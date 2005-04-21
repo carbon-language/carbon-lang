@@ -1,10 +1,10 @@
 //===- lib/Support/Compressor.cpp -------------------------------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
-// This file was developed by Reid Spencer and is distributed under the 
+// This file was developed by Reid Spencer and is distributed under the
 // University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements the llvm::Compressor class, an abstraction for memory
@@ -26,7 +26,7 @@ enum CompressionTypes {
   COMP_TYPE_BZIP2 = '2',
 };
 
-static int getdata(char*& buffer, size_t &size, 
+static int getdata(char*& buffer, size_t &size,
                    llvm::Compressor::OutputDataCallback* cb, void* context) {
   buffer = 0;
   size = 0;
@@ -36,7 +36,7 @@ static int getdata(char*& buffer, size_t &size,
   return result;
 }
 
-static int getdata_uns(char*& buffer, unsigned &size, 
+static int getdata_uns(char*& buffer, unsigned &size,
 		       llvm::Compressor::OutputDataCallback* cb, void* context) {
   size_t SizeOut;
   int Res = getdata(buffer, SizeOut, cb, context);
@@ -45,7 +45,7 @@ static int getdata_uns(char*& buffer, unsigned &size,
 }
 
 //===----------------------------------------------------------------------===//
-//=== NULLCOMP - a compression like set of routines that just copies data 
+//=== NULLCOMP - a compression like set of routines that just copies data
 //===            without doing any compression. This is provided so that if the
 //===            configured environment doesn't have a compression library the
 //===            program can still work, albeit using more data/memory.
@@ -121,26 +121,26 @@ namespace {
 
 /// This structure is only used when a bytecode file is compressed.
 /// As bytecode is being decompressed, the memory buffer might need
-/// to be reallocated. The buffer allocation is handled in a callback 
+/// to be reallocated. The buffer allocation is handled in a callback
 /// and this structure is needed to retain information across calls
 /// to the callback.
 /// @brief An internal buffer object used for handling decompression
 struct BufferContext {
   char* buff;
   size_t size;
-  BufferContext(size_t compressedSize) { 
+  BufferContext(size_t compressedSize) {
     // Null to indicate malloc of a new block
-    buff = 0; 
+    buff = 0;
 
     // Compute the initial length of the uncompression buffer. Note that this
     // is twice the length of the compressed buffer and will be doubled again
-    // in the callback for an initial allocation of 4x compressedSize.  This 
-    // calculation is based on the typical compression ratio of bzip2 on LLVM 
-    // bytecode files which typically ranges in the 50%-75% range.   Since we 
-    // typically get at least 50%, doubling is insufficient. By using a 4x 
+    // in the callback for an initial allocation of 4x compressedSize.  This
+    // calculation is based on the typical compression ratio of bzip2 on LLVM
+    // bytecode files which typically ranges in the 50%-75% range.   Since we
+    // typically get at least 50%, doubling is insufficient. By using a 4x
     // multiplier on the first allocation, we minimize the impact of having to
     // copy the buffer on reallocation.
-    size = compressedSize*2; 
+    size = compressedSize*2;
   }
 
   /// trimTo - Reduce the size of the buffer down to the specified amount.  This
@@ -154,7 +154,7 @@ struct BufferContext {
 
   /// This function handles allocation of the buffer used for decompression of
   /// compressed bytecode files. It is called by Compressor::decompress which is
-  /// called by BytecodeReader::ParseBytecode. 
+  /// called by BytecodeReader::ParseBytecode.
   static size_t callback(char*&buff, size_t &sz, void* ctxt){
     // Case the context variable to our BufferContext
     BufferContext* bc = reinterpret_cast<BufferContext*>(ctxt);
@@ -168,9 +168,9 @@ struct BufferContext {
     // Figure out what to return to the Compressor. If this is the first call,
     // then bc->buff will be null. In this case we want to return the entire
     // buffer because there was no previous allocation.  Otherwise, when the
-    // buffer is reallocated, we save the new base pointer in the 
-    // BufferContext.buff field but return the address of only the extension, 
-    // mid-way through the buffer (since its size was doubled). Furthermore, 
+    // buffer is reallocated, we save the new base pointer in the
+    // BufferContext.buff field but return the address of only the extension,
+    // mid-way through the buffer (since its size was doubled). Furthermore,
     // the sz result must be 1/2 the total size of the buffer.
     if (bc->buff == 0 ) {
       buff = bc->buff = new_buff;
@@ -189,18 +189,18 @@ struct BufferContext {
   }
 };
 
-} // end anonymous namespace 
+} // end anonymous namespace
 
 
 namespace {
 
 // This structure retains the context when compressing the bytecode file. The
 // WriteCompressedData function below uses it to keep track of the previously
-// filled chunk of memory (which it writes) and how many bytes have been 
+// filled chunk of memory (which it writes) and how many bytes have been
 // written.
 struct WriterContext {
   // Initialize the context
-  WriterContext(std::ostream*OS, size_t CS) 
+  WriterContext(std::ostream*OS, size_t CS)
     : chunk(0), sz(0), written(0), compSize(CS), Out(OS) {}
 
   // Make sure we clean up memory
@@ -219,10 +219,10 @@ struct WriterContext {
     sz = 0;
   }
 
-  // This function is a callback used by the Compressor::compress function to 
+  // This function is a callback used by the Compressor::compress function to
   // allocate memory for the compression buffer. This function fulfills that
   // responsibility but also writes the previous (now filled) buffer out to the
-  // stream. 
+  // stream.
   static size_t callback(char*& buffer, size_t &size, void* context) {
     // Cast the context to the structure it must point to.
     WriterContext* ctxt = reinterpret_cast<WriterContext*>(context);
@@ -259,7 +259,7 @@ struct WriterContext {
 }  // end anonymous namespace
 
 // Compress in one of three ways
-size_t Compressor::compress(const char* in, size_t size, 
+size_t Compressor::compress(const char* in, size_t size,
                             OutputDataCallback* cb, void* context) {
   assert(in && "Can't compress null buffer");
   assert(size && "Can't compress empty buffer");
@@ -355,7 +355,7 @@ size_t Compressor::compressToNewBuffer(const char* in, size_t size, char*&out) {
   return result;
 }
 
-size_t 
+size_t
 Compressor::compressToStream(const char*in, size_t size, std::ostream& out) {
   // Set up the context and writer
   WriterContext ctxt(&out, size / 2);
@@ -460,7 +460,7 @@ size_t Compressor::decompress(const char *in, size_t size,
   return result;
 }
 
-size_t 
+size_t
 Compressor::decompressToNewBuffer(const char* in, size_t size, char*&out) {
   BufferContext bc(size);
   size_t result = decompress(in,size,BufferContext::callback,(void*)&bc);
@@ -468,7 +468,7 @@ Compressor::decompressToNewBuffer(const char* in, size_t size, char*&out) {
   return result;
 }
 
-size_t 
+size_t
 Compressor::decompressToStream(const char*in, size_t size, std::ostream& out){
   // Set up the context and writer
   WriterContext ctxt(&out,size / 2);

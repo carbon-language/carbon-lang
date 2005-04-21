@@ -1,10 +1,10 @@
 //===-- TargetFrameInfo.cpp - Implement machine frame interface -*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // Implements the layout of a stack frame on the target machine.
@@ -22,7 +22,7 @@ using namespace llvm;
 //===--------------------------------------------------------------------===//
 
 // This method adjusts a stack offset to meet alignment rules of target.
-int 
+int
 TargetFrameInfo::adjustAlignment(int unalignedOffset, bool growUp,
                                  unsigned align) const {
   abort();
@@ -33,7 +33,7 @@ TargetFrameInfo::adjustAlignment(int unalignedOffset, bool growUp,
 // function.  The frame contents are obtained from the MachineFunction object
 // for the given function.  The rest must be implemented by the
 // machine-specific subclass.
-// 
+//
 int
 TargetFrameInfo::getIncomingArgOffset(MachineFunction& mcInfo, unsigned argNum)
   const {
@@ -55,7 +55,7 @@ TargetFrameInfo::getFirstAutomaticVarOffset(MachineFunction& mcInfo,
   return 0;
 }
 
-int 
+int
 TargetFrameInfo::getRegSpillAreaOffset(MachineFunction& mcInfo, bool& growUp)
   const {
   abort();
@@ -68,7 +68,7 @@ TargetFrameInfo::getTmpAreaOffset(MachineFunction& mcInfo, bool& growUp) const {
   return 0;
 }
 
-int 
+int
 TargetFrameInfo::getDynamicAreaOffset(MachineFunction& mcInfo, bool& growUp)
   const {
   abort();

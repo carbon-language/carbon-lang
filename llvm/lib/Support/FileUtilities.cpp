@@ -1,10 +1,10 @@
 //===- Support/FileUtilities.cpp - File System Utilities ------------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements a family of utility functions which are useful for doing
@@ -24,7 +24,7 @@ using namespace llvm;
 static bool isNumberChar(char C) {
   switch (C) {
   case '0': case '1': case '2': case '3': case '4':
-  case '5': case '6': case '7': case '8': case '9': 
+  case '5': case '6': case '7': case '8': case '9':
   case '.': case '+': case '-':
   case 'e':
   case 'E': return true;
@@ -47,7 +47,7 @@ static bool CompareNumbers(char *&F1P, char *&F2P, char *F1End, char *F2End,
                            double AbsTolerance, double RelTolerance,
                            std::string *ErrorMsg) {
   char *F1NumEnd, *F2NumEnd;
-  double V1 = 0.0, V2 = 0.0; 
+  double V1 = 0.0, V2 = 0.0;
 
   // If one of the positions is at a space and the other isn't, chomp up 'til
   // the end of the space.
@@ -142,7 +142,7 @@ int llvm::DiffFilesWithTolerance(const sys::Path &FileA,
       return 1;
 
     // Now its safe to mmap the files into memory becasue both files
-    // have a non-zero size. 
+    // have a non-zero size.
     sys::MappedFile F1(FileA);
     sys::MappedFile F2(FileB);
     F1.map();
@@ -171,7 +171,7 @@ int llvm::DiffFilesWithTolerance(const sys::Path &FileA,
     // If the files need padding, do so now.
     PadFileIfNeeded(File1Start, File1End, F1P);
     PadFileIfNeeded(File2Start, File2End, F2P);
-    
+
     bool CompareFailed = false;
     while (1) {
       // Scan for the end of file or next difference.

@@ -1,10 +1,10 @@
 //===- lib/Linker/LinkArchives.cpp - Link LLVM objects and libraries ------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file contains routines to handle linking together LLVM bytecode files,
@@ -26,7 +26,7 @@ using namespace llvm;
 /// GetAllDefinedSymbols - Modifies its parameter DefinedSymbols to contain the
 /// name of each externally-visible symbol defined in M.
 ///
-static void 
+static void
 GetAllDefinedSymbols(Module *M, std::set<std::string> &DefinedSymbols) {
   for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
     if (I->hasName() && !I->isExternal() && !I->hasInternalLinkage())
@@ -60,7 +60,7 @@ GetAllUndefinedSymbols(Module *M, std::set<std::string> &UndefinedSymbols) {
   Function *Main = M->getMainFunction();
   if (Main == 0 || Main->isExternal())
     UndefinedSymbols.insert("main");
-  
+
   for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
     if (I->hasName()) {
       if (I->isExternal())
@@ -76,7 +76,7 @@ GetAllUndefinedSymbols(Module *M, std::set<std::string> &UndefinedSymbols) {
       else if (!I->hasInternalLinkage())
         DefinedSymbols.insert(I->getName());
     }
-  
+
   // Prune out any defined symbols from the undefined symbols set...
   for (std::set<std::string>::iterator I = UndefinedSymbols.begin();
        I != UndefinedSymbols.end(); )
@@ -95,7 +95,7 @@ GetAllUndefinedSymbols(Module *M, std::set<std::string> &UndefinedSymbols) {
 /// Return Value:
 ///  TRUE  - An error occurred.
 ///  FALSE - No errors.
-bool 
+bool
 Linker::LinkInArchive(const sys::Path &Filename) {
 
   // Make sure this is an archive file we're dealing with
@@ -110,9 +110,9 @@ Linker::LinkInArchive(const sys::Path &Filename) {
   // no reason to link in any archive files.
   std::set<std::string> UndefinedSymbols;
   GetAllUndefinedSymbols(Composite, UndefinedSymbols);
-  
+
   if (UndefinedSymbols.empty()) {
-    verbose("No symbols undefined, skipping library '" + 
+    verbose("No symbols undefined, skipping library '" +
             Filename.toString() + "'");
     return false;  // No need to link anything in!
   }
@@ -124,7 +124,7 @@ Linker::LinkInArchive(const sys::Path &Filename) {
   Archive* arch = AutoArch.get();
 
   if (!arch)
-    return error("Cannot read archive '" + Filename.toString() + 
+    return error("Cannot read archive '" + Filename.toString() +
                  "': " + ErrMsg);
 
   // Save a set of symbols that are not defined by the archive. Since we're
@@ -133,13 +133,13 @@ Linker::LinkInArchive(const sys::Path &Filename) {
   std::set<std::string> NotDefinedByArchive;
 
   // While we are linking in object files, loop.
-  while (true) {     
+  while (true) {
 
     // Find the modules we need to link into the target module
     std::set<ModuleProvider*> Modules;
     arch->findModulesDefiningSymbols(UndefinedSymbols, Modules);
 
-    // If we didn't find any more modules to link this time, we are done 
+    // If we didn't find any more modules to link this time, we are done
     // searching this archive.
     if (Modules.empty())
       break;
@@ -162,7 +162,7 @@ Linker::LinkInArchive(const sys::Path &Filename) {
 
       // Link it in
       if (LinkInModule(aModule))
-        return error("Cannot link in module '" + 
+        return error("Cannot link in module '" +
                      aModule->getModuleIdentifier() + "': " + Error);
     }
 
@@ -171,17 +171,17 @@ Linker::LinkInArchive(const sys::Path &Filename) {
     GetAllUndefinedSymbols(Composite, UndefinedSymbols);
 
     // At this point we have two sets of undefined symbols: UndefinedSymbols
-    // which holds the undefined symbols from all the modules, and 
+    // which holds the undefined symbols from all the modules, and
     // NotDefinedByArchive which holds symbols we know the archive doesn't
     // define. There's no point searching for symbols that we won't find in the
     // archive so we subtract these sets.
     set_subtract(UndefinedSymbols, NotDefinedByArchive);
-    
+
     // If there's no symbols left, no point in continuing to search the
     // archive.
     if (UndefinedSymbols.empty())
       break;
   }
-  
+
   return false;
 }

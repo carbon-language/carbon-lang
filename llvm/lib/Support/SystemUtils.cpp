@@ -1,10 +1,10 @@
 //===- SystemUtils.cpp - Utilities for low-level system tasks -------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file contains functions used to do a variety of low-level, often
@@ -42,14 +42,14 @@ bool llvm::CheckBytecodeOutputToConsole(std::ostream* stream_to_check,
 #undef FindExecutable   // needed on windows :(
 sys::Path llvm::FindExecutable(const std::string &ExeName,
                                const std::string &ProgramPath) {
-  // First check the directory that the calling program is in.  We can do this  
+  // First check the directory that the calling program is in.  We can do this
   // if ProgramPath contains at least one / character, indicating that it is a
   // relative path to bugpoint itself.
   sys::Path Result ( ProgramPath );
   Result.elideFile();
   if (!Result.isEmpty()) {
     Result.appendFile(ExeName);
-    if (Result.executable()) 
+    if (Result.executable())
       return Result;
   }
 

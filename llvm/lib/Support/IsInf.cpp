@@ -1,10 +1,10 @@
 //===-- IsInf.cpp - Platform-independent wrapper around C99 isinf() -------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Config/config.h"
@@ -26,7 +26,7 @@ static int isinf(double x) { return !finite(x) && x==x; }
 #define isinf(X) (!_finite(X))
 #elif defined(_AIX) && defined(__GNUC__)
 // GCC's fixincludes seems to be removing the isinf() declaration from the
-// system header /usr/include/math.h 
+// system header /usr/include/math.h
 # include <math.h>
 static int isinf(double x) { return !finite(x) && x==x; }
 #else

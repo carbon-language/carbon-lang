@@ -1,10 +1,10 @@
 //===-- Path.cpp - Implement OS Path Concept --------------------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
-// This file was developed by Reid Spencer and is distributed under the 
+// This file was developed by Reid Spencer and is distributed under the
 // University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 //  This header file implements the operating system Path concept.
@@ -20,7 +20,7 @@ using namespace sys;
 
 //===----------------------------------------------------------------------===//
 //=== WARNING: Implementation here must contain only TRULY operating system
-//===          independent code. 
+//===          independent code.
 //===----------------------------------------------------------------------===//
 
 Path
@@ -33,7 +33,7 @@ Path::GetLLVMConfigDir() {
   return GetLLVMDefaultConfigDir();
 }
 
-LLVMFileType 
+LLVMFileType
 sys::IdentifyFileType(const char*magic, unsigned length) {
   assert(magic && "Invalid magic number string");
   assert(length >=4 && "Invalid magic number length");
@@ -69,7 +69,7 @@ Path::isArchive() const {
 
 bool
 Path::isDynamicLibrary() const {
-  if (readable()) 
+  if (readable())
     return hasMagicNumber("\177ELF");
   return false;
 }

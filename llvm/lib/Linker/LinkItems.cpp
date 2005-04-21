@@ -1,10 +1,10 @@
 //===- lib/Linker/LinkItems.cpp - Link LLVM objects and libraries ---------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
-// This file was developed by Reid Spencer and is distributed under the 
+// This file was developed by Reid Spencer and is distributed under the
 // University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file contains routines to handle linking together LLVM bytecode files,
@@ -21,7 +21,7 @@ using namespace llvm;
 bool
 Linker::LinkInItems(const ItemList& Items) {
   // For each linkage item ...
-  for (ItemList::const_iterator I = Items.begin(), E = Items.end(); 
+  for (ItemList::const_iterator I = Items.begin(), E = Items.end();
        I != E; ++I) {
     if (I->second) {
       // Link in the library suggested.
@@ -38,7 +38,7 @@ Linker::LinkInItems(const ItemList& Items) {
   // that module should also be aggregated with duplicates eliminated. This is
   // now the time to process the dependent libraries to resolve any remaining
   // symbols.
-  for (Module::lib_iterator I = Composite->lib_begin(), 
+  for (Module::lib_iterator I = Composite->lib_begin(),
          E = Composite->lib_end(); I != E; ++I)
     if(LinkInLibrary(*I))
       return true;
@@ -95,9 +95,9 @@ bool Linker::LinkInLibraries(const std::vector<std::string> &Libraries) {
   // now the time to process the dependent libraries to resolve any remaining
   // symbols.
   const Module::LibraryListType& DepLibs = Composite->getLibraries();
-  for (Module::LibraryListType::const_iterator I = DepLibs.begin(), 
-      E = DepLibs.end(); I != E; ++I)
-    if (LinkInLibrary(*I)) 
+  for (Module::LibraryListType::const_iterator I = DepLibs.begin(),
+         E = DepLibs.end(); I != E; ++I)
+    if (LinkInLibrary(*I))
       return true;
 
   return false;
@@ -130,7 +130,7 @@ bool Linker::LinkInFile(const sys::Path &File) {
     verbose("Linking bytecode file '" + File.toString() + "'");
 
     std::auto_ptr<Module> M(LoadObject(File));
-    if (M.get() == 0) 
+    if (M.get() == 0)
       return error("Cannot load file '" + File.toString() + "'" + Error);
     if (LinkInModule(M.get()))
       return error("Cannot link file '" + File.toString() + "'" + Error);

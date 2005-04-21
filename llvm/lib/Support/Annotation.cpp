@@ -1,10 +1,10 @@
 //===-- Annotation.cpp - Implement the Annotation Classes -----------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements the AnnotationManager class.
@@ -67,7 +67,7 @@ AnnotationID AnnotationManager::getID(const std::string &Name, Factory Fact,
                                       void *Data) {
   AnnotationID Result(getID(Name));
   registerAnnotationFactory(Result, Fact, Data);
-  return Result;                      
+  return Result;
 }
 
 // getName - This function is especially slow, but that's okay because it should
@@ -82,7 +82,7 @@ const std::string &AnnotationManager::getName(AnnotationID ID) {  // ID -> Name
 }
 
 // registerAnnotationFactory - This method is used to register a callback
-// function used to create an annotation on demand if it is needed by the 
+// function used to create an annotation on demand if it is needed by the
 // Annotable::findOrCreateAnnotation method.
 //
 void AnnotationManager::registerAnnotationFactory(AnnotationID ID, AnnFactory F,
@@ -96,7 +96,7 @@ void AnnotationManager::registerAnnotationFactory(AnnotationID ID, AnnFactory F,
 // createAnnotation - Create an annotation of the specified ID for the
 // specified object, using a register annotation creation function.
 //
-Annotation *AnnotationManager::createAnnotation(AnnotationID ID, 
+Annotation *AnnotationManager::createAnnotation(AnnotationID ID,
                                                 const Annotable *Obj) {
   FactMapType::iterator I = getFactMap().find(ID.ID);
   if (I == getFactMap().end()) return 0;

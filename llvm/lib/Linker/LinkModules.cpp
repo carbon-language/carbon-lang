@@ -1,10 +1,10 @@
 //===- lib/Linker/LinkModules.cpp - Module Linker Implementation ----------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements the LLVM module linker.
@@ -98,11 +98,11 @@ static bool RecursiveResolveTypesI(const PATypeHolder &DestTy,
   const Type *SrcTyT = SrcTy.get();
   const Type *DestTyT = DestTy.get();
   if (DestTyT == SrcTyT) return false;       // If already equal, noop
-  
+
   // If we found our opaque type, resolve it now!
   if (isa<OpaqueType>(DestTyT) || isa<OpaqueType>(SrcTyT))
     return ResolveTypes(DestTyT, SrcTyT, DestST, Name);
-  
+
   // Two types cannot be resolved together if they are of different primitive
   // type.  For example, we cannot resolve an int to a float.
   if (DestTyT->getTypeID() != SrcTyT->getTypeID()) return true;
@@ -123,7 +123,7 @@ static bool RecursiveResolveTypesI(const PATypeHolder &DestTy,
     return false;
   }
   case Type::StructTyID: {
-    if (getST(DestTy)->getNumContainedTypes() != 
+    if (getST(DestTy)->getNumContainedTypes() !=
         getST(SrcTy)->getNumContainedTypes()) return 1;
     for (unsigned i = 0, e = getST(DestTy)->getNumContainedTypes(); i != e; ++i)
       if (RecursiveResolveTypesI(getST(DestTy)->getContainedType(i),
@@ -159,7 +159,7 @@ static bool RecursiveResolveTypesI(const PATypeHolder &DestTy,
     return Result;
   }
   default: assert(0 && "Unexpected type!"); return true;
-  }  
+  }
 }
 
 static bool RecursiveResolveTypes(const PATypeHolder &DestTy,
@@ -229,7 +229,7 @@ static bool LinkTypes(Module *Dest, const Module *Src, std::string *Err) {
         if (!RecursiveResolveTypes(T2, T1, DestST, Name)) {
           // We are making progress!
           DelayedTypesToResolve.erase(DelayedTypesToResolve.begin()+i);
-          
+
           // Go back to the main loop, perhaps we can resolve directly by name
           // now...
           break;
@@ -407,7 +407,7 @@ static bool GetLinkageResult(GlobalValue *Dest, GlobalValue *Src,
   } else {
     assert(Dest->hasExternalLinkage() && Src->hasExternalLinkage() &&
            "Unexpected linkage type!");
-    return Error(Err, "Linking globals named '" + Src->getName() + 
+    return Error(Err, "Linking globals named '" + Src->getName() +
                  "': symbol multiply defined!");
   }
   return false;
@@ -423,7 +423,7 @@ static bool LinkGlobals(Module *Dest, Module *Src,
   // We will need a module level symbol table if the src module has a module
   // level symbol table...
   SymbolTable *ST = (SymbolTable*)&Dest->getSymbolTable();
-  
+
   // Loop over all of the globals in the src module, mapping them over as we go
   for (Module::global_iterator I = Src->global_begin(), E = Src->global_end(); I != E; ++I) {
     GlobalVariable *SGV = I;
@@ -541,11 +541,11 @@ static bool LinkGlobalInits(Module *Dest, const Module *Src,
       Constant *SInit =
         cast<Constant>(RemapOperand(SGV->getInitializer(), ValueMap));
 
-      GlobalVariable *DGV = cast<GlobalVariable>(ValueMap[SGV]);    
+      GlobalVariable *DGV = cast<GlobalVariable>(ValueMap[SGV]);
       if (DGV->hasInitializer()) {
         if (SGV->hasExternalLinkage()) {
           if (DGV->getInitializer() != SInit)
-            return Error(Err, "Global Variable Collision on '" + 
+            return Error(Err, "Global Variable Collision on '" +
                          ToStr(SGV->getType(), Src) +"':%"+SGV->getName()+
                          " - Global variables have different initializers");
         } else if (DGV->hasLinkOnceLinkage() || DGV->hasWeakLinkage()) {
@@ -577,7 +577,7 @@ static bool LinkFunctionProtos(Module *Dest, const Module *Src,
                              std::map<std::string, GlobalValue*> &GlobalsByName,
                                std::string *Err) {
   SymbolTable *ST = (SymbolTable*)&Dest->getSymbolTable();
-  
+
   // Loop over all of the functions in the src module, mapping them over as we
   // go
   for (Module::const_iterator I = Src->begin(), E = Src->end(); I != E; ++I) {
@@ -637,8 +637,8 @@ static bool LinkFunctionProtos(Module *Dest, const Module *Src,
                    "' have different linkage specifiers!");
     } else if (SF->hasExternalLinkage()) {
       // The function is defined in both modules!!
-      return Error(Err, "Function '" + 
-                   ToStr(SF->getFunctionType(), Src) + "':\"" + 
+      return Error(Err, "Function '" +
+                   ToStr(SF->getFunctionType(), Src) + "':\"" +
                    SF->getName() + "\" - Function is already defined!");
     } else {
       assert(0 && "Unknown linkage configuration found!");
@@ -718,7 +718,7 @@ static bool LinkAppendingVars(Module *M,
                   std::multimap<std::string, GlobalVariable *> &AppendingVars,
                               std::string *ErrorMsg) {
   if (AppendingVars.empty()) return false; // Nothing to do.
-  
+
   // Loop over the multimap of appending vars, processing any variables with the
   // same name, forming a new appending global variable with both of the
   // initializers merged together, then rewrite references to the old variables
@@ -735,7 +735,7 @@ static bool LinkAppendingVars(Module *M,
       GlobalVariable *G1 = First->second, *G2 = Second->second;
       const ArrayType *T1 = cast<ArrayType>(G1->getType()->getElementType());
       const ArrayType *T2 = cast<ArrayType>(G2->getType()->getElementType());
-      
+
       // Check to see that they two arrays agree on type...
       if (T1->getElementType() != T2->getElementType())
         return Error(ErrorMsg,
@@ -803,7 +803,7 @@ static bool LinkAppendingVars(Module *M,
 // error occurs, true is returned and ErrorMsg (if not null) is set to indicate
 // the problem.  Upon failure, the Dest module could be in a modified state, and
 // shouldn't be relied on to be consistent.
-bool 
+bool
 Linker::LinkModules(Module *Dest, Module *Src, std::string *ErrorMsg) {
   assert(Dest != 0 && "Invalid Destination module");
   assert(Src  != 0 && "Invalid Source Module");
@@ -824,7 +824,7 @@ Linker::LinkModules(Module *Dest, Module *Src, std::string *ErrorMsg) {
   if (!Src->getTargetTriple().empty() &&
       Dest->getTargetTriple() != Src->getTargetTriple())
     std::cerr << "WARNING: Linking two modules of different target triples!\n";
-  
+
   // Update the destination module's dependent libraries list with the libraries
   // from the source module. There's no opportunity for duplicates here as the
   // Module ensures that duplicate insertions are discarded.

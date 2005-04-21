@@ -1,10 +1,10 @@
 //===- lib/Linker/Linker.cpp - Basic Linker functionality  ----------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
-// This file was developed by Reid Spencer and is distributed under the 
+// This file was developed by Reid Spencer and is distributed under the
 // University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file contains basic Linker functionality that all usages will need.
@@ -42,7 +42,7 @@ Linker::~Linker() {
   delete Composite;
 }
 
-bool 
+bool
 Linker::error(const std::string& message) {
   Error = message;
   if (!(Flags&QuietErrors)) {
@@ -99,23 +99,23 @@ Linker::releaseModule() {
 }
 
 // LoadObject - Read in and parse the bytecode file named by FN and return the
-// module it contains (wrapped in an auto_ptr), or auto_ptr<Module>() and set 
+// module it contains (wrapped in an auto_ptr), or auto_ptr<Module>() and set
 // Error if an error occurs.
-std::auto_ptr<Module> 
+std::auto_ptr<Module>
 Linker::LoadObject(const sys::Path &FN) {
   std::string ParseErrorMessage;
   Module *Result = ParseBytecodeFile(FN.toString(), &ParseErrorMessage);
-  if (Result) 
+  if (Result)
     return std::auto_ptr<Module>(Result);
   Error = "Bytecode file '" + FN.toString() + "' could not be loaded";
-  if (ParseErrorMessage.size()) 
+  if (ParseErrorMessage.size())
     Error += ": " + ParseErrorMessage;
   return std::auto_ptr<Module>();
 }
 
-// IsLibrary - Determine if "Name" is a library in "Directory". Return 
+// IsLibrary - Determine if "Name" is a library in "Directory". Return
 // a non-empty sys::Path if its found, an empty one otherwise.
-static inline sys::Path IsLibrary(const std::string& Name, 
+static inline sys::Path IsLibrary(const std::string& Name,
                                   const sys::Path& Directory) {
 
   assert(Directory.isDirectory() && "Need to specify a directory");
@@ -145,15 +145,15 @@ static inline sys::Path IsLibrary(const std::string& Name,
 /// FindLib - Try to convert Filename into the name of a file that we can open,
 /// if it does not already name a file we can open, by first trying to open
 /// Filename, then libFilename.[suffix] for each of a set of several common
-/// library suffixes, in each of the directories in LibPaths. Returns an empty 
+/// library suffixes, in each of the directories in LibPaths. Returns an empty
 /// Path if no matching file can be found.
 ///
-sys::Path 
-Linker::FindLib(const std::string &Filename) 
+sys::Path
+Linker::FindLib(const std::string &Filename)
 {
   // Determine if the pathname can be found as it stands.
   sys::Path FilePath(Filename);
-  if (FilePath.readable() && 
+  if (FilePath.readable() &&
       (FilePath.isArchive() || FilePath.isDynamicLibrary()))
     return FilePath;
 

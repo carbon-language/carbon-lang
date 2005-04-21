@@ -1,10 +1,10 @@
 //===-- JITEmitter.cpp - Write machine code to executable memory ----------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines a MachineCodeEmitter object that is used by the JIT to
@@ -54,7 +54,7 @@ namespace {
   public:
     JITMemoryManager();
     ~JITMemoryManager();
-    
+
     inline unsigned char *allocateStub(unsigned StubSize);
     inline unsigned char *allocateConstant(unsigned ConstantSize,
                                            unsigned Alignment);
@@ -190,7 +190,7 @@ void *JITResolver::getFunctionStub(Function *F) {
   void *Actual = (void*)LazyResolverFn;
   if (F->isExternal() && F->hasExternalLinkage())
     Actual = TheJIT->getPointerToFunction(F);
-    
+
   // Otherwise, codegen a new stub.  For now, the stub will call the lazy
   // resolver function.
   Stub = TheJIT->getJITInfo().emitFunctionStub(Actual, MCE);
@@ -230,7 +230,7 @@ void *JITResolver::getExternalFunctionStub(void *FnAddr) {
 /// it if necessary, then returns the resultant function pointer.
 void *JITResolver::JITCompilerFn(void *Stub) {
   JITResolver &JR = getJITResolver();
-  
+
   // The address given to us for the stub may not be exactly right, it might be
   // a little bit after the stub.  As such, use upper_bound to find it.
   std::map<void*, Function*>::iterator I =
@@ -373,7 +373,7 @@ void JITEmitter::finishFunction(MachineFunction &F) {
       void *ResultPtr;
       if (MR.isString()) {
         ResultPtr = TheJIT->getPointerToNamedFunction(MR.getString());
-        
+
         // If the target REALLY wants a stub for this function, emit it now.
         if (!MR.doesntNeedFunctionStub())
           ResultPtr = getJITResolver(this).getExternalFunctionStub(ResultPtr);

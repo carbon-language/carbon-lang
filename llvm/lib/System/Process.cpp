@@ -1,10 +1,10 @@
 //===-- Process.cpp - Implement OS Process Concept --------------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
-// This file was developed by Reid Spencer and is distributed under the 
+// This file was developed by Reid Spencer and is distributed under the
 // University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 //  This header file implements the operating system Process concept.
@@ -19,7 +19,7 @@ using namespace sys;
 
 //===----------------------------------------------------------------------===//
 //=== WARNING: Implementation here must contain only TRULY operating system
-//===          independent code. 
+//===          independent code.
 //===----------------------------------------------------------------------===//
 
 }

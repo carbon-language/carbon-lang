@@ -1,10 +1,10 @@
 //===-- TargetInstrInfo.cpp - Target Instruction Information --------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements the TargetInstrInfo class.
@@ -20,7 +20,7 @@ using namespace llvm;
 namespace llvm {
   // External object describing the machine instructions Initialized only when
   // the TargetMachine class is created and reset when that class is destroyed.
-  // 
+  //
   // FIXME: UGLY SPARCV9 HACK!
   const TargetInstrDescriptor* TargetInstrDescriptors = 0;
 }
@@ -49,13 +49,13 @@ bool TargetInstrInfo::constantFitsInImmedField(MachineOpCode opCode,
       // NEED TO HANDLE UNSIGNED VALUES SINCE THEY MAY BECOME MUCH
       // SMALLER AFTER CASTING TO SIGN-EXTENDED int, short, or char.
       // See CreateUIntSetInstruction in SparcInstrInfo.cpp.
-      
+
       // Now check if the constant fits
       if (intValue <= (int64_t) maxImmedValue &&
 	  intValue >= -((int64_t) maxImmedValue+1))
 	return true;
     }
-  
+
   return false;
 }
 

@@ -1,10 +1,10 @@
 //===-- TargetLowering.cpp - Implement the TargetLowering class -----------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This implements the TargetLowering class.
@@ -76,7 +76,7 @@ void TargetLowering::computeRegisterProperties() {
   // Everything defaults to one.
   for (unsigned i = 0; i != MVT::LAST_VALUETYPE; ++i)
     NumElementsForVT[i] = 1;
-  
+
   // Find the largest integer register class.
   unsigned LargestIntReg = MVT::i128;
   for (; RegClassForVT[LargestIntReg] == 0; --LargestIntReg)
@@ -101,7 +101,7 @@ void TargetLowering::computeRegisterProperties() {
                          TransformToType, ValueTypeActions);
     else
       TransformToType[(MVT::ValueType)IntReg] = (MVT::ValueType)IntReg;
-  
+
   // If the target does not have native support for F32, promote it to F64.
   if (!hasNativeSupportFor(MVT::f32))
     SetValueTypeAction(MVT::f32, Promote, *this,

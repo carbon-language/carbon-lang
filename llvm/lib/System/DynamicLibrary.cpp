@@ -1,10 +1,10 @@
 //===-- DynamicLibrary.cpp - Runtime link/load libraries --------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
-// This file was developed by Reid Spencer and is distributed under the 
+// This file was developed by Reid Spencer and is distributed under the
 // University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 //  This header file implements the operating system DynamicLibrary concept.
@@ -33,7 +33,7 @@ using namespace llvm::sys;
 
 //===----------------------------------------------------------------------===//
 //=== WARNING: Implementation here must contain only TRULY operating system
-//===          independent code. 
+//===          independent code.
 //===----------------------------------------------------------------------===//
 
 static bool did_initialize_ltdl = false;
@@ -55,7 +55,7 @@ DynamicLibrary::DynamicLibrary() : handle(0) {
 
   if (a_handle == 0)
     throw std::string("Can't open program as dynamic library");
-  
+
   handle = a_handle;
   OpenedHandles.push_back(a_handle);
 }

@@ -1,10 +1,10 @@
 //===-- TargetMachineRegistry.cpp - Target Auto Registration Impl ---------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file exposes the RegisterTarget class, which TargetMachine
@@ -62,7 +62,7 @@ TargetMachineRegistry::getClosestStaticTargetForModule(const Module &M,
     return 0;
   } else if (UsableTargets.size() == 1)
     return UsableTargets.back().second;
-  
+
   // Otherwise, take the best target, but make sure we don't have to equally
   // good best targets.
   std::sort(UsableTargets.begin(), UsableTargets.end());
@@ -91,7 +91,7 @@ TargetMachineRegistry::getClosestTargetForJIT(std::string &Error) {
     return 0;
   } else if (UsableTargets.size() == 1)
     return UsableTargets.back().second;
-  
+
   // Otherwise, take the best target.  If there is a tie, just pick one.
   unsigned MaxQual = UsableTargets.front().first;
   const Entry *MaxQualTarget = UsableTargets.front().second;
@@ -101,7 +101,7 @@ TargetMachineRegistry::getClosestTargetForJIT(std::string &Error) {
       MaxQual = UsableTargets[i].first;
       MaxQualTarget = UsableTargets[i].second;
     }
-  
+
   return MaxQualTarget;
 }
-                                    
+

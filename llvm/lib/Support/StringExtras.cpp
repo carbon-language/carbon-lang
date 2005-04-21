@@ -1,10 +1,10 @@
 //===-- StringExtras.cpp - Implement the StringExtras header --------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements the StringExtras.h header
@@ -35,9 +35,9 @@ std::string llvm::getToken(std::string &Source, const char *Delimiters) {
 
   // Create the return token.
   std::string Result = std::string(Source.begin()+Start, Source.begin()+End);
-  
+
   // Erase the token that we read in.
   Source.erase(Source.begin(), Source.begin()+End);
-  
+
   return Result;
 }

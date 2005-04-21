@@ -1,10 +1,10 @@
 //===-- SchedInfo.cpp - Generic code to support target schedulers ----------==//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements the generic part of a Scheduler description for a
@@ -21,7 +21,7 @@ using namespace llvm;
 
 resourceId_t llvm::CPUResource::nextId = 0;
 static std::vector<CPUResource*> *CPUResourceMap = 0;
-  
+
 CPUResource::CPUResource(const std::string& resourceName, int maxUsers)
     : rname(resourceName), rid(nextId++), maxNumUsers(maxUsers) {
   if(!CPUResourceMap)
@@ -45,8 +45,8 @@ inline static bool
 RUConflict(const std::vector<resourceId_t>& fromRVec,
 	   const std::vector<resourceId_t>& toRVec)
 {
-  
-  unsigned fN = fromRVec.size(), tN = toRVec.size(); 
+
+  unsigned fN = fromRVec.size(), tN = toRVec.size();
   unsigned fi = 0, ti = 0;
 
   while (fi < fN && ti < tN) {
@@ -62,14 +62,14 @@ RUConflict(const std::vector<resourceId_t>& fromRVec,
 
 
 static CycleCount_t
-ComputeMinGap(const InstrRUsage &fromRU, 
+ComputeMinGap(const InstrRUsage &fromRU,
 	      const InstrRUsage &toRU)
 {
   CycleCount_t minGap = 0;
-  
+
   if (fromRU.numBubbles > 0)
     minGap = fromRU.numBubbles;
-  
+
   if (minGap < fromRU.numCycles) {
     // only need to check from cycle `minGap' onwards
     for (CycleCount_t gap=minGap; gap <= fromRU.numCycles-1; gap++) {
@@ -85,7 +85,7 @@ ComputeMinGap(const InstrRUsage &fromRU,
         }
     }
   }
-  
+
   return minGap;
 }
 
@@ -114,11 +114,11 @@ TargetSchedInfo::initializeResources()
 {
   assert(MAX_NUM_SLOTS >= (int)getMaxNumIssueTotal()
 	 && "Insufficient slots for static data! Increase MAX_NUM_SLOTS");
-  
+
   // First, compute common resource usage info for each class because
   // most instructions will probably behave the same as their class.
   // Cannot allocate a vector of InstrRUsage so new each one.
-  // 
+  //
   std::vector<InstrRUsage> instrRUForClasses;
   instrRUForClasses.resize(numSchedClasses);
   for (InstrSchedClass sc = 0; sc < numSchedClasses; sc++) {
@@ -126,7 +126,7 @@ TargetSchedInfo::initializeResources()
     instrRUForClasses[sc].setMaxSlots(getMaxNumIssueTotal());
     instrRUForClasses[sc].setTo(classRUsages[sc]);
   }
-  
+
   computeInstrResources(instrRUForClasses);
   computeIssueGaps(instrRUForClasses);
 }
@@ -138,21 +138,21 @@ TargetSchedInfo::computeInstrResources(const std::vector<InstrRUsage>&
 {
   int numOpCodes =  mii->getNumOpcodes();
   instrRUsages.resize(numOpCodes);
-  
+
   // First get the resource usage information from the class resource usages.
   for (MachineOpCode op = 0; op < numOpCodes; ++op) {
     InstrSchedClass sc = getSchedClass(op);
     assert(sc < numSchedClasses);
     instrRUsages[op] = instrRUForClasses[sc];
   }
-  
+
   // Now, modify the resource usages as specified in the deltas.
   for (unsigned i = 0; i < numUsageDeltas; ++i) {
     MachineOpCode op = usageDeltas[i].opCode;
     assert(op < numOpCodes);
     instrRUsages[op].addUsageDelta(usageDeltas[i]);
   }
-  
+
   // Then modify the issue restrictions as specified in the deltas.
   for (unsigned i = 0; i < numIssueDeltas; ++i) {
     MachineOpCode op = issueDeltas[i].opCode;
@@ -173,14 +173,14 @@ TargetSchedInfo::computeIssueGaps(const std::vector<InstrRUsage>&
   // First, compute issue gaps between pairs of classes based on common
   // resources usages for each class, because most instruction pairs will
   // usually behave the same as their class.
-  // 
+  //
   int* classPairGaps =
     static_cast<int*>(alloca(sizeof(int) * numSchedClasses * numSchedClasses));
   for (InstrSchedClass fromSC=0; fromSC < numSchedClasses; fromSC++)
     for (InstrSchedClass toSC=0; toSC < numSchedClasses; toSC++) {
       int classPairGap = ComputeMinGap(instrRUForClasses[fromSC],
                                        instrRUForClasses[toSC]);
-      classPairGaps[fromSC*numSchedClasses + toSC] = classPairGap; 
+      classPairGaps[fromSC*numSchedClasses + toSC] = classPairGap;
     }
 
   // Now, for each pair of instructions, use the class pair gap if both
@@ -191,7 +191,7 @@ TargetSchedInfo::computeIssueGaps(const std::vector<InstrRUsage>&
 
   for (MachineOpCode fromOp=0; fromOp < numOpCodes; fromOp++)
     for (MachineOpCode toOp=0; toOp < numOpCodes; toOp++) {
-      int instrPairGap = 
+      int instrPairGap =
         (instrRUsages[fromOp].sameAsClass && instrRUsages[toOp].sameAsClass)
         ? classPairGaps[getSchedClass(fromOp)*numSchedClasses + getSchedClass(toOp)]
         : ComputeMinGap(instrRUsages[fromOp], instrRUsages[toOp]);
@@ -208,23 +208,23 @@ TargetSchedInfo::computeIssueGaps(const std::vector<InstrRUsage>&
 void InstrRUsage::setTo(const InstrClassRUsage& classRU) {
   sameAsClass	= true;
   isSingleIssue = classRU.isSingleIssue;
-  breaksGroup   = classRU.breaksGroup; 
+  breaksGroup   = classRU.breaksGroup;
   numBubbles    = classRU.numBubbles;
-  
+
   for (unsigned i=0; i < classRU.numSlots; i++) {
     unsigned slot = classRU.feasibleSlots[i];
     assert(slot < feasibleSlots.size() && "Invalid slot specified!");
     this->feasibleSlots[slot] = true;
   }
-  
+
   numCycles   = classRU.totCycles;
   resourcesByCycle.resize(this->numCycles);
-  
+
   for (unsigned i=0; i < classRU.numRUEntries; i++)
     for (unsigned c=classRU.V[i].startCycle, NC = c + classRU.V[i].numCycles;
 	 c < NC; c++)
       this->resourcesByCycle[c].push_back(classRU.V[i].resourceId);
-  
+
   // Sort each resource usage vector by resourceId_t to speed up conflict
   // checking
   for (unsigned i=0; i < this->resourcesByCycle.size(); i++)
@@ -234,11 +234,11 @@ void InstrRUsage::setTo(const InstrClassRUsage& classRU) {
 // Add the extra resource usage requirements specified in the delta.
 // Note that a negative value of `numCycles' means one entry for that
 // resource should be deleted for each cycle.
-// 
+//
 void InstrRUsage::addUsageDelta(const InstrRUsageDelta &delta) {
   int NC = delta.numCycles;
   sameAsClass = false;
-  
+
   // resize the resources vector if more cycles are specified
   unsigned maxCycles = this->numCycles;
   maxCycles = std::max(maxCycles, delta.startCycle + abs(NC) - 1);
@@ -246,7 +246,7 @@ void InstrRUsage::addUsageDelta(const InstrRUsageDelta &delta) {
     this->resourcesByCycle.resize(maxCycles);
     this->numCycles = maxCycles;
   }
-    
+
   if (NC >= 0)
     for (unsigned c=delta.startCycle, last=c+NC-1; c <= last; c++)
       this->resourcesByCycle[c].push_back(delta.resourceId);

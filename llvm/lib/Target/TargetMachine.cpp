@@ -1,10 +1,10 @@
 //===-- TargetMachine.cpp - General Target Information ---------------------==//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file describes the general parts of a Target machine.
@@ -32,7 +32,7 @@ namespace {
     cl::desc("Print generated machine code"),
     cl::location(PrintMachineCode), cl::init(false));
 
-  cl::opt<bool, true> 
+  cl::opt<bool, true>
     DisableFPElim("disable-fp-elim",
                   cl::desc("Disable frame pointer elimination optimization"),
                   cl::location(NoFramePointerElim),

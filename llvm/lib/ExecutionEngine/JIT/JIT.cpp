@@ -1,10 +1,10 @@
 //===-- JIT.cpp - LLVM Just in Time Compiler ------------------------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This tool implements a just-in-time compiler for LLVM, allowing direct
@@ -35,7 +35,7 @@ JIT::JIT(ModuleProvider *MP, TargetMachine &tm, TargetJITInfo &tji)
 
   // Initialize MCE
   MCE = createEmitter(*this);
-  
+
   // Add target data
   PM.add(new TargetData(TM.getTargetData()));
 
@@ -77,7 +77,7 @@ GenericValue JIT::runFunction(Function *F,
   if (RetTy == Type::IntTy || RetTy == Type::UIntTy || RetTy == Type::VoidTy) {
     switch (ArgValues.size()) {
     case 3:
-      if ((FTy->getParamType(0) == Type::IntTy || 
+      if ((FTy->getParamType(0) == Type::IntTy ||
            FTy->getParamType(0) == Type::UIntTy) &&
           isa<PointerType>(FTy->getParamType(1)) &&
           isa<PointerType>(FTy->getParamType(2))) {
@@ -92,7 +92,7 @@ GenericValue JIT::runFunction(Function *F,
       }
       break;
     case 2:
-      if ((FTy->getParamType(0) == Type::IntTy || 
+      if ((FTy->getParamType(0) == Type::IntTy ||
            FTy->getParamType(0) == Type::UIntTy) &&
           isa<PointerType>(FTy->getParamType(1))) {
         int (*PF)(int, char **) = (int(*)(int, char **))FPtr;
@@ -105,7 +105,7 @@ GenericValue JIT::runFunction(Function *F,
       break;
     case 1:
       if (FTy->getNumParams() == 1 &&
-          (FTy->getParamType(0) == Type::IntTy || 
+          (FTy->getParamType(0) == Type::IntTy ||
            FTy->getParamType(0) == Type::UIntTy)) {
         GenericValue rv;
         int (*PF)(int) = (int(*)(int))FPtr;
@@ -239,7 +239,7 @@ void *JIT::getPointerToFunction(Function *F) {
     return Addr;   // Check if function already code gen'd
 
   // Make sure we read in the function if it exists in this Module
-  if (F->hasNotBeenReadFromBytecode()) 
+  if (F->hasNotBeenReadFromBytecode())
     try {
       MP->materializeFunction(F);
     } catch ( std::string& errmsg ) {

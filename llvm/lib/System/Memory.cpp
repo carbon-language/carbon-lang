@@ -1,10 +1,10 @@
 //===- Memory.cpp - Memory Handling Support ---------------------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
-// This file was developed by Reid Spencer and is distributed under the 
+// This file was developed by Reid Spencer and is distributed under the
 // University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines some helpful functions for allocating memory and dealing
@@ -20,7 +20,7 @@ using namespace sys;
 
 //===----------------------------------------------------------------------===//
 //=== WARNING: Implementation here must contain only TRULY operating system
-//===          independent code. 
+//===          independent code.
 //===----------------------------------------------------------------------===//
 
 }

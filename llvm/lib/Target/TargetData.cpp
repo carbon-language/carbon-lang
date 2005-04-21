@@ -1,10 +1,10 @@
 //===-- TargetData.cpp - Data size & alignment routines --------------------==//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines target properties related to datatype size/offset/alignment
@@ -43,7 +43,7 @@ StructLayout::StructLayout(const StructType *ST, const TargetData &TD) {
   StructSize = 0;
 
   // Loop over each of the elements, placing them in memory...
-  for (StructType::element_iterator TI = ST->element_begin(), 
+  for (StructType::element_iterator TI = ST->element_begin(),
          TE = ST->element_end(); TI != TE; ++TI) {
     const Type *Ty = *TI;
     unsigned char A;
@@ -95,7 +95,7 @@ unsigned StructLayout::getElementContainingOffset(uint64_t Offset) const {
 TargetData::TargetData(const std::string &TargetName,
                        bool isLittleEndian, unsigned char PtrSize,
                        unsigned char PtrAl, unsigned char DoubleAl,
-                       unsigned char FloatAl, unsigned char LongAl, 
+                       unsigned char FloatAl, unsigned char LongAl,
                        unsigned char IntAl, unsigned char ShortAl,
                        unsigned char ByteAl, unsigned char BoolAl) {
 
@@ -205,7 +205,7 @@ static inline void getTypeInfo(const Type *Ty, const TargetData *TD,
     Size = Layout->StructSize; Alignment = Layout->StructAlignment;
     return;
   }
-    
+
   default:
     assert(0 && "Bad type for getTypeInfo!!!");
     return;

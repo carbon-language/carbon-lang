@@ -1,10 +1,10 @@
 //===-- CommandLine.cpp - Command line parser implementation --------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This class implements a command line argument processor that is useful when
@@ -68,7 +68,7 @@ static std::vector<Option*> &getPositionalOpts() {
 
 static void AddArgument(const char *ArgName, Option *Opt) {
   if (getOption(ArgName)) {
-    std::cerr << ProgramName << ": CommandLine Error: Argument '" 
+    std::cerr << ProgramName << ": CommandLine Error: Argument '"
               << ArgName << "' defined more than once!\n";
   } else {
     // Add argument to the argument map!
@@ -78,7 +78,7 @@ static void AddArgument(const char *ArgName, Option *Opt) {
 
 // RemoveArgument - It's possible that the argument is no longer in the map if
 // options have already been processed and the map has been deleted!
-// 
+//
 static void RemoveArgument(const char *ArgName, Option *Opt) {
   if(getOpts().empty()) return;
 
@@ -107,15 +107,15 @@ static inline bool ProvideOption(Option *Handler, const char *ArgName,
     break;
   case ValueDisallowed:
     if (*Value != 0)
-      return Handler->error(" does not allow a value! '" + 
+      return Handler->error(" does not allow a value! '" +
                             std::string(Value) + "' specified.");
     break;
-  case ValueOptional: 
+  case ValueOptional:
     break;
-  default: 
-    std::cerr << ProgramName 
-              << ": Bad ValueMask flag! CommandLine usage error:" 
-              << Handler->getValueExpectedFlag() << "\n"; 
+  default:
+    std::cerr << ProgramName
+              << ": Bad ValueMask flag! CommandLine usage error:"
+              << Handler->getValueExpectedFlag() << "\n";
     abort();
     break;
   }
@@ -124,7 +124,7 @@ static inline bool ProvideOption(Option *Handler, const char *ArgName,
   return Handler->addOccurrence(i, ArgName, Value);
 }
 
-static bool ProvidePositionalOption(Option *Handler, const std::string &Arg, 
+static bool ProvidePositionalOption(Option *Handler, const std::string &Arg,
                                     int i) {
   int Dummy = i;
   return ProvideOption(Handler, Handler->ArgStr, Arg.c_str(), 0, 0, Dummy);
@@ -147,7 +147,7 @@ static inline bool isPrefixedOrGrouping(const Option *O) {
 //
 static Option *getOptionPred(std::string Name, unsigned &Length,
                              bool (*Pred)(const Option*)) {
-  
+
   Option *Op = getOption(Name);
   if (Op && Pred(Op)) {
     Length = Name.length();
@@ -236,7 +236,7 @@ void cl::ParseEnvironmentOptions(const char *progName, const char *envVar,
   // Check args.
   assert(progName && "Program name not specified");
   assert(envVar && "Environment variable name missing");
-  
+
   // Get the environment variable they want us to parse options out of.
   const char *envValue = getenv (envVar);
   if (!envValue)
@@ -265,7 +265,7 @@ void cl::ParseEnvironmentOptions(const char *progName, const char *envVar,
 /// that as well.
 static Option *LookupOption(const char *&Arg, const char *&Value) {
   while (*Arg == '-') ++Arg;  // Eat leading dashes
-  
+
   const char *ArgEnd = Arg;
   while (*ArgEnd && *ArgEnd != '=')
     ++ArgEnd; // Scan till end of argument name...
@@ -273,7 +273,7 @@ static Option *LookupOption(const char *&Arg, const char *&Value) {
   Value = ArgEnd;
   if (*Value)           // If we have an equals sign...
     ++Value;            // Advance to value...
-  
+
   if (*Arg == 0) return 0;
 
   // Look up the option.
@@ -366,7 +366,7 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
         // All of the positional arguments have been fulfulled, give the rest to
         // the consume after option... if it's specified...
         //
-        if (PositionalVals.size() >= NumPositionalRequired && 
+        if (PositionalVals.size() >= NumPositionalRequired &&
             ConsumeAfterOpt != 0) {
           for (++i; i < argc; ++i)
             PositionalVals.push_back(std::make_pair(argv[i],i));
@@ -402,7 +402,7 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
         if (RealName.size() > 1) {
           unsigned Length = 0;
           Option *PGOpt = getOptionPred(RealName, Length, isPrefixedOrGrouping);
-  
+
           // If the option is a prefixed option, then the value is simply the
           // rest of the name...  so fall through to later processing, by
           // setting up the argument name flags and value fields.
@@ -415,13 +415,13 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
           } else if (PGOpt) {
             // This must be a grouped option... handle them now.
             assert(isGrouping(PGOpt) && "Broken getOptionPred!");
-            
+
             do {
               // Move current arg name out of RealName into RealArgName...
               std::string RealArgName(RealName.begin(),
                                       RealName.begin() + Length);
               RealName.erase(RealName.begin(), RealName.begin() + Length);
-              
+
               // Because ValueRequired is an invalid flag for grouped arguments,
               // we don't need to pass argc/argv in...
               //
@@ -430,11 +430,11 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
               int Dummy;
               ErrorParsing |= ProvideOption(PGOpt, RealArgName.c_str(),
                                             "", 0, 0, Dummy);
-              
+
               // Get the next grouping option...
               PGOpt = getOptionPred(RealName, Length, isGrouping);
             } while (PGOpt && Length != RealName.size());
-            
+
             Handler = PGOpt; // Ate all of the options.
           }
         }
@@ -473,13 +473,13 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
     // active one...
     if (Handler->getFormattingFlag() == cl::Positional)
       ActivePositionalArg = Handler;
-    else 
+    else
       ErrorParsing |= ProvideOption(Handler, ArgName, Value, argc, argv, i);
   }
 
   // Check and handle positional arguments now...
   if (NumPositionalRequired > PositionalVals.size()) {
-    std::cerr << ProgramName 
+    std::cerr << ProgramName
               << ": Not enough positional command line arguments specified!\n"
               << "Must specify at least " << NumPositionalRequired
               << " positional arguments: See: " << argv[0] << " --help\n";
@@ -491,7 +491,7 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
     unsigned ValNo = 0, NumVals = PositionalVals.size();
     for (unsigned i = 0, e = PositionalOpts.size(); i != e; ++i) {
       if (RequiresValue(PositionalOpts[i])) {
-        ProvidePositionalOption(PositionalOpts[i], PositionalVals[ValNo].first, 
+        ProvidePositionalOption(PositionalOpts[i], PositionalVals[ValNo].first,
                                 PositionalVals[ValNo].second);
         ValNo++;
         --NumPositionalRequired;  // We fulfilled our duty...
@@ -542,7 +542,7 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
                                               PositionalVals[ValNo].second);
       ValNo++;
     }
-    
+
     // Handle over all of the rest of the arguments to the
     // cl::ConsumeAfter command line option...
     for (; ValNo != PositionalVals.size(); ++ValNo)
@@ -552,7 +552,7 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
   }
 
   // Loop over args and make sure all required args are specified!
-  for (std::map<std::string, Option*>::iterator I = Opts.begin(), 
+  for (std::map<std::string, Option*>::iterator I = Opts.begin(),
          E = Opts.end(); I != E; ++I) {
     switch (I->second->getNumOccurrencesFlag()) {
     case Required:
@@ -688,7 +688,7 @@ unsigned basic_parser_impl::getOptionWidth(const Option &O) const {
   return Len + 6;
 }
 
-// printOptionInfo - Print out information about this option.  The 
+// printOptionInfo - Print out information about this option.  The
 // to-be-maintained width is specified.
 //
 void basic_parser_impl::printOptionInfo(const Option &O,
@@ -709,7 +709,7 @@ void basic_parser_impl::printOptionInfo(const Option &O,
 //
 bool parser<bool>::parse(Option &O, const char *ArgName,
                          const std::string &Arg, bool &Value) {
-  if (Arg == "" || Arg == "true" || Arg == "TRUE" || Arg == "True" || 
+  if (Arg == "" || Arg == "true" || Arg == "TRUE" || Arg == "True" ||
       Arg == "1") {
     Value = true;
   } else if (Arg == "false" || Arg == "FALSE" || Arg == "False" || Arg == "0") {
@@ -727,7 +727,7 @@ bool parser<int>::parse(Option &O, const char *ArgName,
                         const std::string &Arg, int &Value) {
   char *End;
   Value = (int)strtol(Arg.c_str(), &End, 0);
-  if (*End != 0) 
+  if (*End != 0)
     return O.error(": '" + Arg + "' value invalid for integer argument!");
   return false;
 }
@@ -753,7 +753,7 @@ static bool parseDouble(Option &O, const std::string &Arg, double &Value) {
   const char *ArgStart = Arg.c_str();
   char *End;
   Value = strtod(ArgStart, &End);
-  if (*End != 0) 
+  if (*End != 0)
     return O.error(": '" +Arg+ "' value invalid for floating point argument!");
   return false;
 }
@@ -808,7 +808,7 @@ unsigned generic_parser_base::getOptionWidth(const Option &O) const {
   }
 }
 
-// printOptionInfo - Print out information about this option.  The 
+// printOptionInfo - Print out information about this option.  The
 // to-be-maintained width is specified.
 //
 void generic_parser_base::printOptionInfo(const Option &O,
@@ -825,7 +825,7 @@ void generic_parser_base::printOptionInfo(const Option &O,
     }
   } else {
     if (O.HelpStr[0])
-      std::cerr << "  " << O.HelpStr << "\n"; 
+      std::cerr << "  " << O.HelpStr << "\n";
     for (unsigned i = 0, e = getNumOptions(); i != e; ++i) {
       unsigned L = std::strlen(getOption(i));
       std::cerr << "    -" << getOption(i) << std::string(GlobalWidth-L-8, ' ')
@@ -867,7 +867,7 @@ public:
     copy(getOpts().begin(), getOpts().end(), std::back_inserter(Options));
 
     // Eliminate Hidden or ReallyHidden arguments, depending on ShowHidden
-    Options.erase(std::remove_if(Options.begin(), Options.end(), 
+    Options.erase(std::remove_if(Options.begin(), Options.end(),
                          std::ptr_fun(ShowHidden ? isReallyHidden : isHidden)),
                   Options.end());
 
@@ -928,7 +928,7 @@ class VersionPrinter {
 public:
   void operator=(bool OptionWasSpecified) {
     if (OptionWasSpecified) {
-      std::cerr << "Low Level Virtual Machine (" << PACKAGE_NAME << ") " 
+      std::cerr << "Low Level Virtual Machine (" << PACKAGE_NAME << ") "
                 << PACKAGE_VERSION << " (see http://llvm.cs.uiuc.edu/)\n";
       getOpts().clear();  // Don't bother making option dtors remove from map.
       exit(1);
@@ -943,7 +943,7 @@ public:
 HelpPrinter NormalPrinter(false);
 HelpPrinter HiddenPrinter(true);
 
-cl::opt<HelpPrinter, true, parser<bool> > 
+cl::opt<HelpPrinter, true, parser<bool> >
 HOp("help", cl::desc("display available options (--help-hidden for more)"),
     cl::location(NormalPrinter), cl::ValueDisallowed);
 
@@ -954,7 +954,7 @@ HHOp("help-hidden", cl::desc("display all available options"),
 // Define the --version option that prints out the LLVM version for the tool
 VersionPrinter VersionPrinterInstance;
 cl::opt<VersionPrinter, true, parser<bool> >
-VersOp("version", cl::desc("display the version"), 
+VersOp("version", cl::desc("display the version"),
     cl::location(VersionPrinterInstance), cl::ValueDisallowed);
 
 
@@ -962,10 +962,10 @@ VersOp("version", cl::desc("display the version"),
 
 // Utility function for printing the help message.
 void cl::PrintHelpMessage() {
-  // This looks weird, but it actually prints the help message. The 
+  // This looks weird, but it actually prints the help message. The
   // NormalPrinter variable is a HelpPrinter and the help gets printed when
   // its operator= is invoked. That's because the "normal" usages of the
-  // help printer is to be assigned true/false depending on whether the 
+  // help printer is to be assigned true/false depending on whether the
   // --help option was given or not. Since we're circumventing that we have
   // to make it look like --help was given, so we assign true.
   NormalPrinter = true;

@@ -1,10 +1,10 @@
 //===-- JIT.h - Class definition for the JIT --------------------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines the top-level JIT data structure.
@@ -30,7 +30,7 @@ class MachineCodeEmitter;
 class JIT : public ExecutionEngine {
   TargetMachine &TM;       // The current target we are compiling to
   TargetJITInfo &TJI;      // The JITInfo for the target we are compiling to
-  
+
   FunctionPassManager PM;  // Passes to compile a function
   MachineCodeEmitter *MCE; // MCE object
 
@@ -67,7 +67,7 @@ public:
 
   // CompilationCallback - Invoked the first time that a call site is found,
   // which causes lazy compilation of the target function.
-  // 
+  //
   static void CompilationCallback();
 
   /// getPointerToFunction - This returns the address of the specified function,

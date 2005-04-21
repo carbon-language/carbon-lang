@@ -1,10 +1,10 @@
 //===-- Timer.cpp - Interval Timing Support -------------------------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // Interval Timing implementation.
@@ -238,7 +238,7 @@ void Timer::print(const Timer &Total, std::ostream &OS) {
   if (Total.getProcessTime())
     printVal(getProcessTime(), Total.getProcessTime(), OS);
   printVal(Elapsed, Total.Elapsed, OS);
-  
+
   OS << "  ";
 
   if (Total.MemUsed) {
@@ -294,10 +294,10 @@ void TimerGroup::removeTimer() {
     {  // Scope to contain Total timer... don't allow total timer to drop us to
        // zero timers...
       Timer Total("TOTAL");
-  
+
       for (unsigned i = 0, e = TimersToPrint.size(); i != e; ++i)
         Total.sum(TimersToPrint[i]);
-      
+
       // Print out timing header...
       *OutStream << "===" << std::string(73, '-') << "===\n"
                  << std::string(Padding, ' ') << Name << "\n"
@@ -329,11 +329,11 @@ void TimerGroup::removeTimer() {
       if (Total.getPeakMem())
         *OutStream << "  -PeakMem-";
       *OutStream << "  --- Name ---\n";
-      
+
       // Loop through all of the timing data, printing it out...
       for (unsigned i = 0, e = TimersToPrint.size(); i != e; ++i)
         TimersToPrint[i].print(Total, *OutStream);
-    
+
       Total.print(Total, *OutStream);
       *OutStream << std::endl;  // Flush output
     }

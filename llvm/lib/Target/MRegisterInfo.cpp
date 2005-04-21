@@ -1,10 +1,10 @@
 //===- MRegisterInfo.cpp - Target Register Information Implementation -----===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements the MRegisterInfo interface.
@@ -38,6 +38,6 @@ std::vector<bool> MRegisterInfo::getAllocatableSet(MachineFunction &MF) const {
       Allocatable[*I] = true;
   }
   return Allocatable;
-}  
+}
 
 } // End llvm namespace

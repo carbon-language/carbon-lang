@@ -1,10 +1,10 @@
 //===-- Intercept.cpp - System function interception routines -------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // If a function call occurs to an external function, the JIT is designed to use
@@ -50,7 +50,7 @@ static void runAtExitHandlers() {
 #if defined(__linux__)
 #if defined(HAVE_SYS_STAT_H)
 #include <sys/stat.h>
-#endif 
+#endif
 void *FunctionPointers[] = {
   (void *) stat,
   (void *) fstat,
@@ -84,9 +84,9 @@ static int jit_atexit(void (*Fn)(void)) {
 }
 
 //===----------------------------------------------------------------------===//
-// 
+//
 /// getPointerToNamedFunction - This method returns the address of the specified
-/// function by using the dynamic loader interface.  As such it is only useful 
+/// function by using the dynamic loader interface.  As such it is only useful
 /// for resolving library symbols, not code generated symbols.
 ///
 void *JIT::getPointerToNamedFunction(const std::string &Name) {

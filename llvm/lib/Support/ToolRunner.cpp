@@ -1,10 +1,10 @@
 //===-- ToolRunner.cpp ----------------------------------------------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements the interfaces described in the ToolRunner.h file.
@@ -36,8 +36,8 @@ static int RunProgramWithTimeout(const sys::Path &ProgramPath,
   redirects[0] = &StdInFile;
   redirects[1] = &StdOutFile;
   redirects[2] = &StdErrFile;
-  
-  return 
+
+  return
     sys::Program::ExecuteAndWait(ProgramPath, Args, 0, redirects, NumSeconds);
 }
 
@@ -82,12 +82,12 @@ namespace {
       ToolArgs.clear ();
       if (Args) { ToolArgs = *Args; }
     }
-    
+
     virtual int ExecuteProgram(const std::string &Bytecode,
                                const std::vector<std::string> &Args,
                                const std::string &InputFile,
                                const std::string &OutputFile,
-                               const std::vector<std::string> &SharedLibs = 
+                               const std::vector<std::string> &SharedLibs =
                                std::vector<std::string>(),
                                unsigned Timeout = 0);
   };
@@ -124,7 +124,7 @@ int LLI::ExecuteProgram(const std::string &Bytecode,
         std::cerr << "\n";
         );
   return RunProgramWithTimeout(sys::Path(LLIPath), &LLIArgs[0],
-      sys::Path(InputFile), sys::Path(OutputFile), sys::Path(OutputFile), 
+      sys::Path(InputFile), sys::Path(OutputFile), sys::Path(OutputFile),
       Timeout);
 }
 
@@ -168,7 +168,7 @@ void LLC::OutputAsm(const std::string &Bytecode, sys::Path &OutputAsmFile) {
           std::cerr << " " << LLCArgs[i];
         std::cerr << "\n";
         );
-  if (RunProgramWithTimeout(sys::Path(LLCPath), &LLCArgs[0], 
+  if (RunProgramWithTimeout(sys::Path(LLCPath), &LLCArgs[0],
                             sys::Path(), sys::Path(), sys::Path()))
     ProcessFailure(sys::Path(LLCPath), &LLCArgs[0]);
 }
@@ -228,12 +228,12 @@ namespace {
       ToolArgs.clear ();
       if (Args) { ToolArgs = *Args; }
     }
-    
+
     virtual int ExecuteProgram(const std::string &Bytecode,
                                const std::vector<std::string> &Args,
                                const std::string &InputFile,
                                const std::string &OutputFile,
-                               const std::vector<std::string> &SharedLibs = 
+                               const std::vector<std::string> &SharedLibs =
                                std::vector<std::string>(), unsigned Timeout =0);
   };
 }
@@ -271,7 +271,7 @@ int JIT::ExecuteProgram(const std::string &Bytecode,
         );
   DEBUG(std::cerr << "\nSending output to " << OutputFile << "\n");
   return RunProgramWithTimeout(sys::Path(LLIPath), &JITArgs[0],
-      sys::Path(InputFile), sys::Path(OutputFile), sys::Path(OutputFile), 
+      sys::Path(InputFile), sys::Path(OutputFile), sys::Path(OutputFile),
       Timeout);
 }
 
@@ -313,7 +313,7 @@ void CBE::OutputC(const std::string &Bytecode, sys::Path& OutputCFile) {
           std::cerr << " " << LLCArgs[i];
         std::cerr << "\n";
         );
-  if (RunProgramWithTimeout(LLCPath, &LLCArgs[0], sys::Path(), sys::Path(), 
+  if (RunProgramWithTimeout(LLCPath, &LLCArgs[0], sys::Path(), sys::Path(),
                             sys::Path()))
     ProcessFailure(LLCPath, &LLCArgs[0]);
 }
@@ -335,7 +335,7 @@ int CBE::ExecuteProgram(const std::string &Bytecode,
 
   FileRemover CFileRemove(OutputCFile);
 
-  return gcc->ExecuteProgram(OutputCFile.toString(), Args, GCC::CFile, 
+  return gcc->ExecuteProgram(OutputCFile.toString(), Args, GCC::CFile,
                              InputFile, OutputFile, SharedLibs, Timeout);
 }
 
@@ -346,7 +346,7 @@ CBE *AbstractInterpreter::createCBE(const std::string &ProgramPath,
                                     const std::vector<std::string> *Args) {
   sys::Path LLCPath = FindExecutable("llc", ProgramPath);
   if (LLCPath.isEmpty()) {
-    Message = 
+    Message =
       "Cannot find `llc' in executable directory or PATH!\n";
     return 0;
   }
@@ -377,7 +377,7 @@ int GCC::ExecuteProgram(const std::string &ProgramFile,
   // Specify the shared libraries to link in...
   for (unsigned i = 0, e = SharedLibs.size(); i != e; ++i)
     GCCArgs.push_back(SharedLibs[i].c_str());
-  
+
   // Specify -x explicitly in case the extension is wonky
   GCCArgs.push_back("-x");
   if (fileType == CFile) {
@@ -423,7 +423,7 @@ int GCC::ExecuteProgram(const std::string &ProgramFile,
 
   FileRemover OutputBinaryRemover(OutputBinary);
   return RunProgramWithTimeout(OutputBinary, &ProgramArgs[0],
-      sys::Path(InputFile), sys::Path(OutputFile), sys::Path(OutputFile), 
+      sys::Path(InputFile), sys::Path(OutputFile), sys::Path(OutputFile),
       Timeout);
 }
 
@@ -458,9 +458,9 @@ int GCC::MakeSharedObject(const std::string &InputFile, FileType fileType,
     "-O2",                       // Optimize the program a bit...
     0
   };
-  
+
   std::cout << "<gcc>" << std::flush;
-  if (RunProgramWithTimeout(GCCPath, GCCArgs, sys::Path(), sys::Path(), 
+  if (RunProgramWithTimeout(GCCPath, GCCArgs, sys::Path(), sys::Path(),
                             sys::Path())) {
     ProcessFailure(GCCPath, GCCArgs);
     return 1;

@@ -1,10 +1,10 @@
 //===-- Statistic.cpp - Easy way to expose stats information --------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements the 'Statistic' class, which is designed to be an easy
@@ -78,9 +78,9 @@ void StatisticBase::destroy() const {
     // Figure out how long the biggest Value and Name fields are...
     unsigned MaxNameLen = 0, MaxValLen = 0;
     for (unsigned i = 0, e = AccumStats->size(); i != e; ++i) {
-      MaxValLen = std::max(MaxValLen, 
+      MaxValLen = std::max(MaxValLen,
                            (unsigned)(*AccumStats)[i].Value.length());
-      MaxNameLen = std::max(MaxNameLen, 
+      MaxNameLen = std::max(MaxNameLen,
                             (unsigned)std::strlen((*AccumStats)[i].Name));
     }
 
