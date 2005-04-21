@@ -238,8 +238,7 @@ bool LowerSetJmp::doInitialization(Module& M)
 // "llvm.{setjmp,longjmp}" functions and none of the setjmp/longjmp error
 // handling functions (beginning with __llvm_sjljeh_...they don't throw
 // exceptions).
-bool LowerSetJmp::IsTransformableFunction(const std::string& Name)
-{
+bool LowerSetJmp::IsTransformableFunction(const std::string& Name) {
   std::string SJLJEh("__llvm_sjljeh");
 
   if (Name.size() > SJLJEh.size())
@@ -407,7 +406,10 @@ void LowerSetJmp::TransformSetJmpCall(CallInst* Inst)
   BasicBlock* SetJmpContBlock = ABlock->splitBasicBlock(Inst);
   assert(SetJmpContBlock && "Couldn't split setjmp BB!!");
 
-  SetJmpContBlock->setName("SetJmpContBlock");
+  SetJmpContBlock->setName(ABlock->getName()+"SetJmpCont");
+
+  // Add the SetJmpContBlock to the set of blocks reachable from a setjmp.
+  DFSBlocks.insert(SetJmpContBlock);
 
   // This PHI node will be in the new block created from the
   // splitBasicBlock call.
