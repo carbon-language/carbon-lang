@@ -1,10 +1,10 @@
 //===- ReaderWrappers.cpp - Parse bytecode from file or buffer  -----------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements loading and parsing a bytecode file and parsing a
@@ -43,7 +43,7 @@ namespace {
 }
 
 BytecodeFileReader::BytecodeFileReader(const std::string &Filename,
-                                       llvm::BytecodeHandler* H ) 
+                                       llvm::BytecodeHandler* H )
   : BytecodeReader(H)
   , mapFile( sys::Path(Filename))
 {
@@ -113,7 +113,7 @@ BytecodeBufferReader::~BytecodeBufferReader() {
 
 namespace {
   /// BytecodeStdinReader - parses a bytecode file from stdin
-  /// 
+  ///
   class BytecodeStdinReader : public BytecodeReader {
   private:
     std::vector<unsigned char> FileData;
@@ -127,7 +127,7 @@ namespace {
   };
 }
 
-BytecodeStdinReader::BytecodeStdinReader( BytecodeHandler* H ) 
+BytecodeStdinReader::BytecodeStdinReader( BytecodeHandler* H )
   : BytecodeReader(H)
 {
   char Buffer[4096*4];
@@ -156,7 +156,7 @@ BytecodeStdinReader::BytecodeStdinReader( BytecodeHandler* H )
 // new style varargs for backwards compatibility.
 static ModuleProvider *CheckVarargs(ModuleProvider *MP) {
   Module *M = MP->getModule();
-  
+
   // Check to see if va_start takes arguments...
   Function *F = M->getNamedFunction("llvm.va_start");
   if (F == 0) return MP;  // No varargs use, just return.
@@ -172,11 +172,11 @@ static ModuleProvider *CheckVarargs(ModuleProvider *MP) {
   // the user.
   if (Function *F = M->getNamedFunction("llvm.va_start")) {
     assert(F->arg_size() == 1 && "Obsolete va_start takes 1 argument!");
-        
+
     const Type *RetTy = F->getFunctionType()->getParamType(0);
     RetTy = cast<PointerType>(RetTy)->getElementType();
     Function *NF = M->getOrInsertFunction("llvm.va_start", RetTy, 0);
-        
+
     for (Value::use_iterator I = F->use_begin(), E = F->use_end(); I != E; )
       if (CallInst *CI = dyn_cast<CallInst>(*I++)) {
         Value *V = new CallInst(NF, "", CI);
@@ -192,7 +192,7 @@ static ModuleProvider *CheckVarargs(ModuleProvider *MP) {
     ArgTy = cast<PointerType>(ArgTy)->getElementType();
     Function *NF = M->getOrInsertFunction("llvm.va_end", Type::VoidTy,
                                                   ArgTy, 0);
-        
+
     for (Value::use_iterator I = F->use_begin(), E = F->use_end(); I != E; )
       if (CallInst *CI = dyn_cast<CallInst>(*I++)) {
         Value *V = new LoadInst(CI->getOperand(1), "", CI);
@@ -201,14 +201,14 @@ static ModuleProvider *CheckVarargs(ModuleProvider *MP) {
       }
     F->setName("");
   }
-      
+
   if (Function *F = M->getNamedFunction("llvm.va_copy")) {
     assert(F->arg_size() == 2 && "Obsolete va_copy takes 2 argument!");
     const Type *ArgTy = F->getFunctionType()->getParamType(0);
     ArgTy = cast<PointerType>(ArgTy)->getElementType();
     Function *NF = M->getOrInsertFunction("llvm.va_copy", ArgTy,
                                                   ArgTy, 0);
-        
+
     for (Value::use_iterator I = F->use_begin(), E = F->use_end(); I != E; )
       if (CallInst *CI = dyn_cast<CallInst>(*I++)) {
         Value *V = new CallInst(NF, CI->getOperand(2), "", CI);
@@ -226,7 +226,7 @@ static ModuleProvider *CheckVarargs(ModuleProvider *MP) {
 
 /// getBytecodeBufferModuleProvider - lazy function-at-a-time loading from a
 /// buffer
-ModuleProvider* 
+ModuleProvider*
 llvm::getBytecodeBufferModuleProvider(const unsigned char *Buffer,
                                       unsigned Length,
                                       const std::string &ModuleID,
@@ -313,7 +313,7 @@ Module* llvm::AnalyzeBytecodeBuffer(
   }
 }
 
-bool llvm::GetBytecodeDependentLibraries(const std::string &fname, 
+bool llvm::GetBytecodeDependentLibraries(const std::string &fname,
                                          Module::LibraryListType& deplibs) {
   try {
     std::auto_ptr<ModuleProvider> AMP( getBytecodeModuleProvider(fname));
@@ -346,7 +346,7 @@ static void getSymbols(Module*M, std::vector<std::string>& symbols) {
 bool llvm::GetBytecodeSymbols(const sys::Path& fName,
                               std::vector<std::string>& symbols) {
   try {
-    std::auto_ptr<ModuleProvider> AMP( 
+    std::auto_ptr<ModuleProvider> AMP(
         getBytecodeModuleProvider(fName.toString()));
 
     // Get the module from the provider
@@ -363,7 +363,7 @@ bool llvm::GetBytecodeSymbols(const sys::Path& fName,
   }
 }
 
-ModuleProvider* 
+ModuleProvider*
 llvm::GetBytecodeSymbols(const unsigned char*Buffer, unsigned Length,
                          const std::string& ModuleID,
                          std::vector<std::string>& symbols) {

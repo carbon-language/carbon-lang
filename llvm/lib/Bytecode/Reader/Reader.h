@@ -1,13 +1,13 @@
 //===-- Reader.h - Interface To Bytecode Reading ----------------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
-// This file was developed by Reid Spencer and is distributed under the 
+// This file was developed by Reid Spencer and is distributed under the
 // University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
-//  This header file defines the interface to the Bytecode Reader which is 
+//  This header file defines the interface to the Bytecode Reader which is
 //  responsible for correctly interpreting bytecode files (backwards compatible)
 //  and materializing a module from the bytecode read.
 //
@@ -32,8 +32,8 @@ class BytecodeHandler; ///< Forward declare the handler interface
 /// This class defines the interface for parsing a buffer of bytecode. The
 /// parser itself takes no action except to call the various functions of
 /// the handler interface. The parser's sole responsibility is the correct
-/// interpretation of the bytecode buffer. The handler is responsible for 
-/// instantiating and keeping track of all values. As a convenience, the parser 
+/// interpretation of the bytecode buffer. The handler is responsible for
+/// instantiating and keeping track of all values. As a convenience, the parser
 /// is responsible for materializing types and will pass them through the
 /// handler interface as necessary.
 /// @see BytecodeHandler
@@ -44,13 +44,13 @@ class BytecodeReader : public ModuleProvider {
 /// @{
 public:
   /// @brief Default constructor. By default, no handler is used.
-  BytecodeReader(BytecodeHandler* h = 0) { 
+  BytecodeReader(BytecodeHandler* h = 0) {
     decompressedBlock = 0;
     Handler = h;
   }
 
-  ~BytecodeReader() { 
-    freeState(); 
+  ~BytecodeReader() {
+    freeState();
     if (decompressedBlock) {
       ::free(decompressedBlock);
       decompressedBlock = 0;
@@ -104,7 +104,7 @@ public:
   /// @brief A 2 dimensional table of values
   typedef std::vector<ValueList*> ValueTable;
 
-  /// This map is needed so that forward references to constants can be looked 
+  /// This map is needed so that forward references to constants can be looked
   /// up by Type and slot number when resolving those references.
   /// @brief A mapping of a Type/slot pair to a Constant*.
   typedef std::map<std::pair<unsigned,unsigned>, Constant*> ConstantRefsType;
@@ -112,7 +112,7 @@ public:
   /// For lazy read-in of functions, we need to save the location in the
   /// data stream where the function is located. This structure provides that
   /// information. Lazy read-in is used mostly by the JIT which only wants to
-  /// resolve functions as it needs them. 
+  /// resolve functions as it needs them.
   /// @brief Keeps pointers to function contents for later use.
   struct LazyFunctionInfo {
     const unsigned char *Buf, *EndBuf;
@@ -160,7 +160,7 @@ public:
   }
 
   /// This method is abstract in the parent ModuleProvider class. Its
-  /// implementation is identical to ParseAllFunctionBodies. 
+  /// implementation is identical to ParseAllFunctionBodies.
   /// @see ParseAllFunctionBodies
   /// @brief Make the whole module materialize
   virtual Module* materializeModule() {
@@ -218,7 +218,7 @@ protected:
   unsigned ParseInstructionList(
     Function* F   ///< The function into which BBs will be inserted
   );
-  
+
   /// @brief Parse a single instruction.
   void ParseInstruction(
     std::vector<unsigned>& Args,   ///< The arguments to be filled in
@@ -226,7 +226,7 @@ protected:
   );
 
   /// @brief Parse the whole constant pool
-  void ParseConstantPool(ValueTable& Values, TypeListTy& Types, 
+  void ParseConstantPool(ValueTable& Values, TypeListTy& Types,
                          bool isFunction);
 
   /// @brief Parse a single constant value
@@ -245,7 +245,7 @@ protected:
 /// @name Data
 /// @{
 private:
-  char*  decompressedBlock; ///< Result of decompression 
+  char*  decompressedBlock; ///< Result of decompression
   BufPtr MemStart;     ///< Start of the memory buffer
   BufPtr MemEnd;       ///< End of the memory buffer
   BufPtr BlockStart;   ///< Start of current block being parsed
@@ -291,14 +291,14 @@ private:
   bool hasLongBlockHeaders;
 
   /// LLVM 1.2 and earlier wrote type slot numbers as vbr_uint32. In LLVM 1.3
-  /// this has been reduced to vbr_uint24. It shouldn't make much difference 
+  /// this has been reduced to vbr_uint24. It shouldn't make much difference
   /// since we haven't run into a module with > 24 million types, but for safety
   /// the 24-bit restriction has been enforced in 1.3 to free some bits in
   /// various places and to ensure consistency. In particular, global vars are
   /// restricted to 24-bits.
   bool has32BitTypes;
 
-  /// LLVM 1.2 and earlier did not provide a target triple nor a list of 
+  /// LLVM 1.2 and earlier did not provide a target triple nor a list of
   /// libraries on which the bytecode is dependent. LLVM 1.3 provides these
   /// features, for use in future versions of LLVM.
   bool hasNoDependentLibraries;
@@ -321,8 +321,8 @@ private:
   // unreachable instruction.
   bool hasNoUnreachableInst;
 
-  // In version 5, basic blocks have a minimum index of 0 whereas all the 
-  // other primitives have a minimum index of 1 (because 0 is the "null" 
+  // In version 5, basic blocks have a minimum index of 0 whereas all the
+  // other primitives have a minimum index of 1 (because 0 is the "null"
   // value. In version 5, we made this consistent.
   bool hasInconsistentBBSlotNums;
 
@@ -388,11 +388,11 @@ private:
   // and its FunctionSlot.
   LazyFunctionMap LazyFunctionLoadMap;
 
-  /// This stores the parser's handler which is used for handling tasks other 
-  /// just than reading bytecode into the IR. If this is non-null, calls on 
-  /// the (polymorphic) BytecodeHandler interface (see llvm/Bytecode/Handler.h) 
-  /// will be made to report the logical structure of the bytecode file. What 
-  /// the handler does with the events it receives is completely orthogonal to 
+  /// This stores the parser's handler which is used for handling tasks other
+  /// just than reading bytecode into the IR. If this is non-null, calls on
+  /// the (polymorphic) BytecodeHandler interface (see llvm/Bytecode/Handler.h)
+  /// will be made to report the logical structure of the bytecode file. What
+  /// the handler does with the events it receives is completely orthogonal to
   /// the business of parsing the bytecode and building the IR.  This is used,
   /// for example, by the llvm-abcd tool for analysis of byte code.
   /// @brief Handler for parsing events.
@@ -428,9 +428,9 @@ private:
   const Type *getGlobalTableType(unsigned TypeId);
 
   /// This is just like getTypeSlot, but when a compaction table is in use,
-  /// it is ignored. 
+  /// it is ignored.
   unsigned getGlobalTableTypeSlot(const Type *Ty);
-  
+
   /// @brief Get a value from its typeid and slot number
   Value* getValue(unsigned TypeID, unsigned num, bool Create = true);
 
@@ -456,7 +456,7 @@ private:
   /// @brief Insert the arguments of a function.
   void insertArguments(Function* F );
 
-  /// @brief Resolve all references to the placeholder (if any) for the 
+  /// @brief Resolve all references to the placeholder (if any) for the
   /// given constant.
   void ResolveReferencesToConstant(Constant *C, unsigned Typ, unsigned Slot);
 
@@ -534,7 +534,7 @@ private:
 
 /// @brief A function for creating a BytecodeAnalzer as a handler
 /// for the Bytecode reader.
-BytecodeHandler* createBytecodeAnalyzerHandler(BytecodeAnalysis& bca, 
+BytecodeHandler* createBytecodeAnalyzerHandler(BytecodeAnalysis& bca,
                                                std::ostream* output );
 
 

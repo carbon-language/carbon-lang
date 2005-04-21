@@ -1,10 +1,10 @@
 //===-- Analyzer.cpp - Analysis and Dumping of Bytecode 000000---*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
-// This file was developed by Reid Spencer and is distributed under the 
+// This file was developed by Reid Spencer and is distributed under the
 // University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 //  This file implements the AnalyzerHandler class and PrintBytecodeAnalysis
@@ -35,7 +35,7 @@ class AnalyzerHandler : public BytecodeHandler {
   BytecodeAnalysis& bca;     ///< The structure in which data is recorded
   std::ostream* os;        ///< A convenience for osing data.
   /// @brief Keeps track of current function
-  BytecodeAnalysis::BytecodeFunctionInfo* currFunc; 
+  BytecodeAnalysis::BytecodeFunctionInfo* currFunc;
   Module* M; ///< Keeps track of current module
 
 /// @name Constructor
@@ -44,8 +44,8 @@ public:
   /// The only way to construct an AnalyzerHandler. All that is needed is a
   /// reference to the BytecodeAnalysis structure where the output will be
   /// placed.
-  AnalyzerHandler(BytecodeAnalysis& TheBca, std::ostream* output) 
-    : bca(TheBca) 
+  AnalyzerHandler(BytecodeAnalysis& TheBca, std::ostream* output)
+    : bca(TheBca)
     , os(output)
     , currFunc(0)
     { }
@@ -54,7 +54,7 @@ public:
 /// @name BytecodeHandler Implementations
 /// @{
 public:
-  virtual void handleError(const std::string& str ) { 
+  virtual void handleError(const std::string& str ) {
     if (os)
       *os << "ERROR: " << str << "\n";
   }
@@ -104,16 +104,16 @@ public:
 
   virtual void handleFinish() {
     if (os)
-      *os << "} End Bytecode\n"; 
+      *os << "} End Bytecode\n";
 
     bca.fileDensity = double(bca.byteSize) / double( bca.numTypes + bca.numValues );
     double globalSize = 0.0;
     globalSize += double(bca.BlockSizes[BytecodeFormat::ConstantPoolBlockID]);
     globalSize += double(bca.BlockSizes[BytecodeFormat::ModuleGlobalInfoBlockID]);
     globalSize += double(bca.BlockSizes[BytecodeFormat::GlobalTypePlaneBlockID]);
-    bca.globalsDensity = globalSize / double( bca.numTypes + bca.numConstants + 
+    bca.globalsDensity = globalSize / double( bca.numTypes + bca.numConstants +
       bca.numGlobalVars );
-    bca.functionDensity = double(bca.BlockSizes[BytecodeFormat::FunctionBlockID]) / 
+    bca.functionDensity = double(bca.BlockSizes[BytecodeFormat::FunctionBlockID]) /
       double(bca.numFunctions);
 
     if ( bca.progressiveVerify ) {
@@ -131,7 +131,7 @@ public:
     bca.ModuleId = id;
   }
 
-  virtual void handleModuleEnd(const std::string& id) { 
+  virtual void handleModuleEnd(const std::string& id) {
     if (os)
       *os << "  } End Module " << id << "\n";
     if ( bca.progressiveVerify ) {
@@ -147,22 +147,22 @@ public:
     unsigned char RevisionNum,        ///< Byte code revision number
     Module::Endianness Endianness,    ///< Endianness indicator
     Module::PointerSize PointerSize   ///< PointerSize indicator
-  ) { 
+  ) {
     if (os)
-      *os << "    RevisionNum: " << int(RevisionNum) 
+      *os << "    RevisionNum: " << int(RevisionNum)
          << " Endianness: " << Endianness
          << " PointerSize: " << PointerSize << "\n";
     bca.version = RevisionNum;
   }
 
-  virtual void handleModuleGlobalsBegin() { 
+  virtual void handleModuleGlobalsBegin() {
     if (os)
       *os << "    BLOCK: ModuleGlobalInfo {\n";
   }
 
-  virtual void handleGlobalVariable( 
-    const Type* ElemType,     
-    bool isConstant,          
+  virtual void handleGlobalVariable(
+    const Type* ElemType,
+    bool isConstant,
     GlobalValue::LinkageTypes Linkage,
     unsigned SlotNum,
     unsigned initSlot
@@ -173,7 +173,7 @@ public:
           << ( isConstant? "Constant, " : "Variable, ")
           << " Linkage=" << Linkage << " Type=";
       WriteTypeSymbolic(*os, ElemType, M);
-      *os << " Slot=" << SlotNum << " InitSlot=" << initSlot 
+      *os << " Slot=" << SlotNum << " InitSlot=" << initSlot
           << "\n";
     }
 
@@ -190,8 +190,8 @@ public:
     bca.maxTypeSlot = numEntries - 1;
   }
 
-  virtual void handleType( const Type* Ty ) { 
-    bca.numTypes++; 
+  virtual void handleType( const Type* Ty ) {
+    bca.numTypes++;
     if (os) {
       *os << "      Type: ";
       WriteTypeSymbolic(*os,Ty,M);
@@ -199,7 +199,7 @@ public:
     }
   }
 
-  virtual void handleFunctionDeclaration( 
+  virtual void handleFunctionDeclaration(
     Function* Func            ///< The function
   ) {
     bca.numFunctions++;
@@ -228,7 +228,7 @@ public:
       *os << "      Library: '" << libName << "'\n";
   }
 
-  virtual void handleModuleGlobalsEnd() { 
+  virtual void handleModuleGlobalsEnd() {
     if (os)
       *os << "    } END BLOCK: ModuleGlobalInfo\n";
     if ( bca.progressiveVerify ) {
@@ -240,7 +240,7 @@ public:
     }
   }
 
-  virtual void handleCompactionTableBegin() { 
+  virtual void handleCompactionTableBegin() {
     if (os)
       *os << "      BLOCK: CompactionTable {\n";
     bca.numCmpctnTables++;
@@ -251,53 +251,53 @@ public:
       *os << "        Plane: Ty=" << Ty << " Size=" << NumEntries << "\n";
   }
 
-  virtual void handleCompactionTableType( unsigned i, unsigned TypSlot, 
+  virtual void handleCompactionTableType( unsigned i, unsigned TypSlot,
       const Type* Ty ) {
     if (os) {
       *os << "          Type: " << i << " Slot:" << TypSlot << " is ";
       WriteTypeSymbolic(*os,Ty,M);
-      *os << "\n"; 
+      *os << "\n";
     }
   }
 
   virtual void handleCompactionTableValue(unsigned i, unsigned TypSlot,
-                                          unsigned ValSlot) { 
+                                          unsigned ValSlot) {
     if (os)
-      *os << "          Value: " << i << " TypSlot: " << TypSlot 
+      *os << "          Value: " << i << " TypSlot: " << TypSlot
          << " ValSlot:" << ValSlot << "\n";
     if (ValSlot > bca.maxValueSlot)
       bca.maxValueSlot = ValSlot;
   }
 
-  virtual void handleCompactionTableEnd() { 
+  virtual void handleCompactionTableEnd() {
     if (os)
       *os << "      } END BLOCK: CompactionTable\n";
   }
 
-  virtual void handleSymbolTableBegin(Function* CF, SymbolTable* ST) { 
-    bca.numSymTab++; 
+  virtual void handleSymbolTableBegin(Function* CF, SymbolTable* ST) {
+    bca.numSymTab++;
     if (os)
       *os << "    BLOCK: SymbolTable {\n";
   }
 
-  virtual void handleSymbolTablePlane(unsigned Ty, unsigned NumEntries, 
-    const Type* Typ) { 
+  virtual void handleSymbolTablePlane(unsigned Ty, unsigned NumEntries,
+    const Type* Typ) {
     if (os) {
       *os << "      Plane: Ty=" << Ty << " Size=" << NumEntries << " Type: ";
       WriteTypeSymbolic(*os,Typ,M);
-      *os << "\n"; 
+      *os << "\n";
     }
   }
 
-  virtual void handleSymbolTableType(unsigned i, unsigned TypSlot, 
-    const std::string& name ) { 
+  virtual void handleSymbolTableType(unsigned i, unsigned TypSlot,
+    const std::string& name ) {
     if (os)
       *os << "        Type " << i << " Slot=" << TypSlot
-         << " Name: " << name << "\n"; 
+         << " Name: " << name << "\n";
   }
 
-  virtual void handleSymbolTableValue(unsigned i, unsigned ValSlot, 
-    const std::string& name ) { 
+  virtual void handleSymbolTableValue(unsigned i, unsigned ValSlot,
+    const std::string& name ) {
     if (os)
       *os << "        Value " << i << " Slot=" << ValSlot
          << " Name: " << name << "\n";
@@ -305,7 +305,7 @@ public:
       bca.maxValueSlot = ValSlot;
   }
 
-  virtual void handleSymbolTableEnd() { 
+  virtual void handleSymbolTableEnd() {
     if (os)
       *os << "    } END BLOCK: SymbolTable\n";
   }
@@ -314,7 +314,7 @@ public:
     if (os) {
       *os << "    BLOCK: Function {\n"
           << "      Linkage: " << Func->getLinkage() << "\n"
-          << "      Type: "; 
+          << "      Type: ";
       WriteTypeSymbolic(*os,Func->getType(),M);
       *os << "\n";
     }
@@ -362,14 +362,14 @@ public:
     if ( currFunc ) currFunc->numBasicBlocks++;
   }
 
-  virtual bool handleInstruction( unsigned Opcode, const Type* iType, 
+  virtual bool handleInstruction( unsigned Opcode, const Type* iType,
                                 std::vector<unsigned>& Operands, unsigned Size){
     if (os) {
-      *os << "        INST: OpCode=" 
+      *os << "        INST: OpCode="
          << Instruction::getOpcodeName(Opcode) << " Type=\"";
       WriteTypeSymbolic(*os,iType,M);
       *os << "\"";
-      for ( unsigned i = 0; i < Operands.size(); ++i ) 
+      for ( unsigned i = 0; i < Operands.size(); ++i )
         *os << " Op(" << i << ")=Slot(" << Operands[i] << ")";
       *os << "\n";
     }
@@ -388,25 +388,25 @@ public:
       if (Size > 4 ) currFunc->longInstructions++;
       if ( Opcode == Instruction::PHI ) currFunc->numPhis++;
     }
-    return Instruction::isTerminator(Opcode); 
+    return Instruction::isTerminator(Opcode);
   }
 
-  virtual void handleBasicBlockEnd(unsigned blocknum) { 
+  virtual void handleBasicBlockEnd(unsigned blocknum) {
     if (os)
       *os << "      } END BLOCK: BasicBlock #" << blocknum << "{\n";
   }
 
-  virtual void handleGlobalConstantsBegin() { 
+  virtual void handleGlobalConstantsBegin() {
     if (os)
       *os << "    BLOCK: GlobalConstants {\n";
   }
 
-  virtual void handleConstantExpression( unsigned Opcode, 
+  virtual void handleConstantExpression( unsigned Opcode,
       std::vector<Constant*> ArgVec, Constant* C ) {
     if (os) {
       *os << "      EXPR: " << Instruction::getOpcodeName(Opcode) << "\n";
       for ( unsigned i = 0; i < ArgVec.size(); ++i ) {
-        *os << "        Arg#" << i << " "; ArgVec[i]->print(*os); 
+        *os << "        Arg#" << i << " "; ArgVec[i]->print(*os);
         *os << "\n";
       }
       *os << "        Value=";
@@ -427,13 +427,13 @@ public:
     bca.numValues++;
   }
 
-  virtual void handleConstantArray( const ArrayType* AT, 
+  virtual void handleConstantArray( const ArrayType* AT,
           std::vector<Constant*>& Elements,
           unsigned TypeSlot,
           Constant* ArrayVal ) {
     if (os) {
       *os << "      ARRAY: ";
-      WriteTypeSymbolic(*os,AT,M); 
+      WriteTypeSymbolic(*os,AT,M);
       *os << " TypeSlot=" << TypeSlot << "\n";
       for ( unsigned i = 0; i < Elements.size(); ++i ) {
         *os << "        #" << i;
@@ -459,7 +459,7 @@ public:
       WriteTypeSymbolic(*os,ST,M);
       *os << "\n";
       for ( unsigned i = 0; i < Elements.size(); ++i ) {
-        *os << "        #" << i << " "; Elements[i]->print(*os); 
+        *os << "        #" << i << " "; Elements[i]->print(*os);
         *os << "\n";
       }
       *os << "        Value=";
@@ -470,11 +470,11 @@ public:
     bca.numValues++;
   }
 
-  virtual void handleConstantPacked( 
-    const PackedType* PT,                
+  virtual void handleConstantPacked(
+    const PackedType* PT,
     std::vector<Constant*>& Elements,
-    unsigned TypeSlot,                  
-    Constant* PackedVal) 
+    unsigned TypeSlot,
+    Constant* PackedVal)
   {
     if (os) {
       *os << "      PACKD: ";
@@ -494,7 +494,7 @@ public:
     bca.numValues++;
   }
 
-  virtual void handleConstantPointer( const PointerType* PT, 
+  virtual void handleConstantPointer( const PointerType* PT,
       unsigned Slot, GlobalValue* GV ) {
     if (os) {
       *os << "       PNTR: ";
@@ -510,14 +510,14 @@ public:
   virtual void handleConstantString( const ConstantArray* CA ) {
     if (os) {
       *os << "      STRNG: ";
-      CA->print(*os); 
+      CA->print(*os);
       *os << "\n";
     }
     bca.numConstants++;
     bca.numValues++;
   }
 
-  virtual void handleGlobalConstantsEnd() { 
+  virtual void handleGlobalConstantsEnd() {
     if (os)
       *os << "    } END BLOCK: GlobalConstants\n";
 
@@ -574,38 +574,38 @@ public:
 
 /// @brief Utility for printing a titled unsigned value with
 /// an aligned colon.
-inline static void print(std::ostream& Out, const char*title, 
+inline static void print(std::ostream& Out, const char*title,
   unsigned val, bool nl = true ) {
-  Out << std::setw(30) << std::right << title 
+  Out << std::setw(30) << std::right << title
       << std::setw(0) << ": "
       << std::setw(9) << val << "\n";
 }
 
 /// @brief Utility for printing a titled double value with an
 /// aligned colon
-inline static void print(std::ostream&Out, const char*title, 
+inline static void print(std::ostream&Out, const char*title,
   double val ) {
-  Out << std::setw(30) << std::right << title 
+  Out << std::setw(30) << std::right << title
       << std::setw(0) << ": "
       << std::setw(9) << std::setprecision(6) << val << "\n" ;
 }
 
 /// @brief Utility for printing a titled double value with a
 /// percentage and aligned colon.
-inline static void print(std::ostream&Out, const char*title, 
+inline static void print(std::ostream&Out, const char*title,
   double top, double bot ) {
-  Out << std::setw(30) << std::right << title 
+  Out << std::setw(30) << std::right << title
       << std::setw(0) << ": "
-      << std::setw(9) << std::setprecision(6) << top 
-      << " (" << std::left << std::setw(0) << std::setprecision(4) 
+      << std::setw(9) << std::setprecision(6) << top
+      << " (" << std::left << std::setw(0) << std::setprecision(4)
       << (top/bot)*100.0 << "%)\n";
 }
 
 /// @brief Utility for printing a titled string value with
 /// an aligned colon.
-inline static void print(std::ostream&Out, const char*title, 
+inline static void print(std::ostream&Out, const char*title,
   std::string val, bool nl = true) {
-  Out << std::setw(30) << std::right << title 
+  Out << std::setw(30) << std::right << title
       << std::setw(0) << ": "
       << std::left << val << (nl ? "\n" : "");
 }
@@ -626,33 +626,33 @@ void PrintBytecodeAnalysis(BytecodeAnalysis& bca, std::ostream& Out )
   print(Out, "Module Bytes",
         double(bca.BlockSizes[BytecodeFormat::ModuleBlockID]),
         double(bca.byteSize));
-  print(Out, "Function Bytes", 
+  print(Out, "Function Bytes",
         double(bca.BlockSizes[BytecodeFormat::FunctionBlockID]),
         double(bca.byteSize));
-  print(Out, "Global Types Bytes", 
+  print(Out, "Global Types Bytes",
         double(bca.BlockSizes[BytecodeFormat::GlobalTypePlaneBlockID]),
         double(bca.byteSize));
-  print(Out, "Constant Pool Bytes", 
+  print(Out, "Constant Pool Bytes",
         double(bca.BlockSizes[BytecodeFormat::ConstantPoolBlockID]),
         double(bca.byteSize));
-  print(Out, "Module Globals Bytes", 
+  print(Out, "Module Globals Bytes",
         double(bca.BlockSizes[BytecodeFormat::ModuleGlobalInfoBlockID]),
         double(bca.byteSize));
-  print(Out, "Instruction List Bytes", 
+  print(Out, "Instruction List Bytes",
         double(bca.BlockSizes[BytecodeFormat::InstructionListBlockID]),
         double(bca.byteSize));
-  print(Out, "Compaction Table Bytes", 
+  print(Out, "Compaction Table Bytes",
         double(bca.BlockSizes[BytecodeFormat::CompactionTableBlockID]),
         double(bca.byteSize));
-  print(Out, "Symbol Table Bytes", 
+  print(Out, "Symbol Table Bytes",
         double(bca.BlockSizes[BytecodeFormat::SymbolTableBlockID]),
         double(bca.byteSize));
-  print(Out, "Alignment Bytes", 
+  print(Out, "Alignment Bytes",
         double(bca.numAlignment), double(bca.byteSize));
-  print(Out, "Block Header Bytes", 
+  print(Out, "Block Header Bytes",
         double(bca.BlockSizes[BytecodeFormat::Reserved_DoNotUse]),
         double(bca.byteSize));
-  print(Out, "Dependent Libraries Bytes", double(bca.libSize), 
+  print(Out, "Dependent Libraries Bytes", double(bca.libSize),
         double(bca.byteSize));
   print(Out, "Number Of Bytecode Blocks",       bca.numBlocks);
   print(Out, "Number Of Functions",             bca.numFunctions);
@@ -668,7 +668,7 @@ void PrintBytecodeAnalysis(BytecodeAnalysis& bca, std::ostream& Out )
   print(Out, "Number Of Symbol Tables",         bca.numSymTab);
   print(Out, "Number Of Dependent Libs",        bca.numLibraries);
   print(Out, "Total Instruction Size",          bca.instructionSize);
-  print(Out, "Average Instruction Size", 
+  print(Out, "Average Instruction Size",
         double(bca.instructionSize)/double(bca.numInstructions));
 
   print(Out, "Maximum Type Slot Number",        bca.maxTypeSlot);
@@ -680,16 +680,16 @@ void PrintBytecodeAnalysis(BytecodeAnalysis& bca, std::ostream& Out )
   print(Out, "# of VBR 64-bit Integers",   bca.vbrCount64);
   print(Out, "# of VBR Compressed Bytes",  bca.vbrCompBytes);
   print(Out, "# of VBR Expanded Bytes",    bca.vbrExpdBytes);
-  print(Out, "Bytes Saved With VBR", 
+  print(Out, "Bytes Saved With VBR",
         double(bca.vbrExpdBytes)-double(bca.vbrCompBytes),
         double(bca.vbrExpdBytes));
 
   if (bca.detailedResults) {
     Out << "\nDetailed Analysis Of " << bca.ModuleId << " Functions:\n";
 
-    std::map<const Function*,BytecodeAnalysis::BytecodeFunctionInfo>::iterator I = 
+    std::map<const Function*,BytecodeAnalysis::BytecodeFunctionInfo>::iterator I =
       bca.FunctionInfo.begin();
-    std::map<const Function*,BytecodeAnalysis::BytecodeFunctionInfo>::iterator E = 
+    std::map<const Function*,BytecodeAnalysis::BytecodeFunctionInfo>::iterator E =
       bca.FunctionInfo.end();
 
     while ( I != E ) {
@@ -704,14 +704,14 @@ void PrintBytecodeAnalysis(BytecodeAnalysis& bca, std::ostream& Out )
         print(Out, "Long Instructions", I->second.longInstructions);
         print(Out, "Operands", I->second.numOperands);
         print(Out, "Instruction Size", I->second.instructionSize);
-        print(Out, "Average Instruction Size", 
+        print(Out, "Average Instruction Size",
               double(I->second.instructionSize) / I->second.numInstructions);
         print(Out, "Bytes Per Instruction", I->second.density);
         print(Out, "# of VBR 32-bit Integers",   I->second.vbrCount32);
         print(Out, "# of VBR 64-bit Integers",   I->second.vbrCount64);
         print(Out, "# of VBR Compressed Bytes",  I->second.vbrCompBytes);
         print(Out, "# of VBR Expanded Bytes",    I->second.vbrExpdBytes);
-        print(Out, "Bytes Saved With VBR", 
+        print(Out, "Bytes Saved With VBR",
               double(I->second.vbrExpdBytes) - I->second.vbrCompBytes),
               double(I->second.vbrExpdBytes);
       }
