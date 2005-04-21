@@ -4,7 +4,7 @@
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines a pattern matching instruction selector for X86.
@@ -51,7 +51,7 @@ namespace {
       addRegisterClass(MVT::i16, X86::R16RegisterClass);
       addRegisterClass(MVT::i32, X86::R32RegisterClass);
       addRegisterClass(MVT::f64, X86::RFPRegisterClass);
-      
+
       // FIXME: Eliminate these two classes when legalize can handle promotions
       // well.
 /**/  addRegisterClass(MVT::i1, X86::R8RegisterClass);
@@ -67,9 +67,9 @@ namespace {
       // These should be promoted to a larger select which is supported.
 /**/  setOperationAction(ISD::SELECT           , MVT::i1   , Promote);
       setOperationAction(ISD::SELECT           , MVT::i8   , Promote);
-      
+
       computeRegisterProperties();
-      
+
       addLegalFPImmediate(+0.0); // FLD0
       addLegalFPImmediate(+1.0); // FLD1
       addLegalFPImmediate(-0.0); // FLD0/FCHS
@@ -111,11 +111,11 @@ X86TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
   // [ESP] -- return address
   // [ESP + 4] -- first argument (leftmost lexically)
   // [ESP + 8] -- second argument, if first argument is four bytes in size
-  //    ... 
+  //    ...
   //
   MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo *MFI = MF.getFrameInfo();
-  
+
   unsigned ArgOffset = 0;   // Frame mechanisms handle retaddr slot
   for (Function::arg_iterator I = F.arg_begin(), E = F.arg_end(); I != E; ++I) {
     MVT::ValueType ObjectVT = getValueType(I->getType());
@@ -133,7 +133,7 @@ X86TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
     }
     // Create the frame index object for this incoming parameter...
     int FI = MFI->CreateFixedObject(ObjSize, ArgOffset);
-    
+
     // Create the SelectionDAG nodes corresponding to a load from this parameter
     SDOperand FIN = DAG.getFrameIndex(FI, MVT::i32);
 
@@ -293,7 +293,7 @@ LowerVAArgNext(bool isVANext, SDOperand Chain, SDOperand VAList,
   }
   return std::make_pair(Result, Chain);
 }
-               
+
 
 std::pair<SDOperand, SDOperand> X86TargetLowering::
 LowerFrameReturnAddress(bool isFrameAddress, SDOperand Chain, unsigned Depth,
@@ -307,7 +307,7 @@ LowerFrameReturnAddress(bool isFrameAddress, SDOperand Chain, unsigned Depth,
       MachineFunction &MF = DAG.getMachineFunction();
       ReturnAddrIndex = MF.getFrameInfo()->CreateFixedObject(4, -4);
     }
-    
+
     SDOperand RetAddrFI = DAG.getFrameIndex(ReturnAddrIndex, MVT::i32);
 
     if (!isFrameAddress)
@@ -330,17 +330,17 @@ namespace {
       RegBase,
       FrameIndexBase,
     } BaseType;
-    
+
     struct {            // This is really a union, discriminated by BaseType!
       SDOperand Reg;
       int FrameIndex;
     } Base;
-    
+
     unsigned Scale;
     SDOperand IndexReg;
     unsigned Disp;
     GlobalValue *GV;
-    
+
     X86ISelAddressMode()
       : BaseType(RegBase), Scale(1), IndexReg(), Disp(), GV(0) {
     }
@@ -451,7 +451,7 @@ void ISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
         break;
       }
     }
-  
+
   // Insert FP_REG_KILL instructions into basic blocks that need them.  This
   // only occurs due to the floating point stackifier not being aggressive
   // enough to handle arbitrary global stackification.
@@ -468,7 +468,7 @@ void ISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
     BuildMI(*BB, BB->getFirstTerminator(), X86::FP_REG_KILL, 0);
     ++NumFPKill;
   }
-  
+
   // Clear state used for selection.
   ExprMap.clear();
   RegPressureMap.clear();
@@ -577,7 +577,7 @@ X86AddressMode ISel::SelectAddrExprs(const X86ISelAddressMode &IAM) {
   } else if (IAM.IndexReg.Val) {
     Result.IndexReg = SelectExpr(IAM.IndexReg);
   }
-             
+
   switch (IAM.BaseType) {
   case X86ISelAddressMode::RegBase:
     Result.BaseType = X86AddressMode::RegBase;
@@ -679,7 +679,7 @@ bool ISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM) {
             ConstantSDNode *AddVal =
               cast<ConstantSDNode>(MulVal.Val->getOperand(1));
             AM.Disp += AddVal->getValue() * CN->getValue();
-          } else {          
+          } else {
             Reg = N.Val->getOperand(0);
           }
 
@@ -964,12 +964,12 @@ void ISel::EmitSelectCC(SDOperand Cond, MVT::ValueType SVT,
   static const unsigned CMOVTAB16[] = {
     X86::CMOVE16rr,  X86::CMOVNE16rr, X86::CMOVL16rr,  X86::CMOVLE16rr,
     X86::CMOVG16rr,  X86::CMOVGE16rr, X86::CMOVB16rr,  X86::CMOVBE16rr,
-    X86::CMOVA16rr,  X86::CMOVAE16rr, X86::CMOVP16rr,  X86::CMOVNP16rr, 
+    X86::CMOVA16rr,  X86::CMOVAE16rr, X86::CMOVP16rr,  X86::CMOVNP16rr,
   };
   static const unsigned CMOVTAB32[] = {
     X86::CMOVE32rr,  X86::CMOVNE32rr, X86::CMOVL32rr,  X86::CMOVLE32rr,
     X86::CMOVG32rr,  X86::CMOVGE32rr, X86::CMOVB32rr,  X86::CMOVBE32rr,
-    X86::CMOVA32rr,  X86::CMOVAE32rr, X86::CMOVP32rr,  X86::CMOVNP32rr, 
+    X86::CMOVA32rr,  X86::CMOVAE32rr, X86::CMOVP32rr,  X86::CMOVNP32rr,
   };
   static const unsigned CMOVTABFP[] = {
     X86::FCMOVE ,  X86::FCMOVNE, /*missing*/0, /*missing*/0,
@@ -1318,7 +1318,7 @@ bool ISel::EmitOrOpOp(SDOperand Op1, SDOperand Op2, unsigned DestReg) {
             return true;
           }
         }
-        
+
   return false;
 }
 
@@ -1335,10 +1335,10 @@ unsigned ISel::SelectExpr(SDOperand N) {
     // Just use the specified register as our input.
     return dyn_cast<RegSDNode>(Node)->getReg();
   }
-  
+
   unsigned &Reg = ExprMap[N];
   if (Reg) return Reg;
-  
+
   switch (N.getOpcode()) {
   default:
     Reg = Result = (N.getValueType() != MVT::Other) ?
@@ -1368,7 +1368,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
       ExprMap[N.getValue(i)] = MakeReg(Node->getValueType(i));
     break;
   }
-  
+
   switch (N.getOpcode()) {
   default:
     Node->dump();
@@ -1447,7 +1447,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
       X86AddressMode AM;
       EmitFoldedLoad(N.getOperand(0), AM);
       addFullAddress(BuildMI(BB, Opc[SrcIs16+DestIs16*2], 4, Result), AM);
-                             
+
       return Result;
     }
 
@@ -1457,7 +1457,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
     Tmp1 = SelectExpr(N.getOperand(0));
     BuildMI(BB, Opc[SrcIs16+DestIs16*2], 1, Result).addReg(Tmp1);
     return Result;
-  }    
+  }
   case ISD::SIGN_EXTEND: {
     int DestIs16 = N.getValueType() == MVT::i16;
     int SrcIs16  = N.getOperand(0).getValueType() == MVT::i16;
@@ -1556,7 +1556,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
     }
 
     Tmp1 = SelectExpr(N.getOperand(0));  // Get the operand register
-    
+
     if (PromoteType != MVT::Other) {
       Tmp2 = MakeReg(PromoteType);
       BuildMI(BB, PromoteOpcode, 1, Tmp2).addReg(Tmp1);
@@ -1622,11 +1622,11 @@ unsigned ISel::SelectExpr(SDOperand N) {
       MachineConstantPool *CP = F->getConstantPool();
       unsigned Zero = MakeReg(MVT::i32);
       Constant *Null = Constant::getNullValue(Type::UIntTy);
-      addConstantPoolReference(BuildMI(BB, X86::LEA32r, 5, Zero), 
+      addConstantPoolReference(BuildMI(BB, X86::LEA32r, 5, Zero),
                                CP->getConstantPoolIndex(Null));
       unsigned Offset = MakeReg(MVT::i32);
       Constant *OffsetCst = ConstantUInt::get(Type::UIntTy, 0x5f800000);
-                                             
+
       addConstantPoolReference(BuildMI(BB, X86::LEA32r, 5, Offset),
                                CP->getConstantPoolIndex(OffsetCst));
       unsigned Addr = MakeReg(MVT::i32);
@@ -1664,7 +1664,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
 
     // Reload the modified control word now...
     addFrameReference(BuildMI(BB, X86::FLDCW16m, 4), CWFrameIdx);
-    
+
     // Restore the memory image of control word to original value
     addFrameReference(BuildMI(BB, X86::MOV8mr, 5),
                       CWFrameIdx, 1).addReg(HighPartOfCW);
@@ -1850,7 +1850,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
     unsigned MovOpc, LowReg, HiReg;
     switch (N.getValueType()) {
     default: assert(0 && "Unsupported VT!");
-    case MVT::i8:  
+    case MVT::i8:
       MovOpc = X86::MOV8rr;
       LowReg = X86::AL;
       HiReg = X86::AH;
@@ -1887,7 +1887,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
     BuildMI(BB, Opc, 1).addReg(Tmp2);
     BuildMI(BB, MovOpc, 1, Result).addReg(HiReg);
     return Result;
-  }    
+  }
 
   case ISD::SUB:
   case ISD::MUL:
@@ -1907,7 +1907,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
     static const unsigned ANDTab[] = {
       X86::AND8ri, X86::AND16ri, X86::AND32ri, 0, 0,
       X86::AND8rm, X86::AND16rm, X86::AND32rm, 0, 0,
-      X86::AND8rr, X86::AND16rr, X86::AND32rr, 0, 0, 
+      X86::AND8rr, X86::AND16rr, X86::AND32rr, 0, 0,
     };
     static const unsigned ORTab[] = {
       X86::OR8ri, X86::OR16ri, X86::OR32ri, 0, 0,
@@ -2140,12 +2140,12 @@ unsigned ISel::SelectExpr(SDOperand N) {
         .addReg(ShiftOpLo);
       // TmpReg3 = shl  inLo, CL
       BuildMI(BB, X86::SHL32rCL, 1, TmpReg3).addReg(ShiftOpLo);
-      
+
       // Set the flags to indicate whether the shift was by more than 32 bits.
       BuildMI(BB, X86::TEST8ri, 2).addReg(X86::CL).addImm(32);
-      
+
       // DestHi = (>32) ? TmpReg3 : TmpReg2;
-      BuildMI(BB, X86::CMOVNE32rr, 2, 
+      BuildMI(BB, X86::CMOVNE32rr, 2,
               Result+1).addReg(TmpReg2).addReg(TmpReg3);
       // DestLo = (>32) ? TmpReg : TmpReg3;
       BuildMI(BB, X86::CMOVNE32rr, 2,
@@ -2155,19 +2155,19 @@ unsigned ISel::SelectExpr(SDOperand N) {
       BuildMI(BB, X86::SHRD32rrCL,2,TmpReg2).addReg(ShiftOpLo)
         .addReg(ShiftOpHi);
       // TmpReg3 = s[ah]r  inHi, CL
-      BuildMI(BB, N.getOpcode() == ISD::SRA_PARTS ? X86::SAR32rCL 
+      BuildMI(BB, N.getOpcode() == ISD::SRA_PARTS ? X86::SAR32rCL
                                                   : X86::SHR32rCL, 1, TmpReg3)
         .addReg(ShiftOpHi);
-      
+
       // Set the flags to indicate whether the shift was by more than 32 bits.
       BuildMI(BB, X86::TEST8ri, 2).addReg(X86::CL).addImm(32);
-      
+
       // DestLo = (>32) ? TmpReg3 : TmpReg2;
-      BuildMI(BB, X86::CMOVNE32rr, 2, 
+      BuildMI(BB, X86::CMOVNE32rr, 2,
               Result).addReg(TmpReg2).addReg(TmpReg3);
-      
+
       // DestHi = (>32) ? TmpReg : TmpReg3;
-      BuildMI(BB, X86::CMOVNE32rr, 2, 
+      BuildMI(BB, X86::CMOVNE32rr, 2,
               Result+1).addReg(TmpReg3).addReg(TmpReg);
     }
     return Result+N.ResNo;
@@ -2258,7 +2258,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
           BuildMI(BB, SHROpc, 2, TmpReg2).addReg(TmpReg).addImm(32-Log);
           unsigned TmpReg3 = MakeReg(N.getValueType());
           BuildMI(BB, ADDOpc, 2, TmpReg3).addReg(Tmp1).addReg(TmpReg2);
-          
+
           unsigned TmpReg4 = isNeg ? MakeReg(N.getValueType()) : Result;
           BuildMI(BB, SAROpc, 2, TmpReg4).addReg(TmpReg3).addImm(Log);
           if (isNeg)
@@ -2322,7 +2322,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
     }
 
     // Emit the DIV/IDIV instruction.
-    BuildMI(BB, DivOpcode, 1).addReg(Tmp2);    
+    BuildMI(BB, DivOpcode, 1).addReg(Tmp2);
 
     // Get the result of the divide or rem.
     BuildMI(BB, MovOpcode, 1, Result).addReg(isDiv ? LoReg : HiReg);
@@ -2342,7 +2342,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
         BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp1);
         return Result;
       }
-      
+
       switch (N.getValueType()) {
       default: assert(0 && "Cannot shift this type!");
       case MVT::i8:  Opc = X86::SHL8ri; break;
@@ -2592,7 +2592,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
                 << " the stack alignment yet!";
       abort();
     }
-  
+
     if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
       Select(N.getOperand(0));
       BuildMI(BB, X86::SUB32ri, 2, X86::ESP).addReg(X86::ESP)
@@ -2759,7 +2759,7 @@ bool ISel::TryToFoldLoadOpStore(SDNode *Node) {
     X86::SHR8mi, X86::SHR16mi, X86::SHR32mi,
     /*Have to put the reg in CL*/0, 0, 0,
   };
-  
+
   const unsigned *TabPtr = 0;
   switch (StVal.getOpcode()) {
   default:
@@ -2770,7 +2770,7 @@ bool ISel::TryToFoldLoadOpStore(SDNode *Node) {
   case ISD::UDIV:
   case ISD::SREM:
   case ISD::UREM: return false;
-    
+
   case ISD::ADD: TabPtr = ADDTAB; break;
   case ISD::SUB: TabPtr = SUBTAB; break;
   case ISD::AND: TabPtr = ANDTAB; break;
@@ -2780,7 +2780,7 @@ bool ISel::TryToFoldLoadOpStore(SDNode *Node) {
   case ISD::SRA: TabPtr = SARTAB; break;
   case ISD::SRL: TabPtr = SHRTAB; break;
   }
-  
+
   // Handle: [mem] op= CST
   SDOperand Op0 = StVal.getOperand(0);
   SDOperand Op1 = StVal.getOperand(1);
@@ -2793,7 +2793,7 @@ bool ISel::TryToFoldLoadOpStore(SDNode *Node) {
     case MVT::i16: Opc = TabPtr[1]; break;
     case MVT::i32: Opc = TabPtr[2]; break;
     }
-    
+
     if (Opc) {
       if (!ExprMap.insert(std::make_pair(TheLoad.getValue(1), 1)).second)
         assert(0 && "Already emitted?");
@@ -2807,7 +2807,7 @@ bool ISel::TryToFoldLoadOpStore(SDNode *Node) {
       } else {
         SelectAddress(TheLoad.getOperand(1), AM);
         Select(TheLoad.getOperand(0));
-      }            
+      }
 
       if (StVal.getOpcode() == ISD::ADD) {
         if (CN->getValue() == 1) {
@@ -2838,19 +2838,19 @@ bool ISel::TryToFoldLoadOpStore(SDNode *Node) {
           }
         }
       }
-      
+
       addFullAddress(BuildMI(BB, Opc, 4+1),AM).addImm(CN->getValue());
       return true;
     }
   }
-  
+
   // If we have [mem] = V op [mem], try to turn it into:
   // [mem] = [mem] op V.
   if (Op1 == TheLoad && StVal.getOpcode() != ISD::SUB &&
       StVal.getOpcode() != ISD::SHL && StVal.getOpcode() != ISD::SRA &&
       StVal.getOpcode() != ISD::SRL)
     std::swap(Op0, Op1);
-  
+
   if (Op0 != TheLoad) return false;
 
   switch (Op0.getValueType()) {
@@ -2892,7 +2892,7 @@ void ISel::Select(SDOperand N) {
   case ISD::EntryToken: return;  // Noop
   case ISD::TokenFactor:
     if (Node->getNumOperands() == 2) {
-      bool OneFirst = 
+      bool OneFirst =
         getRegPressure(Node->getOperand(1))>getRegPressure(Node->getOperand(0));
       Select(Node->getOperand(OneFirst));
       Select(Node->getOperand(!OneFirst));
@@ -2915,7 +2915,7 @@ void ISel::Select(SDOperand N) {
       Select(N.getOperand(0));
     }
     Tmp2 = cast<RegSDNode>(N)->getReg();
-    
+
     if (Tmp1 != Tmp2) {
       switch (N.getOperand(1).getValueType()) {
       default: assert(0 && "Invalid type for operation!");
@@ -3077,7 +3077,7 @@ void ISel::Select(SDOperand N) {
     case MVT::i1: Opc = X86::MOV8mr; break;
     case MVT::f32: Opc = X86::FST32m; break;
     }
-    
+
     std::vector<std::pair<unsigned, unsigned> > RP;
     RP.push_back(std::make_pair(getRegPressure(N.getOperand(0)), 0));
     RP.push_back(std::make_pair(getRegPressure(N.getOperand(1)), 1));
@@ -3148,7 +3148,7 @@ void ISel::Select(SDOperand N) {
     case MVT::i32: Opc = X86::MOV32mr; break;
     case MVT::f64: Opc = X86::FST64m; break;
     }
-    
+
     std::vector<std::pair<unsigned, unsigned> > RP;
     RP.push_back(std::make_pair(getRegPressure(N.getOperand(0)), 0));
     RP.push_back(std::make_pair(getRegPressure(N.getOperand(1)), 1));
@@ -3171,7 +3171,7 @@ void ISel::Select(SDOperand N) {
   case ISD::ADJCALLSTACKUP:
     Select(N.getOperand(0));
     Tmp1 = cast<ConstantSDNode>(N.getOperand(1))->getValue();
-    
+
     Opc = N.getOpcode() == ISD::ADJCALLSTACKDOWN ? X86::ADJCALLSTACKDOWN :
                                                    X86::ADJCALLSTACKUP;
     BuildMI(BB, Opc, 1).addImm(Tmp1);
@@ -3291,5 +3291,5 @@ void ISel::Select(SDOperand N) {
 /// description file.
 ///
 FunctionPass *llvm::createX86PatternInstructionSelector(TargetMachine &TM) {
-  return new ISel(TM);  
+  return new ISel(TM);
 }

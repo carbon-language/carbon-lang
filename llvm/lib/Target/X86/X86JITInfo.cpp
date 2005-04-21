@@ -1,10 +1,10 @@
 //===-- X86JITInfo.cpp - Implement the JIT interfaces for the X86 target --===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements the JIT interfaces for the X86 target.
@@ -54,7 +54,7 @@ static void CompilationCallback() {
   // been performed.  Having a variable sized alloca disables frame pointer
   // elimination currently, even if it's dead.  This is a gross hack.
   alloca(10+(RetAddr >> 31));
-  
+
 #endif
   assert(StackPtr[1] == RetAddr &&
          "Could not find return address on the stack!");
@@ -74,7 +74,7 @@ static void CompilationCallback() {
 
   // Sanity check to make sure this really is a call instruction.
   assert(((unsigned char*)(intptr_t)RetAddr)[-1] == 0xE8 &&"Not a call instr!");
-  
+
   unsigned NewVal = (intptr_t)JITCompilerFunction((void*)(intptr_t)RetAddr);
 
   // Rewrite the call target... so that we don't end up here every time we
@@ -110,7 +110,7 @@ void *X86JITInfo::emitFunctionStub(void *Fn, MachineCodeEmitter &MCE) {
     MCE.emitWord((intptr_t)Fn-MCE.getCurrentPCValue()-4);
     return MCE.finishFunctionStub(0);
   }
-  
+
   MCE.startFunctionStub(6);
   MCE.emitByte(0xE8);   // Call with 32 bit pc-rel destination...
 

@@ -1,10 +1,10 @@
 //===- X86InstrInfo.h - X86 Instruction Information ------------*- C++ -*- ===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file contains the X86 implementation of the TargetInstrInfo class.
@@ -37,7 +37,7 @@ namespace X86II {
     /// Raw - This form is for instructions that don't have any operands, so
     /// they are just a fixed opcode value, like 'leave'.
     RawFrm         = 1,
-    
+
     /// AddRegFrm - This form is used for instructions like 'push r32' that have
     /// their one register operand added to their opcode.
     AddRegFrm      = 2,
@@ -61,7 +61,7 @@ namespace X86II {
     /// to specify a source, which in this case is memory.
     ///
     MRMSrcMem      = 6,
-  
+
     /// MRM[0-7][rm] - These forms are used to represent instructions that use
     /// a Mod/RM byte, and use the middle field to hold extended opcode
     /// information.  In the intel manual these are represented as /0, /1, ...

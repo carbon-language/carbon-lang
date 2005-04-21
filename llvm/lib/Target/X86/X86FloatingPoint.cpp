@@ -1,10 +1,10 @@
 //===-- X86FloatingPoint.cpp - Floating point Reg -> Stack converter ------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines the pass which converts floating point instructions from
@@ -68,8 +68,8 @@ namespace {
     void dumpStack() const {
       std::cerr << "Stack contents:";
       for (unsigned i = 0; i != StackTop; ++i) {
-	std::cerr << " FP" << Stack[i];
-	assert(RegMap[Stack[i]] == i && "Stack[] doesn't match RegMap[]!"); 
+        std::cerr << " FP" << Stack[i];
+        assert(RegMap[Stack[i]] == i && "Stack[] doesn't match RegMap[]!");
       }
       std::cerr << "\n";
     }
@@ -104,20 +104,20 @@ namespace {
     bool isAtTop(unsigned RegNo) const { return getSlot(RegNo) == StackTop-1; }
     void moveToTop(unsigned RegNo, MachineBasicBlock::iterator &I) {
       if (!isAtTop(RegNo)) {
-	unsigned Slot = getSlot(RegNo);
-	unsigned STReg = getSTReg(RegNo);
-	unsigned RegOnTop = getStackEntry(0);
+        unsigned Slot = getSlot(RegNo);
+        unsigned STReg = getSTReg(RegNo);
+        unsigned RegOnTop = getStackEntry(0);
 
-	// Swap the slots the regs are in
-	std::swap(RegMap[RegNo], RegMap[RegOnTop]);
+        // Swap the slots the regs are in
+        std::swap(RegMap[RegNo], RegMap[RegOnTop]);
 
-	// Swap stack slot contents
-	assert(RegMap[RegOnTop] < StackTop);
-	std::swap(Stack[RegMap[RegOnTop]], Stack[StackTop-1]);
+        // Swap stack slot contents
+        assert(RegMap[RegOnTop] < StackTop);
+        std::swap(Stack[RegMap[RegOnTop]], Stack[StackTop-1]);
 
-	// Emit an fxch to update the runtime processors version of the state
-	BuildMI(*MBB, I, X86::FXCH, 1).addReg(STReg);
-	NumFXCH++;
+        // Emit an fxch to update the runtime processors version of the state
+        BuildMI(*MBB, I, X86::FXCH, 1).addReg(STReg);
+        NumFXCH++;
       }
     }
 
@@ -196,7 +196,7 @@ bool FPS::processBasicBlock(MachineFunction &MF, MachineBasicBlock &BB) {
   const TargetInstrInfo &TII = *MF.getTarget().getInstrInfo();
   bool Changed = false;
   MBB = &BB;
-  
+
   for (MachineBasicBlock::iterator I = BB.begin(); I != BB.end(); ++I) {
     MachineInstr *MI = I;
     unsigned Flags = TII.get(MI->getOpcode()).TSFlags;
@@ -208,23 +208,24 @@ bool FPS::processBasicBlock(MachineFunction &MF, MachineBasicBlock &BB) {
         PrevMI = prior(I);
 
     ++NumFP;  // Keep track of # of pseudo instrs
-    DEBUG(std::cerr << "\nFPInst:\t";
-	  MI->print(std::cerr, &(MF.getTarget())));
+    DEBUG(std::cerr << "\nFPInst:\t"; MI->print(std::cerr, &(MF.getTarget())));
 
     // Get dead variables list now because the MI pointer may be deleted as part
     // of processing!
     LiveVariables::killed_iterator IB = LV->dead_begin(MI);
     LiveVariables::killed_iterator IE = LV->dead_end(MI);
 
-    DEBUG(const MRegisterInfo *MRI = MF.getTarget().getRegisterInfo();
-	  LiveVariables::killed_iterator I = LV->killed_begin(MI);
-	  LiveVariables::killed_iterator E = LV->killed_end(MI);
-	  if (I != E) {
-	    std::cerr << "Killed Operands:";
-	    for (; I != E; ++I)
-	      std::cerr << " %" << MRI->getName(I->second);
-	    std::cerr << "\n";
-	  });
+    DEBUG(
+      const MRegisterInfo *MRI = MF.getTarget().getRegisterInfo();
+      LiveVariables::killed_iterator I = LV->killed_begin(MI);
+      LiveVariables::killed_iterator E = LV->killed_end(MI);
+      if (I != E) {
+        std::cerr << "Killed Operands:";
+        for (; I != E; ++I)
+          std::cerr << " %" << MRI->getName(I->second);
+        std::cerr << "\n";
+      }
+    );
 
     switch (Flags & X86II::FPTypeMask) {
     case X86II::ZeroArgFP:  handleZeroArgFP(I); break;
@@ -242,11 +243,11 @@ bool FPS::processBasicBlock(MachineFunction &MF, MachineBasicBlock &BB) {
     for (; IB != IE; ++IB) {
       unsigned Reg = IB->second;
       if (Reg >= X86::FP0 && Reg <= X86::FP6) {
-	DEBUG(std::cerr << "Register FP#" << Reg-X86::FP0 << " is dead!\n");
+        DEBUG(std::cerr << "Register FP#" << Reg-X86::FP0 << " is dead!\n");
         freeStackSlotAfter(I, Reg-X86::FP0);
       }
     }
-    
+
     // Print out all of the instructions expanded to if -debug
     DEBUG(
       MachineBasicBlock::iterator PrevI(PrevMI);
@@ -423,7 +424,7 @@ void FPS::handleOneArgFP(MachineBasicBlock::iterator &I) {
   unsigned Reg = getFPReg(MI->getOperand(MI->getNumOperands()-1));
   bool KillsSrc = false;
   for (LiveVariables::killed_iterator KI = LV->killed_begin(MI),
-	 E = LV->killed_end(MI); KI != E; ++KI)
+         E = LV->killed_end(MI); KI != E; ++KI)
     KillsSrc |= KI->second == X86::FP0+Reg;
 
   // FSTP80r and FISTP64r are strange because there are no non-popping versions.
@@ -438,7 +439,7 @@ void FPS::handleOneArgFP(MachineBasicBlock::iterator &I) {
     moveToTop(Reg, I);            // Move to the top of the stack...
   }
   MI->RemoveOperand(MI->getNumOperands()-1);    // Remove explicit ST(0) operand
-  
+
   if (MI->getOpcode() == X86::FSTP80m || MI->getOpcode() == X86::FISTP64m) {
     assert(StackTop > 0 && "Stack empty??");
     --StackTop;
@@ -464,7 +465,7 @@ void FPS::handleOneArgFPRW(MachineBasicBlock::iterator &I) {
   unsigned Reg = getFPReg(MI->getOperand(1));
   bool KillsSrc = false;
   for (LiveVariables::killed_iterator KI = LV->killed_begin(MI),
-	 E = LV->killed_end(MI); KI != E; ++KI)
+         E = LV->killed_end(MI); KI != E; ++KI)
     KillsSrc |= KI->second == X86::FP0+Reg;
 
   if (KillsSrc) {
@@ -529,7 +530,7 @@ static const TableEntry ReverseSTiTable[] = {
 ///         ST(i) = fsub  ST(0), ST(i)
 ///         ST(0) = fsubr ST(0), ST(i)
 ///         ST(i) = fsubr ST(0), ST(i)
-/// 
+///
 void FPS::handleTwoArgFP(MachineBasicBlock::iterator &I) {
   ASSERT_SORTED(ForwardST0Table); ASSERT_SORTED(ReverseST0Table);
   ASSERT_SORTED(ForwardSTiTable); ASSERT_SORTED(ReverseSTiTable);
@@ -543,7 +544,7 @@ void FPS::handleTwoArgFP(MachineBasicBlock::iterator &I) {
   bool KillsOp0 = false, KillsOp1 = false;
 
   for (LiveVariables::killed_iterator KI = LV->killed_begin(MI),
-	 E = LV->killed_end(MI); KI != E; ++KI) {
+         E = LV->killed_end(MI); KI != E; ++KI) {
     KillsOp0 |= (KI->second == X86::FP0+Op0);
     KillsOp1 |= (KI->second == X86::FP0+Op1);
   }
@@ -583,8 +584,8 @@ void FPS::handleTwoArgFP(MachineBasicBlock::iterator &I) {
 
   // Now we know that one of our operands is on the top of the stack, and at
   // least one of our operands is killed by this instruction.
-  assert((TOS == Op0 || TOS == Op1) && (KillsOp0 || KillsOp1) && 
-	 "Stack conditions not set up right!");
+  assert((TOS == Op0 || TOS == Op1) && (KillsOp0 || KillsOp1) &&
+         "Stack conditions not set up right!");
 
   // We decide which form to use based on what is on the top of the stack, and
   // which operand is killed by this instruction.
@@ -602,7 +603,7 @@ void FPS::handleTwoArgFP(MachineBasicBlock::iterator &I) {
     else
       InstTable = ReverseSTiTable;
   }
-  
+
   int Opcode = Lookup(InstTable, ARRAY_SIZE(ForwardST0Table), MI->getOpcode());
   assert(Opcode != -1 && "Unknown TwoArgFP pseudo instruction!");
 
@@ -631,7 +632,7 @@ void FPS::handleTwoArgFP(MachineBasicBlock::iterator &I) {
 
 /// handleCompareFP - Handle FUCOM and FUCOMI instructions, which have two FP
 /// register arguments and no explicit destinations.
-/// 
+///
 void FPS::handleCompareFP(MachineBasicBlock::iterator &I) {
   ASSERT_SORTED(ForwardST0Table); ASSERT_SORTED(ReverseST0Table);
   ASSERT_SORTED(ForwardSTiTable); ASSERT_SORTED(ReverseSTiTable);
@@ -644,7 +645,7 @@ void FPS::handleCompareFP(MachineBasicBlock::iterator &I) {
   bool KillsOp0 = false, KillsOp1 = false;
 
   for (LiveVariables::killed_iterator KI = LV->killed_begin(MI),
-	 E = LV->killed_end(MI); KI != E; ++KI) {
+         E = LV->killed_end(MI); KI != E; ++KI) {
     KillsOp0 |= (KI->second == X86::FP0+Op0);
     KillsOp1 |= (KI->second == X86::FP0+Op1);
   }
@@ -679,7 +680,7 @@ void FPS::handleCondMovFP(MachineBasicBlock::iterator &I) {
   MI->getOperand(0).setReg(getSTReg(Op1));
 
   // If we kill the second operand, make sure to pop it from the stack.
-  if (Op0 != Op1) 
+  if (Op0 != Op1)
     for (LiveVariables::killed_iterator KI = LV->killed_begin(MI),
            E = LV->killed_end(MI); KI != E; ++KI)
       if (KI->second == X86::FP0+Op1) {
@@ -711,7 +712,7 @@ void FPS::handleSpecialFP(MachineBasicBlock::iterator &I) {
     unsigned DestReg = getFPReg(MI->getOperand(0));
     bool KillsSrc = false;
     for (LiveVariables::killed_iterator KI = LV->killed_begin(MI),
-	   E = LV->killed_end(MI); KI != E; ++KI)
+           E = LV->killed_end(MI); KI != E; ++KI)
       KillsSrc |= KI->second == X86::FP0+SrcReg;
 
     if (KillsSrc) {

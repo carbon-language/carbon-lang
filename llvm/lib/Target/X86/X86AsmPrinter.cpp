@@ -1,10 +1,10 @@
 //===-- X86AsmPrinter.cpp - Convert X86 LLVM code to Intel assembly -------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file contains a printer that converts from our internal representation
@@ -85,7 +85,7 @@ bool X86SharedAsmPrinter::doInitialization(Module& M) {
   forCygwin = false;
   const std::string& TT = M.getTargetTriple();
   if (TT.length() > 5)
-    forCygwin = TT.find("cygwin") != std::string::npos || 
+    forCygwin = TT.find("cygwin") != std::string::npos ||
                 TT.find("mingw")  != std::string::npos;
   else if (TT.empty()) {
 #if defined(__CYGWIN__) || defined(__MINGW32__)
@@ -107,7 +107,7 @@ bool X86SharedAsmPrinter::doInitialization(Module& M) {
 void X86SharedAsmPrinter::printConstantPool(MachineConstantPool *MCP) {
   const std::vector<Constant*> &CP = MCP->getConstants();
   const TargetData &TD = TM.getTargetData();
- 
+
   if (CP.empty()) return;
 
   for (unsigned i = 0, e = CP.size(); i != e; ++i) {
@@ -132,13 +132,13 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
       unsigned Size = TD.getTypeSize(C->getType());
       unsigned Align = TD.getTypeAlignmentShift(C->getType());
 
-      if (C->isNullValue() && 
+      if (C->isNullValue() &&
           (I->hasLinkOnceLinkage() || I->hasInternalLinkage() ||
            I->hasWeakLinkage() /* FIXME: Verify correct */)) {
         SwitchSection(O, CurSection, ".data");
         if (!forCygwin && I->hasInternalLinkage())
           O << "\t.local " << name << "\n";
-        
+
         O << "\t.comm " << name << "," << TD.getTypeSize(C->getType());
         if (!forCygwin)
           O << "," << (1 << Align);
@@ -240,7 +240,7 @@ namespace {
     void printMachineInstruction(const MachineInstr *MI);
     void printOp(const MachineOperand &MO, bool elideOffsetKeyword = false);
     void printMemReference(const MachineInstr *MI, unsigned Op);
-    bool runOnMachineFunction(MachineFunction &F);    
+    bool runOnMachineFunction(MachineFunction &F);
     bool doInitialization(Module &M);
   };
 } // end of anonymous namespace
@@ -335,7 +335,7 @@ void X86IntelAsmPrinter::printOp(const MachineOperand &MO,
     O << GlobalPrefix << MO.getSymbolName();
     return;
   default:
-    O << "<unknown operand type>"; return;    
+    O << "<unknown operand type>"; return;
   }
 }
 
@@ -363,7 +363,7 @@ void X86IntelAsmPrinter::printMemReference(const MachineInstr *MI, unsigned Op){
         O << ScaleVal << "*";
       printOp(IndexReg);
     }
-    
+
     if (DispSpec.getImmedValue())
       O << " + " << DispSpec.getImmedValue();
     O << "]";
@@ -465,7 +465,7 @@ namespace {
     void printMachineInstruction(const MachineInstr *MI);
     void printOp(const MachineOperand &MO, bool isCallOperand = false);
     void printMemReference(const MachineInstr *MI, unsigned Op);
-    bool runOnMachineFunction(MachineFunction &F);    
+    bool runOnMachineFunction(MachineFunction &F);
   };
 } // end of anonymous namespace
 
@@ -553,7 +553,7 @@ void X86ATTAsmPrinter::printOp(const MachineOperand &MO, bool isCallOp) {
     O << GlobalPrefix << MO.getSymbolName();
     return;
   default:
-    O << "<unknown operand type>"; return;    
+    O << "<unknown operand type>"; return;
   }
 }
 
@@ -627,7 +627,7 @@ void X86ATTAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
 ///
 FunctionPass *llvm::createX86CodePrinterPass(std::ostream &o,TargetMachine &tm){
   switch (AsmWriterFlavor) {
-  default: 
+  default:
     assert(0 && "Unknown asm flavor!");
   case intel:
     return new X86IntelAsmPrinter(o, tm);

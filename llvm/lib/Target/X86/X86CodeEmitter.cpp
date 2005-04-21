@@ -1,10 +1,10 @@
 //===-- X86/X86CodeEmitter.cpp - Convert X86 code to machine code ---------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file contains the pass that transforms the X86 machine instructions into
@@ -398,7 +398,7 @@ void Emitter::emitInstruction(const MachineInstr &MI) {
       } else if (MO.isExternalSymbol()) {
         emitExternalSymbolAddress(MO.getSymbolName(), true);
       } else if (MO.isImmediate()) {
-        emitConstant(MO.getImmedValue(), sizeOfImm(Desc));        
+        emitConstant(MO.getImmedValue(), sizeOfImm(Desc));
       } else {
         assert(0 && "Unknown RawFrm operand!");
       }
@@ -476,7 +476,7 @@ void Emitter::emitInstruction(const MachineInstr &MI) {
   case X86II::MRM0m: case X86II::MRM1m:
   case X86II::MRM2m: case X86II::MRM3m:
   case X86II::MRM4m: case X86II::MRM5m:
-  case X86II::MRM6m: case X86II::MRM7m: 
+  case X86II::MRM6m: case X86II::MRM7m:
     MCE.emitByte(BaseOpcode);
     emitMemModRMByte(MI, 0, (Desc.TSFlags & X86II::FormMask)-X86II::MRM0m);
 

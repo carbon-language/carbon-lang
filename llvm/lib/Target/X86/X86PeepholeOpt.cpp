@@ -1,10 +1,10 @@
 //===-- X86PeepholeOpt.cpp - X86 Peephole Optimizer -----------------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file contains a peephole optimizer for the X86.
@@ -489,8 +489,8 @@ bool SSAPH::PeepholeOptimize(MachineBasicBlock &MBB,
         }
       }
     }
-  
-  
+
+
   // Perform instruction specific optimizations.
   switch (MI->getOpcode()) {
 

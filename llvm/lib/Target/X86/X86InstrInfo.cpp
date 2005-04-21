@@ -1,10 +1,10 @@
 //===- X86InstrInfo.cpp - X86 Instruction Information -----------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file contains the X86 implementation of the TargetInstrInfo class.
@@ -55,8 +55,8 @@ MachineInstr *X86InstrInfo::convertToThreeAddress(MachineInstr *MI) const {
   unsigned Dest = MI->getOperand(0).getReg();
   unsigned Src = MI->getOperand(1).getReg();
 
-  // FIXME: None of these instructions are promotable to LEAs without 
-  // additional information.  In particular, LEA doesn't set the flags that 
+  // FIXME: None of these instructions are promotable to LEAs without
+  // additional information.  In particular, LEA doesn't set the flags that
   // add and inc do.  :(
   return 0;
 
