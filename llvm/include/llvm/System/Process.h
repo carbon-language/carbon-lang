@@ -63,6 +63,16 @@ namespace sys {
           ///< Returns the current amount of system time for the process
       );
 
+      /// This static function will return the process' current user id number.
+      /// Not all operating systems support this feature. Where it is not 
+      /// supported, the function should return 65536 as the value. 
+      static int GetCurrentUserId();
+      
+      /// This static function will return the process' current group id number.
+      /// Not all operating systems support this feature. Where it is not 
+      /// supported, the function should return 65536 as the value. 
+      static int GetCurrentGroupId();
+
       /// This function makes the necessary calls to the operating system to 
       /// prevent core files or any other kind of large memory dumps that can 
       /// occur when a program fails.
