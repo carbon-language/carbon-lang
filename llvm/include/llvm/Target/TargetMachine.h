@@ -1,10 +1,10 @@
 //===-- llvm/Target/TargetMachine.h - Target Information --------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file describes the general parts of a Target machine.
@@ -37,16 +37,16 @@ class IntrinsicLowering;
 /// TargetMachine - Primary interface to the complete machine description for
 /// the target machine.  All target-specific information should be accessible
 /// through this interface.
-/// 
+///
 class TargetMachine {
   const std::string Name;
   const TargetData DataLayout;       // Calculates type size & alignment
   IntrinsicLowering *IL;             // Specifies how to lower intrinsic calls
-  
+
   TargetMachine(const TargetMachine&);   // DO NOT IMPLEMENT
   void operator=(const TargetMachine&);  // DO NOT IMPLEMENT
 protected: // Can only create subclasses...
-  TargetMachine(const std::string &name, IntrinsicLowering *IL,                
+  TargetMachine(const std::string &name, IntrinsicLowering *IL,
                 bool LittleEndian = false,
                 unsigned char PtrSize = 8, unsigned char PtrAl = 8,
                 unsigned char DoubleAl = 8, unsigned char FloatAl = 4,
@@ -54,7 +54,7 @@ protected: // Can only create subclasses...
                 unsigned char ShortAl = 2, unsigned char ByteAl = 1,
                 unsigned char BoolAl = 1);
 
-  TargetMachine(const std::string &name, IntrinsicLowering *IL, 
+  TargetMachine(const std::string &name, IntrinsicLowering *IL,
                 const TargetData &TD);
 
   /// This constructor is used for targets that support arbitrary TargetData
@@ -87,12 +87,12 @@ public:
   /// lower unknown intrinsic functions to the equivalent LLVM expansion.
   ///
   IntrinsicLowering &getIntrinsicLowering() const { return *IL; }
-  
+
   // Interfaces to the major aspects of target machine information:
   // -- Instruction opcode and operand information
   // -- Pipelines and scheduling information
   // -- Stack frame information
-  // 
+  //
   virtual const TargetInstrInfo        *getInstrInfo() const { return 0; }
   virtual const TargetFrameInfo        *getFrameInfo() const { return 0; }
   const TargetData &getTargetData() const { return DataLayout; }

@@ -1,10 +1,10 @@
 //===- llvm/Transforms/LinkAllPasses.h - Reference All Passes ---*- C++ -*-===//
-// 
+//
 //                      The LLVM Compiler Infrastructure
 //
 // This file was developed by Jeff Cohen and is distributed under the
 // University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This header file is required for building with Microsoft's VC++, as it has

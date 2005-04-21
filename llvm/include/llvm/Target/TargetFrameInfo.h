@@ -1,10 +1,10 @@
 //===-- llvm/Target/TargetFrameInfo.h ---------------------------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // Interface to describe the layout of a stack frame on the target machine.
@@ -67,13 +67,13 @@ public:
   /// fixed offset from the incoming stack pointer that each register should be
   /// spilled at.  If a register is not listed here, the code generator is
   /// allowed to spill it anywhere it chooses.
-  /// 
+  ///
   virtual const std::pair<unsigned, int> *
   getCalleeSaveSpillSlots(unsigned &NumEntries) const {
     NumEntries = 0;
     return 0;
   }
-  
+
   //===--------------------------------------------------------------------===//
   // These methods provide details of the stack frame used by Sparc, thus they
   // are Sparc specific.
@@ -87,12 +87,12 @@ public:
   // function.  The frame contents are obtained from the MachineFunction object
   // for the given function.  The rest must be implemented by the
   // machine-specific subclass.
-  // 
+  //
   virtual int getIncomingArgOffset              (MachineFunction& mcInfo,
 						 unsigned argNum) const;
   virtual int getOutgoingArgOffset              (MachineFunction& mcInfo,
 						 unsigned argNum) const;
-  
+
   virtual int getFirstAutomaticVarOffset        (MachineFunction& mcInfo,
                                                  bool& growUp) const;
   virtual int getRegSpillAreaOffset             (MachineFunction& mcInfo,

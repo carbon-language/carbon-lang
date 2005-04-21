@@ -1,10 +1,10 @@
 //===- llvm/Transforms/IPO.h - Interprocedural Transformations --*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This header file defines prototypes for accessor functions that expose passes
@@ -77,7 +77,7 @@ ModulePass *createGlobalDCEPass();
 
 
 //===----------------------------------------------------------------------===//
-/// createFunctionExtractionPass - If deleteFn is true, this pass deletes as 
+/// createFunctionExtractionPass - If deleteFn is true, this pass deletes as
 /// the specified function. Otherwise, it deletes as much of the module as
 /// possible, except for the function specified.
 ///

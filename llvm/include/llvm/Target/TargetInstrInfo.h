@@ -1,10 +1,10 @@
 //===-- llvm/Target/TargetInstrInfo.h - Instruction Info --------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file describes the target machine instructions to the code generator.
@@ -91,14 +91,14 @@ public:
 
 
 //---------------------------------------------------------------------------
-/// 
+///
 /// TargetInstrInfo - Interface to description of machine instructions
-/// 
+///
 class TargetInstrInfo {
   const TargetInstrDescriptor* desc;    // raw array to allow static init'n
   unsigned NumOpcodes;                  // number of entries in the desc array
   unsigned numRealOpCodes;              // number of non-dummy op codes
-  
+
   TargetInstrInfo(const TargetInstrInfo &);  // DO NOT IMPLEMENT
   void operator=(const TargetInstrInfo &);   // DO NOT IMPLEMENT
 public:
@@ -107,9 +107,9 @@ public:
 
   // Invariant: All instruction sets use opcode #0 as the PHI instruction
   enum { PHI = 0 };
-  
+
   unsigned getNumOpcodes() const { return NumOpcodes; }
-  
+
   /// get - Return the machine instruction descriptor that corresponds to the
   /// specified instruction opcode.
   ///
@@ -121,7 +121,7 @@ public:
   const char *getName(MachineOpCode Opcode) const {
     return get(Opcode).Name;
   }
-  
+
   int getNumOperands(MachineOpCode Opcode) const {
     return get(Opcode).numOperands;
   }
@@ -143,7 +143,7 @@ public:
   //
   // Query instruction class flags according to the machine-independent
   // flags listed above.
-  // 
+  //
   bool isReturn(MachineOpCode Opcode) const {
     return get(Opcode).Flags & M_RET_FLAG;
   }
@@ -253,36 +253,36 @@ public:
     return true;
   }
 
-  // 
+  //
   // Latencies for individual instructions and instruction pairs
-  // 
+  //
   virtual int minLatency(MachineOpCode Opcode) const {
     return get(Opcode).latency;
   }
-  
+
   virtual int maxLatency(MachineOpCode Opcode) const {
     return get(Opcode).latency;
   }
 
   //
   // Which operand holds an immediate constant?  Returns -1 if none
-  // 
+  //
   virtual int getImmedConstantPos(MachineOpCode Opcode) const {
     return -1; // immediate position is machine specific, so say -1 == "none"
   }
-  
+
   // Check if the specified constant fits in the immediate field
   // of this machine instruction
-  // 
+  //
   virtual bool constantFitsInImmedField(MachineOpCode Opcode,
 					int64_t intValue) const;
-  
+
   // Return the largest positive constant that can be held in the IMMED field
   // of this machine instruction.
   // isSignExtended is set to true if the value is sign-extended before use
   // (this is true for all immediate fields in SPARC instructions).
   // Return 0 if the instruction has no IMMED field.
-  // 
+  //
   virtual uint64_t maxImmedConstant(MachineOpCode Opcode,
 				    bool &isSignExtended) const {
     isSignExtended = get(Opcode).immedIsSignExtended;

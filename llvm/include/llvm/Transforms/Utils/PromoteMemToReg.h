@@ -1,10 +1,10 @@
 //===- PromoteMemToReg.h - Promote Allocas to Scalars -----------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file exposes an interface to promote alloca instructions to SSA

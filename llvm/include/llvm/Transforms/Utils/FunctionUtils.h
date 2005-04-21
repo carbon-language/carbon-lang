@@ -1,10 +1,10 @@
 //===-- Transform/Utils/FunctionUtils.h - Function Utils --------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This family of transformations manipulate LLVM functions.
@@ -21,7 +21,7 @@ namespace llvm {
   struct DominatorSet;
   class Function;
   class Loop;
-  
+
   /// ExtractCodeRegion - rip out a sequence of basic blocks into a new function
   ///
   Function* ExtractCodeRegion(DominatorSet &DS,

@@ -1,14 +1,14 @@
 //===-- llvm/Target/TargetData.h - Data size & alignment info ---*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines target properties related to datatype size/offset/alignment
-// information.  It uses lazy annotations to cache information about how 
+// information.  It uses lazy annotations to cache information about how
 // structure types are laid out and used.
 //
 // This structure should be created once, filled in if the defaults are not
@@ -49,7 +49,7 @@ public:
              bool LittleEndian = false,
              unsigned char PtrSize = 8,
              unsigned char PtrAl   = 8, unsigned char DoubleAl = 8,
-             unsigned char FloatAl = 4, unsigned char LongAl   = 8, 
+             unsigned char FloatAl = 4, unsigned char LongAl   = 8,
              unsigned char IntAl   = 4, unsigned char ShortAl  = 2,
              unsigned char ByteAl  = 1, unsigned char BoolAl   = 1);
 
@@ -67,7 +67,7 @@ public:
     PointerSize(TD.getPointerSize()),
     PointerAlignment(TD.getPointerAlignment()) {
   }
-    
+
   TargetData(const std::string &ToolName, const Module *M);
   ~TargetData();  // Not virtual, do not subclass this class
 
@@ -105,9 +105,9 @@ public:
   /// getIndexOffset - return the offset from the beginning of the type for the
   /// specified indices.  This is used to implement getelementptr.
   ///
-  uint64_t getIndexedOffset(const Type *Ty, 
+  uint64_t getIndexedOffset(const Type *Ty,
                             const std::vector<Value*> &Indices) const;
-  
+
   const StructLayout *getStructLayout(const StructType *Ty) const;
 };
 

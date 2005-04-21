@@ -1,10 +1,10 @@
 //===-- Scalar.h - Scalar Transformations -----------------------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This header file defines prototypes for accessor functions that expose passes
@@ -231,7 +231,7 @@ FunctionPass *createLoopSimplifyPass();
 extern const PassInfo *LoopSimplifyID;
 
 //===----------------------------------------------------------------------===//
-// 
+//
 // This pass eliminates call instructions to the current function which occur
 // immediately before return instructions.
 //
@@ -274,7 +274,7 @@ FunctionPass *createLowerPackedPass();
 FunctionPass *createLowerInvokePass();
 extern const PassInfo *LowerInvokePassID;
 
-  
+
 //===----------------------------------------------------------------------===//
 /// createLowerGCPass - This function returns an instance of the "lowergc"
 /// pass, which lowers garbage collection intrinsics to normal LLVM code.

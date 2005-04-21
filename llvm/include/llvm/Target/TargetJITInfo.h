@@ -1,10 +1,10 @@
 //===- Target/TargetJITInfo.h - Target Information for JIT ------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file exposes an abstract interface used by the Just-In-Time code
@@ -30,19 +30,19 @@ namespace llvm {
   class TargetJITInfo {
   public:
     virtual ~TargetJITInfo() {}
-    
+
     /// addPassesToJITCompile - Add passes to the specified pass manager to
     /// implement a fast code generator for this target.
     ///
     virtual void addPassesToJITCompile(FunctionPassManager &PM) = 0;
-    
+
     /// replaceMachineCodeForFunction - Make it so that calling the function
     /// whose machine code is at OLD turns into a call to NEW, perhaps by
     /// overwriting OLD with a branch to NEW.  This is used for self-modifying
     /// code.
     ///
     virtual void replaceMachineCodeForFunction(void *Old, void *New) = 0;
-    
+
     /// emitFunctionStub - Use the specified MachineCodeEmitter object to emit a
     /// small native function that simply calls the function at the specified
     /// address.  Return the address of the resultant function.

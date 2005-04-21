@@ -1,10 +1,10 @@
 //===-- llvm/Target/TargetLowering.h - Target Lowering Info -----*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file describes how to lower LLVM code to machine code.  This has two
@@ -70,7 +70,7 @@ public:
 
   TargetMachine &getTargetMachine() const { return TM; }
   const TargetData &getTargetData() const { return TD; }
-  
+
   bool isLittleEndian() const { return IsLittleEndian; }
   MVT::ValueType getPointerTy() const { return PointerTy; }
   MVT::ValueType getShiftAmountTy() const { return ShiftAmountTy; }
@@ -92,7 +92,7 @@ public:
     assert(RC && "This value type is not natively supported!");
     return RC;
   }
-  
+
   /// hasNativeSupportFor - Return true if the target has native support for the
   /// specified value type.  This means that it has a register that directly
   /// holds it without promotions or expansions.
@@ -117,7 +117,7 @@ public:
   MVT::ValueType getTypeToTransformTo(MVT::ValueType VT) const {
     return TransformToType[VT];
   }
-  
+
   typedef std::vector<double>::const_iterator legal_fpimm_iterator;
   legal_fpimm_iterator legal_fpimm_begin() const {
     return LegalFPImmediates.begin();
@@ -126,11 +126,11 @@ public:
     return LegalFPImmediates.end();
   }
 
-  /// getOperationAction - Return how this operation should be 
+  /// getOperationAction - Return how this operation should be
   LegalizeAction getOperationAction(unsigned Op, MVT::ValueType VT) const {
-    return (LegalizeAction)((OpActions[Op] >> (2*VT)) & 3); 
+    return (LegalizeAction)((OpActions[Op] >> (2*VT)) & 3);
   }
-  
+
   /// hasNativeSupportForOperation - Return true if this operation is legal for
   /// this type.
   ///
@@ -173,7 +173,7 @@ public:
     case Type::PointerTyID: return PointerTy;
     }
   }
-  
+
   /// getNumElements - Return the number of registers that this ValueType will
   /// eventually require.  This is always one for all non-integer types, is
   /// one for any types promoted to live in larger registers, but may be more
@@ -206,7 +206,7 @@ protected:
   void setShiftAmountFlavor(OutOfRangeShiftAmount OORSA) {
     ShiftAmtHandling = OORSA;
   }
-  
+
   /// addRegisterClass - Add the specified register class as an available
   /// regclass for the specified value type.  This indicates the selector can
   /// handle values of that class natively.
@@ -218,7 +218,7 @@ protected:
   /// computeRegisterProperties - Once all of the register classes are added,
   /// this allows us to compute derived properties we expose.
   void computeRegisterProperties();
-  
+
   /// setOperationAction - Indicate that the specified operation does not work
   /// with the specified type and indicate what to do about it.
   void setOperationAction(unsigned Op, MVT::ValueType VT,
@@ -291,7 +291,7 @@ public:
   /// implement this.  The default implementation of this aborts.
   virtual SDOperand LowerOperation(SDOperand Op);
 
-  
+
 private:
   TargetMachine &TM;
   const TargetData &TD;
@@ -299,7 +299,7 @@ private:
   /// IsLittleEndian - True if this is a little endian target.
   ///
   bool IsLittleEndian;
-  
+
   /// PointerTy - The type to use for pointers, usually i32 or i64.
   ///
   MVT::ValueType PointerTy;
@@ -327,7 +327,7 @@ private:
   /// value type, where the two bits correspond to the LegalizeAction enum.
   /// This can be queried with "getTypeAction(VT)".
   unsigned ValueTypeActions;
- 
+
   /// TransformToType - For any value types we are promoting or expanding, this
   /// contains the value type that we are changing to.  For Expanded types, this
   /// contains one step of the expand (e.g. i64 -> i32), even if there are
@@ -341,9 +341,9 @@ private:
   /// operations that are not should be described.  Note that operations on
   /// non-legal value types are not described here.
   unsigned OpActions[128];
-  
+
   std::vector<double> LegalFPImmediates;
-  
+
   std::vector<std::pair<MVT::ValueType,
                         TargetRegisterClass*> > AvailableRegClasses;
 };

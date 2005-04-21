@@ -1,10 +1,10 @@
 //===- Cloning.h - Clone various parts of LLVM programs ---------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines various functions that are used to clone chunks of LLVM
@@ -108,7 +108,7 @@ void CloneTraceInto(Function *NewFunc, Trace &T,
 /// this call.  The program is still in a well defined state if this occurs
 /// though.
 ///
-/// Note that this only does one level of inlining.  For example, if the 
+/// Note that this only does one level of inlining.  For example, if the
 /// instruction 'call B' is inlined, and 'B' calls 'C', then the call to 'C' now
 /// exists in the instruction stream.  Similiarly this will inline a recursive
 /// function by one level.
@@ -117,9 +117,9 @@ bool InlineFunction(CallInst *C);
 bool InlineFunction(InvokeInst *II);
 bool InlineFunction(CallSite CS);
 
-/// CloneTrace - Returns a copy of the specified trace. 
-/// It takes a vector of basic blocks clones the basic blocks, removes internal 
-/// phi nodes, adds it to the same function as the original (although there is 
+/// CloneTrace - Returns a copy of the specified trace.
+/// It takes a vector of basic blocks clones the basic blocks, removes internal
+/// phi nodes, adds it to the same function as the original (although there is
 /// no jump to it) and returns the new vector of basic blocks.
 std::vector<BasicBlock *> CloneTrace(const std::vector<BasicBlock*> &origTrace);
 

@@ -1,10 +1,10 @@
 //===- Target/MRegisterInfo.h - Target Register Information -----*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file describes an abstract interface used to get information about a
@@ -92,7 +92,7 @@ public:
   virtual iterator allocation_order_end(MachineFunction &MF)   const {
     return end();
   }
-  
+
 
 
   /// getSize - Return the size of the register in bytes, which is also the size
@@ -280,7 +280,7 @@ public:
   /// instructions.  This method need only be implemented if using call frame
   /// setup/destroy pseudo instructions.
   ///
-  virtual void 
+  virtual void
   eliminateCallFramePseudoInstr(MachineFunction &MF,
                                 MachineBasicBlock &MBB,
                                 MachineBasicBlock::iterator MI) const {
