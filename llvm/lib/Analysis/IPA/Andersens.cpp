@@ -1,10 +1,10 @@
 //===- Andersens.cpp - Andersen's Interprocedural Alias Analysis ----------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines a very simple implementation of Andersen's interprocedural
@@ -43,8 +43,8 @@
 //
 // Future Improvements:
 //   This implementation of Andersen's algorithm is extremely slow.  To make it
-//   scale reasonably well, the inclusion constraints could be sorted (easy), 
-//   offline variable substitution would be a huge win (straight-forward), and 
+//   scale reasonably well, the inclusion constraints could be sorted (easy),
+//   offline variable substitution would be a huge win (straight-forward), and
 //   online cycle elimination (trickier) might help as well.
 //
 //===----------------------------------------------------------------------===//
@@ -137,7 +137,7 @@ namespace {
     std::map<Value*, unsigned> ValueNodes;
 
     /// ObjectNodes - This map contains entries for each memory object in the
-    /// program: globals, alloca's and mallocs.  
+    /// program: globals, alloca's and mallocs.
     std::map<Value*, unsigned> ObjectNodes;
 
     /// ReturnNodes - This map contains an entry for each function in the
@@ -161,7 +161,7 @@ namespace {
       Constraint(ConstraintType Ty, Node *D, Node *S)
         : Type(Ty), Dest(D), Src(S) {}
     };
-    
+
     /// Constraints - This vector contains a list of all of the constraints
     /// identified by the program.
     std::vector<Constraint> Constraints;
@@ -193,7 +193,7 @@ namespace {
       NullPtr      = 1,
       NullObject   = 2,
     };
-    
+
   public:
     bool runOnModule(Module &M) {
       InitializeAliasAnalysis(this);
@@ -209,7 +209,7 @@ namespace {
       ReturnNodes.clear();
       VarargNodes.clear();
       EscapingInternalFunctions.clear();
-      std::vector<Constraint>().swap(Constraints);      
+      std::vector<Constraint>().swap(Constraints);
       return false;
     }
 
@@ -232,7 +232,7 @@ namespace {
 
     //------------------------------------------------
     // Implement the AliasAnalysis API
-    //  
+    //
     AliasResult alias(const Value *V1, unsigned V1Size,
                       const Value *V2, unsigned V2Size);
     ModRefResult getModRefInfo(CallSite CS, Value *P, unsigned Size);
@@ -265,7 +265,7 @@ namespace {
       }
       return &GraphNodes[I->second];
     }
-    
+
     /// getObject - Return the node corresponding to the memory object for the
     /// specified global or allocation instruction.
     Node *getObject(Value *V) {
@@ -415,7 +415,7 @@ void Andersens::getMustAliases(Value *P, std::vector<Value*> &RetVals) {
       }
     }
   }
-  
+
   AliasAnalysis::getMustAliases(P, RetVals);
 }
 
@@ -572,7 +572,7 @@ void Andersens::AddGlobalInitializerConstraints(Node *N, Constant *C) {
   if (C->getType()->isFirstClassType()) {
     if (isa<PointerType>(C->getType()))
       N->copyFrom(getNodeForConstantPointer(C));
-                                       
+
   } else if (C->isNullValue()) {
     N->addPointerTo(&GraphNodes[NullObject]);
     return;
@@ -607,7 +607,7 @@ bool Andersens::AddConstraintsForExternalCall(CallSite CS, Function *F) {
       F->getName() == "atol" || F->getName() == "atoll" ||
       F->getName() == "remove" || F->getName() == "unlink" ||
       F->getName() == "rename" || F->getName() == "memcmp" ||
-      F->getName() == "llvm.memset" || 
+      F->getName() == "llvm.memset" ||
       F->getName() == "strcmp" || F->getName() == "strncmp" ||
       F->getName() == "execl" || F->getName() == "execlp" ||
       F->getName() == "execle" || F->getName() == "execv" ||
@@ -703,7 +703,7 @@ void Andersens::CollectConstraints(Module &M) {
                                        &GraphNodes[UniversalSet]));
     }
   }
-  
+
   for (Module::iterator F = M.begin(), E = M.end(); F != E; ++F) {
     // Make the function address point to the function object.
     getNodeValue(*F)->addPointerTo(getObject(F)->setValue(F));
@@ -902,7 +902,7 @@ void Andersens::AddConstraintsForCall(CallSite CS, Function *F) {
                                      &GraphNodes[UniversalSet],
                                      getReturnNode(F)));
   }
-  
+
   Function::arg_iterator AI = F->arg_begin(), AE = F->arg_end();
   CallSite::arg_iterator ArgI = CS.arg_begin(), ArgE = CS.arg_end();
   for (; AI != AE && ArgI != ArgE; ++AI, ++ArgI)
@@ -920,7 +920,7 @@ void Andersens::AddConstraintsForCall(CallSite CS, Function *F) {
                                        &GraphNodes[UniversalSet],
                                        getNode(*ArgI)));
     }
-  
+
   // Copy all pointers passed through the varargs section to the varargs node.
   if (F->getFunctionType()->isVarArg())
     for (; ArgI != ArgE; ++ArgI)

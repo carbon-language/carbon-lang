@@ -1,10 +1,10 @@
 //===- AliasAnalysisCounter.cpp - Alias Analysis Query Counter ------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements a pass which can be used to count how many alias queries
@@ -67,7 +67,7 @@ namespace {
           printLine("mod/ref",         MR, MRSum);
           std::cerr
             << "  Mod/Ref Analysis Counter Summary: " << NoMR*100/MRSum<< "%/"
-            << JustRef*100/MRSum << "%/" << JustMod*100/MRSum << "%/" 
+            << JustRef*100/MRSum << "%/" << JustMod*100/MRSum << "%/"
             << MR*100/MRSum <<"%\n\n";
         }
       }
@@ -96,8 +96,8 @@ namespace {
     bool onlyReadsMemory(Function *F) {
       return getAnalysis<AliasAnalysis>().onlyReadsMemory(F);
     }
-    
-    
+
+
     // Forwarding functions: just delegate to a real AA implementation, counting
     // the number of responses...
     AliasResult alias(const Value *V1, unsigned V1Size,
@@ -118,11 +118,11 @@ ModulePass *llvm::createAliasAnalysisCounterPass() {
   return new AliasAnalysisCounter();
 }
 
-AliasAnalysis::AliasResult 
+AliasAnalysis::AliasResult
 AliasAnalysisCounter::alias(const Value *V1, unsigned V1Size,
                             const Value *V2, unsigned V2Size) {
   AliasResult R = getAnalysis<AliasAnalysis>().alias(V1, V1Size, V2, V2Size);
-  
+
   const char *AliasString;
   switch (R) {
   default: assert(0 && "Unknown alias type!");
@@ -142,7 +142,7 @@ AliasAnalysisCounter::alias(const Value *V1, unsigned V1Size,
   return R;
 }
 
-AliasAnalysis::ModRefResult 
+AliasAnalysis::ModRefResult
 AliasAnalysisCounter::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
   ModRefResult R = getAnalysis<AliasAnalysis>().getModRefInfo(CS, P, Size);
 

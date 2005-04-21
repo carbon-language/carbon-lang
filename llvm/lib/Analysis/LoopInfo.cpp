@@ -1,10 +1,10 @@
 //===- LoopInfo.cpp - Natural Loop Calculator -----------------------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines the LoopInfo class that is used to identify natural loops
@@ -175,7 +175,7 @@ Loop *LoopInfo::ConsiderForLoop(BasicBlock *BB, const DominatorSet &DS) {
             std::find(SLP->SubLoops.begin(), SLP->SubLoops.end(), SubLoop);
           assert(I != SLP->SubLoops.end() && "SubLoop not a child of parent?");
           SLP->SubLoops.erase(I);   // Remove from parent...
-          
+
           // Add the subloop to THIS loop...
           SubLoop->ParentLoop = L;
           L->SubLoops.push_back(SubLoop);
@@ -183,7 +183,7 @@ Loop *LoopInfo::ConsiderForLoop(BasicBlock *BB, const DominatorSet &DS) {
 
       // Normal case, add the block to our loop...
       L->Blocks.push_back(X);
-        
+
       // Add all of the predecessors of X to the end of the work stack...
       TodoStack.insert(TodoStack.end(), pred_begin(X), pred_end(X));
     }
@@ -243,7 +243,7 @@ Loop *LoopInfo::ConsiderForLoop(BasicBlock *BB, const DominatorSet &DS) {
             --i;  // We just shrunk the SubLoops list.
           }
         }
-      }      
+      }
     }
   }
 
@@ -263,8 +263,8 @@ void LoopInfo::MoveSiblingLoopInto(Loop *NewChild, Loop *NewParent) {
   assert(I != OldParent->SubLoops.end() && "Parent fields incorrect??");
   OldParent->SubLoops.erase(I);   // Remove from parent's subloops list
   NewChild->ParentLoop = 0;
-  
-  InsertLoopInto(NewChild, NewParent);  
+
+  InsertLoopInto(NewChild, NewParent);
 }
 
 /// InsertLoopInto - This inserts loop L into the specified parent loop.  If the
@@ -273,13 +273,13 @@ void LoopInfo::MoveSiblingLoopInto(Loop *NewChild, Loop *NewParent) {
 void LoopInfo::InsertLoopInto(Loop *L, Loop *Parent) {
   BasicBlock *LHeader = L->getHeader();
   assert(Parent->contains(LHeader) && "This loop should not be inserted here!");
-  
+
   // Check to see if it belongs in a child loop...
   for (unsigned i = 0, e = Parent->SubLoops.size(); i != e; ++i)
     if (Parent->SubLoops[i]->contains(LHeader)) {
       InsertLoopInto(L, Parent->SubLoops[i]);
       return;
-    }      
+    }
 
   // If not, insert it here!
   Parent->SubLoops.push_back(L);
@@ -325,7 +325,7 @@ void LoopInfo::removeBlock(BasicBlock *BB) {
   if (I != BBMap.end()) {
     for (Loop *L = I->second; L; L = L->getParentLoop())
       L->removeBlockFromLoop(BB);
-    
+
     BBMap.erase(I);
   }
 }
@@ -367,7 +367,7 @@ BasicBlock *Loop::getLoopPreheader() const {
         return 0;             // Multiple predecessors outside the loop
       Out = *PI;
     }
-  
+
   // Make sure there is only one exit out of the preheader...
   succ_iterator SI = succ_begin(Out);
   ++SI;
@@ -439,7 +439,7 @@ Value *Loop::getTripCount() const {
   Instruction *Inc = getCanonicalInductionVariableIncrement();
   if (Inc == 0) return 0;
   PHINode *IV = cast<PHINode>(Inc->getOperand(0));
-  
+
   BasicBlock *BackedgeBlock =
     IV->getIncomingBlock(contains(IV->getIncomingBlock(1)));
 
@@ -453,7 +453,7 @@ Value *Loop::getTripCount() const {
           } else if (SCI->getOpcode() == Instruction::SetEQ) {
             return SCI->getOperand(1);
           }
-  
+
   return 0;
 }
 

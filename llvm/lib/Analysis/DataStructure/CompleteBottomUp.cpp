@@ -1,10 +1,10 @@
 //===- CompleteBottomUp.cpp - Complete Bottom-Up Data Structure Graphs ----===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This is the exact same as the bottom-up graphs, but we use take a completed
@@ -52,7 +52,7 @@ bool CompleteBUDataStructures::runOnModule(Module &M) {
   } else {
     std::cerr << "CBU-DSA: No 'main' function found!\n";
   }
-  
+
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
     if (!I->isExternal() && !DSInfo.count(I))
       calculateSCCGraphs(getOrCreateGraph(*I), Stack, NextID, ValMap);
@@ -66,7 +66,7 @@ bool CompleteBUDataStructures::runOnModule(Module &M) {
   if (MainFunc && !MainFunc->isExternal()) {
     DSGraph &MainGraph = getOrCreateGraph(*MainFunc);
     const DSGraph &GG = *MainGraph.getGlobalsGraph();
-    ReachabilityCloner RC(MainGraph, GG, 
+    ReachabilityCloner RC(MainGraph, GG,
                           DSGraph::DontCloneCallNodes |
                           DSGraph::DontCloneAuxCallNodes);
 
@@ -77,7 +77,7 @@ bool CompleteBUDataStructures::runOnModule(Module &M) {
         RC.getClonedNH(GG.getNodeForValue(*I));
 
     MainGraph.maskIncompleteMarkers();
-    MainGraph.markIncompleteNodes(DSGraph::MarkFormalArgs | 
+    MainGraph.markIncompleteNodes(DSGraph::MarkFormalArgs |
                                   DSGraph::IgnoreGlobals);
   }
 
@@ -107,7 +107,7 @@ DSGraph &CompleteBUDataStructures::getOrCreateGraph(Function &F) {
 
 unsigned CompleteBUDataStructures::calculateSCCGraphs(DSGraph &FG,
                                                   std::vector<DSGraph*> &Stack,
-                                                  unsigned &NextID, 
+                                                  unsigned &NextID,
                                          hash_map<DSGraph*, unsigned> &ValMap) {
   assert(!ValMap.count(&FG) && "Shouldn't revisit functions!");
   unsigned Min = NextID++, MyID = Min;
@@ -157,7 +157,7 @@ unsigned CompleteBUDataStructures::calculateSCCGraphs(DSGraph &FG,
     // Remove NG from the ValMap since the pointer may get recycled.
     ValMap.erase(NG);
     delete NG;
-    
+
     Stack.pop_back();
     IsMultiNodeSCC = true;
   }
@@ -165,7 +165,7 @@ unsigned CompleteBUDataStructures::calculateSCCGraphs(DSGraph &FG,
   // Clean up the graph before we start inlining a bunch again...
   if (IsMultiNodeSCC)
     FG.removeTriviallyDeadNodes();
-  
+
   Stack.pop_back();
   processGraph(FG);
   ValMap[&FG] = ~0U;
@@ -187,7 +187,7 @@ void CompleteBUDataStructures::processGraph(DSGraph &G) {
 
     assert(calls.insert(TheCall).second &&
            "Call instruction occurs multiple times in graph??");
-    
+
     // Fast path for noop calls.  Note that we don't care about merging globals
     // in the callee with nodes in the caller here.
     if (CS.getRetVal().isNull() && CS.getNumPtrArgs() == 0)
@@ -196,7 +196,7 @@ void CompleteBUDataStructures::processGraph(DSGraph &G) {
     // Loop over all of the potentially called functions...
     // Inline direct calls as well as indirect calls because the direct
     // callee may have indirect callees and so may have changed.
-    // 
+    //
     callee_iterator I = callee_begin(TheCall),E = callee_end(TheCall);
     unsigned TNum = 0, Num = 0;
     DEBUG(Num = std::distance(I, E));
@@ -208,7 +208,7 @@ void CompleteBUDataStructures::processGraph(DSGraph &G) {
         // calls or for self recursion within an SCC.
         DSGraph &GI = getOrCreateGraph(*CalleeFunc);
         ++NumCBUInlines;
-        G.mergeInGraph(CS, *CalleeFunc, GI, 
+        G.mergeInGraph(CS, *CalleeFunc, GI,
                        DSGraph::StripAllocaBit | DSGraph::DontCloneCallNodes |
                        DSGraph::DontCloneAuxCallNodes);
         DEBUG(std::cerr << "    Inlining graph [" << i << "/"

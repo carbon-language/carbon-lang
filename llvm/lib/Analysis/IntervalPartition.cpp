@@ -1,10 +1,10 @@
 //===- IntervalPartition.cpp - Interval Partition module code -------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file contains the definition of the IntervalPartition class, which
@@ -55,7 +55,7 @@ void IntervalPartition::addIntervalToPartition(Interval *I) {
 //
 void IntervalPartition::updatePredecessors(Interval *Int) {
   BasicBlock *Header = Int->getHeaderNode();
-  for (Interval::succ_iterator I = Int->Successors.begin(), 
+  for (Interval::succ_iterator I = Int->Successors.begin(),
 	                       E = Int->Successors.end(); I != E; ++I)
     getBlockInterval(*I)->Predecessors.push_back(Header);
 }

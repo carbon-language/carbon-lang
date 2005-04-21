@@ -1,13 +1,13 @@
 //===- FindUnsafePointerTypes.cpp - Check pointer usage safety ------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
-// This file defines a pass that can be used to determine, interprocedurally, 
+// This file defines a pass that can be used to determine, interprocedurally,
 // which pointer types are accessed unsafely in a program.  If there is an
 // "unsafe" access to a specific pointer type, transformations that depend on
 // type safety cannot be permitted.
@@ -20,7 +20,7 @@
 //
 // Currently, the only allowed operations on pointer types are:
 //   alloca, malloc, free, getelementptr, load, and store
-// 
+//
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/FindUnsafePointerTypes.h"
@@ -37,7 +37,7 @@ X("unsafepointertypes", "Find Unsafe Pointer Types");
 // Provide a command line option to turn on printing of which instructions cause
 // a type to become invalid
 //
-static cl::opt<bool> 
+static cl::opt<bool>
 PrintFailures("printunsafeptrinst", cl::Hidden,
               cl::desc("Print Unsafe Pointer Access Instructions"));
 
@@ -96,9 +96,9 @@ void FindUnsafePointerTypes::print(std::ostream &o, const Module *M) const {
 
   o << "SafePointerAccess Analysis: Found these unsafe types:\n";
   unsigned Counter = 1;
-  for (std::set<PointerType*>::const_iterator I = getUnsafeTypes().begin(), 
+  for (std::set<PointerType*>::const_iterator I = getUnsafeTypes().begin(),
          E = getUnsafeTypes().end(); I != E; ++I, ++Counter) {
-    
+
     o << " #" << Counter << ". ";
     CW << **I << "\n";
   }

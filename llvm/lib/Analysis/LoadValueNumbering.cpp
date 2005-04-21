@@ -1,10 +1,10 @@
 //===- LoadValueNumbering.cpp - Load Value #'ing Implementation -*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements a value numbering pass that value numbers load and call
@@ -39,16 +39,16 @@ using namespace llvm;
 namespace {
   // FIXME: This should not be a FunctionPass.
   struct LoadVN : public FunctionPass, public ValueNumbering {
-    
+
     /// Pass Implementation stuff.  This doesn't do any analysis.
     ///
     bool runOnFunction(Function &) { return false; }
-    
+
     /// getAnalysisUsage - Does not modify anything.  It uses Value Numbering
     /// and Alias Analysis.
     ///
     virtual void getAnalysisUsage(AnalysisUsage &AU) const;
-    
+
     /// getEqualNumberNodes - Return nodes with the same value number as the
     /// specified Value.  This fills in the argument vector with any equal
     /// values.
@@ -63,7 +63,7 @@ namespace {
     virtual void deleteValue(Value *V) {
       getAnalysis<AliasAnalysis>().deleteValue(V);
     }
-    
+
     /// copyValue - This method should be used whenever a preexisting value in
     /// the program is copied or cloned, introducing a new value.  Note that
     /// analysis implementations should tolerate clients that use this method to
@@ -109,7 +109,7 @@ static bool isPathTransparentTo(BasicBlock *CurBlock, BasicBlock *Dom,
   // stop searching, returning success.
   if (CurBlock == Dom || !Visited.insert(CurBlock).second)
     return true;
-  
+
   // Check whether this block is known transparent or not.
   std::map<BasicBlock*, bool>::iterator TBI =
     TransparentBlocks.lower_bound(CurBlock);
@@ -125,7 +125,7 @@ static bool isPathTransparentTo(BasicBlock *CurBlock, BasicBlock *Dom,
   } else if (!TBI->second)
     // This block is known non-transparent, so that path can't be either.
     return false;
-  
+
   // The current block is known to be transparent.  The entire path is
   // transparent if all of the predecessors paths to the parent is also
   // transparent to the memory location.
@@ -180,7 +180,7 @@ void LoadVN::getCallEqualNumberNodes(CallInst *CI,
         if (AllOperandsEqual)
           IdenticalCalls.push_back(C);
       }
-  
+
   if (IdenticalCalls.empty()) return;
 
   // Eliminate duplicates, which could occur if we chose a value that is passed
@@ -212,7 +212,7 @@ void LoadVN::getCallEqualNumberNodes(CallInst *CI,
           Instruction *First = CI, *Second = C;
           if (!DomSetInfo.dominates(CI, C))
             std::swap(First, Second);
-          
+
           // Scan the instructions between the calls, checking for stores or
           // calls to dangerous functions.
           BasicBlock::iterator I = First;
@@ -283,7 +283,7 @@ void LoadVN::getEqualNumberNodes(Value *V,
   LoadInst *LI = cast<LoadInst>(V);
   if (LI->isVolatile())
     return getAnalysis<ValueNumbering>().getEqualNumberNodes(V, RetVals);
-  
+
   Value *LoadPtr = LI->getOperand(0);
   BasicBlock *LoadBB = LI->getParent();
   Function *F = LoadBB->getParent();
@@ -351,14 +351,14 @@ void LoadVN::getEqualNumberNodes(Value *V,
   // no need to do any global analysis at all.
   if (LoadInvalidatedInBBBefore && LoadInvalidatedInBBAfter)
     return;
-  
+
   // Now that we know the value is not neccesarily killed on entry or exit to
   // the BB, find out how many load and store instructions (to this location)
   // live in each BB in the function.
   //
   std::map<BasicBlock*, unsigned>  CandidateLoads;
   std::set<BasicBlock*> CandidateStores;
-    
+
   for (Value::use_iterator UI = LoadPtr->use_begin(), UE = LoadPtr->use_end();
        UI != UE; ++UI)
     if (LoadInst *Cand = dyn_cast<LoadInst>(*UI)) {// Is a load of source?
@@ -476,7 +476,7 @@ void LoadVN::getEqualNumberNodes(Value *V,
 
   // Stores in the load-bb are handled above.
   CandidateStores.erase(LoadBB);
-  
+
   for (std::set<BasicBlock*>::iterator I = CandidateStores.begin(),
          E = CandidateStores.end(); I != E; ++I)
     if (DomSetInfo.dominates(*I, LoadBB)) {

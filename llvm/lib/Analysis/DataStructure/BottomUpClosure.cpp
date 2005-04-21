@@ -1,10 +1,10 @@
 //===- BottomUpClosure.cpp - Compute bottom-up interprocedural closure ----===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements the BUDataStructures class, which represents the
@@ -26,7 +26,7 @@ namespace {
   Statistic<> MaxSCC("budatastructure", "Maximum SCC Size in Call Graph");
   Statistic<> NumBUInlines("budatastructures", "Number of graphs inlined");
   Statistic<> NumCallEdges("budatastructures", "Number of 'actual' call edges");
-  
+
   RegisterAnalysis<BUDataStructures>
   X("budatastructure", "Bottom-up Data Structure Analysis");
 }
@@ -48,23 +48,23 @@ static void BuildGlobalECs(DSGraph &GG, std::set<GlobalValue*> &ECGlobals) {
     GlobalValue *First = GVs[0];
     for (unsigned i = 1, e = GVs.size(); i != e; ++i)
       GlobalECs.unionSets(First, GVs[i]);
-    
+
     // Next, get the leader element.
     assert(First == GlobalECs.getLeaderValue(First) &&
            "First did not end up being the leader?");
-    
+
     // Next, remove all globals from the scalar map that are not the leader.
     assert(GVs[0] == First && "First had to be at the front!");
     for (unsigned i = 1, e = GVs.size(); i != e; ++i) {
       ECGlobals.insert(GVs[i]);
       SM.erase(SM.find(GVs[i]));
     }
-    
+
     // Finally, change the global node to only contain the leader.
     I->clearGlobals();
     I->addGlobal(First);
   }
-  
+
   DEBUG(GG.AssertGraphOK());
 }
 
@@ -161,7 +161,7 @@ bool BUDataStructures::runOnModule(Module &M) {
   // nothing!  In particular, externally visible globals and unresolvable call
   // nodes at the end of the BU phase should make things that they point to
   // incomplete in the globals graph.
-  // 
+  //
   GlobalsGraph->removeTriviallyDeadNodes();
   GlobalsGraph->maskIncompleteMarkers();
 
@@ -186,7 +186,7 @@ bool BUDataStructures::runOnModule(Module &M) {
   if (MainFunc && !MainFunc->isExternal()) {
     DSGraph &MainGraph = getOrCreateGraph(MainFunc);
     const DSGraph &GG = *MainGraph.getGlobalsGraph();
-    ReachabilityCloner RC(MainGraph, GG, 
+    ReachabilityCloner RC(MainGraph, GG,
                           DSGraph::DontCloneCallNodes |
                           DSGraph::DontCloneAuxCallNodes);
 
@@ -197,7 +197,7 @@ bool BUDataStructures::runOnModule(Module &M) {
         RC.getClonedNH(GG.getNodeForValue(*I));
 
     MainGraph.maskIncompleteMarkers();
-    MainGraph.markIncompleteNodes(DSGraph::MarkFormalArgs | 
+    MainGraph.markIncompleteNodes(DSGraph::MarkFormalArgs |
                                   DSGraph::IgnoreGlobals);
   }
 
@@ -210,7 +210,7 @@ DSGraph &BUDataStructures::getOrCreateGraph(Function *F) {
   if (Graph) return *Graph;
 
   DSGraph &LocGraph = getAnalysis<LocalDataStructures>().getDSGraph(*F);
-  
+
   // Steal the local graph.
   Graph = new DSGraph(GlobalECs, LocGraph.getTargetData());
   Graph->spliceFrom(LocGraph);
@@ -235,7 +235,7 @@ static bool isResolvableFunc(const Function* callee) {
   return !callee->isExternal() || isVAHackFn(callee);
 }
 
-static void GetAllCallees(const DSCallSite &CS, 
+static void GetAllCallees(const DSCallSite &CS,
                           std::vector<Function*> &Callees) {
   if (CS.isDirectCall()) {
     if (isResolvableFunc(CS.getCalleeFunc()))
@@ -244,7 +244,7 @@ static void GetAllCallees(const DSCallSite &CS,
     // Get all callees.
     unsigned OldSize = Callees.size();
     CS.getCalleeNode()->addFullFunctionList(Callees);
-    
+
     // If any of the callees are unresolvable, remove the whole batch!
     for (unsigned i = OldSize, e = Callees.size(); i != e; ++i)
       if (!isResolvableFunc(Callees[i])) {
@@ -265,7 +265,7 @@ static void GetAllAuxCallees(DSGraph &G, std::vector<Function*> &Callees) {
 
 unsigned BUDataStructures::calculateGraphs(Function *F,
                                            std::vector<Function*> &Stack,
-                                           unsigned &NextID, 
+                                           unsigned &NextID,
                                      hash_map<Function*, unsigned> &ValMap) {
   assert(!ValMap.count(F) && "Shouldn't revisit functions!");
   unsigned Min = NextID++, MyID = Min;
@@ -488,7 +488,7 @@ void BUDataStructures::calculateGraph(DSGraph &Graph) {
         if (!Printed)
           std::cerr << "In Fns: " << Graph.getFunctionNames() << "\n";
         std::cerr << "  calls " << CalledFuncs.size()
-                  << " fns from site: " << CS.getCallSite().getInstruction() 
+                  << " fns from site: " << CS.getCallSite().getInstruction()
                   << "  " << *CS.getCallSite().getInstruction();
         std::cerr << "   Fns =";
         unsigned NumPrinted = 0;
@@ -510,7 +510,7 @@ void BUDataStructures::calculateGraph(DSGraph &Graph) {
         if (IndCallGraph.first == 0) {
           std::vector<Function*>::iterator I = CalledFuncs.begin(),
             E = CalledFuncs.end();
-          
+
           // Start with a copy of the first graph.
           GI = IndCallGraph.first = new DSGraph(getDSGraph(**I), GlobalECs);
           GI->setGlobalsGraph(Graph.getGlobalsGraph());
@@ -539,7 +539,7 @@ void BUDataStructures::calculateGraph(DSGraph &Graph) {
             for (e = NextArgs.size(); i != e; ++i)
               Args.push_back(NextArgs[i]);
           }
-          
+
           // Clean up the final graph!
           GI->removeDeadNodes(DSGraph::KeepUnreachableGlobals);
         } else {
@@ -580,7 +580,7 @@ void BUDataStructures::calculateGraph(DSGraph &Graph) {
   // Clone everything reachable from globals in the function graph into the
   // globals graph.
   for (DSScalarMap::global_iterator I = MainSM.global_begin(),
-         E = MainSM.global_end(); I != E; ++I) 
+         E = MainSM.global_end(); I != E; ++I)
     RC.getClonedNH(MainSM[*I]);
 
   //Graph.writeGraphToFile(std::cerr, "bu_" + F.getName());

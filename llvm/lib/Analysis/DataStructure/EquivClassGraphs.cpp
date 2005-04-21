@@ -1,10 +1,10 @@
 //===- EquivClassGraphs.cpp - Merge equiv-class graphs & inline bottom-up -===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This pass is the same as the complete bottom-up graphs, but
@@ -50,12 +50,12 @@ static void CheckAllGraphs(Module *M, GT &ECGraphs) {
 
       DSGraph::NodeMapTy GlobalsGraphNodeMapping;
       G.computeGToGGMapping(GlobalsGraphNodeMapping);
-    } 
+    }
 }
 #endif
 
 // getSomeCalleeForCallSite - Return any one callee function at a call site.
-// 
+//
 Function *EquivClassGraphs::getSomeCalleeForCallSite(const CallSite &CS) const{
   Function *thisFunc = CS.getCaller();
   assert(thisFunc && "getSomeCalleeForCallSite(): Not a valid call site?");
@@ -94,7 +94,7 @@ bool EquivClassGraphs::runOnModule(Module &M) {
   } else {
     std::cerr << "Fold Graphs: No 'main' function found!\n";
   }
-  
+
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
     if (!I->isExternal())
       processSCC(getOrCreateGraph(*I), Stack, NextID, ValMap);
@@ -110,7 +110,7 @@ bool EquivClassGraphs::runOnModule(Module &M) {
   if (MainFunc && !MainFunc->isExternal()) {
     DSGraph &MainGraph = getOrCreateGraph(*MainFunc);
     const DSGraph &GG = *MainGraph.getGlobalsGraph();
-    ReachabilityCloner RC(MainGraph, GG, 
+    ReachabilityCloner RC(MainGraph, GG,
                           DSGraph::DontCloneCallNodes |
                           DSGraph::DontCloneAuxCallNodes);
 
@@ -121,7 +121,7 @@ bool EquivClassGraphs::runOnModule(Module &M) {
         RC.getClonedNH(GG.getNodeForValue(*I));
 
     MainGraph.maskIncompleteMarkers();
-    MainGraph.markIncompleteNodes(DSGraph::MarkFormalArgs | 
+    MainGraph.markIncompleteNodes(DSGraph::MarkFormalArgs |
                                   DSGraph::IgnoreGlobals);
   }
 
@@ -158,7 +158,7 @@ bool EquivClassGraphs::runOnModule(Module &M) {
 //
 void EquivClassGraphs::buildIndirectFunctionSets(Module &M) {
   const ActualCalleesTy& AC = CBU->getActualCallees();
-  
+
   // Loop over all of the indirect calls in the program.  If a call site can
   // call multiple different functions, we need to unify all of the callees into
   // the same equivalence class.
@@ -204,7 +204,7 @@ void EquivClassGraphs::buildIndirectFunctionSets(Module &M) {
     // equivalence class.  More precisely, if F is in the class, and G(F) is
     // its graph, then we include all other functions that are also in G(F).
     // Currently, that is just the functions in the same call-graph-SCC as F.
-    // 
+    //
     DSGraph& funcDSGraph = CBU->getDSGraph(*I->second);
     for (DSGraph::retnodes_iterator RI = funcDSGraph.retnodes_begin(),
            RE = funcDSGraph.retnodes_end(); RI != RE; ++RI)
@@ -242,24 +242,24 @@ void EquivClassGraphs::buildIndirectFunctionSets(Module &M) {
     DSGraph &MergedG = getOrCreateGraph(*LF);
 
     // Record the argument nodes for use in merging later below.
-    std::vector<DSNodeHandle> ArgNodes;  
+    std::vector<DSNodeHandle> ArgNodes;
 
     for (Function::arg_iterator AI = LF->arg_begin(), E = LF->arg_end();
          AI != E; ++AI)
       if (DS::isPointerType(AI->getType()))
         ArgNodes.push_back(MergedG.getNodeForValue(AI));
-      
+
     // Merge in the graphs of all other functions in this equiv. class.  Note
     // that two or more functions may have the same graph, and it only needs
     // to be merged in once.
     std::set<DSGraph*> GraphsMerged;
     GraphsMerged.insert(&CBU->getDSGraph(*LF));
-    
+
     for (++SI; SI != FuncECs.member_end(); ++SI) {
       Function *F = *SI;
       DSGraph *&FG = DSInfo[F];
-      
-      DSGraph &CBUGraph = CBU->getDSGraph(*F); 
+
+      DSGraph &CBUGraph = CBU->getDSGraph(*F);
       if (GraphsMerged.insert(&CBUGraph).second) {
         // Record the "folded" graph for the function.
         for (DSGraph::retnodes_iterator I = CBUGraph.retnodes_begin(),
@@ -267,14 +267,14 @@ void EquivClassGraphs::buildIndirectFunctionSets(Module &M) {
           assert(DSInfo[I->first] == 0 && "Graph already exists for Fn!");
           DSInfo[I->first] = &MergedG;
         }
-        
+
         // Clone this member of the equivalence class into MergedG.
         MergedG.cloneInto(CBUGraph);
       }
-      
+
       // Merge the return nodes of all functions together.
       MergedG.getReturnNodes()[LF].mergeWith(MergedG.getReturnNodes()[F]);
-      
+
       // Merge the function arguments with all argument nodes found so far.
       // If there are extra function args, add them to the vector of argNodes
       Function::arg_iterator AI2 = F->arg_begin(), AI2end = F->arg_end();
@@ -282,7 +282,7 @@ void EquivClassGraphs::buildIndirectFunctionSets(Module &M) {
            arg != numArgs && AI2 != AI2end; ++AI2, ++arg)
         if (DS::isPointerType(AI2->getType()))
           ArgNodes[arg].mergeWith(MergedG.getNodeForValue(AI2));
-      
+
       for ( ; AI2 != AI2end; ++AI2)
         if (DS::isPointerType(AI2->getType()))
           ArgNodes.push_back(MergedG.getNodeForValue(AI2));
@@ -319,7 +319,7 @@ DSGraph &EquivClassGraphs::getOrCreateGraph(Function &F) {
 
 
 unsigned EquivClassGraphs::
-processSCC(DSGraph &FG, std::vector<DSGraph*> &Stack, unsigned &NextID, 
+processSCC(DSGraph &FG, std::vector<DSGraph*> &Stack, unsigned &NextID,
            std::map<DSGraph*, unsigned> &ValMap) {
   std::map<DSGraph*, unsigned>::iterator It = ValMap.lower_bound(&FG);
   if (It != ValMap.end() && It->first == &FG)
@@ -366,7 +366,7 @@ processSCC(DSGraph &FG, std::vector<DSGraph*> &Stack, unsigned &NextID,
     for (DSGraph::retnodes_iterator I = NG->retnodes_begin();
          I != NG->retnodes_end(); ++I)
       DSInfo[I->first] = &FG;
-    
+
     // Remove NG from the ValMap since the pointer may get recycled.
     ValMap.erase(NG);
     delete NG;
@@ -404,14 +404,14 @@ void EquivClassGraphs::processGraph(DSGraph &G) {
 
     assert(calls.insert(TheCall).second &&
            "Call instruction occurs multiple times in graph??");
-    
+
     if (CS.getRetVal().isNull() && CS.getNumPtrArgs() == 0)
       continue;
 
     // Inline the common callee graph into the current graph, if the callee
     // graph has not changed.  Note that all callees should have the same
     // graph so we only need to do this once.
-    // 
+    //
     DSGraph* CalleeGraph = NULL;
     callee_iterator I = callee_begin(TheCall), E = callee_end(TheCall);
     unsigned TNum, Num;
@@ -424,12 +424,12 @@ void EquivClassGraphs::processGraph(DSGraph &G) {
     // Now check if the graph has changed and if so, clone and inline it.
     if (I != E) {
       Function *CalleeFunc = I->second;
-      
+
       // Merge the callee's graph into this graph, if not already the same.
       // Callees in the same equivalence class (which subsumes those
       // in the same SCCs) have the same graph.  Note that all recursion
       // including self-recursion have been folded in the equiv classes.
-      // 
+      //
       CalleeGraph = &getOrCreateGraph(*CalleeFunc);
       if (CalleeGraph != &G) {
         ++NumFoldGraphInlines;
@@ -463,7 +463,7 @@ void EquivClassGraphs::processGraph(DSGraph &G) {
   // Recompute the Incomplete markers.
   G.maskIncompleteMarkers();
   G.markIncompleteNodes(DSGraph::MarkFormalArgs);
-  
+
   // Delete dead nodes.  Treat globals that are unreachable but that can
   // reach live nodes as live.
   G.removeDeadNodes(DSGraph::KeepUnreachableGlobals);
@@ -476,7 +476,7 @@ void EquivClassGraphs::processGraph(DSGraph &G) {
   // globals graph.
   DSScalarMap &MainSM = G.getScalarMap();
   for (DSScalarMap::global_iterator I = MainSM.global_begin(),
-         E = MainSM.global_end(); I != E; ++I) 
+         E = MainSM.global_end(); I != E; ++I)
     RC.getClonedNH(MainSM[*I]);
 
   DEBUG(std::cerr << "  -- DONE ProcessGraph for function "

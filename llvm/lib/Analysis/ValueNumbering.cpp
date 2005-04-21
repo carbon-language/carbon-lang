@@ -1,10 +1,10 @@
 //===- ValueNumbering.cpp - Value #'ing Implementation ----------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements the non-abstract Value Numbering methods as well as a
@@ -103,7 +103,7 @@ void BVNImpl::visitCastInst(CastInst &CI) {
   Instruction &I = (Instruction&)CI;
   Value *Op = I.getOperand(0);
   Function *F = I.getParent()->getParent();
-  
+
   for (Value::use_iterator UI = Op->use_begin(), UE = Op->use_end();
        UI != UE; ++UI)
     if (CastInst *Other = dyn_cast<CastInst>(*UI))
@@ -130,12 +130,12 @@ static inline bool isIdenticalBinaryInst(const Instruction &I1,
   if (I1.getOpcode() != I2->getOpcode() ||
       I1.getParent()->getParent() != I2->getParent()->getParent())
     return false;
-  
+
   // They are identical if both operands are the same!
   if (I1.getOperand(0) == I2->getOperand(0) &&
       I1.getOperand(1) == I2->getOperand(1))
     return true;
-  
+
   // If the instruction is commutative, the instruction can match if the
   // operands are swapped!
   //
@@ -149,12 +149,12 @@ static inline bool isIdenticalBinaryInst(const Instruction &I1,
 
 void BVNImpl::handleBinaryInst(Instruction &I) {
   Value *LHS = I.getOperand(0);
-  
+
   for (Value::use_iterator UI = LHS->use_begin(), UE = LHS->use_end();
        UI != UE; ++UI)
     if (Instruction *Other = dyn_cast<Instruction>(*UI))
       // Check to see if this new binary operator is not I, but same operand...
-      if (Other != &I && isIdenticalBinaryInst(I, Other)) {        
+      if (Other != &I && isIdenticalBinaryInst(I, Other)) {
         // These instructions are identical.  Handle the situation.
         RetVals.push_back(Other);
       }
@@ -164,7 +164,7 @@ void BVNImpl::handleBinaryInst(Instruction &I) {
 // using a brute force comparison.  This is useful for instructions with an
 // arbitrary number of arguments.
 //
-static inline bool IdenticalComplexInst(const Instruction *I1, 
+static inline bool IdenticalComplexInst(const Instruction *I1,
                                         const Instruction *I2) {
   assert(I1->getOpcode() == I2->getOpcode());
   // Equal if they are in the same function...
@@ -187,7 +187,7 @@ void BVNImpl::visitGetElementPtrInst(GetElementPtrInst &I) {
       Op = I.getOperand(i);
       break;
     }
-  
+
   for (Value::use_iterator UI = Op->use_begin(), UE = Op->use_end();
        UI != UE; ++UI)
     if (GetElementPtrInst *Other = dyn_cast<GetElementPtrInst>(*UI))

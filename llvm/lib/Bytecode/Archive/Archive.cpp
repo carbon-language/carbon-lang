@@ -1,10 +1,10 @@
 //===-- Archive.cpp - Generic LLVM archive functions ------------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
-// This file was developed by Reid Spencer and is distributed under the 
+// This file was developed by Reid Spencer and is distributed under the
 // University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file contains the implementation of the Archive and ArchiveMember
@@ -30,7 +30,7 @@ ArchiveMember::getMemberSize() const {
     result += path.toString().length() + 1;
 
   // If its now odd lengthed, include the padding byte
-  if (result % 2 != 0 ) 
+  if (result % 2 != 0 )
     result++;
 
   return result;
@@ -38,27 +38,27 @@ ArchiveMember::getMemberSize() const {
 
 // This default constructor is only use by the ilist when it creates its
 // sentry node. We give it specific static values to make it stand out a bit.
-ArchiveMember::ArchiveMember() 
+ArchiveMember::ArchiveMember()
   : next(0), prev(0), parent(0), path("<invalid>"), flags(0), data(0)
 {
   info.user = sys::Process::GetCurrentUserId();
-  info.group = sys::Process::GetCurrentGroupId(); 
-  info.mode = 0777; 
-  info.fileSize = 0; 
+  info.group = sys::Process::GetCurrentGroupId();
+  info.mode = 0777;
+  info.fileSize = 0;
   info.modTime = sys::TimeValue::now();
 }
 
 // This is the constructor that the Archive class uses when it is building or
 // reading an archive. It just defaults a few things and ensures the parent is
-// set for the iplist. The Archive class fills in the ArchiveMember's data. 
-// This is required because correctly setting the data may depend on other 
+// set for the iplist. The Archive class fills in the ArchiveMember's data.
+// This is required because correctly setting the data may depend on other
 // things in the Archive.
 ArchiveMember::ArchiveMember(Archive* PAR)
   : next(0), prev(0), parent(PAR), path(), flags(0), data(0)
 {
 }
 
-// This method allows an ArchiveMember to be replaced with the data for a 
+// This method allows an ArchiveMember to be replaced with the data for a
 // different file, presumably as an update to the member. It also makes sure
 // the flags are reset correctly.
 void ArchiveMember::replaceWith(const sys::Path& newFile) {
@@ -128,9 +128,9 @@ void ArchiveMember::replaceWith(const sys::Path& newFile) {
 }
 
 // Archive constructor - this is the only constructor that gets used for the
-// Archive class. Everything else (default,copy) is deprecated. This just 
+// Archive class. Everything else (default,copy) is deprecated. This just
 // initializes and maps the file into memory, if requested.
-Archive::Archive(const sys::Path& filename, bool map ) 
+Archive::Archive(const sys::Path& filename, bool map )
   : archPath(filename), members(), mapfile(0), base(0), symTab(), strtab(),
     symTabSize(0), firstFileOffset(0), modules(), foreignST(0)
 {

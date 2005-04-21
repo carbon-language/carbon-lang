@@ -1,10 +1,10 @@
 //===-- ArchiveWriter.cpp - Write LLVM archive files ----------------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
-// This file was developed by Reid Spencer and is distributed under the 
+// This file was developed by Reid Spencer and is distributed under the
 // University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // Builds up an LLVM archive file (.a) containing LLVM bytecode.
@@ -30,7 +30,7 @@ inline void writeInteger(unsigned num, std::ofstream& ARFile) {
       ARFile << (unsigned char)num;
       return;
     }
-    
+
     // Nope, we are bigger than a character, output the next 7 bits and set the
     // high bit to say that there is more coming...
     ARFile << (unsigned char)(0x80 | ((unsigned char)num & 0x7F));
@@ -44,9 +44,9 @@ inline unsigned numVbrBytes(unsigned num) {
 
   // Note that the following nested ifs are somewhat equivalent to a binary
   // search. We split it in half by comparing against 2^14 first. This allows
-  // most reasonable values to be done in 2 comparisons instead of 1 for 
+  // most reasonable values to be done in 2 comparisons instead of 1 for
   // small ones and four for large ones. We expect this to access file offsets
-  // in the 2^10 to 2^24 range and symbol lengths in the 2^0 to 2^8 range, 
+  // in the 2^10 to 2^24 range and symbol lengths in the 2^0 to 2^8 range,
   // so this approach is reasonable.
   if (num < 1<<14)
     if (num < 1<<7)
@@ -62,17 +62,17 @@ inline unsigned numVbrBytes(unsigned num) {
 }
 
 // Create an empty archive.
-Archive* 
+Archive*
 Archive::CreateEmpty(const sys::Path& FilePath ) {
   Archive* result = new Archive(FilePath,false);
   return result;
 }
 
-// Fill the ArchiveMemberHeader with the information from a member. If 
+// Fill the ArchiveMemberHeader with the information from a member. If
 // TruncateNames is true, names are flattened to 15 chars or less. The sz field
-// is provided here instead of coming from the mbr because the member might be 
-// stored compressed and the compressed size is not the ArchiveMember's size. 
-// Furthermore compressed files have negative size fields to identify them as 
+// is provided here instead of coming from the mbr because the member might be
+// stored compressed and the compressed size is not the ArchiveMember's size.
+// Furthermore compressed files have negative size fields to identify them as
 // compressed.
 bool
 Archive::fillHeader(const ArchiveMember &mbr, ArchiveMemberHeader& hdr,
@@ -119,7 +119,7 @@ Archive::fillHeader(const ArchiveMember &mbr, ArchiveMemberHeader& hdr,
       nm += slashpos + 1;
       len -= slashpos +1;
     }
-    if (len > 15) 
+    if (len > 15)
       len = 15;
     memcpy(hdr.name,nm,len);
     hdr.name[len] = '/';
@@ -190,7 +190,7 @@ Archive::writeMember(
   std::ofstream& ARFile,
   bool CreateSymbolTable,
   bool TruncateNames,
-  bool ShouldCompress 
+  bool ShouldCompress
 ) {
 
   unsigned filepos = ARFile.tellp();
@@ -205,45 +205,45 @@ Archive::writeMember(
     mFile = new sys::MappedFile(member.getPath());
     data = (const char*) mFile->map();
     fSize = mFile->size();
-  } 
+  }
 
-  // Now that we have the data in memory, update the 
+  // Now that we have the data in memory, update the
   // symbol table if its a bytecode file.
-  if (CreateSymbolTable && 
+  if (CreateSymbolTable &&
       (member.isBytecode() || member.isCompressedBytecode())) {
     std::vector<std::string> symbols;
-    std::string FullMemberName = archPath.toString() + "(" + 
-      member.getPath().toString() 
+    std::string FullMemberName = archPath.toString() + "(" +
+      member.getPath().toString()
       + ")";
     ModuleProvider* MP = GetBytecodeSymbols(
       (const unsigned char*)data,fSize,FullMemberName, symbols);
 
     // If the bytecode parsed successfully
     if ( MP ) {
-      for (std::vector<std::string>::iterator SI = symbols.begin(), 
+      for (std::vector<std::string>::iterator SI = symbols.begin(),
            SE = symbols.end(); SI != SE; ++SI) {
 
-        std::pair<SymTabType::iterator,bool> Res = 
+        std::pair<SymTabType::iterator,bool> Res =
           symTab.insert(std::make_pair(*SI,filepos));
 
         if (Res.second) {
-          symTabSize += SI->length() + 
-                        numVbrBytes(SI->length()) + 
+          symTabSize += SI->length() +
+                        numVbrBytes(SI->length()) +
                         numVbrBytes(filepos);
         }
       }
       // We don't need this module any more.
       delete MP;
     } else {
-      throw std::string("Can't parse bytecode member: ") + 
+      throw std::string("Can't parse bytecode member: ") +
              member.getPath().toString();
     }
   }
 
   // Determine if we actually should compress this member
-  bool willCompress = 
-      (ShouldCompress && 
-      !member.isCompressed() && 
+  bool willCompress =
+      (ShouldCompress &&
+      !member.isCompressed() &&
       !member.isCompressedBytecode() &&
       !member.isLLVMSymbolTable() &&
       !member.isSVR4SymbolTable() &&
@@ -266,7 +266,7 @@ Archive::writeMember(
     fSize = Compressor::compressToNewBuffer(data,fSize,output);
     data = output;
     if (member.isBytecode())
-      hdrSize = -fSize-4; 
+      hdrSize = -fSize-4;
     else
       hdrSize = -fSize;
   } else {
@@ -361,15 +361,15 @@ Archive::writeSymbolTable(std::ofstream& ARFile) {
 }
 
 // Write the entire archive to the file specified when the archive was created.
-// This writes to a temporary file first. Options are for creating a symbol 
-// table, flattening the file names (no directories, 15 chars max) and 
+// This writes to a temporary file first. Options are for creating a symbol
+// table, flattening the file names (no directories, 15 chars max) and
 // compressing each archive member.
 void
 Archive::writeToDisk(bool CreateSymbolTable, bool TruncateNames, bool Compress){
-  
+
   // Make sure they haven't opened up the file, not loaded it,
   // but are now trying to write it which would wipe out the file.
-  assert(!(members.empty() && mapfile->size() > 8) && 
+  assert(!(members.empty() && mapfile->size() > 8) &&
          "Can't write an archive not opened for writing");
 
   // Create a temporary file to store the archive in
@@ -385,7 +385,7 @@ Archive::writeToDisk(bool CreateSymbolTable, bool TruncateNames, bool Compress){
     std::ios::openmode io_mode = std::ios::out | std::ios::trunc |
                                  std::ios::binary;
     std::ofstream ArchiveFile(TmpArchive.c_str(), io_mode);
-  
+
     // Check for errors opening or creating archive file.
     if ( !ArchiveFile.is_open() || ArchiveFile.bad() ) {
       throw std::string("Error opening archive file: ") + archPath.toString();
@@ -444,7 +444,7 @@ Archive::writeToDisk(bool CreateSymbolTable, bool TruncateNames, bool Compress){
 
       // Copy the temporary file contents being sure to skip the file's magic
       // number.
-      FinalFile.write(base + sizeof(ARFILE_MAGIC)-1, 
+      FinalFile.write(base + sizeof(ARFILE_MAGIC)-1,
         arch.size()-sizeof(ARFILE_MAGIC)+1);
 
       // Close up shop

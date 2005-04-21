@@ -1,10 +1,10 @@
 //===- Steensgaard.cpp - Context Insensitive Alias Analysis ---------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This pass uses the data structure graphs to implement a simple context
@@ -59,7 +59,7 @@ namespace {
 
     //------------------------------------------------
     // Implement the AliasAnalysis API
-    //  
+    //
 
     AliasResult alias(const Value *V1, unsigned V1Size,
                       const Value *V2, unsigned V2Size);
@@ -140,12 +140,12 @@ bool Steens::runOnModule(Module &M) {
   for (std::list<DSCallSite>::iterator CI = Calls.begin(), E = Calls.end();
        CI != E;) {
     DSCallSite &CurCall = *CI++;
-    
+
     // Loop over the called functions, eliminating as many as possible...
     std::vector<Function*> CallTargets;
     if (CurCall.isDirectCall())
       CallTargets.push_back(CurCall.getCalleeFunc());
-    else 
+    else
       CurCall.getCalleeNode()->addFullFunctionList(CallTargets);
 
     for (unsigned c = 0; c != CallTargets.size(); ) {
@@ -239,11 +239,11 @@ AliasAnalysis::AliasResult Steens::alias(const Value *V1, unsigned V1Size,
 AliasAnalysis::ModRefResult
 Steens::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
   AliasAnalysis::ModRefResult Result = ModRef;
-  
+
   // Find the node in question.
   DSGraph::ScalarMapTy &GSM = ResultGraph->getScalarMap();
   DSGraph::ScalarMapTy::iterator I = GSM.find(P);
-  
+
   if (I != GSM.end() && !I->second.isNull()) {
     DSNode *N = I->second.getNode();
     if (N->isComplete()) {
@@ -253,7 +253,7 @@ Steens::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
       if (Function *F = CS.getCalledFunction())
         if (F->isExternal())
           return NoModRef;
-    
+
       // Otherwise, if the node is complete, but it is only M or R, return this.
       // This can be useful for globals that should be marked const but are not.
       if (!N->isModified())

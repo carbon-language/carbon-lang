@@ -1,10 +1,10 @@
 //===- PostDominators.cpp - Post-Dominator Calculation --------------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements the post-dominator construction algorithms.
@@ -73,7 +73,7 @@ bool PostDominatorSet::runOnFunction(Function &F) {
           //
           while (Doms[*SI].size() == 0) ++SI;
           WorkingSet = Doms[*SI];
-          
+
           for (++SI; SI != SE; ++SI) { // Intersect all of the successor sets
             DomSetType &SuccSet = Doms[*SI];
             if (SuccSet.size())
@@ -115,7 +115,7 @@ void ImmediatePostDominators::calcIDoms(const DominatorSetBase &DS) {
   // Loop over all of the nodes that have dominators... figuring out the IDOM
   // for each node...
   //
-  for (DominatorSet::const_iterator DI = DS.begin(), DEnd = DS.end(); 
+  for (DominatorSet::const_iterator DI = DS.begin(), DEnd = DS.end();
        DI != DEnd; ++DI) {
     BasicBlock *BB = DI->first;
     const DominatorSet::DomSetType &Dominators = DI->second;
@@ -133,7 +133,7 @@ void ImmediatePostDominators::calcIDoms(const DominatorSetBase &DS) {
     for (; I != End; ++I) {   // Iterate over dominators...
       // All of our dominators should form a chain, where the number of elements
       // in the dominator set indicates what level the node is at in the chain.
-      // We want the node immediately above us, so it will have an identical 
+      // We want the node immediately above us, so it will have an identical
       // dominator set, except that BB will not dominate it... therefore it's
       // dominator set size will be one less than BB's...
       //
@@ -191,12 +191,12 @@ void PostDominatorTree::calculate(const PostDominatorSet &DS) {
         // dominator set size will be one less than BB's...
         //
         if (DS.getDominators(*I).size() == DomSetSize - 1) {
-          // We know that the immediate dominator should already have a node, 
+          // We know that the immediate dominator should already have a node,
           // because we are traversing the CFG in depth first order!
           //
           Node *IDomNode = Nodes[*I];
           assert(IDomNode && "No node for IDOM?");
-	  
+	
           // Add a new tree node for this BasicBlock, and link it as a child of
           // IDomNode
           Nodes[BB] = IDomNode->addChild(new Node(BB, IDomNode));
@@ -214,7 +214,7 @@ static RegisterAnalysis<PostDominanceFrontier>
 H("postdomfrontier", "Post-Dominance Frontier Construction", true);
 
 const DominanceFrontier::DomSetType &
-PostDominanceFrontier::calculate(const PostDominatorTree &DT, 
+PostDominanceFrontier::calculate(const PostDominatorTree &DT,
                                  const DominatorTree::Node *Node) {
   // Loop over CFG successors to calculate DFlocal[Node]
   BasicBlock *BB = Node->getBlock();

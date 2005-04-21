@@ -1,10 +1,10 @@
 //===- ScalarEvolution.cpp - Scalar Evolution Analysis ----------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file contains the implementation of the scalar evolution analysis
@@ -28,7 +28,7 @@
 // have folders that are used to build the *canonical* representation for a
 // particular expression.  These folders are capable of using a variety of
 // rewrite rules to simplify the expressions.
-// 
+//
 // Once the folders are defined, we can implement the more interesting
 // higher-level code, such as the code that recognizes PHI nodes of various
 // types, computes the execution count of a loop, etc.
@@ -163,7 +163,7 @@ bool SCEVCouldNotCompute::classof(const SCEV *S) {
 // particular value.  Don't use a SCEVHandle here, or else the object will
 // never be deleted!
 static std::map<ConstantInt*, SCEVConstant*> SCEVConstants;
-  
+
 
 SCEVConstant::~SCEVConstant() {
   SCEVConstants.erase(V);
@@ -175,7 +175,7 @@ SCEVHandle SCEVConstant::get(ConstantInt *V) {
     const Type *NewTy = V->getType()->getUnsignedVersion();
     V = cast<ConstantUInt>(ConstantExpr::getCast(V, NewTy));
   }
-  
+
   SCEVConstant *&R = SCEVConstants[V];
   if (R == 0) R = new SCEVConstant(V);
   return R;
@@ -337,7 +337,7 @@ replaceSymbolicValuesWithConcrete(const SCEVHandle &Sym,
       for (++i; i != e; ++i)
         NewOps.push_back(getOperand(i)->
                          replaceSymbolicValuesWithConcrete(Sym, Conc));
-      
+
       return get(NewOps, L);
     }
   }
@@ -451,7 +451,7 @@ static void GroupByComplexity(std::vector<SCEVHandle> &Ops) {
 /// specified signed integer value and return a SCEV for the constant.
 SCEVHandle SCEVUnknown::getIntegerSCEV(int Val, const Type *Ty) {
   Constant *C;
-  if (Val == 0) 
+  if (Val == 0)
     C = Constant::getNullValue(Ty);
   else if (Ty->isFloatingPoint())
     C = ConstantFP::get(Ty, Val);
@@ -483,7 +483,7 @@ static SCEVHandle getTruncateOrZeroExtend(const SCEVHandle &V, const Type *Ty) {
 SCEVHandle SCEV::getNegativeSCEV(const SCEVHandle &V) {
   if (SCEVConstant *VC = dyn_cast<SCEVConstant>(V))
     return SCEVUnknown::get(ConstantExpr::getNeg(VC->getValue()));
-  
+
   return SCEVMulExpr::get(V, SCEVUnknown::getIntegerSCEV(-1, V->getType()));
 }
 
@@ -511,7 +511,7 @@ static SCEVHandle PartialFact(SCEVHandle V, unsigned NumSteps) {
   const Type *Ty = V->getType();
   if (NumSteps == 0)
     return SCEVUnknown::getIntegerSCEV(1, Ty);
-  
+
   SCEVHandle Result = V;
   for (unsigned i = 1; i != NumSteps; ++i)
     Result = SCEVMulExpr::get(Result, SCEV::getMinusSCEV(V,
@@ -623,7 +623,7 @@ SCEVHandle SCEVAddExpr::get(std::vector<SCEVHandle> &Ops) {
   }
 
   if (Ops.size() == 1) return Ops[0];
-  
+
   // Okay, check to see if the same value occurs in the operand list twice.  If
   // so, merge them together into an multiply expression.  Since we sorted the
   // list, these values are required to be adjacent.
@@ -696,7 +696,7 @@ SCEVHandle SCEVAddExpr::get(std::vector<SCEVHandle> &Ops) {
           Ops.push_back(OuterMul);
           return SCEVAddExpr::get(Ops);
         }
-      
+
       // Check this multiply against other multiplies being added together.
       for (unsigned OtherMulIdx = Idx+1;
            OtherMulIdx < Ops.size() && isa<SCEVMulExpr>(Ops[OtherMulIdx]);
@@ -868,7 +868,7 @@ SCEVHandle SCEVMulExpr::get(std::vector<SCEVHandle> &Ops) {
 
   if (Ops.size() == 1)
     return Ops[0];
-  
+
   // If there are mul operands inline them all into this expression.
   if (Idx < Ops.size()) {
     bool DeletedMul = false;
@@ -1086,7 +1086,7 @@ namespace {
     /// properties.  An instruction maps to null if we are unable to compute its
     /// exit value.
     std::map<PHINode*, Constant*> ConstantEvolutionLoopExitValue;
-    
+
   public:
     ScalarEvolutionsImpl(Function &f, LoopInfo &li)
       : F(f), LI(li), UnknownValue(new SCEVCouldNotCompute()) {}
@@ -1230,7 +1230,7 @@ SCEVHandle ScalarEvolutionsImpl::createNodeForPHI(PHINode *PN) {
         // from outside the loop, and one from inside.
         unsigned IncomingEdge = L->contains(PN->getIncomingBlock(0));
         unsigned BackEdge     = IncomingEdge^1;
-        
+
         // While we are analyzing this PHI node, handle its value symbolically.
         SCEVHandle SymbolicName = SCEVUnknown::get(PN);
         assert(Scalars.find(PN) == Scalars.end() &&
@@ -1286,7 +1286,7 @@ SCEVHandle ScalarEvolutionsImpl::createNodeForPHI(PHINode *PN) {
 
         return SymbolicName;
       }
-  
+
   // If it's not a loop phi, we can't handle it yet.
   return SCEVUnknown::get(PN);
 }
@@ -1296,11 +1296,11 @@ SCEVHandle ScalarEvolutionsImpl::createNodeForPHI(PHINode *PN) {
 SCEVHandle ScalarEvolutionsImpl::createNodeForCast(CastInst *CI) {
   const Type *SrcTy = CI->getOperand(0)->getType();
   const Type *DestTy = CI->getType();
-  
+
   // If this is a noop cast (ie, conversion from int to uint), ignore it.
   if (SrcTy->isLosslesslyConvertibleTo(DestTy))
     return getSCEV(CI->getOperand(0));
-  
+
   if (SrcTy->isInteger() && DestTy->isInteger()) {
     // Otherwise, if this is a truncating integer cast, we can represent this
     // cast.
@@ -1486,7 +1486,7 @@ SCEVHandle ScalarEvolutionsImpl::ComputeIterationCount(const Loop *L) {
         if (CompVal) {
           // Form the constant range.
           ConstantRange CompRange(Cond, CompVal);
-          
+
           // Now that we have it, if it's signed, convert it to an unsigned
           // range.
           if (CompRange.getLower()->getType()->isSigned()) {
@@ -1495,12 +1495,12 @@ SCEVHandle ScalarEvolutionsImpl::ComputeIterationCount(const Loop *L) {
             Constant *NewU = ConstantExpr::getCast(CompRange.getUpper(), NewTy);
             CompRange = ConstantRange(NewL, NewU);
           }
-          
+
           SCEVHandle Ret = AddRec->getNumIterationsInRange(CompRange);
           if (!isa<SCEVCouldNotCompute>(Ret)) return Ret;
         }
       }
-  
+
   switch (Cond) {
   case Instruction::SetNE:                     // while (X != Y)
     // Convert to: while (X-Y != 0)
@@ -1545,7 +1545,7 @@ EvaluateConstantChrecAtConstant(const SCEVAddRecExpr *AddRec, Constant *C) {
 /// the addressed element of the initializer or null if the index expression is
 /// invalid.
 static Constant *
-GetAddressedElementFromGlobal(GlobalVariable *GV, 
+GetAddressedElementFromGlobal(GlobalVariable *GV,
                               const std::vector<ConstantInt*> &Indices) {
   Constant *Init = GV->getInitializer();
   for (unsigned i = 0, e = Indices.size(); i != e; ++i) {
@@ -1577,7 +1577,7 @@ GetAddressedElementFromGlobal(GlobalVariable *GV,
 /// ComputeLoadConstantCompareIterationCount - Given an exit condition of
 /// 'setcc load X, cst', try to se if we can compute the trip count.
 SCEVHandle ScalarEvolutionsImpl::
-ComputeLoadConstantCompareIterationCount(LoadInst *LI, Constant *RHS, 
+ComputeLoadConstantCompareIterationCount(LoadInst *LI, Constant *RHS,
                                          const Loop *L, unsigned SetCCOpcode) {
   if (LI->isVolatile()) return UnknownValue;
 
@@ -1656,7 +1656,7 @@ static bool CanConstantFold(const Instruction *I) {
   if (isa<BinaryOperator>(I) || isa<ShiftInst>(I) ||
       isa<SelectInst>(I) || isa<CastInst>(I) || isa<GetElementPtrInst>(I))
     return true;
-  
+
   if (const CallInst *CI = dyn_cast<CallInst>(I))
     if (const Function *F = CI->getCalledFunction())
       return canConstantFoldCallTo((Function*)F);  // FIXME: elim cast
@@ -1713,7 +1713,7 @@ static PHINode *getConstantEvolvingPHI(Value *V, const Loop *L) {
   // If we won't be able to constant fold this expression even if the operands
   // are constants, return early.
   if (!CanConstantFold(I)) return 0;
-  
+
   // Otherwise, we can evaluate this instruction if all of its operands are
   // constant or derived from a PHI node themselves.
   PHINode *PHI = 0;
@@ -1765,7 +1765,7 @@ getConstantEvolutionLoopExitValue(PHINode *PN, uint64_t Its, const Loop *L) {
   if (I != ConstantEvolutionLoopExitValue.end())
     return I->second;
 
-  if (Its > MaxBruteForceIterations) 
+  if (Its > MaxBruteForceIterations)
     return ConstantEvolutionLoopExitValue[PN] = 0;  // Not going to evaluate it.
 
   Constant *&RetVal = ConstantEvolutionLoopExitValue[PN];
@@ -1842,7 +1842,7 @@ ComputeIterationCountExhaustively(const Loop *L, Value *Cond, bool ExitWhen) {
       ++NumBruteForceTripCountsComputed;
       return SCEVConstant::get(ConstantUInt::get(Type::UIntTy, IterationNum));
     }
-    
+
     // Compute the value of the PHI node for the next iteration.
     Constant *NextPHI = EvaluateExpression(BEValue, PHIVal);
     if (NextPHI == 0 || NextPHI == PHIVal)
@@ -1861,7 +1861,7 @@ SCEVHandle ScalarEvolutionsImpl::getSCEVAtScope(SCEV *V, const Loop *L) {
   // FIXME: this should be turned into a virtual method on SCEV!
 
   if (isa<SCEVConstant>(V)) return V;
-  
+
   // If this instruction is evolves from a constant-evolving PHI, compute the
   // exit value from the loop without using SCEVs.
   if (SCEVUnknown *SU = dyn_cast<SCEVUnknown>(V)) {
@@ -1966,7 +1966,7 @@ SCEVHandle ScalarEvolutionsImpl::getSCEVAtScope(SCEV *V, const Loop *L) {
       if (IterationCount == UnknownValue) return UnknownValue;
       IterationCount = getTruncateOrZeroExtend(IterationCount,
                                                AddRec->getType());
-      
+
       // If the value is affine, simplify the expression evaluation to just
       // Start + Step*IterationCount.
       if (AddRec->isAffine())
@@ -1995,7 +1995,7 @@ SolveQuadraticEquation(const SCEVAddRecExpr *AddRec) {
   SCEVConstant *L = dyn_cast<SCEVConstant>(AddRec->getOperand(0));
   SCEVConstant *M = dyn_cast<SCEVConstant>(AddRec->getOperand(1));
   SCEVConstant *N = dyn_cast<SCEVConstant>(AddRec->getOperand(2));
-  
+
   // We currently can only solve this if the coefficients are constants.
   if (!L || !M || !N) {
     SCEV *CNC = new SCEVCouldNotCompute();
@@ -2003,7 +2003,7 @@ SolveQuadraticEquation(const SCEVAddRecExpr *AddRec) {
   }
 
   Constant *Two = ConstantInt::get(L->getValue()->getType(), 2);
-  
+
   // Convert from chrec coefficients to polynomial coefficients AX^2+BX+C
   Constant *C = L->getValue();
   // The B coefficient is M-N/2
@@ -2012,7 +2012,7 @@ SolveQuadraticEquation(const SCEVAddRecExpr *AddRec) {
                                                           Two));
   // The A coefficient is N/2
   Constant *A = ConstantExpr::getDiv(N->getValue(), Two);
-        
+
   // Compute the B^2-4ac term.
   Constant *SqrtTerm =
     ConstantExpr::getMul(ConstantInt::get(C->getType(), 4),
@@ -2035,16 +2035,16 @@ SolveQuadraticEquation(const SCEVAddRecExpr *AddRec) {
 
   SqrtVal = ConstantUInt::get(Type::ULongTy, SqrtValV2);
   SqrtTerm = ConstantExpr::getCast(SqrtVal, SqrtTerm->getType());
-  
+
   Constant *NegB = ConstantExpr::getNeg(B);
   Constant *TwoA = ConstantExpr::getMul(A, Two);
-  
+
   // The divisions must be performed as signed divisions.
   const Type *SignedTy = NegB->getType()->getSignedVersion();
   NegB = ConstantExpr::getCast(NegB, SignedTy);
   TwoA = ConstantExpr::getCast(TwoA, SignedTy);
   SqrtTerm = ConstantExpr::getCast(SqrtTerm, SignedTy);
-  
+
   Constant *Solution1 =
     ConstantExpr::getDiv(ConstantExpr::getAdd(NegB, SqrtTerm), TwoA);
   Constant *Solution2 =
@@ -2117,7 +2117,7 @@ SCEVHandle ScalarEvolutionsImpl::HowFarToZero(SCEV *V, const Loop *L) {
                                                         R2->getValue()))) {
         if (CB != ConstantBool::True)
           std::swap(R1, R2);   // R1 is the minimum root now.
-          
+
         // We can only use this value if the chrec ends up with an exact zero
         // value at this index.  When solving for "X*X != 5", for example, we
         // should not accept a root of 2.
@@ -2128,7 +2128,7 @@ SCEVHandle ScalarEvolutionsImpl::HowFarToZero(SCEV *V, const Loop *L) {
       }
     }
   }
-  
+
   return UnknownValue;
 }
 
@@ -2139,7 +2139,7 @@ SCEVHandle ScalarEvolutionsImpl::HowFarToNonZero(SCEV *V, const Loop *L) {
   // Loops that look like: while (X == 0) are very strange indeed.  We don't
   // handle them yet except for the trivial case.  This could be expanded in the
   // future as needed.
- 
+
   // If the value is a constant, check to see if it is known to be non-zero
   // already.  If so, the backedge will execute zero times.
   if (SCEVConstant *C = dyn_cast<SCEVConstant>(V)) {
@@ -2149,7 +2149,7 @@ SCEVHandle ScalarEvolutionsImpl::HowFarToNonZero(SCEV *V, const Loop *L) {
       return getSCEV(Zero);
     return UnknownValue;  // Otherwise it will loop infinitely.
   }
-  
+
   // We could implement others, but I really doubt anyone writes loops like
   // this, and if they did, they would already be constant folded.
   return UnknownValue;
@@ -2191,7 +2191,7 @@ SCEVHandle SCEVAddRecExpr::getNumIterationsInRange(ConstantRange Range) const {
   // iteration exits.
   ConstantInt *Zero = ConstantInt::get(getType(), 0);
   if (!Range.contains(Zero)) return SCEVConstant::get(Zero);
-  
+
   if (isAffine()) {
     // If this is an affine expression then we have this situation:
     //   Solve {0,+,A} in Range  ===  Ax in Range
@@ -2246,7 +2246,7 @@ SCEVHandle SCEVAddRecExpr::getNumIterationsInRange(ConstantRange Range) const {
                                                         R2->getValue()))) {
         if (CB != ConstantBool::True)
           std::swap(R1, R2);   // R1 is the minimum root now.
-          
+
         // Make sure the root is not off by one.  The returned iteration should
         // not be in the range, but the previous one should be.  When solving
         // for "X*X < 5", for example, we should not return a root of 2.
@@ -2257,13 +2257,13 @@ SCEVHandle SCEVAddRecExpr::getNumIterationsInRange(ConstantRange Range) const {
           Constant *NextVal =
             ConstantExpr::getAdd(R1->getValue(),
                                  ConstantInt::get(R1->getType(), 1));
-          
+
           R1Val = EvaluateConstantChrecAtConstant(this, NextVal);
           if (!Range.contains(R1Val))
             return SCEVUnknown::get(NextVal);
           return new SCEVCouldNotCompute();  // Something strange happened
         }
-   
+
         // If R1 was not in the range, then it is a good return value.  Make
         // sure that R1-1 WAS in the range though, just in case.
         Constant *NextVal =
@@ -2298,7 +2298,7 @@ SCEVHandle SCEVAddRecExpr::getNumIterationsInRange(ConstantRange Range) const {
     // Increment to test the next index.
     TestVal = cast<ConstantInt>(ConstantExpr::getAdd(TestVal, One));
   } while (TestVal != EndVal);
-  
+
   return new SCEVCouldNotCompute();
 }
 
@@ -2343,12 +2343,12 @@ void ScalarEvolution::deleteInstructionFromRecords(Instruction *I) const {
   return ((ScalarEvolutionsImpl*)Impl)->deleteInstructionFromRecords(I);
 }
 
-static void PrintLoopInfo(std::ostream &OS, const ScalarEvolution *SE, 
+static void PrintLoopInfo(std::ostream &OS, const ScalarEvolution *SE,
                           const Loop *L) {
   // Print all inner loops first
   for (Loop::iterator I = L->begin(), E = L->end(); I != E; ++I)
     PrintLoopInfo(OS, SE, *I);
-  
+
   std::cerr << "Loop " << L->getHeader()->getName() << ": ";
 
   std::vector<BasicBlock*> ExitBlocks;
@@ -2377,7 +2377,7 @@ void ScalarEvolution::print(std::ostream &OS, const Module* ) const {
       SCEVHandle SV = getSCEV(&*I);
       SV->print(OS);
       OS << "\t\t";
-      
+
       if ((*I).getType()->isIntegral()) {
         ConstantRange Bounds = SV->getValueRange();
         if (!Bounds.isFullSet())

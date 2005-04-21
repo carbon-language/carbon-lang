@@ -1,13 +1,13 @@
 //===-- InstCount.cpp - Collects the count of all instructions ------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
-// This pass collects the count of all instructions and reports them 
+// This pass collects the count of all instructions and reports them
 //
 //===----------------------------------------------------------------------===//
 
@@ -62,11 +62,11 @@ namespace {
 //
 bool InstCount::runOnFunction(Function &F) {
   unsigned StartMemInsts =
-    NumGetElementPtrInst + NumLoadInst + NumStoreInst + NumCallInst + 
+    NumGetElementPtrInst + NumLoadInst + NumStoreInst + NumCallInst +
     NumInvokeInst + NumAllocaInst + NumMallocInst + NumFreeInst;
   visit(F);
   unsigned EndMemInsts =
-    NumGetElementPtrInst + NumLoadInst + NumStoreInst + NumCallInst + 
+    NumGetElementPtrInst + NumLoadInst + NumStoreInst + NumCallInst +
     NumInvokeInst + NumAllocaInst + NumMallocInst + NumFreeInst;
   TotalMemInst += EndMemInsts-StartMemInsts;
   return false;

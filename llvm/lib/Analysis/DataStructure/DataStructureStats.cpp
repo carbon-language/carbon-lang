@@ -1,10 +1,10 @@
 //===- DataStructureStats.cpp - Various statistics for DS Graphs ----------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines a little pass that prints out statistics for DS Graphs.
@@ -76,7 +76,7 @@ void DSGraphStats::countCallees(const Function& F) {
   unsigned numIndirectCalls = 0, totalNumCallees = 0;
 
   for (DSGraph::fc_iterator I = TDGraph->fc_begin(), E = TDGraph->fc_end();
-       I != E; ++I) 
+       I != E; ++I)
     if (isIndirectCallee(I->getCallSite().getCalledValue())) {
       // This is an indirect function call
       std::vector<Function*> Callees;
@@ -90,10 +90,10 @@ void DSGraphStats::countCallees(const Function& F) {
                   << "' at call: \n"
                   << *I->getCallSite().getInstruction();
     }
-  
+
   TotalNumCallees  += totalNumCallees;
   NumIndirectCalls += numIndirectCalls;
-  
+
   if (numIndirectCalls)
     std::cout << "  In function " << F.getName() << ":  "
               << (totalNumCallees / (double) numIndirectCalls)

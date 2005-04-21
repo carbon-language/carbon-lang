@@ -1,10 +1,10 @@
 //===- Printer.cpp - Code for printing data structure graphs nicely -------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements the 'dot' graph printer.
@@ -76,7 +76,7 @@ static std::string getCaption(const DSNode *N, const DSGraph *G) {
 
   EquivalenceClasses<GlobalValue*> *GlobalECs = 0;
   if (G) GlobalECs = &G->getGlobalECs();
-  
+
   for (unsigned i = 0, e = N->getGlobalsList().size(); i != e; ++i) {
     WriteAsOperand(OS, N->getGlobalsList()[i], false, true, M);
 
@@ -85,7 +85,7 @@ static std::string getCaption(const DSNode *N, const DSGraph *G) {
       EquivalenceClasses<GlobalValue*>::iterator I =
         GlobalECs->findValue(N->getGlobalsList()[i]);
       if (I != GlobalECs->end()) {
-        unsigned NumMembers = 
+        unsigned NumMembers =
           std::distance(GlobalECs->member_begin(I), GlobalECs->member_end());
         if (NumMembers != 1) OS << " + " << (NumMembers-1) << " EC";
       }
@@ -132,7 +132,7 @@ struct DOTGraphTraits<const DSGraph*> : public DefaultDOTGraphTraits {
     return R;
   }
 
-  
+
   /// addCustomGraphFeatures - Use this graph writing hook to emit call nodes
   /// and the return node.
   ///
@@ -156,7 +156,7 @@ struct DOTGraphTraits<const DSGraph*> : public DefaultDOTGraphTraits {
         std::stringstream OS;
         WriteAsOperand(OS, I->first, false, true, CurMod);
         GW.emitSimpleNode(I->first, "", OS.str());
-        
+
         // Add edge from return node to real destination
         DSNode *DestNode = I->second.getNode();
         int EdgeDest = I->second.getOffset() >> DS::PointerShift;
@@ -241,7 +241,7 @@ void DSGraph::writeGraphToFile(std::ostream &O,
   std::string Filename = GraphName + ".dot";
   O << "Writing '" << Filename << "'...";
   std::ofstream F(Filename.c_str());
-  
+
   if (F.good()) {
     print(F);
     unsigned NumCalls = shouldPrintAuxCalls() ?
@@ -329,7 +329,7 @@ static void printCollection(const Collection &C, std::ostream &O,
       << GG.getGraphSize() << "+" << GG.getFunctionCalls().size() << "]\n";
   }
 
-  O << "\nGraphs contain [" << TotalNumNodes << "+" << TotalCallNodes 
+  O << "\nGraphs contain [" << TotalNumNodes << "+" << TotalCallNodes
     << "] nodes total" << std::endl;
 }
 

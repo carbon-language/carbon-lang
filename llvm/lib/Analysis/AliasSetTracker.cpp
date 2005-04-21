@@ -1,14 +1,14 @@
 //===- AliasSetTracker.cpp - Alias Sets Tracker implementation-------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements the AliasSetTracker and AliasSet classes.
-// 
+//
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/AliasSetTracker.h"
@@ -53,7 +53,7 @@ void AliasSet::mergeSetIn(AliasSet &AS, AliasSetTracker &AST) {
     CallSites.insert(CallSites.end(), AS.CallSites.begin(), AS.CallSites.end());
     AS.CallSites.clear();
   }
-  
+
   AS.Forward = this;  // Forward across AS now...
   addRef();           // AS is now pointing to us...
 
@@ -506,7 +506,7 @@ void AliasSet::print(std::ostream &OS) const {
     for (unsigned i = 0, e = CallSites.size(); i != e; ++i) {
       if (i) OS << ", ";
       WriteAsOperand(OS, CallSites[i].getCalledValue());
-    }      
+    }
   }
   OS << "\n";
 }

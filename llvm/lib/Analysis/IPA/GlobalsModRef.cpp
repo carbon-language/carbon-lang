@@ -1,10 +1,10 @@
 //===- GlobalsModRef.cpp - Simple Mod/Ref Analysis for Globals ------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This simple pass provides alias and mod/ref information for global values
@@ -58,7 +58,7 @@ namespace {
         return I->second;
       return 0;
     }
-    
+
     /// FunctionEffect - Capture whether or not this function reads or writes to
     /// ANY memory.  If not, we can do a lot of aggressive analysis on it.
     unsigned FunctionEffect;
@@ -92,7 +92,7 @@ namespace {
 
     //------------------------------------------------
     // Implement the AliasAnalysis API
-    //  
+    //
     AliasResult alias(const Value *V1, unsigned V1Size,
                       const Value *V2, unsigned V2Size);
     ModRefResult getModRefInfo(CallSite CS, Value *P, unsigned Size);
@@ -111,7 +111,7 @@ namespace {
           return DoesNotAccessMemory;
 	else if ((FR->FunctionEffect & Mod) == 0)
 	  return OnlyReadsMemory;
-      return AliasAnalysis::getModRefBehavior(F, CS, Info);    
+      return AliasAnalysis::getModRefBehavior(F, CS, Info);
     }
 
     virtual void deleteValue(Value *V);
@@ -134,7 +134,7 @@ namespace {
     bool AnalyzeUsesOfGlobal(Value *V, std::vector<Function*> &Readers,
                              std::vector<Function*> &Writers);
   };
-  
+
   RegisterOpt<GlobalsModRef> X("globalsmodref-aa",
                                "Simple mod/ref analysis for globals");
   RegisterAnalysisGroup<AliasAnalysis, GlobalsModRef> Y;
@@ -211,7 +211,7 @@ bool GlobalsModRef::AnalyzeUsesOfGlobal(Value *V,
           return true;
       } else {
         return true;
-      }        
+      }
     } else if (GlobalValue *GV = dyn_cast<GlobalValue>(*UI)) {
       if (AnalyzeUsesOfGlobal(GV, Readers, Writers)) return true;
     } else {
@@ -223,7 +223,7 @@ bool GlobalsModRef::AnalyzeUsesOfGlobal(Value *V,
 /// AnalyzeCallGraph - At this point, we know the functions where globals are
 /// immediately stored to and read from.  Propagate this information up the call
 /// graph to all callers and compute the mod/ref info for all memory for each
-/// function.  
+/// function.
 void GlobalsModRef::AnalyzeCallGraph(CallGraph &CG, Module &M) {
   // We do a bottom-up SCC traversal of the call graph.  In other words, we
   // visit all callees before callers (leaf-first).
@@ -298,13 +298,13 @@ void GlobalsModRef::AnalyzeSCC(std::vector<CallGraphNode *> &SCC) {
       FunctionInfo.erase(SCC[i]->getFunction());
     return;
   }
-  
+
   // Otherwise, unless we already know that this function mod/refs memory, scan
   // the function bodies to see if there are any explicit loads or stores.
   if (FunctionEffect != ModRef) {
     for (unsigned i = 0, e = SCC.size(); i != e && FunctionEffect != ModRef;++i)
       for (inst_iterator II = inst_begin(SCC[i]->getFunction()),
-             E = inst_end(SCC[i]->getFunction()); 
+             E = inst_end(SCC[i]->getFunction());
            II != E && FunctionEffect != ModRef; ++II)
         if (isa<LoadInst>(*II))
           FunctionEffect |= Ref;
@@ -334,7 +334,7 @@ static const GlobalValue *getUnderlyingObject(const Value *V) {
 
   // If we are at some type of object... return it.
   if (const GlobalValue *GV = dyn_cast<GlobalValue>(V)) return GV;
-  
+
   // Traverse through different addressing mechanisms...
   if (const Instruction *I = dyn_cast<Instruction>(V)) {
     if (isa<CastInst>(I) || isa<GetElementPtrInst>(I))

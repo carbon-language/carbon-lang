@@ -1,10 +1,10 @@
 //===- ProfileInfoLoad.cpp - Load profile information from disk -----------===//
-// 
+//
 //                      The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // The ProfileInfoLoader class is used to load and represent profiling
@@ -26,9 +26,9 @@ using namespace llvm;
 //
 static inline unsigned ByteSwap(unsigned Var, bool Really) {
   if (!Really) return Var;
-  return ((Var & (255<< 0)) << 24) | 
-         ((Var & (255<< 8)) <<  8) | 
-         ((Var & (255<<16)) >>  8) | 
+  return ((Var & (255<< 0)) << 24) |
+         ((Var & (255<< 8)) <<  8) |
+         ((Var & (255<<16)) >>  8) |
          ((Var & (255<<24)) >> 24);
 }
 
@@ -57,7 +57,7 @@ static void ReadProfilingBlock(const char *ToolName, FILE *F,
   // Make sure we have enough space...
   if (Data.size() < NumEntries)
     Data.resize(NumEntries);
-  
+
   // Accumulate the data we just read into the data.
   if (!ShouldByteSwap) {
     for (unsigned i = 0; i != NumEntries; ++i)
@@ -112,11 +112,11 @@ ProfileInfoLoader::ProfileInfoLoader(const char *ToolName,
       CommandLines.push_back(std::string(&Chars[0], &Chars[ArgLength]));
       break;
     }
-      
+
     case FunctionInfo:
       ReadProfilingBlock(ToolName, F, ShouldByteSwap, FunctionCounts);
       break;
-      
+
     case BlockInfo:
       ReadProfilingBlock(ToolName, F, ShouldByteSwap, BlockCounts);
       break;
@@ -134,7 +134,7 @@ ProfileInfoLoader::ProfileInfoLoader(const char *ToolName,
       exit(1);
     }
   }
-  
+
   fclose(F);
 }
 
@@ -151,7 +151,7 @@ void ProfileInfoLoader::getFunctionCounts(std::vector<std::pair<Function*,
       // their entry blocks were executed.
       std::vector<std::pair<BasicBlock*, unsigned> > BlockCounts;
       getBlockCounts(BlockCounts);
-      
+
       for (unsigned i = 0, e = BlockCounts.size(); i != e; ++i)
         if (&BlockCounts[i].first->getParent()->front() == BlockCounts[i].first)
           Counts.push_back(std::make_pair(BlockCounts[i].first->getParent(),
@@ -161,7 +161,7 @@ void ProfileInfoLoader::getFunctionCounts(std::vector<std::pair<Function*,
     }
     return;
   }
-  
+
   unsigned Counter = 0;
   for (Module::iterator I = M.begin(), E = M.end();
        I != E && Counter != FunctionCounts.size(); ++I)

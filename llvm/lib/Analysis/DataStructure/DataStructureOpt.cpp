@@ -1,10 +1,10 @@
 //===- DataStructureOpt.cpp - Data Structure Analysis Based Optimizations -===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This pass uses DSA to a series of simple optimizations, like marking
@@ -66,7 +66,7 @@ bool DSOpt::OptimizeGlobals(Module &M) {
       DSNode *GNode = 0;
       DSGraph::ScalarMapTy::const_iterator SMI = SM.find(I);
       if (SMI != SM.end()) GNode = SMI->second.getNode();
-    
+
       if (GNode == 0 && I->hasInternalLinkage()) {
         // If there is no entry in the scalar map for this global, it was never
         // referenced in the program.  If it has internal linkage, that means we

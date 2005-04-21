@@ -1,10 +1,10 @@
 //===- GraphChecker.cpp - Assert that various graph properties hold -------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This pass is used to test DSA with regression tests.  It can be used to check
@@ -39,7 +39,7 @@ namespace {
        cl::desc("Specify which DSA pass the -datastructure-gc pass should use"),
          cl::values(clEnumVal(local, "Local pass"),
                     clEnumVal(bu,    "Bottom-up pass"),
-                    clEnumVal(td,    "Top-down pass"), 
+                    clEnumVal(td,    "Top-down pass"),
                     clEnumValEnd), cl::init(local));
 
   cl::opt<bool>
@@ -133,7 +133,7 @@ void DSGC::verify(const DSGraph &G) {
     std::set<std::string> AbortIfMergedS(AbortIfMerged.begin(),
                                          AbortIfMerged.end());
     std::map<std::string, unsigned> CheckFlagsM;
-    
+
     for (cl::list<std::string>::iterator I = CheckFlags.begin(),
            E = CheckFlags.end(); I != E; ++I) {
       std::string::size_type ColonPos = I->rfind(':');
@@ -158,18 +158,18 @@ void DSGC::verify(const DSGraph &G) {
         }
       CheckFlagsM[std::string(I->begin(), I->begin()+ColonPos)] = Flags;
     }
-    
+
     // Now we loop over all of the scalars, checking to see if any are collapsed
     // that are not supposed to be, or if any are merged together.
     const DSGraph::ScalarMapTy &SM = G.getScalarMap();
     std::map<DSNode*, std::string> AbortIfMergedNodes;
-    
+
     for (DSGraph::ScalarMapTy::const_iterator I = SM.begin(), E = SM.end();
          I != E; ++I)
       if (I->first->hasName() && I->second.getNode()) {
         const std::string &Name = I->first->getName();
         DSNode *N = I->second.getNode();
-        
+
         // Verify it is not collapsed if it is not supposed to be...
         if (N->isNodeCompletelyFolded() && AbortIfCollapsedS.count(Name)) {
           std::cerr << "Node for value '%" << Name << "' is collapsed: ";

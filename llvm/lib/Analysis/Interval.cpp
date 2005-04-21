@@ -1,10 +1,10 @@
 //===- Interval.cpp - Interval class code ---------------------------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file contains the definition of the Interval class, which represents a
@@ -39,7 +39,7 @@ bool Interval::isLoop() const {
 void Interval::print(std::ostream &o) const {
   o << "-------------------------------------------------------------\n"
        << "Interval Contents:\n";
-  
+
   // Print out all of the basic blocks in the interval...
   for (std::vector<BasicBlock*>::const_iterator I = Nodes.begin(),
          E = Nodes.end(); I != E; ++I)

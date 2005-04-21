@@ -1,10 +1,10 @@
 //===- Local.cpp - Compute a local data structure graph for a function ----===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // Compute the local version of the data structure graph for a function.  The
@@ -76,7 +76,7 @@ namespace {
     std::list<DSCallSite> *FunctionCalls;
 
   public:
-    GraphBuilder(Function &f, DSGraph &g, DSNodeHandle &retNode, 
+    GraphBuilder(Function &f, DSGraph &g, DSNodeHandle &retNode,
                  std::list<DSCallSite> &fc)
       : G(g), RetNode(&retNode), ScalarMap(G.getScalarMap()),
         FunctionCalls(&fc) {
@@ -148,7 +148,7 @@ namespace {
     ///
     void setDestTo(Value &V, const DSNodeHandle &NH);
 
-    /// getValueDest - Return the DSNode that the actual value points to. 
+    /// getValueDest - Return the DSNode that the actual value points to.
     ///
     DSNodeHandle getValueDest(Value &V);
 
@@ -182,7 +182,7 @@ DSGraph::DSGraph(EquivalenceClasses<GlobalValue*> &ECs, const TargetData &td,
   // initializers into the local graph from the globals graph.
   if (ScalarMap.global_begin() != ScalarMap.global_end()) {
     ReachabilityCloner RC(*this, *GG, 0);
-    
+
     for (DSScalarMap::global_iterator I = ScalarMap.global_begin();
          I != ScalarMap.global_end(); ++I)
       if (GlobalVariable *GV = dyn_cast<GlobalVariable>(*I))
@@ -313,7 +313,7 @@ void GraphBuilder::visitPHINode(PHINode &PN) {
 
 void GraphBuilder::visitSelectInst(SelectInst &SI) {
   if (!isPointerType(SI.getType())) return; // Only pointer Selects
-  
+
   DSNodeHandle &Dest = ScalarMap[&SI];
   Dest.mergeWith(getValueDest(*SI.getOperand(1)));
   Dest.mergeWith(getValueDest(*SI.getOperand(2)));
@@ -573,7 +573,7 @@ void GraphBuilder::visitCallSite(CallSite CS) {
                AI != E; ++AI) {
             if (isPointerType((*AI)->getType()))
               if (DSNode *N = getValueDest(**AI).getNode())
-                N->setReadMarker();   
+                N->setReadMarker();
           }
           return;
         } else if (F->getName() == "read" || F->getName() == "pipe" ||
@@ -583,7 +583,7 @@ void GraphBuilder::visitCallSite(CallSite CS) {
                AI != E; ++AI) {
             if (isPointerType((*AI)->getType()))
               if (DSNode *N = getValueDest(**AI).getNode())
-                N->setModifiedMarker();   
+                N->setModifiedMarker();
           }
           return;
         } else if (F->getName() == "stat" || F->getName() == "fstat" ||
@@ -630,7 +630,7 @@ void GraphBuilder::visitCallSite(CallSite CS) {
             if (isPointerType((*AI)->getType()))
               if (DSNode *N = getValueDest(**AI).getNode())
                 N->setReadMarker();
-          
+
           // fopen allocates in an unknown way and writes to the file
           // descriptor.  Also, merge the allocated type into the node.
           DSNodeHandle Result = getValueDest(*CS.getInstruction());
@@ -661,7 +661,7 @@ void GraphBuilder::visitCallSite(CallSite CS) {
               N->mergeTypeInfo(PTy->getElementType(), H.getOffset());
           }
           return;
-        } else if (CS.arg_end()-CS.arg_begin() == 1 && 
+        } else if (CS.arg_end()-CS.arg_begin() == 1 &&
                    (F->getName() == "fflush" || F->getName() == "feof" ||
                     F->getName() == "fileno" || F->getName() == "clearerr" ||
                     F->getName() == "rewind" || F->getName() == "ftell" ||
@@ -672,13 +672,13 @@ void GraphBuilder::visitCallSite(CallSite CS) {
           DSNodeHandle H = getValueDest(**CS.arg_begin());
           if (DSNode *N = H.getNode()) {
             N->setReadMarker()->setModifiedMarker();
-          
+
             const Type *ArgTy = F->getFunctionType()->getParamType(0);
             if (const PointerType *PTy = dyn_cast<PointerType>(ArgTy))
               N->mergeTypeInfo(PTy->getElementType(), H.getOffset());
           }
           return;
-        } else if (CS.arg_end()-CS.arg_begin() == 4 && 
+        } else if (CS.arg_end()-CS.arg_begin() == 4 &&
                    (F->getName() == "fwrite" || F->getName() == "fread")) {
           // fread writes the first operand, fwrite reads it.  They both
           // read/write the FILE descriptor, and merges the FILE type.
@@ -739,7 +739,7 @@ void GraphBuilder::visitCallSite(CallSite CS) {
                AI != E; ++AI)
             if (isPointerType((*AI)->getType()))
               if (DSNode *N = getValueDest(**AI).getNode())
-                N->setReadMarker();   
+                N->setReadMarker();
           return;
         } else if (F->getName() == "fseek" || F->getName() == "fgetpos" ||
                    F->getName() == "fsetpos") {
@@ -789,7 +789,7 @@ void GraphBuilder::visitCallSite(CallSite CS) {
             // printf reads all pointer arguments.
             if (isPointerType((*AI)->getType()))
               if (DSNode *N = getValueDest(**AI).getNode())
-                N->setReadMarker();   
+                N->setReadMarker();
           }
           return;
         } else if (F->getName() == "vprintf" || F->getName() == "vfprintf" ||
@@ -825,7 +825,7 @@ void GraphBuilder::visitCallSite(CallSite CS) {
                 N->setReadMarker();
             ++AI;
           }
-          
+
           // Read the valist, and the pointed-to objects.
           if (AI != E && isPointerType((*AI)->getType())) {
             const DSNodeHandle &VAList = getValueDest(**AI);
@@ -869,7 +869,7 @@ void GraphBuilder::visitCallSite(CallSite CS) {
             // scanf writes all pointer arguments.
             if (isPointerType((*AI)->getType()))
               if (DSNode *N = getValueDest(**AI).getNode())
-                N->setModifiedMarker();   
+                N->setModifiedMarker();
           }
           return;
         } else if (F->getName() == "strtok") {
@@ -905,7 +905,7 @@ void GraphBuilder::visitCallSite(CallSite CS) {
             if (isPointerType((*AI)->getType()))
               if (DSNode *N = getValueDest(**AI).getNode())
                 N->setReadMarker();
-    
+
           if (DSNode *N = H.getNode())
             N->setReadMarker();
           return;
@@ -1079,23 +1079,23 @@ static void BuildGlobalECs(DSGraph &GG, std::set<GlobalValue*> &ECGlobals) {
     GlobalValue *First = GVs[0];
     for (unsigned i = 1, e = GVs.size(); i != e; ++i)
       GlobalECs.unionSets(First, GVs[i]);
-    
+
     // Next, get the leader element.
     assert(First == GlobalECs.getLeaderValue(First) &&
            "First did not end up being the leader?");
-    
+
     // Next, remove all globals from the scalar map that are not the leader.
     assert(GVs[0] == First && "First had to be at the front!");
     for (unsigned i = 1, e = GVs.size(); i != e; ++i) {
       ECGlobals.insert(GVs[i]);
       SM.erase(SM.find(GVs[i]));
     }
-    
+
     // Finally, change the global node to only contain the leader.
     I->clearGlobals();
     I->addGlobal(First);
   }
-  
+
   DEBUG(GG.AssertGraphOK());
 }
 
@@ -1151,7 +1151,7 @@ bool LocalDataStructures::runOnModule(Module &M) {
   GlobalsGraph = new DSGraph(GlobalECs, TD);
   {
     GraphBuilder GGB(*GlobalsGraph);
-    
+
     // Add initializers for all of the globals to the globals graph.
     for (Module::global_iterator I = M.global_begin(), E = M.global_end();
          I != E; ++I)

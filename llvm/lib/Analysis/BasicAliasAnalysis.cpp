@@ -1,10 +1,10 @@
 //===- BasicAliasAnalysis.cpp - Local Alias Analysis Impl -----------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines the default implementation of the Alias Analysis interface
@@ -39,7 +39,7 @@ namespace {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<TargetData>();
     }
-    
+
     virtual void initializePass() {
       TD = &getAnalysis<TargetData>();
     }
@@ -53,7 +53,7 @@ namespace {
                                          std::vector<PointerAccessInfo> *Info) {
       return UnknownModRefBehavior;
     }
-    
+
     virtual void getArgumentAccesses(Function *F, CallSite CS,
                                      std::vector<PointerAccessInfo> &Info) {
       assert(0 && "This method may not be called on this function!");
@@ -72,7 +72,7 @@ namespace {
     virtual void deleteValue(Value *V) {}
     virtual void copyValue(Value *From, Value *To) {}
   };
- 
+
   // Register this pass...
   RegisterOpt<NoAA>
   U("no-aa", "No Alias Analysis (always returns 'may' alias)");
@@ -106,7 +106,7 @@ namespace {
 
     virtual ModRefBehavior getModRefBehavior(Function *F, CallSite CS,
                                              std::vector<PointerAccessInfo> *Info);
-    
+
   private:
     // CheckGEPInstructions - Check two GEP instructions with known
     // must-aliasing base pointers.  This checks to see if the index expressions
@@ -117,7 +117,7 @@ namespace {
                          const Type *BasePtr2Ty, std::vector<Value*> &GEP2Ops,
                          unsigned G2Size);
   };
- 
+
   // Register this pass...
   RegisterOpt<BasicAliasAnalysis>
   X("basicaa", "Basic Alias Analysis (default AA impl)");
@@ -144,7 +144,7 @@ static const Value *getUnderlyingObject(const Value *V) {
 
   // If we are at some type of object... return it.
   if (hasUniqueAddress(V) || isa<Argument>(V)) return V;
-  
+
   // Traverse through different addressing mechanisms...
   if (const Instruction *I = dyn_cast<Instruction>(V)) {
     if (isa<CastInst>(I) || isa<GetElementPtrInst>(I))
@@ -307,7 +307,7 @@ BasicAliasAnalysis::alias(const Value *V1, unsigned V1Size,
     if (!isa<Argument>(O1) && isa<ConstantPointerNull>(V2))
       return NoAlias;                    // Unique values don't alias null
 
-    if (isa<GlobalVariable>(O1) || 
+    if (isa<GlobalVariable>(O1) ||
         (isa<AllocationInst>(O1) &&
          !cast<AllocationInst>(O1)->isArrayAllocation()))
       if (cast<PointerType>(O1->getType())->getElementType()->isSized()) {
@@ -351,12 +351,12 @@ BasicAliasAnalysis::alias(const Value *V1, unsigned V1Size,
     do {
       BasePtr1 = cast<User>(BasePtr1)->getOperand(0);
     } while (isGEP(BasePtr1) &&
-             cast<User>(BasePtr1)->getOperand(1) == 
+             cast<User>(BasePtr1)->getOperand(1) ==
        Constant::getNullValue(cast<User>(BasePtr1)->getOperand(1)->getType()));
     do {
       BasePtr2 = cast<User>(BasePtr2)->getOperand(0);
     } while (isGEP(BasePtr2) &&
-             cast<User>(BasePtr2)->getOperand(1) == 
+             cast<User>(BasePtr2)->getOperand(1) ==
        Constant::getNullValue(cast<User>(BasePtr2)->getOperand(1)->getType()));
 
     // Do the base pointers alias?
@@ -423,7 +423,7 @@ BasicAliasAnalysis::alias(const Value *V1, unsigned V1Size,
         if (ConstantFound) {
           if (V2Size <= 1 && V1Size <= 1)  // Just pointer check?
             return NoAlias;
-          
+
           // Otherwise we have to check to see that the distance is more than
           // the size of the argument... build an index vector that is equal to
           // the arguments provided, except substitute 0's for any variable
@@ -443,7 +443,7 @@ BasicAliasAnalysis::alias(const Value *V1, unsigned V1Size,
         }
       }
     }
-  
+
   return MayAlias;
 }
 
@@ -503,7 +503,7 @@ CheckGEPInstructions(const Type* BasePtr1Ty, std::vector<Value*> &GEP1Ops,
   // If so, return mustalias.
   if (UnequalOper == MinOperands) {
     if (GEP1Ops.size() < GEP2Ops.size()) std::swap(GEP1Ops, GEP2Ops);
-    
+
     bool AllAreZeros = true;
     for (unsigned i = UnequalOper; i != MaxOperands; ++i)
       if (!isa<Constant>(GEP1Ops[i]) ||
@@ -514,7 +514,7 @@ CheckGEPInstructions(const Type* BasePtr1Ty, std::vector<Value*> &GEP1Ops,
     if (AllAreZeros) return MustAlias;
   }
 
-    
+
   // So now we know that the indexes derived from the base pointers,
   // which are known to alias, are different.  We can still determine a
   // no-alias result if there are differing constant pairs in the index
@@ -530,7 +530,7 @@ CheckGEPInstructions(const Type* BasePtr1Ty, std::vector<Value*> &GEP1Ops,
   for (; FirstConstantOper != MinOperands; ++FirstConstantOper) {
     const Value *G1Oper = GEP1Ops[FirstConstantOper];
     const Value *G2Oper = GEP2Ops[FirstConstantOper];
-    
+
     if (G1Oper != G2Oper)   // Found non-equal constant indexes...
       if (Constant *G1OC = dyn_cast<ConstantInt>(const_cast<Value*>(G1Oper)))
         if (Constant *G2OC = dyn_cast<ConstantInt>(const_cast<Value*>(G2Oper))){
@@ -555,7 +555,7 @@ CheckGEPInstructions(const Type* BasePtr1Ty, std::vector<Value*> &GEP1Ops,
         }
     BasePtr1Ty = cast<CompositeType>(BasePtr1Ty)->getTypeAtIndex(G1Oper);
   }
-  
+
   // No shared constant operands, and we ran out of common operands.  At this
   // point, the GEP instructions have run through all of their operands, and we
   // haven't found evidence that there are any deltas between the GEP's.
@@ -585,13 +585,13 @@ CheckGEPInstructions(const Type* BasePtr1Ty, std::vector<Value*> &GEP1Ops,
           // Now crop off any constants from the end...
           GEP1Ops.resize(MinOperands);
           int64_t Offset2 = TD.getIndexedOffset(GEPPointerTy, GEP1Ops);
-        
+
           // If the tail provided a bit enough offset, return noalias!
           if ((uint64_t)(Offset2-Offset1) >= SizeMax)
             return NoAlias;
         }
     }
-    
+
     // Couldn't find anything useful.
     return MayAlias;
   }
@@ -604,7 +604,7 @@ CheckGEPInstructions(const Type* BasePtr1Ty, std::vector<Value*> &GEP1Ops,
   // Advance BasePtr[12]Ty over this first differing constant operand.
   BasePtr2Ty = cast<CompositeType>(BasePtr1Ty)->getTypeAtIndex(GEP2Ops[FirstConstantOper]);
   BasePtr1Ty = cast<CompositeType>(BasePtr1Ty)->getTypeAtIndex(GEP1Ops[FirstConstantOper]);
-  
+
   // We are going to be using TargetData::getIndexedOffset to determine the
   // offset that each of the GEP's is reaching.  To do this, we have to convert
   // all variable references to constant references.  To do this, we convert the
@@ -614,7 +614,7 @@ CheckGEPInstructions(const Type* BasePtr1Ty, std::vector<Value*> &GEP1Ops,
       GEP1Ops[i] = GEP2Ops[i] = Constant::getNullValue(Type::UIntTy);
 
   // We know that GEP1Ops[FirstConstantOper] & GEP2Ops[FirstConstantOper] are ok
-  
+
   // Loop over the rest of the operands...
   for (unsigned i = FirstConstantOper+1; i != MaxOperands; ++i) {
     const Value *Op1 = i < GEP1Ops.size() ? GEP1Ops[i] : 0;
@@ -631,7 +631,7 @@ CheckGEPInstructions(const Type* BasePtr1Ty, std::vector<Value*> &GEP1Ops,
           if (const ArrayType *AT = dyn_cast<ArrayType>(BasePtr1Ty))
             if (Op1C->getRawValue() >= AT->getNumElements())
               return MayAlias;  // Be conservative with out-of-range accesses
-          
+
         } else {
           // GEP1 is known to produce a value less than GEP2.  To be
           // conservatively correct, we must assume the largest possible
@@ -647,7 +647,7 @@ CheckGEPInstructions(const Type* BasePtr1Ty, std::vector<Value*> &GEP1Ops,
             GEP1Ops[i] = ConstantSInt::get(Type::LongTy,AT->getNumElements()-1);
         }
       }
-      
+
       if (Op2) {
         if (const ConstantInt *Op2C = dyn_cast<ConstantInt>(Op2)) {
           // If this is an array index, make sure the array element is in range.
@@ -674,14 +674,14 @@ CheckGEPInstructions(const Type* BasePtr1Ty, std::vector<Value*> &GEP1Ops,
         BasePtr2Ty = 0;
     }
   }
-  
+
   if (GEPPointerTy->getElementType()->isSized()) {
     int64_t Offset1 = getTargetData().getIndexedOffset(GEPPointerTy, GEP1Ops);
     int64_t Offset2 = getTargetData().getIndexedOffset(GEPPointerTy, GEP2Ops);
     assert(Offset1<Offset2 && "There is at least one different constant here!");
 
     if ((uint64_t)(Offset2-Offset1) >= SizeMax) {
-      //std::cerr << "Determined that these two GEP's don't alias [" 
+      //std::cerr << "Determined that these two GEP's don't alias ["
       //          << SizeMax << " bytes]: \n" << *GEP1 << *GEP2;
       return NoAlias;
     }
@@ -706,11 +706,11 @@ static const char *DoesntAccessMemoryTable[] = {
 
   "abs", "labs", "llabs", "imaxabs", "fabs", "fabsf", "fabsl",
   "trunc", "truncf", "truncl", "ldexp",
-  
+
   "atan", "atanf", "atanl",   "atan2", "atan2f", "atan2l",
   "cbrt",
   "cos", "cosf", "cosl",      "cosh", "coshf", "coshl",
-  "exp", "expf", "expl", 
+  "exp", "expf", "expl",
   "hypot",
   "sin", "sinf", "sinl",      "sinh", "sinhf", "sinhl",
   "tan", "tanf", "tanl",      "tanh", "tanhf", "tanhl",
@@ -723,9 +723,9 @@ static const char *DoesntAccessMemoryTable[] = {
   "iswalnum", "iswalpha", "iswcntrl", "iswdigit", "iswgraph", "iswlower",
   "iswprint", "iswpunct", "iswspace", "iswupper", "iswxdigit",
 
-  "iswctype", "towctrans", "towlower", "towupper", 
+  "iswctype", "towctrans", "towlower", "towupper",
 
-  "btowc", "wctob", 
+  "btowc", "wctob",
 
   "isinf", "isnan", "finite",
 
@@ -744,16 +744,16 @@ static const unsigned DAMTableSize =
 
 static const char *OnlyReadsMemoryTable[] = {
   "atoi", "atol", "atof", "atoll", "atoq", "a64l",
-  "bcmp", "memcmp", "memchr", "memrchr", "wmemcmp", "wmemchr", 
+  "bcmp", "memcmp", "memchr", "memrchr", "wmemcmp", "wmemchr",
 
   // Strings
   "strcmp", "strcasecmp", "strcoll", "strncmp", "strncasecmp",
-  "strchr", "strcspn", "strlen", "strpbrk", "strrchr", "strspn", "strstr", 
+  "strchr", "strcspn", "strlen", "strpbrk", "strrchr", "strspn", "strstr",
   "index", "rindex",
 
   // Wide char strings
   "wcschr", "wcscmp", "wcscoll", "wcscspn", "wcslen", "wcsncmp", "wcspbrk",
-  "wcsrchr", "wcsspn", "wcsstr", 
+  "wcsrchr", "wcsspn", "wcsstr",
 
   // glibc
   "alphasort", "alphasort64", "versionsort", "versionsort64",
@@ -768,8 +768,8 @@ static const char *OnlyReadsMemoryTable[] = {
 
 static const unsigned ORMTableSize =
     sizeof(OnlyReadsMemoryTable)/sizeof(OnlyReadsMemoryTable[0]);
-        
-AliasAnalysis::ModRefBehavior 
+
+AliasAnalysis::ModRefBehavior
 BasicAliasAnalysis::getModRefBehavior(Function *F, CallSite CS,
                                       std::vector<PointerAccessInfo> *Info) {
   if (!F->isExternal()) return UnknownModRefBehavior;
@@ -789,7 +789,7 @@ BasicAliasAnalysis::getModRefBehavior(Function *F, CallSite CS,
                                       F->getName().c_str(), StringCompare());
   if (Ptr != DoesntAccessMemoryTable+DAMTableSize && *Ptr == F->getName())
     return DoesNotAccessMemory;
-    
+
   Ptr = std::lower_bound(OnlyReadsMemoryTable,
                          OnlyReadsMemoryTable+ORMTableSize,
                          F->getName().c_str(), StringCompare());

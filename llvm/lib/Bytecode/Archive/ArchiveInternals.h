@@ -1,10 +1,10 @@
 //===-- lib/Bytecode/ArchiveInternals.h -------------------------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
-// This file was developed by Reid Spencer and is distributed under the 
+// This file was developed by Reid Spencer and is distributed under the
 // University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // Internal implementation header for LLVM Archive files.
@@ -18,8 +18,8 @@
 #include "llvm/System/TimeValue.h"
 #include "llvm/ADT/StringExtras.h"
 
-#define ARFILE_MAGIC "!<arch>\n"                   ///< magic string 
-#define ARFILE_MAGIC_LEN (sizeof(ARFILE_MAGIC)-1)  ///< length of magic string 
+#define ARFILE_MAGIC "!<arch>\n"                   ///< magic string
+#define ARFILE_MAGIC_LEN (sizeof(ARFILE_MAGIC)-1)  ///< length of magic string
 #define ARFILE_SVR4_SYMTAB_NAME "/               " ///< SVR4 symtab entry name
 #define ARFILE_LLVM_SYMTAB_NAME "#_LLVM_SYM_TAB_#" ///< LLVM symtab entry name
 #define ARFILE_BSD4_SYMTAB_NAME "__.SYMDEF SORTED" ///< BSD4 symtab entry name
@@ -29,9 +29,9 @@
 
 namespace llvm {
 
-  /// The ArchiveMemberHeader structure is used internally for bytecode 
-  /// archives. 
-  /// The header precedes each file member in the archive. This structure is 
+  /// The ArchiveMemberHeader structure is used internally for bytecode
+  /// archives.
+  /// The header precedes each file member in the archive. This structure is
   /// defined using character arrays for direct and correct interpretation
   /// regardless of the endianess of the machine that produced it.
   /// @brief Archive File Member Header
@@ -39,7 +39,7 @@ namespace llvm {
     /// @name Data
     /// @{
     public:
-      char name[16];  ///< Name of the file member. 
+      char name[16];  ///< Name of the file member.
       char date[12];  ///< File date, decimal seconds since Epoch
       char uid[6];    ///< user id in ASCII decimal
       char gid[6];    ///< group id in ASCII decimal

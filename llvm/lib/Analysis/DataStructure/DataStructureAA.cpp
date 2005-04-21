@@ -1,10 +1,10 @@
 //===- DataStructureAA.cpp - Data Structure Based Alias Analysis ----------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This pass uses the top-down data structure graphs to implement a simple
@@ -68,7 +68,7 @@ namespace {
 
     //------------------------------------------------
     // Implement the AliasAnalysis API
-    //  
+    //
 
     AliasResult alias(const Value *V1, unsigned V1Size,
                       const Value *V2, unsigned V2Size);
@@ -124,14 +124,14 @@ AliasAnalysis::AliasResult DSAA::alias(const Value *V1, unsigned V1Size,
   DSGraph *G1 = getGraphForValue(V1);
   DSGraph *G2 = getGraphForValue(V2);
   assert((!G1 || !G2 || G1 == G2) && "Alias query for 2 different functions?");
-  
+
   // Get the graph to use...
   DSGraph &G = *(G1 ? G1 : (G2 ? G2 : &TD->getGlobalsGraph()));
 
   const DSGraph::ScalarMapTy &GSM = G.getScalarMap();
   DSGraph::ScalarMapTy::const_iterator I = GSM.find((Value*)V1);
   if (I == GSM.end()) return NoAlias;
-    
+
   DSGraph::ScalarMapTy::const_iterator J = GSM.find((Value*)V2);
   if (J == GSM.end()) return NoAlias;
 
@@ -188,10 +188,10 @@ DSAA::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
 
   HaveMappingInfo:
     assert(N && "Null pointer in scalar map??");
-   
+
     typedef std::multimap<DSNode*, const DSNode*>::iterator NodeMapIt;
     std::pair<NodeMapIt, NodeMapIt> Range = CallerCalleeMap.equal_range(N);
-    
+
     // Loop over all of the nodes in the callee that correspond to "N", keeping
     // track of aggregate mod/ref info.
     bool NeverReads = true, NeverWrites = true;
@@ -203,13 +203,13 @@ DSAA::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
       if (NeverReads == false && NeverWrites == false)
         return AliasAnalysis::getModRefInfo(CS, P, Size);
     }
-    
+
     ModRefResult Result = ModRef;
     if (NeverWrites)      // We proved it was not modified.
       Result = ModRefResult(Result & ~Mod);
     if (NeverReads)       // We proved it was not read.
       Result = ModRefResult(Result & ~Ref);
-    
+
     return ModRefResult(Result & AliasAnalysis::getModRefInfo(CS, P, Size));
   }
 

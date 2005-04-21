@@ -1,10 +1,10 @@
 //===- ProfileInfoLoaderPass.cpp - LLVM Pass to load profile info ---------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements a concrete implementation of profiling information that
@@ -48,7 +48,7 @@ namespace {
     /// run - Load the profile information from the specified file.
     virtual bool runOnModule(Module &M);
   };
- 
+
   RegisterPass<LoaderPass>
   X("profile-loader", "Load profile information from llvmprof.out",
     PassInfo::Analysis|PassInfo::Optimization);
@@ -69,7 +69,7 @@ bool LoaderPass::runOnModule(Module &M) {
   ProfileInfoLoader PIL("profile-loader", Filename, M);
   EdgeCounts.clear();
   bool PrintedWarning = false;
-  
+
   std::vector<std::pair<ProfileInfoLoader::Edge, unsigned> > ECs;
   PIL.getEdgeCounts(ECs);
   for (unsigned i = 0, e = ECs.size(); i != e; ++i) {

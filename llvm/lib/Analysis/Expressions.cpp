@@ -1,16 +1,16 @@
 //===- Expressions.cpp - Expression Analysis Utilities --------------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines a package of expression analysis utilties:
 //
 // ClassifyExpression: Analyze an expression to determine the complexity of the
-//   expression, and which other variables it depends on.  
+//   expression, and which other variables it depends on.
 //
 //===----------------------------------------------------------------------===//
 
@@ -23,7 +23,7 @@
 using namespace llvm;
 
 ExprType::ExprType(Value *Val) {
-  if (Val) 
+  if (Val)
     if (ConstantInt *CPI = dyn_cast<ConstantInt>(Val)) {
       Offset = CPI;
       Var = 0;
@@ -37,7 +37,7 @@ ExprType::ExprType(Value *Val) {
   Scale = 0;
 }
 
-ExprType::ExprType(const ConstantInt *scale, Value *var, 
+ExprType::ExprType(const ConstantInt *scale, Value *var,
 		   const ConstantInt *offset) {
   Scale = var ? scale : 0; Var = var; Offset = offset;
   ExprTy = Scale ? ScaledLinear : (Var ? Linear : Constant);
@@ -67,12 +67,12 @@ namespace {
     inline operator const ConstantInt * () const { return Val; }
     inline const ConstantInt *operator->() const { return Val; }
   };
-  
+
   struct DefZero : public DefVal {
     inline DefZero(const ConstantInt *val, const Type *ty) : DefVal(val, ty) {}
     inline DefZero(const ConstantInt *val) : DefVal(val, val->getType()) {}
   };
-  
+
   struct DefOne : public DefVal {
     inline DefOne(const ConstantInt *val, const Type *ty) : DefVal(val, ty) {}
   };
@@ -160,7 +160,7 @@ static inline const ConstantInt *operator+(const DefOne &L, const DefOne &R) {
 //   3. If DefOne is true, a null return value indicates a value of 1, if DefOne
 //      is false, a null return value indicates a value of 0.
 //
-static inline const ConstantInt *Mul(const ConstantInt *Arg1, 
+static inline const ConstantInt *Mul(const ConstantInt *Arg1,
                                      const ConstantInt *Arg2, bool DefOne) {
   assert(Arg1 && Arg2 && "No null arguments should exist now!");
   assert(Arg1->getType() == Arg2->getType() && "Types must be compatible!");
@@ -168,7 +168,7 @@ static inline const ConstantInt *Mul(const ConstantInt *Arg1,
   // Actually perform the computation now!
   Constant *Result = ConstantExpr::get(Instruction::Mul, (Constant*)Arg1,
                                        (Constant*)Arg2);
-  assert(Result && Result->getType() == Arg1->getType() && 
+  assert(Result && Result->getType() == Arg1->getType() &&
 	 "Couldn't perform multiplication!");
   ConstantInt *ResultI = cast<ConstantInt>(Result);
 
@@ -257,7 +257,7 @@ ExprType llvm::ClassifyExpr(Value *Expr) {
     return Expr;
   }
 
-  
+
   Instruction *I = cast<Instruction>(Expr);
   const Type *Ty = I->getType();
 
@@ -277,7 +277,7 @@ ExprType llvm::ClassifyExpr(Value *Expr) {
     return handleAddition(Left, RightNeg, I);
   }  // end case Instruction::Sub
 
-  case Instruction::Shl: { 
+  case Instruction::Shl: {
     ExprType Right(ClassifyExpr(I->getOperand(1)));
     if (Right.ExprTy != ExprType::Constant) break;
     ExprType Left(ClassifyExpr(I->getOperand(0)));

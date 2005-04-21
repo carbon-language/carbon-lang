@@ -1,10 +1,10 @@
 //===- TopDownClosure.cpp - Compute the top-down interprocedure closure ---===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements the TDDataStructures class, which represents the
@@ -135,7 +135,7 @@ bool TDDataStructures::runOnModule(Module &M) {
     delete IndCallMap.begin()->second;
     IndCallMap.erase(IndCallMap.begin());
   }
-    
+
 
   ArgsRemainIncomplete.clear();
   GlobalsGraph->removeTriviallyDeadNodes();
@@ -170,7 +170,7 @@ void TDDataStructures::ComputePostOrder(Function &F,hash_set<DSGraph*> &Visited,
   DSGraph &G = getOrCreateDSGraph(F);
   if (Visited.count(&G)) return;
   Visited.insert(&G);
-  
+
   // Recursively traverse all of the callee graphs.
   for (DSGraph::fc_iterator CI = G.fc_begin(), CE = G.fc_end(); CI != CE; ++CI){
     Instruction *CallI = CI->getCallSite().getInstruction();
@@ -214,12 +214,12 @@ void TDDataStructures::InlineCallersIntoGraph(DSGraph &DSG) {
   // sites that call into this graph.
   std::vector<CallerCallEdge> EdgesFromCaller;
   std::map<DSGraph*, std::vector<CallerCallEdge> >::iterator
-    CEI = CallerEdges.find(&DSG); 
+    CEI = CallerEdges.find(&DSG);
   if (CEI != CallerEdges.end()) {
     std::swap(CEI->second, EdgesFromCaller);
     CallerEdges.erase(CEI);
   }
-  
+
   // Sort the caller sites to provide a by-caller-graph ordering.
   std::sort(EdgesFromCaller.begin(), EdgesFromCaller.end());
 
@@ -267,7 +267,7 @@ void TDDataStructures::InlineCallersIntoGraph(DSGraph &DSG) {
                getParent()->getParent()->getName() << "'");
       DEBUG(std::cerr << ": " << CF.getFunctionType()->getNumParams()
             << " args\n");
-      
+
       // Get the formal argument and return nodes for the called function and
       // merge them with the cloned subgraph.
       DSCallSite T1 = DSG.getCallSiteForArguments(CF);
@@ -356,7 +356,7 @@ void TDDataStructures::InlineCallersIntoGraph(DSGraph &DSG) {
     // so we build up a new, private, graph that represents the calls of all
     // calls to this set of functions.
     std::vector<Function*> Callees;
-    for (BUDataStructures::ActualCalleesTy::const_iterator I = 
+    for (BUDataStructures::ActualCalleesTy::const_iterator I =
            BUInfo->callee_begin(CallI), E = BUInfo->callee_end(CallI);
          I != E; ++I)
       if (!I->second->isExternal())

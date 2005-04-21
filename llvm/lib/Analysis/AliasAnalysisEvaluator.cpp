@@ -1,10 +1,10 @@
 //===- AliasAnalysisEvaluator.cpp - Alias Analysis Accuracy Evaluator -----===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements a simple N^2 alias analysis accuracy evaluator.
@@ -54,16 +54,16 @@ namespace {
       AU.addRequired<AliasAnalysis>();
       AU.setPreservesAll();
     }
-    
-    bool doInitialization(Module &M) { 
-      NoAlias = MayAlias = MustAlias = 0; 
+
+    bool doInitialization(Module &M) {
+      NoAlias = MayAlias = MustAlias = 0;
       NoModRef = Mod = Ref = ModRef = 0;
 
       if (PrintAll) {
         PrintNoAlias = PrintMayAlias = PrintMustAlias = true;
         PrintNoModRef = PrintMod = PrintRef = PrintModRef = true;
       }
-      return false; 
+      return false;
     }
 
     bool runOnFunction(Function &F);
@@ -85,7 +85,7 @@ static inline void PrintResults(const char *Msg, bool P, Value *V1, Value *V2,
   }
 }
 
-static inline void 
+static inline void
 PrintModRefResults(const char *Msg, bool P, Instruction *I, Value *Ptr,
                    Module *M) {
   if (P) {
@@ -99,7 +99,7 @@ bool AAEval::runOnFunction(Function &F) {
   AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
 
   const TargetData &TD = AA.getTargetData();
-  
+
   std::set<Value *> Pointers;
   std::set<CallSite> CallSites;
 
@@ -157,16 +157,16 @@ bool AAEval::runOnFunction(Function &F) {
   }
 
   // Mod/ref alias analysis: compare all pairs of calls and values
-  for (std::set<CallSite>::iterator C = CallSites.begin(), 
+  for (std::set<CallSite>::iterator C = CallSites.begin(),
          Ce = CallSites.end(); C != Ce; ++C) {
     Instruction *I = C->getInstruction();
-    
+
     for (std::set<Value *>::iterator V = Pointers.begin(), Ve = Pointers.end();
          V != Ve; ++V) {
       unsigned Size = 0;
       const Type *ElTy = cast<PointerType>((*V)->getType())->getElementType();
       if (ElTy->isSized()) Size = TD.getTypeSize(ElTy);
-      
+
       switch (AA.getModRefInfo(*C, *V, Size)) {
       case AliasAnalysis::NoModRef:
         PrintModRefResults("NoModRef", PrintNoModRef, I, *V, F.getParent());
@@ -185,7 +185,7 @@ bool AAEval::runOnFunction(Function &F) {
       }
     }
   }
-  
+
   return false;
 }
 
@@ -199,7 +199,7 @@ bool AAEval::doFinalization(Module &M) {
   std::cerr << "===== Alias Analysis Evaluator Report =====\n";
   if (AliasSum == 0) {
     std::cerr << "  Alias Analysis Evaluator Summary: No pointers!\n";
-  } else { 
+  } else {
     std::cerr << "  " << AliasSum << " Total Alias Queries Performed\n";
     std::cerr << "  " << NoAlias << " no alias responses ";
     PrintPercent(NoAlias, AliasSum);
@@ -207,8 +207,8 @@ bool AAEval::doFinalization(Module &M) {
     PrintPercent(MayAlias, AliasSum);
     std::cerr << "  " << MustAlias << " must alias responses ";
     PrintPercent(MustAlias, AliasSum);
-    std::cerr << "  Alias Analysis Evaluator Pointer Alias Summary: " 
-              << NoAlias*100/AliasSum  << "%/" << MayAlias*100/AliasSum << "%/" 
+    std::cerr << "  Alias Analysis Evaluator Pointer Alias Summary: "
+              << NoAlias*100/AliasSum  << "%/" << MayAlias*100/AliasSum << "%/"
               << MustAlias*100/AliasSum << "%\n";
   }
 
@@ -226,8 +226,8 @@ bool AAEval::doFinalization(Module &M) {
     PrintPercent(Ref, ModRefSum);
     std::cerr << "  " << ModRef << " mod & ref responses ";
     PrintPercent(ModRef, ModRefSum);
-    std::cerr << "  Alias Analysis Evaluator Mod/Ref Summary: " 
-              << NoModRef*100/ModRefSum  << "%/" << Mod*100/ModRefSum << "%/" 
+    std::cerr << "  Alias Analysis Evaluator Mod/Ref Summary: "
+              << NoModRef*100/ModRefSum  << "%/" << Mod*100/ModRefSum << "%/"
               << Ref*100/ModRefSum << "%/" << ModRef*100/ModRefSum << "%\n";
   }
 

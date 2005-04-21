@@ -1,10 +1,10 @@
 //===- PrintSCC.cpp - Enumerate SCCs in some key graphs -------------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file provides passes to print out SCCs in a CFG or a CallGraph.
@@ -17,10 +17,10 @@
 //       analyze -cfgscc            to print the SCCs in each CFG of a module.
 //       analyze -cfgscc -stats     to print the #SCCs and the maximum SCC size.
 //       analyze -cfgscc -debug > /dev/null to watch the algorithm in action.
-// 
+//
 //     and similarly:
 //       analyze -callscc [-stats] [-debug] to print SCCs in the CallGraph
-// 
+//
 // (3) To test the scc_iterator.
 //
 //===----------------------------------------------------------------------===//

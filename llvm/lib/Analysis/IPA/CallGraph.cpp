@@ -1,10 +1,10 @@
 //===- CallGraph.cpp - Build a Module's call graph ------------------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 //  This file implements the CallGraph class.
@@ -57,7 +57,7 @@ void CallGraph::addToCallGraph(Function *F) {
         Root = Node;          // Found a main, keep track of it!
     }
   }
-  
+
   // If this function is not defined in this translation unit, it could call
   // anything.
   if (F->isExternal() && !F->getIntrinsicID())
@@ -113,7 +113,7 @@ bool CallGraph::runOnModule(Module &M) {
 
   // If we didn't find a main function, use the external call graph node
   if (Root == 0) Root = ExternalCallingNode;
-  
+
   return false;
 }
 
@@ -148,7 +148,7 @@ void CallGraph::print(std::ostream &OS, const Module *M) const {
     OS << F->getName() << "\n";
   else
     OS << "<<null function: 0x" << getRoot() << ">>\n";
-  
+
   for (CallGraph::const_iterator I = begin(), E = end(); I != E; ++I)
     I->second->print(OS);
 }

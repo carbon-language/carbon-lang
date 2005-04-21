@@ -1,10 +1,10 @@
 //===- CFGPrinter.cpp - DOT printer for the control flow graph ------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines a '-print-cfg' analysis pass, which emits the
@@ -92,7 +92,7 @@ namespace {
       std::string Filename = "cfg." + F.getName() + ".dot";
       std::cerr << "Writing '" << Filename << "'...";
       std::ofstream File(Filename.c_str());
-      
+
       if (File.good())
         WriteGraph(File, (const Function*)&F);
       else
@@ -102,7 +102,7 @@ namespace {
     }
 
     void print(std::ostream &OS, const Module* = 0) const {}
-    
+
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesAll();
     }
@@ -120,7 +120,7 @@ namespace {
       return false;
     }
     void print(std::ostream &OS, const Module* = 0) const {}
-    
+
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesAll();
     }
@@ -140,7 +140,7 @@ void Function::viewCFG() const {
   std::string Filename = "/tmp/cfg." + getName() + ".dot";
   std::cerr << "Writing '" << Filename << "'... ";
   std::ofstream F(Filename.c_str());
-  
+
   if (!F.good()) {
     std::cerr << "  error opening file for writing!\n";
     return;
