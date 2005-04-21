@@ -1,10 +1,10 @@
 //===-- llvm/GlobalVariable.h - GlobalVariable class ------------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file contains the declaration of the GlobalVariable class, which
@@ -110,12 +110,12 @@ public:
   /// and deletes it.
   ///
   void eraseFromParent();
-  
-  /// Override Constant's implementation of this method so we can 
+
+  /// Override Constant's implementation of this method so we can
   /// replace constant initializers.
   virtual void replaceUsesOfWithOnConstant(Value *From, Value *To,
                                            bool DisableChecking = false);
-  
+
   virtual void print(std::ostream &OS) const;
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:

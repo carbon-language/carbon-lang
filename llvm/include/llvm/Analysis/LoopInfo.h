@@ -1,10 +1,10 @@
 //===- llvm/Analysis/LoopInfo.h - Natural Loop Calculator -------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines the LoopInfo class that is used to identify natural loops
@@ -41,8 +41,8 @@ class PHINode;
 class Instruction;
 
 //===----------------------------------------------------------------------===//
-/// Loop class - Instances of this class are used to represent loops that are 
-/// detected in the flow graph 
+/// Loop class - Instances of this class are used to represent loops that are
+/// detected in the flow graph
 ///
 class Loop {
   Loop *ParentLoop;
@@ -307,10 +307,10 @@ template <> struct GraphTraits<const Loop*> {
   typedef std::vector<Loop*>::const_iterator ChildIteratorType;
 
   static NodeType *getEntryNode(const Loop *L) { return L; }
-  static inline ChildIteratorType child_begin(NodeType *N) { 
+  static inline ChildIteratorType child_begin(NodeType *N) {
     return N->begin();
   }
-  static inline ChildIteratorType child_end(NodeType *N) { 
+  static inline ChildIteratorType child_end(NodeType *N) {
     return N->end();
   }
 };
@@ -320,10 +320,10 @@ template <> struct GraphTraits<Loop*> {
   typedef std::vector<Loop*>::const_iterator ChildIteratorType;
 
   static NodeType *getEntryNode(Loop *L) { return L; }
-  static inline ChildIteratorType child_begin(NodeType *N) { 
+  static inline ChildIteratorType child_begin(NodeType *N) {
     return N->begin();
   }
-  static inline ChildIteratorType child_end(NodeType *N) { 
+  static inline ChildIteratorType child_end(NodeType *N) {
     return N->end();
   }
 };

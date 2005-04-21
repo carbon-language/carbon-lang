@@ -22,7 +22,7 @@
 #include <vector>
 #include <cassert>
 
-namespace llvm { 
+namespace llvm {
   class BasicBlock;
   class Function;
   class Module;

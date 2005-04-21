@@ -1,10 +1,10 @@
 //===- llvm/Assembly/PrintModulePass.h - Printing Pass ----------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines two passes to print out a module.  The PrintModulePass pass
@@ -36,7 +36,7 @@ public:
   ~PrintModulePass() {
     if (DeleteStream) delete Out;
   }
-  
+
   bool runOnModule(Module &M) {
     (*Out) << M << std::flush;
     return false;
@@ -61,7 +61,7 @@ public:
   inline ~PrintFunctionPass() {
     if (DeleteStream) delete Out;
   }
-  
+
   // runOnFunction - This pass just prints a banner followed by the function as
   // it's processed.
   //
@@ -69,7 +69,7 @@ public:
     (*Out) << Banner << (Value&)F;
     return false;
   }
-  
+
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.setPreservesAll();
   }

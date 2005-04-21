@@ -1,10 +1,10 @@
 //===-- llvm/Instructions.h - Instruction subclass definitions --*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file exposes the class definitions of all of the subclasses of the
@@ -34,9 +34,9 @@ class PointerType;
 ///
 class AllocationInst : public UnaryInstruction {
 protected:
-  AllocationInst(const Type *Ty, Value *ArraySize, unsigned iTy, 
+  AllocationInst(const Type *Ty, Value *ArraySize, unsigned iTy,
                  const std::string &Name = "", Instruction *InsertBefore = 0);
-  AllocationInst(const Type *Ty, Value *ArraySize, unsigned iTy, 
+  AllocationInst(const Type *Ty, Value *ArraySize, unsigned iTy,
                  const std::string &Name, BasicBlock *InsertAtEnd);
 
 public:
@@ -55,7 +55,7 @@ public:
   /// getType - Overload to return most specific pointer type
   ///
   inline const PointerType *getType() const {
-    return reinterpret_cast<const PointerType*>(Instruction::getType()); 
+    return reinterpret_cast<const PointerType*>(Instruction::getType());
   }
 
   /// getAllocatedType - Return the type that is being allocated by the
@@ -175,7 +175,7 @@ class LoadInst : public UnaryInstruction {
   LoadInst(const LoadInst &LI)
     : UnaryInstruction(LI.getType(), Load, LI.getOperand(0)) {
     setVolatile(LI.isVolatile());
-    
+
 #ifndef NDEBUG
     AssertOK();
 #endif
@@ -221,7 +221,7 @@ public:
 //                                StoreInst Class
 //===----------------------------------------------------------------------===//
 
-/// StoreInst - an instruction for storing to memory 
+/// StoreInst - an instruction for storing to memory
 ///
 class StoreInst : public Instruction {
   Use Ops[2];
@@ -252,7 +252,7 @@ public:
   void setVolatile(bool V) { SubclassData = V; }
 
   /// Transparently provide more efficient getOperand methods.
-  Value *getOperand(unsigned i) const { 
+  Value *getOperand(unsigned i) const {
     assert(i < 2 && "getOperand() out of range!");
     return Ops[i];
   }
@@ -319,7 +319,7 @@ public:
   ~GetElementPtrInst();
 
   virtual GetElementPtrInst *clone() const;
-  
+
   // getType - Overload to return most specific pointer type...
   inline const PointerType *getType() const {
     return reinterpret_cast<const PointerType*>(Instruction::getType());
@@ -328,15 +328,15 @@ public:
   /// getIndexedType - Returns the type of the element that would be loaded with
   /// a load instruction with the specified parameters.
   ///
-  /// A null type is returned if the indices are invalid for the specified 
+  /// A null type is returned if the indices are invalid for the specified
   /// pointer type.
   ///
-  static const Type *getIndexedType(const Type *Ptr, 
+  static const Type *getIndexedType(const Type *Ptr,
                                     const std::vector<Value*> &Indices,
                                     bool AllowStructLeaf = false);
   static const Type *getIndexedType(const Type *Ptr, Value *Idx0, Value *Idx1,
                                     bool AllowStructLeaf = false);
-  
+
   inline op_iterator       idx_begin()       { return op_begin()+1; }
   inline const_op_iterator idx_begin() const { return op_begin()+1; }
   inline op_iterator       idx_end()         { return op_end(); }
@@ -355,7 +355,7 @@ public:
   inline unsigned getNumIndices() const {  // Note: always non-negative
     return getNumOperands() - 1;
   }
-  
+
   inline bool hasIndices() const {
     return getNumOperands() > 1;
   }
@@ -430,7 +430,7 @@ public:
 /// the instruction (i->getType()).
 ///
 class CastInst : public UnaryInstruction {
-  CastInst(const CastInst &CI) 
+  CastInst(const CastInst &CI)
     : UnaryInstruction(CI.getType(), Cast, CI.getOperand(0)) {
   }
 public:
@@ -486,9 +486,9 @@ public:
            Instruction *InsertBefore = 0);
   CallInst(Value *F, Value *Actual, const std::string& Name,
            BasicBlock *InsertAtEnd);
-  explicit CallInst(Value *F, const std::string &Name = "", 
+  explicit CallInst(Value *F, const std::string &Name = "",
                     Instruction *InsertBefore = 0);
-  explicit CallInst(Value *F, const std::string &Name, 
+  explicit CallInst(Value *F, const std::string &Name,
                     BasicBlock *InsertAtEnd);
   ~CallInst();
 
@@ -509,7 +509,7 @@ public:
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const CallInst *) { return true; }
   static inline bool classof(const Instruction *I) {
-    return I->getOpcode() == Instruction::Call; 
+    return I->getOpcode() == Instruction::Call;
   }
   static inline bool classof(const Value *V) {
     return isa<Instruction>(V) && classof(cast<Instruction>(V));
@@ -568,7 +568,7 @@ public:
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ShiftInst *) { return true; }
   static inline bool classof(const Instruction *I) {
-    return (I->getOpcode() == Instruction::Shr) | 
+    return (I->getOpcode() == Instruction::Shr) |
            (I->getOpcode() == Instruction::Shl);
   }
   static inline bool classof(const Value *V) {
@@ -772,7 +772,7 @@ public:
 
   /// getIncomingBlock - Return incoming basic block #x
   ///
-  BasicBlock *getIncomingBlock(unsigned i) const { 
+  BasicBlock *getIncomingBlock(unsigned i) const {
     return reinterpret_cast<BasicBlock*>(getOperand(i*2+1));
   }
   void setIncomingBlock(unsigned i, BasicBlock *BB) {
@@ -795,7 +795,7 @@ public:
     OperandList[OpNo].init(V, this);
     OperandList[OpNo+1].init(reinterpret_cast<Value*>(BB), this);
   }
-  
+
   /// removeIncomingValue - Remove an incoming value.  This is useful if a
   /// predecessor basic block is deleted.  The value removed is returned.
   ///
@@ -812,12 +812,12 @@ public:
     return removeIncomingValue(Idx, DeletePHIIfEmpty);
   }
 
-  /// getBasicBlockIndex - Return the first index of the specified basic 
+  /// getBasicBlockIndex - Return the first index of the specified basic
   /// block in the value list for this PHI.  Returns -1 if no instance.
   ///
   int getBasicBlockIndex(const BasicBlock *BB) const {
     Use *OL = OperandList;
-    for (unsigned i = 0, e = getNumOperands(); i != e; i += 2) 
+    for (unsigned i = 0, e = getNumOperands(); i != e; i += 2)
       if (OL[i+1] == reinterpret_cast<const Value*>(BB)) return i/2;
     return -1;
   }
@@ -829,7 +829,7 @@ public:
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const PHINode *) { return true; }
   static inline bool classof(const Instruction *I) {
-    return I->getOpcode() == Instruction::PHI; 
+    return I->getOpcode() == Instruction::PHI;
   }
   static inline bool classof(const Value *V) {
     return isa<Instruction>(V) && classof(cast<Instruction>(V));
@@ -1007,7 +1007,7 @@ public:
 
   BasicBlock *getSuccessor(unsigned i) const {
     assert(i < getNumSuccessors() && "Successor # out of range for Branch!");
-    return (i == 0) ? cast<BasicBlock>(getOperand(0)) : 
+    return (i == 0) ? cast<BasicBlock>(getOperand(0)) :
                       cast<BasicBlock>(getOperand(1));
   }
 
@@ -1052,7 +1052,7 @@ public:
   /// be specified here to make memory allocation more efficient.  This
   /// constructor can also autoinsert before another instruction.
   SwitchInst(Value *Value, BasicBlock *Default, unsigned NumCases,
-             Instruction *InsertBefore = 0) 
+             Instruction *InsertBefore = 0)
     : TerminatorInst(Instruction::Switch, 0, 0, InsertBefore) {
     init(Value, Default, NumCases);
   }
@@ -1062,7 +1062,7 @@ public:
   /// be specified here to make memory allocation more efficient.  This
   /// constructor also autoinserts at the end of the specified BasicBlock.
   SwitchInst(Value *Value, BasicBlock *Default, unsigned NumCases,
-             BasicBlock *InsertAtEnd) 
+             BasicBlock *InsertAtEnd)
     : TerminatorInst(Instruction::Switch, 0, 0, InsertAtEnd) {
     init(Value, Default, NumCases);
   }

@@ -1,13 +1,13 @@
 //===-- llvm/ADT/GraphTraits.h - Graph traits template ----------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
-// This file defines the little GraphTraits<X> template class that should be 
+// This file defines the little GraphTraits<X> template class that should be
 // specialized by classes that want to be iteratable by generic graph iterators.
 //
 // This file also defines the marker class Inverse that is used to iterate over
@@ -35,9 +35,9 @@ struct GraphTraits {
 
   // static ChildIteratorType child_begin(NodeType *)
   // static ChildIteratorType child_end  (NodeType *)
-  //    Return iterators that point to the beginning and ending of the child 
+  //    Return iterators that point to the beginning and ending of the child
   //    node list for the specified node.
-  //  
+  //
 
 
   // typedef  ...iterator nodes_iterator;
@@ -50,7 +50,7 @@ struct GraphTraits {
   // If anyone tries to use this class without having an appropriate
   // specialization, make an error.  If you get this error, it's because you
   // need to include the appropriate specialization of GraphTraits<> for your
-  // graph, or you need to define it for a new graph type. Either that or 
+  // graph, or you need to define it for a new graph type. Either that or
   // your argument to XXX_begin(...) is unknown or needs to have the proper .h
   // file #include'd.
   //

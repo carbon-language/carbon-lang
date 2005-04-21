@@ -1,10 +1,10 @@
 //===- DSGraphTraits.h - Provide generic graph interface --------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file provides GraphTraits specializations for the DataStructure graph
@@ -28,7 +28,7 @@ class DSNodeIterator : public forward_iterator<const DSNode, ptrdiff_t> {
   friend class DSNode;
   NodeTy * const Node;
   unsigned Offset;
-  
+
   typedef DSNodeIterator<NodeTy> _Self;
 
   DSNodeIterator(NodeTy *N) : Node(N), Offset(0) {}   // begin iterator
@@ -56,7 +56,7 @@ public:
     Offset = I.Offset;
     return *this;
   }
-  
+
   pointer operator*() const {
     if (Node->isDeadNode())
       return Node->getForwardNode();
@@ -64,13 +64,13 @@ public:
       return Node->getLink(Offset).getNode();
   }
   pointer operator->() const { return operator*(); }
-  
+
   _Self& operator++() {                // Preincrement
     Offset += (1 << DS::PointerShift);
     return *this;
   }
   _Self operator++(int) { // Postincrement
-    _Self tmp = *this; ++*this; return tmp; 
+    _Self tmp = *this; ++*this; return tmp;
   }
 
   unsigned getOffset() const { return Offset; }

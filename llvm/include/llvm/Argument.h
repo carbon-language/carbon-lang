@@ -1,10 +1,10 @@
 //===-- llvm/Argument.h - Definition of the Argument class ------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines the Argument class, which represents an incoming formal
@@ -41,7 +41,7 @@ public:
 
   inline const Function *getParent() const { return Parent; }
   inline       Function *getParent()       { return Parent; }
- 
+
   // getNext/Prev - Return the next or previous argument in the list.
         Argument *getNext()       { return Next; }
   const Argument *getNext() const { return Next; }

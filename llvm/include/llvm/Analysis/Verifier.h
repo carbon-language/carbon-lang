@@ -1,10 +1,10 @@
 //===-- llvm/Analysis/Verifier.h - Module Verifier --------------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines the function verifier interface, that can be used for some
@@ -28,12 +28,12 @@ class Module;
 class Function;
 
 /// @brief An enumeration to specify the action to be taken if errors found.
-/// 
+///
 /// This enumeration is used in the functions below to indicate what should
 /// happen if the verifier finds errors. Each of the functions that uses
 /// this enumeration as an argument provides a default value for it. The
 /// actions are listed below.
-enum VerifierFailureAction { 
+enum VerifierFailureAction {
   AbortProcessAction,   ///< verifyModule will print to stderr and abort()
   ThrowExceptionAction, ///< verifyModule will throw errors as std::string
   PrintMessageAction,   ///< verifyModule will print to stderr and return true
@@ -45,15 +45,15 @@ enum VerifierFailureAction {
 /// Check a module or function for validity.  When the pass is used, the
 /// action indicated by the \p action argument will be used if errors are
 /// found.
-FunctionPass *createVerifierPass( 
+FunctionPass *createVerifierPass(
   VerifierFailureAction action = AbortProcessAction ///< Action to take
 );
 
-/// @brief Check a module for errors. 
+/// @brief Check a module for errors.
 ///
-/// If there are no errors, the function returns false. If an error is found, 
+/// If there are no errors, the function returns false. If an error is found,
 /// the action taken depends on the \p action parameter.
-/// This should only be used for debugging, because it plays games with 
+/// This should only be used for debugging, because it plays games with
 /// PassManagers and stuff.
 
 bool verifyModule(

@@ -1,10 +1,10 @@
 //===- llvm/Analysis/ValueNumbering.h - Value #'ing Interface ---*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines the abstract ValueNumbering interface, which is used as the

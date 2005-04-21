@@ -1,17 +1,17 @@
 //===- llvm/Analysis/AliasSetTracker.h - Build Alias Sets -------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines two classes: AliasSetTracker and AliasSet.  These interface
 // are used to classify a collection of pointer references into a maximal number
 // of disjoint sets.  Each AliasSet object constructed by the AliasSetTracker
 // object refers to memory disjoint from the other sets.
-// 
+//
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_ANALYSIS_ALIASSETTRACKER_H
@@ -58,7 +58,7 @@ class AliasSet {
 
     unsigned getSize() const { return Size; }
 
-    AliasSet *getAliasSet(AliasSetTracker &AST) { 
+    AliasSet *getAliasSet(AliasSetTracker &AST) {
       assert(AS && "No AliasSet yet!");
       if (AS->Forward) {
         AliasSet *OldAS = AS;
@@ -163,7 +163,7 @@ public:
     HashNodePair *CurNode;
   public:
     iterator(HashNodePair *CN = 0) : CurNode(CN) {}
-    
+
     bool operator==(const iterator& x) const {
       return CurNode == x.CurNode;
     }
@@ -173,7 +173,7 @@ public:
       CurNode = I.CurNode;
       return *this;
     }
-  
+
     value_type &operator*() const {
       assert(CurNode && "Dereferencing AliasSet.end()!");
       return *CurNode;
@@ -182,14 +182,14 @@ public:
 
     Value *getPointer() const { return CurNode->first; }
     unsigned getSize() const { return CurNode->second.getSize(); }
-  
+
     iterator& operator++() {                // Preincrement
       assert(CurNode && "Advancing past AliasSet.end()!");
       CurNode = CurNode->second.getNext();
       return *this;
     }
     iterator operator++(int) { // Postincrement
-      iterator tmp = *this; ++*this; return tmp; 
+      iterator tmp = *this; ++*this; return tmp;
     }
   };
 
@@ -306,7 +306,7 @@ public:
   AliasSet *getAliasSetForPointerIfExists(Value *P, unsigned Size) {
     return findAliasSetForPointer(P, Size);
   }
-  
+
   /// containsPointer - Return true if the specified location is represented by
   /// this alias set, false otherwise.  This does not modify the AST object or
   /// alias sets.

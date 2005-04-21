@@ -1,13 +1,13 @@
 //===-- llvm/Function.h - Class to represent a single function --*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
-// This file contains the declaration of the Function class, which represents a 
+// This file contains the declaration of the Function class, which represents a
 // single function/procedure in LLVM.
 //
 // A function basically consists of a list of basic blocks, a list of arguments,
@@ -66,7 +66,7 @@ private:
   ArgumentListType ArgumentList;        // The formal arguments
 
   SymbolTable *SymTab;
-  
+
   friend class SymbolTableListTraits<Function, Module, Module>;
 
   void setParent(Module *parent);
@@ -161,7 +161,7 @@ public:
   inline       SymbolTable &getSymbolTable()       { return *SymTab; }
   inline const SymbolTable &getSymbolTable() const { return *SymTab; }
 
-  
+
   //===--------------------------------------------------------------------===//
   // BasicBlock iterator forwarding functions
   //
@@ -209,7 +209,7 @@ public:
   /// in your path.
   ///
   void viewCFG() const;
-  
+
   /// viewCFGOnly - This function is meant for use from the debugger.  It works
   /// just like viewCFG, but it does not include the contents of basic blocks
   /// into the nodes, just the label.  If you are only interested in the CFG
@@ -228,7 +228,7 @@ public:
   /// 'delete' a whole module at a time, even though there may be circular
   /// references... first all references are dropped, and all use counts go to
   /// zero.  Then everything is deleted for real.  Note that no operations are
-  /// valid on an object that has "dropped all references", except operator 
+  /// valid on an object that has "dropped all references", except operator
   /// delete.
   ///
   /// Since no other object in the module can have references into the body of a

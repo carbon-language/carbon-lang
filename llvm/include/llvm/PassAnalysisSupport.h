@@ -1,10 +1,10 @@
 //===- llvm/PassAnalysisSupport.h - Analysis Pass Support code --*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines stuff that is used to define and "use" Analysis Passes.
@@ -25,10 +25,10 @@ namespace llvm {
 
 //===----------------------------------------------------------------------===//
 // AnalysisUsage - Represent the analysis usage information of a pass.  This
-// tracks analyses that the pass REQUIRES (must be available when the pass 
+// tracks analyses that the pass REQUIRES (must be available when the pass
 // runs), REQUIRES TRANSITIVE (must be available throughout the lifetime of the
 // pass), and analyses that the pass PRESERVES (the pass does not invalidate the
-// results of these analyses).  This information is provided by a pass to the 
+// results of these analyses).  This information is provided by a pass to the
 // Pass infrastructure through the getAnalysisUsage virtual function.
 //
 class AnalysisUsage {
@@ -37,7 +37,7 @@ class AnalysisUsage {
   bool PreservesAll;
 public:
   AnalysisUsage() : PreservesAll(false) {}
-  
+
   // addRequired - Add the specified ID to the required set of the usage info
   // for a pass.
   //

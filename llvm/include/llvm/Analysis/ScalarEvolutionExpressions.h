@@ -1,14 +1,14 @@
 //===- llvm/Analysis/ScalarEvolutionExpressions.h - SCEV Exprs --*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines the classes used to represent and build scalar expressions.
-// 
+//
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_ANALYSIS_SCALAREVOLUTION_EXPRESSIONS_H
@@ -33,7 +33,7 @@ namespace llvm {
   class SCEVConstant : public SCEV {
     ConstantInt *V;
     SCEVConstant(ConstantInt *v) : SCEV(scConstant), V(v) {}
-    
+
     virtual ~SCEVConstant();
   public:
     /// get method - This just gets and returns a new SCEVConstant object.
@@ -86,7 +86,7 @@ namespace llvm {
 
     const SCEVHandle &getOperand() const { return Op; }
     virtual const Type *getType() const { return Ty; }
-    
+
     virtual bool isLoopInvariant(const Loop *L) const {
       return Op->isLoopInvariant(L);
     }
@@ -132,7 +132,7 @@ namespace llvm {
 
     const SCEVHandle &getOperand() const { return Op; }
     virtual const Type *getType() const { return Ty; }
-    
+
     virtual bool isLoopInvariant(const Loop *L) const {
       return Op->isLoopInvariant(L);
     }

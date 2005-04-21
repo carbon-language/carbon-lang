@@ -1,10 +1,10 @@
 //===-- llvm/Constant.h - Constant class definition -------------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file contains the declaration of the Constant class.
@@ -38,7 +38,7 @@ public:
 
   // Specialize get/setOperand for Constant's as their operands are always
   // constants as well.
-  Constant *getOperand(unsigned i) { 
+  Constant *getOperand(unsigned i) {
     return static_cast<Constant*>(User::getOperand(i));
   }
   const Constant *getOperand(unsigned i) const {
@@ -56,7 +56,7 @@ public:
   /// destroyConstantImpl as the last thing they do, to destroy all users and
   /// delete this.
   virtual void destroyConstant() { assert(0 && "Not reached!"); }
-  
+
   //// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const Constant *) { return true; }
   static inline bool classof(const GlobalValue *) { return true; }

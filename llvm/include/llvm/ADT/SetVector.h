@@ -1,13 +1,13 @@
 //===- llvm/ADT/SetVector.h - Set with insert order iteration ---*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by Reid Spencer and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
-// This file implements a set that has insertion order iteration 
+// This file implements a set that has insertion order iteration
 // characteristics. This is useful for keeping a set of things that need to be
 // visited later but in a deterministic order (insertion order). The interface
 // is purposefully minimal.
@@ -24,7 +24,7 @@
 
 namespace llvm {
 
-/// This class provides a way to keep a set of things that also has the 
+/// This class provides a way to keep a set of things that also has the
 /// property of a deterministic iteration order. The order of iteration is the
 /// order of insertion.
 /// @brief A vector that has set insertion semantics.

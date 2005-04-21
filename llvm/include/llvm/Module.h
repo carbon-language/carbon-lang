@@ -1,13 +1,13 @@
 //===-- llvm/Module.h - C++ class to represent a VM module ------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
-// This file contains the declarations for the Module class that is used to 
+// This file contains the declarations for the Module class that is used to
 // maintain all the information related to a VM module.
 //
 // A module also maintains a GlobalValRefMap object that is used to hold all
@@ -229,7 +229,7 @@ public:
   /// @brief Remove a library from the list of dependent libraries
   inline void removeLibrary(const std::string& Lib) { LibraryList.remove(Lib); }
 
-  /// @brief Get all the libraries 
+  /// @brief Get all the libraries
   inline const LibraryListType& getLibraries() const { return LibraryList; }
 
   //===--------------------------------------------------------------------===//
@@ -245,7 +245,7 @@ public:
   /// 'delete' a whole class at a time, even though there may be circular
   /// references... first all references are dropped, and all use counts go to
   /// zero.  Then everything is delete'd for real.  Note that no operations are
-  /// valid on an object that has "dropped all references", except operator 
+  /// valid on an object that has "dropped all references", except operator
   /// delete.
   ///
   void dropAllReferences();

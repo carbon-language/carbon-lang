@@ -1,10 +1,10 @@
 //==- llvm/Analysis/ConstantsScanner.h - Iterate over constants -*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This class implements an iterator to walk through the constants referenced by
@@ -48,7 +48,7 @@ public:
     : InstI(inst_end(F)), OpIdx(0) {
   }
 
-  inline bool operator==(const _Self& x) const { return OpIdx == x.OpIdx && 
+  inline bool operator==(const _Self& x) const { return OpIdx == x.OpIdx &&
 						        InstI == x.InstI; }
   inline bool operator!=(const _Self& x) const { return !operator==(x); }
 
@@ -75,7 +75,7 @@ public:
   }
 
   inline _Self operator++(int) { // Postincrement
-    _Self tmp = *this; ++*this; return tmp; 
+    _Self tmp = *this; ++*this; return tmp;
   }
 
   inline bool atEnd() const { return InstI.atEnd(); }

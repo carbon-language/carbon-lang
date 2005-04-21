@@ -4,9 +4,9 @@
 |*
 |* This file was developed by the LLVM research group and is distributed under
 |* the University of Illinois Open Source License. See LICENSE.TXT for details.
-|* 
+|*
 |*===----------------------------------------------------------------------===*|
-|* 
+|*
 |* This file defines constants shared by the various different profiling
 |* runtime libraries and the LLVM C++ profile info loader. It must be a
 |* C header because, at present, the profiling runtimes are written in C.

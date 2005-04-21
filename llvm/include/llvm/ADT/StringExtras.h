@@ -1,10 +1,10 @@
 //===-- llvm/ADT/StringExtras.h - Useful string functions -------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file contains some functions that are useful when dealing with strings.
@@ -77,21 +77,21 @@ static inline std::string utostr(unsigned X, bool isNeg = false) {
 }
 
 static inline std::string itostr(long long X) {
-  if (X < 0) 
+  if (X < 0)
     return utostr(static_cast<uint64_t>(-X), true);
   else
     return utostr(static_cast<uint64_t>(X));
 }
-  
+
 static inline std::string itostr(long X) {
-  if (X < 0) 
+  if (X < 0)
     return utostr(static_cast<uint64_t>(-X), true);
   else
     return utostr(static_cast<uint64_t>(X));
 }
 
 static inline std::string itostr(int X) {
-  if (X < 0) 
+  if (X < 0)
     return utostr(static_cast<unsigned>(-X), true);
   else
     return utostr(static_cast<unsigned>(X));
@@ -105,7 +105,7 @@ static inline std::string ftostr(double V) {
   return B;
 }
 
-static inline std::string LowercaseString(const std::string &S) { 
+static inline std::string LowercaseString(const std::string &S) {
   std::string result(S);
   for (unsigned i = 0; i < S.length(); ++i)
     if (isupper(result[i]))

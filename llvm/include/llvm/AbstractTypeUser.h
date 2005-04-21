@@ -1,10 +1,10 @@
 //===-- llvm/AbstractTypeUser.h - AbstractTypeUser Interface ----*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // The AbstractTypeUser class is an interface to be implemented by classes who
@@ -79,7 +79,7 @@ class PATypeHandle {
   void removeUser();
 public:
   // ctor - Add use to type if abstract.  Note that Ty must not be null
-  inline PATypeHandle(const Type *ty, AbstractTypeUser *user) 
+  inline PATypeHandle(const Type *ty, AbstractTypeUser *user)
     : Ty(ty), User(user) {
     addUser();
   }

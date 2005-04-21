@@ -1,10 +1,10 @@
 //===-- llvm/Constants.h - Constant class subclass definitions --*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file contains the declarations for the subclasses of Constant, which
@@ -356,7 +356,7 @@ public:
   /// get() - Static factory methods - Return objects of the specified value
   static Constant *get(const ArrayType *T, const std::vector<Constant*> &);
   static Constant *get(const std::string &Initializer);
-  
+
   /// getType - Specialize the getType() method to always return an ArrayType,
   /// which reduces the amount of casting needed in parts of the compiler.
   ///
@@ -423,7 +423,7 @@ public:
   virtual void destroyConstant();
   virtual void replaceUsesOfWithOnConstant(Value *From, Value *To,
                                            bool DisableChecking = false);
-  
+
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ConstantStruct *) { return true; }
   static bool classof(const Value *V) {
@@ -446,7 +446,7 @@ public:
   /// get() - Static factory methods - Return objects of the specified value
   static Constant *get(const PackedType *T, const std::vector<Constant*> &);
   static Constant *get(const std::vector<Constant*> &V);
-  
+
   /// getType - Specialize the getType() method to always return an PackedType,
   /// which reduces the amount of casting needed in parts of the compiler.
   ///
@@ -519,12 +519,12 @@ class ConstantExpr : public Constant {
   friend struct ConstantCreator<ConstantExpr,Type,
                             std::pair<unsigned, std::vector<Constant*> > >;
   friend struct ConvertConstantType<ConstantExpr, Type>;
-  
+
 protected:
   ConstantExpr(const Type *Ty, unsigned Opcode, Use *Ops, unsigned NumOps)
     : Constant(Ty, ConstantExprVal, Ops, NumOps) {
     // Operation type (an Instruction opcode) is stored as the SubclassData.
-    SubclassData = Opcode; 
+    SubclassData = Opcode;
   }
 
   // These private methods are used by the type resolution code to create
@@ -537,13 +537,13 @@ protected:
                                Constant *C1, Constant *C2, Constant *C3);
   static Constant *getGetElementPtrTy(const Type *Ty, Constant *C,
                                       const std::vector<Value*> &IdxList);
-  
+
 public:
   // Static methods to construct a ConstantExpr of different kinds.  Note that
   // these methods may return a object that is not an instance of the
   // ConstantExpr class, because they will attempt to fold the constant
   // expression into something simpler if possible.
-  
+
   /// Cast constant expr
   ///
   static Constant *getCast(Constant *C, const Type *Ty);
@@ -603,29 +603,29 @@ public:
                                     const std::vector<Constant*> &IdxList);
   static Constant *getGetElementPtr(Constant *C,
                                     const std::vector<Value*> &IdxList);
-  
+
   /// isNullValue - Return true if this is the value that would be returned by
   /// getNullValue.
   virtual bool isNullValue() const { return false; }
-  
+
   /// getOpcode - Return the opcode at the root of this constant expression
   unsigned getOpcode() const { return SubclassData; }
 
   /// getOpcodeName - Return a string representation for an opcode.
   const char *getOpcodeName() const;
-  
+
   virtual void destroyConstant();
   virtual void replaceUsesOfWithOnConstant(Value *From, Value *To,
                                            bool DisableChecking = false);
-    
+
   /// Override methods to provide more type information...
-  inline Constant *getOperand(unsigned i) { 
+  inline Constant *getOperand(unsigned i) {
     return cast<Constant>(User::getOperand(i));
   }
   inline Constant *getOperand(unsigned i) const {
     return const_cast<Constant*>(cast<Constant>(User::getOperand(i)));
   }
-  
+
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ConstantExpr *) { return true; }

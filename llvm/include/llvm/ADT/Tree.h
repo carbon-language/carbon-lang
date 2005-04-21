@@ -1,10 +1,10 @@
 //===- llvm/ADT/Tree.h - Generic n-way tree structure -----------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This class defines a generic N way tree node structure.  The tree structure
@@ -35,7 +35,7 @@ public:
               ConcreteTreeNode *par) : Children(children), Parent(par) {}
 
   inline Tree(const std::vector<ConcreteTreeNode*> &children,
-              ConcreteTreeNode *par, const Payload &data) 
+              ConcreteTreeNode *par, const Payload &data)
     : Children(children), Parent(par), Data(data) {}
 
   // Tree dtor - Free all children

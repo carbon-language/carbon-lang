@@ -1,18 +1,18 @@
 //===-- llvm/Type.h - Classes for handling data types -----------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file contains the declaration of the Type class.  For more "Type" type
 // stuff, look in DerivedTypes.h.
 //
 // Note that instances of the Type class are immutable: once they are created,
-// they are never changed.  Also note that only one instance of a particular 
-// type is ever created.  Thus seeing if two types are equal is a matter of 
+// they are never changed.  Also note that only one instance of a particular
+// type is ever created.  Thus seeing if two types are equal is a matter of
 // doing a trivial pointer comparison.
 //
 // Types, once allocated, are never free'd, unless they are an abstract type
@@ -20,7 +20,7 @@
 //
 // Opaque types are simple derived types with no state.  There may be many
 // different Opaque type objects floating around, but two are only considered
-// identical if they are pointer equals of each other.  This allows us to have 
+// identical if they are pointer equals of each other.  This allows us to have
 // two opaque types that end up resolving to different concrete types later.
 //
 // Opaque types are also kinda weird and scary and different because they have
@@ -55,7 +55,7 @@ public:
   ///===-------------------------------------------------------------------===//
   /// Definitions of all of the base types for the Type system.  Based on this
   /// value, you can cast to a "DerivedType" subclass (see DerivedTypes.h)
-  /// Note: If you add an element to this, you need to add an element to the 
+  /// Note: If you add an element to this, you need to add an element to the
   /// Type::getPrimitiveType function, or else things will break!
   ///
   enum TypeID {
@@ -66,14 +66,14 @@ public:
     UIntTyID      , IntTyID,            //  6, 7: 32 bit types...
     ULongTyID     , LongTyID,           //  8, 9: 64 bit types...
     FloatTyID     , DoubleTyID,         // 10,11: Floating point types...
-    LabelTyID     ,                     // 12   : Labels... 
+    LabelTyID     ,                     // 12   : Labels...
 
     // Derived types... see DerivedTypes.h file...
     // Make sure FirstDerivedTyID stays up to date!!!
     FunctionTyID  , StructTyID,         // Functions... Structs...
     ArrayTyID     , PointerTyID,        // Array... pointer...
     OpaqueTyID,                         // Opaque type instances...
-    PackedTyID,                         // SIMD 'packed' format... 
+    PackedTyID,                         // SIMD 'packed' format...
     //...
 
     NumTypeIDs,                         // Must remain as last defined ID
@@ -145,18 +145,18 @@ public:
   /// Float and Double.
   ///
   bool isSigned() const {
-    return ID == SByteTyID || ID == ShortTyID || 
-           ID == IntTyID || ID == LongTyID; 
+    return ID == SByteTyID || ID == ShortTyID ||
+           ID == IntTyID || ID == LongTyID;
   }
-  
+
   /// isUnsigned - Return whether a numeric type is unsigned.  This is not quite
   /// the complement of isSigned... nonnumeric types return false as they do
   /// with isSigned.  This returns true for UByteTy, UShortTy, UIntTy, and
   /// ULongTy
-  /// 
+  ///
   bool isUnsigned() const {
-    return ID == UByteTyID || ID == UShortTyID || 
-           ID == UIntTyID || ID == ULongTyID; 
+    return ID == UByteTyID || ID == UShortTyID ||
+           ID == UIntTyID || ID == ULongTyID;
   }
 
   /// isInteger - Equivalent to isSigned() || isUnsigned()
@@ -173,7 +173,7 @@ public:
   bool isFloatingPoint() const { return ID == FloatTyID || ID == DoubleTyID; }
 
   /// isAbstract - True if the type is either an Opaque type, or is a derived
-  /// type that includes an opaque type somewhere in it.  
+  /// type that includes an opaque type somewhere in it.
   ///
   inline bool isAbstract() const { return Abstract; }
 
@@ -192,7 +192,7 @@ public:
   /// isFirstClassType - Return true if the value is holdable in a register.
   ///
   inline bool isFirstClassType() const {
-    return (ID != VoidTyID && ID <= LastPrimitiveTyID) || 
+    return (ID != VoidTyID && ID <= LastPrimitiveTyID) ||
             ID == PointerTyID || ID == PackedTyID;
   }
 
@@ -271,7 +271,7 @@ public:
   static Type *VoidTy , *BoolTy;
   static Type *SByteTy, *UByteTy,
               *ShortTy, *UShortTy,
-              *IntTy  , *UIntTy, 
+              *IntTy  , *UIntTy,
               *LongTy , *ULongTy;
   static Type *FloatTy, *DoubleTy;
 
@@ -295,7 +295,7 @@ public:
     assert(isAbstract() && "Cannot add a reference to a non-abstract type!");
     ++RefCount;
   }
-  
+
   void dropRef() const {
     assert(isAbstract() && "Cannot drop a reference to a non-abstract type!");
     assert(RefCount && "No objects are currently referencing this object!");
@@ -325,7 +325,7 @@ private:
 
 //===----------------------------------------------------------------------===//
 // Define some inline methods for the AbstractTypeUser.h:PATypeHandle class.
-// These are defined here because they MUST be inlined, yet are dependent on 
+// These are defined here because they MUST be inlined, yet are dependent on
 // the definition of the Type class.  Of course Type derives from Value, which
 // contains an AbstractTypeUser instance, so there is no good way to factor out
 // the code.  Hence this bit of uglyness.
@@ -375,7 +375,7 @@ inline Type* PATypeHolder::get() const {
 
 
 //===----------------------------------------------------------------------===//
-// Provide specializations of GraphTraits to be able to treat a type as a 
+// Provide specializations of GraphTraits to be able to treat a type as a
 // graph of sub types...
 
 template <> struct GraphTraits<Type*> {
@@ -383,10 +383,10 @@ template <> struct GraphTraits<Type*> {
   typedef Type::subtype_iterator ChildIteratorType;
 
   static inline NodeType *getEntryNode(Type *T) { return T; }
-  static inline ChildIteratorType child_begin(NodeType *N) { 
-    return N->subtype_begin(); 
+  static inline ChildIteratorType child_begin(NodeType *N) {
+    return N->subtype_begin();
   }
-  static inline ChildIteratorType child_end(NodeType *N) { 
+  static inline ChildIteratorType child_end(NodeType *N) {
     return N->subtype_end();
   }
 };
@@ -396,15 +396,15 @@ template <> struct GraphTraits<const Type*> {
   typedef Type::subtype_iterator ChildIteratorType;
 
   static inline NodeType *getEntryNode(const Type *T) { return T; }
-  static inline ChildIteratorType child_begin(NodeType *N) { 
-    return N->subtype_begin(); 
+  static inline ChildIteratorType child_begin(NodeType *N) {
+    return N->subtype_begin();
   }
-  static inline ChildIteratorType child_end(NodeType *N) { 
+  static inline ChildIteratorType child_end(NodeType *N) {
     return N->subtype_end();
   }
 };
 
-template <> inline bool isa_impl<PointerType, Type>(const Type &Ty) { 
+template <> inline bool isa_impl<PointerType, Type>(const Type &Ty) {
   return Ty.getTypeID() == Type::PointerTyID;
 }
 

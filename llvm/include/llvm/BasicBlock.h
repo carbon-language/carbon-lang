@@ -1,10 +1,10 @@
 //===-- llvm/BasicBlock.h - Represent a basic block in the VM ---*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 //
@@ -16,7 +16,7 @@
 //
 ///===---------------------------------------------------------------------===//
 //
-// Note that well formed basic blocks are formed of a list of instructions 
+// Note that well formed basic blocks are formed of a list of instructions
 // followed by a single TerminatorInst instruction.  TerminatorInst's may not
 // occur in the middle of basic blocks, and must terminate the blocks.
 //
@@ -91,7 +91,7 @@ public:
   ///
   TerminatorInst *getTerminator();
   const TerminatorInst *const getTerminator() const;
-  
+
   /// removeFromParent - This method unlinks 'this' from the containing
   /// function, but does not delete it.
   ///
@@ -144,14 +144,14 @@ public:
   /// 'delete' a whole class at a time, even though there may be circular
   /// references... first all references are dropped, and all use counts go to
   /// zero.  Then everything is delete'd for real.  Note that no operations are
-  /// valid on an object that has "dropped all references", except operator 
+  /// valid on an object that has "dropped all references", except operator
   /// delete.
   ///
   void dropAllReferences();
 
   /// removePredecessor - This method is used to notify a BasicBlock that the
   /// specified Predecessor of the block is no longer able to reach it.  This is
-  /// actually not used to update the Predecessor list, but is actually used to 
+  /// actually not used to update the Predecessor list, but is actually used to
   /// update the PHI nodes that reside in the block.  Note that this should be
   /// called while the predecessor still refers to this block.
   ///
@@ -164,7 +164,7 @@ public:
   /// new BB, including the old terminator.  The newly formed BasicBlock is
   /// returned.  This function invalidates the specified iterator.
   ///
-  /// Note that this only works on well formed basic blocks (must have a 
+  /// Note that this only works on well formed basic blocks (must have a
   /// terminator), and 'I' must not be the end of instruction list (which would
   /// cause a degenerate basic block to be formed, having a terminator inside of
   /// the basic block).

@@ -1,17 +1,17 @@
 //===- llvm/Analysis/Expressions.h - Expression Analysis Utils --*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines a package of expression analysis utilties:
 //
 // ClassifyExpr: Analyze an expression to determine the complexity of the
 // expression, and which other variables it depends on.
-// 
+//
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_ANALYSIS_EXPRESSIONS_H

@@ -1,10 +1,10 @@
 //===- llvm/Analysis/ScalarEvolution.h - Scalar Evolution -------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // The ScalarEvolution class is an LLVM pass which can be used to analyze and
@@ -15,7 +15,7 @@
 //
 // This analysis is primarily useful for induction variable substitution and
 // strength reduction.
-// 
+//
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_ANALYSIS_SCALAREVOLUTION_H
@@ -89,7 +89,7 @@ namespace llvm {
     /// the same value, but which uses the concrete value Conc instead of the
     /// symbolic value.  If this SCEV does not use the symbolic value, it
     /// returns itself.
-    virtual SCEVHandle 
+    virtual SCEVHandle
     replaceSymbolicValuesWithConcrete(const SCEVHandle &Sym,
                                       const SCEVHandle &Conc) const = 0;
 
@@ -102,7 +102,7 @@ namespace llvm {
     ///
     void dump() const;
   };
-  
+
   inline std::ostream &operator<<(std::ostream &OS, const SCEV &S) {
     S.print(OS);
     return OS;
@@ -121,7 +121,7 @@ namespace llvm {
     virtual const Type *getType() const;
     virtual bool hasComputableLoopEvolution(const Loop *L) const;
     virtual void print(std::ostream &OS) const;
-    virtual SCEVHandle 
+    virtual SCEVHandle
     replaceSymbolicValuesWithConcrete(const SCEVHandle &Sym,
                                       const SCEVHandle &Conc) const;
 
@@ -141,7 +141,7 @@ namespace llvm {
       S->addRef();
     }
     SCEVHandle(const SCEVHandle &RHS) : S(RHS.S) {
-      S->addRef();      
+      S->addRef();
     }
     ~SCEVHandle() { S->dropRef(); }
 
@@ -190,7 +190,7 @@ namespace llvm {
     void *Impl;    // ScalarEvolution uses the pimpl pattern
   public:
     ScalarEvolution() : Impl(0) {}
-    
+
     /// getSCEV - Return a SCEV expression handle for the full generality of the
     /// specified expression.
     SCEVHandle getSCEV(Value *V) const;

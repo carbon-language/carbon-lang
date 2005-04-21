@@ -1,10 +1,10 @@
 //===- llvm/Analysis/AliasAnalysis.h - Alias Analysis Interface -*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines the generic AliasAnalysis interface, which is used as the
@@ -50,7 +50,7 @@ protected:
   /// called multiple times.
   ///
   void InitializeAliasAnalysis(Pass *P);
-  
+
   // getAnalysisUsage - All alias analysis implementations should invoke this
   // directly (using AliasAnalysis::getAnalysisUsage(AU)) to make sure that
   // TargetData is required by the pass.
@@ -108,8 +108,8 @@ public:
   /// bits which may be or'd together.
   ///
   enum ModRefResult { NoModRef = 0, Ref = 1, Mod = 2, ModRef = 3 };
- 
-  
+
+
   /// ModRefBehavior - Summary of how a function affects memory in the program.
   /// Loads from constant globals are not considered memory accesses for this
   /// interface.  Also, functions may freely modify stack space local to their
@@ -120,14 +120,14 @@ public:
     //
     // This property corresponds to the GCC 'const' attribute.
     DoesNotAccessMemory,
-    
+
     // AccessesArguments - This function accesses function arguments in
     // non-volatile and well known ways, but does not access any other memory.
     //
     // Clients may call getArgumentAccesses to get specific information about
     // how pointer arguments are used.
     AccessesArguments,
-    
+
     // AccessesArgumentsAndGlobals - This function has accesses function
     // arguments and global variables in non-volatile and well-known ways, but
     // does not access any other memory.
@@ -135,18 +135,18 @@ public:
     // Clients may call getArgumentAccesses to get specific information about
     // how pointer arguments and globals are used.
     AccessesArgumentsAndGlobals,
-    
+
     // OnlyReadsMemory - This function does not perform any non-local stores or
     // volatile loads, but may read from any memory location.
     //
     // This property corresponds to the GCC 'pure' attribute.
     OnlyReadsMemory,
-    
+
     // UnknownModRefBehavior - This indicates that the function could not be
     // classified into one of the behaviors above.
     UnknownModRefBehavior
   };
-  
+
   /// PointerAccessInfo - This struct is used to return results for pointers,
   /// globals, and the return value of a function.
   struct PointerAccessInfo {
@@ -154,11 +154,11 @@ public:
     /// the function, a GlobalVariable, or null, corresponding to the return
     /// value for the function.
     Value *V;
-    
+
     /// ModRefInfo - Whether the pointer is loaded or stored to/from.
     ///
     ModRefResult ModRefInfo;
-    
+
     /// AccessType - Specific fine-grained access information for the argument.
     /// If none of these classifications is general enough, the
     /// getModRefBehavior method should not return AccessesArguments*.  If a
@@ -168,25 +168,25 @@ public:
       /// ScalarAccess - The pointer is dereferenced.
       ///
       ScalarAccess,
-      
+
       /// ArrayAccess - The pointer is indexed through as an array of elements.
       ///
       ArrayAccess,
-      
+
       /// ElementAccess ?? P->F only?
-      
+
       /// CallsThrough - Indirect calls are made through the specified function
       /// pointer.
       CallsThrough,
     };
-  }; 
-  
+  };
+
   /// getModRefBehavior - Return the behavior of the specified function if
   /// called from the specified call site.  The call site may be null in which
   /// case the most generic behavior of this function should be returned.
   virtual ModRefBehavior getModRefBehavior(Function *F, CallSite CS,
                                      std::vector<PointerAccessInfo> *Info = 0);
-    
+
   /// doesNotAccessMemory - If the specified function is known to never read or
   /// write memory, return true.  If the function only reads from known-constant
   /// memory, it is also legal to return true.  Functions that unwind the stack

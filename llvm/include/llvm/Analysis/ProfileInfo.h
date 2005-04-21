@@ -1,10 +1,10 @@
 //===- llvm/Analysis/ProfileInfo.h - Profile Info Interface -----*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines the generic ProfileInfo interface, which is used as the
@@ -39,7 +39,7 @@ namespace llvm {
     std::map<std::pair<BasicBlock*, BasicBlock*>, unsigned> EdgeCounts;
   public:
     virtual ~ProfileInfo();  // We want to be subclassed
-    
+
     //===------------------------------------------------------------------===//
     /// Profile Information Queries
     ///

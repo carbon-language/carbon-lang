@@ -1,10 +1,10 @@
 //===-- llvm/Instrinsics.h - LLVM Intrinsic Function Handling ---*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines a set of enums which allow processing of intrinsic

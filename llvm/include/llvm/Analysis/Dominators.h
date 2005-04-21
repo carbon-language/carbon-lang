@@ -1,10 +1,10 @@
 //===- llvm/Analysis/Dominators.h - Dominator Info Calculation --*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines the following classes:
@@ -13,13 +13,13 @@
 //  2. DominatorSet: Calculates the [reverse] dominator set for a function
 //  3. DominatorTree: Represent the ImmediateDominator as an explicit tree
 //     structure.
-//  4. DominanceFrontier: Calculate and hold the dominance frontier for a 
+//  4. DominanceFrontier: Calculate and hold the dominance frontier for a
 //     function.
 //
 //  These data structures are listed in increasing order of complexity.  It
-//  takes longer to calculate the dominator frontier, for example, than the 
+//  takes longer to calculate the dominator frontier, for example, than the
 //  ImmediateDominator mapping.
-// 
+//
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_ANALYSIS_DOMINATORS_H
@@ -140,9 +140,9 @@ private:
     unsigned Semi;
     unsigned Size;
     BasicBlock *Label, *Parent, *Child, *Ancestor;
-    
+
     std::vector<BasicBlock*> Bucket;
-    
+
     InfoRec() : Semi(0), Size(0), Label(0), Parent(0), Child(0), Ancestor(0){}
   };
 
@@ -306,7 +306,7 @@ public:
     inline Node *getIDom() const { return IDom; }
     inline const std::vector<Node*> &getChildren() const { return Children; }
 
-    /// dominates - Returns true iff this dominates N.  Note that this is not a 
+    /// dominates - Returns true iff this dominates N.  Note that this is not a
     /// constant time operation!
     ///
     inline bool dominates(const Node *N) const {

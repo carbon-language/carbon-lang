@@ -1,10 +1,10 @@
 //===-- Support/SCCIterator.h - Strongly Connected Comp. Iter. --*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This builds on the llvm/ADT/GraphTraits.h file to find the strongly connected
@@ -12,7 +12,7 @@
 //
 // The SCC iterator has the important property that if a node in SCC S1 has an
 // edge to a node in SCC S2, then it visits S1 *after* S2.
-// 
+//
 // To visit S1 *before* S2, use the scc_iterator on the Inverse graph.
 // (NOTE: This requires some simple wrappers and is not supported yet.)
 //
@@ -118,7 +118,7 @@ class scc_iterator
           do {
             CurrentSCC.push_back(SCCNodeStack.back());
             SCCNodeStack.pop_back();
-            nodeVisitNumbers[CurrentSCC.back()] = ~0UL; 
+            nodeVisitNumbers[CurrentSCC.back()] = ~0UL;
           } while (CurrentSCC.back() != visitingN);
           return;
         }
@@ -144,7 +144,7 @@ public:
     return CurrentSCC.empty();
   }
 
-  inline bool operator==(const _Self& x) const { 
+  inline bool operator==(const _Self& x) const {
     return VisitStack == x.VisitStack && CurrentSCC == x.CurrentSCC;
   }
   inline bool operator!=(const _Self& x) const { return !operator==(x); }
@@ -152,18 +152,18 @@ public:
   // Iterator traversal: forward iteration only
   inline _Self& operator++() {          // Preincrement
     GetNextSCC();
-    return *this; 
+    return *this;
   }
   inline _Self operator++(int) {        // Postincrement
-    _Self tmp = *this; ++*this; return tmp; 
+    _Self tmp = *this; ++*this; return tmp;
   }
 
   // Retrieve a reference to the current SCC
-  inline const SccTy &operator*() const { 
+  inline const SccTy &operator*() const {
     assert(!CurrentSCC.empty() && "Dereferencing END SCC iterator!");
     return CurrentSCC;
   }
-  inline SccTy &operator*() { 
+  inline SccTy &operator*() {
     assert(!CurrentSCC.empty() && "Dereferencing END SCC iterator!");
     return CurrentSCC;
   }

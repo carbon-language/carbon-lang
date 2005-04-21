@@ -1,10 +1,10 @@
 //===- llvm/ADT/DepthFirstIterator.h - Depth First iterator -----*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file builds on the ADT/GraphTraits.h file to build generic depth
@@ -58,7 +58,7 @@ public:
 
 
 // Generic Depth First Iterator
-template<class GraphT, class SetType = 
+template<class GraphT, class SetType =
                             std::set<typename GraphTraits<GraphT>::NodeType*>,
          bool ExtStorage = false, class GT = GraphTraits<GraphT> >
 class df_iterator : public forward_iterator<typename GT::NodeType, ptrdiff_t>,
@@ -85,7 +85,7 @@ private:
       VisitStack.push_back(std::make_pair(Node, GT::child_begin(Node)));
     }
   }
-  inline df_iterator(SetType &S) 
+  inline df_iterator(SetType &S)
     : df_iterator_storage<SetType, ExtStorage>(S) {
     // End is when stack is empty
   }
@@ -106,13 +106,13 @@ public:
   }
   static inline _Self end(GraphT G, SetType &S) { return _Self(S); }
 
-  inline bool operator==(const _Self& x) const { 
+  inline bool operator==(const _Self& x) const {
     return VisitStack.size() == x.VisitStack.size() &&
            VisitStack == x.VisitStack;
   }
   inline bool operator!=(const _Self& x) const { return !operator==(x); }
 
-  inline pointer operator*() const { 
+  inline pointer operator*() const {
     return VisitStack.back().first;
   }
 
@@ -127,7 +127,7 @@ public:
       std::pair<NodeType *, ChildItTy> &Top = VisitStack.back();
       NodeType *Node = Top.first;
       ChildItTy &It  = Top.second;
-      
+
       while (It != GT::child_end(Node)) {
         NodeType *Next = *It++;
         if (!this->Visited.count(Next)) {  // Has our next sibling been visited?
@@ -137,22 +137,22 @@ public:
           return *this;
         }
       }
-      
+
       // Oops, ran out of successors... go up a level on the stack.
       VisitStack.pop_back();
     } while (!VisitStack.empty());
-    return *this; 
+    return *this;
   }
 
   inline _Self operator++(int) { // Postincrement
-    _Self tmp = *this; ++*this; return tmp; 
+    _Self tmp = *this; ++*this; return tmp;
   }
 
   // nodeVisited - return true if this iterator has already visited the
   // specified node.  This is public, and will probably be used to iterate over
   // nodes that a depth first iteration did not find: ie unreachable nodes.
   //
-  inline bool nodeVisited(NodeType *Node) const { 
+  inline bool nodeVisited(NodeType *Node) const {
     return this->Visited.count(Node) != 0;
   }
 };

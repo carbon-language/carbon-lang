@@ -1,10 +1,10 @@
 //===-- AsmAnnotationWriter.h - Itf for annotation .ll files - --*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // Clients of the assembly writer can use this interface to add their own
@@ -26,7 +26,7 @@ class BasicBlock;
 class Instruction;
 
 struct AssemblyAnnotationWriter {
-  
+
   // emitFunctionAnnot - This may be implemented to emit a string right before
   // the start of a function.
   virtual void emitFunctionAnnot(const Function *F, std::ostream &OS) {}

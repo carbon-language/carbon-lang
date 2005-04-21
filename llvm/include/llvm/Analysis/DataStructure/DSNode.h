@@ -1,10 +1,10 @@
 //===- DSNode.h - Node definition for datastructure graphs ------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // Data structure graph nodes and some implementation of DSNodeHandle.
@@ -84,7 +84,7 @@ public:
     AllocaNode  = 1 << 0,   // This node was allocated with alloca
     HeapNode    = 1 << 1,   // This node was allocated with malloc
     GlobalNode  = 1 << 2,   // This node was allocated by a global var decl
-    UnknownNode = 1 << 3,   // This node points to unknown allocated memory 
+    UnknownNode = 1 << 3,   // This node points to unknown allocated memory
     Incomplete  = 1 << 4,   // This node may not be complete
 
     Modified    = 1 << 5,   // This node is modified in this context
@@ -97,7 +97,7 @@ public:
 
     Composition = AllocaNode | HeapNode | GlobalNode | UnknownNode,
   };
-  
+
   /// NodeType - A union of the above bits.  "Shadow" nodes do not add any flags
   /// to the nodes in the data structure graph, so it is possible to have nodes
   /// with a value of 0 for their NodeType.
@@ -105,7 +105,7 @@ public:
 private:
   unsigned short NodeType;
 public:
-  
+
   /// DSNode ctor - Create a node of the specified type, inserting it into the
   /// specified graph.
   ///

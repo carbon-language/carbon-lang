@@ -1,10 +1,10 @@
 //===-- llvm/InstrinsicInst.h - Intrinsic Instruction Wrappers --*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines classes that make it really easy to deal with intrinsic
@@ -53,11 +53,11 @@ namespace llvm {
     static inline bool classof(const CallInst *I) {
       if (const Function *CF = I->getCalledFunction())
         switch (CF->getIntrinsicID()) {
-	case Intrinsic::dbg_stoppoint:    
-	case Intrinsic::dbg_region_start: 
-	case Intrinsic::dbg_region_end:   
-	case Intrinsic::dbg_func_start:   
-	case Intrinsic::dbg_declare:      
+	case Intrinsic::dbg_stoppoint:
+	case Intrinsic::dbg_region_start:
+	case Intrinsic::dbg_region_end:
+	case Intrinsic::dbg_func_start:
+	case Intrinsic::dbg_declare:
           return true;
         default: break;
         }
@@ -81,7 +81,7 @@ namespace llvm {
     }
     Value *getContext() const { return const_cast<Value*>(getOperand(4)); }
 
-   
+
     // Methods for support type inquiry through isa, cast, and dyn_cast:
     static inline bool classof(const DbgStopPointInst *) { return true; }
     static inline bool classof(const CallInst *I) {
@@ -159,7 +159,7 @@ namespace llvm {
     /// value is guaranteed to be a pointer.
     Value *getSource() const { return StripPointerCasts(getRawSource()); }
 
-    
+
     void setSource(Value *Ptr) {
       assert(getRawSource()->getType() == Ptr->getType() &&
              "setSource called with pointer of wrong type!");

@@ -1,13 +1,13 @@
 //===- llvm/Analysis/FindUnsafePointerTypes.h - Unsafe pointers -*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
-// This file defines a pass that can be used to determine, interprocedurally, 
+// This file defines a pass that can be used to determine, interprocedurally,
 // which pointer types are accessed unsafely in a program.  If there is an
 // "unsafe" access to a specific pointer type, transformations that depend on
 // type safety cannot be permitted.
@@ -18,7 +18,7 @@
 // Additionally, this analysis exports a hidden command line argument that (when
 // enabled) prints out the reasons a type was determined to be unsafe.  Just add
 // -printunsafeptrinst to the command line of the tool you want to get it.
-// 
+//
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_ANALYSIS_UNSAFEPOINTERTYPES_H

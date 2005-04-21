@@ -1,13 +1,13 @@
 //===-- llvm/DerivedTypes.h - Classes for handling data types ---*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
-// This file contains the declarations of classes that represent "derived 
+// This file contains the declarations of classes that represent "derived
 // types".  These are things like "arrays of x" or "structure of x, y, z" or
 // "method returning x taking (y,z) as parameters", etc...
 //
@@ -61,7 +61,7 @@ protected:
       delete this;
   }
 
-  
+
 public:
 
   //===--------------------------------------------------------------------===//
@@ -112,12 +112,12 @@ class FunctionType : public DerivedType {
   const FunctionType &operator=(const FunctionType &);  // Do not implement
 protected:
   /// This should really be private, but it squelches a bogus warning
-  /// from GCC to make them protected:  warning: `class FunctionType' only 
+  /// from GCC to make them protected:  warning: `class FunctionType' only
   /// defines private constructors and has no friends
   ///
   /// Private ctor - Only can be created by a static member...
   ///
-  FunctionType(const Type *Result, const std::vector<const Type*> &Params, 
+  FunctionType(const Type *Result, const std::vector<const Type*> &Params,
                bool IsVarArgs);
 
 public:
@@ -146,7 +146,7 @@ public:
   // Implement the AbstractTypeUser interface.
   virtual void refineAbstractType(const DerivedType *OldTy, const Type *NewTy);
   virtual void typeBecameConcrete(const DerivedType *AbsTy);
-  
+
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const FunctionType *T) { return true; }
   static inline bool classof(const Type *T) {
@@ -171,7 +171,7 @@ public:
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const CompositeType *T) { return true; }
   static inline bool classof(const Type *T) {
-    return T->getTypeID() == ArrayTyID || 
+    return T->getTypeID() == ArrayTyID ||
            T->getTypeID() == StructTyID ||
            T->getTypeID() == PointerTyID ||
            T->getTypeID() == PackedTyID;
@@ -188,7 +188,7 @@ class StructType : public CompositeType {
 
 protected:
   /// This should really be private, but it squelches a bogus warning
-  /// from GCC to make them protected:  warning: `class StructType' only 
+  /// from GCC to make them protected:  warning: `class StructType' only
   /// defines private constructors and has no friends
   ///
   /// Private ctor - Only can be created by a static member...
@@ -231,12 +231,12 @@ public:
 };
 
 
-/// SequentialType - This is the superclass of the array, pointer and packed 
+/// SequentialType - This is the superclass of the array, pointer and packed
 /// type classes.  All of these represent "arrays" in memory.  The array type
 /// represents a specifically sized array, pointer types are unsized/unknown
-/// size arrays, packed types represent specifically sized arrays that 
-/// allow for use of SIMD instructions.  SequentialType holds the common 
-/// features of all, which stem from the fact that all three lay their 
+/// size arrays, packed types represent specifically sized arrays that
+/// allow for use of SIMD instructions.  SequentialType holds the common
+/// features of all, which stem from the fact that all three lay their
 /// components out in memory identically.
 ///
 class SequentialType : public CompositeType {
@@ -280,7 +280,7 @@ class ArrayType : public SequentialType {
   const ArrayType &operator=(const ArrayType &);  // Do not implement
 protected:
   /// This should really be private, but it squelches a bogus warning
-  /// from GCC to make them protected:  warning: `class ArrayType' only 
+  /// from GCC to make them protected:  warning: `class ArrayType' only
   /// defines private constructors and has no friends
   ///
   /// Private ctor - Only can be created by a static member...
@@ -316,7 +316,7 @@ class PackedType : public SequentialType {
   const PackedType &operator=(const PackedType &);  // Do not implement
 protected:
   /// This should really be private, but it squelches a bogus warning
-  /// from GCC to make them protected:  warning: `class PackedType' only 
+  /// from GCC to make them protected:  warning: `class PackedType' only
   /// defines private constructors and has no friends
   ///
   /// Private ctor - Only can be created by a static member...
@@ -351,7 +351,7 @@ class PointerType : public SequentialType {
   const PointerType &operator=(const PointerType &);  // Do not implement
 protected:
   // This should really be private, but it squelches a bogus warning
-  // from GCC to make them protected:  warning: `class PointerType' only 
+  // from GCC to make them protected:  warning: `class PointerType' only
   // defines private constructors and has no friends
 
   // Private ctor - Only can be created by a static member...
@@ -380,7 +380,7 @@ class OpaqueType : public DerivedType {
   const OpaqueType &operator=(const OpaqueType &);  // DO NOT IMPLEMENT
 protected:
   /// This should really be private, but it squelches a bogus warning
-  /// from GCC to make them protected:  warning: `class OpaqueType' only 
+  /// from GCC to make them protected:  warning: `class OpaqueType' only
   /// defines private constructors and has no friends
   ///
   /// Private ctor - Only can be created by a static member...

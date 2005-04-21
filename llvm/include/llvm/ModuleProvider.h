@@ -1,10 +1,10 @@
 //===-- llvm/ModuleProvider.h - Interface for module providers --*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file provides an abstract interface for loading a module from some
@@ -48,12 +48,12 @@ public:
   /// releaseModule - no longer delete the Module* when provider is destroyed.
   /// Note that this can throw an exception if the module is corrupt!
   ///
-  virtual Module* releaseModule() { 
+  virtual Module* releaseModule() {
     // Since we're losing control of this Module, we must hand it back complete
     materializeModule();
-    Module *tempM = TheModule; 
-    TheModule = 0; 
-    return tempM; 
+    Module *tempM = TheModule;
+    TheModule = 0;
+    return tempM;
   }
 };
 

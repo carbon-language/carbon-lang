@@ -1,10 +1,10 @@
 //===-- llvm/ADT/BitVectorSet.h - A bit-vector rep. of sets -----*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This is an implementation of the bit-vector representation of sets.  Unlike
@@ -15,11 +15,11 @@
 // universal set) can be chosen at creation time.
 //
 // External functions:
-// 
+//
 // bool Disjoint(const BitSetVector& set1, const BitSetVector& set2):
 //    Tests if two sets have an empty intersection.
 //    This is more efficient than !(set1 & set2).any().
-// 
+//
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_ADT_BITSETVECTOR_H
@@ -47,7 +47,7 @@ private:
   // Utility functions for the representation
   static unsigned NumWords(unsigned Size) {
     return (Size+BITSET_WORDSIZE-1)/BITSET_WORDSIZE;
-  } 
+  }
   static unsigned LastWordSize(unsigned Size) { return Size % BITSET_WORDSIZE; }
 
   // Clear the unused bits in the last word.
@@ -67,7 +67,7 @@ private:
 
 public:
   class iterator;
-  /// 
+  ///
   /// Constructor: create a set of the maximum size maxSetSize.
   /// The set is initialized to empty.
   ///
@@ -77,9 +77,9 @@ public:
   /// size - Return the number of bits tracked by this bit vector...
   unsigned size() const { return maxSize; }
 
-  /// 
+  ///
   ///  Modifier methods: reset, set for entire set, operator[] for one element.
-  ///  
+  ///
   void reset() {
     for (unsigned i=0, N = bitsetVec.size(); i < N; ++i)
       bitsetVec[i].reset();
@@ -95,11 +95,11 @@ public:
     return bitsetVec[ndiv][nmod];
   }
   iterator begin() { return iterator::begin(*this); }
-  iterator end()   { return iterator::end(*this);   } 
+  iterator end()   { return iterator::end(*this);   }
 
-  /// 
+  ///
   ///  Comparison operations: equal, not equal
-  /// 
+  ///
   bool operator == (const BitSetVector& set2) const {
     assert(maxSize == set2.maxSize && "Illegal == comparison");
     for (unsigned i = 0; i < bitsetVec.size(); ++i)
@@ -111,9 +111,9 @@ public:
     return ! (*this == set2);
   }
 
-  /// 
+  ///
   ///  Set membership operations: single element, any, none, count
-  ///  
+  ///
   bool test(unsigned n) const {
     assert(n  < size() && "BitSetVector: Bit number out of range");
     unsigned ndiv = n / BITSET_WORDSIZE, nmod = n % BITSET_WORDSIZE;
@@ -138,9 +138,9 @@ public:
     return (count() == size());
   }
 
-  /// 
+  ///
   ///  Set operations: intersection, union, disjoint union, complement.
-  ///  
+  ///
   BitSetVector operator& (const BitSetVector& set2) const {
     assert(maxSize == set2.maxSize && "Illegal intersection");
     BitSetVector result(maxSize);
@@ -170,19 +170,19 @@ public:
     return result;
   }
 
-  /// 
+  ///
   ///  Printing and debugging support
-  ///  
+  ///
   void print(std::ostream &O) const;
   void dump() const { print(std::cerr); }
 
 public:
-  // 
+  //
   // An iterator to enumerate the bits in a BitSetVector.
   // Eventually, this needs to inherit from bidirectional_iterator.
   // But this iterator may not be as useful as I once thought and
   // may just go away.
-  // 
+  //
   class iterator {
     unsigned   currentBit;
     unsigned   currentWord;
@@ -257,7 +257,7 @@ inline std::ostream& operator<< (std::ostream& O, const BitSetVector& bset)
 
 ///
 /// Optimized versions of fundamental comparison operations
-/// 
+///
 inline bool Disjoint(const BitSetVector& set1,
                      const BitSetVector& set2)
 {

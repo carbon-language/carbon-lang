@@ -1,10 +1,10 @@
 //===-- llvm/Instruction.h - Instruction class definition -------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file contains the declaration of the Instruction class, which is the
@@ -70,7 +70,7 @@ public:
   /// extra information (e.g. load is volatile) agree.
   bool isIdenticalTo(Instruction *I) const;
 
-  
+
   // Accessor methods...
   //
   inline const BasicBlock *getParent() const { return Parent; }
@@ -94,7 +94,7 @@ public:
   void eraseFromParent();
 
   // ---------------------------------------------------------------------------
-  /// Subclass classification... getOpcode() returns a member of 
+  /// Subclass classification... getOpcode() returns a member of
   /// one of the enums that is coming soon (down below)...
   ///
   unsigned getOpcode() const { return getValueType() - InstructionVal; }
@@ -144,10 +144,10 @@ public:
   /// isTrappingInstruction - Return true if the instruction may trap.
   ///
   bool isTrapping() const {
-    return isTrapping(getOpcode()); 
+    return isTrapping(getOpcode());
   }
   static bool isTrapping(unsigned op);
-  
+
   virtual void print(std::ostream &OS) const { print(OS, 0); }
   void print(std::ostream &OS, AssemblyAnnotationWriter *AAW) const;
 
@@ -156,7 +156,7 @@ public:
   static inline bool classof(const Value *V) {
     return V->getValueType() >= Value::InstructionVal;
   }
-  
+
   //----------------------------------------------------------------------
   // Exported enumerations...
   //

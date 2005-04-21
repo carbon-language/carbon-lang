@@ -1,10 +1,10 @@
 //===-- llvm/SymbolTableListTraits.h - Traits for iplist --------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines a generic class that is used to implement the automatic
@@ -64,7 +64,7 @@ public:
 
   void addNodeToList(ValueSubClass *V);
   void removeNodeFromList(ValueSubClass *V);
-  void transferNodesFromList(iplist<ValueSubClass, 
+  void transferNodesFromList(iplist<ValueSubClass,
                              ilist_traits<ValueSubClass> > &L2,
                              ilist_iterator<ValueSubClass> first,
                              ilist_iterator<ValueSubClass> last);

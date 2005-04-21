@@ -1,10 +1,10 @@
 //===- llvm/PassSupport.h - Pass Support code -------------------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines stuff that is used to define and "use" Passes.  This file
@@ -55,7 +55,7 @@ public:
 
   /// PassInfo ctor - Do not call this directly, this should only be invoked
   /// through RegisterPass.
-  PassInfo(const char *name, const char *arg, const std::type_info &ti, 
+  PassInfo(const char *name, const char *arg, const std::type_info &ti,
            unsigned char pt, Pass *(*normal)() = 0,
            Pass *(*targetctor)(TargetMachine &) = 0)
     : PassName(name), PassArgument(arg), TypeInfo(ti), PassType(pt),
@@ -86,7 +86,7 @@ public:
   /// getNormalCtor - Return a pointer to a function, that when called, creates
   /// an instance of the pass and returns it.  This pointer may be null if there
   /// is no default constructor for the pass.
-  /// 
+  ///
   Pass *(*getNormalCtor() const)() {
     return NormalCtor;
   }
@@ -135,7 +135,7 @@ public:
 /// for example will not be able to see the pass and attempts to create the pass
 /// will fail. This template is used in the follow manner (at global scope, in
 /// your .cpp file):
-/// 
+///
 /// static RegisterPass<YourPassClassName> tmp("passopt", "My Pass Name");
 ///
 /// This statement will cause your pass to be created by calling the default
@@ -145,7 +145,7 @@ public:
 ///
 /// Pass *createMyPass(foo &opt) { return new MyPass(opt); }
 /// static RegisterPass<PassClassName> tmp("passopt", "My Name", createMyPass);
-/// 
+///
 struct RegisterPassBase {
   /// getPassInfo - Get the pass info for the registered class...
   ///
@@ -172,7 +172,7 @@ Pass *callDefaultCtor() { return new PassName(); }
 
 template<typename PassName>
 struct RegisterPass : public RegisterPassBase {
-  
+
   // Register Pass using default constructor...
   RegisterPass(const char *PassArg, const char *Name, unsigned char PassTy = 0){
     registerPass(new PassInfo(Name, PassArg, typeid(PassName), PassTy,
@@ -226,7 +226,7 @@ struct RegisterOpt : public RegisterPassBase {
   RegisterOpt(const char *PassArg, const char *Name, FunctionPass *(*ctor)(),
               bool CFGOnly = false) {
     registerPass(new PassInfo(Name, PassArg, typeid(PassName),
-                              PassInfo::Optimization, 
+                              PassInfo::Optimization,
                               static_cast<Pass*(*)()>(ctor)));
     if (CFGOnly) setOnlyUsesCFG();
   }

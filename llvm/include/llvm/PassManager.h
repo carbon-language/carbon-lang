@@ -1,10 +1,10 @@
 //===- llvm/PassManager.h - Container for Passes ----------------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines the PassManager class.  This class is used to hold,
@@ -63,7 +63,7 @@ public:
   ///
   void add(FunctionPass *P);
 
-  /// add - ImmutablePasses are not FunctionPasses, so we have a 
+  /// add - ImmutablePasses are not FunctionPasses, so we have a
   /// special hack to get them into a FunctionPassManager.
   ///
   void add(ImmutablePass *IP);

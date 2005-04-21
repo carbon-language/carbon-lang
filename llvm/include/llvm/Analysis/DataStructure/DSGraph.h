@@ -1,10 +1,10 @@
 //===- DSGraph.h - Represent a collection of data structures ----*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This header defines the data structure graph (DSGraph) and the
@@ -25,14 +25,14 @@ namespace llvm {
 class GlobalValue;
 
 //===----------------------------------------------------------------------===//
-/// DSScalarMap - An instance of this class is used to keep track of all of 
+/// DSScalarMap - An instance of this class is used to keep track of all of
 /// which DSNode each scalar in a function points to.  This is specialized to
-/// keep track of globals with nodes in the function, and to keep track of the 
+/// keep track of globals with nodes in the function, and to keep track of the
 /// unique DSNodeHandle being used by the scalar map.
 ///
-/// This class is crucial to the efficiency of DSA with some large SCC's.  In 
+/// This class is crucial to the efficiency of DSA with some large SCC's.  In
 /// these cases, the cost of iterating over the scalar map dominates the cost
-/// of DSA.  In all of these cases, the DSA phase is really trying to identify 
+/// of DSA.  In all of these cases, the DSA phase is really trying to identify
 /// globals or unique node handles active in the function.
 ///
 class DSScalarMap {
@@ -48,7 +48,7 @@ public:
 
   EquivalenceClasses<GlobalValue*> &getGlobalECs() const { return GlobalECs; }
 
-  // Compatibility methods: provide an interface compatible with a map of 
+  // Compatibility methods: provide an interface compatible with a map of
   // Value* to DSNodeHandle's.
   typedef ValueMapTy::const_iterator const_iterator;
   typedef ValueMapTy::iterator iterator;
@@ -142,11 +142,11 @@ public:
     return ValueMap.insert(std::make_pair(V, DSNodeHandle())).first->second;
   }
 
-  void erase(iterator I) { 
+  void erase(iterator I) {
     assert(I != ValueMap.end() && "Cannot erase end!");
     if (GlobalValue *GV = dyn_cast<GlobalValue>(I->first))
       GlobalSet.erase(GV);
-    ValueMap.erase(I); 
+    ValueMap.erase(I);
   }
 
   void clear() {
@@ -555,7 +555,7 @@ public:
     if (CloneFlags & DSGraph::StripIncompleteBit)
       BitsToKeep &= ~DSNode::Incomplete;
   }
-  
+
   DSNodeHandle getClonedNH(const DSNodeHandle &SrcNH);
 
   void merge(const DSNodeHandle &NH, const DSNodeHandle &SrcNH);

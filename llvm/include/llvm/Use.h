@@ -1,10 +1,10 @@
 //===-- llvm/Use.h - Definition of the Use class ----------------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This defines the Use class.  The Use class represents the operand of an
@@ -114,7 +114,7 @@ public:
   value_use_iterator(const _Self &I) : U(I.U) {}
   value_use_iterator() {}
 
-  bool operator==(const _Self &x) const { 
+  bool operator==(const _Self &x) const {
     return U == x.U;
   }
   bool operator!=(const _Self &x) const {
@@ -125,14 +125,14 @@ public:
   _Self &operator++() {          // Preincrement
     assert(U && "Cannot increment end iterator!");
     U = U->getNext();
-    return *this; 
+    return *this;
   }
   _Self operator++(int) {        // Postincrement
-    _Self tmp = *this; ++*this; return tmp; 
+    _Self tmp = *this; ++*this; return tmp;
   }
 
   // Retrieve a reference to the current SCC
-   UserTy *operator*() const { 
+   UserTy *operator*() const {
     assert(U && "Cannot increment end iterator!");
     return U->getUser();
   }

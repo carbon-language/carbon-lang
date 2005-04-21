@@ -1,10 +1,10 @@
 //===-- llvm/ADT/Statistic.h - Easy way to expose stats ---------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines the 'Statistic' class, which is designed to be an easy way

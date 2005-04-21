@@ -1,15 +1,15 @@
 //===- llvm/Analysis/Interval.h - Interval Class Declaration ----*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file contains the declaration of the Interval class, which
 // represents a set of CFG nodes and is a portion of an interval partition.
-// 
+//
 // Intervals have some interesting and useful properties, including the
 // following:
 //    1. The header node of an interval dominates all of the elements of the
@@ -86,9 +86,9 @@ public:
     //return find(Successors.begin(), Successors.end(), BB) != Successors.end();
   }
 
-  /// Equality operator.  It is only valid to compare two intervals from the same
-  /// partition, because of this, all we have to check is the header node for 
-  /// equality.
+  /// Equality operator.  It is only valid to compare two intervals from the
+  /// same partition, because of this, all we have to check is the header node
+  /// for equality.
   ///
   inline bool operator==(const Interval &I) const {
     return HeaderNode == I.HeaderNode;
@@ -131,7 +131,7 @@ template <> struct GraphTraits<Interval*> {
   static inline ChildIteratorType child_begin(NodeType *N) { 
     return succ_begin(N);
   }
-  static inline ChildIteratorType child_end(NodeType *N) { 
+  static inline ChildIteratorType child_end(NodeType *N) {
     return succ_end(N);
   }
 };
@@ -140,10 +140,10 @@ template <> struct GraphTraits<Inverse<Interval*> > {
   typedef Interval NodeType;
   typedef Interval::pred_iterator ChildIteratorType;
   static NodeType *getEntryNode(Inverse<Interval *> G) { return G.Graph; }
-  static inline ChildIteratorType child_begin(NodeType *N) { 
+  static inline ChildIteratorType child_begin(NodeType *N) {
     return pred_begin(N);
   }
-  static inline ChildIteratorType child_end(NodeType *N) { 
+  static inline ChildIteratorType child_end(NodeType *N) {
     return pred_end(N);
   }
 };

@@ -1,15 +1,15 @@
 //===-- llvm/ADT/EquivalenceClasses.h - Generic Equiv. Classes --*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
-// 
+//
 // Generic implementation of equivalence classes through the use Tarjan's
 // efficient union-find algorithm.
-// 
+//
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_ADT_EQUIVALENCECLASSES_H
@@ -128,7 +128,7 @@ public:
       }
     return *this;
   }
-  
+
   //===--------------------------------------------------------------------===//
   // Inspection methods
   //
@@ -220,7 +220,7 @@ public:
     // point to the L2 leader node.
     const ECValue &L1LV = *L1.Node, &L2LV = *L2.Node;
     L1LV.getEndOfList()->setNext(&L2LV);
-    
+
     // Update L1LV's end of list pointer.
     L1LV.Leader = L2LV.getEndOfList();
 

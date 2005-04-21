@@ -1,10 +1,10 @@
 //===-- llvm/Value.h - Definition of the Value class ------------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines the very important Value class.  This is subclassed by a
@@ -60,7 +60,7 @@ private:
 public:
   Value(const Type *Ty, unsigned scid, const std::string &name = "");
   virtual ~Value();
-  
+
   /// dump - Support for debugging, callable in GDB: V->dump()
   //
   virtual void dump() const;
@@ -68,19 +68,19 @@ public:
   /// print - Implement operator<< on Value...
   ///
   virtual void print(std::ostream &O) const = 0;
-  
+
   /// All values are typed, get the type of this value.
   ///
   inline const Type *getType() const { return Ty; }
-  
+
   // All values can potentially be named...
   inline bool               hasName() const { return !Name.empty(); }
   inline const std::string &getName() const { return Name; }
 
   void setName(const std::string &name);
-  
+
   /// replaceAllUsesWith - Go through the uses list for this definition and make
-  /// each use point to "V" instead of "this".  After this completes, 'this's 
+  /// each use point to "V" instead of "this".  After this completes, 'this's
   /// use list is guaranteed to be empty.
   ///
   void replaceAllUsesWith(Value *V);
@@ -184,7 +184,7 @@ Use::~Use() {
   if (Val) removeFromList();
 }
 
-void Use::set(Value *V) { 
+void Use::set(Value *V) {
   if (Val) removeFromList();
   Val = V;
   if (V) V->addUse(*this);
@@ -194,7 +194,7 @@ void Use::set(Value *V) {
 // isa - Provide some specializations of isa so that we don't have to include
 // the subtype header files to test to see if the value is a subclass...
 //
-template <> inline bool isa_impl<Constant, Value>(const Value &Val) { 
+template <> inline bool isa_impl<Constant, Value>(const Value &Val) {
   return Val.getValueType() == Value::SimpleConstantVal ||
          Val.getValueType() == Value::FunctionVal ||
          Val.getValueType() == Value::GlobalVariableVal ||
@@ -202,22 +202,22 @@ template <> inline bool isa_impl<Constant, Value>(const Value &Val) {
          Val.getValueType() == Value::ConstantAggregateZeroVal ||
          Val.getValueType() == Value::UndefValueVal;
 }
-template <> inline bool isa_impl<Argument, Value>(const Value &Val) { 
+template <> inline bool isa_impl<Argument, Value>(const Value &Val) {
   return Val.getValueType() == Value::ArgumentVal;
 }
-template <> inline bool isa_impl<Instruction, Value>(const Value &Val) { 
+template <> inline bool isa_impl<Instruction, Value>(const Value &Val) {
   return Val.getValueType() >= Value::InstructionVal;
 }
-template <> inline bool isa_impl<BasicBlock, Value>(const Value &Val) { 
+template <> inline bool isa_impl<BasicBlock, Value>(const Value &Val) {
   return Val.getValueType() == Value::BasicBlockVal;
 }
-template <> inline bool isa_impl<Function, Value>(const Value &Val) { 
+template <> inline bool isa_impl<Function, Value>(const Value &Val) {
   return Val.getValueType() == Value::FunctionVal;
 }
-template <> inline bool isa_impl<GlobalVariable, Value>(const Value &Val) { 
+template <> inline bool isa_impl<GlobalVariable, Value>(const Value &Val) {
   return Val.getValueType() == Value::GlobalVariableVal;
 }
-template <> inline bool isa_impl<GlobalValue, Value>(const Value &Val) { 
+template <> inline bool isa_impl<GlobalValue, Value>(const Value &Val) {
   return isa<GlobalVariable>(Val) || isa<Function>(Val);
 }
 

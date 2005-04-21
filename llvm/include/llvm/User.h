@@ -1,10 +1,10 @@
 //===-- llvm/User.h - User class definition ---------------------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This class defines the interface that one who 'use's a Value must implement.
@@ -39,11 +39,11 @@ protected:
   unsigned NumOperands;
 
 public:
-  User(const Type *Ty, unsigned vty, Use *OpList, unsigned NumOps, 
+  User(const Type *Ty, unsigned vty, Use *OpList, unsigned NumOps,
        const std::string &name = "")
     : Value(Ty, vty, name), OperandList(OpList), NumOperands(NumOps) {}
 
-  Value *getOperand(unsigned i) const { 
+  Value *getOperand(unsigned i) const {
     assert(i < NumOperands && "getOperand() out of range!");
     return OperandList[i];
   }
@@ -69,7 +69,7 @@ public:
   // 'delete' a whole class at a time, even though there may be circular
   // references... first all references are dropped, and all use counts go to
   // zero.  Then everything is delete'd for real.  Note that no operations are
-  // valid on an object that has "dropped all references", except operator 
+  // valid on an object that has "dropped all references", except operator
   // delete.
   //
   void dropAllReferences() {
@@ -92,7 +92,7 @@ public:
 
 template<> struct simplify_type<User::op_iterator> {
   typedef Value* SimpleType;
-  
+
   static SimpleType getSimplifiedValue(const User::op_iterator &Val) {
     return static_cast<SimpleType>(Val->get());
   }
@@ -103,7 +103,7 @@ template<> struct simplify_type<const User::op_iterator>
 
 template<> struct simplify_type<User::const_op_iterator> {
   typedef Value* SimpleType;
-  
+
   static SimpleType getSimplifiedValue(const User::const_op_iterator &Val) {
     return static_cast<SimpleType>(Val->get());
   }

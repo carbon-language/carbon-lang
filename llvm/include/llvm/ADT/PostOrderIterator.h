@@ -1,10 +1,10 @@
 //===- llvm/ADT/PostOrderIterator.h - PostOrder iterator --------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file builds on the ADT/GraphTraits.h file to build a generic graph
@@ -58,12 +58,12 @@ public:
   static inline _Self begin(GraphT G) { return _Self(GT::getEntryNode(G)); }
   static inline _Self end  (GraphT G) { return _Self(); }
 
-  inline bool operator==(const _Self& x) const { 
+  inline bool operator==(const _Self& x) const {
     return VisitStack == x.VisitStack;
   }
   inline bool operator!=(const _Self& x) const { return !operator==(x); }
 
-  inline pointer operator*() const { 
+  inline pointer operator*() const {
     return VisitStack.top().first;
   }
 
@@ -77,11 +77,11 @@ public:
     VisitStack.pop();
     if (!VisitStack.empty())
       traverseChild();
-    return *this; 
+    return *this;
   }
 
   inline _Self operator++(int) { // Postincrement
-    _Self tmp = *this; ++*this; return tmp; 
+    _Self tmp = *this; ++*this; return tmp;
   }
 };
 
@@ -112,10 +112,10 @@ ipo_iterator<T> ipo_end(T G){
 //===--------------------------------------------------------------------===//
 // Reverse Post Order CFG iterator code
 //===--------------------------------------------------------------------===//
-// 
+//
 // This is used to visit basic blocks in a method in reverse post order.  This
 // class is awkward to use because I don't know a good incremental algorithm to
-// computer RPO from a graph.  Because of this, the construction of the 
+// computer RPO from a graph.  Because of this, the construction of the
 // ReversePostOrderTraversal object is expensive (it must walk the entire graph
 // with a postorder iterator to build the data structures).  The moral of this
 // story is: Don't create more ReversePostOrderTraversal classes than necessary.

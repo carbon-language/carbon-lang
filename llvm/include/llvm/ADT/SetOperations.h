@@ -1,10 +1,10 @@
 //===-- llvm/ADT/SetOperations.h - Generic Set Operations -------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines generic set operations that may be used on set's of
@@ -20,7 +20,7 @@ namespace llvm {
 /// set_union(A, B) - Compute A := A u B, return whether A changed.
 ///
 template <class S1Ty, class S2Ty>
-bool set_union(S1Ty &S1, const S2Ty &S2) {   
+bool set_union(S1Ty &S1, const S2Ty &S2) {
   bool Changed = false;
 
   for (typename S2Ty::const_iterator SI = S2.begin(), SE = S2.end();
@@ -60,9 +60,9 @@ S1Ty set_difference(const S1Ty &S1, const S2Ty &S2) {
 /// set_subtract(A, B) - Compute A := A - B
 ///
 template <class S1Ty, class S2Ty>
-void set_subtract(S1Ty &S1, const S2Ty &S2) { 
+void set_subtract(S1Ty &S1, const S2Ty &S2) {
   for (typename S2Ty::const_iterator SI = S2.begin(), SE = S2.end();
-       SI != SE; ++SI)  
+       SI != SE; ++SI)
     S1.erase(*SI);
 }
 

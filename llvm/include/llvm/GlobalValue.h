@@ -1,10 +1,10 @@
 //===-- llvm/GlobalValue.h - Class to represent a global value --*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file is a common base class of all globally definable objects.  As such,
@@ -48,9 +48,9 @@ public:
   }
 
   /// If the usage is empty (except transitively dead constants), then this
-  /// global value can can be safely deleted since the destructor will 
+  /// global value can can be safely deleted since the destructor will
   /// delete the dead constants as well.
-  /// @brief Determine if the usage of this global value is empty except 
+  /// @brief Determine if the usage of this global value is empty except
   /// for transitively dead constants.
   bool use_empty_except_constants();
 
@@ -103,7 +103,7 @@ public:
   // Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const GlobalValue *T) { return true; }
   static inline bool classof(const Value *V) {
-    return V->getValueType() == Value::FunctionVal || 
+    return V->getValueType() == Value::FunctionVal ||
            V->getValueType() == Value::GlobalVariableVal;
   }
 };
