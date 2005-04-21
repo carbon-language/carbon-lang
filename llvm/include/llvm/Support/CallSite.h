@@ -1,10 +1,10 @@
 //===-- llvm/Support/CallSite.h - Abstract Call & Invoke instrs -*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines the CallSite class, which is a handy wrapper for code that

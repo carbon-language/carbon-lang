@@ -1,15 +1,15 @@
 //===-- llvm/Support/ELF.h - ELF constants and data structures --*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This header contains common, non-processor-specific data structures and
 // constants for the ELF file format.
-// 
+//
 // The details of the ELF32 bits in this file are largely based on
 // the Tool Interface Standard (TIS) Executable and Linking Format
 // (ELF) Specification Version 1.2, May 1995. The ELF64 stuff is not
@@ -137,7 +137,7 @@ struct Elf32_Shdr {
   Elf32_Addr sh_addr;      // Address where section is to be loaded
   Elf32_Off  sh_offset;    // File offset of section data, in bytes
   Elf32_Word sh_size;      // Size of section, in bytes
-  Elf32_Word sh_link;      // Section type-specific header table index link 
+  Elf32_Word sh_link;      // Section type-specific header table index link
   Elf32_Word sh_info;      // Section type-specific extra information
   Elf32_Word sh_addralign; // Section address alignment
   Elf32_Word sh_entsize;   // Size of records contained within the section
@@ -204,7 +204,7 @@ struct Elf32_Sym {
   unsigned char st_info;  // Symbol's type and binding attributes
   unsigned char st_other; // Must be zero; reserved
   Elf32_Half    st_shndx; // Which section (header table index) it's defined in
-  
+
   // These accessors and mutators correspond to the ELF32_ST_BIND,
   // ELF32_ST_TYPE, and ELF32_ST_INFO macros defined in the ELF specification:
   unsigned char getBinding () const { return st_info >> 4; }
@@ -238,9 +238,9 @@ enum {
 
 // Relocation entry, without explicit addend.
 struct Elf32_Rel {
-  Elf32_Addr r_offset; // Location (file byte offset, or program virtual addr) 
+  Elf32_Addr r_offset; // Location (file byte offset, or program virtual addr)
   Elf32_Word r_info;   // Symbol table index and type of relocation to apply
-  
+
   // These accessors and mutators correspond to the ELF32_R_SYM, ELF32_R_TYPE,
   // and ELF32_R_INFO macros defined in the ELF specification:
   Elf32_Word getSymbol () const { return (r_info >> 8); }
@@ -254,10 +254,10 @@ struct Elf32_Rel {
 
 // Relocation entry with explicit addend.
 struct Elf32_Rela {
-  Elf32_Addr  r_offset; // Location (file byte offset, or program virtual addr)     
+  Elf32_Addr  r_offset; // Location (file byte offset, or program virtual addr)
   Elf32_Word  r_info;   // Symbol table index and type of relocation to apply
   Elf32_Sword r_addend; // Compute value for relocatable field by adding this
-  
+
   // These accessors and mutators correspond to the ELF32_R_SYM, ELF32_R_TYPE,
   // and ELF32_R_INFO macros defined in the ELF specification:
   Elf32_Word getSymbol () const { return (r_info >> 8); }

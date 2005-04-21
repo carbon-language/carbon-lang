@@ -1,10 +1,10 @@
 //===-- llvm/Support/ConstantRange.h - Represent a range --------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // Represent a range of possible values that may occur when the program is run
@@ -39,7 +39,7 @@ class ConstantRange {
   /// Initialize a full (the default) or empty set for the specified type.
   ///
   ConstantRange(const Type *Ty, bool isFullSet = true);
-  
+
   /// Initialize a range to hold the single specified value.
   ///
   ConstantRange(Constant *Value);
@@ -49,7 +49,7 @@ class ConstantRange {
   /// have different types, or if the constant are not integral values.
   ///
   ConstantRange(Constant *Lower, Constant *Upper);
-  
+
   /// Initialize a set of values that all satisfy the condition with C.
   ///
   ConstantRange(unsigned SetCCOpcode, ConstantIntegral *C);
@@ -65,12 +65,12 @@ class ConstantRange {
   /// getType - Return the LLVM data type of this range.
   ///
   const Type *getType() const;
-  
+
   /// isFullSet - Return true if this set contains all of the elements possible
   /// for this data-type
   ///
   bool isFullSet() const;
-  
+
   /// isEmptySet - Return true if this set contains no members.
   ///
   bool isEmptySet() const;
@@ -83,12 +83,12 @@ class ConstantRange {
   /// contains - Return true if the specified value is in the set.
   ///
   bool contains(ConstantInt *Val) const;
-  
+
   /// getSingleElement - If this set contains a single element, return it,
   /// otherwise return null.
   ///
   ConstantIntegral *getSingleElement() const;
-  
+
   /// isSingleElement - Return true if this set contains exactly one member.
   ///
   bool isSingleElement() const { return getSingleElement() != 0; }

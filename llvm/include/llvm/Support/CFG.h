@@ -1,10 +1,10 @@
 //===-- llvm/Support/CFG.h - Process LLVM structures as graphs --*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines specializations of GraphTraits that allow Function and
@@ -34,40 +34,40 @@ class PredIterator : public forward_iterator<_Ptr, ptrdiff_t> {
 public:
   typedef PredIterator<_Ptr,_USE_iterator> _Self;
   typedef typename super::pointer pointer;
-  
+
   inline void advancePastNonTerminators() {
     // Loop to ignore non terminator uses (for example PHI nodes)...
     while (It != BB->use_end() && !isa<TerminatorInst>(*It))
       ++It;
   }
-  
+
   inline PredIterator(_Ptr *bb) : BB(bb), It(bb->use_begin()) {
     advancePastNonTerminators();
   }
   inline PredIterator(_Ptr *bb, bool) : BB(bb), It(bb->use_end()) {}
-    
+
   inline bool operator==(const _Self& x) const { return It == x.It; }
   inline bool operator!=(const _Self& x) const { return !operator==(x); }
-  
-  inline pointer operator*() const { 
+
+  inline pointer operator*() const {
     assert(It != BB->use_end() && "pred_iterator out of range!");
-    return cast<TerminatorInst>(*It)->getParent(); 
+    return cast<TerminatorInst>(*It)->getParent();
   }
   inline pointer *operator->() const { return &(operator*()); }
-  
+
   inline _Self& operator++() {   // Preincrement
     assert(It != BB->use_end() && "pred_iterator out of range!");
     ++It; advancePastNonTerminators();
-    return *this; 
+    return *this;
   }
-  
+
   inline _Self operator++(int) { // Postincrement
-    _Self tmp = *this; ++*this; return tmp; 
+    _Self tmp = *this; ++*this; return tmp;
   }
 };
 
 typedef PredIterator<BasicBlock, Value::use_iterator> pred_iterator;
-typedef PredIterator<const BasicBlock, 
+typedef PredIterator<const BasicBlock,
                      Value::use_const_iterator> pred_const_iterator;
 
 inline pred_iterator pred_begin(BasicBlock *BB) { return pred_iterator(BB); }
@@ -94,7 +94,7 @@ public:
   typedef SuccIterator<Term_, BB_> _Self;
   typedef typename super::pointer pointer;
   // TODO: This can be random access iterator, need operator+ and stuff tho
-    
+
   inline SuccIterator(Term_ T) : Term(T), idx(0) {         // begin iterator
     assert(T && "getTerminator returned null!");
   }
@@ -112,18 +112,18 @@ public:
   /// getSuccessorIndex - This is used to interface between code that wants to
   /// operate on terminator instructions directly.
   unsigned getSuccessorIndex() const { return idx; }
-    
+
   inline bool operator==(const _Self& x) const { return idx == x.idx; }
   inline bool operator!=(const _Self& x) const { return !operator==(x); }
-  
+
   inline pointer operator*() const { return Term->getSuccessor(idx); }
   inline pointer operator->() const { return operator*(); }
-  
+
   inline _Self& operator++() { ++idx; return *this; } // Preincrement
   inline _Self operator++(int) { // Postincrement
-    _Self tmp = *this; ++*this; return tmp; 
+    _Self tmp = *this; ++*this; return tmp;
   }
-    
+
   inline _Self& operator--() { --idx; return *this; }  // Predecrement
   inline _Self operator--(int) { // Postdecrement
     _Self tmp = *this; --*this; return tmp;
@@ -153,7 +153,7 @@ inline succ_const_iterator succ_end(const BasicBlock *BB) {
 // GraphTraits specializations for basic block graphs (CFGs)
 //===--------------------------------------------------------------------===//
 
-// Provide specializations of GraphTraits to be able to treat a function as a 
+// Provide specializations of GraphTraits to be able to treat a function as a
 // graph of basic blocks...
 
 template <> struct GraphTraits<BasicBlock*> {
@@ -161,10 +161,10 @@ template <> struct GraphTraits<BasicBlock*> {
   typedef succ_iterator ChildIteratorType;
 
   static NodeType *getEntryNode(BasicBlock *BB) { return BB; }
-  static inline ChildIteratorType child_begin(NodeType *N) { 
+  static inline ChildIteratorType child_begin(NodeType *N) {
     return succ_begin(N);
   }
-  static inline ChildIteratorType child_end(NodeType *N) { 
+  static inline ChildIteratorType child_end(NodeType *N) {
     return succ_end(N);
   }
 };
@@ -175,15 +175,15 @@ template <> struct GraphTraits<const BasicBlock*> {
 
   static NodeType *getEntryNode(const BasicBlock *BB) { return BB; }
 
-  static inline ChildIteratorType child_begin(NodeType *N) { 
+  static inline ChildIteratorType child_begin(NodeType *N) {
     return succ_begin(N);
   }
-  static inline ChildIteratorType child_end(NodeType *N) { 
+  static inline ChildIteratorType child_end(NodeType *N) {
     return succ_end(N);
   }
 };
 
-// Provide specializations of GraphTraits to be able to treat a function as a 
+// Provide specializations of GraphTraits to be able to treat a function as a
 // graph of basic blocks... and to walk it in inverse order.  Inverse order for
 // a function is considered to be when traversing the predecessor edges of a BB
 // instead of the successor edges.
@@ -192,10 +192,10 @@ template <> struct GraphTraits<Inverse<BasicBlock*> > {
   typedef BasicBlock NodeType;
   typedef pred_iterator ChildIteratorType;
   static NodeType *getEntryNode(Inverse<BasicBlock *> G) { return G.Graph; }
-  static inline ChildIteratorType child_begin(NodeType *N) { 
+  static inline ChildIteratorType child_begin(NodeType *N) {
     return pred_begin(N);
   }
-  static inline ChildIteratorType child_end(NodeType *N) { 
+  static inline ChildIteratorType child_end(NodeType *N) {
     return pred_end(N);
   }
 };
@@ -204,12 +204,12 @@ template <> struct GraphTraits<Inverse<const BasicBlock*> > {
   typedef const BasicBlock NodeType;
   typedef pred_const_iterator ChildIteratorType;
   static NodeType *getEntryNode(Inverse<const BasicBlock*> G) {
-    return G.Graph; 
+    return G.Graph;
   }
-  static inline ChildIteratorType child_begin(NodeType *N) { 
+  static inline ChildIteratorType child_begin(NodeType *N) {
     return pred_begin(N);
   }
-  static inline ChildIteratorType child_end(NodeType *N) { 
+  static inline ChildIteratorType child_end(NodeType *N) {
     return pred_end(N);
   }
 };
@@ -220,7 +220,7 @@ template <> struct GraphTraits<Inverse<const BasicBlock*> > {
 // GraphTraits specializations for function basic block graphs (CFGs)
 //===--------------------------------------------------------------------===//
 
-// Provide specializations of GraphTraits to be able to treat a function as a 
+// Provide specializations of GraphTraits to be able to treat a function as a
 // graph of basic blocks... these are the same as the basic block iterators,
 // except that the root node is implicitly the first node of the function.
 //
@@ -243,7 +243,7 @@ template <> struct GraphTraits<const Function*> :
 };
 
 
-// Provide specializations of GraphTraits to be able to treat a function as a 
+// Provide specializations of GraphTraits to be able to treat a function as a
 // graph of basic blocks... and to walk it in inverse order.  Inverse order for
 // a function is considered to be when traversing the predecessor edges of a BB
 // instead of the successor edges.

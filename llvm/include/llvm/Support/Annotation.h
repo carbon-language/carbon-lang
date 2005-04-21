@@ -1,10 +1,10 @@
 //===-- llvm/Support/Annotation.h - Annotation classes ----------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file contains the declarations for two classes: Annotation & Annotable.
@@ -81,7 +81,7 @@ public:
 //===----------------------------------------------------------------------===//
 //
 // Annotable - This class is used as a base class for all objects that would
-// like to have annotation capability.  One notable subclass is Value, which 
+// like to have annotation capability.  One notable subclass is Value, which
 // means annotations can be attached to almost everything in LLVM.
 //
 // Annotable objects keep their annotation list sorted as annotations are
@@ -157,13 +157,13 @@ public:
 // one-to-one mapping between string Annotation names and Annotation ID numbers.
 //
 // Compared to the rest of the Annotation system, these mapping methods are
-// relatively slow, so they should be avoided by locally caching Annotation 
+// relatively slow, so they should be avoided by locally caching Annotation
 // ID #'s.  These methods are safe to call at any time, even by static ctors, so
 // they should be used by static ctors most of the time.
 //
 // This class also provides support for annotations that are created on demand
 // by the Annotable::getOrCreateAnnotation method.  To get this to work, simply
-// register an annotation handler 
+// register an annotation handler
 //
 struct AnnotationManager {
   typedef Annotation *(*Factory)(AnnotationID, const Annotable *, void*);
@@ -183,7 +183,7 @@ struct AnnotationManager {
   // Annotation creation on demand support...
 
   // registerAnnotationFactory - This method is used to register a callback
-  // function used to create an annotation on demand if it is needed by the 
+  // function used to create an annotation on demand if it is needed by the
   // Annotable::getOrCreateAnnotation method.
   //
   static void registerAnnotationFactory(AnnotationID ID, Factory Func,

@@ -1,10 +1,10 @@
 //===- llvm/Support/PassNameParser.h ----------------------------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file the PassNameParser and FilteredPassNameParser<> classes, which are
@@ -34,12 +34,12 @@ namespace llvm {
 // PassNameParser class - Make use of the pass registration mechanism to
 // automatically add a command line argument to opt for each pass.
 //
-class PassNameParser : public PassRegistrationListener, 
+class PassNameParser : public PassRegistrationListener,
                        public cl::parser<const PassInfo*> {
   cl::Option *Opt;
 public:
   PassNameParser() : Opt(0) {}
-  
+
   void initialize(cl::Option &O) {
     Opt = &O;
     cl::parser<const PassInfo*>::initialize(O);

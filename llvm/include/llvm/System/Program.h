@@ -1,10 +1,10 @@
 //===- llvm/System/Program.h ------------------------------------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
-// This file was developed by Reid Spencer and is distributed under the 
+// This file was developed by Reid Spencer and is distributed under the
 // University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file declares the llvm::sys::Program class.
@@ -31,8 +31,8 @@ namespace sys {
     /// @{
     public:
       /// This static constructor (factory) will attempt to locate a program in
-      /// the operating system's file system using some pre-determined set of 
-      /// locations to search (e.g. the PATH on Unix). 
+      /// the operating system's file system using some pre-determined set of
+      /// locations to search (e.g. the PATH on Unix).
       /// @returns A Path object initialized to the path of the program or a
       /// Path object that is empty (invalid) if the program could not be found.
       /// @throws nothing
@@ -41,11 +41,11 @@ namespace sys {
 
       /// This function executes the program using the \p arguments provided and
       /// waits for the program to exit. This function will block the current
-      /// program until the invoked program exits. The invoked program will 
+      /// program until the invoked program exits. The invoked program will
       /// inherit the stdin, stdout, and stderr file descriptors, the
       /// environment and other configuration settings of the invoking program.
       /// If Path::executable() does not return true when this function is
-      /// called then a std::string is thrown. 
+      /// called then a std::string is thrown.
       /// @param path A sys::Path object providing the path of the program to be
       /// executed. It is presumed this is the result of the FindProgramByName
       /// method.
@@ -56,21 +56,21 @@ namespace sys {
       /// @brief Executes the program with the given set of \p args.
       static int ExecuteAndWait(
         const Path& path,  ///< The path to the program to execute
-        const char** args, ///< A vector of strings that are passed to the 
-          ///< program.  The first element should be the name of the program. 
+        const char** args, ///< A vector of strings that are passed to the
+          ///< program.  The first element should be the name of the program.
           ///< The list *must* be terminated by a null char* entry.
-        const char ** env = 0, ///< An optional vector of strings to use for 
+        const char ** env = 0, ///< An optional vector of strings to use for
           ///< the program's environment. If not provided, the current program's
           ///< environment will be used.
-        const sys::Path** redirects = 0, ///< An optional array of pointers to 
-          ///< Paths. If the array is null, no redirection is done. The array 
+        const sys::Path** redirects = 0, ///< An optional array of pointers to
+          ///< Paths. If the array is null, no redirection is done. The array
           ///< should have a size of at least three. If the pointer in the array
-          ///< are not null, then the inferior process's stdin(0), stdout(1), 
-          ///< and stderr(2) will be redirected to the corresponding Paths. 
-        unsigned secondsToWait = 0 ///< If non-zero, this specifies the amount 
-          ///< of time to wait for the child process to exit. If the time 
-          ///< expires, the child is killed and this call returns. If zero, 
-          ///< this function will wait until the child finishes or forever if 
+          ///< are not null, then the inferior process's stdin(0), stdout(1),
+          ///< and stderr(2) will be redirected to the corresponding Paths.
+        unsigned secondsToWait = 0 ///< If non-zero, this specifies the amount
+          ///< of time to wait for the child process to exit. If the time
+          ///< expires, the child is killed and this call returns. If zero,
+          ///< this function will wait until the child finishes or forever if
           ///< it doesn't.
       );
   };

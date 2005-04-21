@@ -1,16 +1,16 @@
 //===- llvm/Support/type_traits.h - Simplfied type traits -------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file provides a template class that determines if a type is a class or
 // not. The basic mechanism, based on using the pointer to member function of
-// a zero argument to a function was "boosted" from the boost type_traits 
-// library. See http://www.boost.org/ for all the gory details. 
+// a zero argument to a function was "boosted" from the boost type_traits
+// library. See http://www.boost.org/ for all the gory details.
 //
 //===----------------------------------------------------------------------===//
 
@@ -27,13 +27,13 @@ namespace llvm {
 namespace dont_use
 {
     // These two functions should never be used. They are helpers to
-    // the is_class template below. They cannot be located inside 
+    // the is_class template below. They cannot be located inside
     // is_class because doing so causes at least GCC to think that
     // the value of the "value" enumerator is not constant. Placing
-    // them out here (for some strange reason) allows the sizeof 
+    // them out here (for some strange reason) allows the sizeof
     // operator against them to magically be constant. This is
     // important to make the is_class<T>::value idiom zero cost. it
-    // evaluates to a constant 1 or 0 depending on whether the 
+    // evaluates to a constant 1 or 0 depending on whether the
     // parameter T is a class or not (respectively).
     template<typename T> char is_class_helper(void(T::*)(void));
     template<typename T> double is_class_helper(...);

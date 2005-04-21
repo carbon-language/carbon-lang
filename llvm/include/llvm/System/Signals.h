@@ -1,10 +1,10 @@
 //===- llvm/System/Signals.h - Signal Handling support ----------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines some helpful functions for dealing with the possibility of
@@ -20,7 +20,7 @@
 namespace llvm {
 namespace sys {
 
-  /// This function registers signal handlers to ensure that if a signal gets 
+  /// This function registers signal handlers to ensure that if a signal gets
   /// delivered that the named file is removed.
   /// @brief Remove a file if a fatal signal occurs.
   void RemoveFileOnSignal(const Path &Filename);
@@ -31,7 +31,7 @@ namespace sys {
   /// @brief Remove a directory if a fatal signal occurs.
   void RemoveDirectoryOnSignal(const Path& path);
 
-  /// When an error signal (such as SIBABRT or SIGSEGV) is delivered to the 
+  /// When an error signal (such as SIBABRT or SIGSEGV) is delivered to the
   /// process, print a stack trace and then exit.
   /// @brief Print a stack trace if a fatal signal occurs.
   void PrintStackTraceOnErrorSignal();

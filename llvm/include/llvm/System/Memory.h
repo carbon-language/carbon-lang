@@ -1,10 +1,10 @@
 //===- llvm/System/Memory.h - Memory Support --------------------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
-// This file was developed by Reid Spencer and is distributed under the 
+// This file was developed by Reid Spencer and is distributed under the
 // University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file declares the llvm::sys::Memory class.
@@ -42,13 +42,13 @@ namespace sys {
     public:
       /// This method allocates a block of Read/Write/Execute memory that is
       /// suitable for executing dynamically generated code (e.g. JIT). An
-      /// attempt to allocate \p NumBytes bytes of virtual memory is made. 
+      /// attempt to allocate \p NumBytes bytes of virtual memory is made.
       /// @throws std::string if an error occurred.
       /// @brief Allocate Read/Write/Execute memory.
       static MemoryBlock AllocateRWX(unsigned NumBytes);
 
       /// This method releases a block of Read/Write/Execute memory that was
-      /// allocated with the AllocateRWX method. It should not be used to 
+      /// allocated with the AllocateRWX method. It should not be used to
       /// release any memory block allocated any other way.
       /// @throws std::string if an error occurred.
       /// @brief Release Read/Write/Execute memory.

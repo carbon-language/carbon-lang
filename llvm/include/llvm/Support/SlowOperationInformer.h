@@ -1,10 +1,10 @@
 //===- llvm/Support/SlowOperationInformer.h - Keep user informed *- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines a simple object which can be used to let the user know what
@@ -38,13 +38,13 @@ namespace llvm {
   class SlowOperationInformer {
     std::string OperationName;
     unsigned LastPrintAmount;
-    
+
     SlowOperationInformer(const SlowOperationInformer&);   // DO NOT IMPLEMENT
     void operator=(const SlowOperationInformer&);          // DO NOT IMPLEMENT
   public:
     SlowOperationInformer(const std::string &Name);
     ~SlowOperationInformer();
-    
+
     /// progress - Clients should periodically call this method when they are in
     /// an exception-safe state.  The Amount variable should indicate how far
     /// along the operation is, given in 1/10ths of a percent (in other words,

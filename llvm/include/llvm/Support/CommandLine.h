@@ -1,10 +1,10 @@
 //===- llvm/Support/CommandLine.h - Command line handler --------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This class implements a command line argument processor that is useful when
@@ -126,14 +126,14 @@ class Option {
   // an argument.  Should return true if there was an error processing the
   // argument and the program should exit.
   //
-  virtual bool handleOccurrence(unsigned pos, const char *ArgName, 
+  virtual bool handleOccurrence(unsigned pos, const char *ArgName,
                                 const std::string &Arg) = 0;
 
-  virtual enum NumOccurrences getNumOccurrencesFlagDefault() const { 
+  virtual enum NumOccurrences getNumOccurrencesFlagDefault() const {
     return Optional;
   }
   virtual enum ValueExpected getValueExpectedFlagDefault() const {
-    return ValueOptional; 
+    return ValueOptional;
   }
   virtual enum OptionHidden getOptionHiddenFlagDefault() const {
     return NotHidden;
@@ -216,14 +216,14 @@ public:
   // Return the width of the option tag for printing...
   virtual unsigned getOptionWidth() const = 0;
 
-  // printOptionInfo - Print out information about this option.  The 
+  // printOptionInfo - Print out information about this option.  The
   // to-be-maintained width is specified.
   //
   virtual void printOptionInfo(unsigned GlobalWidth) const = 0;
 
   // addOccurrence - Wrapper around handleOccurrence that enforces Flags
   //
-  bool addOccurrence(unsigned pos, const char *ArgName, 
+  bool addOccurrence(unsigned pos, const char *ArgName,
                      const std::string &Value);
 
   // Prints option name followed by message.  Always returns true.
@@ -311,7 +311,7 @@ class ValuesClass {
   std::vector<std::pair<const char *, std::pair<int, const char *> > > Values;
   void processValues(va_list Vals);
 public:
-  ValuesClass(const char *EnumName, DataType Val, const char *Desc, 
+  ValuesClass(const char *EnumName, DataType Val, const char *Desc,
               va_list ValueArgs) {
     // Insert the first value, which is required.
     Values.push_back(std::make_pair(EnumName, std::make_pair(Val, Desc)));
@@ -366,14 +366,14 @@ struct generic_parser_base {
 
   // getOption - Return option name N.
   virtual const char *getOption(unsigned N) const = 0;
-  
+
   // getDescription - Return description N
   virtual const char *getDescription(unsigned N) const = 0;
 
   // Return the width of the option tag for printing...
   virtual unsigned getOptionWidth(const Option &O) const;
 
-  // printOptionInfo - Print out information about this option.  The 
+  // printOptionInfo - Print out information about this option.  The
   // to-be-maintained width is specified.
   //
   virtual void printOptionInfo(const Option &O, unsigned GlobalWidth) const;
@@ -442,7 +442,7 @@ public:
   }
 
   // parse - Return true on error.
-  bool parse(Option &O, const char *ArgName, const std::string &Arg, 
+  bool parse(Option &O, const char *ArgName, const std::string &Arg,
              DataType &V) {
     std::string ArgVal;
     if (hasArgStr)
@@ -485,12 +485,12 @@ struct basic_parser_impl {  // non-template implementation of basic_parser<t>
   enum ValueExpected getValueExpectedFlagDefault() const {
     return ValueRequired;
   }
-  
+
   void initialize(Option &O) {}
-  
+
   // Return the width of the option tag for printing...
   unsigned getOptionWidth(const Option &O) const;
-  
+
   // printOptionInfo - Print out information about this option.  The
   // to-be-maintained width is specified.
   //
@@ -519,7 +519,7 @@ public:
   bool parse(Option &O, const char *ArgName, const std::string &Arg, bool &Val);
 
   enum ValueExpected getValueExpectedFlagDefault() const {
-    return ValueOptional; 
+    return ValueOptional;
   }
 
   // getValueName - Do not print =<value> at all
@@ -590,7 +590,7 @@ template<>
 class parser<std::string> : public basic_parser<std::string> {
 public:
   // parse - Return true on error.
-  bool parse(Option &O, const char *AN, const std::string &Arg, 
+  bool parse(Option &O, const char *AN, const std::string &Arg,
              std::string &Value) {
     Value = Arg;
     return false;
@@ -727,12 +727,12 @@ public:
 //
 template <class DataType, bool ExternalStorage = false,
           class ParserClass = parser<DataType> >
-class opt : public Option, 
+class opt : public Option,
             public opt_storage<DataType, ExternalStorage,
                                is_class<DataType>::value> {
   ParserClass Parser;
 
-  virtual bool handleOccurrence(unsigned pos, const char *ArgName, 
+  virtual bool handleOccurrence(unsigned pos, const char *ArgName,
                                 const std::string &Arg) {
     typename ParserClass::parser_data_type Val;
     if (Parser.parse(*this, ArgName, Arg, Val))
@@ -884,14 +884,14 @@ class list : public Option, public list_storage<DataType, Storage> {
   std::vector<unsigned> Positions;
   ParserClass Parser;
 
-  virtual enum NumOccurrences getNumOccurrencesFlagDefault() const { 
+  virtual enum NumOccurrences getNumOccurrencesFlagDefault() const {
     return ZeroOrMore;
   }
   virtual enum ValueExpected getValueExpectedFlagDefault() const {
     return Parser.getValueExpectedFlagDefault();
   }
 
-  virtual bool handleOccurrence(unsigned pos, const char *ArgName, 
+  virtual bool handleOccurrence(unsigned pos, const char *ArgName,
                                 const std::string &Arg) {
     typename ParserClass::parser_data_type Val;
     if (Parser.parse(*this, ArgName, Arg, Val))
@@ -915,9 +915,9 @@ class list : public Option, public list_storage<DataType, Storage> {
 public:
   ParserClass &getParser() { return Parser; }
 
-  unsigned getPosition(unsigned optnum) const { 
+  unsigned getPosition(unsigned optnum) const {
     assert(optnum < this->size() && "Invalid option index");
-    return Positions[optnum]; 
+    return Positions[optnum];
   }
 
   // One option...
@@ -987,7 +987,7 @@ public:
 
 class alias : public Option {
   Option *AliasFor;
-  virtual bool handleOccurrence(unsigned pos, const char *ArgName, 
+  virtual bool handleOccurrence(unsigned pos, const char *ArgName,
                                 const std::string &Arg) {
     return AliasFor->handleOccurrence(pos, AliasFor->ArgStr, Arg);
   }

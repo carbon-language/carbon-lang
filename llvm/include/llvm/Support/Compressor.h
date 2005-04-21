@@ -1,10 +1,10 @@
 //===- llvm/Support/Compressor.h --------------------------------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
-// This file was developed by Reid Spencer and is distributed under the 
+// This file was developed by Reid Spencer and is distributed under the
 // University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file declares the llvm::Compressor class.
@@ -23,15 +23,15 @@ namespace llvm {
   /// a block of memory.  The algorithm used here is currently bzip2 but that
   /// may change without notice. Should newer algorithms prove to compress
   /// bytecode better than bzip2, that newer algorithm will be added, but won't
-  /// replace bzip2. This interface allows us to abstract the notion of 
-  /// compression and deal with alternate compression schemes over time. 
-  /// The type of compression used can be determined by inspecting the 
-  /// first byte of the compressed output. Currently value '0' means no 
+  /// replace bzip2. This interface allows us to abstract the notion of
+  /// compression and deal with alternate compression schemes over time.
+  /// The type of compression used can be determined by inspecting the
+  /// first byte of the compressed output. Currently value '0' means no
   /// compression was used (for very small files) and value '2' means bzip2
-  /// compression was used.  The Compressor is intended for use with memory 
+  /// compression was used.  The Compressor is intended for use with memory
   /// mapped files where the entire data block to be compressed or decompressed
   /// is available in memory. However, output can be gathered in repeated calls
-  /// to a callback.  Utilities for sending compressed or decompressed output 
+  /// to a callback.  Utilities for sending compressed or decompressed output
   /// to a stream or directly to a memory block are also provided.
   /// @since 1.4
   /// @brief An abstraction for memory to memory data (de)compression
@@ -39,8 +39,8 @@ namespace llvm {
     /// @name High Level Interface
     /// @{
     public:
-      /// This method compresses a block of memory pointed to by \p in with 
-      /// size \p size to a block of memory, \p out, that is allocated with 
+      /// This method compresses a block of memory pointed to by \p in with
+      /// size \p size to a block of memory, \p out, that is allocated with
       /// malloc. It is the caller's responsibility to free \p out. The \p hint
       /// indicates which type of compression the caller would *prefer*.
       /// @throws std::string explaining error if a compression error occurs
@@ -52,10 +52,10 @@ namespace llvm {
         char*&out                 ///< The returned output buffer
       );
 
-      /// This method compresses a block of memory pointed to by \p in with 
+      /// This method compresses a block of memory pointed to by \p in with
       /// size \p size to a stream. The stream \p out must be open and ready for
       /// writing when this method is called. The stream will not be closed by
-      /// this method.  The \p hint argument indicates which type of 
+      /// this method.  The \p hint argument indicates which type of
       /// compression the caller would *prefer*.
       /// @returns The amount of data written to \p out.
       /// @brief Compress memory to a file.
@@ -65,9 +65,9 @@ namespace llvm {
         std::ostream& out         ///< The output stream to write data on
       );
 
-      /// This method decompresses a block of memory pointed to by \p in with 
+      /// This method decompresses a block of memory pointed to by \p in with
       /// size \p size to a new block of memory, \p out, \p that was allocated
-      /// by malloc. It is the caller's responsibility to free \p out. 
+      /// by malloc. It is the caller's responsibility to free \p out.
       /// @returns The size of the output buffer \p out.
       /// @brief Decompress memory to a new memory buffer.
       static size_t decompressToNewBuffer(
@@ -76,10 +76,10 @@ namespace llvm {
         char*&out                 ///< The returned output buffer
       );
 
-      /// This method decompresses a block of memory pointed to by \p in with 
+      /// This method decompresses a block of memory pointed to by \p in with
       /// size \p size to a stream. The stream \p out must be open and ready for
       /// writing when this method is called. The stream will not be closed by
-      /// this method. 
+      /// this method.
       /// @returns The amount of data written to \p out.
       /// @brief Decompress memory to a stream.
       static size_t decompressToStream(
@@ -93,10 +93,10 @@ namespace llvm {
     /// @{
     public:
       /// A callback function type used by the Compressor's low level interface
-      /// to get the next chunk of data to which (de)compressed output will be 
-      /// written. This callback completely abstracts the notion of how to 
+      /// to get the next chunk of data to which (de)compressed output will be
+      /// written. This callback completely abstracts the notion of how to
       /// handle the output data of compression or decompression. The callback
-      /// is responsible for determining both the storage location and the size 
+      /// is responsible for determining both the storage location and the size
       /// of the output. The callback may also do other things with the data
       /// such as write it, transmit it, etc. Note that providing very small
       /// values for \p size will make the compression run very inefficiently.
@@ -138,7 +138,7 @@ namespace llvm {
       /// Note that the callback function will be called as many times as
       /// necessary to complete the compression of the \p in block but that the
       /// total size will generally be greater than \p size. It is a good idea
-      /// to provide as large a value to the callback's \p size parameter as 
+      /// to provide as large a value to the callback's \p size parameter as
       /// possible so that fewer calls to the callback are made.
       /// @throws std::string if an error occurs
       /// @returns the total size of the decompressed data

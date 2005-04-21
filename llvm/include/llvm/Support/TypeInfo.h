@@ -1,10 +1,10 @@
 //===- llvm/Support/TypeInfo.h - Support for type_info objects -*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This class makes std::type_info objects behave like first class objects that
@@ -45,7 +45,7 @@ struct TypeInfo {
 private:
   const std::type_info *Info;
 };
-    
+
 // Comparison operators
 inline bool operator==(const TypeInfo &lhs, const TypeInfo &rhs) {
   return lhs.get() == rhs.get();
@@ -62,11 +62,11 @@ inline bool operator!=(const TypeInfo &lhs, const TypeInfo &rhs) {
 inline bool operator>(const TypeInfo &lhs, const TypeInfo &rhs) {
   return rhs < lhs;
 }
-    
+
 inline bool operator<=(const TypeInfo &lhs, const TypeInfo &rhs) {
   return !(lhs > rhs);
 }
-     
+
 inline bool operator>=(const TypeInfo &lhs, const TypeInfo &rhs) {
   return !(lhs < rhs);
 }

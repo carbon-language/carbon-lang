@@ -1,10 +1,10 @@
 //===-- llvm/Support/PluginLoader.h - Plugin Loader for Tools ---*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // A tool can #include this file to get a -load option that allows the user to

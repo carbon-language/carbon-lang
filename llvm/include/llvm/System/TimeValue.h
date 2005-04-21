@@ -1,10 +1,10 @@
 //===-- TimeValue.h - Declare OS TimeValue Concept --------------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
-// This file was developed by Reid Spencer and is distributed under the 
+// This file was developed by Reid Spencer and is distributed under the
 // University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 //  This header file declares the operating system TimeValue concept.
@@ -19,12 +19,12 @@
 
 namespace llvm {
 namespace sys {
-  /// This class is used where a precise fixed point in time is required. The 
-  /// range of TimeValue spans many hundreds of billions of years both past and 
-  /// present.  The precision of TimeValue is to the nanosecond. However, the 
-  /// actual precision of its values will be determined by the resolution of 
-  /// the system clock. The TimeValue class is used in conjunction with several 
-  /// other lib/System interfaces to specify the time at which a call should 
+  /// This class is used where a precise fixed point in time is required. The
+  /// range of TimeValue spans many hundreds of billions of years both past and
+  /// present.  The precision of TimeValue is to the nanosecond. However, the
+  /// actual precision of its values will be determined by the resolution of
+  /// the system clock. The TimeValue class is used in conjunction with several
+  /// other lib/System interfaces to specify the time at which a call should
   /// timeout, etc.
   /// @since 1.4
   /// @brief Provides an abstraction for a fixed point in time.
@@ -82,9 +82,9 @@ namespace sys {
   /// @name Constructors
   /// @{
   public:
-    /// Caller provides the exact value in seconds and nanoseconds. The 
+    /// Caller provides the exact value in seconds and nanoseconds. The
     /// \p nanos argument defaults to zero for convenience.
-    /// @brief Explicit constructor 
+    /// @brief Explicit constructor
     explicit TimeValue (SecondsType seconds, NanoSecondsType nanos = 0)
       : seconds_( seconds ), nanos_( nanos ) { this->normalize(); }
 
@@ -92,10 +92,10 @@ namespace sys {
     /// fractional part representing nanoseconds.
     /// @brief Double Constructor.
     explicit TimeValue( double new_time )
-      : seconds_( 0 ) , nanos_ ( 0 ) { 
+      : seconds_( 0 ) , nanos_ ( 0 ) {
       SecondsType integer_part = static_cast<SecondsType>( new_time );
       seconds_ = integer_part;
-      nanos_ = static_cast<NanoSecondsType>( (new_time - 
+      nanos_ = static_cast<NanoSecondsType>( (new_time -
                static_cast<double>(integer_part)) * NANOSECONDS_PER_SECOND );
       this->normalize();
     }
@@ -167,7 +167,7 @@ namespace sys {
     /// @brief True iff *this == that.
     /// @brief True if this == that.
     int operator == (const TimeValue &that) const {
-      return (this->seconds_ == that.seconds_) && 
+      return (this->seconds_ == that.seconds_) &&
              (this->nanos_ == that.nanos_);
     }
 
@@ -198,14 +198,14 @@ namespace sys {
     SecondsType seconds() const { return seconds_; }
 
     /// Returns only the nanoseconds component of the TimeValue. The seconds
-    /// portion is ignored. 
+    /// portion is ignored.
     /// @brief Retrieve the nanoseconds component.
     NanoSecondsType nanoseconds() const { return nanos_; }
 
     /// Returns only the fractional portion of the TimeValue rounded down to the
     /// nearest microsecond (divide by one thousand).
     /// @brief Retrieve the fractional part as microseconds;
-    uint32_t microseconds() const { 
+    uint32_t microseconds() const {
       return nanos_ / NANOSECONDS_PER_MICROSECOND;
     }
 
@@ -222,17 +222,17 @@ namespace sys {
     /// systems and is therefore provided.
     /// @brief Convert to a number of microseconds (can overflow)
     uint64_t usec() const {
-      return seconds_ * MICROSECONDS_PER_SECOND + 
+      return seconds_ * MICROSECONDS_PER_SECOND +
              ( nanos_ / NANOSECONDS_PER_MICROSECOND );
     }
 
     /// Returns the TimeValue as a number of milliseconds. Note that the value
-    /// returned can overflow because the range of a uint64_t is smaller than 
+    /// returned can overflow because the range of a uint64_t is smaller than
     /// the range of a TimeValue. Nevertheless, this is useful on some operating
     /// systems and is therefore provided.
     /// @brief Convert to a number of milliseconds (can overflow)
     uint64_t msec() const {
-      return seconds_ * MILLISECONDS_PER_SECOND + 
+      return seconds_ * MILLISECONDS_PER_SECOND +
              ( nanos_ / NANOSECONDS_PER_MILLISECOND );
     }
 
@@ -245,8 +245,8 @@ namespace sys {
       return result;
     }
 
-    /// Converts the TimeValue into the corresponding number of seconds 
-    /// since the epoch (00:00:00 Jan 1,1970). 
+    /// Converts the TimeValue into the corresponding number of seconds
+    /// since the epoch (00:00:00 Jan 1,1970).
     uint64_t toEpochTime() const {
       return seconds_ - PosixZeroTime.seconds_;
     }
@@ -314,7 +314,7 @@ namespace sys {
     /// @brief Converts from microsecond format to TimeValue format
     void usec( int64_t microseconds ) {
       this->seconds_ = microseconds / MICROSECONDS_PER_SECOND;
-      this->nanos_ = NanoSecondsType(microseconds % MICROSECONDS_PER_SECOND) * 
+      this->nanos_ = NanoSecondsType(microseconds % MICROSECONDS_PER_SECOND) *
         NANOSECONDS_PER_MICROSECOND;
       this->normalize();
     }
@@ -322,7 +322,7 @@ namespace sys {
     /// @brief Converts from millisecond format to TimeValue format
     void msec( int64_t milliseconds ) {
       this->seconds_ = milliseconds / MILLISECONDS_PER_SECOND;
-      this->nanos_ = NanoSecondsType(milliseconds % MILLISECONDS_PER_SECOND) * 
+      this->nanos_ = NanoSecondsType(milliseconds % MILLISECONDS_PER_SECOND) *
         NANOSECONDS_PER_MILLISECOND;
       this->normalize();
     }

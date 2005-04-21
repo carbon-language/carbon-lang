@@ -1,10 +1,10 @@
 //===- llvm/Support/InstIterator.h - Classes for inst iteration -*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file contains definitions of two iterators for iterating over the
@@ -54,8 +54,8 @@ public:
   template<typename A, typename B, typename C, typename D>
   InstIterator(InstIterator<A,B,C,D> &II)
     : BBs(II.BBs), BB(II.BB), BI(II.BI) {}
-  
-  template<class M> InstIterator(M &m) 
+
+  template<class M> InstIterator(M &m)
     : BBs(&m.getBasicBlockList()), BB(BBs->begin()) {    // begin ctor
     if (BB != BBs->end()) {
       BI = BB->begin();
@@ -63,43 +63,43 @@ public:
     }
   }
 
-  template<class M> InstIterator(M &m, bool) 
+  template<class M> InstIterator(M &m, bool)
     : BBs(&m.getBasicBlockList()), BB(BBs->end()) {    // end ctor
   }
 
   // Accessors to get at the underlying iterators...
   inline BBIty &getBasicBlockIterator()  { return BB; }
   inline BIty  &getInstructionIterator() { return BI; }
-  
+
   inline reference operator*()  const { return *BI; }
   inline pointer operator->() const { return &operator*(); }
-  
-  inline bool operator==(const InstIterator &y) const { 
+
+  inline bool operator==(const InstIterator &y) const {
     return BB == y.BB && (BB == BBs->end() || BI == y.BI);
   }
-  inline bool operator!=(const InstIterator& y) const { 
+  inline bool operator!=(const InstIterator& y) const {
     return !operator==(y);
   }
 
-  InstIterator& operator++() { 
+  InstIterator& operator++() {
     ++BI;
     advanceToNextBB();
-    return *this; 
+    return *this;
   }
-  inline InstIterator operator++(int) { 
-    InstIterator tmp = *this; ++*this; return tmp; 
+  inline InstIterator operator++(int) {
+    InstIterator tmp = *this; ++*this; return tmp;
   }
-    
-  InstIterator& operator--() { 
+
+  InstIterator& operator--() {
     while (BB == BBs->end() || BI == BB->begin()) {
       --BB;
       BI = BB->end();
     }
     --BI;
-    return *this; 
+    return *this;
   }
-  inline InstIterator  operator--(int) { 
-    InstIterator tmp = *this; --*this; return tmp; 
+  inline InstIterator  operator--(int) {
+    InstIterator tmp = *this; --*this; return tmp;
   }
 
   inline bool atEnd() const { return BB == BBs->end(); }
@@ -121,7 +121,7 @@ typedef InstIterator<iplist<BasicBlock>,
                      Function::iterator, BasicBlock::iterator,
                      Instruction> inst_iterator;
 typedef InstIterator<const iplist<BasicBlock>,
-                     Function::const_iterator, 
+                     Function::const_iterator,
                      BasicBlock::const_iterator,
                      const Instruction> const_inst_iterator;
 

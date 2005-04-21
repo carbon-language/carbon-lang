@@ -1,10 +1,10 @@
 //===-- llvm/Support/ToolRunner.h -------------------------------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file exposes an abstraction around a platform C compiler, used to
@@ -63,7 +63,7 @@ public:
                      FileType fileType,
                      const std::string &InputFile,
                      const std::string &OutputFile,
-                     const std::vector<std::string> &SharedLibs = 
+                     const std::vector<std::string> &SharedLibs =
                          std::vector<std::string>(), unsigned Timeout = 0);
 
   /// MakeSharedObject - This compiles the specified file (which is either a .c
@@ -110,7 +110,7 @@ public:
                              const std::vector<std::string> &Args,
                              const std::string &InputFile,
                              const std::string &OutputFile,
-                             const std::vector<std::string> &SharedLibs = 
+                             const std::vector<std::string> &SharedLibs =
                                std::vector<std::string>(),
                              unsigned Timeout = 0) = 0;
 };
@@ -140,7 +140,7 @@ public:
                              const std::vector<std::string> &Args,
                              const std::string &InputFile,
                              const std::string &OutputFile,
-                             const std::vector<std::string> &SharedLibs = 
+                             const std::vector<std::string> &SharedLibs =
                                std::vector<std::string>(),
                              unsigned Timeout = 0);
 
@@ -177,7 +177,7 @@ public:
                              const std::vector<std::string> &Args,
                              const std::string &InputFile,
                              const std::string &OutputFile,
-                             const std::vector<std::string> &SharedLibs = 
+                             const std::vector<std::string> &SharedLibs =
                                 std::vector<std::string>(),
                              unsigned Timeout = 0);
 

@@ -1,10 +1,10 @@
 //===-- llvm/Support/PatternMatch.h - Match on the LLVM IR ------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file provides a simple and efficient mechanism for performing general
@@ -33,7 +33,7 @@
 #include "llvm/Instructions.h"
 
 namespace llvm {
-namespace PatternMatch { 
+namespace PatternMatch {
 
 template<typename Val, typename Pattern>
 bool match(Val *V, const Pattern &P) {
@@ -88,7 +88,7 @@ struct BinaryOp_match {
              R.match(CE->getOperand(1));
     return false;
   }
-}; 
+};
 
 template<typename LHS, typename RHS>
 inline BinaryOp_match<LHS, RHS, Instruction::Add> m_Add(const LHS &L,
@@ -178,7 +178,7 @@ struct BinaryOpClass_match {
 #endif
     return false;
   }
-}; 
+};
 
 template<typename LHS, typename RHS>
 inline BinaryOpClass_match<LHS, RHS, SetCondInst>
@@ -216,7 +216,7 @@ private:
     else
       return LHS == ConstantFP::get(LHS->getType(), -0.0) && L.match(RHS);
   }
-}; 
+};
 
 template<typename LHS>
 inline neg_match<LHS> m_Neg(const LHS &L) { return L; }

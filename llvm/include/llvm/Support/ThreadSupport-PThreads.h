@@ -1,10 +1,10 @@
 //===-- llvm/Support/ThreadSupport-PThreads.h - PThreads support *- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines pthreads implementations of the generic threading
@@ -39,7 +39,7 @@ namespace llvm {
 
       errorcode = pthread_mutexattr_settype(&Attr, PTHREAD_MUTEX_RECURSIVE);
       assert(errorcode == 0);
-      
+
       errorcode = pthread_mutex_init(&mutex, &Attr);
       assert(errorcode == 0);
 

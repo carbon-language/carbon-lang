@@ -1,10 +1,10 @@
 //===- llvm/System/MappedFile.h - MappedFile OS Concept ---------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
-// This file was developed by Reid Spencer and is distributed under the 
+// This file was developed by Reid Spencer and is distributed under the
 // University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file declares the llvm::sys::MappedFile class.
@@ -20,14 +20,14 @@ namespace llvm {
 namespace sys {
 
   /// Forward declare a class used for holding platform specific information
-  /// that needs to be 
+  /// that needs to be
   struct MappedFileInfo;
 
-  /// This class provides an abstraction for a memory mapped file in the 
+  /// This class provides an abstraction for a memory mapped file in the
   /// operating system's filesystem. It provides platform independent operations
   /// for mapping a file into memory for both read and write access. This class
   /// does not provide facilities for finding the file or operating on paths to
-  /// files. The sys::Path class is used for that. 
+  /// files. The sys::Path class is used for that.
   /// @since 1.4
   /// @brief An abstraction for memory mapped files.
   class MappedFile {
@@ -85,14 +85,14 @@ namespace sys {
     char* charBase() const { return reinterpret_cast<char*>(base_); }
 
     /// This function returns a reference to the sys::Path object kept by the
-    /// MappedFile object. This contains the path to the file that is or 
+    /// MappedFile object. This contains the path to the file that is or
     /// will be mapped.
     /// @returns sys::Path containing the path name.
     /// @brief Returns the mapped file's path as a sys::Path
     /// @throws nothing
     const sys::Path& path() const { return path_; }
 
-    /// This function returns the number of bytes in the file. 
+    /// This function returns the number of bytes in the file.
     /// @throws std::string if an error occurs
     size_t size() const;
 
@@ -106,15 +106,15 @@ namespace sys {
     /// @brief Remove the file mapping from memory.
     void unmap();
 
-    /// The mapped file is put into memory. 
+    /// The mapped file is put into memory.
     /// @returns The base memory address of the mapped file.
     /// @brief Map the file into memory.
     void* map();
 
     /// This method causes the size of the file, and consequently the size
-    /// of the mapping to be set. This is logically the same as unmap(), 
-    /// adjust size of the file, map(). Consequently, when calling this 
-    /// function, the caller should not rely on previous results of the 
+    /// of the mapping to be set. This is logically the same as unmap(),
+    /// adjust size of the file, map(). Consequently, when calling this
+    /// function, the caller should not rely on previous results of the
     /// map(), base(), or baseChar() members as they may point to invalid
     /// areas of memory after this call.
     /// @throws std::string if an error occurs

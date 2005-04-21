@@ -1,10 +1,10 @@
 //===-- llvm/System/DynamicLibrary.h - Portable Dynamic Library -*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
-// This file was developed by Reid Spencer and is distributed under the 
+// This file was developed by Reid Spencer and is distributed under the
 // University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file declares the sys::DynamicLibrary class.
@@ -21,10 +21,10 @@ namespace llvm {
 namespace sys {
 
   /// This class provides a portable interface to dynamic libraries which also
-  /// might be known as shared libraries, shared objects, dynamic shared 
+  /// might be known as shared libraries, shared objects, dynamic shared
   /// objects, or dynamic link libraries. Regardless of the terminology or the
   /// operating system interface, this class provides a portable interface that
-  /// allows dynamic libraries to be loaded and and searched for externally 
+  /// allows dynamic libraries to be loaded and and searched for externally
   /// defined symbols. This is typically used to provide "plug-in" support.
   /// @since 1.4
   /// @brief Portable dynamic library abstraction.
@@ -34,7 +34,7 @@ namespace sys {
     public:
       /// Construct a DynamicLibrary that represents the currently executing
       /// program. The program must have been linked with -export-dynamic or
-      /// -dlopen self for this to work. Any symbols retrieved with the 
+      /// -dlopen self for this to work. Any symbols retrieved with the
       /// GetAddressOfSymbol function will refer to the program not to any
       /// library.
       /// @throws std::string indicating why the program couldn't be opened.
@@ -49,8 +49,8 @@ namespace sys {
 
       /// After destruction, the symbols of the library will no longer be
       /// available to the program. It is important to make sure the lifespan
-      /// of a DynamicLibrary exceeds the lifetime of the pointers returned 
-      /// by the GetAddressOfSymbol otherwise the program may walk off into 
+      /// of a DynamicLibrary exceeds the lifetime of the pointers returned
+      /// by the GetAddressOfSymbol otherwise the program may walk off into
       /// uncharted territory.
       /// @see GetAddressOfSymbol.
       /// @brief Closes the DynamicLibrary

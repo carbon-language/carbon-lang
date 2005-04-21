@@ -1,10 +1,10 @@
 //===-- llvm/Support/Timer.h - Interval Timing Support ----------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines three classes: Timer, TimeRegion, and TimerGroup,
@@ -74,7 +74,7 @@ public:
     return Elapsed < T.Elapsed;
   }
   bool operator>(const Timer &T) const { return T.operator<(*this); }
-  
+
   /// startTimer - Start the timer running.  Time between calls to
   /// startTimer/stopTimer is counted by the Timer class.  Note that these calls
   /// must be correctly paired.

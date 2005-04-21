@@ -1,10 +1,10 @@
 //===-- llvm/Support/GraphWriter.h - Write graph to a .dot file -*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines a simple interface that can be used to print out generic
@@ -99,33 +99,33 @@ public:
          I != E; ++I)
       writeNode(&*I);
   }
- 
+
   void writeNode(NodeType *const *Node) {
     writeNode(*Node);
   }
- 
+
   void writeNode(NodeType *Node) {
     std::string NodeAttributes = DOTTraits::getNodeAttributes(Node);
-      
+
     O << "\tNode" << reinterpret_cast<const void*>(Node) << " [shape=record,";
     if (!NodeAttributes.empty()) O << NodeAttributes << ",";
     O << "label=\"{";
 
     if (!DOTTraits::renderGraphFromBottomUp())
       O << DOT::EscapeString(DOTTraits::getNodeLabel(Node, G));
-    
+
     // Print out the fields of the current node...
     child_iterator EI = GTraits::child_begin(Node);
     child_iterator EE = GTraits::child_end(Node);
     if (EI != EE) {
       if (!DOTTraits::renderGraphFromBottomUp()) O << "|";
       O << "{";
-      
+
       for (unsigned i = 0; EI != EE && i != 64; ++EI, ++i) {
         if (i) O << "|";
         O << "<g" << i << ">" << DOTTraits::getEdgeSourceLabel(Node, EI);
       }
-      
+
       if (EI != EE)
         O << "|<g64>truncated...";
       O << "}";
@@ -133,9 +133,9 @@ public:
     }
     if (DOTTraits::renderGraphFromBottomUp())
       O << DOT::EscapeString(DOTTraits::getNodeLabel(Node, G));
-      
+
     O << "}\"];\n";   // Finish printing the "node" line
-    
+
     // Output all of the edges now
     EI = GTraits::child_begin(Node);
     for (unsigned i = 0; EI != EE && i != 64; ++EI, ++i)
@@ -174,7 +174,7 @@ public:
     O << DOT::EscapeString(Label);
     if (NumEdgeSources) {
       O << "|{";
-      
+
       for (unsigned i = 0; i != NumEdgeSources; ++i) {
         if (i) O << "|";
         O << "<g" << i << ">";
@@ -197,7 +197,7 @@ public:
       O << ":g" << SrcNodePort;
     O << " -> Node" << reinterpret_cast<const void*>(DestNodeID);
     if (DestNodePort >= 0)
-      O << ":g" << DestNodePort;    
+      O << ":g" << DestNodePort;
 
     if (!Attrs.empty())
       O << "[" << Attrs << "]";

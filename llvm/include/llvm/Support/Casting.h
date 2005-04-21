@@ -1,10 +1,10 @@
 //===-- llvm/Support/Casting.h - Allow flexible, checked, casts -*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines the isa<X>(), cast<X>(), dyn_cast<X>(), cast_or_null<X>(),
@@ -48,7 +48,7 @@ template<typename From> struct simplify_type<const From> {
 //  if (isa<Type*>(myVal)) { ... }
 //
 template <typename To, typename From>
-inline bool isa_impl(const From &Val) { 
+inline bool isa_impl(const From &Val) {
   return To::classof(&Val);
 }
 
@@ -57,7 +57,7 @@ struct isa_impl_wrap {
   // When From != SimplifiedType, we can simplify the type some more by using
   // the simplify_type template.
   static bool doit(const From &Val) {
-    return isa_impl_cl<const SimpleType>::template 
+    return isa_impl_cl<const SimpleType>::template
                     isa<To>(simplify_type<const From>::getSimplifiedValue(Val));
   }
 };
@@ -159,7 +159,7 @@ struct cast_retty_wrap<To, FromTy, FromTy> {
 
 template<class To, class From>
 struct cast_retty {
-  typedef typename cast_retty_wrap<To, From, 
+  typedef typename cast_retty_wrap<To, From,
                    typename simplify_type<From>::SimpleType>::ret_type ret_type;
 };
 
@@ -248,7 +248,7 @@ struct foo {
     }*/
 };
 
-template <> inline bool isa_impl<foo,bar>(const bar &Val) { 
+template <> inline bool isa_impl<foo,bar>(const bar &Val) {
   cerr << "Classof: " << &Val << "\n";
   return true;
 }
@@ -279,7 +279,7 @@ void test(bar &B1, const bar *B2) {
   const foo *F12 = cast_or_null<foo>(B2);
   const foo *F13 = cast_or_null<foo>(B4);
   const foo *F14 = cast_or_null<foo>(fub());  // Shouldn't print.
-  
+
   // These lines are errors...
   //foo *F20 = cast<foo>(B2);  // Yields const foo*
   //foo &F21 = cast<foo>(B3);  // Yields const foo&

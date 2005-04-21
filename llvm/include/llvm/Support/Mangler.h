@@ -1,10 +1,10 @@
 //===-- llvm/Support/Mangler.h - Self-contained name mangler ----*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // Unified name mangler for various backends.
@@ -63,7 +63,7 @@ public:
   /// doesn't guarantee unique names for values. getValueName already
   /// does this for you, so there's no point calling it on the result
   /// from getValueName.
-  /// 
+  ///
   static std::string makeNameProper(const std::string &x);
 };
 

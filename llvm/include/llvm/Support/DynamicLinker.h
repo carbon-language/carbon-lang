@@ -1,10 +1,10 @@
 //===-- llvm/Support/DynamicLinker.h - Portable Dynamic Linker --*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // Lightweight interface to dynamic library linking and loading, and dynamic
@@ -31,7 +31,7 @@ bool LinkDynamicObject (const char *filename, std::string *ErrorMessage);
 /// the currently running process, as reported by the dynamic linker,
 /// or NULL if the symbol does not exist or some other error has
 /// occurred.
-/// 
+///
 void *GetAddressOfSymbol (const char *symbolName);
 void *GetAddressOfSymbol (const std::string &symbolName);
 

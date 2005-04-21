@@ -1,10 +1,10 @@
 //===-- llvm/Support/LeakDetector.h - Provide leak detection ----*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines a class that can be used to provide very simple memory leak
@@ -48,7 +48,7 @@ struct LeakDetector {
     removeGarbageObjectImpl(Object);
 #endif
   }
-  
+
   /// checkForGarbage - Traverse the internal representation of garbage
   /// pointers.  If there are any pointers that have been add'ed, but not
   /// remove'd, big obnoxious warnings about memory leaks are issued.

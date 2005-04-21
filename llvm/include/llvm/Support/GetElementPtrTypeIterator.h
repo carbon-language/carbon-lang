@@ -1,10 +1,10 @@
 //===- llvm/Support/GetElementPtrTypeIterator.h -----------------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements an iterator for walking through the types indexed by
@@ -42,14 +42,14 @@ namespace llvm {
       return I;
     }
 
-    bool operator==(const generic_gep_type_iterator& x) const { 
+    bool operator==(const generic_gep_type_iterator& x) const {
       return OpIt == x.OpIt;
     }
     bool operator!=(const generic_gep_type_iterator& x) const {
       return !operator==(x);
     }
 
-    const Type *operator*() const { 
+    const Type *operator*() const {
       return CurTy;
     }
 
@@ -61,7 +61,7 @@ namespace llvm {
     // This is a non-standard operator->.  It allows you to call methods on the
     // current type directly.
     const Type *operator->() const { return operator*(); }
-    
+
     Value *getOperand() const { return *OpIt; }
 
     generic_gep_type_iterator& operator++() {   // Preincrement
@@ -71,11 +71,11 @@ namespace llvm {
         CurTy = 0;
       }
       ++OpIt;
-      return *this; 
+      return *this;
     }
 
     generic_gep_type_iterator operator++(int) { // Postincrement
-      generic_gep_type_iterator tmp = *this; ++*this; return tmp; 
+      generic_gep_type_iterator tmp = *this; ++*this; return tmp;
     }
   };
 

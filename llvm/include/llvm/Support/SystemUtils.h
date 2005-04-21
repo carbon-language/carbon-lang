@@ -1,10 +1,10 @@
 //===- SystemUtils.h - Utilities to do low-level system stuff ---*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file contains functions used to do a variety of low-level, often
@@ -19,8 +19,8 @@
 
 namespace llvm {
 
-/// Determine if the ostream provided is connected to the std::cout and 
-/// displayed or not (to a console window). If so, generate a warning message 
+/// Determine if the ostream provided is connected to the std::cout and
+/// displayed or not (to a console window). If so, generate a warning message
 /// advising against display of bytecode and return true. Otherwise just return
 /// false
 /// @brief Check for output written to a console
