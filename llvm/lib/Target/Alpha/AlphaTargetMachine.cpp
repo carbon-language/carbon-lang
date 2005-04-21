@@ -1,12 +1,12 @@
 //===-- AlphaTargetMachine.cpp - Define TargetMachine for Alpha -----------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
-// 
+//
 //
 //===----------------------------------------------------------------------===//
 
@@ -27,8 +27,8 @@ namespace {
 }
 
 namespace llvm {
-  cl::opt<bool> EnableAlphaLSR("enable-lsr-for-alpha", 
-                             cl::desc("Enable LSR for Alpha (beta option!)"), 
+  cl::opt<bool> EnableAlphaLSR("enable-lsr-for-alpha",
+                             cl::desc("Enable LSR for Alpha (beta option!)"),
                              cl::Hidden);
 }
 
@@ -50,7 +50,7 @@ unsigned AlphaTargetMachine::getModuleMatchQuality(const Module &M) {
 }
 
 AlphaTargetMachine::AlphaTargetMachine( const Module &M, IntrinsicLowering *IL)
-  : TargetMachine("alpha", IL, true), 
+  : TargetMachine("alpha", IL, true),
     FrameInfo(TargetFrameInfo::StackGrowsDown, 8, 0) //TODO: check these
 {}
 
@@ -59,7 +59,7 @@ AlphaTargetMachine::AlphaTargetMachine( const Module &M, IntrinsicLowering *IL)
 ///
 bool AlphaTargetMachine::addPassesToEmitAssembly(PassManager &PM,
                                                    std::ostream &Out) {
-  
+
   if (EnableAlphaLSR) {
     PM.add(createLoopStrengthReducePass());
     PM.add(createCFGSimplificationPass());
@@ -88,12 +88,12 @@ bool AlphaTargetMachine::addPassesToEmitAssembly(PassManager &PM,
     PM.add(createMachineFunctionPrinterPass(&std::cerr));
 
   PM.add(createPrologEpilogCodeInserter());
-  
+
   // Must run branch selection immediately preceding the asm printer
   //PM.add(createAlphaBranchSelectionPass());
-  
+
   PM.add(createAlphaCodePrinterPass(Out, *this));
-    
+
   PM.add(createMachineCodeDeleter());
   return false;
 }

@@ -1,10 +1,10 @@
 //===- AlphaRegisterInfo.cpp - Alpha Register Information -------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file contains the Alpha implementation of the MRegisterInfo class.
@@ -62,7 +62,7 @@ static const TargetRegisterClass *getClass(unsigned SrcReg) {
   return Alpha::GPRCRegisterClass;
 }
 
-void 
+void
 AlphaRegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                        MachineBasicBlock::iterator MI,
                                        unsigned SrcReg, int FrameIdx) const {
@@ -98,7 +98,7 @@ void AlphaRegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
     BuildMI(MBB, MI, Alpha::BIS, 2, DestReg).addReg(SrcReg).addReg(SrcReg);
   } else if (RC == Alpha::FPRCRegisterClass) {
     BuildMI(MBB, MI, Alpha::CPYS, 2, DestReg).addReg(SrcReg).addReg(SrcReg);
-  } else { 
+  } else {
     std::cerr << "Attempt to copy register that is not GPR or FPR";
      abort();
   }
@@ -142,7 +142,7 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
  	New=BuildMI(Alpha::LDA, 2, Alpha::R30)
           .addImm(Amount).addReg(Alpha::R30);
       }
-      
+
       // Replace the pseudo instruction with a new instruction...
       MBB.insert(I, New);
     }
@@ -152,7 +152,7 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
 }
 
 //Alpha has a slightly funny stack:
-//Args 
+//Args
 //<- incoming SP
 //fixed locals (and spills, callee saved, etc)
 //<- FP
@@ -176,15 +176,15 @@ AlphaRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const {
 
   // Add the base register of R30 (SP) or R15 (FP).
   MI.SetMachineOperandReg(i + 1, FP ? Alpha::R15 : Alpha::R30);
-  
+
   // Now add the frame object offset to the offset from the virtual frame index.
   int Offset = MF.getFrameInfo()->getObjectOffset(FrameIndex);
 
   DEBUG(std::cerr << "FI: " << FrameIndex << " Offset: " << Offset << "\n");
 
   Offset += MF.getFrameInfo()->getStackSize();
-  
-  DEBUG(std::cerr << "Corrected Offset " << Offset << 
+
+  DEBUG(std::cerr << "Corrected Offset " << Offset <<
         " for stack size: " << MF.getFrameInfo()->getStackSize() << "\n");
 
   if (Offset > IMM_HIGH || Offset < IMM_LOW) {
@@ -192,7 +192,7 @@ AlphaRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const {
     //inst off the SP/FP
     //fix up the old:
     MI.SetMachineOperandReg(i + 1, Alpha::R28);
-    MI.SetMachineOperandConst(i, MachineOperand::MO_SignExtendedImmed, 
+    MI.SetMachineOperandConst(i, MachineOperand::MO_SignExtendedImmed,
                               getLower16(Offset));
     //insert the new
     MachineInstr* nMI=BuildMI(Alpha::LDAH, 2, Alpha::R28)
@@ -210,24 +210,24 @@ void AlphaRegisterInfo::emitPrologue(MachineFunction &MF) const {
   MachineFrameInfo *MFI = MF.getFrameInfo();
   MachineInstr *MI;
   bool FP = hasFP(MF);
-  
+
   //handle GOP offset
   MI = BuildMI(Alpha::LDGP, 0);
   MBB.insert(MBBI, MI);
   //evil const_cast until MO stuff setup to handle const
   MI = BuildMI(Alpha::ALTENT, 1).addGlobalAddress(const_cast<Function*>(MF.getFunction()), true);
   MBB.insert(MBBI, MI);
-                                                  
+
   // Get the number of bytes to allocate from the FrameInfo
   long NumBytes = MFI->getStackSize();
 
   if (MFI->hasCalls() && !FP) {
-    // We reserve argument space for call sites in the function immediately on 
-    // entry to the current function.  This eliminates the need for add/sub 
+    // We reserve argument space for call sites in the function immediately on
+    // entry to the current function.  This eliminates the need for add/sub
     // brackets around call sites.
     //If there is a frame pointer, then we don't do this
     NumBytes += MFI->getMaxCallFrameSize();
-    DEBUG(std::cerr << "Added " << MFI->getMaxCallFrameSize() 
+    DEBUG(std::cerr << "Added " << MFI->getMaxCallFrameSize()
           << " to the stack due to calls\n");
   }
 
@@ -274,9 +274,9 @@ void AlphaRegisterInfo::emitEpilogue(MachineFunction &MF,
   MachineInstr *MI;
   assert((MBBI->getOpcode() == Alpha::RET || MBBI->getOpcode() == Alpha::RETURN) &&
 	 "Can only insert epilog into returning blocks");
-  
+
   bool FP = hasFP(MF);
- 
+
   // Get the number of bytes allocated from the FrameInfo...
   long NumBytes = MFI->getStackSize();
 
@@ -291,7 +291,7 @@ void AlphaRegisterInfo::emitEpilogue(MachineFunction &MF,
     MBB.insert(MBBI, MI);
   }
 
-   if (NumBytes != 0) 
+   if (NumBytes != 0)
      {
        if (NumBytes <= IMM_HIGH) {
          MI=BuildMI(Alpha::LDA, 2, Alpha::R30).addImm(NumBytes).addReg(Alpha::R30);
@@ -324,7 +324,7 @@ AlphaRegisterInfo::getRegClassForType(const Type* Ty) const {
     case Type::PointerTyID:
     case Type::LongTyID:
     case Type::ULongTyID:  return &GPRCInstance;
-     
+
   case Type::FloatTyID:
   case Type::DoubleTyID: return &FPRCInstance;
   }

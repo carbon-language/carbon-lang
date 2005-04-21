@@ -1,10 +1,10 @@
 //===-- IA64PCInstrBuilder.h - Aids for building IA64 insts -----*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by Duraid Madina and is distributed under the
 // University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file exposes functions that may be used with BuildMI from the
@@ -26,7 +26,7 @@ namespace llvm {
 /// This allows a constant offset to be specified as well...
 ///
 inline const MachineInstrBuilder&
-addFrameReference(const MachineInstrBuilder &MIB, int FI, int Offset = 0, 
+addFrameReference(const MachineInstrBuilder &MIB, int FI, int Offset = 0,
                   bool mem = true) {
   if (mem)
     return MIB.addSImm(Offset).addFrameIndex(FI);

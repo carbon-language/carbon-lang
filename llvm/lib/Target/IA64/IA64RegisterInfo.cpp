@@ -42,7 +42,7 @@ static const TargetRegisterClass *getClass(unsigned SrcReg) {
     return IA64::FPRegisterClass;
   if (IA64::PRRegisterClass->contains(SrcReg))
     return IA64::PRRegisterClass;
-  
+
   assert(IA64::GRRegisterClass->contains(SrcReg) &&
          "PROBLEM: Reg is not FP, predicate or GR!");
   return IA64::GRRegisterClass;
@@ -130,7 +130,7 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
       // alignment boundary.
       unsigned Align = MF.getTarget().getFrameInfo()->getStackAlignment();
       Amount = (Amount+Align-1)/Align*Align;
-      
+
       MachineInstr *New;
       if (Old->getOpcode() == IA64::ADJUSTCALLSTACKDOWN) {
 	New=BuildMI(IA64::ADDIMM22, 2, IA64::r12).addReg(IA64::r12)
@@ -156,7 +156,7 @@ void IA64RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const
   MachineFunction &MF = *MBB.getParent();
 
   bool FP = hasFP(MF);
-  
+
   while (!MI.getOperand(i).isFrameIndex()) {
     ++i;
     assert(i < MI.getNumOperands() && "Instr doesn't have FrameIndex operand!");
@@ -204,26 +204,26 @@ void IA64RegisterInfo::emitPrologue(MachineFunction &MF) const {
   MachineFrameInfo *MFI = MF.getFrameInfo();
   MachineInstr *MI;
   bool FP = hasFP(MF);
- 
+
   // first, we handle the 'alloc' instruction, that should be right up the
   // top of any function
   static const unsigned RegsInOrder[96] = { // there are 96 GPRs the
                                             // RSE worries about
-        IA64::r32, IA64::r33, IA64::r34, IA64::r35, 
-        IA64::r36, IA64::r37, IA64::r38, IA64::r39, IA64::r40, IA64::r41, 
-        IA64::r42, IA64::r43, IA64::r44, IA64::r45, IA64::r46, IA64::r47, 
-        IA64::r48, IA64::r49, IA64::r50, IA64::r51, IA64::r52, IA64::r53, 
-        IA64::r54, IA64::r55, IA64::r56, IA64::r57, IA64::r58, IA64::r59, 
-        IA64::r60, IA64::r61, IA64::r62, IA64::r63, IA64::r64, IA64::r65, 
-        IA64::r66, IA64::r67, IA64::r68, IA64::r69, IA64::r70, IA64::r71, 
-        IA64::r72, IA64::r73, IA64::r74, IA64::r75, IA64::r76, IA64::r77, 
-        IA64::r78, IA64::r79, IA64::r80, IA64::r81, IA64::r82, IA64::r83, 
-        IA64::r84, IA64::r85, IA64::r86, IA64::r87, IA64::r88, IA64::r89, 
-        IA64::r90, IA64::r91, IA64::r92, IA64::r93, IA64::r94, IA64::r95, 
-        IA64::r96, IA64::r97, IA64::r98, IA64::r99, IA64::r100, IA64::r101, 
-        IA64::r102, IA64::r103, IA64::r104, IA64::r105, IA64::r106, IA64::r107, 
-        IA64::r108, IA64::r109, IA64::r110, IA64::r111, IA64::r112, IA64::r113, 
-        IA64::r114, IA64::r115, IA64::r116, IA64::r117, IA64::r118, IA64::r119, 
+        IA64::r32, IA64::r33, IA64::r34, IA64::r35,
+        IA64::r36, IA64::r37, IA64::r38, IA64::r39, IA64::r40, IA64::r41,
+        IA64::r42, IA64::r43, IA64::r44, IA64::r45, IA64::r46, IA64::r47,
+        IA64::r48, IA64::r49, IA64::r50, IA64::r51, IA64::r52, IA64::r53,
+        IA64::r54, IA64::r55, IA64::r56, IA64::r57, IA64::r58, IA64::r59,
+        IA64::r60, IA64::r61, IA64::r62, IA64::r63, IA64::r64, IA64::r65,
+        IA64::r66, IA64::r67, IA64::r68, IA64::r69, IA64::r70, IA64::r71,
+        IA64::r72, IA64::r73, IA64::r74, IA64::r75, IA64::r76, IA64::r77,
+        IA64::r78, IA64::r79, IA64::r80, IA64::r81, IA64::r82, IA64::r83,
+        IA64::r84, IA64::r85, IA64::r86, IA64::r87, IA64::r88, IA64::r89,
+        IA64::r90, IA64::r91, IA64::r92, IA64::r93, IA64::r94, IA64::r95,
+        IA64::r96, IA64::r97, IA64::r98, IA64::r99, IA64::r100, IA64::r101,
+        IA64::r102, IA64::r103, IA64::r104, IA64::r105, IA64::r106, IA64::r107,
+        IA64::r108, IA64::r109, IA64::r110, IA64::r111, IA64::r112, IA64::r113,
+        IA64::r114, IA64::r115, IA64::r116, IA64::r117, IA64::r118, IA64::r119,
         IA64::r120, IA64::r121, IA64::r122, IA64::r123, IA64::r124, IA64::r125,
 	IA64::r126, IA64::r127 };
 
@@ -244,17 +244,17 @@ void IA64RegisterInfo::emitPrologue(MachineFunction &MF) const {
       break;
     }
   }
- 
+
   MI=BuildMI(IA64::ALLOC,5).addReg(dstRegOfPseudoAlloc).addImm(0).\
      addImm(numStackedGPRsUsed).addImm(numOutRegsUsed).addImm(0);
   MBB.insert(MBBI, MI);
- 
+
   // Get the number of bytes to allocate from the FrameInfo
   unsigned NumBytes = MFI->getStackSize();
 
   if (MFI->hasCalls() && !FP) {
-    // We reserve argument space for call sites in the function immediately on 
-    // entry to the current function.  This eliminates the need for add/sub 
+    // We reserve argument space for call sites in the function immediately on
+    // entry to the current function.  This eliminates the need for add/sub
     // brackets around call sites.
     NumBytes += MFI->getMaxCallFrameSize();
   }
@@ -286,7 +286,7 @@ void IA64RegisterInfo::emitPrologue(MachineFunction &MF) const {
     MI=BuildMI(IA64::ADD, 2, IA64::r12).addReg(IA64::r12).addReg(IA64::r22);
     MBB.insert(MBBI, MI);  // then add (subtract) it to r12 (stack ptr)
   }
-  
+
   // now if we need to, save the old FP and set the new
   if (FP) {
     MI = BuildMI(IA64::ST8, 2).addReg(IA64::r12).addReg(IA64::r15);
@@ -294,7 +294,7 @@ void IA64RegisterInfo::emitPrologue(MachineFunction &MF) const {
     // this must be the last instr in the prolog ?  (XXX: why??)
     MI = BuildMI(IA64::MOV, 1, IA64::r15).addReg(IA64::r12);
     MBB.insert(MBBI, MI);
-  } 
+  }
 
 }
 
@@ -322,7 +322,7 @@ void IA64RegisterInfo::emitEpilogue(MachineFunction &MF,
     MBB.insert(MBBI, MI);
   }
 
-  if (NumBytes != 0) 
+  if (NumBytes != 0)
   {
     if (NumBytes <= 8191) {
       MI=BuildMI(IA64::ADDIMM22, 2, IA64::r12).addReg(IA64::r12).addImm(NumBytes);

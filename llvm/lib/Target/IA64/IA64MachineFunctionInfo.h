@@ -1,10 +1,10 @@
 //===-- IA64MachineFunctionInfo.h - IA64-specific information ---*- C++ -*-===//
 //===--                   for MachineFunction                 ---*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
-// 
+//
 //===----------------------------------------------------------------------===//
-// 
+//
 // This file declares IA64-specific per-machine-function information.
 //
 //===----------------------------------------------------------------------===//
@@ -18,7 +18,7 @@
 namespace llvm {
 
 class IA64FunctionInfo : public MachineFunctionInfo {
-  
+
 public:
   unsigned outRegsUsed; // how many 'out' registers are used
   // by this machinefunction? (used to compute the appropriate

@@ -1,10 +1,10 @@
 //===-- AlphaAsmPrinter.cpp - Alpha LLVM assembly writer ------------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file contains a printer that converts from our internal representation
@@ -41,8 +41,8 @@ namespace {
     /// Unique incrementer for label values for referencing Global values.
     ///
     unsigned LabelNumber;
- 
-     AlphaAsmPrinter(std::ostream &o, TargetMachine &tm) 
+
+     AlphaAsmPrinter(std::ostream &o, TargetMachine &tm)
        : AsmPrinter(o, tm), LabelNumber(0)
     {
       AlignmentIsInBytes = false;
@@ -65,7 +65,7 @@ namespace {
     void printOperand(const MachineInstr *MI, int opNum, MVT::ValueType VT);
     void printBaseOffsetPair (const MachineInstr *MI, int i, bool brackets=true);
     void printMachineInstruction(const MachineInstr *MI);
-    bool runOnMachineFunction(MachineFunction &F);    
+    bool runOnMachineFunction(MachineFunction &F);
     bool doInitialization(Module &M);
     bool doFinalization(Module &M);
     void SwitchSection(std::ostream &OS, const char *NewSection);
@@ -101,7 +101,7 @@ void AlphaAsmPrinter::printOperand(const MachineInstr *MI, int opNum, MVT::Value
 void AlphaAsmPrinter::printOp(const MachineOperand &MO, bool IsCallOp) {
   const MRegisterInfo &RI = *TM.getRegisterInfo();
   int new_symbol;
-  
+
   switch (MO.getType()) {
   case MachineOperand::MO_VirtualRegister:
     if (Value *V = MO.getVRegValueOrNull()) {
@@ -124,7 +124,7 @@ void AlphaAsmPrinter::printOp(const MachineOperand &MO, bool IsCallOp) {
     std::cerr << "Shouldn't use addPCDisp() when building Alpha MachineInstrs";
     abort();
     return;
-    
+
   case MachineOperand::MO_MachineBasicBlock: {
     MachineBasicBlock *MBBOp = MO.getMachineBasicBlock();
     O << "LBB" << Mang->getValueName(MBBOp->getParent()->getFunction())
@@ -149,7 +149,7 @@ void AlphaAsmPrinter::printOp(const MachineOperand &MO, bool IsCallOp) {
     else
       O << Mang->getValueName(MO.getGlobal());
     return;
-    
+
   default:
     O << "<unknown operand type: " << MO.getType() << ">";
     return;
@@ -163,7 +163,7 @@ void AlphaAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
   ++EmittedInsts;
   if (printInstruction(MI))
     return; // Printer was automatically generated
-  
+
   assert(0 && "Unhandled instruction in asm writer!");
   abort();
   return;
@@ -218,7 +218,7 @@ bool AlphaAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 void AlphaAsmPrinter::printConstantPool(MachineConstantPool *MCP) {
   const std::vector<Constant*> &CP = MCP->getConstants();
   const TargetData &TD = TM.getTargetData();
- 
+
   if (CP.empty()) return;
 
   SwitchSection(O, "section .rodata");
@@ -240,12 +240,12 @@ bool AlphaAsmPrinter::doInitialization(Module &M)
     O << "\t.arch ev56\n";
   return false;
 }
-    
+
 
 // SwitchSection - Switch to the specified section of the executable if we are
 // not already in it!
 //
-void AlphaAsmPrinter::SwitchSection(std::ostream &OS, const char *NewSection) 
+void AlphaAsmPrinter::SwitchSection(std::ostream &OS, const char *NewSection)
 {
   if (CurSection != NewSection) {
     CurSection = NewSection;
@@ -256,7 +256,7 @@ void AlphaAsmPrinter::SwitchSection(std::ostream &OS, const char *NewSection)
 
 bool AlphaAsmPrinter::doFinalization(Module &M) {
   const TargetData &TD = TM.getTargetData();
-  
+
   for (Module::const_global_iterator I = M.global_begin(), E = M.global_end(); I != E; ++I)
     if (I->hasInitializer()) {   // External global require no code
       O << "\n\n";
@@ -265,13 +265,13 @@ bool AlphaAsmPrinter::doFinalization(Module &M) {
       unsigned Size = TD.getTypeSize(C->getType());
       unsigned Align = TD.getTypeAlignmentShift(C->getType());
 
-      if (C->isNullValue() && 
+      if (C->isNullValue() &&
           (I->hasLinkOnceLinkage() || I->hasInternalLinkage() ||
            I->hasWeakLinkage() /* FIXME: Verify correct */)) {
         SwitchSection(O, "data");
         if (I->hasInternalLinkage())
           O << "\t.local " << name << "\n";
-        
+
         O << "\t.comm " << name << "," << TD.getTypeSize(C->getType())
           << "," << (1 << Align);
         O << "\t\t# ";

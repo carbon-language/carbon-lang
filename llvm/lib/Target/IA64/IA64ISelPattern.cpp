@@ -1,10 +1,10 @@
 //===-- IA64ISelPattern.cpp - A pattern matching inst selector for IA64 ---===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by Duraid Madina and is distributed under the
 // University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines a pattern matching instruction selector for IA64.
@@ -36,7 +36,7 @@ using namespace llvm;
 namespace {
   class IA64TargetLowering : public TargetLowering {
     int VarArgsFrameIndex;            // FrameIndex for start of varargs area.
-    
+
     //int ReturnAddrIndex;              // FrameIndex for return slot.
     unsigned GP, SP, RP; // FIXME - clean this mess up
   public:
@@ -45,20 +45,20 @@ namespace {
    // for ISD::RET down below. add an accessor instead? FIXME
 
    IA64TargetLowering(TargetMachine &TM) : TargetLowering(TM) {
-      
+
       // register class for general registers
       addRegisterClass(MVT::i64, IA64::GRRegisterClass);
 
       // register class for FP registers
       addRegisterClass(MVT::f64, IA64::FPRegisterClass);
-      
-      // register class for predicate registers 
+
+      // register class for predicate registers
       addRegisterClass(MVT::i1, IA64::PRRegisterClass);
-      
+
       setOperationAction(ISD::BRCONDTWOWAY     , MVT::Other, Expand);
       setOperationAction(ISD::FP_ROUND_INREG   , MVT::f32  , Expand);
 
-      setSetCCResultType(MVT::i1); 
+      setSetCCResultType(MVT::i1);
       setShiftAmountType(MVT::i64);
 
       setOperationAction(ISD::EXTLOAD          , MVT::i1   , Promote);
@@ -75,7 +75,7 @@ namespace {
 
       setOperationAction(ISD::UREM             , MVT::f32  , Expand);
       setOperationAction(ISD::UREM             , MVT::f64  , Expand);
-      
+
       setOperationAction(ISD::MEMMOVE          , MVT::Other, Expand);
       setOperationAction(ISD::MEMSET           , MVT::Other, Expand);
       setOperationAction(ISD::MEMCPY           , MVT::Other, Expand);
@@ -154,33 +154,33 @@ IA64TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
 
   MachineBasicBlock& BB = MF.front();
 
-  unsigned args_int[] = {IA64::r32, IA64::r33, IA64::r34, IA64::r35, 
+  unsigned args_int[] = {IA64::r32, IA64::r33, IA64::r34, IA64::r35,
                          IA64::r36, IA64::r37, IA64::r38, IA64::r39};
- 
-  unsigned args_FP[] = {IA64::F8, IA64::F9, IA64::F10, IA64::F11, 
+
+  unsigned args_FP[] = {IA64::F8, IA64::F9, IA64::F10, IA64::F11,
                         IA64::F12,IA64::F13,IA64::F14, IA64::F15};
- 
+
   unsigned argVreg[8];
   unsigned argPreg[8];
   unsigned argOpc[8];
 
   unsigned used_FPArgs = 0; // how many FP args have been used so far?
- 
+
   unsigned ArgOffset = 0;
   int count = 0;
-  
+
   for (Function::arg_iterator I = F.arg_begin(), E = F.arg_end(); I != E; ++I)
     {
       SDOperand newroot, argt;
       if(count < 8) { // need to fix this logic? maybe.
-	  
+	
 	switch (getValueType(I->getType())) {
 	  default:
 	    std::cerr << "ERROR in LowerArgs: unknown type "
 	      << getValueType(I->getType()) << "\n";
 	    abort();
 	  case MVT::f32:
-	    // fixme? (well, will need to for weird FP structy stuff, 
+	    // fixme? (well, will need to for weird FP structy stuff,
 	    // see intel ABI docs)
 	  case MVT::f64:
 //XXX	    BuildMI(&BB, IA64::IDEF, 0, args_FP[used_FPArgs]);
@@ -202,10 +202,10 @@ IA64TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
 	  case MVT::i64:
 //XXX	    BuildMI(&BB, IA64::IDEF, 0, args_int[count]);
 	    MF.addLiveIn(args_int[count]); // mark this register as liveIn
-	    argVreg[count] = 
+	    argVreg[count] =
 	    MF.getSSARegMap()->createVirtualRegister(getRegClassFor(MVT::i64));
 	    argPreg[count] = args_int[count];
-	    argOpc[count] = IA64::MOV; 
+	    argOpc[count] = IA64::MOV;
 	    argt = newroot =
 	      DAG.getCopyFromReg(argVreg[count], MVT::i64, DAG.getRoot());
 	    if ( getValueType(I->getType()) != MVT::i64)
@@ -217,19 +217,19 @@ IA64TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
 	// Create the frame index object for this incoming parameter...
 	ArgOffset = 16 + 8 * (count - 8);
 	int FI = MFI->CreateFixedObject(8, ArgOffset);
-	  
-	// Create the SelectionDAG nodes corresponding to a load 
+	
+	// Create the SelectionDAG nodes corresponding to a load
 	//from this parameter
 	SDOperand FIN = DAG.getFrameIndex(FI, MVT::i64);
-	argt = newroot = DAG.getLoad(getValueType(I->getType()), 
+	argt = newroot = DAG.getLoad(getValueType(I->getType()),
 	    DAG.getEntryNode(), FIN);
       }
       ++count;
       DAG.setRoot(newroot.getValue(1));
       ArgValues.push_back(argt);
-    }    
+    }
 
-       
+
   // Create a vreg to hold the output of (what will become)
   // the "alloc" instruction
   VirtGPR = MF.getSSARegMap()->createVirtualRegister(getRegClassFor(MVT::i64));
@@ -251,14 +251,14 @@ IA64TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
   // ..hmm.
 
   unsigned tempOffset=0;
- 
+
   // if this is a varargs function, we simply lower llvm.va_start by
   // pointing to the first entry
   if(F.isVarArg()) {
     tempOffset=0;
     VarArgsFrameIndex = MFI->CreateFixedObject(8, tempOffset);
   }
- 
+
   // here we actually do the moving of args, and store them to the stack
   // too if this is a varargs function:
   for (int i = 0; i < count && i < 8; ++i) {
@@ -290,10 +290,10 @@ IA64TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
     MF.addLiveOut(IA64::F8);
     break;
   }
-  
+
   return ArgValues;
 }
-  
+
 std::pair<SDOperand, SDOperand>
 IA64TargetLowering::LowerCallTo(SDOperand Chain,
 				 const Type *RetTy, bool isVarArg,
@@ -310,17 +310,17 @@ IA64TargetLowering::LowerCallTo(SDOperand Chain,
   } else {
     outRegsUsed = Args.size();
   }
- 
+
   // FIXME? this WILL fail if we ever try to pass around an arg that
   // consumes more than a single output slot (a 'real' double, int128
   // some sort of aggregate etc.), as we'll underestimate how many 'outX'
   // registers we use. Hopefully, the assembler will notice.
   MF.getInfo<IA64FunctionInfo>()->outRegsUsed=
     std::max(outRegsUsed, MF.getInfo<IA64FunctionInfo>()->outRegsUsed);
-  
+
   Chain = DAG.getNode(ISD::ADJCALLSTACKDOWN, MVT::Other, Chain,
                         DAG.getConstant(NumBytes, getPointerTy()));
- 
+
   std::vector<SDOperand> args_to_use;
   for (unsigned i = 0, e = Args.size(); i != e; ++i)
     {
@@ -478,10 +478,10 @@ static unsigned ponderIntegerDivisionBy(SDOperand N, bool isSigned,
 
   int64_t v = (int64_t)cast<ConstantSDNode>(N)->getSignExtended();
 
-  if ((Imm = ExactLog2(v))) { // if a division by a power of two, say so 
+  if ((Imm = ExactLog2(v))) { // if a division by a power of two, say so
     return 1;
-  } 
-  
+  }
+
   return 0; // fallthrough
 }
 
@@ -493,8 +493,8 @@ static unsigned ponderIntegerAndWith(SDOperand N, unsigned& Imm) {
 
   if ((Imm = ExactLog2sub1(v))!=666) { // if ANDing with ((2^n)-1) for some n
     return 1; // say so
-  } 
-  
+  }
+
   return 0; // fallthrough
 }
 
@@ -506,7 +506,7 @@ static unsigned ponderIntegerAdditionWith(SDOperand N, unsigned& Imm) {
   if (v <= 8191 && v >= -8192) { // if this constants fits in 14 bits, say so
     Imm = v & 0x3FFF; // 14 bits
     return 1;
-  } 
+  }
   return 0; // fallthrough
 }
 
@@ -518,7 +518,7 @@ static unsigned ponderIntegerSubtractionFrom(SDOperand N, unsigned& Imm) {
   if (v <= 127 && v >= -128) { // if this constants fits in 8 bits, say so
     Imm = v & 0xFF; // 8 bits
     return 1;
-  } 
+  }
   return 0; // fallthrough
 }
 
@@ -536,10 +536,10 @@ unsigned ISel::SelectExpr(SDOperand N) {
   if (Node->getOpcode() == ISD::CopyFromReg)
     // Just use the specified register as our input.
     return dyn_cast<RegSDNode>(Node)->getReg();
-  
+
   unsigned &Reg = ExprMap[N];
   if (Reg) return Reg;
-  
+
   if (N.getOpcode() != ISD::CALL)
     Reg = Result = (N.getValueType() != MVT::Other) ?
       MakeReg(N.getValueType()) : 1;
@@ -556,7 +556,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
       ExprMap[SDOperand(Node, Node->getNumValues()-1)] = 1;
     }
   }
-  
+
   switch (N.getOpcode()) {
   default:
     Node->dump();
@@ -614,8 +614,8 @@ unsigned ISel::SelectExpr(SDOperand N) {
                 << " the stack alignment yet!";
       abort();
     }
- 
-/*    
+
+/*
     Select(N.getOperand(0));
     if (ConstantSDNode* CN = dyn_cast<ConstantSDNode>(N.getOperand(1)))
     {
@@ -643,14 +643,14 @@ unsigned ISel::SelectExpr(SDOperand N) {
     BuildMI(BB, IA64::MOV, 1, Result).addReg(IA64::r12);
     return Result;
   }
-    
+
   case ISD::SELECT: {
       Tmp1 = SelectExpr(N.getOperand(0)); //Cond
       Tmp2 = SelectExpr(N.getOperand(1)); //Use if TRUE
       Tmp3 = SelectExpr(N.getOperand(2)); //Use if FALSE
 
       unsigned bogoResult;
-      
+
       switch (N.getOperand(1).getValueType()) {
 	default: assert(0 &&
 	"ISD::SELECT: 'select'ing something other than i64 or f64!\n");
@@ -668,7 +668,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
                        // though this will work for now (no JIT)
       return Result;
   }
-  
+
   case ISD::Constant: {
     unsigned depositPos=0;
     unsigned depositLen=0;
@@ -686,7 +686,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
 		    }
       case MVT::i64: break;
     }
-   
+
     int64_t immediate = cast<ConstantSDNode>(N)->getValue();
 
     if(immediate==0) { // if the constant is just zero,
@@ -699,14 +699,14 @@ unsigned ISel::SelectExpr(SDOperand N) {
       // turn into:   "adds rDest=imm,r0"  (and _not_ "andl"...)
       BuildMI(BB, IA64::MOVSIMM14, 1, Result).addSImm(immediate);
       return Result; // early exit
-    } 
+    }
 
     if (immediate <= 2097151 && immediate >= -2097152) {
       // if this constants fits in 22 bits, we use a mov the assembler will
       // turn into:   "addl rDest=imm,r0"
       BuildMI(BB, IA64::MOVSIMM22, 1, Result).addSImm(immediate);
       return Result; // early exit
-    } 
+    }
 
     /* otherwise, our immediate is big, so we use movl */
     uint64_t Imm = immediate;
@@ -718,7 +718,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
     BuildMI(BB, IA64::IDEF, 0, Result);
     return Result;
   }
-    
+
   case ISD::GlobalAddress: {
     GlobalValue *GV = cast<GlobalAddressSDNode>(N)->getGlobal();
     unsigned Tmp1 = MakeReg(MVT::i64);
@@ -728,7 +728,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
 
     return Result;
   }
-  
+
   case ISD::ExternalSymbol: {
     const char *Sym = cast<ExternalSymbolSDNode>(N)->getSymbol();
 // assert(0 && "sorry, but what did you want an ExternalSymbol for again?");
@@ -744,14 +744,14 @@ unsigned ISel::SelectExpr(SDOperand N) {
 
   case ISD::ZERO_EXTEND: {
     Tmp1 = SelectExpr(N.getOperand(0)); // value
-    
+
     switch (N.getOperand(0).getValueType()) {
     default: assert(0 && "Cannot zero-extend this type!");
     case MVT::i8:  Opc = IA64::ZXT1; break;
     case MVT::i16: Opc = IA64::ZXT2; break;
     case MVT::i32: Opc = IA64::ZXT4; break;
 
-    // we handle bools differently! : 
+    // we handle bools differently! :
     case MVT::i1: { // if the predicate reg has 1, we want a '1' in our GR.
 		    unsigned dummy = MakeReg(MVT::i64);
 		    // first load zero:
@@ -772,7 +772,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
 assert(0 && "hmm, ISD::SIGN_EXTEND: shouldn't ever be reached. bad luck!\n");
 
     Tmp1 = SelectExpr(N.getOperand(0)); // value
-    
+
     switch (N.getOperand(0).getValueType()) {
     default: assert(0 && "Cannot sign-extend this type!");
     case MVT::i1:  assert(0 && "trying to sign extend a bool? ow.\n");
@@ -928,7 +928,7 @@ assert(0 && "hmm, ISD::SIGN_EXTEND: shouldn't ever be reached. bad luck!\n");
       BuildMI(BB, IA64::FMPY, 2, Result).addReg(Tmp1).addReg(Tmp2);
     return Result;
   }
-  
+
   case ISD::SUB: {
     if(DestType == MVT::f64 && N.getOperand(0).getOpcode() == ISD::MUL &&
        N.getOperand(0).Val->hasOneUse()) { // if we can fold this sub
@@ -962,11 +962,11 @@ assert(0 && "hmm, ISD::SIGN_EXTEND: shouldn't ever be reached. bad luck!\n");
     BuildMI(BB, IA64::FABS, 1, Result).addReg(Tmp1);
     return Result;
   }
- 
+
   case ISD::FNEG: {
     assert(DestType == MVT::f64 && "trying to fneg something other than f64?");
 
-    if (ISD::FABS == N.getOperand(0).getOpcode()) { // && hasOneUse()? 
+    if (ISD::FABS == N.getOperand(0).getOpcode()) { // && hasOneUse()?
       Tmp1 = SelectExpr(N.getOperand(0).getOperand(0));
       BuildMI(BB, IA64::FNEGABS, 1, Result).addReg(Tmp1); // fold in abs
     } else {
@@ -976,14 +976,14 @@ assert(0 && "hmm, ISD::SIGN_EXTEND: shouldn't ever be reached. bad luck!\n");
 
     return Result;
   }
-      	 
+      	
   case ISD::AND: {
      switch (N.getValueType()) {
     default: assert(0 && "Cannot AND this type!");
     case MVT::i1: { // if a bool, we emit a pseudocode AND
       unsigned pA = SelectExpr(N.getOperand(0));
       unsigned pB = SelectExpr(N.getOperand(1));
-       
+
 /* our pseudocode for AND is:
  *
 (pA) cmp.eq.unc pC,p0 = r0,r0   // pC = pA
@@ -995,12 +995,12 @@ assert(0 && "hmm, ISD::SIGN_EXTEND: shouldn't ever be reached. bad luck!\n");
 
 */
       unsigned pTemp = MakeReg(MVT::i1);
-     
+
       unsigned bogusTemp1 = MakeReg(MVT::i1);
       unsigned bogusTemp2 = MakeReg(MVT::i1);
       unsigned bogusTemp3 = MakeReg(MVT::i1);
       unsigned bogusTemp4 = MakeReg(MVT::i1);
-    
+
       BuildMI(BB, IA64::PCMPEQUNC, 3, bogusTemp1)
 	.addReg(IA64::r0).addReg(IA64::r0).addReg(pA);
       BuildMI(BB, IA64::CMPEQ, 2, bogusTemp2)
@@ -1011,7 +1011,7 @@ assert(0 && "hmm, ISD::SIGN_EXTEND: shouldn't ever be reached. bad luck!\n");
 	.addReg(bogusTemp1).addReg(IA64::r0).addReg(IA64::r0).addReg(pTemp);
       break;
     }
-    
+
     // if not a bool, we just AND away:
     case MVT::i8:
     case MVT::i16:
@@ -1043,7 +1043,7 @@ assert(0 && "hmm, ISD::SIGN_EXTEND: shouldn't ever be reached. bad luck!\n");
     }
     return Result;
   }
- 
+
   case ISD::OR: {
   switch (N.getValueType()) {
     default: assert(0 && "Cannot OR this type!");
@@ -1052,7 +1052,7 @@ assert(0 && "hmm, ISD::SIGN_EXTEND: shouldn't ever be reached. bad luck!\n");
       unsigned pB = SelectExpr(N.getOperand(1));
 
       unsigned pTemp1 = MakeReg(MVT::i1);
-       
+
 /* our pseudocode for OR is:
  *
 
@@ -1083,7 +1083,7 @@ pC = pA OR pB
     }
     return Result;
   }
-	 
+	
   case ISD::XOR: {
      switch (N.getValueType()) {
     default: assert(0 && "Cannot XOR this type!");
@@ -1163,7 +1163,7 @@ pC = pA OR pB
     }
     return Result;
   }
-		 
+		
   case ISD::SRL: {
     Tmp1 = SelectExpr(N.getOperand(0));
     if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
@@ -1175,7 +1175,7 @@ pC = pA OR pB
     }
     return Result;
   }
-		 
+		
   case ISD::SRA: {
     Tmp1 = SelectExpr(N.getOperand(0));
     if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
@@ -1235,7 +1235,7 @@ pC = pA OR pB
       }
     }
 
-    unsigned TmpPR=MakeReg(MVT::i1);  // we need two scratch 
+    unsigned TmpPR=MakeReg(MVT::i1);  // we need two scratch
     unsigned TmpPR2=MakeReg(MVT::i1); // predicate registers,
     unsigned TmpF1=MakeReg(MVT::f64); // and one metric truckload of FP regs.
     unsigned TmpF2=MakeReg(MVT::f64); // lucky we have IA64?
@@ -1252,14 +1252,14 @@ pC = pA OR pB
     unsigned TmpF13=MakeReg(MVT::f64);
     unsigned TmpF14=MakeReg(MVT::f64);
     unsigned TmpF15=MakeReg(MVT::f64);
- 
+
     // OK, emit some code:
 
     if(!isFP) {
       // first, load the inputs into FP regs.
       BuildMI(BB, IA64::SETFSIG, 1, TmpF1).addReg(Tmp1);
       BuildMI(BB, IA64::SETFSIG, 1, TmpF2).addReg(Tmp2);
-      
+
       // next, convert the inputs to FP
       if(isSigned) {
 	BuildMI(BB, IA64::FCVTXF, 1, TmpF3).addReg(TmpF1);
@@ -1268,7 +1268,7 @@ pC = pA OR pB
 	BuildMI(BB, IA64::FCVTXUFS1, 1, TmpF3).addReg(TmpF1);
 	BuildMI(BB, IA64::FCVTXUFS1, 1, TmpF4).addReg(TmpF2);
       }
-      
+
     } else { // this is an FP divide/remainder, so we 'leak' some temp
              // regs and assign TmpF3=Tmp1, TmpF4=Tmp2
       TmpF3=Tmp1;
@@ -1340,7 +1340,7 @@ pC = pA OR pB
       // we do a 'conditional fmov' (of the correct result, depending
       // on how the frcpa predicate turned out)
       BuildMI(BB, IA64::PFMOV, 2, bogoResult)
-	.addReg(TmpF12).addReg(TmpPR2); 
+	.addReg(TmpF12).addReg(TmpPR2);
       BuildMI(BB, IA64::CFMOV, 2, Result)
 	.addReg(bogoResult).addReg(TmpF15).addReg(TmpPR);
       }
@@ -1502,7 +1502,7 @@ pC = pA OR pB
       Result = ExprMap[N.getValue(0)] = MakeReg(N.getValue(0).getValueType());
 
     bool isBool=false;
-    
+
     if(opcode == ISD::LOAD) { // this is a LOAD
       switch (Node->getValueType(0)) {
 	default: assert(0 && "Cannot load this type!");
@@ -1512,7 +1512,7 @@ pC = pA OR pB
 	case MVT::i16: Opc = IA64::LD2; break;
 	case MVT::i32: Opc = IA64::LD4; break;
 	case MVT::i64: Opc = IA64::LD8; break;
-		       
+		
 	case MVT::f32: Opc = IA64::LDF4; break;
 	case MVT::f64: Opc = IA64::LDF8; break;
       }
@@ -1527,7 +1527,7 @@ pC = pA OR pB
 	case MVT::f32: Opc = IA64::LDF4; break;
       }
     }
-    
+
     SDOperand Chain = N.getOperand(0);
     SDOperand Address = N.getOperand(1);
 
@@ -1580,7 +1580,7 @@ pC = pA OR pB
 	// we compare to 0. true? 0. false? 1.
 	BuildMI(BB, IA64::CMPNE, 2, Result).addReg(dummy3).addReg(IA64::r0);
       }
-    } else { // none of the above... 
+    } else { // none of the above...
       Select(Chain);
       Tmp2 = SelectExpr(Address);
       if(!isBool)
@@ -1597,12 +1597,12 @@ pC = pA OR pB
 
     return Result;
   }
-  
+
   case ISD::CopyFromReg: {
     if (Result == 1)
-        Result = ExprMap[N.getValue(0)] = 
+        Result = ExprMap[N.getValue(0)] =
 	  MakeReg(N.getValue(0).getValueType());
-                                                                                
+
       SDOperand Chain   = N.getOperand(0);
 
       Select(Chain);
@@ -1622,24 +1622,24 @@ pC = pA OR pB
 
       // The chain for this call is now lowered.
       ExprMap.insert(std::make_pair(N.getValue(Node->getNumValues()-1), 1));
-      
+
       //grab the arguments
       std::vector<unsigned> argvregs;
 
       for(int i = 2, e = Node->getNumOperands(); i < e; ++i)
 	argvregs.push_back(SelectExpr(N.getOperand(i)));
-      
-      // see section 8.5.8 of "Itanium Software Conventions and 
+
+      // see section 8.5.8 of "Itanium Software Conventions and
       // Runtime Architecture Guide to see some examples of what's going
       // on here. (in short: int args get mapped 1:1 'slot-wise' to out0->out7,
       // while FP args get mapped to F8->F15 as needed)
 
       unsigned used_FPArgs=0; // how many FP Args have been used so far?
-      
+
       // in reg args
       for(int i = 0, e = std::min(8, (int)argvregs.size()); i < e; ++i)
       {
-	unsigned intArgs[] = {IA64::out0, IA64::out1, IA64::out2, IA64::out3, 
+	unsigned intArgs[] = {IA64::out0, IA64::out1, IA64::out2, IA64::out3,
 			      IA64::out4, IA64::out5, IA64::out6, IA64::out7 };
 	unsigned FPArgs[] = {IA64::F8, IA64::F9, IA64::F10, IA64::F11,
 	                     IA64::F12, IA64::F13, IA64::F14, IA64::F15 };
@@ -1649,7 +1649,7 @@ pC = pA OR pB
 	  default:  // XXX do we need to support MVT::i1 here?
 	    Node->dump();
 	    N.getOperand(i).Val->dump();
-	    std::cerr << "Type for " << i << " is: " << 
+	    std::cerr << "Type for " << i << " is: " <<
 	      N.getOperand(i+2).getValueType() << std::endl;
 	    assert(0 && "Unknown value type for call");
 	  case MVT::i64:
@@ -1670,10 +1670,10 @@ pC = pA OR pB
 	unsigned tempAddr = MakeReg(MVT::i64);
 	
         switch(N.getOperand(i+2).getValueType()) {
-        default: 
-          Node->dump(); 
+        default:
+          Node->dump();
           N.getOperand(i).Val->dump();
-          std::cerr << "Type for " << i << " is: " << 
+          std::cerr << "Type for " << i << " is: " <<
             N.getOperand(i+2).getValueType() << "\n";
           assert(0 && "Unknown value type for call");
         case MVT::i1: // FIXME?
@@ -1695,17 +1695,17 @@ pC = pA OR pB
       }
 
       /*  XXX we want to re-enable direct branches! crippling them now
-       *  to stress-test indirect branches.: 
+       *  to stress-test indirect branches.:
     //build the right kind of call
     if (GlobalAddressSDNode *GASD =
-               dyn_cast<GlobalAddressSDNode>(N.getOperand(1))) 
+               dyn_cast<GlobalAddressSDNode>(N.getOperand(1)))
       {
 	BuildMI(BB, IA64::BRCALL, 1).addGlobalAddress(GASD->getGlobal(),true);
 	IA64Lowering.restoreGP_SP_RP(BB);
       }
-             ^^^^^^^^^^^^^ we want this code one day XXX */ 
+             ^^^^^^^^^^^^^ we want this code one day XXX */
     if (ExternalSymbolSDNode *ESSDN =
-	     dyn_cast<ExternalSymbolSDNode>(N.getOperand(1))) 
+	     dyn_cast<ExternalSymbolSDNode>(N.getOperand(1)))
       { // FIXME : currently need this case for correctness, to avoid
 	// "non-pic code with imm relocation against dynamic symbol" errors
 	BuildMI(BB, IA64::BRCALL, 1)
@@ -1718,7 +1718,7 @@ pC = pA OR pB
       unsigned targetEntryPoint=MakeReg(MVT::i64);
       unsigned targetGPAddr=MakeReg(MVT::i64);
       unsigned currentGP=MakeReg(MVT::i64);
-      
+
       // b6 is a scratch branch register, we load the target entry point
       // from the base of the function descriptor
       BuildMI(BB, IA64::LD8, 1, targetEntryPoint).addReg(Tmp1);
@@ -1726,7 +1726,7 @@ pC = pA OR pB
 
       // save the current GP:
       BuildMI(BB, IA64::MOV, 1, currentGP).addReg(IA64::r1);
-     
+
       /* TODO: we need to make sure doing this never, ever loads a
        * bogus value into r1 (GP). */
       // load the target GP (which is at mem[functiondescriptor+8])
@@ -1761,7 +1761,7 @@ pC = pA OR pB
     return Result+N.ResNo;
   }
 
-  } // <- uhhh XXX 
+  } // <- uhhh XXX
   return 0;
 }
 
@@ -1780,7 +1780,7 @@ void ISel::Select(SDOperand N) {
     assert(0 && "Node not handled yet!");
 
   case ISD::EntryToken: return;  // Noop
-  
+
   case ISD::TokenFactor: {
     for (unsigned i = 0, e = Node->getNumOperands(); i != e; ++i)
       Select(Node->getOperand(i));
@@ -1789,9 +1789,9 @@ void ISel::Select(SDOperand N) {
 
   case ISD::CopyToReg: {
     Select(N.getOperand(0));
-    Tmp1 = SelectExpr(N.getOperand(1));   
+    Tmp1 = SelectExpr(N.getOperand(1));
     Tmp2 = cast<RegSDNode>(N)->getReg();
-    
+
     if (Tmp1 != Tmp2) {
       if(N.getValueType() == MVT::i1) // if a bool, we use pseudocode
 	BuildMI(BB, IA64::PCMPEQUNC, 3, Tmp2)
@@ -1803,7 +1803,7 @@ void ISel::Select(SDOperand N) {
     }
     return;
   }
-  
+
   case ISD::RET: {
 
   /* what the heck is going on here:
@@ -1824,7 +1824,7 @@ void ISel::Select(SDOperand N) {
 <_sabre_> these operand often define chains, they are the last operand
 <_sabre_> they are printed as 'ch' if you do DAG.dump()
   */
-  
+
     switch (N.getNumOperands()) {
     default:
       assert(0 && "Unknown return instruction!");
@@ -1839,7 +1839,7 @@ void ISel::Select(SDOperand N) {
 	       // FIXME: need to round floats - 80 bits is bad, the tester
 	       // told me so
       case MVT::i64:
-	// we mark r8 as live on exit up above in LowerArguments() 
+	// we mark r8 as live on exit up above in LowerArguments()
 	BuildMI(BB, IA64::MOV, 1, IA64::r8).addReg(Tmp1);
 	break;
       case MVT::f64:
@@ -1856,7 +1856,7 @@ void ISel::Select(SDOperand N) {
     BuildMI(BB, IA64::RET, 0); // and then just emit a 'ret' instruction
     return;
   }
-  
+
   case ISD::BR: {
     Select(N.getOperand(0));
     MachineBasicBlock *Dest =
@@ -1882,7 +1882,7 @@ void ISel::Select(SDOperand N) {
     // XXX HACK! we do _not_ need long branches all the time
     return;
   }
-  
+
   case ISD::EXTLOAD:
   case ISD::ZEXTLOAD:
   case ISD::SEXTLOAD:
@@ -1899,7 +1899,7 @@ void ISel::Select(SDOperand N) {
       Tmp1 = SelectExpr(N.getOperand(1)); // value
 
       bool isBool=false;
-     
+
       if(opcode == ISD::STORE) {
 	switch (N.getOperand(1).getValueType()) {
 	  default: assert(0 && "Cannot store this type!");
@@ -1909,7 +1909,7 @@ void ISel::Select(SDOperand N) {
 	  case MVT::i16: Opc = IA64::ST2; break;
 	  case MVT::i32: Opc = IA64::ST4; break;
 	  case MVT::i64: Opc = IA64::ST8; break;
-			 
+			
 	  case MVT::f32: Opc = IA64::STF4; break;
 	  case MVT::f64: Opc = IA64::STF8; break;
 	}
@@ -1921,7 +1921,7 @@ void ISel::Select(SDOperand N) {
 	  case MVT::i8: Opc = IA64::ST1; break;
 	  case MVT::i16: Opc = IA64::ST2; break;
 	  case MVT::i32: Opc = IA64::ST4; break;
-	  case MVT::f32: Opc = IA64::STF4; break; 
+	  case MVT::f32: Opc = IA64::STF4; break;
 	}
       }
 
@@ -1932,7 +1932,7 @@ void ISel::Select(SDOperand N) {
 	  .addGlobalAddress(cast<GlobalAddressSDNode>
 	      (N.getOperand(2))->getGlobal()).addReg(IA64::r1);
 	BuildMI(BB, IA64::LD8, 1, dummy2).addReg(dummy);
-      
+
 	if(!isBool)
 	  BuildMI(BB, Opc, 2).addReg(dummy2).addReg(Tmp1);
 	else { // we are storing a bool, so emit a little pseudocode
@@ -1955,7 +1955,7 @@ void ISel::Select(SDOperand N) {
 	BuildMI(BB, Opc, 2).addReg(dummy).addReg(Tmp1);
       } else { // otherwise
 	Tmp2 = SelectExpr(N.getOperand(2)); //address
-	if(!isBool) 
+	if(!isBool)
 	  BuildMI(BB, Opc, 2).addReg(Tmp2).addReg(Tmp1);
 	else { // we are storing a bool, so emit a little pseudocode
 	       // to store a predicate register as one byte
@@ -1970,12 +1970,12 @@ void ISel::Select(SDOperand N) {
       }
     return;
   }
-  
+
   case ISD::ADJCALLSTACKDOWN:
   case ISD::ADJCALLSTACKUP: {
     Select(N.getOperand(0));
     Tmp1 = cast<ConstantSDNode>(N.getOperand(1))->getValue();
-   
+
     Opc = N.getOpcode() == ISD::ADJCALLSTACKDOWN ? IA64::ADJUSTCALLSTACKDOWN :
                                                    IA64::ADJUSTCALLSTACKUP;
     BuildMI(BB, Opc, 1).addImm(Tmp1);
@@ -1993,7 +1993,7 @@ void ISel::Select(SDOperand N) {
 /// description file.
 ///
 FunctionPass *llvm::createIA64PatternInstructionSelector(TargetMachine &TM) {
-  return new ISel(TM);  
+  return new ISel(TM);
 }
 
 

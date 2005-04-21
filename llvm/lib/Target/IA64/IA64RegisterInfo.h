@@ -1,10 +1,10 @@
 //===- IA64RegisterInfo.h - IA64 Register Information Impl ------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by Duraid Madina and is distributed under the
 // University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file contains the IA64 implementation of the MRegisterInfo class.
@@ -33,7 +33,7 @@ struct IA64RegisterInfo : public IA64GenRegisterInfo {
   void loadRegFromStackSlot(MachineBasicBlock &MBB,
                             MachineBasicBlock::iterator MI,
                             unsigned DestReg, int FrameIndex) const;
-  
+
   void copyRegToReg(MachineBasicBlock &MBB,
                     MachineBasicBlock::iterator MI,
                     unsigned DestReg, unsigned SrcReg,

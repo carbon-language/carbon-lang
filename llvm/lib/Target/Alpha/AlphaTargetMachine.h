@@ -1,12 +1,12 @@
 //===-- AlphaTargetMachine.h - Define TargetMachine for Alpha ---*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
-// 
+//
 // This file declares the Alpha-specific subclass of TargetMachine.
 //
 //===----------------------------------------------------------------------===//
@@ -30,13 +30,13 @@ class AlphaTargetMachine : public TargetMachine {
 
 public:
   AlphaTargetMachine(const Module &M, IntrinsicLowering *IL);
-  
-  virtual const AlphaInstrInfo *getInstrInfo() const { return &InstrInfo; }    
+
+  virtual const AlphaInstrInfo *getInstrInfo() const { return &InstrInfo; }
   virtual const TargetFrameInfo  *getFrameInfo() const { return &FrameInfo; }
   virtual const MRegisterInfo *getRegisterInfo() const {
     return &InstrInfo.getRegisterInfo();
   }
- 
+
   virtual bool addPassesToEmitAssembly(PassManager &PM, std::ostream &Out);
 
   static unsigned getModuleMatchQuality(const Module &M);

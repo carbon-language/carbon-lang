@@ -1,12 +1,12 @@
 //===-- IA64TargetMachine.cpp - Define TargetMachine for IA64 -------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by Duraid Madina and is distributed under the
 // University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
-// 
+//
 // This file defines the IA64 specific subclass of TargetMachine.
 //
 //===----------------------------------------------------------------------===//

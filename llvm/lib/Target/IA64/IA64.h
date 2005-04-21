@@ -3,7 +3,7 @@
 //
 // This file was developed by Duraid Madina and is distributed under the
 // University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file contains the entry points for global functions defined in the IA64
