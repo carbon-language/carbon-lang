@@ -1620,6 +1620,9 @@ void X86ISel::doCall(const ValueRecord &Ret, MachineInstr *CallMI,
         } else if (Args[i].Val && isa<ConstantPointerNull>(Args[i].Val)) {
           addRegOffset(BuildMI(BB, X86::MOV32mi, 5),
                        X86::ESP, ArgOffset).addImm(0);
+        } else if (Args[i].Val && isa<GlobalValue>(Args[i].Val)) {
+          addRegOffset(BuildMI(BB, X86::MOV32mi, 5), X86::ESP, ArgOffset)
+            .addGlobalAddress(cast<GlobalValue>(Args[i].Val));
         } else {
           ArgReg = Args[i].Val ? getReg(Args[i].Val) : Args[i].Reg;
           addRegOffset(BuildMI(BB, X86::MOV32mr, 5),
@@ -3311,6 +3314,8 @@ void X86ISel::visitStoreInst(StoreInst &I) {
     }
   } else if (isa<ConstantPointerNull>(I.getOperand(0))) {
     addFullAddress(BuildMI(BB, X86::MOV32mi, 5), AM).addImm(0);
+  } else if (GlobalValue *GV = dyn_cast<GlobalValue>(I.getOperand(0))) {
+    addFullAddress(BuildMI(BB, X86::MOV32mi, 5), AM).addGlobalAddress(GV);
   } else if (ConstantBool *CB = dyn_cast<ConstantBool>(I.getOperand(0))) {
     addFullAddress(BuildMI(BB, X86::MOV8mi, 5), AM).addImm(CB->getValue());
   } else if (ConstantFP *CFP = dyn_cast<ConstantFP>(I.getOperand(0))) {
