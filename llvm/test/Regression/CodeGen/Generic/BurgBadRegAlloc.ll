@@ -8,7 +8,6 @@
 ;; -- outgoing args of some function calls have to be swapped, causing
 ;;    another write/read from stack to do the exchange (use -dregalloc=y).
 ;;
-;; XFAIL: darwin
 	%Arity = type %struct.arity*
 	%Binding = type %struct.binding*
 	%DeltaCost = type [4 x short]
