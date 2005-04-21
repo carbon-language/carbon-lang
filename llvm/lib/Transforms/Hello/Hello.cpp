@@ -1,10 +1,10 @@
 //===- Hello.cpp - Example code from "Writing an LLVM Pass" ---------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements two versions of the LLVM "Hello World" pass described
@@ -24,7 +24,7 @@ namespace {
       std::cerr << "Hello: " << F.getName() << "\n";
       return false;
     }
-  }; 
+  };
   RegisterOpt<Hello> X("hello", "Hello World Pass");
 
   // Hello2 - The second implementation with getAnalysisUsage implemented.
@@ -38,6 +38,6 @@ namespace {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesAll();
     };
-  }; 
+  };
   RegisterOpt<Hello2> Y("hello2", "Hello World Pass (with getAnalysisUsage implemented)");
 }

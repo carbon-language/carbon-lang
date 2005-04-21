@@ -1,10 +1,10 @@
 //===- LowerInvoke.cpp - Eliminate Invoke & Unwind instructions -----------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This transformation is designed for use by code generators which do not yet
@@ -153,7 +153,7 @@ void LowerInvoke::createAbortMessage() {
     Constant *Msg =
       ConstantArray::get("ERROR: Exception thrown, but not caught!\n");
     AbortMessageLength = Msg->getNumOperands()-1;  // don't include \0
-    
+
     GlobalVariable *MsgGV = new GlobalVariable(Msg->getType(), true,
                                                GlobalValue::InternalLinkage,
                                                Msg, "abortmsg", &M);
@@ -192,7 +192,7 @@ void LowerInvoke::writeAbortMessage(Instruction *IB) {
     unsigned NumArgs = FT->getNumParams();
     for (unsigned i = 0; i != 3; ++i)
       if (i < NumArgs && FT->getParamType(i) != Args[i]->getType())
-        Args[i] = ConstantExpr::getCast(cast<Constant>(Args[i]), 
+        Args[i] = ConstantExpr::getCast(cast<Constant>(Args[i]),
                                         FT->getParamType(i));
 
     new CallInst(WriteFn, Args, "", IB);
@@ -209,7 +209,7 @@ bool LowerInvoke::insertCheapEHSupport(Function &F) {
                                     std::vector<Value*>(II->op_begin()+3,
                                                         II->op_end()), Name,II);
       II->replaceAllUsesWith(NewCall);
-      
+
       // Insert an unconditional branch to the normal destination.
       new BranchInst(II->getNormalDest(), II);
 
@@ -269,7 +269,7 @@ bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
       Value *NextFieldPtr = new GetElementPtrInst(JmpBuf, Idx, "NextField", II);
       new StoreInst(OldEntry, NextFieldPtr, II);
       new StoreInst(JmpBuf, JBListHead, II);
-      
+
       // Call setjmp, passing in the address of the jmpbuffer.
       Idx[1] = ConstantUInt::get(Type::UIntTy, 1);
       Value *JmpBufPtr = new GetElementPtrInst(JmpBuf, Idx, "TheJmpBuf", II);
@@ -283,7 +283,7 @@ bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
       // destination.
       SplitCriticalEdge(II, 0, this);
       Instruction *InsertLoc = II->getNormalDest()->begin();
-      
+
       // Insert a normal call instruction on the normal execution path.
       std::string Name = II->getName(); II->setName("");
       Value *NewCall = new CallInst(II->getCalledValue(),
@@ -291,7 +291,7 @@ bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
                                                         II->op_end()), Name,
                                     InsertLoc);
       II->replaceAllUsesWith(NewCall);
-      
+
       // If we got this far, then no exception was thrown and we can pop our
       // jmpbuf entry off.
       new StoreInst(OldEntry, JBListHead, InsertLoc);
@@ -301,8 +301,8 @@ bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
 
       // Remove the InvokeInst now.
       BB->getInstList().erase(II);
-      ++NumLowered; Changed = true;      
-      
+      ++NumLowered; Changed = true;
+
     } else if (UnwindInst *UI = dyn_cast<UnwindInst>(BB->getTerminator())) {
       if (UnwindBlock == 0) {
         // Create two new blocks, the unwind block and the terminate block.  Add
@@ -330,7 +330,7 @@ bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
 
       // Remove the UnwindInst now.
       BB->getInstList().erase(UI);
-      ++NumLowered; Changed = true;      
+      ++NumLowered; Changed = true;
     }
 
   // If an unwind instruction was inserted, we need to set up the Unwind and
@@ -370,7 +370,7 @@ bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
 
     // Now we set up the terminate block.
     RI = TermBlock->getTerminator();
-    
+
     // Insert a new call to write(2, AbortMessage, AbortMessageLength);
     writeAbortMessage(RI);
 

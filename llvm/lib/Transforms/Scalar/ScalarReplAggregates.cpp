@@ -1,10 +1,10 @@
 //===- ScalarReplAggregates.cpp - Scalar Replacement of Aggregates --------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This transformation implements the well known scalar replacement of
@@ -91,7 +91,7 @@ bool SROA::performPromotion(Function &F) {
   BasicBlock &BB = F.getEntryBlock();  // Get the entry node for the function
 
   bool Changed = false;
-  
+
   while (1) {
     Allocas.clear();
 
@@ -154,7 +154,7 @@ bool SROA::performScalarRepl(Function &F) {
 
     DEBUG(std::cerr << "Found inst to xform: " << *AI);
     Changed = true;
-    
+
     std::vector<AllocaInst*> ElementAllocas;
     if (const StructType *ST = dyn_cast<StructType>(AI->getAllocatedType())) {
       ElementAllocas.reserve(ST->getNumContainedTypes());
@@ -175,7 +175,7 @@ bool SROA::performScalarRepl(Function &F) {
         WorkList.push_back(NA);  // Add to worklist for recursive processing
       }
     }
-    
+
     // Now that we have created the alloca instructions that we want to use,
     // expand the getelementptr instructions to use them.
     //
@@ -183,12 +183,12 @@ bool SROA::performScalarRepl(Function &F) {
       Instruction *User = cast<Instruction>(AI->use_back());
       GetElementPtrInst *GEPI = cast<GetElementPtrInst>(User);
       // We now know that the GEP is of the form: GEP <ptr>, 0, <cst>
-      unsigned Idx = 
+      unsigned Idx =
          (unsigned)cast<ConstantInt>(GEPI->getOperand(2))->getRawValue();
-      
+
       assert(Idx < ElementAllocas.size() && "Index out of range?");
       AllocaInst *AllocaToUse = ElementAllocas[Idx];
-      
+
       Value *RepValue;
       if (GEPI->getNumOperands() == 3) {
         // Do not insert a new getelementptr instruction with zero indices, only
@@ -206,7 +206,7 @@ bool SROA::performScalarRepl(Function &F) {
         GEPI->setName("");
         RepValue = new GetElementPtrInst(AllocaToUse, NewArgs, OldName, GEPI);
       }
-      
+
       // Move all of the users over to the new GEP.
       GEPI->replaceAllUsesWith(RepValue);
       // Delete the old GEP
@@ -259,7 +259,7 @@ static bool AllUsersAreLoads(Value *Ptr) {
        I != E; ++I)
     if (cast<Instruction>(*I)->getOpcode() != Instruction::Load)
       return false;
-  return true; 
+  return true;
 }
 
 /// isSafeUseOfAllocation - Check to see if this user is an allowed use for an
@@ -289,7 +289,7 @@ int SROA::isSafeUseOfAllocation(Instruction *User) {
       //
       if (cast<ConstantInt>(GEPI->getOperand(2))->getRawValue() >= NumElements)
         return 0;
-      
+
     } else {
       // If this is an array index and the index is not constant, we cannot
       // promote... that is unless the array has exactly one or two elements in
@@ -342,7 +342,7 @@ void SROA::CanonicalizeAllocaUsers(AllocationInst *AI) {
 
     if (const ArrayType *AT = dyn_cast<ArrayType>(*I)) {
       uint64_t NumElements = AT->getNumElements();
-      
+
       if (!isa<ConstantInt>(I.getOperand())) {
         if (NumElements == 1) {
           GEPI->setOperand(2, Constant::getNullValue(Type::IntTy));

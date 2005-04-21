@@ -1,10 +1,10 @@
 //===-- ConstantRange.cpp - ConstantRange implementation ------------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // Represent a range of possible values that may occur when the program is run
@@ -32,7 +32,7 @@ using namespace llvm;
 static ConstantIntegral *Next(ConstantIntegral *CI) {
   if (CI->getType() == Type::BoolTy)
     return CI == ConstantBool::True ? ConstantBool::False : ConstantBool::True;
-      
+
   Constant *Result = ConstantExpr::getAdd(CI,
                                           ConstantInt::get(CI->getType(), 1));
   return cast<ConstantIntegral>(Result);
@@ -84,7 +84,7 @@ ConstantRange::ConstantRange(Constant *L, Constant *U)
   : Lower(cast<ConstantIntegral>(L)), Upper(cast<ConstantIntegral>(U)) {
   assert(Lower->getType() == Upper->getType() &&
          "Incompatible types for ConstantRange!");
-  
+
   // Make sure that if L & U are equal that they are either Min or Max...
   assert((L != U || (L == ConstantIntegral::getMaxValue(L->getType()) ||
                      L == ConstantIntegral::getMinValue(L->getType()))) &&
@@ -126,7 +126,7 @@ const Type *ConstantRange::getType() const { return Lower->getType(); }
 bool ConstantRange::isFullSet() const {
   return Lower == Upper && Lower == ConstantIntegral::getMaxValue(getType());
 }
-  
+
 /// isEmptySet - Return true if this set contains no members.
 ///
 bool ConstantRange::isEmptySet() const {
@@ -140,7 +140,7 @@ bool ConstantRange::isWrappedSet() const {
   return GT(Lower, Upper);
 }
 
-  
+
 /// getSingleElement - If this set contains a single element, return it,
 /// otherwise return null.
 ConstantIntegral *ConstantRange::getSingleElement() const {
@@ -158,7 +158,7 @@ uint64_t ConstantRange::getSetSize() const {
       return 1;
     return 2;            // Must be full set...
   }
-  
+
   // Simply subtract the bounds...
   Constant *Result = ConstantExpr::getSub(Upper, Lower);
   return cast<ConstantInt>(Result)->getRawValue();

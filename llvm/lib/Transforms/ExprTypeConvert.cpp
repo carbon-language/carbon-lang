@@ -1,10 +1,10 @@
 //===- ExprTypeConvert.cpp - Code to change an LLVM Expr Type -------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements the part of level raising that checks to see if it is
@@ -69,7 +69,7 @@ static bool MallocConvertibleToType(MallocInst *MI, const Type *Ty,
   // here...
   uint64_t Offset = OffsetVal * OldTypeSize;
   uint64_t Scale  = ScaleVal  * OldTypeSize;
-  
+
   // In order to be successful, both the scale and the offset must be a multiple
   // of the requested data type's size.
   //
@@ -145,7 +145,7 @@ bool llvm::ExpressionConvertibleToType(Value *V, const Type *Ty,
   // Expression type must be holdable in a register.
   if (!Ty->isFirstClassType())
     return false;
-  
+
   ValueTypeCache::iterator CTMI = CTMap.find(V);
   if (CTMI != CTMap.end()) return CTMI->second == Ty;
 
@@ -154,7 +154,7 @@ bool llvm::ExpressionConvertibleToType(Value *V, const Type *Ty,
   //
   if (isa<Constant>(V) && !isa<GlobalValue>(V))
     return true;
-  
+
   CTMap[V] = Ty;
   if (V->getType() == Ty) return true;  // Expression already correct type!
 
@@ -170,7 +170,7 @@ bool llvm::ExpressionConvertibleToType(Value *V, const Type *Ty,
     // We also do not allow conversion of a cast that casts from a ptr to array
     // of X to a *X.  For example: cast [4 x %List *] * %val to %List * *
     //
-    if (const PointerType *SPT = 
+    if (const PointerType *SPT =
         dyn_cast<PointerType>(I->getOperand(0)->getType()))
       if (const PointerType *DPT = dyn_cast<PointerType>(I->getType()))
         if (const ArrayType *AT = dyn_cast<ArrayType>(SPT->getElementType()))
@@ -200,7 +200,7 @@ bool llvm::ExpressionConvertibleToType(Value *V, const Type *Ty,
     if (!ExpressionConvertibleToType(LI->getPointerOperand(),
                                      PointerType::get(Ty), CTMap, TD))
       return false;
-    break;                                     
+    break;
   }
   case Instruction::PHI: {
     PHINode *PN = cast<PHINode>(I);
@@ -227,7 +227,7 @@ bool llvm::ExpressionConvertibleToType(Value *V, const Type *Ty,
     //   %t2 = cast %List * * %t1 to %List *
     // into
     //   %t2 = getelementptr %Hosp * %hosp, ubyte 4           ; <%List *>
-    // 
+    //
     GetElementPtrInst *GEP = cast<GetElementPtrInst>(I);
     const PointerType *PTy = dyn_cast<PointerType>(Ty);
     if (!PTy) return false;  // GEP must always return a pointer...
@@ -283,9 +283,9 @@ bool llvm::ExpressionConvertibleToType(Value *V, const Type *Ty,
     // and want to convert it into something like this:
     //     getelemenptr [[int] *] * %reg115, long %reg138      ; [int]**
     //
-    if (GEP->getNumOperands() == 2 && 
+    if (GEP->getNumOperands() == 2 &&
         PTy->getElementType()->isSized() &&
-        TD.getTypeSize(PTy->getElementType()) == 
+        TD.getTypeSize(PTy->getElementType()) ==
         TD.getTypeSize(GEP->getType()->getElementType())) {
       const PointerType *NewSrcTy = PointerType::get(PVTy);
       if (!ExpressionConvertibleToType(I->getOperand(0), NewSrcTy, CTMap, TD))
@@ -329,7 +329,7 @@ bool llvm::ExpressionConvertibleToType(Value *V, const Type *Ty,
 }
 
 
-Value *llvm::ConvertExpressionToType(Value *V, const Type *Ty, 
+Value *llvm::ConvertExpressionToType(Value *V, const Type *Ty,
                                      ValueMapCache &VMC, const TargetData &TD) {
   if (V->getType() == Ty) return V;  // Already where we need to be?
 
@@ -364,7 +364,7 @@ Value *llvm::ConvertExpressionToType(Value *V, const Type *Ty,
   Instruction *Res;     // Result of conversion
 
   ValueHandle IHandle(VMC, I);  // Prevent I from being removed!
-  
+
   Constant *Dummy = Constant::getNullValue(Ty);
 
   switch (I->getOpcode()) {
@@ -373,7 +373,7 @@ Value *llvm::ConvertExpressionToType(Value *V, const Type *Ty,
     Res = new CastInst(I->getOperand(0), Ty, Name);
     VMC.NewCasts.insert(ValueHandle(VMC, Res));
     break;
-    
+
   case Instruction::Add:
   case Instruction::Sub:
     Res = BinaryOperator::create(cast<BinaryOperator>(I)->getOpcode(),
@@ -436,7 +436,7 @@ Value *llvm::ConvertExpressionToType(Value *V, const Type *Ty,
     //   %t2 = cast %List * * %t1 to %List *
     // into
     //   %t2 = getelementptr %Hosp * %hosp, ubyte 4           ; <%List *>
-    // 
+    //
     GetElementPtrInst *GEP = cast<GetElementPtrInst>(I);
 
     // Check to see if there are zero elements that we can remove from the
@@ -461,7 +461,7 @@ Value *llvm::ConvertExpressionToType(Value *V, const Type *Ty,
 
     if (Res == 0 && GEP->getNumOperands() == 2 &&
         GEP->getType() == PointerType::get(Type::SByteTy)) {
-      
+
       // Otherwise, we can convert a GEP from one form to the other iff the
       // current gep is of the form 'getelementptr sbyte*, unsigned N
       // and we could convert this to an appropriate GEP for the new type.
@@ -475,7 +475,7 @@ Value *llvm::ConvertExpressionToType(Value *V, const Type *Ty,
       std::vector<Value*> Indices;
       const Type *ElTy = ConvertibleToGEP(NewSrcTy, I->getOperand(1),
                                           Indices, TD, &It);
-      if (ElTy) {        
+      if (ElTy) {
         assert(ElTy == PVTy && "Internal error, setup wrong!");
         Res = new GetElementPtrInst(Constant::getNullValue(NewSrcTy),
                                     Indices, Name);
@@ -625,7 +625,7 @@ static bool OperandConvertibleToType(User *U, Value *V, const Type *Ty,
     // We also do not allow conversion of a cast that casts from a ptr to array
     // of X to a *X.  For example: cast [4 x %List *] * %val to %List * *
     //
-    if (const PointerType *SPT = 
+    if (const PointerType *SPT =
         dyn_cast<PointerType>(I->getOperand(0)->getType()))
       if (const PointerType *DPT = dyn_cast<PointerType>(I->getType()))
         if (const ArrayType *AT = dyn_cast<ArrayType>(SPT->getElementType()))
@@ -645,7 +645,7 @@ static bool OperandConvertibleToType(User *U, Value *V, const Type *Ty,
           CTMap[I] = RetTy;
           return true;
         }
-        // We have to return failure here because ValueConvertibleToType could 
+        // We have to return failure here because ValueConvertibleToType could
         // have polluted our map
         return false;
       }
@@ -681,7 +681,7 @@ static bool OperandConvertibleToType(User *U, Value *V, const Type *Ty,
 
     if (const PointerType *PT = dyn_cast<PointerType>(Ty)) {
       LoadInst *LI = cast<LoadInst>(I);
-      
+
       const Type *LoadedTy = PT->getElementType();
 
       // They could be loading the first element of a composite type...
@@ -733,7 +733,7 @@ static bool OperandConvertibleToType(User *U, Value *V, const Type *Ty,
           assert(Offset == 0 && "Offset changed!");
           if (ElTy == 0)    // Element at offset zero in struct doesn't exist!
             return false;   // Can only happen for {}*
-          
+
           if (ElTy == Ty)   // Looks like the 0th element of structure is
             return true;    // compatible!  Accept now!
 
@@ -763,7 +763,7 @@ static bool OperandConvertibleToType(User *U, Value *V, const Type *Ty,
       }
 
       // Must move the same amount of data...
-      if (!ElTy->isSized() || 
+      if (!ElTy->isSized() ||
           TD.getTypeSize(ElTy) != TD.getTypeSize(I->getOperand(0)->getType()))
         return false;
 
@@ -801,7 +801,7 @@ static bool OperandConvertibleToType(User *U, Value *V, const Type *Ty,
           CST = ConstantSInt::get(Index->getType(), DataSize);
         else
           CST = ConstantUInt::get(Index->getType(), DataSize);
-                                  
+
         TempScale = BinaryOperator::create(Instruction::Mul, Index, CST);
         Index = TempScale;
       }
@@ -854,7 +854,7 @@ static bool OperandConvertibleToType(User *U, Value *V, const Type *Ty,
       // the call provides...
       //
       if (NumArgs < FTy->getNumParams()) return false;
-      
+
       // Unless this is a vararg function type, we cannot provide more arguments
       // than are desired...
       //
@@ -878,7 +878,7 @@ static bool OperandConvertibleToType(User *U, Value *V, const Type *Ty,
       //
       return ValueConvertibleToType(I, FTy->getReturnType(), CTMap, TD);
     }
-    
+
     const PointerType *MPtr = cast<PointerType>(I->getOperand(0)->getType());
     const FunctionType *FTy = cast<FunctionType>(MPtr->getElementType());
     if (!FTy->isVarArg()) return false;
@@ -941,7 +941,7 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
   ValueHandle IHandle(VMC, I);
 
   const Type *NewTy = NewVal->getType();
-  Constant *Dummy = (NewTy != Type::VoidTy) ? 
+  Constant *Dummy = (NewTy != Type::VoidTy) ?
                   Constant::getNullValue(NewTy) : 0;
 
   switch (I->getOpcode()) {
@@ -1025,7 +1025,7 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
         Src = new GetElementPtrInst(Src, Indices, Name+".idx", I);
       }
     }
-    
+
     Res = new LoadInst(Src, Name);
     assert(Res->getType()->isFirstClassType() && "Load of structure or array!");
     break;
@@ -1042,13 +1042,13 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
         //
         const Type *ElTy =
           cast<PointerType>(VMCI->second->getType())->getElementType();
-        
+
         Value *SrcPtr = VMCI->second;
 
         if (ElTy != NewTy) {
           // We check that this is a struct in the initial scan...
           const StructType *SElTy = cast<StructType>(ElTy);
-          
+
           std::vector<Value*> Indices;
           Indices.push_back(Constant::getNullValue(Type::UIntTy));
 
@@ -1135,7 +1135,7 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
       // anything that is a pointer type...
       //
       BasicBlock::iterator It = I;
-    
+
       // Check to see if the second argument is an expression that can
       // be converted to the appropriate size... if so, allow it.
       //
@@ -1143,7 +1143,7 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
       const Type *ElTy = ConvertibleToGEP(NewVal->getType(), I->getOperand(1),
                                           Indices, TD, &It);
       assert(ElTy != 0 && "GEP Conversion Failure!");
-      
+
       Res = new GetElementPtrInst(NewVal, Indices, Name);
     } else {
       // Convert a getelementptr ulong * %reg123, uint %N
@@ -1271,7 +1271,7 @@ static void RecursiveDelete(ValueMapCache &Cache, Instruction *I) {
 
   //DEBUG(std::cerr << "VH DELETING: " << (void*)I << " " << I);
 
-  for (User::op_iterator OI = I->op_begin(), OE = I->op_end(); 
+  for (User::op_iterator OI = I->op_begin(), OE = I->op_end();
        OI != OE; ++OI)
     if (Instruction *U = dyn_cast<Instruction>(OI)) {
       *OI = 0;

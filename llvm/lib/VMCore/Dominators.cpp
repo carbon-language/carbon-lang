@@ -1,10 +1,10 @@
 //===- Dominators.cpp - Dominator Calculation -----------------------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements simple dominator construction algorithms for finding
@@ -74,7 +74,7 @@ void ImmediateDominators::Compress(BasicBlock *V, InfoRec &VInfo) {
 
   Compress(VAncestor, VAInfo);
 
-  BasicBlock *VAncestorLabel = VAInfo.Label; 
+  BasicBlock *VAncestorLabel = VAInfo.Label;
   BasicBlock *VLabel = VInfo.Label;
   if (Info[VAncestorLabel].Semi < Info[VLabel].Semi)
     VInfo.Label = VAncestorLabel;
@@ -115,10 +115,10 @@ void ImmediateDominators::Link(BasicBlock *V, BasicBlock *W, InfoRec &WInfo){
   unsigned WLabelSemi = Info[WLabel].Semi;
   BasicBlock *S = W;
   InfoRec *SInfo = &Info[S];
-  
+
   BasicBlock *SChild = SInfo->Child;
   InfoRec *SChildInfo = &Info[SChild];
-  
+
   while (WLabelSemi < Info[SChildInfo->Label].Semi) {
     BasicBlock *SChildChild = SChildInfo->Child;
     if (SInfo->Size+Info[SChildChild].Size >= 2*SChildInfo->Size) {
@@ -133,17 +133,17 @@ void ImmediateDominators::Link(BasicBlock *V, BasicBlock *W, InfoRec &WInfo){
       SChildInfo = &Info[SChild];
     }
   }
-  
+
   InfoRec &VInfo = Info[V];
   SInfo->Label = WLabel;
-  
+
   assert(V != W && "The optimization here will not work in this case!");
   unsigned WSize = WInfo.Size;
   unsigned VSize = (VInfo.Size += WSize);
-  
+
   if (VSize < 2*WSize)
     std::swap(S, VInfo.Child);
-  
+
   while (S) {
     SInfo = &Info[S];
     SInfo->Ancestor = V;
@@ -161,7 +161,7 @@ bool ImmediateDominators::runOnFunction(Function &F) {
   Roots.push_back(Root);
 
   Vertex.push_back(0);
-  
+
   // Step #1: Number blocks in depth-first order and initialize variables used
   // in later stages of the algorithm.
   unsigned N = 0;
@@ -179,7 +179,7 @@ bool ImmediateDominators::runOnFunction(Function &F) {
         if (SemiU < WInfo.Semi)
           WInfo.Semi = SemiU;
       }
-    
+
     Info[Vertex[WInfo.Semi]].Bucket.push_back(W);
 
     BasicBlock *WParent = WInfo.Parent;
@@ -240,11 +240,11 @@ B("domset", "Dominator Set Construction", true);
 bool DominatorSetBase::dominates(Instruction *A, Instruction *B) const {
   BasicBlock *BBA = A->getParent(), *BBB = B->getParent();
   if (BBA != BBB) return dominates(BBA, BBB);
-  
+
   // Loop through the basic block until we find A or B.
   BasicBlock::iterator I = BBA->begin();
   for (; &*I != A && &*I != B; ++I) /*empty*/;
-  
+
   // A dominates B if it is found first in the basic block...
   return &*I == A;
 }
@@ -275,8 +275,8 @@ bool DominatorSet::runOnFunction(Function &F) {
       DomSetType &DS = Doms[I];
       assert(DS.empty() && "Domset already filled in for this block?");
       DS.insert(I);  // Blocks always dominate themselves
-      
-      // Insert all dominators into the set... 
+
+      // Insert all dominators into the set...
       while (IDom) {
         // If we have already computed the dominator sets for our immediate
         // dominator, just use it instead of walking all the way up to the root.
@@ -333,7 +333,7 @@ E("domtree", "Dominator Tree Construction", true);
 
 // DominatorTreeBase::reset - Free all of the tree node memory.
 //
-void DominatorTreeBase::reset() { 
+void DominatorTreeBase::reset() {
   for (NodeMapType::iterator I = Nodes.begin(), E = Nodes.end(); I != E; ++I)
     delete I->second;
   Nodes.clear();
@@ -364,7 +364,7 @@ DominatorTreeBase::Node *DominatorTree::getNodeForBlock(BasicBlock *BB) {
   // immediate dominator.
   BasicBlock *IDom = getAnalysis<ImmediateDominators>()[BB];
   Node *IDomNode = getNodeForBlock(IDom);
-    
+
   // Add a new tree node for this BasicBlock, and link it as a child of
   // IDomNode
   return BBNode = IDomNode->addChild(new Node(BB, IDomNode));
@@ -403,7 +403,7 @@ static std::ostream &operator<<(std::ostream &o,
 static void PrintDomTree(const DominatorTreeBase::Node *N, std::ostream &o,
                          unsigned Lev) {
   o << std::string(2*Lev, ' ') << "[" << Lev << "] " << N;
-  for (DominatorTreeBase::Node::const_iterator I = N->begin(), E = N->end(); 
+  for (DominatorTreeBase::Node::const_iterator I = N->begin(), E = N->end();
        I != E; ++I)
     PrintDomTree(*I, o, Lev+1);
 }
@@ -423,7 +423,7 @@ static RegisterAnalysis<DominanceFrontier>
 G("domfrontier", "Dominance Frontier Construction", true);
 
 const DominanceFrontier::DomSetType &
-DominanceFrontier::calculate(const DominatorTree &DT, 
+DominanceFrontier::calculate(const DominatorTree &DT,
                              const DominatorTree::Node *Node) {
   // Loop over CFG successors to calculate DFlocal[Node]
   BasicBlock *BB = Node->getBlock();

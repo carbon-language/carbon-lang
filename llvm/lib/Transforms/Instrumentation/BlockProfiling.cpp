@@ -1,10 +1,10 @@
 //===- BlockProfiling.cpp - Insert counters for block profiling -----------===//
-// 
+//
 //                      The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This pass instruments the specified program with counters for basic block or
@@ -51,7 +51,7 @@ bool FunctionProfiler::runOnModule(Module &M) {
   }
 
   unsigned NumFunctions = 0;
-  for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I) 
+  for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
     if (!I->isExternal())
       ++NumFunctions;
 
@@ -62,7 +62,7 @@ bool FunctionProfiler::runOnModule(Module &M) {
 
   // Instrument all of the functions...
   unsigned i = 0;
-  for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I) 
+  for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
     if (!I->isExternal())
       // Insert counter at the start of the function
       IncrementCounterInBlock(I->begin(), i++, Counters);
@@ -93,7 +93,7 @@ bool BlockProfiler::runOnModule(Module &M) {
   }
 
   unsigned NumBlocks = 0;
-  for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I) 
+  for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
     NumBlocks += I->size();
 
   const Type *ATy = ArrayType::get(Type::UIntTy, NumBlocks);
@@ -103,7 +103,7 @@ bool BlockProfiler::runOnModule(Module &M) {
 
   // Instrument all of the blocks...
   unsigned i = 0;
-  for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I) 
+  for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
     for (Function::iterator BB = I->begin(), E = I->end(); BB != E; ++BB)
       // Insert counter at the start of the block
       IncrementCounterInBlock(BB, i++, Counters);

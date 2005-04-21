@@ -1,10 +1,10 @@
 //===-- BasicBlockUtils.cpp - BasicBlock Utilities -------------------------==//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This family of functions perform manipulations on basic blocks, and
@@ -30,7 +30,7 @@ void llvm::ReplaceInstWithValue(BasicBlock::InstListType &BIL,
   I.replaceAllUsesWith(V);
 
   std::string OldName = I.getName();
-  
+
   // Delete the unnecessary instruction now...
   BI = BIL.erase(BI);
 
@@ -92,7 +92,7 @@ void llvm::RemoveSuccessor(TerminatorInst *TI, unsigned SuccNum) {
       cast<BranchInst>(TI)->setUnconditionalDest(TI->getSuccessor(1-SuccNum));
     } else {                    // Otherwise convert to a return instruction...
       Value *RetVal = 0;
-      
+
       // Create a value to return... if the function doesn't return null...
       if (BB->getParent()->getReturnType() != Type::VoidTy)
         RetVal = Constant::getNullValue(BB->getParent()->getReturnType());
@@ -100,7 +100,7 @@ void llvm::RemoveSuccessor(TerminatorInst *TI, unsigned SuccNum) {
       // Create the return...
       NewTI = new ReturnInst(RetVal);
     }
-    break;   
+    break;
 
   case Instruction::Invoke:    // Should convert to call
   case Instruction::Switch:    // Should remove entry

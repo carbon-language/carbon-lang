@@ -1,10 +1,10 @@
 //===-- InstLoops.cpp -----------------------------------------------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This is the first-level instrumentation pass for the Reoptimizer. It
@@ -46,7 +46,7 @@ namespace {
     DominatorSet *DS;
     void getBackEdgesVisit(BasicBlock *u,
 			   std::map<BasicBlock *, Color > &color,
-			   std::map<BasicBlock *, int > &d, 
+			   std::map<BasicBlock *, int > &d,
 			   int &time, BBMap &be);
     void removeRedundant(BBMap &be);
     void findAndInstrumentBackEdges(Function &F);
@@ -54,15 +54,15 @@ namespace {
     bool doInitialization(Module &M);
     bool runOnFunction(Function &F);
   };
-  
+
   RegisterOpt<InstLoops> X("instloops", "Instrument backedges for profiling");
 }
 
-//helper function to get back edges: it is called by 
+//helper function to get back edges: it is called by
 //the "getBackEdges" function below
 void InstLoops::getBackEdgesVisit(BasicBlock *u,
                        std::map<BasicBlock *, Color > &color,
-                       std::map<BasicBlock *, int > &d, 
+                       std::map<BasicBlock *, int > &d,
                        int &time, BBMap &be) {
   color[u]=GREY;
   time++;
@@ -74,7 +74,7 @@ void InstLoops::getBackEdgesVisit(BasicBlock *u,
     if(color[BB]!=GREY && color[BB]!=BLACK){
       getBackEdgesVisit(BB, color, d, time, be);
     }
-    
+
     //now checking for d and f vals
     else if(color[BB]==GREY){
       //so v is ancestor of u if time of u > time of v
@@ -91,13 +91,13 @@ void InstLoops::getBackEdgesVisit(BasicBlock *u,
 //set
 void InstLoops::removeRedundant(BBMap &be) {
   std::vector<BasicBlock *> toDelete;
-  for(std::map<BasicBlock *, BasicBlock *>::iterator MI = be.begin(), 
+  for(std::map<BasicBlock *, BasicBlock *>::iterator MI = be.begin(),
 	ME = be.end(); MI != ME; ++MI)
     for(BBMap::iterator MMI = be.begin(), MME = be.end(); MMI != MME; ++MMI)
       if(DS->properlyDominates(MI->first, MMI->first))
 	toDelete.push_back(MMI->first);
   // Remove all the back-edges we found from be.
-  for(std::vector<BasicBlock *>::iterator VI = toDelete.begin(), 
+  for(std::vector<BasicBlock *>::iterator VI = toDelete.begin(),
 	VE = toDelete.end(); VI != VE; ++VI)
     be.erase(*VI);
 }
@@ -137,14 +137,14 @@ void InstLoops::findAndInstrumentBackEdges(Function &F){
 
     assert(ti->getNumSuccessors() > index && "Not enough successors!");
     ti->setSuccessor(index, newBB);
-        
+
     BasicBlock::InstListType &lt = newBB->getInstList();
     lt.push_back(new CallInst(inCountMth));
     new BranchInst(BB, newBB);
-      
+
     // Now, set the sources of Phi nodes corresponding to the back-edge
     // in BB to come from the instrumentation block instead.
-    for(BasicBlock::iterator BB2Inst = BB->begin(), BBend = BB->end(); 
+    for(BasicBlock::iterator BB2Inst = BB->begin(), BBend = BB->end();
         BB2Inst != BBend; ++BB2Inst) {
       if (PHINode *phiInst = dyn_cast<PHINode>(BB2Inst)) {
         int bbIndex = phiInst->getBasicBlockIndex(u);

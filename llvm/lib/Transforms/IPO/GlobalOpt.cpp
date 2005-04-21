@@ -1,10 +1,10 @@
 //===- GlobalOpt.cpp - Optimize Global Variables --------------------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This pass transforms simple global variables that never have their address
@@ -47,7 +47,7 @@ namespace {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<TargetData>();
     }
-    
+
     bool runOnModule(Module &M);
 
   private:
@@ -201,7 +201,7 @@ static bool AnalyzeGlobal(Value *V, GlobalStatus &GS,
         // If the first two indices are constants, this can be SRA'd.
         if (isa<GlobalVariable>(I->getOperand(0))) {
           if (I->getNumOperands() < 3 || !isa<Constant>(I->getOperand(1)) ||
-              !cast<Constant>(I->getOperand(1))->isNullValue() || 
+              !cast<Constant>(I->getOperand(1))->isNullValue() ||
               !isa<ConstantInt>(I->getOperand(2)))
             GS.isNotSuitableForSRA = true;
         } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(I->getOperand(0))){
@@ -304,7 +304,7 @@ static bool CleanupConstantGlobalUsers(Value *V, Constant *Init) {
   bool Changed = false;
   for (Value::use_iterator UI = V->use_begin(), E = V->use_end(); UI != E;) {
     User *U = *UI++;
-    
+
     if (LoadInst *LI = dyn_cast<LoadInst>(U)) {
       if (Init) {
         // Replace the load with the initializer.
@@ -367,7 +367,7 @@ static GlobalVariable *SRAGlobal(GlobalVariable *GV) {
   assert(GV->hasInternalLinkage() && !GV->isConstant());
   Constant *Init = GV->getInitializer();
   const Type *Ty = Init->getType();
-  
+
   std::vector<GlobalVariable*> NewGlobals;
   Module::GlobalListType &Globals = GV->getParent()->getGlobalList();
 
@@ -422,7 +422,7 @@ static GlobalVariable *SRAGlobal(GlobalVariable *GV) {
     assert(((isa<ConstantExpr>(GEP) &&
              cast<ConstantExpr>(GEP)->getOpcode()==Instruction::GetElementPtr)||
             isa<GetElementPtrInst>(GEP)) && "NonGEP CE's are not SRAable!");
-             
+
     // Ignore the 1th operand, which has to be zero or else the program is quite
     // broken (undefined).  Get the 2nd operand, which is the structure or array
     // index.
@@ -499,7 +499,7 @@ static bool AllUsesOfValueWillTrapIfNull(Value *V) {
       if (!AllUsesOfValueWillTrapIfNull(CI)) return false;
     } else if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(*UI)) {
       if (!AllUsesOfValueWillTrapIfNull(GEPI)) return false;
-    } else if (isa<SetCondInst>(*UI) && 
+    } else if (isa<SetCondInst>(*UI) &&
                isa<ConstantPointerNull>(UI->getOperand(1))) {
       // Ignore setcc X, null
     } else {
@@ -681,7 +681,7 @@ static GlobalVariable *OptimizeGlobalAddressOfMalloc(GlobalVariable *GV,
     MI->eraseFromParent();
     MI = NewMI;
   }
-  
+
   // Create the new global variable.  The contents of the malloc'd memory is
   // undefined, so initialize with an undef value.
   Constant *Init = UndefValue::get(MI->getAllocatedType());
@@ -689,7 +689,7 @@ static GlobalVariable *OptimizeGlobalAddressOfMalloc(GlobalVariable *GV,
                                              GlobalValue::InternalLinkage, Init,
                                              GV->getName()+".body");
   GV->getParent()->getGlobalList().insert(GV, NewGV);
-  
+
   // Anything that used the malloc now uses the global directly.
   MI->replaceAllUsesWith(NewGV);
 
@@ -699,8 +699,8 @@ static GlobalVariable *OptimizeGlobalAddressOfMalloc(GlobalVariable *GV,
 
   // If there is a comparison against null, we will insert a global bool to
   // keep track of whether the global was initialized yet or not.
-  GlobalVariable *InitBool = 
-    new GlobalVariable(Type::BoolTy, false, GlobalValue::InternalLinkage, 
+  GlobalVariable *InitBool =
+    new GlobalVariable(Type::BoolTy, false, GlobalValue::InternalLinkage,
                        ConstantBool::False, GV->getName()+".init");
   bool InitBoolUsed = false;
 
@@ -817,7 +817,7 @@ static bool OptimizeOnceStoredGlobal(GlobalVariable *GV, Value *StoredOnceVal,
     if (Constant *SOVC = dyn_cast<Constant>(StoredOnceVal)) {
       if (GV->getInitializer()->getType() != SOVC->getType())
         SOVC = ConstantExpr::getCast(SOVC, GV->getInitializer()->getType());
-      
+
       // Optimize away any trapping uses of the loaded value.
       if (OptimizeAwayTrappingUsesOfLoads(GV, SOVC))
         return true;
@@ -846,7 +846,7 @@ static bool OptimizeOnceStoredGlobal(GlobalVariable *GV, Value *StoredOnceVal,
 }
 
 /// ShrinkGlobalToBoolean - At this point, we have learned that the only two
-/// values ever stored into GV are its initializer and OtherVal.  
+/// values ever stored into GV are its initializer and OtherVal.
 static void ShrinkGlobalToBoolean(GlobalVariable *GV, Constant *OtherVal) {
   // Create the new global, initializing it to false.
   GlobalVariable *NewGV = new GlobalVariable(Type::BoolTy, false,
@@ -895,13 +895,13 @@ static void ShrinkGlobalToBoolean(GlobalVariable *GV, Constant *OtherVal) {
     } else if (!UI->use_empty()) {
       // Change the load into a load of bool then a select.
       LoadInst *LI = cast<LoadInst>(UI);
-      
+
       std::string Name = LI->getName(); LI->setName("");
       LoadInst *NLI = new LoadInst(NewGV, Name+".b", LI);
       Value *NSI;
       if (IsOneZero)
         NSI = new CastInst(NLI, LI->getType(), Name, LI);
-      else 
+      else
         NSI = new SelectInst(NLI, OtherVal, InitVal, Name, LI);
       LI->replaceAllUsesWith(NSI);
     }
@@ -947,7 +947,7 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
       AllocaInst* Alloca = new AllocaInst(ElemTy, NULL, GV->getName(), FirstI);
       if (!isa<UndefValue>(GV->getInitializer()))
         new StoreInst(GV->getInitializer(), Alloca, FirstI);
-   
+
       GV->replaceAllUsesWith(Alloca);
       GV->eraseFromParent();
       ++NumLocalized;
@@ -969,14 +969,14 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
         Changed = true;
       }
       return Changed;
-          
+
     } else if (GS.StoredType <= GlobalStatus::isInitializerStored) {
       DEBUG(std::cerr << "MARKING CONSTANT: " << *GV);
       GV->setConstant(true);
-          
+
       // Clean up any obviously simplifiable users now.
       CleanupConstantGlobalUsers(GV, GV->getInitializer());
-          
+
       // If the global is dead now, just nuke it.
       if (GV->use_empty()) {
         DEBUG(std::cerr << "   *** Marking constant allowed us to simplify "
@@ -984,7 +984,7 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
         GV->eraseFromParent();
         ++NumDeleted;
       }
-          
+
       ++NumMarked;
       return true;
     } else if (!GS.isNotSuitableForSRA &&
@@ -1002,10 +1002,10 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
         if (isa<UndefValue>(GV->getInitializer())) {
           // Change the initial value here.
           GV->setInitializer(SOVConstant);
-          
+
           // Clean up any obviously simplifiable users now.
           CleanupConstantGlobalUsers(GV, GV->getInitializer());
-          
+
           if (GV->use_empty()) {
             DEBUG(std::cerr << "   *** Substituting initializer allowed us to "
                   "simplify all users and delete global!\n");

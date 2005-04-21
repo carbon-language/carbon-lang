@@ -1,10 +1,10 @@
 //===- LoopStrengthReduce.cpp - Strength Reduce GEPs in Loops -------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by Nate Begeman and is distributed under the
 // University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This pass performs a strength reduction on array references inside loops that
@@ -85,7 +85,7 @@ namespace {
                            std::set<Instruction*> &DeadInsts);
     void DeleteTriviallyDeadInstructions(std::set<Instruction*> &Insts);
   };
-  RegisterOpt<LoopStrengthReduce> X("loop-reduce", 
+  RegisterOpt<LoopStrengthReduce> X("loop-reduce",
                                     "Strength Reduce GEP Uses of Ind. Vars");
 }
 
@@ -170,7 +170,7 @@ void LoopStrengthReduce::strengthReduceGEP(GetElementPtrInst *GEPI, Loop *L,
     Cache = Cache->get(operand);
   }
   assert(indvar > 0 && "Indvar used by GEP not found in operand list");
-  
+
   // Ensure the pointer base is loop invariant.  While strength reduction
   // makes sense even if the pointer changed on every iteration, there is no
   // realistic way of handling it unless GEPs were completely decomposed into
@@ -185,9 +185,9 @@ void LoopStrengthReduce::strengthReduceGEP(GetElementPtrInst *GEPI, Loop *L,
   if (sz && (sz & (sz-1)) == 0)   // Power of two?
     if (sz <= (1ULL << (MaxTargetAMSize-1)))
       return;
-  
+
   // If all operands of the GEP we are going to insert into the preheader
-  // are constants, generate a GEP ConstantExpr instead. 
+  // are constants, generate a GEP ConstantExpr instead.
   //
   // If there is only one operand after the initial non-constant one, we know
   // that it was the induction variable, and has been replaced by a constant
@@ -202,7 +202,7 @@ void LoopStrengthReduce::strengthReduceGEP(GetElementPtrInst *GEPI, Loop *L,
       PreGEP = GEPI->getOperand(0);
     } else {
       PreGEP = new GetElementPtrInst(GEPI->getOperand(0),
-                                    pre_op_vector, GEPI->getName()+".pre", 
+                                    pre_op_vector, GEPI->getName()+".pre",
                                     Preheader->getTerminator());
     }
 
@@ -210,15 +210,15 @@ void LoopStrengthReduce::strengthReduceGEP(GetElementPtrInst *GEPI, Loop *L,
     // choose between the initial GEP we created and inserted into the
     // preheader, and the incremented GEP that we will create below and insert
     // into the loop body.
-    NewPHI = new PHINode(PreGEP->getType(), 
+    NewPHI = new PHINode(PreGEP->getType(),
                                   GEPI->getName()+".str", InsertBefore);
     NewPHI->addIncoming(PreGEP, Preheader);
-    
+
     // Now, create the GEP instruction to increment by one the value selected
     // by the PHI instruction we just created above, and add it as the second
     // incoming Value/BasicBlock pair to the PHINode.  It is inserted before
     // the increment of the canonical induction variable.
-    Instruction *IncrInst = 
+    Instruction *IncrInst =
       const_cast<Instruction*>(L->getCanonicalInductionVariableIncrement());
     GetElementPtrInst *StrGEP = new GetElementPtrInst(NewPHI, inc_op_vector,
                                                       GEPI->getName()+".inc",
@@ -233,7 +233,7 @@ void LoopStrengthReduce::strengthReduceGEP(GetElementPtrInst *GEPI, Loop *L,
     // about to create.
     NewPHI = Cache->CachedPHINode;
   }
-  
+
   if (GEPI->getNumOperands() - 1 == indvar) {
     // If there were no operands following the induction variable, replace all
     // uses of the old GEP instruction with the new PHI.
@@ -252,7 +252,7 @@ void LoopStrengthReduce::strengthReduceGEP(GetElementPtrInst *GEPI, Loop *L,
                                                       GEPI);
     GEPI->replaceAllUsesWith(newGEP);
   }
-  
+
   // The old GEP is now dead.
   DeadInsts.insert(GEPI);
   ++NumReduced;
@@ -273,7 +273,7 @@ void LoopStrengthReduce::runOnLoop(Loop *L) {
   // pass creates code like this, which we can't currently detect:
   //  %tmp.1 = sub uint 2000, %indvar
   //  %tmp.8 = getelementptr int* %y, uint %tmp.1
-  
+
   // Strength reduce all GEPs in the Loop.  Insert secondary PHI nodes for the
   // strength reduced pointers we'll be creating after the canonical induction
   // variable's PHI.

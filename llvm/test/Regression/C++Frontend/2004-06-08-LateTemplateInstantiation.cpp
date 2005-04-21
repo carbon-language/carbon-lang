@@ -3,7 +3,7 @@
 
 
 template<typename Ty>
-struct normal_iterator {  
+struct normal_iterator {
   int FIELD;
 };
 

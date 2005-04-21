@@ -1,10 +1,10 @@
 //===- CorrelatedExprs.cpp - Pass to detect and eliminated c.e.'s ---------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // Correlated Expression Elimination propagates information from conditional
@@ -178,7 +178,7 @@ namespace {
 
     // empty - return true if this region has no information known about it.
     bool empty() const { return ValueMap.empty(); }
-    
+
     const RegionInfo &operator=(const RegionInfo &RI) {
       ValueMap = RI.ValueMap;
       return *this;
@@ -204,7 +204,7 @@ namespace {
       if (I != ValueMap.end()) return &I->second;
       return 0;
     }
-    
+
     /// removeValueInfo - Remove anything known about V from our records.  This
     /// works whether or not we know anything about V.
     ///
@@ -281,7 +281,7 @@ namespace {
 
     bool SimplifyBasicBlock(BasicBlock &BB, const RegionInfo &RI);
     bool SimplifyInstruction(Instruction *Inst, const RegionInfo &RI);
-  }; 
+  };
   RegisterOpt<CEE> X("cee", "Correlated Expression Elimination");
 }
 
@@ -299,7 +299,7 @@ bool CEE::runOnFunction(Function &F) {
   // blocks.
   DS = &getAnalysis<DominatorSet>();
   DT = &getAnalysis<DominatorTree>();
-  
+
   std::set<BasicBlock*> VisitedBlocks;
   bool Changed = TransformRegion(&F.getEntryBlock(), VisitedBlocks);
 
@@ -458,13 +458,13 @@ bool CEE::ForwardCorrelatedEdgeDestination(TerminatorInst *TI, unsigned SuccNo,
   for (BasicBlock::iterator I = OldSucc->begin(), E = OldSucc->end(); I!=E; ++I)
     if (I->getType() != Type::VoidTy)
       NewRI.removeValueInfo(I);
-    
+
   // Put the newly discovered information into the RegionInfo...
   for (BasicBlock::iterator I = OldSucc->begin(), E = OldSucc->end(); I!=E; ++I)
     if (PHINode *PN = dyn_cast<PHINode>(I)) {
       int OpNum = PN->getBasicBlockIndex(BB);
       assert(OpNum != -1 && "PHI doesn't have incoming edge for predecessor!?");
-      PropagateEquality(PN, PN->getIncomingValue(OpNum), NewRI);      
+      PropagateEquality(PN, PN->getIncomingValue(OpNum), NewRI);
     } else if (SetCondInst *SCI = dyn_cast<SetCondInst>(I)) {
       Relation::KnownResult Res = getSetCCResult(SCI, NewRI);
       if (Res == Relation::Unknown) return false;
@@ -472,7 +472,7 @@ bool CEE::ForwardCorrelatedEdgeDestination(TerminatorInst *TI, unsigned SuccNo,
     } else {
       assert(isa<BranchInst>(*I) && "Unexpected instruction type!");
     }
-  
+
   // Compute the facts implied by what we have discovered...
   ComputeReplacements(NewRI);
 
@@ -486,7 +486,7 @@ bool CEE::ForwardCorrelatedEdgeDestination(TerminatorInst *TI, unsigned SuccNo,
     ForwardSuccessorTo(TI, SuccNo, BI->getSuccessor(!CB->getValue()), NewRI);
     return true;
   }
-  
+
   return false;
 }
 
@@ -582,7 +582,7 @@ void CEE::ForwardSuccessorTo(TerminatorInst *TI, unsigned SuccNo,
     // node yet though if this is the last edge into it.
     Value *EdgeValue = PN->removeIncomingValue(BB, false);
 
-    // Make sure that anything that used to use PN now refers to EdgeValue    
+    // Make sure that anything that used to use PN now refers to EdgeValue
     ReplaceUsesOfValueInRegion(PN, EdgeValue, Dest);
 
     // If there is only one value left coming into the PHI node, replace the PHI
@@ -603,7 +603,7 @@ void CEE::ForwardSuccessorTo(TerminatorInst *TI, unsigned SuccNo,
       ++I;  // Otherwise, move on to the next PHI node
     }
   }
-  
+
   // Actually revector the branch now...
   TI->setSuccessor(SuccNo, Dest);
 
@@ -689,7 +689,7 @@ static void CalcRegionExitBlocks(BasicBlock *Header, BasicBlock *BB,
   } else {
     // Header does not dominate this block, but we have a predecessor that does
     // dominate us.  Add ourself to the list.
-    RegionExitBlocks.push_back(BB);    
+    RegionExitBlocks.push_back(BB);
   }
 }
 
@@ -703,7 +703,7 @@ void CEE::CalculateRegionExitBlocks(BasicBlock *BB, BasicBlock *OldSucc,
 
   // Recursively calculate blocks we are interested in...
   CalcRegionExitBlocks(BB, BB, Visited, *DS, RegionExitBlocks);
-  
+
   // Filter out blocks that are not dominated by OldSucc...
   for (unsigned i = 0; i != RegionExitBlocks.size(); ) {
     if (DS->dominates(OldSucc, RegionExitBlocks[i]))
@@ -738,7 +738,7 @@ void CEE::InsertRegionExitMerges(PHINode *BBVal, Instruction *OldVal,
       // otherwise use OldVal.
       NewPN->addIncoming(DS->dominates(BB, *PI) ? BBVal : OldVal, *PI);
     }
-    
+
     // Now make everyone dominated by this block use this new value!
     ReplaceUsesOfValueInRegion(OldVal, NewPN, FBlock);
   }
@@ -783,7 +783,7 @@ void CEE::PropagateBranchInfo(BranchInst *BI) {
   //
   PropagateEquality(BI->getCondition(), ConstantBool::True,
                     getRegionInfo(BI->getSuccessor(0)));
-  
+
   // Propagate information into the false block...
   //
   PropagateEquality(BI->getCondition(), ConstantBool::False,
@@ -825,7 +825,7 @@ void CEE::PropagateEquality(Value *Op0, Value *Op1, RegionInfo &RI) {
         PropagateEquality(Inst->getOperand(0), CB, RI);
         PropagateEquality(Inst->getOperand(1), CB, RI);
       }
-      
+
       // If we know that this instruction is an OR instruction, and the result
       // is false, this means that both operands to the OR are know to be false
       // as well.
@@ -834,7 +834,7 @@ void CEE::PropagateEquality(Value *Op0, Value *Op1, RegionInfo &RI) {
         PropagateEquality(Inst->getOperand(0), CB, RI);
         PropagateEquality(Inst->getOperand(1), CB, RI);
       }
-      
+
       // If we know that this instruction is a NOT instruction, we know that the
       // operand is known to be the inverse of whatever the current value is.
       //
@@ -857,7 +857,7 @@ void CEE::PropagateEquality(Value *Op0, Value *Op1, RegionInfo &RI) {
         } else {               // If we know the condition is false...
           // We know the opposite of the condition is true...
           Instruction::BinaryOps C = SCI->getInverseCondition();
-          
+
           PropagateRelation(C, SCI->getOperand(0), SCI->getOperand(1), RI);
           PropagateRelation(SetCondInst::getSwappedCondition(C),
                             SCI->getOperand(1), SCI->getOperand(0), RI);
@@ -1065,7 +1065,7 @@ Relation::KnownResult CEE::getSetCCResult(SetCondInst *SCI,
                                           const RegionInfo &RI) {
   Value *Op0 = SCI->getOperand(0), *Op1 = SCI->getOperand(1);
   Instruction::BinaryOps Opcode = SCI->getOpcode();
-  
+
   if (isa<Constant>(Op0)) {
     if (isa<Constant>(Op1)) {
       if (Constant *Result = ConstantFoldInstruction(SCI)) {
@@ -1098,7 +1098,7 @@ Relation::KnownResult CEE::getSetCCResult(SetCondInst *SCI,
 
       // If the intersection of the two ranges is empty, then the condition
       // could never be true!
-      // 
+      //
       if (Int.isEmptySet()) {
         Result = Relation::KnownFalse;
 
@@ -1254,7 +1254,7 @@ Relation::getImpliedResult(Instruction::BinaryOps Op) const {
 // print - Implement the standard print form to print out analysis information.
 void CEE::print(std::ostream &O, const Module *M) const {
   O << "\nPrinting Correlated Expression Info:\n";
-  for (std::map<BasicBlock*, RegionInfo>::const_iterator I = 
+  for (std::map<BasicBlock*, RegionInfo>::const_iterator I =
          RegionInfoMap.begin(), E = RegionInfoMap.end(); I != E; ++I)
     I->second.print(O);
 }

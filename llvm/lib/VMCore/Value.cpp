@@ -1,13 +1,13 @@
 //===-- Value.cpp - Implement the Value class -----------------------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
-// This file implements the Value and User classes. 
+// This file implements the Value and User classes.
 //
 //===----------------------------------------------------------------------===//
 
@@ -34,7 +34,7 @@ Value::Value(const Type *ty, unsigned scid, const std::string &name)
   : SubclassID(scid), SubclassData(0), Ty(checkType(ty)),
     UseList(0), Name(name) {
   if (!isa<Constant>(this) && !isa<BasicBlock>(this))
-    assert((Ty->isFirstClassType() || Ty == Type::VoidTy || 
+    assert((Ty->isFirstClassType() || Ty == Type::VoidTy ||
            isa<OpaqueType>(ty)) &&
            "Cannot create non-first-class values except for constants!");
   if (ty == Type::VoidTy)
@@ -46,7 +46,7 @@ Value::~Value() {
   // Check to make sure that there are no uses of this value that are still
   // around when the value is destroyed.  If there are, then we have a dangling
   // reference and something is wrong.  This code is here to print out what is
-  // still being referenced.  The value in question should be printed as 
+  // still being referenced.  The value in question should be printed as
   // a <badref>
   //
   if (use_begin() != use_end()) {
@@ -142,7 +142,7 @@ void Value::uncheckedReplaceAllUsesWith(Value *New) {
     if (Constant *C = dyn_cast<Constant>(U.getUser())) {
       if (!isa<GlobalValue>(C))
         C->replaceUsesOfWithOnConstant(this, New, true);
-      else 
+      else
         U.set(New);
     } else {
       U.set(New);

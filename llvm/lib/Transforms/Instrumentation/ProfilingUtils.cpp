@@ -1,10 +1,10 @@
 //===- ProfilingUtils.cpp - Helper functions shared by profilers ----------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This files implements a few helper functions which are used by profile
@@ -51,7 +51,7 @@ void llvm::InsertProfilingInitCall(Function *MainFn, const char *FnName,
     Args[2] = ConstantPointerNull::get(UIntPtr);
   }
   Args[3] = ConstantUInt::get(Type::UIntTy, NumElements);
-  
+
   Instruction *InitCall = new CallInst(InitFn, Args, "newargc", InsertPos);
 
   // If argc or argv are not available in main, just pass null values in.
@@ -80,7 +80,7 @@ void llvm::InsertProfilingInitCall(Function *MainFn, const char *FnName,
       AI->replaceAllUsesWith(InitCall);
       InitCall->setOperand(1, AI);
     }
-    
+
   case 0: break;
   }
 }

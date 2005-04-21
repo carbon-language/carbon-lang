@@ -1,10 +1,10 @@
 //===- BreakCriticalEdges.cpp - Critical Edge Elimination Pass ------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // BreakCriticalEdges pass - Break all of the critical edges in the CFG by
@@ -31,7 +31,7 @@ namespace {
 
   struct BreakCriticalEdges : public FunctionPass {
     virtual bool runOnFunction(Function &F);
-    
+
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addPreserved<DominatorSet>();
       AU.addPreserved<ImmediateDominators>();
@@ -108,7 +108,7 @@ bool llvm::SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum, Pass *P) {
                                      DestBB->getName() + "_crit_edge");
   // Create our unconditional branch...
   new BranchInst(DestBB, NewBB);
-  
+
   // Branch to the new block, breaking the edge...
   TI->setSuccessor(SuccNum, NewBB);
 
@@ -150,11 +150,11 @@ bool llvm::SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum, Pass *P) {
     // anything.
     ID->addNewBlock(NewBB, TIBB);
   }
-  
+
   // Should we update DominatorTree information?
   if (DominatorTree *DT = P->getAnalysisToUpdate<DominatorTree>()) {
     DominatorTree::Node *TINode = DT->getNode(TIBB);
-    
+
     // The new block is not the immediate dominator for any other nodes, but
     // TINode is the immediate dominator for the new node.
     //

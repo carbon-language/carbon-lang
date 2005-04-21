@@ -1,17 +1,17 @@
 //===-- ProfilePaths.cpp - interface to insert instrumentation --*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This inserts instrumentation for counting execution of paths though a given
 // function Its implemented as a "Function" Pass, and called using opt
 //
-// This pass is implemented by using algorithms similar to 
-// 1."Efficient Path Profiling": Ball, T. and Larus, J. R., 
+// This pass is implemented by using algorithms similar to
+// 1."Efficient Path Profiling": Ball, T. and Larus, J. R.,
 //    Proceedings of Micro-29, Dec 1996, Paris, France.
 // 2."Efficiently Counting Program events with support for on-line
 //   "queries": Ball T., ACM Transactions on Programming Languages
@@ -22,7 +22,7 @@
 // (implementation in Graph.cpp and GraphAuxiliary.cpp) and finally, appropriate
 // instrumentation is placed over suitable edges.  (code inserted through
 // EdgeCode.cpp).
-// 
+//
 // The algorithm inserts code such that every acyclic path in the CFG of a
 // function is identified through a unique number. the code insertion is optimal
 // in the sense that its inserted over a minimal set of edges. Also, the
@@ -47,7 +47,7 @@ namespace llvm {
 struct ProfilePaths : public FunctionPass {
   bool runOnFunction(Function &F);
 
-  // Before this pass, make sure that there is only one 
+  // Before this pass, make sure that there is only one
   // entry and only one exit node for the function in the CFG of the function
   //
   void getAnalysisUsage(AnalysisUsage &AU) const {
@@ -76,13 +76,13 @@ bool ProfilePaths::runOnFunction(Function &F){
   if(F.isExternal()) {
     return false;
   }
- 
+
   //increment counter for instrumented functions. mn is now function#
   mn++;
-  
+
   // Transform the cfg s.t. we have just one exit node
-  BasicBlock *ExitNode = 
-    getAnalysis<UnifyFunctionExitNodes>().getReturnBlock();  
+  BasicBlock *ExitNode =
+    getAnalysis<UnifyFunctionExitNodes>().getReturnBlock();
 
   //iterating over BBs and making graph
   std::vector<Node *> nodes;
@@ -92,10 +92,10 @@ bool ProfilePaths::runOnFunction(Function &F){
 
   // The nodes must be uniquely identified:
   // That is, no two nodes must hav same BB*
-  
+
   for (Function::iterator BB = F.begin(), BE = F.end(); BB != BE; ++BB) {
     Node *nd=new Node(BB);
-    nodes.push_back(nd); 
+    nodes.push_back(nd);
     if(&*BB == ExitNode)
       exitNode=nd;
     if(BB==F.begin())
@@ -114,22 +114,22 @@ bool ProfilePaths::runOnFunction(Function &F){
       edges.push_back(ed);
     }
   }
-  
+
   Graph g(nodes,edges, startNode, exitNode);
 
-#ifdef DEBUG_PATH_PROFILES  
+#ifdef DEBUG_PATH_PROFILES
   std::cerr<<"Original graph\n";
   printGraph(g);
 #endif
 
   BasicBlock *fr = &F.front();
-  
+
   // The graph is made acyclic: this is done
   // by removing back edges for now, and adding them later on
   std::vector<Edge> be;
   std::map<Node *, int> nodePriority; //it ranks nodes in depth first order traversal
   g.getBackEdges(be, nodePriority);
-  
+
 #ifdef DEBUG_PATH_PROFILES
   std::cerr<<"BackEdges-------------\n";
   for (std::vector<Edge>::iterator VI=be.begin(); VI!=be.end(); ++VI){
@@ -190,7 +190,7 @@ bool ProfilePaths::runOnFunction(Function &F){
     Function *initialize =
       F.getParent()->getOrInsertFunction("reoptimizerInitialize", Type::VoidTy,
                                          PointerType::get(Type::IntTy), 0);
-    
+
     std::vector<Value *> trargs;
     trargs.push_back(threshold);
     new CallInst(initialize, trargs, "", fr->begin());
@@ -198,8 +198,8 @@ bool ProfilePaths::runOnFunction(Function &F){
 
 
   if(numPaths<=1 || numPaths >5000) return false;
-  
-#ifdef DEBUG_PATH_PROFILES  
+
+#ifdef DEBUG_PATH_PROFILES
   printGraph(g);
 #endif
 
@@ -210,12 +210,12 @@ bool ProfilePaths::runOnFunction(Function &F){
   //count is an array: count[x] would store
   //the number of executions of path numbered x
 
-  Instruction *rVar=new 
-    AllocaInst(Type::IntTy, 
+  Instruction *rVar=new
+    AllocaInst(Type::IntTy,
                ConstantUInt::get(Type::UIntTy,1),"R");
 
-  //Instruction *countVar=new 
-  //AllocaInst(Type::IntTy, 
+  //Instruction *countVar=new
+  //AllocaInst(Type::IntTy,
   //           ConstantUInt::get(Type::UIntTy, numPaths), "Count");
 
   //initialize counter array!
@@ -230,21 +230,21 @@ bool ProfilePaths::runOnFunction(Function &F){
   CountCounter++;
   std::string countStr = tempChar;
   GlobalVariable *countVar = new GlobalVariable(ATy, false,
-                                                GlobalValue::InternalLinkage, 
+                                                GlobalValue::InternalLinkage,
                                                 initializer, countStr,
                                                 F.getParent());
-  
+
   // insert initialization code in first (entry) BB
   // this includes initializing r and count
   insertInTopBB(&F.getEntryBlock(), numPaths, rVar, threshold);
-    
+
   //now process the graph: get path numbers,
   //get increments along different paths,
   //and assign "increments" and "updates" (to r and count)
   //"optimally". Finally, insert llvm code along various edges
-  processGraph(g, rVar, countVar, be, stDummy, exDummy, numPaths, mn, 
-               threshold);    
-   
+  processGraph(g, rVar, countVar, be, stDummy, exDummy, numPaths, mn,
+               threshold);
+
   return true;  // Always modifies function
 }
 

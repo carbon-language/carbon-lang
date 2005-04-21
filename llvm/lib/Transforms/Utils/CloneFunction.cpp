@@ -1,10 +1,10 @@
 //===- CloneFunction.cpp - Clone a function into another function ---------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements the CloneFunctionInto interface, which is used as the
@@ -47,7 +47,7 @@ void llvm::CloneFunctionInto(Function *NewFunc, const Function *OldFunc,
                              std::vector<ReturnInst*> &Returns,
                              const char *NameSuffix) {
   assert(NameSuffix && "NameSuffix cannot be null!");
-  
+
 #ifndef NDEBUG
   for (Function::const_arg_iterator I = OldFunc->arg_begin(), E = OldFunc->arg_end();
        I != E; ++I)
@@ -61,7 +61,7 @@ void llvm::CloneFunctionInto(Function *NewFunc, const Function *OldFunc,
   for (Function::const_iterator BI = OldFunc->begin(), BE = OldFunc->end();
        BI != BE; ++BI) {
     const BasicBlock &BB = *BI;
-    
+
     // Create a new basic block and copy instructions into it!
     BasicBlock *CBB = CloneBasicBlock(&BB, ValueMap, NameSuffix, NewFunc);
     ValueMap[&BB] = CBB;                       // Add basic block mapping.
@@ -70,7 +70,7 @@ void llvm::CloneFunctionInto(Function *NewFunc, const Function *OldFunc,
       Returns.push_back(RI);
   }
 
-  // Loop over all of the instructions in the function, fixing up operand 
+  // Loop over all of the instructions in the function, fixing up operand
   // references as we go.  This uses ValueMap to do all the hard work.
   //
   for (Function::iterator BB = cast<BasicBlock>(ValueMap[OldFunc->begin()]),
@@ -105,7 +105,7 @@ Function *llvm::CloneFunction(const Function *F,
 
   // Create the new function...
   Function *NewF = new Function(FTy, F->getLinkage(), F->getName());
-  
+
   // Loop over the arguments, copying the names of the mapped arguments over...
   Function::arg_iterator DestI = NewF->arg_begin();
   for (Function::const_arg_iterator I = F->arg_begin(), E = F->arg_end(); I != E; ++I)
@@ -116,6 +116,6 @@ Function *llvm::CloneFunction(const Function *F,
 
   std::vector<ReturnInst*> Returns;  // Ignore returns cloned...
   CloneFunctionInto(NewF, F, ValueMap, Returns);
-  return NewF;                    
+  return NewF;
 }
 

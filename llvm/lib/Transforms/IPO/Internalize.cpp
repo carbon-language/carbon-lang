@@ -1,10 +1,10 @@
 //===-- Internalize.cpp - Mark functions internal -------------------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This pass loops over all of the functions in the input module, looking for a
@@ -38,7 +38,7 @@ namespace {
   APIList("internalize-public-api-list", cl::value_desc("list"),
           cl::desc("A list of symbol names to preserve"),
           cl::CommaSeparated);
- 
+
   class InternalizePass : public ModulePass {
     std::set<std::string> ExternalNames;
   public:
@@ -80,7 +80,7 @@ namespace {
       }
 
       bool Changed = false;
-      
+
       // Found a main function, mark all functions not named main as internal.
       for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
         if (!I->isExternal() &&         // Function must be defined here
@@ -109,7 +109,7 @@ namespace {
           ++NumGlobals;
           DEBUG(std::cerr << "Internalizing gvar " << I->getName() << "\n");
         }
-      
+
       return Changed;
     }
   };

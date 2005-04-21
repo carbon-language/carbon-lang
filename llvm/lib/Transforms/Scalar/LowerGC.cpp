@@ -47,7 +47,7 @@ namespace {
     /// had zero roots.
     const Type *MainRootRecordType;
   public:
-    LowerGC() : GCRootInt(0), GCReadInt(0), GCWriteInt(0), 
+    LowerGC() : GCRootInt(0), GCReadInt(0), GCWriteInt(0),
                 GCRead(0), GCWrite(0), RootChain(0), MainRootRecordType(0) {}
     virtual bool doInitialization(Module &M);
     virtual bool runOnFunction(Function &F);
@@ -125,7 +125,7 @@ bool LowerGC::doInitialization(Module &M) {
     if (RootChain == 0) {
       // If the root chain does not exist, insert a new one with linkonce
       // linkage!
-      RootChain = new GlobalVariable(PRLTy, false, 
+      RootChain = new GlobalVariable(PRLTy, false,
                                      GlobalValue::LinkOnceLinkage,
                                      Constant::getNullValue(PRLTy),
                                      "llvm_gc_root_chain", &M);
@@ -141,7 +141,7 @@ bool LowerGC::doInitialization(Module &M) {
 /// not have the specified type, insert a cast.
 static void Coerce(Instruction *I, unsigned OpNum, Type *Ty) {
   if (I->getOperand(OpNum)->getType() != Ty) {
-    if (Constant *C = dyn_cast<Constant>(I->getOperand(OpNum))) 
+    if (Constant *C = dyn_cast<Constant>(I->getOperand(OpNum)))
       I->setOperand(OpNum, ConstantExpr::getCast(C, Ty));
     else {
       CastInst *CI = new CastInst(I->getOperand(OpNum), Ty, "", I);
@@ -152,7 +152,7 @@ static void Coerce(Instruction *I, unsigned OpNum, Type *Ty) {
 
 /// runOnFunction - If the program is using GC intrinsics, replace any
 /// read/write intrinsics with the appropriate read/write barrier calls, then
-/// inline them.  Finally, build the data structures for 
+/// inline them.  Finally, build the data structures for
 bool LowerGC::runOnFunction(Function &F) {
   // Quick exit for programs that are not using GC mechanisms.
   if (!GCRootInt && !GCReadInt && !GCWriteInt) return false;
@@ -192,7 +192,7 @@ bool LowerGC::runOnFunction(Function &F) {
                 CI->setOperand(0, GCRead);
               } else {
                 // Create a whole new call to replace the old one.
-                CallInst *NC = new CallInst(GCRead, CI->getOperand(1), 
+                CallInst *NC = new CallInst(GCRead, CI->getOperand(1),
                                             CI->getOperand(2),
                                             CI->getName(), CI);
                 Value *NV = new CastInst(NC, CI->getType(), "", CI);
@@ -208,7 +208,7 @@ bool LowerGC::runOnFunction(Function &F) {
             MadeChange = true;
           }
       }
-  
+
   // If there are no GC roots in this function, then there is no need to create
   // a GC list record for it.
   if (GCRoots.empty()) return MadeChange;
@@ -263,7 +263,7 @@ bool LowerGC::runOnFunction(Function &F) {
     Par[3] = Zero;
     Value *RootPtrPtr = new GetElementPtrInst(AI, Par, "RootEntPtr", IP);
     new StoreInst(Null, RootPtrPtr, IP);
-    
+
     // Each occurrance of the llvm.gcroot intrinsic now turns into an
     // initialization of the slot with the address and a zeroing out of the
     // address specified.
@@ -301,7 +301,7 @@ bool LowerGC::runOnFunction(Function &F) {
     UnwindInst *UI = new UnwindInst(Cleanup);
     PrevPtr = new LoadInst(PrevPtrPtr, "prevptr", UI);
     new StoreInst(PrevPtr, RootChain, UI);
-  
+
     // Loop over all of the function calls, turning them into invokes.
     while (!NormalCalls.empty()) {
       CallInst *CI = NormalCalls.back();
@@ -314,7 +314,7 @@ bool LowerGC::runOnFunction(Function &F) {
       // Remove the unconditional branch inserted at the end of the CBB.
       CBB->getInstList().pop_back();
       NewBB->getInstList().remove(CI);
-      
+
       // Create a new invoke instruction.
       Value *II = new InvokeInst(CI->getCalledValue(), NewBB, Cleanup,
                                  std::vector<Value*>(CI->op_begin()+1,

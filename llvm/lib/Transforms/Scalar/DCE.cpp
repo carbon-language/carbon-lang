@@ -1,10 +1,10 @@
 //===- DCE.cpp - Code to perform dead code elimination --------------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements dead inst elimination and dead code elimination.
@@ -49,7 +49,7 @@ namespace {
       AU.setPreservesCFG();
     }
   };
-  
+
   RegisterOpt<DeadInstElimination> X("die", "Dead Instruction Elimination");
 }
 
@@ -81,7 +81,7 @@ bool DCE::runOnFunction(Function &F) {
       WorkList.push_back(&*i);
   }
   std::set<Instruction*> DeadInsts;
-  
+
   // Loop over the worklist finding instructions that are dead.  If they are
   // dead make them drop all of their uses, making other instructions
   // potentially dead, and work until the worklist is empty.
@@ -89,7 +89,7 @@ bool DCE::runOnFunction(Function &F) {
   while (!WorkList.empty()) {
     Instruction *I = WorkList.back();
     WorkList.pop_back();
-    
+
     if (isInstructionTriviallyDead(I)) {       // If the instruction is dead...
       // Loop over all of the values that the instruction uses, if there are
       // instructions being used, add them to the worklist, because they might

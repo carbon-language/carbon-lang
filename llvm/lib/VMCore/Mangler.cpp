@@ -1,10 +1,10 @@
 //===-- Mangler.cpp - Self-contained c/asm llvm name mangler --------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // Unified name mangler for CWriter and assembly backends.
@@ -27,10 +27,10 @@ static std::string MangleLetter(unsigned char C) {
 
 /// makeNameProper - We don't want identifier names non-C-identifier characters
 /// in them, so mangle them as appropriate.
-/// 
+///
 std::string Mangler::makeNameProper(const std::string &X) {
   std::string Result;
-  
+
   // Mangle the first letter specially, don't allow numbers...
   if ((X[0] < 'a' || X[0] > 'z') && (X[0] < 'A' || X[0] > 'Z') && X[0] != '_')
     Result += MangleLetter(X[0]);
@@ -85,7 +85,7 @@ std::string Mangler::getValueName(const Value *V) {
   } else {
     name = "ltmp_" + utostr(Count++) + "_" + utostr(getTypeID(V->getType()));
   }
-  
+
   Memo[V] = name;
   return name;
 }

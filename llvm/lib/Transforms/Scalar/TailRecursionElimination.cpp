@@ -1,10 +1,10 @@
 //===- TailRecursionElimination.cpp - Eliminate Tail Calls ----------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file transforms calls of the current function (self recursion) followed
@@ -89,7 +89,7 @@ bool TailCallElim::runOnFunction(Function &F) {
   for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
     if (ReturnInst *Ret = dyn_cast<ReturnInst>(BB->getTerminator()))
       MadeChange |= ProcessReturningBlock(Ret, OldEntry, ArgumentPHIs);
-  
+
   // If we eliminated any tail recursions, it's possible that we inserted some
   // silly PHI nodes which just merge an initial value (the incoming operand)
   // with themselves.  Check to see if we did and clean up our mess if so.  This
@@ -163,7 +163,7 @@ static bool isDynamicConstant(Value *V, CallInst *CI) {
     Function *F = CI->getParent()->getParent();
     for (Function::arg_iterator AI = F->arg_begin(); &*AI != Arg; ++AI)
       ++ArgNo;
-    
+
     // If we are passing this argument into call as the corresponding
     // argument operand, then the argument is dynamically constant.
     // Otherwise, we cannot transform this function safely.
@@ -292,7 +292,7 @@ bool TailCallElim::ProcessReturningBlock(ReturnInst *Ret, BasicBlock *&OldEntry,
     std::string OldName = OldEntry->getName(); OldEntry->setName("tailrecurse");
     BasicBlock *NewEntry = new BasicBlock(OldName, F, OldEntry);
     new BranchInst(OldEntry, NewEntry);
-    
+
     // Now that we have created a new block, which jumps to the entry
     // block, insert a PHI node for each argument of the function.
     // For now, we initialize each PHI to only have the real arguments
@@ -305,13 +305,13 @@ bool TailCallElim::ProcessReturningBlock(ReturnInst *Ret, BasicBlock *&OldEntry,
       ArgumentPHIs.push_back(PN);
     }
   }
-  
+
   // Ok, now that we know we have a pseudo-entry block WITH all of the
   // required PHI nodes, add entries into the PHI node for the actual
   // parameters passed into the tail-recursive call.
   for (unsigned i = 0, e = CI->getNumOperands()-1; i != e; ++i)
     ArgumentPHIs[i]->addIncoming(CI->getOperand(i+1), BB);
-  
+
   // If we are introducing an accumulator variable to eliminate the recursion,
   // do so now.  Note that we _know_ that no subsequent tail recursion
   // eliminations will happen on this function because of the way the

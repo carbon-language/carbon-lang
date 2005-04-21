@@ -1,10 +1,10 @@
 //===-- GCSE.cpp - SSA-based Global Common Subexpression Elimination ------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This pass is designed to be a very quick global transformation that
@@ -116,7 +116,7 @@ bool GCSE::runOnFunction(Function &F) {
           else {
             I = Inst; --I;
           }
-          
+
           // First check to see if we were able to value number this instruction
           // to a non-instruction value.  If so, prefer that value over other
           // instructions which may compute the same thing.
@@ -186,14 +186,14 @@ void GCSE::ReplaceInstructionWith(Instruction *I, Value *V) {
   getAnalysis<ValueNumbering>().deleteValue(I);
 
   I->replaceAllUsesWith(V);
-  
+
   if (InvokeInst *II = dyn_cast<InvokeInst>(I)) {
     // Removing an invoke instruction requires adding a branch to the normal
     // destination and removing PHI node entries in the exception destination.
     new BranchInst(II->getNormalDest(), II);
     II->getUnwindDest()->removePredecessor(II->getParent());
   }
-  
+
   // Erase the instruction from the program.
   I->getParent()->getInstList().erase(I);
 }

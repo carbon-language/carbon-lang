@@ -1,10 +1,10 @@
 //===- UnifyFunctionExitNodes.cpp - Make all functions have a single exit -===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This pass is used to ensure that functions have at most one return
@@ -64,7 +64,7 @@ bool UnifyFunctionExitNodes::runOnFunction(Function &F) {
     UnwindBlock = new BasicBlock("UnifiedUnwindBlock", &F);
     new UnwindInst(UnwindBlock);
 
-    for (std::vector<BasicBlock*>::iterator I = UnwindingBlocks.begin(), 
+    for (std::vector<BasicBlock*>::iterator I = UnwindingBlocks.begin(),
            E = UnwindingBlocks.end(); I != E; ++I) {
       BasicBlock *BB = *I;
       BB->getInstList().pop_back();  // Remove the unwind insn
@@ -81,7 +81,7 @@ bool UnifyFunctionExitNodes::runOnFunction(Function &F) {
     UnreachableBlock = new BasicBlock("UnifiedUnreachableBlock", &F);
     new UnreachableInst(UnreachableBlock);
 
-    for (std::vector<BasicBlock*>::iterator I = UnreachableBlocks.begin(), 
+    for (std::vector<BasicBlock*>::iterator I = UnreachableBlocks.begin(),
            E = UnreachableBlocks.end(); I != E; ++I) {
       BasicBlock *BB = *I;
       BB->getInstList().pop_back();  // Remove the unreachable inst.
@@ -99,7 +99,7 @@ bool UnifyFunctionExitNodes::runOnFunction(Function &F) {
   }
 
   // Otherwise, we need to insert a new basic block into the function, add a PHI
-  // node (if the function returns a value), and convert all of the return 
+  // node (if the function returns a value), and convert all of the return
   // instructions into unconditional branches.
   //
   BasicBlock *NewRetBlock = new BasicBlock("UnifiedReturnBlock", &F);
@@ -115,7 +115,7 @@ bool UnifyFunctionExitNodes::runOnFunction(Function &F) {
   // Loop over all of the blocks, replacing the return instruction with an
   // unconditional branch.
   //
-  for (std::vector<BasicBlock*>::iterator I = ReturningBlocks.begin(), 
+  for (std::vector<BasicBlock*>::iterator I = ReturningBlocks.begin(),
          E = ReturningBlocks.end(); I != E; ++I) {
     BasicBlock *BB = *I;
 

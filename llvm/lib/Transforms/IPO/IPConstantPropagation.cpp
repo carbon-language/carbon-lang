@@ -1,10 +1,10 @@
 //===-- IPConstantPropagation.cpp - Propagate constants through calls -----===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This pass implements an _extremely_ simple interprocedural constant
@@ -81,10 +81,10 @@ bool IPCP::PropagateConstantsIntoArguments(Function &F) {
       return false;  // Used by a non-instruction, do not transform
     else {
       CallSite CS = CallSite::get(cast<Instruction>(*I));
-      if (CS.getInstruction() == 0 || 
+      if (CS.getInstruction() == 0 ||
           CS.getCalledFunction() != &F)
         return false;  // Not a direct call site?
-      
+
       // Check out all of the potentially constant arguments
       CallSite::arg_iterator AI = CS.arg_begin();
       Function::arg_iterator Arg = F.arg_begin();
@@ -163,7 +163,7 @@ bool IPCP::PropagateConstantReturn(Function &F) {
       ReplacedAllUsers = false;
     else {
       CallSite CS = CallSite::get(cast<Instruction>(*I));
-      if (CS.getInstruction() == 0 || 
+      if (CS.getInstruction() == 0 ||
           CS.getCalledFunction() != &F) {
         ReplacedAllUsers = false;
       } else {

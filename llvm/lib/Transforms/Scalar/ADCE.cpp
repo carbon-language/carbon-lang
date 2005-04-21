@@ -1,14 +1,14 @@
 //===- ADCE.cpp - Code to perform aggressive dead code elimination --------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements "aggressive" dead code elimination.  ADCE is DCe where
-// values are assumed to be dead until proven otherwise.  This is similar to 
+// values are assumed to be dead until proven otherwise.  This is similar to
 // SCCP, except applied to the liveness of values.
 //
 //===----------------------------------------------------------------------===//
@@ -116,11 +116,11 @@ void ADCE::markBlockAlive(BasicBlock *BB) {
   if (It != CDG.end()) {
     // Get the blocks that this node is control dependent on...
     const PostDominanceFrontier::DomSetType &CDB = It->second;
-    for (PostDominanceFrontier::DomSetType::const_iterator I = 
+    for (PostDominanceFrontier::DomSetType::const_iterator I =
            CDB.begin(), E = CDB.end(); I != E; ++I)
       markTerminatorLive(*I);   // Mark all their terminators as live
   }
-  
+
   // If this basic block is live, and it ends in an unconditional branch, then
   // the branch is alive as well...
   if (BranchInst *BI = dyn_cast<BranchInst>(BB->getTerminator()))
@@ -162,7 +162,7 @@ TerminatorInst *ADCE::convertToUnconditionalBranch(TerminatorInst *TI) {
   // Remove entries from PHI nodes to avoid confusing ourself later...
   for (unsigned i = 1, e = TI->getNumSuccessors(); i != e; ++i)
     TI->getSuccessor(i)->removePredecessor(BB);
-  
+
   // Delete the old branch itself...
   BB->getInstList().erase(TI);
   return NB;
@@ -203,7 +203,7 @@ bool ADCE::doADCE() {
         }
 
   // Iterate over all of the instructions in the function, eliminating trivially
-  // dead instructions, and marking instructions live that are known to be 
+  // dead instructions, and marking instructions live that are known to be
   // needed.  Perform the walk in depth first order so that we avoid marking any
   // instructions live in basic blocks that are unreachable.  These blocks will
   // be eliminated later, along with the instructions inside.
@@ -338,7 +338,7 @@ bool ADCE::doADCE() {
 
     return MadeChanges;
   }
-  
+
 
   // If the entry node is dead, insert a new entry node to eliminate the entry
   // node as a special case.
@@ -350,7 +350,7 @@ bool ADCE::doADCE() {
     AliveBlocks.insert(NewEntry);    // This block is always alive!
     LiveSet.insert(NewEntry->getTerminator());  // The branch is live
   }
-    
+
   // Loop over all of the alive blocks in the function.  If any successor
   // blocks are not alive, we adjust the outgoing branches to branch to the
   // first live postdominator of the live block, adjusting any PHI nodes in
@@ -360,7 +360,7 @@ bool ADCE::doADCE() {
     if (AliveBlocks.count(I)) {
       BasicBlock *BB = I;
       TerminatorInst *TI = BB->getTerminator();
-      
+
       // If the terminator instruction is alive, but the block it is contained
       // in IS alive, this means that this terminator is a conditional branch on
       // a condition that doesn't matter.  Make it an unconditional branch to
@@ -392,7 +392,7 @@ bool ADCE::doADCE() {
                 break;
               }
             }
-          }          
+          }
 
           // There is a special case here... if there IS no post-dominator for
           // the block we have nowhere to point our branch to.  Instead, convert
@@ -411,12 +411,12 @@ bool ADCE::doADCE() {
               // branch into an infinite loop into a return instruction!
               //
               RemoveSuccessor(TI, i);
-              
+
               // RemoveSuccessor may replace TI... make sure we have a fresh
               // pointer.
               //
               TI = BB->getTerminator();
-              
+
               // Rescan this successor...
               --i;
             } else {
@@ -443,7 +443,7 @@ bool ADCE::doADCE() {
                 int OldIdx = PN->getBasicBlockIndex(LastDead);
                 assert(OldIdx != -1 &&"LastDead is not a pred of NextAlive!");
                 Value *InVal = PN->getIncomingValue(OldIdx);
-                  
+
                 // Add an incoming value for BB now...
                 PN->addIncoming(InVal, BB);
               }

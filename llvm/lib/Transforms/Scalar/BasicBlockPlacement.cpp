@@ -1,10 +1,10 @@
 //===-- BasicBlockPlacement.cpp - Basic Block Code Layout optimization ----===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements a very simple profile guided basic block placement
@@ -37,7 +37,7 @@ using namespace llvm;
 
 namespace {
   Statistic<> NumMoved("block-placement", "Number of basic blocks moved");
-  
+
   struct BlockPlacement : public FunctionPass {
     virtual bool runOnFunction(Function &F);
 
@@ -78,11 +78,11 @@ bool BlockPlacement::runOnFunction(Function &F) {
   PI = &getAnalysis<ProfileInfo>();
 
   NumMovedBlocks = 0;
-  InsertPos = F.begin(); 
+  InsertPos = F.begin();
 
   // Recursively place all blocks.
   PlaceBlocks(F.begin());
-  
+
   PlacedBlocks.clear();
   NumMoved += NumMovedBlocks;
   return NumMovedBlocks != 0;
@@ -115,12 +115,12 @@ void BlockPlacement::PlaceBlocks(BasicBlock *BB) {
   while (1) {
     // Okay, now place any unplaced successors.
     succ_iterator SI = succ_begin(BB), E = succ_end(BB);
-    
+
     // Scan for the first unplaced successor.
     for (; SI != E && PlacedBlocks.count(*SI); ++SI)
       /*empty*/;
     if (SI == E) return;  // No more successors to place.
-    
+
     unsigned MaxExecutionCount = PI->getExecutionCount(*SI);
     BasicBlock *MaxSuccessor = *SI;
 

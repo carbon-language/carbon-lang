@@ -1,11 +1,11 @@
 //===--- stkrc.cpp --- The Stacker Compiler -------------------------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
-// This file was developed by Reid Spencer and donated to the LLVM research 
-// group and is distributed under the University of Illinois Open Source 
+// This file was developed by Reid Spencer and donated to the LLVM research
+// group and is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 //  This is the "main" program for the Stacker Compiler. It is simply a utility
@@ -14,7 +14,7 @@
 //  To get help using this utility, you can invoke it with:
 //   stkrc --help         - Output information about command line switches
 //
-// 
+//
 //===------------------------------------------------------------------------===
 
 #include "../../lib/compiler/StackerCompiler.h"
@@ -29,11 +29,11 @@
 
 using namespace llvm;
 
-static cl::opt<std::string> 
+static cl::opt<std::string>
 InputFilename(cl::Positional, cl::desc("<input .st file>"), cl::init("-"));
 
 static cl::opt<std::string>
-OutputFilename("o", cl::desc("Override output filename"), 
+OutputFilename("o", cl::desc("Override output filename"),
 	cl::value_desc("filename"));
 
 static cl::opt<bool>
@@ -46,7 +46,7 @@ StackSize("s", cl::desc("Specify program maximum stack size"),
 static cl::opt<bool>
 DumpAsm("d", cl::desc("Print LLVM Assembly as parsed"), cl::Hidden);
 
-#ifdef PARSE_DEBUG 
+#ifdef PARSE_DEBUG
 static cl::opt<bool>
 ParseDebug("g", cl::desc("Turn on Bison Debugging"), cl::Hidden);
 #endif
@@ -81,14 +81,14 @@ static cl::opt<OptLev> OptLevel(
     clEnumValEnd
   ));
 
-int main(int argc, char **argv) 
+int main(int argc, char **argv)
 {
   cl::ParseCommandLineOptions(argc, argv, " stacker .st -> .bc compiler\n");
 
   std::ostream *Out = 0;
   try {
     StackerCompiler compiler;
-    try 
+    try
     {
 #ifdef PARSE_DEBUG
       {
@@ -103,8 +103,8 @@ int main(int argc, char **argv)
       }
 #endif
       // Parse the file now...
-      
-      std::auto_ptr<Module> M ( 
+
+      std::auto_ptr<Module> M (
           compiler.compile(InputFilename,EchoSource,OptLevel,StackSize));
       if (M.get() == 0) {
         throw std::string("program didn't parse correctly.");
@@ -113,8 +113,8 @@ int main(int argc, char **argv)
       if (verifyModule(*M.get())) {
         throw std::string("program parsed, but does not verify as correct!");
       }
-    
-      if (DumpAsm) 
+
+      if (DumpAsm)
         std::cerr << "Here's the assembly:" << M.get();
 
       if (OutputFilename != "") {   // Specified an output filename?
@@ -128,7 +128,7 @@ int main(int argc, char **argv)
           }
           Out = new std::ofstream(OutputFilename.c_str());
         } else {                      // Specified stdout
-          Out = &std::cout;       
+          Out = &std::cout;
         }
       } else {
         if (InputFilename == "-") {
@@ -158,11 +158,11 @@ int main(int argc, char **argv)
           sys::RemoveFileOnSignal(sys::Path(OutputFilename));
         }
       }
-    
+
       if (!Out->good()) {
         throw std::string("error opening ") + OutputFilename + "!";
       }
-     
+
       WriteBytecodeToFile(M.get(), *Out);
     } catch (const ParseException &E) {
       std::cerr << argv[0] << ": " << E.getMessage() << "\n";

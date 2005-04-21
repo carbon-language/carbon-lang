@@ -1,10 +1,10 @@
 //===-- CombineBranch.cpp -------------------------------------------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // Combine multiple back-edges going to the same sink into a single
@@ -31,14 +31,14 @@ namespace {
 
     void getBackEdgesVisit(BasicBlock *u,
 			   std::map<BasicBlock *, Color > &color,
-			   std::map<BasicBlock *, int > &d, 
+			   std::map<BasicBlock *, int > &d,
 			   int &time,
 			   std::map<BasicBlock *, BasicBlock *> &be);
     void removeRedundant(std::map<BasicBlock *, BasicBlock *> &be);
   public:
     bool runOnFunction(Function &F);
   };
-  
+
   RegisterOpt<CombineBranches>
   X("branch-combine", "Multiple backedges going to same target are merged");
 }
@@ -53,10 +53,10 @@ namespace {
 ///
 void CombineBranches::getBackEdgesVisit(BasicBlock *u,
                        std::map<BasicBlock *, Color > &color,
-                       std::map<BasicBlock *, int > &d, 
+                       std::map<BasicBlock *, int > &d,
                        int &time,
 		       std::map<BasicBlock *, BasicBlock *> &be) {
-  
+
   color[u]=GREY;
   time++;
   d[u]=time;
@@ -66,7 +66,7 @@ void CombineBranches::getBackEdgesVisit(BasicBlock *u,
 
     if(color[BB]!=GREY && color[BB]!=BLACK)
       getBackEdgesVisit(BB, color, d, time, be);
-    
+
     //now checking for d and f vals
     else if(color[BB]==GREY){
       //so v is ancestor of u if time of u > time of v
@@ -83,29 +83,29 @@ void CombineBranches::getBackEdgesVisit(BasicBlock *u,
 void CombineBranches::removeRedundant(std::map<BasicBlock *, BasicBlock *> &be){
   std::vector<BasicBlock *> toDelete;
   std::map<BasicBlock *, int> seenBB;
-  
-  for(std::map<BasicBlock *, BasicBlock *>::iterator MI = be.begin(), 
+
+  for(std::map<BasicBlock *, BasicBlock *>::iterator MI = be.begin(),
 	ME = be.end(); MI != ME; ++MI){
-    
+
     if(seenBB[MI->second])
       continue;
-    
+
     seenBB[MI->second] = 1;
 
     std::vector<BasicBlock *> sameTarget;
     sameTarget.clear();
-    
-    for(std::map<BasicBlock *, BasicBlock *>::iterator MMI = be.begin(), 
+
+    for(std::map<BasicBlock *, BasicBlock *>::iterator MMI = be.begin(),
 	  MME = be.end(); MMI != MME; ++MMI){
-      
+
       if(MMI->first == MI->first)
 	continue;
-      
+
       if(MMI->second == MI->second)
 	sameTarget.push_back(MMI->first);
-      
+
     }
-    
+
     //so more than one branch to same target
     if(sameTarget.size()){
 
@@ -126,9 +126,9 @@ void CombineBranches::removeRedundant(std::map<BasicBlock *, BasicBlock *> &be){
 
 	ti->setSuccessor(index, newBB);
 
-	for(BasicBlock::iterator BB2Inst = MI->second->begin(), 
+	for(BasicBlock::iterator BB2Inst = MI->second->begin(),
 	      BBend = MI->second->end(); BB2Inst != BBend; ++BB2Inst){
-	  
+	
 	  if (PHINode *phiInst = dyn_cast<PHINode>(BB2Inst)){
 	    int bbIndex;
 	    bbIndex = phiInst->getBasicBlockIndex(*VBI);
@@ -178,7 +178,7 @@ bool CombineBranches::runOnFunction(Function &F){
   int time = 0;
   getBackEdgesVisit (F.begin (), color, d, time, be);
   removeRedundant (be);
-  
+
   return true; // FIXME: assumes a modification was always made.
 }
 

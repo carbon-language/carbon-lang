@@ -1,10 +1,10 @@
 //===-- Globals.cpp - Implement the Global object classes -----------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements the GlobalValue & GlobalVariable classes for the VMCore
@@ -23,7 +23,7 @@ using namespace llvm;
 //                            GlobalValue Class
 //===----------------------------------------------------------------------===//
 
-/// This could be named "SafeToDestroyGlobalValue". It just makes sure that 
+/// This could be named "SafeToDestroyGlobalValue". It just makes sure that
 /// there are no non-constant uses of this GlobalValue. If there aren't then
 /// this and the transitive closure of the constants can be deleted. See the
 /// destructor for details.
@@ -32,7 +32,7 @@ static bool removeDeadConstantUsers(Constant* C) {
 
   while (!C->use_empty())
     if (Constant *User = dyn_cast<Constant>(C->use_back())) {
-      if (!removeDeadConstantUsers(User)) 
+      if (!removeDeadConstantUsers(User))
         return false; // Constant wasn't dead
     } else {
       return false; // Non-constant usage;
@@ -47,7 +47,7 @@ static bool removeDeadConstantUsers(Constant* C) {
 /// that want to check to see if a global is unused, but don't want to deal
 /// with potentially dead constants hanging off of the globals.
 ///
-/// This function returns true if the global value is now dead.  If all 
+/// This function returns true if the global value is now dead.  If all
 /// users of this global are not dead, this method may return false and
 /// leave some of them around.
 void GlobalValue::removeDeadConstantUsers() {
@@ -61,7 +61,7 @@ void GlobalValue::removeDeadConstantUsers() {
   }
 }
 
-/// Override destroyConstant to make sure it doesn't get called on 
+/// Override destroyConstant to make sure it doesn't get called on
 /// GlobalValue's because they shouldn't be treated like other constants.
 void GlobalValue::destroyConstant() {
   assert(0 && "You can't GV->destroyConstant()!");
@@ -111,7 +111,7 @@ void GlobalVariable::replaceUsesOfWithOnConstant(Value *From, Value *To,
                                                  bool DisableChecking) {
   // If you call this, then you better know this GVar has a constant
   // initializer worth replacing. Enforce that here.
-  assert(getNumOperands() == 1 && 
+  assert(getNumOperands() == 1 &&
          "Attempt to replace uses of Constants on a GVar with no initializer");
 
   // And, since you know it has an initializer, the From value better be
@@ -122,7 +122,7 @@ void GlobalVariable::replaceUsesOfWithOnConstant(Value *From, Value *To,
   // And, you better have a constant for the replacement value
   assert(isa<Constant>(To) &&
          "Attempt to replace GVar initializer with non-constant");
-  
+
   // Okay, preconditions out of the way, replace the constant initializer.
   this->setOperand(0, cast<Constant>(To));
 }

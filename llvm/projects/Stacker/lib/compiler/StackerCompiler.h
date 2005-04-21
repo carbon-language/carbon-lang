@@ -1,14 +1,14 @@
 //===-- StackerCompiler.h - Interface to the Stacker Compiler ---*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
-// This file was developed by Reid Spencer and donated to the LLVM research 
-// group and is distributed under the University of Illinois Open Source 
+// This file was developed by Reid Spencer and donated to the LLVM research
+// group and is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
-//  This header file defines the various variables that are shared among the 
+//  This header file defines the various variables that are shared among the
 //  different components of the parser...
 //
 //===----------------------------------------------------------------------===//
@@ -32,10 +32,10 @@ extern int Stackerlineno;
 extern char* Stackertext;
 extern int Stackerleng;
 
-/// @brief This class provides the Compiler for the Stacker language. 
-/// 
+/// @brief This class provides the Compiler for the Stacker language.
+///
 /// The main method to call is \c compile. The other methods are
-/// all internal to the compiler and protected. In general the 
+/// all internal to the compiler and protected. In general the
 /// handle_* methods are called by the BISON generated parser
 /// (see StackerParser.y). The methods returning Instruction* all
 /// produce some snippet of code to manipulate the stack in some
@@ -66,7 +66,7 @@ class StackerCompiler
 	///
 	/// To use the StackerCompiler, just create one on
 	/// the stack and call this method.
-	Module* compile( 
+	Module* compile(
 	    const std::string& filename, ///< File to compile
 	    bool echo, ///< Causes compiler to echo output
             unsigned optLevel, ///< Level of optimization
@@ -153,8 +153,8 @@ class StackerCompiler
 	/// @brief Throws an exception to indicate an error
 	/// @param message The message to be output
 	/// @param line Override for the current line no
-	static inline void ThrowException( const std::string &message, 
-		int line = -1) 	    
+	static inline void ThrowException( const std::string &message,
+		int line = -1) 	
 	{
 	  if (line == -1) line = Stackerlineno;
 	  // TODO: column number in exception

@@ -1,10 +1,10 @@
 //===- PromoteMemoryToRegister.cpp - Convert allocas to registers ---------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file promote memory references to be register references.  It promotes
@@ -48,7 +48,7 @@ bool llvm::isAllocaPromotable(const AllocaInst *AI, const TargetData &TD) {
     } else {
       return false;   // Not a load or store.
     }
-  
+
   return true;
 }
 
@@ -107,7 +107,7 @@ namespace {
     void MarkDominatingPHILive(BasicBlock *BB, unsigned AllocaNum,
                                std::set<PHINode*> &DeadPHINodes);
     void PromoteLocallyUsedAlloca(BasicBlock *BB, AllocaInst *AI);
-    void PromoteLocallyUsedAllocas(BasicBlock *BB, 
+    void PromoteLocallyUsedAllocas(BasicBlock *BB,
                                    const std::vector<AllocaInst*> &AIs);
 
     void RenamePass(BasicBlock *BB, BasicBlock *Pred,
@@ -267,13 +267,13 @@ void PromoteMem2Reg::run() {
 
       if (AST && isa<PointerType>(PN->getType()))
         AST->deleteValue(PN);
-      PN->getParent()->getInstList().erase(PN);      
+      PN->getParent()->getInstList().erase(PN);
     }
 
-    // Keep the reverse mapping of the 'Allocas' array. 
+    // Keep the reverse mapping of the 'Allocas' array.
     AllocaLookup[Allocas[AllocaNum]] = AllocaNum;
   }
-  
+
   // Process all allocas which are only used in a single basic block.
   for (std::map<BasicBlock*, std::vector<AllocaInst*> >::iterator I =
          LocallyUsedAllocas.begin(), E = LocallyUsedAllocas.end(); I != E; ++I){
@@ -327,7 +327,7 @@ void PromoteMem2Reg::run() {
   // have incoming values for all predecessors.  Loop over all PHI nodes we have
   // created, inserting undef values if they are missing any incoming values.
   //
-  for (std::map<BasicBlock*, std::vector<PHINode *> >::iterator I = 
+  for (std::map<BasicBlock*, std::vector<PHINode *> >::iterator I =
          NewPhiNodes.begin(), E = NewPhiNodes.end(); I != E; ++I) {
 
     std::vector<BasicBlock*> Preds(pred_begin(I->first), pred_end(I->first));
@@ -449,7 +449,7 @@ void PromoteMem2Reg::PromoteLocallyUsedAlloca(BasicBlock *BB, AllocaInst *AI) {
   } else {
     // Uses of the uninitialized memory location shall get undef.
     Value *CurVal = UndefValue::get(AI->getAllocatedType());
-  
+
     for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ) {
       Instruction *Inst = I++;
       if (LoadInst *LI = dyn_cast<LoadInst>(Inst)) {
@@ -572,7 +572,7 @@ void PromoteMem2Reg::RenamePass(BasicBlock *BB, BasicBlock *Pred,
 
   // don't revisit nodes
   if (Visited.count(BB)) return;
-  
+
   // mark as visited
   Visited.insert(BB);
 

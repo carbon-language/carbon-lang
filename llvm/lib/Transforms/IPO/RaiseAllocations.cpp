@@ -1,10 +1,10 @@
 //===- RaiseAllocations.cpp - Convert %malloc & %free calls to insts ------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines the RaiseAllocations pass which convert malloc and free
@@ -33,17 +33,17 @@ namespace {
     Function *FreeFunc;     // Initialized by doPassInitializationVirt
   public:
     RaiseAllocations() : MallocFunc(0), FreeFunc(0) {}
-    
+
     // doPassInitialization - For the raise allocations pass, this finds a
     // declaration for malloc and free if they exist.
     //
     void doInitialization(Module &M);
-    
+
     // run - This method does the actual work of converting instructions over.
     //
     bool runOnModule(Module &M);
   };
-  
+
   RegisterOpt<RaiseAllocations>
   X("raiseallocs", "Raise allocations from calls to instructions");
 }  // end anonymous namespace
@@ -134,14 +134,14 @@ bool RaiseAllocations::runOnModule(Module &M) {
             (CS.getCalledFunction() == MallocFunc ||
              std::find(EqPointers.begin(), EqPointers.end(),
                        CS.getCalledValue()) != EqPointers.end())) {
-            
+
           Value *Source = *CS.arg_begin();
-          
+
           // If no prototype was provided for malloc, we may need to cast the
           // source size.
           if (Source->getType() != Type::UIntTy)
             Source = new CastInst(Source, Type::UIntTy, "MallocAmtCast", I);
-          
+
           std::string Name(I->getName()); I->setName("");
           MallocInst *MI = new MallocInst(Type::SByteTy, Source, Name, I);
           I->replaceAllUsesWith(MI);
@@ -183,7 +183,7 @@ bool RaiseAllocations::runOnModule(Module &M) {
             (CS.getCalledFunction() == FreeFunc ||
              std::find(EqPointers.begin(), EqPointers.end(),
                        CS.getCalledValue()) != EqPointers.end())) {
-          
+
           // If no prototype was provided for free, we may need to cast the
           // source pointer.  This should be really uncommon, but it's necessary
           // just in case we are dealing with weird code like this:

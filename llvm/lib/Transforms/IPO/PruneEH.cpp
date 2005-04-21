@@ -1,10 +1,10 @@
 //===- PruneEH.cpp - Pass which deletes unused exception handlers ---------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements a simple interprocedural pass which walks the
@@ -77,7 +77,7 @@ bool PruneEH::runOnSCC(const std::vector<CallGraphNode *> &SCC) {
                 SCCMightThrow = true;
                 break;
               }
-                
+
             } else {
               // Indirect call, it might throw.
               SCCMightThrow = true;
@@ -109,24 +109,24 @@ bool PruneEH::runOnSCC(const std::vector<CallGraphNode *> &SCC) {
                                          std::vector<Value*>(II->op_begin()+3,
                                                              II->op_end()),
                                          Name, II);
-              
+
               // Anything that used the value produced by the invoke instruction
               // now uses the value produced by the call instruction.
               II->replaceAllUsesWith(Call);
               II->getUnwindDest()->removePredecessor(II->getParent());
-          
+
               // Insert a branch to the normal destination right before the
               // invoke.
               new BranchInst(II->getNormalDest(), II);
-              
+
               // Finally, delete the invoke instruction!
               I->getInstList().pop_back();
-              
+
               ++NumRemoved;
               MadeChange = true;
             }
   }
 
-  return MadeChange; 
+  return MadeChange;
 }
 

@@ -1,10 +1,10 @@
 //===- SimplifyCFG.cpp - CFG Simplification Pass --------------------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements dead code elimination and basic block merging.
@@ -100,7 +100,7 @@ bool CFGSimplifyPass::runOnFunction(Function &F) {
             (*SI)->removePredecessor(BB);
         BB->dropAllReferences();
       }
-    
+
     for (Function::iterator I = ++F.begin(); I != F.end();)
       if (!Reachable.count(I))
         I = F.getBasicBlockList().erase(I);

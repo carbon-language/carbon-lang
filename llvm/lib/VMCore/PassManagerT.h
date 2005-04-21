@@ -1,10 +1,10 @@
 //===- PassManagerT.h - Container for Passes --------------------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines the PassManagerT class.  This class is used to hold,
@@ -131,7 +131,7 @@ template<class UnitType> class PassManagerTraits;   // Do not define.
 
 //===----------------------------------------------------------------------===//
 // PassManagerT - Container object for passes.  The PassManagerT destructor
-// deletes all passes contained inside of the PassManagerT, so you shouldn't 
+// deletes all passes contained inside of the PassManagerT, so you shouldn't
 // delete passes manually, and all passes should be dynamically allocated.
 //
 template<typename UnitType>
@@ -147,7 +147,7 @@ class PassManagerT : public PassManagerTraits<UnitType>,public AnalysisResolver{
   friend SubPassClass;
 #else
   friend class PassManagerTraits<UnitType>::PassClass;
-  friend class PassManagerTraits<UnitType>::SubPassClass;  
+  friend class PassManagerTraits<UnitType>::SubPassClass;
 #endif
   friend class PassManagerTraits<UnitType>;
   friend class ImmutablePass;
@@ -219,7 +219,7 @@ public:
     // Run all of the passes
     for (unsigned i = 0, e = Passes.size(); i < e; ++i) {
       PassClass *P = Passes[i];
-      
+
       PMDebug::PrintPassInformation(getDepth(), "Executing Pass", P, M);
 
       // Get information about what analyses the pass uses...
@@ -236,7 +236,7 @@ public:
       P->AnalysisImpls.clear();
       P->AnalysisImpls.reserve(AnUsage.getRequiredSet().size());
       for (std::vector<const PassInfo *>::const_iterator
-             I = AnUsage.getRequiredSet().begin(), 
+             I = AnUsage.getRequiredSet().begin(),
              E = AnUsage.getRequiredSet().end(); I != E; ++I) {
         Pass *Impl = getAnalysisOrNullUp(*I);
         if (Impl == 0) {
@@ -353,7 +353,7 @@ public:
       const PassInfo *IPID = ImmutablePasses[i]->getPassInfo();
       if (IPID == ID)
         return ImmutablePasses[i];
-      
+
       // This pass is the current implementation of all of the interfaces it
       // implements as well.
       //
@@ -420,14 +420,14 @@ public:
       if (Parent) {
         Parent->markPassUsed(P, this);
       } else {
-        assert(getAnalysisOrNullUp(P) && 
+        assert(getAnalysisOrNullUp(P) &&
                dynamic_cast<ImmutablePass*>(getAnalysisOrNullUp(P)) &&
                "Pass available but not found! "
                "Perhaps this is a module pass requiring a function pass?");
       }
     }
   }
-  
+
   // Return the number of parent PassManagers that exist
   virtual unsigned getDepth() const {
     if (Parent == 0) return 0;
@@ -514,8 +514,8 @@ private:
     //const std::vector<AnalysisID> &ProvidedSet = AnUsage.getProvidedSet();
     if (Batcher /*&& ProvidedSet.empty()*/)
       closeBatcher();                     // This pass cannot be batched!
-    
-    // Set the Resolver instance variable in the Pass so that it knows where to 
+
+    // Set the Resolver instance variable in the Pass so that it knows where to
     // find this object...
     //
     setAnalysisResolver(P, this);
@@ -559,7 +559,7 @@ private:
     // For now assume that our results are never used...
     LastUseOf[P] = P;
   }
-  
+
   // For FunctionPass subclasses, we must be sure to batch the FunctionPass's
   // together in a BatcherClass object so that all of the analyses are run
   // together a function at a time.
@@ -588,7 +588,7 @@ public:
       return;
     }
 
-    // Set the Resolver instance variable in the Pass so that it knows where to 
+    // Set the Resolver instance variable in the Pass so that it knows where to
     // find this object...
     //
     setAnalysisResolver(IP, this);
@@ -601,7 +601,7 @@ public:
     //
     IP->AnalysisImpls.clear();
     IP->AnalysisImpls.reserve(AU.getRequiredSet().size());
-    for (std::vector<const PassInfo *>::const_iterator 
+    for (std::vector<const PassInfo *>::const_iterator
            I = AU.getRequiredSet().begin(),
            E = AU.getRequiredSet().end(); I != E; ++I) {
       Pass *Impl = getAnalysisOrNullUp(*I);
@@ -616,7 +616,7 @@ public:
       }
       IP->AnalysisImpls.push_back(std::make_pair(*I, Impl));
     }
-    
+
     // Initialize the immutable pass...
     IP->initializePass();
   }
@@ -642,7 +642,7 @@ public:
   typedef PassManagerT<Module> SubPassClass;
 
   // BatcherClass - The type to use for collation of subtypes... This class is
-  // never instantiated for the PassManager<BasicBlock>, but it must be an 
+  // never instantiated for the PassManager<BasicBlock>, but it must be an
   // instance of PassClass to typecheck.
   //
   typedef PassClass BatcherClass;

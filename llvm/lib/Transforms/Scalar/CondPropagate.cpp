@@ -1,10 +1,10 @@
 //===-- CondPropagate.cpp - Propagate Conditional Expressions -------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This pass propagates information about conditional expressions through the
@@ -73,7 +73,7 @@ void CondProp::SimplifyBlock(BasicBlock *BB) {
     if (BI->isConditional() && isa<PHINode>(BI->getCondition()) &&
         cast<PHINode>(BI->getCondition())->getParent() == BB)
       SimplifyPredecessors(BI);
-    
+
   } else if (SwitchInst *SI = dyn_cast<SwitchInst>(BB->getTerminator())) {
     if (isa<PHINode>(SI->getCondition()) &&
         cast<PHINode>(SI->getCondition())->getParent() == BB)

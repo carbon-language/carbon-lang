@@ -1,10 +1,10 @@
 //===-- LoopUnswitch.cpp - Hoist loop-invariant conditionals in loop ------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This pass transforms loops that contain branches on loop-invariant conditions
@@ -116,15 +116,15 @@ bool LoopUnswitch::visitLoop(Loop *L) {
         } else {
           // FIXME: check for profitability.
           //std::cerr << "BEFORE:\n"; LI->dump();
-          
+
           VersionLoop(BI->getCondition(), L);
-          
+
           //std::cerr << "AFTER:\n"; LI->dump();
           return true;
         }
       }
   }
-  
+
   return Changed;
 }
 
@@ -152,10 +152,10 @@ BasicBlock *LoopUnswitch::SplitBlock(BasicBlock *BB, bool SplitAtTop) {
 }
 
 
-// RemapInstruction - Convert the instruction operands from referencing the 
+// RemapInstruction - Convert the instruction operands from referencing the
 // current values into those specified by ValueMap.
 //
-static inline void RemapInstruction(Instruction *I, 
+static inline void RemapInstruction(Instruction *I,
                                     std::map<const Value *, Value*> &ValueMap) {
   for (unsigned op = 0, E = I->getNumOperands(); op != E; ++op) {
     Value *Op = I->getOperand(op);
@@ -185,7 +185,7 @@ static Loop *CloneLoop(Loop *L, Loop *PL, std::map<const Value*, Value*> &VM,
   // Add all of the subloops to the new loop.
   for (Loop::iterator I = L->begin(), E = L->end(); I != E; ++I)
     CloneLoop(*I, New, VM, LI);
-  
+
   return New;
 }
 
@@ -210,7 +210,7 @@ InsertPHINodesForUsesOutsideLoop(Instruction *OI, Instruction *NI,
         !NL->contains(cast<Instruction>(*UI)->getParent()))
       goto UsedOutsideOfLoop;
   return 0;
-  
+
 UsedOutsideOfLoop:
   // Okay, this instruction is used outside of the current loop.  Insert a PHI
   // nodes for the instruction merging the values together.

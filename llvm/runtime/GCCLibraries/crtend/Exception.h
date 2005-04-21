@@ -1,10 +1,10 @@
 //===- Exception.h - Generic language-independent exceptions ----*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines the the shared data structures used by all language
@@ -24,7 +24,7 @@ struct llvm_exception {
   // exception type is.
   //
   void (*ExceptionDestructor)(llvm_exception *);
-  
+
   // ExceptionType - This field identifies what runtime library this exception
   // came from.  Currently defined values are:
   //     0 - Error

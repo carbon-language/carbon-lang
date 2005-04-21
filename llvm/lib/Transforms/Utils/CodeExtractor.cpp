@@ -1,10 +1,10 @@
 //===- CodeExtractor.cpp - Pull code region into a new function -----------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements the interface to tear out a code region, such as an
@@ -64,7 +64,7 @@ namespace {
           return true;
       return false;
     }
-    
+
     /// definedInCaller - Return true if the specified value is defined in the
     /// function being code extracted, but not in the region being extracted.
     /// These values must be passed in as live-ins to the function.
@@ -198,7 +198,7 @@ void CodeExtractor::splitReturnBlocks() {
 //
 void CodeExtractor::findInputsOutputs(Values &inputs, Values &outputs) {
   std::set<BasicBlock*> ExitBlocks;
-  for (std::set<BasicBlock*>::const_iterator ci = BlocksToExtract.begin(), 
+  for (std::set<BasicBlock*>::const_iterator ci = BlocksToExtract.begin(),
        ce = BlocksToExtract.end(); ci != ce; ++ci) {
     BasicBlock *BB = *ci;
 
@@ -208,7 +208,7 @@ void CodeExtractor::findInputsOutputs(Values &inputs, Values &outputs) {
       for (User::op_iterator O = I->op_begin(), E = I->op_end(); O != E; ++O)
         if (definedInCaller(*O))
           inputs.push_back(*O);
-      
+
       // Consider uses of this instruction (outputs).
       for (Value::use_iterator UI = I->use_begin(), E = I->use_end();
            UI != E; ++UI)
@@ -326,7 +326,7 @@ Function *CodeExtractor::constructFunction(const Values &inputs,
     for (unsigned i = 0, e = inputs.size(); i != e; ++i, ++AI)
       AI->setName(inputs[i]->getName());
     for (unsigned i = 0, e = outputs.size(); i != e; ++i, ++AI)
-      AI->setName(outputs[i]->getName()+".out");  
+      AI->setName(outputs[i]->getName()+".out");
   }
 
   // Rewrite branches to basic blocks outside of the loop to new dummy blocks
@@ -383,8 +383,8 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
 
     // Allocate a struct at the beginning of this function
     Type *StructArgTy = StructType::get(ArgTypes);
-    Struct = 
-      new AllocaInst(StructArgTy, 0, "structArg", 
+    Struct =
+      new AllocaInst(StructArgTy, 0, "structArg",
                      codeReplacer->getParent()->begin()->begin());
     params.push_back(Struct);
 
@@ -399,7 +399,7 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
       StoreInst *SI = new StoreInst(StructValues[i], GEP);
       codeReplacer->getInstList().push_back(SI);
     }
-  } 
+  }
 
   // Emit the call to the function
   CallInst *call = new CallInst(newFunction, params,
@@ -418,7 +418,7 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
       std::vector<Value*> Indices;
       Indices.push_back(Constant::getNullValue(Type::UIntTy));
       Indices.push_back(ConstantUInt::get(Type::UIntTy, FirstOut + i));
-      GetElementPtrInst *GEP 
+      GetElementPtrInst *GEP
         = new GetElementPtrInst(Struct, Indices,
                                 "gep_reload_" + outputs[i]->getName());
       codeReplacer->getInstList().push_back(GEP);
@@ -521,7 +521,7 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
                 Indices.push_back(ConstantUInt::get(Type::UIntTy,FirstOut+out));
                 GetElementPtrInst *GEP =
                   new GetElementPtrInst(OAI, Indices,
-                                        "gep_" + outputs[out]->getName(), 
+                                        "gep_" + outputs[out]->getName(),
                                         NTRet);
                 new StoreInst(outputs[out], GEP, NTRet);
               } else {
@@ -545,7 +545,7 @@ emitCallAndSwitchStatement(Function *newFunction, BasicBlock *codeReplacer,
     // There are no successors (the block containing the switch itself), which
     // means that previously this was the last part of the function, and hence
     // this should be rewritten as a `ret'
-    
+
     // Check if the function should return a value
     if (OldFnRetTy == Type::VoidTy) {
       new ReturnInst(0, TheSwitch);  // Return void
@@ -603,13 +603,13 @@ void CodeExtractor::moveCodeToFunction(Function *newFunction) {
 ///
 /// find inputs and outputs for the region
 ///
-/// for inputs: add to function as args, map input instr* to arg# 
-/// for outputs: add allocas for scalars, 
+/// for inputs: add to function as args, map input instr* to arg#
+/// for outputs: add allocas for scalars,
 ///             add to func as args, map output instr* to arg#
 ///
 /// rewrite func to use argument #s instead of instr*
 ///
-/// for each scalar output in the function: at every exit, store intermediate 
+/// for each scalar output in the function: at every exit, store intermediate
 /// computed result back into memory.
 ///
 Function *CodeExtractor::
@@ -637,7 +637,7 @@ ExtractCodeRegion(const std::vector<BasicBlock*> &code) {
       assert(BlocksToExtract.count(*PI) &&
              "No blocks in this region may have entries from outside the region"
              " except for the first block!");
-  
+
   // If we have to split PHI nodes or the entry block, do so now.
   severSplitPHINodes(header);
 
@@ -660,7 +660,7 @@ ExtractCodeRegion(const std::vector<BasicBlock*> &code) {
 
   // Construct new function based on inputs/outputs & add allocas for all defs.
   Function *newFunction = constructFunction(inputs, outputs, header,
-                                            newFuncRoot, 
+                                            newFuncRoot,
                                             codeReplacer, oldFunction,
                                             oldFunction->getParent());
 
@@ -676,7 +676,7 @@ ExtractCodeRegion(const std::vector<BasicBlock*> &code) {
       if (!BlocksToExtract.count(PN->getIncomingBlock(i)))
         PN->setIncomingBlock(i, newFuncRoot);
   }
-  
+
   // Look at all successors of the codeReplacer block.  If any of these blocks
   // had PHI nodes in them, we need to update the "from" block to be the code
   // replacer, not the original block in the extracted region.
@@ -697,7 +697,7 @@ ExtractCodeRegion(const std::vector<BasicBlock*> &code) {
             --i; --e;
           }
     }
-  
+
   //std::cerr << "NEW FUNCTION: " << *newFunction;
   //  verifyFunction(*newFunction);
 
@@ -744,5 +744,5 @@ Function* llvm::ExtractLoop(DominatorSet &DS, Loop *L, bool AggregateArgs) {
 Function* llvm::ExtractBasicBlock(BasicBlock *BB, bool AggregateArgs) {
   std::vector<BasicBlock*> Blocks;
   Blocks.push_back(BB);
-  return CodeExtractor(0, AggregateArgs).ExtractCodeRegion(Blocks);  
+  return CodeExtractor(0, AggregateArgs).ExtractCodeRegion(Blocks);
 }

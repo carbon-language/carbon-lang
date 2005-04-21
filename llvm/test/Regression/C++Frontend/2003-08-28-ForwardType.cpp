@@ -5,9 +5,9 @@ inline void* operator new(unsigned, void* __p) throw();
 
 
 template<typename _CharT>
-struct stdio_filebuf 
+struct stdio_filebuf
 {  stdio_filebuf();
-  
+
 };
 
 extern stdio_filebuf<char> buf_cout;

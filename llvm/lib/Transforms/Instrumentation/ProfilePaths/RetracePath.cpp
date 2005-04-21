@@ -1,10 +1,10 @@
 //===- RetracePath.cpp ----------------------------------------------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // Retraces a path of BasicBlock, given a path number and a graph!
@@ -25,12 +25,12 @@ namespace llvm {
 
 //Routines to get the path trace!
 
-void getPathFrmNode(Node *n, vector<BasicBlock*> &vBB, int pathNo, Graph &g, 
-		    vector<Edge> &stDummy, vector<Edge> &exDummy, 
+void getPathFrmNode(Node *n, vector<BasicBlock*> &vBB, int pathNo, Graph &g,
+		    vector<Edge> &stDummy, vector<Edge> &exDummy,
 		    vector<Edge> &be,
 		    double strand){
   Graph::nodeList &nlist = g.getNodeList(n);
-  
+
   //printGraph(g);
   //std::cerr<<"Path No: "<<pathNo<<"\n";
   int maxCount=-9999999;
@@ -53,7 +53,7 @@ void getPathFrmNode(Node *n, vector<BasicBlock*> &vBB, int pathNo, Graph &g,
   }
 
   if(!isStart)
-    assert(strand!=-1 && "strand not assigned!"); 
+    assert(strand!=-1 && "strand not assigned!");
 
   assert(!(*nextRoot==*n && pathNo>0) && "No more BBs to go");
   assert(!(*nextRoot==*g.getExit() && pathNo-maxCount!=0) && "Reached exit");
@@ -65,7 +65,7 @@ void getPathFrmNode(Node *n, vector<BasicBlock*> &vBB, int pathNo, Graph &g,
     //look for strnd and edgeRnd now:
     bool has1=false, has2=false;
     //check if exit has it
-    for(vector<Edge>::iterator VI=exDummy.begin(), VE=exDummy.end(); VI!=VE; 
+    for(vector<Edge>::iterator VI=exDummy.begin(), VE=exDummy.end(); VI!=VE;
 	++VI){
       if(VI->getRandId()==edgeRnd){
 	has2=true;
@@ -74,7 +74,7 @@ void getPathFrmNode(Node *n, vector<BasicBlock*> &vBB, int pathNo, Graph &g,
     }
 
     //check if start has it
-    for(vector<Edge>::iterator VI=stDummy.begin(), VE=stDummy.end(); VI!=VE; 
+    for(vector<Edge>::iterator VI=stDummy.begin(), VE=stDummy.end(); VI!=VE;
 	++VI){
       if(VI->getRandId()==strand){
 	has1=true;
@@ -98,22 +98,22 @@ void getPathFrmNode(Node *n, vector<BasicBlock*> &vBB, int pathNo, Graph &g,
       //find backedge with startpoint vBB[vBB.size()-1]
       for(vector<Edge>::iterator VI=be.begin(), VE=be.end(); VI!=VE; ++VI){
 	assert(vBB.size()>0 && "vector too small");
-	if( VI->getFirst()->getElement() == vBB[vBB.size()-1] && 
+	if( VI->getFirst()->getElement() == vBB[vBB.size()-1] &&
             VI->getSecond()->getElement() == vBB[0]){
 	  //vBB.push_back(VI->getSecond()->getElement());
 	  break;
 	}
       }
     }
-    else 
+    else
       vBB.push_back(nextRoot->getElement());
-   
+
     return;
   }
 
   assert(pathNo-maxCount>=0);
 
-  return getPathFrmNode(nextRoot, vBB, pathNo-maxCount, g, stDummy, 
+  return getPathFrmNode(nextRoot, vBB, pathNo-maxCount, g, stDummy,
 			exDummy, be, strand);
 }
 
@@ -131,16 +131,16 @@ void getBBtrace(vector<BasicBlock *> &vBB, int pathNo, Function *M){//,
   //                vector<Instruction *> &instToErase){
   //step 1: create graph
   //Transform the cfg s.t. we have just one exit node
-  
+
   std::vector<Node *> nodes;
   std::vector<Edge> edges;
   Node *exitNode=0, *startNode=0;
 
   //Creat cfg just once for each function!
-  static std::map<Function *, Graph *> graphMap; 
+  static std::map<Function *, Graph *> graphMap;
 
   //get backedges, exit and start edges for the graphs and store them
-  static std::map<Function *, vector<Edge> > stMap, exMap, beMap; 
+  static std::map<Function *, vector<Edge> > stMap, exMap, beMap;
   static std::map<Function *, Value *> pathReg; //path register
 
 
@@ -152,19 +152,19 @@ void getBBtrace(vector<BasicBlock *> &vBB, int pathNo, Function *M){//,
         break;
       }
     }
-  
+
     assert(ExitNode!=0 && "exitnode not found");
 
-    //iterating over BBs and making graph 
+    //iterating over BBs and making graph
     //The nodes must be uniquely identified:
     //That is, no two nodes must hav same BB*
-  
+
     //keep a map for trigger basicblocks!
     std::map<BasicBlock *, unsigned char> triggerBBs;
     //First enter just nodes: later enter edges
     for(Function::iterator BB = M->begin(), BE=M->end(); BB != BE; ++BB){
       bool cont = false;
-      
+
       if(BB->size()==3 || BB->size() ==2){
         for(BasicBlock::iterator II = BB->begin(), IE = BB->end();
             II != IE; ++II){
@@ -180,10 +180,10 @@ void getBBtrace(vector<BasicBlock *> &vBB, int pathNo, Function *M){//,
           }
         }
       }
-      
+
       if(cont)
         continue;
-      
+
       // const Instruction *inst = BB->getInstList().begin();
       // if(isa<CallInst>(inst)){
       // Instruction *ii1 = BB->getInstList().begin();
@@ -191,9 +191,9 @@ void getBBtrace(vector<BasicBlock *> &vBB, int pathNo, Function *M){//,
       // if(callInst->getCalledFunction()->getName()=="trigger")
       // continue;
       // }
-      
+
       Node *nd=new Node(BB);
-      nodes.push_back(nd); 
+      nodes.push_back(nd);
       if(&*BB==ExitNode)
         exitNode=nd;
       if(&*BB==&M->front())
@@ -201,16 +201,16 @@ void getBBtrace(vector<BasicBlock *> &vBB, int pathNo, Function *M){//,
     }
 
     assert(exitNode!=0 && startNode!=0 && "Start or exit not found!");
- 
+
     for (Function::iterator BB = M->begin(), BE=M->end(); BB != BE; ++BB){
-      if(triggerBBs[BB] == 9) 
+      if(triggerBBs[BB] == 9)
         continue;
-      
+
       //if(BB->size()==3)
       //if(CallInst *callInst = dyn_cast<CallInst>(BB->getInstList().begin()))
       //if(callInst->getCalledFunction()->getName() == "trigger")
       //continue;
-      
+
       // if(BB->size()==2){
       //         const Instruction *inst = BB->getInstList().begin();
       //         if(isa<CallInst>(inst)){
@@ -220,12 +220,12 @@ void getBBtrace(vector<BasicBlock *> &vBB, int pathNo, Function *M){//,
       //             continue;
       //         }
       //       }
-      
+
       Node *nd=findBB(nodes, BB);
       assert(nd && "No node for this edge!");
-      
+
       for(succ_iterator s=succ_begin(BB), se=succ_end(BB); s!=se; ++s){
-        
+
         if(triggerBBs[*s] == 9){
           //if(!pathReg[M]){ //Get the path register for this!
           //if(BB->size()>8)
@@ -235,11 +235,11 @@ void getBBtrace(vector<BasicBlock *> &vBB, int pathNo, Function *M){//,
           continue;
         }
         //if((*s)->size()==3)
-        //if(CallInst *callInst = 
+        //if(CallInst *callInst =
         //   dyn_cast<CallInst>((*s)->getInstList().begin()))
         //  if(callInst->getCalledFunction()->getName() == "trigger")
         //    continue;
-        
+
         //  if((*s)->size()==2){
         //           const Instruction *inst = (*s)->getInstList().begin();
         //           if(isa<CallInst>(inst)){
@@ -249,40 +249,40 @@ void getBBtrace(vector<BasicBlock *> &vBB, int pathNo, Function *M){//,
         //               continue;
         //           }
         //         }
-        
+
         Node *nd2 = findBB(nodes,*s);
         assert(nd2 && "No node for this edge!");
         Edge ed(nd,nd2,0);
         edges.push_back(ed);
       }
     }
-  
+
     graphMap[M]= new Graph(nodes,edges, startNode, exitNode);
- 
+
     Graph *g = graphMap[M];
 
-    if (M->size() <= 1) return; //uninstrumented 
-    
+    if (M->size() <= 1) return; //uninstrumented
+
     //step 2: getBackEdges
     //vector<Edge> be;
     std::map<Node *, int> nodePriority;
     g->getBackEdges(beMap[M], nodePriority);
-    
+
     //step 3: add dummy edges
     //vector<Edge> stDummy;
     //vector<Edge> exDummy;
     addDummyEdges(stMap[M], exMap[M], *g, beMap[M]);
-    
+
     //step 4: value assgn to edges
     int numPaths = valueAssignmentToEdges(*g, nodePriority, beMap[M]);
   }
-  
-  
-  //step 5: now travel from root, select max(edge) < pathNo, 
+
+
+  //step 5: now travel from root, select max(edge) < pathNo,
   //and go on until reach the exit
-  getPathFrmNode(graphMap[M]->getRoot(), vBB, pathNo, *graphMap[M], 
+  getPathFrmNode(graphMap[M]->getRoot(), vBB, pathNo, *graphMap[M],
                  stMap[M], exMap[M], beMap[M], -1);
-  
+
 
   //post process vBB to locate instructions to be erased
   /*

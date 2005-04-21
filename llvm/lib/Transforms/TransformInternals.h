@@ -1,10 +1,10 @@
 //===-- TransformInternals.h - Shared functions for Transforms --*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 //  This header file declares shared functions used by the different components
@@ -56,7 +56,7 @@ const Type *ConvertibleToGEP(const Type *Ty, Value *V,
 //  ValueHandle Class - Smart pointer that occupies a slot on the users USE list
 //  that prevents it from being destroyed.  This "looks" like an Instruction
 //  with Opcode UserOp1.
-// 
+//
 class ValueMapCache;
 class ValueHandle : public Instruction {
   Use Op;

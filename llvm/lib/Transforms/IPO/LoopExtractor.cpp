@@ -1,10 +1,10 @@
 //===- LoopExtractor.cpp - Extract each loop into a new function ----------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // A pass wrapper around the ExtractLoop() scalar transformation to extract each
@@ -27,7 +27,7 @@ using namespace llvm;
 
 namespace {
   Statistic<> NumExtracted("loop-extract", "Number of loops extracted");
-  
+
   // FIXME: This is not a function pass, but the PassManager doesn't allow
   // Module passes to require FunctionPasses, so we can't get loop info if we're
   // not a function pass.
@@ -37,7 +37,7 @@ namespace {
     LoopExtractor(unsigned numLoops = ~0) : NumLoops(numLoops) {}
 
     virtual bool runOnFunction(Function &F);
-    
+
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequiredID(BreakCriticalEdgesID);
       AU.addRequiredID(LoopSimplifyID);
@@ -46,7 +46,7 @@ namespace {
     }
   };
 
-  RegisterOpt<LoopExtractor> 
+  RegisterOpt<LoopExtractor>
   X("loop-extract", "Extract loops into new functions");
 
   /// SingleLoopExtractor - For bugpoint.
@@ -54,9 +54,9 @@ namespace {
     SingleLoopExtractor() : LoopExtractor(1) {}
   };
 
-  RegisterOpt<SingleLoopExtractor> 
+  RegisterOpt<SingleLoopExtractor>
   Y("loop-extract-single", "Extract at most one loop into a new function");
-} // End anonymous namespace 
+} // End anonymous namespace
 
 // createLoopExtractorPass - This pass extracts all natural loops from the
 // program into a function if it can.
@@ -87,11 +87,11 @@ bool LoopExtractor::runOnFunction(Function &F) {
     // than a minimal wrapper around the loop, extract the loop.
     Loop *TLL = *LI.begin();
     bool ShouldExtractLoop = false;
-    
+
     // Extract the loop if the entry block doesn't branch to the loop header.
     TerminatorInst *EntryTI = F.getEntryBlock().getTerminator();
     if (!isa<BranchInst>(EntryTI) ||
-        !cast<BranchInst>(EntryTI)->isUnconditional() || 
+        !cast<BranchInst>(EntryTI)->isUnconditional() ||
         EntryTI->getSuccessor(0) != TLL->getHeader())
       ShouldExtractLoop = true;
     else {
@@ -105,7 +105,7 @@ bool LoopExtractor::runOnFunction(Function &F) {
           break;
         }
     }
-    
+
     if (ShouldExtractLoop) {
       if (NumLoops == 0) return Changed;
       --NumLoops;
@@ -184,6 +184,6 @@ bool BlockExtractorPass::runOnModule(Module &M) {
 
   for (unsigned i = 0, e = BlocksToExtract.size(); i != e; ++i)
     ExtractBasicBlock(BlocksToExtract[i]);
-  
+
   return !BlocksToExtract.empty();
 }

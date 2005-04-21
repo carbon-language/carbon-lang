@@ -1,8 +1,8 @@
 // RUN: %llvmgxx -S %s -o - | llvm-as -f -o /dev/null
 
 
-struct Foo { 
-  Foo(int); 
+struct Foo {
+  Foo(int);
   ~Foo();
 };
 void foo() {

@@ -1,10 +1,10 @@
 //===-- Graph.cpp - Implements Graph class --------------------------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This implements Graph for helping in trace generation This graph gets used by
@@ -23,7 +23,7 @@ namespace llvm {
 
 const graphListElement *findNodeInList(const Graph::nodeList &NL,
 					      Node *N) {
-  for(Graph::nodeList::const_iterator NI = NL.begin(), NE=NL.end(); NI != NE; 
+  for(Graph::nodeList::const_iterator NI = NL.begin(), NE=NL.end(); NI != NE;
       ++NI)
     if (*NI->element== *N)
       return &*NI;
@@ -38,7 +38,7 @@ graphListElement *findNodeInList(Graph::nodeList &NL, Node *N) {
 }
 
 //graph constructor with root and exit specified
-Graph::Graph(std::vector<Node*> n, std::vector<Edge> e, 
+Graph::Graph(std::vector<Node*> n, std::vector<Edge> e,
 	     Node *rt, Node *lt){
   strt=rt;
   ext=lt;
@@ -49,17 +49,17 @@ Graph::Graph(std::vector<Node*> n, std::vector<Edge> e,
   for(vector<Edge >::iterator x=e.begin(), en=e.end(); x!=en; ++x){
     Edge ee=*x;
     int w=ee.getWeight();
-    //nodes[ee.getFirst()].push_front(graphListElement(ee.getSecond(),w, ee.getRandId()));   
+    //nodes[ee.getFirst()].push_front(graphListElement(ee.getSecond(),w, ee.getRandId()));
     nodes[ee.getFirst()].push_back(graphListElement(ee.getSecond(),w, ee.getRandId()));
   }
-  
+
 }
 
 //sorting edgelist, called by backEdgeVist ONLY!!!
 Graph::nodeList &Graph::sortNodeList(Node *par, nodeList &nl, vector<Edge> &be){
   assert(par && "null node pointer");
   BasicBlock *bbPar = par->getElement();
-  
+
   if(nl.size()<=1) return nl;
   if(getExit() == par) return nl;
 
@@ -79,7 +79,7 @@ Graph::nodeList &Graph::sortNodeList(Node *par, nodeList &nl, vector<Edge> &be){
 
         assert(ti && "not a branch");
         assert(ti->getNumSuccessors()==2 && "less successors!");
-        
+
         BasicBlock *tB = ti->getSuccessor(0);
         BasicBlock *fB = ti->getSuccessor(1);
         //so one of LI or min must be back edge!
@@ -109,24 +109,24 @@ Graph::nodeList &Graph::sortNodeList(Node *par, nodeList &nl, vector<Edge> &be){
           }
         }
       }
-      
+
       else if (min->element->getElement() != LI->element->getElement()){
         TerminatorInst *tti = par->getElement()->getTerminator();
         BranchInst *ti =  cast<BranchInst>(tti);
         assert(ti && "not a branch");
 
         if(ti->getNumSuccessors()<=1) continue;
-        
+
         assert(ti->getNumSuccessors()==2 && "less successors!");
-        
+
         BasicBlock *tB = ti->getSuccessor(0);
         BasicBlock *fB = ti->getSuccessor(1);
-        
+
         if(tB == LI->element->getElement() || fB == min->element->getElement())
           min = LI;
       }
     }
-    
+
     graphListElement tmpElmnt = *min;
     *min = *NLI;
     *NLI = tmpElmnt;
@@ -159,11 +159,11 @@ bool Graph::hasEdgeAndWt(Edge ed){
 
   Node *nd2=ed.getSecond();
   nodeList &nli = nodes[ed.getFirst()];//getNodeList(ed.getFirst());
-  
+
   for(nodeList::iterator NI=nli.begin(), NE=nli.end(); NI!=NE; ++NI)
     if(*NI->element == *nd2 && ed.getWeight()==NI->weight)
       return true;
-  
+
   return false;
 }
 
@@ -180,9 +180,9 @@ void Graph::addNode(Node *nd){
 }
 
 //add an edge
-//this adds an edge ONLY when 
+//this adds an edge ONLY when
 //the edge to be added does not already exist
-//we "equate" two edges here only with their 
+//we "equate" two edges here only with their
 //end points
 void Graph::addEdge(Edge ed, int w){
   nodeList &ndList = nodes[ed.getFirst()];
@@ -190,7 +190,7 @@ void Graph::addEdge(Edge ed, int w){
 
   if(findNodeInList(nodes[ed.getFirst()], nd2))
     return;
- 
+
   //ndList.push_front(graphListElement(nd2,w, ed.getRandId()));
   ndList.push_back(graphListElement(nd2,w, ed.getRandId()));//chng
   //sortNodeList(ed.getFirst(), ndList);
@@ -296,7 +296,7 @@ int Graph::getNumberOfIncomingEdges(Node *nd){
   for(nodeMapTy::const_iterator EI=nodes.begin(), EE=nodes.end(); EI!=EE ;++EI){
     Node *lnode=EI->first;
     const nodeList &nl = getNodeList(lnode);
-    for(Graph::nodeList::const_iterator NI = nl.begin(), NE=nl.end(); NI != NE; 
+    for(Graph::nodeList::const_iterator NI = nl.begin(), NE=nl.end(); NI != NE;
 	++NI)
       if (*NI->element== *nd)
 	count++;
@@ -340,19 +340,19 @@ static void printNode(Node *nd){
 //of the graph
 Graph* Graph::getMaxSpanningTree(){
   //assume connected graph
- 
+
   Graph *st=new Graph();//max spanning tree, undirected edges
   int inf=9999999;//largest key
   vector<Node *> lt = getAllNodes();
-  
+
   //initially put all vertices in vector vt
   //assign wt(root)=0
   //wt(others)=infinity
   //
   //now:
   //pull out u: a vertex frm vt of min wt
-  //for all vertices w in vt, 
-  //if wt(w) greater than 
+  //for all vertices w in vt,
+  //if wt(w) greater than
   //the wt(u->w), then assign
   //wt(w) to be wt(u->w).
   //
@@ -360,7 +360,7 @@ Graph* Graph::getMaxSpanningTree(){
   //keep pulling out vertices from vt till it is empty
 
   vector<Node *> vt;
-  
+
   std::map<Node*, Node* > parent;
   std::map<Node*, int > ed_weight;
 
@@ -373,7 +373,7 @@ Graph* Graph::getMaxSpanningTree(){
       parent[thisNode]=NULL;
       ed_weight[thisNode]=0;
     }
-    else{ 
+    else{
       thisNode->setWeight(inf);
     }
     st->addNode(thisNode);//add all nodes to spanning tree
@@ -396,7 +396,7 @@ Graph* Graph::getMaxSpanningTree(){
     }
 
     //vt.erase(u);
-    
+
     //remove u frm vt
     for(vector<Node *>::iterator VI=vt.begin(), VE=vt.end(); VI!=VE; ++VI){
       if(**VI==*u){
@@ -404,7 +404,7 @@ Graph* Graph::getMaxSpanningTree(){
 	break;
       }
     }
-    
+
     //assign wt(v) to all adjacent vertices v of u
     //only if v is in vt
     Graph::nodeList &nl = getNodeList(u);
@@ -438,7 +438,7 @@ Graph* Graph::getMaxSpanningTree(){
   return st;
 }
 
-//print the graph (for debugging)   
+//print the graph (for debugging)
 void Graph::printGraph(){
    vector<Node *> lt=getAllNodes();
    std::cerr<<"Graph---------------------\n";
@@ -469,7 +469,7 @@ vector<Node *> Graph::reverseTopologicalSort(){
 }
 
 //a private method for doing DFS traversal of graph
-//this is used in determining the reverse topological sort 
+//this is used in determining the reverse topological sort
 //of the graph
 void Graph::DFS_Visit(Node *nd, vector<Node *> &toReturn){
   nd->setWeight(GREY);
@@ -482,13 +482,13 @@ void Graph::DFS_Visit(Node *nd, vector<Node *> &toReturn){
 }
 
 //Ordinarily, the graph is directional
-//this converts the graph into an 
+//this converts the graph into an
 //undirectional graph
 //This is done by adding an edge
 //v->u for all existing edges u->v
 void Graph::makeUnDirectional(){
   vector<Node* > allNodes=getAllNodes();
-  for(vector<Node *>::iterator NI=allNodes.begin(), NE=allNodes.end(); NI!=NE; 
+  for(vector<Node *>::iterator NI=allNodes.begin(), NE=allNodes.end(); NI!=NE;
       ++NI) {
     nodeList &nl = getNodeList(*NI);
     for(nodeList::iterator NLI=nl.begin(), NLE=nl.end(); NLI!=NLE; ++NLI){
@@ -507,10 +507,10 @@ void Graph::makeUnDirectional(){
 //using min-spanning tree, and vice versa
 void Graph::reverseWts(){
   vector<Node *> allNodes=getAllNodes();
-  for(vector<Node *>::iterator NI=allNodes.begin(), NE=allNodes.end(); NI!=NE; 
+  for(vector<Node *>::iterator NI=allNodes.begin(), NE=allNodes.end(); NI!=NE;
       ++NI) {
     nodeList &node_list = getNodeList(*NI);
-    for(nodeList::iterator NLI=nodes[*NI].begin(), NLE=nodes[*NI].end(); 
+    for(nodeList::iterator NLI=nodes[*NI].begin(), NLE=nodes[*NI].end();
 	NLI!=NLE; ++NLI)
       NLI->weight=-NLI->weight;
   }
@@ -535,7 +535,7 @@ void Graph::getBackEdges(vector<Edge > &be, std::map<Node *, int> &d){
   getBackEdgesVisit(getRoot(), be, color, d, time);
 }
 
-//helper function to get back edges: it is called by 
+//helper function to get back edges: it is called by
 //the "getBackEdges" function above
 void Graph::getBackEdgesVisit(Node *u, vector<Edge > &be,
 			      std::map<Node *, Color > &color,
@@ -545,14 +545,14 @@ void Graph::getBackEdgesVisit(Node *u, vector<Edge > &be,
   d[u]=time;
 
   vector<graphListElement> &succ_list = getNodeList(u);
-  
-  for(vector<graphListElement>::iterator vl=succ_list.begin(), 
+
+  for(vector<graphListElement>::iterator vl=succ_list.begin(),
 	ve=succ_list.end(); vl!=ve; ++vl){
     Node *v=vl->element;
     if(color[v]!=GREY && color[v]!=BLACK){
       getBackEdgesVisit(v, be, color, d, time);
     }
-    
+
     //now checking for d and f vals
     if(color[v]==GREY){
       //so v is ancestor of u if time of u > time of v

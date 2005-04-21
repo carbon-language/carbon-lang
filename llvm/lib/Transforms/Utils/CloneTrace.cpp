@@ -1,10 +1,10 @@
 //===- CloneTrace.cpp - Clone a trace -------------------------------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements the CloneTrace interface, which is used when writing
@@ -27,7 +27,7 @@ std::vector<BasicBlock *>
 llvm::CloneTrace(const std::vector<BasicBlock*> &origTrace) {
   std::vector<BasicBlock *> clonedTrace;
   std::map<const Value*, Value*> ValueMap;
-  
+
   //First, loop over all the Basic Blocks in the trace and copy
   //them using CloneBasicBlock. Also fix the phi nodes during
   //this loop. To fix the phi nodes, we delete incoming branches
@@ -38,7 +38,7 @@ llvm::CloneTrace(const std::vector<BasicBlock*> &origTrace) {
     //Clone Basic Block
     BasicBlock *clonedBlock =
       CloneBasicBlock(*T, ValueMap, ".tr", (*T)->getParent());
-    
+
     //Add it to our new trace
     clonedTrace.push_back(clonedBlock);
 
@@ -55,10 +55,10 @@ llvm::CloneTrace(const std::vector<BasicBlock*> &origTrace) {
         //get incoming value for the previous BB
         Value *V = PN->getIncomingValueForBlock(*(T-1));
         assert(V && "No incoming value from a BasicBlock in our trace!");
-        
+
         //remap our phi node to point to incoming value
         ValueMap[*&I] = V;
-        
+
         //remove phi node
         clonedBlock->getInstList().erase(PN);
       }
@@ -69,7 +69,7 @@ llvm::CloneTrace(const std::vector<BasicBlock*> &origTrace) {
   for(std::vector<BasicBlock *>::const_iterator BB = clonedTrace.begin(),
 	BE = clonedTrace.end(); BB != BE; ++BB) {
     for(BasicBlock::iterator I = (*BB)->begin(); I != (*BB)->end(); ++I) {
-      
+
       //Loop over all the operands of the instruction
       for(unsigned op=0, E = I->getNumOperands(); op != E; ++op) {
 	const Value *Op = I->getOperand(op);
@@ -83,7 +83,7 @@ llvm::CloneTrace(const std::vector<BasicBlock*> &origTrace) {
       }
     }
   }
-  
+
   //return new vector of basic blocks
   return clonedTrace;
 }

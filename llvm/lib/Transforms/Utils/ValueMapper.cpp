@@ -1,10 +1,10 @@
 //===- ValueMapper.cpp - Interface shared by lib/Transforms/Utils ---------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines the MapValue function, which is shared by various parts of
@@ -23,7 +23,7 @@ using namespace llvm;
 Value *llvm::MapValue(const Value *V, std::map<const Value*, Value*> &VM) {
   Value *&VMSlot = VM[V];
   if (VMSlot) return VMSlot;      // Does it exist in the map yet?
-  
+
   // Global values do not need to be seeded into the ValueMap if they are using
   // the identity mapping.
   if (isa<GlobalValue>(V))

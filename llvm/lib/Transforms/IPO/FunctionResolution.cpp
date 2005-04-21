@@ -1,10 +1,10 @@
 //===- FunctionResolution.cpp - Resolve declarations to implementations ---===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // Loop over the functions that are in the module and look for functions that
@@ -57,7 +57,7 @@ static bool ResolveFunctions(Module &M, std::vector<GlobalValue*> &Globals,
       Function *Old = cast<Function>(Globals[i]);
       const FunctionType *OldMT = Old->getFunctionType();
       const FunctionType *ConcreteMT = Concrete->getFunctionType();
-      
+
       if (OldMT->getNumParams() > ConcreteMT->getNumParams() &&
           !ConcreteMT->isVarArg())
         if (!Old->use_empty()) {
@@ -69,7 +69,7 @@ static bool ResolveFunctions(Module &M, std::vector<GlobalValue*> &Globals,
           WriteAsOperand(std::cerr, Concrete);
           std::cerr << "\n";
         }
-      
+
       // Check to make sure that if there are specified types, that they
       // match...
       //
@@ -79,7 +79,7 @@ static bool ResolveFunctions(Module &M, std::vector<GlobalValue*> &Globals,
       if (!Old->use_empty() && !Concrete->use_empty())
         for (unsigned i = 0; i < NumArguments; ++i)
           if (OldMT->getParamType(i) != ConcreteMT->getParamType(i))
-            if (OldMT->getParamType(i)->getTypeID() != 
+            if (OldMT->getParamType(i)->getTypeID() !=
                 ConcreteMT->getParamType(i)->getTypeID()) {
               std::cerr << "WARNING: Function [" << Old->getName()
                         << "]: Parameter types conflict for: '";
@@ -89,7 +89,7 @@ static bool ResolveFunctions(Module &M, std::vector<GlobalValue*> &Globals,
               std::cerr << "'\n";
               return Changed;
             }
-      
+
       // Attempt to convert all of the uses of the old function to the concrete
       // form of the function.  If there is a use of the fn that we don't
       // understand here we punt to avoid making a bad transformation.
@@ -174,11 +174,11 @@ static bool ProcessGlobalsWithSameName(Module &M, TargetData &TD,
       if (!F->isExternal()) {
         if (Concrete && !Concrete->isExternal())
           return false;   // Found two different functions types.  Can't choose!
-        
+
         Concrete = Globals[i];
       } else if (Concrete) {
         if (Concrete->isExternal()) // If we have multiple external symbols...
-          if (F->getFunctionType()->getNumParams() > 
+          if (F->getFunctionType()->getNumParams() >
               cast<Function>(Concrete)->getFunctionType()->getNumParams())
             Concrete = F;  // We are more concrete than "Concrete"!
 
@@ -213,7 +213,7 @@ static bool ProcessGlobalsWithSameName(Module &M, TargetData &TD,
       else if (!Globals[i]->hasInternalLinkage())
         NumInstancesWithExternalLinkage++;
     }
-    
+
     if (!HasExternal && NumInstancesWithExternalLinkage <= 1)
       return false;  // Nothing to do?  Must have multiple internal definitions.
 
@@ -231,7 +231,7 @@ static bool ProcessGlobalsWithSameName(Module &M, TargetData &TD,
               OtherF->getFunctionType()->isVarArg() &&
               OtherF->getFunctionType()->getNumParams() == 0)
             DontPrintWarning = true;
-      
+
       // Otherwise, if the non-concrete global is a global array variable with a
       // size of 0, and the concrete global is an array with a real size, don't
       // warn.  This occurs due to declaring 'extern int A[];'.

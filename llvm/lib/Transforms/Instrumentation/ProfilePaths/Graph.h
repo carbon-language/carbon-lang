@@ -1,10 +1,10 @@
 //===-- Graph.h -------------------------------------------------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // Header file for Graph: This Graph is used by PathProfiles class, and is used
@@ -58,13 +58,13 @@ public:
     randId=rand();
     isnull=false;
   }
-  
+
   inline Edge(Node *f,Node *s, int wt, double rd){
     first=f;
     second=s;
     weight=wt;
     randId=rd;
-    isnull=false; 
+    isnull=false;
   }
 
   inline Edge() { isnull = true; }
@@ -73,22 +73,22 @@ public:
   inline Node* const getFirst() const { assert(!isNull()); return first; }
   inline Node* getSecond() { assert(!isNull()); return second; }
   inline Node* const getSecond() const { assert(!isNull()); return second; }
-  
+
   inline int getWeight() { assert(!isNull());  return weight; }
   inline void setWeight(int n) { assert(!isNull()); weight=n; }
-  
+
   inline void setFirst(Node *&f) { assert(!isNull());  first=f; }
   inline void setSecond(Node *&s) { assert(!isNull()); second=s; }
-  
-  
-  inline bool isNull() const { return isnull;} 
-  
+
+
+  inline bool isNull() const { return isnull;}
+
   inline bool operator<(const Edge& ed) const{
     // Can't be the same if one is null and the other isn't
     if (isNull() != ed.isNull())
       return true;
 
-    return (*first<*(ed.getFirst()))|| 
+    return (*first<*(ed.getFirst()))||
       (*first==*(ed.getFirst()) && *second<*(ed.getSecond()));
   }
 
@@ -96,19 +96,19 @@ public:
     return !(*this<ed) && !(ed<*this);
   }
 
-  inline bool operator!=(const Edge& ed) const{return !(*this==ed);} 
+  inline bool operator!=(const Edge& ed) const{return !(*this==ed);}
 };
 
 
 //graphListElement
-//This forms the "adjacency list element" of a 
+//This forms the "adjacency list element" of a
 //vertex adjacency list in graph
 struct graphListElement{
   Node *element;
   int weight;
   double randId;
-  inline graphListElement(Node *n, int w, double rand){ 
-    element=n; 
+  inline graphListElement(Node *n, int w, double rand){
+    element=n;
     weight=w;
     randId=rand;
   }
@@ -127,12 +127,12 @@ using namespace llvm;
       return n1->getElement() < n2->getElement();
     }
   };
- 
+
   template<>
   struct less<Edge> : public binary_function<Edge,Edge,bool> {
     bool operator()(Edge e1, Edge e2) const {
       assert(!e1.isNull() && !e2.isNull());
-      
+
       Node *x1=e1.getFirst();
       Node *x2=e1.getSecond();
       Node *y1=e2.getFirst();
@@ -210,7 +210,7 @@ public:
 private:
   //the adjacency list of a vertex or node
   nodeMapTy nodes;
-  
+
   //the start or root node
   Node *strt;
 
@@ -218,7 +218,7 @@ private:
   Node *ext;
 
   //a private method for doing DFS traversal of graph
-  //this is used in determining the reverse topological sort 
+  //this is used in determining the reverse topological sort
   //of the graph
   void DFS_Visit(Node *nd, std::vector<Node *> &toReturn);
 
@@ -232,10 +232,10 @@ private:
   //have been visited
   //So we have a back edge when we meet a successor of
   //a node with smaller time, and GREY color
-  void getBackEdgesVisit(Node *u, 
+  void getBackEdgesVisit(Node *u,
 			 std::vector<Edge > &be,
 			 std::map<Node *, Color> &clr,
-			 std::map<Node *, int> &d, 
+			 std::map<Node *, int> &d,
 			 int &time);
 
 public:
@@ -248,18 +248,18 @@ public:
 
   //empty constructor: then add edges and nodes later on
   Graph() {}
-  
+
   //constructor with root and exit node specified
-  Graph(std::vector<Node*> n, 
+  Graph(std::vector<Node*> n,
 	std::vector<Edge> e, Node *rt, Node *lt);
 
   //add a node
   void addNode(Node *nd);
 
   //add an edge
-  //this adds an edge ONLY when 
+  //this adds an edge ONLY when
   //the edge to be added doesn not already exist
-  //we "equate" two edges here only with their 
+  //we "equate" two edges here only with their
   //end points
   void addEdge(Edge ed, int w);
 
@@ -310,14 +310,14 @@ public:
   //in r-topological sorted order
   //note that we assumed graph to be connected
   std::vector<Node *> reverseTopologicalSort();
-  
+
   //reverse the sign of weights on edges
   //this way, max-spanning tree could be obtained
   //usin min-spanning tree, and vice versa
   void reverseWts();
 
   //Ordinarily, the graph is directional
-  //this converts the graph into an 
+  //this converts the graph into an
   //undirectional graph
   //This is done by adding an edge
   //v->u for all existing edges u->v
@@ -325,31 +325,31 @@ public:
 
   //print graph: for debugging
   void printGraph();
-  
+
   //get a vector of back edges in the graph
   void getBackEdges(std::vector<Edge> &be, std::map<Node *, int> &d);
 
   nodeList &sortNodeList(Node *par, nodeList &nl, std::vector<Edge> &be);
- 
+
   //Get the Maximal spanning tree (also a graph)
   //of the graph
   Graph* getMaxSpanningTree();
-  
+
   //get the nodeList adjacent to a node
-  //a nodeList element contains a node, and the weight 
+  //a nodeList element contains a node, and the weight
   //corresponding to the edge for that element
   inline nodeList &getNodeList(Node *nd) {
     elementIterator nli = nodes.find(nd);
     assert(nli != nodes.end() && "Node must be in nodes map");
     return nodes[nd];//sortNodeList(nd, nli->second);
   }
-   
+
   nodeList &getSortedNodeList(Node *nd, std::vector<Edge> &be) {
     elementIterator nli = nodes.find(nd);
     assert(nli != nodes.end() && "Node must be in nodes map");
     return sortNodeList(nd, nodes[nd], be);
   }
- 
+
   //get the root of the graph
   inline Node *getRoot()                {return strt; }
   inline Node * const getRoot() const   {return strt; }
@@ -365,7 +365,7 @@ public:
   inline bool isLeaf(Node *n)    const  {return (*n==*ext);  }
 };
 
-//This class is used to generate 
+//This class is used to generate
 //"appropriate" code to be inserted
 //along an edge
 //The code to be inserted can be of six different types
@@ -378,13 +378,13 @@ public:
 //6: Count[r]++
 class getEdgeCode{
  private:
-  //cond implies which 
+  //cond implies which
   //"kind" of code is to be inserted
   //(from 1-6 above)
   int cond;
   //inc is the increment: eg k, or 0
   int inc;
-  
+
   //A backedge must carry the code
   //of both incoming "dummy" edge
   //and outgoing "dummy" edge
@@ -420,23 +420,23 @@ public:
 
   //set CdIn (only used for backedges)
   inline void setCdIn(getEdgeCode *gd){ cdIn=gd;}
-  
+
   //set CdOut (only used for backedges)
   inline void setCdOut(getEdgeCode *gd){ cdOut=gd;}
 
   //get the code to be inserted on the edge
   //This is determined from cond (1-6)
-  void getCode(Instruction *a, Value *b, Function *M, BasicBlock *BB, 
+  void getCode(Instruction *a, Value *b, Function *M, BasicBlock *BB,
                std::vector<Value *> &retVec);
 };
 
 
 //auxillary functions on graph
 
-//print a given edge in the form BB1Label->BB2Label 
+//print a given edge in the form BB1Label->BB2Label
 void printEdge(Edge ed);
 
-//Do graph processing: to determine minimal edge increments, 
+//Do graph processing: to determine minimal edge increments,
 //appropriate code insertions etc and insert the code at
 //appropriate locations
 void processGraph(Graph &g, Instruction *rInst, Value *countInst, std::vector<Edge> &be, std::vector<Edge> &stDummy, std::vector<Edge> &exDummy, int n, int MethNo, Value *threshold);
@@ -452,7 +452,7 @@ void insertBB(Edge ed, getEdgeCode *edgeCode, Instruction *rInst, Value *countIn
 
 //Insert the initialization code in the top BB
 //this includes initializing r, and count
-//r is like an accumulator, that 
+//r is like an accumulator, that
 //keeps on adding increments as we traverse along a path
 //and at the end of the path, r contains the path
 //number of that path
@@ -470,7 +470,7 @@ void addDummyEdges(std::vector<Edge> &stDummy, std::vector<Edge> &exDummy, Graph
 //such that if we traverse along any path from root to exit, and
 //add up the edge values, we get a path number that uniquely
 //refers to the path we travelled
-int valueAssignmentToEdges(Graph& g, std::map<Node *, int> nodePriority, 
+int valueAssignmentToEdges(Graph& g, std::map<Node *, int> nodePriority,
                            std::vector<Edge> &be);
 
 void getBBtrace(std::vector<BasicBlock *> &vBB, int pathNo, Function *M);

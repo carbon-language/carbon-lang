@@ -8,7 +8,7 @@ struct X {
 
 void foo() {
   X v;
-  
-TryAgain: 
+
+TryAgain:
   goto TryAgain;
 }

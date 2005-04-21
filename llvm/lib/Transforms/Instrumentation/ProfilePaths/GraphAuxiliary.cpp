@@ -1,10 +1,10 @@
 //===- GraphAuxiliary.cpp - Auxiliary functions on graph ------------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // auxiliary function associated with graph: they all operate on graph, and help
@@ -36,10 +36,10 @@ static void getChords(vector<Edge > &chords, Graph &g, Graph st){
   //make sure the spanning tree is directional
   //iterate over ALL the edges of the graph
   vector<Node *> allNodes=g.getAllNodes();
-  for(vector<Node *>::iterator NI=allNodes.begin(), NE=allNodes.end(); NI!=NE; 
+  for(vector<Node *>::iterator NI=allNodes.begin(), NE=allNodes.end(); NI!=NE;
       ++NI){
     Graph::nodeList node_list=g.getNodeList(*NI);
-    for(Graph::nodeList::iterator NLI=node_list.begin(), NLE=node_list.end(); 
+    for(Graph::nodeList::iterator NLI=node_list.begin(), NLE=node_list.end();
 	NLI!=NLE; ++NLI){
       Edge f(*NI, NLI->element,NLI->weight, NLI->randId);
       if(!(st.hasEdgeAndWt(f)))//addnl
@@ -51,13 +51,13 @@ static void getChords(vector<Edge > &chords, Graph &g, Graph st){
 //Given a tree t, and a "directed graph" g
 //replace the edges in the tree t with edges that exist in graph
 //The tree is formed from "undirectional" copy of graph
-//So whatever edges the tree has, the undirectional graph 
-//would have too. This function corrects some of the directions in 
+//So whatever edges the tree has, the undirectional graph
+//would have too. This function corrects some of the directions in
 //the tree so that now, all edge directions in the tree match
 //the edge directions of corresponding edges in the directed graph
 static void removeTreeEdges(Graph &g, Graph& t){
   vector<Node* > allNodes=t.getAllNodes();
-  for(vector<Node *>::iterator NI=allNodes.begin(), NE=allNodes.end(); NI!=NE; 
+  for(vector<Node *>::iterator NI=allNodes.begin(), NE=allNodes.end(); NI!=NE;
       ++NI){
     Graph::nodeList nl=t.getNodeList(*NI);
     for(Graph::nodeList::iterator NLI=nl.begin(), NLE=nl.end();	NLI!=NLE;++NLI){
@@ -72,11 +72,11 @@ static void removeTreeEdges(Graph &g, Graph& t){
 //such that if we traverse along any path from root to exit, and
 //add up the edge values, we get a path number that uniquely
 //refers to the path we travelled
-int valueAssignmentToEdges(Graph& g,  map<Node *, int> nodePriority, 
+int valueAssignmentToEdges(Graph& g,  map<Node *, int> nodePriority,
                            vector<Edge> &be){
   vector<Node *> revtop=g.reverseTopologicalSort();
   map<Node *,int > NumPaths;
-  for(vector<Node *>::iterator RI=revtop.begin(), RE=revtop.end(); 
+  for(vector<Node *>::iterator RI=revtop.begin(), RE=revtop.end();
       RI!=RE; ++RI){
     if(g.isLeaf(*RI))
       NumPaths[*RI]=1;
@@ -87,47 +87,47 @@ int valueAssignmentToEdges(Graph& g,  map<Node *, int> nodePriority,
       Graph::nodeList &nlist=g.getSortedNodeList(*RI, be);
 
       //sort nodelist by increasing order of numpaths
-      
+
       int sz=nlist.size();
-      
+
       for(int i=0;i<sz-1; i++){
 	int min=i;
 	for(int j=i+1; j<sz; j++){
           BasicBlock *bb1 = nlist[j].element->getElement();
           BasicBlock *bb2 = nlist[min].element->getElement();
-          
+
           if(bb1 == bb2) continue;
-          
+
           if(*RI == g.getRoot()){
-            assert(nodePriority[nlist[min].element]!= 
-                   nodePriority[nlist[j].element] 
+            assert(nodePriority[nlist[min].element]!=
+                   nodePriority[nlist[j].element]
                    && "priorities can't be same!");
-            
-            if(nodePriority[nlist[j].element] < 
+
+            if(nodePriority[nlist[j].element] <
                nodePriority[nlist[min].element])
-              min = j; 
+              min = j;
           }
 
           else{
             TerminatorInst *tti = (*RI)->getElement()->getTerminator();
-            
+
             BranchInst *ti =  cast<BranchInst>(tti);
             assert(ti && "not a branch");
             assert(ti->getNumSuccessors()==2 && "less successors!");
-            
+
             BasicBlock *tB = ti->getSuccessor(0);
             BasicBlock *fB = ti->getSuccessor(1);
-            
+
             if(tB == bb1 || fB == bb2)
               min = j;
           }
-          
+
         }
 	graphListElement tempEl=nlist[min];
 	nlist[min]=nlist[i];
 	nlist[i]=tempEl;
       }
-      
+
       //sorted now!
       for(Graph::nodeList::iterator GLI=nlist.begin(), GLE=nlist.end();
 	  GLI!=GLE; ++GLI){
@@ -148,35 +148,35 @@ int valueAssignmentToEdges(Graph& g,  map<Node *, int> nodePriority,
 //refers to the path we travelled
 //inc_Dir tells whether 2 edges are in same, or in different directions
 //if same direction, return 1, else -1
-static int inc_Dir(Edge e, Edge f){ 
- if(e.isNull()) 
+static int inc_Dir(Edge e, Edge f){
+ if(e.isNull())
     return 1;
- 
+
  //check that the edges must have at least one common endpoint
   assert(*(e.getFirst())==*(f.getFirst()) ||
-	 *(e.getFirst())==*(f.getSecond()) || 
+	 *(e.getFirst())==*(f.getSecond()) ||
 	 *(e.getSecond())==*(f.getFirst()) ||
 	 *(e.getSecond())==*(f.getSecond()));
 
-  if(*(e.getFirst())==*(f.getSecond()) || 
+  if(*(e.getFirst())==*(f.getSecond()) ||
      *(e.getSecond())==*(f.getFirst()))
     return 1;
-  
+
   return -1;
 }
 
 
 //used for getting edge increments (read comments above in inc_Dir)
-//inc_DFS is a modification of DFS 
-static void inc_DFS(Graph& g,Graph& t,map<Edge, int, EdgeCompare2>& Increment, 
+//inc_DFS is a modification of DFS
+static void inc_DFS(Graph& g,Graph& t,map<Edge, int, EdgeCompare2>& Increment,
 	     int events, Node *v, Edge e){
-  
+
   vector<Node *> allNodes=t.getAllNodes();
 
-  for(vector<Node *>::iterator NI=allNodes.begin(), NE=allNodes.end(); NI!=NE; 
+  for(vector<Node *>::iterator NI=allNodes.begin(), NE=allNodes.end(); NI!=NE;
       ++NI){
     Graph::nodeList node_list=t.getNodeList(*NI);
-    for(Graph::nodeList::iterator NLI=node_list.begin(), NLE=node_list.end(); 
+    for(Graph::nodeList::iterator NLI=node_list.begin(), NLE=node_list.end();
 	NLI!= NLE; ++NLI){
       Edge f(*NI, NLI->element,NLI->weight, NLI->randId);
       if(!edgesEqual(f,e) && *v==*(f.getSecond())){
@@ -187,29 +187,29 @@ static void inc_DFS(Graph& g,Graph& t,map<Edge, int, EdgeCompare2>& Increment,
     }
   }
 
-  for(vector<Node *>::iterator NI=allNodes.begin(), NE=allNodes.end(); NI!=NE; 
+  for(vector<Node *>::iterator NI=allNodes.begin(), NE=allNodes.end(); NI!=NE;
       ++NI){
     Graph::nodeList node_list=t.getNodeList(*NI);
-    for(Graph::nodeList::iterator NLI=node_list.begin(), NLE=node_list.end(); 
+    for(Graph::nodeList::iterator NLI=node_list.begin(), NLE=node_list.end();
 	NLI!=NLE; ++NLI){
       Edge f(*NI, NLI->element,NLI->weight, NLI->randId);
       if(!edgesEqual(f,e) && *v==*(f.getFirst())){
       	int dir_count=inc_Dir(e,f);
 	int wt=f.getWeight();
-	inc_DFS(g,t, Increment, dir_count*events+wt, 
+	inc_DFS(g,t, Increment, dir_count*events+wt,
 		f.getSecond(), f);
       }
     }
   }
 
   allNodes=g.getAllNodes();
-  for(vector<Node *>::iterator NI=allNodes.begin(), NE=allNodes.end(); NI!=NE; 
+  for(vector<Node *>::iterator NI=allNodes.begin(), NE=allNodes.end(); NI!=NE;
       ++NI){
     Graph::nodeList node_list=g.getNodeList(*NI);
-    for(Graph::nodeList::iterator NLI=node_list.begin(), NLE=node_list.end(); 
+    for(Graph::nodeList::iterator NLI=node_list.begin(), NLE=node_list.end();
 	NLI!=NLE; ++NLI){
       Edge f(*NI, NLI->element,NLI->weight, NLI->randId);
-      if(!(t.hasEdgeAndWt(f)) && (*v==*(f.getSecond()) || 
+      if(!(t.hasEdgeAndWt(f)) && (*v==*(f.getSecond()) ||
 				  *v==*(f.getFirst()))){
 	int dir_count=inc_Dir(e,f);
 	Increment[f]+=dir_count*events;
@@ -219,21 +219,21 @@ static void inc_DFS(Graph& g,Graph& t,map<Edge, int, EdgeCompare2>& Increment,
 }
 
 //Now we select a subset of all edges
-//and assign them some values such that 
+//and assign them some values such that
 //if we consider just this subset, it still represents
 //the path sum along any path in the graph
-static map<Edge, int, EdgeCompare2> getEdgeIncrements(Graph& g, Graph& t, 
+static map<Edge, int, EdgeCompare2> getEdgeIncrements(Graph& g, Graph& t,
                                                       vector<Edge> &be){
   //get all edges in g-t
   map<Edge, int, EdgeCompare2> Increment;
 
   vector<Node *> allNodes=g.getAllNodes();
- 
-  for(vector<Node *>::iterator NI=allNodes.begin(), NE=allNodes.end(); NI!=NE; 
+
+  for(vector<Node *>::iterator NI=allNodes.begin(), NE=allNodes.end(); NI!=NE;
       ++NI){
     Graph::nodeList node_list=g.getSortedNodeList(*NI, be);
     //modified g.getNodeList(*NI);
-    for(Graph::nodeList::iterator NLI=node_list.begin(), NLE=node_list.end(); 
+    for(Graph::nodeList::iterator NLI=node_list.begin(), NLE=node_list.end();
 	NLI!=NLE; ++NLI){
       Edge ed(*NI, NLI->element,NLI->weight,NLI->randId);
       if(!(t.hasEdgeAndWt(ed))){
@@ -245,11 +245,11 @@ static map<Edge, int, EdgeCompare2> getEdgeIncrements(Graph& g, Graph& t,
   Edge *ed=new Edge();
   inc_DFS(g,t,Increment, 0, g.getRoot(), *ed);
 
-  for(vector<Node *>::iterator NI=allNodes.begin(), NE=allNodes.end(); NI!=NE; 
+  for(vector<Node *>::iterator NI=allNodes.begin(), NE=allNodes.end(); NI!=NE;
       ++NI){
     Graph::nodeList node_list=g.getSortedNodeList(*NI, be);
     //modified g.getNodeList(*NI);
-    for(Graph::nodeList::iterator NLI=node_list.begin(), NLE=node_list.end(); 
+    for(Graph::nodeList::iterator NLI=node_list.begin(), NLE=node_list.end();
 	NLI!=NLE; ++NLI){
       Edge ed(*NI, NLI->element,NLI->weight, NLI->randId);
       if(!(t.hasEdgeAndWt(ed))){
@@ -274,7 +274,7 @@ graphListElement *findNodeInList(Graph::nodeList &NL, Node *N);
 //The idea here is to minimize the computation
 //by inserting only the needed code
 static void getCodeInsertions(Graph &g, map<Edge, getEdgeCode *, EdgeCompare2> &instr,
-                              vector<Edge > &chords, 
+                              vector<Edge > &chords,
                               map<Edge,int, EdgeCompare2> &edIncrements){
 
   //Register initialization code
@@ -285,7 +285,7 @@ static void getCodeInsertions(Graph &g, map<Edge, getEdgeCode *, EdgeCompare2> &
     ws.pop_back();
     //for each edge v->w
     Graph::nodeList succs=g.getNodeList(v);
-    
+
     for(Graph::nodeList::iterator nl=succs.begin(), ne=succs.end();
 	nl!=ne; ++nl){
       int edgeWt=nl->weight;
@@ -320,7 +320,7 @@ static void getCodeInsertions(Graph &g, map<Edge, getEdgeCode *, EdgeCompare2> &
 
   /////Memory increment code
   ws.push_back(g.getExit());
-  
+
   while(!ws.empty()) {
     Node *w=ws.back();
     ws.pop_back();
@@ -333,11 +333,11 @@ static void getCodeInsertions(Graph &g, map<Edge, getEdgeCode *, EdgeCompare2> &
       Node *lnode=*EII;
       Graph::nodeList &nl = g.getNodeList(lnode);
       //graphListElement *N = findNodeInList(nl, w);
-      for(Graph::nodeList::const_iterator N = nl.begin(), 
+      for(Graph::nodeList::const_iterator N = nl.begin(),
             NNEN = nl.end(); N!= NNEN; ++N){
         if (*N->element == *w){	
           Node *v=lnode;
-          
+
           //if chords has v->w
           Edge ed(v,w, N->weight, N->randId);
           getEdgeCode *edCd=new getEdgeCode();
@@ -359,7 +359,7 @@ static void getCodeInsertions(Graph &g, map<Edge, getEdgeCode *, EdgeCompare2> &
               edCd->setInc(edIncrements[ed]);
               instr[ed]=edCd;
             }
-            
+
           }
           else if(g.getNumberOfOutgoingEdges(v)==1)
             ws.push_back(v);
@@ -387,8 +387,8 @@ static void getCodeInsertions(Graph &g, map<Edge, getEdgeCode *, EdgeCompare2> &
 //then incoming dummy edge is root->b
 //and outgoing dummy edge is a->exit
 //changed
-void addDummyEdges(vector<Edge > &stDummy, 
-		   vector<Edge > &exDummy, 
+void addDummyEdges(vector<Edge > &stDummy,
+		   vector<Edge > &exDummy,
 		   Graph &g, vector<Edge> &be){
   for(vector<Edge >::iterator VI=be.begin(), VE=be.end(); VI!=VE; ++VI){
     Edge ed=*VI;
@@ -420,17 +420,17 @@ void printEdge(Edge ed){
 
 //Move the incoming dummy edge code and outgoing dummy
 //edge code over to the corresponding back edge
-static void moveDummyCode(vector<Edge> &stDummy, 
-                          vector<Edge> &exDummy, 
-                          vector<Edge> &be,  
-                          map<Edge, getEdgeCode *, EdgeCompare2> &insertions, 
+static void moveDummyCode(vector<Edge> &stDummy,
+                          vector<Edge> &exDummy,
+                          vector<Edge> &be,
+                          map<Edge, getEdgeCode *, EdgeCompare2> &insertions,
 			  Graph &g){
   typedef vector<Edge >::iterator vec_iter;
-  
+
   map<Edge,getEdgeCode *, EdgeCompare2> temp;
   //iterate over edges with code
   std::vector<Edge> toErase;
-  for(map<Edge,getEdgeCode *, EdgeCompare2>::iterator MI=insertions.begin(), 
+  for(map<Edge,getEdgeCode *, EdgeCompare2>::iterator MI=insertions.begin(),
 	ME=insertions.end(); MI!=ME; ++MI){
     Edge ed=MI->first;
     getEdgeCode *edCd=MI->second;
@@ -462,18 +462,18 @@ static void moveDummyCode(vector<Edge> &stDummy,
       }
     }
   }
-  
-  for(vector<Edge >::iterator vmi=toErase.begin(), vme=toErase.end(); vmi!=vme; 
+
+  for(vector<Edge >::iterator vmi=toErase.begin(), vme=toErase.end(); vmi!=vme;
       ++vmi){
     insertions.erase(*vmi);
     g.removeEdgeWithWt(*vmi);
   }
-  
-  for(map<Edge,getEdgeCode *, EdgeCompare2>::iterator MI=temp.begin(), 
+
+  for(map<Edge,getEdgeCode *, EdgeCompare2>::iterator MI=temp.begin(),
       ME=temp.end(); MI!=ME; ++MI){
     insertions[MI->first]=MI->second;
   }
-    
+
 #ifdef DEBUG_PATH_PROFILES
   cerr<<"size of deletions: "<<toErase.size()<<"\n";
   cerr<<"SIZE OF INSERTIONS AFTER DEL "<<insertions.size()<<"\n";
@@ -481,16 +481,16 @@ static void moveDummyCode(vector<Edge> &stDummy,
 
 }
 
-//Do graph processing: to determine minimal edge increments, 
+//Do graph processing: to determine minimal edge increments,
 //appropriate code insertions etc and insert the code at
 //appropriate locations
-void processGraph(Graph &g, 
-		  Instruction *rInst, 
-		  Value *countInst, 
-		  vector<Edge >& be, 
-		  vector<Edge >& stDummy, 
-		  vector<Edge >& exDummy, 
-		  int numPaths, int MethNo, 
+void processGraph(Graph &g,
+		  Instruction *rInst,
+		  Value *countInst,
+		  vector<Edge >& be,
+		  vector<Edge >& stDummy,
+		  vector<Edge >& exDummy,
+		  int numPaths, int MethNo,
                   Value *threshold){
 
   //Given a graph: with exit->root edge, do the following in seq:
@@ -505,11 +505,11 @@ void processGraph(Graph &g,
   //5. Get edge increments
   //6. Get code insertions
   //7. move code on dummy edges over to the back edges
-  
 
-  //This is used as maximum "weight" for 
+
+  //This is used as maximum "weight" for
   //priority queue
-  //This would hold all 
+  //This would hold all
   //right as long as number of paths in the graph
   //is less than this
   const int Infinity=99999999;
@@ -524,7 +524,7 @@ void processGraph(Graph &g,
   //if its there earlier, remove it!
   //assign it weight Infinity
   //so that this edge IS ALWAYS IN spanning tree
-  //Note than edges in spanning tree do not get 
+  //Note than edges in spanning tree do not get
   //instrumented: and we do not want the
   //edge exit->root to get instrumented
   //as it MAY BE a dummy edge
@@ -544,13 +544,13 @@ void processGraph(Graph &g,
 #endif
   //now edges of tree t have weights reversed
   //(negative) because the algorithm used
-  //to find max spanning tree is 
+  //to find max spanning tree is
   //actually for finding min spanning tree
   //so get back the original weights
   t->reverseWts();
 
   //Ordinarily, the graph is directional
-  //lets converts the graph into an 
+  //lets converts the graph into an
   //undirectional graph
   //This is done by adding an edge
   //v->u for all existing edges u->v
@@ -559,8 +559,8 @@ void processGraph(Graph &g,
   //Given a tree t, and a "directed graph" g
   //replace the edges in the tree t with edges that exist in graph
   //The tree is formed from "undirectional" copy of graph
-  //So whatever edges the tree has, the undirectional graph 
-  //would have too. This function corrects some of the directions in 
+  //So whatever edges the tree has, the undirectional graph
+  //would have too. This function corrects some of the directions in
   //the tree so that now, all edge directions in the tree match
   //the edge directions of corresponding edges in the directed graph
   removeTreeEdges(g, *t);
@@ -588,7 +588,7 @@ void processGraph(Graph &g,
   //step 5: Get edge increments
 
   //Now we select a subset of all edges
-  //and assign them some values such that 
+  //and assign them some values such that
   //if we consider just this subset, it still represents
   //the path sum along any path in the graph
 
@@ -603,9 +603,9 @@ void processGraph(Graph &g,
   std::cerr<<"-------end of edge increments\n";
 #endif
 
- 
+
   //step 6: Get code insertions
-  
+
   //Based on edgeIncrements (above), now obtain
   //the kind of code to be inserted along an edge
   //The idea here is to minimize the computation
@@ -616,11 +616,11 @@ void processGraph(Graph &g,
 
   map<Edge, getEdgeCode *, EdgeCompare2> codeInsertions;
   getCodeInsertions(g, codeInsertions, chords,increment);
-  
+
 #ifdef DEBUG_PATH_PROFILES
   //print edges with code for debugging
   cerr<<"Code inserted in following---------------\n";
-  for(map<Edge, getEdgeCode *, EdgeCompare2>::iterator cd_i=codeInsertions.begin(), 
+  for(map<Edge, getEdgeCode *, EdgeCompare2>::iterator cd_i=codeInsertions.begin(),
 	cd_e=codeInsertions.end(); cd_i!=cd_e; ++cd_i){
     printEdge(cd_i->first);
     cerr<<cd_i->second->getCond()<<":"<<cd_i->second->getInc()<<"\n";
@@ -634,11 +634,11 @@ void processGraph(Graph &g,
   //edge code over to the corresponding back edge
 
   moveDummyCode(stDummy, exDummy, be, codeInsertions, g);
-  
+
 #ifdef DEBUG_PATH_PROFILES
   //debugging info
   cerr<<"After moving dummy code\n";
-  for(map<Edge, getEdgeCode *,EdgeCompare2>::iterator cd_i=codeInsertions.begin(), 
+  for(map<Edge, getEdgeCode *,EdgeCompare2>::iterator cd_i=codeInsertions.begin(),
 	cd_e=codeInsertions.end(); cd_i != cd_e; ++cd_i){
     printEdge(cd_i->first);
     cerr<<cd_i->second->getCond()<<":"
@@ -650,22 +650,22 @@ void processGraph(Graph &g,
 
   //see what it looks like...
   //now insert code along edges which have codes on them
-  for(map<Edge, getEdgeCode *,EdgeCompare2>::iterator MI=codeInsertions.begin(), 
+  for(map<Edge, getEdgeCode *,EdgeCompare2>::iterator MI=codeInsertions.begin(),
 	ME=codeInsertions.end(); MI!=ME; ++MI){
     Edge ed=MI->first;
     insertBB(ed, MI->second, rInst, countInst, numPaths, MethNo, threshold);
-  } 
+  }
 }
 
 //print the graph (for debugging)
 void printGraph(Graph &g){
   vector<Node *> lt=g.getAllNodes();
   cerr<<"Graph---------------------\n";
-  for(vector<Node *>::iterator LI=lt.begin(); 
+  for(vector<Node *>::iterator LI=lt.begin();
       LI!=lt.end(); ++LI){
     cerr<<((*LI)->getElement())->getName()<<"->";
     Graph::nodeList nl=g.getNodeList(*LI);
-    for(Graph::nodeList::iterator NI=nl.begin(); 
+    for(Graph::nodeList::iterator NI=nl.begin();
 	NI!=nl.end(); ++NI){
       cerr<<":"<<"("<<(NI->element->getElement())
 	->getName()<<":"<<NI->element->getWeight()<<","<<NI->weight<<","

@@ -1,10 +1,10 @@
 //===- Mem2Reg.cpp - The -mem2reg pass, a wrapper around the Utils lib ----===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This pass is a simple pass wrapper around the PromoteMemToReg function call
@@ -53,7 +53,7 @@ bool PromotePass::runOnFunction(Function &F) {
 
   DominatorTree     &DT = getAnalysis<DominatorTree>();
   DominanceFrontier &DF = getAnalysis<DominanceFrontier>();
-  
+
   while (1) {
     Allocas.clear();
 

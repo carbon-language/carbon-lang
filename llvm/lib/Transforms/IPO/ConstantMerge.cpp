@@ -1,10 +1,10 @@
 //===- ConstantMerge.cpp - Merge duplicate global constants ---------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines the interface to a pass that merges duplicate global
@@ -60,10 +60,10 @@ bool ConstantMerge::runOnModule(Module &M) {
       // Only process constants with initializers
       if (GV->isConstant() && GV->hasInitializer()) {
         Constant *Init = GV->getInitializer();
-        
+
         // Check to see if the initializer is already known...
         std::map<Constant*, GlobalVariable*>::iterator I = CMap.find(Init);
-        
+
         if (I == CMap.end()) {    // Nope, add it to the map
           CMap.insert(I, std::make_pair(Init, GV));
         } else if (GV->hasInternalLinkage()) {    // Yup, this is a duplicate!
@@ -75,22 +75,22 @@ bool ConstantMerge::runOnModule(Module &M) {
           I->second = GV;
         }
       }
-    
+
     if (Replacements.empty())
       return MadeChange;
     CMap.clear();
-    
+
     // Now that we have figured out which replacements must be made, do them all
     // now.  This avoid invalidating the pointers in CMap, which are unneeded
     // now.
     for (unsigned i = 0, e = Replacements.size(); i != e; ++i) {
       // Eliminate any uses of the dead global...
       Replacements[i].first->replaceAllUsesWith(Replacements[i].second);
-      
+
       // Delete the global value from the module...
       M.getGlobalList().erase(Replacements[i].first);
     }
-    
+
     NumMerged += Replacements.size();
     Replacements.clear();
   }

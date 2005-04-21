@@ -1,10 +1,10 @@
 //===- ConstantProp.cpp - Code to perform Simple Constant Propagation -----===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements constant propagation and merging:
@@ -66,7 +66,7 @@ bool ConstantPropagation::runOnFunction(Function &F) {
         for (Value::use_iterator UI = I->use_begin(), UE = I->use_end();
              UI != UE; ++UI)
           WorkList.insert(cast<Instruction>(*UI));
-        
+
         // Replace all of the uses of a variable with uses of the constant.
         I->replaceAllUsesWith(C);
 

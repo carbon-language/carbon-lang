@@ -1,10 +1,10 @@
 //===- SimplifyCFG.cpp - Code to perform CFG simplification ---------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // Peephole optimize the CFG.
@@ -81,7 +81,7 @@ static bool PropagatePredecessorsForPHIs(BasicBlock *BB, BasicBlock *Succ) {
         PN->addIncoming(OldValPN->getIncomingValue(i),
                         OldValPN->getIncomingBlock(i));
     } else {
-      for (std::vector<BasicBlock*>::const_iterator PredI = BBPreds.begin(), 
+      for (std::vector<BasicBlock*>::const_iterator PredI = BBPreds.begin(),
              End = BBPreds.end(); PredI != End; ++PredI) {
         // Add an incoming value for each of the new incoming values...
         PN->addIncoming(OldVal, *PredI);
@@ -97,7 +97,7 @@ static bool PropagatePredecessorsForPHIs(BasicBlock *BB, BasicBlock *Succ) {
 /// which entry into BB will be taken.  Also, return by references the block
 /// that will be entered from if the condition is true, and the block that will
 /// be entered if the condition is false.
-/// 
+///
 ///
 static Value *GetIfCondition(BasicBlock *BB,
                              BasicBlock *&IfTrue, BasicBlock *&IfFalse) {
@@ -240,7 +240,7 @@ static bool DominatesMergePoint(Value *V, BasicBlock *BB,
       case Instruction::SetGE:
         break;   // These are all cheap and non-trapping instructions.
       }
-      
+
       // Okay, we can only really hoist these out if their operands are not
       // defined in the conditional region.
       for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
@@ -317,7 +317,7 @@ static bool GatherValueComparisons(Instruction *Cond, Value *&CompVal,
     return true;
   } else if (Cond->getOpcode() == Instruction::And) {
     CompVal = GatherConstantSetNEs(Cond, Values);
-        
+
     // Return false to indicate that the condition is false if the CompVal is
     // equal to one of the constants.
     return false;
@@ -360,7 +360,7 @@ static bool SafeToMergeTerminators(TerminatorInst *SI1, TerminatorInst *SI2) {
             PN->getIncomingValueForBlock(SI2BB))
           return false;
       }
-        
+
   return true;
 }
 
@@ -397,7 +397,7 @@ static Value *isValueEqualityComparison(TerminatorInst *TI) {
     if (BI->isConditional() && BI->getCondition()->hasOneUse())
       if (SetCondInst *SCI = dyn_cast<SetCondInst>(BI->getCondition()))
         if ((SCI->getOpcode() == Instruction::SetEQ ||
-             SCI->getOpcode() == Instruction::SetNE) && 
+             SCI->getOpcode() == Instruction::SetNE) &&
             isa<ConstantInt>(SCI->getOperand(1)))
           return SCI->getOperand(0);
   return 0;
@@ -406,7 +406,7 @@ static Value *isValueEqualityComparison(TerminatorInst *TI) {
 // Given a value comparison instruction, decode all of the 'cases' that it
 // represents and return the 'default' block.
 static BasicBlock *
-GetValueEqualityComparisonCases(TerminatorInst *TI, 
+GetValueEqualityComparisonCases(TerminatorInst *TI,
                                 std::vector<std::pair<ConstantInt*,
                                                       BasicBlock*> > &Cases) {
   if (SwitchInst *SI = dyn_cast<SwitchInst>(TI)) {
@@ -427,7 +427,7 @@ GetValueEqualityComparisonCases(TerminatorInst *TI,
 
 // EliminateBlockCases - Given an vector of bb/value pairs, remove any entries
 // in the list that match the specified block.
-static void EliminateBlockCases(BasicBlock *BB, 
+static void EliminateBlockCases(BasicBlock *BB,
                std::vector<std::pair<ConstantInt*, BasicBlock*> > &Cases) {
   for (unsigned i = 0, e = Cases.size(); i != e; ++i)
     if (Cases[i].second == BB) {
@@ -491,7 +491,7 @@ static bool SimplifyEqualityComparisonWithOnlyPredecessor(TerminatorInst *TI,
   BasicBlock *PredDef = GetValueEqualityComparisonCases(Pred->getTerminator(),
                                                         PredCases);
   EliminateBlockCases(PredDef, PredCases);  // Remove default from cases.
-  
+
   // Find information about how control leaves this block.
   std::vector<std::pair<ConstantInt*, BasicBlock*> > ThisCases;
   BasicBlock *ThisDef = GetValueEqualityComparisonCases(TI, ThisCases);
@@ -608,7 +608,7 @@ static bool FoldValueComparisonIntoPredecessors(TerminatorInst *TI) {
   while (!Preds.empty()) {
     BasicBlock *Pred = Preds.back();
     Preds.pop_back();
-    
+
     // See if the predecessor is a comparison with the same value.
     TerminatorInst *PTI = Pred->getTerminator();
     Value *PCV = isValueEqualityComparison(PTI);  // PredCondVal
@@ -719,7 +719,7 @@ static bool FoldValueComparisonIntoPredecessors(TerminatorInst *TI) {
           }
           NewSI->setSuccessor(i, InfLoopBlock);
         }
-          
+
       Changed = true;
     }
   }
@@ -750,7 +750,7 @@ static bool HoistThenElseCodeToIf(BranchInst *BI) {
     // broken BB), instead clone it, and remove BI.
     if (isa<TerminatorInst>(I1))
       goto HoistTerminator;
-   
+
     // For a normal instruction, we just move one to right before the branch,
     // then replace all uses of the other with the first.  Finally, we remove
     // the now redundant second instruction.
@@ -758,7 +758,7 @@ static bool HoistThenElseCodeToIf(BranchInst *BI) {
     if (!I2->use_empty())
       I2->replaceAllUsesWith(I1);
     BB2->getInstList().erase(I2);
-    
+
     I1 = BB1->begin();
     I2 = BB2->begin();
   } while (I1->getOpcode() == I2->getOpcode() && I1->isIdenticalTo(I2));
@@ -804,7 +804,7 @@ HoistTerminator:
   // Update any PHI nodes in our new successors.
   for (succ_iterator SI = succ_begin(BB1), E = succ_end(BB1); SI != E; ++SI)
     AddPredecessorToBlock(*SI, BIParent, BB1);
-  
+
   BI->eraseFromParent();
   return true;
 }
@@ -850,13 +850,13 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
       Instruction &I = BB->back();
       // If this instruction is used, replace uses with an arbitrary
       // constant value.  Because control flow can't get here, we don't care
-      // what we replace the value with.  Note that since this block is 
+      // what we replace the value with.  Note that since this block is
       // unreachable, and all values contained within it must dominate their
       // uses, that all uses will eventually be removed.
-      if (!I.use_empty()) 
+      if (!I.use_empty())
         // Make all users of this instruction reference the constant instead
         I.replaceAllUsesWith(Constant::getNullValue(I.getType()));
-      
+
       // Remove the instruction from the basic block
       BB->getInstList().pop_back();
     }
@@ -886,11 +886,11 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
       //
       if (!PropagatePredecessorsForPHIs(BB, Succ)) {
         DEBUG(std::cerr << "Killing Trivial BB: \n" << *BB);
-        
+
         if (isa<PHINode>(&BB->front())) {
           std::vector<BasicBlock*>
             OldSuccPreds(pred_begin(Succ), pred_end(Succ));
-        
+
           // Move all PHI nodes in BB to Succ if they are alive, otherwise
           // delete them.
           while (PHINode *PN = dyn_cast<PHINode>(&BB->front()))
@@ -903,7 +903,7 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
               // strictly dominated Succ.
               BB->getInstList().remove(BB->begin());
               Succ->getInstList().push_front(PN);
-              
+
               // We need to add new entries for the PHI node to account for
               // predecessors of Succ that the PHI node does not take into
               // account.  At this point, since we know that BB dominated succ,
@@ -915,7 +915,7 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
                   PN->addIncoming(PN, OldSuccPreds[i]);
             }
         }
-        
+
         // Everything that jumped to BB now goes to Succ.
         std::string OldName = BB->getName();
         BB->replaceAllUsesWith(Succ);
@@ -948,7 +948,7 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
           else
             CondBranchPreds.push_back(BI);
       }
-      
+
       // If we found some, do the transformation!
       if (!UncondBranchPreds.empty()) {
         while (!UncondBranchPreds.empty()) {
@@ -1061,7 +1061,7 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
           // is now a fall through...
           BranchInst *BI = new BranchInst(II->getNormalDest(), II);
           Pred->getInstList().remove(II);   // Take out of symbol table
-          
+
           // Insert the call now...
           std::vector<Value*> Args(II->op_begin()+3, II->op_end());
           CallInst *CI = new CallInst(II->getCalledValue(), Args,
@@ -1071,7 +1071,7 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
           delete II;
           Changed = true;
         }
-      
+
       Preds.pop_back();
     }
 
@@ -1153,7 +1153,7 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
                   Instruction::BinaryOps Opcode =
                     PBI->getSuccessor(0) == TrueDest ?
                     Instruction::Or : Instruction::And;
-                  Value *NewCond = 
+                  Value *NewCond =
                     BinaryOperator::create(Opcode, PBI->getCondition(),
                                            New, "bothcond", PBI);
                   PBI->setCondition(NewCond);
@@ -1179,7 +1179,7 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
           OnlyPred = 0;       // There are multiple different predecessors...
           break;
         }
-      
+
       if (OnlyPred)
         if (BranchInst *PBI = dyn_cast<BranchInst>(OnlyPred->getTerminator()))
           if (PBI->isConditional() &&
@@ -1275,7 +1275,7 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
             // place to note that the call does not throw though.
             BranchInst *BI = new BranchInst(II->getNormalDest(), II);
             II->removeFromParent();   // Take out of symbol table
-          
+
             // Insert the call now...
             std::vector<Value*> Args(II->op_begin()+3, II->op_end());
             CallInst *CI = new CallInst(II->getCalledValue(), Args,
@@ -1339,23 +1339,23 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
 
     // Delete the unconditional branch from the predecessor...
     OnlyPred->getInstList().pop_back();
-      
+
     // Move all definitions in the successor to the predecessor...
     OnlyPred->getInstList().splice(OnlyPred->end(), BB->getInstList());
-                                     
+
     // Make all PHI nodes that referred to BB now refer to Pred as their
     // source...
     BB->replaceAllUsesWith(OnlyPred);
 
     std::string OldName = BB->getName();
 
-    // Erase basic block from the function... 
+    // Erase basic block from the function...
     M->getBasicBlockList().erase(BB);
 
     // Inherit predecessors name if it exists...
     if (!OldName.empty() && !OnlyPred->hasName())
       OnlyPred->setName(OldName);
-      
+
     return true;
   }
 
@@ -1393,19 +1393,19 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
           // instruction can't handle, remove them now.
           std::sort(Values.begin(), Values.end(), ConstantIntOrdering());
           Values.erase(std::unique(Values.begin(), Values.end()), Values.end());
-          
+
           // Figure out which block is which destination.
           BasicBlock *DefaultBB = BI->getSuccessor(1);
           BasicBlock *EdgeBB    = BI->getSuccessor(0);
           if (!TrueWhenEqual) std::swap(DefaultBB, EdgeBB);
-          
+
           // Create the new switch instruction now.
           SwitchInst *New = new SwitchInst(CompVal, DefaultBB,Values.size(),BI);
-          
+
           // Add all of the 'cases' to the switch instruction.
           for (unsigned i = 0, e = Values.size(); i != e; ++i)
             New->addCase(Values[i], EdgeBB);
-          
+
           // We added edges from PI to the EdgeBB.  As such, if there were any
           // PHI nodes in EdgeBB, they need entries to be added corresponding to
           // the number of edges added.
@@ -1489,7 +1489,7 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
           }
 
           Pred = PN->getIncomingBlock(1);
-          if (CanPromote && 
+          if (CanPromote &&
               cast<BranchInst>(Pred->getTerminator())->isUnconditional()) {
             IfBlock2 = Pred;
             DomBlock = *pred_begin(Pred);
@@ -1539,6 +1539,6 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
         }
       }
     }
-  
+
   return Changed;
 }

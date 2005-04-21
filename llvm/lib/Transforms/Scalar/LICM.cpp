@@ -1,10 +1,10 @@
 //===-- LICM.cpp - Loop Invariant Code Motion Pass ------------------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This pass performs loop invariant code motion, attempting to remove as much
@@ -89,7 +89,7 @@ namespace {
     Loop *CurLoop;           // The current loop we are working on...
     AliasSetTracker *CurAST; // AliasSet information for the current loop...
 
-    /// visitLoop - Hoist expressions out of the specified loop...    
+    /// visitLoop - Hoist expressions out of the specified loop...
     ///
     void visitLoop(Loop *L, AliasSetTracker &AST);
 
@@ -131,21 +131,21 @@ namespace {
       BasicBlock *LoopHeader = CurLoop->getHeader();
       if (BlockInLoop == LoopHeader)
         return true;
-      
+
       DominatorTree::Node *BlockInLoopNode = DT->getNode(BlockInLoop);
       DominatorTree::Node *IDom            = DT->getNode(ExitBlock);
-    
+
       // Because the exit block is not in the loop, we know we have to get _at
       // least_ its immediate dominator.
       do {
         // Get next Immediate Dominator.
         IDom = IDom->getIDom();
-        
+
         // If we have got to the header of the loop, then the instructions block
         // did not dominate the exit node, so we can't hoist it.
         if (IDom->getBlock() == LoopHeader)
           return false;
-        
+
       } while (IDom != BlockInLoopNode);
 
       return true;
@@ -170,7 +170,7 @@ namespace {
 
     /// pointerInvalidatedByLoop - Return true if the body of this loop may
     /// store into the memory location pointed to by V.
-    /// 
+    ///
     bool pointerInvalidatedByLoop(Value *V, unsigned Size) {
       // Check to see if any of the basic blocks in CurLoop invalidate *V.
       return CurAST->getAliasSetForPointer(V, Size).isMod();
@@ -222,7 +222,7 @@ bool LICM::runOnFunction(Function &) {
 }
 
 
-/// visitLoop - Hoist expressions out of the specified loop...    
+/// visitLoop - Hoist expressions out of the specified loop...
 ///
 void LICM::visitLoop(Loop *L, AliasSetTracker &AST) {
   // Recurse through all subloops before we process this loop...
@@ -296,7 +296,7 @@ void LICM::SinkRegion(DominatorTree::Node *N) {
 
   for (BasicBlock::iterator II = BB->end(); II != BB->begin(); ) {
     Instruction &I = *--II;
-    
+
     // Check to see if we can sink this instruction to the exit blocks
     // of the loop.  We can do this if the all users of the instruction are
     // outside of the loop.  In this case, it doesn't even matter if the
@@ -327,12 +327,12 @@ void LICM::HoistRegion(DominatorTree::Node *N) {
   if (!inSubLoop(BB))
     for (BasicBlock::iterator II = BB->begin(), E = BB->end(); II != E; ) {
       Instruction &I = *II++;
-      
+
       // Try hoisting the instruction out to the preheader.  We can only do this
       // if all of the operands of the instruction are loop invariant and if it
       // is safe to hoist the instruction.
       //
-      if (isLoopInvariantInst(I) && canSinkOrHoistInst(I) && 
+      if (isLoopInvariantInst(I) && canSinkOrHoistInst(I) &&
           isSafeToExecuteUnconditionally(I))
           hoist(I);
       }
@@ -380,11 +380,11 @@ bool LICM::canSinkOrHoistInst(Instruction &I) {
 
     // FIXME: This should use mod/ref information to see if we can hoist or sink
     // the call.
-    
+
     return false;
   }
 
-  return isa<BinaryOperator>(I) || isa<ShiftInst>(I) || isa<CastInst>(I) || 
+  return isa<BinaryOperator>(I) || isa<ShiftInst>(I) || isa<CastInst>(I) ||
          isa<SelectInst>(I) ||
          isa<GetElementPtrInst>(I) || isa<VANextInst>(I) || isa<VAArgInst>(I);
 }
@@ -452,7 +452,7 @@ void LICM::sink(Instruction &I) {
       // Move the instruction to the start of the exit block, after any PHI
       // nodes in it.
       I.getParent()->getInstList().remove(&I);
-      
+
       BasicBlock::iterator InsertPt = ExitBlocks[0]->begin();
       while (isa<PHINode>(InsertPt)) ++InsertPt;
       ExitBlocks[0]->getInstList().insert(InsertPt, &I);
@@ -472,7 +472,7 @@ void LICM::sink(Instruction &I) {
     if (I.getType() != Type::VoidTy)
       AI = new AllocaInst(I.getType(), 0, I.getName(),
                           I.getParent()->getParent()->front().begin());
-    
+
     // Secondly, insert load instructions for each use of the instruction
     // outside of the loop.
     while (!I.use_empty()) {
@@ -519,7 +519,7 @@ void LICM::sink(Instruction &I) {
           // Insert the code after the last PHI node...
           BasicBlock::iterator InsertPt = ExitBlock->begin();
           while (isa<PHINode>(InsertPt)) ++InsertPt;
-          
+
           // If this is the first exit block processed, just move the original
           // instruction, otherwise clone the original instruction and insert
           // the copy.
@@ -535,7 +535,7 @@ void LICM::sink(Instruction &I) {
               New->setName(I.getName()+".le");
             ExitBlock->getInstList().insert(InsertPt, New);
           }
-          
+
           // Now that we have inserted the instruction, store it into the alloca
           if (AI) new StoreInst(New, AI, InsertPt);
         }
@@ -547,7 +547,7 @@ void LICM::sink(Instruction &I) {
       CurAST->deleteValue(&I);
       I.getParent()->getInstList().erase(&I);
     }
-      
+
     // Finally, promote the fine value to SSA form.
     if (AI) {
       std::vector<AllocaInst*> Allocas;
@@ -561,7 +561,7 @@ void LICM::sink(Instruction &I) {
 /// that is safe to hoist, this instruction is called to do the dirty work.
 ///
 void LICM::hoist(Instruction &I) {
-  DEBUG(std::cerr << "LICM hoisting to " << Preheader->getName() 
+  DEBUG(std::cerr << "LICM hoisting to " << Preheader->getName()
                   << ": " << I);
 
   // Remove the instruction from its current basic block... but don't delete the
@@ -570,7 +570,7 @@ void LICM::hoist(Instruction &I) {
 
   // Insert the new node in Preheader, before the terminator.
   Preheader->getInstList().insert(Preheader->getTerminator(), &I);
-  
+
   if (isa<LoadInst>(I)) ++NumMovedLoads;
   else if (isa<CallInst>(I)) ++NumMovedCalls;
   ++NumHoisted;
@@ -584,7 +584,7 @@ void LICM::hoist(Instruction &I) {
 bool LICM::isSafeToExecuteUnconditionally(Instruction &Inst) {
   // If it is not a trapping instruction, it is always safe to hoist.
   if (!Inst.isTrapping()) return true;
-  
+
   // Otherwise we have to check to make sure that the instruction dominates all
   // of the exit blocks.  If it doesn't, then there is a path out of the loop
   // which does not execute this instruction, so we can't hoist it.
@@ -610,7 +610,7 @@ bool LICM::isSafeToExecuteUnconditionally(Instruction &Inst) {
   for (unsigned i = 0, e = ExitBlocks.size(); i != e; ++i)
     if (!isExitBlockDominatedByBlockInLoop(ExitBlocks[i], Inst.getParent()))
       return false;
-  
+
   return true;
 }
 
@@ -672,7 +672,7 @@ void LICM::PromoteValuesInLoop() {
     // Store into the temporary alloca.
     new StoreInst(LI, PromotedValues[i].first, LoopPredInst);
   }
-  
+
   // Scan the basic blocks in the loop, replacing uses of our pointers with
   // uses of the allocas in question.
   //
@@ -777,10 +777,10 @@ void LICM::FindPromotableValuesInLoop(
 
         // Update the AST and alias analysis.
         CurAST->copyValue(V, AI);
-        
+
         for (AliasSet::iterator I = AS.begin(), E = AS.end(); I != E; ++I)
           ValueToAllocaMap.insert(std::make_pair(I->first, AI));
-        
+
         DEBUG(std::cerr << "LICM: Promoting value: " << *V << "\n");
       }
     }

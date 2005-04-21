@@ -1,10 +1,10 @@
 //===-- ExtractFunction.cpp - Function extraction pass --------------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This pass extracts
@@ -25,7 +25,7 @@ namespace {
     /// specified function. Otherwise, it deletes as much of the module as
     /// possible, except for the function specified.
     ///
-    FunctionExtractorPass(Function *F = 0, bool deleteFn = true) 
+    FunctionExtractorPass(Function *F = 0, bool deleteFn = true)
       : Named(F), deleteFunc(deleteFn) {}
 
     bool runOnModule(Module &M) {
@@ -36,7 +36,7 @@ namespace {
 
       if (deleteFunc)
         return deleteFunction();
-      else 
+      else
         return isolateFunction(M);
     }
 
@@ -57,31 +57,31 @@ namespace {
           I->setInitializer(0);  // Make all variables external
           I->setLinkage(GlobalValue::ExternalLinkage);
         }
-      
+
       // All of the functions may be used by global variables or the named
       // function.  Loop through them and create a new, external functions that
       // can be "used", instead of ones with bodies.
       std::vector<Function*> NewFunctions;
-      
+
       Function *Last = --M.end();  // Figure out where the last real fn is.
-      
+
       for (Module::iterator I = M.begin(); ; ++I) {
         if (&*I != Named) {
           Function *New = new Function(I->getFunctionType(),
                                        GlobalValue::ExternalLinkage,
                                        I->getName());
           I->setName("");  // Remove Old name
-          
+
           // If it's not the named function, delete the body of the function
           I->dropAllReferences();
-          
+
           M.getFunctionList().push_back(New);
           NewFunctions.push_back(New);
         }
-        
+
         if (&*I == Last) break;  // Stop after processing the last function
       }
-      
+
       // Now that we have replacements all set up, loop through the module,
       // deleting the old functions, replacing them with the newly created
       // functions.
@@ -92,19 +92,19 @@ namespace {
           if (&*I != Named) {
             // Make everything that uses the old function use the new dummy fn
             I->replaceAllUsesWith(NewFunctions[FuncNum++]);
-            
+
             Function *Old = I;
             ++I;  // Move the iterator to the new function
-            
+
             // Delete the old function!
             M.getFunctionList().erase(Old);
-            
+
           } else {
             ++I;  // Skip the function we are extracting
           }
         } while (&*I != NewFunctions[0]);
       }
-      
+
       return true;
     }
   };

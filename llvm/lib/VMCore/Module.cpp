@@ -1,10 +1,10 @@
 //===-- Module.cpp - Implement the Module class ---------------------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements the Module class for the VMCore library.
@@ -174,7 +174,7 @@ Function *Module::getMainFunction() {
     if (Function *F = getFunction("main", FunctionType::get(Type::IntTy,
                                                             Params, false)))
       return F;
-    
+
     // void main(int argc, char **argv)...
     if (Function *F = getFunction("main", FunctionType::get(Type::VoidTy,
                                                             Params, false)))
@@ -212,7 +212,7 @@ Function *Module::getNamedFunction(const std::string &Name) {
 /// have the top-level PointerType, which represents the address of the
 /// global.
 ///
-GlobalVariable *Module::getGlobalVariable(const std::string &Name, 
+GlobalVariable *Module::getGlobalVariable(const std::string &Name,
                                           const Type *Ty) {
   if (Value *V = getSymbolTable().lookup(PointerType::get(Ty), Name)) {
     GlobalVariable *Result = cast<GlobalVariable>(V);
@@ -237,7 +237,7 @@ bool Module::addTypeName(const std::string &Name, const Type *Ty) {
   SymbolTable &ST = getSymbolTable();
 
   if (ST.lookupType(Name)) return true;  // Already in symtab...
-  
+
   // Not in symbol table?  Set the name with the Symtab as an argument so the
   // type knows what to update...
   ST.insert(Name, Ty);

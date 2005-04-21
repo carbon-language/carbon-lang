@@ -1,10 +1,10 @@
 //===- Pass.cpp - LLVM Pass Infrastructure Implementation -----------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements the LLVM Pass infrastructure.  It is primarily
@@ -90,12 +90,12 @@ bool PassManager::run(Module &M) { return PM->runOnModule(M); }
 // is a simple Pimpl class that wraps the PassManagerT template. It
 // is like PassManager, but only deals in FunctionPasses.
 //
-FunctionPassManager::FunctionPassManager(ModuleProvider *P) : 
+FunctionPassManager::FunctionPassManager(ModuleProvider *P) :
   PM(new PassManagerT<Function>()), MP(P) {}
 FunctionPassManager::~FunctionPassManager() { delete PM; }
 void FunctionPassManager::add(FunctionPass *P) { PM->add(P); }
 void FunctionPassManager::add(ImmutablePass *IP) { PM->add(IP); }
-bool FunctionPassManager::run(Function &F) { 
+bool FunctionPassManager::run(Function &F) {
   try {
     MP->materializeFunction(&F);
   } catch (std::string& errstr) {
@@ -149,7 +149,7 @@ void PMDebug::PrintArgumentInformation(const Pass *P) {
 void PMDebug::PrintPassInformation(unsigned Depth, const char *Action,
                                    Pass *P, Module *M) {
   if (PassDebugging >= Executions) {
-    std::cerr << (void*)P << std::string(Depth*2+1, ' ') << Action << " '" 
+    std::cerr << (void*)P << std::string(Depth*2+1, ' ') << Action << " '"
               << P->getPassName();
     if (M) std::cerr << "' on Module '" << M->getModuleIdentifier() << "'\n";
     std::cerr << "'...\n";
@@ -159,7 +159,7 @@ void PMDebug::PrintPassInformation(unsigned Depth, const char *Action,
 void PMDebug::PrintPassInformation(unsigned Depth, const char *Action,
                                    Pass *P, Function *F) {
   if (PassDebugging >= Executions) {
-    std::cerr << (void*)P << std::string(Depth*2+1, ' ') << Action << " '" 
+    std::cerr << (void*)P << std::string(Depth*2+1, ' ') << Action << " '"
               << P->getPassName();
     if (F) std::cerr << "' on Function '" << F->getName();
     std::cerr << "'...\n";
@@ -169,7 +169,7 @@ void PMDebug::PrintPassInformation(unsigned Depth, const char *Action,
 void PMDebug::PrintPassInformation(unsigned Depth, const char *Action,
                                    Pass *P, BasicBlock *BB) {
   if (PassDebugging >= Executions) {
-    std::cerr << (void*)P << std::string(Depth*2+1, ' ') << Action << " '" 
+    std::cerr << (void*)P << std::string(Depth*2+1, ' ') << Action << " '"
               << P->getPassName();
     if (BB) std::cerr << "' on BasicBlock '" << BB->getName();
     std::cerr << "'...\n";
@@ -244,11 +244,11 @@ void ImmutablePass::addToPassManager(PassManagerT<Module> *PM,
 //
 bool FunctionPass::runOnModule(Module &M) {
   bool Changed = doInitialization(M);
-  
+
   for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
     if (!I->isExternal())      // Passes are not run on external functions!
     Changed |= runOnFunction(*I);
-  
+
   return Changed | doFinalization(M);
 }
 
@@ -441,7 +441,7 @@ RegisterAGBase::~RegisterAGBase() {
 
     if (AGI.DefaultImpl == ImplementationInfo)
       AGI.DefaultImpl = 0;
-    
+
     AGI.Implementations.erase(ImplementationInfo);
 
     // Last member of this analysis group? Unregister PassInfo, delete map entry

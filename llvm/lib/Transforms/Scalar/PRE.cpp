@@ -1,10 +1,10 @@
 //===- PRE.cpp - Partial Redundancy Elimination ---------------------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements the well-known Partial Redundancy Elimination
@@ -80,7 +80,7 @@ namespace {
     AvailableBlocksTy AvailableBlocks;
 
     bool ProcessBlock(BasicBlock *BB);
-    
+
     // Anticipatibility calculation...
     void MarkPostDominatingBlocksAnticipatible(PostDominatorTree::Node *N,
                                                std::vector<char> &AntBlocks,
@@ -262,7 +262,7 @@ void PRE::ReplaceDominatedAvailableOccurrencesWith(Instruction *NewOcc,
   // active definition...
   if (ExistingAvailableVal == 0) {
     ExistingAvailableVal = NewOcc;
-    
+
     for (DominatorTree::Node::iterator I = N->begin(), E = N->end(); I != E;++I)
       ReplaceDominatedAvailableOccurrencesWith(NewOcc, *I);
   } else {
@@ -283,7 +283,7 @@ void PRE::ReplaceDominatedAvailableOccurrencesWith(Instruction *NewOcc,
     for (df_iterator<DominatorTree::Node*> DI = df_begin(N), E = df_end(N);
          DI != E; ++DI)
       AvailableBlocks[(*DI)->getBlock()] = NewOcc;
-  }  
+  }
 }
 
 
@@ -400,7 +400,7 @@ bool PRE::ProcessExpression(Instruction *Expr) {
           if (AnticipatibleBlocks[i])
             std::cerr << BlockMapping[i]->getName() <<" ";
         std::cerr << "\n";);
-  
+
 
 
   // AvailabilityFrontier - Calculates the availability frontier for the current
@@ -463,7 +463,7 @@ bool PRE::ProcessExpression(Instruction *Expr) {
                   AnyNotAvailable = true;
                   break;
                 }
-            
+
               // If any predecessor blocks are not available, add the node to
               // the current expression dominance frontier.
               if (AnyNotAvailable) {
@@ -597,12 +597,12 @@ bool PRE::ProcessExpression(Instruction *Expr) {
           ++NumRedundant;
           DEBUG(std::cerr << "  PHI replaces available value: %"
                 << OldVal->getName() << "\n");
-          
+
           // Loop over all of the blocks dominated by this PHI node, and change
           // the AvailableBlocks entries to be the PHI node instead of the old
           // instruction.
           MarkOccurrenceAvailableInAllDominatedBlocks(PN, AFBlock);
-          
+
           AFBlock->getInstList().erase(OldVal);  // Delete old instruction!
 
           // The resultant PHI node is a new definition of the value!
@@ -613,7 +613,7 @@ bool PRE::ProcessExpression(Instruction *Expr) {
           // region (occurs when hoisting loop invariants, f.e.).  In this case,
           // the PHI node should actually just be removed.
           assert(PN->use_empty() && "No uses should exist for dead PHI node!");
-          PN->getParent()->getInstList().erase(PN);            
+          PN->getParent()->getInstList().erase(PN);
         }
       } else {
         // The resultant PHI node is a new definition of the value!

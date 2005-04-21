@@ -1,10 +1,10 @@
 //===-- ArgumentPromotion.cpp - Promote by-reference arguments ------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This pass promotes "by reference" arguments to be "by value" arguments.  In
@@ -67,7 +67,7 @@ namespace {
     virtual bool runOnSCC(const std::vector<CallGraphNode *> &SCC);
   private:
     bool PromoteArguments(CallGraphNode *CGN);
-    bool isSafeToPromoteArgument(Argument *Arg) const;  
+    bool isSafeToPromoteArgument(Argument *Arg) const;
     Function *DoPromotion(Function *F, std::vector<Argument*> &ArgsToPromote);
   };
 
@@ -89,7 +89,7 @@ bool ArgPromotion::runOnSCC(const std::vector<CallGraphNode *> &SCC) {
       LocalChange |= PromoteArguments(SCC[i]);
     Changed |= LocalChange;               // Remember that we changed something.
   } while (LocalChange);
-  
+
   return Changed;
 }
 
@@ -306,7 +306,7 @@ namespace {
       unsigned idx = 0;
       for (; idx < LHS.size() && idx < RHS.size(); ++idx) {
         if (LHS[idx] != RHS[idx]) {
-          return cast<ConstantInt>(LHS[idx])->getRawValue() < 
+          return cast<ConstantInt>(LHS[idx])->getRawValue() <
                  cast<ConstantInt>(RHS[idx])->getRawValue();
         }
       }
@@ -325,7 +325,7 @@ namespace {
 Function *ArgPromotion::DoPromotion(Function *F,
                                     std::vector<Argument*> &Args2Prom) {
   std::set<Argument*> ArgsToPromote(Args2Prom.begin(), Args2Prom.end());
-  
+
   // Start by computing a new prototype for the function, which is the same as
   // the old function, but has modified arguments.
   const FunctionType *FTy = F->getFunctionType();
@@ -391,7 +391,7 @@ Function *ArgPromotion::DoPromotion(Function *F,
     Params.push_back(Type::IntTy);
   }
   FunctionType *NFTy = FunctionType::get(RetTy, Params, FTy->isVarArg());
-  
+
    // Create the new function body and insert it into the module...
   Function *NF = new Function(NFTy, F->getLinkage(), F->getName());
   F->getParent()->getFunctionList().insert(F, NF);
@@ -456,7 +456,7 @@ Function *ArgPromotion::DoPromotion(Function *F,
       Call->setName("");
       New->setName(Name);
     }
-    
+
     // Finally, remove the old call from the program, reducing the use-count of
     // F.
     Call->getParent()->getInstList().erase(Call);

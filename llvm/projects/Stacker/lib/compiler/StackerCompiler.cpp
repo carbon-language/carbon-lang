@@ -1,11 +1,11 @@
 //===-- StackerCompiler.cpp - Parser for llvm assembly files ----*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
-// This file was developed by Reid Spencer and donated to the LLVM research 
-// group and is distributed under the University of Illinois Open Source 
+// This file was developed by Reid Spencer and donated to the LLVM research
+// group and is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 //  This file implements the compiler for the "Stacker" language.
@@ -13,7 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 //===----------------------------------------------------------------------===//
-//            Globasl - Global variables we use 
+//            Globasl - Global variables we use
 //===----------------------------------------------------------------------===//
 
 #include "llvm/PassManager.h"
@@ -72,9 +72,9 @@ StackerCompiler::StackerCompiler()
 
 StackerCompiler::~StackerCompiler()
 {
-    // delete TheModule; << don't do this! 
-    // TheModule is passed to caller of the compile() method .. its their 
-    // problem.  Likewise for the other allocated objects (which become part 
+    // delete TheModule; << don't do this!
+    // TheModule is passed to caller of the compile() method .. its their
+    // problem.  Likewise for the other allocated objects (which become part
     // of TheModule.
     TheModule = 0;
     DefinitionType = 0;
@@ -104,19 +104,19 @@ StackerCompiler::compile(
     FILE *F = stdin;
 
     ///
-    if (filename != "-") 
+    if (filename != "-")
     {
 	F = fopen(filename.c_str(), "r");
 
 	if (F == 0)
 	{
-	    throw ParseException(filename, 
+	    throw ParseException(filename,
 		"Could not open file '" + filename + "'");
 	}
     }
 
     Module *Result;
-    try 
+    try
     {
 	// Create the module we'll return
 	TheModule = new Module( CurFilename );
@@ -124,115 +124,115 @@ StackerCompiler::compile(
         // Tell the module about our runtime library
         TheModule->addLibrary("stkr_runtime");
 
-	// Create a type to represent the stack. This is the same as the LLVM 
+	// Create a type to represent the stack. This is the same as the LLVM
 	// Assembly type [ 256 x long ]
 	stack_type = ArrayType::get( Type::LongTy, stack_size );
 
-	// Create a global variable for the stack. Note the use of appending 
-	// linkage linkage so that multiple modules will make the stack larger. 
-	// Also note that the last argument causes the global to be inserted 
+	// Create a global variable for the stack. Note the use of appending
+	// linkage linkage so that multiple modules will make the stack larger.
+	// Also note that the last argument causes the global to be inserted
 	// automatically into the module.
-	TheStack = new GlobalVariable( 
-	    /*type=*/ stack_type, 
-	    /*isConstant=*/ false, 
-	    /*Linkage=*/ GlobalValue::LinkOnceLinkage, 
+	TheStack = new GlobalVariable(
+	    /*type=*/ stack_type,
+	    /*isConstant=*/ false,
+	    /*Linkage=*/ GlobalValue::LinkOnceLinkage,
 	    /*initializer=*/ Constant::getNullValue(stack_type),
 	    /*name=*/ "_stack_",
-	    /*parent=*/ TheModule 
+	    /*parent=*/ TheModule
 	);
 
-	// Create a global variable for indexing into the stack. Note the use 
-	// of LinkOnce linkage. Only one copy of _index_ will be retained 
+	// Create a global variable for indexing into the stack. Note the use
+	// of LinkOnce linkage. Only one copy of _index_ will be retained
 	// after linking
-	TheIndex = new GlobalVariable( 
-	    /*type=*/Type::LongTy, 
+	TheIndex = new GlobalVariable(
+	    /*type=*/Type::LongTy,
 	    /*isConstant=*/false,
-	    /*Linkage=*/GlobalValue::LinkOnceLinkage, 
+	    /*Linkage=*/GlobalValue::LinkOnceLinkage,
 	    /*initializer=*/ Constant::getNullValue(Type::LongTy),
 	    /*name=*/"_index_",
 	    /*parent=*/TheModule
 	);
 
-	// Create a function prototype for definitions. No parameters, no 
+	// Create a function prototype for definitions. No parameters, no
 	// result.  This is used below any time a function is created.
 	std::vector<const Type*> params; // No parameters
 	DefinitionType = FunctionType::get( Type::VoidTy, params, false );
 
 	// Create a function for printf(3)
 	params.push_back( PointerType::get( Type::SByteTy ) );
-	FunctionType* printf_type = 
+	FunctionType* printf_type =
 	    FunctionType::get( Type::IntTy, params, true );
-	ThePrintf = new Function( 
+	ThePrintf = new Function(
 	    printf_type, GlobalValue::ExternalLinkage, "printf", TheModule);
 
 	// Create a function for scanf(3)
-	TheScanf = new Function( 
+	TheScanf = new Function(
 	    printf_type, GlobalValue::ExternalLinkage, "scanf", TheModule);
 
 	// Create a function for exit(3)
 	params.clear();
 	params.push_back( Type::IntTy );
-	FunctionType* exit_type = 
+	FunctionType* exit_type =
 	    FunctionType::get( Type::VoidTy, params, false );
-	TheExit = new Function( 
+	TheExit = new Function(
 	    exit_type, GlobalValue::ExternalLinkage, "exit", TheModule);
 
 	Constant* str_format = ConstantArray::get("%s");
-	StrFormat = new GlobalVariable( 
+	StrFormat = new GlobalVariable(
 	    /*type=*/ArrayType::get( Type::SByteTy,  3 ),
 	    /*isConstant=*/true,
-	    /*Linkage=*/GlobalValue::LinkOnceLinkage, 
-	    /*initializer=*/str_format, 
+	    /*Linkage=*/GlobalValue::LinkOnceLinkage,
+	    /*initializer=*/str_format,
 	    /*name=*/"_str_format_",
 	    /*parent=*/TheModule
 	);
 
 	Constant* in_str_format = ConstantArray::get(" %as");
-	InStrFormat = new GlobalVariable( 
+	InStrFormat = new GlobalVariable(
 	    /*type=*/ArrayType::get( Type::SByteTy,  5 ),
 	    /*isConstant=*/true,
-	    /*Linkage=*/GlobalValue::LinkOnceLinkage, 
-	    /*initializer=*/in_str_format, 
+	    /*Linkage=*/GlobalValue::LinkOnceLinkage,
+	    /*initializer=*/in_str_format,
 	    /*name=*/"_in_str_format_",
 	    /*parent=*/TheModule
 	);
 
 	Constant* num_format = ConstantArray::get("%d");
-	NumFormat = new GlobalVariable( 
+	NumFormat = new GlobalVariable(
 	    /*type=*/ArrayType::get( Type::SByteTy,  3 ),
 	    /*isConstant=*/true,
-	    /*Linkage=*/GlobalValue::LinkOnceLinkage, 
-	    /*initializer=*/num_format, 
+	    /*Linkage=*/GlobalValue::LinkOnceLinkage,
+	    /*initializer=*/num_format,
 	    /*name=*/"_num_format_",
 	    /*parent=*/TheModule
 	);
 
 	Constant* in_num_format = ConstantArray::get(" %d");
-	InNumFormat = new GlobalVariable( 
+	InNumFormat = new GlobalVariable(
 	    /*type=*/ArrayType::get( Type::SByteTy,  4 ),
 	    /*isConstant=*/true,
-	    /*Linkage=*/GlobalValue::LinkOnceLinkage, 
-	    /*initializer=*/in_num_format, 
+	    /*Linkage=*/GlobalValue::LinkOnceLinkage,
+	    /*initializer=*/in_num_format,
 	    /*name=*/"_in_num_format_",
 	    /*parent=*/TheModule
 	);
 
 	Constant* chr_format = ConstantArray::get("%c");
-	ChrFormat = new GlobalVariable( 
+	ChrFormat = new GlobalVariable(
 	    /*type=*/ArrayType::get( Type::SByteTy,  3 ),
 	    /*isConstant=*/true,
-	    /*Linkage=*/GlobalValue::LinkOnceLinkage, 
-	    /*initializer=*/chr_format, 
+	    /*Linkage=*/GlobalValue::LinkOnceLinkage,
+	    /*initializer=*/chr_format,
 	    /*name=*/"_chr_format_",
 	    /*parent=*/TheModule
 	);
 
 	Constant* in_chr_format = ConstantArray::get(" %c");
-	InChrFormat = new GlobalVariable( 
+	InChrFormat = new GlobalVariable(
 	    /*type=*/ArrayType::get( Type::SByteTy,  4 ),
 	    /*isConstant=*/true,
-	    /*Linkage=*/GlobalValue::LinkOnceLinkage, 
-	    /*initializer=*/in_chr_format, 
+	    /*Linkage=*/GlobalValue::LinkOnceLinkage,
+	    /*initializer=*/in_chr_format,
 	    /*name=*/"_in_chr_format_",
 	    /*parent=*/TheModule
 	);
@@ -246,7 +246,7 @@ StackerCompiler::compile(
 	Five = ConstantInt::get( Type::LongTy, 5 );
 
 	// Reset the current line number
-	Stackerlineno = 1;    
+	Stackerlineno = 1;
 
 	// Reset the parser's input to F
 	Stackerin = F;		// Set the input file.
@@ -254,9 +254,9 @@ StackerCompiler::compile(
 	// Let the parse know about this instance
 	TheInstance = this;
 
-	// Parse the file. The parser (see StackParser.y) will call back to 
-	// the StackerCompiler via the "handle*" methods 
-	Stackerparse(); 
+	// Parse the file. The parser (see StackParser.y) will call back to
+	// the StackerCompiler via the "handle*" methods
+	Stackerparse();
 
 	// Avoid potential illegal use (TheInstance might be on the stack)
 	TheInstance = 0;
@@ -266,20 +266,20 @@ StackerCompiler::compile(
         // Add in the passes we want to execute
         Passes.add(new TargetData("stkrc",TheModule));
         // Verify we start with valid
-        Passes.add(createVerifierPass());          
+        Passes.add(createVerifierPass());
 
         if (optLevel > 0) {
             if (optLevel > 1) {
                 // Clean up disgusting code
-                Passes.add(createCFGSimplificationPass()); 
+                Passes.add(createCFGSimplificationPass());
                 // Remove unused globals
-                Passes.add(createGlobalDCEPass());         
+                Passes.add(createGlobalDCEPass());
                 // IP Constant Propagation
                 Passes.add(createIPConstantPropagationPass());
-                // Clean up after IPCP 
-                Passes.add(createInstructionCombiningPass()); 
-                // Clean up after IPCP 
-                Passes.add(createCFGSimplificationPass());    
+                // Clean up after IPCP
+                Passes.add(createInstructionCombiningPass());
+                // Clean up after IPCP
+                Passes.add(createCFGSimplificationPass());
                 // Inline small definitions (functions)
                 Passes.add(createFunctionInliningPass());
                 // Simplify cfg by copying code
@@ -292,25 +292,25 @@ StackerCompiler::compile(
                     // Reassociate expressions
                     Passes.add(createReassociatePass());
                     // Combine silly seq's
-                    Passes.add(createInstructionCombiningPass()); 
+                    Passes.add(createInstructionCombiningPass());
                     // Eliminate tail calls
-                    Passes.add(createTailCallEliminationPass());  
+                    Passes.add(createTailCallEliminationPass());
                     // Merge & remove BBs
-                    Passes.add(createCFGSimplificationPass());    
+                    Passes.add(createCFGSimplificationPass());
                     // Hoist loop invariants
-                    Passes.add(createLICMPass());                 
+                    Passes.add(createLICMPass());
                     // Clean up after the unroller
-                    Passes.add(createInstructionCombiningPass()); 
+                    Passes.add(createInstructionCombiningPass());
                     // Canonicalize indvars
-                    Passes.add(createIndVarSimplifyPass());       
+                    Passes.add(createIndVarSimplifyPass());
                     // Unroll small loops
-                    Passes.add(createLoopUnrollPass());           
+                    Passes.add(createLoopUnrollPass());
                     // Clean up after the unroller
-                    Passes.add(createInstructionCombiningPass()); 
+                    Passes.add(createInstructionCombiningPass());
                     // GVN for load instructions
-                    Passes.add(createLoadValueNumberingPass());   
+                    Passes.add(createLoadValueNumberingPass());
                     // Remove common subexprs
-                    Passes.add(createGCSEPass());                 
+                    Passes.add(createGCSEPass());
                     // Constant prop with SCCP
                     Passes.add(createSCCPPass());
                 }
@@ -318,13 +318,13 @@ StackerCompiler::compile(
                     // Run instcombine again after redundancy elimination
                     Passes.add(createInstructionCombiningPass());
                     // Delete dead stores
-                    Passes.add(createDeadStoreEliminationPass()); 
+                    Passes.add(createDeadStoreEliminationPass());
                     // SSA based 'Aggressive DCE'
-                    Passes.add(createAggressiveDCEPass());        
+                    Passes.add(createAggressiveDCEPass());
                     // Merge & remove BBs
                     Passes.add(createCFGSimplificationPass());
                     // Merge dup global constants
-                    Passes.add(createConstantMergePass());        
+                    Passes.add(createConstantMergePass());
                 }
             }
 
@@ -342,13 +342,13 @@ StackerCompiler::compile(
         Passes.run(*TheModule);
 
     } catch (...) {
-	if (F != stdin) fclose(F);      // Make sure to close file descriptor 
+	if (F != stdin) fclose(F);      // Make sure to close file descriptor
 	throw;                          // if an exception is thrown
     }
 
     // Close the file
     if (F != stdin) fclose(F);
-    
+
     // Return the compiled module to the caller
     return TheModule;
 }
@@ -369,7 +369,7 @@ StackerCompiler::incr_stack_index( BasicBlock* bb, Value* ival = 0 )
     if ( ival == 0 ) ival = One;
     CastInst* caster = new CastInst( ival, Type::LongTy );
     bb->getInstList().push_back( caster );
-    BinaryOperator* addop = BinaryOperator::create( Instruction::Add, 
+    BinaryOperator* addop = BinaryOperator::create( Instruction::Add,
 	    loadop, caster);
     bb->getInstList().push_back( addop );
 
@@ -390,7 +390,7 @@ StackerCompiler::decr_stack_index( BasicBlock* bb, Value* ival = 0 )
     if ( ival == 0 ) ival = One;
     CastInst* caster = new CastInst( ival, Type::LongTy );
     bb->getInstList().push_back( caster );
-    BinaryOperator* subop = BinaryOperator::create( Instruction::Sub, 
+    BinaryOperator* subop = BinaryOperator::create( Instruction::Sub,
 	    loadop, caster);
     bb->getInstList().push_back( subop );
 
@@ -404,7 +404,7 @@ StackerCompiler::decr_stack_index( BasicBlock* bb, Value* ival = 0 )
 Instruction*
 StackerCompiler::get_stack_pointer( BasicBlock* bb, Value* index = 0 )
 {
-    // Load the value of the Stack Index 
+    // Load the value of the Stack Index
     LoadInst* loadop = new LoadInst( TheIndex );
     bb->getInstList().push_back( loadop );
 
@@ -424,7 +424,7 @@ StackerCompiler::get_stack_pointer( BasicBlock* bb, Value* index = 0 )
     {
 	CastInst* caster = new CastInst( index, Type::LongTy );
 	bb->getInstList().push_back( caster );
-	BinaryOperator* subop = BinaryOperator::create( 
+	BinaryOperator* subop = BinaryOperator::create(
 	    Instruction::Sub, loadop, caster );
 	bb->getInstList().push_back( subop );
 	indexVec.push_back(subop);
@@ -440,11 +440,11 @@ StackerCompiler::get_stack_pointer( BasicBlock* bb, Value* index = 0 )
 Instruction*
 StackerCompiler::push_value( BasicBlock* bb, Value* val )
 {
-    // Get location of 
+    // Get location of
     incr_stack_index(bb);
 
     // Get the stack pointer
-    GetElementPtrInst* gep = cast<GetElementPtrInst>( 
+    GetElementPtrInst* gep = cast<GetElementPtrInst>(
 	    get_stack_pointer( bb ) );
 
     // Cast the value to a long .. hopefully it works
@@ -489,7 +489,7 @@ StackerCompiler::push_string( BasicBlock* bb, const char* value )
     // Get length of the string
     size_t len = strlen( value );
 
-    // Create a type for the string constant. Length is +1 for 
+    // Create a type for the string constant. Length is +1 for
     // the terminating 0.
     ArrayType* char_array = ArrayType::get( Type::SByteTy, len + 1 );
 
@@ -497,10 +497,10 @@ StackerCompiler::push_string( BasicBlock* bb, const char* value )
     Constant* initVal = ConstantArray::get( value );
 
     // Create an internal linkage global variable to hold the constant.
-    GlobalVariable* strconst = new GlobalVariable( 
-	char_array, 
-	/*isConstant=*/true, 
-	GlobalValue::InternalLinkage, 
+    GlobalVariable* strconst = new GlobalVariable(
+	char_array,
+	/*isConstant=*/true,
+	GlobalValue::InternalLinkage,
 	/*initializer=*/initVal,
 	"",
 	TheModule
@@ -538,7 +538,7 @@ StackerCompiler::replace_top( BasicBlock* bb, Value* new_top, Value* index = 0 )
     // Get the stack pointer
     GetElementPtrInst* gep = cast<GetElementPtrInst>(
 	    get_stack_pointer( bb, index ));
-    
+
     // Store the value there
     StoreInst* store_inst = new StoreInst( new_top, gep );
     bb->getInstList().push_back( store_inst );
@@ -604,7 +604,7 @@ StackerCompiler::handle_module_start( )
     return TheModule;
 }
 
-Module* 
+Module*
 StackerCompiler::handle_module_end( Module* mod )
 {
     // Return the module.
@@ -617,7 +617,7 @@ StackerCompiler::handle_definition_list_start()
     return TheModule;
 }
 
-Module* 
+Module*
 StackerCompiler::handle_definition_list_end( Module* mod, Function* definition )
 {
     if ( ! definition->empty() )
@@ -640,7 +640,7 @@ Function*
 StackerCompiler::handle_main_definition( Function* func )
 {
     // Set the name of the function defined as the Stacker main
-    // This will get called by the "main" that is defined in 
+    // This will get called by the "main" that is defined in
     // the runtime library.
     func->setName( "_MAIN_");
 
@@ -656,21 +656,21 @@ StackerCompiler::handle_main_definition( Function* func )
     return func;
 }
 
-Function* 
+Function*
 StackerCompiler::handle_forward( char * name )
 {
     // Just create a placeholder function
-    Function* the_function = new Function ( 
-	DefinitionType, 
-	GlobalValue::ExternalLinkage, 
-	name ); 
+    Function* the_function = new Function (
+	DefinitionType,
+	GlobalValue::ExternalLinkage,
+	name );
     assert( the_function->isExternal() );
 
     free( name );
     return the_function;
 }
 
-Function* 
+Function*
 StackerCompiler::handle_definition( char * name, Function* f )
 {
     // Look up the function name in the module to see if it was forward
@@ -709,7 +709,7 @@ StackerCompiler::handle_word_list_end( Function* f, BasicBlock* bb )
     return f;
 }
 
-BasicBlock* 
+BasicBlock*
 StackerCompiler::handle_if( char* ifTrue, char* ifFalse )
 {
     // Create a basic block for the preamble
@@ -718,8 +718,8 @@ StackerCompiler::handle_if( char* ifTrue, char* ifFalse )
     // Get the condition value
     LoadInst* cond = cast<LoadInst>( pop_integer(bb) );
 
-    // Compare the condition against 0 
-    SetCondInst* cond_inst = new SetCondInst( Instruction::SetNE, cond, 
+    // Compare the condition against 0
+    SetCondInst* cond_inst = new SetCondInst( Instruction::SetNE, cond,
 	ConstantSInt::get( Type::LongTy, 0) );
     bb->getInstList().push_back( cond_inst );
 
@@ -734,22 +734,22 @@ StackerCompiler::handle_if( char* ifTrue, char* ifFalse )
     if ( ifFalse ) false_bb = new BasicBlock((echo?"else":""));
 
     // Create a branch on the SetCond
-    BranchInst* br_inst = new BranchInst( true_bb, 
+    BranchInst* br_inst = new BranchInst( true_bb,
 	( ifFalse ? false_bb : exit_bb ), cond_inst );
     bb->getInstList().push_back( br_inst );
 
-    // Fill the true block 
+    // Fill the true block
     std::vector<Value*> args;
     if ( Function* true_func = TheModule->getNamedFunction(ifTrue) )
     {
-	true_bb->getInstList().push_back( 
+	true_bb->getInstList().push_back(
 		new CallInst( true_func, args ) );
-	true_bb->getInstList().push_back( 
+	true_bb->getInstList().push_back(
 		new BranchInst( exit_bb ) );
     }
     else
     {
-	ThrowException(std::string("Function '") + ifTrue + 
+	ThrowException(std::string("Function '") + ifTrue +
 	    "' must be declared first.'");
     }
 
@@ -760,14 +760,14 @@ StackerCompiler::handle_if( char* ifTrue, char* ifFalse )
     {
 	if ( Function* false_func = TheModule->getNamedFunction(ifFalse) )
 	{
-	    false_bb->getInstList().push_back( 
+	    false_bb->getInstList().push_back(
 		    new CallInst( false_func, args ) );
-	    false_bb->getInstList().push_back( 
+	    false_bb->getInstList().push_back(
 		    new BranchInst( exit_bb ) );
 	}
 	else
 	{
-	    ThrowException(std::string("Function '") + ifFalse + 
+	    ThrowException(std::string("Function '") + ifFalse +
 		    "' must be declared first.'");
 	}
 	free( ifFalse );
@@ -781,7 +781,7 @@ StackerCompiler::handle_if( char* ifTrue, char* ifFalse )
     return exit_bb;
 }
 
-BasicBlock* 
+BasicBlock*
 StackerCompiler::handle_while( char* todo )
 {
 
@@ -802,8 +802,8 @@ StackerCompiler::handle_while( char* todo )
     // Pop the condition value
     LoadInst* cond = cast<LoadInst>( stack_top(test) );
 
-    // Compare the condition against 0 
-    SetCondInst* cond_inst = new SetCondInst( 
+    // Compare the condition against 0
+    SetCondInst* cond_inst = new SetCondInst(
 	Instruction::SetNE, cond, ConstantSInt::get( Type::LongTy, 0) );
     test->getInstList().push_back( cond_inst );
 
@@ -820,7 +820,7 @@ StackerCompiler::handle_while( char* todo )
     }
     else
     {
-	ThrowException(std::string("Function '") + todo + 
+	ThrowException(std::string("Function '") + todo +
 	    "' must be declared first.'");
     }
 
@@ -834,7 +834,7 @@ StackerCompiler::handle_while( char* todo )
     return exit;
 }
 
-BasicBlock* 
+BasicBlock*
 StackerCompiler::handle_identifier( char * name )
 {
     Function* func = TheModule->getNamedFunction( name );
@@ -846,7 +846,7 @@ StackerCompiler::handle_identifier( char * name )
     }
     else
     {
-	ThrowException(std::string("Definition '") + name + 
+	ThrowException(std::string("Definition '") + name +
 	    "' must be defined before it can be used.");
     }
 
@@ -854,7 +854,7 @@ StackerCompiler::handle_identifier( char * name )
     return bb;
 }
 
-BasicBlock* 
+BasicBlock*
 StackerCompiler::handle_string( char * value )
 {
     // Create a new basic block for the push operation
@@ -869,7 +869,7 @@ StackerCompiler::handle_string( char * value )
     return bb;
 }
 
-BasicBlock* 
+BasicBlock*
 StackerCompiler::handle_integer( const int64_t value )
 {
     // Create a new basic block for the push operation
@@ -881,7 +881,7 @@ StackerCompiler::handle_integer( const int64_t value )
     return bb;
 }
 
-BasicBlock* 
+BasicBlock*
 StackerCompiler::handle_word( int tkn )
 {
     // Create a new basic block to hold the instruction(s)
@@ -904,13 +904,13 @@ StackerCompiler::handle_word( int tkn )
     case TRUETOK :  // -- -1
     {
 	if (echo) bb->setName("TRUE");
-	push_integer(bb,-1); 
+	push_integer(bb,-1);
 	break;
     }
     case FALSETOK : // -- 0
     {
 	if (echo) bb->setName("FALSE");
-	push_integer(bb,0); 
+	push_integer(bb,0);
 	break;
     }
     case LESS : // w1 w2 -- w2<w1
@@ -918,7 +918,7 @@ StackerCompiler::handle_word( int tkn )
 	if (echo) bb->setName("LESS");
 	LoadInst* op1 = cast<LoadInst>(pop_integer(bb));
 	LoadInst* op2 = cast<LoadInst>(pop_integer(bb));
-	SetCondInst* cond_inst = 
+	SetCondInst* cond_inst =
 	    new SetCondInst( Instruction::SetLT, op1, op2 );
 	bb->getInstList().push_back( cond_inst );
 	push_value( bb, cond_inst );
@@ -929,7 +929,7 @@ StackerCompiler::handle_word( int tkn )
 	if (echo) bb->setName("MORE");
 	LoadInst* op1 = cast<LoadInst>(pop_integer(bb));
 	LoadInst* op2 = cast<LoadInst>(pop_integer(bb));
-	SetCondInst* cond_inst = 
+	SetCondInst* cond_inst =
 	    new SetCondInst( Instruction::SetGT, op1, op2 );
 	bb->getInstList().push_back( cond_inst );
 	push_value( bb, cond_inst );
@@ -940,7 +940,7 @@ StackerCompiler::handle_word( int tkn )
 	if (echo) bb->setName("LE");
 	LoadInst* op1 = cast<LoadInst>(pop_integer(bb));
 	LoadInst* op2 = cast<LoadInst>(pop_integer(bb));
-	SetCondInst* cond_inst = 
+	SetCondInst* cond_inst =
 	    new SetCondInst( Instruction::SetLE, op1, op2 );
 	bb->getInstList().push_back( cond_inst );
 	push_value( bb, cond_inst );
@@ -951,7 +951,7 @@ StackerCompiler::handle_word( int tkn )
 	if (echo) bb->setName("GE");
 	LoadInst* op1 = cast<LoadInst>(pop_integer(bb));
 	LoadInst* op2 = cast<LoadInst>(pop_integer(bb));
-	SetCondInst* cond_inst = 
+	SetCondInst* cond_inst =
 	    new SetCondInst( Instruction::SetGE, op1, op2 );
 	bb->getInstList().push_back( cond_inst );
 	push_value( bb, cond_inst );
@@ -962,7 +962,7 @@ StackerCompiler::handle_word( int tkn )
 	if (echo) bb->setName("NE");
 	LoadInst* op1 = cast<LoadInst>(pop_integer(bb));
 	LoadInst* op2 = cast<LoadInst>(pop_integer(bb));
-	SetCondInst* cond_inst = 
+	SetCondInst* cond_inst =
 	    new SetCondInst( Instruction::SetNE, op1, op2 );
 	bb->getInstList().push_back( cond_inst );
 	push_value( bb, cond_inst );
@@ -973,7 +973,7 @@ StackerCompiler::handle_word( int tkn )
 	if (echo) bb->setName("EQ");
 	LoadInst* op1 = cast<LoadInst>(pop_integer(bb));
 	LoadInst* op2 = cast<LoadInst>(pop_integer(bb));
-	SetCondInst* cond_inst = 
+	SetCondInst* cond_inst =
 	    new SetCondInst( Instruction::SetEQ, op1, op2 );
 	bb->getInstList().push_back( cond_inst );
 	push_value( bb, cond_inst );
@@ -986,7 +986,7 @@ StackerCompiler::handle_word( int tkn )
 	if (echo) bb->setName("ADD");
 	LoadInst* op1 = cast<LoadInst>(pop_integer(bb));
 	LoadInst* op2 = cast<LoadInst>(pop_integer(bb));
-	BinaryOperator* addop = 
+	BinaryOperator* addop =
 	    BinaryOperator::create( Instruction::Add, op1, op2);
 	bb->getInstList().push_back( addop );
 	push_value( bb, addop );
@@ -997,7 +997,7 @@ StackerCompiler::handle_word( int tkn )
 	if (echo) bb->setName("SUB");
 	LoadInst* op1 = cast<LoadInst>(pop_integer(bb));
 	LoadInst* op2 = cast<LoadInst>(pop_integer(bb));
-	BinaryOperator* subop = 
+	BinaryOperator* subop =
 	    BinaryOperator::create( Instruction::Sub, op1, op2);
 	bb->getInstList().push_back( subop );
 	push_value( bb, subop );
@@ -1007,7 +1007,7 @@ StackerCompiler::handle_word( int tkn )
     {
 	if (echo) bb->setName("INCR");
 	LoadInst* op1 = cast<LoadInst>(pop_integer(bb));
-	BinaryOperator* addop = 
+	BinaryOperator* addop =
 	    BinaryOperator::create( Instruction::Add, op1, One );
 	bb->getInstList().push_back( addop );
 	push_value( bb, addop );
@@ -1028,7 +1028,7 @@ StackerCompiler::handle_word( int tkn )
 	if (echo) bb->setName("MUL");
 	LoadInst* op1 = cast<LoadInst>(pop_integer(bb));
 	LoadInst* op2 = cast<LoadInst>(pop_integer(bb));
-	BinaryOperator* multop = 
+	BinaryOperator* multop =
 	    BinaryOperator::create( Instruction::Mul, op1, op2);
 	bb->getInstList().push_back( multop );
 	push_value( bb, multop );
@@ -1039,7 +1039,7 @@ StackerCompiler::handle_word( int tkn )
 	if (echo) bb->setName("DIV");
 	LoadInst* op1 = cast<LoadInst>(pop_integer(bb));
 	LoadInst* op2 = cast<LoadInst>(pop_integer(bb));
-	BinaryOperator* divop = 
+	BinaryOperator* divop =
 	    BinaryOperator::create( Instruction::Div, op1, op2);
 	bb->getInstList().push_back( divop );
 	push_value( bb, divop );
@@ -1050,7 +1050,7 @@ StackerCompiler::handle_word( int tkn )
 	if (echo) bb->setName("MOD");
 	LoadInst* op1 = cast<LoadInst>(pop_integer(bb));
 	LoadInst* op2 = cast<LoadInst>(pop_integer(bb));
-	BinaryOperator* divop = 
+	BinaryOperator* divop =
 	    BinaryOperator::create( Instruction::Rem, op1, op2);
 	bb->getInstList().push_back( divop );
 	push_value( bb, divop );
@@ -1065,12 +1065,12 @@ StackerCompiler::handle_word( int tkn )
 	LoadInst* op3 = cast<LoadInst>(pop_integer(bb));
 
 	// Multiply the first two
-	BinaryOperator* multop = 
+	BinaryOperator* multop =
 	    BinaryOperator::create( Instruction::Mul, op1, op2);
 	bb->getInstList().push_back( multop );
 
 	// Divide by the third operand
-	BinaryOperator* divop = 
+	BinaryOperator* divop =
 	    BinaryOperator::create( Instruction::Div, multop, op3);
 	bb->getInstList().push_back( divop );
 
@@ -1100,7 +1100,7 @@ StackerCompiler::handle_word( int tkn )
 	LoadInst* op1 = cast<LoadInst>(stack_top(bb));
 
 	// Determine if its negative
-	SetCondInst* cond_inst = 
+	SetCondInst* cond_inst =
 	    new SetCondInst( Instruction::SetLT, op1, Zero );
 	bb->getInstList().push_back( cond_inst );
 
@@ -1140,13 +1140,13 @@ StackerCompiler::handle_word( int tkn )
 	LoadInst* op1 = cast<LoadInst>(pop_integer(bb));
 	LoadInst* op2 = cast<LoadInst>(pop_integer(bb));
 
-	// Compare them 
-	SetCondInst* cond_inst = 
+	// Compare them
+	SetCondInst* cond_inst =
 	    new SetCondInst( Instruction::SetLT, op1, op2);
 	bb->getInstList().push_back( cond_inst );
 
 	// Create a branch on the SetCond
-	BranchInst* br_inst = 
+	BranchInst* br_inst =
 	    new BranchInst( op1_block, op2_block, cond_inst );
 	bb->getInstList().push_back( br_inst );
 
@@ -1172,8 +1172,8 @@ StackerCompiler::handle_word( int tkn )
 	LoadInst* op1 = cast<LoadInst>(pop_integer(bb));
 	LoadInst* op2 = cast<LoadInst>(pop_integer(bb));
 
-	// Compare them 
-	SetCondInst* cond_inst = 
+	// Compare them
+	SetCondInst* cond_inst =
 	    new SetCondInst( Instruction::SetGT, op1, op2);
 	bb->getInstList().push_back( cond_inst );
 
@@ -1191,7 +1191,7 @@ StackerCompiler::handle_word( int tkn )
 	op2_block->getInstList().push_back( new BranchInst( exit_bb ) );
 
 	// Create a banch on the SetCond
-	BranchInst* br_inst = 
+	BranchInst* br_inst =
 	    new BranchInst( op1_block, op2_block, cond_inst );
 	bb->getInstList().push_back( br_inst );
 
@@ -1210,7 +1210,7 @@ StackerCompiler::handle_word( int tkn )
 	if (echo) bb->setName("AND");
 	LoadInst* op1 = cast<LoadInst>(pop_integer(bb));
 	LoadInst* op2 = cast<LoadInst>(pop_integer(bb));
-	BinaryOperator* andop = 
+	BinaryOperator* andop =
 	    BinaryOperator::create( Instruction::And, op1, op2);
 	bb->getInstList().push_back( andop );
 	push_value( bb, andop );
@@ -1221,7 +1221,7 @@ StackerCompiler::handle_word( int tkn )
 	if (echo) bb->setName("OR");
 	LoadInst* op1 = cast<LoadInst>(pop_integer(bb));
 	LoadInst* op2 = cast<LoadInst>(pop_integer(bb));
-	BinaryOperator* orop = 
+	BinaryOperator* orop =
 	    BinaryOperator::create( Instruction::Or, op1, op2);
 	bb->getInstList().push_back( orop );
 	push_value( bb, orop );
@@ -1232,7 +1232,7 @@ StackerCompiler::handle_word( int tkn )
 	if (echo) bb->setName("XOR");
 	LoadInst* op1 = cast<LoadInst>(pop_integer(bb));
 	LoadInst* op2 = cast<LoadInst>(pop_integer(bb));
-	BinaryOperator* xorop = 
+	BinaryOperator* xorop =
 	    BinaryOperator::create( Instruction::Xor, op1, op2);
 	bb->getInstList().push_back( xorop );
 	push_value( bb, xorop );
@@ -1264,13 +1264,13 @@ StackerCompiler::handle_word( int tkn )
     }
 
     // Stack Manipulation Operations
-    case DROP:   	// w -- 
+    case DROP:   	// w --
     {
 	if (echo) bb->setName("DROP");
 	decr_stack_index(bb, One);
 	break;
     }
-    case DROP2:	// w1 w2 -- 
+    case DROP2:	// w1 w2 --
     {
 	if (echo) bb->setName("DROP2");
 	decr_stack_index( bb, Two );
@@ -1417,7 +1417,7 @@ StackerCompiler::handle_word( int tkn )
 	replace_top( bb, w2, Two );
 	break;
     }
-    case TUCK2:	// w1 w2 w3 w4 -- w3 w4 w1 w2 w3 w4 
+    case TUCK2:	// w1 w2 w3 w4 -- w3 w4 w1 w2 w3 w4
     {
 	if (echo) bb->setName("TUCK2");
 	LoadInst* w4 = cast<LoadInst>( stack_top( bb ) );
@@ -1435,10 +1435,10 @@ StackerCompiler::handle_word( int tkn )
     }
     case ROLL:	// x0 x1 .. xn n -- x1 .. xn x0
     {
-	/// THIS OEPRATOR IS OMITTED PURPOSEFULLY AND IS LEFT TO THE 
+	/// THIS OEPRATOR IS OMITTED PURPOSEFULLY AND IS LEFT TO THE
 	/// READER AS AN EXERCISE. THIS IS ONE OF THE MORE COMPLICATED
 	/// OPERATORS. IF YOU CAN GET THIS ONE RIGHT, YOU COMPLETELY
-	/// UNDERSTAND HOW BOTH LLVM AND STACKER WOR.  
+	/// UNDERSTAND HOW BOTH LLVM AND STACKER WOR.
 	/// HINT: LOOK AT PICK AND SELECT. ROLL IS SIMILAR.
 	if (echo) bb->setName("ROLL");
 	break;
@@ -1447,7 +1447,7 @@ StackerCompiler::handle_word( int tkn )
     {
 	if (echo) bb->setName("PICK");
 	LoadInst* n = cast<LoadInst>( stack_top( bb ) );
-	BinaryOperator* addop = 
+	BinaryOperator* addop =
 	    BinaryOperator::create( Instruction::Add, n, One );
 	bb->getInstList().push_back( addop );
 	LoadInst* x0 = cast<LoadInst>( stack_top( bb, addop ) );
@@ -1459,11 +1459,11 @@ StackerCompiler::handle_word( int tkn )
 	if (echo) bb->setName("SELECT");
 	LoadInst* m = cast<LoadInst>( stack_top(bb) );
 	LoadInst* n = cast<LoadInst>( stack_top(bb, One) );
-	BinaryOperator* index = 
+	BinaryOperator* index =
 	    BinaryOperator::create( Instruction::Add, m, One );
 	bb->getInstList().push_back( index );
 	LoadInst* Xm = cast<LoadInst>( stack_top(bb, index ) );
-	BinaryOperator* n_plus_1 = 
+	BinaryOperator* n_plus_1 =
 	    BinaryOperator::create( Instruction::Add, n, One );
 	bb->getInstList().push_back( n_plus_1 );
 	decr_stack_index( bb, n_plus_1 );
@@ -1557,7 +1557,7 @@ StackerCompiler::handle_word( int tkn )
 
 	break;
     }
-    case RECURSE : 
+    case RECURSE :
     {
 	if (echo) bb->setName("RECURSE");
 	std::vector<Value*> params;
@@ -1565,13 +1565,13 @@ StackerCompiler::handle_word( int tkn )
 	bb->getInstList().push_back( call_inst );
 	break;
     }
-    case RETURN : 
+    case RETURN :
     {
 	if (echo) bb->setName("RETURN");
 	bb->getInstList().push_back( new ReturnInst() );
 	break;
     }
-    case EXIT : 
+    case EXIT :
     {
 	if (echo) bb->setName("EXIT");
 	// Get the result value
@@ -1595,12 +1595,12 @@ StackerCompiler::handle_word( int tkn )
 	std::vector<Value*> indexVec;
 	indexVec.push_back( Zero );
 	indexVec.push_back( Zero );
-	GetElementPtrInst* format_gep = 
+	GetElementPtrInst* format_gep =
 	    new GetElementPtrInst( ChrFormat, indexVec );
 	bb->getInstList().push_back( format_gep );
 
 	// Get the character to print (a tab)
-	ConstantSInt* newline = ConstantSInt::get(Type::IntTy, 
+	ConstantSInt* newline = ConstantSInt::get(Type::IntTy,
 	    static_cast<int>('\t'));
 
 	// Call printf
@@ -1610,19 +1610,19 @@ StackerCompiler::handle_word( int tkn )
 	bb->getInstList().push_back( new CallInst( ThePrintf, args ) );
 	break;
     }
-    case SPACE : 
+    case SPACE :
     {
 	if (echo) bb->setName("SPACE");
 	// Get the format string for a character
 	std::vector<Value*> indexVec;
 	indexVec.push_back( Zero );
 	indexVec.push_back( Zero );
-	GetElementPtrInst* format_gep = 
+	GetElementPtrInst* format_gep =
 	    new GetElementPtrInst( ChrFormat, indexVec );
 	bb->getInstList().push_back( format_gep );
 
 	// Get the character to print (a space)
-	ConstantSInt* newline = ConstantSInt::get(Type::IntTy, 
+	ConstantSInt* newline = ConstantSInt::get(Type::IntTy,
 	    static_cast<int>(' '));
 
 	// Call printf
@@ -1632,19 +1632,19 @@ StackerCompiler::handle_word( int tkn )
 	bb->getInstList().push_back( new CallInst( ThePrintf, args ) );
 	break;
     }
-    case CR : 
+    case CR :
     {
 	if (echo) bb->setName("CR");
 	// Get the format string for a character
 	std::vector<Value*> indexVec;
 	indexVec.push_back( Zero );
 	indexVec.push_back( Zero );
-	GetElementPtrInst* format_gep = 
+	GetElementPtrInst* format_gep =
 	    new GetElementPtrInst( ChrFormat, indexVec );
 	bb->getInstList().push_back( format_gep );
 
 	// Get the character to print (a newline)
-	ConstantSInt* newline = ConstantSInt::get(Type::IntTy, 
+	ConstantSInt* newline = ConstantSInt::get(Type::IntTy,
 	    static_cast<int>('\n'));
 
 	// Call printf
@@ -1654,19 +1654,19 @@ StackerCompiler::handle_word( int tkn )
 	bb->getInstList().push_back( new CallInst( ThePrintf, args ) );
 	break;
     }
-    case IN_STR : 
+    case IN_STR :
     {
 	if (echo) bb->setName("IN_STR");
 	// Make room for the value result
 	incr_stack_index(bb);
-	GetElementPtrInst* gep_value = 
+	GetElementPtrInst* gep_value =
 	    cast<GetElementPtrInst>(get_stack_pointer(bb));
-	CastInst* caster = 
+	CastInst* caster =
 	    new CastInst( gep_value, PointerType::get( Type::SByteTy ) );
 
 	// Make room for the count result
 	incr_stack_index(bb);
-	GetElementPtrInst* gep_count = 
+	GetElementPtrInst* gep_count =
 	    cast<GetElementPtrInst>(get_stack_pointer(bb));
 
 	// Call scanf(3)
@@ -1680,17 +1680,17 @@ StackerCompiler::handle_word( int tkn )
 	bb->getInstList().push_back( new StoreInst( scanf, gep_count ) );
 	break;
     }
-    case IN_NUM : 
+    case IN_NUM :
     {
 	if (echo) bb->setName("IN_NUM");
 	// Make room for the value result
 	incr_stack_index(bb);
-	GetElementPtrInst* gep_value = 
+	GetElementPtrInst* gep_value =
 	    cast<GetElementPtrInst>(get_stack_pointer(bb));
 
 	// Make room for the count result
 	incr_stack_index(bb);
-	GetElementPtrInst* gep_count = 
+	GetElementPtrInst* gep_count =
 	    cast<GetElementPtrInst>(get_stack_pointer(bb));
 
 	// Call scanf(3)
@@ -1709,12 +1709,12 @@ StackerCompiler::handle_word( int tkn )
 	if (echo) bb->setName("IN_CHAR");
 	// Make room for the value result
 	incr_stack_index(bb);
-	GetElementPtrInst* gep_value = 
+	GetElementPtrInst* gep_value =
 	    cast<GetElementPtrInst>(get_stack_pointer(bb));
 
 	// Make room for the count result
 	incr_stack_index(bb);
-	GetElementPtrInst* gep_count = 
+	GetElementPtrInst* gep_count =
 	    cast<GetElementPtrInst>(get_stack_pointer(bb));
 
 	// Call scanf(3)
@@ -1728,7 +1728,7 @@ StackerCompiler::handle_word( int tkn )
 	bb->getInstList().push_back( new StoreInst( scanf, gep_count ) );
 	break;
     }
-    case OUT_STR : 
+    case OUT_STR :
     {
 	if (echo) bb->setName("OUT_STR");
 	LoadInst* op1 = cast<LoadInst>(stack_top(bb));
@@ -1737,7 +1737,7 @@ StackerCompiler::handle_word( int tkn )
 	std::vector<Value*> indexVec;
 	indexVec.push_back( Zero );
 	indexVec.push_back( Zero );
-	GetElementPtrInst* format_gep = 
+	GetElementPtrInst* format_gep =
 	    new GetElementPtrInst( StrFormat, indexVec );
 	bb->getInstList().push_back( format_gep );
 	// Build function call arguments
@@ -1748,7 +1748,7 @@ StackerCompiler::handle_word( int tkn )
 	bb->getInstList().push_back( new CallInst( ThePrintf, args ) );
 	break;
     }
-    case OUT_NUM : 
+    case OUT_NUM :
     {
 	if (echo) bb->setName("OUT_NUM");
 	// Pop the numeric operand off the stack
@@ -1758,7 +1758,7 @@ StackerCompiler::handle_word( int tkn )
 	std::vector<Value*> indexVec;
 	indexVec.push_back( Zero );
 	indexVec.push_back( Zero );
-	GetElementPtrInst* format_gep = 
+	GetElementPtrInst* format_gep =
 	    new GetElementPtrInst( NumFormat, indexVec );
 	bb->getInstList().push_back( format_gep );
 
@@ -1781,7 +1781,7 @@ StackerCompiler::handle_word( int tkn )
 	std::vector<Value*> indexVec;
 	indexVec.push_back( Zero );
 	indexVec.push_back( Zero );
-	GetElementPtrInst* format_gep = 
+	GetElementPtrInst* format_gep =
 	    new GetElementPtrInst( ChrFormat, indexVec );
 	bb->getInstList().push_back( format_gep );
 

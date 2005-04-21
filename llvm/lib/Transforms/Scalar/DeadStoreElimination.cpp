@@ -1,10 +1,10 @@
 //===- DeadStoreElimination.cpp - Dead Store Elimination ------------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements a trivial dead store elimination that only considers
@@ -39,9 +39,9 @@ namespace {
         Changed |= runOnBasicBlock(*I);
       return Changed;
     }
-    
+
     bool runOnBasicBlock(BasicBlock &BB);
-    
+
     void DeleteDeadInstructionChains(Instruction *I,
                                      SetVector<Instruction*> &DeadInsts);
 
@@ -87,7 +87,7 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
   bool MadeChange = false;
   for (BasicBlock::iterator BBI = BB.end(); BBI != BB.begin(); ) {
     Instruction *I = --BBI;   // Keep moving iterator backwards
-    
+
     // If this is a free instruction, it makes the free'd location dead!
     if (FreeInst *FI = dyn_cast<FreeInst>(I)) {
       // Free instructions make any stores to the free'd location dead.
@@ -161,7 +161,7 @@ void DSE::DeleteDeadInstructionChains(Instruction *I,
       DeadInsts.insert(Op);      // Attempt to nuke it later.
     I->setOperand(i, 0);         // Drop from the operand list.
   }
-  
+
   I->eraseFromParent();
   ++NumOther;
 }

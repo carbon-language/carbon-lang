@@ -1,10 +1,10 @@
 //===-- Function.cpp - Implement the Global object classes ----------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements the Function & GlobalVariable classes for the VMCore
@@ -51,7 +51,7 @@ template class SymbolTableListTraits<BasicBlock, Function, Function>;
 // Argument Implementation
 //===----------------------------------------------------------------------===//
 
-Argument::Argument(const Type *Ty, const std::string &Name, Function *Par) 
+Argument::Argument(const Type *Ty, const std::string &Name, Function *Par)
   : Value(Ty, Value::ArgumentVal, Name) {
   Parent = 0;
 
@@ -125,7 +125,7 @@ bool Function::isVarArg() const {
   return getFunctionType()->isVarArg();
 }
 
-const Type *Function::getReturnType() const { 
+const Type *Function::getReturnType() const {
   return getFunctionType()->getReturnType();
 }
 
@@ -182,7 +182,7 @@ void Function::renameLocalSymbols() {
 // 'delete' a whole class at a time, even though there may be circular
 // references... first all references are dropped, and all use counts go to
 // zero.  Then everything is deleted for real.  Note that no operations are
-// valid on an object that has "dropped all references", except operator 
+// valid on an object that has "dropped all references", except operator
 // delete.
 //
 void Function::dropAllReferences() {
@@ -204,7 +204,7 @@ unsigned Function::getIntrinsicID() const {
     return 0;  // All intrinsics start with 'llvm.'
 
   assert(getName().size() != 5 && "'llvm.' is an invalid intrinsic name!");
-  
+
   switch (getName()[5]) {
   case 'd':
     if (getName() == "llvm.dbg.stoppoint")   return Intrinsic::dbg_stoppoint;
@@ -233,8 +233,8 @@ unsigned Function::getIntrinsicID() const {
     if (getName() == "llvm.memset")  return Intrinsic::memset;
     break;
   case 'p':
-    if (getName() == "llvm.prefetch")  return Intrinsic::prefetch; 
-    if (getName() == "llvm.pcmarker")  return Intrinsic::pcmarker; 
+    if (getName() == "llvm.prefetch")  return Intrinsic::prefetch;
+    if (getName() == "llvm.pcmarker")  return Intrinsic::pcmarker;
     break;
   case 'r':
     if (getName() == "llvm.returnaddress")  return Intrinsic::returnaddress;

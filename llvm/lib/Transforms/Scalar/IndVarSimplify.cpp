@@ -1,10 +1,10 @@
 //===- IndVarSimplify.cpp - Induction Variable Elimination ----------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This transformation analyzes and transforms the induction variables (and
@@ -76,7 +76,7 @@ namespace {
     bool isInsertedInstruction(Instruction *I) const {
       return InsertedInstructions.count(I);
     }
-    
+
     /// getOrInsertCanonicalInductionVariable - This method returns the
     /// canonical induction variable of the specified type for the specified
     /// loop (inserting one if there is none).  A canonical induction variable
@@ -128,7 +128,7 @@ namespace {
           return ConstantExpr::getCast(C, Ty);
         else if (Instruction *I = dyn_cast<Instruction>(V)) {
           // Check to see if there is already a cast.  If there is, use it.
-          for (Value::use_iterator UI = I->use_begin(), E = I->use_end(); 
+          for (Value::use_iterator UI = I->use_begin(), E = I->use_end();
                UI != E; ++UI) {
             if ((*UI)->getType() == Ty)
               if (CastInst *CI = dyn_cast<CastInst>(cast<Instruction>(*UI))) {
@@ -206,10 +206,10 @@ Value *SCEVExpander::visitMulExpr(SCEVMulExpr *S) {
   if (SCEVConstant *SC = dyn_cast<SCEVConstant>(S->getOperand(0)))
     if (SC->getValue()->isAllOnesValue())
       FirstOp = 1;
-    
+
   int i = S->getNumOperands()-2;
   Value *V = expandInTy(S->getOperand(i+1), Ty);
-    
+
   // Emit a bunch of multiply instructions
   for (; i >= FirstOp; --i)
     V = BinaryOperator::createMul(V, expandInTy(S->getOperand(i), Ty),
@@ -358,7 +358,7 @@ DeleteTriviallyDeadInstructions(std::set<Instruction*> &Insts) {
 /// EliminatePointerRecurrence - Check to see if this is a trivial GEP pointer
 /// recurrence.  If so, change it into an integer recurrence, permitting
 /// analysis by the SCEV routines.
-void IndVarSimplify::EliminatePointerRecurrence(PHINode *PN, 
+void IndVarSimplify::EliminatePointerRecurrence(PHINode *PN,
                                                 BasicBlock *Preheader,
                                             std::set<Instruction*> &DeadInsts) {
   assert(PN->getNumIncomingValues() == 2 && "Noncanonicalized loop!");
@@ -368,7 +368,7 @@ void IndVarSimplify::EliminatePointerRecurrence(PHINode *PN,
       dyn_cast<GetElementPtrInst>(PN->getIncomingValue(BackedgeIdx)))
     if (GEPI->getOperand(0) == PN) {
       assert(GEPI->getNumOperands() == 2 && "GEP types must mismatch!");
-          
+
       // Okay, we found a pointer recurrence.  Transform this pointer
       // recurrence into an integer recurrence.  Compute the value that gets
       // added to the pointer at every iteration.
@@ -383,10 +383,10 @@ void IndVarSimplify::EliminatePointerRecurrence(PHINode *PN,
       Value *NewAdd = BinaryOperator::createAdd(NewPhi, AddedVal,
                                                 GEPI->getName()+".rec", GEPI);
       NewPhi->addIncoming(NewAdd, PN->getIncomingBlock(BackedgeIdx));
-          
+
       // Update the existing GEP to use the recurrence.
       GEPI->setOperand(0, PN->getIncomingValue(PreheaderIdx));
-          
+
       // Update the GEP to use the new recurrence we just inserted.
       GEPI->setOperand(1, NewAdd);
 
@@ -547,7 +547,7 @@ void IndVarSimplify::RewriteLoopExitValues(Loop *L) {
   bool HasConstantItCount = isa<SCEVConstant>(SE->getIterationCount(L));
 
   std::set<Instruction*> InstructionsToDelete;
-  
+
   for (unsigned i = 0, e = L->getBlocks().size(); i != e; ++i)
     if (LI->getLoopFor(L->getBlocks()[i]) == L) {  // Not in a subloop...
       BasicBlock *BB = L->getBlocks()[i];
@@ -599,7 +599,7 @@ void IndVarSimplify::runOnLoop(Loop *L) {
   //
   BasicBlock *Header    = L->getHeader();
   BasicBlock *Preheader = L->getLoopPreheader();
-  
+
   std::set<Instruction*> DeadInsts;
   for (BasicBlock::iterator I = Header->begin(); isa<PHINode>(I); ++I) {
     PHINode *PN = cast<PHINode>(I);
@@ -748,7 +748,7 @@ void IndVarSimplify::runOnLoop(Loop *L) {
             DeadInsts.insert(I);
             ++NumRemoved;
             Changed = true;
-          }          
+          }
         }
     }
 #endif

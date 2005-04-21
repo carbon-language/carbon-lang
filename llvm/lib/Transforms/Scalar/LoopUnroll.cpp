@@ -1,10 +1,10 @@
 //===-- LoopUnroll.cpp - Loop unroller pass -------------------------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This pass implements a simple loop unroller.  It works best when loops have
@@ -88,7 +88,7 @@ static unsigned ApproximateLoopSize(const Loop *L) {
       } else if (I->hasOneUse() && I->use_back() == Term) {
         // Ignore instructions only used by the loop terminator.
       } else if (DbgInfoIntrinsic *DbgI = dyn_cast<DbgInfoIntrinsic>(I)) {
-	// Ignore debug instructions 
+	// Ignore debug instructions
       } else {
         ++Size;
       }
@@ -102,10 +102,10 @@ static unsigned ApproximateLoopSize(const Loop *L) {
   return Size;
 }
 
-// RemapInstruction - Convert the instruction operands from referencing the 
+// RemapInstruction - Convert the instruction operands from referencing the
 // current values into those specified by ValueMap.
 //
-static inline void RemapInstruction(Instruction *I, 
+static inline void RemapInstruction(Instruction *I,
                                     std::map<const Value *, Value*> &ValueMap) {
   for (unsigned op = 0, E = I->getNumOperands(); op != E; ++op) {
     Value *Op = I->getOperand(op);
@@ -150,7 +150,7 @@ bool LoopUnroll::visitLoop(Loop *L) {
     return Changed;
   }
   DEBUG(std::cerr << "UNROLLING!\n");
- 
+
   unsigned TripCount = (unsigned)TripCountFull;
 
   BasicBlock *LoopExit = BI->getSuccessor(L->contains(BI->getSuccessor(0)));
@@ -235,7 +235,7 @@ bool LoopUnroll::visitLoop(Loop *L) {
     PN->replaceAllUsesWith(PN->getIncomingValueForBlock(Preheader));
     BB->getInstList().erase(PN);
   }
- 
+
   // Finally, add an unconditional branch to the block to continue into the exit
   // block.
   new BranchInst(LoopExit, BB);
@@ -245,7 +245,7 @@ bool LoopUnroll::visitLoop(Loop *L) {
   // go.
   for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ) {
     Instruction *Inst = I++;
-    
+
     if (isInstructionTriviallyDead(Inst))
       BB->getInstList().erase(Inst);
     else if (Constant *C = ConstantFoldInstruction(Inst)) {

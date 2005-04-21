@@ -1,14 +1,14 @@
 //===-- lib/Transforms/Scalar/LowerConstantExprs.cpp ------------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was written by Vladimir Prus and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines the LowerConstantExpression pass, which converts all
-// constant expressions into instructions. This is primarily usefull for 
+// constant expressions into instructions. This is primarily usefull for
 // code generators which don't yet want or don't have a need to handle
 // constant expressions themself.
 //
@@ -29,18 +29,18 @@ namespace {
 
     class ConstantExpressionsLower : public FunctionPass {
     private: // FunctionPass overrides
-        
+
         bool runOnFunction(Function& f);
 
     private: // internal methods
 
         /// For all operands of 'insn' which are constant expressions, generates
-        /// an appropriate instruction and replaces the use of constant 
+        /// an appropriate instruction and replaces the use of constant
         /// expression with the use of the generated instruction.
         bool runOnInstruction(Instruction& insn);
 
         /// Given an constant expression 'c' which occures in 'instruction',
-        /// at position 'pos', 
+        /// at position 'pos',
         /// generates instruction to compute 'c' and replaces the use of 'c'
         /// with the use of that instruction. This handles only top-level
         /// expression in 'c', any subexpressions are not handled.
@@ -48,7 +48,7 @@ namespace {
     };
 
     RegisterOpt<ConstantExpressionsLower> X(
-        "lowerconstantexprs", "Lower constant expressions");    
+        "lowerconstantexprs", "Lower constant expressions");
 }
 
 bool ConstantExpressionsLower::runOnFunction(Function& f)
@@ -66,14 +66,14 @@ bool ConstantExpressionsLower::runOnInstruction(Instruction& instruction)
     bool modified = false;
     for (unsigned pos = 0; pos < instruction.getNumOperands(); ++pos)
     {
-        if (ConstantExpr* ce 
+        if (ConstantExpr* ce
             = dyn_cast<ConstantExpr>(instruction.getOperand(pos))) {
 
             // Decide where to insert the new instruction
             Instruction* where = &instruction;
 
-            // For PHI nodes we can't insert new instruction before phi, 
-            // since phi should always come at the beginning of the 
+            // For PHI nodes we can't insert new instruction before phi,
+            // since phi should always come at the beginning of the
             // basic block.
             // So, we need to insert it in the predecessor, right before
             // the terminating instruction.
@@ -92,12 +92,12 @@ bool ConstantExpressionsLower::runOnInstruction(Instruction& instruction)
             // Note: we can't call replaceAllUsesWith, since
             // that might replace uses in another functions,
             // where the instruction(s) we've generated are not
-            // available. 
-                    
-            // Moreover, we can't replace all the users in the same 
-            // function, because we can't be sure the definition 
+            // available.
+
+            // Moreover, we can't replace all the users in the same
+            // function, because we can't be sure the definition
             // made in this block will be available in other
-            // places where the constant is used.                                       
+            // places where the constant is used.
             instruction.setOperand(pos, n);
 
             // The new instruction might have constant expressions in
@@ -105,11 +105,11 @@ bool ConstantExpressionsLower::runOnInstruction(Instruction& instruction)
             runOnInstruction(*n);
             modified = true;
         }
-    }            
+    }
     return modified;
 }
 
-Instruction* 
+Instruction*
 ConstantExpressionsLower::convert(const ConstantExpr& c, Instruction* where)
 {
     Instruction* result = 0;
@@ -118,13 +118,13 @@ ConstantExpressionsLower::convert(const ConstantExpr& c, Instruction* where)
         c.getOpcode() < Instruction::BinaryOpsEnd)
     {
         result = BinaryOperator::create(
-            static_cast<Instruction::BinaryOps>(c.getOpcode()), 
+            static_cast<Instruction::BinaryOps>(c.getOpcode()),
             c.getOperand(0), c.getOperand(1), "", where);
     }
     else
     {
         switch(c.getOpcode()) {
-        case Instruction::GetElementPtr: 
+        case Instruction::GetElementPtr:
         {
             vector<Value*> idx;
             for (unsigned i = 1; i < c.getNumOperands(); ++i)
@@ -135,7 +135,7 @@ ConstantExpressionsLower::convert(const ConstantExpr& c, Instruction* where)
         }
 
         case Instruction::Cast:
-            result = new CastInst(c.getOperand(0), c.getType(), "", 
+            result = new CastInst(c.getOperand(0), c.getType(), "",
                                   where);
             break;
 
@@ -143,15 +143,15 @@ ConstantExpressionsLower::convert(const ConstantExpr& c, Instruction* where)
         case Instruction::Shl:
         case Instruction::Shr:
             result = new ShiftInst(
-                static_cast<Instruction::OtherOps>(c.getOpcode()), 
+                static_cast<Instruction::OtherOps>(c.getOpcode()),
                 c.getOperand(0), c.getOperand(1), "", where);
             break;
-                    
+
         case Instruction::Select:
             result = new SelectInst(c.getOperand(0), c.getOperand(1),
                                     c.getOperand(2), "", where);
             break;
-                 
+
         default:
             std::cerr << "Offending expr: " << c << "\n";
             assert(0 && "Constant expression not yet handled!\n");

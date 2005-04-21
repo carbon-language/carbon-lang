@@ -1,10 +1,10 @@
 //===-- Constants.cpp - Implement Constant nodes --------------------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements the Constant* classes...
@@ -108,7 +108,7 @@ Constant *Constant::getNullValue(const Type *Ty) {
     return NullDouble;
   }
 
-  case Type::PointerTyID: 
+  case Type::PointerTyID:
     return ConstantPointerNull::get(cast<PointerType>(Ty));
 
   case Type::StructTyID:
@@ -130,7 +130,7 @@ ConstantIntegral *ConstantIntegral::getMaxValue(const Type *Ty) {
   case Type::ShortTyID:
   case Type::IntTyID:
   case Type::LongTyID: {
-    // Calculate 011111111111111... 
+    // Calculate 011111111111111...
     unsigned TypeBits = Ty->getPrimitiveSize()*8;
     int64_t Val = INT64_MAX;             // All ones
     Val >>= 64-TypeBits;                 // Shift out unwanted 1 bits...
@@ -154,7 +154,7 @@ ConstantIntegral *ConstantIntegral::getMinValue(const Type *Ty) {
   case Type::ShortTyID:
   case Type::IntTyID:
   case Type::LongTyID: {
-     // Calculate 1111111111000000000000 
+     // Calculate 1111111111000000000000
      unsigned TypeBits = Ty->getPrimitiveSize()*8;
      int64_t Val = -1;                    // All ones
      Val <<= TypeBits-1;                  // Shift over to the right spot
@@ -347,7 +347,7 @@ struct GetElementPtrConstantExpr : public ConstantExpr {
       OperandList[i+1].init(IdxList[i], this);
   }
   ~GetElementPtrConstantExpr() {
-    delete [] OperandList;    
+    delete [] OperandList;
   }
 };
 
@@ -489,7 +489,7 @@ void ConstantArray::replaceUsesOfWithOnConstant(Value *From, Value *To,
     if (Val == From) Val = cast<Constant>(To);
     Values.push_back(Val);
   }
-  
+
   Constant *Replacement = ConstantArray::get(getType(), Values);
   assert(Replacement != this && "I didn't contain From!");
 
@@ -498,9 +498,9 @@ void ConstantArray::replaceUsesOfWithOnConstant(Value *From, Value *To,
     uncheckedReplaceAllUsesWith(Replacement);
   else
     replaceAllUsesWith(Replacement);
-  
+
   // Delete the old constant!
-  destroyConstant();  
+  destroyConstant();
 }
 
 void ConstantStruct::replaceUsesOfWithOnConstant(Value *From, Value *To,
@@ -514,7 +514,7 @@ void ConstantStruct::replaceUsesOfWithOnConstant(Value *From, Value *To,
     if (Val == From) Val = cast<Constant>(To);
     Values.push_back(Val);
   }
-  
+
   Constant *Replacement = ConstantStruct::get(getType(), Values);
   assert(Replacement != this && "I didn't contain From!");
 
@@ -523,7 +523,7 @@ void ConstantStruct::replaceUsesOfWithOnConstant(Value *From, Value *To,
     uncheckedReplaceAllUsesWith(Replacement);
   else
     replaceAllUsesWith(Replacement);
-  
+
   // Delete the old constant!
   destroyConstant();
 }
@@ -539,7 +539,7 @@ void ConstantPacked::replaceUsesOfWithOnConstant(Value *From, Value *To,
     if (Val == From) Val = cast<Constant>(To);
     Values.push_back(Val);
   }
-  
+
   Constant *Replacement = ConstantPacked::get(getType(), Values);
   assert(Replacement != this && "I didn't contain From!");
 
@@ -548,9 +548,9 @@ void ConstantPacked::replaceUsesOfWithOnConstant(Value *From, Value *To,
     uncheckedReplaceAllUsesWith(Replacement);
   else
     replaceAllUsesWith(Replacement);
-  
+
   // Delete the old constant!
-  destroyConstant();  
+  destroyConstant();
 }
 
 void ConstantExpr::replaceUsesOfWithOnConstant(Value *From, Value *ToV,
@@ -564,7 +564,7 @@ void ConstantExpr::replaceUsesOfWithOnConstant(Value *From, Value *ToV,
     Constant *Pointer = getOperand(0);
     Indices.reserve(getNumOperands()-1);
     if (Pointer == From) Pointer = To;
-    
+
     for (unsigned i = 1, e = getNumOperands(); i != e; ++i) {
       Constant *Val = getOperand(i);
       if (Val == From) Val = To;
@@ -592,7 +592,7 @@ void ConstantExpr::replaceUsesOfWithOnConstant(Value *From, Value *ToV,
     assert(0 && "Unknown ConstantExpr type!");
     return;
   }
-  
+
   assert(Replacement != this && "I didn't contain From!");
 
   // Everyone using this now uses the replacement...
@@ -600,7 +600,7 @@ void ConstantExpr::replaceUsesOfWithOnConstant(Value *From, Value *ToV,
     uncheckedReplaceAllUsesWith(Replacement);
   else
     replaceAllUsesWith(Replacement);
-  
+
   // Delete the old constant!
   destroyConstant();
 }
@@ -620,7 +620,7 @@ namespace llvm {
       return new ConstantClass(Ty, V);
     }
   };
-  
+
   template<class ConstantClass, class TypeClass>
   struct ConvertConstantType {
     static void convert(ConstantClass *OldC, const TypeClass *NewTy) {
@@ -683,7 +683,7 @@ namespace {
       }
       return Result;
     }
-    
+
     void remove(ConstantClass *CP) {
       MapIterator I = Map.find(MapKey((TypeClass*)CP->getRawType(),
                                       getValType(CP)));
@@ -708,14 +708,14 @@ namespace {
           // Yes, we are removing the representative entry for this type.
           // See if there are any other entries of the same type.
           MapIterator TmpIt = ATMEntryIt;
-          
+
           // First check the entry before this one...
           if (TmpIt != Map.begin()) {
             --TmpIt;
             if (TmpIt->first.first != Ty) // Not the same type, move back...
               ++TmpIt;
           }
-          
+
           // If we didn't find the same type, try to move forward...
           if (TmpIt == ATMEntryIt) {
             ++TmpIt;
@@ -735,12 +735,12 @@ namespace {
           }
         }
       }
-      
+
       Map.erase(I);
     }
 
     void refineAbstractType(const DerivedType *OldTy, const Type *NewTy) {
-      typename AbstractTypeMapTy::iterator I = 
+      typename AbstractTypeMapTy::iterator I =
         AbstractTypeMap.find(cast<TypeClass>(OldTy));
 
       assert(I != AbstractTypeMap.end() &&
@@ -995,14 +995,14 @@ namespace llvm {
         C.push_back(cast<Constant>(OldC->getOperand(i)));
       Constant *New = ConstantStruct::get(NewTy, C);
       assert(New != OldC && "Didn't replace constant??");
-      
+
       OldC->uncheckedReplaceAllUsesWith(New);
       OldC->destroyConstant();    // This constant is now dead, destroy it.
     }
   };
 }
 
-static ValueMap<std::vector<Constant*>, StructType, 
+static ValueMap<std::vector<Constant*>, StructType,
                 ConstantStruct> StructConstants;
 
 static std::vector<Constant*> getValType(ConstantStruct *CS) {
@@ -1197,9 +1197,9 @@ namespace llvm {
         return new BinaryConstantExpr(V.first, V.second[0], V.second[1]);
       if (V.first == Instruction::Select)
         return new SelectConstantExpr(V.second[0], V.second[1], V.second[2]);
-      
+
       assert(V.first == Instruction::GetElementPtr && "Invalid ConstantExpr!");
-      
+
       std::vector<Constant*> IdxList(V.second.begin()+1, V.second.end());
       return new GetElementPtrConstantExpr(V.second[0], IdxList, Ty);
     }
@@ -1230,12 +1230,12 @@ namespace llvm {
                                   OldC->getOperand(1));
         break;
       case Instruction::GetElementPtr:
-        // Make everyone now use a constant of the new type... 
+        // Make everyone now use a constant of the new type...
         std::vector<Value*> Idx(OldC->op_begin()+1, OldC->op_end());
         New = ConstantExpr::getGetElementPtrTy(NewTy, OldC->getOperand(0), Idx);
         break;
       }
-      
+
       assert(New != OldC && "Didn't replace constant??");
       OldC->uncheckedReplaceAllUsesWith(New);
       OldC->destroyConstant();    // This constant is now dead, destroy it.
@@ -1333,7 +1333,7 @@ Constant *ConstantExpr::get(unsigned Opcode, Constant *C1, Constant *C2) {
   case Instruction::Mul: case Instruction::Div:
   case Instruction::Rem:
     assert(C1->getType() == C2->getType() && "Op types should be identical!");
-    assert((C1->getType()->isInteger() || C1->getType()->isFloatingPoint()) && 
+    assert((C1->getType()->isInteger() || C1->getType()->isFloatingPoint()) &&
            "Tried to create an arithmetic operation on a non-arithmetic type!");
     break;
   case Instruction::And:
@@ -1471,7 +1471,7 @@ void Constant::clearAllValueMaps() {
   UndefValueConstants.clear(Constants);
   ExprConstants.clear(Constants);
 
-  for (std::vector<Constant *>::iterator I = Constants.begin(), 
+  for (std::vector<Constant *>::iterator I = Constants.begin(),
        E = Constants.end(); I != E; ++I)
     (*I)->dropAllReferences();
   for (std::vector<Constant *>::iterator I = Constants.begin(),

@@ -1,10 +1,10 @@
 //===- LowerAllocations.cpp - Reduce malloc & free insts to calls ---------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // The LowerAllocations transformation is a target-dependent tranformation
@@ -49,7 +49,7 @@ namespace {
     virtual bool doInitialization(Function &F) {
       return BasicBlockPass::doInitialization(F);
     }
-    
+
     /// runOnBasicBlock - This method does the actual work of converting
     /// instructions over, assuming that the pass has already been initialized.
     ///
@@ -104,7 +104,7 @@ bool LowerAllocations::runOnBasicBlock(BasicBlock &BB) {
   for (BasicBlock::iterator I = BB.begin(), E = BB.end(); I != E; ++I) {
     if (MallocInst *MI = dyn_cast<MallocInst>(I)) {
       const Type *AllocTy = MI->getType()->getElementType();
-      
+
       // malloc(type) becomes sbyte *malloc(size)
       Value *MallocArg;
       if (LowerMallocArgToInteger)
@@ -133,7 +133,7 @@ bool LowerAllocations::runOnBasicBlock(BasicBlock &BB) {
 
       const FunctionType *MallocFTy = MallocFunc->getFunctionType();
       std::vector<Value*> MallocArgs;
-      
+
       if (MallocFTy->getNumParams() > 0 || MallocFTy->isVarArg()) {
         if (MallocFTy->isVarArg()) {
           if (MallocArg->getType() != IntPtrTy)
@@ -150,14 +150,14 @@ bool LowerAllocations::runOnBasicBlock(BasicBlock &BB) {
 
       // Create the call to Malloc...
       CallInst *MCall = new CallInst(MallocFunc, MallocArgs, "", I);
-      
+
       // Create a cast instruction to convert to the right type...
       Value *MCast;
       if (MCall->getType() != Type::VoidTy)
         MCast = new CastInst(MCall, MI->getType(), "", I);
       else
         MCast = Constant::getNullValue(MI->getType());
-      
+
       // Replace all uses of the old malloc inst with the cast inst
       MI->replaceAllUsesWith(MCast);
       I = --BBIL.erase(I);         // remove and delete the malloc instr...
@@ -166,7 +166,7 @@ bool LowerAllocations::runOnBasicBlock(BasicBlock &BB) {
     } else if (FreeInst *FI = dyn_cast<FreeInst>(I)) {
       const FunctionType *FreeFTy = FreeFunc->getFunctionType();
       std::vector<Value*> FreeArgs;
-      
+
       if (FreeFTy->getNumParams() > 0 || FreeFTy->isVarArg()) {
         Value *MCast = FI->getOperand(0);
         if (FreeFTy->getNumParams() > 0 &&
@@ -178,10 +178,10 @@ bool LowerAllocations::runOnBasicBlock(BasicBlock &BB) {
       // If malloc is prototyped to take extra arguments, pass nulls.
       for (unsigned i = 1; i < FreeFTy->getNumParams(); ++i)
        FreeArgs.push_back(Constant::getNullValue(FreeFTy->getParamType(i)));
-      
+
       // Insert a call to the free function...
       new CallInst(FreeFunc, FreeArgs, "", I);
-      
+
       // Delete the old free instruction
       I = --BBIL.erase(I);
       Changed = true;

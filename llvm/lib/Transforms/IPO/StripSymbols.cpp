@@ -1,10 +1,10 @@
 //===- StripSymbols.cpp - Strip symbols and debug info from a module ------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements stripping symbols out of symbol tables.
@@ -17,7 +17,7 @@
 //
 // Notice that:
 //   * This pass makes code much less readable, so it should only be used in
-//     situations where the 'strip' utility would be used (such as reducing 
+//     situations where the 'strip' utility would be used (such as reducing
 //     code size, and making it harder to reverse engineer code).
 //
 //===----------------------------------------------------------------------===//
@@ -63,7 +63,7 @@ static void RemoveDeadConstant(Constant *C) {
   }
   else if (!isa<Function>(C))
     C->destroyConstant();
-  
+
   // If the constant referenced anything, see if we can delete it as well.
   while (!Operands.empty()) {
     RemoveDeadConstant(Operands.back());
@@ -144,5 +144,5 @@ bool StripSymbols::runOnModule(Module &M) {
       RemoveDeadConstant(GV);
   }
 
-  return true; 
+  return true;
 }

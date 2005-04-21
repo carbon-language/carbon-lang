@@ -1,10 +1,10 @@
 //===-- Verifier.cpp - Implement the Module Verifier -------------*- C++ -*-==//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines the function verifier interface, that can be used for some
@@ -76,17 +76,17 @@ namespace {  // Anonymous namespace for class
     /// an instruction in the same block.
     std::set<Instruction*> InstsInThisBlock;
 
-    Verifier() 
+    Verifier()
         : Broken(false), RealPass(true), action(AbortProcessAction),
           DS(0), msgs( std::ios::app | std::ios::out ) {}
     Verifier( VerifierFailureAction ctn )
-        : Broken(false), RealPass(true), action(ctn), DS(0), 
+        : Broken(false), RealPass(true), action(ctn), DS(0),
           msgs( std::ios::app | std::ios::out ) {}
-    Verifier(bool AB ) 
-        : Broken(false), RealPass(true), 
-          action( AB ? AbortProcessAction : PrintMessageAction), DS(0), 
+    Verifier(bool AB )
+        : Broken(false), RealPass(true),
+          action( AB ? AbortProcessAction : PrintMessageAction), DS(0),
           msgs( std::ios::app | std::ios::out ) {}
-    Verifier(DominatorSet &ds) 
+    Verifier(DominatorSet &ds)
       : Broken(false), RealPass(false), action(PrintMessageAction),
         DS(&ds), msgs( std::ios::app | std::ios::out ) {}
 
@@ -223,7 +223,7 @@ namespace {  // Anonymous namespace for class
       Broken = true;
     }
 
-    void CheckFailed( const std::string& Message, const Value* V1, 
+    void CheckFailed( const std::string& Message, const Value* V1,
                       const Type* T2, const Value* V3 = 0 ) {
       msgs << Message << "\n";
       WriteValue(V1);
@@ -264,11 +264,11 @@ void Verifier::visitGlobalValue(GlobalValue &GV) {
 }
 
 void Verifier::visitGlobalVariable(GlobalVariable &GV) {
-  if (GV.hasInitializer()) 
+  if (GV.hasInitializer())
     Assert1(GV.getInitializer()->getType() == GV.getType()->getElementType(),
             "Global variable initializer type does not match global "
             "variable type!", &GV);
-  
+
   visitGlobalValue(GV);
 }
 
@@ -278,7 +278,7 @@ void Verifier::visitGlobalVariable(GlobalVariable &GV) {
 void Verifier::verifySymbolTable(SymbolTable &ST) {
 
   // Loop over all of the values in all type planes in the symbol table.
-  for (SymbolTable::plane_const_iterator PI = ST.plane_begin(), 
+  for (SymbolTable::plane_const_iterator PI = ST.plane_begin(),
        PE = ST.plane_end(); PI != PE; ++PI)
     for (SymbolTable::value_const_iterator VI = PI->second.begin(),
          VE = PI->second.end(); VI != VE; ++VI) {
@@ -312,7 +312,7 @@ void Verifier::visitFunction(Function &F) {
             "Argument value does not match function argument type!",
             I, FT->getParamType(i));
     // Make sure no aggregates are passed by value.
-    Assert1(I->getType()->isFirstClassType(), 
+    Assert1(I->getType()->isFirstClassType(),
             "Functions cannot take aggregates as arguments by value!", I);
    }
 
@@ -340,7 +340,7 @@ void Verifier::visitBasicBlock(BasicBlock &BB) {
   if (isa<PHINode>(BB.front())) {
     std::vector<BasicBlock*> Preds(pred_begin(&BB), pred_end(&BB));
     std::sort(Preds.begin(), Preds.end());
-    PHINode *PN; 
+    PHINode *PN;
     for (BasicBlock::iterator I = BB.begin(); (PN = dyn_cast<PHINode>(I));++I) {
 
       // Ensure that PHI nodes have at least one entry!
@@ -350,7 +350,7 @@ void Verifier::visitBasicBlock(BasicBlock &BB) {
       Assert1(PN->getNumIncomingValues() == Preds.size(),
               "PHINode should have one entry for each predecessor of its "
               "parent basic block!", PN);
-      
+
       // Get and sort all incoming values in the PHI node...
       std::vector<std::pair<BasicBlock*, Value*> > Values;
       Values.reserve(PN->getNumIncomingValues());
@@ -358,7 +358,7 @@ void Verifier::visitBasicBlock(BasicBlock &BB) {
         Values.push_back(std::make_pair(PN->getIncomingBlock(i),
                                         PN->getIncomingValue(i)));
       std::sort(Values.begin(), Values.end());
-      
+
       for (unsigned i = 0, e = Values.size(); i != e; ++i) {
         // Check to make sure that if there is more than one entry for a
         // particular basic block in this PHI node, that the incoming values are
@@ -369,12 +369,12 @@ void Verifier::visitBasicBlock(BasicBlock &BB) {
                 "PHI node has multiple entries for the same basic block with "
                 "different incoming values!", PN, Values[i].first,
                 Values[i].second, Values[i-1].second);
-        
+
         // Check to make sure that the predecessors and PHI node entries are
         // matched up.
         Assert3(Values[i].first == Preds[i],
                 "PHI node entries do not match predecessors!", PN,
-                Values[i].first, Preds[i]);        
+                Values[i].first, Preds[i]);
       }
     }
   }
@@ -509,11 +509,11 @@ void Verifier::visitBinaryOperator(BinaryOperator &B) {
     Assert1(B.getType() == B.getOperand(0)->getType(),
             "Arithmetic operators must have same type for operands and result!",
             &B);
-    Assert1(B.getType()->isInteger() || B.getType()->isFloatingPoint() || 
+    Assert1(B.getType()->isInteger() || B.getType()->isFloatingPoint() ||
             isa<PackedType>(B.getType()),
             "Arithmetic operators must have integer, fp, or packed type!", &B);
   }
-  
+
   visitInstruction(B);
 }
 
@@ -557,7 +557,7 @@ void Verifier::visitStoreInst(StoreInst &SI) {
 /// verifyInstruction - Verify that an instruction is well formed.
 ///
 void Verifier::visitInstruction(Instruction &I) {
-  BasicBlock *BB = I.getParent();  
+  BasicBlock *BB = I.getParent();
   Assert1(BB, "Instruction not embedded in basic block!", &I);
 
   if (!isa<PHINode>(I)) {   // Check that non-phi nodes are not self referential
@@ -749,13 +749,13 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
   case Intrinsic::memset:          NumArgs = 4; break;
 
   case Intrinsic::prefetch:        NumArgs = 3; break;
-  case Intrinsic::pcmarker:        
-    NumArgs = 1; 
+  case Intrinsic::pcmarker:
+    NumArgs = 1;
     Assert1(isa<Constant>(CI.getOperand(1)),
             "First argument to llvm.pcmarker must be a constant!", &CI);
     break;
- 
-  case Intrinsic::not_intrinsic: 
+
+  case Intrinsic::not_intrinsic:
     assert(0 && "Invalid intrinsic!"); NumArgs = 0; break;
   }
 
@@ -774,11 +774,11 @@ FunctionPass *llvm::createVerifierPass(VerifierFailureAction action) {
 }
 
 
-// verifyFunction - Create 
+// verifyFunction - Create
 bool llvm::verifyFunction(const Function &f, VerifierFailureAction action) {
   Function &F = const_cast<Function&>(f);
   assert(!F.isExternal() && "Cannot verify external functions");
-  
+
   FunctionPassManager FPM(new ExistingModuleProvider(F.getParent()));
   Verifier *V = new Verifier(action);
   FPM.add(V);

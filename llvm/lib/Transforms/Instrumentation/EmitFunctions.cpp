@@ -1,10 +1,10 @@
 //===-- EmitFunctions.cpp - interface to insert instrumentation -----------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This inserts into the input module three new global constants containing
@@ -27,7 +27,7 @@
 #include "llvm/Transforms/Instrumentation.h"
 using namespace llvm;
 
-namespace llvm { 
+namespace llvm {
 
 namespace {
   enum Color{
@@ -35,11 +35,11 @@ namespace {
     GREY,
     BLACK
   };
-  
+
   struct EmitFunctionTable : public ModulePass {
     bool runOnModule(Module &M);
   };
-  
+
   RegisterOpt<EmitFunctionTable>
   X("emitfuncs", "Emit a function table for the reoptimizer");
 }
@@ -48,9 +48,9 @@ static char doDFS(BasicBlock * node,std::map<BasicBlock *, Color > &color){
   color[node] = GREY;
 
   for(succ_iterator vl = succ_begin(node), ve = succ_end(node); vl != ve; ++vl){
-   
-    BasicBlock *BB = *vl; 
-    
+
+    BasicBlock *BB = *vl;
+
     if(color[BB]!=GREY && color[BB]!=BLACK){
       if(!doDFS(BB, color)){
 	return 0;
@@ -75,7 +75,7 @@ static char hasBackEdge(Function *F){
 // Per Module pass for inserting function table
 bool EmitFunctionTable::runOnModule(Module &M){
   std::vector<const Type*> vType;
- 
+
   std::vector<Constant *> vConsts;
   std::vector<Constant *> sBCons;
 
@@ -83,24 +83,24 @@ bool EmitFunctionTable::runOnModule(Module &M){
   for(Module::iterator MI = M.begin(), ME = M.end(); MI != ME; ++MI)
     if (!MI->isExternal()) {
       vType.push_back(MI->getType());
-    
+
       //std::cerr<<MI;
 
       vConsts.push_back(MI);
       sBCons.push_back(ConstantInt::get(Type::SByteTy, hasBackEdge(MI)));
-      
+
       counter++;
     }
-  
+
   StructType *sttype = StructType::get(vType);
   Constant *cstruct = ConstantStruct::get(sttype, vConsts);
 
   GlobalVariable *gb = new GlobalVariable(cstruct->getType(), true,
-                                          GlobalValue::ExternalLinkage, 
+                                          GlobalValue::ExternalLinkage,
                                           cstruct, "llvmFunctionTable");
   M.getGlobalList().push_back(gb);
 
-  Constant *constArray = ConstantArray::get(ArrayType::get(Type::SByteTy, 
+  Constant *constArray = ConstantArray::get(ArrayType::get(Type::SByteTy,
 								sBCons.size()),
 						 sBCons);
 
@@ -110,9 +110,9 @@ bool EmitFunctionTable::runOnModule(Module &M){
 
   M.getGlobalList().push_back(funcArray);
 
-  ConstantInt *cnst = ConstantSInt::get(Type::IntTy, counter); 
-  GlobalVariable *fnCount = new GlobalVariable(Type::IntTy, true, 
-					       GlobalValue::ExternalLinkage, 
+  ConstantInt *cnst = ConstantSInt::get(Type::IntTy, counter);
+  GlobalVariable *fnCount = new GlobalVariable(Type::IntTy, true,
+					       GlobalValue::ExternalLinkage,
 					       cnst, "llvmFunctionCount");
   M.getGlobalList().push_back(fnCount);
   return true;  // Always modifies program

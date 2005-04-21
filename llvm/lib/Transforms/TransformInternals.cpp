@@ -1,10 +1,10 @@
 //===- TransformInternals.cpp - Implement shared functions for transforms -===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 //  This file defines shared functions used by the different components of the
@@ -30,10 +30,10 @@ static const Type *getStructOffsetStep(const StructType *STy, uint64_t &Offset,
   for (i = 0; i < SL->MemberOffsets.size()-1; ++i)
     if (Offset >= SL->MemberOffsets[i] && Offset < SL->MemberOffsets[i+1])
       break;
-  
+
   assert(Offset >= SL->MemberOffsets[i] &&
          (i == SL->MemberOffsets.size()-1 || Offset < SL->MemberOffsets[i+1]));
-  
+
   // Make sure to save the current index...
   Indices.push_back(ConstantUInt::get(Type::UIntTy, i));
   Offset = SL->MemberOffsets[i];

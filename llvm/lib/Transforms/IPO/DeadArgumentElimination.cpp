@@ -1,10 +1,10 @@
 //===-- DeadArgumentElimination.cpp - Eliminate dead arguments ------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This pass deletes dead arguments from internal functions.  Dead argument
@@ -88,7 +88,7 @@ namespace {
     void MarkArgumentLive(Argument *Arg);
     void MarkRetValLive(Function *F);
     void MarkReturnInstArgumentLive(ReturnInst *RI);
-  
+
     void RemoveDeadArgumentsFromFunction(Function *F);
   };
   RegisterOpt<DAE> X("deadargelim", "Dead Argument Elimination");
@@ -168,7 +168,7 @@ void DAE::SurveyFunction(Function &F) {
   if (!F.hasInternalLinkage() &&
       (!ShouldHackArguments() || F.getIntrinsicID()))
     FunctionIntrinsicallyLive = true;
-  else 
+  else
     for (Value::use_iterator I = F.use_begin(), E = F.use_end(); I != E; ++I) {
       // If this use is anything other than a call site, the function is alive.
       CallSite CS = CallSite::get(*I);
@@ -197,7 +197,7 @@ void DAE::SurveyFunction(Function &F) {
             RetValLiveness = Live;
             break;
           }
-      
+
       // If the function is PASSED IN as an argument, its address has been taken
       for (CallSite::arg_iterator AI = CS.arg_begin(), E = CS.arg_end();
            AI != E; ++AI)
@@ -300,11 +300,11 @@ bool DAE::isMaybeLiveArgumentNowLive(Argument *Arg) {
 void DAE::MarkArgumentLive(Argument *Arg) {
   std::set<Argument*>::iterator It = MaybeLiveArguments.lower_bound(Arg);
   if (It == MaybeLiveArguments.end() || *It != Arg) return;
- 
+
   DEBUG(std::cerr << "  MaybeLive argument now live: " << Arg->getName()<<"\n");
   MaybeLiveArguments.erase(It);
   LiveArguments.insert(Arg);
-  
+
   // Loop over all of the call sites of the function, making any arguments
   // passed in to provide a value for this argument live as necessary.
   //
@@ -440,7 +440,7 @@ void DAE::RemoveDeadArgumentsFromFunction(Function *F) {
         New->setName(Name);
       }
     }
-    
+
     // Finally, remove the old call from the program, reducing the use-count of
     // F.
     Call->getParent()->getInstList().erase(Call);
@@ -499,7 +499,7 @@ bool DAE::runOnModule(Module &M) {
   while (!InstructionsToInspect.empty()) {
     Instruction *I = InstructionsToInspect.back();
     InstructionsToInspect.pop_back();
-    
+
     if (ReturnInst *RI = dyn_cast<ReturnInst>(I)) {
       // For return instructions, we just have to check to see if the return
       // value for the current function is known now to be alive.  If so, any
@@ -513,7 +513,7 @@ bool DAE::runOnModule(Module &M) {
       assert(CS.getInstruction() && "Unknown instruction for the I2I list!");
 
       Function *Callee = CS.getCalledFunction();
-      
+
       // If we found a call or invoke instruction on this list, that means that
       // an argument of the function is a call instruction.  If the argument is
       // live, then the return value of the called instruction is now live.
@@ -556,7 +556,7 @@ bool DAE::runOnModule(Module &M) {
   if (MaybeLiveArguments.empty() && DeadArguments.empty() &&
       MaybeLiveRetVal.empty() && DeadRetVal.empty())
     return false;
-  
+
   // Otherwise, compact into one set, and start eliminating the arguments from
   // the functions.
   DeadArguments.insert(MaybeLiveArguments.begin(), MaybeLiveArguments.end());

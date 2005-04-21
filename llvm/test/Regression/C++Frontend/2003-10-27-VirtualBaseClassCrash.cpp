@@ -7,7 +7,7 @@ struct super {
   void foo();
 };
 
-template <class T> 
+template <class T>
 struct test : virtual super<int> {};
 
 extern test<int> X;

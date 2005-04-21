@@ -1,10 +1,10 @@
 //===-- Instruction.cpp - Implement the Instruction class -----------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements the Instruction class for the VMCore library.
@@ -74,7 +74,7 @@ const char *Instruction::getOpcodeName(unsigned OpCode) {
   case Invoke: return "invoke";
   case Unwind: return "unwind";
   case Unreachable: return "unreachable";
-    
+
   // Standard binary operators...
   case Add: return "add";
   case Sub: return "sub";
@@ -94,7 +94,7 @@ const char *Instruction::getOpcodeName(unsigned OpCode) {
   case SetGT:  return "setgt";
   case SetEQ:  return "seteq";
   case SetNE:  return "setne";
-    
+
   // Memory instructions...
   case Malloc:        return "malloc";
   case Free:          return "free";
@@ -102,7 +102,7 @@ const char *Instruction::getOpcodeName(unsigned OpCode) {
   case Load:          return "load";
   case Store:         return "store";
   case GetElementPtr: return "getelementptr";
-    
+
   // Other instructions...
   case PHI:     return "phi";
   case Cast:    return "cast";
@@ -115,7 +115,7 @@ const char *Instruction::getOpcodeName(unsigned OpCode) {
 
   default: return "<Invalid operator> ";
   }
-  
+
   return 0;
 }
 
@@ -172,7 +172,7 @@ bool Instruction::isCommutative(unsigned op) {
   switch (op) {
   case Add:
   case Mul:
-  case And: 
+  case And:
   case Or:
   case Xor:
   case SetEQ:

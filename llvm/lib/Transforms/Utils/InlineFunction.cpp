@@ -1,10 +1,10 @@
 //===- InlineFunction.cpp - Code to perform function inlining -------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements inlining of a function into a call site, resolving
@@ -31,8 +31,8 @@ bool llvm::InlineFunction(InvokeInst *II) {return InlineFunction(CallSite(II));}
 // block of the caller.  This returns false if it is not possible to inline this
 // call.  The program is still in a well defined state if this occurs though.
 //
-// Note that this only does one level of inlining.  For example, if the 
-// instruction 'call B' is inlined, and 'B' calls 'C', then the call to 'C' now 
+// Note that this only does one level of inlining.  For example, if the
+// instruction 'call B' is inlined, and 'B' calls 'C', then the call to 'C' now
 // exists in the instruction stream.  Similiarly this will inline a recursive
 // function by one level.
 //
@@ -60,18 +60,18 @@ bool llvm::InlineFunction(CallSite CS) {
   { // Scope to destroy ValueMap after cloning.
     // Calculate the vector of arguments to pass into the function cloner...
     std::map<const Value*, Value*> ValueMap;
-    assert(std::distance(CalledFunc->arg_begin(), CalledFunc->arg_end()) == 
+    assert(std::distance(CalledFunc->arg_begin(), CalledFunc->arg_end()) ==
            std::distance(CS.arg_begin(), CS.arg_end()) &&
            "No varargs calls can be inlined!");
-    
+
     CallSite::arg_iterator AI = CS.arg_begin();
     for (Function::const_arg_iterator I = CalledFunc->arg_begin(),
            E = CalledFunc->arg_end(); I != E; ++I, ++AI)
       ValueMap[I] = *AI;
-    
-    // Clone the entire body of the callee into the caller.  
+
+    // Clone the entire body of the callee into the caller.
     CloneFunctionInto(Caller, CalledFunc, ValueMap, Returns, ".i");
-  }    
+  }
 
   // Remember the first block that is newly cloned over.
   Function::iterator FirstNewBlock = LastBlock; ++FirstNewBlock;
@@ -131,21 +131,21 @@ bool llvm::InlineFunction(CallSite CS) {
           } else {
             // First, split the basic block...
             BasicBlock *Split = BB->splitBasicBlock(CI, CI->getName()+".noexc");
-            
+
             // Next, create the new invoke instruction, inserting it at the end
             // of the old basic block.
             InvokeInst *II =
-              new InvokeInst(CI->getCalledValue(), Split, InvokeDest, 
+              new InvokeInst(CI->getCalledValue(), Split, InvokeDest,
                             std::vector<Value*>(CI->op_begin()+1, CI->op_end()),
                              CI->getName(), BB->getTerminator());
 
             // Make sure that anything using the call now uses the invoke!
             CI->replaceAllUsesWith(II);
-            
+
             // Delete the unconditional branch inserted by splitBasicBlock
             BB->getInstList().pop_back();
             Split->getInstList().pop_front();  // Delete the original call
-            
+
             // Update any PHI nodes in the exceptional block to indicate that
             // there is now a new entry in them.
             unsigned i = 0;
@@ -154,7 +154,7 @@ bool llvm::InlineFunction(CallSite CS) {
               PHINode *PN = cast<PHINode>(I);
               PN->addIncoming(InvokeDestPHIValues[i], BB);
             }
-            
+
             // This basic block is now complete, start scanning the next one.
             break;
           }
@@ -200,7 +200,7 @@ bool llvm::InlineFunction(CallSite CS) {
                                  FirstNewBlock->begin(), FirstNewBlock->end());
     // Remove the cloned basic block.
     Caller->getBasicBlockList().pop_back();
-    
+
     // If the call site was an invoke instruction, add a branch to the normal
     // destination.
     if (InvokeInst *II = dyn_cast<InvokeInst>(TheCall))
@@ -229,16 +229,16 @@ bool llvm::InlineFunction(CallSite CS) {
   // this is an invoke instruction or a call instruction.
   BasicBlock *AfterCallBB;
   if (InvokeInst *II = dyn_cast<InvokeInst>(TheCall)) {
-    
+
     // Add an unconditional branch to make this look like the CallInst case...
     BranchInst *NewBr = new BranchInst(II->getNormalDest(), TheCall);
-    
+
     // Split the basic block.  This guarantees that no PHI nodes will have to be
     // updated due to new incoming edges, and make the invoke case more
     // symmetric to the call case.
     AfterCallBB = OrigBB->splitBasicBlock(NewBr,
                                           CalledFunc->getName()+".exit");
-    
+
   } else {  // It's a call
     // If this is a call instruction, we need to split the basic block that
     // the call lives in.
@@ -251,7 +251,7 @@ bool llvm::InlineFunction(CallSite CS) {
   // basic block of the inlined function.
   //
   TerminatorInst *Br = OrigBB->getTerminator();
-  assert(Br && Br->getOpcode() == Instruction::Br && 
+  assert(Br && Br->getOpcode() == Instruction::Br &&
          "splitBasicBlock broken!");
   Br->setOperand(0, FirstNewBlock);
 
@@ -273,39 +273,39 @@ bool llvm::InlineFunction(CallSite CS) {
     if (!TheCall->use_empty()) {
       PHI = new PHINode(CalledFunc->getReturnType(),
                         TheCall->getName(), AfterCallBB->begin());
-        
+
       // Anything that used the result of the function call should now use the
       // PHI node as their operand.
       //
       TheCall->replaceAllUsesWith(PHI);
     }
-      
+
     // Loop over all of the return instructions, turning them into unconditional
     // branches to the merge point now, and adding entries to the PHI node as
     // appropriate.
     for (unsigned i = 0, e = Returns.size(); i != e; ++i) {
       ReturnInst *RI = Returns[i];
-        
+
       if (PHI) {
         assert(RI->getReturnValue() && "Ret should have value!");
-        assert(RI->getReturnValue()->getType() == PHI->getType() && 
+        assert(RI->getReturnValue()->getType() == PHI->getType() &&
                "Ret value not consistent in function!");
         PHI->addIncoming(RI->getReturnValue(), RI->getParent());
       }
-        
+
       // Add a branch to the merge point where the PHI node lives if it exists.
       new BranchInst(AfterCallBB, RI);
-        
+
       // Delete the return instruction now
       RI->getParent()->getInstList().erase(RI);
     }
-      
+
   } else if (!Returns.empty()) {
     // Otherwise, if there is exactly one return value, just replace anything
     // using the return value of the call with the computed value.
     if (!TheCall->use_empty())
       TheCall->replaceAllUsesWith(Returns[0]->getReturnValue());
-      
+
     // Splice the code from the return block into the block that it will return
     // to, which contains the code that was after the call.
     BasicBlock *ReturnBB = Returns[0]->getParent();
@@ -314,7 +314,7 @@ bool llvm::InlineFunction(CallSite CS) {
 
     // Update PHI nodes that use the ReturnBB to use the AfterCallBB.
     ReturnBB->replaceAllUsesWith(AfterCallBB);
-      
+
     // Delete the return instruction now and empty ReturnBB now.
     Returns[0]->eraseFromParent();
     ReturnBB->eraseFromParent();
@@ -323,7 +323,7 @@ bool llvm::InlineFunction(CallSite CS) {
     // nuke the result.
     TheCall->replaceAllUsesWith(UndefValue::get(TheCall->getType()));
   }
-    
+
   // Since we are now done with the Call/Invoke, we can delete it.
   TheCall->eraseFromParent();
 

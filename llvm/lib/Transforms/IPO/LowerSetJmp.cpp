@@ -1,10 +1,10 @@
 //===- LowerSetJmp.cpp - Code pertaining to lowering set/long jumps -------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 //  This file implements the lowering of setjmp and longjmp to use the
@@ -204,7 +204,7 @@ bool LowerSetJmp::doInitialization(Module& M)
 
   // void __llvm_sjljeh_init_setjmpmap(void**)
   InitSJMap = M.getOrInsertFunction("__llvm_sjljeh_init_setjmpmap",
-                                    Type::VoidTy, SBPPTy, 0); 
+                                    Type::VoidTy, SBPPTy, 0);
   // void __llvm_sjljeh_destroy_setjmpmap(void**)
   DestroySJMap = M.getOrInsertFunction("__llvm_sjljeh_destroy_setjmpmap",
                                        Type::VoidTy, SBPPTy, 0);
@@ -386,7 +386,7 @@ void LowerSetJmp::TransformSetJmpCall(CallInst* Inst)
   // instructions after the call.
   for (BasicBlock::iterator I = ++BasicBlock::iterator(Inst), E = ABlock->end();
        I != E; ++I)
-    InstrsAfterCall.insert(I);    
+    InstrsAfterCall.insert(I);
 
   for (BasicBlock::iterator II = ABlock->begin();
        II != BasicBlock::iterator(Inst); ++II)
@@ -460,7 +460,7 @@ void LowerSetJmp::visitCallInst(CallInst& CI)
   std::vector<Value*> Params(CI.op_begin() + 1, CI.op_end());
   InvokeInst* II = new
     InvokeInst(CI.getCalledValue(), NewBB, PrelimBBMap[Func],
-               Params, CI.getName(), Term); 
+               Params, CI.getName(), Term);
 
   // Replace the old call inst with the invoke inst and remove the call.
   CI.replaceAllUsesWith(II);

@@ -1,10 +1,10 @@
 //===-- BasicBlock.cpp - Implement BasicBlock related methods -------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements the BasicBlock class for the VMCore library.
@@ -130,7 +130,7 @@ BasicBlock *BasicBlock::getSinglePredecessor() {
 
 /// removePredecessor - This method is used to notify a BasicBlock that the
 /// specified Predecessor of the block is no longer able to reach it.  This is
-/// actually not used to update the Predecessor list, but is actually used to 
+/// actually not used to update the Predecessor list, but is actually used to
 /// update the PHI nodes that reside in the block.  Note that this should be
 /// called while the predecessor still refers to this block.
 ///
@@ -153,9 +153,9 @@ void BasicBlock::removePredecessor(BasicBlock *Pred,
   //    br Loop                 ;; %x2 does not dominate all uses
   //
   // This is because the PHI node input is actually taken from the predecessor
-  // basic block.  The only case this can happen is with a self loop, so we 
+  // basic block.  The only case this can happen is with a self loop, so we
   // check for this case explicitly now.
-  // 
+  //
   unsigned max_idx = APN->getNumIncomingValues();
   assert(max_idx != 0 && "PHI Node in block with 0 predecessors!?!?!");
   if (max_idx == 2) {
@@ -197,18 +197,18 @@ void BasicBlock::removePredecessor(BasicBlock *Pred,
 
 /// splitBasicBlock - This splits a basic block into two at the specified
 /// instruction.  Note that all instructions BEFORE the specified iterator stay
-/// as part of the original basic block, an unconditional branch is added to 
+/// as part of the original basic block, an unconditional branch is added to
 /// the new BB, and the rest of the instructions in the BB are moved to the new
 /// BB, including the old terminator.  This invalidates the iterator.
 ///
-/// Note that this only works on well formed basic blocks (must have a 
+/// Note that this only works on well formed basic blocks (must have a
 /// terminator), and 'I' must not be the end of instruction list (which would
 /// cause a degenerate basic block to be formed, having a terminator inside of
-/// the basic block). 
+/// the basic block).
 ///
 BasicBlock *BasicBlock::splitBasicBlock(iterator I, const std::string &BBName) {
   assert(getTerminator() && "Can't use splitBasicBlock on degenerate BB!");
-  assert(I != InstList.end() && 
+  assert(I != InstList.end() &&
 	 "Trying to get me to create degenerate basic block!");
 
   BasicBlock *New = new BasicBlock(BBName, getParent(), getNext());

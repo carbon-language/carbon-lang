@@ -1,10 +1,10 @@
 //===- TailDuplication.cpp - Simplify CFG through tail duplication --------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This pass performs a limited form of tail duplication, intended to simplify
@@ -127,7 +127,7 @@ bool TailDup::shouldEliminateUnconditionalBranch(TerminatorInst *TI) {
       if (TooMany-- == 0) return false;
   }
 
-  return true;  
+  return true;
 }
 
 /// FindObviousSharedDomOf - We know there is a branch from SrcBlock to
@@ -141,7 +141,7 @@ static BasicBlock *FindObviousSharedDomOf(BasicBlock *SrcBlock,
   if (PI == PE || ++PI != PE) return 0;
 
   BasicBlock *SrcPred = *pred_begin(SrcBlock);
-  
+
   // Look at the predecessors of DstBlock.  One of them will be SrcBlock.  If
   // there is only one other pred, get it, otherwise we can't handle it.
   PI = pred_begin(DstBlock); PE = pred_end(DstBlock);
@@ -199,7 +199,7 @@ void TailDup::eliminateUnconditionalBranch(BranchInst *Branch) {
     while (isa<PHINode>(BBI)) ++BBI;
     while (!isa<TerminatorInst>(BBI)) {
       Instruction *I = BBI++;
-      
+
       bool CanHoist = !I->isTrapping() && !I->mayWriteToMemory();
       if (CanHoist) {
         for (unsigned op = 0, e = I->getNumOperands(); op != e; ++op)
@@ -303,7 +303,7 @@ void TailDup::eliminateUnconditionalBranch(BranchInst *Branch) {
       // Ok, we have a PHI node.  Figure out what the incoming value was for the
       // DestBlock.
       Value *IV = PN->getIncomingValueForBlock(DestBlock);
-      
+
       // Remap the value if necessary...
       if (Value *MappedIV = ValueMapping[IV])
         IV = MappedIV;

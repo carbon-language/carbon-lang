@@ -1,10 +1,10 @@
 //===-- Local.cpp - Functions to perform local transformations ------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This family of functions perform various local transformations to the
@@ -32,7 +32,7 @@ bool llvm::doConstantPropagation(BasicBlock::iterator &II) {
   if (Constant *C = ConstantFoldInstruction(II)) {
     // Replaces all of the uses of a variable with uses of the constant.
     II->replaceAllUsesWith(C);
-    
+
     // Remove the instruction from the basic block...
     II = II->getParent()->getInstList().erase(II);
     return true;
@@ -50,7 +50,7 @@ Constant *llvm::ConstantFoldInstruction(Instruction *I) {
   if (PHINode *PN = dyn_cast<PHINode>(I)) {
     if (PN->getNumIncomingValues() == 0)
       return Constant::getNullValue(PN->getType());
-    
+
     Constant *Result = dyn_cast<Constant>(PN->getIncomingValue(0));
     if (Result == 0) return 0;
 
@@ -58,7 +58,7 @@ Constant *llvm::ConstantFoldInstruction(Instruction *I) {
     for (unsigned i = 1, e = PN->getNumIncomingValues(); i != e; ++i)
       if (PN->getIncomingValue(i) != Result && PN->getIncomingValue(i) != PN)
         return 0;   // Not all the same incoming constants...
-    
+
     // If we reach here, all incoming values are the same constant.
     return Result;
   } else if (CallInst *CI = dyn_cast<CallInst>(I)) {
@@ -89,7 +89,7 @@ Constant *llvm::ConstantFoldInstruction(Instruction *I) {
   }
 
   if (isa<BinaryOperator>(I) || isa<ShiftInst>(I))
-    return ConstantExpr::get(I->getOpcode(), Op0, Op1);    
+    return ConstantExpr::get(I->getOpcode(), Op0, Op1);
 
   switch (I->getOpcode()) {
   default: return 0;
@@ -118,7 +118,7 @@ Constant *llvm::ConstantFoldInstruction(Instruction *I) {
 //
 bool llvm::ConstantFoldTerminator(BasicBlock *BB) {
   TerminatorInst *T = BB->getTerminator();
-      
+
   // Branch - See if we are conditional jumping on constant
   if (BranchInst *BI = dyn_cast<BranchInst>(T)) {
     if (BI->isUnconditional()) return false;  // Can't optimize uncond branch
@@ -131,8 +131,8 @@ bool llvm::ConstantFoldTerminator(BasicBlock *BB) {
       BasicBlock *Destination = Cond->getValue() ? Dest1 : Dest2;
       BasicBlock *OldDest     = Cond->getValue() ? Dest2 : Dest1;
 
-      //cerr << "Function: " << T->getParent()->getParent() 
-      //     << "\nRemoving branch from " << T->getParent() 
+      //cerr << "Function: " << T->getParent()->getParent()
+      //     << "\nRemoving branch from " << T->getParent()
       //     << "\n\nTo: " << OldDest << endl;
 
       // Let the basic block know that we are letting go of it.  Based on this,
@@ -145,7 +145,7 @@ bool llvm::ConstantFoldTerminator(BasicBlock *BB) {
       BI->setUnconditionalDest(Destination);
       return true;
     } else if (Dest2 == Dest1) {       // Conditional branch to same location?
-      // This branch matches something like this:  
+      // This branch matches something like this:
       //     br bool %cond, label %Dest, label %Dest
       // and changes it into:  br label %Dest
 
@@ -294,7 +294,7 @@ Constant *llvm::ConstantFoldCall(Function *F,
 
         if (Name == "llvm.isunordered")
           return ConstantBool::get(IsNAN(Op1V) || IsNAN(Op2V));
-        else 
+        else
         if (Name == "pow") {
           errno = 0;
           double V = pow(Op1V, Op2V);

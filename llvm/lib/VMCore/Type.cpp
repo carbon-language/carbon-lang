@@ -1,10 +1,10 @@
 //===-- Type.cpp - Implement the Type class -------------------------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements the Type class for the VMCore library.
@@ -103,13 +103,13 @@ const Type *Type::getUnsignedVersion() const {
   switch (getTypeID()) {
   default:
     assert(isInteger()&&"Type::getUnsignedVersion is only valid for integers!");
-  case Type::UByteTyID:   
+  case Type::UByteTyID:
   case Type::SByteTyID:   return Type::UByteTy;
-  case Type::UShortTyID:  
+  case Type::UShortTyID:
   case Type::ShortTyID:   return Type::UShortTy;
-  case Type::UIntTyID:    
+  case Type::UIntTyID:
   case Type::IntTyID:     return Type::UIntTy;
-  case Type::ULongTyID:   
+  case Type::ULongTyID:
   case Type::LongTyID:    return Type::ULongTy;
   }
 }
@@ -120,13 +120,13 @@ const Type *Type::getSignedVersion() const {
   switch (getTypeID()) {
   default:
     assert(isInteger() && "Type::getSignedVersion is only valid for integers!");
-  case Type::UByteTyID:   
+  case Type::UByteTyID:
   case Type::SByteTyID:   return Type::SByteTy;
-  case Type::UShortTyID:  
+  case Type::UShortTyID:
   case Type::ShortTyID:   return Type::ShortTy;
-  case Type::UIntTyID:    
+  case Type::UIntTyID:
   case Type::IntTyID:     return Type::IntTy;
-  case Type::ULongTyID:   
+  case Type::ULongTyID:
   case Type::LongTyID:    return Type::LongTy;
   }
 }
@@ -167,7 +167,7 @@ bool Type::isSizedDerivedType() const {
 /// algorithm for when a type is being forwarded to another type.
 const Type *Type::getForwardedTypeInternal() const {
   assert(ForwardType && "This type is not being forwarded to another type!");
-  
+
   // Check to see if the forwarded type has been forwarded on.  If so, collapse
   // the forwarding links.
   const Type *RealForwardedType = ForwardType->getForwardedType();
@@ -181,7 +181,7 @@ const Type *Type::getForwardedTypeInternal() const {
 
   // Now drop the old reference.  This could cause ForwardType to get deleted.
   cast<DerivedType>(ForwardType)->dropRef();
-  
+
   // Return the updated type.
   ForwardType = RealForwardedType;
   return ForwardType;
@@ -201,28 +201,28 @@ static std::string getTypeDescription(const Type *Ty,
     AbstractTypeDescriptions.insert(std::make_pair(Ty, Desc));
     return Desc;
   }
-  
+
   if (!Ty->isAbstract()) {                       // Base case for the recursion
     std::map<const Type*, std::string>::iterator I =
       ConcreteTypeDescriptions.find(Ty);
     if (I != ConcreteTypeDescriptions.end()) return I->second;
   }
-      
+
   // Check to see if the Type is already on the stack...
   unsigned Slot = 0, CurSize = TypeStack.size();
   while (Slot < CurSize && TypeStack[Slot] != Ty) ++Slot; // Scan for type
-  
-  // This is another base case for the recursion.  In this case, we know 
+
+  // This is another base case for the recursion.  In this case, we know
   // that we have looped back to a type that we have previously visited.
   // Generate the appropriate upreference to handle this.
-  // 
+  //
   if (Slot < CurSize)
     return "\\" + utostr(CurSize-Slot);         // Here's the upreference
 
   // Recursive case: derived types...
   std::string Result;
   TypeStack.push_back(Ty);    // Add us to the stack..
-      
+
   switch (Ty->getTypeID()) {
   case Type::FunctionTyID: {
     const FunctionType *FTy = cast<FunctionType>(Ty);
@@ -289,7 +289,7 @@ static const std::string &getOrCreateDesc(std::map<const Type*,std::string>&Map,
                                           const Type *Ty) {
   std::map<const Type*, std::string>::iterator I = Map.find(Ty);
   if (I != Map.end()) return I->second;
-    
+
   std::vector<const Type *> TypeStack;
   std::string Result = getTypeDescription(Ty, TypeStack);
   return Map[Ty] = Result;
@@ -366,11 +366,11 @@ Type *Type::LabelTy  = &TheLabelTy;
 //===----------------------------------------------------------------------===//
 
 FunctionType::FunctionType(const Type *Result,
-                           const std::vector<const Type*> &Params, 
-                           bool IsVarArgs) : DerivedType(FunctionTyID), 
+                           const std::vector<const Type*> &Params,
+                           bool IsVarArgs) : DerivedType(FunctionTyID),
                                              isVarArgs(IsVarArgs) {
   assert((Result->isFirstClassType() || Result == Type::VoidTy ||
-         isa<OpaqueType>(Result)) && 
+         isa<OpaqueType>(Result)) &&
          "LLVM functions cannot return aggregates");
   bool isAbstract = Result->isAbstract();
   ContainedTys.reserve(Params.size()+1);
@@ -415,7 +415,7 @@ PackedType::PackedType(const Type *ElType, unsigned NumEl)
   NumElements = NumEl;
 
   assert(NumEl > 0 && "NumEl of a PackedType must be greater than 0");
-  assert((ElType->isIntegral() || ElType->isFloatingPoint()) && 
+  assert((ElType->isIntegral() || ElType->isFloatingPoint()) &&
          "Elements of a PackedType must be a primitive type");
 }
 
@@ -439,7 +439,7 @@ void DerivedType::dropAllTypeUses() {
   if (!ContainedTys.empty()) {
     while (ContainedTys.size() > 1)
       ContainedTys.pop_back();
-    
+
     // The type must stay abstract.  To do this, we insert a pointer to a type
     // that will never get resolved, thus will always be abstract.
     static Type *AlwaysOpaqueTy = OpaqueType::get();
@@ -463,15 +463,15 @@ namespace llvm {
   template <> struct GraphTraits<TypePromotionGraph> {
     typedef Type NodeType;
     typedef Type::subtype_iterator ChildIteratorType;
-    
+
     static inline NodeType *getEntryNode(TypePromotionGraph G) { return G.Ty; }
-    static inline ChildIteratorType child_begin(NodeType *N) { 
+    static inline ChildIteratorType child_begin(NodeType *N) {
       if (N->isAbstract())
-        return N->subtype_begin(); 
+        return N->subtype_begin();
       else           // No need to process children of concrete types.
-        return N->subtype_end(); 
+        return N->subtype_end();
     }
-    static inline ChildIteratorType child_end(NodeType *N) { 
+    static inline ChildIteratorType child_end(NodeType *N) {
       return N->subtype_end();
     }
   };
@@ -507,12 +507,12 @@ void Type::PromoteAbstractToConcrete() {
             // abstract unless there is a non-SCC abstract type.
             if (std::find(SCC.begin(), SCC.end(), *CI) == SCC.end())
               return;               // Not going to be concrete, sorry.
-      
+
       // Okay, we just discovered this whole SCC is now concrete, mark it as
       // such!
       for (unsigned i = 0, e = SCC.size(); i != e; ++i) {
         assert(SCC[i]->isAbstract() && "Why are we processing concrete types?");
-        
+
         SCC[i]->setAbstract(false);
       }
 
@@ -606,7 +606,7 @@ static bool AbstractTypeHasCycleThrough(const Type *TargetTy, const Type *CurTy,
   if (!VisitedTypes.insert(CurTy).second)
     return false;  // Already been here.
 
-  for (Type::subtype_iterator I = CurTy->subtype_begin(), 
+  for (Type::subtype_iterator I = CurTy->subtype_begin(),
        E = CurTy->subtype_end(); I != E; ++I)
     if (AbstractTypeHasCycleThrough(TargetTy, *I, VisitedTypes))
       return true;
@@ -620,7 +620,7 @@ static bool ConcreteTypeHasCycleThrough(const Type *TargetTy, const Type *CurTy,
   if (!VisitedTypes.insert(CurTy).second)
     return false;  // Already been here.
 
-  for (Type::subtype_iterator I = CurTy->subtype_begin(), 
+  for (Type::subtype_iterator I = CurTy->subtype_begin(),
        E = CurTy->subtype_end(); I != E; ++I)
     if (ConcreteTypeHasCycleThrough(TargetTy, *I, VisitedTypes))
       return true;
@@ -633,7 +633,7 @@ static bool TypeHasCycleThroughItself(const Type *Ty) {
   std::set<const Type*> VisitedTypes;
 
   if (Ty->isAbstract()) {  // Optimized case for abstract types.
-    for (Type::subtype_iterator I = Ty->subtype_begin(), E = Ty->subtype_end(); 
+    for (Type::subtype_iterator I = Ty->subtype_begin(), E = Ty->subtype_end();
          I != E; ++I)
       if (AbstractTypeHasCycleThrough(Ty, *I, VisitedTypes))
         return true;
@@ -670,7 +670,7 @@ class TypeMap {
 
 private:
   void clear(std::vector<Type *> &DerivedTypes) {
-    for (typename std::map<ValType, PATypeHolder>::iterator I = Map.begin(), 
+    for (typename std::map<ValType, PATypeHolder>::iterator I = Map.begin(),
          E = Map.end(); I != E; ++I)
       DerivedTypes.push_back(I->second.get());
     TypesByHash.clear();
@@ -694,7 +694,7 @@ public:
   }
 
   void RemoveFromTypesByHash(unsigned Hash, const Type *Ty) {
-    std::multimap<unsigned, PATypeHolder>::iterator I = 
+    std::multimap<unsigned, PATypeHolder>::iterator I =
       TypesByHash.lower_bound(Hash);
     while (I->second != Ty) {
       ++I;
@@ -736,7 +736,7 @@ public:
       }
 
     unsigned TypeHash = ValType::hashTypeStructure(Ty);
-    
+
     // If there are no cycles going through this node, we can do a simple,
     // efficient lookup in the map, instead of an inefficient nasty linear
     // lookup.
@@ -756,7 +756,7 @@ public:
         Ty->refineAbstractTypeTo(NewTy);
         return;
       }
-      
+
     } else {
       // Now we check to see if there is an existing entry in the table which is
       // structurally identical to the newly refined type.  If so, this type
@@ -770,7 +770,7 @@ public:
           if (TypesEqual(Ty, I->second)) {
             assert(Ty->isAbstract() && "Replacing a non-abstract type?");
             TypeClass *NewTy = cast<TypeClass>((Type*)I->second.get());
-            
+
             if (Entry == E) {
               // Find the location of Ty in the TypesByHash structure.
               while (I->second != Ty) {
@@ -785,7 +785,7 @@ public:
             return;
           }
         } else {
-          // Remember the position of 
+          // Remember the position of
           Entry = I;
         }
       }
@@ -807,14 +807,14 @@ public:
     if (Ty->isAbstract())
       Ty->PromoteAbstractToConcrete();
   }
-  
+
   void print(const char *Arg) const {
 #ifdef DEBUG_MERGE_TYPES
     std::cerr << "TypeMap<>::" << Arg << " table contents:\n";
     unsigned i = 0;
     for (typename std::map<ValType, PATypeHolder>::const_iterator I
            = Map.begin(), E = Map.end(); I != E; ++I)
-      std::cerr << " " << (++i) << ". " << (void*)I->second.get() << " " 
+      std::cerr << " " << (++i) << ". " << (void*)I->second.get() << " "
                 << *I->second.get() << "\n";
 #endif
   }
@@ -879,7 +879,7 @@ FunctionValType FunctionValType::get(const FunctionType *FT) {
 
 
 // FunctionType::get - The factory function for the FunctionType class...
-FunctionType *FunctionType::get(const Type *ReturnType, 
+FunctionType *FunctionType::get(const Type *ReturnType,
                                 const std::vector<const Type*> &Params,
                                 bool isVarArg) {
   FunctionValType VT(ReturnType, Params, isVarArg);
@@ -1010,7 +1010,7 @@ public:
     ElTypes.reserve(ST->getNumElements());
     for (unsigned i = 0, e = ST->getNumElements(); i != e; ++i)
       ElTypes.push_back(ST->getElementType(i));
-    
+
     return StructValType(ElTypes);
   }
 
@@ -1121,12 +1121,12 @@ void DerivedType::removeAbstractTypeUser(AbstractTypeUser *U) const {
   assert(i < AbstractTypeUsers.size() && "Index out of range!");  // Wraparound?
 
   AbstractTypeUsers.erase(AbstractTypeUsers.begin()+i);
-      
+
 #ifdef DEBUG_MERGE_TYPES
   std::cerr << "  remAbstractTypeUser[" << (void*)this << ", "
             << *this << "][" << i << "] User = " << U << "\n";
 #endif
-    
+
   if (AbstractTypeUsers.empty() && getRefCount() == 0 && isAbstract()) {
 #ifdef DEBUG_MERGE_TYPES
     std::cerr << "DELETEing unused abstract type: <" << *this
@@ -1223,7 +1223,7 @@ void DerivedType::notifyUsesThatTypeBecameConcrete() {
            "AbstractTypeUser did not remove itself from the use list!");
   }
 }
-  
+
 
 
 
@@ -1333,7 +1333,7 @@ void Type::clearAllTypeMaps() {
   ArrayTypes.clear(DerivedTypes);
   PackedTypes.clear(DerivedTypes);
 
-  for(std::vector<Type *>::iterator I = DerivedTypes.begin(), 
+  for(std::vector<Type *>::iterator I = DerivedTypes.begin(),
       E = DerivedTypes.end(); I != E; ++I)
     (*I)->ContainedTys.clear();
   for(std::vector<Type *>::iterator I = DerivedTypes.begin(),

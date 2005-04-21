@@ -1,10 +1,10 @@
 //===- Inliner.cpp - Code common to all inliners --------------------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements the mechanics required to implement inlining without
@@ -53,18 +53,18 @@ static bool InlineCallIfPossible(CallSite CS, CallGraph &CG,
   for (CallGraphNode::iterator I = CalleeNode->begin(),
          E = CalleeNode->end(); I != E; ++I)
     CallerNode->addCalledFunction(*I);
-  
+
   // If we inlined the last possible call site to the function, delete the
   // function body now.
   if (Callee->use_empty() && Callee->hasInternalLinkage() &&
       !SCCFunctions.count(Callee)) {
     DEBUG(std::cerr << "    -> Deleting dead function: "
                     << Callee->getName() << "\n");
-    
+
     // Remove any call graph edges from the callee to its callees.
     while (CalleeNode->begin() != CalleeNode->end())
       CalleeNode->removeCallEdgeTo(*(CalleeNode->end()-1));
-     
+
     // Removing the node for callee from the call graph and delete it.
     delete CG.removeFunctionFromModule(CalleeNode);
     ++NumDeleted;
@@ -99,7 +99,7 @@ bool Inliner::runOnSCC(const std::vector<CallGraphNode*> &SCC) {
         }
 
   DEBUG(std::cerr << ": " << CallSites.size() << " call sites.\n");
-  
+
   // Now that we have all of the call sites, move the ones to functions in the
   // current SCC to the end of the list.
   unsigned FirstCallInSCC = CallSites.size();
@@ -107,7 +107,7 @@ bool Inliner::runOnSCC(const std::vector<CallGraphNode*> &SCC) {
     if (Function *F = CallSites[i].getCalledFunction())
       if (SCCFunctions.count(F))
         std::swap(CallSites[i--], CallSites[--FirstCallInSCC]);
-  
+
   // Now that we have all of the call sites, loop over them and inline them if
   // it looks profitable to do so.
   bool Changed = false;
@@ -137,7 +137,7 @@ bool Inliner::runOnSCC(const std::vector<CallGraphNode*> &SCC) {
         } else {
           DEBUG(std::cerr << "    Inlining: cost=" << InlineCost
                 << ", Call: " << *CS.getInstruction());
-          
+
           Function *Caller = CS.getInstruction()->getParent()->getParent();
 
           // Attempt to inline the function...
@@ -178,12 +178,12 @@ bool Inliner::doFinalization(CallGraph &CG) {
         // Remove any call graph edges from the function to its callees.
         while (CGN->begin() != CGN->end())
           CGN->removeCallEdgeTo(*(CGN->end()-1));
-        
+
         // Remove any edges from the external node to the function's call graph
         // node.  These edges might have been made irrelegant due to
         // optimization of the program.
         CG.getExternalCallingNode()->removeAnyCallEdgeTo(CGN);
-        
+
         // Removing the node for callee from the call graph and delete it.
         FunctionsToRemove.insert(CGN);
       }

@@ -1,10 +1,10 @@
 //===-- GlobalDCE.cpp - DCE unreachable internal functions ----------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This transform is designed to eliminate unreachable internal globals from the
@@ -111,7 +111,7 @@ bool GlobalDCE::runOnModule(Module &M) {
     NumVariables += DeadGlobalVars.size();
     Changed = true;
   }
-    
+
   // Make sure that all memory is released
   AliveGlobals.clear();
   return Changed;
@@ -148,7 +148,7 @@ void GlobalDCE::GlobalIsNeeded(GlobalValue *G) {
           if (GlobalValue *GV = dyn_cast<GlobalValue>(*U))
             GlobalIsNeeded(GV);
           else if (Constant *C = dyn_cast<Constant>(*U))
-            MarkUsedGlobalsAsNeeded(C);      
+            MarkUsedGlobalsAsNeeded(C);
   }
 }
 
@@ -174,7 +174,7 @@ bool GlobalDCE::RemoveUnusedGlobalValue(GlobalValue &GV) {
   GV.removeDeadConstantUsers();
   return GV.use_empty();
 }
- 
+
 // SafeToDestroyConstant - It is safe to destroy a constant iff it is only used
 // by constants itself.  Note that constants cannot be cyclic, so this test is
 // pretty easy to implement recursively.

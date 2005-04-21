@@ -6,7 +6,7 @@ char* eback();
 template<typename foo>
 struct basic_filebuf {
   char *instancevar;
- 
+
   void callee() {
     instancevar += eback() != eback();
   }

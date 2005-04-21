@@ -1,10 +1,10 @@
 //===- LoopSimplify.cpp - Loop Canonicalization Pass ----------------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This pass performs several transformations to transform natural loops into a
@@ -60,7 +60,7 @@ namespace {
     AliasAnalysis *AA;
 
     virtual bool runOnFunction(Function &F);
-    
+
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       // We need loop information to identify the loops...
       AU.addRequired<LoopInfo>();
@@ -204,13 +204,13 @@ bool LoopSimplify::ProcessLoop(Loop *L) {
 BasicBlock *LoopSimplify::SplitBlockPredecessors(BasicBlock *BB,
                                                  const char *Suffix,
                                        const std::vector<BasicBlock*> &Preds) {
-  
+
   // Create new basic block, insert right before the original block...
   BasicBlock *NewBB = new BasicBlock(BB->getName()+Suffix, BB->getParent(), BB);
 
   // The preheader first gets an unconditional branch to the loop header...
   BranchInst *BI = new BranchInst(BB, NewBB);
-  
+
   // For every PHI node in the block, insert a PHI node into NewBB where the
   // incoming values from the out of loop edges are moved to NewBB.  We have two
   // possible cases here.  If the loop is dead, we just insert dummy entries
@@ -232,13 +232,13 @@ BasicBlock *LoopSimplify::SplitBlockPredecessors(BasicBlock *BB,
           InVal = 0;
           break;
         }
-      
+
       // If the values coming into the block are not the same, we need a PHI.
       if (InVal == 0) {
         // Create the new PHI node, insert it into NewBB at the end of the block
         PHINode *NewPHI = new PHINode(PN->getType(), PN->getName()+".ph", BI);
         if (AA) AA->copyValue(PN, NewPHI);
-        
+
         // Move all of the edges from blocks outside the loop to the new PHI
         for (unsigned i = 0, e = Preds.size(); i != e; ++i) {
           Value *V = PN->removeIncomingValue(Preds[i], false);
@@ -266,7 +266,7 @@ BasicBlock *LoopSimplify::SplitBlockPredecessors(BasicBlock *BB,
         }
       }
     }
-    
+
     // Now that the PHI nodes are updated, actually move the edges from
     // Preds to point to NewBB instead of BB.
     //
@@ -276,14 +276,14 @@ BasicBlock *LoopSimplify::SplitBlockPredecessors(BasicBlock *BB,
         if (TI->getSuccessor(s) == BB)
           TI->setSuccessor(s, NewBB);
     }
-    
+
   } else {                       // Otherwise the loop is dead...
     for (BasicBlock::iterator I = BB->begin(); isa<PHINode>(I); ++I) {
       PHINode *PN = cast<PHINode>(I);
       // Insert dummy values as the incoming value...
       PN->addIncoming(Constant::getNullValue(PN->getType()), NewBB);
     }
-  }  
+  }
   return NewBB;
 }
 
@@ -300,15 +300,15 @@ void LoopSimplify::InsertPreheaderForLoop(Loop *L) {
        PI != PE; ++PI)
       if (!L->contains(*PI))           // Coming in from outside the loop?
         OutsideBlocks.push_back(*PI);  // Keep track of it...
-  
+
   // Split out the loop pre-header
   BasicBlock *NewBB =
     SplitBlockPredecessors(Header, ".preheader", OutsideBlocks);
-  
+
   //===--------------------------------------------------------------------===//
   //  Update analysis results now that we have performed the transformation
   //
-  
+
   // We know that we have loop information to update... update it now.
   if (Loop *Parent = L->getParentLoop())
     Parent->addBasicBlockToLoop(NewBB, getAnalysis<LoopInfo>());
@@ -330,7 +330,7 @@ void LoopSimplify::InsertPreheaderForLoop(Loop *L) {
 
   DominatorSet &DS = getAnalysis<DominatorSet>();  // Update dominator info
   DominatorTree &DT = getAnalysis<DominatorTree>();
-    
+
 
   // Update the dominator tree information.
   // The immediate dominator of the preheader is the immediate dominator of
@@ -353,16 +353,16 @@ void LoopSimplify::InsertPreheaderForLoop(Loop *L) {
            E = df_end(PHDomTreeNode); DFI != E; ++DFI)
       DS.addDominator((*DFI)->getBlock(), NewBB);
   }
-  
+
   // Update immediate dominator information if we have it...
   if (ImmediateDominators *ID = getAnalysisToUpdate<ImmediateDominators>()) {
     // Whatever i-dominated the header node now immediately dominates NewBB
     ID->addNewBlock(NewBB, ID->get(Header));
-    
+
     // The preheader now is the immediate dominator for the header node...
     ID->setImmediateDominator(Header, NewBB);
   }
-  
+
   // Update dominance frontier information...
   if (DominanceFrontier *DF = getAnalysisToUpdate<DominanceFrontier>()) {
     // The DF(NewBB) is just (DF(Header)-Header), because NewBB dominates
@@ -405,7 +405,7 @@ void LoopSimplify::InsertPreheaderForLoop(Loop *L) {
 /// outside of the loop.
 BasicBlock *LoopSimplify::RewriteLoopExitBlock(Loop *L, BasicBlock *Exit) {
   DominatorSet &DS = getAnalysis<DominatorSet>();
-  
+
   std::vector<BasicBlock*> LoopBlocks;
   for (pred_iterator I = pred_begin(Exit), E = pred_end(Exit); I != E; ++I)
     if (L->contains(*I))
@@ -579,7 +579,7 @@ void LoopSimplify::InsertUniqueBackedgeBlock(Loop *L) {
   // Move the new backedge block to right after the last backedge block.
   Function::iterator InsertPos = BackedgeBlocks.back(); ++InsertPos;
   F->getBasicBlockList().splice(InsertPos, F->getBasicBlockList(), BEBlock);
-  
+
   // Now that the block has been inserted into the function, create PHI nodes in
   // the backedge block which correspond to any PHI nodes in the header block.
   for (BasicBlock::iterator I = Header->begin(); isa<PHINode>(I); ++I) {
@@ -609,7 +609,7 @@ void LoopSimplify::InsertUniqueBackedgeBlock(Loop *L) {
         }
       }
     }
-      
+
     // Delete all of the incoming values from the old PN except the preheader's
     assert(PreheaderIdx != ~0U && "PHI has no preheader entry??");
     if (PreheaderIdx != 0) {
@@ -825,7 +825,7 @@ void LoopSimplify::UpdateDomInfoForRevectoredPreds(BasicBlock *NewBB,
       for (DominatorSet::DomSetType::const_iterator PDI = PredDoms.begin(),
              PDE = PredDoms.end(); PDI != PDE; ++PDI) {
         BasicBlock *PredDom = *PDI;
-        
+
         // If the NewBBSucc node is in DF(PredDom), then PredDom didn't
         // dominate NewBBSucc but did dominate a predecessor of it.  Now we
         // change this entry to include NewBB in the DF instead of NewBBSucc.
@@ -846,7 +846,7 @@ void LoopSimplify::UpdateDomInfoForRevectoredPreds(BasicBlock *NewBB,
                 break;
               }
           }
-            
+
           if (ShouldRemove)
             DF->removeFromFrontier(DFI, NewBBSucc);
           DF->addToFrontier(DFI, NewBB);

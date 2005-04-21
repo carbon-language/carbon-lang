@@ -1,10 +1,10 @@
 //===- SCCP.cpp - Sparse Conditional Constant Propagation -----------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements sparse conditional constant propagation and merging:
@@ -45,7 +45,7 @@ using namespace llvm;
 namespace {
 
 class LatticeVal {
-  enum { 
+  enum {
     undefined,           // This instruction has no known value
     constant,            // This instruction has a constant value
     overdefined          // This instruction has an unknown value
@@ -198,7 +198,7 @@ public:
 
 private:
   // markConstant - Make a value be marked as "constant".  If the value
-  // is not already a constant, add it to the instruction work list so that 
+  // is not already a constant, add it to the instruction work list so that
   // the users of the instruction are updated later.
   //
   inline void markConstant(LatticeVal &IV, Value *V, Constant *C) {
@@ -212,9 +212,9 @@ private:
   }
 
   // markOverdefined - Make a value be marked as "overdefined". If the
-  // value is not already overdefined, add it to the overdefined instruction 
+  // value is not already overdefined, add it to the overdefined instruction
   // work list so that the users of the instruction are updated later.
-  
+
   inline void markOverdefined(LatticeVal &IV, Value *V) {
     if (IV.markOverdefined()) {
       DEBUG(std::cerr << "markOverdefined: ";
@@ -262,9 +262,9 @@ private:
     return ValueState[V];
   }
 
-  // markEdgeExecutable - Mark a basic block as executable, adding it to the BB 
+  // markEdgeExecutable - Mark a basic block as executable, adding it to the BB
   // work list if it is not already executable...
-  // 
+  //
   void markEdgeExecutable(BasicBlock *Source, BasicBlock *Dest) {
     if (!KnownFeasibleEdges.insert(Edge(Source, Dest)).second)
       return;  // This edge is already known to be executable!
@@ -308,7 +308,7 @@ private:
 private:
   friend class InstVisitor<SCCPSolver>;
 
-  // visit implementations - Something changed in this instruction... Either an 
+  // visit implementations - Something changed in this instruction... Either an
   // operand made a transition, or the instruction is newly executable.  Change
   // the value type of I to reflect these changes if appropriate.
   //
@@ -406,7 +406,7 @@ bool SCCPSolver::isEdgeFeasible(BasicBlock *From, BasicBlock *To) {
 
   // Make sure the source basic block is executable!!
   if (!BBExecutable.count(From)) return false;
-  
+
   // Check to make sure this edge itself is actually feasible now...
   TerminatorInst *TI = From->getTerminator();
   if (BranchInst *BI = dyn_cast<BranchInst>(TI)) {
@@ -422,7 +422,7 @@ bool SCCPSolver::isEdgeFeasible(BasicBlock *From, BasicBlock *To) {
         if (!isa<ConstantBool>(BCValue.getConstant())) return true;
 
         // Constant condition variables mean the branch can only go a single way
-        return BI->getSuccessor(BCValue.getConstant() == 
+        return BI->getSuccessor(BCValue.getConstant() ==
                                        ConstantBool::False) == To;
       }
       return false;
@@ -511,7 +511,7 @@ void SCCPSolver::visitPHINode(PHINode &PN) {
   for (unsigned i = 0, e = PN.getNumIncomingValues(); i != e; ++i) {
     LatticeVal &IV = getValueState(PN.getIncomingValue(i));
     if (IV.isUndefined()) continue;  // Doesn't influence PHI node.
-    
+
     if (isEdgeFeasible(PN.getIncomingBlock(i), PN.getParent())) {
       if (IV.isOverdefined()) {   // PHI node becomes overdefined!
         markOverdefined(PNIV, &PN);
@@ -524,7 +524,7 @@ void SCCPSolver::visitPHINode(PHINode &PN) {
         // There is already a reachable operand.  If we conflict with it,
         // then the PHI node becomes overdefined.  If we agree with it, we
         // can continue on.
-        
+
         // Check to see if there are two different constants merging...
         if (IV.getConstant() != OperandVal) {
           // Yes there is.  This means the PHI node is not constant.
@@ -753,7 +753,7 @@ void SCCPSolver::visitGetElementPtrInst(GetElementPtrInst &I) {
   Constant *Ptr = Operands[0];
   Operands.erase(Operands.begin());  // Erase the pointer from idx list...
 
-  markConstant(IV, &I, ConstantExpr::getGetElementPtr(Ptr, Operands));  
+  markConstant(IV, &I, ConstantExpr::getGetElementPtr(Ptr, Operands));
 }
 
 /// GetGEPGlobalInitializer - Given a constant and a getelementptr constantexpr,
@@ -813,7 +813,7 @@ void SCCPSolver::visitLoadInst(LoadInst &I) {
       markConstant(IV, &I, Constant::getNullValue(I.getType()));
       return;
     }
-      
+
     // Transform load (constant global) into the value loaded.
     if (GlobalVariable *GV = dyn_cast<GlobalVariable>(Ptr)) {
       if (GV->isConstant()) {
@@ -837,7 +837,7 @@ void SCCPSolver::visitLoadInst(LoadInst &I) {
       if (CE->getOpcode() == Instruction::GetElementPtr)
 	if (GlobalVariable *GV = dyn_cast<GlobalVariable>(CE->getOperand(0)))
 	  if (GV->isConstant() && !GV->isExternal())
-	    if (Constant *V = 
+	    if (Constant *V =
 		GetGEPGlobalInitializer(GV->getInitializer(), CE)) {
 	      markConstant(IV, &I, V);
 	      return;
@@ -857,7 +857,7 @@ void SCCPSolver::visitCallSite(CallSite CS) {
   hash_map<Function*, LatticeVal>::iterator TFRVI =TrackedFunctionRetVals.end();
   if (F && F->hasInternalLinkage())
     TFRVI = TrackedFunctionRetVals.find(F);
-  
+
   if (TFRVI != TrackedFunctionRetVals.end()) {
     // If this is the first call to the function hit, mark its entry block
     // executable.
@@ -883,7 +883,7 @@ void SCCPSolver::visitCallSite(CallSite CS) {
     mergeInValue(IV, I, TFRVI->second);
     return;
   }
-  
+
   if (F == 0 || !F->isExternal() || !canConstantFoldCallTo(F)) {
     markOverdefined(IV, I);
     return;
@@ -914,7 +914,7 @@ void SCCPSolver::visitCallSite(CallSite CS) {
 
 void SCCPSolver::Solve() {
   // Process the work lists until they are empty!
-  while (!BBWorkList.empty() || !InstWorkList.empty() || 
+  while (!BBWorkList.empty() || !InstWorkList.empty() ||
 	 !OverdefinedInstWorkList.empty()) {
     // Process the instruction work list...
     while (!OverdefinedInstWorkList.empty()) {
@@ -922,7 +922,7 @@ void SCCPSolver::Solve() {
       OverdefinedInstWorkList.pop_back();
 
       DEBUG(std::cerr << "\nPopped off OI-WL: " << *I);
-      
+
       // "I" got into the work list because it either made the transition from
       // bottom to constant
       //
@@ -940,7 +940,7 @@ void SCCPSolver::Solve() {
       InstWorkList.pop_back();
 
       DEBUG(std::cerr << "\nPopped off I-WL: " << *I);
-      
+
       // "I" got into the work list because it either made the transition from
       // bottom to constant
       //
@@ -953,14 +953,14 @@ void SCCPSolver::Solve() {
              UI != E; ++UI)
           OperandChangedState(*UI);
     }
-    
+
     // Process the basic block work list...
     while (!BBWorkList.empty()) {
       BasicBlock *BB = BBWorkList.back();
       BBWorkList.pop_back();
-      
+
       DEBUG(std::cerr << "\nPopped off BBWL: " << *BB);
-      
+
       // Notify all instructions in this basic block that they are newly
       // executable.
       visit(BB);
@@ -1016,7 +1016,7 @@ namespace {
     // algorithm, and return true if the function was modified.
     //
     bool runOnFunction(Function &F);
-    
+
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesCFG();
     }
@@ -1095,13 +1095,13 @@ bool SCCP::runOnFunction(Function &F) {
             Constant *Const = IV.isConstant()
               ? IV.getConstant() : UndefValue::get(Inst->getType());
             DEBUG(std::cerr << "  Constant: " << *Const << " = " << *Inst);
-            
+
             // Replaces all of the uses of a variable with uses of the constant.
             Inst->replaceAllUsesWith(Const);
-            
+
             // Delete the instruction.
             BB->getInstList().erase(Inst);
-            
+
             // Hey, we just changed something!
             MadeChanges = true;
             ++NumInstRemoved;
@@ -1217,7 +1217,7 @@ bool IPSCCP::runOnModule(Module &M) {
           Constant *CST = IV.isConstant() ?
             IV.getConstant() : UndefValue::get(AI->getType());
           DEBUG(std::cerr << "***  Arg " << *AI << " = " << *CST <<"\n");
-          
+
           // Replaces all of the uses of a variable with uses of the
           // constant.
           AI->replaceAllUsesWith(CST);
@@ -1247,7 +1247,7 @@ bool IPSCCP::runOnModule(Module &M) {
           MadeChanges = true;
           ++IPNumInstRemoved;
         }
-        
+
         for (unsigned i = 0, e = TI->getNumSuccessors(); i != e; ++i) {
           BasicBlock *Succ = TI->getSuccessor(i);
           if (Succ->begin() != Succ->end() && isa<PHINode>(Succ->begin()))
@@ -1272,11 +1272,11 @@ bool IPSCCP::runOnModule(Module &M) {
               Constant *Const = IV.isConstant()
                 ? IV.getConstant() : UndefValue::get(Inst->getType());
               DEBUG(std::cerr << "  Constant: " << *Const << " = " << *Inst);
-              
+
               // Replaces all of the uses of a variable with uses of the
               // constant.
               Inst->replaceAllUsesWith(Const);
-              
+
               // Delete the instruction.
               if (!isa<TerminatorInst>(Inst) && !isa<CallInst>(Inst))
                 BB->getInstList().erase(Inst);
@@ -1300,7 +1300,7 @@ bool IPSCCP::runOnModule(Module &M) {
         bool Folded = ConstantFoldTerminator(I->getParent());
         assert(Folded && "Didn't fold away reference to block!");
       }
-        
+
       // Finally, delete the basic block.
       F->getBasicBlockList().erase(DeadBB);
     }
@@ -1338,6 +1338,6 @@ bool IPSCCP::runOnModule(Module &M) {
     M.getGlobalList().erase(GV);
     ++IPNumGlobalConst;
   }
-  
+
   return MadeChanges;
 }

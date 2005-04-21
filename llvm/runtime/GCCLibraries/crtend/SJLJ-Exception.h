@@ -1,10 +1,10 @@
 //===- SJLJ-Exception.h - SetJmp/LongJmp Exception Handling -----*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines the data structures and API used by the Setjmp/Longjmp
@@ -61,7 +61,7 @@ extern "C" {
   // current uncaught exception is a longjmp exception.  This is the first step
   // of catching a sjlj exception.
   bool __llvm_sjljeh_is_longjmp_exception() throw();
-  
+
   // __llvm_sjljeh_get_longjmp_value - This function returns the value that the
   // setjmp call should "return".  This requires that the current uncaught
   // exception be a sjlj exception, though it does not require the exception to

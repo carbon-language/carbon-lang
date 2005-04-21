@@ -1,10 +1,10 @@
 //===- LevelRaise.cpp - Code to change LLVM to higher level ---------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements the 'raising' part of the LevelChange API.  This is
@@ -37,7 +37,7 @@ StartInst("raise-start-inst", cl::Hidden, cl::value_desc("inst name"),
 static Statistic<>
 NumLoadStorePeepholes("raise", "Number of load/store peepholes");
 
-static Statistic<> 
+static Statistic<>
 NumGEPInstFormed("raise", "Number of other getelementptr's formed");
 
 static Statistic<>
@@ -138,14 +138,14 @@ static bool HandleCastToPointer(BasicBlock::iterator BI,
 
   PRINT_PEEPHOLE2("cast-add-to-gep:in", *Src, CI);
 
-  // If we have a getelementptr capability... transform all of the 
+  // If we have a getelementptr capability... transform all of the
   // add instruction uses into getelementptr's.
   while (!CI.use_empty()) {
     BinaryOperator *I = cast<BinaryOperator>(*CI.use_begin());
     assert((I->getOpcode() == Instruction::Add ||
-            I->getOpcode() == Instruction::Sub) && 
+            I->getOpcode() == Instruction::Sub) &&
            "Use is not a valid add instruction!");
-    
+
     // Get the value added to the cast result pointer...
     Value *OtherPtr = I->getOperand((I->getOperand(0) == &CI) ? 1 : 0);
 
@@ -156,7 +156,7 @@ static bool HandleCastToPointer(BasicBlock::iterator BI,
     // one index (from code above), so we just need to negate the pointer index
     // long value.
     if (I->getOpcode() == Instruction::Sub) {
-      Instruction *Neg = BinaryOperator::createNeg(GEP->getOperand(1), 
+      Instruction *Neg = BinaryOperator::createNeg(GEP->getOperand(1),
                                        GEP->getOperand(1)->getName()+".neg", I);
       GEP->setOperand(1, Neg);
     }
@@ -276,7 +276,7 @@ bool RPR::PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
       ConvertedTypes[CI] = CI->getType();  // Make sure the cast doesn't change
       if (ExpressionConvertibleToType(Src, DestTy, ConvertedTypes, TD)) {
         PRINT_PEEPHOLE3("CAST-SRC-EXPR-CONV:in ", *Src, *CI, *BB->getParent());
-          
+
         DEBUG(std::cerr << "\nCONVERTING SRC EXPR TYPE:\n");
         { // ValueMap must be destroyed before function verified!
           ValueMapCache ValueMap;
@@ -284,7 +284,7 @@ bool RPR::PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
 
           if (Constant *CPV = dyn_cast<Constant>(E))
             CI->replaceAllUsesWith(CPV);
-          
+
           PRINT_PEEPHOLE1("CAST-SRC-EXPR-CONV:out", *E);
           DEBUG(std::cerr << "DONE CONVERTING SRC EXPR TYPE: \n"
                           << *BB->getParent());
@@ -376,7 +376,7 @@ bool RPR::PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
             if (const StructType *CurSTy = dyn_cast<StructType>(CurCTy)) {
               // Check for a zero element struct type... if we have one, bail.
               if (CurSTy->getNumElements() == 0) break;
-            
+
               // Grab the first element of the struct type, which must lie at
               // offset zero in the struct.
               //
@@ -390,13 +390,13 @@ bool RPR::PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
 
             // Did we find what we're looking for?
             if (ElTy->isLosslesslyConvertibleTo(DestPointedTy)) break;
-            
+
             // Nope, go a level deeper.
             ++Depth;
             CurCTy = dyn_cast<CompositeType>(ElTy);
             ElTy = 0;
           }
-          
+
           // Did we find what we were looking for? If so, do the transformation
           if (ElTy) {
             PRINT_PEEPHOLE1("cast-for-first:in", *CI);
@@ -411,7 +411,7 @@ bool RPR::PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
             // the old src value.
             //
             CI->setOperand(0, GEP);
-            
+
             PRINT_PEEPHOLE2("cast-for-first:out", *GEP, *CI);
             ++NumGEPInstFormed;
             return true;
@@ -422,12 +422,12 @@ bool RPR::PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
   } else if (StoreInst *SI = dyn_cast<StoreInst>(I)) {
     Value *Val     = SI->getOperand(0);
     Value *Pointer = SI->getPointerOperand();
-    
+
     // Peephole optimize the following instructions:
     // %t = cast <T1>* %P to <T2> * ;; If T1 is losslessly convertible to T2
     // store <T2> %V, <T2>* %t
     //
-    // Into: 
+    // Into:
     // %t = cast <T2> %V to <T1>
     // store <T1> %t2, <T1>* %P
     //
@@ -460,12 +460,12 @@ bool RPR::PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
     Value *Pointer = LI->getOperand(0);
     const Type *PtrElType =
       cast<PointerType>(Pointer->getType())->getElementType();
-    
+
     // Peephole optimize the following instructions:
     // %Val = cast <T1>* to <T2>*    ;; If T1 is losslessly convertible to T2
     // %t = load <T2>* %P
     //
-    // Into: 
+    // Into:
     // %t = load <T1>* %P
     // %Val = cast <T1> to <T2>
     //
@@ -483,7 +483,7 @@ bool RPR::PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
 
             // Create the new load instruction... loading the pre-casted value
             LoadInst *NewLI = new LoadInst(CastSrc, LI->getName(), BI);
-            
+
             // Insert the new T cast instruction... stealing old T's name
             CastInst *NCI = new CastInst(NewLI, LI->getType(), CI->getName());
 
@@ -540,7 +540,7 @@ bool RPR::PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
                            std::vector<Value*>(CI->op_begin()+1, CI->op_end()));
       ++BI;
       ReplaceInstWithInst(CI, NewCall);
-      
+
       ++NumVarargCallChanges;
       return true;
     }
@@ -559,7 +559,7 @@ bool RPR::DoRaisePass(Function &F) {
     for (BasicBlock::iterator BI = BB->begin(); BI != BB->end();) {
       DEBUG(std::cerr << "LevelRaising: " << *BI);
       if (dceInstruction(BI) || doConstantPropagation(BI)) {
-        Changed = true; 
+        Changed = true;
         ++NumDCEorCP;
         DEBUG(std::cerr << "***\t\t^^-- Dead code eliminated!\n");
       } else if (PeepholeOptimize(BB, BI)) {

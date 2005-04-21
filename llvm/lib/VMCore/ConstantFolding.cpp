@@ -1,10 +1,10 @@
 //===- ConstantFolding.cpp - LLVM constant folder -------------------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements folding of constants for LLVM.  This implements the
@@ -30,7 +30,7 @@ using namespace llvm;
 namespace {
   struct ConstRules {
     ConstRules() {}
-    
+
     // Binary Operators...
     virtual Constant *add(const Constant *V1, const Constant *V2) const = 0;
     virtual Constant *sub(const Constant *V1, const Constant *V2) const = 0;
@@ -59,7 +59,7 @@ namespace {
     virtual Constant *castToDouble(const Constant *V) const = 0;
     virtual Constant *castToPointer(const Constant *V,
                                     const PointerType *Ty) const = 0;
-    
+
     // ConstRules::get - Return an instance of ConstRules for the specified
     // constant operands.
     //
@@ -75,11 +75,11 @@ namespace {
 //                             TemplateRules Class
 //===----------------------------------------------------------------------===//
 //
-// TemplateRules - Implement a subclass of ConstRules that provides all 
-// operations as noops.  All other rules classes inherit from this class so 
-// that if functionality is needed in the future, it can simply be added here 
+// TemplateRules - Implement a subclass of ConstRules that provides all
+// operations as noops.  All other rules classes inherit from this class so
+// that if functionality is needed in the future, it can simply be added here
 // and to ConstRules without changing anything else...
-// 
+//
 // This class also provides subclasses with typesafe implementations of methods
 // so that don't have to do type casting.
 //
@@ -90,41 +90,41 @@ class TemplateRules : public ConstRules {
   // Redirecting functions that cast to the appropriate types
   //===--------------------------------------------------------------------===//
 
-  virtual Constant *add(const Constant *V1, const Constant *V2) const { 
-    return SubClassName::Add((const ArgType *)V1, (const ArgType *)V2);  
+  virtual Constant *add(const Constant *V1, const Constant *V2) const {
+    return SubClassName::Add((const ArgType *)V1, (const ArgType *)V2);
   }
-  virtual Constant *sub(const Constant *V1, const Constant *V2) const { 
-    return SubClassName::Sub((const ArgType *)V1, (const ArgType *)V2);  
+  virtual Constant *sub(const Constant *V1, const Constant *V2) const {
+    return SubClassName::Sub((const ArgType *)V1, (const ArgType *)V2);
   }
-  virtual Constant *mul(const Constant *V1, const Constant *V2) const { 
-    return SubClassName::Mul((const ArgType *)V1, (const ArgType *)V2);  
+  virtual Constant *mul(const Constant *V1, const Constant *V2) const {
+    return SubClassName::Mul((const ArgType *)V1, (const ArgType *)V2);
   }
-  virtual Constant *div(const Constant *V1, const Constant *V2) const { 
-    return SubClassName::Div((const ArgType *)V1, (const ArgType *)V2);  
+  virtual Constant *div(const Constant *V1, const Constant *V2) const {
+    return SubClassName::Div((const ArgType *)V1, (const ArgType *)V2);
   }
-  virtual Constant *rem(const Constant *V1, const Constant *V2) const { 
-    return SubClassName::Rem((const ArgType *)V1, (const ArgType *)V2);  
+  virtual Constant *rem(const Constant *V1, const Constant *V2) const {
+    return SubClassName::Rem((const ArgType *)V1, (const ArgType *)V2);
   }
-  virtual Constant *op_and(const Constant *V1, const Constant *V2) const { 
-    return SubClassName::And((const ArgType *)V1, (const ArgType *)V2);  
+  virtual Constant *op_and(const Constant *V1, const Constant *V2) const {
+    return SubClassName::And((const ArgType *)V1, (const ArgType *)V2);
   }
-  virtual Constant *op_or(const Constant *V1, const Constant *V2) const { 
-    return SubClassName::Or((const ArgType *)V1, (const ArgType *)V2);  
+  virtual Constant *op_or(const Constant *V1, const Constant *V2) const {
+    return SubClassName::Or((const ArgType *)V1, (const ArgType *)V2);
   }
-  virtual Constant *op_xor(const Constant *V1, const Constant *V2) const { 
-    return SubClassName::Xor((const ArgType *)V1, (const ArgType *)V2);  
+  virtual Constant *op_xor(const Constant *V1, const Constant *V2) const {
+    return SubClassName::Xor((const ArgType *)V1, (const ArgType *)V2);
   }
-  virtual Constant *shl(const Constant *V1, const Constant *V2) const { 
-    return SubClassName::Shl((const ArgType *)V1, (const ArgType *)V2);  
+  virtual Constant *shl(const Constant *V1, const Constant *V2) const {
+    return SubClassName::Shl((const ArgType *)V1, (const ArgType *)V2);
   }
-  virtual Constant *shr(const Constant *V1, const Constant *V2) const { 
-    return SubClassName::Shr((const ArgType *)V1, (const ArgType *)V2);  
+  virtual Constant *shr(const Constant *V1, const Constant *V2) const {
+    return SubClassName::Shr((const ArgType *)V1, (const ArgType *)V2);
   }
 
-  virtual Constant *lessthan(const Constant *V1, const Constant *V2) const { 
+  virtual Constant *lessthan(const Constant *V1, const Constant *V2) const {
     return SubClassName::LessThan((const ArgType *)V1, (const ArgType *)V2);
   }
-  virtual Constant *equalto(const Constant *V1, const Constant *V2) const { 
+  virtual Constant *equalto(const Constant *V1, const Constant *V2) const {
     return SubClassName::EqualTo((const ArgType *)V1, (const ArgType *)V2);
   }
 
@@ -162,7 +162,7 @@ class TemplateRules : public ConstRules {
   virtual Constant *castToDouble(const Constant *V) const {
     return SubClassName::CastToDouble((const ArgType*)V);
   }
-  virtual Constant *castToPointer(const Constant *V, 
+  virtual Constant *castToPointer(const Constant *V,
                                   const PointerType *Ty) const {
     return SubClassName::CastToPointer((const ArgType*)V, Ty);
   }
@@ -357,7 +357,7 @@ struct DirectRules : public TemplateRules<ConstantClass, SuperClass> {
   static Constant *LessThan(const ConstantClass *V1, const ConstantClass *V2) {
     bool R = (BuiltinType)V1->getValue() < (BuiltinType)V2->getValue();
     return ConstantBool::get(R);
-  } 
+  }
 
   static Constant *EqualTo(const ConstantClass *V1, const ConstantClass *V2) {
     bool R = (BuiltinType)V1->getValue() == (BuiltinType)V2->getValue();
@@ -654,7 +654,7 @@ static int IdxCompare(Constant *C1, Constant *C2, const Type *ElTy) {
   // ConstantExprs?  If so, we can't do anything with them.
   if (!isa<ConstantInt>(C1) || !isa<ConstantInt>(C2))
     return -2; // don't know!
-  
+
   // Ok, we have two differing integer indices.  Sign extend them to be the same
   // type.  Long is always big enough, so we use it.
   C1 = ConstantExpr::getSignExtend(C1, Type::LongTy);
@@ -798,7 +798,7 @@ static Instruction::BinaryOps evaluateRelation(const Constant *V1,
             // same global.  From this, we can precisely determine the relative
             // ordering of the resultant pointers.
             unsigned i = 1;
-            
+
             // Compare all of the operands the GEP's have in common.
             gep_type_iterator GTI = gep_type_begin(CE1);
             for (;i != CE1->getNumOperands() && i != CE2->getNumOperands();
@@ -818,7 +818,7 @@ static Instruction::BinaryOps evaluateRelation(const Constant *V1,
                   return Instruction::SetGT;
                 else
                   return Instruction::BinaryOpsEnd; // Might be equal.
-                    
+
             for (; i < CE2->getNumOperands(); ++i)
               if (!CE2->getOperand(i)->isNullValue())
                 if (isa<ConstantIntegral>(CE2->getOperand(i)))
@@ -829,7 +829,7 @@ static Instruction::BinaryOps evaluateRelation(const Constant *V1,
           }
         }
       }
-      
+
     default:
       break;
     }
@@ -910,7 +910,7 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
       if (Opcode == Instruction::SetLT) return ConstantBool::False;
       if (Opcode == Instruction::SetGT) return ConstantBool::True;
       break;
-      
+
     case Instruction::SetNE:
       // If we know that V1 != V2, we can only partially decide this relation.
       if (Opcode == Instruction::SetEQ) return ConstantBool::False;
@@ -1115,12 +1115,12 @@ Constant *llvm::ConstantFoldGetElementPtr(const Constant *C,
         if (!Idx0->isNullValue()) {
           const Type *IdxTy = Combined->getType();
           if (IdxTy != Idx0->getType()) IdxTy = Type::LongTy;
-          Combined = 
+          Combined =
             ConstantExpr::get(Instruction::Add,
                               ConstantExpr::getCast(Idx0, IdxTy),
                               ConstantExpr::getCast(Combined, IdxTy));
         }
-        
+
         NewIndices.push_back(Combined);
         NewIndices.insert(NewIndices.end(), IdxList.begin()+1, IdxList.end());
         return ConstantExpr::getGetElementPtr(CE->getOperand(0), NewIndices);
@@ -1134,7 +1134,7 @@ Constant *llvm::ConstantFoldGetElementPtr(const Constant *C,
     //
     if (CE->getOpcode() == Instruction::Cast && IdxList.size() > 1 &&
         Idx0->isNullValue())
-      if (const PointerType *SPT = 
+      if (const PointerType *SPT =
           dyn_cast<PointerType>(CE->getOperand(0)->getType()))
         if (const ArrayType *SAT = dyn_cast<ArrayType>(SPT->getElementType()))
           if (const ArrayType *CAT =

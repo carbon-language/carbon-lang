@@ -1,10 +1,10 @@
 //===-- ConstantFolding.h - Internal Constant Folding Interface -*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines the (internal) constant folding interfaces for LLVM.  These
@@ -25,7 +25,7 @@ namespace llvm {
   class Value;
   class Constant;
   class Type;
-  
+
   // Constant fold various types of instruction...
   Constant *ConstantFoldCastInstruction(const Constant *V, const Type *DestTy);
   Constant *ConstantFoldSelectInstruction(const Constant *Cond,

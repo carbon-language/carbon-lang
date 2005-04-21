@@ -1,11 +1,11 @@
 //===-- SymbolTable.cpp - Implement the SymbolTable class -----------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and revised by Reid
-// Spencer. It is distributed under the University of Illinois Open Source 
+// Spencer. It is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements the SymbolTable class for the VMCore library.
@@ -31,7 +31,7 @@ SymbolTable::~SymbolTable() {
       cast<DerivedType>(TI->second)->removeAbstractTypeUser(this);
   }
 
- // TODO: FIXME: BIG ONE: This doesn't unreference abstract types for the 
+ // TODO: FIXME: BIG ONE: This doesn't unreference abstract types for the
  // planes that could still have entries!
 
 #ifndef NDEBUG   // Only do this in -g mode...
@@ -45,7 +45,7 @@ SymbolTable::~SymbolTable() {
         LeftoverValues = false;
       }
   }
-  
+
   assert(LeftoverValues && "Values remain in symbol table!");
 #endif
 }
@@ -194,7 +194,7 @@ void SymbolTable::insertEntry(const std::string &Name, const Type *VTy,
 
 #if DEBUG_SYMBOL_TABLE
   dump();
-  std::cerr << " Inserting definition: " << Name << ": " 
+  std::cerr << " Inserting definition: " << Name << ": "
             << VTy->getDescription() << "\n";
 #endif
 
@@ -243,7 +243,7 @@ void SymbolTable::insert(const std::string& Name, const Type* T) {
 
 #if DEBUG_SYMBOL_TABLE
   dump();
-  std::cerr << " Inserting type: " << UniqueName << ": " 
+  std::cerr << " Inserting type: " << UniqueName << ": "
             << T->getDescription() << "\n";
 #endif
 
@@ -282,7 +282,7 @@ bool SymbolTable::strip() {
     remove(TI++);
     RemovedSymbol = true;
   }
- 
+
   return RemovedSymbol;
 }
 
@@ -299,7 +299,7 @@ void SymbolTable::refineAbstractType(const DerivedType *OldType,
     plane_iterator NewTypeIt = pmap.find(NewType);
     if (NewTypeIt == pmap.end()) {      // If no plane exists, add one
       NewTypeIt = pmap.insert(make_pair(NewType, ValueMap())).first;
-      
+
       if (NewType->isAbstract()) {
         cast<DerivedType>(NewType)->addAbstractTypeUser(this);
 #if DEBUG_ABSTYPE
@@ -338,7 +338,7 @@ void SymbolTable::refineAbstractType(const DerivedType *OldType,
           // Ok we have two external global values.  Make all uses of the new
           // one use the old one...
           NewGV->uncheckedReplaceAllUsesWith(ExistGV);
-          
+
           // Update NewGV's name, we're about the remove it from the symbol
           // table.
           NewGV->Name = "";
@@ -387,7 +387,7 @@ void SymbolTable::refineAbstractType(const DerivedType *OldType,
       std::cerr << "Removing type " << OldType->getDescription() << "\n";
 #endif
       OldType->removeAbstractTypeUser(this);
-        
+
       I->second = (Type*)NewType;  // TODO FIXME when types aren't const
       if (NewType->isAbstract()) {
 #if DEBUG_ABSTYPE

@@ -1,10 +1,10 @@
 //===- InstructionCombining.cpp - Combine multiple instructions -----------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // InstructionCombining - Combine instructions to form fewer, simple
@@ -103,7 +103,7 @@ namespace {
     //    null        - No change was made
     //     I          - Change was made, I is still valid, I may be dead though
     //   otherwise    - Change was made, replace I with returned instruction
-    //   
+    //
     Instruction *visitAdd(BinaryOperator &I);
     Instruction *visitSub(BinaryOperator &I);
     Instruction *visitMul(BinaryOperator &I);
@@ -159,7 +159,7 @@ namespace {
     /// cast.
     Value *InsertCastBefore(Value *V, const Type *Ty, Instruction &Pos) {
       if (V->getType() == Ty) return V;
-      
+
       Instruction *C = new CastInst(V, Ty, V->getName(), &Pos);
       WorkList.push_back(C);
       return C;
@@ -275,7 +275,7 @@ bool InstCombiner::SimplifyCommutative(BinaryOperator &I) {
   bool Changed = false;
   if (getComplexity(I.getOperand(0)) < getComplexity(I.getOperand(1)))
     Changed = !I.swapOperands();
-  
+
   if (!I.isAssociative()) return Changed;
   Instruction::BinaryOps Opcode = I.getOpcode();
   if (BinaryOperator *Op = dyn_cast<BinaryOperator>(I.getOperand(0)))
@@ -302,7 +302,7 @@ bool InstCombiner::SimplifyCommutative(BinaryOperator &I) {
           I.setOperand(0, New);
           I.setOperand(1, Folded);
           return true;
-        }      
+        }
     }
   return Changed;
 }
@@ -427,7 +427,7 @@ Instruction *AssociativeOpt(BinaryOperator &Root, const Functor &F) {
     // reassociate the expression from ((? op A) op B) to (? op (A op B))
     if (ShouldApply) {
       BasicBlock *BB = Root.getParent();
-      
+
       // Now all of the instructions are in the current basic block, go ahead
       // and perform the reassociation.
       Instruction *TmpLHSI = cast<Instruction>(Root.getOperand(0));
@@ -463,12 +463,12 @@ Instruction *AssociativeOpt(BinaryOperator &Root, const Functor &F) {
         TmpLHSI = NextLHSI;
         ExtraOperand = NextOp;
       }
-      
+
       // Now that the instructions are reassociated, have the functor perform
       // the transformation...
       return F.apply(Root);
     }
-    
+
     LHSI = dyn_cast<Instruction>(LHSI->getOperand(0));
   }
   return 0;
@@ -493,7 +493,7 @@ struct AddMaskingAnd {
   AddMaskingAnd(Constant *c) : C2(c) {}
   bool shouldApply(Value *LHS) const {
     ConstantInt *C1;
-    return match(LHS, m_And(m_Value(), m_ConstantInt(C1))) && 
+    return match(LHS, m_And(m_Value(), m_ConstantInt(C1))) &&
            ConstantExpr::getAnd(C1, C2)->isNullValue();
   }
   Instruction *apply(BinaryOperator &Add) const {
@@ -506,7 +506,7 @@ static Value *FoldOperationIntoSelectOperand(Instruction &I, Value *SO,
   if (isa<CastInst>(I)) {
     if (Constant *SOC = dyn_cast<Constant>(SO))
       return ConstantExpr::getCast(SOC, I.getType());
-    
+
     return IC->InsertNewInstBefore(new CastInst(SO, I.getType(),
                                                 SO->getName() + ".cast"), I);
   }
@@ -615,7 +615,7 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
     if (!I.getType()->isFloatingPoint() && // -0 + +0 = +0, so it's not a noop
         RHSC->isNullValue())
       return ReplaceInstUsesWith(I, LHS);
-    
+
     // X + (signbit) --> X ^ signbit
     if (ConstantInt *CI = dyn_cast<ConstantInt>(RHSC)) {
       unsigned NumBits = CI->getType()->getPrimitiveSize()*8;
@@ -654,7 +654,7 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
     if (Value *V = dyn_castNegVal(RHS))
       return BinaryOperator::createSub(LHS, V);
 
-  
+
   ConstantInt *C2;
   if (Value *X = dyn_castFoldableMul(LHS, C2)) {
     if (X == RHS)   // X*C + X --> X * (C+1)
@@ -696,7 +696,7 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
 
         // See if the and mask includes all of these bits.
         uint64_t AddRHSHighBitsAnd = AddRHSHighBits & C2->getRawValue();
-        
+
         if (AddRHSHighBits == AddRHSHighBitsAnd) {
           // Okay, the xform is safe.  Insert the new add pronto.
           Value *NewAdd = InsertNewInstBefore(BinaryOperator::createAdd(X, CRHS,
@@ -832,7 +832,7 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
         Value *IIOp0 = Op1I->getOperand(0), *IIOp1 = Op1I->getOperand(1);
         Op1I->setOperand(0, IIOp1);
         Op1I->setOperand(1, IIOp0);
-        
+
         // Create the new top level add instruction...
         return BinaryOperator::createAdd(Op0, Op1);
       }
@@ -853,13 +853,13 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
         if (ConstantSInt *CSI = dyn_cast<ConstantSInt>(Op0))
           if (CSI->isNullValue())
             if (Constant *DivRHS = dyn_cast<Constant>(Op1I->getOperand(1)))
-              return BinaryOperator::createDiv(Op1I->getOperand(0), 
+              return BinaryOperator::createDiv(Op1I->getOperand(0),
                                                ConstantExpr::getNeg(DivRHS));
 
       // X - X*C --> X * (1-C)
       ConstantInt *C2;
       if (dyn_castFoldableMul(Op1I, C2) == Op0) {
-        Constant *CP1 = 
+        Constant *CP1 =
           ConstantExpr::getSub(ConstantInt::get(I.getType(), 1), C2);
         return BinaryOperator::createMul(Op0, CP1);
       }
@@ -877,7 +877,7 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
         if (Op0I->getOperand(0) == Op1)             // (X-Y)-X == -Y
           return BinaryOperator::createNeg(Op0I->getOperand(1), I.getName());
       }
-  
+
   ConstantInt *C1;
   if (Value *X = dyn_castFoldableMul(Op0, C1)) {
     if (X == Op1) { // X*C - X --> X * (C-1)
@@ -929,7 +929,7 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
           if (Constant *ShOp = dyn_cast<Constant>(SI->getOperand(1)))
             return BinaryOperator::createMul(SI->getOperand(0),
                                              ConstantExpr::getShl(CI, ShOp));
-      
+
       if (CI->isNullValue())
         return ReplaceInstUsesWith(I, Op1);  // X * 0  == 0
       if (CI->equalsInt(1))                  // X * 1  == X
@@ -1004,7 +1004,7 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
         // or truncate to the multiply type.
         if (I.getType() != V->getType())
           V = InsertNewInstBefore(new CastInst(V, I.getType(), V->getName()),I);
-        
+
         Value *OtherOp = Op0 == BoolCast ? I.getOperand(1) : Op0;
         return BinaryOperator::createAnd(V, OtherOp);
       }
@@ -1069,10 +1069,10 @@ Instruction *InstCombiner::visitDiv(BinaryOperator &I) {
       if (ConstantUInt *SFO = dyn_cast<ConstantUInt>(SI->getOperand(2))) {
         if (STO->getValue() == 0) { // Couldn't be this argument.
           I.setOperand(1, SFO);
-          return &I;          
+          return &I;
         } else if (SFO->getValue() == 0) {
           I.setOperand(2, STO);
-          return &I;          
+          return &I;
         }
 
         uint64_t TVA = STO->getValue(), FVA = SFO->getValue();
@@ -1083,7 +1083,7 @@ Instruction *InstCombiner::visitDiv(BinaryOperator &I) {
           Instruction *TSI = new ShiftInst(Instruction::Shr, Op0,
                                            TC, SI->getName()+".t");
           TSI = InsertNewInstBefore(TSI, I);
-          
+
           Constant *FC = ConstantUInt::get(Type::UByteTy, FSA);
           Instruction *FSI = new ShiftInst(Instruction::Shr, Op0,
                                            FC, SI->getName()+".f");
@@ -1091,7 +1091,7 @@ Instruction *InstCombiner::visitDiv(BinaryOperator &I) {
           return new SelectInst(SI->getOperand(0), TSI, FSI);
         }
       }
-  
+
   // 0 / X == 0, we don't need to preserve faults!
   if (ConstantInt *LHS = dyn_cast<ConstantInt>(Op0))
     if (LHS->equalsInt(0))
@@ -1147,10 +1147,10 @@ Instruction *InstCombiner::visitRem(BinaryOperator &I) {
       if (ConstantUInt *SFO = dyn_cast<ConstantUInt>(SI->getOperand(2))) {
         if (STO->getValue() == 0) { // Couldn't be this argument.
           I.setOperand(1, SFO);
-          return &I;          
+          return &I;
         } else if (SFO->getValue() == 0) {
           I.setOperand(1, STO);
-          return &I;          
+          return &I;
         }
 
         if (!(STO->getValue() & (STO->getValue()-1)) &&
@@ -1162,7 +1162,7 @@ Instruction *InstCombiner::visitRem(BinaryOperator &I) {
           return new SelectInst(SI->getOperand(0), TrueAnd, FalseAnd);
         }
       }
-  
+
   // 0 % X == 0, we don't need to preserve faults!
   if (ConstantInt *LHS = dyn_cast<ConstantInt>(Op0))
     if (LHS->equalsInt(0))
@@ -1182,7 +1182,7 @@ static bool isMaxValueMinusOne(const ConstantInt *C) {
   }
 
   const ConstantSInt *CS = cast<ConstantSInt>(C);
-  
+
   // Calculate 0111111111..11111
   unsigned TypeBits = C->getType()->getPrimitiveSize()*8;
   int64_t Val = INT64_MAX;             // All ones
@@ -1196,8 +1196,8 @@ static bool isMinValuePlusOne(const ConstantInt *C) {
     return CU->getValue() == 1;
 
   const ConstantSInt *CS = cast<ConstantSInt>(C);
-  
-  // Calculate 1111111111000000000000 
+
+  // Calculate 1111111111000000000000
   unsigned TypeBits = C->getType()->getPrimitiveSize()*8;
   int64_t Val = -1;                    // All ones
   Val <<= TypeBits-1;                  // Shift over to the right spot
@@ -1325,7 +1325,7 @@ static bool MaskedValueIsZero(Value *V, ConstantIntegral *Mask) {
     return true;
   if (ConstantIntegral *CI = dyn_cast<ConstantIntegral>(V))
     return ConstantExpr::getAnd(CI, Mask)->isNullValue();
-  
+
   if (Instruction *I = dyn_cast<Instruction>(V)) {
     switch (I->getOpcode()) {
     case Instruction::And:
@@ -1336,11 +1336,11 @@ static bool MaskedValueIsZero(Value *V, ConstantIntegral *Mask) {
       break;
     case Instruction::Or:
       // If the LHS and the RHS are MaskedValueIsZero, the result is also zero.
-      return MaskedValueIsZero(I->getOperand(1), Mask) && 
+      return MaskedValueIsZero(I->getOperand(1), Mask) &&
              MaskedValueIsZero(I->getOperand(0), Mask);
     case Instruction::Select:
       // If the T and F values are MaskedValueIsZero, the result is also zero.
-      return MaskedValueIsZero(I->getOperand(2), Mask) && 
+      return MaskedValueIsZero(I->getOperand(2), Mask) &&
              MaskedValueIsZero(I->getOperand(1), Mask);
     case Instruction::Cast: {
       const Type *SrcTy = I->getOperand(0)->getType();
@@ -1414,7 +1414,7 @@ Instruction *InstCombiner::OptAndOp(Instruction *Op,
   case Instruction::Or:
     if (Together == AndRHS) // (X | C) & C --> C
       return ReplaceInstUsesWith(TheAnd, AndRHS);
-      
+
     if (Op->hasOneUse() && Together != OpRHS) {
       // (X | C1) & C2 --> (X | (C1&C2)) & C2
       std::string Op0Name = Op->getName(); Op->setName("");
@@ -1439,7 +1439,7 @@ Instruction *InstCombiner::OptAndOp(Instruction *Op,
         // ADD down to exactly one bit.  If the constant we are adding has
         // no bits set below this bit, then we can eliminate the ADD.
         uint64_t AddRHS = cast<ConstantInt>(OpRHS)->getRawValue();
-            
+
         // Check to see if any bits below the one bit set in AndRHSV are set.
         if ((AddRHS & (AndRHSV-1)) == 0) {
           // If not, the only thing that can effect the output of the AND is
@@ -1468,7 +1468,7 @@ Instruction *InstCombiner::OptAndOp(Instruction *Op,
     Constant *AllOne = ConstantIntegral::getAllOnesValue(AndRHS->getType());
     Constant *ShlMask = ConstantExpr::getShl(AllOne, OpRHS);
     Constant *CI = ConstantExpr::getAnd(AndRHS, ShlMask);
-                                        
+
     if (CI == ShlMask) {   // Masking out bits that the shift already masks
       return ReplaceInstUsesWith(TheAnd, Op);   // No need for the and.
     } else if (CI != AndRHS) {                  // Reducing bits set in and.
@@ -1476,7 +1476,7 @@ Instruction *InstCombiner::OptAndOp(Instruction *Op,
       return &TheAnd;
     }
     break;
-  } 
+  }
   case Instruction::Shr:
     // We know that the AND will not produce any of the bits shifted in, so if
     // the anded constant includes them, clear them now!  This only applies to
@@ -1536,7 +1536,7 @@ Instruction *InstCombiner::InsertRangeTest(Value *V, Constant *Lo, Constant *Hi,
       return new SetCondInst(Instruction::SetNE, V, V);
     if (cast<ConstantIntegral>(Lo)->isMinValue())
       return new SetCondInst(Instruction::SetLT, V, Hi);
-    
+
     Constant *AddCST = ConstantExpr::getNeg(Lo);
     Instruction *Add = BinaryOperator::createAdd(V, AddCST,V->getName()+".off");
     InsertNewInstBefore(Add, IB);
@@ -1589,9 +1589,9 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
 
     // If the mask is not masking out any bits, there is no reason to do the
     // and in the first place.
-    ConstantIntegral *NotAndRHS = 
+    ConstantIntegral *NotAndRHS =
       cast<ConstantIntegral>(ConstantExpr::getNot(AndRHS));
-    if (MaskedValueIsZero(Op0, NotAndRHS))                          
+    if (MaskedValueIsZero(Op0, NotAndRHS))
       return ReplaceInstUsesWith(I, Op0);
 
     // Optimize a variety of ((val OP C1) & C2) combinations...
@@ -1605,9 +1605,9 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
         // (X ^ V) & C2 --> (X & C2) iff (V & C2) == 0
         // (X | V) & C2 --> (X & C2) iff (V & C2) == 0
         if (MaskedValueIsZero(Op0LHS, AndRHS))
-          return BinaryOperator::createAnd(Op0RHS, AndRHS);      
+          return BinaryOperator::createAnd(Op0RHS, AndRHS);
         if (MaskedValueIsZero(Op0RHS, AndRHS))
-          return BinaryOperator::createAnd(Op0LHS, AndRHS);      
+          return BinaryOperator::createAnd(Op0LHS, AndRHS);
 
         // If the mask is only needed on one incoming arm, push it up.
         if (Op0I->hasOneUse()) {
@@ -1618,7 +1618,7 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
             InsertNewInstBefore(NewRHS, I);
             return BinaryOperator::create(
                        cast<BinaryOperator>(Op0I)->getOpcode(), Op0LHS, NewRHS);
-          }  
+          }
           if (!isa<Constant>(NotAndRHS) &&
               MaskedValueIsZero(Op0RHS, NotAndRHS)) {
             // Not masking anything out for the RHS, move to LHS.
@@ -1727,7 +1727,7 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
       if (match(RHS, m_SetCond(RHSCC, m_Value(RHSVal), m_ConstantInt(RHSCst))))
         if (LHSVal == RHSVal &&    // Found (X setcc C1) & (X setcc C2)
             // Set[GL]E X, CST is folded to Set[GL]T elsewhere.
-            LHSCC != Instruction::SetGE && LHSCC != Instruction::SetLE && 
+            LHSCC != Instruction::SetGE && LHSCC != Instruction::SetLE &&
             RHSCC != Instruction::SetGE && RHSCC != Instruction::SetLE) {
           // Ensure that the larger constant is on the RHS.
           Constant *Cmp = ConstantExpr::getSetGT(LHSCst, RHSCst);
@@ -1869,7 +1869,7 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
 
   if (match(Op0, m_Not(m_Value(A)))) {   // ~A | Op1
     if (A == Op1)   // ~A | A == -1
-      return ReplaceInstUsesWith(I, 
+      return ReplaceInstUsesWith(I,
                                 ConstantIntegral::getAllOnesValue(I.getType()));
   } else {
     A = 0;
@@ -1877,7 +1877,7 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
 
   if (match(Op1, m_Not(m_Value(B)))) {   // Op0 | ~B
     if (Op0 == B)
-      return ReplaceInstUsesWith(I, 
+      return ReplaceInstUsesWith(I,
                                 ConstantIntegral::getAllOnesValue(I.getType()));
 
     // (~A | ~B) == (~(A & B)) - De Morgan's Law
@@ -1900,7 +1900,7 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
       if (match(RHS, m_SetCond(RHSCC, m_Value(RHSVal), m_ConstantInt(RHSCst))))
         if (LHSVal == RHSVal &&    // Found (X setcc C1) | (X setcc C2)
             // Set[GL]E X, CST is folded to Set[GL]T elsewhere.
-            LHSCC != Instruction::SetGE && LHSCC != Instruction::SetLE && 
+            LHSCC != Instruction::SetGE && LHSCC != Instruction::SetLE &&
             RHSCC != Instruction::SetGE && RHSCC != Instruction::SetLE) {
           // Ensure that the larger constant is on the RHS.
           Constant *Cmp = ConstantExpr::getSetGT(LHSCst, RHSCst);
@@ -2035,13 +2035,13 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
         if (dyn_castNotVal(Op0I->getOperand(1))) Op0I->swapOperands();
         if (Value *Op0NotVal = dyn_castNotVal(Op0I->getOperand(0))) {
           Instruction *NotY =
-            BinaryOperator::createNot(Op0I->getOperand(1), 
+            BinaryOperator::createNot(Op0I->getOperand(1),
                                       Op0I->getOperand(1)->getName()+".not");
           InsertNewInstBefore(NotY, I);
           return BinaryOperator::createOr(Op0NotVal, NotY);
         }
       }
-          
+
       if (ConstantInt *Op0CI = dyn_cast<ConstantInt>(Op0I->getOperand(1)))
         switch (Op0I->getOpcode()) {
         case Instruction::Add:
@@ -2096,7 +2096,7 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
       } else if (Op1I->getOperand(1) == Op0) {       // B^(A|B) == (A|B)^B
         I.swapOperands();
         std::swap(Op0, Op1);
-      }      
+      }
     } else if (Op1I->getOpcode() == Instruction::Xor) {
       if (Op0 == Op1I->getOperand(0))                        // A^(A^B) == B
         return ReplaceInstUsesWith(I, Op1I->getOperand(1));
@@ -2242,13 +2242,13 @@ Instruction *InstCombiner::FoldGEPSetCC(User *GEPLHS, Value *RHS,
             EmitIt = false;
           else if (TD->getTypeSize(GTI.getIndexedType()) == 0) {
             EmitIt = false;  // This is indexing into a zero sized array?
-          } else if (isa<ConstantInt>(C)) 
+          } else if (isa<ConstantInt>(C))
             return ReplaceInstUsesWith(I, // No comparison is needed here.
                                  ConstantBool::get(Cond == Instruction::SetNE));
         }
 
         if (EmitIt) {
-          Instruction *Comp = 
+          Instruction *Comp =
             new SetCondInst(Cond, GEPLHS->getOperand(i),
                     Constant::getNullValue(GEPLHS->getOperand(i)->getType()));
           if (InVal == 0)
@@ -2312,7 +2312,7 @@ Instruction *InstCombiner::FoldGEPSetCC(User *GEPLHS, Value *RHS,
       unsigned DiffOperand = 0;     // The operand that differs.
       for (unsigned i = 1, e = GEPRHS->getNumOperands(); i != e; ++i)
         if (GEPLHS->getOperand(i) != GEPRHS->getOperand(i)) {
-          if (GEPLHS->getOperand(i)->getType()->getPrimitiveSize() != 
+          if (GEPLHS->getOperand(i)->getType()->getPrimitiveSize() !=
                      GEPRHS->getOperand(i)->getType()->getPrimitiveSize()) {
             // Irreconcilable differences.
             NumDifferences = 2;
@@ -2364,9 +2364,9 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
 
   // setcc <global/alloca*/null>, <global/alloca*/null> - Global/Stack value
   // addresses never equal each other!  We already know that Op0 != Op1.
-  if ((isa<GlobalValue>(Op0) || isa<AllocaInst>(Op0) || 
-       isa<ConstantPointerNull>(Op0)) && 
-      (isa<GlobalValue>(Op1) || isa<AllocaInst>(Op1) || 
+  if ((isa<GlobalValue>(Op0) || isa<AllocaInst>(Op0) ||
+       isa<ConstantPointerNull>(Op0)) &&
+      (isa<GlobalValue>(Op1) || isa<AllocaInst>(Op1) ||
        isa<ConstantPointerNull>(Op1)))
     return ReplaceInstUsesWith(I, ConstantBool::get(!isTrueWhenEqual(I)));
 
@@ -2466,7 +2466,7 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
           ShAmt = Shift ? dyn_cast<ConstantUInt>(Shift->getOperand(1)) : 0;
           ConstantInt *AndCST = cast<ConstantInt>(LHSI->getOperand(1));
           const Type *Ty = LHSI->getType();
-          
+
           // We can fold this as long as we can't shift unknown bits
           // into the mask.  This can only happen with signed shift
           // rights, as they sign-extend.
@@ -2476,14 +2476,14 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
             if (!CanFold) {
               // To test for the bad case of the signed shr, see if any
               // of the bits shifted in could be tested after the mask.
-              Constant *OShAmt = ConstantUInt::get(Type::UByteTy, 
+              Constant *OShAmt = ConstantUInt::get(Type::UByteTy,
                                    Ty->getPrimitiveSize()*8-ShAmt->getValue());
-              Constant *ShVal = 
+              Constant *ShVal =
                 ConstantExpr::getShl(ConstantInt::getAllOnesValue(Ty), OShAmt);
               if (ConstantExpr::getAnd(ShVal, AndCST)->isNullValue())
                 CanFold = true;
             }
-            
+
             if (CanFold) {
               Constant *NewCst;
               if (Shift->getOpcode() == Instruction::Shl)
@@ -2521,7 +2521,7 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
 
       // (setcc (cast X to larger), CI)
       case Instruction::Cast:
-        if (Instruction *R = 
+        if (Instruction *R =
                 visitSetCondInstWithCastAndConstant(I,cast<CastInst>(LHSI),CI))
           return R;
         break;
@@ -2534,7 +2534,7 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
           case Instruction::SetNE: {
             // If we are comparing against bits always shifted out, the
             // comparison cannot succeed.
-            Constant *Comp = 
+            Constant *Comp =
               ConstantExpr::getShl(ConstantExpr::getShr(CI, ShAmt), ShAmt);
             if (Comp != CI) {// Comparing against a bit that we know is zero.
               bool IsSetNE = I.getOpcode() == Instruction::SetNE;
@@ -2556,7 +2556,7 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
               } else {
                 Mask = ConstantInt::getAllOnesValue(CI->getType());
               }
-              
+
               Instruction *AndI =
                 BinaryOperator::createAnd(LHSI->getOperand(0),
                                           Mask, LHSI->getName()+".mask");
@@ -2577,15 +2577,15 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
           case Instruction::SetNE: {
             // If we are comparing against bits always shifted out, the
             // comparison cannot succeed.
-            Constant *Comp = 
+            Constant *Comp =
               ConstantExpr::getShr(ConstantExpr::getShl(CI, ShAmt), ShAmt);
-            
+
             if (Comp != CI) {// Comparing against a bit that we know is zero.
               bool IsSetNE = I.getOpcode() == Instruction::SetNE;
               Constant *Cst = ConstantBool::get(IsSetNE);
               return ReplaceInstUsesWith(I, Cst);
             }
-              
+
             if (LHSI->hasOneUse() || CI->isNullValue()) {
               unsigned ShAmtVal = (unsigned)ShAmt->getValue();
 
@@ -2602,7 +2602,7 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
               } else {
                 Mask = ConstantSInt::get(CI->getType(), Val);
               }
-              
+
               Instruction *AndI =
                 BinaryOperator::createAnd(LHSI->getOperand(0),
                                           Mask, LHSI->getName()+".mask");
@@ -2727,12 +2727,12 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
                                                       I.getName()), I);
           }
         }
-        
+
         if (Op1)
           return new SelectInst(LHSI->getOperand(0), Op1, Op2);
         break;
       }
-    
+
     // Simplify seteq and setne instructions...
     if (I.getOpcode() == Instruction::SetEQ ||
         I.getOpcode() == Instruction::SetNE) {
@@ -2758,7 +2758,7 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
               return BinaryOperator::create(I.getOpcode(), NewRem,
                                             Constant::getNullValue(UTy));
             }
-          break;          
+          break;
 
         case Instruction::Add:
           // Replace ((add A, B) != C) with (A != C-B) if B & C are constants.
@@ -2770,7 +2770,7 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
             // Replace ((add A, B) != 0) with (A != -B) if A or B is
             // efficiently invertible, or if the add has just this one use.
             Value *BOp0 = BO->getOperand(0), *BOp1 = BO->getOperand(1);
-            
+
             if (Value *NegVal = dyn_castNegVal(BOp1))
               return new SetCondInst(I.getOpcode(), BOp0, NegVal);
             else if (Value *NegVal = dyn_castNegVal(BOp0))
@@ -2835,7 +2835,7 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
                                          Instruction::SetGE, X,
                                      Constant::getNullValue(X->getType()));
             }
-            
+
             // ((X & ~7) == 0) --> X < 8
             if (CI->isNullValue() && isHighOnes(BOC)) {
               Value *X = BO->getOperand(0);
@@ -2857,14 +2857,14 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
         }
       }
     } else {  // Not a SetEQ/SetNE
-      // If the LHS is a cast from an integral value of the same size, 
+      // If the LHS is a cast from an integral value of the same size,
       if (CastInst *Cast = dyn_cast<CastInst>(Op0)) {
         Value *CastOp = Cast->getOperand(0);
         const Type *SrcTy = CastOp->getType();
         unsigned SrcTySize = SrcTy->getPrimitiveSize();
         if (SrcTy != Cast->getType() && SrcTy->isInteger() &&
             SrcTySize == Cast->getType()->getPrimitiveSize()) {
-          assert((SrcTy->isSigned() ^ Cast->getType()->isSigned()) && 
+          assert((SrcTy->isSigned() ^ Cast->getType()->isSigned()) &&
                  "Source and destination signednesses should differ!");
           if (Cast->getType()->isSigned()) {
             // If this is a signed comparison, check for comparisons in the
@@ -2916,14 +2916,14 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
       // We keep moving the cast from the left operand over to the right
       // operand, where it can often be eliminated completely.
       Op0 = CastOp0;
-      
+
       // If operand #1 is a cast instruction, see if we can eliminate it as
       // well.
       if (CastInst *CI2 = dyn_cast<CastInst>(Op1))
         if (CI2->getOperand(0)->getType()->isLosslesslyConvertibleTo(
                                                                Op0->getType()))
           Op1 = CI2->getOperand(0);
-      
+
       // If Op1 is a constant, we can fold the cast into the constant.
       if (Op1->getType() != Op0->getType())
         if (Constant *Op1C = dyn_cast<Constant>(Op1)) {
@@ -2978,7 +2978,7 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
             return ReplaceInstUsesWith(I, ConstantBool::False);
           }
         }
-        
+
         // Otherwise, we can replace the setcc with a setcc of the smaller
         // operand value.
         Op1 = ConstantExpr::getCast(cast<Constant>(Op1), SrcTy);
@@ -2989,10 +2989,10 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
   return Changed ? &I : 0;
 }
 
-// visitSetCondInstWithCastAndConstant - this method is part of the 
+// visitSetCondInstWithCastAndConstant - this method is part of the
 // visitSetCondInst method. It handles the situation where we have:
 //   (setcc (cast X to larger), CI)
-// It tries to remove the cast and even the setcc if the CI value 
+// It tries to remove the cast and even the setcc if the CI value
 // and range of the cast allow it.
 Instruction *
 InstCombiner::visitSetCondInstWithCastAndConstant(BinaryOperator&I,
@@ -3005,9 +3005,9 @@ InstCombiner::visitSetCondInstWithCastAndConstant(BinaryOperator&I,
 
   unsigned SrcBits = SrcTy->getPrimitiveSize()*8;
   unsigned DestBits = DestTy->getPrimitiveSize()*8;
-  if (SrcTy == Type::BoolTy) 
+  if (SrcTy == Type::BoolTy)
     SrcBits = 1;
-  if (DestTy == Type::BoolTy) 
+  if (DestTy == Type::BoolTy)
     DestBits = 1;
   if (SrcBits < DestBits) {
     // There are fewer bits in the source of the cast than in the result
@@ -3015,25 +3015,25 @@ InstCombiner::visitSetCondInstWithCastAndConstant(BinaryOperator&I,
     // value won't have changed due to sign extension.
     Constant *NewCst = ConstantExpr::getCast(CI, SrcTy);
     if (ConstantExpr::getCast(NewCst, DestTy) == CI) {
-      // The constant value operand of the setCC before and after a 
-      // cast to the source type of the cast instruction is the same 
-      // value, so we just replace with the same setcc opcode, but 
-      // using the source value compared to the constant casted to the 
-      // source type. 
+      // The constant value operand of the setCC before and after a
+      // cast to the source type of the cast instruction is the same
+      // value, so we just replace with the same setcc opcode, but
+      // using the source value compared to the constant casted to the
+      // source type.
       if (SrcTy->isSigned() && DestTy->isUnsigned()) {
         CastInst* Cst = new CastInst(LHSI->getOperand(0),
                                      SrcTy->getUnsignedVersion(),
                                      LHSI->getName());
         InsertNewInstBefore(Cst,I);
-        return new SetCondInst(I.getOpcode(), Cst, 
+        return new SetCondInst(I.getOpcode(), Cst,
                                ConstantExpr::getCast(CI,
                                                  SrcTy->getUnsignedVersion()));
       }
       return new SetCondInst(I.getOpcode(), LHSI->getOperand(0),NewCst);
     }
 
-    // The constant value before and after a cast to the source type 
-    // is different, so various cases are possible depending on the 
+    // The constant value before and after a cast to the source type
+    // is different, so various cases are possible depending on the
     // opcode and the signs of the types involved in the cast.
     switch (I.getOpcode()) {
     case Instruction::SetLT: {
@@ -3052,14 +3052,14 @@ InstCombiner::visitSetCondInstWithCastAndConstant(BinaryOperator&I,
       // We're looking for equality, and we know the values are not
       // equal so replace with constant False.
       return ReplaceInstUsesWith(I, ConstantBool::False);
-    case Instruction::SetNE: 
+    case Instruction::SetNE:
       // We're testing for inequality, and we know the values are not
       // equal so replace with constant True.
       return ReplaceInstUsesWith(I, ConstantBool::True);
-    case Instruction::SetLE: 
-    case Instruction::SetGE: 
+    case Instruction::SetLE:
+    case Instruction::SetGE:
       assert(0 && "SetLE and SetGE should be handled elsewhere");
-    default: 
+    default:
       assert(0 && "unknown integer comparison");
     }
   }
@@ -3123,7 +3123,7 @@ Instruction *InstCombiner::visitShiftInst(ShiftInst &I) {
         if (Constant *BOOp = dyn_cast<Constant>(BO->getOperand(1)))
           return BinaryOperator::createMul(BO->getOperand(0),
                                            ConstantExpr::getShl(BOOp, CUI));
-    
+
     // Try to fold constant and into select arguments.
     if (SelectInst *SI = dyn_cast<SelectInst>(Op0))
       if (Instruction *R = FoldOpIntoSelect(I, SI, this))
@@ -3219,7 +3219,7 @@ Instruction *InstCombiner::visitShiftInst(ShiftInst &I) {
                                  dyn_cast<ConstantUInt>(Op0SI->getOperand(1))) {
         unsigned ShiftAmt1 = (unsigned)ShiftAmt1C->getValue();
         unsigned ShiftAmt2 = (unsigned)CUI->getValue();
-        
+
         // Check for (A << c1) << c2   and   (A >> c1) >> c2
         if (I.getOpcode() == Op0SI->getOpcode()) {
           unsigned Amt = ShiftAmt1+ShiftAmt2;   // Fold into one big shift...
@@ -3228,7 +3228,7 @@ Instruction *InstCombiner::visitShiftInst(ShiftInst &I) {
           return new ShiftInst(I.getOpcode(), Op0SI->getOperand(0),
                                ConstantUInt::get(Type::UByteTy, Amt));
         }
-        
+
         // Check for (A << c1) >> c2 or visaversa.  If we are dealing with
         // signed types, we can only support the (A >> c1) << c2 configuration,
         // because it can not turn an arbitrary bit of A into a sign bit.
@@ -3239,12 +3239,12 @@ Instruction *InstCombiner::visitShiftInst(ShiftInst &I) {
             C = ConstantExpr::getShl(C, ShiftAmt1C);
           else
             C = ConstantExpr::getShr(C, ShiftAmt1C);
-          
+
           Instruction *Mask =
             BinaryOperator::createAnd(Op0SI->getOperand(0), C,
                                       Op0SI->getOperand(0)->getName()+".mask");
           InsertNewInstBefore(Mask, I);
-          
+
           // Figure out what flavor of shift we should use...
           if (ShiftAmt1 == ShiftAmt2)
             return ReplaceInstUsesWith(I, Mask);  // (A << c) >> c  === A & c2
@@ -3293,7 +3293,7 @@ static inline bool isEliminableCastOfCast(const Type *SrcTy, const Type *MidTy,
                                           const Type *DstTy, TargetData *TD) {
 
   // It is legal to eliminate the instruction if casting A->B->A if the sizes
-  // are identical and the bits don't get reinterpreted (for example 
+  // are identical and the bits don't get reinterpreted (for example
   // int->float->int would not be allowed).
   if (SrcTy == DstTy && SrcTy->isLosslesslyConvertibleTo(MidTy))
     return true;
@@ -3341,7 +3341,7 @@ static inline bool isEliminableCastOfCast(const Type *SrcTy, const Type *MidTy,
       CastType ResultCast = getCastType(SrcTy, DstTy);
       if (ResultCast == Noop || ResultCast == Truncate)
         return true;
-      // Otherwise we are still growing the value, we are only safe if the 
+      // Otherwise we are still growing the value, we are only safe if the
       // result will match the sign/zeroextendness of the result.
       return ResultCast == FirstCast;
     }
@@ -3402,7 +3402,7 @@ Instruction *InstCombiner::visitCastInst(CastInst &CI) {
     // If this is an A->B->A cast, and we are dealing with integral types, try
     // to convert this into a logical 'and' instruction.
     //
-    if (A->getType()->isInteger() && 
+    if (A->getType()->isInteger() &&
         CI.getType()->isInteger() && CSrc->getType()->isInteger() &&
         CSrc->getType()->isUnsigned() &&   // B->A cast must zero extend
         CSrc->getType()->getPrimitiveSize() < CI.getType()->getPrimitiveSize()&&
@@ -3422,7 +3422,7 @@ Instruction *InstCombiner::visitCastInst(CastInst &CI) {
       return And;
     }
   }
-  
+
   // If this is a cast to bool, turn it into the appropriate setne instruction.
   if (CI.getType() == Type::BoolTy)
     return BinaryOperator::createSetNE(CI.getOperand(0),
@@ -3460,7 +3460,7 @@ Instruction *InstCombiner::visitCastInst(CastInst &CI) {
 
           // If the allocation is for an even multiple of the cast type size
           if (CastElTySize && (AllocElTySize % CastElTySize == 0)) {
-            Value *Amt = ConstantUInt::get(Type::UIntTy, 
+            Value *Amt = ConstantUInt::get(Type::UIntTy,
                                          AllocElTySize/CastElTySize);
             std::string Name = AI->getName(); AI->setName("");
             AllocationInst *New;
@@ -3527,7 +3527,7 @@ Instruction *InstCombiner::visitCastInst(CastInst &CI) {
         break;
       }
     }
-  
+
   return 0;
 }
 
@@ -3553,7 +3553,7 @@ static unsigned GetSelectFoldableOperands(Instruction *I) {
   case Instruction::Sub:   // Can only fold on the amount subtracted.
   case Instruction::Shl:   // Can only fold on the shift amount.
   case Instruction::Shr:
-    return 1;           
+    return 1;
   default:
     return 0;              // Cannot fold
   }
@@ -3592,7 +3592,7 @@ Instruction *InstCombiner::FoldSelectOpOp(SelectInst &SI, Instruction *TI,
     } else {
       return 0;  // unknown unary op.
     }
-    
+
     // Fold this by inserting a select from the input values.
     SelectInst *NewSI = new SelectInst(SI.getCondition(), TI->getOperand(0),
                                        FI->getOperand(0), SI.getName()+".v");
@@ -3732,9 +3732,9 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
               cast<Constant>(IC->getOperand(1))->isNullValue())
             if (Instruction *ICA = dyn_cast<Instruction>(IC->getOperand(0)))
               if (ICA->getOpcode() == Instruction::And &&
-                  isa<ConstantInt>(ICA->getOperand(1)) && 
-                  (ICA->getOperand(1) == TrueValC || 
-                   ICA->getOperand(1) == FalseValC) && 
+                  isa<ConstantInt>(ICA->getOperand(1)) &&
+                  (ICA->getOperand(1) == TrueValC ||
+                   ICA->getOperand(1) == FalseValC) &&
                   isOneBitSet(cast<ConstantInt>(ICA->getOperand(1)))) {
                 // Okay, now we know that everything is set up, we just don't
                 // know whether we have a setne or seteq and whether the true or
@@ -3770,7 +3770,7 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
       // NOTE: if we wanted to, this is where to detect MIN/MAX/ABS/etc.
     }
   }
-  
+
   if (Instruction *TI = dyn_cast<Instruction>(TrueVal))
     if (Instruction *FI = dyn_cast<Instruction>(FalseVal))
       if (TI->hasOneUse() && FI->hasOneUse()) {
@@ -3821,14 +3821,14 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
                 std::swap(NewTrueOp, NewFalseOp);
               Instruction *NewSel =
                 new SelectInst(CondVal, NewTrueOp,NewFalseOp,SI.getName()+".p");
-                               
+
               NewSel = InsertNewInstBefore(NewSel, SI);
               return BinaryOperator::createAdd(SubOp->getOperand(0), NewSel);
             }
           }
         }
       }
-  
+
   // See if we can fold the select into one of our operands.
   if (SI.getType()->isInteger()) {
     // See the comment above GetSelectFoldableOperands for a description of the
@@ -3906,7 +3906,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
       if (NumBytes->isNullValue()) return EraseInstFromFunction(CI);
 
       // FIXME: Increase alignment here.
-      
+
       if (ConstantInt *CI = dyn_cast<ConstantInt>(NumBytes))
         if (CI->getRawValue() == 1) {
           // Replace the instruction with just byte operations.  We would
@@ -3998,7 +3998,7 @@ Instruction *InstCombiner::visitCallSite(CallSite CS) {
         }
       }
   }
-  
+
   return Changed ? CS.getInstruction() : 0;
 }
 
@@ -4043,12 +4043,12 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
 
   unsigned NumActualArgs = unsigned(CS.arg_end()-CS.arg_begin());
   unsigned NumCommonArgs = std::min(FT->getNumParams(), NumActualArgs);
-                                    
+
   CallSite::arg_iterator AI = CS.arg_begin();
   for (unsigned i = 0, e = NumCommonArgs; i != e; ++i, ++AI) {
     const Type *ParamTy = FT->getParamType(i);
     bool isConvertible = (*AI)->getType()->isLosslesslyConvertibleTo(ParamTy);
-    if (Callee->isExternal() && !isConvertible) return false;    
+    if (Callee->isExternal() && !isConvertible) return false;
   }
 
   if (FT->getNumParams() < NumActualArgs && !FT->isVarArg() &&
@@ -4200,7 +4200,7 @@ Instruction *InstCombiner::FoldPHIArgOpIntoPHI(PHINode &PN) {
     InsertNewInstBefore(NewPN, PN);
     PhiVal = NewPN;
   }
-  
+
   // Insert and return the new operation.
   if (isa<CastInst>(FirstInst))
     return new CastInst(PhiVal, PN.getType());
@@ -4223,7 +4223,7 @@ static bool DeadPHICycle(PHINode *PN, std::set<PHINode*> &PotentiallyDeadPHIs) {
 
   if (PHINode *PU = dyn_cast<PHINode>(PN->use_back()))
     return DeadPHICycle(PU, PotentiallyDeadPHIs);
-  
+
   return false;
 }
 
@@ -4295,7 +4295,7 @@ Instruction *InstCombiner::visitPHINode(PHINode &PN) {
       if (DeadPHICycle(PU, PotentiallyDeadPHIs))
         return ReplaceInstUsesWith(PN, UndefValue::get(PN.getType()));
     }
-  
+
   return 0;
 }
 
@@ -4353,7 +4353,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
             // We can always eliminate a cast from int to [u]long.  We can
             // eliminate a cast from uint to [u]long iff the target is a 32-bit
             // pointer target.
-            if (SrcTy->isSigned() || 
+            if (SrcTy->isSigned() ||
                 SrcTy->getPrimitiveSize() >= TD->getPointerSize()) {
               MadeChange = true;
               GEP.setOperand(i, Src);
@@ -4412,7 +4412,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
     for (gep_type_iterator I = gep_type_begin(*cast<User>(PtrOp)),
            E = gep_type_end(*cast<User>(PtrOp)); I != E; ++I)
       EndsWithSequential = !isa<StructType>(*I);
-  
+
     // Can we combine the two pointer arithmetics offsets?
     if (EndsWithSequential) {
       // Replace: gep (gep %P, long B), long A, ...
@@ -4466,9 +4466,9 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
         Indices.push_back(Sum);
         Indices.insert(Indices.end(), GEP.op_begin()+2, GEP.op_end());
       }
-    } else if (isa<Constant>(*GEP.idx_begin()) && 
+    } else if (isa<Constant>(*GEP.idx_begin()) &&
                cast<Constant>(*GEP.idx_begin())->isNullValue() &&
-               SrcGEPOperands.size() != 1) { 
+               SrcGEPOperands.size() != 1) {
       // Otherwise we can do the fold if the first index of the GEP is a zero
       Indices.insert(Indices.end(), SrcGEPOperands.begin()+1,
                      SrcGEPOperands.end());
@@ -4526,7 +4526,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
         const Type *SrcElTy = cast<PointerType>(X->getType())->getElementType();
         const Type *ResElTy =cast<PointerType>(CE->getType())->getElementType();
         if (isa<ArrayType>(SrcElTy) &&
-            TD->getTypeSize(cast<ArrayType>(SrcElTy)->getElementType()) == 
+            TD->getTypeSize(cast<ArrayType>(SrcElTy)->getElementType()) ==
             TD->getTypeSize(ResElTy)) {
           Value *V = InsertNewInstBefore(
                  new GetElementPtrInst(X, Constant::getNullValue(Type::IntTy),
@@ -4556,7 +4556,7 @@ Instruction *InstCombiner::visitAllocationInst(AllocationInst &AI) {
       }
 
       InsertNewInstBefore(New, AI);
-      
+
       // Scan to the end of the allocation instructions, to skip over a block of
       // allocas if possible...
       //
@@ -4579,7 +4579,7 @@ Instruction *InstCombiner::visitAllocationInst(AllocationInst &AI) {
   // If alloca'ing a zero byte object, replace the alloca with a null pointer.
   // Note that we only do this for alloca's, because malloc should allocate and
   // return a unique pointer, even for a zero byte allocation.
-  if (isa<AllocaInst>(AI) && AI.getAllocatedType()->isSized() && 
+  if (isa<AllocaInst>(AI) && AI.getAllocatedType()->isSized() &&
       TD->getTypeSize(AI.getAllocatedType()) == 0)
     return ReplaceInstUsesWith(AI, Constant::getNullValue(AI.getType()));
 
@@ -4682,9 +4682,9 @@ static Instruction *InstCombineLoadCast(InstCombiner &IC, LoadInst &LI) {
           // Do not allow turning this into a load of an integer, which is then
           // casted to a pointer, this pessimizes pointer analysis a lot.
           (isa<PointerType>(SrcPTy) == isa<PointerType>(LI.getType())) &&
-          IC.getTargetData().getTypeSize(SrcPTy) == 
+          IC.getTargetData().getTypeSize(SrcPTy) ==
                IC.getTargetData().getTypeSize(DestPTy)) {
-          
+
         // Okay, we are casting from one integer or pointer type to another of
         // the same size.  Instead of casting the pointer before the load, cast
         // the result of the loaded value.
@@ -4721,7 +4721,7 @@ static bool isSafeToLoadUnconditionally(Value *V, Instruction *ScanFrom) {
       if (LI->getOperand(0) == V) return true;
     } else if (StoreInst *SI = dyn_cast<StoreInst>(BBI))
       if (SI->getOperand(1) == V) return true;
-    
+
   }
   return false;
 }
@@ -4743,7 +4743,7 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
     if (GlobalVariable *GV = dyn_cast<GlobalVariable>(Op))
       if (GV->isConstant() && !GV->isExternal())
         return ReplaceInstUsesWith(LI, GV->getInitializer());
-    
+
     // Instcombine load (constantexpr_GEP global, 0, ...) into the value loaded.
     if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Op))
       if (CE->getOpcode() == Instruction::GetElementPtr) {
@@ -4867,7 +4867,7 @@ static Instruction *InstCombineStoreToCast(InstCombiner &IC, StoreInst &SI) {
           }
 
       if ((SrcPTy->isInteger() || isa<PointerType>(SrcPTy)) &&
-          IC.getTargetData().getTypeSize(SrcPTy) == 
+          IC.getTargetData().getTypeSize(SrcPTy) ==
                IC.getTargetData().getTypeSize(DestPTy)) {
 
         // Okay, we are casting from one integer or pointer type to another of
@@ -4967,7 +4967,7 @@ Instruction *InstCombiner::visitBranchInst(BranchInst &BI) {
       WorkList.push_back(cast<Instruction>(NewSCC));
       return &BI;
     }
-  
+
   return 0;
 }
 
@@ -5004,7 +5004,7 @@ static bool TryToSinkInstruction(Instruction *I, BasicBlock *DestBlock) {
 
   // Cannot move control-flow-involving instructions.
   if (isa<PHINode>(I) || isa<InvokeInst>(I) || isa<CallInst>(I)) return false;
-  
+
   // Do not sink alloca instructions out of the entry block.
   if (isa<AllocaInst>(I) && I->getParent() == &DestBlock->getParent()->front())
     return false;
@@ -5024,7 +5024,7 @@ static bool TryToSinkInstruction(Instruction *I, BasicBlock *DestBlock) {
   while (isa<PHINode>(InsertPos)) ++InsertPos;
 
   BasicBlock *SrcBlock = I->getParent();
-  DestBlock->getInstList().splice(InsertPos, SrcBlock->getInstList(), I);  
+  DestBlock->getInstList().splice(InsertPos, SrcBlock->getInstList(), I);
   ++NumSunkInst;
   return true;
 }
@@ -5165,7 +5165,7 @@ bool InstCombiner::runOnFunction(Function &F) {
           for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
             if (Instruction *OpI = dyn_cast<Instruction>(I->getOperand(i)))
               WorkList.push_back(OpI);
-          
+
           // Instructions may end up in the worklist more than once.  Erase all
           // occurrances of this instruction.
           removeFromWorkList(I);

@@ -1,10 +1,10 @@
 //===- LowerSelect.cpp - Transform select insts to branches ---------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This pass lowers select instructions into conditional branches for targets
@@ -86,7 +86,7 @@ bool LowerSelect::runOnFunction(Function &F) {
           // Use the PHI instead of the select.
           SI->replaceAllUsesWith(PN);
           NewCont->getInstList().erase(SI);
-        
+
           Changed = true;
           break; // This block is done with.
         }

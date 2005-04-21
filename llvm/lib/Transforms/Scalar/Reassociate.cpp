@@ -1,10 +1,10 @@
 //===- Reassociate.cpp - Reassociate binary expressions -------------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This pass reassociates commutative expressions in an order that is designed
@@ -115,7 +115,7 @@ bool Reassociate::ReassociateExpr(BinaryOperator *I) {
   Value *RHS = I->getOperand(1);
   unsigned LHSRank = getRank(LHS);
   unsigned RHSRank = getRank(RHS);
-  
+
   bool Changed = false;
 
   // Make sure the LHS of the operand always has the greater rank...
@@ -130,7 +130,7 @@ bool Reassociate::ReassociateExpr(BinaryOperator *I) {
     DEBUG(std::cerr << "Transposed: " << *I
           /* << " Result BB: " << I->getParent()*/);
   }
-  
+
   // If the LHS is the same operator as the current one is, and if we are the
   // only expression using it...
   //
@@ -233,7 +233,7 @@ bool Reassociate::ReassociateBB(BasicBlock *BB) {
 
       BI = New;
       New->setOperand(1, NegateValue(New->getOperand(1), BI));
-      
+
       Changed = true;
       DEBUG(std::cerr << "Negated: " << *New /*<< " Result BB: " << BB*/);
     }

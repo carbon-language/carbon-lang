@@ -1,10 +1,10 @@
 //===- SJLJ-Exception.cpp - SetJmp/LongJmp Exception Handling -------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements the API used by the Setjmp/Longjmp exception handling
@@ -106,7 +106,7 @@ void __llvm_sjljeh_add_setjmp_to_map(void **SetJmpMap, void *JmpBuf,
 bool __llvm_sjljeh_is_longjmp_exception() throw() {
   return __llvm_eh_current_uncaught_exception_type(SJLJException) != 0;
 }
-  
+
 // __llvm_sjljeh_get_longjmp_value - This function returns the value that the
 // setjmp call should "return".  This requires that the current uncaught
 // exception be a sjlj exception, though it does not require the exception to be
@@ -125,7 +125,7 @@ int __llvm_sjljeh_get_longjmp_value() throw() {
 unsigned __llvm_sjljeh_try_catching_longjmp_exception(void **SetJmpMap) throw(){
   llvm_sjlj_exception *E =
     get_sjlj_exception(__llvm_eh_get_uncaught_exception());
- 
+
   // Scan for a matching entry in the SetJmpMap...
   SetJmpMapEntry *SJE = *(SetJmpMapEntry**)SetJmpMap;
   for (; SJE; SJE = SJE->Next)
@@ -140,7 +140,7 @@ unsigned __llvm_sjljeh_try_catching_longjmp_exception(void **SetJmpMap) throw(){
       // Return the setjmp ID which we should branch to...
       return SJE->SetJmpID;
     }
-  
+
   // No setjmp in this function catches the exception!
   return ~0;
 }

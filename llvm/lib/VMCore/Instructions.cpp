@@ -1,10 +1,10 @@
 //===-- Instructions.cpp - Implement the LLVM instructions ----------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements all of the non-inline methods for the LLVM instruction
@@ -25,7 +25,7 @@ using namespace llvm;
 //===----------------------------------------------------------------------===//
 
 TerminatorInst::TerminatorInst(Instruction::TermOps iType,
-                               Use *Ops, unsigned NumOps, Instruction *IB) 
+                               Use *Ops, unsigned NumOps, Instruction *IB)
   : Instruction(Type::VoidTy, iType, Ops, NumOps, "", IB) {
 }
 
@@ -104,7 +104,7 @@ void PHINode::resizeOperands(unsigned NumOps) {
   } else if (NumOps == NumOperands) {
     if (ReservedSpace == NumOps) return;
   } else {
-    return;        
+    return;
   }
 
   ReservedSpace = NumOps;
@@ -132,10 +132,10 @@ void CallInst::init(Value *Func, const std::vector<Value*> &Params) {
   Use *OL = OperandList = new Use[Params.size()+1];
   OL[0].init(Func, this);
 
-  const FunctionType *FTy = 
+  const FunctionType *FTy =
     cast<FunctionType>(cast<PointerType>(Func->getType())->getElementType());
 
-  assert((Params.size() == FTy->getNumParams() || 
+  assert((Params.size() == FTy->getNumParams() ||
           (FTy->isVarArg() && Params.size() > FTy->getNumParams())) &&
          "Calling a function with bad signature");
   for (unsigned i = 0, e = Params.size(); i != e; ++i)
@@ -148,8 +148,8 @@ void CallInst::init(Value *Func, Value *Actual1, Value *Actual2) {
   OL[0].init(Func, this);
   OL[1].init(Actual1, this);
   OL[2].init(Actual2, this);
-  
-  const FunctionType *FTy = 
+
+  const FunctionType *FTy =
     cast<FunctionType>(cast<PointerType>(Func->getType())->getElementType());
 
   assert((FTy->getNumParams() == 2 ||
@@ -162,8 +162,8 @@ void CallInst::init(Value *Func, Value *Actual) {
   Use *OL = OperandList = new Use[2];
   OL[0].init(Func, this);
   OL[1].init(Actual, this);
-  
-  const FunctionType *FTy = 
+
+  const FunctionType *FTy =
     cast<FunctionType>(cast<PointerType>(Func->getType())->getElementType());
 
   assert((FTy->getNumParams() == 1 ||
@@ -175,23 +175,23 @@ void CallInst::init(Value *Func) {
   NumOperands = 1;
   Use *OL = OperandList = new Use[1];
   OL[0].init(Func, this);
-  
-  const FunctionType *MTy = 
+
+  const FunctionType *MTy =
     cast<FunctionType>(cast<PointerType>(Func->getType())->getElementType());
 
   assert(MTy->getNumParams() == 0 && "Calling a function with bad signature");
 }
 
-CallInst::CallInst(Value *Func, const std::vector<Value*> &Params, 
-                   const std::string &Name, Instruction *InsertBefore) 
+CallInst::CallInst(Value *Func, const std::vector<Value*> &Params,
+                   const std::string &Name, Instruction *InsertBefore)
   : Instruction(cast<FunctionType>(cast<PointerType>(Func->getType())
                                  ->getElementType())->getReturnType(),
                 Instruction::Call, 0, 0, Name, InsertBefore) {
   init(Func, Params);
 }
 
-CallInst::CallInst(Value *Func, const std::vector<Value*> &Params, 
-                   const std::string &Name, BasicBlock *InsertAtEnd) 
+CallInst::CallInst(Value *Func, const std::vector<Value*> &Params,
+                   const std::string &Name, BasicBlock *InsertAtEnd)
   : Instruction(cast<FunctionType>(cast<PointerType>(Func->getType())
                                  ->getElementType())->getReturnType(),
                 Instruction::Call, 0, 0, Name, InsertAtEnd) {
@@ -246,7 +246,7 @@ CallInst::CallInst(Value *Func, const std::string &Name,
   init(Func);
 }
 
-CallInst::CallInst(const CallInst &CI) 
+CallInst::CallInst(const CallInst &CI)
   : Instruction(CI.getType(), Instruction::Call, new Use[CI.getNumOperands()],
                 CI.getNumOperands()) {
   Use *OL = OperandList;
@@ -271,13 +271,13 @@ void InvokeInst::init(Value *Fn, BasicBlock *IfNormal, BasicBlock *IfException,
   OL[0].init(Fn, this);
   OL[1].init(IfNormal, this);
   OL[2].init(IfException, this);
-  const FunctionType *FTy = 
+  const FunctionType *FTy =
     cast<FunctionType>(cast<PointerType>(Fn->getType())->getElementType());
-  
-  assert((Params.size() == FTy->getNumParams()) || 
+
+  assert((Params.size() == FTy->getNumParams()) ||
          (FTy->isVarArg() && Params.size() > FTy->getNumParams()) &&
          "Calling a function with bad signature");
-  
+
   for (unsigned i = 0, e = Params.size(); i != e; i++)
     OL[i+3].init(Params[i], this);
 }
@@ -302,7 +302,7 @@ InvokeInst::InvokeInst(Value *Fn, BasicBlock *IfNormal,
   init(Fn, IfNormal, IfException, Params);
 }
 
-InvokeInst::InvokeInst(const InvokeInst &II) 
+InvokeInst::InvokeInst(const InvokeInst &II)
   : TerminatorInst(II.getType(), Instruction::Invoke,
                    new Use[II.getNumOperands()], II.getNumOperands()) {
   Use *OL = OperandList, *InOL = II.OperandList;
@@ -327,7 +327,7 @@ void InvokeInst::setSuccessorV(unsigned idx, BasicBlock *B) {
 
 void ReturnInst::init(Value *retVal) {
   if (retVal && retVal->getType() != Type::VoidTy) {
-    assert(!isa<BasicBlock>(retVal) && 
+    assert(!isa<BasicBlock>(retVal) &&
            "Cannot return basic block.  Probably using the incorrect ctor");
     NumOperands = 1;
     RetVal.init(retVal, this);
@@ -393,7 +393,7 @@ BasicBlock *UnreachableInst::getSuccessorV(unsigned idx) const {
 
 void BranchInst::AssertOK() {
   if (isConditional())
-    assert(getCondition()->getType() == Type::BoolTy && 
+    assert(getCondition()->getType() == Type::BoolTy &&
            "May only branch on boolean predicates!");
 }
 
@@ -428,10 +428,10 @@ static Value *getAISize(Value *Amt) {
   else
     assert(Amt->getType() == Type::UIntTy &&
            "Malloc/Allocation array size != UIntTy!");
-  return Amt;  
+  return Amt;
 }
 
-AllocationInst::AllocationInst(const Type *Ty, Value *ArraySize, unsigned iTy, 
+AllocationInst::AllocationInst(const Type *Ty, Value *ArraySize, unsigned iTy,
                                const std::string &Name,
                                Instruction *InsertBefore)
   : UnaryInstruction(PointerType::get(Ty), iTy, getAISize(ArraySize),
@@ -439,7 +439,7 @@ AllocationInst::AllocationInst(const Type *Ty, Value *ArraySize, unsigned iTy,
   assert(Ty != Type::VoidTy && "Cannot allocate void!");
 }
 
-AllocationInst::AllocationInst(const Type *Ty, Value *ArraySize, unsigned iTy, 
+AllocationInst::AllocationInst(const Type *Ty, Value *ArraySize, unsigned iTy,
                                const std::string &Name,
                                BasicBlock *InsertAtEnd)
   : UnaryInstruction(PointerType::get(Ty), iTy, getAISize(ArraySize),
@@ -492,7 +492,7 @@ FreeInst::FreeInst(Value *Ptr, BasicBlock *InsertAtEnd)
 //===----------------------------------------------------------------------===//
 
 void LoadInst::AssertOK() {
-  assert(isa<PointerType>(getOperand(0)->getType()) && 
+  assert(isa<PointerType>(getOperand(0)->getType()) &&
          "Ptr must have pointer type.");
 }
 
@@ -556,7 +556,7 @@ StoreInst::StoreInst(Value *val, Value *addr, BasicBlock *InsertAtEnd)
   AssertOK();
 }
 
-StoreInst::StoreInst(Value *val, Value *addr, bool isVolatile, 
+StoreInst::StoreInst(Value *val, Value *addr, bool isVolatile,
                      Instruction *InsertBefore)
   : Instruction(Type::VoidTy, Store, Ops, 2, "", InsertBefore) {
   Ops[0].init(val, this);
@@ -565,7 +565,7 @@ StoreInst::StoreInst(Value *val, Value *addr, bool isVolatile,
   AssertOK();
 }
 
-StoreInst::StoreInst(Value *val, Value *addr, bool isVolatile, 
+StoreInst::StoreInst(Value *val, Value *addr, bool isVolatile,
                      BasicBlock *InsertAtEnd)
   : Instruction(Type::VoidTy, Store, Ops, 2, "", InsertAtEnd) {
   Ops[0].init(val, this);
@@ -642,10 +642,10 @@ GetElementPtrInst::~GetElementPtrInst() {
 // getIndexedType - Returns the type of the element that would be loaded with
 // a load instruction with the specified parameters.
 //
-// A null type is returned if the indices are invalid for the specified 
+// A null type is returned if the indices are invalid for the specified
 // pointer type.
 //
-const Type* GetElementPtrInst::getIndexedType(const Type *Ptr, 
+const Type* GetElementPtrInst::getIndexedType(const Type *Ptr,
                                               const std::vector<Value*> &Idx,
                                               bool AllowCompositeLeaf) {
   if (!isa<PointerType>(Ptr)) return 0;   // Type isn't a pointer type!
@@ -657,7 +657,7 @@ const Type* GetElementPtrInst::getIndexedType(const Type *Ptr,
       return cast<PointerType>(Ptr)->getElementType();
     else
       return 0;
- 
+
   unsigned CurIdx = 0;
   while (const CompositeType *CT = dyn_cast<CompositeType>(Ptr)) {
     if (Idx.size() == CurIdx) {
@@ -682,7 +682,7 @@ const Type* GetElementPtrInst::getIndexedType(const Type *Ptr,
   return CurIdx == Idx.size() ? Ptr : 0;
 }
 
-const Type* GetElementPtrInst::getIndexedType(const Type *Ptr, 
+const Type* GetElementPtrInst::getIndexedType(const Type *Ptr,
                                               Value *Idx0, Value *Idx1,
                                               bool AllowCompositeLeaf) {
   const PointerType *PTy = dyn_cast<PointerType>(Ptr);
@@ -716,9 +716,9 @@ void BinaryOperator::init(BinaryOps iType)
   case Rem:
     assert(getType() == LHS->getType() &&
            "Arithmetic operation should return same type as operands!");
-    assert((getType()->isInteger() || 
-            getType()->isFloatingPoint() || 
-            isa<PackedType>(getType()) ) && 
+    assert((getType()->isInteger() ||
+            getType()->isFloatingPoint() ||
+            isa<PackedType>(getType()) ) &&
           "Tried to create an arithmetic operation on a non-arithmetic type!");
     break;
   case And: case Or:
@@ -870,7 +870,7 @@ bool BinaryOperator::swapOperands() {
 //                             SetCondInst Class
 //===----------------------------------------------------------------------===//
 
-SetCondInst::SetCondInst(BinaryOps Opcode, Value *S1, Value *S2, 
+SetCondInst::SetCondInst(BinaryOps Opcode, Value *S1, Value *S2,
                          const std::string &Name, Instruction *InsertBefore)
   : BinaryOperator(Opcode, S1, S2, Type::BoolTy, Name, InsertBefore) {
 
@@ -878,7 +878,7 @@ SetCondInst::SetCondInst(BinaryOps Opcode, Value *S1, Value *S2,
   assert(getInverseCondition(Opcode));
 }
 
-SetCondInst::SetCondInst(BinaryOps Opcode, Value *S1, Value *S2, 
+SetCondInst::SetCondInst(BinaryOps Opcode, Value *S1, Value *S2,
                          const std::string &Name, BasicBlock *InsertAtEnd)
   : BinaryOperator(Opcode, S1, S2, Type::BoolTy, Name, InsertAtEnd) {
 
@@ -931,7 +931,7 @@ void SwitchInst::init(Value *Value, BasicBlock *Default, unsigned NumCases) {
   OperandList[1].init(Default, this);
 }
 
-SwitchInst::SwitchInst(const SwitchInst &SI) 
+SwitchInst::SwitchInst(const SwitchInst &SI)
   : TerminatorInst(Instruction::Switch, new Use[SI.getNumOperands()],
                    SI.getNumOperands()) {
   Use *OL = OperandList, *InOL = SI.OperandList;
