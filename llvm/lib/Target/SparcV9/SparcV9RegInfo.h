@@ -1,10 +1,10 @@
 //===-- SparcV9RegInfo.h - SparcV9 Target Register Info ---------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file is used to describe the register file of the SparcV9 target to
@@ -43,7 +43,7 @@ protected:
   const unsigned RegClassID;        // integer ID of a reg class
   const unsigned NumOfAvailRegs;    // # of avail for coloring -without SP etc.
   const unsigned NumOfAllRegs;      // # of all registers -including SP,g0 etc.
-  
+
 public:
   inline unsigned getRegClassID()     const { return RegClassID; }
   inline unsigned getNumOfAvailRegs() const { return NumOfAvailRegs; }
@@ -52,7 +52,7 @@ public:
   // This method marks the registers used for a given register number.
   // This defaults to marking a single register but may mark multiple
   // registers when a single number denotes paired registers.
-  // 
+  //
   virtual void markColorsUsed(unsigned RegInClass,
                               int UserRegType,
                               int RegTypeWanted,
@@ -68,7 +68,7 @@ public:
   // checking a single entry in the array directly, but that can be overridden
   // for paired registers and other such silliness.
   // It returns -1 if no unused color is found.
-  // 
+  //
   virtual int findUnusedColor(int RegTypeWanted,
                           const std::vector<bool> &IsColorUsedArr) const {
     // find first unused color in the IsColorUsedArr directly
@@ -81,7 +81,7 @@ public:
   }
 
   // This method should find a color which is not used by neighbors
-  // (i.e., a false position in IsColorUsedArr) and 
+  // (i.e., a false position in IsColorUsedArr) and
   virtual void colorIGNode(IGNode *Node,
                            const std::vector<bool> &IsColorUsedArr) const = 0;
 
@@ -107,8 +107,8 @@ class SparcV9RegInfo {
 protected:
   // A vector of all machine register classes
   //
-  std::vector<const TargetRegClassInfo *> MachineRegClassArr;    
-  
+  std::vector<const TargetRegClassInfo *> MachineRegClassArr;
+
 public:
   const TargetMachine &target;
 
@@ -119,7 +119,7 @@ public:
 
 
   // According the definition of a MachineOperand class, a Value in a
-  // machine instruction can go into either a normal register or a 
+  // machine instruction can go into either a normal register or a
   // condition code register. If isCCReg is true below, the ID of the condition
   // code register class will be returned. Otherwise, the normal register
   // class (eg. int, float) must be returned.
@@ -139,12 +139,12 @@ public:
     return classId;
   }
 
-  unsigned int getNumOfRegClasses() const { 
-    return MachineRegClassArr.size(); 
-  }  
+  unsigned int getNumOfRegClasses() const {
+    return MachineRegClassArr.size();
+  }
 
-  const TargetRegClassInfo *getMachineRegClass(unsigned i) const { 
-    return MachineRegClassArr[i]; 
+  const TargetRegClassInfo *getMachineRegClass(unsigned i) const {
+    return MachineRegClassArr[i];
   }
 
   // getZeroRegNum - returns the register that is hardwired to always contain
@@ -156,13 +156,13 @@ public:
   // method args and return values etc.) with specific hardware registers
   // as required. See SparcRegInfo.cpp for the implementation for Sparc.
   //
-  void suggestRegs4MethodArgs(const Function *Func, 
+  void suggestRegs4MethodArgs(const Function *Func,
                                       LiveRangeInfo& LRI) const;
 
-  void suggestRegs4CallArgs(MachineInstr *CallI, 
+  void suggestRegs4CallArgs(MachineInstr *CallI,
                                     LiveRangeInfo& LRI) const;
 
-  void suggestReg4RetValue(MachineInstr *RetI, 
+  void suggestReg4RetValue(MachineInstr *RetI,
 				   LiveRangeInfo& LRI) const;
 
   void colorMethodArgs(const Function *Func,
@@ -182,7 +182,7 @@ public:
   inline bool modifiedByCall(int RegClassID, int Reg) const {
     return MachineRegClassArr[RegClassID]->modifiedByCall(Reg);
   }
-  
+
   // getCallAddressReg - Returns the reg used for pushing the address
   // when a method is called. This can be used for other purposes
   // between calls
@@ -207,8 +207,8 @@ public:
   // and returns the class ID in regClassID.
   int getClassRegNum(int uRegNum, unsigned& regClassID) const {
     if (uRegNum == getInvalidRegNum()) { return getInvalidRegNum(); }
-    
-    int totalRegs = 0, rcid = 0, NC = getNumOfRegClasses();  
+
+    int totalRegs = 0, rcid = 0, NC = getNumOfRegClasses();
     while (rcid < NC &&
            uRegNum>= totalRegs+(int)MachineRegClassArr[rcid]->getNumOfAllRegs())
     {
@@ -222,20 +222,20 @@ public:
     regClassID = rcid;
     return uRegNum - totalRegs;
   }
-  
+
   // Returns the assembly-language name of the specified machine register.
-  // 
+  //
   const char * const getUnifiedRegName(int UnifiedRegNum) const {
     unsigned regClassID = getNumOfRegClasses(); // initialize to invalid value
     int regNumInClass = getClassRegNum(UnifiedRegNum, regClassID);
     return MachineRegClassArr[regClassID]->getRegName(regNumInClass);
   }
 
-  // This method gives the the number of bytes of stack space allocated 
+  // This method gives the the number of bytes of stack space allocated
   // to a register when it is spilled to the stack, according to its
   // register type.
   //
-  // For SparcV9, currently we allocate 8 bytes on stack for all 
+  // For SparcV9, currently we allocate 8 bytes on stack for all
   // register types. We can optimize this later if necessary to save stack
   // space (However, should make sure that stack alignment is correct)
   //
@@ -256,11 +256,11 @@ private:
   // function args and return values etc.) with specific hardware registers
   // as required. See SparcV9RegInfo.cpp for the implementation.
   //
-  void suggestReg4RetAddr(MachineInstr *RetMI, 
+  void suggestReg4RetAddr(MachineInstr *RetMI,
 			  LiveRangeInfo &LRI) const;
 
   void suggestReg4CallAddr(MachineInstr *CallMI, LiveRangeInfo &LRI) const;
-  
+
   // Helper used by the all the getRegType() functions.
   int getRegTypeForClassAndType(unsigned regClassID, const Type* type) const;
 
@@ -280,11 +280,11 @@ public:
 
   // The actual register classes in the SparcV9
   //
-  // **** WARNING: If this enum order is changed, also modify 
-  // getRegisterClassOfValue method below since it assumes this particular 
+  // **** WARNING: If this enum order is changed, also modify
+  // getRegisterClassOfValue method below since it assumes this particular
   // order for efficiency.
-  // 
-  enum RegClassIDs { 
+  //
+  enum RegClassIDs {
     IntRegClassID,                      // Integer
     FloatRegClassID,                    // Float (both single/double)
     IntCCRegClassID,                    // Int Condition Code
@@ -300,7 +300,7 @@ public:
   }
 
   // Returns the register containing the return address.
-  // It should be made sure that this  register contains the return 
+  // It should be made sure that this  register contains the return
   // value when a return instruction is reached.
   //
   unsigned getReturnAddressReg() const;
@@ -310,15 +310,15 @@ public:
   //
   unsigned const getNumOfIntArgRegs() const   { return NumOfIntArgRegs; }
   unsigned const getNumOfFloatArgRegs() const { return NumOfFloatArgRegs; }
-  
+
   // Compute which register can be used for an argument, if any
-  // 
+  //
   int regNumForIntArg(bool inCallee, bool isVarArgsCall,
                       unsigned argNo, unsigned& regClassId) const;
 
   int regNumForFPArg(unsigned RegType, bool inCallee, bool isVarArgsCall,
                      unsigned argNo, unsigned& regClassId) const;
-  
+
 
   // method used for printing a register for debugging purposes
   //
@@ -331,7 +331,7 @@ public:
   const Value * getCallInstIndirectAddrVal(const MachineInstr *CallMI) const;
 
   // The following methods are used to generate "copy" machine instructions
-  // for an architecture. Currently they are used in TargetRegClass 
+  // for an architecture. Currently they are used in TargetRegClass
   // interface. However, they can be moved to TargetInstrInfo interface if
   // necessary.
   //

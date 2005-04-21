@@ -1,10 +1,10 @@
 //===-- SparcV8AsmPrinter.cpp - SparcV8 LLVM assembly writer --------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file contains a printer that converts from our internal representation
@@ -71,7 +71,7 @@ namespace {
     void printOperand(const MachineInstr *MI, int opNum);
     void printBaseOffsetPair (const MachineInstr *MI, int i, bool brackets=true);
     void printMachineInstruction(const MachineInstr *MI);
-    bool runOnMachineFunction(MachineFunction &F);    
+    bool runOnMachineFunction(MachineFunction &F);
     bool doInitialization(Module &M);
     bool doFinalization(Module &M);
   };
@@ -203,7 +203,7 @@ void V8Printer::emitConstantValueOnly(const Constant *CV) {
 
 // Print a constant value or values, with the appropriate storage class as a
 // prefix.
-void V8Printer::emitGlobalConstant(const Constant *CV) {  
+void V8Printer::emitGlobalConstant(const Constant *CV) {
   const TargetData &TD = TM.getTargetData();
 
   if (const ConstantArray *CVA = dyn_cast<ConstantArray>(CV)) {
@@ -235,7 +235,7 @@ void V8Printer::emitGlobalConstant(const Constant *CV) {
 
       // Insert the field padding unless it's zero bytes...
       if (padSize)
-        O << "\t.skip\t " << padSize << "\n";      
+        O << "\t.skip\t " << padSize << "\n";
     }
     assert(sizeSoFar == cvsLayout->StructSize &&
            "Layout of constant struct may be incorrect!");
@@ -268,7 +268,7 @@ void V8Printer::emitGlobalConstant(const Constant *CV) {
     }
   } else if (isa<UndefValue> (CV)) {
     unsigned size = TD.getTypeSize (CV->getType ());
-    O << "\t.skip\t " << size << "\n";      
+    O << "\t.skip\t " << size << "\n";
     return;
   } else if (isa<ConstantAggregateZero> (CV)) {
     unsigned size = TD.getTypeSize (CV->getType ());
@@ -311,7 +311,7 @@ void V8Printer::emitGlobalConstant(const Constant *CV) {
 void V8Printer::printConstantPool(MachineConstantPool *MCP) {
   const std::vector<Constant*> &CP = MCP->getConstants();
   const TargetData &TD = TM.getTargetData();
- 
+
   if (CP.empty()) return;
 
   for (unsigned i = 0, e = CP.size(); i != e; ++i) {
@@ -424,7 +424,7 @@ void V8Printer::printOperand(const MachineInstr *MI, int opNum) {
     O << ".CPI" << CurrentFnName << "_" << MO.getConstantPoolIndex();
     break;
   default:
-    O << "<unknown operand type>"; abort (); break;    
+    O << "<unknown operand type>"; abort (); break;
   }
   if (CloseParen) O << ")";
 }
@@ -511,7 +511,7 @@ void V8Printer::printMachineInstruction(const MachineInstr *MI) {
     O << "! ";
 
   O << Desc.Name << " ";
-  
+
   // Printing memory instructions is a special case.
   // for loads:  %dest = op %base, offset --> op [%base + offset], %dest
   // for stores: op %base, offset, %src   --> op %src, [%base + offset]
@@ -550,7 +550,7 @@ void V8Printer::printMachineInstruction(const MachineInstr *MI) {
   for (unsigned i = 0; i < MI->getNumOperands (); ++i)
     if (MI->getOperand (i).isRegister () && MI->getOperand (i).isDef ())
       print_order.push_back (i);
-  for (unsigned i = 0, e = print_order.size (); i != e; ++i) { 
+  for (unsigned i = 0, e = print_order.size (); i != e; ++i) {
     printOperand (MI, print_order[i]);
     if (i != (print_order.size () - 1))
       O << ", ";
@@ -588,13 +588,13 @@ bool V8Printer::doFinalization(Module &M) {
       unsigned Size = TD.getTypeSize(C->getType());
       unsigned Align = TD.getTypeAlignment(C->getType());
 
-      if (C->isNullValue() && 
+      if (C->isNullValue() &&
           (I->hasLinkOnceLinkage() || I->hasInternalLinkage() ||
            I->hasWeakLinkage() /* FIXME: Verify correct */)) {
         SwitchSection(O, CurSection, ".data");
         if (I->hasInternalLinkage())
           O << "\t.local " << name << "\n";
-        
+
         O << "\t.comm " << name << "," << TD.getTypeSize(C->getType())
           << "," << (unsigned)TD.getTypeAlignment(C->getType());
         O << "\t\t! ";
@@ -609,7 +609,7 @@ bool V8Printer::doFinalization(Module &M) {
           SwitchSection(O, CurSection, "");
           O << "\t.section\t\".llvm.linkonce.d." << name << "\",\"aw\",@progbits\n";
           break;
-        
+
         case GlobalValue::AppendingLinkage:
           // FIXME: appending linkage variables should go into a section of
           // their name or something.  For now, just emit them as external.

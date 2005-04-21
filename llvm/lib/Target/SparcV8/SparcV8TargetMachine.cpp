@@ -1,12 +1,12 @@
 //===-- SparcV8TargetMachine.cpp - Define TargetMachine for SparcV8 -------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
-// 
+//
 //
 //===----------------------------------------------------------------------===//
 
@@ -87,7 +87,7 @@ bool SparcV8TargetMachine::addPassesToEmitAssembly(PassManager &PM,
   // Print LLVM code input to instruction selector:
   if (PrintMachineCode)
     PM.add(new PrintFunctionPass());
-  
+
   PM.add(createSparcV8SimpleInstructionSelector(*this));
 
   // Print machine instructions as they were initially generated.
@@ -126,7 +126,7 @@ void SparcV8JITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
 
   // Replace malloc and free instructions with library calls.
   PM.add(createLowerAllocationsPass());
-  
+
   // FIXME: implement the switch instruction in the instruction selector.
   PM.add(createLowerSwitchPass());
 
@@ -134,17 +134,17 @@ void SparcV8JITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
   PM.add(createLowerInvokePass());
 
   PM.add(createLowerConstantExpressionsPass());
-  
+
   // Make sure that no unreachable blocks are instruction selected.
   PM.add(createUnreachableBlockEliminationPass());
 
   // FIXME: implement the select instruction in the instruction selector.
   PM.add(createLowerSelectPass());
-  
+
   // Print LLVM code input to instruction selector:
   if (PrintMachineCode)
     PM.add(new PrintFunctionPass());
-  
+
   PM.add(createSparcV8SimpleInstructionSelector(TM));
 
   // Print machine instructions as they were initially generated.

@@ -1,10 +1,10 @@
 //===-- PowerPCFrameInfo.h - Define TargetFrameInfo for PowerPC -*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 //
@@ -22,7 +22,7 @@ namespace llvm {
 class PowerPCFrameInfo: public TargetFrameInfo {
   const TargetMachine &TM;
   std::pair<unsigned, int> LR[1];
-  
+
 public:
   PowerPCFrameInfo(const TargetMachine &tm, bool LP64)
     : TargetFrameInfo(TargetFrameInfo::StackGrowsDown, 16, 0), TM(tm) {

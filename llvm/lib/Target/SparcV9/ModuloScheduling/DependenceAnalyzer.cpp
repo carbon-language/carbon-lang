@@ -6,10 +6,10 @@
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-// 
-//  
-//  
-// 
+//
+//
+//
+//
 //===----------------------------------------------------------------------===//
 #define DEBUG_TYPE "ModuloSched"
 
@@ -23,25 +23,25 @@ using namespace llvm;
 ///
 namespace llvm {
 FunctionPass *createDependenceAnalyzer() {
-  return new DependenceAnalyzer(); 
+  return new DependenceAnalyzer();
 }
 }
 
   bool DependenceAnalyzer::runOnFunction(Function &F) {
     AA = &getAnalysis<AliasAnalysis>();
     TD = &getAnalysis<TargetData>();
-  
+
     return  false;
   }
 
   static RegisterAnalysis<DependenceAnalyzer>X("depanalyzer", "Dependence Analyzer");
-  
+
   DependenceResult DependenceAnalyzer::getDependenceInfo(Instruction *inst1, Instruction *inst2) {
     std::vector<Dependence> deps;
 
     DEBUG(std::cerr << "Inst1: " << *inst1 << "\n");
     DEBUG(std::cerr << "Inst2: " << *inst2 << "\n");
-    
+
 
     if(LoadInst *ldInst = dyn_cast<LoadInst>(inst1)) {
 
@@ -55,7 +55,7 @@ FunctionPass *createDependenceAnalyzer() {
 	if(AA->alias(ldOp, (unsigned)TD->getTypeSize(ldOp->getType()),
 		     stOp,(unsigned)TD->getTypeSize(stOp->getType()))
 	   != AliasAnalysis::NoAlias) {
-	  
+	
 	  //Anti Dep
 	  deps.push_back(Dependence(0, Dependence::AntiDep));
 	}
@@ -63,7 +63,7 @@ FunctionPass *createDependenceAnalyzer() {
     }
 
     else if(StoreInst *stInst = dyn_cast<StoreInst>(inst1)) {
-      
+
       if(LoadInst *ldInst = dyn_cast<LoadInst>(inst2)) {
 	//Get load mem ref
 	Value *ldOp = ldInst->getOperand(0);
@@ -75,7 +75,7 @@ FunctionPass *createDependenceAnalyzer() {
 	if(AA->alias(ldOp, (unsigned)TD->getTypeSize(ldOp->getType()),
 		     stOp,(unsigned)TD->getTypeSize(stOp->getType()))
 	   != AliasAnalysis::NoAlias) {
-	  
+	
 	  //Anti Dep
 	  deps.push_back(Dependence(0, Dependence::TrueDep));
 	}
@@ -88,17 +88,17 @@ FunctionPass *createDependenceAnalyzer() {
 	//Get store mem ref
 	Value *stOp2 = stInst2->getOperand(1);
 
-      
+
 	if(AA->alias(stOp1, (unsigned)TD->getTypeSize(stOp1->getType()),
 		     stOp2,(unsigned)TD->getTypeSize(stOp2->getType()))
 	   != AliasAnalysis::NoAlias) {
-	  
+	
 	  //Anti Dep
 	  deps.push_back(Dependence(0, Dependence::OutputDep));
 	}
       }
 
-    
+
     }
     else
       assert("Expected a load or a store\n");

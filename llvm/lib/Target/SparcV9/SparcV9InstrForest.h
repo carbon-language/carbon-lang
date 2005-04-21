@@ -1,10 +1,10 @@
 //===- SparcV9InstrForest.h - SparcV9 BURG Instruction Selector Trees -----===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // A forest of BURG instruction trees (class InstrForest) which represents
@@ -62,7 +62,7 @@ typedef int StateLabel;
 
 /// Declarations of data and functions created by BURG
 ///
-namespace llvm { 
+namespace llvm {
   class InstrTreeNode;
 };
 extern short*		burm_nts[];
@@ -100,7 +100,7 @@ public:
 protected:
   InstrTreeNodeType treeNodeType;
   Value*	   val;
-  
+
 public:
   InstrTreeNode(InstrTreeNodeType nodeType, Value* _val)
     : treeNodeType(nodeType), val(_val) {
@@ -116,10 +116,10 @@ public:
   inline OpLabel	getOpLabel	() const { return opLabel; }
   inline InstrTreeNode *leftChild       () const { return LeftChild; }
   inline InstrTreeNode *parent          () const { return Parent; }
-  
+
   // If right child is a list node, recursively get its *left* child
   inline InstrTreeNode* rightChild() const {
-    return (!RightChild ? 0 : 
+    return (!RightChild ? 0 :
 	    (RightChild->getOpLabel() == VRegListOp
 	     ? RightChild->LeftChild : RightChild));
   }

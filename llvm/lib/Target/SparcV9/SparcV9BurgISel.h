@@ -1,10 +1,10 @@
 //===-- SparcV9BurgISel.h ---------------------------------------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // Global functions exposed by the BURG-based instruction selector
@@ -41,7 +41,7 @@ bool ConstantMayNotFitInImmedField (const Constant *CV, const Instruction *I);
 /// or a GlobalValue, viz., the constant address of a global variable or
 /// function.  The generated instructions are returned in `mvec'.  Any temp.
 /// registers (TmpInstruction) created are recorded in mcfi.
-/// 
+///
 void CreateCodeToLoadConst (const TargetMachine &target, Function *F,
   Value *val, Instruction *dest, std::vector<MachineInstr*> &mvec,
   MachineCodeForInstruction &mcfi);

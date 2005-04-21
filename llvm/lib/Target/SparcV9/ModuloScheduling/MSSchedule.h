@@ -23,7 +23,7 @@ namespace llvm {
   class MSSchedule {
     std::map<int, std::vector<MSchedGraphNode*> > schedule;
     unsigned numIssue;
-    
+
     //Internal map to keep track of explicit resources
     std::map<int, std::map<int, int> > resourceNumPerCycle;
 
@@ -49,7 +49,7 @@ namespace llvm {
     bool constructKernel(int II, std::vector<MSchedGraphNode*> &branches, std::map<const MachineInstr*, unsigned> &indVar);
     int getMaxStage() { return maxStage; }
 
-   
+
     //iterators
     typedef std::map<int, std::vector<MSchedGraphNode*> >::iterator schedule_iterator;
     typedef std::map<int, std::vector<MSchedGraphNode*> >::const_iterator schedule_const_iterator;
@@ -61,7 +61,7 @@ namespace llvm {
     typedef std::vector<std::pair<MachineInstr*, int> >::const_iterator kernel_const_iterator;
     kernel_iterator kernel_begin() { return kernel.begin(); }
     kernel_iterator kernel_end() { return kernel.end(); }
-    
+
   };
 
 }

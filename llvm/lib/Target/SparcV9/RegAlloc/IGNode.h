@@ -1,16 +1,16 @@
 //===-- IGNode.h - Represent a node in an interference graph ----*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
-// This file represents a node in an interference graph. 
+// This file represents a node in an interference graph.
 //
 // For efficiency, the AdjList is updated only once - ie. we can add but not
-// remove nodes from AdjList. 
+// remove nodes from AdjList.
 //
 // The removal of nodes from IG is simulated by decrementing the CurDegree.
 // If this node is put on stack (that is removed from IG), the CurDegree of all
@@ -44,15 +44,15 @@ class RegClass;
 //----------------------------------------------------------------------------
 
 class IGNode {
-  const unsigned Index;         // index within IGNodeList 
+  const unsigned Index;         // index within IGNodeList
   bool OnStack;                 // this has been pushed on to stack for coloring
   std::vector<IGNode *> AdjList;// adjacency list for this live range
 
-  int CurDegree;     
+  int CurDegree;
   //
   // set by InterferenceGraph::setCurDegreeOfIGNodes() after calculating
   // all adjacency lists.
-  // Decremented when a neighbor is pushed on to the stack. 
+  // Decremented when a neighbor is pushed on to the stack.
   // After that, never incremented/set again nor used.
 
   LiveRange *const ParentLR;
@@ -68,15 +68,15 @@ public:
 
   // adjLists must be updated only once.  However, the CurDegree can be changed
   //
-  inline void addAdjIGNode(IGNode *AdjNode) { AdjList.push_back(AdjNode);  } 
+  inline void addAdjIGNode(IGNode *AdjNode) { AdjList.push_back(AdjNode);  }
 
-  inline IGNode *getAdjIGNode(unsigned ind) const 
+  inline IGNode *getAdjIGNode(unsigned ind) const
     { assert ( ind < AdjList.size()); return AdjList[ind]; }
 
   // delete a node in AdjList - node must be in the list
   // should not be called often
   //
-  void delAdjIGNode(const IGNode *Node); 
+  void delAdjIGNode(const IGNode *Node);
 
   inline unsigned getNumOfNeighbors() const { return AdjList.size(); }
 
@@ -87,7 +87,7 @@ public:
 
   // remove form IG and pushes on to stack (reduce the degree of neighbors)
   //
-  void pushOnStack(); 
+  void pushOnStack();
 
   // CurDegree is the effective number of neighbors when neighbors are
   // pushed on to the stack during the coloring phase. Must be called

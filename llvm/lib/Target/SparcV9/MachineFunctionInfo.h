@@ -1,18 +1,18 @@
 //===-- SparcV9FunctionInfo.h -----------------------------------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
-// 
+//
 // This class keeps track of information about the stack frame and about the
 // per-function constant pool.
 //
 // FIXME: This class is completely SparcV9 specific.  Do not use it for future
 // targets.  This file will be eliminated in future versions of LLVM.
-//   
+//
 //===----------------------------------------------------------------------===//
 
 #ifndef MACHINEFUNCTIONINFO_H
@@ -62,7 +62,7 @@ public:
 
   //
   // Accessors for global information about generated code for a method.
-  // 
+  //
   bool     isCompiledAsLeafMethod() const { return compiledAsLeaf; }
   unsigned getStaticStackSize()     const { return staticStackSize; }
   unsigned getAutomaticVarsSize()   const { return automaticVarsSize; }
@@ -72,31 +72,31 @@ public:
   const hash_set<const Constant*> &getConstantPoolValues() const {
     return constantsForConstPool;
   }
-  
+
   //
   // Modifiers used during code generation
-  // 
+  //
   void            initializeFrameLayout    ();
-  
+
   void            addToConstantPool        (const Constant* constVal) {
     constantsForConstPool.insert(constVal);
   }
-  
+
   void markAsLeafMethod() { compiledAsLeaf = true; }
-  
+
   int             computeOffsetforLocalVar (const Value*  local,
                                             unsigned& getPaddedSize,
                                             unsigned  sizeToUse = 0);
   int             allocateLocalVar         (const Value* local,
                                             unsigned sizeToUse = 0);
-  
+
   int             allocateSpilledValue     (const Type* type);
   int             pushTempValue            (unsigned size);
   void            popAllTempValues         ();
-  
-  void            freezeSpillsArea         () { spillsAreaFrozen = true; } 
+
+  void            freezeSpillsArea         () { spillsAreaFrozen = true; }
   void            freezeAutomaticVarsArea  () { automaticVarsAreaFrozen=true; }
-  
+
 private:
   void incrementAutomaticVarsSize(int incr) {
     automaticVarsSize+= incr;

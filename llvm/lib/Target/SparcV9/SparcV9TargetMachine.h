@@ -1,12 +1,12 @@
 //===-- SparcV9TargetMachine.h - Define TargetMachine for SparcV9 -*- C++ -*-=//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
-// 
+//
 // This file declares the top-level SparcV9 target machine.
 //
 //===----------------------------------------------------------------------===//
@@ -33,7 +33,7 @@ class SparcV9TargetMachine : public TargetMachine {
   SparcV9JITInfo   jitInfo;
 public:
   SparcV9TargetMachine(const Module &M, IntrinsicLowering *IL);
-  
+
   virtual const TargetInstrInfo  *getInstrInfo() const { return &instrInfo; }
   virtual const TargetSchedInfo  *getSchedInfo() const { return &schedInfo; }
   virtual const SparcV9RegInfo   *getRegInfo()   const { return &regInfo; }

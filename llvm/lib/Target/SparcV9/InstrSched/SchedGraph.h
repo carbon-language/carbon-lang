@@ -1,19 +1,19 @@
 //===-- SchedGraph.h - Scheduling Graph -------------------------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This is a scheduling graph based on SSA graph plus extra dependence edges
 // capturing dependences due to machine resources (machine registers, CC
 // registers, and any others).
-// 
+//
 // This graph tries to leverage the SSA graph as much as possible, but captures
 // the extra dependences through a common interface.
-// 
+//
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_CODEGEN_SCHEDGRAPH_H
@@ -37,7 +37,7 @@ class SchedGraphNode : public SchedGraphNodeCommon {
   const MachineInstr *MI;
 
 
-  SchedGraphNode(unsigned nodeId, MachineBasicBlock *mbb, int indexInBB, 
+  SchedGraphNode(unsigned nodeId, MachineBasicBlock *mbb, int indexInBB,
 		 const TargetMachine& Target);
   ~SchedGraphNode();
 
@@ -58,21 +58,21 @@ public:
 class SchedGraph : public SchedGraphCommon {
   MachineBasicBlock &MBB;
   hash_map<const MachineInstr*, SchedGraphNode*> GraphMap;
-  
+
 public:
   typedef hash_map<const MachineInstr*, SchedGraphNode*>::const_iterator iterator;
   typedef hash_map<const MachineInstr*, SchedGraphNode*>::const_iterator const_iterator;
-    
+
   MachineBasicBlock& getBasicBlock() const{return MBB;}
   const unsigned int getNumNodes() const { return GraphMap.size()+2; }
   SchedGraphNode* getGraphNodeForInstr(const MachineInstr* MI) const {
     const_iterator onePair = find(MI);
     return (onePair != end())? onePair->second : NULL;
   }
-  
+
   // Debugging support
   void dump() const;
-  
+
 protected:
   SchedGraph(MachineBasicBlock& mbb, const TargetMachine& TM);
   ~SchedGraph();
@@ -86,17 +86,17 @@ protected:
   hash_map<const MachineInstr*, SchedGraphNode*>::const_iterator end() const {
     return GraphMap.end();
   }
- 
+
   unsigned size() { return GraphMap.size(); }
   iterator find(const MachineInstr *MI) const { return GraphMap.find(MI); }
-  
+
   SchedGraphNode *&operator[](const MachineInstr *MI) {
     return GraphMap[MI];
   }
-  
+
 private:
   friend class SchedGraphSet;		// give access to ctor
-    
+
   inline void	noteGraphNodeForInstr	(const MachineInstr* minstr,
 					 SchedGraphNode* node) {
     assert((*this)[minstr] == NULL);
@@ -107,39 +107,39 @@ private:
   // Graph builder
   //
   void buildGraph(const TargetMachine& target);
-  
+
   void  buildNodesForBB(const TargetMachine& target,MachineBasicBlock &MBB,
 			std::vector<SchedGraphNode*>& memNV,
 			std::vector<SchedGraphNode*>& callNV,
 			RegToRefVecMap& regToRefVecMap,
 			ValueToDefVecMap& valueToDefVecMap);
 
-  
+
   void findDefUseInfoAtInstr(const TargetMachine& target, SchedGraphNode* node,
 			     std::vector<SchedGraphNode*>& memNV,
 			     std::vector<SchedGraphNode*>& callNV,
 			     RegToRefVecMap& regToRefVecMap,
 			     ValueToDefVecMap& valueToDefVecMap);
-                                         
+
   void addEdgesForInstruction(const MachineInstr& minstr,
 			      const ValueToDefVecMap& valueToDefVecMap,
 			      const TargetMachine& target);
-  
+
   void addCDEdges(const TerminatorInst* term, const TargetMachine& target);
-  
+
   void addMemEdges(const std::vector<SchedGraphNode*>& memNod,
 		   const TargetMachine& target);
-  
+
   void addCallCCEdges(const std::vector<SchedGraphNode*>& memNod,
 		      MachineBasicBlock& bbMvec,
 		      const TargetMachine& target);
 
   void addCallDepEdges(const std::vector<SchedGraphNode*>& callNV,
 		       const TargetMachine& target);
-  
+
   void addMachineRegEdges(RegToRefVecMap& regToRefVecMap,
 			  const TargetMachine& target);
-  
+
   void addEdgesForValue(SchedGraphNode* refNode, const RefVec& defVec,
 			const Value* defValue, bool  refNodeIsDef,
 			bool  refNodeIsDefAndUse,
@@ -161,12 +161,12 @@ class SchedGraphSet {
   inline void addGraph(SchedGraph* graph) {
     assert(graph != NULL);
     Graphs.push_back(graph);
-  }  
+  }
 
 public:
   SchedGraphSet(const Function *function, const TargetMachine& target);
   ~SchedGraphSet();
-  
+
   //iterators
   typedef std::vector<SchedGraph*>::const_iterator iterator;
   typedef std::vector<SchedGraph*>::const_iterator const_iterator;
@@ -181,7 +181,7 @@ public:
 
 
 
-// 
+//
 // sg_pred_iterator
 // sg_pred_const_iterator
 //
@@ -204,7 +204,7 @@ inline sg_pred_const_iterator pred_end(const SchedGraphNode *N) {
 }
 
 
-// 
+//
 // sg_succ_iterator
 // sg_succ_const_iterator
 //
@@ -234,10 +234,10 @@ template <> struct GraphTraits<SchedGraph*> {
   typedef sg_succ_iterator ChildIteratorType;
 
   static inline NodeType *getEntryNode(SchedGraph *SG) { return (NodeType*)SG->getRoot(); }
-  static inline ChildIteratorType child_begin(NodeType *N) { 
-    return succ_begin(N); 
+  static inline ChildIteratorType child_begin(NodeType *N) {
+    return succ_begin(N);
   }
-  static inline ChildIteratorType child_end(NodeType *N) { 
+  static inline ChildIteratorType child_end(NodeType *N) {
     return succ_end(N);
   }
 };
@@ -249,10 +249,10 @@ template <> struct GraphTraits<const SchedGraph*> {
   static inline NodeType *getEntryNode(const SchedGraph *SG) {
     return (NodeType*)SG->getRoot();
   }
-  static inline ChildIteratorType child_begin(NodeType *N) { 
-    return succ_begin(N); 
+  static inline ChildIteratorType child_begin(NodeType *N) {
+    return succ_begin(N);
   }
-  static inline ChildIteratorType child_end(NodeType *N) { 
+  static inline ChildIteratorType child_end(NodeType *N) {
     return succ_end(N);
   }
 };

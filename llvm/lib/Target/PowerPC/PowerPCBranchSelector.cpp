@@ -1,13 +1,13 @@
 //===-- PowerPCBranchSelector.cpp - Emit long conditional branches-*- C++ -*-=//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by Nate Baegeman and is distributed under the
 // University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
-// This file contains a pass that scans a machine function to determine which 
+// This file contains a pass that scans a machine function to determine which
 // conditional branches need more than 16 bits of displacement to reach their
 // target basic block.  It does this in two passes; a calculation of basic block
 // positions pass, and a branch psuedo op to machine branch opcode pass.  This
@@ -30,32 +30,32 @@ namespace {
     // OffsetMap - Mapping between BB and byte offset from start of function
     std::map<MachineBasicBlock*, unsigned> OffsetMap;
 
-    /// bytesForOpcode - A convenience function for totalling up the number of 
+    /// bytesForOpcode - A convenience function for totalling up the number of
     /// bytes in a basic block.
     ///
     static unsigned bytesForOpcode(unsigned opcode) {
       switch (opcode) {
       case PPC::COND_BRANCH:
         // while this will be 4 most of the time, if we emit 12 it is just a
-        // minor pessimization that saves us from having to worry about 
+        // minor pessimization that saves us from having to worry about
         // keeping the offsets up to date later when we emit long branch glue.
         return 12;
       case PPC::IMPLICIT_DEF: // no asm emitted
         return 0;
         break;
-      default: 
+      default:
         return 4; // PowerPC instructions are all 4 bytes
         break;
       }
     }
-    
+
     virtual bool runOnMachineFunction(MachineFunction &Fn) {
       // Running total of instructions encountered since beginning of function
       unsigned ByteCount = 0;
 
       // For each MBB, add its offset to the offset map, and count up its
       // instructions
-      for (MachineFunction::iterator MFI = Fn.begin(), E = Fn.end(); MFI != E; 
+      for (MachineFunction::iterator MFI = Fn.begin(), E = Fn.end(); MFI != E;
            ++MFI) {
         MachineBasicBlock *MBB = MFI;
         OffsetMap[MBB] = ByteCount;
@@ -80,10 +80,10 @@ namespace {
       // b .L_TARGET_MBB
       // b .L_FALLTHROUGH_MBB
 
-      for (MachineFunction::iterator MFI = Fn.begin(), E = Fn.end(); MFI != E; 
+      for (MachineFunction::iterator MFI = Fn.begin(), E = Fn.end(); MFI != E;
            ++MFI) {
         MachineBasicBlock *MBB = MFI;
-        
+
         for (MachineBasicBlock::iterator MBBI = MBB->begin(), EE = MBB->end();
              MBBI != EE; ++MBBI) {
           if (MBBI->getOpcode() == PPC::COND_BRANCH) {
@@ -92,11 +92,11 @@ namespace {
             // 1. bc opcode
             // 2. target MBB
             // 3. fallthrough MBB
-            MachineBasicBlock *trueMBB = 
+            MachineBasicBlock *trueMBB =
               MBBI->getOperand(2).getMachineBasicBlock();
-            MachineBasicBlock *falseMBB = 
+            MachineBasicBlock *falseMBB =
               MBBI->getOperand(3).getMachineBasicBlock();
-            
+
             int Displacement = OffsetMap[trueMBB] - ByteCount;
             unsigned Opcode = MBBI->getOperand(1).getImmedValue();
             unsigned Inverted = PPC32InstrInfo::invertPPCBranchOpcode(Opcode);

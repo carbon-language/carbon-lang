@@ -1,12 +1,12 @@
 //===-- PowerPCTargetMachine.cpp - Define TargetMachine for PowerPC -------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
-// 
+//
 //
 //===----------------------------------------------------------------------===//
 
@@ -31,13 +31,13 @@ using namespace llvm;
 
 namespace llvm {
   bool PPCCRopts;
-  cl::opt<bool> AIX("aix", 
-                    cl::desc("Generate AIX/xcoff instead of Darwin/MachO"), 
+  cl::opt<bool> AIX("aix",
+                    cl::desc("Generate AIX/xcoff instead of Darwin/MachO"),
                     cl::Hidden);
-  cl::opt<bool> EnablePPCLSR("enable-lsr-for-ppc", 
-                             cl::desc("Enable LSR for PPC (beta)"), 
+  cl::opt<bool> EnablePPCLSR("enable-lsr-for-ppc",
+                             cl::desc("Enable LSR for PPC (beta)"),
                              cl::Hidden);
-  cl::opt<bool, true> EnablePPCCRopts("enable-cc-opts", 
+  cl::opt<bool, true> EnablePPCCRopts("enable-cc-opts",
                             cl::desc("Enable opts using condition regs (beta)"),
                             cl::location(PPCCRopts),
                             cl::init(false),
@@ -47,13 +47,13 @@ namespace llvm {
 namespace {
   const std::string PPC32ID = "PowerPC/32bit";
   const std::string PPC64ID = "PowerPC/64bit";
-  
+
   // Register the targets
-  RegisterTarget<PPC32TargetMachine> 
+  RegisterTarget<PPC32TargetMachine>
   X("ppc32", "  PowerPC 32-bit");
 
 #if 0
-  RegisterTarget<PPC64TargetMachine> 
+  RegisterTarget<PPC64TargetMachine>
   Y("ppc64", "  PowerPC 64-bit (unimplemented)");
 #endif
 }
@@ -84,7 +84,7 @@ bool PowerPCTargetMachine::addPassesToEmitAssembly(PassManager &PM,
     PM.add(createLoopStrengthReducePass());
     PM.add(createCFGSimplificationPass());
   }
-  
+
   // FIXME: Implement efficient support for garbage collection intrinsics.
   PM.add(createLowerGCPass());
 
@@ -116,15 +116,15 @@ bool PowerPCTargetMachine::addPassesToEmitAssembly(PassManager &PM,
     PM.add(createMachineFunctionPrinterPass(&std::cerr));
 
   PM.add(createPrologEpilogCodeInserter());
-  
+
   // Must run branch selection immediately preceding the asm printer
   PM.add(createPPCBranchSelectionPass());
-  
+
   if (AIX)
     PM.add(createAIXAsmPrinter(Out, *this));
   else
     PM.add(createDarwinAsmPrinter(Out, *this));
-    
+
   PM.add(createMachineCodeDeleter());
   return false;
 }
@@ -172,7 +172,7 @@ void PowerPCJITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
 /// PowerPCTargetMachine ctor - Create an ILP32 architecture model
 ///
 PPC32TargetMachine::PPC32TargetMachine(const Module &M, IntrinsicLowering *IL)
-  : PowerPCTargetMachine(PPC32ID, IL, 
+  : PowerPCTargetMachine(PPC32ID, IL,
                          TargetData(PPC32ID,false,4,4,4,4,4,4,2,1,1),
                          PowerPCFrameInfo(*this, false)), JITInfo(*this) {}
 

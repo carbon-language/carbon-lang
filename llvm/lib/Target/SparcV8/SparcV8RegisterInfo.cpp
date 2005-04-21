@@ -1,10 +1,10 @@
 //===- SparcV8RegisterInfo.cpp - SparcV8 Register Information ---*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file contains the SparcV8 implementation of the MRegisterInfo class.
@@ -44,7 +44,7 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
   const TargetRegisterClass *RC = getClass(SrcReg);
 
   // On the order of operands here: think "[FrameIdx + 0] = SrcReg".
-  if (RC == SparcV8::IntRegsRegisterClass) 
+  if (RC == SparcV8::IntRegsRegisterClass)
     BuildMI (MBB, I, V8::ST, 3).addFrameIndex (FrameIdx).addSImm (0)
       .addReg (SrcReg);
   else if (RC == SparcV8::FPRegsRegisterClass)
@@ -61,7 +61,7 @@ void SparcV8RegisterInfo::
 loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                      unsigned DestReg, int FrameIdx) const {
   const TargetRegisterClass *RC = getClass(DestReg);
-  if (RC == SparcV8::IntRegsRegisterClass) 
+  if (RC == SparcV8::IntRegsRegisterClass)
     BuildMI (MBB, I, V8::LD, 2, DestReg).addFrameIndex (FrameIdx).addSImm (0);
   else if (RC == SparcV8::FPRegsRegisterClass)
     BuildMI (MBB, I, V8::LDFri, 2, DestReg).addFrameIndex (FrameIdx)
@@ -77,7 +77,7 @@ void SparcV8RegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
                                        MachineBasicBlock::iterator I,
                                        unsigned DestReg, unsigned SrcReg,
                                        const TargetRegisterClass *RC) const {
-  if (RC == SparcV8::IntRegsRegisterClass) 
+  if (RC == SparcV8::IntRegsRegisterClass)
     BuildMI (MBB, I, V8::ORrr, 2, DestReg).addReg (V8::G0).addReg (SrcReg);
   else if (RC == SparcV8::FPRegsRegisterClass)
     BuildMI (MBB, I, V8::FMOVS, 1, DestReg).addReg (SrcReg);

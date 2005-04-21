@@ -1,14 +1,14 @@
 //===-- LiveRangeInfo.cpp -------------------------------------------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
-// 
+//
 //  Live range construction for coloring-based register allocation for LLVM.
-// 
+//
 //===----------------------------------------------------------------------===//
 
 #include "IGNode.h"
@@ -35,8 +35,8 @@ LiveRangeInfo::LiveRangeInfo(const Function *F, const TargetMachine &tm,
 
 
 LiveRangeInfo::~LiveRangeInfo() {
-  for (LiveRangeMapType::iterator MI = LiveRangeMap.begin(); 
-       MI != LiveRangeMap.end(); ++MI) {  
+  for (LiveRangeMapType::iterator MI = LiveRangeMap.begin();
+       MI != LiveRangeMap.end(); ++MI) {
 
     if (MI->first && MI->second) {
       LiveRange *LR = MI->second;
@@ -48,7 +48,7 @@ LiveRangeInfo::~LiveRangeInfo() {
 
       for (LiveRange::iterator LI = LR->begin(); LI != LR->end(); ++LI)
         LiveRangeMap[*LI] = 0;
-      
+
       delete LR;
     }
   }
@@ -70,14 +70,14 @@ void LiveRangeInfo::unionAndUpdateLRs(LiveRange *L1, LiveRange *L2) {
 
   for(LiveRange::iterator L2It = L2->begin(); L2It != L2->end(); ++L2It) {
     L1->insert(*L2It);                  // add the var in L2 to L1
-    LiveRangeMap[*L2It] = L1;           // now the elements in L2 should map 
-                                        //to L1    
+    LiveRangeMap[*L2It] = L1;           // now the elements in L2 should map
+                                        //to L1
   }
-  
+
   // set call interference for L1 from L2
   if (L2->isCallInterference())
     L1->setCallInterference();
-  
+
   // add the spill costs
   L1->addSpillCost(L2->getSpillCost());
 
@@ -90,7 +90,7 @@ void LiveRangeInfo::unionAndUpdateLRs(LiveRange *L1, LiveRange *L2) {
   // must have the same color.
   if (L2->hasSuggestedColor())
     L1->setSuggestedColor(L2->getSuggestedColor());
-  
+
   delete L2;                        // delete L2 as it is no longer needed
 }
 
@@ -103,7 +103,7 @@ void LiveRangeInfo::unionAndUpdateLRs(LiveRange *L1, LiveRange *L2) {
 
 LiveRange*
 LiveRangeInfo::createNewLiveRange(const Value* Def, bool isCC /* = false*/)
-{  
+{
   LiveRange* DefRange = new LiveRange();  // Create a new live range,
   DefRange->insert(Def);                  // add Def to it,
   LiveRangeMap[Def] = DefRange;           // and update the map.
@@ -123,11 +123,11 @@ LiveRangeInfo::createNewLiveRange(const Value* Def, bool isCC /* = false*/)
 
 LiveRange*
 LiveRangeInfo::createOrAddToLiveRange(const Value* Def, bool isCC /* = false*/)
-{  
+{
   LiveRange *DefRange = LiveRangeMap[Def];
 
   // check if the LR is already there (because of multiple defs)
-  if (!DefRange) { 
+  if (!DefRange) {
     DefRange = createNewLiveRange(Def, isCC);
   } else {                          // live range already exists
     DefRange->insert(Def);          // add the operand to the range
@@ -140,13 +140,13 @@ LiveRangeInfo::createOrAddToLiveRange(const Value* Def, bool isCC /* = false*/)
 
 
 //---------------------------------------------------------------------------
-// Method for constructing all live ranges in a function. It creates live 
+// Method for constructing all live ranges in a function. It creates live
 // ranges for all values defined in the instruction stream. Also, it
 // creates live ranges for all incoming arguments of the function.
 //---------------------------------------------------------------------------
-void LiveRangeInfo::constructLiveRanges() {  
+void LiveRangeInfo::constructLiveRanges() {
 
-  if (DEBUG_RA >= RA_DEBUG_LiveRanges) 
+  if (DEBUG_RA >= RA_DEBUG_LiveRanges)
     std::cerr << "Constructing Live Ranges ...\n";
 
   // first find the live ranges for all incoming args of the function since
@@ -154,14 +154,14 @@ void LiveRangeInfo::constructLiveRanges() {
   for (Function::const_arg_iterator AI = Meth->arg_begin(); AI != Meth->arg_end(); ++AI)
     createNewLiveRange(AI, /*isCC*/ false);
 
-  // Now suggest hardware registers for these function args 
+  // Now suggest hardware registers for these function args
   MRI.suggestRegs4MethodArgs(Meth, *this);
 
-  // Now create LRs for machine instructions.  A new LR will be created 
+  // Now create LRs for machine instructions.  A new LR will be created
   // only for defs in the machine instr since, we assume that all Values are
   // defined before they are used. However, there can be multiple defs for
   // the same Value in machine instructions.
-  // 
+  //
   // Also, find CALL and RETURN instructions, which need extra work.
   //
   MachineFunction &MF = MachineFunction::get(Meth);
@@ -170,21 +170,21 @@ void LiveRangeInfo::constructLiveRanges() {
 
     // iterate over all the machine instructions in BB
     for(MachineBasicBlock::iterator MInstIterator = MBB.begin();
-        MInstIterator != MBB.end(); ++MInstIterator) {  
-      MachineInstr *MInst = MInstIterator; 
+        MInstIterator != MBB.end(); ++MInstIterator) {
+      MachineInstr *MInst = MInstIterator;
 
       // If the machine instruction is a  call/return instruction, add it to
       // CallRetInstrList for processing its args, ret value, and ret addr.
-      // 
+      //
       if(TM.getInstrInfo()->isReturn(MInst->getOpcode()) ||
 	 TM.getInstrInfo()->isCall(MInst->getOpcode()))
-	CallRetInstrList.push_back(MInst); 
- 
+	CallRetInstrList.push_back(MInst);
+
       // iterate over explicit MI operands and create a new LR
       // for each operand that is defined by the instruction
       for (MachineInstr::val_op_iterator OpI = MInst->begin(),
              OpE = MInst->end(); OpI != OpE; ++OpI)
-	if (OpI.isDef()) {     
+	if (OpI.isDef()) {
 	  const Value *Def = *OpI;
           bool isCC = (OpI.getMachineOperand().getType()
                        == MachineOperand::MO_CCRegister);
@@ -201,7 +201,7 @@ void LiveRangeInfo::constructLiveRanges() {
 
       // iterate over implicit MI operands and create a new LR
       // for each operand that is defined by the instruction
-      for (unsigned i = 0; i < MInst->getNumImplicitRefs(); ++i) 
+      for (unsigned i = 0; i < MInst->getNumImplicitRefs(); ++i)
 	if (MInst->getImplicitOp(i).isDef()) {
 	  const Value *Def = MInst->getImplicitRef(i);
           LiveRange* LR = createOrAddToLiveRange(Def, /*isCC*/ false);
@@ -222,10 +222,10 @@ void LiveRangeInfo::constructLiveRanges() {
   // Now we have to suggest clors for call and return arg live ranges.
   // Also, if there are implicit defs (e.g., retun value of a call inst)
   // they must be added to the live range list
-  // 
+  //
   suggestRegs4CallRets();
 
-  if( DEBUG_RA >= RA_DEBUG_LiveRanges) 
+  if( DEBUG_RA >= RA_DEBUG_LiveRanges)
     std::cerr << "Initial Live Ranges constructed!\n";
 }
 
@@ -235,7 +235,7 @@ void LiveRangeInfo::constructLiveRanges() {
 // (e.g., for outgoing call args), suggesting of colors for such live
 // ranges is done using target specific function. Those functions are called
 // from this function. The target specific methods must:
-//    1) suggest colors for call and return args. 
+//    1) suggest colors for call and return args.
 //    2) create new LRs for implicit defs in machine instructions
 //---------------------------------------------------------------------------
 void LiveRangeInfo::suggestRegs4CallRets() {
@@ -248,7 +248,7 @@ void LiveRangeInfo::suggestRegs4CallRets() {
       MRI.suggestReg4RetValue(MInst, *this);
     else if (TM.getInstrInfo()->isCall(OpCode))
       MRI.suggestRegs4CallArgs(MInst, *this);
-    else 
+    else
       assert( 0 && "Non call/ret instr in CallRetInstrList" );
   }
 }
@@ -268,7 +268,7 @@ void LiveRangeInfo::suggestRegs4CallRets() {
 	     if the def and op do not interfere //i.e., not simultaneously live
 	       if (degree(LR of def) + degree(LR of op)) <= # avail regs
 	         if both LRs do not have suggested colors
-		    merge2IGNodes(def, op) // i.e., merge 2 LRs 
+		    merge2IGNodes(def, op) // i.e., merge 2 LRs
 
 */
 //---------------------------------------------------------------------------
@@ -276,7 +276,7 @@ void LiveRangeInfo::suggestRegs4CallRets() {
 
 // Checks if live range LR interferes with any node assigned or suggested to
 // be assigned the specified color
-// 
+//
 inline bool InterferesWithColor(const LiveRange& LR, unsigned color) {
   IGNode* lrNode = LR.getUserIGNode();
   for (unsigned n=0, NN = lrNode->getNumOfNeighbors(); n < NN; n++) {
@@ -295,7 +295,7 @@ inline bool InterferesWithColor(const LiveRange& LR, unsigned color) {
 //    (but if the colors are the same, it is definitely safe to coalesce)
 // (3) LR1 has color and LR2 interferes with any LR that has the same color
 // (4) LR2 has color and LR1 interferes with any LR that has the same color
-// 
+//
 inline bool InterfsPreventCoalescing(const LiveRange& LROfDef,
                                      const LiveRange& LROfUse) {
   // (4) if they have different suggested colors, cannot coalesce
@@ -318,9 +318,9 @@ inline bool InterfsPreventCoalescing(const LiveRange& LROfDef,
 }
 
 
-void LiveRangeInfo::coalesceLRs()  
+void LiveRangeInfo::coalesceLRs()
 {
-  if(DEBUG_RA >= RA_DEBUG_LiveRanges) 
+  if(DEBUG_RA >= RA_DEBUG_LiveRanges)
     std::cerr << "\nCoalescing LRs ...\n";
 
   MachineFunction &MF = MachineFunction::get(Meth);
@@ -364,7 +364,7 @@ void LiveRangeInfo::coalesceLRs()
 	      if (!RCOfDef->getInterference(LROfDef, LROfUse) ) {
 
 		unsigned CombinedDegree =
-		  LROfDef->getUserIGNode()->getNumOfNeighbors() + 
+		  LROfDef->getUserIGNode()->getNumOfNeighbors() +
 		  LROfUse->getUserIGNode()->getNumOfNeighbors();
 
                 if (CombinedDegree > RCOfDef->getNumOfAvailRegs()) {
@@ -390,7 +390,7 @@ void LiveRangeInfo::coalesceLRs()
     } // for all machine instructions
   } // for all BBs
 
-  if (DEBUG_RA >= RA_DEBUG_LiveRanges) 
+  if (DEBUG_RA >= RA_DEBUG_LiveRanges)
     std::cerr << "\nCoalescing Done!\n";
 }
 
@@ -402,7 +402,7 @@ void LiveRangeInfo::printLiveRanges() {
   std::cerr << "\nPrinting Live Ranges from Hash Map:\n";
   for( ; HMI != LiveRangeMap.end(); ++HMI) {
     if (HMI->first && HMI->second) {
-      std::cerr << " Value* " << RAV(HMI->first) << "\t: "; 
+      std::cerr << " Value* " << RAV(HMI->first) << "\t: ";
       if (IGNode* igNode = HMI->second->getUserIGNode())
         std::cerr << "LR# " << igNode->getIndex();
       else

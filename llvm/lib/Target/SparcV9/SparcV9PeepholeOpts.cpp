@@ -1,12 +1,12 @@
 //===-- SparcV9PeepholeOpts.cpp -------------------------------------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
-// 
+//
 // Support for performing several peephole opts in one or a few passes over the
 // machine code of a method.
 //
@@ -37,13 +37,13 @@ DeleteInstruction(MachineBasicBlock& mvec,
         // This instruction is in a delay slot of its predecessor, so
         // replace it with a nop. By replacing in place, we save having
         // to update the I-I maps.
-        // 
+        //
         assert(ndelay == 1 && "Not yet handling multiple-delay-slot targets");
         BBI->replace(V9::NOP, 0);
         return;
       }
   }
-  
+
   // The instruction is not in a delay slot, so we can simply erase it.
   mvec.erase(BBI);
   BBI = mvec.end();
@@ -68,13 +68,13 @@ static bool IsUselessCopy(const TargetMachine &target, const MachineInstr* MI) {
   } else if (MI->getOpcode() == V9::ADDr || MI->getOpcode() == V9::ORr ||
              MI->getOpcode() == V9::ADDi || MI->getOpcode() == V9::ORi) {
     unsigned srcWithDestReg;
-    
+
     for (srcWithDestReg = 0; srcWithDestReg < 2; ++srcWithDestReg)
       if (MI->getOperand(srcWithDestReg).hasAllocatedReg() &&
           MI->getOperand(srcWithDestReg).getReg()
           == MI->getOperand(2).getReg())
         break;
-    
+
     if (srcWithDestReg == 2)
       return false;
     else {
@@ -84,7 +84,7 @@ static bool IsUselessCopy(const TargetMachine &target, const MachineInstr* MI) {
               (MI->getOperand(otherOp).hasAllocatedReg() &&
                MI->getOperand(otherOp).getReg() ==
                target.getRegInfo()->getZeroRegNum()) ||
-              
+
               // or operand otherOp == 0
               (MI->getOperand(otherOp).getType()
                == MachineOperand::MO_SignExtendedImmed &&
@@ -126,7 +126,7 @@ public:
 
 // Apply a list of peephole optimizations to this machine instruction
 // within its local context.  They are allowed to delete MI or any
-// instruction before MI, but not 
+// instruction before MI, but not
 //
 bool PeepholeOpts::visit(MachineBasicBlock& mvec,
                          MachineBasicBlock::iterator BBI) const {

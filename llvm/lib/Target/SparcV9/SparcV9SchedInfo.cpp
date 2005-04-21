@@ -1,10 +1,10 @@
 //===-- SparcV9SchedInfo.cpp ----------------------------------------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // Describe the scheduling characteristics of the UltraSparc IIi.
@@ -28,7 +28,7 @@ I-Cache alignment rules (pg 326)
    (see pg. 327).
 ** Don't put a branch in a group that crosses a 32-byte boundary!
    An artificial branch is inserted after every 32 bytes, and having
-   another branch will force the group to be broken into 2 groups. 
+   another branch will force the group to be broken into 2 groups.
 
 iTLB rules:
 -- Don't let a loop span two memory pages, if possible
@@ -73,8 +73,8 @@ Issue and grouping constraints:
 -- Several instructions must be issued in a single-instruction group:
 	MOVcc or MOVr, MULs/x and DIVs/x, SAVE/RESTORE, many others
 -- A CALL or JMPL breaks a group, ie, is not combined with subsequent instrs.
--- 
--- 
+--
+--
 
 Branch delay slot scheduling rules:
 -- A CTI couple (two back-to-back CTI instructions in the dynamic stream)
@@ -100,8 +100,8 @@ static const CPUResource  FPAIssueSlots(   "FP Instr Slot 1", 1);
 static const CPUResource  FPMIssueSlots(   "FP Instr Slot 2", 1);
 
 // IEUN instructions can use either Alu and should use IAluN.
-// IEU0 instructions must use Alu 1 and should use both IAluN and IAlu0. 
-// IEU1 instructions must use Alu 2 and should use both IAluN and IAlu1. 
+// IEU0 instructions must use Alu 1 and should use both IAluN and IAlu0.
+// IEU1 instructions must use Alu 2 and should use both IAluN and IAlu1.
 static const CPUResource  IAluN("Int ALU 1or2", 2);
 static const CPUResource  IAlu0("Int ALU 1",    1);
 static const CPUResource  IAlu1("Int ALU 2",    1);
@@ -130,7 +130,7 @@ static const CPUResource  FCMPDelayCycle("FCMP delay cycle", 1);
 
 //---------------------------------------------------------------------------
 // const InstrClassRUsage SparcV9RUsageDesc[]
-// 
+//
 // Purpose:
 //   Resource usage information for instruction in each scheduling class.
 //   The InstrRUsage Objects for individual classes are specified first.
@@ -141,15 +141,15 @@ static const CPUResource  FCMPDelayCycle("FCMP delay cycle", 1);
 static const InstrClassRUsage NoneClassRUsage = {
   SPARC_NONE,
   /*totCycles*/ 7,
-  
+
   /* maxIssueNum */ 4,
   /* isSingleIssue */ false,
   /* breaksGroup */ false,
   /* numBubbles */ 0,
-  
+
   /*numSlots*/ 4,
   /* feasibleSlots[] */ { 0, 1, 2, 3 },
-  
+
   /*numEntries*/ 0,
   /* V[] */ {
     /*Cycle G */
@@ -165,15 +165,15 @@ static const InstrClassRUsage NoneClassRUsage = {
 static const InstrClassRUsage IEUNClassRUsage = {
   SPARC_IEUN,
   /*totCycles*/ 7,
-  
+
   /* maxIssueNum */ 3,
   /* isSingleIssue */ false,
   /* breaksGroup */ false,
   /* numBubbles */ 0,
-  
+
   /*numSlots*/ 3,
   /* feasibleSlots[] */ { 0, 1, 2 },
-  
+
   /*numEntries*/ 4,
   /* V[] */ {
     /*Cycle G */ { AllIssueSlots.rid, 0, 1 },
@@ -190,15 +190,15 @@ static const InstrClassRUsage IEUNClassRUsage = {
 static const InstrClassRUsage IEU0ClassRUsage = {
   SPARC_IEU0,
   /*totCycles*/ 7,
-  
+
   /* maxIssueNum */ 1,
   /* isSingleIssue */ false,
   /* breaksGroup */ false,
   /* numBubbles */ 0,
-  
+
   /*numSlots*/ 3,
   /* feasibleSlots[] */ { 0, 1, 2 },
-  
+
   /*numEntries*/ 5,
   /* V[] */ {
     /*Cycle G */ { AllIssueSlots.rid, 0, 1 },
@@ -216,15 +216,15 @@ static const InstrClassRUsage IEU0ClassRUsage = {
 static const InstrClassRUsage IEU1ClassRUsage = {
   SPARC_IEU1,
   /*totCycles*/ 7,
-  
+
   /* maxIssueNum */ 1,
   /* isSingleIssue */ false,
   /* breaksGroup */ false,
   /* numBubbles */ 0,
-  
+
   /*numSlots*/ 3,
   /* feasibleSlots[] */ { 0, 1, 2 },
-  
+
   /*numEntries*/ 5,
   /* V[] */ {
     /*Cycle G */ { AllIssueSlots.rid, 0, 1 },
@@ -242,15 +242,15 @@ static const InstrClassRUsage IEU1ClassRUsage = {
 static const InstrClassRUsage FPMClassRUsage = {
   SPARC_FPM,
   /*totCycles*/ 7,
-  
+
   /* maxIssueNum */ 1,
   /* isSingleIssue */ false,
   /* breaksGroup */ false,
   /* numBubbles */ 0,
-  
+
   /*numSlots*/ 4,
   /* feasibleSlots[] */ { 0, 1, 2, 3 },
-  
+
   /*numEntries*/ 7,
   /* V[] */ {
     /*Cycle G */ { AllIssueSlots.rid,   0, 1 },
@@ -267,15 +267,15 @@ static const InstrClassRUsage FPMClassRUsage = {
 static const InstrClassRUsage FPAClassRUsage = {
   SPARC_FPA,
   /*totCycles*/ 7,
-  
+
   /* maxIssueNum */ 1,
   /* isSingleIssue */ false,
   /* breaksGroup */ false,
   /* numBubbles */ 0,
-  
+
   /*numSlots*/ 4,
   /* feasibleSlots[] */ { 0, 1, 2, 3 },
-  
+
   /*numEntries*/ 7,
   /* V[] */ {
     /*Cycle G */ { AllIssueSlots.rid,   0, 1 },
@@ -292,15 +292,15 @@ static const InstrClassRUsage FPAClassRUsage = {
 static const InstrClassRUsage LDClassRUsage = {
   SPARC_LD,
   /*totCycles*/ 7,
-  
+
   /* maxIssueNum */ 1,
   /* isSingleIssue */ false,
   /* breaksGroup */ false,
   /* numBubbles */ 0,
-  
+
   /*numSlots*/ 3,
   /* feasibleSlots[] */ { 0, 1, 2, },
-  
+
   /*numEntries*/ 6,
   /* V[] */ {
     /*Cycle G */ { AllIssueSlots.rid,    0, 1 },
@@ -319,15 +319,15 @@ static const InstrClassRUsage LDClassRUsage = {
 static const InstrClassRUsage STClassRUsage = {
   SPARC_ST,
   /*totCycles*/ 7,
-  
+
   /* maxIssueNum */ 1,
   /* isSingleIssue */ false,
   /* breaksGroup */ false,
   /* numBubbles */ 0,
-  
+
   /*numSlots*/ 3,
   /* feasibleSlots[] */ { 0, 1, 2 },
-  
+
   /*numEntries*/ 4,
   /* V[] */ {
     /*Cycle G */ { AllIssueSlots.rid,    0, 1 },
@@ -345,22 +345,22 @@ static const InstrClassRUsage STClassRUsage = {
 static const InstrClassRUsage CTIClassRUsage = {
   SPARC_CTI,
   /*totCycles*/ 7,
-  
+
   /* maxIssueNum */ 1,
   /* isSingleIssue */ false,
   /* breaksGroup */ false,
   /* numBubbles */ 0,
-  
+
   /*numSlots*/ 4,
   /* feasibleSlots[] */ { 0, 1, 2, 3 },
-  
+
   /*numEntries*/ 4,
   /* V[] */ {
     /*Cycle G */ { AllIssueSlots.rid,    0, 1 },
 		 { CTIIssueSlots.rid,    0, 1 },
     /*Cycle E */ { IAlu0.rid,            1, 1 },
     /*Cycles E-C */ { CTIDelayCycle.rid, 1, 2 }
-    /*Cycle C */             
+    /*Cycle C */
     /*Cycle N1*/
     /*Cycle N1*/
     /*Cycle N1*/
@@ -371,15 +371,15 @@ static const InstrClassRUsage CTIClassRUsage = {
 static const InstrClassRUsage SingleClassRUsage = {
   SPARC_SINGLE,
   /*totCycles*/ 7,
-  
+
   /* maxIssueNum */ 1,
   /* isSingleIssue */ true,
   /* breaksGroup */ false,
   /* numBubbles */ 0,
-  
+
   /*numSlots*/ 1,
   /* feasibleSlots[] */ { 0 },
-  
+
   /*numEntries*/ 5,
   /* V[] */ {
     /*Cycle G */ { AllIssueSlots.rid,    0, 1 },
@@ -413,7 +413,7 @@ static const InstrClassRUsage SparcV9RUsageDesc[] = {
 
 //---------------------------------------------------------------------------
 // const InstrIssueDelta  SparcV9InstrIssueDeltas[]
-// 
+//
 // Purpose:
 //   Changes to issue restrictions information in InstrClassRUsage for
 //   instructions that differ from other instructions in their class.
@@ -461,7 +461,7 @@ static const InstrIssueDelta  SparcV9InstrIssueDeltas[] = {
 //{ V9::RETRY,		true,	true,	0 },
 //{ V9::TCC,		true,	true,	0 },
 //{ V9::SHUTDOWN,	true,	true,	0 },
-  
+
 				// Special cases for breaking group *before*
 				// CURRENTLY NOT SUPPORTED!
   { V9::CALL,		false,	false,	0 },
@@ -469,7 +469,7 @@ static const InstrIssueDelta  SparcV9InstrIssueDeltas[] = {
   { V9::JMPLCALLi,	false,	false,	0 },
   { V9::JMPLRETr,	false,	false,	0 },
   { V9::JMPLRETi,	false,	false,	0 },
-  
+
 				// Special cases for breaking the group *after*
   { V9::MULXr,		true,	true,	(4+34)/2 },
   { V9::MULXi,		true,	true,	(4+34)/2 },
@@ -480,7 +480,7 @@ static const InstrIssueDelta  SparcV9InstrIssueDeltas[] = {
   { V9::FSQRTD,		false,	true,	0 },
   { V9::FSQRTQ,		false,	true,	0 },
 //{ V9::FCMP{LE,GT,NE,EQ}, false, true, 0 },
-  
+
 				// Instructions that introduce bubbles
 //{ V9::MULScc,		true,	true,	2 },
 //{ V9::SMULcc,		true,	true,	(4+18)/2 },
@@ -503,7 +503,7 @@ static const InstrIssueDelta  SparcV9InstrIssueDeltas[] = {
 
 //---------------------------------------------------------------------------
 // const InstrRUsageDelta SparcV9InstrUsageDeltas[]
-// 
+//
 // Purpose:
 //   Changes to resource usage information in InstrClassRUsage for
 //   instructions that differ from other instructions in their class.
@@ -513,22 +513,22 @@ static const InstrRUsageDelta SparcV9InstrUsageDeltas[] = {
 
   // MachineOpCode, Resource, Start cycle, Num cycles
 
-  // 
+  //
   // JMPL counts as a load/store instruction for issue!
   //
   { V9::JMPLCALLr, LSIssueSlots.rid,  0,  1 },
   { V9::JMPLCALLi, LSIssueSlots.rid,  0,  1 },
   { V9::JMPLRETr,  LSIssueSlots.rid,  0,  1 },
   { V9::JMPLRETi,  LSIssueSlots.rid,  0,  1 },
-  
-  // 
+
+  //
   // Many instructions cannot issue for the next 2 cycles after an FCMP
   // We model that with a fake resource FCMPDelayCycle.
-  // 
+  //
   { V9::FCMPS,    FCMPDelayCycle.rid, 1, 3 },
   { V9::FCMPD,    FCMPDelayCycle.rid, 1, 3 },
   { V9::FCMPQ,    FCMPDelayCycle.rid, 1, 3 },
-  
+
   { V9::MULXr,     FCMPDelayCycle.rid, 1, 1 },
   { V9::MULXi,     FCMPDelayCycle.rid, 1, 1 },
   { V9::SDIVXr,    FCMPDelayCycle.rid, 1, 1 },
@@ -547,11 +547,11 @@ static const InstrRUsageDelta SparcV9InstrUsageDeltas[] = {
   { V9::FMOVRSNZ, FCMPDelayCycle.rid, 1, 1 },
   { V9::FMOVRSGZ, FCMPDelayCycle.rid, 1, 1 },
   { V9::FMOVRSGEZ,FCMPDelayCycle.rid, 1, 1 },
-  
-  // 
+
+  //
   // Some instructions are stalled in the GROUP stage if a CTI is in
   // the E or C stage.  We model that with a fake resource CTIDelayCycle.
-  // 
+  //
   { V9::LDDFr,    CTIDelayCycle.rid,  1, 1 },
   { V9::LDDFi,    CTIDelayCycle.rid,  1, 1 },
 //{ V9::LDDA,     CTIDelayCycle.rid,  1, 1 },
@@ -563,7 +563,7 @@ static const InstrRUsageDelta SparcV9InstrUsageDeltas[] = {
 //{ V9::CASA,     CTIDelayCycle.rid,  1, 1 },
 //{ V9::CASX,     CTIDelayCycle.rid,  1, 1 },
 //{ V9::CASXA,    CTIDelayCycle.rid,  1, 1 },
-  
+
   //
   // Signed int loads of less than dword size return data in cycle N1 (not C)
   // and put all loads in consecutive cycles into delayed load return mode.
@@ -572,12 +572,12 @@ static const InstrRUsageDelta SparcV9InstrUsageDeltas[] = {
   { V9::LDSBr,    LdReturn.rid,  3,  1 },
   { V9::LDSBi,    LdReturn.rid,  2, -1 },
   { V9::LDSBi,    LdReturn.rid,  3,  1 },
-  
+
   { V9::LDSHr,    LdReturn.rid,  2, -1 },
   { V9::LDSHr,    LdReturn.rid,  3,  1 },
   { V9::LDSHi,    LdReturn.rid,  2, -1 },
   { V9::LDSHi,    LdReturn.rid,  3,  1 },
-  
+
   { V9::LDSWr,    LdReturn.rid,  2, -1 },
   { V9::LDSWr,    LdReturn.rid,  3,  1 },
   { V9::LDSWi,    LdReturn.rid,  2, -1 },
@@ -589,7 +589,7 @@ static const InstrRUsageDelta SparcV9InstrUsageDeltas[] = {
   // Together with their single-issue requirement, this means all four issue
   // slots are effectively blocked for those cycles, plus the issue cycle.
   // This does not increase the latency of the instruction itself.
-  // 
+  //
   { V9::RDCCR,   AllIssueSlots.rid,     0,  5 },
   { V9::RDCCR,   AllIssueSlots.rid,     0,  5 },
   { V9::RDCCR,   AllIssueSlots.rid,     0,  5 },
@@ -597,96 +597,96 @@ static const InstrRUsageDelta SparcV9InstrUsageDeltas[] = {
 
 #undef EXPLICIT_BUBBLES_NEEDED
 #ifdef EXPLICIT_BUBBLES_NEEDED
-  // 
+  //
   // MULScc inserts one bubble.
   // This means it breaks the current group (captured in UltraSparcV9SchedInfo)
   // *and occupies all issue slots for the next cycle
-  // 
+  //
 //{ V9::MULScc,  AllIssueSlots.rid, 2, 2-1 },
 //{ V9::MULScc,  AllIssueSlots.rid, 2, 2-1 },
 //{ V9::MULScc,  AllIssueSlots.rid, 2, 2-1 },
 //{ V9::MULScc,  AllIssueSlots.rid, 2, 2-1 },
-  
-  // 
+
+  //
   // SMULcc inserts between 4 and 18 bubbles, depending on #leading 0s in rs1.
   // We just model this with a simple average.
-  // 
+  //
 //{ V9::SMULcc,  AllIssueSlots.rid, 2, ((4+18)/2)-1 },
 //{ V9::SMULcc,  AllIssueSlots.rid, 2, ((4+18)/2)-1 },
 //{ V9::SMULcc,  AllIssueSlots.rid, 2, ((4+18)/2)-1 },
 //{ V9::SMULcc,  AllIssueSlots.rid, 2, ((4+18)/2)-1 },
-  
+
   // SMULcc inserts between 4 and 19 bubbles, depending on #leading 0s in rs1.
 //{ V9::UMULcc,  AllIssueSlots.rid, 2, ((4+19)/2)-1 },
 //{ V9::UMULcc,  AllIssueSlots.rid, 2, ((4+19)/2)-1 },
 //{ V9::UMULcc,  AllIssueSlots.rid, 2, ((4+19)/2)-1 },
 //{ V9::UMULcc,  AllIssueSlots.rid, 2, ((4+19)/2)-1 },
-  
-  // 
+
+  //
   // MULX inserts between 4 and 34 bubbles, depending on #leading 0s in rs1.
-  // 
+  //
   { V9::MULX,    AllIssueSlots.rid, 2, ((4+34)/2)-1 },
   { V9::MULX,    AllIssueSlots.rid, 2, ((4+34)/2)-1 },
   { V9::MULX,    AllIssueSlots.rid, 2, ((4+34)/2)-1 },
   { V9::MULX,    AllIssueSlots.rid, 2, ((4+34)/2)-1 },
-  
-  // 
+
+  //
   // SDIVcc inserts 36 bubbles.
-  // 
+  //
 //{ V9::SDIVcc,  AllIssueSlots.rid, 2, 36-1 },
 //{ V9::SDIVcc,  AllIssueSlots.rid, 2, 36-1 },
 //{ V9::SDIVcc,  AllIssueSlots.rid, 2, 36-1 },
 //{ V9::SDIVcc,  AllIssueSlots.rid, 2, 36-1 },
-  
+
   // UDIVcc inserts 37 bubbles.
 //{ V9::UDIVcc,  AllIssueSlots.rid, 2, 37-1 },
 //{ V9::UDIVcc,  AllIssueSlots.rid, 2, 37-1 },
 //{ V9::UDIVcc,  AllIssueSlots.rid, 2, 37-1 },
 //{ V9::UDIVcc,  AllIssueSlots.rid, 2, 37-1 },
-  
-  // 
+
+  //
   // SDIVX inserts 68 bubbles.
-  // 
+  //
   { V9::SDIVX,   AllIssueSlots.rid, 2, 68-1 },
   { V9::SDIVX,   AllIssueSlots.rid, 2, 68-1 },
   { V9::SDIVX,   AllIssueSlots.rid, 2, 68-1 },
   { V9::SDIVX,   AllIssueSlots.rid, 2, 68-1 },
-  
-  // 
+
+  //
   // UDIVX inserts 68 bubbles.
-  // 
+  //
   { V9::UDIVX,   AllIssueSlots.rid, 2, 68-1 },
   { V9::UDIVX,   AllIssueSlots.rid, 2, 68-1 },
   { V9::UDIVX,   AllIssueSlots.rid, 2, 68-1 },
   { V9::UDIVX,   AllIssueSlots.rid, 2, 68-1 },
-  
-  // 
+
+  //
   // WR inserts 4 bubbles.
-  // 
+  //
 //{ V9::WR,     AllIssueSlots.rid, 2, 68-1 },
 //{ V9::WR,     AllIssueSlots.rid, 2, 68-1 },
 //{ V9::WR,     AllIssueSlots.rid, 2, 68-1 },
 //{ V9::WR,     AllIssueSlots.rid, 2, 68-1 },
-  
-  // 
+
+  //
   // WRPR inserts 4 bubbles.
-  // 
+  //
 //{ V9::WRPR,   AllIssueSlots.rid, 2, 68-1 },
 //{ V9::WRPR,   AllIssueSlots.rid, 2, 68-1 },
 //{ V9::WRPR,   AllIssueSlots.rid, 2, 68-1 },
 //{ V9::WRPR,   AllIssueSlots.rid, 2, 68-1 },
-  
-  // 
+
+  //
   // DONE inserts 9 bubbles.
-  // 
+  //
 //{ V9::DONE,   AllIssueSlots.rid, 2, 9-1 },
 //{ V9::DONE,   AllIssueSlots.rid, 2, 9-1 },
 //{ V9::DONE,   AllIssueSlots.rid, 2, 9-1 },
 //{ V9::DONE,   AllIssueSlots.rid, 2, 9-1 },
-  
-  // 
+
+  //
   // RETRY inserts 9 bubbles.
-  // 
+  //
 //{ V9::RETRY,   AllIssueSlots.rid, 2, 9-1 },
 //{ V9::RETRY,   AllIssueSlots.rid, 2, 9-1 },
 //{ V9::RETRY,   AllIssueSlots.rid, 2, 9-1 },
@@ -713,7 +713,7 @@ static const InstrRUsageDelta SparcV9InstrUsageDeltas[] = {
 //    branch.  The group will stall until the load returns.
 //11. Single-prec. FP loads lock 2 registers, for dependency checking.
 //
-// 
+//
 // Additional delays we cannot or will not capture:
 // 1. If DCTI is last word of cache line, it is delayed until next line can be
 //    fetched.  Also, other DCTI alignment-related delays (pg 352)
@@ -726,8 +726,8 @@ static const InstrRUsageDelta SparcV9InstrUsageDeltas[] = {
 
 
 //---------------------------------------------------------------------------
-// class SparcV9SchedInfo 
-// 
+// class SparcV9SchedInfo
+//
 // Purpose:
 //   Scheduling information for the UltraSPARC.
 //   Primarily just initializes machine-dependent parameters in
@@ -746,7 +746,7 @@ SparcV9SchedInfo::SparcV9SchedInfo(const TargetMachine& tgt)
 {
   maxNumIssueTotal = 4;
   longestIssueConflict = 0;		// computed from issuesGaps[]
-  
+
   // must be called after above parameters are initialized.
   initializeResources();
 }
@@ -756,6 +756,6 @@ SparcV9SchedInfo::initializeResources()
 {
   // Compute TargetSchedInfo::instrRUsages and TargetSchedInfo::issueGaps
   TargetSchedInfo::initializeResources();
-  
+
   // Machine-dependent fixups go here.  None for now.
 }

@@ -1,28 +1,28 @@
 //===-- MachineCodeForInstruction.h -----------------------------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
-// FIXME: This file is SparcV9 specific.  Do not rely on this class for new 
+// FIXME: This file is SparcV9 specific.  Do not rely on this class for new
 // targets, it will go away in the future.
 //
 // Representation of the sequence of machine instructions created for a single
 // VM instruction.  Additionally records information about hidden and implicit
 // values used by the machine instructions: about hidden values used by the
 // machine instructions:
-// 
+//
 // "Temporary values" are intermediate values used in the machine instruction
 // sequence, but not in the VM instruction Note that such values should be
 // treated as pure SSA values with no interpretation of their operands (i.e., as
 // a TmpInstruction object which actually represents such a value).
-// 
+//
 // (2) "Implicit uses" are values used in the VM instruction but not in
 //     the machine instruction sequence
-// 
+//
 //===----------------------------------------------------------------------===//
 
 #ifndef MACHINECODE_FOR_INSTRUCTION_H
@@ -44,7 +44,7 @@ class CallArgsDescriptor;
 public:
   MachineCodeForInstruction() : callArgsDesc(NULL) {}
   ~MachineCodeForInstruction();
-  
+
   static MachineCodeForInstruction &get(const Instruction *I);
   static void destroy(const Instruction *I);
 
@@ -71,7 +71,7 @@ public:
   }
   iterator erase(iterator where) { return Contents.erase(where); }
   iterator erase(iterator s, iterator e) { return Contents.erase(s, e); }
-  
+
 
   // dropAllReferences() - This function drops all references within
   // temporary (hidden) instructions created in implementing the original
@@ -82,7 +82,7 @@ public:
 
   const std::vector<Value*> &getTempValues() const { return tempVec; }
         std::vector<Value*> &getTempValues()       { return tempVec; }
-  
+
   MachineCodeForInstruction &addTemp(Value *tmp) {
     tempVec.push_back(tmp);
     return *this;

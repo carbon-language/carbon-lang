@@ -1,18 +1,18 @@
 //===-- LiveRangeInfo.h - Track all LiveRanges for a Function ----*- C++ -*-==//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
-// This file contains the class LiveRangeInfo which constructs and keeps 
+// This file contains the class LiveRangeInfo which constructs and keeps
 // the LiveRangeMap which contains all the live ranges used in a method.
 //
-// Assumptions: 
+// Assumptions:
 //
-// All variables (llvm Values) are defined before they are used. However, a 
+// All variables (llvm Values) are defined before they are used. However, a
 // constant may not be defined in the machine instruction stream if it can be
 // used as an immediate value within a machine instruction. However, register
 // allocation does not have to worry about immediate constants since they
@@ -45,16 +45,16 @@ typedef hash_map<const Value*, LiveRange*> LiveRangeMapType;
 //----------------------------------------------------------------------------
 // Class LiveRangeInfo
 //
-// Constructs and keeps the LiveRangeMap which contains all the live 
+// Constructs and keeps the LiveRangeMap which contains all the live
 // ranges used in a method. Also contain methods to coalesce live ranges.
 //----------------------------------------------------------------------------
 
 class LiveRangeInfo {
   const Function *const Meth;       // Func for which live range info is held
-  LiveRangeMapType  LiveRangeMap;   // A map from Value * to LiveRange * to 
+  LiveRangeMapType  LiveRangeMap;   // A map from Value * to LiveRange * to
                                     // record all live ranges in a method
                                     // created by constructLiveRanges
-  
+
   const TargetMachine& TM;          // target machine description
 
   std::vector<RegClass *> & RegClassList;// vector containing register classess
@@ -76,8 +76,8 @@ class LiveRangeInfo {
 
   void suggestRegs4CallRets             ();
 public:
-  
-  LiveRangeInfo(const Function *F, 
+
+  LiveRangeInfo(const Function *F,
 		const TargetMachine& tm,
 		std::vector<RegClass *> & RCList);
 
@@ -89,10 +89,10 @@ public:
   // Main entry point for live range construction
   //
   void constructLiveRanges();
-  
+
   /// return the common live range map for this method
   ///
-  inline const LiveRangeMapType *getLiveRangeMap() const 
+  inline const LiveRangeMapType *getLiveRangeMap() const
     { return &LiveRangeMap; }
 
   /// Method used to get the live range containing a Value.
@@ -109,7 +109,7 @@ public:
   /// Method for coalescing live ranges. Called only after interference info
   /// is calculated.
   ///
-  void coalesceLRs();  
+  void coalesceLRs();
 
   /// debugging method to print the live ranges
   ///
@@ -118,4 +118,4 @@ public:
 
 } // End llvm namespace
 
-#endif 
+#endif

@@ -1,10 +1,10 @@
 //===-- SparcV9FrameInfo.h - Define TargetFrameInfo for SparcV9 -*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // Interface to stack frame layout info for the UltraSPARC.
@@ -25,7 +25,7 @@ class SparcV9FrameInfo: public TargetFrameInfo {
 public:
   SparcV9FrameInfo(const TargetMachine &TM)
     : TargetFrameInfo(StackGrowsDown, StackFrameSizeAlignment, 0), target(TM) {}
-  
+
   // This method adjusts a stack offset to meet alignment rules of target.
   // The fixed OFFSET (0x7ff) must be subtracted and the result aligned.
   virtual int  adjustAlignment(int unalignedOffset, bool growUp,
@@ -36,7 +36,7 @@ public:
   // These methods compute offsets using the frame contents for a
   // particular function.  The frame contents are obtained from the
   // MachineCodeInfoForMethod object for the given function.
-  // 
+  //
   int getFirstAutomaticVarOffset(MachineFunction& mcInfo, bool& growUp) const {
     growUp = false;
     return StaticAreaOffsetFromFP;
@@ -45,7 +45,7 @@ public:
   int getTmpAreaOffset(MachineFunction& mcInfo, bool& growUp) const;
   int getDynamicAreaOffset(MachineFunction& mcInfo, bool& growUp) const;
 
-  virtual int getIncomingArgOffset(MachineFunction& mcInfo, 
+  virtual int getIncomingArgOffset(MachineFunction& mcInfo,
                                    unsigned argNum) const {
     unsigned relativeOffset = argNum * SizeOfEachArgOnStack;
     int firstArg = FirstIncomingArgOffsetFromFP;
@@ -56,7 +56,7 @@ public:
 				   unsigned argNum) const {
     return FirstOutgoingArgOffsetFromSP + argNum * SizeOfEachArgOnStack;
   }
-  
+
   /*----------------------------------------------------------------------
     This diagram shows the stack frame layout used by llc on SparcV9 V9.
     Note that only the location of automatic variables, spill area,
@@ -72,7 +72,7 @@ public:
         during a call to another function, so it is never needed when
         the current function is active.  This is why space can be allocated
         dynamically by incrementing %sp any time within the function.
-    
+
     STACK FRAME LAYOUT:
 
        ...

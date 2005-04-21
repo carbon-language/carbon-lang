@@ -1,12 +1,12 @@
 //===-- SkeletonCodeEmitter.cpp - JIT Code Emitter --------------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
-// 
+//
 // This is a stub for a JIT code generator, which is obviously not implemented.
 //
 //===----------------------------------------------------------------------===//

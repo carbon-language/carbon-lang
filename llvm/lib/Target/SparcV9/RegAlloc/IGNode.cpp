@@ -1,15 +1,15 @@
 //===-- IGNode.cpp --------------------------------------------------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
-// 
+//
 // This file implements an Interference graph node for coloring-based register
 // allocation.
-// 
+//
 //===----------------------------------------------------------------------===//
 
 #include "IGNode.h"
@@ -19,11 +19,11 @@
 namespace llvm {
 
 //-----------------------------------------------------------------------------
-// Sets this IGNode on stack and reduce the degree of neighbors  
+// Sets this IGNode on stack and reduce the degree of neighbors
 //-----------------------------------------------------------------------------
 
 void IGNode::pushOnStack() {
-  OnStack = true; 
+  OnStack = true;
   int neighs = AdjList.size();
 
   if (neighs < 0) {
@@ -34,7 +34,7 @@ void IGNode::pushOnStack() {
   for (int i=0; i < neighs; i++)
     AdjList[i]->decCurDegree();
 }
- 
+
 //-----------------------------------------------------------------------------
 // Deletes an adjacency node. IGNodes are deleted when coalescing merges
 // two IGNodes together.

@@ -1,10 +1,10 @@
 //===-- InstSelectSimple.cpp - A simple instruction selector for SparcV8 --===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines a simple peephole instruction selector for the V8 target
@@ -318,7 +318,7 @@ void V8ISel::copyConstantToRegister(MachineBasicBlock *MBB,
     BuildMI (*MBB, IP, V8::ORri, 2, R).addReg (V8::G0).addSImm (0);
   } else if (GlobalValue *GV = dyn_cast<GlobalValue>(C)) {
     // Copy it with a SETHI/OR pair; the JIT + asmwriter should recognize
-    // that SETHI %reg,global == SETHI %reg,%hi(global) and 
+    // that SETHI %reg,global == SETHI %reg,%hi(global) and
     // OR %reg,global,%reg == OR %reg,%lo(global),%reg.
     unsigned TmpReg = makeAnotherReg (C->getType ());
     BuildMI (*MBB, IP, V8::SETHIi, 1, TmpReg).addGlobalAddress(GV);
@@ -362,10 +362,10 @@ void V8ISel::LoadArgumentsToVirtualRegs (Function *LF) {
   const unsigned *IAR = &IncomingArgRegs[0];
   unsigned ArgOffset = 68;
 
-  // Store registers onto stack if this is a varargs function. 
+  // Store registers onto stack if this is a varargs function.
   // FIXME: This doesn't really pertain to "loading arguments into
   // virtual registers", so it's not clear that it really belongs here.
-  // FIXME: We could avoid storing any args onto the stack that don't 
+  // FIXME: We could avoid storing any args onto the stack that don't
   // need to be in memory, because they come before the ellipsis in the
   // parameter list (and thus could never be accessed through va_arg).
   if (LF->getFunctionType ()->isVarArg ()) {
@@ -505,7 +505,7 @@ void V8ISel::SelectPHINodes() {
             break;
           }
         assert (PredMBB && "Couldn't find incoming machine-cfg edge for phi");
-        
+
         unsigned ValReg;
         std::map<MachineBasicBlock*, unsigned>::iterator EntryIt =
           PHIValues.lower_bound(PredMBB);
@@ -515,7 +515,7 @@ void V8ISel::SelectPHINodes() {
           // predecessor.  Recycle it.
           ValReg = EntryIt->second;
 
-        } else {        
+        } else {
           // Get the incoming value into a virtual register.
           //
           Value *Val = PN->getIncomingValue(i);
@@ -534,11 +534,11 @@ void V8ISel::SelectPHINodes() {
             // might be arbitrarily complex if it is a constant expression),
             // just insert the computation at the top of the basic block.
             MachineBasicBlock::iterator PI = PredMBB->begin();
-            
+
             // Skip over any PHI nodes though!
             while (PI != PredMBB->end() && PI->getOpcode() == V8::PHI)
               ++PI;
-            
+
             ValReg = getReg(Val, PredMBB, PI);
           }
 
@@ -568,28 +568,28 @@ bool V8ISel::runOnFunction(Function &Fn) {
   // First pass over the function, lower any unknown intrinsic functions
   // with the IntrinsicLowering class.
   LowerUnknownIntrinsicFunctionCalls(Fn);
-  
+
   F = &MachineFunction::construct(&Fn, TM);
-  
+
   // Create all of the machine basic blocks for the function...
   for (Function::iterator I = Fn.begin(), E = Fn.end(); I != E; ++I)
     F->getBasicBlockList().push_back(MBBMap[I] = new MachineBasicBlock(I));
-  
+
   BB = &F->front();
-  
+
   // Set up a frame object for the return address.  This is used by the
   // llvm.returnaddress & llvm.frameaddress intrinisics.
   //ReturnAddressIndex = F->getFrameInfo()->CreateFixedObject(4, -4);
-  
+
   // Copy incoming arguments off of the stack and out of fixed registers.
   LoadArgumentsToVirtualRegs(&Fn);
-  
+
   // Instruction select everything except PHI nodes
   visit(Fn);
-  
+
   // Select the PHI nodes
   SelectPHINodes();
-  
+
   RegMap.clear();
   MBBMap.clear();
   F = 0;
@@ -632,11 +632,11 @@ void V8ISel::emitFPToIntegerCast (MachineBasicBlock *BB,
                                   const Type *newTy, unsigned DestReg) {
   unsigned FPCastOpcode, FPStoreOpcode, FPSize, FPAlign;
   unsigned oldTyClass = getClassB(oldTy);
-  if (oldTyClass == cFloat) { 
-    FPCastOpcode = V8::FSTOI; FPStoreOpcode = V8::STFri; FPSize = 4; 
+  if (oldTyClass == cFloat) {
+    FPCastOpcode = V8::FSTOI; FPStoreOpcode = V8::STFri; FPSize = 4;
     FPAlign = TM.getTargetData().getFloatAlignment();
   } else { // it's a double
-    FPCastOpcode = V8::FDTOI; FPStoreOpcode = V8::STDFri; FPSize = 8; 
+    FPCastOpcode = V8::FDTOI; FPStoreOpcode = V8::STDFri; FPSize = 8;
     FPAlign = TM.getTargetData().getDoubleAlignment();
   }
   unsigned TempReg = makeAnotherReg (oldTy);
@@ -672,11 +672,11 @@ void V8ISel::emitCastOperation(MachineBasicBlock *BB,
     case cShort:
     case cInt:
       switch (oldTyClass) {
-      case cLong: 
+      case cLong:
         // Treat it like a cast from the lower half of the value.
         emitIntegerCast (BB, IP, Type::IntTy, SrcReg+1, newTy, DestReg);
         break;
-      case cFloat: 
+      case cFloat:
       case cDouble:
         emitFPToIntegerCast (BB, IP, oldTy, SrcReg, newTy, DestReg);
         break;
@@ -742,10 +742,10 @@ void V8ISel::emitCastOperation(MachineBasicBlock *BB,
         unsigned TempReg = emitIntegerCast (BB, IP, OldHalfTy, SrcReg,
                                             NewHalfTy, DestReg+1, true);
         if (newTy->isSigned ()) {
-          BuildMI (*BB, IP, V8::SRAri, 2, DestReg).addReg (TempReg) 
+          BuildMI (*BB, IP, V8::SRAri, 2, DestReg).addReg (TempReg)
             .addZImm (31);
         } else {
-          BuildMI (*BB, IP, V8::ORrr, 2, DestReg).addReg (V8::G0) 
+          BuildMI (*BB, IP, V8::ORrr, 2, DestReg).addReg (V8::G0)
             .addReg (V8::G0);
         }
         break;
@@ -1162,7 +1162,7 @@ void V8ISel::emitGEPOperation (MachineBasicBlock *MBB,
       if (isa<ConstantIntegral> (idx)) {
         // If idx is a constant, we don't have to emit the multiply.
         int64_t Val = cast<ConstantIntegral> (idx)->getRawValue ();
-        if ((Val * elementSize) + 4096 < 8191) { 
+        if ((Val * elementSize) + 4096 < 8191) {
           // (Val * elementSize) is constant and fits in an immediate field.
           // emit: nextBasePtrReg = ADDri basePtrReg, (Val * elementSize)
           addImmed = true;
@@ -1180,16 +1180,16 @@ void V8ISel::emitGEPOperation (MachineBasicBlock *MBB,
         OffsetReg = makeAnotherReg (Type::IntTy);
         unsigned idxReg = getReg (idx, MBB, IP);
         switch (elementSize) {
-          case 1: 
+          case 1:
             BuildMI (*MBB, IP, V8::ORrr, 2, OffsetReg).addReg (V8::G0).addReg (idxReg);
             break;
-          case 2: 
+          case 2:
             BuildMI (*MBB, IP, V8::SLLri, 2, OffsetReg).addReg (idxReg).addZImm (1);
             break;
-          case 4: 
+          case 4:
             BuildMI (*MBB, IP, V8::SLLri, 2, OffsetReg).addReg (idxReg).addZImm (2);
             break;
-          case 8: 
+          case 8:
             BuildMI (*MBB, IP, V8::SLLri, 2, OffsetReg).addReg (idxReg).addZImm (3);
             break;
           default: {
@@ -1343,7 +1343,7 @@ void V8ISel::emitShift64 (MachineBasicBlock *MBB,
     //   ba .lshr_continue
 
     BB = oneShiftMBB;
-    
+
     if (isSigned)
       BuildMI (BB, V8::SRAri, 2, OneShiftOutReg).addReg (SrcReg).addZImm (31);
     else
@@ -1515,7 +1515,7 @@ void V8ISel::visitBinaryOperator (Instruction &I) {
   }
 
   switch (getClassB (I.getType ())) {
-    case cByte: 
+    case cByte:
       if (I.getType ()->isSigned ()) { // add byte
         BuildMI (BB, V8::ANDri, 2, DestReg).addReg (ResultReg).addZImm (0xff);
       } else { // add ubyte
@@ -1562,7 +1562,7 @@ void V8ISel::visitSetCondInst(SetCondInst &I) {
   unsigned Op1Reg = getReg (I.getOperand (1));
   unsigned DestReg = getReg (I);
   const Type *Ty = I.getOperand (0)->getType ();
-  
+
   // Compare the two values.
   if (getClass (Ty) < cLong) {
     BuildMI(BB, V8::SUBCCrr, 2, V8::G0).addReg(Op0Reg).addReg(Op1Reg);

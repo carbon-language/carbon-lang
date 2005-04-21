@@ -1,14 +1,14 @@
 //===-- SparcV9FrameInfo.cpp - Stack frame layout info for SparcV9 --------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
-// 
+//
 // Interface to stack frame layout info for the UltraSPARC.
-// 
+//
 //===----------------------------------------------------------------------===//
 
 #include "llvm/CodeGen/MachineFunction.h"
@@ -19,21 +19,21 @@
 using namespace llvm;
 
 int
-SparcV9FrameInfo::getRegSpillAreaOffset(MachineFunction& mcInfo, bool& pos) const 
+SparcV9FrameInfo::getRegSpillAreaOffset(MachineFunction& mcInfo, bool& pos) const
 {
   // ensure no more auto vars are added
   mcInfo.getInfo<SparcV9FunctionInfo>()->freezeAutomaticVarsArea();
-  
+
   pos = false;                          // static stack area grows downwards
   unsigned autoVarsSize = mcInfo.getInfo<SparcV9FunctionInfo>()->getAutomaticVarsSize();
-  return StaticAreaOffsetFromFP - autoVarsSize; 
+  return StaticAreaOffsetFromFP - autoVarsSize;
 }
 
 int SparcV9FrameInfo::getTmpAreaOffset(MachineFunction& mcInfo, bool& pos) const {
   SparcV9FunctionInfo *MFI = mcInfo.getInfo<SparcV9FunctionInfo>();
   MFI->freezeAutomaticVarsArea();     // ensure no more auto vars are added
   MFI->freezeSpillsArea();            // ensure no more spill slots are added
-  
+
   pos = false;                          // static stack area grows downwards
   unsigned autoVarsSize = MFI->getAutomaticVarsSize();
   unsigned spillAreaSize = MFI->getRegSpillsSize();

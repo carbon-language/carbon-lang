@@ -1,10 +1,10 @@
 //===-- BBLiveVar.h - Live Variable Analysis for a BasicBlock ---*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This is a BasicBlock annotation class that is used by live var analysis to
@@ -46,14 +46,14 @@ class BBLiveVar {
                                 // coming in on that edge.  such uses have to be
                                 // treated differently from ordinary uses.
   hash_map<const BasicBlock *, ValueSet> PredToEdgeInSetMap;
-  
+
   // method to propagate an InSet to OutSet of a predecessor
-  bool setPropagate(ValueSet *OutSetOfPred, 
+  bool setPropagate(ValueSet *OutSetOfPred,
                     const ValueSet *InSetOfThisBB,
                     const BasicBlock *PredBB);
 
   // To add an operand which is a def
-  void addDef(const Value *Op); 
+  void addDef(const Value *Op);
 
   // To add an operand which is a use
   void addUse(const Value *Op);
@@ -63,14 +63,14 @@ public:
 
   BBLiveVar(const BasicBlock &BB, const MachineBasicBlock &MBB, unsigned POID);
 
-  inline bool isInSetChanged() const  { return InSetChanged; }    
+  inline bool isInSetChanged() const  { return InSetChanged; }
   inline bool isOutSetChanged() const { return OutSetChanged; }
 
   const MachineBasicBlock &getMachineBasicBlock() const { return MBB; }
 
   inline unsigned getPOId() const { return POID; }
 
-  bool applyTransferFunc();      // calcultes the In in terms of Out 
+  bool applyTransferFunc();      // calcultes the In in terms of Out
 
   // calculates Out set using In sets of the predecessors
   bool applyFlowFunc(hash_map<const BasicBlock*, BBLiveVar*> &BBLiveVarInfo);

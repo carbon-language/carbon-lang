@@ -1,10 +1,10 @@
 //===- SkeletonInstrInfo.h - Instruction Information ------------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file is where the target-specific implementation of the TargetInstrInfo
@@ -24,7 +24,7 @@ namespace llvm {
     const SkeletonRegisterInfo RI;
   public:
     SkeletonInstrInfo();
-    
+
     /// getRegisterInfo - TargetInstrInfo is a superset of MRegister info.  As
     /// such, whenever a client has an instance of instruction info, it should
     /// always be able to get register info as well (through this method).

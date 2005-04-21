@@ -1,34 +1,34 @@
 //===-- CodeGen/FunctionLiveVarInfo.h - LiveVar Analysis --------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
-// This is the interface for live variable info of a function that is required 
+// This is the interface for live variable info of a function that is required
 // by any other part of the compiler
 //
-// After the analysis, getInSetOfBB or getOutSetofBB can be called to get 
+// After the analysis, getInSetOfBB or getOutSetofBB can be called to get
 // live var info of a BB.
 //
 // The live var set before an instruction can be obtained in 2 ways:
 //
-// 1. Use the method getLiveVarSetAfterInst(Instruction *) to get the LV Info 
+// 1. Use the method getLiveVarSetAfterInst(Instruction *) to get the LV Info
 //    just after an instruction. (also exists getLiveVarSetBeforeInst(..))
 //
-//    This function caluclates the LV info for a BB only once and caches that 
-//    info. If the cache does not contain the LV info of the instruction, it 
+//    This function caluclates the LV info for a BB only once and caches that
+//    info. If the cache does not contain the LV info of the instruction, it
 //    calculates the LV info for the whole BB and caches them.
 //
-//    Getting liveVar info this way uses more memory since, LV info should be 
+//    Getting liveVar info this way uses more memory since, LV info should be
 //    cached. However, if you need LV info of nearly all the instructions of a
 //    BB, this is the best and simplest interfrace.
 //
-// 2. Use the OutSet and applyTranferFuncForInst(const Instruction *const Inst) 
-//    declared in LiveVarSet and  traverse the instructions of a basic block in 
-//    reverse (using const_reverse_iterator in the BB class). 
+// 2. Use the OutSet and applyTranferFuncForInst(const Instruction *const Inst)
+//    declared in LiveVarSet and  traverse the instructions of a basic block in
+//    reverse (using const_reverse_iterator in the BB class).
 //
 //===----------------------------------------------------------------------===//
 
@@ -47,7 +47,7 @@ class MachineInstr;
 class FunctionLiveVarInfo : public FunctionPass {
   // Machine Instr to LiveVarSet Map for providing LVset BEFORE each inst
   // These sets are owned by this map and will be freed in releaseMemory().
-  hash_map<const MachineInstr *, ValueSet *> MInst2LVSetBI; 
+  hash_map<const MachineInstr *, ValueSet *> MInst2LVSetBI;
 
   // Machine Instr to LiveVarSet Map for providing LVset AFTER each inst.
   // These sets are just pointers to sets in MInst2LVSetBI or BBLiveVar.
@@ -62,13 +62,13 @@ class FunctionLiveVarInfo : public FunctionPass {
 
   // constructs BBLiveVars and init Def and In sets
   void constructBBs(const Function *F);
-    
+
   // do one backward pass over the CFG
-  bool doSingleBackwardPass(const Function *F, unsigned int iter); 
+  bool doSingleBackwardPass(const Function *F, unsigned int iter);
 
   // calculates live var sets for instructions in a BB
   void calcLiveVarSetsForBB(const BasicBlock *BB);
-  
+
 public:
   // --------- Implement the FunctionPass interface ----------------------
 

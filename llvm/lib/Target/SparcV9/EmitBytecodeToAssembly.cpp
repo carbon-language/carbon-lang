@@ -1,10 +1,10 @@
 //===-- EmitBytecodeToAssembly.cpp - Emit bytecode to SparcV9 .s File ------==//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements the pass that writes LLVM bytecode as data to a sparc
@@ -31,7 +31,7 @@ namespace {
     typedef int            int_type;
     typedef std::streampos pos_type;
     typedef std::streamoff off_type;
-    
+
     sparcasmbuf(std::ostream &On) : BaseStr(On) {}
 
     virtual int_type overflow(int_type C) {
@@ -65,19 +65,19 @@ namespace {
 			     const std::string &symName) {
     // Prologue:
     // Output a comment describing the object.
-    Out << "!" << comment << "\n";   
+    Out << "!" << comment << "\n";
     // Switch the current section to .rodata in the assembly output:
-    Out << "\t.section \".rodata\"\n\t.align 8\n";  
+    Out << "\t.section \".rodata\"\n\t.align 8\n";
     // Output a global symbol naming the object:
-    Out << "\t.global " << symName << "\n";    
-    Out << "\t.type " << symName << ",#object\n"; 
-    Out << symName << ":\n"; 
+    Out << "\t.global " << symName << "\n";
+    Out << "\t.type " << symName << ",#object\n";
+    Out << symName << ":\n";
   }
 
   static void writeEpilogue (std::ostream &Out, const std::string &symName) {
     // Epilogue:
     // Output a local symbol marking the end of the object:
-    Out << ".end_" << symName << ":\n";    
+    Out << ".end_" << symName << ":\n";
     // Output size directive giving the size of the object:
     Out << "\t.size " << symName << ", .end_" << symName << "-" << symName
 	<< "\n";
@@ -90,7 +90,7 @@ namespace {
     SparcV9BytecodeWriter(std::ostream &out) : Out(out) {}
 
     const char *getPassName() const { return "Emit Bytecode to SparcV9 Assembly";}
-    
+
     virtual bool runOnModule(Module &M) {
       // Write an object containing the bytecode to the SPARC assembly stream
       writePrologue (Out, "LLVM BYTECODE OUTPUT", "LLVMBytecode");
@@ -101,7 +101,7 @@ namespace {
       // Write an object containing its length as an integer to the
       // SPARC assembly stream
       writePrologue (Out, "LLVM BYTECODE LENGTH", "llvm_length");
-      Out <<"\t.word\t.end_LLVMBytecode-LLVMBytecode\n"; 
+      Out <<"\t.word\t.end_LLVMBytecode-LLVMBytecode\n";
       writeEpilogue (Out, "llvm_length");
 
       return false;

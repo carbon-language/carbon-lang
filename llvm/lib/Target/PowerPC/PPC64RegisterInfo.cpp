@@ -1,10 +1,10 @@
 //===- PPC64RegisterInfo.cpp - PowerPC64 Register Information ---*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file contains the PowerPC64 implementation of the MRegisterInfo class.
@@ -38,7 +38,7 @@ namespace llvm {
 
 PPC64RegisterInfo::PPC64RegisterInfo()
   : PPC64GenRegisterInfo(PPC::ADJCALLSTACKDOWN, PPC::ADJCALLSTACKUP) {
-  ImmToIdxMap[PPC::LD]   = PPC::LDX;    ImmToIdxMap[PPC::STD]  = PPC::STDX;    
+  ImmToIdxMap[PPC::LD]   = PPC::LDX;    ImmToIdxMap[PPC::STD]  = PPC::STDX;
   ImmToIdxMap[PPC::LBZ]  = PPC::LBZX;   ImmToIdxMap[PPC::STB]  = PPC::STBX;
   ImmToIdxMap[PPC::LHZ]  = PPC::LHZX;   ImmToIdxMap[PPC::LHA]  = PPC::LHAX;
   ImmToIdxMap[PPC::LWZ]  = PPC::LWZX;   ImmToIdxMap[PPC::LWA]  = PPC::LWAX;
@@ -62,7 +62,7 @@ static unsigned getIdx(const TargetRegisterClass *RC) {
       case 1:  return 0;
       case 2:  return 1;
       case 4:  return 2;
-      case 8:  return 3;         
+      case 8:  return 3;
     }
   } else if (RC == PPC64::FPRCRegisterClass) {
     switch (RC->getSize()) {
@@ -75,12 +75,12 @@ static unsigned getIdx(const TargetRegisterClass *RC) {
   abort();
 }
 
-void 
+void
 PPC64RegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                        MachineBasicBlock::iterator MI,
                                        unsigned SrcReg, int FrameIdx) const {
-  static const unsigned Opcode[] = { 
-    PPC::STB, PPC::STH, PPC::STW, PPC::STD, PPC::STFS, PPC::STFD 
+  static const unsigned Opcode[] = {
+    PPC::STB, PPC::STH, PPC::STW, PPC::STD, PPC::STFS, PPC::STFD
   };
   unsigned OC = Opcode[getIdx(getClass(SrcReg))];
   if (SrcReg == PPC::LR) {
@@ -97,8 +97,8 @@ void
 PPC64RegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
                                         MachineBasicBlock::iterator MI,
                                         unsigned DestReg, int FrameIdx) const{
-  static const unsigned Opcode[] = { 
-    PPC::LBZ, PPC::LHZ, PPC::LWZ, PPC::LD, PPC::LFS, PPC::LFD 
+  static const unsigned Opcode[] = {
+    PPC::LBZ, PPC::LHZ, PPC::LWZ, PPC::LD, PPC::LFS, PPC::LFD
   };
   unsigned OC = Opcode[getIdx(getClass(DestReg))];
   if (DestReg == PPC::LR) {
@@ -121,7 +121,7 @@ void PPC64RegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
     BuildMI(MBB, MI, PPC::OR, 2, DestReg).addReg(SrcReg).addReg(SrcReg);
   } else if (RC == PPC64::FPRCRegisterClass) {
     BuildMI(MBB, MI, PPC::FMR, 1, DestReg).addReg(SrcReg);
-  } else { 
+  } else {
     std::cerr << "Attempt to copy register that is not GPR or FPR";
     abort();
   }
@@ -155,7 +155,7 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
       // alignment boundary.
       unsigned Align = MF.getTarget().getFrameInfo()->getStackAlignment();
       Amount = (Amount+Align-1)/Align*Align;
-      
+
       // Replace the pseudo instruction with a new instruction...
       if (Old->getOpcode() == PPC::ADJCALLSTACKDOWN) {
         MBB.insert(I, BuildMI(PPC::ADDI, 2, PPC::R1).addReg(PPC::R1)
@@ -176,7 +176,7 @@ PPC64RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const {
   MachineInstr &MI = *II;
   MachineBasicBlock &MBB = *MI.getParent();
   MachineFunction &MF = *MBB.getParent();
-  
+
   while (!MI.getOperand(i).isFrameIndex()) {
     ++i;
     assert(i < MI.getNumOperands() && "Instr doesn't have FrameIndex operand!");
@@ -198,7 +198,7 @@ PPC64RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const {
   // SP before having the stack size subtracted from it, then add the stack size
   // to Offset to get the correct offset.
   Offset += MF.getFrameInfo()->getStackSize();
-  
+
   if (Offset > 32767 || Offset < -32768) {
     // Insert a set of r0 with the full offset value before the ld, st, or add
     MachineBasicBlock *MBB = MI.getParent();
@@ -208,7 +208,7 @@ PPC64RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const {
     // convert into indexed form of the instruction
     // sth 0:rA, 1:imm 2:(rB) ==> sthx 0:rA, 2:rB, 1:r0
     // addi 0:rA 1:rB, 2, imm ==> add 0:rA, 1:rB, 2:r0
-    unsigned NewOpcode = 
+    unsigned NewOpcode =
       const_cast<std::map<unsigned, unsigned>& >(ImmToIdxMap)[MI.getOpcode()];
     assert(NewOpcode && "No indexed form of load or store available!");
     MI.setOpcode(NewOpcode);
@@ -226,15 +226,15 @@ void PPC64RegisterInfo::emitPrologue(MachineFunction &MF) const {
   MachineBasicBlock::iterator MBBI = MBB.begin();
   MachineFrameInfo *MFI = MF.getFrameInfo();
   MachineInstr *MI;
-  
+
   // Get the number of bytes to allocate from the FrameInfo
   unsigned NumBytes = MFI->getStackSize();
 
   // If we have calls, we cannot use the red zone to store callee save registers
   // and we must set up a stack frame, so calculate the necessary size here.
   if (MFI->hasCalls()) {
-    // We reserve argument space for call sites in the function immediately on 
-    // entry to the current function.  This eliminates the need for add/sub 
+    // We reserve argument space for call sites in the function immediately on
+    // entry to the current function.  This eliminates the need for add/sub
     // brackets around call sites.
     NumBytes += MFI->getMaxCallFrameSize();
   }
@@ -242,7 +242,7 @@ void PPC64RegisterInfo::emitPrologue(MachineFunction &MF) const {
   // Do we need to allocate space on the stack?
   if (NumBytes == 0) return;
 
-  // Add the size of R1 to  NumBytes size for the store of R1 to the bottom 
+  // Add the size of R1 to  NumBytes size for the store of R1 to the bottom
   // of the stack and round the size to a multiple of the alignment.
   unsigned Align = MF.getTarget().getFrameInfo()->getStackAlignment();
   unsigned GPRSize = getSpillSize(PPC::R1)/8;
@@ -266,7 +266,7 @@ void PPC64RegisterInfo::emitPrologue(MachineFunction &MF) const {
     MI = BuildMI(PPC::STDUX, 3).addReg(PPC::R1).addReg(PPC::R1).addReg(PPC::R0);
     MBB.insert(MBBI, MI);
   }
-  
+
   if (hasFP(MF)) {
     MI = BuildMI(PPC::STD, 3).addReg(PPC::R31).addSImm(GPRSize).addReg(PPC::R1);
     MBB.insert(MBBI, MI);
@@ -282,7 +282,7 @@ void PPC64RegisterInfo::emitEpilogue(MachineFunction &MF,
   MachineInstr *MI;
   assert(MBBI->getOpcode() == PPC::BLR &&
          "Can only insert epilog into returning blocks");
-  
+
   // Get the number of bytes allocated from the FrameInfo...
   unsigned NumBytes = MFI->getStackSize();
 
@@ -314,7 +314,7 @@ PPC64RegisterInfo::getRegClassForType(const Type* Ty) const {
     case Type::PointerTyID:
     case Type::LongTyID:
     case Type::ULongTyID:  return &GPRCInstance;
-     
+
     case Type::FloatTyID:
     case Type::DoubleTyID: return &FPRCInstance;
   }

@@ -1,16 +1,16 @@
 //===-- PhyRegAlloc.h - Graph Coloring Register Allocator -------*- c++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
-//   
+//
 // This is the main entry point for register allocation.
 //
 // Notes:
-// * RegisterClasses: Each RegClass accepts a 
+// * RegisterClasses: Each RegClass accepts a
 //   TargetRegClass which contains machine specific info about that register
 //   class. The code in the RegClass is machine independent and they use
 //   access functions in the TargetRegClass object passed into it to get
@@ -27,7 +27,7 @@
 #include "LiveRangeInfo.h"
 #include "llvm/Pass.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
-#include "llvm/Target/TargetMachine.h" 
+#include "llvm/Target/TargetMachine.h"
 #include "../SparcV9RegInfo.h"
 #include <map>
 
@@ -42,9 +42,9 @@ class Constant;
 
 //----------------------------------------------------------------------------
 // Class AddedInstrns:
-// When register allocator inserts new instructions in to the existing 
+// When register allocator inserts new instructions in to the existing
 // instruction stream, it does NOT directly modify the instruction stream.
-// Rather, it creates an object of AddedInstrns and stick it in the 
+// Rather, it creates an object of AddedInstrns and stick it in the
 // AddedInstrMap for an existing instruction. This class contains two vectors
 // to store such instructions added before and after an existing instruction.
 //----------------------------------------------------------------------------
@@ -66,8 +66,8 @@ class PhyRegAlloc : public FunctionPass {
   const TargetMachine &TM;              // target machine
   const Function *Fn;                   // name of the function we work on
   MachineFunction *MF;                  // descriptor for method's native code
-  FunctionLiveVarInfo *LVI;             // LV information for this method 
-                                        // (already computed for BBs) 
+  FunctionLiveVarInfo *LVI;             // LV information for this method
+                                        // (already computed for BBs)
   LiveRangeInfo *LRI;                   // LR info  (will be computed)
   const SparcV9RegInfo &MRI;            // Machine Register information
   const unsigned NumOfRegClasses;       // recorded here for efficiency
@@ -76,7 +76,7 @@ class PhyRegAlloc : public FunctionPass {
   // updated according to their assigned colors.  This is only used in
   // assertion checking (debug builds).
   std::map<const MachineInstr *, bool> OperandsColoredMap;
-  
+
   // AddedInstrMap - Used to store instrns added in this phase
   std::map<const MachineInstr *, AddedInstrns> AddedInstrMap;
 
@@ -85,7 +85,7 @@ class PhyRegAlloc : public FunctionPass {
   ScratchRegsUsedTy ScratchRegsUsed;
 
   AddedInstrns AddedInstrAtEntry;       // to store instrns added at entry
-  const LoopInfo *LoopDepthCalc;        // to calculate loop depths 
+  const LoopInfo *LoopDepthCalc;        // to calculate loop depths
 
   PhyRegAlloc(const PhyRegAlloc&);     // DO NOT IMPLEMENT
   void operator=(const PhyRegAlloc&);  // DO NOT IMPLEMENT
@@ -117,7 +117,7 @@ public:
 private:
   SavedStateMapTy FnAllocState;
 
-  void addInterference(const Value *Def, const ValueSet *LVSet, 
+  void addInterference(const Value *Def, const ValueSet *LVSet,
 		       bool isCallInst);
   bool markAllocatedRegs(MachineInstr* MInst);
 
@@ -130,16 +130,16 @@ private:
   void saveState();
   void finishSavingState(Module &M);
 
-  void setCallInterferences(const MachineInstr *MI, 
+  void setCallInterferences(const MachineInstr *MI,
 			    const ValueSet *LVSetAft);
 
-  void move2DelayedInstr(const MachineInstr *OrigMI, 
+  void move2DelayedInstr(const MachineInstr *OrigMI,
 			 const MachineInstr *DelayedMI);
 
   void markUnusableSugColors();
   void allocateStackSpace4SpilledLRs();
 
-  void insertCode4SpilledLR(const LiveRange *LR, 
+  void insertCode4SpilledLR(const LiveRange *LR,
                             MachineBasicBlock::iterator& MII,
                             MachineBasicBlock &MBB, unsigned OpNum);
 
@@ -161,17 +161,17 @@ private:
 			  MachineInstr *MI,
                           std::vector<MachineInstr*>& MIBef,
                           std::vector<MachineInstr*>& MIAft);
-  
-  /// Callback method used to find unused registers. 
+
+  /// Callback method used to find unused registers.
   /// LVSetBef is the live variable set to search for an unused register.
   /// If it is not specified, the LV set before the current MI is used.
   /// This is sufficient as long as no new copy instructions are generated
   /// to copy the free register to memory.
-  /// 
+  ///
   int getUnusedUniRegAtMI(RegClass *RC, int RegType,
                           const MachineInstr *MI,
                           const ValueSet *LVSetBef = 0);
-  
+
   void setRelRegsUsedByThisInst(RegClass *RC, int RegType,
                                 const MachineInstr *MI);
 

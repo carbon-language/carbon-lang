@@ -1,9 +1,9 @@
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 // FIXME: Eliminate this file.
 
@@ -13,7 +13,7 @@
 
 namespace llvm {
 
-std::ostream &operator<<(std::ostream &O, RAV V) { // func to print a Value 
+std::ostream &operator<<(std::ostream &O, RAV V) { // func to print a Value
   const Value &v = V.V;
   if (v.hasName())
     return O << (void*)&v << "(" << v.getName() << ") ";

@@ -1,17 +1,17 @@
 //===-- SparcV9InstrInfo.h - Define TargetInstrInfo for SparcV9 -*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This class contains information about individual instructions.
 // Also see the SparcV9MachineInstrDesc array, which can be found in
 // SparcV9TargetMachine.cpp.
 // Other information is computed on demand, and most such functions
-// default to member functions in base class TargetInstrInfo. 
+// default to member functions in base class TargetInstrInfo.
 //
 //===----------------------------------------------------------------------===//
 
@@ -41,7 +41,7 @@ public:
 
   // All immediate constants are in position 1 except the
   // store instructions and SETxx.
-  // 
+  //
   virtual int getImmedConstantPos(MachineOpCode opCode) const {
     bool ignore;
     if (this->maxImmedConstant(opCode, ignore) != 0) {

@@ -1,10 +1,10 @@
 //===- SkeletonRegisterInfo.cpp - Skeleton Register Information -*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file contains the Skeleton implementation of the MRegisterInfo class.
@@ -45,7 +45,7 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
   abort();
 }
 
-void SkeletonRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) 
+void SkeletonRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II)
   const {
   abort();
 }
@@ -81,7 +81,7 @@ SkeletonRegisterInfo::getRegClassForType(const Type* Ty) const {
   case Type::IntTyID:
   case Type::UIntTyID:
   case Type::PointerTyID: return &GPRCInstance;
-    
+
   case Type::FloatTyID:
   case Type::DoubleTyID: return &FPRCInstance;
   }

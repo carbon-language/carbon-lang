@@ -20,7 +20,7 @@
 // TableGen to generate the register file description automatically.
 // It consists of register classes and register class instances
 // for the SparcV9 target.
-// 
+//
 // FIXME: the alignments listed here are wild guesses.
 //
 //===----------------------------------------------------------------------===//
@@ -295,7 +295,7 @@ void SparcV9RegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
   abort ();
 }
 
-void SparcV9RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MI) 
+void SparcV9RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator MI)
   const {
   abort ();
 }

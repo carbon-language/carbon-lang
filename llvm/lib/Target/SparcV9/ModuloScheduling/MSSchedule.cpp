@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// 
+//
 //
 //===----------------------------------------------------------------------===//
 #define DEBUG_TYPE "ModuloSched"
@@ -21,7 +21,7 @@ using namespace llvm;
 
 //Returns a boolean indicating if the start cycle needs to be increased/decreased
 bool MSSchedule::insert(MSchedGraphNode *node, int cycle) {
-  
+
   //First, check if the cycle has a spot free to start
   if(schedule.find(cycle) != schedule.end()) {
     //Check if we have a free issue slot at this cycle
@@ -48,7 +48,7 @@ bool MSSchedule::insert(MSchedGraphNode *node, int cycle) {
 
   DEBUG(std::cerr << "All issue slots taken\n");
   return true;
-  
+
 }
 
 void MSSchedule::addToSchedule(int cycle, MSchedGraphNode *node) {
@@ -64,31 +64,31 @@ void MSSchedule::addToSchedule(int cycle, MSchedGraphNode *node) {
   std::vector<MSchedGraphNode*> nodes;
   for(std::map<unsigned, MSchedGraphNode*>::iterator I = indexMap.begin(), E = indexMap.end(); I != E; ++I)
     nodes.push_back(I->second);
-  
+
   schedule[cycle] =  nodes;
 }
 
 
 bool MSSchedule::resourcesFree(MSchedGraphNode *node, int cycle) {
-  
+
   //Get Resource usage for this instruction
   const TargetSchedInfo *msi = node->getParent()->getTarget()->getSchedInfo();
   int currentCycle = cycle;
   bool success = true;
-  
+
   //Get resource usage for this instruction
   InstrRUsage rUsage = msi->getInstrRUsage(node->getInst()->getOpcode());
   std::vector<std::vector<resourceId_t> > resources = rUsage.resourcesByCycle;
-  
+
   //Loop over resources in each cycle and increments their usage count
   for(unsigned i=0; i < resources.size(); ++i) {
     for(unsigned j=0; j < resources[i].size(); ++j) {
-      
+
       //Get Resource to check its availability
       int resourceNum = resources[i][j];
-      
+
       DEBUG(std::cerr << "Attempting to schedule Resource Num: " << resourceNum << " in cycle: " << currentCycle << "\n");
-      
+
 	//Check if this resource is available for this cycle
 	std::map<int, std::map<int,int> >::iterator resourcesForCycle = resourceNumPerCycle.find(currentCycle);
 
@@ -100,7 +100,7 @@ bool MSSchedule::resourcesFree(MSchedGraphNode *node, int cycle) {
 	    //Check if there are enough of this resource and if so, increase count and move on
 	    if(resourceUse->second < CPUResource::getCPUResource(resourceNum)->maxNumUsers)
 	      ++resourceUse->second;
-	    
+	
 	    else {
 	      DEBUG(std::cerr << "No resource num " << resourceNum << " available for cycle " << currentCycle << "\n");
 	      success = false;
@@ -123,18 +123,18 @@ bool MSSchedule::resourcesFree(MSchedGraphNode *node, int cycle) {
       if(!success)
 	break;
 	
-      
+
       //Increase cycle
       currentCycle++;
   }
-  
+
   if(!success) {
     int oldCycle = cycle;
     DEBUG(std::cerr << "Backtrack\n");
     //Get resource usage for this instruction
     InstrRUsage rUsage = msi->getInstrRUsage(node->getInst()->getOpcode());
     std::vector<std::vector<resourceId_t> > resources = rUsage.resourcesByCycle;
-    
+
     //Loop over resources in each cycle and increments their usage count
     for(unsigned i=0; i < resources.size(); ++i) {
       if(oldCycle < currentCycle) {
@@ -158,7 +158,7 @@ bool MSSchedule::resourcesFree(MSchedGraphNode *node, int cycle) {
       oldCycle++;
     }
     return false;
-    
+
   }
 
   return true;
@@ -166,7 +166,7 @@ bool MSSchedule::resourcesFree(MSchedGraphNode *node, int cycle) {
 }
 
 bool MSSchedule::constructKernel(int II, std::vector<MSchedGraphNode*> &branches, std::map<const MachineInstr*, unsigned> &indVar) {
- 
+
   //Our schedule is allowed to have negative numbers, so lets calculate this offset
   int offset = schedule.begin()->first;
   if(offset > 0)
@@ -184,12 +184,12 @@ bool MSSchedule::constructKernel(int II, std::vector<MSchedGraphNode*> &branches
   int maxSN = 0;
 
   DEBUG(std::cerr << "Number of Stages: " << stageNum << "\n");
-  
+
   for(int index = offset; index < (II+offset); ++index) {
     int count = 0;
-    for(int i = index; i <= (schedule.rbegin()->first); i+=II) {  
+    for(int i = index; i <= (schedule.rbegin()->first); i+=II) {
       if(schedule.count(i)) {
-	for(std::vector<MSchedGraphNode*>::iterator I = schedule[i].begin(), 
+	for(std::vector<MSchedGraphNode*>::iterator I = schedule[i].begin(),
 	      E = schedule[i].end(); I != E; ++I) {
 	  //Check if its a branch
 	  if((*I)->isBranch()) {
@@ -228,7 +228,7 @@ bool MSSchedule::constructKernel(int II, std::vector<MSchedGraphNode*> &branches
 	indVar.erase(N->second);
       }
     }
-   
+
     kernel.push_back(std::make_pair((MachineInstr*) I->first->getInst(), I->second));
 
   }
@@ -256,7 +256,7 @@ bool MSSchedule::constructKernel(int II, std::vector<MSchedGraphNode*> &branches
 
 void MSSchedule::print(std::ostream &os) const {
   os << "Schedule:\n";
-  
+
   for(schedule_const_iterator I =  schedule.begin(), E = schedule.end(); I != E; ++I) {
     os << "Cycle: " << I->first << "\n";
     for(std::vector<MSchedGraphNode*>::const_iterator node = I->second.begin(), nodeEnd = I->second.end(); node != nodeEnd; ++node)
@@ -268,4 +268,4 @@ void MSSchedule::print(std::ostream &os) const {
 	E = kernel.end(); I != E; ++I)
     os << "Node: " << *(I->first) << " Stage: " << I->second << "\n";
 }
-  
+

@@ -1,10 +1,10 @@
 //===-- PPC32JITInfo.cpp - Implement the JIT interfaces for the PowerPC ---===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements the JIT interfaces for the 32-bit PowerPC target.
@@ -66,9 +66,9 @@ asm(
     "stw r11, 280(r1)\n"    // Set up a proper stack frame
     "stmw r3, 156(r1)\n"    // Save all of the integer registers
     // Save all call-clobbered FP regs.
-    "stfd f1, 44(r1)\n"  "stfd f2, 52(r1)\n"  "stfd f3, 60(r1)\n" 
-    "stfd f4, 68(r1)\n" "stfd f5, 76(r1)\n" "stfd f6, 84(r1)\n" 
-    "stfd f7, 92(r1)\n" "stfd f8, 100(r1)\n" "stfd f9, 108(r1)\n" 
+    "stfd f1, 44(r1)\n"  "stfd f2, 52(r1)\n"  "stfd f3, 60(r1)\n"
+    "stfd f4, 68(r1)\n" "stfd f5, 76(r1)\n" "stfd f6, 84(r1)\n"
+    "stfd f7, 92(r1)\n" "stfd f8, 100(r1)\n" "stfd f9, 108(r1)\n"
     "stfd f10, 116(r1)\n" "stfd f11, 124(r1)\n" "stfd f12, 132(r1)\n"
     "stfd f13, 140(r1)\n"
 
@@ -112,7 +112,7 @@ extern "C" void PPC32CompilationCallbackC(unsigned *IntRegs, double *FPRegs) {
       CameFromOrig[-1] = CameFromOrigInst;
     }
   }
-  
+
   // Locate the start of the stub.  If this is a short call, adjust backwards
   // the short amount, otherwise the full amount.
   bool isShortStub = (*CameFromStub >> 26) == 18;
@@ -135,9 +135,9 @@ extern "C" void PPC32CompilationCallbackC(unsigned *IntRegs, double *FPRegs) {
   register unsigned *IRR asm ("r2") = IntRegs;
   register double   *FRR asm ("r3") = FPRegs;
   __asm__ __volatile__ (
-  "lfd f1, 0(%0)\n"  "lfd f2, 8(%0)\n"  "lfd f3, 16(%0)\n" 
-  "lfd f4, 24(%0)\n" "lfd f5, 32(%0)\n" "lfd f6, 40(%0)\n" 
-  "lfd f7, 48(%0)\n" "lfd f8, 56(%0)\n" "lfd f9, 64(%0)\n" 
+  "lfd f1, 0(%0)\n"  "lfd f2, 8(%0)\n"  "lfd f3, 16(%0)\n"
+  "lfd f4, 24(%0)\n" "lfd f5, 32(%0)\n" "lfd f6, 40(%0)\n"
+  "lfd f7, 48(%0)\n" "lfd f8, 56(%0)\n" "lfd f9, 64(%0)\n"
   "lfd f10, 72(%0)\n" "lfd f11, 80(%0)\n" "lfd f12, 88(%0)\n"
   "lfd f13, 96(%0)\n"
   "lmw r3, 0(%1)\n"  // Load all integer regs
@@ -147,13 +147,13 @@ extern "C" void PPC32CompilationCallbackC(unsigned *IntRegs, double *FPRegs) {
   "mtctr r0\n"       // Put it into the CTR register
   "lwz r1,0(r1)\n"   // Pop two frames off
   "bctr\n" ::        // Return to stub!
-  "b" (FRR), "b" (IRR)); 
+  "b" (FRR), "b" (IRR));
 #endif
 }
 
 
 
-TargetJITInfo::LazyResolverFn 
+TargetJITInfo::LazyResolverFn
 PPC32JITInfo::getLazyResolverFunction(JITCompilerFn Fn) {
   JITCompilerFunction = Fn;
   return PPC32CompilationCallback;

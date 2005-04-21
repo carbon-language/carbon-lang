@@ -1,12 +1,12 @@
 //===-- SparcV9FunctionInfo.cpp -------------------------------------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
-// 
+//
 // This implements the SparcV9 specific MachineFunctionInfo class.
 //
 //===----------------------------------------------------------------------===//
@@ -25,7 +25,7 @@ ComputeMaxOptionalArgsSize(const TargetMachine& target, const Function *F,
                            unsigned &maxOptionalNumArgs)
 {
   unsigned maxSize = 0;
-  
+
   for (Function::const_iterator BB = F->begin(), BBE = F->end(); BB !=BBE; ++BB)
     for (BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I != E; ++I)
       if (const CallInst *callInst = dyn_cast<CallInst>(I))
@@ -34,16 +34,16 @@ ComputeMaxOptionalArgsSize(const TargetMachine& target, const Function *F,
           int numExtra = numOperands-6;
           if (numExtra <= 0)
             continue;
-          
+
           unsigned sizeForThisCall = numExtra * 8;
-          
+
           if (maxSize < sizeForThisCall)
             maxSize = sizeForThisCall;
-          
+
           if ((int)maxOptionalNumArgs < numExtra)
             maxOptionalNumArgs = (unsigned) numExtra;
         }
-  
+
   return maxSize;
 }
 
@@ -55,7 +55,7 @@ ComputeMaxOptionalArgsSize(const TargetMachine& target, const Function *F,
 // This function is similar to the corresponding function in EmitAssembly.cpp
 // but they are unrelated.  This one does not align at more than a
 // double-word boundary whereas that one might.
-// 
+//
 inline unsigned
 SizeToAlignment(unsigned size, const TargetMachine& target)
 {
@@ -108,9 +108,9 @@ int SparcV9FunctionInfo::allocateLocalVar(const Value* val,
   assert(! automaticVarsAreaFrozen &&
          "Size of auto vars area has been used to compute an offset so "
          "no more automatic vars should be allocated!");
-  
+
   // Check if we've allocated a stack slot for this value already
-  // 
+  //
   hash_map<const Value*, int>::const_iterator pair = offsets.find(val);
   if (pair != offsets.end())
     return pair->second;
@@ -128,19 +128,19 @@ SparcV9FunctionInfo::allocateSpilledValue(const Type* type)
   assert(! spillsAreaFrozen &&
          "Size of reg spills area has been used to compute an offset so "
          "no more register spill slots should be allocated!");
-  
+
   unsigned size  = MF.getTarget().getTargetData().getTypeSize(type);
   unsigned char align = MF.getTarget().getTargetData().getTypeAlignment(type);
-  
+
   bool growUp;
   int firstOffset = MF.getTarget().getFrameInfo()->getRegSpillAreaOffset(MF, growUp);
-  
+
   int offset = growUp? firstOffset + getRegSpillsSize()
                      : firstOffset - (getRegSpillsSize() + size);
 
   int aligned = MF.getTarget().getFrameInfo()->adjustAlignment(offset, growUp, align);
   size += abs(aligned - offset); // include alignment padding in size
-  
+
   incrementRegSpillsSize(size);  // update size of reg. spills area
 
   return aligned;

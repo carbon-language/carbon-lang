@@ -1,10 +1,10 @@
 //===- SparcV9PreSelection.cpp - Specialize LLVM code for SparcV9 ---------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines the PreSelection pass which specializes LLVM code for
@@ -34,7 +34,7 @@ namespace {
 
   //===--------------------------------------------------------------------===//
   // PreSelection Pass - Specialize LLVM code for the SparcV9 instr. selector.
-  // 
+  //
   class PreSelection : public FunctionPass, public InstVisitor<PreSelection> {
     const TargetInstrInfo &instrInfo;
 
@@ -50,7 +50,7 @@ namespace {
     const char *getPassName() const { return "SparcV9 Instr. Pre-selection"; }
 
     // These methods do the actual work of specializing code
-    void visitInstruction(Instruction &I);   // common work for every instr. 
+    void visitInstruction(Instruction &I);   // common work for every instr.
     void visitGetElementPtrInst(GetElementPtrInst &I);
     void visitCallInst(CallInst &I);
     void visitPHINode(PHINode &PN);
@@ -65,12 +65,12 @@ namespace {
     }
 
     // Helper functions for visiting operands of every instruction
-    // 
+    //
     // visitOperands() works on every operand in [firstOp, lastOp-1].
     // If lastOp==0, lastOp defaults to #operands or #incoming Phi values.
-    // 
+    //
     // visitOneOperand() does all the work for one operand.
-    // 
+    //
     void visitOperands(Instruction &I, int firstOp=0);
     void visitOneOperand(Instruction &I, Value* Op, unsigned opNum,
                          Instruction& insertBefore);
@@ -110,7 +110,7 @@ static Instruction* DecomposeConstantExpr(ConstantExpr* CE,
                                           Instruction& insertBefore)
 {
   Value *getArg1, *getArg2;
-  
+
   switch(CE->getOpcode())
     {
     case Instruction::Cast:
@@ -131,7 +131,7 @@ static Instruction* DecomposeConstantExpr(ConstantExpr* CE,
       return new GetElementPtrInst(getArg1,
                           std::vector<Value*>(CE->op_begin()+1, CE->op_end()),
                           "constantGEP:" + getArg1->getName(), &insertBefore);
-                          
+
     case Instruction::Select: {
       Value *C, *S1, *S2;
       C = CE->getOperand (0);
@@ -145,7 +145,7 @@ static Instruction* DecomposeConstantExpr(ConstantExpr* CE,
         S2 = DecomposeConstantExpr (CEarg, insertBefore);
       return new SelectInst (C, S1, S2, "constantSelect", &insertBefore);
     }
-    
+
     default:                            // must be a binary operator
       assert(CE->getOpcode() >= Instruction::BinaryOpsBegin &&
              CE->getOpcode() <  Instruction::BinaryOpsEnd &&
@@ -206,10 +206,10 @@ PreSelection::visitOneOperand(Instruction &I, Value* Op, unsigned opNum,
 ///    depends on the type of instruction and on the target architecture.
 /// -- For any constants that cannot be put in an immediate field,
 ///    load address into virtual register first, and then load the constant.
-/// 
+///
 /// firstOp and lastOp can be used to skip leading and trailing operands.
 /// If lastOp is 0, it defaults to #operands or #incoming Phi values.
-///  
+///
 inline void PreSelection::visitOperands(Instruction &I, int firstOp) {
   // For any instruction other than PHI, copies go just before the instr.
   for (unsigned i = firstOp, e = I.getNumOperands(); i != e; ++i)
@@ -221,7 +221,7 @@ void PreSelection::visitPHINode(PHINode &PN) {
   // For a PHI, operand copies must be before the terminator of the
   // appropriate predecessor basic block.  Remaining logic is simple
   // so just handle PHIs and other instructions separately.
-  // 
+  //
   for (unsigned i = 0, e = PN.getNumIncomingValues(); i != e; ++i)
     visitOneOperand(PN, PN.getIncomingValue(i),
                     PN.getOperandNumForIncomingValue(i),
@@ -231,12 +231,12 @@ void PreSelection::visitPHINode(PHINode &PN) {
 
 // Common work for *all* instructions.  This needs to be called explicitly
 // by other visit<InstructionType> functions.
-inline void PreSelection::visitInstruction(Instruction &I) { 
+inline void PreSelection::visitInstruction(Instruction &I) {
   visitOperands(I);              // Perform operand transformations
 }
 
 // GetElementPtr instructions: check if pointer is a global
-void PreSelection::visitGetElementPtrInst(GetElementPtrInst &I) { 
+void PreSelection::visitGetElementPtrInst(GetElementPtrInst &I) {
   Instruction* curI = &I;
 
   // The Sparc backend doesn't handle array indexes that are not long types, so

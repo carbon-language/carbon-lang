@@ -1,10 +1,10 @@
 //===-- AllocInfo.h - Store info about regalloc decisions -------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This header file contains the data structure used to save the state
@@ -35,7 +35,7 @@ struct AllocInfo {
   AllocInfo (int Inst_, int Op_, AllocStateTy State_, int Place_) :
     Instruction(Inst_), Operand(Op_), AllocState(State_), Placement(Place_) { }
 
-  /// AllocInfo constructor -- Default constructor creates an invalid AllocInfo 
+  /// AllocInfo constructor -- Default constructor creates an invalid AllocInfo
   /// (presumably to be replaced with something meaningful later).
   ///
   AllocInfo () :
@@ -71,8 +71,8 @@ struct AllocInfo {
   ///
   bool operator== (const AllocInfo &X) const {
     return (X.AllocState == AllocState) && (X.Placement == Placement);
-  } 
-  bool operator!= (const AllocInfo &X) const { return !(*this == X); } 
+  }
+  bool operator!= (const AllocInfo &X) const { return !(*this == X); }
 
   /// Returns a human-readable string representation of the AllocState member.
   ///

@@ -1,16 +1,16 @@
 //===-- SparcV9TargetMachine.cpp - SparcV9 Target Machine Implementation --===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
-// 
+//
 // Primary interface to machine description for the UltraSPARC.  Primarily just
 // initializes machine-dependent parameters in class TargetMachine, and creates
 // machine-dependent subclasses for classes such as TargetInstrInfo.
-// 
+//
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Function.h"
@@ -23,7 +23,7 @@
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetMachineRegistry.h"
 #include "llvm/Transforms/Scalar.h"
-#include "MappingInfo.h" 
+#include "MappingInfo.h"
 #include "MachineFunctionInfo.h"
 #include "MachineCodeForInstruction.h"
 #include "SparcV9Internals.h"
@@ -63,7 +63,7 @@ namespace {
                  cl::init(false),
                  cl::desc("Emit LLVM-to-MachineCode mapping info to assembly"));
 
-  cl::opt<bool> EnableModSched("enable-modsched", 
+  cl::opt<bool> EnableModSched("enable-modsched",
 	 cl::desc("Enable modulo scheduling pass instead of local scheduling"), cl::Hidden);
 
   // Register the target.
@@ -103,11 +103,11 @@ namespace {
     TargetMachine &Target;
   public:
     ConstructMachineFunction(TargetMachine &T) : Target(T) {}
-    
+
     const char *getPassName() const {
       return "ConstructMachineFunction";
     }
-    
+
     bool runOnFunction(Function &F) {
       MachineFunction::construct(&F, Target).getInfo<SparcV9FunctionInfo>()->CalculateArgSize();
       return false;
@@ -116,24 +116,24 @@ namespace {
 
   struct DestroyMachineFunction : public FunctionPass {
     const char *getPassName() const { return "DestroyMachineFunction"; }
-    
+
     static void freeMachineCode(Instruction &I) {
       MachineCodeForInstruction::destroy(&I);
     }
-    
+
     bool runOnFunction(Function &F) {
       for (Function::iterator FI = F.begin(), FE = F.end(); FI != FE; ++FI)
         for (BasicBlock::iterator I = FI->begin(), E = FI->end(); I != E; ++I)
           MachineCodeForInstruction::get(I).dropAllReferences();
-      
+
       for (Function::iterator FI = F.begin(), FE = F.end(); FI != FE; ++FI)
         for_each(FI->begin(), FI->end(), freeMachineCode);
-      
+
       MachineFunction::destruct(&F);
       return false;
     }
   };
-  
+
   FunctionPass *createMachineCodeConstructionPass(TargetMachine &Target) {
     return new ConstructMachineFunction(Target);
   }
@@ -164,13 +164,13 @@ SparcV9TargetMachine::addPassesToEmitAssembly(PassManager &PM, std::ostream &Out
 
   // Replace malloc and free instructions with library calls.
   PM.add(createLowerAllocationsPass());
-  
+
   // FIXME: implement the switch instruction in the instruction selector.
   PM.add(createLowerSwitchPass());
 
   // FIXME: implement the invoke/unwind instructions!
   PM.add(createLowerInvokePass());
-  
+
   // decompose multi-dimensional array references into single-dim refs
   PM.add(createDecomposeMultiDimRefsPass());
 
@@ -189,7 +189,7 @@ SparcV9TargetMachine::addPassesToEmitAssembly(PassManager &PM, std::ostream &Out
   // Insert empty stackslots in the stack frame of each function
   // so %fp+offset-8 and %fp+offset-16 are empty slots now!
   PM.add(createStackSlotsPass(*this));
-  
+
   PM.add(createSparcV9BurgInstSelector(*this));
 
   if (!DisableSched)
@@ -201,7 +201,7 @@ SparcV9TargetMachine::addPassesToEmitAssembly(PassManager &PM, std::ostream &Out
   //Use ModuloScheduling if enabled, otherwise use local scheduling if not disabled.
   if(EnableModSched)
     PM.add(createModuloSchedulingPass(*this));
-  
+
   if (PrintMachineCode)
     PM.add(createMachineFunctionPrinterPass(&std::cerr, "Before reg alloc:\n"));
 
@@ -236,7 +236,7 @@ SparcV9TargetMachine::addPassesToEmitAssembly(PassManager &PM, std::ostream &Out
   // Emit bytecode to the assembly file into its special section next
   if (EmitMappingInfo)
     PM.add(createBytecodeAsmPrinterPass(Out));
-  
+
   return false;
 }
 
@@ -249,13 +249,13 @@ void SparcV9JITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
 
   // Replace malloc and free instructions with library calls.
   PM.add(createLowerAllocationsPass());
-  
+
   // FIXME: implement the switch instruction in the instruction selector.
   PM.add(createLowerSwitchPass());
 
   // FIXME: implement the invoke/unwind instructions!
   PM.add(createLowerInvokePass());
-  
+
   // decompose multi-dimensional array references into single-dim refs
   PM.add(createDecomposeMultiDimRefsPass());
 

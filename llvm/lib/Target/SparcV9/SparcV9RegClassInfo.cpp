@@ -1,10 +1,10 @@
 //===-- SparcV9RegClassInfo.cpp - Register class def'ns for SparcV9 -------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines the methods used by the SparcV9 register allocator
@@ -34,7 +34,7 @@ namespace llvm {
 //     If there is call interf, try to allocate non-volatile. If that fails
 //     try to allocate a volatile and insert save across calls
 //     If both above fail, spill.
-//  
+//
 //-----------------------------------------------------------------------------
 void SparcV9IntRegClass::colorIGNode(IGNode * Node,
                                const std::vector<bool> &IsColorUsedArr) const
@@ -43,7 +43,7 @@ void SparcV9IntRegClass::colorIGNode(IGNode * Node,
 
   if (DEBUG_RA)
     std::cerr << "\nColoring LR [CallInt=" << LR->isCallInterference() <<"]:"
-              << *LR << "\n"; 
+              << *LR << "\n";
 
   if (LR->hasSuggestedColor()) {
     unsigned SugCol = LR->getSuggestedColor();
@@ -69,18 +69,18 @@ void SparcV9IntRegClass::colorIGNode(IGNode * Node,
   bool ColorFound= false;               // have we found a color yet?
 
   //if this Node is between calls
-  if (! LR->isCallInterference()) { 
+  if (! LR->isCallInterference()) {
     // start with volatiles (we can  allocate volatiles safely)
-    SearchStart = SparcV9IntRegClass::StartOfAllRegs;  
-  } else {           
+    SearchStart = SparcV9IntRegClass::StartOfAllRegs;
+  } else {
     // start with non volatiles (no non-volatiles)
-    SearchStart =  SparcV9IntRegClass::StartOfNonVolatileRegs;  
+    SearchStart =  SparcV9IntRegClass::StartOfNonVolatileRegs;
   }
 
   unsigned c=0;                         // color
- 
+
   // find first unused color
-  for (c=SearchStart; c < SparcV9IntRegClass::NumOfAvailRegs; c++) { 
+  for (c=SearchStart; c < SparcV9IntRegClass::NumOfAvailRegs; c++) {
     if (!IsColorUsedArr[c]) {
       ColorFound = true;
       break;
@@ -97,20 +97,20 @@ void SparcV9IntRegClass::colorIGNode(IGNode * Node,
   //
   else if (LR->isCallInterference()) {
     // start from 0 - try to find even a volatile this time
-    SearchStart = SparcV9IntRegClass::StartOfAllRegs;  
+    SearchStart = SparcV9IntRegClass::StartOfAllRegs;
 
     // find first unused volatile color
-    for(c=SearchStart; c < SparcV9IntRegClass::StartOfNonVolatileRegs; c++) { 
+    for(c=SearchStart; c < SparcV9IntRegClass::StartOfNonVolatileRegs; c++) {
       if (! IsColorUsedArr[c]) {
         ColorFound = true;
         break;
       }
     }
 
-    if (ColorFound) { 
-      LR->setColor(c);  
+    if (ColorFound) {
+      LR->setColor(c);
       //  get the live range corresponding to live var
-      // since LR span across calls, must save across calls 
+      // since LR span across calls, must save across calls
       //
       if (DEBUG_RA)
         std::cerr << "\n  Colored after SECOND search with col " << c;
@@ -121,7 +121,7 @@ void SparcV9IntRegClass::colorIGNode(IGNode * Node,
   // If we couldn't find a color regardless of call interference - i.e., we
   // don't have either a volatile or non-volatile color left
   //
-  if (!ColorFound)  
+  if (!ColorFound)
     LR->markForSpill();               // no color found - must spill
 }
 
@@ -137,7 +137,7 @@ void SparcV9IntRegClass::colorIGNode(IGNode * Node,
 //         if (the LR is a 64-bit comparison) use %xcc
 //         else /*32-bit or smaller*/ use %icc
 //     }
-// 
+//
 // Note: The third name (%ccr) is essentially an assembly mnemonic and
 // depends solely on the opcode, so the name can be chosen in EmitAssembly.
 //-----------------------------------------------------------------------------
@@ -151,7 +151,7 @@ void SparcV9IntCCRegClass::colorIGNode(IGNode *Node,
   // because there is only one possible register, but more importantly, the
   // spill algorithm cannot find it.  In particular, we have to choose
   // whether to use %xcc or %icc based on type of value compared
-  // 
+  //
   const LiveRange* ccLR = Node->getParentLR();
   const Type* setCCType = (* ccLR->begin())->getType(); // any Value in LR
   assert(setCCType->isIntegral() || isa<PointerType>(setCCType));
@@ -178,10 +178,10 @@ void SparcV9FloatCCRegClass::colorIGNode(IGNode *Node,
                                 const std::vector<bool> &IsColorUsedArr) const {
   for(unsigned c = 0; c != 4; ++c)
     if (!IsColorUsedArr[c]) { // find unused color
-      Node->setColor(c);   
+      Node->setColor(c);
       return;
     }
-  
+
   Node->getParentLR()->markForSpill();
 }
 
@@ -209,30 +209,30 @@ void SparcV9FloatRegClass::colorIGNode(IGNode * Node,
 
 #ifndef NDEBUG
   // Check that the correct colors have been are marked for fp-doubles.
-  // 
+  //
   // FIXME: This is old code that is no longer needed.  Temporarily converting
   // it into a big assertion just to check that the replacement logic
   // (invoking SparcV9FloatRegClass::markColorsUsed() directly from
   // RegClass::colorIGNode) works correctly.
-  // 
+  //
   // In fact, this entire function should be identical to
   // SparcV9IntRegClass::colorIGNode(), and perhaps can be
-  // made into a general case in CodeGen/RegAlloc/RegClass.cpp.  
-  // 
+  // made into a general case in CodeGen/RegAlloc/RegClass.cpp.
+  //
   unsigned NumNeighbors =  Node->getNumOfNeighbors();   // total # of neighbors
-  for(unsigned n=0; n < NumNeighbors; n++) {            // for each neigh 
+  for(unsigned n=0; n < NumNeighbors; n++) {            // for each neigh
     IGNode *NeighIGNode = Node->getAdjIGNode(n);
     LiveRange *NeighLR = NeighIGNode->getParentLR();
-    
+
     if (NeighLR->hasColor()) {
       assert(IsColorUsedArr[ NeighLR->getColor() ]);
       if (NeighLR->getType() == Type::DoubleTy)
         assert(IsColorUsedArr[ NeighLR->getColor()+1 ]);
-      
+
     } else if (NeighLR->hasSuggestedColor() &&
                NeighLR-> isSuggestedColorUsable() ) {
 
-      // if the neighbour can use the suggested color 
+      // if the neighbour can use the suggested color
       assert(IsColorUsedArr[ NeighLR->getSuggestedColor() ]);
       if (NeighLR->getType() == Type::DoubleTy)
         assert(IsColorUsedArr[ NeighLR->getSuggestedColor()+1 ]);
@@ -242,9 +242,9 @@ void SparcV9FloatRegClass::colorIGNode(IGNode * Node,
 
   // **NOTE: We don't check for call interferences in allocating suggested
   // color in this class since ALL registers are volatile. If this fact
-  // changes, we should change the following part 
+  // changes, we should change the following part
   //- see SparcV9IntRegClass::colorIGNode()
-  // 
+  //
   if( LR->hasSuggestedColor() ) {
     if( ! IsColorUsedArr[ LR->getSuggestedColor() ] ) {
       LR->setColor(  LR->getSuggestedColor() );
@@ -264,40 +264,40 @@ void SparcV9FloatRegClass::colorIGNode(IGNode * Node,
   // cannot go there. By doing that, we provide more space for singles
   // in f0 - f31
   //
-  if (LR->getType() == Type::DoubleTy)       
+  if (LR->getType() == Type::DoubleTy)
     ColorFound = findFloatColor( LR, 32, 64, IsColorUsedArr );
 
   if (ColorFound >= 0) {               // if we could find a color
-    LR->setColor(ColorFound);                
+    LR->setColor(ColorFound);
     return;
-  } else { 
+  } else {
 
     // if we didn't find a color because the LR was single precision or
     // all f32-f63 range is filled, we try to allocate a register from
-    // the f0 - f31 region 
+    // the f0 - f31 region
 
     unsigned SearchStart;                 // start pos of color in pref-order
 
     //if this Node is between calls (i.e., no call interferences )
     if (! isCallInterf) {
       // start with volatiles (we can  allocate volatiles safely)
-      SearchStart = SparcV9FloatRegClass::StartOfAllRegs;  
+      SearchStart = SparcV9FloatRegClass::StartOfAllRegs;
     } else {
       // start with non volatiles (no non-volatiles)
-      SearchStart =  SparcV9FloatRegClass::StartOfNonVolatileRegs;  
+      SearchStart =  SparcV9FloatRegClass::StartOfNonVolatileRegs;
     }
-    
+
     ColorFound = findFloatColor(LR, SearchStart, 32, IsColorUsedArr);
   }
 
   if (ColorFound >= 0) {               // if we could find a color
-    LR->setColor(ColorFound);                  
+    LR->setColor(ColorFound);
     return;
-  } else if (isCallInterf) { 
+  } else if (isCallInterf) {
     // We are here because there is a call interference and no non-volatile
     // color could be found.
     // Now try to allocate even a volatile color
-    ColorFound = findFloatColor(LR, SparcV9FloatRegClass::StartOfAllRegs, 
+    ColorFound = findFloatColor(LR, SparcV9FloatRegClass::StartOfAllRegs,
 				SparcV9FloatRegClass::StartOfNonVolatileRegs,
 				IsColorUsedArr);
   }
@@ -345,7 +345,7 @@ void SparcV9FloatRegClass::markColorsUsed(unsigned RegInClass,
 // entry in the array directly for float regs, and checks the pair [R,R+1]
 // for double-precision registers
 // It returns -1 if no unused color is found.
-// 
+//
 int SparcV9FloatRegClass::findUnusedColor(int RegTypeWanted,
                                 const std::vector<bool> &IsColorUsedArr) const
 {
@@ -369,13 +369,13 @@ int SparcV9FloatRegClass::findUnusedColor(int RegTypeWanted,
 // type of the Node (i.e., float/double)
 //-----------------------------------------------------------------------------
 
-int SparcV9FloatRegClass::findFloatColor(const LiveRange *LR, 
+int SparcV9FloatRegClass::findFloatColor(const LiveRange *LR,
                                        unsigned Start,
-                                       unsigned End, 
+                                       unsigned End,
                                const std::vector<bool> &IsColorUsedArr) const
 {
-  if (LR->getType() == Type::DoubleTy) { 
-    // find first unused color for a double 
+  if (LR->getType() == Type::DoubleTy) {
+    // find first unused color for a double
     assert(Start % 2 == 0 && "Odd register number could be used for double!");
     for (unsigned c=Start; c < End ; c+= 2)
       if (!IsColorUsedArr[c]) {

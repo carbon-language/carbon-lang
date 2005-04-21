@@ -1,10 +1,10 @@
 //===-- PowerPCAsmPrinter.cpp - Print machine instrs to PowerPC assembly --===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file contains a printer that converts from our internal representation
@@ -45,14 +45,14 @@ namespace {
   struct PowerPCAsmPrinter : public AsmPrinter {
     std::set<std::string> FnStubs, GVStubs, LinkOnceStubs;
     std::set<std::string> Strings;
-    
+
     PowerPCAsmPrinter(std::ostream &O, TargetMachine &TM)
       : AsmPrinter(O, TM), LabelNumber(0) {}
 
     /// Unique incrementer for label values for referencing Global values.
     ///
     unsigned LabelNumber;
-  
+
     virtual const char *getPassName() const {
       return "PowerPC Assembly Printer";
     }
@@ -109,7 +109,7 @@ namespace {
       if (MI->getOperand(OpNo).isImmediate()) {
         O << "$+" << MI->getOperand(OpNo).getImmedValue();
       } else {
-        printOp(MI->getOperand(OpNo), 
+        printOp(MI->getOperand(OpNo),
                 TM.getInstrInfo()->isCall(MI->getOpcode()));
       }
     }
@@ -158,12 +158,12 @@ namespace {
       }
       O << 4 * RegNo + value;
     }
-  
+
     virtual void printConstantPool(MachineConstantPool *MCP) = 0;
-    virtual bool runOnMachineFunction(MachineFunction &F) = 0;    
+    virtual bool runOnMachineFunction(MachineFunction &F) = 0;
     virtual bool doFinalization(Module &M) = 0;
   };
-  
+
   /// DarwinAsmPrinter - PowerPC assembly printer, customized for Darwin/Mac OS
   /// X
   ///
@@ -183,10 +183,10 @@ namespace {
     }
 
     void printConstantPool(MachineConstantPool *MCP);
-    bool runOnMachineFunction(MachineFunction &F);    
+    bool runOnMachineFunction(MachineFunction &F);
     bool doFinalization(Module &M);
   };
-  
+
   /// AIXAsmPrinter - PowerPC assembly printer, customized for AIX
   ///
   struct AIXAsmPrinter : public PowerPCAsmPrinter {
@@ -202,13 +202,13 @@ namespace {
       Data64bitsDirective = 0;       // we can't emit a 64-bit unit
       AlignmentIsInBytes = false;    // Alignment is by power of 2.
     }
-    
+
     virtual const char *getPassName() const {
       return "AIX PPC Assembly Printer";
     }
 
     void printConstantPool(MachineConstantPool *MCP);
-    bool runOnMachineFunction(MachineFunction &F);    
+    bool runOnMachineFunction(MachineFunction &F);
     bool doInitialization(Module &M);
     bool doFinalization(Module &M);
   };
@@ -258,7 +258,7 @@ namespace {
 
 /// SwitchStringSection - manage the changes required to output bytes as
 /// characters in a string vs. numeric decimal values
-/// 
+///
 static inline void SwitchStringSection(std::ostream &O, StringSection NewSect,
                                        StringSection &Current) {
   if (Current == None) {
@@ -269,7 +269,7 @@ static inline void SwitchStringSection(std::ostream &O, StringSection NewSect,
   } else if (Current == Alpha) {
     if (NewSect == None)
       O << "\"";
-    else if (NewSect == Numeric) 
+    else if (NewSect == Numeric)
       O << "\"\n"
         << "\t.byte ";
   } else if (Current == Numeric) {
@@ -310,8 +310,8 @@ static void printAsCString(std::ostream &O, const ConstantArray *CVA) {
   O << '\n';
 }
 
-/// createDarwinAsmPrinterPass - Returns a pass that prints the PPC assembly 
-/// code for a MachineFunction to the given output stream, in a format that the 
+/// createDarwinAsmPrinterPass - Returns a pass that prints the PPC assembly
+/// code for a MachineFunction to the given output stream, in a format that the
 /// Darwin assembler can deal with.
 ///
 FunctionPass *llvm::createDarwinAsmPrinter(std::ostream &o, TargetMachine &tm) {
@@ -319,7 +319,7 @@ FunctionPass *llvm::createDarwinAsmPrinter(std::ostream &o, TargetMachine &tm) {
 }
 
 /// createAIXAsmPrinterPass - Returns a pass that prints the PPC assembly code
-/// for a MachineFunction to the given output stream, in a format that the 
+/// for a MachineFunction to the given output stream, in a format that the
 /// AIX 5L assembler can deal with.
 ///
 FunctionPass *llvm::createAIXAsmPrinter(std::ostream &o, TargetMachine &tm) {
@@ -332,7 +332,7 @@ FunctionPass *llvm::createAIXAsmPrinter(std::ostream &o, TargetMachine &tm) {
 void PowerPCAsmPrinter::printOp(const MachineOperand &MO, bool IsCallOp) {
   const MRegisterInfo &RI = *TM.getRegisterInfo();
   int new_symbol;
-  
+
   switch (MO.getType()) {
   case MachineOperand::MO_VirtualRegister:
     if (Value *V = MO.getVRegValueOrNull()) {
@@ -355,7 +355,7 @@ void PowerPCAsmPrinter::printOp(const MachineOperand &MO, bool IsCallOp) {
     std::cerr << "Shouldn't use addPCDisp() when building PPC MachineInstrs";
     abort();
     return;
-    
+
   case MachineOperand::MO_MachineBasicBlock: {
     MachineBasicBlock *MBBOp = MO.getMachineBasicBlock();
     O << ".LBB" << Mang->getValueName(MBBOp->getParent()->getFunction())
@@ -391,7 +391,7 @@ void PowerPCAsmPrinter::printOp(const MachineOperand &MO, bool IsCallOp) {
       O << "L" << Name << "$stub";
       return;
     }
-    
+
     // External or weakly linked global variables need non-lazily-resolved stubs
     if ((GV->isExternal() || GV->hasWeakLinkage() || GV->hasLinkOnceLinkage())){
       if (GV->hasLinkOnceLinkage())
@@ -405,7 +405,7 @@ void PowerPCAsmPrinter::printOp(const MachineOperand &MO, bool IsCallOp) {
     O << Mang->getValueName(GV);
     return;
   }
-    
+
   default:
     O << "<unknown operand type: " << MO.getType() << ">";
     return;
@@ -431,17 +431,17 @@ void PowerPCAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
       SH = 32-SH;
     }
     if (FoundMnemonic) {
-      printOperand(MI, 0, MVT::i64); 
-      O << ", "; 
-      printOperand(MI, 1, MVT::i64); 
+      printOperand(MI, 0, MVT::i64);
+      O << ", ";
+      printOperand(MI, 1, MVT::i64);
       O << ", " << (unsigned int)SH << "\n";
       return;
     }
   }
-  
+
   if (printInstruction(MI))
     return; // Printer was automatically generated
-  
+
   assert(0 && "Unhandled instruction in asm writer!");
   abort();
   return;
@@ -490,7 +490,7 @@ bool DarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 void DarwinAsmPrinter::printConstantPool(MachineConstantPool *MCP) {
   const std::vector<Constant*> &CP = MCP->getConstants();
   const TargetData &TD = TM.getTargetData();
- 
+
   if (CP.empty()) return;
 
   for (unsigned i = 0, e = CP.size(); i != e; ++i) {
@@ -516,13 +516,13 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
       unsigned Align = TD.getTypeAlignmentShift(C->getType());
 
       if (C->isNullValue() && /* FIXME: Verify correct */
-          (I->hasInternalLinkage() || I->hasWeakLinkage() || 
+          (I->hasInternalLinkage() || I->hasWeakLinkage() ||
            I->hasLinkOnceLinkage())) {
         SwitchSection(O, CurSection, ".data");
         if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
         if (I->hasInternalLinkage())
           O << ".lcomm " << name << "," << Size << "," << Align;
-        else 
+        else
           O << ".comm " << name << "," << Size;
         O << "\t\t; ";
         WriteAsOperand(O, I, true, true, &M);
@@ -535,7 +535,7 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
             << ".private_extern " << name << '\n'
             << ".section __DATA,__datacoal_nt,coalesced,no_toc\n";
           LinkOnceStubs.insert(name);
-          break;  
+          break;
         case GlobalValue::WeakLinkage:   // FIXME: Verify correct for weak.
           // Nonnull linkonce -> weak
           O << "\t.weak " << name << "\n";
@@ -568,7 +568,7 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
     }
 
   // Output stubs for dynamically-linked functions
-  for (std::set<std::string>::iterator i = FnStubs.begin(), e = FnStubs.end(); 
+  for (std::set<std::string>::iterator i = FnStubs.begin(), e = FnStubs.end();
        i != e; ++i)
   {
     O << ".data\n";
@@ -597,22 +597,22 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
   // Output stubs for external global variables
   if (GVStubs.begin() != GVStubs.end())
     O << ".data\n.non_lazy_symbol_pointer\n";
-  for (std::set<std::string>::iterator i = GVStubs.begin(), e = GVStubs.end(); 
+  for (std::set<std::string>::iterator i = GVStubs.begin(), e = GVStubs.end();
        i != e; ++i) {
     O << "L" << *i << "$non_lazy_ptr:\n";
     O << "\t.indirect_symbol " << *i << "\n";
     O << "\t.long\t0\n";
   }
-  
+
   // Output stubs for link-once variables
   if (LinkOnceStubs.begin() != LinkOnceStubs.end())
     O << ".data\n.align 2\n";
-  for (std::set<std::string>::iterator i = LinkOnceStubs.begin(), 
+  for (std::set<std::string>::iterator i = LinkOnceStubs.begin(),
          e = LinkOnceStubs.end(); i != e; ++i) {
     O << "L" << *i << "$non_lazy_ptr:\n"
       << "\t.long\t" << *i << '\n';
   }
-  
+
   AsmPrinter::doFinalization(M);
   return false; // success
 }
@@ -672,7 +672,7 @@ bool AIXAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 void AIXAsmPrinter::printConstantPool(MachineConstantPool *MCP) {
   const std::vector<Constant*> &CP = MCP->getConstants();
   const TargetData &TD = TM.getTargetData();
- 
+
   if (CP.empty()) return;
 
   for (unsigned i = 0, e = CP.size(); i != e; ++i) {
@@ -689,7 +689,7 @@ bool AIXAsmPrinter::doInitialization(Module &M) {
   const TargetData &TD = TM.getTargetData();
   std::string CurSection;
 
-  O << "\t.machine \"ppc64\"\n" 
+  O << "\t.machine \"ppc64\"\n"
     << "\t.toc\n"
     << "\t.csect .text[PR]\n";
 
@@ -697,11 +697,11 @@ bool AIXAsmPrinter::doInitialization(Module &M) {
   for (Module::const_global_iterator I = M.global_begin(), E = M.global_end(); I != E; ++I) {
     if (!I->hasInitializer())
       continue;
- 
+
     std::string Name = I->getName();
     Constant *C = I->getInitializer();
     // N.B.: We are defaulting to writable strings
-    if (I->hasExternalLinkage()) { 
+    if (I->hasExternalLinkage()) {
       O << "\t.globl " << Name << '\n'
         << "\t.csect .data[RW],3\n";
     } else {

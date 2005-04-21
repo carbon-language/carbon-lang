@@ -1,10 +1,10 @@
 //===- PPC32RegisterInfo.h - PowerPC32 Register Information Impl -*- C++ -*-==//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file contains the PowerPC implementation of the MRegisterInfo class.
@@ -36,7 +36,7 @@ public:
   void loadRegFromStackSlot(MachineBasicBlock &MBB,
                             MachineBasicBlock::iterator MBBI,
                             unsigned DestReg, int FrameIndex) const;
-  
+
   void copyRegToReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator MBBI,
                     unsigned DestReg, unsigned SrcReg,
                     const TargetRegisterClass *RC) const;

@@ -1,10 +1,10 @@
 //===-- SparcV9RegInfo.cpp - SparcV9 Target Register Information ----------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file contains implementations of SparcV9 specific helper methods
@@ -44,8 +44,8 @@ SparcV9RegInfo::SparcV9RegInfo(const SparcV9TargetMachine &tgt)
   MachineRegClassArr.push_back(new SparcV9IntCCRegClass(IntCCRegClassID));
   MachineRegClassArr.push_back(new SparcV9FloatCCRegClass(FloatCCRegClassID));
   MachineRegClassArr.push_back(new SparcV9SpecialRegClass(SpecialRegClassID));
-  
-  assert(SparcV9FloatRegClass::StartOfNonVolatileRegs == 32 && 
+
+  assert(SparcV9FloatRegClass::StartOfNonVolatileRegs == 32 &&
          "32 Float regs are used for float arg passing");
 }
 
@@ -67,7 +67,7 @@ unsigned SparcV9RegInfo::getCallAddressReg() const {
 }
 
 // Returns the register containing the return address.
-// It should be made sure that this  register contains the return 
+// It should be made sure that this  register contains the return
 // value when a return instruction is reached.
 //
 unsigned SparcV9RegInfo::getReturnAddressReg() const {
@@ -81,19 +81,19 @@ unsigned SparcV9RegInfo::getReturnAddressReg() const {
 static const char * const IntRegNames[] = {
   "o0", "o1", "o2", "o3", "o4", "o5",       "o7",
   "l0", "l1", "l2", "l3", "l4", "l5", "l6", "l7",
-  "i0", "i1", "i2", "i3", "i4", "i5",  
+  "i0", "i1", "i2", "i3", "i4", "i5",
   "i6", "i7",
-  "g0", "g1", "g2", "g3", "g4", "g5",  "g6", "g7", 
+  "g0", "g1", "g2", "g3", "g4", "g5",  "g6", "g7",
   "o6"
-}; 
+};
 
 const char * const SparcV9IntRegClass::getRegName(unsigned reg) const {
   assert(reg < NumOfAllRegs);
   return IntRegNames[reg];
 }
 
-static const char * const FloatRegNames[] = {    
-  "f0",  "f1",  "f2",  "f3",  "f4",  "f5",  "f6",  "f7",  "f8",  "f9", 
+static const char * const FloatRegNames[] = {
+  "f0",  "f1",  "f2",  "f3",  "f4",  "f5",  "f6",  "f7",  "f8",  "f9",
   "f10", "f11", "f12", "f13", "f14", "f15", "f16", "f17", "f18", "f19",
   "f20", "f21", "f22", "f23", "f24", "f25", "f26", "f27", "f28", "f29",
   "f30", "f31", "f32", "f33", "f34", "f35", "f36", "f37", "f38", "f39",
@@ -107,7 +107,7 @@ const char * const SparcV9FloatRegClass::getRegName(unsigned reg) const {
   return FloatRegNames[reg];
 }
 
-static const char * const IntCCRegNames[] = {    
+static const char * const IntCCRegNames[] = {
   "xcc",  "icc",  "ccr"
 };
 
@@ -116,7 +116,7 @@ const char * const SparcV9IntCCRegClass::getRegName(unsigned reg) const {
   return IntCCRegNames[reg];
 }
 
-static const char * const FloatCCRegNames[] = {    
+static const char * const FloatCCRegNames[] = {
   "fcc0", "fcc1",  "fcc2",  "fcc3"
 };
 
@@ -125,7 +125,7 @@ const char * const SparcV9FloatCCRegClass::getRegName(unsigned reg) const {
   return FloatCCRegNames[reg];
 }
 
-static const char * const SpecialRegNames[] = {    
+static const char * const SpecialRegNames[] = {
   "fsr"
 };
 
@@ -168,12 +168,12 @@ isVarArgsCall(const MachineInstr *CallMI) {
 
 
 // Get the register number for the specified argument #argNo,
-// 
+//
 // Return value:
-//      getInvalidRegNum(),  if there is no int register available for the arg. 
+//      getInvalidRegNum(),  if there is no int register available for the arg.
 //      regNum,              otherwise (this is NOT the unified reg. num).
 //                           regClassId is set to the register class ID.
-// 
+//
 int
 SparcV9RegInfo::regNumForIntArg(bool inCallee, bool isVarArgsCall,
                                    unsigned argNo, unsigned& regClassId) const
@@ -187,12 +187,12 @@ SparcV9RegInfo::regNumForIntArg(bool inCallee, bool isVarArgsCall,
 
 // Get the register number for the specified FP argument #argNo,
 // Use INT regs for FP args if this is a varargs call.
-// 
+//
 // Return value:
-//      getInvalidRegNum(),  if there is no int register available for the arg. 
+//      getInvalidRegNum(),  if there is no int register available for the arg.
 //      regNum,              otherwise (this is NOT the unified reg. num).
 //                           regClassId is set to the register class ID.
-// 
+//
 int
 SparcV9RegInfo::regNumForFPArg(unsigned regType,
                                   bool inCallee, bool isVarArgsCall,
@@ -227,14 +227,14 @@ int SparcV9RegInfo::getRegTypeForClassAndType(unsigned regClassID,
                                                  const Type* type) const
 {
   switch (regClassID) {
-  case IntRegClassID:                   return IntRegType; 
+  case IntRegClassID:                   return IntRegType;
   case FloatRegClassID:
     if (type == Type::FloatTy)          return FPSingleRegType;
     else if (type == Type::DoubleTy)    return FPDoubleRegType;
     assert(0 && "Unknown type in FloatRegClass"); return 0;
-  case IntCCRegClassID:                 return IntCCRegType; 
-  case FloatCCRegClassID:               return FloatCCRegType; 
-  case SpecialRegClassID:               return SpecialRegType; 
+  case IntCCRegClassID:                 return IntCCRegType;
+  case FloatCCRegClassID:               return FloatCCRegType;
+  case SpecialRegClassID:               return SpecialRegType;
   default: assert( 0 && "Unknown reg class ID"); return 0;
   }
 }
@@ -251,7 +251,7 @@ int SparcV9RegInfo::getRegTypeForLR(const LiveRange *LR) const
 
 int SparcV9RegInfo::getRegType(int unifiedRegNum) const
 {
-  if (unifiedRegNum < 32) 
+  if (unifiedRegNum < 32)
     return IntRegType;
   else if (unifiedRegNum < (32 + 32))
     return FPSingleRegType;
@@ -259,11 +259,11 @@ int SparcV9RegInfo::getRegType(int unifiedRegNum) const
     return FPDoubleRegType;
   else if (unifiedRegNum < (64+32+3))
     return IntCCRegType;
-  else if (unifiedRegNum < (64+32+3+4))  
-    return FloatCCRegType;             
-  else if (unifiedRegNum < (64+32+3+4+1))  
-    return SpecialRegType;             
-  else 
+  else if (unifiedRegNum < (64+32+3+4))
+    return FloatCCRegType;
+  else if (unifiedRegNum < (64+32+3+4+1))
+    return SpecialRegType;
+  else
     assert(0 && "Invalid unified register number in getRegType");
   return 0;
 }
@@ -275,22 +275,22 @@ unsigned SparcV9RegInfo::getRegClassIDOfType(const Type *type,
                                                 bool isCCReg) const {
   Type::TypeID ty = type->getTypeID();
   unsigned res;
-    
+
   // FIXME: Comparing types like this isn't very safe...
   if ((ty && ty <= Type::LongTyID) || (ty == Type::LabelTyID) ||
       (ty == Type::FunctionTyID) ||  (ty == Type::PointerTyID) )
     res = IntRegClassID;             // sparc int reg (ty=0: void)
   else if (ty <= Type::DoubleTyID)
     res = FloatRegClassID;           // sparc float reg class
-  else { 
+  else {
     //std::cerr << "TypeID: " << ty << "\n";
     assert(0 && "Cannot resolve register class for type");
     return 0;
   }
-  
+
   if (isCCReg)
-    return res + 2;      // corresponding condition code register 
-  else 
+    return res + 2;      // corresponding condition code register
+  else
     return res;
 }
 
@@ -312,16 +312,16 @@ unsigned SparcV9RegInfo::getRegClassIDOfRegType(int regType) const {
 // Suggests a register for the ret address in the RET machine instruction.
 // We always suggest %i7 by convention.
 //---------------------------------------------------------------------------
-void SparcV9RegInfo::suggestReg4RetAddr(MachineInstr *RetMI, 
+void SparcV9RegInfo::suggestReg4RetAddr(MachineInstr *RetMI,
 					   LiveRangeInfo& LRI) const {
 
   assert(target.getInstrInfo()->isReturn(RetMI->getOpcode()));
-  
+
   // return address is always mapped to i7 so set it immediately
   RetMI->SetRegForOperand(0, getUnifiedRegNum(IntRegClassID,
                                               SparcV9IntRegClass::i7));
-  
-  // Possible Optimization: 
+
+  // Possible Optimization:
   // Instead of setting the color, we can suggest one. In that case,
   // we have to test later whether it received the suggested color.
   // In that case, a LR has to be created at the start of method.
@@ -330,8 +330,8 @@ void SparcV9RegInfo::suggestReg4RetAddr(MachineInstr *RetMI,
   // MachineOperand & MO  = RetMI->getOperand(0);
   // const Value *RetAddrVal = MO.getVRegValue();
   // assert( RetAddrVal && "LR for ret address must be created at start");
-  // LiveRange * RetAddrLR = LRI.getLiveRangeForValue( RetAddrVal);  
-  // RetAddrLR->setSuggestedColor(getUnifiedRegNum( IntRegClassID, 
+  // LiveRange * RetAddrLR = LRI.getLiveRangeForValue( RetAddrVal);
+  // RetAddrLR->setSuggestedColor(getUnifiedRegNum( IntRegClassID,
   //                              SparcV9IntRegOrdr::i7) );
 }
 
@@ -344,7 +344,7 @@ void
 SparcV9RegInfo::suggestReg4CallAddr(MachineInstr * CallMI,
                                        LiveRangeInfo& LRI) const
 {
-  CallArgsDescriptor* argDesc = CallArgsDescriptor::get(CallMI); 
+  CallArgsDescriptor* argDesc = CallArgsDescriptor::get(CallMI);
   const Value *RetAddrVal = argDesc->getReturnAddrReg();
   assert(RetAddrVal && "INTERNAL ERROR: Return address value is required");
 
@@ -359,18 +359,18 @@ SparcV9RegInfo::suggestReg4CallAddr(MachineInstr * CallMI,
 
 
 //---------------------------------------------------------------------------
-//  This method will suggest colors to incoming args to a method. 
-//  According to the SparcV9 ABI, the first 6 incoming args are in 
+//  This method will suggest colors to incoming args to a method.
+//  According to the SparcV9 ABI, the first 6 incoming args are in
 //  %i0 - %i5 (if they are integer) OR in %f0 - %f31 (if they are float).
 //  If the arg is passed on stack due to the lack of regs, NOTHING will be
 //  done - it will be colored (or spilled) as a normal live range.
 //---------------------------------------------------------------------------
-void SparcV9RegInfo::suggestRegs4MethodArgs(const Function *Meth, 
-					       LiveRangeInfo& LRI) const 
+void SparcV9RegInfo::suggestRegs4MethodArgs(const Function *Meth,
+					       LiveRangeInfo& LRI) const
 {
   // Check if this is a varArgs function. needed for choosing regs.
   bool isVarArgs = isVarArgsFunction(Meth->getType());
-  
+
   // Count the arguments, *ignoring* whether they are int or FP args.
   // Use this common arg numbering to pick the right int or fp register.
   unsigned argNo=0;
@@ -378,15 +378,15 @@ void SparcV9RegInfo::suggestRegs4MethodArgs(const Function *Meth,
       I != E; ++I, ++argNo) {
     LiveRange *LR = LRI.getLiveRangeForValue(I);
     assert(LR && "No live range found for method arg");
-    
+
     unsigned regType = getRegTypeForLR(LR);
     unsigned regClassIDOfArgReg = BadRegClass; // for chosen reg (unused)
-    
+
     int regNum = (regType == IntRegType)
       ? regNumForIntArg(/*inCallee*/ true, isVarArgs, argNo, regClassIDOfArgReg)
       : regNumForFPArg(regType, /*inCallee*/ true, isVarArgs, argNo,
-                       regClassIDOfArgReg); 
-    
+                       regClassIDOfArgReg);
+
     if (regNum != getInvalidRegNum())
       LR->setSuggestedColor(regNum);
   }
@@ -398,7 +398,7 @@ void SparcV9RegInfo::suggestRegs4MethodArgs(const Function *Meth,
 // the correct hardware registers if they did not receive the correct
 // (suggested) color through graph coloring.
 //---------------------------------------------------------------------------
-void SparcV9RegInfo::colorMethodArgs(const Function *Meth, 
+void SparcV9RegInfo::colorMethodArgs(const Function *Meth,
                             LiveRangeInfo &LRI,
                             std::vector<MachineInstr*>& InstrnsBefore,
                             std::vector<MachineInstr*>& InstrnsAfter) const {
@@ -418,25 +418,25 @@ void SparcV9RegInfo::colorMethodArgs(const Function *Meth,
 
     unsigned regType = getRegTypeForLR(LR);
     unsigned RegClassID = LR->getRegClassID();
-    
+
     // Find whether this argument is coming in a register (if not, on stack)
     // Also find the correct register the argument must use (UniArgReg)
     //
     bool isArgInReg = false;
     unsigned UniArgReg = getInvalidRegNum(); // reg that LR MUST be colored with
     unsigned regClassIDOfArgReg = BadRegClass; // reg class of chosen reg
-    
+
     int regNum = (regType == IntRegType)
       ? regNumForIntArg(/*inCallee*/ true, isVarArgs,
                         argNo, regClassIDOfArgReg)
       : regNumForFPArg(regType, /*inCallee*/ true, isVarArgs,
                        argNo, regClassIDOfArgReg);
-    
+
     if(regNum != getInvalidRegNum()) {
       isArgInReg = true;
       UniArgReg = getUnifiedRegNum( regClassIDOfArgReg, regNum);
     }
-    
+
     if( ! LR->isMarkedForSpill() ) {    // if this arg received a register
 
       unsigned UniLRReg = getUnifiedRegNum(  RegClassID, LR->getColor() );
@@ -446,31 +446,31 @@ void SparcV9RegInfo::colorMethodArgs(const Function *Meth,
       if( UniLRReg == UniArgReg )
 	continue;
 
-      // We are here because the LR did not receive the suggested 
+      // We are here because the LR did not receive the suggested
       // but LR received another register.
-      // Now we have to copy the %i reg (or stack pos of arg) 
+      // Now we have to copy the %i reg (or stack pos of arg)
       // to the register the LR was colored with.
-      
+
       // if the arg is coming in UniArgReg register, it MUST go into
       // the UniLRReg register
       //
       if( isArgInReg ) {
 	if( regClassIDOfArgReg != RegClassID ) {
 	  // NOTE: This code has not been well-tested.
-          
+
 	  // It is a variable argument call: the float reg must go in a %o reg.
 	  // We have to move an int reg to a float reg via memory.
-          // 
+          //
           assert(isVarArgs &&
-                 RegClassID == FloatRegClassID && 
+                 RegClassID == FloatRegClassID &&
                  regClassIDOfArgReg == IntRegClassID &&
                  "This should only be an Int register for an FP argument");
-          
+
  	  int TmpOff = MachineFunction::get(Meth).getInfo<SparcV9FunctionInfo>()->pushTempValue(
                                                 getSpilledRegSize(regType));
 	  cpReg2MemMI(InstrnsBefore,
                       UniArgReg, getFramePointer(), TmpOff, IntRegType);
-          
+
 	  cpMem2RegMI(InstrnsBefore,
                       getFramePointer(), TmpOff, UniLRReg, regType);
 	}
@@ -501,10 +501,10 @@ void SparcV9RegInfo::colorMethodArgs(const Function *Meth,
 	cpMem2RegMI(InstrnsBefore,
                     getFramePointer(), offsetFromFP, UniLRReg, regType);
       }
-      
+
     } // if LR received a color
 
-    else {                             
+    else {
 
       // Now, the LR did not receive a color. But it has a stack offset for
       // spilling.
@@ -512,18 +512,18 @@ void SparcV9RegInfo::colorMethodArgs(const Function *Meth,
       // that on to the stack pos of LR
 
       if( isArgInReg ) {
-        
+
 	if( regClassIDOfArgReg != RegClassID ) {
           assert(0 &&
                  "FP arguments to a varargs function should be explicitly "
                  "copied to/from int registers by instruction selection!");
-          
+
 	  // It must be a float arg for a variable argument call, which
           // must come in a %o reg.  Move the int reg to the stack.
-          // 
+          //
           assert(isVarArgs && regClassIDOfArgReg == IntRegClassID &&
                  "This should only be an Int register for an FP argument");
-          
+
           cpReg2MemMI(InstrnsBefore, UniArgReg,
                       getFramePointer(), LR->getSpillOffFromFP(), IntRegType);
         }
@@ -535,12 +535,12 @@ void SparcV9RegInfo::colorMethodArgs(const Function *Meth,
 
       else {
 
-	// Now the arg is coming on stack. Since the LR did NOT 
+	// Now the arg is coming on stack. Since the LR did NOT
 	// received a register as well, it is allocated a stack position. We
 	// can simply change the stack position of the LR. We can do this,
 	// since this method is called before any other method that makes
 	// uses of the stack pos of the LR (e.g., updateMachineInstr)
-        // 
+        //
         const TargetFrameInfo& frameInfo = *target.getFrameInfo();
 	int offsetFromFP =
           frameInfo.getIncomingArgOffset(MachineFunction::get(Meth),
@@ -555,7 +555,7 @@ void SparcV9RegInfo::colorMethodArgs(const Function *Meth,
           assert(argSize <= slotSize && "Insufficient slot size!");
           offsetFromFP += slotSize - argSize;
         }
-        
+
 	LR->modifySpillOffFromFP( offsetFromFP );
       }
 
@@ -571,18 +571,18 @@ void SparcV9RegInfo::colorMethodArgs(const Function *Meth,
 // This method is called before graph coloring to suggest colors to the
 // outgoing call args and the return value of the call.
 //---------------------------------------------------------------------------
-void SparcV9RegInfo::suggestRegs4CallArgs(MachineInstr *CallMI, 
+void SparcV9RegInfo::suggestRegs4CallArgs(MachineInstr *CallMI,
 					     LiveRangeInfo& LRI) const {
   assert ( (target.getInstrInfo())->isCall(CallMI->getOpcode()) );
 
-  CallArgsDescriptor* argDesc = CallArgsDescriptor::get(CallMI); 
-  
+  CallArgsDescriptor* argDesc = CallArgsDescriptor::get(CallMI);
+
   suggestReg4CallAddr(CallMI, LRI);
 
   // First color the return value of the call instruction, if any.
   // The return value will be in %o0 if the value is an integer type,
   // or in %f0 if the value is a float type.
-  // 
+  //
   if (const Value *RetVal = argDesc->getReturnValue()) {
     LiveRange *RetValLR = LRI.getLiveRangeForValue(RetVal);
     assert(RetValLR && "No LR for return Value of call!");
@@ -590,9 +590,9 @@ void SparcV9RegInfo::suggestRegs4CallArgs(MachineInstr *CallMI,
     unsigned RegClassID = RetValLR->getRegClassID();
 
     // now suggest a register depending on the register class of ret arg
-    if( RegClassID == IntRegClassID ) 
+    if( RegClassID == IntRegClassID )
       RetValLR->setSuggestedColor(SparcV9IntRegClass::o0);
-    else if (RegClassID == FloatRegClassID ) 
+    else if (RegClassID == FloatRegClassID )
       RetValLR->setSuggestedColor(SparcV9FloatRegClass::f0 );
     else assert( 0 && "Unknown reg class for return value of call\n");
   }
@@ -603,14 +603,14 @@ void SparcV9RegInfo::suggestRegs4CallArgs(MachineInstr *CallMI,
   // Now, go thru call args - implicit operands of the call MI
 
   unsigned NumOfCallArgs = argDesc->getNumArgs();
-  
+
   for(unsigned argNo=0, i=0, intArgNo=0, fpArgNo=0;
-       i < NumOfCallArgs; ++i, ++argNo) {    
+       i < NumOfCallArgs; ++i, ++argNo) {
 
     const Value *CallArg = argDesc->getArgInfo(i).getArgVal();
-    
+
     // get the LR of call operand (parameter)
-    LiveRange *const LR = LRI.getLiveRangeForValue(CallArg); 
+    LiveRange *const LR = LRI.getLiveRangeForValue(CallArg);
     if (!LR)
       continue;                    // no live ranges for constants and labels
 
@@ -625,8 +625,8 @@ void SparcV9RegInfo::suggestRegs4CallArgs(MachineInstr *CallMI,
       ? regNumForIntArg(/*inCallee*/ false, /*isVarArgs*/ false,
                         argNo, regClassIDOfArgReg)
       : regNumForFPArg(regType, /*inCallee*/ false, /*isVarArgs*/ false,
-                       argNo, regClassIDOfArgReg); 
-    
+                       argNo, regClassIDOfArgReg);
+
     // If a register could be allocated, use it.
     // If not, do NOTHING as this will be colored as a normal value.
     if(regNum != getInvalidRegNum())
@@ -639,7 +639,7 @@ void SparcV9RegInfo::suggestRegs4CallArgs(MachineInstr *CallMI,
 // this method is called for an LLVM return instruction to identify which
 // values will be returned from this method and to suggest colors.
 //---------------------------------------------------------------------------
-void SparcV9RegInfo::suggestReg4RetValue(MachineInstr *RetMI, 
+void SparcV9RegInfo::suggestReg4RetValue(MachineInstr *RetMI,
                                             LiveRangeInfo& LRI) const {
 
   assert( target.getInstrInfo()->isReturn( RetMI->getOpcode() ) );
@@ -688,14 +688,14 @@ SparcV9RegInfo::cpReg2RegMI(std::vector<MachineInstr*>& mvec,
                                unsigned SrcReg,
                                unsigned DestReg,
                                int RegType) const {
-  assert( ((int)SrcReg != getInvalidRegNum()) && 
+  assert( ((int)SrcReg != getInvalidRegNum()) &&
           ((int)DestReg != getInvalidRegNum()) &&
 	  "Invalid Register");
-  
+
   MachineInstr * MI = NULL;
-  
+
   switch( RegType ) {
-    
+
   case IntCCRegType:
     if (getRegType(DestReg) == IntRegType) {
       // copy intCC reg to int reg
@@ -715,16 +715,16 @@ SparcV9RegInfo::cpReg2RegMI(std::vector<MachineInstr*>& mvec,
                      MachineOperand::Def));
     }
     break;
-    
-  case FloatCCRegType: 
+
+  case FloatCCRegType:
     assert(0 && "Cannot copy FPCC register to any other register");
     break;
-    
+
   case IntRegType:
     MI = BuildMI(V9::ADDr, 3).addMReg(SrcReg).addMReg(getZeroRegNum())
       .addMReg(DestReg, MachineOperand::Def);
     break;
-    
+
   case FPSingleRegType:
     MI = BuildMI(V9::FMOVS, 2).addMReg(SrcReg)
            .addMReg(DestReg, MachineOperand::Def);
@@ -739,7 +739,7 @@ SparcV9RegInfo::cpReg2RegMI(std::vector<MachineInstr*>& mvec,
     assert(0 && "Unknown RegType");
     break;
   }
-  
+
   if (MI)
     mvec.push_back(MI);
 }
@@ -894,7 +894,7 @@ void SparcV9RegInfo::cpMem2RegMI(std::vector<MachineInstr*>& mvec,
     MI = BuildMI(V9::WRCCRr, 3).addMReg(scratchReg).addMReg(SparcV9::g0)
            .addMReg(SparcV9::ccr, MachineOperand::Def);
     break;
-    
+
   case SpecialRegType: // used only for %fsr itself
   case FloatCCRegType: {
     if (useImmediateOffset)
@@ -956,13 +956,13 @@ void SparcV9RegInfo::printReg(const LiveRange *LR) const {
     std::cerr << " - could not find a color\n";
     return;
   }
-  
+
   // if a color is found
 
   std::cerr << " colored with color "<< LR->getColor();
 
   unsigned uRegName = getUnifiedRegNum(RegClassID, LR->getColor());
-  
+
   std::cerr << "[";
   std::cerr<< getUnifiedRegName(uRegName);
   if (RegClassID == FloatRegClassID && LR->getType() == Type::DoubleTy)

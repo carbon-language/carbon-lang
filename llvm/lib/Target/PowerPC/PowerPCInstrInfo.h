@@ -1,10 +1,10 @@
 //===- PowerPCInstrInfo.h - PowerPC Instruction Information -----*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file contains the PowerPC implementation of the TargetInstrInfo class.
@@ -23,7 +23,7 @@ namespace llvm {
       VMX   = 1 << 0,
       PPC64 = 1 << 1,
     };
-  
+
     enum {
       None = 0,
       Gpr = 1,

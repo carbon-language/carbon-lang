@@ -1,10 +1,10 @@
 //===-- MachineCodeForInstruction.cpp -------------------------------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // Container for the sequence of MachineInstrs created for a single
@@ -13,7 +13,7 @@
 // they can be deleted when they are no longer needed, and finally, it also
 // holds some extra information for 'call' Instructions (using the
 // CallArgsDescriptor object, which is also implemented in this file).
-// 
+//
 //===----------------------------------------------------------------------===//
 
 #include "MachineCodeForInstruction.h"
@@ -46,11 +46,11 @@ void MachineCodeForInstruction::dropAllReferences() {
 MachineCodeForInstruction::~MachineCodeForInstruction() {
   // Let go of all uses in temp. instructions
   dropAllReferences();
-  
+
   // Free the Value objects created to hold intermediate values
   for (unsigned i=0, N=tempVec.size(); i < N; i++)
     delete tempVec[i];
-  
+
   // do not free the MachineInstr objects allocated. they are managed
   // by the ilist in MachineBasicBlock
 
@@ -76,7 +76,7 @@ CallArgsDescriptor::CallArgsDescriptor(CallInst* _callInstr,
 
   // Enter this object in the MachineCodeForInstr object of the CallInst.
   // This transfers ownership of this object.
-  MachineCodeForInstruction::get(callInstr).setCallArgsDescriptor(this); 
+  MachineCodeForInstruction::get(callInstr).setCallArgsDescriptor(this);
 }
 
 CallInst *CallArgsDescriptor::getReturnValue() const {
@@ -90,7 +90,7 @@ CallInst *CallArgsDescriptor::getReturnValue() const {
 /// the CallArgsDescriptor from the MachineCodeForInstruction object for the
 /// CallInstr.  This is roundabout but avoids adding a new map or annotation
 /// just to keep track of CallArgsDescriptors.
-/// 
+///
 CallArgsDescriptor *CallArgsDescriptor::get(const MachineInstr *MI) {
   const Value *retAddrVal = 0;
   if ((MI->getOperand (0).getType () == MachineOperand::MO_MachineRegister
@@ -110,7 +110,7 @@ CallArgsDescriptor *CallArgsDescriptor::get(const MachineInstr *MI) {
   const CallInst* callInstr = cast<CallInst>(retAddrReg->getOperand(0));
 
   CallArgsDescriptor* desc =
-    MachineCodeForInstruction::get(callInstr).getCallArgsDescriptor(); 
+    MachineCodeForInstruction::get(callInstr).getCallArgsDescriptor();
   assert(desc->getCallInst()==callInstr && "Incorrect call args descriptor?");
   return desc;
 }

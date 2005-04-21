@@ -1,10 +1,10 @@
 //===-- BBLiveVar.cpp - Live Variable Analysis for a BasicBlock -----------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This is a wrapper class for BasicBlock which is used by live var analysis.
@@ -43,7 +43,7 @@ void BBLiveVar::calcDefUseSets() {
   for (MachineBasicBlock::const_reverse_iterator MII = MBB.rbegin(),
          MIE = MBB.rend(); MII != MIE; ++MII) {
     const MachineInstr *MI = &*MII;
-    
+
     if (DEBUG_LV >= LV_DEBUG_Verbose) {
       std::cerr << " *Iterating over machine instr ";
       MI->dump();
@@ -60,7 +60,7 @@ void BBLiveVar::calcDefUseSets() {
     for (unsigned i = 0; i < MI->getNumImplicitRefs(); ++i)
       if (MI->getImplicitOp(i).isDef())
 	addDef(MI->getImplicitRef(i));
-    
+
     // iterate over MI operands to find uses
     for (MachineInstr::const_val_op_iterator OpI = MI->begin(), OpE = MI->end();
          OpI != OpE; ++OpI) {
@@ -75,16 +75,16 @@ void BBLiveVar::calcDefUseSets() {
         //     instructions is untested.  The previous code was broken and I
         //     fixed it, but it turned out to be unused as long as Phi
         //     elimination is performed during instruction selection.
-        // 
+        //
         // Put Phi operands in UseSet for the incoming edge, not node.
         // They must not "hide" later defs, and must be handled specially
         // during set propagation over the CFG.
 	if (MI->getOpcode() == V9::PHI) {         // for a phi node
           const Value *ArgVal = Op;
 	  const BasicBlock *PredBB = cast<BasicBlock>(*++OpI); // next ptr is BB
-	  
-	  PredToEdgeInSetMap[PredBB].insert(ArgVal); 
-	  
+	
+	  PredToEdgeInSetMap[PredBB].insert(ArgVal);
+	
 	  if (DEBUG_LV >= LV_DEBUG_Verbose)
 	    std::cerr << "   - phi operand " << RAV(ArgVal) << " came from BB "
                       << RAV(PredBB) << "\n";
@@ -108,7 +108,7 @@ void BBLiveVar::calcDefUseSets() {
 	addUse(Op);
     }
   } // for all machine instructions
-} 
+}
 
 
 	
@@ -118,7 +118,7 @@ void BBLiveVar::calcDefUseSets() {
 void BBLiveVar::addDef(const Value *Op) {
   DefSet.insert(Op);     // operand is a def - so add to def set
   InSet.erase(Op);       // this definition kills any later uses
-  InSetChanged = true; 
+  InSetChanged = true;
 
   if (DEBUG_LV >= LV_DEBUG_Verbose) std::cerr << "  +Def: " << RAV(Op) << "\n";
 }
@@ -130,7 +130,7 @@ void BBLiveVar::addDef(const Value *Op) {
 void  BBLiveVar::addUse(const Value *Op) {
   InSet.insert(Op);   // An operand is a use - so add to use set
   DefSet.erase(Op);   // remove if there is a def below this use
-  InSetChanged = true; 
+  InSetChanged = true;
 
   if (DEBUG_LV >= LV_DEBUG_Verbose) std::cerr << "   Use: " << RAV(Op) << "\n";
 }
@@ -138,16 +138,16 @@ void  BBLiveVar::addUse(const Value *Op) {
 
 //-----------------------------------------------------------------------------
 // Applies the transfer function to a basic block to produce the InSet using
-// the OutSet. 
+// the OutSet.
 //-----------------------------------------------------------------------------
 
 bool BBLiveVar::applyTransferFunc() {
-  // IMPORTANT: caller should check whether the OutSet changed 
+  // IMPORTANT: caller should check whether the OutSet changed
   //           (else no point in calling)
 
   ValueSet OutMinusDef = set_difference(OutSet, DefSet);
   InSetChanged = set_union(InSet, OutMinusDef);
- 
+
   OutSetChanged = false;      // no change to OutSet since transf func applied
   return InSetChanged;
 }
@@ -157,31 +157,31 @@ bool BBLiveVar::applyTransferFunc() {
 // calculates Out set using In sets of the successors
 //-----------------------------------------------------------------------------
 
-bool BBLiveVar::setPropagate(ValueSet *OutSet, const ValueSet *InSet, 
+bool BBLiveVar::setPropagate(ValueSet *OutSet, const ValueSet *InSet,
                              const BasicBlock *PredBB) {
   bool Changed = false;
-  
+
   // merge all members of InSet into OutSet of the predecessor
   for (ValueSet::const_iterator InIt = InSet->begin(), InE = InSet->end();
        InIt != InE; ++InIt)
     if ((OutSet->insert(*InIt)).second)
       Changed = true;
-  
-  // 
+
+  //
   //**** WARNING: The following code for handling dummy PHI machine
   //     instructions is untested.  See explanation above.
-  // 
+  //
   // then merge all members of the EdgeInSet for the predecessor into the OutSet
   const ValueSet& EdgeInSet = PredToEdgeInSetMap[PredBB];
   for (ValueSet::const_iterator InIt = EdgeInSet.begin(), InE = EdgeInSet.end();
        InIt != InE; ++InIt)
     if ((OutSet->insert(*InIt)).second)
       Changed = true;
-  // 
+  //
   //****
-  
+
   return Changed;
-} 
+}
 
 
 //-----------------------------------------------------------------------------
@@ -190,25 +190,25 @@ bool BBLiveVar::setPropagate(ValueSet *OutSet, const ValueSet *InSet,
 
 bool BBLiveVar::applyFlowFunc(hash_map<const BasicBlock*,
                                        BBLiveVar*> &BBLiveVarInfo) {
-  // IMPORTANT: caller should check whether inset changed 
+  // IMPORTANT: caller should check whether inset changed
   //            (else no point in calling)
-  
+
   // If this BB changed any OutSets of preds whose POID is lower, than we need
   // another iteration...
   //
-  bool needAnotherIt = false;  
+  bool needAnotherIt = false;
 
   for (pred_const_iterator PI = pred_begin(&BB), PE = pred_end(&BB);
        PI != PE ; ++PI) {
     BBLiveVar *PredLVBB = BBLiveVarInfo[*PI];
 
     // do set union
-    if (setPropagate(&PredLVBB->OutSet, &InSet, *PI)) {  
+    if (setPropagate(&PredLVBB->OutSet, &InSet, *PI)) {
       PredLVBB->OutSetChanged = true;
 
       // if the predec POID is lower than mine
       if (PredLVBB->getPOId() <= POID)
-	needAnotherIt = true;   
+	needAnotherIt = true;
     }
   }  // for
 

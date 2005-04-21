@@ -1,12 +1,12 @@
 //===-- SparcV9Internals.h --------------------------------------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
-// 
+//
 // This file defines stuff that is to be private to the SparcV9 backend, but is
 // shared among different portions of the backend.
 //
@@ -41,19 +41,19 @@ enum SparcV9InstrSchedClass {
   SPARC_LD,		/* Load instructions */
   SPARC_ST,		/* Store instructions */
   SPARC_SINGLE,		/* Instructions that must issue by themselves */
-  
+
   SPARC_INV,		/* This should stay at the end for the next value */
   SPARC_NUM_SCHED_CLASSES = SPARC_INV
 };
 
 
 //---------------------------------------------------------------------------
-// enum SparcV9MachineOpCode. 
+// enum SparcV9MachineOpCode.
 // const TargetInstrDescriptor SparcV9MachineInstrDesc[]
-// 
+//
 // Purpose:
 //   Description of UltraSparcV9 machine instructions.
-// 
+//
 //---------------------------------------------------------------------------
 
 namespace V9 {
@@ -75,7 +75,7 @@ extern const TargetInstrDescriptor SparcV9MachineInstrDesc[];
 
 //---------------------------------------------------------------------------
 // class SparcV9SchedInfo
-// 
+//
 // Purpose:
 //   Interface to instruction scheduling information for UltraSPARC.
 //   The parameter values above are based on UltraSPARC IIi.
@@ -107,7 +107,7 @@ FunctionPass *createDecomposeMultiDimRefsPass();
 
 // This function decomposes a single instance of such a reference.
 // Return value: true if the instruction was replaced; false otherwise.
-// 
+//
 bool DecomposeArrayRef(GetElementPtrInst* GEP);
 
 /// Peephole optimization pass operating on machine code

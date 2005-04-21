@@ -1,10 +1,10 @@
 //===-- RegClass.h - Machine Independent register coloring ------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 
 /* Title:   RegClass.h   -*- C++ -*-
@@ -29,23 +29,23 @@ class TargetRegClassInfo;
 //-----------------------------------------------------------------------------
 // Class RegClass
 //
-//   Implements a machine independent register class. 
+//   Implements a machine independent register class.
 //
 //   This is the class that contains all data structures and common algos
-//   for coloring a particular register class (e.g., int class, fp class).  
-//   This class is hardware independent. This class accepts a hardware 
-//   dependent description of machine registers (TargetRegInfo class) to 
+//   for coloring a particular register class (e.g., int class, fp class).
+//   This class is hardware independent. This class accepts a hardware
+//   dependent description of machine registers (TargetRegInfo class) to
 //   get hardware specific info and to color an individual IG node.
 //
 //   This class contains the InterferenceGraph (IG).
-//   Also it contains an IGNode stack that can be used for coloring. 
+//   Also it contains an IGNode stack that can be used for coloring.
 //   The class provides some easy access methods to the IG methods, since these
 //   methods are called thru a register class.
 //
 //-----------------------------------------------------------------------------
 class RegClass {
   const Function *const Meth;           // Function we are working on
-  const SparcV9RegInfo *MRI;            // Machine register information 
+  const SparcV9RegInfo *MRI;            // Machine register information
   const TargetRegClassInfo *const MRC;  // Machine reg. class for this RegClass
   const unsigned RegClassID;            // my int ID
 
@@ -100,28 +100,28 @@ class RegClass {
 
   // main method called for coloring regs
   //
-  void colorAllRegs();                 
+  void colorAllRegs();
 
-  inline unsigned getNumOfAvailRegs() const 
+  inline unsigned getNumOfAvailRegs() const
     { return MRC->getNumOfAvailRegs(); }
 
 
   // --- following methods are provided to access the IG contained within this
   // ---- RegClass easilly.
 
-  inline void addLRToIG(LiveRange *const LR) 
+  inline void addLRToIG(LiveRange *const LR)
     { IG.addLRToIG(LR); }
 
   inline void setInterference(const LiveRange *const LR1,
-			      const LiveRange *const LR2)  
+			      const LiveRange *const LR2)
     { IG.setInterference(LR1, LR2); }
 
   inline unsigned getInterference(const LiveRange *const LR1,
-			      const LiveRange *const LR2) const 
+			      const LiveRange *const LR2) const
     { return IG.getInterference(LR1, LR2); }
 
   inline void mergeIGNodesOfLRs(const LiveRange *const LR1,
-				LiveRange *const LR2) 
+				LiveRange *const LR2)
     { IG.mergeIGNodesOfLRs(LR1, LR2); }
 
 

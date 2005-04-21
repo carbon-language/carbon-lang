@@ -1,12 +1,12 @@
 //===-- SparcV8CodeEmitter.cpp - JIT Code Emitter for SparcV8 -----*- C++ -*-=//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
-// 
+//
 //
 //===----------------------------------------------------------------------===//
 
@@ -78,7 +78,7 @@ bool SparcV8TargetMachine::addPassesToEmitMachineCode(FunctionPassManager &PM,
                                                       MachineCodeEmitter &MCE) {
   // Keep as `true' until this is a functional JIT to allow llvm-gcc to build
   return true;
-  
+
   // Machine code emitter pass for SparcV8
   PM.add(new SparcV8CodeEmitter(*this, MCE));
   // Delete machine code for this function after emitting it

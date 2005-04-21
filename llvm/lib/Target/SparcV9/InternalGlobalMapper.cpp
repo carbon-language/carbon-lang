@@ -1,10 +1,10 @@
 //===-- InternalGlobalMapper.cpp - Mapping Info for Internal Globals ------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // InternalGlobalMapper is a pass that helps the runtime trace optimizer map
@@ -71,7 +71,7 @@ bool InternalGlobalMapper::runOnModule(Module &M) {
   std::vector<Constant *> FieldValues;
   FieldValues.push_back (ConstantUInt::get (Type::UIntTy, gvvector.size ()));
   FieldValues.push_back (ConstantArray::get (ATy, gvvector));
-  
+
   // Add the constant struct to M as an external global symbol named
   // "_llvm_internalGlobals".
   new GlobalVariable (STy, true, GlobalValue::ExternalLinkage,

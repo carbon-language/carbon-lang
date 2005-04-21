@@ -1,10 +1,10 @@
 //===- SparcV9StackSlots.cpp - Add empty stack slots to functions ---------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This pass adds 2 empty slots at the top of function stack.  These two slots
@@ -26,19 +26,19 @@ namespace {
     const TargetMachine &Target;
   public:
     StackSlots(const TargetMachine &T) : Target(T) {}
-    
+
     const char *getPassName() const {
       return "Stack Slot Insertion for profiling code";
     }
-    
+
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesCFG();
     }
-    
+
     bool runOnMachineFunction(MachineFunction &MF) {
       const Type *PtrInt = PointerType::get(Type::IntTy);
       unsigned Size = Target.getTargetData().getTypeSize(PtrInt);
-      
+
       Value *V = Constant::getNullValue(Type::IntTy);
       MF.getInfo<SparcV9FunctionInfo>()->allocateLocalVar(V, 2*Size);
       return true;

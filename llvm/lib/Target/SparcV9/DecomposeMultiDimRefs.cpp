@@ -1,10 +1,10 @@
 //===- llvm/Transforms/DecomposeMultiDimRefs.cpp - Lower array refs to 1D -===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // DecomposeMultiDimRefs - Convert multi-dimensional references consisting of
@@ -57,28 +57,28 @@ static inline bool isZeroConst (Value *V) {
 }
 
 // Function: DecomposeArrayRef()
-//  
+//
 // For any GetElementPtrInst with 2 or more array and structure indices:
-// 
+//
 //      opCode CompositeType* P, [uint|ubyte] idx1, ..., [uint|ubyte] idxN
-// 
+//
 // this function generates the following sequence:
-// 
+//
 //      ptr1   = getElementPtr P,         idx1
 //      ptr2   = getElementPtr ptr1,   0, idx2
 //      ...
 //      ptrN-1 = getElementPtr ptrN-2, 0, idxN-1
 //      opCode                 ptrN-1, 0, idxN  // New-MAI
-// 
+//
 // Then it replaces the original instruction with this sequence,
 // and replaces all uses of the original instruction with New-MAI.
 // If idx1 is 0, we simply omit the first getElementPtr instruction.
-// 
+//
 // On return: BBI points to the instruction after the current one
 //            (whether or not *BBI was replaced).
-// 
+//
 // Return value: true if the instruction was replaced; false otherwise.
-// 
+//
 bool llvm::DecomposeArrayRef(GetElementPtrInst* GEP) {
   if (GEP->getNumIndices() < 2
       || (GEP->getNumIndices() == 2
@@ -97,7 +97,7 @@ bool llvm::DecomposeArrayRef(GetElementPtrInst* GEP) {
   User::const_op_iterator OI = GEP->idx_begin(), OE = GEP->idx_end();
   for (; OI+1 != OE; ++OI) {
     std::vector<Value*> Indices;
-    
+
     // If this is the first index and is 0, skip it and move on!
     if (OI == GEP->idx_begin()) {
       if (isZeroConst (*OI))

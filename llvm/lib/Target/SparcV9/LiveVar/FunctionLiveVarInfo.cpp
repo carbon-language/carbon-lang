@@ -1,10 +1,10 @@
 //===-- FunctionLiveVarInfo.cpp - Live Variable Analysis for a Function ---===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This is the interface to function level live variable information that is
@@ -79,7 +79,7 @@ bool FunctionLiveVarInfo::runOnFunction(Function &F) {
   unsigned int iter=0;
   while (doSingleBackwardPass(M, iter++))
     ; // Iterate until we are done.
-  
+
   if (DEBUG_LV) std::cerr << "Live Variable Analysis complete!\n";
   return false;
 }
@@ -99,7 +99,7 @@ void FunctionLiveVarInfo::constructBBs(const Function *F) {
 
   MachineFunction &MF = MachineFunction::get(F);
   for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I) {
-    const BasicBlock &BB = *I->getBasicBlock();        // get the current BB 
+    const BasicBlock &BB = *I->getBasicBlock();        // get the current BB
     if (DEBUG_LV) std::cerr << " For BB " << RAV(BB) << ":\n";
 
     BBLiveVar *LVBB;
@@ -116,7 +116,7 @@ void FunctionLiveVarInfo::constructBBs(const Function *F) {
       LVBB = new BBLiveVar(BB, *I, ++POId);
     }
     BBLiveVarInfo[&BB] = LVBB;
-    
+
     if (DEBUG_LV)
       LVBB->printAllSets();
   }
@@ -140,19 +140,19 @@ bool FunctionLiveVarInfo::doSingleBackwardPass(const Function *M,
     if (DEBUG_LV) std::cerr << " For BB " << (*BBI)->getName() << ":\n";
 
     // InSets are initialized to "GenSet". Recompute only if OutSet changed.
-    if(LVBB->isOutSetChanged()) 
+    if(LVBB->isOutSetChanged())
       LVBB->applyTransferFunc();        // apply the Tran Func to calc InSet
-    
+
     // OutSets are initialized to EMPTY.  Recompute on first iter or if InSet
     // changed.
     if (iter == 0 || LVBB->isInSetChanged())        // to calc Outsets of preds
       NeedAnotherIteration |= LVBB->applyFlowFunc(BBLiveVarInfo);
-    
+
     if (DEBUG_LV) LVBB->printInOutSets();
   }
 
   // true if we need to reiterate over the CFG
-  return NeedAnotherIteration;         
+  return NeedAnotherIteration;
 }
 
 
@@ -188,10 +188,10 @@ void FunctionLiveVarInfo::releaseMemory() {
 // Following functions will give the LiveVar info for any machine instr in
 // a function. It should be called after a call to analyze().
 //
-// These functions calculate live var info for all the machine instrs in a 
-// BB when LVInfo for one inst is requested. Hence, this function is useful 
-// when live var info is required for many (or all) instructions in a basic 
-// block. Also, the arguments to this function does not require specific 
+// These functions calculate live var info for all the machine instrs in a
+// BB when LVInfo for one inst is requested. Hence, this function is useful
+// when live var info is required for many (or all) instructions in a basic
+// block. Also, the arguments to this function does not require specific
 // iterators.
 //-----------------------------------------------------------------------------
 
@@ -215,12 +215,12 @@ FunctionLiveVarInfo::getLiveVarSetBeforeMInst(const MachineInstr *MI,
 // Gives live variable information after a machine instruction
 //-----------------------------------------------------------------------------
 
-const ValueSet & 
+const ValueSet &
 FunctionLiveVarInfo::getLiveVarSetAfterMInst(const MachineInstr *MI,
                                              const BasicBlock *BB) {
 
   ValueSet* &LVSet = MInst2LVSetAI[MI]; // ref. to map entry
-  if (LVSet == NULL && BB != NULL) {    // if not found and BB provided 
+  if (LVSet == NULL && BB != NULL) {    // if not found and BB provided
     calcLiveVarSetsForBB(BB);           // calc LVSet for all instrs in BB
     assert(LVSet != NULL);
   }
@@ -230,7 +230,7 @@ FunctionLiveVarInfo::getLiveVarSetAfterMInst(const MachineInstr *MI,
 // This function applies a machine instr to a live var set (accepts OutSet) and
 // makes necessary changes to it (produces InSet). Note that two for loops are
 // used to first kill all defs and then to add all uses. This is because there
-// can be instructions like Val = Val + 1 since we allow multiple defs to a 
+// can be instructions like Val = Val + 1 since we allow multiple defs to a
 // machine instruction operand.
 //
 static void applyTranferFuncForMInst(ValueSet &LVS, const MachineInstr *MInst) {
@@ -261,7 +261,7 @@ static void applyTranferFuncForMInst(ValueSet &LVS, const MachineInstr *MInst) {
 }
 
 //-----------------------------------------------------------------------------
-// This method calculates the live variable information for all the 
+// This method calculates the live variable information for all the
 // instructions in a basic block and enter the newly constructed live
 // variable sets into a the caches (MInst2LVSetAI, MInst2LVSetBI)
 //-----------------------------------------------------------------------------
@@ -276,15 +276,15 @@ void FunctionLiveVarInfo::calcLiveVarSetsForBB(const BasicBlock *BB) {
   if (DEBUG_LV >= LV_DEBUG_Instr)
     std::cerr << "\n======For BB " << BB->getName()
               << ": Live var sets for instructions======\n";
-  
+
   ValueSet *SetAI = &getOutSetOfBB(BB);         // init SetAI with OutSet
   ValueSet CurSet(*SetAI);                      // CurSet now contains OutSet
 
   // iterate over all the machine instructions in BB
   for (MachineBasicBlock::const_reverse_iterator MII = MIVec.rbegin(),
-         MIE = MIVec.rend(); MII != MIE; ++MII) {  
+         MIE = MIVec.rend(); MII != MIE; ++MII) {
     // MI is cur machine inst
-    const MachineInstr *MI = &*MII;  
+    const MachineInstr *MI = &*MII;
 
     MInst2LVSetAI[MI] = SetAI;                 // record in After Inst map
 
@@ -316,7 +316,7 @@ void FunctionLiveVarInfo::calcLiveVarSetsForBB(const BasicBlock *BB) {
     }
 
     // SetAI will be used in the next iteration
-    SetAI = NewSet;                 
+    SetAI = NewSet;
   }
 }
 

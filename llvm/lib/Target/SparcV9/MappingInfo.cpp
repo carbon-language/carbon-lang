@@ -1,10 +1,10 @@
 //===- MappingInfo.cpp - create LLVM info and output to .s file -----------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file contains a FunctionPass called MappingInfoAsmPrinter,
@@ -36,7 +36,7 @@
 namespace llvm {
 
 namespace {
-  class MappingInfoAsmPrinter : public FunctionPass { 
+  class MappingInfoAsmPrinter : public FunctionPass {
     std::ostream &Out;
   public:
     MappingInfoAsmPrinter(std::ostream &out) : Out(out){}
@@ -78,8 +78,8 @@ bool MappingInfoAsmPrinter::runOnFunction(Function &FI) {
   // Now, write out the maps.
   BBMIMap.dumpAssembly (Out);
 
-  return false; 
-}  
+  return false;
+}
 
 /// writeNumber - Write out the number X as a sequence of .byte
 /// directives to the current output stream Out. This method performs a
@@ -146,7 +146,7 @@ void MappingInfoAsmPrinter::buildBBMIMap(Function &FI, MappingInfo &Map) {
   create_BB_to_MInumber_Key(FI, BBkey);
 
   selectOutputMap (Map);
-  MachineFunction &MF = MachineFunction::get(&FI);  
+  MachineFunction &MF = MachineFunction::get(&FI);
   for (MachineFunction::iterator BI = MF.begin(), BE = MF.end();
        BI != BE; ++BI, ++bb) {
     MachineBasicBlock &miBB = *BI;
@@ -165,19 +165,19 @@ static void writePrologue (std::ostream &Out, const std::string &comment,
 			   const std::string &symName) {
   // Prologue:
   // Output a comment describing the object.
-  Out << "!" << comment << "\n";   
+  Out << "!" << comment << "\n";
   // Switch the current section to .rodata in the assembly output:
-  Out << "\t.section \".rodata\"\n\t.align 8\n";  
+  Out << "\t.section \".rodata\"\n\t.align 8\n";
   // Output a global symbol naming the object:
-  Out << "\t.global " << symName << "\n";    
-  Out << "\t.type " << symName << ",#object\n"; 
-  Out << symName << ":\n"; 
+  Out << "\t.global " << symName << "\n";
+  Out << "\t.type " << symName << ",#object\n";
+  Out << symName << ":\n";
 }
 
 static void writeEpilogue (std::ostream &Out, const std::string &symName) {
   // Epilogue:
   // Output a local symbol marking the end of the object:
-  Out << ".end_" << symName << ":\n";    
+  Out << ".end_" << symName << ":\n";
   // Output size directive giving the size of the object:
   Out << "\t.size " << symName << ", .end_" << symName << "-" << symName
       << "\n";
@@ -199,7 +199,7 @@ void MappingInfo::dumpAssembly (std::ostream &Out) {
 ///
 bool MappingInfoAsmPrinter::doFinalization (Module &M) {
   unsigned f;
-  
+
   writePrologue(Out, "FUNCTION TO BB MAP", "FunctionBB");
   f=0;
   for(Module::iterator FI = M.begin (), FE = M.end (); FE != FI; ++FI) {
@@ -209,7 +209,7 @@ bool MappingInfoAsmPrinter::doFinalization (Module &M) {
     ++f;
   }
   writeEpilogue(Out, "FunctionBB");
-  
+
   return false;
 }
 

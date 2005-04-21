@@ -1,10 +1,10 @@
 //===- PPC64JITInfo.h - PowerPC/AIX impl. of the JIT interface -*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file contains the PowerPC/AIX implementation of the TargetJITInfo class.

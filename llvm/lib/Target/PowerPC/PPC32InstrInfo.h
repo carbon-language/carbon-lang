@@ -1,10 +1,10 @@
 //===- PPC32InstrInfo.h - PowerPC32 Instruction Information -----*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file contains the PowerPC implementation of the TargetInstrInfo class.
@@ -47,7 +47,7 @@ public:
     case PPC::BGE: return PPC::BLT;
     case PPC::BGT: return PPC::BLE;
     case PPC::BLE: return PPC::BGT;
-    } 
+    }
   }
 };
 

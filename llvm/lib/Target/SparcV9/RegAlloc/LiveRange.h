@@ -1,10 +1,10 @@
 //===-- LiveRange.h - Store info about a live range -------------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // Implements a live range using a SetVector of Value *s.  We keep only
@@ -34,7 +34,7 @@ private:
   ValueContainerType MyValues; // Values in this LiveRange
   RegClass *MyRegClass;        // register class (e.g., int, FP) for this LR
 
-  /// doesSpanAcrossCalls - Does this live range span across calls? 
+  /// doesSpanAcrossCalls - Does this live range span across calls?
   /// This information is used by graph coloring algo to avoid allocating
   /// volatile colors to live ranges that span across calls (since they have to
   /// be saved/restored)
@@ -56,7 +56,7 @@ private:
   /// this live range is not available before graph coloring (e.g., it
   /// can be allocated to another live range which interferes with
   /// this)
-  /// 
+  ///
   bool CanUseSuggestedCol;
 
   /// SpilledStackOffsetFromFP - If this LR is spilled, its stack
@@ -83,7 +83,7 @@ public:
   void insert(iterator b, iterator e) { MyValues.insert (b, e); }
 
   LiveRange() {
-    Color = SuggestedColor = -1;        // not yet colored 
+    Color = SuggestedColor = -1;        // not yet colored
     mustSpill = false;
     MyRegClass = 0;
     UserIGNode = 0;
@@ -99,21 +99,21 @@ public:
   unsigned getRegClassID() const;
 
   bool hasColor() const { return Color != -1; }
-  
+
   unsigned getColor() const { assert(Color != -1); return (unsigned)Color; }
 
   void setColor(unsigned Col) { Color = (int)Col; }
 
-  inline void setCallInterference() { 
+  inline void setCallInterference() {
     doesSpanAcrossCalls = 1;
   }
-  inline void clearCallInterference() { 
+  inline void clearCallInterference() {
     doesSpanAcrossCalls = 0;
   }
 
-  inline bool isCallInterference() const { 
-    return doesSpanAcrossCalls == 1; 
-  } 
+  inline bool isCallInterference() const {
+    return doesSpanAcrossCalls == 1;
+  }
 
   inline void markForSpill() { mustSpill = true; }
 
@@ -150,7 +150,7 @@ public:
   inline const Type *getType() const {
     return (*begin())->getType();  // set's don't have a front
   }
-  
+
   inline void setSuggestedColor(int Col) {
     if (SuggestedColor == -1)
       SuggestedColor = Col;

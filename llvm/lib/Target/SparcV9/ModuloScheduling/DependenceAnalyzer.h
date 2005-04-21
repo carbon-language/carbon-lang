@@ -6,8 +6,8 @@
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-// 
-// 
+//
+//
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_DEPENDENCEANALYZER_H
@@ -24,22 +24,22 @@ namespace llvm {
 
   //class to represent a dependence
   struct Dependence {
-    
+
     enum DataDepType {
       TrueDep, AntiDep, OutputDep, NonDateDep,
     };
-    
+
     Dependence(int diff, DataDepType dep) : iteDiff(diff), depType(dep) {}
     unsigned getIteDiff() { return iteDiff; }
     unsigned getDepType() { return depType; }
-    
+
     private:
-    
+
     unsigned iteDiff;
     unsigned depType;
   };
 
-  
+
   struct DependenceResult {
     std::vector<Dependence> dependences;
     DependenceResult(const std::vector<Dependence> &d) : dependences(d) {}
@@ -49,12 +49,12 @@ namespace llvm {
   class DependenceAnalyzer : public FunctionPass {
     AliasAnalysis *AA;
     TargetData *TD;
- 
+
   public:
     DependenceAnalyzer() { AA = 0; TD = 0; }
     virtual bool runOnFunction(Function &F);
     virtual const char* getPassName() const { return "DependenceAnalyzer"; }
-  
+
     // getAnalysisUsage
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<AliasAnalysis>();

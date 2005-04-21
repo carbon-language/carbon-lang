@@ -1,10 +1,10 @@
 //===-- SparcJITInfo.cpp - Implement the JIT interfaces for SparcV9 -------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements the JIT interfaces for the SparcV9 target.
@@ -57,7 +57,7 @@ static void InsertJumpAtAddr(int64_t JumpTarget, unsigned *Addr) {
     Addr[4] = 0x82114001;
     // or %g1, %lo(Target), %g1  ;; get lowest 10 bits of Target into %g1
     Addr[5] = BUILD_ORI(G1, JumpTarget, G1);
-    
+
     // jmpl %g1, %g0, %g0          ;; indirect branch on %g1
     Addr[6] = 0x81C00001;
     // nop                         ;; delay slot
@@ -70,13 +70,13 @@ void SparcV9JITInfo::replaceMachineCodeForFunction (void *Old, void *New) {
 }
 
 
-static void SaveRegisters(uint64_t DoubleFP[], uint64_t CC[], 
+static void SaveRegisters(uint64_t DoubleFP[], uint64_t CC[],
                           uint64_t Globals[]) {
 #if defined(__sparcv9)
 
   __asm__ __volatile__ (// Save condition-code registers
-                        "stx %%fsr, %0;\n\t" 
-                        "rd %%fprs, %1;\n\t" 
+                        "stx %%fsr, %0;\n\t"
+                        "rd %%fprs, %1;\n\t"
                         "rd %%ccr,  %2;\n\t"
                         : "=m"(CC[0]), "=r"(CC[1]), "=r"(CC[2]));
 
@@ -103,7 +103,7 @@ static void SaveRegisters(uint64_t DoubleFP[], uint64_t CC[],
                           "=m"(DoubleFP[10]), "=m"(DoubleFP[11]),
                           "=m"(DoubleFP[12]), "=m"(DoubleFP[13]),
                           "=m"(DoubleFP[14]), "=m"(DoubleFP[15]));
-                        
+
   __asm__ __volatile__ (// Save Double FP registers, part 2
                         "std %%f32, %0;\n\t"  "std %%f34, %1;\n\t"
                         "std %%f36, %2;\n\t"  "std %%f38, %3;\n\t"
@@ -127,14 +127,14 @@ static void SaveRegisters(uint64_t DoubleFP[], uint64_t CC[],
 #endif
 }
 
-static void RestoreRegisters(uint64_t DoubleFP[], uint64_t CC[], 
+static void RestoreRegisters(uint64_t DoubleFP[], uint64_t CC[],
                              uint64_t Globals[]) {
 #if defined(__sparcv9)
 
   __asm__ __volatile__ (// Restore condition-code registers
-                        "ldx %0,    %%fsr;\n\t" 
+                        "ldx %0,    %%fsr;\n\t"
                         "wr  %1, 0, %%fprs;\n\t"
-                        "wr  %2, 0, %%ccr;\n\t" 
+                        "wr  %2, 0, %%ccr;\n\t"
                         :: "m"(CC[0]), "r"(CC[1]), "r"(CC[2]));
 
   __asm__ __volatile__ (// Restore globals g1 and g5
@@ -144,11 +144,11 @@ static void RestoreRegisters(uint64_t DoubleFP[], uint64_t CC[],
 
   // GCC says: `asm' only allows up to thirty parameters!
   __asm__ __volatile__ (// Restore Single/Double FP registers, part 1
-                        "ldd %0,  %%f0;\n\t"   "ldd %1, %%f2;\n\t" 
-                        "ldd %2,  %%f4;\n\t"   "ldd %3, %%f6;\n\t" 
-                        "ldd %4,  %%f8;\n\t"   "ldd %5, %%f10;\n\t" 
-                        "ldd %6,  %%f12;\n\t"  "ldd %7, %%f14;\n\t" 
-                        "ldd %8,  %%f16;\n\t"  "ldd %9, %%f18;\n\t" 
+                        "ldd %0,  %%f0;\n\t"   "ldd %1, %%f2;\n\t"
+                        "ldd %2,  %%f4;\n\t"   "ldd %3, %%f6;\n\t"
+                        "ldd %4,  %%f8;\n\t"   "ldd %5, %%f10;\n\t"
+                        "ldd %6,  %%f12;\n\t"  "ldd %7, %%f14;\n\t"
+                        "ldd %8,  %%f16;\n\t"  "ldd %9, %%f18;\n\t"
                         "ldd %10, %%f20;\n\t" "ldd %11, %%f22;\n\t"
                         "ldd %12, %%f24;\n\t" "ldd %13, %%f26;\n\t"
                         "ldd %14, %%f28;\n\t" "ldd %15, %%f30;\n\t"
@@ -228,7 +228,7 @@ static void CompilationCallback() {
   // has been performed.  Having a variable sized alloca disables frame pointer
   // elimination currently, even if it's dead.  This is a gross hack.
   alloca(42+Offset);
-  
+
   // Make sure that what we're about to overwrite is indeed "save".
   if (*CodeBegin != 0x9DE3BF40) {
     std::cerr << "About to overwrite smthg not a save instr!";
@@ -264,7 +264,7 @@ static void CompilationCallback() {
 ///
 void *SparcV9JITInfo::emitFunctionStub(void *Fn, MachineCodeEmitter &MCE) {
   if (Fn != CompilationCallback) {
-    // If this is just a call to an external function, 
+    // If this is just a call to an external function,
     MCE.startFunctionStub(4*8);
     unsigned *Stub = (unsigned*)(intptr_t)MCE.getCurrentPCValue();
     for (unsigned i = 0; i != 8; ++i)

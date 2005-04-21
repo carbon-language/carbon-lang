@@ -1,10 +1,10 @@
 //===-- DelaySlotFiller.cpp - SparcV8 delay slot filler -------------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This is a simple local pass that fills delay slots with NOPs.
