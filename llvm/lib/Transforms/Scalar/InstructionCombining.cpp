@@ -548,6 +548,9 @@ static Instruction *FoldOpIntoSelect(Instruction &Op, SelectInst *SI,
   Value *FV = SI->getOperand(2);
 
   if (isa<Constant>(TV) || isa<Constant>(FV)) {
+    // Bool selects with constant operands can be folded to logical ops.
+    if (SI->getType() == Type::BoolTy) return 0;
+
     Value *SelectTrueVal = FoldOperationIntoSelectOperand(Op, TV, IC);
     Value *SelectFalseVal = FoldOperationIntoSelectOperand(Op, FV, IC);
 
