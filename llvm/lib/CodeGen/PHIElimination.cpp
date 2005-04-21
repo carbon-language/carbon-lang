@@ -1,10 +1,10 @@
 //===-- PhiElimination.cpp - Eliminate PHI nodes by inserting copies ------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This pass eliminates machine instruction PHI nodes by inserting copy
@@ -97,12 +97,12 @@ bool PNE::EliminatePHINodes(MachineFunction &MF, MachineBasicBlock &MBB) {
   while (MBB.front().getOpcode() == TargetInstrInfo::PHI) {
     // Unlink the PHI node from the basic block, but don't delete the PHI yet.
     MachineInstr *MPhi = MBB.remove(MBB.begin());
-    
+
     assert(MRegisterInfo::isVirtualRegister(MPhi->getOperand(0).getReg()) &&
            "PHI node doesn't write virt reg?");
 
     unsigned DestReg = MPhi->getOperand(0).getReg();
-    
+
     // Create a new register for the incoming PHI arguments
     const TargetRegisterClass *RC = MF.getSSARegMap()->getRegClass(DestReg);
     unsigned IncomingReg = MF.getSSARegMap()->createVirtualRegister(RC);
@@ -112,7 +112,7 @@ bool PNE::EliminatePHINodes(MachineFunction &MF, MachineBasicBlock &MBB) {
     // into the phi node destination.
     //
     RegInfo->copyRegToReg(MBB, AfterPHIsIt, DestReg, IncomingReg, RC);
-    
+
     // Update live variable information if there is any...
     if (LV) {
       MachineInstr *PHICopy = prior(AfterPHIsIt);
@@ -128,7 +128,7 @@ bool PNE::EliminatePHINodes(MachineFunction &MF, MachineBasicBlock &MBB) {
       // of any registers, or if the value itself is dead, we need to move this
       // information over to the new copy we just inserted.
       //
-      std::pair<LiveVariables::killed_iterator, LiveVariables::killed_iterator> 
+      std::pair<LiveVariables::killed_iterator, LiveVariables::killed_iterator>
         RKs = LV->killed_range(MPhi);
       std::vector<std::pair<MachineInstr*, unsigned> > Range;
       if (RKs.first != RKs.second) // Delete the range.
@@ -154,13 +154,13 @@ bool PNE::EliminatePHINodes(MachineFunction &MF, MachineBasicBlock &MBB) {
     //
     for (int i = MPhi->getNumOperands() - 1; i >= 2; i-=2) {
       MachineOperand &opVal = MPhi->getOperand(i-1);
-      
+
       // Get the MachineBasicBlock equivalent of the BasicBlock that is the
       // source path the PHI.
       MachineBasicBlock &opBlock = *MPhi->getOperand(i).getMachineBasicBlock();
 
       MachineBasicBlock::iterator I = opBlock.getFirstTerminator();
-      
+
       // Check to make sure we haven't already emitted the copy for this block.
       // This can happen because PHI nodes may have multiple entries for the
       // same basic block.  It doesn't matter which entry we use though, because
@@ -171,7 +171,7 @@ bool PNE::EliminatePHINodes(MachineFunction &MF, MachineBasicBlock &MBB) {
       // register we are interested in!
       //
       bool HaveNotEmitted = true;
-      
+
       if (I != opBlock.begin()) {
         MachineBasicBlock::iterator PrevInst = prior(I);
         for (unsigned i = 0, e = PrevInst->getNumOperands(); i != e; ++i) {
@@ -180,7 +180,7 @@ bool PNE::EliminatePHINodes(MachineFunction &MF, MachineBasicBlock &MBB) {
             if (MO.isDef()) {
               HaveNotEmitted = false;
               break;
-            }             
+            }
         }
       }
 
@@ -215,7 +215,7 @@ bool PNE::EliminatePHINodes(MachineFunction &MF, MachineBasicBlock &MBB) {
           for (MachineBasicBlock::succ_iterator SI = opBlock.succ_begin(),
                  E = opBlock.succ_end(); SI != E && !ValueIsLive; ++SI) {
             MachineBasicBlock *SuccMBB = *SI;
-            
+
             // Is it alive in this successor?
             unsigned SuccIdx = SuccMBB->getNumber();
             if (SuccIdx < InRegVI.AliveBlocks.size() &&
@@ -223,7 +223,7 @@ bool PNE::EliminatePHINodes(MachineFunction &MF, MachineBasicBlock &MBB) {
               ValueIsLive = true;
               break;
             }
-            
+
             // Is it killed in this successor?
             for (unsigned i = 0, e = InRegVI.Kills.size(); i != e; ++i)
               if (InRegVI.Kills[i]->getParent() == SuccMBB) {
@@ -235,7 +235,7 @@ bool PNE::EliminatePHINodes(MachineFunction &MF, MachineBasicBlock &MBB) {
             if (!ValueIsLive)
               ValueIsLive = VRegPHIUseCount[SrcReg] != 0;
           }
-          
+
           // Okay, if we now know that the value is not live out of the block,
           // we can add a kill marker to the copy we inserted saying that it
           // kills the incoming value!
@@ -252,7 +252,7 @@ bool PNE::EliminatePHINodes(MachineFunction &MF, MachineBasicBlock &MBB) {
         }
       }
     }
-    
+
     // Really delete the PHI instruction now!
     delete MPhi;
   }

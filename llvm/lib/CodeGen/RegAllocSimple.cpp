@@ -1,10 +1,10 @@
 //===-- RegAllocSimple.cpp - A simple generic register allocator ----------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements a simple register allocator. *Very* simple: It immediate
@@ -36,7 +36,7 @@ namespace {
     const TargetMachine *TM;
     const MRegisterInfo *RegInfo;
     bool *PhysRegsEverUsed;
-    
+
     // StackSlotForVirtReg - Maps SSA Regs => frame index on the stack where
     // these values are spilled
     std::map<unsigned, int> StackSlotForVirtReg;
@@ -102,7 +102,7 @@ int RegAllocSimple::getStackSpaceFor(unsigned VirtReg,
   // Allocate a new stack object for this spill location...
   int FrameIdx = MF->getFrameInfo()->CreateStackObject(RC->getSize(),
                                                        RC->getAlignment());
-  
+
   // Assign the slot...
   StackSlotForVirtReg.insert(I, std::make_pair(VirtReg, FrameIdx));
 
@@ -115,10 +115,10 @@ unsigned RegAllocSimple::getFreeReg(unsigned virtualReg) {
   TargetRegisterClass::iterator RE = RC->allocation_order_end(*MF);
 
   while (1) {
-    unsigned regIdx = RegClassIdx[RC]++; 
+    unsigned regIdx = RegClassIdx[RC]++;
     assert(RI+regIdx != RE && "Not enough registers!");
     unsigned PhysReg = *(RI+regIdx);
-    
+
     if (!RegsUsed[PhysReg]) {
       PhysRegsEverUsed[PhysReg] = true;
       return PhysReg;
@@ -158,7 +158,7 @@ void RegAllocSimple::AllocateBasicBlock(MachineBasicBlock &MBB) {
     std::map<unsigned, unsigned> Virt2PhysRegMap;
 
     RegsUsed.resize(RegInfo->getNumRegs());
-    
+
     // This is a preliminary pass that will invalidate any registers that are
     // used by the instruction (including implicit uses).
     unsigned Opcode = MI->getOpcode();
@@ -166,23 +166,23 @@ void RegAllocSimple::AllocateBasicBlock(MachineBasicBlock &MBB) {
     const unsigned *Regs;
     for (Regs = Desc.ImplicitUses; *Regs; ++Regs)
       RegsUsed[*Regs] = true;
-    
+
     for (Regs = Desc.ImplicitDefs; *Regs; ++Regs) {
       RegsUsed[*Regs] = true;
       PhysRegsEverUsed[*Regs] = true;
     }
-    
+
     // Loop over uses, move from memory into registers.
     for (int i = MI->getNumOperands() - 1; i >= 0; --i) {
       MachineOperand &op = MI->getOperand(i);
-      
+
       if (op.isRegister() && op.getReg() &&
           MRegisterInfo::isVirtualRegister(op.getReg())) {
         unsigned virtualReg = (unsigned) op.getReg();
         DEBUG(std::cerr << "op: " << op << "\n");
         DEBUG(std::cerr << "\t inst[" << i << "]: ";
               MI->print(std::cerr, TM));
-        
+
         // make sure the same virtual register maps to the same physical
         // register in any given instruction
         unsigned physReg = Virt2PhysRegMap[virtualReg];
@@ -211,7 +211,7 @@ void RegAllocSimple::AllocateBasicBlock(MachineBasicBlock &MBB) {
           }
         }
         MI->SetMachineOperandReg(i, physReg);
-        DEBUG(std::cerr << "virt: " << virtualReg << 
+        DEBUG(std::cerr << "virt: " << virtualReg <<
               ", phys: " << op.getReg() << "\n");
       }
     }

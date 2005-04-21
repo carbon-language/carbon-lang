@@ -57,7 +57,7 @@ namespace {
     bool runOnMachineFunction(MachineFunction&);
   };
 
-  RegisterPass<TwoAddressInstructionPass> 
+  RegisterPass<TwoAddressInstructionPass>
   X("twoaddressinstruction", "Two-Address instruction pass");
 };
 
@@ -152,7 +152,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
                   mbbi->insert(mi, NewMI);           // Insert the new inst
                   mbbi->erase(mi);                   // Nuke the old inst.
                   mi = NewMI;
-                }                  
+                }
 
                 ++NumCommuted;
                 regB = regC;
@@ -161,7 +161,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
             }
           }
           // If this instruction is potentially convertible to a true
-          // three-address instruction, 
+          // three-address instruction,
           if (TID.Flags & M_CONVERTIBLE_TO_3_ADDR)
             if (MachineInstr *New = TII.convertToThreeAddress(mi)) {
               DEBUG(std::cerr << "2addr: CONVERTING 2-ADDR: " << *mi);
@@ -197,7 +197,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
 
         // replace all occurences of regB with regA
         for (unsigned i = 1, e = mi->getNumOperands(); i != e; ++i) {
-          if (mi->getOperand(i).isRegister() && 
+          if (mi->getOperand(i).isRegister() &&
               mi->getOperand(i).getReg() == regB)
             mi->SetMachineOperandReg(i, regA);
         }

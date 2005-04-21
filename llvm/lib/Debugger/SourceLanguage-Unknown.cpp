@@ -1,12 +1,12 @@
 //===-- SourceLanguage-Unknown.cpp - Implement itf for unknown languages --===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
-// 
+//
 // If the LLVM debugger does not have a module for a particular language, it
 // falls back on using this one to perform the source-language interface.  This
 // interface is not wonderful, but it gets the job done.

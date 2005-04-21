@@ -1,12 +1,12 @@
 //===-- RuntimeInfo.cpp - Compute and cache info about running program ----===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
-// 
+//
 // This file implements the RuntimeInfo and related classes, by querying and
 // cachine information from the running inferior process.
 //
@@ -24,7 +24,7 @@ StackFrame::StackFrame(RuntimeInfo &ri, void *ParentFrameID)
   : RI(ri), SourceInfo(0) {
   FrameID = RI.getInferiorProcess().getPreviousFrame(ParentFrameID);
   if (FrameID == 0) throw "Stack frame does not exist!";
-  
+
   // Compute lazily as needed.
   FunctionDesc = 0;
 }

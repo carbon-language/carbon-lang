@@ -1,10 +1,10 @@
 //===-- LegalizeDAG.cpp - Implement SelectionDAG::Legalize ----------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements the SelectionDAG::Legalize method.
@@ -285,7 +285,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         VT = MVT::f32;
         Extend = true;
       }
-      
+
       SDOperand CPIdx = DAG.getConstantPool(CP->getConstantPoolIndex(LLVMC),
                                             TLI.getPointerTy());
       if (Extend) {
@@ -433,7 +433,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       Result = DAG.getLoad(Node->getValueType(0), Tmp1, Tmp2);
     else
       Result = SDOperand(Node, 0);
-    
+
     // Since loads produce two values, make sure to remember that we legalized
     // both of them.
     AddLegalizedOperand(SDOperand(Node, 0), Result);
@@ -458,7 +458,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       AddLegalizedOperand(SDOperand(Node, 0), Result);
       AddLegalizedOperand(SDOperand(Node, 1), Result.getValue(1));
       return Result.getValue(Op.ResNo);
-      
+
     case TargetLowering::Legal:
       if (Tmp1 != Node->getOperand(0) ||
           Tmp2 != Node->getOperand(1))
@@ -504,7 +504,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
 
   case ISD::CopyToReg:
     Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
-    
+
     switch (getTypeAction(Node->getOperand(1).getValueType())) {
     case Legal:
       // Legalize the incoming value (must be legal).
@@ -518,7 +518,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       break;
     case Expand:
       SDOperand Lo, Hi;
-      ExpandOp(Node->getOperand(1), Lo, Hi);      
+      ExpandOp(Node->getOperand(1), Lo, Hi);
       unsigned Reg = cast<RegSDNode>(Node)->getReg();
       Lo = DAG.getCopyToReg(Tmp1, Lo, Reg);
       Hi = DAG.getCopyToReg(Tmp1, Hi, Reg+1);
@@ -544,7 +544,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         SDOperand Lo, Hi;
         ExpandOp(Node->getOperand(1), Lo, Hi);
         Result = DAG.getNode(ISD::RET, MVT::Other, Tmp1, Lo, Hi);
-        break;                             
+        break;
       }
       case Promote:
         Tmp2 = PromoteOp(Node->getOperand(1));
@@ -569,7 +569,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
           ExpandOp(Node->getOperand(i), Lo, Hi);
           NewValues.push_back(Lo);
           NewValues.push_back(Hi);
-          break;                             
+          break;
         }
         case Promote:
           assert(0 && "Can't promote multiple return value yet!");
@@ -753,7 +753,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       Result = DAG.getSetCC(cast<SetCCSDNode>(Node)->getCondition(),
                             Node->getValueType(0), Tmp1, Tmp2);
       break;
-    case Expand: 
+    case Expand:
       SDOperand LHSLo, LHSHi, RHSLo, RHSHi;
       ExpandOp(Node->getOperand(0), LHSLo, LHSHi);
       ExpandOp(Node->getOperand(1), RHSLo, RHSHi);
@@ -765,15 +765,15 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
             if (RHSCST->isAllOnesValue()) {
               // Comparison to -1.
               Tmp1 = DAG.getNode(ISD::AND, LHSLo.getValueType(), LHSLo, LHSHi);
-              Result = DAG.getSetCC(cast<SetCCSDNode>(Node)->getCondition(), 
+              Result = DAG.getSetCC(cast<SetCCSDNode>(Node)->getCondition(),
                                     Node->getValueType(0), Tmp1, RHSLo);
-              break;                                    
+              break;
             }
 
         Tmp1 = DAG.getNode(ISD::XOR, LHSLo.getValueType(), LHSLo, RHSLo);
         Tmp2 = DAG.getNode(ISD::XOR, LHSLo.getValueType(), LHSHi, RHSHi);
         Tmp1 = DAG.getNode(ISD::OR, Tmp1.getValueType(), Tmp1, Tmp2);
-        Result = DAG.getSetCC(cast<SetCCSDNode>(Node)->getCondition(), 
+        Result = DAG.getSetCC(cast<SetCCSDNode>(Node)->getCondition(),
                               Node->getValueType(0), Tmp1,
                               DAG.getConstant(0, Tmp1.getValueType()));
         break;
@@ -781,7 +781,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         // If this is a comparison of the sign bit, just look at the top part.
         // X > -1,  x < 0
         if (ConstantSDNode *CST = dyn_cast<ConstantSDNode>(Node->getOperand(1)))
-          if ((cast<SetCCSDNode>(Node)->getCondition() == ISD::SETLT && 
+          if ((cast<SetCCSDNode>(Node)->getCondition() == ISD::SETLT &&
                CST->getValue() == 0) ||              // X < 0
               (cast<SetCCSDNode>(Node)->getCondition() == ISD::SETGT &&
                (CST->isAllOnesValue())))             // X > -1
@@ -801,7 +801,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         case ISD::SETGE:
         case ISD::SETUGE: LowCC = ISD::SETUGE; break;
         }
-        
+
         // Tmp1 = lo(op1) < lo(op2)   // Always unsigned comparison
         // Tmp2 = hi(op1) < hi(op2)   // Signedness depends on operands
         // dest = hi(op1) == hi(op2) ? Tmp1 : Tmp2;
@@ -836,7 +836,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         break;
       }
     } else {
-      Tmp3 = LegalizeOp(Node->getOperand(2));    // memcpy/move = pointer, 
+      Tmp3 = LegalizeOp(Node->getOperand(2));    // memcpy/move = pointer,
     }
 
     SDOperand Tmp4;
@@ -956,7 +956,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         Tmp2 != Node->getOperand(1))
       Result = DAG.getNode(Node->getOpcode(), Node->getValueType(0), Tmp1,Tmp2);
     break;
-  
+
   case ISD::UREM:
   case ISD::SREM:
     Tmp1 = LegalizeOp(Node->getOperand(0));   // LHS
@@ -965,7 +965,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     case TargetLowering::Legal:
       if (Tmp1 != Node->getOperand(0) ||
           Tmp2 != Node->getOperand(1))
-        Result = DAG.getNode(Node->getOpcode(), Node->getValueType(0), Tmp1, 
+        Result = DAG.getNode(Node->getOpcode(), Node->getValueType(0), Tmp1,
                              Tmp2);
       break;
     case TargetLowering::Promote:
@@ -1042,7 +1042,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         // In the expand case, we must be dealing with a truncate, because
         // otherwise the result would be larger than the source.
         ExpandOp(Node->getOperand(0), Tmp1, Tmp2);
-        
+
         // Since the result is legal, we should just be able to truncate the low
         // part of the source.
         Result = DAG.getNode(ISD::TRUNCATE, Node->getValueType(0), Tmp1);
@@ -1134,7 +1134,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         unsigned TySize = (unsigned)TLI.getTargetData().getTypeSize(Ty);
         unsigned Align  = TLI.getTargetData().getTypeAlignment(Ty);
         MachineFunction &MF = DAG.getMachineFunction();
-        int SSFI = 
+        int SSFI =
           MF.getFrameInfo()->CreateStackObject((unsigned)TySize, Align);
         SDOperand StackSlot = DAG.getFrameIndex(SSFI, TLI.getPointerTy());
         Result = DAG.getNode(ISD::TRUNCSTORE, MVT::Other, DAG.getEntryNode(),
@@ -1231,7 +1231,7 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
     case Expand:
       ExpandOp(Node->getOperand(0), Tmp1, Tmp2);
       // Truncate the low part of the expanded value to the result type
-      Result = DAG.getNode(ISD::TRUNCATE, VT, Tmp1); 
+      Result = DAG.getNode(ISD::TRUNCATE, VT, Tmp1);
     }
     break;
   case ISD::SIGN_EXTEND:
@@ -1445,7 +1445,7 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
     // Insert the new chain mapping.
     AddLegalizedOperand(Op.getValue(1), Result.getValue(1));
     break;
-  } 
+  }
   }
 
   assert(Result.Val && "Didn't set a result!");
@@ -1568,16 +1568,16 @@ bool SelectionDAGLegalize::ExpandShift(unsigned Opc, SDOperand Op,SDOperand Amt,
       return true;
     case ISD::SRA:
       if (Cst > VTBits) {
-        Hi = Lo = DAG.getNode(ISD::SRA, NVT, InH, 
+        Hi = Lo = DAG.getNode(ISD::SRA, NVT, InH,
                               DAG.getConstant(NVTBits-1, ShTy));
       } else if (Cst > NVTBits) {
-        Lo = DAG.getNode(ISD::SRA, NVT, InH, 
+        Lo = DAG.getNode(ISD::SRA, NVT, InH,
                            DAG.getConstant(Cst-NVTBits, ShTy));
-        Hi = DAG.getNode(ISD::SRA, NVT, InH, 
+        Hi = DAG.getNode(ISD::SRA, NVT, InH,
                               DAG.getConstant(NVTBits-1, ShTy));
       } else if (Cst == NVTBits) {
         Lo = InH;
-        Hi = DAG.getNode(ISD::SRA, NVT, InH, 
+        Hi = DAG.getNode(ISD::SRA, NVT, InH,
                               DAG.getConstant(NVTBits-1, ShTy));
       } else {
         Lo = DAG.getNode(ISD::OR, NVT,
@@ -1620,7 +1620,7 @@ bool SelectionDAGLegalize::ExpandShift(unsigned Opc, SDOperand Op,SDOperand Amt,
                                DAG.getNode(ISD::SHL, NVT, InH, ShAmt),
                                DAG.getNode(ISD::SRL, NVT, InL, NAmt));
     SDOperand T2 = DAG.getNode(ISD::SHL, NVT, InL, ShAmt); // T2 = Lo << Amt&31
-    
+
     Hi = DAG.getNode(ISD::SELECT, NVT, Cond, T2, T1);
     Lo = DAG.getNode(ISD::SELECT, NVT, Cond, DAG.getConstant(0, NVT), T2);
   } else {
@@ -1705,14 +1705,14 @@ static SDNode *FindAdjCallStackUp(SDNode *Node) {
 
   if (Node->hasOneUse())  // Simple case, only has one user to check.
     return FindAdjCallStackUp(*Node->use_begin());
-  
+
   SDOperand TheChain(Node, Node->getNumValues()-1);
   assert(TheChain.getValueType() == MVT::Other && "Is not a token chain!");
-  
-  for (SDNode::use_iterator UI = Node->use_begin(), 
+
+  for (SDNode::use_iterator UI = Node->use_begin(),
          E = Node->use_end(); ; ++UI) {
     assert(UI != E && "Didn't find a user of the tokchain, no ADJCALLSTACKUP!");
-    
+
     // Make sure to only follow users of our token chain.
     SDNode *User = *UI;
     for (unsigned i = 0, e = User->getNumOperands(); i != e; ++i)
@@ -1732,7 +1732,7 @@ static SDOperand FindInputOutputChains(SDNode *OpNode, SDNode *&OutChain,
   SDNode *LatestAdjCallStackUp = 0;
   FindLatestAdjCallStackDown(OpNode, LatestAdjCallStackDown);
   //std::cerr << "Found node: "; LatestAdjCallStackDown->dump(); std::cerr <<"\n";
-  
+
   // It is possible that no ISD::ADJCALLSTACKDOWN was found because there is no
   // previous call in the function.  LatestCallStackDown may in that case be
   // the entry node itself.  Do not attempt to find a matching ADJCALLSTACKUP
@@ -1742,12 +1742,12 @@ static SDOperand FindInputOutputChains(SDNode *OpNode, SDNode *&OutChain,
   else
     LatestAdjCallStackUp = Entry.Val;
   assert(LatestAdjCallStackUp && "NULL return from FindAdjCallStackUp");
-  
+
   SDNode *EarliestAdjCallStackUp = 0;
   FindEarliestAdjCallStackUp(OpNode, EarliestAdjCallStackUp);
 
   if (EarliestAdjCallStackUp) {
-    //std::cerr << "Found node: "; 
+    //std::cerr << "Found node: ";
     //EarliestAdjCallStackUp->dump(); std::cerr <<"\n";
   }
 
@@ -1775,7 +1775,7 @@ SDOperand SelectionDAGLegalize::ExpandLibCall(const char *Name, SDNode *Node,
     Args.push_back(std::make_pair(Node->getOperand(i), ArgTy));
   }
   SDOperand Callee = DAG.getExternalSymbol(Name, TLI.getPointerTy());
-  
+
   // We don't care about token chains for libcalls.  We just use the entry
   // node as our input and ignore the output chain.  This allows us to place
   // calls wherever we need them to satisfy data dependences.
@@ -1866,7 +1866,7 @@ ExpandIntToFP(bool isSigned, MVT::ValueType DestTy, SDOperand Source) {
   const Type *RetTy = MVT::getTypeForValueType(DestTy);
   return TLI.LowerCallTo(InChain, RetTy, false, Callee, Args, DAG).first;
 }
-                   
+
 
 
 /// ExpandOp - Expand the specified SDOperand into its two component pieces
@@ -1922,7 +1922,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     // Aggregate register values are always in consequtive pairs.
     Lo = DAG.getCopyFromReg(Reg, NVT, Node->getOperand(0));
     Hi = DAG.getCopyFromReg(Reg+1, NVT, Lo.getValue(1));
-    
+
     // Remember that we legalized the chain.
     AddLegalizedOperand(Op.getValue(1), Hi.getValue(1));
 
@@ -1953,7 +1953,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     // other one.
     SDOperand TF = DAG.getNode(ISD::TokenFactor, MVT::Other, Lo.getValue(1),
                                Hi.getValue(1));
-    
+
     // Remember that we legalized the chain.
     AddLegalizedOperand(Op.getValue(1), TF);
     if (!TLI.isLittleEndian())
@@ -2031,7 +2031,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     // The low part is just a sign extension of the input (which degenerates to
     // a copy).
     Lo = DAG.getNode(ISD::SIGN_EXTEND, NVT, In);
-    
+
     // The high part is obtained by SRA'ing all but one of the bits of the lo
     // part.
     unsigned LoSize = MVT::getSizeInBits(Lo.getValueType());
@@ -2054,7 +2054,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     // The low part is just a zero extension of the input (which degenerates to
     // a copy).
     Lo = DAG.getNode(ISD::ZERO_EXTEND, NVT, In);
-    
+
     // The high part is just a zero.
     Hi = DAG.getConstant(0, NVT);
     break;
@@ -2121,7 +2121,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     Lo = ExpandLibCall("__lshrdi3", Node, Hi);
     break;
 
-  case ISD::ADD: 
+  case ISD::ADD:
     ExpandByParts(ISD::ADD_PARTS, Node->getOperand(0), Node->getOperand(1),
                   Lo, Hi);
     break;

@@ -48,7 +48,7 @@ namespace llvm {
     /// instructions, we need to know which virtual register was
     /// read/written by this instruction.
     MI2VirtMapTy MI2VirtMap;
-    
+
     VirtRegMap(const VirtRegMap&);     // DO NOT IMPLEMENT
     void operator=(const VirtRegMap&); // DO NOT IMPLEMENT
 

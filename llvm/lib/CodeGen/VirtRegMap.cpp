@@ -82,7 +82,7 @@ void VirtRegMap::virtFolded(unsigned VirtReg, MachineInstr *OldMI,
                             unsigned OpNo, MachineInstr *NewMI) {
   // Move previous memory references folded to new instruction.
   MI2VirtMapTy::iterator IP = MI2VirtMap.lower_bound(NewMI);
-  for (MI2VirtMapTy::iterator I = MI2VirtMap.lower_bound(OldMI), 
+  for (MI2VirtMapTy::iterator I = MI2VirtMap.lower_bound(OldMI),
          E = MI2VirtMap.end(); I != E && I->first == OldMI; ) {
     MI2VirtMap.insert(IP, std::make_pair(NewMI, I->second));
     MI2VirtMap.erase(I++);
@@ -108,7 +108,7 @@ void VirtRegMap::print(std::ostream &OS) const {
          e = MF.getSSARegMap()->getLastVirtReg(); i <= e; ++i) {
     if (Virt2PhysMap[i] != (unsigned)VirtRegMap::NO_PHYS_REG)
       OS << "[reg" << i << " -> " << MRI->getName(Virt2PhysMap[i]) << "]\n";
-         
+
   }
 
   for (unsigned i = MRegisterInfo::FirstVirtualRegister,
@@ -163,7 +163,7 @@ bool SimpleSpiller::runOnMachineFunction(MachineFunction &MF,
             unsigned PhysReg = VRM.getPhys(VirtReg);
             if (VRM.hasStackSlot(VirtReg)) {
               int StackSlot = VRM.getStackSlot(VirtReg);
-              
+
               if (MO.isUse() &&
                   std::find(LoadedRegs.begin(), LoadedRegs.end(), VirtReg)
                   == LoadedRegs.end()) {
@@ -172,7 +172,7 @@ bool SimpleSpiller::runOnMachineFunction(MachineFunction &MF,
                 ++NumLoads;
                 DEBUG(std::cerr << '\t' << *prior(MII));
               }
-              
+
               if (MO.isDef()) {
                 MRI.storeRegToStackSlot(MBB, next(MII), PhysReg, StackSlot);
                 ++NumStores;
@@ -255,16 +255,16 @@ namespace {
   struct ReusedOp {
     // The MachineInstr operand that reused an available value.
     unsigned Operand;
-    
+
     // StackSlot - The spill slot of the value being reused.
     unsigned StackSlot;
-    
+
     // PhysRegReused - The physical register the value was available in.
     unsigned PhysRegReused;
-    
+
     // AssignedPhysReg - The physreg that was assigned for use by the reload.
     unsigned AssignedPhysReg;
-    
+
     ReusedOp(unsigned o, unsigned ss, unsigned prr, unsigned apr)
       : Operand(o), StackSlot(ss), PhysRegReused(prr), AssignedPhysReg(apr) {}
   };
@@ -384,7 +384,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, const VirtRegMap &VRM) {
                         // Okay, we found out that an alias of a reused register
                         // was used.  This isn't good because it means we have
                         // to undo a previous reuse.
-                        MRI->loadRegFromStackSlot(MBB, &MI, Op.AssignedPhysReg, 
+                        MRI->loadRegFromStackSlot(MBB, &MI, Op.AssignedPhysReg,
                                                   Op.StackSlot);
                         ClobberPhysReg(Op.AssignedPhysReg, SpillSlotsAvailable,
                                        PhysRegsAvailable);
@@ -510,12 +510,12 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, const VirtRegMap &VRM) {
                 break;
               }
           }
-          
+
           if (!OpTakenCareOf) {
             ClobberPhysReg(VirtReg, SpillSlotsAvailable, PhysRegsAvailable);
             TakenCareOf = true;
           }
-        }  
+        }
 
         if (!TakenCareOf) {
           // The only vregs left are stack slot definitions.

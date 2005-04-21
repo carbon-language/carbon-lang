@@ -742,7 +742,7 @@ bool LiveIntervals::differingRegisterClasses(unsigned RegA,
 
   // Get the register classes for the first reg.
   if (MRegisterInfo::isPhysicalRegister(RegA)) {
-    assert(MRegisterInfo::isVirtualRegister(RegB) && 
+    assert(MRegisterInfo::isVirtualRegister(RegB) &&
            "Shouldn't consider two physregs!");
     return !mf_->getSSARegMap()->getRegClass(RegB)->contains(RegA);
   }
@@ -775,7 +775,7 @@ bool LiveIntervals::overlapsAliases(const LiveInterval *LHS,
 }
 
 LiveInterval LiveIntervals::createInterval(unsigned reg) {
-  float Weight = MRegisterInfo::isPhysicalRegister(reg) ? 
+  float Weight = MRegisterInfo::isPhysicalRegister(reg) ?
                        (float)HUGE_VAL :0.0F;
   return LiveInterval(reg, Weight);
 }

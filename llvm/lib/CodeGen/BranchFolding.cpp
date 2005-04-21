@@ -1,10 +1,10 @@
 //===-- BranchFolding.cpp - Fold machine code branch instructions ---------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This pass forwards branches to unconditional branches to make them branch
@@ -158,7 +158,7 @@ bool BranchFolder::OptimizeBlock(MachineFunction::iterator MBB,
     assert(Br->getNumOperands() == 1 && Br->getOperand(0).isMachineBasicBlock()
            && "Uncond branch should take one MBB argument!");
     MachineBasicBlock *Dest = Br->getOperand(0).getMachineBasicBlock();
-    
+
     while (!MBB->pred_empty()) {
       MachineBasicBlock *Pred = *(MBB->pred_end()-1);
       ReplaceUsesOfBlockWith(Pred, MBB, Dest, TII);

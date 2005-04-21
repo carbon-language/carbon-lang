@@ -208,7 +208,7 @@ void RA::linearScan()
 
     assert(MRegisterInfo::isVirtualRegister(cur->reg) &&
            "Can only allocate virtual registers!");
-    
+
     // Allocating a virtual register. try to find a free
     // physical register or spill an interval (possibly this one) in order to
     // assign it one.
@@ -266,7 +266,7 @@ void RA::processActiveIntervals(unsigned CurPoint)
       active_[i] = active_.back();
       active_.pop_back();
       --i; --e;
-      
+
     } else if (IntervalPos->start > CurPoint) {
       // Move inactive intervals to inactive list.
       DEBUG(std::cerr << "\t\tinterval " << *Interval << " inactive\n");
@@ -300,7 +300,7 @@ void RA::processInactiveIntervals(unsigned CurPoint)
     unsigned reg = Interval->reg;
 
     IntervalPos = Interval->advanceTo(IntervalPos, CurPoint);
-    
+
     if (IntervalPos == Interval->end()) {       // remove expired intervals.
       DEBUG(std::cerr << "\t\tinterval " << *Interval << " expired\n");
 
@@ -331,7 +331,7 @@ void RA::processInactiveIntervals(unsigned CurPoint)
 
 /// updateSpillWeights - updates the spill weights of the specifed physical
 /// register and its weight.
-static void updateSpillWeights(std::vector<float> &Weights, 
+static void updateSpillWeights(std::vector<float> &Weights,
                                unsigned reg, float weight,
                                const MRegisterInfo *MRI) {
   Weights[reg] += weight;

@@ -1,12 +1,12 @@
 //===-- ExecutionEngine.cpp - Common Implementation shared by EEs ---------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
-// 
+//
 // This file defines the common interface used by the various execution engine
 // subclasses.
 //
@@ -33,7 +33,7 @@ namespace {
   Statistic<> NumGlobals  ("lli", "Number of global vars initialized");
 }
 
-ExecutionEngine::ExecutionEngine(ModuleProvider *P) : 
+ExecutionEngine::ExecutionEngine(ModuleProvider *P) :
   CurMod(*P->getModule()), MP(P) {
   assert(P && "ModuleProvider is null?");
 }
@@ -52,7 +52,7 @@ ExecutionEngine::~ExecutionEngine() {
 const GlobalValue *ExecutionEngine::getGlobalValueAtAddress(void *Addr) {
   // If we haven't computed the reverse mapping yet, do so first.
   if (GlobalAddressReverseMap.empty()) {
-    for (std::map<const GlobalValue*, void *>::iterator I = 
+    for (std::map<const GlobalValue*, void *>::iterator I =
            GlobalAddressMap.begin(), E = GlobalAddressMap.end(); I != E; ++I)
       GlobalAddressReverseMap.insert(std::make_pair(I->second, I->first));
   }
@@ -77,10 +77,10 @@ static void *CreateArgv(ExecutionEngine *EE,
     unsigned Size = InputArgv[i].size()+1;
     char *Dest = new char[Size];
     DEBUG(std::cerr << "ARGV[" << i << "] = " << (void*)Dest << "\n");
-      
+
     std::copy(InputArgv[i].begin(), InputArgv[i].end(), Dest);
     Dest[Size-1] = 0;
-      
+
     // Endian safe: Result[i] = (PointerTy)Dest;
     EE->StoreValueToMemory(PTOGV(Dest), (GenericValue*)(Result+i*PtrSize),
                            SBytePtr);
@@ -124,9 +124,9 @@ int ExecutionEngine::runFunctionAsMain(Function *Fn,
 
 /// If possible, create a JIT, unless the caller specifically requests an
 /// Interpreter or there's an error. If even an Interpreter cannot be created,
-/// NULL is returned. 
+/// NULL is returned.
 ///
-ExecutionEngine *ExecutionEngine::create(ModuleProvider *MP, 
+ExecutionEngine *ExecutionEngine::create(ModuleProvider *MP,
                                          bool ForceInterpreter,
                                          IntrinsicLowering *IL) {
   ExecutionEngine *EE = 0;
@@ -151,10 +151,10 @@ ExecutionEngine *ExecutionEngine::create(ModuleProvider *MP,
     }
   }
 
-  if (EE == 0) 
+  if (EE == 0)
     delete IL;
   else
-    // Make sure we can resolve symbols in the program as well. The zero arg 
+    // Make sure we can resolve symbols in the program as well. The zero arg
     // to the function tells DynamicLibrary to load the program, not a library.
     sys::DynamicLibrary::LoadLibraryPermanently(0);
 
@@ -173,7 +173,7 @@ void *ExecutionEngine::getPointerToGlobal(const GlobalValue *GV) {
 }
 
 /// FIXME: document
-/// 
+///
 GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
   GenericValue Result;
   if (isa<UndefValue>(C)) return Result;
@@ -185,7 +185,7 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
       std::vector<Value*> Indexes(CE->op_begin()+1, CE->op_end());
       uint64_t Offset =
         TD->getIndexedOffset(CE->getOperand(0)->getType(), Indexes);
-                             
+
       Result.LongVal += Offset;
       return Result;
     }
@@ -203,7 +203,7 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
       // Handle a cast of pointer to any integral type...
       if (isa<PointerType>(Op->getType()) && C->getType()->isIntegral())
         return GV;
-        
+
       // Handle cast of integer to a pointer...
       if (isa<PointerType>(C->getType()) && Op->getType()->isIntegral())
         switch (Op->getType()->getTypeID()) {
@@ -260,7 +260,7 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
     std::cerr << "ConstantExpr not handled as global var init: " << *CE << "\n";
     abort();
   }
-  
+
   switch (C->getType()->getTypeID()) {
 #define GET_CONST_VAL(TY, CTY, CLASS) \
   case Type::TY##TyID: Result.TY##Val = (CTY)cast<CLASS>(C)->getValue(); break
@@ -353,7 +353,7 @@ void ExecutionEngine::StoreValueToMemory(GenericValue Val, GenericValue *Ptr,
     case Type::DoubleTyID:
     case Type::ULongTyID:
     case Type::LongTyID:
-      Ptr->Untyped[7] = (unsigned char)(Val.ULongVal      ); 
+      Ptr->Untyped[7] = (unsigned char)(Val.ULongVal      );
       Ptr->Untyped[6] = (unsigned char)(Val.ULongVal >>  8);
       Ptr->Untyped[5] = (unsigned char)(Val.ULongVal >> 16);
       Ptr->Untyped[4] = (unsigned char)(Val.ULongVal >> 24);
@@ -382,7 +382,7 @@ GenericValue ExecutionEngine::LoadValueFromMemory(GenericValue *Ptr,
     case Type::ShortTyID:   Result.UShortVal = (unsigned)Ptr->Untyped[0] |
                                               ((unsigned)Ptr->Untyped[1] << 8);
                             break;
-    Load4BytesLittleEndian:                            
+    Load4BytesLittleEndian:
     case Type::FloatTyID:
     case Type::UIntTyID:
     case Type::IntTyID:     Result.UIntVal = (unsigned)Ptr->Untyped[0] |
@@ -463,7 +463,7 @@ void ExecutionEngine::InitializeMemory(const Constant *Init, void *Addr) {
   switch (Init->getType()->getTypeID()) {
   case Type::ArrayTyID: {
     const ConstantArray *CPA = cast<ConstantArray>(Init);
-    unsigned ElementSize = 
+    unsigned ElementSize =
       getTargetData().getTypeSize(cast<ArrayType>(CPA->getType())->getElementType());
     for (unsigned i = 0, e = CPA->getNumOperands(); i != e; ++i)
       InitializeMemory(CPA->getOperand(i), (char*)Addr+i*ElementSize);
@@ -491,7 +491,7 @@ void ExecutionEngine::InitializeMemory(const Constant *Init, void *Addr) {
 ///
 void ExecutionEngine::emitGlobals() {
   const TargetData &TD = getTargetData();
-  
+
   // Loop over all of the global variables in the program, allocating the memory
   // to hold them.
   for (Module::const_global_iterator I = getModule().global_begin(), E = getModule().global_end();
@@ -499,7 +499,7 @@ void ExecutionEngine::emitGlobals() {
     if (!I->isExternal()) {
       // Get the type of the global...
       const Type *Ty = I->getType()->getElementType();
-      
+
       // Allocate some memory for it!
       unsigned Size = TD.getTypeSize(Ty);
       addGlobalMapping(I, new char[Size]);
@@ -515,7 +515,7 @@ void ExecutionEngine::emitGlobals() {
         abort();
       }
     }
-  
+
   // Now that all of the globals are set up in memory, loop through them all and
   // initialize their contents.
   for (Module::const_global_iterator I = getModule().global_begin(), E = getModule().global_end();

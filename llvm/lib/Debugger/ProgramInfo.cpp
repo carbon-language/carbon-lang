@@ -1,12 +1,12 @@
 //===-- ProgramInfo.cpp - Compute and cache info about a program ----------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
-// 
+//
 // This file implements the ProgramInfo and related classes, by sorting through
 // the loaded Module.
 //
@@ -107,13 +107,13 @@ static const GlobalVariable *getNextStopPoint(const Value *V, unsigned &LineNo,
           if (const ConstantInt *C = dyn_cast<ConstantInt>(CI->getOperand(3)))
             CurColNo = C->getRawValue();
           const Value *Op = CI->getOperand(4);
-          
+
           if ((CurDesc = dyn_cast<GlobalVariable>(Op)) &&
               (LineNo < LastLineNo ||
                (LineNo == LastLineNo && ColNo < LastColNo))) {
             LastDesc = CurDesc;
             LastLineNo = CurLineNo;
-            LastColNo = CurColNo;            
+            LastColNo = CurColNo;
           }
           ShouldRecurse = false;
         }
@@ -128,12 +128,12 @@ static const GlobalVariable *getNextStopPoint(const Value *V, unsigned &LineNo,
         if (LineNo < LastLineNo || (LineNo == LastLineNo && ColNo < LastColNo)){
           LastDesc = GV;
           LastLineNo = CurLineNo;
-          LastColNo = CurColNo;            
+          LastColNo = CurColNo;
         }
       }
     }
   }
-  
+
   if (LastDesc) {
     LineNo = LastLineNo != ~0U ? LastLineNo : 0;
     ColNo  = LastColNo  != ~0U ? LastColNo : 0;
@@ -157,7 +157,7 @@ SourceFileInfo::SourceFileInfo(const GlobalVariable *Desc,
       if (CS->getNumOperands() > 4) {
         if (ConstantUInt *CUI = dyn_cast<ConstantUInt>(CS->getOperand(1)))
           Version = CUI->getValue();
-        
+
         BaseName  = getStringValue(CS->getOperand(3));
         Directory = getStringValue(CS->getOperand(4));
       }
@@ -194,7 +194,7 @@ SourceFunctionInfo::SourceFunctionInfo(ProgramInfo &PI,
     if (ConstantStruct *CS = dyn_cast<ConstantStruct>(Desc->getInitializer()))
       if (CS->getNumOperands() > 2) {
         // Entry #1 is the file descriptor.
-        if (const GlobalVariable *GV = 
+        if (const GlobalVariable *GV =
             dyn_cast<GlobalVariable>(CS->getOperand(1)))
           SourceFile = &PI.getSourceFile(GV);
 
@@ -338,7 +338,7 @@ const SourceFileInfo &ProgramInfo::getSourceFile(const std::string &Filename) {
   std::multimap<std::string, SourceFileInfo*>::const_iterator Start, End;
   getSourceFiles();
   tie(Start, End) = SourceFileIndex.equal_range(Filename);
-  
+
   if (Start == End) throw "Could not find source file '" + Filename + "'!";
   const SourceFileInfo &SFI = *Start->second;
   ++Start;

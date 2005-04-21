@@ -34,7 +34,7 @@ using namespace llvm;
 //
 bool LiveInterval::liveAt(unsigned I) const {
   Ranges::const_iterator r = std::upper_bound(ranges.begin(), ranges.end(), I);
-                                              
+
   if (r == ranges.begin())
     return false;
 
@@ -174,7 +174,7 @@ void LiveInterval::extendIntervalEndTo(Ranges::iterator I, unsigned NewEnd) {
 /// extendIntervalStartTo - This method is used when we want to extend the range
 /// specified by I to start at the specified endpoint.  To do this, we should
 /// merge and eliminate all ranges that this will overlap with.
-LiveInterval::Ranges::iterator 
+LiveInterval::Ranges::iterator
 LiveInterval::extendIntervalStartTo(Ranges::iterator I, unsigned NewStart) {
   assert(I != ranges.end() && "Not a valid interval!");
   unsigned ValId = I->ValId;

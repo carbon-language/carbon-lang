@@ -1,10 +1,10 @@
 //===- lib/Debugger/FDHandle.h - File Descriptor Handle ---------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines a family of utility functions which are useful for doing

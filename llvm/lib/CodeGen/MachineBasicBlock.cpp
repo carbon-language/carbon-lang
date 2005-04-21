@@ -133,7 +133,7 @@ void MachineBasicBlock::addPredecessor(MachineBasicBlock *pred) {
 }
 
 void MachineBasicBlock::removePredecessor(MachineBasicBlock *pred) {
-  std::vector<MachineBasicBlock *>::iterator I = 
+  std::vector<MachineBasicBlock *>::iterator I =
     std::find(Predecessors.begin(), Predecessors.end(), pred);
   assert(I != Predecessors.end() && "Pred is not a predecessor of this block!");
   Predecessors.erase(I);

@@ -1,10 +1,10 @@
 //===-- MachineCodeEmitter.cpp - Implement the MachineCodeEmitter itf -----===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements the MachineCodeEmitter interface.
@@ -35,7 +35,7 @@ namespace {
       std::cout << "\n--- End of stub for Function\n";
       return 0;
     }
-    
+
     void emitByte(unsigned char B) {
       std::cout << "0x" << std::hex << (unsigned int)B << std::dec << " ";
     }
@@ -62,14 +62,14 @@ namespace {
     MachineCodeEmitter &MCE;
     unsigned counter;
     unsigned values[4];
-    
+
   public:
     FilePrinterEmitter(MachineCodeEmitter &M, std::ostream &os)
       : o(os), MCE(M), counter(0) {
       openActual();
     }
-    
-    ~FilePrinterEmitter() { 
+
+    ~FilePrinterEmitter() {
       o << "\n";
       actual.close();
     }
@@ -101,7 +101,7 @@ namespace {
     void *finishFunctionStub(const Function *F) {
       return MCE.finishFunctionStub(F);
     }
-    
+
     void emitByte(unsigned char B) {
       MCE.emitByte(B);
       actual << B; actual.flush();

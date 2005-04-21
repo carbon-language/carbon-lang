@@ -1,10 +1,10 @@
 //===-- SelectionDAG.cpp - Implement the SelectionDAG data structures -----===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This implements the SelectionDAG class.
@@ -60,7 +60,7 @@ static bool isInvertibleForFree(SDOperand N) {
   if (isa<ConstantSDNode>(N.Val)) return true;
   if (isa<SetCCSDNode>(N.Val) && N.Val->hasOneUse())
     return true;
-  return false;  
+  return false;
 }
 
 
@@ -118,9 +118,9 @@ ISD::CondCode ISD::getSetCCOrOperation(ISD::CondCode Op1, ISD::CondCode Op2,
   if (isInteger && (isSignedOp(Op1) | isSignedOp(Op2)) == 3)
     // Cannot fold a signed integer setcc with an unsigned integer setcc.
     return ISD::SETCC_INVALID;
-  
+
   unsigned Op = Op1 | Op2;  // Combine all of the condition bits.
-  
+
   // If the N and U bits get set then the resultant comparison DOES suddenly
   // care about orderedness, and is true when ordered.
   if (Op > ISD::SETTRUE2)
@@ -136,7 +136,7 @@ ISD::CondCode ISD::getSetCCAndOperation(ISD::CondCode Op1, ISD::CondCode Op2,
                                         bool isInteger) {
   if (isInteger && (isSignedOp(Op1) | isSignedOp(Op2)) == 3)
     // Cannot fold a signed setcc with an unsigned setcc.
-    return ISD::SETCC_INVALID; 
+    return ISD::SETCC_INVALID;
 
   // Combine all of the condition bits.
   return ISD::CondCode(Op1 & Op2);
@@ -269,7 +269,7 @@ void SelectionDAG::DeleteNodeIfDead(SDNode *N, void *NodeSet) {
     // Now that we removed this operand, see if there are no uses of it left.
     DeleteNodeIfDead(O, NodeSet);
   }
-  
+
   // Remove the node from the nodes set and delete it.
   std::set<SDNode*> &AllNodeSet = *(std::set<SDNode*>*)NodeSet;
   AllNodeSet.erase(N);
@@ -297,7 +297,7 @@ SDOperand SelectionDAG::getConstant(uint64_t Val, MVT::ValueType VT) {
   // Mask out any bits that are not valid for this constant.
   if (VT != MVT::i64)
     Val &= ((uint64_t)1 << MVT::getSizeInBits(VT)) - 1;
-  
+
   SDNode *&N = Constants[std::make_pair(Val, VT)];
   if (N) return SDOperand(N, 0);
   N = new ConstantSDNode(Val, VT);
@@ -317,7 +317,7 @@ SDOperand SelectionDAG::getConstantFP(double Val, MVT::ValueType VT) {
     double DV;
     uint64_t IV;
   };
-  
+
   DV = Val;
 
   SDNode *&N = ConstantFPs[std::make_pair(IV, VT)];
@@ -385,7 +385,7 @@ SDOperand SelectionDAG::getSetCC(ISD::CondCode Cond, MVT::ValueType VT,
     uint64_t C2 = N2C->getValue();
     if (ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1.Val)) {
       uint64_t C1 = N1C->getValue();
-      
+
       // Sign extend the operands if required
       if (ISD::isSignedIntSetCC(Cond)) {
         C1 = N1C->getSignExtended();
@@ -480,14 +480,14 @@ SDOperand SelectionDAG::getSetCC(ISD::CondCode Cond, MVT::ValueType VT,
         N2 = getConstant(C2, N2.getValueType());
         N2C = cast<ConstantSDNode>(N2.Val);
       }
-      
+
       if ((Cond == ISD::SETLT || Cond == ISD::SETULT) && C2 == MinVal)
         return getConstant(0, VT);      // X < MIN --> false
-        
+
       // Canonicalize setgt X, Min --> setne X, Min
       if ((Cond == ISD::SETGT || Cond == ISD::SETUGT) && C2 == MinVal)
         return getSetCC(ISD::SETNE, VT, N1, N2);
-        
+
       // If we have setult X, 1, turn it into seteq X, 0
       if ((Cond == ISD::SETLT || Cond == ISD::SETULT) && C2 == MinVal+1)
         return getSetCC(ISD::SETEQ, VT, N1,
@@ -538,7 +538,7 @@ SDOperand SelectionDAG::getSetCC(ISD::CondCode Cond, MVT::ValueType VT,
   if (ConstantFPSDNode *N1C = dyn_cast<ConstantFPSDNode>(N1.Val))
     if (ConstantFPSDNode *N2C = dyn_cast<ConstantFPSDNode>(N2.Val)) {
       double C1 = N1C->getValue(), C2 = N2C->getValue();
-      
+
       switch (Cond) {
       default: break; // FIXME: Implement the rest of these!
       case ISD::SETEQ:  return getConstant(C1 == C2, VT);
@@ -588,7 +588,7 @@ SDOperand SelectionDAG::getSetCC(ISD::CondCode Cond, MVT::ValueType VT,
       }
 
       // FIXME: move this stuff to the DAG Combiner when it exists!
-      
+
       // Simplify (X+Z) == X -->  Z == 0
       if (N1.getOperand(0) == N2)
         return getSetCC(Cond, VT, N1.getOperand(1),
@@ -601,7 +601,7 @@ SDOperand SelectionDAG::getSetCC(ISD::CondCode Cond, MVT::ValueType VT,
           assert(N1.getOpcode() == ISD::SUB && "Unexpected operation!");
           // (Z-X) == X  --> Z == X<<1
           return getSetCC(Cond, VT, N1.getOperand(0),
-                          getNode(ISD::SHL, N2.getValueType(), 
+                          getNode(ISD::SHL, N2.getValueType(),
                                   N2, getConstant(1, TLI.getShiftAmountTy())));
         }
       }
@@ -760,7 +760,7 @@ static bool MaskedValueIsZero(const SDOperand &Op, uint64_t Mask,
                               const TargetLowering &TLI) {
   unsigned SrcBits;
   if (Mask == 0) return true;
-  
+
   // If we know the result of a setcc has the top bits zero, use this info.
   switch (Op.getOpcode()) {
   case ISD::UNDEF:
@@ -769,7 +769,7 @@ static bool MaskedValueIsZero(const SDOperand &Op, uint64_t Mask,
     return (cast<ConstantSDNode>(Op)->getValue() & Mask) == 0;
 
   case ISD::SETCC:
-    return ((Mask & 1) == 0) && 
+    return ((Mask & 1) == 0) &&
            TLI.getSetCCResultContents() == TargetLowering::ZeroOrOneSetCCResult;
 
   case ISD::ZEXTLOAD:
@@ -1066,7 +1066,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
             Op2 == LHS->getCondition() && MVT::isInteger(LL.getValueType())) {
           if ((Op2 == ISD::SETEQ && Opcode == ISD::AND) ||
               (Op2 == ISD::SETNE && Opcode == ISD::OR))
-            return getSetCC(Op2, VT, 
+            return getSetCC(Op2, VT,
                             getNode(ISD::OR, LR.getValueType(), LL, RL), LR);
         }
 
@@ -1075,7 +1075,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
           Op2 = ISD::getSetCCSwappedOperands(Op2);
           goto MatchedBackwards;
         }
-      
+
         if (LL == RL && LR == RR) {
         MatchedBackwards:
           ISD::CondCode Result;
@@ -1179,7 +1179,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     if (N1C)
       if (N1C->getValue())
         return N2;             // select true, X, Y -> X
-      else 
+      else
         return N3;             // select false, X, Y -> Y
 
     if (N2 == N3) return N2;   // select C, X, X -> X
@@ -1275,7 +1275,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
 
   SDNode *N = new SDNode(Opcode, N1, N2, N3);
   switch (Opcode) {
-  default: 
+  default:
     N->setValueTypes(VT);
     break;
   case ISD::DYNAMIC_STACKALLOC: // DYNAMIC_STACKALLOC produces pointer and chain
@@ -1371,7 +1371,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,SDOperand N1,
     // If we are extending the result of a setcc, and we already know the
     // contents of the top bits, eliminate the extension.
     if (N1.getOpcode() == ISD::SETCC &&
-        TLI.getSetCCResultContents() == 
+        TLI.getSetCCResultContents() ==
                         TargetLowering::ZeroOrNegativeOneSetCCResult)
       return N1;
 
@@ -1412,7 +1412,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,SDOperand N1,
     if (VT == EVT)
       return getNode(ISD::LOAD, VT, N1, N2);
     assert(EVT < VT && "Should only be an extending load, not truncating!");
-    assert((Opcode == ISD::EXTLOAD || MVT::isInteger(VT)) && 
+    assert((Opcode == ISD::EXTLOAD || MVT::isInteger(VT)) &&
            "Cannot sign/zero extend a FP load!");
     assert(MVT::isInteger(VT) == MVT::isInteger(EVT) &&
            "Cannot convert from FP to Int or Int -> FP!");
@@ -1444,7 +1444,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,SDOperand N1,
     if (isa<Constant>(N1)) {
       SDOperand Op = getNode(ISD::TRUNCATE, EVT, N1);
       if (isa<Constant>(Op))
-        N1 = Op;      
+        N1 = Op;
     }
     // Also for ConstantFP?
 #endif
@@ -1599,8 +1599,8 @@ const char *SDNode::getOperationName() const {
     case ISD::SETOLT:  return "setcc:setolt";
     case ISD::SETOLE:  return "setcc:setole";
     case ISD::SETONE:  return "setcc:setone";
-      
-    case ISD::SETO:    return "setcc:seto"; 
+
+    case ISD::SETO:    return "setcc:seto";
     case ISD::SETUO:   return "setcc:setuo";
     case ISD::SETUEQ:  return "setcc:setue";
     case ISD::SETUGT:  return "setcc:setugt";
@@ -1608,7 +1608,7 @@ const char *SDNode::getOperationName() const {
     case ISD::SETULT:  return "setcc:setult";
     case ISD::SETULE:  return "setcc:setule";
     case ISD::SETUNE:  return "setcc:setune";
-      
+
     case ISD::SETEQ:   return "setcc:seteq";
     case ISD::SETGT:   return "setcc:setgt";
     case ISD::SETGE:   return "setcc:setge";
@@ -1643,7 +1643,7 @@ void SDNode::dump() const {
     std::cerr << "<" << CSDN->getValue() << ">";
   } else if (const ConstantFPSDNode *CSDN = dyn_cast<ConstantFPSDNode>(this)) {
     std::cerr << "<" << CSDN->getValue() << ">";
-  } else if (const GlobalAddressSDNode *GADN = 
+  } else if (const GlobalAddressSDNode *GADN =
              dyn_cast<GlobalAddressSDNode>(this)) {
     std::cerr << "<";
     WriteAsOperand(std::cerr, GADN->getGlobal()) << ">";
@@ -1652,7 +1652,7 @@ void SDNode::dump() const {
     std::cerr << "<" << FIDN->getIndex() << ">";
   } else if (const ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(this)){
     std::cerr << "<" << CP->getIndex() << ">";
-  } else if (const BasicBlockSDNode *BBDN = 
+  } else if (const BasicBlockSDNode *BBDN =
 	     dyn_cast<BasicBlockSDNode>(this)) {
     std::cerr << "<";
     const Value *LBB = (const Value*)BBDN->getBasicBlock()->getBasicBlock();
@@ -1676,7 +1676,7 @@ static void DumpNodes(SDNode *N, unsigned indent) {
     else
       std::cerr << "\n" << std::string(indent+2, ' ')
                 << (void*)N->getOperand(i).Val << ": <multiple use>";
-    
+
 
   std::cerr << "\n" << std::string(indent, ' ');
   N->dump();

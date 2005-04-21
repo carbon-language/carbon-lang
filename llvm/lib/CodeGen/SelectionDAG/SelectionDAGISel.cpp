@@ -1,10 +1,10 @@
 //===-- SelectionDAGISel.cpp - Implement the SelectionDAGISel class -------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This implements the SelectionDAGISel class.
@@ -79,7 +79,7 @@ namespace llvm {
     unsigned MakeReg(MVT::ValueType VT) {
       return RegMap->createVirtualRegister(TLI.getRegClassFor(VT));
     }
-  
+
     unsigned CreateRegForValue(const Value *V) {
       MVT::ValueType VT = TLI.getValueType(V->getType());
       // The common case is that we will only create one register for this
@@ -89,19 +89,19 @@ namespace llvm {
         // If we are promoting this value, pick the next largest supported type.
         return MakeReg(TLI.getTypeToTransformTo(VT));
       }
-    
+
       // If this value is represented with multiple target registers, make sure
       // to create enough consequtive registers of the right (smaller) type.
       unsigned NT = VT-1;  // Find the type to use.
       while (TLI.getNumElements((MVT::ValueType)NT) != 1)
         --NT;
-    
+
       unsigned R = MakeReg((MVT::ValueType)NT);
       for (unsigned i = 1; i != NV; ++i)
         MakeReg((MVT::ValueType)NT);
       return R;
     }
-  
+
     unsigned InitializeRegForValue(const Value *V) {
       unsigned &R = ValueMap[V];
       assert(R == 0 && "Already initialized this value register!");
@@ -122,7 +122,7 @@ static bool isUsedOutsideOfDefiningBlock(Instruction *I) {
 }
 
 FunctionLoweringInfo::FunctionLoweringInfo(TargetLowering &tli,
-                                           Function &fn, MachineFunction &mf) 
+                                           Function &fn, MachineFunction &mf)
     : TLI(tli), Fn(fn), MF(mf), RegMap(MF.getSSARegMap()) {
 
   // Initialize the mapping of values to registers.  This is only set up for
@@ -206,7 +206,7 @@ public:
   FunctionLoweringInfo &FuncInfo;
 
   SelectionDAGLowering(SelectionDAG &dag, TargetLowering &tli,
-                       FunctionLoweringInfo &funcinfo) 
+                       FunctionLoweringInfo &funcinfo)
     : TLI(tli), DAG(dag), TD(DAG.getTarget().getTargetData()),
       FuncInfo(funcinfo) {
   }
@@ -216,7 +216,7 @@ public:
   SDOperand getRoot() {
     if (PendingLoads.empty())
       return DAG.getRoot();
-    
+
     if (PendingLoads.size() == 1) {
       SDOperand Root = PendingLoads[0];
       DAG.setRoot(Root);
@@ -558,7 +558,7 @@ void SelectionDAGLowering::visitGetElementPtr(User &I) {
           IdxN = DAG.getNode(ISD::TRUNCATE, Scale.getValueType(), IdxN);
 
         IdxN = DAG.getNode(ISD::MUL, N.getValueType(), IdxN, Scale);
-			   
+			
         N = DAG.getNode(ISD::ADD, N.getValueType(), N, IdxN);
       }
     }
@@ -615,7 +615,7 @@ void SelectionDAGLowering::visitAlloca(AllocaInst &I) {
 
 void SelectionDAGLowering::visitLoad(LoadInst &I) {
   SDOperand Ptr = getValue(I.getOperand(0));
-  
+
   SDOperand Root;
   if (I.isVolatile())
     Root = getRoot();
@@ -672,7 +672,7 @@ void SelectionDAGLowering::visitCall(CallInst &I) {
       case Intrinsic::memcpy:  visitMemIntrinsic(I, ISD::MEMCPY); return;
       case Intrinsic::memset:  visitMemIntrinsic(I, ISD::MEMSET); return;
       case Intrinsic::memmove: visitMemIntrinsic(I, ISD::MEMMOVE); return;
-        
+
       case Intrinsic::isunordered:
         setValue(&I, DAG.getSetCC(ISD::SETUO, MVT::i1,getValue(I.getOperand(1)),
                                   getValue(I.getOperand(2))));
@@ -683,23 +683,23 @@ void SelectionDAGLowering::visitCall(CallInst &I) {
         return;
       }
       }
-  
+
   SDOperand Callee;
   if (!RenameFn)
     Callee = getValue(I.getOperand(0));
   else
     Callee = DAG.getExternalSymbol(RenameFn, TLI.getPointerTy());
   std::vector<std::pair<SDOperand, const Type*> > Args;
-  
+
   for (unsigned i = 1, e = I.getNumOperands(); i != e; ++i) {
     Value *Arg = I.getOperand(i);
     SDOperand ArgNode = getValue(Arg);
     Args.push_back(std::make_pair(ArgNode, Arg->getType()));
   }
-  
+
   const PointerType *PT = cast<PointerType>(I.getCalledValue()->getType());
   const FunctionType *FTy = cast<FunctionType>(PT->getElementType());
-  
+
   std::pair<SDOperand,SDOperand> Result =
     TLI.LowerCallTo(getRoot(), I.getType(), FTy->isVarArg(), Callee, Args, DAG);
   if (I.getType() != Type::VoidTy)
@@ -726,7 +726,7 @@ void SelectionDAGLowering::visitMalloc(MallocInst &I) {
   Args.push_back(std::make_pair(Src, TLI.getTargetData().getIntPtrType()));
 
   std::pair<SDOperand,SDOperand> Result =
-    TLI.LowerCallTo(getRoot(), I.getType(), false, 
+    TLI.LowerCallTo(getRoot(), I.getType(), false,
                     DAG.getExternalSymbol("malloc", IntPtr),
                     Args, DAG);
   setValue(&I, Result.first);  // Pointers always fit in registers
@@ -784,7 +784,7 @@ void SelectionDAGLowering::visitVAStart(CallInst &I) {
 
 void SelectionDAGLowering::visitVAArg(VAArgInst &I) {
   std::pair<SDOperand,SDOperand> Result =
-    TLI.LowerVAArgNext(false, getRoot(), getValue(I.getOperand(0)), 
+    TLI.LowerVAArgNext(false, getRoot(), getValue(I.getOperand(0)),
                        I.getType(), DAG);
   setValue(&I, Result.first);
   DAG.setRoot(Result.second);
@@ -792,7 +792,7 @@ void SelectionDAGLowering::visitVAArg(VAArgInst &I) {
 
 void SelectionDAGLowering::visitVANext(VANextInst &I) {
   std::pair<SDOperand,SDOperand> Result =
-    TLI.LowerVAArgNext(true, getRoot(), getValue(I.getOperand(0)), 
+    TLI.LowerVAArgNext(true, getRoot(), getValue(I.getOperand(0)),
                        I.getArgType(), DAG);
   setValue(&I, Result.first);
   DAG.setRoot(Result.second);
@@ -861,7 +861,7 @@ bool SelectionDAGISel::runOnFunction(Function &Fn) {
 
   for (Function::iterator I = Fn.begin(), E = Fn.end(); I != E; ++I)
     SelectBasicBlock(I, MF, FuncInfo);
-  
+
   return true;
 }
 
@@ -915,7 +915,7 @@ LowerArguments(BasicBlock *BB, SelectionDAGLowering &SDL,
            AI != E; ++AI,++a)
         if (!AI->use_empty()) {
           SDL.setValue(AI, Args[a]);
-          SDOperand Copy = 
+          SDOperand Copy =
             CopyValueToVirtualRegister(SDL, AI, FuncInfo.ValueMap[AI]);
           UnorderedChains.push_back(Copy);
         }
@@ -931,7 +931,7 @@ LowerArguments(BasicBlock *BB, SelectionDAGLowering &SDL,
                                                       std::make_pair(AI, a)));
           } else {
             SDL.setValue(AI, Args[a]);
-            SDOperand Copy = 
+            SDOperand Copy =
               CopyValueToVirtualRegister(SDL, AI, FuncInfo.ValueMap[AI]);
             UnorderedChains.push_back(Copy);
           }
@@ -948,12 +948,12 @@ LowerArguments(BasicBlock *BB, SelectionDAGLowering &SDL,
     if (BLAI != FuncInfo.BlockLocalArguments.end() && BLAI->first == BB) {
       // Lower the arguments into this block.
       std::vector<SDOperand> Args = TLI.LowerArguments(F, SDL.DAG);
-      
+
       // Set up the value mapping for the local arguments.
       for (; BLAI != FuncInfo.BlockLocalArguments.end() && BLAI->first == BB;
            ++BLAI)
         SDL.setValue(BLAI->second.first, Args[BLAI->second.second]);
-      
+
       // Any dead arguments will just be ignored here.
     }
   }
@@ -966,7 +966,7 @@ void SelectionDAGISel::BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
   SelectionDAGLowering SDL(DAG, TLI, FuncInfo);
 
   std::vector<SDOperand> UnorderedChains;
-  
+
   // Lower any arguments needed in this block.
   LowerArguments(LLVMBB, SDL, UnorderedChains);
 
@@ -994,7 +994,7 @@ void SelectionDAGISel::BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
   // directly add them, because expansion might result in multiple MBB's for one
   // BB.  As such, the start of the BB might correspond to a different MBB than
   // the end.
-  // 
+  //
 
   // Emit constants only once even if used by multiple PHI nodes.
   std::map<Constant*, unsigned> ConstantsOut;
@@ -1026,7 +1026,7 @@ void SelectionDAGISel::BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
         } else {
           Reg = FuncInfo.ValueMap[PHIOp];
           if (Reg == 0) {
-            assert(isa<AllocaInst>(PHIOp) && 
+            assert(isa<AllocaInst>(PHIOp) &&
                    FuncInfo.StaticAllocaMap.count(cast<AllocaInst>(PHIOp)) &&
                    "Didn't codegen value into a register!??");
             Reg = FuncInfo.CreateRegForValue(PHIOp);
@@ -1034,7 +1034,7 @@ void SelectionDAGISel::BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
                              CopyValueToVirtualRegister(SDL, PHIOp, Reg));
           }
         }
-        
+
         // Remember that this register needs to added to the machine PHI node as
         // the input for this MBB.
         unsigned NumElements =

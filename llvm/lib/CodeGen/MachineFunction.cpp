@@ -256,7 +256,7 @@ void MachineFunction::clearSSARegMap() {
 /// CreateStackObject - Create a stack object for a value of the specified type.
 ///
 int MachineFrameInfo::CreateStackObject(const Type *Ty, const TargetData &TD) {
-  return CreateStackObject((unsigned)TD.getTypeSize(Ty), 
+  return CreateStackObject((unsigned)TD.getTypeSize(Ty),
                            TD.getTypeAlignment(Ty));
 }
 

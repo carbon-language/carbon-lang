@@ -1,10 +1,10 @@
 //===-- MachineInstr.cpp --------------------------------------------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // Methods common to all machine instructions.
@@ -28,7 +28,7 @@ using namespace llvm;
 // Global variable holding an array of descriptors for machine instructions.
 // The actual object needs to be created separately for each target machine.
 // This variable is initialized and reset by class TargetInstrInfo.
-// 
+//
 // FIXME: This should be a property of the target so that more than one target
 // at a time can be active...
 //
@@ -112,7 +112,7 @@ bool MachineInstr::OperandsComplete() const {
 /// replace - Support for replacing opcode and operands of a MachineInstr in
 /// place. This only resets the size of the operand vector and initializes it.
 /// The new operands must be set explicitly later.
-/// 
+///
 void MachineInstr::replace(short opcode, unsigned numOperands) {
   assert(getNumImplicitRefs() == 0 &&
          "This is probably broken because implicit refs are going to be lost.");
@@ -178,7 +178,7 @@ MachineInstr::substituteValue(const Value* oldVal, Value* newVal,
 {
   assert((!defsOnly || !notDefsAndUses) &&
          "notDefsAndUses is irrelevant if defsOnly == true.");
-  
+
   unsigned numSubst = 0;
 
   // Substitute operands
@@ -236,7 +236,7 @@ static inline void OutputReg(std::ostream &os, unsigned RegNo,
 static void print(const MachineOperand &MO, std::ostream &OS,
                   const TargetMachine *TM) {
   const MRegisterInfo *MRI = 0;
-  
+
   if (TM) MRI = TM->getRegisterInfo();
 
   bool CloseParen = true;
@@ -250,7 +250,7 @@ static void print(const MachineOperand &MO, std::ostream &OS,
     OS << "%hm(";
   else
     CloseParen = false;
-  
+
   switch (MO.getType()) {
   case MachineOperand::MO_VirtualRegister:
     if (MO.getVRegValue()) {
@@ -333,21 +333,21 @@ void MachineInstr::print(std::ostream &OS, const TargetMachine *TM) const {
   // be attached to a Machine function yet
   if (TM)
     OS << TM->getInstrInfo()->getName(getOpcode());
-  
+
   for (unsigned i = StartOp, e = getNumOperands(); i != e; ++i) {
     const MachineOperand& mop = getOperand(i);
     if (i != StartOp)
       OS << ",";
     OS << " ";
     ::print(mop, OS, TM);
-    
+
     if (mop.isDef())
       if (mop.isUse())
         OS << "<def&use>";
       else
         OS << "<def>";
   }
-    
+
   // code for printing implicit references
   if (getNumImplicitRefs()) {
     OS << "\tImplicitRefs: ";
@@ -361,7 +361,7 @@ void MachineInstr::print(std::ostream &OS, const TargetMachine *TM) const {
           OS << "<def>";
     }
   }
-  
+
   OS << "\n";
 }
 
@@ -381,7 +381,7 @@ std::ostream &operator<<(std::ostream &os, const MachineInstr &MI) {
   // Otherwise, print it out in the "raw" format without symbolic register names
   // and such.
   os << TargetInstrDescriptors[MI.getOpcode()].Name;
-  
+
   for (unsigned i = 0, N = MI.getNumOperands(); i < N; i++) {
     os << "\t" << MI.getOperand(i);
     if (MI.getOperand(i).isDef())
@@ -390,13 +390,13 @@ std::ostream &operator<<(std::ostream &os, const MachineInstr &MI) {
       else
         os << "<d>";
   }
-  
+
   // code for printing implicit references
   unsigned NumOfImpRefs = MI.getNumImplicitRefs();
   if (NumOfImpRefs > 0) {
     os << "\tImplicit: ";
     for (unsigned z = 0; z < NumOfImpRefs; z++) {
-      OutputValue(os, MI.getImplicitRef(z)); 
+      OutputValue(os, MI.getImplicitRef(z));
       if (MI.getImplicitOp(z).isDef())
           if (MI.getImplicitOp(z).isUse())
             os << "<d&u>";
@@ -405,7 +405,7 @@ std::ostream &operator<<(std::ostream &os, const MachineInstr &MI) {
       os << "\t";
     }
   }
-  
+
   return os << "\n";
 }
 
@@ -418,7 +418,7 @@ std::ostream &operator<<(std::ostream &OS, const MachineOperand &MO) {
     OS << "%hh(";
   else if (MO.isLoBits64())
     OS << "%hm(";
-  
+
   switch (MO.getType()) {
   case MachineOperand::MO_VirtualRegister:
     if (MO.hasAllocatedReg())
@@ -479,10 +479,10 @@ std::ostream &operator<<(std::ostream &OS, const MachineOperand &MO) {
     assert(0 && "Unrecognized operand type");
     break;
   }
-  
+
   if (MO.isHiBits32() || MO.isLoBits32() || MO.isHiBits64() || MO.isLoBits64())
     OS << ")";
-  
+
   return OS;
 }
 

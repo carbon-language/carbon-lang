@@ -210,7 +210,7 @@ namespace {
     ///
     MachineInstr *reloadVirtReg(MachineBasicBlock &MBB, MachineInstr *MI,
                                 unsigned OpNum);
- 
+
 
     void reloadPhysReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator &I,
                        unsigned PhysReg);

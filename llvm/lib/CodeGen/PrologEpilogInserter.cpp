@@ -1,10 +1,10 @@
 //===-- PrologEpilogInserter.cpp - Insert Prolog/Epilog code in function --===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This pass is responsible for finalizing the functions frame layout, saving
@@ -190,7 +190,7 @@ void PEI::calculateCallerSavedRegisters(MachineFunction &Fn) {
 void PEI::saveCallerSavedRegisters(MachineFunction &Fn) {
   // Early exit if no caller saved registers are modified!
   if (RegsToSave.empty())
-    return;   
+    return;
 
   const MRegisterInfo *RegInfo = Fn.getTarget().getRegisterInfo();
 
@@ -226,10 +226,10 @@ void PEI::saveCallerSavedRegisters(MachineFunction &Fn) {
 ///
 void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
   const TargetFrameInfo &TFI = *Fn.getTarget().getFrameInfo();
-  
+
   bool StackGrowsDown =
     TFI.getStackGrowthDirection() == TargetFrameInfo::StackGrowsDown;
- 
+
   // Loop over all of the stack objects, assigning sequential addresses...
   MachineFrameInfo *FFI = Fn.getFrameInfo();
 
@@ -241,12 +241,12 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
   int Offset = TFI.getOffsetOfLocalArea();
   if (StackGrowsDown)
     Offset = -Offset;
-  assert(Offset >= 0 
+  assert(Offset >= 0
          && "Local area offset should be in direction of stack growth");
 
   // If there are fixed sized objects that are preallocated in the local area,
   // non-fixed objects can't be allocated right at the start of local area.
-  // We currently don't support filling in holes in between fixed sized objects, 
+  // We currently don't support filling in holes in between fixed sized objects,
   // so we adjust 'Offset' to point to the end of last fixed sized
   // preallocated object.
   for (int i = FFI->getObjectIndexBegin(); i != 0; ++i) {
@@ -257,11 +257,11 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
       // the offset is negative, so we negate the offset to get the distance.
       FixedOff = -FFI->getObjectOffset(i);
     } else {
-      // The maximum distance from the start pointer is at the upper 
+      // The maximum distance from the start pointer is at the upper
       // address of the object.
       FixedOff = FFI->getObjectOffset(i) + FFI->getObjectSize(i);
-    }    
-    if (FixedOff > Offset) Offset = FixedOff;            
+    }
+    if (FixedOff > Offset) Offset = FixedOff;
   }
 
   for (unsigned i = 0, e = FFI->getObjectIndexEnd(); i != e; ++i) {
@@ -274,11 +274,11 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
     assert(Align <= StackAlignment && "Cannot align stack object to higher "
            "alignment boundary than the stack itself!");
     Offset = (Offset+Align-1)/Align*Align;   // Adjust to Alignment boundary...
-    
+
     if (StackGrowsDown) {
       FFI->setObjectOffset(i, -Offset);        // Set the computed offset
     } else {
-      FFI->setObjectOffset(i, Offset); 
+      FFI->setObjectOffset(i, Offset);
       Offset += FFI->getObjectSize(i);
     }
   }

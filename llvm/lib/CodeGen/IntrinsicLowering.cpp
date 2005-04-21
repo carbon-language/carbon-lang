@@ -1,10 +1,10 @@
 //===-- IntrinsicLowering.cpp - Intrinsic Lowering default implementation -===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements the default intrinsic lowering implementation.
@@ -117,7 +117,7 @@ void DefaultIntrinsicLowering::AddPrototypes(Module &M) {
 void DefaultIntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
   Function *Callee = CI->getCalledFunction();
   assert(Callee && "Cannot lower an indirect call!");
-  
+
   switch (Callee->getIntrinsicID()) {
   case Intrinsic::not_intrinsic:
     std::cerr << "Cannot lower a call to a non-intrinsic function '"
@@ -140,7 +140,7 @@ void DefaultIntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
       CI->replaceAllUsesWith(V);
     break;
   }
-  case Intrinsic::sigsetjmp: 
+  case Intrinsic::sigsetjmp:
      if (CI->getType() != Type::VoidTy)
        CI->replaceAllUsesWith(Constant::getNullValue(CI->getType()));
      break;
@@ -163,7 +163,7 @@ void DefaultIntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
   case Intrinsic::returnaddress:
   case Intrinsic::frameaddress:
     std::cerr << "WARNING: this target does not support the llvm."
-              << (Callee->getIntrinsicID() == Intrinsic::returnaddress ? 
+              << (Callee->getIntrinsicID() == Intrinsic::returnaddress ?
                   "return" : "frame") << "address intrinsic.\n";
     CI->replaceAllUsesWith(ConstantPointerNull::get(
                                             cast<PointerType>(CI->getType())));
@@ -220,7 +220,7 @@ void DefaultIntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
     break;
   }
   }
-  
+
   assert(CI->use_empty() &&
          "Lowering should have eliminated any uses of the intrinsic call!");
   CI->getParent()->getInstList().erase(CI);

@@ -148,7 +148,7 @@ static void printAsCString(std::ostream &O, const ConstantArray *CVA) {
 
   O << "\"";
   for (unsigned i = 0; i != CVA->getNumOperands(); ++i) {
-    unsigned char C = 
+    unsigned char C =
         (unsigned char)cast<ConstantInt>(CVA->getOperand(i))->getRawValue();
 
     if (C == '"') {
@@ -178,7 +178,7 @@ static void printAsCString(std::ostream &O, const ConstantArray *CVA) {
 
 /// emitGlobalConstant - Print a general LLVM constant to the .s file.
 ///
-void AsmPrinter::emitGlobalConstant(const Constant *CV) {  
+void AsmPrinter::emitGlobalConstant(const Constant *CV) {
   const TargetData &TD = TM.getTargetData();
 
   if (CV->isNullValue() || isa<UndefValue>(CV)) {
@@ -253,7 +253,7 @@ void AsmPrinter::emitGlobalConstant(const Constant *CV) {
         int32_t UVal;
       } U;
       U.FVal = (float)Val;
-      
+
       O << Data32bitsDirective << U.UVal << "\t" << CommentString
         << " float " << Val << "\n";
       return;
@@ -261,7 +261,7 @@ void AsmPrinter::emitGlobalConstant(const Constant *CV) {
   } else if (CV->getType() == Type::ULongTy || CV->getType() == Type::LongTy) {
     if (const ConstantInt *CI = dyn_cast<ConstantInt>(CV)) {
       uint64_t Val = CI->getRawValue();
-        
+
       if (Data64bitsDirective)
         O << Data64bitsDirective << Val << "\n";
       else if (TD.isBigEndian()) {
@@ -285,7 +285,7 @@ void AsmPrinter::emitGlobalConstant(const Constant *CV) {
 
   const Type *type = CV->getType();
   switch (type->getTypeID()) {
-  case Type::BoolTyID: 
+  case Type::BoolTyID:
   case Type::UByteTyID: case Type::SByteTyID:
     O << Data8bitsDirective;
     break;
@@ -301,7 +301,7 @@ void AsmPrinter::emitGlobalConstant(const Constant *CV) {
   case Type::UIntTyID: case Type::IntTyID:
     O << Data32bitsDirective;
     break;
-  case Type::ULongTyID: case Type::LongTyID:    
+  case Type::ULongTyID: case Type::LongTyID:
     assert (0 && "Should have already output double-word constant.");
   case Type::FloatTyID: case Type::DoubleTyID:
     assert (0 && "Should have already output floating point constant.");

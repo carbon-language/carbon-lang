@@ -1,12 +1,12 @@
 //===-- UnixLocalInferiorProcess.cpp - A Local process on a Unixy system --===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
-// 
+//
 // This file provides one implementation of the InferiorProcess class, which is
 // designed to be used on unixy systems (those that support pipe, fork, exec,
 // and signals).
@@ -94,7 +94,7 @@ namespace {
 
     // FinishProgram: FrameDesc*->char - This command causes the program to
     // continue execution until the specified function frame returns.
-    FinishProgram, 
+    FinishProgram,
 
     // ContProgram: void->char - This command causes the program to continue
     // execution, stopping at some point in the future.
@@ -217,7 +217,7 @@ IP::IP(Module *M, const std::vector<std::string> &Arguments,
 
   // Start the child running...
   startChild(M, Arguments, envp);
-  
+
   // Okay, we created the program and it is off and running.  Wait for it to
   // stop now.
   try {
@@ -325,7 +325,7 @@ const GlobalVariable *IP::getSubprogramDesc(void *Frame) const {
 
 /// getFrameLocation - This method returns the source location where each stack
 /// frame is stopped.
-void IP::getFrameLocation(void *Frame, unsigned &LineNo, unsigned &ColNo, 
+void IP::getFrameLocation(void *Frame, unsigned &LineNo, unsigned &ColNo,
                           const GlobalVariable *&SourceDesc) const {
   sendCommand(GetFrameLocation, &Frame, sizeof(Frame));
   LocationToken Loc;
@@ -419,7 +419,7 @@ void IP::writeToChild(void *Buffer, unsigned Size) const {
 /// died, otherwise it just returns the exit code if it had to be killed.
 void IP::killChild() const {
   assert(ChildPID != 0 && "Child has already been reaped!");
-  
+
   // If the process terminated on its own accord, closing the pipe file
   // descriptors, we will get here.  Check to see if the process has already
   // died in this manner, gracefully.
@@ -456,7 +456,7 @@ void IP::killChild() const {
       throw InferiorProcessDead(WTERMSIG(Status));
     throw InferiorProcessDead(-1);
   }
-  
+
   // Otherwise, the child exists and has not yet been killed.
   if (kill(ChildPID, SIGKILL) < 0)
     throw "Error killing child process!";
@@ -905,7 +905,7 @@ static void runChild(Module *M, const std::vector<std::string> &Arguments,
     ExecutionEngine::create(new ExistingModuleProvider(M), false,
                             new DebuggerIntrinsicLowering());
   assert(EE && "Couldn't create an ExecutionEngine, not even an interpreter?");
-  
+
   // Call the main function from M as if its signature were:
   //   int main (int argc, char **argv, const char **envp)
   // using the contents of Args to determine argc & argv, and the contents of

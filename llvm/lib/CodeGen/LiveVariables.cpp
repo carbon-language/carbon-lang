@@ -1,12 +1,12 @@
 //===-- LiveVariables.cpp - Live Variable Analysis for Machine Code -------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
-// 
+//
 // This file implements the LiveVariable analysis pass.  For each machine
 // instruction in the function, this pass calculates the set of registers that
 // are immediately dead after the instruction (i.e., the instruction calculates
@@ -98,7 +98,7 @@ void LiveVariables::HandleVirtRegUse(VarInfo &VRInfo, MachineBasicBlock *MBB,
     assert(VRInfo.Kills[i]->getParent() != MBB && "entry should be at end!");
 #endif
 
-  assert(MBB != VRInfo.DefInst->getParent() && 
+  assert(MBB != VRInfo.DefInst->getParent() &&
          "Should have kill for defblock!");
 
   // Add a new kill entry for this basic block.
@@ -156,7 +156,7 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
   // physical register.  This is a purely local property, because all physical
   // register references as presumed dead across basic blocks.
   //
-  PhysRegInfo = (MachineInstr**)alloca(sizeof(MachineInstr*) * 
+  PhysRegInfo = (MachineInstr**)alloca(sizeof(MachineInstr*) *
                                        RegInfo->getNumRegs());
   PhysRegUsed = (bool*)alloca(sizeof(bool)*RegInfo->getNumRegs());
   std::fill(PhysRegInfo, PhysRegInfo+RegInfo->getNumRegs(), (MachineInstr*)0);
@@ -171,7 +171,7 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
            "Cannot have a live-in virtual register!");
     HandlePhysRegDef(*I, 0);
   }
-  
+
   // Calculate live variable information in depth first order on the CFG of the
   // function.  This guarantees that we will see the definition of a virtual
   // register before its uses due to dominance properties of SSA (except for PHI
@@ -195,7 +195,7 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
 
       // Unless it is a PHI node.  In this case, ONLY process the DEF, not any
       // of the uses.  They will be handled in other basic blocks.
-      if (MI->getOpcode() == TargetInstrInfo::PHI)      
+      if (MI->getOpcode() == TargetInstrInfo::PHI)
         NumOperandsToProcess = 1;
 
       // Loop over implicit uses, using them.
@@ -247,7 +247,7 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
     for (MachineBasicBlock::succ_iterator SI = MBB->succ_begin(),
            E = MBB->succ_end(); SI != E; ++SI) {
       MachineBasicBlock *Succ = *SI;
-      
+
       // PHI nodes are guaranteed to be at the top of the block...
       for (MachineBasicBlock::iterator MI = Succ->begin(), ME = Succ->end();
            MI != ME && MI->getOpcode() == TargetInstrInfo::PHI; ++MI) {
@@ -267,7 +267,7 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
         }
       }
     }
-    
+
     // Finally, if the last block in the function is a return, make sure to mark
     // it as using all of the live-out values in the function.
     if (!MBB->empty() && TII.isReturn(MBB->back().getOpcode())) {
@@ -305,7 +305,7 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
   // function.  If so, it is due to a bug in the instruction selector or some
   // other part of the code generator if this happens.
 #ifndef NDEBUG
-  for(MachineFunction::iterator i = MF.begin(), e = MF.end(); i != e; ++i) 
+  for(MachineFunction::iterator i = MF.begin(), e = MF.end(); i != e; ++i)
     assert(Visited.count(&*i) != 0 && "unreachable basic block found");
 #endif
 

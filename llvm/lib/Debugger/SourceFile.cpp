@@ -1,12 +1,12 @@
 //===-- SourceFile.cpp - SourceFile implementation for the debugger -------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
-// 
+//
 // This file implements the SourceFile class for the LLVM debugger.
 //
 //===----------------------------------------------------------------------===//
@@ -16,7 +16,7 @@
 
 using namespace llvm;
 
-/// readFile - Load Filename 
+/// readFile - Load Filename
 ///
 void SourceFile::readFile() {
   File.map();

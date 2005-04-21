@@ -1,12 +1,12 @@
 //===-- Debugger.cpp - LLVM debugger library implementation ---------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
-// 
+//
 // This file contains the main implementation of the LLVM debugger library.
 //
 //===----------------------------------------------------------------------===//
@@ -32,7 +32,7 @@ Debugger::~Debugger() {
   } catch (const char *) {
   } catch (const std::string &) {
   }
-  
+
   unloadProgram();
 }
 
@@ -47,7 +47,7 @@ getMaterializedModuleProvider(const std::string &Filename) {
   try {
     std::auto_ptr<ModuleProvider> Result(getBytecodeModuleProvider(Filename));
     if (!Result.get()) return 0;
-  
+
     Result->materializeModule();
     return Result.release()->releaseModule();
   } catch (...) {
@@ -163,7 +163,7 @@ void Debugger::nextProgram() {
 
     // Don't trust the current frame: get the caller frame.
     void *ParentFrame  = Process->getPreviousFrame(CurrentFrame);
-    
+
     // Ok, we have some information, run the program one step.
     Process->stepProgram();
 

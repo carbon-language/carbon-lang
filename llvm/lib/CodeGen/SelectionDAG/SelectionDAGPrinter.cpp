@@ -1,10 +1,10 @@
 //===-- SelectionDAGPrinter.cpp - Implement SelectionDAG::viewGraph() -----===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This implements the SelectionDAG::viewGraph method.
@@ -70,7 +70,7 @@ std::string DOTGraphTraits<SelectionDAG*>::getNodeLabel(const SDNode *Node,
     Op += ": " + utostr(CSDN->getValue());
   } else if (const ConstantFPSDNode *CSDN = dyn_cast<ConstantFPSDNode>(Node)) {
     Op += ": " + ftostr(CSDN->getValue());
-  } else if (const GlobalAddressSDNode *GADN = 
+  } else if (const GlobalAddressSDNode *GADN =
              dyn_cast<GlobalAddressSDNode>(Node)) {
     Op += ": " + GADN->getGlobal()->getName();
   } else if (const FrameIndexSDNode *FIDN =
@@ -78,7 +78,7 @@ std::string DOTGraphTraits<SelectionDAG*>::getNodeLabel(const SDNode *Node,
     Op += " " + itostr(FIDN->getIndex());
   } else if (const ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(Node)){
     Op += "<" + utostr(CP->getIndex()) + ">";
-  } else if (const BasicBlockSDNode *BBDN = 
+  } else if (const BasicBlockSDNode *BBDN =
 	     dyn_cast<BasicBlockSDNode>(Node)) {
     Op = "BB: ";
     const Value *LBB = (const Value*)BBDN->getBasicBlock()->getBasicBlock();
@@ -95,7 +95,7 @@ std::string DOTGraphTraits<SelectionDAG*>::getNodeLabel(const SDNode *Node,
   }
   return Op;
 }
- 
+
 
 /// viewGraph - Pop up a ghostview window with the reachable parts of the DAG
 /// rendered using 'dot'.
