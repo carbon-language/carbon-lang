@@ -1,10 +1,10 @@
 //===- Configuration.cpp - Configuration Data Mgmt --------------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
-// This file was developed by Reid Spencer and is distributed under the 
+// This file was developed by Reid Spencer and is distributed under the
 // University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements the parsing of configuration files for the LLVM Compiler
@@ -34,7 +34,7 @@ namespace llvm {
 
   InputProvider::~InputProvider() {}
   void InputProvider::error(const std::string& msg) {
-    std::cerr << name << ":" << ConfigLexerState.lineNum << ": Error: " << 
+    std::cerr << name << ":" << ConfigLexerState.lineNum << ": Error: " <<
       msg << "\n";
     errCount++;
   }
@@ -53,7 +53,7 @@ namespace {
   class FileInputProvider : public InputProvider {
     public:
       FileInputProvider(const std::string & fname)
-        : InputProvider(fname) 
+        : InputProvider(fname)
         , F(fname.c_str()) {
         ConfigLexerInput = this;
       }
@@ -71,7 +71,7 @@ namespace {
       std::ifstream F;
   };
 
-  cl::opt<bool> DumpTokens("dump-tokens", cl::Optional, cl::Hidden, 
+  cl::opt<bool> DumpTokens("dump-tokens", cl::Optional, cl::Hidden,
     cl::init(false), cl::desc("Dump lexical tokens (debug use only)."));
 
   struct Parser
@@ -90,14 +90,14 @@ namespace {
     InputProvider* provider;
     CompilerDriver::ConfigData* confDat;
 
-    inline int next() { 
+    inline int next() {
       token = Configlex();
-      if (DumpTokens) 
+      if (DumpTokens)
         std::cerr << token << "\n";
       return token;
     }
 
-    inline bool next_is_real() { 
+    inline bool next_is_real() {
       next();
       return (token != EOLTOK) && (token != ERRORTOK) && (token != 0);
     }
@@ -117,7 +117,7 @@ namespace {
       while (next_is_real()) {
         switch (token ) {
           case STRING :
-          case OPTION : 
+          case OPTION :
             result += ConfigLexerState.StringVal;
             break;
           case SEPARATOR:
@@ -229,27 +229,27 @@ namespace {
         case LIBS:
           parseLibs();
           break;
-        case NAME: 
-          confDat->langName = parseName(); 
+        case NAME:
+          confDat->langName = parseName();
           break;
-        case OPT1: 
-          parseOptionList(confDat->opts[CompilerDriver::OPT_FAST_COMPILE]); 
+        case OPT1:
+          parseOptionList(confDat->opts[CompilerDriver::OPT_FAST_COMPILE]);
           break;
-        case OPT2: 
-          parseOptionList(confDat->opts[CompilerDriver::OPT_SIMPLE]); 
+        case OPT2:
+          parseOptionList(confDat->opts[CompilerDriver::OPT_SIMPLE]);
           break;
-        case OPT3: 
-          parseOptionList(confDat->opts[CompilerDriver::OPT_AGGRESSIVE]); 
+        case OPT3:
+          parseOptionList(confDat->opts[CompilerDriver::OPT_AGGRESSIVE]);
           break;
-        case OPT4: 
-          parseOptionList(confDat->opts[CompilerDriver::OPT_LINK_TIME]); 
+        case OPT4:
+          parseOptionList(confDat->opts[CompilerDriver::OPT_LINK_TIME]);
           break;
-        case OPT5: 
+        case OPT5:
           parseOptionList(
             confDat->opts[CompilerDriver::OPT_AGGRESSIVE_LINK_TIME]);
           break;
-        default:   
-          error("Expecting 'name' or 'optN' after 'lang.'"); 
+        default:
+          error("Expecting 'name' or 'optN' after 'lang.'");
           break;
       }
     }
@@ -295,7 +295,7 @@ namespace {
             break;
         }
         next();
-      } while (token != SPACE && token != EOFTOK && token != EOLTOK && 
+      } while (token != SPACE && token != EOFTOK && token != EOLTOK &&
                token != ERRORTOK);
       return !str.empty();
     }
@@ -312,7 +312,7 @@ namespace {
         case SPACE:
           next();
           /* FALL THROUGH */
-        default: 
+        default:
         {
           std::string progname;
           if (parseProgramName(progname))
@@ -402,7 +402,7 @@ namespace {
       if (next() != SEPARATOR)
         error("Expecting '.'");
       switch (next()) {
-        case COMMAND: 
+        case COMMAND:
           parseCommand(confDat->Translator);
           break;
         case REQUIRED:
@@ -414,7 +414,7 @@ namespace {
         case PREPROCESSES:
           if (parseBoolean())
             confDat->Translator.set(CompilerDriver::PREPROCESSES_FLAG);
-          else 
+          else
             confDat->Translator.clear(CompilerDriver::PREPROCESSES_FLAG);
           break;
         case OUTPUT:
@@ -464,8 +464,8 @@ namespace {
             confDat->Translator.clear(CompilerDriver::OUTPUT_IS_ASM_FLAG);
           break;
         default:
-          error(std::string("Expecting 'command', 'preprocesses', " 
-              "'translates' or 'output' but found '") + 
+          error(std::string("Expecting 'command', 'preprocesses', "
+              "'translates' or 'output' but found '") +
               ConfigLexerState.StringVal + "' instead");
           break;
       }
@@ -509,7 +509,7 @@ namespace {
         case LINKER:        parseLinker(); break;
         case EOLTOK:        break; // just ignore
         case ERRORTOK:
-        default:          
+        default:
           error("Invalid top level configuration item");
           break;
       }
@@ -548,7 +548,7 @@ LLVMC_ConfigDataProvider::ReadConfigData(const std::string& ftype) {
       confFile.setDirectory(conf);
       confFile.appendFile(ftype);
       if (!confFile.readable())
-        throw std::string("Configuration file for '") + ftype + 
+        throw std::string("Configuration file for '") + ftype +
                           "' is not available.";
     } else {
       // Try the user's home directory
@@ -569,7 +569,7 @@ LLVMC_ConfigDataProvider::ReadConfigData(const std::string& ftype) {
           confFile = sys::Path::GetLLVMDefaultConfigDir();
           confFile.appendFile(ftype);
           if (!confFile.readable()) {
-            throw std::string("Configuration file for '") + ftype + 
+            throw std::string("Configuration file for '") + ftype +
                               "' is not available.";
           }
         }
@@ -579,12 +579,12 @@ LLVMC_ConfigDataProvider::ReadConfigData(const std::string& ftype) {
     confFile = configDir;
     confFile.appendFile(ftype);
     if (!confFile.readable())
-      throw std::string("Configuration file for '") + ftype + 
+      throw std::string("Configuration file for '") + ftype +
                         "' is not available.";
   }
   FileInputProvider fip( confFile.toString() );
   if (!fip.okay()) {
-    throw std::string("Configuration file for '") + ftype + 
+    throw std::string("Configuration file for '") + ftype +
                       "' is not available.";
   }
   result = new CompilerDriver::ConfigData();
@@ -603,7 +603,7 @@ LLVMC_ConfigDataProvider::~LLVMC_ConfigDataProvider()
   Configurations.clear();
 }
 
-CompilerDriver::ConfigData* 
+CompilerDriver::ConfigData*
 LLVMC_ConfigDataProvider::ProvideConfigData(const std::string& filetype) {
   CompilerDriver::ConfigData* result = 0;
   if (!Configurations.empty()) {

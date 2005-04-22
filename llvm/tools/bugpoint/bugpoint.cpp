@@ -1,10 +1,10 @@
 //===- bugpoint.cpp - The LLVM Bugpoint utility ---------------------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This program is an automated compiler debugger tool.  It is used to narrow

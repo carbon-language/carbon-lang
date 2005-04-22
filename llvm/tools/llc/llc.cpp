@@ -1,14 +1,14 @@
 //===-- llc.cpp - Implement the LLVM Native Code Generator ----------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This is the llc code generator driver. It provides a convenient
-// command-line interface for generating native assembly-language code 
+// command-line interface for generating native assembly-language code
 // or C code, given LLVM bytecode.
 //
 //===----------------------------------------------------------------------===//
@@ -32,7 +32,7 @@ using namespace llvm;
 // General options for llc.  Other pass-specific options are specified
 // within the corresponding llc passes, and target-specific options
 // and back-end code generation options are specified with the target machine.
-// 
+//
 static cl::opt<std::string>
 InputFilename(cl::Positional, cl::desc("<input bytecode>"), cl::init("-"));
 
@@ -43,7 +43,7 @@ static cl::opt<bool> Force("f", cl::desc("Overwrite output files"));
 
 static cl::opt<const TargetMachineRegistry::Entry*, false, TargetNameParser>
 MArch("march", cl::desc("Architecture to generate assembly for:"));
-               
+
 // GetFileNameRoot - Helper function to get the basename of a filename...
 static inline std::string
 GetFileNameRoot(const std::string &InputFilename) {
@@ -125,13 +125,13 @@ int main(int argc, char **argv) {
         OutputFilename = "-";
         Out = &std::cout;
       } else {
-        OutputFilename = GetFileNameRoot(InputFilename); 
+        OutputFilename = GetFileNameRoot(InputFilename);
 
         if (MArch->Name[0] != 'c' || MArch->Name[1] != 0)  // not CBE
           OutputFilename += ".s";
         else
           OutputFilename += ".cbe.c";
-        
+
         if (!Force && std::ifstream(OutputFilename.c_str())) {
           // If force is not specified, make sure not to overwrite a file!
           std::cerr << argv[0] << ": error opening '" << OutputFilename
@@ -139,14 +139,14 @@ int main(int argc, char **argv) {
                     << "Use -f command line argument to force output\n";
           return 1;
         }
-        
+
         Out = new std::ofstream(OutputFilename.c_str());
         if (!Out->good()) {
           std::cerr << argv[0] << ": error opening " << OutputFilename << "!\n";
           delete Out;
           return 1;
         }
-        
+
         // Make sure that the Out file gets unlinked from the disk if we get a
         // SIGINT
         sys::RemoveFileOnSignal(sys::Path(OutputFilename));

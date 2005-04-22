@@ -1,10 +1,10 @@
 //===- CLIDebugger.h - LLVM Command Line Interface Debugger -----*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines the CLIDebugger class, which implements a command line
@@ -62,11 +62,11 @@ namespace llvm {
     //
     std::string Prompt;   // set prompt, show prompt
     unsigned ListSize;    // set listsize, show listsize
-    
+
     //===------------------------------------------------------------------===//
     // Data to support user interaction
     //
-    
+
     /// CurrentFile - The current source file we are inspecting, or null if
     /// none.
     const SourceFile *CurrentFile;

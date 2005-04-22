@@ -1,10 +1,10 @@
 //===- InstrInfoEmitter.cpp - Generate a Instruction Set Desc. ------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This tablegen backend is responsible for emitting a description of the target
@@ -69,7 +69,7 @@ void TreePatternNode::InstantiateNonterminals(InstrSelectorEmitter &ISE) {
       getChild(i)->InstantiateNonterminals(ISE);
     return;
   }
-  
+
   // If this is a leaf, it might be a reference to a nonterminal!  Check now.
   Record *R = getValueRecord();
   if (R->isSubClassOf("Nonterminal")) {
@@ -78,7 +78,7 @@ void TreePatternNode::InstantiateNonterminals(InstrSelectorEmitter &ISE) {
       // We found an unresolved nonterminal reference.  Ask the ISE to clone
       // it for us, then update our reference to the fresh, new, resolved,
       // nonterminal.
-      
+
       Value = new DefInit(ISE.InstantiateNonterminal(NT, getType()));
     }
   }
@@ -107,12 +107,12 @@ std::ostream &llvm::operator<<(std::ostream &OS, const TreePatternNode &N) {
     return OS << N.getType() << ":" << *N.getValue();
   OS << "(" << N.getType() << ":";
   OS << N.getOperator()->getName();
-  
+
   if (N.getNumChildren() != 0) {
     OS << " " << *N.getChild(0);
     for (unsigned i = 1, e = N.getNumChildren(); i != e; ++i)
       OS << ", " << *N.getChild(i);
-  }  
+  }
   return OS << ")";
 }
 
@@ -162,7 +162,7 @@ void Pattern::error(const std::string &Msg) const {
   case Instruction: M += "instruction "; break;
   case Expander   : M += "expander "; break;
   }
-  throw M + TheRecord->getName() + ": " + Msg;  
+  throw M + TheRecord->getName() + ": " + Msg;
 }
 
 /// calculateArgs - Compute the list of all of the arguments to this pattern,
@@ -205,7 +205,7 @@ TreePatternNode *Pattern::ParseTreePattern(DagInit *Dag) {
     // node.
     if (Dag->getNumArgs() != 1)
       error("Type cast only valid for a leaf node!");
-    
+
     Init *Arg = Dag->getArg(0);
     TreePatternNode *New;
     if (DefInit *DI = dynamic_cast<DefInit*>(Arg)) {
@@ -229,7 +229,7 @@ TreePatternNode *Pattern::ParseTreePattern(DagInit *Dag) {
     error("Unrecognized node '" + Operator->getName() + "'!");
 
   std::vector<std::pair<TreePatternNode*, std::string> > Children;
-  
+
   for (unsigned i = 0, e = Dag->getNumArgs(); i != e; ++i) {
     Init *Arg = Dag->getArg(i);
     if (DagInit *DI = dynamic_cast<DagInit*>(Arg)) {
@@ -442,7 +442,7 @@ void InstrSelectorEmitter::ReadNodeTypes() {
   DEBUG(std::cerr << "Getting node types: ");
   for (unsigned i = 0, e = Nodes.size(); i != e; ++i) {
     Record *Node = Nodes[i];
-    
+
     // Translate the return type...
     NodeType::ArgResultTypes RetTy =
       NodeType::Translate(Node->getValueAsDef("RetType"));
@@ -545,7 +545,7 @@ Record *InstrSelectorEmitter::InstantiateNonterminal(Pattern *NT,
   // Check to see if we have already instantiated this pair...
   Record* &Slot = InstantiatedNTs[std::make_pair(NT, ResultTy)];
   if (Slot) return Slot;
-  
+
   Record *New = new Record(NT->getRecord()->getName()+"_"+getName(ResultTy));
 
   // Copy over the superclasses...
@@ -685,7 +685,7 @@ void InstrSelectorEmitter::EmitMatchCosters(std::ostream &OS,
                                             unsigned IndentAmt) {
   assert(!Patterns.empty() && "No patterns to emit matchers for!");
   std::string Indent(IndentAmt, ' ');
-  
+
   // Load all of the operands of the root node into scalars for fast access
   const NodeType &ONT = getNodeType(Patterns[0].second->getOperator());
   for (unsigned i = 0, e = ONT.ArgTypes.size(); i != e; ++i)
@@ -719,7 +719,7 @@ void InstrSelectorEmitter::EmitMatchCosters(std::ostream &OS,
   std::string LocCostName = VarPrefix + "_Cost";
   OS << Indent << "unsigned " << LocCostName << "Min = ~0U >> 1;\n"
      << Indent << "unsigned " << VarPrefix << "_PatternMin = NoMatchPattern;\n";
-  
+
 #if 0
   // Separate out all of the patterns into groups based on what their top-level
   // signature looks like...
@@ -789,7 +789,7 @@ void InstrSelectorEmitter::EmitMatchCosters(std::ostream &OS,
     OS << Indent << "  if (" << LocCostName << " < " << LocCostName << "Min) { "
        << LocCostName << "Min = " << LocCostName << "; " << VarPrefix
        << "_PatternMin = " << VarPrefix << "_Pattern; }\n";
-    
+
     OS << Indent << "}\n";
   }
 #endif
@@ -938,7 +938,7 @@ void InstrSelectorEmitter::PrintExpanderOperand(Init *Arg,
   P->error("Unknown operand type to expander!");
 }
 
-static std::string getArgName(Pattern *P, const std::string &ArgName, 
+static std::string getArgName(Pattern *P, const std::string &ArgName,
        const std::vector<std::pair<TreePatternNode*, std::string> > &Operands) {
   assert(P->getNumArgs() == Operands.size() &&"Argument computation mismatch!");
   if (ArgName.empty()) return "";
@@ -957,7 +957,7 @@ static std::string getArgName(Pattern *P, const std::string &ArgName,
 void InstrSelectorEmitter::run(std::ostream &OS) {
   // Type-check all of the node types to ensure we "understand" them.
   ReadNodeTypes();
-  
+
   // Read in all of the nonterminals, instructions, and expanders...
   ReadNonterminals();
   ReadInstructionPatterns();
@@ -977,7 +977,7 @@ void InstrSelectorEmitter::run(std::ostream &OS) {
       DEBUG(std::cerr << "  " << *I->second << "\n");
 
   CalculateComputableValues();
-  
+
   OS << "#include \"llvm/CodeGen/MachineInstrBuilder.h\"\n";
 
   EmitSourceFileHeader("Instruction Selector for the " + Target.getName() +
@@ -1127,13 +1127,13 @@ void InstrSelectorEmitter::run(std::ostream &OS) {
         OS << getNodeName(Operator) << "(SelectionDAGNode *N) {\n"
            << "  unsigned Pattern = NoMatchPattern;\n"
            << "  unsigned MinCost = ~0U >> 1;\n";
-        
+
         std::vector<std::pair<Pattern*, TreePatternNode*> > Patterns;
         for (unsigned i = 0, e = J->second.size(); i != e; ++i)
           Patterns.push_back(std::make_pair(J->second[i],
                                             J->second[i]->getTree()));
         EmitMatchCosters(OS, Patterns, "N", 2);
-        
+
         OS << "\n  N->setPatternCostFor(" << SlotName
            << "_Slot, Pattern, MinCost, NumSlots);\n"
            << "  return MinCost;\n"
@@ -1172,7 +1172,7 @@ void InstrSelectorEmitter::run(std::ostream &OS) {
         // Loop over the operands, reducing them...
         std::vector<std::pair<TreePatternNode*, std::string> > Operands;
         ReduceAllOperands(P->getTree(), "N", Operands, OS);
-        
+
         // Now that we have reduced all of our operands, and have the values
         // that reduction produces, perform the reduction action for this
         // pattern.
@@ -1206,7 +1206,7 @@ void InstrSelectorEmitter::run(std::ostream &OS) {
                      << "->Val";
                 });
         DEBUG(OS << " << \"\\n\";\n");
-        
+
         // Generate the reduction code appropriate to the particular type of
         // pattern that this is...
         switch (P->getPatternType()) {
@@ -1245,7 +1245,7 @@ void InstrSelectorEmitter::run(std::ostream &OS) {
             Pattern *InstPat = getPattern(InstRec);
             if (!InstPat || InstPat->getPatternType() != Pattern::Instruction)
               P->error("Instruction list must contain Instruction patterns!");
-            
+
             bool hasResult = InstPat->getResult() != 0;
             if (InstPat->getNumArgs() != DIInst->getNumArgs()-hasResult) {
               P->error("Incorrect number of arguments specified for inst '" +
@@ -1286,8 +1286,8 @@ void InstrSelectorEmitter::run(std::ostream &OS) {
            << "    break;\n"
            << "  }\n";
       }
-    
-    
+
+
     OS << "  default: assert(0 && \"Unknown " << SlotName << " pattern!\");\n"
        << "  }\n\n  N->addValue(Val);  // Do not ever recalculate this\n"
        << "  return Val;\n}\n\n";

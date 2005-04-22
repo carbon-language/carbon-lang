@@ -1,10 +1,10 @@
 //===- ExtractFunction.cpp - Extract a function from Program --------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements several methods that are used to extract functions,
@@ -104,7 +104,7 @@ Module *BugDriver::performFinalCleanups(Module *M, bool MayModifySemantics) {
   // Make all functions external, so GlobalDCE doesn't delete them...
   for (Module::iterator I = M->begin(), E = M->end(); I != E; ++I)
     I->setLinkage(GlobalValue::ExternalLinkage);
-  
+
   std::vector<const PassInfo*> CleanupPasses;
   CleanupPasses.push_back(getPI(createFunctionResolvingPass()));
   CleanupPasses.push_back(getPI(createGlobalDCEPass()));
@@ -155,7 +155,7 @@ Module *BugDriver::ExtractLoop(Module *M) {
     for (unsigned i = 0, e = M->size(); i != e; ++i)
       ++MI;
   }
-  
+
   return NewM;
 }
 
@@ -251,7 +251,7 @@ bool BlockExtractorPass::runOnModule(Module &M) {
 
   for (unsigned i = 0, e = BlocksToExtract.size(); i != e; ++i)
     ExtractBasicBlock(BlocksToExtract[i]);
-  
+
   return !BlocksToExtract.empty();
 }
 

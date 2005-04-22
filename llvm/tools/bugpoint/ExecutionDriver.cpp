@@ -1,10 +1,10 @@
 //===- ExecutionDriver.cpp - Allow execution of LLVM program --------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file contains code used to execute the program utilizing one of the
@@ -276,7 +276,7 @@ std::string BugDriver::compileSharedObject(const std::string &BytecodeFile) {
 #endif
 
   std::string SharedObjectFile;
-  if (gcc->MakeSharedObject(OutputCFile.toString(), GCC::CFile, 
+  if (gcc->MakeSharedObject(OutputCFile.toString(), GCC::CFile,
                             SharedObjectFile))
     exit(1);
 
@@ -303,7 +303,7 @@ bool BugDriver::diffProgram(const std::string &BytecodeFile,
   // If we're checking the program exit code, assume anything nonzero is bad.
   if (CheckProgramExitCode && ProgramExitedNonzero) {
     Output.destroyFile();
-    if (RemoveBytecode) 
+    if (RemoveBytecode)
       sys::Path(BytecodeFile).destroyFile();
     return true;
   }
@@ -319,7 +319,7 @@ bool BugDriver::diffProgram(const std::string &BytecodeFile,
     }
     FilesDifferent = true;
   }
-  
+
   // Remove the generated output.
   Output.destroyFile();
 

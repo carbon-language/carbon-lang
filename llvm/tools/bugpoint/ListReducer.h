@@ -1,10 +1,10 @@
 //===- ListReducer.h - Trim down list while retaining property --*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This class is to be used as a base class for operations that want to zero in
@@ -48,7 +48,7 @@ struct ListReducer {
     case KeepPrefix:
       if (TheList.size() == 1) // we are done, it's the base case and it fails
         return true;
-      else 
+      else
         break; // there's definitely an error, but we need to narrow it down
 
     case KeepSuffix:
@@ -107,7 +107,7 @@ struct ListReducer {
             Changed = true;
           }
         }
-        // This can take a long time if left uncontrolled.  For now, don't 
+        // This can take a long time if left uncontrolled.  For now, don't
         // iterate.
         break;
       }

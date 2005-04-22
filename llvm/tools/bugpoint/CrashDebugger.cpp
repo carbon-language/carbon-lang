@@ -1,10 +1,10 @@
 //===- CrashDebugger.cpp - Debug compilation crashes ----------------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines the bugpoint internals that narrow down compilation crashes
@@ -36,7 +36,7 @@ namespace llvm {
     BugDriver &BD;
   public:
     ReducePassList(BugDriver &bd) : BD(bd) {}
-    
+
     // doTest - Return true iff running the "removed" passes succeeds, and
     // running the "Kept" passes fail when run on the output of the "removed"
     // passes.  If we return true, we update the current module of bugpoint.
@@ -72,7 +72,7 @@ ReducePassList::doTest(std::vector<const PassInfo*> &Prefix,
 
   std::cout << "Checking to see if these passes crash: "
             << getPassesString(Suffix) << ": ";
-  
+
   if (BD.runPasses(Suffix)) {
     delete OrigProgram;            // The suffix crashes alone...
     return KeepSuffix;
@@ -94,7 +94,7 @@ namespace llvm {
     ReduceCrashingFunctions(BugDriver &bd,
                             bool (*testFn)(BugDriver &, Module *))
       : BD(bd), TestFn(testFn) {}
-    
+
     virtual TestResult doTest(std::vector<Function*> &Prefix,
                               std::vector<Function*> &Kept) {
       if (!Kept.empty() && TestFuncs(Kept))
@@ -103,7 +103,7 @@ namespace llvm {
         return KeepPrefix;
       return NoFailure;
     }
-    
+
     bool TestFuncs(std::vector<Function*> &Prefix);
   };
 }
@@ -111,11 +111,11 @@ namespace llvm {
 bool ReduceCrashingFunctions::TestFuncs(std::vector<Function*> &Funcs) {
   // Clone the program to try hacking it apart...
   Module *M = CloneModule(BD.getProgram());
-  
+
   // Convert list to set for fast lookup...
   std::set<Function*> Functions;
   for (unsigned i = 0, e = Funcs.size(); i != e; ++i) {
-    Function *CMF = M->getFunction(Funcs[i]->getName(), 
+    Function *CMF = M->getFunction(Funcs[i]->getName(),
                                    Funcs[i]->getFunctionType());
     assert(CMF && "Function not in module?!");
     Functions.insert(CMF);
@@ -157,7 +157,7 @@ namespace {
   public:
     ReduceCrashingBlocks(BugDriver &bd, bool (*testFn)(BugDriver &, Module *))
       : BD(bd), TestFn(testFn) {}
-    
+
     virtual TestResult doTest(std::vector<const BasicBlock*> &Prefix,
                               std::vector<const BasicBlock*> &Kept) {
       if (!Kept.empty() && TestBlocks(Kept))
@@ -166,7 +166,7 @@ namespace {
         return KeepPrefix;
       return NoFailure;
     }
-    
+
     bool TestBlocks(std::vector<const BasicBlock*> &Prefix);
   };
 }
@@ -174,7 +174,7 @@ namespace {
 bool ReduceCrashingBlocks::TestBlocks(std::vector<const BasicBlock*> &BBs) {
   // Clone the program to try hacking it apart...
   Module *M = CloneModule(BD.getProgram());
-  
+
   // Convert list to set for fast lookup...
   std::set<BasicBlock*> Blocks;
   for (unsigned i = 0, e = BBs.size(); i != e; ++i) {
@@ -214,7 +214,7 @@ bool ReduceCrashingBlocks::TestBlocks(std::vector<const BasicBlock*> &BBs) {
 
         // Delete the old terminator instruction...
         BB->getInstList().pop_back();
-        
+
         // Add a new return instruction of the appropriate type...
         const Type *RetTy = BB->getParent()->getReturnType();
         new ReturnInst(RetTy == Type::VoidTy ? 0 :
@@ -274,7 +274,7 @@ static bool DebugACrash(BugDriver &BD,  bool (*TestFn)(BugDriver &, Module *)) {
         I->setLinkage(GlobalValue::ExternalLinkage);
         DeletedInit = true;
       }
-    
+
     if (!DeletedInit) {
       delete M;  // No change made...
     } else {
@@ -290,7 +290,7 @@ static bool DebugACrash(BugDriver &BD,  bool (*TestFn)(BugDriver &, Module *)) {
       }
     }
   }
-  
+
   // Now try to reduce the number of functions in the module to something small.
   std::vector<Function*> Functions;
   for (Module::iterator I = BD.getProgram()->begin(),
@@ -343,7 +343,7 @@ static bool DebugACrash(BugDriver &BD,  bool (*TestFn)(BugDriver &, Module *)) {
     //
     unsigned InstructionsToSkipBeforeDeleting = 0;
   TryAgain:
-    
+
     // Loop over all of the (non-terminator) instructions remaining in the
     // function, attempting to delete them.
     unsigned CurInstructionNum = 0;
@@ -359,7 +359,7 @@ static bool DebugACrash(BugDriver &BD,  bool (*TestFn)(BugDriver &, Module *)) {
             } else {
               std::cout << "Checking instruction '" << I->getName() << "': ";
               Module *M = BD.deleteInstructionFromProgram(I, Simplification);
-              
+
               // Find out if the pass still crashes on this pass...
               if (TestFn(BD, M)) {
                 // Yup, it does, we delete the old module, and continue trying
@@ -369,7 +369,7 @@ static bool DebugACrash(BugDriver &BD,  bool (*TestFn)(BugDriver &, Module *)) {
                 InstructionsToSkipBeforeDeleting = CurInstructionNum;
                 goto TryAgain;  // I wish I had a multi-level break here!
               }
-              
+
               // This pass didn't crash without this instruction, try the next
               // one.
               delete M;
@@ -379,14 +379,14 @@ static bool DebugACrash(BugDriver &BD,  bool (*TestFn)(BugDriver &, Module *)) {
       InstructionsToSkipBeforeDeleting = 0;
       goto TryAgain;
     }
-      
+
   } while (Simplification);
 
   // Try to clean up the testcase by running funcresolve and globaldce...
   std::cout << "\n*** Attempting to perform final cleanups: ";
   Module *M = CloneModule(BD.getProgram());
   M = BD.performFinalCleanups(M, true);
-            
+
   // Find out if the pass still crashes on the cleaned up program...
   if (TestFn(BD, M)) {
     BD.setNewProgram(M);     // Yup, it does, keep the reduced version...
@@ -398,7 +398,7 @@ static bool DebugACrash(BugDriver &BD,  bool (*TestFn)(BugDriver &, Module *)) {
   if (AnyReduction)
     BD.EmitProgressBytecode("reduced-simplified");
 
-  return false;  
+  return false;
 }
 
 static bool TestForOptimizerCrash(BugDriver &BD, Module *M) {

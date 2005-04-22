@@ -1,10 +1,10 @@
 //===- InstrInfoEmitter.h - Generate a Instruction Set Desc. ----*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This tablegen backend is responsible for emitting a description of the target
@@ -147,7 +147,7 @@ private:
   /// there was a (set) node on the outside level that it has been stripped off.
   ///
   TreePatternNode *Tree;
-  
+
   /// Result - If this is an instruction or expander pattern, this is the
   /// register result, specified with a (set) in the pattern.
   ///
@@ -195,7 +195,7 @@ public:
   /// getTree - Return the tree pattern which corresponds to this pattern.
   ///
   TreePatternNode *getTree() const { return Tree; }
-  
+
   Record *getResult() const {
     return ResultNode ? ResultNode->getValueRecord() : 0;
   }
@@ -319,7 +319,7 @@ class InstrSelectorEmitter : public TableGenBackend {
 
 public:
   InstrSelectorEmitter(RecordKeeper &R) : Records(R) {}
-  
+
   // run - Output the instruction set description, returning true on failure.
   void run(std::ostream &OS);
 
@@ -369,7 +369,7 @@ private:
   // InstantiateNonterminals - Instantiate any unresolved nonterminals with
   // information from the context that they are used in.
   void InstantiateNonterminals();
-  
+
   // CalculateComputableValues - Fill in the ComputableValues map through
   // analysis of the patterns we are playing with.
   void CalculateComputableValues();
@@ -381,7 +381,7 @@ private:
   void EmitMatchCosters(std::ostream &OS,
             const std::vector<std::pair<Pattern*, TreePatternNode*> > &Patterns,
                         const std::string &VarPrefix, unsigned Indent);
-  
+
   /// PrintExpanderOperand - Print out Arg as part of the instruction emission
   /// process for the expander pattern P.  This argument may be referencing some
   /// values defined in P, or may just be physical register references or

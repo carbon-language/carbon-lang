@@ -1,10 +1,10 @@
 //===- AsmWriterEmitter.cpp - Generate an assembly writer -----------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This tablegen backend is emits an assembly printer for the current target.
@@ -64,7 +64,7 @@ namespace {
   struct AsmWriterInst {
     std::vector<AsmWriterOperand> Operands;
     const CodeGenInstruction *CGI;
-    
+
     AsmWriterInst(const CodeGenInstruction &CGI, unsigned Variant);
 
     /// MatchesAllButOneOp - If this instruction is exactly identical to the
@@ -198,7 +198,7 @@ unsigned AsmWriterInst::MatchesAllButOneOp(const AsmWriterInst &Other)const{
     if (Operands[i] != Other.Operands[i])
       if (MismatchOperand != ~0U)  // Already have one mismatch?
         return ~1U;
-      else 
+      else
         MismatchOperand = i;
   }
   return MismatchOperand;
@@ -268,7 +268,7 @@ static void EmitInstructions(std::vector<AsmWriterInst> &Insts,
       OpsToPrint.push_back(std::make_pair(Namespace+"::"+
                                           FirstInst.CGI->TheDef->getName(),
                                           FirstInst.Operands[i]));
-                                          
+
       for (unsigned si = 0, e = SimilarInsts.size(); si != e; ++si) {
         AsmWriterInst &AWI = SimilarInsts[si];
         OpsToPrint.push_back(std::make_pair(Namespace+"::"+
@@ -313,7 +313,7 @@ void AsmWriterEmitter::run(std::ostream &O) {
 
   // If all of the instructions start with a constant string (a very very common
   // occurance), emit all of the constant strings as a big table lookup instead
-  // of requiring a switch for them.  
+  // of requiring a switch for them.
   bool AllStartWithString = true;
 
   for (unsigned i = 0, e = Instructions.size(); i != e; ++i)
@@ -323,7 +323,7 @@ void AsmWriterEmitter::run(std::ostream &O) {
       AllStartWithString = false;
       break;
     }
-  
+
   if (AllStartWithString) {
     // Compute the CodeGenInstruction -> AsmWriterInst mapping.  Note that not
     // all machine instructions are necessarily being printed, so there may be
@@ -361,7 +361,7 @@ void AsmWriterEmitter::run(std::ostream &O) {
 
   O << "  switch (MI->getOpcode()) {\n"
        "  default: return false;\n";
-  
+
   while (!Instructions.empty())
     EmitInstructions(Instructions, O);
 

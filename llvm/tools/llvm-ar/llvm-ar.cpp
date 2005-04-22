@@ -1,13 +1,13 @@
 //===-- llvm-ar.cpp - LLVM archive librarian utility ----------------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
-// Builds up (relatively) standard unix archive files (.a) containing LLVM 
+// Builds up (relatively) standard unix archive files (.a) containing LLVM
 // bytecode or other files.
 //
 //===----------------------------------------------------------------------===//
@@ -24,24 +24,24 @@
 using namespace llvm;
 
 // Option for compatibility with ASIX, not used but must allow it to be present.
-static cl::opt<bool> 
-X32Option ("X32_64", cl::Hidden, 
+static cl::opt<bool>
+X32Option ("X32_64", cl::Hidden,
             cl::desc("Ignored option for compatibility with AIX"));
 
 // llvm-ar operation code and modifier flags. This must come first.
-static cl::opt<std::string> 
+static cl::opt<std::string>
 Options(cl::Positional, cl::Required, cl::desc("{operation}[modifiers]..."));
 
 // llvm-ar remaining positional arguments.
-static cl::list<std::string> 
-RestOfArgs(cl::Positional, cl::OneOrMore, 
+static cl::list<std::string>
+RestOfArgs(cl::Positional, cl::OneOrMore,
     cl::desc("[relpos] [count] <archive-file> [members]..."));
 
 // MoreHelp - Provide additional help output explaining the operations and
 // modifiers of llvm-ar. This object instructs the CommandLine library
 // to print the text of the constructor when the --help option is given.
 static cl::extrahelp MoreHelp(
-  "\nOPERATIONS:\n" 
+  "\nOPERATIONS:\n"
   "  d[NsS]       - delete file(s) from the archive\n"
   "  m[abiSs]     - move file(s) in the archive\n"
   "  p[kN]        - print file(s) found in the archive\n"
@@ -85,7 +85,7 @@ enum ArchiveOperation {
 // Modifiers to follow operation to vary behavior
 bool AddAfter = false;           ///< 'a' modifier
 bool AddBefore = false;          ///< 'b' modifier
-bool Create = false;             ///< 'c' modifier 
+bool Create = false;             ///< 'c' modifier
 bool TruncateNames = false;      ///< 'f' modifier
 bool InsertBefore = false;       ///< 'i' modifier
 bool DontSkipBytecode = false;   ///< 'k' modifier
@@ -135,7 +135,7 @@ void getRelPos() {
     throw "Expected [relpos] for a, b, or i modifier";
 }
 
-// getCount - Extract the [count] argument associated with the N modifier 
+// getCount - Extract the [count] argument associated with the N modifier
 // from the command line and check its value.
 void getCount() {
   if(RestOfArgs.size() > 0) {
@@ -164,11 +164,11 @@ void getArchive() {
 // This is just for clarity.
 void getMembers() {
   if(RestOfArgs.size() > 0)
-    Members = std::vector<std::string>(RestOfArgs); 
+    Members = std::vector<std::string>(RestOfArgs);
 }
 
 // parseCommandLine - Parse the command line options as presented and return the
-// operation specified. Process all modifiers and check to make sure that 
+// operation specified. Process all modifiers and check to make sure that
 // constraints on modifier/operation pairs have not been violated.
 ArchiveOperation parseCommandLine() {
 
@@ -188,7 +188,7 @@ ArchiveOperation parseCommandLine() {
     case 'd': ++NumOperations; Operation = Delete; break;
     case 'm': ++NumOperations; Operation = Move ; break;
     case 'p': ++NumOperations; Operation = Print; break;
-    case 'r': ++NumOperations; Operation = ReplaceOrInsert; break; 
+    case 'r': ++NumOperations; Operation = ReplaceOrInsert; break;
     case 't': ++NumOperations; Operation = DisplayTable; break;
     case 'x': ++NumOperations; Operation = Extract; break;
     case 'c': Create = true; break;
@@ -220,7 +220,7 @@ ArchiveOperation parseCommandLine() {
       NumPositional++;
       break;
     case 'N':
-      getCount(); 
+      getCount();
       UseCount = true;
       break;
     default:
@@ -228,7 +228,7 @@ ArchiveOperation parseCommandLine() {
     }
   }
 
-  // At this point, the next thing on the command line must be 
+  // At this point, the next thing on the command line must be
   // the archive name.
   getArchive();
 
@@ -274,7 +274,7 @@ std::set<sys::Path> recurseDirectories(const sys::Path& path) {
   if (RecurseDirectories) {
     std::set<sys::Path> content;
     path.getDirectoryContents(content);
-    for (std::set<sys::Path>::iterator I = content.begin(), E = content.end(); 
+    for (std::set<sys::Path>::iterator I = content.begin(), E = content.end();
          I != E; ++I) {
       if (I->isDirectory()) {
         std::set<sys::Path> moreResults = recurseDirectories(*I);
@@ -288,7 +288,7 @@ std::set<sys::Path> recurseDirectories(const sys::Path& path) {
 }
 
 // buildPaths - Convert the strings in the Members vector to sys::Path objects
-// and make sure they are valid and exist exist. This check is only needed for 
+// and make sure they are valid and exist exist. This check is only needed for
 // the operations that add/replace files to the archive ('q' and 'r')
 void buildPaths(bool checkExistence = true) {
   for (unsigned i = 0; i < Members.size(); i++) {
@@ -316,7 +316,7 @@ void buildPaths(bool checkExistence = true) {
 void printSymbolTable() {
   std::cout << "\nArchive Symbol Table:\n";
   const Archive::SymTabType& symtab = TheArchive->getSymbolTable();
-  for (Archive::SymTabType::const_iterator I=symtab.begin(), E=symtab.end(); 
+  for (Archive::SymTabType::const_iterator I=symtab.begin(), E=symtab.end();
        I != E; ++I ) {
     unsigned offset = TheArchive->getFirstFileOffset() + I->second;
     std::cout << " " << std::setw(9) << offset << "\t" << I->first <<"\n";
@@ -330,16 +330,16 @@ void printSymbolTable() {
 void doPrint() {
   buildPaths(false);
   unsigned countDown = Count;
-  for (Archive::iterator I = TheArchive->begin(), E = TheArchive->end(); 
+  for (Archive::iterator I = TheArchive->begin(), E = TheArchive->end();
        I != E; ++I ) {
-    if (Paths.empty() || 
+    if (Paths.empty() ||
         (std::find(Paths.begin(), Paths.end(), I->getPath()) != Paths.end())) {
       if (countDown == 1) {
         const char* data = reinterpret_cast<const char*>(I->getData());
 
         // Skip things that don't make sense to print
-        if (I->isLLVMSymbolTable() || I->isSVR4SymbolTable() || 
-            I->isBSD4SymbolTable() || (!DontSkipBytecode && 
+        if (I->isLLVMSymbolTable() || I->isSVR4SymbolTable() ||
+            I->isBSD4SymbolTable() || (!DontSkipBytecode &&
              (I->isBytecode() || I->isCompressedBytecode())))
           continue;
 
@@ -364,7 +364,7 @@ void doPrint() {
 // putMode - utility function for printing out the file mode when the 't'
 // operation is in verbose mode.
 void printMode(unsigned mode) {
-  if (mode & 004) 
+  if (mode & 004)
     std::cout << "r";
   else
     std::cout << "-";
@@ -384,9 +384,9 @@ void printMode(unsigned mode) {
 // modification time are also printed.
 void doDisplayTable() {
   buildPaths(false);
-  for (Archive::iterator I = TheArchive->begin(), E = TheArchive->end(); 
+  for (Archive::iterator I = TheArchive->begin(), E = TheArchive->end();
        I != E; ++I ) {
-    if (Paths.empty() || 
+    if (Paths.empty() ||
         (std::find(Paths.begin(), Paths.end(), I->getPath()) != Paths.end())) {
       if (Verbose) {
         // FIXME: Output should be this format:
@@ -406,7 +406,7 @@ void doDisplayTable() {
         std::cout << " " << std::setw(4) << I->getUser();
         std::cout << "/" << std::setw(4) << I->getGroup();
         std::cout << " " << std::setw(8) << I->getSize();
-        std::cout << " " << std::setw(20) << 
+        std::cout << " " << std::setw(20) <<
           I->getModTime().toString().substr(4);
         std::cout << " " << I->getPath().toString() << "\n";
       } else {
@@ -423,7 +423,7 @@ void doDisplayTable() {
 void doExtract() {
   buildPaths(false);
   unsigned countDown = Count;
-  for (Archive::iterator I = TheArchive->begin(), E = TheArchive->end(); 
+  for (Archive::iterator I = TheArchive->begin(), E = TheArchive->end();
        I != E; ++I ) {
     if (Paths.empty() ||
         (std::find(Paths.begin(), Paths.end(), I->getPath()) != Paths.end())) {
@@ -468,7 +468,7 @@ void doDelete() {
   buildPaths(false);
   if (Paths.empty()) return;
   unsigned countDown = Count;
-  for (Archive::iterator I = TheArchive->begin(), E = TheArchive->end(); 
+  for (Archive::iterator I = TheArchive->begin(), E = TheArchive->end();
        I != E; ) {
     if (std::find(Paths.begin(), Paths.end(), I->getPath()) != Paths.end()) {
       if (countDown == 1) {
@@ -504,7 +504,7 @@ void doMove() {
   // the archive to find the member in question. If we don't find it, its no
   // crime, we just move to the end.
   if (AddBefore || InsertBefore || AddAfter) {
-    for (Archive::iterator I = TheArchive->begin(), E= TheArchive->end(); 
+    for (Archive::iterator I = TheArchive->begin(), E= TheArchive->end();
          I != E; ++I ) {
       if (RelPos == I->getPath().toString()) {
         if (AddAfter) {
@@ -523,12 +523,12 @@ void doMove() {
 
   // Scan the archive again, this time looking for the members to move to the
   // moveto_spot.
-  for (Archive::iterator I = TheArchive->begin(), E= TheArchive->end(); 
+  for (Archive::iterator I = TheArchive->begin(), E= TheArchive->end();
        I != E && !remaining.empty(); ++I ) {
-    std::set<sys::Path>::iterator found = 
+    std::set<sys::Path>::iterator found =
       std::find(remaining.begin(),remaining.end(),I->getPath());
     if (found != remaining.end()) {
-      if (I != moveto_spot) 
+      if (I != moveto_spot)
         TheArchive->splice(moveto_spot,*TheArchive,I);
       remaining.erase(found);
     }
@@ -560,7 +560,7 @@ void doQuickAppend() {
 }
 
 // doReplaceOrInsert - Implements the 'r' operation. This function will replace
-// any existing files or insert new ones into the archive. 
+// any existing files or insert new ones into the archive.
 void doReplaceOrInsert() {
 
   // Build the list of files to be added/replaced.
@@ -581,7 +581,7 @@ void doReplaceOrInsert() {
     // to replace.
 
     std::set<sys::Path>::iterator found = remaining.end();
-    for (std::set<sys::Path>::iterator RI = remaining.begin(), 
+    for (std::set<sys::Path>::iterator RI = remaining.begin(),
          RE = remaining.end(); RI != RE; ++RI ) {
       std::string compare(RI->toString());
       if (TruncateNames && compare.length() > 15) {
@@ -592,7 +592,7 @@ void doReplaceOrInsert() {
           nm += slashpos + 1;
           len -= slashpos +1;
         }
-        if (len > 15) 
+        if (len > 15)
           len = 15;
         compare.assign(nm,len);
       }
@@ -634,7 +634,7 @@ void doReplaceOrInsert() {
   // If we didn't replace all the members, some will remain and need to be
   // inserted at the previously computed insert-spot.
   if (!remaining.empty()) {
-    for (std::set<sys::Path>::iterator PI = remaining.begin(), 
+    for (std::set<sys::Path>::iterator PI = remaining.begin(),
          PE = remaining.end(); PI != PE; ++PI) {
       TheArchive->addFileBefore(*PI,insert_spot);
     }

@@ -1,10 +1,10 @@
 //===- fpcmp.cpp - A fuzzy "cmp" that permits floating point noise --------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // fpcmp is a tool that basically works like the 'cmp' tool, except that it can

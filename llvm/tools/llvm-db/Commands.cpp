@@ -1,12 +1,12 @@
 //===-- Commands.cpp - Implement various commands for the CLI -------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
-// 
+//
 // This file implements many builtin user commands.
 //
 //===----------------------------------------------------------------------===//
@@ -91,7 +91,7 @@ bool CLIDebugger::printSourceLine(unsigned LineNo) {
       std::cout << " ->";
   }
 
-  std::cout << "\t" << std::string(LineStart, LineEnd) << "\n"; 
+  std::cout << "\t" << std::string(LineStart, LineEnd) << "\n";
   return false;
 }
 
@@ -115,9 +115,9 @@ void CLIDebugger::printProgramLocation(bool PrintLocation) {
       std::cout << getProgramInfo().getFunction(FuncDesc).getSymbolicName();
     else
       std::cout << "<unknown function>";
-    
+
     CurrentFile = &FileDesc->getSourceText();
-    
+
     std::cout << " at " << CurrentFile->getFilename() << ":" << LineNo;
     if (ColNo) std::cout << ":" << ColNo;
     std::cout << "\n";
@@ -167,7 +167,7 @@ static unsigned getUnsignedIntegerOption(const char *Msg, std::string &Val,
   std::string Tok = getToken(Val);
   if (Tok.empty() || (isOnlyOption && !getToken(Val).empty()))
     throw std::string(Msg) + " expects an unsigned integer argument.";
-  
+
   char *EndPtr;
   unsigned Result = strtoul(Tok.c_str(), &EndPtr, 0);
   if (EndPtr != Tok.c_str()+Tok.size())
@@ -179,7 +179,7 @@ static unsigned getUnsignedIntegerOption(const char *Msg, std::string &Val,
 /// getOptionalUnsignedIntegerOption - This method is just like
 /// getUnsignedIntegerOption, but if the argument value is not specified, a
 /// default is returned instead of causing an error.
-static unsigned 
+static unsigned
 getOptionalUnsignedIntegerOption(const char *Msg, unsigned Default,
                                  std::string &Val, bool isOnlyOption = true) {
   // Check to see if the value was specified...
@@ -201,13 +201,13 @@ void CLIDebugger::parseProgramOptions(std::string &Options) {
   // FIXME: tokenizing by whitespace is clearly incorrect.  Instead we should
   // honor quotes and other things that a shell would.  Also in the future we
   // should support redirection of standard IO.
- 
+
   std::vector<std::string> Arguments;
   for (std::string A = getToken(Options); !A.empty(); A = getToken(Options))
     Arguments.push_back(A);
   Dbg.setProgramArguments(Arguments.begin(), Arguments.end());
 }
-                                                
+
 
 //===----------------------------------------------------------------------===//
 //                   Program startup and shutdown options
@@ -477,7 +477,7 @@ void CLIDebugger::breakCommand(std::string &Options) {
   // Figure out where the user wants a breakpoint.
   const SourceFile *File;
   unsigned LineNo;
-  
+
   // Check to see if the user specified a line specifier.
   std::string Option = getToken(Options);  // strip whitespace
   if (!Option.empty()) {
@@ -489,13 +489,13 @@ void CLIDebugger::breakCommand(std::string &Options) {
     // Build a line specifier for the current stack frame.
     throw "FIXME: breaking at the current location is not implemented yet!";
   }
-  
+
   if (!File) File = CurrentFile;
   if (File == 0)
     throw "Unknown file to place breakpoint!";
 
   std::cerr << "Break: " << File->getFilename() << ":" << LineNo << "\n";
-  
+
   throw "breakpoints not implemented yet!";
 }
 
@@ -542,7 +542,7 @@ void CLIDebugger::infoCommand(std::string &Options) {
               << SF.getLanguage().getSourceLanguageName() << "\n";
 
   } else if (What == "sources") {
-    const std::map<const GlobalVariable*, SourceFileInfo*> &SourceFiles = 
+    const std::map<const GlobalVariable*, SourceFileInfo*> &SourceFiles =
       getProgramInfo().getSourceFiles();
     std::cout << "Source files for the program:\n";
     for (std::map<const GlobalVariable*, SourceFileInfo*>::const_iterator I =
@@ -607,7 +607,7 @@ void CLIDebugger::parseLineSpec(std::string &LineSpec,
         std::string Name = getToken(FirstPart);
         if (!getToken(FirstPart).empty())
           throw "Extra junk in line specifier after '" + Name + "'.";
-        SourceFunctionInfo *SFI = 
+        SourceFunctionInfo *SFI =
           getCurrentLanguage().lookupFunction(Name, getProgramInfo(),
                                               TheRuntimeInfo);
         if (SFI == 0)
@@ -651,7 +651,7 @@ void CLIDebugger::listCommand(std::string &Options) {
 
   // Handle "list foo," correctly, by returning " " as the second token
   Options += " ";
-  
+
   std::string FirstLineSpec = getToken(Options, ",");
   std::string SecondLineSpec = getToken(Options, ",");
   if (!getToken(Options, ",").empty())
@@ -689,7 +689,7 @@ void CLIDebugger::listCommand(std::string &Options) {
     }
 
   } else {
-    // Parse two line specifiers... 
+    // Parse two line specifiers...
     const SourceFile *StartFile, *EndFile;
     unsigned StartLineNo, EndLineNo;
     parseLineSpec(FirstLineSpec, StartFile, StartLineNo);

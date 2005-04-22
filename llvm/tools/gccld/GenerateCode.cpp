@@ -1,10 +1,10 @@
 //===- GenerateCode.cpp - Functions for generating executable files  ------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file contains functions for generating executable files once linking
@@ -154,8 +154,8 @@ static bool isBytecodeLPath(const std::string &LibPath) {
 
   // Make sure the -L path has a '/' character
   // because llvm-g++ passes them without the ending
-  // '/' char and sys::Path doesn't think it is a 
-  // directory (see: sys::Path::isDirectory) without it 
+  // '/' char and sys::Path doesn't think it is a
+  // directory (see: sys::Path::isDirectory) without it
   std::string dir = LibPath;
   if ( dir[dir.length()-1] != '/' )
   dir.append("/");
@@ -406,7 +406,7 @@ int llvm::GenerateNative(const std::string &OutputFilename,
   //
   // Note:
   //  When gccld is called from the llvm-gxx frontends, the -L paths for
-  //  the LLVM cfrontend install paths are appended.  We don't want the 
+  //  the LLVM cfrontend install paths are appended.  We don't want the
   //  native linker to use these -L paths as they contain bytecode files.
   //  Further, we don't want any -L paths that contain bytecode shared
   //  libraries or true bytecode archive files.  We omit them in all such
@@ -417,7 +417,7 @@ int llvm::GenerateNative(const std::string &OutputFilename,
       args.push_back(LibPaths[index].c_str());
     }
   }
- 
+
   // Add in the libraries to link.
   for (unsigned index = 0; index < Libraries.size(); index++) {
     if (Libraries[index] != "crtend") {

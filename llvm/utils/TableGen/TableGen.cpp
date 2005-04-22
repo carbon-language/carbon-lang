@@ -1,10 +1,10 @@
 //===- TableGen.cpp - Top-Level TableGen implementation -------------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // TableGen is a tool which can be used to build up a description of something,
@@ -158,7 +158,7 @@ static void FindInstDifferences(Record *I1, Record *I2,
   unsigned LastFixedBit = FirstVaryingBit;
   while (LastFixedBit < MaxBits && BitsAreFixed(I1, I2, LastFixedBit))
     ++LastFixedBit;
-  
+
   if (FirstVaryingBit < FirstVaryingBitOverall)
     FirstVaryingBitOverall = FirstVaryingBit;
   if (LastFixedBit < LastFixedBitOverall)
@@ -187,7 +187,7 @@ struct BitComparator {
   }
 };
 
-static void PrintRange(std::vector<Record*>::iterator I, 
+static void PrintRange(std::vector<Record*>::iterator I,
 		       std::vector<Record*>::iterator E) {
   while (I != E) std::cerr << **I++;
 }
@@ -210,7 +210,7 @@ static unsigned getFirstFixedBitInSequence(std::vector<Record*>::iterator IB,
 // instructions that we may have found.  Eventually, this list will get pared
 // down to zero or one instruction, in which case we have a match or failure.
 //
-static Record *ParseMachineCode(std::vector<Record*>::iterator InstsB, 
+static Record *ParseMachineCode(std::vector<Record*>::iterator InstsB,
 				std::vector<Record*>::iterator InstsE,
 				unsigned char *M) {
   assert(InstsB != InstsE && "Empty range?");
@@ -269,7 +269,7 @@ static Record *ParseMachineCode(std::vector<Record*>::iterator InstsB,
     while (RangeEnd != InstsE &&
           BitRangesEqual(*RangeBegin, *RangeEnd, FirstVaryingBit, LastFixedBit))
       ++RangeEnd;
-    
+
     // We just identified a range of equal instructions.  If this range is the
     // input range, we were not able to distinguish between the instructions in
     // the set.  Print an error and exit!
@@ -279,7 +279,7 @@ static Record *ParseMachineCode(std::vector<Record*>::iterator InstsB,
       PrintRange(InstsB, InstsE);
       exit(1);
     }
-    
+
 #if 0
     std::cerr << "FVB: " << FirstVaryingBit << " - " << LastFixedBit
 	      << ": [" << RangeEnd-RangeBegin << "] - ";
@@ -316,7 +316,7 @@ static void PrintValue(Record *I, unsigned char *Ptr, const RecordVal &Val) {
   for (unsigned i = 0, e = BI->getNumBits(); i != e; ++i)
     if (BitInit *B = dynamic_cast<BitInit*>(BI->getBit(i)))
       Value |= B->getValue() << i;
-  
+
   // Loop over all of the fields in the instruction adding in any
   // contributions to this value (due to bit references).
   //
@@ -330,7 +330,7 @@ static void PrintValue(Record *I, unsigned char *Ptr, const RecordVal &Val) {
 	  Value |= getMemoryBit(Ptr, Offset+i) << i;
 	break;
       }
-      
+
       // Scan through the field looking for bit initializers of the current
       // variable...
       for (unsigned i = 0, e = FieldInitializer->getNumBits(); i != e; ++i)
@@ -355,7 +355,7 @@ static void PrintInstruction(Record *I, unsigned char *Ptr) {
   std::cout << "Inst " << getNumBits(I)/8 << " bytes: "
 	    << "\t" << I->getName() << "\t" << *I->getValue("Name")->getValue()
 	    << "\t";
-  
+
   const std::vector<RecordVal> &Vals = I->getValues();
   for (unsigned i = 0, e = Vals.size(); i != e; ++i)
     if (!Vals[i].getValue()->isComplete()) {
@@ -363,7 +363,7 @@ static void PrintInstruction(Record *I, unsigned char *Ptr) {
       PrintValue(I, Ptr, Vals[i]);
       std::cout << "\t";
     }
-  
+
   std::cout << "\n";// << *I;
 }
 
@@ -390,7 +390,7 @@ static void ParseMachineCode() {
 
 #if 0
   // SparcV9 code
-  unsigned char Buffer[] = { 0xbf, 0xe0, 0x20, 0x1f, 0x1, 0x0, 0x0, 0x1, 
+  unsigned char Buffer[] = { 0xbf, 0xe0, 0x20, 0x1f, 0x1, 0x0, 0x0, 0x1,
                              0x0, 0x0, 0x0, 0x0, 0xc1, 0x0, 0x20, 0x1, 0x1,
                              0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
                              0x0, 0x0, 0x0, 0x0, 0x0, 0x40, 0x0, 0x0, 0x0, 0x1,

@@ -1,10 +1,10 @@
 //===- Record.h - Classes to represent Table Records ------------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines the main TableGen data structures, including the TableGen
@@ -280,7 +280,7 @@ public:
   virtual Init *convertValue( TypedInit *TI);
   virtual Init *convertValue(   VarInit *VI) { return RecTy::convertValue(VI);}
   virtual Init *convertValue( FieldInit *FI) { return RecTy::convertValue(FI);}
-  
+
   void print(std::ostream &OS) const;
 
   bool typeIsConvertibleTo(const RecTy *RHS) const {
@@ -292,7 +292,7 @@ public:
   virtual bool baseClassOf(const IntRecTy    *RHS) const { return false; }
   virtual bool baseClassOf(const StringRecTy *RHS) const { return false; }
   virtual bool baseClassOf(const ListRecTy   *RHS) const {
-    return RHS->getElementType()->typeIsConvertibleTo(Ty); 
+    return RHS->getElementType()->typeIsConvertibleTo(Ty);
   }
   virtual bool baseClassOf(const CodeRecTy   *RHS) const { return false; }
   virtual bool baseClassOf(const DagRecTy    *RHS) const { return false; }
@@ -388,7 +388,7 @@ public:
   virtual Init *convertValue(VarBitInit *VB) { return 0; }
   virtual Init *convertValue(   DefInit *DI);
   virtual Init *convertValue(   DagInit *DI) { return 0; }
-  virtual Init *convertValue( TypedInit *VI); 
+  virtual Init *convertValue( TypedInit *VI);
   virtual Init *convertValue(   VarInit *VI) { return RecTy::convertValue(VI);}
   virtual Init *convertValue( FieldInit *FI) { return RecTy::convertValue(FI);}
 
@@ -464,7 +464,7 @@ struct Init {
   virtual Init *getFieldInit(Record &R, const std::string &FieldName) const {
     return 0;
   }
-  
+
   enum BinaryOp { SHL, SRA, SRL };
   virtual Init *getBinaryOp(BinaryOp Op, Init *RHS) {
     return 0;
@@ -645,7 +645,7 @@ public:
 ///
 class TypedInit : public Init {
   RecTy *Ty;
-public:  
+public:
   TypedInit(RecTy *T) : Ty(T) {}
 
   RecTy *getType() const { return Ty; }
@@ -673,7 +673,7 @@ class VarInit : public TypedInit {
   std::string VarName;
 public:
   VarInit(const std::string &VN, RecTy *T) : TypedInit(T), VarName(VN) {}
-  
+
   virtual Init *convertInitializerTo(RecTy *Ty) {
     return Ty->convertValue(this);
   }
@@ -694,7 +694,7 @@ public:
   /// users of the value to allow the value to propagate out.
   ///
   virtual Init *resolveReferences(Record &R, const RecordVal *RV);
-  
+
   virtual void print(std::ostream &OS) const { OS << VarName; }
 };
 
@@ -717,14 +717,14 @@ public:
 
   TypedInit *getVariable() const { return TI; }
   unsigned getBitNum() const { return Bit; }
-  
+
   virtual void print(std::ostream &OS) const {
     TI->print(OS); OS << "{" << Bit << "}";
   }
   virtual Init *resolveReferences(Record &R, const RecordVal *RV);
 };
 
-/// VarListElementInit - List[4] - Represent access to one element of a var or 
+/// VarListElementInit - List[4] - Represent access to one element of a var or
 /// field.
 class VarListElementInit : public TypedInit {
   TypedInit *TI;
@@ -765,7 +765,7 @@ class DefInit : public Init {
   Record *Def;
 public:
   DefInit(Record *D) : Def(D) {}
-  
+
   virtual Init *convertInitializerTo(RecTy *Ty) {
     return Ty->convertValue(this);
   }
@@ -776,7 +776,7 @@ public:
 
   virtual RecTy *getFieldType(const std::string &FieldName) const;
   virtual Init *getFieldInit(Record &R, const std::string &FieldName) const;
-  
+
   virtual void print(std::ostream &OS) const;
 };
 
@@ -826,7 +826,7 @@ public:
       ArgNames.push_back(args[i].second);
     }
   }
-  
+
   virtual Init *convertInitializerTo(RecTy *Ty) {
     return Ty->convertValue(this);
   }
@@ -1037,7 +1037,7 @@ public:
 	   E = Defs.end(); I != E; ++I)
       delete I->second;
   }
-  
+
   const std::map<std::string, Record*> &getClasses() const { return Classes; }
   const std::map<std::string, Record*> &getDefs() const { return Defs; }
 

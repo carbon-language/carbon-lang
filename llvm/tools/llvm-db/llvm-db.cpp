@@ -1,10 +1,10 @@
 //===- llvm-db.cpp - LLVM Debugger ----------------------------------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This utility implements a simple text-mode front-end to the LLVM debugger
@@ -35,7 +35,7 @@ namespace {
                     cl::desc("Add directory to the search for source files"));
   cl::alias SDA("d", cl::desc("Alias for --directory"),
                 cl::aliasopt(SourceDirectories));
-  
+
   cl::opt<std::string>
   WorkingDirectory("cd", cl::desc("Use directory as current working directory"),
                    cl::value_desc("directory"));
@@ -73,7 +73,7 @@ int main(int argc, char **argv, char * const *envp) {
     Dbg.setWorkingDirectory(WorkingDirectory);
     for (unsigned i = 0, e = SourceDirectories.size(); i != e; ++i)
       D.addSourceDirectory(SourceDirectories[i]);
-    
+
     if (!InputArgs.empty()) {
       try {
         D.fileCommand(InputArgs[0]);

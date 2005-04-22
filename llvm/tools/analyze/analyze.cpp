@@ -1,14 +1,14 @@
 //===- analyze.cpp - The LLVM analyze utility -----------------------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This utility is designed to print out the results of running various analysis
-// passes on a program.  This is useful for understanding a program, or for 
+// passes on a program.  This is useful for understanding a program, or for
 // debugging an analysis pass.
 //
 //  analyze --help           - Output information about command line switches
@@ -37,11 +37,11 @@ struct ModulePassPrinter : public ModulePass {
   virtual bool runOnModule(Module &M) {
     std::cout << "Printing analysis '" << PassToPrint->getPassName() << "':\n";
     getAnalysisID<Pass>(PassToPrint).print(std::cout, &M);
-    
+
     // Get and print pass...
     return false;
   }
-  
+
   virtual const char *getPassName() const { return "'Pass' Printer"; }
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
@@ -150,7 +150,7 @@ int main(int argc, char **argv) {
     // Create a new optimization pass for each one specified on the command line
     for (unsigned i = 0; i < AnalysesList.size(); ++i) {
       const PassInfo *Analysis = AnalysesList[i];
-      
+
       if (Analysis->getNormalCtor()) {
         Pass *P = Analysis->getNormalCtor()();
         Passes.add(P);

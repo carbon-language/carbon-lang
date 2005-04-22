@@ -1,10 +1,10 @@
 //===- BugDriver.cpp - Top-Level BugPoint class implementation ------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This class contains all of the shared state and information that is used by
@@ -35,7 +35,7 @@ namespace {
   // otherwise the raw input run through an interpreter is used as the reference
   // source.
   //
-  cl::opt<std::string> 
+  cl::opt<std::string>
   OutputFile("output", cl::desc("Specify a reference program output "
                                 "(for miscompilation detection)"));
 }

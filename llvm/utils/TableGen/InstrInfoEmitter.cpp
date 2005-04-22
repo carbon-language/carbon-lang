@@ -1,10 +1,10 @@
 //===- InstrInfoEmitter.cpp - Generate a Instruction Set Desc. ------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This tablegen backend is responsible for emitting a description of the target
@@ -135,13 +135,13 @@ void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,
   LI = Inst.TheDef->getValueAsListInit("Uses");
   if (!LI->getSize())
     OS << "EmptyImpUses, ";
-  else 
+  else
     OS << Inst.TheDef->getName() << "ImpUses, ";
 
   LI = Inst.TheDef->getValueAsListInit("Defs");
   if (!LI->getSize())
     OS << "EmptyImpDefs ";
-  else 
+  else
     OS << Inst.TheDef->getName() << "ImpDefs ";
 
   OS << " },  // Inst #" << Num << " = " << Inst.TheDef->getName() << "\n";

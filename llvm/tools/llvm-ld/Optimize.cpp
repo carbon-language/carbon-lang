@@ -1,10 +1,10 @@
 //===- Optimize.cpp - Optimize a complete program -------------------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
-// This file was developed by Reid Spencer and is distributed under the 
+// This file was developed by Reid Spencer and is distributed under the
 // University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements all optimization of the linked module for llvm-ld.
@@ -52,7 +52,7 @@ static cl::opt<OptimizationLevels> OptLevel(
   )
 );
 
-static cl::opt<bool> DisableInline("disable-inlining", 
+static cl::opt<bool> DisableInline("disable-inlining",
   cl::desc("Do not run the inliner pass"));
 
 static cl::opt<bool>
@@ -62,13 +62,13 @@ DisableOptimizations("disable-opt",
 static cl::opt<bool> DisableInternalize("disable-internalize",
   cl::desc("Do not mark all symbols as internal"));
 
-static cl::opt<bool> Verify("verify", 
+static cl::opt<bool> Verify("verify",
   cl::desc("Verify intermediate results of all passes"));
 
-static cl::opt<bool> Strip("s", 
+static cl::opt<bool> Strip("s",
   cl::desc("Strip symbol info from executable"));
 
-static cl::alias ExportDynamic("export-dynamic", 
+static cl::alias ExportDynamic("export-dynamic",
   cl::aliasopt(DisableInternalize),
   cl::desc("Alias for -disable-internalize"));
 
@@ -81,16 +81,16 @@ static cl::list<std::string> LoadableModules("load",
 static inline void addPass(PassManager &PM, Pass *P) {
   // Add the pass to the pass manager...
   PM.add(P);
-  
+
   // If we are verifying all of the intermediate steps, add the verifier...
-  if (Verify) 
+  if (Verify)
     PM.add(createVerifierPass());
 }
 
 namespace llvm {
 
-/// Optimize - Perform link time optimizations. This will run the scalar 
-/// optimizations, any loaded plugin-optimization modules, and then the 
+/// Optimize - Perform link time optimizations. This will run the scalar
+/// optimizations, any loaded plugin-optimization modules, and then the
 /// inter-procedural optimizations if applicable.
 void Optimize(Module* M) {
 
@@ -98,7 +98,7 @@ void Optimize(Module* M) {
   PassManager Passes;
 
   // If we're verifying, start off with a verification pass.
-  if (Verify) 
+  if (Verify)
     Passes.add(createVerifierPass());
 
   // Add an appropriate TargetData instance for this module...
@@ -171,14 +171,14 @@ void Optimize(Module* M) {
   }
 
   std::vector<std::string> plugins = LoadableModules;
-  for (std::vector<std::string>::iterator I = plugins.begin(), 
+  for (std::vector<std::string>::iterator I = plugins.begin(),
       E = plugins.end(); I != E; ++I) {
     sys::DynamicLibrary dll(I->c_str());
     typedef void (*OptimizeFunc)(PassManager&,int);
     OptimizeFunc OF = OptimizeFunc(
         dll.GetAddressOfSymbol("RunOptimizations"));
     if (OF == 0) {
-      throw std::string("Optimization Module '") + *I + 
+      throw std::string("Optimization Module '") + *I +
         "' is missing the RunOptimizations symbol";
     }
     (*OF)(Passes,OptLevel);

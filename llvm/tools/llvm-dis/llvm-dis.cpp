@@ -1,10 +1,10 @@
 //===-- llvm-dis.cpp - The low-level LLVM disassembler --------------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This utility may be invoked in the following manner:
@@ -31,7 +31,7 @@ static cl::opt<std::string>
 InputFilename(cl::Positional, cl::desc("<input bytecode>"), cl::init("-"));
 
 static cl::opt<std::string>
-OutputFilename("o", cl::desc("Override output filename"), 
+OutputFilename("o", cl::desc("Override output filename"),
                cl::value_desc("filename"));
 
 static cl::opt<bool>
@@ -54,7 +54,7 @@ int main(int argc, char **argv) {
         std::cerr << "bytecode didn't read correctly.\n";
       return 1;
     }
-    
+
     if (OutputFilename != "") {   // Specified an output filename?
       if (OutputFilename != "-") { // Not stdout?
         if (!Force && std::ifstream(OutputFilename.c_str())) {

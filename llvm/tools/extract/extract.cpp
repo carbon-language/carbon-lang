@@ -1,10 +1,10 @@
 //===- extract.cpp - LLVM function extraction utility ---------------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This utility changes the input module to only contain a single function,
@@ -28,9 +28,9 @@ using namespace llvm;
 static cl::opt<std::string>
 InputFilename(cl::Positional, cl::desc("<input bytecode file>"),
               cl::init("-"), cl::value_desc("filename"));
-              
+
 static cl::opt<std::string>
-OutputFilename("o", cl::desc("Specify output filename"), 
+OutputFilename("o", cl::desc("Specify output filename"),
                cl::value_desc("filename"), cl::init("-"));
 
 static cl::opt<bool>
@@ -88,7 +88,7 @@ int main(int argc, char **argv) {
       Out = new std::ofstream(OutputFilename.c_str(), io_mode);
     } else {                      // Specified stdout
       // FIXME: cout is not binary!
-      Out = &std::cout;       
+      Out = &std::cout;
     }
 
     Passes.add(new WriteBytecodePass(Out));  // Write bytecode to file...

@@ -1,10 +1,10 @@
 //===- GraphPrinters.cpp - DOT printers for various graph types -----------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines several printers for various different types of graphs used
@@ -27,7 +27,7 @@ static void WriteGraphToFile(std::ostream &O, const std::string &GraphName,
   std::string Filename = GraphName + ".dot";
   O << "Writing '" << Filename << "'...";
   std::ofstream F(Filename.c_str());
-  
+
   if (F.good())
     WriteGraph(F, GT);
   else
@@ -46,7 +46,7 @@ namespace llvm {
     static std::string getGraphName(CallGraph *F) {
       return "Call Graph";
     }
-    
+
     static std::string getNodeLabel(CallGraphNode *Node, CallGraph *Graph) {
       if (Node->getFunction())
         return ((Value*)Node->getFunction())->getName();
@@ -65,7 +65,7 @@ namespace {
     }
 
     void print(std::ostream &OS) const {}
-    
+
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<CallGraph>();
       AU.setPreservesAll();

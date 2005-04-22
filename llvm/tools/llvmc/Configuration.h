@@ -1,10 +1,10 @@
 //===- Configuration.h - Configuration Data Mgmt ----------------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
-// This file was developed by Reid Spencer and is distributed under the 
+// This file was developed by Reid Spencer and is distributed under the
 // University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file declares the LLVMC_ConfigDataProvider class which implements the
@@ -22,7 +22,7 @@ namespace llvm {
   /// The driver's purpose is to make it easier for compiler writers and users
   /// of LLVM to utilize the compiler toolkits and LLVM toolset by learning only
   /// the interface of one program (llvmc).
-  /// 
+  ///
   /// @see llvmc.cpp
   /// @brief The interface to the LLVM Compiler Driver.
   class LLVMC_ConfigDataProvider : public CompilerDriver::ConfigDataProvider {
@@ -35,12 +35,12 @@ namespace llvm {
     /// @{
     public:
       /// @brief Provide the configuration data to the CompilerDriver.
-      virtual CompilerDriver::ConfigData* 
+      virtual CompilerDriver::ConfigData*
         ProvideConfigData(const std::string& filetype);
 
       /// @brief Allow the configuration directory to be set
-      virtual void setConfigDir(const sys::Path& dirName) { 
-        configDir = dirName; 
+      virtual void setConfigDir(const sys::Path& dirName) {
+        configDir = dirName;
       }
 
     private:

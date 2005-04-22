@@ -1,10 +1,10 @@
 //===- CodeGenTarget.cpp - CodeGen Target Class Wrapper ---------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This class wrap target description classes used by the various code
@@ -77,7 +77,7 @@ std::ostream &llvm::operator<<(std::ostream &OS, MVT::ValueType T) {
 CodeGenTarget::CodeGenTarget() : PointerType(MVT::Other) {
   std::vector<Record*> Targets = Records.getAllDerivedDefinitions("Target");
   if (Targets.size() == 0)
-    throw std::string("ERROR: No 'Target' subclasses defined!");  
+    throw std::string("ERROR: No 'Target' subclasses defined!");
   if (Targets.size() != 1)
     throw std::string("ERROR: Multiple subclasses of Target defined!");
   TargetRec = Targets[0];
@@ -155,7 +155,7 @@ CodeGenRegisterClass::CodeGenRegisterClass(Record *R) : TheDef(R) {
   ListInit *RegList = R->getValueAsListInit("MemberList");
   for (unsigned i = 0, e = RegList->getSize(); i != e; ++i) {
     DefInit *RegDef = dynamic_cast<DefInit*>(RegList->getElement(i));
-    if (!RegDef) throw "Register class member is not a record!";      
+    if (!RegDef) throw "Register class member is not a record!";
     Record *Reg = RegDef->getDef();
 
     if (!Reg->isSubClassOf("Register"))
@@ -257,7 +257,7 @@ CodeGenInstruction::CodeGenInstruction(Record *R, const std::string &AsmStr)
         } else
           throw "Unknown operand class '" + Rec->getName() +
                 "' in instruction '" + R->getName() + "' instruction!";
-        
+
         OperandList.push_back(OperandInfo(Rec, Ty, DI->getArgName(i),
                                           PrintMethod, MIOperandNo));
         MIOperandNo += NumOps;

@@ -1,10 +1,10 @@
 //===- RegisterInfoEmitter.cpp - Generate a Register File Desc. -*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This tablegen backend is responsible for emitting a description of a target
@@ -38,7 +38,7 @@ void RegisterInfoEmitter::runEnums(std::ostream &OS) {
 
   for (unsigned i = 0, e = Registers.size(); i != e; ++i)
     OS << "    " << Registers[i].getName() << ", \t// " << i+1 << "\n";
-  
+
   OS << "  };\n";
   if (!Namespace.empty())
     OS << "}\n";
@@ -162,11 +162,11 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
                   << " specified multiple times!\n";
       RegisterAliases[Reg->getDef()].insert(R);
     }
-  } 
+  }
 
   if (!RegisterAliases.empty())
     OS << "\n\n  // Register Alias Sets...\n";
-  
+
   // Emit the empty alias list
   OS << "  const unsigned Empty_AliasSet[] = { 0 };\n";
   // Loop over all of the registers which have aliases, emitting the alias list
@@ -223,7 +223,7 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
               Reg.getName() + "'!";
     }
 
-    OS << SpillSize << ", " << SpillAlign << " },\n";    
+    OS << SpillSize << ", " << SpillAlign << " },\n";
   }
   OS << "  };\n";      // End of register descriptors...
   OS << "}\n\n";       // End of anonymous namespace...
@@ -240,21 +240,21 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
 
 
   std::string ClassName = Target.getName() + "GenRegisterInfo";
-  
+
   // Emit the constructor of the class...
   OS << ClassName << "::" << ClassName
      << "(int CallFrameSetupOpcode, int CallFrameDestroyOpcode)\n"
      << "  : MRegisterInfo(RegisterDescriptors, " << Registers.size()+1
      << ", RegisterClasses, RegisterClasses+" << RegClassNames.size() << ",\n "
      << "                 CallFrameSetupOpcode, CallFrameDestroyOpcode) {}\n\n";
-  
+
   // Emit the getCalleeSaveRegs method...
   OS << "const unsigned* " << ClassName << "::getCalleeSaveRegs() const {\n"
      << "  static const unsigned CalleeSaveRegs[] = {\n    ";
 
   const std::vector<Record*> &CSR = Target.getCalleeSavedRegisters();
   for (unsigned i = 0, e = CSR.size(); i != e; ++i)
-    OS << getQualifiedName(CSR[i]) << ", ";  
+    OS << getQualifiedName(CSR[i]) << ", ";
   OS << " 0\n  };\n  return CalleeSaveRegs;\n}\n\n";
   OS << "} // End llvm namespace \n";
 }

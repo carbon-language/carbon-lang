@@ -1,12 +1,12 @@
 //===-- CLIDebugger.cpp - Command Line Interface to the Debugger ----------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
-// 
+//
 // This file contains the main implementation of the Command Line Interface to
 // the debugger.
 //
@@ -77,7 +77,7 @@ CLIDebugger::CLIDebugger()
   addCommand("next", C = new BuiltinCLICommand(
     "Step program until it reaches a new source line, stepping over calls", "",
     &CLIDebugger::nextCommand));
-  addCommand("n", C); 
+  addCommand("n", C);
 
   addCommand("finish", new BuiltinCLICommand(
     "Execute until the selected stack frame returns",
@@ -91,8 +91,8 @@ CLIDebugger::CLIDebugger()
    "Print backtrace of all stack frames, or innermost COUNT frames",
    "FIXME: describe.  Takes 'n', '-n' or 'full'\n",
     &CLIDebugger::backtraceCommand));
-  addCommand("bt", C); 
- 
+  addCommand("bt", C);
+
   addCommand("up", new BuiltinCLICommand(
     "Select and print stack frame that called this one",
     "An argument says how many frames up to go.\n",
@@ -108,7 +108,7 @@ CLIDebugger::CLIDebugger()
  "With no argument, print the selected stack frame.  (See also 'info frame').\n"
  "An argument specifies the frame to select.\n",
     &CLIDebugger::frameCommand));
-  addCommand("f", C); 
+  addCommand("f", C);
 
   //===--------------------------------------------------------------------===//
   // Breakpoint related commands
@@ -117,7 +117,7 @@ CLIDebugger::CLIDebugger()
    "Set breakpoint at specified line or function",
    "FIXME: describe.\n",
     &CLIDebugger::breakCommand));
-  addCommand("b", C); 
+  addCommand("b", C);
 
 
   //===--------------------------------------------------------------------===//
@@ -187,7 +187,7 @@ CLICommand *CLIDebugger::getCommand(const std::string &Command) {
   // Look up the command in the table.
   std::map<std::string, CLICommand*>::iterator CI =
     CommandTable.lower_bound(Command);
-      
+
   if (Command == "") {
     throw "Null command should not get here!";
   } else if (CI == CommandTable.end() ||
@@ -207,7 +207,7 @@ CLICommand *CLIDebugger::getCommand(const std::string &Command) {
     // If the next command is a valid completion of this one, we are
     // ambiguous.
     if (++CI2 != CommandTable.end() && isValidPrefix(Command, CI2->first)) {
-      std::string ErrorMsg = 
+      std::string ErrorMsg =
         "Ambiguous command '" + Command + "'.  Options: " + CI->first;
       for (++CI; CI != CommandTable.end() &&
              isValidPrefix(Command, CI->first); ++CI)
@@ -242,7 +242,7 @@ int CLIDebugger::run() {
 
     try {
       CLICommand *CurCommand;
-      
+
       if (Command == "") {
         CurCommand = LastCommand;
         Arguments = LastArgs;
@@ -257,7 +257,7 @@ int CLIDebugger::run() {
 
       // Finally, execute the command.
       if (CurCommand)
-        CurCommand->runCommand(*this, Arguments);      
+        CurCommand->runCommand(*this, Arguments);
 
     } catch (int RetVal) {
       // The quit command exits the command loop by throwing an integer return
@@ -273,7 +273,7 @@ int CLIDebugger::run() {
       std::cout << "ERROR: Debugger caught unexpected exception!\n";
       // Attempt to continue.
     }
-    
+
     // Write the prompt to get the next bit of user input
     std::cout << Prompt;
   }
@@ -302,7 +302,7 @@ bool CLIDebugger::askYesNo(const std::string &Message) const {
     std::cout << "Please answer y or n.\n" << Message << " (y or n) "
               << std::flush;
   }
-  
+
   // Ran out of input?
   return false;
 }

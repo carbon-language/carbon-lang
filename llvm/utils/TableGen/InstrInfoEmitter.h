@@ -1,10 +1,10 @@
 //===- InstrInfoEmitter.h - Generate a Instruction Set Desc. ----*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This tablegen backend is responsible for emitting a description of the target
@@ -28,7 +28,7 @@ class InstrInfoEmitter : public TableGenBackend {
   RecordKeeper &Records;
 public:
   InstrInfoEmitter(RecordKeeper &R) : Records(R) {}
-  
+
   // run - Output the instruction set description, returning true on failure.
   void run(std::ostream &OS);
 

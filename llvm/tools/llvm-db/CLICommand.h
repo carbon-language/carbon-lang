@@ -1,10 +1,10 @@
 //===- CLICommand.h - Classes used to represent commands --------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines a small class hierarchy used to represent the various types
@@ -74,7 +74,7 @@ namespace llvm {
     /// removeOptionName - Eliminate one of the names for this option.
     ///
     void removeOptionName(const std::string &Name) {
-      unsigned i = 0; 
+      unsigned i = 0;
       for (; OptionNames[i] != Name; ++i)
         assert(i+1 < OptionNames.size() && "Didn't find option name!");
       OptionNames.erase(OptionNames.begin()+i);
@@ -101,7 +101,7 @@ namespace llvm {
     BuiltinCLICommand(const std::string &ShortHelp, const std::string &LongHelp,
                       void (CLIDebugger::*impl)(std::string&))
       : CLICommand(ShortHelp, LongHelp), Impl(impl) {}
-    
+
     void runCommand(CLIDebugger &D, std::string &Arguments) {
       (D.*Impl)(Arguments);
     }

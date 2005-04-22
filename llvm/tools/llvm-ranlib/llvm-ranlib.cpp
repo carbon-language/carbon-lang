@@ -1,10 +1,10 @@
 //===-- llvm-ranlib.cpp - LLVM archive index generator --------------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
-// This file was developed by Reid Spencer and is distributed under the 
+// This file was developed by Reid Spencer and is distributed under the
 // University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // Adds or updates an index (symbol table) for an LLVM archive file.
@@ -21,7 +21,7 @@
 using namespace llvm;
 
 // llvm-ar operation code and modifier flags
-static cl::opt<std::string> 
+static cl::opt<std::string>
 ArchiveName(cl::Positional, cl::Optional, cl::desc("<archive-file>"));
 
 static cl::opt<bool>
@@ -32,7 +32,7 @@ Verbose("verbose",cl::Optional,cl::init(false),
 void printSymbolTable(Archive* TheArchive) {
   std::cout << "\nArchive Symbol Table:\n";
   const Archive::SymTabType& symtab = TheArchive->getSymbolTable();
-  for (Archive::SymTabType::const_iterator I=symtab.begin(), E=symtab.end(); 
+  for (Archive::SymTabType::const_iterator I=symtab.begin(), E=symtab.end();
        I != E; ++I ) {
     unsigned offset = TheArchive->getFirstFileOffset() + I->second;
     std::cout << " " << std::setw(9) << offset << "\t" << I->first <<"\n";
@@ -67,7 +67,7 @@ int main(int argc, char **argv) {
       throw std::string("Archive file does not exist");
 
     std::string err_msg;
-    std::auto_ptr<Archive> 
+    std::auto_ptr<Archive>
       AutoArchive(Archive::OpenAndLoad(ArchivePath,&err_msg));
     Archive* TheArchive = AutoArchive.get();
     if (!TheArchive)

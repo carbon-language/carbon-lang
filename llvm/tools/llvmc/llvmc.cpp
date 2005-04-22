@@ -1,17 +1,17 @@
 //===--- llvmc.cpp - The LLVM Compiler Driver -------------------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by Reid Spencer and is distributed under the
 // University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 //  This tool provides a single point of access to the LLVM compilation tools.
 //  It has many options. To discover the options supported please refer to the
 //  tools' manual page (docs/CommandGuide/html/llvmc.html) or run the tool with
 //  the --help option.
-// 
+//
 //===------------------------------------------------------------------------===
 
 #include "CompilerDriver.h"
@@ -28,7 +28,7 @@ namespace {
 //===          PHASE OPTIONS
 //===------------------------------------------------------------------------===
 cl::opt<CompilerDriver::Phases> FinalPhase(cl::Optional,
-  cl::desc("Choose final phase of compilation:"), 
+  cl::desc("Choose final phase of compilation:"),
   cl::init(CompilerDriver::LINKING),
   cl::values(
     clEnumValN(CompilerDriver::PREPROCESSING,"E",
@@ -71,7 +71,7 @@ cl::opt<CompilerDriver::OptimizationLevels> OptLevel(cl::ZeroOrMore,
 //===------------------------------------------------------------------------===
 
 cl::list<std::string> PreprocessorToolOpts("Tpre", cl::ZeroOrMore,
-  cl::desc("Pass specific options to the pre-processor"), 
+  cl::desc("Pass specific options to the pre-processor"),
   cl::value_desc("option"));
 
 cl::alias PreprocessorToolOptsAlias("Wp,", cl::ZeroOrMore,
@@ -111,7 +111,7 @@ cl::list<std::string> WOpts("W", cl::ZeroOrMore, cl::Prefix,
   cl::desc("Pass through -W options to compiler tools"),
   cl::value_desc("option"));
 
-cl::list<std::string> BOpt("B", cl::ZeroOrMore, cl::Prefix, 
+cl::list<std::string> BOpt("B", cl::ZeroOrMore, cl::Prefix,
   cl::desc("Specify path to find llvmc sub-tools"),
   cl::value_desc("dir"));
 
@@ -126,7 +126,7 @@ cl::list<std::string> Libraries("l", cl::Prefix,
   cl::desc("Specify base name of libraries to link to"), cl::value_desc("lib"));
 
 cl::list<std::string> Includes("I", cl::Prefix,
-  cl::desc("Specify location to search for included source"), 
+  cl::desc("Specify location to search for included source"),
   cl::value_desc("dir"));
 
 cl::list<std::string> Defines("D", cl::Prefix,
@@ -137,7 +137,7 @@ cl::list<std::string> Defines("D", cl::Prefix,
 //===          OUTPUT OPTIONS
 //===------------------------------------------------------------------------===
 
-cl::opt<std::string> OutputFilename("o", 
+cl::opt<std::string> OutputFilename("o",
   cl::desc("Override output filename"), cl::value_desc("file"));
 
 cl::opt<std::string> OutputMachine("m", cl::Prefix,
@@ -169,10 +169,10 @@ cl::alias DryRunAlias("y", cl::Optional,
 cl::opt<bool> Verbose("verbose", cl::Optional, cl::init(false),
   cl::desc("Print out each action taken"));
 
-cl::alias VerboseAlias("v", cl::Optional, 
+cl::alias VerboseAlias("v", cl::Optional,
   cl::desc("Alias for -verbose"), cl::aliasopt(Verbose));
 
-cl::opt<bool> Debug("debug", cl::Optional, cl::init(false), 
+cl::opt<bool> Debug("debug", cl::Optional, cl::init(false),
   cl::Hidden, cl::desc("Print out debugging information"));
 
 cl::alias DebugAlias("d", cl::Optional,
@@ -258,7 +258,7 @@ int main(int argc, char **argv) {
   try {
 
     // Parse the command line options
-    cl::ParseCommandLineOptions(argc, argv, 
+    cl::ParseCommandLineOptions(argc, argv,
       " LLVM Compiler Driver (llvmc)\n\n"
       "  This program provides easy invocation of the LLVM tool set\n"
       "  and other compiler tools.\n"

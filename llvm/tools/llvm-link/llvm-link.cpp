@@ -1,10 +1,10 @@
 //===- llvm-link.cpp - Low-level LLVM linker ------------------------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This utility may be invoked in the following manner:
@@ -67,7 +67,7 @@ static inline std::auto_ptr<Module> LoadFile(const std::string &FN) {
       std::cerr << "\n";
     }
   } else {
-    std::cerr << "Bytecode file: '" << Filename.c_str() 
+    std::cerr << "Bytecode file: '" << Filename.c_str()
               << "' does not exist.\n";
   }
 

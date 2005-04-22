@@ -1,10 +1,10 @@
 //===- OptimizerDriver.cpp - Allow BugPoint to run passes safely ----------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines an interface that allows bugpoint to run various passes
@@ -195,7 +195,7 @@ Module *BugDriver::runPassesOn(Module *M,
   std::string BytecodeResult;
   if (runPasses(Passes, BytecodeResult, false/*delete*/, true/*quiet*/)) {
     if (AutoDebugCrashes) {
-      std::cerr << " Error running this sequence of passes" 
+      std::cerr << " Error running this sequence of passes"
                 << " on the input program!\n";
       delete OldProgram;
       EmitProgressBytecode("pass-error",  false);

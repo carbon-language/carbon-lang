@@ -1,10 +1,10 @@
 //===- CodeEmitterGen.cpp - Code Emitter Generator ------------------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // CodeEmitterGen uses the descriptions of instructions and their fields to
@@ -112,7 +112,7 @@ void CodeEmitterGen::run(std::ostream &o) {
       }
       BI = NewBI;
     }
- 
+
     unsigned Value = 0;
     const std::vector<RecordVal> &Vals = R->getValues();
 
@@ -130,16 +130,16 @@ void CodeEmitterGen::run(std::ostream &o) {
 
     DEBUG(o << "      // " << *R->getValue("Inst") << "\n");
     o << "      Value = " << Value << "U;\n\n";
-    
+
     // Loop over all of the fields in the instruction, determining which are the
-    // operands to the instruction. 
+    // operands to the instruction.
     unsigned op = 0;
     std::map<std::string, unsigned> OpOrder;
     std::map<std::string, bool> OpContinuous;
     for (unsigned i = 0, e = Vals.size(); i != e; ++i) {
       if (!Vals[i].getPrefix() && !Vals[i].getValue()->isComplete()) {
         // Is the operand continuous? If so, we can just mask and OR it in
-        // instead of doing it bit-by-bit, saving a lot in runtime cost.        
+        // instead of doing it bit-by-bit, saving a lot in runtime cost.
         BitsInit *InstInit = BI;
         int beginBitInVar = -1, endBitInVar = -1;
         int beginBitInInst = -1, endBitInInst = -1;
@@ -197,20 +197,20 @@ void CodeEmitterGen::run(std::ostream &o) {
         // this is not an operand!!
         if (beginBitInInst != -1) {
           o << "      // op" << op << ": " << Vals[i].getName() << "\n"
-            << "      int64_t op" << op 
+            << "      int64_t op" << op
             <<" = getMachineOpValue(MI, MI.getOperand("<<op<<"));\n";
           //<< "   MachineOperand &op" << op <<" = MI.getOperand("<<op<<");\n";
           OpOrder[Vals[i].getName()] = op++;
-          
-          DEBUG(o << "      // Var: begin = " << beginBitInVar 
+
+          DEBUG(o << "      // Var: begin = " << beginBitInVar
                   << ", end = " << endBitInVar
                   << "; Inst: begin = " << beginBitInInst
                   << ", end = " << endBitInInst << "\n");
-          
+
           if (continuous) {
             DEBUG(o << "      // continuous: op" << OpOrder[Vals[i].getName()]
                     << "\n");
-            
+
             // Mask off the right bits
             // Low mask (ie. shift, if necessary)
             assert(endBitInVar >= 0 && "Negative shift amount in masking!");
@@ -220,21 +220,21 @@ void CodeEmitterGen::run(std::ostream &o) {
               beginBitInVar -= endBitInVar;
               endBitInVar = 0;
             }
-            
+
             // High mask
             o << "      op" << OpOrder[Vals[i].getName()]
               << " &= (1<<" << beginBitInVar+1 << ") - 1;\n";
-            
+
             // Shift the value to the correct place (according to place in inst)
             assert(endBitInInst >= 0 && "Negative shift amount!");
             if (endBitInInst != 0)
               o << "      op" << OpOrder[Vals[i].getName()]
               << " <<= " << endBitInInst << ";\n";
-            
+
             // Just OR in the result
             o << "      Value |= op" << OpOrder[Vals[i].getName()] << ";\n";
           }
-          
+
           // otherwise, will be taken care of in the loop below using this
           // value:
           OpContinuous[Vals[i].getName()] = continuous;

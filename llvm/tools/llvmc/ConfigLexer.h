@@ -1,10 +1,10 @@
 //===- ConfigLexer.h - ConfigLexer Declarations -----------------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
-// This file was developed by Reid Spencer and is distributed under the 
+// This file was developed by Reid Spencer and is distributed under the
 // University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file declares the types and data needed by ConfigLexer.l
@@ -37,7 +37,7 @@ class InputProvider {
     }
     virtual ~InputProvider();
     virtual unsigned read(char *buf, unsigned max_size) = 0;
-    virtual void error(const std::string& msg); 
+    virtual void error(const std::string& msg);
     virtual void checkErrors();
 
   private:
@@ -62,7 +62,7 @@ enum ConfigLexerTokens {
   FOPTS_SUBST,  ///< The substitution item %fOpts%
   IN_SUBST,     ///< The substitution item %in%
   INCLS_SUBST,  ///< The substitution item %incls%
-  INTEGER,      ///< An integer 
+  INTEGER,      ///< An integer
   LANG,         ///< The name "lang" (and variants)
   LIBPATHS,     ///< The name "libpaths" (and variants)
   LIBS,         ///< The name "libs" (and variants)

@@ -1,10 +1,10 @@
 //===- CodeGenInstruction.h - Instruction Class Wrapper ---------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines a wrapper class for the 'Instruction' TableGen class.
@@ -61,7 +61,7 @@ namespace llvm {
                   const std::string &PMN, unsigned MION)
         : Rec(R), Ty(T), Name(N), PrinterMethodName(PMN), MIOperandNo(MION) {}
     };
-    
+
     /// OperandList - The list of declared operands, along with their declared
     /// type (which is a record).
     std::vector<OperandInfo> OperandList;

@@ -1,16 +1,16 @@
 //===-- llvm-nm.cpp - Symbol table dumping utility for llvm ---------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This program is a utility that works like traditional Unix "nm",
 // that is, it prints out the names of symbols in a bytecode file,
 // along with some information about each symbol.
-// 
+//
 // This "nm" does not print symbols' addresses. It supports many of
 // the features of GNU "nm", including its different output formats.
 //
@@ -35,12 +35,12 @@ namespace {
        cl::desc("Specify output format"),
          cl::values(clEnumVal(bsd,   "BSD format"),
                     clEnumVal(sysv,  "System V format"),
-                    clEnumVal(posix, "POSIX.2 format"), 
+                    clEnumVal(posix, "POSIX.2 format"),
                     clEnumValEnd), cl::init(bsd));
   cl::alias OutputFormat2("f", cl::desc("Alias for --format"),
                           cl::aliasopt(OutputFormat));
 
-  cl::list<std::string> 
+  cl::list<std::string>
   InputFilenames(cl::Positional, cl::desc("<input bytecode files>"),
                  cl::ZeroOrMore);
 

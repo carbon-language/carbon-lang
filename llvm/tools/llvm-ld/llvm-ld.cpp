@@ -1,10 +1,10 @@
 //===- llvm-ld.cpp - LLVM 'ld' compatible linker --------------------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This utility is intended to be compatible with GCC, and follows standard
@@ -44,21 +44,21 @@ static cl::list<std::string> InputFilenames(cl::Positional, cl::OneOrMore,
   cl::desc("<input bytecode files>"));
 
 static cl::opt<std::string> OutputFilename("o", cl::init("a.out"),
-  cl::desc("Override output filename"), 
+  cl::desc("Override output filename"),
   cl::value_desc("filename"));
 
-static cl::opt<bool> Verbose("v", 
+static cl::opt<bool> Verbose("v",
   cl::desc("Print information about actions taken"));
-  
+
 static cl::list<std::string> LibPaths("L", cl::Prefix,
-  cl::desc("Specify a library search path"), 
+  cl::desc("Specify a library search path"),
   cl::value_desc("directory"));
 
 static cl::list<std::string> Libraries("l", cl::Prefix,
-  cl::desc("Specify libraries to link to"), 
+  cl::desc("Specify libraries to link to"),
   cl::value_desc("library prefix"));
 
-static cl::opt<bool> LinkAsLibrary("link-as-library", 
+static cl::opt<bool> LinkAsLibrary("link-as-library",
   cl::desc("Link the .bc files together as a library, not an executable"));
 
 static cl::alias Relink("r", cl::aliasopt(LinkAsLibrary),
@@ -75,18 +75,18 @@ static cl::opt<bool>NativeCBE("native-cbe",
 
 static cl::opt<bool>DisableCompression("disable-compression",cl::init(false),
   cl::desc("Disable writing of compressed bytecode files"));
-  
+
 // Compatibility options that are ignored but supported by LD
-static cl::opt<std::string> CO3("soname", cl::Hidden, 
+static cl::opt<std::string> CO3("soname", cl::Hidden,
   cl::desc("Compatibility option: ignored"));
 
-static cl::opt<std::string> CO4("version-script", cl::Hidden, 
+static cl::opt<std::string> CO4("version-script", cl::Hidden,
   cl::desc("Compatibility option: ignored"));
 
-static cl::opt<bool> CO5("eh-frame-hdr", cl::Hidden, 
+static cl::opt<bool> CO5("eh-frame-hdr", cl::Hidden,
   cl::desc("Compatibility option: ignored"));
 
-static  cl::opt<std::string> CO6("h", cl::Hidden, 
+static  cl::opt<std::string> CO6("h", cl::Hidden,
   cl::desc("Compatibility option: ignored"));
 
 /// This is just for convenience so it doesn't have to be passed around
@@ -342,12 +342,12 @@ static void EmitShellScript(char **argv) {
   LibPaths.push_back("/usr/X11R6/lib");
   // We don't need to link in libc! In fact, /usr/lib/libc.so may not be a
   // shared object at all! See RH 8: plain text.
-  std::vector<std::string>::iterator libc = 
+  std::vector<std::string>::iterator libc =
     std::find(Libraries.begin(), Libraries.end(), "c");
   if (libc != Libraries.end()) Libraries.erase(libc);
   // List all the shared object (native) libraries this executable will need
   // on the command line, so that we don't have to do this manually!
-  for (std::vector<std::string>::iterator i = Libraries.begin(), 
+  for (std::vector<std::string>::iterator i = Libraries.begin(),
          e = Libraries.end(); i != e; ++i) {
     sys::Path FullLibraryPath = sys::Path::FindLibrary(*i);
     if (!FullLibraryPath.isEmpty() && FullLibraryPath.isDynamicLibrary())
@@ -365,7 +365,7 @@ static void BuildLinkItems(
   const cl::list<std::string>& Files,
   const cl::list<std::string>& Libraries) {
 
-  // Build the list of linkage items for LinkItems. 
+  // Build the list of linkage items for LinkItems.
 
   cl::list<std::string>::const_iterator fileIt = Files.begin();
   cl::list<std::string>::const_iterator libIt  = Libraries.begin();
@@ -401,7 +401,7 @@ int main(int argc, char **argv, char **envp) {
     // Initial global variable above for convenience printing of program name.
     progname = sys::Path(argv[0]).getBasename();
     Linker TheLinker(progname, Verbose);
-    
+
     // Set up the library paths for the Linker
     TheLinker.addPaths(LibPaths);
     TheLinker.addSystemPaths();
@@ -423,7 +423,7 @@ int main(int argc, char **argv, char **envp) {
 
       // The libraries aren't linked in but are noted as "dependent" in the
       // module.
-      for (cl::list<std::string>::const_iterator I = Libraries.begin(), 
+      for (cl::list<std::string>::const_iterator I = Libraries.begin(),
            E = Libraries.end(); I != E ; ++I) {
         TheLinker.getModule()->addLibrary(*I);
       }
@@ -476,7 +476,7 @@ int main(int argc, char **argv, char **envp) {
         if (Verbose) std::cout << "Generating Assembly Code\n";
         GenerateAssembly(AssemblyFile.toString(), RealBytecodeOutput, llc);
         if (Verbose) std::cout << "Generating Native Code\n";
-        GenerateNative(OutputFilename, AssemblyFile.toString(), Libraries, 
+        GenerateNative(OutputFilename, AssemblyFile.toString(), Libraries,
                        gcc, envp);
 
         // Remove the assembly language file.
@@ -510,7 +510,7 @@ int main(int argc, char **argv, char **envp) {
       } else {
         EmitShellScript(argv);
       }
-    
+
       // Make the script executable...
       sys::Path(OutputFilename).makeExecutable();
 

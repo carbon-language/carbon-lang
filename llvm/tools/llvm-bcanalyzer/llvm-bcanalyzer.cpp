@@ -1,10 +1,10 @@
 //===-- llvm-bcanalyzer.cpp - Byte Code Analyzer --------------------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
-// This file was developed by Reid Spencer and is distributed under the 
+// This file was developed by Reid Spencer and is distributed under the
 // University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This tool may be invoked in the following manner:
@@ -13,20 +13,20 @@
 //
 //  Options:
 //      --help      - Output information about command line switches
-//      --nodetails - Don't print out detailed informaton about individual 
+//      --nodetails - Don't print out detailed informaton about individual
 //                    blocks and functions
 //      --dump      - Dump low-level bytecode structure in readable format
 //
 // This tool provides analytical information about a bytecode file. It is
 // intended as an aid to developers of bytecode reading and writing software. It
-// produces on std::out a summary of the bytecode file that shows various 
+// produces on std::out a summary of the bytecode file that shows various
 // statistics about the contents of the file. By default this information is
 // detailed and contains information about individual bytecode blocks and the
-// functions in the module. To avoid this more detailed output, use the 
+// functions in the module. To avoid this more detailed output, use the
 // -nodetails option to limit the output to just module level information.
-// The tool is also able to print a bytecode file in a straight forward text 
-// format that shows the containment and relationships of the information in 
-// the bytecode file (-dump option). 
+// The tool is also able to print a bytecode file in a straight forward text
+// format that shows the containment and relationships of the information in
+// the bytecode file (-dump option).
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Analysis/Verifier.h"
@@ -48,10 +48,10 @@ static cl::opt<bool> NoDetails ("nodetails", cl::desc("Skip detailed output"));
 static cl::opt<bool> Dump      ("dump", cl::desc("Dump low level bytecode trace"));
 static cl::opt<bool> Verify    ("verify", cl::desc("Progressively verify module"));
 
-int 
+int
 main(int argc, char **argv) {
   try {
-    cl::ParseCommandLineOptions(argc, argv, 
+    cl::ParseCommandLineOptions(argc, argv,
       " llvm-bcanalyzer Analysis of ByteCode Dumper\n");
 
     sys::PrintStackTraceOnErrorSignal();
@@ -78,7 +78,7 @@ main(int argc, char **argv) {
       } catch (std::string& errmsg ) {
         verificationMsg = errmsg;
       }
-      if ( verificationMsg.length() > 0 ) 
+      if ( verificationMsg.length() > 0 )
         std::cerr << "Final Verification Message: " << verificationMsg << "\n";
     }
 
@@ -88,7 +88,7 @@ main(int argc, char **argv) {
       std::cerr << argv[0] << ": " << ErrorMessage << "\n";
       return 1;
     }
-    
+
 
     if (Out != &std::cout) {
       ((std::ofstream*)Out)->close();

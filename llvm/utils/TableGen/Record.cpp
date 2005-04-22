@@ -1,10 +1,10 @@
 //===- Record.cpp - Record implementation ---------------------------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 //
@@ -32,8 +32,8 @@ bool BitRecTy::baseClassOf(const BitsRecTy *RHS) const {
 Init *BitRecTy::convertValue(IntInit *II) {
   int Val = II->getValue();
   if (Val != 0 && Val != 1) return 0;  // Only accept 0 or 1 for a bit!
-  
-  return new BitInit(Val != 0); 
+
+  return new BitInit(Val != 0);
 }
 
 Init *BitRecTy::convertValue(TypedInit *VI) {
@@ -98,7 +98,7 @@ Init *BitsRecTy::convertValue(TypedInit *VI) {
     Ret->setBit(0, VI);
     return Ret;
   }
-      
+
   return 0;
 }
 
@@ -108,7 +108,7 @@ Init *IntRecTy::convertValue(BitInit *BI) {
 
 Init *IntRecTy::convertValue(BitsInit *BI) {
   int Result = 0;
-  for (unsigned i = 0, e = BI->getNumBits(); i != e; ++i) 
+  for (unsigned i = 0, e = BI->getNumBits(); i != e; ++i)
     if (BitInit *Bit = dynamic_cast<BitInit*>(BI->getBit(i))) {
       Result |= Bit->getValue() << i;
     } else {
@@ -230,7 +230,7 @@ void BitsInit::print(std::ostream &OS) const {
 bool BitsInit::printInHex(std::ostream &OS) const {
   // First, attempt to convert the value into an integer value...
   int Result = 0;
-  for (unsigned i = 0, e = getNumBits(); i != e; ++i) 
+  for (unsigned i = 0, e = getNumBits(); i != e; ++i)
     if (BitInit *Bit = dynamic_cast<BitInit*>(getBit(i))) {
       Result |= Bit->getValue() << i;
     } else {
@@ -265,7 +265,7 @@ bool BitsInit::printAsVariable(std::ostream &OS) const {
 }
 
 bool BitsInit::printAsUnset(std::ostream &OS) const {
-  for (unsigned i = 0, e = getNumBits(); i != e; ++i) 
+  for (unsigned i = 0, e = getNumBits(); i != e; ++i)
     if (!dynamic_cast<UnsetInit*>(getBit(i)))
       return true;
   OS << "?";
@@ -406,7 +406,7 @@ Init *VarInit::resolveBitReference(Record &R, const RecordVal *IRV,
   assert(RV && "Reference to a non-existant variable?");
   assert(dynamic_cast<BitsInit*>(RV->getValue()));
   BitsInit *BI = (BitsInit*)RV->getValue();
-  
+
   assert(Bit < BI->getNumBits() && "Bit reference out of range!");
   Init *B = BI->getBit(Bit);
 
@@ -465,7 +465,7 @@ Init *VarInit::resolveReferences(Record &R, const RecordVal *RV) {
       return Val->getValue();
   return this;
 }
-  
+
 
 Init *VarBitInit::resolveReferences(Record &R, const RecordVal *RV) {
   if (Init *I = getVariable()->resolveBitReference(R, RV, getBitNum()))
@@ -515,7 +515,7 @@ Init *FieldInit::resolveBitReference(Record &R, const RecordVal *RV,
     if (BitsInit *BI = dynamic_cast<BitsInit*>(BitsVal)) {
       assert(Bit < BI->getNumBits() && "Bit reference out of range!");
       Init *B = BI->getBit(Bit);
-      
+
       if (dynamic_cast<BitInit*>(B))  // If the bit is set...
         return B;                     // Replace the VarBitInit with it.
     }
@@ -770,7 +770,7 @@ std::ostream &llvm::operator<<(std::ostream &OS, const RecordKeeper &RK) {
   for (std::map<std::string, Record*>::const_iterator I = Classes.begin(),
 	 E = Classes.end(); I != E; ++I)
     OS << "class " << *I->second;
-  
+
   OS << "------------- Defs -----------------\n";
   const std::map<std::string, Record*> &Defs = RK.getDefs();
   for (std::map<std::string, Record*>::const_iterator I = Defs.begin(),

@@ -1,10 +1,10 @@
 //===- CompilerDriver.h - Compiler Driver -----------------------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
-// This file was developed by Reid Spencer and is distributed under the 
+// This file was developed by Reid Spencer and is distributed under the
 // University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file declares the CompilerDriver class which implements the bulk of the
@@ -23,7 +23,7 @@ namespace llvm {
   /// The driver's purpose is to make it easier for compiler writers and users
   /// of LLVM to utilize the compiler toolkits and LLVM toolset by learning only
   /// the interface of one program (llvmc).
-  /// 
+  ///
   /// @see llvmc.cpp
   /// @brief The interface to the LLVM Compiler Driver.
   class CompilerDriver {
@@ -43,7 +43,7 @@ namespace llvm {
       enum Phases {
         PREPROCESSING, ///< Source language combining, filtering, substitution
         TRANSLATION,   ///< Translate source -> LLVM bytecode/assembly
-        OPTIMIZATION,  ///< Optimize translation result 
+        OPTIMIZATION,  ///< Optimize translation result
         ASSEMBLY,      ///< Convert program to executable
         LINKING,       ///< Link bytecode and native code
         NUM_PHASES     ///< Always last!
@@ -92,7 +92,7 @@ namespace llvm {
       struct ConfigData {
         ConfigData();
         std::string version;    ///< The version number.
-        std::string langName;   ///< The name of the source language 
+        std::string langName;   ///< The name of the source language
         StringTable opts;       ///< The o10n options for each level
         StringVector libpaths;  ///< The library paths
         Action PreProcessor;    ///< PreProcessor command line
@@ -105,7 +105,7 @@ namespace llvm {
       /// This pure virtual interface class defines the interface between the
       /// CompilerDriver and other software that provides ConfigData objects to
       /// it. The CompilerDriver must be configured to use an object of this
-      /// type so it can obtain the configuration data. 
+      /// type so it can obtain the configuration data.
       /// @see setConfigDataProvider
       /// @brief Configuration Data Provider interface
       class ConfigDataProvider {
@@ -116,7 +116,7 @@ namespace llvm {
 
       /// These flags control various actions of the compiler driver. They are
       /// used by adding the needed flag values together and passing them to the
-      /// compiler driver's setDriverFlags method. 
+      /// compiler driver's setDriverFlags method.
       /// @see setDriverFlags
       /// @brief Driver specific flags
       enum DriverFlags {
@@ -163,7 +163,7 @@ namespace llvm {
       virtual void setOutputMachine(const std::string& machineName) = 0;
 
       /// @brief Set the options for a given phase.
-      virtual void setPhaseArgs(Phases phase, const StringVector& opts) = 0; 
+      virtual void setPhaseArgs(Phases phase, const StringVector& opts) = 0;
 
       /// @brief Set Library Paths
       virtual void setIncludePaths(const StringVector& paths) = 0;

@@ -1,11 +1,11 @@
 //===- CompilerDriver.cpp - The LLVM Compiler Driver ------------*- C++ -*-===//
 //
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
-// This file was developed by Reid Spencer and is distributed under the 
+// This file was developed by Reid Spencer and is distributed under the
 // University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements the bulk of the LLVM Compiler Driver (llvmc).
@@ -48,7 +48,7 @@ void DumpAction(CompilerDriver::Action* action) {
 }
 
 void DumpConfigData(CompilerDriver::ConfigData* cd, const std::string& type ){
-  std::cerr << "Configuration Data For '" << cd->langName << "' (" << type 
+  std::cerr << "Configuration Data For '" << cd->langName << "' (" << type
     << ")\n";
   std::cerr << "PreProcessor: ";
   DumpAction(&cd->PreProcessor);
@@ -64,7 +64,7 @@ void DumpConfigData(CompilerDriver::ConfigData* cd, const std::string& type ){
 
 /// This specifies the passes to run for OPT_FAST_COMPILE (-O1)
 /// which should reduce the volume of code and make compilation
-/// faster. This is also safe on any llvm module. 
+/// faster. This is also safe on any llvm module.
 static const char* DefaultFastCompileOptimizations[] = {
   "-simplifycfg", "-mem2reg", "-instcombine"
 };
@@ -76,7 +76,7 @@ public:
   CompilerDriverImpl(ConfigDataProvider& confDatProv )
     : cdp(&confDatProv)
     , finalPhase(LINKING)
-    , optLevel(OPT_FAST_COMPILE) 
+    , optLevel(OPT_FAST_COMPILE)
     , Flags(0)
     , machine()
     , LibraryPaths()
@@ -108,16 +108,16 @@ public:
 /// @name Methods
 /// @{
 public:
-  virtual void setFinalPhase( Phases phase ) { 
-    finalPhase = phase; 
+  virtual void setFinalPhase( Phases phase ) {
+    finalPhase = phase;
   }
 
-  virtual void setOptimization( OptimizationLevels level ) { 
-    optLevel = level; 
+  virtual void setOptimization( OptimizationLevels level ) {
+    optLevel = level;
   }
 
   virtual void setDriverFlags( unsigned flags ) {
-    Flags = flags & DRIVER_FLAGS_MASK; 
+    Flags = flags & DRIVER_FLAGS_MASK;
   }
 
   virtual void setOutputMachine( const std::string& machineName ) {
@@ -194,7 +194,7 @@ private:
     }
   }
 
-  sys::Path MakeTempFile(const std::string& basename, 
+  sys::Path MakeTempFile(const std::string& basename,
                          const std::string& suffix ) {
     sys::Path result(TempDir);
     if (!result.appendFile(basename))
@@ -204,8 +204,8 @@ private:
     return result;
   }
 
-  Action* GetAction(ConfigData* cd, 
-                    const sys::Path& input, 
+  Action* GetAction(ConfigData* cd,
+                    const sys::Path& input,
                     const sys::Path& output,
                     Phases phase)
   {
@@ -243,7 +243,7 @@ private:
                   // Get specific options for each kind of action type
                   StringVector& addargs = AdditionalArgs[phase];
                   // Add specific options for each kind of action type
-                  action->args.insert(action->args.end(), addargs.begin(), 
+                  action->args.insert(action->args.end(), addargs.begin(),
                                       addargs.end());
                 }
             } else
@@ -263,7 +263,7 @@ private:
           case 'f':
             if (*PI == "%fOpts%") {
               if (!fOptions.empty())
-                action->args.insert(action->args.end(), fOptions.begin(), 
+                action->args.insert(action->args.end(), fOptions.begin(),
                                     fOptions.end());
             } else
               found = false;
@@ -297,13 +297,13 @@ private:
               action->args.push_back(output.toString());
             } else if (*PI == "%opt%") {
               if (!isSet(EMIT_RAW_FLAG)) {
-                if (cd->opts.size() > static_cast<unsigned>(optLevel) && 
+                if (cd->opts.size() > static_cast<unsigned>(optLevel) &&
                     !cd->opts[optLevel].empty())
-                  action->args.insert(action->args.end(), 
+                  action->args.insert(action->args.end(),
                                       cd->opts[optLevel].begin(),
                                       cd->opts[optLevel].end());
                 else
-                  throw std::string("Optimization options for level ") + 
+                  throw std::string("Optimization options for level ") +
                         utostr(unsigned(optLevel)) + " were not specified";
               }
             } else
@@ -335,7 +335,7 @@ private:
           case 'M':
             if (*PI == "%Mopts%") {
               if (!MOptions.empty())
-                action->args.insert(action->args.end(), MOptions.begin(), 
+                action->args.insert(action->args.end(), MOptions.begin(),
                                     MOptions.end());
             } else
               found = false;
@@ -355,7 +355,7 @@ private:
         }
         if (!found) {
           // Did it even look like a substitution?
-          if (PI->length()>1 && (*PI)[0] == '%' && 
+          if (PI->length()>1 && (*PI)[0] == '%' &&
               (*PI)[PI->length()-1] == '%') {
             throw std::string("Invalid substitution token: '") + *PI +
                   "' for command '" + pat->program.toString() + "'";
@@ -392,7 +392,7 @@ private:
                           "' is not executable.");
 
       // Invoke the program
-      const char** Args = (const char**) 
+      const char** Args = (const char**)
         alloca(sizeof(const char*)*(action->args.size()+2));
       Args[0] = action->program.toString().c_str();
       for (unsigned i = 1; i != action->args.size(); ++i)
@@ -421,7 +421,7 @@ private:
     fullpath.setFile(link_item);
     if (fullpath.readable())
       return fullpath;
-    for (PathVector::iterator PI = LibraryPaths.begin(), 
+    for (PathVector::iterator PI = LibraryPaths.begin(),
          PE = LibraryPaths.end(); PI != PE; ++PI) {
       fullpath.setDirectory(PI->toString());
       fullpath.appendFile(link_item);
@@ -431,11 +431,11 @@ private:
         fullpath.appendSuffix("a");
       } else {
         fullpath.appendSuffix("bc");
-        if (fullpath.readable()) 
+        if (fullpath.readable())
           return fullpath;
         fullpath.elideSuffix();
         fullpath.appendSuffix("o");
-        if (fullpath.readable()) 
+        if (fullpath.readable())
           return fullpath;
         fullpath = *PI;
         fullpath.appendFile(std::string("lib") + link_item);
@@ -472,7 +472,7 @@ private:
       // If we didn't find the file in any of the library search paths
       // we have to bail. No where else to look.
       if (fullpath.isEmpty()) {
-        err = 
+        err =
           std::string("Can't find linkage item '") + link_item.toString() + "'";
         return false;
       }
@@ -494,7 +494,7 @@ private:
         while ( LI != LE ) {
           if (!ProcessLinkageItem(sys::Path(*LI),set,err)) {
             if (err.empty()) {
-              err = std::string("Library '") + *LI + 
+              err = std::string("Library '") + *LI +
                     "' is not valid for linking but is required by file '" +
                     fullpath.toString() + "'";
             } else {
@@ -506,7 +506,7 @@ private:
         }
       } else if (err.empty()) {
         err = std::string(
-          "The dependent libraries could not be extracted from '") + 
+          "The dependent libraries could not be extracted from '") +
           fullpath.toString();
         return false;
       }
@@ -534,7 +534,7 @@ public:
         std::cerr << "OutputMachine = " << machine << "\n";
         InputList::const_iterator I = InpList.begin();
         while ( I != InpList.end() ) {
-          std::cerr << "Input: " << I->first << "(" << I->second 
+          std::cerr << "Input: " << I->first << "(" << I->second
                     << ")\n";
           ++I;
         }
@@ -571,11 +571,11 @@ public:
         // Get the suffix of the file name
         const std::string& ftype = I->second;
 
-        // If its a library, bytecode file, or object file, save 
-        // it for linking below and short circuit the 
+        // If its a library, bytecode file, or object file, save
+        // it for linking below and short circuit the
         // pre-processing/translation/assembly phases
         if (ftype.empty() ||  ftype == "o" || ftype == "bc" || ftype=="a") {
-          // We shouldn't get any of these types of files unless we're 
+          // We shouldn't get any of these types of files unless we're
           // later going to link. Enforce this limit now.
           if (finalPhase != LINKING) {
             throw std::string(
@@ -593,8 +593,8 @@ public:
         // for this kind of file.
         ConfigData* cd = cdp->ProvideConfigData(I->second);
         if (cd == 0)
-          throw std::string("Files of type '") + I->second + 
-                "' are not recognized."; 
+          throw std::string("Files of type '") + I->second +
+                "' are not recognized.";
         if (isSet(DEBUG_FLAG))
           DumpConfigData(cd,I->second);
 
@@ -631,11 +631,11 @@ public:
         } else if (finalPhase == PREPROCESSING) {
           throw cd->langName + " does not support pre-processing";
         } else if (action.isSet(REQUIRED_FLAG)) {
-          throw std::string("Don't know how to pre-process ") + 
+          throw std::string("Don't know how to pre-process ") +
                 cd->langName + " files";
         }
 
-        // Short-circuit remaining actions if all they want is 
+        // Short-circuit remaining actions if all they want is
         // pre-processing
         if (finalPhase == PREPROCESSING) { continue; };
 
@@ -653,7 +653,7 @@ public:
                 actions.push_back(GetAction(cd,InFile,Output,TRANSLATION));
               }
             } else {
-              sys::Path TempFile(MakeTempFile(I->first.getBasename(),"trans")); 
+              sys::Path TempFile(MakeTempFile(I->first.getBasename(),"trans"));
               actions.push_back(GetAction(cd,InFile,TempFile,TRANSLATION));
               InFile = TempFile;
             }
@@ -674,7 +674,7 @@ public:
         } else if (finalPhase == TRANSLATION) {
           throw cd->langName + " does not support translation";
         } else if (action.isSet(REQUIRED_FLAG)) {
-          throw std::string("Don't know how to translate ") + 
+          throw std::string("Don't know how to translate ") +
                 cd->langName + " files";
         }
 
@@ -717,7 +717,7 @@ public:
           } else if (finalPhase == OPTIMIZATION) {
             throw cd->langName + " does not support optimization";
           } else if (action.isSet(REQUIRED_FLAG)) {
-            throw std::string("Don't know how to optimize ") + 
+            throw std::string("Don't know how to optimize ") +
                 cd->langName + " files";
           }
         }
@@ -762,7 +762,7 @@ public:
           // Put the action on the list
           actions.push_back(action);
 
-          // Short circuit the rest of the loop, we don't want to link 
+          // Short circuit the rest of the loop, we don't want to link
           continue;
         }
 
@@ -816,7 +816,7 @@ public:
         // Add in all the linkage items we generated. This includes the
         // output from the translation/optimization phases as well as any
         // -l arguments specified.
-        for (PathVector::const_iterator I=LinkageItems.begin(), 
+        for (PathVector::const_iterator I=LinkageItems.begin(),
              E=LinkageItems.end(); I != E; ++I )
           link->args.push_back(I->toString());
 

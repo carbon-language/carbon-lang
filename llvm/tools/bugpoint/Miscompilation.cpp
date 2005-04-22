@@ -1,10 +1,10 @@
 //===- Miscompilation.cpp - Debug program miscompilations -----------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file implements optimizer and code generation miscompilation debugging
@@ -37,7 +37,7 @@ namespace {
     BugDriver &BD;
   public:
     ReduceMiscompilingPasses(BugDriver &bd) : BD(bd) {}
-    
+
     virtual TestResult doTest(std::vector<const PassInfo*> &Prefix,
                               std::vector<const PassInfo*> &Suffix);
   };
@@ -56,7 +56,7 @@ ReduceMiscompilingPasses::doTest(std::vector<const PassInfo*> &Prefix,
 
   std::string BytecodeResult;
   if (BD.runPasses(Suffix, BytecodeResult, false/*delete*/, true/*quiet*/)) {
-    std::cerr << " Error running this sequence of passes" 
+    std::cerr << " Error running this sequence of passes"
               << " on the input program!\n";
     BD.setPassesToRun(Suffix);
     BD.EmitProgressBytecode("pass-error",  false);
@@ -89,7 +89,7 @@ ReduceMiscompilingPasses::doTest(std::vector<const PassInfo*> &Prefix,
   // prefix passes, then discard the prefix passes.
   //
   if (BD.runPasses(Prefix, BytecodeResult, false/*delete*/, true/*quiet*/)) {
-    std::cerr << " Error running this sequence of passes" 
+    std::cerr << " Error running this sequence of passes"
               << " on the input program!\n";
     BD.setPassesToRun(Prefix);
     BD.EmitProgressBytecode("pass-error",  false);
@@ -118,14 +118,14 @@ ReduceMiscompilingPasses::doTest(std::vector<const PassInfo*> &Prefix,
   // Don't check if there are no passes in the suffix.
   if (Suffix.empty())
     return NoFailure;
-  
+
   std::cout << "Checking to see if '" << getPassesString(Suffix)
             << "' passes compile correctly after the '"
             << getPassesString(Prefix) << "' passes: ";
 
   Module *OriginalInput = BD.swapProgramIn(PrefixOutput);
   if (BD.runPasses(Suffix, BytecodeResult, false/*delete*/, true/*quiet*/)) {
-    std::cerr << " Error running this sequence of passes" 
+    std::cerr << " Error running this sequence of passes"
               << " on the input program!\n";
     BD.setPassesToRun(Suffix);
     BD.EmitProgressBytecode("pass-error",  false);
@@ -153,7 +153,7 @@ namespace {
     ReduceMiscompilingFunctions(BugDriver &bd,
                                 bool (*F)(BugDriver &, Module *, Module *))
       : BD(bd), TestFn(F) {}
-    
+
     virtual TestResult doTest(std::vector<Function*> &Prefix,
                               std::vector<Function*> &Suffix) {
       if (!Suffix.empty() && TestFuncs(Suffix))
@@ -162,7 +162,7 @@ namespace {
         return KeepPrefix;
       return NoFailure;
     }
-    
+
     bool TestFuncs(const std::vector<Function*> &Prefix);
   };
 }
@@ -280,7 +280,7 @@ static bool ExtractLoops(BugDriver &BD,
       return MadeChange;
     }
     BD.switchToInterpreter(AI);
-    
+
     std::cout << "  Testing after loop extraction:\n";
     // Clone modules, the tester function will free them.
     Module *TOLEBackup = CloneModule(ToOptimizeLoopExtracted);
@@ -343,7 +343,7 @@ namespace {
                             bool (*F)(BugDriver &, Module *, Module *),
                             const std::vector<Function*> &Fns)
       : BD(bd), TestFn(F), FunctionsBeingTested(Fns) {}
-    
+
     virtual TestResult doTest(std::vector<BasicBlock*> &Prefix,
                               std::vector<BasicBlock*> &Suffix) {
       if (!Suffix.empty() && TestFuncs(Suffix))
@@ -352,7 +352,7 @@ namespace {
         return KeepPrefix;
       return NoFailure;
     }
-    
+
     bool TestFuncs(const std::vector<BasicBlock*> &Prefix);
   };
 }
@@ -506,7 +506,7 @@ DebugAMiscompilation(BugDriver &BD,
 
     // Do the reduction...
     ReduceMiscompilingFunctions(BD, TestFn).reduceList(MiscompiledFunctions);
-    
+
     std::cout << "\n*** The following function"
               << (MiscompiledFunctions.size() == 1 ? " is" : "s are")
               << " being miscompiled: ";
@@ -525,7 +525,7 @@ DebugAMiscompilation(BugDriver &BD,
 
     // Do the reduction...
     ReduceMiscompilingFunctions(BD, TestFn).reduceList(MiscompiledFunctions);
-    
+
     std::cout << "\n*** The following function"
               << (MiscompiledFunctions.size() == 1 ? " is" : "s are")
               << " being miscompiled: ";
@@ -586,7 +586,7 @@ bool BugDriver::debugMiscompilation() {
   ToNotOptimize = swapProgramIn(ToNotOptimize);
   EmitProgressBytecode("tonotoptimize", true);
   setNewProgram(ToNotOptimize);   // Delete hacked module.
-  
+
   std::cout << "  Portion that is input to optimizer: ";
   ToOptimize = swapProgramIn(ToOptimize);
   EmitProgressBytecode("tooptimize");
@@ -614,12 +614,12 @@ static void CleanupAndPrepareModules(BugDriver &BD, Module *&Test,
       // Rename it
       oldMain->setName("llvm_bugpoint_old_main");
       // Create a NEW `main' function with same type in the test module.
-      Function *newMain = new Function(oldMain->getFunctionType(), 
+      Function *newMain = new Function(oldMain->getFunctionType(),
                                        GlobalValue::ExternalLinkage,
                                        "main", Test);
       // Create an `oldmain' prototype in the test module, which will
       // corresponds to the real main function in the same module.
-      Function *oldMainProto = new Function(oldMain->getFunctionType(), 
+      Function *oldMainProto = new Function(oldMain->getFunctionType(),
                                             GlobalValue::ExternalLinkage,
                                             oldMain->getName(), Test);
       // Set up and remember the argument list for the main function.
@@ -634,7 +634,7 @@ static void CleanupAndPrepareModules(BugDriver &BD, Module *&Test,
       // Call the old main function and return its result
       BasicBlock *BB = new BasicBlock("entry", newMain);
       CallInst *call = new CallInst(oldMainProto, args, "", BB);
-    
+
       // If the type of old function wasn't void, return value of call
       new ReturnInst(call, BB);
     }
@@ -643,14 +643,14 @@ static void CleanupAndPrepareModules(BugDriver &BD, Module *&Test,
   // module cannot directly reference any functions defined in the test
   // module.  Instead, we use a JIT API call to dynamically resolve the
   // symbol.
-    
+
   // Add the resolver to the Safe module.
   // Prototype: void *getPointerToNamedFunction(const char* Name)
-  Function *resolverFunc = 
+  Function *resolverFunc =
     Safe->getOrInsertFunction("getPointerToNamedFunction",
                               PointerType::get(Type::SByteTy),
                               PointerType::get(Type::SByteTy), 0);
-    
+
   // Use the function we just added to get addresses of functions we need.
   for (Module::iterator F = Safe->begin(), E = Safe->end(); F != E; ++F) {
     if (F->isExternal() && !F->use_empty() && &*F != resolverFunc &&
@@ -663,7 +663,7 @@ static void CleanupAndPrepareModules(BugDriver &BD, Module *&Test,
         Constant *InitArray = ConstantArray::get(F->getName());
         GlobalVariable *funcName =
           new GlobalVariable(InitArray->getType(), true /*isConstant*/,
-                             GlobalValue::InternalLinkage, InitArray,    
+                             GlobalValue::InternalLinkage, InitArray,
                              F->getName() + "_name", Safe);
 
         // 2. Use `GetElementPtr *funcName, 0, 0' to convert the string to an
@@ -690,7 +690,7 @@ static void CleanupAndPrepareModules(BugDriver &BD, Module *&Test,
           // Resolve the call to function F via the JIT API:
           //
           // call resolver(GetElementPtr...)
-          CallInst *resolve = new CallInst(resolverFunc, ResolverArgs, 
+          CallInst *resolve = new CallInst(resolverFunc, ResolverArgs,
                                            "resolver");
           Header->getInstList().push_back(resolve);
           // cast the result from the resolver to correctly-typed function

@@ -1,10 +1,10 @@
 //===- BugDriver.h - Top-Level BugPoint class -------------------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This class contains all of the shared state and information that is used by
@@ -76,7 +76,7 @@ public:
   /// reasonable, and figure out exactly which pass is crashing.
   ///
   bool debugOptimizerCrash();
-  
+
   /// debugCodeGeneratorCrash - This method is called when the code generator
   /// crashes on an input.  It attempts to reduce the input as much as possible
   /// while still causing the code generator to crash.
@@ -139,7 +139,7 @@ public:
   void switchToInterpreter(AbstractInterpreter *AI) {
     Interpreter = AI;
   }
- 
+
   /// setNewProgram - If we reduce or update the program somehow, call this
   /// method to update bugdriver with it.  This deletes the old module and sets
   /// the specified one as the current program.

@@ -1,10 +1,10 @@
 //===- gccld.cpp - LLVM 'ld' compatible linker ----------------------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This utility is intended to be compatible with GCC, and follows standard
@@ -38,22 +38,22 @@
 using namespace llvm;
 
 namespace {
-  cl::list<std::string> 
+  cl::list<std::string>
   InputFilenames(cl::Positional, cl::desc("<input bytecode files>"),
                  cl::OneOrMore);
 
-  cl::opt<std::string> 
+  cl::opt<std::string>
   OutputFilename("o", cl::desc("Override output filename"), cl::init("a.out"),
                  cl::value_desc("filename"));
 
   cl::opt<bool>
   Verbose("v", cl::desc("Print information about actions taken"));
 
-  cl::list<std::string> 
+  cl::list<std::string>
   LibPaths("L", cl::desc("Specify a library search path"), cl::Prefix,
            cl::value_desc("directory"));
 
-  cl::list<std::string> 
+  cl::list<std::string>
   Libraries("l", cl::desc("Specify libraries to link to"), cl::Prefix,
             cl::value_desc("library prefix"));
 
@@ -91,13 +91,13 @@ namespace {
   cl::opt<std::string>
   RPath("rpath",
         cl::desc("Set runtime shared library search path (requires -native or"
-                 " -native-cbe)"), 
+                 " -native-cbe)"),
         cl::Prefix, cl::value_desc("directory"));
 
   cl::opt<std::string>
   SOName("soname",
          cl::desc("Set internal name of shared library (requires -native or"
-                 " -native-cbe)"), 
+                 " -native-cbe)"),
          cl::Prefix, cl::value_desc("name"));
 
   // Compatibility options that are ignored but supported by LD
@@ -155,12 +155,12 @@ static void EmitShellScript(char **argv) {
 
   // We don't need to link in libc! In fact, /usr/lib/libc.so may not be a
   // shared object at all! See RH 8: plain text.
-  std::vector<std::string>::iterator libc = 
+  std::vector<std::string>::iterator libc =
     std::find(Libraries.begin(), Libraries.end(), "c");
   if (libc != Libraries.end()) Libraries.erase(libc);
   // List all the shared object (native) libraries this executable will need
   // on the command line, so that we don't have to do this manually!
-  for (std::vector<std::string>::iterator i = Libraries.begin(), 
+  for (std::vector<std::string>::iterator i = Libraries.begin(),
          e = Libraries.end(); i != e; ++i) {
     sys::Path FullLibraryPath = sys::Path::FindLibrary(*i);
     if (!FullLibraryPath.isEmpty() && FullLibraryPath.isDynamicLibrary())
@@ -178,7 +178,7 @@ static void BuildLinkItems(
   const cl::list<std::string>& Files,
   const cl::list<std::string>& Libraries) {
 
-  // Build the list of linkage items for LinkItems. 
+  // Build the list of linkage items for LinkItems.
 
   cl::list<std::string>::const_iterator fileIt = Files.begin();
   cl::list<std::string>::const_iterator libIt  = Libraries.begin();
@@ -231,7 +231,7 @@ int main(int argc, char **argv, char **envp ) {
 
       // The libraries aren't linked in but are noted as "dependent" in the
       // module.
-      for (cl::list<std::string>::const_iterator I = Libraries.begin(), 
+      for (cl::list<std::string>::const_iterator I = Libraries.begin(),
            E = Libraries.end(); I != E ; ++I) {
         TheLinker.getModule()->addLibrary(*I);
       }
@@ -267,7 +267,7 @@ int main(int argc, char **argv, char **envp ) {
     // strip debug info.
     int StripLevel = Strip ? 2 : (StripDebug ? 1 : 0);
 
-    // Internalize the module if neither -disable-internalize nor 
+    // Internalize the module if neither -disable-internalize nor
     // -link-as-library are passed in.
     bool ShouldInternalize = !NoInternalize & !LinkAsLibrary;
 
@@ -281,8 +281,8 @@ int main(int argc, char **argv, char **envp ) {
     Out.close();
 
     // Generate either a native file or a JIT shell script.  If the user wants
-    // to generate a native file, compile it from the bytecode file. Otherwise, 
-    // if the target is not a library, create a script that will run the 
+    // to generate a native file, compile it from the bytecode file. Otherwise,
+    // if the target is not a library, create a script that will run the
     // bytecode through the JIT.
     if (Native) {
       // Name of the Assembly Language output file
@@ -304,10 +304,10 @@ int main(int argc, char **argv, char **envp ) {
 
       // Generate an assembly language file for the bytecode.
       if (Verbose) std::cout << "Generating Assembly Code\n";
-      GenerateAssembly(AssemblyFile.toString(), RealBytecodeOutput, llc, 
+      GenerateAssembly(AssemblyFile.toString(), RealBytecodeOutput, llc,
                        Verbose);
       if (Verbose) std::cout << "Generating Native Code\n";
-      GenerateNative(OutputFilename, AssemblyFile.toString(), 
+      GenerateNative(OutputFilename, AssemblyFile.toString(),
                      LibPaths, Libraries, gcc, envp, LinkAsLibrary, RPath,
                      SOName, Verbose);
 

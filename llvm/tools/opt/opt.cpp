@@ -1,10 +1,10 @@
 //===- opt.cpp - The LLVM Modular Optimizer -------------------------------===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // Optimizations may be specified an arbitrary number of times on the command
@@ -137,7 +137,7 @@ int main(int argc, char **argv) {
     // Create a new optimization pass for each one specified on the command line
     for (unsigned i = 0; i < OptimizationList.size(); ++i) {
       const PassInfo *Opt = OptimizationList[i];
-      
+
       if (Opt->getNormalCtor())
         Passes.add(Opt->getNormalCtor()());
       else if (Opt->getTargetCtor()) {

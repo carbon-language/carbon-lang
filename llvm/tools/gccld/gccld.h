@@ -1,10 +1,10 @@
 //===- gccld.h - Utility functions header file ------------------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file contains function prototypes for the functions in util.cpp.
@@ -32,8 +32,8 @@ GenerateAssembly (const std::string &OutputFilename,
                   const sys::Path &llc,
                   bool Verbose=false);
 
-int 
-GenerateCFile (const std::string &OutputFile, 
+int
+GenerateCFile (const std::string &OutputFile,
                const std::string &InputFile,
                const sys::Path &llc,
                bool Verbose=false);

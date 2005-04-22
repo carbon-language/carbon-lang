@@ -1,10 +1,10 @@
 //===- llvm-prof.cpp - Read in and process llvmprof.out data files --------===//
-// 
+//
 //                      The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This tools is meant for use with the various LLVM profiling instrumentation
@@ -28,11 +28,11 @@
 using namespace llvm;
 
 namespace {
-  cl::opt<std::string> 
+  cl::opt<std::string>
   BytecodeFile(cl::Positional, cl::desc("<program bytecode file>"),
                cl::Required);
 
-  cl::opt<std::string> 
+  cl::opt<std::string>
   ProfileDataFile(cl::Positional, cl::desc("<llvmprof.out file>"),
                   cl::Optional, cl::init("llvmprof.out"));
 
@@ -87,7 +87,7 @@ namespace {
       // Figure out how many times each successor executed.
       std::vector<std::pair<const BasicBlock*, unsigned> > SuccCounts;
       const TerminatorInst *TI = BB->getTerminator();
-      
+
       std::map<ProfileInfoLoader::Edge, unsigned>::iterator I =
         EdgeFreqs.lower_bound(std::make_pair(const_cast<BasicBlock*>(BB), 0U));
       for (; I != EdgeFreqs.end() && I->first.first == BB; ++I)
@@ -142,18 +142,18 @@ int main(int argc, char **argv) {
     unsigned long long TotalExecutions = 0;
     for (unsigned i = 0, e = FunctionCounts.size(); i != e; ++i)
       TotalExecutions += FunctionCounts[i].second;
-    
+
     std::cout << "===" << std::string(73, '-') << "===\n"
               << "LLVM profiling output for execution";
     if (PI.getNumExecutions() != 1) std::cout << "s";
     std::cout << ":\n";
-    
+
     for (unsigned i = 0, e = PI.getNumExecutions(); i != e; ++i) {
       std::cout << "  ";
       if (e != 1) std::cout << i+1 << ". ";
       std::cout << PI.getExecution(i) << "\n";
     }
-    
+
     std::cout << "\n===" << std::string(73, '-') << "===\n";
     std::cout << "Function execution frequencies:\n\n";
 
@@ -185,7 +185,7 @@ int main(int argc, char **argv) {
       // Sort by the frequency, backwards.
       std::sort(Counts.begin(), Counts.end(),
                 PairSecondSortReverse<BasicBlock*>());
-      
+
       std::cout << "\n===" << std::string(73, '-') << "===\n";
       std::cout << "Top 20 most frequently executed basic blocks:\n\n";
 
@@ -205,7 +205,7 @@ int main(int argc, char **argv) {
 
       BlockFreqs.insert(Counts.begin(), Counts.end());
     }
-    
+
     if (PI.hasAccurateEdgeCounts()) {
       std::vector<std::pair<ProfileInfoLoader::Edge, unsigned> > Counts;
       PI.getEdgeCounts(Counts);
@@ -215,7 +215,7 @@ int main(int argc, char **argv) {
     if (PrintAnnotatedLLVM || PrintAllCode) {
       std::cout << "\n===" << std::string(73, '-') << "===\n";
       std::cout << "Annotated LLVM code for the module:\n\n";
-      
+
       ProfileAnnotator PA(FuncFreqs, BlockFreqs, EdgeFreqs);
 
       if (FunctionsToPrint.empty() || PrintAllCode)
