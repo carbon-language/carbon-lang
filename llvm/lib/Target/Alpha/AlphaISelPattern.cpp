@@ -383,6 +383,7 @@ class ISel : public SelectionDAGISel {
   int count_ins;
   int count_outs;
   bool has_sym;
+  int max_depth;
 
 public:
   ISel(TargetMachine &TM) : SelectionDAGISel(AlphaLowering), AlphaLowering(TM)
@@ -394,17 +395,20 @@ public:
     DEBUG(BB->dump());
     count_ins = 0;
     count_outs = 0;
+    max_depth = 0;
     has_sym = false;
 
     // Codegen the basic block.
     ISelDAG = &DAG;
+    max_depth = DAG.getRoot().getNodeDepth();
     Select(DAG.getRoot());
 
     if(has_sym)
       ++count_ins;
     if(EnableAlphaCount)
-      std::cerr << "COUNT: " << BB->getParent()->getFunction ()->getName() << " "
-                << BB->getNumber() << " "
+      std::cerr << "COUNT: " << BB->getParent()->getFunction ()->getName() << " " 
+                << BB->getNumber() << " " 
+                << max_depth << " "
                 << count_ins << " "
                 << count_outs << "\n";
 
