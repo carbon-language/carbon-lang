@@ -218,6 +218,8 @@ else
     Sparc)   AC_SUBST(JIT,[[TARGET_HAS_JIT=1]]) ;;
     PowerPC) AC_SUBST(JIT,[[TARGET_HAS_JIT=1]]) ;;
     x86_64)  AC_SUBST(JIT,[[]]) ;;
+    Alpha)   AC_SUBST(JIT,[[]]) ;;
+    IA64)    AC_SUBST(JIT,[[]]) ;;
     *)       AC_SUBST(JIT,[[]]) ;;
   esac
 fi
@@ -234,6 +236,53 @@ case "$enableval" in
   *) AC_MSG_ERROR([Invalid setting for --enable-doxygen. Use "yes" or "no"]) ;;
 esac
 
+dnl Allow specific targets to be specified for building (or not)
+TARGETS_TO_BUILD=""
+AC_ARG_ENABLE([target-this],AS_HELP_STRING([--enable-target-this],
+[Build only the current host's target (default is NO)]),,enable_target_this=no)
+AC_ARG_ENABLE([target-x86],AS_HELP_STRING([--enable-target-x86],
+[Build the x86 target (default is YES)]),,enable_target_x86=yes)
+AC_ARG_ENABLE([target-x86-64],AS_HELP_STRING([--enable-target-x86-64],
+[Build the x86_64 target (default is YES)]),,enable_target_x86_64=yes)
+AC_ARG_ENABLE([target-sparc],AS_HELP_STRING([--enable-target-sparc],
+[Build the Sparc target (default is YES)]),,enable_target_sparc=yes)
+AC_ARG_ENABLE([target-powerpc],AS_HELP_STRING([--enable-target-powerpc],
+[Build the PowerPC target (default is YES)]),,enable_target_powerpc=yes)
+AC_ARG_ENABLE([target-alpha],AS_HELP_STRING([--enable-target-alpha],
+[Build the Alpha target (default is YES)]),,enable_target_alpha=yes)
+AC_ARG_ENABLE(]target-ia64],AS_HELP_STRING([--enable-target-ia64],
+[Build the IA64 target (default is YES)]),,enable_target_ia64=yes)
+
+if test "$enable_target_this" = "yes" ; then
+  case "$llvm_cv_target_arch" in
+    x86)     TARGETS_TO_BUILD="X86" ;;
+    x86_64)  TARGETS_TO_BUILD="X86" ;;
+    Sparc)   TARGETS_TO_BUILD="SparcV8 SparcV9" ;;
+    PowerPC) TARGETS_TO_BUILD="PowerPC" ;;
+    Alpha)   TARGETS_TO_BUILD="Alpha" ;;
+    IA64)    TARGETS_TO_BUILD="IA64" ;;
+    *)       AC_MSG_ERROR([Can not set target to build]) ;;
+  esac
+else
+  if test "$enable_target_x86" = "yes" -o "$enable_target_x86_64" = "yes" ; then
+    TARGETS_TO_BUILD="X86 $TARGETS_TO_BUILD"
+  fi
+  if test "$enable_target_sparc" = "yes" ; then
+    TARGETS_TO_BUILD="SparcV8 SparcV9 $TARGETS_TO_BUILD"
+  fi
+  if test "$enable_target_powerpc" = "yes" ; then
+    TARGETS_TO_BUILD="PowerPC $TARGETS_TO_BUILD"
+  fi
+  if test "$enable_target_alpha" = "yes" ; then
+    TARGETS_TO_BUILD="Alpha $TARGETS_TO_BUILD"
+  fi
+  if test "$enable_target_ia64" = "yes" ; then
+    TARGETS_TO_BUILD="IA64 $TARGETS_TO_BUILD"
+  fi
+fi
+
+AC_SUBST(TARGETS_TO_BUILD,$TARGETS_TO_BUILD)
+
 dnl Allow a specific llvm-gcc/llvm-g++ pair to be used with this LLVM config.
 AC_ARG_WITH(llvmgccdir,
   AS_HELP_STRING([--with-llvmgccdir],
@@ -244,6 +293,7 @@ case "$withval" in
   /*)      WITH_LLVMGCCDIR=$withval ;;
   *) AC_MSG_ERROR([Invalid path for --with-llvmgccdir. Provide full path]) ;;
 esac
+
 
 dnl===-----------------------------------------------------------------------===
 dnl===
