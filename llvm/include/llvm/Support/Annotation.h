@@ -132,10 +132,10 @@ public:
   inline Annotation *unlinkAnnotation(AnnotationID ID) const {
     for (Annotation **A = &AnnotationList; *A; A = &((*A)->Next))
       if ((*A)->getID() == ID) {
-	Annotation *Ret = *A;
-	*A = Ret->Next;
-	Ret->Next = 0;
-	return Ret;
+        Annotation *Ret = *A;
+        *A = Ret->Next;
+        Ret->Next = 0;
+        return Ret;
       }
     return 0;
   }
@@ -187,7 +187,7 @@ struct AnnotationManager {
   // Annotable::getOrCreateAnnotation method.
   //
   static void registerAnnotationFactory(AnnotationID ID, Factory Func,
-					void *ExtraData = 0);
+                                        void *ExtraData = 0);
 
   // createAnnotation - Create an annotation of the specified ID for the
   // specified object, using a register annotation creation function.
