@@ -268,6 +268,7 @@ case "$enableval" in
   done 
   ;;
 esac
+TARGETS_TO_BUILD="CBackend $TARGETS_TO_BUILD"
 AC_SUBST(TARGETS_TO_BUILD,$TARGETS_TO_BUILD)
 
 dnl Allow a specific llvm-gcc/llvm-g++ pair to be used with this LLVM config.
