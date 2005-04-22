@@ -93,10 +93,10 @@ void PrintStackTrace() {
 
     // Try to run c++filt or gc++filt.  If neither is found, call back on 'cat'
     // to print the mangled stack trace.  If we can't find cat, just exit.
-    execlp("c++filt", "c++filt", 0);
-    execlp("gc++filt", "gc++filt", 0);
-    execlp("cat", "cat", 0);
-    execlp("/bin/cat", "cat", 0);
+    execlp("c++filt", "c++filt", (char*)NULL);
+    execlp("gc++filt", "gc++filt", (char*)NULL);
+    execlp("cat", "cat", (char*)NULL);
+    execlp("/bin/cat", "cat", (char*)NULL);
     exit(0);
   }
 #endif
