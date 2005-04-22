@@ -33,7 +33,7 @@ bool IA64InstrInfo::isMoveInstr(const MachineInstr& MI,
              MI.getOperand(1).isRegister() && */
              "invalid register-register move instruction");
      if( MI.getOperand(0).isRegister() &&
-	 MI.getOperand(1).isRegister() ) {
+         MI.getOperand(1).isRegister() ) {
        // if both operands of the MOV/FMOV are registers, then
        // yes, this is a move instruction
        sourceReg = MI.getOperand(1).getReg();

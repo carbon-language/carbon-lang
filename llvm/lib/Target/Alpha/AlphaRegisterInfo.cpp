@@ -135,11 +135,11 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
 
       MachineInstr *New;
       if (Old->getOpcode() == Alpha::ADJUSTSTACKDOWN) {
- 	New=BuildMI(Alpha::LDA, 2, Alpha::R30)
+         New=BuildMI(Alpha::LDA, 2, Alpha::R30)
           .addImm(-Amount).addReg(Alpha::R30);
       } else {
- 	assert(Old->getOpcode() == Alpha::ADJUSTSTACKUP);
- 	New=BuildMI(Alpha::LDA, 2, Alpha::R30)
+         assert(Old->getOpcode() == Alpha::ADJUSTSTACKUP);
+         New=BuildMI(Alpha::LDA, 2, Alpha::R30)
           .addImm(Amount).addReg(Alpha::R30);
       }
 
@@ -272,8 +272,8 @@ void AlphaRegisterInfo::emitEpilogue(MachineFunction &MF,
   const MachineFrameInfo *MFI = MF.getFrameInfo();
   MachineBasicBlock::iterator MBBI = prior(MBB.end());
   MachineInstr *MI;
-  assert((MBBI->getOpcode() == Alpha::RET || MBBI->getOpcode() == Alpha::RETURN) &&
-	 "Can only insert epilog into returning blocks");
+  assert((MBBI->getOpcode() == Alpha::RET || MBBI->getOpcode() == Alpha::RETURN)
+         && "Can only insert epilog into returning blocks");
 
   bool FP = hasFP(MF);
 

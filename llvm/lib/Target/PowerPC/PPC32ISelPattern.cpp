@@ -263,8 +263,9 @@ PPC32TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
 
 std::pair<SDOperand, SDOperand>
 PPC32TargetLowering::LowerCallTo(SDOperand Chain,
-				 const Type *RetTy, bool isVarArg,
-         SDOperand Callee, ArgListTy &Args, SelectionDAG &DAG) {
+                                 const Type *RetTy, bool isVarArg,
+                                 SDOperand Callee, ArgListTy &Args,
+                                 SelectionDAG &DAG) {
   // args_to_use will accumulate outgoing args for the ISD::CALL case in
   // SelectExpr to use to put the arguments in the appropriate registers.
   std::vector<SDOperand> args_to_use;
@@ -2366,7 +2367,7 @@ void ISel::Select(SDOperand N) {
     case 3:
       assert(N.getOperand(1).getValueType() == MVT::i32 &&
              N.getOperand(2).getValueType() == MVT::i32 &&
-	           "Unknown two-register value!");
+             "Unknown two-register value!");
       Select(N.getOperand(0));
       Tmp1 = SelectExpr(N.getOperand(1));
       Tmp2 = SelectExpr(N.getOperand(2));

@@ -133,12 +133,12 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
 
       MachineInstr *New;
       if (Old->getOpcode() == IA64::ADJUSTCALLSTACKDOWN) {
-	New=BuildMI(IA64::ADDIMM22, 2, IA64::r12).addReg(IA64::r12)
-	  .addSImm(-Amount);
+        New=BuildMI(IA64::ADDIMM22, 2, IA64::r12).addReg(IA64::r12)
+          .addSImm(-Amount);
       } else {
-	assert(Old->getOpcode() == IA64::ADJUSTCALLSTACKUP);
-	New=BuildMI(IA64::ADDIMM22, 2, IA64::r12).addReg(IA64::r12)
-	  .addSImm(Amount);
+        assert(Old->getOpcode() == IA64::ADJUSTCALLSTACKUP);
+        New=BuildMI(IA64::ADDIMM22, 2, IA64::r12).addReg(IA64::r12)
+          .addSImm(Amount);
       }
 
       // Replace the pseudo instruction with a new instruction...
@@ -225,7 +225,7 @@ void IA64RegisterInfo::emitPrologue(MachineFunction &MF) const {
         IA64::r108, IA64::r109, IA64::r110, IA64::r111, IA64::r112, IA64::r113,
         IA64::r114, IA64::r115, IA64::r116, IA64::r117, IA64::r118, IA64::r119,
         IA64::r120, IA64::r121, IA64::r122, IA64::r123, IA64::r124, IA64::r125,
-	IA64::r126, IA64::r127 };
+        IA64::r126, IA64::r127 };
 
   unsigned numStackedGPRsUsed=0;
   for(int i=0; i<96; i++) {

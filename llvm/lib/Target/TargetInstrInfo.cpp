@@ -26,21 +26,21 @@ namespace llvm {
 }
 
 TargetInstrInfo::TargetInstrInfo(const TargetInstrDescriptor* Desc,
-				 unsigned numOpcodes)
+                                 unsigned numOpcodes)
   : desc(Desc), NumOpcodes(numOpcodes) {
   // FIXME: TargetInstrDescriptors should not be global
   assert(TargetInstrDescriptors == NULL && desc != NULL
          && "TargetMachine data structure corrupt; maybe you tried to create another TargetMachine? (only one may exist in a program)");
-  TargetInstrDescriptors = desc;	// initialize global variable
+  TargetInstrDescriptors = desc; // initialize global variable
 }
 
 TargetInstrInfo::~TargetInstrInfo() {
-  TargetInstrDescriptors = NULL;	// reset global variable
+  TargetInstrDescriptors = NULL; // reset global variable
 }
 
 // FIXME: SPARCV9 SPECIFIC!
 bool TargetInstrInfo::constantFitsInImmedField(MachineOpCode opCode,
-					       int64_t intValue) const {
+                                               int64_t intValue) const {
   // First, check if opCode has an immed field.
   bool isSignExtended;
   uint64_t maxImmedValue = maxImmedConstant(opCode, isSignExtended);
@@ -52,8 +52,8 @@ bool TargetInstrInfo::constantFitsInImmedField(MachineOpCode opCode,
 
       // Now check if the constant fits
       if (intValue <= (int64_t) maxImmedValue &&
-	  intValue >= -((int64_t) maxImmedValue+1))
-	return true;
+          intValue >= -((int64_t) maxImmedValue+1))
+        return true;
     }
 
   return false;

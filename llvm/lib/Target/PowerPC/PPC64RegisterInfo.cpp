@@ -50,7 +50,7 @@ PPC64RegisterInfo::PPC64RegisterInfo()
 
 static const TargetRegisterClass *getClass(unsigned SrcReg) {
   if (PPC64::FPRCRegisterClass->contains(SrcReg))
-  	return PPC64::FPRCRegisterClass;
+    return PPC64::FPRCRegisterClass;
   assert(PPC64::GPRCRegisterClass->contains(SrcReg) && "Reg not FPR or GPR");
   return PPC64::GPRCRegisterClass;
 }

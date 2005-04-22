@@ -43,7 +43,7 @@ CPUResource* CPUResource::getCPUResource(resourceId_t id) {
 //
 inline static bool
 RUConflict(const std::vector<resourceId_t>& fromRVec,
-	   const std::vector<resourceId_t>& toRVec)
+           const std::vector<resourceId_t>& toRVec)
 {
 
   unsigned fN = fromRVec.size(), tN = toRVec.size();
@@ -63,7 +63,7 @@ RUConflict(const std::vector<resourceId_t>& fromRVec,
 
 static CycleCount_t
 ComputeMinGap(const InstrRUsage &fromRU,
-	      const InstrRUsage &toRU)
+              const InstrRUsage &toRU)
 {
   CycleCount_t minGap = 0;
 
@@ -92,7 +92,7 @@ ComputeMinGap(const InstrRUsage &fromRU,
 
 //---------------------------------------------------------------------------
 // class TargetSchedInfo
-//	Interface to machine description for instruction scheduling
+// Interface to machine description for instruction scheduling
 //---------------------------------------------------------------------------
 
 TargetSchedInfo::TargetSchedInfo(const TargetMachine&    tgt,
@@ -112,8 +112,8 @@ TargetSchedInfo::TargetSchedInfo(const TargetMachine&    tgt,
 void
 TargetSchedInfo::initializeResources()
 {
-  assert(MAX_NUM_SLOTS >= (int)getMaxNumIssueTotal()
-	 && "Insufficient slots for static data! Increase MAX_NUM_SLOTS");
+  assert(MAX_NUM_SLOTS >= (int)getMaxNumIssueTotal() &&
+         "Insufficient slots for static data! Increase MAX_NUM_SLOTS");
 
   // First, compute common resource usage info for each class because
   // most instructions will probably behave the same as their class.
@@ -134,8 +134,7 @@ TargetSchedInfo::initializeResources()
 
 void
 TargetSchedInfo::computeInstrResources(const std::vector<InstrRUsage>&
-					instrRUForClasses)
-{
+                                        instrRUForClasses) {
   int numOpCodes =  mii->getNumOpcodes();
   instrRUsages.resize(numOpCodes);
 
@@ -164,8 +163,7 @@ TargetSchedInfo::computeInstrResources(const std::vector<InstrRUsage>&
 
 void
 TargetSchedInfo::computeIssueGaps(const std::vector<InstrRUsage>&
-				   instrRUForClasses)
-{
+                                   instrRUForClasses) {
   int numOpCodes =  mii->getNumOpcodes();
   issueGaps.resize(numOpCodes);
   conflictLists.resize(numOpCodes);
@@ -206,7 +204,7 @@ TargetSchedInfo::computeIssueGaps(const std::vector<InstrRUsage>&
 
 
 void InstrRUsage::setTo(const InstrClassRUsage& classRU) {
-  sameAsClass	= true;
+  sameAsClass   = true;
   isSingleIssue = classRU.isSingleIssue;
   breaksGroup   = classRU.breaksGroup;
   numBubbles    = classRU.numBubbles;
@@ -222,7 +220,7 @@ void InstrRUsage::setTo(const InstrClassRUsage& classRU) {
 
   for (unsigned i=0; i < classRU.numRUEntries; i++)
     for (unsigned c=classRU.V[i].startCycle, NC = c + classRU.V[i].numCycles;
-	 c < NC; c++)
+         c < NC; c++)
       this->resourcesByCycle[c].push_back(classRU.V[i].resourceId);
 
   // Sort each resource usage vector by resourceId_t to speed up conflict

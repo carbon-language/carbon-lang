@@ -113,14 +113,14 @@ bool IA64SharedAsmPrinter::doFinalization(Module &M) {
            I->hasWeakLinkage() /* FIXME: Verify correct */)) {
         SwitchSection(O, CurSection, ".data");
         if (I->hasInternalLinkage()) {
-	  O << "\t.lcomm " << name << "," << TD.getTypeSize(C->getType())
-	    << "," << (1 << Align);
-	  O << "\t\t// ";
-	} else {
-	  O << "\t.common " << name << "," << TD.getTypeSize(C->getType())
-	    << "," << (1 << Align);
-	  O << "\t\t// ";
-	}
+          O << "\t.lcomm " << name << "," << TD.getTypeSize(C->getType())
+            << "," << (1 << Align);
+          O << "\t\t// ";
+        } else {
+          O << "\t.common " << name << "," << TD.getTypeSize(C->getType())
+            << "," << (1 << Align);
+          O << "\t\t// ";
+        }
         WriteAsOperand(O, I, true, true, &M);
         O << "\n";
       } else {
@@ -131,7 +131,7 @@ bool IA64SharedAsmPrinter::doFinalization(Module &M) {
           O << "\t.weak " << name << "\n";
           SwitchSection(O, CurSection, "");
           O << "\t.section\t.llvm.linkonce.d." << name
-	    << ", \"aw\", \"progbits\"\n";
+            << ", \"aw\", \"progbits\"\n";
           break;
         case GlobalValue::AppendingLinkage:
           // FIXME: appending linkage variables should go into a section of
@@ -352,19 +352,19 @@ void IA64AsmPrinter::printOp(const MachineOperand &MO,
 
     bool Needfptr=false; // if we're computing an address @ltoff(X), do
                          // we need to decorate it so it becomes
-			 // @ltoff(@fptr(X)) ?
-    if(F && !isBRCALLinsn /*&& F->isExternal()*/)
+                         // @ltoff(@fptr(X)) ?
+    if (F && !isBRCALLinsn /*&& F->isExternal()*/)
       Needfptr=true;
 
     // if this is the target of a call instruction, we should define
     // the function somewhere (GNU gas has no problem without this, but
     // Intel ias rightly complains of an 'undefined symbol')
 
-    if(F /*&& isBRCALLinsn*/ && F->isExternal())
+    if (F /*&& isBRCALLinsn*/ && F->isExternal())
       ExternalFunctionNames.insert(Mang->getValueName(MO.getGlobal()));
     else
-      if(GV->isExternal()) // e.g. stuff like 'stdin'
-	ExternalObjectNames.insert(Mang->getValueName(MO.getGlobal()));
+      if (GV->isExternal()) // e.g. stuff like 'stdin'
+        ExternalObjectNames.insert(Mang->getValueName(MO.getGlobal()));
 
     if (!isBRCALLinsn)
       O << "@ltoff(";
@@ -406,9 +406,9 @@ bool IA64AsmPrinter::doInitialization(Module &M) {
   AsmPrinter::doInitialization(M);
 
   O << "\n.ident \"LLVM-ia64\"\n\n"
-    << "\t.psr	  lsb\n"  // should be "msb" on HP-UX, for starters
+    << "\t.psr    lsb\n"  // should be "msb" on HP-UX, for starters
     << "\t.radix  C\n"
-    << "\t.psr	  abi64\n"; // we only support 64 bits for now
+    << "\t.psr    abi64\n"; // we only support 64 bits for now
   return false;
 }
 

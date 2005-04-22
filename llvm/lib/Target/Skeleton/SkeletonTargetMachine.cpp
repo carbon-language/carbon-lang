@@ -38,7 +38,7 @@ SkeletonTargetMachine::SkeletonTargetMachine(const Module &M,
 /// to implement a static compiler for this target.
 ///
 bool SkeletonTargetMachine::addPassesToEmitAssembly(PassManager &PM,
-					       std::ostream &Out) {
+                                                    std::ostream &Out) {
   // <insert instruction selector passes here>
   PM.add(createRegisterAllocator());
   PM.add(createPrologEpilogCodeInserter());

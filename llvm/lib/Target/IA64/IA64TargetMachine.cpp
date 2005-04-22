@@ -56,10 +56,10 @@ unsigned IA64TargetMachine::getModuleMatchQuality(const Module &M) {
 
   if (TT.size() >= 4) {
     if( (TT[0]=='i' || TT[0]=='I') &&
-	(TT[1]=='a' || TT[1]=='A') ) {
+        (TT[1]=='a' || TT[1]=='A') ) {
       for(unsigned int i=2; i<(TT.size()-1); i++)
-	if(TT[i]=='6' && TT[i+1]=='4')
-	  seenIA64=true;
+        if(TT[i]=='6' && TT[i+1]=='4')
+          seenIA64=true;
     }
 
     if(seenIA64)
@@ -80,7 +80,7 @@ IA64TargetMachine::IA64TargetMachine(const Module &M, IntrinsicLowering *IL)
 // addPassesToEmitAssembly - We currently use all of the same passes as the JIT
 // does to emit statically compiled machine code.
 bool IA64TargetMachine::addPassesToEmitAssembly(PassManager &PM,
-					       std::ostream &Out) {
+                                                std::ostream &Out) {
   // FIXME: Implement efficient support for garbage collection intrinsics.
   PM.add(createLowerGCPass());
 

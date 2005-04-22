@@ -50,7 +50,7 @@ PPC32RegisterInfo::PPC32RegisterInfo()
 
 static const TargetRegisterClass *getClass(unsigned SrcReg) {
   if (PPC32::FPRCRegisterClass->contains(SrcReg))
-  	return PPC32::FPRCRegisterClass;
+    return PPC32::FPRCRegisterClass;
   assert(PPC32::GPRCRegisterClass->contains(SrcReg) && "Reg not FPR or GPR");
   return PPC32::GPRCRegisterClass;
 }

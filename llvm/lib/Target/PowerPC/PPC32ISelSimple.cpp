@@ -1306,7 +1306,7 @@ void PPC32ISel::visitSetCondInst(SetCondInst &I) {
         }
       } // switch
       return;
-  	}
+    }
   }
   unsigned PPCOpcode = getPPCOpcodeForSetCCOpcode(Opcode);
 

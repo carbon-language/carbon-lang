@@ -132,7 +132,7 @@ namespace {
 //collected in a memory argument list that is a naturally aligned
 //array of quadwords. In a standard call, this list, if present, must
 //be passed at 0(SP).
-//7 ... n  	  	  	0(SP) ... (n-7)*8(SP)
+//7 ... n         0(SP) ... (n-7)*8(SP)
 
 // //#define FP    $15
 // //#define RA    $26
@@ -158,9 +158,9 @@ AlphaTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG)
   //BuildMI(&BB, Alpha::IDEF, 0, Alpha::R26);
 
   unsigned args_int[] = {Alpha::R16, Alpha::R17, Alpha::R18,
-			 Alpha::R19, Alpha::R20, Alpha::R21};
+                         Alpha::R19, Alpha::R20, Alpha::R21};
   unsigned args_float[] = {Alpha::F16, Alpha::F17, Alpha::F18,
-			   Alpha::F19, Alpha::F20, Alpha::F21};
+                           Alpha::F19, Alpha::F20, Alpha::F21};
   int count = 0;
 
   //Def incoming registers
@@ -286,14 +286,15 @@ AlphaTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG)
 
 std::pair<SDOperand, SDOperand>
 AlphaTargetLowering::LowerCallTo(SDOperand Chain,
-				 const Type *RetTy, bool isVarArg,
-         SDOperand Callee, ArgListTy &Args, SelectionDAG &DAG) {
+                                 const Type *RetTy, bool isVarArg,
+                                 SDOperand Callee, ArgListTy &Args, 
+                                 SelectionDAG &DAG) {
   int NumBytes = 0;
   if (Args.size() > 6)
     NumBytes = (Args.size() - 6) * 8;
 
   Chain = DAG.getNode(ISD::ADJCALLSTACKDOWN, MVT::Other, Chain,
-		      DAG.getConstant(NumBytes, getPointerTy()));
+                      DAG.getConstant(NumBytes, getPointerTy()));
   std::vector<SDOperand> args_to_use;
   for (unsigned i = 0, e = Args.size(); i != e; ++i)
   {
@@ -911,11 +912,11 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
   case ISD::FNEG:
     if(ISD::FABS == N.getOperand(0).getOpcode())
       {
-	Tmp1 = SelectExpr(N.getOperand(0).getOperand(0));
-	BuildMI(BB, Alpha::CPYSN, 2, Result).addReg(Alpha::F31).addReg(Tmp1);
+        Tmp1 = SelectExpr(N.getOperand(0).getOperand(0));
+        BuildMI(BB, Alpha::CPYSN, 2, Result).addReg(Alpha::F31).addReg(Tmp1);
       } else {
-	Tmp1 = SelectExpr(N.getOperand(0));
-	BuildMI(BB, Alpha::CPYSN, 2, Result).addReg(Tmp1).addReg(Tmp1);
+        Tmp1 = SelectExpr(N.getOperand(0));
+        BuildMI(BB, Alpha::CPYSN, 2, Result).addReg(Tmp1).addReg(Tmp1);
       }
     return Result;
 
@@ -1029,9 +1030,9 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
     {
       // Make sure we generate both values.
       if (Result != notIn)
-	ExprMap[N.getValue(1)] = notIn;   // Generate the token
+        ExprMap[N.getValue(1)] = notIn;   // Generate the token
       else
-	Result = ExprMap[N.getValue(0)] = MakeReg(N.getValue(0).getValueType());
+        Result = ExprMap[N.getValue(0)] = MakeReg(N.getValue(0).getValueType());
 
       DestType = N.getValue(0).getValueType();
 
@@ -1449,12 +1450,12 @@ unsigned ISel::SelectExpr(SDOperand N) {
       case MVT::i16:
       case MVT::i32:
       case MVT::i64:
-	BuildMI(BB, Alpha::BIS, 2, Result).addReg(Alpha::R0).addReg(Alpha::R0);
-	break;
+        BuildMI(BB, Alpha::BIS, 2, Result).addReg(Alpha::R0).addReg(Alpha::R0);
+        break;
       case MVT::f32:
       case MVT::f64:
-	BuildMI(BB, Alpha::CPYS, 2, Result).addReg(Alpha::F0).addReg(Alpha::F0);
-	break;
+        BuildMI(BB, Alpha::CPYS, 2, Result).addReg(Alpha::F0).addReg(Alpha::F0);
+        break;
       }
       return Result+N.ResNo;
     }
@@ -1571,7 +1572,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
           bool isConst1 = false;
           bool isConst2 = false;
           int dir;
-	
+
           //Tmp1 = SelectExpr(N.getOperand(0));
           if(N.getOperand(0).getOpcode() == ISD::Constant &&
              cast<ConstantSDNode>(N.getOperand(0))->getValue() <= 255)
@@ -1667,9 +1668,9 @@ unsigned ISel::SelectExpr(SDOperand N) {
 
       // Make sure we generate both values.
       if (Result != notIn)
-	ExprMap[N.getValue(1)] = notIn;   // Generate the token
+        ExprMap[N.getValue(1)] = notIn;   // Generate the token
       else
-	Result = ExprMap[N.getValue(0)] = MakeReg(N.getValue(0).getValueType());
+        Result = ExprMap[N.getValue(0)] = MakeReg(N.getValue(0).getValueType());
 
       SDOperand Chain   = N.getOperand(0);
 
@@ -1685,11 +1686,11 @@ unsigned ISel::SelectExpr(SDOperand N) {
   case ISD::XOR:
     //Match Not
     if (N.getOperand(1).getOpcode() == ISD::Constant &&
-	cast<ConstantSDNode>(N.getOperand(1))->getSignExtended() == -1)
+        cast<ConstantSDNode>(N.getOperand(1))->getSignExtended() == -1)
       {
-	Tmp1 = SelectExpr(N.getOperand(0));
-	BuildMI(BB, Alpha::ORNOT, 2, Result).addReg(Alpha::R31).addReg(Tmp1);
-	return Result;
+        Tmp1 = SelectExpr(N.getOperand(0));
+        BuildMI(BB, Alpha::ORNOT, 2, Result).addReg(Alpha::R31).addReg(Tmp1);
+        return Result;
       }
     //Fall through
   case ISD::AND:
@@ -1717,32 +1718,32 @@ unsigned ISel::SelectExpr(SDOperand N) {
     //Check operand(0) == Not
     if (N.getOperand(0).getOpcode() == ISD::XOR &&
         N.getOperand(0).getOperand(1).getOpcode() == ISD::Constant &&
-	cast<ConstantSDNode>(N.getOperand(0).getOperand(1))->getSignExtended() == -1)
+        cast<ConstantSDNode>(N.getOperand(0).getOperand(1))->getSignExtended() == -1)
       {
-	switch(opcode) {
-	case ISD::AND: Opc = Alpha::BIC; break;
-	case ISD::OR:  Opc = Alpha::ORNOT; break;
-	case ISD::XOR: Opc = Alpha::EQV; break;
-	}
-	Tmp1 = SelectExpr(N.getOperand(1));
-	Tmp2 = SelectExpr(N.getOperand(0).getOperand(0));
-	BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
-	return Result;
+        switch(opcode) {
+        case ISD::AND: Opc = Alpha::BIC; break;
+        case ISD::OR:  Opc = Alpha::ORNOT; break;
+        case ISD::XOR: Opc = Alpha::EQV; break;
+        }
+        Tmp1 = SelectExpr(N.getOperand(1));
+        Tmp2 = SelectExpr(N.getOperand(0).getOperand(0));
+        BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
+        return Result;
       }
     //Check operand(1) == Not
     if (N.getOperand(1).getOpcode() == ISD::XOR &&
         N.getOperand(1).getOperand(1).getOpcode() == ISD::Constant &&
-	cast<ConstantSDNode>(N.getOperand(1).getOperand(1))->getSignExtended() == -1)
+        cast<ConstantSDNode>(N.getOperand(1).getOperand(1))->getSignExtended() == -1)
       {
-	switch(opcode) {
-	case ISD::AND: Opc = Alpha::BIC; break;
-	case ISD::OR:  Opc = Alpha::ORNOT; break;
-	case ISD::XOR: Opc = Alpha::EQV; break;
-	}
-	Tmp1 = SelectExpr(N.getOperand(0));
-	Tmp2 = SelectExpr(N.getOperand(1).getOperand(0));
-	BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
-	return Result;
+        switch(opcode) {
+        case ISD::AND: Opc = Alpha::BIC; break;
+        case ISD::OR:  Opc = Alpha::ORNOT; break;
+        case ISD::XOR: Opc = Alpha::EQV; break;
+        }
+        Tmp1 = SelectExpr(N.getOperand(0));
+        Tmp2 = SelectExpr(N.getOperand(1).getOperand(0));
+        BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
+        return Result;
       }
     //Fall through
   case ISD::SHL:
@@ -1930,11 +1931,11 @@ unsigned ISel::SelectExpr(SDOperand N) {
       assert (SrcType == MVT::f32 || SrcType == MVT::f64);
       Tmp1 = SelectExpr(N.getOperand(0));  // Get the operand register
       if (SrcType == MVT::f32)
-	{
-	  Tmp2 = MakeReg(MVT::f64);
-	  BuildMI(BB, Alpha::CVTST, 1, Tmp2).addReg(Tmp1);
-	  Tmp1 = Tmp2;
-	}
+        {
+          Tmp2 = MakeReg(MVT::f64);
+          BuildMI(BB, Alpha::CVTST, 1, Tmp2).addReg(Tmp1);
+          Tmp1 = Tmp2;
+        }
       Tmp2 = MakeReg(MVT::f64);
       BuildMI(BB, Alpha::CVTTQ, 1, Tmp2).addReg(Tmp1);
       MoveFP2Int(Tmp2, Result, true);
@@ -1957,19 +1958,19 @@ unsigned ISel::SelectExpr(SDOperand N) {
       if (CC.getOpcode() == ISD::SETCC &&
           !MVT::isInteger(SetCC->getOperand(0).getValueType()))
       { //FP Setcc -> Int Select
-	Tmp1 = MakeReg(MVT::f64);
+        Tmp1 = MakeReg(MVT::f64);
         Tmp2 = SelectExpr(N.getOperand(1)); //Use if TRUE
         Tmp3 = SelectExpr(N.getOperand(2)); //Use if FALSE
-	bool inv = SelectFPSetCC(CC, Tmp1);
-	BuildMI(BB, inv?Alpha::CMOVNE_FP:Alpha::CMOVEQ_FP, 2, Result)
-	  .addReg(Tmp2).addReg(Tmp3).addReg(Tmp1);
-	return Result;
+        bool inv = SelectFPSetCC(CC, Tmp1);
+        BuildMI(BB, inv?Alpha::CMOVNE_FP:Alpha::CMOVEQ_FP, 2, Result)
+          .addReg(Tmp2).addReg(Tmp3).addReg(Tmp1);
+        return Result;
       }
       if (CC.getOpcode() == ISD::SETCC) {
-	//Int SetCC -> Select
-	//Dropping the CC is only useful if we are comparing to 0
-	if((SetCC->getOperand(1).getOpcode() == ISD::Constant &&
-	   cast<ConstantSDNode>(SetCC->getOperand(1))->getValue() == 0) ||
+        //Int SetCC -> Select
+        //Dropping the CC is only useful if we are comparing to 0
+        if((SetCC->getOperand(1).getOpcode() == ISD::Constant &&
+           cast<ConstantSDNode>(SetCC->getOperand(1))->getValue() == 0) ||
            (SetCC->getOperand(0).getOpcode() == ISD::Constant &&
             cast<ConstantSDNode>(SetCC->getOperand(0))->getValue() == 0))
         {
@@ -2013,12 +2014,12 @@ unsigned ISel::SelectExpr(SDOperand N) {
           if (LeftConst) {
             Tmp3 = SelectExpr(N.getOperand(2)); //Use if FALSE
             BuildMI(BB, Opc, 2, Result).addReg(Tmp3)
-		.addImm(cast<ConstantSDNode>(N.getOperand(1))->getValue())
+                .addImm(cast<ConstantSDNode>(N.getOperand(1))->getValue())
                 .addReg(Tmp1);
           } else if (RightConst) {
             Tmp3 = SelectExpr(N.getOperand(1)); //Use if FALSE
             BuildMI(BB, Opc, 2, Result).addReg(Tmp3)
-		.addImm(cast<ConstantSDNode>(N.getOperand(2))->getValue())
+                .addImm(cast<ConstantSDNode>(N.getOperand(2))->getValue())
                 .addReg(Tmp1);
           } else {
             Tmp2 = SelectExpr(N.getOperand(1)); //Use if TRUE
@@ -2027,7 +2028,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
           }
           return Result;
         }
-	//Otherwise, fall though
+        //Otherwise, fall though
       }
       Tmp1 = SelectExpr(N.getOperand(0)); //Cond
       Tmp2 = SelectExpr(N.getOperand(1)); //Use if TRUE
@@ -2041,13 +2042,13 @@ unsigned ISel::SelectExpr(SDOperand N) {
     {
       int64_t val = (int64_t)cast<ConstantSDNode>(N)->getValue();
       if (val <= IMM_HIGH && val >= IMM_LOW) {
-	BuildMI(BB, Alpha::LDA, 2, Result).addImm(val).addReg(Alpha::R31);
+        BuildMI(BB, Alpha::LDA, 2, Result).addImm(val).addReg(Alpha::R31);
       }
-      else if (val <= (int64_t)IMM_HIGH + (int64_t)IMM_HIGH * (int64_t)IMM_MULT &&
-	       val >= (int64_t)IMM_LOW + (int64_t)IMM_LOW * (int64_t)IMM_MULT) {
-	Tmp1 = MakeReg(MVT::i64);
-	BuildMI(BB, Alpha::LDAH, 2, Tmp1).addImm(getUpper16(val)).addReg(Alpha::R31);
-	BuildMI(BB, Alpha::LDA, 2, Result).addImm(getLower16(val)).addReg(Tmp1);
+      else if (val <= (int64_t)IMM_HIGH +(int64_t)IMM_HIGH* (int64_t)IMM_MULT &&
+               val >= (int64_t)IMM_LOW + (int64_t)IMM_LOW * (int64_t)IMM_MULT) {
+        Tmp1 = MakeReg(MVT::i64);
+        BuildMI(BB, Alpha::LDAH, 2, Tmp1).addImm(getUpper16(val)).addReg(Alpha::R31);
+        BuildMI(BB, Alpha::LDA, 2, Result).addImm(getLower16(val)).addReg(Tmp1);
       }
       else {
         MachineConstantPool *CP = BB->getParent()->getConstantPool();
