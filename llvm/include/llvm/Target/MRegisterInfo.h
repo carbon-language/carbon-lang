@@ -123,7 +123,7 @@ private:
 protected:
   MRegisterInfo(const MRegisterDesc *D, unsigned NR,
                 regclass_iterator RegClassBegin, regclass_iterator RegClassEnd,
-		int CallFrameSetupOpcode = -1, int CallFrameDestroyOpcode = -1);
+                int CallFrameSetupOpcode = -1, int CallFrameDestroyOpcode = -1);
   virtual ~MRegisterInfo();
 public:
 
@@ -285,8 +285,8 @@ public:
                                 MachineBasicBlock &MBB,
                                 MachineBasicBlock::iterator MI) const {
     assert(getCallFrameSetupOpcode()== -1 && getCallFrameDestroyOpcode()== -1 &&
-	   "eliminateCallFramePseudoInstr must be implemented if using"
-	   " call frame setup/destroy pseudo instructions!");
+           "eliminateCallFramePseudoInstr must be implemented if using"
+           " call frame setup/destroy pseudo instructions!");
     assert(0 && "Call Frame Pseudo Instructions do not exist on this target!");
   }
 

@@ -61,8 +61,8 @@ public:
   void removeNodeFromList(MachineBasicBlock* N);
   void transferNodesFromList(iplist<MachineBasicBlock,
                                     ilist_traits<MachineBasicBlock> > &toList,
-			     ilist_iterator<MachineBasicBlock> first,
-			     ilist_iterator<MachineBasicBlock> last);
+                             ilist_iterator<MachineBasicBlock> first,
+                             ilist_iterator<MachineBasicBlock> last);
 };
 
 /// MachineFunctionInfo - This class can be derived from and used by targets to

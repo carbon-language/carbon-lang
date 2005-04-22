@@ -43,29 +43,29 @@ typedef short MachineOpCode;
 //   first and initialize each one later.
 //
 //   E.g, for this VM instruction:
-//		ptr = alloca type, numElements
+//     ptr = alloca type, numElements
 //   we generate 2 machine instructions on the SPARC:
 //
-//		mul Constant, Numelements -> Reg
-//		add %sp, Reg -> Ptr
+//    mul Constant, Numelements -> Reg
+//    add %sp, Reg -> Ptr
 //
 //   Each instruction has 3 operands, listed above.  Of those:
-//   -	Reg, NumElements, and Ptr are of operand type MO_Register.
-//   -	Constant is of operand type MO_SignExtendedImmed on the SPARC.
-//	
+//   - Reg, NumElements, and Ptr are of operand type MO_Register.
+//   - Constant is of operand type MO_SignExtendedImmed on the SPARC.
+//
 //   For the register operands, the virtual register type is as follows:
-//	
-//   -  Reg will be of virtual register type MO_MInstrVirtualReg.  The field
-//	MachineInstr* minstr will point to the instruction that computes reg.
 //
-//   -	%sp will be of virtual register type MO_MachineReg.
-//	The field regNum identifies the machine register.
+//   - Reg will be of virtual register type MO_MInstrVirtualReg.  The field
+//     MachineInstr* minstr will point to the instruction that computes reg.
 //
-//   -	NumElements will be of virtual register type MO_VirtualReg.
-//	The field Value* value identifies the value.
+//   - %sp will be of virtual register type MO_MachineReg.
+//     The field regNum identifies the machine register.
 //
-//   -	Ptr will also be of virtual register type MO_VirtualReg.
-//	Again, the field Value* value identifies the value.
+//   - NumElements will be of virtual register type MO_VirtualReg.
+//     The field Value* value identifies the value.
+//
+//   - Ptr will also be of virtual register type MO_VirtualReg.
+//     Again, the field Value* value identifies the value.
 //
 //===----------------------------------------------------------------------===//
 
@@ -96,8 +96,8 @@ public:
   };
 
   enum MachineOperandType {
-    MO_VirtualRegister,		// virtual register for *value
-    MO_MachineRegister,		// pre-assigned machine register `regNum'
+    MO_VirtualRegister,         // virtual register for *value
+    MO_MachineRegister,         // pre-assigned machine register `regNum'
     MO_CCRegister,
     MO_SignExtendedImmed,
     MO_UnextendedImmed,
@@ -118,7 +118,7 @@ private:
                         //   the generated machine code.
                         // LLVM global for MO_GlobalAddress.
 
-    int64_t immedVal;		// Constant value for an explicit constant
+    int64_t immedVal;   // Constant value for an explicit constant
 
     MachineBasicBlock *MBB;     // For MO_MachineBasicBlock type
     const char *SymbolName;     // For MO_ExternalSymbol type
@@ -127,7 +127,7 @@ private:
   char flags;                   // see bit field definitions above
   MachineOperandType opType:8;  // Pack into 8 bits efficiently after flags.
   union {
-    int regNum;	                // register number for an explicit register
+    int regNum;                 // register number for an explicit register
                                 // will be set for a value after reg allocation
 
     int offset;                 // Offset to address of global or external, only
@@ -154,7 +154,7 @@ private:
   }
 
   MachineOperand(Value *V, MachineOperandType OpTy, UseType UseTy,
-		 bool isPCRelative = false)
+                 bool isPCRelative = false)
     : flags(UseTy | (isPCRelative?PCRELATIVE:0)), opType(OpTy) {
     assert(OpTy != MachineOperand::MO_GlobalAddress);
     zeroContents();
@@ -163,7 +163,7 @@ private:
   }
 
   MachineOperand(GlobalValue *V, MachineOperandType OpTy, UseType UseTy,
-		 bool isPCRelative = false, int Offset = 0)
+                 bool isPCRelative = false, int Offset = 0)
     : flags(UseTy | (isPCRelative?PCRELATIVE:0)), opType(OpTy) {
     assert(OpTy == MachineOperand::MO_GlobalAddress);
     zeroContents ();
@@ -366,7 +366,7 @@ private:
   ///
   void setRegForValue(int reg) {
     assert(opType == MO_VirtualRegister || opType == MO_CCRegister ||
-	   opType == MO_MachineRegister);
+           opType == MO_MachineRegister);
     extra.regNum = reg;
   }
 

@@ -57,7 +57,7 @@ public:
 
   // Iterators
   iterator beginInEdges() { return inEdges.begin(); }
-  iterator endInEdges()	 { return inEdges.end(); }
+  iterator endInEdges() { return inEdges.end(); }
   iterator beginOutEdges() { return outEdges.begin(); }
   iterator endOutEdges() { return outEdges.end(); }
 
@@ -73,11 +73,11 @@ public:
 
 protected:
   friend class SchedGraphCommon;
-  friend class SchedGraphEdge;		// give access for adding edges
+  friend class SchedGraphEdge;   // give access for adding edges
 
 
   // disable default constructor and provide a ctor for single-block graphs
-  SchedGraphNodeCommon();	// DO NOT IMPLEMENT
+  SchedGraphNodeCommon();  // DO NOT IMPLEMENT
 
   inline SchedGraphNodeCommon(unsigned Id, int index, int late=0) : ID(Id), latency(late), origIndexInBB(index) {}
 
@@ -93,7 +93,7 @@ protected:
 
 // ostream << operator for SchedGraphNode class
 inline std::ostream &operator<<(std::ostream &os,
-				const SchedGraphNodeCommon &node) {
+                                const SchedGraphNodeCommon &node) {
   node.print(os);
   return os;
 }
@@ -114,8 +114,8 @@ public:
   };
 
 protected:
-  SchedGraphNodeCommon*	src;
-  SchedGraphNodeCommon*	sink;
+  SchedGraphNodeCommon* src;
+  SchedGraphNodeCommon* sink;
   SchedGraphEdgeDepType depType;
   unsigned int depOrderType;
   int minDelay; // cached latency (assumes fixed target arch)
@@ -127,35 +127,35 @@ protected:
     ResourceId   resourceId;
   };
 
-public:	
+public:
   // For all constructors, if minDelay is unspecified, minDelay is
   // set to _src->getLatency().
 
   // constructor for CtrlDep or MemoryDep edges, selected by 3rd argument
   SchedGraphEdge(SchedGraphNodeCommon* _src, SchedGraphNodeCommon* _sink,
-		 SchedGraphEdgeDepType _depType, unsigned int _depOrderType,
-		 int _minDelay = -1);
+                 SchedGraphEdgeDepType _depType, unsigned int _depOrderType,
+                 int _minDelay = -1);
 
   // constructor for explicit value dependence (may be true/anti/output)
   SchedGraphEdge(SchedGraphNodeCommon* _src, SchedGraphNodeCommon* _sink,
-		 const Value* _val, unsigned int _depOrderType,
-		 int _minDelay = -1);
+                 const Value* _val, unsigned int _depOrderType,
+                 int _minDelay = -1);
 
   // constructor for machine register dependence
   SchedGraphEdge(SchedGraphNodeCommon* _src,SchedGraphNodeCommon* _sink,
-		 unsigned int _regNum, unsigned int _depOrderType,
-		 int _minDelay = -1);
+                 unsigned int _regNum, unsigned int _depOrderType,
+                 int _minDelay = -1);
 
   // constructor for any other machine resource dependences.
   // DataDepOrderType is always NonDataDep.  It it not an argument to
   // avoid overloading ambiguity with previous constructor.
   SchedGraphEdge(SchedGraphNodeCommon* _src, SchedGraphNodeCommon* _sink,
-		 ResourceId _resourceId, int _minDelay = -1);
+                 ResourceId _resourceId, int _minDelay = -1);
 
   ~SchedGraphEdge() {}
 
-  SchedGraphNodeCommon*	getSrc() const { return src; }
-  SchedGraphNodeCommon*	getSink() const { return sink; }
+  SchedGraphNodeCommon* getSrc() const { return src; }
+  SchedGraphNodeCommon* getSink() const { return sink; }
   int getMinDelay() const { return minDelay; }
   SchedGraphEdgeDepType getDepType() const { return depType; }
   unsigned int getDepOrderType() const { return depOrderType; }
@@ -187,7 +187,7 @@ public:
 
 private:
   // disable default ctor
-  SchedGraphEdge();	// DO NOT IMPLEMENT
+  SchedGraphEdge(); // DO NOT IMPLEMENT
 };
 
 // ostream << operator for SchedGraphNode class
@@ -247,12 +247,12 @@ public:
   inline _EdgeType* getEdge() const { return *(oi); }
 
   inline _Self &operator++() { ++oi; return *this; }    // Preincrement
-  inline _Self operator++(int) {                      	// Postincrement
+  inline _Self operator++(int) {                        // Postincrement
     _Self tmp(*this); ++*this; return tmp;
   }
 
   inline _Self &operator--() { --oi; return *this; }    // Predecrement
-  inline _Self operator--(int) {                       	// Postdecrement
+  inline _Self operator--(int) {                        // Postdecrement
     _Self tmp = *this; --*this; return tmp;
   }
 };
@@ -275,12 +275,12 @@ public:
   inline _EdgeType* getEdge() const { return *(oi); }
 
   inline _Self &operator++() { ++oi; return *this; }    // Preincrement
-  inline _Self operator++(int) {                      	// Postincrement
+  inline _Self operator++(int) {                        // Postincrement
     _Self tmp(*this); ++*this; return tmp;
   }
 
   inline _Self &operator--() { --oi; return *this; }    // Predecrement
-  inline _Self operator--(int) {                       	// Postdecrement
+  inline _Self operator--(int) {                        // Postdecrement
     _Self tmp = *this; --*this; return tmp;
   }
 };

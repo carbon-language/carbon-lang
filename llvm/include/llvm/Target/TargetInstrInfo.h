@@ -39,22 +39,22 @@ typedef unsigned InstrSchedClass;
 
 //---------------------------------------------------------------------------
 // struct TargetInstrDescriptor:
-//	Predefined information about each machine instruction.
-//	Designed to initialized statically.
+//  Predefined information about each machine instruction.
+//  Designed to initialized statically.
 //
 
-const unsigned M_NOP_FLAG		= 1 << 0;
-const unsigned M_BRANCH_FLAG		= 1 << 1;
-const unsigned M_CALL_FLAG		= 1 << 2;
-const unsigned M_RET_FLAG		= 1 << 3;
-const unsigned M_BARRIER_FLAG           = 1 << 4;
-const unsigned M_DELAY_SLOT_FLAG        = 1 << 5;
-const unsigned M_CC_FLAG		= 1 << 6;
-const unsigned M_LOAD_FLAG		= 1 << 7;
-const unsigned M_STORE_FLAG		= 1 << 8;
+const unsigned M_NOP_FLAG              = 1 << 0;
+const unsigned M_BRANCH_FLAG           = 1 << 1;
+const unsigned M_CALL_FLAG             = 1 << 2;
+const unsigned M_RET_FLAG              = 1 << 3;
+const unsigned M_BARRIER_FLAG          = 1 << 4;
+const unsigned M_DELAY_SLOT_FLAG       = 1 << 5;
+const unsigned M_CC_FLAG               = 1 << 6;
+const unsigned M_LOAD_FLAG             = 1 << 7;
+const unsigned M_STORE_FLAG            = 1 << 8;
 
 // M_2_ADDR_FLAG - 3-addr instructions which really work like 2-addr ones.
-const unsigned M_2_ADDR_FLAG            = 1 << 9;
+const unsigned M_2_ADDR_FLAG           = 1 << 9;
 
 // M_CONVERTIBLE_TO_3_ADDR - This is a M_2_ADDR_FLAG instruction which can be
 // changed into a 3-address instruction if the first two operands cannot be
@@ -78,7 +78,7 @@ public:
   int             numOperands;   // Number of args; -1 if variable #args
   int             resultPos;     // Position of the result; -1 if no result
   unsigned        maxImmedConst; // Largest +ve constant in IMMED field or 0.
-  bool	          immedIsSignExtended; // Is IMMED field sign-extended? If so,
+  bool            immedIsSignExtended; // Is IMMED field sign-extended? If so,
                                  //   smallest -ve value is -(maxImmedConst+1).
   unsigned        numDelaySlots; // Number of delay slots after instruction
   unsigned        latency;       // Latency in machine cycles
@@ -275,7 +275,7 @@ public:
   // of this machine instruction
   //
   virtual bool constantFitsInImmedField(MachineOpCode Opcode,
-					int64_t intValue) const;
+                                        int64_t intValue) const;
 
   // Return the largest positive constant that can be held in the IMMED field
   // of this machine instruction.
@@ -284,7 +284,7 @@ public:
   // Return 0 if the instruction has no IMMED field.
   //
   virtual uint64_t maxImmedConstant(MachineOpCode Opcode,
-				    bool &isSignExtended) const {
+                                    bool &isSignExtended) const {
     isSignExtended = get(Opcode).immedIsSignExtended;
     return get(Opcode).maxImmedConst;
   }

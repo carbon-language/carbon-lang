@@ -243,7 +243,7 @@ public:
 
   void MarkVirtRegAliveInBlock(VarInfo &VRInfo, MachineBasicBlock *BB);
   void HandleVirtRegUse(VarInfo &VRInfo, MachineBasicBlock *MBB,
-                       	MachineInstr *MI);
+                        MachineInstr *MI);
 };
 
 } // End llvm namespace

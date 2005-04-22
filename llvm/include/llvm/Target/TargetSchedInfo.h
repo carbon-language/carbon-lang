@@ -72,13 +72,13 @@ const int MAX_NUM_CYCLES = 32;
 
 struct InstrClassRUsage {
   InstrSchedClass schedClass;
-  int		totCycles;
+  int             totCycles;
 
   // Issue restrictions common to instructions in this class
   unsigned      maxNumIssue;
-  bool	        isSingleIssue;
-  bool	        breaksGroup;
-  CycleCount_t      numBubbles;
+  bool          isSingleIssue;
+  bool          breaksGroup;
+  CycleCount_t  numBubbles;
 
   // Feasible slots to use for instructions in this class.
   // The size of vector S[] is `numSlots'.
@@ -91,41 +91,41 @@ struct InstrClassRUsage {
   struct {
     resourceId_t resourceId;
     unsigned    startCycle;
-    int	        numCycles;
+    int         numCycles;
   } V[MAX_NUM_CYCLES];
 };
 
 struct InstrRUsageDelta {
   MachineOpCode opCode;
-  resourceId_t	resourceId;
+  resourceId_t  resourceId;
   unsigned      startCycle;
-  int		numCycles;
+  int  numCycles;
 };
 
 // Specify instruction issue restrictions for individual instructions
 // that differ from the common rules for the class.
 //
 struct InstrIssueDelta {
-  MachineOpCode	opCode;
-  bool		isSingleIssue;
-  bool		breaksGroup;
-  CycleCount_t	numBubbles;
+  MachineOpCode opCode;
+  bool isSingleIssue;
+  bool breaksGroup;
+  CycleCount_t numBubbles;
 };
 
 
 struct InstrRUsage {
-  bool		sameAsClass;
+  bool  sameAsClass;
 
   // Issue restrictions for this instruction
-  bool		isSingleIssue;
-  bool		breaksGroup;
-  CycleCount_t	numBubbles;
+  bool  isSingleIssue;
+  bool  breaksGroup;
+  CycleCount_t numBubbles;
 
   // Feasible slots to use for this instruction.
   std::vector<bool> feasibleSlots;
 
   // Resource usages for this instruction, with one resource vector per cycle.
-  CycleCount_t	numCycles;
+  CycleCount_t numCycles;
   std::vector<std::vector<resourceId_t> > resourcesByCycle;
 
 private:
@@ -139,12 +139,12 @@ private:
     numBubbles = delta.numBubbles;
   }
 
-  void addUsageDelta	(const InstrRUsageDelta& delta);
-  void setMaxSlots	(int maxNumSlots) {
+  void addUsageDelta(const InstrRUsageDelta& delta);
+  void setMaxSlots(int maxNumSlots) {
     feasibleSlots.resize(maxNumSlots);
   }
 
-  friend class TargetSchedInfo;	// give access to these functions
+  friend class TargetSchedInfo; // give access to these functions
 };
 
 
@@ -157,7 +157,7 @@ public:
   const TargetMachine& target;
 
   unsigned maxNumIssueTotal;
-  int	longestIssueConflict;
+  int longestIssueConflict;
 
 protected:
   inline const InstrRUsage& getInstrRUsage(MachineOpCode opCode) const {
@@ -173,20 +173,20 @@ private:
   TargetSchedInfo(const TargetSchedInfo &);  // DO NOT IMPLEMENT
   void operator=(const TargetSchedInfo &);  // DO NOT IMPLEMENT
 public:
-  /*ctor*/	   TargetSchedInfo	(const TargetMachine& tgt,
-                                         int                  _numSchedClasses,
-					 const InstrClassRUsage* _classRUsages,
-					 const InstrRUsageDelta* _usageDeltas,
-					 const InstrIssueDelta*  _issueDeltas,
-					 unsigned _numUsageDeltas,
-					 unsigned _numIssueDeltas);
-  /*dtor*/ virtual ~TargetSchedInfo() {}
+  TargetSchedInfo(const TargetMachine& tgt,
+                  int _numSchedClasses,
+                  const InstrClassRUsage* _classRUsages,
+                  const InstrRUsageDelta* _usageDeltas,
+                  const InstrIssueDelta*  _issueDeltas,
+                  unsigned _numUsageDeltas,
+                  unsigned _numIssueDeltas);
+  virtual ~TargetSchedInfo() {}
 
   inline const TargetInstrInfo& getInstrInfo() const {
     return *mii;
   }
 
-  inline int		getNumSchedClasses()  const {
+  inline int getNumSchedClasses()  const {
     return numSchedClasses;
   }
 
@@ -199,42 +199,42 @@ public:
     return classRUsages[sc].maxNumIssue;
   }
 
-  inline InstrSchedClass getSchedClass	(MachineOpCode opCode) const {
+  inline InstrSchedClass getSchedClass(MachineOpCode opCode) const {
     return getInstrInfo().getSchedClass(opCode);
   }
 
-  inline  bool	instrCanUseSlot		(MachineOpCode opCode,
-					 unsigned s) const {
+  inline  bool instrCanUseSlot(MachineOpCode opCode,
+                               unsigned s) const {
     assert(s < getInstrRUsage(opCode).feasibleSlots.size() && "Invalid slot!");
     return getInstrRUsage(opCode).feasibleSlots[s];
   }
 
-  inline int	getLongestIssueConflict	() const {
+  inline int getLongestIssueConflict() const {
     return longestIssueConflict;
   }
 
-  inline  int 	getMinIssueGap		(MachineOpCode fromOp,
-					 MachineOpCode toOp)   const {
+  inline  int getMinIssueGap(MachineOpCode fromOp,
+                             MachineOpCode toOp)   const {
     assert(fromOp < (int) issueGaps.size());
     const std::vector<int>& toGaps = issueGaps[fromOp];
     return (toOp < (int) toGaps.size())? toGaps[toOp] : 0;
   }
 
   inline const std::vector<MachineOpCode>&
-		getConflictList(MachineOpCode opCode) const {
+    getConflictList(MachineOpCode opCode) const {
     assert(opCode < (int) conflictLists.size());
     return conflictLists[opCode];
   }
 
-  inline  bool	isSingleIssue		(MachineOpCode opCode) const {
+  inline  bool isSingleIssue(MachineOpCode opCode) const {
     return getInstrRUsage(opCode).isSingleIssue;
   }
 
-  inline  bool	breaksIssueGroup	(MachineOpCode opCode) const {
+  inline  bool breaksIssueGroup(MachineOpCode opCode) const {
     return getInstrRUsage(opCode).breaksGroup;
   }
 
-  inline  unsigned numBubblesAfter	(MachineOpCode opCode) const {
+  inline  unsigned numBubblesAfter(MachineOpCode opCode) const {
     return getInstrRUsage(opCode).numBubbles;
   }
 
@@ -248,7 +248,7 @@ public:
 
 
 protected:
-  virtual void	initializeResources	();
+  virtual void initializeResources();
 
 private:
   void computeInstrResources(const std::vector<InstrRUsage>& instrRUForClasses);
@@ -265,18 +265,18 @@ public:
   std::vector<std::pair<int,int> > resourceNumVector;
 
 protected:
-  unsigned	           numSchedClasses;
+  unsigned           numSchedClasses;
   const TargetInstrInfo*   mii;
-  const	InstrClassRUsage*  classRUsages;        // raw array by sclass
-  const	InstrRUsageDelta*  usageDeltas;	        // raw array [1:numUsageDeltas]
-  const InstrIssueDelta*   issueDeltas;	        // raw array [1:numIssueDeltas]
-  unsigned 		   numUsageDeltas;
-  unsigned 		   numIssueDeltas;
+  const InstrClassRUsage*  classRUsages;        // raw array by sclass
+  const InstrRUsageDelta*  usageDeltas;         // raw array [1:numUsageDeltas]
+  const InstrIssueDelta*   issueDeltas;         // raw array [1:numIssueDeltas]
+  unsigned      numUsageDeltas;
+  unsigned      numIssueDeltas;
 
   std::vector<InstrRUsage> instrRUsages;    // indexed by opcode
   std::vector<std::vector<int> > issueGaps; // indexed by [opcode1][opcode2]
   std::vector<std::vector<MachineOpCode> >
-			   conflictLists;   // indexed by [opcode]
+      conflictLists;   // indexed by [opcode]
 
 
   friend class ModuloSchedulingPass;
