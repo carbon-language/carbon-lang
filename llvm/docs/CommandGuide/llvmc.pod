@@ -292,7 +292,7 @@ Pass an arbitrary option to the code generator.
 
 =back
 
-=head3 C/C++ Specific Options
+=head2 C/C++ Specific Options
 
 =over
 
