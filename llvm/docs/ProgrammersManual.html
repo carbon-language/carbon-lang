@@ -292,8 +292,9 @@ file (note that you very rarely have to include this file directly).</p>
     if (isa&lt;<a href="#Constant">Constant</a>&gt;(V) || isa&lt;<a href="#Argument">Argument</a>&gt;(V) || isa&lt;<a href="#GlobalValue">GlobalValue</a>&gt;(V))
       return true;
 
-  <i>// Otherwise, it must be an instruction...</i>
-  return !L-&gt;contains(cast&lt;<a href="#Instruction">Instruction</a>&gt;(V)-&gt;getParent());
+    <i>// Otherwise, it must be an instruction...</i>
+    return !L-&gt;contains(cast&lt;<a href="#Instruction">Instruction</a>&gt;(V)-&gt;getParent());
+  }
   </pre>
 
   <p>Note that you should <b>not</b> use an <tt>isa&lt;&gt;</tt> test followed
@@ -322,21 +323,12 @@ file (note that you very rarely have to include this file directly).</p>
    call to <tt>isa&lt;&gt;</tt> and a call to <tt>cast&lt;&gt;</tt> into one
    statement, which is very convenient.</p>
 
-   <p> Another common example is:</p>
-
-   <pre>
-     <i>// Loop over all of the phi nodes in a basic block</i>
-     BasicBlock::iterator BBI = BB-&gt;begin();
-     for (; <a href="#PhiNode">PHINode</a> *PN = dyn_cast&lt;<a href="#PHINode">PHINode</a>&gt;(BBI); ++BBI)
-       std::cerr &lt;&lt; *PN;
-   </pre>
-
    <p>Note that the <tt>dyn_cast&lt;&gt;</tt> operator, like C++'s
    <tt>dynamic_cast</tt> or Java's <tt>instanceof</tt> operator, can be abused.
    In particular you should not use big chained <tt>if/then/else</tt> blocks to
    check for lots of different variants of classes.  If you find yourself
    wanting to do this, it is much cleaner and more efficient to use the
-   InstVisitor class to dispatch over the instruction type directly.</p>
+   <tt>InstVisitor</tt> class to dispatch over the instruction type directly.</p>
 
     </dd>
 
