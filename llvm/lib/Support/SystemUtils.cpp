@@ -13,20 +13,19 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/SystemUtils.h"
-#include "llvm/System/Program.h"
 #include "llvm/System/Process.h"
+#include "llvm/System/Program.h"
 #include <iostream>
-
 using namespace llvm;
 
 bool llvm::CheckBytecodeOutputToConsole(std::ostream* stream_to_check,
                                         bool print_warning) {
   if (stream_to_check == &std::cout && sys::Process::StandardOutIsDisplayed()) {
     if (print_warning) {
-      std::cerr << "WARNING: You're attempting to print out a bytecode file.\n";
-      std::cerr << "This is inadvisable as it may cause display problems. If\n";
-      std::cerr << "you REALLY want to taste LLVM bytecode first-hand, you\n";
-      std::cerr << "can force output with the `-f' option.\n\n";
+      std::cerr << "WARNING: You're attempting to print out a bytecode file.\n"
+                << "This is inadvisable as it may cause display problems. If\n"
+                << "you REALLY want to taste LLVM bytecode first-hand, you\n"
+                << "can force output with the `-f' option.\n\n";
     }
     return true;
   }
