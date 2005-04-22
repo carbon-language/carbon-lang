@@ -310,6 +310,8 @@ void GlobalsModRef::AnalyzeSCC(std::vector<CallGraphNode *> &SCC) {
           FunctionEffect |= Ref;
         else if (isa<StoreInst>(*II))
           FunctionEffect |= Mod;
+        else if (isa<MallocInst>(*II) || isa<FreeInst>(*II))
+          FunctionEffect |= ModRef;
   }
 
   if ((FunctionEffect & Mod) == 0)
