@@ -1,4 +1,4 @@
-// %llvmgcc %s -S -o -
+// RUN: %llvmgcc %s -S -o -
 
 #include <math.h>
 #define I 1.0iF
