@@ -876,23 +876,27 @@ void V8ISel::visitCallInst(CallInst &I) {
     if (getClassB (I.getOperand (i)->getType ()) < cLong) {
       // Schlep it over into the incoming arg register
       if (ArgOffset < 92) {
-	assert (OAR != OAREnd && "About to dereference past end of OutgoingArgRegs");
-	BuildMI (BB, V8::ORrr, 2, *OAR++).addReg (V8::G0).addReg (ArgReg);
+        assert (OAR != OAREnd &&
+                "About to dereference past end of OutgoingArgRegs");
+        BuildMI (BB, V8::ORrr, 2, *OAR++).addReg (V8::G0).addReg (ArgReg);
       } else {
-	BuildMI (BB, V8::ST, 3).addReg (V8::SP).addSImm (ArgOffset).addReg (ArgReg);
+        BuildMI (BB, V8::ST, 3).addReg (V8::SP).addSImm (ArgOffset)
+          .addReg (ArgReg);
       }
       ArgOffset += 4;
     } else if (getClassB (I.getOperand (i)->getType ()) == cFloat) {
       if (ArgOffset < 92) {
-	// Single-fp args are passed in integer registers; go through
-	// memory to get them out of FP registers. (Bleh!)
-	unsigned FltAlign = TM.getTargetData().getFloatAlignment();
-	int FI = F->getFrameInfo()->CreateStackObject(4, FltAlign);
-	BuildMI (BB, V8::STFri, 3).addFrameIndex (FI).addSImm (0).addReg (ArgReg);
-	assert (OAR != OAREnd && "About to dereference past end of OutgoingArgRegs");
-	BuildMI (BB, V8::LD, 2, *OAR++).addFrameIndex (FI).addSImm (0);
+        // Single-fp args are passed in integer registers; go through
+        // memory to get them out of FP registers. (Bleh!)
+        unsigned FltAlign = TM.getTargetData().getFloatAlignment();
+        int FI = F->getFrameInfo()->CreateStackObject(4, FltAlign);
+        BuildMI (BB, V8::STFri, 3).addFrameIndex(FI).addSImm(0).addReg(ArgReg);
+        assert (OAR != OAREnd &&
+                "About to dereference past end of OutgoingArgRegs");
+        BuildMI (BB, V8::LD, 2, *OAR++).addFrameIndex (FI).addSImm (0);
       } else {
-	BuildMI (BB, V8::STFri, 3).addReg (V8::SP).addSImm (ArgOffset).addReg (ArgReg);
+        BuildMI (BB, V8::STFri, 3).addReg (V8::SP).addSImm (ArgOffset)
+          .addReg (ArgReg);
       }
       ArgOffset += 4;
     } else if (getClassB (I.getOperand (i)->getType ()) == cDouble) {
@@ -904,38 +908,46 @@ void V8ISel::visitCallInst(CallInst &I) {
       int FI = F->getFrameInfo()->CreateStackObject(8, DblAlign);
       BuildMI (BB, V8::STDFri, 3).addFrameIndex (FI).addSImm (0).addReg (ArgReg);
       if (ArgOffset < 92 && OAR != OAREnd) {
-	assert (OAR != OAREnd && "About to dereference past end of OutgoingArgRegs");
-	BuildMI (BB, V8::LD, 2, *OAR++).addFrameIndex (FI).addSImm (0);
+        assert (OAR != OAREnd &&
+                "About to dereference past end of OutgoingArgRegs");
+        BuildMI (BB, V8::LD, 2, *OAR++).addFrameIndex (FI).addSImm (0);
       } else {
         unsigned TempReg = makeAnotherReg (Type::IntTy);
-	BuildMI (BB, V8::LD, 2, TempReg).addFrameIndex (FI).addSImm (0);
-	BuildMI (BB, V8::ST, 3).addReg (V8::SP).addSImm (ArgOffset).addReg (TempReg);
+        BuildMI (BB, V8::LD, 2, TempReg).addFrameIndex (FI).addSImm (0);
+        BuildMI (BB, V8::ST, 3).addReg (V8::SP).addSImm (ArgOffset)
+          .addReg (TempReg);
       }
       ArgOffset += 4;
       if (ArgOffset < 92 && OAR != OAREnd) {
-	assert (OAR != OAREnd && "About to dereference past end of OutgoingArgRegs");
-	BuildMI (BB, V8::LD, 2, *OAR++).addFrameIndex (FI).addSImm (4);
+        assert (OAR != OAREnd &&
+                "About to dereference past end of OutgoingArgRegs");
+        BuildMI (BB, V8::LD, 2, *OAR++).addFrameIndex (FI).addSImm (4);
       } else {
         unsigned TempReg = makeAnotherReg (Type::IntTy);
-	BuildMI (BB, V8::LD, 2, TempReg).addFrameIndex (FI).addSImm (4);
-	BuildMI (BB, V8::ST, 3).addReg (V8::SP).addSImm (ArgOffset).addReg (TempReg);
+        BuildMI (BB, V8::LD, 2, TempReg).addFrameIndex (FI).addSImm (4);
+        BuildMI (BB, V8::ST, 3).addReg (V8::SP).addSImm (ArgOffset)
+          .addReg (TempReg);
       }
       ArgOffset += 4;
     } else if (getClassB (I.getOperand (i)->getType ()) == cLong) {
       // do the first half...
       if (ArgOffset < 92) {
-	assert (OAR != OAREnd && "About to dereference past end of OutgoingArgRegs");
-	BuildMI (BB, V8::ORrr, 2, *OAR++).addReg (V8::G0).addReg (ArgReg);
+        assert (OAR != OAREnd &&
+                "About to dereference past end of OutgoingArgRegs");
+        BuildMI (BB, V8::ORrr, 2, *OAR++).addReg (V8::G0).addReg (ArgReg);
       } else {
-	BuildMI (BB, V8::ST, 3).addReg (V8::SP).addSImm (ArgOffset).addReg (ArgReg);
+        BuildMI (BB, V8::ST, 3).addReg (V8::SP).addSImm (ArgOffset)
+          .addReg (ArgReg);
       }
       ArgOffset += 4;
       // ...then do the second half
       if (ArgOffset < 92) {
-	assert (OAR != OAREnd && "About to dereference past end of OutgoingArgRegs");
-	BuildMI (BB, V8::ORrr, 2, *OAR++).addReg (V8::G0).addReg (ArgReg+1);
+        assert (OAR != OAREnd &&
+                "About to dereference past end of OutgoingArgRegs");
+        BuildMI (BB, V8::ORrr, 2, *OAR++).addReg (V8::G0).addReg (ArgReg+1);
       } else {
-	BuildMI (BB, V8::ST, 3).addReg (V8::SP).addSImm (ArgOffset).addReg (ArgReg+1);
+        BuildMI (BB, V8::ST, 3).addReg (V8::SP).addSImm (ArgOffset)
+          .addReg (ArgReg+1);
       }
       ArgOffset += 4;
     } else {
@@ -1111,8 +1123,8 @@ void V8ISel::visitBranchInst(BranchInst &I) {
 ///
 void V8ISel::emitGEPOperation (MachineBasicBlock *MBB,
                                MachineBasicBlock::iterator IP,
-		               Value *Src, User::op_iterator IdxBegin,
-		               User::op_iterator IdxEnd, unsigned TargetReg) {
+                               Value *Src, User::op_iterator IdxBegin,
+                               User::op_iterator IdxEnd, unsigned TargetReg) {
   const TargetData &TD = TM.getTargetData ();
   const Type *Ty = Src->getType ();
   unsigned basePtrReg = getReg (Src, MBB, IP);
@@ -1776,13 +1788,13 @@ void V8ISel::visitVAArgInst (VAArgInst &I) {
   case Type::PointerTyID:
   case Type::UIntTyID:
   case Type::IntTyID:
-	BuildMI (BB, V8::LD, 2, DestReg).addReg (VAList).addSImm (0);
+    BuildMI (BB, V8::LD, 2, DestReg).addReg (VAList).addSImm (0);
     return;
 
   case Type::ULongTyID:
   case Type::LongTyID:
-	BuildMI (BB, V8::LD, 2, DestReg).addReg (VAList).addSImm (0);
-	BuildMI (BB, V8::LD, 2, DestReg+1).addReg (VAList).addSImm (4);
+    BuildMI (BB, V8::LD, 2, DestReg).addReg (VAList).addSImm (0);
+    BuildMI (BB, V8::LD, 2, DestReg+1).addReg (VAList).addSImm (4);
     return;
 
   case Type::DoubleTyID: {

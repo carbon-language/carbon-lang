@@ -273,7 +273,7 @@ void V8Printer::emitGlobalConstant(const Constant *CV) {
   } else if (isa<ConstantAggregateZero> (CV)) {
     unsigned size = TD.getTypeSize (CV->getType ());
     for (unsigned i = 0; i < size; ++i)
-	  O << "\t.byte 0\n";
+      O << "\t.byte 0\n";
     return;
   }
 
@@ -362,7 +362,7 @@ bool V8Printer::runOnMachineFunction(MachineFunction &MF) {
       << "_" << I->getNumber () << ":\t! "
       << I->getBasicBlock ()->getName () << "\n";
     for (MachineBasicBlock::const_iterator II = I->begin(), E = I->end();
-	 II != E; ++II) {
+         II != E; ++II) {
       // Print the assembly for the instruction.
       O << "\t";
       printMachineInstruction(II);

@@ -63,7 +63,7 @@ unsigned SparcV8TargetMachine::getModuleMatchQuality(const Module &M) {
 /// to implement a static compiler for this target.
 ///
 bool SparcV8TargetMachine::addPassesToEmitAssembly(PassManager &PM,
-					       std::ostream &Out) {
+                                                   std::ostream &Out) {
   // FIXME: Implement efficient support for garbage collection intrinsics.
   PM.add(createLowerGCPass());
 
