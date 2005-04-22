@@ -790,6 +790,16 @@ script to configure the build system:</p>
     to explicitly enable it if you want it.
     <p></p>
   </dd>
+  <dt><i>--enable-targets=</i><tt>target-option</tt></dt>
+  <dd>Controls which targets will be built and linked into llc. The default 
+  value for <tt>target_options</tt> is "all" which builds and links all 
+  available targets.  The value "host-only" can be specified to build only a 
+  native compiler (no cross-compiler targets available). The "native" target is 
+  selected as the target of the build host. You can also specify a comma 
+  separated list of target names that you want available in llc. The target 
+  names use all lower case. The current set is of targets is: <br/>
+  <tt>alpha, ia64, powerpc, skeleton, sparc, x86</tt>.
+  <p></p></dd>
   <dt><i>--enable-doxygen</i></dt>
   <dd>Look for the doxygen program and enable construction of doxygen based
   documentation from the source code. This is disabled by default because 
