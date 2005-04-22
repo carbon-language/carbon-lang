@@ -109,13 +109,13 @@ of compilation, optimization, and linking should be attempted.  Source files
 specified on the command line will be compiled and linked with objects and
 libraries also specified. 
 
-=item B<-S> or B<--assemble>
+=item B<-S>
 
 This option specifies that compilation should end in the creation of
 an LLVM assembly file that can be later converted to an LLVM object
 file.
 
-=item B<-E> or B<--preprocess>
+=item B<-E>
 
 This option specifies that no compilation or linking should be 
 performed. Only pre-processing, if applicable to the language being
@@ -274,7 +274,7 @@ it to the standard error.
 
 =over
 
-=item B<-T,pp>=I<options>
+=item B<-T,pre>=I<options>
 
 Pass an arbitrary option to the pre-processor.
 
@@ -282,7 +282,7 @@ Pass an arbitrary option to the pre-processor.
 
 Pass an arbitrary option to the optimizer.
 
-=item B<-T,link>=I<options>
+=item B<-T,lnk>=I<options>
 
 Pass an arbitrary option to the linker.
 
@@ -300,6 +300,11 @@ Pass an arbitrary option to the code generator.
 
 This option is just passed through to a C or C++ front end compiler to tell it
 where include files can be found.
+
+=item B<-D>F<symbol>
+
+This option is just passed through to a C or C++ front end compiler to tell it
+to define a symbol.
 
 =back
 
@@ -324,6 +329,23 @@ of these options can produce drastically wrong results.
 
 =over 
 
+=item B<--config-dir> F<dirname>
+
+This option tells B<llvmc> to read configuration data from the I<directory>
+named F<dirname>. Data from such directories will be read in the order
+specified on the command line after all other standard configuration files have
+been read. This allows users or groups of users to conveniently create 
+their own configuration directories in addition to the standard ones to which 
+they may not have write access.
+
+
+=head2 Unimplemented Options
+
+The options below are not currently implemented in B<llvmc> but will be
+eventually. They are documented here as "future design".
+
+=over
+
 =item B<--show-config> I<[suffixes...]>
 
 When this option is given, the only action taken by B<llvmc> is to show its
@@ -343,15 +365,6 @@ This option instructs B<llvmc> to accept I<value> as the value for configuration
 item I<name> in the section named I<section>. This is a quick way to override
 a configuration item on the command line without resorting to changing the
 configuration files. 
-
-=item B<--config-dir> F<dirname>
-
-This option tells B<llvmc> to read configuration data from the I<directory>
-named F<dirname>. Data from such directories will be read in the order
-specified on the command line after all other standard configuration files have
-been read. This allows users or groups of users to conveniently create 
-their own configuration directories in addition to the standard ones to which 
-they may not have write access.
 
 =item B<--config-only-from> F<dirname>
 
