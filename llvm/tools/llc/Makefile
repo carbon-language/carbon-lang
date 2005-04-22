@@ -15,8 +15,18 @@ TOOLNAME = llc
 # early so we can set up USEDLIBS properly before includeing Makefile.rules
 include $(LEVEL)/Makefile.config
 
-# We always build the C Backend and the Skeleton
-USEDLIBS := LLVMCBackend LLVMSkeleton
+# Initialize the USEDLIBS so we can add to it
+USEDLIBS :=
+
+# Check for LLVMCBackend  target
+ifneq ($(strip $(filter CBackend,$(TARGETS_TO_BUILD))),)
+USEDLIB += LLVMCBackend
+endif
+
+# Check for Skeleton target
+ifneq ($(strip $(filter Skeleton,$(TARGETS_TO_BUILD))),)
+USEDLIB += LLVMSkeleton
+endif
 
 # Check for Sparc target
 ifneq ($(strip $(filter SparcV8,$(TARGETS_TO_BUILD))),)
