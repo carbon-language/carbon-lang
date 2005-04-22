@@ -294,9 +294,9 @@ LocationClass<Ty> location(Ty &L) { return LocationClass<Ty>(L); }
 //===----------------------------------------------------------------------===//
 // Enum valued command line option
 //
-#define clEnumVal(ENUMVAL, DESC) #ENUMVAL, (int)ENUMVAL, DESC
-#define clEnumValN(ENUMVAL, FLAGNAME, DESC) FLAGNAME, (int)ENUMVAL, DESC
-#define clEnumValEnd ((void*)0)
+#define clEnumVal(ENUMVAL, DESC) #ENUMVAL, int(ENUMVAL), DESC
+#define clEnumValN(ENUMVAL, FLAGNAME, DESC) FLAGNAME, int(ENUMVAL), DESC
+#define clEnumValEnd (reinterpret_cast<void*>(0))
 
 // values - For custom data types, allow specifying a group of values together
 // as the values that go into the mapping that the option handler uses.  Note
@@ -435,7 +435,7 @@ public:
   typedef DataType parser_data_type;
 
   // Implement virtual functions needed by generic_parser_base
-  unsigned getNumOptions() const { return (unsigned)Values.size(); }
+  unsigned getNumOptions() const { return unsigned(Values.size()); }
   const char *getOption(unsigned N) const { return Values[N].first; }
   const char *getDescription(unsigned N) const {
     return Values[N].second.second;
