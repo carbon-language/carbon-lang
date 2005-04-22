@@ -37,7 +37,7 @@ enum VerifierFailureAction {
   AbortProcessAction,   ///< verifyModule will print to stderr and abort()
   ThrowExceptionAction, ///< verifyModule will throw errors as std::string
   PrintMessageAction,   ///< verifyModule will print to stderr and return true
-  ReturnStatusAction 	///< verifyModule will just return true
+  ReturnStatusAction    ///< verifyModule will just return true
 };
 
 /// @brief Create a verifier pass.

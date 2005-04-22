@@ -38,8 +38,8 @@ class po_iterator : public forward_iterator<typename GT::NodeType, ptrdiff_t> {
     while (VisitStack.top().second != GT::child_end(VisitStack.top().first)) {
       NodeType *BB = *VisitStack.top().second++;
       if (!Visited.count(BB)) {  // If the block is not visited...
-	Visited.insert(BB);
-	VisitStack.push(std::make_pair(BB, GT::child_begin(BB)));
+        Visited.insert(BB);
+        VisitStack.push(std::make_pair(BB, GT::child_begin(BB)));
       }
     }
   }

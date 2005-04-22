@@ -42,7 +42,7 @@ ModuleProvider *getBytecodeModuleProvider(
 ModuleProvider *getBytecodeBufferModuleProvider(const unsigned char *Buffer,
                                                 unsigned BufferSize,
                                                 const std::string &ModuleID="",
-						BytecodeHandler* H = 0);
+                                                BytecodeHandler* H = 0);
 
 /// @brief Parse the given bytecode file
 Module* ParseBytecodeFile(const std::string &Filename,

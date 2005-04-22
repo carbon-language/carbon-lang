@@ -41,7 +41,7 @@ std::ostream &WriteAsOperand(std::ostream &, const Value *, bool PrintTy = true,
                              bool PrintName = true, const Module *Context = 0);
 
 std::ostream &WriteAsOperand(std::ostream&, const Type*, bool PrintTy = true,
-	                     bool PrintName = true, const Module* Context = 0);
+                             bool PrintName = true, const Module* Context = 0);
 
 } // End llvm namespace
 

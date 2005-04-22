@@ -32,7 +32,7 @@ class constant_iterator : public forward_iterator<const Constant, ptrdiff_t> {
 
   inline bool isAtConstant() const {
     assert(!InstI.atEnd() && OpIdx < InstI->getNumOperands() &&
-	   "isAtConstant called with invalid arguments!");
+           "isAtConstant called with invalid arguments!");
     return isa<Constant>(InstI->getOperand(OpIdx));
   }
 
@@ -40,7 +40,7 @@ public:
   inline constant_iterator(const Function *F) : InstI(inst_begin(F)), OpIdx(0) {
     // Advance to first constant... if we are not already at constant or end
     if (InstI != inst_end(F) &&                            // InstI is valid?
-	(InstI->getNumOperands() == 0 || !isAtConstant())) // Not at constant?
+        (InstI->getNumOperands() == 0 || !isAtConstant())) // Not at constant?
       operator++();
   }
 
@@ -49,7 +49,7 @@ public:
   }
 
   inline bool operator==(const _Self& x) const { return OpIdx == x.OpIdx &&
-						        InstI == x.InstI; }
+                                                        InstI == x.InstI; }
   inline bool operator!=(const _Self& x) const { return !operator==(x); }
 
   inline pointer operator*() const {
@@ -63,7 +63,7 @@ public:
     do {
       unsigned NumOperands = InstI->getNumOperands();
       while (OpIdx < NumOperands && !isAtConstant()) {
-	++OpIdx;
+        ++OpIdx;
       }
 
       if (OpIdx < NumOperands) return *this;  // Found a constant!

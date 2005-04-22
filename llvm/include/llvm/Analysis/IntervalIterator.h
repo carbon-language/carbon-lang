@@ -115,8 +115,8 @@ public:
   inline ~IntervalIterator() {
     if (IOwnMem)
       while (!IntStack.empty()) {
-	delete operator*();
-	IntStack.pop();
+        delete operator*();
+        IntStack.pop();
       }
   }
 
@@ -134,11 +134,11 @@ public:
       // All of the intervals on the stack have been visited.  Try visiting
       // their successors now.
       Interval::succ_iterator &SuccIt = IntStack.top().second,
-	                        EndIt = succ_end(IntStack.top().first);
+                                EndIt = succ_end(IntStack.top().first);
       while (SuccIt != EndIt) {                 // Loop over all interval succs
-	bool Done = ProcessInterval(getSourceGraphNode(OrigContainer, *SuccIt));
-	++SuccIt;                               // Increment iterator
-	if (Done) return *this;                 // Found a new interval! Use it!
+        bool Done = ProcessInterval(getSourceGraphNode(OrigContainer, *SuccIt));
+        ++SuccIt;                               // Increment iterator
+        if (Done) return *this;                 // Found a new interval! Use it!
       }
 
       // Free interval memory... if necessary
@@ -196,19 +196,19 @@ private:
 
     if (Visited.count(NodeHeader)) {     // Node already been visited?
       if (Int->contains(NodeHeader)) {   // Already in this interval...
-	return;
+        return;
       } else {                           // In other interval, add as successor
-	if (!Int->isSuccessor(NodeHeader)) // Add only if not already in set
-	  Int->Successors.push_back(NodeHeader);
+        if (!Int->isSuccessor(NodeHeader)) // Add only if not already in set
+          Int->Successors.push_back(NodeHeader);
       }
     } else {                             // Otherwise, not in interval yet
       for (typename IGT::ChildIteratorType I = IGT::child_begin(Node),
              E = IGT::child_end(Node); I != E; ++I) {
-	if (!Int->contains(*I)) {        // If pred not in interval, we can't be
-	  if (!Int->isSuccessor(NodeHeader)) // Add only if not already in set
-	    Int->Successors.push_back(NodeHeader);
-	  return;                        // See you later
-	}
+        if (!Int->contains(*I)) {        // If pred not in interval, we can't be
+          if (!Int->isSuccessor(NodeHeader)) // Add only if not already in set
+            Int->Successors.push_back(NodeHeader);
+          return;                        // See you later
+        }
       }
 
       // If we get here, then all of the predecessors of BB are in the interval
@@ -217,17 +217,17 @@ private:
       Visited.insert(NodeHeader);     // The node has now been visited!
 
       if (Int->isSuccessor(NodeHeader)) {
-	// If we were in the successor list from before... remove from succ list
-	Int->Successors.erase(std::remove(Int->Successors.begin(),
-				          Int->Successors.end(), NodeHeader),
-			      Int->Successors.end());
+        // If we were in the successor list from before... remove from succ list
+        Int->Successors.erase(std::remove(Int->Successors.begin(),
+                                          Int->Successors.end(), NodeHeader),
+                              Int->Successors.end());
       }
 
       // Now that we have discovered that Node is in the interval, perhaps some
       // of its successors are as well?
       for (typename GT::ChildIteratorType It = GT::child_begin(Node),
-	     End = GT::child_end(Node); It != End; ++It)
-	ProcessNode(Int, getSourceGraphNode(OrigContainer, *It));
+             End = GT::child_end(Node); It != End; ++It)
+        ProcessNode(Int, getSourceGraphNode(OrigContainer, *It));
     }
   }
 };

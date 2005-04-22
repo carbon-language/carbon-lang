@@ -39,7 +39,7 @@ Module *ParseAssemblyFile(const std::string &Filename);// throw (ParseException)
 class ParseException {
 public:
   ParseException(const std::string &filename, const std::string &message,
-		 int LineNo = -1, int ColNo = -1);
+                 int LineNo = -1, int ColNo = -1);
 
   ParseException(const ParseException &E);
 
