@@ -564,7 +564,7 @@ bool BugDriver::debugMiscompilation() {
   // Make sure something was miscompiled...
   if (!ReduceMiscompilingPasses(*this).reduceList(PassesToRun)) {
     std::cerr << "*** Optimized program matches reference output!  No problem "
-	      << "detected...\nbugpoint can't help you with your problem!\n";
+              << "detected...\nbugpoint can't help you with your problem!\n";
     return false;
   }
 

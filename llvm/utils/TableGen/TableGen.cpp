@@ -93,10 +93,10 @@ static Init *getBit(Record *R, unsigned BitNo) {
   for (unsigned i = 0, e = V.size(); i != e; ++i)
     if (V[i].getPrefix()) {
       assert(dynamic_cast<BitsInit*>(V[i].getValue()) &&
-	     "Can only handle fields of bits<> type!");
+             "Can only handle fields of bits<> type!");
       BitsInit *I = (BitsInit*)V[i].getValue();
       if (BitNo < I->getNumBits())
-	return I->getBit(BitNo);
+        return I->getBit(BitNo);
       BitNo -= I->getNumBits();
     }
 
@@ -111,7 +111,7 @@ static unsigned getNumBits(Record *R) {
   for (unsigned i = 0, e = V.size(); i != e; ++i)
     if (V[i].getPrefix()) {
       assert(dynamic_cast<BitsInit*>(V[i].getValue()) &&
-	     "Can only handle fields of bits<> type!");
+             "Can only handle fields of bits<> type!");
       Num += ((BitsInit*)V[i].getValue())->getNumBits();
     }
   return Num;
@@ -130,7 +130,7 @@ static bool BitsAreEqual(Record *I1, Record *I2, unsigned BitNo) {
 }
 
 static bool BitRangesEqual(Record *I1, Record *I2,
-			   unsigned Start, unsigned End) {
+                           unsigned Start, unsigned End) {
   for (unsigned i = Start; i != End; ++i)
     if (!BitsAreEqual(I1, I2, i))
       return false;
@@ -145,9 +145,9 @@ static unsigned getFirstFixedBit(Record *R, unsigned FirstFixedBit) {
 }
 
 static void FindInstDifferences(Record *I1, Record *I2,
-				unsigned FirstFixedBit, unsigned MaxBits,
-				unsigned &FirstVaryingBitOverall,
-				unsigned &LastFixedBitOverall) {
+                                unsigned FirstFixedBit, unsigned MaxBits,
+                                unsigned &FirstVaryingBitOverall,
+                                unsigned &LastFixedBitOverall) {
   // Compare the first instruction to the rest of the instructions, looking for
   // fields that differ.
   //
@@ -179,16 +179,16 @@ struct BitComparator {
     for (unsigned i = BitBegin; i != BitEnd; ++i) {
       bool V1 = getBitValue(R1, i), V2 = getBitValue(R2, i);
       if (V1 < V2)
-	return true;
+        return true;
       else if (V2 < V1)
-	return false;
+        return false;
     }
     return false;
   }
 };
 
 static void PrintRange(std::vector<Record*>::iterator I,
-		       std::vector<Record*>::iterator E) {
+                       std::vector<Record*>::iterator E) {
   while (I != E) std::cerr << **I++;
 }
 
@@ -197,8 +197,8 @@ static bool getMemoryBit(unsigned char *M, unsigned i) {
 }
 
 static unsigned getFirstFixedBitInSequence(std::vector<Record*>::iterator IB,
-					   std::vector<Record*>::iterator IE,
-					   unsigned StartBit) {
+                                           std::vector<Record*>::iterator IE,
+                                           unsigned StartBit) {
   unsigned FirstFixedBit = 0;
   for (std::vector<Record*>::iterator I = IB; I != IE; ++I)
     FirstFixedBit = std::max(FirstFixedBit, getFirstFixedBit(*I, StartBit));
@@ -211,16 +211,16 @@ static unsigned getFirstFixedBitInSequence(std::vector<Record*>::iterator IB,
 // down to zero or one instruction, in which case we have a match or failure.
 //
 static Record *ParseMachineCode(std::vector<Record*>::iterator InstsB,
-				std::vector<Record*>::iterator InstsE,
-				unsigned char *M) {
+                                std::vector<Record*>::iterator InstsE,
+                                unsigned char *M) {
   assert(InstsB != InstsE && "Empty range?");
   if (InstsB+1 == InstsE) {
     // Only a single instruction, see if we match it...
     Record *Inst = *InstsB;
     for (unsigned i = 0, e = getNumBits(Inst); i != e; ++i)
       if (BitInit *BI = dynamic_cast<BitInit*>(getBit(Inst, i)))
-	if (getMemoryBit(M, i) != BI->getValue())
-	  throw std::string("Parse failed!\n");
+        if (getMemoryBit(M, i) != BI->getValue())
+          throw std::string("Parse failed!\n");
     return Inst;
   }
 
@@ -235,16 +235,16 @@ static Record *ParseMachineCode(std::vector<Record*>::iterator InstsB,
     LastFixedBit = ~0;
     for (std::vector<Record*>::iterator I = InstsB+1; I != InstsE; ++I)
       FindInstDifferences(*InstsB, *I, FirstFixedBit, MaxBits,
-			  FirstVaryingBit, LastFixedBit);
+                          FirstVaryingBit, LastFixedBit);
     if (FirstVaryingBit == MaxBits) {
       std::cerr << "ERROR: Could not find bit to distinguish between "
-		<< "the following entries!\n";
+                << "the following entries!\n";
       PrintRange(InstsB, InstsE);
     }
 
 #if 0
     std::cerr << "FVB: " << FirstVaryingBit << " - " << LastFixedBit
-	      << ": " << InstsE-InstsB << "\n";
+              << ": " << InstsE-InstsB << "\n";
 #endif
 
     FirstFixedBit = getFirstFixedBitInSequence(InstsB, InstsE, FirstVaryingBit);
@@ -282,7 +282,7 @@ static Record *ParseMachineCode(std::vector<Record*>::iterator InstsB,
 
 #if 0
     std::cerr << "FVB: " << FirstVaryingBit << " - " << LastFixedBit
-	      << ": [" << RangeEnd-RangeBegin << "] - ";
+              << ": [" << RangeEnd-RangeBegin << "] - ";
     for (int i = LastFixedBit-1; i >= (int)FirstVaryingBit; --i)
       std::cerr << (int)((BitInit*)getBit(*RangeBegin, i))->getValue() << " ";
     std::cerr << "\n";
@@ -290,8 +290,8 @@ static Record *ParseMachineCode(std::vector<Record*>::iterator InstsB,
 
     if (Record *R = ParseMachineCode(RangeBegin, RangeEnd, M)) {
       if (Match) {
-	std::cerr << "Error: Multiple matches found:\n";
-	PrintRange(InstsB, InstsE);
+        std::cerr << "Error: Multiple matches found:\n";
+        PrintRange(InstsB, InstsE);
       }
 
       assert(Match == 0 && "Multiple matches??");
@@ -305,7 +305,7 @@ static Record *ParseMachineCode(std::vector<Record*>::iterator InstsB,
 
 static void PrintValue(Record *I, unsigned char *Ptr, const RecordVal &Val) {
   assert(dynamic_cast<BitsInit*>(Val.getValue()) &&
-	 "Can only handle undefined bits<> types!");
+         "Can only handle undefined bits<> types!");
   BitsInit *BI = (BitsInit*)Val.getValue();
   assert(BI->getNumBits() <= 32 && "Can only handle fields up to 32 bits!");
 
@@ -325,17 +325,17 @@ static void PrintValue(Record *I, unsigned char *Ptr, const RecordVal &Val) {
     if (Vals[f].getPrefix()) {
       BitsInit *FieldInitializer = (BitsInit*)Vals[f].getValue();
       if (&Vals[f] == &Val) {
-	// Read the bits directly now...
-	for (unsigned i = 0, e = BI->getNumBits(); i != e; ++i)
-	  Value |= getMemoryBit(Ptr, Offset+i) << i;
-	break;
+        // Read the bits directly now...
+        for (unsigned i = 0, e = BI->getNumBits(); i != e; ++i)
+          Value |= getMemoryBit(Ptr, Offset+i) << i;
+        break;
       }
 
       // Scan through the field looking for bit initializers of the current
       // variable...
       for (unsigned i = 0, e = FieldInitializer->getNumBits(); i != e; ++i)
-	if (VarBitInit *VBI =
-	    dynamic_cast<VarBitInit*>(FieldInitializer->getBit(i))) {
+        if (VarBitInit *VBI =
+            dynamic_cast<VarBitInit*>(FieldInitializer->getBit(i))) {
           TypedInit *TI = VBI->getVariable();
           if (VarInit *VI = dynamic_cast<VarInit*>(TI)) {
             if (VI->getName() == Val.getName())
@@ -344,7 +344,7 @@ static void PrintValue(Record *I, unsigned char *Ptr, const RecordVal &Val) {
             // FIXME: implement this!
             std::cerr << "FIELD INIT not implemented yet!\n";
           }
-	}	
+        }
       Offset += FieldInitializer->getNumBits();
     }
 
@@ -353,8 +353,8 @@ static void PrintValue(Record *I, unsigned char *Ptr, const RecordVal &Val) {
 
 static void PrintInstruction(Record *I, unsigned char *Ptr) {
   std::cout << "Inst " << getNumBits(I)/8 << " bytes: "
-	    << "\t" << I->getName() << "\t" << *I->getValue("Name")->getValue()
-	    << "\t";
+            << "\t" << I->getName() << "\t" << *I->getValue("Name")->getValue()
+            << "\t";
 
   const std::vector<RecordVal> &Vals = I->getValues();
   for (unsigned i = 0, e = Vals.size(); i != e; ++i)
@@ -371,21 +371,21 @@ static void ParseMachineCode() {
   // X86 code
   unsigned char Buffer[] = {
                              0x55,             // push EBP
-			     0x89, 0xE5,       // mov EBP, ESP
-			     //0x83, 0xEC, 0x08, // sub ESP, 0x8
-			     0xE8, 1, 2, 3, 4, // call +0x04030201
-			     0x89, 0xEC,       // mov ESP, EBP
-			     0x5D,             // pop EBP
-			     0xC3,             // ret
-			     0x90,             // nop
-			     0xC9,             // leave
-			     0x89, 0xF6,       // mov ESI, ESI
-			     0x68, 1, 2, 3, 4, // push 0x04030201
-			     0x5e,             // pop ESI
-			     0xFF, 0xD0,       // call EAX
-			     0xB8, 1, 2, 3, 4, // mov EAX, 0x04030201
-			     0x85, 0xC0,       // test EAX, EAX
-			     0xF4,             // hlt
+                             0x89, 0xE5,       // mov EBP, ESP
+                             //0x83, 0xEC, 0x08, // sub ESP, 0x8
+                             0xE8, 1, 2, 3, 4, // call +0x04030201
+                             0x89, 0xEC,       // mov ESP, EBP
+                             0x5D,             // pop EBP
+                             0xC3,             // ret
+                             0x90,             // nop
+                             0xC9,             // leave
+                             0x89, 0xF6,       // mov ESI, ESI
+                             0x68, 1, 2, 3, 4, // push 0x04030201
+                             0x5e,             // pop ESI
+                             0xFF, 0xD0,       // call EAX
+                             0xB8, 1, 2, 3, 4, // mov EAX, 0x04030201
+                             0x85, 0xC0,       // test EAX, EAX
+                             0xF4,             // hlt
   };
 
 #if 0

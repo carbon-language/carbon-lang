@@ -944,7 +944,7 @@ public:
   bool isSubClassOf(Record *R) const {
     for (unsigned i = 0, e = SuperClasses.size(); i != e; ++i)
       if (SuperClasses[i] == R)
-	return true;
+        return true;
     return false;
   }
 
@@ -1031,10 +1031,10 @@ class RecordKeeper {
 public:
   ~RecordKeeper() {
     for (std::map<std::string, Record*>::iterator I = Classes.begin(),
-	   E = Classes.end(); I != E; ++I)
+           E = Classes.end(); I != E; ++I)
       delete I->second;
     for (std::map<std::string, Record*>::iterator I = Defs.begin(),
-	   E = Defs.end(); I != E; ++I)
+           E = Defs.end(); I != E; ++I)
       delete I->second;
   }
 

@@ -1,6 +1,6 @@
 /* $Id$ */
 
-#define MAX_ARITY	2
+#define MAX_ARITY       2
 
 typedef int ItemSetNum;
 typedef int OperatorNum;
@@ -9,11 +9,11 @@ typedef int RuleNum;
 typedef int ArityNum;
 typedef int ERuleNum;
 
-extern NonTerminalNum	last_user_nonterminal;
-extern NonTerminalNum	max_nonterminal;
-extern RuleNum		max_rule;
-extern ERuleNum		max_erule_num;
-extern int		max_arity;
+extern NonTerminalNum   last_user_nonterminal;
+extern NonTerminalNum   max_nonterminal;
+extern RuleNum          max_rule;
+extern ERuleNum         max_erule_num;
+extern int              max_arity;
 
 #ifdef __STDC__
 #define ARGS(x) x
@@ -22,7 +22,7 @@ extern int		max_arity;
 #endif
 
 #ifndef NOLEX
-#define DELTAWIDTH	4
+#define DELTAWIDTH      4
 typedef short DeltaCost[DELTAWIDTH];
 typedef short *DeltaPtr;
 extern void ASSIGNCOST ARGS((DeltaPtr, DeltaPtr));
@@ -31,179 +31,179 @@ extern void MINUSCOST ARGS((DeltaPtr, DeltaPtr));
 extern void ZEROCOST ARGS((DeltaPtr));
 extern int LESSCOST ARGS((DeltaPtr, DeltaPtr));
 extern int EQUALCOST ARGS((DeltaPtr, DeltaPtr));
-#define PRINCIPLECOST(x)	(x[0])
+#define PRINCIPLECOST(x)        (x[0])
 #else
-#define DELTAWIDTH	1
+#define DELTAWIDTH      1
 typedef int DeltaCost;
 typedef int DeltaPtr;
-#define ASSIGNCOST(l, r)	((l) = (r))
-#define ADDCOST(l, r)		((l) += (r))
-#define MINUSCOST(l, r)		((l) -= (r))
-#define ZEROCOST(x)		((x) = 0)
-#define LESSCOST(l, r)		((l) < (r))
-#define EQUALCOST(l, r)		((l) == (r))
-#define PRINCIPLECOST(x)	(x)
+#define ASSIGNCOST(l, r)        ((l) = (r))
+#define ADDCOST(l, r)           ((l) += (r))
+#define MINUSCOST(l, r)         ((l) -= (r))
+#define ZEROCOST(x)             ((x) = 0)
+#define LESSCOST(l, r)          ((l) < (r))
+#define EQUALCOST(l, r)         ((l) == (r))
+#define PRINCIPLECOST(x)        (x)
 #endif /* NOLEX */
-#define NODIVERGE(c,state,nt,base)		if (prevent_divergence > 0) CHECKDIVERGE(c,state,nt,base);
+#define NODIVERGE(c,state,nt,base)              if (prevent_divergence > 0) CHECKDIVERGE(c,state,nt,base);
 
 struct list {
-	void		*x;
-	struct list	*next;
+        void            *x;
+        struct list     *next;
 };
-typedef struct list	*List;
+typedef struct list     *List;
 
 struct intlist {
-	int		x;
-	struct intlist	*next;
+        int             x;
+        struct intlist  *next;
 };
-typedef struct intlist	*IntList;
+typedef struct intlist  *IntList;
 
 struct operator {
-	char		*name;
-	unsigned int	ref:1;
-	OperatorNum	num;
-	ItemSetNum	baseNum;
-	ItemSetNum	stateCount;
-	ArityNum	arity;
-	struct table	*table;
+        char            *name;
+        unsigned int    ref:1;
+        OperatorNum     num;
+        ItemSetNum      baseNum;
+        ItemSetNum      stateCount;
+        ArityNum        arity;
+        struct table    *table;
 };
-typedef struct operator	*Operator;
+typedef struct operator *Operator;
 
 struct nonterminal {
-	char		*name;
-	NonTerminalNum	num;
-	ItemSetNum	baseNum;
-	ItemSetNum	ruleCount;
-	struct plankMap *pmap;
+        char            *name;
+        NonTerminalNum  num;
+        ItemSetNum      baseNum;
+        ItemSetNum      ruleCount;
+        struct plankMap *pmap;
 
-	struct rule	*sampleRule; /* diagnostic---gives "a" rule that with this lhs */
+        struct rule     *sampleRule; /* diagnostic---gives "a" rule that with this lhs */
 };
-typedef struct nonterminal	*NonTerminal;
+typedef struct nonterminal      *NonTerminal;
 
 struct pattern {
-	NonTerminal	normalizer;
-	Operator	op;		/* NULL if NonTerm -> NonTerm */
-	NonTerminal	children[MAX_ARITY];
+        NonTerminal     normalizer;
+        Operator        op;             /* NULL if NonTerm -> NonTerm */
+        NonTerminal     children[MAX_ARITY];
 };
-typedef struct pattern	*Pattern;
+typedef struct pattern  *Pattern;
 
 struct rule {
-	DeltaCost	delta;
-	ERuleNum	erulenum;
-	RuleNum		num;
-	RuleNum		newNum;
-	NonTerminal	lhs;
-	Pattern		pat;
-	unsigned int	used:1;
+        DeltaCost       delta;
+        ERuleNum        erulenum;
+        RuleNum         num;
+        RuleNum         newNum;
+        NonTerminal     lhs;
+        Pattern         pat;
+        unsigned int    used:1;
 };
-typedef struct rule	*Rule;
+typedef struct rule     *Rule;
 
 struct item {
-	DeltaCost	delta;
-	Rule		rule;
+        DeltaCost       delta;
+        Rule            rule;
 };
-typedef struct item	Item;
+typedef struct item     Item;
 
-typedef short 	*Relevant;	/* relevant non-terminals */
+typedef short   *Relevant;      /* relevant non-terminals */
 
-typedef Item	*ItemArray;
+typedef Item    *ItemArray;
 
-struct item_set {	/* indexed by NonTerminal */
-	ItemSetNum	num;
-	ItemSetNum	newNum;
-	Operator	op;
-	struct item_set *kids[2];
-	struct item_set *representative;
-	Relevant	relevant;
-	ItemArray	virgin;
-	ItemArray	closed;
+struct item_set {       /* indexed by NonTerminal */
+        ItemSetNum      num;
+        ItemSetNum      newNum;
+        Operator        op;
+        struct item_set *kids[2];
+        struct item_set *representative;
+        Relevant        relevant;
+        ItemArray       virgin;
+        ItemArray       closed;
 };
-typedef struct item_set	*Item_Set;
+typedef struct item_set *Item_Set;
 
-#define DIM_MAP_SIZE	(1 << 8)
-#define GLOBAL_MAP_SIZE	(1 << 15)
+#define DIM_MAP_SIZE    (1 << 8)
+#define GLOBAL_MAP_SIZE (1 << 15)
 
-struct mapping {	/* should be a hash table for TS -> int */
-	List		*hash;
-	int		hash_size;
-	int		max_size;
-	ItemSetNum	count;
-	Item_Set	*set;	/* map: int <-> Item_Set */
+struct mapping {        /* should be a hash table for TS -> int */
+        List            *hash;
+        int             hash_size;
+        int             max_size;
+        ItemSetNum      count;
+        Item_Set        *set;   /* map: int <-> Item_Set */
 };
-typedef struct mapping	*Mapping;
+typedef struct mapping  *Mapping;
 
 struct index_map {
-	ItemSetNum	max_size;
-	Item_Set	*class;
+        ItemSetNum      max_size;
+        Item_Set        *class;
 };
-typedef struct index_map	Index_Map;
+typedef struct index_map        Index_Map;
 
 struct dimension {
-	Relevant	relevant;
-	Index_Map	index_map;
-	Mapping		map;
-	ItemSetNum	max_size;
-	struct plankMap *pmap;
+        Relevant        relevant;
+        Index_Map       index_map;
+        Mapping         map;
+        ItemSetNum      max_size;
+        struct plankMap *pmap;
 };
-typedef struct dimension	*Dimension;
+typedef struct dimension        *Dimension;
 
 
 struct table {
-	Operator	op;
-	List		rules;
-	Relevant	relevant;
-	Dimension	dimen[MAX_ARITY];	/* 1 for each dimension */
-	Item_Set	*transition;	/* maps local indices to global
-						itemsets */
+        Operator        op;
+        List            rules;
+        Relevant        relevant;
+        Dimension       dimen[MAX_ARITY];       /* 1 for each dimension */
+        Item_Set        *transition;    /* maps local indices to global
+                                                itemsets */
 };
-typedef struct table	*Table;
+typedef struct table    *Table;
 
 struct relation {
-	Rule	rule;
-	DeltaCost	chain;
-	NonTerminalNum	nextchain;
-	DeltaCost	sibling;
-	int		sibFlag;
-	int		sibComputed;
+        Rule    rule;
+        DeltaCost       chain;
+        NonTerminalNum  nextchain;
+        DeltaCost       sibling;
+        int             sibFlag;
+        int             sibComputed;
 };
-typedef struct relation	*Relation;
+typedef struct relation *Relation;
 
 struct queue {
-	List head;
-	List tail;
+        List head;
+        List tail;
 };
-typedef struct queue	*Queue;
+typedef struct queue    *Queue;
 
 struct plank {
-	char *name;
-	List fields;
-	int width;
+        char *name;
+        List fields;
+        int width;
 };
-typedef struct plank	*Plank;
+typedef struct plank    *Plank;
 
 struct except {
-	short index;
-	short value;
+        short index;
+        short value;
 };
-typedef struct except	*Exception;
+typedef struct except   *Exception;
 
 struct plankMap {
-	List exceptions;
-	int offset;
-	struct stateMap *values;
+        List exceptions;
+        int offset;
+        struct stateMap *values;
 };
-typedef struct plankMap	*PlankMap;
+typedef struct plankMap *PlankMap;
 
 struct stateMap {
-	char *fieldname;
-	Plank plank;
-	int width;
-	short *value;
+        char *fieldname;
+        Plank plank;
+        int width;
+        short *value;
 };
-typedef struct stateMap	*StateMap;
+typedef struct stateMap *StateMap;
 
 struct stateMapTable {
-	List maps;
+        List maps;
 };
 
 extern void CHECKDIVERGE ARGS((DeltaPtr, Item_Set, int, int));
@@ -232,7 +232,7 @@ extern Item_Set encode ARGS((Mapping, Item_Set, int *));
 extern void build ARGS((void));
 extern Item_Set *transLval ARGS((Table, int, int));
 
-typedef void *	(*ListFn) ARGS((void *));
+typedef void *  (*ListFn) ARGS((void *));
 extern void foreachList ARGS((ListFn, List));
 extern void reveachList ARGS((ListFn, List));
 
@@ -247,23 +247,23 @@ extern void addRelevant ARGS((Relevant, NonTerminalNum));
 extern void *zalloc ARGS((unsigned int));
 extern void zfree ARGS((void *));
 
-extern NonTerminal	start;
-extern List		rules;
-extern List		chainrules;
-extern List		operators;
-extern List		leaves;
-extern List		nonterminals;
-extern List		grammarNts;
-extern Queue		globalQ;
-extern Mapping		globalMap;
-extern int		exceptionTolerance;
-extern int		prevent_divergence;
-extern int		principleCost;
-extern int		lexical;
-extern struct rule	stub_rule;
-extern Relation 	*allpairs;
-extern Item_Set		*sortedStates;
-extern Item_Set		errorState;
+extern NonTerminal      start;
+extern List             rules;
+extern List             chainrules;
+extern List             operators;
+extern List             leaves;
+extern List             nonterminals;
+extern List             grammarNts;
+extern Queue            globalQ;
+extern Mapping          globalMap;
+extern int              exceptionTolerance;
+extern int              prevent_divergence;
+extern int              principleCost;
+extern int              lexical;
+extern struct rule      stub_rule;
+extern Relation         *allpairs;
+extern Item_Set         *sortedStates;
+extern Item_Set         errorState;
 
 extern void dumpRelevant ARGS((Relevant));
 extern void dumpOperator ARGS((Operator, int));
@@ -289,14 +289,14 @@ extern void dumpSortedRules ARGS((void));
 extern int debugTrim;
 
 #ifdef DEBUG
-#define debug(a,b)	if (a) b
+#define debug(a,b)      if (a) b
 #else
 #define debug(a,b)
 #endif
 extern int debugTables;
 
-#define TABLE_INCR	8
-#define STATES_INCR	64
+#define TABLE_INCR      8
+#define STATES_INCR     64
 
 #ifdef NDEBUG
 #define assert(c) ((void) 0)

@@ -94,7 +94,7 @@ public:
   /// are to match.
   ///
   bool debugPassMiscompilation(const PassInfo *ThePass,
-			       const std::string &ReferenceOutput);
+                               const std::string &ReferenceOutput);
 
   /// compileSharedObject - This method creates a SharedObject from a given
   /// BytecodeFile for debugging a code generator.
@@ -227,7 +227,7 @@ public:
   ///
   bool runPasses(const std::vector<const PassInfo*> &PassesToRun,
                  std::string &OutputFilename, bool DeleteOutput = false,
-		 bool Quiet = false) const;
+                 bool Quiet = false) const;
 
   /// writeProgramToFile - This writes the current "Program" to the named
   /// bytecode file.  If an error occurs, true is returned.

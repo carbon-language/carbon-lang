@@ -1,62 +1,62 @@
 /* $Id$ */
 
 struct binding {
-	char	*name;
-	int	opnum;
+  char  *name;
+  int opnum;
 };
-typedef struct binding	*Binding;
+typedef struct binding  *Binding;
 
 struct arity {
-	int	arity;
-	List	bindings;
+  int arity;
+  List  bindings;
 };
-typedef struct arity	*Arity;
+typedef struct arity  *Arity;
 
 struct patternAST {
-	struct symbol *sym;
-	char	*op;
-	List	children;
+  struct symbol *sym;
+  char  *op;
+  List  children;
 };
-typedef struct patternAST	*PatternAST;
+typedef struct patternAST *PatternAST;
 
 struct ruleAST {
-	char			*lhs;
-	PatternAST		pat;
-	int			erulenum;
-	IntList			cost;
-	struct rule		*rule;
-	struct strTableElement	*kids;
-	struct strTableElement	*nts;
+  char      *lhs;
+  PatternAST    pat;
+  int     erulenum;
+  IntList     cost;
+  struct rule   *rule;
+  struct strTableElement  *kids;
+  struct strTableElement  *nts;
 };
-typedef struct ruleAST	*RuleAST;
+typedef struct ruleAST  *RuleAST;
 
 typedef enum {
-	UNKNOWN,
-	OPERATOR,
-	NONTERMINAL
+  UNKNOWN,
+  OPERATOR,
+  NONTERMINAL
 } TagType;
 
 struct symbol {
-	char	*name;
-	TagType	tag;
-	union {
-		NonTerminal	nt;
-		Operator	op;
-	} u;
+  char  *name;
+  TagType tag;
+  union {
+    NonTerminal nt;
+    Operator  op;
+  } u;
 };
-typedef struct symbol	*Symbol;
+typedef struct symbol *Symbol;
 
 struct strTableElement {
-	char *str;
-	IntList erulenos;
-	char *ename;
+  char *str;
+  IntList erulenos;
+  char *ename;
 };
-typedef struct strTableElement	*StrTableElement;
+typedef struct strTableElement  *StrTableElement;
 
 struct strTable {
-	List elems;
+  List elems;
 };
-typedef struct strTable	*StrTable;
+typedef struct strTable *StrTable;
 
 extern void doGrammarNts ARGS((void));
 void makeRuleDescArray ARGS((void));
@@ -122,11 +122,11 @@ extern void dumpStrTable ARGS((StrTable));
 extern int yylex ARGS((void));
 extern int yyparse ARGS((void));
 
-extern int	max_ruleAST;
-extern List	ruleASTs;
+extern int  max_ruleAST;
+extern List ruleASTs;
 
-extern FILE	*outfile;
+extern FILE *outfile;
 extern const char *prefix;
-extern int 	trimflag;
-extern int 	speedflag;
-extern int 	grammarflag;
+extern int  trimflag;
+extern int  speedflag;
+extern int  grammarflag;

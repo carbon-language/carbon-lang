@@ -43,7 +43,7 @@ using namespace llvm;
 /// file.  If an error occurs, true is returned.
 ///
 bool BugDriver::writeProgramToFile(const std::string &Filename,
-				   Module *M) const {
+                                   Module *M) const {
   std::ios::openmode io_mode = std::ios::out | std::ios::trunc |
                                std::ios::binary;
   std::ofstream Out(Filename.c_str(), io_mode);
@@ -127,7 +127,7 @@ static void RunChild(Module *Program,const std::vector<const PassInfo*> &Passes,
 ///
 bool BugDriver::runPasses(const std::vector<const PassInfo*> &Passes,
                           std::string &OutputFilename, bool DeleteOutput,
-			  bool Quiet) const{
+                          bool Quiet) const{
   std::cout << std::flush;
   sys::Path uniqueFilename("bugpoint-output.bc");
   uniqueFilename.makeUnique();

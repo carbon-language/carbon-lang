@@ -90,7 +90,7 @@ Init *BitsRecTy::convertValue(TypedInit *VI) {
     if (BRT->Size == Size) {
       BitsInit *Ret = new BitsInit(Size);
       for (unsigned i = 0; i != Size; ++i)
-	Ret->setBit(i, new VarBitInit(VI, i));
+        Ret->setBit(i, new VarBitInit(VI, i));
       return Ret;
     }
   if (Size == 1 && dynamic_cast<BitRecTy*>(VI->getType())) {
@@ -768,13 +768,13 @@ std::ostream &llvm::operator<<(std::ostream &OS, const RecordKeeper &RK) {
   OS << "------------- Classes -----------------\n";
   const std::map<std::string, Record*> &Classes = RK.getClasses();
   for (std::map<std::string, Record*>::const_iterator I = Classes.begin(),
-	 E = Classes.end(); I != E; ++I)
+         E = Classes.end(); I != E; ++I)
     OS << "class " << *I->second;
 
   OS << "------------- Defs -----------------\n";
   const std::map<std::string, Record*> &Defs = RK.getDefs();
   for (std::map<std::string, Record*>::const_iterator I = Defs.begin(),
-	 E = Defs.end(); I != E; ++I)
+         E = Defs.end(); I != E; ++I)
     OS << "def " << *I->second;
   return OS;
 }
