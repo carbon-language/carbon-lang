@@ -470,7 +470,7 @@ int BZ_API(BZ2_bzCompress) ( bz_stream *strm, int action )
             return progress ? BZ_RUN_OK : BZ_PARAM_ERROR;
          } 
          else
-	 if (action == BZ_FLUSH) {
+         if (action == BZ_FLUSH) {
             s->avail_in_expect = strm->avail_in;
             s->mode = BZ_M_FLUSHING;
             goto preswitch;

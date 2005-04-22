@@ -37,7 +37,8 @@ static int getdata(char*& buffer, size_t &size,
 }
 
 static int getdata_uns(char*& buffer, unsigned &size,
-		       llvm::Compressor::OutputDataCallback* cb, void* context) {
+                       llvm::Compressor::OutputDataCallback* cb, void* context)
+{
   size_t SizeOut;
   int Res = getdata(buffer, SizeOut, cb, context);
   size = SizeOut;

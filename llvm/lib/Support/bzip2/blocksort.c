@@ -321,7 +321,7 @@ void fallbackSort ( UInt32* fmap,
       r = -1;
       while (1) {
 
-	 /*-- find the next non-singleton bucket --*/
+         /*-- find the next non-singleton bucket --*/
          k = r + 1;
          while (ISSET_BH(k) && UNALIGNED_BH(k)) k++;
          if (ISSET_BH(k)) {

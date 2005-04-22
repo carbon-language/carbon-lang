@@ -31,5 +31,5 @@ void PluginLoader::operator=(const std::string &Filename) {
   }
   if (!ErrorMessage.empty())
     std::cerr << "Error opening '" << Filename << "': " << ErrorMessage
-              << "\n  -load request ignored.\n";	
+              << "\n  -load request ignored.\n";
 }

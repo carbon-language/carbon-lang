@@ -175,7 +175,7 @@ public:
   //FIXME: private:
 public:
   GenericValue executeGEPOperation(Value *Ptr, gep_type_iterator I,
-				   gep_type_iterator E, ExecutionContext &SF);
+                                   gep_type_iterator E, ExecutionContext &SF);
 
 private:  // Helper functions
   // SwitchToNewBasicBlock - Start execution in a new basic block and run any
@@ -191,7 +191,7 @@ private:  // Helper functions
   GenericValue getConstantExprValue(ConstantExpr *CE, ExecutionContext &SF);
   GenericValue getOperandValue(Value *V, ExecutionContext &SF);
   GenericValue executeCastOperation(Value *SrcVal, const Type *Ty,
-				    ExecutionContext &SF);
+                                    ExecutionContext &SF);
   void popStackAndReturnValueToCaller(const Type *RetTy, GenericValue Result);
 };
 

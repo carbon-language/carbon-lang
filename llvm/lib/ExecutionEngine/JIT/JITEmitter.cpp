@@ -443,7 +443,7 @@ void JITEmitter::emitWordAt(unsigned W, unsigned *Ptr) {
 //
 uint64_t JITEmitter::getConstantPoolEntryAddress(unsigned ConstantNum) {
   assert(ConstantNum < ConstantPoolAddresses.size() &&
-	 "Invalid ConstantPoolIndex!");
+         "Invalid ConstantPoolIndex!");
   return (intptr_t)ConstantPoolAddresses[ConstantNum];
 }
 

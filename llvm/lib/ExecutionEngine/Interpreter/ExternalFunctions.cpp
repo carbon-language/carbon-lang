@@ -560,7 +560,7 @@ GenericValue lle_X_memcpy(FunctionType *M, const vector<GenericValue> &Args) {
 GenericValue lle_X_fopen(FunctionType *M, const vector<GenericValue> &Args) {
   assert(Args.size() == 2);
   return PTOGV(fopen((const char *)GVTOP(Args[0]),
-		     (const char *)GVTOP(Args[1])));
+                     (const char *)GVTOP(Args[1])));
 }
 
 // int fclose(FILE *F);
@@ -604,14 +604,14 @@ GenericValue lle_X_fwrite(FunctionType *M, const vector<GenericValue> &Args) {
 GenericValue lle_X_fgets(FunctionType *M, const vector<GenericValue> &Args) {
   assert(Args.size() == 3);
   return GVTOP(fgets((char*)GVTOP(Args[0]), Args[1].IntVal,
-		     getFILE(GVTOP(Args[2]))));
+                     getFILE(GVTOP(Args[2]))));
 }
 
 // FILE *freopen(const char *path, const char *mode, FILE *stream);
 GenericValue lle_X_freopen(FunctionType *M, const vector<GenericValue> &Args) {
   assert(Args.size() == 3);
   return PTOGV(freopen((char*)GVTOP(Args[0]), (char*)GVTOP(Args[1]),
-		       getFILE(GVTOP(Args[2]))));
+                       getFILE(GVTOP(Args[2]))));
 }
 
 // int fflush(FILE *stream);
