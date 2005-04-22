@@ -513,11 +513,11 @@ system. The current set of primitive types is as follows:</p>
         <tbody>
         <tr><th>Type</th><th>Description</th></tr>
         <tr><td><tt>void</tt></td><td>No value</td></tr>
-        <tr><td><tt>ubyte</tt></td><td>Unsigned 8 bit value</td></tr>
-        <tr><td><tt>ushort</tt></td><td>Unsigned 16 bit value</td></tr>
-        <tr><td><tt>uint</tt></td><td>Unsigned 32 bit value</td></tr>
-        <tr><td><tt>ulong</tt></td><td>Unsigned 64 bit value</td></tr>
-        <tr><td><tt>float</tt></td><td>32 bit floating point value</td></tr>
+        <tr><td><tt>ubyte</tt></td><td>Unsigned 8-bit value</td></tr>
+        <tr><td><tt>ushort</tt></td><td>Unsigned 16-bit value</td></tr>
+        <tr><td><tt>uint</tt></td><td>Unsigned 32-bit value</td></tr>
+        <tr><td><tt>ulong</tt></td><td>Unsigned 64-bit value</td></tr>
+        <tr><td><tt>float</tt></td><td>32-bit floating point value</td></tr>
         <tr><td><tt>label</tt></td><td>Branch destination</td></tr>
         </tbody>
       </table>
@@ -527,11 +527,11 @@ system. The current set of primitive types is as follows:</p>
         <tbody>
           <tr><th>Type</th><th>Description</th></tr>
           <tr><td><tt>bool</tt></td><td>True or False value</td></tr>
-          <tr><td><tt>sbyte</tt></td><td>Signed 8 bit value</td></tr>
-          <tr><td><tt>short</tt></td><td>Signed 16 bit value</td></tr>
-          <tr><td><tt>int</tt></td><td>Signed 32 bit value</td></tr>
-          <tr><td><tt>long</tt></td><td>Signed 64 bit value</td></tr>
-          <tr><td><tt>double</tt></td><td>64 bit floating point value</td></tr>
+          <tr><td><tt>sbyte</tt></td><td>Signed 8-bit value</td></tr>
+          <tr><td><tt>short</tt></td><td>Signed 16-bit value</td></tr>
+          <tr><td><tt>int</tt></td><td>Signed 32-bit value</td></tr>
+          <tr><td><tt>long</tt></td><td>Signed 64-bit value</td></tr>
+          <tr><td><tt>double</tt></td><td>64-bit floating point value</td></tr>
         </tbody>
       </table>
     </td>
@@ -2637,7 +2637,7 @@ The '<tt>llvm.readport</tt>' intrinsic reads data from the hardware I/O port
 specified by <i>address</i> and returns the value.  The address and return
 value must be integers, but the size is dependent upon the platform upon which
 the program is code generated.  For example, on x86, the address must be an
-unsigned 16 bit value, and the return value must be 8, 16, or 32 bits.
+unsigned 16-bit value, and the return value must be 8, 16, or 32 bits.
 </p>
 
 </div>
@@ -2681,7 +2681,7 @@ being a memory location for memory mapped I/O).
 The '<tt>llvm.writeport</tt>' intrinsic writes <i>value</i> to the I/O port
 specified by <i>address</i>.  The address and value must be integers, but the
 size is dependent upon the platform upon which the program is code generated.
-For example, on x86, the address must be an unsigned 16 bit value, and the
+For example, on x86, the address must be an unsigned 16-bit value, and the
 value written must be 8, 16, or 32 bits in length.
 </p>
 
@@ -2721,7 +2721,7 @@ The '<tt>llvm.readio</tt>' intrinsic reads data from a memory mapped I/O
 location specified by <i>pointer</i> and returns the value.  The argument must
 be a pointer, and the return value must be a
 <a href="#t_firstclass">first class</a> type.  However, certain architectures
-may not support I/O on all first class types.  For example, 32 bit processors
+may not support I/O on all first class types.  For example, 32-bit processors
 may only support I/O on data types that are 32 bits or less.
 </p>
 
@@ -2768,7 +2768,7 @@ data should be written.
 The '<tt>llvm.writeio</tt>' intrinsic writes <i>value</i> to the memory mapped
 I/O address specified by <i>pointer</i>.  The value must be a
 <a href="#t_firstclass">first class</a> type.  However, certain architectures
-may not support I/O on all first class types.  For example, 32 bit processors
+may not support I/O on all first class types.  For example, 32-bit processors
 may only support I/O on data types that are 32 bits or less.
 </p>
 
