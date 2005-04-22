@@ -58,8 +58,8 @@ std::string gensym (const std::string varName, bool percent = true) {
 
 void emitArith (std::string op, char delta, std::ofstream &dest) {
   std::string ptr = gensym (op + "ptr"),
-	      val = gensym (op + "val"),
-	      result = gensym (op + "result");
+              val = gensym (op + "val"),
+              result = gensym (op + "result");
   dest << ptr << " = load sbyte** %ptrbox\n"
        << val << " = load sbyte* " << ptr << "\n"
        << result << " = add sbyte " << val << ", " << (int)delta << "\n"

@@ -52,7 +52,7 @@ public:
   /// its internal state to reference NewType instead of OldType.
   ///
   virtual void refineAbstractType(const DerivedType *OldTy,
-				  const Type *NewTy) = 0;
+                                  const Type *NewTy) = 0;
 
   /// The other case which AbstractTypeUsers must be aware of is when a type
   /// makes the transition from being abstract (where it has clients on it's

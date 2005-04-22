@@ -53,11 +53,11 @@ namespace llvm {
     static inline bool classof(const CallInst *I) {
       if (const Function *CF = I->getCalledFunction())
         switch (CF->getIntrinsicID()) {
-	case Intrinsic::dbg_stoppoint:
-	case Intrinsic::dbg_region_start:
-	case Intrinsic::dbg_region_end:
-	case Intrinsic::dbg_func_start:
-	case Intrinsic::dbg_declare:
+        case Intrinsic::dbg_stoppoint:
+        case Intrinsic::dbg_region_start:
+        case Intrinsic::dbg_region_end:
+        case Intrinsic::dbg_func_start:
+        case Intrinsic::dbg_declare:
           return true;
         default: break;
         }

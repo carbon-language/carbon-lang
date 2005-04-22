@@ -151,7 +151,7 @@ public:
   /// Instruction is allowed to be a dereferenced end iterator.
   ///
   static BinaryOperator *create(BinaryOps Op, Value *S1, Value *S2,
-				const std::string &Name = "",
+                                const std::string &Name = "",
                                 Instruction *InsertBefore = 0);
 
   /// create() - Construct a binary instruction, given the opcode and the two
@@ -159,7 +159,7 @@ public:
   /// BasicBlock specified.
   ///
   static BinaryOperator *create(BinaryOps Op, Value *S1, Value *S2,
-				const std::string &Name,
+                                const std::string &Name,
                                 BasicBlock *InsertAtEnd);
 
   /// create* - These methods just forward to create, and are useful when you

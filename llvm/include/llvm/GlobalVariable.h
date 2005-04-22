@@ -48,7 +48,7 @@ public:
   /// automatically inserted into the end of the specified modules global list.
   ///
   GlobalVariable(const Type *Ty, bool isConstant, LinkageTypes Linkage,
-		 Constant *Initializer = 0, const std::string &Name = "",
+                 Constant *Initializer = 0, const std::string &Name = "",
                  Module *Parent = 0);
 
   /// isExternal - Is this global variable lacking an initializer?  If so, the
