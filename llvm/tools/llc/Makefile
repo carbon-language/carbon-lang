@@ -9,22 +9,50 @@
 
 LEVEL = ../..
 TOOLNAME = llc
-USEDLIBS = \
+
+# Include this here so we can get the configuration of the targets
+# that have been configured for construction. We have to do this 
+# early so we can set up USEDLIBS properly before includeing Makefile.rules
+include $(LEVEL)/Makefile.config
+
+# We always build the C Backend and the Skeleton
+USEDLIBS := LLVMCBackend LLVMSkeleton
+
+# Check for Sparc target
+ifneq ($(strip $(filter SparcV8,$(TARGETS_TO_BUILD))),)
+USEDLIBS += \
 	LLVMSparcV9ModuloSched \
-	LLVMCBackend \
-	LLVMPowerPC \
 	LLVMSparcV8 \
 	LLVMSparcV9 \
-	LLVMX86 \
-	LLVMAlpha \
-	LLVMIA64 \
-	LLVMSkeleton \
 	LLVMSparcV9RegAlloc \
 	LLVMSparcV9InstrSched \
+	LLVMSparcV9LiveVar
+endif
+
+#Check for X86 Target
+ifneq ($(strip $(filter X86,$(TARGETS_TO_BUILD))),)
+USEDLIBS += LLVMX86
+endif
+
+#Check for PowerPC Target
+ifneq ($(strip $(filter PowerPC,$(TARGETS_TO_BUILD))),)
+USEDLIBS += LLVMPowerPC
+endif
+
+#Check for Alpha Target
+ifneq ($(strip $(filter Alpha,$(TARGETS_TO_BUILD))),)
+USEDLIBS += LLVMAlpha
+endif
+
+#Check for IA64 Target
+ifneq ($(strip $(filter IA64,$(TARGETS_TO_BUILD))),)
+USEDLIBS += LLVMIA64
+endif
+
+USEDLIBS += \
 	LLVMSelectionDAG \
 	LLVMCodeGen \
 	LLVMTarget.a \
-	LLVMSparcV9LiveVar \
 	LLVMipa.a \
 	LLVMTransforms.a \
 	LLVMScalarOpts \
@@ -37,7 +65,5 @@ USEDLIBS = \
 	LLVMbzip2 \
 	LLVMSystem.a
 
-TOOLLINKOPTS = $(PLATFORMLIBDL)
-
-include $(LEVEL)/Makefile.common
+include $(LLVM_SRC_ROOT)/Makefile.rules
 

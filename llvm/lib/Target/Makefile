@@ -7,8 +7,14 @@
 # 
 ##===----------------------------------------------------------------------===##
 LEVEL = ../..
-PARALLEL_DIRS = CBackend X86 SparcV8 SparcV9 PowerPC Alpha IA64 Skeleton
 LIBRARYNAME = LLVMTarget
 BUILD_ARCHIVE = 1
 
-include $(LEVEL)/Makefile.common
+# We include this early so we can access the value of TARGETS_TO_BUILD as the
+# value for PARALLEL_DIRS which must be set before Makefile.rules is included
+include $(LEVEL)/Makefile.config
+
+PARALLEL_DIRS := $(TARGETS_TO_BUILD)
+
+include $(LLVM_SRC_ROOT)/Makefile.rules
+
