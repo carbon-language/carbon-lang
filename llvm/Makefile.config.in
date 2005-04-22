@@ -100,6 +100,9 @@ ARCH=@ARCH@
 # Target triple (cpu-vendor-os) for which we should generate code
 TARGET_TRIPLE=@target@
 
+# Targets that we should build
+TARGETS_TO_BUILD=@TARGETS_TO_BUILD@
+
 # Endian-ness of the target
 ENDIAN=@ENDIAN@
 
@@ -112,9 +115,6 @@ CC := @CC@
 
 # Linker flags.
 LDFLAGS+=@LDFLAGS@
-
-# Libraries needed by tools
-TOOLLINKOPTS=@LIBS@
 
 # Path to the library archiver program.
 AR_PATH = @AR@
@@ -149,6 +149,8 @@ POD2MAN    := @POD2MAN@
 RUNTEST    := @RUNTEST@
 TCLSH      := @TCLSH@
 ZIP        := @ZIP@
+
+LIBS       := @LIBS@
 
 # Path to location for LLVM C/C++ front-end. You can modify this if you
 # want to override the value set by configure.

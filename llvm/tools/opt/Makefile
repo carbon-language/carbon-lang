@@ -14,6 +14,4 @@ USEDLIBS = LLVMBCReader LLVMBCWriter LLVMInstrumentation LLVMProfilePaths \
 	   LLVMTarget.a LLVMAnalysis LLVMTransformUtils LLVMCore LLVMSupport.a \
 	   LLVMbzip2 LLVMSystem.a 
 
-TOOLLINKOPTS = $(PLATFORMLIBDL)
-
 include $(LEVEL)/Makefile.common

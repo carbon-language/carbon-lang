@@ -18,6 +18,4 @@ USEDLIBS = LLVMipo LLVMScalarOpts LLVMAnalysis $(OPTLIBS) $(ANALIBS) \
 	   LLVMAsmParser LLVMLinker.a LLVMBCReader LLVMBCWriter \
 	   LLVMCore LLVMSupport.a LLVMbzip2 LLVMSystem.a
 
-TOOLLINKOPTS = $(PLATFORMLIBDL)
-
 include $(LEVEL)/Makefile.common

@@ -12,6 +12,4 @@ USEDLIBS = LLVMAsmParser LLVMBCReader LLVMAnalysis LLVMipa LLVMDataStructure \
 	   LLVMScalarOpts.a LLVMTransforms.a LLVMTarget.a LLVMScalarOpts.a \
 	   LLVMTransformUtils.a LLVMCore LLVMSupport.a LLVMbzip2 LLVMSystem.a
 
-TOOLLINKOPTS = $(PLATFORMLIBDL)
-
 include $(LEVEL)/Makefile.common
