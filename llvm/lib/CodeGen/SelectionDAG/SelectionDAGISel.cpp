@@ -418,7 +418,7 @@ void SelectionDAGLowering::visitBr(BranchInst &I) {
     // If this is not a fall-through branch, emit the branch.
     if (Succ0MBB != NextBlock)
       DAG.setRoot(DAG.getNode(ISD::BR, MVT::Other, getRoot(),
-			      DAG.getBasicBlock(Succ0MBB)));
+                              DAG.getBasicBlock(Succ0MBB)));
   } else {
     MachineBasicBlock *Succ1MBB = FuncInfo.MBBMap[I.getSuccessor(1)];
 
@@ -427,14 +427,14 @@ void SelectionDAGLowering::visitBr(BranchInst &I) {
       // If the condition is false, fall through.  This means we should branch
       // if the condition is true to Succ #0.
       DAG.setRoot(DAG.getNode(ISD::BRCOND, MVT::Other, getRoot(),
-			      Cond, DAG.getBasicBlock(Succ0MBB)));
+                              Cond, DAG.getBasicBlock(Succ0MBB)));
     } else if (Succ0MBB == NextBlock) {
       // If the condition is true, fall through.  This means we should branch if
       // the condition is false to Succ #1.  Invert the condition first.
       SDOperand True = DAG.getConstant(1, Cond.getValueType());
       Cond = DAG.getNode(ISD::XOR, Cond.getValueType(), Cond, True);
       DAG.setRoot(DAG.getNode(ISD::BRCOND, MVT::Other, getRoot(),
-			      Cond, DAG.getBasicBlock(Succ1MBB)));
+                              Cond, DAG.getBasicBlock(Succ1MBB)));
     } else {
       std::vector<SDOperand> Ops;
       Ops.push_back(getRoot());
@@ -537,7 +537,7 @@ void SelectionDAGLowering::visitGetElementPtr(User &I) {
         // N = N + Offset
         uint64_t Offset = TD.getStructLayout(StTy)->MemberOffsets[Field];
         N = DAG.getNode(ISD::ADD, N.getValueType(), N,
-			getIntPtrConstant(Offset));
+                        getIntPtrConstant(Offset));
       }
       Ty = StTy->getElementType(Field);
     } else {
@@ -558,7 +558,6 @@ void SelectionDAGLowering::visitGetElementPtr(User &I) {
           IdxN = DAG.getNode(ISD::TRUNCATE, Scale.getValueType(), IdxN);
 
         IdxN = DAG.getNode(ISD::MUL, N.getValueType(), IdxN, Scale);
-			
         N = DAG.getNode(ISD::ADD, N.getValueType(), N, IdxN);
       }
     }

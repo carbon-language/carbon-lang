@@ -88,7 +88,7 @@ bool PostDominatorSet::runOnFunction(Function &F) {
           if (Roots.size() > 1)
             WorkingSet.insert(0);
         }
-	
+
         WorkingSet.insert(BB);           // A block always dominates itself
         DomSetType &BBSet = Doms[BB];
         if (BBSet != WorkingSet) {
@@ -138,8 +138,8 @@ void ImmediatePostDominators::calcIDoms(const DominatorSetBase &DS) {
       // dominator set size will be one less than BB's...
       //
       if (DS.getDominators(*I).size() == DomSetSize - 1) {
-	IDoms[BB] = *I;
-	break;
+        IDoms[BB] = *I;
+        break;
       }
     }
   }
@@ -196,7 +196,7 @@ void PostDominatorTree::calculate(const PostDominatorSet &DS) {
           //
           Node *IDomNode = Nodes[*I];
           assert(IDomNode && "No node for IDOM?");
-	
+
           // Add a new tree node for this BasicBlock, and link it as a child of
           // IDomNode
           Nodes[BB] = IDomNode->addChild(new Node(BB, IDomNode));
@@ -240,7 +240,7 @@ PostDominanceFrontier::calculate(const PostDominatorTree &DT,
     DomSetType::const_iterator CDFI = ChildDF.begin(), CDFE = ChildDF.end();
     for (; CDFI != CDFE; ++CDFI) {
       if (!Node->dominates(DT[*CDFI]))
-	S.insert(*CDFI);
+        S.insert(*CDFI);
     }
   }
 

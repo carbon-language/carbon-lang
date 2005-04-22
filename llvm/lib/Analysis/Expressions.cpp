@@ -38,7 +38,7 @@ ExprType::ExprType(Value *Val) {
 }
 
 ExprType::ExprType(const ConstantInt *scale, Value *var,
-		   const ConstantInt *offset) {
+                   const ConstantInt *offset) {
   Scale = var ? scale : 0; Var = var; Offset = offset;
   ExprTy = Scale ? ScaledLinear : (Var ? Linear : Constant);
   if (Scale && Scale->isNullValue()) {  // Simplify 0*Var + const
@@ -169,7 +169,7 @@ static inline const ConstantInt *Mul(const ConstantInt *Arg1,
   Constant *Result = ConstantExpr::get(Instruction::Mul, (Constant*)Arg1,
                                        (Constant*)Arg2);
   assert(Result && Result->getType() == Arg1->getType() &&
-	 "Couldn't perform multiplication!");
+         "Couldn't perform multiplication!");
   ConstantInt *ResultI = cast<ConstantInt>(Result);
 
   // Check to see if the result is one of the special cases that we want to
@@ -207,15 +207,15 @@ static ExprType handleAddition(ExprType Left, ExprType Right, Value *V) {
   switch (Left.ExprTy) {
   case ExprType::Constant:
         return ExprType(Right.Scale, Right.Var,
-			DefZero(Right.Offset, Ty) + DefZero(Left.Offset, Ty));
+                        DefZero(Right.Offset, Ty) + DefZero(Left.Offset, Ty));
   case ExprType::Linear:              // RHS side must be linear or scaled
   case ExprType::ScaledLinear:        // RHS must be scaled
     if (Left.Var != Right.Var)        // Are they the same variables?
       return V;                       //   if not, we don't know anything!
 
     return ExprType(DefOne(Left.Scale  , Ty) + DefOne(Right.Scale , Ty),
-		    Right.Var,
-		    DefZero(Left.Offset, Ty) + DefZero(Right.Offset, Ty));
+                    Right.Var,
+                    DefZero(Left.Offset, Ty) + DefZero(Right.Offset, Ty));
   default:
     assert(0 && "Dont' know how to handle this case!");
     return ExprType();
@@ -233,7 +233,7 @@ static inline ExprType negate(const ExprType &E, Value *V) {
   if (NegOne == 0) return V;  // Couldn't subtract values...
 
   return ExprType(DefOne (E.Scale , Ty) * NegOne, E.Var,
-		  DefZero(E.Offset, Ty) * NegOne);
+                  DefZero(E.Offset, Ty) * NegOne);
 }
 
 
@@ -283,7 +283,7 @@ ExprType llvm::ClassifyExpr(Value *Expr) {
     ExprType Left(ClassifyExpr(I->getOperand(0)));
     if (Right.Offset == 0) return Left;   // shl x, 0 = x
     assert(Right.Offset->getType() == Type::UByteTy &&
-	   "Shift amount must always be a unsigned byte!");
+           "Shift amount must always be a unsigned byte!");
     uint64_t ShiftAmount = cast<ConstantUInt>(Right.Offset)->getValue();
     ConstantInt *Multiplier = getUnsignedConstant(1ULL << ShiftAmount, Ty);
 
@@ -301,7 +301,7 @@ ExprType llvm::ClassifyExpr(Value *Expr) {
       return Expr;
 
     return ExprType(DefOne(Left.Scale, Ty) * Multiplier, Left.Var,
-		    DefZero(Left.Offset, Ty) * Multiplier);
+                    DefZero(Left.Offset, Ty) * Multiplier);
   }  // end case Instruction::Shl
 
   case Instruction::Mul: {
@@ -316,7 +316,7 @@ ExprType llvm::ClassifyExpr(Value *Expr) {
     const ConstantInt *Offs = Left.Offset;
     if (Offs == 0) return ExprType();
     return ExprType( DefOne(Right.Scale , Ty) * Offs, Right.Var,
-		    DefZero(Right.Offset, Ty) * Offs);
+                    DefZero(Right.Offset, Ty) * Offs);
   } // end case Instruction::Mul
 
   case Instruction::Cast: {

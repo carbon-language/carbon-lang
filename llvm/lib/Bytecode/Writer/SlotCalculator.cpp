@@ -151,7 +151,7 @@ void SlotCalculator::processModule() {
         unsigned FirstNonStringID = 0;
         for (unsigned i = 0, e = Plane.size(); i != e; ++i)
           if (isa<ConstantAggregateZero>(Plane[i]) ||
-	      (isa<ConstantArray>(Plane[i]) &&
+              (isa<ConstantArray>(Plane[i]) &&
                cast<ConstantArray>(Plane[i])->isString())) {
             // Check to see if we have to shuffle this string around.  If not,
             // don't do anything.

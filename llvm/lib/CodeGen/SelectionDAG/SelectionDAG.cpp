@@ -981,7 +981,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     case ISD::OR:
       if (!C2)return N1;          // X or 0 -> X
       if (N2C->isAllOnesValue())
-	return N2;                // X or -1 -> -1
+        return N2;                // X or -1 -> -1
       break;
     case ISD::XOR:
       if (!C2) return N1;        // X xor 0 -> X
@@ -1005,7 +1005,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
             return getNode(ISD::AND, VT, LHS, RHS);
           }
         }
-	// X xor -1 -> not(x)  ?
+        // X xor -1 -> not(x)  ?
       }
       break;
     }
@@ -1647,13 +1647,11 @@ void SDNode::dump() const {
              dyn_cast<GlobalAddressSDNode>(this)) {
     std::cerr << "<";
     WriteAsOperand(std::cerr, GADN->getGlobal()) << ">";
-  } else if (const FrameIndexSDNode *FIDN =
-	     dyn_cast<FrameIndexSDNode>(this)) {
+  } else if (const FrameIndexSDNode *FIDN = dyn_cast<FrameIndexSDNode>(this)) {
     std::cerr << "<" << FIDN->getIndex() << ">";
   } else if (const ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(this)){
     std::cerr << "<" << CP->getIndex() << ">";
-  } else if (const BasicBlockSDNode *BBDN =
-	     dyn_cast<BasicBlockSDNode>(this)) {
+  } else if (const BasicBlockSDNode *BBDN = dyn_cast<BasicBlockSDNode>(this)) {
     std::cerr << "<";
     const Value *LBB = (const Value*)BBDN->getBasicBlock()->getBasicBlock();
     if (LBB)

@@ -73,13 +73,11 @@ std::string DOTGraphTraits<SelectionDAG*>::getNodeLabel(const SDNode *Node,
   } else if (const GlobalAddressSDNode *GADN =
              dyn_cast<GlobalAddressSDNode>(Node)) {
     Op += ": " + GADN->getGlobal()->getName();
-  } else if (const FrameIndexSDNode *FIDN =
-	     dyn_cast<FrameIndexSDNode>(Node)) {
+  } else if (const FrameIndexSDNode *FIDN = dyn_cast<FrameIndexSDNode>(Node)) {
     Op += " " + itostr(FIDN->getIndex());
   } else if (const ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(Node)){
     Op += "<" + utostr(CP->getIndex()) + ">";
-  } else if (const BasicBlockSDNode *BBDN =
-	     dyn_cast<BasicBlockSDNode>(Node)) {
+  } else if (const BasicBlockSDNode *BBDN = dyn_cast<BasicBlockSDNode>(Node)) {
     Op = "BB: ";
     const Value *LBB = (const Value*)BBDN->getBasicBlock()->getBasicBlock();
     if (LBB)

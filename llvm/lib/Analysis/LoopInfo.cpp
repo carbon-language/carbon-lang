@@ -109,7 +109,7 @@ void LoopInfo::Calculate(const DominatorSet &DS) {
   BasicBlock *RootNode = DS.getRoot();
 
   for (df_iterator<BasicBlock*> NI = df_begin(RootNode),
-	 NE = df_end(RootNode); NI != NE; ++NI)
+         NE = df_end(RootNode); NI != NE; ++NI)
     if (Loop *L = ConsiderForLoop(*NI, DS))
       TopLevelLoops.push_back(L);
 }
@@ -191,7 +191,7 @@ Loop *LoopInfo::ConsiderForLoop(BasicBlock *BB, const DominatorSet &DS) {
 
   // If there are any loops nested within this loop, create them now!
   for (std::vector<BasicBlock*>::iterator I = L->Blocks.begin(),
-	 E = L->Blocks.end(); I != E; ++I)
+         E = L->Blocks.end(); I != E; ++I)
     if (Loop *NewLoop = ConsiderForLoop(*I, DS)) {
       L->SubLoops.push_back(NewLoop);
       NewLoop->ParentLoop = L;
@@ -201,7 +201,7 @@ Loop *LoopInfo::ConsiderForLoop(BasicBlock *BB, const DominatorSet &DS) {
   // loop can be found for them.
   //
   for (std::vector<BasicBlock*>::iterator I = L->Blocks.begin(),
-	 E = L->Blocks.end(); I != E; ++I) {
+         E = L->Blocks.end(); I != E; ++I) {
     std::map<BasicBlock*, Loop*>::iterator BBMI = BBMap.lower_bound(*I);
     if (BBMI == BBMap.end() || BBMI->first != *I)  // Not in map yet...
       BBMap.insert(BBMI, std::make_pair(*I, L));   // Must be at this level

@@ -109,8 +109,8 @@ namespace {
       if (FunctionRecord *FR = getFunctionInfo(F))
         if (FR->FunctionEffect == 0)
           return DoesNotAccessMemory;
-	else if ((FR->FunctionEffect & Mod) == 0)
-	  return OnlyReadsMemory;
+        else if ((FR->FunctionEffect & Mod) == 0)
+          return OnlyReadsMemory;
       return AliasAnalysis::getModRefBehavior(F, CS, Info);
     }
 

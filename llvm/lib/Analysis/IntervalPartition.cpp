@@ -56,7 +56,7 @@ void IntervalPartition::addIntervalToPartition(Interval *I) {
 void IntervalPartition::updatePredecessors(Interval *Int) {
   BasicBlock *Header = Int->getHeaderNode();
   for (Interval::succ_iterator I = Int->Successors.begin(),
-	                       E = Int->Successors.end(); I != E; ++I)
+         E = Int->Successors.end(); I != E; ++I)
     getBlockInterval(*I)->Predecessors.push_back(Header);
 }
 

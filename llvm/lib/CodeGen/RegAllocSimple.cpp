@@ -91,7 +91,7 @@ namespace {
 /// getStackSpaceFor - This allocates space for the specified virtual
 /// register to be held on the stack.
 int RegAllocSimple::getStackSpaceFor(unsigned VirtReg,
-				     const TargetRegisterClass *RC) {
+                                     const TargetRegisterClass *RC) {
   // Find the location VirtReg would belong...
   std::map<unsigned, int>::iterator I =
     StackSlotForVirtReg.lower_bound(VirtReg);

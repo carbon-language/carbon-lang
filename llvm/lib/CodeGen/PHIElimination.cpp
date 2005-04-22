@@ -32,7 +32,7 @@ namespace {
       // Eliminate PHI instructions by inserting copies into predecessor blocks.
       //
       for (MachineFunction::iterator I = Fn.begin(), E = Fn.end(); I != E; ++I)
-	Changed |= EliminatePHINodes(Fn, *I);
+        Changed |= EliminatePHINodes(Fn, *I);
 
       //std::cerr << "AFTER PHI NODE ELIM:\n";
       //Fn.dump();
@@ -52,7 +52,7 @@ namespace {
   };
 
   RegisterPass<PNE> X("phi-node-elimination",
-		      "Eliminate PHI nodes for register allocation");
+                      "Eliminate PHI nodes for register allocation");
 }
 
 

@@ -180,11 +180,11 @@ void EquivClassGraphs::buildIndirectFunctionSets(Module &M) {
         // This is the first callee from this call site.
         LastInst = I->first;
         FirstFunc = I->second;
-	// Instead of storing the lastInst For Indirection call Sites we store
-	// the DSNode for the function ptr arguemnt
-	Function *thisFunc = LastInst->getParent()->getParent();
+        // Instead of storing the lastInst For Indirection call Sites we store
+        // the DSNode for the function ptr arguemnt
+        Function *thisFunc = LastInst->getParent()->getParent();
         DSGraph &TFG = CBU->getDSGraph(*thisFunc);
-	DSNode *calleeNode = TFG.getNodeForValue(CS.getCalledValue()).getNode();
+        DSNode *calleeNode = TFG.getNodeForValue(CS.getCalledValue()).getNode();
         OneCalledFunction[calleeNode] = FirstFunc;
         FuncECs.insert(I->second);
       } else {
@@ -192,9 +192,9 @@ void EquivClassGraphs::buildIndirectFunctionSets(Module &M) {
         // Union the callee in with the other functions.
         FuncECs.unionSets(FirstFunc, I->second);
 #ifndef NDEBUG
-	Function *thisFunc = LastInst->getParent()->getParent();
+        Function *thisFunc = LastInst->getParent()->getParent();
         DSGraph &TFG = CBU->getDSGraph(*thisFunc);
-	DSNode *calleeNode = TFG.getNodeForValue(CS.getCalledValue()).getNode();
+        DSNode *calleeNode = TFG.getNodeForValue(CS.getCalledValue()).getNode();
         assert(OneCalledFunction.count(calleeNode) > 0 && "Missed a call?");
 #endif
       }
