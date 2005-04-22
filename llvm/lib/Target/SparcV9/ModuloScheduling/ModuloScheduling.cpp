@@ -74,12 +74,23 @@ static void WriteGraphToFile(std::ostream &O, const std::string &GraphName,
 
 //Graph Traits for printing out the dependence graph
 namespace llvm {
+
+  //Loop statistics
   Statistic<> ValidLoops("modulosched-validLoops", "Number of candidate loops modulo-scheduled");
-  Statistic<> MSLoops("modulosched-schedLoops", "Number of loops successfully modulo-scheduled");
-  Statistic<> IncreasedII("modulosched-increasedII", "Number of times we had to increase II");
+  Statistic<> JumboBB("modulosched-jumboBB", "Basic Blocks with more then 100 instructions");
+  Statistic<> LoopsWithCalls("modulosched-loopCalls", "Loops with calls");
+  Statistic<> LoopsWithCondMov("modulosched-loopCondMov", "Loops with conditional moves");
+  Statistic<> InvalidLoops("modulosched-invalidLoops", "Loops with unknown trip counts or loop invariant trip counts");
   Statistic<> SingleBBLoops("modulosched-singeBBLoops", "Number of single basic block loops");
+
+  //Scheduling Statistics
+  Statistic<> MSLoops("modulosched-schedLoops", "Number of loops successfully modulo-scheduled");
   Statistic<> NoSched("modulosched-noSched", "No schedule");
   Statistic<> SameStage("modulosched-sameStage", "Max stage is 0");
+  Statistic<> ResourceConstraint("modulosched-resourceConstraint", "Loops constrained by resources");
+  Statistic<> RecurrenceConstraint("modulosched-recurrenceConstraint", "Loops constrained by recurrences");
+   Statistic<> FinalIISum("modulosched-finalIISum", "Sum of all final II");
+  Statistic<> IISum("modulosched-IISum", "Sum of all theoretical II");
 
   template<>
   struct DOTGraphTraits<MSchedGraph*> : public DefaultDOTGraphTraits {
@@ -142,7 +153,7 @@ namespace llvm {
 /// 3) Scheduling
 ///
 bool ModuloSchedulingPass::runOnFunction(Function &F) {
-  alarm(300);
+  alarm(100);
 
   bool Changed = false;
   int numMS = 0;
@@ -160,9 +171,14 @@ bool ModuloSchedulingPass::runOnFunction(Function &F) {
 
   //Iterate over BasicBlocks and put them into our worklist if they are valid
   for (MachineFunction::iterator BI = MF.begin(); BI != MF.end(); ++BI)
-    if(MachineBBisValid(BI)) {
-      Worklist.push_back(&*BI);
-      ++ValidLoops;
+    if(MachineBBisValid(BI)) { 
+      if(BI->size() < 100) {
+	Worklist.push_back(&*BI);
+	++ValidLoops;
+      }
+      else
+	++JumboBB;
+      std::cerr << "BB Size: " << BI->size() << "\n";
     }
 
   defaultInst = 0;
@@ -174,6 +190,7 @@ bool ModuloSchedulingPass::runOnFunction(Function &F) {
 	BE = Worklist.end(); BI != BE; ++BI) {
 
     //Print out BB for debugging
+    DEBUG(std::cerr << "BB Size: " << (*BI)->size() << "\n");
     DEBUG(std::cerr << "ModuloScheduling BB: \n"; (*BI)->print(std::cerr));
 
     //Print out LLVM BB
@@ -195,6 +212,7 @@ bool ModuloSchedulingPass::runOnFunction(Function &F) {
 
     //Write Graph out to file
     DEBUG(WriteGraphToFile(std::cerr, F.getName(), MSG));
+    DEBUG(MSG->print(std::cerr));
 
     //Calculate Resource II
     int ResMII = calculateResMII(*BI);
@@ -204,11 +222,15 @@ bool ModuloSchedulingPass::runOnFunction(Function &F) {
 
     DEBUG(std::cerr << "Number of reccurrences found: " << recurrenceList.size() << "\n");
 
-
-
-
     //Our starting initiation interval is the maximum of RecMII and ResMII
+    if(RecMII < ResMII)
+      ++RecurrenceConstraint;
+    else
+      ++ResourceConstraint;
+
     II = std::max(RecMII, ResMII);
+    int mII = II;
+    IISum += mII;
 
     //Print out II, RecMII, and ResMII
     DEBUG(std::cerr << "II starts out as " << II << " ( RecMII=" << RecMII << " and ResMII=" << ResMII << ")\n");
@@ -252,7 +274,7 @@ bool ModuloSchedulingPass::runOnFunction(Function &F) {
 	  });
 
     //Finally schedule nodes
-    bool haveSched = computeSchedule(*BI);
+    bool haveSched = computeSchedule(*BI, MSG);
 
     //Print out final schedule
     DEBUG(schedule.print(std::cerr));
@@ -363,9 +385,11 @@ bool ModuloSchedulingPass::MachineBBisValid(const MachineBasicBlock *BI) {
     MachineOpCode OC = I->getOpcode();
 
     //Look for calls
-    if(TMI->isCall(OC))
+    if(TMI->isCall(OC)) {
+      ++LoopsWithCalls;
       return false;
-
+    }
+    
     //Look for conditional move
     if(OC == V9::MOVRZr || OC == V9::MOVRZi || OC == V9::MOVRLEZr || OC == V9::MOVRLEZi
        || OC == V9::MOVRLZr || OC == V9::MOVRLZi || OC == V9::MOVRNZr || OC == V9::MOVRNZi
@@ -373,8 +397,10 @@ bool ModuloSchedulingPass::MachineBBisValid(const MachineBasicBlock *BI) {
        || OC == V9::MOVRGEZi || OC == V9::MOVLEr || OC == V9::MOVLEi || OC == V9::MOVLEUr
        || OC == V9::MOVLEUi || OC == V9::MOVFLEr || OC == V9::MOVFLEi
        || OC == V9::MOVNEr || OC == V9::MOVNEi || OC == V9::MOVNEGr || OC == V9::MOVNEGi
-       || OC == V9::MOVFNEr || OC == V9::MOVFNEi)
+       || OC == V9::MOVFNEr || OC == V9::MOVFNEi) {
+      ++LoopsWithCondMov;
       return false;
+    }
 
     indexMap[I] = count;
 
@@ -406,14 +432,19 @@ bool ModuloSchedulingPass::MachineBBisValid(const MachineBasicBlock *BI) {
 
   if(Instruction *I = dyn_cast<Instruction>(cond))
     if(I->getParent() == BB) {
-      if (!assocIndVar(I, indVar, stack, BB))
+      if (!assocIndVar(I, indVar, stack, BB)) {
+	++InvalidLoops;
 	return false;
+      }
     }
-    else
+    else {
+      ++InvalidLoops;
       return false;
-  else
+    }
+  else {
+    ++InvalidLoops;
     return false;
-
+  }
   //The indVar set must be >= 3 instructions for this loop to match (FIX ME!)
   if(indVar.size() < 3 )
     return false;
@@ -523,7 +554,7 @@ int ModuloSchedulingPass::calculateResMII(const MachineBasicBlock *BI) {
     //Loop over resources in each cycle and increments their usage count
     for(unsigned i=0; i < resources.size(); ++i)
       for(unsigned j=0; j < resources[i].size(); ++j) {
-	if( resourceUsageCount.find(resources[i][j]) == resourceUsageCount.end()) {
+	if(!resourceUsageCount.count(resources[i][j])) {
 	  resourceUsageCount[resources[i][j]] = 1;
 	}
 	else {
@@ -913,67 +944,8 @@ bool ModuloSchedulingPass::circuit(MSchedGraphNode *v, std::vector<MSchedGraphNo
   for(std::set<MSchedGraphNode*>::iterator I = AkV.begin(), E = AkV.end(); I != E; ++I) {
     if(*I == s) {
       //We have a circuit, so add it to our list
-
-      std::vector<MSchedGraphNode*> recc;
-      //Dump recurrence for now
-      DEBUG(std::cerr << "Starting Recc\n");
-	
-      int totalDelay = 0;
-      int totalDistance = 0;
-      MSchedGraphNode *lastN = 0;
-      MSchedGraphNode *start = 0;
-      MSchedGraphNode *end = 0;
-
-      //Loop over recurrence, get delay and distance
-      for(std::vector<MSchedGraphNode*>::iterator N = stack.begin(), NE = stack.end(); N != NE; ++N) {
-	totalDelay += (*N)->getLatency();
-	if(lastN) {
-	  int iteDiff = (*N)->getInEdge(lastN).getIteDiff();
-	  totalDistance += iteDiff;
-
-	  if(iteDiff > 0) {
-	    start = lastN;
-	    end = *N;
-	  }
-	}
-	//Get the original node
-	lastN = *N;
-	recc.push_back(newNodes[*N]);
-
-	DEBUG(std::cerr << *lastN << "\n");
-      }
-
-      //Get the loop edge
-      totalDistance += lastN->getIteDiff(*stack.begin());
-
-      DEBUG(std::cerr << "End Recc\n");
+      addRecc(stack, newNodes);
       f = true;
-      CircCount++;
-
-      if(start && end) {	
-	//Insert reccurrence into the list
-	DEBUG(std::cerr << "Ignore Edge from!!: " << *start << " to " << *end << "\n");
-	edgesToIgnore.insert(std::make_pair(newNodes[start], (newNodes[end])->getInEdgeNum(newNodes[start])));
-      }
-      else {
-	//Insert reccurrence into the list
-	DEBUG(std::cerr << "Ignore Edge from: " << *lastN << " to " << **stack.begin() << "\n");
-	edgesToIgnore.insert(std::make_pair(newNodes[lastN], newNodes[(*stack.begin())]->getInEdgeNum(newNodes[lastN])));
-
-      }
-      //Adjust II until we get close to the inequality delay - II*distance <= 0
-      int RecMII = II; //Starting value
-      int value = totalDelay-(RecMII * totalDistance);
-      int lastII = II;
-      while(value <= 0) {
-	
-	lastII = RecMII;
-	RecMII--;
-	value = totalDelay-(RecMII * totalDistance);
-      }
-
-      recurrenceList.insert(std::make_pair(lastII, recc));
-
     }
     else if(!blocked.count(*I)) {
       if(circuit(*I, stack, blocked, SCC, s, B, II, newNodes))
@@ -999,6 +971,70 @@ bool ModuloSchedulingPass::circuit(MSchedGraphNode *v, std::vector<MSchedGraphNo
   return f;
 
 }
+
+void ModuloSchedulingPass::addRecc(std::vector<MSchedGraphNode*> &stack, std::map<MSchedGraphNode*, MSchedGraphNode*> &newNodes) {
+  std::vector<MSchedGraphNode*> recc;
+  //Dump recurrence for now
+  DEBUG(std::cerr << "Starting Recc\n");
+	
+  int totalDelay = 0;
+  int totalDistance = 0;
+  MSchedGraphNode *lastN = 0;
+  MSchedGraphNode *start = 0;
+  MSchedGraphNode *end = 0;
+
+  //Loop over recurrence, get delay and distance
+  for(std::vector<MSchedGraphNode*>::iterator N = stack.begin(), NE = stack.end(); N != NE; ++N) {
+    DEBUG(std::cerr << **N << "\n");
+    totalDelay += (*N)->getLatency();
+    if(lastN) {
+      int iteDiff = (*N)->getInEdge(lastN).getIteDiff();
+      totalDistance += iteDiff;
+
+      if(iteDiff > 0) {
+	start = lastN;
+	end = *N;
+      }
+    }
+    //Get the original node
+    lastN = *N;
+    recc.push_back(newNodes[*N]);
+
+
+  }
+
+  //Get the loop edge
+  totalDistance += lastN->getIteDiff(*stack.begin());
+
+  DEBUG(std::cerr << "End Recc\n");
+  CircCount++;
+
+  if(start && end) {	
+    //Insert reccurrence into the list
+    DEBUG(std::cerr << "Ignore Edge from!!: " << *start << " to " << *end << "\n");
+    edgesToIgnore.insert(std::make_pair(newNodes[start], (newNodes[end])->getInEdgeNum(newNodes[start])));
+  }
+  else {
+    //Insert reccurrence into the list
+    DEBUG(std::cerr << "Ignore Edge from: " << *lastN << " to " << **stack.begin() << "\n");
+    edgesToIgnore.insert(std::make_pair(newNodes[lastN], newNodes[(*stack.begin())]->getInEdgeNum(newNodes[lastN])));
+
+  }
+  //Adjust II until we get close to the inequality delay - II*distance <= 0
+  int RecMII = II; //Starting value
+  int value = totalDelay-(RecMII * totalDistance);
+  int lastII = II;
+  while(value < 0) {
+	  
+    lastII = RecMII;
+    RecMII--;
+    value = totalDelay-(RecMII * totalDistance);
+  }
+
+  recurrenceList.insert(std::make_pair(lastII, recc));
+
+}
+
 
 void ModuloSchedulingPass::findAllCircuits(MSchedGraph *g, int II) {
 
@@ -1086,12 +1122,13 @@ void ModuloSchedulingPass::findAllCircuits(MSchedGraph *g, int II) {
     if(Vk.size() > 1) {
       circuit(s, stack, blocked, Vk, s, B, II, newNodes);
 
+      //Delete nodes from the graph
       //Find all nodes up to s and delete them
       std::vector<MSchedGraphNode*> nodesToRemove;
       nodesToRemove.push_back(s);
       for(MSchedGraph::iterator N = MSG->begin(), NE = MSG->end(); N != NE; ++N) {
 	if(N->second < s )
-	  nodesToRemove.push_back(N->second);
+	    nodesToRemove.push_back(N->second);
       }
       for(std::vector<MSchedGraphNode*>::iterator N = nodesToRemove.begin(), NE = nodesToRemove.end(); N != NE; ++N) {
 	DEBUG(std::cerr << "Deleting Node: " << **N << "\n");
@@ -1100,7 +1137,7 @@ void ModuloSchedulingPass::findAllCircuits(MSchedGraph *g, int II) {
     }
     else
       break;
-  }
+  }    
   DEBUG(std::cerr << "Num Circuits found: " << CircCount << "\n");
 }
 
@@ -1253,17 +1290,21 @@ void ModuloSchedulingPass::pathToRecc(MSchedGraphNode *node,
 void ModuloSchedulingPass::computePartialOrder() {
 
   TIME_REGION(X, "calculatePartialOrder");
+  
+  DEBUG(std::cerr << "Computing Partial Order\n");
 
-  //Only push BA branches onto the final node order, we put other branches after it
-  //FIXME: Should we really be pushing branches on it a specific order instead of relying
-  //on BA being there?
+  //Only push BA branches onto the final node order, we put other
+  //branches after it FIXME: Should we really be pushing branches on
+  //it a specific order instead of relying on BA being there?
+
   std::vector<MSchedGraphNode*> branches;
-
-  //Steps to add a recurrence to the partial order
-  // 1) Find reccurrence with the highest RecMII. Add it to the partial order.
-  // 2) For each recurrence with decreasing RecMII, add it to the partial order along with
-  // any nodes that connect this recurrence to recurrences already in the partial order
-  for(std::set<std::pair<int, std::vector<MSchedGraphNode*> > >::reverse_iterator
+  
+  //Steps to add a recurrence to the partial order 1) Find reccurrence
+  //with the highest RecMII. Add it to the partial order.  2) For each
+  //recurrence with decreasing RecMII, add it to the partial order
+  //along with any nodes that connect this recurrence to recurrences
+  //already in the partial order
+  for(std::set<std::pair<int, std::vector<MSchedGraphNode*> > >::reverse_iterator 
 	I = recurrenceList.rbegin(), E=recurrenceList.rend(); I !=E; ++I) {
 
     std::set<MSchedGraphNode*> new_recurrence;
@@ -1296,6 +1337,10 @@ void ModuloSchedulingPass::computePartialOrder() {
       std::vector<MSchedGraphNode*> path;
       std::set<MSchedGraphNode*> nodesToAdd;
 
+      //Dump recc we are dealing with (minus nodes already in PO)
+      DEBUG(std::cerr << "Recc: ");
+      DEBUG(for(std::set<MSchedGraphNode*>::iterator R = new_recurrence.begin(), RE = new_recurrence.end(); R != RE; ++R) { std::cerr << **R ; });
+
       //Add nodes that connect this recurrence to recurrences in the partial path
       for(std::set<MSchedGraphNode*>::iterator N = new_recurrence.begin(),
           NE = new_recurrence.end(); N != NE; ++N)
@@ -1318,6 +1363,15 @@ void ModuloSchedulingPass::computePartialOrder() {
 
       partialOrder.push_back(new_recurrence);
 
+       
+      //Dump out partial order
+      DEBUG(for(std::vector<std::set<MSchedGraphNode*> >::iterator I = partialOrder.begin(), 
+		  E = partialOrder.end(); I !=E; ++I) {
+	      std::cerr << "Start set in PO\n";
+	      for(std::set<MSchedGraphNode*>::iterator J = I->begin(), JE = I->end(); J != JE; ++J)
+		std::cerr << "PO:" << **J << "\n";
+	    });
+      
     }
   }
 
@@ -1649,7 +1703,7 @@ void ModuloSchedulingPass::orderNodes() {
   //return FinalNodeOrder;
 }
 
-bool ModuloSchedulingPass::computeSchedule(const MachineBasicBlock *BB) {
+bool ModuloSchedulingPass::computeSchedule(const MachineBasicBlock *BB, MSchedGraph *MSG) {
 
   TIME_REGION(X, "computeSchedule");
 
@@ -1657,7 +1711,7 @@ bool ModuloSchedulingPass::computeSchedule(const MachineBasicBlock *BB) {
 
   //FIXME: Should be set to max II of the original loop
   //Cap II in order to prevent infinite loop
-  int capII = 100;
+  int capII = MSG->totalDelay();
 
   while(!success) {
 
@@ -1768,8 +1822,7 @@ bool ModuloSchedulingPass::computeSchedule(const MachineBasicBlock *BB) {
 	success = scheduleNode(*I, EarlyStart, EarlyStart + II - 1);
 
       if(!success) {
-	++IncreasedII;
-	++II;
+	++II; 
 	schedule.clear();
 	break;
       }
@@ -1781,11 +1834,11 @@ bool ModuloSchedulingPass::computeSchedule(const MachineBasicBlock *BB) {
       success = schedule.constructKernel(II, branches, indVarInstrs[BB]);
       DEBUG(std::cerr << "Done Constructing Schedule Kernel\n");
       if(!success) {
-	++IncreasedII;
 	++II;
 	schedule.clear();
       }
       DEBUG(std::cerr << "Final II: " << II << "\n");
+      FinalIISum += II;
     }
 
     if(II >= capII) {

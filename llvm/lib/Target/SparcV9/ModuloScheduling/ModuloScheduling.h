@@ -19,6 +19,8 @@
 #include "llvm/Pass.h"
 #include "DependenceAnalyzer.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/Analysis/LoopInfo.h"
+#include "llvm/Analysis/ScalarEvolution.h"
 #include <set>
 
 namespace llvm {
@@ -107,7 +109,9 @@ namespace llvm {
     void unblock(MSchedGraphNode *u, std::set<MSchedGraphNode*> &blocked,
 		 std::map<MSchedGraphNode*, std::set<MSchedGraphNode*> > &B);
 
-    void searchPath(MSchedGraphNode *node,
+    void addRecc(std::vector<MSchedGraphNode*> &stack, std::map<MSchedGraphNode*, MSchedGraphNode*> &newNodes);
+
+    void searchPath(MSchedGraphNode *node, 
 		    std::vector<MSchedGraphNode*> &path,
 		    std::set<MSchedGraphNode*> &nodesToAdd);
 
@@ -117,8 +121,8 @@ namespace llvm {
 
     void computePartialOrder();
 
-    bool computeSchedule(const MachineBasicBlock *BB);
-    bool scheduleNode(MSchedGraphNode *node,
+    bool computeSchedule(const MachineBasicBlock *BB, MSchedGraph *MSG);
+    bool scheduleNode(MSchedGraphNode *node, 
 		      int start, int end);
 
     void predIntersect(std::set<MSchedGraphNode*> &CurrentSet, std::set<MSchedGraphNode*> &IntersectResult);
@@ -148,6 +152,12 @@ namespace llvm {
 
     // getAnalysisUsage
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      /// HACK: We don't actually need loopinfo or scev, but we have
+      /// to say we do so that the pass manager does not delete it
+      /// before we run.
+      AU.addRequired<LoopInfo>();
+      AU.addRequired<ScalarEvolution>();
+      
       AU.addRequired<DependenceAnalyzer>();
     }
 

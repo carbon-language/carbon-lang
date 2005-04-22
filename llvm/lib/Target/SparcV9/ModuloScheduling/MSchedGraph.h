@@ -258,6 +258,9 @@ namespace llvm {
 
     //Copy constructor with maps to link old nodes to new nodes
     MSchedGraph(const MSchedGraph &G, std::map<MSchedGraphNode*, MSchedGraphNode*> &newNodes);
+    
+    //Print graph
+    void print(std::ostream &os) const;
 
     //Deconstructor!
     ~MSchedGraph();
@@ -265,6 +268,7 @@ namespace llvm {
     //Add or delete nodes from the Graph
     void addNode(const MachineInstr* MI, MSchedGraphNode *node);
     void deleteNode(MSchedGraphNode *node);
+    int totalDelay();
 
     //iterators
     typedef std::map<const MachineInstr*, MSchedGraphNode*>::iterator iterator;
