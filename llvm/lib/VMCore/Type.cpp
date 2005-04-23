@@ -138,34 +138,34 @@ const Type *Type::getSignedVersion() const {
 //
 unsigned Type::getPrimitiveSize() const {
   switch (getTypeID()) {
-  case Type::BoolTy:
-  case Type::SByteTy:
-  case Type::UByteTy: return 1;
-  case Type::UShortTy:
-  case Type::ShortTy: return 2;
-  case Type::FloatTy: 
-  case Type::IntTy: 
-  case Type::UIntTy: return 4;
-  case Type::LongTy:
-  case Type::ULongTy:
-  case Type::DoubleTy: return 8;
+  case Type::BoolTyID:
+  case Type::SByteTyID:
+  case Type::UByteTyID: return 1;
+  case Type::UShortTyID:
+  case Type::ShortTyID: return 2;
+  case Type::FloatTyID: 
+  case Type::IntTyID: 
+  case Type::UIntTyID: return 4;
+  case Type::LongTyID:
+  case Type::ULongTyID:
+  case Type::DoubleTyID: return 8;
   default: return 0;
   }
 }
 
 unsigned Type::getPrimitiveSizeInBits() const {
   switch (getTypeID()) {
-  case Type::BoolTy:  return 1;
-  case Type::SByteTy:
-  case Type::UByteTy: return 8;
-  case Type::UShortTy:
-  case Type::ShortTy: return 16;
-  case Type::FloatTy: 
-  case Type::IntTy: 
-  case Type::UIntTy: return 32;
-  case Type::LongTy:
-  case Type::ULongTy:
-  case Type::DoubleTy: return 64;
+  case Type::BoolTyID:  return 1;
+  case Type::SByteTyID:
+  case Type::UByteTyID: return 8;
+  case Type::UShortTyID:
+  case Type::ShortTyID: return 16;
+  case Type::FloatTyID: 
+  case Type::IntTyID:
+  case Type::UIntTyID: return 32;
+  case Type::LongTyID:
+  case Type::ULongTyID:
+  case Type::DoubleTyID: return 64;
   default: return 0;
   }
 }
