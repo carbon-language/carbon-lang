@@ -5,13 +5,13 @@
 // was mistakenly "thinking" that 'foo' took a structure by component.
 
 struct C {
-        int A, B;
-        ~C() {}
+  int A, B;
+  ~C() {}
 };
 
 void foo(C b);
 
 void test(C *P) {
-	foo(*P);
+  foo(*P);
 }
 

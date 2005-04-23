@@ -34,14 +34,14 @@ InputFilename(cl::Positional, cl::desc("<input .st file>"), cl::init("-"));
 
 static cl::opt<std::string>
 OutputFilename("o", cl::desc("Override output filename"),
-	cl::value_desc("filename"));
+        cl::value_desc("filename"));
 
 static cl::opt<bool>
 Force("f", cl::desc("Overwrite output files"));
 
 static cl::opt<uint32_t>
 StackSize("s", cl::desc("Specify program maximum stack size"),
-	cl::init(1024), cl::value_desc("stack size"));
+        cl::init(1024), cl::value_desc("stack size"));
 
 static cl::opt<bool>
 DumpAsm("d", cl::desc("Print LLVM Assembly as parsed"), cl::Hidden);

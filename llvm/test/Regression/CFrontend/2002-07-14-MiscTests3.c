@@ -23,7 +23,7 @@ struct Quad {
   struct SubStruct *SSP;
   char c;
   int y;
-}; 
+};
 
 struct Quad GlobalQuad = { 4, {1, 2}, 0, 3, 156 };
 
@@ -65,7 +65,7 @@ int F1(struct Quad *Q, int i) {             /* Pass Q by address */
 
 
 int BadFunc(float Val) {
-  int Result; 
+  int Result;
   if (Val > 12.345) Result = 4;
   return Result;     /* Test use of undefined value */
 }
@@ -80,14 +80,14 @@ int Func(int Param, long long Param2) {
   int Result = Param;
 
   {{{{
-    char c; int X;
-    EF1(&Result, &c, &X);
-  }}}
-  
-  {   // c & X are duplicate names!
-    char c; int X;
-    EF1(&Result, &c, &X);
-  }
+      char c; int X;
+      EF1(&Result, &c, &X);
+    }}}
+
+    {   // c & X are duplicate names!
+      char c; int X;
+      EF1(&Result, &c, &X);
+    }
 
   }
   return Result;
@@ -129,7 +129,7 @@ int ArrayToSum(void) {
   for (i = 0; i < 100; ++i)
     A[i] = i*4;
 
-  return A[A[0]]; //SumArray(A, 100);  
+  return A[A[0]]; //SumArray(A, 100);
 }
 
 
@@ -141,7 +141,7 @@ int main(int argc, char *argv[]) {
 
   ExternFunc(-1, 0, (short)argc, 2);
   //func(argc, argc);
-  
+
   for (i = 0; i < 10; i++)
     puts(argv[3]);
   return 0;
@@ -159,29 +159,29 @@ double MathFunc(double X, double Y, double Z,
 
 
 void strcpy(char *s1, char *s2) {
-    while (*s1++ = *s2++);
+  while (*s1++ = *s2++);
 }
 
 void strcat(char *s1, char *s2) {
-    while (*s1++);
-    s1--;
-    while (*s1++ = *s2++);
+  while (*s1++);
+  s1--;
+  while (*s1++ = *s2++);
 }
 
 int strcmp(char *s1, char *s2) {
-    while (*s1++ == *s2++);
-    if (*s1 == 0) {
-	if (*s2 == 0) {
-	    return 0;
-	} else {
-	    return -1;
-	}
+  while (*s1++ == *s2++);
+  if (*s1 == 0) {
+    if (*s2 == 0) {
+      return 0;
     } else {
-	if (*s2 == 0) {
-	    return 1;
-	} else {
-	    return (*(--s1) - *(--s2));
-	}
+      return -1;
     }
+  } else {
+    if (*s2 == 0) {
+      return 1;
+    } else {
+      return (*(--s1) - *(--s2));
+    }
+  }
 }
 

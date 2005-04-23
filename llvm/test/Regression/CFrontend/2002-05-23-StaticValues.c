@@ -10,6 +10,6 @@ static void foo(int Z) {
 }
 
 void *test() {
-	foo(12);
-	return &Y;
+  foo(12);
+  return &Y;
 }

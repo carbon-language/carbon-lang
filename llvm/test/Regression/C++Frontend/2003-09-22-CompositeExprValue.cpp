@@ -2,10 +2,10 @@
 
 struct duration {
  duration operator/=(int c) {
-	return *this;
+  return *this;
   }
 };
 
 void a000090() {
-	duration() /= 1;
+  duration() /= 1;
 }

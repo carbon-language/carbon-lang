@@ -1,11 +1,11 @@
 //===-- stacker_rt.c - Runtime Support For Stacker Compiler -----*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
-// This file was developed by Reid Spencer and donated to the LLVM research 
-// group and is distributed under the University of Illinois Open Source 
+// This file was developed by Reid Spencer and donated to the LLVM research
+// group and is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 //  This file defines a stack dumping function that can be used for debugging.
@@ -33,7 +33,7 @@ _stacker_dump_stack_()
     printf("Stack Dump:\n");
     for (i = _index_; i > 0; i-- )
     {
-	printf("#%03lld: %lld\n", (long long int) i, (long long int) _stack_[i] );
+        printf("#%03lld: %lld\n", (long long int) i, (long long int) _stack_[i] );
     }
 }
 
@@ -50,14 +50,14 @@ main ( int argc, char** argv )
     // so that they get popped in the order presented
     while ( a > 0 )
     {
-	if ( isdigit( (int) argv[--a][0] ) )
-	{
-	    _stack_[_index_++] = atoll( argv[a] );
-	}
-	else
-	{
-	    _stack_[_index_++] = (int64_t) (intptr_t) argv[a];
-	}
+        if ( isdigit( (int) argv[--a][0] ) )
+        {
+            _stack_[_index_++] = atoll( argv[a] );
+        }
+        else
+        {
+            _stack_[_index_++] = (int64_t) (intptr_t) argv[a];
+        }
     }
 
     // Put the argument count on the stack
@@ -68,6 +68,6 @@ main ( int argc, char** argv )
 
     // Return last item on the stack
     if ( _index_ >= 0 )
-	return _stack_[_index_];
+        return _stack_[_index_];
     return -1;
 }

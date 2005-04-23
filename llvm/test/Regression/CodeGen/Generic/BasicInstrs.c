@@ -1,4 +1,4 @@
-// This file can be used to see what a native C compiler is generating for a 
+// This file can be used to see what a native C compiler is generating for a
 // variety of interesting operations.
 //
 // RUN: %llvmgcc -c %s -o - | llc
@@ -23,4 +23,4 @@ _Bool setlt(int X, int Y) {
 _Bool setgt(int X, int Y) {
   return X > Y;
 }
-	
+
