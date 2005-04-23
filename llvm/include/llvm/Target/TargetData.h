@@ -72,35 +72,39 @@ public:
   ~TargetData();  // Not virtual, do not subclass this class
 
   /// Target endianness...
-  bool          isLittleEndian()      const { return     LittleEndian; }
-  bool          isBigEndian()         const { return    !LittleEndian; }
+  bool          isLittleEndian()       const { return     LittleEndian; }
+  bool          isBigEndian()          const { return    !LittleEndian; }
 
   /// Target alignment constraints
-  unsigned char getBoolAlignment()    const { return    BoolAlignment; }
-  unsigned char getByteAlignment()    const { return    ByteAlignment; }
-  unsigned char getShortAlignment()   const { return   ShortAlignment; }
-  unsigned char getIntAlignment()     const { return     IntAlignment; }
-  unsigned char getLongAlignment()    const { return    LongAlignment; }
-  unsigned char getFloatAlignment()   const { return   FloatAlignment; }
-  unsigned char getDoubleAlignment()  const { return  DoubleAlignment; }
-  unsigned char getPointerAlignment() const { return PointerAlignment; }
-  unsigned char getPointerSize()      const { return      PointerSize; }
-  unsigned char getPointerSizeInBits()const { return      PointerSize*8; }
+  unsigned char getBoolAlignment()     const { return    BoolAlignment; }
+  unsigned char getByteAlignment()     const { return    ByteAlignment; }
+  unsigned char getShortAlignment()    const { return   ShortAlignment; }
+  unsigned char getIntAlignment()      const { return     IntAlignment; }
+  unsigned char getLongAlignment()     const { return    LongAlignment; }
+  unsigned char getFloatAlignment()    const { return   FloatAlignment; }
+  unsigned char getDoubleAlignment()   const { return  DoubleAlignment; }
+  unsigned char getPointerAlignment()  const { return PointerAlignment; }
+  unsigned char getPointerSize()       const { return      PointerSize; }
+  unsigned char getPointerSizeInBits() const { return    8*PointerSize; }
 
   /// getTypeSize - Return the number of bytes necessary to hold the specified
   /// type.
+  ///
   uint64_t getTypeSize(const Type *Ty) const;
 
   /// getTypeAlignment - Return the minimum required alignment for the specified
   /// type.
+  ///
   unsigned char getTypeAlignment(const Type *Ty) const;
 
   /// getTypeAlignmentShift - Return the minimum required alignment for the
   /// specified type, returned as log2 of the value (a shift amount).
+  ///
   unsigned char getTypeAlignmentShift(const Type *Ty) const;
 
   /// getIntPtrType - Return an unsigned integer type that is the same size or
   /// greater to the host pointer size.
+  ///
   const Type *getIntPtrType() const;
 
   /// getIndexOffset - return the offset from the beginning of the type for the
@@ -112,9 +116,9 @@ public:
   const StructLayout *getStructLayout(const StructType *Ty) const;
 };
 
-// This object is used to lazily calculate structure layout information for a
-// target machine, based on the TargetData structure.
-//
+/// StructLayout - used to lazily calculate structure layout information for a
+/// target machine, based on the TargetData structure.
+///
 class StructLayout {
 public:
   std::vector<uint64_t> MemberOffsets;
@@ -123,6 +127,7 @@ public:
 
   /// getElementContainingOffset - Given a valid offset into the structure,
   /// return the structure index that contains it.
+  ///
   unsigned getElementContainingOffset(uint64_t Offset) const;
 
 private:
