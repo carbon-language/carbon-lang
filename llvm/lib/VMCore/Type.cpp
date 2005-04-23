@@ -138,8 +138,34 @@ const Type *Type::getSignedVersion() const {
 //
 unsigned Type::getPrimitiveSize() const {
   switch (getTypeID()) {
-#define HANDLE_PRIM_TYPE(TY,SIZE)  case TY##TyID: return SIZE;
-#include "llvm/Type.def"
+  case Type::BoolTy:
+  case Type::SByteTy:
+  case Type::UByteTy: return 1;
+  case Type::UShortTy:
+  case Type::ShortTy: return 2;
+  case Type::FloatTy: 
+  case Type::IntTy: 
+  case Type::UIntTy: return 4;
+  case Type::LongTy:
+  case Type::ULongTy:
+  case Type::DoubleTy: return 8;
+  default: return 0;
+  }
+}
+
+unsigned Type::getPrimitiveSizeInBits() const {
+  switch (getTypeID()) {
+  case Type::BoolTy:  return 1;
+  case Type::SByteTy:
+  case Type::UByteTy: return 8;
+  case Type::UShortTy:
+  case Type::ShortTy: return 16;
+  case Type::FloatTy: 
+  case Type::IntTy: 
+  case Type::UIntTy: return 32;
+  case Type::LongTy:
+  case Type::ULongTy:
+  case Type::DoubleTy: return 64;
   default: return 0;
   }
 }
