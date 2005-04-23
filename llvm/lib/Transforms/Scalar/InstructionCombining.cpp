@@ -2450,10 +2450,6 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
 
     if (Instruction *LHSI = dyn_cast<Instruction>(Op0))
       switch (LHSI->getOpcode()) {
-      case Instruction::PHI:
-        if (Instruction *NV = FoldOpIntoPhi(I))
-          return NV;
-        break;
       case Instruction::And:
         if (LHSI->hasOneUse() && isa<ConstantInt>(LHSI->getOperand(1)) &&
             LHSI->getOperand(0)->hasOneUse()) {
@@ -2705,32 +2701,6 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
           }
         }
         break;
-      case Instruction::Select:
-        // If either operand of the select is a constant, we can fold the
-        // comparison into the select arms, which will cause one to be
-        // constant folded and the select turned into a bitwise or.
-        Value *Op1 = 0, *Op2 = 0;
-        if (LHSI->hasOneUse()) {
-          if (Constant *C = dyn_cast<Constant>(LHSI->getOperand(1))) {
-            // Fold the known value into the constant operand.
-            Op1 = ConstantExpr::get(I.getOpcode(), C, CI);
-            // Insert a new SetCC of the other select operand.
-            Op2 = InsertNewInstBefore(new SetCondInst(I.getOpcode(),
-                                                      LHSI->getOperand(2), CI,
-                                                      I.getName()), I);
-          } else if (Constant *C = dyn_cast<Constant>(LHSI->getOperand(2))) {
-            // Fold the known value into the constant operand.
-            Op2 = ConstantExpr::get(I.getOpcode(), C, CI);
-            // Insert a new SetCC of the other select operand.
-            Op1 = InsertNewInstBefore(new SetCondInst(I.getOpcode(),
-                                                      LHSI->getOperand(1), CI,
-                                                      I.getName()), I);
-          }
-        }
-
-        if (Op1)
-          return new SelectInst(LHSI->getOperand(0), Op1, Op2);
-        break;
       }
 
     // Simplify seteq and setne instructions...
@@ -2894,6 +2864,43 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
         }
       }
     }
+  }
+
+  // Handle setcc with constant RHS's that can be integer, FP or pointer.
+  if (Constant *RHSC = dyn_cast<Constant>(Op1)) {
+    if (Instruction *LHSI = dyn_cast<Instruction>(Op0))
+      switch (LHSI->getOpcode()) {
+      case Instruction::PHI:
+        if (Instruction *NV = FoldOpIntoPhi(I))
+          return NV;
+        break;
+      case Instruction::Select:
+        // If either operand of the select is a constant, we can fold the
+        // comparison into the select arms, which will cause one to be
+        // constant folded and the select turned into a bitwise or.
+        Value *Op1 = 0, *Op2 = 0;
+        if (LHSI->hasOneUse()) {
+          if (Constant *C = dyn_cast<Constant>(LHSI->getOperand(1))) {
+            // Fold the known value into the constant operand.
+            Op1 = ConstantExpr::get(I.getOpcode(), C, RHSC);
+            // Insert a new SetCC of the other select operand.
+            Op2 = InsertNewInstBefore(new SetCondInst(I.getOpcode(),
+                                                      LHSI->getOperand(2), RHSC,
+                                                      I.getName()), I);
+          } else if (Constant *C = dyn_cast<Constant>(LHSI->getOperand(2))) {
+            // Fold the known value into the constant operand.
+            Op2 = ConstantExpr::get(I.getOpcode(), C, RHSC);
+            // Insert a new SetCC of the other select operand.
+            Op1 = InsertNewInstBefore(new SetCondInst(I.getOpcode(),
+                                                      LHSI->getOperand(1), RHSC,
+                                                      I.getName()), I);
+          }
+        }
+        
+        if (Op1)
+          return new SelectInst(LHSI->getOperand(0), Op1, Op2);
+        break;
+      }
   }
 
   // If we can optimize a 'setcc GEP, P' or 'setcc P, GEP', do so now.
