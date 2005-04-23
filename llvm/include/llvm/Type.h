@@ -236,6 +236,20 @@ public:
     return getForwardedTypeInternal();
   }
 
+  /// getVAArgsPromotedType - Return the type an argument of this type
+  /// will be promoted to if passed through a variable argument
+  /// function.
+  const Type *getVAArgsPromotedType() const {
+    if (ID == BoolTyID || ID == UByteTyID || ID == UShortTyID)
+      return Type::UIntTy;
+    else if (ID == SByteTyID || ID == ShortTyID)
+      return Type::IntTy;
+    else if (ID == FloatTyID)
+      return Type::DoubleTy;
+    else
+      return this;
+  }
+
   //===--------------------------------------------------------------------===//
   // Type Iteration support
   //
