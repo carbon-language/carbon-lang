@@ -36,7 +36,7 @@ namespace {
 
 ModulePass *llvm::createTraceBasicBlockPass()
 {
-	return new TraceBasicBlocks();
+  return new TraceBasicBlocks();
 }
 
 static void InsertInstrumentationCall (BasicBlock *BB,

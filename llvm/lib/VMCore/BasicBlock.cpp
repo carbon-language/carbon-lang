@@ -138,7 +138,7 @@ void BasicBlock::removePredecessor(BasicBlock *Pred,
                                    bool DontDeleteUselessPHIs) {
   assert((hasNUsesOrMore(16)||// Reduce cost of this assertion for complex CFGs.
           find(pred_begin(this), pred_end(this), Pred) != pred_end(this)) &&
-	 "removePredecessor: BB is not a predecessor!");
+         "removePredecessor: BB is not a predecessor!");
 
   if (InstList.empty()) return;
   PHINode *APN = dyn_cast<PHINode>(&front());
@@ -209,7 +209,7 @@ void BasicBlock::removePredecessor(BasicBlock *Pred,
 BasicBlock *BasicBlock::splitBasicBlock(iterator I, const std::string &BBName) {
   assert(getTerminator() && "Can't use splitBasicBlock on degenerate BB!");
   assert(I != InstList.end() &&
-	 "Trying to get me to create degenerate basic block!");
+         "Trying to get me to create degenerate basic block!");
 
   BasicBlock *New = new BasicBlock(BBName, getParent(), getNext());
 

@@ -45,9 +45,9 @@ namespace {
     Function *inCountMth;
     DominatorSet *DS;
     void getBackEdgesVisit(BasicBlock *u,
-			   std::map<BasicBlock *, Color > &color,
-			   std::map<BasicBlock *, int > &d,
-			   int &time, BBMap &be);
+                           std::map<BasicBlock *, Color > &color,
+                           std::map<BasicBlock *, int > &d,
+                           int &time, BBMap &be);
     void removeRedundant(BBMap &be);
     void findAndInstrumentBackEdges(Function &F);
   public:
@@ -79,8 +79,8 @@ void InstLoops::getBackEdgesVisit(BasicBlock *u,
     else if(color[BB]==GREY){
       //so v is ancestor of u if time of u > time of v
       if(d[u] >= d[BB]){
-	//u->BB is a backedge
-	be[u] = BB;
+        //u->BB is a backedge
+        be[u] = BB;
       }
     }
   }
@@ -92,13 +92,13 @@ void InstLoops::getBackEdgesVisit(BasicBlock *u,
 void InstLoops::removeRedundant(BBMap &be) {
   std::vector<BasicBlock *> toDelete;
   for(std::map<BasicBlock *, BasicBlock *>::iterator MI = be.begin(),
-	ME = be.end(); MI != ME; ++MI)
+        ME = be.end(); MI != ME; ++MI)
     for(BBMap::iterator MMI = be.begin(), MME = be.end(); MMI != MME; ++MMI)
       if(DS->properlyDominates(MI->first, MMI->first))
-	toDelete.push_back(MMI->first);
+        toDelete.push_back(MMI->first);
   // Remove all the back-edges we found from be.
   for(std::vector<BasicBlock *>::iterator VI = toDelete.begin(),
-	VE = toDelete.end(); VI != VE; ++VI)
+        VE = toDelete.end(); VI != VE; ++VI)
     be.erase(*VI);
 }
 
@@ -123,7 +123,7 @@ void InstLoops::findAndInstrumentBackEdges(Function &F){
   removeRedundant(be);
 
   for(std::map<BasicBlock *, BasicBlock *>::iterator MI = be.begin(),
-	ME = be.end(); MI != ME; ++MI){
+        ME = be.end(); MI != ME; ++MI){
     BasicBlock *u = MI->first;
     BasicBlock *BB = MI->second;
     // We have a back-edge from BB --> u.

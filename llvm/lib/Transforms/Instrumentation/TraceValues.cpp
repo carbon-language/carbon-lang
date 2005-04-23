@@ -33,7 +33,7 @@ DisablePtrHashing("tracedisablehashdisable", cl::Hidden,
 static cl::list<std::string>
 TraceFuncNames("tracefunc", cl::desc("Only trace specific functions in the "
                                      "-trace or -tracem passes"),
-	       cl::value_desc("function"), cl::Hidden);
+               cl::value_desc("function"), cl::Hidden);
 
 static void TraceValuesAtBBExit(BasicBlock *BB,
                                 Function *Printf, Function* HashPtrToSeqNum,

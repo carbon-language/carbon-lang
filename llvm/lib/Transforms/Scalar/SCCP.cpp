@@ -835,13 +835,13 @@ void SCCPSolver::visitLoadInst(LoadInst &I) {
     // Transform load (constantexpr_GEP global, 0, ...) into the value loaded.
     if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Ptr))
       if (CE->getOpcode() == Instruction::GetElementPtr)
-	if (GlobalVariable *GV = dyn_cast<GlobalVariable>(CE->getOperand(0)))
-	  if (GV->isConstant() && !GV->isExternal())
-	    if (Constant *V =
-		GetGEPGlobalInitializer(GV->getInitializer(), CE)) {
-	      markConstant(IV, &I, V);
-	      return;
-	    }
+    if (GlobalVariable *GV = dyn_cast<GlobalVariable>(CE->getOperand(0)))
+      if (GV->isConstant() && !GV->isExternal())
+        if (Constant *V =
+        GetGEPGlobalInitializer(GV->getInitializer(), CE)) {
+          markConstant(IV, &I, V);
+          return;
+        }
   }
 
   // Otherwise we cannot say for certain what value this load will produce.
@@ -915,7 +915,7 @@ void SCCPSolver::visitCallSite(CallSite CS) {
 void SCCPSolver::Solve() {
   // Process the work lists until they are empty!
   while (!BBWorkList.empty() || !InstWorkList.empty() ||
-	 !OverdefinedInstWorkList.empty()) {
+         !OverdefinedInstWorkList.empty()) {
     // Process the instruction work list...
     while (!OverdefinedInstWorkList.empty()) {
       Value *I = OverdefinedInstWorkList.back();

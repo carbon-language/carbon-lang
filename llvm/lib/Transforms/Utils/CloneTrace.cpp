@@ -33,7 +33,7 @@ llvm::CloneTrace(const std::vector<BasicBlock*> &origTrace) {
   //this loop. To fix the phi nodes, we delete incoming branches
   //that are not in the trace.
   for(std::vector<BasicBlock *>::const_iterator T = origTrace.begin(),
-	End = origTrace.end(); T != End; ++T) {
+    End = origTrace.end(); T != End; ++T) {
 
     //Clone Basic Block
     BasicBlock *clonedBlock =
@@ -67,19 +67,19 @@ llvm::CloneTrace(const std::vector<BasicBlock*> &origTrace) {
 
   //Second loop to do the remapping
   for(std::vector<BasicBlock *>::const_iterator BB = clonedTrace.begin(),
-	BE = clonedTrace.end(); BB != BE; ++BB) {
+    BE = clonedTrace.end(); BB != BE; ++BB) {
     for(BasicBlock::iterator I = (*BB)->begin(); I != (*BB)->end(); ++I) {
 
       //Loop over all the operands of the instruction
       for(unsigned op=0, E = I->getNumOperands(); op != E; ++op) {
-	const Value *Op = I->getOperand(op);
-	
-	//Get it out of the value map
-	Value *V = ValueMap[Op];
+    const Value *Op = I->getOperand(op);
 
-	//If not in the value map, then its outside our trace so ignore
-	if(V != 0)
-	  I->setOperand(op,V);
+    //Get it out of the value map
+    Value *V = ValueMap[Op];
+
+    //If not in the value map, then its outside our trace so ignore
+    if(V != 0)
+      I->setOperand(op,V);
       }
     }
   }

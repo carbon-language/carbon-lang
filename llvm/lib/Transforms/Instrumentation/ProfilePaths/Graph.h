@@ -233,10 +233,10 @@ private:
   //So we have a back edge when we meet a successor of
   //a node with smaller time, and GREY color
   void getBackEdgesVisit(Node *u,
-			 std::vector<Edge > &be,
-			 std::map<Node *, Color> &clr,
-			 std::map<Node *, int> &d,
-			 int &time);
+                         std::vector<Edge > &be,
+                         std::map<Node *, Color> &clr,
+                         std::map<Node *, int> &d,
+                         int &time);
 
 public:
   typedef nodeMapTy::iterator elementIterator;
@@ -251,7 +251,7 @@ public:
 
   //constructor with root and exit node specified
   Graph(std::vector<Node*> n,
-	std::vector<Edge> e, Node *rt, Node *lt);
+        std::vector<Edge> e, Node *rt, Node *lt);
 
   //add a node
   void addNode(Node *nd);

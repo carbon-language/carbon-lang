@@ -258,7 +258,7 @@ bool DominatorSet::runOnFunction(Function &F) {
   Roots.clear();
   Roots.push_back(Root);
   assert(pred_begin(Root) == pred_end(Root) &&
-	 "Root node has predecessors in function!");
+         "Root node has predecessors in function!");
 
   ImmediateDominators &ID = getAnalysis<ImmediateDominators>();
   Doms.clear();
@@ -448,7 +448,7 @@ DominanceFrontier::calculate(const DominatorTree &DT,
     DomSetType::const_iterator CDFI = ChildDF.begin(), CDFE = ChildDF.end();
     for (; CDFI != CDFE; ++CDFI) {
       if (!Node->dominates(DT[*CDFI]))
-	S.insert(*CDFI);
+        S.insert(*CDFI);
     }
   }
 

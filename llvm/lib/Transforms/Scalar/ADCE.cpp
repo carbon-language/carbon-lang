@@ -229,7 +229,7 @@ bool ADCE::doADCE() {
                  isa<UnwindInst>(I) || isa<UnreachableInst>(I)) {
         // FIXME: Unreachable instructions should not be marked intrinsically
         // live here.
-	markInstructionLive(I);
+        markInstructionLive(I);
       } else if (isInstructionTriviallyDead(I)) {
         // Remove the instruction from it's basic block...
         BB->getInstList().erase(I);

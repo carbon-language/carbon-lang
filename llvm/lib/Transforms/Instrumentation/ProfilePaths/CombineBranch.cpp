@@ -30,10 +30,10 @@ namespace {
     enum Color { WHITE, GREY, BLACK };
 
     void getBackEdgesVisit(BasicBlock *u,
-			   std::map<BasicBlock *, Color > &color,
-			   std::map<BasicBlock *, int > &d,
-			   int &time,
-			   std::map<BasicBlock *, BasicBlock *> &be);
+                           std::map<BasicBlock *, Color > &color,
+                           std::map<BasicBlock *, int > &d,
+                           int &time,
+                           std::map<BasicBlock *, BasicBlock *> &be);
     void removeRedundant(std::map<BasicBlock *, BasicBlock *> &be);
   public:
     bool runOnFunction(Function &F);
@@ -55,7 +55,7 @@ void CombineBranches::getBackEdgesVisit(BasicBlock *u,
                        std::map<BasicBlock *, Color > &color,
                        std::map<BasicBlock *, int > &d,
                        int &time,
-		       std::map<BasicBlock *, BasicBlock *> &be) {
+                       std::map<BasicBlock *, BasicBlock *> &be) {
 
   color[u]=GREY;
   time++;
@@ -71,7 +71,7 @@ void CombineBranches::getBackEdgesVisit(BasicBlock *u,
     else if(color[BB]==GREY){
       //so v is ancestor of u if time of u > time of v
       if(d[u] >= d[BB]) // u->BB is a backedge
-	be[u] = BB;
+        be[u] = BB;
     }
   }
   color[u]=BLACK;//done with visiting the node and its neighbors
@@ -85,7 +85,7 @@ void CombineBranches::removeRedundant(std::map<BasicBlock *, BasicBlock *> &be){
   std::map<BasicBlock *, int> seenBB;
 
   for(std::map<BasicBlock *, BasicBlock *>::iterator MI = be.begin(),
-	ME = be.end(); MI != ME; ++MI){
+        ME = be.end(); MI != ME; ++MI){
 
     if(seenBB[MI->second])
       continue;
@@ -96,13 +96,13 @@ void CombineBranches::removeRedundant(std::map<BasicBlock *, BasicBlock *> &be){
     sameTarget.clear();
 
     for(std::map<BasicBlock *, BasicBlock *>::iterator MMI = be.begin(),
-	  MME = be.end(); MMI != MME; ++MMI){
+          MME = be.end(); MMI != MME; ++MMI){
 
       if(MMI->first == MI->first)
-	continue;
+        continue;
 
       if(MMI->second == MI->second)
-	sameTarget.push_back(MMI->first);
+        sameTarget.push_back(MMI->first);
 
     }
 
@@ -117,49 +117,49 @@ void CombineBranches::removeRedundant(std::map<BasicBlock *, BasicBlock *> &be){
       std::map<PHINode *, std::vector<unsigned int> > phiMap;
 
       for(std::vector<BasicBlock *>::iterator VBI = sameTarget.begin(),
-	    VBE = sameTarget.end(); VBI != VBE; ++VBI){
+            VBE = sameTarget.end(); VBI != VBE; ++VBI){
 
-	BranchInst *ti = cast<BranchInst>((*VBI)->getTerminator());
-	unsigned char index = 1;
-	if(ti->getSuccessor(0) == MI->second)
-	  index = 0;
+        BranchInst *ti = cast<BranchInst>((*VBI)->getTerminator());
+        unsigned char index = 1;
+        if(ti->getSuccessor(0) == MI->second)
+          index = 0;
 
-	ti->setSuccessor(index, newBB);
+        ti->setSuccessor(index, newBB);
 
-	for(BasicBlock::iterator BB2Inst = MI->second->begin(),
-	      BBend = MI->second->end(); BB2Inst != BBend; ++BB2Inst){
-	
-	  if (PHINode *phiInst = dyn_cast<PHINode>(BB2Inst)){
-	    int bbIndex;
-	    bbIndex = phiInst->getBasicBlockIndex(*VBI);
-	    if(bbIndex>=0)
-	      phiMap[phiInst].push_back(bbIndex);
-	  }
-	}
+        for(BasicBlock::iterator BB2Inst = MI->second->begin(),
+              BBend = MI->second->end(); BB2Inst != BBend; ++BB2Inst){
+
+          if (PHINode *phiInst = dyn_cast<PHINode>(BB2Inst)){
+            int bbIndex;
+            bbIndex = phiInst->getBasicBlockIndex(*VBI);
+            if(bbIndex>=0)
+              phiMap[phiInst].push_back(bbIndex);
+          }
+        }
       }
 
       for(std::map<PHINode *, std::vector<unsigned int> >::iterator
-	    PI = phiMap.begin(), PE = phiMap.end(); PI != PE; ++PI){
-	
-	PHINode *phiNode = new PHINode(PI->first->getType(), "phi", newBranch);
-	for(std::vector<unsigned int>::iterator II = PI->second.begin(),
-	      IE = PI->second.end(); II != IE; ++II){
-	  phiNode->addIncoming(PI->first->getIncomingValue(*II),
-			       PI->first->getIncomingBlock(*II));
-	}
+            PI = phiMap.begin(), PE = phiMap.end(); PI != PE; ++PI){
 
-	std::vector<BasicBlock *> tempBB;
-	for(std::vector<unsigned int>::iterator II = PI->second.begin(),
-	      IE = PI->second.end(); II != IE; ++II){
-	  tempBB.push_back(PI->first->getIncomingBlock(*II));
-	}
+        PHINode *phiNode = new PHINode(PI->first->getType(), "phi", newBranch);
+        for(std::vector<unsigned int>::iterator II = PI->second.begin(),
+              IE = PI->second.end(); II != IE; ++II){
+          phiNode->addIncoming(PI->first->getIncomingValue(*II),
+                               PI->first->getIncomingBlock(*II));
+        }
 
-	for(std::vector<BasicBlock *>::iterator II = tempBB.begin(),
-	      IE = tempBB.end(); II != IE; ++II){
-	  PI->first->removeIncomingValue(*II);
-	}
+        std::vector<BasicBlock *> tempBB;
+        for(std::vector<unsigned int>::iterator II = PI->second.begin(),
+              IE = PI->second.end(); II != IE; ++II){
+          tempBB.push_back(PI->first->getIncomingBlock(*II));
+        }
 
-	PI->first->addIncoming(phiNode, newBB);
+        for(std::vector<BasicBlock *>::iterator II = tempBB.begin(),
+              IE = tempBB.end(); II != IE; ++II){
+          PI->first->removeIncomingValue(*II);
+        }
+
+        PI->first->addIncoming(phiNode, newBB);
       }
     }
   }

@@ -26,9 +26,9 @@ namespace llvm {
 //Routines to get the path trace!
 
 void getPathFrmNode(Node *n, vector<BasicBlock*> &vBB, int pathNo, Graph &g,
-		    vector<Edge> &stDummy, vector<Edge> &exDummy,
-		    vector<Edge> &be,
-		    double strand){
+                    vector<Edge> &stDummy, vector<Edge> &exDummy,
+                    vector<Edge> &be,
+                    double strand){
   Graph::nodeList &nlist = g.getNodeList(n);
 
   //printGraph(g);
@@ -48,7 +48,7 @@ void getPathFrmNode(Node *n, vector<BasicBlock*> &vBB, int pathNo, Graph &g,
       nextRoot=NLI->element;
       edgeRnd=NLI->randId;
       if(isStart)
-	strand=NLI->randId;
+        strand=NLI->randId;
     }
   }
 
@@ -66,43 +66,43 @@ void getPathFrmNode(Node *n, vector<BasicBlock*> &vBB, int pathNo, Graph &g,
     bool has1=false, has2=false;
     //check if exit has it
     for(vector<Edge>::iterator VI=exDummy.begin(), VE=exDummy.end(); VI!=VE;
-	++VI){
+        ++VI){
       if(VI->getRandId()==edgeRnd){
-	has2=true;
-	break;
+        has2=true;
+        break;
       }
     }
 
     //check if start has it
     for(vector<Edge>::iterator VI=stDummy.begin(), VE=stDummy.end(); VI!=VE;
-	++VI){
+        ++VI){
       if(VI->getRandId()==strand){
-	has1=true;
-	break;
+        has1=true;
+        break;
       }
     }
 
     if(has1){
       //find backedge with endpoint vBB[1]
       for(vector<Edge>::iterator VI=be.begin(), VE=be.end(); VI!=VE; ++VI){
-	assert(vBB.size()>0 && "vector too small");
-	if( VI->getSecond()->getElement() == vBB[1] ){
-	  //vBB[0]=VI->getFirst()->getElement();
+        assert(vBB.size()>0 && "vector too small");
+        if( VI->getSecond()->getElement() == vBB[1] ){
+          //vBB[0]=VI->getFirst()->getElement();
           vBB.erase(vBB.begin());
-	  break;
-	}
+          break;
+        }
       }
     }
 
     if(has2){
       //find backedge with startpoint vBB[vBB.size()-1]
       for(vector<Edge>::iterator VI=be.begin(), VE=be.end(); VI!=VE; ++VI){
-	assert(vBB.size()>0 && "vector too small");
-	if( VI->getFirst()->getElement() == vBB[vBB.size()-1] &&
+        assert(vBB.size()>0 && "vector too small");
+        if( VI->getFirst()->getElement() == vBB[vBB.size()-1] &&
             VI->getSecond()->getElement() == vBB[0]){
-	  //vBB.push_back(VI->getSecond()->getElement());
-	  break;
-	}
+          //vBB.push_back(VI->getSecond()->getElement());
+          break;
+        }
       }
     }
     else
@@ -114,7 +114,7 @@ void getPathFrmNode(Node *n, vector<BasicBlock*> &vBB, int pathNo, Graph &g,
   assert(pathNo-maxCount>=0);
 
   return getPathFrmNode(nextRoot, vBB, pathNo-maxCount, g, stDummy,
-			exDummy, be, strand);
+                        exDummy, be, strand);
 }
 
 

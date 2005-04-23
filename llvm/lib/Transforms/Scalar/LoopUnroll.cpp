@@ -88,7 +88,7 @@ static unsigned ApproximateLoopSize(const Loop *L) {
       } else if (I->hasOneUse() && I->use_back() == Term) {
         // Ignore instructions only used by the loop terminator.
       } else if (DbgInfoIntrinsic *DbgI = dyn_cast<DbgInfoIntrinsic>(I)) {
-	// Ignore debug instructions
+        // Ignore debug instructions
       } else {
         ++Size;
       }

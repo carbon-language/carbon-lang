@@ -22,7 +22,7 @@ using std::vector;
 namespace llvm {
 
 const graphListElement *findNodeInList(const Graph::nodeList &NL,
-					      Node *N) {
+                                       Node *N) {
   for(Graph::nodeList::const_iterator NI = NL.begin(), NE=NL.end(); NI != NE;
       ++NI)
     if (*NI->element== *N)
@@ -39,7 +39,7 @@ graphListElement *findNodeInList(Graph::nodeList &NL, Node *N) {
 
 //graph constructor with root and exit specified
 Graph::Graph(std::vector<Node*> n, std::vector<Edge> e,
-	     Node *rt, Node *lt){
+             Node *rt, Node *lt){
   strt=rt;
   ext=lt;
   for(vector<Node* >::iterator x=n.begin(), en=n.end(); x!=en; ++x)
@@ -297,9 +297,9 @@ int Graph::getNumberOfIncomingEdges(Node *nd){
     Node *lnode=EI->first;
     const nodeList &nl = getNodeList(lnode);
     for(Graph::nodeList::const_iterator NI = nl.begin(), NE=nl.end(); NI != NE;
-	++NI)
+        ++NI)
       if (*NI->element== *nd)
-	count++;
+        count++;
   }
   return count;
 }
@@ -400,8 +400,8 @@ Graph* Graph::getMaxSpanningTree(){
     //remove u frm vt
     for(vector<Node *>::iterator VI=vt.begin(), VE=vt.end(); VI!=VE; ++VI){
       if(**VI==*u){
-	vt.erase(VI);
-	break;
+        vt.erase(VI);
+        break;
       }
     }
 
@@ -414,10 +414,10 @@ Graph* Graph::getMaxSpanningTree(){
       //check if v is in vt
       bool contains=false;
       for(vector<Node *>::iterator VI=vt.begin(), VE=vt.end(); VI!=VE; ++VI){
-	if(**VI==*v){
-	  contains=true;
-	  break;
-	}
+        if(**VI==*v){
+          contains=true;
+          break;
+        }
       }
       DEBUG(std::cerr<<"wt:v->wt"<<weight<<":"<<v->getWeight()<<"\n";
             printNode(v);std::cerr<<"node wt:"<<(*v).weight<<"\n");
@@ -425,11 +425,11 @@ Graph* Graph::getMaxSpanningTree(){
       //so if v in in vt, change wt(v) to wt(u->v)
       //only if wt(u->v)<wt(v)
       if(contains && weight<v->getWeight()){
-	parent[v]=u;
-	ed_weight[v]=weight;
-	v->setWeight(weight);
+        parent[v]=u;
+        ed_weight[v]=weight;
+        v->setWeight(weight);
 
-	DEBUG(std::cerr<<v->getWeight()<<":Set weight------\n";
+        DEBUG(std::cerr<<v->getWeight()<<":Set weight------\n";
               printGraph();
               printEdge(Edge(u,v,weight)));
       }
@@ -447,7 +447,7 @@ void Graph::printGraph(){
      Graph::nodeList &nl = getNodeList(*LI);
      for(Graph::nodeList::iterator NI=nl.begin(), NE=nl.end(); NI!=NE; ++NI){
        std::cerr<<":"<<"("<<(NI->element->getElement())
-	 ->getName()<<":"<<NI->element->getWeight()<<","<<NI->weight<<")";
+         ->getName()<<":"<<NI->element->getWeight()<<","<<NI->weight<<")";
      }
      std::cerr<<"--------\n";
    }
@@ -494,9 +494,9 @@ void Graph::makeUnDirectional(){
     for(nodeList::iterator NLI=nl.begin(), NLE=nl.end(); NLI!=NLE; ++NLI){
       Edge ed(NLI->element, *NI, NLI->weight);
       if(!hasEdgeAndWt(ed)){
-	DEBUG(std::cerr<<"######doesn't hv\n";
+        DEBUG(std::cerr<<"######doesn't hv\n";
               printEdge(ed));
-	addEdgeForce(ed);
+        addEdgeForce(ed);
       }
     }
   }
@@ -511,7 +511,7 @@ void Graph::reverseWts(){
       ++NI) {
     nodeList &node_list = getNodeList(*NI);
     for(nodeList::iterator NLI=nodes[*NI].begin(), NLE=nodes[*NI].end();
-	NLI!=NLE; ++NLI)
+        NLI!=NLE; ++NLI)
       NLI->weight=-NLI->weight;
   }
 }
@@ -538,8 +538,8 @@ void Graph::getBackEdges(vector<Edge > &be, std::map<Node *, int> &d){
 //helper function to get back edges: it is called by
 //the "getBackEdges" function above
 void Graph::getBackEdgesVisit(Node *u, vector<Edge > &be,
-			      std::map<Node *, Color > &color,
-			      std::map<Node *, int > &d, int &time) {
+                              std::map<Node *, Color > &color,
+                              std::map<Node *, int > &d, int &time) {
   color[u]=GREY;
   time++;
   d[u]=time;
@@ -547,7 +547,7 @@ void Graph::getBackEdgesVisit(Node *u, vector<Edge > &be,
   vector<graphListElement> &succ_list = getNodeList(u);
 
   for(vector<graphListElement>::iterator vl=succ_list.begin(),
-	ve=succ_list.end(); vl!=ve; ++vl){
+        ve=succ_list.end(); vl!=ve; ++vl){
     Node *v=vl->element;
     if(color[v]!=GREY && color[v]!=BLACK){
       getBackEdgesVisit(v, be, color, d, time);
@@ -557,9 +557,9 @@ void Graph::getBackEdgesVisit(Node *u, vector<Edge > &be,
     if(color[v]==GREY){
       //so v is ancestor of u if time of u > time of v
       if(d[u] >= d[v]){
-	Edge *ed=new Edge(u, v,vl->weight, vl->randId);
-	if (!(*u == *getExit() && *v == *getRoot()))
-	  be.push_back(*ed);      // choose the forward edges
+        Edge *ed=new Edge(u, v,vl->weight, vl->randId);
+        if (!(*u == *getExit() && *v == *getRoot()))
+          be.push_back(*ed);      // choose the forward edges
       }
     }
   }

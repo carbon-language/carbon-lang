@@ -40,10 +40,10 @@ static void getChords(vector<Edge > &chords, Graph &g, Graph st){
       ++NI){
     Graph::nodeList node_list=g.getNodeList(*NI);
     for(Graph::nodeList::iterator NLI=node_list.begin(), NLE=node_list.end();
-	NLI!=NLE; ++NLI){
+        NLI!=NLE; ++NLI){
       Edge f(*NI, NLI->element,NLI->weight, NLI->randId);
       if(!(st.hasEdgeAndWt(f)))//addnl
-	chords.push_back(f);
+        chords.push_back(f);
     }
   }
 }
@@ -60,7 +60,7 @@ static void removeTreeEdges(Graph &g, Graph& t){
   for(vector<Node *>::iterator NI=allNodes.begin(), NE=allNodes.end(); NI!=NE;
       ++NI){
     Graph::nodeList nl=t.getNodeList(*NI);
-    for(Graph::nodeList::iterator NLI=nl.begin(), NLE=nl.end();	NLI!=NLE;++NLI){
+    for(Graph::nodeList::iterator NLI=nl.begin(), NLE=nl.end(); NLI!=NLE;++NLI){
       Edge ed(NLI->element, *NI, NLI->weight);
       if(!g.hasEdgeAndWt(ed)) t.removeEdge(ed);//tree has only one edge
       //between any pair of vertices, so no need to delete by edge wt
@@ -91,8 +91,8 @@ int valueAssignmentToEdges(Graph& g,  map<Node *, int> nodePriority,
       int sz=nlist.size();
 
       for(int i=0;i<sz-1; i++){
-	int min=i;
-	for(int j=i+1; j<sz; j++){
+        int min=i;
+        for(int j=i+1; j<sz; j++){
           BasicBlock *bb1 = nlist[j].element->getElement();
           BasicBlock *bb2 = nlist[min].element->getElement();
 
@@ -123,16 +123,16 @@ int valueAssignmentToEdges(Graph& g,  map<Node *, int> nodePriority,
           }
 
         }
-	graphListElement tempEl=nlist[min];
-	nlist[min]=nlist[i];
-	nlist[i]=tempEl;
+        graphListElement tempEl=nlist[min];
+        nlist[min]=nlist[i];
+        nlist[i]=tempEl;
       }
 
       //sorted now!
       for(Graph::nodeList::iterator GLI=nlist.begin(), GLE=nlist.end();
-	  GLI!=GLE; ++GLI){
-       	GLI->weight=NumPaths[*RI];
-	NumPaths[*RI]+=NumPaths[GLI->element];
+          GLI!=GLE; ++GLI){
+        GLI->weight=NumPaths[*RI];
+        NumPaths[*RI]+=NumPaths[GLI->element];
       }
     }
   }
@@ -154,9 +154,9 @@ static int inc_Dir(Edge e, Edge f){
 
  //check that the edges must have at least one common endpoint
   assert(*(e.getFirst())==*(f.getFirst()) ||
-	 *(e.getFirst())==*(f.getSecond()) ||
-	 *(e.getSecond())==*(f.getFirst()) ||
-	 *(e.getSecond())==*(f.getSecond()));
+         *(e.getFirst())==*(f.getSecond()) ||
+         *(e.getSecond())==*(f.getFirst()) ||
+         *(e.getSecond())==*(f.getSecond()));
 
   if(*(e.getFirst())==*(f.getSecond()) ||
      *(e.getSecond())==*(f.getFirst()))
@@ -169,7 +169,7 @@ static int inc_Dir(Edge e, Edge f){
 //used for getting edge increments (read comments above in inc_Dir)
 //inc_DFS is a modification of DFS
 static void inc_DFS(Graph& g,Graph& t,map<Edge, int, EdgeCompare2>& Increment,
-	     int events, Node *v, Edge e){
+             int events, Node *v, Edge e){
 
   vector<Node *> allNodes=t.getAllNodes();
 
@@ -177,12 +177,12 @@ static void inc_DFS(Graph& g,Graph& t,map<Edge, int, EdgeCompare2>& Increment,
       ++NI){
     Graph::nodeList node_list=t.getNodeList(*NI);
     for(Graph::nodeList::iterator NLI=node_list.begin(), NLE=node_list.end();
-	NLI!= NLE; ++NLI){
+        NLI!= NLE; ++NLI){
       Edge f(*NI, NLI->element,NLI->weight, NLI->randId);
       if(!edgesEqual(f,e) && *v==*(f.getSecond())){
-	int dir_count=inc_Dir(e,f);
-	int wt=1*f.getWeight();
-	inc_DFS(g,t, Increment, dir_count*events+wt, f.getFirst(), f);
+        int dir_count=inc_Dir(e,f);
+        int wt=1*f.getWeight();
+        inc_DFS(g,t, Increment, dir_count*events+wt, f.getFirst(), f);
       }
     }
   }
@@ -191,13 +191,13 @@ static void inc_DFS(Graph& g,Graph& t,map<Edge, int, EdgeCompare2>& Increment,
       ++NI){
     Graph::nodeList node_list=t.getNodeList(*NI);
     for(Graph::nodeList::iterator NLI=node_list.begin(), NLE=node_list.end();
-	NLI!=NLE; ++NLI){
+        NLI!=NLE; ++NLI){
       Edge f(*NI, NLI->element,NLI->weight, NLI->randId);
       if(!edgesEqual(f,e) && *v==*(f.getFirst())){
-      	int dir_count=inc_Dir(e,f);
-	int wt=f.getWeight();
-	inc_DFS(g,t, Increment, dir_count*events+wt,
-		f.getSecond(), f);
+        int dir_count=inc_Dir(e,f);
+        int wt=f.getWeight();
+        inc_DFS(g,t, Increment, dir_count*events+wt,
+                f.getSecond(), f);
       }
     }
   }
@@ -207,12 +207,12 @@ static void inc_DFS(Graph& g,Graph& t,map<Edge, int, EdgeCompare2>& Increment,
       ++NI){
     Graph::nodeList node_list=g.getNodeList(*NI);
     for(Graph::nodeList::iterator NLI=node_list.begin(), NLE=node_list.end();
-	NLI!=NLE; ++NLI){
+        NLI!=NLE; ++NLI){
       Edge f(*NI, NLI->element,NLI->weight, NLI->randId);
       if(!(t.hasEdgeAndWt(f)) && (*v==*(f.getSecond()) ||
-				  *v==*(f.getFirst()))){
-	int dir_count=inc_Dir(e,f);
-	Increment[f]+=dir_count*events;
+                                  *v==*(f.getFirst()))){
+        int dir_count=inc_Dir(e,f);
+        Increment[f]+=dir_count*events;
       }
     }
   }
@@ -234,10 +234,10 @@ static map<Edge, int, EdgeCompare2> getEdgeIncrements(Graph& g, Graph& t,
     Graph::nodeList node_list=g.getSortedNodeList(*NI, be);
     //modified g.getNodeList(*NI);
     for(Graph::nodeList::iterator NLI=node_list.begin(), NLE=node_list.end();
-	NLI!=NLE; ++NLI){
+        NLI!=NLE; ++NLI){
       Edge ed(*NI, NLI->element,NLI->weight,NLI->randId);
       if(!(t.hasEdgeAndWt(ed))){
-	Increment[ed]=0;;
+        Increment[ed]=0;;
       }
     }
   }
@@ -250,11 +250,11 @@ static map<Edge, int, EdgeCompare2> getEdgeIncrements(Graph& g, Graph& t,
     Graph::nodeList node_list=g.getSortedNodeList(*NI, be);
     //modified g.getNodeList(*NI);
     for(Graph::nodeList::iterator NLI=node_list.begin(), NLE=node_list.end();
-	NLI!=NLE; ++NLI){
+        NLI!=NLE; ++NLI){
       Edge ed(*NI, NLI->element,NLI->weight, NLI->randId);
       if(!(t.hasEdgeAndWt(ed))){
-	int wt=ed.getWeight();
-	Increment[ed]+=wt;
+        int wt=ed.getWeight();
+        Increment[ed]+=wt;
       }
     }
   }
@@ -264,7 +264,7 @@ static map<Edge, int, EdgeCompare2> getEdgeIncrements(Graph& g, Graph& t,
 
 //push it up: TODO
 const graphListElement *findNodeInList(const Graph::nodeList &NL,
-					      Node *N);
+                                              Node *N);
 
 graphListElement *findNodeInList(Graph::nodeList &NL, Node *N);
 //end TODO
@@ -287,33 +287,33 @@ static void getCodeInsertions(Graph &g, map<Edge, getEdgeCode *, EdgeCompare2> &
     Graph::nodeList succs=g.getNodeList(v);
 
     for(Graph::nodeList::iterator nl=succs.begin(), ne=succs.end();
-	nl!=ne; ++nl){
+        nl!=ne; ++nl){
       int edgeWt=nl->weight;
       Node *w=nl->element;
       //if chords has v->w
       Edge ed(v,w, edgeWt, nl->randId);
       bool hasEdge=false;
       for(vector<Edge>::iterator CI=chords.begin(), CE=chords.end();
-	  CI!=CE && !hasEdge;++CI){
-	if(*CI==ed && CI->getWeight()==edgeWt){//modf
-	  hasEdge=true;
-	}
+          CI!=CE && !hasEdge;++CI){
+        if(*CI==ed && CI->getWeight()==edgeWt){//modf
+          hasEdge=true;
+        }
       }
 
       if(hasEdge){//so its a chord edge
-	getEdgeCode *edCd=new getEdgeCode();
-	edCd->setCond(1);
-	edCd->setInc(edIncrements[ed]);
-	instr[ed]=edCd;
+        getEdgeCode *edCd=new getEdgeCode();
+        edCd->setCond(1);
+        edCd->setInc(edIncrements[ed]);
+        instr[ed]=edCd;
       }
       else if(g.getNumberOfIncomingEdges(w)==1){
-	ws.push_back(w);
+        ws.push_back(w);
       }
       else{
-	getEdgeCode *edCd=new getEdgeCode();
-	edCd->setCond(2);
-	edCd->setInc(0);
-	instr[ed]=edCd;
+        getEdgeCode *edCd=new getEdgeCode();
+        edCd->setCond(2);
+        edCd->setInc(0);
+        instr[ed]=edCd;
       }
     }
   }
@@ -335,7 +335,7 @@ static void getCodeInsertions(Graph &g, map<Edge, getEdgeCode *, EdgeCompare2> &
       //graphListElement *N = findNodeInList(nl, w);
       for(Graph::nodeList::const_iterator N = nl.begin(),
             NNEN = nl.end(); N!= NNEN; ++N){
-        if (*N->element == *w){	
+        if (*N->element == *w){
           Node *v=lnode;
 
           //if chords has v->w
@@ -388,8 +388,8 @@ static void getCodeInsertions(Graph &g, map<Edge, getEdgeCode *, EdgeCompare2> &
 //and outgoing dummy edge is a->exit
 //changed
 void addDummyEdges(vector<Edge > &stDummy,
-		   vector<Edge > &exDummy,
-		   Graph &g, vector<Edge> &be){
+                   vector<Edge > &exDummy,
+                   Graph &g, vector<Edge> &be){
   for(vector<Edge >::iterator VI=be.begin(), VE=be.end(); VI!=VE; ++VI){
     Edge ed=*VI;
     Node *first=ed.getFirst();
@@ -414,7 +414,7 @@ void addDummyEdges(vector<Edge > &stDummy,
 void printEdge(Edge ed){
   cerr<<((ed.getFirst())->getElement())
     ->getName()<<"->"<<((ed.getSecond())
-			  ->getElement())->getName()<<
+                          ->getElement())->getName()<<
     ":"<<ed.getWeight()<<" rndId::"<<ed.getRandId()<<"\n";
 }
 
@@ -424,14 +424,14 @@ static void moveDummyCode(vector<Edge> &stDummy,
                           vector<Edge> &exDummy,
                           vector<Edge> &be,
                           map<Edge, getEdgeCode *, EdgeCompare2> &insertions,
-			  Graph &g){
+                          Graph &g){
   typedef vector<Edge >::iterator vec_iter;
 
   map<Edge,getEdgeCode *, EdgeCompare2> temp;
   //iterate over edges with code
   std::vector<Edge> toErase;
   for(map<Edge,getEdgeCode *, EdgeCompare2>::iterator MI=insertions.begin(),
-	ME=insertions.end(); MI!=ME; ++MI){
+        ME=insertions.end(); MI!=ME; ++MI){
     Edge ed=MI->first;
     getEdgeCode *edCd=MI->second;
 
@@ -439,26 +439,26 @@ static void moveDummyCode(vector<Edge> &stDummy,
     //iterate over be, and check if its starts and end vertices hv code
     for(vector<Edge>::iterator BEI=be.begin(), BEE=be.end(); BEI!=BEE; ++BEI){
       if(ed.getRandId()==BEI->getRandId()){
-	
-	if(temp[*BEI]==0)
-	  temp[*BEI]=new getEdgeCode();
-	
-	//so ed is either in st, or ex!
-	if(ed.getFirst()==g.getRoot()){
 
-	  //so its in stDummy
-	  temp[*BEI]->setCdIn(edCd);
-	  toErase.push_back(ed);
-	}
-	else if(ed.getSecond()==g.getExit()){
+        if(temp[*BEI]==0)
+          temp[*BEI]=new getEdgeCode();
 
-	  //so its in exDummy
-	  toErase.push_back(ed);
-	  temp[*BEI]->setCdOut(edCd);
-	}
-	else{
-	  assert(false && "Not found in either start or end! Rand failed?");
-	}
+        //so ed is either in st, or ex!
+        if(ed.getFirst()==g.getRoot()){
+
+          //so its in stDummy
+          temp[*BEI]->setCdIn(edCd);
+          toErase.push_back(ed);
+        }
+        else if(ed.getSecond()==g.getExit()){
+
+          //so its in exDummy
+          toErase.push_back(ed);
+          temp[*BEI]->setCdOut(edCd);
+        }
+        else{
+          assert(false && "Not found in either start or end! Rand failed?");
+        }
       }
     }
   }
@@ -485,12 +485,12 @@ static void moveDummyCode(vector<Edge> &stDummy,
 //appropriate code insertions etc and insert the code at
 //appropriate locations
 void processGraph(Graph &g,
-		  Instruction *rInst,
-		  Value *countInst,
-		  vector<Edge >& be,
-		  vector<Edge >& stDummy,
-		  vector<Edge >& exDummy,
-		  int numPaths, int MethNo,
+                  Instruction *rInst,
+                  Value *countInst,
+                  vector<Edge >& be,
+                  vector<Edge >& stDummy,
+                  vector<Edge >& exDummy,
+                  int numPaths, int MethNo,
                   Value *threshold){
 
   //Given a graph: with exit->root edge, do the following in seq:
@@ -621,7 +621,7 @@ void processGraph(Graph &g,
   //print edges with code for debugging
   cerr<<"Code inserted in following---------------\n";
   for(map<Edge, getEdgeCode *, EdgeCompare2>::iterator cd_i=codeInsertions.begin(),
-	cd_e=codeInsertions.end(); cd_i!=cd_e; ++cd_i){
+        cd_e=codeInsertions.end(); cd_i!=cd_e; ++cd_i){
     printEdge(cd_i->first);
     cerr<<cd_i->second->getCond()<<":"<<cd_i->second->getInc()<<"\n";
   }
@@ -639,10 +639,10 @@ void processGraph(Graph &g,
   //debugging info
   cerr<<"After moving dummy code\n";
   for(map<Edge, getEdgeCode *,EdgeCompare2>::iterator cd_i=codeInsertions.begin(),
-	cd_e=codeInsertions.end(); cd_i != cd_e; ++cd_i){
+        cd_e=codeInsertions.end(); cd_i != cd_e; ++cd_i){
     printEdge(cd_i->first);
     cerr<<cd_i->second->getCond()<<":"
-	<<cd_i->second->getInc()<<"\n";
+        <<cd_i->second->getInc()<<"\n";
   }
   cerr<<"Dummy end------------\n";
 #endif
@@ -651,7 +651,7 @@ void processGraph(Graph &g,
   //see what it looks like...
   //now insert code along edges which have codes on them
   for(map<Edge, getEdgeCode *,EdgeCompare2>::iterator MI=codeInsertions.begin(),
-	ME=codeInsertions.end(); MI!=ME; ++MI){
+        ME=codeInsertions.end(); MI!=ME; ++MI){
     Edge ed=MI->first;
     insertBB(ed, MI->second, rInst, countInst, numPaths, MethNo, threshold);
   }
@@ -666,10 +666,10 @@ void printGraph(Graph &g){
     cerr<<((*LI)->getElement())->getName()<<"->";
     Graph::nodeList nl=g.getNodeList(*LI);
     for(Graph::nodeList::iterator NI=nl.begin();
-	NI!=nl.end(); ++NI){
+        NI!=nl.end(); ++NI){
       cerr<<":"<<"("<<(NI->element->getElement())
-	->getName()<<":"<<NI->element->getWeight()<<","<<NI->weight<<","
-	  <<NI->randId<<")";
+        ->getName()<<":"<<NI->element->getWeight()<<","<<NI->weight<<","
+          <<NI->randId<<")";
     }
     cerr<<"\n";
   }

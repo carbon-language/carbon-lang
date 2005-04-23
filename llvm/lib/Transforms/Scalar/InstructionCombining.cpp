@@ -2896,7 +2896,7 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
                                                       I.getName()), I);
           }
         }
-        
+
         if (Op1)
           return new SelectInst(LHSI->getOperand(0), Op1, Op2);
         break;
@@ -4640,9 +4640,9 @@ static Constant *GetGEPGlobalInitializer(Constant *C, ConstantExpr *CE) {
       if (ConstantStruct *CS = dyn_cast<ConstantStruct>(C)) {
         C = CS->getOperand(El);
       } else if (isa<ConstantAggregateZero>(C)) {
-	C = Constant::getNullValue(STy->getElementType(El));
+        C = Constant::getNullValue(STy->getElementType(El));
       } else if (isa<UndefValue>(C)) {
-	C = UndefValue::get(STy->getElementType(El));
+        C = UndefValue::get(STy->getElementType(El));
       } else {
         return 0;
       }

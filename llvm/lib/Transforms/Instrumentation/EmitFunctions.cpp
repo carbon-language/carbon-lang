@@ -53,7 +53,7 @@ static char doDFS(BasicBlock * node,std::map<BasicBlock *, Color > &color){
 
     if(color[BB]!=GREY && color[BB]!=BLACK){
       if(!doDFS(BB, color)){
-	return 0;
+        return 0;
       }
     }
 
@@ -101,19 +101,19 @@ bool EmitFunctionTable::runOnModule(Module &M){
   M.getGlobalList().push_back(gb);
 
   Constant *constArray = ConstantArray::get(ArrayType::get(Type::SByteTy,
-								sBCons.size()),
-						 sBCons);
+                                                                sBCons.size()),
+                                                 sBCons);
 
   GlobalVariable *funcArray = new GlobalVariable(constArray->getType(), true,
-					      GlobalValue::ExternalLinkage,
-					      constArray, "llvmSimpleFunction");
+                                              GlobalValue::ExternalLinkage,
+                                              constArray, "llvmSimpleFunction");
 
   M.getGlobalList().push_back(funcArray);
 
   ConstantInt *cnst = ConstantSInt::get(Type::IntTy, counter);
   GlobalVariable *fnCount = new GlobalVariable(Type::IntTy, true,
-					       GlobalValue::ExternalLinkage,
-					       cnst, "llvmFunctionCount");
+                                               GlobalValue::ExternalLinkage,
+                                               cnst, "llvmFunctionCount");
   M.getGlobalList().push_back(fnCount);
   return true;  // Always modifies program
 }

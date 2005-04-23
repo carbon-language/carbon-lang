@@ -59,7 +59,7 @@ static void getTriggerCode(Module *M, BasicBlock *BB, int MethNo, Value *pathNo,
 //get the code to be inserted on the edge
 //This is determined from cond (1-6)
 void getEdgeCode::getCode(Instruction *rInst, Value *countInst,
-			  Function *M, BasicBlock *BB,
+                          Function *M, BasicBlock *BB,
                           vector<Value *> &retVec){
 
   //Instruction *InsertPos = BB->getInstList().begin();
@@ -143,7 +143,7 @@ void getEdgeCode::getCode(Instruction *rInst, Value *countInst,
     retVec.push_back(trAddIndex);
     //insert trigger
     //getTriggerCode(M->getParent(), BB, MethNo,
-    //	   ConstantSInt::get(Type::IntTy,inc), newCount, triggerInst);
+    //     ConstantSInt::get(Type::IntTy,inc), newCount, triggerInst);
     //end trigger code
 
     assert(inc>=0 && "IT MUST BE POSITIVE NOW");
@@ -164,7 +164,7 @@ void getEdgeCode::getCode(Instruction *rInst, Value *countInst,
 
     //now load count[addIndex]
     Instruction *castInst=new CastInst(addIndex,
-				       Type::LongTy,"ctin");//, InsertPos);
+                                       Type::LongTy,"ctin");//, InsertPos);
     BB->getInstList().push_back(castInst);
 
     vector<Value *> tmpVec;
@@ -252,8 +252,8 @@ void getEdgeCode::getCode(Instruction *rInst, Value *countInst,
 //Count is an array, where Count[k] represents
 //the number of executions of path k
 void insertInTopBB(BasicBlock *front,
-		   int k,
-		   Instruction *rVar, Value *threshold){
+                   int k,
+                   Instruction *rVar, Value *threshold){
   //rVar is variable r,
   //countVar is count[]
 
@@ -281,10 +281,10 @@ void insertInTopBB(BasicBlock *front,
 //insert a basic block with appropriate code
 //along a given edge
 void insertBB(Edge ed,
-	      getEdgeCode *edgeCode,
-	      Instruction *rInst,
-	      Value *countInst,
-	      int numPaths, int Methno, Value *threshold){
+              getEdgeCode *edgeCode,
+              Instruction *rInst,
+              Value *countInst,
+              int numPaths, int Methno, Value *threshold){
 
   BasicBlock* BB1=ed.getFirst()->getElement();
   BasicBlock* BB2=ed.getSecond()->getElement();
