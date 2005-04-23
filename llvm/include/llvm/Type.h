@@ -218,6 +218,7 @@ public:
   /// return zero if the type does not have a size or is not a primitive type.
   ///
   unsigned getPrimitiveSize() const;
+  unsigned getPrimitiveSizeInBits() const;
 
   /// getUnsignedVersion - If this is an integer type, return the unsigned
   /// variant of this type.  For example int -> uint.
@@ -293,8 +294,6 @@ public:
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const Type *T) { return true; }
-
-#include "llvm/Type.def"
 
   // Virtual methods used by callbacks below.  These should only be implemented
   // in the DerivedType class.
