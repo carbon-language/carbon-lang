@@ -85,6 +85,7 @@ public:
   unsigned char getDoubleAlignment()  const { return  DoubleAlignment; }
   unsigned char getPointerAlignment() const { return PointerAlignment; }
   unsigned char getPointerSize()      const { return      PointerSize; }
+  unsigned char getPointerSizeInBits()const { return      PointerSize*8; }
 
   /// getTypeSize - Return the number of bytes necessary to hold the specified
   /// type.
