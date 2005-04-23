@@ -142,3 +142,9 @@ int %test16(bool %C, int* %P) {
 	%V = load int* %P2
 	ret int %V
 }
+
+bool %test17(int* %X, bool %C) {
+	%R = select bool %C, int* %X, int* null
+	%RV = seteq int* %R, null
+	ret bool %RV
+}
