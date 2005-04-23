@@ -18,10 +18,8 @@ include $(LEVEL)/Makefile.config
 # Initialize the USEDLIBS so we can add to it
 USEDLIBS :=
 
-# Check for LLVMCBackend  target
-ifneq ($(strip $(filter CBackend,$(TARGETS_TO_BUILD))),)
+# Always add the C Backend
 USEDLIB += LLVMCBackend
-endif
 
 # Check for Skeleton target
 ifneq ($(strip $(filter Skeleton,$(TARGETS_TO_BUILD))),)
