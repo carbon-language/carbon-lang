@@ -35,6 +35,7 @@ namespace {
 //
 bool CompleteBUDataStructures::runOnModule(Module &M) {
   BUDataStructures &BU = getAnalysis<BUDataStructures>();
+  GlobalECs = BU.getGlobalECs();
   GlobalsGraph = new DSGraph(BU.getGlobalsGraph(), GlobalECs);
   GlobalsGraph->setPrintAuxCalls();
 
