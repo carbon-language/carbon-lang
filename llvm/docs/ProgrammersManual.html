@@ -85,6 +85,14 @@ with another <tt>Value</tt></a> </li>
 
   <li><a href="#advanced">Advanced Topics</a>
   <ul>
+  <li><a href="#TypeResolve">LLVM Type Resolution</a>
+  <ul>
+    <li><a href="#BuildRecType">Basic Recursive Type Construction</a></li>
+    <li><a href="#refineAbstractTypeTo">The <tt>refineAbstractTypeTo</tt> method</a></li>
+    <li><a href="#PATypeHolder">The PATypeHolder Class</a></li>
+    <li><a href="#AbstractTypeUser">The AbstractTypeUser Class</a></li>
+  </ul></li>
+
   <li><a href="#SymbolTable">The <tt>SymbolTable</tt> class </a></li>
   </ul></li>
 
@@ -930,8 +938,165 @@ ReplaceInstWithValue, ReplaceInstWithInst -->
 <!-- *********************************************************************** -->
 
 <div class="doc_text">
+<p>
+This section describes some of the advanced or obscure API's that most clients
+do not need to be aware of.  These API's tend manage the inner workings of the
+LLVM system, and only need to be accessed in unusual circumstances.
+</p>
+</div>
 
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="TypeResolve">LLVM Type Resolution</a>
+</div>
 
+<div class="doc_text">
+
+<p>
+The LLVM type system has a very simple goal: allow clients to compare types for
+structural equality with a simple pointer comparison (aka a shallow compare).
+This goal makes clients much simpler and faster, and is used throughout the LLVM
+system.
+</p>
+
+<p>
+Unfortunately achieving this goal is not a simple matter.  In particular,
+recursive types and late resolution of opaque types makes the situation very
+difficult to handle.  Fortunately, for the most part, our implementation makes
+most clients able to be completely unaware of the nasty internal details.  The
+primary case where clients are exposed to the inner workings of it are when
+building a recursive type.  In addition to this case, the LLVM bytecode reader,
+assembly parser, and linker also have to be aware of the inner workings of this
+system.
+</p>
+
+</div>
+
+<!-- ______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="BuildRecType">Basic Recursive Type Construction</a>
+</div>
+
+<div class="doc_text">
+
+<p>
+Because the most common question is "how do I build a recursive type with LLVM",
+we answer it now and explain it as we go.  Here we include enough to cause this
+to be emitted to an output .ll file:
+</p>
+
+<pre>
+   %mylist = type { %mylist*, int }
+</pre>
+
+<p>
+To build this, use the following LLVM APIs:
+</p>
+
+<pre>
+  //<i> Create the initial outer struct.</i>
+  <a href="#PATypeHolder">PATypeHolder</a> StructTy = OpaqueType::get();
+  std::vector&lt;const Type*&gt; Elts;
+  Elts.push_back(PointerType::get(StructTy));
+  Elts.push_back(Type::IntTy);
+  StructType *NewSTy = StructType::get(Elts);
+
+  //<i> At this point, NewSTy = "{ opaque*, int }". Tell VMCore that</i>
+  //<i> the struct and the opaque type are actually the same.</i>
+  cast&lt;OpaqueType&gt;(StructTy.get())-&gt;<a href="#refineAbstractTypeTo">refineAbstractTypeTo</a>(NewSTy);
+
+  // <i>NewSTy is potentially invalidated, but StructTy (a <a href="#PATypeHolder">PATypeHolder</a>) is</i>
+  // <i>kept up-to-date.</i>
+  NewSTy = cast&lt;StructType&gt;(StructTy.get());
+
+  // <i>Add a name for the type to the module symbol table (optional).</i>
+  MyModule-&gt;addTypeName("mylist", NewSTy);
+</pre>
+
+<p>
+This code shows the basic approach used to build recursive types: build a
+non-recursive type using 'opaque', then use type unification to close the cycle.
+The type unification step is performed by the <tt><a
+ref="#refineAbstractTypeTo">refineAbstractTypeTo</a></tt> method, which is
+described next.  After that, we describe the <a
+href="#PATypeHolder">PATypeHolder class</a>.
+</p>
+
+</div>
+
+<!-- ______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="refineAbstractTypeTo">The <tt>refineAbstractTypeTo</tt> method</a>
+</div>
+
+<div class="doc_text">
+<p>
+The <tt>refineAbstractTypeTo</tt> method starts the type unification process.
+While this method is actually a member of the DerivedType class, it is most
+often used on OpaqueType instances.  Type unification is actually a recursive
+process.  After unification, types can become structurally isomorphic to
+existing types, and all duplicates are deleted (to preserve pointer equality).
+</p>
+
+<p>
+In the example above, the OpaqueType object is definitely deleted.
+Additionally, if there is an "{ \2*, int}" type already created in the system,
+the pointer and struct type created are <b>also</b> deleted.  Obviously whenever
+a type is deleted, any "Type*" pointers in the program are invalidated.  As
+such, it is safest to avoid having <i>any</i> "Type*" pointers to abstract types
+live across a call to <tt>refineAbstractTypeTo</tt> (note that non-abstract
+types can never move or be deleted).  To deal with this, the <a
+href="#PATypeHolder">PATypeHolder</a> class is used to maintain a stable
+reference to a possibly refined type, and the <a
+href="#AbstractTypeUser">AbstractTypeUser</a> class is used to update more
+complex datastructures.
+</p>
+
+</div>
+
+<!-- ______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="PATypeHolder">The PATypeHolder Class</a>
+</div>
+
+<div class="doc_text">
+<p>
+PATypeHolder is a form of a "smart pointer" for Type objects.  When VMCore
+happily goes about nuking types that become isomorphic to existing types, it
+automatically updates all PATypeHolder objects to point to the new type.  In the
+example above, this allows the code to maintain a pointer to the resultant
+resolved recursive type, even though the Type*'s are potentially invalidated.
+</p>
+
+<p>
+PATypeHolder is an extremely light-weight object that uses a lazy union-find
+implementation to update pointers.  For example the pointer from a Value to its
+Type is maintained by PATypeHolder objects.
+</p>
+
+</div>
+
+<!-- ______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="AbstractTypeUser">The AbstractTypeUser Class</a>
+</div>
+
+<div class="doc_text">
+
+<p>
+Some data structures need more to perform more complex updates when types get
+resolved.  The <a href="#SymbolTable">SymbolTable</a> class, for example, needs
+move and potentially merge type planes in its representation when a pointer
+changes.</p>
+
+<p>
+To support this, a class can derive from the AbstractTypeUser class.  This class
+allows it to get callbacks when certain types are resolved.  To register to get
+callbacks for a particular type, the DerivedType::{add/remove}AbstractTypeUser
+methods can be called on a type.  Note that these methods only work for {\em
+abstract} types.  Concrete types (those that do not include an opaque objects
+somewhere) can never be refined.
+</p>
 </div>
 
 
@@ -939,6 +1104,7 @@ ReplaceInstWithValue, ReplaceInstWithInst -->
 <div class="doc_subsection">
   <a name="SymbolTable">The <tt>SymbolTable</tt> class</a>
 </div>
+
 <div class="doc_text">
 <p>This class provides a symbol table that the <a
 href="#Function"><tt>Function</tt></a> and <a href="#Module">
