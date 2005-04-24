@@ -141,4 +141,8 @@ void %test20(uint %A, uint %B) {  ; The "swap idiom"
         ret void
 }
 
-
+int %test21(bool %C, int %A, int %B) {
+	%C2 = xor bool %C, true
+	%D = select bool %C2, int %A, int %B
+	ret int %D
+}
