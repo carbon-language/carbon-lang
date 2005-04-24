@@ -208,10 +208,10 @@ public:
   /// getNegArgument, getNotArgument - Helper functions to extract the
   ///     unary argument of a NEG or NOT operation implemented via Sub or Xor.
   ///
-  static const Value*    getNegArgument(const BinaryOperator* Bop);
-  static       Value*    getNegArgument(      BinaryOperator* Bop);
-  static const Value*    getNotArgument(const BinaryOperator* Bop);
-  static       Value*    getNotArgument(      BinaryOperator* Bop);
+  static const Value*    getNegArgument(const Value *BinOp);
+  static       Value*    getNegArgument(      Value *BinOp);
+  static const Value*    getNotArgument(const Value *BinOp);
+  static       Value*    getNotArgument(      Value *BinOp);
 
   BinaryOps getOpcode() const {
     return static_cast<BinaryOps>(Instruction::getOpcode());
