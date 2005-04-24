@@ -30,6 +30,7 @@ using namespace llvm;
 namespace {
   struct ConstRules {
     ConstRules() {}
+    virtual ~ConstRules() {}
 
     // Binary Operators...
     virtual Constant *add(const Constant *V1, const Constant *V2) const = 0;
@@ -85,6 +86,7 @@ namespace {
 //
 template<class ArgType, class SubClassName>
 class TemplateRules : public ConstRules {
+
 
   //===--------------------------------------------------------------------===//
   // Redirecting functions that cast to the appropriate types
@@ -202,6 +204,9 @@ class TemplateRules : public ConstRules {
   static Constant *CastToDouble(const Constant *V) { return 0; }
   static Constant *CastToPointer(const Constant *,
                                  const PointerType *) {return 0;}
+
+public:
+  virtual ~TemplateRules() {}
 };
 
 
