@@ -691,7 +691,7 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
 
         // Form a mask of all bits from the lowest bit added through the top.
         uint64_t AddRHSHighBits = ~((AddRHSV & -AddRHSV)-1);
-        AddRHSHighBits &= (1ULL << C2->getType()->getPrimitiveSizeInBits())-1;
+        AddRHSHighBits &= ~0ULL >> (64-C2->getType()->getPrimitiveSizeInBits());
 
         // See if the and mask includes all of these bits.
         uint64_t AddRHSHighBitsAnd = AddRHSHighBits & C2->getRawValue();
@@ -718,7 +718,7 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
 // highest order bit set.
 static bool isSignBit(ConstantInt *CI) {
   unsigned NumBits = CI->getType()->getPrimitiveSizeInBits();
-  return (CI->getRawValue() & ~(-1LL << NumBits)) == (1ULL << (NumBits-1));
+  return (CI->getRawValue() & (~0ULL >> (64-NumBits))) == (1ULL << (NumBits-1));
 }
 
 /// RemoveNoopCast - Strip off nonconverting casts from the value.
@@ -1427,7 +1427,7 @@ Instruction *InstCombiner::OptAndOp(Instruction *Op,
       uint64_t AndRHSV = cast<ConstantInt>(AndRHS)->getRawValue();
 
       // Clear bits that are not part of the constant.
-      AndRHSV &= (1ULL << AndRHS->getType()->getPrimitiveSizeInBits())-1;
+      AndRHSV &= ~0ULL >> (64-AndRHS->getType()->getPrimitiveSizeInBits());
 
       // If there is only one bit set...
       if (isOneBitSet(cast<ConstantInt>(AndRHS))) {
@@ -2582,8 +2582,7 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
               Constant *Mask;
               if (CI->getType()->isUnsigned()) {
                 unsigned TypeBits = CI->getType()->getPrimitiveSizeInBits();
-                if (TypeBits != 64)
-                  Val &= (1ULL << TypeBits)-1;
+                Val &= ~0ULL >> (64-TypeBits);
                 Mask = ConstantUInt::get(CI->getType(), Val);
               } else {
                 Mask = ConstantSInt::get(CI->getType(), Val);
@@ -2984,9 +2983,6 @@ Instruction *InstCombiner::visitSetCondInstWithCastAndCast(SetCondInst &SCI) {
         return ReplaceInstUsesWith(SCI, ConstantBool::False);
       if (SCI.getOpcode() == Instruction::SetNE)
         return ReplaceInstUsesWith(SCI, ConstantBool::True);
-
-      // SignBitSet - True if the top bit of the compared constant value is set.
-      bool SignBitSet = CI->getRawValue() & 1ULL << (DestBits-1);
 
       // Evaluate the comparison for LT.
       Value *Result;
@@ -3405,7 +3401,7 @@ Instruction *InstCombiner::visitCastInst(CastInst &CI) {
               CI.getType()->getPrimitiveSizeInBits()) {
       assert(CSrc->getType() != Type::ULongTy &&
              "Cannot have type bigger than ulong!");
-      uint64_t AndValue = (1ULL << CSrc->getType()->getPrimitiveSizeInBits())-1;
+      uint64_t AndValue = ~0ULL>>(64-CSrc->getType()->getPrimitiveSizeInBits());
       Constant *AndOp = ConstantUInt::get(A->getType()->getUnsignedVersion(),
                                           AndValue);
       AndOp = ConstantExpr::getCast(AndOp, A->getType());
