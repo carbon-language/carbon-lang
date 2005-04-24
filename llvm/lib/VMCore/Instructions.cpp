@@ -823,27 +823,28 @@ bool BinaryOperator::isNot(const Value *V) {
   return false;
 }
 
-Value *BinaryOperator::getNegArgument(BinaryOperator *Bop) {
-  assert(isNeg(Bop) && "getNegArgument from non-'neg' instruction!");
-  return Bop->getOperand(1);
+Value *BinaryOperator::getNegArgument(Value *BinOp) {
+  assert(isNeg(BinOp) && "getNegArgument from non-'neg' instruction!");
+  return cast<BinaryOperator>(BinOp)->getOperand(1);
 }
 
-const Value *BinaryOperator::getNegArgument(const BinaryOperator *Bop) {
-  return getNegArgument((BinaryOperator*)Bop);
+const Value *BinaryOperator::getNegArgument(const Value *BinOp) {
+  return getNegArgument(const_cast<Value*>(BinOp));
 }
 
-Value *BinaryOperator::getNotArgument(BinaryOperator *Bop) {
-  assert(isNot(Bop) && "getNotArgument on non-'not' instruction!");
-  Value *Op0 = Bop->getOperand(0);
-  Value *Op1 = Bop->getOperand(1);
+Value *BinaryOperator::getNotArgument(Value *BinOp) {
+  assert(isNot(BinOp) && "getNotArgument on non-'not' instruction!");
+  BinaryOperator *BO = cast<BinaryOperator>(BinOp);
+  Value *Op0 = BO->getOperand(0);
+  Value *Op1 = BO->getOperand(1);
   if (isConstantAllOnes(Op0)) return Op1;
 
   assert(isConstantAllOnes(Op1));
   return Op0;
 }
 
-const Value *BinaryOperator::getNotArgument(const BinaryOperator *Bop) {
-  return getNotArgument((BinaryOperator*)Bop);
+const Value *BinaryOperator::getNotArgument(const Value *BinOp) {
+  return getNotArgument(const_cast<Value*>(BinOp));
 }
 
 
