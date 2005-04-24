@@ -311,7 +311,7 @@ bool InstCombiner::SimplifyCommutative(BinaryOperator &I) {
 //
 static inline Value *dyn_castNegVal(Value *V) {
   if (BinaryOperator::isNeg(V))
-    return BinaryOperator::getNegArgument(cast<BinaryOperator>(V));
+    return BinaryOperator::getNegArgument(V);
 
   // Constants can be considered to be negated values if they can be folded.
   if (ConstantInt *C = dyn_cast<ConstantInt>(V))
@@ -321,7 +321,7 @@ static inline Value *dyn_castNegVal(Value *V) {
 
 static inline Value *dyn_castNotVal(Value *V) {
   if (BinaryOperator::isNot(V))
-    return BinaryOperator::getNotArgument(cast<BinaryOperator>(V));
+    return BinaryOperator::getNotArgument(V);
 
   // Constants can be considered to be not'ed values...
   if (ConstantIntegral *C = dyn_cast<ConstantIntegral>(V))
@@ -3885,6 +3885,14 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
           }
         }
   }
+
+  if (BinaryOperator::isNot(CondVal)) {
+    SI.setOperand(0, BinaryOperator::getNotArgument(CondVal));
+    SI.setOperand(1, FalseVal);
+    SI.setOperand(2, TrueVal);
+    return &SI;
+  }
+
   return 0;
 }
 
