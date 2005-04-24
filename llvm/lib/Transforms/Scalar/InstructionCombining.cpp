@@ -112,10 +112,9 @@ namespace {
     Instruction *visitAnd(BinaryOperator &I);
     Instruction *visitOr (BinaryOperator &I);
     Instruction *visitXor(BinaryOperator &I);
-    Instruction *visitSetCondInst(BinaryOperator &I);
-    Instruction *visitSetCondInstWithCastAndConstant(BinaryOperator&I,
-                                                     CastInst*LHSI,
-                                                     ConstantInt* CI);
+    Instruction *visitSetCondInst(SetCondInst &I);
+    Instruction *visitSetCondInstWithCastAndCast(SetCondInst &SCI);
+
     Instruction *FoldGEPSetCC(User *GEPLHS, Value *RHS,
                               Instruction::BinaryOps Cond, Instruction &I);
     Instruction *visitShiftInst(ShiftInst &I);
@@ -618,7 +617,7 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
 
     // X + (signbit) --> X ^ signbit
     if (ConstantInt *CI = dyn_cast<ConstantInt>(RHSC)) {
-      unsigned NumBits = CI->getType()->getPrimitiveSize()*8;
+      unsigned NumBits = CI->getType()->getPrimitiveSizeInBits();
       uint64_t Val = CI->getRawValue() & (1ULL << NumBits)-1;
       if (Val == (1ULL << (NumBits-1)))
         return BinaryOperator::createXor(LHS, RHS);
@@ -692,7 +691,7 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
 
         // Form a mask of all bits from the lowest bit added through the top.
         uint64_t AddRHSHighBits = ~((AddRHSV & -AddRHSV)-1);
-        AddRHSHighBits &= (1ULL << C2->getType()->getPrimitiveSize()*8)-1;
+        AddRHSHighBits &= (1ULL << C2->getType()->getPrimitiveSizeInBits())-1;
 
         // See if the and mask includes all of these bits.
         uint64_t AddRHSHighBitsAnd = AddRHSHighBits & C2->getRawValue();
@@ -718,12 +717,8 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
 // isSignBit - Return true if the value represented by the constant only has the
 // highest order bit set.
 static bool isSignBit(ConstantInt *CI) {
-  unsigned NumBits = CI->getType()->getPrimitiveSize()*8;
+  unsigned NumBits = CI->getType()->getPrimitiveSizeInBits();
   return (CI->getRawValue() & ~(-1LL << NumBits)) == (1ULL << (NumBits-1));
-}
-
-static unsigned getTypeSizeInBits(const Type *Ty) {
-  return Ty == Type::BoolTy ? 1 : Ty->getPrimitiveSize()*8;
 }
 
 /// RemoveNoopCast - Strip off nonconverting casts from the value.
@@ -733,7 +728,7 @@ static Value *RemoveNoopCast(Value *V) {
     const Type *CTy = CI->getType();
     const Type *OpTy = CI->getOperand(0)->getType();
     if (CTy->isInteger() && OpTy->isInteger()) {
-      if (CTy->getPrimitiveSize() == OpTy->getPrimitiveSize())
+      if (CTy->getPrimitiveSizeInBits() == OpTy->getPrimitiveSizeInBits())
         return RemoveNoopCast(CI->getOperand(0));
     } else if (isa<PointerType>(CTy) && isa<PointerType>(OpTy))
       return RemoveNoopCast(CI->getOperand(0));
@@ -779,7 +774,7 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
             else
               NewTy = SI->getType()->getSignedVersion();
             // Check to see if we are shifting out everything but the sign bit.
-            if (CU->getValue() == SI->getType()->getPrimitiveSize()*8-1) {
+            if (CU->getValue() == SI->getType()->getPrimitiveSizeInBits()-1) {
               // Ok, the transformation is safe.  Insert a cast of the incoming
               // value, then the new shift, then the new cast.
               Instruction *FirstCast = new CastInst(SI->getOperand(0), NewTy,
@@ -904,10 +899,11 @@ static bool isSignBitCheck(unsigned Opcode, Value *LHS, ConstantInt *RHS) {
     // True if source is LHS > 127 or LHS >= 128, where the constants depend on
     // the size of the integer type.
     if (Opcode == Instruction::SetGE)
-      return RHSC->getValue() == 1ULL<<(RHS->getType()->getPrimitiveSize()*8-1);
+      return RHSC->getValue() ==
+        1ULL << (RHS->getType()->getPrimitiveSizeInBits()-1);
     if (Opcode == Instruction::SetGT)
       return RHSC->getValue() ==
-        (1ULL << (RHS->getType()->getPrimitiveSize()*8-1))-1;
+        (1ULL << (RHS->getType()->getPrimitiveSizeInBits()-1))-1;
   }
   return false;
 }
@@ -988,7 +984,7 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
           isSignBitCheck(SCI->getOpcode(), SCIOp0, cast<ConstantInt>(SCIOp1))) {
         // Shift the X value right to turn it into "all signbits".
         Constant *Amt = ConstantUInt::get(Type::UByteTy,
-                                          SCOpTy->getPrimitiveSize()*8-1);
+                                          SCOpTy->getPrimitiveSizeInBits()-1);
         if (SCIOp0->getType()->isUnsigned()) {
           const Type *NewTy = SCIOp0->getType()->getSignedVersion();
           SCIOp0 = InsertNewInstBefore(new CastInst(SCIOp0, NewTy,
@@ -1175,7 +1171,7 @@ Instruction *InstCombiner::visitRem(BinaryOperator &I) {
 static bool isMaxValueMinusOne(const ConstantInt *C) {
   if (const ConstantUInt *CU = dyn_cast<ConstantUInt>(C)) {
     // Calculate -1 casted to the right type...
-    unsigned TypeBits = C->getType()->getPrimitiveSize()*8;
+    unsigned TypeBits = C->getType()->getPrimitiveSizeInBits();
     uint64_t Val = ~0ULL;                // All ones
     Val >>= 64-TypeBits;                 // Shift out unwanted 1 bits...
     return CU->getValue() == Val-1;
@@ -1184,7 +1180,7 @@ static bool isMaxValueMinusOne(const ConstantInt *C) {
   const ConstantSInt *CS = cast<ConstantSInt>(C);
 
   // Calculate 0111111111..11111
-  unsigned TypeBits = C->getType()->getPrimitiveSize()*8;
+  unsigned TypeBits = C->getType()->getPrimitiveSizeInBits();
   int64_t Val = INT64_MAX;             // All ones
   Val >>= 64-TypeBits;                 // Shift out unwanted 1 bits...
   return CS->getValue() == Val-1;
@@ -1198,7 +1194,7 @@ static bool isMinValuePlusOne(const ConstantInt *C) {
   const ConstantSInt *CS = cast<ConstantSInt>(C);
 
   // Calculate 1111111111000000000000
-  unsigned TypeBits = C->getType()->getPrimitiveSize()*8;
+  unsigned TypeBits = C->getType()->getPrimitiveSizeInBits();
   int64_t Val = -1;                    // All ones
   Val <<= TypeBits-1;                  // Shift over to the right spot
   return CS->getValue() == Val+1;
@@ -1431,7 +1427,7 @@ Instruction *InstCombiner::OptAndOp(Instruction *Op,
       uint64_t AndRHSV = cast<ConstantInt>(AndRHS)->getRawValue();
 
       // Clear bits that are not part of the constant.
-      AndRHSV &= (1ULL << AndRHS->getType()->getPrimitiveSize()*8)-1;
+      AndRHSV &= (1ULL << AndRHS->getType()->getPrimitiveSizeInBits())-1;
 
       // If there is only one bit set...
       if (isOneBitSet(cast<ConstantInt>(AndRHS))) {
@@ -1647,7 +1643,8 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
 
       // If this is an integer sign or zero extension instruction.
       if (SrcTy->isIntegral() &&
-          SrcTy->getPrimitiveSize() < CI->getType()->getPrimitiveSize()) {
+          SrcTy->getPrimitiveSizeInBits() <
+          CI->getType()->getPrimitiveSizeInBits()) {
 
         if (SrcTy->isUnsigned()) {
           // See if this and is clearing out bits that are known to be zero
@@ -2312,8 +2309,8 @@ Instruction *InstCombiner::FoldGEPSetCC(User *GEPLHS, Value *RHS,
       unsigned DiffOperand = 0;     // The operand that differs.
       for (unsigned i = 1, e = GEPRHS->getNumOperands(); i != e; ++i)
         if (GEPLHS->getOperand(i) != GEPRHS->getOperand(i)) {
-          if (GEPLHS->getOperand(i)->getType()->getPrimitiveSize() !=
-                     GEPRHS->getOperand(i)->getType()->getPrimitiveSize()) {
+          if (GEPLHS->getOperand(i)->getType()->getPrimitiveSizeInBits() !=
+                   GEPRHS->getOperand(i)->getType()->getPrimitiveSizeInBits()) {
             // Irreconcilable differences.
             NumDifferences = 2;
             break;
@@ -2350,7 +2347,7 @@ Instruction *InstCombiner::FoldGEPSetCC(User *GEPLHS, Value *RHS,
 }
 
 
-Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
+Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
   bool Changed = SimplifyCommutative(I);
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
   const Type *Ty = Op0->getType();
@@ -2473,7 +2470,7 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
               // To test for the bad case of the signed shr, see if any
               // of the bits shifted in could be tested after the mask.
               Constant *OShAmt = ConstantUInt::get(Type::UByteTy,
-                                   Ty->getPrimitiveSize()*8-ShAmt->getValue());
+                               Ty->getPrimitiveSizeInBits()-ShAmt->getValue());
               Constant *ShVal =
                 ConstantExpr::getShl(ConstantInt::getAllOnesValue(Ty), OShAmt);
               if (ConstantExpr::getAnd(ShVal, AndCST)->isNullValue())
@@ -2515,13 +2512,6 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
         }
         break;
 
-      // (setcc (cast X to larger), CI)
-      case Instruction::Cast:
-        if (Instruction *R =
-                visitSetCondInstWithCastAndConstant(I,cast<CastInst>(LHSI),CI))
-          return R;
-        break;
-
       case Instruction::Shl:         // (setcc (shl X, ShAmt), CI)
         if (ConstantUInt *ShAmt = dyn_cast<ConstantUInt>(LHSI->getOperand(1))) {
           switch (I.getOpcode()) {
@@ -2541,7 +2531,7 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
             if (LHSI->hasOneUse()) {
               // Otherwise strength reduce the shift into an and.
               unsigned ShAmtVal = (unsigned)ShAmt->getValue();
-              unsigned TypeBits = CI->getType()->getPrimitiveSize()*8;
+              unsigned TypeBits = CI->getType()->getPrimitiveSizeInBits();
               uint64_t Val = (1ULL << (TypeBits-ShAmtVal))-1;
 
               Constant *Mask;
@@ -2591,7 +2581,7 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
 
               Constant *Mask;
               if (CI->getType()->isUnsigned()) {
-                unsigned TypeBits = CI->getType()->getPrimitiveSize()*8;
+                unsigned TypeBits = CI->getType()->getPrimitiveSizeInBits();
                 if (TypeBits != 64)
                   Val &= (1ULL << TypeBits)-1;
                 Mask = ConstantUInt::get(CI->getType(), Val);
@@ -2831,9 +2821,9 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
       if (CastInst *Cast = dyn_cast<CastInst>(Op0)) {
         Value *CastOp = Cast->getOperand(0);
         const Type *SrcTy = CastOp->getType();
-        unsigned SrcTySize = SrcTy->getPrimitiveSize();
+        unsigned SrcTySize = SrcTy->getPrimitiveSizeInBits();
         if (SrcTy != Cast->getType() && SrcTy->isInteger() &&
-            SrcTySize == Cast->getType()->getPrimitiveSize()) {
+            SrcTySize == Cast->getType()->getPrimitiveSizeInBits()) {
           assert((SrcTy->isSigned() ^ Cast->getType()->isSigned()) &&
                  "Source and destination signednesses should differ!");
           if (Cast->getType()->isSigned()) {
@@ -2842,21 +2832,21 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
             if (I.getOpcode() == Instruction::SetLT && CI->isNullValue())
               // X < 0  => x > 127
               return BinaryOperator::createSetGT(CastOp,
-                         ConstantUInt::get(SrcTy, (1ULL << (SrcTySize*8-1))-1));
+                         ConstantUInt::get(SrcTy, (1ULL << (SrcTySize-1))-1));
             else if (I.getOpcode() == Instruction::SetGT &&
                      cast<ConstantSInt>(CI)->getValue() == -1)
               // X > -1  => x < 128
               return BinaryOperator::createSetLT(CastOp,
-                         ConstantUInt::get(SrcTy, 1ULL << (SrcTySize*8-1)));
+                         ConstantUInt::get(SrcTy, 1ULL << (SrcTySize-1)));
           } else {
             ConstantUInt *CUI = cast<ConstantUInt>(CI);
             if (I.getOpcode() == Instruction::SetLT &&
-                CUI->getValue() == 1ULL << (SrcTySize*8-1))
+                CUI->getValue() == 1ULL << (SrcTySize-1))
               // X < 128 => X > -1
               return BinaryOperator::createSetGT(CastOp,
                                                  ConstantSInt::get(SrcTy, -1));
             else if (I.getOpcode() == Instruction::SetGT &&
-                     CUI->getValue() == (1ULL << (SrcTySize*8-1))-1)
+                     CUI->getValue() == (1ULL << (SrcTySize-1))-1)
               // X > 127 => X < 0
               return BinaryOperator::createSetLT(CastOp,
                                                  Constant::getNullValue(SrcTy));
@@ -2948,131 +2938,129 @@ Instruction *InstCombiner::visitSetCondInst(BinaryOperator &I) {
     //   int X = A < B;
     //   if (X) ...
     // For generality, we handle any zero-extension of any operand comparison
-    // with a constant.
-    if (ConstantInt *ConstantRHS = dyn_cast<ConstantInt>(Op1)) {
-      const Type *SrcTy = CastOp0->getType();
-      const Type *DestTy = Op0->getType();
-      if (SrcTy->getPrimitiveSize() < DestTy->getPrimitiveSize() &&
-          (SrcTy->isUnsigned() || SrcTy == Type::BoolTy)) {
-        // Ok, we have an expansion of operand 0 into a new type.  Get the
-        // constant value, masink off bits which are not set in the RHS.  These
-        // could be set if the destination value is signed.
-        uint64_t ConstVal = ConstantRHS->getRawValue();
-        ConstVal &= (1ULL << DestTy->getPrimitiveSize()*8)-1;
-
-        // If the constant we are comparing it with has high bits set, which
-        // don't exist in the original value, the values could never be equal,
-        // because the source would be zero extended.
-        unsigned SrcBits =
-          SrcTy == Type::BoolTy ? 1 : SrcTy->getPrimitiveSize()*8;
-        bool HasSignBit = ConstVal & (1ULL << (DestTy->getPrimitiveSize()*8-1));
-        if (ConstVal & ~((1ULL << SrcBits)-1)) {
-          switch (I.getOpcode()) {
-          default: assert(0 && "Unknown comparison type!");
-          case Instruction::SetEQ:
-            return ReplaceInstUsesWith(I, ConstantBool::False);
-          case Instruction::SetNE:
-            return ReplaceInstUsesWith(I, ConstantBool::True);
-          case Instruction::SetLT:
-          case Instruction::SetLE:
-            if (DestTy->isSigned() && HasSignBit)
-              return ReplaceInstUsesWith(I, ConstantBool::False);
-            return ReplaceInstUsesWith(I, ConstantBool::True);
-          case Instruction::SetGT:
-          case Instruction::SetGE:
-            if (DestTy->isSigned() && HasSignBit)
-              return ReplaceInstUsesWith(I, ConstantBool::True);
-            return ReplaceInstUsesWith(I, ConstantBool::False);
-          }
-        }
-
-        // Otherwise, we can replace the setcc with a setcc of the smaller
-        // operand value.
-        Op1 = ConstantExpr::getCast(cast<Constant>(Op1), SrcTy);
-        return BinaryOperator::create(I.getOpcode(), CastOp0, Op1);
-      }
-    }
+    // with a constant or another cast from the same type.
+    if (isa<ConstantInt>(Op1) || isa<CastInst>(Op1))
+      if (Instruction *R = visitSetCondInstWithCastAndCast(I))
+        return R;
   }
   return Changed ? &I : 0;
 }
 
-// visitSetCondInstWithCastAndConstant - this method is part of the
-// visitSetCondInst method. It handles the situation where we have:
-//   (setcc (cast X to larger), CI)
-// It tries to remove the cast and even the setcc if the CI value
-// and range of the cast allow it.
-Instruction *
-InstCombiner::visitSetCondInstWithCastAndConstant(BinaryOperator&I,
-                                                  CastInst* LHSI,
-                                                  ConstantInt* CI) {
-  const Type *SrcTy = LHSI->getOperand(0)->getType();
-  const Type *DestTy = LHSI->getType();
-  if (!SrcTy->isIntegral() || !DestTy->isIntegral())
+// visitSetCondInstWithCastAndCast - Handle setcond (cast x to y), (cast/cst).
+// We only handle extending casts so far.
+//
+Instruction *InstCombiner::visitSetCondInstWithCastAndCast(SetCondInst &SCI) {
+  Value *LHSCIOp = cast<CastInst>(SCI.getOperand(0))->getOperand(0);
+  const Type *SrcTy = LHSCIOp->getType();
+  const Type *DestTy = SCI.getOperand(0)->getType();
+  Value *RHSCIOp;
+
+  if (!DestTy->isIntegral() || !SrcTy->isIntegral())
     return 0;
 
-  unsigned SrcBits = SrcTy->getPrimitiveSize()*8;
-  unsigned DestBits = DestTy->getPrimitiveSize()*8;
-  if (SrcTy == Type::BoolTy)
-    SrcBits = 1;
-  if (DestTy == Type::BoolTy)
-    DestBits = 1;
-  if (SrcBits < DestBits) {
-    // There are fewer bits in the source of the cast than in the result
-    // of the cast. Any other case doesn't matter because the constant
-    // value won't have changed due to sign extension.
-    Constant *NewCst = ConstantExpr::getCast(CI, SrcTy);
-    if (ConstantExpr::getCast(NewCst, DestTy) == CI) {
-      // The constant value operand of the setCC before and after a
-      // cast to the source type of the cast instruction is the same
-      // value, so we just replace with the same setcc opcode, but
-      // using the source value compared to the constant casted to the
-      // source type.
-      if (SrcTy->isSigned() && DestTy->isUnsigned()) {
-        CastInst* Cst = new CastInst(LHSI->getOperand(0),
-                                     SrcTy->getUnsignedVersion(),
-                                     LHSI->getName());
-        InsertNewInstBefore(Cst,I);
-        return new SetCondInst(I.getOpcode(), Cst,
-                               ConstantExpr::getCast(CI,
-                                                 SrcTy->getUnsignedVersion()));
+  unsigned SrcBits  = SrcTy->getPrimitiveSizeInBits();
+  unsigned DestBits = DestTy->getPrimitiveSizeInBits();
+  if (SrcBits >= DestBits) return 0;  // Only handle extending cast.
+
+  // Is this a sign or zero extension?
+  bool isSignSrc  = SrcTy->isSigned();
+  bool isSignDest = DestTy->isSigned();
+
+  if (CastInst *CI = dyn_cast<CastInst>(SCI.getOperand(1))) {
+    // Not an extension from the same type?
+    RHSCIOp = CI->getOperand(0);
+    if (RHSCIOp->getType() != LHSCIOp->getType()) return 0;
+  } else if (ConstantInt *CI = dyn_cast<ConstantInt>(SCI.getOperand(1))) {
+    // Compute the constant that would happen if we truncated to SrcTy then
+    // reextended to DestTy.
+    Constant *Res = ConstantExpr::getCast(CI, SrcTy);
+
+    if (ConstantExpr::getCast(Res, DestTy) == CI) {
+      RHSCIOp = Res;
+    } else {
+      // If the value cannot be represented in the shorter type, we cannot emit
+      // a simple comparison.
+      if (SCI.getOpcode() == Instruction::SetEQ)
+        return ReplaceInstUsesWith(SCI, ConstantBool::False);
+      if (SCI.getOpcode() == Instruction::SetNE)
+        return ReplaceInstUsesWith(SCI, ConstantBool::True);
+
+      // SignBitSet - True if the top bit of the compared constant value is set.
+      bool SignBitSet = CI->getRawValue() & 1ULL << (DestBits-1);
+
+      // Evaluate the comparison for LT.
+      Value *Result;
+      if (DestTy->isSigned()) {
+        // We're performing a signed comparison.
+        if (isSignSrc) {
+          // Signed extend and signed comparison.
+          if (cast<ConstantSInt>(CI)->getValue() < 0) // X < (small) --> false
+            Result = ConstantBool::False;
+          else
+            Result = ConstantBool::True;              // X < (large) --> true
+        } else {
+          // Unsigned extend and signed comparison.
+          if (cast<ConstantSInt>(CI)->getValue() < 0)
+            Result = ConstantBool::False;
+          else
+            Result = ConstantBool::True;
+        }
+      } else {
+        // We're performing an unsigned comparison.
+        if (!isSignSrc) {
+          // Unsigned extend & compare -> always true.
+          Result = ConstantBool::True;
+        } else {
+          // We're performing an unsigned comp with a sign extended value.
+          // This is true if the input is >= 0. [aka >s -1]
+          Constant *NegOne = ConstantIntegral::getAllOnesValue(SrcTy);
+          Result = InsertNewInstBefore(BinaryOperator::createSetGT(LHSCIOp,
+                                                  NegOne, SCI.getName()), SCI);
+        }
       }
-      return new SetCondInst(I.getOpcode(), LHSI->getOperand(0),NewCst);
-    }
 
-    // The constant value before and after a cast to the source type
-    // is different, so various cases are possible depending on the
-    // opcode and the signs of the types involved in the cast.
-    switch (I.getOpcode()) {
-    case Instruction::SetLT: {
-      return 0;
-      Constant* Max = ConstantIntegral::getMaxValue(SrcTy);
-      Max = ConstantExpr::getCast(Max, DestTy);
-      return ReplaceInstUsesWith(I, ConstantExpr::getSetLT(Max, CI));
+      // Finally, return the value computed.    
+      if (SCI.getOpcode() == Instruction::SetLT) {
+        return ReplaceInstUsesWith(SCI, Result);
+      } else {
+        assert(SCI.getOpcode()==Instruction::SetGT &&"SetCC should be folded!");
+        if (Constant *CI = dyn_cast<Constant>(Result))
+          return ReplaceInstUsesWith(SCI, ConstantExpr::getNot(CI));
+        else
+          return BinaryOperator::createNot(Result);
+      }
     }
-    case Instruction::SetGT: {
-      return 0; // FIXME! RENABLE.  This breaks for (cast sbyte to uint) > 255
-      Constant* Min = ConstantIntegral::getMinValue(SrcTy);
-      Min = ConstantExpr::getCast(Min, DestTy);
-      return ReplaceInstUsesWith(I, ConstantExpr::getSetGT(Min, CI));
-    }
-    case Instruction::SetEQ:
-      // We're looking for equality, and we know the values are not
-      // equal so replace with constant False.
-      return ReplaceInstUsesWith(I, ConstantBool::False);
-    case Instruction::SetNE:
-      // We're testing for inequality, and we know the values are not
-      // equal so replace with constant True.
-      return ReplaceInstUsesWith(I, ConstantBool::True);
-    case Instruction::SetLE:
-    case Instruction::SetGE:
-      assert(0 && "SetLE and SetGE should be handled elsewhere");
-    default:
-      assert(0 && "unknown integer comparison");
-    }
+  } else {
+    return 0;
   }
-  return 0;
-}
 
+  // Okay, we have the two reduced sized operands.  If we are doing a <,>
+  // comparison, make sure we perform the compare with the same signedness as
+  // the DestTy.  We don't have to do this if the comparison is !=/== or if the
+  // source is a bool.
+  if (isSignSrc != isSignDest && SrcTy != Type::BoolTy &&
+      SCI.getOpcode() != Instruction::SetEQ &&
+      SCI.getOpcode() != Instruction::SetNE) {
+    // Insert noop casts of the two operands to change the sign of the
+    // comparison.
+    const Type *NewSrcTy;
+    if (isSignDest)
+      NewSrcTy = SrcTy->getSignedVersion();
+    else 
+      NewSrcTy = SrcTy->getUnsignedVersion();
+    
+    // Insert the new casts.
+    LHSCIOp = InsertNewInstBefore(new CastInst(LHSCIOp, NewSrcTy,
+                                               LHSCIOp->getName()), SCI);
+    if (Constant *RHSC = dyn_cast<Constant>(RHSCIOp))
+      RHSCIOp = ConstantExpr::getCast(RHSC, NewSrcTy);
+    else
+      RHSCIOp = InsertNewInstBefore(new CastInst(RHSCIOp, NewSrcTy,
+                                                 RHSCIOp->getName()), SCI);
+  }
+
+  return BinaryOperator::create(SCI.getOpcode(), LHSCIOp, RHSCIOp);
+}
 
 Instruction *InstCombiner::visitShiftInst(ShiftInst &I) {
   assert(I.getOperand(1)->getType() == Type::UByteTy);
@@ -3114,7 +3102,7 @@ Instruction *InstCombiner::visitShiftInst(ShiftInst &I) {
     // shl uint X, 32 = 0 and shr ubyte Y, 9 = 0, ... just don't eliminate shr
     // of a signed value.
     //
-    unsigned TypeBits = Op0->getType()->getPrimitiveSize()*8;
+    unsigned TypeBits = Op0->getType()->getPrimitiveSizeInBits();
     if (CUI->getValue() >= TypeBits) {
       if (!Op0->getType()->isSigned() || isLeftShift)
         return ReplaceInstUsesWith(I, Constant::getNullValue(Op0->getType()));
@@ -3145,7 +3133,8 @@ Instruction *InstCombiner::visitShiftInst(ShiftInst &I) {
       if (CastInst *CI = dyn_cast<CastInst>(Op0)) {
         const Type *SrcTy = CI->getOperand(0)->getType();
         if (isLeftShift && SrcTy->isInteger() && SrcTy->isSigned() &&
-            SrcTy->getPrimitiveSize() < CI->getType()->getPrimitiveSize()) {
+            SrcTy->getPrimitiveSizeInBits() <
+                   CI->getType()->getPrimitiveSizeInBits()) {
           // We can change it to a zero extension if we are shifting out all of
           // the sign extended bits.  To check this, form a mask of all of the
           // sign extend bits, then shift them left and see if we have anything
@@ -3230,8 +3219,8 @@ Instruction *InstCombiner::visitShiftInst(ShiftInst &I) {
         // Check for (A << c1) << c2   and   (A >> c1) >> c2
         if (I.getOpcode() == Op0SI->getOpcode()) {
           unsigned Amt = ShiftAmt1+ShiftAmt2;   // Fold into one big shift...
-          if (Op0->getType()->getPrimitiveSize()*8 < Amt)
-            Amt = Op0->getType()->getPrimitiveSize()*8;
+          if (Op0->getType()->getPrimitiveSizeInBits() < Amt)
+            Amt = Op0->getType()->getPrimitiveSizeInBits();
           return new ShiftInst(I.getOpcode(), Op0SI->getOperand(0),
                                ConstantUInt::get(Type::UByteTy, Amt));
         }
@@ -3281,10 +3270,8 @@ enum CastType {
 static CastType getCastType(const Type *Src, const Type *Dest) {
   assert(Src->isIntegral() && Dest->isIntegral() &&
          "Only works on integral types!");
-  unsigned SrcSize = Src->getPrimitiveSize()*8;
-  if (Src == Type::BoolTy) SrcSize = 1;
-  unsigned DestSize = Dest->getPrimitiveSize()*8;
-  if (Dest == Type::BoolTy) DestSize = 1;
+  unsigned SrcSize = Src->getPrimitiveSizeInBits();
+  unsigned DestSize = Dest->getPrimitiveSizeInBits();
 
   if (SrcSize == DestSize) return Noop;
   if (SrcSize > DestSize)  return Truncate;
@@ -3412,11 +3399,13 @@ Instruction *InstCombiner::visitCastInst(CastInst &CI) {
     if (A->getType()->isInteger() &&
         CI.getType()->isInteger() && CSrc->getType()->isInteger() &&
         CSrc->getType()->isUnsigned() &&   // B->A cast must zero extend
-        CSrc->getType()->getPrimitiveSize() < CI.getType()->getPrimitiveSize()&&
-        A->getType()->getPrimitiveSize() == CI.getType()->getPrimitiveSize()) {
+        CSrc->getType()->getPrimitiveSizeInBits() <
+                    CI.getType()->getPrimitiveSizeInBits()&&
+        A->getType()->getPrimitiveSizeInBits() ==
+              CI.getType()->getPrimitiveSizeInBits()) {
       assert(CSrc->getType() != Type::ULongTy &&
              "Cannot have type bigger than ulong!");
-      uint64_t AndValue = (1ULL << CSrc->getType()->getPrimitiveSize()*8)-1;
+      uint64_t AndValue = (1ULL << CSrc->getType()->getPrimitiveSizeInBits())-1;
       Constant *AndOp = ConstantUInt::get(A->getType()->getUnsignedVersion(),
                                           AndValue);
       AndOp = ConstantExpr::getCast(AndOp, A->getType());
@@ -3495,8 +3484,8 @@ Instruction *InstCombiner::visitCastInst(CastInst &CI) {
     if (SrcI->hasOneUse() && Src->getType()->isIntegral() &&
         CI.getType()->isInteger()) {  // Don't mess with casts to bool here
       const Type *DestTy = CI.getType();
-      unsigned SrcBitSize = getTypeSizeInBits(Src->getType());
-      unsigned DestBitSize = getTypeSizeInBits(DestTy);
+      unsigned SrcBitSize = Src->getType()->getPrimitiveSizeInBits();
+      unsigned DestBitSize = DestTy->getPrimitiveSizeInBits();
 
       Value *Op0 = SrcI->getNumOperands() > 0 ? SrcI->getOperand(0) : 0;
       Value *Op1 = SrcI->getNumOperands() > 1 ? SrcI->getOperand(1) : 0;
@@ -4347,11 +4336,12 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
         const Type *SrcTy = Src->getType();
         const Type *DestTy = CI->getType();
         if (Src->getType()->isInteger()) {
-          if (SrcTy->getPrimitiveSize() == DestTy->getPrimitiveSize()) {
+          if (SrcTy->getPrimitiveSizeInBits() ==
+                       DestTy->getPrimitiveSizeInBits()) {
             // We can always eliminate a cast from ulong or long to the other.
             // We can always eliminate a cast from uint to int or the other on
             // 32-bit pointer platforms.
-            if (DestTy->getPrimitiveSize() >= TD->getPointerSize()) {
+            if (DestTy->getPrimitiveSizeInBits() >= TD->getPointerSizeInBits()){
               MadeChange = true;
               GEP.setOperand(i, Src);
             }
@@ -4361,7 +4351,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
             // eliminate a cast from uint to [u]long iff the target is a 32-bit
             // pointer target.
             if (SrcTy->isSigned() ||
-                SrcTy->getPrimitiveSize() >= TD->getPointerSize()) {
+                SrcTy->getPrimitiveSizeInBits() >= TD->getPointerSizeInBits()) {
               MadeChange = true;
               GEP.setOperand(i, Src);
             }
