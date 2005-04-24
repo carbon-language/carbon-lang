@@ -1,4 +1,4 @@
-//===- extract.cpp - LLVM function extraction utility ---------------------===//
+//===- llvm-extract.cpp - LLVM function extraction utility ----------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -69,9 +69,9 @@ int main(int argc, char **argv) {
     Passes.add(new TargetData("extract", M.get())); // Use correct TargetData
     // Either isolate the function or delete it from the Module
     Passes.add(createFunctionExtractionPass(F, DeleteFn));
-    Passes.add(createGlobalDCEPass());              // Delete unreachable globals
-    Passes.add(createFunctionResolvingPass());      // Delete prototypes
-    Passes.add(createDeadTypeEliminationPass());    // Remove dead types...
+    Passes.add(createGlobalDCEPass());             // Delete unreachable globals
+    Passes.add(createFunctionResolvingPass());     // Delete prototypes
+    Passes.add(createDeadTypeEliminationPass());   // Remove dead types...
 
     std::ostream *Out = 0;
 

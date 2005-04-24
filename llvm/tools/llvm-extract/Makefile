@@ -1,4 +1,4 @@
-##===- tools/extract/Makefile ------------------------------*- Makefile -*-===##
+##===- tools/llvm-extract/Makefile -------------------------*- Makefile -*-===##
 # 
 #                     The LLVM Compiler Infrastructure
 #
@@ -8,9 +8,9 @@
 ##===----------------------------------------------------------------------===##
 LEVEL = ../..
 
-TOOLNAME = extract
+TOOLNAME = llvm-extract
 USEDLIBS = LLVMBCReader LLVMBCWriter LLVMTransforms.a LLVMipo.a LLVMTarget.a \
-	   LLVMAnalysis.a LLVMTransformUtils.a LLVMipa.a \
-	   LLVMCore LLVMSupport.a LLVMbzip2 LLVMSystem.a
+           LLVMAnalysis.a LLVMTransformUtils.a LLVMipa.a \
+           LLVMCore LLVMSupport.a LLVMbzip2 LLVMSystem.a
 
 include $(LEVEL)/Makefile.common
