@@ -9,7 +9,7 @@
 
 LEVEL := ..
 PARALLEL_DIRS := llvm-as llvm-dis opt gccas llc llvm-link lli gccld llvm-stub \
-                 analyze extract llvm-nm llvm-prof llvm-ar llvm-ranlib \
+                 analyze llvm-extract llvm-nm llvm-prof llvm-ar llvm-ranlib \
                  llvm-bcanalyzer llvmc llvm-ld llvm-db bugpoint
 
 include $(LEVEL)/Makefile.config
