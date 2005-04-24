@@ -10,5 +10,6 @@ LEVEL = ../..
 
 TOOLNAME = llvm-prof
 USEDLIBS = LLVMAnalysis.a LLVMBCReader \
-	   LLVMCore LLVMSupport.a LLVMbzip2 LLVMSystem.a
+           LLVMCore LLVMSupport.a LLVMbzip2 LLVMSystem.a
+
 include $(LEVEL)/Makefile.common
