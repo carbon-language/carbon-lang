@@ -11,14 +11,8 @@
 ;
 ; RUN: llvm-as %s -o - | opt -instcombine | llvm-dis | not grep 'cast.*int'
 
-
-; Some of these cases were miscompiling programs so they were disabled, see 
-; bugzilla for details.
-; XFAIL: *
-
 implementation   ; Functions:
 
-; 
 bool %lt_signed_to_large_unsigned(sbyte %SB) {
   %Y = cast sbyte %SB to uint		; <uint> [#uses=1]
   %C = setlt uint %Y, 1024		; <bool> [#uses=1]
