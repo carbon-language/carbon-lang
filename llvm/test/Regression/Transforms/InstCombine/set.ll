@@ -100,3 +100,9 @@ endif:
         ret bool %tmp.4
 }
 
+bool %test19(bool %A, bool %B) {
+	%a = cast bool %A to int
+	%b = cast bool %B to int
+	%C = seteq int %a, %b
+	ret bool %C
+}
