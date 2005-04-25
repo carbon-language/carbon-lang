@@ -41,6 +41,8 @@ public:
   TargetFrameInfo(StackDirection D, unsigned StackAl, int LAO)
     : StackDir(D), StackAlignment(StackAl), LocalAreaOffset(LAO) {}
 
+  virtual ~TargetFrameInfo();
+
   // These methods return information that describes the abstract stack layout
   // of the target machine.
 

@@ -16,6 +16,10 @@
 
 using namespace llvm;
 
+TargetFrameInfo::~TargetFrameInfo() 
+{
+}
+
 //===--------------------------------------------------------------------===//
 // These methods provide details of the stack frame used by Sparc, thus they
 // are Sparc specific.
