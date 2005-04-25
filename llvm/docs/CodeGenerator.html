@@ -769,7 +769,8 @@ tasks:</p>
 <ol>
 <li><p>Convert values of unsupported types to values of supported types.</p>
     <p>There are two main ways of doing this: promoting a small type to a larger
-       type (e.g. f32 -> f64, or i16 -> i32), and demoting larg integer types
+       type (e.g. f32 -&gt; f64, or i16 -&gt; i32), and breaking up large 
+       integer types
        to smaller ones (e.g. implementing i64 with i32 operations where
        possible).  Type conversions can insert sign and zero extensions as 
        needed to make sure that the final code has the same behavior as the 
