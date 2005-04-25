@@ -105,7 +105,7 @@ public:
 // is used to pull analysis information out of them.
 //
 struct AnalysisResolver {
-  virtual ~AnalysisResolver() {}
+  virtual ~AnalysisResolver();
   virtual Pass *getAnalysisOrNullUp(AnalysisID ID) const = 0;
   virtual Pass *getAnalysisOrNullDown(AnalysisID ID) const = 0;
   virtual void addPass(ImmutablePass *IP, AnalysisUsage &AU) = 0;

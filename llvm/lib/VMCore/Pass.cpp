@@ -45,6 +45,8 @@ void RegisterPassBase::setOnlyUsesCFG() {
 //   AnalysisResolver Class Implementation
 //
 
+AnalysisResolver::~AnalysisResolver() {
+}
 void AnalysisResolver::setAnalysisResolver(Pass *P, AnalysisResolver *AR) {
   assert(P->Resolver == 0 && "Pass already in a PassManager!");
   P->Resolver = AR;
@@ -494,3 +496,4 @@ void PassRegistrationListener::enumeratePasses() {
            E = PassInfoMap->end(); I != E; ++I)
       passEnumerate(I->second);
 }
+
