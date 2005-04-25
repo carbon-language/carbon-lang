@@ -163,6 +163,10 @@ FunctionPass *createSingleLoopExtractorPass();
 //
 ModulePass *createBlockExtractorPass(std::vector<BasicBlock*> &BTNE);
 
+// createOptimizeWellKnownCallsPass - This pass optimizes specific calls to
+// specific well-known (library) functions.
+ModulePass *createSimplifyLibCallsPass();
+
 } // End llvm namespace
 
 #endif
