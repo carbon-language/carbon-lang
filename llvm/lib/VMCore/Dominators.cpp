@@ -245,8 +245,13 @@ bool DominatorSetBase::dominates(Instruction *A, Instruction *B) const {
   BasicBlock::iterator I = BBA->begin();
   for (; &*I != A && &*I != B; ++I) /*empty*/;
 
-  // A dominates B if it is found first in the basic block...
-  return &*I == A;
+  if(!IsPostDominators) {
+    // A dominates B if it is found first in the basic block.
+    return &*I == A;
+  } else {
+    // A post-dominates B if B is found first in the basic block.
+    return &*I == B;
+  }
 }
 
 
