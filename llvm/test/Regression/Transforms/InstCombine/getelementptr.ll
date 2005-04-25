@@ -59,7 +59,7 @@ int %test9() {
 	ret int %B
 }
 
-bool %g({int, int} * %x, {int, int} * %y) {
+bool %test10({int, int} * %x, {int, int} * %y) {
         %tmp.1 = getelementptr {int,int}* %x, int 0, uint 1
         %tmp.3 = getelementptr {int,int}* %y, int 0, uint 1
         %tmp.4 = seteq int* %tmp.1, %tmp.3    ;; seteq x, y
