@@ -39,6 +39,7 @@
           <li><a href="#t_pointer">Pointer Type</a></li>
           <li><a href="#t_struct">Structure Type</a></li>
           <li><a href="#t_packed">Packed Type</a></li>
+          <li><a href="#t_opaque">Opaque Type</a></li>
         </ol>
       </li>
     </ol>
@@ -750,18 +751,27 @@ reference to another object, which must live in memory.</p>
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection"> <a name="t_packed">Packed Type</a> </div>
 <div class="doc_text">
+
 <h5>Overview:</h5>
+
 <p>A packed type is a simple derived type that represents a vector
 of elements.  Packed types are used when multiple primitive data 
 are operated in parallel using a single instruction (SIMD). 
 A packed type requires a size (number of
 elements) and an underlying primitive data type.  Packed types are
 considered <a href="#t_firstclass">first class</a>.</p>
+
 <h5>Syntax:</h5>
-<pre>  &lt; &lt;# elements&gt; x &lt;elementtype&gt; &gt;<br></pre>
+
+<pre>
+  &lt; &lt;# elements&gt; x &lt;elementtype&gt; &gt;
+</pre>
+
 <p>The number of elements is a constant integer value, elementtype may
 be any integral or floating point type.</p>
+
 <h5>Examples:</h5>
+
 <table class="layout">
   <tr class="layout">
     <td class="left">
@@ -777,6 +787,38 @@ be any integral or floating point type.</p>
   </tr>
 </table>
 </div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection"> <a name="t_opaque">Opaque Type</a> </div>
+<div class="doc_text">
+
+<h5>Overview:</h5>
+
+<p>Opaque types are used to represent unknown types in the system.  This
+corresponds (for example) to the C notion of a foward declared structure type.
+In LLVM, opaque types can eventually be resolved to any type (not just a
+structure type).</p>
+
+<h5>Syntax:</h5>
+
+<pre>
+  opaque
+</pre>
+
+<h5>Examples:</h5>
+
+<table class="layout">
+  <tr class="layout">
+    <td class="left">
+      <tt>opaque</tt>
+    </td>
+    <td class="left">
+      An opaque type.<br/>
+    </td>
+  </tr>
+</table>
+</div>
+
 
 <!-- *********************************************************************** -->
 <div class="doc_section"> <a name="constants">Constants</a> </div>
