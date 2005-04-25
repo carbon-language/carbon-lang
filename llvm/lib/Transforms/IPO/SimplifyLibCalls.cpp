@@ -104,10 +104,7 @@ namespace {
   }
 
   /// Make sure we get our virtual table in this file.
-  CallOptimizer::~CallOptimizer() 
-  {
-    optlist.clear();
-  }
+  CallOptimizer::~CallOptimizer() { }
 }
 
 ModulePass *llvm::createSimplifyLibCallsPass() 
