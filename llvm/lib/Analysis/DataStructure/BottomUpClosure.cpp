@@ -434,13 +434,41 @@ DSGraph &BUDataStructures::CreateGraphForExternalFunction(const Function &Fn) {
 
 
 void BUDataStructures::calculateGraph(DSGraph &Graph) {
+  // If this graph contains the main function, clone the globals graph into this
+  // graph before we inline callees and other fun stuff.
+  bool ContainsMain = false;
+  DSGraph::ReturnNodesTy &ReturnNodes = Graph.getReturnNodes();
+
+  for (DSGraph::ReturnNodesTy::iterator I = ReturnNodes.begin(),
+         E = ReturnNodes.end(); I != E; ++I)
+    if (I->first->hasExternalLinkage() && I->first->getName() == "main") {
+      ContainsMain = true;
+      break;
+    }
+
+  // If this graph contains main, copy the contents of the globals graph over.
+  // Note that this is *required* for correctness.  If a callee contains a use
+  // of a global, we have to make sure to link up nodes due to global-argument
+  // bindings.
+  if (ContainsMain) {
+    const DSGraph &GG = *Graph.getGlobalsGraph();
+    ReachabilityCloner RC(Graph, GG,
+                          DSGraph::DontCloneCallNodes |
+                          DSGraph::DontCloneAuxCallNodes);
+
+    // Clone the global nodes into this graph.
+    for (DSScalarMap::global_iterator I = GG.getScalarMap().global_begin(),
+           E = GG.getScalarMap().global_end(); I != E; ++I)
+      if (isa<GlobalVariable>(*I))
+        RC.getClonedNH(GG.getNodeForValue(*I));
+  }
+
+
   // Move our call site list into TempFCs so that inline call sites go into the
   // new call site list and doesn't invalidate our iterators!
   std::list<DSCallSite> TempFCs;
   std::list<DSCallSite> &AuxCallsList = Graph.getAuxFunctionCalls();
   TempFCs.swap(AuxCallsList);
-
-  DSGraph::ReturnNodesTy &ReturnNodes = Graph.getReturnNodes();
 
   bool Printed = false;
   std::vector<Function*> CalledFuncs;
