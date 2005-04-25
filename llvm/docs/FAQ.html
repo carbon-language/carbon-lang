@@ -67,6 +67,11 @@
     When I compile code using the LLVM GCC front end, it complains that it
     cannot find libcrtend.a.
     </li>
+
+    <li>
+    How can I disable all optimizations when compiling code using the LLVM GCC front end?
+    </li>
+
   </ol>
   </li>
 
@@ -442,6 +447,19 @@ correct this, do:</p>
 </pre>
 </div>
 
+<div class="question">
+<p>
+How can I disable all optimizations when compiling code using the LLVM GCC front end?
+</p>
+</div>
+
+<div class="answer">
+<p>
+Passing "-Wa,-disable-opt -Wl,-disable-opt" will disable *all* cleanup and
+optimizations done at the llvm level, leaving you with the truly horrible
+code that you desire.
+</p>
+</div>
 
 <!-- *********************************************************************** -->
 <div class="doc_section">
