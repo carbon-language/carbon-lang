@@ -809,6 +809,7 @@ static bool MaskedValueIsZero(const SDOperand &Op, uint64_t Mask,
       return MaskedValueIsZero(Op.getOperand(0), NewVal, TLI);
     }
     return false;
+    // TODO we could handle some SRA cases here.
   default: break;
   }
 
@@ -1061,11 +1062,13 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
 
         // (X != 0) | (Y != 0) -> (X|Y != 0)
         // (X == 0) & (Y == 0) -> (X|Y == 0)
+        // (X <  0) | (Y <  0) -> (X|Y < 0)
         if (LR == RR && isa<ConstantSDNode>(LR) &&
             cast<ConstantSDNode>(LR)->getValue() == 0 &&
             Op2 == LHS->getCondition() && MVT::isInteger(LL.getValueType())) {
           if ((Op2 == ISD::SETEQ && Opcode == ISD::AND) ||
-              (Op2 == ISD::SETNE && Opcode == ISD::OR))
+              (Op2 == ISD::SETNE && Opcode == ISD::OR) ||
+              (Op2 == ISD::SETLT && Opcode == ISD::OR))
             return getSetCC(Op2, VT,
                             getNode(ISD::OR, LR.getValueType(), LL, RL), LR);
         }
