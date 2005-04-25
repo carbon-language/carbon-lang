@@ -2277,8 +2277,26 @@ Instruction *InstCombiner::FoldGEPSetCC(User *GEPLHS, Value *RHS,
                              Constant::getNullValue(Offset->getType()));
     }
   } else if (User *GEPRHS = dyn_castGetElementPtr(RHS)) {
-    if (PtrBase != GEPRHS->getOperand(0))
+    // If the base pointers are different, but the indices are the same, just
+    // compare the base pointer.
+    if (PtrBase != GEPRHS->getOperand(0)) {
+      bool IndicesTheSame = GEPLHS->getNumOperands()==GEPRHS->getNumOperands();
+      if (IndicesTheSame)
+        for (unsigned i = 1, e = GEPLHS->getNumOperands(); i != e; ++i)
+          if (GEPLHS->getOperand(i) != GEPRHS->getOperand(i)) {
+            IndicesTheSame = false;
+            break;
+          }
+
+      // If all indices are the same, just compare the base pointers.
+      if (IndicesTheSame)
+        return new SetCondInst(Cond, GEPLHS->getOperand(0),
+                               GEPRHS->getOperand(0));
+
+      // Otherwise, the base pointers are different and the indices are
+      // different, bail out.
       return 0;
+    }
 
     // If one of the GEPs has all zero indices, recurse.
     bool AllZeros = true;
