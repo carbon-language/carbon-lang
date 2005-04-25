@@ -1430,11 +1430,12 @@ VisitForSCCs(const DSNode *N) {
   // Otherwise, check all successors.
   bool AnyDirectSuccessorsReachClonedNodes = false;
   for (DSNode::const_edge_iterator EI = N->edge_begin(), EE = N->edge_end();
-       EI != EE; ++EI) {
-    std::pair<unsigned, bool> &SuccInfo = VisitForSCCs(EI->getNode());
-    if (SuccInfo.first < Min) Min = SuccInfo.first;
-    AnyDirectSuccessorsReachClonedNodes |= SuccInfo.second;
-  }
+       EI != EE; ++EI)
+    if (DSNode *Succ = EI->getNode()) {
+      std::pair<unsigned, bool> &SuccInfo = VisitForSCCs(Succ);
+      if (SuccInfo.first < Min) Min = SuccInfo.first;
+      AnyDirectSuccessorsReachClonedNodes |= SuccInfo.second;
+    }
 
   if (Min != MyId)
     return ThisNodeInfo;  // Part of a large SCC.  Leave self on stack.
