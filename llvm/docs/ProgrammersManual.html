@@ -970,6 +970,15 @@ assembly parser, and linker also have to be aware of the inner workings of this
 system.
 </p>
 
+<p>
+For our purposes below, we need three concepts.  First, an "Opaque Type" is 
+exactly as defined in the <a href="LangRef.html#t_opaque">language 
+reference</a>.  Second an "Abstract Type" is any type which includes an 
+opaque type as part of its type graph (for example "<tt>{ opaque, int }</tt>").
+Third, a concrete type is a type that is not an abstract type (e.g. "<tt>[ int, 
+float }</tt>").
+</p>
+
 </div>
 
 <!-- ______________________________________________________________________ -->
@@ -1093,8 +1102,8 @@ changes.</p>
 To support this, a class can derive from the AbstractTypeUser class.  This class
 allows it to get callbacks when certain types are resolved.  To register to get
 callbacks for a particular type, the DerivedType::{add/remove}AbstractTypeUser
-methods can be called on a type.  Note that these methods only work for {\em
-abstract} types.  Concrete types (those that do not include an opaque objects
+methods can be called on a type.  Note that these methods only work for <i>
+abstract</i> types.  Concrete types (those that do not include an opaque objects
 somewhere) can never be refined.
 </p>
 </div>
