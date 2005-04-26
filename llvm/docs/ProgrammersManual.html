@@ -274,7 +274,7 @@ operator, but they don't have some drawbacks (primarily stemming from
 the fact that <tt>dynamic_cast&lt;&gt;</tt> only works on classes that
 have a v-table). Because they are used so often, you must know what they
 do and how they work. All of these templates are defined in the <a
- href="/doxygen/Casting_8h-source.html"><tt>Support/Casting.h</tt></a>
+ href="/doxygen/Casting_8h-source.html"><tt>llvm/Support/Casting.h</tt></a>
 file (note that you very rarely have to include this file directly).</p>
 
 <dl>
@@ -379,7 +379,7 @@ across).</p>
 but you don't want them to always be noisy.  A standard compromise is to comment
 them out, allowing you to enable them if you need them in the future.</p>
 
-<p>The "<tt><a href="/doxygen/Debug_8h-source.html">Support/Debug.h</a></tt>"
+<p>The "<tt><a href="/doxygen/Debug_8h-source.html">llvm/Support/Debug.h</a></tt>"
 file provides a macro named <tt>DEBUG()</tt> that is a much nicer solution to
 this problem.  Basically, you can put arbitrary code into the argument of the
 <tt>DEBUG</tt> macro, and it is only executed if '<tt>opt</tt>' (or any other
@@ -427,7 +427,7 @@ option as follows:</p>
 
 <p>Of course, in practice, you should only set <tt>DEBUG_TYPE</tt> at the top of
 a file, to specify the debug type for the entire module (if you do this before
-you <tt>#include "Support/Debug.h"</tt>, you don't have to insert the ugly
+you <tt>#include "llvm/Support/Debug.h"</tt>, you don't have to insert the ugly
 <tt>#undef</tt>'s).  Also, you should use names more meaningful than "foo" and
 "bar", because there is no system in place to ensure that names do not
 conflict. If two different modules use the same string, they will all be turned
@@ -446,7 +446,7 @@ even if the source lives in multiple files.</p>
 <div class="doc_text">
 
 <p>The "<tt><a
-href="/doxygen/Statistic_8h-source.html">Support/Statistic.h</a></tt>" file
+href="/doxygen/Statistic_8h-source.html">llvm/ADT/Statistic.h</a></tt>" file
 provides a template named <tt>Statistic</tt> that is used as a unified way to
 keep track of what the LLVM compiler is doing and how effective various
 optimizations are.  It is useful to see what optimizations are contributing to
