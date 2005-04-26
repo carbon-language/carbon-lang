@@ -16,7 +16,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#define DEBUG_TYPE "argpromotion"
+#define DEBUG_TYPE "simplify-libcalls"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Instructions.h"
