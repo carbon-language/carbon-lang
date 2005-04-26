@@ -535,7 +535,7 @@ public:
   {
     // Just make sure this has 4 arguments per LLVM spec.
     return (f->arg_size() == 4) && 
-           (f->getReturnType() == PointerType::get(Type::VoidTy));
+           (f->getReturnType() == Type::VoidTy);
   }
 
   /// Because of alignment and instruction information that we don't have, we
