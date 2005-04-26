@@ -2848,8 +2848,8 @@ for more efficient code generation.
 
 <h5>Syntax:</h5>
 <pre>
-  call void (sbyte*, sbyte*, uint, uint)* %llvm.memcpy(sbyte* &lt;dest&gt;, sbyte* &lt;src&gt;,
-                                                       uint &lt;len&gt;, uint &lt;align&gt;)
+  declare void %llvm.memcpy(sbyte* &lt;dest&gt;, sbyte* &lt;src&gt;,
+                            uint &lt;len&gt;, uint &lt;align&gt;)
 </pre>
 
 <h5>Overview:</h5>
@@ -2900,8 +2900,8 @@ be set to 0 or 1.
 
 <h5>Syntax:</h5>
 <pre>
-  call void (sbyte*, sbyte*, uint, uint)* %llvm.memmove(sbyte* &lt;dest&gt;, sbyte* &lt;src&gt;,
-                                                       uint &lt;len&gt;, uint &lt;align&gt;)
+  declare void %llvm.memmove(sbyte* &lt;dest&gt;, sbyte* &lt;src&gt;,
+                             uint &lt;len&gt;, uint &lt;align&gt;)
 </pre>
 
 <h5>Overview:</h5>
@@ -2953,8 +2953,8 @@ be set to 0 or 1.
 
 <h5>Syntax:</h5>
 <pre>
-  call void (sbyte*, ubyte, uint, uint)* %llvm.memset(sbyte* &lt;dest&gt;, ubyte &lt;val&gt;,
-                                                      uint &lt;len&gt;, uint &lt;align&gt;)
+  declare void %llvm.memset(sbyte* &lt;dest&gt;, ubyte &lt;val&gt;,
+                            uint &lt;len&gt;, uint &lt;align&gt;)
 </pre>
 
 <h5>Overview:</h5>
