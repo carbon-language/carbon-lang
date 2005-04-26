@@ -1075,8 +1075,10 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
           if (cast<ConstantSDNode>(LR)->isAllOnesValue()) {
             // (X == -1) & (Y == -1) -> (X&Y == -1)
             // (X != -1) | (Y != -1) -> (X&Y != -1)
+            // (X >  -1) | (Y >  -1) -> (X&Y >  -1)
             if ((Opcode == ISD::AND && Op2 == ISD::SETEQ) ||
-                (Opcode == ISD::OR  && Op2 == ISD::SETNE))
+                (Opcode == ISD::OR  && Op2 == ISD::SETNE) ||
+                (Opcode == ISD::OR  && Op2 == ISD::SETGT))
               return getSetCC(Op2, VT,
                             getNode(ISD::AND, LR.getValueType(), LL, RL), LR);
             // (X >  -1) & (Y >  -1) -> (X|Y > -1)
