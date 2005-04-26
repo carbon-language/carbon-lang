@@ -29,9 +29,9 @@ namespace {
   Statistic<> NumRemoved("prune-eh", "Number of invokes removed");
 
   struct PruneEH : public CallGraphSCCPass {
-    /// DoesNotThrow - This set contains all of the functions which we have
+    /// DoesNotUnwind - This set contains all of the functions which we have
     /// determined cannot throw exceptions.
-    std::set<CallGraphNode*> DoesNotThrow;
+    std::set<CallGraphNode*> DoesNotUnwind;
 
     // runOnSCC - Analyze the SCC, performing the transformation if possible.
     bool runOnSCC(const std::vector<CallGraphNode *> &SCC);
@@ -50,17 +50,17 @@ bool PruneEH::runOnSCC(const std::vector<CallGraphNode *> &SCC) {
   // If this SCC includes the unwind instruction, we KNOW it throws, so
   // obviously the SCC might throw.
   //
-  bool SCCMightThrow = false;
-  for (unsigned i = 0, e = SCC.size(); !SCCMightThrow && i != e; ++i) {
+  bool SCCMightUnwind = false;
+  for (unsigned i = 0, e = SCC.size(); !SCCMightUnwind && i != e; ++i) {
     Function *F = SCC[i]->getFunction();
     if (F == 0 || (F->isExternal() && !F->getIntrinsicID())) {
-      SCCMightThrow = true;
+      SCCMightUnwind = true;
     } else {
       // Check to see if this function performs an unwind or calls an
       // unwinding function.
       for (Function::iterator BB = F->begin(), E = F->end(); BB != E; ++BB) {
         if (isa<UnwindInst>(BB->getTerminator())) {  // Uses unwind!
-          SCCMightThrow = true;
+          SCCMightUnwind = true;
           break;
         }
 
@@ -73,18 +73,18 @@ bool PruneEH::runOnSCC(const std::vector<CallGraphNode *> &SCC) {
               // If the callee is outside our current SCC, or if it is not
               // known to throw, then we might throw also.
               if (std::find(SCC.begin(), SCC.end(), CalleeNode) == SCC.end()&&
-                  !DoesNotThrow.count(CalleeNode)) {
-                SCCMightThrow = true;
+                  !DoesNotUnwind.count(CalleeNode)) {
+                SCCMightUnwind = true;
                 break;
               }
 
             } else {
               // Indirect call, it might throw.
-              SCCMightThrow = true;
+              SCCMightUnwind = true;
               break;
             }
           }
-        if (SCCMightThrow) break;
+        if (SCCMightUnwind) break;
       }
     }
   }
@@ -92,8 +92,8 @@ bool PruneEH::runOnSCC(const std::vector<CallGraphNode *> &SCC) {
 
   for (unsigned i = 0, e = SCC.size(); i != e; ++i) {
     // If the SCC can't throw, remember this for callers...
-    if (!SCCMightThrow)
-      DoesNotThrow.insert(SCC[i]);
+    if (!SCCMightUnwind)
+      DoesNotUnwind.insert(SCC[i]);
 
     // Convert any invoke instructions to non-throwing functions in this node
     // into call instructions with a branch.  This makes the exception blocks
@@ -102,7 +102,7 @@ bool PruneEH::runOnSCC(const std::vector<CallGraphNode *> &SCC) {
       for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I)
         if (InvokeInst *II = dyn_cast<InvokeInst>(I->getTerminator()))
           if (Function *F = II->getCalledFunction())
-            if (DoesNotThrow.count(CG[F])) {
+            if (DoesNotUnwind.count(CG[F])) {
               // Insert a call instruction before the invoke...
               std::string Name = II->getName();  II->setName("");
               Value *Call = new CallInst(II->getCalledValue(),
