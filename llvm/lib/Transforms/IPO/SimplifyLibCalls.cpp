@@ -24,6 +24,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/hash_map"
+#include "llvm/Target/TargetData.h"
 #include <iostream>
 using namespace llvm;
 
@@ -44,6 +45,9 @@ namespace {
   /// @brief A ModulePass for optimizing well-known function calls
   struct SimplifyLibCalls : public ModulePass {
 
+    /// We need some target data for accurate signature details that are
+    /// target dependent. So we require target data in our AnalysisUsage.
+    virtual void getAnalysisUsage(AnalysisUsage& Info) const;
 
     /// For this pass, process all of the function calls in the module, calling
     /// RecognizeCall and OptimizeCall as appropriate.
@@ -71,7 +75,8 @@ namespace {
     /// true. This avoids doing initialization until the optimizer is actually
     /// going to be called upon to do some optimization.
     virtual bool ValidateCalledFunction(
-      const Function* F ///< The function that is the target of call sites
+      const Function* F,   ///< The function that is the target of call sites
+      const TargetData& TD ///< Information about the target
     ) = 0;
 
     /// The implementations of this function in subclasses is the heart of the 
@@ -84,7 +89,8 @@ namespace {
     /// @param f the function that ci calls.
     /// @brief Optimize a call, if possible.
     virtual bool OptimizeCall(
-      CallInst* ci ///< The call instruction that should be optimized.
+      CallInst* ci,         ///< The call instruction that should be optimized.
+      const TargetData& TD  ///< Information about the target
     ) = 0;
 
     const char * getFunctionName() const { return func_name; }
@@ -106,16 +112,84 @@ namespace {
   /// Make sure we get our virtual table in this file.
   CallOptimizer::~CallOptimizer() { }
 
+}
+
+ModulePass *llvm::createSimplifyLibCallsPass() 
+{ 
+  return new SimplifyLibCalls(); 
+}
+
+void SimplifyLibCalls::getAnalysisUsage(AnalysisUsage& Info) const
+{
+  // Ask that the TargetData analysis be performed before us so we can use
+  // the target data.
+  Info.addRequired<TargetData>();
+}
+
+bool SimplifyLibCalls::runOnModule(Module &M) 
+{
+  TargetData& TD = getAnalysis<TargetData>();
+
+  bool result = false;
+
+  // The call optimizations can be recursive. That is, the optimization might
+  // generate a call to another function which can also be optimized. This way
+  // we make the CallOptimizer instances very specific to the case they handle.
+  // It also means we need to keep running over the function calls in the module
+  // until we don't get any more optimizations possible.
+  bool found_optimization = false;
+  do
+  {
+    found_optimization = false;
+    for (Module::iterator FI = M.begin(), FE = M.end(); FI != FE; ++FI)
+    {
+      // All the "well-known" functions are external and have external linkage
+      // because they live in a runtime library somewhere and were (probably) 
+      // not compiled by LLVM.  So, we only act on external functions that have 
+      // external linkage and non-empty uses.
+      if (FI->isExternal() && FI->hasExternalLinkage() && !FI->use_empty())
+      {
+        // Get the optimization class that pertains to this function
+        if (CallOptimizer* CO = optlist[FI->getName().c_str()] )
+        {
+          // Make sure the called function is suitable for the optimization
+          if (CO->ValidateCalledFunction(FI,TD))
+          {
+            // Loop over each of the uses of the function
+            for (Value::use_iterator UI = FI->use_begin(), UE = FI->use_end(); 
+                 UI != UE ; )
+            {
+              // If the use of the function is a call instruction
+              if (CallInst* CI = dyn_cast<CallInst>(*UI++))
+              {
+                // Do the optimization on the CallOptimizer.
+                if (CO->OptimizeCall(CI,TD))
+                {
+                  ++SimplifiedLibCalls;
+                  found_optimization = result = true;
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  } while (found_optimization);
+  return result;
+}
+
+namespace {
+
   /// Provide some functions for accessing standard library prototypes and
   /// caching them so we don't have to keep recomputing them
-  FunctionType* get_strlen()
+  FunctionType* get_strlen(const Type* IntPtrTy)
   {
     static FunctionType* strlen_type = 0;
     if (!strlen_type)
     {
       std::vector<const Type*> args;
       args.push_back(PointerType::get(Type::SByteTy));
-      strlen_type = FunctionType::get(Type::IntTy, args, false);
+      strlen_type = FunctionType::get(IntPtrTy, args, false);
     }
     return strlen_type;
   }
@@ -144,7 +218,7 @@ namespace {
   /// elements or if there is no null-terminator. The logic below checks
   bool getConstantStringLength(Value* V, uint64_t& len )
   {
-    assert(V != 0 && "Invalid args to getCharArrayLength");
+    assert(V != 0 && "Invalid args to getConstantStringLength");
     len = 0; // make sure we initialize this 
     User* GEP = 0;
     // If the value is not a GEP instruction nor a constant expression with a 
@@ -158,6 +232,10 @@ namespace {
       else
         return false;
     else
+      return false;
+
+    // Make sure the GEP has exactly three arguments.
+    if (GEP->getNumOperands() != 3)
       return false;
 
     // Check to make sure that the first operand of the GEP is an integer and
@@ -187,10 +265,8 @@ namespace {
     if (!GV || !GV->isConstant() || !GV->hasInitializer())
       return false;
 
-    // Get the initializer and make sure its valid.
+    // Get the initializer.
     Constant* INTLZR = GV->getInitializer();
-    if (!INTLZR)
-      return false;
 
     // Handle the ConstantAggregateZero case
     if (ConstantAggregateZero* CAZ = dyn_cast<ConstantAggregateZero>(INTLZR))
@@ -229,64 +305,6 @@ namespace {
     len -= start_idx;
     return true; // success!
   }
-}
-
-ModulePass *llvm::createSimplifyLibCallsPass() 
-{ 
-  return new SimplifyLibCalls(); 
-}
-
-bool SimplifyLibCalls::runOnModule(Module &M) 
-{
-  bool result = false;
-
-  // The call optimizations can be recursive. That is, the optimization might
-  // generate a call to another function which can also be optimized. This way
-  // we make the CallOptimizer instances very specific to the case they handle.
-  // It also means we need to keep running over the function calls in the module
-  // until we don't get any more optimizations possible.
-  bool found_optimization = false;
-  do
-  {
-    found_optimization = false;
-    for (Module::iterator FI = M.begin(), FE = M.end(); FI != FE; ++FI)
-    {
-      // All the "well-known" functions are external and have external linkage
-      // because they live in a runtime library somewhere and were (probably) 
-      // not compiled by LLVM.  So, we only act on external functions that have 
-      // external linkage and non-empty uses.
-      if (FI->isExternal() && FI->hasExternalLinkage() && !FI->use_empty())
-      {
-        // Get the optimization class that pertains to this function
-        if (CallOptimizer* CO = optlist[FI->getName().c_str()] )
-        {
-          // Make sure the called function is suitable for the optimization
-          if (CO->ValidateCalledFunction(FI))
-          {
-            // Loop over each of the uses of the function
-            for (Value::use_iterator UI = FI->use_begin(), UE = FI->use_end(); 
-                 UI != UE ; )
-            {
-              // If the use of the function is a call instruction
-              if (CallInst* CI = dyn_cast<CallInst>(*UI++))
-              {
-                // Do the optimization on the CallOptimizer.
-                if (CO->OptimizeCall(CI))
-                {
-                  ++SimplifiedLibCalls;
-                  found_optimization = result = true;
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  } while (found_optimization);
-  return result;
-}
-
-namespace {
 
 /// This CallOptimizer will find instances of a call to "exit" that occurs
 /// within the "main" function and change it to a simple "ret" instruction with
@@ -301,7 +319,7 @@ struct ExitInMainOptimization : public CallOptimizer
 
   // Make sure the called function looks like exit (int argument, int return
   // type, external linkage, not varargs). 
-  virtual bool ValidateCalledFunction(const Function* f)
+  virtual bool ValidateCalledFunction(const Function* f, const TargetData& TD)
   {
     if (f->arg_size() >= 1)
       if (f->arg_begin()->getType()->isInteger())
@@ -309,7 +327,7 @@ struct ExitInMainOptimization : public CallOptimizer
     return false;
   }
 
-  virtual bool OptimizeCall(CallInst* ci)
+  virtual bool OptimizeCall(CallInst* ci, const TargetData& TD)
   {
     // To be careful, we check that the call to exit is coming from "main", that
     // main has external linkage, and the return type of main and the argument
@@ -369,11 +387,11 @@ public:
     {}
   virtual ~StrCatOptimization() {}
 
-  inline Function* get_strlen_func(Module*M)
+  inline Function* get_strlen_func(Module*M,const Type* IntPtrTy)
   {
     if (strlen_func)
       return strlen_func;
-    return strlen_func = M->getOrInsertFunction("strlen",get_strlen());
+    return strlen_func = M->getOrInsertFunction("strlen",get_strlen(IntPtrTy));
   }
 
   inline Function* get_memcpy_func(Module* M) 
@@ -384,7 +402,7 @@ public:
   }
 
   /// @brief Make sure that the "strcat" function has the right prototype
-  virtual bool ValidateCalledFunction(const Function* f) 
+  virtual bool ValidateCalledFunction(const Function* f, const TargetData& TD) 
   {
     if (f->getReturnType() == PointerType::get(Type::SByteTy))
       if (f->arg_size() == 2) 
@@ -409,7 +427,7 @@ public:
 
   /// Perform the optimization if the length of the string concatenated
   /// is reasonably short and it is a constant array.
-  virtual bool OptimizeCall(CallInst* ci)
+  virtual bool OptimizeCall(CallInst* ci, const TargetData& TD)
   {
     // Extract the initializer (while making numerous checks) from the 
     // source operand of the call to strcat. If we get null back, one of
@@ -438,7 +456,8 @@ public:
     // optimized in another pass). Note that the get_strlen_func() call 
     // caches the Function* for us.
     CallInst* strlen_inst = 
-      new CallInst(get_strlen_func(M),ci->getOperand(1),"",ci);
+      new CallInst(get_strlen_func(M,TD.getIntPtrType()),
+                   ci->getOperand(1),"",ci);
 
     // Now that we have the destination's length, we must index into the 
     // destination's pointer to get the actual memcpy destination (end of
@@ -476,9 +495,9 @@ struct StrLenOptimization : public CallOptimizer
   virtual ~StrLenOptimization() {}
 
   /// @brief Make sure that the "strlen" function has the right prototype
-  virtual bool ValidateCalledFunction(const Function* f)
+  virtual bool ValidateCalledFunction(const Function* f, const TargetData& TD)
   {
-    if (f->getReturnType() == Type::IntTy)
+    if (f->getReturnType() == TD.getIntPtrType())
       if (f->arg_size() == 1) 
         if (Function::const_arg_iterator AI = f->arg_begin())
           if (AI->getType() == PointerType::get(Type::SByteTy))
@@ -487,14 +506,14 @@ struct StrLenOptimization : public CallOptimizer
   }
 
   /// @brief Perform the strlen optimization
-  virtual bool OptimizeCall(CallInst* ci)
+  virtual bool OptimizeCall(CallInst* ci, const TargetData& TD)
   {
     // Get the length of the string
     uint64_t len = 0;
     if (!getConstantStringLength(ci->getOperand(1),len))
       return false;
 
-    ci->replaceAllUsesWith(ConstantInt::get(Type::IntTy,len));
+    ci->replaceAllUsesWith(ConstantInt::get(TD.getIntPtrType(),len));
     ci->eraseFromParent();
     return true;
   }
@@ -507,22 +526,16 @@ struct StrLenOptimization : public CallOptimizer
 struct MemCpyOptimization : public CallOptimizer
 {
   MemCpyOptimization() : CallOptimizer("llvm.memcpy") {}
+protected:
+  MemCpyOptimization(const char* fname) : CallOptimizer(fname) {}
+public:
   virtual ~MemCpyOptimization() {}
 
   /// @brief Make sure that the "memcpy" function has the right prototype
-  virtual bool ValidateCalledFunction(const Function* f)
+  virtual bool ValidateCalledFunction(const Function* f, const TargetData& TD)
   {
-    if (f->getReturnType() == PointerType::get(Type::SByteTy))
-      if (f->arg_size() == 4) 
-      {
-        Function::const_arg_iterator AI = f->arg_begin();
-        if (AI++->getType() == PointerType::get(Type::SByteTy))
-          if (AI++->getType() == PointerType::get(Type::SByteTy))
-            if (AI++->getType() == Type::IntTy)
-              if (AI->getType() == Type::IntTy)
-            return true;
-      }
-    return false;
+    // Just make sure this has 4 arguments per LLVM spec.
+    return f->arg_size() == 4;
   }
 
   /// Because of alignment and instruction information that we don't have, we
@@ -531,51 +544,63 @@ struct MemCpyOptimization : public CallOptimizer
   /// alignment match the sizes of our intrinsic types so we can do a load and
   /// store instead of the memcpy call.
   /// @brief Perform the memcpy optimization.
-  virtual bool OptimizeCall(CallInst* ci)
+  virtual bool OptimizeCall(CallInst* ci, const TargetData& TD)
   {
-    ConstantInt* CI = dyn_cast<ConstantInt>(ci->getOperand(3));
+    ConstantInt* CI = cast<ConstantInt>(ci->getOperand(3));
     assert(CI && "Operand should be ConstantInt");
     uint64_t len = CI->getRawValue();
     CI = dyn_cast<ConstantInt>(ci->getOperand(4));
     assert(CI && "Operand should be ConstantInt");
     uint64_t alignment = CI->getRawValue();
-    if (len != alignment)
+    if (len > alignment)
       return false;
 
     Value* dest = ci->getOperand(1);
     Value* src = ci->getOperand(2);
-    LoadInst* LI = 0;
     CastInst* SrcCast = 0;
     CastInst* DestCast = 0;
     switch (len)
     {
+      case 0:
+        // Just replace with the destination parameter since a zero length
+        // memcpy is a no-op.
+        ci->replaceAllUsesWith(dest);
+        ci->eraseFromParent();
+        return true;
       case 1:
         SrcCast = new CastInst(src,PointerType::get(Type::SByteTy),"",ci);
         DestCast = new CastInst(dest,PointerType::get(Type::SByteTy),"",ci);
-        LI = new LoadInst(SrcCast,"",ci);
         break;
       case 2:
         SrcCast = new CastInst(src,PointerType::get(Type::ShortTy),"",ci);
         DestCast = new CastInst(dest,PointerType::get(Type::ShortTy),"",ci);
-        LI = new LoadInst(SrcCast,"",ci);
         break;
       case 4:
         SrcCast = new CastInst(src,PointerType::get(Type::IntTy),"",ci);
         DestCast = new CastInst(dest,PointerType::get(Type::IntTy),"",ci);
-        LI = new LoadInst(SrcCast,"",ci);
         break;
       case 8:
         SrcCast = new CastInst(src,PointerType::get(Type::LongTy),"",ci);
         DestCast = new CastInst(dest,PointerType::get(Type::LongTy),"",ci);
-        LI = new LoadInst(SrcCast,"",ci);
         break;
       default:
         return false;
     }
+    LoadInst* LI = new LoadInst(SrcCast,"",ci);
     StoreInst* SI = new StoreInst(LI, DestCast, ci);
     ci->replaceAllUsesWith(dest);
     ci->eraseFromParent();
     return true;
   }
 } MemCpyOptimizer;
+
+/// This CallOptimizer will simplify a call to the memmove library function. It
+/// is identical to MemCopyOptimization except for the name of the intrinsic.
+/// @brief Simplify the memmove library function.
+struct MemMoveOptimization : public MemCpyOptimization
+{
+  MemMoveOptimization() : MemCpyOptimization("llvm.memmove") {}
+
+} MemMoveOptimizer;
+
 }
