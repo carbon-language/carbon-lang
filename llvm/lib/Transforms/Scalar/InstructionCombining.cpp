@@ -2281,6 +2281,8 @@ Instruction *InstCombiner::FoldGEPSetCC(User *GEPLHS, Value *RHS,
     // compare the base pointer.
     if (PtrBase != GEPRHS->getOperand(0)) {
       bool IndicesTheSame = GEPLHS->getNumOperands()==GEPRHS->getNumOperands();
+      IndicesTheSame &= GEPLHS->getOperand(0)->getType() == 
+                        GEPRHS->getOperand(0)->getType();
       if (IndicesTheSame)
         for (unsigned i = 1, e = GEPLHS->getNumOperands(); i != e; ++i)
           if (GEPLHS->getOperand(i) != GEPRHS->getOperand(i)) {
