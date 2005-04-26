@@ -72,7 +72,7 @@ namespace {
     /// going to be called upon to do some optimization.
     virtual bool ValidateCalledFunction(
       const Function* F ///< The function that is the target of call sites
-    ) const = 0;
+    ) = 0;
 
     /// The implementations of this function in subclasses is the heart of the 
     /// SimplifyLibCalls algorithm. Sublcasses of this class implement 
@@ -85,7 +85,7 @@ namespace {
     /// @brief Optimize a call, if possible.
     virtual bool OptimizeCall(
       CallInst* ci ///< The call instruction that should be optimized.
-    ) const = 0;
+    ) = 0;
 
     const char * getFunctionName() const { return func_name; }
   private:
@@ -105,6 +105,37 @@ namespace {
 
   /// Make sure we get our virtual table in this file.
   CallOptimizer::~CallOptimizer() { }
+
+  /// Provide some functions for accessing standard library prototypes and
+  /// caching them so we don't have to keep recomputing them
+  FunctionType* get_strlen()
+  {
+    static FunctionType* strlen_type = 0;
+    if (!strlen_type)
+    {
+      std::vector<const Type*> args;
+      args.push_back(PointerType::get(Type::SByteTy));
+      strlen_type = FunctionType::get(Type::IntTy, args, false);
+    }
+    return strlen_type;
+  }
+
+  FunctionType* get_memcpy()
+  {
+    static FunctionType* memcpy_type = 0;
+    if (!memcpy_type)
+    {
+      // Note: this is for llvm.memcpy intrinsic
+      std::vector<const Type*> args;
+      args.push_back(PointerType::get(Type::SByteTy));
+      args.push_back(PointerType::get(Type::SByteTy));
+      args.push_back(Type::IntTy);
+      args.push_back(Type::IntTy);
+      memcpy_type = FunctionType::get(
+        PointerType::get(Type::SByteTy), args, false);
+    }
+    return memcpy_type;
+  }
 }
 
 ModulePass *llvm::createSimplifyLibCallsPass() 
@@ -177,7 +208,7 @@ struct ExitInMainOptimization : public CallOptimizer
 
   // Make sure the called function looks like exit (int argument, int return
   // type, external linkage, not varargs). 
-  virtual bool ValidateCalledFunction(const Function* f) const
+  virtual bool ValidateCalledFunction(const Function* f)
   {
     if (f->getReturnType()->getTypeID() == Type::VoidTyID && !f->isVarArg())
       if (f->arg_size() == 1)
@@ -186,7 +217,7 @@ struct ExitInMainOptimization : public CallOptimizer
     return false;
   }
 
-  virtual bool OptimizeCall(CallInst* ci) const
+  virtual bool OptimizeCall(CallInst* ci)
   {
     // To be careful, we check that the call to exit is coming from "main", that
     // main has external linkage, and the return type of main and the argument
@@ -207,13 +238,13 @@ struct ExitInMainOptimization : public CallOptimizer
 
           // Split the block at the call instruction which places it in a new
           // basic block.
-          bb->splitBasicBlock(BasicBlock::iterator(ci));
+          bb->splitBasicBlock(ci);
 
           // The block split caused a branch instruction to be inserted into
           // the end of the original block, right after the return instruction
           // that we put there. That's not a valid block, so delete the branch
           // instruction.
-          bb->back().eraseFromParent();
+          bb->getInstList().pop_back();
 
           // Now we can finally get rid of the call instruction which now lives
           // in the new basic block.
@@ -235,11 +266,33 @@ struct ExitInMainOptimization : public CallOptimizer
 /// @brief Simplify the strcat library function.
 struct StrCatOptimization : public CallOptimizer
 {
-  StrCatOptimization() : CallOptimizer("strcat") {}
+private:
+  Function* strlen_func;
+  Function* memcpy_func;
+public:
+  StrCatOptimization() 
+    : CallOptimizer("strcat") 
+    , strlen_func(0)
+    , memcpy_func(0)
+    {}
   virtual ~StrCatOptimization() {}
 
+  inline Function* get_strlen_func(Module*M)
+  {
+    if (strlen_func)
+      return strlen_func;
+    return strlen_func = M->getOrInsertFunction("strlen",get_strlen());
+  }
+
+  inline Function* get_memcpy_func(Module* M) 
+  {
+    if (memcpy_func)
+      return memcpy_func;
+    return memcpy_func = M->getOrInsertFunction("llvm.memcpy",get_memcpy());
+  }
+
   /// @brief Make sure that the "strcat" function has the right prototype
-  virtual bool ValidateCalledFunction(const Function* f) const
+  virtual bool ValidateCalledFunction(const Function* f) 
   {
     if (f->getReturnType() == PointerType::get(Type::SByteTy))
       if (f->arg_size() == 2) 
@@ -247,117 +300,143 @@ struct StrCatOptimization : public CallOptimizer
         Function::const_arg_iterator AI = f->arg_begin();
         if (AI++->getType() == PointerType::get(Type::SByteTy))
           if (AI->getType() == PointerType::get(Type::SByteTy))
+          {
+            // Invalidate the pre-computed strlen_func and memcpy_func Functions
+            // because, by definition, this method is only called when a new
+            // Module is being traversed. Invalidation causes re-computation for
+            // the new Module (if necessary).
+            strlen_func = 0;
+            memcpy_func = 0;
+
+            // Indicate this is a suitable call type.
             return true;
+          }
       }
     return false;
   }
 
   /// Perform the optimization if the length of the string concatenated
   /// is reasonably short and it is a constant array.
-  virtual bool OptimizeCall(CallInst* ci) const
+  virtual bool OptimizeCall(CallInst* ci)
   {
-    // If the thing being appended is not a GEP instruction
-    GetElementPtrInst* GEP = dyn_cast<GetElementPtrInst>(ci->getOperand(2));
-    if (!GEP)
-      return false;
-
-    // Double check that we're dealing with a pointer to sbyte here
-    if (GEP->getType() != PointerType::get(Type::SByteTy))
-      return false;
-
-    // We can only optimize if the appended string is a constant 
-    Constant* C = dyn_cast<Constant>(GEP->getPointerOperand());
-    if (!C)
-      return false;
-
-    // Check the various kinds of constants that are applicable
-    GlobalVariable* GV = dyn_cast<GlobalVariable>(C);
-    if (!GV)
-      return false;
-
-    // Only GVars that have initializers will do
-    if (GV->hasInitializer())
-    {
-      Constant* INTLZR = GV->getInitializer();
-      // And only if that initializer is ConstantArray
-      if (ConstantArray* A = dyn_cast<ConstantArray>(INTLZR))
-      {
-        assert(A->isString() && "This ought to be a string");
-
-        // Get the value of the string and determine its length. If the length
-        // is zero, we can just substitute the destination pointer for the
-        // call. 
-        std::string str = A->getAsString().c_str();
-        if (str.length() == 0)
-        {
-          ci->replaceAllUsesWith(ci->getOperand(1));
-          ci->eraseFromParent();
-          return true;
-        }
-
-        // Otherwise, lets just turn this into a memcpy call which will be 
-        // optimized out on the next pass.
-        else
-        {
-          // Extract some information
-          Module* M = ci->getParent()->getParent()->getParent();
-          // We need to find the end of the string of the first operand to the
-          // strcat call instruction. That's where the memory is to be moved
-          // to. So, generate code that does that
-          std::vector<const Type*> args;
-          args.push_back(PointerType::get(Type::SByteTy));
-          FunctionType* strlen_type = 
-            FunctionType::get(Type::IntTy, args, false);
-          Function* strlen = M->getOrInsertFunction("strlen",strlen_type);
-          CallInst* strlen_inst = 
-            new CallInst(strlen,ci->getOperand(1),"",ci);
-
-          // Now that we have the string length, we must add it to the pointer
-          // to get the memcpy destination.
-          std::vector<Value*> idx;
-          idx.push_back(strlen_inst);
-          GetElementPtrInst* gep = 
-            new GetElementPtrInst(ci->getOperand(1),idx,"",ci);
-
-          // Generate the memcpy call
-          args.clear();
-          args.push_back(PointerType::get(Type::SByteTy));
-          args.push_back(PointerType::get(Type::SByteTy));
-          args.push_back(Type::IntTy);
-          FunctionType* memcpy_type = FunctionType::get(
-            PointerType::get(Type::SByteTy), args, false);
-          Function* memcpy = M->getOrInsertFunction("memcpy",memcpy_type);
-          std::vector<Value*> vals;
-          vals.push_back(gep);
-          vals.push_back(ci->getOperand(2));
-          vals.push_back(ConstantSInt::get(Type::IntTy,str.length()+1));
-          CallInst* memcpy_inst = new CallInst(memcpy, vals, "", ci);
-
-          // Finally, cast the result of the memcpy to the correct type which is
-          // the result of the strcat.
-          CastInst* cast_inst =
-            new CastInst(memcpy_inst, PointerType::get(Type::SByteTy),
-                ci->getName(),ci);
-
-          // And perform the stubstitution for the strcat call.
-          ci->replaceAllUsesWith(cast_inst);
-          ci->eraseFromParent();
-          return true;
-        }
-      }
-      else if (ConstantAggregateZero* CAZ = 
-          dyn_cast<ConstantAggregateZero>(INTLZR))
-      {
-        // We know this is the zero length string case so we can just avoid
-        // the strcat altogether. 
-        ci->replaceAllUsesWith(ci->getOperand(1));
-        ci->eraseFromParent();
-        return true;
-      }
-      else if (ConstantExpr* E = dyn_cast<ConstantExpr>(INTLZR))
-      {
+    User* GEP = 0;
+    // If the thing being appended is not a GEP instruction nor a constant
+    // expression with a GEP instruction, then return false because this is
+    // not a situation we can optimize.
+    if (GetElementPtrInst* GEPI = 
+        dyn_cast<GetElementPtrInst>(ci->getOperand(2)))
+      GEP = GEPI;
+    else if (ConstantExpr* CE = dyn_cast<ConstantExpr>(ci->getOperand(2)))
+      if (CE->getOpcode() == Instruction::GetElementPtr)
+        GEP = CE;
+      else
         return false;
+    else
+      return false;
+
+    // Check to make sure that the first operand of the GEP is an integer and
+    // has value 0 so that we are sure we're indexing into the initializer. 
+    if (ConstantInt* op1 = dyn_cast<ConstantInt>(GEP->getOperand(1)))
+      if (op1->isNullValue())
+        ;
+      else
+        return false;
+    else
+      return false;
+
+    // Ensure that the second operand is a constant int. If it isn't then this
+    // GEP is wonky and we're not really sure what were referencing into and 
+    // better of not optimizing it.
+    if (!dyn_cast<ConstantInt>(GEP->getOperand(2)))
+      return false;
+
+    // The GEP instruction, constant or instruction, must reference a global
+    // variable that is a constant and is initialized. The referenced constant
+    // initializer is the array that we'll use for optimization.
+    GlobalVariable* GV = dyn_cast<GlobalVariable>(GEP->getOperand(0));
+    if (!GV || !GV->isConstant() || !GV->hasInitializer())
+      return false;
+
+    // Get the initializer
+    Constant* INTLZR = GV->getInitializer();
+
+    // Handle the ConstantArray case.
+    if (ConstantArray* A = dyn_cast<ConstantArray>(INTLZR))
+    {
+      // First off, we can't do this if the constant array isn't a string, 
+      // meaning its base type is sbyte and its constant initializers for all
+      // the elements are constantInt or constantInt expressions.
+      if (!A->isString())
+        return false;
+
+      // Now we need to examine the source string to find its actual length. We
+      // can't rely on the size of the constant array becasue there could be a
+      // null terminator in the middle of the array. We also have to bail out if
+      // we find a non-integer constant initializer of one of the elements. 
+      // Also, if we never find a terminator before the end of the array.
+      unsigned max_elems = A->getType()->getNumElements();
+      unsigned len = 0;
+      for (; len < max_elems; len++)
+      {
+        if (ConstantInt* CI = dyn_cast<ConstantInt>(A->getOperand(len)))
+        {
+          if (CI->isNullValue())
+            break; // we found end of string
+        }
+        else
+          return false; // This array isn't suitable, non-int initializer
       }
+      if (len >= max_elems)
+        return false; // This array isn't null terminated
+      else
+        len++; // increment for null terminator
+
+      // Extract some information from the instruction
+      Module* M = ci->getParent()->getParent()->getParent();
+
+      // We need to find the end of the destination string.  That's where the 
+      // memory is to be moved to. We just generate a call to strlen (further 
+      // optimized in another pass). Note that the get_strlen_func() call 
+      // caches the Function* for us.
+      CallInst* strlen_inst = 
+        new CallInst(get_strlen_func(M),ci->getOperand(1),"",ci);
+
+      // Now that we have the destination's length, we must index into the 
+      // destination's pointer to get the actual memcpy destination (end of
+      // the string .. we're concatenating).
+      std::vector<Value*> idx;
+      idx.push_back(strlen_inst);
+      GetElementPtrInst* gep = 
+        new GetElementPtrInst(ci->getOperand(1),idx,"",ci);
+
+      // We have enough information to now generate the memcpy call to
+      // do the concatenation for us.
+      std::vector<Value*> vals;
+      vals.push_back(gep); // destination
+      vals.push_back(ci->getOperand(2)); // source
+      vals.push_back(ConstantSInt::get(Type::IntTy,len)); // length
+      vals.push_back(ConstantSInt::get(Type::IntTy,1)); // alignment
+      CallInst* memcpy_inst = 
+        new CallInst(get_memcpy_func(M), vals, "", ci);
+
+      // Finally, substitute the first operand of the strcat call for the 
+      // strcat call itself since strcat returns its first operand; and, 
+      // kill the strcat CallInst.
+      ci->replaceAllUsesWith(ci->getOperand(1));
+      ci->eraseFromParent();
+      return true;
+    }
+
+    // Handle the ConstantAggregateZero case
+    else if (ConstantAggregateZero* CAZ = 
+        dyn_cast<ConstantAggregateZero>(INTLZR))
+    {
+      // We know this is the zero length string case so we can just avoid
+      // the strcat altogether and replace the CallInst with its first operand
+      // (what strcat returns).
+      ci->replaceAllUsesWith(ci->getOperand(1));
+      ci->eraseFromParent();
+      return true;
     }
 
     // We didn't pass the criteria for this optimization so return false.
@@ -371,18 +450,20 @@ struct StrCatOptimization : public CallOptimizer
 /// @brief Simplify the memcpy library function.
 struct MemCpyOptimization : public CallOptimizer
 {
-  MemCpyOptimization() : CallOptimizer("memcpy") {}
+  MemCpyOptimization() : CallOptimizer("llvm.memcpy") {}
   virtual ~MemCpyOptimization() {}
 
   /// @brief Make sure that the "memcpy" function has the right prototype
-  virtual bool ValidateCalledFunction(const Function* f) const
+  virtual bool ValidateCalledFunction(const Function* f)
   {
-    if (f->getReturnType() == PointerType::get(Type::SByteTy))
+    if (f->getReturnType() == PointerType::get(Type::VoidTy))
       if (f->arg_size() == 2) 
       {
         Function::const_arg_iterator AI = f->arg_begin();
         if (AI++->getType() == PointerType::get(Type::SByteTy))
-          if (AI->getType() == PointerType::get(Type::SByteTy))
+          if (AI++->getType() == PointerType::get(Type::SByteTy))
+            if (AI++->getType() == Type::IntTy)
+              if (AI->getType() == Type::IntTy)
             return true;
       }
     return false;
@@ -390,8 +471,9 @@ struct MemCpyOptimization : public CallOptimizer
 
   /// Perform the optimization if the length of the string concatenated
   /// is reasonably short and it is a constant array.
-  virtual bool OptimizeCall(CallInst* ci) const
+  virtual bool OptimizeCall(CallInst* ci)
   {
+    // 
     // We didn't pass the criteria for this optimization so return false.
     return false;
   }
