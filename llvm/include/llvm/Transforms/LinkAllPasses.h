@@ -105,6 +105,7 @@ namespace {
       (void) llvm::createReassociatePass();
       (void) llvm::createSCCPPass();
       (void) llvm::createScalarReplAggregatesPass();
+      (void) llvm::createSimplifyLibCallsPass();
       (void) llvm::createSingleLoopExtractorPass();
       (void) llvm::createSteensgaardPass();
       (void) llvm::createStripSymbolsPass();

@@ -226,6 +226,9 @@
 					RelativePath="..\..\lib\Transforms\Ipo\RaiseAllocations.cpp">
 				</File>
 				<File
+					RelativePath="..\..\lib\Transforms\Ipo\SimplifyLibCalls.cpp">
+				</File>
+				<File
 					RelativePath="..\..\lib\Transforms\Ipo\StripSymbols.cpp">
 				</File>
 			</Filter>
