@@ -31,8 +31,8 @@ void IntervalPartition::destroy() {
 }
 
 void IntervalPartition::print(std::ostream &O, const Module*) const {
-  std::copy(Intervals.begin(), Intervals.end(),
-            std::ostream_iterator<const Interval *>(O, "\n"));
+  for(unsigned i = 0, e = Intervals.size(); i != e; ++i)
+    Intervals[i]->print(O);
 }
 
 // addIntervalToPartition - Add an interval to the internal list of intervals,
