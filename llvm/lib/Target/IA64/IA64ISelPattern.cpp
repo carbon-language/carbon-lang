@@ -453,9 +453,6 @@ void ISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
   ISelDAG = 0;
 }
 
-const char sign[2]={'+','-'};
-
-
 // strip leading '0' characters from a string
 void munchLeadingZeros(std::string& inString) {
   while(inString.c_str()[0]=='0') {
@@ -564,7 +561,8 @@ unsigned lefevre(const std::string inString,
   }
 
   std::string t, u;
-  int c,f;
+  int c;
+  bool f;
   std::map<const int, int> w;
 
   for(int i=0; i<p.size(); i++) {
@@ -678,18 +676,19 @@ unsigned lefevre(const std::string inString,
   }
 
   if( c<0 ) {
-    f=1;
+    f=true;
     c=-c;
   } else
-    f=0;
+    f=false;
   
   bool hit=true;
-  for(int i=0; i<u.length()-1; i++) {
-    if(u.c_str()[i]!='0')
-      hit=false;
+  for(int i=0; i<u.length(); i++) {
+    if(u[i]!='0')
+      if(u[i]!='N') {
+	hit=false;
+	break;
+      }
   }
-  if(u.c_str()[u.length()-1]!='N')
-    hit=false;
 
   int g=0;
   if(hit) {
