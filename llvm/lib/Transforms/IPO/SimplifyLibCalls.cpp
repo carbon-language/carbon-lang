@@ -205,8 +205,7 @@ namespace {
       args.push_back(PointerType::get(Type::SByteTy));
       args.push_back(Type::IntTy);
       args.push_back(Type::IntTy);
-      memcpy_type = FunctionType::get(
-        PointerType::get(Type::SByteTy), args, false);
+      memcpy_type = FunctionType::get(Type::VoidTy, args, false);
     }
     return memcpy_type;
   }
@@ -568,10 +567,7 @@ public:
     switch (len)
     {
       case 0:
-        // Just replace with the destination parameter since a zero length
-        // memcpy is a no-op.
-        ci->replaceAllUsesWith(
-            new CastInst(dest,PointerType::get(Type::VoidTy),"",ci));
+        // The memcpy is a no-op so just dump its call.
         ci->eraseFromParent();
         return true;
       case 1:
@@ -595,8 +591,6 @@ public:
     }
     LoadInst* LI = new LoadInst(SrcCast,"",ci);
     StoreInst* SI = new StoreInst(LI, DestCast, ci);
-    ci->replaceAllUsesWith(
-      new CastInst(dest,PointerType::get(Type::VoidTy),"",ci));
     ci->eraseFromParent();
     return true;
   }
