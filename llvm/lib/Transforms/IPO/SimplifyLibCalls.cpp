@@ -16,15 +16,17 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Transforms/IPO.h"
+#define DEBUG_TYPE "argpromotion"
+#include "llvm/Constants.h"
+#include "llvm/DerivedTypes.h"
+#include "llvm/Instructions.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
-#include "llvm/DerivedTypes.h"
-#include "llvm/Constants.h"
-#include "llvm/Instructions.h"
-#include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/hash_map"
+#include "llvm/ADT/Statistic.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Target/TargetData.h"
+#include "llvm/Transforms/IPO.h"
 #include <iostream>
 using namespace llvm;
 
@@ -167,6 +169,7 @@ bool SimplifyLibCalls::runOnModule(Module &M)
                 {
                   ++SimplifiedLibCalls;
                   found_optimization = result = true;
+              DEBUG(std::cerr << "simplify-libcall: " << CO->getFunctionName());
                 }
               }
             }
@@ -534,8 +537,7 @@ public:
   virtual bool ValidateCalledFunction(const Function* f, const TargetData& TD)
   {
     // Just make sure this has 4 arguments per LLVM spec.
-    return (f->arg_size() == 4) && 
-           (f->getReturnType() == Type::VoidTy);
+    return (f->arg_size() == 4);
   }
 
   /// Because of alignment and instruction information that we don't have, we
