@@ -169,7 +169,7 @@ bool SimplifyLibCalls::runOnModule(Module &M)
                 {
                   ++SimplifiedLibCalls;
                   found_optimization = result = true;
-              DEBUG(std::cerr << "simplify-libcall: " << CO->getFunctionName());
+                  DEBUG(std::cerr << "simplify-libcall: " << CO->getFunctionName() << "\n");
                 }
               }
             }
