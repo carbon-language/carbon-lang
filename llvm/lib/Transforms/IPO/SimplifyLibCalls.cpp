@@ -136,6 +136,79 @@ namespace {
     }
     return memcpy_type;
   }
+
+  // Provide some utility functions for various checks common to more than
+  // one CallOptimizer
+  Constant* get_GVInitializer(Value* V)
+  {
+    User* GEP = 0;
+    // If the value not a GEP instruction nor a constant expression with a GEP 
+    // instruction, then return 0 because ConstantArray can't occur any other
+    // way
+    if (GetElementPtrInst* GEPI = dyn_cast<GetElementPtrInst>(V))
+      GEP = GEPI;
+    else if (ConstantExpr* CE = dyn_cast<ConstantExpr>(V))
+      if (CE->getOpcode() == Instruction::GetElementPtr)
+        GEP = CE;
+      else
+        return 0;
+    else
+      return 0;
+
+    // Check to make sure that the first operand of the GEP is an integer and
+    // has value 0 so that we are sure we're indexing into the initializer. 
+    if (ConstantInt* op1 = dyn_cast<ConstantInt>(GEP->getOperand(1)))
+      if (op1->isNullValue())
+        ;
+      else
+        return false;
+    else
+      return false;
+
+    // Ensure that the second operand is a ConstantInt. If it isn't then this
+    // GEP is wonky and we're not really sure what were referencing into and 
+    // better of not optimizing it.
+    if (!dyn_cast<ConstantInt>(GEP->getOperand(2)))
+      return 0;
+
+    // The GEP instruction, constant or instruction, must reference a global
+    // variable that is a constant and is initialized. The referenced constant
+    // initializer is the array that we'll use for optimization.
+    GlobalVariable* GV = dyn_cast<GlobalVariable>(GEP->getOperand(0));
+    if (!GV || !GV->isConstant() || !GV->hasInitializer())
+      return 0;
+
+    // Return the result
+    return GV->getInitializer();
+  }
+
+  /// A function to compute the length of a null-terminated string of integers.
+  /// This function can't rely on the size of the constant array because there 
+  /// could be a null terminator in the middle of the array. We also have to 
+  /// bail out if we find a non-integer constant initializer of one of the 
+  /// elements or if there is no null-terminator. The logic below checks
+  bool getCharArrayLength(ConstantArray* A, unsigned& len)
+  {
+    assert(A != 0 && "Invalid args to getCharArrayLength");
+    // Get the supposed length
+    unsigned max_elems = A->getType()->getNumElements();
+    len = 0;
+    // Examine all the elements
+    for (; len < max_elems; len++)
+    {
+      if (ConstantInt* CI = dyn_cast<ConstantInt>(A->getOperand(len)))
+      {
+        // Check for the null terminator
+        if (CI->isNullValue())
+          break; // we found end of string
+      }
+      else
+        return false; // This array isn't suitable, non-int initializer
+    }
+    if (len >= max_elems)
+      return false; // This array isn't null terminated
+    return true; // success!
+  }
 }
 
 ModulePass *llvm::createSimplifyLibCallsPass() 
@@ -319,46 +392,12 @@ public:
   /// is reasonably short and it is a constant array.
   virtual bool OptimizeCall(CallInst* ci)
   {
-    User* GEP = 0;
-    // If the thing being appended is not a GEP instruction nor a constant
-    // expression with a GEP instruction, then return false because this is
-    // not a situation we can optimize.
-    if (GetElementPtrInst* GEPI = 
-        dyn_cast<GetElementPtrInst>(ci->getOperand(2)))
-      GEP = GEPI;
-    else if (ConstantExpr* CE = dyn_cast<ConstantExpr>(ci->getOperand(2)))
-      if (CE->getOpcode() == Instruction::GetElementPtr)
-        GEP = CE;
-      else
-        return false;
-    else
+    // Extract the initializer (while making numerous checks) from the 
+    // source operand of the call to strcat. If we get null back, one of
+    // a variety of checks in get_GVInitializer failed
+    Constant* INTLZR = get_GVInitializer(ci->getOperand(2));
+    if (!INTLZR)
       return false;
-
-    // Check to make sure that the first operand of the GEP is an integer and
-    // has value 0 so that we are sure we're indexing into the initializer. 
-    if (ConstantInt* op1 = dyn_cast<ConstantInt>(GEP->getOperand(1)))
-      if (op1->isNullValue())
-        ;
-      else
-        return false;
-    else
-      return false;
-
-    // Ensure that the second operand is a constant int. If it isn't then this
-    // GEP is wonky and we're not really sure what were referencing into and 
-    // better of not optimizing it.
-    if (!dyn_cast<ConstantInt>(GEP->getOperand(2)))
-      return false;
-
-    // The GEP instruction, constant or instruction, must reference a global
-    // variable that is a constant and is initialized. The referenced constant
-    // initializer is the array that we'll use for optimization.
-    GlobalVariable* GV = dyn_cast<GlobalVariable>(GEP->getOperand(0));
-    if (!GV || !GV->isConstant() || !GV->hasInitializer())
-      return false;
-
-    // Get the initializer
-    Constant* INTLZR = GV->getInitializer();
 
     // Handle the ConstantArray case.
     if (ConstantArray* A = dyn_cast<ConstantArray>(INTLZR))
@@ -376,18 +415,8 @@ public:
       // Also, if we never find a terminator before the end of the array.
       unsigned max_elems = A->getType()->getNumElements();
       unsigned len = 0;
-      for (; len < max_elems; len++)
-      {
-        if (ConstantInt* CI = dyn_cast<ConstantInt>(A->getOperand(len)))
-        {
-          if (CI->isNullValue())
-            break; // we found end of string
-        }
-        else
-          return false; // This array isn't suitable, non-int initializer
-      }
-      if (len >= max_elems)
-        return false; // This array isn't null terminated
+      if (!getCharArrayLength(A,len))
+        return false;
       else
         len++; // increment for null terminator
 
@@ -444,6 +473,62 @@ public:
   }
 } StrCatOptimizer;
 
+/// This CallOptimizer will simplify a call to the strlen library function by
+/// replacing it with a constant value if the string provided to it is a 
+/// constant array.
+/// @brief Simplify the strlen library function.
+struct StrLenOptimization : public CallOptimizer
+{
+  StrLenOptimization() : CallOptimizer("strlen") {}
+  virtual ~StrLenOptimization() {}
+
+  /// @brief Make sure that the "strlen" function has the right prototype
+  virtual bool ValidateCalledFunction(const Function* f)
+  {
+    if (f->getReturnType() == Type::IntTy)
+      if (f->arg_size() == 1) 
+        if (Function::const_arg_iterator AI = f->arg_begin())
+          if (AI->getType() == PointerType::get(Type::SByteTy))
+            return true;
+    return false;
+  }
+
+  /// @brief Perform the strlen optimization
+  virtual bool OptimizeCall(CallInst* ci)
+  {
+    // Extract the initializer (while making numerous checks) from the 
+    // source operand of the call to strlen. If we get null back, one of
+    // a variety of checks in get_GVInitializer failed
+    Constant* INTLZR = get_GVInitializer(ci->getOperand(1));
+    if (!INTLZR)
+      return false;
+
+    if (ConstantArray* A = dyn_cast<ConstantArray>(INTLZR))
+    {
+      unsigned len = 0;
+      if (!getCharArrayLength(A,len))
+        return false;
+      ci->replaceAllUsesWith(ConstantInt::get(Type::IntTy,len));
+      ci->eraseFromParent();
+      return true;
+    }
+
+    // Handle the ConstantAggregateZero case
+    else if (ConstantAggregateZero* CAZ = 
+        dyn_cast<ConstantAggregateZero>(INTLZR))
+    {
+      // We know this is the zero length string case so we can just avoid
+      // the strlen altogether and replace the CallInst with zero
+      ci->replaceAllUsesWith(ConstantInt::get(Type::IntTy,0));
+      ci->eraseFromParent();
+      return true;
+    }
+
+    // We didn't pass the criteria for this optimization so return false.
+    return false;
+  }
+} StrLenOptimizer;
+
 /// This CallOptimizer will simplify a call to the memcpy library function by
 /// expanding it out to a small set of stores if the copy source is a constant
 /// array. 
@@ -456,7 +541,7 @@ struct MemCpyOptimization : public CallOptimizer
   /// @brief Make sure that the "memcpy" function has the right prototype
   virtual bool ValidateCalledFunction(const Function* f)
   {
-    if (f->getReturnType() == PointerType::get(Type::VoidTy))
+    if (f->getReturnType() == PointerType::get(Type::SByteTy))
       if (f->arg_size() == 2) 
       {
         Function::const_arg_iterator AI = f->arg_begin();
