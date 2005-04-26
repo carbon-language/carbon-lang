@@ -535,7 +535,8 @@ public:
   virtual bool ValidateCalledFunction(const Function* f, const TargetData& TD)
   {
     // Just make sure this has 4 arguments per LLVM spec.
-    return f->arg_size() == 4;
+    return (f->arg_size() == 4) && 
+           (f->getReturnType() == PointerType::get(Type::VoidTy));
   }
 
   /// Because of alignment and instruction information that we don't have, we
@@ -546,12 +547,17 @@ public:
   /// @brief Perform the memcpy optimization.
   virtual bool OptimizeCall(CallInst* ci, const TargetData& TD)
   {
-    ConstantInt* CI = cast<ConstantInt>(ci->getOperand(3));
-    assert(CI && "Operand should be ConstantInt");
-    uint64_t len = CI->getRawValue();
-    CI = dyn_cast<ConstantInt>(ci->getOperand(4));
-    assert(CI && "Operand should be ConstantInt");
-    uint64_t alignment = CI->getRawValue();
+    // Make sure we have constant int values to work with
+    ConstantInt* LEN = dyn_cast<ConstantInt>(ci->getOperand(3));
+    if (!LEN)
+      return false;
+    ConstantInt* ALIGN = dyn_cast<ConstantInt>(ci->getOperand(4));
+    if (!ALIGN)
+      return false;
+
+    // If the length is larger than the alignment, we can't optimize
+    uint64_t len = LEN->getRawValue();
+    uint64_t alignment = ALIGN->getRawValue();
     if (len > alignment)
       return false;
 
@@ -564,7 +570,8 @@ public:
       case 0:
         // Just replace with the destination parameter since a zero length
         // memcpy is a no-op.
-        ci->replaceAllUsesWith(dest);
+        ci->replaceAllUsesWith(
+            new CastInst(dest,PointerType::get(Type::VoidTy),"",ci));
         ci->eraseFromParent();
         return true;
       case 1:
@@ -588,7 +595,8 @@ public:
     }
     LoadInst* LI = new LoadInst(SrcCast,"",ci);
     StoreInst* SI = new StoreInst(LI, DestCast, ci);
-    ci->replaceAllUsesWith(dest);
+    ci->replaceAllUsesWith(
+      new CastInst(dest,PointerType::get(Type::VoidTy),"",ci));
     ci->eraseFromParent();
     return true;
   }
