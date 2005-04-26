@@ -2257,7 +2257,7 @@ int %test(int %X, ...) {
 
 <div class="doc_text">
 <h5>Syntax:</h5>
-<pre>  call &lt;va_list&gt; ()* %llvm.va_start()<br></pre>
+<pre>  declare &lt;va_list&gt; %llvm.va_start()<br></pre>
 <h5>Overview:</h5>
 <p>The '<tt>llvm.va_start</tt>' intrinsic returns a new <tt>&lt;arglist&gt;</tt>
 for subsequent use by the variable argument intrinsics.</p>
@@ -2279,7 +2279,7 @@ within the body of a variable argument function.</p>
 
 <div class="doc_text">
 <h5>Syntax:</h5>
-<pre>  call void (&lt;va_list&gt;)* %llvm.va_end(&lt;va_list&gt; &lt;arglist&gt;)<br></pre>
+<pre>  declare void %llvm.va_end(&lt;va_list&gt; &lt;arglist&gt;)<br></pre>
 <h5>Overview:</h5>
 <p>The '<tt>llvm.va_end</tt>' intrinsic destroys <tt>&lt;arglist&gt;</tt>
 which has been initialized previously with <tt><a href="#i_va_start">llvm.va_start</a></tt>
@@ -2304,7 +2304,7 @@ with calls to <tt>llvm.va_end</tt>.</p>
 <h5>Syntax:</h5>
 
 <pre>
-  call  &lt;va_list&gt; (&lt;va_list&gt;)* %llvm.va_copy(&lt;va_list&gt; &lt;destarglist&gt;)
+  declare &lt;va_list&gt; %llvm.va_copy(&lt;va_list&gt; &lt;destarglist&gt;)
 </pre>
 
 <h5>Overview:</h5>
@@ -2355,7 +2355,7 @@ href="GarbageCollection.html">Accurate Garbage Collection with LLVM</a>.
 <h5>Syntax:</h5>
 
 <pre>
-  call void (&lt;ty&gt;**, &lt;ty2&gt;*)* %llvm.gcroot(&lt;ty&gt;** %ptrloc, &lt;ty2&gt;* %metadata)
+  declare void %llvm.gcroot(&lt;ty&gt;** %ptrloc, &lt;ty2&gt;* %metadata)
 </pre>
 
 <h5>Overview:</h5>
@@ -2389,7 +2389,7 @@ the runtime to find the pointer at GC safe points.
 <h5>Syntax:</h5>
 
 <pre>
-  call sbyte* (sbyte**)* %llvm.gcread(sbyte** %Ptr)
+  declare sbyte* %llvm.gcread(sbyte** %Ptr)
 </pre>
 
 <h5>Overview:</h5>
@@ -2422,7 +2422,7 @@ garbage collector runtime, as needed.</p>
 <h5>Syntax:</h5>
 
 <pre>
-  call void (sbyte*, sbyte**)* %llvm.gcwrite(sbyte* %P1, sbyte** %P2)
+  declare void %llvm.gcwrite(sbyte* %P1, sbyte** %P2)
 </pre>
 
 <h5>Overview:</h5>
@@ -2468,7 +2468,7 @@ be implemented with code generator support.
 
 <h5>Syntax:</h5>
 <pre>
-  call void* ()* %llvm.returnaddress(uint &lt;level&gt;)
+  declare void* %llvm.returnaddress(uint &lt;level&gt;)
 </pre>
 
 <h5>Overview:</h5>
@@ -2512,7 +2512,7 @@ source-language caller.
 
 <h5>Syntax:</h5>
 <pre>
-  call void* ()* %llvm.frameaddress(uint &lt;level&gt;)
+  declare void* %llvm.frameaddress(uint &lt;level&gt;)
 </pre>
 
 <h5>Overview:</h5>
@@ -2555,9 +2555,8 @@ source-language caller.
 
 <h5>Syntax:</h5>
 <pre>
-  call void (sbyte *, uint, uint)* %llvm.prefetch(sbyte * &lt;address&gt;,
-                                                  uint &lt;rw&gt;, 
-                                                  uint &lt;locality&gt;)
+  declare void %llvm.prefetch(sbyte * &lt;address&gt;,
+                                uint &lt;rw&gt;, uint &lt;locality&gt;)
 </pre>
 
 <h5>Overview:</h5>
@@ -2600,7 +2599,7 @@ performance.
 
 <h5>Syntax:</h5>
 <pre>
-  call void (uint)* %llvm.pcmarker( uint &lt;id&gt; )
+  declare void %llvm.pcmarker( uint &lt;id&gt; )
 </pre>
 
 <h5>Overview:</h5>
@@ -2654,7 +2653,7 @@ operating system level code.
 
 <h5>Syntax:</h5>
 <pre>
-  call &lt;integer type&gt; (&lt;integer type&gt;)* %llvm.readport (&lt;integer type&gt; &lt;address&gt;)
+  declare &lt;integer type&gt; %llvm.readport (&lt;integer type&gt; &lt;address&gt;)
 </pre>
 
 <h5>Overview:</h5>
@@ -2738,7 +2737,7 @@ value written must be 8, 16, or 32 bits in length.
 
 <h5>Syntax:</h5>
 <pre>
-  call &lt;result&gt; (&lt;ty&gt;*)* %llvm.readio (&lt;ty&gt; * &lt;pointer&gt;)
+  declare &lt;result&gt; %llvm.readio (&lt;ty&gt; * &lt;pointer&gt;)
 </pre>
 
 <h5>Overview:</h5>
@@ -2786,7 +2785,7 @@ ensures that accesses to memory mapped I/O registers occur in program order.
 
 <h5>Syntax:</h5>
 <pre>
-  call void (&lt;ty1&gt;, &lt;ty2&gt;*)* %llvm.writeio (&lt;ty1&gt; &lt;value&gt;, &lt;ty2&gt; * &lt;pointer&gt;)
+  declare void %llvm.writeio (&lt;ty1&gt; &lt;value&gt;, &lt;ty2&gt; * &lt;pointer&gt;)
 </pre>
 
 <h5>Overview:</h5>
@@ -3004,8 +3003,7 @@ this can be specified as the fourth argument, otherwise it should be set to 0 or
 
 <h5>Syntax:</h5>
 <pre>
-  call bool (&lt;float or double&gt;, &lt;float or double&gt;)* %llvm.isunordered(&lt;float or double&gt; Val1,
-                                                                      &lt;float or double&gt; Val2)
+  declare bool %llvm.isunordered(&lt;float or double&gt; Val1, &lt;float or double&gt; Val2)
 </pre>
 
 <h5>Overview:</h5>
