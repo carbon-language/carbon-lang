@@ -137,64 +137,81 @@ namespace {
     return memcpy_type;
   }
 
-  // Provide some utility functions for various checks common to more than
-  // one CallOptimizer
-  Constant* get_GVInitializer(Value* V)
+  /// A function to compute the length of a null-terminated string of integers.
+  /// This function can't rely on the size of the constant array because there 
+  /// could be a null terminator in the middle of the array. We also have to 
+  /// bail out if we find a non-integer constant initializer of one of the 
+  /// elements or if there is no null-terminator. The logic below checks
+  bool getConstantStringLength(Value* V, uint64_t& len )
   {
+    assert(V != 0 && "Invalid args to getCharArrayLength");
+    len = 0; // make sure we initialize this 
     User* GEP = 0;
-    // If the value not a GEP instruction nor a constant expression with a GEP 
-    // instruction, then return 0 because ConstantArray can't occur any other
-    // way
+    // If the value is not a GEP instruction nor a constant expression with a 
+    // GEP instruction, then return false because ConstantArray can't occur 
+    // any other way
     if (GetElementPtrInst* GEPI = dyn_cast<GetElementPtrInst>(V))
       GEP = GEPI;
     else if (ConstantExpr* CE = dyn_cast<ConstantExpr>(V))
       if (CE->getOpcode() == Instruction::GetElementPtr)
         GEP = CE;
       else
-        return 0;
+        return false;
     else
-      return 0;
+      return false;
 
     // Check to make sure that the first operand of the GEP is an integer and
     // has value 0 so that we are sure we're indexing into the initializer. 
     if (ConstantInt* op1 = dyn_cast<ConstantInt>(GEP->getOperand(1)))
-      if (op1->isNullValue())
-        ;
-      else
+    {
+      if (!op1->isNullValue())
         return false;
+    }
     else
       return false;
 
     // Ensure that the second operand is a ConstantInt. If it isn't then this
     // GEP is wonky and we're not really sure what were referencing into and 
-    // better of not optimizing it.
-    if (!dyn_cast<ConstantInt>(GEP->getOperand(2)))
-      return 0;
+    // better of not optimizing it. While we're at it, get the second index
+    // value. We'll need this later for indexing the ConstantArray.
+    uint64_t start_idx = 0;
+    if (ConstantInt* CI = dyn_cast<ConstantInt>(GEP->getOperand(2)))
+      start_idx = CI->getRawValue();
+    else
+      return false;
 
     // The GEP instruction, constant or instruction, must reference a global
     // variable that is a constant and is initialized. The referenced constant
     // initializer is the array that we'll use for optimization.
     GlobalVariable* GV = dyn_cast<GlobalVariable>(GEP->getOperand(0));
     if (!GV || !GV->isConstant() || !GV->hasInitializer())
-      return 0;
+      return false;
 
-    // Return the result
-    return GV->getInitializer();
-  }
+    // Get the initializer and make sure its valid.
+    Constant* INTLZR = GV->getInitializer();
+    if (!INTLZR)
+      return false;
 
-  /// A function to compute the length of a null-terminated string of integers.
-  /// This function can't rely on the size of the constant array because there 
-  /// could be a null terminator in the middle of the array. We also have to 
-  /// bail out if we find a non-integer constant initializer of one of the 
-  /// elements or if there is no null-terminator. The logic below checks
-  bool getCharArrayLength(ConstantArray* A, unsigned& len)
-  {
-    assert(A != 0 && "Invalid args to getCharArrayLength");
-    // Get the supposed length
-    unsigned max_elems = A->getType()->getNumElements();
-    len = 0;
-    // Examine all the elements
-    for (; len < max_elems; len++)
+    // Handle the ConstantAggregateZero case
+    if (ConstantAggregateZero* CAZ = dyn_cast<ConstantAggregateZero>(INTLZR))
+    {
+      // This is a degenerate case. The initializer is constant zero so the
+      // length of the string must be zero.
+      len = 0;
+      return true;
+    }
+
+    // Must be a Constant Array
+    ConstantArray* A = dyn_cast<ConstantArray>(INTLZR);
+    if (!A)
+      return false;
+
+    // Get the number of elements in the array
+    uint64_t max_elems = A->getType()->getNumElements();
+
+    // Traverse the constant array from start_idx (derived above) which is
+    // the place the GEP refers to in the array. 
+    for ( len = start_idx; len < max_elems; len++)
     {
       if (ConstantInt* CI = dyn_cast<ConstantInt>(A->getOperand(len)))
       {
@@ -207,6 +224,9 @@ namespace {
     }
     if (len >= max_elems)
       return false; // This array isn't null terminated
+
+    // Subtract out the initial value from the length
+    len -= start_idx;
     return true; // success!
   }
 }
@@ -283,10 +303,9 @@ struct ExitInMainOptimization : public CallOptimizer
   // type, external linkage, not varargs). 
   virtual bool ValidateCalledFunction(const Function* f)
   {
-    if (f->getReturnType()->getTypeID() == Type::VoidTyID && !f->isVarArg())
-      if (f->arg_size() == 1)
-        if (f->arg_begin()->getType()->isInteger())
-          return true;
+    if (f->arg_size() >= 1)
+      if (f->arg_begin()->getType()->isInteger())
+        return true;
     return false;
   }
 
@@ -395,81 +414,55 @@ public:
     // Extract the initializer (while making numerous checks) from the 
     // source operand of the call to strcat. If we get null back, one of
     // a variety of checks in get_GVInitializer failed
-    Constant* INTLZR = get_GVInitializer(ci->getOperand(2));
-    if (!INTLZR)
+    uint64_t len = 0;
+    if (!getConstantStringLength(ci->getOperand(2),len))
       return false;
 
-    // Handle the ConstantArray case.
-    if (ConstantArray* A = dyn_cast<ConstantArray>(INTLZR))
+    // Handle the simple, do-nothing case
+    if (len == 0)
     {
-      // First off, we can't do this if the constant array isn't a string, 
-      // meaning its base type is sbyte and its constant initializers for all
-      // the elements are constantInt or constantInt expressions.
-      if (!A->isString())
-        return false;
-
-      // Now we need to examine the source string to find its actual length. We
-      // can't rely on the size of the constant array becasue there could be a
-      // null terminator in the middle of the array. We also have to bail out if
-      // we find a non-integer constant initializer of one of the elements. 
-      // Also, if we never find a terminator before the end of the array.
-      unsigned max_elems = A->getType()->getNumElements();
-      unsigned len = 0;
-      if (!getCharArrayLength(A,len))
-        return false;
-      else
-        len++; // increment for null terminator
-
-      // Extract some information from the instruction
-      Module* M = ci->getParent()->getParent()->getParent();
-
-      // We need to find the end of the destination string.  That's where the 
-      // memory is to be moved to. We just generate a call to strlen (further 
-      // optimized in another pass). Note that the get_strlen_func() call 
-      // caches the Function* for us.
-      CallInst* strlen_inst = 
-        new CallInst(get_strlen_func(M),ci->getOperand(1),"",ci);
-
-      // Now that we have the destination's length, we must index into the 
-      // destination's pointer to get the actual memcpy destination (end of
-      // the string .. we're concatenating).
-      std::vector<Value*> idx;
-      idx.push_back(strlen_inst);
-      GetElementPtrInst* gep = 
-        new GetElementPtrInst(ci->getOperand(1),idx,"",ci);
-
-      // We have enough information to now generate the memcpy call to
-      // do the concatenation for us.
-      std::vector<Value*> vals;
-      vals.push_back(gep); // destination
-      vals.push_back(ci->getOperand(2)); // source
-      vals.push_back(ConstantSInt::get(Type::IntTy,len)); // length
-      vals.push_back(ConstantSInt::get(Type::IntTy,1)); // alignment
-      CallInst* memcpy_inst = 
-        new CallInst(get_memcpy_func(M), vals, "", ci);
-
-      // Finally, substitute the first operand of the strcat call for the 
-      // strcat call itself since strcat returns its first operand; and, 
-      // kill the strcat CallInst.
       ci->replaceAllUsesWith(ci->getOperand(1));
       ci->eraseFromParent();
       return true;
     }
 
-    // Handle the ConstantAggregateZero case
-    else if (ConstantAggregateZero* CAZ = 
-        dyn_cast<ConstantAggregateZero>(INTLZR))
-    {
-      // We know this is the zero length string case so we can just avoid
-      // the strcat altogether and replace the CallInst with its first operand
-      // (what strcat returns).
-      ci->replaceAllUsesWith(ci->getOperand(1));
-      ci->eraseFromParent();
-      return true;
-    }
+    // Increment the length because we actually want to memcpy the null
+    // terminator as well.
+    len++;
 
-    // We didn't pass the criteria for this optimization so return false.
-    return false;
+    // Extract some information from the instruction
+    Module* M = ci->getParent()->getParent()->getParent();
+
+    // We need to find the end of the destination string.  That's where the 
+    // memory is to be moved to. We just generate a call to strlen (further 
+    // optimized in another pass). Note that the get_strlen_func() call 
+    // caches the Function* for us.
+    CallInst* strlen_inst = 
+      new CallInst(get_strlen_func(M),ci->getOperand(1),"",ci);
+
+    // Now that we have the destination's length, we must index into the 
+    // destination's pointer to get the actual memcpy destination (end of
+    // the string .. we're concatenating).
+    std::vector<Value*> idx;
+    idx.push_back(strlen_inst);
+    GetElementPtrInst* gep = 
+      new GetElementPtrInst(ci->getOperand(1),idx,"",ci);
+
+    // We have enough information to now generate the memcpy call to
+    // do the concatenation for us.
+    std::vector<Value*> vals;
+    vals.push_back(gep); // destination
+    vals.push_back(ci->getOperand(2)); // source
+    vals.push_back(ConstantSInt::get(Type::IntTy,len)); // length
+    vals.push_back(ConstantSInt::get(Type::IntTy,1)); // alignment
+    CallInst* memcpy_inst = new CallInst(get_memcpy_func(M), vals, "", ci);
+
+    // Finally, substitute the first operand of the strcat call for the 
+    // strcat call itself since strcat returns its first operand; and, 
+    // kill the strcat CallInst.
+    ci->replaceAllUsesWith(ci->getOperand(1));
+    ci->eraseFromParent();
+    return true;
   }
 } StrCatOptimizer;
 
@@ -496,36 +489,14 @@ struct StrLenOptimization : public CallOptimizer
   /// @brief Perform the strlen optimization
   virtual bool OptimizeCall(CallInst* ci)
   {
-    // Extract the initializer (while making numerous checks) from the 
-    // source operand of the call to strlen. If we get null back, one of
-    // a variety of checks in get_GVInitializer failed
-    Constant* INTLZR = get_GVInitializer(ci->getOperand(1));
-    if (!INTLZR)
+    // Get the length of the string
+    uint64_t len = 0;
+    if (!getConstantStringLength(ci->getOperand(1),len))
       return false;
 
-    if (ConstantArray* A = dyn_cast<ConstantArray>(INTLZR))
-    {
-      unsigned len = 0;
-      if (!getCharArrayLength(A,len))
-        return false;
-      ci->replaceAllUsesWith(ConstantInt::get(Type::IntTy,len));
-      ci->eraseFromParent();
-      return true;
-    }
-
-    // Handle the ConstantAggregateZero case
-    else if (ConstantAggregateZero* CAZ = 
-        dyn_cast<ConstantAggregateZero>(INTLZR))
-    {
-      // We know this is the zero length string case so we can just avoid
-      // the strlen altogether and replace the CallInst with zero
-      ci->replaceAllUsesWith(ConstantInt::get(Type::IntTy,0));
-      ci->eraseFromParent();
-      return true;
-    }
-
-    // We didn't pass the criteria for this optimization so return false.
-    return false;
+    ci->replaceAllUsesWith(ConstantInt::get(Type::IntTy,len));
+    ci->eraseFromParent();
+    return true;
   }
 } StrLenOptimizer;
 
@@ -542,7 +513,7 @@ struct MemCpyOptimization : public CallOptimizer
   virtual bool ValidateCalledFunction(const Function* f)
   {
     if (f->getReturnType() == PointerType::get(Type::SByteTy))
-      if (f->arg_size() == 2) 
+      if (f->arg_size() == 4) 
       {
         Function::const_arg_iterator AI = f->arg_begin();
         if (AI++->getType() == PointerType::get(Type::SByteTy))
@@ -554,13 +525,57 @@ struct MemCpyOptimization : public CallOptimizer
     return false;
   }
 
-  /// Perform the optimization if the length of the string concatenated
-  /// is reasonably short and it is a constant array.
+  /// Because of alignment and instruction information that we don't have, we
+  /// leave the bulk of this to the code generators. The optimization here just
+  /// deals with a few degenerate cases where the length of the string and the
+  /// alignment match the sizes of our intrinsic types so we can do a load and
+  /// store instead of the memcpy call.
+  /// @brief Perform the memcpy optimization.
   virtual bool OptimizeCall(CallInst* ci)
   {
-    // 
-    // We didn't pass the criteria for this optimization so return false.
-    return false;
+    ConstantInt* CI = dyn_cast<ConstantInt>(ci->getOperand(3));
+    assert(CI && "Operand should be ConstantInt");
+    uint64_t len = CI->getRawValue();
+    CI = dyn_cast<ConstantInt>(ci->getOperand(4));
+    assert(CI && "Operand should be ConstantInt");
+    uint64_t alignment = CI->getRawValue();
+    if (len != alignment)
+      return false;
+
+    Value* dest = ci->getOperand(1);
+    Value* src = ci->getOperand(2);
+    LoadInst* LI = 0;
+    CastInst* SrcCast = 0;
+    CastInst* DestCast = 0;
+    switch (len)
+    {
+      case 1:
+        SrcCast = new CastInst(src,PointerType::get(Type::SByteTy),"",ci);
+        DestCast = new CastInst(dest,PointerType::get(Type::SByteTy),"",ci);
+        LI = new LoadInst(SrcCast,"",ci);
+        break;
+      case 2:
+        SrcCast = new CastInst(src,PointerType::get(Type::ShortTy),"",ci);
+        DestCast = new CastInst(dest,PointerType::get(Type::ShortTy),"",ci);
+        LI = new LoadInst(SrcCast,"",ci);
+        break;
+      case 4:
+        SrcCast = new CastInst(src,PointerType::get(Type::IntTy),"",ci);
+        DestCast = new CastInst(dest,PointerType::get(Type::IntTy),"",ci);
+        LI = new LoadInst(SrcCast,"",ci);
+        break;
+      case 8:
+        SrcCast = new CastInst(src,PointerType::get(Type::LongTy),"",ci);
+        DestCast = new CastInst(dest,PointerType::get(Type::LongTy),"",ci);
+        LI = new LoadInst(SrcCast,"",ci);
+        break;
+      default:
+        return false;
+    }
+    StoreInst* SI = new StoreInst(LI, DestCast, ci);
+    ci->replaceAllUsesWith(dest);
+    ci->eraseFromParent();
+    return true;
   }
 } MemCpyOptimizer;
 }
