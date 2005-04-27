@@ -104,6 +104,7 @@ namespace {
   private:
     const char* func_name;
 #ifndef NDEBUG
+    std::string stat_name;
     Statistic<> activations; 
 #endif
   };
@@ -115,7 +116,8 @@ namespace {
   CallOptimizer::CallOptimizer(const char* fname)
     : func_name(fname)
 #ifndef NDEBUG
-    , activations(fname,"Number of calls simplified") 
+    , stat_name(std::string("simplify-libcalls:")+fname)
+    , activations(stat_name.c_str(),"Number of calls simplified") 
 #endif
   {
     // Register this call optimizer
