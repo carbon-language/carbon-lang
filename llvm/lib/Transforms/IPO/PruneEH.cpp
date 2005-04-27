@@ -170,7 +170,7 @@ bool PruneEH::SimplifyFunction(Function *F) {
           MadeChange = true;
         }
 
-    for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; I)
+    for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; )
       if (CallInst *CI = dyn_cast<CallInst>(I++))
         if (Function *Callee = CI->getCalledFunction())
           if (DoesNotReturn.count(CG[Callee]) && !isa<UnreachableInst>(I)) {
