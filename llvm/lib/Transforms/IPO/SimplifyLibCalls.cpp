@@ -37,23 +37,33 @@ namespace {
 Statistic<> SimplifiedLibCalls("simplify-libcalls", 
   "Number of well-known library calls simplified");
 
-/// @brief The list of optimizations deriving from LibCallOptimization
+// Forward declarations
 class LibCallOptimization;
 class SimplifyLibCalls;
+
+/// @brief The list of optimizations deriving from LibCallOptimization
 hash_map<std::string,LibCallOptimization*> optlist;
 
 /// This class is the abstract base class for the set of optimizations that
-/// corresponds to one library call. The SimplifyLibCall pass will call the
+/// corresponds to one library call. The SimplifyLibCalls pass will call the
 /// ValidateCalledFunction method to ask the optimization if a given Function
-/// is the kind that the optimization can handle. It will also call the
-/// OptimizeCall method to perform, or attempt to perform, the optimization(s)
-/// for the library call. Subclasses of this class are located toward the
-/// end of this file.
+/// is the kind that the optimization can handle. If the subclass returns true,
+/// then SImplifyLibCalls will also call the OptimizeCall method to perform, 
+/// or attempt to perform, the optimization(s) for the library call. Otherwise,
+/// OptimizeCall won't be called. Subclasses are responsible for providing the
+/// name of the library call (strlen, strcpy, etc.) to the LibCallOptimization
+/// constructor. This is used to efficiently select which call instructions to
+/// optimize. The criteria for a "lib call" is "anything with well known 
+/// semantics", typically a library function that is defined by an international
+/// standard. Because the semantics are well known, the optimizations can 
+/// generally short-circuit actually calling the function if there's a simpler
+/// way (e.g. strlen(X) can be reduced to a constant if X is a constant global).
 /// @brief Base class for library call optimizations
 struct LibCallOptimization
 {
-  /// @brief Constructor that registers the optimization. The \p fname argument
-  /// must be the name of the library function being optimized by the subclass.
+  /// The \p fname argument must be the name of the library function being 
+  /// optimized by the subclass.
+  /// @brief Constructor that registers the optimization.
   LibCallOptimization(const char * fname )
     : func_name(fname)
 #ifndef NDEBUG
@@ -61,22 +71,23 @@ struct LibCallOptimization
     , occurrences(stat_name.c_str(),"Number of calls simplified") 
 #endif
   {
-    // Register this call optimizer
+    // Register this call optimizer in the optlist (a hash_map)
     optlist[func_name] = this;
   }
 
-  /// @brief Destructor
-  virtual ~LibCallOptimization() {}
+  /// @brief Deregister from the optlist
+  virtual ~LibCallOptimization() { optlist.erase(func_name); }
 
   /// The implementation of this function in subclasses should determine if
   /// \p F is suitable for the optimization. This method is called by 
-  /// runOnModule to short circuit visiting all the call sites of such a
-  /// function if that function is not suitable in the first place.
-  /// If the called function is suitabe, this method should return true;
+  /// SimplifyLibCalls::runOnModule to short circuit visiting all the call 
+  /// sites of such a function if that function is not suitable in the first 
+  /// place.  If the called function is suitabe, this method should return true;
   /// false, otherwise. This function should also perform any lazy 
   /// initialization that the LibCallOptimization needs to do, if its to return 
   /// true. This avoids doing initialization until the optimizer is actually
   /// going to be called upon to do some optimization.
+  /// @brief Determine if the function is suitable for optimization
   virtual bool ValidateCalledFunction(
     const Function* F,    ///< The function that is the target of call sites
     SimplifyLibCalls& SLC ///< The pass object invoking us
@@ -88,8 +99,6 @@ struct LibCallOptimization
   /// the call and (b) to perform the optimization. If an action is taken 
   /// against ci, the subclass is responsible for returning true and ensuring
   /// that ci is erased from its parent.
-  /// @param ci the call instruction under consideration
-  /// @param f the function that ci calls.
   /// @brief Optimize a call, if possible.
   virtual bool OptimizeCall(
     CallInst* ci,          ///< The call instruction that should be optimized.
@@ -100,7 +109,8 @@ struct LibCallOptimization
   const char * getFunctionName() const { return func_name; }
 
 #ifndef NDEBUG
-  void occurred() { ++occurrences; }
+  /// @brief Called by SimplifyLibCalls to update the occurrences statistic.
+  void succeeded() { ++occurrences; }
 #endif
 
 private:
@@ -111,23 +121,19 @@ private:
 #endif
 };
 
-/// This class is the base class for a set of small but important 
-/// optimizations of calls to well-known functions, such as those in the c
-/// library. 
-
 /// This class is an LLVM Pass that applies each of the LibCallOptimization 
 /// instances to all the call sites in a module, relatively efficiently. The
 /// purpose of this pass is to provide optimizations for calls to well-known 
 /// functions with well-known semantics, such as those in the c library. The
-/// class provides the basic infrastructure for handling runOnModule.  
-/// Whenever this pass finds a function call, it asks the subclasses to 
-/// validate the call by calling ValidateLibraryCall. If it is validated, then
-/// the OptimizeCall method is called. 
+/// class provides the basic infrastructure for handling runOnModule.  Whenever /// this pass finds a function call, it asks the appropriate optimizer to 
+/// validate the call (ValidateLibraryCall). If it is validated, then
+/// the OptimizeCall method is also called.
 /// @brief A ModulePass for optimizing well-known function calls.
 struct SimplifyLibCalls : public ModulePass 
 {
   /// We need some target data for accurate signature details that are
   /// target dependent. So we require target data in our AnalysisUsage.
+  /// @brief Require TargetData from AnalysisUsage.
   virtual void getAnalysisUsage(AnalysisUsage& Info) const
   {
     // Ask that the TargetData analysis be performed before us so we can use
@@ -137,6 +143,7 @@ struct SimplifyLibCalls : public ModulePass
 
   /// For this pass, process all of the function calls in the module, calling
   /// ValidateLibraryCall and OptimizeCall as appropriate.
+  /// @brief Run all the lib call optimizations on a Module.
   virtual bool runOnModule(Module &M)
   {
     reset(M);
@@ -183,7 +190,7 @@ struct SimplifyLibCalls : public ModulePass
               ++SimplifiedLibCalls;
               found_optimization = result = true;
 #ifndef NDEBUG
-              CO->occurred();
+              CO->succeeded();
 #endif
             }
           }
@@ -230,10 +237,8 @@ struct SimplifyLibCalls : public ModulePass
     return memcpy_func;
   }
 
-  /// @brief Compute length of constant string
-  bool getConstantStringLength(Value* V, uint64_t& len );
-
 private:
+  /// @brief Reset our cached data for a new Module
   void reset(Module& mod)
   {
     M = &mod;
@@ -243,10 +248,10 @@ private:
   }
 
 private:
-  Function* memcpy_func;
-  Function* strlen_func;
-  Module* M;
-  TargetData* TD;
+  Function* memcpy_func; ///< Cached llvm.memcpy function
+  Function* strlen_func; ///< Cached strlen function
+  Module* M;             ///< Cached Module
+  TargetData* TD;        ///< Cached TargetData
 };
 
 // Register the pass
@@ -272,9 +277,8 @@ bool getConstantStringLength(Value* V, uint64_t& len );
 
 /// This LibCallOptimization will find instances of a call to "exit" that occurs
 /// within the "main" function and change it to a simple "ret" instruction with
-/// the same value as passed to the exit function. It assumes that the 
-/// instructions after the call to exit(3) can be deleted since they are 
-/// unreachable anyway.
+/// the same value passed to the exit function. When this is done, it splits the
+/// basic block at the exit(3) call and deletes the call instruction.
 /// @brief Replace calls to exit in main with a simple return
 struct ExitInMainOptimization : public LibCallOptimization
 {
@@ -335,16 +339,18 @@ struct ExitInMainOptimization : public LibCallOptimization
 /// This LibCallOptimization will simplify a call to the strcat library 
 /// function. The simplification is possible only if the string being 
 /// concatenated is a constant array or a constant expression that results in 
-/// a constant array. In this case, if the array is small, we can generate a 
-/// series of inline store instructions to effect the concatenation without 
-/// calling strcat.
+/// a constant string. In this case we can replace it with strlen + llvm.memcpy 
+/// of the constant string. Both of these calls are further reduced, if possible
+/// on subsequent passes.
 /// @brief Simplify the strcat library function.
 struct StrCatOptimization : public LibCallOptimization
 {
 public:
+  /// @brief Default constructor
   StrCatOptimization() : LibCallOptimization("strcat") {}
 
 public:
+  /// @breif  Destructor
   virtual ~StrCatOptimization() {}
 
   /// @brief Make sure that the "strcat" function has the right prototype
@@ -425,8 +431,8 @@ public:
   }
 } StrCatOptimizer;
 
-/// This LibCallOptimization will simplify a call to the strcpy library function. 
-/// Several optimizations are possible: 
+/// This LibCallOptimization will simplify a call to the strcpy library 
+/// function.  Two optimizations are possible: 
 /// (1) If src and dest are the same and not volatile, just return dest
 /// (2) If the src is a constant then we can convert to llvm.memmove
 /// @brief Simplify the strcpy library function.
@@ -514,9 +520,9 @@ public:
   }
 } StrCpyOptimizer;
 
-/// This LibCallOptimization will simplify a call to the strlen library function by
-/// replacing it with a constant value if the string provided to it is a 
-/// constant array.
+/// This LibCallOptimization will simplify a call to the strlen library 
+/// function by replacing it with a constant value if the string provided to 
+/// it is a constant array.
 /// @brief Simplify the strlen library function.
 struct StrLenOptimization : public LibCallOptimization
 {
@@ -549,16 +555,20 @@ struct StrLenOptimization : public LibCallOptimization
   }
 } StrLenOptimizer;
 
-/// This LibCallOptimization will simplify a call to the memcpy library function by
-/// expanding it out to a single store of size 0, 1, 2, 4, or 8 bytes depending
-/// on the length of the string and the alignment.
+/// This LibCallOptimization will simplify a call to the memcpy library 
+/// function by expanding it out to a single store of size 0, 1, 2, 4, or 8 
+/// bytes depending on the length of the string and the alignment. Additional
+/// optimizations are possible in code generation (sequence of immediate store)
 /// @brief Simplify the memcpy library function.
 struct MemCpyOptimization : public LibCallOptimization
 {
+  /// @brief Default Constructor
   MemCpyOptimization() : LibCallOptimization("llvm.memcpy") {}
 protected:
+  /// @brief Subclass Constructor 
   MemCpyOptimization(const char* fname) : LibCallOptimization(fname) {}
 public:
+  /// @brief Destructor
   virtual ~MemCpyOptimization() {}
 
   /// @brief Make sure that the "memcpy" function has the right prototype
@@ -620,19 +630,27 @@ public:
   }
 } MemCpyOptimizer;
 
-/// This LibCallOptimization will simplify a call to the memmove library function. /// It is identical to MemCopyOptimization except for the name of the intrinsic.
+/// This LibCallOptimization will simplify a call to the memmove library 
+/// function. It is identical to MemCopyOptimization except for the name of 
+/// the intrinsic.
 /// @brief Simplify the memmove library function.
 struct MemMoveOptimization : public MemCpyOptimization
 {
+  /// @brief Default Constructor
   MemMoveOptimization() : MemCpyOptimization("llvm.memmove") {}
 
 } MemMoveOptimizer;
 
-/// A function to compute the length of a null-terminated string of integers.
-/// This function can't rely on the size of the constant array because there 
-/// could be a null terminator in the middle of the array. We also have to 
-/// bail out if we find a non-integer constant initializer of one of the 
-/// elements or if there is no null-terminator. The logic below checks
+/// A function to compute the length of a null-terminated constant array of
+/// integers.  This function can't rely on the size of the constant array 
+/// because there could be a null terminator in the middle of the array. 
+/// We also have to bail out if we find a non-integer constant initializer 
+/// of one of the elements or if there is no null-terminator. The logic 
+/// below checks each of these conditions and will return true only if all
+/// conditions are met. In that case, the \p len parameter is set to the length
+/// of the null-terminated string. If false is returned, the conditions were
+/// not met and len is set to 0.
+/// @brief Get the length of a constant string (null-terminated array).
 bool getConstantStringLength(Value* V, uint64_t& len )
 {
   assert(V != 0 && "Invalid args to getConstantStringLength");
@@ -722,7 +740,6 @@ bool getConstantStringLength(Value* V, uint64_t& len )
   len -= start_idx;
   return true; // success!
 }
-
 
 // TODO: Additional cases that we need to add to this file:
 // 1. memmove -> memcpy if src is a global constant array
