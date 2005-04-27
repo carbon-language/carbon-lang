@@ -565,20 +565,20 @@ unsigned lefevre(const std::string inString,
   bool f;
   std::map<const int, int> w;
 
-  for(int i=0; i<p.size(); i++) {
-    for(int j=0; j<i; j++) {
+  for(unsigned i=0; i<p.size(); i++) {
+    for(unsigned j=0; j<i; j++) {
       w[p[i]-p[j]]++;
     }
   }
 
-  for(int i=1; i<n.size(); i++) {
-    for(int j=0; j<i; j++) {
+  for(unsigned i=1; i<n.size(); i++) {
+    for(unsigned j=0; j<i; j++) {
       w[n[i]-n[j]]++;
     }
   }
 
-  for(int i=0; i<p.size(); i++) {
-    for(int j=0; j<n.size(); j++) {
+  for(unsigned i=0; i<p.size(); i++) {
+    for(unsigned j=0; j<n.size(); j++) {
       w[-abs(p[i]-n[j])]++;
     }
   }
@@ -606,7 +606,7 @@ unsigned lefevre(const std::string inString,
 
     if(int_d>0) {
       
-      for(int base=0; base<retstring.size(); base++) {
+      for(unsigned base=0; base<retstring.size(); base++) {
 	if( ((base+z+1) < retstring.size()) &&
 	   retstring.c_str()[base]=='P' &&
 	   retstring.c_str()[base+z+1]=='P')
@@ -618,7 +618,7 @@ unsigned lefevre(const std::string inString,
 	}
       }
 
-      for(int base=0; base<retstring.size(); base++) {
+      for(unsigned base=0; base<retstring.size(); base++) {
 	if( ((base+z+1) < retstring.size()) &&
 	   retstring.c_str()[base]=='N' &&
 	   retstring.c_str()[base+z+1]=='N')
@@ -631,7 +631,7 @@ unsigned lefevre(const std::string inString,
       }
 
     } else {
-      for(int base=0; base<retstring.size(); base++) {
+      for(unsigned base=0; base<retstring.size(); base++) {
 	if( ((base+z+1) < retstring.size()) &&
 	    ((retstring.c_str()[base]=='P' &&
 	     retstring.c_str()[base+z+1]=='N') ||
@@ -661,12 +661,12 @@ unsigned lefevre(const std::string inString,
 
   u = t;
   
-  for(int i=0; i<t.length(); i++) {
+  for(unsigned i=0; i<t.length(); i++) {
     if(t.c_str()[i]=='p' || t.c_str()[i]=='n')
       t.replace(i, 1, "0");
   }
 
-  for(int i=0; i<u.length(); i++) {
+  for(unsigned i=0; i<u.length(); i++) {
     if(u.c_str()[i]=='P' || u.c_str()[i]=='N')
       u.replace(i, 1, "0");
     if(u.c_str()[i]=='p')
@@ -682,7 +682,7 @@ unsigned lefevre(const std::string inString,
     f=false;
   
   bool hit=true;
-  for(int i=0; i<u.length(); i++) {
+  for(unsigned i=0; i<u.length(); i++) {
     if(u[i]!='0')
       if(u[i]!='N') {
 	hit=false;
@@ -693,7 +693,7 @@ unsigned lefevre(const std::string inString,
   int g=0;
   if(hit) {
     g=1;
-    for(int p=0; p<u.length(); p++) {
+    for(unsigned p=0; p<u.length(); p++) {
       bool isP=(u.c_str()[p]=='P');
       bool isN=(u.c_str()[p]=='N');
 
@@ -725,7 +725,7 @@ unsigned lefevre(const std::string inString,
 
   if(t.c_str()[0]!='P') {
     g=2;
-    for(int p=0; p<t.length(); p++) {
+    for(unsigned p=0; p<t.length(); p++) {
       bool isP=(t.c_str()[p]=='P');
       bool isN=(t.c_str()[p]=='N');
 
@@ -808,7 +808,7 @@ SDOperand ISel::BuildConstmulSequence(SDOperand N) {
   SDOperand results[ops.size()]; // temporary results (of adds/subs of shifts)
   
   // now turn 'ops' into DAG bits
-  for(int i=0; i<ops.size(); i++) {
+  for(unsigned i=0; i<ops.size(); i++) {
     SDOperand amt = ISelDAG->getConstant(ops[i].firstShift, MVT::i64);
     SDOperand val = (ops[i].firstVal == 0) ? N.getOperand(0) :
       results[ops[i].firstVal-1];
