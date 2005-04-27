@@ -267,6 +267,7 @@ ModulePass *llvm::createSimplifyLibCallsPass()
 // auto registers it into the "optlist" global above. 
 namespace {
 
+// Forward declare a utility function.
 bool getConstantStringLength(Value* V, uint64_t& len );
 
 /// This LibCallOptimization will find instances of a call to "exit" that occurs
@@ -366,17 +367,22 @@ public:
   /// @brief Optimize the strcat library function
   virtual bool OptimizeCall(CallInst* ci, SimplifyLibCalls& SLC)
   {
+    // Extract some information from the instruction
+    Module* M = ci->getParent()->getParent()->getParent();
+    Value* dest = ci->getOperand(1);
+    Value* src  = ci->getOperand(2);
+
     // Extract the initializer (while making numerous checks) from the 
     // source operand of the call to strcat. If we get null back, one of
     // a variety of checks in get_GVInitializer failed
     uint64_t len = 0;
-    if (!getConstantStringLength(ci->getOperand(2),len))
+    if (!getConstantStringLength(src,len))
       return false;
 
     // Handle the simple, do-nothing case
     if (len == 0)
     {
-      ci->replaceAllUsesWith(ci->getOperand(1));
+      ci->replaceAllUsesWith(dest);
       ci->eraseFromParent();
       return true;
     }
@@ -385,15 +391,13 @@ public:
     // terminator as well.
     len++;
 
-    // Extract some information from the instruction
-    Module* M = ci->getParent()->getParent()->getParent();
 
     // We need to find the end of the destination string.  That's where the 
     // memory is to be moved to. We just generate a call to strlen (further 
     // optimized in another pass).  Note that the SLC.get_strlen() call 
     // caches the Function* for us.
     CallInst* strlen_inst = 
-      new CallInst(SLC.get_strlen(), ci->getOperand(1),"",ci);
+      new CallInst(SLC.get_strlen(), dest, dest->getName()+".len",ci);
 
     // Now that we have the destination's length, we must index into the 
     // destination's pointer to get the actual memcpy destination (end of
@@ -401,7 +405,7 @@ public:
     std::vector<Value*> idx;
     idx.push_back(strlen_inst);
     GetElementPtrInst* gep = 
-      new GetElementPtrInst(ci->getOperand(1),idx,"",ci);
+      new GetElementPtrInst(dest,idx,dest->getName()+".indexed",ci);
 
     // We have enough information to now generate the memcpy call to
     // do the concatenation for us.
@@ -410,12 +414,12 @@ public:
     vals.push_back(ci->getOperand(2)); // source
     vals.push_back(ConstantSInt::get(Type::IntTy,len)); // length
     vals.push_back(ConstantSInt::get(Type::IntTy,1)); // alignment
-    CallInst* memcpy_inst = new CallInst(SLC.get_memcpy(), vals, "", ci);
+    new CallInst(SLC.get_memcpy(), vals, "", ci);
 
     // Finally, substitute the first operand of the strcat call for the 
     // strcat call itself since strcat returns its first operand; and, 
     // kill the strcat CallInst.
-    ci->replaceAllUsesWith(ci->getOperand(1));
+    ci->replaceAllUsesWith(dest);
     ci->eraseFromParent();
     return true;
   }
@@ -499,7 +503,7 @@ public:
     vals.push_back(src); // source
     vals.push_back(ConstantSInt::get(Type::IntTy,len)); // length
     vals.push_back(ConstantSInt::get(Type::IntTy,1)); // alignment
-    CallInst* memcpy_inst = new CallInst(SLC.get_memcpy(), vals, "", ci);
+    new CallInst(SLC.get_memcpy(), vals, "", ci);
 
     // Finally, substitute the first operand of the strcat call for the 
     // strcat call itself since strcat returns its first operand; and, 
@@ -586,36 +590,30 @@ public:
     if (len > alignment)
       return false;
 
+    // Get the type we will cast to, based on size of the string
     Value* dest = ci->getOperand(1);
     Value* src = ci->getOperand(2);
-    CastInst* SrcCast = 0;
-    CastInst* DestCast = 0;
+    Type* castType = 0;
     switch (len)
     {
       case 0:
         // The memcpy is a no-op so just dump its call.
         ci->eraseFromParent();
         return true;
-      case 1:
-        SrcCast = new CastInst(src,PointerType::get(Type::SByteTy),"",ci);
-        DestCast = new CastInst(dest,PointerType::get(Type::SByteTy),"",ci);
-        break;
-      case 2:
-        SrcCast = new CastInst(src,PointerType::get(Type::ShortTy),"",ci);
-        DestCast = new CastInst(dest,PointerType::get(Type::ShortTy),"",ci);
-        break;
-      case 4:
-        SrcCast = new CastInst(src,PointerType::get(Type::IntTy),"",ci);
-        DestCast = new CastInst(dest,PointerType::get(Type::IntTy),"",ci);
-        break;
-      case 8:
-        SrcCast = new CastInst(src,PointerType::get(Type::LongTy),"",ci);
-        DestCast = new CastInst(dest,PointerType::get(Type::LongTy),"",ci);
-        break;
+      case 1: castType = Type::SByteTy; break;
+      case 2: castType = Type::ShortTy; break;
+      case 4: castType = Type::IntTy; break;
+      case 8: castType = Type::LongTy; break;
       default:
         return false;
     }
-    LoadInst* LI = new LoadInst(SrcCast,"",ci);
+
+    // Cast source and dest to the right sized primitive and then load/store
+    CastInst* SrcCast = 
+      new CastInst(src,PointerType::get(castType),src->getName()+".cast",ci);
+    CastInst* DestCast = 
+      new CastInst(dest,PointerType::get(castType),dest->getName()+".cast",ci);
+    LoadInst* LI = new LoadInst(SrcCast,SrcCast->getName()+".val",ci);
     StoreInst* SI = new StoreInst(LI, DestCast, ci);
     ci->eraseFromParent();
     return true;
