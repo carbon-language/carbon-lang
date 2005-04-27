@@ -23,7 +23,7 @@ while($d = <>)
   if (18 == scalar split " ", $d)
     {
       ($day, $mon, $year, $prog, $gccas, $bc, $llccompile, $llcbetacompile, $jitcompile,
-       $mc, $gcc, $cbe, $llc, $llcbeta, $jit, $foo1, $foo2, $foo3) = split / /, $d;
+       $mc, $gcc, $cbe, $llc, $llcbeta, $jit, $foo1, $foo2, $foo3) = split " ", $d;
       if ($gccas =~ /\d+/)
         {
           $dbh->do("INSERT INTO Tests (NAME, RUN, TEST, VALUE) VALUES
