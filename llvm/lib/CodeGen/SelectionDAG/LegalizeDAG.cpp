@@ -290,9 +290,9 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
                                             TLI.getPointerTy());
       if (Extend) {
         Result = DAG.getNode(ISD::EXTLOAD, MVT::f64, DAG.getEntryNode(), CPIdx,
-                             MVT::f32);
+                             DAG.getSrcValue(NULL), MVT::f32);
       } else {
-        Result = DAG.getLoad(VT, DAG.getEntryNode(), CPIdx);
+        Result = DAG.getLoad(VT, DAG.getEntryNode(), CPIdx, DAG.getSrcValue(NULL));
       }
     }
     break;
@@ -428,9 +428,10 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
   case ISD::LOAD:
     Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
     Tmp2 = LegalizeOp(Node->getOperand(1));  // Legalize the pointer.
+
     if (Tmp1 != Node->getOperand(0) ||
         Tmp2 != Node->getOperand(1))
-      Result = DAG.getLoad(Node->getValueType(0), Tmp1, Tmp2);
+      Result = DAG.getLoad(Node->getValueType(0), Tmp1, Tmp2, Node->getOperand(2));
     else
       Result = SDOperand(Node, 0);
 
@@ -452,7 +453,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     case TargetLowering::Promote:
       assert(SrcVT == MVT::i1 && "Can only promote EXTLOAD from i1 -> i8!");
       Result = DAG.getNode(Node->getOpcode(), Node->getValueType(0),
-                           Tmp1, Tmp2, MVT::i8);
+                           Tmp1, Tmp2, Node->getOperand(2), MVT::i8);
       // Since loads produce two values, make sure to remember that we legalized
       // both of them.
       AddLegalizedOperand(SDOperand(Node, 0), Result);
@@ -463,7 +464,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       if (Tmp1 != Node->getOperand(0) ||
           Tmp2 != Node->getOperand(1))
         Result = DAG.getNode(Node->getOpcode(), Node->getValueType(0),
-                             Tmp1, Tmp2, SrcVT);
+                             Tmp1, Tmp2, Node->getOperand(2), SrcVT);
       else
         Result = SDOperand(Node, 0);
 
@@ -478,7 +479,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       // Turn the unsupported load into an EXTLOAD followed by an explicit
       // zero/sign extend inreg.
       Result = DAG.getNode(ISD::EXTLOAD, Node->getValueType(0),
-                           Tmp1, Tmp2, SrcVT);
+                           Tmp1, Tmp2, Node->getOperand(2), SrcVT);
       SDOperand ValRes;
       if (Node->getOpcode() == ISD::SEXTLOAD)
         ValRes = DAG.getNode(ISD::SIGN_EXTEND_INREG, Result.getValueType(),
@@ -591,8 +592,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
           float    F;
         } V;
         V.F = CFP->getValue();
-        Result = DAG.getNode(ISD::STORE, MVT::Other, Tmp1,
-                             DAG.getConstant(V.I, MVT::i32), Tmp2);
+        Result = DAG.getNode(ISD::STORE, MVT::Other, Tmp1, 
+                              DAG.getConstant(V.I, MVT::i32), Tmp2, Node->getOperand(3));
       } else {
         assert(CFP->getValueType(0) == MVT::f64 && "Unknown FP type!");
         union {
@@ -600,8 +601,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
           double   F;
         } V;
         V.F = CFP->getValue();
-        Result = DAG.getNode(ISD::STORE, MVT::Other, Tmp1,
-                             DAG.getConstant(V.I, MVT::i64), Tmp2);
+        Result = DAG.getNode(ISD::STORE, MVT::Other, Tmp1, 
+                             DAG.getConstant(V.I, MVT::i64), Tmp2, Node->getOperand(3));
       }
       Node = Result.Val;
     }
@@ -611,14 +612,15 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       SDOperand Val = LegalizeOp(Node->getOperand(1));
       if (Val != Node->getOperand(1) || Tmp1 != Node->getOperand(0) ||
           Tmp2 != Node->getOperand(2))
-        Result = DAG.getNode(ISD::STORE, MVT::Other, Tmp1, Val, Tmp2);
+        Result = DAG.getNode(ISD::STORE, MVT::Other, Tmp1, Val, Tmp2, Node->getOperand(3));
       break;
     }
     case Promote:
       // Truncate the value and store the result.
       Tmp3 = PromoteOp(Node->getOperand(1));
       Result = DAG.getNode(ISD::TRUNCSTORE, MVT::Other, Tmp1, Tmp3, Tmp2,
-                           Node->getOperand(1).getValueType());
+                           Node->getOperand(3),
+                           Node->getOperand(1).getValueType()); 
       break;
 
     case Expand:
@@ -628,14 +630,16 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       if (!TLI.isLittleEndian())
         std::swap(Lo, Hi);
 
-      Lo = DAG.getNode(ISD::STORE, MVT::Other, Tmp1, Lo, Tmp2);
+      Lo = DAG.getNode(ISD::STORE, MVT::Other,Tmp1, Lo, Tmp2,Node->getOperand(3));
 
       unsigned IncrementSize = MVT::getSizeInBits(Hi.getValueType())/8;
       Tmp2 = DAG.getNode(ISD::ADD, Tmp2.getValueType(), Tmp2,
                          getIntPtrConstant(IncrementSize));
       assert(isTypeLegal(Tmp2.getValueType()) &&
              "Pointers must be legal!");
-      Hi = DAG.getNode(ISD::STORE, MVT::Other, Tmp1, Hi, Tmp2);
+      //Again, claiming both parts of the store came form the same Instr
+      Hi = DAG.getNode(ISD::STORE, MVT::Other, Tmp1, Hi, Tmp2, Node->getOperand(3));
+                              
       Result = DAG.getNode(ISD::TokenFactor, MVT::Other, Lo, Hi);
       break;
     }
@@ -655,6 +659,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(1) ||
           Tmp3 != Node->getOperand(2))
         Result = DAG.getNode(ISD::TRUNCSTORE, MVT::Other, Tmp1, Tmp2, Tmp3,
+                             Node->getOperand(3),
                              cast<MVTSDNode>(Node)->getExtraValueType());
       break;
     case Promote:
@@ -1138,9 +1143,9 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
           MF.getFrameInfo()->CreateStackObject((unsigned)TySize, Align);
         SDOperand StackSlot = DAG.getFrameIndex(SSFI, TLI.getPointerTy());
         Result = DAG.getNode(ISD::TRUNCSTORE, MVT::Other, DAG.getEntryNode(),
-                             Node->getOperand(0), StackSlot, ExtraVT);
+                             Node->getOperand(0), StackSlot, DAG.getSrcValue(NULL), ExtraVT);
         Result = DAG.getNode(ISD::EXTLOAD, Node->getValueType(0),
-                             Result, StackSlot, ExtraVT);
+                             Result, StackSlot, DAG.getSrcValue(NULL), ExtraVT);
       } else {
         assert(0 && "Unknown op");
       }
@@ -1404,9 +1409,9 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
     Tmp2 = LegalizeOp(Node->getOperand(1));   // Legalize the pointer.
     // FIXME: When the DAG combiner exists, change this to use EXTLOAD!
     if (MVT::isInteger(NVT))
-      Result = DAG.getNode(ISD::ZEXTLOAD, NVT, Tmp1, Tmp2, VT);
+      Result = DAG.getNode(ISD::ZEXTLOAD, NVT, Tmp1, Tmp2, Node->getOperand(2), VT);
     else
-      Result = DAG.getNode(ISD::EXTLOAD, NVT, Tmp1, Tmp2, VT);
+      Result = DAG.getNode(ISD::EXTLOAD, NVT, Tmp1, Tmp2, Node->getOperand(2), VT);
 
     // Remember that we legalized the chain.
     AddLegalizedOperand(Op.getValue(1), Result.getValue(1));
@@ -1846,11 +1851,11 @@ ExpandIntToFP(bool isSigned, MVT::ValueType DestTy, SDOperand Source) {
     CPIdx = DAG.getNode(ISD::ADD, TLI.getPointerTy(), CPIdx, CstOffset);
     SDOperand FudgeInReg;
     if (DestTy == MVT::f32)
-      FudgeInReg = DAG.getLoad(MVT::f32, DAG.getEntryNode(), CPIdx);
+      FudgeInReg = DAG.getLoad(MVT::f32, DAG.getEntryNode(), CPIdx, DAG.getSrcValue(NULL));
     else {
       assert(DestTy == MVT::f64 && "Unexpected conversion");
       FudgeInReg = DAG.getNode(ISD::EXTLOAD, MVT::f64, DAG.getEntryNode(),
-                               CPIdx, MVT::f32);
+                               CPIdx, DAG.getSrcValue(NULL), MVT::f32);
     }
     return DAG.getNode(ISD::ADD, DestTy, SignedConv, FudgeInReg);
   }
@@ -1941,13 +1946,15 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
   case ISD::LOAD: {
     SDOperand Ch = LegalizeOp(Node->getOperand(0));   // Legalize the chain.
     SDOperand Ptr = LegalizeOp(Node->getOperand(1));  // Legalize the pointer.
-    Lo = DAG.getLoad(NVT, Ch, Ptr);
+    Lo = DAG.getLoad(NVT, Ch, Ptr, Node->getOperand(2));
 
     // Increment the pointer to the other half.
     unsigned IncrementSize = MVT::getSizeInBits(Lo.getValueType())/8;
     Ptr = DAG.getNode(ISD::ADD, Ptr.getValueType(), Ptr,
                       getIntPtrConstant(IncrementSize));
-    Hi = DAG.getLoad(NVT, Ch, Ptr);
+    //Is this safe?  declaring that the two parts of the split load  
+    //are from the same instruction?
+    Hi = DAG.getLoad(NVT, Ch, Ptr, Node->getOperand(2));
 
     // Build a factor node to remember that this load is independent of the
     // other one.

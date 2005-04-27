@@ -1174,10 +1174,11 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
 }
 
 SDOperand SelectionDAG::getLoad(MVT::ValueType VT,
-                                SDOperand Chain, SDOperand Ptr) {
+                                SDOperand Chain, SDOperand Ptr, 
+                                SDOperand SV) {
   SDNode *&N = Loads[std::make_pair(Ptr, std::make_pair(Chain, VT))];
   if (N) return SDOperand(N, 0);
-  N = new SDNode(ISD::LOAD, Chain, Ptr);
+  N = new SDNode(ISD::LOAD, Chain, Ptr, SV);
 
   // Loads have a token chain.
   N->setValueTypes(VT, MVT::Other);
@@ -1185,9 +1186,9 @@ SDOperand SelectionDAG::getLoad(MVT::ValueType VT,
   return SDOperand(N, 0);
 }
 
-
 SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
                                 SDOperand N1, SDOperand N2, SDOperand N3) {
+  assert(Opcode != ISD::STORE && "Store shouldn't use this anymore");
   // Perform various simplifications.
   ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1.Val);
   ConstantSDNode *N2C = dyn_cast<ConstantSDNode>(N2.Val);
@@ -1315,6 +1316,27 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
 }
 
 SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
+                                SDOperand N1, SDOperand N2, SDOperand N3, 
+                                SDOperand N4) {
+  assert(Opcode == ISD::STORE && "Only stores should use this");
+
+  SDNode *N = new SDNode(Opcode, N1, N2, N3, N4);
+  N->setValueTypes(VT);
+
+  // FIXME: memoize NODES
+  AllNodes.push_back(N);
+  return SDOperand(N, 0);
+}
+
+SDOperand SelectionDAG::getSrcValue(const Value* v) {
+  SDNode *N = new SrcValueSDNode(v);
+  N->setValueTypes(MVT::Other);
+  // FIXME: memoize NODES
+  AllNodes.push_back(N);
+  return SDOperand(N, 0);
+}
+
+SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
                                 std::vector<SDOperand> &Children) {
   switch (Children.size()) {
   case 0: return getNode(Opcode, VT);
@@ -1419,7 +1441,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,SDOperand N1,
 }
 
 SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,SDOperand N1,
-                                SDOperand N2, MVT::ValueType EVT) {
+                                SDOperand N2, SDOperand N3, MVT::ValueType EVT) {
   switch (Opcode) {
   default:  assert(0 && "Bad opcode for this accessor!");
   case ISD::EXTLOAD:
@@ -1428,7 +1450,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,SDOperand N1,
     // If they are asking for an extending load from/to the same thing, return a
     // normal load.
     if (VT == EVT)
-      return getNode(ISD::LOAD, VT, N1, N2);
+      return getLoad(VT, N1, N2, N3);
     assert(EVT < VT && "Should only be an extending load, not truncating!");
     assert((Opcode == ISD::EXTLOAD || MVT::isInteger(VT)) &&
            "Cannot sign/zero extend a FP load!");
@@ -1443,16 +1465,17 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,SDOperand N1,
   NN.EVT = EVT;
   NN.Ops.push_back(N1);
   NN.Ops.push_back(N2);
+  NN.Ops.push_back(N3);
 
   SDNode *&N = MVTSDNodes[NN];
   if (N) return SDOperand(N, 0);
-  N = new MVTSDNode(Opcode, VT, MVT::Other, N1, N2, EVT);
+  N = new MVTSDNode(Opcode, VT, MVT::Other, N1, N2, N3, EVT);
   AllNodes.push_back(N);
   return SDOperand(N, 0);
 }
 
 SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,SDOperand N1,
-                                SDOperand N2, SDOperand N3, MVT::ValueType EVT) {
+                                SDOperand N2, SDOperand N3, SDOperand N4, MVT::ValueType EVT) {
   switch (Opcode) {
   default:  assert(0 && "Bad opcode for this accessor!");
   case ISD::TRUNCSTORE:
@@ -1467,7 +1490,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,SDOperand N1,
     // Also for ConstantFP?
 #endif
     if (N1.getValueType() == EVT)       // Normal store?
-      return getNode(ISD::STORE, VT, N1, N2, N3);
+      return getNode(ISD::STORE, VT, N1, N2, N3, N4);
     assert(N2.getValueType() > EVT && "Not a truncation?");
     assert(MVT::isInteger(N2.getValueType()) == MVT::isInteger(EVT) &&
            "Can't do FP-INT conversion!");
@@ -1481,10 +1504,11 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,SDOperand N1,
   NN.Ops.push_back(N1);
   NN.Ops.push_back(N2);
   NN.Ops.push_back(N3);
+  NN.Ops.push_back(N4);
 
   SDNode *&N = MVTSDNodes[NN];
   if (N) return SDOperand(N, 0);
-  N = new MVTSDNode(Opcode, VT, N1, N2, N3, EVT);
+  N = new MVTSDNode(Opcode, VT, N1, N2, N3, N4, EVT);
   AllNodes.push_back(N);
   return SDOperand(N, 0);
 }

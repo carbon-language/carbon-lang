@@ -162,6 +162,8 @@ public:
   SDOperand getNode(unsigned Opcode, MVT::ValueType VT,
                     SDOperand N1, SDOperand N2, SDOperand N3);
   SDOperand getNode(unsigned Opcode, MVT::ValueType VT,
+                    SDOperand N1, SDOperand N2, SDOperand N3, SDOperand N4);
+  SDOperand getNode(unsigned Opcode, MVT::ValueType VT,
                     std::vector<SDOperand> &Children);
 
   // getNode - These versions take an extra value type for extending and
@@ -172,11 +174,16 @@ public:
                     SDOperand N, MVT::ValueType EVT);
   SDOperand getNode(unsigned Opcode, MVT::ValueType VT, SDOperand N1,
                     SDOperand N2, SDOperand N3, MVT::ValueType EVT);
+  SDOperand getNode(unsigned Opcode, MVT::ValueType VT, SDOperand N1,
+                    SDOperand N2, SDOperand N3, SDOperand N4, MVT::ValueType EVT);
 
   /// getLoad - Loads are not normal binary operators: their result type is not
   /// determined by their operands, and they produce a value AND a token chain.
   ///
-  SDOperand getLoad(MVT::ValueType VT, SDOperand Chain, SDOperand Ptr);
+  SDOperand getLoad(MVT::ValueType VT, SDOperand Chain, SDOperand Ptr, SDOperand SV);
+
+  // getSrcValue - construct a node to track a Value* through the backend
+  SDOperand getSrcValue(const Value* I);
 
   void replaceAllUsesWith(SDOperand Old, SDOperand New) {
     assert(Old != New && "RAUW self!");

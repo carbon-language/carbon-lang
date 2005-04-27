@@ -20,6 +20,7 @@
 #define LLVM_CODEGEN_SELECTIONDAGNODES_H
 
 #include "llvm/CodeGen/ValueTypes.h"
+#include "llvm/Value.h"
 #include "llvm/ADT/GraphTraits.h"
 #include "llvm/ADT/GraphTraits.h"
 #include "llvm/ADT/iterator"
@@ -250,6 +251,11 @@ namespace ISD {
 
     // PCMARKER - This corresponds to the pcmarker intrinsic.
     PCMARKER,
+
+    // SRCVALUE - This corresponds to a Value*, and is used to carry associate
+    // memory operations with their corrosponding load.  This lets one use the
+    // pointer analysis information in the backend
+    SRCVALUE,
 
     // BUILTIN_OP_END - This must be the last enum value in this list.
     BUILTIN_OP_END,
@@ -529,6 +535,22 @@ protected:
     N1.Val->Uses.push_back(this); N2.Val->Uses.push_back(this);
     N3.Val->Uses.push_back(this);
   }
+  SDNode(unsigned NT, SDOperand N1, SDOperand N2, SDOperand N3, SDOperand N4)
+    : NodeType(NT) {
+    unsigned ND = N1.Val->getNodeDepth();
+    if (ND < N2.Val->getNodeDepth())
+      ND = N2.Val->getNodeDepth();
+    if (ND < N3.Val->getNodeDepth())
+      ND = N3.Val->getNodeDepth();
+    if (ND < N4.Val->getNodeDepth())
+      ND = N4.Val->getNodeDepth();
+    NodeDepth = ND+1;
+
+    Operands.reserve(3); Operands.push_back(N1); Operands.push_back(N2);
+    Operands.push_back(N3); Operands.push_back(N4);
+    N1.Val->Uses.push_back(this); N2.Val->Uses.push_back(this);
+    N3.Val->Uses.push_back(this); N4.Val->Uses.push_back(this);
+  }
   SDNode(unsigned NT, std::vector<SDOperand> &Nodes) : NodeType(NT) {
     Operands.swap(Nodes);
     unsigned ND = 0;
@@ -724,6 +746,22 @@ public:
   }
 };
 
+class SrcValueSDNode : public SDNode {
+  const Value *V;
+protected:
+  friend class SelectionDAG;
+  SrcValueSDNode(const Value* v)
+    : SDNode(ISD::SRCVALUE, MVT::Other), V(v) {}
+
+public:
+  const Value *getValue() const { return V; }
+
+  static bool classof(const SrcValueSDNode *) { return true; }
+  static bool classof(const SDNode *N) {
+    return N->getOpcode() == ISD::SRCVALUE;
+  }
+};
+
 
 class RegSDNode : public SDNode {
   unsigned Reg;
@@ -791,13 +829,14 @@ protected:
     setValueTypes(VT1);
   }
   MVTSDNode(unsigned Opc, MVT::ValueType VT1, MVT::ValueType VT2,
-            SDOperand Op0, SDOperand Op1, MVT::ValueType EVT)
-    : SDNode(Opc, Op0, Op1), ExtraValueType(EVT) {
-    setValueTypes(VT1, VT2);
-  }
-  MVTSDNode(unsigned Opc, MVT::ValueType VT,
             SDOperand Op0, SDOperand Op1, SDOperand Op2, MVT::ValueType EVT)
     : SDNode(Opc, Op0, Op1, Op2), ExtraValueType(EVT) {
+    setValueTypes(VT1, VT2);
+  }
+
+  MVTSDNode(unsigned Opc, MVT::ValueType VT,
+            SDOperand Op0, SDOperand Op1, SDOperand Op2, SDOperand Op3, MVT::ValueType EVT)
+    : SDNode(Opc, Op0, Op1, Op2, Op3), ExtraValueType(EVT) {
     setValueTypes(VT);
   }
 public:

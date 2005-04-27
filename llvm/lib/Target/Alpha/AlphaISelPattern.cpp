@@ -229,7 +229,7 @@ AlphaTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG)
       //from this parameter
       SDOperand FIN = DAG.getFrameIndex(FI, MVT::i64);
       argt = newroot = DAG.getLoad(getValueType(I->getType()),
-                                   DAG.getEntryNode(), FIN);
+                                   DAG.getEntryNode(), FIN, DAG.getSrcValue(NULL));
     }
     ++count;
     LS.push_back(newroot.getValue(1));
@@ -245,14 +245,14 @@ AlphaTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG)
       SDOperand argt = DAG.getCopyFromReg(Vreg, MVT::i64, Chain);
       int FI = MFI->CreateFixedObject(8, -8 * (6 - i));
       SDOperand SDFI = DAG.getFrameIndex(FI, MVT::i64);
-      LS.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain, argt, SDFI));
+      LS.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain, argt, SDFI, DAG.getSrcValue(NULL)));
 
       Vreg = MF.getSSARegMap()->createVirtualRegister(getRegClassFor(MVT::f64));
       BuildMI(&BB, Alpha::CPYS, 2, Vreg).addReg(args_float[i]).addReg(args_float[i]);
       argt = DAG.getCopyFromReg(Vreg, MVT::f64, Chain);
       FI = MFI->CreateFixedObject(8, - 8 * (12 - i));
       SDFI = DAG.getFrameIndex(FI, MVT::i64);
-      LS.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain, argt, SDFI));
+      LS.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain, argt, SDFI, DAG.getSrcValue(NULL)));
     }
 
   // If the function takes variable number of arguments, make a frame index for

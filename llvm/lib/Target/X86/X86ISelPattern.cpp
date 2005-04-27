@@ -141,7 +141,7 @@ X86TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
     // dead loads.
     SDOperand ArgValue;
     if (!I->use_empty())
-      ArgValue = DAG.getLoad(ObjectVT, DAG.getEntryNode(), FIN);
+      ArgValue = DAG.getLoad(ObjectVT, DAG.getEntryNode(), FIN, DAG.getSrcValue(NULL));
     else {
       if (MVT::isInteger(ObjectVT))
         ArgValue = DAG.getConstant(0, ObjectVT);
@@ -239,13 +239,13 @@ X86TargetLowering::LowerCallTo(SDOperand Chain,
       case MVT::i32:
       case MVT::f32:
         Stores.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
-                                     Args[i].first, PtrOff));
+                                     Args[i].first, PtrOff, DAG.getSrcValue(NULL)));
         ArgOffset += 4;
         break;
       case MVT::i64:
       case MVT::f64:
         Stores.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
-                                     Args[i].first, PtrOff));
+                                     Args[i].first, PtrOff, DAG.getSrcValue(NULL)));
         ArgOffset += 8;
         break;
       }
@@ -278,7 +278,7 @@ LowerVAArgNext(bool isVANext, SDOperand Chain, SDOperand VAList,
   MVT::ValueType ArgVT = getValueType(ArgTy);
   SDOperand Result;
   if (!isVANext) {
-    Result = DAG.getLoad(ArgVT, DAG.getEntryNode(), VAList);
+    Result = DAG.getLoad(ArgVT, DAG.getEntryNode(), VAList, DAG.getSrcValue(NULL));
   } else {
     unsigned Amt;
     if (ArgVT == MVT::i32)
@@ -312,7 +312,7 @@ LowerFrameReturnAddress(bool isFrameAddress, SDOperand Chain, unsigned Depth,
 
     if (!isFrameAddress)
       // Just load the return address
-      Result = DAG.getLoad(MVT::i32, DAG.getEntryNode(), RetAddrFI);
+      Result = DAG.getLoad(MVT::i32, DAG.getEntryNode(), RetAddrFI, DAG.getSrcValue(NULL));
     else
       Result = DAG.getNode(ISD::SUB, MVT::i32, RetAddrFI,
                            DAG.getConstant(4, MVT::i32));

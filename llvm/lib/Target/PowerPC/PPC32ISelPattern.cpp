@@ -164,7 +164,7 @@ PPC32TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
         } else {
           int FI = MFI->CreateFixedObject(4, ArgOffset+4);
           SDOperand FIN = DAG.getFrameIndex(FI, MVT::i32);
-          argLo = DAG.getLoad(MVT::i32, DAG.getEntryNode(), FIN);
+          argLo = DAG.getLoad(MVT::i32, DAG.getEntryNode(), FIN, DAG.getSrcValue(NULL));
         }
         // Build the outgoing arg thingy
         argt = DAG.getNode(ISD::BUILD_PAIR, MVT::i64, argLo, argHi);
@@ -199,7 +199,7 @@ PPC32TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
       SDOperand FIN = DAG.getFrameIndex(FI, MVT::i32);
       FIN = DAG.getNode(ISD::ADD, MVT::i32, FIN,
                         DAG.getConstant(SubregOffset, MVT::i32));
-      argt = newroot = DAG.getLoad(ObjectVT, DAG.getEntryNode(), FIN);
+      argt = newroot = DAG.getLoad(ObjectVT, DAG.getEntryNode(), FIN, DAG.getSrcValue(NULL));
     }
 
     // Every 4 bytes of argument space consumes one of the GPRs available for
@@ -229,7 +229,7 @@ PPC32TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
       MF.addLiveIn(GPR[GPR_idx]);
       SDOperand Val = DAG.getCopyFromReg(GPR[GPR_idx], MVT::i32, DAG.getRoot());
       SDOperand Store = DAG.getNode(ISD::STORE, MVT::Other, Val.getValue(1),
-                                    Val, FIN);
+                                    Val, FIN, DAG.getSrcValue(NULL));
       MemOps.push_back(Store);
       // Increment the address by four for the next argument to store
       SDOperand PtrOff = DAG.getConstant(4, getPointerTy());
@@ -343,7 +343,7 @@ PPC32TargetLowering::LowerCallTo(SDOperand Chain,
           --GPR_remaining;
         } else {
           MemOps.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
-                                          Args[i].first, PtrOff));
+                                       Args[i].first, PtrOff, DAG.getSrcValue(NULL)));
         }
         ArgOffset += 4;
         break;
@@ -365,11 +365,11 @@ PPC32TargetLowering::LowerCallTo(SDOperand Chain,
             SDOperand ConstFour = DAG.getConstant(4, getPointerTy());
             PtrOff = DAG.getNode(ISD::ADD, MVT::i32, PtrOff, ConstFour);
             MemOps.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
-                                            Lo, PtrOff));
+                                         Lo, PtrOff, DAG.getSrcValue(NULL)));
           }
         } else {
           MemOps.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
-                                          Args[i].first, PtrOff));
+                                       Args[i].first, PtrOff, DAG.getSrcValue(NULL)));
         }
         ArgOffset += 8;
         break;
@@ -380,11 +380,11 @@ PPC32TargetLowering::LowerCallTo(SDOperand Chain,
           --FPR_remaining;
           if (isVarArg) {
             SDOperand Store = DAG.getNode(ISD::STORE, MVT::Other, Chain,
-                                          Args[i].first, PtrOff);
+                                          Args[i].first, PtrOff, DAG.getSrcValue(NULL));
             MemOps.push_back(Store);
             // Float varargs are always shadowed in available integer registers
             if (GPR_remaining > 0) {
-              SDOperand Load = DAG.getLoad(MVT::i32, Store, PtrOff);
+              SDOperand Load = DAG.getLoad(MVT::i32, Store, PtrOff, DAG.getSrcValue(NULL));
               MemOps.push_back(Load);
               args_to_use.push_back(Load);
               --GPR_remaining;
@@ -392,7 +392,7 @@ PPC32TargetLowering::LowerCallTo(SDOperand Chain,
             if (GPR_remaining > 0 && MVT::f64 == ArgVT) {
               SDOperand ConstFour = DAG.getConstant(4, getPointerTy());
               PtrOff = DAG.getNode(ISD::ADD, MVT::i32, PtrOff, ConstFour);
-              SDOperand Load = DAG.getLoad(MVT::i32, Store, PtrOff);
+              SDOperand Load = DAG.getLoad(MVT::i32, Store, PtrOff, DAG.getSrcValue(NULL));
               MemOps.push_back(Load);
               args_to_use.push_back(Load);
               --GPR_remaining;
@@ -412,7 +412,7 @@ PPC32TargetLowering::LowerCallTo(SDOperand Chain,
           }
         } else {
           MemOps.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
-                                          Args[i].first, PtrOff));
+                                       Args[i].first, PtrOff, DAG.getSrcValue(NULL)));
         }
         ArgOffset += (ArgVT == MVT::f32) ? 4 : 8;
         break;
@@ -448,7 +448,7 @@ LowerVAArgNext(bool isVANext, SDOperand Chain, SDOperand VAList,
   MVT::ValueType ArgVT = getValueType(ArgTy);
   SDOperand Result;
   if (!isVANext) {
-    Result = DAG.getLoad(ArgVT, DAG.getEntryNode(), VAList);
+    Result = DAG.getLoad(ArgVT, DAG.getEntryNode(), VAList, DAG.getSrcValue(NULL));
   } else {
     unsigned Amt;
     if (ArgVT == MVT::i32 || ArgVT == MVT::f32)

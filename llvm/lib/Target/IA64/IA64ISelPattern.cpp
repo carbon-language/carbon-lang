@@ -223,7 +223,7 @@ IA64TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
         //from this parameter
         SDOperand FIN = DAG.getFrameIndex(FI, MVT::i64);
         argt = newroot = DAG.getLoad(getValueType(I->getType()),
-            DAG.getEntryNode(), FIN);
+                                     DAG.getEntryNode(), FIN, DAG.getSrcValue(NULL));
       }
       ++count;
       DAG.setRoot(newroot.getValue(1));
@@ -378,7 +378,7 @@ LowerVAArgNext(bool isVANext, SDOperand Chain, SDOperand VAList,
   MVT::ValueType ArgVT = getValueType(ArgTy);
   SDOperand Result;
   if (!isVANext) {
-    Result = DAG.getLoad(ArgVT, DAG.getEntryNode(), VAList);
+    Result = DAG.getLoad(ArgVT, DAG.getEntryNode(), VAList, DAG.getSrcValue(NULL));
   } else {
     unsigned Amt;
     if (ArgVT == MVT::i32 || ArgVT == MVT::f32)
