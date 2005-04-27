@@ -96,8 +96,16 @@ namespace {
     ) = 0;
 
     const char * getFunctionName() const { return func_name; }
+
+#ifndef NDEBUG
+    void activate() { ++activations; }
+#endif
+
   private:
     const char* func_name;
+#ifndef NDEBUG
+    Statistic<> activations; 
+#endif
   };
 
   /// @brief The list of optimizations deriving from CallOptimizer
@@ -106,6 +114,9 @@ namespace {
 
   CallOptimizer::CallOptimizer(const char* fname)
     : func_name(fname)
+#ifndef NDEBUG
+    , activations(fname,"Number of calls simplified") 
+#endif
   {
     // Register this call optimizer
     optlist[func_name] = this;
@@ -149,30 +160,33 @@ bool SimplifyLibCalls::runOnModule(Module &M)
       // because they live in a runtime library somewhere and were (probably) 
       // not compiled by LLVM.  So, we only act on external functions that have 
       // external linkage and non-empty uses.
-      if (FI->isExternal() && FI->hasExternalLinkage() && !FI->use_empty())
+      if (!FI->isExternal() || !FI->hasExternalLinkage() || FI->use_empty())
+        continue;
+
+      // Get the optimization class that pertains to this function
+      CallOptimizer* CO = optlist[FI->getName().c_str()];
+      if (!CO)
+        continue;
+
+      // Make sure the called function is suitable for the optimization
+      if (!CO->ValidateCalledFunction(FI,TD))
+        continue;
+
+      // Loop over each of the uses of the function
+      for (Value::use_iterator UI = FI->use_begin(), UE = FI->use_end(); 
+           UI != UE ; )
       {
-        // Get the optimization class that pertains to this function
-        if (CallOptimizer* CO = optlist[FI->getName().c_str()] )
+        // If the use of the function is a call instruction
+        if (CallInst* CI = dyn_cast<CallInst>(*UI++))
         {
-          // Make sure the called function is suitable for the optimization
-          if (CO->ValidateCalledFunction(FI,TD))
+          // Do the optimization on the CallOptimizer.
+          if (CO->OptimizeCall(CI,TD))
           {
-            // Loop over each of the uses of the function
-            for (Value::use_iterator UI = FI->use_begin(), UE = FI->use_end(); 
-                 UI != UE ; )
-            {
-              // If the use of the function is a call instruction
-              if (CallInst* CI = dyn_cast<CallInst>(*UI++))
-              {
-                // Do the optimization on the CallOptimizer.
-                if (CO->OptimizeCall(CI,TD))
-                {
-                  ++SimplifiedLibCalls;
-                  found_optimization = result = true;
-                  DEBUG(std::cerr << "simplify-libcall: " << CO->getFunctionName() << "\n");
-                }
-              }
-            }
+            ++SimplifiedLibCalls;
+            found_optimization = result = true;
+#ifndef NDEBUG
+            CO->activate();
+#endif
           }
         }
       }
