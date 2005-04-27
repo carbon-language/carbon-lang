@@ -15,12 +15,14 @@ while(<>)
     if (/<td>([^<]+)<\/td>/)
       {
         if ($prefix)
-          { $output .= "$1 "; }
+          { $output .= "$1 "; $count++; }
       }
     if (/<tr/)
       {
-        if ($output)
-          { print "\n$day $mon $year $prefix/$output"; $output = ""; }
+        if ($output and $count > 3)
+          { print "\n$day $mon $year $prefix/$output"; }
+	$output = "";
+	$count = 0;
       }
     if (/<h2>(Programs.+)<\/h2>/)
       {
