@@ -1535,9 +1535,12 @@ def FLD1 : FPI<0xE8, RawFrm, ZeroArgFP, (ops), "fld1">, D9;
 
 
 // Unary operations...
-def FCHS : FPI<0xE0, RawFrm, OneArgFPRW, (ops), "fchs">, D9;   // f1 = fchs f2
-def FABS : FPI<0xE1, RawFrm, OneArgFPRW, (ops), "fabs">, D9;   // f1 = fabs f2
-def FTST : FPI<0xE4, RawFrm, OneArgFP, (ops), "ftst">, D9;     // ftst ST(0)
+def FCHS  : FPI<0xE0, RawFrm, OneArgFPRW, (ops), "fchs" >, D9; // f1 = fchs f2
+def FABS  : FPI<0xE1, RawFrm, OneArgFPRW, (ops), "fabs" >, D9; // f1 = fabs f2
+def FSQRT : FPI<0xFA, RawFrm, OneArgFPRW, (ops), "fsqrt">, D9; // fsqrt ST(0)
+def FSIN  : FPI<0xFE, RawFrm, OneArgFPRW, (ops), "fsin" >, D9; // fsin  ST(0)
+def FCOS  : FPI<0xFF, RawFrm, OneArgFPRW, (ops), "fcos" >, D9; // fcos  ST(0)
+def FTST  : FPI<0xE4, RawFrm, OneArgFP  , (ops), "ftst" >, D9; // ftst ST(0)
 
 // Binary arithmetic operations...
 class FPST0rInst<bits<8> o, dag ops, string asm>
