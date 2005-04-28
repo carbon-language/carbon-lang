@@ -990,6 +990,9 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     // Unary operators
   case ISD::FABS:
   case ISD::FNEG:
+  case ISD::FSQRT:
+  case ISD::FSIN:
+  case ISD::FCOS:
     Tmp1 = LegalizeOp(Node->getOperand(0));
     switch (TLI.getOperationAction(Node->getOpcode(), Node->getValueType(0))) {
     case TargetLowering::Legal:
@@ -1333,6 +1336,16 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
     // NOTE: we do not have to do any extra rounding here for
     // NoExcessFPPrecision, because we know the input will have the appropriate
     // precision, and these operations don't modify precision at all.
+    break;
+
+  case ISD::FSQRT:
+  case ISD::FSIN:
+  case ISD::FCOS:
+    Tmp1 = PromoteOp(Node->getOperand(0));
+    assert(Tmp1.getValueType() == NVT);
+    Result = DAG.getNode(Node->getOpcode(), NVT, Tmp1);
+    if(NoExcessFPPrecision)
+      Result = DAG.getNode(ISD::FP_ROUND_INREG, NVT, Result, VT);
     break;
 
   case ISD::AND:
