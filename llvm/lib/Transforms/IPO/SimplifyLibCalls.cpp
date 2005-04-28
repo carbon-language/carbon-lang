@@ -741,6 +741,187 @@ bool getConstantStringLength(Value* V, uint64_t& len )
   return true; // success!
 }
 
-// TODO: Additional cases that we need to add to this file:
-// 1. memmove -> memcpy if src is a global constant array
+// TODO: 
+//   Additional cases that we need to add to this file:
+//
+// abs:
+//   * abs(cnst) -> cnst'
+//
+// atan:
+//   * atan(0.0) -> 0.0
+//   * atan(1.0) -> pi/4
+//
+// cbrt:
+//   * cbrt(constant) -> constant'
+//   * cbrt(expN(X))  -> expN(x/3)
+//   * cbrt(sqrt(x))  -> pow(x,1/6)
+//   * cbrt(sqrt(x))  -> pow(x,1/9)
+//
+// ceil, ceilf, ceill:
+//   * ceil(constant) -> constant'
+//
+// cos, cosf, cosl:
+//   * cos(0.0) -> 1.0
+//   * cox(-x)  -> cos(x)
+//
+// exp, expf, expl:
+//   * exp(0.0)     -> 1.0
+//   * exp(int)     -> contant'
+//   * exp(log(x))  -> x
+//
+// fabs, fabsf, fabsl:
+//   * fabs(cnst)    -> cnst'
+//
+// ffs, ffsl, ffsll:
+//   * ffs(cnst)     -> cnst'
+//
+// floor, floorf, floorl:
+//   * floor(cnst) -> cnst'
+//
+// fprintf:
+//   * fprintf(file,fmt) -> fputs(fmt,file) 
+//       (if fmt is constant and constains no % characters)
+//   * fprintf(file,"%s",str) -> fputs(orig,str)
+//       (only if the fprintf result is not used)
+//   * fprintf(file,"%c",chr) -> fputc(chr,file)
+//
+// fputs: (only if the result is not used)
+//   * fputs("",F) -> noop
+//   * fputs(s,F)  -> fputc(s[0],F)        (if s is constant and strlen(s) == 1)
+//   * fputs(s,F)  -> fwrite(s, 1, len, F) (if s is constant and strlen(s) > 1)
+//
+// isascii:
+//   * isascii(c)    -> ((c & ~0x7f) == 0)
+//   
+// isdigit:
+//   * isdigit(c)    -> (unsigned)(c) - '0' <= 9
+//
+// log, logf, logl:
+//   * log(1.0)      -> 0.0
+//   * log(exp(x))   -> x
+//   * log(x**y)     -> y*log(x)
+//   * log(exp(y))   -> y*log(e)
+//   * log(exp2(y))  -> y*log(2)
+//   * log(exp10(y)) -> y*log(10)
+//   * log(sqrt(x))  -> 0.5*log(x)
+//   * log(pow(x,y)) -> y*log(x)
+//
+// lround, lroundf, lroundl:
+//   * lround(cnst) -> cnst'
+//
+// memcmp:
+//   * memcmp(s1,s2,0) -> 0
+//   * memcmp(x,x,l)   -> 0
+//   * memcmp(x,y,l)   -> cnst
+//      (if all arguments are constant and strlen(x) <= l and strlen(y) <= l)
+//   * memcpy(x,y,1)   -> *x - *y
+//
+// memcpy:
+//   * memcpy(d,s,0,a) -> d
+//
+// memmove:
+//   * memmove(d,s,l,a) -> memcpy(d,s,l,a) 
+//       (if s is a global constant array)
+//
+// memset:
+//   * memset(s,c,0) -> noop
+//   * memset(s,c,n) -> store s, c
+//      (for n=1,2,4,8)
+//
+// pow, powf, powl:
+//   * pow(1.0,y)     -> 1.0
+//   * pow(x,0.0)     -> 1.0
+//   * pow(x,1.0)     -> x
+//   * pow(x,-1.0)    -> 1.0/x
+//   * pow(x,0.5)     -> sqrt(x)
+//   * pow(cst1,cst2) -> const1**const2
+//   * pow(exp(x),y)  -> exp(x*y)
+//   * pow(sqrt(x),y) -> pow(x,y*0.5)
+//   * pow(pow(x,y),z)-> pow(x,y*z)
+//
+// puts:
+//   * puts("") -> fputc("\n",stdout) (how do we get "stdout"?)
+//
+// round, roundf, roundl:
+//   * round(cnst) -> cnst'
+//
+// signbit:
+//   * signbit(cnst) -> cnst'
+//   * signbit(nncst) -> 0 (if pstv is a non-negative constant)
+//
+// sin, sinf, sinl:
+//   * sin(0.0) -> 0.0
+//
+// sprintf:
+//   * sprintf(dest,fmt) -> strcpy(dest,fmt) 
+//       (if fmt is constant and constains no % characters)
+//   * sprintf(dest,"%s",orig) -> strcpy(dest,orig)
+//       (only if the sprintf result is not used)
+//
+// sqrt, sqrtf, sqrtl:
+//   * sqrt(cnst) -> cnst'
+//   * sqrt(expN(x))  -> expN(x*0.5)
+//   * sqrt(Nroot(x)) -> pow(x,1/(2*N))
+//   * sqrt(pow(x,y)) -> pow(|x|,y*0.5)
+//
+// strchr, strrchr:
+//   * strchr(s,c)  -> offset_of_in(c,s)
+//      (if c is a constant integer and s is a constant string)
+//   * strrchr(s,c) -> reverse_offset_of_in(c,s)
+//      (if c is a constant integer and s is a constant string)
+//   * strrchr(s1,0) -> strchr(s1,0)
+//
+// strcmp:
+//   * strcmp(x,x)  -> 0
+//   * strcmp(x,"") -> *x
+//   * strcmp("",x) -> *x
+//   * strcmp(x,y)  -> cnst  (if both x and y are constant strings)
+//
+// strncat:
+//   * strncat(x,y,0) -> x
+//   * strncat(x,y,0) -> x (if strlen(y) = 0)
+//   * strncat(x,y,l) -> strcat(x,y) (if y and l are constants an l > strlen(y))
+//
+// strncmp:
+//   * strncmp(x,y,0)   -> 0
+//   * strncmp(x,x,l)   -> 0
+//   * strncmp(x,"",l)  -> *x
+//   * strncmp("",x,l)  -> *x
+//   * strncmp(x,y,1)   -> *x - *y
+//
+// strncpy:
+//   * strncpy(d,s,0) -> d
+//   * strncpy(d,s,l) -> memcpy(d,s,l,1)
+//      (if s and l are constants)
+//
+// strpbrk:
+//   * strpbrk(s,a) -> offset_in_for(s,a)
+//      (if s and a are both constant strings)
+//   * strpbrk(s,"") -> 0
+//   * strpbrk(s,a) -> strchr(s,a[0]) (if a is constant string of length 1)
+//
+// strspn, strcspn:
+//   * strspn(s,a)   -> const_int (if both args are constant)
+//   * strspn("",a)  -> 0
+//   * strspn(s,"")  -> 0
+//   * strcspn(s,a)  -> const_int (if both args are constant)
+//   * strcspn("",a) -> 0
+//   * strcspn(s,"") -> strlen(a)
+//
+// strstr:
+//   * strstr(x,x)  -> x
+//   * strstr(s1,s2) -> offset_of_s2_in(s1)  
+//       (if s1 and s2 are constant strings)
+//    
+// tan, tanf, tanl:
+//   * tan(0.0)     -> 0.0
+//   * tan(atan(x)) -> x
+// 
+// toascii:
+//   * toascii(c)   -> (c & 0x7f)
+//
+// trunc, truncf, truncl:
+//   * trunc(cnst) -> cnst'
+//
+// 
 }
