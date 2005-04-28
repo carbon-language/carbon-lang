@@ -1568,6 +1568,9 @@ const char *SDNode::getOperationName() const {
   // Unary operators
   case ISD::FABS:   return "fabs";
   case ISD::FNEG:   return "fneg";
+  case ISD::FSQRT:  return "fsqrt";
+  case ISD::FSIN:   return "fsin";
+  case ISD::FCOS:   return "fcos";
 
   // Binary operators
   case ISD::ADD:    return "add";
@@ -1593,7 +1596,7 @@ const char *SDNode::getOperationName() const {
   case ISD::SRA_PARTS:   return "sra_parts";
   case ISD::SRL_PARTS:   return "srl_parts";
 
-    // Conversion operators.
+  // Conversion operators.
   case ISD::SIGN_EXTEND: return "sign_extend";
   case ISD::ZERO_EXTEND: return "zero_extend";
   case ISD::SIGN_EXTEND_INREG: return "sign_extend_inreg";

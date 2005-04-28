@@ -168,9 +168,9 @@ namespace ISD {
     // FP_EXTEND - Extend a smaller FP type into a larger FP type.
     FP_EXTEND,
 
-    // FNEG, FABS - Perform unary floating point negation and absolute value
-    // operations.
-    FNEG, FABS,
+    // FNEG, FABS, FSQRT, FSIN, FCOS - Perform unary floating point negation,
+    // absolute value, square root, sine and cosine operations.
+    FNEG, FABS, FSQRT, FSIN, FCOS,
 
     // Other operators.  LOAD and STORE have token chains as their first
     // operand, then the same operands as an LLVM load/store instruction.
