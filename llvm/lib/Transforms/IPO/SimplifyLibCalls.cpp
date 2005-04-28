@@ -744,39 +744,20 @@ bool getConstantStringLength(Value* V, uint64_t& len )
 // TODO: 
 //   Additional cases that we need to add to this file:
 //
-// abs:
-//   * abs(cnst) -> cnst'
-//
-// atan:
-//   * atan(0.0) -> 0.0
-//   * atan(1.0) -> pi/4
-//
 // cbrt:
-//   * cbrt(constant) -> constant'
 //   * cbrt(expN(X))  -> expN(x/3)
 //   * cbrt(sqrt(x))  -> pow(x,1/6)
 //   * cbrt(sqrt(x))  -> pow(x,1/9)
 //
-// ceil, ceilf, ceill:
-//   * ceil(constant) -> constant'
-//
 // cos, cosf, cosl:
-//   * cos(0.0) -> 1.0
-//   * cox(-x)  -> cos(x)
+//   * cos(-x)  -> cos(x)
 //
 // exp, expf, expl:
-//   * exp(0.0)     -> 1.0
 //   * exp(int)     -> contant'
 //   * exp(log(x))  -> x
 //
-// fabs, fabsf, fabsl:
-//   * fabs(cnst)    -> cnst'
-//
 // ffs, ffsl, ffsll:
 //   * ffs(cnst)     -> cnst'
-//
-// floor, floorf, floorl:
-//   * floor(cnst) -> cnst'
 //
 // fprintf:
 //   * fprintf(file,fmt) -> fputs(fmt,file) 
@@ -797,7 +778,6 @@ bool getConstantStringLength(Value* V, uint64_t& len )
 //   * isdigit(c)    -> (unsigned)(c) - '0' <= 9
 //
 // log, logf, logl:
-//   * log(1.0)      -> 0.0
 //   * log(exp(x))   -> x
 //   * log(x**y)     -> y*log(x)
 //   * log(exp(y))   -> y*log(e)
@@ -829,9 +809,6 @@ bool getConstantStringLength(Value* V, uint64_t& len )
 //      (for n=1,2,4,8)
 //
 // pow, powf, powl:
-//   * pow(1.0,y)     -> 1.0
-//   * pow(x,0.0)     -> 1.0
-//   * pow(x,1.0)     -> x
 //   * pow(x,-1.0)    -> 1.0/x
 //   * pow(x,0.5)     -> sqrt(x)
 //   * pow(cst1,cst2) -> const1**const2
@@ -849,9 +826,6 @@ bool getConstantStringLength(Value* V, uint64_t& len )
 //   * signbit(cnst) -> cnst'
 //   * signbit(nncst) -> 0 (if pstv is a non-negative constant)
 //
-// sin, sinf, sinl:
-//   * sin(0.0) -> 0.0
-//
 // sprintf:
 //   * sprintf(dest,fmt) -> strcpy(dest,fmt) 
 //       (if fmt is constant and constains no % characters)
@@ -859,7 +833,6 @@ bool getConstantStringLength(Value* V, uint64_t& len )
 //       (only if the sprintf result is not used)
 //
 // sqrt, sqrtf, sqrtl:
-//   * sqrt(cnst) -> cnst'
 //   * sqrt(expN(x))  -> expN(x*0.5)
 //   * sqrt(Nroot(x)) -> pow(x,1/(2*N))
 //   * sqrt(pow(x,y)) -> pow(|x|,y*0.5)
@@ -914,7 +887,6 @@ bool getConstantStringLength(Value* V, uint64_t& len )
 //       (if s1 and s2 are constant strings)
 //    
 // tan, tanf, tanl:
-//   * tan(0.0)     -> 0.0
 //   * tan(atan(x)) -> x
 // 
 // toascii:
