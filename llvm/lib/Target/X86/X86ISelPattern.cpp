@@ -1830,12 +1830,16 @@ unsigned ISel::SelectExpr(SDOperand N) {
     return Result;
 
   case ISD::FABS:
-    Tmp1 = SelectExpr(Node->getOperand(0));
-    BuildMI(BB, X86::FABS, 1, Result).addReg(Tmp1);
-    return Result;
   case ISD::FNEG:
+  case ISD::FSQRT:
+    assert(N.getValueType()==MVT::f64 && "Illegal type for this operation");
     Tmp1 = SelectExpr(Node->getOperand(0));
-    BuildMI(BB, X86::FCHS, 1, Result).addReg(Tmp1);
+    switch (N.getOpcode()) {
+    default: assert(0 && "Unreachable!");
+    case ISD::FABS: BuildMI(BB, X86::FABS, 1, Result).addReg(Tmp1); break;
+    case ISD::FNEG: BuildMI(BB, X86::FCHS, 1, Result).addReg(Tmp1); break;
+    case ISD::FSQRT: BuildMI(BB, X86::FSQRT, 1, Result).addReg(Tmp1); break;
+    }
     return Result;
 
   case ISD::MULHU:
