@@ -709,10 +709,10 @@ static const char *DoesntAccessMemoryTable[] = {
 
   "atan", "atanf", "atanl",   "atan2", "atan2f", "atan2l",
   "cbrt",
-  "cos", "cosf", "cosl",      "cosh", "coshf", "coshl",
+  "cos", "cosf", "cosl",
   "exp", "expf", "expl",
   "hypot",
-  "sin", "sinf", "sinl",      "sinh", "sinhf", "sinhl",
+  "sin", "sinf", "sinl",
   "tan", "tanf", "tanl",      "tanh", "tanhf", "tanhl",
 
   // ctype.h
