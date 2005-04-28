@@ -1735,6 +1735,15 @@ void X86ISel::visitCallInst(CallInst &CI) {
     if (Intrinsic::ID ID = (Intrinsic::ID)F->getIntrinsicID()) {
       visitIntrinsicCall(ID, CI);   // Special intrinsics are not handled here
       return;
+    } else if (F->getName() == "fabs" || F->getName() == "fabsf") {
+      if (CI.getNumOperands() == 2 &&   // Basic sanity checks.
+          CI.getOperand(1)->getType()->isFloatingPoint() &&
+          CI.getType() == CI.getOperand(1)->getType()) {
+        unsigned op1Reg = getReg(CI.getOperand(1));
+        unsigned DestReg = getReg(CI);
+        BuildMI(BB, X86::FABS, 1, DestReg).addReg(op1Reg);
+        return;
+      }
     }
 
     // Emit a CALL instruction with PC-relative displacement.
