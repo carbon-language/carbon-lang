@@ -242,9 +242,29 @@ bool llvm::canConstantFoldCallTo(Function *F) {
   default: break;
   }
 
-  return Name == "sin" || Name == "cos" || Name == "tan" || Name == "sqrt" ||
-         Name == "log" || Name == "log10" || Name == "exp" || Name == "pow" ||
-         Name == "acos" || Name == "asin" || Name == "atan" || Name == "fmod";
+  switch (Name[0])
+  {
+    case 'a':
+      return Name == "acos" || Name == "asin" || Name == "atan" || 
+             Name == "atan2";
+    case 'c':
+      return Name == "ceil" || Name == "cos" || Name == "cosf" || 
+             Name == "cosh";
+    case 'e':
+      return Name == "exp";
+    case 'f':
+      return Name == "fabs" || Name == "fmod" || Name == "floor";
+    case 'l':
+      return Name == "log" || Name == "log10";
+    case 'p':
+      return Name == "pow";
+    case 's':
+      return Name == "sin" || Name == "sinh" || Name == "sqrt";
+    case 't':
+      return Name == "tan" || Name == "tanh";
+    default:
+      return false;
+  }
 }
 
 static Constant *ConstantFoldFP(double (*NativeFP)(double), double V,
@@ -266,31 +286,63 @@ Constant *llvm::ConstantFoldCall(Function *F,
   if (Operands.size() == 1) {
     if (ConstantFP *Op = dyn_cast<ConstantFP>(Operands[0])) {
       double V = Op->getValue();
-      if (Name == "sin")
-        return ConstantFP::get(Ty, sin(V));
-      else if (Name == "cos")
-        return ConstantFP::get(Ty, cos(V));
-      else if (Name == "tan")
-        return ConstantFP::get(Ty, tan(V));
-      else if (Name == "sqrt" && V >= 0)
-        return ConstantFP::get(Ty, sqrt(V));
-      else if (Name == "exp")
-        return ConstantFP::get(Ty, exp(V));
-      else if (Name == "log" && V > 0)
-        return ConstantFP::get(Ty, log(V));
-      else if (Name == "log10")
-        return ConstantFoldFP(log10, V, Ty);
-      else if (Name == "acos")
-        return ConstantFoldFP(acos, V, Ty);
-      else if (Name == "asin")
-        return ConstantFoldFP(asin, V, Ty);
-      else if (Name == "atan")
-        return ConstantFP::get(Ty, atan(V));
+      switch (Name[0])
+      {
+        case 'a':
+          if (Name == "acos")
+            return ConstantFoldFP(acos, V, Ty);
+          else if (Name == "asin")
+            return ConstantFoldFP(asin, V, Ty);
+          else if (Name == "atan")
+            return ConstantFP::get(Ty, atan(V));
+          break;
+        case 'c':
+          if (Name == "ceil")
+            return ConstantFoldFP(ceil, V, Ty);
+          else if (Name == "cos")
+            return ConstantFP::get(Ty, cos(V));
+          else if (Name == "cosh")
+            return ConstantFP::get(Ty, cosh(V));
+          break;
+        case 'e':
+          if (Name == "exp")
+            return ConstantFP::get(Ty, exp(V));
+          break;
+        case 'f':
+          if (Name == "fabs")
+            return ConstantFP::get(Ty, fabs(V));
+          else if (Name == "floor")
+            return ConstantFoldFP(floor, V, Ty);
+          break;
+        case 'l':
+          if (Name == "log" && V > 0)
+            return ConstantFP::get(Ty, log(V));
+          else if (Name == "log10" && V > 0)
+            return ConstantFoldFP(log10, V, Ty);
+          break;
+        case 's':
+          if (Name == "sin")
+            return ConstantFP::get(Ty, sin(V));
+          else if (Name == "sinh")
+            return ConstantFP::get(Ty, sinh(V));
+          else if (Name == "sqrt" && V >= 0)
+            return ConstantFP::get(Ty, sqrt(V));
+          break;
+        case 't':
+          if (Name == "tan")
+            return ConstantFP::get(Ty, tan(V));
+          else if (Name == "tanh")
+            return ConstantFP::get(Ty, tanh(V));
+          break;
+        default:
+          break;
+      }
     }
   } else if (Operands.size() == 2) {
-    if (ConstantFP *Op1 = dyn_cast<ConstantFP>(Operands[0]))
+    if (ConstantFP *Op1 = dyn_cast<ConstantFP>(Operands[0])) {
+      double Op1V = Op1->getValue();
       if (ConstantFP *Op2 = dyn_cast<ConstantFP>(Operands[1])) {
-        double Op1V = Op1->getValue(), Op2V = Op2->getValue();
+        double Op2V = Op2->getValue();
 
         if (Name == "llvm.isunordered")
           return ConstantBool::get(IsNAN(Op1V) || IsNAN(Op2V));
@@ -305,8 +357,20 @@ Constant *llvm::ConstantFoldCall(Function *F,
           double V = fmod(Op1V, Op2V);
           if (errno == 0)
             return ConstantFP::get(Ty, V);
-        }
+        } else if (Name == "atan2")
+          return ConstantFP::get(Ty, atan2(Op1V,Op2V));
       }
+      else if (Name == "pow" && Op1V == 1.0) {
+        return ConstantFP::get(Ty,1.0);
+      }
+    } else if (ConstantFP* Op2 = dyn_cast<ConstantFP>(Operands[1])) {
+      double Op2V = Op2->getValue();
+      if (Name == "pow")
+        if (Op2V == 0.0)
+          return ConstantFP::get(Ty,1.0);
+        else if (Op2V == 1.0)
+          return Operands[0];
+    }
   }
   return 0;
 }
