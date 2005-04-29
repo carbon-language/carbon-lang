@@ -360,16 +360,6 @@ Constant *llvm::ConstantFoldCall(Function *F,
         } else if (Name == "atan2")
           return ConstantFP::get(Ty, atan2(Op1V,Op2V));
       }
-      else if (Name == "pow" && Op1V == 1.0) {
-        return ConstantFP::get(Ty,1.0);
-      }
-    } else if (ConstantFP* Op2 = dyn_cast<ConstantFP>(Operands[1])) {
-      double Op2V = Op2->getValue();
-      if (Name == "pow")
-        if (Op2V == 0.0)
-          return ConstantFP::get(Ty,1.0);
-        else if (Op2V == 1.0)
-          return Operands[0];
     }
   }
   return 0;
