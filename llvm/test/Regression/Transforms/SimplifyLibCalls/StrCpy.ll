@@ -1,5 +1,5 @@
-; Test that the StrCatOptimizer works correctly
-; RUN: llvm-as < %s | opt -simplify-libcalls | llvm-dis | not grep 'call.*strcat'
+; Test that the StrCpyOptimizer works correctly
+; RUN: llvm-as < %s | opt -simplify-libcalls | llvm-dis | not grep 'call.*strcpy'
 
 declare sbyte* %strcpy(sbyte*,sbyte*)
 declare int %puts(sbyte*)
