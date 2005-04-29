@@ -69,7 +69,8 @@ public:
     : func_name(fname)
 #ifndef NDEBUG
     , stat_name(std::string("simplify-libcalls:")+fname)
-    , occurrences(stat_name.c_str(),"Number of calls simplified") 
+    , stat_desc(std::string("Number of ")+fname+"(...) calls simplified")
+    , occurrences(stat_name.c_str(),stat_desc.c_str())
 #endif
   {
     // Register this call optimizer in the optlist (a hash_map)
@@ -118,6 +119,7 @@ private:
   const char* func_name; ///< Name of the library call we optimize
 #ifndef NDEBUG
   std::string stat_name; ///< Holder for debug statistic name
+  std::string stat_desc; ///< Holder for debug statistic description
   Statistic<> occurrences; ///< debug statistic (-debug-only=simplify-libcalls)
 #endif
 };
@@ -203,10 +205,69 @@ public:
   }
 
   /// @brief Return the *current* module we're working on.
-  Module* getModule() { return M; }
+  Module* getModule() const { return M; }
 
   /// @brief Return the *current* target data for the module we're working on.
-  TargetData* getTargetData() { return TD; }
+  TargetData* getTargetData() const { return TD; }
+
+  /// @brief Return the size_t type -- syntactic shortcut
+  const Type* getIntPtrType() const { return TD->getIntPtrType(); }
+
+  /// @brief Return a Function* for the fputc libcall
+  Function* get_fputc()
+  {
+    if (!fputc_func)
+    {
+      std::vector<const Type*> args;
+      args.push_back(Type::IntTy);
+      const Type* FILE_type = M->getTypeByName("struct._IO_FILE");
+      if (!FILE_type)
+        FILE_type = M->getTypeByName("struct._FILE");
+      if (!FILE_type)
+        return 0;
+      args.push_back(PointerType::get(FILE_type));
+      FunctionType* fputc_type = 
+        FunctionType::get(Type::IntTy, args, false);
+      fputc_func = M->getOrInsertFunction("fputc",fputc_type);
+    }
+    return fputc_func;
+  }
+
+  /// @brief Return a Function* for the fwrite libcall
+  Function* get_fwrite()
+  {
+    if (!fwrite_func)
+    {
+      std::vector<const Type*> args;
+      args.push_back(PointerType::get(Type::SByteTy));
+      args.push_back(TD->getIntPtrType());
+      args.push_back(TD->getIntPtrType());
+      const Type* FILE_type = M->getTypeByName("struct._IO_FILE");
+      if (!FILE_type)
+        FILE_type = M->getTypeByName("struct._FILE");
+      if (!FILE_type)
+        return 0;
+      args.push_back(PointerType::get(FILE_type));
+      FunctionType* fwrite_type = 
+        FunctionType::get(TD->getIntPtrType(), args, false);
+      fwrite_func = M->getOrInsertFunction("fwrite",fwrite_type);
+    }
+    return fwrite_func;
+  }
+
+  /// @brief Return a Function* for the sqrt libcall
+  Function* get_sqrt()
+  {
+    if (!sqrt_func)
+    {
+      std::vector<const Type*> args;
+      args.push_back(Type::DoubleTy);
+      FunctionType* sqrt_type = 
+        FunctionType::get(Type::DoubleTy, args, false);
+      sqrt_func = M->getOrInsertFunction("sqrt",sqrt_type);
+    }
+    return sqrt_func;
+  }
 
   /// @brief Return a Function* for the strlen libcall
   Function* get_strlen()
@@ -245,12 +306,18 @@ private:
   {
     M = &mod;
     TD = &getAnalysis<TargetData>();
+    fputc_func = 0;
+    fwrite_func = 0;
     memcpy_func = 0;
+    sqrt_func   = 0;
     strlen_func = 0;
   }
 
 private:
+  Function* fputc_func;  ///< Cached fputc function
+  Function* fwrite_func; ///< Cached fwrite function
   Function* memcpy_func; ///< Cached llvm.memcpy function
+  Function* sqrt_func;   ///< Cached sqrt function
   Function* strlen_func; ///< Cached strlen function
   Module* M;             ///< Cached Module
   TargetData* TD;        ///< Cached TargetData
@@ -398,7 +465,6 @@ public:
     // Increment the length because we actually want to memcpy the null
     // terminator as well.
     len++;
-
 
     // We need to find the end of the destination string.  That's where the 
     // memory is to be moved to. We just generate a call to strlen (further 
@@ -609,7 +675,7 @@ public:
     switch (len)
     {
       case 0:
-        // The memcpy is a no-op so just dump its call.
+        // memcpy(d,s,0,a) -> noop
         ci->eraseFromParent();
         return true;
       case 1: castType = Type::SByteTy; break;
@@ -642,6 +708,152 @@ struct MemMoveOptimization : public MemCpyOptimization
   MemMoveOptimization() : MemCpyOptimization("llvm.memmove") {}
 
 } MemMoveOptimizer;
+
+/// This LibCallOptimization will simplify calls to the "pow" library 
+/// function. It looks for cases where the result of pow is well known and 
+/// substitutes the appropriate value.
+/// @brief Simplify the pow library function.
+struct PowOptimization : public LibCallOptimization
+{
+public:
+  /// @brief Default Constructor
+  PowOptimization() : LibCallOptimization("pow") {}
+  /// @brief Destructor
+  virtual ~PowOptimization() {}
+
+  /// @brief Make sure that the "pow" function has the right prototype
+  virtual bool ValidateCalledFunction(const Function* f, SimplifyLibCalls& SLC)
+  {
+    // Just make sure this has 2 arguments
+    return (f->arg_size() == 2);
+  }
+
+  /// @brief Perform the pow optimization.
+  virtual bool OptimizeCall(CallInst* ci, SimplifyLibCalls& SLC)
+  {
+    const Type *Ty = cast<Function>(ci->getOperand(0))->getReturnType();
+    Value* base = ci->getOperand(1);
+    Value* expn = ci->getOperand(2);
+    if (ConstantFP *Op1 = dyn_cast<ConstantFP>(base)) {
+      double Op1V = Op1->getValue();
+      if (Op1V == 1.0)
+      {
+        // pow(1.0,x) -> 1.0
+        ci->replaceAllUsesWith(ConstantFP::get(Ty,1.0));
+        ci->eraseFromParent();
+        return true;
+      }
+    } 
+    else if (ConstantFP* Op2 = dyn_cast<ConstantFP>(expn)) 
+    {
+      double Op2V = Op2->getValue();
+      if (Op2V == 0.0)
+      {
+        // pow(x,0.0) -> 1.0
+        ci->replaceAllUsesWith(ConstantFP::get(Ty,1.0));
+        ci->eraseFromParent();
+        return true;
+      }
+      else if (Op2V == 0.5)
+      {
+        // pow(x,0.5) -> sqrt(x)
+        CallInst* sqrt_inst = new CallInst(SLC.get_sqrt(), base,
+            ci->getName()+".pow",ci);
+        ci->replaceAllUsesWith(sqrt_inst);
+        ci->eraseFromParent();
+        return true;
+      }
+      else if (Op2V == 1.0)
+      {
+        // pow(x,1.0) -> x
+        ci->replaceAllUsesWith(base);
+        ci->eraseFromParent();
+        return true;
+      }
+      else if (Op2V == -1.0)
+      {
+        // pow(x,-1.0)    -> 1.0/x
+        BinaryOperator* div_inst= BinaryOperator::create(Instruction::Div,
+          ConstantFP::get(Ty,1.0), base, ci->getName()+".pow", ci);
+        ci->replaceAllUsesWith(div_inst);
+        ci->eraseFromParent();
+        return true;
+      }
+    }
+    return false; // opt failed
+  }
+} PowOptimizer;
+
+/// This LibCallOptimization will simplify calls to the "fputs" library 
+/// function. It looks for cases where the result of fputs is not used and the
+/// operation can be reduced to something simpler.
+/// @brief Simplify the pow library function.
+struct PutsOptimization : public LibCallOptimization
+{
+public:
+  /// @brief Default Constructor
+  PutsOptimization() : LibCallOptimization("fputs") {}
+
+  /// @brief Destructor
+  virtual ~PutsOptimization() {}
+
+  /// @brief Make sure that the "fputs" function has the right prototype
+  virtual bool ValidateCalledFunction(const Function* f, SimplifyLibCalls& SLC)
+  {
+    // Just make sure this has 2 arguments
+    return (f->arg_size() == 2);
+  }
+
+  /// @brief Perform the fputs optimization.
+  virtual bool OptimizeCall(CallInst* ci, SimplifyLibCalls& SLC)
+  {
+    // If the result is used, none of these optimizations work
+    if (!ci->hasNUses(0)) 
+      return false;
+
+    // All the optimizations depend on the length of the first argument and the
+    // fact that it is a constant string array. Check that now
+    uint64_t len = 0; 
+    if (!getConstantStringLength(ci->getOperand(1), len))
+      return false;
+
+    switch (len)
+    {
+      case 0:
+        // fputs("",F) -> noop
+        break;
+      case 1:
+      {
+        // fputs(s,F)  -> fputc(s[0],F)  (if s is constant and strlen(s) == 1)
+        Function* fputc_func = SLC.get_fputc();
+        if (!fputc_func)
+          return false;
+        LoadInst* loadi = new LoadInst(ci->getOperand(1),
+          ci->getOperand(1)->getName()+".byte",ci);
+        CastInst* casti = new CastInst(loadi,Type::IntTy,
+          loadi->getName()+".int",ci);
+        new CallInst(fputc_func,casti,ci->getOperand(2),"",ci);
+        break;
+      }
+      default:
+      {  
+        // fputs(s,F)  -> fwrite(s,1,len,F) (if s is constant and strlen(s) > 1)
+        Function* fwrite_func = SLC.get_fwrite();
+        if (!fwrite_func)
+          return false;
+        std::vector<Value*> parms;
+        parms.push_back(ci->getOperand(1));
+        parms.push_back(ConstantUInt::get(SLC.getIntPtrType(),len));
+        parms.push_back(ConstantUInt::get(SLC.getIntPtrType(),1));
+        parms.push_back(ci->getOperand(2));
+        new CallInst(fwrite_func,parms,"",ci);
+        break;
+      }
+    }
+    ci->eraseFromParent();
+    return true; // success
+  }
+} PutsOptimizer;
 
 /// A function to compute the length of a null-terminated constant array of
 /// integers.  This function can't rely on the size of the constant array 
@@ -755,7 +967,6 @@ bool getConstantStringLength(Value* V, uint64_t& len )
 //   * cos(-x)  -> cos(x)
 //
 // exp, expf, expl:
-//   * exp(int)     -> contant'
 //   * exp(log(x))  -> x
 //
 // ffs, ffsl, ffsll:
@@ -767,11 +978,6 @@ bool getConstantStringLength(Value* V, uint64_t& len )
 //   * fprintf(file,"%s",str) -> fputs(orig,str)
 //       (only if the fprintf result is not used)
 //   * fprintf(file,"%c",chr) -> fputc(chr,file)
-//
-// fputs: (only if the result is not used)
-//   * fputs("",F) -> noop
-//   * fputs(s,F)  -> fputc(s[0],F)        (if s is constant and strlen(s) == 1)
-//   * fputs(s,F)  -> fwrite(s, 1, len, F) (if s is constant and strlen(s) > 1)
 //
 // isascii:
 //   * isascii(c)    -> ((c & ~0x7f) == 0)
@@ -798,9 +1004,6 @@ bool getConstantStringLength(Value* V, uint64_t& len )
 //      (if all arguments are constant and strlen(x) <= l and strlen(y) <= l)
 //   * memcpy(x,y,1)   -> *x - *y
 //
-// memcpy:
-//   * memcpy(d,s,0,a) -> d
-//
 // memmove:
 //   * memmove(d,s,l,a) -> memcpy(d,s,l,a) 
 //       (if s is a global constant array)
@@ -811,9 +1014,6 @@ bool getConstantStringLength(Value* V, uint64_t& len )
 //      (for n=1,2,4,8)
 //
 // pow, powf, powl:
-//   * pow(x,-1.0)    -> 1.0/x
-//   * pow(x,0.5)     -> sqrt(x)
-//   * pow(cst1,cst2) -> const1**const2
 //   * pow(exp(x),y)  -> exp(x*y)
 //   * pow(sqrt(x),y) -> pow(x,y*0.5)
 //   * pow(pow(x,y),z)-> pow(x,y*z)
