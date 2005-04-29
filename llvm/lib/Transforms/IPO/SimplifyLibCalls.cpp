@@ -59,8 +59,9 @@ hash_map<std::string,LibCallOptimization*> optlist;
 /// generally short-circuit actually calling the function if there's a simpler
 /// way (e.g. strlen(X) can be reduced to a constant if X is a constant global).
 /// @brief Base class for library call optimizations
-struct LibCallOptimization
+class LibCallOptimization
 {
+public:
   /// The \p fname argument must be the name of the library function being 
   /// optimized by the subclass.
   /// @brief Constructor that registers the optimization.
@@ -129,8 +130,9 @@ private:
 /// validate the call (ValidateLibraryCall). If it is validated, then
 /// the OptimizeCall method is also called.
 /// @brief A ModulePass for optimizing well-known function calls.
-struct SimplifyLibCalls : public ModulePass 
+class SimplifyLibCalls : public ModulePass 
 {
+public:
   /// We need some target data for accurate signature details that are
   /// target dependent. So we require target data in our AnalysisUsage.
   /// @brief Require TargetData from AnalysisUsage.
