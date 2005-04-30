@@ -63,6 +63,7 @@ namespace Intrinsic {
 
     // libm related functions.
     isunordered,    // Return true if either argument is a NaN
+    sqrt,
 
     // Input/Output intrinsics.
     readport,

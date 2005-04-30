@@ -723,6 +723,16 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
     NumArgs = 2;
     break;
 
+  case Intrinsic::sqrt:
+    Assert1(FT->getNumParams() == 1,
+            "Illegal # arguments for intrinsic function!", IF);
+    Assert1(FT->getParamType(0)->isFloatingPoint(),
+            "Argument is not a floating point type!", IF);
+    Assert1(FT->getReturnType() == FT->getParamType(0),
+            "Return type is not the same as argument type!", IF);
+    NumArgs = 1;
+    break;
+
   case Intrinsic::setjmp:          NumArgs = 1; break;
   case Intrinsic::longjmp:         NumArgs = 2; break;
   case Intrinsic::sigsetjmp:       NumArgs = 2; break;
