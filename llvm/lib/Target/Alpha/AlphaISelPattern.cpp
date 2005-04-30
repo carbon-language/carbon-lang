@@ -737,7 +737,7 @@ bool ISel::SelectFPSetCC(SDOperand N, unsigned dst)
       && (CN->isExactlyValue(+0.0) || CN->isExactlyValue(-0.0)))
     Tmp2 = Alpha::F31;
   else
-            Tmp2 = SelectExpr(N.getOperand(1));
+    Tmp2 = SelectExpr(N.getOperand(1));
 
   //Can only compare doubles, and dag won't promote for me
   if (SetCC->getOperand(0).getValueType() == MVT::f32)
