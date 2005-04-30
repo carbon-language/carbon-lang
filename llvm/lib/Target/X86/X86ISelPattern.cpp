@@ -24,6 +24,7 @@
 #include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetLowering.h"
+#include "llvm/Target/TargetOptions.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/ADT/Statistic.h"
 #include <set>
@@ -63,6 +64,11 @@ namespace {
       setOperationAction(ISD::FP_ROUND_INREG   , MVT::f32  , Expand);
       setOperationAction(ISD::SEXTLOAD         , MVT::i1   , Expand);
       setOperationAction(ISD::SREM             , MVT::f64  , Expand);
+
+      if (!UnsafeFPMath) {
+        setOperationAction(ISD::FSIN           , MVT::f64  , Expand);
+        setOperationAction(ISD::FCOS           , MVT::f64  , Expand);
+      }
 
       // These should be promoted to a larger select which is supported.
 /**/  setOperationAction(ISD::SELECT           , MVT::i1   , Promote);
@@ -1831,6 +1837,8 @@ unsigned ISel::SelectExpr(SDOperand N) {
 
   case ISD::FABS:
   case ISD::FNEG:
+  case ISD::FSIN:
+  case ISD::FCOS:
   case ISD::FSQRT:
     assert(N.getValueType()==MVT::f64 && "Illegal type for this operation");
     Tmp1 = SelectExpr(Node->getOperand(0));
@@ -1839,6 +1847,8 @@ unsigned ISel::SelectExpr(SDOperand N) {
     case ISD::FABS: BuildMI(BB, X86::FABS, 1, Result).addReg(Tmp1); break;
     case ISD::FNEG: BuildMI(BB, X86::FCHS, 1, Result).addReg(Tmp1); break;
     case ISD::FSQRT: BuildMI(BB, X86::FSQRT, 1, Result).addReg(Tmp1); break;
+    case ISD::FSIN: BuildMI(BB, X86::FSIN, 1, Result).addReg(Tmp1); break;
+    case ISD::FCOS: BuildMI(BB, X86::FCOS, 1, Result).addReg(Tmp1); break;
     }
     return Result;
 
