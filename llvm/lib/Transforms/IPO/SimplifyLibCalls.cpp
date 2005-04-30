@@ -214,18 +214,13 @@ public:
   const Type* getIntPtrType() const { return TD->getIntPtrType(); }
 
   /// @brief Return a Function* for the fputc libcall
-  Function* get_fputc()
+  Function* get_fputc(const Type* FILEptr_type)
   {
     if (!fputc_func)
     {
       std::vector<const Type*> args;
       args.push_back(Type::IntTy);
-      const Type* FILE_type = M->getTypeByName("struct._IO_FILE");
-      if (!FILE_type)
-        FILE_type = M->getTypeByName("struct._FILE");
-      if (!FILE_type)
-        return 0;
-      args.push_back(PointerType::get(FILE_type));
+      args.push_back(FILEptr_type);
       FunctionType* fputc_type = 
         FunctionType::get(Type::IntTy, args, false);
       fputc_func = M->getOrInsertFunction("fputc",fputc_type);
@@ -234,7 +229,7 @@ public:
   }
 
   /// @brief Return a Function* for the fwrite libcall
-  Function* get_fwrite()
+  Function* get_fwrite(const Type* FILEptr_type)
   {
     if (!fwrite_func)
     {
@@ -242,12 +237,7 @@ public:
       args.push_back(PointerType::get(Type::SByteTy));
       args.push_back(TD->getIntPtrType());
       args.push_back(TD->getIntPtrType());
-      const Type* FILE_type = M->getTypeByName("struct._IO_FILE");
-      if (!FILE_type)
-        FILE_type = M->getTypeByName("struct._FILE");
-      if (!FILE_type)
-        return 0;
-      args.push_back(PointerType::get(FILE_type));
+      args.push_back(FILEptr_type);
       FunctionType* fwrite_type = 
         FunctionType::get(TD->getIntPtrType(), args, false);
       fwrite_func = M->getOrInsertFunction("fwrite",fwrite_type);
@@ -342,7 +332,7 @@ ModulePass *llvm::createSimplifyLibCallsPass()
 namespace {
 
 // Forward declare a utility function.
-bool getConstantStringLength(Value* V, uint64_t& len );
+bool getConstantStringLength(Value* V, uint64_t& len, ConstantArray** A = 0 );
 
 /// This LibCallOptimization will find instances of a call to "exit" that occurs
 /// within the "main" function and change it to a simple "ret" instruction with
@@ -498,6 +488,93 @@ public:
     return true;
   }
 } StrCatOptimizer;
+
+/// This LibCallOptimization will simplify a call to the strcmp library 
+/// function.  It optimizes out cases where one or both arguments are constant
+/// and the result can be determined statically.
+/// @brief Simplify the strcmp library function.
+struct StrCmpOptimization : public LibCallOptimization
+{
+public:
+  StrCmpOptimization() : LibCallOptimization("strcmp") {}
+  virtual ~StrCmpOptimization() {}
+
+  /// @brief Make sure that the "strcpy" function has the right prototype
+  virtual bool ValidateCalledFunction(const Function* f, SimplifyLibCalls& SLC) 
+  {
+    if (f->getReturnType() == Type::IntTy && f->arg_size() == 2)
+      return true;
+    return false;
+  }
+
+  /// @brief Perform the strcpy optimization
+  virtual bool OptimizeCall(CallInst* ci, SimplifyLibCalls& SLC)
+  {
+    // First, check to see if src and destination are the same. If they are,
+    // then the optimization is to replace the CallInst with the destination
+    // because the call is a no-op. Note that this corresponds to the 
+    // degenerate strcpy(X,X) case which should have "undefined" results
+    // according to the C specification. However, it occurs sometimes and
+    // we optimize it as a no-op.
+    Value* s1 = ci->getOperand(1);
+    Value* s2 = ci->getOperand(2);
+    if (s1 == s2)
+    {
+      // strcmp(x,x)  -> 0
+      ci->replaceAllUsesWith(ConstantInt::get(Type::IntTy,0));
+      ci->eraseFromParent();
+      return true;
+    }
+
+    bool isstr_1 = false;
+    uint64_t len_1 = 0;
+    ConstantArray* A1;
+    if (getConstantStringLength(s1,len_1,&A1))
+    {
+      isstr_1 = true;
+      if (len_1 == 0)
+      {
+        // strcmp("",x) -> *x
+        LoadInst* load = new LoadInst(s1,ci->getName()+".load",ci);
+        CastInst* cast = 
+          new CastInst(load,Type::IntTy,ci->getName()+".int",ci);
+        ci->replaceAllUsesWith(cast);
+        ci->eraseFromParent();
+        return true;
+      }
+    }
+
+    bool isstr_2 = false;
+    uint64_t len_2 = 0;
+    ConstantArray* A2;
+    if (getConstantStringLength(s2,len_2,&A2))
+    {
+      isstr_2 = true;
+      if (len_2 == 0)
+      {
+        // strcmp(x,"") -> *x
+        LoadInst* load = new LoadInst(s2,ci->getName()+".val",ci);
+        CastInst* cast = 
+          new CastInst(load,Type::IntTy,ci->getName()+".int",ci);
+        ci->replaceAllUsesWith(cast);
+        ci->eraseFromParent();
+        return true;
+      }
+    }
+
+    if (isstr_1 && isstr_2)
+    {
+      // strcmp(x,y)  -> cnst  (if both x and y are constant strings)
+      std::string str1 = A1->getAsString();
+      std::string str2 = A2->getAsString();
+      int result = strcmp(str1.c_str(), str2.c_str());
+      ci->replaceAllUsesWith(ConstantSInt::get(Type::IntTy,result));
+      ci->eraseFromParent();
+      return true;
+    }
+    return false;
+  }
+} StrCmpOptimizer;
 
 /// This LibCallOptimization will simplify a call to the strcpy library 
 /// function.  Two optimizations are possible: 
@@ -825,7 +902,8 @@ public:
       case 1:
       {
         // fputs(s,F)  -> fputc(s[0],F)  (if s is constant and strlen(s) == 1)
-        Function* fputc_func = SLC.get_fputc();
+        const Type* FILEptr_type = ci->getOperand(2)->getType();
+        Function* fputc_func = SLC.get_fputc(FILEptr_type);
         if (!fputc_func)
           return false;
         LoadInst* loadi = new LoadInst(ci->getOperand(1),
@@ -838,7 +916,8 @@ public:
       default:
       {  
         // fputs(s,F)  -> fwrite(s,1,len,F) (if s is constant and strlen(s) > 1)
-        Function* fwrite_func = SLC.get_fwrite();
+        const Type* FILEptr_type = ci->getOperand(2)->getType();
+        Function* fwrite_func = SLC.get_fwrite(FILEptr_type);
         if (!fwrite_func)
           return false;
         std::vector<Value*> parms;
@@ -855,6 +934,39 @@ public:
   }
 } PutsOptimizer;
 
+/// This LibCallOptimization will simplify calls to the "toascii" library 
+/// function. It simply does the corresponding and operation to restrict the
+/// range of values to the ASCII character set (0-127).
+/// @brief Simplify the toascii library function.
+struct ToAsciiOptimization : public LibCallOptimization
+{
+public:
+  /// @brief Default Constructor
+  ToAsciiOptimization() : LibCallOptimization("toascii") {}
+
+  /// @brief Destructor
+  virtual ~ToAsciiOptimization() {}
+
+  /// @brief Make sure that the "fputs" function has the right prototype
+  virtual bool ValidateCalledFunction(const Function* f, SimplifyLibCalls& SLC)
+  {
+    // Just make sure this has 2 arguments
+    return (f->arg_size() == 1);
+  }
+
+  /// @brief Perform the toascii optimization.
+  virtual bool OptimizeCall(CallInst* ci, SimplifyLibCalls& SLC)
+  {
+    // toascii(c)   -> (c & 0x7f)
+    Value* chr = ci->getOperand(1);
+    BinaryOperator* and_inst = BinaryOperator::create(Instruction::And,chr,
+        ConstantInt::get(chr->getType(),0x7F),ci->getName()+".toascii",ci);
+    ci->replaceAllUsesWith(and_inst);
+    ci->eraseFromParent();
+    return true;
+  }
+} ToAsciiOptimizer;
+
 /// A function to compute the length of a null-terminated constant array of
 /// integers.  This function can't rely on the size of the constant array 
 /// because there could be a null terminator in the middle of the array. 
@@ -865,7 +977,7 @@ public:
 /// of the null-terminated string. If false is returned, the conditions were
 /// not met and len is set to 0.
 /// @brief Get the length of a constant string (null-terminated array).
-bool getConstantStringLength(Value* V, uint64_t& len )
+bool getConstantStringLength(Value* V, uint64_t& len, ConstantArray** CA )
 {
   assert(V != 0 && "Invalid args to getConstantStringLength");
   len = 0; // make sure we initialize this 
@@ -952,6 +1064,8 @@ bool getConstantStringLength(Value* V, uint64_t& len )
 
   // Subtract out the initial value from the length
   len -= start_idx;
+  if (CA)
+    *CA = A;
   return true; // success!
 }
 
@@ -1091,9 +1205,6 @@ bool getConstantStringLength(Value* V, uint64_t& len )
 // tan, tanf, tanl:
 //   * tan(atan(x)) -> x
 // 
-// toascii:
-//   * toascii(c)   -> (c & 0x7f)
-//
 // trunc, truncf, truncl:
 //   * trunc(cnst) -> cnst'
 //
