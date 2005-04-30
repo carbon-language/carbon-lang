@@ -61,6 +61,14 @@ namespace {
       setOperationAction(ISD::SREM, MVT::i32, Expand);
       setOperationAction(ISD::UREM, MVT::i32, Expand);
 
+      // We don't support sin/cos/sqrt
+      setOperationAction(ISD::FSIN , MVT::f64, Expand);
+      setOperationAction(ISD::FCOS , MVT::f64, Expand);
+      setOperationAction(ISD::FSQRT, MVT::f64, Expand);
+      setOperationAction(ISD::FSIN , MVT::f32, Expand);
+      setOperationAction(ISD::FCOS , MVT::f32, Expand);
+      setOperationAction(ISD::FSQRT, MVT::f32, Expand);
+
       setSetCCResultContents(ZeroOrOneSetCCResult);
       addLegalFPImmediate(+0.0); // Necessary for FSEL
       addLegalFPImmediate(-0.0); //

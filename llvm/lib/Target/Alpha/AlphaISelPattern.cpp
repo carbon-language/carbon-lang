@@ -84,8 +84,16 @@ namespace {
       setOperationAction(ISD::MEMSET   , MVT::Other, Expand);
       setOperationAction(ISD::MEMCPY   , MVT::Other, Expand);
 
+      // We don't support sin/cos/sqrt
+      setOperationAction(ISD::FSIN , MVT::f64, Expand);
+      setOperationAction(ISD::FCOS , MVT::f64, Expand);
+      setOperationAction(ISD::FSQRT, MVT::f64, Expand);
+      setOperationAction(ISD::FSIN , MVT::f32, Expand);
+      setOperationAction(ISD::FCOS , MVT::f32, Expand);
+      setOperationAction(ISD::FSQRT, MVT::f32, Expand);
+
       //Doesn't work yet
-      setOperationAction(ISD::SETCC    , MVT::f32,   Promote);
+      setOperationAction(ISD::SETCC, MVT::f32,   Promote);
 
       computeRegisterProperties();
 
