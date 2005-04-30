@@ -511,11 +511,8 @@ public:
   virtual bool OptimizeCall(CallInst* ci, SimplifyLibCalls& SLC)
   {
     // First, check to see if src and destination are the same. If they are,
-    // then the optimization is to replace the CallInst with the destination
-    // because the call is a no-op. Note that this corresponds to the 
-    // degenerate strcpy(X,X) case which should have "undefined" results
-    // according to the C specification. However, it occurs sometimes and
-    // we optimize it as a no-op.
+    // then the optimization is to replace the CallInst with a constant 0
+    // because the call is a no-op. 
     Value* s1 = ci->getOperand(1);
     Value* s2 = ci->getOperand(2);
     if (s1 == s2)
