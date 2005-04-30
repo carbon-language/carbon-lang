@@ -111,7 +111,7 @@ void DefaultIntrinsicLowering::AddPrototypes(Module &M) {
         EnsureFunctionExists(M, "isunordered", I->arg_begin(), I->arg_end(), Type::BoolTy);
         break;
       case Intrinsic::sqrt:
-        if(I->abegin()->getType() == Type::FloatTy)
+        if(I->arg_begin()->getType() == Type::FloatTy)
           EnsureFunctionExists(M, "sqrtf", I->arg_begin(), I->arg_end(), Type::FloatTy);
         else
           EnsureFunctionExists(M, "sqrt", I->arg_begin(), I->arg_end(), Type::DoubleTy);
