@@ -656,6 +656,24 @@ void SelectionDAGLowering::visitCall(CallInst &I) {
             return;
           }
         }
+        else if (F->getName() == "sin" || F->getName() == "sinf") {
+          if (I.getNumOperands() == 2 &&   // Basic sanity checks.
+              I.getOperand(1)->getType()->isFloatingPoint() &&
+              I.getType() == I.getOperand(1)->getType()) {
+            SDOperand Tmp = getValue(I.getOperand(1));
+            setValue(&I, DAG.getNode(ISD::FSIN, Tmp.getValueType(), Tmp));
+            return;
+          }
+        }
+        else if (F->getName() == "cos" || F->getName() == "cosf") {
+          if (I.getNumOperands() == 2 &&   // Basic sanity checks.
+              I.getOperand(1)->getType()->isFloatingPoint() &&
+              I.getType() == I.getOperand(1)->getType()) {
+            SDOperand Tmp = getValue(I.getOperand(1));
+            setValue(&I, DAG.getNode(ISD::FCOS, Tmp.getValueType(), Tmp));
+            return;
+          }
+        }
         break;
       case Intrinsic::vastart:  visitVAStart(I); return;
       case Intrinsic::vaend:    visitVAEnd(I); return;
@@ -677,6 +695,13 @@ void SelectionDAGLowering::visitCall(CallInst &I) {
         setValue(&I, DAG.getSetCC(ISD::SETUO, MVT::i1,getValue(I.getOperand(1)),
                                   getValue(I.getOperand(2))));
         return;
+
+      case Intrinsic::sqrt:
+        setValue(&I, DAG.getNode(ISD::FSQRT,
+                                 getValue(I.getOperand(1)).getValueType(),
+                                 getValue(I.getOperand(1))));
+        return;
+
       case Intrinsic::pcmarker: {
         SDOperand Num = getValue(I.getOperand(1));
         DAG.setRoot(DAG.getNode(ISD::PCMARKER, MVT::Other, getRoot(), Num));

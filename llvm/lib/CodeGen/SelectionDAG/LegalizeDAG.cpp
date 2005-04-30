@@ -1003,12 +1003,15 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     case TargetLowering::Custom:
       assert(0 && "Cannot promote/custom handle this yet!");
     case TargetLowering::Expand:
-      if (Node->getOpcode() == ISD::FNEG) {
+      switch(Node->getOpcode()) {
+      case ISD::FNEG: {
         // Expand Y = FNEG(X) ->  Y = SUB -0.0, X
         Tmp2 = DAG.getConstantFP(-0.0, Node->getValueType(0));
         Result = LegalizeOp(DAG.getNode(ISD::SUB, Node->getValueType(0),
                                         Tmp2, Tmp1));
-      } else if (Node->getOpcode() == ISD::FABS) {
+        break;
+      }
+      case ISD::FABS: {
         // Expand Y = FABS(X) -> Y = (X >u 0.0) ? X : fneg(X).
         MVT::ValueType VT = Node->getValueType(0);
         Tmp2 = DAG.getConstantFP(0.0, VT);
@@ -1016,7 +1019,29 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         Tmp3 = DAG.getNode(ISD::FNEG, VT, Tmp1);
         Result = DAG.getNode(ISD::SELECT, VT, Tmp2, Tmp1, Tmp3);
         Result = LegalizeOp(Result);
-      } else {
+        break;
+      }
+      case ISD::FSQRT:
+      case ISD::FSIN:
+      case ISD::FCOS: {
+        MVT::ValueType VT = Node->getValueType(0);
+        Type *T = VT == MVT::f32 ? Type::FloatTy : Type::DoubleTy;
+        const char *FnName = 0;
+        switch(Node->getOpcode()) {
+        case ISD::FSQRT: FnName = VT == MVT::f32 ? "sqrtf" : "sqrt"; break;
+        case ISD::FSIN:  FnName = VT == MVT::f32 ? "sinf"  : "sin"; break;
+        case ISD::FCOS:  FnName = VT == MVT::f32 ? "cosf"  : "cos"; break;
+        default: assert(0 && "Unreachable!");
+        }
+        std::vector<std::pair<SDOperand, const Type*> > Args;
+        Args.push_back(std::make_pair(Tmp1, T));
+        std::pair<SDOperand,SDOperand> CallResult =
+          TLI.LowerCallTo(DAG.getEntryNode(), T, false,
+                          DAG.getExternalSymbol(FnName, VT), Args, DAG);
+        Result = LegalizeOp(CallResult.first);
+        break;
+      }
+      default:
         assert(0 && "Unreachable!");
       }
       break;
