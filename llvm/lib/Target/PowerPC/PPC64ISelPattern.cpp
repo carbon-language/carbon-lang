@@ -52,6 +52,14 @@ namespace {
       setOperationAction(ISD::MEMSET, MVT::Other, Expand);
       setOperationAction(ISD::MEMCPY, MVT::Other, Expand);
 
+      // We don't support sin/cos/sqrt
+      setOperationAction(ISD::FSIN , MVT::f64, Expand);
+      setOperationAction(ISD::FCOS , MVT::f64, Expand);
+      setOperationAction(ISD::FSQRT, MVT::f64, Expand);
+      setOperationAction(ISD::FSIN , MVT::f32, Expand);
+      setOperationAction(ISD::FCOS , MVT::f32, Expand);
+      setOperationAction(ISD::FSQRT, MVT::f32, Expand);
+
       // PPC 64 has i16 and i32 but no i8 (or i1) SEXTLOAD
       setOperationAction(ISD::SEXTLOAD, MVT::i1, Expand);
       setOperationAction(ISD::SEXTLOAD, MVT::i8, Expand);
