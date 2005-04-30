@@ -110,8 +110,13 @@ void DefaultIntrinsicLowering::AddPrototypes(Module &M) {
       case Intrinsic::isunordered:
         EnsureFunctionExists(M, "isunordered", I->arg_begin(), I->arg_end(), Type::BoolTy);
         break;
+      case Intrinsic::sqrt:
+        if(I->abegin()->getType() == Type::FloatTy)
+          EnsureFunctionExists(M, "sqrtf", I->arg_begin(), I->arg_end(), Type::FloatTy);
+        else
+          EnsureFunctionExists(M, "sqrt", I->arg_begin(), I->arg_end(), Type::DoubleTy);
+        break;
       }
-
 }
 
 void DefaultIntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
@@ -217,6 +222,17 @@ void DefaultIntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
     CI->replaceAllUsesWith(
       BinaryOperator::create(Instruction::Or, LIsNan, RIsNan,
                              "isunordered", CI));
+    break;
+  }
+  case Intrinsic::sqrt: {
+    static Function *sqrtFCache = 0;
+    static Function *sqrtfFCache = 0;
+    if(CI->getType() == Type::FloatTy)
+      ReplaceCallWith("sqrtf", CI, CI->op_begin()+1, CI->op_end(),
+                      Type::FloatTy, sqrtfFCache);
+    else
+      ReplaceCallWith("sqrt", CI, CI->op_begin()+1, CI->op_end(),
+                      Type::DoubleTy, sqrtFCache);
     break;
   }
   }
