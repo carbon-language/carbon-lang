@@ -26,6 +26,7 @@ namespace llvm {
   bool NoFramePointerElim;
   bool NoExcessFPPrecision;
   int  PatternISelTriState;
+  bool UnsafeFPMath;
 };
 namespace {
   cl::opt<bool, true> PrintCode("print-machineinstrs",
@@ -46,6 +47,11 @@ namespace {
                     cl::desc("sets the pattern ISel off(0), on(1), default(2)"),
                     cl::location(PatternISelTriState),
                     cl::init(2));
+  cl::opt<bool, true>
+  EnableUnsafeFPMath("enable-unsafe-fp-math",
+               cl::desc("Enable optimizations that may decrease FP precision"),
+               cl::location(UnsafeFPMath),
+               cl::init(false));
 };
 
 //---------------------------------------------------------------------------

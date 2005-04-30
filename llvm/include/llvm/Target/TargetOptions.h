@@ -41,6 +41,12 @@ namespace llvm {
   /// pattern ISel if available.
   extern int PatternISelTriState;
 
+  /// UnsafeFPMath - This flag is enabled when the
+  /// -enable-unsafe-fp-math flag is specified on the command line.  When
+  /// this flag is off (the default), the code generator is not allowed to
+  /// produce results that are "less precise" than IEEE allows.  This includes
+  /// use of X86 instructions like FSIN and FCOS instead of libcalls.
+  extern bool UnsafeFPMath;
 } // End llvm namespace
 
 #endif
