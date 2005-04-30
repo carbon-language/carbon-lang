@@ -26,6 +26,7 @@
 #include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/Target/MRegisterInfo.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetOptions.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/ADT/Statistic.h"
@@ -1744,6 +1745,25 @@ void X86ISel::visitCallInst(CallInst &CI) {
         BuildMI(BB, X86::FABS, 1, DestReg).addReg(op1Reg);
         return;
       }
+    } else if (F->getName() == "sin" && UnsafeFPMath || F->getName() == "sinf") {
+      if (CI.getNumOperands() == 2 &&   // Basic sanity checks.
+          CI.getOperand(1)->getType()->isFloatingPoint() &&
+          CI.getType() == CI.getOperand(1)->getType()) {
+        unsigned op1Reg = getReg(CI.getOperand(1));
+        unsigned DestReg = getReg(CI);
+        BuildMI(BB, X86::FSIN, 1, DestReg).addReg(op1Reg);
+        return;
+      }
+    }
+    else if (F->getName() == "cos" && UnsafeFPMath || F->getName() == "cosf") {
+      if (CI.getNumOperands() == 2 &&   // Basic sanity checks.
+          CI.getOperand(1)->getType()->isFloatingPoint() &&
+          CI.getType() == CI.getOperand(1)->getType()) {
+        unsigned op1Reg = getReg(CI.getOperand(1));
+        unsigned DestReg = getReg(CI);
+        BuildMI(BB, X86::FCOS, 1, DestReg).addReg(op1Reg);
+        return;
+      }
     }
 
     // Emit a CALL instruction with PC-relative displacement.
@@ -1780,6 +1800,7 @@ void X86ISel::LowerUnknownIntrinsicFunctionCalls(Function &F) {
           case Intrinsic::memcpy:
           case Intrinsic::memset:
           case Intrinsic::isunordered:
+          case Intrinsic::sqrt:
           case Intrinsic::readport:
           case Intrinsic::writeport:
             // We directly implement these intrinsics
@@ -1858,6 +1879,12 @@ void X86ISel::visitIntrinsicCall(Intrinsic::ID ID, CallInst &CI) {
     emitUCOMr(BB, BB->end(), TmpReg2, TmpReg1);
     TmpReg2 = getReg(CI);
     BuildMI(BB, X86::SETPr, 0, TmpReg2);
+    return;
+
+  case Intrinsic::sqrt:
+    TmpReg1 = getReg(CI.getOperand(1));
+    TmpReg2 = getReg(CI);
+    BuildMI(BB, X86::FSQRT, 1, TmpReg2).addReg(TmpReg1);
     return;
 
   case Intrinsic::memcpy: {
