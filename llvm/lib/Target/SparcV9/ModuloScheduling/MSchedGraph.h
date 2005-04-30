@@ -233,7 +233,7 @@ namespace llvm {
   //Graph class to represent dependence graph
   class MSchedGraph {
 
-    const MachineBasicBlock *BB; //Machine basic block
+    std::vector<const MachineBasicBlock *> BBs; //Machine basic block
     const TargetMachine &Target; //Target Machine
 
     //Nodes
@@ -283,7 +283,7 @@ namespace llvm {
 
     //Get Target or original machine basic block
     const TargetMachine* getTarget() { return &Target; }
-    const MachineBasicBlock* getBB() { return BB; }
+    std::vector<const MachineBasicBlock*> getBBs() { return BBs; }
   };
 
 

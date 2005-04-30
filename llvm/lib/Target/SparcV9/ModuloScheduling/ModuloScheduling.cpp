@@ -1218,7 +1218,8 @@ void ModuloSchedulingPass::findAllReccurrences(MSchedGraphNode *node,
 
 void ModuloSchedulingPass::searchPath(MSchedGraphNode *node,
 				      std::vector<MSchedGraphNode*> &path,
-				      std::set<MSchedGraphNode*> &nodesToAdd) {
+				      std::set<MSchedGraphNode*> &nodesToAdd,
+				     std::set<MSchedGraphNode*> &new_reccurrence) {
   //Push node onto the path
   path.push_back(node);
 
@@ -1227,23 +1228,32 @@ void ModuloSchedulingPass::searchPath(MSchedGraphNode *node,
   for(MSchedGraphNode::succ_iterator S = node->succ_begin(), SE = node->succ_end(); S != SE;
       ++S) {
 
-    //If this node exists in a recurrence already in the partial order, then add all
-    //nodes in the path to the set of nodes to add
-     //Check if its already in our partial order, if not add it to the final vector
+    //Check if we should ignore this edge first
+    if(ignoreEdge(node,*S))
+      continue;
+    
+    //check if successor is in this recurrence, we will get to it eventually
+    if(new_reccurrence.count(*S))
+      continue;
+
+    //If this node exists in a recurrence already in the partial
+    //order, then add all nodes in the path to the set of nodes to add
+     //Check if its already in our partial order, if not add it to the
+     //final vector
+    bool found = false;
     for(std::vector<std::set<MSchedGraphNode*> >::iterator PO = partialOrder.begin(),
 	  PE = partialOrder.end(); PO != PE; ++PO) {
 
-      //Check if we should ignore this edge first
-      if(ignoreEdge(node,*S))
-	continue;
-
       if(PO->count(*S)) {
-	nodesToAdd.insert(*S);
+	found = true;
+	break;
       }
-      //terminate
-      else
-	searchPath(*S, path, nodesToAdd);
-      }
+    }
+
+    if(!found) {
+      nodesToAdd.insert(*S);
+      searchPath(*S, path, nodesToAdd, new_reccurrence);
+    }
   }
 
   //Pop Node off the path
@@ -1344,7 +1354,7 @@ void ModuloSchedulingPass::computePartialOrder() {
       //Add nodes that connect this recurrence to recurrences in the partial path
       for(std::set<MSchedGraphNode*>::iterator N = new_recurrence.begin(),
           NE = new_recurrence.end(); N != NE; ++N)
-	  searchPath(*N, path, nodesToAdd);
+	searchPath(*N, path, nodesToAdd, new_recurrence);
 
       //Add nodes to this recurrence if they are not already in the partial order
       for(std::set<MSchedGraphNode*>::iterator N = nodesToAdd.begin(), NE = nodesToAdd.end();
@@ -1723,8 +1733,10 @@ bool ModuloSchedulingPass::computeSchedule(const MachineBasicBlock *BB, MSchedGr
 	  E = FinalNodeOrder.end(); I != E; ++I) {
 
       //CalculateEarly and Late start
-      int EarlyStart = -1;
-      int LateStart = 99999; //Set to something higher then we would ever expect (FIXME)
+      bool initialLSVal = false;
+      bool initialESVal = false;
+      int EarlyStart = 0;
+      int LateStart = 0; 
       bool hasSucc = false;
       bool hasPred = false;
       bool sched;
@@ -1751,7 +1763,12 @@ bool ModuloSchedulingPass::computeSchedule(const MachineBasicBlock *BB, MSchedGr
 	      int ES_Temp = nodesByCycle->first + (*schedNode)->getLatency() - diff * II;
 	      DEBUG(std::cerr << "Diff: " << diff << " Cycle: " << nodesByCycle->first << "\n");
 	      DEBUG(std::cerr << "Temp EarlyStart: " << ES_Temp << " Prev EarlyStart: " << EarlyStart << "\n");
-	      EarlyStart = std::max(EarlyStart, ES_Temp);
+	      if(initialESVal)
+		EarlyStart = std::max(EarlyStart, ES_Temp);
+	      else {
+		EarlyStart = ES_Temp;
+		initialESVal = true;
+	      }
 	      hasPred = true;
 	    }
 	    if((*I)->isSuccessor(*schedNode)) {
@@ -1759,7 +1776,12 @@ bool ModuloSchedulingPass::computeSchedule(const MachineBasicBlock *BB, MSchedGr
 	      int LS_Temp = nodesByCycle->first - (*I)->getLatency() + diff * II;
 	      DEBUG(std::cerr << "Diff: " << diff << " Cycle: " << nodesByCycle->first << "\n");
 	      DEBUG(std::cerr << "Temp LateStart: " << LS_Temp << " Prev LateStart: " << LateStart << "\n");
-	      LateStart = std::min(LateStart, LS_Temp);
+	      if(initialLSVal)
+		LateStart = std::min(LateStart, LS_Temp);
+	      else {
+		LateStart = LS_Temp;
+		initialLSVal = true;
+	      }
 	      hasSucc = true;
 	    }
 	  }
@@ -1772,7 +1794,7 @@ bool ModuloSchedulingPass::computeSchedule(const MachineBasicBlock *BB, MSchedGr
 
       //Check if this node is a pred or succ to a branch, and restrict its placement
       //even though the branch is not in the schedule
-      int count = branches.size();
+      /*int count = branches.size();
       for(std::vector<MSchedGraphNode*>::iterator B = branches.begin(), BE = branches.end();
 	  B != BE; ++B) {
 	if((*I)->isPredecessor(*B)) {
@@ -1794,7 +1816,7 @@ bool ModuloSchedulingPass::computeSchedule(const MachineBasicBlock *BB, MSchedGr
 	}
 	
 	count--;
-      }
+      }*/
 
       //Check if the node has no pred or successors and set Early Start to its ASAP
       if(!hasSucc && !hasPred)

@@ -113,7 +113,8 @@ namespace llvm {
 
     void searchPath(MSchedGraphNode *node, 
 		    std::vector<MSchedGraphNode*> &path,
-		    std::set<MSchedGraphNode*> &nodesToAdd);
+		    std::set<MSchedGraphNode*> &nodesToAdd,
+		    std::set<MSchedGraphNode*> &new_reccurence);
 
     void pathToRecc(MSchedGraphNode *node,
 		    std::vector<MSchedGraphNode*> &path,

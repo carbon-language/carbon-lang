@@ -153,13 +153,13 @@ MSchedGraph::MSchedGraph(const MachineBasicBlock *bb,
 			 std::map<const MachineInstr*, unsigned> &ignoreInstrs, 
 			 DependenceAnalyzer &DA, 
 			 std::map<MachineInstr*, Instruction*> &machineTollvm)
-  : BB(bb), Target(targ) {
+  : Target(targ) {
 
   //Make sure BB is not null,
-  assert(BB != NULL && "Basic Block is null");
+  assert(bb != NULL && "Basic Block is null");
 
-  //DEBUG(std::cerr << "Constructing graph for " << bb << "\n");
-
+  BBs.push_back(bb);
+  
   //Create nodes and edges for this BB
   buildNodesAndEdges(ignoreInstrs, DA, machineTollvm);
 
@@ -170,7 +170,9 @@ MSchedGraph::MSchedGraph(const MachineBasicBlock *bb,
 //Copies the graph and keeps a map from old to new nodes
 MSchedGraph::MSchedGraph(const MSchedGraph &G, 
 			 std::map<MSchedGraphNode*, MSchedGraphNode*> &newNodes) 
-  : BB(G.BB), Target(G.Target) {
+  : Target(G.Target) {
+
+  BBs = G.BBs;
 
   std::map<MSchedGraphNode*, MSchedGraphNode*> oldToNew;
   //Copy all nodes
@@ -336,179 +338,184 @@ void MSchedGraph::buildNodesAndEdges(std::map<const MachineInstr*, unsigned> &ig
   std::vector<const MachineInstr*> phiInstrs;
   unsigned index = 0;
 
-  //Loop over instructions in MBB and add nodes and edges
-  for (MachineBasicBlock::const_iterator MI = BB->begin(), e = BB->end(); 
-       MI != e; ++MI) {
+  for(std::vector<const MachineBasicBlock*>::iterator B = BBs.begin(), 
+	BE = BBs.end(); B != BE; ++B) {
+    
+    const MachineBasicBlock *BB = *B;
 
-    //Ignore indvar instructions
-    if(ignoreInstrs.count(MI)) {
-      ++index;
-      continue;
-    }
-
-    //Get each instruction of machine basic block, get the delay
-    //using the op code, create a new node for it, and add to the
-    //graph.
-
-    MachineOpCode opCode = MI->getOpcode();
-    int delay;
-
-#if 0  // FIXME: LOOK INTO THIS
-    //Check if subsequent instructions can be issued before
-    //the result is ready, if so use min delay.
-    if(MTI->hasResultInterlock(MIopCode))
-      delay = MTI->minLatency(MIopCode);
-    else
-#endif
-      //Get delay
-      delay = MTI->maxLatency(opCode);
-
-    //Create new node for this machine instruction and add to the graph.
-    //Create only if not a nop
-    if(MTI->isNop(opCode))
-      continue;
-
-    //Sparc BE does not use PHI opcode, so assert on this case
-    assert(opCode != TargetInstrInfo::PHI && "Did not expect PHI opcode");
-
-    bool isBranch = false;
-
-    //We want to flag the branch node to treat it special
-    if(MTI->isBranch(opCode))
-      isBranch = true;
-
-    //Node is created and added to the graph automatically
-    MSchedGraphNode *node =  new MSchedGraphNode(MI, this, index, delay, 
-						 isBranch);
-
-    DEBUG(std::cerr << "Created Node: " << *node << "\n");
-
-    //Check OpCode to keep track of memory operations to add memory
-    //dependencies later.
-    if(MTI->isLoad(opCode) || MTI->isStore(opCode))
-      memInstructions.push_back(node);
-
-    //Loop over all operands, and put them into the register number to
-    //graph node map for determining dependencies
-    //If an operands is a use/def, we have an anti dependence to itself
-    for(unsigned i=0; i < MI->getNumOperands(); ++i) {
-      //Get Operand
-      const MachineOperand &mOp = MI->getOperand(i);
-
-      //Check if it has an allocated register
-      if(mOp.hasAllocatedReg()) {
-	int regNum = mOp.getReg();
-
-	if(regNum != SparcV9::g0) {
-	//Put into our map
-	regNumtoNodeMap[regNum].push_back(std::make_pair(i, node));
-	}
+    //Loop over instructions in MBB and add nodes and edges
+    for (MachineBasicBlock::const_iterator MI = BB->begin(), e = BB->end(); 
+	 MI != e; ++MI) {
+      
+      //Ignore indvar instructions
+      if(ignoreInstrs.count(MI)) {
+	++index;
 	continue;
       }
-
-
-      //Add virtual registers dependencies
-      //Check if any exist in the value map already and create dependencies
-      //between them.
-      if(mOp.getType() == MachineOperand::MO_VirtualRegister 
-	 ||  mOp.getType() == MachineOperand::MO_CCRegister) {
-
-	//Make sure virtual register value is not null
-	assert((mOp.getVRegValue() != NULL) && "Null value is defined");
-
-	//Check if this is a read operation in a phi node, if so DO NOT PROCESS
-	if(mOp.isUse() && (opCode == TargetInstrInfo::PHI)) {
-	  DEBUG(std::cerr << "Read Operation in a PHI node\n");
+      
+      //Get each instruction of machine basic block, get the delay
+      //using the op code, create a new node for it, and add to the
+      //graph.
+      
+      MachineOpCode opCode = MI->getOpcode();
+      int delay;
+      
+#if 0  // FIXME: LOOK INTO THIS
+      //Check if subsequent instructions can be issued before
+      //the result is ready, if so use min delay.
+      if(MTI->hasResultInterlock(MIopCode))
+	delay = MTI->minLatency(MIopCode);
+      else
+#endif
+	//Get delay
+	delay = MTI->maxLatency(opCode);
+      
+      //Create new node for this machine instruction and add to the graph.
+      //Create only if not a nop
+      if(MTI->isNop(opCode))
+	continue;
+      
+      //Sparc BE does not use PHI opcode, so assert on this case
+      assert(opCode != TargetInstrInfo::PHI && "Did not expect PHI opcode");
+      
+      bool isBranch = false;
+      
+      //We want to flag the branch node to treat it special
+      if(MTI->isBranch(opCode))
+	isBranch = true;
+      
+      //Node is created and added to the graph automatically
+      MSchedGraphNode *node =  new MSchedGraphNode(MI, this, index, delay, 
+						   isBranch);
+      
+      DEBUG(std::cerr << "Created Node: " << *node << "\n");
+      
+      //Check OpCode to keep track of memory operations to add memory
+      //dependencies later.
+      if(MTI->isLoad(opCode) || MTI->isStore(opCode))
+	memInstructions.push_back(node);
+      
+      //Loop over all operands, and put them into the register number to
+      //graph node map for determining dependencies
+      //If an operands is a use/def, we have an anti dependence to itself
+      for(unsigned i=0; i < MI->getNumOperands(); ++i) {
+	//Get Operand
+	const MachineOperand &mOp = MI->getOperand(i);
+	
+	//Check if it has an allocated register
+	if(mOp.hasAllocatedReg()) {
+	  int regNum = mOp.getReg();
+	  
+	  if(regNum != SparcV9::g0) {
+	    //Put into our map
+	    regNumtoNodeMap[regNum].push_back(std::make_pair(i, node));
+	  }
 	  continue;
 	}
-
-	if (const Value* srcI = mOp.getVRegValue()) {
 	
-	  //Find value in the map
-	  std::map<const Value*, std::vector<OpIndexNodePair> >::iterator V
-	    = valuetoNodeMap.find(srcI);
 	
-	  //If there is something in the map already, add edges from
-	  //those instructions
-	  //to this one we are processing
-	  if(V != valuetoNodeMap.end()) {
-	    addValueEdges(V->second, node, mOp.isUse(), mOp.isDef(), phiInstrs);
-	
-	    //Add to value map
-	    V->second.push_back(std::make_pair(i,node));
+	//Add virtual registers dependencies
+	//Check if any exist in the value map already and create dependencies
+	//between them.
+	if(mOp.getType() == MachineOperand::MO_VirtualRegister 
+	   ||  mOp.getType() == MachineOperand::MO_CCRegister) {
+	  
+	  //Make sure virtual register value is not null
+	  assert((mOp.getVRegValue() != NULL) && "Null value is defined");
+	  
+	  //Check if this is a read operation in a phi node, if so DO NOT PROCESS
+	  if(mOp.isUse() && (opCode == TargetInstrInfo::PHI)) {
+	    DEBUG(std::cerr << "Read Operation in a PHI node\n");
+	    continue;
 	  }
-	  //Otherwise put it in the map
-	  else
-	    //Put into value map
-	  valuetoNodeMap[mOp.getVRegValue()].push_back(std::make_pair(i, node));
+	  
+	  if (const Value* srcI = mOp.getVRegValue()) {
+	    
+	    //Find value in the map
+	    std::map<const Value*, std::vector<OpIndexNodePair> >::iterator V
+	      = valuetoNodeMap.find(srcI);
+	    
+	    //If there is something in the map already, add edges from
+	    //those instructions
+	    //to this one we are processing
+	    if(V != valuetoNodeMap.end()) {
+	      addValueEdges(V->second, node, mOp.isUse(), mOp.isDef(), phiInstrs);
+	      
+	      //Add to value map
+	      V->second.push_back(std::make_pair(i,node));
+	    }
+	    //Otherwise put it in the map
+	    else
+	      //Put into value map
+	      valuetoNodeMap[mOp.getVRegValue()].push_back(std::make_pair(i, node));
+	  }
 	}
       }
+      ++index;
     }
-    ++index;
-  }
-
-  //Loop over LLVM BB, examine phi instructions, and add them to our
-  //phiInstr list to process
-  const BasicBlock *llvm_bb = BB->getBasicBlock();
-  for(BasicBlock::const_iterator I = llvm_bb->begin(), E = llvm_bb->end(); 
-      I != E; ++I) {
-    if(const PHINode *PN = dyn_cast<PHINode>(I)) {
-      MachineCodeForInstruction & tempMvec = MachineCodeForInstruction::get(PN);
-       for (unsigned j = 0; j < tempMvec.size(); j++) {
-	 if(!ignoreInstrs.count(tempMvec[j])) {
-	   DEBUG(std::cerr << "Inserting phi instr into map: " << *tempMvec[j] << "\n");
-	   phiInstrs.push_back((MachineInstr*) tempMvec[j]);
-	 }
-       }
+    
+    //Loop over LLVM BB, examine phi instructions, and add them to our
+    //phiInstr list to process
+    const BasicBlock *llvm_bb = BB->getBasicBlock();
+    for(BasicBlock::const_iterator I = llvm_bb->begin(), E = llvm_bb->end(); 
+	I != E; ++I) {
+      if(const PHINode *PN = dyn_cast<PHINode>(I)) {
+	MachineCodeForInstruction & tempMvec = MachineCodeForInstruction::get(PN);
+	for (unsigned j = 0; j < tempMvec.size(); j++) {
+	  if(!ignoreInstrs.count(tempMvec[j])) {
+	    DEBUG(std::cerr << "Inserting phi instr into map: " << *tempMvec[j] << "\n");
+	    phiInstrs.push_back((MachineInstr*) tempMvec[j]);
+	  }
+	}
+      }
+      
     }
-
-  }
-
-  addMemEdges(memInstructions, DA, machineTollvm);
-  addMachRegEdges(regNumtoNodeMap);
-
-  //Finally deal with PHI Nodes and Value*
-  for(std::vector<const MachineInstr*>::iterator I = phiInstrs.begin(), 
-	E = phiInstrs.end(); I != E;  ++I) {
-
-    //Get Node for this instruction
-    std::map<const MachineInstr*, MSchedGraphNode*>::iterator X;
-    X = find(*I);
-
-    if(X == GraphMap.end())
-      continue;
-
-    MSchedGraphNode *node = X->second;
-
-    DEBUG(std::cerr << "Adding ite diff edges for node: " << *node << "\n");
-
-    //Loop over operands for this instruction and add value edges
-    for(unsigned i=0; i < (*I)->getNumOperands(); ++i) {
-      //Get Operand
-      const MachineOperand &mOp = (*I)->getOperand(i);
-      if((mOp.getType() == MachineOperand::MO_VirtualRegister 
-	  ||  mOp.getType() == MachineOperand::MO_CCRegister) && mOp.isUse()) {
-
-	//find the value in the map
-	if (const Value* srcI = mOp.getVRegValue()) {
-
-	  //Find value in the map
-	  std::map<const Value*, std::vector<OpIndexNodePair> >::iterator V
+    
+    addMemEdges(memInstructions, DA, machineTollvm);
+    addMachRegEdges(regNumtoNodeMap);
+    
+    //Finally deal with PHI Nodes and Value*
+    for(std::vector<const MachineInstr*>::iterator I = phiInstrs.begin(), 
+	  E = phiInstrs.end(); I != E;  ++I) {
+      
+      //Get Node for this instruction
+      std::map<const MachineInstr*, MSchedGraphNode*>::iterator X;
+      X = find(*I);
+      
+      if(X == GraphMap.end())
+	continue;
+      
+      MSchedGraphNode *node = X->second;
+      
+      DEBUG(std::cerr << "Adding ite diff edges for node: " << *node << "\n");
+      
+      //Loop over operands for this instruction and add value edges
+      for(unsigned i=0; i < (*I)->getNumOperands(); ++i) {
+	//Get Operand
+	const MachineOperand &mOp = (*I)->getOperand(i);
+	if((mOp.getType() == MachineOperand::MO_VirtualRegister 
+	    ||  mOp.getType() == MachineOperand::MO_CCRegister) && mOp.isUse()) {
+	  
+	  //find the value in the map
+	  if (const Value* srcI = mOp.getVRegValue()) {
+	    
+	    //Find value in the map
+	    std::map<const Value*, std::vector<OpIndexNodePair> >::iterator V
 	      = valuetoNodeMap.find(srcI);
-
-	  //If there is something in the map already, add edges from
-	  //those instructions
-	  //to this one we are processing
-	  if(V != valuetoNodeMap.end()) {
-	    addValueEdges(V->second, node, mOp.isUse(), mOp.isDef(), 
-			  phiInstrs, 1);
+	    
+	    //If there is something in the map already, add edges from
+	    //those instructions
+	    //to this one we are processing
+	    if(V != valuetoNodeMap.end()) {
+	      addValueEdges(V->second, node, mOp.isUse(), mOp.isDef(), 
+			    phiInstrs, 1);
+	    }
 	  }
 	}
       }
     }
   }
 }
-
 //Add dependencies for Value*s
 void MSchedGraph::addValueEdges(std::vector<OpIndexNodePair> &NodesInMap,
 				MSchedGraphNode *destNode, bool nodeIsUse,

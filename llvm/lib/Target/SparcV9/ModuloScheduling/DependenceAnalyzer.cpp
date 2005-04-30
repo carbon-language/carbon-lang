@@ -218,7 +218,9 @@ void DependenceAnalyzer::advancedDepAnalysis(GetElementPtrInst *gp1,
   //Find constant index difference
   int diff = A1->getValue()->getRawValue() - A2->getValue()->getRawValue();
   std::cerr << diff << "\n";
-  
+  if(diff > 5)
+    diff = 2;
+
   if(diff > 0)
     createDep(deps, valLoad, val2Load, srcBeforeDest, diff);
   
