@@ -1199,13 +1199,14 @@ unsigned ISel::SelectExpr(SDOperand N) {
     }
   }
 
-  if (DestType == MVT::f64 || DestType == MVT::f32 ||
-      (
-       (opcode == ISD::LOAD || opcode == ISD::CopyFromReg ||
-        opcode == ISD::EXTLOAD) &&
-       (N.getValue(0).getValueType() == MVT::f32 ||
-        N.getValue(0).getValueType() == MVT::f64)
-       )
+  if ((DestType == MVT::f64 || DestType == MVT::f32 ||
+       (
+        (opcode == ISD::LOAD || opcode == ISD::CopyFromReg ||
+         opcode == ISD::EXTLOAD) &&
+        (N.getValue(0).getValueType() == MVT::f32 ||
+         N.getValue(0).getValueType() == MVT::f64)
+       ))
+       && opcode != ISD::CALL
       )
     return SelectExprFP(N, Result);
 
