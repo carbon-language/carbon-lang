@@ -2879,6 +2879,22 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
   if (Constant *RHSC = dyn_cast<Constant>(Op1)) {
     if (Instruction *LHSI = dyn_cast<Instruction>(Op0))
       switch (LHSI->getOpcode()) {
+      case Instruction::GetElementPtr:
+        if (RHSC->isNullValue()) {
+          // Transform setcc GEP P, int 0, int 0, int 0, null -> setcc P, null
+          bool isAllZeros = true;
+          for (unsigned i = 1, e = LHSI->getNumOperands(); i != e; ++i)
+            if (!isa<Constant>(LHSI->getOperand(i)) ||
+                !cast<Constant>(LHSI->getOperand(i))->isNullValue()) {
+              isAllZeros = false;
+              break;
+            }
+          if (isAllZeros)
+            return new SetCondInst(I.getOpcode(), LHSI->getOperand(0),
+                    Constant::getNullValue(LHSI->getOperand(0)->getType()));
+        }
+        break;
+
       case Instruction::PHI:
         if (Instruction *NV = FoldOpIntoPhi(I))
           return NV;
