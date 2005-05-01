@@ -98,6 +98,9 @@ namespace llvm {
   //createModuloSchedulingPass - Creates the Swing Modulo Scheduling Pass
   FunctionPass *createModuloSchedulingPass(TargetMachine & targ);
 
+  //createModuloSchedulingPass - Creates the Swing Modulo Scheduling Pass
+  FunctionPass *createModuloSchedulingSBPass(TargetMachine & targ);
+
 } // End llvm namespace
 
 #endif
