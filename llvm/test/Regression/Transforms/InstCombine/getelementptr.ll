@@ -66,3 +66,8 @@ bool %test10({int, int} * %x, {int, int} * %y) {
         ret bool %tmp.4
 }
 
+bool %test11({int,int} *%X) {
+	%P = getelementptr {int,int}* %X, int 0, uint 0
+	%Q = seteq int* %P, null
+	ret bool %Q
+}
