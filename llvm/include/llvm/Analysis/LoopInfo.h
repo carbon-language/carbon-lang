@@ -74,6 +74,7 @@ public:
 
   /// iterator/begin/end - Return the loops contained entirely within this loop.
   ///
+  const std::vector<Loop*> &getSubLoops() const { return SubLoops; }
   typedef std::vector<Loop*>::const_iterator iterator;
   iterator begin() const { return SubLoops.begin(); }
   iterator end() const { return SubLoops.end(); }
