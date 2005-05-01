@@ -4750,13 +4750,34 @@ static bool isSafeToLoadUnconditionally(Value *V, Instruction *ScanFrom) {
 Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
   Value *Op = LI.getOperand(0);
 
+  // load (cast X) --> cast (load X) iff safe
+  if (CastInst *CI = dyn_cast<CastInst>(Op))
+    if (Instruction *Res = InstCombineLoadCast(*this, LI))
+      return Res;
+
+  // None of the following transforms are legal for volatile loads.
+  if (LI.isVolatile()) return 0;
+
+  if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(Op))
+    if (isa<ConstantPointerNull>(GEPI->getOperand(0)) ||
+        isa<UndefValue>(GEPI->getOperand(0))) {
+      // Insert a new store to null instruction before the load to indicate
+      // that this code is not reachable.  We do this instead of inserting
+      // an unreachable instruction directly because we cannot modify the
+      // CFG.
+      new StoreInst(UndefValue::get(LI.getType()),
+                    Constant::getNullValue(Op->getType()), &LI);
+      return ReplaceInstUsesWith(LI, UndefValue::get(LI.getType()));
+    }
+
   if (Constant *C = dyn_cast<Constant>(Op)) {
-    if ((C->isNullValue() || isa<UndefValue>(C)) &&
-        !LI.isVolatile()) {                          // load null/undef -> undef
+    // load null/undef -> undef
+    if ((C->isNullValue() || isa<UndefValue>(C))) {
       // Insert a new store to null instruction before the load to indicate that
       // this code is not reachable.  We do this instead of inserting an
       // unreachable instruction directly because we cannot modify the CFG.
-      new StoreInst(UndefValue::get(LI.getType()), C, &LI);
+      new StoreInst(UndefValue::get(LI.getType()),
+                    Constant::getNullValue(Op->getType()), &LI);
       return ReplaceInstUsesWith(LI, UndefValue::get(LI.getType()));
     }
 
@@ -4772,18 +4793,23 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
           if (GV->isConstant() && !GV->isExternal())
             if (Constant *V = GetGEPGlobalInitializer(GV->getInitializer(), CE))
               return ReplaceInstUsesWith(LI, V);
+        if (CE->getOperand(0)->isNullValue()) {
+          // Insert a new store to null instruction before the load to indicate
+          // that this code is not reachable.  We do this instead of inserting
+          // an unreachable instruction directly because we cannot modify the
+          // CFG.
+          new StoreInst(UndefValue::get(LI.getType()),
+                        Constant::getNullValue(Op->getType()), &LI);
+          return ReplaceInstUsesWith(LI, UndefValue::get(LI.getType()));
+        }
+
       } else if (CE->getOpcode() == Instruction::Cast) {
         if (Instruction *Res = InstCombineLoadCast(*this, LI))
           return Res;
       }
   }
 
-  // load (cast X) --> cast (load X) iff safe
-  if (CastInst *CI = dyn_cast<CastInst>(Op))
-    if (Instruction *Res = InstCombineLoadCast(*this, LI))
-      return Res;
-
-  if (!LI.isVolatile() && Op->hasOneUse()) {
+  if (Op->hasOneUse()) {
     // Change select and PHI nodes to select values instead of addresses: this
     // helps alias analysis out a lot, allows many others simplifications, and
     // exposes redundancy in the code.
