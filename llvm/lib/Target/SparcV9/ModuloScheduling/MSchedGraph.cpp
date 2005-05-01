@@ -167,6 +167,28 @@ MSchedGraph::MSchedGraph(const MachineBasicBlock *bb,
   //addBranchEdges();
 }
 
+//Create a graph for a machine block. The ignoreInstrs map is so that
+//we ignore instructions associated to the index variable since this
+//is a special case in Modulo Scheduling.  We only want to deal with
+//the body of the loop.
+MSchedGraph::MSchedGraph(std::vector<const MachineBasicBlock*> &bbs, 
+			 const TargetMachine &targ, 
+			 std::map<const MachineInstr*, unsigned> &ignoreInstrs, 
+			 DependenceAnalyzer &DA, 
+			 std::map<MachineInstr*, Instruction*> &machineTollvm)
+  : BBs(bbs), Target(targ) {
+
+  //Make sure there is at least one BB and it is not null,
+  assert(((bbs.size() >= 1) &&  bbs[1] != NULL) && "Basic Block is null");
+  
+  //Create nodes and edges for this BB
+  buildNodesAndEdges(ignoreInstrs, DA, machineTollvm);
+
+  //Experimental!
+  //addBranchEdges();
+}
+
+
 //Copies the graph and keeps a map from old to new nodes
 MSchedGraph::MSchedGraph(const MSchedGraph &G, 
 			 std::map<MSchedGraphNode*, MSchedGraphNode*> &newNodes) 

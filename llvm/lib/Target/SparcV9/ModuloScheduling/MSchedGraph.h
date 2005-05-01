@@ -259,6 +259,12 @@ namespace llvm {
     //Copy constructor with maps to link old nodes to new nodes
     MSchedGraph(const MSchedGraph &G, std::map<MSchedGraphNode*, MSchedGraphNode*> &newNodes);
     
+    MSchedGraph(std::vector<const MachineBasicBlock*> &bbs, 
+		const TargetMachine &targ, 
+		std::map<const MachineInstr*, unsigned> &ignoreInstrs, 
+		DependenceAnalyzer &DA, 
+		std::map<MachineInstr*, Instruction*> &machineTollvm);
+
     //Print graph
     void print(std::ostream &os) const;
 
