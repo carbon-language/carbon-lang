@@ -54,3 +54,8 @@ cond_continue.i:
         ret int %tmp.3
 }
 
+int %test7(int %X) {
+	%V = getelementptr int* null, int %X
+	%R = load int* %V
+	ret int %R
+}
