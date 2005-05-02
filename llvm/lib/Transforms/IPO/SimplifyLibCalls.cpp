@@ -858,6 +858,132 @@ public:
   }
 } PowOptimizer;
 
+/// This LibCallOptimization will simplify calls to the "fprintf" library 
+/// function. It looks for cases where the result of fprintf is not used and the
+/// operation can be reduced to something simpler.
+/// @brief Simplify the pow library function.
+struct FPrintFOptimization : public LibCallOptimization
+{
+public:
+  /// @brief Default Constructor
+  FPrintFOptimization() : LibCallOptimization("fprintf") {}
+
+  /// @brief Destructor
+  virtual ~FPrintFOptimization() {}
+
+  /// @brief Make sure that the "fprintf" function has the right prototype
+  virtual bool ValidateCalledFunction(const Function* f, SimplifyLibCalls& SLC)
+  {
+    // Just make sure this has at least 2 arguments
+    return (f->arg_size() >= 2);
+  }
+
+  /// @brief Perform the fprintf optimization.
+  virtual bool OptimizeCall(CallInst* ci, SimplifyLibCalls& SLC)
+  {
+    // If the call has more than 3 operands, we can't optimize it
+    if (ci->getNumOperands() > 4 || ci->getNumOperands() <= 2)
+      return false;
+
+    // If the result of the fprintf call is used, none of these optimizations 
+    // can be made.
+    if (!ci->hasNUses(0)) 
+      return false;
+
+    // All the optimizations depend on the length of the second argument and the
+    // fact that it is a constant string array. Check that now
+    uint64_t len = 0; 
+    ConstantArray* CA = 0;
+    if (!getConstantStringLength(ci->getOperand(2), len, &CA))
+      return false;
+
+    if (ci->getNumOperands() == 3)
+    {
+      // Make sure there's no % in the constant array
+      for (unsigned i = 0; i < len; ++i)
+      {
+        if (ConstantInt* CI = dyn_cast<ConstantInt>(CA->getOperand(i)))
+        {
+          // Check for the null terminator
+          if (CI->getRawValue() == '%')
+            return false; // we found end of string
+        }
+        else 
+          return false;
+      }
+
+      // fprintf(file,fmt) -> fwrite(fmt,strlen(fmt),1file) 
+      const Type* FILEptr_type = ci->getOperand(1)->getType();
+      Function* fwrite_func = SLC.get_fwrite(FILEptr_type);
+      if (!fwrite_func)
+        return false;
+      std::vector<Value*> args;
+      args.push_back(ci->getOperand(2));
+      args.push_back(ConstantUInt::get(SLC.getIntPtrType(),len));
+      args.push_back(ConstantUInt::get(SLC.getIntPtrType(),1));
+      args.push_back(ci->getOperand(1));
+      new CallInst(fwrite_func,args,"",ci);
+      ci->eraseFromParent();
+      return true;
+    }
+
+    // The remaining optimizations require the format string to be length 2
+    // "%s" or "%c".
+    if (len != 2)
+      return false;
+
+    // The first character has to be a %
+    if (ConstantInt* CI = dyn_cast<ConstantInt>(CA->getOperand(0)))
+      if (CI->getRawValue() != '%')
+        return false;
+
+    // Get the second character and switch on its value
+    ConstantInt* CI = dyn_cast<ConstantInt>(CA->getOperand(1));
+    switch (CI->getRawValue())
+    {
+      case 's':
+      {
+        uint64_t len = 0; 
+        ConstantArray* CA = 0;
+        if (!getConstantStringLength(ci->getOperand(3), len, &CA))
+          return false;
+
+        // fprintf(file,fmt) -> fwrite(fmt,strlen(fmt),1,file) 
+        const Type* FILEptr_type = ci->getOperand(1)->getType();
+        Function* fwrite_func = SLC.get_fwrite(FILEptr_type);
+        if (!fwrite_func)
+          return false;
+        std::vector<Value*> args;
+        args.push_back(ci->getOperand(3));
+        args.push_back(ConstantUInt::get(SLC.getIntPtrType(),len));
+        args.push_back(ConstantUInt::get(SLC.getIntPtrType(),1));
+        args.push_back(ci->getOperand(1));
+        new CallInst(fwrite_func,args,"",ci);
+        break;
+      }
+      case 'c':
+      {
+        ConstantInt* CI = dyn_cast<ConstantInt>(ci->getOperand(3));
+        if (!CI)
+          return false;
+
+        const Type* FILEptr_type = ci->getOperand(1)->getType();
+        Function* fputc_func = SLC.get_fputc(FILEptr_type);
+        if (!fputc_func)
+          return false;
+        CastInst* cast = new CastInst(CI,Type::IntTy,CI->getName()+".int",ci);
+        new CallInst(fputc_func,cast,ci->getOperand(1),"",ci);
+        break;
+      }
+      default:
+        return false;
+    }
+    ci->eraseFromParent();
+    return true;
+  }
+} FPrintFOptimizer;
+
+
 /// This LibCallOptimization will simplify calls to the "fputs" library 
 /// function. It looks for cases where the result of fputs is not used and the
 /// operation can be reduced to something simpler.
@@ -1082,13 +1208,6 @@ bool getConstantStringLength(Value* V, uint64_t& len, ConstantArray** CA )
 //
 // ffs, ffsl, ffsll:
 //   * ffs(cnst)     -> cnst'
-//
-// fprintf:
-//   * fprintf(file,fmt) -> fputs(fmt,file) 
-//       (if fmt is constant and constains no % characters)
-//   * fprintf(file,"%s",str) -> fputs(orig,str)
-//       (only if the fprintf result is not used)
-//   * fprintf(file,"%c",chr) -> fputc(chr,file)
 //
 // isascii:
 //   * isascii(c)    -> ((c & ~0x7f) == 0)
