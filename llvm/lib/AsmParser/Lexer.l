@@ -240,7 +240,6 @@ cast            { RET_TOK(OtherOpVal, Cast, CAST); }
 select          { RET_TOK(OtherOpVal, Select, SELECT); }
 shl             { RET_TOK(OtherOpVal, Shl, SHL); }
 shr             { RET_TOK(OtherOpVal, Shr, SHR); }
-va_arg          { return VA_ARG; /* FIXME: OBSOLETE */}
 vanext          { RET_TOK(OtherOpVal, VANext, VANEXT); }
 vaarg           { RET_TOK(OtherOpVal, VAArg , VAARG); }
 
