@@ -1054,19 +1054,48 @@ unsigned ISel::SelectExpr(SDOperand N) {
 
       switch (N.getOperand(1).getValueType()) {
         default: assert(0 &&
-        "ISD::SELECT: 'select'ing something other than i64 or f64!\n");
+        "ISD::SELECT: 'select'ing something other than i1, i64 or f64!\n");
+        // for i1, we load the condition into an integer register, then
+        // conditionally copy Tmp2 and Tmp3 to Tmp1 in parallel (only one
+        // of them will go through, since the integer register will hold
+        // either 0 or 1)
+        case MVT::i1: {
+          bogoResult=MakeReg(MVT::i1);
+
+          // load the condition into an integer register
+          unsigned condReg=MakeReg(MVT::i64);
+          unsigned dummy=MakeReg(MVT::i64);
+          BuildMI(BB, IA64::MOV, 1, dummy).addReg(IA64::r0);
+          BuildMI(BB, IA64::TPCADDIMM22, 2, condReg).addReg(dummy)
+            .addImm(1).addReg(Tmp1);
+
+          // initialize Result (bool) to false (hence UNC) and if
+          // the select condition (condReg) is false (0), copy Tmp3
+          BuildMI(BB, IA64::PCMPEQUNC, 3, bogoResult)
+            .addReg(condReg).addReg(IA64::r0).addReg(Tmp3);
+
+          // now, if the selection condition is true, write 1 to the
+          // result if Tmp2 is 1
+          BuildMI(BB, IA64::TPCMPNE, 3, Result).addReg(bogoResult)
+            .addReg(condReg).addReg(IA64::r0).addReg(Tmp2);
+          break;
+        }
+        // for i64/f64, we just copy Tmp3 and then conditionally overwrite it
+        // with Tmp2 if Tmp1 is true
         case MVT::i64:
           bogoResult=MakeReg(MVT::i64);
+          BuildMI(BB, IA64::MOV, 1, bogoResult).addReg(Tmp3);
+          BuildMI(BB, IA64::CMOV, 2, Result).addReg(bogoResult).addReg(Tmp2)
+            .addReg(Tmp1);
           break;
         case MVT::f64:
           bogoResult=MakeReg(MVT::f64);
+          BuildMI(BB, IA64::FMOV, 1, bogoResult).addReg(Tmp3);
+          BuildMI(BB, IA64::CFMOV, 2, Result).addReg(bogoResult).addReg(Tmp2)
+            .addReg(Tmp1);
           break;
       }
-
-      BuildMI(BB, IA64::MOV, 1, bogoResult).addReg(Tmp3);
-      BuildMI(BB, IA64::CMOV, 2, Result).addReg(bogoResult).addReg(Tmp2)
-        .addReg(Tmp1); // FIXME: should be FMOV/FCMOV sometimes,
-                       // though this will work for now (no JIT)
+      
       return Result;
   }
 
