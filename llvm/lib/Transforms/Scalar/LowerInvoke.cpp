@@ -18,9 +18,9 @@
 // program will print a message then abort.
 //
 // 'Expensive' exception handling support gives the full exception handling
-// support to the program at making the 'invoke' instruction really expensive.
-// It basically inserts setjmp/longjmp calls to emulate the exception handling
-// as necessary.
+// support to the program at the cost of making the 'invoke' instruction
+// really expensive.  It basically inserts setjmp/longjmp calls to emulate the
+// exception handling as necessary.
 //
 // Because the 'expensive' support slows down programs a lot, and EH is only
 // used for a subset of the programs, it must be specifically enabled by an
