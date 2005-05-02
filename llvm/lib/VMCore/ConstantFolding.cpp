@@ -470,6 +470,13 @@ struct DirectFPRules
                                    (BuiltinType)V2->getValue());
     return ConstantClass::get(*Ty, Result);
   }
+  static Constant *Div(const ConstantClass *V1, const ConstantClass *V2) {
+    if (V2->isExactlyValue(0.0)) return ConstantClass::get(*Ty, INFINITY);
+    if (V2->isExactlyValue(-0.0)) return ConstantClass::get(*Ty, -INFINITY);
+    if (V2->isNullValue()) return 0;
+    BuiltinType R = (BuiltinType)V1->getValue() / (BuiltinType)V2->getValue();
+    return ConstantClass::get(*Ty, R);
+  }
 };
 
 
