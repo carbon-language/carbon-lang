@@ -784,7 +784,7 @@ SDOperand ISel::BuildConstmulSequence(SDOperand N) {
   bool flippedSign;
   unsigned preliminaryShift=0;
 
-  assert(constant > 0 && "erk, don't multiply by zero or negative nums\n");
+  assert(constant != 0 && "erk, you're trying to multiply by constant zero\n");
 
   // first, we make the constant to multiply by positive
   if(constant<0) {
@@ -832,15 +832,24 @@ SDOperand ISel::BuildConstmulSequence(SDOperand N) {
   }
 
   // don't forget flippedSign and preliminaryShift!
-  SDOperand finalresult;
+  SDOperand shiftedresult;
   if(preliminaryShift) {
     SDOperand finalshift = ISelDAG->getConstant(preliminaryShift, MVT::i64);
-    finalresult = ISelDAG->getNode(ISD::SHL, MVT::i64,
+    shiftedresult = ISelDAG->getNode(ISD::SHL, MVT::i64,
 	results[ops.size()-1], finalshift);
   } else { // there was no preliminary divide-by-power-of-2 required
-    finalresult = results[ops.size()-1];
+    shiftedresult = results[ops.size()-1];
   }
  
+  SDOperand finalresult;
+  if(flippedSign) { // if we were multiplying by a negative constant:
+    SDOperand zero = ISelDAG->getConstant(0, MVT::i64);
+    // subtract the result from 0 to flip its sign
+    finalresult = ISelDAG->getNode(ISD::SUB, MVT::i64, zero, shiftedresult);
+  } else { // there was no preliminary multiply by -1 required
+    finalresult = shiftedresult;
+  }
+  
   return finalresult; 
 }
 
