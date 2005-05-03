@@ -8,9 +8,9 @@ declare bool %llvm.isunordered(double, double)
 
 declare void %llvm.prefetch(sbyte*, uint, uint)
 
-declare uint %llvm.ctpop.32(uint)
-declare ushort %llvm.cttz.16(ushort)
-declare ulong %llvm.ctlz.64(ulong)
+declare uint %llvm.ctpop(uint)
+declare ushort %llvm.cttz(ushort)
+declare ulong %llvm.ctlz(ulong)
 
 implementation
 
