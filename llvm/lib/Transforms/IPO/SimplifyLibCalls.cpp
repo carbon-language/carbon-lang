@@ -117,8 +117,6 @@ public:
 private:
   const char* func_name; ///< Name of the library call we optimize
 #ifndef NDEBUG
-  std::string stat_name; ///< Holder for debug statistic name
-  std::string stat_desc; ///< Holder for debug statistic description
   Statistic<> occurrences; ///< debug statistic (-debug-only=simplify-libcalls)
 #endif
 };
@@ -166,8 +164,8 @@ public:
       {
         // All the "well-known" functions are external and have external linkage
         // because they live in a runtime library somewhere and were (probably) 
-        // not compiled by LLVM.  So, we only act on external functions that have 
-        // external linkage and non-empty uses.
+        // not compiled by LLVM.  So, we only act on external functions that 
+        // have external linkage and non-empty uses.
         if (!FI->isExternal() || !FI->hasExternalLinkage() || FI->use_empty())
           continue;
 
@@ -272,6 +270,22 @@ public:
     return strlen_func;
   }
 
+  /// @brief Return a Function* for the memchr libcall
+  Function* get_memchr()
+  {
+    if (!memchr_func)
+    {
+      std::vector<const Type*> args;
+      args.push_back(PointerType::get(Type::SByteTy));
+      args.push_back(Type::IntTy);
+      args.push_back(TD->getIntPtrType());
+      FunctionType* memchr_type = FunctionType::get(
+          PointerType::get(Type::SByteTy), args, false);
+      memchr_func = M->getOrInsertFunction("memchr",memchr_type);
+    }
+    return memchr_func;
+  }
+
   /// @brief Return a Function* for the memcpy libcall
   Function* get_memcpy()
   {
@@ -298,6 +312,7 @@ private:
     fputc_func = 0;
     fwrite_func = 0;
     memcpy_func = 0;
+    memchr_func = 0;
     sqrt_func   = 0;
     strlen_func = 0;
   }
@@ -306,6 +321,7 @@ private:
   Function* fputc_func;  ///< Cached fputc function
   Function* fwrite_func; ///< Cached fwrite function
   Function* memcpy_func; ///< Cached llvm.memcpy function
+  Function* memchr_func; ///< Cached memchr function
   Function* sqrt_func;   ///< Cached sqrt function
   Function* strlen_func; ///< Cached strlen function
   Module* M;             ///< Cached Module
@@ -489,6 +505,98 @@ public:
     return true;
   }
 } StrCatOptimizer;
+
+/// This LibCallOptimization will simplify a call to the strchr library 
+/// function.  It optimizes out cases where the arguments are both constant
+/// and the result can be determined statically.
+/// @brief Simplify the strcmp library function.
+struct StrChrOptimization : public LibCallOptimization
+{
+public:
+  StrChrOptimization() : LibCallOptimization("strchr",
+      "simplify-libcalls:strchr","Number of 'strchr' calls simplified") {}
+  virtual ~StrChrOptimization() {}
+
+  /// @brief Make sure that the "strchr" function has the right prototype
+  virtual bool ValidateCalledFunction(const Function* f, SimplifyLibCalls& SLC) 
+  {
+    if (f->getReturnType() == PointerType::get(Type::SByteTy) && 
+        f->arg_size() == 2)
+      return true;
+    return false;
+  }
+
+  /// @brief Perform the strcpy optimization
+  virtual bool OptimizeCall(CallInst* ci, SimplifyLibCalls& SLC)
+  {
+    // If there aren't three operands, bail
+    if (ci->getNumOperands() != 3)
+      return false;
+
+    // Check that the first argument to strchr is a constant array of sbyte.
+    // If it is, get the length and data, otherwise return false.
+    uint64_t len = 0;
+    ConstantArray* CA;
+    if (!getConstantStringLength(ci->getOperand(1),len,&CA))
+      return false;
+
+    // Check that the second argument to strchr is a constant int, return false
+    // if it isn't
+    ConstantSInt* CSI = dyn_cast<ConstantSInt>(ci->getOperand(2));
+    if (!CSI)
+    {
+      // Just lower this to memchr since we know the length of the string as
+      // it is constant.
+      Function* f = SLC.get_memchr();
+      std::vector<Value*> args;
+      args.push_back(ci->getOperand(1));
+      args.push_back(ci->getOperand(2));
+      args.push_back(ConstantUInt::get(SLC.getIntPtrType(),len));
+      ci->replaceAllUsesWith( new CallInst(f,args,ci->getName(),ci));
+      ci->eraseFromParent();
+      return true;
+    }
+
+    // Get the character we're looking for
+    int64_t chr = CSI->getValue();
+
+    // Compute the offset
+    uint64_t offset = 0;
+    bool char_found = false;
+    for (uint64_t i = 0; i < len; ++i)
+    {
+      if (ConstantSInt* CI = dyn_cast<ConstantSInt>(CA->getOperand(i)))
+      {
+        // Check for the null terminator
+        if (CI->isNullValue())
+          break; // we found end of string
+        else if (CI->getValue() == chr)
+        {
+          char_found = true;
+          offset = i;
+          break;
+        }
+      }
+    }
+
+    // strchr(s,c)  -> offset_of_in(c,s)
+    //    (if c is a constant integer and s is a constant string)
+    if (char_found)
+    {
+      std::vector<Value*> indices;
+      indices.push_back(ConstantUInt::get(Type::ULongTy,offset));
+      GetElementPtrInst* GEP = new GetElementPtrInst(ci->getOperand(1),indices,
+          ci->getOperand(1)->getName()+".strchr",ci);
+      ci->replaceAllUsesWith(GEP);
+    }
+    else
+      ci->replaceAllUsesWith(
+          ConstantPointerNull::get(PointerType::get(Type::SByteTy)));
+
+    ci->eraseFromParent();
+    return true;
+  }
+} StrChrOptimizer;
 
 /// This LibCallOptimization will simplify a call to the strcmp library 
 /// function.  It optimizes out cases where one or both arguments are constant
@@ -808,20 +916,20 @@ struct StrLenOptimization : public LibCallOptimization
 /// bytes depending on the length of the string and the alignment. Additional
 /// optimizations are possible in code generation (sequence of immediate store)
 /// @brief Simplify the memcpy library function.
-struct MemCpyOptimization : public LibCallOptimization
+struct LLVMMemCpyOptimization : public LibCallOptimization
 {
   /// @brief Default Constructor
-  MemCpyOptimization() : LibCallOptimization("llvm.memcpy",
+  LLVMMemCpyOptimization() : LibCallOptimization("llvm.memcpy",
       "simplify-libcalls:llvm.memcpy",
       "Number of 'llvm.memcpy' calls simplified") {}
 
 protected:
   /// @brief Subclass Constructor 
-  MemCpyOptimization(const char* fname, const char* sname, const char* desc) 
+  LLVMMemCpyOptimization(const char* fname, const char* sname, const char* desc)
     : LibCallOptimization(fname, sname, desc) {}
 public:
   /// @brief Destructor
-  virtual ~MemCpyOptimization() {}
+  virtual ~LLVMMemCpyOptimization() {}
 
   /// @brief Make sure that the "memcpy" function has the right prototype
   virtual bool ValidateCalledFunction(const Function* f, SimplifyLibCalls& TD)
@@ -849,6 +957,8 @@ public:
     // If the length is larger than the alignment, we can't optimize
     uint64_t len = LEN->getRawValue();
     uint64_t alignment = ALIGN->getRawValue();
+    if (alignment == 0)
+      alignment = 1; // Alignment 0 is identity for alignment 1
     if (len > alignment)
       return false;
 
@@ -880,20 +990,128 @@ public:
     ci->eraseFromParent();
     return true;
   }
-} MemCpyOptimizer;
+} LLVMMemCpyOptimizer;
 
 /// This LibCallOptimization will simplify a call to the memmove library 
 /// function. It is identical to MemCopyOptimization except for the name of 
 /// the intrinsic.
 /// @brief Simplify the memmove library function.
-struct MemMoveOptimization : public MemCpyOptimization
+struct LLVMMemMoveOptimization : public LLVMMemCpyOptimization
 {
   /// @brief Default Constructor
-  MemMoveOptimization() : MemCpyOptimization("llvm.memmove",
+  LLVMMemMoveOptimization() : LLVMMemCpyOptimization("llvm.memmove",
       "simplify-libcalls:llvm.memmove",
       "Number of 'llvm.memmove' calls simplified") {}
 
-} MemMoveOptimizer;
+} LLVMMemMoveOptimizer;
+
+/// This LibCallOptimization will simplify a call to the memset library 
+/// function by expanding it out to a single store of size 0, 1, 2, 4, or 8 
+/// bytes depending on the length argument. 
+struct LLVMMemSetOptimization : public LibCallOptimization
+{
+  /// @brief Default Constructor
+  LLVMMemSetOptimization() : LibCallOptimization("llvm.memset",
+      "simplify-libcalls:llvm.memset",
+      "Number of 'llvm.memset' calls simplified") {}
+
+public:
+  /// @brief Destructor
+  virtual ~LLVMMemSetOptimization() {}
+
+  /// @brief Make sure that the "memset" function has the right prototype
+  virtual bool ValidateCalledFunction(const Function* f, SimplifyLibCalls& TD)
+  {
+    // Just make sure this has 3 arguments per LLVM spec.
+    return (f->arg_size() == 4);
+  }
+
+  /// Because of alignment and instruction information that we don't have, we
+  /// leave the bulk of this to the code generators. The optimization here just
+  /// deals with a few degenerate cases where the length parameter is constant
+  /// and the alignment matches the sizes of our intrinsic types so we can do 
+  /// store instead of the memcpy call. Other calls are transformed into the
+  /// llvm.memset intrinsic.
+  /// @brief Perform the memset optimization.
+  virtual bool OptimizeCall(CallInst* ci, SimplifyLibCalls& TD)
+  {
+    // Make sure we have constant int values to work with
+    ConstantInt* LEN = dyn_cast<ConstantInt>(ci->getOperand(3));
+    if (!LEN)
+      return false;
+    ConstantInt* ALIGN = dyn_cast<ConstantInt>(ci->getOperand(4));
+    if (!ALIGN)
+      return false;
+
+    // Extract the length and alignment
+    uint64_t len = LEN->getRawValue();
+    uint64_t alignment = ALIGN->getRawValue();
+
+    // Alignment 0 is identity for alignment 1
+    if (alignment == 0)
+      alignment = 1;
+
+    // If the length is zero, this is a no-op
+    if (len == 0)
+    {
+      // memset(d,c,0,a) -> noop
+      ci->eraseFromParent();
+      return true;
+    }
+
+    // If the length is larger than the alignment, we can't optimize
+    if (len > alignment)
+      return false;
+
+    // Make sure we have a constant ubyte to work with so we can extract
+    // the value to be filled.
+    ConstantUInt* FILL = dyn_cast<ConstantUInt>(ci->getOperand(2));
+    if (!FILL)
+      return false;
+    if (FILL->getType() != Type::UByteTy)
+      return false;
+
+    // memset(s,c,n) -> store s, c (for n=1,2,4,8)
+    
+    // Extract the fill character
+    uint64_t fill_char = FILL->getValue();
+    uint64_t fill_value = fill_char;
+
+    // Get the type we will cast to, based on size of memory area to fill, and
+    // and the value we will store there.
+    Value* dest = ci->getOperand(1);
+    Type* castType = 0;
+    switch (len)
+    {
+      case 1: 
+        castType = Type::UByteTy; 
+        break;
+      case 2: 
+        castType = Type::UShortTy; 
+        fill_value |= fill_char << 8;
+        break;
+      case 4: 
+        castType = Type::UIntTy;
+        fill_value |= fill_char << 8 | fill_char << 16 | fill_char << 24;
+        break;
+      case 8: 
+        castType = Type::ULongTy;
+        fill_value |= fill_char << 8 | fill_char << 16 | fill_char << 24;
+        fill_value |= fill_char << 32 | fill_char << 40 | fill_char << 48;
+        fill_value |= fill_char << 56;
+        break;
+      default:
+        return false;
+    }
+
+    // Cast dest to the right sized primitive and then load/store
+    CastInst* DestCast = 
+      new CastInst(dest,PointerType::get(castType),dest->getName()+".cast",ci);
+    new StoreInst(ConstantUInt::get(castType,fill_value),DestCast, ci);
+    ci->eraseFromParent();
+    return true;
+  }
+} LLVMMemSetOptimizer;
 
 /// This LibCallOptimization will simplify calls to the "pow" library 
 /// function. It looks for cases where the result of pow is well known and 
@@ -1349,16 +1567,11 @@ bool getConstantStringLength(Value* V, uint64_t& len, ConstantArray** CA )
 //   * memcmp(x,x,l)   -> 0
 //   * memcmp(x,y,l)   -> cnst
 //      (if all arguments are constant and strlen(x) <= l and strlen(y) <= l)
-//   * memcpy(x,y,1)   -> *x - *y
+//   * memcmp(x,y,1)   -> *x - *y
 //
 // memmove:
 //   * memmove(d,s,l,a) -> memcpy(d,s,l,a) 
 //       (if s is a global constant array)
-//
-// memset:
-//   * memset(s,c,0) -> noop
-//   * memset(s,c,n) -> store s, c
-//      (for n=1,2,4,8)
 //
 // pow, powf, powl:
 //   * pow(exp(x),y)  -> exp(x*y)
@@ -1386,9 +1599,7 @@ bool getConstantStringLength(Value* V, uint64_t& len, ConstantArray** CA )
 //   * sqrt(Nroot(x)) -> pow(x,1/(2*N))
 //   * sqrt(pow(x,y)) -> pow(|x|,y*0.5)
 //
-// strchr, strrchr:
-//   * strchr(s,c)  -> offset_of_in(c,s)
-//      (if c is a constant integer and s is a constant string)
+// strrchr:
 //   * strrchr(s,c) -> reverse_offset_of_in(c,s)
 //      (if c is a constant integer and s is a constant string)
 //   * strrchr(s1,0) -> strchr(s1,0)
