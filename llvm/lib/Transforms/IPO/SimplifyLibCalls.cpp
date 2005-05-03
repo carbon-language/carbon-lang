@@ -65,16 +65,15 @@ public:
   /// The \p fname argument must be the name of the library function being 
   /// optimized by the subclass.
   /// @brief Constructor that registers the optimization.
-  LibCallOptimization(const char * fname )
+  LibCallOptimization(const char* fname, 
+                      const char* stat_name, const char* description )
     : func_name(fname)
 #ifndef NDEBUG
-    , stat_name(std::string("simplify-libcalls:")+fname)
-    , stat_desc(std::string("Number of ")+fname+"(...) calls simplified")
-    , occurrences(stat_name.c_str(),stat_desc.c_str())
+    , occurrences(stat_name,description)
 #endif
   {
     // Register this call optimizer in the optlist (a hash_map)
-    optlist[func_name] = this;
+    optlist[fname] = this;
   }
 
   /// @brief Deregister from the optlist
@@ -341,7 +340,8 @@ bool getConstantStringLength(Value* V, uint64_t& len, ConstantArray** A = 0 );
 /// @brief Replace calls to exit in main with a simple return
 struct ExitInMainOptimization : public LibCallOptimization
 {
-  ExitInMainOptimization() : LibCallOptimization("exit") {}
+  ExitInMainOptimization() : LibCallOptimization("exit",
+      "simplify-libcalls:exit","Number of 'exit' calls simplified") {}
   virtual ~ExitInMainOptimization() {}
 
   // Make sure the called function looks like exit (int argument, int return
@@ -406,7 +406,8 @@ struct StrCatOptimization : public LibCallOptimization
 {
 public:
   /// @brief Default constructor
-  StrCatOptimization() : LibCallOptimization("strcat") {}
+  StrCatOptimization() : LibCallOptimization("strcat",
+      "simplify-libcalls:strcat","Number of 'strcat' calls simplified") {}
 
 public:
   /// @breif  Destructor
@@ -496,7 +497,8 @@ public:
 struct StrCmpOptimization : public LibCallOptimization
 {
 public:
-  StrCmpOptimization() : LibCallOptimization("strcmp") {}
+  StrCmpOptimization() : LibCallOptimization("strcmp",
+      "simplify-libcalls:strcmp","Number of 'strcmp' calls simplified") {}
   virtual ~StrCmpOptimization() {}
 
   /// @brief Make sure that the "strcpy" function has the right prototype
@@ -580,7 +582,8 @@ public:
 struct StrNCmpOptimization : public LibCallOptimization
 {
 public:
-  StrNCmpOptimization() : LibCallOptimization("strncmp") {}
+  StrNCmpOptimization() : LibCallOptimization("strncmp",
+      "simplify-libcalls:strncmp","Number of 'strncmp' calls simplified") {}
   virtual ~StrNCmpOptimization() {}
 
   /// @brief Make sure that the "strcpy" function has the right prototype
@@ -682,7 +685,8 @@ public:
 struct StrCpyOptimization : public LibCallOptimization
 {
 public:
-  StrCpyOptimization() : LibCallOptimization("strcpy") {}
+  StrCpyOptimization() : LibCallOptimization("strcpy",
+      "simplify-libcalls:strcpy","Number of 'strcpy' calls simplified") {}
   virtual ~StrCpyOptimization() {}
 
   /// @brief Make sure that the "strcpy" function has the right prototype
@@ -769,7 +773,8 @@ public:
 /// @brief Simplify the strlen library function.
 struct StrLenOptimization : public LibCallOptimization
 {
-  StrLenOptimization() : LibCallOptimization("strlen") {}
+  StrLenOptimization() : LibCallOptimization("strlen",
+      "simplify-libcalls:strlen","Number of 'strlen' calls simplified") {}
   virtual ~StrLenOptimization() {}
 
   /// @brief Make sure that the "strlen" function has the right prototype
@@ -806,10 +811,14 @@ struct StrLenOptimization : public LibCallOptimization
 struct MemCpyOptimization : public LibCallOptimization
 {
   /// @brief Default Constructor
-  MemCpyOptimization() : LibCallOptimization("llvm.memcpy") {}
+  MemCpyOptimization() : LibCallOptimization("llvm.memcpy",
+      "simplify-libcalls:llvm.memcpy",
+      "Number of 'llvm.memcpy' calls simplified") {}
+
 protected:
   /// @brief Subclass Constructor 
-  MemCpyOptimization(const char* fname) : LibCallOptimization(fname) {}
+  MemCpyOptimization(const char* fname, const char* sname, const char* desc) 
+    : LibCallOptimization(fname, sname, desc) {}
 public:
   /// @brief Destructor
   virtual ~MemCpyOptimization() {}
@@ -880,7 +889,9 @@ public:
 struct MemMoveOptimization : public MemCpyOptimization
 {
   /// @brief Default Constructor
-  MemMoveOptimization() : MemCpyOptimization("llvm.memmove") {}
+  MemMoveOptimization() : MemCpyOptimization("llvm.memmove",
+      "simplify-libcalls:llvm.memmove",
+      "Number of 'llvm.memmove' calls simplified") {}
 
 } MemMoveOptimizer;
 
@@ -892,7 +903,9 @@ struct PowOptimization : public LibCallOptimization
 {
 public:
   /// @brief Default Constructor
-  PowOptimization() : LibCallOptimization("pow") {}
+  PowOptimization() : LibCallOptimization("pow",
+      "simplify-libcalls:pow", "Number of 'pow' calls simplified") {}
+
   /// @brief Destructor
   virtual ~PowOptimization() {}
 
@@ -967,7 +980,8 @@ struct FPrintFOptimization : public LibCallOptimization
 {
 public:
   /// @brief Default Constructor
-  FPrintFOptimization() : LibCallOptimization("fprintf") {}
+  FPrintFOptimization() : LibCallOptimization("fprintf",
+      "simplify-libcalls:fprintf", "Number of 'fprintf' calls simplified") {}
 
   /// @brief Destructor
   virtual ~FPrintFOptimization() {}
@@ -1093,7 +1107,8 @@ struct PutsOptimization : public LibCallOptimization
 {
 public:
   /// @brief Default Constructor
-  PutsOptimization() : LibCallOptimization("fputs") {}
+  PutsOptimization() : LibCallOptimization("fputs",
+      "simplify-libcalls:fputs", "Number of 'fputs' calls simplified") {}
 
   /// @brief Destructor
   virtual ~PutsOptimization() {}
@@ -1166,7 +1181,8 @@ struct ToAsciiOptimization : public LibCallOptimization
 {
 public:
   /// @brief Default Constructor
-  ToAsciiOptimization() : LibCallOptimization("toascii") {}
+  ToAsciiOptimization() : LibCallOptimization("toascii",
+      "simplify-libcalls:toascii", "Number of 'toascii' calls simplified") {}
 
   /// @brief Destructor
   virtual ~ToAsciiOptimization() {}
