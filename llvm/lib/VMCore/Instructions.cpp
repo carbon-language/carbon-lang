@@ -603,6 +603,13 @@ void GetElementPtrInst::init(Value *Ptr, Value *Idx0, Value *Idx1) {
   OL[2].init(Idx1, this);
 }
 
+void GetElementPtrInst::init(Value *Ptr, Value *Idx) {
+  NumOperands = 2;
+  Use *OL = OperandList = new Use[2];
+  OL[0].init(Ptr, this);
+  OL[1].init(Idx, this);
+}
+
 GetElementPtrInst::GetElementPtrInst(Value *Ptr, const std::vector<Value*> &Idx,
                                      const std::string &Name, Instruction *InBe)
   : Instruction(PointerType::get(checkType(getIndexedType(Ptr->getType(),
@@ -615,6 +622,20 @@ GetElementPtrInst::GetElementPtrInst(Value *Ptr, const std::vector<Value*> &Idx,
                                      const std::string &Name, BasicBlock *IAE)
   : Instruction(PointerType::get(checkType(getIndexedType(Ptr->getType(),
                                                           Idx, true))),
+                GetElementPtr, 0, 0, Name, IAE) {
+  init(Ptr, Idx);
+}
+
+GetElementPtrInst::GetElementPtrInst(Value *Ptr, Value *Idx,
+                                     const std::string &Name, Instruction *InBe)
+  : Instruction(PointerType::get(checkType(getIndexedType(Ptr->getType(),Idx))),
+                GetElementPtr, 0, 0, Name, InBe) {
+  init(Ptr, Idx);
+}
+
+GetElementPtrInst::GetElementPtrInst(Value *Ptr, Value *Idx,
+                                     const std::string &Name, BasicBlock *IAE)
+  : Instruction(PointerType::get(checkType(getIndexedType(Ptr->getType(),Idx))),
                 GetElementPtr, 0, 0, Name, IAE) {
   init(Ptr, Idx);
 }
@@ -698,6 +719,16 @@ const Type* GetElementPtrInst::getIndexedType(const Type *Ptr,
   if (AllowCompositeLeaf || ElTy->isFirstClassType())
     return ElTy;
   return 0;
+}
+
+const Type* GetElementPtrInst::getIndexedType(const Type *Ptr, Value *Idx) {
+  const PointerType *PTy = dyn_cast<PointerType>(Ptr);
+  if (!PTy) return 0;   // Type isn't a pointer type!
+
+  // Check the pointer index.
+  if (!PTy->indexValid(Idx)) return 0;
+
+  return PTy;
 }
 
 //===----------------------------------------------------------------------===//

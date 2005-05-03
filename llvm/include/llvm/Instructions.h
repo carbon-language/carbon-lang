@@ -300,6 +300,7 @@ class GetElementPtrInst : public Instruction {
   }
   void init(Value *Ptr, const std::vector<Value*> &Idx);
   void init(Value *Ptr, Value *Idx0, Value *Idx1);
+  void init(Value *Ptr, Value *Idx);
 public:
   /// Constructors - Create a getelementptr instruction with a base pointer an
   /// list of indices.  The first ctor can optionally insert before an existing
@@ -310,8 +311,12 @@ public:
   GetElementPtrInst(Value *Ptr, const std::vector<Value*> &Idx,
                     const std::string &Name, BasicBlock *InsertAtEnd);
 
-  /// Constructors - These two constructors are convenience methods because two
-  /// index getelementptr instructions are so common.
+  /// Constructors - These two constructors are convenience methods because one
+  /// and two index getelementptr instructions are so common.
+  GetElementPtrInst(Value *Ptr, Value *Idx,
+                    const std::string &Name = "", Instruction *InsertBefore =0);
+  GetElementPtrInst(Value *Ptr, Value *Idx,
+                    const std::string &Name, BasicBlock *InsertAtEnd);
   GetElementPtrInst(Value *Ptr, Value *Idx0, Value *Idx1,
                     const std::string &Name = "", Instruction *InsertBefore =0);
   GetElementPtrInst(Value *Ptr, Value *Idx0, Value *Idx1,
@@ -336,6 +341,7 @@ public:
                                     bool AllowStructLeaf = false);
   static const Type *getIndexedType(const Type *Ptr, Value *Idx0, Value *Idx1,
                                     bool AllowStructLeaf = false);
+  static const Type *getIndexedType(const Type *Ptr, Value *Idx);
 
   inline op_iterator       idx_begin()       { return op_begin()+1; }
   inline const_op_iterator idx_begin() const { return op_begin()+1; }
