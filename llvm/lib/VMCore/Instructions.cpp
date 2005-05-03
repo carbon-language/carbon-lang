@@ -728,7 +728,7 @@ const Type* GetElementPtrInst::getIndexedType(const Type *Ptr, Value *Idx) {
   // Check the pointer index.
   if (!PTy->indexValid(Idx)) return 0;
 
-  return PTy;
+  return PTy->getElementType();
 }
 
 //===----------------------------------------------------------------------===//
