@@ -281,9 +281,9 @@ int main(int argc, char **argv) {
 
     // If the LLVM_LIB_SEARCH_PATH environment variable is
     // set, append it to the list of places to search for libraries
-    std::string srchPath = getenv("LLVM_LIB_SEARCH_PATH");
-    if (!srchPath.empty())
-      LibPaths.push_back(srchPath);
+    char *srchPath = getenv("LLVM_LIB_SEARCH_PATH");
+    if (srchPath != NULL && strlen(srchPath) != 0)
+      LibPaths.push_back(std::string(srchPath));
 
     // Set the driver flags based on command line options
     unsigned flags = 0;
