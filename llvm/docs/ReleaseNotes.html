@@ -130,7 +130,7 @@ improvements:</a>
 
 <div class="doc_text">
 <ol>
-   <li></li>
+   <li>Transition code for 1.0 style varargs was removed. </li>
 </ol>
 </div>
 
@@ -201,6 +201,7 @@ were fixed:</a>
 <li>Intel and AMD machines running on Win32 with the Cygwin libraries (limited
     support is available for native builds with Visual C++).</li>
 <li>PowerPC-based Mac OS X systems, running 10.2 and above.</li>
+<li>Alpha-based machines running Debian GNU/Linux</li>
 </ul>
 
 <p>The core LLVM infrastructure uses
@@ -566,6 +567,23 @@ problem probably cannot be fixed.</li>
 <li><a href="http://llvm.cs.uiuc.edu/PR56">Zero arg vararg functions are not 
 supported</a>.  This should not affect LLVM produced by the C or C++ 
 frontends.</li>
+
+</ul>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="alpha-be">Known problems with the Alpha back-end</a>
+</div>
+
+<div class="doc_text">
+
+<ul>
+
+<li>On 21164s, some rare FP arithmatic sequences which may trap do not have the appropriate nops inserted to ensure restartability.</li>
+
+<li>Vararg functions are not supported.</li>
 
 </ul>
 
