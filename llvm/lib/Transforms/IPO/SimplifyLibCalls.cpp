@@ -573,6 +573,107 @@ public:
   }
 } StrCmpOptimizer;
 
+/// This LibCallOptimization will simplify a call to the strncmp library 
+/// function.  It optimizes out cases where one or both arguments are constant
+/// and the result can be determined statically.
+/// @brief Simplify the strncmp library function.
+struct StrNCmpOptimization : public LibCallOptimization
+{
+public:
+  StrNCmpOptimization() : LibCallOptimization("strncmp") {}
+  virtual ~StrNCmpOptimization() {}
+
+  /// @brief Make sure that the "strcpy" function has the right prototype
+  virtual bool ValidateCalledFunction(const Function* f, SimplifyLibCalls& SLC) 
+  {
+    if (f->getReturnType() == Type::IntTy && f->arg_size() == 3)
+      return true;
+    return false;
+  }
+
+  /// @brief Perform the strncpy optimization
+  virtual bool OptimizeCall(CallInst* ci, SimplifyLibCalls& SLC)
+  {
+    // First, check to see if src and destination are the same. If they are,
+    // then the optimization is to replace the CallInst with a constant 0
+    // because the call is a no-op. 
+    Value* s1 = ci->getOperand(1);
+    Value* s2 = ci->getOperand(2);
+    if (s1 == s2)
+    {
+      // strncmp(x,x,l)  -> 0
+      ci->replaceAllUsesWith(ConstantInt::get(Type::IntTy,0));
+      ci->eraseFromParent();
+      return true;
+    }
+
+    // Check the length argument, if it is Constant zero then the strings are
+    // considered equal.
+    uint64_t len_arg = 0;
+    bool len_arg_is_const = false;
+    if (ConstantInt* len_CI = dyn_cast<ConstantInt>(ci->getOperand(3)))
+    {
+      len_arg_is_const = true;
+      len_arg = len_CI->getRawValue();
+      if (len_arg == 0)
+      {
+        // strncmp(x,y,0)   -> 0
+        ci->replaceAllUsesWith(ConstantInt::get(Type::IntTy,0));
+        ci->eraseFromParent();
+        return true;
+      } 
+    }
+
+    bool isstr_1 = false;
+    uint64_t len_1 = 0;
+    ConstantArray* A1;
+    if (getConstantStringLength(s1,len_1,&A1))
+    {
+      isstr_1 = true;
+      if (len_1 == 0)
+      {
+        // strncmp("",x) -> *x
+        LoadInst* load = new LoadInst(s1,ci->getName()+".load",ci);
+        CastInst* cast = 
+          new CastInst(load,Type::IntTy,ci->getName()+".int",ci);
+        ci->replaceAllUsesWith(cast);
+        ci->eraseFromParent();
+        return true;
+      }
+    }
+
+    bool isstr_2 = false;
+    uint64_t len_2 = 0;
+    ConstantArray* A2;
+    if (getConstantStringLength(s2,len_2,&A2))
+    {
+      isstr_2 = true;
+      if (len_2 == 0)
+      {
+        // strncmp(x,"") -> *x
+        LoadInst* load = new LoadInst(s2,ci->getName()+".val",ci);
+        CastInst* cast = 
+          new CastInst(load,Type::IntTy,ci->getName()+".int",ci);
+        ci->replaceAllUsesWith(cast);
+        ci->eraseFromParent();
+        return true;
+      }
+    }
+
+    if (isstr_1 && isstr_2 && len_arg_is_const)
+    {
+      // strncmp(x,y,const) -> constant
+      std::string str1 = A1->getAsString();
+      std::string str2 = A2->getAsString();
+      int result = strncmp(str1.c_str(), str2.c_str(), len_arg);
+      ci->replaceAllUsesWith(ConstantSInt::get(Type::IntTy,result));
+      ci->eraseFromParent();
+      return true;
+    }
+    return false;
+  }
+} StrNCmpOptimizer;
+
 /// This LibCallOptimization will simplify a call to the strcpy library 
 /// function.  Two optimizations are possible: 
 /// (1) If src and dest are the same and not volatile, just return dest
@@ -1276,23 +1377,10 @@ bool getConstantStringLength(Value* V, uint64_t& len, ConstantArray** CA )
 //      (if c is a constant integer and s is a constant string)
 //   * strrchr(s1,0) -> strchr(s1,0)
 //
-// strcmp:
-//   * strcmp(x,x)  -> 0
-//   * strcmp(x,"") -> *x
-//   * strcmp("",x) -> *x
-//   * strcmp(x,y)  -> cnst  (if both x and y are constant strings)
-//
 // strncat:
 //   * strncat(x,y,0) -> x
 //   * strncat(x,y,0) -> x (if strlen(y) = 0)
 //   * strncat(x,y,l) -> strcat(x,y) (if y and l are constants an l > strlen(y))
-//
-// strncmp:
-//   * strncmp(x,y,0)   -> 0
-//   * strncmp(x,x,l)   -> 0
-//   * strncmp(x,"",l)  -> *x
-//   * strncmp("",x,l)  -> *x
-//   * strncmp(x,y,1)   -> *x - *y
 //
 // strncpy:
 //   * strncpy(d,s,0) -> d
