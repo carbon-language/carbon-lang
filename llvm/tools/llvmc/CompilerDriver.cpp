@@ -30,21 +30,21 @@ void WriteAction(CompilerDriver::Action* action ) {
   std::cerr << action->program.c_str();
   std::vector<std::string>::const_iterator I = action->args.begin();
   while (I != action->args.end()) {
-    std::cerr << " " << *I;
+    std::cerr << ' ' << *I;
     ++I;
   }
-  std::cerr << "\n";
+  std::cerr << '\n';
 }
 
 void DumpAction(CompilerDriver::Action* action) {
   std::cerr << "command = " << action->program.c_str();
   std::vector<std::string>::const_iterator I = action->args.begin();
   while (I != action->args.end()) {
-    std::cerr << " " << *I;
+    std::cerr << ' ' << *I;
     ++I;
   }
-  std::cerr << "\n";
-  std::cerr << "flags = " << action->flags << "\n";
+  std::cerr << '\n';
+  std::cerr << "flags = " << action->flags << '\n';
 }
 
 void DumpConfigData(CompilerDriver::ConfigData* cd, const std::string& type ){
@@ -108,19 +108,19 @@ public:
 /// @name Methods
 /// @{
 public:
-  virtual void setFinalPhase( Phases phase ) {
+  virtual void setFinalPhase(Phases phase) {
     finalPhase = phase;
   }
 
-  virtual void setOptimization( OptimizationLevels level ) {
+  virtual void setOptimization(OptimizationLevels level) {
     optLevel = level;
   }
 
-  virtual void setDriverFlags( unsigned flags ) {
+  virtual void setDriverFlags(unsigned flags) {
     Flags = flags & DRIVER_FLAGS_MASK;
   }
 
-  virtual void setOutputMachine( const std::string& machineName ) {
+  virtual void setOutputMachine(const std::string& machineName) {
     machine = machineName;
   }
 
@@ -155,11 +155,11 @@ public:
     }
   }
 
-  virtual void addLibraryPath( const sys::Path& libPath ) {
+  virtual void addLibraryPath(const sys::Path& libPath) {
     LibraryPaths.push_back(libPath);
   }
 
-  virtual void addToolPath( const sys::Path& toolPath ) {
+  virtual void addToolPath(const sys::Path& toolPath) {
     ToolPaths.push_back(toolPath);
   }
 
@@ -195,7 +195,7 @@ private:
   }
 
   sys::Path MakeTempFile(const std::string& basename,
-                         const std::string& suffix ) {
+                         const std::string& suffix) {
     sys::Path result(TempDir);
     if (!result.appendFile(basename))
       throw basename + ": can't use this file name";
@@ -344,7 +344,7 @@ private:
             if (*PI == "%Wopts%") {
               for (StringVector::iterator I = WOptions.begin(),
                    E = WOptions.end(); I != E ; ++I ) {
-                action->args.push_back( std::string("-W") + *I );
+                action->args.push_back(std::string("-W") + *I);
               }
             } else
               found = false;
@@ -913,5 +913,3 @@ CompilerDriver::ConfigData::ConfigData()
   for (unsigned i = 0; i < NUM_PHASES; ++i)
     opts.push_back(emptyVec);
 }
-
-// vim: sw=2 smartindent smarttab tw=80 autoindent expandtab

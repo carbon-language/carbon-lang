@@ -622,5 +622,3 @@ LLVMC_ConfigDataProvider::ProvideConfigData(const std::string& filetype) {
   }
   return result; // Might return 0
 }
-
-// vim: sw=2 smartindent smarttab tw=80 autoindent expandtab
