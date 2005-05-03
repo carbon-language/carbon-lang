@@ -1,4 +1,4 @@
-# Stacker Configuration File For llvmc
+# C++ configuration file for llvmc
 
 ##########################################################
 # Language definitions
@@ -16,50 +16,46 @@
 # Pre-processor definitions
 ##########################################################
 
-  # Stacker doesn't have a preprocessor but the following
-  # allows the -E option to be supported
+  # We use g++ as our pre-processor
   preprocessor.command=g++ -E %in% -o %out% %incls% %defs%
-  preprocessor.required=false
+  preprocessor.required=true
 
 ##########################################################
 # Translator definitions
 ##########################################################
 
-  # To compile stacker source, we just run the stacker
-  # compiler with a default stack size of 2048 entries.
+  # To compile C++ source, just use llvm-g++'s cc1
   translator.command=@LLVMCC1PLUS@ -quiet %in% -o %out% \
     %opt% %incls% %defs% %WOpts% %fOpts% %MOpts% %args% \
     -D_GNU_SOURCE
 
-  # stkrc doesn't preprocess but we set this to true so
-  # that we don't run the cp command by default.
-  translator.preprocesses=true
+  # llvm-g++ does not pre-process
+  translator.preprocesses=false
 
   # The translator is required to run.
   translator.required=true
 
-  # stkrc doesn't handle the -On options
+  # Output of translator is assembly
   translator.output=assembly
 
 ##########################################################
 # Optimizer definitions
 ##########################################################
   
-  # For optimization, we use the LLVM "opt" program
+  # Use gccas to clean up the generated code
   optimizer.command=@LLVM_BINDIR@/gccas %in% -o %out% %args%
-
   optimizer.required = true
 
-  # opt doesn't translate
+  # gccas doesn't translate
   optimizer.translates = false
 
-  # opt doesn't preprocess
+  # gccas doesn't preprocess
   optimizer.preprocesses=false
 
-  # opt produces bytecode
+  # gccas produces bytecode
   optimizer.output = bytecode
 
 ##########################################################
 # Assembler definitions
 ##########################################################
-  assembler.command=llc %in% -o %out% %target% %time% %stats%
+  assembler.command=@LLVM_BINDIR@/llc %in% -o %out% %target% %time% %stats%
