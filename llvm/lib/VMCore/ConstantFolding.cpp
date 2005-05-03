@@ -24,6 +24,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
+#include <limits>
 #include <cmath>
 using namespace llvm;
 
@@ -471,9 +472,9 @@ struct DirectFPRules
     return ConstantClass::get(*Ty, Result);
   }
   static Constant *Div(const ConstantClass *V1, const ConstantClass *V2) {
-    if (V2->isExactlyValue(0.0)) return ConstantClass::get(*Ty, INFINITY);
-    if (V2->isExactlyValue(-0.0)) return ConstantClass::get(*Ty, -INFINITY);
-    if (V2->isNullValue()) return 0;
+    BuiltinType inf = std::numeric_limits<BuiltinType>::infinity();
+    if (V2->isExactlyValue(0.0)) return ConstantClass::get(*Ty, inf);
+    if (V2->isExactlyValue(-0.0)) return ConstantClass::get(*Ty, -inf);
     BuiltinType R = (BuiltinType)V1->getValue() / (BuiltinType)V2->getValue();
     return ConstantClass::get(*Ty, R);
   }
