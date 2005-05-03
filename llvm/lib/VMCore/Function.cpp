@@ -206,6 +206,11 @@ unsigned Function::getIntrinsicID() const {
   assert(getName().size() != 5 && "'llvm.' is an invalid intrinsic name!");
 
   switch (getName()[5]) {
+  case 'c':
+    if (getName() == "llvm.ctpop") return Intrinsic::ctpop;
+    if (getName() == "llvm.cttz") return Intrinsic::cttz;
+    if (getName() == "llvm.ctlz") return Intrinsic::ctlz;
+    break;
   case 'd':
     if (getName() == "llvm.dbg.stoppoint")   return Intrinsic::dbg_stoppoint;
     if (getName() == "llvm.dbg.region.start")return Intrinsic::dbg_region_start;

@@ -44,6 +44,10 @@ class SelectionDAG {
 
   // AllNodes - All of the nodes in the DAG
   std::vector<SDNode*> AllNodes;
+
+  // ValueNodes - track SrcValue nodes
+  std::map<std::pair<const Value*, int>, SDNode*> ValueNodes;
+
 public:
   SelectionDAG(TargetLowering &tli, MachineFunction &mf) : TLI(tli), MF(mf) {
     EntryNode = Root = getNode(ISD::EntryToken, MVT::Other);
@@ -183,7 +187,7 @@ public:
   SDOperand getLoad(MVT::ValueType VT, SDOperand Chain, SDOperand Ptr, SDOperand SV);
 
   // getSrcValue - construct a node to track a Value* through the backend
-  SDOperand getSrcValue(const Value* I);
+  SDOperand getSrcValue(const Value* I, int offset = 0);
 
   void replaceAllUsesWith(SDOperand Old, SDOperand New) {
     assert(Old != New && "RAUW self!");

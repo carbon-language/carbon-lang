@@ -723,6 +723,18 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
     NumArgs = 2;
     break;
 
+  case Intrinsic::ctpop:
+  case Intrinsic::ctlz:
+  case Intrinsic::cttz:
+    Assert1(FT->getNumParams() == 1,
+            "Illegal # arguments for intrinsic function!", IF);
+    Assert1(FT->getReturnType() == FT->getParamType(0),
+            "Return type does not match source type", IF);
+    Assert1(FT->getParamType(0)->isIntegral(),
+            "Argument must be of an int type!", IF);
+    NumArgs = 1;
+    break;
+
   case Intrinsic::sqrt:
     Assert1(FT->getNumParams() == 1,
             "Illegal # arguments for intrinsic function!", IF);

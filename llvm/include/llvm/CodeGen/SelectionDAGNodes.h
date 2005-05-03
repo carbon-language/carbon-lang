@@ -100,6 +100,9 @@ namespace ISD {
     // Bitwise operators.
     AND, OR, XOR, SHL, SRA, SRL,
 
+    // Counting operators
+    CTTZ, CTLZ, CTPOP,
+
     // Select operator.
     SELECT,
 
@@ -546,7 +549,7 @@ protected:
       ND = N4.Val->getNodeDepth();
     NodeDepth = ND+1;
 
-    Operands.reserve(3); Operands.push_back(N1); Operands.push_back(N2);
+    Operands.reserve(4); Operands.push_back(N1); Operands.push_back(N2);
     Operands.push_back(N3); Operands.push_back(N4);
     N1.Val->Uses.push_back(this); N2.Val->Uses.push_back(this);
     N3.Val->Uses.push_back(this); N4.Val->Uses.push_back(this);
@@ -748,13 +751,15 @@ public:
 
 class SrcValueSDNode : public SDNode {
   const Value *V;
+  int offset;
 protected:
   friend class SelectionDAG;
-  SrcValueSDNode(const Value* v)
-    : SDNode(ISD::SRCVALUE, MVT::Other), V(v) {}
+  SrcValueSDNode(const Value* v, int o)
+    : SDNode(ISD::SRCVALUE, MVT::Other), V(v), offset(o) {}
 
 public:
   const Value *getValue() const { return V; }
+  int getOffset() const { return offset; }
 
   static bool classof(const SrcValueSDNode *) { return true; }
   static bool classof(const SDNode *N) {

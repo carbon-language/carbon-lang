@@ -186,12 +186,9 @@ def BIC      : OForm< 0x11, 0x08, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "bic $RA,$
 def BICi     : OFormL<0x11, 0x08, (ops GPRC:$RC, GPRC:$RA, u8imm:$L), "bic $RA,$L,$RC">; //Bit clear
 def BIS      : OForm< 0x11, 0x20, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "bis $RA,$RB,$RC">; //Logical sum
 def BISi     : OFormL<0x11, 0x20, (ops GPRC:$RC, GPRC:$RA, u8imm:$L), "bis $RA,$L,$RC">; //Logical sum
-def CTLZ     : OForm< 0x1C, 0x32, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "CTLZ $RA,$RB,$RC">; //Count leading zero
-def CTLZi    : OFormL<0x1C, 0x32, (ops GPRC:$RC, GPRC:$RA, u8imm:$L), "CTLZ $RA,$L,$RC">; //Count leading zero
-def CTPOP    : OForm< 0x1C, 0x30, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "CTPOP $RA,$RB,$RC">; //Count population
-def CTPOPi   : OFormL<0x1C, 0x30, (ops GPRC:$RC, GPRC:$RA, u8imm:$L), "CTPOP $RA,$L,$RC">; //Count population
-def CTTZ     : OForm< 0x1C, 0x33, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "CTTZ $RA,$RB,$RC">; //Count trailing zero
-def CTTZi    : OFormL<0x1C, 0x33, (ops GPRC:$RC, GPRC:$RA, u8imm:$L), "CTTZ $RA,$L,$RC">; //Count trailing zero
+def CTLZ     : OForm< 0x1C, 0x32, (ops GPRC:$RC, GPRC:$RB), "CTLZ $RB,$RC">; //Count leading zero
+def CTPOP    : OForm< 0x1C, 0x30, (ops GPRC:$RC, GPRC:$RB), "CTPOP $RB,$RC">; //Count population
+def CTTZ     : OForm< 0x1C, 0x33, (ops GPRC:$RC, GPRC:$RB), "CTTZ $RB,$RC">; //Count trailing zero
 def EQV      : OForm< 0x11, 0x48, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "eqv $RA,$RB,$RC">; //Logical equivalence
 def EQVi     : OFormL<0x11, 0x48, (ops GPRC:$RC, GPRC:$RA, u8imm:$L), "eqv $RA,$L,$RC">; //Logical equivalence
 def EXTBL    : OForm< 0x12, 0x06, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), "EXTBL $RA,$RB,$RC">; //Extract byte low

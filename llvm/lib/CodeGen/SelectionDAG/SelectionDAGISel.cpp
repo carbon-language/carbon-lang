@@ -707,6 +707,21 @@ void SelectionDAGLowering::visitCall(CallInst &I) {
         DAG.setRoot(DAG.getNode(ISD::PCMARKER, MVT::Other, getRoot(), Num));
         return;
       }
+      case Intrinsic::cttz:
+        setValue(&I, DAG.getNode(ISD::CTTZ,
+                                 getValue(I.getOperand(1)).getValueType(),
+                                 getValue(I.getOperand(1))));
+        return;
+      case Intrinsic::ctlz:
+        setValue(&I, DAG.getNode(ISD::CTLZ,
+                                 getValue(I.getOperand(1)).getValueType(),
+                                 getValue(I.getOperand(1))));
+        return;
+      case Intrinsic::ctpop:
+        setValue(&I, DAG.getNode(ISD::CTPOP,
+                                 getValue(I.getOperand(1)).getValueType(),
+                                 getValue(I.getOperand(1))));
+        return;
       }
 
   SDOperand Callee;

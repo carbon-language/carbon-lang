@@ -16,6 +16,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
 #include "llvm/Instructions.h"
+#include "llvm/Type.h"
 #include <iostream>
 
 using namespace llvm;
@@ -162,6 +163,201 @@ void DefaultIntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
     static Function *AbortFCache = 0;
     ReplaceCallWith("abort", CI, CI->op_end(), CI->op_end(), Type::VoidTy,
                     AbortFCache);
+    break;
+  }
+  case Intrinsic::ctpop: {
+    Value *Src = CI->getOperand(1);
+    switch (CI->getOperand(0)->getType()->getTypeID())
+    {
+    case Type::SByteTyID:
+    case Type::UByteTyID:
+      {
+        Value* SA = ConstantUInt::get(Type::UByteTy, 1);
+        Value* MA = ConstantUInt::get(Type::UIntTy, 0x55);
+        Src = BinaryOperator::create(Instruction::Add,
+                BinaryOperator::create(Instruction::And, Src, MA),
+                BinaryOperator::create(Instruction::And, 
+                                       new ShiftInst(Instruction::Shr, Src, SA),
+                                       MA));
+        SA = ConstantUInt::get(Type::UByteTy, 2);
+        MA = ConstantUInt::get(Type::UIntTy, 0x33);
+        Src = BinaryOperator::create(Instruction::Add,
+                BinaryOperator::create(Instruction::And, Src, MA),
+                BinaryOperator::create(Instruction::And,
+                                       new ShiftInst(Instruction::Shr, Src, SA),
+                                       MA));
+        SA = ConstantUInt::get(Type::UByteTy, 4);
+        MA = ConstantUInt::get(Type::UIntTy, 0x0F);
+        Src = BinaryOperator::create(Instruction::Add,
+                BinaryOperator::create(Instruction::And, Src, MA),
+                BinaryOperator::create(Instruction::And, 
+                                       new ShiftInst(Instruction::Shr, Src, SA),
+                                       MA), "ctpop");
+      }
+      break;
+    case Type::ShortTyID:
+    case Type::UShortTyID:
+      {
+        Value* SA = ConstantUInt::get(Type::UByteTy, 1);
+        Value* MA = ConstantUInt::get(Type::UIntTy, 0x5555);
+        Src = BinaryOperator::create(Instruction::Add,
+                BinaryOperator::create(Instruction::And, Src, MA),
+                BinaryOperator::create(Instruction::And, 
+                                       new ShiftInst(Instruction::Shr, Src, SA),
+                                       MA));
+        SA = ConstantUInt::get(Type::UByteTy, 2);
+        MA = ConstantUInt::get(Type::UIntTy, 0x3333);
+        Src = BinaryOperator::create(Instruction::Add,
+                BinaryOperator::create(Instruction::And, Src, MA),
+                BinaryOperator::create(Instruction::And, 
+                                       new ShiftInst(Instruction::Shr, Src, SA),
+                                       MA));
+        SA = ConstantUInt::get(Type::UByteTy, 4);
+        MA = ConstantUInt::get(Type::UIntTy, 0x0F0F);
+        Src = BinaryOperator::create(Instruction::Add,
+                BinaryOperator::create(Instruction::And, Src, MA),
+                BinaryOperator::create(Instruction::And, 
+                                       new ShiftInst(Instruction::Shr, Src, SA),
+                                       MA));
+        SA = ConstantUInt::get(Type::UByteTy, 8);
+        MA = ConstantUInt::get(Type::UIntTy, 0x00FF);
+        Src = BinaryOperator::create(Instruction::Add,
+                BinaryOperator::create(Instruction::And, Src, MA),
+                BinaryOperator::create(Instruction::And, 
+                                       new ShiftInst(Instruction::Shr, Src, SA),
+                                       MA), "ctpop");
+
+      }
+      break;
+    case Type::IntTyID:
+    case Type::UIntTyID:
+      {
+        Value* SA = ConstantUInt::get(Type::UByteTy, 1);
+        Value* MA = ConstantUInt::get(Type::UIntTy, 0x55555555);
+        Src = BinaryOperator::create(Instruction::Add,
+                BinaryOperator::create(Instruction::And, Src, MA),
+                BinaryOperator::create(Instruction::And, 
+                                       new ShiftInst(Instruction::Shr, Src, SA),
+                                       MA));
+        SA = ConstantUInt::get(Type::UByteTy, 2);
+        MA = ConstantUInt::get(Type::UIntTy, 0x33333333);
+        Src = BinaryOperator::create(Instruction::Add,
+                BinaryOperator::create(Instruction::And, Src, MA),
+                BinaryOperator::create(Instruction::And, 
+                                       new ShiftInst(Instruction::Shr, Src, SA),
+                                       MA));
+        SA = ConstantUInt::get(Type::UByteTy, 4);
+        MA = ConstantUInt::get(Type::UIntTy, 0x0F0F0F0F);
+        Src = BinaryOperator::create(Instruction::Add,
+                BinaryOperator::create(Instruction::And, Src, MA),
+                BinaryOperator::create(Instruction::And, 
+                                       new ShiftInst(Instruction::Shr, Src, SA),
+                                       MA));
+        SA = ConstantUInt::get(Type::UByteTy, 8);
+        MA = ConstantUInt::get(Type::UIntTy, 0x00FF00FF);
+        Src = BinaryOperator::create(Instruction::Add,
+                BinaryOperator::create(Instruction::And, Src, MA),
+                BinaryOperator::create(Instruction::And, 
+                                       new ShiftInst(Instruction::Shr, Src, SA),
+                                       MA));
+        SA = ConstantUInt::get(Type::UByteTy, 8);
+        MA = ConstantUInt::get(Type::UIntTy, 0x0000FFFF);
+        Src = BinaryOperator::create(Instruction::Add,
+                BinaryOperator::create(Instruction::And, Src, MA),
+                BinaryOperator::create(Instruction::And, 
+                                       new ShiftInst(Instruction::Shr, Src, SA),
+                                       MA), "ctpop");
+      }
+      break;
+    case Type::LongTyID:
+    case Type::ULongTyID:
+      {
+        Value* SA = ConstantUInt::get(Type::UByteTy, 1);
+        Value* MA = ConstantUInt::get(Type::ULongTy, 0x5555555555555555ULL);
+        Src = BinaryOperator::create(Instruction::Add,
+                BinaryOperator::create(Instruction::And, Src, MA),
+                BinaryOperator::create(Instruction::And, 
+                                       new ShiftInst(Instruction::Shr, Src, SA),
+                                       MA));
+        SA = ConstantUInt::get(Type::UByteTy, 2);
+        MA = ConstantUInt::get(Type::ULongTy, 0x3333333333333333ULL);
+        Src = BinaryOperator::create(Instruction::Add,
+                BinaryOperator::create(Instruction::And, Src, MA),
+                BinaryOperator::create(Instruction::And, 
+                                       new ShiftInst(Instruction::Shr, Src, SA),
+                                       MA));
+        SA = ConstantUInt::get(Type::UByteTy, 4);
+        MA = ConstantUInt::get(Type::ULongTy, 0x0F0F0F0F0F0F0F0FULL);
+        Src = BinaryOperator::create(Instruction::Add,
+                BinaryOperator::create(Instruction::And, Src, MA),
+                BinaryOperator::create(Instruction::And, 
+                                       new ShiftInst(Instruction::Shr, Src, SA),
+                                       MA));
+        SA = ConstantUInt::get(Type::UByteTy, 8);
+        MA = ConstantUInt::get(Type::ULongTy, 0x00FF00FF00FF00FFULL);
+        Src = BinaryOperator::create(Instruction::Add,
+                BinaryOperator::create(Instruction::And, Src, MA),
+                BinaryOperator::create(Instruction::And, 
+                                       new ShiftInst(Instruction::Shr, Src, SA),
+                                       MA));
+        SA = ConstantUInt::get(Type::UByteTy, 16);
+        MA = ConstantUInt::get(Type::ULongTy, 0x00000000FFFFFFFFULL);
+        Src = BinaryOperator::create(Instruction::Add,
+                BinaryOperator::create(Instruction::And, Src, MA),
+                BinaryOperator::create(Instruction::And, 
+                                       new ShiftInst(Instruction::Shr, Src, SA),
+                                       MA), "ctpop");
+      }
+      break;
+    default:
+      abort();
+    }
+        
+    CI->replaceAllUsesWith(Src);
+    break;
+  }
+  case Intrinsic::ctlz: {
+    Value *Src = CI->getOperand(1);
+    Value* SA;
+    switch (CI->getOperand(0)->getType()->getTypeID())
+    {
+    case Type::LongTyID:
+    case Type::ULongTyID:
+      SA = ConstantUInt::get(Type::UByteTy, 32);
+      Src = BinaryOperator::create(Instruction::Or, Src, new ShiftInst(Instruction::Shr, Src, SA));
+    case Type::IntTyID:
+    case Type::UIntTyID:
+      SA = ConstantUInt::get(Type::UByteTy, 16);
+      Src = BinaryOperator::create(Instruction::Or, Src, new ShiftInst(Instruction::Shr, Src, SA));
+    case Type::ShortTyID:
+    case Type::UShortTyID:
+      SA = ConstantUInt::get(Type::UByteTy, 8);
+      Src = BinaryOperator::create(Instruction::Or, Src, new ShiftInst(Instruction::Shr, Src, SA));
+    default:
+      SA = ConstantUInt::get(Type::UByteTy, 1);
+      Src = BinaryOperator::create(Instruction::Or, Src, new ShiftInst(Instruction::Shr, Src, SA));
+      SA = ConstantUInt::get(Type::UByteTy, 2);
+      Src = BinaryOperator::create(Instruction::Or, Src, new ShiftInst(Instruction::Shr, Src, SA));
+      SA = ConstantUInt::get(Type::UByteTy, 4);
+      Src = BinaryOperator::create(Instruction::Or, Src, new ShiftInst(Instruction::Shr, Src, SA));
+    };
+    Src = BinaryOperator::createNot(Src);
+
+    Src = new CallInst(new Function(CI->getCalledFunction()->getFunctionType(),
+                                    CI->getCalledFunction()->getLinkage(),
+                                    "llvm.ctpop"), Src);
+    CI->replaceAllUsesWith(Src);
+    break;
+  }
+  case Intrinsic::cttz: {
+    Value *Src = CI->getOperand(1);
+    Src = BinaryOperator::create(Instruction::And, BinaryOperator::createNot(Src),
+            BinaryOperator::create(Instruction::Sub, Src, 
+                            ConstantUInt::get(CI->getOperand(0)->getType(), 1)));
+    Src = new CallInst(new Function(CI->getCalledFunction()->getFunctionType(),
+                                    CI->getCalledFunction()->getLinkage(),
+                                    "llvm.ctpop"), Src);
+    CI->replaceAllUsesWith(Src);
     break;
   }
 

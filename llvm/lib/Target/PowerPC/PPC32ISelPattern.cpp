@@ -69,6 +69,11 @@ namespace {
       setOperationAction(ISD::FCOS , MVT::f32, Expand);
       setOperationAction(ISD::FSQRT, MVT::f32, Expand);
 
+      //PowerPC has these, but they are not implemented
+      setOperationAction(ISD::CTPOP, MVT::i32  , Expand);
+      setOperationAction(ISD::CTTZ , MVT::i32  , Expand);
+      setOperationAction(ISD::CTTZ , MVT::i32  , Expand);
+
       setSetCCResultContents(ZeroOrOneSetCCResult);
       addLegalFPImmediate(+0.0); // Necessary for FSEL
       addLegalFPImmediate(-0.0); //

@@ -63,13 +63,17 @@ namespace Intrinsic {
 
     // libm related functions.
     isunordered,    // Return true if either argument is a NaN
-    sqrt,
+    ctpop, //count population
+    ctlz, //count leading zeros
+    cttz, //count trailing zeros
+    sqrt, //square root
 
     // Input/Output intrinsics.
     readport,
     writeport,
     readio,
     writeio
+
   };
 
 } // End Intrinsic namespace

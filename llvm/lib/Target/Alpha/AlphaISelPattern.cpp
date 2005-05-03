@@ -76,6 +76,10 @@ namespace {
       setOperationAction(ISD::SREM     , MVT::f32  , Expand);
       setOperationAction(ISD::SREM     , MVT::f64  , Expand);
 
+      //      setOperationAction(ISD::CTPOP    , MVT::i64  , Expand);
+      //      setOperationAction(ISD::CTTZ     , MVT::i64  , Expand);
+      //      setOperationAction(ISD::CTTZ     , MVT::i64  , Expand);
+
       //If this didn't legalize into a div....
       //      setOperationAction(ISD::SREM     , MVT::i64, Expand);
       //      setOperationAction(ISD::UREM     , MVT::i64, Expand);
@@ -1214,6 +1218,15 @@ unsigned ISel::SelectExpr(SDOperand N) {
   default:
     Node->dump();
     assert(0 && "Node not handled!\n");
+
+  case ISD::CTPOP:
+  case ISD::CTTZ:
+  case ISD::CTLZ:
+    Opc = opcode == ISD::CTPOP ? Alpha::CTPOP :
+    (opcode == ISD::CTTZ ? Alpha::CTTZ : Alpha::CTLZ);
+    Tmp1 = SelectExpr(N.getOperand(0));
+    BuildMI(BB, Opc, 1, Result).addReg(Tmp1);
+    return Result;
 
   case ISD::MULHU:
     Tmp1 = SelectExpr(N.getOperand(0));

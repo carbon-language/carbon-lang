@@ -68,6 +68,11 @@ namespace {
       setOperationAction(ISD::SREM, MVT::i64, Expand);
       setOperationAction(ISD::UREM, MVT::i64, Expand);
 
+      // PowerPC has these, but they are not implemented
+      setOperationAction(ISD::CTPOP, MVT::i64, Expand);
+      setOperationAction(ISD::CTTZ , MVT::i64, Expand);
+      setOperationAction(ISD::CTTZ , MVT::i64, Expand);
+
       setShiftAmountFlavor(Extend);   // shl X, 32 == 0
       addLegalFPImmediate(+0.0); // Necessary for FSEL
       addLegalFPImmediate(-0.0); //
