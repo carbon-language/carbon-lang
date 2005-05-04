@@ -799,7 +799,7 @@ StackerCompiler::handle_while( char* todo )
     BranchInst* root_br_inst = new BranchInst( test );
     bb->getInstList().push_back( root_br_inst );
 
-    // Pop the condition value
+    // Examine the condition value
     LoadInst* cond = cast<LoadInst>( stack_top(test) );
 
     // Compare the condition against 0
