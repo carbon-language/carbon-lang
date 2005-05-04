@@ -106,3 +106,10 @@ bool %test19(bool %A, bool %B) {
 	%C = seteq int %a, %b
 	ret bool %C
 }
+
+uint %test20(uint %A) {
+        %B = and uint %A, 1
+        %C = setne uint %B, 0
+        %D = cast bool %C to uint
+        ret uint %D
+}
