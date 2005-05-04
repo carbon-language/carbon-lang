@@ -1,4 +1,4 @@
-; Make sure this testcase codegens to the bic instruction
+; Make sure this testcase codegens to the ctlz instruction
 ; RUN: llvm-as < %s | llc -march=alpha -enable-alpha-CT | grep 'ctlz'
 
 declare ubyte %llvm.ctlz(ubyte)
