@@ -36,9 +36,12 @@ namespace llvm {
   cl::opt<bool> EnableAlphaIDIV("enable-alpha-intfpdiv",
                              cl::desc("Use the FP div instruction for integer div when possible"),
                              cl::Hidden);
-  cl::opt<bool> EnableAlphaFTOI("enable-alpha-ftoi",
+  cl::opt<bool> EnableAlphaFTOI("enable-alpha-FTOI",
                              cl::desc("Enable use of ftoi* and itof* instructions (ev6 and higher)"),
                              cl::Hidden);
+  cl::opt<bool> EnableAlphaCT("enable-alpha-CT",
+                              cl::desc("Enable use of the ctpop, ctlz, and cttz instructions"),
+                              cl::Hidden);
   cl::opt<bool> EnableAlphaCount("enable-alpha-count",
                              cl::desc("Print estimates on live ins and outs"),
                              cl::Hidden);
@@ -76,9 +79,11 @@ namespace {
       setOperationAction(ISD::SREM     , MVT::f32  , Expand);
       setOperationAction(ISD::SREM     , MVT::f64  , Expand);
 
-      //      setOperationAction(ISD::CTPOP    , MVT::i64  , Expand);
-      //      setOperationAction(ISD::CTTZ     , MVT::i64  , Expand);
-      //      setOperationAction(ISD::CTTZ     , MVT::i64  , Expand);
+      if (!EnableAlphaCT) {
+        setOperationAction(ISD::CTPOP    , MVT::i64  , Expand);
+        setOperationAction(ISD::CTTZ     , MVT::i64  , Expand);
+        setOperationAction(ISD::CTTZ     , MVT::i64  , Expand);
+      }
 
       //If this didn't legalize into a div....
       //      setOperationAction(ISD::SREM     , MVT::i64, Expand);

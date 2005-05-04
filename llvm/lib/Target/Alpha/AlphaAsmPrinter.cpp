@@ -31,6 +31,7 @@ using namespace llvm;
 
 namespace llvm {
   extern cl::opt<bool> EnableAlphaFTOI;
+  extern cl::opt<bool> EnableAlphaCT;
 }
 
 namespace {
@@ -234,7 +235,7 @@ void AlphaAsmPrinter::printConstantPool(MachineConstantPool *MCP) {
 bool AlphaAsmPrinter::doInitialization(Module &M)
 {
   AsmPrinter::doInitialization(M);
-  if(EnableAlphaFTOI)
+  if(EnableAlphaFTOI || EnableAlphaCT)
     O << "\t.arch ev6\n";
   else
     O << "\t.arch ev56\n";
