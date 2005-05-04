@@ -3553,9 +3553,30 @@ Instruction *InstCombiner::visitCastInst(CastInst &CI) {
           return new ShiftInst(Instruction::Shl, Op0c, Op1);
         }
         break;
+      case Instruction::SetNE:
+      case Instruction::SetEQ:
+        // We if we are just checking for a seteq of a single bit and casting it
+        // to an integer.  If so, shift the bit to the appropriate place then
+        // cast to integer to avoid the comparison.
+        if (ConstantInt *Op1C = dyn_cast<ConstantInt>(Op1)) {
+          // cast (X != 0) to int, cast (X == 1) to int  -> X iff X has only the
+          // low bit set.
+          bool isSetNE = SrcI->getOpcode() == Instruction::SetNE;
+          if ((isSetNE && Op1C->getRawValue() == 0) ||
+              (!isSetNE && Op1C->getRawValue() == 1)) {
+            Constant *Not1 = 
+              ConstantExpr::getNot(ConstantInt::get(Op0->getType(), 1));
+            if (MaskedValueIsZero(Op0, cast<ConstantIntegral>(Not1))) {
+              if (CI.getType() == Op0->getType())
+                return ReplaceInstUsesWith(CI, Op0);
+              else
+                return new CastInst(Op0, CI.getType());
+            }
+          }
+        }
+        break;
       }
     }
-
   return 0;
 }
 
@@ -4603,8 +4624,9 @@ Instruction *InstCombiner::visitAllocationInst(AllocationInst &AI) {
       // Now that I is pointing to the first non-allocation-inst in the block,
       // insert our getelementptr instruction...
       //
-      std::vector<Value*> Idx(2, Constant::getNullValue(Type::IntTy));
-      Value *V = new GetElementPtrInst(New, Idx, New->getName()+".sub", It);
+      Value *NullIdx = Constant::getNullValue(Type::IntTy);
+      Value *V = new GetElementPtrInst(New, NullIdx, NullIdx,
+                                       New->getName()+".sub", It);
 
       // Now make everything use the getelementptr instead of the original
       // allocation.
