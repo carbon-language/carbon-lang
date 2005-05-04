@@ -12,6 +12,7 @@ int %main () {
   %val4 = call int %isdigit(int 58)
   %rslt1 = add int %val1, %val2
   %rslt2 = add int %val3, %val4
-  %rslt = add int %rslt1, %rslt2
+  %sum = add int %rslt1, %rslt2
+  %rslt = call int %isdigit(int %sum)
   ret int %rslt
 }
