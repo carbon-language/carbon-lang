@@ -1554,6 +1554,60 @@ public:
   }
 } PutsOptimizer;
 
+/// This LibCallOptimization will simplify calls to the "isdigit" library 
+/// function. It simply does range checks the parameter explicitly.
+/// @brief Simplify the isdigit library function.
+struct IsDigitOptimization : public LibCallOptimization
+{
+public:
+  /// @brief Default Constructor
+  IsDigitOptimization() : LibCallOptimization("isdigit",
+      "simplify-libcalls:isdigit", "Number of 'isdigit' calls simplified") {}
+
+  /// @brief Destructor
+  virtual ~IsDigitOptimization() {}
+
+  /// @brief Make sure that the "fputs" function has the right prototype
+  virtual bool ValidateCalledFunction(const Function* f, SimplifyLibCalls& SLC)
+  {
+    // Just make sure this has 1 argument
+    return (f->arg_size() == 1);
+  }
+
+  /// @brief Perform the toascii optimization.
+  virtual bool OptimizeCall(CallInst* ci, SimplifyLibCalls& SLC)
+  {
+    if (ConstantInt* CI = dyn_cast<ConstantInt>(ci->getOperand(1)))
+    {
+      // isdigit(c)   -> 0 or 1, if 'c' is constant
+      uint64_t val = CI->getRawValue();
+      if (val >= '0' && val <='9')
+        ci->replaceAllUsesWith(ConstantSInt::get(Type::IntTy,1));
+      else
+        ci->replaceAllUsesWith(ConstantSInt::get(Type::IntTy,0));
+      ci->eraseFromParent();
+      return true;
+    }
+
+    // isdigit(c)   -> (unsigned)c - '0' <= 9
+    CastInst* cast = 
+      new CastInst(ci->getOperand(1),Type::UIntTy,
+        ci->getOperand(1)->getName()+".uint",ci);
+    BinaryOperator* sub_inst = BinaryOperator::create(Instruction::Sub,cast,
+        ConstantUInt::get(Type::UIntTy,0x30),
+        ci->getOperand(1)->getName()+".sub",ci);
+    SetCondInst* setcond_inst = new SetCondInst(Instruction::SetLE,sub_inst,
+        ConstantUInt::get(Type::UIntTy,9),
+        ci->getOperand(1)->getName()+".cmp",ci);
+    CastInst* c2 = 
+      new CastInst(setcond_inst,Type::IntTy,
+        ci->getOperand(1)->getName()+".isdigit",ci);
+    ci->replaceAllUsesWith(c2);
+    ci->eraseFromParent();
+    return true;
+  }
+} IsDigitOptimizer;
+
 /// This LibCallOptimization will simplify calls to the "toascii" library 
 /// function. It simply does the corresponding and operation to restrict the
 /// range of values to the ASCII character set (0-127).
@@ -1750,12 +1804,6 @@ bool getConstantStringLength(Value* V, uint64_t& len, ConstantArray** CA )
 // signbit:
 //   * signbit(cnst) -> cnst'
 //   * signbit(nncst) -> 0 (if pstv is a non-negative constant)
-//
-// sprintf:
-//   * sprintf(dest,fmt) -> strcpy(dest,fmt) 
-//       (if fmt is constant and constains no % characters)
-//   * sprintf(dest,"%s",orig) -> strcpy(dest,orig)
-//       (only if the sprintf result is not used)
 //
 // sqrt, sqrtf, sqrtl:
 //   * sqrt(expN(x))  -> expN(x*0.5)
