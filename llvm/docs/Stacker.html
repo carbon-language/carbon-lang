@@ -787,7 +787,7 @@ using the following construction:</p>
 </tr>
 <tr><td>RROT</td>
     <td>RROT</td>
-    <td>w1 w2 w3 -- w2 w3 w1</td>
+    <td>w1 w2 w3 -- w3 w1 w2</td>
     <td>Reverse rotation. Like ROT, but it rotates the other way around.
 	Essentially, the third element on the stack is moved to the top
 	of the stack.</td>
@@ -946,24 +946,28 @@ using the following construction:</p>
 	executed. In either case, after the (words....) have executed, execution continues
         immediately following the ENDIF. </td>
 </tr>
-<tr><td>WHILE (words...) END</td>
-    <td>WHILE (words...) END</td>
+<tr><td>WHILE word END</td>
+    <td>WHILE word END</td>
     <td>b -- b </td>
-    <td>The boolean value on the top of the stack is examined. If it is non-zero then the 
-	"words..." between WHILE and END are executed. Execution then begins again at the WHILE where another
-	boolean is popped off the stack. To prevent this operation from eating up the entire
-	stack, you should push on to the stack (just before the END) a boolean value that indicates
-	whether to terminate. Note that since booleans and integers can be coerced you can
-	use the following "for loop" idiom:<br/>
-	<code>(push count) WHILE (words...) -- END</code><br/>
+    <td>The boolean value on the top of the stack is examined (not popped). If 
+      it is non-zero then the "word" between WHILE and END is executed. 
+      Execution then begins again at the WHILE where the boolean on the top of 
+      the stack is examined again. The stack is not modified by the WHILE...END 
+      loop, only examined. It is imperative that the "word" in the body of the
+      loop ensure that the top of the stack contains the next boolean to examine
+      when it completes.  Note that since booleans and integers can be coerced 
+      you can use the following "for loop" idiom:<br/>
+	<code>(push count) WHILE word -- END</code><br/>
 	For example:<br/>
-	<code>10 WHILE DUP &gt;d -- END</code><br/>
-	This will print the numbers from 10 down to 1. 10 is pushed on the stack. Since that is
-	non-zero, the while loop is entered. The top of the stack (10) is duplicated and then
-	printed out with &gt;d. The top of the stack is decremented, yielding 9 and control is
-	transfered back to the WHILE keyword. The process starts all over again and repeats until
-	the top of stack is decremented to 0 at which the WHILE test fails and control is
-	transfered to the word after the END.</td>
+	<code>10 WHILE &gt;d -- END</code><br/>
+        This will print the numbers from 10 down to 1. 10 is pushed on the 
+        stack. Since that is non-zero, the while loop is entered. The top of 
+        the stack (10) is printed out with &gt;d. The top of the stack is 
+        decremented, yielding 9 and control is transfered back to the WHILE 
+        keyword. The process starts all over again and repeats until
+        the top of stack is decremented to 0 at which point the WHILE test 
+        fails and control is transfered to the word after the END.
+      </td>
 </tr>
 <tr><th colspan="4"><b>INPUT &amp; OUTPUT OPERATORS</b></th></tr>
 <tr>
