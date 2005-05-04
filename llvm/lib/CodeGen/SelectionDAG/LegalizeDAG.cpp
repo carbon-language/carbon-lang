@@ -1534,6 +1534,34 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
     AddLegalizedOperand(Op.getValue(1), Result.getValue(1));
     break;
   }
+  case ISD::CTPOP:
+  case ISD::CTTZ:
+  case ISD::CTLZ:
+    Tmp1 = Node->getOperand(0);
+    //Zero extend the argument
+    Tmp1 = DAG.getNode(ISD::ZERO_EXTEND, NVT, Tmp1);
+    // Perform the larger operation, then subtract if needed.
+    Tmp1 = DAG.getNode(Node->getOpcode(), NVT, Tmp1);
+    switch(Node->getOpcode())
+    {
+    case ISD::CTPOP:
+      Result = Tmp1;
+      break;
+    case ISD::CTTZ:
+      //if Tmp1 == sizeinbits(NVT) then Tmp1 = sizeinbits(Old VT)
+      Tmp2 = DAG.getSetCC(ISD::SETEQ, MVT::i1, Tmp1, 
+                          DAG.getConstant(getSizeInBits(NVT), NVT));
+      Result = DAG.getNode(ISD::SELECT, NVT, Tmp2, 
+                           DAG.getConstant(getSizeInBits(VT),NVT), Tmp1);
+      break;
+    case ISD::CTLZ:
+      //Tmp1 = Tmp1 - (sizeinbits(NVT) - sizeinbits(Old VT))
+      Result = DAG.getNode(ISD::SUB, NVT, Tmp1, 
+                           DAG.getConstant(getSizeInBits(NVT) - 
+                                           getSizeInBits(VT), NVT));
+      break;
+    }
+    break;
   }
 
   assert(Result.Val && "Didn't set a result!");
