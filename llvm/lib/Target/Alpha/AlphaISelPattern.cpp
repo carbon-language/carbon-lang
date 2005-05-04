@@ -82,7 +82,7 @@ namespace {
       if (!EnableAlphaCT) {
         setOperationAction(ISD::CTPOP    , MVT::i64  , Expand);
         setOperationAction(ISD::CTTZ     , MVT::i64  , Expand);
-        setOperationAction(ISD::CTTZ     , MVT::i64  , Expand);
+        setOperationAction(ISD::CTLZ     , MVT::i64  , Expand);
       }
 
       //If this didn't legalize into a div....

@@ -66,7 +66,7 @@ namespace {
       setOperationAction(ISD::SREM             , MVT::f64  , Expand);
       setOperationAction(ISD::CTPOP            , MVT::i32  , Expand);
       setOperationAction(ISD::CTTZ             , MVT::i32  , Expand);
-      setOperationAction(ISD::CTTZ             , MVT::i32  , Expand);
+      setOperationAction(ISD::CTLZ             , MVT::i32  , Expand);
 
       if (!UnsafeFPMath) {
         setOperationAction(ISD::FSIN           , MVT::f64  , Expand);
