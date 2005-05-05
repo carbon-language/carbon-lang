@@ -412,9 +412,12 @@ Value * BytecodeReader::getValue(unsigned type, unsigned oNum, bool Create) {
       GlobalTyID = CompactionTypes[type-Type::FirstDerivedTyID].second;
 
     if (hasImplicitNull(GlobalTyID)) {
-      if (Num == 0)
-        return Constant::getNullValue(getType(type));
-      --Num;
+      const Type *Ty = getType(type);
+      if (!isa<OpaqueType>(Ty)) {
+        if (Num == 0)
+          return Constant::getNullValue(Ty);
+        --Num;
+      }
     }
 
     if (GlobalTyID < ModuleValues.size() && ModuleValues[GlobalTyID]) {
@@ -529,7 +532,7 @@ unsigned BytecodeReader::insertValue(Value *Val, unsigned type,
 
   ValueTab[type]->push_back(Val);
 
-  bool HasOffset = hasImplicitNull(type);
+  bool HasOffset = hasImplicitNull(type) && !isa<OpaqueType>(Val->getType());
   return ValueTab[type]->size()-1 + HasOffset;
 }
 
@@ -2140,6 +2143,9 @@ void BytecodeReader::ParseModule() {
     } else
       error("Cannot find initializer value.");
   }
+
+  if (!ConstantFwdRefs.empty())
+    error("Use of undefined constants in a module");
 
   /// Make sure we pulled them all out. If we didn't then there's a declaration
   /// but a missing body. That's not allowed.
