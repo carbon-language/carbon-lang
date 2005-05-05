@@ -683,6 +683,7 @@ void SelectionDAGLowering::visitCall(CallInst &I) {
       default:
         // FIXME: IMPLEMENT THESE.
         // readport, writeport, readio, writeio
+        std::cerr << I;
         assert(0 && "This intrinsic is not implemented yet!");
         return;
       case Intrinsic::setjmp:  RenameFn = "setjmp"; break;
@@ -690,6 +691,15 @@ void SelectionDAGLowering::visitCall(CallInst &I) {
       case Intrinsic::memcpy:  visitMemIntrinsic(I, ISD::MEMCPY); return;
       case Intrinsic::memset:  visitMemIntrinsic(I, ISD::MEMSET); return;
       case Intrinsic::memmove: visitMemIntrinsic(I, ISD::MEMMOVE); return;
+
+      case Intrinsic::dbg_stoppoint:
+      case Intrinsic::dbg_region_start:
+      case Intrinsic::dbg_region_end:
+      case Intrinsic::dbg_func_start:
+      case Intrinsic::dbg_declare:
+        if (I.getType() != Type::VoidTy)
+          setValue(&I, DAG.getNode(ISD::UNDEF, TLI.getValueType(I.getType())));
+        return;
 
       case Intrinsic::isunordered:
         setValue(&I, DAG.getSetCC(ISD::SETUO, MVT::i1,getValue(I.getOperand(1)),
