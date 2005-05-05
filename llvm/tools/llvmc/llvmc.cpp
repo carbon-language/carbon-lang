@@ -215,14 +215,14 @@ static cl::list<std::string> Languages("x", cl::ZeroOrMore,
 //===------------------------------------------------------------------------===
 //===          GetFileType - determine type of a file
 //===------------------------------------------------------------------------===
-const std::string GetFileType(const std::string& fname, unsigned pos ) {
+const std::string GetFileType(const std::string& fname, unsigned pos) {
   static std::vector<std::string>::iterator langIt = Languages.begin();
   static std::string CurrLang = "";
 
   // If a -x LANG option has been specified ..
-  if ( langIt != Languages.end() )
+  if (langIt != Languages.end())
     // If the -x LANG option came before the current file on command line
-    if ( Languages.getPosition( langIt - Languages.begin() ) < pos ) {
+    if (Languages.getPosition( langIt - Languages.begin() ) < pos) {
       // use that language
       CurrLang = *langIt++;
       return CurrLang;
@@ -233,19 +233,19 @@ const std::string GetFileType(const std::string& fname, unsigned pos ) {
     return CurrLang; // use that language
 
   // otherwise just determine lang from the filename's suffix
-  return fname.substr( fname.rfind('.',fname.size()) + 1 );
+  return fname.substr(fname.rfind('.', fname.size()) + 1);
 }
 
 } // end anonymous namespace
 
 void handleTerminatingOptions(CompilerDriver* CD) {
   if (!PrintFileName.empty()) {
-    sys::Path path = CD->GetPathForLinkageItem(PrintFileName,false);
+    sys::Path path = CD->GetPathForLinkageItem(PrintFileName, false);
     std::string p = path.toString();
     if (p.empty())
-      std::cout << "Can't locate '" << PrintFileName << "'.\n";
+      std::cout << "Can't locate `" << PrintFileName << "'.\n";
     else
-      std::cout << p << "\n";
+      std::cout << p << '\n';
     exit(0);
   }
 }
@@ -299,7 +299,7 @@ int main(int argc, char **argv) {
     if (StripOutput)    flags |= CompilerDriver::STRIP_OUTPUT_FLAG;
     CD->setDriverFlags(flags);
 
-    // Specify requred parameters
+    // Specify required parameters
     CD->setFinalPhase(FinalPhase);
     CD->setOptimization(OptLevel);
     CD->setOutputMachine(OutputMachine);
@@ -332,30 +332,30 @@ int main(int argc, char **argv) {
     std::vector<std::string>::iterator libIt  = Libraries.begin();
     unsigned libPos = 0, filePos = 0;
     while ( 1 ) {
-      if ( libIt != Libraries.end() )
+      if (libIt != Libraries.end())
         libPos = Libraries.getPosition( libIt - Libraries.begin() );
       else
         libPos = 0;
-      if ( fileIt != Files.end() )
-        filePos = Files.getPosition( fileIt - Files.begin() );
+      if (fileIt != Files.end())
+        filePos = Files.getPosition(fileIt - Files.begin());
       else
         filePos = 0;
 
-      if ( filePos != 0 && (libPos == 0 || filePos < libPos) ) {
+      if (filePos != 0 && (libPos == 0 || filePos < libPos)) {
         // Add a source file
-        InpList.push_back( std::make_pair(*fileIt, GetFileType(*fileIt,filePos)));
+        InpList.push_back(std::make_pair(*fileIt, 
+                                         GetFileType(*fileIt, filePos)));
         ++fileIt;
-      }
-      else if ( libPos != 0 && (filePos == 0 || libPos < filePos) ) {
+      } else if ( libPos != 0 && (filePos == 0 || libPos < filePos) ) {
         // Add a library
-        InpList.push_back( std::make_pair(*libIt++,""));
+        InpList.push_back(std::make_pair(*libIt++, ""));
       }
       else
         break; // we're done with the list
     }
 
     // Tell the driver to do its thing
-    int result = CD->execute(InpList,sys::Path(OutputFilename));
+    int result = CD->execute(InpList, sys::Path(OutputFilename));
     if (result != 0) {
       throw std::string("Error executing actions. Terminated.");
       return result;
@@ -364,7 +364,7 @@ int main(int argc, char **argv) {
     // All is good, return success
     return 0;
   } catch (const std::string& msg) {
-    std::cerr << argv[0] << ": " << msg << "\n";
+    std::cerr << argv[0] << ": " << msg << '\n';
   } catch (...) {
     std::cerr << argv[0] << ": Unexpected unknown exception occurred.\n";
   }
