@@ -13,11 +13,11 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/CodeGen/LiveVariables.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/SSARegMap.h"
-#include "llvm/CodeGen/LiveVariables.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/ADT/DenseMap.h"
@@ -30,12 +30,9 @@ namespace {
       bool Changed = false;
 
       // Eliminate PHI instructions by inserting copies into predecessor blocks.
-      //
       for (MachineFunction::iterator I = Fn.begin(), E = Fn.end(); I != E; ++I)
         Changed |= EliminatePHINodes(Fn, *I);
 
-      //std::cerr << "AFTER PHI NODE ELIM:\n";
-      //Fn.dump();
       return Changed;
     }
 
