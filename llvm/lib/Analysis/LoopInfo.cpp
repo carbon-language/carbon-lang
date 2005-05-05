@@ -23,7 +23,6 @@
 #include "llvm/ADT/DepthFirstIterator.h"
 #include <algorithm>
 #include <iostream>
-
 using namespace llvm;
 
 static RegisterAnalysis<LoopInfo>
