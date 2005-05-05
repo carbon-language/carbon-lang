@@ -74,24 +74,24 @@
 namespace HASH_NAMESPACE {
 
 template <class DataType> struct hash {
-	unsigned int operator()(const unsigned int& x) const {
-	    return x;
-	}
+  unsigned int operator()(const unsigned int& x) const {
+      return x;
+  }
 };
 
 template <typename KeyType,
-	  typename ValueType,
-	  class _HashFcn = hash<KeyType>,
-	  class _EqualKey = equal_to<KeyType>,
-	  class _A = allocator <ValueType> >
+          typename ValueType,
+          class _HashFcn = hash<KeyType>,
+          class _EqualKey = equal_to<KeyType>,
+          class _A = allocator <ValueType> >
 class hash_map : public rw_hashmap<KeyType, ValueType, class _HashFcn, class _EqualKey, class _A> {
 };
 
 template <typename KeyType,
-	  typename ValueType,
-	  class _HashFcn = hash<KeyType>,
-	  class _EqualKey = equal_to<KeyType>,
-	  class _A = allocator <ValueType> >
+          typename ValueType,
+          class _HashFcn = hash<KeyType>,
+          class _EqualKey = equal_to<KeyType>,
+          class _A = allocator <ValueType> >
 class hash_multimap : public rw_hashmultimap<KeyType, ValueType, class _HashFcn, class _EqualKey, class _A> {
 };
 
@@ -117,7 +117,7 @@ namespace stdext {
   // Provide a hash function for unsigned ints...
   template<> struct hash<unsigned int> {
     inline size_t operator()(unsigned int Val) const {
-	  return Val;
+      return Val;
     }
   };
 
