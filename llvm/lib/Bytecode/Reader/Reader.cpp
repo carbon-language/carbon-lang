@@ -2262,4 +2262,3 @@ void BytecodeReader::ParseBytecode(BufPtr Buf, unsigned Length,
 
 BytecodeHandler::~BytecodeHandler() {}
 
-// vim: sw=2

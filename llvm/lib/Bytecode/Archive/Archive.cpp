@@ -155,4 +155,3 @@ Archive::~Archive() {
   }
 }
 
-// vim: sw=2 ai

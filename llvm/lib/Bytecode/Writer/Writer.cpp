@@ -1142,4 +1142,3 @@ void llvm::WriteBytecodeToFile(const Module *M, std::ostream &Out,
   Out.flush();
 }
 
-// vim: sw=2 ai

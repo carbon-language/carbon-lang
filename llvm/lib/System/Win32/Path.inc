@@ -780,5 +780,4 @@ Path::createTemporaryFile(bool reuse_current) {
 }
 }
 
-// vim: sw=2 smartindent smarttab tw=80 autoindent expandtab
 

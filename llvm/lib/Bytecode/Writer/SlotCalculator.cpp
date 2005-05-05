@@ -866,4 +866,3 @@ int SlotCalculator::doInsertType(const Type *Ty) {
   return (int)DestSlot;
 }
 
-// vim: sw=2 ai

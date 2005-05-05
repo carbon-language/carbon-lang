@@ -107,4 +107,3 @@ Path::GetDLLSuffix() {
 #include "Win32/Path.inc"
 #endif
 
-// vim: sw=2 smartindent smarttab tw=80 autoindent expandtab

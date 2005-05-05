@@ -167,4 +167,3 @@ void sys::PrintStackTraceOnErrorSignal() {
 
 }
 
-// vim: sw=2 smartindent smarttab tw=80 autoindent expandtab

@@ -391,4 +391,3 @@ llvm::GetBytecodeSymbols(const unsigned char*Buffer, unsigned Length,
   }
   return 0;
 }
-// vim: sw=2 ai

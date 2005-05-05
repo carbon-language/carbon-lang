@@ -47,6 +47,5 @@ std::string TimeValue::toString() const {
   return std::string(buffer);
 }
 
-// vim: sw=2 smartindent smarttab tw=80 autoindent expandtab
 
 }

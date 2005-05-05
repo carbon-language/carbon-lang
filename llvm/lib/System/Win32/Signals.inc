@@ -236,4 +236,3 @@ static BOOL WINAPI LLVMConsoleCtrlHandler(DWORD dwCtrlType) {
   return FALSE;
 }
 
-// vim: sw=2 smartindent smarttab tw=80 autoindent expandtab

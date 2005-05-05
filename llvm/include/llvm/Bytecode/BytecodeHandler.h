@@ -321,5 +321,4 @@ public:
 };
 
 }
-// vim: sw=2 ai
 #endif

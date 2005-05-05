@@ -77,6 +77,5 @@ namespace sys {
 }
 }
 
-// vim: sw=2
 
 #endif

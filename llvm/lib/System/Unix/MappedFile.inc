@@ -152,4 +152,3 @@ void MappedFile::size(size_t new_size) {
 
 }
 
-// vim: sw=2 smartindent smarttab tw=80 autoindent expandtab

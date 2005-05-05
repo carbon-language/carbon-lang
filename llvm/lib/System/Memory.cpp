@@ -33,4 +33,3 @@ using namespace sys;
 #include "Win32/Memory.inc"
 #endif
 
-// vim: sw=2 smartindent smarttab tw=80 autoindent expandtab

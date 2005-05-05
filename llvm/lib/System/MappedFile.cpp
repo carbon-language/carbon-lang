@@ -32,4 +32,3 @@ using namespace sys;
 #include "Win32/MappedFile.inc"
 #endif
 
-// vim: sw=2 smartindent smarttab tw=80 autoindent expandtab

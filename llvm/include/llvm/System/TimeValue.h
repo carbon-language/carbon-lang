@@ -380,5 +380,4 @@ inline TimeValue operator - (const TimeValue &tv1, const TimeValue &tv2) {
 }
 }
 
-// vim: sw=2 smartindent smarttab tw=80 autoindent expandtab
 #endif

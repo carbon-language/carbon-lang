@@ -758,4 +758,3 @@ Path::makeUnique(bool reuse_current) {
 }
 }
 
-// vim: sw=2

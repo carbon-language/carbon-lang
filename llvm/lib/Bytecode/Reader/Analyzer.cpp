@@ -731,4 +731,3 @@ BytecodeHandler* createBytecodeAnalyzerHandler(BytecodeAnalysis& bca,
 
 }
 
-// vim: sw=2

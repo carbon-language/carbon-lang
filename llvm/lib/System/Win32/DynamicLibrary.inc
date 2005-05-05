@@ -124,4 +124,3 @@ void *DynamicLibrary::GetAddressOfSymbol(const char *symbolName) {
 
 }
 
-// vim: sw=2 smartindent smarttab tw=80 autoindent expandtab

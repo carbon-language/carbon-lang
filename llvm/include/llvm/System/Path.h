@@ -602,6 +602,5 @@ inline std::ostream& operator<<(std::ostream& strm, const sys::Path& aPath) {
 
 }
 
-// vim: sw=2
 
 #endif
