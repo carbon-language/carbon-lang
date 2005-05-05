@@ -272,9 +272,17 @@ void LowerSetJmp::TransformLongJmpCall(CallInst* Inst)
   else
     new UnwindInst(Inst);
 
-  // Remove all insts after the branch/unwind inst.
-  Inst->getParent()->getInstList().erase(Inst,
-                                       Inst->getParent()->getInstList().end());
+  // Remove all insts after the branch/unwind inst.  Go from back to front to
+  // avoid replaceAllUsesWith if possible.
+  BasicBlock *BB = Inst->getParent();
+  Instruction *Removed;
+  do {
+    Removed = &BB->back();
+    // If the removed instructions have any users, replace them now.
+    if (!Removed->use_empty())
+      Removed->replaceAllUsesWith(UndefValue::get(Removed->getType()));
+    Removed->eraseFromParent();
+  } while (Removed != Inst);
 
   ++LongJmpsTransformed;
 }
