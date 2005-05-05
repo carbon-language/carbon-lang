@@ -843,8 +843,8 @@ void BytecodeWriter::outputConstantsInPlane(const std::vector<const Value*>
   }
 }
 
-static inline bool hasNullValue(unsigned TyID) {
-  return TyID != Type::LabelTyID && TyID != Type::VoidTyID;
+static inline bool hasNullValue(const Type *Ty) {
+  return Ty != Type::LabelTy && Ty != Type::VoidTy && !isa<OpaqueType>(Ty);
 }
 
 void BytecodeWriter::outputConstants(bool isFunction) {
@@ -867,7 +867,7 @@ void BytecodeWriter::outputConstants(bool isFunction) {
       if (isFunction)                  // Don't re-emit module constants
         ValNo += Table.getModuleLevel(pno);
 
-      if (hasNullValue(pno)) {
+      if (hasNullValue(Plane[0]->getType())) {
         // Skip zero initializer
         if (ValNo == 0)
           ValNo = 1;

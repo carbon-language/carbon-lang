@@ -121,8 +121,8 @@ void SlotCalculator::processModule() {
 
   // Add all of the global variables to the value table...
   //
-  for (Module::const_global_iterator I = TheModule->global_begin(), E = TheModule->global_end();
-       I != E; ++I)
+  for (Module::const_global_iterator I = TheModule->global_begin(),
+         E = TheModule->global_end(); I != E; ++I)
     getOrCreateSlot(I);
 
   // Scavenge the types out of the functions, then add the functions themselves
@@ -134,8 +134,8 @@ void SlotCalculator::processModule() {
 
   // Add all of the module level constants used as initializers
   //
-  for (Module::const_global_iterator I = TheModule->global_begin(), E = TheModule->global_end();
-       I != E; ++I)
+  for (Module::const_global_iterator I = TheModule->global_begin(),
+         E = TheModule->global_end(); I != E; ++I)
     if (I->hasInitializer())
       getOrCreateSlot(I->getInitializer());
 
@@ -388,8 +388,8 @@ void SlotCalculator::purgeFunction() {
   SC_DEBUG("end purgeFunction!\n");
 }
 
-static inline bool hasNullValue(unsigned TyID) {
-  return TyID != Type::LabelTyID && TyID != Type::VoidTyID;
+static inline bool hasNullValue(const Type *Ty) {
+  return Ty != Type::LabelTy && Ty != Type::VoidTy && !isa<OpaqueType>(Ty);
 }
 
 /// getOrCreateCompactionTableSlot - This method is used to build up the initial
@@ -413,7 +413,7 @@ unsigned SlotCalculator::getOrCreateCompactionTableSlot(const Value *V) {
 
   // Make sure to insert the null entry if the thing we are inserting is not a
   // null constant.
-  if (TyPlane.empty() && hasNullValue(V->getType()->getTypeID())) {
+  if (TyPlane.empty() && hasNullValue(V->getType())) {
     Value *ZeroInitializer = Constant::getNullValue(V->getType());
     if (V != ZeroInitializer) {
       TyPlane.push_back(ZeroInitializer);
@@ -461,7 +461,8 @@ void SlotCalculator::buildCompactionTable(const Function *F) {
   }
 
   // Next, include any types used by function arguments.
-  for (Function::const_arg_iterator I = F->arg_begin(), E = F->arg_end(); I != E; ++I)
+  for (Function::const_arg_iterator I = F->arg_begin(), E = F->arg_end();
+       I != E; ++I)
     getOrCreateCompactionTableSlot(I->getType());
 
   // Next, find all of the types and values that are referred to by the
@@ -829,7 +830,7 @@ int SlotCalculator::doInsertValue(const Value *D) {
 
   // If this is the first value to get inserted into the type plane, make sure
   // to insert the implicit null value...
-  if (Table[Ty].empty() &&  hasNullValue(Ty)) {
+  if (Table[Ty].empty() && hasNullValue(Typ)) {
     Value *ZeroInitializer = Constant::getNullValue(Typ);
 
     // If we are pushing zeroinit, it will be handled below.
