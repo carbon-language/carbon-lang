@@ -9,11 +9,11 @@ declare int "test"()      ; Differ only by vararg
 
 implementation
 
-void "invoke"(%FunTy *%x)
-begin
+void "invoke"(%FunTy *%x) {
 	%foo = call %FunTy* %x(int 123)
+	%foo2 = tail call %FunTy* %x(int 123)
 	ret void
-end
+}
 
 int "main"(int %argc)   ; TODO: , sbyte **argv, sbyte **envp)
 begin
