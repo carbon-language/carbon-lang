@@ -1340,21 +1340,23 @@ static bool MaskedValueIsZero(Value *V, ConstantIntegral *Mask) {
              MaskedValueIsZero(I->getOperand(1), Mask);
     case Instruction::Cast: {
       const Type *SrcTy = I->getOperand(0)->getType();
-      if (SrcTy->isIntegral()) {
+      if (SrcTy == Type::BoolTy)
+        return (Mask->getRawValue() & 1) == 0;
+
+      if (SrcTy->isInteger()) {
         // (cast <ty> X to int) & C2 == 0  iff <ty> could not have contained C2.
         if (SrcTy->isUnsigned() &&                      // Only handle zero ext.
             ConstantExpr::getCast(Mask, SrcTy)->isNullValue())
           return true;
 
         // If this is a noop cast, recurse.
-        if (SrcTy != Type::BoolTy)
-          if ((SrcTy->isSigned() && SrcTy->getUnsignedVersion() ==I->getType()) ||
-              SrcTy->getSignedVersion() == I->getType()) {
-            Constant *NewMask =
-              ConstantExpr::getCast(Mask, I->getOperand(0)->getType());
-            return MaskedValueIsZero(I->getOperand(0),
-                                     cast<ConstantIntegral>(NewMask));
-          }
+        if ((SrcTy->isSigned() && SrcTy->getUnsignedVersion() == I->getType())||
+            SrcTy->getSignedVersion() == I->getType()) {
+          Constant *NewMask =
+            ConstantExpr::getCast(Mask, I->getOperand(0)->getType());
+          return MaskedValueIsZero(I->getOperand(0),
+                                   cast<ConstantIntegral>(NewMask));
+        }
       }
       break;
     }
@@ -3561,23 +3563,63 @@ Instruction *InstCombiner::visitCastInst(CastInst &CI) {
         }
         break;
       case Instruction::SetNE:
-      case Instruction::SetEQ:
-        // We if we are just checking for a seteq of a single bit and casting it
-        // to an integer.  If so, shift the bit to the appropriate place then
-        // cast to integer to avoid the comparison.
         if (ConstantInt *Op1C = dyn_cast<ConstantInt>(Op1)) {
-          // cast (X != 0) to int, cast (X == 1) to int  -> X iff X has only the
-          // low bit set.
-          bool isSetNE = SrcI->getOpcode() == Instruction::SetNE;
-          if ((isSetNE && Op1C->getRawValue() == 0) ||
-              (!isSetNE && Op1C->getRawValue() == 1)) {
+          if (Op1C->getRawValue() == 0) {
+            // If the input only has the low bit set, simplify directly.
             Constant *Not1 = 
               ConstantExpr::getNot(ConstantInt::get(Op0->getType(), 1));
+            // cast (X != 0) to int  --> X if X&~1 == 0
             if (MaskedValueIsZero(Op0, cast<ConstantIntegral>(Not1))) {
               if (CI.getType() == Op0->getType())
                 return ReplaceInstUsesWith(CI, Op0);
               else
                 return new CastInst(Op0, CI.getType());
+            }
+
+            // If the input is an and with a single bit, shift then simplify.
+            ConstantInt *AndRHS;
+            if (match(Op0, m_And(m_Value(), m_ConstantInt(AndRHS))))
+              if (AndRHS->getRawValue() &&
+                  (AndRHS->getRawValue() & (AndRHS->getRawValue()-1)) == 0) {
+                unsigned ShiftAmt = Log2(AndRHS->getRawValue());
+                // Perform an unsigned shr by shiftamt.  Convert input to
+                // unsigned if it is signed.
+                Value *In = Op0;
+                if (In->getType()->isSigned())
+                  In = InsertNewInstBefore(new CastInst(In,
+                        In->getType()->getUnsignedVersion(), In->getName()),CI);
+                // Insert the shift to put the result in the low bit.
+                In = InsertNewInstBefore(new ShiftInst(Instruction::Shr, In,
+                                      ConstantInt::get(Type::UByteTy, ShiftAmt),
+                                                   In->getName()+".lobit"), CI);
+                std::cerr << "In1 = " << *Op0;
+                std::cerr << "In2 = " << *CI.getOperand(0);
+                std::cerr << "In3 = " << CI;
+                if (CI.getType() == In->getType())
+                  return ReplaceInstUsesWith(CI, In);
+                else
+                  return new CastInst(In, CI.getType());
+              }
+          }
+        }
+        break;
+      case Instruction::SetEQ:
+        // We if we are just checking for a seteq of a single bit and casting it
+        // to an integer.  If so, shift the bit to the appropriate place then
+        // cast to integer to avoid the comparison.
+        if (ConstantInt *Op1C = dyn_cast<ConstantInt>(Op1)) {
+          // Is Op1C a power of two or zero?
+          if ((Op1C->getRawValue() & Op1C->getRawValue()-1) == 0) {
+            // cast (X == 1) to int -> X iff X has only the low bit set.
+            if (Op1C->getRawValue() == 1) {
+              Constant *Not1 = 
+                ConstantExpr::getNot(ConstantInt::get(Op0->getType(), 1));
+              if (MaskedValueIsZero(Op0, cast<ConstantIntegral>(Not1))) {
+                if (CI.getType() == Op0->getType())
+                  return ReplaceInstUsesWith(CI, Op0);
+                else
+                  return new CastInst(Op0, CI.getType());
+              }
             }
           }
         }
