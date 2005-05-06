@@ -113,3 +113,11 @@ uint %test20(uint %A) {
         %D = cast bool %C to uint
         ret uint %D
 }
+
+int %test21(int %a) {
+        %tmp.6 = and int %a, 4
+        %not.tmp.7 = setne int %tmp.6, 0
+        %retval = cast bool %not.tmp.7 to int
+        ret int %retval
+}
+
