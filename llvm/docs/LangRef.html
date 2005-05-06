@@ -2041,26 +2041,43 @@ value argument, otherwise it returns the second value argument.
 
 
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"> <a name="i_call">'<tt>call</tt>'
-Instruction</a> </div>
+<div class="doc_subsubsection">
+  <a name="i_call">'<tt>call</tt>' Instruction</a>
+</div>
+
 <div class="doc_text">
+
 <h5>Syntax:</h5>
-<pre>  &lt;result&gt; = call &lt;ty&gt;* &lt;fnptrval&gt;(&lt;param list&gt;)<br></pre>
+<pre>
+  &lt;result&gt; = [tail] call &lt;ty&gt;* &lt;fnptrval&gt;(&lt;param list&gt;)
+</pre>
+
 <h5>Overview:</h5>
+
 <p>The '<tt>call</tt>' instruction represents a simple function call.</p>
+
 <h5>Arguments:</h5>
+
 <p>This instruction requires several arguments:</p>
+
 <ol>
   <li>
-    <p>'<tt>ty</tt>': shall be the signature of the pointer to function
-value   being invoked.  The argument types must match the types implied
-by this   signature.</p>
+    <p>The "tail" marker indicates whether the callee function accesses any
+    allocas or varargs in the caller.  If the "tail" marker is present, the
+    function call is eligible for tail call optimization.  Note that calls may
+    be marked "tail" even if they do not occur before a <a
+    href="#i_ret"><tt>ret</tt></a> instruction.
   </li>
   <li>
-    <p>'<tt>fnptrval</tt>': An LLVM value containing a pointer to a
-function   to be invoked. In most cases, this is a direct function
-invocation, but   indirect <tt>call</tt>s are just as possible,
-calling an arbitrary pointer to   function values.</p>
+    <p>'<tt>ty</tt>': shall be the signature of the pointer to function value
+    being invoked.  The argument types must match the types implied by this
+    signature.</p>
+  </li>
+  <li>
+    <p>'<tt>fnptrval</tt>': An LLVM value containing a pointer to a function to
+    be invoked. In most cases, this is a direct function invocation, but
+    indirect <tt>call</tt>s are just as possible, calling an arbitrary pointer
+    to function values.</p>
   </li>
   <li>
     <p>'<tt>function args</tt>': argument list whose types match the
@@ -2070,7 +2087,9 @@ calling an arbitrary pointer to   function values.</p>
     arguments can be specified.</p>
   </li>
 </ol>
+
 <h5>Semantics:</h5>
+
 <p>The '<tt>call</tt>' instruction is used to cause control flow to
 transfer to a specified function, with its incoming arguments bound to
 the specified values. Upon a '<tt><a href="#i_ret">ret</a></tt>'
@@ -2078,8 +2097,15 @@ instruction in the called function, control flow continues with the
 instruction after the function call, and the return value of the
 function is bound to the result argument.  This is a simpler case of
 the <a href="#i_invoke">invoke</a> instruction.</p>
+
 <h5>Example:</h5>
-<pre>  %retval = call int %test(int %argc)<br>  call int(sbyte*, ...) *%printf(sbyte* %msg, int 12, sbyte 42);<br></pre>
+
+<pre>
+  %retval = call int %test(int %argc)
+  call int(sbyte*, ...) *%printf(sbyte* %msg, int 12, sbyte 42);
+  %X = tail call int %foo()
+</pre>
+
 </div>
 
 <!-- _______________________________________________________________________ -->
