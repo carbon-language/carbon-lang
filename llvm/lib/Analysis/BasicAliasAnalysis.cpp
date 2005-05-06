@@ -702,7 +702,7 @@ namespace {
 static const char *DoesntAccessMemoryTable[] = {
   // LLVM intrinsics:
   "llvm.frameaddress", "llvm.returnaddress", "llvm.readport",
-  "llvm.isunordered", "llvm.sqrt",
+  "llvm.isunordered", "llvm.sqrt", "llvm.ctpop", "llvm.ctlz", "llvm.cttz",
 
   "abs", "labs", "llabs", "imaxabs", "fabs", "fabsf", "fabsl",
   "trunc", "truncf", "truncl", "ldexp",
