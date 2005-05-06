@@ -923,10 +923,17 @@ void BytecodeWriter::outputModuleInfoBlock(const Module *M) {
     assert(Slot != -1 && "Module slot calculator is broken!");
     assert(Slot >= Type::FirstDerivedTyID && "Derived type not in range!");
     assert(((Slot << 5) >> 5) == Slot && "Slot # too big!");
-    unsigned ID = (Slot << 5) + 1;
+    unsigned ID = (Slot << 5);
+
+    if (I->getCallingConv() < 15)
+      ID += I->getCallingConv()+1;
+
     if (I->isExternal())   // If external, we don't have an FunctionInfo block.
       ID |= 1 << 4;
     output_vbr(ID);
+
+    if (I->getCallingConv() >= 15)
+      output_vbr(I->getCallingConv());
   }
   output_vbr((unsigned)Table.getSlot(Type::VoidTy) << 5);
 

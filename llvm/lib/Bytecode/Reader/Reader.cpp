@@ -1886,6 +1886,14 @@ void BytecodeReader::ParseModuleGlobalInfo() {
     if ((Flags & (1 << 4)) == 0)
       FunctionSignatureList.push_back(Func);
 
+    // Look at the low bits.  If there is a calling conv here, apply it,
+    // read it as a vbr.
+    Flags &= 15;
+    if (Flags)
+      Func->setCallingConv(Flags-1);
+    else
+      Func->setCallingConv(read_vbr_uint());
+
     if (Handler) Handler->handleFunctionDeclaration(Func);
 
     // Get the next function signature.
