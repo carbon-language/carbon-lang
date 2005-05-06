@@ -4232,6 +4232,8 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
                         Args, Caller->getName(), Caller);
   } else {
     NC = new CallInst(Callee, Args, Caller->getName(), Caller);
+    if (cast<CallInst>(Caller)->isTailCall())
+      cast<CallInst>(NC)->setTailCall();
   }
 
   // Insert a cast of the return type as necessary...

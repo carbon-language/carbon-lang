@@ -150,6 +150,7 @@ bool LowerAllocations::runOnBasicBlock(BasicBlock &BB) {
 
       // Create the call to Malloc...
       CallInst *MCall = new CallInst(MallocFunc, MallocArgs, "", I);
+      MCall->setTailCall();
 
       // Create a cast instruction to convert to the right type...
       Value *MCast;
@@ -180,7 +181,7 @@ bool LowerAllocations::runOnBasicBlock(BasicBlock &BB) {
        FreeArgs.push_back(Constant::getNullValue(FreeFTy->getParamType(i)));
 
       // Insert a call to the free function...
-      new CallInst(FreeFunc, FreeArgs, "", I);
+      (new CallInst(FreeFunc, FreeArgs, "", I))->setTailCall();
 
       // Delete the old free instruction
       I = --BBIL.erase(I);

@@ -195,7 +195,7 @@ void LowerInvoke::writeAbortMessage(Instruction *IB) {
         Args[i] = ConstantExpr::getCast(cast<Constant>(Args[i]),
                                         FT->getParamType(i));
 
-    new CallInst(WriteFn, Args, "", IB);
+    (new CallInst(WriteFn, Args, "", IB))->setTailCall();
   }
 }
 
@@ -225,7 +225,7 @@ bool LowerInvoke::insertCheapEHSupport(Function &F) {
       writeAbortMessage(UI);
 
       // Insert a call to abort()
-      new CallInst(AbortFn, std::vector<Value*>(), "", UI);
+      (new CallInst(AbortFn, std::vector<Value*>(), "", UI))->setTailCall();
 
       // Insert a return instruction.  This really should be a "barrier", as it
       // is unreachable.
@@ -375,7 +375,7 @@ bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
     writeAbortMessage(RI);
 
     // Insert a call to abort()
-    new CallInst(AbortFn, std::vector<Value*>(), "", RI);
+    (new CallInst(AbortFn, std::vector<Value*>(), "", RI))->setTailCall();
   }
 
   return Changed;
