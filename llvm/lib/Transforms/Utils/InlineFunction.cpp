@@ -46,6 +46,12 @@ bool llvm::InlineFunction(CallSite CS) {
       CalledFunc->isExternal() || // call, or call to a vararg function!
       CalledFunc->getFunctionType()->isVarArg()) return false;
 
+
+  // If the call to the callee is a non-tail call, we must clear the 'tail'
+  // flags on any calls that we inline.
+  bool MustClearTailCallFlags =
+    isa<CallInst>(TheCall) || !cast<CallInst>(TheCall)->isTailCall();
+
   BasicBlock *OrigBB = TheCall->getParent();
   Function *Caller = OrigBB->getParent();
 
@@ -101,6 +107,15 @@ bool llvm::InlineFunction(CallSite CS) {
         }
   }
 
+  // If we are inlining tail call instruction through an invoke or 
+  if (MustClearTailCallFlags) {
+    for (Function::iterator BB = FirstNewBlock, E = Caller->end();
+         BB != E; ++BB)
+      for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I)
+        if (CallInst *CI = dyn_cast<CallInst>(I))
+          CI->setTailCall(false);
+  }
+
   // If we are inlining for an invoke instruction, we must make sure to rewrite
   // any inlined 'unwind' instructions into branches to the invoke exception
   // destination, and call instructions into invoke instructions.
@@ -124,7 +139,7 @@ bool llvm::InlineFunction(CallSite CS) {
         // require no special handling...
         if (CallInst *CI = dyn_cast<CallInst>(I)) {
           // Convert this function call into an invoke instruction... if it's
-          // not an intrinsic function call (which are known to not throw).
+          // not an intrinsic function call (which are known to not unwind).
           if (CI->getCalledFunction() &&
               CI->getCalledFunction()->getIntrinsicID()) {
             ++I;
