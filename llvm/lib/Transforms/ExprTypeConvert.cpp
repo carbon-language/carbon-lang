@@ -523,6 +523,8 @@ Value *llvm::ConvertExpressionToType(Value *V, const Type *Ty,
     Res = new CallInst(Constant::getNullValue(NewPTy),
                        std::vector<Value*>(I->op_begin()+1, I->op_end()),
                        Name);
+    if (cast<CallInst>(I)->isTailCall())
+      cast<CallInst>(Res)->setTailCall();
     VMC.ExprMap[I] = Res;
     Res->setOperand(0, ConvertExpressionToType(I->getOperand(0),NewPTy,VMC,TD));
     break;

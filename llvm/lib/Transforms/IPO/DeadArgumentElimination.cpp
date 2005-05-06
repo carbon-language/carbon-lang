@@ -430,6 +430,8 @@ void DAE::RemoveDeadArgumentsFromFunction(Function *F) {
                            Args, "", Call);
     } else {
       New = new CallInst(NF, Args, "", Call);
+      if (cast<CallInst>(Call)->isTailCall())
+        cast<CallInst>(New)->setTailCall();
     }
     Args.clear();
 
