@@ -198,7 +198,8 @@ GenericValue JIT::runFunction(Function *F,
     Args.push_back(C);
   }
 
-  Value *TheCall = new CallInst(F, Args, "", StubBB);
+  CallInst *TheCall = new CallInst(F, Args, "", StubBB);
+  TheCall->setTailCall();
   if (TheCall->getType() != Type::VoidTy)
     new ReturnInst(TheCall, StubBB);             // Return result of the call.
   else
