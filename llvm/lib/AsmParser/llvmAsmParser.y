@@ -1703,8 +1703,9 @@ InstructionList : InstructionList Inst {
     // Make sure to move the basic block to the correct location in the
     // function, instead of leaving it inserted wherever it was first
     // referenced.
-    CurFun.CurrentFunction->getBasicBlockList().remove($$);
-    CurFun.CurrentFunction->getBasicBlockList().push_back($$);
+    Function::BasicBlockListType &BBL = 
+      CurFun.CurrentFunction->getBasicBlockList();
+    BBL.splice(BBL.end(), BBL, $$);
   }
   | LABELSTR {
     $$ = getBBVal(ValID::create($1), true);
@@ -1712,8 +1713,9 @@ InstructionList : InstructionList Inst {
     // Make sure to move the basic block to the correct location in the
     // function, instead of leaving it inserted wherever it was first
     // referenced.
-    CurFun.CurrentFunction->getBasicBlockList().remove($$);
-    CurFun.CurrentFunction->getBasicBlockList().push_back($$);
+    Function::BasicBlockListType &BBL = 
+      CurFun.CurrentFunction->getBasicBlockList();
+    BBL.splice(BBL.end(), BBL, $$);
   };
 
 BBTerminatorInst : RET ResolvedVal {              // Return with a result...
