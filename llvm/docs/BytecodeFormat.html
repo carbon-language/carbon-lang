@@ -1059,7 +1059,11 @@ href="#uint32_vbr">uint32_vbr</a> that describes the function.</p>
     </tr>
     <tr>
       <td><a href="#bit">bit(0-3)</a></td>
-      <td class="td_left">Reserved for future use.  Currently set to 0001.</td>
+      <td class="td_left">
+      Encodes the calling convention number of the function.  If this number is
+      zero, this field is followed by a vbr indicating the CC#.  Otherwise, the
+      CC number of the function is the value of this field minus one.
+      </td>
     </tr>
     <tr>
       <td><a href="#bit">bit(4)</a></td>

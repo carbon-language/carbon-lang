@@ -21,6 +21,7 @@
     <ol>
       <li><a href="#modulestructure">Module Structure</a></li>
       <li><a href="#linkage">Linkage Types</a></li>
+      <li><a href="#callingconv">Calling Conventions</a></li>
       <li><a href="#globalvars">Global Variables</a></li>
       <li><a href="#functionstructure">Function Structure</a></li>
     </ol>
@@ -428,6 +429,62 @@ to have any linkage type other than "externally visible".</a></p>
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
+  <a name="callingconv">Calling Conventions</a>
+</div>
+
+<div class="doc_text">
+
+<p>LLVM <a href="#functionstructure">functions</a>, <a href="#i_call">calls</a>
+and <a href="#i_invoke">invokes</a> can all have an optional calling convention
+specified for the call.  The calling convention of any pair of dynamic
+caller/callee must match, or the behavior of the program is undefined.  The
+following calling conventions are supported by LLVM, and more may be added in
+the future:</p>
+
+<dl>
+  <dt><b>"<tt>ccc</tt>" - The C calling convention</b>:</dt>
+
+  <dd>This calling convention (the default if no other calling convention is
+  specified) matches the target C calling conventions.  This calling convention
+  supports varargs function calls, and tolerates some mismatch in the declared
+  prototype and implemented declaration of the function (as does normal C).
+  </dd>
+
+  <dt><b>"<tt>fastcc</tt>" - The fast calling convention</b>:</dt>
+
+  <dd>This calling convention attempts to make calls as fast as possible
+  (e.g. by passing things in registers).  This calling convention allows the
+  target to use whatever tricks it wants to produce fast code for the target,
+  without having to conform to an externally specified ABI.  This calling
+  convention does not support varargs and requires the prototype of all callees
+  to exactly match the prototype of the function definition.
+  </dd>
+
+  <dt><b>"<tt>coldcc</tt>" - The cold calling convention</b>:</dt>
+
+  <dd>This calling convention attempts to make code in the caller as efficient
+  as possible under the assumption that the call is not commonly executed.  As
+  such, these calls often preserve all registers so that the call does not break
+  any live ranges in the caller side.  This calling convention does not support
+  varargs and requires the prototype of all callees to exactly match the
+  prototype of the function definition.
+  </dd>
+
+  <dt><b>"<tt>cc &lt;<it>n</it>&gt;</tt>" - Numbered convention</b>:</dt>
+
+  <dd>Any calling convention may be specified by number, allowing
+  target-specific calling conventions to be used.  Target specific calling
+  conventions start at 64.
+  </dd>
+
+<p>More calling conventions can be added/defined on an as-needed basis, to
+support pascal conventions or any other well-known target-independent
+convention.</p>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
   <a name="globalvars">Global Variables</a>
 </div>
 
@@ -466,10 +523,13 @@ accessed through pointers.</p>
 
 <div class="doc_text">
 
-<p>LLVM function definitions are composed of a (possibly empty) argument list,
-an opening curly brace, a list of basic blocks, and a closing curly brace.  LLVM
-function declarations are defined with the "<tt>declare</tt>" keyword, a
-function name, and a function signature.</p>
+<p>LLVM function definitions consist of an optional <a href="#linkage">linkage
+type</a>, an optional <a href="#callingconv">calling convention</a>, a return
+type, a function name, a (possibly empty) argument list, an opening curly brace,
+a list of basic blocks, and a closing curly brace.  LLVM function declarations
+are defined with the "<tt>declare</tt>" keyword, an optional <a
+href="#callingconv">calling convention</a>, a return type, a function name, and
+a possibly empty list of arguments.</p>
 
 <p>A function definition contains a list of basic blocks, forming the CFG for
 the function.  Each basic block may optionally start with a label (giving the
@@ -1154,51 +1214,82 @@ branches or with a lookup table.</p>
                                       uint 2, label %ontwo ]
 </pre>
 </div>
+
 <!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection"> <a name="i_invoke">'<tt>invoke</tt>'
-Instruction</a> </div>
+<div class="doc_subsubsection">
+  <a name="i_invoke">'<tt>invoke</tt>' Instruction</a>
+</div>
+
 <div class="doc_text">
+
 <h5>Syntax:</h5>
-<pre>  &lt;result&gt; = invoke &lt;ptr to function ty&gt; %&lt;function ptr val&gt;(&lt;function args&gt;)<br>                 to label &lt;normal label&gt; except label &lt;exception label&gt;<br></pre>
+
+<pre>
+  &lt;result&gt; = invoke [<a href="#callingconv">cconv</a>] &lt;ptr to function ty&gt; %&lt;function ptr val&gt;(&lt;function args&gt;) 
+                to label &lt;normal label&gt; except label &lt;exception label&gt;
+</pre>
+
 <h5>Overview:</h5>
-<p>The '<tt>invoke</tt>' instruction causes control to transfer to a
-specified function, with the possibility of control flow transfer to
-either the '<tt>normal</tt>' <tt>label</tt> label or the '<tt>exception</tt>'<tt>label</tt>.
-If the callee function returns with the "<tt><a href="#i_ret">ret</a></tt>"
-instruction, control flow will return to the "normal" label.  If the
-callee (or any indirect callees) returns with the "<a href="#i_unwind"><tt>unwind</tt></a>"
-instruction, control is interrupted, and continued at the dynamically
-nearest "except" label.</p>
+
+<p>The '<tt>invoke</tt>' instruction causes control to transfer to a specified
+function, with the possibility of control flow transfer to either the
+'<tt>normal</tt>' <tt>label</tt> label or the
+'<tt>exception</tt>'<tt>label</tt>.  If the callee function returns with the
+"<tt><a href="#i_ret">ret</a></tt>" instruction, control flow will return to the
+"normal" label.  If the callee (or any indirect callees) returns with the "<a
+href="#i_unwind"><tt>unwind</tt></a>" instruction, control is interrupted, and
+continued at the dynamically nearest "except" label.</p>
+
 <h5>Arguments:</h5>
+
 <p>This instruction requires several arguments:</p>
+
 <ol>
-  <li>'<tt>ptr to function ty</tt>': shall be the signature of the
-pointer to function value being invoked.  In most cases, this is a
-direct function invocation, but indirect <tt>invoke</tt>s are just as
-possible, branching off an arbitrary pointer to function value. </li>
-  <li>'<tt>function ptr val</tt>': An LLVM value containing a pointer
-to a function to be invoked. </li>
-  <li>'<tt>function args</tt>': argument list whose types match the
-function signature argument types.  If the function signature indicates
-the function accepts a variable number of arguments, the extra
-arguments can be specified. </li>
-  <li>'<tt>normal label</tt>': the label reached when the called
-function executes a '<tt><a href="#i_ret">ret</a></tt>' instruction. </li>
-  <li>'<tt>exception label</tt>': the label reached when a callee
-returns with the <a href="#i_unwind"><tt>unwind</tt></a> instruction. </li>
+  <li>
+    <p>The optional "cconv" marker indicates which <a href="callingconv">calling
+    convention</a> the call should use.  If none is specified, the call defaults
+    to using C calling conventions.
+  </li>
+  <li>'<tt>ptr to function ty</tt>': shall be the signature of the pointer to
+  function value being invoked.  In most cases, this is a direct function
+  invocation, but indirect <tt>invoke</tt>s are just as possible, branching off
+  an arbitrary pointer to function value.
+  </li>
+
+  <li>'<tt>function ptr val</tt>': An LLVM value containing a pointer to a
+  function to be invoked. </li>
+
+  <li>'<tt>function args</tt>': argument list whose types match the function
+  signature argument types.  If the function signature indicates the function
+  accepts a variable number of arguments, the extra arguments can be
+  specified. </li>
+
+  <li>'<tt>normal label</tt>': the label reached when the called function
+  executes a '<tt><a href="#i_ret">ret</a></tt>' instruction. </li>
+
+  <li>'<tt>exception label</tt>': the label reached when a callee returns with
+  the <a href="#i_unwind"><tt>unwind</tt></a> instruction. </li>
+
 </ol>
+
 <h5>Semantics:</h5>
+
 <p>This instruction is designed to operate as a standard '<tt><a
- href="#i_call">call</a></tt>' instruction in most regards.  The
-primary difference is that it establishes an association with a label,
-which is used by the runtime library to unwind the stack.</p>
-<p>This instruction is used in languages with destructors to ensure
-that proper cleanup is performed in the case of either a <tt>longjmp</tt>
-or a thrown exception.  Additionally, this is important for
-implementation of '<tt>catch</tt>' clauses in high-level languages that
-support them.</p>
+href="#i_call">call</a></tt>' instruction in most regards.  The primary
+difference is that it establishes an association with a label, which is used by
+the runtime library to unwind the stack.</p>
+
+<p>This instruction is used in languages with destructors to ensure that proper
+cleanup is performed in the case of either a <tt>longjmp</tt> or a thrown
+exception.  Additionally, this is important for implementation of
+'<tt>catch</tt>' clauses in high-level languages that support them.</p>
+
 <h5>Example:</h5>
-<pre>  %retval = invoke int %Test(int 15)<br>              to label %Continue<br>              except label %TestCleanup     <i>; {int}:retval set</i>
+<pre>
+  %retval = invoke int %Test(int 15)             to label %Continue
+              except label %TestCleanup     <i>; {int}:retval set</i>
+  %retval = invoke <a href="#callingconv">coldcc</a> int %Test(int 15)             to label %Continue
+              except label %TestCleanup     <i>; {int}:retval set</i>
 </pre>
 </div>
 
@@ -2049,7 +2140,7 @@ value argument, otherwise it returns the second value argument.
 
 <h5>Syntax:</h5>
 <pre>
-  &lt;result&gt; = [tail] call &lt;ty&gt;* &lt;fnptrval&gt;(&lt;param list&gt;)
+  &lt;result&gt; = [tail] call [<a href="#callingconv">cconv</a>] &lt;ty&gt;* &lt;fnptrval&gt;(&lt;param list&gt;)
 </pre>
 
 <h5>Overview:</h5>
@@ -2062,11 +2153,16 @@ value argument, otherwise it returns the second value argument.
 
 <ol>
   <li>
-    <p>The "tail" marker indicates whether the callee function accesses any
-    allocas or varargs in the caller.  If the "tail" marker is present, the
+    <p>The optional "tail" marker indicates whether the callee function accesses
+    any allocas or varargs in the caller.  If the "tail" marker is present, the
     function call is eligible for tail call optimization.  Note that calls may
     be marked "tail" even if they do not occur before a <a
     href="#i_ret"><tt>ret</tt></a> instruction.
+  </li>
+  <li>
+    <p>The optional "cconv" marker indicates which <a href="callingconv">calling
+    convention</a> the call should use.  If none is specified, the call defaults
+    to using C calling conventions.
   </li>
   <li>
     <p>'<tt>ty</tt>': shall be the signature of the pointer to function value
@@ -2104,6 +2200,7 @@ the <a href="#i_invoke">invoke</a> instruction.</p>
   %retval = call int %test(int %argc)
   call int(sbyte*, ...) *%printf(sbyte* %msg, int 12, sbyte 42);
   %X = tail call int %foo()
+  %Y = tail call <a href="#callingconv">fastcc</a> int %foo()
 </pre>
 
 </div>
