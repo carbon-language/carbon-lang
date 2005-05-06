@@ -19,6 +19,7 @@
 
 #include "WriterInternals.h"
 #include "llvm/Bytecode/WriteBytecodePass.h"
+#include "llvm/CallingConv.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Instructions.h"
@@ -425,7 +426,7 @@ void BytecodeWriter::outputConstantStrings() {
 typedef unsigned char uchar;
 
 // outputInstructionFormat0 - Output those weird instructions that have a large
-// number of operands or have large operands themselves...
+// number of operands or have large operands themselves.
 //
 // Format: [opcode] [type] [numargs] [arg0] [arg1] ... [arg<numargs-1>]
 //
@@ -439,7 +440,7 @@ void BytecodeWriter::outputInstructionFormat0(const Instruction *I,
 
   unsigned NumArgs = I->getNumOperands();
   output_vbr(NumArgs + (isa<CastInst>(I) || isa<VANextInst>(I) ||
-                        isa<VAArgInst>(I)));
+                        isa<VAArgInst>(I) || Opcode == 56 || Opcode == 58));
 
   if (!isa<GetElementPtrInst>(&I)) {
     for (unsigned i = 0; i < NumArgs; ++i) {
@@ -456,8 +457,12 @@ void BytecodeWriter::outputInstructionFormat0(const Instruction *I,
       int Slot = Table.getSlot(VAI->getArgType());
       assert(Slot != -1 && "VarArg argument type unknown?");
       output_typeid((unsigned)Slot);
+    } else if (Opcode == 56) {  // Invoke escape sequence
+      output_vbr(cast<InvokeInst>(I)->getCallingConv());
+    } else if (Opcode == 58) {  // Call escape sequence
+      output_vbr((cast<CallInst>(I)->getCallingConv() << 1) |
+                 cast<CallInst>(I)->isTailCall());
     }
-
   } else {
     int Slot = Table.getSlot(I->getOperand(0));
     assert(Slot >= 0 && "No slot number for value!?!?");
@@ -608,12 +613,31 @@ void BytecodeWriter::outputInstruction(const Instruction &I) {
 
   // Encode 'tail call' as 61, 'volatile load' as 62, and 'volatile store' as
   // 63.
-  if (isa<CallInst>(I) && cast<CallInst>(I).isTailCall())
-    Opcode = 61;
-  if (isa<LoadInst>(I) && cast<LoadInst>(I).isVolatile())
+  if (const CallInst *CI = dyn_cast<CallInst>(&I)) {
+    if (CI->getCallingConv() == CallingConv::C) {
+      if (CI->isTailCall())
+        Opcode = 61;   // CCC + Tail Call
+      else
+        ;     // Opcode = Instruction::Call
+    } else if (CI->getCallingConv() == CallingConv::Fast) {
+      if (CI->isTailCall())
+        Opcode = 59;    // FastCC + TailCall
+      else
+        Opcode = 60;    // FastCC + Not Tail Call
+    } else {
+      Opcode = 58;      // Call escape sequence.
+    }
+  } else if (const InvokeInst *II = dyn_cast<InvokeInst>(&I)) {
+    if (II->getCallingConv() == CallingConv::Fast)
+      Opcode = 57;      // FastCC invoke.
+    else if (II->getCallingConv() != CallingConv::C)
+      Opcode = 56;      // Invoke escape sequence.
+      
+  } else if (isa<LoadInst>(I) && cast<LoadInst>(I).isVolatile()) {
     Opcode = 62;
-  if (isa<StoreInst>(I) && cast<StoreInst>(I).isVolatile())
+  } else if (isa<StoreInst>(I) && cast<StoreInst>(I).isVolatile()) {
     Opcode = 63;
+  }
 
   // Figure out which type to encode with the instruction.  Typically we want
   // the type of the first parameter, as opposed to the type of the instruction
@@ -702,6 +726,18 @@ void BytecodeWriter::outputInstruction(const Instruction &I) {
           Slots[Idx] = (Slots[Idx] << 2) | IdxId;
           if (Slots[Idx] > MaxOpSlot) MaxOpSlot = Slots[Idx];
         }
+    } else if (Opcode == 58) {
+      // If this is the escape sequence for call, emit the tailcall/cc info.
+      const CallInst &CI = cast<CallInst>(I);
+      ++NumOperands;
+      if (NumOperands < 3) {
+        Slots[NumOperands-1] = (CI.getCallingConv() << 1) | CI.isTailCall();
+        if (Slots[NumOperands-1] > MaxOpSlot)
+          MaxOpSlot = Slots[NumOperands-1];
+      }
+    } else if (Opcode == 56) {
+      // Invoke escape seq has at least 4 operands to encode.
+      ++NumOperands;
     }
 
     // Decide which instruction encoding to use.  This is determined primarily

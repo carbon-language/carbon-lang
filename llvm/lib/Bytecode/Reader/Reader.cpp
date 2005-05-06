@@ -19,11 +19,12 @@
 #include "Reader.h"
 #include "llvm/Bytecode/BytecodeHandler.h"
 #include "llvm/BasicBlock.h"
-#include "llvm/Config/alloca.h"
+#include "llvm/CallingConv.h"
 #include "llvm/Constants.h"
 #include "llvm/Instructions.h"
 #include "llvm/SymbolTable.h"
 #include "llvm/Bytecode/Format.h"
+#include "llvm/Config/alloca.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/Compressor.h"
 #include "llvm/ADT/StringExtras.h"
@@ -720,12 +721,21 @@ void BytecodeReader::ParseInstruction(std::vector<unsigned> &Oprnds,
     break;
   }
 
-  case 61:  // tail call
-  case Instruction::Call: {
+  case 58:                   // Call with extra operand for calling conv
+  case 59:                   // tail call, Fast CC
+  case 60:                   // normal call, Fast CC
+  case 61:                   // tail call, C Calling Conv
+  case Instruction::Call: {  // Normal Call, C Calling Convention
     if (Oprnds.size() == 0)
       error("Invalid call instruction encountered!");
 
     Value *F = getValue(iType, Oprnds[0]);
+
+    unsigned CallingConv = CallingConv::C;
+    bool isTailCall = false;
+
+    if (Opcode == 61 || Opcode == 59)
+      isTailCall = true;
 
     // Check to make sure we have a pointer to function type
     const PointerType *PTy = dyn_cast<PointerType>(F->getType());
@@ -736,6 +746,13 @@ void BytecodeReader::ParseInstruction(std::vector<unsigned> &Oprnds,
     std::vector<Value *> Params;
     if (!FTy->isVarArg()) {
       FunctionType::param_iterator It = FTy->param_begin();
+
+      if (Opcode == 58) {
+        isTailCall = Oprnds.back() & 1;
+        CallingConv = Oprnds.back() >> 1;
+        Oprnds.pop_back();
+      } else if (Opcode == 59 || Opcode == 60)
+        CallingConv = CallingConv::Fast;
 
       for (unsigned i = 1, e = Oprnds.size(); i != e; ++i) {
         if (It == FTy->param_end())
@@ -766,10 +783,13 @@ void BytecodeReader::ParseInstruction(std::vector<unsigned> &Oprnds,
     }
 
     Result = new CallInst(F, Params);
-    if (Opcode == 61) cast<CallInst>(Result)->setTailCall(true);
+    if (isTailCall) cast<CallInst>(Result)->setTailCall();
+    if (CallingConv) cast<CallInst>(Result)->setCallingConv(CallingConv);
     break;
   }
-  case Instruction::Invoke: {
+  case 56:                     // Invoke with encoded CC
+  case 57:                     // Invoke Fast CC
+  case Instruction::Invoke: {  // Invoke C CC
     if (Oprnds.size() < 3)
       error("Invalid invoke instruction!");
     Value *F = getValue(iType, Oprnds[0]);
@@ -784,6 +804,14 @@ void BytecodeReader::ParseInstruction(std::vector<unsigned> &Oprnds,
 
     std::vector<Value *> Params;
     BasicBlock *Normal, *Except;
+    unsigned CallingConv = CallingConv::C;
+
+    if (Opcode == 57)
+      CallingConv = CallingConv::Fast;
+    else if (Opcode == 56) {
+      CallingConv = Oprnds.back();
+      Oprnds.pop_back();
+    }
 
     if (!FTy->isVarArg()) {
       Normal = getBasicBlock(Oprnds[1]);
@@ -816,6 +844,7 @@ void BytecodeReader::ParseInstruction(std::vector<unsigned> &Oprnds,
     }
 
     Result = new InvokeInst(F, Normal, Except, Params);
+    if (CallingConv) cast<InvokeInst>(Result)->setCallingConv(CallingConv);
     break;
   }
   case Instruction::Malloc:
@@ -2043,8 +2072,9 @@ void BytecodeReader::ParseVersionInfo() {
 
     // FALL THROUGH
 
-  case 5:               // 1.x.x (Not Released)
+  case 5:               // 1.4 (Released)
     break;
+#if 0
     // FIXME: NONE of this is implemented yet!
 
     // In version 5, basic blocks have a minimum index of 0 whereas all the
@@ -2061,7 +2091,7 @@ void BytecodeReader::ParseVersionInfo() {
     // integer value 0x01 to identify the module block. This is unnecessary and
     // removed in version 5.
     hasUnnecessaryModuleBlockId = true;
-
+#endif
   default:
     error("Unknown bytecode version number: " + itostr(RevisionNum));
   }
