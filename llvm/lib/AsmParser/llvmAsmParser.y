@@ -803,6 +803,7 @@ Module *llvm::RunVMAsmParser(const std::string &Filename, FILE *F) {
 %type <JumpTable>     JumpTable
 %type <BoolVal>       GlobalType                  // GLOBAL or CONSTANT?
 %type <BoolVal>       OptVolatile                 // 'volatile' or not
+%type <BoolVal>       OptTailCall                 // TAIL CALL or plain CALL.
 %type <Linkage>       OptLinkage
 %type <Endianness>    BigOrLittle
 
@@ -837,7 +838,7 @@ Module *llvm::RunVMAsmParser(const std::string &Filename, FILE *F) {
 %token DECLARE GLOBAL CONSTANT VOLATILE
 %token TO DOTDOTDOT NULL_TOK UNDEF CONST INTERNAL LINKONCE WEAK  APPENDING
 %token OPAQUE NOT EXTERNAL TARGET TRIPLE ENDIAN POINTERSIZE LITTLE BIG
-%token DEPLIBS 
+%token DEPLIBS CALL TAIL
 
 // Basic Block Terminating Operators 
 %token <TermOpVal> RET BR SWITCH INVOKE UNWIND UNREACHABLE
@@ -852,7 +853,8 @@ Module *llvm::RunVMAsmParser(const std::string &Filename, FILE *F) {
 
 // Other Operators
 %type  <OtherOpVal> ShiftOps
-%token <OtherOpVal> PHI_TOK CALL CAST SELECT SHL SHR VAARG VANEXT
+%token <OtherOpVal> PHI_TOK CAST SELECT SHL SHR VAARG VANEXT
+
 
 %start Module
 %%
@@ -882,6 +884,9 @@ LogicalOps   : AND | OR | XOR;
 SetCondOps   : SETLE | SETGE | SETLT | SETGT | SETEQ | SETNE;
 
 ShiftOps  : SHL | SHR;
+
+
+
 
 // These are some types that allow classification if we only want a particular 
 // thing... for example, only a signed, unsigned, or integral type.
@@ -1858,6 +1863,15 @@ ValueRefList : ResolvedVal {    // Used for call statements, and memory insts...
 // ValueRefListE - Just like ValueRefList, except that it may also be empty!
 ValueRefListE : ValueRefList | /*empty*/ { $$ = 0; };
 
+OptTailCall : TAIL CALL {
+    $$ = true;
+  }
+  | CALL {
+    $$ = false;
+  };
+
+
+
 InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     if (!(*$2)->isInteger() && !(*$2)->isFloatingPoint() && 
         !isa<PackedType>((*$2).get()))
@@ -1944,8 +1958,8 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
       $2->pop_front();
     }
     delete $2;  // Free the list...
-  } 
-  | CALL TypesV ValueRef '(' ValueRefListE ')' {
+  }
+  | OptTailCall TypesV ValueRef '(' ValueRefListE ')'  {
     const PointerType *PFTy;
     const FunctionType *Ty;
 
@@ -1997,6 +2011,7 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
 
       $$ = new CallInst(V, *$5);
     }
+    cast<CallInst>($$)->setTailCall($1);
     delete $2;
     delete $5;
   }
@@ -2018,6 +2033,7 @@ OptVolatile : VOLATILE {
   | /* empty */ {
     $$ = false;
   };
+
 
 
 MemoryInst : MALLOC Types {

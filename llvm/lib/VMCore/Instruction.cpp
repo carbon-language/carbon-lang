@@ -141,6 +141,8 @@ bool Instruction::isIdenticalTo(Instruction *I) const {
     return SI->isVolatile() == cast<StoreInst>(I)->isVolatile();
   if (const VANextInst *VAN = dyn_cast<VANextInst>(this))
     return VAN->getArgType() == cast<VANextInst>(I)->getArgType();
+  if (const CallInst *CI = dyn_cast<CallInst>(this))
+    return CI->isTailCall() == cast<CallInst>(I)->isTailCall();
   return true;
 }
 

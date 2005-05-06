@@ -1043,10 +1043,14 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
   if (I.hasName())
     Out << getLLVMName(I.getName()) << " = ";
 
-  // If this is a volatile load or store, print out the volatile marker
+  // If this is a volatile load or store, print out the volatile marker.
   if ((isa<LoadInst>(I)  && cast<LoadInst>(I).isVolatile()) ||
-      (isa<StoreInst>(I) && cast<StoreInst>(I).isVolatile()))
+      (isa<StoreInst>(I) && cast<StoreInst>(I).isVolatile())) {
       Out << "volatile ";
+  } else if (isa<CallInst>(I) && cast<CallInst>(I).isTailCall()) {
+    // If this is a call, check if it's a tail call.
+    Out << "tail ";
+  }
 
   // Print out the opcode...
   Out << I.getOpcodeName();

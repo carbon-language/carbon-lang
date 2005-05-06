@@ -467,7 +467,8 @@ public:
 //===----------------------------------------------------------------------===//
 
 /// CallInst - This class represents a function call, abstracting a target
-/// machine's calling convention.
+/// machine's calling convention.  This class uses the SubClassData field to
+/// indicate whether or not this is a tail call.
 ///
 class CallInst : public Instruction {
   CallInst(const CallInst &CI);
@@ -500,6 +501,9 @@ public:
 
   virtual CallInst *clone() const;
   bool mayWriteToMemory() const { return true; }
+
+  bool isTailCall() const           { return SubclassData; }
+  void setTailCall(bool isTailCall) { SubclassData = isTailCall; }
 
   /// getCalledFunction - Return the function being called by this instruction
   /// if it is a direct call.  If it is a call through a function pointer,

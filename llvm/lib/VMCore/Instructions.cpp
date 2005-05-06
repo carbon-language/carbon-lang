@@ -249,6 +249,7 @@ CallInst::CallInst(Value *Func, const std::string &Name,
 CallInst::CallInst(const CallInst &CI)
   : Instruction(CI.getType(), Instruction::Call, new Use[CI.getNumOperands()],
                 CI.getNumOperands()) {
+  setTailCall(CI.isTailCall());
   Use *OL = OperandList;
   Use *InOL = CI.OperandList;
   for (unsigned i = 0, e = CI.getNumOperands(); i != e; ++i)
