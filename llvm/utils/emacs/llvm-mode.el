@@ -31,7 +31,7 @@
    ;; Arithmetic and Logical Operators
    '("add\\|sub\\|mul\\|div\\|rem\\|and\\|or\\|xor\\|set\\(ne\\|eq\\|lt\\|gt\\|le\\|ge\\)" . font-lock-keyword-face)
    ;; Special instructions
-   '("phi\\|call\\|cast\\|select\\|to\\|shl\\|shr\\|vaarg\\|vanext" . font-lock-keyword-face)
+   '("phi\\|tail\\|call\\|cast\\|select\\|to\\|shl\\|shr\\|vaarg\\|vanext" . font-lock-keyword-face)
    ;; Control instructions
    '("ret\\|br\\|switch\\|invoke\\|unwind\\|unreachable" . font-lock-keyword-face)
    ;; Memory operators
