@@ -197,3 +197,17 @@ int %test30(bool %X) {
 	%Z = and int %Y, 1
 	ret int %Z
 }
+
+uint %test31(bool %X) {
+	%Y = cast bool %X to uint
+	%Z = shl uint %Y, ubyte 4
+	%A = and uint %Z, 16
+	ret uint %A
+}
+
+uint %test32(uint %In) {
+	%Y = and uint %In, 16
+	%Z = shr uint %Y, ubyte 2
+	%A = and uint %Z, 1
+	ret uint %A
+}
