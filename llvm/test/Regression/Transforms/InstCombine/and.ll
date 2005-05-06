@@ -192,3 +192,8 @@ int %test29(ubyte %X) {
         ret int %Z
 }
 
+int %test30(bool %X) {
+	%Y = cast bool %X to int
+	%Z = and int %Y, 1
+	ret int %Z
+}
