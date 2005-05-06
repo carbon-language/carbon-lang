@@ -210,7 +210,8 @@ void DAE::SurveyFunction(Function &F) {
 
   if (FunctionIntrinsicallyLive) {
     DEBUG(std::cerr << "  Intrinsically live fn: " << F.getName() << "\n");
-    for (Function::arg_iterator AI = F.arg_begin(), E = F.arg_end(); AI != E; ++AI)
+    for (Function::arg_iterator AI = F.arg_begin(), E = F.arg_end();
+         AI != E; ++AI)
       LiveArguments.insert(AI);
     LiveRetVal.insert(&F);
     return;
@@ -230,7 +231,8 @@ void DAE::SurveyFunction(Function &F) {
   // if there are any arguments we assume that are dead.
   //
   bool AnyMaybeLiveArgs = false;
-  for (Function::arg_iterator AI = F.arg_begin(), E = F.arg_end(); AI != E; ++AI)
+  for (Function::arg_iterator AI = F.arg_begin(), E = F.arg_end();
+       AI != E; ++AI)
     switch (getArgumentLiveness(*AI)) {
     case Live:
       DEBUG(std::cerr << "    Arg live by use: " << AI->getName() << "\n");
@@ -410,7 +412,8 @@ void DAE::RemoveDeadArgumentsFromFunction(Function *F) {
 
     // Loop over the operands, deleting dead ones...
     CallSite::arg_iterator AI = CS.arg_begin();
-    for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end(); I != E; ++I, ++AI)
+    for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end();
+         I != E; ++I, ++AI)
       if (!DeadArguments.count(I))      // Remove operands for dead arguments
         Args.push_back(*AI);
 
@@ -455,7 +458,8 @@ void DAE::RemoveDeadArgumentsFromFunction(Function *F) {
   // the new arguments, also transfering over the names as well.  While we're at
   // it, remove the dead arguments from the DeadArguments list.
   //
-  for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end(), I2 = NF->arg_begin();
+  for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end(),
+         I2 = NF->arg_begin();
        I != E; ++I)
     if (!DeadArguments.count(I)) {
       // If this is a live argument, move the name and users over to the new
@@ -519,8 +523,8 @@ bool DAE::runOnModule(Module &M) {
       // live, then the return value of the called instruction is now live.
       //
       CallSite::arg_iterator AI = CS.arg_begin();  // ActualIterator
-      for (Function::arg_iterator FI = Callee->arg_begin(), E = Callee->arg_end();
-           FI != E; ++AI, ++FI) {
+      for (Function::arg_iterator FI = Callee->arg_begin(),
+             E = Callee->arg_end(); FI != E; ++AI, ++FI) {
         // If this argument is another call...
         CallSite ArgCS = CallSite::get(*AI);
         if (ArgCS.getInstruction() && LiveArguments.count(FI))
