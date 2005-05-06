@@ -1542,6 +1542,7 @@ void CWriter::visitCallInst(CallInst &I) {
   // match exactly.
   //
   bool WroteCallee = false;
+  if (I.isTailCall()) Out << " /*tail*/ ";
   if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Callee))
     if (CE->getOpcode() == Instruction::Cast)
       if (Function *RF = dyn_cast<Function>(CE->getOperand(0))) {
