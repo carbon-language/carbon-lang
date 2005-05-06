@@ -606,7 +606,10 @@ void BytecodeWriter::outputInstruction(const Instruction &I) {
   unsigned Opcode = I.getOpcode();
   unsigned NumOperands = I.getNumOperands();
 
-  // Encode 'volatile load' as 62 and 'volatile store' as 63.
+  // Encode 'tail call' as 61, 'volatile load' as 62, and 'volatile store' as
+  // 63.
+  if (isa<CallInst>(I) && cast<CallInst>(I).isTailCall())
+    Opcode = 61;
   if (isa<LoadInst>(I) && cast<LoadInst>(I).isVolatile())
     Opcode = 62;
   if (isa<StoreInst>(I) && cast<StoreInst>(I).isVolatile())

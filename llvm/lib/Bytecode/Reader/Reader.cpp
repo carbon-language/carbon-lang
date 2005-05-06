@@ -720,6 +720,7 @@ void BytecodeReader::ParseInstruction(std::vector<unsigned> &Oprnds,
     break;
   }
 
+  case 61:  // tail call
   case Instruction::Call: {
     if (Oprnds.size() == 0)
       error("Invalid call instruction encountered!");
@@ -765,6 +766,7 @@ void BytecodeReader::ParseInstruction(std::vector<unsigned> &Oprnds,
     }
 
     Result = new CallInst(F, Params);
+    if (Opcode == 61) cast<CallInst>(Result)->setTailCall(true);
     break;
   }
   case Instruction::Invoke: {
