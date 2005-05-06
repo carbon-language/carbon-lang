@@ -1872,6 +1872,13 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
     A = 0;
   }
 
+  if (match(Op0, m_And(m_Value(A), m_Value(B))))
+    if (A == Op1 || B == Op1)    // (A & ?) | A  --> A
+      return ReplaceInstUsesWith(I, Op1);
+  if (match(Op1, m_And(m_Value(A), m_Value(B))))
+    if (A == Op0 || B == Op0)    // A | (A & ?)  --> A
+      return ReplaceInstUsesWith(I, Op0);
+
   if (match(Op1, m_Not(m_Value(B)))) {   // Op0 | ~B
     if (Op0 == B)
       return ReplaceInstUsesWith(I,
