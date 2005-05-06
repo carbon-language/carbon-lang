@@ -13,6 +13,7 @@
 
 %{
 #include "ParserInternals.h"
+#include "llvm/CallingConv.h"
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
 #include "llvm/SymbolTable.h"
@@ -831,6 +832,8 @@ Module *llvm::RunVMAsmParser(const std::string &Filename, FILE *F) {
 %token TO DOTDOTDOT NULL_TOK UNDEF CONST INTERNAL LINKONCE WEAK  APPENDING
 %token OPAQUE NOT EXTERNAL TARGET TRIPLE ENDIAN POINTERSIZE LITTLE BIG
 %token DEPLIBS CALL TAIL
+%token CC_TOK CCC_TOK FASTCC_TOK COLDCC_TOK
+%type <UIntVal> OptCallingConv
 
 // Basic Block Terminating Operators 
 %token <TermOpVal> RET BR SWITCH INVOKE UNWIND UNREACHABLE
@@ -900,6 +903,16 @@ OptLinkage : INTERNAL  { $$ = GlobalValue::InternalLinkage; } |
              WEAK      { $$ = GlobalValue::WeakLinkage; } |
              APPENDING { $$ = GlobalValue::AppendingLinkage; } |
              /*empty*/ { $$ = GlobalValue::ExternalLinkage; };
+
+OptCallingConv : /*empty*/      { $$ = CallingConv::C; } |
+                 CCC_TOK        { $$ = CallingConv::C; } |
+                 FASTCC_TOK     { $$ = CallingConv::Fast; } |
+                 COLDCC_TOK     { $$ = CallingConv::Cold; } |
+                 CC_TOK EUINT64VAL {
+                   if ((unsigned)$2 != $2)
+                     ThrowException("Calling conv too large!");
+                   $$ = $2;
+                 };
 
 //===----------------------------------------------------------------------===//
 // Types includes all predefined types... except void, because it can only be
@@ -1499,27 +1512,27 @@ ArgList : ArgListH {
     $$ = 0;
   };
 
-FunctionHeaderH : TypesV Name '(' ArgList ')' {
-  UnEscapeLexed($2);
-  std::string FunctionName($2);
-  free($2);  // Free strdup'd memory!
+FunctionHeaderH : OptCallingConv TypesV Name '(' ArgList ')' {
+  UnEscapeLexed($3);
+  std::string FunctionName($3);
+  free($3);  // Free strdup'd memory!
   
-  if (!(*$1)->isFirstClassType() && *$1 != Type::VoidTy)
+  if (!(*$2)->isFirstClassType() && *$2 != Type::VoidTy)
     ThrowException("LLVM functions cannot return aggregate types!");
 
   std::vector<const Type*> ParamTypeList;
-  if ($4) {   // If there are arguments...
-    for (std::vector<std::pair<PATypeHolder*,char*> >::iterator I = $4->begin();
-         I != $4->end(); ++I)
+  if ($5) {   // If there are arguments...
+    for (std::vector<std::pair<PATypeHolder*,char*> >::iterator I = $5->begin();
+         I != $5->end(); ++I)
       ParamTypeList.push_back(I->first->get());
   }
 
   bool isVarArg = ParamTypeList.size() && ParamTypeList.back() == Type::VoidTy;
   if (isVarArg) ParamTypeList.pop_back();
 
-  const FunctionType *FT = FunctionType::get(*$1, ParamTypeList, isVarArg);
+  const FunctionType *FT = FunctionType::get(*$2, ParamTypeList, isVarArg);
   const PointerType *PFT = PointerType::get(FT);
-  delete $1;
+  delete $2;
 
   ValID ID;
   if (!FunctionName.empty()) {
@@ -1556,25 +1569,26 @@ FunctionHeaderH : TypesV Name '(' ArgList ')' {
   }
 
   CurFun.FunctionStart(Fn);
+  Fn->setCallingConv($1);
 
   // Add all of the arguments we parsed to the function...
-  if ($4) {                     // Is null if empty...
+  if ($5) {                     // Is null if empty...
     if (isVarArg) {  // Nuke the last entry
-      assert($4->back().first->get() == Type::VoidTy && $4->back().second == 0&&
+      assert($5->back().first->get() == Type::VoidTy && $5->back().second == 0&&
              "Not a varargs marker!");
-      delete $4->back().first;
-      $4->pop_back();  // Delete the last entry
+      delete $5->back().first;
+      $5->pop_back();  // Delete the last entry
     }
     Function::arg_iterator ArgIt = Fn->arg_begin();
-    for (std::vector<std::pair<PATypeHolder*, char*> >::iterator I =$4->begin();
-         I != $4->end(); ++I, ++ArgIt) {
+    for (std::vector<std::pair<PATypeHolder*,char*> >::iterator I = $5->begin();
+         I != $5->end(); ++I, ++ArgIt) {
       delete I->first;                          // Delete the typeholder...
 
       setValueName(ArgIt, I->second);           // Insert arg into symtab...
       InsertValue(ArgIt);
     }
 
-    delete $4;                     // We're now done with the argument list
+    delete $5;                     // We're now done with the argument list
   }
 };
 
@@ -1748,17 +1762,17 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
     SwitchInst *S = new SwitchInst(getVal($2, $3), getBBVal($6), 0);
     $$ = S;
   }
-  | INVOKE TypesV ValueRef '(' ValueRefListE ')' TO LABEL ValueRef
-    UNWIND LABEL ValueRef {
+  | INVOKE OptCallingConv TypesV ValueRef '(' ValueRefListE ')'
+    TO LABEL ValueRef UNWIND LABEL ValueRef {
     const PointerType *PFTy;
     const FunctionType *Ty;
 
-    if (!(PFTy = dyn_cast<PointerType>($2->get())) ||
+    if (!(PFTy = dyn_cast<PointerType>($3->get())) ||
         !(Ty = dyn_cast<FunctionType>(PFTy->getElementType()))) {
       // Pull out the types of all of the arguments...
       std::vector<const Type*> ParamTypes;
-      if ($5) {
-        for (std::vector<Value*>::iterator I = $5->begin(), E = $5->end();
+      if ($6) {
+        for (std::vector<Value*>::iterator I = $6->begin(), E = $6->end();
              I != E; ++I)
           ParamTypes.push_back((*I)->getType());
       }
@@ -1766,17 +1780,17 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
       bool isVarArg = ParamTypes.size() && ParamTypes.back() == Type::VoidTy;
       if (isVarArg) ParamTypes.pop_back();
 
-      Ty = FunctionType::get($2->get(), ParamTypes, isVarArg);
+      Ty = FunctionType::get($3->get(), ParamTypes, isVarArg);
       PFTy = PointerType::get(Ty);
     }
 
-    Value *V = getVal(PFTy, $3);   // Get the function we're calling...
+    Value *V = getVal(PFTy, $4);   // Get the function we're calling...
 
-    BasicBlock *Normal = getBBVal($9);
-    BasicBlock *Except = getBBVal($12);
+    BasicBlock *Normal = getBBVal($10);
+    BasicBlock *Except = getBBVal($13);
 
     // Create the call node...
-    if (!$5) {                                   // Has no arguments?
+    if (!$6) {                                   // Has no arguments?
       $$ = new InvokeInst(V, Normal, Except, std::vector<Value*>());
     } else {                                     // Has arguments?
       // Loop through FunctionType's arguments and ensure they are specified
@@ -1784,7 +1798,7 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
       //
       FunctionType::param_iterator I = Ty->param_begin();
       FunctionType::param_iterator E = Ty->param_end();
-      std::vector<Value*>::iterator ArgI = $5->begin(), ArgE = $5->end();
+      std::vector<Value*>::iterator ArgI = $6->begin(), ArgE = $6->end();
 
       for (; ArgI != ArgE && I != E; ++ArgI, ++I)
         if ((*ArgI)->getType() != *I)
@@ -1794,10 +1808,12 @@ BBTerminatorInst : RET ResolvedVal {              // Return with a result...
       if (I != E || (ArgI != ArgE && !Ty->isVarArg()))
         ThrowException("Invalid number of parameters detected!");
 
-      $$ = new InvokeInst(V, Normal, Except, *$5);
+      $$ = new InvokeInst(V, Normal, Except, *$6);
     }
-    delete $2;
-    delete $5;
+    cast<InvokeInst>($$)->setCallingConv($2);
+  
+    delete $3;
+    delete $6;
   }
   | UNWIND {
     $$ = new UnwindInst();
@@ -1953,16 +1969,16 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     }
     delete $2;  // Free the list...
   }
-  | OptTailCall TypesV ValueRef '(' ValueRefListE ')'  {
+  | OptTailCall OptCallingConv TypesV ValueRef '(' ValueRefListE ')'  {
     const PointerType *PFTy;
     const FunctionType *Ty;
 
-    if (!(PFTy = dyn_cast<PointerType>($2->get())) ||
+    if (!(PFTy = dyn_cast<PointerType>($3->get())) ||
         !(Ty = dyn_cast<FunctionType>(PFTy->getElementType()))) {
       // Pull out the types of all of the arguments...
       std::vector<const Type*> ParamTypes;
-      if ($5) {
-        for (std::vector<Value*>::iterator I = $5->begin(), E = $5->end();
+      if ($6) {
+        for (std::vector<Value*>::iterator I = $6->begin(), E = $6->end();
              I != E; ++I)
           ParamTypes.push_back((*I)->getType());
       }
@@ -1970,17 +1986,17 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
       bool isVarArg = ParamTypes.size() && ParamTypes.back() == Type::VoidTy;
       if (isVarArg) ParamTypes.pop_back();
 
-      if (!(*$2)->isFirstClassType() && *$2 != Type::VoidTy)
+      if (!(*$3)->isFirstClassType() && *$3 != Type::VoidTy)
         ThrowException("LLVM functions cannot return aggregate types!");
 
-      Ty = FunctionType::get($2->get(), ParamTypes, isVarArg);
+      Ty = FunctionType::get($3->get(), ParamTypes, isVarArg);
       PFTy = PointerType::get(Ty);
     }
 
-    Value *V = getVal(PFTy, $3);   // Get the function we're calling...
+    Value *V = getVal(PFTy, $4);   // Get the function we're calling...
 
     // Create the call node...
-    if (!$5) {                                   // Has no arguments?
+    if (!$6) {                                   // Has no arguments?
       // Make sure no arguments is a good thing!
       if (Ty->getNumParams() != 0)
         ThrowException("No arguments passed to a function that "
@@ -1993,7 +2009,7 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
       //
       FunctionType::param_iterator I = Ty->param_begin();
       FunctionType::param_iterator E = Ty->param_end();
-      std::vector<Value*>::iterator ArgI = $5->begin(), ArgE = $5->end();
+      std::vector<Value*>::iterator ArgI = $6->begin(), ArgE = $6->end();
 
       for (; ArgI != ArgE && I != E; ++ArgI, ++I)
         if ((*ArgI)->getType() != *I)
@@ -2003,11 +2019,12 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
       if (I != E || (ArgI != ArgE && !Ty->isVarArg()))
         ThrowException("Invalid number of parameters detected!");
 
-      $$ = new CallInst(V, *$5);
+      $$ = new CallInst(V, *$6);
     }
     cast<CallInst>($$)->setTailCall($1);
-    delete $2;
-    delete $5;
+    cast<CallInst>($$)->setCallingConv($2);
+    delete $3;
+    delete $6;
   }
   | MemoryInst {
     $$ = $1;

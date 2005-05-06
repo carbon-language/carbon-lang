@@ -204,6 +204,11 @@ little          { return LITTLE; }
 big             { return BIG; }
 volatile        { return VOLATILE; }
 
+cc              { return CC_TOK; }
+ccc             { return CCC_TOK; }
+fastcc          { return FASTCC_TOK; }
+coldcc          { return COLDCC_TOK; }
+
 void            { llvmAsmlval.PrimType = Type::VoidTy  ; return VOID;   }
 bool            { llvmAsmlval.PrimType = Type::BoolTy  ; return BOOL;   }
 sbyte           { llvmAsmlval.PrimType = Type::SByteTy ; return SBYTE;  }
