@@ -1991,9 +1991,6 @@ void BytecodeReader::ParseVersionInfo() {
   has32BitTypes = false;
   hasNoDependentLibraries = false;
   hasAlignment = false;
-  hasInconsistentBBSlotNums = false;
-  hasVBRByteTypes = false;
-  hasUnnecessaryModuleBlockId = false;
   hasNoUndefValue = false;
   hasNoFlagsForFunctions = false;
   hasNoUnreachableInst = false;
@@ -2074,24 +2071,7 @@ void BytecodeReader::ParseVersionInfo() {
 
   case 5:               // 1.4 (Released)
     break;
-#if 0
-    // FIXME: NONE of this is implemented yet!
 
-    // In version 5, basic blocks have a minimum index of 0 whereas all the
-    // other primitives have a minimum index of 1 (because 0 is the "null"
-    // value. In version 5, we made this consistent.
-    hasInconsistentBBSlotNums = true;
-
-    // In version 5, the types SByte and UByte were encoded as vbr_uint so that
-    // signed values > 63 and unsigned values >127 would be encoded as two
-    // bytes. In version 5, they are encoded directly in a single byte.
-    hasVBRByteTypes = true;
-
-    // In version 5, modules begin with a "Module Block" which encodes a 4-byte
-    // integer value 0x01 to identify the module block. This is unnecessary and
-    // removed in version 5.
-    hasUnnecessaryModuleBlockId = true;
-#endif
   default:
     error("Unknown bytecode version number: " + itostr(RevisionNum));
   }

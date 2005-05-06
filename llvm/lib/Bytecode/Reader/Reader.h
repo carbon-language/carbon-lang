@@ -321,21 +321,6 @@ private:
   // unreachable instruction.
   bool hasNoUnreachableInst;
 
-  // In version 5, basic blocks have a minimum index of 0 whereas all the
-  // other primitives have a minimum index of 1 (because 0 is the "null"
-  // value. In version 5, we made this consistent.
-  bool hasInconsistentBBSlotNums;
-
-  // In version 5, the types SByte and UByte were encoded as vbr_uint so that
-  // signed values > 63 and unsigned values >127 would be encoded as two
-  // bytes. In version 5, they are encoded directly in a single byte.
-  bool hasVBRByteTypes;
-
-  // In version 5, modules begin with a "Module Block" which encodes a 4-byte
-  // integer value 0x01 to identify the module block. This is unnecessary and
-  // removed in version 5.
-  bool hasUnnecessaryModuleBlockId;
-
   /// CompactionTypes - If a compaction table is active in the current function,
   /// this is the mapping that it contains.  We keep track of what resolved type
   /// it is as well as what global type entry it is.
