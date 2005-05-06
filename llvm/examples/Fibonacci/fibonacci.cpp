@@ -65,10 +65,13 @@ static Function *CreateFibFunction(Module *M) {
   // create fib(x-1)
   Value *Sub = BinaryOperator::createSub(ArgX, One, "arg", RecurseBB);
   Value *CallFibX1 = new CallInst(FibF, Sub, "fibx1", RecurseBB);
+  CallFibX1->setTailCall(true);
 
   // create fib(x-2)
   Sub = BinaryOperator::createSub(ArgX, Two, "arg", RecurseBB);
   Value *CallFibX2 = new CallInst(FibF, Sub, "fibx2", RecurseBB);
+  CallFibX2->setTailCall(true);
+
 
   // fib(x-1)+fib(x-2)
   Value *Sum = BinaryOperator::createAdd(CallFibX1, CallFibX2,
