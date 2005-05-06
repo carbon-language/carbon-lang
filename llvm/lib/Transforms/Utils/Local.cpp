@@ -373,7 +373,26 @@ Constant *llvm::ConstantFoldCall(Function *F,
 //
 
 bool llvm::isInstructionTriviallyDead(Instruction *I) {
-  return I->use_empty() && !I->mayWriteToMemory() && !isa<TerminatorInst>(I);
+  if (!I->use_empty() || isa<TerminatorInst>(I)) return false;
+ 
+  if (!I->mayWriteToMemory()) return true;
+
+  if (CallInst *CI = dyn_cast<CallInst>(I))
+    if (Function *F = CI->getCalledFunction())
+      switch (F->getIntrinsicID()) {
+      default: break;
+      case Intrinsic::vastart:
+      case Intrinsic::vacopy:
+      case Intrinsic::returnaddress:
+      case Intrinsic::frameaddress:
+      case Intrinsic::isunordered:
+      case Intrinsic::ctpop:
+      case Intrinsic::ctlz:
+      case Intrinsic::cttz:
+      case Intrinsic::sqrt:
+        return true;             // These intrinsics have no side effects.
+      }
+  return false;
 }
 
 // dceInstruction - Inspect the instruction at *BBI and figure out if it's
