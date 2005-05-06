@@ -46,14 +46,6 @@ static Module *ParserResult;
 
 #define YYERROR_VERBOSE 1
 
-// HACK ALERT: This variable is used to implement the automatic conversion of
-// variable argument instructions from their old to new forms.  When this
-// compatiblity "Feature" is removed, this should be too.
-//
-static BasicBlock *CurBB;
-static bool ObsoleteVarArgs;
-
-
 // This contains info used when building the body of a function.  It is
 // destroyed when the function is completed.
 //
@@ -1706,22 +1698,22 @@ InstructionList : InstructionList Inst {
     $$ = $1;
   }
   | /* empty */ {
-    $$ = CurBB = getBBVal(ValID::create((int)CurFun.NextBBNum++), true);
+    $$ = getBBVal(ValID::create((int)CurFun.NextBBNum++), true);
 
     // Make sure to move the basic block to the correct location in the
     // function, instead of leaving it inserted wherever it was first
     // referenced.
-    CurFun.CurrentFunction->getBasicBlockList().remove(CurBB);
-    CurFun.CurrentFunction->getBasicBlockList().push_back(CurBB);
+    CurFun.CurrentFunction->getBasicBlockList().remove($$);
+    CurFun.CurrentFunction->getBasicBlockList().push_back($$);
   }
   | LABELSTR {
-    $$ = CurBB = getBBVal(ValID::create($1), true);
+    $$ = getBBVal(ValID::create($1), true);
 
     // Make sure to move the basic block to the correct location in the
     // function, instead of leaving it inserted wherever it was first
     // referenced.
-    CurFun.CurrentFunction->getBasicBlockList().remove(CurBB);
-    CurFun.CurrentFunction->getBasicBlockList().push_back(CurBB);
+    CurFun.CurrentFunction->getBasicBlockList().remove($$);
+    CurFun.CurrentFunction->getBasicBlockList().push_back($$);
   };
 
 BBTerminatorInst : RET ResolvedVal {              // Return with a result...
