@@ -194,6 +194,7 @@ null            { return NULL_TOK; }
 to              { return TO; }
 except          { RET_TOK(TermOpVal, Unwind, UNWIND); }
 not             { return NOT; }  /* Deprecated, turned into XOR */
+tail            { return TAIL; }
 target          { return TARGET; }
 triple          { return TRIPLE; }
 deplibs         { return DEPLIBS; }
