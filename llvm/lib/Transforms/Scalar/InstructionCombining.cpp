@@ -3550,6 +3550,15 @@ Instruction *InstCombiner::visitCastInst(CastInst &CI) {
                              ->getOpcode(), Op0c, Op1c);
           }
         }
+
+        // cast (xor bool X, true) to int  --> xor (cast bool X to int), 1
+        if (SrcBitSize == 1 && SrcI->getOpcode() == Instruction::Xor &&
+            Op1 == ConstantBool::True &&
+            (!Op0->hasOneUse() || !isa<SetCondInst>(Op0))) {
+          Value *New = InsertOperandCastBefore(Op0, DestTy, &CI);
+          return BinaryOperator::createXor(New,
+                                           ConstantInt::get(CI.getType(), 1));
+        }
         break;
       case Instruction::Shl:
         // Allow changing the sign of the source operand.  Do not allow changing
