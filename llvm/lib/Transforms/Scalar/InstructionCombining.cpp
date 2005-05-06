@@ -1361,14 +1361,10 @@ static bool MaskedValueIsZero(Value *V, ConstantIntegral *Mask) {
       break;
     }
     case Instruction::Shl:
-      // (shl X, C1) & C2 == 0   iff  (-1 << C1) & C2 == 0
-      if (ConstantUInt *SA = dyn_cast<ConstantUInt>(I->getOperand(1))) {
-        Constant *C1 = ConstantIntegral::getAllOnesValue(I->getType());
-        C1 = ConstantExpr::getShl(C1, SA);
-        C1 = ConstantExpr::getAnd(C1, Mask);
-        if (C1->isNullValue())
-          return true;
-      }
+      // (shl X, C1) & C2 == 0   iff   (X & C2 >>u C1) == 0
+      if (ConstantUInt *SA = dyn_cast<ConstantUInt>(I->getOperand(1)))
+        return MaskedValueIsZero(I->getOperand(0),
+                      cast<ConstantIntegral>(ConstantExpr::getUShr(Mask, SA)));
       break;
     case Instruction::Shr:
       // (ushr X, C1) & C2 == 0   iff  (-1 >> C1) & C2 == 0
