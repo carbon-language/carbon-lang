@@ -897,7 +897,8 @@ void BytecodeWriter::outputModuleInfoBlock(const Module *M) {
   BytecodeBlock ModuleInfoBlock(BytecodeFormat::ModuleGlobalInfoBlockID, *this);
 
   // Output the types for the global variables in the module...
-  for (Module::const_global_iterator I = M->global_begin(), End = M->global_end(); I != End;++I) {
+  for (Module::const_global_iterator I = M->global_begin(),
+         End = M->global_end(); I != End;++I) {
     int Slot = Table.getSlot(I->getType());
     assert(Slot != -1 && "Module global vars is broken!");
 
