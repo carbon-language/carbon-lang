@@ -128,3 +128,8 @@ bool %test19(int %A) {
         ret bool %D
 }
 
+int %test20(int %x) {
+	%y = and int %x, 123
+	%z = or int %y, %x
+	ret int %z
+}
