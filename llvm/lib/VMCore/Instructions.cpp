@@ -20,6 +20,20 @@
 #include "llvm/Support/CallSite.h"
 using namespace llvm;
 
+unsigned CallSite::getCallingConv() const {
+  if (CallInst *CI = dyn_cast<CallInst>(I))
+    return CI->getCallingConv();
+  else
+    return cast<InvokeInst>(I)->getCallingConv();
+}
+void CallSite::setCallingConv(unsigned CC) {
+  if (CallInst *CI = dyn_cast<CallInst>(I))
+    CI->setCallingConv(CC);
+  else
+    cast<InvokeInst>(I)->setCallingConv(CC);
+}
+
+
 //===----------------------------------------------------------------------===//
 //                            TerminatorInst Class
 //===----------------------------------------------------------------------===//
@@ -249,7 +263,7 @@ CallInst::CallInst(Value *Func, const std::string &Name,
 CallInst::CallInst(const CallInst &CI)
   : Instruction(CI.getType(), Instruction::Call, new Use[CI.getNumOperands()],
                 CI.getNumOperands()) {
-  setTailCall(CI.isTailCall());
+  SubclassData = CI.SubclassData;
   Use *OL = OperandList;
   Use *InOL = CI.OperandList;
   for (unsigned i = 0, e = CI.getNumOperands(); i != e; ++i)
@@ -306,6 +320,7 @@ InvokeInst::InvokeInst(Value *Fn, BasicBlock *IfNormal,
 InvokeInst::InvokeInst(const InvokeInst &II)
   : TerminatorInst(II.getType(), Instruction::Invoke,
                    new Use[II.getNumOperands()], II.getNumOperands()) {
+  SubclassData = II.SubclassData;
   Use *OL = OperandList, *InOL = II.OperandList;
   for (unsigned i = 0, e = II.getNumOperands(); i != e; ++i)
     OL[i].init(InOL[i], this);

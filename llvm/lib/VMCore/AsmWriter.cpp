@@ -18,6 +18,7 @@
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Assembly/PrintModulePass.h"
 #include "llvm/Assembly/AsmAnnotationWriter.h"
+#include "llvm/CallingConv.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Instruction.h"
@@ -915,6 +916,14 @@ void AssemblyWriter::printFunction(const Function *F) {
       abort();
     }
 
+  // Print the calling convention.
+  switch (F->getCallingConv()) {
+  case CallingConv::C: break;   // default
+  case CallingConv::Fast: Out << "fastcc "; break;
+  case CallingConv::Cold: Out << "coldcc "; break;
+  default: Out << "cc" << F->getCallingConv() << " "; break;
+  }
+
   printType(F->getReturnType()) << ' ';
   if (!F->getName().empty())
     Out << getLLVMName(F->getName());
@@ -1090,7 +1099,15 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     }
   } else if (isa<ReturnInst>(I) && !Operand) {
     Out << " void";
-  } else if (isa<CallInst>(I)) {
+  } else if (const CallInst *CI = dyn_cast<CallInst>(&I)) {
+    // Print the calling convention being used.
+    switch (CI->getCallingConv()) {
+    case CallingConv::C: break;   // default
+    case CallingConv::Fast: Out << " fastcc"; break;
+    case CallingConv::Cold: Out << " coldcc"; break;
+    default: Out << " cc" << CI->getCallingConv(); break;
+    }
+
     const PointerType  *PTy = cast<PointerType>(Operand->getType());
     const FunctionType *FTy = cast<FunctionType>(PTy->getElementType());
     const Type       *RetTy = FTy->getReturnType();
@@ -1108,7 +1125,7 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
       writeOperand(Operand, true);
     }
     Out << '(';
-    if (I.getNumOperands() > 1) writeOperand(I.getOperand(1), true);
+    if (CI->getNumOperands() > 1) writeOperand(CI->getOperand(1), true);
     for (unsigned op = 2, Eop = I.getNumOperands(); op < Eop; ++op) {
       Out << ',';
       writeOperand(I.getOperand(op), true);
@@ -1119,6 +1136,14 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     const PointerType  *PTy = cast<PointerType>(Operand->getType());
     const FunctionType *FTy = cast<FunctionType>(PTy->getElementType());
     const Type       *RetTy = FTy->getReturnType();
+
+    // Print the calling convention being used.
+    switch (II->getCallingConv()) {
+    case CallingConv::C: break;   // default
+    case CallingConv::Fast: Out << " fastcc"; break;
+    case CallingConv::Cold: Out << " coldcc"; break;
+    default: Out << " cc" << II->getCallingConv(); break;
+    }
 
     // If possible, print out the short form of the invoke instruction. We can
     // only do this if the first argument is a pointer to a nonvararg function,
