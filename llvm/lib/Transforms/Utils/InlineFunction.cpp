@@ -50,7 +50,7 @@ bool llvm::InlineFunction(CallSite CS) {
   // If the call to the callee is a non-tail call, we must clear the 'tail'
   // flags on any calls that we inline.
   bool MustClearTailCallFlags =
-    isa<CallInst>(TheCall) || !cast<CallInst>(TheCall)->isTailCall();
+    isa<CallInst>(TheCall) && !cast<CallInst>(TheCall)->isTailCall();
 
   BasicBlock *OrigBB = TheCall->getParent();
   Function *Caller = OrigBB->getParent();
