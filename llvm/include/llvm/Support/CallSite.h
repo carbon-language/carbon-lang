@@ -52,6 +52,11 @@ public:
     return CallSite();
   }
 
+  /// getCallingConv/setCallingConv - get or set the calling convention of the
+  /// call.
+  unsigned getCallingConv() const;
+  void setCallingConv(unsigned CC);
+
   /// getType - Return the type of the instruction that generated this call site
   ///
   const Type *getType() const { return I->getType(); }

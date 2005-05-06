@@ -467,8 +467,9 @@ public:
 //===----------------------------------------------------------------------===//
 
 /// CallInst - This class represents a function call, abstracting a target
-/// machine's calling convention.  This class uses the SubClassData field to
-/// indicate whether or not this is a tail call.
+/// machine's calling convention.  This class uses low bit of the SubClassData
+/// field to indicate whether or not this is a tail call.  The rest of the bits
+/// hold the calling convention of the call.
 ///
 class CallInst : public Instruction {
   CallInst(const CallInst &CI);
@@ -502,8 +503,17 @@ public:
   virtual CallInst *clone() const;
   bool mayWriteToMemory() const { return true; }
 
-  bool isTailCall() const           { return SubclassData; }
-  void setTailCall(bool isTailCall = true) { SubclassData = isTailCall; }
+  bool isTailCall() const           { return SubclassData & 1; }
+  void setTailCall(bool isTailCall = true) {
+    SubclassData = (SubclassData & ~1) | isTailCall;
+  }
+
+  /// getCallingConv/setCallingConv - Get or set the calling convention of this
+  /// function call.
+  unsigned getCallingConv() const { return SubclassData >> 1; }
+  void setCallingConv(unsigned CC) {
+    SubclassData = (SubclassData & 1) | (CC << 1);
+  }
 
   /// getCalledFunction - Return the function being called by this instruction
   /// if it is a direct call.  If it is a call through a function pointer,
@@ -1165,7 +1175,9 @@ private:
 //===----------------------------------------------------------------------===//
 
 //===---------------------------------------------------------------------------
-/// InvokeInst - Invoke instruction
+
+/// InvokeInst - Invoke instruction.  The SubclassData field is used to hold the
+/// calling convention of the call.
 ///
 class InvokeInst : public TerminatorInst {
   InvokeInst(const InvokeInst &BI);
@@ -1183,6 +1195,13 @@ public:
   virtual InvokeInst *clone() const;
 
   bool mayWriteToMemory() const { return true; }
+
+  /// getCallingConv/setCallingConv - Get or set the calling convention of this
+  /// function call.
+  unsigned getCallingConv() const { return SubclassData; }
+  void setCallingConv(unsigned CC) {
+    SubclassData = CC;
+  }
 
   /// getCalledFunction - Return the function called, or null if this is an
   /// indirect function invocation.

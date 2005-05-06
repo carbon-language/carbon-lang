@@ -66,6 +66,7 @@ private:
   ArgumentListType ArgumentList;        // The formal arguments
 
   SymbolTable *SymTab;
+  unsigned CallingConvention;
 
   friend class SymbolTableListTraits<Function, Module, Module>;
 
@@ -105,6 +106,12 @@ public:
   ///
   unsigned getIntrinsicID() const;
   bool isIntrinsic() const { return getIntrinsicID() != 0; }
+
+  /// getCallingConv()/setCallingConv(uint) - These method get and set the
+  /// calling convention of this function.  The enum values for the known
+  /// calling conventions are defined in CallingConv.h.
+  unsigned getCallingConv() const { return CallingConvention; }
+  void setCallingConv(unsigned CC) { CallingConvention = CC; }
 
   /// renameLocalSymbols - This method goes through the Function's symbol table
   /// and renames any symbols that conflict with symbols at global scope.  This
