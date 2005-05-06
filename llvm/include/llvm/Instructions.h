@@ -503,7 +503,7 @@ public:
   bool mayWriteToMemory() const { return true; }
 
   bool isTailCall() const           { return SubclassData; }
-  void setTailCall(bool isTailCall) { SubclassData = isTailCall; }
+  void setTailCall(bool isTailCall = true) { SubclassData = isTailCall; }
 
   /// getCalledFunction - Return the function being called by this instruction
   /// if it is a direct call.  If it is a call through a function pointer,
