@@ -146,3 +146,11 @@ int %test21(bool %C, int %A, int %B) {
 	%D = select bool %C2, int %A, int %B
 	ret int %D
 }
+
+int %test22(bool %X) {
+        %Y = xor bool %X, true
+        %Z = cast bool %Y to int
+        %Q = xor int %Z, 1
+        ret int %Q
+}
+

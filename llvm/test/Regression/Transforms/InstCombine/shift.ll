@@ -158,3 +158,9 @@ bool %test22(ubyte %A) {
 	ret bool %C
 }
 
+sbyte %test23(int %A) {
+	%B = shl int %A, ubyte 24  ;; casts not needed
+	%C = shr int %B, ubyte 24
+	%D = cast int %C to sbyte
+	ret sbyte %D
+}
