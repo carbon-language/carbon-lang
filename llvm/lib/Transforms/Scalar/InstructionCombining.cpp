@@ -3571,6 +3571,25 @@ Instruction *InstCombiner::visitCastInst(CastInst &CI) {
           return new ShiftInst(Instruction::Shl, Op0c, Op1);
         }
         break;
+      case Instruction::Shr:
+        // If this is a signed shr, and if all bits shifted in are about to be
+        // truncated off, turn it into an unsigned shr to allow greater
+        // simplifications.
+        if (DestBitSize < SrcBitSize && Src->getType()->isSigned() &&
+            isa<ConstantInt>(Op1)) {
+          unsigned ShiftAmt = cast<ConstantUInt>(Op1)->getValue();
+          if (SrcBitSize > ShiftAmt && SrcBitSize-ShiftAmt >= DestBitSize) {
+            // Convert to unsigned.
+            Value *N1 = InsertOperandCastBefore(Op0,
+                                     Op0->getType()->getUnsignedVersion(), &CI);
+            // Insert the new shift, which is now unsigned.
+            N1 = InsertNewInstBefore(new ShiftInst(Instruction::Shr, N1,
+                                                   Op1, Src->getName()), CI);
+            return new CastInst(N1, CI.getType());
+          }
+        }
+        break;
+
       case Instruction::SetNE:
         if (ConstantInt *Op1C = dyn_cast<ConstantInt>(Op1)) {
           if (Op1C->getRawValue() == 0) {
@@ -3601,9 +3620,6 @@ Instruction *InstCombiner::visitCastInst(CastInst &CI) {
                 In = InsertNewInstBefore(new ShiftInst(Instruction::Shr, In,
                                       ConstantInt::get(Type::UByteTy, ShiftAmt),
                                                    In->getName()+".lobit"), CI);
-                std::cerr << "In1 = " << *Op0;
-                std::cerr << "In2 = " << *CI.getOperand(0);
-                std::cerr << "In3 = " << CI;
                 if (CI.getType() == In->getType())
                   return ReplaceInstUsesWith(CI, In);
                 else
