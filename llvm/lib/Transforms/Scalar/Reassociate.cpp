@@ -22,11 +22,11 @@
 
 #define DEBUG_TYPE "reassociate"
 #include "llvm/Transforms/Scalar.h"
+#include "llvm/Constants.h"
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
-#include "llvm/Type.h"
 #include "llvm/Pass.h"
-#include "llvm/Constant.h"
+#include "llvm/Type.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/ADT/PostOrderIterator.h"
@@ -243,6 +243,25 @@ static Instruction *BreakUpSubtract(Instruction *Sub) {
   return New;
 }
 
+/// ConvertShiftToMul - If this is a shift of a reassociable multiply or is used
+/// by one, change this into a multiply by a constant to assist with further
+/// reassociation.
+static Instruction *ConvertShiftToMul(Instruction *Shl) {
+  if (!isReassociableOp(Shl->getOperand(0), Instruction::Mul) &&
+      !(Shl->hasOneUse() && isReassociableOp(Shl->use_back(),Instruction::Mul)))
+    return 0;
+
+  Constant *MulCst = ConstantInt::get(Shl->getType(), 1);
+  MulCst = ConstantExpr::getShl(MulCst, cast<Constant>(Shl->getOperand(1)));
+
+  std::string Name = Shl->getName();  Shl->setName("");
+  Instruction *Mul = BinaryOperator::createMul(Shl->getOperand(0), MulCst,
+                                               Name, Shl);
+  Shl->replaceAllUsesWith(Mul);
+  Shl->eraseFromParent();
+  return Mul;
+}
+
 
 /// ReassociateBB - Inspect all of the instructions in this basic block,
 /// reassociating them as we go.
@@ -253,6 +272,12 @@ bool Reassociate::ReassociateBB(BasicBlock *BB) {
     // see if we can convert it to X+-Y.
     if (BI->getOpcode() == Instruction::Sub && !BinaryOperator::isNeg(BI))
       if (Instruction *NI = BreakUpSubtract(BI)) {
+        Changed = true;
+        BI = NI;
+      }
+    if (BI->getOpcode() == Instruction::Shl &&
+        isa<ConstantInt>(BI->getOperand(1)))
+      if (Instruction *NI = ConvertShiftToMul(BI)) {
         Changed = true;
         BI = NI;
       }
