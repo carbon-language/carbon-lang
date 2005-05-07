@@ -111,7 +111,7 @@ public:
 
 #ifndef NDEBUG
   /// @brief Called by SimplifyLibCalls to update the occurrences statistic.
-  void succeeded() { ++occurrences; }
+  void succeeded() { DEBUG(++occurrences); }
 #endif
 
 private:
