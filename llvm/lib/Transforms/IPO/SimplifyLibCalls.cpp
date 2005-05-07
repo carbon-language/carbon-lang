@@ -35,7 +35,7 @@ namespace {
 /// This statistic keeps track of the total number of library calls that have
 /// been simplified regardless of which call it is.
 Statistic<> SimplifiedLibCalls("simplify-libcalls", 
-  "Number of well-known library calls simplified");
+  "Total number of library calls simplified");
 
 // Forward declarations
 class LibCallOptimization;
@@ -65,11 +65,10 @@ public:
   /// The \p fname argument must be the name of the library function being 
   /// optimized by the subclass.
   /// @brief Constructor that registers the optimization.
-  LibCallOptimization(const char* fname, 
-                      const char* stat_name, const char* description )
+  LibCallOptimization(const char* fname, const char* description )
     : func_name(fname)
 #ifndef NDEBUG
-    , occurrences(stat_name,description)
+    , occurrences("simplify-libcalls",description)
 #endif
   {
     // Register this call optimizer in the optlist (a hash_map)
@@ -374,7 +373,7 @@ bool getConstantStringLength(Value* V, uint64_t& len, ConstantArray** A = 0 );
 struct ExitInMainOptimization : public LibCallOptimization
 {
   ExitInMainOptimization() : LibCallOptimization("exit",
-      "simplify-libcalls:exit","Number of 'exit' calls simplified") {}
+      "Number of 'exit' calls simplified") {}
   virtual ~ExitInMainOptimization() {}
 
   // Make sure the called function looks like exit (int argument, int return
@@ -440,7 +439,7 @@ struct StrCatOptimization : public LibCallOptimization
 public:
   /// @brief Default constructor
   StrCatOptimization() : LibCallOptimization("strcat",
-      "simplify-libcalls:strcat","Number of 'strcat' calls simplified") {}
+      "Number of 'strcat' calls simplified") {}
 
 public:
   /// @breif  Destructor
@@ -531,7 +530,7 @@ struct StrChrOptimization : public LibCallOptimization
 {
 public:
   StrChrOptimization() : LibCallOptimization("strchr",
-      "simplify-libcalls:strchr","Number of 'strchr' calls simplified") {}
+      "Number of 'strchr' calls simplified") {}
   virtual ~StrChrOptimization() {}
 
   /// @brief Make sure that the "strchr" function has the right prototype
@@ -623,7 +622,7 @@ struct StrCmpOptimization : public LibCallOptimization
 {
 public:
   StrCmpOptimization() : LibCallOptimization("strcmp",
-      "simplify-libcalls:strcmp","Number of 'strcmp' calls simplified") {}
+      "Number of 'strcmp' calls simplified") {}
   virtual ~StrCmpOptimization() {}
 
   /// @brief Make sure that the "strcpy" function has the right prototype
@@ -708,7 +707,7 @@ struct StrNCmpOptimization : public LibCallOptimization
 {
 public:
   StrNCmpOptimization() : LibCallOptimization("strncmp",
-      "simplify-libcalls:strncmp","Number of 'strncmp' calls simplified") {}
+      "Number of 'strncmp' calls simplified") {}
   virtual ~StrNCmpOptimization() {}
 
   /// @brief Make sure that the "strcpy" function has the right prototype
@@ -811,7 +810,7 @@ struct StrCpyOptimization : public LibCallOptimization
 {
 public:
   StrCpyOptimization() : LibCallOptimization("strcpy",
-      "simplify-libcalls:strcpy","Number of 'strcpy' calls simplified") {}
+      "Number of 'strcpy' calls simplified") {}
   virtual ~StrCpyOptimization() {}
 
   /// @brief Make sure that the "strcpy" function has the right prototype
@@ -899,7 +898,7 @@ public:
 struct StrLenOptimization : public LibCallOptimization
 {
   StrLenOptimization() : LibCallOptimization("strlen",
-      "simplify-libcalls:strlen","Number of 'strlen' calls simplified") {}
+      "Number of 'strlen' calls simplified") {}
   virtual ~StrLenOptimization() {}
 
   /// @brief Make sure that the "strlen" function has the right prototype
@@ -916,11 +915,45 @@ struct StrLenOptimization : public LibCallOptimization
   /// @brief Perform the strlen optimization
   virtual bool OptimizeCall(CallInst* ci, SimplifyLibCalls& SLC)
   {
-    // Get the length of the string
+    // Make sure we're dealing with an sbyte* here.
+    Value* str = ci->getOperand(1);
+    if (str->getType() != PointerType::get(Type::SByteTy))
+      return false;
+
+    // Does the call to strlen have exactly one use?
+    if (ci->hasOneUse()) 
+      // Is that single use a binary operator?
+      if (BinaryOperator* bop = dyn_cast<BinaryOperator>(ci->use_back()))
+        // Is it compared against a constant integer?
+        if (ConstantInt* CI = dyn_cast<ConstantInt>(bop->getOperand(1)))
+        {
+          // Get the value the strlen result is compared to
+          uint64_t val = CI->getRawValue();
+
+          // If its compared against length 0 with == or !=
+          if (val == 0 &&
+              (bop->getOpcode() == Instruction::SetEQ ||
+               bop->getOpcode() == Instruction::SetNE))
+          {
+            // strlen(x) != 0 -> *x != 0
+            // strlen(x) == 0 -> *x == 0
+            LoadInst* load = new LoadInst(str,str->getName()+".first",ci);
+            BinaryOperator* rbop = BinaryOperator::create(bop->getOpcode(),
+              load, ConstantSInt::get(Type::SByteTy,0),
+              bop->getName()+".strlen", ci);
+            bop->replaceAllUsesWith(rbop);
+            bop->eraseFromParent();
+            ci->eraseFromParent();
+            return true;
+          }
+        }
+
+    // Get the length of the constant string operand
     uint64_t len = 0;
     if (!getConstantStringLength(ci->getOperand(1),len))
       return false;
 
+    // strlen("xyz") -> 3 (for example)
     ci->replaceAllUsesWith(
         ConstantInt::get(SLC.getTargetData()->getIntPtrType(),len));
     ci->eraseFromParent();
@@ -937,13 +970,12 @@ struct LLVMMemCpyOptimization : public LibCallOptimization
 {
   /// @brief Default Constructor
   LLVMMemCpyOptimization() : LibCallOptimization("llvm.memcpy",
-      "simplify-libcalls:llvm.memcpy",
       "Number of 'llvm.memcpy' calls simplified") {}
 
 protected:
   /// @brief Subclass Constructor 
-  LLVMMemCpyOptimization(const char* fname, const char* sname, const char* desc)
-    : LibCallOptimization(fname, sname, desc) {}
+  LLVMMemCpyOptimization(const char* fname, const char* desc)
+    : LibCallOptimization(fname, desc) {}
 public:
   /// @brief Destructor
   virtual ~LLVMMemCpyOptimization() {}
@@ -1017,7 +1049,6 @@ struct LLVMMemMoveOptimization : public LLVMMemCpyOptimization
 {
   /// @brief Default Constructor
   LLVMMemMoveOptimization() : LLVMMemCpyOptimization("llvm.memmove",
-      "simplify-libcalls:llvm.memmove",
       "Number of 'llvm.memmove' calls simplified") {}
 
 } LLVMMemMoveOptimizer;
@@ -1029,7 +1060,6 @@ struct LLVMMemSetOptimization : public LibCallOptimization
 {
   /// @brief Default Constructor
   LLVMMemSetOptimization() : LibCallOptimization("llvm.memset",
-      "simplify-libcalls:llvm.memset",
       "Number of 'llvm.memset' calls simplified") {}
 
 public:
@@ -1139,7 +1169,7 @@ struct PowOptimization : public LibCallOptimization
 public:
   /// @brief Default Constructor
   PowOptimization() : LibCallOptimization("pow",
-      "simplify-libcalls:pow", "Number of 'pow' calls simplified") {}
+      "Number of 'pow' calls simplified") {}
 
   /// @brief Destructor
   virtual ~PowOptimization() {}
@@ -1216,7 +1246,7 @@ struct FPrintFOptimization : public LibCallOptimization
 public:
   /// @brief Default Constructor
   FPrintFOptimization() : LibCallOptimization("fprintf",
-      "simplify-libcalls:fprintf", "Number of 'fprintf' calls simplified") {}
+      "Number of 'fprintf' calls simplified") {}
 
   /// @brief Destructor
   virtual ~FPrintFOptimization() {}
@@ -1346,7 +1376,7 @@ struct SPrintFOptimization : public LibCallOptimization
 public:
   /// @brief Default Constructor
   SPrintFOptimization() : LibCallOptimization("sprintf",
-      "simplify-libcalls:sprintf", "Number of 'sprintf' calls simplified") {}
+      "Number of 'sprintf' calls simplified") {}
 
   /// @brief Destructor
   virtual ~SPrintFOptimization() {}
@@ -1489,7 +1519,7 @@ struct PutsOptimization : public LibCallOptimization
 public:
   /// @brief Default Constructor
   PutsOptimization() : LibCallOptimization("fputs",
-      "simplify-libcalls:fputs", "Number of 'fputs' calls simplified") {}
+      "Number of 'fputs' calls simplified") {}
 
   /// @brief Destructor
   virtual ~PutsOptimization() {}
@@ -1562,7 +1592,7 @@ struct IsDigitOptimization : public LibCallOptimization
 public:
   /// @brief Default Constructor
   IsDigitOptimization() : LibCallOptimization("isdigit",
-      "simplify-libcalls:isdigit", "Number of 'isdigit' calls simplified") {}
+      "Number of 'isdigit' calls simplified") {}
 
   /// @brief Destructor
   virtual ~IsDigitOptimization() {}
@@ -1617,7 +1647,7 @@ struct ToAsciiOptimization : public LibCallOptimization
 public:
   /// @brief Default Constructor
   ToAsciiOptimization() : LibCallOptimization("toascii",
-      "simplify-libcalls:toascii", "Number of 'toascii' calls simplified") {}
+      "Number of 'toascii' calls simplified") {}
 
   /// @brief Destructor
   virtual ~ToAsciiOptimization() {}
@@ -1810,6 +1840,9 @@ bool getConstantStringLength(Value* V, uint64_t& len, ConstantArray** CA )
 //   * sqrt(Nroot(x)) -> pow(x,1/(2*N))
 //   * sqrt(pow(x,y)) -> pow(|x|,y*0.5)
 //
+// stpcpy:
+//   * stpcpy(str, "literal") ->
+//           llvm.memcpy(str,"literal",strlen("literal")+1,1)
 // strrchr:
 //   * strrchr(s,c) -> reverse_offset_of_in(c,s)
 //      (if c is a constant integer and s is a constant string)
