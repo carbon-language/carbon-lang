@@ -1856,8 +1856,16 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
         return NV;
   }
 
-  // (A & C1)|(A & C2) == A & (C1|C2)
   Value *A, *B; ConstantInt *C1, *C2;
+
+  if (match(Op0, m_And(m_Value(A), m_Value(B))))
+    if (A == Op1 || B == Op1)    // (A & ?) | A  --> A
+      return ReplaceInstUsesWith(I, Op1);
+  if (match(Op1, m_And(m_Value(A), m_Value(B))))
+    if (A == Op0 || B == Op0)    // A | (A & ?)  --> A
+      return ReplaceInstUsesWith(I, Op0);
+
+  // (A & C1)|(A & C2) == A & (C1|C2)
   if (match(Op0, m_And(m_Value(A), m_ConstantInt(C1))) &&
       match(Op1, m_And(m_Value(B), m_ConstantInt(C2))) && A == B)
     return BinaryOperator::createAnd(A, ConstantExpr::getOr(C1, C2));
@@ -1869,14 +1877,7 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
   } else {
     A = 0;
   }
-
-  if (match(Op0, m_And(m_Value(A), m_Value(B))))
-    if (A == Op1 || B == Op1)    // (A & ?) | A  --> A
-      return ReplaceInstUsesWith(I, Op1);
-  if (match(Op1, m_And(m_Value(A), m_Value(B))))
-    if (A == Op0 || B == Op0)    // A | (A & ?)  --> A
-      return ReplaceInstUsesWith(I, Op0);
-
+  // Note, A is still live here!
   if (match(Op1, m_Not(m_Value(B)))) {   // Op0 | ~B
     if (Op0 == B)
       return ReplaceInstUsesWith(I,
