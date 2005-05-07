@@ -106,6 +106,10 @@ In this release, the following missing features were implemented:
        -shared -Wl,-native</tt>' (or with <tt>-Wl,-native-cbe</tt>).</li>
    <li>LLVM now supports a new "<a href="LangRef.html#i_prefetch">llvm.prefetch
        </a>" intrinsic, and llvm-gcc now supports __builtin_prefetch.
+  <li>LLVM now supports intrinsics for <a href="LangRef.html#int_count">bit
+      counting</a> and llvm-gcc now implements the GCC
+      <tt>__builtin_popcount</tt>, <tt>__builtin_ctz</tt>, and
+      <tt>__builtin_clz</tt> builtins.</li>
 </ol>
 
 </div>
@@ -396,8 +400,9 @@ work:
          <tt>__builtin_types_compatible_p</tt>, <tt>__builtin_choose_expr</tt>,
          <tt>__builtin_constant_p</tt>, and <tt>__builtin_expect</tt>
          (currently ignored).  We also support builtins for ISO C99 floating
-         point comparison macros (e.g., <tt>__builtin_islessequal</tt>), and
-         <tt>__builtin_prefetch</tt>.</li>
+         point comparison macros (e.g., <tt>__builtin_islessequal</tt>), 
+         <tt>__builtin_prefetch</tt>, <tt>__builtin_popcount[ll]</tt>,
+         <tt>__builtin_clz[ll]</tt>, and <tt>__builtin_ctz[ll]</tt>.</li>
   </ol>
 
   <p>The following extensions <b>are</b> known to be supported:</p>
