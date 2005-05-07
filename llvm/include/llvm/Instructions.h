@@ -505,7 +505,7 @@ public:
 
   bool isTailCall() const           { return SubclassData & 1; }
   void setTailCall(bool isTailCall = true) {
-    SubclassData = (SubclassData & ~1) | isTailCall;
+    SubclassData = (SubclassData & ~1) | unsigned(isTailCall);
   }
 
   /// getCallingConv/setCallingConv - Get or set the calling convention of this

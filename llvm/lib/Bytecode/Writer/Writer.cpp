@@ -461,7 +461,7 @@ void BytecodeWriter::outputInstructionFormat0(const Instruction *I,
       output_vbr(cast<InvokeInst>(I)->getCallingConv());
     } else if (Opcode == 58) {  // Call escape sequence
       output_vbr((cast<CallInst>(I)->getCallingConv() << 1) |
-                 cast<CallInst>(I)->isTailCall());
+                 unsigned(cast<CallInst>(I)->isTailCall()));
     }
   } else {
     int Slot = Table.getSlot(I->getOperand(0));
@@ -731,7 +731,7 @@ void BytecodeWriter::outputInstruction(const Instruction &I) {
       const CallInst &CI = cast<CallInst>(I);
       ++NumOperands;
       if (NumOperands < 3) {
-        Slots[NumOperands-1] = (CI.getCallingConv() << 1) | CI.isTailCall();
+        Slots[NumOperands-1] = (CI.getCallingConv() << 1)|unsigned(CI.isTailCall());
         if (Slots[NumOperands-1] > MaxOpSlot)
           MaxOpSlot = Slots[NumOperands-1];
       }
