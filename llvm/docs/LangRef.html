@@ -471,12 +471,13 @@ the future:</p>
   prototype of the function definition.
   </dd>
 
-  <dt><b>"<tt>cc &lt;<it>n</it>&gt;</tt>" - Numbered convention</b>:</dt>
+  <dt><b>"<tt>cc &lt;<em>n</em>&gt;</tt>" - Numbered convention</b>:</dt>
 
   <dd>Any calling convention may be specified by number, allowing
   target-specific calling conventions to be used.  Target specific calling
   conventions start at 64.
   </dd>
+</dl>
 
 <p>More calling conventions can be added/defined on an as-needed basis, to
 support pascal conventions or any other well-known target-independent
@@ -3195,7 +3196,8 @@ The '<tt>llvm.ctpop</tt>' intrinsic counts the number of ones in a variable.
 <h5>Arguments:</h5>
 
 <p>
-The only argument is the value to be counted.  The argument may be of any integer type.
+The only argument is the value to be counted.  The argument may be of any
+integer type.  The return type must match the argument type.
 </p>
 
 <h5>Semantics:</h5>
@@ -3227,14 +3229,15 @@ The '<tt>llvm.cttz</tt>' intrinsic counts the number of trailing zeros.
 <h5>Arguments:</h5>
 
 <p>
-The only argument is the value to be counted.  The argument may be of any integer type.
+The only argument is the value to be counted.  The argument may be of any
+integer type.  The return type must match the argument type.
 </p>
 
 <h5>Semantics:</h5>
 
 <p>
-The '<tt>llvm.cttz</tt>' intrinsic counts the trailing zeros in a variable.  If the src == 0
-then the result is the size in bits of the type of src.
+The '<tt>llvm.cttz</tt>' intrinsic counts the trailing zeros in a variable.  If
+the src == 0 then the result is the size in bits of the type of src.
 </p>
 </div>
 
@@ -3254,20 +3257,22 @@ then the result is the size in bits of the type of src.
 <h5>Overview:</h5>
 
 <p>
-The '<tt>llvm.ctlz</tt>' intrinsic counts the number of leading zeros in a variable.
+The '<tt>llvm.ctlz</tt>' intrinsic counts the number of leading zeros in a
+variable.
 </p>
 
 <h5>Arguments:</h5>
 
 <p>
-The only argument is the value to be counted.  The argument may be of any integer type.
+The only argument is the value to be counted.  The argument may be of any
+integer type. The return type must match the argument type.
 </p>
 
 <h5>Semantics:</h5>
 
 <p>
-The '<tt>llvm.ctlz</tt>' intrinsic counts the leading zeros in a variable.  If the src == 0
-then the result is the size in bits of the type of src.
+The '<tt>llvm.ctlz</tt>' intrinsic counts the leading zeros in a variable.  If
+the src == 0 then the result is the size in bits of the type of src.
 </p>
 </div>
 
