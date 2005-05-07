@@ -12,9 +12,6 @@
 //
 // For example: 4 + (x + 5) -> x + (4 + 5)
 //
-// Note that this pass works best if left shifts have been promoted to explicit
-// multiplies before this pass executes.
-//
 // In the implementation of this algorithm, constants are assigned rank = 0,
 // function arguments are rank = 1, and other values are assigned ranks
 // corresponding to the reverse post order traversal of current function
@@ -23,6 +20,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "reassociate"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
@@ -78,35 +76,33 @@ void Reassociate::BuildRankMap(Function &F) {
 unsigned Reassociate::getRank(Value *V) {
   if (isa<Argument>(V)) return ValueRankMap[V];   // Function argument...
 
-  if (Instruction *I = dyn_cast<Instruction>(V)) {
-    // If this is an expression, return the 1+MAX(rank(LHS), rank(RHS)) so that
-    // we can reassociate expressions for code motion!  Since we do not recurse
-    // for PHI nodes, we cannot have infinite recursion here, because there
-    // cannot be loops in the value graph that do not go through PHI nodes.
-    //
-    if (I->getOpcode() == Instruction::PHI ||
-        I->getOpcode() == Instruction::Alloca ||
-        I->getOpcode() == Instruction::Malloc || isa<TerminatorInst>(I) ||
-        I->mayWriteToMemory())  // Cannot move inst if it writes to memory!
-      return RankMap[I->getParent()];
+  Instruction *I = dyn_cast<Instruction>(V);
+  if (I == 0) return 0;  // Otherwise it's a global or constant, rank 0.
 
-    unsigned &CachedRank = ValueRankMap[I];
-    if (CachedRank) return CachedRank;    // Rank already known?
-
-    // If not, compute it!
-    unsigned Rank = 0, MaxRank = RankMap[I->getParent()];
-    for (unsigned i = 0, e = I->getNumOperands();
-         i != e && Rank != MaxRank; ++i)
-      Rank = std::max(Rank, getRank(I->getOperand(i)));
-
-    DEBUG(std::cerr << "Calculated Rank[" << V->getName() << "] = "
-                    << Rank+1 << "\n");
-
-    return CachedRank = Rank+1;
-  }
-
-  // Otherwise it's a global or constant, rank 0.
-  return 0;
+  unsigned &CachedRank = ValueRankMap[I];
+  if (CachedRank) return CachedRank;    // Rank already known?
+  
+  // If this is an expression, return the 1+MAX(rank(LHS), rank(RHS)) so that
+  // we can reassociate expressions for code motion!  Since we do not recurse
+  // for PHI nodes, we cannot have infinite recursion here, because there
+  // cannot be loops in the value graph that do not go through PHI nodes.
+  //
+  if (I->getOpcode() == Instruction::PHI ||
+      I->getOpcode() == Instruction::Alloca ||
+      I->getOpcode() == Instruction::Malloc || isa<TerminatorInst>(I) ||
+      I->mayWriteToMemory())  // Cannot move inst if it writes to memory!
+    return RankMap[I->getParent()];
+  
+  // If not, compute it!
+  unsigned Rank = 0, MaxRank = RankMap[I->getParent()];
+  for (unsigned i = 0, e = I->getNumOperands();
+       i != e && Rank != MaxRank; ++i)
+    Rank = std::max(Rank, getRank(I->getOperand(i)));
+  
+  DEBUG(std::cerr << "Calculated Rank[" << V->getName() << "] = "
+        << Rank+1 << "\n");
+  
+  return CachedRank = Rank+1;
 }
 
 
@@ -175,7 +171,7 @@ bool Reassociate::ReassociateExpr(BinaryOperator *I) {
 // version of the value is returned, and BI is left pointing at the instruction
 // that should be processed next by the reassociation pass.
 //
-static Value *NegateValue(Value *V, BasicBlock::iterator &BI) {
+static Value *NegateValue(Value *V, Instruction *BI) {
   // We are trying to expose opportunity for reassociation.  One of the things
   // that we want to do to achieve this is to push a negation as deep into an
   // expression chain as possible, to expose the add instructions.  In practice,
@@ -196,52 +192,76 @@ static Value *NegateValue(Value *V, BasicBlock::iterator &BI) {
       // inserted dominate the instruction we are about to insert after them.
       //
       return BinaryOperator::create(Instruction::Add, LHS, RHS,
-                                    I->getName()+".neg",
-                                    cast<Instruction>(RHS)->getNext());
+                                    I->getName()+".neg", BI);
     }
 
   // Insert a 'neg' instruction that subtracts the value from zero to get the
   // negation.
   //
-  return BI = BinaryOperator::createNeg(V, V->getName() + ".neg", BI);
+  return BinaryOperator::createNeg(V, V->getName() + ".neg", BI);
+}
+
+/// isReassociableOp - Return true if V is an instruction of the specified
+/// opcode and if it only has one use.
+static bool isReassociableOp(Value *V, unsigned Opcode) {
+  return V->hasOneUse() && isa<Instruction>(V) &&
+         cast<Instruction>(V)->getOpcode() == Opcode;
+}
+
+/// BreakUpSubtract - If we have (X-Y), and if either X is an add, or if this is
+/// only used by an add, transform this into (X+(0-Y)) to promote better
+/// reassociation.
+static Instruction *BreakUpSubtract(Instruction *Sub) {
+  // Reject cases where it is pointless to do this.
+  if (Sub->getType()->isFloatingPoint())
+    return 0;  // Floating point adds are not associative.
+
+  // Don't bother to break this up unless either the LHS is an associable add or
+  // if this is only used by one.
+  if (!isReassociableOp(Sub->getOperand(0), Instruction::Add) &&
+      !isReassociableOp(Sub->getOperand(1), Instruction::Add) &&
+      !(Sub->hasOneUse() &&isReassociableOp(Sub->use_back(), Instruction::Add)))
+    return 0;
+
+  // Convert a subtract into an add and a neg instruction... so that sub
+  // instructions can be commuted with other add instructions...
+  //
+  // Calculate the negative value of Operand 1 of the sub instruction...
+  // and set it as the RHS of the add instruction we just made...
+  //
+  std::string Name = Sub->getName();
+  Sub->setName("");
+  Value *NegVal = NegateValue(Sub->getOperand(1), Sub);
+  Instruction *New =
+    BinaryOperator::createAdd(Sub->getOperand(0), NegVal, Name, Sub);
+
+  // Everyone now refers to the add instruction.
+  Sub->replaceAllUsesWith(New);
+  Sub->eraseFromParent();
+  
+  DEBUG(std::cerr << "Negated: " << *New);
+  return New;
 }
 
 
+/// ReassociateBB - Inspect all of the instructions in this basic block,
+/// reassociating them as we go.
 bool Reassociate::ReassociateBB(BasicBlock *BB) {
   bool Changed = false;
   for (BasicBlock::iterator BI = BB->begin(); BI != BB->end(); ++BI) {
-
-    DEBUG(std::cerr << "Reassociating: " << *BI);
-    if (BI->getOpcode() == Instruction::Sub && !BinaryOperator::isNeg(BI)) {
-      // Convert a subtract into an add and a neg instruction... so that sub
-      // instructions can be commuted with other add instructions...
-      //
-      // Calculate the negative value of Operand 1 of the sub instruction...
-      // and set it as the RHS of the add instruction we just made...
-      //
-      std::string Name = BI->getName();
-      BI->setName("");
-      Instruction *New =
-        BinaryOperator::create(Instruction::Add, BI->getOperand(0),
-                               BI->getOperand(1), Name, BI);
-
-      // Everyone now refers to the add instruction...
-      BI->replaceAllUsesWith(New);
-
-      // Put the new add in the place of the subtract... deleting the subtract
-      BB->getInstList().erase(BI);
-
-      BI = New;
-      New->setOperand(1, NegateValue(New->getOperand(1), BI));
-
-      Changed = true;
-      DEBUG(std::cerr << "Negated: " << *New /*<< " Result BB: " << BB*/);
-    }
+    // If this is a subtract instruction which is not already in negate form,
+    // see if we can convert it to X+-Y.
+    if (BI->getOpcode() == Instruction::Sub && !BinaryOperator::isNeg(BI))
+      if (Instruction *NI = BreakUpSubtract(BI)) {
+        Changed = true;
+        BI = NI;
+      }
 
     // If this instruction is a commutative binary operator, and the ranks of
     // the two operands are sorted incorrectly, fix it now.
     //
     if (BI->isAssociative()) {
+      DEBUG(std::cerr << "Reassociating: " << *BI);
       BinaryOperator *I = cast<BinaryOperator>(BI);
       if (!I->use_empty()) {
         // Make sure that we don't have a tree-shaped computation.  If we do,
