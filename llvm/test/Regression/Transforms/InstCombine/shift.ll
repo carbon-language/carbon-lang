@@ -164,3 +164,11 @@ sbyte %test23(int %A) {
 	%D = cast int %C to sbyte
 	ret sbyte %D
 }
+
+sbyte %test24(sbyte %X) {
+        %Y = and sbyte %X, -5 ; ~4
+        %Z = shl sbyte %Y, ubyte 5
+        %Q = shr sbyte %Z, ubyte 5
+        ret sbyte %Q
+}
+
