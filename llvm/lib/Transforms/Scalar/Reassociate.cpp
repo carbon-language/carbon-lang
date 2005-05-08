@@ -365,7 +365,6 @@ void Reassociate::OptimizeExpression(unsigned Opcode,
                                      std::vector<ValueEntry> &Ops) {
   // Now that we have the linearized expression tree, try to optimize it.
   // Start by folding any constants that we found.
-Iterate:
   bool IterateOptimization = false;
   if (Ops.size() == 1) return;
 
@@ -373,7 +372,8 @@ Iterate:
     if (Constant *V2 = dyn_cast<Constant>(Ops.back().Op)) {
       Ops.pop_back();
       Ops.back().Op = ConstantExpr::get(Opcode, V1, V2);
-      goto Iterate;
+      OptimizeExpression(Opcode, Ops);
+      return;
     }
 
   // Check for destructive annihilation due to a constant being used.
@@ -494,7 +494,8 @@ Iterate:
   //case Instruction::Mul:
   }
 
-  if (IterateOptimization) goto Iterate;
+  if (IterateOptimization) 
+    OptimizeExpression(Opcode, Ops);
 }
 
 
