@@ -3136,6 +3136,16 @@ Instruction *InstCombiner::visitShiftInst(ShiftInst &I) {
       if (Instruction *R = FoldOpIntoSelect(I, SI, this))
         return R;
 
+  // See if we can turn a signed shr into an unsigned shr.
+  if (!isLeftShift && I.getType()->isSigned()) {
+    if (MaskedValueIsZero(Op0, ConstantInt::getMinValue(I.getType()))) {
+      Value *V = InsertCastBefore(Op0, I.getType()->getUnsignedVersion(), I);
+      V = InsertNewInstBefore(new ShiftInst(Instruction::Shr, V, Op1,
+                                            I.getName()), I);
+      return new CastInst(V, I.getType());
+    }
+  }
+  
   if (ConstantUInt *CUI = dyn_cast<ConstantUInt>(Op1)) {
     // shl uint X, 32 = 0 and shr ubyte Y, 9 = 0, ... just don't eliminate shr
     // of a signed value.
