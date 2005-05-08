@@ -341,10 +341,6 @@ static Value *NegateValue(Value *V, Instruction *BI) {
 /// only used by an add, transform this into (X+(0-Y)) to promote better
 /// reassociation.
 static Instruction *BreakUpSubtract(Instruction *Sub) {
-  // Reject cases where it is pointless to do this.
-  if (Sub->getType()->isFloatingPoint())
-    return 0;  // Floating point adds are not associative.
-
   // Don't bother to break this up unless either the LHS is an associable add or
   // if this is only used by one.
   if (!isReassociableOp(Sub->getOperand(0), Instruction::Add) &&
@@ -560,6 +556,10 @@ static void PrintOps(unsigned Opcode, const std::vector<ValueEntry> &Ops,
 /// reassociating them as we go.
 void Reassociate::ReassociateBB(BasicBlock *BB) {
   for (BasicBlock::iterator BI = BB->begin(); BI != BB->end(); ++BI) {
+    // Reject cases where it is pointless to do this.
+    if (!isa<BinaryOperator>(BI) || BI->getType()->isFloatingPoint())
+      continue;  // Floating point ops are not associative.
+
     // If this is a subtract instruction which is not already in negate form,
     // see if we can convert it to X+-Y.
     if (BI->getOpcode() == Instruction::Sub) {
