@@ -239,6 +239,12 @@ BasicAliasAnalysis::getModRefInfo(CallSite CS, Value *P, unsigned Size) {
       // because it simply can't get its address.
       if (!AddressMightEscape(AI))
         return NoModRef;
+
+      // If this is a tail call and P points to a stack location, we know that
+      // the tail call cannot access or modify the local stack.
+      if (CallInst *CI = dyn_cast<CallInst>(CS.getInstruction()))
+        if (CI->isTailCall() && isa<AllocaInst>(AI))
+          return NoModRef;
     }
 
   // The AliasAnalysis base class has some smarts, lets use them.
