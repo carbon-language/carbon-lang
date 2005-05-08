@@ -77,6 +77,20 @@ namespace {
 // Public interface to the Reassociate pass
 FunctionPass *llvm::createReassociatePass() { return new Reassociate(); }
 
+
+static bool isUnmovableInstruction(Instruction *I) {
+  if (I->getOpcode() == Instruction::PHI ||
+      I->getOpcode() == Instruction::Alloca ||
+      I->getOpcode() == Instruction::Load ||
+      I->getOpcode() == Instruction::Malloc ||
+      I->getOpcode() == Instruction::Invoke ||
+      I->getOpcode() == Instruction::Call ||
+      I->getOpcode() == Instruction::Div ||
+      I->getOpcode() == Instruction::Rem)
+    return true;
+  return false;
+}
+
 void Reassociate::BuildRankMap(Function &F) {
   unsigned i = 2;
 
@@ -86,8 +100,17 @@ void Reassociate::BuildRankMap(Function &F) {
 
   ReversePostOrderTraversal<Function*> RPOT(&F);
   for (ReversePostOrderTraversal<Function*>::rpo_iterator I = RPOT.begin(),
-         E = RPOT.end(); I != E; ++I)
-    RankMap[*I] = ++i << 16;
+         E = RPOT.end(); I != E; ++I) {
+    BasicBlock *BB = *I;
+    unsigned BBRank = RankMap[BB] = ++i << 16;
+
+    // Walk the basic block, adding precomputed ranks for any instructions that
+    // we cannot move.  This ensures that the ranks for these instructions are
+    // all different in the block.
+    for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I)
+      if (isUnmovableInstruction(I))
+        ValueRankMap[I] = ++BBRank;
+  }
 }
 
 unsigned Reassociate::getRank(Value *V) {
@@ -103,14 +126,6 @@ unsigned Reassociate::getRank(Value *V) {
   // we can reassociate expressions for code motion!  Since we do not recurse
   // for PHI nodes, we cannot have infinite recursion here, because there
   // cannot be loops in the value graph that do not go through PHI nodes.
-  //
-  if (I->getOpcode() == Instruction::PHI ||
-      I->getOpcode() == Instruction::Alloca ||
-      I->getOpcode() == Instruction::Malloc || isa<TerminatorInst>(I) ||
-      I->mayWriteToMemory())  // Cannot move inst if it writes to memory!
-    return RankMap[I->getParent()];
-  
-  // If not, compute it!
   unsigned Rank = 0, MaxRank = RankMap[I->getParent()];
   for (unsigned i = 0, e = I->getNumOperands();
        i != e && Rank != MaxRank; ++i)
@@ -122,8 +137,8 @@ unsigned Reassociate::getRank(Value *V) {
       (!BinaryOperator::isNot(I) && !BinaryOperator::isNeg(I)))
     ++Rank;
 
-  DEBUG(std::cerr << "Calculated Rank[" << V->getName() << "] = "
-        << Rank << "\n");
+  //DEBUG(std::cerr << "Calculated Rank[" << V->getName() << "] = "
+  //<< Rank << "\n");
   
   return CachedRank = Rank;
 }
