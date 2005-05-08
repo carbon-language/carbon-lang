@@ -41,6 +41,7 @@
 
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Assembly/Writer.h"
+#include "llvm/CallingConv.h"
 #include "llvm/Constants.h"
 #include "llvm/Pass.h"
 #include "llvm/Module.h"
@@ -294,7 +295,10 @@ void Verifier::verifySymbolTable(SymbolTable &ST) {
 // visitFunction - Verify that a function is ok.
 //
 void Verifier::visitFunction(Function &F) {
-  // Check function arguments...
+  Assert1(!F.isVarArg() || F.getCallingConv() == CallingConv::C,
+          "Varargs functions must have C calling conventions!", &F);
+
+  // Check function arguments.
   const FunctionType *FT = F.getFunctionType();
   unsigned NumArgs = F.getArgumentList().size();
 
