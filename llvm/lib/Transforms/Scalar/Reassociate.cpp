@@ -27,6 +27,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Pass.h"
 #include "llvm/Type.h"
+#include "llvm/Assembly/Writer.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/ADT/PostOrderIterator.h"
@@ -498,6 +499,17 @@ void Reassociate::OptimizeExpression(unsigned Opcode,
     OptimizeExpression(Opcode, Ops);
 }
 
+/// PrintOps - Print out the expression identified in the Ops list.
+///
+static void PrintOps(unsigned Opcode, const std::vector<ValueEntry> &Ops,
+                     BasicBlock *BB) {
+  Module *M = BB->getParent()->getParent();
+  std::cerr << Instruction::getOpcodeName(Opcode) << " "
+            << *Ops[0].Op->getType();
+  for (unsigned i = 0, e = Ops.size(); i != e; ++i)
+    WriteAsOperand(std::cerr << " ", Ops[i].Op, false, true, M)
+      << "," << Ops[i].Rank;
+}
 
 /// ReassociateBB - Inspect all of the instructions in this basic block,
 /// reassociating them as we go.
@@ -530,6 +542,9 @@ void Reassociate::ReassociateBB(BasicBlock *BB) {
     std::vector<ValueEntry> Ops;
     LinearizeExprTree(I, Ops);
 
+    DEBUG(std::cerr << "RAIn:\t"; PrintOps(I->getOpcode(), Ops, BB);
+          std::cerr << "\n");
+
     // Now that we have linearized the tree to a list and have gathered all of
     // the operands and their ranks, sort the operands by their rank.  Use a
     // stable_sort so that values with equal ranks will have their relative
@@ -541,6 +556,9 @@ void Reassociate::ReassociateBB(BasicBlock *BB) {
     // OptimizeExpression - Now that we have the expression tree in a convenient
     // sorted form, optimize it globally if possible.
     OptimizeExpression(I->getOpcode(), Ops);
+
+    DEBUG(std::cerr << "RAOut:\t"; PrintOps(I->getOpcode(), Ops, BB);
+          std::cerr << "\n");
 
     if (Ops.size() == 1) {
       // This expression tree simplified to something that isn't a tree,
