@@ -260,7 +260,6 @@ static bool ExtractLoops(BugDriver &BD,
     }
 
     std::cerr << "Extracted a loop from the breaking portion of the program.\n";
-    delete ToOptimize;
 
     // Bugpoint is intentionally not very trusting of LLVM transformations.  In
     // particular, we're not going to assume that the loop extractor works, so
@@ -275,10 +274,19 @@ static bool ExtractLoops(BugDriver &BD,
       std::cerr << "  *** ERROR: Loop extraction broke the program. :("
                 << " Please report a bug!\n";
       std::cerr << "      Continuing on with un-loop-extracted version.\n";
+
+      BD.writeProgramToFile("bugpoint-loop-extract-fail-tno.bc", ToNotOptimize);
+      BD.writeProgramToFile("bugpoint-loop-extract-fail-to.bc", ToOptimize);
+      BD.writeProgramToFile("bugpoint-loop-extract-fail-to-le.bc",
+                            ToOptimizeLoopExtracted);
+
+      std::cerr << "Please submit the bugpoint-loop-extract-fail-*.bc files.\n";
+      delete ToOptimize;
       delete ToNotOptimize;
       delete ToOptimizeLoopExtracted;
       return MadeChange;
     }
+    delete ToOptimize;
     BD.switchToInterpreter(AI);
 
     std::cout << "  Testing after loop extraction:\n";
