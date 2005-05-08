@@ -77,20 +77,19 @@ namespace {
 bool DCE::runOnFunction(Function &F) {
   // Start out with all of the instructions in the worklist...
   std::vector<Instruction*> WorkList;
-  for (inst_iterator i = inst_begin(F), e = inst_end(F); i != e; ++i) {
-      WorkList.push_back(&*i);
-  }
-  std::set<Instruction*> DeadInsts;
+  for (inst_iterator i = inst_begin(F), e = inst_end(F); i != e; ++i)
+    WorkList.push_back(&*i);
 
   // Loop over the worklist finding instructions that are dead.  If they are
   // dead make them drop all of their uses, making other instructions
   // potentially dead, and work until the worklist is empty.
   //
+  bool MadeChange = false;
   while (!WorkList.empty()) {
     Instruction *I = WorkList.back();
     WorkList.pop_back();
 
-    if (isInstructionTriviallyDead(I)) {       // If the instruction is dead...
+    if (isInstructionTriviallyDead(I)) {       // If the instruction is dead.
       // Loop over all of the values that the instruction uses, if there are
       // instructions being used, add them to the worklist, because they might
       // go dead after this one is removed.
@@ -99,28 +98,23 @@ bool DCE::runOnFunction(Function &F) {
         if (Instruction *Used = dyn_cast<Instruction>(*OI))
           WorkList.push_back(Used);
 
-      // Tell the instruction to let go of all of the values it uses...
-      I->dropAllReferences();
+      // Remove the instruction.
+      I->eraseFromParent();
 
-      // Keep track of this instruction, because we are going to delete it later
-      DeadInsts.insert(I);
+      // Remove the instruction from the worklist if it still exists in it.
+      for (std::vector<Instruction*>::iterator WI = WorkList.begin(),
+             E = WorkList.end(); WI != E; ++WI)
+        if (*WI == I) {
+          WorkList.erase(WI);
+          --E;
+          --WI;
+        }
+
+      MadeChange = true;
+      ++DCEEliminated;
     }
   }
-
-  // If we found no dead instructions, we haven't changed the function...
-  if (DeadInsts.empty()) return false;
-
-  // Otherwise, loop over the program, removing and deleting the instructions...
-  for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I)
-    for (BasicBlock::iterator BI = I->begin(); BI != I->end(); )
-      if (DeadInsts.count(BI)) {             // Is this instruction dead?
-        BI = I->getInstList().erase(BI);     // Yup, remove and delete inst
-        ++DCEEliminated;
-      } else {                               // This instruction is not dead
-        ++BI;                                // Continue on to the next one...
-      }
-
-  return true;
+  return MadeChange;
 }
 
 FunctionPass *llvm::createDeadCodeEliminationPass() {
