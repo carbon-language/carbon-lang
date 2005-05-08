@@ -113,10 +113,16 @@ unsigned Reassociate::getRank(Value *V) {
        i != e && Rank != MaxRank; ++i)
     Rank = std::max(Rank, getRank(I->getOperand(i)));
   
+  // If this is a not or neg instruction, do not count it for rank.  This
+  // assures us that X and ~X will have the same rank.
+  if (!I->getType()->isIntegral() ||
+      (!BinaryOperator::isNot(I) && !BinaryOperator::isNeg(I)))
+    ++Rank;
+
   DEBUG(std::cerr << "Calculated Rank[" << V->getName() << "] = "
-        << Rank+1 << "\n");
+        << Rank << "\n");
   
-  return CachedRank = Rank+1;
+  return CachedRank = Rank;
 }
 
 /// isReassociableOp - Return true if V is an instruction of the specified
@@ -388,11 +394,40 @@ void Reassociate::ReassociateBB(BasicBlock *BB) {
           goto FoldConstants;
         }
 
-    // FIXME: Handle destructive annihilation here.  Ensure RANK(neg(x)) ==
-    // RANK(x) [and not].  Handle case when Cst = 0 and op = AND f.e.
-
-    // FIXME: Handle +0,*1,&~0,... at end of the list.
-
+    // Check for destructive annihilation due to a constant being used.
+    if (Ops.size() != 1) {  // Nothing to annihilate?
+      if (ConstantIntegral *CstVal = dyn_cast<ConstantIntegral>(Ops.back().Op))
+        switch (I->getOpcode()) {
+        default: break;
+        case Instruction::And:
+          if (CstVal->isNullValue()) {           // ... & 0 -> 0
+            Ops[0].Op = CstVal;
+            Ops.erase(Ops.begin()+1, Ops.end());
+          } else if (CstVal->isAllOnesValue()) { // ... & -1 -> ...
+            Ops.pop_back();
+          }
+          break;
+        case Instruction::Mul:
+          if (CstVal->isNullValue()) {           // ... * 0 -> 0
+            Ops[0].Op = CstVal;
+            Ops.erase(Ops.begin()+1, Ops.end());
+          } else if (cast<ConstantInt>(CstVal)->getRawValue() == 1) {
+            Ops.pop_back();                      // ... * 1 -> ...
+          }
+          break;
+        case Instruction::Or:
+          if (CstVal->isAllOnesValue()) {        // ... | -1 -> -1
+            Ops[0].Op = CstVal;
+            Ops.erase(Ops.begin()+1, Ops.end());
+          }
+          // FALLTHROUGH!
+        case Instruction::Add:
+        case Instruction::Xor:
+          if (CstVal->isNullValue())             // ... [|^+] 0 -> ...
+            Ops.pop_back();
+          break;
+        }
+    }
 
     if (Ops.size() == 1) {
       // This expression tree simplified to something that isn't a tree,
