@@ -88,13 +88,16 @@ void DefaultIntrinsicLowering::AddPrototypes(Module &M) {
       switch (I->getIntrinsicID()) {
       default: break;
       case Intrinsic::setjmp:
-        EnsureFunctionExists(M, "setjmp", I->arg_begin(), I->arg_end(), Type::IntTy);
+        EnsureFunctionExists(M, "setjmp", I->arg_begin(), I->arg_end(),
+                             Type::IntTy);
         break;
       case Intrinsic::longjmp:
-        EnsureFunctionExists(M, "longjmp", I->arg_begin(), I->arg_end(),Type::VoidTy);
+        EnsureFunctionExists(M, "longjmp", I->arg_begin(), I->arg_end(),
+                             Type::VoidTy);
         break;
       case Intrinsic::siglongjmp:
-        EnsureFunctionExists(M, "abort", I->arg_end(), I->arg_end(), Type::VoidTy);
+        EnsureFunctionExists(M, "abort", I->arg_end(), I->arg_end(),
+                             Type::VoidTy);
         break;
       case Intrinsic::memcpy:
         EnsureFunctionExists(M, "memcpy", I->arg_begin(), --I->arg_end(),
@@ -105,17 +108,21 @@ void DefaultIntrinsicLowering::AddPrototypes(Module &M) {
                              I->arg_begin()->getType());
         break;
       case Intrinsic::memset:
-        EnsureFunctionExists(M, "memset", I->arg_begin(), --I->arg_end(),
-                             I->arg_begin()->getType());
+        M.getOrInsertFunction("memset", PointerType::get(Type::SByteTy),
+                              PointerType::get(Type::SByteTy),
+                              Type::IntTy, (--(--I->arg_end()))->getType(), 0);
         break;
       case Intrinsic::isunordered:
-        EnsureFunctionExists(M, "isunordered", I->arg_begin(), I->arg_end(), Type::BoolTy);
+        EnsureFunctionExists(M, "isunordered", I->arg_begin(), I->arg_end(),
+                             Type::BoolTy);
         break;
       case Intrinsic::sqrt:
         if(I->arg_begin()->getType() == Type::FloatTy)
-          EnsureFunctionExists(M, "sqrtf", I->arg_begin(), I->arg_end(), Type::FloatTy);
+          EnsureFunctionExists(M, "sqrtf", I->arg_begin(), I->arg_end(),
+                               Type::FloatTy);
         else
-          EnsureFunctionExists(M, "sqrt", I->arg_begin(), I->arg_end(), Type::DoubleTy);
+          EnsureFunctionExists(M, "sqrt", I->arg_begin(), I->arg_end(),
+                               Type::DoubleTy);
         break;
       }
 }
