@@ -15,6 +15,7 @@
 
 #define DEBUG_TYPE "globalopt"
 #include "llvm/Transforms/IPO.h"
+#include "llvm/CallingConv.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Instructions.h"
@@ -42,6 +43,8 @@ namespace {
   Statistic<> NumLocalized("globalopt", "Number of globals localized");
   Statistic<> NumShrunkToBool("globalopt",
                               "Number of global vars shrunk to booleans");
+  Statistic<> NumFastCallFns("globalopt",
+                             "Number of functions converted to fastcc");
 
   struct GlobalOpt : public ModulePass {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
@@ -1039,6 +1042,32 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
   return false;
 }
 
+/// OnlyCalledDirectly - Return true if the specified function is only called
+/// directly.  In other words, its address is never taken.
+static bool OnlyCalledDirectly(Function *F) {
+  for (Value::use_iterator UI = F->use_begin(), E = F->use_end(); UI != E;++UI){
+    Instruction *User = dyn_cast<Instruction>(*UI);
+    if (!User) return false;
+    if (!isa<CallInst>(User) && !isa<InvokeInst>(User)) return false;
+
+    // See if the function address is passed as an argument.
+    for (unsigned i = 1, e = User->getNumOperands(); i != e; ++i)
+      if (User->getOperand(i) == F) return false;
+  }
+  return true;
+}
+
+/// ChangeCalleesToFastCall - Walk all of the direct calls of the specified
+/// function, changing them to FastCC.
+static void ChangeCalleesToFastCall(Function *F) {
+  for (Value::use_iterator UI = F->use_begin(), E = F->use_end(); UI != E;++UI){
+    Instruction *User = cast<Instruction>(*UI);
+    if (CallInst *CI = dyn_cast<CallInst>(User))
+      CI->setCallingConv(CallingConv::Fast);
+    else
+      cast<InvokeInst>(User)->setCallingConv(CallingConv::Fast);
+  }
+}
 
 bool GlobalOpt::runOnModule(Module &M) {
   bool Changed = false;
@@ -1055,6 +1084,16 @@ bool GlobalOpt::runOnModule(Module &M) {
         M.getFunctionList().erase(F);
         LocalChange = true;
         ++NumFnDeleted;
+      } else if (F->hasInternalLinkage() &&
+                 F->getCallingConv() == CallingConv::C &&  !F->isVarArg() &&
+                 OnlyCalledDirectly(F)) {
+        // If this function has C calling conventions, is not a varargs
+        // function, and is only called directly, promote it to use the Fast
+        // calling convention.
+        F->setCallingConv(CallingConv::Fast);
+        ChangeCalleesToFastCall(F);
+        ++NumFastCallFns;
+        LocalChange = true;
       }
     }
     Changed |= LocalChange;
@@ -1063,7 +1102,8 @@ bool GlobalOpt::runOnModule(Module &M) {
   LocalChange = true;
   while (LocalChange) {
     LocalChange = false;
-    for (Module::global_iterator GVI = M.global_begin(), E = M.global_end(); GVI != E;) {
+    for (Module::global_iterator GVI = M.global_begin(), E = M.global_end();
+         GVI != E; ) {
       GlobalVariable *GV = GVI++;
       if (!GV->isConstant() && GV->hasInternalLinkage() &&
           GV->hasInitializer())
