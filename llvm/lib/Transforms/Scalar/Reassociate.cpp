@@ -614,6 +614,18 @@ void Reassociate::ReassociateBB(BasicBlock *BB) {
     // sorted form, optimize it globally if possible.
     OptimizeExpression(I->getOpcode(), Ops);
 
+    // We want to sink immediates as deeply as possible except in the case where
+    // this is a multiply tree used only by an add, and the immediate is a -1.
+    // In this case we reassociate to put the negation on the outside so that we
+    // can fold the negation into the add: (-X)*Y + Z -> Z-X*Y
+    if (I->getOpcode() == Instruction::Mul && I->hasOneUse() && 
+        cast<Instruction>(I->use_back())->getOpcode() == Instruction::Add &&
+        isa<ConstantInt>(Ops.back().Op) &&
+        cast<ConstantInt>(Ops.back().Op)->isAllOnesValue()) {
+      Ops.insert(Ops.begin(), Ops.back());
+      Ops.pop_back();
+    }
+
     DEBUG(std::cerr << "RAOut:\t"; PrintOps(I->getOpcode(), Ops, BB);
           std::cerr << "\n");
 
