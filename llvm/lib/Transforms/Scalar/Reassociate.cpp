@@ -63,6 +63,7 @@ namespace {
     unsigned getRank(Value *V);
     void RewriteExprTree(BinaryOperator *I, unsigned Idx,
                          std::vector<ValueEntry> &Ops);
+    void OptimizeExpression(unsigned Opcode, std::vector<ValueEntry> &Ops);
     void LinearizeExprTree(BinaryOperator *I, std::vector<ValueEntry> &Ops);
     void LinearizeExpr(BinaryOperator *I);
     void ReassociateBB(BasicBlock *BB);
@@ -343,6 +344,57 @@ static Instruction *ConvertShiftToMul(Instruction *Shl) {
   return Mul;
 }
 
+void Reassociate::OptimizeExpression(unsigned Opcode,
+                                     std::vector<ValueEntry> &Ops) {
+  // Now that we have the linearized expression tree, try to optimize it.
+  // Start by folding any constants that we found.
+ FoldConstants:
+  if (Ops.size() == 1) return;
+
+  if (Constant *V1 = dyn_cast<Constant>(Ops[Ops.size()-2].Op))
+    if (Constant *V2 = dyn_cast<Constant>(Ops.back().Op)) {
+      Ops.pop_back();
+      Ops.back().Op = ConstantExpr::get(Opcode, V1, V2);
+      goto FoldConstants;
+    }
+
+  // Check for destructive annihilation due to a constant being used.
+  if (ConstantIntegral *CstVal = dyn_cast<ConstantIntegral>(Ops.back().Op))
+    switch (Opcode) {
+    default: break;
+    case Instruction::And:
+      if (CstVal->isNullValue()) {           // ... & 0 -> 0
+        Ops[0].Op = CstVal;
+        Ops.erase(Ops.begin()+1, Ops.end());
+      } else if (CstVal->isAllOnesValue()) { // ... & -1 -> ...
+        Ops.pop_back();
+      }
+      break;
+    case Instruction::Mul:
+      if (CstVal->isNullValue()) {           // ... * 0 -> 0
+        Ops[0].Op = CstVal;
+        Ops.erase(Ops.begin()+1, Ops.end());
+      } else if (cast<ConstantInt>(CstVal)->getRawValue() == 1) {
+        Ops.pop_back();                      // ... * 1 -> ...
+      }
+      break;
+    case Instruction::Or:
+      if (CstVal->isAllOnesValue()) {        // ... | -1 -> -1
+        Ops[0].Op = CstVal;
+        Ops.erase(Ops.begin()+1, Ops.end());
+      }
+      // FALLTHROUGH!
+    case Instruction::Add:
+    case Instruction::Xor:
+      if (CstVal->isNullValue())             // ... [|^+] 0 -> ...
+        Ops.pop_back();
+      break;
+    }
+
+  // Handle destructive annihilation do to identities between elements in the
+  // argument list here.
+}
+
 
 /// ReassociateBB - Inspect all of the instructions in this basic block,
 /// reassociating them as we go.
@@ -383,51 +435,9 @@ void Reassociate::ReassociateBB(BasicBlock *BB) {
     // the vector.
     std::stable_sort(Ops.begin(), Ops.end());
 
-    // Now that we have the linearized expression tree, try to optimize it.
-    // Start by folding any constants that we found.
-  FoldConstants:
-    if (Ops.size() > 1)
-      if (Constant *V1 = dyn_cast<Constant>(Ops[Ops.size()-2].Op))
-        if (Constant *V2 = dyn_cast<Constant>(Ops.back().Op)) {
-          Ops.pop_back();
-          Ops.back().Op = ConstantExpr::get(I->getOpcode(), V1, V2);
-          goto FoldConstants;
-        }
-
-    // Check for destructive annihilation due to a constant being used.
-    if (Ops.size() != 1) {  // Nothing to annihilate?
-      if (ConstantIntegral *CstVal = dyn_cast<ConstantIntegral>(Ops.back().Op))
-        switch (I->getOpcode()) {
-        default: break;
-        case Instruction::And:
-          if (CstVal->isNullValue()) {           // ... & 0 -> 0
-            Ops[0].Op = CstVal;
-            Ops.erase(Ops.begin()+1, Ops.end());
-          } else if (CstVal->isAllOnesValue()) { // ... & -1 -> ...
-            Ops.pop_back();
-          }
-          break;
-        case Instruction::Mul:
-          if (CstVal->isNullValue()) {           // ... * 0 -> 0
-            Ops[0].Op = CstVal;
-            Ops.erase(Ops.begin()+1, Ops.end());
-          } else if (cast<ConstantInt>(CstVal)->getRawValue() == 1) {
-            Ops.pop_back();                      // ... * 1 -> ...
-          }
-          break;
-        case Instruction::Or:
-          if (CstVal->isAllOnesValue()) {        // ... | -1 -> -1
-            Ops[0].Op = CstVal;
-            Ops.erase(Ops.begin()+1, Ops.end());
-          }
-          // FALLTHROUGH!
-        case Instruction::Add:
-        case Instruction::Xor:
-          if (CstVal->isNullValue())             // ... [|^+] 0 -> ...
-            Ops.pop_back();
-          break;
-        }
-    }
+    // OptimizeExpression - Now that we have the expression tree in a convenient
+    // sorted form, optimize it globally if possible.
+    OptimizeExpression(I->getOpcode(), Ops);
 
     if (Ops.size() == 1) {
       // This expression tree simplified to something that isn't a tree,
