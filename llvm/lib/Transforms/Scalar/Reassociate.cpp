@@ -152,6 +152,23 @@ static BinaryOperator *isReassociableOp(Value *V, unsigned Opcode) {
   return 0;
 }
 
+/// LowerNegateToMultiply - Replace 0-X with X*-1.
+///
+static Instruction *LowerNegateToMultiply(Instruction *Neg) {
+  Constant *Cst;
+  if (Neg->getType()->isFloatingPoint())
+    Cst = ConstantFP::get(Neg->getType(), -1);
+  else
+    Cst = ConstantInt::getAllOnesValue(Neg->getType());
+
+  std::string NegName = Neg->getName(); Neg->setName("");
+  Instruction *Res = BinaryOperator::createMul(Neg->getOperand(1), Cst, NegName,
+                                               Neg);
+  Neg->replaceAllUsesWith(Res);
+  Neg->eraseFromParent();
+  return Res;
+}
+
 // Given an expression of the form '(A+B)+(D+C)', turn it into '(((A+B)+C)+D)'.
 // Note that if D is also part of the expression tree that we recurse to
 // linearize it as well.  Besides that case, this does not recurse into A,B, or
@@ -200,6 +217,19 @@ void Reassociate::LinearizeExprTree(BinaryOperator *I,
   // First step, linearize the expression if it is in ((A+B)+(C+D)) form.
   BinaryOperator *LHSBO = isReassociableOp(LHS, Opcode);
   BinaryOperator *RHSBO = isReassociableOp(RHS, Opcode);
+
+  // If this is a multiply expression tree and it contains internal negations,
+  // transform them into multiplies by -1 so they can be reassociated.
+  if (I->getOpcode() == Instruction::Mul) {
+    if (!LHSBO && LHS->hasOneUse() && BinaryOperator::isNeg(LHS)) {
+      LHS = LowerNegateToMultiply(cast<Instruction>(LHS));
+      LHSBO = isReassociableOp(LHS, Opcode);
+    }
+    if (!RHSBO && RHS->hasOneUse() && BinaryOperator::isNeg(RHS)) {
+      RHS = LowerNegateToMultiply(cast<Instruction>(RHS));
+      RHSBO = isReassociableOp(RHS, Opcode);
+    }
+  }
 
   if (!LHSBO) {
     if (!RHSBO) {
@@ -532,11 +562,23 @@ void Reassociate::ReassociateBB(BasicBlock *BB) {
   for (BasicBlock::iterator BI = BB->begin(); BI != BB->end(); ++BI) {
     // If this is a subtract instruction which is not already in negate form,
     // see if we can convert it to X+-Y.
-    if (BI->getOpcode() == Instruction::Sub && !BinaryOperator::isNeg(BI))
-      if (Instruction *NI = BreakUpSubtract(BI)) {
-        MadeChange = true;
-        BI = NI;
+    if (BI->getOpcode() == Instruction::Sub) {
+      if (!BinaryOperator::isNeg(BI)) {
+        if (Instruction *NI = BreakUpSubtract(BI)) {
+          MadeChange = true;
+          BI = NI;
+        }
+      } else {
+        // Otherwise, this is a negation.  See if the operand is a multiply tree
+        // and if this is not an inner node of a multiply tree.
+        if (isReassociableOp(BI->getOperand(1), Instruction::Mul) &&
+            (!BI->hasOneUse() ||
+             !isReassociableOp(BI->use_back(), Instruction::Mul))) {
+          BI = LowerNegateToMultiply(BI);
+          MadeChange = true;
+        }
       }
+    }
     if (BI->getOpcode() == Instruction::Shl &&
         isa<ConstantInt>(BI->getOperand(1)))
       if (Instruction *NI = ConvertShiftToMul(BI)) {
