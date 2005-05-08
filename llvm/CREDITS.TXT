@@ -34,6 +34,8 @@ E: ccarter@uiuc.edu
 D: Fixes to the Reassociation pass, various improvement patches
 
 N: Jeff Cohen
+E: jeffc@jolt-lang.org
+W: http://jolt-lang.org
 D: Native Win32 API portability layer
 
 N: John T. Criswell
