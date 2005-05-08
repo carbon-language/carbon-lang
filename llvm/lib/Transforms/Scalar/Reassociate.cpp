@@ -38,6 +38,7 @@ namespace {
   Statistic<> NumLinear ("reassociate","Number of insts linearized");
   Statistic<> NumChanged("reassociate","Number of insts reassociated");
   Statistic<> NumSwapped("reassociate","Number of insts with operands swapped");
+  Statistic<> NumAnnihil("reassociate","Number of expr tree annihilated");
 
   struct ValueEntry {
     unsigned Rank;
@@ -344,18 +345,35 @@ static Instruction *ConvertShiftToMul(Instruction *Shl) {
   return Mul;
 }
 
+// Scan backwards and forwards among values with the same rank as element i to
+// see if X exists.  If X does not exist, return i.
+static unsigned FindInOperandList(std::vector<ValueEntry> &Ops, unsigned i,
+                                  Value *X) {
+  unsigned XRank = Ops[i].Rank;
+  unsigned e = Ops.size();
+  for (unsigned j = i+1; j != e && Ops[j].Rank == XRank; ++j)
+    if (Ops[j].Op == X)
+      return j;
+  // Scan backwards
+  for (unsigned j = i-1; j != ~0U && Ops[j].Rank == XRank; --j)
+    if (Ops[j].Op == X)
+      return j;
+  return i;
+}
+
 void Reassociate::OptimizeExpression(unsigned Opcode,
                                      std::vector<ValueEntry> &Ops) {
   // Now that we have the linearized expression tree, try to optimize it.
   // Start by folding any constants that we found.
- FoldConstants:
+Iterate:
+  bool IterateOptimization = false;
   if (Ops.size() == 1) return;
 
   if (Constant *V1 = dyn_cast<Constant>(Ops[Ops.size()-2].Op))
     if (Constant *V2 = dyn_cast<Constant>(Ops.back().Op)) {
       Ops.pop_back();
       Ops.back().Op = ConstantExpr::get(Opcode, V1, V2);
-      goto FoldConstants;
+      goto Iterate;
     }
 
   // Check for destructive annihilation due to a constant being used.
@@ -366,6 +384,8 @@ void Reassociate::OptimizeExpression(unsigned Opcode,
       if (CstVal->isNullValue()) {           // ... & 0 -> 0
         Ops[0].Op = CstVal;
         Ops.erase(Ops.begin()+1, Ops.end());
+        ++NumAnnihil;
+        return;
       } else if (CstVal->isAllOnesValue()) { // ... & -1 -> ...
         Ops.pop_back();
       }
@@ -374,6 +394,8 @@ void Reassociate::OptimizeExpression(unsigned Opcode,
       if (CstVal->isNullValue()) {           // ... * 0 -> 0
         Ops[0].Op = CstVal;
         Ops.erase(Ops.begin()+1, Ops.end());
+        ++NumAnnihil;
+        return;
       } else if (cast<ConstantInt>(CstVal)->getRawValue() == 1) {
         Ops.pop_back();                      // ... * 1 -> ...
       }
@@ -382,6 +404,8 @@ void Reassociate::OptimizeExpression(unsigned Opcode,
       if (CstVal->isAllOnesValue()) {        // ... | -1 -> -1
         Ops[0].Op = CstVal;
         Ops.erase(Ops.begin()+1, Ops.end());
+        ++NumAnnihil;
+        return;
       }
       // FALLTHROUGH!
     case Instruction::Add:
@@ -393,6 +417,84 @@ void Reassociate::OptimizeExpression(unsigned Opcode,
 
   // Handle destructive annihilation do to identities between elements in the
   // argument list here.
+  switch (Opcode) {
+  default: break;
+  case Instruction::And:
+  case Instruction::Or:
+  case Instruction::Xor:
+    // Scan the operand lists looking for X and ~X pairs, along with X,X pairs.
+    // If we find any, we can simplify the expression. X&~X == 0, X|~X == -1.
+    for (unsigned i = 0, e = Ops.size(); i != e; ++i) {
+      // First, check for X and ~X in the operand list.
+      if (BinaryOperator::isNot(Ops[i].Op)) {    // Cannot occur for ^.
+        Value *X = BinaryOperator::getNotArgument(Ops[i].Op);
+        unsigned FoundX = FindInOperandList(Ops, i, X);
+        if (FoundX != i) {
+          if (Opcode == Instruction::And) {   // ...&X&~X = 0
+            Ops[0].Op = Constant::getNullValue(X->getType());
+            Ops.erase(Ops.begin()+1, Ops.end());
+            ++NumAnnihil;
+            return;
+          } else if (Opcode == Instruction::Or) {   // ...|X|~X = -1
+            Ops[0].Op = ConstantIntegral::getAllOnesValue(X->getType());
+            Ops.erase(Ops.begin()+1, Ops.end());
+            ++NumAnnihil;
+            return;
+          }
+        }
+      }
+
+      // Next, check for duplicate pairs of values, which we assume are next to
+      // each other, due to our sorting criteria.
+      if (i+1 != Ops.size() && Ops[i+1].Op == Ops[i].Op) {
+        if (Opcode == Instruction::And || Opcode == Instruction::Or) {
+          // Drop duplicate values.
+          Ops.erase(Ops.begin()+i);
+          --i; --e;
+          IterateOptimization = true;
+          ++NumAnnihil;
+        } else {
+          assert(Opcode == Instruction::Xor);
+          // ... X^X -> ...
+          Ops.erase(Ops.begin()+i, Ops.begin()+i+2);
+          i -= 2; e -= 2;
+          IterateOptimization = true;
+          ++NumAnnihil;
+        }
+      }
+    }
+    break;
+
+  case Instruction::Add:
+    // Scan the operand lists looking for X and -X pairs.  If we find any, we
+    // can simplify the expression. X+-X == 0
+    for (unsigned i = 0, e = Ops.size(); i != e; ++i) {
+      // Check for X and -X in the operand list.
+      if (BinaryOperator::isNeg(Ops[i].Op)) {
+        Value *X = BinaryOperator::getNegArgument(Ops[i].Op);
+        unsigned FoundX = FindInOperandList(Ops, i, X);
+        if (FoundX != i) {
+          // Remove X and -X from the operand list.
+          if (Ops.size() == 2) {
+            Ops[0].Op = Constant::getNullValue(X->getType());
+            Ops.erase(Ops.begin()+1);
+            ++NumAnnihil;
+            return;
+          } else {
+            Ops.erase(Ops.begin()+i);
+            if (i < FoundX) --FoundX;
+            Ops.erase(Ops.begin()+FoundX);
+            IterateOptimization = true;
+            ++NumAnnihil;
+          }
+        }
+      }
+    }
+    break;
+  //case Instruction::Mul:
+  }
+
+  if (IterateOptimization) goto Iterate;
 }
 
 
