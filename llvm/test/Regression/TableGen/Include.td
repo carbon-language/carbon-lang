@@ -1,4 +1,4 @@
-// RUN: tblgen %s
+// RUN: tblgen -I `dirname %s` %s
 def BeforeInclude;
 
 include "Include.inc"
