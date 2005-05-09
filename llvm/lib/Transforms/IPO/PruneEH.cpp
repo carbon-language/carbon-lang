@@ -144,10 +144,11 @@ bool PruneEH::SimplifyFunction(Function *F) {
         if (DoesNotUnwind.count(CG[F])) {
           // Insert a call instruction before the invoke...
           std::string Name = II->getName();  II->setName("");
-          Value *Call = new CallInst(II->getCalledValue(),
-                                     std::vector<Value*>(II->op_begin()+3,
-                                                         II->op_end()),
-                                     Name, II);
+          CallInst *Call = new CallInst(II->getCalledValue(),
+                                        std::vector<Value*>(II->op_begin()+3,
+                                                            II->op_end()),
+                                        Name, II);
+          Call->setCallingConv(II->getCallingConv());
           
           // Anything that used the value produced by the invoke instruction
           // now uses the value produced by the call instruction.

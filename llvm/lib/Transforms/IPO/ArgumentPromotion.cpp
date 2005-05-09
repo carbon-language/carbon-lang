@@ -394,6 +394,7 @@ Function *ArgPromotion::DoPromotion(Function *F,
 
    // Create the new function body and insert it into the module...
   Function *NF = new Function(NFTy, F->getLinkage(), F->getName());
+  NF->setCallingConv(F->getCallingConv());
   F->getParent()->getFunctionList().insert(F, NF);
 
   // Get the alias analysis information that we need to update to reflect our
@@ -411,7 +412,8 @@ Function *ArgPromotion::DoPromotion(Function *F,
     // Loop over the operands, inserting GEP and loads in the caller as
     // appropriate.
     CallSite::arg_iterator AI = CS.arg_begin();
-    for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end(); I != E; ++I, ++AI)
+    for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end();
+         I != E; ++I, ++AI)
       if (!ArgsToPromote.count(I))
         Args.push_back(*AI);          // Unmodified argument
       else if (!I->use_empty()) {
@@ -441,8 +443,10 @@ Function *ArgPromotion::DoPromotion(Function *F,
     if (InvokeInst *II = dyn_cast<InvokeInst>(Call)) {
       New = new InvokeInst(NF, II->getNormalDest(), II->getUnwindDest(),
                            Args, "", Call);
+      cast<InvokeInst>(New)->setCallingConv(CS.getCallingConv());
     } else {
       New = new CallInst(NF, Args, "", Call);
+      cast<CallInst>(New)->setCallingConv(CS.getCallingConv());
       if (cast<CallInst>(Call)->isTailCall())
         cast<CallInst>(New)->setTailCall();
     }

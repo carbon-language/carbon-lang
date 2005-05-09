@@ -400,6 +400,7 @@ void DAE::RemoveDeadArgumentsFromFunction(Function *F) {
 
   // Create the new function body and insert it into the module...
   Function *NF = new Function(NFTy, F->getLinkage(), F->getName());
+  NF->setCallingConv(F->getCallingConv());
   F->getParent()->getFunctionList().insert(F, NF);
 
   // Loop over all of the callers of the function, transforming the call sites
@@ -428,8 +429,10 @@ void DAE::RemoveDeadArgumentsFromFunction(Function *F) {
     if (InvokeInst *II = dyn_cast<InvokeInst>(Call)) {
       New = new InvokeInst(NF, II->getNormalDest(), II->getUnwindDest(),
                            Args, "", Call);
+      cast<InvokeInst>(New)->setCallingConv(CS.getCallingConv());
     } else {
       New = new CallInst(NF, Args, "", Call);
+      cast<CallInst>(New)->setCallingConv(CS.getCallingConv());
       if (cast<CallInst>(Call)->isTailCall())
         cast<CallInst>(New)->setTailCall();
     }
