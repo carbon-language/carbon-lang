@@ -25,6 +25,9 @@
 //     unlikely, that the return returns something else (like constant 0), and
 //     can still be TRE'd.  It can be TRE'd if ALL OTHER return instructions in
 //     the function return the exact same value.
+//  4. If it can prove that callees do not access theier caller stack frame,
+//     they are marked as eligible for tail call elimination (by the code
+//     generator).
 //
 // There are several improvements that could be made:
 //
@@ -42,6 +45,8 @@
 //     requires some substantial analysis (such as with DSA) to prove safe to
 //     move ahead of the call, but doing so could allow many more TREs to be
 //     performed, for example in TreeAdd/TreeAlloc from the treeadd benchmark.
+//  4. The algorithm we use to detect if callees access their caller stack
+//     frames is very primitive.
 //
 //===----------------------------------------------------------------------===//
 
@@ -76,6 +81,26 @@ FunctionPass *llvm::createTailCallEliminationPass() {
 }
 
 
+/// AllocaMightEscapeToCalls - Return true if this alloca may be accessed by
+/// callees of this function.  We only do very simple analysis right now, this
+/// could be expanded in the future to use mod/ref information for particular
+/// call sites if desired.
+static bool AllocaMightEscapeToCalls(AllocaInst *AI) {
+  // FIXME: do simple 'address taken' analysis.
+  return true;
+}
+
+/// FunctionContainsAllocas - Scan the specified basic block for alloca
+/// instructions.  If it contains any that might be accessed by calls, return
+/// true.
+static bool CheckForEscapingAllocas(BasicBlock *BB) {
+  for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I)
+    if (AllocaInst *AI = dyn_cast<AllocaInst>(I))
+      if (AllocaMightEscapeToCalls(AI))
+        return true;
+  return false;
+}
+
 bool TailCallElim::runOnFunction(Function &F) {
   // If this function is a varargs function, we won't be able to PHI the args
   // right, so don't even try to convert it...
@@ -85,10 +110,17 @@ bool TailCallElim::runOnFunction(Function &F) {
   std::vector<PHINode*> ArgumentPHIs;
   bool MadeChange = false;
 
-  // Loop over the function, looking for any returning blocks...
-  for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
+  bool FunctionContainsEscapingAllocas = false;
+
+  // Loop over the function, looking for any returning blocks, and keeping track
+  // of whether this function has any non-trivially used allocas.
+  for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB) {
+    if (!FunctionContainsEscapingAllocas)
+      FunctionContainsEscapingAllocas = CheckForEscapingAllocas(BB);
+    
     if (ReturnInst *Ret = dyn_cast<ReturnInst>(BB->getTerminator()))
       MadeChange |= ProcessReturningBlock(Ret, OldEntry, ArgumentPHIs);
+  }
 
   // If we eliminated any tail recursions, it's possible that we inserted some
   // silly PHI nodes which just merge an initial value (the incoming operand)
@@ -119,6 +151,15 @@ bool TailCallElim::runOnFunction(Function &F) {
       }
     }
   }
+
+  // Finally, if this function contains no non-escaping allocas, mark all calls
+  // in the function as eligible for tail calls (there is no stack memory for
+  // them to access).
+  if (!FunctionContainsEscapingAllocas)
+    for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
+      for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I)
+        if (CallInst *CI = dyn_cast<CallInst>(I))
+          CI->setTailCall();
 
   return MadeChange;
 }
@@ -298,7 +339,8 @@ bool TailCallElim::ProcessReturningBlock(ReturnInst *Ret, BasicBlock *&OldEntry,
     // For now, we initialize each PHI to only have the real arguments
     // which are passed in.
     Instruction *InsertPos = OldEntry->begin();
-    for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end(); I != E; ++I) {
+    for (Function::arg_iterator I = F->arg_begin(), E = F->arg_end();
+         I != E; ++I) {
       PHINode *PN = new PHINode(I->getType(), I->getName()+".tr", InsertPos);
       I->replaceAllUsesWith(PN); // Everyone use the PHI node now!
       PN->addIncoming(I, NewEntry);
