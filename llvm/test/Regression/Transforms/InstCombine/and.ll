@@ -211,3 +211,12 @@ uint %test32(uint %In) {
 	%A = and uint %Z, 1
 	ret uint %A
 }
+
+uint %test33(uint %b) {   ;; Code corresponding to one-bit bitfield ^1.
+        %tmp.4.mask = and uint %b, 1
+        %tmp.10 = xor uint %tmp.4.mask, 1
+        %tmp.12 = and uint %b, 4294967294
+        %tmp.13 = or uint %tmp.12, %tmp.10
+        ret uint %tmp.13
+}
+
