@@ -152,7 +152,8 @@ X86TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
     // dead loads.
     SDOperand ArgValue;
     if (!I->use_empty())
-      ArgValue = DAG.getLoad(ObjectVT, DAG.getEntryNode(), FIN, DAG.getSrcValue(NULL));
+      ArgValue = DAG.getLoad(ObjectVT, DAG.getEntryNode(), FIN,
+                             DAG.getSrcValue(NULL));
     else {
       if (MVT::isInteger(ObjectVT))
         ArgValue = DAG.getConstant(0, ObjectVT);
@@ -250,13 +251,15 @@ X86TargetLowering::LowerCallTo(SDOperand Chain,
       case MVT::i32:
       case MVT::f32:
         Stores.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
-                                     Args[i].first, PtrOff, DAG.getSrcValue(NULL)));
+                                     Args[i].first, PtrOff,
+                                     DAG.getSrcValue(NULL)));
         ArgOffset += 4;
         break;
       case MVT::i64:
       case MVT::f64:
         Stores.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
-                                     Args[i].first, PtrOff, DAG.getSrcValue(NULL)));
+                                     Args[i].first, PtrOff,
+                                     DAG.getSrcValue(NULL)));
         ArgOffset += 8;
         break;
       }
@@ -289,7 +292,8 @@ LowerVAArgNext(bool isVANext, SDOperand Chain, SDOperand VAList,
   MVT::ValueType ArgVT = getValueType(ArgTy);
   SDOperand Result;
   if (!isVANext) {
-    Result = DAG.getLoad(ArgVT, DAG.getEntryNode(), VAList, DAG.getSrcValue(NULL));
+    Result = DAG.getLoad(ArgVT, DAG.getEntryNode(), VAList,
+                         DAG.getSrcValue(NULL));
   } else {
     unsigned Amt;
     if (ArgVT == MVT::i32)
@@ -1596,15 +1600,6 @@ unsigned ISel::SelectExpr(SDOperand N) {
     int FrameIdx = F->getFrameInfo()->CreateStackObject(Size, Size);
 
     switch (SrcTy) {
-    case MVT::i64:
-      assert(0 && "Cast ulong to FP not implemented yet!");
-      // FIXME: this won't work for cast [u]long to FP
-      addFrameReference(BuildMI(BB, X86::MOV32mr, 5),
-                        FrameIdx).addReg(Tmp1);
-      addFrameReference(BuildMI(BB, X86::MOV32mr, 5),
-                        FrameIdx, 4).addReg(Tmp1+1);
-      addFrameReference(BuildMI(BB, X86::FILD64m, 5, Result), FrameIdx);
-      break;
     case MVT::i32:
       addFrameReference(BuildMI(BB, X86::MOV32mr, 5),
                         FrameIdx).addReg(Tmp1);
@@ -1634,36 +1629,6 @@ unsigned ISel::SelectExpr(SDOperand N) {
       unsigned CPI = F->getConstantPool()->getConstantPoolIndex(TheOffset);
       BuildMI(BB, X86::FADD32m, 5, RealDestReg).addReg(Result)
         .addConstantPoolIndex(CPI).addZImm(4).addReg(IsNeg).addSImm(0);
-
-    } else if (Node->getOpcode() == ISD::UINT_TO_FP && SrcTy == MVT::i64) {
-      // We need special handling for unsigned 64-bit integer sources.  If the
-      // input number has the "sign bit" set, then we loaded it incorrectly as a
-      // negative 64-bit number.  In this case, add an offset value.
-
-      // Emit a test instruction to see if the dynamic input value was signed.
-      BuildMI(BB, X86::TEST32rr, 2).addReg(Tmp1+1).addReg(Tmp1+1);
-
-      // If the sign bit is set, get a pointer to an offset, otherwise get a
-      // pointer to a zero.
-      MachineConstantPool *CP = F->getConstantPool();
-      unsigned Zero = MakeReg(MVT::i32);
-      Constant *Null = Constant::getNullValue(Type::UIntTy);
-      addConstantPoolReference(BuildMI(BB, X86::LEA32r, 5, Zero),
-                               CP->getConstantPoolIndex(Null));
-      unsigned Offset = MakeReg(MVT::i32);
-      Constant *OffsetCst = ConstantUInt::get(Type::UIntTy, 0x5f800000);
-
-      addConstantPoolReference(BuildMI(BB, X86::LEA32r, 5, Offset),
-                               CP->getConstantPoolIndex(OffsetCst));
-      unsigned Addr = MakeReg(MVT::i32);
-      BuildMI(BB, X86::CMOVS32rr, 2, Addr).addReg(Zero).addReg(Offset);
-
-      // Load the constant for an add.  FIXME: this could make an 'fadd' that
-      // reads directly from memory, but we don't support these yet.
-      unsigned ConstReg = MakeReg(MVT::f64);
-      addDirectMem(BuildMI(BB, X86::FLD32m, 4, ConstReg), Addr);
-
-      BuildMI(BB, X86::FpADD, 2, RealDestReg).addReg(ConstReg).addReg(Result);
     }
     return RealDestReg;
   }
@@ -1705,10 +1670,6 @@ unsigned ISel::SelectExpr(SDOperand N) {
       case MVT::i8:  StoreClass = MVT::i16; break;
       case MVT::i16: StoreClass = MVT::i32; break;
       case MVT::i32: StoreClass = MVT::i64; break;
-        // The following treatment of cLong may not be perfectly right,
-        // but it survives chains of casts of the form
-        // double->ulong->double.
-      case MVT::i64:  StoreClass = MVT::i64;  break;
       default: assert(0 && "Unknown store class!");
       }
 
@@ -1724,19 +1685,11 @@ unsigned ISel::SelectExpr(SDOperand N) {
     case MVT::i32:
       addFrameReference(BuildMI(BB, X86::FIST32m, 5), FrameIdx).addReg(Tmp1);
       break;
-    case MVT::i64:
-      addFrameReference(BuildMI(BB, X86::FISTP64m, 5), FrameIdx).addReg(Tmp1);
-      break;
     }
 
     switch (Node->getValueType(0)) {
     default:
       assert(0 && "Unknown integer type!");
-    case MVT::i64:
-      // FIXME: this isn't gunna work.
-      assert(0 && "Cast FP to long not implemented yet!");
-      addFrameReference(BuildMI(BB, X86::MOV32rm, 4, Result), FrameIdx);
-      addFrameReference(BuildMI(BB, X86::MOV32rm, 4, Result+1), FrameIdx, 4);
     case MVT::i32:
       addFrameReference(BuildMI(BB, X86::MOV32rm, 4, Result), FrameIdx);
       break;
