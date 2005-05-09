@@ -25,3 +25,5 @@ void %libm() {
         call ulong %llvm.ctlz(ulong 65000)
 	ret void
 }
+
+; FIXME: test ALL the intrinsics in this file.
