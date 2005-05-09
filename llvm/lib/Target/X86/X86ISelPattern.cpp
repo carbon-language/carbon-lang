@@ -14,9 +14,10 @@
 #include "X86.h"
 #include "X86InstrBuilder.h"
 #include "X86RegisterInfo.h"
-#include "llvm/Constants.h"                   // FIXME: REMOVE
+#include "llvm/Constants.h"
+#include "llvm/Instructions.h"
 #include "llvm/Function.h"
-#include "llvm/CodeGen/MachineConstantPool.h" // FIXME: REMOVE
+#include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/SelectionDAG.h"
@@ -25,6 +26,7 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetOptions.h"
+#include "llvm/Support/CFG.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/ADT/Statistic.h"
 #include <set>
@@ -460,6 +462,21 @@ void ISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
         break;
       }
     }
+
+  // Final check, check LLVM BB's that are successors to the LLVM BB
+  // corresponding to BB for FP PHI nodes.
+  const BasicBlock *LLVMBB = BB->getBasicBlock();
+  const PHINode *PN;
+  if (!ContainsFPCode)
+    for (succ_const_iterator SI = succ_begin(LLVMBB), E = succ_end(LLVMBB);
+         SI != E && !ContainsFPCode; ++SI)
+      for (BasicBlock::const_iterator II = SI->begin();
+           (PN = dyn_cast<PHINode>(II)); ++II)
+        if (PN->getType()->isFloatingPoint()) {
+          ContainsFPCode = true;
+          break;
+        }
+
 
   // Insert FP_REG_KILL instructions into basic blocks that need them.  This
   // only occurs due to the floating point stackifier not being aggressive
