@@ -1845,27 +1845,46 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
         return Result;
       }
     }
-    Tmp1 = SelectExpr(N.getOperand(0));
     // FIXME: should add check in getImmediateForOpcode to return a value
     // indicating the immediate is a run of set bits so we can emit a bitfield
     // clear with RLWINM instead.
     switch(getImmediateForOpcode(N.getOperand(1), opcode, Tmp2)) {
       default: assert(0 && "unhandled result code");
       case 0: // No immediate
+        Tmp1 = SelectExpr(N.getOperand(0));
         Tmp2 = SelectExpr(N.getOperand(1));
         Opc = Recording ? PPC::ANDo : PPC::AND;
         BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
         break;
       case 1: // Low immediate
+        Tmp1 = SelectExpr(N.getOperand(0));
         BuildMI(BB, PPC::ANDIo, 2, Result).addReg(Tmp1).addImm(Tmp2);
         break;
       case 2: // Shifted immediate
+        Tmp1 = SelectExpr(N.getOperand(0));
         BuildMI(BB, PPC::ANDISo, 2, Result).addReg(Tmp1).addImm(Tmp2);
         break;
       case 5: // Bitfield mask
         Opc = Recording ? PPC::RLWINMo : PPC::RLWINM;
         Tmp3 = Tmp2 >> 16;  // MB
         Tmp2 &= 0xFFFF;     // ME
+
+        if (N.getOperand(0).getOpcode() == ISD::SRL)
+          if (ConstantSDNode *SA =
+              dyn_cast<ConstantSDNode>(N.getOperand(0).getOperand(1))) {
+
+            // We can fold the RLWINM and the SRL together if the mask is
+            // clearing the top bits which are rotated around.
+            unsigned RotAmt = 32-(SA->getValue() & 31);
+            if (Tmp2 <= RotAmt) {
+              Tmp1 = SelectExpr(N.getOperand(0).getOperand(0));
+              BuildMI(BB, Opc, 4, Result).addReg(Tmp1).addImm(RotAmt)
+                .addImm(Tmp3).addImm(Tmp2);
+              break;
+            }
+          }
+
+        Tmp1 = SelectExpr(N.getOperand(0));
         BuildMI(BB, Opc, 4, Result).addReg(Tmp1).addImm(0)
           .addImm(Tmp3).addImm(Tmp2);
         break;
