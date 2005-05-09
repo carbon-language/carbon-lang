@@ -1195,7 +1195,11 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
   SDNode *&N = BinaryOps[std::make_pair(Opcode, std::make_pair(N1, N2))];
   if (N) return SDOperand(N, 0);
   N = new SDNode(Opcode, N1, N2);
-  N->setValueTypes(VT);
+
+  if (Opcode != ISD::READPORT && Opcode != ISD::READIO)
+    N->setValueTypes(VT);
+  else
+    N->setValueTypes(VT, MVT::Other);
 
   AllNodes.push_back(N);
   return SDOperand(N, 0);
@@ -1665,6 +1669,11 @@ const char *SDNode::getOperationName() const {
   case ISD::MEMSET:  return "memset";
   case ISD::MEMCPY:  return "memcpy";
   case ISD::MEMMOVE: return "memmove";
+
+  case ISD::READPORT: return "readport";
+  case ISD::WRITEPORT: return "writeport";
+  case ISD::READIO: return "readio";
+  case ISD::WRITEIO: return "writeio";
 
   case ISD::SETCC:
     const SetCCSDNode *SetCC = cast<SetCCSDNode>(this);
