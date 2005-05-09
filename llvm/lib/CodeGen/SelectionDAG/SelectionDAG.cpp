@@ -946,6 +946,34 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
         return getNode(ISD::UNDEF, N1.getValueType());
       }
       if (C2 == 0) return N1;
+
+      if (Opcode == ISD::SHL && N1.getNumOperands() == 2)
+        if (ConstantSDNode *OpSA = dyn_cast<ConstantSDNode>(N1.getOperand(1))) {
+          unsigned OpSAC = OpSA->getValue();
+          if (N1.getOpcode() == ISD::SHL) {
+            if (C2+OpSAC >= MVT::getSizeInBits(N1.getValueType()))
+              return getConstant(0, N1.getValueType());
+            return getNode(ISD::SHL, N1.getValueType(), N1.getOperand(0),
+                           getConstant(C2+OpSAC, N2.getValueType()));
+          } else if (N1.getOpcode() == ISD::SRL) {
+            // (X >> C1) << C2:  if C2 > C1, ((X & ~0<<C1) << C2-C1)
+            SDOperand Mask = getNode(ISD::AND, VT, N1.getOperand(0),
+                                     getConstant(~0ULL << OpSAC, VT));
+            if (C2 > OpSAC) {
+              return getNode(ISD::SHL, VT, Mask,
+                             getConstant(C2-OpSAC, N2.getValueType()));
+            } else {
+              // (X >> C1) << C2:  if C2 <= C1, ((X & ~0<<C1) >> C1-C2)
+              return getNode(ISD::SRL, VT, Mask,
+                             getConstant(OpSAC-C2, N2.getValueType()));
+            }
+          } else if (N1.getOpcode() == ISD::SRA) {
+            // if C1 == C2, just mask out low bits.
+            if (C2 == OpSAC)
+              return getNode(ISD::AND, VT, N1.getOperand(0),
+                             getConstant(~0ULL << C2, VT));
+          }
+        }
       break;
 
     case ISD::AND:
