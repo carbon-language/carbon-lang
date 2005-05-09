@@ -1554,6 +1554,7 @@ const char *SDNode::getOperationName() const {
   switch (getOpcode()) {
   default: return "<<Unknown>>";
   case ISD::PCMARKER:      return "PCMarker";
+  case ISD::SRCVALUE:      return "SrcValue";
   case ISD::EntryToken:    return "EntryToken";
   case ISD::TokenFactor:   return "TokenFactor";
   case ISD::Constant:      return "Constant";
@@ -1712,6 +1713,11 @@ void SDNode::dump() const {
     std::cerr << "'" << ES->getSymbol() << "'";
   } else if (const MVTSDNode *M = dyn_cast<MVTSDNode>(this)) {
     std::cerr << " - Ty = " << MVT::getValueTypeString(M->getExtraValueType());
+  } else if (const SrcValueSDNode *M = dyn_cast<SrcValueSDNode>(this)) {
+    if (M->getValue())
+      std::cerr << "<" << M->getValue() << ":" << M->getOffset() << ">";
+    else
+      std::cerr << "<null:" << M->getOffset() << ">";
   }
 }
 
