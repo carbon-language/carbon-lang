@@ -1832,8 +1832,8 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
     ConstantInt *C1; Value *X;
     // (X & C1) | C2 --> (X | C2) & (C1|C2)
     if (match(Op0, m_And(m_Value(X), m_ConstantInt(C1))) && isOnlyUse(Op0)) {
-      std::string Op0Name = Op0->getName(); Op0->setName("");
-      Instruction *Or = BinaryOperator::createOr(X, RHS, Op0Name);
+      Instruction *Or = BinaryOperator::createOr(X, RHS, Op0->getName());
+      Op0->setName("");
       InsertNewInstBefore(Or, I);
       return BinaryOperator::createAnd(Or, ConstantExpr::getOr(RHS, C1));
     }
@@ -1864,6 +1864,22 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
   if (match(Op1, m_And(m_Value(A), m_Value(B))))
     if (A == Op0 || B == Op0)    // A | (A & ?)  --> A
       return ReplaceInstUsesWith(I, Op0);
+
+  // (X^C)|Y -> (X|Y)^C iff Y&C == 0
+  if (Op0->hasOneUse() && match(Op0, m_Xor(m_Value(A), m_ConstantInt(C1))) &&
+      MaskedValueIsZero(Op1, C1)) {
+    Instruction *NOr = BinaryOperator::createOr(A, Op1, Op0->getName());
+    Op0->setName("");
+    return BinaryOperator::createXor(InsertNewInstBefore(NOr, I), C1);
+  }
+
+  // Y|(X^C) -> (X|Y)^C iff Y&C == 0
+  if (Op1->hasOneUse() && match(Op1, m_Xor(m_Value(A), m_ConstantInt(C1))) &&
+      MaskedValueIsZero(Op0, C1)) {
+    Instruction *NOr = BinaryOperator::createOr(A, Op0, Op1->getName());
+    Op0->setName("");
+    return BinaryOperator::createXor(InsertNewInstBefore(NOr, I), C1);
+  }
 
   // (A & C1)|(A & C2) == A & (C1|C2)
   if (match(Op0, m_And(m_Value(A), m_ConstantInt(C1))) &&
