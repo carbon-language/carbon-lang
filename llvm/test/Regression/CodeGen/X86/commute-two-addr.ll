@@ -1,8 +1,8 @@
 ; The register allocator can commute two-address instructions to avoid
 ; insertion of register-register copies.
 
-; Check that there are no register-register copies left.
-; RUN: llvm-as < %s | llc -march=x86 -x86-asm-syntax=intel | not grep 'mov %E.X, %E.X'
+; Make sure there are only 3 mov's for each testcase
+; RUN: llvm-as < %s | llc -march=x86 -x86-asm-syntax=intel | grep 'mov ' | wc -l | grep 6
 
 %G = external global int
 
