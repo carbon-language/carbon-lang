@@ -70,6 +70,15 @@ namespace {
       setOperationAction(ISD::CTTZ             , MVT::i32  , Expand);
       setOperationAction(ISD::CTLZ             , MVT::i32  , Expand);
 
+      setOperationAction(ISD::READIO           , MVT::i1   , Expand);
+      setOperationAction(ISD::READIO           , MVT::i8   , Expand);
+      setOperationAction(ISD::READIO           , MVT::i16  , Expand);
+      setOperationAction(ISD::READIO           , MVT::i32  , Expand);
+      setOperationAction(ISD::WRITEIO          , MVT::i1   , Expand);
+      setOperationAction(ISD::WRITEIO          , MVT::i8   , Expand);
+      setOperationAction(ISD::WRITEIO          , MVT::i16  , Expand);
+      setOperationAction(ISD::WRITEIO          , MVT::i32  , Expand);
+
       if (!UnsafeFPMath) {
         setOperationAction(ISD::FSIN           , MVT::f64  , Expand);
         setOperationAction(ISD::FCOS           , MVT::f64  , Expand);
