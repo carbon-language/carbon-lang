@@ -683,7 +683,7 @@ value produced by an operation.</p>
 
 <p>
 A SelectionDAG has designated "Entry" and "Root" nodes.  The Entry node is
-always a marker node with an Opcode of ISD::TokenFactor.  The Root node is the
+always a marker node with an Opcode of ISD::EntryToken.  The Root node is the
 final side-effecting node in the token chain. For example, in a single basic
 block function, this would be the return node.
 </p>
