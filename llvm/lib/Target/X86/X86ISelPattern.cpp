@@ -1685,7 +1685,9 @@ unsigned ISel::SelectExpr(SDOperand N) {
     case MVT::i32:
       addFrameReference(BuildMI(BB, X86::FIST32m, 5), FrameIdx).addReg(Tmp1);
       break;
-    }
+    case MVT::i64:
+      addFrameReference(BuildMI(BB, X86::FISTP64m, 5), FrameIdx).addReg(Tmp1);
+      break;    }
 
     switch (Node->getValueType(0)) {
     default:
