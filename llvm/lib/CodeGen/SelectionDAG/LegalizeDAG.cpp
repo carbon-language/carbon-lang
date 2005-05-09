@@ -595,7 +595,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         } V;
         V.F = CFP->getValue();
         Result = DAG.getNode(ISD::STORE, MVT::Other, Tmp1, 
-                              DAG.getConstant(V.I, MVT::i32), Tmp2,
+                             DAG.getConstant(V.I, MVT::i32), Tmp2,
                              Node->getOperand(3));
       } else {
         assert(CFP->getValueType(0) == MVT::f64 && "Unknown FP type!");
@@ -927,11 +927,11 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
   }
 
   case ISD::READPORT:
-  case ISD::READIO:
     Tmp1 = LegalizeOp(Node->getOperand(0));
     Tmp2 = LegalizeOp(Node->getOperand(1));
+
     if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(1))
-      Result = DAG.getNode(Node->getOpcode(), Node->getValueType(0),Tmp1, Tmp2);
+      Result = DAG.getNode(ISD::READPORT, Node->getValueType(0), Tmp1, Tmp2);
     else
       Result = SDOperand(Node, 0);
     // Since these produce two values, make sure to remember that we legalized
@@ -939,15 +939,65 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     AddLegalizedOperand(SDOperand(Node, 0), Result);
     AddLegalizedOperand(SDOperand(Node, 1), Result.getValue(1));
     return Result.getValue(Op.ResNo);
-
   case ISD::WRITEPORT:
-  case ISD::WRITEIO:
     Tmp1 = LegalizeOp(Node->getOperand(0));
     Tmp2 = LegalizeOp(Node->getOperand(1));
     Tmp3 = LegalizeOp(Node->getOperand(2));
     if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(1) ||
         Tmp3 != Node->getOperand(2))
       Result = DAG.getNode(Node->getOpcode(), MVT::Other, Tmp1, Tmp2, Tmp3);
+    break;
+
+  case ISD::READIO:
+    Tmp1 = LegalizeOp(Node->getOperand(0));
+    Tmp2 = LegalizeOp(Node->getOperand(1));
+
+    switch (TLI.getOperationAction(Node->getOpcode(), Node->getValueType(0))) {
+    case TargetLowering::Custom:
+    default: assert(0 && "This action not implemented for this operation!");
+    case TargetLowering::Legal:
+      if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(1))
+        Result = DAG.getNode(Node->getOpcode(), Node->getValueType(0),
+                             Tmp1, Tmp2);
+      else
+        Result = SDOperand(Node, 0);
+      break;
+    case TargetLowering::Expand:
+      // Replace this with a load from memory.
+      Result = DAG.getLoad(Node->getValueType(0), Node->getOperand(0),
+                           Node->getOperand(1), DAG.getSrcValue(NULL));
+      Result = LegalizeOp(Result);
+      break;
+    }
+
+    // Since these produce two values, make sure to remember that we legalized
+    // both of them.
+    AddLegalizedOperand(SDOperand(Node, 0), Result);
+    AddLegalizedOperand(SDOperand(Node, 1), Result.getValue(1));
+    return Result.getValue(Op.ResNo);
+
+  case ISD::WRITEIO:
+    Tmp1 = LegalizeOp(Node->getOperand(0));
+    Tmp2 = LegalizeOp(Node->getOperand(1));
+    Tmp3 = LegalizeOp(Node->getOperand(2));
+
+    switch (TLI.getOperationAction(Node->getOpcode(),
+                                   Node->getOperand(1).getValueType())) {
+    case TargetLowering::Custom:
+    default: assert(0 && "This action not implemented for this operation!");
+    case TargetLowering::Legal:
+      if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(1) ||
+          Tmp3 != Node->getOperand(2))
+        Result = DAG.getNode(Node->getOpcode(), MVT::Other, Tmp1, Tmp2, Tmp3);
+      break;
+    case TargetLowering::Expand:
+      // Replace this with a store to memory.
+      Result = DAG.getNode(ISD::STORE, MVT::Other, Node->getOperand(0),
+                           Node->getOperand(1), Node->getOperand(2),
+                           DAG.getSrcValue(NULL));
+      Result = LegalizeOp(Result);
+      break;
+    }
     break;
 
   case ISD::ADD_PARTS:
