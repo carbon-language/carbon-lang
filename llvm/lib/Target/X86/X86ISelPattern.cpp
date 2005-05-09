@@ -2660,6 +2660,67 @@ unsigned ISel::SelectExpr(SDOperand N) {
       break;
     }
     return Result+N.ResNo;
+  case ISD::READPORT:
+    // First, determine that the size of the operand falls within the acceptable
+    // range for this architecture.
+    //
+    if (Node->getOperand(1).getValueType() != MVT::i16) {
+      std::cerr << "llvm.readport: Address size is not 16 bits\n";
+      exit(1);
+    }
+
+    // Make sure we generate both values.
+    if (Result != 1) {  // Generate the token
+      if (!ExprMap.insert(std::make_pair(N.getValue(1), 1)).second)
+        assert(0 && "readport already emitted!?");
+    } else
+      Result = ExprMap[N.getValue(0)] = MakeReg(N.getValue(0).getValueType());
+    
+    Select(Node->getOperand(0));  // Select the chain.
+
+    // If the port is a single-byte constant, use the immediate form.
+    if (ConstantSDNode *Port = dyn_cast<ConstantSDNode>(Node->getOperand(1)))
+      if ((Port->getValue() & 255) == Port->getValue()) {
+        switch (Node->getValueType(0)) {
+        case MVT::i8:
+          BuildMI(BB, X86::IN8ri, 1).addImm(Port->getValue());
+          BuildMI(BB, X86::MOV8rr, 1, Result).addReg(X86::AL);
+          return Result;
+        case MVT::i16:
+          BuildMI(BB, X86::IN16ri, 1).addImm(Port->getValue());
+          BuildMI(BB, X86::MOV16rr, 1, Result).addReg(X86::AX);
+          return Result;
+        case MVT::i32:
+          BuildMI(BB, X86::IN32ri, 1).addImm(Port->getValue());
+          BuildMI(BB, X86::MOV32rr, 1, Result).addReg(X86::EAX);
+          return Result;
+        default: break;
+        }
+      }
+
+    // Now, move the I/O port address into the DX register and use the IN
+    // instruction to get the input data.
+    //
+    Tmp1 = SelectExpr(Node->getOperand(1));
+    BuildMI(BB, X86::MOV16rr, 1, X86::DX).addReg(Tmp1);
+    switch (Node->getValueType(0)) {
+    case MVT::i8:
+      BuildMI(BB, X86::IN8rr, 0);
+      BuildMI(BB, X86::MOV8rr, 1, Result).addReg(X86::AL);
+      return Result;
+    case MVT::i16:
+      BuildMI(BB, X86::IN16rr, 0);
+      BuildMI(BB, X86::MOV16rr, 1, Result).addReg(X86::AX);
+      return Result;
+    case MVT::i32:
+      BuildMI(BB, X86::IN32rr, 0);
+      BuildMI(BB, X86::MOV32rr, 1, Result).addReg(X86::EAX);
+      return Result;
+    default:
+      std::cerr << "Cannot do input on this data type";
+      exit(1);
+    }
+    
   }
 
   return 0;
@@ -3027,7 +3088,7 @@ void ISel::Select(SDOperand N) {
     ExprMap.erase(N);
     SelectExpr(N);
     return;
-
+  case ISD::READPORT:
   case ISD::EXTLOAD:
   case ISD::SEXTLOAD:
   case ISD::ZEXTLOAD:
@@ -3236,7 +3297,7 @@ void ISel::Select(SDOperand N) {
     BuildMI(BB, Opcode, 0);
     return;
   }
-  case ISD::MEMCPY:
+  case ISD::MEMCPY: {
     Select(N.getOperand(0));  // Select the chain.
     unsigned Align =
       (unsigned)cast<ConstantSDNode>(Node->getOperand(4))->getValue();
@@ -3280,6 +3341,45 @@ void ISel::Select(SDOperand N) {
     BuildMI(BB, X86::MOV32rr, 1, X86::EDI).addReg(TmpReg1);
     BuildMI(BB, X86::MOV32rr, 1, X86::ESI).addReg(TmpReg2);
     BuildMI(BB, Opcode, 0);
+    return;
+  }
+  case ISD::WRITEPORT:
+    if (Node->getOperand(2).getValueType() != MVT::i16) {
+      std::cerr << "llvm.writeport: Address size is not 16 bits\n";
+      exit(1);
+    }
+    Select(Node->getOperand(0)); // Emit the chain.
+
+    Tmp1 = SelectExpr(Node->getOperand(1));
+    switch (Node->getOperand(1).getValueType()) {
+    case MVT::i8:
+      BuildMI(BB, X86::MOV8rr, 1, X86::AL).addReg(Tmp1);
+      Tmp2 = X86::OUT8ir;  Opc = X86::OUT8rr;
+      break;
+    case MVT::i16:
+      BuildMI(BB, X86::MOV16rr, 1, X86::AX).addReg(Tmp1);
+      Tmp2 = X86::OUT16ir; Opc = X86::OUT16rr;
+      break;
+    case MVT::i32:
+      BuildMI(BB, X86::MOV32rr, 1, X86::EAX).addReg(Tmp1);
+      Tmp2 = X86::OUT32ir; Opc = X86::OUT32rr;
+      break;
+    default:
+      std::cerr << "llvm.writeport: invalid data type for X86 target";
+      exit(1);
+    }
+
+    // If the port is a single-byte constant, use the immediate form.
+    if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(Node->getOperand(2)))
+      if ((CN->getValue() & 255) == CN->getValue()) {
+        BuildMI(BB, Tmp2, 1).addImm(CN->getValue());
+        return;
+      }
+
+    // Otherwise, move the I/O port address into the DX register.
+    unsigned Reg = SelectExpr(Node->getOperand(2));
+    BuildMI(BB, X86::MOV16rr, 1, X86::DX).addReg(Reg);
+    BuildMI(BB, Opc, 0);
     return;
   }
   assert(0 && "Should not be reached!");
