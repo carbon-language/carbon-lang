@@ -2042,11 +2042,11 @@ void X86ISel::visitIntrinsicCall(Intrinsic::ID ID, CallInst &CI) {
       break;
     case cShort:
       BuildMI(BB, X86::IN16rr, 0);
-      BuildMI(BB, X86::MOV8rr, 1, DestReg).addReg(X86::AX);
+      BuildMI(BB, X86::MOV16rr, 1, DestReg).addReg(X86::AX);
       break;
     case cInt:
       BuildMI(BB, X86::IN32rr, 0);
-      BuildMI(BB, X86::MOV8rr, 1, DestReg).addReg(X86::EAX);
+      BuildMI(BB, X86::MOV32rr, 1, DestReg).addReg(X86::EAX);
       break;
     default:
       std::cerr << "Cannot do input on this data type";
