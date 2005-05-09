@@ -1328,13 +1328,11 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
   return SDOperand(N, 0);
 }
 
-SDOperand SelectionDAG::getSrcValue(const Value* v, int offset) {
-  if (v && ValueNodes[std::make_pair(v,offset)])
-    return SDOperand(ValueNodes[std::make_pair(v,offset)], 0);
-  SDNode *N = new SrcValueSDNode(v, offset);
-  N->setValueTypes(MVT::Other);
-  if (v) //only track non-null values
-    ValueNodes[std::make_pair(v,offset)] = N;
+SDOperand SelectionDAG::getSrcValue(const Value *V, int Offset) {
+  SDNode *&N = ValueNodes[std::make_pair(V, Offset)];
+  if (N) return SDOperand(N, 0);
+
+  N = new SrcValueSDNode(V, Offset);
   AllNodes.push_back(N);
   return SDOperand(N, 0);
 }
