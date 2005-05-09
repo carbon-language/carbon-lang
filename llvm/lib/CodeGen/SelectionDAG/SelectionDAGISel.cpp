@@ -638,13 +638,13 @@ void SelectionDAGLowering::visitStore(StoreInst &I) {
   Value *SrcV = I.getOperand(0);
   SDOperand Src = getValue(SrcV);
   SDOperand Ptr = getValue(I.getOperand(1));
-  //  DAG.setRoot(DAG.getNode(ISD::STORE, MVT::Other, getRoot(), Src, Ptr));
   DAG.setRoot(DAG.getNode(ISD::STORE, MVT::Other, getRoot(), Src, Ptr,
                           DAG.getSrcValue(I.getOperand(1))));
 }
 
 void SelectionDAGLowering::visitCall(CallInst &I) {
   const char *RenameFn = 0;
+  SDOperand Tmp;
   if (Function *F = I.getCalledFunction())
     if (F->isExternal())
       switch (F->getIntrinsicID()) {
@@ -653,7 +653,7 @@ void SelectionDAGLowering::visitCall(CallInst &I) {
           if (I.getNumOperands() == 2 &&   // Basic sanity checks.
               I.getOperand(1)->getType()->isFloatingPoint() &&
               I.getType() == I.getOperand(1)->getType()) {
-            SDOperand Tmp = getValue(I.getOperand(1));
+            Tmp = getValue(I.getOperand(1));
             setValue(&I, DAG.getNode(ISD::FABS, Tmp.getValueType(), Tmp));
             return;
           }
@@ -662,7 +662,7 @@ void SelectionDAGLowering::visitCall(CallInst &I) {
           if (I.getNumOperands() == 2 &&   // Basic sanity checks.
               I.getOperand(1)->getType()->isFloatingPoint() &&
               I.getType() == I.getOperand(1)->getType()) {
-            SDOperand Tmp = getValue(I.getOperand(1));
+            Tmp = getValue(I.getOperand(1));
             setValue(&I, DAG.getNode(ISD::FSIN, Tmp.getValueType(), Tmp));
             return;
           }
@@ -671,7 +671,7 @@ void SelectionDAGLowering::visitCall(CallInst &I) {
           if (I.getNumOperands() == 2 &&   // Basic sanity checks.
               I.getOperand(1)->getType()->isFloatingPoint() &&
               I.getType() == I.getOperand(1)->getType()) {
-            SDOperand Tmp = getValue(I.getOperand(1));
+            Tmp = getValue(I.getOperand(1));
             setValue(&I, DAG.getNode(ISD::FCOS, Tmp.getValueType(), Tmp));
             return;
           }
@@ -682,18 +682,29 @@ void SelectionDAGLowering::visitCall(CallInst &I) {
       case Intrinsic::vacopy:   visitVACopy(I); return;
       case Intrinsic::returnaddress: visitFrameReturnAddress(I, false); return;
       case Intrinsic::frameaddress:  visitFrameReturnAddress(I, true); return;
-      default:
-        // FIXME: IMPLEMENT THESE.
-        // readport, writeport, readio, writeio
-        std::cerr << I;
-        assert(0 && "This intrinsic is not implemented yet!");
-        return;
+
       case Intrinsic::setjmp:  RenameFn = "setjmp"; break;
       case Intrinsic::longjmp: RenameFn = "longjmp"; break;
       case Intrinsic::memcpy:  visitMemIntrinsic(I, ISD::MEMCPY); return;
       case Intrinsic::memset:  visitMemIntrinsic(I, ISD::MEMSET); return;
       case Intrinsic::memmove: visitMemIntrinsic(I, ISD::MEMMOVE); return;
 
+      case Intrinsic::readport:
+      case Intrinsic::readio:
+        Tmp = DAG.getNode(F->getIntrinsicID() == Intrinsic::readport ?
+                          ISD::READPORT : ISD::READIO,
+                          TLI.getValueType(I.getType()), getRoot(),
+                          getValue(I.getOperand(1)));
+        setValue(&I, Tmp);
+        DAG.setRoot(Tmp.getValue(1));
+        return;
+      case Intrinsic::writeport:
+      case Intrinsic::writeio:
+        DAG.setRoot(DAG.getNode(F->getIntrinsicID() == Intrinsic::writeport ?
+                                ISD::WRITEPORT : ISD::WRITEIO, MVT::Other,
+                                getRoot(), getValue(I.getOperand(1)),
+                                getValue(I.getOperand(2))));
+        return;
       case Intrinsic::dbg_stoppoint:
       case Intrinsic::dbg_region_start:
       case Intrinsic::dbg_region_end:
@@ -714,11 +725,10 @@ void SelectionDAGLowering::visitCall(CallInst &I) {
                                  getValue(I.getOperand(1))));
         return;
 
-      case Intrinsic::pcmarker: {
-        SDOperand Num = getValue(I.getOperand(1));
-        DAG.setRoot(DAG.getNode(ISD::PCMARKER, MVT::Other, getRoot(), Num));
+      case Intrinsic::pcmarker:
+        Tmp = getValue(I.getOperand(1));
+        DAG.setRoot(DAG.getNode(ISD::PCMARKER, MVT::Other, getRoot(), Tmp));
         return;
-      }
       case Intrinsic::cttz:
         setValue(&I, DAG.getNode(ISD::CTTZ,
                                  getValue(I.getOperand(1)).getValueType(),
@@ -733,6 +743,10 @@ void SelectionDAGLowering::visitCall(CallInst &I) {
         setValue(&I, DAG.getNode(ISD::CTPOP,
                                  getValue(I.getOperand(1)).getValueType(),
                                  getValue(I.getOperand(1))));
+        return;
+      default:
+        std::cerr << I;
+        assert(0 && "This intrinsic is not implemented yet!");
         return;
       }
 
