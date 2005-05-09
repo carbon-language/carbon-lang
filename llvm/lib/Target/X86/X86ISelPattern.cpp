@@ -1701,6 +1701,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
     MVT::ValueType StoreClass = Node->getValueType(0);
     if (StoreClass == MVT::i8 || Node->getOpcode() == ISD::FP_TO_UINT)
       switch (StoreClass) {
+      case MVT::i1:
       case MVT::i8:  StoreClass = MVT::i16; break;
       case MVT::i16: StoreClass = MVT::i32; break;
       case MVT::i32: StoreClass = MVT::i64; break;
@@ -1743,6 +1744,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
       addFrameReference(BuildMI(BB, X86::MOV16rm, 4, Result), FrameIdx);
       break;
     case MVT::i8:
+    case MVT::i1:
       addFrameReference(BuildMI(BB, X86::MOV8rm, 4, Result), FrameIdx);
       break;
     }
