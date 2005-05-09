@@ -252,13 +252,19 @@ namespace ISD {
     ADJCALLSTACKDOWN,  // Beginning of a call sequence
     ADJCALLSTACKUP,    // End of a call sequence
 
+    // SRCVALUE - This corresponds to a Value*, and is used to associate memory
+    // locations with their value.  This allows one use alias analysis
+    // information in the backend.
+    SRCVALUE,
+
     // PCMARKER - This corresponds to the pcmarker intrinsic.
     PCMARKER,
 
-    // SRCVALUE - This corresponds to a Value*, and is used to carry associate
-    // memory operations with their corrosponding load.  This lets one use the
-    // pointer analysis information in the backend
-    SRCVALUE,
+    // READPORT, WRITEPORT, READIO, WRITEIO - These correspond to the LLVM
+    // intrinsics of the same name.  The first operand is a token chain, the
+    // other operands match the intrinsic.  These produce a token chain in
+    // addition to a value (if any).
+    READPORT, WRITEPORT, READIO, WRITEIO,
 
     // BUILTIN_OP_END - This must be the last enum value in this list.
     BUILTIN_OP_END,

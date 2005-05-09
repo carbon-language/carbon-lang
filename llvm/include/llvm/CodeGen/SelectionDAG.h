@@ -179,12 +179,14 @@ public:
   SDOperand getNode(unsigned Opcode, MVT::ValueType VT, SDOperand N1,
                     SDOperand N2, SDOperand N3, MVT::ValueType EVT);
   SDOperand getNode(unsigned Opcode, MVT::ValueType VT, SDOperand N1,
-                    SDOperand N2, SDOperand N3, SDOperand N4, MVT::ValueType EVT);
+                    SDOperand N2, SDOperand N3, SDOperand N4,
+                    MVT::ValueType EVT);
 
   /// getLoad - Loads are not normal binary operators: their result type is not
   /// determined by their operands, and they produce a value AND a token chain.
   ///
-  SDOperand getLoad(MVT::ValueType VT, SDOperand Chain, SDOperand Ptr, SDOperand SV);
+  SDOperand getLoad(MVT::ValueType VT, SDOperand Chain, SDOperand Ptr,
+                    SDOperand SV);
 
   // getSrcValue - construct a node to track a Value* through the backend
   SDOperand getSrcValue(const Value* I, int offset = 0);
