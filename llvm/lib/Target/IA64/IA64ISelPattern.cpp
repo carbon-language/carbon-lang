@@ -680,11 +680,11 @@ unsigned lefevre(const std::string inString,
   }
 
   for(unsigned i=0; i<u.length(); i++) {
-    if(u.c_str()[i]=='P' || u.c_str()[i]=='N')
+    if(u[i]=='P' || u[i]=='N')
       u.replace(i, 1, "0");
-    if(u.c_str()[i]=='p')
+    if(u[i]=='p')
       u.replace(i, 1, "P");
-    if(u.c_str()[i]=='n')
+    if(u[i]=='n')
       u.replace(i, 1, "N");
   }
 
@@ -694,21 +694,18 @@ unsigned lefevre(const std::string inString,
   } else
     f=false;
   
-  bool hit=true;
-  for(unsigned i=0; i<u.length(); i++) {
-    if(u[i]!='0')
-      if(u[i]!='N') {
-	hit=false;
-	break;
-      }
-  }
+  int pos=0;
+  while(u[pos]=='0')
+    pos++;
+
+  bool hit=(u[pos]=='N');
 
   int g=0;
   if(hit) {
     g=1;
     for(unsigned p=0; p<u.length(); p++) {
-      bool isP=(u.c_str()[p]=='P');
-      bool isN=(u.c_str()[p]=='N');
+      bool isP=(u[p]=='P');
+      bool isN=(u[p]=='N');
 
       if(isP)
 	u.replace(p, 1, "N");
