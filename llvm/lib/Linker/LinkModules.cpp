@@ -600,6 +600,7 @@ static bool LinkFunctionProtos(Module *Dest, const Module *Src,
       // identical to SF into the dest module...
       Function *NewDF = new Function(SF->getFunctionType(), SF->getLinkage(),
                                      SF->getName(), Dest);
+      NewDF->setCallingConv(SF->getCallingConv());
 
       // If the LLVM runtime renamed the function, but it is an externally
       // visible symbol, DF must be an existing function with internal linkage.
