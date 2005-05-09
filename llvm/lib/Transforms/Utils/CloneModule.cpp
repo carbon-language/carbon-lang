@@ -47,21 +47,27 @@ Module *llvm::CloneModule(const Module *M) {
   // new module.  Here we add them to the ValueMap and to the new Module.  We
   // don't worry about attributes or initializers, they will come later.
   //
-  for (Module::const_global_iterator I = M->global_begin(), E = M->global_end(); I != E; ++I)
+  for (Module::const_global_iterator I = M->global_begin(), E = M->global_end();
+       I != E; ++I)
     ValueMap[I] = new GlobalVariable(I->getType()->getElementType(), false,
                                      GlobalValue::ExternalLinkage, 0,
                                      I->getName(), New);
 
   // Loop over the functions in the module, making external functions as before
-  for (Module::const_iterator I = M->begin(), E = M->end(); I != E; ++I)
-    ValueMap[I]=new Function(cast<FunctionType>(I->getType()->getElementType()),
-                             GlobalValue::ExternalLinkage, I->getName(), New);
+  for (Module::const_iterator I = M->begin(), E = M->end(); I != E; ++I) {
+    Function *NF = 
+      new Function(cast<FunctionType>(I->getType()->getElementType()),
+                   GlobalValue::ExternalLinkage, I->getName(), New);
+    NF->setCallingConv(I->getCallingConv());
+    ValueMap[I]= NF;
+  }
 
   // Now that all of the things that global variable initializer can refer to
   // have been created, loop through and copy the global variable referrers
   // over...  We also set the attributes on the global now.
   //
-  for (Module::const_global_iterator I = M->global_begin(), E = M->global_end(); I != E; ++I) {
+  for (Module::const_global_iterator I = M->global_begin(), E = M->global_end();
+       I != E; ++I) {
     GlobalVariable *GV = cast<GlobalVariable>(ValueMap[I]);
     if (I->hasInitializer())
       GV->setInitializer(cast<Constant>(MapValue(I->getInitializer(),
@@ -75,7 +81,8 @@ Module *llvm::CloneModule(const Module *M) {
     Function *F = cast<Function>(ValueMap[I]);
     if (!I->isExternal()) {
       Function::arg_iterator DestI = F->arg_begin();
-      for (Function::const_arg_iterator J = I->arg_begin(); J != I->arg_end(); ++J) {
+      for (Function::const_arg_iterator J = I->arg_begin(); J != I->arg_end();
+           ++J) {
         DestI->setName(J->getName());
         ValueMap[J] = DestI++;
       }

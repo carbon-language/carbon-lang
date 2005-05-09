@@ -153,6 +153,7 @@ bool llvm::InlineFunction(CallSite CS) {
               new InvokeInst(CI->getCalledValue(), Split, InvokeDest,
                             std::vector<Value*>(CI->op_begin()+1, CI->op_end()),
                              CI->getName(), BB->getTerminator());
+            II->setCallingConv(CI->getCallingConv());
 
             // Make sure that anything using the call now uses the invoke!
             CI->replaceAllUsesWith(II);
