@@ -493,6 +493,11 @@ void SelectionDAGLowering::visitCast(User &I) {
 
   if (N.getValueType() == DestTy) {
     setValue(&I, N);  // noop cast.
+  } else if (DestTy == MVT::i1) {
+    // Cast to bool is a comparison against zero, not truncation to zero.
+    SDOperand Zero = isInteger(SrcTy) ? DAG.getConstant(0, N.getValueType()) :
+                                       DAG.getConstantFP(0.0, N.getValueType());
+    setValue(&I, DAG.getSetCC(ISD::SETNE, MVT::i1, N, Zero));
   } else if (isInteger(SrcTy)) {
     if (isInteger(DestTy)) {        // Int -> Int cast
       if (DestTy < SrcTy)   // Truncating cast?
