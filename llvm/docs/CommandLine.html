@@ -1284,27 +1284,29 @@ that this option prefixes its value.  With 'Prefix' options, the equal sign does
 not separate the value from the option name specified. Instead, the value is
 everything after the prefix, including any equal sign if present. This is useful
 for processing odd arguments like <tt>-lmalloc</tt> and <tt>-L/usr/lib</tt> in a
-linker tool or <tt>-DNAME=value</tt> in a compiler tool.   Here, the 
+linker tool or <tt>-DNAME=value</tt> in a compiler tool.   Here, the
 '<tt>l</tt>', '<tt>D</tt>' and '<tt>L</tt>' options are normal string (or list)
-options, that have the <a href="#cl::Prefix">cl::Prefix</a> modifier added to 
-allow the CommandLine library to recognize them.  Note that 
-<a href="#cl::Prefix">cl::Prefix</a> options must not have the <a
-href="#cl::ValueDisallowed">cl::ValueDisallowed</a> modifier specified.</li>
+options, that have the <b><tt><a href="#cl::Prefix">cl::Prefix</a></tt></b>
+modifier added to allow the CommandLine library to recognize them.  Note that
+<b><tt><a href="#cl::Prefix">cl::Prefix</a></tt></b> options must not have the
+<b><tt><a href="#cl::ValueDisallowed">cl::ValueDisallowed</a></tt></b> modifier
+specified.</li>
 
 <li><a name="cl::Grouping">The <b><tt>cl::Grouping</tt></b></a> modifier is used
 to implement unix style tools (like <tt>ls</tt>) that have lots of single letter
 arguments, but only require a single dash.  For example, the '<tt>ls -labF</tt>'
 command actually enables four different options, all of which are single
-letters.  Note that <a href="#cl::Grouping">cl::Grouping</a> options cannot have
-values.</li>
+letters.  Note that <b><tt><a href="#cl::Grouping">cl::Grouping</a></tt></b>
+options cannot have values.</li>
 
 </ul>
 
-<p>The CommandLine library does not restrict how you use the <a
-href="#cl::Prefix">cl::Prefix</a> or <a href="#cl::Grouping">cl::Grouping</a>
-modifiers, but it is possible to specify ambiguous argument settings.  Thus, it
-is possible to have multiple letter options that are prefix or grouping options,
-and they will still work as designed.</p>
+<p>The CommandLine library does not restrict how you use the <b><tt><a
+href="#cl::Prefix">cl::Prefix</a></tt></b> or <b><tt><a
+href="#cl::Grouping">cl::Grouping</a></tt></b> modifiers, but it is possible to
+specify ambiguous argument settings.  Thus, it is possible to have multiple
+letter options that are prefix or grouping options, and they will still work as
+designed.</p>
 
 <p>To do this, the CommandLine library uses a greedy algorithm to parse the
 input option into (potentially multiple) prefix and grouping options.  The
