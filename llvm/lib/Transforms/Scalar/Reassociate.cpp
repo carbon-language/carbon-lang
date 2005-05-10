@@ -556,6 +556,13 @@ static void PrintOps(unsigned Opcode, const std::vector<ValueEntry> &Ops,
 /// reassociating them as we go.
 void Reassociate::ReassociateBB(BasicBlock *BB) {
   for (BasicBlock::iterator BI = BB->begin(); BI != BB->end(); ++BI) {
+    if (BI->getOpcode() == Instruction::Shl &&
+        isa<ConstantInt>(BI->getOperand(1)))
+      if (Instruction *NI = ConvertShiftToMul(BI)) {
+        MadeChange = true;
+        BI = NI;
+      }
+
     // Reject cases where it is pointless to do this.
     if (!isa<BinaryOperator>(BI) || BI->getType()->isFloatingPoint())
       continue;  // Floating point ops are not associative.
@@ -579,12 +586,6 @@ void Reassociate::ReassociateBB(BasicBlock *BB) {
         }
       }
     }
-    if (BI->getOpcode() == Instruction::Shl &&
-        isa<ConstantInt>(BI->getOperand(1)))
-      if (Instruction *NI = ConvertShiftToMul(BI)) {
-        MadeChange = true;
-        BI = NI;
-      }
 
     // If this instruction is a commutative binary operator, process it.
     if (!BI->isAssociative()) continue;
