@@ -97,7 +97,7 @@ static inline bool ProvideOption(Option *Handler, const char *ArgName,
   // Enforce value requirements
   switch (Handler->getValueExpectedFlag()) {
   case ValueRequired:
-    if (Value == 0 || *Value == 0) {  // No value specified?
+    if (Value == 0) {       // No value specified?
       if (i+1 < argc) {     // Steal the next argument, like for '-o filename'
         Value = argv[++i];
       } else {
@@ -106,7 +106,7 @@ static inline bool ProvideOption(Option *Handler, const char *ArgName,
     }
     break;
   case ValueDisallowed:
-    if (*Value != 0)
+    if (Value)
       return Handler->error(" does not allow a value! '" +
                             std::string(Value) + "' specified.");
     break;
@@ -121,7 +121,7 @@ static inline bool ProvideOption(Option *Handler, const char *ArgName,
   }
 
   // Run the handler now!
-  return Handler->addOccurrence(i, ArgName, Value);
+  return Handler->addOccurrence(i, ArgName, Value ? Value : "");
 }
 
 static bool ProvidePositionalOption(Option *Handler, const std::string &Arg,
@@ -268,11 +268,11 @@ static Option *LookupOption(const char *&Arg, const char *&Value) {
 
   const char *ArgEnd = Arg;
   while (*ArgEnd && *ArgEnd != '=')
-    ++ArgEnd; // Scan till end of argument name...
+    ++ArgEnd; // Scan till end of argument name.
 
-  Value = ArgEnd;
-  if (*Value)           // If we have an equals sign...
-    ++Value;            // Advance to value...
+  if (*ArgEnd == '=')  // If we have an equals sign...
+    Value = ArgEnd+1;  // Get the value, not the equals
+
 
   if (*Arg == 0) return 0;
 
@@ -348,7 +348,7 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
   bool DashDashFound = false;  // Have we read '--'?
   for (int i = 1; i < argc; ++i) {
     Option *Handler = 0;
-    const char *Value = "";
+    const char *Value = 0;
     const char *ArgName = "";
 
     // Check to see if this is a positional argument.  This argument is
@@ -429,7 +429,7 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
                      "Option can not be cl::Grouping AND cl::ValueRequired!");
               int Dummy;
               ErrorParsing |= ProvideOption(PGOpt, RealArgName.c_str(),
-                                            "", 0, 0, Dummy);
+                                            0, 0, 0, Dummy);
 
               // Get the next grouping option...
               PGOpt = getOptionPred(RealName, Length, isGrouping);
@@ -450,7 +450,7 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
 
     // Check to see if this option accepts a comma separated list of values.  If
     // it does, we have to split up the value into multiple values...
-    if (Handler->getMiscFlags() & CommaSeparated) {
+    if (Value && Handler->getMiscFlags() & CommaSeparated) {
       std::string Val(Value);
       std::string::size_type Pos = Val.find(',');
 
@@ -591,7 +591,8 @@ bool Option::error(std::string Message, const char *ArgName) {
   return true;
 }
 
-bool Option::addOccurrence(unsigned pos, const char *ArgName, const std::string &Value) {
+bool Option::addOccurrence(unsigned pos, const char *ArgName,
+                           const std::string &Value) {
   NumOccurrences++;   // Increment the number of times we have been seen
 
   switch (getNumOccurrencesFlag()) {
