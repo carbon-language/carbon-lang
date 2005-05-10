@@ -1,10 +1,10 @@
 /*===-- Lexer.l - Scanner for llvm assembly files --------------*- C++ -*--===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 //  This file implements the flex scanner for LLVM assembly languages files.
@@ -37,12 +37,12 @@
 
 namespace llvm {
 
-// TODO: All of the static identifiers are figured out by the lexer, 
+// TODO: All of the static identifiers are figured out by the lexer,
 // these should be hashed to reduce the lexer size
 
 
 // atoull - Convert an ascii string of decimal digits into the unsigned long
-// long representation... this does not have to do input error checking, 
+// long representation... this does not have to do input error checking,
 // because we know that the input will be matched by a suitable regex...
 //
 static uint64_t atoull(const char *Buffer) {
@@ -110,7 +110,7 @@ char *UnEscapeLexed(char *Buffer, bool AllowNull) {
       *BOut = (char)strtol(BIn+1, 0, 16);  // Convert to number
       if (!AllowNull && !*BOut)
         ThrowException("String literal cannot accept \\00 escape!");
-      
+
       BIn[3] = Tmp;                  // Restore character
       BIn += 3;                      // Skip over handled chars
       ++BOut;
@@ -267,43 +267,43 @@ getelementptr   { RET_TOK(MemOpVal, GetElementPtr, GETELEMENTPTR); }
 {VarID}         {
                   UnEscapeLexed(yytext+1);
                   llvmAsmlval.StrVal = strdup(yytext+1);             // Skip %
-                  return VAR_ID; 
+                  return VAR_ID;
                 }
 {Label}         {
                   yytext[strlen(yytext)-1] = 0;  // nuke colon
                   UnEscapeLexed(yytext);
-		  llvmAsmlval.StrVal = strdup(yytext);
-		  return LABELSTR; 
+                  llvmAsmlval.StrVal = strdup(yytext);
+                  return LABELSTR;
                 }
 {QuoteLabel}    {
                   yytext[strlen(yytext)-2] = 0;  // nuke colon, end quote
                   UnEscapeLexed(yytext+1);
-		  llvmAsmlval.StrVal = strdup(yytext+1);
-		  return LABELSTR; 
+                  llvmAsmlval.StrVal = strdup(yytext+1);
+                  return LABELSTR;
                 }
 
 {StringConstant} { // Note that we cannot unescape a string constant here!  The
-                   // string constant might contain a \00 which would not be 
+                   // string constant might contain a \00 which would not be
                    // understood by the string stuff.  It is valid to make a
                    // [sbyte] c"Hello World\00" constant, for example.
                    //
-                  yytext[strlen(yytext)-1] = 0;           // nuke end quote
-		  llvmAsmlval.StrVal = strdup(yytext+1);  // Nuke start quote
-		  return STRINGCONSTANT;
+                   yytext[strlen(yytext)-1] = 0;           // nuke end quote
+                   llvmAsmlval.StrVal = strdup(yytext+1);  // Nuke start quote
+                   return STRINGCONSTANT;
                  }
 
 
 {PInteger}      { llvmAsmlval.UInt64Val = atoull(yytext); return EUINT64VAL; }
-{NInteger}      { 
+{NInteger}      {
                   uint64_t Val = atoull(yytext+1);
-		  // +1:  we have bigger negative range
-		  if (Val > (uint64_t)INT64_MAX+1)
-		    ThrowException("Constant too large for signed 64 bits!");
-                  llvmAsmlval.SInt64Val = -Val; 
-		  return ESINT64VAL; 
+                  // +1:  we have bigger negative range
+                  if (Val > (uint64_t)INT64_MAX+1)
+                    ThrowException("Constant too large for signed 64 bits!");
+                  llvmAsmlval.SInt64Val = -Val;
+                  return ESINT64VAL;
                 }
 {HexIntConstant} {
-                   llvmAsmlval.UInt64Val = HexIntToVal(yytext+3); 
+                   llvmAsmlval.UInt64Val = HexIntToVal(yytext+3);
                    return yytext[0] == 's' ? ESINT64VAL : EUINT64VAL;
                  }
 
@@ -316,11 +316,11 @@ getelementptr   { RET_TOK(MemOpVal, GetElementPtr, GETELEMENTPTR); }
                 }
 {ENInteger}     {
                   uint64_t Val = atoull(yytext+2);
-		  // +1:  we have bigger negative range
-		  if (Val > (uint64_t)INT32_MAX+1)
-		    ThrowException("Constant too large for signed 32 bits!");
+                  // +1:  we have bigger negative range
+                  if (Val > (uint64_t)INT32_MAX+1)
+                    ThrowException("Constant too large for signed 32 bits!");
                   llvmAsmlval.SIntVal = (int)-Val;
-		  return SINTVAL;
+                  return SINTVAL;
                 }
 
 {FPConstant}    { llvmAsmlval.FPVal = atof(yytext); return FPVAL; }

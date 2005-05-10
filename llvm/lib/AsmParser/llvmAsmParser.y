@@ -1,10 +1,10 @@
 //===-- llvmAsmParser.y - Parser for llvm assembly files --------*- C++ -*-===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file was developed by the LLVM research group and is distributed under
 // the University of Illinois Open Source License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 //  This file implements the bison parser for LLVM assembly languages files.
@@ -51,8 +51,9 @@ static Module *ParserResult;
 // destroyed when the function is completed.
 //
 typedef std::vector<Value *> ValueList;           // Numbered defs
-static void ResolveDefinitions(std::map<const Type *,ValueList> &LateResolvers,
-                               std::map<const Type *,ValueList> *FutureLateResolvers = 0);
+static void 
+ResolveDefinitions(std::map<const Type *,ValueList> &LateResolvers,
+                   std::map<const Type *,ValueList> *FutureLateResolvers = 0);
 
 static struct PerModuleInfo {
   Module *CurrentModule;
@@ -87,7 +88,7 @@ static struct PerModuleInfo {
     //
     if (!GlobalRefs.empty()) {
       std::string UndefinedReferences = "Unresolved global references exist:\n";
-      
+
       for (GlobalRefsType::iterator I = GlobalRefs.begin(), E =GlobalRefs.end();
            I != E; ++I) {
         UndefinedReferences += "  " + I->first.first->getDescription() + " " +
@@ -179,7 +180,7 @@ static const Type *getTypeVal(const ValID &D, bool DoNotImprovise = false) {
   switch (D.Type) {
   case ValID::NumberVal:               // Is it a numbered definition?
     // Module constants occupy the lowest numbered slots...
-    if ((unsigned)D.Num < CurModule.Types.size()) 
+    if ((unsigned)D.Num < CurModule.Types.size())
       return CurModule.Types[(unsigned)D.Num];
     break;
   case ValID::NameVal:                 // Is it a named definition?
@@ -216,7 +217,7 @@ static const Type *getTypeVal(const ValID &D, bool DoNotImprovise = false) {
  }
 
 static Value *lookupInSymbolTable(const Type *Ty, const std::string &Name) {
-  SymbolTable &SymTab = 
+  SymbolTable &SymTab =
     inFunctionScope() ? CurFun.CurrentFunction->getSymbolTable() :
                         CurModule.CurrentModule->getSymbolTable();
   return SymTab.lookup(Ty, Name);
@@ -238,7 +239,7 @@ static Value *getValNonImprovising(const Type *Ty, const ValID &D) {
     // Module constants occupy the lowest numbered slots...
     std::map<const Type*,ValueList>::iterator VI = CurModule.Values.find(Ty);
     if (VI != CurModule.Values.end()) {
-      if (Num < VI->second.size()) 
+      if (Num < VI->second.size())
         return VI->second[Num];
       Num -= VI->second.size();
     }
@@ -249,7 +250,7 @@ static Value *getValNonImprovising(const Type *Ty, const ValID &D) {
 
     // Check that the number is within bounds...
     if (VI->second.size() <= Num) return 0;
-  
+
     return VI->second[Num];
   }
 
@@ -261,12 +262,12 @@ static Value *getValNonImprovising(const Type *Ty, const ValID &D) {
     return N;
   }
 
-  // Check to make sure that "Ty" is an integral type, and that our 
+  // Check to make sure that "Ty" is an integral type, and that our
   // value will fit into the specified type...
   case ValID::ConstSIntVal:    // Is it a constant pool reference??
     if (!ConstantSInt::isValueValidForType(Ty, D.ConstPool64))
       ThrowException("Signed integral constant '" +
-                     itostr(D.ConstPool64) + "' is invalid for type '" + 
+                     itostr(D.ConstPool64) + "' is invalid for type '" +
                      Ty->getDescription() + "'!");
     return ConstantSInt::get(Ty, D.ConstPool64);
 
@@ -286,15 +287,15 @@ static Value *getValNonImprovising(const Type *Ty, const ValID &D) {
     if (!ConstantFP::isValueValidForType(Ty, D.ConstPoolFP))
       ThrowException("FP constant invalid for type!!");
     return ConstantFP::get(Ty, D.ConstPoolFP);
-    
+
   case ValID::ConstNullVal:      // Is it a null value?
     if (!isa<PointerType>(Ty))
       ThrowException("Cannot create a a non pointer null!");
     return ConstantPointerNull::get(cast<PointerType>(Ty));
-    
+
   case ValID::ConstUndefVal:      // Is it an undef value?
     return UndefValue::get(Ty);
-    
+
   case ValID::ConstantVal:       // Fully resolved constant?
     if (D.ConstantValue->getType() != Ty)
       ThrowException("Constant expression type different from required type!");
@@ -339,7 +340,7 @@ static Value *getVal(const Type *Ty, const ValID &ID) {
 
   if (inFunctionScope())
     InsertValue(V, CurFun.LateResolveValues);
-  else 
+  else
     InsertValue(V, CurModule.LateResolveValues);
   return V;
 }
@@ -419,12 +420,13 @@ static BasicBlock *getBBVal(const ValID &ID, bool isDefinition = false) {
 // and back patchs after we are done.
 //
 
-// ResolveDefinitions - If we could not resolve some defs at parsing 
-// time (forward branches, phi functions for loops, etc...) resolve the 
+// ResolveDefinitions - If we could not resolve some defs at parsing
+// time (forward branches, phi functions for loops, etc...) resolve the
 // defs now...
 //
-static void ResolveDefinitions(std::map<const Type*,ValueList> &LateResolvers,
-                               std::map<const Type*,ValueList> *FutureLateResolvers) {
+static void 
+ResolveDefinitions(std::map<const Type*,ValueList> &LateResolvers,
+                   std::map<const Type*,ValueList> *FutureLateResolvers) {
   // Loop over LateResolveDefs fixing up stuff that couldn't be resolved
   for (std::map<const Type*,ValueList>::iterator LRI = LateResolvers.begin(),
          E = LateResolvers.end(); LRI != E; ++LRI) {
@@ -455,7 +457,7 @@ static void ResolveDefinitions(std::map<const Type*,ValueList> &LateResolvers,
                          PHI->second.second);
         else
           ThrowException("Reference to an invalid definition: #" +
-                         itostr(DID.Num) + " of type '" + 
+                         itostr(DID.Num) + " of type '" +
                          V->getType()->getDescription() + "'",
                          PHI->second.second);
       }
@@ -491,15 +493,15 @@ static void setValueName(Value *V, char *NameStr) {
     std::string Name(NameStr);      // Copy string
     free(NameStr);                  // Free old string
 
-    if (V->getType() == Type::VoidTy) 
+    if (V->getType() == Type::VoidTy)
       ThrowException("Can't assign name '" + Name+"' to value with void type!");
-    
+
     assert(inFunctionScope() && "Must be in function scope!");
     SymbolTable &ST = CurFun.CurrentFunction->getSymbolTable();
     if (ST.lookup(V->getType(), Name))
       ThrowException("Redefinition of value named '" + Name + "' in the '" +
                      V->getType()->getDescription() + "' type plane!");
-    
+
     // Set the name.
     V->setName(Name);
   }
@@ -513,7 +515,7 @@ static void ParseGlobalVariable(char *NameStr,GlobalValue::LinkageTypes Linkage,
   if (isa<FunctionType>(Ty))
     ThrowException("Cannot declare global vars of function type!");
 
-  const PointerType *PTy = PointerType::get(Ty); 
+  const PointerType *PTy = PointerType::get(Ty);
 
   std::string Name;
   if (NameStr) {
@@ -523,7 +525,7 @@ static void ParseGlobalVariable(char *NameStr,GlobalValue::LinkageTypes Linkage,
 
   // See if this global value was forward referenced.  If so, recycle the
   // object.
-  ValID ID; 
+  ValID ID;
   if (!Name.empty()) {
     ID = ValID::create((char*)Name.c_str());
   } else {
@@ -531,7 +533,7 @@ static void ParseGlobalVariable(char *NameStr,GlobalValue::LinkageTypes Linkage,
   }
 
   if (GlobalValue *FWGV = CurModule.GetForwardRefForGlobal(PTy, ID)) {
-    // Move the global to the end of the list, from whereever it was 
+    // Move the global to the end of the list, from whereever it was
     // previously inserted.
     GlobalVariable *GV = cast<GlobalVariable>(FWGV);
     CurModule.CurrentModule->getGlobalList().remove(GV);
@@ -549,10 +551,10 @@ static void ParseGlobalVariable(char *NameStr,GlobalValue::LinkageTypes Linkage,
   if (!Name.empty()) {
     // We are a simple redefinition of a value, check to see if it is defined
     // the same as the old one.
-    if (GlobalVariable *EGV = 
+    if (GlobalVariable *EGV =
                 CurModule.CurrentModule->getGlobalVariable(Name, Ty)) {
       // We are allowed to redefine a global variable in two circumstances:
-      // 1. If at least one of the globals is uninitialized or 
+      // 1. If at least one of the globals is uninitialized or
       // 2. If both initializers have the same value.
       //
       if (!EGV->hasInitializer() || !Initializer ||
@@ -568,14 +570,14 @@ static void ParseGlobalVariable(char *NameStr,GlobalValue::LinkageTypes Linkage,
         return;
       }
 
-      ThrowException("Redefinition of global variable named '" + Name + 
+      ThrowException("Redefinition of global variable named '" + Name +
                      "' in the '" + Ty->getDescription() + "' type plane!");
     }
   }
 
   // Otherwise there is no existing GV to use, create one now.
   GlobalVariable *GV =
-    new GlobalVariable(Ty, isConstantGlobal, Linkage, Initializer, Name, 
+    new GlobalVariable(Ty, isConstantGlobal, Linkage, Initializer, Name,
                        CurModule.CurrentModule);
   InsertValue(GV, CurModule.Values);
 }
@@ -590,12 +592,12 @@ static void ParseGlobalVariable(char *NameStr,GlobalValue::LinkageTypes Linkage,
 static bool setTypeName(const Type *T, char *NameStr) {
   assert(!inFunctionScope() && "Can't give types function-local names!");
   if (NameStr == 0) return false;
-  
+ 
   std::string Name(NameStr);      // Copy string
   free(NameStr);                  // Free old string
 
   // We don't allow assigning names to void type
-  if (T == Type::VoidTy) 
+  if (T == Type::VoidTy)
     ThrowException("Can't assign name '" + Name + "' to the void type!");
 
   // Set the type name, checking for conflicts as we do so.
@@ -634,7 +636,7 @@ static bool setTypeName(const Type *T, char *NameStr) {
 // TypeContains - Returns true if Ty directly contains E in it.
 //
 static bool TypeContains(const Type *Ty, const Type *E) {
-  return std::find(Ty->subtype_begin(), Ty->subtype_end(), 
+  return std::find(Ty->subtype_begin(), Ty->subtype_end(),
                    E) != Ty->subtype_end();
 }
 
@@ -643,7 +645,7 @@ namespace {
     // NestingLevel - The number of nesting levels that need to be popped before
     // this type is resolved.
     unsigned NestingLevel;
-    
+
     // LastContainedTy - This is the type at the current binding level for the
     // type.  Every time we reduce the nesting level, this gets updated.
     const Type *LastContainedTy;
@@ -670,7 +672,7 @@ static std::vector<UpRefRecord> UpRefs;
 static PATypeHolder HandleUpRefs(const Type *ty) {
   if (!ty->isAbstract()) return ty;
   PATypeHolder Ty(ty);
-  UR_OUT("Type '" << Ty->getDescription() << 
+  UR_OUT("Type '" << Ty->getDescription() <<
          "' newly formed.  Resolving upreferences.\n" <<
          UpRefs.size() << " upreferences active!\n");
 
@@ -681,15 +683,15 @@ static PATypeHolder HandleUpRefs(const Type *ty) {
   OpaqueType *TypeToResolve = 0;
 
   for (unsigned i = 0; i != UpRefs.size(); ++i) {
-    UR_OUT("  UR#" << i << " - TypeContains(" << Ty->getDescription() << ", " 
-           << UpRefs[i].second->getDescription() << ") = " 
+    UR_OUT("  UR#" << i << " - TypeContains(" << Ty->getDescription() << ", "
+           << UpRefs[i].second->getDescription() << ") = "
            << (TypeContains(Ty, UpRefs[i].second) ? "true" : "false") << "\n");
     if (TypeContains(Ty, UpRefs[i].LastContainedTy)) {
       // Decrement level of upreference
       unsigned Level = --UpRefs[i].NestingLevel;
       UpRefs[i].LastContainedTy = Ty;
       UR_OUT("  Uplevel Ref Level = " << Level << "\n");
-      if (Level == 0) {                     // Upreference should be resolved! 
+      if (Level == 0) {                     // Upreference should be resolved!
         if (!TypeToResolve) {
           TypeToResolve = UpRefs[i].UpRefTy;
         } else {
@@ -757,8 +759,9 @@ Module *llvm::RunVMAsmParser(const std::string &Filename, FILE *F) {
   std::vector<std::pair<llvm::PATypeHolder*,char*> > *ArgList;
   std::vector<llvm::Value*>              *ValueList;
   std::list<llvm::PATypeHolder>          *TypeList;
+  // Represent the RHS of PHI node
   std::list<std::pair<llvm::Value*,
-                      llvm::BasicBlock*> > *PHIList; // Represent the RHS of PHI node
+                      llvm::BasicBlock*> > *PHIList;
   std::vector<std::pair<llvm::Constant*, llvm::BasicBlock*> > *JumpTable;
   std::vector<llvm::Constant*>           *ConstVector;
 
@@ -835,10 +838,10 @@ Module *llvm::RunVMAsmParser(const std::string &Filename, FILE *F) {
 %token CC_TOK CCC_TOK FASTCC_TOK COLDCC_TOK
 %type <UIntVal> OptCallingConv
 
-// Basic Block Terminating Operators 
+// Basic Block Terminating Operators
 %token <TermOpVal> RET BR SWITCH INVOKE UNWIND UNREACHABLE
 
-// Binary Operators 
+// Binary Operators
 %type  <BinaryOpVal> ArithmeticOps LogicalOps SetCondOps // Binops Subcatagories
 %token <BinaryOpVal> ADD SUB MUL DIV REM AND OR XOR
 %token <BinaryOpVal> SETLE SETGE SETLT SETGT SETEQ SETNE  // Binary Comarators
@@ -871,7 +874,7 @@ EINT64VAL : EUINT64VAL {
   $$ = (int64_t)$1;
 };
 
-// Operations that are notably excluded from this list include: 
+// Operations that are notably excluded from this list include:
 // RET, BR, & SWITCH because they end basic blocks and are treated specially.
 //
 ArithmeticOps: ADD | SUB | MUL | DIV | REM;
@@ -879,9 +882,6 @@ LogicalOps   : AND | OR | XOR;
 SetCondOps   : SETLE | SETGE | SETLT | SETGT | SETEQ | SETNE;
 
 ShiftOps  : SHL | SHR;
-
-
-
 
 // These are some types that allow classification if we only want a particular 
 // thing... for example, only a signed, unsigned, or integral type.
@@ -894,8 +894,8 @@ FPType   : FLOAT | DOUBLE;
 OptAssign : Name '=' {
     $$ = $1;
   }
-  | /*empty*/ { 
-    $$ = 0; 
+  | /*empty*/ {
+    $$ = 0;
   };
 
 OptLinkage : INTERNAL  { $$ = GlobalValue::InternalLinkage; } |
@@ -986,7 +986,7 @@ UpRTypes : '\\' EUINT64VAL {                   // Type UpReference
     for (std::list<llvm::PATypeHolder>::iterator I = $2->begin(),
            E = $2->end(); I != E; ++I)
       Elements.push_back(*I);
-    
+
     $$ = new PATypeHolder(HandleUpRefs(StructType::get(Elements)));
     delete $2;
   }
@@ -1887,10 +1887,8 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
         !isa<PackedType>((*$2).get()))
       ThrowException(
         "Arithmetic operator requires integer, FP, or packed operands!");
-    if(isa<PackedType>((*$2).get()) && $1 == Instruction::Rem) {
-      ThrowException(
-        "Rem not supported on packed types!");
-    }
+    if (isa<PackedType>((*$2).get()) && $1 == Instruction::Rem)
+      ThrowException("Rem not supported on packed types!");
     $$ = BinaryOperator::create($1, getVal(*$2, $3), getVal(*$2, $5));
     if ($$ == 0)
       ThrowException("binary operator returned null!");
