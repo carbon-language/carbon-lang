@@ -287,7 +287,7 @@ SelectionDAG::~SelectionDAG() {
 
 SDOperand SelectionDAG::getZeroExtendInReg(SDOperand Op, MVT::ValueType VT) {
   if (Op.getValueType() == VT) return Op;
-  int64_t Imm = ~0ULL >> 64-MVT::getSizeInBits(VT);
+  int64_t Imm = ~0ULL >> (64-MVT::getSizeInBits(VT));
   return getNode(ISD::AND, Op.getValueType(), Op,
                  getConstant(Imm, Op.getValueType()));
 }
@@ -561,7 +561,7 @@ SDOperand SelectionDAG::getSetCC(ISD::CondCode Cond, MVT::ValueType VT,
     unsigned UOF = ISD::getUnorderedFlavor(Cond);
     if (UOF == 2)   // FP operators that are undefined on NaNs.
       return getConstant(ISD::isTrueWhenEqual(Cond), VT);
-    if (UOF == ISD::isTrueWhenEqual(Cond))
+    if (UOF == unsigned(ISD::isTrueWhenEqual(Cond)))
       return getConstant(UOF, VT);
     // Otherwise, we can't fold it.  However, we can simplify it to SETUO/SETO
     // if it is not already.

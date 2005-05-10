@@ -240,7 +240,6 @@ X86TargetLowering::LowerCallTo(SDOperand Chain,
     std::vector<SDOperand> Stores;
 
     for (unsigned i = 0, e = Args.size(); i != e; ++i) {
-      unsigned ArgReg;
       SDOperand PtrOff = DAG.getConstant(ArgOffset, getPointerTy());
       PtrOff = DAG.getNode(ISD::ADD, MVT::i32, StackPtr, PtrOff);
 
