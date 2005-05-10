@@ -23,9 +23,9 @@ bool llvm::CheckBytecodeOutputToConsole(std::ostream* stream_to_check,
   if (stream_to_check == &std::cout && sys::Process::StandardOutIsDisplayed()) {
     if (print_warning) {
       std::cerr << "WARNING: You're attempting to print out a bytecode file.\n"
-                << "This is inadvisable as it may cause display problems. If\n"
-                << "you REALLY want to taste LLVM bytecode first-hand, you\n"
-                << "can force output with the `-f' option.\n\n";
+                   "This is inadvisable as it may cause display problems. If\n"
+                   "you REALLY want to taste LLVM bytecode first-hand, you\n"
+                   "can force output with the `-f' option.\n\n";
     }
     return true;
   }
