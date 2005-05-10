@@ -120,10 +120,12 @@ namespace {
   };
 }
 
-
 std::vector<SDOperand>
 X86TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
   std::vector<SDOperand> ArgValues;
+
+  MachineFunction &MF = DAG.getMachineFunction();
+  MachineFrameInfo *MFI = MF.getFrameInfo();
 
   // Add DAG nodes to load the arguments...  On entry to a function on the X86,
   // the stack frame looks like this:
@@ -133,9 +135,6 @@ X86TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
   // [ESP + 8] -- second argument, if first argument is four bytes in size
   //    ...
   //
-  MachineFunction &MF = DAG.getMachineFunction();
-  MachineFrameInfo *MFI = MF.getFrameInfo();
-
   unsigned ArgOffset = 0;   // Frame mechanisms handle retaddr slot
   for (Function::arg_iterator I = F.arg_begin(), E = F.arg_end(); I != E; ++I) {
     MVT::ValueType ObjectVT = getValueType(I->getType());
@@ -433,17 +432,34 @@ namespace {
   };
 }
 
+/// EmitSpecialCodeForMain - Emit any code that needs to be executed only in
+/// the main function.
+static void EmitSpecialCodeForMain(MachineBasicBlock *BB,
+                                   MachineFrameInfo *MFI) {
+  // Switch the FPU to 64-bit precision mode for better compatibility and speed.
+  int CWFrameIdx = MFI->CreateStackObject(2, 2);
+  addFrameReference(BuildMI(BB, X86::FNSTCW16m, 4), CWFrameIdx);
+
+  // Set the high part to be 64-bit precision.
+  addFrameReference(BuildMI(BB, X86::MOV8mi, 5),
+                    CWFrameIdx, 1).addImm(2);
+
+  // Reload the modified control word now.
+  addFrameReference(BuildMI(BB, X86::FLDCW16m, 4), CWFrameIdx);
+}
+
 /// InstructionSelectBasicBlock - This callback is invoked by SelectionDAGISel
 /// when it has created a SelectionDAG for us to codegen.
 void ISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
   // While we're doing this, keep track of whether we see any FP code for
   // FP_REG_KILL insertion.
   ContainsFPCode = false;
+  MachineFunction *MF = BB->getParent();
 
   // Scan the PHI nodes that already are inserted into this basic block.  If any
   // of them is a PHI of a floating point value, we need to insert an
   // FP_REG_KILL.
-  SSARegMap *RegMap = BB->getParent()->getSSARegMap();
+  SSARegMap *RegMap = MF->getSSARegMap();
   for (MachineBasicBlock::iterator I = BB->begin(), E = BB->end();
        I != E; ++I) {
     assert(I->getOpcode() == X86::PHI &&
@@ -453,6 +469,13 @@ void ISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
       ContainsFPCode = true;
       break;
     }
+  }
+
+  // If this is the entry block of main, emit special code for main.
+  if (BB == MF->begin()) {
+    const Function *F = MF->getFunction();
+    if (F->hasExternalLinkage() && F->getName() == "main")
+      EmitSpecialCodeForMain(BB, MF->getFrameInfo());
   }
 
   // Compute the RegPressureMap, which is an approximation for the number of
