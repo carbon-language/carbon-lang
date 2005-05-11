@@ -90,7 +90,6 @@ namespace {
       setOperationAction(ISD::FSQRT, MVT::f32, Expand);
 
       //IA64 has these, but they are not implemented
-      setOperationAction(ISD::CTPOP, MVT::i64  , Expand);
       setOperationAction(ISD::CTTZ , MVT::i64  , Expand);
       setOperationAction(ISD::CTLZ , MVT::i64  , Expand);
 
@@ -1597,6 +1596,12 @@ pC = pA OR pB
       break;
     }
     }
+    return Result;
+  }
+
+  case ISD::CTPOP: {
+    Tmp1 = SelectExpr(N.getOperand(0));
+    BuildMI(BB, IA64::POPCNT, 1, Result).addReg(Tmp1);
     return Result;
   }
 

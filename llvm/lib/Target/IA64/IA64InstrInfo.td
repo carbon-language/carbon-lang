@@ -227,6 +227,8 @@ def LD4 : AForm<0x03, 0x0b, (ops GR:$dst, GR:$srcPtr),
 def LD8 : AForm<0x03, 0x0b, (ops GR:$dst, GR:$srcPtr),
   "ld8 $dst = [$srcPtr];;">;
 
+def POPCNT : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src), "popcnt $dst = $src;;">;
+
 // some FP stuff:
 def FADD : AForm<0x03, 0x0b, (ops FP:$dst, FP:$src1, FP:$src2),
   "fadd $dst = $src1, $src2;;">;
