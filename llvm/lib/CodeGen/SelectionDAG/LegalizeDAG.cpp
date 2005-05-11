@@ -1132,10 +1132,27 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         Result = Tmp1;
         break;
       }
-//       case ISD::CTTZ:
-//         break;
-//       case ISD::CTLZ:
-//         break;
+      case ISD::CTTZ:
+        /* This should be used for targets that support ctpop:
+int nlz5(unsigned x) {
+   int pop(unsigned x);
+
+   x = x | (x >> 1);
+   x = x | (x >> 2);
+   x = x | (x >> 4);
+   x = x | (x >> 8);
+   x = x | (x >>16);
+   return ctpop(~x);
+}
+          See also: http://www.hackersdelight.org/HDcode/nlz.cc
+*/
+
+        assert(0 && "Cannot expand this yet!");
+        break;
+      case ISD::CTLZ:
+        // See Also: http://www.hackersdelight.org/HDcode/ntz.cc
+        assert(0 && "Cannot expand this yet!");
+        break;
       default:
         assert(0 && "Cannot expand this yet!");
         break;
