@@ -146,6 +146,30 @@ static Instruction* DecomposeConstantExpr(ConstantExpr* CE,
       return new SelectInst (C, S1, S2, "constantSelect", &insertBefore);
     }
 
+    case Instruction::Shr: {
+      getArg1 = CE->getOperand(0);
+      if (ConstantExpr* CEarg = dyn_cast<ConstantExpr>(getArg1))
+        getArg1 = DecomposeConstantExpr(CEarg, insertBefore);
+      getArg2 = CE->getOperand(1);
+      if (ConstantExpr* CEarg = dyn_cast<ConstantExpr>(getArg2))
+        getArg2 = DecomposeConstantExpr(CEarg, insertBefore);
+      return new ShiftInst (static_cast<Instruction::OtherOps>(CE->getOpcode()),
+                            getArg1, getArg2,
+                            "constantShr:" + getArg1->getName(), &insertBefore);
+    }
+
+    case Instruction::Shl: {
+      getArg1 = CE->getOperand(0);
+      if (ConstantExpr* CEarg = dyn_cast<ConstantExpr>(getArg1))
+        getArg1 = DecomposeConstantExpr(CEarg, insertBefore);
+      getArg2 = CE->getOperand(1);
+      if (ConstantExpr* CEarg = dyn_cast<ConstantExpr>(getArg2))
+        getArg2 = DecomposeConstantExpr(CEarg, insertBefore);
+      return new ShiftInst (static_cast<Instruction::OtherOps>(CE->getOpcode()),
+                            getArg1, getArg2,
+                            "constantShl:" + getArg1->getName(), &insertBefore);
+    }
+
     default:                            // must be a binary operator
       assert(CE->getOpcode() >= Instruction::BinaryOpsBegin &&
              CE->getOpcode() <  Instruction::BinaryOpsEnd &&
