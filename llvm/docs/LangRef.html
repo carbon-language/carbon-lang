@@ -2328,12 +2328,8 @@ function.  Additionally, because intrinsic functions are part of the LLVM
 language, it is required that they all be documented here if any are added.</p>
 
 
-<p>
-Adding an intrinsic to LLVM is straight-forward if it is possible to express the
-concept in LLVM directly (ie, code generator support is not _required_).  To do
-this, extend the default implementation of the IntrinsicLowering class to handle
-the intrinsic.  Code generators use this class to lower intrinsics they do not
-understand to raw LLVM instructions that they do.
+<p>To learn how to add an intrinsics, please see the <a
+href="ExtendingLLVM.html">Extending LLVM Guide</a>.
 </p>
 
 </div>
