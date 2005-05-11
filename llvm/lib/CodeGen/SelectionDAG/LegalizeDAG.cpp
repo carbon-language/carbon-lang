@@ -1132,27 +1132,40 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         Result = Tmp1;
         break;
       }
-      case ISD::CTTZ:
-        /* This should be used for targets that support ctpop:
-int nlz5(unsigned x) {
-   int pop(unsigned x);
-
-   x = x | (x >> 1);
-   x = x | (x >> 2);
-   x = x | (x >> 4);
-   x = x | (x >> 8);
-   x = x | (x >>16);
-   return ctpop(~x);
-}
-          See also: http://www.hackersdelight.org/HDcode/nlz.cc
-*/
-
-        assert(0 && "Cannot expand this yet!");
+      case ISD::CTLZ: {
+        /* for now, we do this:
+        x = x | (x >> 1);
+        x = x | (x >> 2);
+        ...
+        x = x | (x >>16);
+        x = x | (x >>32); // for 64-bit input 
+        return popcount(~x);
+        
+	but see also: http://www.hackersdelight.org/HDcode/nlz.cc */
+	MVT::ValueType VT = Tmp1.getValueType();
+        MVT::ValueType ShVT = TLI.getShiftAmountTy();
+        unsigned len = getSizeInBits(VT);
+        for (unsigned i = 0; (1U << i) <= (len / 2); ++i) {
+          Tmp3 = DAG.getConstant(1ULL << i, ShVT);
+          Tmp1 = DAG.getNode(ISD::OR, VT, Tmp1,  
+                             DAG.getNode(ISD::SRL, VT, Tmp1, Tmp3));
+        }
+        Tmp3 = DAG.getNode(ISD::XOR, VT, Tmp1, DAG.getConstant(~0ULL, VT));
+	Result = DAG.getNode(ISD::CTPOP, VT, Tmp3);
         break;
-      case ISD::CTLZ:
-        // See Also: http://www.hackersdelight.org/HDcode/ntz.cc
-        assert(0 && "Cannot expand this yet!");
+      }
+      case ISD::CTTZ: {
+	// for now, we use: { return popcount(~x & (x - 1)); }
+        // but see also http://www.hackersdelight.org/HDcode/ntz.cc )
+	MVT::ValueType VT = Tmp1.getValueType();
+	Tmp2 = DAG.getConstant(~0ULL, VT);
+	Tmp3 = DAG.getNode(ISD::AND, VT, 
+                             DAG.getNode(ISD::XOR, VT, Tmp1, Tmp2),
+                             DAG.getNode(ISD::SUB, VT, Tmp1,
+			                           DAG.getConstant(1, VT)));
+	Result = DAG.getNode(ISD::CTPOP, VT, Tmp3);
         break;
+      }
       default:
         assert(0 && "Cannot expand this yet!");
         break;
