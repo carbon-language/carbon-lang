@@ -251,13 +251,12 @@ void DefaultIntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
     break;
   }
   case Intrinsic::cttz: {
+    // cttz(x) -> ctpop(~X & (X-1))
     Value *Src = CI->getOperand(1);
     Value *NotSrc = BinaryOperator::createNot(Src, Src->getName()+".not", CI);
-    Src = BinaryOperator::createAnd(NotSrc,
-                                    BinaryOperator::createSub(Src, 
-                           ConstantUInt::get(CI->getOperand(0)->getType(), 1), "", CI));
-
-    Src = LowerCTPOP(Src, CI);
+    Value *SrcM1  = ConstantInt::get(Src->getType(), 1);
+    SrcM1 = BinaryOperator::createSub(Src, SrcM1, "", CI);
+    Src = LowerCTPOP(BinaryOperator::createAnd(NotSrc, SrcM1, "", CI), CI);
     CI->replaceAllUsesWith(Src);
     break;
   }
