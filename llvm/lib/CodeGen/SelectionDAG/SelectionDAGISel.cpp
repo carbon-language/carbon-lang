@@ -128,7 +128,8 @@ FunctionLoweringInfo::FunctionLoweringInfo(TargetLowering &tli,
   // Initialize the mapping of values to registers.  This is only set up for
   // instruction values that are used outside of the block that defines
   // them.
-  for (Function::arg_iterator AI = Fn.arg_begin(), E = Fn.arg_end(); AI != E; ++AI)
+  for (Function::arg_iterator AI = Fn.arg_begin(), E = Fn.arg_end();
+       AI != E; ++AI)
     InitializeRegForValue(AI);
 
   Function::iterator BB = Fn.begin(), E = Fn.end();
