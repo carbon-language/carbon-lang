@@ -2226,6 +2226,12 @@ CreateIntNegInstruction(const TargetMachine& target, Value* vreg) {
     .addReg(vreg).addRegDef(vreg);
 }
 
+static inline MachineInstr*
+CreateIntNegInstruction(const TargetMachine& target, Value* vreg, Value *destreg) {
+  return BuildMI(V9::SUBr, 3).addMReg(target.getRegInfo()->getZeroRegNum())
+    .addReg(vreg).addRegDef(destreg);
+}
+
 /// CreateShiftInstructions - Create instruction sequence for any shift
 /// operation. SLL or SLLX on an operand smaller than the integer reg. size
 /// (64bits) requires a second instruction for explicit sign-extension. Note
@@ -2306,6 +2312,7 @@ CreateMulConstInstruction(const TargetMachine &target, Function* F,
         needNeg = true;
         C = -C;
       }
+      TmpInstruction *tmpNeg = 0;
 
       if (C == 0 || C == 1) {
         cost = target.getInstrInfo()->minLatency(V9::ADDr);
@@ -2317,15 +2324,31 @@ CreateMulConstInstruction(const TargetMachine &target, Function* F,
           M = BuildMI(V9::ADDr,3).addReg(lval).addMReg(Zero).addRegDef(destVal);
         mvec.push_back(M);
       } else if (isPowerOf2(C, pow)) {
+	if(!needNeg) {
         unsigned opSize = target.getTargetData().getTypeSize(resultType);
         MachineOpCode opCode = (opSize <= 32)? V9::SLLr5 : V9::SLLXr6;
         CreateShiftInstructions(target, F, opCode, lval, NULL, pow,
                                 destVal, mvec, mcfi);
+	}
+	else {
+	  //Create tmp instruction to hold intermeidate value, since we need
+	  //to negate the result
+	  tmpNeg = new TmpInstruction(mcfi, lval);
+	  unsigned opSize = target.getTargetData().getTypeSize(resultType);
+	  MachineOpCode opCode = (opSize <= 32)? V9::SLLr5 : V9::SLLXr6;
+	  CreateShiftInstructions(target, F, opCode, lval, NULL, pow,
+				  tmpNeg, mvec, mcfi);
+	}
+	  
       }
 
       if (mvec.size() > 0 && needNeg) {
+	MachineInstr* M = 0;
+	if(tmpNeg)
         // insert <reg = SUB 0, reg> after the instr to flip the sign
-        MachineInstr* M = CreateIntNegInstruction(target, destVal);
+	  M = CreateIntNegInstruction(target, tmpNeg, destVal);
+	else
+	  M = CreateIntNegInstruction(target, destVal);
         mvec.push_back(M);
       }
     }
