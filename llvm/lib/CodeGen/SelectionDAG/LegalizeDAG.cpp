@@ -1111,19 +1111,18 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       switch(Node->getOpcode())
       {
       case ISD::CTPOP: {
-        static const uint64_t mask[6][9] = {
-          {0, 0x55, 0x5555, 0, 0x55555555, 0, 0, 0, 0x5555555555555555ULL},
-          {0, 0x33, 0x3333, 0, 0x33333333, 0, 0, 0, 0x3333333333333333ULL},
-          {0, 0x0F, 0x0F0F, 0, 0x0F0F0F0F, 0, 0, 0, 0x0F0F0F0F0F0F0F0FULL},
-          {0,    0, 0x00FF, 0, 0x00FF00FF, 0, 0, 0, 0x00FF00FF00FF00FFULL},
-          {0,    0,      0, 0, 0x0000FFFF, 0, 0, 0, 0x0000FFFF0000FFFFULL},
-          {0,    0,      0, 0,          0, 0, 0, 0, 0x00000000FFFFFFFFULL}};
+        static const uint64_t mask[6] = {
+          0x5555555555555555ULL, 0x3333333333333333ULL,
+          0x0F0F0F0F0F0F0F0FULL, 0x00FF00FF00FF00FFULL,
+          0x0000FFFF0000FFFFULL, 0x00000000FFFFFFFFULL
+        };
         MVT::ValueType VT = Tmp1.getValueType();
-        int len = getSizeInBits(VT);
-        for (int i = 0; (1 << i) <= (len / 2); ++i) {
+        MVT::ValueType ShVT = TLI.getShiftAmountTy();
+        unsigned len = getSizeInBits(VT);
+        for (unsigned i = 0; (1U << i) <= (len / 2); ++i) {
           //x = (x & mask[i][len/8]) + (x >> (1 << i) & mask[i][len/8])
-          Tmp2 = DAG.getConstant(mask[i][len/8], VT);
-          Tmp3 = DAG.getConstant(1 << i, VT);
+          Tmp2 = DAG.getConstant(mask[i], VT);
+          Tmp3 = DAG.getConstant(1ULL << i, ShVT);
           Tmp1 = DAG.getNode(ISD::ADD, VT, 
                              DAG.getNode(ISD::AND, VT, Tmp1, Tmp2),
                              DAG.getNode(ISD::AND, VT,
