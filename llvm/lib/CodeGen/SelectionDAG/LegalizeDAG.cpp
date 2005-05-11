@@ -635,16 +635,16 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       if (!TLI.isLittleEndian())
         std::swap(Lo, Hi);
 
-      Lo = DAG.getNode(ISD::STORE, MVT::Other,Tmp1, Lo, Tmp2,Node->getOperand(3));
-
+      Lo = DAG.getNode(ISD::STORE, MVT::Other, Tmp1, Lo, Tmp2,
+                       Node->getOperand(3));
       unsigned IncrementSize = MVT::getSizeInBits(Hi.getValueType())/8;
       Tmp2 = DAG.getNode(ISD::ADD, Tmp2.getValueType(), Tmp2,
                          getIntPtrConstant(IncrementSize));
       assert(isTypeLegal(Tmp2.getValueType()) &&
              "Pointers must be legal!");
       //Again, claiming both parts of the store came form the same Instr
-      Hi = DAG.getNode(ISD::STORE, MVT::Other, Tmp1, Hi, Tmp2, Node->getOperand(3));
-                              
+      Hi = DAG.getNode(ISD::STORE, MVT::Other, Tmp1, Hi, Tmp2,
+                       Node->getOperand(3));
       Result = DAG.getNode(ISD::TokenFactor, MVT::Other, Lo, Hi);
       break;
     }
@@ -1079,7 +1079,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     case TargetLowering::Promote: {
       MVT::ValueType OVT = Tmp1.getValueType();
       MVT::ValueType NVT = TLI.getTypeToPromoteTo(Node->getOpcode(), OVT);
-      //Zero extend the argument
+
+      // Zero extend the argument.
       Tmp1 = DAG.getNode(ISD::ZERO_EXTEND, NVT, Tmp1);
       // Perform the larger operation, then subtract if needed.
       Tmp1 = DAG.getNode(Node->getOpcode(), Node->getValueType(0), Tmp1);
@@ -2169,6 +2170,16 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     Lo = LegalizeOp(Node->getOperand(0));
     Hi = LegalizeOp(Node->getOperand(1));
     break;
+
+  case ISD::CTPOP:
+    ExpandOp(Node->getOperand(0), Lo, Hi);
+    Lo = DAG.getNode(ISD::ADD, NVT, Lo, Hi);
+    Hi = DAG.getConstant(0, NVT);
+    break;
+
+  case ISD::CTTZ:
+  case ISD::CTLZ:
+    assert(0 && "ct intrinsics cannot be expanded!");
 
   case ISD::LOAD: {
     SDOperand Ch = LegalizeOp(Node->getOperand(0));   // Legalize the chain.
