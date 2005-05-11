@@ -908,6 +908,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       } else {
         assert(0 && "Unknown op!");
       }
+      // FIXME: THESE SHOULD USE ExpandLibCall ??!?
       std::pair<SDOperand,SDOperand> CallResult =
         TLI.LowerCallTo(Tmp1, Type::VoidTy, false,
                         DAG.getExternalSymbol(FnName, IntPtr), Args, DAG);
@@ -1222,6 +1223,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         }
         std::vector<std::pair<SDOperand, const Type*> > Args;
         Args.push_back(std::make_pair(Tmp1, T));
+        // FIXME: should use ExpandLibCall!
         std::pair<SDOperand,SDOperand> CallResult =
           TLI.LowerCallTo(DAG.getEntryNode(), T, false,
                           DAG.getExternalSymbol(FnName, VT), Args, DAG);
@@ -1984,15 +1986,30 @@ static SDNode *FindAdjCallStackUp(SDNode *Node) {
   abort();
 }
 
+/// FindAdjCallStackDown - Given a chained node that is part of a call sequence,
+/// find the ADJCALLSTACKDOWN node that initiates the call sequence.
+static SDNode *FindAdjCallStackDown(SDNode *Node) {
+  assert(Node && "Didn't find adjcallstackdown for a call??");
+  if (Node->getOpcode() == ISD::ADJCALLSTACKDOWN) return Node;
+
+  assert(Node->getOperand(0).getValueType() == MVT::Other &&
+         "Node doesn't have a token chain argument!");
+  return FindAdjCallStackDown(Node->getOperand(0).Val);
+}
+
+
 /// FindInputOutputChains - If we are replacing an operation with a call we need
 /// to find the call that occurs before and the call that occurs after it to
-/// properly serialize the calls in the block.
+/// properly serialize the calls in the block.  The returned operand is the
+/// input chain value for the new call (e.g. the entry node or the previous
+/// call), and OutChain is set to be the chain node to update to point to the
+/// end of the call chain.
 static SDOperand FindInputOutputChains(SDNode *OpNode, SDNode *&OutChain,
                                        SDOperand Entry) {
   SDNode *LatestAdjCallStackDown = Entry.Val;
   SDNode *LatestAdjCallStackUp = 0;
   FindLatestAdjCallStackDown(OpNode, LatestAdjCallStackDown);
-  //std::cerr << "Found node: "; LatestAdjCallStackDown->dump(); std::cerr <<"\n";
+  //std::cerr<<"Found node: "; LatestAdjCallStackDown->dump(); std::cerr <<"\n";
 
   // It is possible that no ISD::ADJCALLSTACKDOWN was found because there is no
   // previous call in the function.  LatestCallStackDown may in that case be
@@ -2004,17 +2021,33 @@ static SDOperand FindInputOutputChains(SDNode *OpNode, SDNode *&OutChain,
     LatestAdjCallStackUp = Entry.Val;
   assert(LatestAdjCallStackUp && "NULL return from FindAdjCallStackUp");
 
-  SDNode *EarliestAdjCallStackUp = 0;
-  FindEarliestAdjCallStackUp(OpNode, EarliestAdjCallStackUp);
+  // Finally, find the first call that this must come before, first we find the
+  // adjcallstackup that ends the call.
+  OutChain = 0;
+  FindEarliestAdjCallStackUp(OpNode, OutChain);
 
-  if (EarliestAdjCallStackUp) {
-    //std::cerr << "Found node: ";
-    //EarliestAdjCallStackUp->dump(); std::cerr <<"\n";
-  }
+  // If we found one, translate from the adj up to the adjdown.
+  if (OutChain)
+    OutChain = FindAdjCallStackDown(OutChain);
 
   return SDOperand(LatestAdjCallStackUp, 0);
 }
 
+/// SpliceCallInto - Given the result chain of a libcall (CallResult), and a 
+static void SpliceCallInto(const SDOperand &CallResult, SDNode *OutChain,
+                           SelectionDAG &DAG) {
+  // Nothing to splice it into?
+  if (OutChain == 0) return;
+
+  assert(OutChain->getOperand(0).getValueType() == MVT::Other);
+  //OutChain->dump();
+
+  // Form a token factor node merging the old inval and the new inval.
+  SDOperand InToken = DAG.getNode(ISD::TokenFactor, MVT::Other, CallResult,
+                                  OutChain->getOperand(0));
+  // Change the node to refer to the new token.
+  OutChain->setAdjCallChain(InToken);
+}
 
 
 // ExpandLibCall - Expand a node into a call to a libcall.  If the result value
@@ -2037,21 +2070,21 @@ SDOperand SelectionDAGLegalize::ExpandLibCall(const char *Name, SDNode *Node,
   }
   SDOperand Callee = DAG.getExternalSymbol(Name, TLI.getPointerTy());
 
-  // We don't care about token chains for libcalls.  We just use the entry
-  // node as our input and ignore the output chain.  This allows us to place
-  // calls wherever we need them to satisfy data dependences.
+  // Splice the libcall in wherever FindInputOutputChains tells us to.
   const Type *RetTy = MVT::getTypeForValueType(Node->getValueType(0));
-  SDOperand Result = TLI.LowerCallTo(InChain, RetTy, false, Callee,
-                                     Args, DAG).first;
-  switch (getTypeAction(Result.getValueType())) {
+  std::pair<SDOperand,SDOperand> CallInfo =
+    TLI.LowerCallTo(InChain, RetTy, false, Callee, Args, DAG);
+  SpliceCallInto(CallInfo.second, OutChain, DAG);
+
+  switch (getTypeAction(CallInfo.first.getValueType())) {
   default: assert(0 && "Unknown thing");
   case Legal:
-    return Result;
+    return CallInfo.first;
   case Promote:
     assert(0 && "Cannot promote this yet!");
   case Expand:
     SDOperand Lo;
-    ExpandOp(Result, Lo, Hi);
+    ExpandOp(CallInfo.first, Lo, Hi);
     return Lo;
   }
 }
@@ -2066,19 +2099,7 @@ ExpandIntToFP(bool isSigned, MVT::ValueType DestTy, SDOperand Source) {
          "This is not an expansion!");
   assert(Source.getValueType() == MVT::i64 && "Only handle expand from i64!");
 
-  SDNode *OutChain;
-  SDOperand InChain = FindInputOutputChains(Source.Val, OutChain,
-                                            DAG.getEntryNode());
-
-  const char *FnName = 0;
-  if (isSigned) {
-    if (DestTy == MVT::f32)
-      FnName = "__floatdisf";
-    else {
-      assert(DestTy == MVT::f64 && "Unknown fp value type!");
-      FnName = "__floatdidf";
-    }
-  } else {
+  if (!isSigned) {
     // If this is unsigned, and not supported, first perform the conversion to
     // signed, then adjust the result if the sign bit is set.
     SDOperand SignedConv = ExpandIntToFP(true, DestTy, Source);
@@ -2116,6 +2137,18 @@ ExpandIntToFP(bool isSigned, MVT::ValueType DestTy, SDOperand Source) {
     }
     return DAG.getNode(ISD::ADD, DestTy, SignedConv, FudgeInReg);
   }
+
+  SDNode *OutChain = 0;
+  SDOperand InChain = FindInputOutputChains(Source.Val, OutChain,
+                                            DAG.getEntryNode());
+  const char *FnName = 0;
+  if (DestTy == MVT::f32)
+    FnName = "__floatdisf";
+  else {
+    assert(DestTy == MVT::f64 && "Unknown fp value type!");
+    FnName = "__floatdidf";
+  }
+
   SDOperand Callee = DAG.getExternalSymbol(FnName, TLI.getPointerTy());
 
   TargetLowering::ArgListTy Args;
@@ -2126,7 +2159,12 @@ ExpandIntToFP(bool isSigned, MVT::ValueType DestTy, SDOperand Source) {
   // node as our input and ignore the output chain.  This allows us to place
   // calls wherever we need them to satisfy data dependences.
   const Type *RetTy = MVT::getTypeForValueType(DestTy);
-  return TLI.LowerCallTo(InChain, RetTy, false, Callee, Args, DAG).first;
+
+  std::pair<SDOperand,SDOperand> CallResult =
+    TLI.LowerCallTo(InChain, RetTy, false, Callee, Args, DAG);
+
+  SpliceCallInto(CallResult.second, OutChain, DAG);
+  return CallResult.first;
 }
 
 
