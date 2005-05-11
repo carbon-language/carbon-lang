@@ -2173,7 +2173,9 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
 
   case ISD::CTPOP:
     ExpandOp(Node->getOperand(0), Lo, Hi);
-    Lo = DAG.getNode(ISD::ADD, NVT, Lo, Hi);
+    Lo = DAG.getNode(ISD::ADD, NVT,          // ctpop(HL) -> ctpop(H)+ctpop(L)
+                     DAG.getNode(ISD::CTPOP, NVT, Lo),
+                     DAG.getNode(ISD::CTPOP, NVT, Hi));
     Hi = DAG.getConstant(0, NVT);
     break;
 
