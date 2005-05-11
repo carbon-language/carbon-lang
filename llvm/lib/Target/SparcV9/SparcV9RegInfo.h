@@ -45,6 +45,8 @@ protected:
   const unsigned NumOfAllRegs;      // # of all registers -including SP,g0 etc.
 
 public:
+  virtual ~TargetRegClassInfo() {}
+
   inline unsigned getRegClassID()     const { return RegClassID; }
   inline unsigned getNumOfAvailRegs() const { return NumOfAvailRegs; }
   inline unsigned getNumOfAllRegs()   const { return NumOfAllRegs; }
