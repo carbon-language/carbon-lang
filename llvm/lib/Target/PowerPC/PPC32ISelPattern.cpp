@@ -69,10 +69,9 @@ namespace {
       setOperationAction(ISD::FCOS , MVT::f32, Expand);
       setOperationAction(ISD::FSQRT, MVT::f32, Expand);
 
-      //PowerPC has these, but they are not implemented
+      //PowerPC does not have CTPOP or CTTZ
       setOperationAction(ISD::CTPOP, MVT::i32  , Expand);
       setOperationAction(ISD::CTTZ , MVT::i32  , Expand);
-      setOperationAction(ISD::CTLZ , MVT::i32  , Expand);
 
       setSetCCResultContents(ZeroOrOneSetCCResult);
       addLegalFPImmediate(+0.0); // Necessary for FSEL
@@ -654,8 +653,12 @@ static unsigned getImmediateForOpcode(SDOperand N, unsigned Opcode,
     if ((v & 0x0000FFFF) == 0) { Imm = v >> 16; return 2; }
     break;
   case ISD::MUL:
-  case ISD::SUB:
     if (v <= 32767 && v >= -32768) { Imm = v & 0xFFFF; return 1; }
+    break;
+  case ISD::SUB:
+    // handle subtract-from separately from subtract, since subi is really addi
+    if (U && v <= 32767 && v >= -32768) { Imm = v & 0xFFFF; return 1; }
+    if (!U && v <= 32768 && v >= -32767) { Imm = (-v) & 0xFFFF; return 1; }
     break;
   case ISD::SETCC:
     if (U && (v >= 0 && v <= 65535)) { Imm = v & 0xFFFF; return 1; }
@@ -1817,6 +1820,11 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
     }
     return Result;
 
+  case ISD::CTLZ:
+    Tmp1 = SelectExpr(N.getOperand(0));
+    BuildMI(BB, PPC::CNTLZW, 1, Result).addReg(Tmp1);
+    return Result;
+
   case ISD::ADD:
     assert (DestType == MVT::i32 && "Only do arithmetic on i32s!");
     Tmp1 = SelectExpr(N.getOperand(0));
@@ -1851,6 +1859,16 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
     switch(getImmediateForOpcode(N.getOperand(1), opcode, Tmp2)) {
       default: assert(0 && "unhandled result code");
       case 0: // No immediate
+        // Check for andc: and, (xor a, -1), b
+        if (N.getOperand(0).getOpcode() == ISD::XOR &&
+          N.getOperand(0).getOperand(1).getOpcode() == ISD::Constant &&
+        cast<ConstantSDNode>(N.getOperand(0).getOperand(1))->isAllOnesValue()) {
+          Tmp1 = SelectExpr(N.getOperand(0).getOperand(0));
+          Tmp2 = SelectExpr(N.getOperand(1));
+          BuildMI(BB, PPC::ANDC, 2, Result).addReg(Tmp2).addReg(Tmp1);
+          return Result;
+        }
+        // It wasn't and-with-complement, emit a regular and
         Tmp1 = SelectExpr(N.getOperand(0));
         Tmp2 = SelectExpr(N.getOperand(1));
         Opc = Recording ? PPC::ANDo : PPC::AND;
@@ -1976,11 +1994,15 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
   }
 
   case ISD::SUB:
-    Tmp2 = SelectExpr(N.getOperand(1));
-    if (1 == getImmediateForOpcode(N.getOperand(0), opcode, Tmp1))
+    if (1 == getImmediateForOpcode(N.getOperand(0), opcode, Tmp1, true)) {
+      Tmp2 = SelectExpr(N.getOperand(1));
       BuildMI(BB, PPC::SUBFIC, 2, Result).addReg(Tmp2).addSImm(Tmp1);
-    else {
+    } else if (1 == getImmediateForOpcode(N.getOperand(1), opcode, Tmp2)) {
       Tmp1 = SelectExpr(N.getOperand(0));
+      BuildMI(BB, PPC::ADDI, 2, Result).addReg(Tmp1).addSImm(Tmp2);
+    } else {
+      Tmp1 = SelectExpr(N.getOperand(0));
+      Tmp2 = SelectExpr(N.getOperand(1));
       BuildMI(BB, PPC::SUBF, 2, Result).addReg(Tmp2).addReg(Tmp1);
     }
     return Result;

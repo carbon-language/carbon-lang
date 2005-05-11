@@ -1156,15 +1156,25 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         break;
       }
       case ISD::CTTZ: {
-        // for now, we use: { return popcount(~x & (x - 1)); }
-        // but see also http://www.hackersdelight.org/HDcode/ntz.cc
+        // for now, we use: { return popcount(~x & (x - 1)); } 
+        // unless the target has ctlz but not ctpop, in which case we use:
+        // { return 32 - nlz(~x & (x-1)); }
+        // see also http://www.hackersdelight.org/HDcode/ntz.cc
         MVT::ValueType VT = Tmp1.getValueType();
         Tmp2 = DAG.getConstant(~0ULL, VT);
         Tmp3 = DAG.getNode(ISD::AND, VT, 
                            DAG.getNode(ISD::XOR, VT, Tmp1, Tmp2),
                            DAG.getNode(ISD::SUB, VT, Tmp1,
                                        DAG.getConstant(1, VT)));
-        Result = LegalizeOp(DAG.getNode(ISD::CTPOP, VT, Tmp3));
+        // If ISD::CTLZ is legal and CTPOP isn't, then do that instead
+        if (TLI.getOperationAction(ISD::CTPOP, VT) != TargetLowering::Legal &&
+            TLI.getOperationAction(ISD::CTLZ, VT) == TargetLowering::Legal) {
+          Result = LegalizeOp(DAG.getNode(ISD::SUB, VT, 
+                                        DAG.getConstant(getSizeInBits(VT), VT),
+                                        DAG.getNode(ISD::CTLZ, VT, Tmp3)));
+        } else {
+          Result = LegalizeOp(DAG.getNode(ISD::CTPOP, VT, Tmp3));
+        }
         break;
       }
       default:
