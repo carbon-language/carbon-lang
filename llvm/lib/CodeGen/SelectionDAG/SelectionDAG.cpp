@@ -1670,6 +1670,12 @@ const char *SDNode::getOperationName() const {
   case ISD::MEMCPY:  return "memcpy";
   case ISD::MEMMOVE: return "memmove";
 
+  // Bit counting
+  case ISD::CTPOP:   return "ctpop";
+  case ISD::CTTZ:    return "cttz";
+  case ISD::CTLZ:    return "ctlz";
+
+  // IO Intrinsics
   case ISD::READPORT: return "readport";
   case ISD::WRITEPORT: return "writeport";
   case ISD::READIO: return "readio";
