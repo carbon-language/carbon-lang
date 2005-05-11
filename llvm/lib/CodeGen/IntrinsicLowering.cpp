@@ -131,7 +131,6 @@ void DefaultIntrinsicLowering::AddPrototypes(Module &M) {
 /// instruction.
 static Value *LowerCTPOP(Value *V, Instruction *IP) {
   assert(V->getType()->isInteger() && "Can't ctpop a non-integer type!");
-  unsigned BitSize = V->getType()->getPrimitiveSizeInBits();
 
   static const uint64_t MaskValues[6] = {
     0x5555555555555555ULL, 0x3333333333333333ULL,
@@ -145,6 +144,7 @@ static Value *LowerCTPOP(Value *V, Instruction *IP) {
   if (DestTy->isSigned())
     V = new CastInst(V, DestTy->getUnsignedVersion(), V->getName(), IP);
 
+  unsigned BitSize = V->getType()->getPrimitiveSizeInBits();
   for (unsigned i = 1, ct = 0; i != BitSize; i <<= 1, ++ct) {
     Value *MaskCst =
       ConstantExpr::getCast(ConstantUInt::get(Type::ULongTy,
@@ -159,6 +159,29 @@ static Value *LowerCTPOP(Value *V, Instruction *IP) {
   if (V->getType() != DestTy)
     V = new CastInst(V, DestTy, V->getName(), IP);
   return V;
+}
+
+/// LowerCTLZ - Emit the code to lower ctlz of V before the specified
+/// instruction.
+static Value *LowerCTLZ(Value *V, Instruction *IP) {
+  const Type *DestTy = V->getType();
+
+  // Force to unsigned so that the shift rights are logical.
+  if (DestTy->isSigned())
+    V = new CastInst(V, DestTy->getUnsignedVersion(), V->getName(), IP);
+
+  unsigned BitSize = V->getType()->getPrimitiveSizeInBits();
+  for (unsigned i = 1; i != BitSize; i <<= 1) {
+    Value *ShVal = ConstantInt::get(Type::UByteTy, i);
+    ShVal = new ShiftInst(Instruction::Shr, V, ShVal, "ctlz.sh", IP);
+    V = BinaryOperator::createOr(V, ShVal, "ctlz.step", IP);
+  }
+
+  if (V->getType() != DestTy)
+    V = new CastInst(V, DestTy, V->getName(), IP);
+
+  V = BinaryOperator::createNot(V, "", IP);
+  return LowerCTPOP(V, IP);
 }
 
 void DefaultIntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
@@ -210,46 +233,9 @@ void DefaultIntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
     CI->replaceAllUsesWith(LowerCTPOP(CI->getOperand(1), CI));
     break;
 
-  case Intrinsic::ctlz: {
-    Value *Src = CI->getOperand(1);
-    Value* SA;
-    switch (CI->getOperand(0)->getType()->getTypeID())
-    {
-    case Type::LongTyID:
-    case Type::ULongTyID:
-      SA = ConstantUInt::get(Type::UByteTy, 32);
-      Src = BinaryOperator::createOr(Src, new ShiftInst(Instruction::Shr, Src,
-                                                        SA, "", CI), "", CI);
-    case Type::IntTyID:
-    case Type::UIntTyID:
-      SA = ConstantUInt::get(Type::UByteTy, 16);
-      Src = BinaryOperator::createOr(Src, new ShiftInst(Instruction::Shr,
-                                                        Src, SA, "", CI),
-                                     "", CI);
-    case Type::ShortTyID:
-    case Type::UShortTyID:
-      SA = ConstantUInt::get(Type::UByteTy, 8);
-      Src = BinaryOperator::createOr(Src, new ShiftInst(Instruction::Shr,
-                                                        Src, SA, "", CI),
-                                     "", CI);
-    default:
-      SA = ConstantUInt::get(Type::UByteTy, 1);
-      Src = BinaryOperator::createOr(Src, new ShiftInst(Instruction::Shr, Src,
-                                                        SA, "", CI), "", CI);
-      SA = ConstantUInt::get(Type::UByteTy, 2);
-      Src = BinaryOperator::createOr(Src, new ShiftInst(Instruction::Shr, Src,
-                                                        SA, "", CI), "", CI);
-      SA = ConstantUInt::get(Type::UByteTy, 4);
-      Src = BinaryOperator::createOr(Src, new ShiftInst(Instruction::Shr, Src,
-                                                        SA, "", CI), "", CI);
-    };
-    Src = BinaryOperator::createNot(Src, "", CI);
-
-
-    Src = LowerCTPOP(Src, CI);
-    CI->replaceAllUsesWith(Src);
+  case Intrinsic::ctlz:
+    CI->replaceAllUsesWith(LowerCTLZ(CI->getOperand(1), CI));
     break;
-  }
   case Intrinsic::cttz: {
     // cttz(x) -> ctpop(~X & (X-1))
     Value *Src = CI->getOperand(1);
