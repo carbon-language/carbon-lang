@@ -1192,9 +1192,17 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
 #endif
   }
 
-  SDNode *&N = BinaryOps[std::make_pair(Opcode, std::make_pair(N1, N2))];
-  if (N) return SDOperand(N, 0);
-  N = new SDNode(Opcode, N1, N2);
+  // Memoize this node if possible.
+  SDNode *N;
+  if (Opcode != ISD::ADJCALLSTACKDOWN) {
+    SDNode *&BON = BinaryOps[std::make_pair(Opcode, std::make_pair(N1, N2))];
+    if (BON) return SDOperand(BON, 0);
+
+    BON = N = new SDNode(Opcode, N1, N2);
+  } else {
+    N = new SDNode(ISD::ADJCALLSTACKDOWN, N1, N2);
+  }
+
 
   if (Opcode != ISD::READPORT && Opcode != ISD::READIO)
     N->setValueTypes(VT);
@@ -1204,6 +1212,19 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
   AllNodes.push_back(N);
   return SDOperand(N, 0);
 }
+
+// setAdjCallChain - This method changes the token chain of an ADJCALLSTACKDOWN
+// node to be the specified operand.
+void SDNode::setAdjCallChain(SDOperand N) {
+  assert(N.getValueType() == MVT::Other);
+  assert(getOpcode() == ISD::ADJCALLSTACKDOWN && "Cannot adjust this node!");
+
+  Operands[0].Val->removeUser(this);
+  Operands[0] = N;
+  N.Val->Uses.push_back(this);
+}
+
+
 
 SDOperand SelectionDAG::getLoad(MVT::ValueType VT,
                                 SDOperand Chain, SDOperand Ptr, 
