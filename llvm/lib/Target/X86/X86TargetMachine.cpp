@@ -110,8 +110,8 @@ bool X86TargetMachine::addPassesToEmitAssembly(PassManager &PM,
   // Make sure that no unreachable blocks are instruction selected.
   PM.add(createUnreachableBlockEliminationPass());
 
-  // Default to simple ISel
-  if (PatternISelTriState != 1)
+  // Default to pattern ISel
+  if (PatternISelTriState == 0)
     PM.add(createX86SimpleInstructionSelector(*this));
   else
     PM.add(createX86PatternInstructionSelector(*this));
@@ -169,8 +169,8 @@ void X86JITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
   // Make sure that no unreachable blocks are instruction selected.
   PM.add(createUnreachableBlockEliminationPass());
 
-  // Default to simple ISel
-  if (PatternISelTriState != 1)
+  // Default to pattern ISel
+  if (PatternISelTriState == 0)
     PM.add(createX86SimpleInstructionSelector(TM));
   else
     PM.add(createX86PatternInstructionSelector(TM));
