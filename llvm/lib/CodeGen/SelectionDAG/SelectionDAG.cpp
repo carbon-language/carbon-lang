@@ -1299,7 +1299,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
               N2.getOperand(0) == N3)
             return getNode(ISD::FABS, VT, N3);
         }
-      // select (setlt X, 0), A, 0 -> and (sra X, size(X)-1, A)
+      // select (setlt X, 0), A, 0 -> and (sra X, size(X)-1), A
       if (ConstantSDNode *CN =
           dyn_cast<ConstantSDNode>(SetCC->getOperand(1)))
         if (CN->getValue() == 0 && N3C && N3C->getValue() == 0)
@@ -1307,6 +1307,22 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
             MVT::ValueType XType = SetCC->getOperand(0).getValueType();
             MVT::ValueType AType = N2.getValueType();
             if (XType >= AType) {
+              // and (sra X, size(X)-1, A) -> "and (srl X, C2), A" iff A is a
+              // single-bit constant.  FIXME: remove once the dag combiner
+              // exists.
+              if (ConstantSDNode *AC = dyn_cast<ConstantSDNode>(N2))
+                if ((AC->getValue() & (AC->getValue()-1)) == 0) {
+                  unsigned ShCtV = ExactLog2(AC->getValue());
+                  ShCtV = MVT::getSizeInBits(XType)-ShCtV-1;
+                  SDOperand ShCt = getConstant(ShCtV, TLI.getShiftAmountTy());
+                  SDOperand Shift = getNode(ISD::SRL, XType,
+                                            SetCC->getOperand(0), ShCt);
+                  if (XType > AType)
+                    Shift = getNode(ISD::TRUNCATE, AType, Shift);
+                  return getNode(ISD::AND, AType, Shift, N2);
+                }
+
+
               SDOperand Shift = getNode(ISD::SRA, XType, SetCC->getOperand(0),
                 getConstant(MVT::getSizeInBits(XType)-1,
                             TLI.getShiftAmountTy()));
