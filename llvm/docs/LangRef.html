@@ -305,7 +305,7 @@ important lexical features of LLVM:</p>
 
 </ol>
 
-<p>...and it also show a convention that we follow in this document.  When
+<p>...and it also shows a convention that we follow in this document.  When
 demonstrating instructions, we will follow an instruction with a comment that
 defines the type and name of value produced.  Comments are shown in italic
 text.</p>
@@ -446,7 +446,7 @@ the future:</p>
 
   <dd>This calling convention (the default if no other calling convention is
   specified) matches the target C calling conventions.  This calling convention
-  supports varargs function calls, and tolerates some mismatch in the declared
+  supports varargs function calls and tolerates some mismatch in the declared
   prototype and implemented declaration of the function (as does normal C).
   </dd>
 
@@ -539,7 +539,7 @@ basic block a symbol table entry), contains a list of instructions, and ends
 with a <a href="#terminators">terminator</a> instruction (such as a branch or
 function return).</p>
 
-<p>The first basic block in program is special in two ways: it is immediately
+<p>The first basic block in a program is special in two ways: it is immediately
 executed on entrance to the function, and it is not allowed to have predecessor
 basic blocks (i.e. there can not be any branches to the entry block of a
 function).  Because the block can have no predecessors, it also cannot have any
@@ -685,7 +685,7 @@ elements) and an underlying data type.</p>
   [&lt;# elements&gt; x &lt;elementtype&gt;]
 </pre>
 
-<p>The number of elements is a constant integer value, elementtype may
+<p>The number of elements is a constant integer value; elementtype may
 be any type with a size.</p>
 
 <h5>Examples:</h5>
@@ -1060,7 +1060,7 @@ following is the syntax for constant expressions:</p>
   be any of the <a href="#binaryops">binary</a> or <a href="#bitwiseops">bitwise
   binary</a> operations.  The constraints on operands are the same as those for
   the corresponding instruction (e.g. no bitwise operations on floating point
-  are allowed).</dd>
+  values are allowed).</dd>
 </dl>
 </div>
 
@@ -1125,7 +1125,7 @@ returns back to the calling function's context.  If the caller is a "<a
  href="#i_call"><tt>call</tt></a>" instruction, execution continues at
 the instruction after the call.  If the caller was an "<a
  href="#i_invoke"><tt>invoke</tt></a>" instruction, execution continues
-at the beginning "normal" of the destination block.  If the instruction
+at the beginning of the "normal" destination block.  If the instruction
 returns a value, that value shall set the call or invoke instruction's
 return value.</p>
 <h5>Example:</h5>
@@ -1235,12 +1235,12 @@ branches or with a lookup table.</p>
 
 <p>The '<tt>invoke</tt>' instruction causes control to transfer to a specified
 function, with the possibility of control flow transfer to either the
-'<tt>normal</tt>' <tt>label</tt> label or the
-'<tt>exception</tt>'<tt>label</tt>.  If the callee function returns with the
+'<tt>normal</tt>' label or the
+'<tt>exception</tt>' label.  If the callee function returns with the
 "<tt><a href="#i_ret">ret</a></tt>" instruction, control flow will return to the
 "normal" label.  If the callee (or any indirect callees) returns with the "<a
-href="#i_unwind"><tt>unwind</tt></a>" instruction, control is interrupted, and
-continued at the dynamically nearest "except" label.</p>
+href="#i_unwind"><tt>unwind</tt></a>" instruction, control is interrupted and
+continued at the dynamically nearest "exception" label.</p>
 
 <h5>Arguments:</h5>
 
