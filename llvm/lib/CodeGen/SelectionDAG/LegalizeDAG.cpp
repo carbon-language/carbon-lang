@@ -1110,7 +1110,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         break;
       case ISD::CTTZ:
         //if Tmp1 == sizeinbits(NVT) then Tmp1 = sizeinbits(Old VT)
-        Tmp2 = DAG.getSetCC(ISD::SETEQ, MVT::i1, Tmp1, 
+        Tmp2 = DAG.getSetCC(ISD::SETEQ, TLI.getSetCCResultTy(), Tmp1, 
                             DAG.getConstant(getSizeInBits(NVT), NVT));
         Result = DAG.getNode(ISD::SELECT, NVT, Tmp2, 
                            DAG.getConstant(getSizeInBits(OVT),NVT), Tmp1);
@@ -2285,9 +2285,33 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     Hi = DAG.getConstant(0, NVT);
     break;
 
-  case ISD::CTTZ:
-  case ISD::CTLZ:
-    assert(0 && "ct intrinsics cannot be expanded!");
+  case ISD::CTLZ: {
+    // ctlz (HL) -> ctlz(H) != 32 ? ctlz(H) : (ctlz(L)+32)
+    SDOperand BitsC = DAG.getConstant(MVT::getSizeInBits(NVT), NVT);
+    SDOperand HLZ = DAG.getNode(ISD::CTLZ, NVT, Hi);
+    SDOperand TopNotZero = DAG.getSetCC(ISD::SETNE, TLI.getSetCCResultTy(),
+                                        HLZ, BitsC);
+    SDOperand LowPart = DAG.getNode(ISD::CTLZ, NVT, Lo);
+    LowPart = DAG.getNode(ISD::ADD, NVT, LowPart, BitsC);
+
+    Lo = DAG.getNode(ISD::SELECT, NVT, TopNotZero, HLZ, LowPart);
+    Hi = DAG.getConstant(0, NVT);
+    break;
+  }
+
+  case ISD::CTTZ: {
+    // cttz (HL) -> cttz(L) != 32 ? cttz(L) : (cttz(H)+32)
+    SDOperand BitsC = DAG.getConstant(MVT::getSizeInBits(NVT), NVT);
+    SDOperand LTZ = DAG.getNode(ISD::CTTZ, NVT, Lo);
+    SDOperand BotNotZero = DAG.getSetCC(ISD::SETNE, TLI.getSetCCResultTy(),
+                                        LTZ, BitsC);
+    SDOperand HiPart = DAG.getNode(ISD::CTTZ, NVT, Hi);
+    HiPart = DAG.getNode(ISD::ADD, NVT, HiPart, BitsC);
+
+    Lo = DAG.getNode(ISD::SELECT, NVT, BotNotZero, LTZ, HiPart);
+    Hi = DAG.getConstant(0, NVT);
+    break;
+  }
 
   case ISD::LOAD: {
     SDOperand Ch = LegalizeOp(Node->getOperand(0));   // Legalize the chain.
