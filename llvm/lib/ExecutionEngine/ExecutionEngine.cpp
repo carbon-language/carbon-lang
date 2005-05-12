@@ -271,8 +271,8 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
     GET_CONST_VAL(Short  , signed short  , ConstantSInt);
     GET_CONST_VAL(UInt   , unsigned int  , ConstantUInt);
     GET_CONST_VAL(Int    , signed int    , ConstantSInt);
-    GET_CONST_VAL(ULong  , unsigned long , ConstantUInt);
-    GET_CONST_VAL(Long   , signed long   , ConstantSInt);
+    GET_CONST_VAL(ULong  , uint64_t      , ConstantUInt);
+    GET_CONST_VAL(Long   , int64_t       , ConstantSInt);
     GET_CONST_VAL(Float  , float         , ConstantFP);
     GET_CONST_VAL(Double , double        , ConstantFP);
 #undef GET_CONST_VAL
