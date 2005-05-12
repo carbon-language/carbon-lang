@@ -2153,6 +2153,12 @@ ExpandIntToFP(bool isSigned, MVT::ValueType DestTy, SDOperand Source) {
     return DAG.getNode(ISD::ADD, DestTy, SignedConv, FudgeInReg);
   }
 
+  // Expand the source, then glue it back together for the call.  We must expand
+  // the source in case it is shared (this pass of legalize must traverse it).
+  SDOperand SrcLo, SrcHi;
+  ExpandOp(Source, SrcLo, SrcHi);
+  Source = DAG.getNode(ISD::BUILD_PAIR, Source.getValueType(), SrcLo, SrcHi);
+
   SDNode *OutChain = 0;
   SDOperand InChain = FindInputOutputChains(Source.Val, OutChain,
                                             DAG.getEntryNode());
@@ -2168,12 +2174,6 @@ ExpandIntToFP(bool isSigned, MVT::ValueType DestTy, SDOperand Source) {
 
   TargetLowering::ArgListTy Args;
   const Type *ArgTy = MVT::getTypeForValueType(Source.getValueType());
-
-  // Expand the source, then glue it back together for the call.  We must expand
-  // the source in case it is shared (this pass of legalize must traverse it).
-  SDOperand SrcLo, SrcHi;
-  ExpandOp(Source, SrcLo, SrcHi);
-  Source = DAG.getNode(ISD::BUILD_PAIR, Source.getValueType(), SrcLo, SrcHi);
 
   Args.push_back(std::make_pair(Source, ArgTy));
 
