@@ -118,7 +118,7 @@ namespace {
     /// LowerCallTo - This hook lowers an abstract call to a function into an
     /// actual call.
     virtual std::pair<SDOperand, SDOperand>
-    LowerCallTo(SDOperand Chain, const Type *RetTy, bool isVarArg,
+    LowerCallTo(SDOperand Chain, const Type *RetTy, bool isVarArg, unsigned CC,
                 SDOperand Callee, ArgListTy &Args, SelectionDAG &DAG);
 
     virtual std::pair<SDOperand, SDOperand>
@@ -304,6 +304,7 @@ AlphaTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG)
 std::pair<SDOperand, SDOperand>
 AlphaTargetLowering::LowerCallTo(SDOperand Chain,
                                  const Type *RetTy, bool isVarArg,
+                                 unsigned CallingConv,
                                  SDOperand Callee, ArgListTy &Args, 
                                  SelectionDAG &DAG) {
   int NumBytes = 0;
