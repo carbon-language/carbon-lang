@@ -323,8 +323,11 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
     // There is no need to legalize the size argument (Operand #1)
     if (Tmp1 != Node->getOperand(0))
-      Result = DAG.getNode(Node->getOpcode(), MVT::Other, Tmp1,
-                           Node->getOperand(1));
+      Node->setAdjCallChain(Tmp1);
+    // Note that we do not create new ADJCALLSTACK DOWN/UP nodes here.  These
+    // nodes are treated specially and are mutated in place.  This makes the dag
+    // legalization process more efficient and also makes libcall insertion
+    // easier.
     break;
   case ISD::DYNAMIC_STACKALLOC:
     Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.

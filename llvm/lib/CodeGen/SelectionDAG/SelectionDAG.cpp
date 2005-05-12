@@ -916,7 +916,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
       break;
     case ISD::SUB:
       if (!C2) return N1;         // sub X, 0 -> X
-      break;
+      return getNode(ISD::ADD, VT, N1, getConstant(-C2, VT));
     case ISD::MUL:
       if (!C2) return N2;         // mul X, 0 -> 0
       if (N2C->isAllOnesValue()) // mul X, -1 -> 0-X
@@ -1194,13 +1194,13 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
 
   // Memoize this node if possible.
   SDNode *N;
-  if (Opcode != ISD::ADJCALLSTACKDOWN) {
+  if (Opcode != ISD::ADJCALLSTACKDOWN && Opcode != ISD::ADJCALLSTACKUP) {
     SDNode *&BON = BinaryOps[std::make_pair(Opcode, std::make_pair(N1, N2))];
     if (BON) return SDOperand(BON, 0);
 
     BON = N = new SDNode(Opcode, N1, N2);
   } else {
-    N = new SDNode(ISD::ADJCALLSTACKDOWN, N1, N2);
+    N = new SDNode(Opcode, N1, N2);
   }
 
 
@@ -1213,11 +1213,12 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
   return SDOperand(N, 0);
 }
 
-// setAdjCallChain - This method changes the token chain of an ADJCALLSTACKDOWN
-// node to be the specified operand.
+// setAdjCallChain - This method changes the token chain of an
+// ADJCALLSTACKDOWN/UP node to be the specified operand.
 void SDNode::setAdjCallChain(SDOperand N) {
   assert(N.getValueType() == MVT::Other);
-  assert(getOpcode() == ISD::ADJCALLSTACKDOWN && "Cannot adjust this node!");
+  assert((getOpcode() == ISD::ADJCALLSTACKDOWN ||
+          getOpcode() == ISD::ADJCALLSTACKUP) && "Cannot adjust this node!");
 
   Operands[0].Val->removeUser(this);
   Operands[0] = N;
