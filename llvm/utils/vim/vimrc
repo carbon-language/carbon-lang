@@ -2,8 +2,7 @@
 " Maintainer: LLVM Team, http://llvm.cs.uiuc.edu
 " Updated:    2005-04-24
 " WARNING:    Read before you source in all these commands and macros!  Some
-"             of them may change VIM behavior that you depend on and the
-"             settings here may depend on other settings that you may have.
+"             of them may change VIM behavior that you depend on.
 
 " Wrap text at 80 cols
 set textwidth=80
@@ -12,6 +11,13 @@ set textwidth=80
 set tabstop=2
 set shiftwidth=2
 set expandtab
+
+" Optional
+" C/C++ programming helpers
+set autoindent
+set smartindent
+" Add and delete spaces in increments of `shiftwidth' for tabs
+set smarttab
 
 " Enable filetype detection
 filetype on
