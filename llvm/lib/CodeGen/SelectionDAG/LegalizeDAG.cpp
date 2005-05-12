@@ -928,7 +928,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       }
 
       std::pair<SDOperand,SDOperand> CallResult =
-        TLI.LowerCallTo(Tmp1, Type::VoidTy, false,
+        TLI.LowerCallTo(Tmp1, Type::VoidTy, false, 0,
                         DAG.getExternalSymbol(FnName, IntPtr), Args, DAG);
       Result = LegalizeOp(CallResult.second);
       break;
@@ -1253,7 +1253,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         Args.push_back(std::make_pair(Tmp1, T));
         // FIXME: should use ExpandLibCall!
         std::pair<SDOperand,SDOperand> CallResult =
-          TLI.LowerCallTo(DAG.getEntryNode(), T, false,
+          TLI.LowerCallTo(DAG.getEntryNode(), T, false, 0,
                           DAG.getExternalSymbol(FnName, VT), Args, DAG);
         Result = LegalizeOp(CallResult.first);
         break;
@@ -2102,7 +2102,7 @@ SDOperand SelectionDAGLegalize::ExpandLibCall(const char *Name, SDNode *Node,
   // Splice the libcall in wherever FindInputOutputChains tells us to.
   const Type *RetTy = MVT::getTypeForValueType(Node->getValueType(0));
   std::pair<SDOperand,SDOperand> CallInfo =
-    TLI.LowerCallTo(InChain, RetTy, false, Callee, Args, DAG);
+    TLI.LowerCallTo(InChain, RetTy, false, 0, Callee, Args, DAG);
   SpliceCallInto(CallInfo.second, OutChain);
 
   NeedsAnotherIteration = true;
@@ -2198,7 +2198,7 @@ ExpandIntToFP(bool isSigned, MVT::ValueType DestTy, SDOperand Source) {
   const Type *RetTy = MVT::getTypeForValueType(DestTy);
 
   std::pair<SDOperand,SDOperand> CallResult =
-    TLI.LowerCallTo(InChain, RetTy, false, Callee, Args, DAG);
+    TLI.LowerCallTo(InChain, RetTy, false, 0, Callee, Args, DAG);
 
   SpliceCallInto(CallResult.second, OutChain);
   return CallResult.first;
