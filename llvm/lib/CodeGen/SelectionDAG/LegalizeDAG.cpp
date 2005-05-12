@@ -2148,10 +2148,9 @@ ExpandIntToFP(bool isSigned, MVT::ValueType DestTy, SDOperand Source) {
     SDOperand Zero = getIntPtrConstant(0), Four = getIntPtrConstant(4);
     SDOperand CstOffset = DAG.getNode(ISD::SELECT, Zero.getValueType(),
                                       SignSet, Four, Zero);
-    // FIXME: This is almost certainly broken for big-endian systems.  Should
-    // this just put the fudge factor in the low bits of the uint64 constant or?
-    static Constant *FudgeFactor =
-      ConstantUInt::get(Type::ULongTy, 0x5f800000ULL << 32);
+    uint64_t FF = 0x5f800000ULL;
+    if (TLI.isLittleEndian()) FF <<= 32;
+    static Constant *FudgeFactor = ConstantUInt::get(Type::ULongTy, FF);
 
     MachineConstantPool *CP = DAG.getMachineFunction().getConstantPool();
     SDOperand CPIdx = DAG.getConstantPool(CP->getConstantPoolIndex(FudgeFactor),
