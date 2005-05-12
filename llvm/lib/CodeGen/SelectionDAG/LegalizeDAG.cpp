@@ -130,6 +130,8 @@ private:
   void ExpandByParts(unsigned NodeOp, SDOperand LHS, SDOperand RHS,
                      SDOperand &Lo, SDOperand &Hi);
 
+  void SpliceCallInto(const SDOperand &CallResult, SDNode *OutChain);
+
   SDOperand getIntPtrConstant(uint64_t Val) {
     return DAG.getConstant(Val, TLI.getPointerTy());
   }
@@ -1271,7 +1273,6 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
           Node->getOpcode() == ISD::UINT_TO_FP) {
         Result = ExpandIntToFP(Node->getOpcode() == ISD::SINT_TO_FP,
                                Node->getValueType(0), Node->getOperand(0));
-        Result = LegalizeOp(Result);
         break;
       } else if (Node->getOpcode() == ISD::TRUNCATE) {
         // In the expand case, we must be dealing with a truncate, because
@@ -1530,8 +1531,6 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
     case Expand:
       Result = ExpandIntToFP(Node->getOpcode() == ISD::SINT_TO_FP, NVT,
                              Node->getOperand(0));
-      Result = LegalizeOp(Result);
-
       // Round if we cannot tolerate excess precision.
       if (NoExcessFPPrecision)
         Result = DAG.getNode(ISD::FP_ROUND_INREG, NVT, Result, VT);
@@ -2047,8 +2046,8 @@ static SDOperand FindInputOutputChains(SDNode *OpNode, SDNode *&OutChain,
 }
 
 /// SpliceCallInto - Given the result chain of a libcall (CallResult), and a 
-static void SpliceCallInto(const SDOperand &CallResult, SDNode *OutChain,
-                           SelectionDAG &DAG) {
+void SelectionDAGLegalize::SpliceCallInto(const SDOperand &CallResult,
+                                          SDNode *OutChain) {
   // Nothing to splice it into?
   if (OutChain == 0) return;
 
@@ -2087,7 +2086,9 @@ SDOperand SelectionDAGLegalize::ExpandLibCall(const char *Name, SDNode *Node,
   const Type *RetTy = MVT::getTypeForValueType(Node->getValueType(0));
   std::pair<SDOperand,SDOperand> CallInfo =
     TLI.LowerCallTo(InChain, RetTy, false, Callee, Args, DAG);
-  SpliceCallInto(CallInfo.second, OutChain, DAG);
+  SpliceCallInto(CallInfo.second, OutChain);
+
+  NeedsAnotherIteration = true;
 
   switch (getTypeAction(CallInfo.first.getValueType())) {
   default: assert(0 && "Unknown thing");
@@ -2176,7 +2177,7 @@ ExpandIntToFP(bool isSigned, MVT::ValueType DestTy, SDOperand Source) {
   std::pair<SDOperand,SDOperand> CallResult =
     TLI.LowerCallTo(InChain, RetTy, false, Callee, Args, DAG);
 
-  SpliceCallInto(CallResult.second, OutChain, DAG);
+  SpliceCallInto(CallResult.second, OutChain);
   return CallResult.first;
 }
 
