@@ -306,6 +306,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     for (unsigned i = 0, e = Node->getNumOperands(); i != e; ++i) {
       SDOperand Op = Node->getOperand(i);
       // Fold single-use TokenFactor nodes into this token factor as we go.
+      // FIXME: This is something that the DAGCombiner should do!!
       if (Op.getOpcode() == ISD::TokenFactor && Op.hasOneUse()) {
         Changed = true;
         for (unsigned j = 0, e = Op.getNumOperands(); j != e; ++j)
