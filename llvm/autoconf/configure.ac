@@ -74,7 +74,6 @@ do
       "llvm-gcc")     AC_CONFIG_SUBDIRS([projects/llvm-gcc])  ;;
       "llvm-java")    AC_CONFIG_SUBDIRS([projects/llvm-java]) ;;
       "llvm-tv")      AC_CONFIG_SUBDIRS([projects/llvm-tv])   ;;
-      "llvm-fefw")    AC_CONFIG_SUBDIRS([projects/llvm-fefw]) ;;
       "llvm-poolalloc") AC_CONFIG_SUBDIRS([projects/llvm-poolalloc]) ;;
       *)              
         AC_MSG_WARN([Unknown project (${i}) won't be configured automatically])
