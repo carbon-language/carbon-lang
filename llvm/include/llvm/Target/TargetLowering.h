@@ -76,6 +76,10 @@ public:
   MVT::ValueType getShiftAmountTy() const { return ShiftAmountTy; }
   OutOfRangeShiftAmount getShiftAmountFlavor() const {return ShiftAmtHandling; }
 
+  /// isSetCCExpensive - Return true if the setcc operation is expensive for
+  /// this target.
+  bool isSetCCExpensive() const { return SetCCIsExpensive; }
+
   /// getSetCCResultTy - Return the ValueType of the result of setcc operations.
   ///
   MVT::ValueType getSetCCResultTy() const { return SetCCResultTy; }
@@ -207,6 +211,11 @@ protected:
     ShiftAmtHandling = OORSA;
   }
 
+  /// setSetCCIxExpensive - This is a short term hack for targets that codegen
+  /// setcc as a conditional branch.  This encourages the code generator to fold
+  /// setcc operations into other operations if possible.
+  void setSetCCIsExpensive() { SetCCIsExpensive = true; }
+
   /// addRegisterClass - Add the specified register class as an available
   /// regclass for the specified value type.  This indicates the selector can
   /// handle values of that class natively.
@@ -309,6 +318,11 @@ private:
   MVT::ValueType ShiftAmountTy;
 
   OutOfRangeShiftAmount ShiftAmtHandling;
+
+  /// SetCCIsExpensive - This is a short term hack for targets that codegen
+  /// setcc as a conditional branch.  This encourages the code generator to fold
+  /// setcc operations into other operations if possible.
+  bool SetCCIsExpensive;
 
   /// SetCCResultTy - The type that SetCC operations use.  This defaults to the
   /// PointerTy.
