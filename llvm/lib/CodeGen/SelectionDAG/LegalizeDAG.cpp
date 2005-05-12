@@ -2287,6 +2287,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
 
   case ISD::CTLZ: {
     // ctlz (HL) -> ctlz(H) != 32 ? ctlz(H) : (ctlz(L)+32)
+    ExpandOp(Node->getOperand(0), Lo, Hi);
     SDOperand BitsC = DAG.getConstant(MVT::getSizeInBits(NVT), NVT);
     SDOperand HLZ = DAG.getNode(ISD::CTLZ, NVT, Hi);
     SDOperand TopNotZero = DAG.getSetCC(ISD::SETNE, TLI.getSetCCResultTy(),
@@ -2301,6 +2302,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
 
   case ISD::CTTZ: {
     // cttz (HL) -> cttz(L) != 32 ? cttz(L) : (cttz(H)+32)
+    ExpandOp(Node->getOperand(0), Lo, Hi);
     SDOperand BitsC = DAG.getConstant(MVT::getSizeInBits(NVT), NVT);
     SDOperand LTZ = DAG.getNode(ISD::CTTZ, NVT, Lo);
     SDOperand BotNotZero = DAG.getSetCC(ISD::SETNE, TLI.getSetCCResultTy(),
