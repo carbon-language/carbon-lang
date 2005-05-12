@@ -1837,7 +1837,7 @@ a shorter version of the first that defaults to allocating one element.</p>
 memory is automatically released when the function returns.  The '<tt>alloca</tt>'
 instruction is commonly used to represent automatic variables that must
 have an address available.  When the function returns (either with the <tt><a
- href="#i_ret">ret</a></tt> or <tt><a href="#i_invoke">invoke</a></tt>
+ href="#i_ret">ret</a></tt> or <tt><a href="#i_unwind">unwind</a></tt>
 instructions), the memory is reclaimed.</p>
 <h5>Example:</h5>
 <pre>  %ptr = alloca int                              <i>; yields {int*}:ptr</i>
