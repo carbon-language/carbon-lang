@@ -162,12 +162,13 @@ void SelectionDAGLegalize::LegalizeDAG() {
 SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
   assert(getTypeAction(Op.getValueType()) == Legal &&
          "Caller should expand or promote operands that are not legal!");
+  SDNode *Node = Op.Val;
 
   // If this operation defines any values that cannot be represented in a
   // register on this target, make sure to expand or promote them.
-  if (Op.Val->getNumValues() > 1) {
-    for (unsigned i = 0, e = Op.Val->getNumValues(); i != e; ++i)
-      switch (getTypeAction(Op.Val->getValueType(i))) {
+  if (Node->getNumValues() > 1) {
+    for (unsigned i = 0, e = Node->getNumValues(); i != e; ++i)
+      switch (getTypeAction(Node->getValueType(i))) {
       case Legal: break;  // Nothing to do.
       case Expand: {
         SDOperand T1, T2;
@@ -184,13 +185,14 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       }
   }
 
+  // Note that LegalizeOp may be reentered even from single-use nodes, which
+  // means that we always must cache transformed nodes.
   std::map<SDOperand, SDOperand>::iterator I = LegalizedNodes.find(Op);
   if (I != LegalizedNodes.end()) return I->second;
 
   SDOperand Tmp1, Tmp2, Tmp3;
 
   SDOperand Result = Op;
-  SDNode *Node = Op.Val;
 
   switch (Node->getOpcode()) {
   default:
@@ -325,8 +327,18 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
   case ISD::ADJCALLSTACKUP:
     Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
     // There is no need to legalize the size argument (Operand #1)
-    if (Tmp1 != Node->getOperand(0))
+    Tmp2 = Node->getOperand(0);
+    if (Tmp1 != Tmp2) {
       Node->setAdjCallChain(Tmp1);
+
+      // If moving the operand from pointing to Tmp2 dropped its use count to 1,
+      // this will cause the maps used to memoize results to get confused.
+      // Create and add a dummy use, just to increase its use count.  This will
+      // be removed at the end of legalize when dead nodes are removed.
+      if (Tmp2.Val->hasOneUse())
+        DAG.getNode(ISD::PCMARKER, MVT::Other, Tmp2,
+                    DAG.getConstant(0, MVT::i32));
+    }
     // Note that we do not create new ADJCALLSTACK DOWN/UP nodes here.  These
     // nodes are treated specially and are mutated in place.  This makes the dag
     // legalization process more efficient and also makes libcall insertion
@@ -914,7 +926,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       } else {
         assert(0 && "Unknown op!");
       }
-      // FIXME: THESE SHOULD USE ExpandLibCall ??!?
+
       std::pair<SDOperand,SDOperand> CallResult =
         TLI.LowerCallTo(Tmp1, Type::VoidTy, false,
                         DAG.getExternalSymbol(FnName, IntPtr), Args, DAG);
@@ -1389,9 +1401,9 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
   }
   }
 
-  if (!Op.Val->hasOneUse())
-    AddLegalizedOperand(Op, Result);
-
+  // Note that LegalizeOp may be reentered even from single-use nodes, which
+  // means that we always must cache transformed nodes.
+  AddLegalizedOperand(Op, Result);
   return Result;
 }
 
@@ -1407,13 +1419,17 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
   assert(NVT > VT && MVT::isInteger(NVT) == MVT::isInteger(VT) &&
          "Cannot promote to smaller type!");
 
-  std::map<SDOperand, SDOperand>::iterator I = PromotedNodes.find(Op);
-  if (I != PromotedNodes.end()) return I->second;
-
   SDOperand Tmp1, Tmp2, Tmp3;
 
   SDOperand Result;
   SDNode *Node = Op.Val;
+
+  if (!Node->hasOneUse()) {
+    std::map<SDOperand, SDOperand>::iterator I = PromotedNodes.find(Op);
+    if (I != PromotedNodes.end()) return I->second;
+  } else {
+    assert(!PromotedNodes.count(Op) && "Repromoted this node??");
+  }
 
   // Promotion needs an optimization step to clean up after it, and is not
   // careful to avoid operations the target does not support.  Make sure that
@@ -2216,6 +2232,8 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
       Hi = I->second.second;
       return;
     }
+  } else {
+    assert(!ExpandedNodes.count(Op) && "Re-expanding a node!");
   }
 
   // Expanding to multiple registers needs to perform an optimization step, and
