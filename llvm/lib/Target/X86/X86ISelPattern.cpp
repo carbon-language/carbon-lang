@@ -257,7 +257,7 @@ X86TargetLowering::LowerCCCCallTo(SDOperand Chain, const Type *RetTy,
 
   if (Args.empty()) {
     // Save zero bytes.
-    Chain = DAG.getNode(ISD::ADJCALLSTACKDOWN, MVT::Other, Chain,
+    Chain = DAG.getNode(ISD::CALLSEQ_START, MVT::Other, Chain,
                         DAG.getConstant(0, getPointerTy()));
   } else {
     for (unsigned i = 0, e = Args.size(); i != e; ++i)
@@ -276,7 +276,7 @@ X86TargetLowering::LowerCCCCallTo(SDOperand Chain, const Type *RetTy,
         break;
       }
 
-    Chain = DAG.getNode(ISD::ADJCALLSTACKDOWN, MVT::Other, Chain,
+    Chain = DAG.getNode(ISD::CALLSEQ_START, MVT::Other, Chain,
                         DAG.getConstant(NumBytes, getPointerTy()));
 
     // Arguments go on the stack in reverse order, as specified by the ABI.
@@ -329,7 +329,7 @@ X86TargetLowering::LowerCCCCallTo(SDOperand Chain, const Type *RetTy,
 
   SDOperand TheCall = SDOperand(DAG.getCall(RetVals, Chain, Callee), 0);
   Chain = TheCall.getValue(RetTyVT != MVT::isVoid);
-  Chain = DAG.getNode(ISD::ADJCALLSTACKUP, MVT::Other, Chain,
+  Chain = DAG.getNode(ISD::CALLSEQ_END, MVT::Other, Chain,
                       DAG.getConstant(NumBytes, getPointerTy()));
   return std::make_pair(TheCall, Chain);
 }
@@ -578,7 +578,7 @@ X86TargetLowering::LowerFastCCCallTo(SDOperand Chain, const Type *RetTy,
       break;
     }
 
-  Chain = DAG.getNode(ISD::ADJCALLSTACKDOWN, MVT::Other, Chain,
+  Chain = DAG.getNode(ISD::CALLSEQ_START, MVT::Other, Chain,
                       DAG.getConstant(NumBytes, getPointerTy()));
 
   // Arguments go on the stack in reverse order, as specified by the ABI.
@@ -655,7 +655,7 @@ X86TargetLowering::LowerFastCCCallTo(SDOperand Chain, const Type *RetTy,
   SDOperand TheCall = SDOperand(DAG.getCall(RetVals, Chain, Callee,
                                             RegValuesToPass), 0);
   Chain = TheCall.getValue(RetTyVT != MVT::isVoid);
-  Chain = DAG.getNode(ISD::ADJCALLSTACKUP, MVT::Other, Chain,
+  Chain = DAG.getNode(ISD::CALLSEQ_END, MVT::Other, Chain,
                       DAG.getConstant(NumBytes, getPointerTy()));
   return std::make_pair(TheCall, Chain);
 }
@@ -3669,13 +3669,13 @@ void ISel::Select(SDOperand N) {
     addFullAddress(BuildMI(BB, Opc, 4+1), AM).addReg(Tmp1);
     return;
   }
-  case ISD::ADJCALLSTACKDOWN:
-  case ISD::ADJCALLSTACKUP:
+  case ISD::CALLSEQ_START:
+  case ISD::CALLSEQ_END:
     Select(N.getOperand(0));
     Tmp1 = cast<ConstantSDNode>(N.getOperand(1))->getValue();
 
-    Opc = N.getOpcode() == ISD::ADJCALLSTACKDOWN ? X86::ADJCALLSTACKDOWN :
-                                                   X86::ADJCALLSTACKUP;
+    Opc = N.getOpcode() == ISD::CALLSEQ_START ? X86::ADJCALLSTACKDOWN :
+                                                X86::ADJCALLSTACKUP;
     BuildMI(BB, Opc, 1).addImm(Tmp1);
     return;
   case ISD::MEMSET: {

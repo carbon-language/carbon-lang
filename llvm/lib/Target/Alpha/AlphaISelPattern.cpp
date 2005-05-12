@@ -311,7 +311,7 @@ AlphaTargetLowering::LowerCallTo(SDOperand Chain,
   if (Args.size() > 6)
     NumBytes = (Args.size() - 6) * 8;
 
-  Chain = DAG.getNode(ISD::ADJCALLSTACKDOWN, MVT::Other, Chain,
+  Chain = DAG.getNode(ISD::CALLSEQ_START, MVT::Other, Chain,
                       DAG.getConstant(NumBytes, getPointerTy()));
   std::vector<SDOperand> args_to_use;
   for (unsigned i = 0, e = Args.size(); i != e; ++i)
@@ -346,7 +346,7 @@ AlphaTargetLowering::LowerCallTo(SDOperand Chain,
   SDOperand TheCall = SDOperand(DAG.getCall(RetVals,
                                             Chain, Callee, args_to_use), 0);
   Chain = TheCall.getValue(RetTyVT != MVT::isVoid);
-  Chain = DAG.getNode(ISD::ADJCALLSTACKUP, MVT::Other, Chain,
+  Chain = DAG.getNode(ISD::CALLSEQ_END, MVT::Other, Chain,
                       DAG.getConstant(NumBytes, getPointerTy()));
   return std::make_pair(TheCall, Chain);
 }
@@ -2247,12 +2247,12 @@ void ISel::Select(SDOperand N) {
     SelectExpr(N);
     return;
 
-  case ISD::ADJCALLSTACKDOWN:
-  case ISD::ADJCALLSTACKUP:
+  case ISD::CALLSEQ_START:
+  case ISD::CALLSEQ_END:
     Select(N.getOperand(0));
     Tmp1 = cast<ConstantSDNode>(N.getOperand(1))->getValue();
 
-    Opc = N.getOpcode() == ISD::ADJCALLSTACKDOWN ? Alpha::ADJUSTSTACKDOWN :
+    Opc = N.getOpcode() == ISD::CALLSEQ_START ? Alpha::ADJUSTSTACKDOWN :
       Alpha::ADJUSTSTACKUP;
     BuildMI(BB, Opc, 1).addImm(Tmp1);
     return;

@@ -1194,7 +1194,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
 
   // Memoize this node if possible.
   SDNode *N;
-  if (Opcode != ISD::ADJCALLSTACKDOWN && Opcode != ISD::ADJCALLSTACKUP) {
+  if (Opcode != ISD::CALLSEQ_START && Opcode != ISD::CALLSEQ_END) {
     SDNode *&BON = BinaryOps[std::make_pair(Opcode, std::make_pair(N1, N2))];
     if (BON) return SDOperand(BON, 0);
 
@@ -1214,11 +1214,11 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
 }
 
 // setAdjCallChain - This method changes the token chain of an
-// ADJCALLSTACKDOWN/UP node to be the specified operand.
+// CALLSEQ_START/END node to be the specified operand.
 void SDNode::setAdjCallChain(SDOperand N) {
   assert(N.getValueType() == MVT::Other);
-  assert((getOpcode() == ISD::ADJCALLSTACKDOWN ||
-          getOpcode() == ISD::ADJCALLSTACKUP) && "Cannot adjust this node!");
+  assert((getOpcode() == ISD::CALLSEQ_START ||
+          getOpcode() == ISD::CALLSEQ_END) && "Cannot adjust this node!");
 
   Operands[0].Val->removeUser(this);
   Operands[0] = N;
@@ -1690,8 +1690,8 @@ const char *SDNode::getOperationName() const {
   case ISD::BRCONDTWOWAY:  return "brcondtwoway";
   case ISD::RET:     return "ret";
   case ISD::CALL:    return "call";
-  case ISD::ADJCALLSTACKDOWN:  return "adjcallstackdown";
-  case ISD::ADJCALLSTACKUP:    return "adjcallstackup";
+  case ISD::CALLSEQ_START:  return "callseq_end";
+  case ISD::CALLSEQ_END:    return "callseq_start";
 
     // Other operators
   case ISD::LOAD:    return "load";

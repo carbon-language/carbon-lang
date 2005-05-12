@@ -245,12 +245,12 @@ namespace ISD {
     MEMMOVE,
     MEMCPY,
 
-    // ADJCALLSTACKDOWN/ADJCALLSTACKUP - These operators mark the beginning and
-    // end of a call sequence and indicate how much the stack pointer needs to
-    // be adjusted for that particular call.  The first operand is a chain, the
-    // second is a ConstantSDNode of intptr type.
-    ADJCALLSTACKDOWN,  // Beginning of a call sequence
-    ADJCALLSTACKUP,    // End of a call sequence
+    // CALLSEQ_START/CALLSEQ_END - These operators mark the beginning and end of
+    // a call sequence, and carry arbitrary information that target might want
+    // to know.  The first operand is a chain, the rest are specified by the
+    // target and not touched by the DAG optimizers.
+    CALLSEQ_START,  // Beginning of a call sequence
+    CALLSEQ_END,    // End of a call sequence
 
     // SRCVALUE - This corresponds to a Value*, and is used to associate memory
     // locations with their value.  This allows one use alias analysis

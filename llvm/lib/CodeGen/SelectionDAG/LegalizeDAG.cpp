@@ -323,8 +323,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     break;
   }
 
-  case ISD::ADJCALLSTACKDOWN:
-  case ISD::ADJCALLSTACKUP:
+  case ISD::CALLSEQ_START:
+  case ISD::CALLSEQ_END:
     Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
     // There is no need to legalize the size argument (Operand #1)
     Tmp2 = Node->getOperand(0);
@@ -339,7 +339,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         DAG.getNode(ISD::PCMARKER, MVT::Other, Tmp2,
                     DAG.getConstant(0, MVT::i32));
     }
-    // Note that we do not create new ADJCALLSTACK DOWN/UP nodes here.  These
+    // Note that we do not create new CALLSEQ_DOWN/UP nodes here.  These
     // nodes are treated specially and are mutated in place.  This makes the dag
     // legalization process more efficient and also makes libcall insertion
     // easier.
@@ -1945,9 +1945,9 @@ bool SelectionDAGLegalize::ExpandShift(unsigned Opc, SDOperand Op,SDOperand Amt,
 static void FindLatestAdjCallStackDown(SDNode *Node, SDNode *&Found) {
   if (Node->getNodeDepth() <= Found->getNodeDepth()) return;
 
-  // If we found an ADJCALLSTACKDOWN, we already know this node occurs later
+  // If we found an CALLSEQ_START, we already know this node occurs later
   // than the Found node. Just remember this node and return.
-  if (Node->getOpcode() == ISD::ADJCALLSTACKDOWN) {
+  if (Node->getOpcode() == ISD::CALLSEQ_START) {
     Found = Node;
     return;
   }
@@ -1970,9 +1970,9 @@ static void FindLatestAdjCallStackDown(SDNode *Node, SDNode *&Found) {
 static void FindEarliestAdjCallStackUp(SDNode *Node, SDNode *&Found) {
   if (Found && Node->getNodeDepth() >= Found->getNodeDepth()) return;
 
-  // If we found an ADJCALLSTACKUP, we already know this node occurs earlier
+  // If we found an CALLSEQ_END, we already know this node occurs earlier
   // than the Found node. Just remember this node and return.
-  if (Node->getOpcode() == ISD::ADJCALLSTACKUP) {
+  if (Node->getOpcode() == ISD::CALLSEQ_END) {
     Found = Node;
     return;
   }
@@ -1988,9 +1988,9 @@ static void FindEarliestAdjCallStackUp(SDNode *Node, SDNode *&Found) {
 }
 
 /// FindAdjCallStackUp - Given a chained node that is part of a call sequence,
-/// find the ADJCALLSTACKUP node that terminates the call sequence.
+/// find the CALLSEQ_END node that terminates the call sequence.
 static SDNode *FindAdjCallStackUp(SDNode *Node) {
-  if (Node->getOpcode() == ISD::ADJCALLSTACKUP)
+  if (Node->getOpcode() == ISD::CALLSEQ_END)
     return Node;
   if (Node->use_empty())
     return 0;   // No adjcallstackup
@@ -2003,7 +2003,7 @@ static SDNode *FindAdjCallStackUp(SDNode *Node) {
 
   for (SDNode::use_iterator UI = Node->use_begin(),
          E = Node->use_end(); ; ++UI) {
-    assert(UI != E && "Didn't find a user of the tokchain, no ADJCALLSTACKUP!");
+    assert(UI != E && "Didn't find a user of the tokchain, no CALLSEQ_END!");
 
     // Make sure to only follow users of our token chain.
     SDNode *User = *UI;
@@ -2016,10 +2016,10 @@ static SDNode *FindAdjCallStackUp(SDNode *Node) {
 }
 
 /// FindAdjCallStackDown - Given a chained node that is part of a call sequence,
-/// find the ADJCALLSTACKDOWN node that initiates the call sequence.
+/// find the CALLSEQ_START node that initiates the call sequence.
 static SDNode *FindAdjCallStackDown(SDNode *Node) {
   assert(Node && "Didn't find adjcallstackdown for a call??");
-  if (Node->getOpcode() == ISD::ADJCALLSTACKDOWN) return Node;
+  if (Node->getOpcode() == ISD::CALLSEQ_START) return Node;
 
   assert(Node->getOperand(0).getValueType() == MVT::Other &&
          "Node doesn't have a token chain argument!");
@@ -2040,11 +2040,11 @@ static SDOperand FindInputOutputChains(SDNode *OpNode, SDNode *&OutChain,
   FindLatestAdjCallStackDown(OpNode, LatestAdjCallStackDown);
   //std::cerr<<"Found node: "; LatestAdjCallStackDown->dump(); std::cerr <<"\n";
 
-  // It is possible that no ISD::ADJCALLSTACKDOWN was found because there is no
+  // It is possible that no ISD::CALLSEQ_START was found because there is no
   // previous call in the function.  LatestCallStackDown may in that case be
-  // the entry node itself.  Do not attempt to find a matching ADJCALLSTACKUP
-  // unless LatestCallStackDown is an ADJCALLSTACKDOWN.
-  if (LatestAdjCallStackDown->getOpcode() == ISD::ADJCALLSTACKDOWN)
+  // the entry node itself.  Do not attempt to find a matching CALLSEQ_END
+  // unless LatestCallStackDown is an CALLSEQ_START.
+  if (LatestAdjCallStackDown->getOpcode() == ISD::CALLSEQ_START)
     LatestAdjCallStackUp = FindAdjCallStackUp(LatestAdjCallStackDown);
   else
     LatestAdjCallStackUp = Entry.Val;
