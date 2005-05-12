@@ -43,6 +43,9 @@ namespace {
     int ReturnAddrIndex;              // FrameIndex for return slot.
   public:
     PPC32TargetLowering(TargetMachine &TM) : TargetLowering(TM) {
+      // Fold away setcc operations if possible.
+      setSetCCIsExpensive();
+
       // Set up the register classes.
       addRegisterClass(MVT::i32, PPC32::GPRCRegisterClass);
       addRegisterClass(MVT::f32, PPC32::FPRCRegisterClass);
