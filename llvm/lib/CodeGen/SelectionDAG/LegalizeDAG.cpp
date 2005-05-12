@@ -326,7 +326,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
   case ISD::CALLSEQ_START:
   case ISD::CALLSEQ_END:
     Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
-    // There is no need to legalize the size argument (Operand #1)
+    // Do not try to legalize the target-specific arguments (#1+)
     Tmp2 = Node->getOperand(0);
     if (Tmp1 != Tmp2) {
       Node->setAdjCallChain(Tmp1);
