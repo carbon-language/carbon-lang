@@ -563,7 +563,7 @@ endif
 
 ifdef MODULE_NAME
 ifeq ($(strip $(LLVMGCC)),)
-$(warning Modules require llvm-gcc but no llvm-gcc is available)
+$(warning Modules require llvm-gcc but no llvm-gcc is available ****)
 else
 
 Module     := $(LibDir)/$(MODULE_NAME).bc
@@ -574,7 +574,7 @@ LinkModule += -Xlinker -internalize-public-api-file=$(EXPORTED_SYMBOL_FILE)
 endif
 
 $(Module): $(BUILT_SOURCES) $(ObjectsBC) $(LibDir)/.dir $(GCCLD)
-	$(Echo) Building $(BuildMOde) Bytecode Module $(notdir $@)
+	$(Echo) Building $(BuildMode) Bytecode Module $(notdir $@)
 	$(Verb) $(LinkModule) -o $@ $(ObjectsBC)
 
 all-local:: $(Module)
@@ -663,7 +663,7 @@ endif
 #---------------------------------------------------------
 ifdef BYTECODE_LIBRARY
 ifeq ($(strip $(LLVMGCC)),)
-$(warning Bytecode libraries require llvm-gcc which could not be found)
+$(warning Bytecode libraries require llvm-gcc which could not be found ****)
 else
 
 # make the C and C++ compilers strip debug info out of bytecode libraries.
