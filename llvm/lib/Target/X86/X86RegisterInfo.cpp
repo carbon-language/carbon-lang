@@ -493,7 +493,7 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
   const MachineFrameInfo *MFI = MF.getFrameInfo();
   MachineBasicBlock::iterator MBBI = prior(MBB.end());
   MachineInstr *MI;
-  assert(MBBI->getOpcode() == X86::RET &&
+  assert((MBBI->getOpcode() == X86::RET || MBBI->getOpcode() == X86::RETI) &&
          "Can only insert epilog into returning blocks");
 
   if (hasFP(MF)) {
