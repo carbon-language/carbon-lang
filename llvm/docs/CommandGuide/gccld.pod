@@ -112,7 +112,7 @@ Do not mark all symbols as internal.
 
 Preserve the list of symbol names in the file filename.
 
-=item B<-internalize-public-api-list &lt;list&gt;>
+=item B<-internalize-public-api-list I<list>
 
 Preserve the symbol names in list.
 
