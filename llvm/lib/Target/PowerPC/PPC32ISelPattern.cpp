@@ -64,13 +64,15 @@ namespace {
       setOperationAction(ISD::SREM, MVT::i32, Expand);
       setOperationAction(ISD::UREM, MVT::i32, Expand);
 
-      // We don't support sin/cos/sqrt
+      // We don't support sin/cos/sqrt/fmod
       setOperationAction(ISD::FSIN , MVT::f64, Expand);
       setOperationAction(ISD::FCOS , MVT::f64, Expand);
       setOperationAction(ISD::FSQRT, MVT::f64, Expand);
+      setOperationAction(ISD::SREM , MVT::f64, Expand);
       setOperationAction(ISD::FSIN , MVT::f32, Expand);
       setOperationAction(ISD::FCOS , MVT::f32, Expand);
       setOperationAction(ISD::FSQRT, MVT::f32, Expand);
+      setOperationAction(ISD::SREM , MVT::f32, Expand);
 
       //PowerPC does not have CTPOP or CTTZ
       setOperationAction(ISD::CTPOP, MVT::i32  , Expand);
