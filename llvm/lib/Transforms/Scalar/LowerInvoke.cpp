@@ -157,7 +157,7 @@ void LowerInvoke::createAbortMessage() {
     GlobalVariable *MsgGV = new GlobalVariable(Msg->getType(), true,
                                                GlobalValue::InternalLinkage,
                                                Msg, "abortmsg", &M);
-    std::vector<Constant*> GEPIdx(2, Constant::getNullValue(Type::LongTy));
+    std::vector<Constant*> GEPIdx(2, Constant::getNullValue(Type::IntTy));
     AbortMessage = ConstantExpr::getGetElementPtr(MsgGV, GEPIdx);
   } else {
     // The abort message for cheap EH support tells the user that EH is not
@@ -170,7 +170,7 @@ void LowerInvoke::createAbortMessage() {
     GlobalVariable *MsgGV = new GlobalVariable(Msg->getType(), true,
                                                GlobalValue::InternalLinkage,
                                                Msg, "abortmsg", &M);
-    std::vector<Constant*> GEPIdx(2, Constant::getNullValue(Type::LongTy));
+    std::vector<Constant*> GEPIdx(2, Constant::getNullValue(Type::IntTy));
     AbortMessage = ConstantExpr::getGetElementPtr(MsgGV, GEPIdx);
   }
 }
@@ -355,7 +355,7 @@ bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
     // Now that we have a pointer to the whole record, remove the entry from the
     // JBList.
     std::vector<Value*> Idx;
-    Idx.push_back(Constant::getNullValue(Type::LongTy));
+    Idx.push_back(Constant::getNullValue(Type::IntTy));
     Idx.push_back(ConstantUInt::get(Type::UIntTy, 0));
     Value *NextFieldPtr = new GetElementPtrInst(RecPtr, Idx, "NextField", RI);
     Value *NextRec = new LoadInst(NextFieldPtr, "NextRecord", RI);
