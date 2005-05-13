@@ -5,9 +5,6 @@
 ##===----------------------------------------------------------------------===##
 
 LEVEL = ..
-DIRS = compiler
-ifneq ($(MAKECMDGOALS),tools-only)
-DIRS += runtime 
-endif
+DIRS = compiler runtime
 
 include $(LEVEL)/Makefile.common
