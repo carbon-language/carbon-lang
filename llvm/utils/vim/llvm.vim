@@ -29,7 +29,7 @@ syn keyword llvmStatement declare global constant const
 syn keyword llvmStatement internal uninitialized external implementation
 syn keyword llvmStatement linkonce weak appending
 syn keyword llvmStatement undef null to except target endian pointersize deplibs
-syn keyword llvmStatement big little volatile
+syn keyword llvmStatement big little volatile fastcc coldcc cc
 
 "syn match llvmFunction /%[a-zA-Z\$._\-][a-zA-Z\$._\-0-9]*/
 syn match  llvmNumber /\<\d\+\>/
