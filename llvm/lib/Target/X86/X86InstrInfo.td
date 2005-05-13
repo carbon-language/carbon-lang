@@ -152,9 +152,11 @@ let isTerminator = 1 in
 //  Control Flow Instructions...
 //
 
-// Return instruction...
+// Return instructions.
 let isTerminator = 1, isReturn = 1, isBarrier = 1 in
   def RET : I<0xC3, RawFrm, (ops), "ret">;
+let isTerminator = 1, isReturn = 1, isBarrier = 1 in
+  def RETI : Ii16<0xC2, RawFrm, (ops i16imm:$amt), "ret $amt">;
 
 // All branches are RawFrm, Void, Branch, and Terminators
 let isBranch = 1, isTerminator = 1 in
