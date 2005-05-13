@@ -45,15 +45,6 @@ Print a summary of command line options.
 Specify the output filename.  If filename is "-" (the default), then
 B<llvm-extract> sends its output to standard output.
 
-=item B<--stats>
-
-Print statistics.
-
-=item B<--time-passes>
-
-Record the amount of time needed for each pass and print it to standard
-error.
-
 =back
 
 =head1 EXIT STATUS
