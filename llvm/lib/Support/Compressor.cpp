@@ -408,7 +408,8 @@ size_t Compressor::decompress(const char *in, size_t size,
 
       // Decompress it
       int bzerr = BZ_OK;
-      while (BZ_OK == (bzerr = BZ2_bzDecompress(&bzdata))) {
+      while ( BZ_OK == (bzerr = BZ2_bzDecompress(&bzdata)) && 
+              bzdata.avail_in != 0 ) {
         if (0 != getdata_uns(bzdata.next_out, bzdata.avail_out,cb,context)) {
           BZ2_bzDecompressEnd(&bzdata);
           throw std::string("Can't allocate output buffer");
@@ -420,10 +421,11 @@ size_t Compressor::decompress(const char *in, size_t size,
         case BZ_MEM_ERROR:    throw std::string("Out of memory");
         case BZ_DATA_ERROR:   throw std::string("Data integrity error");
         case BZ_DATA_ERROR_MAGIC:throw std::string("Data is not BZIP2");
+        case BZ_OK:           throw std::string("Insufficient input for bzip2");
+        case BZ_STREAM_END: break;
         default: throw("Ooops");
-        case BZ_STREAM_END:
-          break;
       }
+
 
       // Finish
       result = bzdata.total_out_lo32;
@@ -474,7 +476,7 @@ Compressor::decompressToStream(const char*in, size_t size, std::ostream& out){
   // Set up the context and writer
   WriterContext ctxt(&out,size / 2);
 
-  // Compress everything after the magic number (which we'll alter)
+  // Decompress everything after the magic number (which we'll alter)
   size_t zipSize = Compressor::decompress(in,size,
     WriterContext::callback, (void*)&ctxt);
 
