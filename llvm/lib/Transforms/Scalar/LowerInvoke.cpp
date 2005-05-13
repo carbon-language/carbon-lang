@@ -205,9 +205,10 @@ bool LowerInvoke::insertCheapEHSupport(Function &F) {
     if (InvokeInst *II = dyn_cast<InvokeInst>(BB->getTerminator())) {
       // Insert a normal call instruction...
       std::string Name = II->getName(); II->setName("");
-      Value *NewCall = new CallInst(II->getCalledValue(),
-                                    std::vector<Value*>(II->op_begin()+3,
-                                                        II->op_end()), Name,II);
+      CallInst *NewCall = new CallInst(II->getCalledValue(),
+                                       std::vector<Value*>(II->op_begin()+3,
+                                                       II->op_end()), Name, II);
+      NewCall->setCallingConv(II->getCallingConv());
       II->replaceAllUsesWith(NewCall);
 
       // Insert an unconditional branch to the normal destination.
@@ -286,10 +287,11 @@ bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
 
       // Insert a normal call instruction on the normal execution path.
       std::string Name = II->getName(); II->setName("");
-      Value *NewCall = new CallInst(II->getCalledValue(),
-                                    std::vector<Value*>(II->op_begin()+3,
-                                                        II->op_end()), Name,
-                                    InsertLoc);
+      CallInst *NewCall = new CallInst(II->getCalledValue(),
+                                       std::vector<Value*>(II->op_begin()+3,
+                                                           II->op_end()), Name,
+                                       InsertLoc);
+      NewCall->setCallingConv(II->getCallingConv());
       II->replaceAllUsesWith(NewCall);
 
       // If we got this far, then no exception was thrown and we can pop our
