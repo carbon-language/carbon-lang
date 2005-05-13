@@ -136,12 +136,13 @@ namespace {
     std::vector<SDOperand> LowerCCCArguments(Function &F, SelectionDAG &DAG);
     std::pair<SDOperand, SDOperand>
     LowerCCCCallTo(SDOperand Chain, const Type *RetTy, bool isVarArg,
+                   bool isTailCall,
                    SDOperand Callee, ArgListTy &Args, SelectionDAG &DAG);
  
     // Fast Calling Convention implementation.
     std::vector<SDOperand> LowerFastCCArguments(Function &F, SelectionDAG &DAG);
     std::pair<SDOperand, SDOperand>
-    LowerFastCCCallTo(SDOperand Chain, const Type *RetTy,
+    LowerFastCCCallTo(SDOperand Chain, const Type *RetTy, bool isTailCall,
                       SDOperand Callee, ArgListTy &Args, SelectionDAG &DAG);
   };
 }
@@ -162,8 +163,8 @@ X86TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
   assert((!isVarArg || CallingConv == CallingConv::C) &&
          "Only C takes varargs!");
   if (CallingConv == CallingConv::Fast && EnableFastCC)
-    return LowerFastCCCallTo(Chain, RetTy, Callee, Args, DAG);
-  return  LowerCCCCallTo(Chain, RetTy, isVarArg, Callee, Args, DAG);
+    return LowerFastCCCallTo(Chain, RetTy, isTailCall, Callee, Args, DAG);
+  return  LowerCCCCallTo(Chain, RetTy, isVarArg, isTailCall, Callee, Args, DAG);
 }
 
 //===----------------------------------------------------------------------===//
@@ -253,8 +254,9 @@ X86TargetLowering::LowerCCCArguments(Function &F, SelectionDAG &DAG) {
 
 std::pair<SDOperand, SDOperand>
 X86TargetLowering::LowerCCCCallTo(SDOperand Chain, const Type *RetTy,
-                                  bool isVarArg, SDOperand Callee,
-                                  ArgListTy &Args, SelectionDAG &DAG) {
+                                  bool isVarArg, bool isTailCall,
+                                  SDOperand Callee, ArgListTy &Args,
+                                  SelectionDAG &DAG) {
   // Count how many bytes are to be pushed on the stack.
   unsigned NumBytes = 0;
 
@@ -330,7 +332,8 @@ X86TargetLowering::LowerCCCCallTo(SDOperand Chain, const Type *RetTy,
     RetVals.push_back(RetTyVT);
   RetVals.push_back(MVT::Other);
 
-  SDOperand TheCall = SDOperand(DAG.getCall(RetVals, Chain, Callee), 0);
+  SDOperand TheCall = SDOperand(DAG.getCall(RetVals, Chain, Callee,
+                                            isTailCall), 0);
   Chain = TheCall.getValue(RetTyVT != MVT::isVoid);
   Chain = DAG.getNode(ISD::CALLSEQ_END, MVT::Other, Chain,
                       DAG.getConstant(NumBytes, getPointerTy()),
@@ -554,7 +557,7 @@ X86TargetLowering::LowerFastCCArguments(Function &F, SelectionDAG &DAG) {
 
 std::pair<SDOperand, SDOperand>
 X86TargetLowering::LowerFastCCCallTo(SDOperand Chain, const Type *RetTy,
-                                     SDOperand Callee,
+                                     bool isTailCall, SDOperand Callee,
                                      ArgListTy &Args, SelectionDAG &DAG) {
   // Count how many bytes are to be pushed on the stack.
   unsigned NumBytes = 0;
@@ -670,7 +673,7 @@ X86TargetLowering::LowerFastCCCallTo(SDOperand Chain, const Type *RetTy,
   RetVals.push_back(MVT::Other);
 
   SDOperand TheCall = SDOperand(DAG.getCall(RetVals, Chain, Callee,
-                                            RegValuesToPass), 0);
+                                            RegValuesToPass, isTailCall), 0);
   Chain = TheCall.getValue(RetTyVT != MVT::isVoid);
   Chain = DAG.getNode(ISD::CALLSEQ_END, MVT::Other, Chain,
                       DAG.getConstant(NumBytes, getPointerTy()),
@@ -1798,6 +1801,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
     Reg = Result = (N.getValueType() != MVT::Other) ?
                             MakeReg(N.getValueType()) : 1;
     break;
+  case ISD::TAILCALL:
   case ISD::CALL:
     // If this is a call instruction, make sure to prepare ALL of the result
     // values as well as the chain.
@@ -3053,6 +3057,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
     BuildMI(BB, X86::MOV32rr, 1, Result).addReg(X86::ESP);
     return Result;
 
+  case ISD::TAILCALL:
   case ISD::CALL: {
     // The chain for this call is now lowered.
     ExprMap.insert(std::make_pair(N.getValue(Node->getNumValues()-1), 1));
@@ -3574,6 +3579,7 @@ void ISel::Select(SDOperand N) {
   case ISD::EXTLOAD:
   case ISD::SEXTLOAD:
   case ISD::ZEXTLOAD:
+  case ISD::TAILCALL:
   case ISD::CALL:
   case ISD::DYNAMIC_STACKALLOC:
     ExprMap.erase(N);
