@@ -932,8 +932,6 @@ bool SelectionDAGISel::runOnFunction(Function &Fn) {
 
   FunctionLoweringInfo FuncInfo(TLI, Fn, MF);
 
-  EmitFunctionEntryCode(Fn, MF);
-
   for (Function::iterator I = Fn.begin(), E = Fn.end(); I != E; ++I)
     SelectBasicBlock(I, MF, FuncInfo);
 
@@ -1012,6 +1010,8 @@ LowerArguments(BasicBlock *BB, SelectionDAGLowering &SDL,
           }
         }
     }
+
+    EmitFunctionEntryCode(F, SDL.DAG.getMachineFunction());
   }
 
   // See if there are any block-local arguments that need to be emitted in this
