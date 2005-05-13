@@ -375,6 +375,19 @@ LowerVAArgNext(bool isVANext, SDOperand Chain, SDOperand VAList,
 // Note that this can be enhanced in the future to pass fp vals in registers
 // (when we have a global fp allocator) and do other tricks.
 //
+
+/// AddLiveIn - This helper function adds the specified physical register to the
+/// MachineFunction as a live in value.  It also creates a corresponding virtual
+/// register for it.
+static unsigned AddLiveIn(MachineFunction &MF, unsigned PReg,
+                          TargetRegisterClass *RC) {
+  assert(RC->contains(PReg) && "Not the correct regclass!");
+  unsigned VReg = MF.getSSARegMap()->createVirtualRegister(RC);
+  MF.addLiveIn(PReg, VReg);
+  return VReg;
+}
+
+
 std::vector<SDOperand>
 X86TargetLowering::LowerFastCCArguments(Function &F, SelectionDAG &DAG) {
   std::vector<SDOperand> ArgValues;
@@ -408,9 +421,9 @@ X86TargetLowering::LowerFastCCArguments(Function &F, SelectionDAG &DAG) {
     case MVT::i8:
       if (NumIntRegs < 2) {
         if (!I->use_empty()) {
-          MF.addLiveIn(NumIntRegs ? X86::DL : X86::AL);
-          ArgValue = DAG.getCopyFromReg(NumIntRegs ? X86::DL : X86::AL, MVT::i8,
-                                        DAG.getRoot());
+          unsigned VReg = AddLiveIn(MF, NumIntRegs ? X86::DL : X86::AL,
+                                    X86::R8RegisterClass);
+          ArgValue = DAG.getCopyFromReg(VReg, MVT::i8, DAG.getRoot());
           DAG.setRoot(ArgValue.getValue(1));
         }
         ++NumIntRegs;
@@ -422,9 +435,9 @@ X86TargetLowering::LowerFastCCArguments(Function &F, SelectionDAG &DAG) {
     case MVT::i16:
       if (NumIntRegs < 2) {
         if (!I->use_empty()) {
-          MF.addLiveIn(NumIntRegs ? X86::DX : X86::AX);
-          ArgValue = DAG.getCopyFromReg(NumIntRegs ? X86::DX : X86::AX,
-                                        MVT::i16, DAG.getRoot());
+          unsigned VReg = AddLiveIn(MF, NumIntRegs ? X86::DX : X86::AX,
+                                    X86::R16RegisterClass);
+          ArgValue = DAG.getCopyFromReg(VReg, MVT::i16, DAG.getRoot());
           DAG.setRoot(ArgValue.getValue(1));
         }
         ++NumIntRegs;
@@ -435,9 +448,9 @@ X86TargetLowering::LowerFastCCArguments(Function &F, SelectionDAG &DAG) {
     case MVT::i32:
       if (NumIntRegs < 2) {
         if (!I->use_empty()) {
-          MF.addLiveIn(NumIntRegs ? X86::EDX : X86::EAX);
-          ArgValue = DAG.getCopyFromReg(NumIntRegs ? X86::EDX : X86::EAX,
-                                        MVT::i32, DAG.getRoot());
+          unsigned VReg = AddLiveIn(MF,NumIntRegs ? X86::EDX : X86::EAX,
+                                    X86::R32RegisterClass);
+          ArgValue = DAG.getCopyFromReg(VReg, MVT::i32, DAG.getRoot());
           DAG.setRoot(ArgValue.getValue(1));
         }
         ++NumIntRegs;
@@ -448,11 +461,11 @@ X86TargetLowering::LowerFastCCArguments(Function &F, SelectionDAG &DAG) {
     case MVT::i64:
       if (NumIntRegs == 0) {
         if (!I->use_empty()) {
-          MF.addLiveIn(X86::EDX);
-          MF.addLiveIn(X86::EAX);
+          unsigned BotReg = AddLiveIn(MF, X86::EAX, X86::R32RegisterClass);
+          unsigned TopReg = AddLiveIn(MF, X86::EDX, X86::R32RegisterClass);
 
-          SDOperand Low=DAG.getCopyFromReg(X86::EAX, MVT::i32, DAG.getRoot());
-          SDOperand Hi =DAG.getCopyFromReg(X86::EDX, MVT::i32, Low.getValue(1));
+          SDOperand Low=DAG.getCopyFromReg(BotReg, MVT::i32, DAG.getRoot());
+          SDOperand Hi =DAG.getCopyFromReg(TopReg, MVT::i32, Low.getValue(1));
           DAG.setRoot(Hi.getValue(1));
 
           ArgValue = DAG.getNode(ISD::BUILD_PAIR, MVT::i64, Low, Hi);
@@ -461,8 +474,8 @@ X86TargetLowering::LowerFastCCArguments(Function &F, SelectionDAG &DAG) {
         break;
       } else if (NumIntRegs == 1) {
         if (!I->use_empty()) {
-          MF.addLiveIn(X86::EDX);
-          SDOperand Low = DAG.getCopyFromReg(X86::EDX, MVT::i32, DAG.getRoot());
+          unsigned BotReg = AddLiveIn(MF, X86::EDX, X86::R32RegisterClass);
+          SDOperand Low = DAG.getCopyFromReg(BotReg, MVT::i32, DAG.getRoot());
           DAG.setRoot(Low.getValue(1));
 
           // Load the high part from memory.
@@ -760,6 +773,8 @@ namespace {
     /// SelectionDAGISel when it has created a SelectionDAG for us to codegen.
     virtual void InstructionSelectBasicBlock(SelectionDAG &DAG);
 
+    virtual void EmitFunctionEntryCode(Function &Fn, MachineFunction &MF);
+
     bool isFoldableLoad(SDOperand Op, SDOperand OtherOp,
                         bool FloatPromoteOk = false);
     void EmitFoldedLoad(SDOperand Op, X86AddressMode &AM);
@@ -795,6 +810,36 @@ static void EmitSpecialCodeForMain(MachineBasicBlock *BB,
   addFrameReference(BuildMI(BB, X86::FLDCW16m, 4), CWFrameIdx);
 }
 
+void ISel::EmitFunctionEntryCode(Function &Fn, MachineFunction &MF) {
+  // If this function has live-in values, emit the copies from pregs to vregs at
+  // the top of the function, before anything else.
+  MachineBasicBlock *BB = MF.begin();
+  if (MF.livein_begin() != MF.livein_end()) {
+    SSARegMap *RegMap = MF.getSSARegMap();
+    for (MachineFunction::livein_iterator LI = MF.livein_begin(),
+         E = MF.livein_end(); LI != E; ++LI) {
+      const TargetRegisterClass *RC = RegMap->getRegClass(LI->second);
+      if (RC == X86::R8RegisterClass) {
+        BuildMI(BB, X86::MOV8rr, 1, LI->second).addReg(LI->first);
+      } else if (RC == X86::R16RegisterClass) {
+        BuildMI(BB, X86::MOV16rr, 1, LI->second).addReg(LI->first);
+      } else if (RC == X86::R32RegisterClass) {
+        BuildMI(BB, X86::MOV32rr, 1, LI->second).addReg(LI->first);
+      } else if (RC == X86::RFPRegisterClass) {
+        BuildMI(BB, X86::FpMOV, 1, LI->second).addReg(LI->first);
+      } else {
+        assert(0 && "Unknown regclass!");
+      }
+    }
+  }
+
+
+  // If this is main, emit special code for main.
+  if (Fn.hasExternalLinkage() && Fn.getName() == "main")
+    EmitSpecialCodeForMain(BB, MF.getFrameInfo());
+}
+
+
 /// InstructionSelectBasicBlock - This callback is invoked by SelectionDAGISel
 /// when it has created a SelectionDAG for us to codegen.
 void ISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
@@ -807,23 +852,17 @@ void ISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
   // of them is a PHI of a floating point value, we need to insert an
   // FP_REG_KILL.
   SSARegMap *RegMap = MF->getSSARegMap();
-  for (MachineBasicBlock::iterator I = BB->begin(), E = BB->end();
-       I != E; ++I) {
-    assert(I->getOpcode() == X86::PHI &&
-           "Isn't just PHI nodes?");
-    if (RegMap->getRegClass(I->getOperand(0).getReg()) ==
-        X86::RFPRegisterClass) {
-      ContainsFPCode = true;
-      break;
+  if (BB != MF->begin())
+    for (MachineBasicBlock::iterator I = BB->begin(), E = BB->end();
+         I != E; ++I) {
+      assert(I->getOpcode() == X86::PHI &&
+             "Isn't just PHI nodes?");
+      if (RegMap->getRegClass(I->getOperand(0).getReg()) ==
+          X86::RFPRegisterClass) {
+        ContainsFPCode = true;
+        break;
+      }
     }
-  }
-
-  // If this is the entry block of main, emit special code for main.
-  if (BB == MF->begin()) {
-    const Function *F = MF->getFunction();
-    if (F->hasExternalLinkage() && F->getName() == "main")
-      EmitSpecialCodeForMain(BB, MF->getFrameInfo());
-  }
 
   // Compute the RegPressureMap, which is an approximation for the number of
   // registers required to compute each node.
