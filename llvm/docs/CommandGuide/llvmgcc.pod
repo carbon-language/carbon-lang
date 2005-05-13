@@ -64,9 +64,17 @@ repeated.
 Link in the library libI<name>.[bc | a | so].  This library should
 be a bytecode library.
 
+=item B<-Wa,>I<option>
+
+Pass I<option> to gccas
+
 =item B<-Wl,>I<option>
 
-Pass I<option> to the linker (usually gccld).
+Pass I<option> to gccld
+
+=item B<-Wa,-disable-inlining -Wl,-disable-inlining>I<option>
+
+Fully disable all inlining
 
 =back
 
