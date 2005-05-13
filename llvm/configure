@@ -24648,7 +24648,6 @@ do
 done
 done
 
-  test -z "$ac_cv_path_LLVMGCC" && ac_cv_path_LLVMGCC="llvm-gcc"
   ;;
 esac
 fi
@@ -24688,7 +24687,6 @@ do
 done
 done
 
-  test -z "$ac_cv_path_LLVMGXX" && ac_cv_path_LLVMGXX="llvm-g++"
   ;;
 esac
 fi

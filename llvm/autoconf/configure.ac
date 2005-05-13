@@ -354,8 +354,8 @@ esac
 AC_SUBST(ETAGSFLAGS,$ETAGSFLAGS)
 
 if test "$WITH_LLVMGCCDIR" = "default" ; then
-  AC_PATH_PROG(LLVMGCC, [llvm-gcc], [llvm-gcc])
-  AC_PATH_PROG(LLVMGXX, [llvm-g++], [llvm-g++])
+  AC_PATH_PROG(LLVMGCC, [llvm-gcc], [])
+  AC_PATH_PROG(LLVMGXX, [llvm-g++], [])
 else
   LLVMGCC=$WITH_LLVMGCCDIR/bin/llvm-gcc
   LLVMGXX=$WITH_LLVMGCCDIR/bin/llvm-g++
