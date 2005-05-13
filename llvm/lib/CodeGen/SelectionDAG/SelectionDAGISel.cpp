@@ -13,6 +13,7 @@
 
 #define DEBUG_TYPE "isel"
 #include "llvm/CodeGen/SelectionDAGISel.h"
+#include "llvm/CallingConv.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
@@ -774,7 +775,7 @@ void SelectionDAGLowering::visitCall(CallInst &I) {
 
   std::pair<SDOperand,SDOperand> Result =
     TLI.LowerCallTo(getRoot(), I.getType(), FTy->isVarArg(), I.getCallingConv(),
-                    Callee, Args, DAG);
+                    I.isTailCall(), Callee, Args, DAG);
   if (I.getType() != Type::VoidTy)
     setValue(&I, Result.first);
   DAG.setRoot(Result.second);
@@ -799,7 +800,7 @@ void SelectionDAGLowering::visitMalloc(MallocInst &I) {
   Args.push_back(std::make_pair(Src, TLI.getTargetData().getIntPtrType()));
 
   std::pair<SDOperand,SDOperand> Result =
-    TLI.LowerCallTo(getRoot(), I.getType(), false, 0,
+    TLI.LowerCallTo(getRoot(), I.getType(), false, CallingConv::C, true,
                     DAG.getExternalSymbol("malloc", IntPtr),
                     Args, DAG);
   setValue(&I, Result.first);  // Pointers always fit in registers
@@ -812,7 +813,7 @@ void SelectionDAGLowering::visitFree(FreeInst &I) {
                                 TLI.getTargetData().getIntPtrType()));
   MVT::ValueType IntPtr = TLI.getPointerTy();
   std::pair<SDOperand,SDOperand> Result =
-    TLI.LowerCallTo(getRoot(), Type::VoidTy, false, 0,
+    TLI.LowerCallTo(getRoot(), Type::VoidTy, false, CallingConv::C, true,
                     DAG.getExternalSymbol("free", IntPtr), Args, DAG);
   DAG.setRoot(Result.second);
 }

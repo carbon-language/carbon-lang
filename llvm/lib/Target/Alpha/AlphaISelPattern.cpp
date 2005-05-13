@@ -119,7 +119,8 @@ namespace {
     /// actual call.
     virtual std::pair<SDOperand, SDOperand>
     LowerCallTo(SDOperand Chain, const Type *RetTy, bool isVarArg, unsigned CC,
-                SDOperand Callee, ArgListTy &Args, SelectionDAG &DAG);
+                bool isTailCall, SDOperand Callee, ArgListTy &Args,
+                SelectionDAG &DAG);
 
     virtual std::pair<SDOperand, SDOperand>
     LowerVAStart(SDOperand Chain, SelectionDAG &DAG);
@@ -304,7 +305,7 @@ AlphaTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG)
 std::pair<SDOperand, SDOperand>
 AlphaTargetLowering::LowerCallTo(SDOperand Chain,
                                  const Type *RetTy, bool isVarArg,
-                                 unsigned CallingConv,
+                                 unsigned CallingConv, bool isTailCall,
                                  SDOperand Callee, ArgListTy &Args, 
                                  SelectionDAG &DAG) {
   int NumBytes = 0;

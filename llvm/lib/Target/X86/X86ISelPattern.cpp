@@ -45,6 +45,7 @@ namespace {
   class X86TargetLowering : public TargetLowering {
     int VarArgsFrameIndex;            // FrameIndex for start of varargs area.
     int ReturnAddrIndex;              // FrameIndex for return slot.
+    int BytesToPopOnReturn;           // Number of bytes ret should pop.
   public:
     X86TargetLowering(TargetMachine &TM) : TargetLowering(TM) {
       // Set up the TargetLowering object.
@@ -117,7 +118,8 @@ namespace {
     /// actual call.
     virtual std::pair<SDOperand, SDOperand>
     LowerCallTo(SDOperand Chain, const Type *RetTy, bool isVarArg, unsigned CC, 
-                SDOperand Callee, ArgListTy &Args, SelectionDAG &DAG);
+                bool isTailCall, SDOperand Callee, ArgListTy &Args,
+                SelectionDAG &DAG);
 
     virtual std::pair<SDOperand, SDOperand>
     LowerVAStart(SDOperand Chain, SelectionDAG &DAG);
@@ -154,6 +156,7 @@ X86TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
 std::pair<SDOperand, SDOperand>
 X86TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
                                bool isVarArg, unsigned CallingConv,
+                               bool isTailCall, 
                                SDOperand Callee, ArgListTy &Args,
                                SelectionDAG &DAG) {
   assert((!isVarArg || CallingConv == CallingConv::C) &&
@@ -330,7 +333,8 @@ X86TargetLowering::LowerCCCCallTo(SDOperand Chain, const Type *RetTy,
   SDOperand TheCall = SDOperand(DAG.getCall(RetVals, Chain, Callee), 0);
   Chain = TheCall.getValue(RetTyVT != MVT::isVoid);
   Chain = DAG.getNode(ISD::CALLSEQ_END, MVT::Other, Chain,
-                      DAG.getConstant(NumBytes, getPointerTy()));
+                      DAG.getConstant(NumBytes, getPointerTy()),
+                      DAG.getConstant(0, getPointerTy()));
   return std::make_pair(TheCall, Chain);
 }
 
@@ -669,7 +673,9 @@ X86TargetLowering::LowerFastCCCallTo(SDOperand Chain, const Type *RetTy,
                                             RegValuesToPass), 0);
   Chain = TheCall.getValue(RetTyVT != MVT::isVoid);
   Chain = DAG.getNode(ISD::CALLSEQ_END, MVT::Other, Chain,
-                      DAG.getConstant(NumBytes, getPointerTy()));
+                      DAG.getConstant(NumBytes, getPointerTy()),
+                      // The callee pops the arguments off the stack.
+                      DAG.getConstant(ArgOffset, getPointerTy()));
   return std::make_pair(TheCall, Chain);
 }
 

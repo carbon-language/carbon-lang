@@ -262,8 +262,8 @@ public:
   typedef std::vector<std::pair<SDOperand, const Type*> > ArgListTy;
   virtual std::pair<SDOperand, SDOperand>
   LowerCallTo(SDOperand Chain, const Type *RetTy, bool isVarArg,
-              unsigned CallingConv, SDOperand Callee, ArgListTy &Args,
-              SelectionDAG &DAG) = 0;
+              unsigned CallingConv, bool isTailCall, SDOperand Callee,
+              ArgListTy &Args, SelectionDAG &DAG) = 0;
 
   /// LowerVAStart - This lowers the llvm.va_start intrinsic.  If not
   /// implemented, this method prints a message and aborts.
