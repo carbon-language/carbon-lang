@@ -1690,6 +1690,7 @@ const char *SDNode::getOperationName() const {
   case ISD::BRCONDTWOWAY:  return "brcondtwoway";
   case ISD::RET:     return "ret";
   case ISD::CALL:    return "call";
+  case ISD::TAILCALL:return "tailcall";
   case ISD::CALLSEQ_START:  return "callseq_start";
   case ISD::CALLSEQ_END:    return "callseq_end";
 

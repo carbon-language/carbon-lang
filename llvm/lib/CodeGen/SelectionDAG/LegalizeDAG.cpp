@@ -361,6 +361,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     AddLegalizedOperand(SDOperand(Node, 1), Result.getValue(1));
     return Result.getValue(Op.ResNo);
 
+  case ISD::TAILCALL:
   case ISD::CALL: {
     Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
     Tmp2 = LegalizeOp(Node->getOperand(1));  // Legalize the callee.
@@ -377,7 +378,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       RetTyVTs.reserve(Node->getNumValues());
       for (unsigned i = 0, e = Node->getNumValues(); i != e; ++i)
         RetTyVTs.push_back(Node->getValueType(i));
-      Result = SDOperand(DAG.getCall(RetTyVTs, Tmp1, Tmp2, Ops), 0);
+      Result = SDOperand(DAG.getCall(RetTyVTs, Tmp1, Tmp2, Ops,
+                                     Node->getOpcode() == ISD::TAILCALL), 0);
     } else {
       Result = Result.getValue(0);
     }
@@ -1689,6 +1691,7 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
     Tmp3 = PromoteOp(Node->getOperand(2));   // Legalize the op1
     Result = DAG.getNode(ISD::SELECT, NVT, Tmp1, Tmp2, Tmp3);
     break;
+  case ISD::TAILCALL:
   case ISD::CALL: {
     Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
     Tmp2 = LegalizeOp(Node->getOperand(1));  // Legalize the callee.
@@ -1703,7 +1706,8 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
     RetTyVTs.reserve(2);
     RetTyVTs.push_back(NVT);
     RetTyVTs.push_back(MVT::Other);
-    SDNode *NC = DAG.getCall(RetTyVTs, Tmp1, Tmp2, Ops);
+    SDNode *NC = DAG.getCall(RetTyVTs, Tmp1, Tmp2, Ops,
+                             Node->getOpcode() == ISD::TAILCALL);
     Result = SDOperand(NC, 0);
 
     // Insert the new chain mapping.
@@ -2341,6 +2345,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
       std::swap(Lo, Hi);
     break;
   }
+  case ISD::TAILCALL:
   case ISD::CALL: {
     SDOperand Chain  = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
     SDOperand Callee = LegalizeOp(Node->getOperand(1));  // Legalize the callee.
@@ -2360,7 +2365,8 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     RetTyVTs.push_back(NVT);
     RetTyVTs.push_back(NVT);
     RetTyVTs.push_back(MVT::Other);
-    SDNode *NC = DAG.getCall(RetTyVTs, Chain, Callee, Ops);
+    SDNode *NC = DAG.getCall(RetTyVTs, Chain, Callee, Ops,
+                             Node->getOpcode() == ISD::TAILCALL);
     Lo = SDOperand(NC, 0);
     Hi = SDOperand(NC, 1);
 
