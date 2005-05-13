@@ -1,4 +1,5 @@
 ; Make sure this testcase codegens to the S4ADDQ instruction
+; XFAIL: *
 ; RUN: llvm-as < %s | llc -march=alpha | grep 's4addq'
 
 implementation   ; Functions:

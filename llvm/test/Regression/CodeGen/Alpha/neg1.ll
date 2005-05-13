@@ -1,4 +1,5 @@
 ; Make sure this testcase codegens to the lda -1 instruction
+; XFAIL: *
 ; RUN: llvm-as < %s | llc -march=alpha | grep '-1'
 
 implementation   ; Functions:
