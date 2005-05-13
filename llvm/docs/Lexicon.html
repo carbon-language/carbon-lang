@@ -19,53 +19,42 @@
     <tr><th colspan="8"><b>- <a href="#A">A</a> -</b></th></tr>
     <tr>
       <td><a href="#ADCE">ADCE</a></td>
-      <td></td>
-      <td></td>
     </tr>
     <tr><th colspan="8"><b>- <a href="#B">B</a> -</b></th></tr>
     <tr>
       <td><a href="#BURS">BURS</a></td>
-      <td></td>
-      <td></td>
     </tr>
     <tr><th colspan="8"><b>- <a href="#C">C</a> -</b></th></tr>
     <tr>
       <td><a href="#CSE">CSE</a></td>
-      <td></td>
-      <td></td>
     </tr>
     <tr><th colspan="8"><b>- <a href="#D">D</a> -</b></th></tr>
     <tr>
       <td><a href="#DSA">DSA</a></td>
       <td><a href="#DSE">DSE</a></td>
-      <td></td>
-      <td></td>
     </tr>
     <tr><th colspan="8"><b>- <a href="#I">I</a> -</b></th></tr>
     <tr>
       <td><a href="#IPA">IPA</a></td>
       <td><a href="#IPO">IPO</a></td>
-      <td></td>
-      <td></td>
     </tr>
     <tr><th colspan="8"><b>- <a href="#L">L</a> -</b></th></tr>
     <tr>
       <td><a href="#LICM">LICM</a></td>
       <td><a href="#Load-VN">Load-VN</a></td>
-      <td></td>
-      <td></td>
     </tr>
     <tr><th colspan="8"><b>- <a href="#P">P</a> -</b></th></tr>
     <tr>
       <td><a href="#PRE">PRE</a></td>
-      <td></td>
-      <td></td>
+    </tr>
+    <tr><th colspan="8"><b>- <a href="#R">R</a> -</b></th></tr>
+    <tr>
+      <td><a href="#Reassociation">Reassociation</a></td>
     </tr>
     <tr><th colspan="8"><b>- <a href="#S">S</a> -</b></th></tr>
     <tr>
       <td><a href="#SCCP">SCCP</a></td>
       <td><a href="#SSA">SSA</a></td>
-      <td></td>
     </tr>
   </table>
 </div>
@@ -136,6 +125,7 @@ href="http://www.program-transformation.org/Transform/BURG">BURG</a> tool.</dd>
     <dd>Load Value Numbering</dd>
   </dl>
 </div>
+
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsection"><a name="P">- P -</a></div>
 <div class="doc_text">
@@ -144,6 +134,18 @@ href="http://www.program-transformation.org/Transform/BURG">BURG</a> tool.</dd>
     <dd>Partial Redundancy Elimination</dd>
   </dl>
 </div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsection"><a name="R">- R -</a></div>
+<div class="doc_text">
+  <dl>
+    <dt><a name="Reassociation"><b>Reassociation</b></a></dt> <dd>Rearranging
+    associative expressions to promote better redundancy elimination and other
+    optimization.  For example, changing (A+B-A) into (B+A-A), permitting it to
+    be optimized into (B+0) then (B).
+  </dl>
+</div>
+
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsection"><a name="S">- S -</a></div>
 <div class="doc_text">
