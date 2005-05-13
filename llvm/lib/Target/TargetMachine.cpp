@@ -44,7 +44,7 @@ namespace {
                cl::location(NoExcessFPPrecision),
                cl::init(false));
   cl::opt<int, true> PatternISel("enable-pattern-isel",
-                    cl::desc("sets the pattern ISel off(0), on(1), default(2)"),
+                    cl::desc("Turn the pattern ISel off(0), on(1), default(2)"),
                     cl::location(PatternISelTriState),
                     cl::init(2));
   cl::opt<bool, true>
