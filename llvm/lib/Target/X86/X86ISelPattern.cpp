@@ -2699,8 +2699,13 @@ unsigned ISel::SelectExpr(SDOperand N) {
           }
           unsigned RegSize = MVT::getSizeInBits(N.getValueType());
           Tmp1 = SelectExpr(N.getOperand(0));
-          unsigned TmpReg = MakeReg(N.getValueType());
-          BuildMI(BB, SAROpc, 2, TmpReg).addReg(Tmp1).addImm(Log-1);
+          unsigned TmpReg;
+          if (Log != 1) {
+            TmpReg = MakeReg(N.getValueType());
+            BuildMI(BB, SAROpc, 2, TmpReg).addReg(Tmp1).addImm(Log-1);
+          } else {
+            TmpReg = Tmp1;
+          }
           unsigned TmpReg2 = MakeReg(N.getValueType());
           BuildMI(BB, SHROpc, 2, TmpReg2).addReg(TmpReg).addImm(RegSize-Log);
           unsigned TmpReg3 = MakeReg(N.getValueType());
