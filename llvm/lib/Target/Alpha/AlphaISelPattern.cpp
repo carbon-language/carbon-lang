@@ -1193,7 +1193,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
   unsigned &Reg = ExprMap[N];
   if (Reg) return Reg;
 
-  if (N.getOpcode() != ISD::CALL)
+  if (N.getOpcode() != ISD::CALL && N.getOpcode() != ISD::TAILCALL)
     Reg = Result = (N.getValueType() != MVT::Other) ?
       MakeReg(N.getValueType()) : notIn;
   else {
@@ -1217,7 +1217,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
         (N.getValue(0).getValueType() == MVT::f32 ||
          N.getValue(0).getValueType() == MVT::f64)
        ))
-       && opcode != ISD::CALL
+      && opcode != ISD::CALL && opcode != ISD::TAILCALL
       )
     return SelectExprFP(N, Result);
 
@@ -1376,6 +1376,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
       .addGlobalAddress(cast<GlobalAddressSDNode>(N)->getGlobal());
     return Result;
 
+  case ISD::TAILCALL:
   case ISD::CALL:
     {
       Select(N.getOperand(0));
@@ -2242,6 +2243,7 @@ void ISel::Select(SDOperand N) {
   case ISD::ZEXTLOAD:
   case ISD::LOAD:
   case ISD::CopyFromReg:
+  case ISD::TAILCALL:
   case ISD::CALL:
   case ISD::DYNAMIC_STACKALLOC:
     ExprMap.erase(N);

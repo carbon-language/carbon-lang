@@ -1539,6 +1539,7 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
     Reg = Result = (N.getValueType() != MVT::Other) ?
                             MakeReg(N.getValueType()) : 1;
     break;
+  case ISD::TAILCALL:
   case ISD::CALL:
     // If this is a call instruction, make sure to prepare ALL of the result
     // values as well as the chain.
@@ -1569,7 +1570,7 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
 
   if (DestType == MVT::f64 || DestType == MVT::f32)
     if (ISD::LOAD != opcode && ISD::EXTLOAD != opcode &&
-        ISD::UNDEF != opcode && ISD::CALL != opcode)
+        ISD::UNDEF != opcode && ISD::CALL != opcode && ISD::TAILCALL != opcode)
       return SelectExprFP(N, Result);
 
   switch (opcode) {
@@ -1680,6 +1681,7 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
     return Result;
   }
 
+  case ISD::TAILCALL:
   case ISD::CALL: {
     unsigned GPR_idx = 0, FPR_idx = 0;
     static const unsigned GPR[] = {
@@ -2504,6 +2506,7 @@ void ISel::Select(SDOperand N) {
   case ISD::ZEXTLOAD:
   case ISD::LOAD:
   case ISD::CopyFromReg:
+  case ISD::TAILCALL:
   case ISD::CALL:
   case ISD::DYNAMIC_STACKALLOC:
     ExprMap.erase(N);

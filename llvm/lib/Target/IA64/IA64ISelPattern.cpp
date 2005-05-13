@@ -953,7 +953,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
   unsigned &Reg = ExprMap[N];
   if (Reg) return Reg;
 
-  if (N.getOpcode() != ISD::CALL)
+  if (N.getOpcode() != ISD::CALL && N.getOpcode() != ISD::TAILCALL)
     Reg = Result = (N.getValueType() != MVT::Other) ?
       MakeReg(N.getValueType()) : 1;
   else {
@@ -2072,6 +2072,7 @@ pC = pA OR pB
       return Result;
   }
 
+  case ISD::TAILCALL:
   case ISD::CALL: {
       Select(N.getOperand(0));
 
@@ -2342,6 +2343,7 @@ void ISel::Select(SDOperand N) {
   case ISD::ZEXTLOAD:
   case ISD::SEXTLOAD:
   case ISD::LOAD:
+  case ISD::TAILCALL:
   case ISD::CALL:
   case ISD::CopyFromReg:
   case ISD::DYNAMIC_STACKALLOC:
