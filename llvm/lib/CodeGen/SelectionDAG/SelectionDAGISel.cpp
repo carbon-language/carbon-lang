@@ -932,6 +932,8 @@ bool SelectionDAGISel::runOnFunction(Function &Fn) {
 
   FunctionLoweringInfo FuncInfo(TLI, Fn, MF);
 
+  EmitFunctionEntryCode(Fn, MF);
+
   for (Function::iterator I = Fn.begin(), E = Fn.end(); I != E; ++I)
     SelectBasicBlock(I, MF, FuncInfo);
 
