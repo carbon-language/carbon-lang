@@ -43,7 +43,7 @@ exit code will be returned.
 
 =head1 SEE ALSO
 
-L<llvm-ar|llvm-ar>, L<ranlib(1)>
+L<llvm-ar|llvm-ar>, ranlib(1)
 
 =head1 AUTHORS
 
