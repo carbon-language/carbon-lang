@@ -118,7 +118,7 @@ void PEI::calculateCallerSavedRegisters(MachineFunction &Fn) {
     for (MachineBasicBlock::iterator I = BB->begin(); I != BB->end(); )
       if (I->getOpcode() == FrameSetupOpcode ||
           I->getOpcode() == FrameDestroyOpcode) {
-        assert(I->getNumOperands() == 1 && "Call Frame Setup/Destroy Pseudo"
+        assert(I->getNumOperands() >= 1 && "Call Frame Setup/Destroy Pseudo"
                " instructions should have a single immediate argument!");
         unsigned Size = I->getOperand(0).getImmedValue();
         if (Size > MaxCallFrameSize) MaxCallFrameSize = Size;
