@@ -42,11 +42,6 @@ Print a summary of command line options.
 Specify the output file name.  If F<filename> is -, then the output is sent
 to standard output.
 
-=item B<-time-passes>
-
-Record the amount of time needed for each pass and print it to standard
-error.
-
 =back
 
 =head1 EXIT STATUS
