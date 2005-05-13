@@ -6,5 +6,5 @@ implementation   ; Functions:
 long %bar(long %x) {
 entry:
 	%tmp.1 = and long %x, 255  		; <long> [#uses=1]
-	ret long %tmp.2
+	ret long %tmp.1
 }
