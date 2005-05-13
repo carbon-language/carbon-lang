@@ -234,8 +234,10 @@ namespace ISD {
     // CALL - Call to a function pointer.  The first operand is the chain, the
     // second is the destination function pointer (a GlobalAddress for a direct
     // call).  Arguments have already been lowered to explicit DAGs according to
-    // the calling convention in effect here.
+    // the calling convention in effect here.  TAILCALL is the same as CALL, but
+    // the callee is known not to access the stack of the caller.
     CALL,
+    TAILCALL,
 
     // MEMSET/MEMCPY/MEMMOVE - The first operand is the chain, and the rest
     // correspond to the operands of the LLVM intrinsic functions.  The only

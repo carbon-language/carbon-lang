@@ -129,8 +129,8 @@ public:
   /// getCall - Note that this destroys the vector of RetVals passed in.
   ///
   SDNode *getCall(std::vector<MVT::ValueType> &RetVals, SDOperand Chain,
-                  SDOperand Callee) {
-    SDNode *NN = new SDNode(ISD::CALL, Chain, Callee);
+                  SDOperand Callee, bool isTailCall = false) {
+    SDNode *NN = new SDNode(isTailCall ? ISD::TAILCALL : ISD::CALL, Chain, Callee);
     NN->setValueTypes(RetVals);
     AllNodes.push_back(NN);
     return NN;
@@ -140,10 +140,10 @@ public:
   /// where arguments are passed in physical registers.  This destroys the
   /// RetVals and ArgsInRegs vectors.
   SDNode *getCall(std::vector<MVT::ValueType> &RetVals, SDOperand Chain,
-                  SDOperand Callee, std::vector<SDOperand> &ArgsInRegs) {
+                  SDOperand Callee, std::vector<SDOperand> &ArgsInRegs, bool isTailCall = false) {
     ArgsInRegs.insert(ArgsInRegs.begin(), Callee);
     ArgsInRegs.insert(ArgsInRegs.begin(), Chain);
-    SDNode *NN = new SDNode(ISD::CALL, ArgsInRegs);
+    SDNode *NN = new SDNode(isTailCall ? ISD::TAILCALL : ISD::CALL, ArgsInRegs);
     NN->setValueTypes(RetVals);
     AllNodes.push_back(NN);
     return NN;
