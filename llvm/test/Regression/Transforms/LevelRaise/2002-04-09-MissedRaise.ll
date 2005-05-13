@@ -18,7 +18,7 @@ bb0:					;[#uses=0]
 	br label %bb1
 
 bb1:					;[#uses=2]
-	%reg108 = cast int * %x to sbyte *		; <sbyte *> [#uses=1]
+	%reg108 = cast int * %x to ulong		; <sbyte *> [#uses=1]
 	%cond219 = setgt ulong 12, 13		; <bool> [#uses=1]
 	br bool %cond219, label %bb3, label %bb2
 
@@ -33,9 +33,9 @@ bb2:					;[#uses=3]
 	%cast222 = cast int %reg111 to uint		; <uint> [#uses=1]
 	%reg113 = shl uint %cast222, ubyte 2		; <uint> [#uses=1]
 	%cast114 = cast uint %reg113 to ulong		; <ulong> [#uses=1]
-	%cast115 = cast ulong %cast114 to sbyte *		; <sbyte *> [#uses=1]
-	%reg116 = add sbyte * %reg108, %cast115		; <sbyte *> [#uses=1]
-	%cast223 = cast sbyte * %reg116 to int *		; <int *> [#uses=1]
+	%cast115 = cast ulong %cast114 to ulong		; <sbyte *> [#uses=1]
+	%reg116 = add ulong %reg108, %cast115		; <sbyte *> [#uses=1]
+	%cast223 = cast ulong %reg116 to int *		; <int *> [#uses=1]
 	store int %j, int * %cast223
 	%reg118 = add uint %cast224, 1		; <uint> [#uses=1]
 	%cond220 = setle uint %reg118, 13		; <bool> [#uses=1]

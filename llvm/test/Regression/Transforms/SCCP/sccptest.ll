@@ -3,7 +3,7 @@
 ;
 ; RUN: llvm-as < %s | opt -sccp -constprop -dce -cfgsimplify | llvm-dis | not grep BB3
 
-int %test function(int %i0, int %j0) {
+int %testfunction(int %i0, int %j0) {
 BB1:
 	br label %BB2
 BB2:
