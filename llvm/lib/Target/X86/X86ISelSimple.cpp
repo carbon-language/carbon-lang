@@ -2924,7 +2924,7 @@ void X86ISel::emitDivRemOperation(MachineBasicBlock *BB,
           .addReg(Op0Reg).addImm(Log-1);
         unsigned TmpReg2 = makeAnotherReg(Op0->getType());
         BuildMI(*BB, IP, SHROpcode[Class], 2, TmpReg2)
-          .addReg(TmpReg).addImm(32-Log);
+          .addReg(TmpReg).addImm(CI->getType()->getPrimitiveSizeInBits()-Log);
         unsigned TmpReg3 = makeAnotherReg(Op0->getType());
         BuildMI(*BB, IP, ADDOpcode[Class], 2, TmpReg3)
           .addReg(Op0Reg).addReg(TmpReg2);

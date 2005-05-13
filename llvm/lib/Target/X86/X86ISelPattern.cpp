@@ -2675,7 +2675,6 @@ unsigned ISel::SelectExpr(SDOperand N) {
         }
         if (RHS && (RHS & (RHS-1)) == 0) {   // Signed division by power of 2?
           unsigned Log = log2(RHS);
-          unsigned TmpReg = MakeReg(N.getValueType());
           unsigned SAROpc, SHROpc, ADDOpc, NEGOpc;
           switch (N.getValueType()) {
           default: assert("Unknown type to signed divide!");
@@ -2698,10 +2697,12 @@ unsigned ISel::SelectExpr(SDOperand N) {
             NEGOpc = X86::NEG32r;
             break;
           }
+          unsigned RegSize = MVT::getSizeInBits(N.getValueType());
           Tmp1 = SelectExpr(N.getOperand(0));
+          unsigned TmpReg = MakeReg(N.getValueType());
           BuildMI(BB, SAROpc, 2, TmpReg).addReg(Tmp1).addImm(Log-1);
           unsigned TmpReg2 = MakeReg(N.getValueType());
-          BuildMI(BB, SHROpc, 2, TmpReg2).addReg(TmpReg).addImm(32-Log);
+          BuildMI(BB, SHROpc, 2, TmpReg2).addReg(TmpReg).addImm(RegSize-Log);
           unsigned TmpReg3 = MakeReg(N.getValueType());
           BuildMI(BB, ADDOpc, 2, TmpReg3).addReg(Tmp1).addReg(TmpReg2);
 
