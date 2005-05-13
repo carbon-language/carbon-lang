@@ -12,11 +12,11 @@ B<llc> [I<options>] [I<filename>]
 
 The B<llc> command compiles LLVM bytecode into assembly language for a
 specified architecture.  The assembly language output can then be passed through
-a native assembler and linker to generate native code.
+a native assembler and linker to generate a native executable.
 
-The choice of architecture for the output assembly code is automatically 
-determined from the input bytecode file, unless a B<-m> option is used to override
-the default.
+The choice of architecture for the output assembly code is automatically
+determined from the input bytecode file, unless the B<-march> option is used to
+override the default.
 
 =head1 OPTIONS
 
@@ -33,7 +33,13 @@ removing any existing F<.bc> extension, and adding a F<.s> suffix.
 
 Other B<llc> options are as follows:
 
+=head2 End-user Options
+
 =over
+
+=item B<--help>
+
+Print a summary of command line options.
 
 =item B<-f>
 
@@ -42,41 +48,31 @@ an output file which already exists.
 
 =item B<-march>=I<arch>
 
-Specify the architecture for which to generate assembly.  Valid
-architectures are:
-
-=over
-
-=item I<x86>
-
-Intel IA-32 (Pentium and above)
-
-=item I<ppc32>
-
-32-bit PowerPC (MacOS X, 32-bit ABI)
-
-=item I<sparcv9>
-
-64-bit SPARC V9
-
-=item I<c>
-
-Emit C code, not assembly
-
-=back
+Specify the architecture for which to generate assembly, overriding the target
+encoded in the bytecode file.  See the output of B<llc --help> for a list of
+valid architectures.
 
 =item B<--disable-fp-elim>
 
 Disable frame pointer elimination optimization.
 
+=item B<--disable-excess-fp-precision>
+
+Disable optimizations that may produce excess precision for floating point.
+Note that this option can dramatically slow down code on some systems
+(e.g. X86).
+
+=item B<--enable-unsafe-fp-math>
+
+Enable optimizations that make unsafe assumptions about IEEE math (e.g. that
+addition is associative) or may not work for all input ranges.  These
+optimizations allow the code generator to make use of some instructions which
+would otherwise not be usable (such as fsin on X86).
+
 =item B<--enable-correct-eh-support>
 
 Instruct the B<lowerinvoke> pass to insert code for correct exception handling
 support.  This is expensive and is by default omitted for efficiency.
-
-=item B<--help>
-
-Print a summary of command line options.
 
 =item B<--stats>
 
@@ -86,6 +82,18 @@ Print statistics recorded by code-generation passes.
 
 Record the amount of time needed for each pass and print a report to standard
 error.
+
+=item B<--load>=F<dso_path>
+
+Dynamically load F<dso_path> (a path to a dynamically shared object) that
+implements an LLVM target. This will permit the target name to be used with the
+B<-march> option so that code can be generated for that target.
+
+=back
+
+=head2 Tuning/Configuration Options
+
+=over
 
 =item B<--print-machineinstrs>
 
@@ -133,12 +141,6 @@ Simple spiller
 Local spiller
 
 =back
-
-=item B<--load>=F<dso_path>
-
-Dynamically load F<dso_path> (a path to a dynamically shared object) that
-implements an LLVM target. This will permit the target name to be used with the
-B<-march> option so that code can be generated for that target.
 
 =back
 
