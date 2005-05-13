@@ -192,7 +192,7 @@ to debug and visualize the transformations.  The three different forms
 of LLVM are all equivalent.  This document describes the human readable
 representation and notation.</p>
 
-<p>The LLVM representation aims to be a light-weight and low-level
+<p>The LLVM representation aims to be light-weight and low-level
 while being expressive, typed, and extensible at the same time.  It
 aims to be a "universal IR" of sorts, by being at a low enough level
 that high-level ideas may be cleanly mapped to it (similar to how
@@ -222,7 +222,7 @@ following instruction is syntactically okay, but not well formed:</p>
 <p>...because the definition of <tt>%x</tt> does not dominate all of
 its uses. The LLVM infrastructure provides a verification pass that may
 be used to verify that an LLVM module is well formed.  This pass is
-automatically run by the parser after parsing input assembly, and by
+automatically run by the parser after parsing input assembly and by
 the optimizer before it outputs bytecode.  The violations pointed out
 by the verifier pass indicate bugs in transformation passes or input to
 the parser.</p>
@@ -712,7 +712,7 @@ be any type with a size.</p>
       <tt>[2 x [3 x [4 x uint]]]</tt><br/>
     </td>
     <td class="left">
-      3x4 array integer values.<br/>
+      3x4 array of integer values.<br/>
       12x10 array of single precision floating point values.<br/>
       2x3x4 array of unsigned integer values.<br/>
     </td>
@@ -836,7 +836,7 @@ considered <a href="#t_firstclass">first class</a>.</p>
   &lt; &lt;# elements&gt; x &lt;elementtype&gt; &gt;
 </pre>
 
-<p>The number of elements is a constant integer value, elementtype may
+<p>The number of elements is a constant integer value; elementtype may
 be any integral or floating point type.</p>
 
 <h5>Examples:</h5>
@@ -923,7 +923,6 @@ them all and their syntax.</p>
 
   <dd>Floating point constants use standard decimal notation (e.g. 123.421),
   exponential notation (e.g. 1.23421e+2), or a more precise hexadecimal
-  notation.  Floating point constants have an optional hexadecimal
   notation (see below).  Floating point constants must have a <a
   href="#t_floating">floating point</a> type. </dd>
 
@@ -1022,7 +1021,7 @@ file:</p>
 <div class="doc_subsection"><a name="undefvalues">Undefined Values</a></div>
 <div class="doc_text">
   <p>The string '<tt>undef</tt>' is recognized as a type-less constant that has 
-  no specific value.  Undefined values may be of any type, and be used anywhere 
+  no specific value.  Undefined values may be of any type and be used anywhere 
   a constant is permitted.</p>
 
   <p>Undefined values indicate to the compiler that the program is well defined
@@ -1038,7 +1037,7 @@ file:</p>
 
 <p>Constant expressions are used to allow expressions involving other constants
 to be used as constants.  Constant expressions may be of any <a
-href="#t_firstclass">first class</a> type, and may involve any LLVM operation
+href="#t_firstclass">first class</a> type and may involve any LLVM operation
 that does not have side effects (e.g. load and call are not supported).  The
 following is the syntax for constant expressions:</p>
 
@@ -1072,7 +1071,8 @@ following is the syntax for constant expressions:</p>
 
 <p>The LLVM instruction set consists of several different
 classifications of instructions: <a href="#terminators">terminator
-instructions</a>, <a href="#binaryops">binary instructions</a>, <a
+instructions</a>, <a href="#binaryops">binary instructions</a>,
+<a href="#bitwiseops">bitwise binary instructions</a>, <a
  href="#memoryops">memory instructions</a>, and <a href="#otherops">other
 instructions</a>.</p>
 
@@ -1109,7 +1109,7 @@ Instruction</a> </div>
 </pre>
 <h5>Overview:</h5>
 <p>The '<tt>ret</tt>' instruction is used to return control flow (and a
-value) from a function, back to the caller.</p>
+value) from a function back to the caller.</p>
 <p>There are two forms of the '<tt>ret</tt>' instruction: one that
 returns a value and then causes control flow, and one that just causes
 control flow to occur.</p>
@@ -1248,7 +1248,7 @@ continued at the dynamically nearest "exception" label.</p>
 
 <ol>
   <li>
-    <p>The optional "cconv" marker indicates which <a href="callingconv">calling
+    The optional "cconv" marker indicates which <a href="callingconv">calling
     convention</a> the call should use.  If none is specified, the call defaults
     to using C calling conventions.
   </li>
@@ -1800,7 +1800,7 @@ Instruction</a> </div>
 </pre>
 <h5>Overview:</h5>
 <p>The '<tt>free</tt>' instruction returns memory back to the unused
-memory heap, to be reallocated in the future.</p>
+memory heap to be reallocated in the future.</p>
 <p> </p>
 <h5>Arguments:</h5>
 <p>'<tt>value</tt>' shall be a pointer value that points to a value
@@ -1833,7 +1833,7 @@ appropriate type to the program.  The second form of the instruction is
 a shorter version of the first that defaults to allocating one element.</p>
 <p>'<tt>type</tt>' may be any sized type.</p>
 <h5>Semantics:</h5>
-<p>Memory is allocated, a pointer is returned.  '<tt>alloca</tt>'d
+<p>Memory is allocated; a pointer is returned.  '<tt>alloca</tt>'d
 memory is automatically released when the function returns.  The '<tt>alloca</tt>'
 instruction is commonly used to represent automatic variables that must
 have an address available.  When the function returns (either with the <tt><a
@@ -1882,7 +1882,7 @@ Instruction</a> </div>
 <p>There are two arguments to the '<tt>store</tt>' instruction: a value
 to store and an address to store it into.  The type of the '<tt>&lt;pointer&gt;</tt>'
 operand must be a pointer to the type of the '<tt>&lt;value&gt;</tt>'
-operand. If the <tt>store</tt> is marked as <tt>volatile</tt> then the
+operand. If the <tt>store</tt> is marked as <tt>volatile</tt>, then the
 optimizer is not allowed to modify the number or order of execution of
 this <tt>store</tt> with other volatile <tt>load</tt> and <tt><a
  href="#i_store">store</a></tt> instructions.</p>
@@ -1919,7 +1919,7 @@ elements of the aggregate object to index to.  The actual types of the arguments
 provided depend on the type of the first pointer argument.  The
 '<tt>getelementptr</tt>' instruction is used to index down through the type
 levels of a structure.  When indexing into a structure, only <tt>uint</tt>
-integer constants are allowed.  When indexing into an array or pointer
+integer constants are allowed.  When indexing into an array or pointer,
 <tt>int</tt> and <tt>long</tt> indexes are allowed of any sign.</p>
 
 <p>For example, let's consider a C code fragment and how it gets
@@ -1960,7 +1960,7 @@ compiled to LLVM:</p>
 <h5>Semantics:</h5>
 
 <p>The index types specified for the '<tt>getelementptr</tt>' instruction depend
-on the pointer type that is being index into. <a href="#t_pointer">Pointer</a>
+on the pointer type that is being indexed into. <a href="#t_pointer">Pointer</a>
 and <a href="#t_array">array</a> types require <tt>uint</tt>, <tt>int</tt>,
 <tt>ulong</tt>, or <tt>long</tt> values, and <a href="#t_struct">structure</a>
 types require <tt>uint</tt> <b>constants</b>.</p>
