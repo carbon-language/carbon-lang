@@ -50,7 +50,7 @@ namespace {
     X86TargetLowering(TargetMachine &TM) : TargetLowering(TM) {
       // Set up the TargetLowering object.
 
-      // X86 is wierd, it always uses i8 for shift amounts and setcc results.
+      // X86 is weird, it always uses i8 for shift amounts and setcc results.
       setShiftAmountType(MVT::i8);
       setSetCCResultType(MVT::i8);
       setSetCCResultContents(ZeroOrOneSetCCResult);
@@ -173,7 +173,7 @@ X86TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
 }
 
 //===----------------------------------------------------------------------===//
-//                  C Calling Convention implementation
+//                    C Calling Convention implementation
 //===----------------------------------------------------------------------===//
 
 std::vector<SDOperand>
@@ -377,7 +377,7 @@ LowerVAArgNext(bool isVANext, SDOperand Chain, SDOperand VAList,
 }
 
 //===----------------------------------------------------------------------===//
-//                   Fast Calling Convention implementation
+//                    Fast Calling Convention implementation
 //===----------------------------------------------------------------------===//
 //
 // The X86 'fast' calling convention passes up to two integer arguments in
