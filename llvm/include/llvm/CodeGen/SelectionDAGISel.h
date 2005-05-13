@@ -48,6 +48,7 @@ public:
 
   unsigned MakeReg(MVT::ValueType VT);
 
+  virtual void EmitFunctionEntryCode(Function &Fn, MachineFunction &MF) {}
   virtual void InstructionSelectBasicBlock(SelectionDAG &SD) = 0;
 
 private:
