@@ -607,7 +607,7 @@ inline void BytecodeWriter::outputInstructionFormat3(const Instruction *I,
 }
 
 void BytecodeWriter::outputInstruction(const Instruction &I) {
-  assert(I.getOpcode() < 62 && "Opcode too big???");
+  assert(I.getOpcode() < 56 && "Opcode too big???");
   unsigned Opcode = I.getOpcode();
   unsigned NumOperands = I.getNumOperands();
 
