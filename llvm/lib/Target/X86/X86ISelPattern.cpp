@@ -3746,7 +3746,43 @@ void ISel::Select(SDOperand N) {
 
     // Amount the callee added to the stack pointer.
     Tmp2 = cast<ConstantSDNode>(N.getOperand(2))->getValue();
-    BuildMI(BB, X86::ADJCALLSTACKUP, 2).addImm(Tmp1).addImm(Tmp2);
+
+    // This hackery is due to the fact that we don't want to emit this code:
+    //   call foo
+    //   mov vreg, EAX
+    //   adjcallstackup 
+    //
+    // Because if foo is a fastcc call and if vreg gets spilled, we might end up
+    // with this:
+    //   call foo
+    //   mov [ESP+offset], EAX     ;; Offset doesn't consider the 12!
+    //   sub ESP, 12
+    //
+    // To avoid this, we force the adjcallstackup instruction before the 0, 1 or
+    // 2 moves that occur after the call.  The correct way to fix this is to use
+    // target-specific DAG nodes in the call sequence. FIXME!
+    //
+    if (EnableFastCC) {
+      // This code should be safe.  Be defensive for LLVM 1.5 release though.
+      assert(!BB->empty());
+      MachineBasicBlock::iterator PrevI = --BB->end();
+      if (PrevI->getOpcode() == X86::CALLpcrel32 ||
+          PrevI->getOpcode() == X86::CALL32r)
+        ++PrevI;
+      else if (PrevI != BB->begin() &&
+               ((--PrevI)->getOpcode() == X86::CALLpcrel32 ||
+                PrevI->getOpcode() == X86::CALL32r))
+        ++PrevI;
+      else if (PrevI != BB->begin() &&
+               ((--PrevI)->getOpcode() == X86::CALLpcrel32 ||
+                PrevI->getOpcode() == X86::CALL32r))
+        ++PrevI;
+      else
+        PrevI = BB->end();
+      BuildMI(*BB, PrevI, X86::ADJCALLSTACKUP, 2).addImm(Tmp1).addImm(Tmp2);
+    } else {
+      BuildMI(*BB, PrevI, X86::ADJCALLSTACKUP, 2).addImm(Tmp1).addImm(Tmp2);
+    }
     return;
   case ISD::MEMSET: {
     Select(N.getOperand(0));  // Select the chain.
