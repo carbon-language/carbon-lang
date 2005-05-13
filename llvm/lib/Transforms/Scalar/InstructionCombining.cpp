@@ -4115,6 +4115,20 @@ Instruction *InstCombiner::visitCallSite(CallSite CS) {
 
   Value *Callee = CS.getCalledValue();
 
+  if (Function *CalleeF = dyn_cast<Function>(Callee))
+    if (CalleeF->getCallingConv() != CS.getCallingConv()) {
+      Instruction *OldCall = CS.getInstruction();
+      // If the call and callee calling conventions don't match, this call must
+      // be unreachable, as the call is undefined.
+      new StoreInst(ConstantBool::True,
+                    UndefValue::get(PointerType::get(Type::BoolTy)), OldCall);
+      if (!OldCall->use_empty())
+        OldCall->replaceAllUsesWith(UndefValue::get(OldCall->getType()));
+      if (isa<CallInst>(OldCall))   // Not worth removing an invoke here.
+        return EraseInstFromFunction(*OldCall);
+      return 0;
+    }
+
   if (isa<ConstantPointerNull>(Callee) || isa<UndefValue>(Callee)) {
     // This instruction is not reachable, just remove it.  We insert a store to
     // undef so that we know that this code is not reachable, despite the fact
