@@ -170,8 +170,15 @@ of permissions. Specify a path into which LLVM can be installed (e.g.
 <p><b>Solaris/SPARC:</b></p>
 
 <p>
-For Solaris/SPARC, LLVM only supports the SPARC V9 architecture.  Therefore,
-the configure command line should specify sparcv9, as shown below. Also,
+The GCC front-end can be configured for either SPARC V8 (32 bit) or SPARC V9 (64
+bit).  This changes, among other things, the sizes of integer types and the
+macros defined for conditional compilation.
+</p>
+
+<p>
+The SPARC V8 backend is still beta quality software.  Unless you are working on
+the SPARC V8 backend, you should specify sparcv9 on the configure command line,
+as shown below. Also,
 note that Solaris has trouble with various wide (multibyte) character
 functions from C as referenced from C++, so we typically configure with
 --disable-c-mbchar (cf. <a href="http://llvm.cs.uiuc.edu/PR206">Bug 206</a>).
