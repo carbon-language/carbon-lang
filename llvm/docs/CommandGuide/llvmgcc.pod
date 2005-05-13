@@ -72,7 +72,7 @@ Pass I<option> to gccas
 
 Pass I<option> to gccld
 
-=item B<-Wa,-disable-inlining -Wl,-disable-inlining>I<option>
+=item B<-Wa,-disable-inlining -Wl,-disable-inlining>
 
 Fully disable all inlining
 
