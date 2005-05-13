@@ -2009,7 +2009,8 @@ static SDNode *FindCallSeqEnd(SDNode *Node) {
     SDNode *User = *UI;
     for (unsigned i = 0, e = User->getNumOperands(); i != e; ++i)
       if (User->getOperand(i) == TheChain)
-        return FindCallSeqEnd(User);
+        if (SDNode *Result = FindCallSeqEnd(User))
+          return Result;
   }
   assert(0 && "Unreachable");
   abort();
