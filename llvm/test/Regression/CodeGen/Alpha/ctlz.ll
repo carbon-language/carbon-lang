@@ -1,6 +1,5 @@
 ; Make sure this testcase codegens to the ctlz instruction
-; XFAIL: *
-; RUN: llvm-as < %s | llc -march=alpha -enable-alpha-CT | grep 'ctlz'
+; RUN: llvm-as < %s | llc -march=alpha -enable-alpha-CT | grep -i 'ctlz'
 
 declare ubyte %llvm.ctlz(ubyte)
 
