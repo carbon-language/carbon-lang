@@ -69,7 +69,7 @@ and Settings" directory).  We welcome patches to fix this issue.
 </p>
 <p>It has been found that the GCC 3.3.3 compiler provided with recent Cygwin
 versions is incapable of compiling the LLVM CFE correctly. If your Cygwin
-installation includes GCC 3.3.3 we <i>strongly</i> recommend that you download
+installation includes GCC 3.3.3, we <i>strongly</i> recommend that you download
 GCC 3.4.3, build it separately, and use it for compiling LLVM CFE. This has been
 shown to work correctly.</p>
 <p>Some versions of Cygwin utilize an experimental version of GNU binutils that
@@ -101,7 +101,8 @@ invalid code.  Instead, use the system assembler and linker.
 <p>
 <ol>
 <li><p>Configure and build the LLVM libraries and tools. There are two ways to
-do this: either with <i>objdir</i> == <i>srcdir</i> or not. It is recommended 
+do this: either with <i>objdir</i> == <i>srcdir</i> or
+<i>objdir</i> != <i>srcdir</i>. It is recommended 
 that <i>srcdir</i> not be the same as <i>objdir</i>:</p>
 <ul>
   <li>With <i>objdir</i> != <i>srcdir</i>:<pre>
@@ -131,7 +132,7 @@ of permissions. Specify a path into which LLVM can be installed (e.g.
        untar'ing an llvm-gcc.tar.gz file or checking out CVS into this
        directory.</p></li>
 
-<li><p>Make "build" and "install" directories as siblings of the "src" tree.</p>
+<li><p>Make "build" and "install" directories as siblings of the "src" tree:</p>
 <pre>
  % pwd
  /usr/local/example/cfrontend/src
