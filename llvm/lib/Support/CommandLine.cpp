@@ -945,17 +945,17 @@ HelpPrinter NormalPrinter(false);
 HelpPrinter HiddenPrinter(true);
 
 cl::opt<HelpPrinter, true, parser<bool> >
-HOp("help", cl::desc("display available options (--help-hidden for more)"),
+HOp("help", cl::desc("Display available options (--help-hidden for more)"),
     cl::location(NormalPrinter), cl::ValueDisallowed);
 
 cl::opt<HelpPrinter, true, parser<bool> >
-HHOp("help-hidden", cl::desc("display all available options"),
+HHOp("help-hidden", cl::desc("Display all available options"),
      cl::location(HiddenPrinter), cl::Hidden, cl::ValueDisallowed);
 
 // Define the --version option that prints out the LLVM version for the tool
 VersionPrinter VersionPrinterInstance;
 cl::opt<VersionPrinter, true, parser<bool> >
-VersOp("version", cl::desc("display the version"),
+VersOp("version", cl::desc("Display the version of this program"),
     cl::location(VersionPrinterInstance), cl::ValueDisallowed);
 
 
