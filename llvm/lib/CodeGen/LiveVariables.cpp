@@ -165,11 +165,11 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
   VirtRegInfo.resize(64);
 
   // Mark live-in registers as live-in.
-  for (MachineFunction::liveinout_iterator I = MF.livein_begin(),
+  for (MachineFunction::livein_iterator I = MF.livein_begin(),
          E = MF.livein_end(); I != E; ++I) {
-    assert(MRegisterInfo::isPhysicalRegister(*I) &&
+    assert(MRegisterInfo::isPhysicalRegister(I->first) &&
            "Cannot have a live-in virtual register!");
-    HandlePhysRegDef(*I, 0);
+    HandlePhysRegDef(I->first, 0);
   }
 
   // Calculate live variable information in depth first order on the CFG of the
@@ -272,7 +272,7 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
     // it as using all of the live-out values in the function.
     if (!MBB->empty() && TII.isReturn(MBB->back().getOpcode())) {
       MachineInstr *Ret = &MBB->back();
-      for (MachineFunction::liveinout_iterator I = MF.liveout_begin(),
+      for (MachineFunction::liveout_iterator I = MF.liveout_begin(),
              E = MF.liveout_end(); I != E; ++I) {
         assert(MRegisterInfo::isPhysicalRegister(*I) &&
                "Cannot have a live-in virtual register!");

@@ -95,7 +95,7 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
   // beginning of the function that we will pretend "defines" the values.  This
   // is to make the interval analysis simpler by providing a number.
   if (fn.livein_begin() != fn.livein_end()) {
-    unsigned FirstLiveIn = *fn.livein_begin();
+    unsigned FirstLiveIn = fn.livein_begin()->first;
 
     // Find a reg class that contains this live in.
     const TargetRegisterClass *RC = 0;
@@ -128,11 +128,11 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
   // Note intervals due to live-in values.
   if (fn.livein_begin() != fn.livein_end()) {
     MachineBasicBlock *Entry = fn.begin();
-    for (MachineFunction::liveinout_iterator I = fn.livein_begin(),
+    for (MachineFunction::livein_iterator I = fn.livein_begin(),
            E = fn.livein_end(); I != E; ++I) {
       handlePhysicalRegisterDef(Entry, Entry->begin(),
-                                getOrCreateInterval(*I), 0, 0);
-      for (const unsigned* AS = mri_->getAliasSet(*I); *AS; ++AS)
+                                getOrCreateInterval(I->first), 0, 0);
+      for (const unsigned* AS = mri_->getAliasSet(I->first); *AS; ++AS)
         handlePhysicalRegisterDef(Entry, Entry->begin(),
                                   getOrCreateInterval(*AS), 0, 0);
     }
