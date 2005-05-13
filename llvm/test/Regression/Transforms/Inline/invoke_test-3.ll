@@ -1,10 +1,9 @@
 ; Test that any rethrown exceptions in an inlined function are automatically
 ; turned into branches to the invoke destination.
 
-; RUN: llvm-as < %s | opt -inline | llvm-dis | not grep 'call void %llvm.unwind'
+; RUN: llvm-as < %s | opt -inline | llvm-dis | not grep unwind$
 
 declare void %might_throw()
-declare void %llvm.unwind()
 
 implementation
 
@@ -13,8 +12,7 @@ internal int %callee() {
 cont:
 	ret int 0
 exc:	; This just rethrows the exception!
-	call void %llvm.unwind()
-	ret int 123  ; DEAD!
+	unwind
 }
 
 ; caller returns true if might_throw throws an exception... which gets 
