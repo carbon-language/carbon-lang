@@ -53,10 +53,10 @@ namespace llvm {
 
 namespace {
   cl::opt<bool> DisableSched("disable-sched",
-                             cl::desc("Disable local scheduling pass"));
+                             cl::desc("Disable sparcv9 local scheduling pass"));
 
   cl::opt<bool> DisablePeephole("disable-peephole",
-                                cl::desc("Disable peephole optimization pass"));
+                                cl::desc("Disable sparcv9 peephole optimization pass"));
 
   cl::opt<bool, true> EmitMappingInfoOpt("enable-maps", cl::ReallyHidden,
                  cl::location(EmitMappingInfo),
@@ -64,7 +64,7 @@ namespace {
                  cl::desc("Emit LLVM-to-MachineCode mapping info to assembly"));
 
   cl::opt<bool> EnableModSched("enable-modsched",
-	 cl::desc("Enable modulo scheduling pass instead of local scheduling"), cl::Hidden);
+	 cl::desc("Enable sparcv9 modulo scheduling pass instead of local scheduling"), cl::Hidden);
 
   // Register the target.
   RegisterTarget<SparcV9TargetMachine> X("sparcv9", "  SPARC V9");
