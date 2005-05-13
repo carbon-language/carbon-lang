@@ -112,13 +112,17 @@ or<br>
 <pre>
 % gmake check
 </pre>
-<p>To run only a subdirectory of tests in llvm/test using DejaGNU (ie. Regression/Transforms). Just substitute the path to the subdirectory:</p>
+
+<p>To run only a subdirectory of tests in llvm/test using DejaGNU (ie.
+Regression/Transforms), just set the TESTSUITE variable to the path of the
+subdirectory (relative to <tt>llvm/test</tt>):</p>
 <pre>
 % gmake -C llvm/test TESTSUITE=Regression/Transforms
 </pre>
 
-<p><b>Note: If you are running the tests with <tt>objdir != subdir</tt> you must
-have run the complete testsuite before you can specify a subdirectory.</b></p>
+<p><b>Note: If you are running the tests with <tt>objdir != subdir</tt>, you
+must have run the complete testsuite before you can specify a
+subdirectory.</b></p>
 
 <p>To run the comprehensive test suite (tests that compile and execute whole 
 programs), run the <tt>llvm-test</tt> tests:</p>
@@ -141,8 +145,8 @@ programs), run the <tt>llvm-test</tt> tests:</p>
 
 <p>The LLVM test suite contains two major categories of tests: code
 fragments and whole programs. Code fragments are in the <tt>llvm</tt> module
-under the directory under the <tt>llvm/test</tt> directory. The whole programs
-test suite are in the <tt>llvm-test</tt> module under the main directory.</p>
+under the <tt>llvm/test</tt> directory. The whole programs
+test suite is in the <tt>llvm-test</tt> module under the main directory.</p>
 
 </div>
 
