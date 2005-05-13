@@ -375,17 +375,31 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
       unsigned Align = MF.getTarget().getFrameInfo()->getStackAlignment();
       Amount = (Amount+Align-1)/Align*Align;
 
-      MachineInstr *New;
+      MachineInstr *New = 0;
       if (Old->getOpcode() == X86::ADJCALLSTACKDOWN) {
 	New=BuildMI(X86::SUB32ri, 1, X86::ESP, MachineOperand::UseAndDef)
               .addZImm(Amount);
       } else {
 	assert(Old->getOpcode() == X86::ADJCALLSTACKUP);
-	New=BuildMI(X86::ADD32ri, 1, X86::ESP, MachineOperand::UseAndDef)
-              .addZImm(Amount);
+        // factor out the amount the callee already popped.
+        unsigned CalleeAmt = Old->getOperand(1).getImmedValue();
+        Amount -= CalleeAmt;
+        if (Amount)
+          New = BuildMI(X86::ADD32ri, 1, X86::ESP,
+                        MachineOperand::UseAndDef).addZImm(Amount);
       }
 
       // Replace the pseudo instruction with a new instruction...
+      if (New) MBB.insert(I, New);
+    }
+  } else if (I->getOpcode() == X86::ADJCALLSTACKUP) {
+    // If we are performing frame pointer elimination and if the callee pops
+    // something off the stack pointer, add it back.  We do this until we have
+    // more advanced stack pointer tracking ability.
+    if (unsigned CalleeAmt = I->getOperand(1).getImmedValue()) {
+      MachineInstr *New = 
+        BuildMI(X86::SUB32ri, 1, X86::ESP,
+                MachineOperand::UseAndDef).addZImm(CalleeAmt);
       MBB.insert(I, New);
     }
   }
@@ -513,8 +527,8 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
     unsigned NumBytes = MFI->getStackSize();
 
     if (NumBytes) {    // adjust stack pointer back: ESP += numbytes
-      MI =BuildMI(X86::ADD32ri, 1, X86::ESP, MachineOperand::UseAndDef)
-            .addZImm(NumBytes);
+      MI = BuildMI(X86::ADD32ri, 1, X86::ESP, MachineOperand::UseAndDef)
+        .addZImm(NumBytes);
       MBB.insert(MBBI, MI);
     }
   }

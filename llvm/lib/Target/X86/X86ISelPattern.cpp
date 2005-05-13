@@ -109,6 +109,11 @@ namespace {
       addLegalFPImmediate(-1.0); // FLD1/FCHS
     }
 
+    // Return the number of bytes that a function should pop when it returns (in
+    // addition to the space used by the return address).
+    //
+    unsigned getBytesToPopOnReturn() const { return BytesToPopOnReturn; }
+
     /// LowerArguments - This hook must be implemented to indicate how we should
     /// lower the arguments for the specified function, into the specified DAG.
     virtual std::vector<SDOperand>
@@ -228,7 +233,8 @@ X86TargetLowering::LowerCCCArguments(Function &F, SelectionDAG &DAG) {
   // the start of the first vararg value... for expansion of llvm.va_start.
   if (F.isVarArg())
     VarArgsFrameIndex = MFI->CreateFixedObject(1, ArgOffset);
-  ReturnAddrIndex = 0;  // No return address slot generated yet.
+  ReturnAddrIndex = 0;     // No return address slot generated yet.
+  BytesToPopOnReturn = 0;  // Callee pops nothing.
 
   // Finally, inform the code generator which regs we return values in.
   switch (getValueType(F.getReturnType())) {
@@ -527,11 +533,9 @@ X86TargetLowering::LowerFastCCArguments(Function &F, SelectionDAG &DAG) {
       ArgOffset += ArgIncrement;   // Move on to the next argument.
   }
 
-  // If the function takes variable number of arguments, make a frame index for
-  // the start of the first vararg value... for expansion of llvm.va_start.
-  if (F.isVarArg())
-    VarArgsFrameIndex = MFI->CreateFixedObject(1, ArgOffset);
-  ReturnAddrIndex = 0;  // No return address slot generated yet.
+  VarArgsFrameIndex = 0xAAAAAAA;   // fastcc functions can't have varargs.
+  ReturnAddrIndex = 0;             // No return address slot generated yet.
+  BytesToPopOnReturn = ArgOffset;  // Callee pops all stack arguments.
 
   // Finally, inform the code generator which regs we return values in.
   switch (getValueType(F.getReturnType())) {
@@ -3518,7 +3522,10 @@ void ISel::Select(SDOperand N) {
       Select(N.getOperand(0));
       break;
     }
-    BuildMI(BB, X86::RET, 0); // Just emit a 'ret' instruction
+    if (X86Lowering.getBytesToPopOnReturn() == 0)
+      BuildMI(BB, X86::RET, 0); // Just emit a 'ret' instruction
+    else
+      BuildMI(BB, X86::RETI, 1).addImm(X86Lowering.getBytesToPopOnReturn());
     return;
   case ISD::BR: {
     Select(N.getOperand(0));
@@ -3721,13 +3728,19 @@ void ISel::Select(SDOperand N) {
     return;
   }
   case ISD::CALLSEQ_START:
+    Select(N.getOperand(0));
+    // Stack amount
+    Tmp1 = cast<ConstantSDNode>(N.getOperand(1))->getValue();
+    BuildMI(BB, X86::ADJCALLSTACKDOWN, 1).addImm(Tmp1);
+    return;
   case ISD::CALLSEQ_END:
     Select(N.getOperand(0));
+    // Stack amount
     Tmp1 = cast<ConstantSDNode>(N.getOperand(1))->getValue();
 
-    Opc = N.getOpcode() == ISD::CALLSEQ_START ? X86::ADJCALLSTACKDOWN :
-                                                X86::ADJCALLSTACKUP;
-    BuildMI(BB, Opc, 1).addImm(Tmp1);
+    // Amount the callee added to the stack pointer.
+    Tmp2 = cast<ConstantSDNode>(N.getOperand(2))->getValue();
+    BuildMI(BB, X86::ADJCALLSTACKUP, 2).addImm(Tmp1).addImm(Tmp2);
     return;
   case ISD::MEMSET: {
     Select(N.getOperand(0));  // Select the chain.

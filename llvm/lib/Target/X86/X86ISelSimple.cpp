@@ -1695,7 +1695,7 @@ void X86ISel::doCall(const ValueRecord &Ret, MachineInstr *CallMI,
 
   BB->push_back(CallMI);
 
-  BuildMI(BB, X86::ADJCALLSTACKUP, 1).addImm(NumBytes);
+  BuildMI(BB, X86::ADJCALLSTACKUP, 2).addImm(NumBytes).addImm(0);
 
   // If there is a return value, scavenge the result from the location the call
   // leaves it in...
