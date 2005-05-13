@@ -2131,10 +2131,6 @@ ExpandIntToFP(bool isSigned, MVT::ValueType DestTy, SDOperand Source) {
   assert(Source.getValueType() == MVT::i64 && "Only handle expand from i64!");
 
   if (!isSigned) {
-    // If this is unsigned, and not supported, first perform the conversion to
-    // signed, then adjust the result if the sign bit is set.
-    SDOperand SignedConv = ExpandIntToFP(true, DestTy, Source);
-
     assert(Source.getValueType() == MVT::i64 &&
            "This only works for 64-bit -> FP");
     // The 64-bit value loaded will be incorrectly if the 'sign bit' of the
@@ -2142,6 +2138,11 @@ ExpandIntToFP(bool isSigned, MVT::ValueType DestTy, SDOperand Source) {
     // it is set, and, if so, add a fudge factor.
     SDOperand Lo, Hi;
     ExpandOp(Source, Lo, Hi);
+
+    // If this is unsigned, and not supported, first perform the conversion to
+    // signed, then adjust the result if the sign bit is set.
+    SDOperand SignedConv = ExpandIntToFP(true, DestTy,
+                   DAG.getNode(ISD::BUILD_PAIR, Source.getValueType(), Lo, Hi));
 
     SDOperand SignSet = DAG.getSetCC(ISD::SETLT, TLI.getSetCCResultTy(), Hi,
                                      DAG.getConstant(0, Hi.getValueType()));
