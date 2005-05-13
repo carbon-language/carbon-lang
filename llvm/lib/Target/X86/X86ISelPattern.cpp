@@ -385,6 +385,10 @@ LowerVAArgNext(bool isVANext, SDOperand Chain, SDOperand VAList,
 // and requires that the callee pop its arguments off the stack (allowing proper
 // tail calls), and has the same return value conventions as C calling convs.
 //
+// This calling convention always arranges for the callee pop value to be 8n+4
+// bytes, which is needed for tail recursion elimination and stack alignment
+// reasons.
+//
 // Note that this can be enhanced in the future to pass fp vals in registers
 // (when we have a global fp allocator) and do other tricks.
 //
@@ -533,6 +537,11 @@ X86TargetLowering::LowerFastCCArguments(Function &F, SelectionDAG &DAG) {
       ArgOffset += ArgIncrement;   // Move on to the next argument.
   }
 
+  // Make sure the instruction takes 8n+4 bytes to make sure the start of the
+  // arguments and the arguments after the retaddr has been pushed are aligned.
+  if ((ArgOffset & 7) == 0)
+    ArgOffset += 4;
+
   VarArgsFrameIndex = 0xAAAAAAA;   // fastcc functions can't have varargs.
   ReturnAddrIndex = 0;             // No return address slot generated yet.
   BytesToPopOnReturn = ArgOffset;  // Callee pops all stack arguments.
@@ -601,6 +610,11 @@ X86TargetLowering::LowerFastCCCallTo(SDOperand Chain, const Type *RetTy,
       NumBytes += 8;
       break;
     }
+
+  // Make sure the instruction takes 8n+4 bytes to make sure the start of the
+  // arguments and the arguments after the retaddr has been pushed are aligned.
+  if ((NumBytes & 7) == 0)
+    NumBytes += 4;
 
   Chain = DAG.getNode(ISD::CALLSEQ_START, MVT::Other, Chain,
                       DAG.getConstant(NumBytes, getPointerTy()));
@@ -679,8 +693,14 @@ X86TargetLowering::LowerFastCCCallTo(SDOperand Chain, const Type *RetTy,
   SDOperand TheCall = SDOperand(DAG.getCall(RetVals, Chain, Callee,
                                             RegValuesToPass, isTailCall), 0);
   Chain = TheCall.getValue(RetTyVT != MVT::isVoid);
+
+  // Make sure the instruction takes 8n+4 bytes to make sure the start of the
+  // arguments and the arguments after the retaddr has been pushed are aligned.
+  if ((ArgOffset & 7) == 0)
+    ArgOffset += 4;
+
   Chain = DAG.getNode(ISD::CALLSEQ_END, MVT::Other, Chain,
-                      DAG.getConstant(NumBytes, getPointerTy()),
+                      DAG.getConstant(ArgOffset, getPointerTy()),
                       // The callee pops the arguments off the stack.
                       DAG.getConstant(ArgOffset, getPointerTy()));
   return std::make_pair(TheCall, Chain);
@@ -3781,7 +3801,7 @@ void ISel::Select(SDOperand N) {
         PrevI = BB->end();
       BuildMI(*BB, PrevI, X86::ADJCALLSTACKUP, 2).addImm(Tmp1).addImm(Tmp2);
     } else {
-      BuildMI(*BB, PrevI, X86::ADJCALLSTACKUP, 2).addImm(Tmp1).addImm(Tmp2);
+      BuildMI(BB, X86::ADJCALLSTACKUP, 2).addImm(Tmp1).addImm(Tmp2);
     }
     return;
   case ISD::MEMSET: {
