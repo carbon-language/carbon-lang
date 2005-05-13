@@ -28,7 +28,7 @@ namespace llvm {
 
 SchedDebugLevel_t SchedDebugLevel;
 
-static cl::opt<bool> EnableFillingDelaySlots("sched-fill-delay-slots",
+static cl::opt<bool> EnableFillingDelaySlots("sched-fill-delay-slots", cl::Hidden,
               cl::desc("Fill branch delay slots during local scheduling"));
 
 static cl::opt<SchedDebugLevel_t, true>

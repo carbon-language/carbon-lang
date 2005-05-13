@@ -58,7 +58,7 @@ namespace {
   cl::opt<bool> DisablePeephole("disable-peephole",
                                 cl::desc("Disable peephole optimization pass"));
 
-  cl::opt<bool, true> EmitMappingInfoOpt("enable-maps",
+  cl::opt<bool, true> EmitMappingInfoOpt("enable-maps", cl::ReallyHidden,
                  cl::location(EmitMappingInfo),
                  cl::init(false),
                  cl::desc("Emit LLVM-to-MachineCode mapping info to assembly"));
