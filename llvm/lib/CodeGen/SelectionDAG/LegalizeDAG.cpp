@@ -1939,10 +1939,10 @@ bool SelectionDAGLegalize::ExpandShift(unsigned Opc, SDOperand Op,SDOperand Amt,
   return true;
 }
 
-/// FindLatestAdjCallStackDown - Scan up the dag to find the latest (highest
-/// NodeDepth) node that is an AdjCallStackDown operation and occurs later than
+/// FindLatestCallSeqStart - Scan up the dag to find the latest (highest
+/// NodeDepth) node that is an CallSeqStart operation and occurs later than
 /// Found.
-static void FindLatestAdjCallStackDown(SDNode *Node, SDNode *&Found) {
+static void FindLatestCallSeqStart(SDNode *Node, SDNode *&Found) {
   if (Node->getNodeDepth() <= Found->getNodeDepth()) return;
 
   // If we found an CALLSEQ_START, we already know this node occurs later
@@ -1956,18 +1956,18 @@ static void FindLatestAdjCallStackDown(SDNode *Node, SDNode *&Found) {
   assert(Node->getNumOperands() != 0 &&
          "All leaves should have depth equal to the entry node!");
   for (unsigned i = 0, e = Node->getNumOperands()-1; i != e; ++i)
-    FindLatestAdjCallStackDown(Node->getOperand(i).Val, Found);
+    FindLatestCallSeqStart(Node->getOperand(i).Val, Found);
 
   // Tail recurse for the last iteration.
-  FindLatestAdjCallStackDown(Node->getOperand(Node->getNumOperands()-1).Val,
+  FindLatestCallSeqStart(Node->getOperand(Node->getNumOperands()-1).Val,
                              Found);
 }
 
 
-/// FindEarliestAdjCallStackUp - Scan down the dag to find the earliest (lowest
-/// NodeDepth) node that is an AdjCallStackUp operation and occurs more recent
+/// FindEarliestCallSeqEnd - Scan down the dag to find the earliest (lowest
+/// NodeDepth) node that is an CallSeqEnd operation and occurs more recent
 /// than Found.
-static void FindEarliestAdjCallStackUp(SDNode *Node, SDNode *&Found) {
+static void FindEarliestCallSeqEnd(SDNode *Node, SDNode *&Found) {
   if (Found && Node->getNodeDepth() >= Found->getNodeDepth()) return;
 
   // If we found an CALLSEQ_END, we already know this node occurs earlier
@@ -1981,22 +1981,22 @@ static void FindEarliestAdjCallStackUp(SDNode *Node, SDNode *&Found) {
   SDNode::use_iterator UI = Node->use_begin(), E = Node->use_end();
   if (UI == E) return;
   for (--E; UI != E; ++UI)
-    FindEarliestAdjCallStackUp(*UI, Found);
+    FindEarliestCallSeqEnd(*UI, Found);
 
   // Tail recurse for the last iteration.
-  FindEarliestAdjCallStackUp(*UI, Found);
+  FindEarliestCallSeqEnd(*UI, Found);
 }
 
-/// FindAdjCallStackUp - Given a chained node that is part of a call sequence,
+/// FindCallSeqEnd - Given a chained node that is part of a call sequence,
 /// find the CALLSEQ_END node that terminates the call sequence.
-static SDNode *FindAdjCallStackUp(SDNode *Node) {
+static SDNode *FindCallSeqEnd(SDNode *Node) {
   if (Node->getOpcode() == ISD::CALLSEQ_END)
     return Node;
   if (Node->use_empty())
-    return 0;   // No adjcallstackup
+    return 0;   // No CallSeqEnd
 
   if (Node->hasOneUse())  // Simple case, only has one user to check.
-    return FindAdjCallStackUp(*Node->use_begin());
+    return FindCallSeqEnd(*Node->use_begin());
 
   SDOperand TheChain(Node, Node->getNumValues()-1);
   assert(TheChain.getValueType() == MVT::Other && "Is not a token chain!");
@@ -2009,21 +2009,21 @@ static SDNode *FindAdjCallStackUp(SDNode *Node) {
     SDNode *User = *UI;
     for (unsigned i = 0, e = User->getNumOperands(); i != e; ++i)
       if (User->getOperand(i) == TheChain)
-        return FindAdjCallStackUp(User);
+        return FindCallSeqEnd(User);
   }
   assert(0 && "Unreachable");
   abort();
 }
 
-/// FindAdjCallStackDown - Given a chained node that is part of a call sequence,
+/// FindCallSeqStart - Given a chained node that is part of a call sequence,
 /// find the CALLSEQ_START node that initiates the call sequence.
-static SDNode *FindAdjCallStackDown(SDNode *Node) {
-  assert(Node && "Didn't find adjcallstackdown for a call??");
+static SDNode *FindCallSeqStart(SDNode *Node) {
+  assert(Node && "Didn't find callseq_start for a call??");
   if (Node->getOpcode() == ISD::CALLSEQ_START) return Node;
 
   assert(Node->getOperand(0).getValueType() == MVT::Other &&
          "Node doesn't have a token chain argument!");
-  return FindAdjCallStackDown(Node->getOperand(0).Val);
+  return FindCallSeqStart(Node->getOperand(0).Val);
 }
 
 
@@ -2035,31 +2035,31 @@ static SDNode *FindAdjCallStackDown(SDNode *Node) {
 /// end of the call chain.
 static SDOperand FindInputOutputChains(SDNode *OpNode, SDNode *&OutChain,
                                        SDOperand Entry) {
-  SDNode *LatestAdjCallStackDown = Entry.Val;
-  SDNode *LatestAdjCallStackUp = 0;
-  FindLatestAdjCallStackDown(OpNode, LatestAdjCallStackDown);
-  //std::cerr<<"Found node: "; LatestAdjCallStackDown->dump(); std::cerr <<"\n";
+  SDNode *LatestCallSeqStart = Entry.Val;
+  SDNode *LatestCallSeqEnd = 0;
+  FindLatestCallSeqStart(OpNode, LatestCallSeqStart);
+  //std::cerr<<"Found node: "; LatestCallSeqStart->dump(); std::cerr <<"\n";
 
   // It is possible that no ISD::CALLSEQ_START was found because there is no
   // previous call in the function.  LatestCallStackDown may in that case be
   // the entry node itself.  Do not attempt to find a matching CALLSEQ_END
   // unless LatestCallStackDown is an CALLSEQ_START.
-  if (LatestAdjCallStackDown->getOpcode() == ISD::CALLSEQ_START)
-    LatestAdjCallStackUp = FindAdjCallStackUp(LatestAdjCallStackDown);
+  if (LatestCallSeqStart->getOpcode() == ISD::CALLSEQ_START)
+    LatestCallSeqEnd = FindCallSeqEnd(LatestCallSeqStart);
   else
-    LatestAdjCallStackUp = Entry.Val;
-  assert(LatestAdjCallStackUp && "NULL return from FindAdjCallStackUp");
+    LatestCallSeqEnd = Entry.Val;
+  assert(LatestCallSeqEnd && "NULL return from FindCallSeqEnd");
 
   // Finally, find the first call that this must come before, first we find the
-  // adjcallstackup that ends the call.
+  // CallSeqEnd that ends the call.
   OutChain = 0;
-  FindEarliestAdjCallStackUp(OpNode, OutChain);
+  FindEarliestCallSeqEnd(OpNode, OutChain);
 
-  // If we found one, translate from the adj up to the adjdown.
+  // If we found one, translate from the adj up to the callseq_start.
   if (OutChain)
-    OutChain = FindAdjCallStackDown(OutChain);
+    OutChain = FindCallSeqStart(OutChain);
 
-  return SDOperand(LatestAdjCallStackUp, 0);
+  return SDOperand(LatestCallSeqEnd, 0);
 }
 
 /// SpliceCallInto - Given the result chain of a libcall (CallResult), and a 
