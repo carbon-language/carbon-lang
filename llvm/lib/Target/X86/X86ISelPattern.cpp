@@ -750,8 +750,7 @@ X86TargetLowering::LowerFastCCCallTo(SDOperand Chain, const Type *RetTy,
           SDOperand PtrOff = DAG.getConstant(ArgOffset, getPointerTy());
           PtrOff = DAG.getNode(ISD::ADD, MVT::i32, StackPtr, PtrOff);
           Stores.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
-                                       Args[i].first, PtrOff,
-                                       DAG.getSrcValue(NULL)));
+                                       Hi, PtrOff, DAG.getSrcValue(NULL)));
           ArgOffset += 4;
         }
         break;
