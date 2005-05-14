@@ -2176,6 +2176,17 @@ ExpandIntToFP(bool isSigned, MVT::ValueType DestTy, SDOperand Source) {
     return DAG.getNode(ISD::ADD, DestTy, SignedConv, FudgeInReg);
   }
 
+  // Check to see if the target has a custom way to lower this.  If so, use it.
+  switch (TLI.getOperationAction(ISD::SINT_TO_FP, Source.getValueType())) {
+  default: assert(0 && "This action not implemented for this operation!");
+  case TargetLowering::Legal:
+  case TargetLowering::Expand:
+    break;   // This case is handled below.
+  case TargetLowering::Custom:
+    Source = DAG.getNode(ISD::SINT_TO_FP, DestTy, Source);
+    return LegalizeOp(TLI.LowerOperation(Source));
+  }
+
   // Expand the source, then glue it back together for the call.  We must expand
   // the source in case it is shared (this pass of legalize must traverse it).
   SDOperand SrcLo, SrcHi;
