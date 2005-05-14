@@ -525,6 +525,7 @@ Value *llvm::ConvertExpressionToType(Value *V, const Type *Ty,
                        Name);
     if (cast<CallInst>(I)->isTailCall())
       cast<CallInst>(Res)->setTailCall();
+    cast<CallInst>(Res)->setCallingConv(cast<CallInst>(I)->getCallingConv());
     VMC.ExprMap[I] = Res;
     Res->setOperand(0, ConvertExpressionToType(I->getOperand(0),NewPTy,VMC,TD));
     break;
@@ -1218,6 +1219,9 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
     }
 
     Res = new CallInst(Meth, Params, Name);
+    if (cast<CallInst>(I)->isTailCall())
+      cast<CallInst>(Res)->setTailCall();
+    cast<CallInst>(Res)->setCallingConv(cast<CallInst>(I)->getCallingConv());
     break;
   }
   default:

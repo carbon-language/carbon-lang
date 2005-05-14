@@ -538,6 +538,8 @@ bool RPR::PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
       // Create a new call instruction...
       CallInst *NewCall = new CallInst(NewCast,
                            std::vector<Value*>(CI->op_begin()+1, CI->op_end()));
+      if (CI->isTailCall()) NewCall->setTailCall();
+      NewCall->setCallingConv(CI->getCallingConv());
       ++BI;
       ReplaceInstWithInst(CI, NewCall);
 
