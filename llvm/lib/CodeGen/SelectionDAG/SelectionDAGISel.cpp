@@ -901,7 +901,7 @@ TargetLowering::LowerFrameReturnAddress(bool isFrameAddr, SDOperand Chain,
   return std::make_pair(DAG.getConstant(0, getPointerTy()), Chain);
 }
 
-SDOperand TargetLowering::LowerOperation(SDOperand Op) {
+SDOperand TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   assert(0 && "LowerOperation not implemented for this target!");
   abort();
   return SDOperand();

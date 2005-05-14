@@ -941,7 +941,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       Ops.push_back(Tmp1); Ops.push_back(Tmp2); Ops.push_back(Tmp3);
       Ops.push_back(Tmp4); Ops.push_back(Tmp5);
       Result = DAG.getNode(Node->getOpcode(), MVT::Other, Ops);
-      Result = TLI.LowerOperation(Result);
+      Result = TLI.LowerOperation(Result, DAG);
       Result = LegalizeOp(Result);
       break;
     }
@@ -2184,7 +2184,7 @@ ExpandIntToFP(bool isSigned, MVT::ValueType DestTy, SDOperand Source) {
     break;   // This case is handled below.
   case TargetLowering::Custom:
     Source = DAG.getNode(ISD::SINT_TO_FP, DestTy, Source);
-    return LegalizeOp(TLI.LowerOperation(Source));
+    return LegalizeOp(TLI.LowerOperation(Source, DAG));
   }
 
   // Expand the source, then glue it back together for the call.  We must expand
