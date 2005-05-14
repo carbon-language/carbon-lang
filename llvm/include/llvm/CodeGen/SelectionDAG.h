@@ -226,6 +226,9 @@ private:
   std::map<unsigned, SDNode*> ConstantPoolIndices;
   std::map<MachineBasicBlock *, SDNode*> BBNodes;
   std::map<std::pair<unsigned,
+                     std::pair<MVT::ValueType, std::vector<SDOperand> > >,
+           SDNode*> OneResultNodes;
+  std::map<std::pair<unsigned,
                      std::pair<std::vector<MVT::ValueType>,
                                std::vector<SDOperand> > >,
            SDNode*> ArbitraryNodes;
