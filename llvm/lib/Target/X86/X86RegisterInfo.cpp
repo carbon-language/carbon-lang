@@ -507,8 +507,16 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
   const MachineFrameInfo *MFI = MF.getFrameInfo();
   MachineBasicBlock::iterator MBBI = prior(MBB.end());
   MachineInstr *MI;
-  assert((MBBI->getOpcode() == X86::RET || MBBI->getOpcode() == X86::RETI) &&
-         "Can only insert epilog into returning blocks");
+
+  switch (MBBI->getOpcode()) {
+  case X86::RET:
+  case X86::RETI:
+  case X86::TAILJMPd:
+  case X86::TAILJMPr:
+  case X86::TAILJMPm: break;  // These are ok
+  default:
+    assert(0 && "Can only insert epilog into returning blocks");
+  }
 
   if (hasFP(MF)) {
     // Get the offset of the stack slot for the EBP register... which is

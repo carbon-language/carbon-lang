@@ -191,6 +191,13 @@ let isCall = 1 in
     def CALL32m     : I<0xFF, MRM2m, (ops i32mem:$dst), "call {*}$dst">;
   }
 
+// calltarget instead of i32imm?
+let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in
+  def TAILJMPd : IBr<0xE9, (ops i32imm:$dst), "jmp $dst">;
+let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in
+  def TAILJMPr : I<0xFF, MRM4r, (ops R32:$dst), "jmp {*}$dst">;
+let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in
+  def TAILJMPm : I<0xFF, MRM4m, (ops i32mem:$dst), "jmp {*}$dst">;
        
 //===----------------------------------------------------------------------===//
 //  Miscellaneous Instructions...
