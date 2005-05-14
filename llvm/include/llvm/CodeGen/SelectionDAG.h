@@ -130,7 +130,8 @@ public:
   ///
   SDNode *getCall(std::vector<MVT::ValueType> &RetVals, SDOperand Chain,
                   SDOperand Callee, bool isTailCall = false) {
-    SDNode *NN = new SDNode(isTailCall ? ISD::TAILCALL : ISD::CALL, Chain, Callee);
+    SDNode *NN = new SDNode(isTailCall ? ISD::TAILCALL : ISD::CALL, Chain,
+                            Callee);
     NN->setValueTypes(RetVals);
     AllNodes.push_back(NN);
     return NN;
@@ -140,7 +141,8 @@ public:
   /// where arguments are passed in physical registers.  This destroys the
   /// RetVals and ArgsInRegs vectors.
   SDNode *getCall(std::vector<MVT::ValueType> &RetVals, SDOperand Chain,
-                  SDOperand Callee, std::vector<SDOperand> &ArgsInRegs, bool isTailCall = false) {
+                  SDOperand Callee, std::vector<SDOperand> &ArgsInRegs,
+                  bool isTailCall = false) {
     ArgsInRegs.insert(ArgsInRegs.begin(), Callee);
     ArgsInRegs.insert(ArgsInRegs.begin(), Chain);
     SDNode *NN = new SDNode(isTailCall ? ISD::TAILCALL : ISD::CALL, ArgsInRegs);
@@ -169,6 +171,8 @@ public:
                     SDOperand N1, SDOperand N2, SDOperand N3, SDOperand N4);
   SDOperand getNode(unsigned Opcode, MVT::ValueType VT,
                     std::vector<SDOperand> &Children);
+  SDOperand getNode(unsigned Opcode, std::vector<MVT::ValueType> &ResultTys,
+                    std::vector<SDOperand> &Ops);
 
   // getNode - These versions take an extra value type for extending and
   // truncating loads, stores, rounds, extends etc.
@@ -181,6 +185,7 @@ public:
   SDOperand getNode(unsigned Opcode, MVT::ValueType VT, SDOperand N1,
                     SDOperand N2, SDOperand N3, SDOperand N4,
                     MVT::ValueType EVT);
+
 
   /// getLoad - Loads are not normal binary operators: their result type is not
   /// determined by their operands, and they produce a value AND a token chain.
@@ -220,6 +225,11 @@ private:
   std::map<int, SDNode*> FrameIndices;
   std::map<unsigned, SDNode*> ConstantPoolIndices;
   std::map<MachineBasicBlock *, SDNode*> BBNodes;
+  std::map<std::pair<unsigned,
+                     std::pair<std::vector<MVT::ValueType>,
+                               std::vector<SDOperand> > >,
+           SDNode*> ArbitraryNodes;
+
   std::map<std::string, SDNode*> ExternalSymbols;
   struct EVTStruct {
     unsigned Opcode;
