@@ -1624,19 +1624,18 @@ In each of these entries in range 56-63, the opcode is documented as the base
 opcode (Invoke, Call, Store) plus some set of modifiers, as follows:</p>
 <dl>
   <dt>CC</dt>
-  <dd>This means a generic (user defined) calling convention number is specified
-  in a VBR that follows the opcode immediately. This is used when the calling 
-  convention for the Invoke or the Call instruction is not one of the LLVM 
-  standard ones (like FastCC or CCC)
+  <dd>This means an arbitrary calling convention is specified
+  in a VBR that follows the opcode. This is used when the instruction cannot
+  be encoded with one of the more compact forms.
   </dd>
   <dt>FastCC</dt>
   <dd>This indicates that the Call or Invoke is using the FastCC calling 
-  convention which puts arguments in registers to avoid stack loading.</dd>
+  convention.</dd>
   <dt>CCC</dt>
-  <dd>This indicates that the Call or Invoke is using the "C" calling convention
-  which is specified by the C99 language.</dd>
+  <dd>This indicates that the Call or Invoke is using the native "C" calling 
+  convention.</dd>
   <dt>TailCall</dt>
-  <dd>This indicates that the Call or Invoke is a tail call.</dd>
+  <dd>This indicates that the Call has the 'tail' modifier.</dd>
 </dl>
 
 <!-- _______________________________________________________________________ -->
