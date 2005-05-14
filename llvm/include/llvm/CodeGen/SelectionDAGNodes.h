@@ -491,6 +491,10 @@ public:
     assert(Num < Operands.size() && "Invalid child # of SDNode!");
     return Operands[Num];
   }
+  typedef std::vector<SDOperand>::const_iterator op_iterator;
+  op_iterator op_begin() const { return Operands.begin(); }
+  op_iterator op_end() const { return Operands.end(); }
+
 
   /// getNumValues - Return the number of values defined/returned by this
   /// operator.
@@ -503,6 +507,10 @@ public:
     assert(ResNo < Values.size() && "Illegal result number!");
     return Values[ResNo];
   }
+  
+  typedef std::vector<MVT::ValueType>::const_iterator value_iterator;
+  value_iterator value_begin() const { return Values.begin(); }
+  value_iterator value_end() const { return Values.end(); }
 
   /// getOperationName - Return the opcode of this operation for printing.
   ///
