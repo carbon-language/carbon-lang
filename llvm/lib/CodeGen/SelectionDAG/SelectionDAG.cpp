@@ -257,7 +257,12 @@ void SelectionDAG::DeleteNodeIfDead(SDNode *N, void *NodeSet) {
       BinaryOps.erase(std::make_pair(N->getOpcode(),
                                      std::make_pair(N->getOperand(0),
                                                     N->getOperand(1))));
-    else {
+    else if (N->getNumValues() == 1) {
+      std::vector<SDOperand> Ops(N->op_begin(), N->op_end());
+      OneResultNodes.erase(std::make_pair(N->getOpcode(),
+                                          std::make_pair(N->getValueType(0),
+                                                         Ops)));
+    } else {
       // Remove the node from the ArbitraryNodes map.
       std::vector<MVT::ValueType> RV(N->value_begin(), N->value_end());
       std::vector<SDOperand>     Ops(N->op_begin(), N->op_end());
@@ -1249,7 +1254,6 @@ SDOperand SelectionDAG::getLoad(MVT::ValueType VT,
 
 SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
                                 SDOperand N1, SDOperand N2, SDOperand N3) {
-  assert(Opcode != ISD::STORE && "Store shouldn't use this anymore");
   // Perform various simplifications.
   ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1.Val);
   ConstantSDNode *N2C = dyn_cast<ConstantSDNode>(N2.Val);
@@ -1349,9 +1353,18 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     break;
   }
 
-  SDNode *N = new SDNode(Opcode, N1, N2, N3);
+  std::vector<SDOperand> Ops;
+  Ops.reserve(3);
+  Ops.push_back(N1);
+  Ops.push_back(N2);
+  Ops.push_back(N3);
+
+  // Memoize nodes.
+  SDNode *&N = OneResultNodes[std::make_pair(Opcode, std::make_pair(VT, Ops))];
+  if (N) return SDOperand(N, 0);
+
+  N = new SDNode(Opcode, N1, N2, N3);
   N->setValueTypes(VT);
-  // FIXME: memoize NODES
   AllNodes.push_back(N);
   return SDOperand(N, 0);
 }
@@ -1391,9 +1404,6 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
 
   ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(Ops[1].Val);
   switch (Opcode) {
-  case ISD::ADD_PARTS:
-  case ISD::SUB_PARTS:
-    assert(0 && "Shouldn't be here, should set multiple retvals");
   default: break;
   case ISD::BRCONDTWOWAY:
     if (N1C)
@@ -1404,8 +1414,10 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     break;
   }
 
-  // FIXME: MEMOIZE!!
-  SDNode *N = new SDNode(Opcode, Ops);
+  // Memoize nodes.
+  SDNode *&N = OneResultNodes[std::make_pair(Opcode, std::make_pair(VT, Ops))];
+  if (N) return SDOperand(N, 0);
+  N = new SDNode(Opcode, Ops);
   N->setValueTypes(VT);
   AllNodes.push_back(N);
   return SDOperand(N, 0);
