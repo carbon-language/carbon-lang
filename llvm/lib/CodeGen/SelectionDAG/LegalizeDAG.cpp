@@ -197,6 +197,29 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
 
   switch (Node->getOpcode()) {
   default:
+    if (Node->getOpcode() >= ISD::BUILTIN_OP_END) {
+      // If this is a target node, legalize it by legalizing the operands then
+      // passing it through.
+      std::vector<SDOperand> Ops;
+      bool Changed = false;
+      for (unsigned i = 0, e = Node->getNumOperands(); i != e; ++i) {
+        Ops.push_back(LegalizeOp(Node->getOperand(i)));
+        Changed = Changed || Node->getOperand(i) != Ops.back();
+      }
+      if (Changed)
+        if (Node->getNumValues() == 1)
+          Result = DAG.getNode(Node->getOpcode(), Node->getValueType(0), Ops);
+        else {
+          std::vector<MVT::ValueType> VTs(Node->value_begin(),
+                                          Node->value_end());
+          Result = DAG.getNode(Node->getOpcode(), VTs, Ops);
+        }
+
+      for (unsigned i = 0, e = Node->getNumValues(); i != e; ++i)
+        AddLegalizedOperand(Op.getValue(i), Result.getValue(i));
+      return Result.getValue(Op.ResNo);
+    }
+    // Otherwise this is an unhandled builtin node.  splat.
     std::cerr << "NODE: "; Node->dump(); std::cerr << "\n";
     assert(0 && "Do not know how to legalize this operator!");
     abort();
