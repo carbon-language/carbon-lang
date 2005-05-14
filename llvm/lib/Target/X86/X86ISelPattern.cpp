@@ -51,6 +51,29 @@ namespace {
       /// the X86::FILD64m instruction.  It has two inputs (token chain and
       /// address) and two outputs (FP value and token chain).
       FILD64m,
+
+      /// CALL/TAILCALL - These operations represent an abstract X86 call
+      /// instruction, which includes a bunch of information.  In particular the
+      /// operands of these node are:
+      ///
+      ///     #0 - The incoming token chain
+      ///     #1 - The callee
+      ///     #2 - The number of arg bytes the caller pushes on the stack.
+      ///     #3 - The number of arg bytes the callee pops off the stack.
+      ///     #4 - The value to pass in AL/AX/EAX (optional)
+      ///     #5 - The value to pass in DL/DX/EDX (optional)
+      ///
+      /// The result values of these nodes are:
+      ///
+      ///     #0 - The outgoing token chain
+      ///     #1 - The first register result value (optional)
+      ///     #2 - The second register result value (optional)
+      ///
+      /// The CALL vs TAILCALL distinction boils down to whether the callee is
+      /// known not to modify the caller's stack frame, as is standard with
+      /// LLVM.
+      CALL,
+      TAILCALL,
     };
   }
 }
@@ -355,17 +378,59 @@ X86TargetLowering::LowerCCCCallTo(SDOperand Chain, const Type *RetTy,
 
   std::vector<MVT::ValueType> RetVals;
   MVT::ValueType RetTyVT = getValueType(RetTy);
-  if (RetTyVT != MVT::isVoid)
-    RetVals.push_back(RetTyVT);
   RetVals.push_back(MVT::Other);
 
-  SDOperand TheCall = SDOperand(DAG.getCall(RetVals, Chain, Callee,
-                                            isTailCall), 0);
-  Chain = TheCall.getValue(RetTyVT != MVT::isVoid);
-  Chain = DAG.getNode(ISD::CALLSEQ_END, MVT::Other, Chain,
-                      DAG.getConstant(NumBytes, getPointerTy()),
-                      DAG.getConstant(0, getPointerTy()));
-  return std::make_pair(TheCall, Chain);
+  // The result values produced have to be legal.  Promote the result.
+  switch (RetTyVT) {
+  case MVT::isVoid: break;
+  default:
+    RetVals.push_back(RetTyVT);
+    break;
+  case MVT::i1:
+  case MVT::i8:
+  case MVT::i16:
+    RetVals.push_back(MVT::i32);
+    break;
+  case MVT::f32:
+    RetVals.push_back(MVT::f64);
+    break;
+  case MVT::i64:
+    RetVals.push_back(MVT::i32);
+    RetVals.push_back(MVT::i32);
+    break;
+  }
+  std::vector<SDOperand> Ops;
+  Ops.push_back(Chain);
+  Ops.push_back(Callee);
+  Ops.push_back(DAG.getConstant(NumBytes, getPointerTy()));
+  Ops.push_back(DAG.getConstant(0, getPointerTy()));
+  SDOperand TheCall = DAG.getNode(isTailCall ? X86ISD::TAILCALL : X86ISD::CALL,
+                                  RetVals, Ops);
+  Chain = DAG.getNode(ISD::CALLSEQ_END, MVT::Other, TheCall);
+
+  SDOperand ResultVal;
+  switch (RetTyVT) {
+  case MVT::isVoid: break;
+  default:
+    ResultVal = TheCall.getValue(1);
+    break;
+  case MVT::i1:
+  case MVT::i8:
+  case MVT::i16:
+    ResultVal = DAG.getNode(ISD::TRUNCATE, RetTyVT, TheCall.getValue(1));
+    break;
+  case MVT::f32:
+    // FIXME: we would really like to remember that this FP_ROUND operation is
+    // okay to eliminate if we allow excess FP precision.
+    ResultVal = DAG.getNode(ISD::FP_ROUND, MVT::f32, TheCall.getValue(1));
+    break;
+  case MVT::i64:
+    ResultVal = DAG.getNode(ISD::BUILD_PAIR, MVT::i64, TheCall.getValue(1),
+                            TheCall.getValue(2));
+    break;
+  }
+
+  return std::make_pair(ResultVal, Chain);
 }
 
 std::pair<SDOperand, SDOperand>
@@ -705,26 +770,73 @@ X86TargetLowering::LowerFastCCCallTo(SDOperand Chain, const Type *RetTy,
   if (!Stores.empty())
     Chain = DAG.getNode(ISD::TokenFactor, MVT::Other, Stores);
 
-  std::vector<MVT::ValueType> RetVals;
-  MVT::ValueType RetTyVT = getValueType(RetTy);
-  if (RetTyVT != MVT::isVoid)
-    RetVals.push_back(RetTyVT);
-  RetVals.push_back(MVT::Other);
-
-  SDOperand TheCall = SDOperand(DAG.getCall(RetVals, Chain, Callee,
-                                            RegValuesToPass, isTailCall), 0);
-  Chain = TheCall.getValue(RetTyVT != MVT::isVoid);
-
   // Make sure the instruction takes 8n+4 bytes to make sure the start of the
   // arguments and the arguments after the retaddr has been pushed are aligned.
   if ((ArgOffset & 7) == 0)
     ArgOffset += 4;
 
-  Chain = DAG.getNode(ISD::CALLSEQ_END, MVT::Other, Chain,
-                      DAG.getConstant(ArgOffset, getPointerTy()),
-                      // The callee pops the arguments off the stack.
-                      DAG.getConstant(ArgOffset, getPointerTy()));
-  return std::make_pair(TheCall, Chain);
+  std::vector<MVT::ValueType> RetVals;
+  MVT::ValueType RetTyVT = getValueType(RetTy);
+
+  RetVals.push_back(MVT::Other);
+
+  // The result values produced have to be legal.  Promote the result.
+  switch (RetTyVT) {
+  case MVT::isVoid: break;
+  default:
+    RetVals.push_back(RetTyVT);
+    break;
+  case MVT::i1:
+  case MVT::i8:
+  case MVT::i16:
+    RetVals.push_back(MVT::i32);
+    break;
+  case MVT::f32:
+    RetVals.push_back(MVT::f64);
+    break;
+  case MVT::i64:
+    RetVals.push_back(MVT::i32);
+    RetVals.push_back(MVT::i32);
+    break;
+  }
+
+  std::vector<SDOperand> Ops;
+  Ops.push_back(Chain);
+  Ops.push_back(Callee);
+  Ops.push_back(DAG.getConstant(ArgOffset, getPointerTy()));
+  // Callee pops all arg values on the stack.
+  Ops.push_back(DAG.getConstant(ArgOffset, getPointerTy()));
+
+  // Pass register arguments as needed.
+  Ops.insert(Ops.end(), RegValuesToPass.begin(), RegValuesToPass.end());
+
+  SDOperand TheCall = DAG.getNode(isTailCall ? X86ISD::TAILCALL : X86ISD::CALL,
+                                  RetVals, Ops);
+  Chain = DAG.getNode(ISD::CALLSEQ_END, MVT::Other, TheCall);
+
+  SDOperand ResultVal;
+  switch (RetTyVT) {
+  case MVT::isVoid: break;
+  default:
+    ResultVal = TheCall.getValue(1);
+    break;
+  case MVT::i1:
+  case MVT::i8:
+  case MVT::i16:
+    ResultVal = DAG.getNode(ISD::TRUNCATE, RetTyVT, TheCall.getValue(1));
+    break;
+  case MVT::f32:
+    // FIXME: we would really like to remember that this FP_ROUND operation is
+    // okay to eliminate if we allow excess FP precision.
+    ResultVal = DAG.getNode(ISD::FP_ROUND, MVT::f32, TheCall.getValue(1));
+    break;
+  case MVT::i64:
+    ResultVal = DAG.getNode(ISD::BUILD_PAIR, MVT::i64, TheCall.getValue(1),
+                            TheCall.getValue(2));
+    break;
+  }
+
+  return std::make_pair(ResultVal, Chain);
 }
 
 
@@ -1876,18 +1988,18 @@ unsigned ISel::SelectExpr(SDOperand N) {
     Reg = Result = (N.getValueType() != MVT::Other) ?
                             MakeReg(N.getValueType()) : 1;
     break;
-  case ISD::TAILCALL:
-  case ISD::CALL:
+  case X86ISD::TAILCALL:
+  case X86ISD::CALL:
     // If this is a call instruction, make sure to prepare ALL of the result
     // values as well as the chain.
-    if (Node->getNumValues() == 1)
-      Reg = Result = 1;  // Void call, just a chain.
-    else {
-      Result = MakeReg(Node->getValueType(0));
-      ExprMap[N.getValue(0)] = Result;
-      for (unsigned i = 1, e = N.Val->getNumValues()-1; i != e; ++i)
+    ExprMap[N.getValue(0)] = 1;
+    if (Node->getNumValues() > 1) {
+      Result = MakeReg(Node->getValueType(1));
+      ExprMap[N.getValue(1)] = Result;
+      for (unsigned i = 2, e = Node->getNumValues(); i != e; ++i)
         ExprMap[N.getValue(i)] = MakeReg(Node->getValueType(i));
-      ExprMap[SDOperand(Node, Node->getNumValues()-1)] = 1;
+    } else {
+      Result = 1;
     }
     break;
   case ISD::ADD_PARTS:
@@ -3160,10 +3272,10 @@ unsigned ISel::SelectExpr(SDOperand N) {
     BuildMI(BB, X86::MOV32rr, 1, Result).addReg(X86::ESP);
     return Result;
 
-  case ISD::TAILCALL:
-  case ISD::CALL: {
+  case X86ISD::TAILCALL:
+  case X86ISD::CALL: {
     // The chain for this call is now lowered.
-    ExprMap.insert(std::make_pair(N.getValue(Node->getNumValues()-1), 1));
+    ExprMap.insert(std::make_pair(N.getValue(0), 1));
 
     bool isDirect = isa<GlobalAddressSDNode>(N.getOperand(1)) ||
                     isa<ExternalSymbolSDNode>(N.getOperand(1));
@@ -3181,13 +3293,13 @@ unsigned ISel::SelectExpr(SDOperand N) {
     }
 
     // If this call has values to pass in registers, do so now.
-    if (Node->getNumOperands() > 2) {
+    if (Node->getNumOperands() > 4) {
       // The first value is passed in (a part of) EAX, the second in EDX.
-      unsigned RegOp1 = SelectExpr(N.getOperand(2));
+      unsigned RegOp1 = SelectExpr(N.getOperand(4));
       unsigned RegOp2 =
-        Node->getNumOperands() > 3 ? SelectExpr(N.getOperand(3)) : 0;
+        Node->getNumOperands() > 5 ? SelectExpr(N.getOperand(5)) : 0;
       
-      switch (N.getOperand(2).getValueType()) {
+      switch (N.getOperand(4).getValueType()) {
       default: assert(0 && "Bad thing to pass in regs");
       case MVT::i1:
       case MVT::i8:  BuildMI(BB, X86::MOV8rr , 1,X86::AL).addReg(RegOp1); break;
@@ -3195,7 +3307,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
       case MVT::i32: BuildMI(BB, X86::MOV32rr, 1,X86::EAX).addReg(RegOp1);break;
       }
       if (RegOp2)
-        switch (N.getOperand(3).getValueType()) {
+        switch (N.getOperand(5).getValueType()) {
         default: assert(0 && "Bad thing to pass in regs");
         case MVT::i1:
         case MVT::i8:
@@ -3228,27 +3340,34 @@ unsigned ISel::SelectExpr(SDOperand N) {
 
       BuildMI(BB, X86::CALL32r, 1).addReg(Tmp1);
     }
-    switch (Node->getValueType(0)) {
-    default: assert(0 && "Unknown value type for call result!");
-    case MVT::Other: return 1;
-    case MVT::i1:
-    case MVT::i8:
-      BuildMI(BB, X86::MOV8rr, 1, Result).addReg(X86::AL);
-      break;
-    case MVT::i16:
-      BuildMI(BB, X86::MOV16rr, 1, Result).addReg(X86::AX);
-      break;
-    case MVT::i32:
-      BuildMI(BB, X86::MOV32rr, 1, Result).addReg(X86::EAX);
-      if (Node->getValueType(1) == MVT::i32)
-        BuildMI(BB, X86::MOV32rr, 1, Result+1).addReg(X86::EDX);
-      break;
-    case MVT::f64:     // Floating-point return values live in %ST(0)
-      ContainsFPCode = true;
-      BuildMI(BB, X86::FpGETRESULT, 1, Result);
-      break;
-    }
-    return Result+N.ResNo;
+
+    // Get caller stack amount and amount the callee added to the stack pointer.
+    Tmp1 = cast<ConstantSDNode>(N.getOperand(2))->getValue();
+    Tmp2 = cast<ConstantSDNode>(N.getOperand(3))->getValue();
+    BuildMI(BB, X86::ADJCALLSTACKUP, 2).addImm(Tmp1).addImm(Tmp2);
+
+    if (Node->getNumValues() != 1)
+      switch (Node->getValueType(1)) {
+      default: assert(0 && "Unknown value type for call result!");
+      case MVT::Other: return 1;
+      case MVT::i1:
+      case MVT::i8:
+        BuildMI(BB, X86::MOV8rr, 1, Result).addReg(X86::AL);
+        break;
+      case MVT::i16:
+        BuildMI(BB, X86::MOV16rr, 1, Result).addReg(X86::AX);
+        break;
+      case MVT::i32:
+        BuildMI(BB, X86::MOV32rr, 1, Result).addReg(X86::EAX);
+        if (Node->getNumValues() == 3 && Node->getValueType(2) == MVT::i32)
+          BuildMI(BB, X86::MOV32rr, 1, Result+1).addReg(X86::EDX);
+        break;
+      case MVT::f64:     // Floating-point return values live in %ST(0)
+        ContainsFPCode = true;
+        BuildMI(BB, X86::FpGETRESULT, 1, Result);
+        break;
+      }
+    return Result+N.ResNo-1;
   }
   case ISD::READPORT:
     // First, determine that the size of the operand falls within the acceptable
@@ -3685,9 +3804,9 @@ void ISel::Select(SDOperand N) {
   case ISD::EXTLOAD:
   case ISD::SEXTLOAD:
   case ISD::ZEXTLOAD:
-  case ISD::TAILCALL:
-  case ISD::CALL:
   case ISD::DYNAMIC_STACKALLOC:
+  case X86ISD::TAILCALL:
+  case X86ISD::CALL:
     ExprMap.erase(N);
     SelectExpr(N);
     return;
@@ -3835,48 +3954,6 @@ void ISel::Select(SDOperand N) {
     return;
   case ISD::CALLSEQ_END:
     Select(N.getOperand(0));
-    // Stack amount
-    Tmp1 = cast<ConstantSDNode>(N.getOperand(1))->getValue();
-
-    // Amount the callee added to the stack pointer.
-    Tmp2 = cast<ConstantSDNode>(N.getOperand(2))->getValue();
-
-    // This hackery is due to the fact that we don't want to emit this code:
-    //   call foo
-    //   mov vreg, EAX
-    //   adjcallstackup 
-    //
-    // Because if foo is a fastcc call and if vreg gets spilled, we might end up
-    // with this:
-    //   call foo
-    //   mov [ESP+offset], EAX     ;; Offset doesn't consider the 12!
-    //   sub ESP, 12
-    //
-    // To avoid this, we force the adjcallstackup instruction before the 0, 1 or
-    // 2 moves that occur after the call.  The correct way to fix this is to use
-    // target-specific DAG nodes in the call sequence. FIXME!
-    //
-    if (EnableFastCC) {
-      // This code should be safe.  Be defensive for LLVM 1.5 release though.
-      assert(!BB->empty());
-      MachineBasicBlock::iterator PrevI = --BB->end();
-      if (PrevI->getOpcode() == X86::CALLpcrel32 ||
-          PrevI->getOpcode() == X86::CALL32r)
-        ++PrevI;
-      else if (PrevI != BB->begin() &&
-               ((--PrevI)->getOpcode() == X86::CALLpcrel32 ||
-                PrevI->getOpcode() == X86::CALL32r))
-        ++PrevI;
-      else if (PrevI != BB->begin() &&
-               ((--PrevI)->getOpcode() == X86::CALLpcrel32 ||
-                PrevI->getOpcode() == X86::CALL32r))
-        ++PrevI;
-      else
-        PrevI = BB->end();
-      BuildMI(*BB, PrevI, X86::ADJCALLSTACKUP, 2).addImm(Tmp1).addImm(Tmp2);
-    } else {
-      BuildMI(BB, X86::ADJCALLSTACKUP, 2).addImm(Tmp1).addImm(Tmp2);
-    }
     return;
   case ISD::MEMSET: {
     Select(N.getOperand(0));  // Select the chain.
