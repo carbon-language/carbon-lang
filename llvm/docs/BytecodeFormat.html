@@ -1601,9 +1601,45 @@ single <a href="#uint32_vbr">uint32_vbr</a> as follows:</p>
       <tr><td>Select</td><td>34</td><td>2</td><td>1.2</td></tr>
       <tr><td>UserOp1</td><td>35</td><td>1</td><td>1.0</td></tr>
       <tr><td>UserOp2</td><td>36</td><td>1</td><td>1.0</td></tr>
+      <tr><td colspan="4">
+          <b>Pseudo Instructions<a href="#pi_note">*</a></b>
+      </td></tr>
+      <tr><td>Invoke+CC </td><td>56</td><td>5</td><td>1.5</td></tr>
+      <tr><td>Invoke+FastCC</td><td>57</td><td>5</td><td>1.5</td></tr>
+      <tr><td>Call+CC</td><td>58</td><td>5</td><td>1.5</td></tr>
+      <tr><td>Call+FastCC+TailCall</td><td>59</td><td>5</td><td>1.5</td></tr>
+      <tr><td>Call+FastCC</td><td>60</td><td>5</td><td>1.5</td></tr>
+      <tr><td>Call+CCC+TailCall</td><td>61</td><td>5</td><td>1.5</td></tr>
+      <tr><td>Load+Volatile</td><td>62</td><td>3</td><td>1.3</td></tr>
+      <tr><td>Store+Volatile</td><td>63</td><td>3</td><td>1.3</td></tr>
     </tbody>
   </table>
 </div>
+
+<p><b><a name="pi_note">* Note: </a></b>
+These aren't really opcodes from an LLVM language prespeective. They encode
+information into other opcodes without reserving space for that information. 
+For example, opcode=63 is a Volatile Store. The opcode for this
+instruction is 25 (Store) but we encode it as 63 to indicate that is a Volatile
+Store. The same is done for the calling conventions and tail calls.
+In each of these entries in range 56-63, the opcode is documented as the base
+opcode (Invoke, Call, Store) plus some set of modifiers, as follows:</p>
+<dl>
+  <dt>CC</dt>
+  <dd>This means a generic (user defined) calling convention number is specified
+  in a VBR that follows the opcode immediately. This is used when the calling 
+  convention for the Invoke or the Call instruction is not one of the LLVM 
+  standard ones (like FastCC or CCC)
+  </dd>
+  <dt>FastCC</dt>
+  <dd>This indicates that the Call or Invoke is using the FastCC calling 
+  convention which puts arguments in registers to avoid stack loading.</dd>
+  <dt>CCC</dt>
+  <dd>This indicates that the Call or Invoke is using the "C" calling convention
+  which is specified by the C99 language.</dd>
+  <dt>TailCall</dt>
+  <dd>This indicates that the Call or Invoke is a tail call.</dd>
+</dl>
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsection"><a name="symtab">Symbol Table</a> </div>
