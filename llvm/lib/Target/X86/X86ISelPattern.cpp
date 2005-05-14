@@ -39,6 +39,22 @@ using namespace llvm;
 static cl::opt<bool> EnableFastCC("enable-x86-fastcc", cl::Hidden,
                                   cl::desc("Enable fastcc on X86"));
 
+namespace {
+  // X86 Specific DAG Nodes
+  namespace X86ISD {
+    enum NodeType {
+      // Start the numbering where the builtin ops leave off.
+      FIRST_NUMBER = ISD::BUILTIN_OP_END,
+
+      /// FILD64m - This instruction implements SINT_TO_FP with a
+      /// 64-bit source in memory and a FP reg result.  This corresponds to
+      /// the X86::FILD64m instruction.  It has two inputs (token chain and
+      /// address) and two outputs (FP value and token chain).
+      FILD64m,
+    };
+  }
+}
+
 //===----------------------------------------------------------------------===//
 //  X86TargetLowering - X86 Implementation of the TargetLowering interface
 namespace {
@@ -66,6 +82,7 @@ namespace {
       // well.
 /**/  addRegisterClass(MVT::i1, X86::R8RegisterClass);
 
+      setOperationAction(ISD::SINT_TO_FP       , MVT::i64  , Custom);
       setOperationAction(ISD::BRCONDTWOWAY     , MVT::Other, Expand);
       setOperationAction(ISD::MEMMOVE          , MVT::Other, Expand);
       setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i16  , Expand);
@@ -113,6 +130,10 @@ namespace {
     // addition to the space used by the return address).
     //
     unsigned getBytesToPopOnReturn() const { return BytesToPopOnReturn; }
+
+    /// LowerOperation - Provide custom lowering hooks for some operations.
+    ///
+    virtual SDOperand LowerOperation(SDOperand Op, SelectionDAG &DAG);
 
     /// LowerArguments - This hook must be implemented to indicate how we should
     /// lower the arguments for the specified function, into the specified DAG.
@@ -735,6 +756,36 @@ LowerFrameReturnAddress(bool isFrameAddress, SDOperand Chain, unsigned Depth,
   return std::make_pair(Result, Chain);
 }
 
+/// LowerOperation - Provide custom lowering hooks for some operations.
+///
+SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
+  switch (Op.getOpcode()) {
+  default: assert(0 && "Should not custom lower this!");
+  case ISD::SINT_TO_FP:
+    assert(Op.getValueType() == MVT::f64 &&
+           Op.getOperand(0).getValueType() == MVT::i64 &&
+           "Unknown SINT_TO_FP to lower!");
+    // We lower sint64->FP into a store to a temporary stack slot, followed by a
+    // FILD64m node.
+    MachineFunction &MF = DAG.getMachineFunction();
+    int SSFI = MF.getFrameInfo()->CreateStackObject(8, 8);
+    SDOperand StackSlot = DAG.getFrameIndex(SSFI, getPointerTy());
+    SDOperand Store = DAG.getNode(ISD::STORE, MVT::Other, DAG.getEntryNode(),
+                           Op.getOperand(0), StackSlot, DAG.getSrcValue(NULL));
+    std::vector<MVT::ValueType> RTs;
+    RTs.push_back(MVT::f64);
+    RTs.push_back(MVT::Other);
+    std::vector<SDOperand> Ops;
+    Ops.push_back(Store);
+    Ops.push_back(StackSlot);
+    return DAG.getNode(X86ISD::FILD64m, RTs, Ops);
+  }
+}
+
+
+//===----------------------------------------------------------------------===//
+//                      Pattern Matcher Implementation
+//===----------------------------------------------------------------------===//
 
 namespace {
   /// X86ISelAddressMode - This corresponds to X86AddressMode, but uses
@@ -2945,6 +2996,28 @@ unsigned ISel::SelectExpr(SDOperand N) {
       addFullAddress(BuildMI(BB, Opc, 4, Result), AM);
     }
     return Result;
+  case X86ISD::FILD64m:
+    // Make sure we generate both values.
+    assert(Result != 1 && N.getValueType() == MVT::f64);
+    if (!ExprMap.insert(std::make_pair(N.getValue(1), 1)).second)
+      assert(0 && "Load already emitted!?");
+
+    {
+      X86AddressMode AM;
+
+      SDOperand Chain   = N.getOperand(0);
+      SDOperand Address = N.getOperand(1);
+      if (getRegPressure(Chain) > getRegPressure(Address)) {
+        Select(Chain);
+        SelectAddress(Address, AM);
+      } else {
+        SelectAddress(Address, AM);
+        Select(Chain);
+      }
+
+      addFullAddress(BuildMI(BB, X86::FILD64m, 4, Result), AM);
+    }
+    return Result;
 
   case ISD::EXTLOAD:          // Arbitrarily codegen extloads as MOVZX*
   case ISD::ZEXTLOAD: {
@@ -3619,6 +3692,7 @@ void ISel::Select(SDOperand N) {
     SelectExpr(N);
     return;
   case ISD::CopyFromReg:
+  case X86ISD::FILD64m:
     ExprMap.erase(N);
     SelectExpr(N.getValue(0));
     return;
