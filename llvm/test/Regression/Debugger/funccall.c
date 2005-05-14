@@ -14,4 +14,4 @@ int main() {
 }
 
 // This is the source that corresponds to funccall.ll
-// RUN: exit 0
+// RUN: echo foo
