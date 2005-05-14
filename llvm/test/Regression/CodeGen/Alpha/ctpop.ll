@@ -1,5 +1,4 @@
 ; Make sure this testcase codegens to the ctpop instruction
-; XFAIL: *
 ; RUN: llvm-as < %s | llc -march=alpha -enable-alpha-CT | grep -i 'ctpop'
 
 declare long %llvm.ctpop(long)
