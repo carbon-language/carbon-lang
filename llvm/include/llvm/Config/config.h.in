@@ -91,6 +91,9 @@
 /* Define to 1 if you have the <fcntl.h> header file. */
 #undef HAVE_FCNTL_H
 
+/* Define to 1 if you have the `ffsll' function. */
+#undef HAVE_FFSLL
+
 /* Set to 1 if the finite function is found in <ieeefp.h> */
 #undef HAVE_FINITE_IN_IEEEFP_H
 
