@@ -4271,10 +4271,12 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
   if (InvokeInst *II = dyn_cast<InvokeInst>(Caller)) {
     NC = new InvokeInst(Callee, II->getNormalDest(), II->getUnwindDest(),
                         Args, Caller->getName(), Caller);
+    cast<InvokeInst>(II)->setCallingConv(II->getCallingConv());
   } else {
     NC = new CallInst(Callee, Args, Caller->getName(), Caller);
     if (cast<CallInst>(Caller)->isTailCall())
       cast<CallInst>(NC)->setTailCall();
+   cast<CallInst>(NC)->setCallingConv(cast<CallInst>(Caller)->getCallingConv());
   }
 
   // Insert a cast of the return type as necessary...

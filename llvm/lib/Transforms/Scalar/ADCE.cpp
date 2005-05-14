@@ -188,7 +188,8 @@ bool ADCE::doADCE() {
           // after it to the normal destination.
           std::vector<Value*> Args(II->op_begin()+3, II->op_end());
           std::string Name = II->getName(); II->setName("");
-          Instruction *NewCall = new CallInst(F, Args, Name, II);
+          CallInst *NewCall = new CallInst(F, Args, Name, II);
+          NewCall->setCallingConv(II->getCallingConv());
           II->replaceAllUsesWith(NewCall);
           new BranchInst(II->getNormalDest(), II);
 
