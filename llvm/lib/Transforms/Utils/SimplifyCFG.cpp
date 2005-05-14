@@ -1066,6 +1066,7 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
           std::vector<Value*> Args(II->op_begin()+3, II->op_end());
           CallInst *CI = new CallInst(II->getCalledValue(), Args,
                                       II->getName(), BI);
+          CI->setCallingConv(II->getCallingConv());
           // If the invoke produced a value, the Call now does instead
           II->replaceAllUsesWith(CI);
           delete II;
@@ -1280,6 +1281,7 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
             std::vector<Value*> Args(II->op_begin()+3, II->op_end());
             CallInst *CI = new CallInst(II->getCalledValue(), Args,
                                         II->getName(), BI);
+            CI->setCallingConv(II->getCallingConv());
             // If the invoke produced a value, the Call does now instead.
             II->replaceAllUsesWith(CI);
             delete II;
