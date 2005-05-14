@@ -597,6 +597,30 @@ frontends.</li>
 
 </div>
 
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="ia64-be">Known problems with the IA64 back-end</a>
+</div>
+
+<div class="doc_text">
+
+<ul>
+
+<li>C++ programs are likely to fail on IA64, as calls to <tt>setjmp</tt> are
+made where the argument is not 16-byte aligned, as required on IA64. (Strictly
+speaking this is not a bug in the IA64 back-end; it will also be encountered
+when building C++ programs using the C back-end.)</li>
+
+<li>There are a few ABI violations which will lead to problems
+when mixing LLVM output with code built with other compilers,
+particularly for C++ and floating-point programs.</li>
+
+<li>Vararg functions are not supported.</li>
+
+</ul>
+
+</div>
+
 <!-- *********************************************************************** -->
 <div class="doc_section">
   <a name="additionalinfo">Additional Information</a>
