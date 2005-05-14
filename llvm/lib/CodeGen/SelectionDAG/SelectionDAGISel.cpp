@@ -711,14 +711,20 @@ void SelectionDAGLowering::visitCall(CallInst &I) {
       case Intrinsic::memmove: visitMemIntrinsic(I, ISD::MEMMOVE); return;
 
       case Intrinsic::readport:
-      case Intrinsic::readio:
+      case Intrinsic::readio: {
+        std::vector<MVT::ValueType> VTs;
+        VTs.push_back(TLI.getValueType(I.getType()));
+        VTs.push_back(MVT::Other);
+        std::vector<SDOperand> Ops;
+        Ops.push_back(getRoot());
+        Ops.push_back(getValue(I.getOperand(1)));
         Tmp = DAG.getNode(F->getIntrinsicID() == Intrinsic::readport ?
-                          ISD::READPORT : ISD::READIO,
-                          TLI.getValueType(I.getType()), getRoot(),
-                          getValue(I.getOperand(1)));
+                          ISD::READPORT : ISD::READIO, VTs, Ops);
+                          
         setValue(&I, Tmp);
         DAG.setRoot(Tmp.getValue(1));
         return;
+      }
       case Intrinsic::writeport:
       case Intrinsic::writeio:
         DAG.setRoot(DAG.getNode(F->getIntrinsicID() == Intrinsic::writeport ?
