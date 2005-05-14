@@ -617,9 +617,14 @@ void SelectionDAGLowering::visitAlloca(AllocaInst &I) {
                             getIntPtrConstant(~(uint64_t)(StackAlign-1)));
   }
 
-  SDOperand DSA = DAG.getNode(ISD::DYNAMIC_STACKALLOC, AllocSize.getValueType(),
-                              getRoot(), AllocSize,
-                              getIntPtrConstant(Align));
+  std::vector<MVT::ValueType> VTs;
+  VTs.push_back(AllocSize.getValueType());
+  VTs.push_back(MVT::Other);
+  std::vector<SDOperand> Ops;
+  Ops.push_back(getRoot());
+  Ops.push_back(AllocSize);
+  Ops.push_back(getIntPtrConstant(Align));
+  SDOperand DSA = DAG.getNode(ISD::DYNAMIC_STACKALLOC, VTs, Ops);
   DAG.setRoot(setValue(&I, DSA).getValue(1));
 
   // Inform the Frame Information that we have just allocated a variable-sized

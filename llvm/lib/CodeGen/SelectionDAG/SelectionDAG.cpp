@@ -1350,19 +1350,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
   }
 
   SDNode *N = new SDNode(Opcode, N1, N2, N3);
-  switch (Opcode) {
-  case ISD::SRA_PARTS:
-  case ISD::SRL_PARTS:
-  case ISD::SHL_PARTS:
-    assert(0 && "Should not get here!");
-  default:
-    N->setValueTypes(VT);
-    break;
-  case ISD::DYNAMIC_STACKALLOC: // DYNAMIC_STACKALLOC produces pointer and chain
-    N->setValueTypes(VT, MVT::Other);
-    break;
-  }
-
+  N->setValueTypes(VT);
   // FIXME: memoize NODES
   AllNodes.push_back(N);
   return SDOperand(N, 0);

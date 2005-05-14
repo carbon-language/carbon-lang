@@ -373,10 +373,12 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     Tmp2 = LegalizeOp(Node->getOperand(1));  // Legalize the size.
     Tmp3 = LegalizeOp(Node->getOperand(2));  // Legalize the alignment.
     if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(1) ||
-        Tmp3 != Node->getOperand(2))
-      Result = DAG.getNode(ISD::DYNAMIC_STACKALLOC, Node->getValueType(0),
-                           Tmp1, Tmp2, Tmp3);
-    else
+        Tmp3 != Node->getOperand(2)) {
+      std::vector<MVT::ValueType> VTs(Node->value_begin(), Node->value_end());
+      std::vector<SDOperand> Ops;
+      Ops.push_back(Tmp1); Ops.push_back(Tmp2); Ops.push_back(Tmp3);
+      Result = DAG.getNode(ISD::DYNAMIC_STACKALLOC, VTs, Ops);
+    } else
       Result = Op.getValue(0);
 
     // Since this op produces two values, make sure to remember that we
