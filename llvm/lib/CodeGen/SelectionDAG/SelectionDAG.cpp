@@ -1347,44 +1347,20 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
       else
         return N1;         // Never-taken branch
     break;
-  // FIXME: figure out how to safely handle things like
-  // int foo(int x) { return 1 << (x & 255); }
-  // int bar() { return foo(256); }
-#if 0
-  case ISD::SRA_PARTS:
-  case ISD::SRL_PARTS:
-  case ISD::SHL_PARTS:
-    if (N3.getOpcode() == ISD::SIGN_EXTEND_INREG &&
-        cast<MVTSDNode>(N3)->getExtraValueType() != MVT::i1)
-      return getNode(Opcode, VT, N1, N2, N3.getOperand(0));
-    else if (N3.getOpcode() == ISD::AND)
-      if (ConstantSDNode *AndRHS = dyn_cast<ConstantSDNode>(N3.getOperand(1))) {
-        // If the and is only masking out bits that cannot effect the shift,
-        // eliminate the and.
-        unsigned NumBits = MVT::getSizeInBits(VT)*2;
-        if ((AndRHS->getValue() & (NumBits-1)) == NumBits-1)
-          return getNode(Opcode, VT, N1, N2, N3.getOperand(0));
-      }
-    break;
-#endif
   }
 
   SDNode *N = new SDNode(Opcode, N1, N2, N3);
   switch (Opcode) {
+  case ISD::SRA_PARTS:
+  case ISD::SRL_PARTS:
+  case ISD::SHL_PARTS:
+    assert(0 && "Should not get here!");
   default:
     N->setValueTypes(VT);
     break;
   case ISD::DYNAMIC_STACKALLOC: // DYNAMIC_STACKALLOC produces pointer and chain
     N->setValueTypes(VT, MVT::Other);
     break;
-
-  case ISD::SRA_PARTS:
-  case ISD::SRL_PARTS:
-  case ISD::SHL_PARTS: {
-    std::vector<MVT::ValueType> V(N->getNumOperands()-1, VT);
-    N->setValueTypes(V);
-    break;
-  }
   }
 
   // FIXME: memoize NODES
@@ -1428,6 +1404,9 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
 
   ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(Ops[1].Val);
   switch (Opcode) {
+  case ISD::ADD_PARTS:
+  case ISD::SUB_PARTS:
+    assert(0 && "Shouldn't be here, should set multiple retvals");
   default: break;
   case ISD::BRCONDTWOWAY:
     if (N1C)
@@ -1440,12 +1419,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
 
   // FIXME: MEMOIZE!!
   SDNode *N = new SDNode(Opcode, Ops);
-  if (Opcode != ISD::ADD_PARTS && Opcode != ISD::SUB_PARTS) {
-    N->setValueTypes(VT);
-  } else {
-    std::vector<MVT::ValueType> V(N->getNumOperands()/2, VT);
-    N->setValueTypes(V);
-  }
+  N->setValueTypes(VT);
   AllNodes.push_back(N);
   return SDOperand(N, 0);
 }
@@ -1456,6 +1430,28 @@ SDOperand SelectionDAG::getNode(unsigned Opcode,
   if (ResultTys.size() == 1)
     return getNode(Opcode, ResultTys[0], Ops);
 
+  // FIXME: figure out how to safely handle things like
+  // int foo(int x) { return 1 << (x & 255); }
+  // int bar() { return foo(256); }
+#if 0
+  switch (Opcode) {
+  case ISD::SRA_PARTS:
+  case ISD::SRL_PARTS:
+  case ISD::SHL_PARTS:
+    if (N3.getOpcode() == ISD::SIGN_EXTEND_INREG &&
+        cast<MVTSDNode>(N3)->getExtraValueType() != MVT::i1)
+      return getNode(Opcode, VT, N1, N2, N3.getOperand(0));
+    else if (N3.getOpcode() == ISD::AND)
+      if (ConstantSDNode *AndRHS = dyn_cast<ConstantSDNode>(N3.getOperand(1))) {
+        // If the and is only masking out bits that cannot effect the shift,
+        // eliminate the and.
+        unsigned NumBits = MVT::getSizeInBits(VT)*2;
+        if ((AndRHS->getValue() & (NumBits-1)) == NumBits-1)
+          return getNode(Opcode, VT, N1, N2, N3.getOperand(0));
+      }
+    break;
+  }
+#endif
 
   // Memoize the node.
   SDNode *&N = ArbitraryNodes[std::make_pair(Opcode, std::make_pair(ResultTys,

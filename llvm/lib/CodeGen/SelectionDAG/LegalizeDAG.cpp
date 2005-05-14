@@ -1056,8 +1056,10 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       Ops.push_back(LegalizeOp(Node->getOperand(i)));
       Changed |= Ops.back() != Node->getOperand(i);
     }
-    if (Changed)
-      Result = DAG.getNode(Node->getOpcode(), Node->getValueType(0), Ops);
+    if (Changed) {
+      std::vector<MVT::ValueType> VTs(Node->value_begin(), Node->value_end());
+      Result = DAG.getNode(Node->getOpcode(), VTs, Ops);
+    }
 
     // Since these produce multiple values, make sure to remember that we
     // legalized all of them.
@@ -1784,32 +1786,34 @@ ExpandByParts(unsigned NodeOp, SDOperand LHS, SDOperand RHS,
   ExpandOp(RHS, RHSL, RHSH);
 
   // FIXME: this should be moved to the dag combiner someday.
-  if (NodeOp == ISD::ADD_PARTS || NodeOp == ISD::SUB_PARTS)
-    if (LHSL.getValueType() == MVT::i32) {
-      SDOperand LowEl;
-      if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(LHSL))
-        if (C->getValue() == 0)
-          LowEl = RHSL;
-      if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(RHSL))
-        if (C->getValue() == 0)
-          LowEl = LHSL;
-      if (LowEl.Val) {
-        // Turn this into an add/sub of the high part only.
-        SDOperand HiEl =
-          DAG.getNode(NodeOp == ISD::ADD_PARTS ? ISD::ADD : ISD::SUB,
-                      LowEl.getValueType(), LHSH, RHSH);
-        Lo = LowEl;
-        Hi = HiEl;
-        return;
-      }
+  assert(NodeOp == ISD::ADD_PARTS || NodeOp == ISD::SUB_PARTS);
+  if (LHSL.getValueType() == MVT::i32) {
+    SDOperand LowEl;
+    if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(LHSL))
+      if (C->getValue() == 0)
+        LowEl = RHSL;
+    if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(RHSL))
+      if (C->getValue() == 0)
+        LowEl = LHSL;
+    if (LowEl.Val) {
+      // Turn this into an add/sub of the high part only.
+      SDOperand HiEl =
+        DAG.getNode(NodeOp == ISD::ADD_PARTS ? ISD::ADD : ISD::SUB,
+                    LowEl.getValueType(), LHSH, RHSH);
+      Lo = LowEl;
+      Hi = HiEl;
+      return;
     }
+  }
 
   std::vector<SDOperand> Ops;
   Ops.push_back(LHSL);
   Ops.push_back(LHSH);
   Ops.push_back(RHSL);
   Ops.push_back(RHSH);
-  Lo = DAG.getNode(NodeOp, LHSL.getValueType(), Ops);
+
+  std::vector<MVT::ValueType> VTs(2, LHSL.getValueType());
+  Lo = DAG.getNode(NodeOp, VTs, Ops);
   Hi = Lo.getValue(1);
 }
 
@@ -1824,7 +1828,11 @@ void SelectionDAGLegalize::ExpandShiftParts(unsigned NodeOp,
   Ops.push_back(LHSL);
   Ops.push_back(LHSH);
   Ops.push_back(Amt);
-  Lo = DAG.getNode(NodeOp, LHSL.getValueType(), Ops);
+  std::vector<MVT::ValueType> VTs;
+  VTs.push_back(LHSL.getValueType());
+  VTs.push_back(LHSH.getValueType());
+  VTs.push_back(Amt.getValueType());
+  Lo = DAG.getNode(NodeOp, VTs, Ops);
   Hi = Lo.getValue(1);
 }
 
