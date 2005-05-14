@@ -506,7 +506,6 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
                                    MachineBasicBlock &MBB) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
   MachineBasicBlock::iterator MBBI = prior(MBB.end());
-  MachineInstr *MI;
 
   switch (MBBI->getOpcode()) {
   case X86::RET:
@@ -524,20 +523,36 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
     int EBPOffset = MFI->getObjectOffset(MFI->getObjectIndexEnd()-1)+4;
 
     // mov ESP, EBP
-    MI = BuildMI(X86::MOV32rr, 1,X86::ESP).addReg(X86::EBP);
-    MBB.insert(MBBI, MI);
+    BuildMI(MBB, MBBI, X86::MOV32rr, 1,X86::ESP).addReg(X86::EBP);
 
     // pop EBP
-    MI = BuildMI(X86::POP32r, 0, X86::EBP);
-    MBB.insert(MBBI, MI);
+    BuildMI(MBB, MBBI, X86::POP32r, 0, X86::EBP);
   } else {
     // Get the number of bytes allocated from the FrameInfo...
     unsigned NumBytes = MFI->getStackSize();
 
     if (NumBytes) {    // adjust stack pointer back: ESP += numbytes
-      MI = BuildMI(X86::ADD32ri, 1, X86::ESP, MachineOperand::UseAndDef)
-        .addZImm(NumBytes);
-      MBB.insert(MBBI, MI);
+      // If there is an ADD32ri or SUB32ri of ESP immediately before this
+      // instruction, merge the two instructions.
+      if (MBBI != MBB.begin()) {
+        MachineBasicBlock::iterator PI = prior(MBBI);
+        if (PI->getOpcode() == X86::ADD32ri &&
+            PI->getOperand(0).getReg() == X86::ESP) {
+          NumBytes += PI->getOperand(1).getImmedValue();
+          MBB.erase(PI);
+        } else if (PI->getOpcode() == X86::SUB32ri &&
+                   PI->getOperand(0).getReg() == X86::ESP) {
+          NumBytes -= PI->getOperand(1).getImmedValue();
+          MBB.erase(PI);
+        }
+      }
+
+      if (NumBytes > 0)
+        BuildMI(MBB, MBBI, X86::ADD32ri, 2)
+          .addReg(X86::ESP, MachineOperand::UseAndDef).addZImm(NumBytes);
+      else if ((int)NumBytes < 0)
+        BuildMI(MBB, MBBI, X86::SUB32ri, 2)
+          .addReg(X86::ESP, MachineOperand::UseAndDef).addZImm(-NumBytes);
     }
   }
 }
