@@ -1672,6 +1672,80 @@ public:
   }
 } ToAsciiOptimizer;
 
+#if defined(HAVE_FFSLL)
+/// This LibCallOptimization will simplify calls to the "ffs" library
+/// calls which find the first set bit in an int, long, or long long. The 
+/// optimization is to compute the result at compile time if the argument is
+/// a constant.
+/// @brief Simplify the ffs library function.
+struct FFSOptimization : public LibCallOptimization
+{
+protected:
+  /// @brief Subclass Constructor
+  FFSOptimization(const char* funcName, const char* description)
+    : LibCallOptimization(funcName, description)
+    {}
+
+public:
+  /// @brief Default Constructor
+  FFSOptimization() : LibCallOptimization("ffs",
+      "Number of 'ffs' calls simplified") {}
+
+  /// @brief Destructor
+  virtual ~FFSOptimization() {}
+
+  /// @brief Make sure that the "fputs" function has the right prototype
+  virtual bool ValidateCalledFunction(const Function* f, SimplifyLibCalls& SLC)
+  {
+    // Just make sure this has 2 arguments
+    return (f->arg_size() == 1 && f->getReturnType() == Type::IntTy);
+  }
+
+  /// @brief Perform the ffs optimization.
+  virtual bool OptimizeCall(CallInst* ci, SimplifyLibCalls& SLC)
+  {
+    if (ConstantInt* CI = dyn_cast<ConstantInt>(ci->getOperand(1)))
+    {
+      // ffs(cnst)  -> bit#
+      // ffsl(cnst) -> bit#
+      uint64_t val = CI->getRawValue();
+      int result = ffsll(static_cast<long long>(val));
+      ci->replaceAllUsesWith(ConstantSInt::get(Type::IntTy, result));
+      ci->eraseFromParent();
+      return true;
+    }
+    return false;
+  }
+} FFSOptimizer;
+
+/// This LibCallOptimization will simplify calls to the "ffsl" library
+/// calls. It simply uses FFSOptimization for which the transformation is
+/// identical.
+/// @brief Simplify the ffsl library function.
+struct FFSLOptimization : public FFSOptimization
+{
+public:
+  /// @brief Default Constructor
+  FFSLOptimization() : FFSOptimization("ffsl",
+      "Number of 'ffsl' calls simplified") {}
+
+} FFSLOptimizer;
+
+/// This LibCallOptimization will simplify calls to the "ffsll" library
+/// calls. It simply uses FFSOptimization for which the transformation is
+/// identical.
+/// @brief Simplify the ffsl library function.
+struct FFSLLOptimization : public FFSOptimization
+{
+public:
+  /// @brief Default Constructor
+  FFSLLOptimization() : FFSOptimization("ffsll",
+      "Number of 'ffsll' calls simplified") {}
+
+} FFSLLOptimizer;
+
+#endif
+
 /// A function to compute the length of a null-terminated constant array of
 /// integers.  This function can't rely on the size of the constant array 
 /// because there could be a null terminator in the middle of the array. 
@@ -1787,9 +1861,6 @@ bool getConstantStringLength(Value* V, uint64_t& len, ConstantArray** CA )
 //
 // exp, expf, expl:
 //   * exp(log(x))  -> x
-//
-// ffs, ffsl, ffsll:
-//   * ffs(cnst)     -> cnst'
 //
 // isascii:
 //   * isascii(c)    -> ((c & ~0x7f) == 0)
