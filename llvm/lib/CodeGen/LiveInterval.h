@@ -26,6 +26,8 @@
 #include <cassert>
 
 namespace llvm {
+  class MRegisterInfo;
+
   /// LiveRange structure - This represents a simple register range in the
   /// program, with an inclusive start point and an exclusive end point.
   /// These ranges are rendered as [start,end).
@@ -175,6 +177,7 @@ namespace llvm {
       return beginNumber() < other.beginNumber();
     }
 
+    void print(std::ostream &OS, const MRegisterInfo *MRI = 0) const;
     void dump() const;
 
   private:
@@ -185,7 +188,10 @@ namespace llvm {
     LiveInterval& operator=(const LiveInterval& rhs); // DO NOT IMPLEMENT
   };
 
-  std::ostream& operator<<(std::ostream& os, const LiveInterval& li);
+  inline std::ostream &operator<<(std::ostream &OS, const LiveInterval &LI) {
+    LI.print(OS);
+    return OS;
+  }
 }
 
 #endif

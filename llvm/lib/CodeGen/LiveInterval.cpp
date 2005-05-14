@@ -20,6 +20,7 @@
 
 #include "LiveInterval.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/Target/MRegisterInfo.h"
 #include <algorithm>
 #include <iostream>
 #include <map>
@@ -351,17 +352,22 @@ void LiveRange::dump() const {
   std::cerr << *this << "\n";
 }
 
+void LiveInterval::print(std::ostream &OS, const MRegisterInfo *MRI) const {
+  if (MRI && MRegisterInfo::isPhysicalRegister(reg))
+    OS << MRI->getName(reg);
+  else
+    OS << "%reg" << reg;
 
-std::ostream& llvm::operator<<(std::ostream& os, const LiveInterval& li) {
-  os << "%reg" << li.reg << ',' << li.weight;
-  if (li.empty())
-    return os << "EMPTY";
+  OS << ',' << weight;
 
-  os << " = ";
-  for (LiveInterval::Ranges::const_iterator i = li.ranges.begin(),
-         e = li.ranges.end(); i != e; ++i)
-    os << *i;
-  return os;
+  if (empty())
+    OS << "EMPTY";
+  else {
+    OS << " = ";
+    for (LiveInterval::Ranges::const_iterator I = ranges.begin(),
+           E = ranges.end(); I != E; ++I)
+    OS << *I;
+  }
 }
 
 void LiveInterval::dump() const {

@@ -142,11 +142,11 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
 
   numIntervals += getNumIntervals();
 
-#if 1
-  DEBUG(std::cerr << "********** INTERVALS **********\n");
-  DEBUG(for (iterator I = begin(), E = end(); I != E; ++I)
-        std::cerr << I->second << "\n");
-#endif
+  DEBUG(std::cerr << "********** INTERVALS **********\n";
+        for (iterator I = begin(), E = end(); I != E; ++I) {
+          I->second.print(std::cerr, mri_);
+          std::cerr << "\n";
+        });
 
   // join intervals if requested
   if (EnableJoining) joinIntervals();
