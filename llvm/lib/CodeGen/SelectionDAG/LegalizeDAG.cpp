@@ -977,9 +977,13 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     Tmp1 = LegalizeOp(Node->getOperand(0));
     Tmp2 = LegalizeOp(Node->getOperand(1));
 
-    if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(1))
-      Result = DAG.getNode(ISD::READPORT, Node->getValueType(0), Tmp1, Tmp2);
-    else
+    if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(1)) {
+      std::vector<MVT::ValueType> VTs(Node->value_begin(), Node->value_end());
+      std::vector<SDOperand> Ops;
+      Ops.push_back(Tmp1);
+      Ops.push_back(Tmp2);
+      Result = DAG.getNode(ISD::READPORT, VTs, Ops);
+    } else
       Result = SDOperand(Node, 0);
     // Since these produce two values, make sure to remember that we legalized
     // both of them.
@@ -1003,10 +1007,13 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     case TargetLowering::Custom:
     default: assert(0 && "This action not implemented for this operation!");
     case TargetLowering::Legal:
-      if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(1))
-        Result = DAG.getNode(Node->getOpcode(), Node->getValueType(0),
-                             Tmp1, Tmp2);
-      else
+      if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(1)) {
+        std::vector<MVT::ValueType> VTs(Node->value_begin(), Node->value_end());
+        std::vector<SDOperand> Ops;
+        Ops.push_back(Tmp1);
+        Ops.push_back(Tmp2);
+        Result = DAG.getNode(ISD::READPORT, VTs, Ops);
+      } else
         Result = SDOperand(Node, 0);
       break;
     case TargetLowering::Expand:

@@ -1215,12 +1215,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     N = new SDNode(Opcode, N1, N2);
   }
 
-
-  if (Opcode != ISD::READPORT && Opcode != ISD::READIO)
-    N->setValueTypes(VT);
-  else
-    N->setValueTypes(VT, MVT::Other);
-
+  N->setValueTypes(VT);
   AllNodes.push_back(N);
   return SDOperand(N, 0);
 }
