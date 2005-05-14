@@ -257,6 +257,13 @@ void SelectionDAG::DeleteNodeIfDead(SDNode *N, void *NodeSet) {
       BinaryOps.erase(std::make_pair(N->getOpcode(),
                                      std::make_pair(N->getOperand(0),
                                                     N->getOperand(1))));
+    else {
+      // Remove the node from the ArbitraryNodes map.
+      std::vector<MVT::ValueType> RV(N->value_begin(), N->value_end());
+      std::vector<SDOperand>     Ops(N->op_begin(), N->op_end());
+      ArbitraryNodes.erase(std::make_pair(N->getOpcode(),
+                                          std::make_pair(RV, Ops)));
+    }
     break;
   }
 
@@ -1410,29 +1417,29 @@ SDOperand SelectionDAG::getSrcValue(const Value *V, int Offset) {
 }
 
 SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
-                                std::vector<SDOperand> &Children) {
-  switch (Children.size()) {
+                                std::vector<SDOperand> &Ops) {
+  switch (Ops.size()) {
   case 0: return getNode(Opcode, VT);
-  case 1: return getNode(Opcode, VT, Children[0]);
-  case 2: return getNode(Opcode, VT, Children[0], Children[1]);
-  case 3: return getNode(Opcode, VT, Children[0], Children[1], Children[2]);
+  case 1: return getNode(Opcode, VT, Ops[0]);
+  case 2: return getNode(Opcode, VT, Ops[0], Ops[1]);
+  case 3: return getNode(Opcode, VT, Ops[0], Ops[1], Ops[2]);
   default: break;
   }
 
-  ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(Children[1].Val);
+  ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(Ops[1].Val);
   switch (Opcode) {
   default: break;
   case ISD::BRCONDTWOWAY:
     if (N1C)
       if (N1C->getValue()) // Unconditional branch to true dest.
-        return getNode(ISD::BR, MVT::Other, Children[0], Children[2]);
+        return getNode(ISD::BR, MVT::Other, Ops[0], Ops[2]);
       else                 // Unconditional branch to false dest.
-        return getNode(ISD::BR, MVT::Other, Children[0], Children[3]);
+        return getNode(ISD::BR, MVT::Other, Ops[0], Ops[3]);
     break;
   }
 
   // FIXME: MEMOIZE!!
-  SDNode *N = new SDNode(Opcode, Children);
+  SDNode *N = new SDNode(Opcode, Ops);
   if (Opcode != ISD::ADD_PARTS && Opcode != ISD::SUB_PARTS) {
     N->setValueTypes(VT);
   } else {
@@ -1442,6 +1449,23 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
   AllNodes.push_back(N);
   return SDOperand(N, 0);
 }
+
+SDOperand SelectionDAG::getNode(unsigned Opcode,
+                                std::vector<MVT::ValueType> &ResultTys,
+                                std::vector<SDOperand> &Ops) {
+  if (ResultTys.size() == 1)
+    return getNode(Opcode, ResultTys[0], Ops);
+
+
+  // Memoize the node.
+  SDNode *&N = ArbitraryNodes[std::make_pair(Opcode, std::make_pair(ResultTys,
+                                                                    Ops))];
+  if (N) return SDOperand(N, 0);
+  N = new SDNode(Opcode, Ops);
+  N->setValueTypes(ResultTys);
+  return SDOperand(N, 0);
+}
+
 
 SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,SDOperand N1,
                                 MVT::ValueType EVT) {
