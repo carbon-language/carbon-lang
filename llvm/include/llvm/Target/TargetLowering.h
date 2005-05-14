@@ -299,7 +299,7 @@ public:
   /// which are registered to use 'custom' lowering.  This callback is invoked.
   /// If the target has no operations that require custom lowering, it need not
   /// implement this.  The default implementation of this aborts.
-  virtual SDOperand LowerOperation(SDOperand Op);
+  virtual SDOperand LowerOperation(SDOperand Op, SelectionDAG &DAG);
 
 
 private:
