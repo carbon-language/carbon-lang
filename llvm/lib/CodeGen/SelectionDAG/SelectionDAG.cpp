@@ -1463,6 +1463,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode,
   if (N) return SDOperand(N, 0);
   N = new SDNode(Opcode, Ops);
   N->setValueTypes(ResultTys);
+  AllNodes.push_back(N);
   return SDOperand(N, 0);
 }
 
@@ -1572,7 +1573,8 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,SDOperand N1,
 }
 
 SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,SDOperand N1,
-                                SDOperand N2, SDOperand N3, SDOperand N4, MVT::ValueType EVT) {
+                                SDOperand N2, SDOperand N3, SDOperand N4,
+                                MVT::ValueType EVT) {
   switch (Opcode) {
   default:  assert(0 && "Bad opcode for this accessor!");
   case ISD::TRUNCSTORE:
