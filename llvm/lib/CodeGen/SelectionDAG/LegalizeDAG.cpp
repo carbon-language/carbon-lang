@@ -2044,6 +2044,8 @@ static SDNode *FindCallSeqEnd(SDNode *Node) {
     return FindCallSeqEnd(*Node->use_begin());
 
   SDOperand TheChain(Node, Node->getNumValues()-1);
+  if (TheChain.getValueType() != MVT::Other)
+    TheChain = SDOperand(Node, 0);
   assert(TheChain.getValueType() == MVT::Other && "Is not a token chain!");
 
   for (SDNode::use_iterator UI = Node->use_begin(),
