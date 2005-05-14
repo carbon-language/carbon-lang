@@ -1359,14 +1359,13 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
 SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
                                 SDOperand N1, SDOperand N2, SDOperand N3, 
                                 SDOperand N4) {
-  assert(Opcode == ISD::STORE && "Only stores should use this");
-
-  SDNode *N = new SDNode(Opcode, N1, N2, N3, N4);
-  N->setValueTypes(VT);
-
-  // FIXME: memoize NODES
-  AllNodes.push_back(N);
-  return SDOperand(N, 0);
+  std::vector<SDOperand> Ops;
+  Ops.reserve(4);
+  Ops.push_back(N1);
+  Ops.push_back(N2);
+  Ops.push_back(N3);
+  Ops.push_back(N4);
+  return getNode(Opcode, VT, Ops);
 }
 
 SDOperand SelectionDAG::getSrcValue(const Value *V, int Offset) {
