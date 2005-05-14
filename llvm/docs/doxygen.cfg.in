@@ -88,7 +88,7 @@ HIDE_UNDOC_CLASSES     = NO
 BRIEF_MEMBER_DESC      = YES
 
 # If the REPEAT_BRIEF tag is set to YES (the default) Doxygen will prepend 
-# the brief description of a member or function before the detailed description. 
+# the brief description of a member or function before the detailed description.
 # Note: if both HIDE_UNDOC_MEMBERS and BRIEF_MEMBER_DESC are set to NO, the 
 # brief descriptions will be completely suppressed.
 
@@ -536,7 +536,7 @@ COMPACT_LATEX          = NO
 # by the printer. Possible values are: a4, a4wide, letter, legal and 
 # executive. If left blank a4wide will be used.
 
-PAPER_TYPE             = a4wide
+PAPER_TYPE             = letter
 
 # The EXTRA_PACKAGES tag can be to specify one or more names of LaTeX 
 # packages that should be included in the LaTeX output.
