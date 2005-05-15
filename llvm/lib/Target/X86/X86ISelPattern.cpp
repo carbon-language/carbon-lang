@@ -3764,8 +3764,10 @@ static SDOperand GetAdjustedArgumentStores(SDOperand Chain, int Offset,
   MVT::ValueType StoreVT;
   switch (Chain.getOpcode()) {
   case ISD::CALLSEQ_START:
-    // If we found the start of the call sequence, we're done.
-    return Chain;
+    // If we found the start of the call sequence, we're done.  We actually
+    // strip off the CALLSEQ_START node, to avoid generating the
+    // ADJCALLSTACKDOWN marker for the tail call.
+    return Chain.getOperand(0);
   case ISD::TokenFactor: {
     std::vector<SDOperand> Ops;
     Ops.reserve(Chain.getNumOperands());
