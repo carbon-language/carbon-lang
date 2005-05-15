@@ -301,7 +301,7 @@ private:
 
 // Make sure that any clients of this file link in LoopInfo.cpp
 static IncludeFile
-LOOP_INFO_INCLUDE_FILE(reinterpret_cast<void*>(&LoopInfo::stub));
+LOOP_INFO_INCLUDE_FILE((void*)(&LoopInfo::stub));
 
 // Allow clients to walk the list of nested loops...
 template <> struct GraphTraits<const Loop*> {
