@@ -27,6 +27,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Transforms/IPO.h"
+#include "llvm/Config/config.h"
 #include <iostream>
 using namespace llvm;
 
