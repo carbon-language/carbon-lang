@@ -17,7 +17,7 @@ D: MingW Win32 API portability layer
 
 N: Nate Begeman
 E: natebegeman@mac.com
-D: Portions of the PowerPC backend
+D: Primary PowerPC backend developer
 
 N: Misha Brukman
 E: brukman+llvm@uiuc.edu
