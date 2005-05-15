@@ -150,17 +150,35 @@ to handle more general cases, but the simple case will always work if the code
 generator supports tail calls.  Here is a simple example:</p>
 
 <p><pre>
-fastcc int %bar(int %X, int(double, int)* %FP) {        ;<i> fastcc</i>
-     %Y = tail call fastcc int %FP(double 0.0, int %X)  ;<i> tail, fastcc</i>
-     ret int %Y
-}
+    fastcc int %bar(int %X, int(double, int)* %FP) {       ;<i> fastcc</i>
+        %Y = tail call fastcc int %FP(double 0.0, int %X)  ;<i> tail, fastcc</i>
+        ret int %Y
+    }
 </pre></p>
 
 <p>In LLVM 1.5, the X86 code generator is the only target that has been enhanced
 to support proper tail calls (other targets will be enhanced in future).
 Further, because this support was added very close to the release, it is
-disabled by default.  Pass <tt>-enable-x86-fastcc</tt> to llc to enable it.  X86
-support will be enabled by default in the next LLVM release.</p>
+disabled by default.  Pass <tt>-enable-x86-fastcc</tt> to llc to enable it (this
+will be enabled by default in the next release).  The example above compiles to:
+</p>
+
+<p><pre>
+    bar:
+        sub ESP, 8                   # Callee uses more space than the caller
+        mov ECX, DWORD PTR [ESP + 8] # Get the old return address
+        mov DWORD PTR [ESP + 4], 0   # First half of 0.0
+        mov DWORD PTR [ESP + 8], 0   # Second half of 0.0
+        mov DWORD PTR [ESP], ECX     # Put the return address where it belongs
+        jmp EDX                      # Tail call "FP"
+</pre></p>
+
+<p>
+With fastcc on X86, the first two integer arguments are passed in EAX/EDX, the
+callee pops its arguments off the stack, and the argument area is always a
+multiple of 8 bytes in size.
+</p>
+
 </div>
 
 <!--_________________________________________________________________________-->
