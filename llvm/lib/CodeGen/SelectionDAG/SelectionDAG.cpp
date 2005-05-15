@@ -843,6 +843,8 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
   case ISD::XOR:
   case ISD::UDIV:
   case ISD::UREM:
+  case ISD::MULHU:
+  case ISD::MULHS:
     assert(MVT::isInteger(VT) && "This operator does not apply to FP types!");
     // fall through
   case ISD::ADD:
@@ -939,6 +941,16 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
         SDOperand ShAmt = getConstant(ExactLog2(C2), TLI.getShiftAmountTy());
         return getNode(ISD::SHL, VT, N1, ShAmt);
       }
+      break;
+
+    case ISD::MULHU:
+    case ISD::MULHS:
+      if (!C2) return N2;         // mul X, 0 -> 0
+
+      if (C2 == 1)                // 0X*01 -> 0X  hi(0X) == 0
+        return getConstant(0, VT);
+
+      // Many others could be handled here, including -1, powers of 2, etc.
       break;
 
     case ISD::UDIV:
