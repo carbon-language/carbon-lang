@@ -484,7 +484,7 @@ dnl=== SECTION 8: Check for specific functions needed
 dnl===
 dnl===-----------------------------------------------------------------------===
 
-AC_CHECK_FUNCS([backtrace ffsll getcwd getpagesize getrusage gettimeofday ])
+AC_CHECK_FUNCS([backtrace getcwd getpagesize getrusage gettimeofday ])
 AC_CHECK_FUNCS([isatty mkdtemp mkstemp mktemp ])
 AC_CHECK_FUNCS([realpath sbrk setrlimit strdup strerror strerror_r ])
 AC_CHECK_FUNCS([strtoll strtoq sysconf])
