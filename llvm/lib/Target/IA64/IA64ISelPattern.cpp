@@ -816,7 +816,8 @@ SDOperand ISel::BuildConstmulSequence(SDOperand N) {
   // do the transformation, filling out 'ops'
   lefevre(boothEncodedString, ops);
 
-  SDOperand results[ops.size()]; // temporary results (of adds/subs of shifts)
+  assert(ops.size() < 80 && "constmul code has gone haywire\n");
+  SDOperand results[80]; // temporary results (of adds/subs of shifts)
   
   // now turn 'ops' into DAG bits
   for(unsigned i=0; i<ops.size(); i++) {
