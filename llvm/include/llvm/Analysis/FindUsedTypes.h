@@ -60,7 +60,7 @@ public:
 
 // Make sure that any clients of this file link in PostDominators.cpp
 static IncludeFile
-FIND_USED_TYPES_INCLUDE_FILE(reinterpret_cast<void*>(&FindUsedTypes::stub));
+FIND_USED_TYPES_INCLUDE_FILE((void*)(&FindUsedTypes::stub));
 
 } // End llvm namespace
 
