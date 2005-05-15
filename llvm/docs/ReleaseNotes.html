@@ -75,7 +75,8 @@ and enhancements, described below.</p>
 </div>
 
 <!--_________________________________________________________________________-->
-<div class="doc_subsubsection">New Native Code Generators</div>
+<div class="doc_subsubsection"><a href="newcg">New Native Code
+Generators</a></div>
 
 <div class="doc_text">
 <p>
@@ -87,7 +88,8 @@ rapidly.
 </div>
 
 <!--_________________________________________________________________________-->
-<div class="doc_subsubsection">New Instruction Selector Framework</div>
+<div class="doc_subsubsection"><a name="selectiondag">New Instruction
+Selector Framework</a></div>
 
 <div class="doc_text">
 <p>This release includes a <a href="CodeGenerator.html#instselect">new framework
@@ -104,7 +106,8 @@ SPARC backends will be migrated when time permits.
 </div>
 
 <!--_________________________________________________________________________-->
-<div class="doc_subsubsection">New Support For Custom Calling Convetions</div>
+<div class="doc_subsubsection"><a name="customccs">New Support For Custom
+Calling Conventions</a></div>
 
 <div class="doc_text">
 <p>LLVM 1.5 adds supports for <a href="LangRef.html#callingconv">custom and
@@ -125,7 +128,8 @@ fastcall on X86).</p>
 </div>
 
 <!--_________________________________________________________________________-->
-<div class="doc_subsubsection">New Support for "Proper Tail Calls"</div>
+<div class="doc_subsubsection"><a name="tailcalls">New Support for
+"Proper Tail Calls"</a></div>
 
 <div class="doc_text">
 <p>The release now includes support for <a
@@ -209,6 +213,7 @@ multiple of 8 bytes in size.
   <li>LLVM now includes workarounds in the code generator generator which
       reduces the likelyhood of <a href="http://llvm.cs.uiuc.edu/PR448">GCC
       hitting swap during optimized builds</a>.</li>
+  <li>The PowerPC backend generates far better code than in LLVM 1.4.</li>
 </ol>
 </div>
 
