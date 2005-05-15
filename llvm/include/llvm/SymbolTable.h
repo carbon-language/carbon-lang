@@ -108,7 +108,7 @@ public:
   inline bool isEmpty() const { return pmap.empty() && tmap.empty(); }
 
   /// @brief The number of name/type pairs is returned.
-  inline unsigned num_types() const { return (unsigned)tmap.size(); }
+  inline unsigned num_types() const { return unsigned(tmap.size()); }
 
   /// Given a base name, return a string that is either equal to it or
   /// derived from it that does not already occur in the symbol table

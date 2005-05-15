@@ -27,6 +27,8 @@ class Instruction;
 
 struct AssemblyAnnotationWriter {
 
+  virtual ~AssemblyAnnotationWriter();
+
   // emitFunctionAnnot - This may be implemented to emit a string right before
   // the start of a function.
   virtual void emitFunctionAnnot(const Function *F, std::ostream &OS) {}

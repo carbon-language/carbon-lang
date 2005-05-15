@@ -32,8 +32,8 @@ class CallSite {
   Instruction *I;
 public:
   CallSite() : I(0) {}
-  CallSite(CallInst *CI) : I((Instruction*)CI) {}
-  CallSite(InvokeInst *II) : I((Instruction*)II) {}
+  CallSite(CallInst *CI) : I(reinterpret_cast<Instruction*>(CI)) {}
+  CallSite(InvokeInst *II) : I(reinterpret_cast<Instruction*>(II)) {}
   CallSite(const CallSite &CS) : I(CS.I) {}
   CallSite &operator=(const CallSite &CS) { I = CS.I; return *this; }
 
@@ -45,9 +45,9 @@ public:
   static CallSite get(Value *V) {
     if (Instruction *I = dyn_cast<Instruction>(V)) {
       if (I->getOpcode() == Instruction::Call)
-        return CallSite((CallInst*)I);
+        return CallSite(reinterpret_cast<CallInst*>(I));
       else if (I->getOpcode() == Instruction::Invoke)
-        return CallSite((InvokeInst*)I);
+        return CallSite(reinterpret_cast<InvokeInst*>(I));
     }
     return CallSite();
   }

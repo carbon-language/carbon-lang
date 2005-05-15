@@ -519,7 +519,7 @@ public:
   /// if it is a direct call.  If it is a call through a function pointer,
   /// return null.
   Function *getCalledFunction() const {
-    return (Function*)dyn_cast<Function>(getOperand(0));
+    return static_cast<Function*>(dyn_cast<Function>(getOperand(0)));
   }
 
   // getCalledValue - Get a pointer to a method that is invoked by this inst.
@@ -1153,7 +1153,7 @@ public:
   // successor.
   inline ConstantInt *getSuccessorValue(unsigned idx) const {
     assert(idx < getNumSuccessors() && "Successor # out of range!");
-    return (ConstantInt*)getOperand(idx*2);
+    return reinterpret_cast<ConstantInt*>(getOperand(idx*2));
   }
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:

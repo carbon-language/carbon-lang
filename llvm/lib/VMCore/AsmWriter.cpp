@@ -34,6 +34,9 @@ using namespace llvm;
 
 namespace llvm {
 
+// Make virtual table appear in this compilation unit.
+AssemblyAnnotationWriter::~AssemblyAnnotationWriter() {}
+
 /// This class provides computation of slot numbers for LLVM Assembly writing.
 /// @brief LLVM Assembly Writing Slot Computation.
 class SlotMachine {

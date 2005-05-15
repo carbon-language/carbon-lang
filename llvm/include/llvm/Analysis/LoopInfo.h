@@ -230,7 +230,8 @@ public:
   /// block is in no loop (for example the entry node), null is returned.
   ///
   Loop *getLoopFor(const BasicBlock *BB) const {
-    std::map<BasicBlock *, Loop*>::const_iterator I=BBMap.find((BasicBlock*)BB);
+    std::map<BasicBlock *, Loop*>::const_iterator I=
+      BBMap.find(const_cast<BasicBlock*>(BB));
     return I != BBMap.end() ? I->second : 0;
   }
 
@@ -300,7 +301,7 @@ private:
 
 // Make sure that any clients of this file link in LoopInfo.cpp
 static IncludeFile
-LOOP_INFO_INCLUDE_FILE((void*)&LoopInfo::stub);
+LOOP_INFO_INCLUDE_FILE(reinterpret_cast<void*>(&LoopInfo::stub));
 
 // Allow clients to walk the list of nested loops...
 template <> struct GraphTraits<const Loop*> {
