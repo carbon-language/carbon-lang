@@ -211,6 +211,12 @@ which primarily helps iterator-intensive C++ codes.</li>
 <li>The code generator now uses information about takes advantage of commutative
 two-address instructions when performing register allocation.</li>
 
+<li>A new pass has been added to gccas to simplify well-known library calls. The
+pass will short circuit calls to many of the string, memory, and printf type 
+functions or replace the calls with simpler/faster calls, where possible given
+information known statically about the arguments to the call. To use the
+pass, specify <tt>-simplify-libcalls</tt> to the <tt>opt</tt> tool.</li>
+
    
 </ol>
 </div>
