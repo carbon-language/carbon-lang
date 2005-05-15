@@ -191,13 +191,23 @@ let isCall = 1 in
     def CALL32m     : I<0xFF, MRM2m, (ops i32mem:$dst), "call {*}$dst">;
   }
 
+// Tail call stuff.
 let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in
-  def TAILJMPd : IBr<0xE9, (ops calltarget:$dst), "jmp $dst">;
+  def TAILJMPd : IBr<0xE9, (ops calltarget:$dst), "jmp $dst  # TAIL CALL">;
 let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in
-  def TAILJMPr : I<0xFF, MRM4r, (ops R32:$dst), "jmp {*}$dst">;
+  def TAILJMPr : I<0xFF, MRM4r, (ops R32:$dst), "jmp {*}$dst  # TAIL CALL">;
 let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in
-  def TAILJMPm : I<0xFF, MRM4m, (ops i32mem:$dst), "jmp {*}$dst">;
-       
+  def TAILJMPm : I<0xFF, MRM4m, (ops i32mem:$dst), "jmp {*}$dst  # TAIL CALL">;
+
+// ADJSTACKPTRri - This is a standard ADD32ri instruction, identical in every
+// way, except that it is marked as being a terminator.  This causes the epilog
+// inserter to insert reloads of callee saved registers BEFORE this.  We need
+// this until we have a more accurate way of tracking where the stack pointer is
+// within a function.
+let isTerminator = 1, isTwoAddress = 1 in
+  def ADJSTACKPTRri : Ii32<0x81, MRM0r, (ops R32:$dst, R32:$src1, i32imm:$src2),
+                           "add{l} {$src2, $dst|$dst, $src2}">;
+
 //===----------------------------------------------------------------------===//
 //  Miscellaneous Instructions...
 //
