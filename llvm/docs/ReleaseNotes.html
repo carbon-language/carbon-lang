@@ -75,15 +75,15 @@ and enhancements, described below.</p>
 </div>
 
 <!--_________________________________________________________________________-->
-<div class="doc_subsubsection"><a href="newcg">New Native Code
+<div class="doc_subsubsection"><a name="newcg">New Native Code
 Generators</a></div>
 
 <div class="doc_text">
 <p>
 This release includes new native code generators for <a
-href="#alpha-be">Alpha</a>, <a href="#ia64-be">IA-64</a>, and SPARC-V8 (32-bit
-SPARC).  These code generators are still beta quality, but are progressing
-rapidly.
+href="#alpha-be">Alpha</a>, <a href="#ia64-be">IA-64</a>, and <a
+href="#sparcv8">SPARC-V8</a> (32-bit SPARC).  These code generators are still
+beta quality, but are progressing rapidly.
 </p>
 </div>
 
@@ -138,7 +138,7 @@ required to implement languages like Scheme.  Tail calls make use of two
 features: custom calling conventions (described above), which allow the code
 generator to emit code for the caller to deallocate its own stack when it
 returns.  The second feature is a flag on the <a href="LangRef.html#i_call">call
-instruction</a>, which indicates that the callee does not access the callers
+instruction</a>, which indicates that the callee does not access the caller's
 stack frame (indicating that it is acceptable to deallocate the caller stack
 before invoking the callee).  LLVM proper tail calls run on the system stack (as
 do normal calls), supports indirect tail calls, tail calls with arbitrary
@@ -153,12 +153,12 @@ return of the called value (or void).  The optimizer and code generator attempt
 to handle more general cases, but the simple case will always work if the code
 generator supports tail calls.  Here is a simple example:</p>
 
-<p><pre>
+<pre>
     fastcc int %bar(int %X, int(double, int)* %FP) {       ;<i> fastcc</i>
         %Y = tail call fastcc int %FP(double 0.0, int %X)  ;<i> tail, fastcc</i>
         ret int %Y
     }
-</pre></p>
+</pre>
 
 <p>In LLVM 1.5, the X86 code generator is the only target that has been enhanced
 to support proper tail calls (other targets will be enhanced in future).
@@ -167,7 +167,7 @@ disabled by default.  Pass <tt>-enable-x86-fastcc</tt> to llc to enable it (this
 will be enabled by default in the next release).  The example above compiles to:
 </p>
 
-<p><pre>
+<pre>
     bar:
         sub ESP, 8                   # Callee uses more space than the caller
         mov ECX, DWORD PTR [ESP + 8] # Get the old return address
@@ -175,7 +175,7 @@ will be enabled by default in the next release).  The example above compiles to:
         mov DWORD PTR [ESP + 8], 0   # Second half of 0.0
         mov DWORD PTR [ESP], ECX     # Put the return address where it belongs
         jmp EDX                      # Tail call "FP"
-</pre></p>
+</pre>
 
 <p>
 With fastcc on X86, the first two integer arguments are passed in EAX/EDX, the
@@ -724,6 +724,23 @@ particularly for C++ and floating-point programs.</li>
 
 <li>Vararg functions are not supported.</li>
 
+</ul>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="sparcv8">Known problems with the SPARC-V8 back-end</a>
+</div>
+
+<div class="doc_text">
+
+<ul>
+<li>Many features are still missing (e.g. support for 64-bit integer
+arithmetic).</li>
+
+<li>This backend needs to be updated to use the SelectionDAG instruction
+selection framework.</li>
 </ul>
 
 </div>
