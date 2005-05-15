@@ -544,6 +544,9 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
                    PI->getOperand(0).getReg() == X86::ESP) {
           NumBytes -= PI->getOperand(1).getImmedValue();
           MBB.erase(PI);
+        } else if (PI->getOpcode() == X86::ADJSTACKPTRri) {
+          NumBytes += PI->getOperand(1).getImmedValue();
+          MBB.erase(PI);
         }
       }
 
