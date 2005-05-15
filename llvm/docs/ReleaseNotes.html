@@ -33,8 +33,8 @@
 
 <p>This document contains the release notes for the LLVM compiler
 infrastructure, release 1.5.  Here we describe the status of LLVM, including any
-known problems and improvements from the previous release.  The most up-to-date
-version of this document can be found on the <a
+known problems and major improvements from the previous release.  The most
+up-to-date version of this document can be found on the <a
 href="http://llvm.cs.uiuc.edu/releases/1.5/">LLVM 1.5 web site</a>.  If you are
 not reading this on the LLVM web pages, you should probably go there because
 this document may be updated after the release.</p>
@@ -60,48 +60,124 @@ href="http://llvm.cs.uiuc.edu/releases/">releases page</a>.</p>
 
 <div class="doc_text">
 
-<p>This is the sixth public release of the LLVM compiler infrastructure.</p>
+<p>This is the sixth public release of the LLVM Compiler Infrastructure.</p>
 
-<p> At this time, LLVM is known to correctly compile a broad range of C and
-C++ programs, including the SPEC CPU95 &amp; 2000 suite. TODO.  It also includes
-bug fixes for those problems found since the 1.4 release.</p>
+<p> At this time, LLVM is known to correctly compile a wide range of C and C++
+programs, including the SPEC CPU95 &amp; 2000 suite.  It includes bug fixes for
+those problems found since the 1.4 release and a large number of new features
+and enhancements, described below.</p>
 
 </div>
 
 <!--=========================================================================-->
-<div class="doc_subsubsection">
-<a name="newfeatures">This release implements the following new features:</a>
+<div class="doc_subsection">
+<a name="newfeatures">New Features in LLVM 1.5</a>
 </div>
+
+<!--_________________________________________________________________________-->
+<div class="doc_subsubsection">New Native Code Generators</div>
+
+<div class="doc_text">
+<p>
+This release includes new native code generators for <a
+href="#alpha-be">Alpha</a>, <a href="#ia64-be">IA-64</a>, and SPARC-V8 (32-bit
+SPARC).  These code generators are still beta quality, but are progressing
+rapidly.
+</p>
+</div>
+
+<!--_________________________________________________________________________-->
+<div class="doc_subsubsection">New Instruction Selector Framework</div>
+
+<div class="doc_text">
+<p>This release includes a <a href="CodeGenerator.html#instselect">new framework
+for building instruction selectors</a>, which has long been the hardest part of
+building a new LLVM target.  This framework handles a lot of the mundane (but
+easy to get wrong) details of writing the instruction selector, such as
+generating efficient code for <a
+href="LangRef.html#i_getelementptr">getelementptr</a> instructions, promoting
+small integer types to larger types (e.g.  for RISC targets with one size of
+integer registers), expanding 64-bit integer operations for 32-bit hosts, etc.
+Currently, the X86, PowerPC, Alpha, and IA-64 backends use this framework.  The
+SPARC backends will be migrated when time permits.
+</p>
+</div>
+
+<!--_________________________________________________________________________-->
+<div class="doc_subsubsection">New Support For Custom Calling Convetions</div>
+
+<div class="doc_text">
+<p>LLVM 1.5 adds supports for <a href="LangRef.html#callingconv">custom and
+target-specific calling conventions</a>.  Traditionally, the LLVM code
+generators match the native C calling conventions for a target.  This is
+important for compatibility, but is not very flexible.  This release allows
+custom calling conventions to be established for functions, and defines three
+target-independent conventions (C call, fast call, and cold call) which may be
+supported by code generators.  When possible, the LLVM optimizer promotes C
+functions to use the "fastcc" convention, allowing the use of more efficient
+calling sequences (e.g., parameters are passed in registers in the X86 target).
+</p>
+
+<p>Targets may now also define target-specific calling conventions, allowing
+LLVM to fully support calling convention altering options (e.g. GCC's
+<tt>-mregparm</tt> flag) and well-defined target conventions (e.g. stdcall and
+fastcall on X86).</p>
+</div>
+
+<!--_________________________________________________________________________-->
+<div class="doc_subsubsection">New Support for "Proper Tail Calls"</div>
+
+<div class="doc_text">
+<p>The release now includes support for <a
+href="http://doi.acm.org/10.1145/277650.277719">proper tail calls</a>, as
+required to implement languages like Scheme.  Tail calls make use of two
+features: custom calling conventions (described above), which allow the code
+generator to emit code for the caller to deallocate its own stack when it
+returns.  The second feature is a flag on the <a href="LangRef.html#i_call">call
+instruction</a>, which indicates that the callee does not access the callers
+stack frame (indicating that it is acceptable to deallocate the caller stack
+before invoking the callee).  LLVM proper tail calls run on the system stack (as
+do normal calls), supports indirect tail calls, tail calls with arbitrary
+numbers of arguments, tail calls where the callee requires more argument space
+than the caller, etc.  The only case not supported are varargs calls, but that
+could be added if desired.
+</p>
+
+<p>In order for a front-end to get guaranteed tail call, it must mark functions
+as "fastcc", mark calls with the 'tail' marker, and follow the call with a
+return of the called value (or void).  The optimizer and code generator attempt
+to handle more general cases, but the simple case will always work if the code
+generator supports tail calls.  Here is a simple example:</p>
+
+<p><pre>
+fastcc int %bar(int %X, int(double, int)* %FP) {        ;<i> fastcc</i>
+     %Y = tail call fastcc int %FP(double 0.0, int %X)  ;<i> tail, fastcc</i>
+     ret int %Y
+}
+</pre></p>
+
+<p>In LLVM 1.5, the X86 code generator is the only target that has been enhanced
+to support proper tail calls (other targets will be enhanced in future).
+Further, because this support was added very close to the release, it is
+disabled by default.  Pass <tt>-enable-x86-fastcc</tt> to llc to enable it.  X86
+support will be enabled by default in the next LLVM release.</p>
+</div>
+
+<!--_________________________________________________________________________-->
+<div class="doc_subsubsection">Other New Features</div>
 
 <div class="doc_text">
 <ol>
   <li>LLVM now includes an <a href="http://llvm.cs.uiuc.edu/PR415">
       Interprocedural Sparse Conditional Constant Propagation</a> pass, named
      -ipsccp, which is run by default at link-time.</li>
-  <li>LLVM 1.5 is now about 15% faster than LLVM 1.4 and its core data structures
-      use about 30% less memory.</li>
-  <li>LLVM includes new experimental native code generators for SparcV8,
-      Alpha, and IA64.</li>
+  <li>LLVM 1.5 is now about 15% faster than LLVM 1.4 and its core data 
+      structures use about 30% less memory.</li>
   <li>Support for Microsoft Visual Studio is improved, and <a 
       href="GettingStartedVS.html">now documented</a>.</li>
-  <li>Configuring LLVM to build targets selectively is now implemented, via the
-      <tt>--enable-targets=</tt> option. This feature is documented
-      <a href="GettingStarted.html#config">here</a>.</li>
-  <li>LLVM now supports <a href="LangRef.html#callingconv">custom and
-      target-specific calling conventions</a>.</li>
-</ol>
-
-</div>
-
-
-<!--=========================================================================-->
-<div class="doc_subsubsection">
-In this release, the following missing features were implemented:
-</div>
-
-<div class="doc_text">
-
-<ol>
+  <li><a href="GettingStarted.html#config">Configuring LLVM to build a subset
+      of the available targets</a> is now implemented, via the
+      <tt>--enable-targets=</tt> option.</li>
    <li>LLVM can now create native shared libraries with '<tt>llvm-gcc ...
        -shared -Wl,-native</tt>' (or with <tt>-Wl,-native-cbe</tt>).</li>
    <li>LLVM now supports a new "<a href="LangRef.html#i_prefetch">llvm.prefetch
@@ -110,40 +186,38 @@ In this release, the following missing features were implemented:
       counting</a> and llvm-gcc now implements the GCC
       <tt>__builtin_popcount</tt>, <tt>__builtin_ctz</tt>, and
       <tt>__builtin_clz</tt> builtins.</li>
-</ol>
-
-</div>
-
-<!--=========================================================================-->
-<div class="doc_subsubsection">
-<a name="qualityofimp">In this release, the following Quality of Implementation
-issues were fixed:</a>
-</div>
-
-<div class="doc_text">
-
-<ol>
-   <li><a href="http://llvm.cs.uiuc.edu/PR448">Building LLVM in optimized mode
-       should no longer cause GCC to hit swap in the PowerPC backend.</a></li>
+  <li>LLVM now builds on HP-UX with the HP aCC Compiler.</li>
+  <li>The LLVM X86 backend can now emit Cygwin-compatible .s files.</li>
+  <li>LLVM now includes workarounds in the code generator generator which
+      reduces the likelyhood of <a href="http://llvm.cs.uiuc.edu/PR448">GCC
+      hitting swap during optimized builds</a>.</li>
 </ol>
 </div>
 
 <!--=========================================================================-->
-<div class="doc_subsubsection">
-<a name="codequality">This release includes the following Code Quality
-improvements:</a>
+<div class="doc_subsection">
+<a name="codequality">Code Quality Improvements in LLVM 1.5</a>
 </div>
 
 <div class="doc_text">
 <ol>
-   <li>Transition code for 1.0 style varargs was removed. </li>
+<li>The -globalopt pass now promotes non-address-taken static globals that are
+only accessed in main to SSA registers.</li>
+
+<li>Loops with trip counts based on array pointer comparisons (e.g. "<tt>for (i
+= 0; &amp;A[i] != &amp;A[100]; ++i) ...</tt>") are optimized better than before,
+which primarily helps iterator-intensive C++ codes.</li>
+
+<li>The code generator now uses information about takes advantage of commutative
+two-address instructions when performing register allocation.</li>
+
+   
 </ol>
 </div>
 
 <!--=========================================================================-->
-<div class="doc_subsubsection">
-<a name="bugfix">In this release, the following bugs in the previous release
-were fixed:</a>
+<div class="doc_subsection">
+<a name="bugfix">Significant Bugs Fixed in LLVM 1.5</a>
 </div>
 
 <div class="doc_text">
@@ -155,6 +229,8 @@ were fixed:</a>
        are partially overwritten by smaller stores</a></li>
    <li><a href="http://llvm.cs.uiuc.edu/PR548">[instcombine] miscompilation of 
        setcc or setcc in one case</a></li>
+   <li>Transition code for LLVM 1.0 style varargs was removed from the .ll file
+   parser.  LLVM 1.0 bytecode files are still supported. </li>
 </ol>
 
 <p>Code Generator Bugs:</p>
