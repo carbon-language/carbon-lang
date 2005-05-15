@@ -149,8 +149,8 @@
       <li><a href="#int_count">Bit counting Intrinsics</a>
         <ol>
           <li><a href="#int_ctpop">'<tt>llvm.ctpop</tt>' Intrinsic </a></li>
-          <li><a href="#int_cttz">'<tt>llvm.cttz</tt>' Intrinsic </a></li>
           <li><a href="#int_ctlz">'<tt>llvm.ctlz</tt>' Intrinsic </a></li>
+          <li><a href="#int_cttz">'<tt>llvm.cttz</tt>' Intrinsic </a></li>
         </ol>
       </li>
       <li><a href="#int_debugger">Debugger intrinsics</a></li>
@@ -3205,40 +3205,6 @@ The '<tt>llvm.ctpop</tt>' intrinsic counts the 1's in a variable.
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
-  <a name="int_cttz">'<tt>llvm.cttz</tt>' Intrinsic</a>
-</div>
-
-<div class="doc_text">
-
-<h5>Syntax:</h5>
-<pre>
-  declare int %llvm.cttz(int &lt;src&gt;)
-
-</pre>
-
-<h5>Overview:</h5>
-
-<p>
-The '<tt>llvm.cttz</tt>' intrinsic counts the number of trailing zeros.
-</p>
-
-<h5>Arguments:</h5>
-
-<p>
-The only argument is the value to be counted.  The argument may be of any
-integer type.  The return type must match the argument type.
-</p>
-
-<h5>Semantics:</h5>
-
-<p>
-The '<tt>llvm.cttz</tt>' intrinsic counts the trailing zeros in a variable.  If
-the src == 0 then the result is the size in bits of the type of src.
-</p>
-</div>
-
-<!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
   <a name="int_ctlz">'<tt>llvm.ctlz</tt>' Intrinsic</a>
 </div>
 
@@ -3267,11 +3233,48 @@ integer type. The return type must match the argument type.
 <h5>Semantics:</h5>
 
 <p>
-The '<tt>llvm.ctlz</tt>' intrinsic counts the leading zeros in a variable.  If
-the src == 0 then the result is the size in bits of the type of src.
+The '<tt>llvm.ctlz</tt>' intrinsic counts the leading (most significant) zeros
+in a variable.  If the src == 0 then the result is the size in bits of the type
+of src. For example, <tt>llvm.cttz(int 2) = 30</tt>.
 </p>
 </div>
 
+
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="int_cttz">'<tt>llvm.cttz</tt>' Intrinsic</a>
+</div>
+
+<div class="doc_text">
+
+<h5>Syntax:</h5>
+<pre>
+  declare int %llvm.cttz(int &lt;src&gt;)
+
+</pre>
+
+<h5>Overview:</h5>
+
+<p>
+The '<tt>llvm.cttz</tt>' intrinsic counts the number of trailing zeros.
+</p>
+
+<h5>Arguments:</h5>
+
+<p>
+The only argument is the value to be counted.  The argument may be of any
+integer type.  The return type must match the argument type.
+</p>
+
+<h5>Semantics:</h5>
+
+<p>
+The '<tt>llvm.cttz</tt>' intrinsic counts the trailing (least significant) zeros
+in a variable.  If the src == 0 then the result is the size in bits of the type
+of src.  For example, <tt>llvm.cttz(2) = 1</tt>.
+</p>
+</div>
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
