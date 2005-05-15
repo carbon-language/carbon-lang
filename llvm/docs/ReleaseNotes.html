@@ -222,18 +222,18 @@ multiple of 8 bytes in size.
 <li>The -globalopt pass now promotes non-address-taken static globals that are
 only accessed in main to SSA registers.</li>
 
+<li>The new -simplify-libcalls pass improves code generated for well-known
+library calls. The pass optimizes calls to many of the string, memory, and
+standard I/O functions (e.g. replace the calls with simpler/faster calls) when
+possible, given information known statically about the arguments to the call.
+</li>
+
 <li>Loops with trip counts based on array pointer comparisons (e.g. "<tt>for (i
 = 0; &amp;A[i] != &amp;A[100]; ++i) ...</tt>") are optimized better than before,
 which primarily helps iterator-intensive C++ codes.</li>
 
 <li>The code generator now uses information about takes advantage of commutative
 two-address instructions when performing register allocation.</li>
-
-<li>A new pass has been added to gccas to simplify well-known library calls. The
-pass will short circuit calls to many of the string, memory, and printf type 
-functions or replace the calls with simpler/faster calls, where possible given
-information known statically about the arguments to the call. To use the
-pass, specify <tt>-simplify-libcalls</tt> to the <tt>opt</tt> tool.</li>
 
    
 </ol>
