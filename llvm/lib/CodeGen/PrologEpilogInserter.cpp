@@ -211,6 +211,14 @@ void PEI::saveCallerSavedRegisters(MachineFunction &Fn) {
       MBB = FI;
       I = MBB->end(); --I;
 
+      // Skip over all terminator instructions, which are part of the return
+      // sequence.
+      MachineBasicBlock::iterator I2 = I;
+      while (I2 != MBB->begin() && TII.isTerminatorInstr((--I2)->getOpcode()))
+        I = I2;
+
+      // Restore all registers immediately before the return and any terminators
+      // that preceed it.
       for (unsigned i = 0, e = RegsToSave.size(); i != e; ++i) {
         RegInfo->loadRegFromStackSlot(*MBB, I, RegsToSave[i], StackSlots[i]);
         assert(I != MBB->begin() &&
