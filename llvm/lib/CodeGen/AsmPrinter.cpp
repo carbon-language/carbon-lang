@@ -64,7 +64,7 @@ void AsmPrinter::emitConstantValueOnly(const Constant *CV) {
     if (((CI->getValue() << 32) >> 32) == CI->getValue())
       O << CI->getValue();
     else
-      O << (unsigned long long)CI->getValue();
+      O << (uint64_t)CI->getValue();
   else if (const ConstantUInt *CI = dyn_cast<ConstantUInt>(CV))
     O << CI->getValue();
   else if (isa<GlobalValue>((Value*)CV)) {
