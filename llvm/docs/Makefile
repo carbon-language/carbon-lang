@@ -64,3 +64,8 @@ $(PROJ_OBJ_DIR)/doxygen.tar.gz: $(DOXYFILES) $(PROJ_OBJ_DIR)/doxygen.cfg
 	$(Verb) $(TAR) cf $(PROJ_OBJ_DIR)/doxygen.tar doxygen
 	$(Verb) $(GZIP) $(PROJ_OBJ_DIR)/doxygen.tar
 
+userloc.html:
+	$(Echo) Making User LOC Table
+	$(Verb) cd $(LLVM_SRC_ROOT) ; ./utils/userloc.pl -details -recurse \
+	  -html lib include tools runtime utils examples autoconf test > userloc.html
+	  
