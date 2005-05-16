@@ -1918,7 +1918,8 @@ subelement of an aggregate data structure.</p>
 elements of the aggregate object to index to.  The actual types of the arguments
 provided depend on the type of the first pointer argument.  The
 '<tt>getelementptr</tt>' instruction is used to index down through the type
-levels of a structure.  When indexing into a structure, only <tt>uint</tt>
+levels of a structure or to a specific index in an array.  When indexing into a
+structure, only <tt>uint</tt>
 integer constants are allowed.  When indexing into an array or pointer,
 <tt>int</tt> and <tt>long</tt> indexes are allowed of any sign.</p>
 
@@ -1972,7 +1973,7 @@ the structure, yielding a '<tt>%RT</tt>' = '<tt>{ sbyte, [10 x [20 x int]],
 sbyte }</tt>' type, another structure.  The third index indexes into the second
 element of the structure, yielding a '<tt>[10 x [20 x int]]</tt>' type, an
 array.  The two dimensions of the array are subscripted into, yielding an
-'<tt>int</tt>' type.  The '<tt>getelementptr</tt>' instruction return a pointer
+'<tt>int</tt>' type.  The '<tt>getelementptr</tt>' instruction returns a pointer
 to this element, thus computing a value of '<tt>int*</tt>' type.</p>
 
 <p>Note that it is perfectly legal to index partially through a
@@ -2119,7 +2120,7 @@ The '<tt>select</tt>' instruction requires a boolean value indicating the condit
 
 <p>
 If the boolean condition evaluates to true, the instruction returns the first
-value argument, otherwise it returns the second value argument.
+value argument; otherwise, it returns the second value argument.
 </p>
 
 <h5>Example:</h5>
@@ -2169,13 +2170,14 @@ value argument, otherwise it returns the second value argument.
   <li>
     <p>'<tt>ty</tt>': shall be the signature of the pointer to function value
     being invoked.  The argument types must match the types implied by this
-    signature.</p>
+    signature.  This type can be omitted if the function is not varargs and
+    if the function type does not return a pointer to a function.</p>
   </li>
   <li>
     <p>'<tt>fnptrval</tt>': An LLVM value containing a pointer to a function to
     be invoked. In most cases, this is a direct function invocation, but
     indirect <tt>call</tt>s are just as possible, calling an arbitrary pointer
-    to function values.</p>
+    to function value.</p>
   </li>
   <li>
     <p>'<tt>function args</tt>': argument list whose types match the
@@ -2248,9 +2250,9 @@ function.</p>
 
 <p><tt>vanext</tt> is an LLVM instruction instead of an <a
 href="#intrinsics">intrinsic function</a> because it takes a type as an
-argument.  The type refers to the current argument in the <tt>va_list</tt>, it
+argument.  The type refers to the current argument in the <tt>va_list</tt>; it
 tells the compiler how far on the stack it needs to advance to find the next
-argument</p>
+argument.</p>
 
 <h5>Example:</h5>
 
@@ -2297,7 +2299,7 @@ take a variable number of arguments, for example, the <tt>vfprintf</tt>
 function.</p>
 
 <p><tt>vaarg</tt> is an LLVM instruction instead of an <a
-href="#intrinsics">intrinsic function</a> because it takes an type as an
+href="#intrinsics">intrinsic function</a> because it takes a type as an
 argument.</p>
 
 <h5>Example:</h5>
@@ -2313,14 +2315,14 @@ argument.</p>
 <div class="doc_text">
 
 <p>LLVM supports the notion of an "intrinsic function".  These functions have
-well known names and semantics, and are required to follow certain
+well known names and semantics and are required to follow certain
 restrictions. Overall, these instructions represent an extension mechanism for
 the LLVM language that does not require changing all of the transformations in
 LLVM to add to the language (or the bytecode reader/writer, the parser,
 etc...).</p>
 
-<p>Intrinsic function names must all start with an "<tt>llvm.</tt>" prefix, this
-prefix is reserved in LLVM for intrinsic names, thus functions may not be named
+<p>Intrinsic function names must all start with an "<tt>llvm.</tt>" prefix. This
+prefix is reserved in LLVM for intrinsic names; thus, functions may not be named
 this.  Intrinsic functions must always be external functions: you cannot define
 the body of intrinsic functions.  Intrinsic functions may only be used in call
 or invoke instructions: it is illegal to take the address of an intrinsic
@@ -2328,7 +2330,7 @@ function.  Additionally, because intrinsic functions are part of the LLVM
 language, it is required that they all be documented here if any are added.</p>
 
 
-<p>To learn how to add an intrinsics, please see the <a
+<p>To learn how to add an intrinsic function, please see the <a
 href="ExtendingLLVM.html">Extending LLVM Guide</a>.
 </p>
 
@@ -2396,7 +2398,7 @@ macro available in C.  In a target-dependent way, it initializes and
 returns a <tt>va_list</tt> element, so that the next <tt>vaarg</tt>
 will produce the first variable argument passed to the function.  Unlike
 the C <tt>va_start</tt> macro, this intrinsic does not need to know the
-last argument of the function, the compiler can figure that out.</p>
+last argument of the function; the compiler can figure that out.</p>
 <p>Note that this intrinsic function is only legal to be called from
 within the body of a variable argument function.</p>
 </div>
@@ -2693,8 +2695,9 @@ source-language caller.
 
 <p>
 The '<tt>llvm.prefetch</tt>' intrinsic is a hint to the code generator to insert
-a prefetch instruction if supported, otherwise it is a noop.  Prefetches have no
-effect on the behavior of the program, but can change its performance
+a prefetch instruction if supported; otherwise, it is a noop.  Prefetches have
+no
+effect on the behavior of the program but can change its performance
 characteristics.
 </p>
 
@@ -2735,13 +2738,14 @@ performance.
 
 
 <p>
-The '<tt>llvm.pcmarker</tt>' intrinsic is a method to export a PC in a region of 
+The '<tt>llvm.pcmarker</tt>' intrinsic is a method to export a Program Counter
+(PC) in a region of 
 code to simulators and other tools.  The method is target specific, but it is 
 expected that the marker will use exported symbols to transmit the PC of the marker.
 The marker makes no guaranties that it will remain with any specific instruction 
 after optimizations.  It is possible that the presense of a marker will inhibit 
 optimizations.  The intended use is to be inserted after optmizations to allow
-corrolations of simulation runs.
+correlations of simulation runs.
 </p>
 
 <h5>Arguments:</h5>
