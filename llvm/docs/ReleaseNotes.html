@@ -62,10 +62,9 @@ href="http://llvm.cs.uiuc.edu/releases/">releases page</a>.</p>
 
 <p>This is the sixth public release of the LLVM Compiler Infrastructure.</p>
 
-<p> At this time, LLVM is known to correctly compile a wide range of C and C++
-programs, including the SPEC CPU95 &amp; 2000 suite.  It includes bug fixes for
-those problems found since the 1.4 release and a large number of new features
-and enhancements, described below.</p>
+<p>LLVM 1.5 is known to correctly compile a wide range of C and C++ programs,
+includes bug fixes for those problems found since the 1.4 release, and includes
+a large number of new features and enhancements, described below.</p>
 
 </div>
 
@@ -101,7 +100,7 @@ easy to get wrong) details of writing the instruction selector, such as
 generating efficient code for <a
 href="LangRef.html#i_getelementptr">getelementptr</a> instructions, promoting
 small integer types to larger types (e.g.  for RISC targets with one size of
-integer registers), expanding 64-bit integer operations for 32-bit hosts, etc.
+integer registers), expanding 64-bit integer operations for 32-bit targets, etc.
 Currently, the X86, PowerPC, Alpha, and IA-64 backends use this framework.  The
 SPARC backends will be migrated when time permits.
 </p>
@@ -138,7 +137,7 @@ Proper Tail Calls</a></div>
 href="http://doi.acm.org/10.1145/277650.277719">proper tail calls</a>, as
 required to implement languages like Scheme.  Tail calls make use of two
 features: custom calling conventions (described above), which allow the code
-generator to emit code for the caller to deallocate its own stack when it
+generator to use a convention where the caller deallocates its stack before it
 returns.  The second feature is a flag on the <a href="LangRef.html#i_call">call
 instruction</a>, which indicates that the callee does not access the caller's
 stack frame (indicating that it is acceptable to deallocate the caller stack
@@ -149,11 +148,11 @@ than the caller, etc.  The only case not supported are varargs calls, but that
 could be added if desired.
 </p>
 
-<p>In order for a front-end to get guaranteed tail call, it must mark functions
-as "fastcc", mark calls with the 'tail' marker, and follow the call with a
-return of the called value (or void).  The optimizer and code generator attempt
-to handle more general cases, but the simple case will always work if the code
-generator supports tail calls.  Here is a simple example:</p>
+<p>In order for a front-end to get a guaranteed tail call, it must mark
+functions as "fastcc", mark calls with the 'tail' marker, and follow the call
+with a return of the called value (or void).  The optimizer and code generator
+attempt to handle more general cases, but the simple case will always work if
+the code generator supports tail calls.  Here is an example:</p>
 
 <pre>
     fastcc int %bar(int %X, int(double, int)* %FP) {       ;<i> fastcc</i>
@@ -198,7 +197,8 @@ multiple of 8 bytes in size.
   <li>LLVM 1.5 is now about 15% faster than LLVM 1.4 and its core data 
       structures use about 30% less memory.</li>
   <li>Support for Microsoft Visual Studio is improved, and <a 
-      href="GettingStartedVS.html">now documented</a>.</li>
+      href="GettingStartedVS.html">now documented</a>.  Most LLVM tools build
+      natively with Visual C++ now.</li>
   <li><a href="GettingStarted.html#config">Configuring LLVM to build a subset
       of the available targets</a> is now implemented, via the
       <tt>--enable-targets=</tt> option.</li>
@@ -215,7 +215,13 @@ multiple of 8 bytes in size.
   <li>LLVM now includes workarounds in the code generator generator which
       reduces the likelyhood of <a href="http://llvm.cs.uiuc.edu/PR448">GCC
       hitting swap during optimized builds</a>.</li>
-  <li>The PowerPC backend generates far better code than in LLVM 1.4.</li>
+  <li>The <a href="http://llvm.cs.uiuc.edu/ProjectsWithLLVM/#llvmtv">LLVM
+      Transformation Visualizer</a> (llvm-tv) project has been updated to
+      work with LLVM CVS.</li>
+  <li>Nightly tester output is now archived on the <a
+      href="http://mail.cs.uiuc.edu/pipermail/llvm-testresults/">
+      llvm-testresults</a> mailing list.</li>
+
 </ol>
 </div>
 
@@ -226,30 +232,61 @@ multiple of 8 bytes in size.
 
 <div class="doc_text">
 <ol>
-<li>The -globalopt pass now promotes non-address-taken static globals that are
-only accessed in main to SSA registers.</li>
-
 <li>The new -simplify-libcalls pass improves code generated for well-known
 library calls. The pass optimizes calls to many of the string, memory, and
 standard I/O functions (e.g. replace the calls with simpler/faster calls) when
 possible, given information known statically about the arguments to the call.
 </li>
 
+<li>The -globalopt pass now promotes non-address-taken static globals that are
+only accessed in main to SSA registers.</li>
+
 <li>Loops with trip counts based on array pointer comparisons (e.g. "<tt>for (i
-= 0; &amp;A[i] != &amp;A[100]; ++i) ...</tt>") are optimized better than before,
+= 0; &amp;A[i] != &amp;A[n]; ++i) ...</tt>") are optimized better than before,
 which primarily helps iterator-intensive C++ codes.</li>
 
-<li>The code generator now can provide and use information about commutative
-two-address instructions when performing register allocation.</li>
-
 <li>The optimizer now eliminates simple cases where redundant conditions exist
-between neighboring blocks.</li>
+    between neighboring blocks.</li>
 
 <li>The reassociation pass (which turns (1+X+3) into (X+1+3) among other
-things), is more aggressive an intelligent.</li>
-   
+things), is more aggressive and intelligent.</li>
+
+<li>The -prune-eh pass now detects no-return functions in addition to the
+    no-unwind functions it did before.</li>
+
+<li>The -globalsmodref alias analysis generates more precise results in some
+    cases.</li>
 </ol>
 </div>
+
+
+<!--=========================================================================-->
+<div class="doc_subsection">
+<a name="codequality">Code Generator Improvements in LLVM 1.5</a>
+</div>
+
+<div class="doc_text">
+<ol>
+<li>The code generator now can provide and use information about commutative
+    two-address instructions when performing register allocation.</li>
+
+<li>The code generator now tracks function live-in registers explicitly, 
+    instead of requiring the target to generate 'implicit defs' at the
+    entry to a function.</li>
+
+<li>The code generator can lower integer division by a constant to
+    multiplication by a magic constant and multiplication by a constant into
+    shift/add sequences.</li>
+
+<li>The code generator compiles fabs/fneg/sin/cos/sqrt to assembly instructions
+    when possible.</li>
+
+<li>The PowerPC backend generates better code in many cases, making use of 
+    FMA instructions and the recording ("dot") forms of various PowerPC
+    instructions.</li>
+</ol>
+</div>
+
 
 <!--=========================================================================-->
 <div class="doc_subsection">
@@ -266,7 +303,7 @@ things), is more aggressive an intelligent.</li>
    <li><a href="http://llvm.cs.uiuc.edu/PR548">[instcombine] miscompilation of 
        setcc or setcc in one case</a></li>
    <li>Transition code for LLVM 1.0 style varargs was removed from the .ll file
-   parser.  LLVM 1.0 bytecode files are still supported. </li>
+       parser.  LLVM 1.0 bytecode files are still supported. </li>
 </ol>
 
 <p>Code Generator Bugs:</p>
@@ -277,6 +314,7 @@ things), is more aggressive an intelligent.</li>
        respect 'volatile'</a>.</li>
    <li>The JIT sometimes miscompiled globals and constant pool entries for
        64-bit integer constants on 32-bit hosts.</li>
+   <li>The C backend should no longer produce code that crashes ICC 8.1.</li>
 </ol>
 
 <p>Bugs in the C/C++ front-end:</p>
