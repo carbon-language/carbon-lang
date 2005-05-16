@@ -29,6 +29,10 @@ static int isinf(double x) { return !finite(x) && x==x; }
 // system header /usr/include/math.h
 # include <math.h>
 static int isinf(double x) { return !finite(x) && x==x; }
+#elif defined(__hpux)
+// HP-UX is "special"
+#include <math.h>
+static int isinf(double x) { return ((x)==INFINITY)||((x)==-INFINITY); }
 #else
 # error "Don't know how to get isinf()"
 #endif
