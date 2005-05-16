@@ -161,18 +161,19 @@ sub printStats
     print " <tr><th style=\"text-align:left\">Directory</th>\n";
     foreach $user (keys %Stats)
     {
-      print "<th style=\"text-align:right\">",$user,"</th></tr>\n";
+      print "<th style=\"text-align:right\">",$user,"</th>\n";
     }
+    print "</tr>\n";
   }
 
   $RowCount++;
-
-  foreach $user (keys %{$hash}) { $total += $hash->{$user}; }
 
   if ($html)
     { print "<tr><td style=\"text-align:left\">",$dir,"</td>"; }
   else
     { print $dir,"\n"; }
+
+  foreach $user (keys %{$hash}) { $total += $hash->{$user}; }
 
   foreach $user ( sort keys %Stats )
   {
