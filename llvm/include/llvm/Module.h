@@ -186,21 +186,11 @@ public:
   // Module iterator forwarding functions
   //
   // Globals list interface
-  inline global_iterator                global_begin()       { return GlobalList.begin(); }
-  inline const_global_iterator          global_begin() const { return GlobalList.begin(); }
-  inline global_iterator                global_end  ()       { return GlobalList.end();   }
-  inline const_global_iterator          global_end  () const { return GlobalList.end();   }
-  inline bool                           global_empty() const { return GlobalList.empty(); }
-
-  //===--------------------------------------------------------------------===//
-  // Module iterator forwarding functions (legacy, deprecated, will be removed)
-  //
-  // Globals list interface
-  inline global_iterator                gbegin()       { return GlobalList.begin(); }
-  inline const_global_iterator          gbegin() const { return GlobalList.begin(); }
-  inline global_iterator                gend  ()       { return GlobalList.end();   }
-  inline const_global_iterator          gend  () const { return GlobalList.end();   }
-  inline bool                           gempty() const { return GlobalList.empty(); }
+  global_iterator       global_begin()       { return GlobalList.begin(); }
+  const_global_iterator global_begin() const { return GlobalList.begin(); }
+  global_iterator       global_end  ()       { return GlobalList.end(); }
+  const_global_iterator global_end  () const { return GlobalList.end(); }
+  bool                  global_empty() const { return GlobalList.empty(); }
 
   // FunctionList interface
   inline iterator                begin()       { return FunctionList.begin(); }

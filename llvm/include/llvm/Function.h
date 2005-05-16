@@ -195,17 +195,6 @@ public:
   size_t                      arg_size () const { return ArgumentList.size();  }
   bool                        arg_empty() const { return ArgumentList.empty(); }
 
-  //===--------------------------------------------------------------------===//
-  // Argument iterator forwarding functions (legacy, deprecated, will be removed)
-  //
-  arg_iterator                abegin()       { return ArgumentList.begin(); }
-  const_arg_iterator          abegin() const { return ArgumentList.begin(); }
-  arg_iterator                aend  ()       { return ArgumentList.end();   }
-  const_arg_iterator          aend  () const { return ArgumentList.end();   }
-
-  size_t                       asize() const { return ArgumentList.size();  }
-  bool                        aempty() const { return ArgumentList.empty(); }
-
   virtual void print(std::ostream &OS) const { print(OS, 0); }
   void print(std::ostream &OS, AssemblyAnnotationWriter *AAW) const;
 
