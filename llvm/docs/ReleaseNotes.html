@@ -625,12 +625,6 @@ itself.</p>
 <li>The C++ front-end inherits all problems afflicting the <a href="#c-fe">C
     front-end</a>.</li>
 
-<li><b>IA-64 specific</b>: The C++ front-end does not use <a 
-href="http://llvm.cs.uiuc.edu/PR406">IA64 ABI compliant layout of v-tables</a>.
-In particular, it just stores function pointers instead of function
-descriptors in the vtable.  This bug prevents mixing C++ code compiled with
-LLVM with C++ objects compiled by other C++ compilers.</li>
-
 </ul>
 
 </div>
@@ -672,46 +666,6 @@ href="http://gcc.gnu.org/gcc-3.4/changes.html">GCC 3.4 release notes</a>.</li>
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
-  <a name="x86-be">Known problems with the X86 back-end</a>
-</div>
-
-<div class="doc_text">
-
-<ul>
-  <li>None yet</li>
-</ul>
-
-</div>
-
-<!-- ======================================================================= -->
-<div class="doc_subsection">
-  <a name="sparcv9-be">Known problems with the SparcV9 back-end</a>
-</div>
-
-<div class="doc_text">
-
-<ul>
-<li><a href="http://llvm.cs.uiuc.edu/PR60">[sparcv9] SparcV9 backend miscompiles
-several programs in the LLVM test suite</a></li>
-</ul>
-
-</div>
-
-<!-- ======================================================================= -->
-<div class="doc_subsection">
-  <a name="ppc-be">Known problems with the PowerPC back-end</a>
-</div>
-
-<div class="doc_text">
-
-<ul>
-<li>None yet</li>
-</ul>
-
-</div>
-
-<!-- ======================================================================= -->
-<div class="doc_subsection">
   <a name="c-be">Known problems with the C back-end</a>
 </div>
 
@@ -734,6 +688,46 @@ frontends.</li>
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
+  <a name="x86-be">Known problems with the X86 back-end</a>
+</div>
+
+<div class="doc_text">
+
+<ul>
+  <li>None yet</li>
+</ul>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="ppc-be">Known problems with the PowerPC back-end</a>
+</div>
+
+<div class="doc_text">
+
+<ul>
+<li>None yet</li>
+</ul>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="sparcv9-be">Known problems with the SparcV9 back-end</a>
+</div>
+
+<div class="doc_text">
+
+<ul>
+<li><a href="http://llvm.cs.uiuc.edu/PR60">[sparcv9] SparcV9 backend miscompiles
+several programs in the LLVM test suite</a></li>
+</ul>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
   <a name="alpha-be">Known problems with the Alpha back-end</a>
 </div>
 
@@ -741,9 +735,10 @@ frontends.</li>
 
 <ul>
 
-<li>On 21164s, some rare FP arithmatic sequences which may trap do not have the appropriate nops inserted to ensure restartability.</li>
+<li>On 21164s, some rare FP arithmetic sequences which may trap do not have the
+appropriate nops inserted to ensure restartability.</li>
 
-<li>Vararg functions are not supported.</li>
+<li>Defining vararg functions is not supported (but calling them is ok).</li>
 
 <li>Due to the vararg problems, C++ exceptions do not work.  Small changes are required to the CFE (which break correctness in the exception handler) to compile the exception handling library (and thus the C++ standard library).</li>
 
@@ -765,11 +760,17 @@ made where the argument is not 16-byte aligned, as required on IA64. (Strictly
 speaking this is not a bug in the IA64 back-end; it will also be encountered
 when building C++ programs using the C back-end.)</li>
 
-<li>There are a few ABI violations which will lead to problems
-when mixing LLVM output with code built with other compilers,
-particularly for C++ and floating-point programs.</li>
+<li>The C++ front-end does not use <a href="http://llvm.cs.uiuc.edu/PR406">IA64
+ABI compliant layout of v-tables</a>.  In particular, it just stores function
+pointers instead of function descriptors in the vtable.  This bug prevents
+mixing C++ code compiled with LLVM with C++ objects compiled by other C++
+compilers.</li>
 
-<li>Vararg functions are not supported.</li>
+<li>There are a few ABI violations which will lead to problems when mixing LLVM
+output with code built with other compilers, particularly for floating-point
+programs.</li>
+
+<li>Defining vararg functions is not supported (but calling them is ok).</li>
 
 </ul>
 
