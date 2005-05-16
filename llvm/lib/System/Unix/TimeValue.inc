@@ -26,6 +26,7 @@ std::string TimeValue::toString() const {
 
   time_t ourTime = time_t(this->toEpochTime());
 #ifdef __hpux
+// note that the following line needs -D_REENTRANT on HP-UX to be picked up 
   asctime_r(localtime(&ourTime), buffer);
 #else
   ::asctime_r(::localtime(&ourTime), buffer);
