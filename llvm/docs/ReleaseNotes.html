@@ -83,7 +83,9 @@ Generators</a></div>
 This release includes new native code generators for <a
 href="#alpha-be">Alpha</a>, <a href="#ia64-be">IA-64</a>, and <a
 href="#sparcv8">SPARC-V8</a> (32-bit SPARC).  These code generators are still
-beta quality, but are progressing rapidly.
+beta quality, but are progressing rapidly.  The Alpha backend is implemented
+with an eye towards being compatible with the widely used SimpleScalar
+simulator.
 </p>
 </div>
 
@@ -106,17 +108,17 @@ SPARC backends will be migrated when time permits.
 </div>
 
 <!--_________________________________________________________________________-->
-<div class="doc_subsubsection"><a name="customccs">New Support For Custom
+<div class="doc_subsubsection"><a name="customccs">New Support for Per-Function
 Calling Conventions</a></div>
 
 <div class="doc_text">
-<p>LLVM 1.5 adds supports for <a href="LangRef.html#callingconv">custom and
-target-specific calling conventions</a>.  Traditionally, the LLVM code
-generators match the native C calling conventions for a target.  This is
-important for compatibility, but is not very flexible.  This release allows
-custom calling conventions to be established for functions, and defines three
-target-independent conventions (C call, fast call, and cold call) which may be
-supported by code generators.  When possible, the LLVM optimizer promotes C
+<p>LLVM 1.5 adds supports for <a href="LangRef.html#callingconv">per-function
+calling conventions</a>.  Traditionally, the LLVM code generators match the
+native C calling conventions for a target.  This is important for compatibility,
+but is not very flexible.  This release allows custom calling conventions to be
+established for functions, and defines three target-independent conventions (<a
+href="LangRef.html#callingconv">C call, fast call, and cold call</a>) which may
+be supported by code generators.  When possible, the LLVM optimizer promotes C
 functions to use the "fastcc" convention, allowing the use of more efficient
 calling sequences (e.g., parameters are passed in registers in the X86 target).
 </p>
@@ -129,7 +131,7 @@ fastcall on X86).</p>
 
 <!--_________________________________________________________________________-->
 <div class="doc_subsubsection"><a name="tailcalls">New Support for
-"Proper Tail Calls"</a></div>
+Proper Tail Calls</a></div>
 
 <div class="doc_text">
 <p>The release now includes support for <a
@@ -208,7 +210,7 @@ multiple of 8 bytes in size.
       counting</a> and llvm-gcc now implements the GCC
       <tt>__builtin_popcount</tt>, <tt>__builtin_ctz</tt>, and
       <tt>__builtin_clz</tt> builtins.</li>
-  <li>LLVM now builds on HP-UX with the HP aCC Compiler.</li>
+  <li>LLVM now mostly builds on HP-UX with the HP aCC Compiler.</li>
   <li>The LLVM X86 backend can now emit Cygwin-compatible .s files.</li>
   <li>LLVM now includes workarounds in the code generator generator which
       reduces the likelyhood of <a href="http://llvm.cs.uiuc.edu/PR448">GCC
@@ -240,6 +242,11 @@ which primarily helps iterator-intensive C++ codes.</li>
 <li>The code generator now uses information about takes advantage of commutative
 two-address instructions when performing register allocation.</li>
 
+<li>The optimizer now eliminates simple cases where redundant conditions exist
+between neighboring blocks.</li>
+
+<li>The reassociation pass (which turns (1+X+3) into (X+1+3) among other
+things), is more aggressive an intelligent.</li>
    
 </ol>
 </div>
@@ -265,9 +272,11 @@ two-address instructions when performing register allocation.</li>
 <p>Code Generator Bugs:</p>
 <ol>
    <li><a href="http://llvm.cs.uiuc.edu/PR490">[cbackend] Logical constant 
-       expressions (and/or/xor) not implemented</a></li>
+       expressions (and/or/xor) not implemented</a>.</li>
    <li><a href="http://llvm.cs.uiuc.edu/PR511">[cbackend] C backend does not 
-       respect 'volatile'</a></li>
+       respect 'volatile'</a>.</li>
+   <li>The JIT sometimes miscompiled globals and constant pool entries for
+       64-bit integer constants on 32-bit hosts.</li>
 </ol>
 
 <p>Bugs in the C/C++ front-end:</p>
