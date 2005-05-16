@@ -159,7 +159,7 @@ sub printStats
   if ($RowCount % 10 == 0)
   {
     print " <tr><th style=\"text-align:left\">Directory</th>\n";
-    foreach $user (keys %Stats)
+    foreach $user (sort keys %Stats)
     {
       print "<th style=\"text-align:right\">",$user,"</th>\n";
     }
