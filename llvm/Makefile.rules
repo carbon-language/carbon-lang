@@ -343,6 +343,10 @@ endif
 
 CompileCommonOpts := -Wall -W -Wwrite-strings -Wno-unused
 
+ifeq ($(OS),HP-UX)
+  CompileCommonOpts += -D_REENTRANT -D_HPUX_SOURCE
+endif
+
 LD.Flags  += -L$(LibDir) -L$(LLVMLibDir) 
 CPP.Flags += -I$(PROJ_OBJ_DIR) -I$(PROJ_SRC_DIR) \
 	     -I$(PROJ_OBJ_ROOT)/include \
