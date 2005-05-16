@@ -239,7 +239,7 @@ possible, given information known statically about the arguments to the call.
 = 0; &amp;A[i] != &amp;A[100]; ++i) ...</tt>") are optimized better than before,
 which primarily helps iterator-intensive C++ codes.</li>
 
-<li>The code generator now uses information about takes advantage of commutative
+<li>The code generator now can provide and use information about commutative
 two-address instructions when performing register allocation.</li>
 
 <li>The optimizer now eliminates simple cases where redundant conditions exist
