@@ -109,15 +109,14 @@ described the instruction set with the assembly printer generator in mind, that
 step can be almost automated.</li>
 </ul>
 
-<p>Now, for static code generation you also need to write an instruction
-selector for your platform: see <tt>lib/Target/*/*ISelSimple.cpp</tt> which
-is no longer "simple" but it gives you the idea: you have to be able to create
-MachineInstrs for any given LLVM instruction using the <tt>InstVisitor</tt>
-pattern, and produce a <tt>MachineFunction</tt> with
-<tt>MachineBasicBlock</tt>s full of <tt><a
-href="CodeGenerator.html#machineinstr">MachineInstr</a></tt>s for a
-corresponding LLVM Function.  Creating an instruction selector is perhaps the
-most time-consuming part of creating a back-end.</p> 
+<p>You also need to write an instruction selector for your platform.  The
+recommended method is the pattern-matching instruction selector.  You can see
+examples in other targets: <tt>lib/Target/*/*ISelPattern.cpp</tt>.  The former
+method for writing instruction selectors (<b>not</b> recommended) is
+encapsulated in <tt>lib/Target/*/*ISelSimple.cpp</tt>, which are
+<tt>InstVisitor</tt>-based translators, generating code for an LLVM instruction
+at a time.  Creating an instruction selector is perhaps the most time-consuming
+part of creating a back-end.</p>
 
 <p>To create a JIT for your platform:</p>
 
