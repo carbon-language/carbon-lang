@@ -110,13 +110,15 @@ step can be almost automated.</li>
 </ul>
 
 <p>You also need to write an instruction selector for your platform.  The
-recommended method is the pattern-matching instruction selector.  You can see
-examples in other targets: <tt>lib/Target/*/*ISelPattern.cpp</tt>.  The former
-method for writing instruction selectors (<b>not</b> recommended) is
-encapsulated in <tt>lib/Target/*/*ISelSimple.cpp</tt>, which are
-<tt>InstVisitor</tt>-based translators, generating code for an LLVM instruction
-at a time.  Creating an instruction selector is perhaps the most time-consuming
-part of creating a back-end.</p>
+recommended method is the <a
+href="CodeGenerator.html#instselect">pattern-matching instruction selector</a>,
+examples of which you can see in other targets:
+<tt>lib/Target/*/*ISelPattern.cpp</tt>.  The former method for writing
+instruction selectors (<b>not</b> recommended for new targets) is evident in
+<tt>lib/Target/*/*ISelSimple.cpp</tt>, which are <tt>InstVisitor</tt>-based
+translators, generating code for an LLVM instruction at a time.  Creating an
+instruction selector is perhaps the most time-consuming part of creating a
+back-end.</p>
 
 <p>To create a JIT for your platform:</p>
 
