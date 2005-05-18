@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Inliner.h"
+#include "llvm/CallingConv.h"
 #include "llvm/Instructions.h"
 #include "llvm/IntrinsicInst.h"
 #include "llvm/Function.h"
@@ -195,6 +196,20 @@ int SimpleInliner::getInlineCost(CallSite CS) {
   //
   if (Callee->hasInternalLinkage() && Callee->hasOneUse())
     InlineCost -= 30000;
+
+  // If this function uses the coldcc calling convention, prefer not to inline
+  // it.
+  if (Callee->getCallingConv() == CallingConv::Cold)
+    InlineCost += 2000;
+
+  // If the instruction after the call, or if the normal destination of the
+  // invoke is an unreachable instruction, the function is noreturn.  As such,
+  // there is little point in inlining this.
+  if (InvokeInst *II = dyn_cast<InvokeInst>(TheCall)) {
+    if (isa<UnreachableInst>(II->getNormalDest()->begin()))
+      InlineCost += 10000;
+  } else if (isa<UnreachableInst>(++BasicBlock::iterator(TheCall)))
+    InlineCost += 10000;
 
   // Get information about the callee...
   FunctionInfo &CalleeFI = CachedFunctionInfo[Callee];
