@@ -16,7 +16,6 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Debug.h"
-
 using namespace llvm;
 
 namespace {
@@ -54,10 +53,20 @@ FunctionPass *llvm::createSparcV8FPMoverPass (TargetMachine &tm) {
   return new FPMover (tm);
 }
 
-static void doubleToSingleRegPair(unsigned doubleReg, unsigned &singleReg1, unsigned &singleReg2) {
-  const unsigned EvenHalvesOfPairs[] = { V8::F0, V8::F2, V8::F4, V8::F6, V8::F8, V8::F10, V8::F12, V8::F14, V8::F16, V8::F18, V8::F20, V8::F22, V8::F24, V8::F26, V8::F28, V8::F30 };
-  const unsigned OddHalvesOfPairs[] = { V8::F1, V8::F3, V8::F5, V8::F7, V8::F9, V8::F11, V8::F13, V8::F15, V8::F17, V8::F19, V8::F21, V8::F23, V8::F25, V8::F27, V8::F29, V8::F31 };
-  const unsigned DoubleRegsInOrder[] = { V8::D0, V8::D1, V8::D2, V8::D3, V8::D4, V8::D5, V8::D6, V8::D7, V8::D8, V8::D9, V8::D10, V8::D11, V8::D12, V8::D13, V8::D14, V8::D15 };
+static void doubleToSingleRegPair(unsigned doubleReg, unsigned &singleReg1, 
+                                  unsigned &singleReg2) {
+  const unsigned EvenHalvesOfPairs[] = { 
+    V8::F0, V8::F2, V8::F4, V8::F6, V8::F8, V8::F10, V8::F12, V8::F14, 
+    V8::F16, V8::F18, V8::F20, V8::F22, V8::F24, V8::F26, V8::F28, V8::F30 
+  };
+  const unsigned OddHalvesOfPairs[] = { 
+    V8::F1, V8::F3, V8::F5, V8::F7, V8::F9, V8::F11, V8::F13, V8::F15, 
+    V8::F17, V8::F19, V8::F21, V8::F23, V8::F25, V8::F27, V8::F29, V8::F31 
+  };
+  const unsigned DoubleRegsInOrder[] = { 
+    V8::D0, V8::D1, V8::D2, V8::D3, V8::D4, V8::D5, V8::D6, V8::D7, V8::D8, 
+    V8::D9, V8::D10, V8::D11, V8::D12, V8::D13, V8::D14, V8::D15 
+  };
   for (unsigned i = 0; i < sizeof(DoubleRegsInOrder)/sizeof(unsigned); ++i)
     if (DoubleRegsInOrder[i] == doubleReg) {
       singleReg1 = EvenHalvesOfPairs[i];
