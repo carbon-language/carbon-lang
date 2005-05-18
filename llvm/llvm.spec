@@ -1,6 +1,6 @@
 Summary: Static and JIT research compiler infrastructure
 Name: llvm
-Version: 1.5
+Version: 1.6cvs
 Release: 0
 License: U of Illinois/NCSA Open Source License
 Group: Development/Languages
@@ -14,10 +14,10 @@ Requires: /sbin/ldconfig
 %description
 LLVM is a compiler infrastructure designed for compile-time, link-time, runtime,
 and "idle-time" optimization of programs from arbitrary programming languages.
-LLVM is written in C++ and has been developed since 2000 at the
-University of Illinois. It currently supports compilation of C and C++
-programs, using front-ends derived from GCC 3.4. The compiler infrastructure
-includes mirror sets of programming tools as well as libraries with equivalent
+LLVM is written in C++ and has been developed since 2000 at the University of
+Illinois. It currently supports compilation of C and C++ programs, using
+front-ends derived from GCC 3.4. The compiler infrastructure includes mirror
+sets of programming tools as well as libraries with equivalent
 functionality.
 
 %prep
