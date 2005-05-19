@@ -36,19 +36,52 @@ void X86JITInfo::replaceMachineCodeForFunction(void *Old, void *New) {
 /// compile a function lazily.
 static TargetJITInfo::JITCompilerFn JITCompilerFunction;
 
-/// CompilationCallback - This is the target-specific function invoked by the
+// Provide a wrapper for X86CompilationCallback2 that saves non-traditional
+// callee saved registers, for the fastcc calling convention.
+extern "C" void X86CompilationCallback(void);
+
+#if defined(__i386__) || defined(i386)
+#ifndef _MSC_VER
+asm(
+   ".text\n"
+   ".align 8\n"
+   ".globl X86CompilationCallback\n"
+"X86CompilationCallback:\n"
+   "pushl   %ebp\n"
+   "movl    %esp, %ebp\n"    // Standard prologue
+   "pushl   %eax\n"
+   "pushl   %edx\n"          // save EAX/EDX
+   "call X86CompilationCallback2\n"
+   "popl    %edx\n"
+   "popl    %eax\n"
+   "popl    %ebp\n"
+   "ret\n");
+#else
+// FIXME: implement this for VC++
+#endif
+
+#else
+// Not an i386 host
+void X86CompilationCallback() {
+  assert(0 && "This is not a X86, you can't execute this!");
+  abort();
+}
+#endif
+
+/// X86CompilationCallback - This is the target-specific function invoked by the
 /// function stub when we did not know the real target of a call.  This function
 /// must locate the start of the stub or call site and pass it into the JIT
 /// compiler function.
-static void CompilationCallback() {
+extern "C" void X86CompilationCallback2() {
 #ifdef _MSC_VER
+  // FIXME: This needs to go up one more level!
   unsigned *StackPtr, RetAddr;
   __asm mov StackPtr, ebp;
   __asm mov eax, DWORD PTR [ebp + 4];
   __asm mov RetAddr, eax;
 #else
-  unsigned *StackPtr = (unsigned*)__builtin_frame_address(0);
-  unsigned RetAddr = (unsigned)(intptr_t)__builtin_return_address(0);
+  unsigned *StackPtr = (unsigned*)__builtin_frame_address(1);
+  unsigned RetAddr = (unsigned)(intptr_t)__builtin_return_address(1);
 
   // NOTE: __builtin_frame_address doesn't work if frame pointer elimination has
   // been performed.  Having a variable sized alloca disables frame pointer
@@ -100,11 +133,11 @@ static void CompilationCallback() {
 TargetJITInfo::LazyResolverFn
 X86JITInfo::getLazyResolverFunction(JITCompilerFn F) {
   JITCompilerFunction = F;
-  return CompilationCallback;
+  return X86CompilationCallback;
 }
 
 void *X86JITInfo::emitFunctionStub(void *Fn, MachineCodeEmitter &MCE) {
-  if (Fn != CompilationCallback) {
+  if (Fn != X86CompilationCallback) {
     MCE.startFunctionStub(5);
     MCE.emitByte(0xE9);
     MCE.emitWord((intptr_t)Fn-MCE.getCurrentPCValue()-4);
