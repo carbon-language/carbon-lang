@@ -620,9 +620,6 @@ AC_CONFIG_HEADERS([include/llvm/ADT/iterator])
 dnl Configure the makefile's configuration data
 AC_CONFIG_FILES([Makefile.config])
 
-dnl Configure llvmc's configuration files
-AC_CONFIG_FILES([tools/llvmc/st tools/llvmc/cpp tools/llvmc/ll tools/llvmc/c])
-
 dnl Configure doxygen's configuration file
 AC_CONFIG_FILES([docs/doxygen.cfg])
 
