@@ -53,9 +53,10 @@ namespace {
 
     void emitPCRelativeBlockAddress(const MachineBasicBlock *BB);
     void emitPCRelativeValue(unsigned Address);
-    void emitGlobalAddressForCall(GlobalValue *GV);
+    void emitGlobalAddressForCall(GlobalValue *GV, bool isTailCall);
     void emitGlobalAddressForPtr(GlobalValue *GV, int Disp = 0);
-    void emitExternalSymbolAddress(const char *ES, bool isPCRelative);
+    void emitExternalSymbolAddress(const char *ES, bool isPCRelative,
+                                   bool isTailCall);
 
     void emitRegModRMByte(unsigned ModRMReg, unsigned RegOpcodeField);
     void emitSIBByte(unsigned SS, unsigned Index, unsigned Base);
@@ -139,9 +140,10 @@ void Emitter::emitPCRelativeBlockAddress(const MachineBasicBlock *MBB) {
 /// emitGlobalAddressForCall - Emit the specified address to the code stream
 /// assuming this is part of a function call, which is PC relative.
 ///
-void Emitter::emitGlobalAddressForCall(GlobalValue *GV) {
+void Emitter::emitGlobalAddressForCall(GlobalValue *GV, bool isTailCall) {
   MCE.addRelocation(MachineRelocation(MCE.getCurrentPCOffset(),
-                                      X86::reloc_pcrel_word, GV, 0, true));
+                                      X86::reloc_pcrel_word, GV, 0,
+                                      !isTailCall /*Doesn'tNeedStub*/));
   MCE.emitWord(0);
 }
 
@@ -158,7 +160,8 @@ void Emitter::emitGlobalAddressForPtr(GlobalValue *GV, int Disp /* = 0 */) {
 /// emitExternalSymbolAddress - Arrange for the address of an external symbol to
 /// be emitted to the current location in the function, and allow it to be PC
 /// relative.
-void Emitter::emitExternalSymbolAddress(const char *ES, bool isPCRelative) {
+void Emitter::emitExternalSymbolAddress(const char *ES, bool isPCRelative,
+                                        bool isTailCall) {
   MCE.addRelocation(MachineRelocation(MCE.getCurrentPCOffset(),
           isPCRelative ? X86::reloc_pcrel_word : X86::reloc_absolute_word, ES));
   MCE.emitWord(0);
@@ -394,9 +397,13 @@ void Emitter::emitInstruction(const MachineInstr &MI) {
         emitPCRelativeBlockAddress(MO.getMachineBasicBlock());
       } else if (MO.isGlobalAddress()) {
         assert(MO.isPCRelative() && "Call target is not PC Relative?");
-        emitGlobalAddressForCall(MO.getGlobal());
+        bool isTailCall = Opcode == X86::TAILJMPd ||
+                          Opcode == X86::TAILJMPr || Opcode == X86::TAILJMPm;
+        emitGlobalAddressForCall(MO.getGlobal(), isTailCall);
       } else if (MO.isExternalSymbol()) {
-        emitExternalSymbolAddress(MO.getSymbolName(), true);
+        bool isTailCall = Opcode == X86::TAILJMPd ||
+                          Opcode == X86::TAILJMPr || Opcode == X86::TAILJMPm;
+        emitExternalSymbolAddress(MO.getSymbolName(), true, isTailCall);
       } else if (MO.isImmediate()) {
         emitConstant(MO.getImmedValue(), sizeOfImm(Desc));
       } else {
@@ -421,7 +428,7 @@ void Emitter::emitInstruction(const MachineInstr &MI) {
       } else if (MO1.isExternalSymbol()) {
         assert(sizeOfImm(Desc) == 4 &&
                "Don't know how to emit non-pointer values!");
-        emitExternalSymbolAddress(MO1.getSymbolName(), false);
+        emitExternalSymbolAddress(MO1.getSymbolName(), false, false);
       } else {
         emitConstant(MO1.getImmedValue(), sizeOfImm(Desc));
       }

@@ -3918,7 +3918,7 @@ void ISel::EmitFastCCToFastCCTailCall(SDNode *TailCallNode) {
   if (!isDirect) {
     BuildMI(BB, X86::TAILJMPr, 1).addReg(CalleeReg);
   } else if (GlobalAddressSDNode *GASD = dyn_cast<GlobalAddressSDNode>(Callee)){
-    BuildMI(BB, X86::TAILJMPd, 1).addGlobalAddress(GASD->getGlobal(),true);
+    BuildMI(BB, X86::TAILJMPd, 1).addGlobalAddress(GASD->getGlobal(), true);
   } else {
     ExternalSymbolSDNode *ESSDN = cast<ExternalSymbolSDNode>(Callee);
     BuildMI(BB, X86::TAILJMPd, 1).addExternalSymbol(ESSDN->getSymbol(), true);
