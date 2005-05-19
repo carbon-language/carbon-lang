@@ -12,7 +12,8 @@ TOOLNAME = stkrc
 LLVMLIBS = LLVMAsmParser LLVMBCWriter LLVMTransforms LLVMipo.a LLVMipa.a \
 	   LLVMScalarOpts LLVMAnalysis.a LLVMTarget.a LLVMTransformUtils \
 	   LLVMCore LLVMSupport.a LLVMbzip2 LLVMSystem.a 
-
+CONFIG_FILES = st
+EXTRA_DIST = st
 USEDLIBS=stkr_compiler 
 
 
