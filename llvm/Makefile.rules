@@ -554,6 +554,82 @@ uninstall-local::
 endif
 
 ###############################################################################
+# Set up variables for building libararies
+###############################################################################
+
+#---------------------------------------------------------
+# Handle the special "JIT" value for LLVM_LIBS which is a
+# shorthand for a bunch of libraries that get the correct
+# JIT support for a library or a tool that runs JIT.
+#---------------------------------------------------------
+ifeq ($(LLVMLIBS),JIT)
+
+# Make sure we can get our own symbols in the tool
+Link += -dlopen self
+
+# Generic JIT libraries
+JIT_LIBS := LLVMInterpreter LLVMJIT LLVMCodeGen LLVMExecutionEngine
+
+# You can enable the X86 JIT on a non-X86 host by setting the flag
+# ENABLE_X86_JIT on the make command line. If not, it will still be
+# enabled automagically on an X86 host.
+ifeq ($(ARCH), x86)
+  ENABLE_X86_JIT = 1
+endif
+
+# What the X86 JIT requires
+ifdef ENABLE_X86_JIT
+  JIT_LIBS += LLVMX86 LLVMSelectionDAG
+endif
+
+# You can enable the SparcV9 JIT on a non-SparcV9 host by setting the flag
+# ENABLE_SPARCV9_JIT on the make command line. If not, it will still be
+# enabled automagically on an SparcV9 host.
+ifeq ($(ARCH), Sparc)
+  ENABLE_SPARCV9_JIT = 1
+endif
+
+# What the Sparc JIT requires
+ifdef ENABLE_SPARCV9_JIT
+  JIT_LIBS += LLVMSparcV9 LLVMSparcV9ModuloSched LLVMSparcV9InstrSched \
+              LLVMSparcV9LiveVar LLVMInstrumentation.a LLVMProfilePaths \
+              LLVMBCWriter LLVMTransforms.a LLVMipo.a LLVMipa.a \
+              LLVMDataStructure.a LLVMSparcV9RegAlloc
+endif
+
+# You can enable the PowerPC JIT on a non-PowerPC host by setting the flag
+# ENABLE_PPC_JIT on the make command line. If not, it will still be
+# enabled automagically on an PowerPC host.
+ifeq ($(ARCH), PowerPC)
+  ENABLE_PPC_JIT = 1
+endif
+
+# What the PowerPC JIT requires
+ifdef ENABLE_PPC_JIT
+  JIT_LIBS += LLVMPowerPC LLVMSelectionDAG
+endif
+
+LLVMLIBS := $(JIT_LIBS) LLVMScalarOpts LLVMAnalysis.a LLVMTransformUtils.a \
+            LLVMBCReader LLVMCore LLVMSupport.a LLVMTarget.a LLVMbzip2 \
+            LLVMSystem.a $(PLATFORMLIBDL)
+endif
+
+#---------------------------------------------------------
+# Define various command line options pertaining to the
+# libraries needed when linking. There are "Proj" libs 
+# (defined by the user's project) and "LLVM" libs (defined 
+# by the # LLVM project).
+#---------------------------------------------------------
+ProjLibsOptions := $(patsubst %.a.o, -l%, $(addsuffix .o, $(USEDLIBS)))
+ProjLibsOptions := $(patsubst %.o, $(LibDir)/%.o,  $(ProjLibsOptions))
+LLVMLibsOptions := $(patsubst %.a.o, -l%, $(addsuffix .o, $(LLVMLIBS)))
+LLVMLibsOptions := $(patsubst %.o, $(LLVMLibDir)/%.o, $(LLVMLibsOptions))
+ProjUsedLibs    := $(patsubst %.a.o, lib%.a, $(addsuffix .o, $(USEDLIBS)))
+LLVMUsedLibs    := $(patsubst %.a.o, lib%.a, $(addsuffix .o, $(LLVMLIBS)))
+ProjLibsPaths   := $(addprefix $(LibDir)/,$(ProjUsedLibs))
+LLVMLibsPaths   := $(addprefix $(LLVMLibDir)/,$(LLVMUsedLibs))
+
+###############################################################################
 # Library Build Rules: Four ways to build a library
 ###############################################################################
 
@@ -634,10 +710,18 @@ ifdef SHARED_LIBRARY
 
 all-local:: $(LibName.LA)
 
+ifdef LINK_LIBS_IN_SHARED
+$(LibName.LA): $(ObjectsLO) $(LibDir)/.dir
+	$(Echo) Linking $(BuildMode) Shared Library $(LIBRARYNAME)$(SHLIBEXT)
+	$(Verb) $(Link) -o $@ $(ObjectsLO) \
+         $(ProjLibsOptions) $(LLVMLibsOptions)
+	$(Verb) $(LTInstall) $@ $(LibDir)
+else
 $(LibName.LA): $(ObjectsLO) $(LibDir)/.dir
 	$(Echo) Linking $(BuildMode) Shared Library $(LIBRARYNAME)$(SHLIBEXT)
 	$(Verb) $(Link) -o $@ $(ObjectsLO)
 	$(Verb) $(LTInstall) $@ $(LibDir)
+endif
 
 clean-local::
 ifneq ($(strip $(LibName.LA)),)
@@ -801,63 +885,6 @@ endif
 ifdef TOOLNAME
 
 #---------------------------------------------------------
-# Handle the special "JIT" value for LLVM_LIBS which is a
-# shorthand for a bunch of libraries that get the correct
-# JIT support for a tool that runs JIT.
-#---------------------------------------------------------
-ifeq ($(LLVMLIBS),JIT)
-
-# Make sure we can get our own symbols in the tool
-Link += -dlopen self
-
-# Generic JIT libraries
-JIT_LIBS := LLVMInterpreter LLVMJIT LLVMCodeGen LLVMExecutionEngine
-
-# You can enable the X86 JIT on a non-X86 host by setting the flag
-# ENABLE_X86_JIT on the make command line. If not, it will still be
-# enabled automagically on an X86 host.
-ifeq ($(ARCH), x86)
-  ENABLE_X86_JIT = 1
-endif
-
-# What the X86 JIT requires
-ifdef ENABLE_X86_JIT
-  JIT_LIBS += LLVMX86 LLVMSelectionDAG
-endif
-
-# You can enable the SparcV9 JIT on a non-SparcV9 host by setting the flag
-# ENABLE_SPARCV9_JIT on the make command line. If not, it will still be
-# enabled automagically on an SparcV9 host.
-ifeq ($(ARCH), Sparc)
-  ENABLE_SPARCV9_JIT = 1
-endif
-
-# What the Sparc JIT requires
-ifdef ENABLE_SPARCV9_JIT
-  JIT_LIBS += LLVMSparcV9 LLVMSparcV9ModuloSched LLVMSparcV9InstrSched \
-              LLVMSparcV9LiveVar LLVMInstrumentation.a LLVMProfilePaths \
-              LLVMBCWriter LLVMTransforms.a LLVMipo.a LLVMipa.a \
-              LLVMDataStructure.a LLVMSparcV9RegAlloc
-endif
-
-# You can enable the PowerPC JIT on a non-PowerPC host by setting the flag
-# ENABLE_PPC_JIT on the make command line. If not, it will still be
-# enabled automagically on an PowerPC host.
-ifeq ($(ARCH), PowerPC)
-  ENABLE_PPC_JIT = 1
-endif
-
-# What the PowerPC JIT requires
-ifdef ENABLE_PPC_JIT
-  JIT_LIBS += LLVMPowerPC LLVMSelectionDAG
-endif
-
-LLVMLIBS := $(JIT_LIBS) LLVMScalarOpts LLVMAnalysis.a LLVMTransformUtils.a \
-            LLVMBCReader LLVMCore LLVMSupport.a LLVMTarget.a LLVMbzip2 \
-            LLVMSystem.a $(PLATFORMLIBDL)
-endif
-
-#---------------------------------------------------------
 # Set up variables for building a tool.
 #---------------------------------------------------------
 ifdef EXAMPLE_TOOL
@@ -865,14 +892,6 @@ ToolBuildPath   := $(ExmplDir)/$(TOOLNAME)$(EXEEXT)
 else
 ToolBuildPath   := $(ToolDir)/$(TOOLNAME)$(EXEEXT)
 endif
-ProjLibsOptions := $(patsubst %.a.o, -l%, $(addsuffix .o, $(USEDLIBS)))
-ProjLibsOptions := $(patsubst %.o, $(LibDir)/%.o,  $(ProjLibsOptions))
-LLVMLibsOptions := $(patsubst %.a.o, -l%, $(addsuffix .o, $(LLVMLIBS)))
-LLVMLibsOptions := $(patsubst %.o, $(LLVMLibDir)/%.o, $(LLVMLibsOptions))
-ProjUsedLibs    := $(patsubst %.a.o, lib%.a, $(addsuffix .o, $(USEDLIBS)))
-LLVMUsedLibs    := $(patsubst %.a.o, lib%.a, $(addsuffix .o, $(LLVMLIBS)))
-ProjLibsPaths   := $(addprefix $(LibDir)/,$(ProjUsedLibs))
-LLVMLibsPaths   := $(addprefix $(LLVMLibDir)/,$(LLVMUsedLibs))
 
 #---------------------------------------------------------
 # Tell make that we need to rebuild subdirectories before 
