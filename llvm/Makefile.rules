@@ -423,17 +423,10 @@ endif
 # in the file so they get built before dependencies
 #---------------------------------------------------------
 
-$(PROJ_bindir):
-	$(Verb) $(MKDIR) $(PROJ_bindir)
-
-$(PROJ_libdir):
-	$(Verb) $(MKDIR) $(PROJ_libdir)
-
-$(PROJ_includedir):
-	$(Verb) $(MKDIR) $(PROJ_includedir)
-
-$(PROJ_etcdir):
-	$(Verb) $(MKDIR) $(PROJ_etcdir)
+$(PROJ_bindir): $(PROJ_bindir)/.dir
+$(PROJ_libdir): $(PROJ_libdir)/.dir
+$(PROJ_includedir): $(PROJ_includedir)/.dir
+$(PROJ_etcdir): $(PROJ_etcdir)/.dir
 
 # To create other directories, as needed, and timestamp their creation
 %/.dir:
