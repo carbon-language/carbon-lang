@@ -8,7 +8,7 @@
 ##===----------------------------------------------------------------------===##
 
 LEVEL = ../..
-TOOLNAME = llvm-ranlib 
+TOOLNAME = llvm-ranlib
 USEDLIBS = LLVMArchive.a LLVMBCReader \
 	   LLVMCore LLVMSupport.a LLVMbzip2 LLVMSystem.a
 
