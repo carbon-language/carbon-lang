@@ -562,7 +562,7 @@ LLVMC_ConfigDataProvider::ReadConfigData(const std::string& ftype) {
         if (!confFile.readable())
           confFile.clear();
       }
-      if (!confFile.isEmpty()) {
+      if (confFile.isEmpty()) {
         // Okay, try the LLVM installation directory
         confFile = sys::Path::GetLLVMConfigDir();
         confFile.appendFile(ftype);
