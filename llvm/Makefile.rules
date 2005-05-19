@@ -881,9 +881,9 @@ ifdef TOOLNAME
 # Set up variables for building a tool.
 #---------------------------------------------------------
 ifdef EXAMPLE_TOOL
-ToolBuildPath   := $(ExmplDir)/$(TOOLNAME)$(EXEEXT)
+ToolBuildPath   := $(ExmplDir)/$(strip $(TOOLNAME))$(EXEEXT)
 else
-ToolBuildPath   := $(ToolDir)/$(TOOLNAME)$(EXEEXT)
+ToolBuildPath   := $(ToolDir)/$(strip $(TOOLNAME))$(EXEEXT)
 endif
 
 #---------------------------------------------------------

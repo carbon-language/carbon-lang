@@ -8,7 +8,7 @@
 ##===----------------------------------------------------------------------===##
 LEVEL = ../..
 
-TOOLNAME = llvm-ar 
+TOOLNAME = llvm-ar
 USEDLIBS = LLVMArchive.a LLVMBCReader \
 	   LLVMCore LLVMSupport.a LLVMbzip2 LLVMSystem.a
 
