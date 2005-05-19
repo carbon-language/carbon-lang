@@ -167,9 +167,11 @@ namespace {
     bool parseSubstitution(CompilerDriver::StringVector& optList) {
       switch (token) {
         case ARGS_SUBST:        optList.push_back("%args%"); break;
+        case BINDIR_SUBST:      optList.push_back("%bindir%"); break;
         case DEFS_SUBST:        optList.push_back("%defs%"); break;
         case IN_SUBST:          optList.push_back("%in%"); break;
         case INCLS_SUBST:       optList.push_back("%incls%"); break;
+        case LIBDIR_SUBST:      optList.push_back("%libdir%"); break;
         case LIBS_SUBST:        optList.push_back("%libs%"); break;
         case OPT_SUBST:         optList.push_back("%opt%"); break;
         case OUT_SUBST:         optList.push_back("%out%"); break;

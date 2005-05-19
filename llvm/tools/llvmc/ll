@@ -3,10 +3,10 @@
   lang.name=LLVM Assembly
   preprocessor.command=
   preprocessor.required=false
-  translator.command=@bindir@/llvm-as %in% -o %out%
+  translator.command=%bindir%/llvm-as %in% -o %out%
   translator.optimizes=no
   translator.preprocesses=true
   translator.required=TRUE
-  optimizer.command=@bindir@/opt %in% -o %out% %opt% %args%
+  optimizer.command=%bindir%/opt %in% -o %out% %opt% %args%
   optimizer.translates=no
-  assembler.command=@bindir@/llc %in% -o %out%
+  assembler.command=%bindir%/llc %in% -o %out%

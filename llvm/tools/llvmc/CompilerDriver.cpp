@@ -249,6 +249,14 @@ private:
             } else
               found = false;
             break;
+          case 'b':
+            if (*PI == "%bindir%") {
+              std::string tmp(*PI);
+              tmp.replace(0,8,LLVM_BINDIR);
+              action->args.push_back(tmp);
+            } else
+              found = false;
+            break;
           case 'd':
             if (*PI == "%defs%") {
               StringVector::iterator I = Defines.begin();
@@ -282,13 +290,35 @@ private:
               found = false;
             break;
           case 'l':
-            if (*PI == "%libs%") {
+            if ((*PI)[1] == 'l') {
+              std::string tmp(*PI);
+              if (*PI == "%llvmgccdir%")
+                tmp.replace(0,12,LLVMGCCDIR);
+              else if (*PI == "%llvmgccarch%")
+                tmp.replace(0,13,LLVMGCCARCH);
+              else if (*PI == "%llvmgcc%")
+                tmp.replace(0,9,LLVMGCC);
+              else if (*PI == "%llvmgxx%")
+                tmp.replace(0,9,LLVMGXX);
+              else if (*PI == "%llvmcc1%")
+                tmp.replace(0,9,LLVMCC1);
+              else if (*PI == "%llvmcc1plus%") 
+                tmp.replace(0,9,LLVMCC1);
+              else
+                found = false;
+              if (found)
+                action->args.push_back(tmp);
+            } else if (*PI == "%libs%") {
               PathVector::iterator I = LibraryPaths.begin();
               PathVector::iterator E = LibraryPaths.end();
               while (I != E) {
                 action->args.push_back( std::string("-L") + I->toString() );
                 ++I;
               }
+            } else if (*PI == "%libdir%") {
+              std::string tmp(*PI);
+              tmp.replace(0,8,LLVM_LIBDIR);
+              action->args.push_back(tmp);
             } else
               found = false;
             break;
@@ -895,6 +925,8 @@ private:
 
 CompilerDriver::~CompilerDriver() {
 }
+
+CompilerDriver::ConfigDataProvider::~ConfigDataProvider() {}
 
 CompilerDriver*
 CompilerDriver::Get(ConfigDataProvider& CDP) {

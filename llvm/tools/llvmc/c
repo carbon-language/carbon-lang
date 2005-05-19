@@ -9,8 +9,8 @@
   lang.opt3=-O3
   lang.opt4=-O3
   lang.opt5=-O3
-  lang.libs=@LLVMGCCDIR@/lib @LLVMGCCDIR@/lib \
-    @LLVMGCCDIR@/lib/gcc/@LLVMGCCARCH@
+  lang.libs=%llvmgccdir%/lib %llvmgccdir%/lib \
+    %llvmgccdir%/lib/gcc/%llvmgccarch%
 
 ##########################################################
 # Pre-processor definitions
@@ -25,7 +25,7 @@
 ##########################################################
 
   # To compile C source, just use llvm-gcc's cc1
-  translator.command=@LLVMCC1@ -quiet %in% -o %out% \
+  translator.command=%llvmcc1% -quiet %in% -o %out% \
     %opt% %incls% %defs% %WOpts% %fOpts% %MOpts% %args% \
     -D_GNU_SOURCE
 
@@ -43,7 +43,7 @@
 ##########################################################
   
   # Use gccas to clean up the generated code
-  optimizer.command=@LLVM_BINDIR@/gccas %in% -o %out% %args%
+  optimizer.command=%bindir%/gccas %in% -o %out% %args%
   optimizer.required = true
 
   # gccas doesn't translate
@@ -58,4 +58,4 @@
 ##########################################################
 # Assembler definitions
 ##########################################################
-  assembler.command=@LLVM_BINDIR@/llc %in% -o %out% %target% %time% %stats%
+  assembler.command=%bindir%/llc %in% -o %out% %target% %time% %stats%

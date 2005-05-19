@@ -110,6 +110,7 @@ namespace llvm {
       /// @brief Configuration Data Provider interface
       class ConfigDataProvider {
       public:
+        virtual ~ConfigDataProvider();
         virtual ConfigData* ProvideConfigData(const std::string& filetype) = 0;
         virtual void setConfigDir(const sys::Path& dirName) = 0;
       };

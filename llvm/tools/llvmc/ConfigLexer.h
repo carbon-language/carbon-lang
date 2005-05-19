@@ -48,53 +48,61 @@ class InputProvider {
 extern InputProvider* ConfigLexerInput;
 
 enum ConfigLexerTokens {
-  EOFTOK = 0,   ///< Returned by Configlex when we hit end of file
-  EOLTOK,       ///< End of line
-  ERRORTOK,     ///< Error token
-  ARGS_SUBST,   ///< THe substitution item %args%
-  ASSEMBLY,     ///< The value "assembly" (and variants)
-  ASSEMBLER,    ///< The name "assembler" (and variants)
-  BYTECODE,     ///< The value "bytecode" (and variants)
-  COMMAND,      ///< The name "command" (and variants)
-  DEFS_SUBST,   ///< The substitution item %defs%
-  EQUALS,       ///< The equals sign, =
-  FALSETOK,     ///< A boolean false value (false/no/off)
-  FOPTS_SUBST,  ///< The substitution item %fOpts%
-  IN_SUBST,     ///< The substitution item %in%
-  INCLS_SUBST,  ///< The substitution item %incls%
-  INTEGER,      ///< An integer
-  LANG,         ///< The name "lang" (and variants)
-  LIBPATHS,     ///< The name "libpaths" (and variants)
-  LIBS,         ///< The name "libs" (and variants)
-  LIBS_SUBST,   ///< The substitution item %libs%
-  LINKER,       ///< The name "linker" (and variants)
-  MOPTS_SUBST,  ///< The substitution item %Mopts%
-  NAME,         ///< The name "name" (and variants)
-  OPT_SUBST,    ///< The substitution item %opt%
-  OPTIMIZER,    ///< The name "optimizer" (and variants)
-  OPTION,       ///< A command line option
-  OPT1,         ///< The name "opt1" (and variants)
-  OPT2,         ///< The name "opt2" (and variants)
-  OPT3,         ///< The name "opt3" (and variants)
-  OPT4,         ///< The name "opt4" (and variants)
-  OPT5,         ///< The name "opt5" (and variants)
-  OUT_SUBST,    ///< The output substitution item %out%
-  OUTPUT,       ///< The name "output" (and variants)
-  PREPROCESSES, ///< The name "preprocesses" (and variants)
-  PREPROCESSOR, ///< The name "preprocessor" (and variants)
-  REQUIRED,     ///< The name "required" (and variants)
-  SEPARATOR,    ///< A configuration item separator
-  SPACE,        ///< Space between options
-  STATS_SUBST,  ///< The stats substitution item %stats%
-  STRING,       ///< A quoted string
-  TARGET_SUBST, ///< The substitition item %target%
-  TIME_SUBST,   ///< The substitution item %time%
-  TRANSLATES,   ///< The name "translates" (and variants)
-  TRANSLATOR,   ///< The name "translator" (and variants)
-  TRUETOK,      ///< A boolean true value (true/yes/on)
-  VERBOSE_SUBST,///< The substitution item %verbose%
-  VERSION_TOK,  ///< The name "version" (and variants)
-  WOPTS_SUBST,  ///< The %WOpts% substitution
+  EOFTOK = 0,        ///< Returned by Configlex when we hit end of file
+  EOLTOK,            ///< End of line
+  ERRORTOK,          ///< Error token
+  ARGS_SUBST,        ///< The substitution item %args%
+  BINDIR_SUBST,      ///< The substitution item %bindir%
+  ASSEMBLY,          ///< The value "assembly" (and variants)
+  ASSEMBLER,         ///< The name "assembler" (and variants)
+  BYTECODE,          ///< The value "bytecode" (and variants)
+  COMMAND,           ///< The name "command" (and variants)
+  DEFS_SUBST,        ///< The substitution item %defs%
+  EQUALS,            ///< The equals sign, =
+  FALSETOK,          ///< A boolean false value (false/no/off)
+  FOPTS_SUBST,       ///< The substitution item %fOpts%
+  IN_SUBST,          ///< The substitution item %in%
+  INCLS_SUBST,       ///< The substitution item %incls%
+  INTEGER,           ///< An integer
+  LANG,              ///< The name "lang" (and variants)
+  LIBDIR_SUBST,      ///< The substitution item %libdir%
+  LIBPATHS,          ///< The name "libpaths" (and variants)
+  LIBS,              ///< The name "libs" (and variants)
+  LIBS_SUBST,        ///< The substitution item %libs%
+  LINKER,            ///< The name "linker" (and variants)
+  LLVMGCCDIR_SUBST,  ///< The substitution item %llvmgccdir%
+  LLVMGCCARCH_SUBST, ///< The substitution item %llvmgccarch%
+  LLVMGCC_SUBST,     ///< The substitution item %llvmgcc%
+  LLVMGXX_SUBST,     ///< The substitution item %llvmgxx%
+  LLVMCC1_SUBST,     ///< The substitution item %llvmcc1%
+  LLVMCC1PLUS_SUBST, ///< The substitution item %llvmcc1plus%
+  MOPTS_SUBST,       ///< The substitution item %Mopts%
+  NAME,              ///< The name "name" (and variants)
+  OPT_SUBST,         ///< The substitution item %opt%
+  OPTIMIZER,         ///< The name "optimizer" (and variants)
+  OPTION,            ///< A command line option
+  OPT1,              ///< The name "opt1" (and variants)
+  OPT2,              ///< The name "opt2" (and variants)
+  OPT3,              ///< The name "opt3" (and variants)
+  OPT4,              ///< The name "opt4" (and variants)
+  OPT5,              ///< The name "opt5" (and variants)
+  OUT_SUBST,         ///< The output substitution item %out%
+  OUTPUT,            ///< The name "output" (and variants)
+  PREPROCESSES,      ///< The name "preprocesses" (and variants)
+  PREPROCESSOR,      ///< The name "preprocessor" (and variants)
+  REQUIRED,          ///< The name "required" (and variants)
+  SEPARATOR,         ///< A configuration item separator
+  SPACE,             ///< Space between options
+  STATS_SUBST,       ///< The stats substitution item %stats%
+  STRING,            ///< A quoted string
+  TARGET_SUBST,      ///< The substitition item %target%
+  TIME_SUBST,        ///< The substitution item %time%
+  TRANSLATES,        ///< The name "translates" (and variants)
+  TRANSLATOR,        ///< The name "translator" (and variants)
+  TRUETOK,           ///< A boolean true value (true/yes/on)
+  VERBOSE_SUBST,     ///< The substitution item %verbose%
+  VERSION_TOK,       ///< The name "version" (and variants)
+  WOPTS_SUBST,       ///< The %WOpts% substitution
 };
 
 extern ConfigLexerTokens Configlex();

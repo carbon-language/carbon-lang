@@ -163,10 +163,18 @@ White           [ \t]*
 {LINKER}        { return handleNameContext(LINKER); }
 
 %args%          { return handleSubstitution(ARGS_SUBST); }
+%bindir%        { return handleSubstitution(BINDIR_SUBST); }      
 %defs%          { return handleSubstitution(DEFS_SUBST); }
 %in%            { return handleSubstitution(IN_SUBST); }
 %incls%         { return handleSubstitution(INCLS_SUBST); }
+%libdir%        { return handleSubstitution(LIBDIR_SUBST); }
 %libs%          { return handleSubstitution(LIBS_SUBST); }
+%llvmgccdir%    { return handleSubstitution(LLVMGCCDIR_SUBST); }
+%llvmgccarch%   { return handleSubstitution(LLVMGCCARCH_SUBST); }
+%llvmgcc%       { return handleSubstitution(LLVMGCC_SUBST); }
+%llvmgxx%       { return handleSubstitution(LLVMGXX_SUBST); }
+%llvmcc1%       { return handleSubstitution(LLVMCC1_SUBST); }
+%llvmcc1plus%   { return handleSubstitution(LLVMCC1PLUS_SUBST); }
 %opt%           { return handleSubstitution(OPT_SUBST); }
 %out%           { return handleSubstitution(OUT_SUBST); }
 %stats%         { return handleSubstitution(STATS_SUBST); }
