@@ -2151,16 +2151,13 @@ pC = pA OR pB
         }
       }
 
-      /*  XXX we want to re-enable direct branches! crippling them now
-       *  to stress-test indirect branches.:
-    //build the right kind of call
+    // build the right kind of call. if we can branch directly, do so:
     if (GlobalAddressSDNode *GASD =
                dyn_cast<GlobalAddressSDNode>(N.getOperand(1)))
       {
         BuildMI(BB, IA64::BRCALL, 1).addGlobalAddress(GASD->getGlobal(),true);
         IA64Lowering.restoreGP_SP_RP(BB);
-      }
-             ^^^^^^^^^^^^^ we want this code one day XXX */
+      } else
     if (ExternalSymbolSDNode *ESSDN =
              dyn_cast<ExternalSymbolSDNode>(N.getOperand(1)))
       { // FIXME : currently need this case for correctness, to avoid
@@ -2169,7 +2166,9 @@ pC = pA OR pB
           .addExternalSymbol(ESSDN->getSymbol(), true);
         IA64Lowering.restoreGP_SP_RP(BB);
       }
-    else {
+    else { // otherwise we need to get the function descriptor
+           // load the branch target (function)'s entry point and
+	   // GP, then branch
       Tmp1 = SelectExpr(N.getOperand(1));
 
       unsigned targetEntryPoint=MakeReg(MVT::i64);
