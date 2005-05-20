@@ -74,7 +74,6 @@ extern "C" {
   // Not an i386 host
   void X86CompilationCallback() {
     assert(0 && "This is not a X86, you can't execute this!");
-    abort();
   }
 #endif
 }
