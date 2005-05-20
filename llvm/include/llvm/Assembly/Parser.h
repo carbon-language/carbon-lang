@@ -28,6 +28,7 @@ class ParseException;
 // the verifier after parsing the file to check that it's ok.
 //
 Module *ParseAssemblyFile(const std::string &Filename);// throw (ParseException)
+Module *ParseAssemblyString(const char * AsmString, Module * M);// throw (ParseException)
 
 //===------------------------------------------------------------------------===
 //                              Helper Classes
