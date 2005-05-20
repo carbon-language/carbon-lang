@@ -12,6 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "jit"
+#include <stdlib.h>
 #include "X86JITInfo.h"
 #include "X86Relocations.h"
 #include "llvm/CodeGen/MachineCodeEmitter.h"
