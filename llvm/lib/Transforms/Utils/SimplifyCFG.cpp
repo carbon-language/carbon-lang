@@ -1236,6 +1236,7 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
         } else if (SwitchInst *SI = dyn_cast<SwitchInst>(TI)) {
           for (unsigned i = 1, e = SI->getNumCases(); i != e; ++i)
             if (SI->getSuccessor(i) == BB) {
+              BB->removePredecessor(SI->getParent());
               SI->removeCase(i);
               --i; --e;
               Changed = true;
@@ -1262,6 +1263,12 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
               // edges to it.
               SI->setSuccessor(0, MaxBlock);
               Changed = true;
+
+              // If MaxBlock has phinodes in it, remove MaxPop-1 entries from
+              // it.
+              if (isa<PHINode>(MaxBlock->begin()))
+                for (unsigned i = 0; i != MaxPop-1; ++i)
+                  MaxBlock->removePredecessor(SI->getParent());
 
               for (unsigned i = 1, e = SI->getNumCases(); i != e; ++i)
                 if (SI->getSuccessor(i) == MaxBlock) {
