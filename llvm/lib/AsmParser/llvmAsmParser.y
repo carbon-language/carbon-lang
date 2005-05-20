@@ -719,26 +719,41 @@ static PATypeHolder HandleUpRefs(const Type *ty) {
 }
 
 
+// common code from the two 'RunVMAsmParser' functions
+ static Module * RunParser(Module * M) {
+
+  llvmAsmlineno = 1;      // Reset the current line number...
+
+  CurModule.CurrentModule = M;
+  yyparse();       // Parse the file, potentially throwing exception
+
+  Module *Result = ParserResult;
+  ParserResult = 0;
+
+  return Result;
+
+ }
+
 //===----------------------------------------------------------------------===//
 //            RunVMAsmParser - Define an interface to this parser
 //===----------------------------------------------------------------------===//
 //
 Module *llvm::RunVMAsmParser(const std::string &Filename, FILE *F) {
-  llvmAsmin = F;
+  set_scan_file(F);
+
   CurFilename = Filename;
-  llvmAsmlineno = 1;      // Reset the current line number...
+  return RunParser(new Module(CurFilename));
+}
 
-  // Allocate a new module to read
-  CurModule.CurrentModule = new Module(Filename);
+Module *llvm::RunVMAsmParser(const char * AsmString, Module * M) {
+  set_scan_string(AsmString);
 
-  yyparse();       // Parse the file, potentially throwing exception
-
-  Module *Result = ParserResult;
-
-  llvmAsmin = stdin;    // F is about to go away, don't use it anymore...
-  ParserResult = 0;
-
-  return Result;
+  CurFilename = "from_memory";
+  if (M == NULL) {
+    return RunParser(new Module (CurFilename));
+  } else {
+    return RunParser(M);
+  }
 }
 
 %}

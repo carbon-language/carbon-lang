@@ -42,6 +42,10 @@ Module *llvm::ParseAssemblyFile(const std::string &Filename) {
   return Result;
 }
 
+Module *llvm::ParseAssemblyString(const char * AsmString, Module * M) {
+  return RunVMAsmParser(AsmString, M);
+}
+
 
 //===------------------------------------------------------------------------===
 //                              ParseException Class

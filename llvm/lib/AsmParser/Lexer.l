@@ -32,6 +32,13 @@
 #include <cctype>
 #include <cstdlib>
 
+void set_scan_file(FILE * F){
+  yy_switch_to_buffer(yy_create_buffer( F, YY_BUF_SIZE ) );
+}
+void set_scan_string (const char * str) {
+  yy_scan_string (str);
+}
+
 #define RET_TOK(type, Enum, sym) \
   llvmAsmlval.type = Instruction::Enum; return sym
 

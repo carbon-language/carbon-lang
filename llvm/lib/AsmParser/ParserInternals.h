@@ -22,9 +22,16 @@
 #include "llvm/Assembly/Parser.h"
 #include "llvm/ADT/StringExtras.h"
 
+
 // Global variables exported from the lexer...
-extern std::FILE *llvmAsmin;
+
 extern int llvmAsmlineno;
+
+extern std::string &llvmAsmTextin;
+
+// functions exported from the lexer
+void set_scan_file(FILE * F);
+void set_scan_string (const char * str);
 
 // Globals exported by the parser...
 extern char* llvmAsmtext;
@@ -37,6 +44,9 @@ extern std::string CurFilename;
 
 class Module;
 Module *RunVMAsmParser(const std::string &Filename, FILE *F);
+
+// Parse a string directly
+Module *RunVMAsmParser(const char * AsmString, Module * M);
 
 
 // UnEscapeLexed - Run through the specified buffer and change \xx codes to the
