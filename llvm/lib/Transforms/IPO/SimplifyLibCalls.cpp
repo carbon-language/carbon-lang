@@ -542,7 +542,7 @@ public:
     return false;
   }
 
-  /// @brief Perform the strcpy optimization
+  /// @brief Perform the strchr optimizations
   virtual bool OptimizeCall(CallInst* ci, SimplifyLibCalls& SLC)
   {
     // If there aren't three operands, bail
@@ -625,7 +625,7 @@ public:
       "Number of 'strcmp' calls simplified") {}
   virtual ~StrCmpOptimization() {}
 
-  /// @brief Make sure that the "strcpy" function has the right prototype
+  /// @brief Make sure that the "strcmp" function has the right prototype
   virtual bool ValidateCalledFunction(const Function* f, SimplifyLibCalls& SLC) 
   {
     if (f->getReturnType() == Type::IntTy && f->arg_size() == 2)
@@ -633,7 +633,7 @@ public:
     return false;
   }
 
-  /// @brief Perform the strcpy optimization
+  /// @brief Perform the strcmp optimization
   virtual bool OptimizeCall(CallInst* ci, SimplifyLibCalls& SLC)
   {
     // First, check to see if src and destination are the same. If they are,
@@ -710,7 +710,7 @@ public:
       "Number of 'strncmp' calls simplified") {}
   virtual ~StrNCmpOptimization() {}
 
-  /// @brief Make sure that the "strcpy" function has the right prototype
+  /// @brief Make sure that the "strncmp" function has the right prototype
   virtual bool ValidateCalledFunction(const Function* f, SimplifyLibCalls& SLC) 
   {
     if (f->getReturnType() == Type::IntTy && f->arg_size() == 3)
@@ -1366,6 +1366,15 @@ public:
   }
 } FPrintFOptimizer;
 
+/// CastToCStr - Return V if it is an sbyte*, otherwise cast it to sbyte*,
+/// inserting the cast before IP, and return the cast.
+static Value *CastToCStr(Value *V, Instruction &IP) {
+  const Type *SBPTy = PointerType::get(Type::SByteTy);
+  if (V->getType() != SBPTy)
+    return new CastInst(V, SBPTy, V->getName(), &IP);
+  return V;
+}
+
 
 /// This LibCallOptimization will simplify calls to the "sprintf" library 
 /// function. It looks for cases where the result of sprintf is not used and the
@@ -1468,8 +1477,8 @@ public:
           if (!strcpy_func)
             return false;
           std::vector<Value*> args;
-          args.push_back(ci->getOperand(1));
-          args.push_back(ci->getOperand(3));
+          args.push_back(CastToCStr(ci->getOperand(1), *ci));
+          args.push_back(CastToCStr(ci->getOperand(3), *ci));
           new CallInst(strcpy_func,args,"",ci);
         }
         else if (getConstantStringLength(ci->getOperand(3),len))
@@ -1480,8 +1489,8 @@ public:
           if (!memcpy_func)
             return false;
           std::vector<Value*> args;
-          args.push_back(ci->getOperand(1));
-          args.push_back(ci->getOperand(3));
+          args.push_back(CastToCStr(ci->getOperand(1), *ci));
+          args.push_back(CastToCStr(ci->getOperand(3), *ci));
           args.push_back(ConstantUInt::get(Type::UIntTy,len));
           args.push_back(ConstantUInt::get(Type::UIntTy,1));
           new CallInst(memcpy_func,args,"",ci);
