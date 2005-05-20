@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "jit"
-#include <stdlib.h>
+#include <cstdlib>
 #include "X86JITInfo.h"
 #include "X86Relocations.h"
 #include "llvm/CodeGen/MachineCodeEmitter.h"
@@ -75,6 +75,7 @@ extern "C" {
   // Not an i386 host
   void X86CompilationCallback() {
     assert(0 && "This is not a X86, you can't execute this!");
+    abort();
   }
 #endif
 }
