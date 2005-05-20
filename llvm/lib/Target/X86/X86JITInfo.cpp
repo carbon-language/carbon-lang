@@ -12,11 +12,12 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "jit"
-#include <cstdlib>
 #include "X86JITInfo.h"
 #include "X86Relocations.h"
 #include "llvm/CodeGen/MachineCodeEmitter.h"
 #include "llvm/Config/alloca.h"
+#include <cstdlib>
+#include <iostream>
 using namespace llvm;
 
 void X86JITInfo::replaceMachineCodeForFunction(void *Old, void *New) {
