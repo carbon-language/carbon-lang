@@ -28,45 +28,56 @@ void X86JITInfo::replaceMachineCodeForFunction(void *Old, void *New) {
 }
 
 
-#ifdef _MSC_VER
-#pragma optimize("y", off)
-#endif
-
 /// JITCompilerFunction - This contains the address of the JIT function used to
 /// compile a function lazily.
 static TargetJITInfo::JITCompilerFn JITCompilerFunction;
 
 // Provide a wrapper for X86CompilationCallback2 that saves non-traditional
 // callee saved registers, for the fastcc calling convention.
-extern "C" void X86CompilationCallback(void);
-
-#if defined(__i386__) || defined(i386)
+extern "C" {
+#if defined(__i386__) || defined(i386) || defined(_M_IX86)
 #ifndef _MSC_VER
-asm(
-   ".text\n"
-   ".align 8\n"
-   ".globl X86CompilationCallback\n"
-"X86CompilationCallback:\n"
-   "pushl   %ebp\n"
-   "movl    %esp, %ebp\n"    // Standard prologue
-   "pushl   %eax\n"
-   "pushl   %edx\n"          // save EAX/EDX
-   "call X86CompilationCallback2\n"
-   "popl    %edx\n"
-   "popl    %eax\n"
-   "popl    %ebp\n"
-   "ret\n");
+  void X86CompilationCallback(void);
+  asm(
+    ".text\n"
+    ".align 8\n"
+    ".globl X86CompilationCallback\n"
+  "X86CompilationCallback:\n"
+    "pushl   %ebp\n"
+    "movl    %esp, %ebp\n"    // Standard prologue
+    "pushl   %eax\n"
+    "pushl   %edx\n"          // save EAX/EDX
+    "call X86CompilationCallback2\n"
+    "popl    %edx\n"
+    "popl    %eax\n"
+    "popl    %ebp\n"
+    "ret\n");
 #else
-// FIXME: implement this for VC++
+  extern "C" void *_AddressOfReturnAddress(void);
+  #pragma intrinsic(_AddressOfReturnAddress)
+
+  void X86CompilationCallback2(void);
+
+  _declspec(naked) void X86CompilationCallback(void) {
+    __asm {
+      push  eax
+      push  edx
+      call  X86CompilationCallback2
+      pop   edx
+      pop   eax
+      ret
+    }
+  }
 #endif
 
 #else
-// Not an i386 host
-void X86CompilationCallback() {
-  assert(0 && "This is not a X86, you can't execute this!");
-  abort();
-}
+  // Not an i386 host
+  void X86CompilationCallback() {
+    assert(0 && "This is not a X86, you can't execute this!");
+    abort();
+  }
 #endif
+}
 
 /// X86CompilationCallback - This is the target-specific function invoked by the
 /// function stub when we did not know the real target of a call.  This function
@@ -74,14 +85,14 @@ void X86CompilationCallback() {
 /// compiler function.
 extern "C" void X86CompilationCallback2() {
 #ifdef _MSC_VER
-  // FIXME: This needs to go up one more level!
-  unsigned *StackPtr, RetAddr;
-  __asm mov StackPtr, ebp;
-  __asm mov eax, DWORD PTR [ebp + 4];
-  __asm mov RetAddr, eax;
+  assert(sizeof(size_t) == 4); // FIXME: handle Win64
+  unsigned *RetAddrLoc = (unsigned *)_AddressOfReturnAddress();
+  RetAddrLoc += 3;  // skip over ret addr, edx, eax
+  unsigned RetAddr = *RetAddrLoc;
 #else
   unsigned *StackPtr = (unsigned*)__builtin_frame_address(1);
   unsigned RetAddr = (unsigned)(intptr_t)__builtin_return_address(1);
+  unsigned *RetAddrLoc = &StackPtr[1];
 
   // NOTE: __builtin_frame_address doesn't work if frame pointer elimination has
   // been performed.  Having a variable sized alloca disables frame pointer
@@ -89,7 +100,7 @@ extern "C" void X86CompilationCallback2() {
   alloca(10+(RetAddr >> 31));
 
 #endif
-  assert(StackPtr[1] == RetAddr &&
+  assert(*RetAddrLoc == RetAddr &&
          "Could not find return address on the stack!");
 
   // It's a stub if there is an interrupt marker after the call.
@@ -123,12 +134,8 @@ extern "C" void X86CompilationCallback2() {
   }
 
   // Change the return address to reexecute the call instruction...
-  StackPtr[1] -= 5;
+  *RetAddrLoc -= 5;
 }
-
-#ifdef _MSC_VER
-#pragma optimize( "", on )
-#endif
 
 TargetJITInfo::LazyResolverFn
 X86JITInfo::getLazyResolverFunction(JITCompilerFn F) {
