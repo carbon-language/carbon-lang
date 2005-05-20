@@ -27,6 +27,7 @@ $| = 1;
 print "Content-type: image/png", "\n\n";
 
 open CMDSTREAM, "|gnuplot";
+#open CMDSTREAM, "|echo";
 
 print CMDSTREAM "set terminal png\n";
 print CMDSTREAM "set output\n";
@@ -36,7 +37,7 @@ print CMDSTREAM "\nplot";
 for ($iter = 0; $iter < $count; $iter++) {
   if ($iter)
     { print CMDSTREAM ","; }
-  print CMDSTREAM " '-' using 1:2 with lines";
+  print CMDSTREAM " '-' using 1:2 title \"" . $q->param('t' . $iter) . "," . $q->param('n' . $iter) . "\"with lines";
 }
 
 print CMDSTREAM "\n";

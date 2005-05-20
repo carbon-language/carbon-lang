@@ -61,15 +61,18 @@ else
       {
         my @names = $q->param('name');
         my @tests = $q->param('test');
+        print "<P>";
+        print join "<BR>", @names;
+        print "<P>";
+        print join "<BR>", @tests;
+        print "<P>";
         $str = "pwd=" . $q->param('pwd');
         $count = 0;
-        while (@names)
+        foreach $n (@names)
           {
-            $n = pop @names;
-            while (@tests)
+            foreach $t (@tests)
               {
-                $t = pop @tests;
-                $str .= "&t$count=$t&n$count=$n";
+                $str = "$str&t$count=$t&n$count=$n";
                 $count++;
               }
           }
