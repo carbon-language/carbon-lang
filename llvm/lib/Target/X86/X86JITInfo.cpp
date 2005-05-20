@@ -69,12 +69,11 @@ extern "C" {
       ret
     }
   }
-#endif
+#endif // _MSC_VER
 
-#else
-  // Not an i386 host
+#else // Not an i386 host
   void X86CompilationCallback() {
-    assert(0 && "This is not a X86, you can't execute this!");
+    std::cerr << "Cannot call X86CompilationCallback() on a non-x86 arch!\n";
     abort();
   }
 #endif
