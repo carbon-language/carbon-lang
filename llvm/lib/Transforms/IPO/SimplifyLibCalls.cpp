@@ -7,12 +7,13 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements a variety of small optimizations for calls to specific
-// well-known (e.g. runtime library) function calls. For example, a call to the
-// function "exit(3)" that occurs within the main() function can be transformed
-// into a simple "return 3" instruction. Any optimization that takes this form
-// (replace call to library function with simpler code that provides same 
-// result) belongs in this file. 
+// This file implements a module pass that applies a variety of small 
+// optimizations for calls to specific well-known function calls (e.g. runtime 
+// library functions). For example, a call to the function "exit(3)" that 
+// occurs within the main() function can be transformed into a simple "return 3"
+// instruction. Any optimization that takes this form (replace call to library 
+// function with simpler code that provides the same result) belongs in this 
+// file. 
 //
 //===----------------------------------------------------------------------===//
 
