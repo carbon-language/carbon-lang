@@ -42,8 +42,12 @@ Statistic<> SimplifiedLibCalls("simplify-libcalls",
 class LibCallOptimization;
 class SimplifyLibCalls;
 
+/// This hash map is populated by the constructor for LibCallOptimization class.
+/// Therefore all subclasses are registered here at static initialization time
+/// and this list is what the SimplifyLibCalls pass uses to apply the individual
+/// optimizations to the call sites.
 /// @brief The list of optimizations deriving from LibCallOptimization
-hash_map<std::string,LibCallOptimization*> optlist;
+static hash_map<std::string,LibCallOptimization*> optlist;
 
 /// This class is the abstract base class for the set of optimizations that
 /// corresponds to one library call. The SimplifyLibCalls pass will call the
