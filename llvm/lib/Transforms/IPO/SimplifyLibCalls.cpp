@@ -1368,6 +1368,7 @@ public:
 
 /// CastToCStr - Return V if it is an sbyte*, otherwise cast it to sbyte*,
 /// inserting the cast before IP, and return the cast.
+/// @brief Cast a value to a "C" string.
 static Value *CastToCStr(Value *V, Instruction &IP) {
   const Type *SBPTy = PointerType::get(Type::SByteTy);
   if (V->getType() != SBPTy)
