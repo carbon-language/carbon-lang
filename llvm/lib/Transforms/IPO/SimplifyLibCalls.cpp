@@ -1237,6 +1237,16 @@ public:
   }
 } PowOptimizer;
 
+/// CastToCStr - Return V if it is an sbyte*, otherwise cast it to sbyte*,
+/// inserting the cast before IP, and return the cast.
+/// @brief Cast a value to a "C" string.
+static Value *CastToCStr(Value *V, Instruction &IP) {
+  const Type *SBPTy = PointerType::get(Type::SByteTy);
+  if (V->getType() != SBPTy)
+    return new CastInst(V, SBPTy, V->getName(), &IP);
+  return V;
+}
+
 /// This LibCallOptimization will simplify calls to the "fprintf" library 
 /// function. It looks for cases where the result of fprintf is not used and the
 /// operation can be reduced to something simpler.
@@ -1292,7 +1302,7 @@ public:
           return false;
       }
 
-      // fprintf(file,fmt) -> fwrite(fmt,strlen(fmt),1file) 
+      // fprintf(file,fmt) -> fwrite(fmt,strlen(fmt),file) 
       const Type* FILEptr_type = ci->getOperand(1)->getType();
       Function* fwrite_func = SLC.get_fwrite(FILEptr_type);
       if (!fwrite_func)
@@ -1335,7 +1345,7 @@ public:
         if (!fwrite_func)
           return false;
         std::vector<Value*> args;
-        args.push_back(ci->getOperand(3));
+        args.push_back(CastToCStr(ci->getOperand(3), *ci));
         args.push_back(ConstantUInt::get(SLC.getIntPtrType(),len));
         args.push_back(ConstantUInt::get(SLC.getIntPtrType(),1));
         args.push_back(ci->getOperand(1));
@@ -1365,17 +1375,6 @@ public:
     return true;
   }
 } FPrintFOptimizer;
-
-/// CastToCStr - Return V if it is an sbyte*, otherwise cast it to sbyte*,
-/// inserting the cast before IP, and return the cast.
-/// @brief Cast a value to a "C" string.
-static Value *CastToCStr(Value *V, Instruction &IP) {
-  const Type *SBPTy = PointerType::get(Type::SByteTy);
-  if (V->getType() != SBPTy)
-    return new CastInst(V, SBPTy, V->getName(), &IP);
-  return V;
-}
-
 
 /// This LibCallOptimization will simplify calls to the "sprintf" library 
 /// function. It looks for cases where the result of sprintf is not used and the
