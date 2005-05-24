@@ -1366,7 +1366,7 @@ dist-check:: $(DistTarGZip)
 	  gunzip -c $(DistTarGZip) | $(TAR) xf - && \
 	  cd build && \
 	  ../$(DistName)/configure --prefix="$(DistCheckDir)/install" \
-	    --srcdir=../$(DistName) && \
+	    --srcdir=../$(DistName) $(DIST_CHECK_CONFIG_OPTIONS) && \
 	  $(MAKE) all && \
 	  $(MAKE) check && \
 	  $(MAKE) install && \
@@ -1432,9 +1432,16 @@ $(DistDir)/.makedistdir: $(DistSources)
 	  if test -d "$$from_dir/$$file"; then \
 	    if test -d "$(PROJ_SRC_DIR)/$$file" && \
 	       test "$$from_dir" != "$(PROJ_SRC_DIR)" ; then \
-	      $(CP) -pR "$(PROJ_SRC_DIR)/$$file" "$$to_dir" || exit 1; \
+	       cd $(PROJ_SRC_DIR) ; \
+	       $(TAR) cf - $$file --exclude .svn --exclude CVS | \
+	         ( cd $$to_dir ; $(TAR) xf - ) ; \
+	       cd $(PROJ_OBJ_DIR) ; \
+	    else \
+	       cd $$from_dir ; \
+	       $(TAR) cf - $$file --exclude .svn --exclude CVS | \
+	         ( cd $$to_dir ; $(TAR) xf - ) ; \
+	       cd $(PROJ_OBJ_DIR) ; \
 	    fi; \
-	    $(CP) -pR $$from_dir/$$file $$to_dir || exit 1; \
 	  elif test -f "$$from_dir/$$file" ; then \
 	    $(CP) -p "$$from_dir/$$file" "$(DistDir)/$$file" || exit 1; \
 	  elif test -L "$$from_dir/$$file" ; then \
@@ -1455,8 +1462,8 @@ $(DistDir)/.makedistdir: $(DistSources)
 	  fi; \
 	done
 	$(Verb) if test "$(DistDir)" = "$(TopDistDir)" ; then \
-	  $(EchoCmd) Eliminating CVS directories from distribution ; \
-	  $(RM) -rf `find $(TopDistDir) -type d -name CVS -print` ;\
+	  $(EchoCmd) Eliminating CVS/.svn directories from distribution ; \
+	  $(RM) -rf `find $(TopDistDir) -type d \( -name CVS -o -name .svn \) -print` ;\
 	  $(MAKE) dist-hook ; \
 	  $(FIND) $(TopDistDir) -type d ! -perm -777 -exec chmod a+rwx {} \; \
 	    -o ! -type d ! -perm -444 -links 1 -exec chmod a+r {} \; \

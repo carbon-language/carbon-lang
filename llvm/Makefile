@@ -18,6 +18,10 @@ EXTRA_DIST := test llvm.spec include
 
 include $(LEVEL)/Makefile.common
 
+# Specify options to pass to configure script when we're
+# running the dist-check target
+DIST_CHECK_CONFIG_OPTIONS = --with-llvmgccdir=$(LLVMGCCDIR)
+
 .PHONY: debug-opt-prof
 debug-opt-prof:
 	$(Echo) Building Debug Version
