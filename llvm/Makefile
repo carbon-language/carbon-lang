@@ -7,11 +7,15 @@
 # 
 #===------------------------------------------------------------------------===#
 LEVEL = .
-DIRS = lib/System lib/Support utils lib tools 
+DIRS = lib/System lib/Support utils lib
 
-ifneq ($(MAKECMDGOALS),tools-only)
-DIRS += runtime docs
-OPTIONAL_DIRS = examples projects
+ifeq ($(MAKECMDGOALS),tools-only)
+DIRS += tools
+else
+  ifneq ($(MAKECMDGOALS),libs-only)
+    DIRS += runtime docs
+    OPTIONAL_DIRS = examples projects
+  endif
 endif
 
 EXTRA_DIST := test llvm.spec include
@@ -46,3 +50,4 @@ dist-hook::
 	  $(TopDistDir)/include/llvm/Support/ThreadSupport.h
 
 tools-only: all
+libs-only: all
