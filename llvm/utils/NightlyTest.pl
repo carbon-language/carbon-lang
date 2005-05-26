@@ -34,6 +34,8 @@
 #  -gnuplotscript   Next argument specifies gnuplot script to use
 #  -templatefile    Next argument specifies template file to use
 #  -gccpath         Path to gcc/g++ used to build LLVM
+#  -cvstag          Check out a specific CVS tag to build LLVM (useful for
+#                   testing release branches)
 #
 # CVSROOT is the CVS repository from which the tree will be checked out,
 #  specified either in the full :method:user@host:/dir syntax, or
@@ -79,6 +81,7 @@ my $PROGTESTOPTS = "";
 my $VERBOSE = 0;
 my $DEBUG = 0;
 my $CONFIGUREARGS = "";
+my $CVSCOOPT = "-APR";
 my $NICE = "";
 my $NODEJAGNU = 0;
 
@@ -288,6 +291,7 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
   if (/^-gccpath/)         { 
     $CONFIGUREARGS .= " CC=$ARGV[0]/gcc CXX=$ARGV[0]/g++"; shift; next; 
   }
+  if (/^-cvstag/)          { $CVSCOOPT .= " -r $ARGV[0]"; shift; next; }
   if (/^-noexternals$/)    { $NOEXTERNALS = 1; next; }
   if(/^-nodejagnu$/) { $NODEJAGNU = 1; next; }
 
@@ -357,12 +361,14 @@ ChangeDir( $BuildDir, "CVS checkout directory" );
 #
 # Check out the llvm tree, saving CVS messages to the cvs log...
 #
-$CVSOPT = "";
-$CVSOPT = "-z3" if $CVSRootDir =~ /^:ext:/; # Use compression if going over ssh.
+my $CVSOPT = "";
+# Use compression if going over ssh.
+$CVSOPT = "-z3" if $CVSRootDir =~ /^:ext:/;
+my $CVSCMD = "$NICE cvs $CVSOPT -d $CVSRootDir co $CVSCOOPT";
 if (!$NOCHECKOUT) {
   if ( $VERBOSE ) { print "CHECKOUT STAGE\n"; }
-  system "( time -p $NICE cvs $CVSOPT -d $CVSRootDir co -APR llvm; cd llvm/projects ; " .
-     "$NICE cvs $CVSOPT -d $CVSRootDir co -APR llvm-test ) > $CVSLog 2>&1";
+  system "( time -p $CVSCMD llvm; cd llvm/projects ; " .
+     "$CVSCMD llvm-test ) > $CVSLog 2>&1";
   ChangeDir( $BuildDir , "CVS Checkout directory") ;
 }
 
