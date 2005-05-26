@@ -1165,6 +1165,32 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
     }
 
   case ISD::UINT_TO_FP:
+    {
+      //FIXME: First test if we will have problems with the sign bit before doing the slow thing
+      assert (N.getOperand(0).getValueType() == MVT::i64
+              && "only quads can be loaded from");
+      Tmp1 = SelectExpr(N.getOperand(0));  // Get the operand register
+      Tmp2 = MakeReg(MVT::i64);
+      BuildMI(BB, Alpha::SRL, 2, Tmp2).addReg(Tmp1).addImm(1);
+      Tmp3 = MakeReg(MVT::i64);
+      BuildMI(BB, Alpha::CMPLT, 2, Tmp3).addReg(Tmp1).addReg(Alpha::R31);
+      unsigned Tmp4 = MakeReg(MVT::f64), Tmp5 = MakeReg(MVT::f64), Tmp6 = MakeReg(MVT::f64);
+      MoveInt2FP(Tmp1, Tmp4, true);
+      MoveInt2FP(Tmp2, Tmp5, true);
+      MoveInt2FP(Tmp3, Tmp6, true);
+      Tmp1 = MakeReg(MVT::f64);
+      Tmp2 = MakeReg(MVT::f64);
+      Opc = DestType == MVT::f64 ? Alpha::CVTQT : Alpha::CVTQS;
+      BuildMI(BB, Opc, 1, Tmp1).addReg(Tmp4);
+      BuildMI(BB, Opc, 1, Tmp2).addReg(Tmp5);
+      Tmp3 = MakeReg(MVT::f64);
+      BuildMI(BB, Alpha::ADDT, 2, Tmp3).addReg(Tmp2).addReg(Tmp2);
+      //Ok, now tmp1 had the plain covereted
+      //tmp3 has the reduced converted and added
+      //tmp6 has the conditional to use
+      BuildMI(BB, Alpha::FCMOVNE, 3, Result).addReg(Tmp1).addReg(Tmp3).addReg(Tmp6);
+      return Result;
+    }
   case ISD::SINT_TO_FP:
     {
       assert (N.getOperand(0).getValueType() == MVT::i64
