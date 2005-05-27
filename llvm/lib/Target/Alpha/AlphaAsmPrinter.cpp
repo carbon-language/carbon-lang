@@ -184,8 +184,8 @@ bool AlphaAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   // Print out labels for the function.
   SwitchSection(O, "text");
   emitAlignment(4);
-  O << "\t.globl\t" << CurrentFnName << "\n";
-  O << "\t.ent\t" << CurrentFnName << "\n";
+  O << "\t.globl " << CurrentFnName << "\n";
+  O << "\t.ent " << CurrentFnName << "\n";
 
   O << CurrentFnName << ":\n";
 
