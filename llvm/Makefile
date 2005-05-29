@@ -13,7 +13,7 @@ ifeq ($(MAKECMDGOALS),tools-only)
 DIRS += tools
 else
   ifneq ($(MAKECMDGOALS),libs-only)
-    DIRS += runtime docs
+    DIRS += tools runtime docs
     OPTIONAL_DIRS = examples projects
   endif
 endif
