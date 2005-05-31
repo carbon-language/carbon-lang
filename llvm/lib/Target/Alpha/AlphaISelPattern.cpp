@@ -140,6 +140,17 @@ namespace {
   };
 }
 
+/// AddLiveIn - This helper function adds the specified physical register to the
+/// MachineFunction as a live in value.  It also creates a corresponding virtual
+/// register for it.
+static unsigned AddLiveIn(MachineFunction &MF, unsigned PReg,
+                          TargetRegisterClass *RC) {
+  assert(RC->contains(PReg) && "Not the correct regclass!");
+  unsigned VReg = MF.getSSARegMap()->createVirtualRegister(RC);
+  MF.addLiveIn(PReg, VReg);
+  return VReg;
+}
+
 //http://www.cs.arizona.edu/computer.help/policy/DIGITAL_unix/AA-PY8AC-TET1_html/callCH3.html#BLOCK21
 
 //For now, just use variable size stack frame format
@@ -162,14 +173,10 @@ std::vector<SDOperand>
 AlphaTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG)
 {
   std::vector<SDOperand> ArgValues;
-  std::vector<SDOperand> LS;
-  SDOperand Chain = DAG.getRoot();
 
-  //  assert(0 && "TODO");
   MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo*MFI = MF.getFrameInfo();
 
-  GP = MF.getSSARegMap()->createVirtualRegister(getRegClassFor(MVT::i64));
   MachineBasicBlock& BB = MF.front();
 
   //Handle the return address
@@ -181,64 +188,35 @@ AlphaTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG)
                            Alpha::F19, Alpha::F20, Alpha::F21};
   int count = 0;
 
-  //Def incoming registers
-  {
-    Function::arg_iterator I = F.arg_begin();
-    Function::arg_iterator E = F.arg_end();
-    for (int i = 0; i < 6; ++i)
-    {
-      if (F.isVarArg()) {
-        MF.addLiveIn(args_int[i]);
-        MF.addLiveIn(args_float[i]);
-//        BuildMI(&BB, Alpha::IDEF, 0, args_int[i]);
-//        BuildMI(&BB, Alpha::IDEF, 0, args_float[i]);
-      } else if (I != E)
-      {
-        if(MVT::isInteger(getValueType(I->getType())))
-          MF.addLiveIn(args_int[i]);
-//          BuildMI(&BB, Alpha::IDEF, 0, args_int[i]);
-        else
-          MF.addLiveIn(args_float[i]);
-//          BuildMI(&BB, Alpha::IDEF, 0, args_float[i]);
-        ++I;
-      }
-    }
-  }
-
-  MF.addLiveIn(Alpha::R29);
-//  BuildMI(&BB, Alpha::IDEF, 0, Alpha::R29);
-  BuildMI(&BB, Alpha::BIS, 2, GP).addReg(Alpha::R29).addReg(Alpha::R29);
+  GP = AddLiveIn(MF, Alpha::R29, getRegClassFor(MVT::i64));
 
   for (Function::arg_iterator I = F.arg_begin(), E = F.arg_end(); I != E; ++I)
   {
-    SDOperand newroot, argt;
+    SDOperand argt;
     if (count  < 6) {
       unsigned Vreg;
       MVT::ValueType VT = getValueType(I->getType());
-      switch (getValueType(I->getType())) {
+      switch (VT) {
       default:
         std::cerr << "Unknown Type " << VT << "\n";
         abort();
       case MVT::f64:
       case MVT::f32:
-        Vreg = MF.getSSARegMap()->createVirtualRegister(getRegClassFor(VT));
-        BuildMI(&BB, Alpha::CPYS, 2, Vreg).addReg(args_float[count]).addReg(args_float[count]);
-        argt = newroot = DAG.getCopyFromReg(Vreg,
-                                            getValueType(I->getType()),
-                                            Chain);
+        args_float[count] = AddLiveIn(MF,args_float[count], getRegClassFor(VT));
+        argt = DAG.getCopyFromReg(args_float[count], VT, DAG.getRoot());
         break;
       case MVT::i1:
       case MVT::i8:
       case MVT::i16:
       case MVT::i32:
       case MVT::i64:
-        Vreg = MF.getSSARegMap()->createVirtualRegister(getRegClassFor(MVT::i64));
-        BuildMI(&BB, Alpha::BIS, 2, Vreg).addReg(args_int[count]).addReg(args_int[count]);
-        argt = newroot = DAG.getCopyFromReg(Vreg, MVT::i64, Chain);
-        if (getValueType(I->getType()) != MVT::i64)
-          argt = DAG.getNode(ISD::TRUNCATE, getValueType(I->getType()), newroot);
+        args_int[count] = AddLiveIn(MF, args_int[count], getRegClassFor(VT));
+        argt = DAG.getCopyFromReg(args_int[count], VT, DAG.getRoot());
+        //        if (VT != MVT::i64)
+        //          argt = DAG.getNode(ISD::TRUNCATE, VT, argt);
         break;
       }
+      DAG.setRoot(argt.getValue(1));
     } else { //more args
       // Create the frame index object for this incoming parameter...
       int FI = MFI->CreateFixedObject(8, 8 * (count - 6));
@@ -246,40 +224,35 @@ AlphaTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG)
       // Create the SelectionDAG nodes corresponding to a load
       //from this parameter
       SDOperand FIN = DAG.getFrameIndex(FI, MVT::i64);
-      argt = newroot = DAG.getLoad(getValueType(I->getType()),
-                                   DAG.getEntryNode(), FIN, DAG.getSrcValue(NULL));
+      argt = DAG.getLoad(getValueType(I->getType()),
+                         DAG.getEntryNode(), FIN, DAG.getSrcValue(NULL));
     }
     ++count;
-    LS.push_back(newroot.getValue(1));
     ArgValues.push_back(argt);
   }
 
   // If the functions takes variable number of arguments, copy all regs to stack
-  if (F.isVarArg())
-    for (int i = 0; i < 6; ++i)
-    {
-      unsigned Vreg = MF.getSSARegMap()->createVirtualRegister(getRegClassFor(MVT::i64));
-      BuildMI(&BB, Alpha::BIS, 2, Vreg).addReg(args_int[i]).addReg(args_int[i]);
-      SDOperand argt = DAG.getCopyFromReg(Vreg, MVT::i64, Chain);
+  if (F.isVarArg()) {
+    std::vector<SDOperand> LS;
+    for (int i = 0; i < 6; ++i) {
+      if (args_int[i] < 1024)
+        args_int[i] = AddLiveIn(MF,args_int[i], getRegClassFor(MVT::i64));
+      SDOperand argt = DAG.getCopyFromReg(args_int[i], MVT::i64, DAG.getRoot());
       int FI = MFI->CreateFixedObject(8, -8 * (6 - i));
       SDOperand SDFI = DAG.getFrameIndex(FI, MVT::i64);
-      LS.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain, argt, SDFI, DAG.getSrcValue(NULL)));
-
-      Vreg = MF.getSSARegMap()->createVirtualRegister(getRegClassFor(MVT::f64));
-      BuildMI(&BB, Alpha::CPYS, 2, Vreg).addReg(args_float[i]).addReg(args_float[i]);
-      argt = DAG.getCopyFromReg(Vreg, MVT::f64, Chain);
+      LS.push_back(DAG.getNode(ISD::STORE, MVT::Other, DAG.getRoot(), argt, SDFI, DAG.getSrcValue(NULL)));
+      
+      if (args_float[i] < 1024)
+        args_float[i] = AddLiveIn(MF,args_float[i], getRegClassFor(MVT::f64));
+      argt = DAG.getCopyFromReg(args_float[i], MVT::f64, DAG.getRoot());
       FI = MFI->CreateFixedObject(8, - 8 * (12 - i));
       SDFI = DAG.getFrameIndex(FI, MVT::i64);
-      LS.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain, argt, SDFI, DAG.getSrcValue(NULL)));
+      LS.push_back(DAG.getNode(ISD::STORE, MVT::Other, DAG.getRoot(), argt, SDFI, DAG.getSrcValue(NULL)));
     }
 
-  // If the function takes variable number of arguments, make a frame index for
-  // the start of the first arg value... for expansion of llvm.va_start.
-  //   if (F.isVarArg())
-  //     VarArgsFrameIndex = MFI->CreateFixedObject(4, ArgOffset);
-
-  //Set up a token factor with all the stack traffic
-  DAG.setRoot(DAG.getNode(ISD::TokenFactor, MVT::Other, LS));
+    //Set up a token factor with all the stack traffic
+    DAG.setRoot(DAG.getNode(ISD::TokenFactor, MVT::Other, LS));
+  }
 
   // Finally, inform the code generator which regs we return values in.
   switch (getValueType(F.getReturnType())) {
@@ -436,6 +409,8 @@ public:
     ExprMap.clear();
     CCInvMap.clear();
   }
+  
+  virtual void EmitFunctionEntryCode(Function &Fn, MachineFunction &MF);
 
   unsigned SelectExpr(SDOperand N);
   unsigned SelectExprFP(SDOperand N, unsigned Result);
@@ -453,6 +428,26 @@ public:
   SDOperand BuildUDIVSequence(SDOperand N);
 
 };
+}
+
+void ISel::EmitFunctionEntryCode(Function &Fn, MachineFunction &MF) {
+  // If this function has live-in values, emit the copies from pregs to vregs at
+  // the top of the function, before anything else.
+  MachineBasicBlock *BB = MF.begin();
+  if (MF.livein_begin() != MF.livein_end()) {
+    SSARegMap *RegMap = MF.getSSARegMap();
+    for (MachineFunction::livein_iterator LI = MF.livein_begin(),
+           E = MF.livein_end(); LI != E; ++LI) {
+      const TargetRegisterClass *RC = RegMap->getRegClass(LI->second);
+      if (RC == Alpha::GPRCRegisterClass) {
+        BuildMI(BB, Alpha::BIS, 2, LI->second).addReg(LI->first).addReg(LI->first);
+      } else if (RC == Alpha::FPRCRegisterClass) {
+        BuildMI(BB, Alpha::CPYS, 2, LI->second).addReg(LI->first).addReg(LI->first);
+      } else {
+        assert(0 && "Unknown regclass!");
+      }
+    }
+  }
 }
 
 //Factorize a number using the list of constants
