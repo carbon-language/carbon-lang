@@ -212,8 +212,8 @@ AlphaTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG)
       case MVT::i64:
         args_int[count] = AddLiveIn(MF, args_int[count], getRegClassFor(VT));
         argt = DAG.getCopyFromReg(args_int[count], VT, DAG.getRoot());
-        //        if (VT != MVT::i64)
-        //          argt = DAG.getNode(ISD::TRUNCATE, VT, argt);
+        if (VT != MVT::i64)
+          argt = DAG.getNode(ISD::TRUNCATE, VT, argt);
         break;
       }
       DAG.setRoot(argt.getValue(1));
