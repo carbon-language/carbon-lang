@@ -47,6 +47,24 @@ namespace llvm {
                              cl::Hidden);
 }
 
+namespace {
+  // Alpha Specific DAG Nodes
+  namespace AlphaISD {
+    enum NodeType {
+      // Start the numbering where the builtin ops leave off.
+      FIRST_NUMBER = ISD::BUILTIN_OP_END,
+
+      //Convert an int bit pattern in an FP reg to a Double or Float
+      //Has a dest type and a source
+      CVTQ,
+      //Move an Ireg to a FPreg
+      ITOF,
+      //Move a  FPreg to an Ireg
+      FTOI, 
+    };
+  }
+}
+
 //===----------------------------------------------------------------------===//
 //  AlphaTargetLowering - Alpha Implementation of the TargetLowering interface
 namespace {
@@ -104,11 +122,18 @@ namespace {
       //Doesn't work yet
       setOperationAction(ISD::SETCC, MVT::f32,   Promote);
 
+      //Try a couple things with a custom expander
+      //setOperationAction(ISD::SINT_TO_FP       , MVT::i64  , Custom);
+
       computeRegisterProperties();
 
       addLegalFPImmediate(+0.0); //F31
       addLegalFPImmediate(-0.0); //-F31
     }
+
+    /// LowerOperation - Provide custom lowering hooks for some operations.
+    ///
+    virtual SDOperand LowerOperation(SDOperand Op, SelectionDAG &DAG);
 
     /// LowerArguments - This hook must be implemented to indicate how we should
     /// lower the arguments for the specified function, into the specified DAG.
@@ -139,6 +164,42 @@ namespace {
     }
   };
 }
+
+/// LowerOperation - Provide custom lowering hooks for some operations.
+///
+SDOperand AlphaTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
+    MachineFunction &MF = DAG.getMachineFunction();
+    switch (Op.getOpcode()) {
+    default: assert(0 && "Should not custom lower this!");
+//     case ISD::SINT_TO_FP:
+//       {
+//         assert (Op.getOperand(0).getValueType() == MVT::i64
+//                 && "only quads can be loaded from");
+//         SDOperand SRC;
+//         if (EnableAlphaFTOI)
+//         {
+//           std::vector<MVT::ValueType> RTs;
+//           RTs.push_back(Op.getValueType());
+//           std::vector<SDOperand> Ops;
+//           Ops.push_back(Op.getOperand(0));
+//           SRC = DAG.getNode(AlphaISD::ITOF, RTs, Ops);
+//         } else {
+//           int SSFI = MF.getFrameInfo()->CreateStackObject(8, 8);
+//           SDOperand StackSlot = DAG.getFrameIndex(SSFI, getPointerTy());
+//           SDOperand Store = DAG.getNode(ISD::STORE, MVT::Other, DAG.getEntryNode(),
+//                                         Op.getOperand(0), StackSlot, DAG.getSrcValue(NULL));
+//           SRC = DAG.getLoad(Op.getValueType(), Store.getValue(0), StackSlot,
+//                             DAG.getSrcValue(NULL));
+//         }
+//         std::vector<MVT::ValueType> RTs;
+//         RTs.push_back(Op.getValueType());
+//         std::vector<SDOperand> Ops;
+//         Ops.push_back(SRC);
+//         return DAG.getNode(AlphaISD::CVTQ, RTs, Ops);
+//       }
+    }
+}
+
 
 /// AddLiveIn - This helper function adds the specified physical register to the
 /// MachineFunction as a live in value.  It also creates a corresponding virtual
