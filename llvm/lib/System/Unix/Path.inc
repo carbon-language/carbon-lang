@@ -47,6 +47,11 @@
 # endif
 #endif
 
+// Put in a hack for Cygwin which falsely reports that the mkdtemp function
+// is available when it is not.
+#ifdef __CYGWIN__
+# undef HAVE_MKDTEMP
+#endif
 
 namespace llvm {
 using namespace sys;
