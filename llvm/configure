@@ -24625,8 +24625,10 @@ ETAGSFLAGS=$ETAGSFLAGS
 
 
 if test "$WITH_LLVMGCCDIR" = "default" ; then
-  # Extract the first word of "llvm-gcc", so it can be a program name with args.
-set dummy llvm-gcc; ac_word=$2
+  LLVMGCC="llvm-gcc${EXEEXT}"
+  LLVMGXX="llvm-g++${EXEEXT}"
+  # Extract the first word of "$LLVMGCC", so it can be a program name with args.
+set dummy $LLVMGCC; ac_word=$2
 echo "$as_me:$LINENO: checking for $ac_word" >&5
 echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
 if test "${ac_cv_path_LLVMGCC+set}" = set; then
@@ -24664,8 +24666,8 @@ else
 echo "${ECHO_T}no" >&6
 fi
 
-  # Extract the first word of "llvm-g++", so it can be a program name with args.
-set dummy llvm-g++; ac_word=$2
+  # Extract the first word of "$LLVMGXX", so it can be a program name with args.
+set dummy $LLVMGXX; ac_word=$2
 echo "$as_me:$LINENO: checking for $ac_word" >&5
 echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
 if test "${ac_cv_path_LLVMGXX+set}" = set; then
@@ -24704,8 +24706,8 @@ echo "${ECHO_T}no" >&6
 fi
 
 else
-  LLVMGCC=$WITH_LLVMGCCDIR/bin/llvm-gcc
-  LLVMGXX=$WITH_LLVMGCCDIR/bin/llvm-g++
+  LLVMGCC="$WITH_LLVMGCCDIR/bin/llvm-gcc${EXEEXT}"
+  LLVMGXX="$WITH_LLVMGCCDIR/bin/llvm-g++${EXEEXT}"
   LLVMGCC=$LLVMGCC
 
   LLVMGXX=$LLVMGXX
