@@ -43,13 +43,22 @@ extern "C" {
   asm(
     ".text\n"
     ".align 8\n"
+#ifdef __CYGWIN__
+    ".globl _X86CompilationCallback\n"
+  "_X86CompilationCallback:\n"
+#else
     ".globl X86CompilationCallback\n"
   "X86CompilationCallback:\n"
+#endif
     "pushl   %ebp\n"
     "movl    %esp, %ebp\n"    // Standard prologue
     "pushl   %eax\n"
     "pushl   %edx\n"          // save EAX/EDX
+#ifdef __CYGWIN__
+    "call _X86CompilationCallback2\n"
+#else
     "call X86CompilationCallback2\n"
+#endif
     "popl    %edx\n"
     "popl    %eax\n"
     "popl    %ebp\n"
