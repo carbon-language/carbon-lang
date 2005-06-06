@@ -36,6 +36,7 @@
 #  -gccpath         Path to gcc/g++ used to build LLVM
 #  -cvstag          Check out a specific CVS tag to build LLVM (useful for
 #                   testing release branches)
+#  -target          Specify the target triplet
 #
 # CVSROOT is the CVS repository from which the tree will be checked out,
 #  specified either in the full :method:user@host:/dir syntax, or
@@ -272,7 +273,7 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
   if (/^-parallel$/)       { $MAKEOPTS = "$MAKEOPTS -j2 -l3.0"; next; }
   if (/^-release$/)        { $MAKEOPTS = "$MAKEOPTS ENABLE_OPTIMIZED=1"; next; }
   if (/^-pedantic$/)       { 
-      $MAKEOPTS   = "$MAKEOPTS CompileOptimizeOpts='-O3 -DNDEBUG -finline-functions -Wpointer-arith -Wcast-align -Wno-deprecated -Wold-style-cast -Wabi -Woverloaded-virtual -ffor-scope'"; 
+      $MAKEOPTS = "$MAKEOPTS CompileOptimizeOpts='-O3 -DNDEBUG -finline-functions -Wpointer-arith -Wcast-align -Wno-deprecated -Wold-style-cast -Wabi -Woverloaded-virtual -ffor-scope'"; 
       next; 
   }
   if (/^-enable-llcbeta$/) { $PROGTESTOPTS .= " ENABLE_LLCBETA=1"; next; }
@@ -292,8 +293,11 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
     $CONFIGUREARGS .= " CC=$ARGV[0]/gcc CXX=$ARGV[0]/g++"; shift; next; 
   }
   if (/^-cvstag/)          { $CVSCOOPT .= " -r $ARGV[0]"; shift; next; }
+  if (/^-target/)          {
+    $CONFIGUREARGS .= " --target=$ARGV[0]"; shift; next;
+  }
   if (/^-noexternals$/)    { $NOEXTERNALS = 1; next; }
-  if(/^-nodejagnu$/) { $NODEJAGNU = 1; next; }
+  if (/^-nodejagnu$/)      { $NODEJAGNU = 1; next; }
 
   print "Unknown option: $_ : ignoring!\n";
 }
