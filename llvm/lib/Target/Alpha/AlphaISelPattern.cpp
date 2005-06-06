@@ -45,6 +45,9 @@ namespace llvm {
   cl::opt<bool> EnableAlphaCount("enable-alpha-count",
                              cl::desc("Print estimates on live ins and outs"),
                              cl::Hidden);
+  cl::opt<bool> EnableAlphaLSMark("enable-alpha-lsmark",
+                             cl::desc("Emit symbols to corrolate Mem ops to LLVM Values"),
+                             cl::Hidden);
 }
 
 namespace {
@@ -512,6 +515,27 @@ void ISel::EmitFunctionEntryCode(Function &Fn, MachineFunction &MF) {
       }
     }
   }
+}
+
+//Find the offset of the arg in it's parent's function
+static int getValueOffset(const Value* v)
+{
+  if (v == NULL)
+    return 0;
+
+  const Instruction* itarget = dyn_cast<Instruction>(v);
+  const BasicBlock* btarget = itarget->getParent();
+  const Function* ftarget = btarget->getParent();
+
+  //offset due to earlier BBs
+  int i = 0;
+  for(Function::const_iterator ii = ftarget->begin(); &*ii != btarget; ++ii)
+    i += ii->size();
+
+  for(BasicBlock::const_iterator ii = btarget->begin(); &*ii != itarget; ++ii)
+    ++i;
+
+  return i;
 }
 
 //Factorize a number using the list of constants
@@ -1119,6 +1143,12 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
       Select(Chain);
       Opc = DestType == MVT::f64 ? Alpha::LDT : Alpha::LDS;
 
+      if (EnableAlphaLSMark)
+      {
+        int i = getValueOffset(dyn_cast<SrcValueSDNode>(N.getOperand(2))->getValue());
+        BuildMI(BB, Alpha::MEMLABEL, 2).addImm(i);
+      }
+      
       if (Address.getOpcode() == ISD::GlobalAddress) {
         AlphaLowering.restoreGP(BB);
         Opc = GetSymVersion(Opc);
