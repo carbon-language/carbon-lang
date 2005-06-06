@@ -171,33 +171,36 @@ SDOperand AlphaTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     MachineFunction &MF = DAG.getMachineFunction();
     switch (Op.getOpcode()) {
     default: assert(0 && "Should not custom lower this!");
-//     case ISD::SINT_TO_FP:
-//       {
-//         assert (Op.getOperand(0).getValueType() == MVT::i64
-//                 && "only quads can be loaded from");
-//         SDOperand SRC;
-//         if (EnableAlphaFTOI)
-//         {
-//           std::vector<MVT::ValueType> RTs;
-//           RTs.push_back(Op.getValueType());
-//           std::vector<SDOperand> Ops;
-//           Ops.push_back(Op.getOperand(0));
-//           SRC = DAG.getNode(AlphaISD::ITOF, RTs, Ops);
-//         } else {
-//           int SSFI = MF.getFrameInfo()->CreateStackObject(8, 8);
-//           SDOperand StackSlot = DAG.getFrameIndex(SSFI, getPointerTy());
-//           SDOperand Store = DAG.getNode(ISD::STORE, MVT::Other, DAG.getEntryNode(),
-//                                         Op.getOperand(0), StackSlot, DAG.getSrcValue(NULL));
-//           SRC = DAG.getLoad(Op.getValueType(), Store.getValue(0), StackSlot,
-//                             DAG.getSrcValue(NULL));
-//         }
-//         std::vector<MVT::ValueType> RTs;
-//         RTs.push_back(Op.getValueType());
-//         std::vector<SDOperand> Ops;
-//         Ops.push_back(SRC);
-//         return DAG.getNode(AlphaISD::CVTQ, RTs, Ops);
-//       }
+#if 0
+    case ISD::SINT_TO_FP:
+      {
+        assert (Op.getOperand(0).getValueType() == MVT::i64
+                && "only quads can be loaded from");
+        SDOperand SRC;
+        if (EnableAlphaFTOI)
+        {
+          std::vector<MVT::ValueType> RTs;
+          RTs.push_back(Op.getValueType());
+          std::vector<SDOperand> Ops;
+          Ops.push_back(Op.getOperand(0));
+          SRC = DAG.getNode(AlphaISD::ITOF, RTs, Ops);
+        } else {
+          int SSFI = MF.getFrameInfo()->CreateStackObject(8, 8);
+          SDOperand StackSlot = DAG.getFrameIndex(SSFI, getPointerTy());
+          SDOperand Store = DAG.getNode(ISD::STORE, MVT::Other, DAG.getEntryNode(),
+                                        Op.getOperand(0), StackSlot, DAG.getSrcValue(NULL));
+          SRC = DAG.getLoad(Op.getValueType(), Store.getValue(0), StackSlot,
+                            DAG.getSrcValue(NULL));
+        }
+        std::vector<MVT::ValueType> RTs;
+        RTs.push_back(Op.getValueType());
+        std::vector<SDOperand> Ops;
+        Ops.push_back(SRC);
+        return DAG.getNode(AlphaISD::CVTQ, RTs, Ops);
+      }
+#endif
     }
+    return SDOperand();
 }
 
 
