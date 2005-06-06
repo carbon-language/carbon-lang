@@ -128,7 +128,7 @@ void AlphaAsmPrinter::printOp(const MachineOperand &MO, bool IsCallOp) {
 
   case MachineOperand::MO_MachineBasicBlock: {
     MachineBasicBlock *MBBOp = MO.getMachineBasicBlock();
-    O << "LBB" << Mang->getValueName(MBBOp->getParent()->getFunction())
+    O << "$LBB" << Mang->getValueName(MBBOp->getParent()->getFunction())
       << "_" << MBBOp->getNumber() << "\t" << CommentString << " "
       << MBBOp->getBasicBlock()->getName();
     return;
@@ -193,7 +193,7 @@ bool AlphaAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   for (MachineFunction::const_iterator I = MF.begin(), E = MF.end();
        I != E; ++I) {
     // Print a label for the basic block.
-    O << "LBB" << CurrentFnName << "_" << I->getNumber() << ":\t"
+    O << "$LBB" << CurrentFnName << "_" << I->getNumber() << ":\t"
       << CommentString << " " << I->getBasicBlock()->getName() << "\n";
     for (MachineBasicBlock::const_iterator II = I->begin(), E = I->end();
          II != E; ++II) {
