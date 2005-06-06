@@ -46,7 +46,7 @@ namespace llvm {
                              cl::desc("Print estimates on live ins and outs"),
                              cl::Hidden);
   cl::opt<bool> EnableAlphaLSMark("enable-alpha-lsmark",
-                             cl::desc("Emit symbols to corrolate Mem ops to LLVM Values"),
+                             cl::desc("Emit symbols to correlate Mem ops to LLVM Values"),
                              cl::Hidden);
 }
 
