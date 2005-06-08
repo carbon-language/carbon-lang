@@ -29,15 +29,19 @@ USEDLIB += LLVMSkeleton
 endif
 
 # Check for Sparc target
-ifneq ($(strip $(filter SparcV8,$(TARGETS_TO_BUILD))),)
+ifneq ($(strip $(filter SparcV9,$(TARGETS_TO_BUILD))),)
 USEDLIBS += \
 	LLVMSparcV9ModuloSched \
-	LLVMSparcV8 \
 	LLVMSparcV9 \
 	LLVMSparcV9RegAlloc \
 	LLVMSparcV9InstrSched \
 	LLVMSparcV9LiveVar
 endif
+
+ifneq ($(strip $(filter SparcV8,$(TARGETS_TO_BUILD))),)
+USEDLIBS += LLVMSparcV8
+endif
+
 
 #Check for X86 Target
 ifneq ($(strip $(filter X86,$(TARGETS_TO_BUILD))),)
