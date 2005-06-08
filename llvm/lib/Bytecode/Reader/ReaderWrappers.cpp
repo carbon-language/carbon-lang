@@ -149,78 +149,6 @@ BytecodeStdinReader::BytecodeStdinReader( BytecodeHandler* H )
 }
 
 //===----------------------------------------------------------------------===//
-//  Varargs transmogrification code...
-//
-
-// CheckVarargs - This is used to automatically translate old-style varargs to
-// new style varargs for backwards compatibility.
-static ModuleProvider *CheckVarargs(ModuleProvider *MP) {
-  Module *M = MP->getModule();
-
-  // Check to see if va_start takes arguments...
-  Function *F = M->getNamedFunction("llvm.va_start");
-  if (F == 0) return MP;  // No varargs use, just return.
-
-  if (F->getFunctionType()->getNumParams() == 0)
-    return MP;  // Modern varargs processing, just return.
-
-  // If we get to this point, we know that we have an old-style module.
-  // Materialize the whole thing to perform the rewriting.
-  MP->materializeModule();
-
-  // If the user is making use of obsolete varargs intrinsics, adjust them for
-  // the user.
-  if (Function *F = M->getNamedFunction("llvm.va_start")) {
-    assert(F->arg_size() == 1 && "Obsolete va_start takes 1 argument!");
-
-    const Type *RetTy = F->getFunctionType()->getParamType(0);
-    RetTy = cast<PointerType>(RetTy)->getElementType();
-    Function *NF = M->getOrInsertFunction("llvm.va_start", RetTy, 0);
-
-    for (Value::use_iterator I = F->use_begin(), E = F->use_end(); I != E; )
-      if (CallInst *CI = dyn_cast<CallInst>(*I++)) {
-        Value *V = new CallInst(NF, "", CI);
-        new StoreInst(V, CI->getOperand(1), CI);
-        CI->getParent()->getInstList().erase(CI);
-      }
-    F->setName("");
-  }
-
-  if (Function *F = M->getNamedFunction("llvm.va_end")) {
-    assert(F->arg_size() == 1 && "Obsolete va_end takes 1 argument!");
-    const Type *ArgTy = F->getFunctionType()->getParamType(0);
-    ArgTy = cast<PointerType>(ArgTy)->getElementType();
-    Function *NF = M->getOrInsertFunction("llvm.va_end", Type::VoidTy,
-                                                  ArgTy, 0);
-
-    for (Value::use_iterator I = F->use_begin(), E = F->use_end(); I != E; )
-      if (CallInst *CI = dyn_cast<CallInst>(*I++)) {
-        Value *V = new LoadInst(CI->getOperand(1), "", CI);
-        new CallInst(NF, V, "", CI);
-        CI->getParent()->getInstList().erase(CI);
-      }
-    F->setName("");
-  }
-
-  if (Function *F = M->getNamedFunction("llvm.va_copy")) {
-    assert(F->arg_size() == 2 && "Obsolete va_copy takes 2 argument!");
-    const Type *ArgTy = F->getFunctionType()->getParamType(0);
-    ArgTy = cast<PointerType>(ArgTy)->getElementType();
-    Function *NF = M->getOrInsertFunction("llvm.va_copy", ArgTy,
-                                                  ArgTy, 0);
-
-    for (Value::use_iterator I = F->use_begin(), E = F->use_end(); I != E; )
-      if (CallInst *CI = dyn_cast<CallInst>(*I++)) {
-        Value *V = new CallInst(NF, CI->getOperand(2), "", CI);
-        new StoreInst(V, CI->getOperand(1), CI);
-        CI->getParent()->getInstList().erase(CI);
-      }
-    F->setName("");
-  }
-  return MP;
-}
-
-//===----------------------------------------------------------------------===//
 // Wrapper functions
 //===----------------------------------------------------------------------===//
 
@@ -231,8 +159,7 @@ llvm::getBytecodeBufferModuleProvider(const unsigned char *Buffer,
                                       unsigned Length,
                                       const std::string &ModuleID,
                                       BytecodeHandler* H ) {
-  return CheckVarargs(
-      new BytecodeBufferReader(Buffer, Length, ModuleID, H));
+  return new BytecodeBufferReader(Buffer, Length, ModuleID, H);
 }
 
 /// ParseBytecodeBuffer - Parse a given bytecode buffer
@@ -255,9 +182,9 @@ Module *llvm::ParseBytecodeBuffer(const unsigned char *Buffer, unsigned Length,
 ModuleProvider *llvm::getBytecodeModuleProvider(const std::string &Filename,
                                                 BytecodeHandler* H) {
   if (Filename != std::string("-"))        // Read from a file...
-    return CheckVarargs(new BytecodeFileReader(Filename,H));
+    return new BytecodeFileReader(Filename,H);
   else                                     // Read from stdin
-    return CheckVarargs(new BytecodeStdinReader(H));
+    return new BytecodeStdinReader(H);
 }
 
 /// ParseBytecodeFile - Parse the given bytecode file
