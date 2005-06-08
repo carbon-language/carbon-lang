@@ -982,8 +982,12 @@ void ISel::MoveCRtoGPR(unsigned CCReg, bool Inv, unsigned Idx, unsigned Result){
 bool ISel::SelectBitfieldInsert(SDOperand OR, unsigned Result) {
   bool IsRotate = false;
   unsigned TgtMask = 0xFFFFFFFF, InsMask = 0xFFFFFFFF, Amount = 0;
-  unsigned Op0Opc = OR.getOperand(0).getOpcode();
-  unsigned Op1Opc = OR.getOperand(1).getOpcode();
+  
+  SDOperand Op0 = OR.getOperand(0);
+  SDOperand Op1 = OR.getOperand(1);
+
+  unsigned Op0Opc = Op0.getOpcode();
+  unsigned Op1Opc = Op1.getOpcode();
 
   // Verify that we have the correct opcodes
   if (ISD::SHL != Op0Opc && ISD::SRL != Op0Opc && ISD::AND != Op0Opc)
@@ -993,7 +997,7 @@ bool ISel::SelectBitfieldInsert(SDOperand OR, unsigned Result) {
 
   // Generate Mask value for Target
   if (ConstantSDNode *CN =
-      dyn_cast<ConstantSDNode>(OR.getOperand(0).getOperand(1).Val)) {
+      dyn_cast<ConstantSDNode>(Op0.getOperand(1).Val)) {
     switch(Op0Opc) {
     case ISD::SHL: TgtMask <<= (unsigned)CN->getValue(); break;
     case ISD::SRL: TgtMask >>= (unsigned)CN->getValue(); break;
@@ -1005,7 +1009,7 @@ bool ISel::SelectBitfieldInsert(SDOperand OR, unsigned Result) {
 
   // Generate Mask value for Insert
   if (ConstantSDNode *CN =
-      dyn_cast<ConstantSDNode>(OR.getOperand(1).getOperand(1).Val)) {
+      dyn_cast<ConstantSDNode>(Op1.getOperand(1).Val)) {
     switch(Op1Opc) {
     case ISD::SHL:
       Amount = CN->getValue();
@@ -1026,27 +1030,55 @@ bool ISel::SelectBitfieldInsert(SDOperand OR, unsigned Result) {
     return false;
   }
 
+  unsigned Tmp3 = 0;
+
+  // If both of the inputs are ANDs and one of them has a logical shift by
+  // constant as its input, make that the inserted value so that we can combine
+  // the shift into the rotate part of the rlwimi instruction
+  if (Op0Opc == ISD::AND && Op1Opc == ISD::AND) {
+    if (Op1.getOperand(0).getOpcode() == ISD::SHL || 
+        Op1.getOperand(0).getOpcode() == ISD::SRL) {
+      if (ConstantSDNode *CN = 
+          dyn_cast<ConstantSDNode>(Op1.getOperand(0).getOperand(1).Val)) {
+        Amount = Op1.getOperand(0).getOpcode() == ISD::SHL ? 
+          CN->getValue() : 32 - CN->getValue();
+        Tmp3 = SelectExpr(Op1.getOperand(0).getOperand(0));
+      }
+    } else if (Op0.getOperand(0).getOpcode() == ISD::SHL ||
+               Op0.getOperand(0).getOpcode() == ISD::SRL) {
+      if (ConstantSDNode *CN = 
+          dyn_cast<ConstantSDNode>(Op0.getOperand(0).getOperand(1).Val)) {
+        std::swap(Op0, Op1);
+        std::swap(TgtMask, InsMask);
+        Amount = Op1.getOperand(0).getOpcode() == ISD::SHL ? 
+          CN->getValue() : 32 - CN->getValue();
+        Tmp3 = SelectExpr(Op1.getOperand(0).getOperand(0));
+      }
+    }
+  }
+
   // Verify that the Target mask and Insert mask together form a full word mask
   // and that the Insert mask is a run of set bits (which implies both are runs
   // of set bits).  Given that, Select the arguments and generate the rlwimi
   // instruction.
   unsigned MB, ME;
-  if (((TgtMask ^ InsMask) == 0xFFFFFFFF) && IsRunOfOnes(InsMask, MB, ME)) {
+  if (((TgtMask & InsMask) == 0) && IsRunOfOnes(InsMask, MB, ME)) {
     unsigned Tmp1, Tmp2;
+    bool fullMask = (TgtMask ^ InsMask) == 0xFFFFFFFF;
     // Check for rotlwi / rotrwi here, a special case of bitfield insert
     // where both bitfield halves are sourced from the same value.
-    if (IsRotate &&
+    if (IsRotate && fullMask &&
         OR.getOperand(0).getOperand(0) == OR.getOperand(1).getOperand(0)) {
       Tmp1 = SelectExpr(OR.getOperand(0).getOperand(0));
       BuildMI(BB, PPC::RLWINM, 4, Result).addReg(Tmp1).addImm(Amount)
         .addImm(0).addImm(31);
       return true;
     }
-    if (Op0Opc == ISD::AND)
-      Tmp1 = SelectExpr(OR.getOperand(0).getOperand(0));
+    if (Op0Opc == ISD::AND && fullMask)
+      Tmp1 = SelectExpr(Op0.getOperand(0));
     else
-      Tmp1 = SelectExpr(OR.getOperand(0));
-    Tmp2 = SelectExpr(OR.getOperand(1).getOperand(0));
+      Tmp1 = SelectExpr(Op0);
+    Tmp2 = Tmp3 ? Tmp3 : SelectExpr(Op1.getOperand(0));
     BuildMI(BB, PPC::RLWIMI, 5, Result).addReg(Tmp1).addReg(Tmp2)
       .addImm(Amount).addImm(MB).addImm(ME);
     return true;
