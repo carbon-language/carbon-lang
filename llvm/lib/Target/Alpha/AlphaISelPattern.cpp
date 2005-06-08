@@ -899,8 +899,8 @@ void ISel::SelectBranchCC(SDOperand N)
       //Dropping the CC is only useful if we are comparing to 0
       bool LeftZero = SetCC->getOperand(0).getOpcode() == ISD::Constant &&
         cast<ConstantSDNode>(SetCC->getOperand(0))->getValue() == 0;
-      bool RightZero = SetCC->getOperand(0).getOpcode() == ISD::Constant &&
-        cast<ConstantSDNode>(SetCC->getOperand(0))->getValue() == 0;
+      bool RightZero = SetCC->getOperand(1).getOpcode() == ISD::Constant &&
+        cast<ConstantSDNode>(SetCC->getOperand(1))->getValue() == 0;
       bool isNE = false;
 
       //Fix up CC
@@ -912,7 +912,7 @@ void ISel::SelectBranchCC(SDOperand N)
         isNE = true;
 
       if (LeftZero || RightZero) {
-        switch (SetCC->getCondition()) {
+        switch (cCode) {
         default: CC.Val->dump(); assert(0 && "Unknown integer comparison!");
         case ISD::SETEQ:  Opc = Alpha::BEQ; break;
         case ISD::SETLT:  Opc = Alpha::BLT; break;
