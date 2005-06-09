@@ -204,32 +204,32 @@ bool LowerSetJmp::doInitialization(Module& M)
 
   // void __llvm_sjljeh_init_setjmpmap(void**)
   InitSJMap = M.getOrInsertFunction("__llvm_sjljeh_init_setjmpmap",
-                                    Type::VoidTy, SBPPTy, 0);
+                                    Type::VoidTy, SBPPTy, NULL);
   // void __llvm_sjljeh_destroy_setjmpmap(void**)
   DestroySJMap = M.getOrInsertFunction("__llvm_sjljeh_destroy_setjmpmap",
-                                       Type::VoidTy, SBPPTy, 0);
+                                       Type::VoidTy, SBPPTy, NULL);
 
   // void __llvm_sjljeh_add_setjmp_to_map(void**, void*, unsigned)
   AddSJToMap = M.getOrInsertFunction("__llvm_sjljeh_add_setjmp_to_map",
                                      Type::VoidTy, SBPPTy, SBPTy,
-                                     Type::UIntTy, 0);
+                                     Type::UIntTy, NULL);
 
   // void __llvm_sjljeh_throw_longjmp(int*, int)
   ThrowLongJmp = M.getOrInsertFunction("__llvm_sjljeh_throw_longjmp",
-                                       Type::VoidTy, SBPTy, Type::IntTy, 0);
+                                       Type::VoidTy, SBPTy, Type::IntTy, NULL);
 
   // unsigned __llvm_sjljeh_try_catching_longjmp_exception(void **)
   TryCatchLJ =
     M.getOrInsertFunction("__llvm_sjljeh_try_catching_longjmp_exception",
-                          Type::UIntTy, SBPPTy, 0);
+                          Type::UIntTy, SBPPTy, NULL);
 
   // bool __llvm_sjljeh_is_longjmp_exception()
   IsLJException = M.getOrInsertFunction("__llvm_sjljeh_is_longjmp_exception",
-                                        Type::BoolTy, 0);
+                                        Type::BoolTy, NULL);
 
   // int __llvm_sjljeh_get_longjmp_value()
   GetLJValue = M.getOrInsertFunction("__llvm_sjljeh_get_longjmp_value",
-                                     Type::IntTy, 0);
+                                     Type::IntTy, NULL);
   return true;
 }
 
