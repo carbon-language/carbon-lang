@@ -55,10 +55,10 @@ class IGNode {
   // Decremented when a neighbor is pushed on to the stack.
   // After that, never incremented/set again nor used.
 
-  LiveRange *const ParentLR;
+  V9LiveRange *const ParentLR;
 public:
 
-  IGNode(LiveRange *LR, unsigned index) : Index(index), ParentLR(LR) {
+  IGNode(V9LiveRange *LR, unsigned index) : Index(index), ParentLR(LR) {
     OnStack = false;
     CurDegree = -1;
     ParentLR->setUserIGNode(this);
@@ -115,7 +115,7 @@ public:
 
   inline void setColor(unsigned Col) { ParentLR->setColor(Col);  }
 
-  inline LiveRange *getParentLR() const { return ParentLR; }
+  inline V9LiveRange *getParentLR() const { return ParentLR; }
 };
 
 } // End llvm namespace

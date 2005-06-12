@@ -109,19 +109,19 @@ class RegClass {
   // --- following methods are provided to access the IG contained within this
   // ---- RegClass easilly.
 
-  inline void addLRToIG(LiveRange *const LR)
+  inline void addLRToIG(V9LiveRange *const LR)
     { IG.addLRToIG(LR); }
 
-  inline void setInterference(const LiveRange *const LR1,
-			      const LiveRange *const LR2)
+  inline void setInterference(const V9LiveRange *const LR1,
+			      const V9LiveRange *const LR2)
     { IG.setInterference(LR1, LR2); }
 
-  inline unsigned getInterference(const LiveRange *const LR1,
-			      const LiveRange *const LR2) const
+  inline unsigned getInterference(const V9LiveRange *const LR1,
+			      const V9LiveRange *const LR2) const
     { return IG.getInterference(LR1, LR2); }
 
-  inline void mergeIGNodesOfLRs(const LiveRange *const LR1,
-				LiveRange *const LR2)
+  inline void mergeIGNodesOfLRs(const V9LiveRange *const LR1,
+				V9LiveRange *const LR2)
     { IG.mergeIGNodesOfLRs(LR1, LR2); }
 
 

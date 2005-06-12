@@ -27,7 +27,7 @@
 
 namespace llvm {
 
-unsigned LiveRange::getRegClassID() const { return getRegClass()->getID(); }
+unsigned V9LiveRange::getRegClassID() const { return getRegClass()->getID(); }
 
 LiveRangeInfo::LiveRangeInfo(const Function *F, const TargetMachine &tm,
 			     std::vector<RegClass *> &RCL)
@@ -39,14 +39,14 @@ LiveRangeInfo::~LiveRangeInfo() {
        MI != LiveRangeMap.end(); ++MI) {
 
     if (MI->first && MI->second) {
-      LiveRange *LR = MI->second;
+      V9LiveRange *LR = MI->second;
 
       // we need to be careful in deleting LiveRanges in LiveRangeMap
       // since two/more Values in the live range map can point to the same
       // live range. We have to make the other entries NULL when we delete
       // a live range.
 
-      for (LiveRange::iterator LI = LR->begin(); LI != LR->end(); ++LI)
+      for (V9LiveRange::iterator LI = LR->begin(); LI != LR->end(); ++LI)
         LiveRangeMap[*LI] = 0;
 
       delete LR;
@@ -61,14 +61,14 @@ LiveRangeInfo::~LiveRangeInfo() {
 // LRs don't have suggested colors
 //---------------------------------------------------------------------------
 
-void LiveRangeInfo::unionAndUpdateLRs(LiveRange *L1, LiveRange *L2) {
+void LiveRangeInfo::unionAndUpdateLRs(V9LiveRange *L1, V9LiveRange *L2) {
   assert(L1 != L2 && (!L1->hasSuggestedColor() || !L2->hasSuggestedColor()));
   assert(! (L1->hasColor() && L2->hasColor()) ||
          L1->getColor() == L2->getColor());
 
   L2->insert (L1->begin(), L1->end());   // add elements of L2 to L1
 
-  for(LiveRange::iterator L2It = L2->begin(); L2It != L2->end(); ++L2It) {
+  for(V9LiveRange::iterator L2It = L2->begin(); L2It != L2->end(); ++L2It) {
     L1->insert(*L2It);                  // add the var in L2 to L1
     LiveRangeMap[*L2It] = L1;           // now the elements in L2 should map
                                         //to L1
@@ -101,10 +101,10 @@ void LiveRangeInfo::unionAndUpdateLRs(LiveRange *L1, LiveRange *L2) {
 // Note: this function does *not* check that no live range exists for def.
 //---------------------------------------------------------------------------
 
-LiveRange*
+V9LiveRange*
 LiveRangeInfo::createNewLiveRange(const Value* Def, bool isCC /* = false*/)
 {
-  LiveRange* DefRange = new LiveRange();  // Create a new live range,
+  V9LiveRange* DefRange = new V9LiveRange();  // Create a new live range,
   DefRange->insert(Def);                  // add Def to it,
   LiveRangeMap[Def] = DefRange;           // and update the map.
 
@@ -121,10 +121,10 @@ LiveRangeInfo::createNewLiveRange(const Value* Def, bool isCC /* = false*/)
 }
 
 
-LiveRange*
+V9LiveRange*
 LiveRangeInfo::createOrAddToLiveRange(const Value* Def, bool isCC /* = false*/)
 {
-  LiveRange *DefRange = LiveRangeMap[Def];
+  V9LiveRange *DefRange = LiveRangeMap[Def];
 
   // check if the LR is already there (because of multiple defs)
   if (!DefRange) {
@@ -188,10 +188,10 @@ void LiveRangeInfo::constructLiveRanges() {
 	  const Value *Def = *OpI;
           bool isCC = (OpI.getMachineOperand().getType()
                        == MachineOperand::MO_CCRegister);
-          LiveRange* LR = createOrAddToLiveRange(Def, isCC);
+          V9LiveRange* LR = createOrAddToLiveRange(Def, isCC);
 
           // If the operand has a pre-assigned register,
-          // set it directly in the LiveRange
+          // set it directly in the V9LiveRange
           if (OpI.getMachineOperand().hasAllocatedReg()) {
             unsigned getClassId;
             LR->setColor(MRI.getClassRegNum(OpI.getMachineOperand().getReg(),
@@ -204,10 +204,10 @@ void LiveRangeInfo::constructLiveRanges() {
       for (unsigned i = 0; i < MInst->getNumImplicitRefs(); ++i)
 	if (MInst->getImplicitOp(i).isDef()) {
 	  const Value *Def = MInst->getImplicitRef(i);
-          LiveRange* LR = createOrAddToLiveRange(Def, /*isCC*/ false);
+          V9LiveRange* LR = createOrAddToLiveRange(Def, /*isCC*/ false);
 
           // If the implicit operand has a pre-assigned register,
-          // set it directly in the LiveRange
+          // set it directly in the V9LiveRange
           if (MInst->getImplicitOp(i).hasAllocatedReg()) {
             unsigned getClassId;
             LR->setColor(MRI.getClassRegNum(
@@ -277,10 +277,10 @@ void LiveRangeInfo::suggestRegs4CallRets() {
 // Checks if live range LR interferes with any node assigned or suggested to
 // be assigned the specified color
 //
-inline bool InterferesWithColor(const LiveRange& LR, unsigned color) {
+inline bool InterferesWithColor(const V9LiveRange& LR, unsigned color) {
   IGNode* lrNode = LR.getUserIGNode();
   for (unsigned n=0, NN = lrNode->getNumOfNeighbors(); n < NN; n++) {
-    LiveRange *neighLR = lrNode->getAdjIGNode(n)->getParentLR();
+    V9LiveRange *neighLR = lrNode->getAdjIGNode(n)->getParentLR();
     if (neighLR->hasColor() && neighLR->getColor() == color)
       return true;
     if (neighLR->hasSuggestedColor() && neighLR->getSuggestedColor() == color)
@@ -296,8 +296,8 @@ inline bool InterferesWithColor(const LiveRange& LR, unsigned color) {
 // (3) LR1 has color and LR2 interferes with any LR that has the same color
 // (4) LR2 has color and LR1 interferes with any LR that has the same color
 //
-inline bool InterfsPreventCoalescing(const LiveRange& LROfDef,
-                                     const LiveRange& LROfUse) {
+inline bool InterfsPreventCoalescing(const V9LiveRange& LROfDef,
+                                     const V9LiveRange& LROfUse) {
   // (4) if they have different suggested colors, cannot coalesce
   if (LROfDef.hasSuggestedColor() && LROfUse.hasSuggestedColor())
     return true;
@@ -341,13 +341,13 @@ void LiveRangeInfo::coalesceLRs()
       for(MachineInstr::const_val_op_iterator DefI = MI->begin(),
             DefE = MI->end(); DefI != DefE; ++DefI) {
 	if (DefI.isDef()) { // this operand is modified
-	  LiveRange *LROfDef = getLiveRangeForValue( *DefI );
+	  V9LiveRange *LROfDef = getLiveRangeForValue( *DefI );
 	  RegClass *RCOfDef = LROfDef->getRegClass();
 
 	  MachineInstr::const_val_op_iterator UseI = MI->begin(),
             UseE = MI->end();
 	  for( ; UseI != UseE; ++UseI) { // for all uses
- 	    LiveRange *LROfUse = getLiveRangeForValue( *UseI );
+ 	    V9LiveRange *LROfUse = getLiveRangeForValue( *UseI );
 	    if (!LROfUse) {             // if LR of use is not found
 	      //don't warn about labels
 	      if (!isa<BasicBlock>(*UseI) && DEBUG_RA >= RA_DEBUG_LiveRanges)

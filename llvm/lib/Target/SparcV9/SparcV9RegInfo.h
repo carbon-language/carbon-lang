@@ -27,7 +27,7 @@ class Type;
 class Value;
 class LiveRangeInfo;
 class Function;
-class LiveRange;
+class V9LiveRange;
 class AddedInstrns;
 class MachineInstr;
 class BasicBlock;
@@ -324,7 +324,7 @@ public:
 
   // method used for printing a register for debugging purposes
   //
-  void printReg(const LiveRange *LR) const;
+  void printReg(const V9LiveRange *LR) const;
 
   // To obtain the return value and the indirect call address (if any)
   // contained in a CALL machine instruction
@@ -369,7 +369,7 @@ public:
   // The reg class of a LR depends both on the Value types in it and whether
   // they are CC registers or not (for example).
   int getRegTypeForDataType(const Type* type) const;
-  int getRegTypeForLR(const LiveRange *LR) const;
+  int getRegTypeForLR(const V9LiveRange *LR) const;
   int getRegType(int unifiedRegNum) const;
 
   unsigned getFramePointer() const;

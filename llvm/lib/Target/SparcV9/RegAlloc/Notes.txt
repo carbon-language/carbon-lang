@@ -92,10 +92,10 @@ construction is complete, there is a live range for all variables defined in
 the instruction stream. Note however that, live ranges are not constructed for
 constants which are not defined in the instruction stream. 
 
-A LiveRange is a set of Values (only defs) in that live range. Live range
+A V9LiveRange is a set of Values (only defs) in that live range. Live range
 construction is done in combination for all register classes. All the live
 ranges for a method are entered to a LiveRangeMap which can be accessed using 
-any Value in the LiveRange.
+any Value in the V9LiveRange.
 
 After live ranges have been constructed, we call machine specific code to 
 suggest colors for speical live ranges. For instance, incoming args, call args,
@@ -109,7 +109,7 @@ live range does not receive the suggested color, we have to insert explicit
 copy instructions to move the value into requred registers and its done in
 step 5 above.
 
-See LiveRange.h, LiveRangeInfo.h (and  LiveRange.cpp, LiveRangeInfo.cpp) for
+See LiveRange.h, LiveRangeInfo.h (and LiveRange.cpp, LiveRangeInfo.cpp) for
 algorithms and details. See SparcRegInfo.cpp for suggesting colors for 
 incoming/call arguments and return values.
 
@@ -121,7 +121,7 @@ register class. Though each register class must have a separate interference
 graph, building all interference graphs is performed in one pass. Also, the
 adjacency list for each live range is built in this phase. Consequently, each
 register class has an interference graph (which is a bit matrix) and each
-LiveRange has an adjacency list to record its neighbors. Live variable info
+V9LiveRange has an adjacency list to record its neighbors. Live variable info
 is used for finding the interferences.
 
 See IGNode.h, InterferenceGraph.h (and IGNode.h, InterferenceGraph.h) for 

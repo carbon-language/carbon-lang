@@ -221,7 +221,7 @@ SparcV9RegInfo::regNumForFPArg(unsigned regType,
 //---------------------------------------------------------------------------
 
 // The following 4  methods are used to find the RegType (SparcV9Internals.h)
-// of a LiveRange, a Value, and for a given register unified reg number.
+// of a V9LiveRange, a Value, and for a given register unified reg number.
 //
 int SparcV9RegInfo::getRegTypeForClassAndType(unsigned regClassID,
                                                  const Type* type) const
@@ -244,7 +244,7 @@ int SparcV9RegInfo::getRegTypeForDataType(const Type* type) const
   return getRegTypeForClassAndType(getRegClassIDOfType(type), type);
 }
 
-int SparcV9RegInfo::getRegTypeForLR(const LiveRange *LR) const
+int SparcV9RegInfo::getRegTypeForLR(const V9LiveRange *LR) const
 {
   return getRegTypeForClassAndType(LR->getRegClassID(), LR->getType());
 }
@@ -330,7 +330,7 @@ void SparcV9RegInfo::suggestReg4RetAddr(MachineInstr *RetMI,
   // MachineOperand & MO  = RetMI->getOperand(0);
   // const Value *RetAddrVal = MO.getVRegValue();
   // assert( RetAddrVal && "LR for ret address must be created at start");
-  // LiveRange * RetAddrLR = LRI.getLiveRangeForValue( RetAddrVal);
+  // V9LiveRange * RetAddrLR = LRI.getLiveRangeForValue( RetAddrVal);
   // RetAddrLR->setSuggestedColor(getUnifiedRegNum( IntRegClassID,
   //                              SparcV9IntRegOrdr::i7) );
 }
@@ -349,7 +349,7 @@ SparcV9RegInfo::suggestReg4CallAddr(MachineInstr * CallMI,
   assert(RetAddrVal && "INTERNAL ERROR: Return address value is required");
 
   // A LR must already exist for the return address.
-  LiveRange *RetAddrLR = LRI.getLiveRangeForValue(RetAddrVal);
+  V9LiveRange *RetAddrLR = LRI.getLiveRangeForValue(RetAddrVal);
   assert(RetAddrLR && "INTERNAL ERROR: No LR for return address of call!");
 
   unsigned RegClassID = RetAddrLR->getRegClassID();
@@ -376,7 +376,7 @@ void SparcV9RegInfo::suggestRegs4MethodArgs(const Function *Meth,
   unsigned argNo=0;
   for(Function::const_arg_iterator I = Meth->arg_begin(), E = Meth->arg_end();
       I != E; ++I, ++argNo) {
-    LiveRange *LR = LRI.getLiveRangeForValue(I);
+    V9LiveRange *LR = LRI.getLiveRangeForValue(I);
     assert(LR && "No live range found for method arg");
 
     unsigned regType = getRegTypeForLR(LR);
@@ -413,7 +413,7 @@ void SparcV9RegInfo::colorMethodArgs(const Function *Meth,
   for(Function::const_arg_iterator I = Meth->arg_begin(), E = Meth->arg_end();
       I != E; ++I, ++argNo) {
     // get the LR of arg
-    LiveRange *LR = LRI.getLiveRangeForValue(I);
+    V9LiveRange *LR = LRI.getLiveRangeForValue(I);
     assert( LR && "No live range found for method arg");
 
     unsigned regType = getRegTypeForLR(LR);
@@ -584,7 +584,7 @@ void SparcV9RegInfo::suggestRegs4CallArgs(MachineInstr *CallMI,
   // or in %f0 if the value is a float type.
   //
   if (const Value *RetVal = argDesc->getReturnValue()) {
-    LiveRange *RetValLR = LRI.getLiveRangeForValue(RetVal);
+    V9LiveRange *RetValLR = LRI.getLiveRangeForValue(RetVal);
     assert(RetValLR && "No LR for return Value of call!");
 
     unsigned RegClassID = RetValLR->getRegClassID();
@@ -610,7 +610,7 @@ void SparcV9RegInfo::suggestRegs4CallArgs(MachineInstr *CallMI,
     const Value *CallArg = argDesc->getArgInfo(i).getArgVal();
 
     // get the LR of call operand (parameter)
-    LiveRange *const LR = LRI.getLiveRangeForValue(CallArg);
+    V9LiveRange *const LR = LRI.getLiveRangeForValue(CallArg);
     if (!LR)
       continue;                    // no live ranges for constants and labels
 
@@ -651,7 +651,7 @@ void SparcV9RegInfo::suggestReg4RetValue(MachineInstr *RetMI,
   Value* tmpI = RetMI->getOperand(0).getVRegValue();
   ReturnInst* retI=cast<ReturnInst>(cast<TmpInstruction>(tmpI)->getOperand(0));
   if (const Value *RetVal = retI->getReturnValue())
-    if (LiveRange *const LR = LRI.getLiveRangeForValue(RetVal))
+    if (V9LiveRange *const LR = LRI.getLiveRangeForValue(RetVal))
       LR->setSuggestedColor(LR->getRegClassID() == IntRegClassID
                             ? (unsigned) SparcV9IntRegClass::i0
                             : (unsigned) SparcV9FloatRegClass::f0);
@@ -948,7 +948,7 @@ SparcV9RegInfo::cpValue2Value(Value *Src, Value *Dest,
 // Print the register assigned to a LR
 //---------------------------------------------------------------------------
 
-void SparcV9RegInfo::printReg(const LiveRange *LR) const {
+void SparcV9RegInfo::printReg(const V9LiveRange *LR) const {
   unsigned RegClassID = LR->getRegClassID();
   std::cerr << " Node ";
 

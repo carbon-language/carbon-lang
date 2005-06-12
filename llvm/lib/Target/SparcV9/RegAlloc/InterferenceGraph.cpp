@@ -74,7 +74,7 @@ void InterferenceGraph::createGraph()
 //-----------------------------------------------------------------------------
 // creates a new IGNode for the given live range and add to IG
 //-----------------------------------------------------------------------------
-void InterferenceGraph::addLRToIG(LiveRange *const LR)
+void InterferenceGraph::addLRToIG(V9LiveRange *const LR)
 {
   IGNodeList.push_back(new IGNode(LR, IGNodeList.size()));
 }
@@ -87,8 +87,8 @@ void InterferenceGraph::addLRToIG(LiveRange *const LR)
 // are not updated. LR1 and LR2 must be distinct since if not, it suggests
 // that there is some wrong logic in some other method.
 //-----------------------------------------------------------------------------
-void InterferenceGraph::setInterference(const LiveRange *const LR1,
-					const LiveRange *const LR2 ) {
+void InterferenceGraph::setInterference(const V9LiveRange *const LR1,
+					const V9LiveRange *const LR2 ) {
   assert(LR1 != LR2);
 
   IGNode *IGNode1 = LR1->getUserIGNode();
@@ -119,8 +119,9 @@ void InterferenceGraph::setInterference(const LiveRange *const LR1,
 //----------------------------------------------------------------------------
 // return whether two live ranges interfere
 //----------------------------------------------------------------------------
-unsigned InterferenceGraph::getInterference(const LiveRange *const LR1,
-                                            const LiveRange *const LR2) const {
+unsigned InterferenceGraph::getInterference(const V9LiveRange *const LR1,
+                                            const V9LiveRange *const LR2) 
+                                            const {
   assert(LR1 != LR2);
   assertIGNode(this, LR1->getUserIGNode());
   assertIGNode(this, LR2->getUserIGNode());
@@ -145,8 +146,8 @@ unsigned InterferenceGraph::getInterference(const LiveRange *const LR1,
 //            LiveRangeInfo::unionAndUpdateLRs for that purpose.
 //----------------------------------------------------------------------------
 
-void InterferenceGraph::mergeIGNodesOfLRs(const LiveRange *LR1,
-					  LiveRange *LR2) {
+void InterferenceGraph::mergeIGNodesOfLRs(const V9LiveRange *LR1,
+					                            V9LiveRange *LR2) {
 
   assert( LR1 != LR2);                  // cannot merge the same live range
 
@@ -168,7 +169,7 @@ void InterferenceGraph::mergeIGNodesOfLRs(const LiveRange *LR1,
   for(unsigned i=0; i < SrcDegree; i++) {
     IGNode *NeighNode = SrcNode->getAdjIGNode(i);
 
-    LiveRange *const LROfNeigh = NeighNode->getParentLR();
+    V9LiveRange *const LROfNeigh = NeighNode->getParentLR();
 
     // delete edge between src and neigh - even neigh == dest
     NeighNode->delAdjIGNode(SrcNode);

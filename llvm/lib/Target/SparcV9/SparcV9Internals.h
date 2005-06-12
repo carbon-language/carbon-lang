@@ -25,7 +25,7 @@
 
 namespace llvm {
 
-class LiveRange;
+class V9LiveRange;
 class SparcV9TargetMachine;
 class ModulePass;
 class GetElementPtrInst;

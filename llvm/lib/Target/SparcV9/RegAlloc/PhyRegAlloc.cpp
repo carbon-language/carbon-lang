@@ -98,7 +98,7 @@ void PhyRegAlloc::createIGNodeListsAndIGs() {
 
   for (; HMI != HMIEnd ; ++HMI ) {
     if (HMI->first) {
-      LiveRange *L = HMI->second;   // get the LiveRange
+      V9LiveRange *L = HMI->second;   // get the V9LiveRange
       if (!L) {
         if (DEBUG_RA && !isa<ConstantIntegral> (HMI->first))
           std::cerr << "\n**** ?!?WARNING: NULL LIVE RANGE FOUND FOR: "
@@ -133,7 +133,7 @@ void PhyRegAlloc::addInterference(const Value *Def, const ValueSet *LVSet,
   ValueSet::const_iterator LIt = LVSet->begin();
 
   // get the live range of instruction
-  const LiveRange *const LROfDef = LRI->getLiveRangeForValue( Def );
+  const V9LiveRange *const LROfDef = LRI->getLiveRangeForValue( Def );
 
   IGNode *const IGNodeOfDef = LROfDef->getUserIGNode();
   assert( IGNodeOfDef );
@@ -147,7 +147,7 @@ void PhyRegAlloc::addInterference(const Value *Def, const ValueSet *LVSet,
       std::cerr << "< Def=" << RAV(Def) << ", Lvar=" << RAV(*LIt) << "> ";
 
     //  get the live range corresponding to live var
-    LiveRange *LROfVar = LRI->getLiveRangeForValue(*LIt);
+    V9LiveRange *LROfVar = LRI->getLiveRangeForValue(*LIt);
 
     // LROfVar can be null if it is a const since a const
     // doesn't have a dominating def - see Assumptions above
@@ -174,7 +174,7 @@ void PhyRegAlloc::setCallInterferences(const MachineInstr *MInst,
        LIt != LEnd; ++LIt) {
 
     //  get the live range corresponding to live var
-    LiveRange *const LR = LRI->getLiveRangeForValue(*LIt);
+    V9LiveRange *const LR = LRI->getLiveRangeForValue(*LIt);
 
     // LR can be null if it is a const since a const
     // doesn't have a dominating def - see Assumptions above
@@ -195,7 +195,7 @@ void PhyRegAlloc::setCallInterferences(const MachineInstr *MInst,
   CallArgsDescriptor* argDesc = CallArgsDescriptor::get(MInst);
 
   if (const Value *RetVal = argDesc->getReturnValue()) {
-    LiveRange *RetValLR = LRI->getLiveRangeForValue( RetVal );
+    V9LiveRange *RetValLR = LRI->getLiveRangeForValue( RetVal );
     assert( RetValLR && "No LR for RetValue of call");
     RetValLR->clearCallInterference();
   }
@@ -203,7 +203,7 @@ void PhyRegAlloc::setCallInterferences(const MachineInstr *MInst,
   // If the CALL is an indirect call, find the LR of the function pointer.
   // That has a call interference because it conflicts with outgoing args.
   if (const Value *AddrVal = argDesc->getIndirectFuncPtr()) {
-    LiveRange *AddrValLR = LRI->getLiveRangeForValue( AddrVal );
+    V9LiveRange *AddrValLR = LRI->getLiveRangeForValue( AddrVal );
     // LR can be null if the function pointer is a constant.
     if (AddrValLR)
       AddrValLR->setCallInterference();
@@ -254,7 +254,7 @@ void PhyRegAlloc::buildInterferenceGraphs() {
 	  addInterference(*OpI, &LVSetAI, isCallInst);
 
 	// Calculate the spill cost of each live range
-	LiveRange *LR = LRI->getLiveRangeForValue(*OpI);
+	V9LiveRange *LR = LRI->getLiveRangeForValue(*OpI);
 	if (LR) LR->addSpillCost(BBLoopDepthCost);
       }
       // Also add interference for any implicit definitions in a machine
@@ -284,12 +284,12 @@ void PhyRegAlloc::addInterf4PseudoInstr(const MachineInstr *MInst) {
   // iterate over MI operands to find defs
   for (MachineInstr::const_val_op_iterator It1 = MInst->begin(),
          ItE = MInst->end(); It1 != ItE; ++It1) {
-    const LiveRange *LROfOp1 = LRI->getLiveRangeForValue(*It1);
+    const V9LiveRange *LROfOp1 = LRI->getLiveRangeForValue(*It1);
     assert((LROfOp1 || It1.isDef()) && "No LR for Def in PSEUDO insruction");
 
     MachineInstr::const_val_op_iterator It2 = It1;
     for (++It2; It2 != ItE; ++It2) {
-      const LiveRange *LROfOp2 = LRI->getLiveRangeForValue(*It2);
+      const V9LiveRange *LROfOp2 = LRI->getLiveRangeForValue(*It2);
 
       if (LROfOp2) {
 	RegClass *RCOfOp1 = LROfOp1->getRegClass();
@@ -398,7 +398,7 @@ bool PhyRegAlloc::markAllocatedRegs(MachineInstr* MInst)
       if (Op.getType() ==  MachineOperand::MO_VirtualRegister ||
           Op.getType() ==  MachineOperand::MO_CCRegister) {
           const Value *const Val =  Op.getVRegValue();
-          if (const LiveRange* LR = LRI->getLiveRangeForValue(Val)) {
+          if (const V9LiveRange* LR = LRI->getLiveRangeForValue(Val)) {
             // Remember if any operand needs spilling
             instrNeedsSpills |= LR->isMarkedForSpill();
 
@@ -456,7 +456,7 @@ void PhyRegAlloc::updateInstruction(MachineBasicBlock::iterator& MII,
         if (Op.getType() ==  MachineOperand::MO_VirtualRegister ||
             Op.getType() ==  MachineOperand::MO_CCRegister) {
             const Value* Val = Op.getVRegValue();
-            if (const LiveRange *LR = LRI->getLiveRangeForValue(Val))
+            if (const V9LiveRange *LR = LRI->getLiveRangeForValue(Val))
               if (LR->isMarkedForSpill())
                 insertCode4SpilledLR(LR, MII, MBB, OpNum);
           }
@@ -609,7 +609,7 @@ void PhyRegAlloc::updateMachineCode()
 /// instruction. Then it uses this register temporarily to accommodate the
 /// spilled value.
 ///
-void PhyRegAlloc::insertCode4SpilledLR(const LiveRange *LR,
+void PhyRegAlloc::insertCode4SpilledLR(const V9LiveRange *LR,
                                        MachineBasicBlock::iterator& MII,
                                        MachineBasicBlock &MBB,
 				       const unsigned OpNum) {
@@ -754,7 +754,7 @@ PhyRegAlloc::insertCallerSavingCode(std::vector<MachineInstr*> &instrnsBefore,
     assert(tmpRetVal->getOperand(0) == origRetVal &&
            tmpRetVal->getType() == origRetVal->getType() &&
            "Wrong implicit ref?");
-    LiveRange *RetValLR = LRI->getLiveRangeForValue(tmpRetVal);
+    V9LiveRange *RetValLR = LRI->getLiveRangeForValue(tmpRetVal);
     assert(RetValLR && "No LR for RetValue of call");
 
     if (! RetValLR->isMarkedForSpill())
@@ -768,7 +768,7 @@ PhyRegAlloc::insertCallerSavingCode(std::vector<MachineInstr*> &instrnsBefore,
   // for each live var in live variable set after machine inst
   for( ; LIt != LVSetAft.end(); ++LIt) {
     // get the live range corresponding to live var
-    LiveRange *const LR = LRI->getLiveRangeForValue(*LIt);
+    V9LiveRange *const LR = LRI->getLiveRangeForValue(*LIt);
 
     // LR can be null if it is a const since a const
     // doesn't have a dominating def - see Assumptions above
@@ -945,7 +945,7 @@ int PhyRegAlloc::getUnusedUniRegAtMI(RegClass *RC, const int RegType,
   // for each live var in live variable set after machine inst
   for ( ; LIt != LVSetBef->end(); ++LIt) {
     // Get the live range corresponding to live var, and its RegClass
-    LiveRange *const LRofLV = LRI->getLiveRangeForValue(*LIt );
+    V9LiveRange *const LRofLV = LRI->getLiveRangeForValue(*LIt );
 
     // LR can be null if it is a const since a const
     // doesn't have a dominating def - see Assumptions above
@@ -1023,7 +1023,7 @@ void PhyRegAlloc::setRelRegsUsedByThisInst(RegClass *RC, int RegType,
 
   // If there are implicit references, mark their allocated regs as well
   for (unsigned z=0; z < MI->getNumImplicitRefs(); z++)
-    if (const LiveRange*
+    if (const V9LiveRange*
         LRofImpRef = LRI->getLiveRangeForValue(MI->getImplicitRef(z)))
       if (LRofImpRef->hasColor())
         // this implicit reference is in a LR that received a color
@@ -1080,7 +1080,7 @@ void PhyRegAlloc::markUnusableSugColors()
 
   for (; HMI != HMIEnd ; ++HMI ) {
     if (HMI->first) {
-      LiveRange *L = HMI->second;      // get the LiveRange
+      V9LiveRange *L = HMI->second;      // get the V9LiveRange
       if (L && L->hasSuggestedColor ())
         L->setSuggestedColorUsable
           (!(MRI.isRegVolatile (L->getRegClassID (), L->getSuggestedColor ())
@@ -1102,7 +1102,7 @@ void PhyRegAlloc::allocateStackSpace4SpilledLRs() {
 
   for ( ; HMI != HMIEnd ; ++HMI) {
     if (HMI->first && HMI->second) {
-      LiveRange *L = HMI->second;       // get the LiveRange
+      V9LiveRange *L = HMI->second;       // get the V9LiveRange
       if (L->isMarkedForSpill()) {      // NOTE: allocating size of long Type **
         int stackOffset = MF->getInfo<SparcV9FunctionInfo>()->allocateSpilledValue(Type::LongTy);
         L->setSpillOffFromFP(stackOffset);
@@ -1122,7 +1122,7 @@ void PhyRegAlloc::saveStateForValue (std::vector<AllocInfo> &state,
   AllocInfo::AllocStateTy AllocState = AllocInfo::NotAllocated;
   int Placement = -1;
   if ((HMI != HMIEnd) && HMI->second) {
-    LiveRange *L = HMI->second;
+    V9LiveRange *L = HMI->second;
     assert ((L->hasColor () || L->isMarkedForSpill ())
             && "Live range exists but not colored or spilled");
     if (L->hasColor ()) {

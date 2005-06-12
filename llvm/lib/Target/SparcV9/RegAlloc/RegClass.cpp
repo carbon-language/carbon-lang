@@ -197,11 +197,11 @@ void RegClass::colorIGNode(IGNode *const Node) {
     clearColorsUsed();
 
     // initialize all colors used by neighbors of this node to true
-    LiveRange *LR = Node->getParentLR();
+    V9LiveRange *LR = Node->getParentLR();
     unsigned NumNeighbors =  Node->getNumOfNeighbors();
     for (unsigned n=0; n < NumNeighbors; n++) {
       IGNode *NeighIGNode = Node->getAdjIGNode(n);
-      LiveRange *NeighLR = NeighIGNode->getParentLR();
+      V9LiveRange *NeighLR = NeighIGNode->getParentLR();
 
       // Don't use a color if it is in use by the neighbor,
       // or is suggested for use by the neighbor,

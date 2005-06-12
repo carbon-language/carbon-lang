@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 //
 // Implements a live range using a SetVector of Value *s.  We keep only
-// defs in a LiveRange.
+// defs in a V9LiveRange.
 //
 //===----------------------------------------------------------------------===//
 
@@ -24,14 +24,14 @@ namespace llvm {
 class RegClass;
 class IGNode;
 
-class LiveRange {
+class V9LiveRange {
 public:
   typedef SetVector<const Value *> ValueContainerType;
   typedef ValueContainerType::iterator iterator;
   typedef ValueContainerType::const_iterator const_iterator;
 
 private:
-  ValueContainerType MyValues; // Values in this LiveRange
+  ValueContainerType MyValues; // Values in this V9LiveRange
   RegClass *MyRegClass;        // register class (e.g., int, FP) for this LR
 
   /// doesSpanAcrossCalls - Does this live range span across calls?
@@ -82,7 +82,7 @@ public:
   bool insert(const Value *&X)  { return MyValues.insert (X); }
   void insert(iterator b, iterator e) { MyValues.insert (b, e); }
 
-  LiveRange() {
+  V9LiveRange() {
     Color = SuggestedColor = -1;        // not yet colored
     mustSpill = false;
     MyRegClass = 0;
@@ -184,7 +184,8 @@ public:
   }
 };
 
-static inline std::ostream &operator << (std::ostream &os, const LiveRange &lr) {
+static inline std::ostream &operator << (std::ostream &os, 
+                                         const V9LiveRange &lr) {
   os << "LiveRange@" << (void *)(&lr);
   return os;
 };

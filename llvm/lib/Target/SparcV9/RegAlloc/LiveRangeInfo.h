@@ -31,7 +31,7 @@
 
 namespace llvm {
 
-class LiveRange;
+class V9LiveRange;
 class MachineInstr;
 class RegClass;
 class SparcV9RegInfo;
@@ -40,7 +40,7 @@ class Value;
 class Function;
 class Instruction;
 
-typedef hash_map<const Value*, LiveRange*> LiveRangeMapType;
+typedef hash_map<const Value*, V9LiveRange*> LiveRangeMapType;
 
 //----------------------------------------------------------------------------
 // Class LiveRangeInfo
@@ -51,7 +51,7 @@ typedef hash_map<const Value*, LiveRange*> LiveRangeMapType;
 
 class LiveRangeInfo {
   const Function *const Meth;       // Func for which live range info is held
-  LiveRangeMapType  LiveRangeMap;   // A map from Value * to LiveRange * to
+  LiveRangeMapType  LiveRangeMap;   // A map from Value * to V9LiveRange * to
                                     // record all live ranges in a method
                                     // created by constructLiveRanges
 
@@ -65,14 +65,14 @@ class LiveRangeInfo {
 
   //------------ Private methods (see LiveRangeInfo.cpp for description)-------
 
-  LiveRange* createNewLiveRange         (const Value* Def,
+  V9LiveRange* createNewLiveRange         (const Value* Def,
                                          bool isCC = false);
 
-  LiveRange* createOrAddToLiveRange     (const Value* Def,
+  V9LiveRange* createOrAddToLiveRange     (const Value* Def,
                                          bool isCC = false);
 
-  void unionAndUpdateLRs                (LiveRange *L1,
-                                         LiveRange *L2);
+  void unionAndUpdateLRs                (V9LiveRange *L1,
+                                         V9LiveRange *L2);
 
   void suggestRegs4CallRets             ();
 public:
@@ -82,7 +82,7 @@ public:
 		std::vector<RegClass *> & RCList);
 
 
-  /// Destructor to destroy all LiveRanges in the LiveRange Map
+  /// Destructor to destroy all LiveRanges in the V9LiveRange Map
   ///
   ~LiveRangeInfo();
 
@@ -98,10 +98,10 @@ public:
   /// Method used to get the live range containing a Value.
   /// This may return NULL if no live range exists for a Value (eg, some consts)
   ///
-  inline LiveRange *getLiveRangeForValue(const Value *Val) {
+  inline V9LiveRange *getLiveRangeForValue(const Value *Val) {
     return LiveRangeMap[Val];
   }
-  inline const LiveRange *getLiveRangeForValue(const Value *Val) const {
+  inline const V9LiveRange *getLiveRangeForValue(const Value *Val) const {
     LiveRangeMapType::const_iterator I = LiveRangeMap.find(Val);
     return I->second;
   }

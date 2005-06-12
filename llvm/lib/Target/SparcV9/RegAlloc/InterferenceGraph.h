@@ -33,7 +33,7 @@
 
 namespace llvm {
 
-class LiveRange;
+class V9LiveRange;
 class RegClass;
 class IGNode;
 
@@ -51,15 +51,15 @@ class InterferenceGraph {
 
   void createGraph();
 
-  void addLRToIG(LiveRange *LR);
+  void addLRToIG(V9LiveRange *LR);
 
-  void setInterference(const LiveRange *LR1,
-                       const LiveRange *LR2);
+  void setInterference(const V9LiveRange *LR1,
+                       const V9LiveRange *LR2);
 
-  unsigned getInterference(const LiveRange *LR1,
-                           const LiveRange *LR2) const ;
+  unsigned getInterference(const V9LiveRange *LR1,
+                           const V9LiveRange *LR2) const ;
 
-  void mergeIGNodesOfLRs(const LiveRange *LR1, LiveRange *LR2);
+  void mergeIGNodesOfLRs(const V9LiveRange *LR1, V9LiveRange *LR2);
 
   std::vector<IGNode *> &getIGNodeList() { return IGNodeList; }
   const std::vector<IGNode *> &getIGNodeList() const { return IGNodeList; }

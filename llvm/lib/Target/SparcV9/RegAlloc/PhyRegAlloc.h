@@ -139,7 +139,7 @@ private:
   void markUnusableSugColors();
   void allocateStackSpace4SpilledLRs();
 
-  void insertCode4SpilledLR(const LiveRange *LR,
+  void insertCode4SpilledLR(const V9LiveRange *LR,
                             MachineBasicBlock::iterator& MII,
                             MachineBasicBlock &MBB, unsigned OpNum);
 

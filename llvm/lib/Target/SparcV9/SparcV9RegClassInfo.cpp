@@ -39,7 +39,7 @@ namespace llvm {
 void SparcV9IntRegClass::colorIGNode(IGNode * Node,
                                const std::vector<bool> &IsColorUsedArr) const
 {
-  LiveRange *LR = Node->getParentLR();
+  V9LiveRange *LR = Node->getParentLR();
 
   if (DEBUG_RA)
     std::cerr << "\nColoring LR [CallInt=" << LR->isCallInterference() <<"]:"
@@ -152,7 +152,7 @@ void SparcV9IntCCRegClass::colorIGNode(IGNode *Node,
   // spill algorithm cannot find it.  In particular, we have to choose
   // whether to use %xcc or %icc based on type of value compared
   //
-  const LiveRange* ccLR = Node->getParentLR();
+  const V9LiveRange* ccLR = Node->getParentLR();
   const Type* setCCType = (* ccLR->begin())->getType(); // any Value in LR
   assert(setCCType->isIntegral() || isa<PointerType>(setCCType));
   int ccReg = ((isa<PointerType>(setCCType) || setCCType == Type::LongTy)
@@ -161,7 +161,7 @@ void SparcV9IntCCRegClass::colorIGNode(IGNode *Node,
 #ifndef NDEBUG
   // Let's just make sure values of two different types have not been
   // coalesced into this LR.
-  for (LiveRange::const_iterator I=ccLR->begin(), E=ccLR->end(); I!=E; ++I) {
+  for (V9LiveRange::const_iterator I=ccLR->begin(), E=ccLR->end(); I!=E; ++I) {
     const Type* ccType = (*I)->getType();
     assert((ccReg == xcc && (isa<PointerType>(ccType)
                              || ccType == Type::LongTy)) ||
@@ -205,7 +205,7 @@ void SparcV9FloatCCRegClass::colorIGNode(IGNode *Node,
 void SparcV9FloatRegClass::colorIGNode(IGNode * Node,
                                  const std::vector<bool> &IsColorUsedArr) const
 {
-  LiveRange *LR = Node->getParentLR();
+  V9LiveRange *LR = Node->getParentLR();
 
 #ifndef NDEBUG
   // Check that the correct colors have been are marked for fp-doubles.
@@ -222,7 +222,7 @@ void SparcV9FloatRegClass::colorIGNode(IGNode * Node,
   unsigned NumNeighbors =  Node->getNumOfNeighbors();   // total # of neighbors
   for(unsigned n=0; n < NumNeighbors; n++) {            // for each neigh
     IGNode *NeighIGNode = Node->getAdjIGNode(n);
-    LiveRange *NeighLR = NeighIGNode->getParentLR();
+    V9LiveRange *NeighLR = NeighIGNode->getParentLR();
 
     if (NeighLR->hasColor()) {
       assert(IsColorUsedArr[ NeighLR->getColor() ]);
@@ -369,7 +369,7 @@ int SparcV9FloatRegClass::findUnusedColor(int RegTypeWanted,
 // type of the Node (i.e., float/double)
 //-----------------------------------------------------------------------------
 
-int SparcV9FloatRegClass::findFloatColor(const LiveRange *LR,
+int SparcV9FloatRegClass::findFloatColor(const V9LiveRange *LR,
                                        unsigned Start,
                                        unsigned End,
                                const std::vector<bool> &IsColorUsedArr) const
