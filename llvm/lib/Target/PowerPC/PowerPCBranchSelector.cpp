@@ -86,7 +86,14 @@ namespace {
 
         for (MachineBasicBlock::iterator MBBI = MBB->begin(), EE = MBB->end();
              MBBI != EE; ++MBBI) {
-          if (MBBI->getOpcode() == PPC::COND_BRANCH) {
+          // We may end up deleting the MachineInstr that MBBI points to, so
+          // remember its opcode now so we can refer to it after calling erase()
+          unsigned OpcodeToReplace = MBBI->getOpcode();
+
+          if (OpcodeToReplace == PPC::COND_BRANCH) {
+            MachineBasicBlock::iterator MBBJ = MBBI;
+            ++MBBJ;
+            
             // condbranch operands:
             // 0. CR0 register
             // 1. bc opcode
@@ -101,17 +108,21 @@ namespace {
             unsigned Opcode = MBBI->getOperand(1).getImmedValue();
             unsigned Inverted = PPC32InstrInfo::invertPPCBranchOpcode(Opcode);
 
-            MachineInstr *MI = MBBI;
             if (Displacement >= -32768 && Displacement <= 32767) {
-              BuildMI(*MBB, MBBI, Opcode, 2).addReg(PPC::CR0).addMBB(trueMBB);
+              BuildMI(*MBB, MBBJ, Opcode, 2).addReg(PPC::CR0).addMBB(trueMBB);
             } else {
-              BuildMI(*MBB, MBBI, Inverted, 2).addReg(PPC::CR0).addSImm(8);
-              BuildMI(*MBB, MBBI, PPC::B, 1).addMBB(trueMBB);
-              BuildMI(*MBB, MBBI, PPC::B, 1).addMBB(falseMBB);
+              BuildMI(*MBB, MBBJ, Inverted, 2).addReg(PPC::CR0).addSImm(8);
+              BuildMI(*MBB, MBBJ, PPC::B, 1).addMBB(trueMBB);
+              BuildMI(*MBB, MBBJ, PPC::B, 1).addMBB(falseMBB);
             }
-            MBB->erase(MI);
+
+            // Erase the psuedo COND_BRANCH instruction, and then back up the
+            // iterator so that when the for loop increments it, we end up in
+            // the correct place rather than iterating off the end.
+            MBB->erase(MBBI);
+            MBBI = --MBBJ;
           }
-          ByteCount += bytesForOpcode(MBBI->getOpcode());
+          ByteCount += bytesForOpcode(OpcodeToReplace);
         }
       }
 
