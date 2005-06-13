@@ -3088,8 +3088,6 @@ Instruction *InstCombiner::visitSetCondInstWithCastAndCast(SetCondInst &SCI) {
     return 0;
   }
 
-  return 0; //The rest of this function is broken.  See bug 571
-
   // Okay, we have the two reduced sized operands.  If we are doing a <,>
   // comparison, make sure we perform the compare with the same signedness as
   // the DestTy.  We don't have to do this if the comparison is !=/== or if the
