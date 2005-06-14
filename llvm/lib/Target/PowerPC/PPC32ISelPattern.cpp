@@ -1572,6 +1572,11 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
   SDNode *Node = N.Val;
   MVT::ValueType DestType = N.getValueType();
 
+  if (Node->getOpcode() == ISD::CopyFromReg &&
+      MRegisterInfo::isVirtualRegister(cast<RegSDNode>(Node)->getReg()))
+    // Just use the specified register as our input.
+    return cast<RegSDNode>(Node)->getReg();
+
   unsigned &Reg = ExprMap[N];
   if (Reg) return Reg;
 
