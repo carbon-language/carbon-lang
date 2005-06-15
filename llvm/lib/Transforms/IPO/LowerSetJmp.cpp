@@ -459,6 +459,7 @@ void LowerSetJmp::visitCallInst(CallInst& CI)
 
   BasicBlock* NewBB = OldBB->splitBasicBlock(CI);
   assert(NewBB && "Couldn't split BB of \"call\" instruction!!");
+  DFSBlocks.insert(NewBB);
   NewBB->setName("Call2Invoke");
 
   Function* Func = OldBB->getParent();
