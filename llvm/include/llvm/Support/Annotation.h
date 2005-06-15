@@ -81,8 +81,7 @@ public:
 //===----------------------------------------------------------------------===//
 //
 // Annotable - This class is used as a base class for all objects that would
-// like to have annotation capability.  One notable subclass is Value, which
-// means annotations can be attached to almost everything in LLVM.
+// like to have annotation capability.  
 //
 // Annotable objects keep their annotation list sorted as annotations are
 // inserted and deleted.  This is used to ensure that annotations with identical
