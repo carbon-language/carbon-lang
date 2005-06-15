@@ -104,6 +104,10 @@ struct GlobalStatus {
   Function *AccessingFunction;
   bool HasMultipleAccessingFunctions;
 
+  // HasNonInstructionUser - Set to true if this global has a user that is not
+  // an instruction (e.g. a constant expr or GV initializer).
+  bool HasNonInstructionUser;
+
   /// isNotSuitableForSRA - Keep track of whether any SRA preventing users of
   /// the global exist.  Such users include GEP instruction with variable
   /// indexes, and non-gep/load/store users like constant expr casts.
@@ -111,7 +115,7 @@ struct GlobalStatus {
 
   GlobalStatus() : isLoaded(false), StoredType(NotStored), StoredOnceValue(0),
                    AccessingFunction(0), HasMultipleAccessingFunctions(false),
-                   isNotSuitableForSRA(false) {}
+                   HasNonInstructionUser(false), isNotSuitableForSRA(false) {}
 };
 
 
@@ -140,6 +144,8 @@ static bool AnalyzeGlobal(Value *V, GlobalStatus &GS,
                           std::set<PHINode*> &PHIUsers) {
   for (Value::use_iterator UI = V->use_begin(), E = V->use_end(); UI != E; ++UI)
     if (ConstantExpr *CE = dyn_cast<ConstantExpr>(*UI)) {
+      GS.HasNonInstructionUser = true;
+
       if (AnalyzeGlobal(CE, GS, PHIUsers)) return true;
       if (CE->getOpcode() != Instruction::GetElementPtr)
         GS.isNotSuitableForSRA = true;
@@ -241,11 +247,13 @@ static bool AnalyzeGlobal(Value *V, GlobalStatus &GS,
         return true;  // Any other non-load instruction might take address!
       }
     } else if (Constant *C = dyn_cast<Constant>(*UI)) {
+      GS.HasNonInstructionUser = true;
       // We might have a dead and dangling constant hanging off of here.
       if (!ConstantIsDead(C))
         return true;
     } else {
-      // Otherwise must be a global or some other user.
+      GS.HasNonInstructionUser = true;
+      // Otherwise must be some other user.
       return true;
     }
 
@@ -940,7 +948,7 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
     // NOTE: It doesn't make sense to promote non first class types since we
     // are just replacing static memory to stack memory.
     if (!GS.HasMultipleAccessingFunctions &&
-        GS.AccessingFunction &&
+        GS.AccessingFunction && !GS.HasNonInstructionUser &&
         GV->getType()->getElementType()->isFirstClassType() &&
         GS.AccessingFunction->getName() == "main" &&
         GS.AccessingFunction->hasExternalLinkage()) {
