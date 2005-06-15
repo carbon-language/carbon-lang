@@ -551,7 +551,7 @@ void IndVarSimplify::RewriteLoopExitValues(Loop *L) {
   for (unsigned i = 0, e = L->getBlocks().size(); i != e; ++i)
     if (LI->getLoopFor(L->getBlocks()[i]) == L) {  // Not in a subloop...
       BasicBlock *BB = L->getBlocks()[i];
-      for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I)
+      for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E;) {
         if (I->getType()->isInteger()) {      // Is an integer instruction
           SCEVHandle SH = SE->getSCEV(I);
           if (SH->hasComputableLoopEvolution(L) ||    // Varies predictably
@@ -571,6 +571,10 @@ void IndVarSimplify::RewriteLoopExitValues(Loop *L) {
               if (!isa<SCEVCouldNotCompute>(ExitValue)) {
                 Changed = true;
                 ++NumReplaced;
+                // Remember the next instruction.  The rewriter can move code
+                // around in some cases.
+                BasicBlock::iterator NextI = I; ++NextI;
+
                 Value *NewVal = Rewriter.expandCodeFor(ExitValue, InsertPt,
                                                        I->getType());
 
@@ -582,10 +586,16 @@ void IndVarSimplify::RewriteLoopExitValues(Loop *L) {
                 // If this instruction is dead now, schedule it to be removed.
                 if (I->use_empty())
                   InstructionsToDelete.insert(I);
+                I = NextI;
+                continue;  // Skip the ++I
               }
             }
           }
         }
+
+        // Next instruction.  Continue instruction skips this.
+        ++I;
+      }
     }
 
   DeleteTriviallyDeadInstructions(InstructionsToDelete);
