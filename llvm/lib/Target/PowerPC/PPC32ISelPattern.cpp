@@ -1232,9 +1232,9 @@ void ISel::SelectBranchCC(SDOperand N)
   Select(N.getOperand(0));  //chain
   CCReg = SelectCC(N.getOperand(1), Opc, Inv, Idx);
 
-  // Iterate to the next basic block, unless we're already at the end of the
-  ilist<MachineBasicBlock>::iterator It = BB, E = BB->getParent()->end();
-  if (++It == E) It = BB;
+  // Iterate to the next basic block
+  ilist<MachineBasicBlock>::iterator It = BB;
+  ++It;
 
   // If this is a two way branch, then grab the fallthrough basic block argument
   // and build a PowerPC branch pseudo-op, suitable for long branch conversion
@@ -1256,6 +1256,11 @@ void ISel::SelectBranchCC(SDOperand N)
       }
     }
   } else {
+    // If the fallthrough path is off the end of the function, which would be
+    // undefined behavior, set it to be the same as the current block because
+    // we have nothing better to set it to, and leaving it alone will cause the
+    // PowerPC Branch Selection pass to crash.
+    if (It == BB->getParent()->end()) It = Dest;
     BuildMI(BB, PPC::COND_BRANCH, 4).addReg(CCReg).addImm(Opc)
       .addMBB(Dest).addMBB(It);
   }
