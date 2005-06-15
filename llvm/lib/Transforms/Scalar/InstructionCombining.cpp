@@ -2560,6 +2560,14 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
           default: break;
           case Instruction::SetEQ:
           case Instruction::SetNE: {
+            unsigned TypeBits = CI->getType()->getPrimitiveSizeInBits();
+
+            // Check that the shift amount is in range.  If not, don't perform
+            // undefined shifts.  When the shift is visited it will be
+            // simplified.
+            if (ShAmt->getValue() >= TypeBits)
+              break;
+
             // If we are comparing against bits always shifted out, the
             // comparison cannot succeed.
             Constant *Comp =
@@ -2573,7 +2581,6 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
             if (LHSI->hasOneUse()) {
               // Otherwise strength reduce the shift into an and.
               unsigned ShAmtVal = (unsigned)ShAmt->getValue();
-              unsigned TypeBits = CI->getType()->getPrimitiveSizeInBits();
               uint64_t Val = (1ULL << (TypeBits-ShAmtVal))-1;
 
               Constant *Mask;
@@ -2603,6 +2610,14 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
           default: break;
           case Instruction::SetEQ:
           case Instruction::SetNE: {
+
+            // Check that the shift amount is in range.  If not, don't perform
+            // undefined shifts.  When the shift is visited it will be
+            // simplified.
+            unsigned TypeBits = ShAmt->getType()->getPrimitiveSizeInBits();
+            if (ShAmt->getValue() >= TypeBits)
+              break;
+
             // If we are comparing against bits always shifted out, the
             // comparison cannot succeed.
             Constant *Comp =
@@ -2623,7 +2638,6 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
 
               Constant *Mask;
               if (CI->getType()->isUnsigned()) {
-                unsigned TypeBits = CI->getType()->getPrimitiveSizeInBits();
                 Val &= ~0ULL >> (64-TypeBits);
                 Mask = ConstantUInt::get(CI->getType(), Val);
               } else {
