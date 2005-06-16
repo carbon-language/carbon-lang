@@ -2614,7 +2614,7 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
             // Check that the shift amount is in range.  If not, don't perform
             // undefined shifts.  When the shift is visited it will be
             // simplified.
-            unsigned TypeBits = ShAmt->getType()->getPrimitiveSizeInBits();
+            unsigned TypeBits = CI->getType()->getPrimitiveSizeInBits();
             if (ShAmt->getValue() >= TypeBits)
               break;
 
