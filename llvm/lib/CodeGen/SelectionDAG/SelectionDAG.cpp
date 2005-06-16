@@ -1183,12 +1183,17 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     if (N2.getOpcode() == ISD::SUB && isa<ConstantSDNode>(N2.getOperand(0)) &&
         cast<ConstantSDNode>(N2.getOperand(0))->getValue() == 0)
       return getNode(ISD::SUB, VT, N1, N2.getOperand(1)); // A+(0-B) -> A-B
+    if (N2.getOpcode() == ISD::SUB && N1 == N2.Val->getOperand(1) &&
+        !MVT::isFloatingPoint(N2.getValueType()))
+      return N2.Val->getOperand(0); // A+(B-A) -> B
     break;
   case ISD::SUB:
     if (N1.getOpcode() == ISD::ADD) {
-      if (N1.Val->getOperand(0) == N2)
+      if (N1.Val->getOperand(0) == N2 && 
+          !MVT::isFloatingPoint(N2.getValueType()))
         return N1.Val->getOperand(1);         // (A+B)-A == B
-      if (N1.Val->getOperand(1) == N2)
+      if (N1.Val->getOperand(1) == N2 &&
+          !MVT::isFloatingPoint(N2.getValueType()))
         return N1.Val->getOperand(0);         // (A+B)-B == A
     }
     if (N2.getOpcode() == ISD::FNEG)          // (A- (-B) -> A+B
