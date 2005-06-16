@@ -1067,7 +1067,7 @@ Instruction *InstCombiner::visitDiv(BinaryOperator &I) {
           I.setOperand(1, SFO);
           return &I;
         } else if (SFO->getValue() == 0) {
-          I.setOperand(2, STO);
+          I.setOperand(1, STO);
           return &I;
         }
 
