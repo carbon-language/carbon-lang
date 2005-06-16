@@ -3102,33 +3102,7 @@ Instruction *InstCombiner::visitSetCondInstWithCastAndCast(SetCondInst &SCI) {
     return 0;
   }
 
-  return 0; //The rest of this function is broken.  See bug 571
-
-  // Okay, we have the two reduced sized operands.  If we are doing a <,>
-  // comparison, make sure we perform the compare with the same signedness as
-  // the DestTy.  We don't have to do this if the comparison is !=/== or if the
-  // source is a bool.
-  if (isSignSrc != isSignDest && SrcTy != Type::BoolTy &&
-      SCI.getOpcode() != Instruction::SetEQ &&
-      SCI.getOpcode() != Instruction::SetNE) {
-    // Insert noop casts of the two operands to change the sign of the
-    // comparison.
-    const Type *NewSrcTy;
-    if (isSignDest)
-      NewSrcTy = SrcTy->getSignedVersion();
-    else 
-      NewSrcTy = SrcTy->getUnsignedVersion();
-    
-    // Insert the new casts.
-    LHSCIOp = InsertNewInstBefore(new CastInst(LHSCIOp, NewSrcTy,
-                                               LHSCIOp->getName()), SCI);
-    if (Constant *RHSC = dyn_cast<Constant>(RHSCIOp))
-      RHSCIOp = ConstantExpr::getCast(RHSC, NewSrcTy);
-    else
-      RHSCIOp = InsertNewInstBefore(new CastInst(RHSCIOp, NewSrcTy,
-                                                 RHSCIOp->getName()), SCI);
-  }
-
+  // Okay, just insert a compare of the reduced operands now!
   return BinaryOperator::create(SCI.getOpcode(), LHSCIOp, RHSCIOp);
 }
 
