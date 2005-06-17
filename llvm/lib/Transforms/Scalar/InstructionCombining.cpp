@@ -1967,12 +1967,11 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
           case Instruction::SetNE:
             switch (RHSCC) {
             default: assert(0 && "Unknown integer condition code!");
-            case Instruction::SetLT:        // (X != 13 | X < 15) -> X < 15
-              return ReplaceInstUsesWith(I, RHS);
             case Instruction::SetEQ:        // (X != 13 | X == 15) -> X != 13
             case Instruction::SetGT:        // (X != 13 | X > 15)  -> X != 13
               return ReplaceInstUsesWith(I, LHS);
             case Instruction::SetNE:        // (X != 13 | X != 15) -> true
+            case Instruction::SetLT:        // (X != 13 | X < 15)  -> true
               return ReplaceInstUsesWith(I, ConstantBool::True);
             }
             break;
