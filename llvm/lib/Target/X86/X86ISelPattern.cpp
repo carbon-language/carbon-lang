@@ -3862,7 +3862,7 @@ void ISel::EmitFastCCToFastCCTailCall(SDNode *TailCallNode) {
   SDOperand Callee = TailCallNode->getOperand(1);
   bool isDirect = isa<GlobalAddressSDNode>(Callee) ||
                   isa<ExternalSymbolSDNode>(Callee);
-  unsigned CalleeReg;
+  unsigned CalleeReg = 0;
   if (!isDirect) CalleeReg = SelectExpr(Callee);
 
   unsigned RegOp1 = 0;
