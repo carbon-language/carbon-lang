@@ -1461,12 +1461,15 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
         BasicBlock::iterator AfterPHIIt = BB->begin();
         while (isa<PHINode>(AfterPHIIt)) {
           PHINode *PN = cast<PHINode>(AfterPHIIt++);
-          if (PN->getIncomingValue(0) == PN->getIncomingValue(1))
-            PN->replaceAllUsesWith(PN->getIncomingValue(0));
-          else if (!DominatesMergePoint(PN->getIncomingValue(0), BB,
-                                        &AggressiveInsts) ||
-                   !DominatesMergePoint(PN->getIncomingValue(1), BB,
-                                        &AggressiveInsts)) {
+          if (PN->getIncomingValue(0) == PN->getIncomingValue(1)) {
+            if (PN->getIncomingValue(0) != PN)
+              PN->replaceAllUsesWith(PN->getIncomingValue(0));
+            else
+              PN->replaceAllUsesWith(UndefValue::get(PN->getType()));
+          } else if (!DominatesMergePoint(PN->getIncomingValue(0), BB,
+                                          &AggressiveInsts) ||
+                     !DominatesMergePoint(PN->getIncomingValue(1), BB,
+                                          &AggressiveInsts)) {
             CanPromote = false;
             break;
           }
