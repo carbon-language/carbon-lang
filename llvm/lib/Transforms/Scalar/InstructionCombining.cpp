@@ -2699,6 +2699,8 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
             if (CI->isNullValue()) {       // (X / neg) op 0
               LoBound = AddOne(DivRHS);
               HiBound = cast<ConstantInt>(ConstantExpr::getNeg(DivRHS));
+              if (HiBound == DivRHS)
+                LoBound = 0;  // - INTMIN = INTMIN
             } else if (isPositive(CI)) {   // (X / neg) op pos
               HiOverflow = LoOverflow = ProdOV;
               if (!LoOverflow)
