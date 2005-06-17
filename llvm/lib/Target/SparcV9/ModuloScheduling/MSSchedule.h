@@ -28,7 +28,9 @@ namespace llvm {
     std::map<int, std::map<int, int> > resourceNumPerCycle;
 
     //Check if all resources are free
-    bool resourcesFree(MSchedGraphNode*, int);
+    bool resourcesFree(MSchedGraphNode*, int, int II); 
+    bool resourceAvailable(int resourceNum, int cycle);
+    void useResource(int resourceNum, int cycle);
 
     //Resulting kernel
     std::vector<std::pair<MachineInstr*, int> > kernel;
@@ -42,13 +44,13 @@ namespace llvm {
   public:
     MSSchedule(int num) : numIssue(num) {}
     MSSchedule() : numIssue(4) {}
-    bool insert(MSchedGraphNode *node, int cycle);
+    bool insert(MSchedGraphNode *node, int cycle, int II);
     int getStartCycle(MSchedGraphNode *node);
     void clear() { schedule.clear(); resourceNumPerCycle.clear(); kernel.clear(); }
     std::vector<std::pair<MachineInstr*, int> >* getKernel() { return &kernel; }
     bool constructKernel(int II, std::vector<MSchedGraphNode*> &branches, std::map<const MachineInstr*, unsigned> &indVar);
     int getMaxStage() { return maxStage; }
-
+    bool defPreviousStage(Value *def, int stage);
 
     //iterators
     typedef std::map<int, std::vector<MSchedGraphNode*> >::iterator schedule_iterator;

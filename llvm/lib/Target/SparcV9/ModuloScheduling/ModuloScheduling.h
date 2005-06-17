@@ -98,6 +98,7 @@ namespace llvm {
     void findAllReccurrences(MSchedGraphNode *node,
 			     std::vector<MSchedGraphNode*> &visitedNodes, int II);
     void addReccurrence(std::vector<MSchedGraphNode*> &recurrence, int II, MSchedGraphNode*, MSchedGraphNode*);
+    void addSCC(std::vector<MSchedGraphNode*> &SCC, std::map<MSchedGraphNode*, MSchedGraphNode*> &newNodes);
 
     void findAllCircuits(MSchedGraph *MSG, int II);
     bool circuit(MSchedGraphNode *v, std::vector<MSchedGraphNode*> &stack,
@@ -142,7 +143,7 @@ namespace llvm {
 
     void writeKernel(BasicBlock *llvmBB, MachineBasicBlock *machineBB, std::map<const Value*, std::pair<const MachineInstr*, int> > &valuesToSave, std::map<Value*, std::map<int, Value*> > &newValues, std::map<Value*, MachineBasicBlock*> &newValLocation, std::map<Value*, std::map<int, Value*> > &kernelPHIs);
 
-    void removePHIs(const MachineBasicBlock *origBB, std::vector<MachineBasicBlock *> &prologues, std::vector<MachineBasicBlock *> &epilogues, MachineBasicBlock *kernelBB, std::map<Value*, MachineBasicBlock*> &newValLocation);
+    void removePHIs(const MachineBasicBlock* SB, std::vector<MachineBasicBlock*> &prologues, std::vector<MachineBasicBlock *> &epilogues, MachineBasicBlock *kernelBB, std::map<Value*, MachineBasicBlock*> &newValLocation);
 
     void connectedComponentSet(MSchedGraphNode *node, std::set<MSchedGraphNode*> &ccSet, std::set<MSchedGraphNode*> &lastNodes);
 

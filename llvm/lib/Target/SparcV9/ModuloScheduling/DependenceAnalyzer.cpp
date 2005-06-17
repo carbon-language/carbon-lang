@@ -159,10 +159,10 @@ void DependenceAnalyzer::advancedDepAnalysis(GetElementPtrInst *gp1,
   SCEVHandle SV2 = SE->getSCEV(Gep2Idx);
 
   //Now handle special cases of dependence analysis
-  SV1->print(std::cerr);
-  std::cerr << "\n";
-  SV2->print(std::cerr);
-  std::cerr << "\n";
+  //SV1->print(std::cerr);
+  //std::cerr << "\n";
+  //SV2->print(std::cerr);
+  //std::cerr << "\n";
 
   //Check if we have an SCEVAddExpr, cause we can only handle those
   SCEVAddRecExpr *SVAdd1 = dyn_cast<SCEVAddRecExpr>(SV1);
@@ -217,7 +217,7 @@ void DependenceAnalyzer::advancedDepAnalysis(GetElementPtrInst *gp1,
   
   //Find constant index difference
   int diff = A1->getValue()->getRawValue() - A2->getValue()->getRawValue();
-  std::cerr << diff << "\n";
+  //std::cerr << diff << "\n";
   if(diff > 5)
     diff = 2;
 
@@ -240,14 +240,21 @@ void DependenceAnalyzer::createDep(std::vector<Dependence> &deps,
 
   //If load/store pair
   if(valLoad && !val2Load) {
-    //Anti Dep
-    deps.push_back(Dependence(diff, Dependence::AntiDep));
+    if(srcBeforeDest) 
+      //Anti Dep
+      deps.push_back(Dependence(diff, Dependence::AntiDep));
+    else
+      deps.push_back(Dependence(diff, Dependence::TrueDep));
+
     ++NumDeps;
   }
   //If store/load pair
   else if(!valLoad && val2Load) {
-    //True Dep
-    deps.push_back(Dependence(diff, Dependence::TrueDep));
+    if(srcBeforeDest) 
+      //True Dep
+      deps.push_back(Dependence(diff, Dependence::TrueDep));
+    else
+      deps.push_back(Dependence(diff, Dependence::AntiDep));
     ++NumDeps;
   }
   //If store/store pair

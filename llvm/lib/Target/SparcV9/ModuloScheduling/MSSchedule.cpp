@@ -16,18 +16,23 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Target/TargetSchedInfo.h"
 #include "../SparcV9Internals.h"
+#include "llvm/CodeGen/MachineInstr.h"
 
 using namespace llvm;
 
+//Check if all resources are free
+bool resourcesFree(MSchedGraphNode*, int, 
+std::map<int, std::map<int, int> > &resourceNumPerCycle);
+
 //Returns a boolean indicating if the start cycle needs to be increased/decreased
-bool MSSchedule::insert(MSchedGraphNode *node, int cycle) {
+bool MSSchedule::insert(MSchedGraphNode *node, int cycle, int II) {
 
   //First, check if the cycle has a spot free to start
   if(schedule.find(cycle) != schedule.end()) {
     //Check if we have a free issue slot at this cycle
     if (schedule[cycle].size() < numIssue) {
       //Now check if all the resources in their respective cycles are available
-      if(resourcesFree(node, cycle)) {
+      if(resourcesFree(node, cycle, II)) {
 	//Insert to preserve dependencies
 	addToSchedule(cycle,node);
 	DEBUG(std::cerr << "Found spot in map, and there is an issue slot\n");
@@ -37,7 +42,7 @@ bool MSSchedule::insert(MSchedGraphNode *node, int cycle) {
   }
   //Not in the map yet so put it in
   else {
-    if(resourcesFree(node,cycle)) {
+    if(resourcesFree(node,cycle,II)) {
       std::vector<MSchedGraphNode*> nodes;
       nodes.push_back(node);
       schedule[cycle] = nodes;
@@ -68,98 +73,112 @@ void MSSchedule::addToSchedule(int cycle, MSchedGraphNode *node) {
   schedule[cycle] =  nodes;
 }
 
+bool MSSchedule::resourceAvailable(int resourceNum, int cycle) {
+  bool isFree = true;
 
-bool MSSchedule::resourcesFree(MSchedGraphNode *node, int cycle) {
+  //Get Map for this cycle
+  if(resourceNumPerCycle.count(cycle)) {
+    if(resourceNumPerCycle[cycle].count(resourceNum)) {
+      int maxRes = CPUResource::getCPUResource(resourceNum)->maxNumUsers;
+      if(resourceNumPerCycle[cycle][resourceNum] >= maxRes)
+	isFree = false;
+    }
+  }
+  
+  return isFree;
+}
+
+void MSSchedule::useResource(int resourceNum, int cycle) {
+  
+  //Get Map for this cycle
+  if(resourceNumPerCycle.count(cycle)) {
+    if(resourceNumPerCycle[cycle].count(resourceNum)) {
+      resourceNumPerCycle[cycle][resourceNum]++;
+    }
+    else {
+      resourceNumPerCycle[cycle][resourceNum] = 1;
+    }
+  }
+  //If no map, create one!
+  else {
+    std::map<int, int> resourceUse;
+    resourceUse[resourceNum] = 1;
+    resourceNumPerCycle[cycle] = resourceUse;
+  }
+  
+}
+
+bool MSSchedule::resourcesFree(MSchedGraphNode *node, int cycle, int II) {
 
   //Get Resource usage for this instruction
   const TargetSchedInfo *msi = node->getParent()->getTarget()->getSchedInfo();
   int currentCycle = cycle;
   bool success = true;
 
-  //Get resource usage for this instruction
-  InstrRUsage rUsage = msi->getInstrRUsage(node->getInst()->getOpcode());
-  std::vector<std::vector<resourceId_t> > resources = rUsage.resourcesByCycle;
+  //Create vector of starting cycles
+  std::vector<int> cyclesMayConflict;
+  cyclesMayConflict.push_back(cycle);
 
-  //Loop over resources in each cycle and increments their usage count
-  for(unsigned i=0; i < resources.size(); ++i) {
-    for(unsigned j=0; j < resources[i].size(); ++j) {
-
-      //Get Resource to check its availability
-      int resourceNum = resources[i][j];
-
-      DEBUG(std::cerr << "Attempting to schedule Resource Num: " << resourceNum << " in cycle: " << currentCycle << "\n");
-
-	//Check if this resource is available for this cycle
-	std::map<int, std::map<int,int> >::iterator resourcesForCycle = resourceNumPerCycle.find(currentCycle);
-
-	//First check if map exists for this cycle
-	if(resourcesForCycle != resourceNumPerCycle.end()) {
-	  //A map exists for this cycle, so lets check for the resource
-	  std::map<int, int>::iterator resourceUse = resourcesForCycle->second.find(resourceNum);
-	  if(resourceUse != resourcesForCycle->second.end()) {
-	    //Check if there are enough of this resource and if so, increase count and move on
-	    if(resourceUse->second < CPUResource::getCPUResource(resourceNum)->maxNumUsers)
-	      ++resourceUse->second;
-	
-	    else {
-	      DEBUG(std::cerr << "No resource num " << resourceNum << " available for cycle " << currentCycle << "\n");
-	      success = false;
-	    }
-	  }
-	  //Not in the map yet, so put it
-	  else
-	    resourcesForCycle->second[resourceNum] = 1;
-	
-	}
-	else {
-	  //Create a new map and put in our resource
-	  std::map<int, int> resourceMap;
-	  resourceMap[resourceNum] = 1;
-	  resourceNumPerCycle[currentCycle] = resourceMap;
-	}
-	if(!success)
-	  break;
-      }
-      if(!success)
-	break;
-	
-
-      //Increase cycle
-      currentCycle++;
+  if(resourceNumPerCycle.size() > 0) {
+    for(int i = cycle-II; i >= (resourceNumPerCycle.begin()->first); i-=II)
+      cyclesMayConflict.push_back(i);
+    for(int i = cycle+II; i <= resourceNumPerCycle.end()->first; i+=II)
+      cyclesMayConflict.push_back(i);
   }
 
-  if(!success) {
-    int oldCycle = cycle;
-    DEBUG(std::cerr << "Backtrack\n");
+  //Now check all cycles for conflicts
+  for(int index = 0; index < (int) cyclesMayConflict.size(); ++index) {
+    currentCycle = cyclesMayConflict[index];
+    
     //Get resource usage for this instruction
     InstrRUsage rUsage = msi->getInstrRUsage(node->getInst()->getOpcode());
     std::vector<std::vector<resourceId_t> > resources = rUsage.resourcesByCycle;
-
+    
     //Loop over resources in each cycle and increments their usage count
     for(unsigned i=0; i < resources.size(); ++i) {
-      if(oldCycle < currentCycle) {
+      for(unsigned j=0; j < resources[i].size(); ++j) {
 	
-	//Check if this resource is available for this cycle
-	std::map<int, std::map<int,int> >::iterator resourcesForCycle = resourceNumPerCycle.find(oldCycle);
-	if(resourcesForCycle != resourceNumPerCycle.end()) {
-	  for(unsigned j=0; j < resources[i].size(); ++j) {
-	    int resourceNum = resources[i][j];
-	    //remove from map
-	    std::map<int, int>::iterator resourceUse = resourcesForCycle->second.find(resourceNum);
-	    //assert if not in the map.. since it should be!
-	    //assert(resourceUse != resourcesForCycle.end() && "Resource should be in map!");
-	    DEBUG(std::cerr << "Removing resource num " << resourceNum << " from cycle " << oldCycle << "\n");
-	    --resourceUse->second;
-	  }
-	}
+	//Get Resource to check its availability
+	int resourceNum = resources[i][j];
+	
+	DEBUG(std::cerr << "Attempting to schedule Resource Num: " << resourceNum << " in cycle: " << currentCycle << "\n");
+	
+	success = resourceAvailable(resourceNum, currentCycle); 
+	
+	if(!success)
+	  break;
+	
       }
-      else
+      
+      if(!success)
 	break;
-      oldCycle++;
+      
+      //Increase cycle
+      currentCycle++;
     }
-    return false;
-
+    
+    if(!success)
+      return false;
   }
+
+  //Actually put resources into the map
+  if(success) {
+
+    int currentCycle = cycle;
+    //Get resource usage for this instruction
+    InstrRUsage rUsage = msi->getInstrRUsage(node->getInst()->getOpcode());
+    std::vector<std::vector<resourceId_t> > resources = rUsage.resourcesByCycle;
+    
+    //Loop over resources in each cycle and increments their usage count
+    for(unsigned i=0; i < resources.size(); ++i) {
+      for(unsigned j=0; j < resources[i].size(); ++j) {
+	int resourceNum = resources[i][j];
+	useResource(resourceNum, currentCycle);
+      }
+      currentCycle++;
+    }
+  }
+
 
   return true;
 
@@ -174,12 +193,9 @@ bool MSSchedule::constructKernel(int II, std::vector<MSchedGraphNode*> &branches
 
   DEBUG(std::cerr << "Offset: " << offset << "\n");
 
-  //Not sure what happens in this case, but assert if offset is > II
-  //assert(offset > -II && "Offset can not be more then II");
-
+  //Using the schedule, fold up into kernel and check resource conflicts as we go
   std::vector<std::pair<MSchedGraphNode*, int> > tempKernel;
-
-
+  
   int stageNum = ((schedule.rbegin()->first-offset)+1)/ II;
   int maxSN = 0;
 
@@ -192,20 +208,17 @@ bool MSSchedule::constructKernel(int II, std::vector<MSchedGraphNode*> &branches
 	for(std::vector<MSchedGraphNode*>::iterator I = schedule[i].begin(),
 	      E = schedule[i].end(); I != E; ++I) {
 	  //Check if its a branch
-	  if((*I)->isBranch()) {
-	    assert(count == 0 && "Branch can not be from a previous iteration");
-	    tempKernel.push_back(std::make_pair(*I, count));
-	  }
-	  else {
-	  //FIXME: Check if the instructions in the earlier stage conflict
-	    tempKernel.push_back(std::make_pair(*I, count));
-	    maxSN = std::max(maxSN, count);
-	  }
+	  assert(!(*I)->isBranch() && "Branch should not be schedule!");
+
+	  tempKernel.push_back(std::make_pair(*I, count));
+	  maxSN = std::max(maxSN, count);
+	  
 	}
       }
       ++count;
     }
   }
+
 
   //Add in induction var code
   for(std::vector<std::pair<MSchedGraphNode*, int> >::iterator I = tempKernel.begin(), IE = tempKernel.end();
@@ -251,6 +264,30 @@ bool MSSchedule::constructKernel(int II, std::vector<MSchedGraphNode*> &branches
 
 
   return true;
+}
+
+bool MSSchedule::defPreviousStage(Value *def, int stage) {
+
+  //Loop over kernel and determine if value is being defined in previous stage
+  for(std::vector<std::pair<MachineInstr*, int> >::iterator P = kernel.begin(), PE = kernel.end(); P != PE; ++P) {
+    MachineInstr* inst = P->first;
+
+    //Loop over Machine Operands
+    for(unsigned i=0; i < inst->getNumOperands(); ++i) {
+      //get machine operand
+     const MachineOperand &mOp = inst->getOperand(i);
+     if(mOp.getType() == MachineOperand::MO_VirtualRegister && mOp.isDef()) {
+       if(def == mOp.getVRegValue()) {
+	 if(P->second >= stage)
+	   return false;
+	 else
+	   return true;
+       }
+     }
+    }
+  }
+  
+  assert(0 && "We should always have found the def in our kernel\n");
 }
 
 
