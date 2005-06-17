@@ -2511,8 +2511,10 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
             if (!CanFold) {
               // To test for the bad case of the signed shr, see if any
               // of the bits shifted in could be tested after the mask.
-              Constant *OShAmt = ConstantUInt::get(Type::UByteTy,
-                               Ty->getPrimitiveSizeInBits()-ShAmt->getValue());
+              int ShAmtVal = Ty->getPrimitiveSizeInBits()-ShAmt->getValue();
+              if (ShAmtVal < 0) ShAmtVal = 0; // Out of range shift.
+
+              Constant *OShAmt = ConstantUInt::get(Type::UByteTy, ShAmtVal);
               Constant *ShVal =
                 ConstantExpr::getShl(ConstantInt::getAllOnesValue(Ty), OShAmt);
               if (ConstantExpr::getAnd(ShVal, AndCST)->isNullValue())
