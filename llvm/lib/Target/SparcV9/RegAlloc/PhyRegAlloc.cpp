@@ -46,10 +46,12 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/ADT/SetOperations.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/ADT/Statistic.h"
 #include <cmath>
 #include <iostream>
 
 namespace llvm {
+ Statistic<> RASpills("regalloc-spills", "Number of registers spilled");
 
 RegAllocDebugLevel_t DEBUG_RA;
 
@@ -703,6 +705,7 @@ void PhyRegAlloc::insertCode4SpilledLR(const V9LiveRange *LR,
   // Finally, insert the entire spill code sequences before/after MInst
   AI.InstrnsBefore.insert(AI.InstrnsBefore.end(), MIBef.begin(), MIBef.end());
   AI.InstrnsAfter.insert(AI.InstrnsAfter.begin(), MIAft.begin(), MIAft.end());
+  ++RASpills;
 
   if (DEBUG_RA) {
     std::cerr << "\nFor Inst:\n  " << *MInst;
