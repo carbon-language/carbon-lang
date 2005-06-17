@@ -280,7 +280,10 @@ protected:
 
 
   friend class ModuloSchedulingPass;
+  friend class ModuloSchedulingSBPass;
   friend class MSSchedule;
+  friend class MSScheduleSB;
+  friend class MSchedGraphSB;
 
 };
 
