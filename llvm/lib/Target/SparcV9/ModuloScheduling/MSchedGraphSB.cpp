@@ -370,8 +370,10 @@ bool MSchedGraphSB::instrCauseException(MachineOpCode opCode) {
   //Check for any floating point operation
   const TargetSchedInfo *msi = Target.getSchedInfo();
   InstrSchedClass sc = msi->getSchedClass(opCode);
-  if(sc == SPARC_FGA || sc == SPARC_FGM)
-    return true;
+  
+  //FIXME: Should check for floating point instructions!
+  //if(sc == SPARC_FGA || sc == SPARC_FGM)
+  //return true;
 
   return false;
 }
