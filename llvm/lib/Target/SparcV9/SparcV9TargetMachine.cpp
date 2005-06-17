@@ -64,7 +64,10 @@ namespace {
                  cl::desc("Emit LLVM-to-MachineCode mapping info to assembly"));
 
   cl::opt<bool> EnableModSched("enable-modsched",
-	 cl::desc("Enable sparcv9 modulo scheduling pass instead of local scheduling"), cl::Hidden);
+		 cl::desc("Enable modulo scheduling pass"), cl::Hidden);
+
+  cl::opt<bool> EnableSBModSched("enable-modschedSB",
+	 cl::desc("Enable superblock modulo scheduling (experimental)"), cl::Hidden);
 
   // Register the target.
   RegisterTarget<SparcV9TargetMachine> X("sparcv9", "  SPARC V9");
@@ -192,6 +195,9 @@ SparcV9TargetMachine::addPassesToEmitAssembly(PassManager &PM, std::ostream &Out
 
   PM.add(createSparcV9BurgInstSelector(*this));
 
+  if(!DisableSched && PrintMachineCode)
+    PM.add(createMachineFunctionPrinterPass(&std::cerr, "Before local scheduling:\n"));
+
   if (!DisableSched)
     PM.add(createInstructionSchedulingWithSSAPass(*this));
 
@@ -201,6 +207,9 @@ SparcV9TargetMachine::addPassesToEmitAssembly(PassManager &PM, std::ostream &Out
   //Use ModuloScheduling if enabled, otherwise use local scheduling if not disabled.
   if(EnableModSched)
     PM.add(createModuloSchedulingPass(*this));
+
+  if(EnableSBModSched)
+    PM.add(createModuloSchedulingSBPass(*this));
 
   if (PrintMachineCode)
     PM.add(createMachineFunctionPrinterPass(&std::cerr, "Before reg alloc:\n"));
