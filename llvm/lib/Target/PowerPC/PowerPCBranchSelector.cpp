@@ -42,10 +42,8 @@ namespace {
         return 12;
       case PPC::IMPLICIT_DEF: // no asm emitted
         return 0;
-        break;
       default:
         return 4; // PowerPC instructions are all 4 bytes
-        break;
       }
     }
 
