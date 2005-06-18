@@ -367,8 +367,9 @@ ModulePass *llvm::createSimplifyLibCallsPass()
 // auto registers it into the "optlist" global above. 
 namespace {
 
-// Forward declare a utility function.
+// Forward declare utility functions.
 bool getConstantStringLength(Value* V, uint64_t& len, ConstantArray** A = 0 );
+Value *CastToCStr(Value *V, Instruction &IP);
 
 /// This LibCallOptimization will find instances of a call to "exit" that occurs
 /// within the "main" function and change it to a simple "ret" instruction with
@@ -663,7 +664,8 @@ public:
       if (len_1 == 0)
       {
         // strcmp("",x) -> *x
-        LoadInst* load = new LoadInst(s1,ci->getName()+".load",ci);
+        LoadInst* load = 
+          new LoadInst(CastToCStr(s2,*ci), ci->getName()+".load",ci);
         CastInst* cast = 
           new CastInst(load,Type::IntTy,ci->getName()+".int",ci);
         ci->replaceAllUsesWith(cast);
@@ -681,7 +683,8 @@ public:
       if (len_2 == 0)
       {
         // strcmp(x,"") -> *x
-        LoadInst* load = new LoadInst(s2,ci->getName()+".val",ci);
+        LoadInst* load = 
+          new LoadInst(CastToCStr(s1,*ci),ci->getName()+".val",ci);
         CastInst* cast = 
           new CastInst(load,Type::IntTy,ci->getName()+".int",ci);
         ci->replaceAllUsesWith(cast);
@@ -1241,16 +1244,6 @@ public:
     return false; // opt failed
   }
 } PowOptimizer;
-
-/// CastToCStr - Return V if it is an sbyte*, otherwise cast it to sbyte*,
-/// inserting the cast before IP, and return the cast.
-/// @brief Cast a value to a "C" string.
-static Value *CastToCStr(Value *V, Instruction &IP) {
-  const Type *SBPTy = PointerType::get(Type::SByteTy);
-  if (V->getType() != SBPTy)
-    return new CastInst(V, SBPTy, V->getName(), &IP);
-  return V;
-}
 
 /// This LibCallOptimization will simplify calls to the "fprintf" library 
 /// function. It looks for cases where the result of fprintf is not used and the
@@ -1887,6 +1880,16 @@ bool getConstantStringLength(Value* V, uint64_t& len, ConstantArray** CA )
   if (CA)
     *CA = A;
   return true; // success!
+}
+
+/// CastToCStr - Return V if it is an sbyte*, otherwise cast it to sbyte*,
+/// inserting the cast before IP, and return the cast.
+/// @brief Cast a value to a "C" string.
+Value *CastToCStr(Value *V, Instruction &IP) {
+  const Type *SBPTy = PointerType::get(Type::SByteTy);
+  if (V->getType() != SBPTy)
+    return new CastInst(V, SBPTy, V->getName(), &IP);
+  return V;
 }
 
 // TODO: 
