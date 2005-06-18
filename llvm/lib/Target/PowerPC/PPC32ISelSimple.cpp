@@ -310,7 +310,6 @@ namespace {
     void visitShiftInst(ShiftInst &I);
     void visitPHINode(PHINode &I) {}      // PHI nodes handled by second pass
     void visitCastInst(CastInst &I);
-    void visitVANextInst(VANextInst &I);
     void visitVAArgInst(VAArgInst &I);
 
     void visitInstruction(Instruction &I) {
@@ -1978,6 +1977,7 @@ void PPC32ISel::visitIntrinsicCall(Intrinsic::ID ID, CallInst &CI) {
   unsigned TmpReg1, TmpReg2, TmpReg3;
   switch (ID) {
   case Intrinsic::vastart:
+    //FIXME: need to store, not return a value
     // Get the address of the first vararg value...
     TmpReg1 = getReg(CI);
     addFrameReference(BuildMI(BB, PPC::ADDI, 2, TmpReg1), VarArgsFrameIndex,
@@ -1985,6 +1985,7 @@ void PPC32ISel::visitIntrinsicCall(Intrinsic::ID ID, CallInst &CI) {
     return;
 
   case Intrinsic::vacopy:
+    //FIXME: need to store into first arg the value of the second
     TmpReg1 = getReg(CI);
     TmpReg2 = getReg(CI.getOperand(1));
     BuildMI(BB, PPC::OR, 2, TmpReg1).addReg(TmpReg2).addReg(TmpReg2);
@@ -3679,37 +3680,12 @@ void PPC32ISel::emitCastOperation(MachineBasicBlock *MBB,
   abort();
 }
 
-/// visitVANextInst - Implement the va_next instruction...
-///
-void PPC32ISel::visitVANextInst(VANextInst &I) {
-  unsigned VAList = getReg(I.getOperand(0));
-  unsigned DestReg = getReg(I);
-
-  unsigned Size;
-  switch (I.getArgType()->getTypeID()) {
-  default:
-    std::cerr << I;
-    assert(0 && "Error: bad type for va_next instruction!");
-    return;
-  case Type::PointerTyID:
-  case Type::UIntTyID:
-  case Type::IntTyID:
-    Size = 4;
-    break;
-  case Type::ULongTyID:
-  case Type::LongTyID:
-  case Type::DoubleTyID:
-    Size = 8;
-    break;
-  }
-
-  // Increment the VAList pointer...
-  BuildMI(BB, PPC::ADDI, 2, DestReg).addReg(VAList).addSImm(Size);
-}
-
 void PPC32ISel::visitVAArgInst(VAArgInst &I) {
-  unsigned VAList = getReg(I.getOperand(0));
+  unsigned VAListPtr = getReg(I.getOperand(0));
   unsigned DestReg = getReg(I);
+  unsigned VAList = makeAnotherReg(Type::IntTy);
+  BuildMI(BB, PPC::LWZ, 2, VAList).addSImm(0).addReg(VAListPtr);
+  int Size;
 
   switch (I.getType()->getTypeID()) {
   default:
@@ -3719,20 +3695,28 @@ void PPC32ISel::visitVAArgInst(VAArgInst &I) {
   case Type::PointerTyID:
   case Type::UIntTyID:
   case Type::IntTyID:
+    Size = 4;
     BuildMI(BB, PPC::LWZ, 2, DestReg).addSImm(0).addReg(VAList);
     break;
   case Type::ULongTyID:
   case Type::LongTyID:
+    Size = 8;
     BuildMI(BB, PPC::LWZ, 2, DestReg).addSImm(0).addReg(VAList);
     BuildMI(BB, PPC::LWZ, 2, DestReg+1).addSImm(4).addReg(VAList);
     break;
   case Type::FloatTyID:
+    Size = 4; //?? Bad value?
     BuildMI(BB, PPC::LFS, 2, DestReg).addSImm(0).addReg(VAList);
     break;
   case Type::DoubleTyID:
+    Size = 8;
     BuildMI(BB, PPC::LFD, 2, DestReg).addSImm(0).addReg(VAList);
     break;
   }
+  // Increment the VAList pointer...
+  unsigned NP = makeAnotherReg(Type::IntTy);
+  BuildMI(BB, PPC::ADDI, 2, NP).addReg(VAList).addSImm(Size);
+  BuildMI(BB, PPC::STW, 3).addReg(NP).addSImm(0).addReg(VAListPtr);
 }
 
 /// visitGetElementPtrInst - instruction-select GEP instructions

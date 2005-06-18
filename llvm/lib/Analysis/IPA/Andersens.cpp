@@ -330,7 +330,6 @@ namespace {
     void visitCastInst(CastInst &CI);
     void visitSetCondInst(SetCondInst &SCI) {} // NOOP!
     void visitSelectInst(SelectInst &SI);
-    void visitVANext(VANextInst &I);
     void visitVAArg(VAArgInst &I);
     void visitInstruction(Instruction &I);
   };
@@ -867,10 +866,6 @@ void Andersens::visitSelectInst(SelectInst &SI) {
   }
 }
 
-void Andersens::visitVANext(VANextInst &I) {
-  // FIXME: Implement
-  assert(0 && "vanext not handled yet!");
-}
 void Andersens::visitVAArg(VAArgInst &I) {
   assert(0 && "vaarg not handled yet!");
 }

@@ -114,11 +114,15 @@ namespace {
                 SelectionDAG &DAG);
 
     virtual std::pair<SDOperand, SDOperand>
-    LowerVAStart(SDOperand Chain, SelectionDAG &DAG);
+    LowerVAStart(SDOperand Chain, SelectionDAG &DAG, SDOperand Dest);
 
     virtual std::pair<SDOperand,SDOperand>
-    LowerVAArgNext(bool isVANext, SDOperand Chain, SDOperand VAList,
+    LowerVAArgNext(SDOperand Chain, SDOperand VAList,
                    const Type *ArgTy, SelectionDAG &DAG);
+
+    virtual std::pair<SDOperand,SDOperand>
+    LowerVACopy(SDOperand Chain, SDOperand Src, SDOperand Dest, 
+                SelectionDAG &DAG);
 
     virtual std::pair<SDOperand, SDOperand>
     LowerFrameReturnAddress(bool isFrameAddr, SDOperand Chain, unsigned Depth,
@@ -380,32 +384,42 @@ IA64TargetLowering::LowerCallTo(SDOperand Chain,
 }
 
 std::pair<SDOperand, SDOperand>
-IA64TargetLowering::LowerVAStart(SDOperand Chain, SelectionDAG &DAG) {
-  // vastart just returns the address of the VarArgsFrameIndex slot.
-  return std::make_pair(DAG.getFrameIndex(VarArgsFrameIndex, MVT::i64), Chain);
+IA64TargetLowering::LowerVAStart(SDOperand Chain, SelectionDAG &DAG, SDOperand Dest) {
+  // vastart just stores the address of the VarArgsFrameIndex slot.
+  SDOperand FR = DAG.getFrameIndex(VarArgsFrameIndex, MVT::i64);
+  SDOperand Result = DAG.getNode(ISD::STORE, MVT::Other, Chain, FR, Dest, DAG.getSrcValue(NULL));
+  return std::make_pair(Result, Result);
 }
 
 std::pair<SDOperand,SDOperand> IA64TargetLowering::
-LowerVAArgNext(bool isVANext, SDOperand Chain, SDOperand VAList,
+LowerVAArgNext(SDOperand Chain, SDOperand VAList,
                const Type *ArgTy, SelectionDAG &DAG) {
 
   MVT::ValueType ArgVT = getValueType(ArgTy);
-  SDOperand Result;
-  if (!isVANext) {
-    Result = DAG.getLoad(ArgVT, DAG.getEntryNode(), VAList, DAG.getSrcValue(NULL));
-  } else {
-    unsigned Amt;
-    if (ArgVT == MVT::i32 || ArgVT == MVT::f32)
-      Amt = 8;
-    else {
-      assert((ArgVT == MVT::i64 || ArgVT == MVT::f64) &&
-             "Other types should have been promoted for varargs!");
-      Amt = 8;
-    }
-    Result = DAG.getNode(ISD::ADD, VAList.getValueType(), VAList,
-                         DAG.getConstant(Amt, VAList.getValueType()));
+  SDOperand Val = DAG.getLoad(MVT::i64, Chain, VAList, DAG.getSrcValue(NULL));
+  SDOperand Result = DAG.getLoad(ArgVT, DAG.getEntryNode(), Val, DAG.getSrcValue(NULL));
+  unsigned Amt;
+  if (ArgVT == MVT::i32 || ArgVT == MVT::f32)
+    Amt = 8;
+  else {
+    assert((ArgVT == MVT::i64 || ArgVT == MVT::f64) &&
+           "Other types should have been promoted for varargs!");
+    Amt = 8;
   }
+  Val = DAG.getNode(ISD::ADD, Val.getValueType(), Val, 
+                    DAG.getConstant(Amt, Val.getValueType()));
+  Chain = DAG.getNode(ISD::STORE, MVT::Other, Chain,
+                      Val, VAList, DAG.getSrcValue(NULL));
   return std::make_pair(Result, Chain);
+}
+
+std::pair<SDOperand,SDOperand>
+IA64TargetLowering::LowerVACopy(SDOperand Chain, SDOperand Src, 
+                                SDOperand Dest, SelectionDAG &DAG)
+{
+  SDOperand Result = DAG.getNode(ISD::STORE, MVT::Other, Chain,
+                                 Src, Dest, DAG.getSrcValue(NULL));
+  return std::make_pair(Result, Result);
 }
 
 std::pair<SDOperand, SDOperand> IA64TargetLowering::

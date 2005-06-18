@@ -47,6 +47,10 @@ static Module *ParserResult;
 
 #define YYERROR_VERBOSE 1
 
+static bool ObsoleteVarArgs;
+static BasicBlock* CurBB;
+
+
 // This contains info used when building the body of a function.  It is
 // destroyed when the function is completed.
 //
@@ -723,12 +727,87 @@ static PATypeHolder HandleUpRefs(const Type *ty) {
  static Module * RunParser(Module * M) {
 
   llvmAsmlineno = 1;      // Reset the current line number...
+  ObsoleteVarArgs = false;
 
   CurModule.CurrentModule = M;
   yyparse();       // Parse the file, potentially throwing exception
 
   Module *Result = ParserResult;
   ParserResult = 0;
+
+  if(ObsoleteVarArgs) {
+    if(Function* F = Result->getNamedFunction("llvm.va_start")) {
+      assert(F->arg_size() == 0 && "Obsolete va_start takes 0 argument!");
+      
+      //foo = va_start()
+      // ->
+      //bar = alloca typeof(foo)
+      //va_start(bar)
+      //foo = load bar
+
+      const Type* RetTy = Type::getPrimitiveType(Type::VoidTyID);
+      const Type* ArgTy = F->getFunctionType()->getReturnType();
+      const Type* ArgTyPtr = PointerType::get(ArgTy);
+      Function* NF = Result->getOrInsertFunction("llvm.va_start", 
+                                                 RetTy, ArgTyPtr, 0);
+
+      while (!F->use_empty()) {
+        CallInst* CI = cast<CallInst>(F->use_back());
+        AllocaInst* bar = new AllocaInst(ArgTy, 0, "vastart.fix.1", CI);
+        new CallInst(NF, bar, "", CI);
+        Value* foo = new LoadInst(bar, "vastart.fix.2", CI);
+        CI->replaceAllUsesWith(foo);
+        CI->getParent()->getInstList().erase(CI);
+      }
+      Result->getFunctionList().erase(F);
+    }
+    
+    if(Function* F = Result->getNamedFunction("llvm.va_end")) {
+      assert(F->arg_size() == 1 && "Obsolete va_end takes 1 argument!");
+      //vaend foo
+      // ->
+      //bar = alloca 1 of typeof(foo)
+      //vaend bar
+      const Type* RetTy = Type::getPrimitiveType(Type::VoidTyID);
+      const Type* ArgTy = F->getFunctionType()->getParamType(0);
+      const Type* ArgTyPtr = PointerType::get(ArgTy);
+      Function* NF = Result->getOrInsertFunction("llvm.va_end", 
+                                                 RetTy, ArgTyPtr, 0);
+
+      while (!F->use_empty()) {
+        CallInst* CI = cast<CallInst>(F->use_back());
+        AllocaInst* bar = new AllocaInst(ArgTy, 0, "vaend.fix.1", CI);
+        new CallInst(NF, bar, "", CI);
+        CI->getParent()->getInstList().erase(CI);
+      }
+      Result->getFunctionList().erase(F);
+    }
+
+    if(Function* F = Result->getNamedFunction("llvm.va_copy")) {
+      assert(F->arg_size() == 1 && "Obsolete va_copy takes 1 argument!");
+      //foo = vacopy(bar)
+      // ->
+      //a = alloca 1 of typeof(foo)
+      //vacopy(a, bar)
+      //foo = load a
+      
+      const Type* RetTy = Type::getPrimitiveType(Type::VoidTyID);
+      const Type* ArgTy = F->getFunctionType()->getReturnType();
+      const Type* ArgTyPtr = PointerType::get(ArgTy);
+      Function* NF = Result->getOrInsertFunction("llvm.va_copy", 
+                                                 RetTy, ArgTyPtr, ArgTy, 0);
+
+      while (!F->use_empty()) {
+        CallInst* CI = cast<CallInst>(F->use_back());
+        AllocaInst* a = new AllocaInst(ArgTy, 0, "vacopy.fix.1", CI);
+        new CallInst(NF, a, CI->getOperand(1), "", CI);
+        Value* foo = new LoadInst(a, "vacopy.fix.2", CI);
+        CI->replaceAllUsesWith(foo);
+        CI->getParent()->getInstList().erase(CI);
+      }
+      Result->getFunctionList().erase(F);
+    }
+  }
 
   return Result;
 
@@ -866,7 +945,8 @@ Module *llvm::RunVMAsmParser(const char * AsmString, Module * M) {
 
 // Other Operators
 %type  <OtherOpVal> ShiftOps
-%token <OtherOpVal> PHI_TOK CAST SELECT SHL SHR VAARG VANEXT
+%token <OtherOpVal> PHI_TOK CAST SELECT SHL SHR VAARG
+%token VAARG_old VANEXT_old //OBSOLETE
 
 
 %start Module
@@ -1727,7 +1807,7 @@ InstructionList : InstructionList Inst {
     $$ = $1;
   }
   | /* empty */ {
-    $$ = getBBVal(ValID::create((int)CurFun.NextBBNum++), true);
+    $$ = CurBB = getBBVal(ValID::create((int)CurFun.NextBBNum++), true);
 
     // Make sure to move the basic block to the correct location in the
     // function, instead of leaving it inserted wherever it was first
@@ -1737,7 +1817,7 @@ InstructionList : InstructionList Inst {
     BBL.splice(BBL.end(), BBL, $$);
   }
   | LABELSTR {
-    $$ = getBBVal(ValID::create($1), true);
+    $$ = CurBB = getBBVal(ValID::create($1), true);
 
     // Make sure to move the basic block to the correct location in the
     // function, instead of leaving it inserted wherever it was first
@@ -1964,8 +2044,45 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     $$ = new VAArgInst($2, *$4);
     delete $4;
   }
-  | VANEXT ResolvedVal ',' Types {
-    $$ = new VANextInst($2, *$4);
+  | VAARG_old ResolvedVal ',' Types {
+    ObsoleteVarArgs = true;
+    const Type* ArgTy = $2->getType();
+    Function* NF = CurModule.CurrentModule->
+      getOrInsertFunction("llvm.va_copy", ArgTy, ArgTy, 0);
+
+    //b = vaarg a, t -> 
+    //foo = alloca 1 of t
+    //bar = vacopy a 
+    //store bar -> foo
+    //b = vaarg foo, t
+    AllocaInst* foo = new AllocaInst(ArgTy, 0, "vaarg.fix");
+    CurBB->getInstList().push_back(foo);
+    CallInst* bar = new CallInst(NF, $2);
+    CurBB->getInstList().push_back(bar);
+    CurBB->getInstList().push_back(new StoreInst(bar, foo));
+    $$ = new VAArgInst(foo, *$4);
+    delete $4;
+  }
+  | VANEXT_old ResolvedVal ',' Types {
+    ObsoleteVarArgs = true;
+    const Type* ArgTy = $2->getType();
+    Function* NF = CurModule.CurrentModule->
+      getOrInsertFunction("llvm.va_copy", ArgTy, ArgTy, 0);
+
+    //b = vanext a, t ->
+    //foo = alloca 1 of t
+    //bar = vacopy a
+    //store bar -> foo
+    //tmp = vaarg foo, t
+    //b = load foo
+    AllocaInst* foo = new AllocaInst(ArgTy, 0, "vanext.fix");
+    CurBB->getInstList().push_back(foo);
+    CallInst* bar = new CallInst(NF, $2);
+    CurBB->getInstList().push_back(bar);
+    CurBB->getInstList().push_back(new StoreInst(bar, foo));
+    Instruction* tmp = new VAArgInst(foo, *$4);
+    CurBB->getInstList().push_back(tmp);
+    $$ = new LoadInst(foo);
     delete $4;
   }
   | PHI_TOK PHIList {

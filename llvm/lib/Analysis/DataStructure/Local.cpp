@@ -119,7 +119,6 @@ namespace {
     void visitInstruction(Instruction &I);
 
     void visitCallSite(CallSite CS);
-    void visitVANextInst(VANextInst &I);
     void visitVAArgInst(VAArgInst   &I);
 
     void MergeConstantInitIntoNode(DSNodeHandle &NH, Constant *C);
@@ -475,11 +474,8 @@ void GraphBuilder::visitReturnInst(ReturnInst &RI) {
     RetNode->mergeWith(getValueDest(*RI.getOperand(0)));
 }
 
-void GraphBuilder::visitVANextInst(VANextInst &I) {
-  getValueDest(*I.getOperand(0)).mergeWith(getValueDest(I));
-}
-
 void GraphBuilder::visitVAArgInst(VAArgInst &I) {
+  //FIXME: also updates the argument
   DSNodeHandle Ptr = getValueDest(*I.getOperand(0));
   if (Ptr.isNull()) return;
 

@@ -102,7 +102,6 @@ namespace {
     void visitBranchInst(BranchInst &I);
     void visitUnreachableInst(UnreachableInst &I) {}
     void visitCastInst(CastInst &I);
-    void visitVANextInst(VANextInst &I);
     void visitVAArgInst(VAArgInst &I);
     void visitLoadInst(LoadInst &I);
     void visitStoreInst(StoreInst &I);
@@ -1754,8 +1753,10 @@ void V8ISel::visitIntrinsicCall(Intrinsic::ID ID, CallInst &CI) {
 
   case Intrinsic::vastart: {
     // Add the VarArgsOffset to the frame pointer, and copy it to the result.
-    unsigned DestReg = getReg (CI);
-    BuildMI (BB, V8::ADDri, 2, DestReg).addReg (V8::FP).addSImm (VarArgsOffset);
+    unsigned DestReg = getReg (CI.getOperand(1));
+    unsigned Tmp = makeAnotherReg(Type::IntTy);
+    BuildMI (BB, V8::ADDri, 2, Tmp).addReg (V8::FP).addSImm (VarArgsOffset);
+    BuildMI(BB, V8::ST, 3).addReg(DestReg).addSImm(0).addReg(Tmp);
     return;
   }
 
@@ -1765,39 +1766,37 @@ void V8ISel::visitIntrinsicCall(Intrinsic::ID ID, CallInst &CI) {
 
   case Intrinsic::vacopy: {
     // Copy the va_list ptr (arg1) to the result.
-    unsigned DestReg = getReg (CI), SrcReg = getReg (CI.getOperand (1));
-    BuildMI (BB, V8::ORrr, 2, DestReg).addReg (V8::G0).addReg (SrcReg);
+    unsigned DestReg = getReg (CI.getOperand(1)), SrcReg = getReg (CI.getOperand (2));
+    BuildMI(BB, V8::ST, 3).addReg(DestReg).addSImm(0).addReg(SrcReg);
     return;
   }
   }
 }
 
-void V8ISel::visitVANextInst (VANextInst &I) {
-  // Add the type size to the vararg pointer (arg0).
-  unsigned DestReg = getReg (I);
-  unsigned SrcReg = getReg (I.getOperand (0));
-  unsigned TySize = TM.getTargetData ().getTypeSize (I.getArgType ());
-  BuildMI (BB, V8::ADDri, 2, DestReg).addReg (SrcReg).addSImm (TySize);
-}
-
 void V8ISel::visitVAArgInst (VAArgInst &I) {
-  unsigned VAList = getReg (I.getOperand (0));
+  unsigned VAListPtr = getReg (I.getOperand (0));
   unsigned DestReg = getReg (I);
+  unsigned Size;
+  unsigned VAList = makeAnotherReg(Type::IntTy);
+  BuildMI(BB, V8::LD, 2, VAList).addReg(VAListPtr).addSImm(0);
 
   switch (I.getType ()->getTypeID ()) {
   case Type::PointerTyID:
   case Type::UIntTyID:
   case Type::IntTyID:
+    Size = 4;
     BuildMI (BB, V8::LD, 2, DestReg).addReg (VAList).addSImm (0);
-    return;
+    break;
 
   case Type::ULongTyID:
   case Type::LongTyID:
+    Size = 8;
     BuildMI (BB, V8::LD, 2, DestReg).addReg (VAList).addSImm (0);
     BuildMI (BB, V8::LD, 2, DestReg+1).addReg (VAList).addSImm (4);
-    return;
+    break;
 
   case Type::DoubleTyID: {
+    Size = 8;
     unsigned DblAlign = TM.getTargetData().getDoubleAlignment();
     unsigned TempReg = makeAnotherReg (Type::IntTy);
     unsigned TempReg2 = makeAnotherReg (Type::IntTy);
@@ -1807,7 +1806,7 @@ void V8ISel::visitVAArgInst (VAArgInst &I) {
     BuildMI (BB, V8::ST, 3).addFrameIndex (FI).addSImm (0).addReg (TempReg);
     BuildMI (BB, V8::ST, 3).addFrameIndex (FI).addSImm (4).addReg (TempReg2);
     BuildMI (BB, V8::LDDFri, 2, DestReg).addFrameIndex (FI).addSImm (0);
-    return;
+    break;
   }
 
   default:
@@ -1816,4 +1815,8 @@ void V8ISel::visitVAArgInst (VAArgInst &I) {
     abort ();
     return;
   }
+  unsigned tmp = makeAnotherReg(Type::IntTy);
+  BuildMI (BB, V8::ADDri, 2, tmp).addReg(VAList).addSImm(Size);
+  BuildMI(BB, V8::ST, 3).addReg(VAListPtr).addSImm(0).addReg(VAList);
+  return;
 }

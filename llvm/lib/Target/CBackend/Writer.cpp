@@ -145,7 +145,7 @@ namespace {
       // emit it inline where it would go.
       if (I.getType() == Type::VoidTy || !I.hasOneUse() ||
           isa<TerminatorInst>(I) || isa<CallInst>(I) || isa<PHINode>(I) ||
-          isa<LoadInst>(I) || isa<VAArgInst>(I) || isa<VANextInst>(I))
+          isa<LoadInst>(I) || isa<VAArgInst>(I))
         // Don't inline a load across a store or other bad things!
         return false;
 
@@ -196,7 +196,6 @@ namespace {
     void visitLoadInst  (LoadInst   &I);
     void visitStoreInst (StoreInst  &I);
     void visitGetElementPtrInst(GetElementPtrInst &I);
-    void visitVANextInst(VANextInst &I);
     void visitVAArgInst (VAArgInst &I);
 
     void visitInstruction(Instruction &I) {
@@ -1469,7 +1468,10 @@ void CWriter::visitCallInst(CallInst &I) {
       case Intrinsic::vastart:
         Out << "0; ";
 
-        Out << "va_start(*(va_list*)&" << Mang->getValueName(&I) << ", ";
+        //        Out << "va_start(*(va_list*)&" << Mang->getValueName(&I) << ", ";
+        Out << "va_start(*(va_list*)";
+        writeOperand(I.getOperand(1));
+        Out << ", ";
         // Output the last argument to the enclosing function...
         if (I.getParent()->getParent()->arg_empty()) {
           std::cerr << "The C backend does not currently support zero "
@@ -1482,7 +1484,7 @@ void CWriter::visitCallInst(CallInst &I) {
         return;
       case Intrinsic::vaend:
         if (!isa<ConstantPointerNull>(I.getOperand(1))) {
-          Out << "va_end(*(va_list*)&";
+          Out << "0; va_end(*(va_list*)";
           writeOperand(I.getOperand(1));
           Out << ')';
         } else {
@@ -1490,10 +1492,11 @@ void CWriter::visitCallInst(CallInst &I) {
         }
         return;
       case Intrinsic::vacopy:
-        Out << "0;";
-        Out << "va_copy(*(va_list*)&" << Mang->getValueName(&I) << ", ";
-        Out << "*(va_list*)&";
+        Out << "0; ";
+        Out << "va_copy(*(va_list*)";
         writeOperand(I.getOperand(1));
+        Out << ", *(va_list*)&";
+        writeOperand(I.getOperand(2));
         Out << ')';
         return;
       case Intrinsic::returnaddress:
@@ -1710,20 +1713,12 @@ void CWriter::visitGetElementPtrInst(GetElementPtrInst &I) {
                           gep_type_end(I));
 }
 
-void CWriter::visitVANextInst(VANextInst &I) {
-  Out << Mang->getValueName(I.getOperand(0));
-  Out << ";  va_arg(*(va_list*)&" << Mang->getValueName(&I) << ", ";
-  printType(Out, I.getArgType());
-  Out << ')';
-}
-
 void CWriter::visitVAArgInst(VAArgInst &I) {
-  Out << "0;\n";
-  Out << "{ va_list Tmp; va_copy(Tmp, *(va_list*)&";
+  Out << "va_arg(*(va_list*)";
   writeOperand(I.getOperand(0));
-  Out << ");\n  " << Mang->getValueName(&I) << " = va_arg(Tmp, ";
+  Out << ", ";
   printType(Out, I.getType());
-  Out << ");\n  va_end(Tmp); }";
+  Out << ");\n ";
 }
 
 //===----------------------------------------------------------------------===//

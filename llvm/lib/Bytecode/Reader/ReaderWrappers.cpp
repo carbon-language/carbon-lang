@@ -149,6 +149,100 @@ BytecodeStdinReader::BytecodeStdinReader( BytecodeHandler* H )
 }
 
 //===----------------------------------------------------------------------===//
+// Varargs transmogrification code...
+//
+
+// CheckVarargs - This is used to automatically translate old-style varargs to
+// new style varargs for backwards compatibility.
+static ModuleProvider* CheckVarargs(ModuleProvider* MP) {
+  Module* M = MP->getModule();
+
+  // check to see if va_start takes arguements...
+  Function* F = M->getNamedFunction("llvm.va_start");
+  if(F == 0) return MP; //No varargs use, just return.
+
+  if (F->getFunctionType()->getNumParams() == 1)
+    return MP; // Modern varargs processing, just return.
+
+  // If we get to this point, we know that we have an old-style module.
+  // Materialize the whole thing to perform the rewriting.
+  MP->materializeModule();
+
+  if(Function* F = M->getNamedFunction("llvm.va_start")) {
+    assert(F->arg_size() == 0 && "Obsolete va_start takes 0 argument!");
+    
+    //foo = va_start()
+    // ->
+    //bar = alloca typeof(foo)
+    //va_start(bar)
+    //foo = load bar
+    
+    const Type* RetTy = Type::getPrimitiveType(Type::VoidTyID);
+    const Type* ArgTy = F->getFunctionType()->getReturnType();
+    const Type* ArgTyPtr = PointerType::get(ArgTy);
+    Function* NF = M->getOrInsertFunction("llvm.va_start", 
+                                               RetTy, ArgTyPtr, 0);
+
+    for(Value::use_iterator I = F->use_begin(), E = F->use_end(); I != E;)
+      if (CallInst* CI = dyn_cast<CallInst>(*I++)) {
+        AllocaInst* bar = new AllocaInst(ArgTy, 0, "vastart.fix.1", CI);
+        new CallInst(NF, bar, "", CI);
+        Value* foo = new LoadInst(bar, "vastart.fix.2", CI);
+        CI->replaceAllUsesWith(foo);
+        CI->getParent()->getInstList().erase(CI);
+      }
+    F->setName("");
+  }
+    
+  if(Function* F = M->getNamedFunction("llvm.va_end")) {
+    assert(F->arg_size() == 1 && "Obsolete va_end takes 1 argument!");
+    //vaend foo
+    // ->
+    //bar = alloca 1 of typeof(foo)
+    //vaend bar
+    const Type* RetTy = Type::getPrimitiveType(Type::VoidTyID);
+    const Type* ArgTy = F->getFunctionType()->getParamType(0);
+    const Type* ArgTyPtr = PointerType::get(ArgTy);
+    Function* NF = M->getOrInsertFunction("llvm.va_end", 
+                                                 RetTy, ArgTyPtr, 0);
+    
+    for(Value::use_iterator I = F->use_begin(), E = F->use_end(); I != E;)
+      if (CallInst* CI = dyn_cast<CallInst>(*I++)) {
+        AllocaInst* bar = new AllocaInst(ArgTy, 0, "vaend.fix.1", CI);
+        new CallInst(NF, bar, "", CI);
+        CI->getParent()->getInstList().erase(CI);
+      }
+    F->setName("");
+  }
+  
+  if(Function* F = M->getNamedFunction("llvm.va_copy")) {
+    assert(F->arg_size() == 1 && "Obsolete va_copy takes 1 argument!");
+    //foo = vacopy(bar)
+    // ->
+    //a = alloca 1 of typeof(foo)
+    //vacopy(a, bar)
+    //foo = load a
+    
+    const Type* RetTy = Type::getPrimitiveType(Type::VoidTyID);
+    const Type* ArgTy = F->getFunctionType()->getReturnType();
+    const Type* ArgTyPtr = PointerType::get(ArgTy);
+    Function* NF = M->getOrInsertFunction("llvm.va_copy", 
+                                          RetTy, ArgTyPtr, ArgTy, 0);
+    
+    for(Value::use_iterator I = F->use_begin(), E = F->use_end(); I != E;)
+      if (CallInst* CI = dyn_cast<CallInst>(*I++)) {
+        AllocaInst* a = new AllocaInst(ArgTy, 0, "vacopy.fix.1", CI);
+        new CallInst(NF, a, CI->getOperand(1), "", CI);
+        Value* foo = new LoadInst(a, "vacopy.fix.2", CI);
+        CI->replaceAllUsesWith(foo);
+        CI->getParent()->getInstList().erase(CI);
+      }
+    F->setName("");
+  }
+  return MP;
+}
+
+//===----------------------------------------------------------------------===//
 // Wrapper functions
 //===----------------------------------------------------------------------===//
 
@@ -159,7 +253,8 @@ llvm::getBytecodeBufferModuleProvider(const unsigned char *Buffer,
                                       unsigned Length,
                                       const std::string &ModuleID,
                                       BytecodeHandler* H ) {
-  return new BytecodeBufferReader(Buffer, Length, ModuleID, H);
+  return CheckVarargs(
+     new BytecodeBufferReader(Buffer, Length, ModuleID, H));
 }
 
 /// ParseBytecodeBuffer - Parse a given bytecode buffer
@@ -182,9 +277,9 @@ Module *llvm::ParseBytecodeBuffer(const unsigned char *Buffer, unsigned Length,
 ModuleProvider *llvm::getBytecodeModuleProvider(const std::string &Filename,
                                                 BytecodeHandler* H) {
   if (Filename != std::string("-"))        // Read from a file...
-    return new BytecodeFileReader(Filename,H);
+    return CheckVarargs(new BytecodeFileReader(Filename,H));
   else                                     // Read from stdin
-    return new BytecodeStdinReader(H);
+    return CheckVarargs(new BytecodeStdinReader(H));
 }
 
 /// ParseBytecodeFile - Parse the given bytecode file

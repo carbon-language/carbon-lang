@@ -110,8 +110,7 @@ const char *Instruction::getOpcodeName(unsigned OpCode) {
   case Call:    return "call";
   case Shl:     return "shl";
   case Shr:     return "shr";
-  case VANext:  return "vanext";
-  case VAArg:   return "vaarg";
+  case VAArg:   return "va_arg";
 
   default: return "<Invalid operator> ";
   }
@@ -139,8 +138,6 @@ bool Instruction::isIdenticalTo(Instruction *I) const {
     return LI->isVolatile() == cast<LoadInst>(I)->isVolatile();
   if (const StoreInst *SI = dyn_cast<StoreInst>(this))
     return SI->isVolatile() == cast<StoreInst>(I)->isVolatile();
-  if (const VANextInst *VAN = dyn_cast<VANextInst>(this))
-    return VAN->getArgType() == cast<VANextInst>(I)->getArgType();
   if (const CallInst *CI = dyn_cast<CallInst>(this))
     return CI->isTailCall() == cast<CallInst>(I)->isTailCall();
   return true;

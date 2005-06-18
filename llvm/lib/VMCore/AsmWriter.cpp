@@ -1188,10 +1188,6 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     if (Operand) writeOperand(Operand, true);   // Work with broken code
     Out << ", ";
     printType(I.getType());
-  } else if (const VANextInst *VAN = dyn_cast<VANextInst>(&I)) {
-    if (Operand) writeOperand(Operand, true);   // Work with broken code
-    Out << ", ";
-    printType(VAN->getArgType());
   } else if (Operand) {   // Print the normal way...
 
     // PrintAllTypes - Instructions who have operands of all the same type

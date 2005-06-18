@@ -72,7 +72,8 @@ namespace {
 //  AlphaTargetLowering - Alpha Implementation of the TargetLowering interface
 namespace {
   class AlphaTargetLowering : public TargetLowering {
-    int VarArgsFrameIndex;            // FrameIndex for start of varargs area.
+    int VarArgsOffset;  // What is the offset to the first vaarg
+    int VarArgsBase;    // What is the base FrameIndex
     unsigned GP; //GOT vreg
   public:
     AlphaTargetLowering(TargetMachine &TM) : TargetLowering(TM) {
@@ -151,10 +152,10 @@ namespace {
                 SelectionDAG &DAG);
 
     virtual std::pair<SDOperand, SDOperand>
-    LowerVAStart(SDOperand Chain, SelectionDAG &DAG);
+    LowerVAStart(SDOperand Chain, SelectionDAG &DAG, SDOperand Dest);
 
     virtual std::pair<SDOperand,SDOperand>
-    LowerVAArgNext(bool isVANext, SDOperand Chain, SDOperand VAList,
+    LowerVAArgNext(SDOperand Chain, SDOperand VAList,
                    const Type *ArgTy, SelectionDAG &DAG);
 
     virtual std::pair<SDOperand, SDOperand>
@@ -300,12 +301,14 @@ AlphaTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG)
 
   // If the functions takes variable number of arguments, copy all regs to stack
   if (F.isVarArg()) {
+    VarArgsOffset = count * 8;
     std::vector<SDOperand> LS;
     for (int i = 0; i < 6; ++i) {
       if (args_int[i] < 1024)
         args_int[i] = AddLiveIn(MF,args_int[i], getRegClassFor(MVT::i64));
       SDOperand argt = DAG.getCopyFromReg(args_int[i], MVT::i64, DAG.getRoot());
       int FI = MFI->CreateFixedObject(8, -8 * (6 - i));
+      if (i == 0) VarArgsBase = FI;
       SDOperand SDFI = DAG.getFrameIndex(FI, MVT::i64);
       LS.push_back(DAG.getNode(ISD::STORE, MVT::Other, DAG.getRoot(), argt, SDFI, DAG.getSrcValue(NULL)));
       
@@ -393,15 +396,34 @@ AlphaTargetLowering::LowerCallTo(SDOperand Chain,
 }
 
 std::pair<SDOperand, SDOperand>
-AlphaTargetLowering::LowerVAStart(SDOperand Chain, SelectionDAG &DAG) {
-  //vastart just returns the address of the VarArgsFrameIndex slot.
-  return std::make_pair(DAG.getFrameIndex(VarArgsFrameIndex, MVT::i64), Chain);
+AlphaTargetLowering::LowerVAStart(SDOperand Chain, SelectionDAG &DAG, SDOperand Dest) {
+  // vastart just stores the address of the VarArgsBase and VarArgsOffset
+  SDOperand FR  = DAG.getFrameIndex(VarArgsBase, MVT::i32);
+  SDOperand S1  = DAG.getNode(ISD::STORE, MVT::Other, Chain, FR, Dest, DAG.getSrcValue(NULL));
+  SDOperand SA2 = DAG.getNode(ISD::ADD, MVT::i64, Dest, DAG.getConstant(8, MVT::i64));
+  SDOperand S2  = DAG.getNode(ISD::STORE, MVT::Other, S1, 
+                              DAG.getConstant(VarArgsOffset, MVT::i64), SA2, 
+                              DAG.getSrcValue(NULL));
+
+  return std::make_pair(S2, S2);
 }
 
 std::pair<SDOperand,SDOperand> AlphaTargetLowering::
-LowerVAArgNext(bool isVANext, SDOperand Chain, SDOperand VAList,
+LowerVAArgNext(SDOperand Chain, SDOperand VAList,
                const Type *ArgTy, SelectionDAG &DAG) {
-  abort();
+  //FIXME: For now, ignore FP
+  SDOperand Base = DAG.getLoad(MVT::i64, Chain, VAList, DAG.getSrcValue(NULL));
+  SDOperand Tmp = DAG.getNode(ISD::ADD, MVT::i64, VAList, 
+                              DAG.getConstant(8, MVT::i64));
+  SDOperand Offset = DAG.getLoad(MVT::i64, Chain, Tmp, DAG.getSrcValue(NULL));
+  SDOperand DataPtr = DAG.getNode(ISD::ADD, MVT::i64, Base, Offset);
+  SDOperand Result = DAG.getLoad(MVT::i64, Chain, DataPtr, 
+                                 DAG.getSrcValue(NULL));
+  SDOperand NewOffset = DAG.getNode(ISD::ADD, MVT::i64, Offset, 
+                                    DAG.getConstant(8, MVT::i64));
+  SDOperand Update = DAG.getNode(ISD::STORE, MVT::Other, Result, NewOffset, 
+                                 Tmp, DAG.getSrcValue(NULL));
+  return std::make_pair(Result, Update);
 }
 
 

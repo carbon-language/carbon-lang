@@ -988,18 +988,6 @@ void Interpreter::visitCastInst(CastInst &I) {
   SetValue(&I, executeCastOperation(I.getOperand(0), I.getType(), SF), SF);
 }
 
-void Interpreter::visitVANextInst(VANextInst &I) {
-  ExecutionContext &SF = ECStack.back();
-
-  // Get the incoming valist parameter.  LLI treats the valist as a
-  // (ec-stack-depth var-arg-index) pair.
-  GenericValue VAList = getOperandValue(I.getOperand(0), SF);
-
-  // Move the pointer to the next vararg.
-  ++VAList.UIntPairVal.second;
-  SetValue(&I, VAList, SF);
-}
-
 #define IMPLEMENT_VAARG(TY) \
    case Type::TY##TyID: Dest.TY##Val = Src.TY##Val; break
 
@@ -1033,6 +1021,9 @@ void Interpreter::visitVAArgInst(VAArgInst &I) {
 
   // Set the Value of this Instruction.
   SetValue(&I, Dest, SF);
+
+  // Move the pointer to the next vararg.
+  ++VAList.UIntPairVal.second;
 }
 
 //===----------------------------------------------------------------------===//

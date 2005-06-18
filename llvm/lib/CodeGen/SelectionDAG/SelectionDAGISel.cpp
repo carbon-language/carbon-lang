@@ -356,7 +356,6 @@ public:
   void visitCall(CallInst &I);
 
   void visitVAStart(CallInst &I);
-  void visitVANext(VANextInst &I);
   void visitVAArg(VAArgInst &I);
   void visitVAEnd(CallInst &I);
   void visitVACopy(CallInst &I);
@@ -839,7 +838,7 @@ void SelectionDAGLowering::visitFree(FreeInst &I) {
 }
 
 std::pair<SDOperand, SDOperand>
-TargetLowering::LowerVAStart(SDOperand Chain, SelectionDAG &DAG) {
+TargetLowering::LowerVAStart(SDOperand Chain, SelectionDAG &DAG, SDOperand Dest) {
   // We have no sane default behavior, just emit a useful error message and bail
   // out.
   std::cerr << "Variable arguments handling not implemented on this target!\n";
@@ -854,13 +853,16 @@ SDOperand TargetLowering::LowerVAEnd(SDOperand Chain, SDOperand L,
 }
 
 std::pair<SDOperand,SDOperand>
-TargetLowering::LowerVACopy(SDOperand Chain, SDOperand L, SelectionDAG &DAG) {
-  // Default to returning the input list.
-  return std::make_pair(L, Chain);
+TargetLowering::LowerVACopy(SDOperand Chain, SDOperand Src, SDOperand Dest, 
+                            SelectionDAG &DAG) {
+  // We have no sane default behavior, just emit a useful error message and bail
+  // out.
+  std::cerr << "Variable arguments handling not implemented on this target!\n";
+  abort();
 }
 
 std::pair<SDOperand,SDOperand>
-TargetLowering::LowerVAArgNext(bool isVANext, SDOperand Chain, SDOperand VAList,
+TargetLowering::LowerVAArgNext(SDOperand Chain, SDOperand VAList,
                                const Type *ArgTy, SelectionDAG &DAG) {
   // We have no sane default behavior, just emit a useful error message and bail
   // out.
@@ -871,23 +873,15 @@ TargetLowering::LowerVAArgNext(bool isVANext, SDOperand Chain, SDOperand VAList,
 
 
 void SelectionDAGLowering::visitVAStart(CallInst &I) {
-  std::pair<SDOperand,SDOperand> Result = TLI.LowerVAStart(getRoot(), DAG);
+  std::pair<SDOperand,SDOperand> Result = TLI.LowerVAStart(getRoot(), DAG, getValue(I.getOperand(1)));
   setValue(&I, Result.first);
   DAG.setRoot(Result.second);
 }
 
 void SelectionDAGLowering::visitVAArg(VAArgInst &I) {
   std::pair<SDOperand,SDOperand> Result =
-    TLI.LowerVAArgNext(false, getRoot(), getValue(I.getOperand(0)),
-                       I.getType(), DAG);
-  setValue(&I, Result.first);
-  DAG.setRoot(Result.second);
-}
-
-void SelectionDAGLowering::visitVANext(VANextInst &I) {
-  std::pair<SDOperand,SDOperand> Result =
-    TLI.LowerVAArgNext(true, getRoot(), getValue(I.getOperand(0)),
-                       I.getArgType(), DAG);
+    TLI.LowerVAArgNext(getRoot(), getValue(I.getOperand(0)),
+                   I.getType(), DAG);
   setValue(&I, Result.first);
   DAG.setRoot(Result.second);
 }
@@ -898,7 +892,7 @@ void SelectionDAGLowering::visitVAEnd(CallInst &I) {
 
 void SelectionDAGLowering::visitVACopy(CallInst &I) {
   std::pair<SDOperand,SDOperand> Result =
-    TLI.LowerVACopy(getRoot(), getValue(I.getOperand(1)), DAG);
+    TLI.LowerVACopy(getRoot(), getValue(I.getOperand(2)), getValue(I.getOperand(1)), DAG);
   setValue(&I, Result.first);
   DAG.setRoot(Result.second);
 }

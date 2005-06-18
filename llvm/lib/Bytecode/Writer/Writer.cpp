@@ -439,7 +439,7 @@ void BytecodeWriter::outputInstructionFormat0(const Instruction *I,
   output_typeid(Type);                      // Result type
 
   unsigned NumArgs = I->getNumOperands();
-  output_vbr(NumArgs + (isa<CastInst>(I) || isa<VANextInst>(I) ||
+  output_vbr(NumArgs + (isa<CastInst>(I)  ||
                         isa<VAArgInst>(I) || Opcode == 56 || Opcode == 58));
 
   if (!isa<GetElementPtrInst>(&I)) {
@@ -452,10 +452,6 @@ void BytecodeWriter::outputInstructionFormat0(const Instruction *I,
     if (isa<CastInst>(I) || isa<VAArgInst>(I)) {
       int Slot = Table.getSlot(I->getType());
       assert(Slot != -1 && "Cast return type unknown?");
-      output_typeid((unsigned)Slot);
-    } else if (const VANextInst *VAI = dyn_cast<VANextInst>(I)) {
-      int Slot = Table.getSlot(VAI->getArgType());
-      assert(Slot != -1 && "VarArg argument type unknown?");
       output_typeid((unsigned)Slot);
     } else if (Opcode == 56) {  // Invoke escape sequence
       output_vbr(cast<InvokeInst>(I)->getCallingConv());
@@ -702,11 +698,6 @@ void BytecodeWriter::outputInstruction(const Instruction &I) {
       // packet, or else we won't know what type to cast to!
       Slots[1] = Table.getSlot(I.getType());
       assert(Slots[1] != ~0U && "Cast return type unknown?");
-      if (Slots[1] > MaxOpSlot) MaxOpSlot = Slots[1];
-      NumOperands++;
-    } else if (const VANextInst *VANI = dyn_cast<VANextInst>(&I)) {
-      Slots[1] = Table.getSlot(VANI->getArgType());
-      assert(Slots[1] != ~0U && "va_next return type unknown?");
       if (Slots[1] > MaxOpSlot) MaxOpSlot = Slots[1];
       NumOperands++;
     } else if (const GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(&I)) {

@@ -178,7 +178,6 @@ namespace {  // Anonymous namespace for class
     void visitPHINode(PHINode &PN);
     void visitBinaryOperator(BinaryOperator &B);
     void visitShiftInst(ShiftInst &SI);
-    void visitVANextInst(VANextInst &VAN) { visitInstruction(VAN); }
     void visitVAArgInst(VAArgInst &VAA) { visitInstruction(VAA); }
     void visitCallInst(CallInst &CI);
     void visitGetElementPtrInst(GetElementPtrInst &GEP);
@@ -655,10 +654,10 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
     Assert1(CI.getParent()->getParent()->getFunctionType()->isVarArg(),
             "llvm.va_start intrinsic may only occur in function with variable"
             " args!", &CI);
-    NumArgs = 0;
+    NumArgs = 1;
     break;
   case Intrinsic::vaend:          NumArgs = 1; break;
-  case Intrinsic::vacopy:         NumArgs = 1; break;
+  case Intrinsic::vacopy:         NumArgs = 2; break;
 
   case Intrinsic::returnaddress:
   case Intrinsic::frameaddress:

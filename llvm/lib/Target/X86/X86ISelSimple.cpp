@@ -232,7 +232,6 @@ namespace {
     void visitShiftInst(ShiftInst &I);
     void visitPHINode(PHINode &I) {}      // PHI nodes handled by second pass
     void visitCastInst(CastInst &I);
-    void visitVANextInst(VANextInst &I);
     void visitVAArgInst(VAArgInst &I);
 
     void visitInstruction(Instruction &I) {
@@ -1838,12 +1837,14 @@ void X86ISel::visitIntrinsicCall(Intrinsic::ID ID, CallInst &CI) {
   unsigned TmpReg1, TmpReg2;
   switch (ID) {
   case Intrinsic::vastart:
+    //FIXME: store to first arg, don't return
     // Get the address of the first vararg value...
     TmpReg1 = getReg(CI);
     addFrameReference(BuildMI(BB, X86::LEA32r, 5, TmpReg1), VarArgsFrameIndex);
     return;
 
   case Intrinsic::vacopy:
+    //FIXME: copy val of second into first (which is a ptr)
     TmpReg1 = getReg(CI);
     TmpReg2 = getReg(CI.getOperand(1));
     BuildMI(BB, X86::MOV32rr, 1, TmpReg1).addReg(TmpReg2);
@@ -3745,38 +3746,12 @@ void X86ISel::emitCastOperation(MachineBasicBlock *BB,
   abort();
 }
 
-/// visitVANextInst - Implement the va_next instruction...
-///
-void X86ISel::visitVANextInst(VANextInst &I) {
-  unsigned VAList = getReg(I.getOperand(0));
-  unsigned DestReg = getReg(I);
-
-  unsigned Size;
-  switch (I.getArgType()->getTypeID()) {
-  default:
-    std::cerr << I;
-    assert(0 && "Error: bad type for va_next instruction!");
-    return;
-  case Type::PointerTyID:
-  case Type::UIntTyID:
-  case Type::IntTyID:
-    Size = 4;
-    break;
-  case Type::ULongTyID:
-  case Type::LongTyID:
-  case Type::DoubleTyID:
-    Size = 8;
-    break;
-  }
-
-  // Increment the VAList pointer...
-  BuildMI(BB, X86::ADD32ri, 2, DestReg).addReg(VAList).addImm(Size);
-}
-
 void X86ISel::visitVAArgInst(VAArgInst &I) {
-  unsigned VAList = getReg(I.getOperand(0));
+  unsigned VAListPtr = getReg(I.getOperand(0));
   unsigned DestReg = getReg(I);
-
+  unsigned VAList = makeAnotherReg(Type::IntTy);
+  addDirectMem(BuildMI(BB, X86::MOV32rm, 4, VAList), VAListPtr);
+  unsigned Size;
   switch (I.getType()->getTypeID()) {
   default:
     std::cerr << I;
@@ -3785,17 +3760,24 @@ void X86ISel::visitVAArgInst(VAArgInst &I) {
   case Type::PointerTyID:
   case Type::UIntTyID:
   case Type::IntTyID:
+    Size = 4;
     addDirectMem(BuildMI(BB, X86::MOV32rm, 4, DestReg), VAList);
     break;
   case Type::ULongTyID:
   case Type::LongTyID:
+    Size = 8;
     addDirectMem(BuildMI(BB, X86::MOV32rm, 4, DestReg), VAList);
     addRegOffset(BuildMI(BB, X86::MOV32rm, 4, DestReg+1), VAList, 4);
     break;
   case Type::DoubleTyID:
+    Size = 8;
     addDirectMem(BuildMI(BB, X86::FLD64m, 4, DestReg), VAList);
     break;
   }
+  // Increment the VAList pointer...
+  unsigned NP = makeAnotherReg(Type::IntTy);
+  BuildMI(BB, X86::ADD32ri, 2, NP).addReg(VAList).addSImm(Size);
+  addDirectMem(BuildMI(BB, X86::MOV32rm, 5), VAListPtr).addReg(VAList);
 }
 
 /// visitGetElementPtrInst - instruction-select GEP instructions

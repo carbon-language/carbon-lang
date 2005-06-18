@@ -253,9 +253,9 @@ cast            { RET_TOK(OtherOpVal, Cast, CAST); }
 select          { RET_TOK(OtherOpVal, Select, SELECT); }
 shl             { RET_TOK(OtherOpVal, Shl, SHL); }
 shr             { RET_TOK(OtherOpVal, Shr, SHR); }
-vanext          { RET_TOK(OtherOpVal, VANext, VANEXT); }
-vaarg           { RET_TOK(OtherOpVal, VAArg , VAARG); }
-
+vanext          { return VANEXT_old; }
+vaarg           { return VAARG_old; }
+va_arg          { RET_TOK(OtherOpVal, VAArg , VAARG); }
 ret             { RET_TOK(TermOpVal, Ret, RET); }
 br              { RET_TOK(TermOpVal, Br, BR); }
 switch          { RET_TOK(TermOpVal, Switch, SWITCH); }

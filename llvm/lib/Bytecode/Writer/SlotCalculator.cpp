@@ -187,8 +187,6 @@ void SlotCalculator::processModule() {
             !isa<GlobalValue>(I->getOperand(op)))
           getOrCreateSlot(I->getOperand(op));
       getOrCreateSlot(I->getType());
-      if (const VANextInst *VAN = dyn_cast<VANextInst>(&*I))
-        getOrCreateSlot(VAN->getArgType());
     }
     processSymbolTableConstants(&F->getSymbolTable());
   }
@@ -320,8 +318,6 @@ void SlotCalculator::incorporateFunction(const Function *F) {
     getOrCreateSlot(BB);
     for (BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I!=E; ++I) {
       getOrCreateSlot(I);
-      if (const VANextInst *VAN = dyn_cast<VANextInst>(I))
-        getOrCreateSlot(VAN->getArgType());
     }
   }
 
@@ -472,8 +468,6 @@ void SlotCalculator::buildCompactionTable(const Function *F) {
     for (unsigned op = 0, e = I->getNumOperands(); op != e; ++op)
       if (isa<Constant>(I->getOperand(op)))
         getOrCreateCompactionTableSlot(I->getOperand(op));
-    if (const VANextInst *VAN = dyn_cast<VANextInst>(&*I))
-      getOrCreateCompactionTableSlot(VAN->getArgType());
   }
 
   // Do the types in the symbol table

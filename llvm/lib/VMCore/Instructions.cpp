@@ -1096,7 +1096,6 @@ CastInst   *CastInst::clone()   const { return new CastInst(*this); }
 CallInst   *CallInst::clone()   const { return new CallInst(*this); }
 ShiftInst  *ShiftInst::clone()  const { return new ShiftInst(*this); }
 SelectInst *SelectInst::clone() const { return new SelectInst(*this); }
-VANextInst *VANextInst::clone() const { return new VANextInst(*this); }
 VAArgInst  *VAArgInst::clone()  const { return new VAArgInst(*this); }
 PHINode    *PHINode::clone()    const { return new PHINode(*this); }
 ReturnInst *ReturnInst::clone() const { return new ReturnInst(*this); }

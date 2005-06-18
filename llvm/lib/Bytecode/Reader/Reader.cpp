@@ -658,10 +658,43 @@ void BytecodeReader::ParseInstruction(std::vector<unsigned> &Oprnds,
     Result = new VAArgInst(getValue(iType, Oprnds[0]),
                            getSanitizedType(Oprnds[1]));
     break;
-  case Instruction::VANext:
-    Result = new VANextInst(getValue(iType, Oprnds[0]),
-                            getSanitizedType(Oprnds[1]));
+  case 32: { //VANext_old
+    const Type* ArgTy = getValue(iType, Oprnds[0])->getType();
+    Function* NF = TheModule->getOrInsertFunction("llvm.va_copy", ArgTy, ArgTy, 0);
+
+    //b = vanext a, t ->
+    //foo = alloca 1 of t
+    //bar = vacopy a
+    //store bar -> foo
+    //tmp = vaarg foo, t
+    //b = load foo
+    AllocaInst* foo = new AllocaInst(ArgTy, 0, "vanext.fix");
+    BB->getInstList().push_back(foo);
+    CallInst* bar = new CallInst(NF, getValue(iType, Oprnds[0]));
+    BB->getInstList().push_back(bar);
+    BB->getInstList().push_back(new StoreInst(bar, foo));
+    Instruction* tmp = new VAArgInst(foo, getSanitizedType(Oprnds[1]));
+    BB->getInstList().push_back(tmp);
+    Result = new LoadInst(foo);
     break;
+  }
+  case 33: { //VAArg_old
+    const Type* ArgTy = getValue(iType, Oprnds[0])->getType();
+    Function* NF = TheModule->getOrInsertFunction("llvm.va_copy", ArgTy, ArgTy, 0);
+
+    //b = vaarg a, t -> 
+    //foo = alloca 1 of t
+    //bar = vacopy a 
+    //store bar -> foo
+    //b = vaarg foo, t
+    AllocaInst* foo = new AllocaInst(ArgTy, 0, "vaarg.fix");
+    BB->getInstList().push_back(foo);
+    CallInst* bar = new CallInst(NF, getValue(iType, Oprnds[0]));
+    BB->getInstList().push_back(bar);
+    BB->getInstList().push_back(new StoreInst(bar, foo));
+    Result = new VAArgInst(foo, getSanitizedType(Oprnds[1]));
+    break;
+  }
   case Instruction::Cast:
     Result = new CastInst(getValue(iType, Oprnds[0]),
                           getSanitizedType(Oprnds[1]));
