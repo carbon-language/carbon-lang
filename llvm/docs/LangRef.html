@@ -101,7 +101,6 @@
           <li><a href="#i_cast">'<tt>cast .. to</tt>' Instruction</a></li>
           <li><a href="#i_select">'<tt>select</tt>' Instruction</a></li>
           <li><a href="#i_call">'<tt>call</tt>'  Instruction</a></li>
-          <li><a href="#i_vanext">'<tt>vanext</tt>' Instruction</a></li>
           <li><a href="#i_vaarg">'<tt>vaarg</tt>'  Instruction</a></li>
         </ol>
       </li>
@@ -2211,58 +2210,6 @@ the <a href="#i_invoke">invoke</a> instruction.</p>
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
-  <a name="i_vanext">'<tt>vanext</tt>' Instruction</a>
-</div>
-
-<div class="doc_text">
-
-<h5>Syntax:</h5>
-
-<pre>
-  &lt;resultarglist&gt; = vanext &lt;va_list&gt; &lt;arglist&gt;, &lt;argty&gt;
-</pre>
-
-<h5>Overview:</h5>
-
-<p>The '<tt>vanext</tt>' instruction is used to access arguments passed
-through the "variable argument" area of a function call.  It is used to
-implement the <tt>va_arg</tt> macro in C.</p>
-
-<h5>Arguments:</h5>
-
-<p>This instruction takes a <tt>va_list</tt> value and the type of the
-argument. It returns another <tt>va_list</tt>. The actual type of
-<tt>va_list</tt> may be defined differently for different targets.  Most targets
-use a <tt>va_list</tt> type of <tt>sbyte*</tt> or some other pointer type.</p>
-
-<h5>Semantics:</h5>
-
-<p>The '<tt>vanext</tt>' instruction advances the specified <tt>va_list</tt>
-past an argument of the specified type.  In conjunction with the <a
- href="#i_vaarg"><tt>vaarg</tt></a> instruction, it is used to implement
-the <tt>va_arg</tt> macro available in C.  For more information, see
-the variable argument handling <a href="#int_varargs">Intrinsic
-Functions</a>.</p>
-
-<p>It is legal for this instruction to be called in a function which
-does not take a variable number of arguments, for example, the <tt>vfprintf</tt>
-function.</p>
-
-<p><tt>vanext</tt> is an LLVM instruction instead of an <a
-href="#intrinsics">intrinsic function</a> because it takes a type as an
-argument.  The type refers to the current argument in the <tt>va_list</tt>; it
-tells the compiler how far on the stack it needs to advance to find the next
-argument.</p>
-
-<h5>Example:</h5>
-
-<p>See the <a href="#int_varargs">variable argument processing</a>
-section.</p>
-
-</div>
-
-<!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
   <a name="i_vaarg">'<tt>vaarg</tt>' Instruction</a>
 </div>
 
@@ -2271,34 +2218,35 @@ section.</p>
 <h5>Syntax:</h5>
 
 <pre>
-  &lt;resultval&gt; = vaarg &lt;va_list&gt; &lt;arglist&gt;, &lt;argty&gt;
+  &lt;resultval&gt; = va_arg &lt;va_list*&gt; &lt;arglist&gt;, &lt;argty&gt;
 </pre>
 
 <h5>Overview:</h5>
 
-<p>The '<tt>vaarg</tt>' instruction is used to access arguments passed through
+<p>The '<tt>va_arg</tt>' instruction is used to access arguments passed through
 the "variable argument" area of a function call.  It is used to implement the
 <tt>va_arg</tt> macro in C.</p>
 
 <h5>Arguments:</h5>
 
-<p>This instruction takes a <tt>va_list</tt> value and the type of the
-argument. It returns a value of the specified argument type.  Again, the actual
-type of <tt>va_list</tt> is target specific.</p>
+<p>This instruction takes a <tt>va_list*</tt> value and the type of
+the argument. It returns a value of the specified argument type and
+increments the <tt>va_list</tt> to poin to the next argument.  Again, the
+actual type of <tt>va_list</tt> is target specific.</p>
 
 <h5>Semantics:</h5>
 
-<p>The '<tt>vaarg</tt>' instruction loads an argument of the specified type from
-the specified <tt>va_list</tt>.  In conjunction with the <a
-href="#i_vanext"><tt>vanext</tt></a> instruction, it is used to implement the
-<tt>va_arg</tt> macro available in C.  For more information, see the variable
-argument handling <a href="#int_varargs">Intrinsic Functions</a>.</p>
+<p>The '<tt>va_arg</tt>' instruction loads an argument of the specified
+type from the specified <tt>va_list</tt> and causes the
+<tt>va_list</tt> to point to the next argument.  For more information,
+see the variable argument handling <a href="#int_varargs">Intrinsic
+Functions</a>.</p>
 
 <p>It is legal for this instruction to be called in a function which does not
 take a variable number of arguments, for example, the <tt>vfprintf</tt>
 function.</p>
 
-<p><tt>vaarg</tt> is an LLVM instruction instead of an <a
+<p><tt>va_arg</tt> is an LLVM instruction instead of an <a
 href="#intrinsics">intrinsic function</a> because it takes a type as an
 argument.</p>
 
@@ -2361,20 +2309,20 @@ used.</p>
 <pre>
 int %test(int %X, ...) {
   ; Initialize variable argument processing
-  %ap = call sbyte* %<a href="#i_va_start">llvm.va_start</a>()
+  %ap = alloca sbyte*
+  call void %<a href="#i_va_start">llvm.va_start</a>(sbyte** %ap)
 
   ; Read a single integer argument
-  %tmp = vaarg sbyte* %ap, int
-
-  ; Advance to the next argument
-  %ap2 = vanext sbyte* %ap, int
+  %tmp = va_arg sbyte** %ap, int
 
   ; Demonstrate usage of llvm.va_copy and llvm.va_end
-  %aq = call sbyte* %<a href="#i_va_copy">llvm.va_copy</a>(sbyte* %ap2)
-  call void %<a href="#i_va_end">llvm.va_end</a>(sbyte* %aq)
+  %aq = alloca sbyte*
+  %apv = load sbyte** %ap
+  call void %<a href="#i_va_copy">llvm.va_copy</a>(sbyte** %aq, sbyte* %apv)
+  call void %<a href="#i_va_end">llvm.va_end</a>(sbyte** %aq)
 
   ; Stop processing of arguments.
-  call void %<a href="#i_va_end">llvm.va_end</a>(sbyte* %ap2)
+  call void %<a href="#i_va_end">llvm.va_end</a>(sbyte** %ap)
   ret int %tmp
 }
 </pre>
@@ -2388,19 +2336,25 @@ int %test(int %X, ...) {
 
 <div class="doc_text">
 <h5>Syntax:</h5>
-<pre>  declare &lt;va_list&gt; %llvm.va_start()<br></pre>
+<pre>  declare void %llvm.va_start(&lt;va_list&gt;* &lt;arglist&gt;)<br></pre>
 <h5>Overview:</h5>
-<p>The '<tt>llvm.va_start</tt>' intrinsic returns a new <tt>&lt;arglist&gt;</tt>
-for subsequent use by the variable argument intrinsics.</p>
+<P>The '<tt>llvm.va_start</tt>' intrinsic initializes
+<tt>*&lt;arglist&gt;</tt> for subsequent use by <tt><a
+href="#i_va_arg">va_arg</a></tt>.</p>
+
+<h5>Arguments:</h5>
+
+<P>The argument is a pointer to a <tt>va_list</tt> element to initialize.</p>
+
 <h5>Semantics:</h5>
-<p>The '<tt>llvm.va_start</tt>' intrinsic works just like the <tt>va_start</tt>
-macro available in C.  In a target-dependent way, it initializes and
-returns a <tt>va_list</tt> element, so that the next <tt>vaarg</tt>
-will produce the first variable argument passed to the function.  Unlike
-the C <tt>va_start</tt> macro, this intrinsic does not need to know the
-last argument of the function; the compiler can figure that out.</p>
-<p>Note that this intrinsic function is only legal to be called from
-within the body of a variable argument function.</p>
+
+<P>The '<tt>llvm.va_start</tt>' intrinsic works just like the <tt>va_start</tt>
+macro available in C.  In a target-dependent way, it initializes the
+<tt>va_list</tt> element the argument points to, so that the next call to
+<tt>va_arg</tt> will produce the first variable argument passed to the function.
+Unlike the C <tt>va_start</tt> macro, this intrinsic does not need to know the
+last argument of the function, the compiler can figure that out.</p>
+
 </div>
 
 <!-- _______________________________________________________________________ -->
@@ -2410,7 +2364,7 @@ within the body of a variable argument function.</p>
 
 <div class="doc_text">
 <h5>Syntax:</h5>
-<pre>  declare void %llvm.va_end(&lt;va_list&gt; &lt;arglist&gt;)<br></pre>
+<pre>  declare void %llvm.va_end(&lt;va_list*&gt; &lt;arglist&gt;)<br></pre>
 <h5>Overview:</h5>
 <p>The '<tt>llvm.va_end</tt>' intrinsic destroys <tt>&lt;arglist&gt;</tt>
 which has been initialized previously with <tt><a href="#i_va_start">llvm.va_start</a></tt>
@@ -2435,24 +2389,27 @@ with calls to <tt>llvm.va_end</tt>.</p>
 <h5>Syntax:</h5>
 
 <pre>
-  declare &lt;va_list&gt; %llvm.va_copy(&lt;va_list&gt; &lt;destarglist&gt;)
+  declare void %llvm.va_copy(&lt;va_list&gt;* &lt;destarglist&gt;,
+                                          &lt;va_list&gt; &lt;srcarglist&gt;)
 </pre>
 
 <h5>Overview:</h5>
 
-<p>The '<tt>llvm.va_copy</tt>' intrinsic copies the current argument position
-from the source argument list to the destination argument list.</p>
+<p>The '<tt>llvm.va_copy</tt>' intrinsic copies the current argument position from
+the source argument list to the destination argument list.</p>
 
 <h5>Arguments:</h5>
 
-<p>The argument is the <tt>va_list</tt> to copy.</p>
+<p>The first argument is a pointer to a <tt>va_list</tt> element to initialize.
+The second argument is a <tt>va_list</tt> element to copy from.</p>
+
 
 <h5>Semantics:</h5>
 
-<p>The '<tt>llvm.va_copy</tt>' intrinsic works just like the <tt>va_copy</tt>
-macro available in C.  In a target-dependent way, it copies the source
-<tt>va_list</tt> element into the returned list.  This intrinsic is necessary
-because the <tt><a href="#i_va_start">llvm.va_start</a></tt> intrinsic may be
+<p>The '<tt>llvm.va_copy</tt>' intrinsic works just like the <tt>va_copy</tt> macro
+available in C.  In a target-dependent way, it copies the source
+<tt>va_list</tt> element into the destination list.  This intrinsic is necessary
+because the <tt><a href="i_va_begin">llvm.va_begin</a></tt> intrinsic may be
 arbitrarily complex and require memory allocation, for example.</p>
 
 </div>
