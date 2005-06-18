@@ -4216,6 +4216,8 @@ void GetInstructionsByRule(InstructionNode* subtreeRoot, int ruleForNode,
       case 64:	// reg:   Phi(reg,reg)
         break;                          // don't forward the value
 
+#if 0
+//FIXME: new VAArg support
       case 65:	// reg:   VANext(reg):  the va_next(va_list, type) instruction
       { // Increment the va_list pointer register according to the type.
         // All LLVM argument types are <= 64 bits, so use one doubleword.
@@ -4227,7 +4229,9 @@ void GetInstructionsByRule(InstructionNode* subtreeRoot, int ruleForNode,
                        addSImm(argSize).addRegDef(vaNextI));
         break;
       }
+#endif
 
+//FIXME: new VAArg support
       case 66:	// reg:   VAArg (reg): the va_arg instruction
       { // Load argument from stack using current va_list pointer value.
         // Use 64-bit load for all non-FP args, and LDDF or double for FP.

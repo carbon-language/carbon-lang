@@ -96,7 +96,6 @@ Xdefine PANIC		printf
 %term Call=CallOPCODE
 %term Shl=ShlOPCODE
 %term Shr=ShrOPCODE
-%term VANext=VANextOPCODE
 %term VAArg=VAArgOPCODE
 		/* 33...46 are unused */
     /*
@@ -268,7 +267,6 @@ reg:	Call			=   61 (20);	/* just ignore the operands! */
 reg:	Shl(reg,reg)		=   62 (20);	/* 1 for issue restrictions */
 reg:	Shr(reg,reg)		=   63 (20);	/* 1 for issue restrictions */
 reg:	Phi(reg,reg)		=   64 (0);
-reg:	VANext(reg)		=   65 (40);	/* incr stack slot pointer */
 reg:	VAArg(reg)		=   66 (40);	/* get a vararg */
 
 	/*
