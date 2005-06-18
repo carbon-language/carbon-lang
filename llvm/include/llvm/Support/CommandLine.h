@@ -894,7 +894,8 @@ class list : public Option, public list_storage<DataType, Storage> {
 
   virtual bool handleOccurrence(unsigned pos, const char *ArgName,
                                 const std::string &Arg) {
-    typename ParserClass::parser_data_type Val;
+    typename ParserClass::parser_data_type Val =
+      typename ParserClass::parser_data_type();
     if (Parser.parse(*this, ArgName, Arg, Val))
       return true;  // Parse Error!
     addValue(Val);
