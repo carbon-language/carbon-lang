@@ -2915,8 +2915,9 @@ extern bool ThisIsAChainRule(int eruleno) {
       return true; break;
 
     default:
-      return false; break;
+      break;
     }
+  return false; 
 }
 
 /// GetInstructionsByRule - Choose machine instructions for the

@@ -757,7 +757,7 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
       return BinaryOperator::createNot(Op1);
 
     // C - ~X == X + (1+C)
-    Value *X;
+    Value *X = 0;
     if (match(Op1, m_Not(m_Value(X))))
       return BinaryOperator::createAdd(X,
                     ConstantExpr::getAdd(C, ConstantInt::get(I.getType(), 1)));
@@ -852,7 +852,7 @@ Instruction *InstCombiner::visitSub(BinaryOperator &I) {
                                                ConstantExpr::getNeg(DivRHS));
 
       // X - X*C --> X * (1-C)
-      ConstantInt *C2;
+      ConstantInt *C2 = 0;
       if (dyn_castFoldableMul(Op1I, C2) == Op0) {
         Constant *CP1 =
           ConstantExpr::getSub(ConstantInt::get(I.getType(), 1), C2);
@@ -5129,7 +5129,7 @@ Instruction *InstCombiner::visitStoreInst(StoreInst &SI) {
 
 Instruction *InstCombiner::visitBranchInst(BranchInst &BI) {
   // Change br (not X), label True, label False to: br X, label False, True
-  Value *X;
+  Value *X = 0;
   BasicBlock *TrueDest;
   BasicBlock *FalseDest;
   if (match(&BI, m_Br(m_Not(m_Value(X)), TrueDest, FalseDest)) &&

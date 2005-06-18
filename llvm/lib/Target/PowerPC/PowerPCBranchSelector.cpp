@@ -43,8 +43,9 @@ namespace {
       case PPC::IMPLICIT_DEF: // no asm emitted
         return 0;
       default:
-        return 4; // PowerPC instructions are all 4 bytes
+        break;
       }
+      return 4; // PowerPC instructions are all 4 bytes
     }
 
     virtual bool runOnMachineFunction(MachineFunction &Fn) {
