@@ -1,1 +1,4 @@
 pod2htm?.tmp
+*.html
+*.1
+*.ps
