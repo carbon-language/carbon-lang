@@ -660,55 +660,12 @@ public:
   }
 };
 
-
-//===----------------------------------------------------------------------===//
-//                                VANextInst Class
-//===----------------------------------------------------------------------===//
-
-/// VANextInst - This class represents the va_next llvm instruction, which
-/// advances a vararg list passed an argument of the specified type, returning
-/// the resultant list.
-///
-class VANextInst : public UnaryInstruction {
-  PATypeHolder ArgTy;
-  VANextInst(const VANextInst &VAN)
-    : UnaryInstruction(VAN.getType(), VANext, VAN.getOperand(0)),
-      ArgTy(VAN.getArgType()) {
-  }
-
-public:
-  VANextInst(Value *List, const Type *Ty, const std::string &Name = "",
-             Instruction *InsertBefore = 0)
-    : UnaryInstruction(List->getType(), VANext, List, Name, InsertBefore),
-      ArgTy(Ty) {
-  }
-  VANextInst(Value *List, const Type *Ty, const std::string &Name,
-             BasicBlock *InsertAtEnd)
-    : UnaryInstruction(List->getType(), VANext, List, Name, InsertAtEnd),
-      ArgTy(Ty) {
-  }
-
-  const Type *getArgType() const { return ArgTy; }
-
-  virtual VANextInst *clone() const;
-
-  // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const VANextInst *) { return true; }
-  static inline bool classof(const Instruction *I) {
-    return I->getOpcode() == VANext;
-  }
-  static inline bool classof(const Value *V) {
-    return isa<Instruction>(V) && classof(cast<Instruction>(V));
-  }
-};
-
-
 //===----------------------------------------------------------------------===//
 //                                VAArgInst Class
 //===----------------------------------------------------------------------===//
 
 /// VAArgInst - This class represents the va_arg llvm instruction, which returns
-/// an argument of the specified type given a va_list.
+/// an argument of the specified type given a va_list and increments that list
 ///
 class VAArgInst : public UnaryInstruction {
   VAArgInst(const VAArgInst &VAA)

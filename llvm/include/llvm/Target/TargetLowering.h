@@ -268,7 +268,7 @@ public:
   /// LowerVAStart - This lowers the llvm.va_start intrinsic.  If not
   /// implemented, this method prints a message and aborts.
   virtual std::pair<SDOperand, SDOperand>
-  LowerVAStart(SDOperand Chain, SelectionDAG &DAG);
+  LowerVAStart(SDOperand Chain, SelectionDAG &DAG, SDOperand Dest);
 
   /// LowerVAEnd - This lowers llvm.va_end and returns the resultant chain.  If
   /// not implemented, this defaults to a noop.
@@ -278,13 +278,12 @@ public:
   /// value/chain pair.  If not implemented, this defaults to returning the
   /// input operand.
   virtual std::pair<SDOperand,SDOperand>
-  LowerVACopy(SDOperand Chain, SDOperand L, SelectionDAG &DAG);
+  LowerVACopy(SDOperand Chain, SDOperand Src, SDOperand Dest, SelectionDAG &DAG);
 
-  /// LowerVAArgNext - This lowers the vaarg and vanext instructions (depending
-  /// on whether the first argument is true).  If not implemented, this prints a
-  /// message and aborts.
+  /// LowerVAArgNext - This lowers the instruction 
+  /// If not implemented, this prints a message and aborts.
   virtual std::pair<SDOperand,SDOperand>
-  LowerVAArgNext(bool isVANext, SDOperand Chain, SDOperand VAList,
+  LowerVAArgNext(SDOperand Chain, SDOperand VAList,
                  const Type *ArgTy, SelectionDAG &DAG);
 
   /// LowerFrameReturnAddress - This hook lowers a call to llvm.returnaddress or
