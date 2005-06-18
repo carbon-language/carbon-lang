@@ -19,7 +19,7 @@ int %test(int %X, ...) {
         call void %llvm.va_start(sbyte** %ap)
 
         ; Read a single integer argument
-        %tmp = vaarg sbyte** %ap, int           ; <int> [#uses=1]
+        %tmp = va_arg sbyte** %ap, int           ; <int> [#uses=1]
 
         ; Demonstrate usage of llvm.va_copy and llvm_va_end
         %apv = load sbyte** %ap         ; <sbyte*> [#uses=1]
