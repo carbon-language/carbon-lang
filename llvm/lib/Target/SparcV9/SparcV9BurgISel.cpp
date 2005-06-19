@@ -2869,8 +2869,11 @@ static bool CodeGenIntrinsic(Intrinsic::ID iid, CallInst &callInstr,
     int fpReg          = SparcV9::i6;
     int firstVarArgOff = numFixedArgs * 8 +
                          SparcV9FrameInfo::FirstIncomingArgOffsetFromFP;
-    mvec.push_back(BuildMI(V9::ADDi, 3).addMReg(fpReg).addSImm(firstVarArgOff).
-                   addRegDef(&callInstr));
+    //What oh what do we pass to TmpInstruction?
+    MachineCodeForInstruction& m = MachineCodeForInstruction::get(&callInstr);
+    TmpInstruction* T = new TmpInstruction(m, callInstr.getOperand(1)->getType());
+    mvec.push_back(BuildMI(V9::ADDi, 3).addMReg(fpReg).addSImm(firstVarArgOff).addRegDef(T));
+    mvec.push_back(BuildMI(V9::STXr, 3).addReg(T).addReg(callInstr.getOperand(1)).addSImm(0));
     return true;
   }
 
@@ -2878,11 +2881,10 @@ static bool CodeGenIntrinsic(Intrinsic::ID iid, CallInst &callInstr,
     return true;                        // no-op on SparcV9
 
   case Intrinsic::vacopy:
-    // Simple copy of current va_list (arg1) to new va_list (result)
-    mvec.push_back(BuildMI(V9::ORr, 3).
-                   addMReg(target.getRegInfo()->getZeroRegNum()).
-                   addReg(callInstr.getOperand(1)).
-                   addRegDef(&callInstr));
+    // Simple store of current va_list (arg2) to new va_list (arg1)
+    mvec.push_back(BuildMI(V9::STXi, 3).
+                   addReg(callInstr.getOperand(2)).
+                   addReg(callInstr.getOperand(1)).addSImm(0));
     return true;
   }
 }
@@ -4216,32 +4218,33 @@ void GetInstructionsByRule(InstructionNode* subtreeRoot, int ruleForNode,
       case 64:	// reg:   Phi(reg,reg)
         break;                          // don't forward the value
 
-#if 0
-//FIXME: new VAArg support
-      case 65:	// reg:   VANext(reg):  the va_next(va_list, type) instruction
-      { // Increment the va_list pointer register according to the type.
-        // All LLVM argument types are <= 64 bits, so use one doubleword.
-        Instruction* vaNextI = subtreeRoot->getInstruction();
-        assert(target.getTargetData().getTypeSize(vaNextI->getType()) <= 8 &&
-               "We assumed that all LLVM parameter types <= 8 bytes!");
-        unsigned argSize = SparcV9FrameInfo::SizeOfEachArgOnStack;
-        mvec.push_back(BuildMI(V9::ADDi, 3).addReg(vaNextI->getOperand(0)).
-                       addSImm(argSize).addRegDef(vaNextI));
-        break;
-      }
-#endif
-
-//FIXME: new VAArg support
       case 66:	// reg:   VAArg (reg): the va_arg instruction
       { // Load argument from stack using current va_list pointer value.
         // Use 64-bit load for all non-FP args, and LDDF or double for FP.
         Instruction* vaArgI = subtreeRoot->getInstruction();
+        //but first load the va_list pointer
+        // Create a virtual register to represent it
+        //What oh what do we pass to TmpInstruction?
+        MachineCodeForInstruction& m1 = MachineCodeForInstruction::get(vaArgI);
+        TmpInstruction* VReg = new TmpInstruction(m1, vaArgI->getOperand(0)->getType());
+        mvec.push_back(BuildMI(V9::LDXi, 3).addReg(vaArgI->getOperand(0))
+                       .addSImm(0).addRegDef(VReg));
+        //OK, now do the load
         MachineOpCode loadOp = (vaArgI->getType()->isFloatingPoint()
                                 ? (vaArgI->getType() == Type::FloatTy
                                    ? V9::LDFi : V9::LDDFi)
                                 : V9::LDXi);
-        mvec.push_back(BuildMI(loadOp, 3).addReg(vaArgI->getOperand(0)).
+        mvec.push_back(BuildMI(loadOp, 3).addReg(VReg).
                        addSImm(0).addRegDef(vaArgI));
+        //Also increment the pointer
+        MachineCodeForInstruction& m2 = MachineCodeForInstruction::get(vaArgI);
+        TmpInstruction* VRegA = new TmpInstruction(m2, vaArgI->getOperand(0)->getType());
+        unsigned argSize = SparcV9FrameInfo::SizeOfEachArgOnStack;
+        mvec.push_back(BuildMI(V9::ADDi, 3).addReg(VReg).
+                       addSImm(argSize).addRegDef(VRegA));
+        //And store
+        mvec.push_back(BuildMI(V9::STXr, 3).addReg(VRegA).
+                       addReg(vaArgI->getOperand(0)).addSImm(0));
         break;
       }
 
