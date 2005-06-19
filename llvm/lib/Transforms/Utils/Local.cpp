@@ -381,8 +381,6 @@ bool llvm::isInstructionTriviallyDead(Instruction *I) {
     if (Function *F = CI->getCalledFunction())
       switch (F->getIntrinsicID()) {
       default: break;
-      case Intrinsic::vastart:
-      case Intrinsic::vacopy:
       case Intrinsic::returnaddress:
       case Intrinsic::frameaddress:
       case Intrinsic::isunordered:
