@@ -48,6 +48,7 @@ static Module *ParserResult;
 #define YYERROR_VERBOSE 1
 
 static bool ObsoleteVarArgs;
+static bool NewVarArgs;
 static BasicBlock* CurBB;
 
 
@@ -728,12 +729,19 @@ static PATypeHolder HandleUpRefs(const Type *ty) {
 
   llvmAsmlineno = 1;      // Reset the current line number...
   ObsoleteVarArgs = false;
+  NewVarArgs = false;
 
   CurModule.CurrentModule = M;
   yyparse();       // Parse the file, potentially throwing exception
 
   Module *Result = ParserResult;
   ParserResult = 0;
+
+  if (ObsoleteVarArgs && NewVarArgs)
+  {
+    std::cerr << "This file is corrupt in that it uses both new and old style varargs\n";
+    abort();
+  }
 
   if(ObsoleteVarArgs) {
     if(Function* F = Result->getNamedFunction("llvm.va_start")) {
@@ -2041,6 +2049,7 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     $$ = new SelectInst($2, $4, $6);
   }
   | VAARG ResolvedVal ',' Types {
+    NewVarArgs = true;
     $$ = new VAArgInst($2, *$4);
     delete $4;
   }
