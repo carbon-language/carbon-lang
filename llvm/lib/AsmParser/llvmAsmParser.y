@@ -785,6 +785,7 @@ static PATypeHolder HandleUpRefs(const Type *ty) {
       while (!F->use_empty()) {
         CallInst* CI = cast<CallInst>(F->use_back());
         AllocaInst* bar = new AllocaInst(ArgTy, 0, "vaend.fix.1", CI);
+        new StoreInst(CI->getOperand(1), bar, CI);
         new CallInst(NF, bar, "", CI);
         CI->getParent()->getInstList().erase(CI);
       }

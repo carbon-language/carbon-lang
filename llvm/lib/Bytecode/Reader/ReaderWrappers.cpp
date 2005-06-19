@@ -209,6 +209,7 @@ static ModuleProvider* CheckVarargs(ModuleProvider* MP) {
     for(Value::use_iterator I = F->use_begin(), E = F->use_end(); I != E;)
       if (CallInst* CI = dyn_cast<CallInst>(*I++)) {
         AllocaInst* bar = new AllocaInst(ArgTy, 0, "vaend.fix.1", CI);
+        new StoreInst(CI->getOperand(1), bar, CI);
         new CallInst(NF, bar, "", CI);
         CI->getParent()->getInstList().erase(CI);
       }
