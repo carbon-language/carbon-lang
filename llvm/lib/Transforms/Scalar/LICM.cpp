@@ -386,7 +386,7 @@ bool LICM::canSinkOrHoistInst(Instruction &I) {
 
   return isa<BinaryOperator>(I) || isa<ShiftInst>(I) || isa<CastInst>(I) ||
          isa<SelectInst>(I) ||
-         isa<GetElementPtrInst>(I) || isa<VAArgInst>(I);
+         isa<GetElementPtrInst>(I);
 }
 
 /// isNotUsedInLoop - Return true if the only users of this instruction are
