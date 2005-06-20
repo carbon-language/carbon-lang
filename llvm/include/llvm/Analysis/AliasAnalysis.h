@@ -37,6 +37,7 @@ namespace llvm {
 
 class LoadInst;
 class StoreInst;
+class VAArgInst;
 class TargetData;
 
 class AliasAnalysis {
@@ -254,8 +255,12 @@ public:
   ModRefResult getModRefInfo(InvokeInst *I, Value *P, unsigned Size) {
     return getModRefInfo(CallSite(I), P, Size);
   }
+  ModRefResult getModRefInfo(VAArgInst* I, Value* P, unsigned Size) {
+    return AliasAnalysis::Mod;
+  }
   ModRefResult getModRefInfo(Instruction *I, Value *P, unsigned Size) {
     switch (I->getOpcode()) {
+    case Instruction::VAArg:  return getModRefInfo((VAArgInst*)I, P, Size);
     case Instruction::Load:   return getModRefInfo((LoadInst*)I, P, Size);
     case Instruction::Store:  return getModRefInfo((StoreInst*)I, P, Size);
     case Instruction::Call:   return getModRefInfo((CallInst*)I, P, Size);
