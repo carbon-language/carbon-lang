@@ -737,6 +737,17 @@ static PATypeHolder HandleUpRefs(const Type *ty) {
   Module *Result = ParserResult;
   ParserResult = 0;
 
+  //Not all functions use vaarg, so make a second check for ObsoleteVarArgs
+  {
+    Function* F;
+    if ((F = Result->getNamedFunction("llvm.va_start"))
+        && F->getFunctionType()->getNumParams() == 0)
+      ObsoleteVarArgs = true;
+    if((F = Result->getNamedFunction("llvm.va_copy"))
+       && F->getFunctionType()->getNumParams() == 1)
+      ObsoleteVarArgs = true;
+  }
+
   if (ObsoleteVarArgs && NewVarArgs)
   {
     std::cerr << "This file is corrupt in that it uses both new and old style varargs\n";
