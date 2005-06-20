@@ -173,9 +173,9 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
         }
 
         emitAlignment(Align);
-	if (!forCygwin) {
-	  O << "\t.type " << name << ",@object\n";
-	  O << "\t.size " << name << "," << Size << "\n";
+        if (!forCygwin) {
+          O << "\t.type " << name << ",@object\n";
+          O << "\t.size " << name << "," << Size << "\n";
         }
         O << name << ":\t\t\t\t# ";
         WriteAsOperand(O, I, true, true, &M);
