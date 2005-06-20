@@ -328,10 +328,6 @@ void LoadVN::getEqualNumberNodes(Value *V,
       LoadInvalidatedInBBBefore = true;
       break;
     }
-    if (dyn_cast<VAArgInst>(I)) {
-      LoadInvalidatedInBBBefore = true;
-      break;
-    }
   }
 
   // Figure out if the load is invalidated between the load and the exit of the
