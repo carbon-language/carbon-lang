@@ -2317,8 +2317,7 @@ int %test(int %X, ...) {
 
   ; Demonstrate usage of llvm.va_copy and llvm.va_end
   %aq = alloca sbyte*
-  %apv = load sbyte** %ap
-  call void %<a href="#i_va_copy">llvm.va_copy</a>(sbyte** %aq, sbyte* %apv)
+  call void %<a href="#i_va_copy">llvm.va_copy</a>(sbyte** %aq, sbyte** %ap)
   call void %<a href="#i_va_end">llvm.va_end</a>(sbyte** %aq)
 
   ; Stop processing of arguments.
@@ -2390,7 +2389,7 @@ with calls to <tt>llvm.va_end</tt>.</p>
 
 <pre>
   declare void %llvm.va_copy(&lt;va_list&gt;* &lt;destarglist&gt;,
-                                          &lt;va_list&gt; &lt;srcarglist&gt;)
+                                          &lt;va_list&gt;* &lt;srcarglist&gt;)
 </pre>
 
 <h5>Overview:</h5>
@@ -2401,7 +2400,7 @@ the source argument list to the destination argument list.</p>
 <h5>Arguments:</h5>
 
 <p>The first argument is a pointer to a <tt>va_list</tt> element to initialize.
-The second argument is a <tt>va_list</tt> element to copy from.</p>
+The second argument is a pointer to a <tt>va_list</tt> element to copy from.</p>
 
 
 <h5>Semantics:</h5>
