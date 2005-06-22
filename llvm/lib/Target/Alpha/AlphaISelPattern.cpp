@@ -15,6 +15,7 @@
 #include "AlphaRegisterInfo.h"
 #include "llvm/Constants.h"                   // FIXME: REMOVE
 #include "llvm/Function.h"
+#include "llvm/Module.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineConstantPool.h" // FIXME: REMOVE
 #include "llvm/CodeGen/MachineFunction.h"
@@ -443,7 +444,7 @@ namespace {
 /// ISel - Alpha specific code to select Alpha machine instructions for
 /// SelectionDAG operations.
 //===--------------------------------------------------------------------===//
-class ISel : public SelectionDAGISel {
+class AlphaISel : public SelectionDAGISel {
 
   /// AlphaLowering - This object fully describes how to lower LLVM code to an
   /// Alpha-specific SelectionDAG.
@@ -468,7 +469,7 @@ class ISel : public SelectionDAGISel {
   int max_depth;
 
 public:
-  ISel(TargetMachine &TM) : SelectionDAGISel(AlphaLowering), AlphaLowering(TM)
+  AlphaISel(TargetMachine &TM) : SelectionDAGISel(AlphaLowering), AlphaLowering(TM)
   {}
 
   /// InstructionSelectBasicBlock - This callback is invoked by
@@ -519,7 +520,7 @@ public:
 };
 }
 
-void ISel::EmitFunctionEntryCode(Function &Fn, MachineFunction &MF) {
+void AlphaISel::EmitFunctionEntryCode(Function &Fn, MachineFunction &MF) {
   // If this function has live-in values, emit the copies from pregs to vregs at
   // the top of the function, before anything else.
   MachineBasicBlock *BB = MF.begin();
@@ -542,8 +543,9 @@ void ISel::EmitFunctionEntryCode(Function &Fn, MachineFunction &MF) {
 //Find the offset of the arg in it's parent's function
 static int getValueOffset(const Value* v)
 {
+  static int uniqneg = -1;
   if (v == NULL)
-    return 0;
+    return uniqneg--;
 
   const Instruction* itarget = dyn_cast<Instruction>(v);
   const BasicBlock* btarget = itarget->getParent();
@@ -558,6 +560,24 @@ static int getValueOffset(const Value* v)
     ++i;
 
   return i;
+}
+//Find the offset of the function in it's module
+static int getFunctionOffset(const Function* fun)
+{
+  const Module* M = fun->getParent();
+
+  //offset due to earlier BBs
+  int i = 0;
+  for(Module::const_iterator ii = M->begin(); &*ii != fun; ++ii)
+    ++i;
+
+  return i;
+}
+
+static int getUID()
+{
+  static int id = 0;
+  return ++id;
 }
 
 //Factorize a number using the list of constants
@@ -680,7 +700,7 @@ static struct mu magicu(uint64_t d)
 /// return a DAG expression to select that will generate the same value by
 /// multiplying by a magic number.  See:
 /// <http://the.wall.riscom.net/books/proc/ppc/cwg/code2.html>
-SDOperand ISel::BuildSDIVSequence(SDOperand N) {
+SDOperand AlphaISel::BuildSDIVSequence(SDOperand N) {
   int64_t d = (int64_t)cast<ConstantSDNode>(N.getOperand(1))->getSignExtended();
   ms magics = magic(d);
   // Multiply the numerator (operand 0) by the magic value
@@ -706,7 +726,7 @@ SDOperand ISel::BuildSDIVSequence(SDOperand N) {
 /// return a DAG expression to select that will generate the same value by
 /// multiplying by a magic number.  See:
 /// <http://the.wall.riscom.net/books/proc/ppc/cwg/code2.html>
-SDOperand ISel::BuildUDIVSequence(SDOperand N) {
+SDOperand AlphaISel::BuildUDIVSequence(SDOperand N) {
   unsigned d =
     (unsigned)cast<ConstantSDNode>(N.getOperand(1))->getSignExtended();
   mu magics = magicu(d);
@@ -781,7 +801,7 @@ static unsigned GetSymVersion(unsigned opcode)
   }
 }
 
-void ISel::MoveFP2Int(unsigned src, unsigned dst, bool isDouble)
+void AlphaISel::MoveFP2Int(unsigned src, unsigned dst, bool isDouble)
 {
   unsigned Opc;
   if (EnableAlphaFTOI) {
@@ -801,7 +821,7 @@ void ISel::MoveFP2Int(unsigned src, unsigned dst, bool isDouble)
   }
 }
 
-void ISel::MoveInt2FP(unsigned src, unsigned dst, bool isDouble)
+void AlphaISel::MoveInt2FP(unsigned src, unsigned dst, bool isDouble)
 {
   unsigned Opc;
   if (EnableAlphaFTOI) {
@@ -821,7 +841,7 @@ void ISel::MoveInt2FP(unsigned src, unsigned dst, bool isDouble)
   }
 }
 
-bool ISel::SelectFPSetCC(SDOperand N, unsigned dst)
+bool AlphaISel::SelectFPSetCC(SDOperand N, unsigned dst)
 {
   SDNode *Node = N.Val;
   unsigned Opc, Tmp1, Tmp2, Tmp3;
@@ -880,7 +900,7 @@ bool ISel::SelectFPSetCC(SDOperand N, unsigned dst)
 }
 
 //Check to see if the load is a constant offset from a base register
-void ISel::SelectAddr(SDOperand N, unsigned& Reg, long& offset)
+void AlphaISel::SelectAddr(SDOperand N, unsigned& Reg, long& offset)
 {
   unsigned opcode = N.getOpcode();
   if (opcode == ISD::ADD) {
@@ -904,7 +924,7 @@ void ISel::SelectAddr(SDOperand N, unsigned& Reg, long& offset)
   return;
 }
 
-void ISel::SelectBranchCC(SDOperand N)
+void AlphaISel::SelectBranchCC(SDOperand N)
 {
   assert(N.getOpcode() == ISD::BRCOND && "Not a BranchCC???");
   MachineBasicBlock *Dest =
@@ -1015,7 +1035,7 @@ void ISel::SelectBranchCC(SDOperand N)
   abort(); //Should never be reached
 }
 
-unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
+unsigned AlphaISel::SelectExprFP(SDOperand N, unsigned Result)
 {
   unsigned Tmp1, Tmp2, Tmp3;
   unsigned Opc = 0;
@@ -1168,7 +1188,8 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
       if (EnableAlphaLSMark)
       {
         int i = getValueOffset(dyn_cast<SrcValueSDNode>(N.getOperand(2))->getValue());
-        BuildMI(BB, Alpha::MEMLABEL, 2).addImm(i);
+        int j = getFunctionOffset(BB->getParent()->getFunction());
+        BuildMI(BB, Alpha::MEMLABEL, 3).addImm(j).addImm(i).addImm(getUID());
       }
       
       if (Address.getOpcode() == ISD::GlobalAddress) {
@@ -1318,7 +1339,7 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
   return 0;
 }
 
-unsigned ISel::SelectExpr(SDOperand N) {
+unsigned AlphaISel::SelectExpr(SDOperand N) {
   unsigned Result;
   unsigned Tmp1, Tmp2 = 0, Tmp3;
   unsigned Opc = 0;
@@ -1481,6 +1502,13 @@ unsigned ISel::SelectExpr(SDOperand N) {
         case MVT::i8: Opc = Alpha::LDBU;
           assert(opcode != ISD::SEXTLOAD && "Not zext"); break;
         }
+
+      if (EnableAlphaLSMark)
+      {
+        int i = getValueOffset(dyn_cast<SrcValueSDNode>(N.getOperand(2))->getValue());
+        int j = getFunctionOffset(BB->getParent()->getFunction());
+        BuildMI(BB, Alpha::MEMLABEL, 3).addImm(j).addImm(i).addImm(getUID());
+      }
 
       if (Address.getOpcode() == ISD::GlobalAddress) {
         AlphaLowering.restoreGP(BB);
@@ -2231,7 +2259,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
   return 0;
 }
 
-void ISel::Select(SDOperand N) {
+void AlphaISel::Select(SDOperand N) {
   unsigned Tmp1, Tmp2, Opc;
   unsigned opcode = N.getOpcode();
 
@@ -2353,6 +2381,13 @@ void ISel::Select(SDOperand N) {
         }
       }
 
+      if (EnableAlphaLSMark)
+      {
+        int i = getValueOffset(dyn_cast<SrcValueSDNode>(N.getOperand(3))->getValue());
+        int j = getFunctionOffset(BB->getParent()->getFunction());
+        BuildMI(BB, Alpha::MEMLABEL, 3).addImm(j).addImm(i).addImm(getUID());
+      }
+
       if (Address.getOpcode() == ISD::GlobalAddress)
       {
         AlphaLowering.restoreGP(BB);
@@ -2411,6 +2446,6 @@ void ISel::Select(SDOperand N) {
 /// description file.
 ///
 FunctionPass *llvm::createAlphaPatternInstructionSelector(TargetMachine &TM) {
-  return new ISel(TM);
+  return new AlphaISel(TM);
 }
 
