@@ -182,10 +182,6 @@ namespace {
     LowerVAArgNext(SDOperand Chain, SDOperand VAList,
                    const Type *ArgTy, SelectionDAG &DAG);
 
-    virtual std::pair<SDOperand,SDOperand>
-    LowerVACopy(SDOperand Chain, SDOperand Src, SDOperand Dest, 
-                SelectionDAG &DAG);
-
     virtual std::pair<SDOperand, SDOperand>
     LowerFrameReturnAddress(bool isFrameAddr, SDOperand Chain, unsigned Depth,
                             SelectionDAG &DAG);
@@ -473,15 +469,6 @@ X86TargetLowering::LowerVAArgNext(SDOperand Chain, SDOperand VAList,
   Chain = DAG.getNode(ISD::STORE, MVT::Other, Chain,
                       Val, VAList, DAG.getSrcValue(NULL));
   return std::make_pair(Result, Chain);
-}
-
-std::pair<SDOperand,SDOperand>
-X86TargetLowering::LowerVACopy(SDOperand Chain, SDOperand Src, 
-                               SDOperand Dest, SelectionDAG &DAG)
-{
-  SDOperand Result = DAG.getNode(ISD::STORE, MVT::Other, Chain,
-                                 Src, Dest, DAG.getSrcValue(NULL));
-  return std::make_pair(Result, Result);
 }
 
 //===----------------------------------------------------------------------===//

@@ -2881,11 +2881,18 @@ static bool CodeGenIntrinsic(Intrinsic::ID iid, CallInst &callInstr,
     return true;                        // no-op on SparcV9
 
   case Intrinsic::vacopy:
-    // Simple store of current va_list (arg2) to new va_list (arg1)
-    mvec.push_back(BuildMI(V9::STXi, 3).
-                   addReg(callInstr.getOperand(2)).
-                   addReg(callInstr.getOperand(1)).addSImm(0));
-    return true;
+    {
+      MachineCodeForInstruction& m1 = MachineCodeForInstruction::get(&callInstr);
+      TmpInstruction* VReg = 
+        new TmpInstruction(m1, callInstr.getOperand(1)->getType());
+      
+      // Simple store of current va_list (arg2) to new va_list (arg1)
+      mvec.push_back(BuildMI(V9::LDXi, 3).
+                     addReg(callInstr.getOperand(2)).addSImm(0).addRegDef(VReg));
+      mvec.push_back(BuildMI(V9::STXi, 3).
+                     addReg(VReg).addReg(callInstr.getOperand(1)).addSImm(0));
+      return true;
+    }
   }
 }
 

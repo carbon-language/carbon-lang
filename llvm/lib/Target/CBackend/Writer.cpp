@@ -1495,7 +1495,7 @@ void CWriter::visitCallInst(CallInst &I) {
         Out << "0; ";
         Out << "va_copy(*(va_list*)";
         writeOperand(I.getOperand(1));
-        Out << ", *(va_list*)&";
+        Out << ", *(va_list*)";
         writeOperand(I.getOperand(2));
         Out << ')';
         return;

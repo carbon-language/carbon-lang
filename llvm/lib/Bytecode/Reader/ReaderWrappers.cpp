@@ -221,20 +221,24 @@ static ModuleProvider* CheckVarargs(ModuleProvider* MP) {
     //foo = vacopy(bar)
     // ->
     //a = alloca 1 of typeof(foo)
-    //vacopy(a, bar)
+    //b = alloca 1 of typeof(foo)
+    //store bar -> b
+    //vacopy(a, b)
     //foo = load a
     
     const Type* RetTy = Type::getPrimitiveType(Type::VoidTyID);
     const Type* ArgTy = F->getFunctionType()->getReturnType();
     const Type* ArgTyPtr = PointerType::get(ArgTy);
     Function* NF = M->getOrInsertFunction("llvm.va_copy", 
-                                          RetTy, ArgTyPtr, ArgTy, 0);
+                                          RetTy, ArgTyPtr, ArgTyPtr, 0);
     
     for(Value::use_iterator I = F->use_begin(), E = F->use_end(); I != E;)
       if (CallInst* CI = dyn_cast<CallInst>(*I++)) {
         AllocaInst* a = new AllocaInst(ArgTy, 0, "vacopy.fix.1", CI);
-        new CallInst(NF, a, CI->getOperand(1), "", CI);
-        Value* foo = new LoadInst(a, "vacopy.fix.2", CI);
+        AllocaInst* b = new AllocaInst(ArgTy, 0, "vacopy.fix.2", CI);
+        new StoreInst(CI->getOperand(1), b, CI);
+        new CallInst(NF, a, b, "", CI);
+        Value* foo = new LoadInst(a, "vacopy.fix.3", CI);
         CI->replaceAllUsesWith(foo);
         CI->getParent()->getInstList().erase(CI);
       }

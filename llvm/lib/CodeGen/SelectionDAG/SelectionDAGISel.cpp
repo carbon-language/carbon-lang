@@ -855,10 +855,11 @@ SDOperand TargetLowering::LowerVAEnd(SDOperand Chain, SDOperand L,
 std::pair<SDOperand,SDOperand>
 TargetLowering::LowerVACopy(SDOperand Chain, SDOperand Src, SDOperand Dest, 
                             SelectionDAG &DAG) {
-  // We have no sane default behavior, just emit a useful error message and bail
-  // out.
-  std::cerr << "Variable arguments handling not implemented on this target!\n";
-  abort();
+  //Default to returning the input list
+  SDOperand Val = DAG.getLoad(getPointerTy(), Chain, Src, DAG.getSrcValue(NULL));
+  SDOperand Result = DAG.getNode(ISD::STORE, MVT::Other, Val.getValue(1),
+                                 Val, Dest, DAG.getSrcValue(NULL));
+  return std::make_pair(Result, Result);
 }
 
 std::pair<SDOperand,SDOperand>

@@ -749,14 +749,12 @@ static PATypeHolder HandleUpRefs(const Type *ty) {
   }
 
   if (ObsoleteVarArgs && NewVarArgs)
-  {
-    std::cerr << "This file is corrupt in that it uses both new and old style varargs\n";
-    abort();
-  }
+    ThrowException("This file is corrupt in that it uses both new and old style varargs");
 
   if(ObsoleteVarArgs) {
     if(Function* F = Result->getNamedFunction("llvm.va_start")) {
-      assert(F->arg_size() == 0 && "Obsolete va_start takes 0 argument!");
+      if (F->arg_size() != 0)
+        ThrowException("Obsolete va_start takes 0 argument!");
       
       //foo = va_start()
       // ->
@@ -782,7 +780,9 @@ static PATypeHolder HandleUpRefs(const Type *ty) {
     }
     
     if(Function* F = Result->getNamedFunction("llvm.va_end")) {
-      assert(F->arg_size() == 1 && "Obsolete va_end takes 1 argument!");
+      if(F->arg_size() != 1)
+        ThrowException("Obsolete va_end takes 1 argument!");
+
       //vaend foo
       // ->
       //bar = alloca 1 of typeof(foo)
@@ -804,24 +804,29 @@ static PATypeHolder HandleUpRefs(const Type *ty) {
     }
 
     if(Function* F = Result->getNamedFunction("llvm.va_copy")) {
-      assert(F->arg_size() == 1 && "Obsolete va_copy takes 1 argument!");
+      if(F->arg_size() != 1)
+        ThrowException("Obsolete va_copy takes 1 argument!");
       //foo = vacopy(bar)
       // ->
       //a = alloca 1 of typeof(foo)
-      //vacopy(a, bar)
+      //b = alloca 1 of typeof(foo)
+      //store bar -> b
+      //vacopy(a, b)
       //foo = load a
       
       const Type* RetTy = Type::getPrimitiveType(Type::VoidTyID);
       const Type* ArgTy = F->getFunctionType()->getReturnType();
       const Type* ArgTyPtr = PointerType::get(ArgTy);
       Function* NF = Result->getOrInsertFunction("llvm.va_copy", 
-                                                 RetTy, ArgTyPtr, ArgTy, 0);
+                                                 RetTy, ArgTyPtr, ArgTyPtr, 0);
 
       while (!F->use_empty()) {
         CallInst* CI = cast<CallInst>(F->use_back());
         AllocaInst* a = new AllocaInst(ArgTy, 0, "vacopy.fix.1", CI);
-        new CallInst(NF, a, CI->getOperand(1), "", CI);
-        Value* foo = new LoadInst(a, "vacopy.fix.2", CI);
+        AllocaInst* b = new AllocaInst(ArgTy, 0, "vacopy.fix.2", CI);
+        new StoreInst(CI->getOperand(1), b, CI);
+        new CallInst(NF, a, b, "", CI);
+        Value* foo = new LoadInst(a, "vacopy.fix.3", CI);
         CI->replaceAllUsesWith(foo);
         CI->getParent()->getInstList().erase(CI);
       }
