@@ -76,6 +76,7 @@ namespace {
     int VarArgsOffset;  // What is the offset to the first vaarg
     int VarArgsBase;    // What is the base FrameIndex
     unsigned GP; //GOT vreg
+    unsigned RA; //Return Address
   public:
     AlphaTargetLowering(TargetMachine &TM) : TargetLowering(TM) {
       // Set up the TargetLowering object.
@@ -171,6 +172,11 @@ namespace {
     {
       BuildMI(BB, Alpha::BIS, 2, Alpha::R29).addReg(GP).addReg(GP);
     }
+    void restoreRA(MachineBasicBlock* BB)
+    {
+      BuildMI(BB, Alpha::BIS, 2, Alpha::R26).addReg(RA).addReg(RA);
+    }
+
   };
 }
 
@@ -262,6 +268,7 @@ AlphaTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG)
   int count = 0;
 
   GP = AddLiveIn(MF, Alpha::R29, getRegClassFor(MVT::i64));
+  RA = AddLiveIn(MF, Alpha::R26, getRegClassFor(MVT::i64));
 
   for (Function::arg_iterator I = F.arg_begin(), E = F.arg_end(); I != E; ++I)
   {
@@ -418,7 +425,7 @@ LowerVAArgNext(SDOperand Chain, SDOperand VAList,
   SDOperand Base = DAG.getLoad(MVT::i64, Chain, VAList, DAG.getSrcValue(NULL));
   SDOperand Tmp = DAG.getNode(ISD::ADD, MVT::i64, VAList, 
                               DAG.getConstant(8, MVT::i64));
-  SDOperand Offset = DAG.getNode(ISD::SEXTLOAD, MVT::i64, Chain, Tmp, 
+  SDOperand Offset = DAG.getNode(ISD::SEXTLOAD, MVT::i64, Base.getValue(1), Tmp, 
                                  DAG.getSrcValue(NULL), MVT::i32);
   SDOperand DataPtr = DAG.getNode(ISD::ADD, MVT::i64, Base, Offset);
   if (ArgTy->isFloatingPoint())
@@ -433,18 +440,18 @@ LowerVAArgNext(SDOperand Chain, SDOperand VAList,
 
   SDOperand Result;
   if (ArgTy == Type::IntTy)
-    Result = DAG.getNode(ISD::SEXTLOAD, MVT::i64, Chain, DataPtr, 
+    Result = DAG.getNode(ISD::SEXTLOAD, MVT::i64, Offset.getValue(1), DataPtr, 
                          DAG.getSrcValue(NULL), MVT::i32);
   else if (ArgTy == Type::UIntTy)
-    Result = DAG.getNode(ISD::ZEXTLOAD, MVT::i64, Chain, DataPtr, 
+    Result = DAG.getNode(ISD::ZEXTLOAD, MVT::i64, Offset.getValue(1), DataPtr, 
                          DAG.getSrcValue(NULL), MVT::i32);
   else
-    Result = DAG.getLoad(getValueType(ArgTy), Chain, DataPtr, 
+    Result = DAG.getLoad(getValueType(ArgTy), Offset.getValue(1), DataPtr, 
                          DAG.getSrcValue(NULL));
 
   SDOperand NewOffset = DAG.getNode(ISD::ADD, MVT::i64, Offset, 
                                     DAG.getConstant(8, MVT::i64));
-  SDOperand Update = DAG.getNode(ISD::TRUNCSTORE, MVT::Other, Result, NewOffset, 
+  SDOperand Update = DAG.getNode(ISD::TRUNCSTORE, MVT::Other, Result.getValue(1), NewOffset, 
                                  Tmp, DAG.getSrcValue(NULL), MVT::i32);
   Result = DAG.getNode(ISD::TRUNCATE, getValueType(ArgTy), Result);
 
@@ -460,10 +467,12 @@ LowerVACopy(SDOperand Chain, SDOperand Src, SDOperand Dest,
                                  Val, Dest, DAG.getSrcValue(NULL));
   SDOperand NP = DAG.getNode(ISD::ADD, MVT::i64, Src, 
                              DAG.getConstant(8, MVT::i64));
-  Val = DAG.getNode(ISD::SEXTLOAD, MVT::i64, Chain, NP, DAG.getSrcValue(NULL), 
+  Val = DAG.getNode(ISD::SEXTLOAD, MVT::i64, Result, NP, DAG.getSrcValue(NULL), 
                     MVT::i32);
+  SDOperand NPD = DAG.getNode(ISD::ADD, MVT::i64, Dest, 
+                             DAG.getConstant(8, MVT::i64));
   Result = DAG.getNode(ISD::TRUNCSTORE, MVT::Other, Val.getValue(1),
-                       Val, Dest, DAG.getSrcValue(NULL), MVT::i32);
+                       Val, NPD, DAG.getSrcValue(NULL), MVT::i32);
   return std::make_pair(Result, Result);
 }
 
@@ -2388,9 +2397,8 @@ void AlphaISel::Select(SDOperand N) {
       Select(N.getOperand(0));
       break;
     }
-    //Tmp2 = AlphaLowering.getRetAddr();
-    //BuildMI(BB, Alpha::BIS, 2, Alpha::R26).addReg(Tmp2).addReg(Tmp2);
-    BuildMI(BB, Alpha::RETURN, 0); // Just emit a 'ret' instruction
+    AlphaLowering.restoreRA(BB);
+    BuildMI(BB, Alpha::RET, 1, Alpha::R31).addReg(Alpha::R26); // Just emit a 'ret' instruction
     return;
 
   case ISD::TRUNCSTORE:

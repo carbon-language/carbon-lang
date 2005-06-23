@@ -53,9 +53,6 @@ let isCall = 1,
     Uses = [R29] in
       def CALL : PseudoInstAlpha< (ops s64imm:$TARGET), "jsr $TARGET">; //Jump to subroutine
 
-let isReturn = 1, isTerminator = 1 in
-  def RETURN : PseudoInstAlpha<(ops ), "ret $$31,($$26),1">; //Return from subroutine
-
 //These are evil as they get expanded into multiple instructions to take care of reallocation
 let Uses = [R29], Defs = [R28] in {
   def LOAD_ADDR : PseudoInstAlpha<(ops GPRC:$RA, s64imm:$DISP), "lda $RA,$DISP">;  //Load address
