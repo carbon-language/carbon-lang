@@ -717,6 +717,14 @@ be any type with a size.</p>
     </td>
   </tr>
 </table>
+
+<p>Note that 'variable sized arrays' can be implemented in LLVM With a zero 
+length array.  Normally accesses past the end of an array are undefined in
+LLVM (e.g. it is illegal to access the 5th element of a 3 element array).
+As a special case, however, zero length arrays are recognized to be variable
+length.  This allows implementation of 'pascal style arrays' with the  LLVM
+type "{ int, [0 x float]}", for example.</p>
+
 </div>
 
 <!-- _______________________________________________________________________ -->
@@ -1989,7 +1997,15 @@ the LLVM code for the given testcase is equivalent to:</p>
     ret int* %t5
   }
 </pre>
+
+<p>Note that it is undefined to access an array out of bounds: array and 
+pointer indexes must always be within the defined bounds of the array type.
+The one exception for this rules is zero length arrays.  These arrays are
+defined to be accessible as variable length arrays, which requires access
+beyond the zero'th element.</p>
+
 <h5>Example:</h5>
+
 <pre>
     <i>; yields [12 x ubyte]*:aptr</i>
     %aptr = getelementptr {int, [12 x ubyte]}* %sptr, long 0, uint 1
