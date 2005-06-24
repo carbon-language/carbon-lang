@@ -749,7 +749,7 @@ static PATypeHolder HandleUpRefs(const Type *ty) {
   }
 
   if (ObsoleteVarArgs && NewVarArgs)
-    ThrowException("This file is corrupt in that it uses both new and old style varargs");
+    ThrowException("This file is corrupt: it uses both new and old style varargs");
 
   if(ObsoleteVarArgs) {
     if(Function* F = Result->getNamedFunction("llvm.va_start")) {
