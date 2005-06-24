@@ -17,6 +17,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "deadargelim"
 #include "llvm/Transforms/IPO.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
