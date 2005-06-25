@@ -115,7 +115,7 @@ public:
   /// CodeGenFileType - These enums are meant to be passed into
   /// addPassesToEmitFile to indicate what type of file to emit.
   enum CodeGenFileType {
-    AssemblyFile
+    AssemblyFile, ObjectFile, DynamicLibrary
   };
 
   /// addPassesToEmitFile - Add passes to the specified pass manager to get
