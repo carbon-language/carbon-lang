@@ -54,11 +54,13 @@ AlphaTargetMachine::AlphaTargetMachine( const Module &M, IntrinsicLowering *IL)
     FrameInfo(TargetFrameInfo::StackGrowsDown, 8, 0) //TODO: check these
 {}
 
-/// addPassesToEmitAssembly - Add passes to the specified pass manager
-/// to implement a static compiler for this target.
+/// addPassesToEmitFile - Add passes to the specified pass manager to implement
+/// a static compiler for this target.
 ///
-bool AlphaTargetMachine::addPassesToEmitAssembly(PassManager &PM,
-                                                   std::ostream &Out) {
+bool AlphaTargetMachine::addPassesToEmitFile(PassManager &PM,
+                                             std::ostream &Out,
+                                             CodeGenFileType FileType) {
+  if (FileType != TargetMachine::AssemblyFile) return true;
 
   if (EnableAlphaLSR) {
     PM.add(createLoopStrengthReducePass());

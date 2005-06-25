@@ -42,7 +42,8 @@ namespace llvm {
     virtual bool addPassesToEmitMachineCode(FunctionPassManager &PM,
                                             MachineCodeEmitter &MCE);
 
-    virtual bool addPassesToEmitAssembly(PassManager &PM, std::ostream &Out);
+    virtual bool addPassesToEmitFile(PassManager &PM, std::ostream &Out,
+                                     CodeGenFileType FileType);
   };
 
 } // end namespace llvm

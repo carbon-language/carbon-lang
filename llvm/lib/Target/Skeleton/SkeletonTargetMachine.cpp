@@ -34,11 +34,13 @@ SkeletonTargetMachine::SkeletonTargetMachine(const Module &M,
     FrameInfo(TargetFrameInfo::StackGrowsDown, 8, -4), JITInfo(*this) {
 }
 
-/// addPassesToEmitAssembly - Add passes to the specified pass manager
+/// addPassesToEmitFile - Add passes to the specified pass manager
 /// to implement a static compiler for this target.
 ///
-bool SkeletonTargetMachine::addPassesToEmitAssembly(PassManager &PM,
-                                                    std::ostream &Out) {
+bool SkeletonTargetMachine::addPassesToEmitFile(PassManager &PM,
+                                                std::ostream &Out,
+                                                CodeGenFileType FileType) {
+  if (FileType != TargetMachine::AssemblyFile) return true;
   // <insert instruction selector passes here>
   PM.add(createRegisterAllocator());
   PM.add(createPrologEpilogCodeInserter());

@@ -1725,7 +1725,10 @@ void CWriter::visitVAArgInst(VAArgInst &I) {
 //                       External Interface declaration
 //===----------------------------------------------------------------------===//
 
-bool CTargetMachine::addPassesToEmitAssembly(PassManager &PM, std::ostream &o) {
+bool CTargetMachine::addPassesToEmitFile(PassManager &PM, std::ostream &o,
+                                         CodeGenFileType FileType) {
+  if (FileType != TargetMachine::AssemblyFile) return true;
+
   PM.add(createLowerGCPass());
   PM.add(createLowerAllocationsPass(true));
   PM.add(createLowerInvokePass());
@@ -1733,5 +1736,3 @@ bool CTargetMachine::addPassesToEmitAssembly(PassManager &PM, std::ostream &o) {
   PM.add(new CWriter(o, getIntrinsicLowering()));
   return false;
 }
-
-// vim: sw=2

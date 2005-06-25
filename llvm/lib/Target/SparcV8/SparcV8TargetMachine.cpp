@@ -59,11 +59,14 @@ unsigned SparcV8TargetMachine::getModuleMatchQuality(const Module &M) {
   return getJITMatchQuality()/2;
 }
 
-/// addPassesToEmitAssembly - Add passes to the specified pass manager
+/// addPassesToEmitFile - Add passes to the specified pass manager
 /// to implement a static compiler for this target.
 ///
-bool SparcV8TargetMachine::addPassesToEmitAssembly(PassManager &PM,
-                                                   std::ostream &Out) {
+bool SparcV8TargetMachine::addPassesToEmitFile(PassManager &PM,
+                                               std::ostream &Out,
+                                               CodeGenFileType FileType) {
+  if (FileType != TargetMachine::AssemblyFile) return true;
+
   // FIXME: Implement efficient support for garbage collection intrinsics.
   PM.add(createLowerGCPass());
 

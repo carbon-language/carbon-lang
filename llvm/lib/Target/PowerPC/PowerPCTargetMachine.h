@@ -32,7 +32,8 @@ protected:
 public:
   virtual const TargetFrameInfo  *getFrameInfo() const { return &FrameInfo; }
 
-  virtual bool addPassesToEmitAssembly(PassManager &PM, std::ostream &Out);
+  virtual bool addPassesToEmitFile(PassManager &PM, std::ostream &Out,
+                                   CodeGenFileType FileType);
 };
 
 } // end namespace llvm

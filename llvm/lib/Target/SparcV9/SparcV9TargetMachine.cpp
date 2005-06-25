@@ -156,12 +156,14 @@ SparcV9TargetMachine::SparcV9TargetMachine(const Module &M,
     jitInfo(*this) {
 }
 
-/// addPassesToEmitAssembly - This method controls the entire code generation
+/// addPassesToEmitFile - This method controls the entire code generation
 /// process for the ultra sparc.
 ///
 bool
-SparcV9TargetMachine::addPassesToEmitAssembly(PassManager &PM, std::ostream &Out)
-{
+SparcV9TargetMachine::addPassesToEmitFile(PassManager &PM, std::ostream &Out,
+                                                CodeGenFileType FileType) {
+  if (FileType != TargetMachine::AssemblyFile) return true;
+
   // FIXME: Implement efficient support for garbage collection intrinsics.
   PM.add(createLowerGCPass());
 

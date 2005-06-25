@@ -73,11 +73,14 @@ unsigned PPC32TargetMachine::getJITMatchQuality() {
 #endif
 }
 
-/// addPassesToEmitAssembly - Add passes to the specified pass manager
-/// to implement a static compiler for this target.
+/// addPassesToEmitFile - Add passes to the specified pass manager to implement
+/// a static compiler for this target.
 ///
-bool PowerPCTargetMachine::addPassesToEmitAssembly(PassManager &PM,
-                                                   std::ostream &Out) {
+bool PowerPCTargetMachine::addPassesToEmitFile(PassManager &PM,
+                                               std::ostream &Out,
+                                                CodeGenFileType FileType) {
+  if (FileType != TargetMachine::AssemblyFile) return true;
+
   bool LP64 = (0 != dynamic_cast<PPC64TargetMachine *>(this));
 
   if (EnablePPCLSR) {

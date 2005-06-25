@@ -35,7 +35,8 @@ public:
     return &InstrInfo.getRegisterInfo();
   }
 
-  virtual bool addPassesToEmitAssembly(PassManager &PM, std::ostream &Out);
+  virtual bool addPassesToEmitFile(PassManager &PM, std::ostream &Out,
+                                   CodeGenFileType FileType);
 
   static unsigned getModuleMatchQuality(const Module &M);
   static unsigned compileTimeMatchQuality(void);
