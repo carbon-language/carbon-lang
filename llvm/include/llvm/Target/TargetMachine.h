@@ -112,12 +112,19 @@ public:
   virtual const TargetSchedInfo        *getSchedInfo() const { return 0; }
   virtual const SparcV9RegInfo         *getRegInfo()   const { return 0; }
 
-  /// addPassesToEmitAssembly - Add passes to the specified pass manager to get
-  /// assembly langage code emitted.  Typically this will involve several steps
-  /// of code generation.  This method should return true if assembly emission
-  /// is not supported.
+  /// CodeGenFileType - These enums are meant to be passed into
+  /// addPassesToEmitFile to indicate what type of file to emit.
+  enum CodeGenFileType {
+    AssemblyFile
+  };
+
+  /// addPassesToEmitFile - Add passes to the specified pass manager to get
+  /// the specified file emitted.  Typically this will involve several steps of
+  /// code generation.  This method should return true if emission of this file
+  /// type is not supported.
   ///
-  virtual bool addPassesToEmitAssembly(PassManager &PM, std::ostream &Out) {
+  virtual bool addPassesToEmitFile(PassManager &PM, std::ostream &Out,
+                                   CodeGenFileType FileType) {
     return true;
   }
 
