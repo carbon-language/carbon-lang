@@ -23,6 +23,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/PluginLoader.h"
 #include "llvm/System/Signals.h"
+#include "llvm/Config/config.h"
 #include <fstream>
 #include <iostream>
 #include <memory>
@@ -44,7 +45,20 @@ static cl::opt<bool> Force("f", cl::desc("Overwrite output files"));
 static cl::opt<const TargetMachineRegistry::Entry*, false, TargetNameParser>
 MArch("march", cl::desc("Architecture to generate code for:"));
 
-// GetFileNameRoot - Helper function to get the basename of a filename...
+cl::opt<TargetMachine::CodeGenFileType>
+FileType("filetype", cl::init(TargetMachine::AssemblyFile),
+  cl::desc("Choose a file type (not all types are supported by all targets):"),
+  cl::values(
+       clEnumValN(TargetMachine::AssemblyFile,    "asm",
+                  "  Emit an assembly ('.s') file"),
+       clEnumValN(TargetMachine::ObjectFile,    "obj",
+                  "  Emit a native object ('.o') file"),
+       clEnumValN(TargetMachine::DynamicLibrary, "dynlib",
+                  "  Emit a native dynamic library ('.so') file"),
+       clEnumValEnd));
+
+
+// GetFileNameRoot - Helper function to get the basename of a filename.
 static inline std::string
 GetFileNameRoot(const std::string &InputFilename) {
   std::string IFN = InputFilename;
@@ -126,10 +140,20 @@ int main(int argc, char **argv) {
       } else {
         OutputFilename = GetFileNameRoot(InputFilename);
 
-        if (MArch->Name[0] != 'c' || MArch->Name[1] != 0)  // not CBE
-          OutputFilename += ".s";
-        else
-          OutputFilename += ".cbe.c";
+        switch (FileType) {
+        case TargetMachine::AssemblyFile:
+          if (MArch->Name[0] != 'c' || MArch->Name[1] != 0)  // not CBE
+            OutputFilename += ".s";
+          else
+            OutputFilename += ".cbe.c";
+          break;
+        case TargetMachine::ObjectFile:
+          OutputFilename += ".o";
+          break;
+        case TargetMachine::DynamicLibrary:
+          OutputFilename += LTDL_SHLIB_EXT;
+          break;
+        }
 
         if (!Force && std::ifstream(OutputFilename.c_str())) {
           // If force is not specified, make sure not to overwrite a file!
@@ -153,9 +177,9 @@ int main(int argc, char **argv) {
     }
 
     // Ask the target to add backend passes as necessary.
-    if (Target.addPassesToEmitFile(Passes, *Out, TargetMachine::AssemblyFile)) {
+    if (Target.addPassesToEmitFile(Passes, *Out, FileType)) {
       std::cerr << argv[0] << ": target '" << Target.getName()
-                << "' does not support static compilation!\n";
+                << "' does not support generation of this file type!\n";
       if (Out != &std::cout) delete Out;
       // And the Out file is empty and useless, so remove it now.
       std::remove(OutputFilename.c_str());
