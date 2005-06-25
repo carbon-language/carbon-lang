@@ -154,7 +154,7 @@ int main(int argc, char **argv) {
     }
 
     // Ask the target to add backend passes as necessary
-    if (Target.addPassesToEmitAssembly(Passes, *Out)) {
+    if (Target.addPassesToEmitFile(Passes, *Out, TargetMachine::AssemblyFile)) {
       std::cerr << argv[0] << ": target '" << Target.getName()
                 << "' does not support static compilation!\n";
       if (Out != &std::cout) delete Out;
