@@ -852,6 +852,18 @@ static unsigned GetSymVersion(unsigned opcode)
   case Alpha::STB: return Alpha::STB_SYM;
   }
 }
+static unsigned GetRelVersion(unsigned opcode)
+{
+  switch (opcode) {
+  default: assert(0 && "unknown load or store"); return 0;
+  case Alpha::LDQ: return Alpha::LDQr;
+  case Alpha::LDS: return Alpha::LDSr;
+  case Alpha::LDT: return Alpha::LDTr;
+  case Alpha::LDL: return Alpha::LDLr;
+  case Alpha::LDBU: return Alpha::LDBUr;
+  case Alpha::LDWU: return Alpha::LDWUr;
+  }
+}
 
 void AlphaISel::MoveFP2Int(unsigned src, unsigned dst, bool isDouble)
 {
@@ -1234,9 +1246,11 @@ unsigned AlphaISel::SelectExprFP(SDOperand N, unsigned Result)
       }
       else if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(Address)) {
         AlphaLowering.restoreGP(BB);
-        Opc = GetSymVersion(Opc);
+        Opc = GetRelVersion(Opc);
         has_sym = true;
-        BuildMI(BB, Opc, 1, Result).addConstantPoolIndex(CP->getIndex());
+        Tmp1 = MakeReg(MVT::i64);
+        BuildMI(BB, Alpha::LDAHr, 2, Tmp1).addConstantPoolIndex(CP->getIndex()).addReg(Alpha::R29);
+        BuildMI(BB, Opc, 2, Result).addConstantPoolIndex(CP->getIndex()).addReg(Tmp1);
       }
       else if(Address.getOpcode() == ISD::FrameIndex) {
         BuildMI(BB, Opc, 2, Result)
@@ -1321,7 +1335,9 @@ unsigned AlphaISel::SelectExprFP(SDOperand N, unsigned Result)
       {
         AlphaLowering.restoreGP(BB);
         has_sym = true;
-        BuildMI(BB, Alpha::LDS_SYM, 1, Tmp1).addConstantPoolIndex(CP->getIndex());
+        Tmp2 = MakeReg(MVT::i64);
+        BuildMI(BB, Alpha::LDAHr, 2, Tmp2).addConstantPoolIndex(CP->getIndex()).addReg(Alpha::R29);
+        BuildMI(BB, Alpha::LDSr, 2, Tmp1).addConstantPoolIndex(CP->getIndex()).addReg(Tmp2);
       }
       else if(Address.getOpcode() == ISD::FrameIndex) {
         Tmp2 = cast<FrameIndexSDNode>(Address)->getIndex();
@@ -1532,9 +1548,11 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
       }
       else if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(Address)) {
         AlphaLowering.restoreGP(BB);
-        Opc = GetSymVersion(Opc);
+        Opc = GetRelVersion(Opc);
         has_sym = true;
-        BuildMI(BB, Opc, 1, Result).addConstantPoolIndex(CP->getIndex());
+        Tmp1 = MakeReg(MVT::i64);
+        BuildMI(BB, Alpha::LDAHr, 2, Tmp1).addConstantPoolIndex(CP->getIndex()).addReg(Alpha::R29);
+        BuildMI(BB, Opc, 2, Result).addConstantPoolIndex(CP->getIndex()).addReg(Tmp1);
       }
       else if(Address.getOpcode() == ISD::FrameIndex) {
         BuildMI(BB, Opc, 2, Result)
@@ -2219,7 +2237,10 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
         ConstantUInt *C = ConstantUInt::get(Type::getPrimitiveType(Type::ULongTyID) , val);
         unsigned CPI = CP->getConstantPoolIndex(C);
         AlphaLowering.restoreGP(BB);
-        BuildMI(BB, Alpha::LDQ_SYM, 1, Result).addConstantPoolIndex(CPI);
+        has_sym = true;
+        Tmp1 = MakeReg(MVT::i64);
+        BuildMI(BB, Alpha::LDAHr, 2, Tmp1).addConstantPoolIndex(CPI).addReg(Alpha::R29);
+        BuildMI(BB, Alpha::LDQr, 2, Result).addConstantPoolIndex(CPI).addReg(Tmp1);
       }
       return Result;
     }

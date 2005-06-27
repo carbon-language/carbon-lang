@@ -333,7 +333,6 @@ let isCall = 1,
 def JSR_COROUTINE : MForm< 0x1A, (ops GPRC:$RD, GPRC:$RS), "jsr_coroutine $RD,($RS),1">; //Jump to subroutine return
 def BR : BForm<0x30, (ops GPRC:$RD, s21imm:$DISP), "br $RD,$DISP">; //Branch
 
-let Uses = [R28] in {
 //Stores, int
 def STB : MForm<0x0E, (ops GPRC:$RA, s16imm:$DISP, GPRC:$RB), "stb $RA,$DISP($RB)">; // Store byte
 def STW : MForm<0x0D, (ops GPRC:$RA, s16imm:$DISP, GPRC:$RB), "stw $RA,$DISP($RB)">; // Store word
@@ -353,11 +352,24 @@ def STT : MForm<0x27, (ops FPRC:$RA, s16imm:$DISP, GPRC:$RB), "stt $RA,$DISP($RB
 //Loads, float
 def LDS : MForm<0x22, (ops FPRC:$RA, s16imm:$DISP, GPRC:$RB), "lds $RA,$DISP($RB)">; //Load S_floating
 def LDT : MForm<0x23, (ops FPRC:$RA, s16imm:$DISP, GPRC:$RB), "ldt $RA,$DISP($RB)">; //Load T_floating
-}
 
 //Load address
 def LDA : MForm<0x08, (ops GPRC:$RA, s16imm:$DISP, GPRC:$RB), "lda $RA,$DISP($RB)">;  //Load address
 def LDAH : MForm<0x08, (ops GPRC:$RA, s16imm:$DISP, GPRC:$RB), "ldah $RA,$DISP($RB)">;  //Load address high
+
+
+//Loads, int, Rellocated form
+def LDLr : MForm<0x28, (ops GPRC:$RA, s16imm:$DISP, GPRC:$RB), "ldl $RA,$DISP($RB) !gprellow">; // Load sign-extended longword
+def LDQr : MForm<0x29, (ops GPRC:$RA, s16imm:$DISP, GPRC:$RB), "ldq $RA,$DISP($RB) !gprellow">; //Load quadword
+def LDBUr : MForm<0x0A, (ops GPRC:$RA, s16imm:$DISP, GPRC:$RB), "ldbu $RA,$DISP($RB) !gprellow">; //Load zero-extended byte
+def LDWUr : MForm<0x0C, (ops GPRC:$RA, s16imm:$DISP, GPRC:$RB), "ldwu $RA,$DISP($RB) !gprellow">; //Load zero-extended word
+
+//Loads, float, Rellocated form
+def LDSr : MForm<0x22, (ops FPRC:$RA, s16imm:$DISP, GPRC:$RB), "lds $RA,$DISP($RB) !gprellow">; //Load S_floating
+def LDTr : MForm<0x23, (ops FPRC:$RA, s16imm:$DISP, GPRC:$RB), "ldt $RA,$DISP($RB) !gprellow">; //Load T_floating
+
+//Load address, rellocated form
+def LDAHr : MForm<0x08, (ops GPRC:$RA, s16imm:$DISP, GPRC:$RB), "ldah $RA,$DISP($RB) !gprelhigh">;  //Load address high
 
 
 //Branches, int
