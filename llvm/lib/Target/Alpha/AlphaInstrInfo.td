@@ -369,6 +369,7 @@ def LDSr : MForm<0x22, (ops FPRC:$RA, s16imm:$DISP, GPRC:$RB), "lds $RA,$DISP($R
 def LDTr : MForm<0x23, (ops FPRC:$RA, s16imm:$DISP, GPRC:$RB), "ldt $RA,$DISP($RB) !gprellow">; //Load T_floating
 
 //Load address, rellocated form
+def LDAr : MForm<0x08, (ops GPRC:$RA, s16imm:$DISP, GPRC:$RB), "lda $RA,$DISP($RB) !gprellow">;  //Load address
 def LDAHr : MForm<0x08, (ops GPRC:$RA, s16imm:$DISP, GPRC:$RB), "ldah $RA,$DISP($RB) !gprelhigh">;  //Load address high
 
 

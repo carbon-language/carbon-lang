@@ -1520,11 +1520,15 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
     BuildMI(BB, Alpha::BIS, 2, Result).addReg(Alpha::R30).addReg(Alpha::R30);
     return Result;
 
-//   case ISD::ConstantPool:
-//     Tmp1 = cast<ConstantPoolSDNode>(N)->getIndex();
-//     AlphaLowering.restoreGP(BB);
-//     BuildMI(BB, Alpha::LDQ_SYM, 1, Result).addConstantPoolIndex(Tmp1);
-//     return Result;
+  case ISD::ConstantPool:
+    Tmp1 = cast<ConstantPoolSDNode>(N)->getIndex();
+    AlphaLowering.restoreGP(BB);
+    Tmp2 = MakeReg(MVT::i64);
+    BuildMI(BB, Alpha::LDAHr, 2, Tmp2).addConstantPoolIndex(Tmp1)
+      .addReg(Alpha::R29);
+    BuildMI(BB, Alpha::LDAr, 2, Result).addConstantPoolIndex(Tmp1)
+      .addReg(Tmp2);
+    return Result;
 
   case ISD::FrameIndex:
     BuildMI(BB, Alpha::LDA, 2, Result)
