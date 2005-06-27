@@ -92,8 +92,7 @@ namespace {
       setOperationAction(ISD::BRCONDTWOWAY, MVT::Other, Expand);
 
       setOperationAction(ISD::EXTLOAD, MVT::i1,  Promote);
-      setOperationAction(ISD::EXTLOAD, MVT::f32, Promote);
-
+ 
       setOperationAction(ISD::ZEXTLOAD, MVT::i1   , Expand);
       setOperationAction(ISD::ZEXTLOAD, MVT::i32  , Expand);
 
@@ -2392,7 +2391,8 @@ void AlphaISel::Select(SDOperand N) {
       break;
     }
     // Just emit a 'ret' instruction
-    BuildMI(BB, Alpha::RET, 1, Alpha::R31).addReg(AlphaLowering.getRA());
+    AlphaLowering.restoreRA(BB);
+    BuildMI(BB, Alpha::RET, 1, Alpha::R31).addReg(Alpha::R26);
     return;
 
   case ISD::TRUNCSTORE:
