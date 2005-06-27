@@ -179,6 +179,10 @@ namespace {
     {
       BuildMI(BB, Alpha::BIS, 2, Alpha::R26).addReg(RA).addReg(RA);
     }
+    unsigned getRA()
+    {
+      return RA;
+    }
 
   };
 }
@@ -2310,8 +2314,7 @@ void AlphaISel::Select(SDOperand N) {
       Select(N.getOperand(0));
       break;
     }
-    AlphaLowering.restoreRA(BB);
-    BuildMI(BB, Alpha::RET, 1, Alpha::R31).addReg(Alpha::R26); // Just emit a 'ret' instruction
+    BuildMI(BB, Alpha::RET, 1, Alpha::R31).addReg(AlphaLowering.getRA()); // Just emit a 'ret' instruction
     return;
 
   case ISD::TRUNCSTORE:
