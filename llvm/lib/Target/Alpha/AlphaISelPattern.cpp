@@ -1607,8 +1607,9 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
   case ISD::GlobalAddress:
     AlphaLowering.restoreGP(BB);
     has_sym = true;
-    BuildMI(BB, Alpha::LOAD_ADDR, 1, Result)
-      .addGlobalAddress(cast<GlobalAddressSDNode>(N)->getGlobal());
+    BuildMI(BB, Alpha::LDQrl, 2, Result)
+      .addGlobalAddress(cast<GlobalAddressSDNode>(N)->getGlobal())
+      .addReg(Alpha::R29);
     return Result;
 
   case ISD::TAILCALL:

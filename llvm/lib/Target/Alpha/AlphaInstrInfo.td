@@ -55,7 +55,6 @@ let isCall = 1,
 
 //These are evil as they get expanded into multiple instructions to take care of reallocation
 let Uses = [R29], Defs = [R28] in {
-  def LOAD_ADDR : PseudoInstAlpha<(ops GPRC:$RA, s64imm:$DISP), "lda $RA,$DISP">;  //Load address
   def LDQ_SYM : PseudoInstAlpha<(ops GPRC:$RA, s64imm:$DISP), "ldq $RA,$DISP">; //Load quadword
   def LDS_SYM : PseudoInstAlpha<(ops GPRC:$RA, s64imm:$DISP), "lds $RA,$DISP">; //Load float
   def LDT_SYM : PseudoInstAlpha<(ops GPRC:$RA, s64imm:$DISP), "ldt $RA,$DISP">; //Load double
@@ -363,6 +362,7 @@ def LDLr : MForm<0x28, (ops GPRC:$RA, s16imm:$DISP, GPRC:$RB), "ldl $RA,$DISP($R
 def LDQr : MForm<0x29, (ops GPRC:$RA, s16imm:$DISP, GPRC:$RB), "ldq $RA,$DISP($RB) !gprellow">; //Load quadword
 def LDBUr : MForm<0x0A, (ops GPRC:$RA, s16imm:$DISP, GPRC:$RB), "ldbu $RA,$DISP($RB) !gprellow">; //Load zero-extended byte
 def LDWUr : MForm<0x0C, (ops GPRC:$RA, s16imm:$DISP, GPRC:$RB), "ldwu $RA,$DISP($RB) !gprellow">; //Load zero-extended word
+def LDQrl : MForm<0x29, (ops GPRC:$RA, s16imm:$DISP, GPRC:$RB), "ldq $RA,$DISP($RB) !literal">; //Load quadword
 
 //Loads, float, Rellocated form
 def LDSr : MForm<0x22, (ops FPRC:$RA, s16imm:$DISP, GPRC:$RB), "lds $RA,$DISP($RB) !gprellow">; //Load S_floating
