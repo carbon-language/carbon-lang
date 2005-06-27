@@ -135,7 +135,7 @@ void AlphaAsmPrinter::printOp(const MachineOperand &MO, bool IsCallOp) {
   }
 
   case MachineOperand::MO_ConstantPoolIndex:
-    O << "CPI" << CurrentFnName << "_" << MO.getConstantPoolIndex();
+    O << "$CPI" << CurrentFnName << "_" << MO.getConstantPoolIndex();
     return;
 
   case MachineOperand::MO_ExternalSymbol:
@@ -226,7 +226,7 @@ void AlphaAsmPrinter::printConstantPool(MachineConstantPool *MCP) {
   for (unsigned i = 0, e = CP.size(); i != e; ++i) {
     //    SwitchSection(O, "section .rodata, \"dr\"");
     emitAlignment(TD.getTypeAlignmentShift(CP[i]->getType()));
-    O << "CPI" << CurrentFnName << "_" << i << ":\t\t\t\t\t" << CommentString
+    O << "$CPI" << CurrentFnName << "_" << i << ":\t\t\t\t\t" << CommentString
       << *CP[i] << "\n";
     emitGlobalConstant(CP[i]);
   }
