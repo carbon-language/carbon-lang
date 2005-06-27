@@ -1314,6 +1314,41 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
   case ISD::UINT_TO_FP:
     switch (getTypeAction(Node->getOperand(0).getValueType())) {
     case Legal:
+      //still made need to expand if the op is illegal, but the types are legal
+      if (Node->getOpcode() == ISD::UINT_TO_FP &&
+          TLI.getOperationAction(Node->getOpcode(), 
+                                 Node->getOperand(0).getValueType()) 
+          == TargetLowering::Expand) {
+        Tmp1 = DAG.getNode(ISD::SINT_TO_FP, Node->getValueType(0), 
+                           Node->getOperand(0));
+        
+        SDOperand SignSet = DAG.getSetCC(ISD::SETLT, TLI.getSetCCResultTy(), 
+                                         Node->getOperand(0),
+                                         DAG.getConstant(0, 
+                                         Node->getOperand(0).getValueType()));
+        SDOperand Zero = getIntPtrConstant(0), Four = getIntPtrConstant(4);
+        SDOperand CstOffset = DAG.getNode(ISD::SELECT, Zero.getValueType(),
+                                          SignSet, Four, Zero);
+        uint64_t FF = 0x5f800000ULL;
+        if (TLI.isLittleEndian()) FF <<= 32;
+        static Constant *FudgeFactor = ConstantUInt::get(Type::ULongTy, FF);
+
+        MachineConstantPool *CP = DAG.getMachineFunction().getConstantPool();
+        SDOperand CPIdx = DAG.getConstantPool(CP->getConstantPoolIndex(FudgeFactor),
+                                              TLI.getPointerTy());
+        CPIdx = DAG.getNode(ISD::ADD, TLI.getPointerTy(), CPIdx, CstOffset);
+        SDOperand FudgeInReg;
+        if (Node->getValueType(0) == MVT::f32)
+          FudgeInReg = DAG.getLoad(MVT::f32, DAG.getEntryNode(), CPIdx,
+                                   DAG.getSrcValue(NULL));
+        else {
+          assert(Node->getValueType(0) == MVT::f64 && "Unexpected conversion");
+          FudgeInReg = DAG.getNode(ISD::EXTLOAD, MVT::f64, DAG.getEntryNode(),
+                                   CPIdx, DAG.getSrcValue(NULL), MVT::f32);
+        }
+        Result = DAG.getNode(ISD::ADD, Node->getValueType(0), Tmp1, FudgeInReg);
+        break;
+      }
       Tmp1 = LegalizeOp(Node->getOperand(0));
       if (Tmp1 != Node->getOperand(0))
         Result = DAG.getNode(Node->getOpcode(), Node->getValueType(0), Tmp1);
