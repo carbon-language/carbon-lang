@@ -98,7 +98,8 @@ X86TargetMachine::X86TargetMachine(const Module &M, IntrinsicLowering *IL)
 // does to emit statically compiled machine code.
 bool X86TargetMachine::addPassesToEmitFile(PassManager &PM, std::ostream &Out,
                                            CodeGenFileType FileType) {
-  if (FileType != TargetMachine::AssemblyFile) return true;
+  if (FileType != TargetMachine::AssemblyFile && 
+      FileType != TargetMachine::ObjectFile) return true;
 
   // FIXME: Implement efficient support for garbage collection intrinsics.
   PM.add(createLowerGCPass());
@@ -146,7 +147,19 @@ bool X86TargetMachine::addPassesToEmitFile(PassManager &PM, std::ostream &Out,
     PM.add(createX86CodePrinterPass(std::cerr, *this));
 
   if (!DisableOutput)
-    PM.add(createX86CodePrinterPass(Out, *this));
+    switch (FileType) {
+    default:
+      assert(0 && "Unexpected filetype here!");
+    case TargetMachine::AssemblyFile:
+      PM.add(createX86CodePrinterPass(Out, *this));
+      break;
+    case TargetMachine::ObjectFile:
+      // FIXME: We only support emission of ELF files for now, this should check
+      // the target triple and decide on the format to write (e.g. COFF on
+      // win32).
+      PM.add(createX86ELFObjectWriterPass(Out, *this));
+      break;
+    }
 
   // Delete machine code for this function
   PM.add(createMachineCodeDeleter());

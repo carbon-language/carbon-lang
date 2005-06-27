@@ -69,6 +69,12 @@ FunctionPass *createX86FloatingPointStackifierPass();
 ///
 FunctionPass *createX86CodePrinterPass(std::ostream &o,TargetMachine &tm);
 
+/// createX86ELFObjectWriterPass - Returns a pass that outputs the generated
+/// code as an ELF object file.
+///
+FunctionPass *createX86ELFObjectWriterPass(std::ostream &o, TargetMachine &tm);
+
+
 /// createX86EmitCodeToMemory - Returns a pass that converts a register
 /// allocated function into raw machine code in a dynamically
 /// allocated chunk of memory.
