@@ -119,13 +119,76 @@ static unsigned AddLiveIn(MachineFunction &MF, unsigned PReg,
 std::vector<SDOperand>
 V8TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG)
 {
-  //FIXME
+  static const unsigned IncomingArgRegs[] = 
+    { V8::I0, V8::I1, V8::I2, V8::I3, V8::I4, V8::I5 };
   std::vector<SDOperand> ArgValues;
 
   MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo*MFI = MF.getFrameInfo();
 
   MachineBasicBlock& BB = MF.front();
+
+  unsigned ArgNo = 0;
+  unsigned ArgOffset = 92;
+  for (Function::arg_iterator I = F.arg_begin(), E = F.arg_end();
+       I != E; ++I, ++ArgNo) {
+    MVT::ValueType VT = getValueType(I->getType());
+    SDOperand argt;
+    if (ArgNo < 6) {
+      switch(VT) {
+      default:
+        std::cerr << "Unknown Type " << VT << "\n";
+        abort();
+      case MVT::f64:
+      case MVT::i64:
+        //FIXME: figure out the build pair thing
+        assert(0 && "doubles and longs not supported yet");
+      case MVT::f32:
+        argt = DAG.getCopyFromReg(AddLiveIn(MF, IncomingArgRegs[ArgNo],
+                                            MVT::i32),
+                                  VT, DAG.getRoot());
+        //copy out of Int reg
+        argt = DAG.getNode(ISD::FP_TO_UINT, MVT::f32, argt);
+        break;
+      case MVT::i1:
+      case MVT::i8:
+      case MVT::i16:
+      case MVT::i32:
+        argt = DAG.getCopyFromReg(AddLiveIn(MF, IncomingArgRegs[ArgNo], 
+                                            getRegClassFor(MVT::i32)), 
+                                  VT, DAG.getRoot());
+        if (VT != MVT::i32)
+          argt = DAG.getNode(ISD::TRUNCATE, VT, argt);
+        break;
+      }
+      DAG.setRoot(argt.getValue(1));
+    } else {
+      //stack passed
+      switch(VT) {
+      default:
+        std::cerr << "Unknown Type " << VT << "\n";
+        abort();
+      case MVT::f64:
+      case MVT::i64:
+        //FIXME: figure out the build pair thing
+        assert(0 && "doubles and longs not supported yet");
+      case MVT::f32:
+      case MVT::i1:
+      case MVT::i8:
+      case MVT::i16:
+      case MVT::i32:
+      // Create the frame index object for this incoming parameter...
+      int FI = MFI->CreateFixedObject(4, ArgOffset);
+      argt = DAG.getLoad(VT,
+                         DAG.getEntryNode(),
+                         DAG.getFramIndex(FI, MVT::i32),
+                         DAG.getSrcValue(NULL));
+      ArgOffset += 4;
+      break;
+      }
+      ArgValues.push_back(argt);
+    }
+  }
 
   //return the arguments
   return ArgValues;
