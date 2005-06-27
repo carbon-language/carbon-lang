@@ -47,6 +47,12 @@ let Namespace = "X86" in {
   def FP4 : Register<"FP4">; def FP5 : Register<"FP5">;
   def FP6 : Register<"FP6">; 
 
+  // XMM Registers, used by the various SSE instruction set extensions
+  def XMM0: Register<"XMM0">; def XMM1: Register<"XMM1">;
+  def XMM2: Register<"XMM2">; def XMM3: Register<"XMM3">;
+  def XMM4: Register<"XMM4">; def XMM5: Register<"XMM5">;
+  def XMM6: Register<"XMM6">; def XMM7: Register<"XMM7">;
+
   // Floating point stack registers
   def ST0 : Register<"ST(0)">; def ST1 : Register<"ST(1)">;
   def ST2 : Register<"ST(2)">; def ST3 : Register<"ST(3)">;
@@ -89,6 +95,12 @@ def R32 : RegisterClass<i32, 32, [EAX, ECX, EDX, ESI, EDI, EBX, EBP, ESP]> {
     }
   }];
 }
+
+// FIXME: These registers can contain both integer and fp values.  We should
+// figure out the right way to deal with that.  For now, since they'll be used
+// for scalar FP, they are being declared f64
+def RXMM : RegisterClass<f64, 128, [XMM0, XMM1, XMM2, XMM3, 
+                                    XMM4, XMM5, XMM6, XMM7]>;
 
 // FIXME: This sets up the floating point register files as though they are f64
 // values, though they really are f80 values.  This will cause us to spill
