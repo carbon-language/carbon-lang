@@ -265,9 +265,6 @@ AlphaTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG)
 
   MachineBasicBlock& BB = MF.front();
 
-  //Handle the return address
-  //BuildMI(&BB, Alpha::IDEF, 0, Alpha::R26);
-
   unsigned args_int[] = {Alpha::R16, Alpha::R17, Alpha::R18,
                          Alpha::R19, Alpha::R20, Alpha::R21};
   unsigned args_float[] = {Alpha::F16, Alpha::F17, Alpha::F18,
@@ -1306,6 +1303,13 @@ unsigned AlphaISel::SelectExprFP(SDOperand N, unsigned Result)
       SDOperand Chain   = N.getOperand(0);
       SDOperand Address = N.getOperand(1);
       Select(Chain);
+
+      if (EnableAlphaLSMark)
+      {
+        int i = getValueOffset(dyn_cast<SrcValueSDNode>(N.getOperand(2))->getValue());
+        int j = getFunctionOffset(BB->getParent()->getFunction());
+        BuildMI(BB, Alpha::MEMLABEL, 3).addImm(j).addImm(i).addImm(getUID());
+      }
 
       if (Address.getOpcode() == ISD::GlobalAddress) {
         AlphaLowering.restoreGP(BB);
