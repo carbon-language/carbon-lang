@@ -120,7 +120,8 @@
 ..\$(IntDir)\TableGen.exe -gen-instr-enums -I ..\..\lib\Target\X86 $(InputPath) -o X86GenInstrNames.inc
 ..\$(IntDir)\TableGen.exe -gen-instr-desc -I ..\..\lib\Target\X86 $(InputPath) -o X86GenInstrInfo.inc
 ..\$(IntDir)\TableGen.exe -gen-asm-writer -I ..\..\lib\Target\X86 $(InputPath) -o X86GenAsmWriter.inc
-..\$(IntDir)\TableGen.exe -gen-asm-writer -asmwriternum=1 -I ..\..\lib\Target\X86 $(InputPath) -o X86GenAsmWriter1.inc"
+..\$(IntDir)\TableGen.exe -gen-asm-writer -asmwriternum=1 -I ..\..\lib\Target\X86 $(InputPath) -o X86GenAsmWriter1.inc
+"
 						AdditionalDependencies="$(InputDir)X86InstrInfo.td;$(InputDir)X86RegisterInfo.td;$(InputDir)..\Target.td;$(ProjectDir)..\$(IntDir)\TableGen.exe"
 						Outputs="X86GenRegisterNames.inc;X86GenRegisterInfo.h.inc;X86GenRegisterInfo.inc;X86GenInstrNames.inc;X86GenInstrInfo.inc;X86GenAsmWriter.inc;X86GenAsmWriter1.inc"/>
 				</FileConfiguration>
@@ -135,7 +136,8 @@
 ..\$(IntDir)\TableGen.exe -gen-instr-enums -I ..\..\lib\Target\X86 $(InputPath) -o X86GenInstrNames.inc
 ..\$(IntDir)\TableGen.exe -gen-instr-desc -I ..\..\lib\Target\X86 $(InputPath) -o X86GenInstrInfo.inc
 ..\$(IntDir)\TableGen.exe -gen-asm-writer -I ..\..\lib\Target\X86 $(InputPath) -o X86GenAsmWriter.inc
-..\$(IntDir)\TableGen.exe -gen-asm-writer -asmwriternum=1 -I ..\..\lib\Target\X86 $(InputPath) -o X86GenAsmWriter1.inc"
+..\$(IntDir)\TableGen.exe -gen-asm-writer -asmwriternum=1 -I ..\..\lib\Target\X86 $(InputPath) -o X86GenAsmWriter1.inc
+"
 						AdditionalDependencies="$(InputDir)X86InstrInfo.td;$(InputDir)X86RegisterInfo.td;$(InputDir)..\Target.td;$(ProjectDir)..\$(IntDir)\TableGen.exe"
 						Outputs="X86GenRegisterNames.inc;X86GenRegisterInfo.h.inc;X86GenRegisterInfo.inc;X86GenInstrNames.inc;X86GenInstrInfo.inc;X86GenAsmWriter.inc;X86GenAsmWriter1.inc"/>
 				</FileConfiguration>
@@ -145,6 +147,9 @@
 			</File>
 			<File
 				RelativePath="..\..\lib\Target\X86\X86CodeEmitter.cpp">
+			</File>
+			<File
+				RelativePath="..\..\lib\Target\X86\X86ELFWriter.cpp">
 			</File>
 			<File
 				RelativePath="..\..\lib\Target\X86\X86FloatingPoint.cpp">
