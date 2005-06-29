@@ -607,16 +607,15 @@ void AlphaISel::EmitFunctionEntryCode(Function &Fn, MachineFunction &MF) {
 //Find the offset of the arg in it's parent's function
 static int getValueOffset(const Value* v)
 {
-  static int uniqneg = -1;
   if (v == NULL)
-    return uniqneg--;
+    return 0;
 
   const Instruction* itarget = dyn_cast<Instruction>(v);
   const BasicBlock* btarget = itarget->getParent();
   const Function* ftarget = btarget->getParent();
 
   //offset due to earlier BBs
-  int i = 0;
+  int i = 1;
   for(Function::const_iterator ii = ftarget->begin(); &*ii != btarget; ++ii)
     i += ii->size();
 
@@ -1299,7 +1298,7 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
     has_sym = true;
 
     if (EnableAlphaLSMark)
-      BuildMI(BB, Alpha::MEMLABEL, 3).addImm(0).addImm(0).addImm(getUID());
+      BuildMI(BB, Alpha::MEMLABEL, 3).addImm(0).addImm(1).addImm(getUID());
 
     BuildMI(BB, Alpha::LDQl, 2, Result)
       .addGlobalAddress(cast<GlobalAddressSDNode>(N)->getGlobal())
