@@ -1305,6 +1305,15 @@ public:
       Function* fwrite_func = SLC.get_fwrite(FILEptr_type);
       if (!fwrite_func)
         return false;
+
+      // Make sure that the fprintf() and fwrite() functions both take the
+      // same type of char pointer.
+      if (ci->getOperand(2)->getType() !=
+          fwrite_func->getFunctionType()->getParamType(0))
+      {
+        return false;
+      }
+
       std::vector<Value*> args;
       args.push_back(ci->getOperand(2));
       args.push_back(ConstantUInt::get(SLC.getIntPtrType(),len));
