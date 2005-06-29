@@ -1289,7 +1289,8 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
   }
 
   if ((DestType == MVT::f64 || DestType == MVT::f32)
-      && opcode != ISD::CALL && opcode != ISD::TAILCALL)
+      && opcode != ISD::CALL && opcode != ISD::TAILCALL 
+      && opcode != ISD::CopyFromReg && opcode != ISD::LOAD)
     return SelectExprFP(N, Result);
   
   switch (opcode) {
