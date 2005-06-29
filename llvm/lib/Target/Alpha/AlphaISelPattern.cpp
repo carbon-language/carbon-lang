@@ -1819,6 +1819,7 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
       Tmp2 = SelectExpr(N.getOperand(1));
       BuildMI(BB, DestType == MVT::f64 ? Alpha::DIVT : Alpha::DIVS, 2, Result)
         .addReg(Tmp1).addReg(Tmp2);
+      return Result;
     } else {
       ConstantSDNode* CSD;
       //check if we can convert into a shift!
