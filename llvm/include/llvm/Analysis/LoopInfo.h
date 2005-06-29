@@ -250,7 +250,8 @@ public:
 
   // isLoopHeader - True if the block is a loop header node
   bool isLoopHeader(BasicBlock *BB) const {
-    return getLoopFor(BB)->getHeader() == BB;
+    const Loop *L = getLoopFor(BB);
+    return L && L->getHeader() == BB;
   }
 
   /// runOnFunction - Calculate the natural loop information.
