@@ -644,7 +644,7 @@ void SelectionDAGLowering::visitLoad(LoadInst &I) {
   }
 
   SDOperand L = DAG.getLoad(TLI.getValueType(I.getType()), Root, Ptr,
-                            DAG.getSrcValue(&I));
+                            DAG.getSrcValue(I.getOperand(0)));
   setValue(&I, L);
 
   if (I.isVolatile())
@@ -659,7 +659,7 @@ void SelectionDAGLowering::visitStore(StoreInst &I) {
   SDOperand Src = getValue(SrcV);
   SDOperand Ptr = getValue(I.getOperand(1));
   DAG.setRoot(DAG.getNode(ISD::STORE, MVT::Other, getRoot(), Src, Ptr,
-                          DAG.getSrcValue(&I)));
+                          DAG.getSrcValue(I.getOperand(1))));
 }
 
 void SelectionDAGLowering::visitCall(CallInst &I) {

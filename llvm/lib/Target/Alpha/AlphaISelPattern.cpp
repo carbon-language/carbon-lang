@@ -604,37 +604,48 @@ void AlphaISel::EmitFunctionEntryCode(Function &Fn, MachineFunction &MF) {
   }
 }
 
-//Find the offset of the arg in it's parent's function
-static int getValueOffset(const Value* v)
+static void getValueInfo(const Value* v, int& type, int& fun, int& offset)
 {
-  if (v == NULL)
-    return 0;
-
-  const Instruction* itarget = dyn_cast<Instruction>(v);
-  const BasicBlock* btarget = itarget->getParent();
-  const Function* ftarget = btarget->getParent();
-
-  //offset due to earlier BBs
-  int i = 1;
-  for(Function::const_iterator ii = ftarget->begin(); &*ii != btarget; ++ii)
-    i += ii->size();
-
-  for(BasicBlock::const_iterator ii = btarget->begin(); &*ii != itarget; ++ii)
-    ++i;
-
-  return i;
-}
-//Find the offset of the function in it's module
-static int getFunctionOffset(const Function* fun)
-{
-  const Module* M = fun->getParent();
-
-  //offset due to earlier BBs
-  int i = 0;
-  for(Module::const_iterator ii = M->begin(); &*ii != fun; ++ii)
-    ++i;
-
-  return i;
+  if (v == NULL) {
+    type = 0;
+    fun = 0;
+    offset = 0;
+  } else if (const GlobalValue* GV = dyn_cast<GlobalValue>(v)) {
+    type = 1;
+    fun = 1;
+    const Module* M = GV->getParent();
+      int i = 0;
+      for(Module::const_global_iterator ii = M->global_begin(); &*ii != GV; ++ii)
+        ++i;
+      offset = i;
+  } else if (const Argument* Arg = dyn_cast<Argument>(v)) {
+    type = 2;
+    const Function* F = Arg->getParent();
+    const Module* M = F->getParent();
+    int i = 0;
+    for(Module::const_iterator ii = M->begin(); &*ii != F; ++ii)
+      ++i;
+    fun = i;
+    i = 0;
+    for(Function::const_arg_iterator ii = F->arg_begin(); &*ii != Arg; ++ii)
+      ++i;
+    offset = i;
+  } else if (const Instruction* I = dyn_cast<Instruction>(v)) {
+    type = 3;
+    const BasicBlock* bb = I->getParent();
+    const Function* F = bb->getParent();
+    const Module* M = F->getParent();
+    int i = 0;
+    for(Module::const_iterator ii = M->begin(); &*ii != F; ++ii)
+      ++i;
+    fun = i;
+    i = 0;
+    for(Function::const_iterator ii = F->begin(); &*ii != bb; ++ii)
+      i += ii->size();
+    for(BasicBlock::const_iterator ii = bb->begin(); &*ii != I; ++ii)
+      ++i;
+    offset = i;
+  }
 }
 
 static int getUID()
@@ -1244,18 +1255,18 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
           assert(opcode != ISD::SEXTLOAD && "Not zext"); break;
         }
 
-      int i = 0, j = 0;
-      if (EnableAlphaLSMark) {
-        i = getValueOffset(dyn_cast<SrcValueSDNode>(N.getOperand(2))
-                           ->getValue());
-        j = getFunctionOffset(BB->getParent()->getFunction());
-      }
+      int i, j, k;
+      if (EnableAlphaLSMark)
+        getValueInfo(dyn_cast<SrcValueSDNode>(N.getOperand(2))->getValue(),
+                     i, j, k);
+
       if (GlobalAddressSDNode *GASD = 
           dyn_cast<GlobalAddressSDNode>(Address)) {
         if (GASD->getGlobal()->isExternal()) {
           Tmp1 = SelectExpr(Address);
           if (EnableAlphaLSMark)
-            BuildMI(BB, Alpha::MEMLABEL, 3).addImm(j).addImm(i).addImm(getUID());
+            BuildMI(BB, Alpha::MEMLABEL, 4).addImm(i).addImm(j).addImm(k)
+              .addImm(getUID());
           BuildMI(BB, Opc, 2, Result).addImm(0).addReg(Tmp1);
         } else {
           Tmp1 = MakeReg(MVT::i64);
@@ -1263,7 +1274,8 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
           BuildMI(BB, Alpha::LDAHr, 2, Tmp1)
             .addGlobalAddress(GASD->getGlobal()).addReg(Alpha::R29);
           if (EnableAlphaLSMark)
-            BuildMI(BB, Alpha::MEMLABEL, 3).addImm(j).addImm(i).addImm(getUID());
+            BuildMI(BB, Alpha::MEMLABEL, 4).addImm(i).addImm(j).addImm(k)
+              .addImm(getUID());
           BuildMI(BB, GetRelVersion(Opc), 2, Result)
             .addGlobalAddress(GASD->getGlobal()).addReg(Tmp1);
         }
@@ -1274,12 +1286,14 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
         BuildMI(BB, Alpha::LDAHr, 2, Tmp1).addConstantPoolIndex(CP->getIndex())
           .addReg(Alpha::R29);
         if (EnableAlphaLSMark)
-          BuildMI(BB, Alpha::MEMLABEL, 3).addImm(j).addImm(i).addImm(getUID());
+          BuildMI(BB, Alpha::MEMLABEL, 4).addImm(i).addImm(j).addImm(k)
+            .addImm(getUID());
         BuildMI(BB, GetRelVersion(Opc), 2, Result)
           .addConstantPoolIndex(CP->getIndex()).addReg(Tmp1);
       } else if(Address.getOpcode() == ISD::FrameIndex) {
         if (EnableAlphaLSMark)
-          BuildMI(BB, Alpha::MEMLABEL, 3).addImm(j).addImm(i).addImm(getUID());
+          BuildMI(BB, Alpha::MEMLABEL, 4).addImm(i).addImm(j).addImm(k)
+            .addImm(getUID());
         BuildMI(BB, Opc, 2, Result)
           .addFrameIndex(cast<FrameIndexSDNode>(Address)->getIndex())
           .addReg(Alpha::F31);
@@ -1287,7 +1301,8 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
         long offset;
         SelectAddr(Address, Tmp1, offset);
         if (EnableAlphaLSMark)
-          BuildMI(BB, Alpha::MEMLABEL, 3).addImm(j).addImm(i).addImm(getUID());
+          BuildMI(BB, Alpha::MEMLABEL, 4).addImm(i).addImm(j).addImm(k)
+            .addImm(getUID());
         BuildMI(BB, Opc, 2, Result).addImm(offset).addReg(Tmp1);
       }
       return Result;
@@ -1298,7 +1313,8 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
     has_sym = true;
 
     if (EnableAlphaLSMark)
-      BuildMI(BB, Alpha::MEMLABEL, 3).addImm(0).addImm(1).addImm(getUID());
+      BuildMI(BB, Alpha::MEMLABEL, 4).addImm(0).addImm(0).addImm(0)
+        .addImm(getUID());
 
     BuildMI(BB, Alpha::LDQl, 2, Result)
       .addGlobalAddress(cast<GlobalAddressSDNode>(N)->getGlobal())
@@ -2268,19 +2284,18 @@ void AlphaISel::Select(SDOperand N) {
         }
       }
 
-      int i = 0, j = 0;
-      if (EnableAlphaLSMark) {
-        i = 
-          getValueOffset(dyn_cast<SrcValueSDNode>(N.getOperand(3))->getValue());
-        j = getFunctionOffset(BB->getParent()->getFunction());
-      }
+      int i, j, k;
+      if (EnableAlphaLSMark) 
+        getValueInfo(dyn_cast<SrcValueSDNode>(N.getOperand(3))->getValue(), 
+                     i, j, k);
 
       if (GlobalAddressSDNode *GASD = 
           dyn_cast<GlobalAddressSDNode>(Address)) {
         if (GASD->getGlobal()->isExternal()) {
           Tmp2 = SelectExpr(Address);
           if (EnableAlphaLSMark)
-            BuildMI(BB, Alpha::MEMLABEL, 3).addImm(j).addImm(i).addImm(getUID());
+            BuildMI(BB, Alpha::MEMLABEL, 4).addImm(i).addImm(j).addImm(k)
+              .addImm(getUID());
           BuildMI(BB, Opc, 3).addReg(Tmp1).addImm(0).addReg(Tmp2);
         } else {
           Tmp2 = MakeReg(MVT::i64);
@@ -2288,13 +2303,15 @@ void AlphaISel::Select(SDOperand N) {
           BuildMI(BB, Alpha::LDAHr, 2, Tmp2)
             .addGlobalAddress(GASD->getGlobal()).addReg(Alpha::R29);
           if (EnableAlphaLSMark)
-            BuildMI(BB, Alpha::MEMLABEL, 3).addImm(j).addImm(i).addImm(getUID());
+            BuildMI(BB, Alpha::MEMLABEL, 4).addImm(i).addImm(j).addImm(k)
+              .addImm(getUID());
           BuildMI(BB, GetRelVersion(Opc), 3).addReg(Tmp1)
             .addGlobalAddress(GASD->getGlobal()).addReg(Tmp2);
         }
       } else if(Address.getOpcode() == ISD::FrameIndex) {
         if (EnableAlphaLSMark)
-          BuildMI(BB, Alpha::MEMLABEL, 3).addImm(j).addImm(i).addImm(getUID());
+          BuildMI(BB, Alpha::MEMLABEL, 4).addImm(i).addImm(j).addImm(k)
+            .addImm(getUID());
         BuildMI(BB, Opc, 3).addReg(Tmp1)
           .addFrameIndex(cast<FrameIndexSDNode>(Address)->getIndex())
           .addReg(Alpha::F31);
@@ -2302,7 +2319,8 @@ void AlphaISel::Select(SDOperand N) {
         long offset;
         SelectAddr(Address, Tmp2, offset);
         if (EnableAlphaLSMark)
-          BuildMI(BB, Alpha::MEMLABEL, 3).addImm(j).addImm(i).addImm(getUID());
+          BuildMI(BB, Alpha::MEMLABEL, 4).addImm(i).addImm(j).addImm(k)
+            .addImm(getUID());
         BuildMI(BB, Opc, 3).addReg(Tmp1).addImm(offset).addReg(Tmp2);
       }
       return;

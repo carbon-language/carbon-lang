@@ -1394,6 +1394,8 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
 }
 
 SDOperand SelectionDAG::getSrcValue(const Value *V, int Offset) {
+  assert((!V || isa<PointerType>(V->getType())) &&
+         "SrcValue is not a pointer?");
   SDNode *&N = ValueNodes[std::make_pair(V, Offset)];
   if (N) return SDOperand(N, 0);
 

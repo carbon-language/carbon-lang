@@ -31,7 +31,8 @@ def ADJUSTSTACKUP : PseudoInstAlpha<(ops ), "ADJUP">;
 def ADJUSTSTACKDOWN : PseudoInstAlpha<(ops ), "ADJDOWN">;
 def ALTENT : PseudoInstAlpha<(ops s64imm:$TARGET), "$TARGET:\n">;
 def PCLABEL : PseudoInstAlpha<(ops s64imm:$num), "PCMARKER_$num:\n">;
-def MEMLABEL : PseudoInstAlpha<(ops s64imm:$i, s64imm:$j, s64imm:$k), "LSMARKER$$$i$$$j$$$k:\n">;
+def MEMLABEL : PseudoInstAlpha<(ops s64imm:$i, s64imm:$j, s64imm:$k, s64imm:$m),
+         "LSMARKER$$$i$$$j$$$k$$$m:\n">;
 
 //*****************
 //These are shortcuts, the assembler expands them
