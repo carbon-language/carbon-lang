@@ -566,7 +566,6 @@ public:
   virtual void EmitFunctionEntryCode(Function &Fn, MachineFunction &MF);
 
   unsigned SelectExpr(SDOperand N);
-  unsigned SelectExprFP(SDOperand N, unsigned Result);
   void Select(SDOperand N);
 
   void SelectAddr(SDOperand N, unsigned& Reg, long& offset);
@@ -1081,184 +1080,6 @@ void AlphaISel::SelectBranchCC(SDOperand N)
   abort(); //Should never be reached
 }
 
-unsigned AlphaISel::SelectExprFP(SDOperand N, unsigned Result)
-{
-  unsigned Tmp1, Tmp2, Tmp3;
-  unsigned Opc = 0;
-  SDNode *Node = N.Val;
-  MVT::ValueType DestType = N.getValueType();
-  unsigned opcode = N.getOpcode();
-
-  switch (opcode) {
-  default:
-    Node->dump();
-    assert(0 && "Node not handled!\n");
-
-  case ISD::UNDEF: {
-    BuildMI(BB, Alpha::IDEF, 0, Result);
-    return Result;
-  }
-
-  case ISD::FNEG:
-    if(ISD::FABS == N.getOperand(0).getOpcode())
-      {
-        Tmp1 = SelectExpr(N.getOperand(0).getOperand(0));
-        BuildMI(BB, Alpha::CPYSN, 2, Result).addReg(Alpha::F31).addReg(Tmp1);
-      } else {
-        Tmp1 = SelectExpr(N.getOperand(0));
-        BuildMI(BB, Alpha::CPYSN, 2, Result).addReg(Tmp1).addReg(Tmp1);
-      }
-    return Result;
-
-  case ISD::FABS:
-    Tmp1 = SelectExpr(N.getOperand(0));
-    BuildMI(BB, Alpha::CPYS, 2, Result).addReg(Alpha::F31).addReg(Tmp1);
-    return Result;
-
-  case ISD::SELECT:
-    {
-      //Tmp1 = SelectExpr(N.getOperand(0)); //Cond
-      unsigned TV = SelectExpr(N.getOperand(1)); //Use if TRUE
-      unsigned FV = SelectExpr(N.getOperand(2)); //Use if FALSE
-
-      SDOperand CC = N.getOperand(0);
-      SetCCSDNode* SetCC = dyn_cast<SetCCSDNode>(CC.Val);
-
-      if (CC.getOpcode() == ISD::SETCC &&
-          !MVT::isInteger(SetCC->getOperand(0).getValueType()))
-      { //FP Setcc -> Select yay!
-
-
-        //for a cmp b: c = a - b;
-        //a = b: c = 0
-        //a < b: c < 0
-        //a > b: c > 0
-
-        bool invTest = false;
-        unsigned Tmp3;
-
-        ConstantFPSDNode *CN;
-        if ((CN = dyn_cast<ConstantFPSDNode>(SetCC->getOperand(1)))
-            && (CN->isExactlyValue(+0.0) || CN->isExactlyValue(-0.0)))
-          Tmp3 = SelectExpr(SetCC->getOperand(0));
-        else if ((CN = dyn_cast<ConstantFPSDNode>(SetCC->getOperand(0)))
-                 && (CN->isExactlyValue(+0.0) || CN->isExactlyValue(-0.0)))
-        {
-          Tmp3 = SelectExpr(SetCC->getOperand(1));
-          invTest = true;
-        }
-        else
-        {
-          unsigned Tmp1 = SelectExpr(SetCC->getOperand(0));
-          unsigned Tmp2 = SelectExpr(SetCC->getOperand(1));
-          bool isD = SetCC->getOperand(0).getValueType() == MVT::f64;
-          Tmp3 = MakeReg(isD ? MVT::f64 : MVT::f32);
-          BuildMI(BB, isD ? Alpha::SUBT : Alpha::SUBS, 2, Tmp3)
-            .addReg(Tmp1).addReg(Tmp2);
-        }
-
-        switch (SetCC->getCondition()) {
-        default: CC.Val->dump(); assert(0 && "Unknown FP comparison!");
-        case ISD::SETEQ: Opc = invTest ? Alpha::FCMOVNE : Alpha::FCMOVEQ; break;
-        case ISD::SETLT: Opc = invTest ? Alpha::FCMOVGT : Alpha::FCMOVLT; break;
-        case ISD::SETLE: Opc = invTest ? Alpha::FCMOVGE : Alpha::FCMOVLE; break;
-        case ISD::SETGT: Opc = invTest ? Alpha::FCMOVLT : Alpha::FCMOVGT; break;
-        case ISD::SETGE: Opc = invTest ? Alpha::FCMOVLE : Alpha::FCMOVGE; break;
-        case ISD::SETNE: Opc = invTest ? Alpha::FCMOVEQ : Alpha::FCMOVNE; break;
-        }
-        BuildMI(BB, Opc, 3, Result).addReg(FV).addReg(TV).addReg(Tmp3);
-        return Result;
-      }
-      else
-      {
-        Tmp1 = SelectExpr(N.getOperand(0)); //Cond
-        BuildMI(BB, Alpha::FCMOVEQ_INT, 3, Result).addReg(TV).addReg(FV)
-          .addReg(Tmp1);
-//         // Spill the cond to memory and reload it from there.
-//         unsigned Tmp4 = MakeReg(MVT::f64);
-//         MoveIntFP(Tmp1, Tmp4, true);
-//         //now ideally, we don't have to do anything to the flag...
-//         // Get the condition into the zero flag.
-//         BuildMI(BB, Alpha::FCMOVEQ, 3, Result).addReg(TV).addReg(FV).addReg(Tmp4);
-        return Result;
-      }
-    }
-
-  case ISD::FP_ROUND:
-    assert (DestType == MVT::f32 &&
-            N.getOperand(0).getValueType() == MVT::f64 &&
-            "only f64 to f32 conversion supported here");
-    Tmp1 = SelectExpr(N.getOperand(0));
-    BuildMI(BB, Alpha::CVTTS, 1, Result).addReg(Tmp1);
-    return Result;
-
-  case ISD::FP_EXTEND:
-    assert (DestType == MVT::f64 &&
-            N.getOperand(0).getValueType() == MVT::f32 &&
-            "only f32 to f64 conversion supported here");
-    Tmp1 = SelectExpr(N.getOperand(0));
-    BuildMI(BB, Alpha::CVTST, 1, Result).addReg(Tmp1);
-    return Result;
-
-  case ISD::ConstantFP:
-    if (ConstantFPSDNode *CN = dyn_cast<ConstantFPSDNode>(N)) {
-      if (CN->isExactlyValue(+0.0)) {
-        BuildMI(BB, Alpha::CPYS, 2, Result).addReg(Alpha::F31)
-          .addReg(Alpha::F31);
-      } else if ( CN->isExactlyValue(-0.0)) {
-        BuildMI(BB, Alpha::CPYSN, 2, Result).addReg(Alpha::F31)
-          .addReg(Alpha::F31);
-      } else {
-        abort();
-      }
-    }
-    return Result;
-
-  case ISD::SDIV:
-  case ISD::MUL:
-  case ISD::ADD:
-  case ISD::SUB:
-  switch( opcode ) {
-      case ISD::MUL: Opc = DestType == MVT::f64 ? Alpha::MULT : Alpha::MULS; 
-      break;
-      case ISD::ADD: Opc = DestType == MVT::f64 ? Alpha::ADDT : Alpha::ADDS; 
-      break;
-      case ISD::SUB: Opc = DestType == MVT::f64 ? Alpha::SUBT : Alpha::SUBS; 
-      break;
-      case ISD::SDIV: Opc = DestType == MVT::f64 ? Alpha::DIVT : Alpha::DIVS;
-      break;
-    };
-
-    ConstantFPSDNode *CN;
-    if (opcode == ISD::SUB
-        && (CN = dyn_cast<ConstantFPSDNode>(N.getOperand(0)))
-        && (CN->isExactlyValue(+0.0) || CN->isExactlyValue(-0.0)))
-    {
-      Tmp2 = SelectExpr(N.getOperand(1));
-      BuildMI(BB, Alpha::CPYSN, 2, Result).addReg(Tmp2).addReg(Tmp2);
-    } else {
-      Tmp1 = SelectExpr(N.getOperand(0));
-      Tmp2 = SelectExpr(N.getOperand(1));
-      BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
-    }
-    return Result;
-
-  case ISD::SINT_TO_FP:
-    {
-      assert (N.getOperand(0).getValueType() == MVT::i64
-              && "only quads can be loaded from");
-      Tmp1 = SelectExpr(N.getOperand(0));  // Get the operand register
-      Tmp2 = MakeReg(MVT::f64);
-      MoveInt2FP(Tmp1, Tmp2, true);
-      Opc = DestType == MVT::f64 ? Alpha::CVTQT : Alpha::CVTQS;
-      BuildMI(BB, Opc, 1, Result).addReg(Tmp2);
-      return Result;
-    }
-  }
-  assert(0 && "should not get here");
-  return 0;
-}
-
 unsigned AlphaISel::SelectExpr(SDOperand N) {
   unsigned Result;
   unsigned Tmp1, Tmp2 = 0, Tmp3;
@@ -1267,6 +1088,7 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
 
   SDNode *Node = N.Val;
   MVT::ValueType DestType = N.getValueType();
+  bool isFP = DestType == MVT::f64 || DestType == MVT::f32;
 
   unsigned &Reg = ExprMap[N];
   if (Reg) return Reg;
@@ -1288,11 +1110,6 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
     }
   }
 
-  if ((DestType == MVT::f64 || DestType == MVT::f32)
-      && opcode != ISD::CALL && opcode != ISD::TAILCALL 
-      && opcode != ISD::CopyFromReg && opcode != ISD::LOAD)
-    return SelectExprFP(N, Result);
-  
   switch (opcode) {
   default:
     Node->dump();
@@ -1800,7 +1617,7 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
       Select(Chain);
       unsigned r = dyn_cast<RegSDNode>(Node)->getReg();
       //std::cerr << "CopyFromReg " << Result << " = " << r << "\n";
-      if (DestType == MVT::f32 || DestType == MVT::f64)
+      if (isFP)
         BuildMI(BB, Alpha::CPYS, 2, Result).addReg(r).addReg(r);
       else
         BuildMI(BB, Alpha::BIS, 2, Result).addReg(r).addReg(r);
@@ -1876,7 +1693,6 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
   case ISD::SRL:
   case ISD::SRA:
   case ISD::MUL:
-    assert (DestType == MVT::i64 && "Only do arithmetic on i64s!");
     if(N.getOperand(1).getOpcode() == ISD::Constant &&
        cast<ConstantSDNode>(N.getOperand(1))->getValue() <= 255)
     {
@@ -1900,7 +1716,10 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
       case ISD::SHL: Opc = Alpha::SL; break;
       case ISD::SRL: Opc = Alpha::SRL; break;
       case ISD::SRA: Opc = Alpha::SRA; break;
-      case ISD::MUL: Opc = Alpha::MULQ; break;
+      case ISD::MUL: 
+        Opc = isFP ? (DestType == MVT::f64 ? Alpha::MULT : Alpha::MULS) 
+          : Alpha::MULQ;
+        break;
       };
       Tmp1 = SelectExpr(N.getOperand(0));
       Tmp2 = SelectExpr(N.getOperand(1));
@@ -1910,7 +1729,25 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
 
   case ISD::ADD:
   case ISD::SUB:
-    {
+    if (isFP) {
+      ConstantFPSDNode *CN;
+      if (opcode == ISD::ADD)
+        Opc = DestType == MVT::f64 ? Alpha::ADDT : Alpha::ADDS;
+      else
+        Opc = DestType == MVT::f64 ? Alpha::SUBT : Alpha::SUBS;
+      if (opcode == ISD::SUB
+          && (CN = dyn_cast<ConstantFPSDNode>(N.getOperand(0)))
+          && (CN->isExactlyValue(+0.0) || CN->isExactlyValue(-0.0)))
+      {
+        Tmp2 = SelectExpr(N.getOperand(1));
+        BuildMI(BB, Alpha::CPYSN, 2, Result).addReg(Tmp2).addReg(Tmp2);
+      } else {
+        Tmp1 = SelectExpr(N.getOperand(0));
+        Tmp2 = SelectExpr(N.getOperand(1));
+        BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
+      }
+      return Result;
+    } else {
       bool isAdd = opcode == ISD::ADD;
 
       //first check for Scaled Adds and Subs!
@@ -1977,7 +1814,12 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
     }
 
   case ISD::SDIV:
-    {
+    if (isFP) {
+      Tmp1 = SelectExpr(N.getOperand(0));
+      Tmp2 = SelectExpr(N.getOperand(1));
+      BuildMI(BB, DestType == MVT::f64 ? Alpha::DIVT : Alpha::DIVS, 2, Result)
+        .addReg(Tmp1).addReg(Tmp2);
+    } else {
       ConstantSDNode* CSD;
       //check if we can convert into a shift!
       if ((CSD = dyn_cast<ConstantSDNode>(N.getOperand(1).Val)) &&
@@ -2070,7 +1912,73 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
     }
 
   case ISD::SELECT:
-    {
+    if (isFP) {
+      //Tmp1 = SelectExpr(N.getOperand(0)); //Cond
+      unsigned TV = SelectExpr(N.getOperand(1)); //Use if TRUE
+      unsigned FV = SelectExpr(N.getOperand(2)); //Use if FALSE
+
+      SDOperand CC = N.getOperand(0);
+      SetCCSDNode* SetCC = dyn_cast<SetCCSDNode>(CC.Val);
+
+      if (CC.getOpcode() == ISD::SETCC &&
+          !MVT::isInteger(SetCC->getOperand(0).getValueType()))
+      { //FP Setcc -> Select yay!
+
+        
+        //for a cmp b: c = a - b;
+        //a = b: c = 0
+        //a < b: c < 0
+        //a > b: c > 0
+
+        bool invTest = false;
+        unsigned Tmp3;
+
+        ConstantFPSDNode *CN;
+        if ((CN = dyn_cast<ConstantFPSDNode>(SetCC->getOperand(1)))
+            && (CN->isExactlyValue(+0.0) || CN->isExactlyValue(-0.0)))
+          Tmp3 = SelectExpr(SetCC->getOperand(0));
+        else if ((CN = dyn_cast<ConstantFPSDNode>(SetCC->getOperand(0)))
+                 && (CN->isExactlyValue(+0.0) || CN->isExactlyValue(-0.0)))
+        {
+          Tmp3 = SelectExpr(SetCC->getOperand(1));
+          invTest = true;
+        }
+        else
+        {
+          unsigned Tmp1 = SelectExpr(SetCC->getOperand(0));
+          unsigned Tmp2 = SelectExpr(SetCC->getOperand(1));
+          bool isD = SetCC->getOperand(0).getValueType() == MVT::f64;
+          Tmp3 = MakeReg(isD ? MVT::f64 : MVT::f32);
+          BuildMI(BB, isD ? Alpha::SUBT : Alpha::SUBS, 2, Tmp3)
+            .addReg(Tmp1).addReg(Tmp2);
+        }
+
+        switch (SetCC->getCondition()) {
+        default: CC.Val->dump(); assert(0 && "Unknown FP comparison!");
+        case ISD::SETEQ: Opc = invTest ? Alpha::FCMOVNE : Alpha::FCMOVEQ; break;
+        case ISD::SETLT: Opc = invTest ? Alpha::FCMOVGT : Alpha::FCMOVLT; break;
+        case ISD::SETLE: Opc = invTest ? Alpha::FCMOVGE : Alpha::FCMOVLE; break;
+        case ISD::SETGT: Opc = invTest ? Alpha::FCMOVLT : Alpha::FCMOVGT; break;
+        case ISD::SETGE: Opc = invTest ? Alpha::FCMOVLE : Alpha::FCMOVGE; break;
+        case ISD::SETNE: Opc = invTest ? Alpha::FCMOVEQ : Alpha::FCMOVNE; break;
+        }
+        BuildMI(BB, Opc, 3, Result).addReg(FV).addReg(TV).addReg(Tmp3);
+        return Result;
+      }
+      else
+      {
+        Tmp1 = SelectExpr(N.getOperand(0)); //Cond
+        BuildMI(BB, Alpha::FCMOVEQ_INT, 3, Result).addReg(TV).addReg(FV)
+          .addReg(Tmp1);
+//         // Spill the cond to memory and reload it from there.
+//         unsigned Tmp4 = MakeReg(MVT::f64);
+//         MoveIntFP(Tmp1, Tmp4, true);
+//         //now ideally, we don't have to do anything to the flag...
+//         // Get the condition into the zero flag.
+//         BuildMI(BB, Alpha::FCMOVEQ, 3, Result).addReg(TV).addReg(FV).addReg(Tmp4);
+        return Result;
+      }  
+    } else {
       //FIXME: look at parent to decide if intCC can be folded, or if setCC(FP)
       //and can save stack use
       //Tmp1 = SelectExpr(N.getOperand(0)); //Cond
@@ -2174,6 +2082,63 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
         BuildMI(BB, Alpha::LDQr, 2, Result).addConstantPoolIndex(CPI)
           .addReg(Tmp1);
       }
+      return Result;
+    }
+  case ISD::FNEG:
+    if(ISD::FABS == N.getOperand(0).getOpcode())
+      {
+        Tmp1 = SelectExpr(N.getOperand(0).getOperand(0));
+        BuildMI(BB, Alpha::CPYSN, 2, Result).addReg(Alpha::F31).addReg(Tmp1);
+      } else {
+        Tmp1 = SelectExpr(N.getOperand(0));
+        BuildMI(BB, Alpha::CPYSN, 2, Result).addReg(Tmp1).addReg(Tmp1);
+      }
+    return Result;
+
+  case ISD::FABS:
+    Tmp1 = SelectExpr(N.getOperand(0));
+    BuildMI(BB, Alpha::CPYS, 2, Result).addReg(Alpha::F31).addReg(Tmp1);
+    return Result;
+
+  case ISD::FP_ROUND:
+    assert (DestType == MVT::f32 &&
+            N.getOperand(0).getValueType() == MVT::f64 &&
+            "only f64 to f32 conversion supported here");
+    Tmp1 = SelectExpr(N.getOperand(0));
+    BuildMI(BB, Alpha::CVTTS, 1, Result).addReg(Tmp1);
+    return Result;
+
+  case ISD::FP_EXTEND:
+    assert (DestType == MVT::f64 &&
+            N.getOperand(0).getValueType() == MVT::f32 &&
+            "only f32 to f64 conversion supported here");
+    Tmp1 = SelectExpr(N.getOperand(0));
+    BuildMI(BB, Alpha::CVTST, 1, Result).addReg(Tmp1);
+    return Result;
+
+  case ISD::ConstantFP:
+    if (ConstantFPSDNode *CN = dyn_cast<ConstantFPSDNode>(N)) {
+      if (CN->isExactlyValue(+0.0)) {
+        BuildMI(BB, Alpha::CPYS, 2, Result).addReg(Alpha::F31)
+          .addReg(Alpha::F31);
+      } else if ( CN->isExactlyValue(-0.0)) {
+        BuildMI(BB, Alpha::CPYSN, 2, Result).addReg(Alpha::F31)
+          .addReg(Alpha::F31);
+      } else {
+        abort();
+      }
+    }
+    return Result;
+
+  case ISD::SINT_TO_FP:
+    {
+      assert (N.getOperand(0).getValueType() == MVT::i64
+              && "only quads can be loaded from");
+      Tmp1 = SelectExpr(N.getOperand(0));  // Get the operand register
+      Tmp2 = MakeReg(MVT::f64);
+      MoveInt2FP(Tmp1, Tmp2, true);
+      Opc = DestType == MVT::f64 ? Alpha::CVTQT : Alpha::CVTQS;
+      BuildMI(BB, Opc, 1, Result).addReg(Tmp2);
       return Result;
     }
   }
