@@ -82,9 +82,13 @@ def F30 : FPR<30, "$f30">;  def F31 : FPR<31, "$f31">;
 def GPRC : RegisterClass<i64, 64,
      // Volatile
      [R0, R1, R2, R3, R4, R5, R6, R7, R8, R16, R17, R18, R19, R20, R21, R22,
-      R23, R24, R25, R26, R27,
+      R23, R24, R25, 
+     //Special meaning, but volatile
+     R27, //procedure address
+     R26, //return address
+     R29, //global offset table address
      // Non-volatile
-     R9, R10, R11, R12, R13, R14, R29 ]>;
+     R9, R10, R11, R12, R13, R14 ]>;
      // Note: R28 is reserved for the assembler
 
 // Don't allocate 15, 29, 30, 31

@@ -92,9 +92,10 @@ namespace {
       setOperationAction(ISD::BRCONDTWOWAY, MVT::Other, Expand);
 
       setOperationAction(ISD::EXTLOAD, MVT::i1,  Promote);
+      setOperationAction(ISD::EXTLOAD, MVT::f32, Expand);
  
-      setOperationAction(ISD::ZEXTLOAD, MVT::i1   , Expand);
-      setOperationAction(ISD::ZEXTLOAD, MVT::i32  , Expand);
+      setOperationAction(ISD::ZEXTLOAD, MVT::i1,  Expand);
+      setOperationAction(ISD::ZEXTLOAD, MVT::i32, Expand);
 
       setOperationAction(ISD::SEXTLOAD, MVT::i1,  Expand);
       setOperationAction(ISD::SEXTLOAD, MVT::i8,  Expand);
@@ -844,26 +845,6 @@ static long getLower16(long l)
   return l - h * IMM_MULT;
 }
 
-static unsigned GetSymVersion(unsigned opcode)
-{
-  switch (opcode) {
-  default: assert(0 && "unknown load or store"); return 0;
-  case Alpha::LDQ: return Alpha::LDQ_SYM;
-  case Alpha::LDS: return Alpha::LDS_SYM;
-  case Alpha::LDT: return Alpha::LDT_SYM;
-  case Alpha::LDL: return Alpha::LDL_SYM;
-  case Alpha::LDBU: return Alpha::LDBU_SYM;
-  case Alpha::LDWU: return Alpha::LDWU_SYM;
-  case Alpha::LDW: return Alpha::LDW_SYM;
-  case Alpha::LDB: return Alpha::LDB_SYM;
-  case Alpha::STQ: return Alpha::STQ_SYM;
-  case Alpha::STS: return Alpha::STS_SYM;
-  case Alpha::STT: return Alpha::STT_SYM;
-  case Alpha::STL: return Alpha::STL_SYM;
-  case Alpha::STW: return Alpha::STW_SYM;
-  case Alpha::STB: return Alpha::STB_SYM;
-  }
-}
 static unsigned GetRelVersion(unsigned opcode)
 {
   switch (opcode) {
@@ -1212,74 +1193,6 @@ unsigned AlphaISel::SelectExprFP(SDOperand N, unsigned Result)
     BuildMI(BB, Alpha::CVTST, 1, Result).addReg(Tmp1);
     return Result;
 
-  case ISD::CopyFromReg:
-    {
-      // Make sure we generate both values.
-      if (Result != notIn)
-        ExprMap[N.getValue(1)] = notIn;   // Generate the token
-      else
-        Result = ExprMap[N.getValue(0)] = MakeReg(N.getValue(0).getValueType());
-
-      SDOperand Chain   = N.getOperand(0);
-
-      Select(Chain);
-      unsigned r = dyn_cast<RegSDNode>(Node)->getReg();
-      //std::cerr << "CopyFromReg " << Result << " = " << r << "\n";
-      BuildMI(BB, Alpha::CPYS, 2, Result).addReg(r).addReg(r);
-      return Result;
-    }
-
-  case ISD::LOAD:
-    {
-      // Make sure we generate both values.
-      if (Result != notIn)
-        ExprMap[N.getValue(1)] = notIn;   // Generate the token
-      else
-        Result = ExprMap[N.getValue(0)] = MakeReg(N.getValue(0).getValueType());
-
-      DestType = N.getValue(0).getValueType();
-
-      SDOperand Chain   = N.getOperand(0);
-      SDOperand Address = N.getOperand(1);
-      Select(Chain);
-      Opc = DestType == MVT::f64 ? Alpha::LDT : Alpha::LDS;
-
-      if (EnableAlphaLSMark)
-      {
-        int i = getValueOffset(dyn_cast<SrcValueSDNode>(N.getOperand(2))
-                                  ->getValue());
-        int j = getFunctionOffset(BB->getParent()->getFunction());
-        BuildMI(BB, Alpha::MEMLABEL, 3).addImm(j).addImm(i).addImm(getUID());
-      }
-      
-      if (Address.getOpcode() == ISD::GlobalAddress) {
-        AlphaLowering.restoreGP(BB);
-        Opc = GetSymVersion(Opc);
-        has_sym = true;
-        BuildMI(BB, Opc, 1, Result)
-          .addGlobalAddress(cast<GlobalAddressSDNode>(Address)->getGlobal());
-      }
-      else if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(Address)) {
-        AlphaLowering.restoreGP(BB);
-        Opc = GetRelVersion(Opc);
-        has_sym = true;
-        Tmp1 = MakeReg(MVT::i64);
-        BuildMI(BB, Alpha::LDAHr, 2, Tmp1).addConstantPoolIndex(CP->getIndex())
-          .addReg(Alpha::R29);
-        BuildMI(BB, Opc, 2, Result).addConstantPoolIndex(CP->getIndex())
-          .addReg(Tmp1);
-      }
-      else if(Address.getOpcode() == ISD::FrameIndex) {
-        BuildMI(BB, Opc, 2, Result)
-          .addFrameIndex(cast<FrameIndexSDNode>(Address)->getIndex())
-          .addReg(Alpha::F31);
-      } else {
-        long offset;
-        SelectAddr(Address, Tmp1, offset);
-        BuildMI(BB, Opc, 2, Result).addImm(offset).addReg(Tmp1);
-      }
-      return Result;
-    }
   case ISD::ConstantFP:
     if (ConstantFPSDNode *CN = dyn_cast<ConstantFPSDNode>(N)) {
       if (CN->isExactlyValue(+0.0)) {
@@ -1322,63 +1235,6 @@ unsigned AlphaISel::SelectExprFP(SDOperand N, unsigned Result)
       BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
     }
     return Result;
-
-  case ISD::EXTLOAD:
-    {
-      //include a conversion sequence for float loads to double
-      if (Result != notIn)
-        ExprMap[N.getValue(1)] = notIn;   // Generate the token
-      else
-        Result = ExprMap[N.getValue(0)] = MakeReg(N.getValue(0).getValueType());
-
-      Tmp1 = MakeReg(MVT::f32);
-
-      assert(cast<MVTSDNode>(Node)->getExtraValueType() == MVT::f32 &&
-             "EXTLOAD not from f32");
-      assert(Node->getValueType(0) == MVT::f64 && "EXTLOAD not to f64");
-
-      SDOperand Chain   = N.getOperand(0);
-      SDOperand Address = N.getOperand(1);
-      Select(Chain);
-
-      if (EnableAlphaLSMark)
-      {
-        int i = getValueOffset(dyn_cast<SrcValueSDNode>(N.getOperand(2))
-                                  ->getValue());
-        int j = getFunctionOffset(BB->getParent()->getFunction());
-        BuildMI(BB, Alpha::MEMLABEL, 3).addImm(j).addImm(i).addImm(getUID());
-      }
-
-      if (Address.getOpcode() == ISD::GlobalAddress) {
-        AlphaLowering.restoreGP(BB);
-        has_sym = true;
-        BuildMI(BB, Alpha::LDS_SYM, 1, Tmp1)
-          .addGlobalAddress(cast<GlobalAddressSDNode>(Address)->getGlobal());
-      }
-      else if (ConstantPoolSDNode *CP =
-               dyn_cast<ConstantPoolSDNode>(N.getOperand(1)))
-      {
-        AlphaLowering.restoreGP(BB);
-        has_sym = true;
-        Tmp2 = MakeReg(MVT::i64);
-        BuildMI(BB, Alpha::LDAHr, 2, Tmp2).addConstantPoolIndex(CP->getIndex())
-          .addReg(Alpha::R29);
-        BuildMI(BB, Alpha::LDSr, 2, Tmp1).addConstantPoolIndex(CP->getIndex())
-          .addReg(Tmp2);
-      }
-      else if(Address.getOpcode() == ISD::FrameIndex) {
-        Tmp2 = cast<FrameIndexSDNode>(Address)->getIndex();
-        BuildMI(BB, Alpha::LDS, 2, Tmp1)
-          .addFrameIndex(cast<FrameIndexSDNode>(Address)->getIndex())
-          .addReg(Alpha::F31);
-      } else {
-        long offset;
-        SelectAddr(Address, Tmp2, offset);
-        BuildMI(BB, Alpha::LDS, 1, Tmp1).addImm(offset).addReg(Tmp2);
-      }
-      BuildMI(BB, Alpha::CVTST, 1, Result).addReg(Tmp1);
-      return Result;
-    }
 
   case ISD::SINT_TO_FP:
     {
@@ -1425,17 +1281,10 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
     }
   }
 
-  if ((DestType == MVT::f64 || DestType == MVT::f32 ||
-       (
-        (opcode == ISD::LOAD || opcode == ISD::CopyFromReg ||
-         opcode == ISD::EXTLOAD) &&
-        (N.getValue(0).getValueType() == MVT::f32 ||
-         N.getValue(0).getValueType() == MVT::f64)
-       ))
-      && opcode != ISD::CALL && opcode != ISD::TAILCALL
-      )
+  if ((DestType == MVT::f64 || DestType == MVT::f32)
+      && opcode != ISD::CALL && opcode != ISD::TAILCALL)
     return SelectExprFP(N, Result);
-
+  
   switch (opcode) {
   default:
     Node->dump();
@@ -1550,10 +1399,15 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
       SDOperand Address = N.getOperand(1);
       Select(Chain);
 
-      assert(Node->getValueType(0) == MVT::i64 &&
-             "Unknown type to sign extend to.");
+      bool fpext = true;
+
       if (opcode == ISD::LOAD)
-        Opc = Alpha::LDQ;
+        switch (Node->getValueType(0)) {
+        default: Node->dump(); assert(0 && "Bad load!");
+        case MVT::i64: Opc = Alpha::LDQ; break;
+        case MVT::f64: Opc = Alpha::LDT; break;
+        case MVT::f32: Opc = Alpha::LDS; break;
+        }
       else
         switch (cast<MVTSDNode>(Node)->getExtraValueType()) {
         default: Node->dump(); assert(0 && "Bad sign extend!");
@@ -1566,38 +1420,50 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
           assert(opcode != ISD::SEXTLOAD && "Not zext"); break;
         }
 
-      if (EnableAlphaLSMark)
-      {
-        int i = getValueOffset(dyn_cast<SrcValueSDNode>(N.getOperand(2))
-                                 ->getValue());
-        int j = getFunctionOffset(BB->getParent()->getFunction());
-        BuildMI(BB, Alpha::MEMLABEL, 3).addImm(j).addImm(i).addImm(getUID());
+      int i = 0, j = 0;
+      if (EnableAlphaLSMark) {
+        i = getValueOffset(dyn_cast<SrcValueSDNode>(N.getOperand(2))
+                           ->getValue());
+        j = getFunctionOffset(BB->getParent()->getFunction());
       }
-
-      if (Address.getOpcode() == ISD::GlobalAddress) {
+      if (GlobalAddressSDNode *GASD = 
+          dyn_cast<GlobalAddressSDNode>(Address)) {
+        if (GASD->getGlobal()->isExternal()) {
+          Tmp1 = SelectExpr(Address);
+          if (EnableAlphaLSMark)
+            BuildMI(BB, Alpha::MEMLABEL, 3).addImm(j).addImm(i).addImm(getUID());
+          BuildMI(BB, Opc, 2, Result).addImm(0).addReg(Tmp1);
+        } else {
+          Tmp1 = MakeReg(MVT::i64);
+          AlphaLowering.restoreGP(BB);
+          BuildMI(BB, Alpha::LDAHr, 2, Tmp1)
+            .addGlobalAddress(GASD->getGlobal()).addReg(Alpha::R29);
+          if (EnableAlphaLSMark)
+            BuildMI(BB, Alpha::MEMLABEL, 3).addImm(j).addImm(i).addImm(getUID());
+          BuildMI(BB, GetRelVersion(Opc), 2, Result)
+            .addGlobalAddress(GASD->getGlobal()).addReg(Tmp1);
+        }
+      } else if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(Address)) {
         AlphaLowering.restoreGP(BB);
-        Opc = GetSymVersion(Opc);
-        has_sym = true;
-        BuildMI(BB, Opc, 1, Result)
-          .addGlobalAddress(cast<GlobalAddressSDNode>(Address)->getGlobal());
-      }
-      else if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(Address)) {
-        AlphaLowering.restoreGP(BB);
-        Opc = GetRelVersion(Opc);
         has_sym = true;
         Tmp1 = MakeReg(MVT::i64);
         BuildMI(BB, Alpha::LDAHr, 2, Tmp1).addConstantPoolIndex(CP->getIndex())
           .addReg(Alpha::R29);
-        BuildMI(BB, Opc, 2, Result).addConstantPoolIndex(CP->getIndex())
-          .addReg(Tmp1);
-      }
-      else if(Address.getOpcode() == ISD::FrameIndex) {
+        if (EnableAlphaLSMark)
+          BuildMI(BB, Alpha::MEMLABEL, 3).addImm(j).addImm(i).addImm(getUID());
+        BuildMI(BB, GetRelVersion(Opc), 2, Result)
+          .addConstantPoolIndex(CP->getIndex()).addReg(Tmp1);
+      } else if(Address.getOpcode() == ISD::FrameIndex) {
+        if (EnableAlphaLSMark)
+          BuildMI(BB, Alpha::MEMLABEL, 3).addImm(j).addImm(i).addImm(getUID());
         BuildMI(BB, Opc, 2, Result)
           .addFrameIndex(cast<FrameIndexSDNode>(Address)->getIndex())
           .addReg(Alpha::F31);
       } else {
         long offset;
         SelectAddr(Address, Tmp1, offset);
+        if (EnableAlphaLSMark)
+          BuildMI(BB, Alpha::MEMLABEL, 3).addImm(j).addImm(i).addImm(getUID());
         BuildMI(BB, Opc, 2, Result).addImm(offset).addReg(Tmp1);
       }
       return Result;
@@ -1606,7 +1472,11 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
   case ISD::GlobalAddress:
     AlphaLowering.restoreGP(BB);
     has_sym = true;
-    BuildMI(BB, Alpha::LDQrl, 2, Result)
+
+    if (EnableAlphaLSMark)
+      BuildMI(BB, Alpha::MEMLABEL, 3).addImm(0).addImm(0).addImm(getUID());
+
+    BuildMI(BB, Alpha::LDQl, 2, Result)
       .addGlobalAddress(cast<GlobalAddressSDNode>(N)->getGlobal())
       .addReg(Alpha::R29);
     return Result;
@@ -1922,7 +1792,10 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
       Select(Chain);
       unsigned r = dyn_cast<RegSDNode>(Node)->getReg();
       //std::cerr << "CopyFromReg " << Result << " = " << r << "\n";
-      BuildMI(BB, Alpha::BIS, 2, Result).addReg(r).addReg(r);
+      if (DestType == MVT::f32 || DestType == MVT::f64)
+        BuildMI(BB, Alpha::CPYS, 2, Result).addReg(r).addReg(r);
+      else
+        BuildMI(BB, Alpha::BIS, 2, Result).addReg(r).addReg(r);
       return Result;
     }
 
@@ -2422,32 +2295,24 @@ void AlphaISel::Select(SDOperand N) {
         }
       }
 
-      if (EnableAlphaLSMark)
-      {
-        int i = 
+      int i = 0, j = 0;
+      if (EnableAlphaLSMark) {
+        i = 
           getValueOffset(dyn_cast<SrcValueSDNode>(N.getOperand(3))->getValue());
-        int j = getFunctionOffset(BB->getParent()->getFunction());
-        BuildMI(BB, Alpha::MEMLABEL, 3).addImm(j).addImm(i).addImm(getUID());
+        j = getFunctionOffset(BB->getParent()->getFunction());
       }
 
-      if (Address.getOpcode() == ISD::GlobalAddress)
-      {
-        AlphaLowering.restoreGP(BB);
-        Opc = GetSymVersion(Opc);
-        has_sym = true;
-        BuildMI(BB, Opc, 2).addReg(Tmp1)
-          .addGlobalAddress(cast<GlobalAddressSDNode>(Address)->getGlobal());
-      }
-      else if(Address.getOpcode() == ISD::FrameIndex)
-      {
+      if(Address.getOpcode() == ISD::FrameIndex) {
+        if (EnableAlphaLSMark)
+          BuildMI(BB, Alpha::MEMLABEL, 3).addImm(j).addImm(i).addImm(getUID());
         BuildMI(BB, Opc, 3).addReg(Tmp1)
           .addFrameIndex(cast<FrameIndexSDNode>(Address)->getIndex())
           .addReg(Alpha::F31);
-      }
-      else
-      {
+      } else {
         long offset;
         SelectAddr(Address, Tmp2, offset);
+        if (EnableAlphaLSMark)
+          BuildMI(BB, Alpha::MEMLABEL, 3).addImm(j).addImm(i).addImm(getUID());
         BuildMI(BB, Opc, 3).addReg(Tmp1).addImm(offset).addReg(Tmp2);
       }
       return;

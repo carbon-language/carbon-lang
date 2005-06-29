@@ -53,30 +53,6 @@ let isCall = 1,
     Uses = [R29] in
       def CALL : PseudoInstAlpha< (ops s64imm:$TARGET), "jsr $TARGET">; //Jump to subroutine
 
-//These are evil as they get expanded into multiple instructions to take care of reallocation
-let Uses = [R29], Defs = [R28] in {
-  def LDQ_SYM : PseudoInstAlpha<(ops GPRC:$RA, s64imm:$DISP), "ldq $RA,$DISP">; //Load quadword
-  def LDS_SYM : PseudoInstAlpha<(ops GPRC:$RA, s64imm:$DISP), "lds $RA,$DISP">; //Load float
-  def LDT_SYM : PseudoInstAlpha<(ops GPRC:$RA, s64imm:$DISP), "ldt $RA,$DISP">; //Load double
-  def LDL_SYM : PseudoInstAlpha<(ops GPRC:$RA, s16imm:$DISP), "ldl $RA,$DISP">; // Load sign-extended longword
-  def LDBU_SYM : PseudoInstAlpha<(ops GPRC:$RA, s16imm:$DISP), "ldbu $RA,$DISP">; //Load zero-extended byte
-  def LDWU_SYM : PseudoInstAlpha<(ops GPRC:$RA, s16imm:$DISP), "ldwu $RA,$DISP">; //Load zero-extended word
-  def LDW_SYM : PseudoInstAlpha<(ops GPRC:$RA, s16imm:$DISP), "ldw $RA,$DISP">; // Load sign-extended word
-  def LDB_SYM : PseudoInstAlpha<(ops GPRC:$RA, s16imm:$DISP), "ldb $RA,$DISP">; //Load byte
-
-  def LDW : PseudoInstAlpha<(ops GPRC:$RA, s16imm:$DISP, GPRC:$RB), "ldw $RA,$DISP($RB)">; // Load sign-extended word
-  def LDB : PseudoInstAlpha<(ops GPRC:$RA, s16imm:$DISP, GPRC:$RB), "ldb $RA,$DISP($RB)">; //Load byte
-
-  def STB_SYM : PseudoInstAlpha<(ops GPRC:$RA, s16imm:$DISP), "stb $RA,$DISP">; // Store byte
-  def STW_SYM : PseudoInstAlpha<(ops GPRC:$RA, s16imm:$DISP), "stw $RA,$DISP">; // Store word
-  def STL_SYM : PseudoInstAlpha<(ops GPRC:$RA, s16imm:$DISP), "stl $RA,$DISP">; // Store longword
-  def STQ_SYM : PseudoInstAlpha<(ops GPRC:$RA, s16imm:$DISP), "stq $RA,$DISP">; //Store quadword
-
-  def STS_SYM : PseudoInstAlpha<(ops GPRC:$RA, s64imm:$DISP), "sts $RA,$DISP">; //store float
-  def STT_SYM : PseudoInstAlpha<(ops GPRC:$RA, s64imm:$DISP), "stt $RA,$DISP">; //store double
-}
-
-
 //RESULTS of these go to R27
 //These are also evil as the assembler expands them into calls
 let Uses = [R29], 
@@ -357,21 +333,22 @@ def LDA : MForm<0x08, (ops GPRC:$RA, s16imm:$DISP, GPRC:$RB), "lda $RA,$DISP($RB
 def LDAH : MForm<0x08, (ops GPRC:$RA, s16imm:$DISP, GPRC:$RB), "ldah $RA,$DISP($RB)">;  //Load address high
 
 
-//Loads, int, Rellocated form
+//Loads, int, Rellocated Low form
 def LDLr : MForm<0x28, (ops GPRC:$RA, s16imm:$DISP, GPRC:$RB), "ldl $RA,$DISP($RB) !gprellow">; // Load sign-extended longword
 def LDQr : MForm<0x29, (ops GPRC:$RA, s16imm:$DISP, GPRC:$RB), "ldq $RA,$DISP($RB) !gprellow">; //Load quadword
 def LDBUr : MForm<0x0A, (ops GPRC:$RA, s16imm:$DISP, GPRC:$RB), "ldbu $RA,$DISP($RB) !gprellow">; //Load zero-extended byte
 def LDWUr : MForm<0x0C, (ops GPRC:$RA, s16imm:$DISP, GPRC:$RB), "ldwu $RA,$DISP($RB) !gprellow">; //Load zero-extended word
-def LDQrl : MForm<0x29, (ops GPRC:$RA, s16imm:$DISP, GPRC:$RB), "ldq $RA,$DISP($RB) !literal">; //Load quadword
 
-//Loads, float, Rellocated form
+//Loads, float, Rellocated Low form
 def LDSr : MForm<0x22, (ops FPRC:$RA, s16imm:$DISP, GPRC:$RB), "lds $RA,$DISP($RB) !gprellow">; //Load S_floating
 def LDTr : MForm<0x23, (ops FPRC:$RA, s16imm:$DISP, GPRC:$RB), "ldt $RA,$DISP($RB) !gprellow">; //Load T_floating
 
-//Load address, rellocated form
+//Load address, rellocated low and high form
 def LDAr : MForm<0x08, (ops GPRC:$RA, s16imm:$DISP, GPRC:$RB), "lda $RA,$DISP($RB) !gprellow">;  //Load address
 def LDAHr : MForm<0x08, (ops GPRC:$RA, s16imm:$DISP, GPRC:$RB), "ldah $RA,$DISP($RB) !gprelhigh">;  //Load address high
 
+//Load quad, rellocated literal form
+def LDQl : MForm<0x29, (ops GPRC:$RA, s16imm:$DISP, GPRC:$RB), "ldq $RA,$DISP($RB) !literal">; //Load quadword
 
 //Branches, int
 def BEQ : BForm<0x39, (ops GPRC:$RA, s21imm:$DISP), "beq $RA,$DISP">; //Branch if = zero
