@@ -1310,9 +1310,7 @@ public:
       // same type of char pointer.
       if (ci->getOperand(2)->getType() !=
           fwrite_func->getFunctionType()->getParamType(0))
-      {
         return false;
-      }
 
       std::vector<Value*> args;
       args.push_back(ci->getOperand(2));
