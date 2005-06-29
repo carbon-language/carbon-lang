@@ -350,6 +350,17 @@ def LDAHr : MForm<0x08, (ops GPRC:$RA, s16imm:$DISP, GPRC:$RB), "ldah $RA,$DISP(
 //Load quad, rellocated literal form
 def LDQl : MForm<0x29, (ops GPRC:$RA, s16imm:$DISP, GPRC:$RB), "ldq $RA,$DISP($RB) !literal">; //Load quadword
 
+//Stores, int
+def STBr : MForm<0x0E, (ops GPRC:$RA, s16imm:$DISP, GPRC:$RB), "stb $RA,$DISP($RB) !gprellow">; // Store byte
+def STWr : MForm<0x0D, (ops GPRC:$RA, s16imm:$DISP, GPRC:$RB), "stw $RA,$DISP($RB) !gprellow">; // Store word
+def STLr : MForm<0x2C, (ops GPRC:$RA, s16imm:$DISP, GPRC:$RB), "stl $RA,$DISP($RB) !gprellow">; // Store longword
+def STQr : MForm<0x2D, (ops GPRC:$RA, s16imm:$DISP, GPRC:$RB), "stq $RA,$DISP($RB) !gprellow">; //Store quadword
+
+//Stores, float
+def STSr : MForm<0x26, (ops FPRC:$RA, s16imm:$DISP, GPRC:$RB), "sts $RA,$DISP($RB) !gprellow">; //Store S_floating
+def STTr : MForm<0x27, (ops FPRC:$RA, s16imm:$DISP, GPRC:$RB), "stt $RA,$DISP($RB) !gprellow">; //Store T_floating
+
+
 //Branches, int
 def BEQ : BForm<0x39, (ops GPRC:$RA, s21imm:$DISP), "beq $RA,$DISP">; //Branch if = zero
 def BGE : BForm<0x3E, (ops GPRC:$RA, s21imm:$DISP), "bge $RA,$DISP">; //Branch if >= zero

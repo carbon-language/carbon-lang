@@ -855,6 +855,13 @@ static unsigned GetRelVersion(unsigned opcode)
   case Alpha::LDL: return Alpha::LDLr;
   case Alpha::LDBU: return Alpha::LDBUr;
   case Alpha::LDWU: return Alpha::LDWUr;
+  case Alpha::STB: return Alpha::STBr;
+  case Alpha::STW: return Alpha::STWr;
+  case Alpha::STL: return Alpha::STLr;
+  case Alpha::STQ: return Alpha::STQr;
+  case Alpha::STS: return Alpha::STSr;
+  case Alpha::STT: return Alpha::STTr;
+
   }
 }
 
@@ -2302,7 +2309,24 @@ void AlphaISel::Select(SDOperand N) {
         j = getFunctionOffset(BB->getParent()->getFunction());
       }
 
-      if(Address.getOpcode() == ISD::FrameIndex) {
+      if (GlobalAddressSDNode *GASD = 
+          dyn_cast<GlobalAddressSDNode>(Address)) {
+        if (GASD->getGlobal()->isExternal()) {
+          Tmp2 = SelectExpr(Address);
+          if (EnableAlphaLSMark)
+            BuildMI(BB, Alpha::MEMLABEL, 3).addImm(j).addImm(i).addImm(getUID());
+          BuildMI(BB, Opc, 3).addReg(Tmp1).addImm(0).addReg(Tmp2);
+        } else {
+          Tmp2 = MakeReg(MVT::i64);
+          AlphaLowering.restoreGP(BB);
+          BuildMI(BB, Alpha::LDAHr, 2, Tmp2)
+            .addGlobalAddress(GASD->getGlobal()).addReg(Alpha::R29);
+          if (EnableAlphaLSMark)
+            BuildMI(BB, Alpha::MEMLABEL, 3).addImm(j).addImm(i).addImm(getUID());
+          BuildMI(BB, GetRelVersion(Opc), 3).addReg(Tmp1)
+            .addGlobalAddress(GASD->getGlobal()).addReg(Tmp2);
+        }
+      } else if(Address.getOpcode() == ISD::FrameIndex) {
         if (EnableAlphaLSMark)
           BuildMI(BB, Alpha::MEMLABEL, 3).addImm(j).addImm(i).addImm(getUID());
         BuildMI(BB, Opc, 3).addReg(Tmp1)
