@@ -522,6 +522,15 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       AddLegalizedOperand(SDOperand(Node, 1), Result.getValue(1));
       return Result.getValue(Op.ResNo);
     case TargetLowering::Expand:
+      //f64 = EXTLOAD f32 should expand to LOAD, FP_EXTEND
+      if (SrcVT == MVT::f32 && Node->getValueType(0) == MVT::f64) {
+        SDOperand Load = DAG.getLoad(SrcVT, Tmp1, Tmp2, Node->getOperand(2));
+        Result = 
+          DAG.getNode(ISD::FP_EXTEND, Node->getValueType(0), Load, SrcVT);
+        if (Op.ResNo)
+          return Load.getValue(1);
+        return Result;
+      }
       assert(Node->getOpcode() != ISD::EXTLOAD &&
              "EXTLOAD should always be supported!");
       // Turn the unsupported load into an EXTLOAD followed by an explicit
