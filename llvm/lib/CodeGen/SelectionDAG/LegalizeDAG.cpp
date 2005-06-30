@@ -525,8 +525,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       //f64 = EXTLOAD f32 should expand to LOAD, FP_EXTEND
       if (SrcVT == MVT::f32 && Node->getValueType(0) == MVT::f64) {
         SDOperand Load = DAG.getLoad(SrcVT, Tmp1, Tmp2, Node->getOperand(2));
-        Result = 
-          DAG.getNode(ISD::FP_EXTEND, Node->getValueType(0), Load, SrcVT);
+        Result = DAG.getNode(ISD::FP_EXTEND, Node->getValueType(0), Load);
         if (Op.ResNo)
           return Load.getValue(1);
         return Result;
