@@ -57,6 +57,7 @@ namespace {
     /// Allocas - The alloca instructions being promoted.
     ///
     std::vector<AllocaInst*> Allocas;
+    std::vector<AllocaInst*> &RetryList;
     DominatorTree &DT;
     DominanceFrontier &DF;
     const TargetData &TD;
@@ -88,10 +89,11 @@ namespace {
     StableBasicBlockNumbering BBNumbers;
 
   public:
-    PromoteMem2Reg(const std::vector<AllocaInst*> &A, DominatorTree &dt,
+    PromoteMem2Reg(const std::vector<AllocaInst*> &A,
+                   std::vector<AllocaInst*> &Retry, DominatorTree &dt,
                    DominanceFrontier &df, const TargetData &td,
                    AliasSetTracker *ast)
-      : Allocas(A), DT(dt), DF(df), TD(td), AST(ast) {}
+      : Allocas(A), RetryList(Retry), DT(dt), DF(df), TD(td), AST(ast) {}
 
     void run();
 
@@ -106,7 +108,7 @@ namespace {
   private:
     void MarkDominatingPHILive(BasicBlock *BB, unsigned AllocaNum,
                                std::set<PHINode*> &DeadPHINodes);
-    void PromoteLocallyUsedAlloca(BasicBlock *BB, AllocaInst *AI);
+    bool PromoteLocallyUsedAlloca(BasicBlock *BB, AllocaInst *AI);
     void PromoteLocallyUsedAllocas(BasicBlock *BB,
                                    const std::vector<AllocaInst*> &AIs);
 
@@ -277,15 +279,21 @@ void PromoteMem2Reg::run() {
   // Process all allocas which are only used in a single basic block.
   for (std::map<BasicBlock*, std::vector<AllocaInst*> >::iterator I =
          LocallyUsedAllocas.begin(), E = LocallyUsedAllocas.end(); I != E; ++I){
-    const std::vector<AllocaInst*> &Allocas = I->second;
-    assert(!Allocas.empty() && "empty alloca list??");
+    const std::vector<AllocaInst*> &LocAllocas = I->second;
+    assert(!LocAllocas.empty() && "empty alloca list??");
 
     // It's common for there to only be one alloca in the list.  Handle it
     // efficiently.
-    if (Allocas.size() == 1)
-      PromoteLocallyUsedAlloca(I->first, Allocas[0]);
-    else
-      PromoteLocallyUsedAllocas(I->first, Allocas);
+    if (LocAllocas.size() == 1) {
+      // If we can do the quick promotion pass, do so now.
+      if (PromoteLocallyUsedAlloca(I->first, LocAllocas[0]))
+        RetryList.push_back(LocAllocas[0]);  // Failed, retry later.
+    } else {
+      // Locally promote anything possible.  Note that if this is unable to
+      // promote a particular alloca, it puts the alloca onto the Allocas vector
+      // for global processing.
+      PromoteLocallyUsedAllocas(I->first, LocAllocas);
+    }
   }
 
   if (Allocas.empty())
@@ -430,7 +438,16 @@ void PromoteMem2Reg::MarkDominatingPHILive(BasicBlock *BB, unsigned AllocaNum,
 /// potentially useless PHI nodes by just performing a single linear pass over
 /// the basic block using the Alloca.
 ///
-void PromoteMem2Reg::PromoteLocallyUsedAlloca(BasicBlock *BB, AllocaInst *AI) {
+/// If we cannot promote this alloca (because it is read before it is written),
+/// return true.  This is necessary in cases where, due to control flow, the
+/// alloca is potentially undefined on some control flow paths.  e.g. code like
+/// this is potentially correct:
+///
+///   for (...) { if (c) { A = undef; undef = B; } }
+///
+/// ... so long as A is not used before undef is set.
+///
+bool PromoteMem2Reg::PromoteLocallyUsedAlloca(BasicBlock *BB, AllocaInst *AI) {
   assert(!AI->use_empty() && "There are no uses of the alloca!");
 
   // Handle degenerate cases quickly.
@@ -448,12 +465,14 @@ void PromoteMem2Reg::PromoteLocallyUsedAlloca(BasicBlock *BB, AllocaInst *AI) {
     BB->getInstList().erase(U);
   } else {
     // Uses of the uninitialized memory location shall get undef.
-    Value *CurVal = UndefValue::get(AI->getAllocatedType());
+    Value *CurVal = 0;
 
     for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ) {
       Instruction *Inst = I++;
       if (LoadInst *LI = dyn_cast<LoadInst>(Inst)) {
         if (LI->getOperand(0) == AI) {
+          if (!CurVal) return true;  // Could not locally promote!
+
           // Loads just returns the "current value"...
           LI->replaceAllUsesWith(CurVal);
           if (AST && isa<PointerType>(LI->getType()))
@@ -475,6 +494,7 @@ void PromoteMem2Reg::PromoteLocallyUsedAlloca(BasicBlock *BB, AllocaInst *AI) {
   assert(AI->use_empty() && "Uses of alloca from more than one BB??");
   if (AST) AST->deleteValue(AI);
   AI->getParent()->getInstList().erase(AI);
+  return false;
 }
 
 /// PromoteLocallyUsedAllocas - This method is just like
@@ -495,13 +515,19 @@ PromoteLocallyUsedAllocas(BasicBlock *BB, const std::vector<AllocaInst*> &AIs) {
       if (AllocaInst *AI = dyn_cast<AllocaInst>(LI->getOperand(0))) {
         std::map<AllocaInst*, Value*>::iterator AIt = CurValues.find(AI);
         if (AIt != CurValues.end()) {
-          // Loads just returns the "current value"...
-          if (AIt->second == 0)   // Uninitialized value??
-            AIt->second = UndefValue::get(AIt->first->getAllocatedType());
-          LI->replaceAllUsesWith(AIt->second);
-          if (AST && isa<PointerType>(LI->getType()))
-            AST->deleteValue(LI);
-          BB->getInstList().erase(LI);
+          // If loading an uninitialized value, allow the inter-block case to
+          // handle it.  Due to control flow, this might actually be ok.
+          if (AIt->second == 0) {  // Use of locally uninitialized value??
+            RetryList.push_back(AI);   // Retry elsewhere.
+            CurValues.erase(AIt);   // Stop tracking this here.
+            if (CurValues.empty()) return;
+          } else {
+            // Loads just returns the "current value"...
+            LI->replaceAllUsesWith(AIt->second);
+            if (AST && isa<PointerType>(LI->getType()))
+              AST->deleteValue(LI);
+            BB->getInstList().erase(LI);
+          }
         }
       }
     } else if (StoreInst *SI = dyn_cast<StoreInst>(Inst)) {
@@ -627,5 +653,25 @@ void llvm::PromoteMemToReg(const std::vector<AllocaInst*> &Allocas,
                            const TargetData &TD, AliasSetTracker *AST) {
   // If there is nothing to do, bail out...
   if (Allocas.empty()) return;
-  PromoteMem2Reg(Allocas, DT, DF, TD, AST).run();
+
+  std::vector<AllocaInst*> RetryList;
+  PromoteMem2Reg(Allocas, RetryList, DT, DF, TD, AST).run();
+
+  // PromoteMem2Reg may not have been able to promote all of the allocas in one
+  // pass, run it again if needed.
+  while (!RetryList.empty()) {
+    // If we need to retry some allocas, this is due to there being no store
+    // before a read in a local block.  To counteract this, insert a store of
+    // undef into the alloca right after the alloca itself.
+    for (unsigned i = 0, e = RetryList.size(); i != e; ++i) {
+      BasicBlock::iterator BBI = RetryList[i];
+      
+      new StoreInst(UndefValue::get(RetryList[i]->getAllocatedType()),
+                    RetryList[i], ++BBI);
+    }
+
+    std::vector<AllocaInst*> NewAllocas;
+    std::swap(NewAllocas, RetryList);
+    PromoteMem2Reg(NewAllocas, RetryList, DT, DF, TD, AST).run();
+  }
 }
