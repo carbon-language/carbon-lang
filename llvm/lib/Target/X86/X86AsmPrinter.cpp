@@ -44,12 +44,13 @@ namespace {
 
   struct X86SharedAsmPrinter : public AsmPrinter {
     X86SharedAsmPrinter(std::ostream &O, TargetMachine &TM)
-      : AsmPrinter(O, TM), forCygwin(false) { }
+      : AsmPrinter(O, TM), forCygwin(false), forDarwin(false) { }
 
     bool doInitialization(Module &M);
     void printConstantPool(MachineConstantPool *MCP);
     bool doFinalization(Module &M);
     bool forCygwin;
+    bool forDarwin;
   };
 }
 
@@ -82,20 +83,22 @@ static void SwitchSection(std::ostream &OS, std::string &CurSection,
 
 /// doInitialization - determine
 bool X86SharedAsmPrinter::doInitialization(Module& M) {
-  forCygwin = false;
   const std::string& TT = M.getTargetTriple();
-  if (TT.length() > 5)
+  if (TT.length() > 5) {
     forCygwin = TT.find("cygwin") != std::string::npos ||
                 TT.find("mingw")  != std::string::npos;
-  else if (TT.empty()) {
+    forDarwin = TT.find("darwin") != std::string::npos;
+  } else if (TT.empty()) {
 #if defined(__CYGWIN__) || defined(__MINGW32__)
     forCygwin = true;
-#else
-    forCygwin = false;
+#elif defined(__MACOSX__)
+    forDarwin = true;
 #endif
   }
-  if (forCygwin)
+  if (forCygwin || forDarwin)
     GlobalPrefix = "_";
+  if (forDarwin)
+    AlignmentIsInBytes = false;
   return AsmPrinter::doInitialization(M);
 }
 
@@ -173,7 +176,7 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
         }
 
         emitAlignment(Align);
-        if (!forCygwin) {
+        if (!forCygwin && !forDarwin) {
           O << "\t.type " << name << ",@object\n";
           O << "\t.size " << name << "," << Size << "\n";
         }
@@ -264,7 +267,7 @@ bool X86IntelAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   O << "\t.text\n";
   emitAlignment(4);
   O << "\t.globl\t" << CurrentFnName << "\n";
-  if (!forCygwin)
+  if (!forCygwin && !forDarwin)
     O << "\t.type\t" << CurrentFnName << ", @function\n";
   O << CurrentFnName << ":\n";
 
@@ -312,7 +315,7 @@ void X86IntelAsmPrinter::printOp(const MachineOperand &MO,
   case MachineOperand::MO_MachineBasicBlock: {
     MachineBasicBlock *MBBOp = MO.getMachineBasicBlock();
     O << ".LBB" << Mang->getValueName(MBBOp->getParent()->getFunction())
-      << "_" << MBBOp->getNumber () << "\t# "
+      << "_" << MBBOp->getNumber () << '\t' << CommentString
       << MBBOp->getBasicBlock ()->getName ();
     return;
   }
@@ -488,7 +491,7 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   O << "\t.text\n";
   emitAlignment(4);
   O << "\t.globl\t" << CurrentFnName << "\n";
-  if (!forCygwin)
+  if (!forCygwin && !forDarwin)
     O << "\t.type\t" << CurrentFnName << ", @function\n";
   O << CurrentFnName << ":\n";
 
@@ -530,7 +533,7 @@ void X86ATTAsmPrinter::printOp(const MachineOperand &MO, bool isCallOp) {
   case MachineOperand::MO_MachineBasicBlock: {
     MachineBasicBlock *MBBOp = MO.getMachineBasicBlock();
     O << ".LBB" << Mang->getValueName(MBBOp->getParent()->getFunction())
-      << "_" << MBBOp->getNumber () << "\t# "
+      << "_" << MBBOp->getNumber () << '\t' << CommentString
       << MBBOp->getBasicBlock ()->getName ();
     return;
   }
