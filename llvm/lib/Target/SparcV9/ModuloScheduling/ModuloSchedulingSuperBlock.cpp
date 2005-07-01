@@ -148,7 +148,6 @@ namespace llvm {
   };
 
   bool ModuloSchedulingSBPass::runOnFunction(Function &F) {
-    alarm(100);
     bool Changed = false;
     
     //Get MachineFunction
@@ -270,9 +269,7 @@ namespace llvm {
       defMap.clear();
       
     }
-    alarm(0);
     return Changed;
-    
   }
 
   void ModuloSchedulingSBPass::FindSuperBlocks(Function &F, LoopInfo &LI,
