@@ -45,23 +45,6 @@ let Defs = [R29] in
   let Uses = [R27] in
     def LDGP : PseudoInstAlpha<(ops), "ldgp $$29, 0($$27)">;
 
-//RESULTS of these go to R27
-//These are also evil as the assembler expands them into calls
-let Uses = [R29], 
-    Defs = [R28, R23, R24, R25, R27] in
-{
-  def REMQU : PseudoInstAlpha<(ops GPRC:$RA, GPRC:$RB), "remqu $RA,$RB,$$27">; //unsigned remander
-  def REMQ  : PseudoInstAlpha<(ops GPRC:$RA, GPRC:$RB), "remq $RA,$RB,$$27">; //signed remander
-  def DIVQU : PseudoInstAlpha<(ops GPRC:$RA, GPRC:$RB), "divqu $RA,$RB,$$27">; //unsigned division
-  def DIVQ  : PseudoInstAlpha<(ops GPRC:$RA, GPRC:$RB), "divq $RA,$RB,$$27">; //signed division
-}
-
-//This is an improvement on the old style setcc (FP)
-//def CC2INT_INV : PseudoInstAlpha<(ops GPRC:$RES, FPRC:$COND), 
-//  "lda $RES,1($$31)\n\tfbeq $COND, 42f\n\tbis $$31,$$31,$RES\n42:\n">;
-//def CC2INT : PseudoInstAlpha<(ops GPRC:$RES, FPRC:$COND), 
-//  "lda $RES,1($$31)\n\tfbne $COND, 42f\n\tbis $$31,$$31,$RES\n42:\n">;
-
 //An even better improvement on the Int = SetCC(FP):  SelectCC!
 //These are evil because they hide control flow in a MBB
 //really the ISel should emit multiple MBB
