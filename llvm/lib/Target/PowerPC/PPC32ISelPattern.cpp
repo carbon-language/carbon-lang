@@ -98,10 +98,10 @@ namespace {
                 SelectionDAG &DAG);
 
     virtual std::pair<SDOperand, SDOperand>
-    LowerVAStart(SDOperand Chain, SelectionDAG &DAG);
+    LowerVAStart(SDOperand Chain, SelectionDAG &DAG, SDOperand Dest);
 
     virtual std::pair<SDOperand,SDOperand>
-    LowerVAArgNext(bool isVANext, SDOperand Chain, SDOperand VAList,
+    LowerVAArgNext(SDOperand Chain, SDOperand VAList,
                    const Type *ArgTy, SelectionDAG &DAG);
 
     virtual std::pair<SDOperand, SDOperand>
@@ -464,14 +464,19 @@ PPC32TargetLowering::LowerCallTo(SDOperand Chain,
 }
 
 std::pair<SDOperand, SDOperand>
-PPC32TargetLowering::LowerVAStart(SDOperand Chain, SelectionDAG &DAG) {
+PPC32TargetLowering::LowerVAStart(SDOperand Chain, SelectionDAG &DAG, SDOperand Dest) {
   //vastart just returns the address of the VarArgsFrameIndex slot.
   return std::make_pair(DAG.getFrameIndex(VarArgsFrameIndex, MVT::i32), Chain);
 }
 
 std::pair<SDOperand,SDOperand> PPC32TargetLowering::
-LowerVAArgNext(bool isVANext, SDOperand Chain, SDOperand VAList,
+LowerVAArgNext(SDOperand Chain, SDOperand VAList,
                const Type *ArgTy, SelectionDAG &DAG) {
+  // FIXME: THIS IS BROKEN!!!
+
+  bool isVANext = true;
+  
+  
   MVT::ValueType ArgVT = getValueType(ArgTy);
   SDOperand Result;
   if (!isVANext) {
