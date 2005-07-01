@@ -31,6 +31,10 @@
 #include <iostream>
 using namespace llvm;
 
+namespace llvm {
+  extern cl::opt<bool> EnableAlphaLSMark;
+}
+
 //These describe LDAx
 static const int IMM_LOW  = -32768;
 static const int IMM_HIGH = 32767;
@@ -48,6 +52,12 @@ static long getLower16(long l)
 {
   long h = getUpper16(l);
   return l - h * IMM_MULT;
+}
+
+static int getUID()
+{
+  static int id = 0;
+  return ++id;
 }
 
 AlphaRegisterInfo::AlphaRegisterInfo()
@@ -68,6 +78,9 @@ AlphaRegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                        unsigned SrcReg, int FrameIdx) const {
   //std::cerr << "Trying to store " << getPrettyName(SrcReg) << " to " << FrameIdx << "\n";
   //BuildMI(MBB, MI, Alpha::WTF, 0).addReg(SrcReg);
+  if (EnableAlphaLSMark)
+    BuildMI(MBB, MI, Alpha::MEMLABEL, 4).addImm(4).addImm(0).addImm(1)
+      .addImm(getUID());
   if (getClass(SrcReg) == Alpha::FPRCRegisterClass)
     BuildMI(MBB, MI, Alpha::STT, 3).addReg(SrcReg).addFrameIndex(FrameIdx).addReg(Alpha::F31);
   else if (getClass(SrcReg) == Alpha::GPRCRegisterClass)
@@ -81,6 +94,9 @@ AlphaRegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
                                         MachineBasicBlock::iterator MI,
                                         unsigned DestReg, int FrameIdx) const{
   //std::cerr << "Trying to load " << getPrettyName(DestReg) << " to " << FrameIdx << "\n";
+  if (EnableAlphaLSMark)
+    BuildMI(MBB, MI, Alpha::MEMLABEL, 4).addImm(4).addImm(0).addImm(2)
+      .addImm(getUID());
   if (getClass(DestReg) == Alpha::FPRCRegisterClass)
     BuildMI(MBB, MI, Alpha::LDT, 2, DestReg).addFrameIndex(FrameIdx).addReg(Alpha::F31);
   else if (getClass(DestReg) == Alpha::GPRCRegisterClass)

@@ -612,7 +612,7 @@ static void getValueInfo(const Value* v, int& type, int& fun, int& offset)
     offset = 0;
   } else if (const GlobalValue* GV = dyn_cast<GlobalValue>(v)) {
     type = 1;
-    fun = 1;
+    fun = 0;
     const Module* M = GV->getParent();
       int i = 0;
       for(Module::const_global_iterator ii = M->global_begin(); &*ii != GV; ++ii)
@@ -646,6 +646,8 @@ static void getValueInfo(const Value* v, int& type, int& fun, int& offset)
       ++i;
     offset = i;
   }
+  //type = 4: register spilling
+  //type = 5: global address loading or constant loading
 }
 
 static int getUID()
@@ -887,8 +889,15 @@ void AlphaISel::MoveFP2Int(unsigned src, unsigned dst, bool isDouble)
     MachineFunction *F = BB->getParent();
     int FrameIdx = F->getFrameInfo()->CreateStackObject(Size, 8);
 
+    if (EnableAlphaLSMark)
+      BuildMI(BB, Alpha::MEMLABEL, 4).addImm(4).addImm(0).addImm(0)
+        .addImm(getUID());
     Opc = isDouble ? Alpha::STT : Alpha::STS;
     BuildMI(BB, Opc, 3).addReg(src).addFrameIndex(FrameIdx).addReg(Alpha::F31);
+
+    if (EnableAlphaLSMark)
+      BuildMI(BB, Alpha::MEMLABEL, 4).addImm(4).addImm(0).addImm(0)
+        .addImm(getUID());
     Opc = isDouble ? Alpha::LDQ : Alpha::LDL;
     BuildMI(BB, Alpha::LDQ, 2, dst).addFrameIndex(FrameIdx).addReg(Alpha::F31);
   }
@@ -907,8 +916,15 @@ void AlphaISel::MoveInt2FP(unsigned src, unsigned dst, bool isDouble)
     MachineFunction *F = BB->getParent();
     int FrameIdx = F->getFrameInfo()->CreateStackObject(Size, 8);
 
+    if (EnableAlphaLSMark)
+      BuildMI(BB, Alpha::MEMLABEL, 4).addImm(4).addImm(0).addImm(0)
+        .addImm(getUID());
     Opc = isDouble ? Alpha::STQ : Alpha::STL;
     BuildMI(BB, Opc, 3).addReg(src).addFrameIndex(FrameIdx).addReg(Alpha::F31);
+
+    if (EnableAlphaLSMark)
+      BuildMI(BB, Alpha::MEMLABEL, 4).addImm(4).addImm(0).addImm(0)
+        .addImm(getUID());
     Opc = isDouble ? Alpha::LDT : Alpha::LDS;
     BuildMI(BB, Opc, 2, dst).addFrameIndex(FrameIdx).addReg(Alpha::F31);
   }
@@ -1260,25 +1276,17 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
         getValueInfo(dyn_cast<SrcValueSDNode>(N.getOperand(2))->getValue(),
                      i, j, k);
 
-      if (GlobalAddressSDNode *GASD = 
-          dyn_cast<GlobalAddressSDNode>(Address)) {
-        if (GASD->getGlobal()->isExternal()) {
-          Tmp1 = SelectExpr(Address);
-          if (EnableAlphaLSMark)
-            BuildMI(BB, Alpha::MEMLABEL, 4).addImm(i).addImm(j).addImm(k)
-              .addImm(getUID());
-          BuildMI(BB, Opc, 2, Result).addImm(0).addReg(Tmp1);
-        } else {
-          Tmp1 = MakeReg(MVT::i64);
-          AlphaLowering.restoreGP(BB);
-          BuildMI(BB, Alpha::LDAHr, 2, Tmp1)
-            .addGlobalAddress(GASD->getGlobal()).addReg(Alpha::R29);
-          if (EnableAlphaLSMark)
-            BuildMI(BB, Alpha::MEMLABEL, 4).addImm(i).addImm(j).addImm(k)
-              .addImm(getUID());
-          BuildMI(BB, GetRelVersion(Opc), 2, Result)
-            .addGlobalAddress(GASD->getGlobal()).addReg(Tmp1);
-        }
+      GlobalAddressSDNode *GASD = dyn_cast<GlobalAddressSDNode>(Address);
+      if (GASD && !GASD->getGlobal()->isExternal()) {
+        Tmp1 = MakeReg(MVT::i64);
+        AlphaLowering.restoreGP(BB);
+        BuildMI(BB, Alpha::LDAHr, 2, Tmp1)
+          .addGlobalAddress(GASD->getGlobal()).addReg(Alpha::R29);
+        if (EnableAlphaLSMark)
+          BuildMI(BB, Alpha::MEMLABEL, 4).addImm(i).addImm(j).addImm(k)
+            .addImm(getUID());
+        BuildMI(BB, GetRelVersion(Opc), 2, Result)
+          .addGlobalAddress(GASD->getGlobal()).addReg(Tmp1);
       } else if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(Address)) {
         AlphaLowering.restoreGP(BB);
         has_sym = true;
@@ -1313,11 +1321,24 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
     has_sym = true;
 
     if (EnableAlphaLSMark)
-      BuildMI(BB, Alpha::MEMLABEL, 4).addImm(0).addImm(0).addImm(0)
+      BuildMI(BB, Alpha::MEMLABEL, 4).addImm(5).addImm(0).addImm(0)
         .addImm(getUID());
 
     BuildMI(BB, Alpha::LDQl, 2, Result)
       .addGlobalAddress(cast<GlobalAddressSDNode>(N)->getGlobal())
+      .addReg(Alpha::R29);
+    return Result;
+
+  case ISD::ExternalSymbol:
+    AlphaLowering.restoreGP(BB);
+    has_sym = true;
+
+    if (EnableAlphaLSMark)
+      BuildMI(BB, Alpha::MEMLABEL, 4).addImm(5).addImm(0).addImm(0)
+        .addImm(getUID());
+
+    BuildMI(BB, Alpha::LDQl, 2, Result)
+      .addExternalSymbol(cast<ExternalSymbolSDNode>(N)->getSymbol())
       .addReg(Alpha::R29);
     return Result;
 
@@ -1393,27 +1414,12 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
         }
       }
       //build the right kind of call
-      if (GlobalAddressSDNode *GASD =
-          dyn_cast<GlobalAddressSDNode>(N.getOperand(1)))
-      {
-        if (GASD->getGlobal()->isExternal()) {
-          //use safe calling convention
-          AlphaLowering.restoreGP(BB);
-          has_sym = true;
-          BuildMI(BB, Alpha::CALL, 1).addGlobalAddress(GASD->getGlobal());
-        } else {
-          //use PC relative branch call
-          AlphaLowering.restoreGP(BB);
-          BuildMI(BB, Alpha::BSR, 1, Alpha::R26)
-            .addGlobalAddress(GASD->getGlobal(),true);
-        }
-      }
-      else if (ExternalSymbolSDNode *ESSDN =
-               dyn_cast<ExternalSymbolSDNode>(N.getOperand(1)))
-      {
+      GlobalAddressSDNode *GASD = dyn_cast<GlobalAddressSDNode>(N.getOperand(1));
+      if (GASD && !GASD->getGlobal()->isExternal()) {
+        //use PC relative branch call
         AlphaLowering.restoreGP(BB);
-        has_sym = true;
-        BuildMI(BB, Alpha::CALL, 1).addExternalSymbol(ESSDN->getSymbol(), true);
+        BuildMI(BB, Alpha::BSR, 1, Alpha::R26)
+          .addGlobalAddress(GASD->getGlobal(),true);
       } else {
         //no need to restore GP as we are doing an indirect call
         Tmp1 = SelectExpr(N.getOperand(1));
@@ -1886,26 +1892,27 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
     }
     //else fall though
   case ISD::UREM:
-  case ISD::SREM:
-    //FIXME: alpha really doesn't support any of these operations,
-    // the ops are expanded into special library calls with
-    // special calling conventions
-    //Restore GP because it is a call after all...
+  case ISD::SREM: {
+    const char* opstr = 0;
     switch(opcode) {
-    case ISD::UREM: Opc = Alpha::REMQU; break;
-    case ISD::SREM: Opc = Alpha::REMQ; break;
-    case ISD::UDIV: Opc = Alpha::DIVQU; break;
-    case ISD::SDIV: Opc = Alpha::DIVQ; break;
+    case ISD::UREM: opstr = "__remqu"; break;
+    case ISD::SREM: opstr = "__remq";  break;
+    case ISD::UDIV: opstr = "__divqu"; break;
+    case ISD::SDIV: opstr = "__divq";  break;
     }
     Tmp1 = SelectExpr(N.getOperand(0));
     Tmp2 = SelectExpr(N.getOperand(1));
+    SDOperand Addr = 
+      ISelDAG->getExternalSymbol(opstr, AlphaLowering.getPointerTy());
+    Tmp3 = SelectExpr(Addr);
     //set up regs explicitly (helps Reg alloc)
     BuildMI(BB, Alpha::BIS, 2, Alpha::R24).addReg(Tmp1).addReg(Tmp1);
     BuildMI(BB, Alpha::BIS, 2, Alpha::R25).addReg(Tmp2).addReg(Tmp2);
-    AlphaLowering.restoreGP(BB);
-    BuildMI(BB, Opc, 2).addReg(Alpha::R24).addReg(Alpha::R25);
+    BuildMI(BB, Alpha::BIS, 2, Alpha::R27).addReg(Tmp3).addReg(Tmp3);
+    BuildMI(BB, Alpha::JSRs, 2, Alpha::R23).addReg(Alpha::R27).addImm(0);
     BuildMI(BB, Alpha::BIS, 2, Result).addReg(Alpha::R27).addReg(Alpha::R27);
     return Result;
+  }
 
   case ISD::FP_TO_UINT:
   case ISD::FP_TO_SINT:
@@ -2095,6 +2102,9 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
         Tmp1 = MakeReg(MVT::i64);
         BuildMI(BB, Alpha::LDAHr, 2, Tmp1).addConstantPoolIndex(CPI)
           .addReg(Alpha::R29);
+        if (EnableAlphaLSMark)
+          BuildMI(BB, Alpha::MEMLABEL, 4).addImm(5).addImm(0).addImm(0)
+            .addImm(getUID());
         BuildMI(BB, Alpha::LDQr, 2, Result).addConstantPoolIndex(CPI)
           .addReg(Tmp1);
       }
@@ -2289,25 +2299,17 @@ void AlphaISel::Select(SDOperand N) {
         getValueInfo(dyn_cast<SrcValueSDNode>(N.getOperand(3))->getValue(), 
                      i, j, k);
 
-      if (GlobalAddressSDNode *GASD = 
-          dyn_cast<GlobalAddressSDNode>(Address)) {
-        if (GASD->getGlobal()->isExternal()) {
-          Tmp2 = SelectExpr(Address);
-          if (EnableAlphaLSMark)
-            BuildMI(BB, Alpha::MEMLABEL, 4).addImm(i).addImm(j).addImm(k)
-              .addImm(getUID());
-          BuildMI(BB, Opc, 3).addReg(Tmp1).addImm(0).addReg(Tmp2);
-        } else {
-          Tmp2 = MakeReg(MVT::i64);
-          AlphaLowering.restoreGP(BB);
-          BuildMI(BB, Alpha::LDAHr, 2, Tmp2)
-            .addGlobalAddress(GASD->getGlobal()).addReg(Alpha::R29);
-          if (EnableAlphaLSMark)
-            BuildMI(BB, Alpha::MEMLABEL, 4).addImm(i).addImm(j).addImm(k)
-              .addImm(getUID());
-          BuildMI(BB, GetRelVersion(Opc), 3).addReg(Tmp1)
-            .addGlobalAddress(GASD->getGlobal()).addReg(Tmp2);
-        }
+      GlobalAddressSDNode *GASD = dyn_cast<GlobalAddressSDNode>(Address);
+      if (GASD && !GASD->getGlobal()->isExternal()) {
+        Tmp2 = MakeReg(MVT::i64);
+        AlphaLowering.restoreGP(BB);
+        BuildMI(BB, Alpha::LDAHr, 2, Tmp2)
+          .addGlobalAddress(GASD->getGlobal()).addReg(Alpha::R29);
+        if (EnableAlphaLSMark)
+          BuildMI(BB, Alpha::MEMLABEL, 4).addImm(i).addImm(j).addImm(k)
+            .addImm(getUID());
+        BuildMI(BB, GetRelVersion(Opc), 3).addReg(Tmp1)
+          .addGlobalAddress(GASD->getGlobal()).addReg(Tmp2);
       } else if(Address.getOpcode() == ISD::FrameIndex) {
         if (EnableAlphaLSMark)
           BuildMI(BB, Alpha::MEMLABEL, 4).addImm(i).addImm(j).addImm(k)

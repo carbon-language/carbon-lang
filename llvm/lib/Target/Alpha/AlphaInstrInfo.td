@@ -45,15 +45,6 @@ let Defs = [R29] in
   let Uses = [R27] in
     def LDGP : PseudoInstAlpha<(ops), "ldgp $$29, 0($$27)">;
 
-let isCall = 1,
-    Defs = [R0, R1, R2, R3, R4, R5, R6, R7, R8, R16, R17, R18, R19,
-            R20, R21, R22, R23, R24, R25, R26, R27, R28, R29,
-            F0, F1,
-            F10, F11, F12, F13, F14, F15, F16, F17, F18, F19,
-            F20, F21, F22, F23, F24, F25, F26, F27, F28, F29, F30],
-    Uses = [R29] in
-      def CALL : PseudoInstAlpha< (ops s64imm:$TARGET), "jsr $TARGET">; //Jump to subroutine
-
 //RESULTS of these go to R27
 //These are also evil as the assembler expands them into calls
 let Uses = [R29], 
@@ -305,6 +296,9 @@ let isCall = 1,
     def JSR : MForm< 0x1A, (ops GPRC:$RD, GPRC:$RS, s14imm:$DISP), "jsr $RD,($RS),$DISP">; //Jump to subroutine
     def BSR : BForm<0x34, (ops GPRC:$RD, s21imm:$DISP), "bsr $RD,$DISP">; //Branch to subroutine
 }
+let isCall = 1, Defs = [R24, R25, R27, R28], Uses = [R24, R25] in
+  def JSRs : MForm< 0x1A, (ops GPRC:$RD, GPRC:$RS, s14imm:$DISP), "jsr $RD,($RS),$DISP">; //Jump to div or rem
+
 
 def JSR_COROUTINE : MForm< 0x1A, (ops GPRC:$RD, GPRC:$RS), "jsr_coroutine $RD,($RS),1">; //Jump to subroutine return
 def BR : BForm<0x30, (ops GPRC:$RD, s21imm:$DISP), "br $RD,$DISP">; //Branch
