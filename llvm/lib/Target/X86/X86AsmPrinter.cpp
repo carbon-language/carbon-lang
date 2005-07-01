@@ -25,7 +25,8 @@
 using namespace llvm;
 using namespace x86;
 
-Statistic<> EmittedInsts("asm-printer", "Number of machine instrs printed");
+Statistic<> llvm::x86::EmittedInsts("asm-printer", 
+                                    "Number of machine instrs printed");
 
 enum AsmWriterFlavorTy { att, intel };
 cl::opt<AsmWriterFlavorTy>
