@@ -146,6 +146,9 @@
 				RelativePath="..\..\lib\Target\X86\X86AsmPrinter.cpp">
 			</File>
 			<File
+				RelativePath="..\..\lib\Target\X86\X86ATTAsmPrinter.cpp">
+			</File>
+			<File
 				RelativePath="..\..\lib\Target\X86\X86CodeEmitter.cpp">
 			</File>
 			<File
@@ -156,6 +159,9 @@
 			</File>
 			<File
 				RelativePath="..\..\lib\Target\X86\X86InstrInfo.cpp">
+			</File>
+			<File
+				RelativePath="..\..\lib\Target\X86\X86IntelAsmPrinter.cpp">
 			</File>
 			<File
 				RelativePath="..\..\lib\Target\X86\X86ISelPattern.cpp">
@@ -187,6 +193,9 @@
 				RelativePath="..\..\lib\Target\X86\X86.h">
 			</File>
 			<File
+				RelativePath="..\..\lib\Target\X86\X86ATTAsmPrinter.h">
+			</File>
+			<File
 				RelativePath="..\..\lib\Target\X86\X86InstrBuilder.h">
 			</File>
 			<File
@@ -194,6 +203,9 @@
 			</File>
 			<File
 				RelativePath="..\..\lib\Target\X86\X86InstrInfo.td">
+			</File>
+			<File
+				RelativePath="..\..\lib\Target\X86\X86IntelAsmPrinter.h">
 			</File>
 			<File
 				RelativePath="..\..\lib\Target\X86\X86JITInfo.h">
