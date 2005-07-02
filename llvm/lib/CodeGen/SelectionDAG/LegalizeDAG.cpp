@@ -1351,8 +1351,9 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
                                    DAG.getSrcValue(NULL));
         else {
           assert(Node->getValueType(0) == MVT::f64 && "Unexpected conversion");
-          FudgeInReg = DAG.getNode(ISD::EXTLOAD, MVT::f64, DAG.getEntryNode(),
-                                   CPIdx, DAG.getSrcValue(NULL), MVT::f32);
+          FudgeInReg = 
+            LegalizeOp(DAG.getNode(ISD::EXTLOAD, MVT::f64, DAG.getEntryNode(),
+                                   CPIdx, DAG.getSrcValue(NULL), MVT::f32));
         }
         Result = DAG.getNode(ISD::ADD, Node->getValueType(0), Tmp1, FudgeInReg);
         break;
