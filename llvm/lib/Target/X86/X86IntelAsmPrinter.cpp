@@ -188,7 +188,7 @@ void X86IntelAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
 }
 
 bool X86IntelAsmPrinter::doInitialization(Module &M) {
-  AsmPrinter::doInitialization(M);
+  X86SharedAsmPrinter::doInitialization(M);
   // Tell gas we are outputting Intel syntax (not AT&T syntax) assembly.
   //
   // Bug: gas in `intel_syntax noprefix' mode interprets the symbol `Sp' in an
