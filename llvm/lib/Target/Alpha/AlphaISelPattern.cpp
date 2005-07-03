@@ -1319,6 +1319,8 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
   case ISD::GlobalAddress:
     AlphaLowering.restoreGP(BB);
     has_sym = true;
+ 
+    Reg = Result = MakeReg(MVT::i64);
 
     if (EnableAlphaLSMark)
       BuildMI(BB, Alpha::MEMLABEL, 4).addImm(5).addImm(0).addImm(0)
@@ -1332,6 +1334,8 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
   case ISD::ExternalSymbol:
     AlphaLowering.restoreGP(BB);
     has_sym = true;
+
+    Reg = Result = MakeReg(MVT::i64);
 
     if (EnableAlphaLSMark)
       BuildMI(BB, Alpha::MEMLABEL, 4).addImm(5).addImm(0).addImm(0)
