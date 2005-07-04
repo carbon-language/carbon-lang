@@ -1642,7 +1642,7 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
       Select(Chain);
       unsigned r = dyn_cast<RegSDNode>(Node)->getReg();
       //std::cerr << "CopyFromReg " << Result << " = " << r << "\n";
-      if (isFP)
+      if (MVT::isFloatingPoint(N.getValue(0).getValueType()))
         BuildMI(BB, Alpha::CPYS, 2, Result).addReg(r).addReg(r);
       else
         BuildMI(BB, Alpha::BIS, 2, Result).addReg(r).addReg(r);
