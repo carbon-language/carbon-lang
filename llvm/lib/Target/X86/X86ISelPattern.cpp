@@ -443,10 +443,12 @@ X86TargetLowering::LowerCCCCallTo(SDOperand Chain, const Type *RetTy,
 }
 
 std::pair<SDOperand,SDOperand> 
-X86TargetLowering::LowerVAStart(SDOperand Chain, SelectionDAG &DAG, SDOperand Dest) {
+X86TargetLowering::LowerVAStart(SDOperand Chain, SelectionDAG &DAG,
+                                SDOperand Dest) {
   // vastart just stores the address of the VarArgsFrameIndex slot.
   SDOperand FR = DAG.getFrameIndex(VarArgsFrameIndex, MVT::i32);
-  SDOperand Result = DAG.getNode(ISD::STORE, MVT::Other, Chain, FR, Dest, DAG.getSrcValue(NULL));
+  SDOperand Result = DAG.getNode(ISD::STORE, MVT::Other, Chain, FR, Dest,
+                                 DAG.getSrcValue(NULL));
   return std::make_pair(Result, Result);
 }
 
@@ -455,7 +457,8 @@ X86TargetLowering::LowerVAArgNext(SDOperand Chain, SDOperand VAList,
                                   const Type *ArgTy, SelectionDAG &DAG) {
   MVT::ValueType ArgVT = getValueType(ArgTy);
   SDOperand Val = DAG.getLoad(MVT::i32, Chain, VAList, DAG.getSrcValue(NULL));
-  SDOperand Result = DAG.getLoad(ArgVT, Val.getValue(1), Val, DAG.getSrcValue(NULL));
+  SDOperand Result = DAG.getLoad(ArgVT, Val.getValue(1), Val,
+                                 DAG.getSrcValue(NULL));
   unsigned Amt;
   if (ArgVT == MVT::i32)
     Amt = 4;
