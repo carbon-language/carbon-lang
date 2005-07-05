@@ -464,36 +464,37 @@ PPC32TargetLowering::LowerCallTo(SDOperand Chain,
 }
 
 std::pair<SDOperand, SDOperand>
-PPC32TargetLowering::LowerVAStart(SDOperand Chain, SelectionDAG &DAG, SDOperand Dest) {
-  //vastart just returns the address of the VarArgsFrameIndex slot.
-  return std::make_pair(DAG.getFrameIndex(VarArgsFrameIndex, MVT::i32), Chain);
+PPC32TargetLowering::LowerVAStart(SDOperand Chain, SelectionDAG &DAG,
+                                  SDOperand Dest) {
+  // vastart just stores the address of the VarArgsFrameIndex slot into the
+  // memory location argument.
+  SDOperand FR = DAG.getFrameIndex(VarArgsFrameIndex, MVT::i32);
+  SDOperand Result = DAG.getNode(ISD::STORE, MVT::Other, Chain, FR, Dest,
+                                 DAG.getSrcValue(NULL));
+  return std::make_pair(Result, Result);
 }
 
 std::pair<SDOperand,SDOperand> PPC32TargetLowering::
-LowerVAArgNext(SDOperand Chain, SDOperand VAList,
+LowerVAArgNext(SDOperand Chain, SDOperand VAArgOp,
                const Type *ArgTy, SelectionDAG &DAG) {
-  // FIXME: THIS IS BROKEN!!!
-
-  bool isVANext = true;
-  
-  
   MVT::ValueType ArgVT = getValueType(ArgTy);
-  SDOperand Result;
-  if (!isVANext) {
-    Result = DAG.getLoad(ArgVT, DAG.getEntryNode(), VAList,
-                         DAG.getSrcValue(NULL));
-  } else {
-    unsigned Amt;
-    if (ArgVT == MVT::i32 || ArgVT == MVT::f32)
-      Amt = 4;
-    else {
-      assert((ArgVT == MVT::i64 || ArgVT == MVT::f64) &&
-             "Other types should have been promoted for varargs!");
-      Amt = 8;
-    }
-    Result = DAG.getNode(ISD::ADD, VAList.getValueType(), VAList,
-                         DAG.getConstant(Amt, VAList.getValueType()));
+
+  SDOperand VAList =
+    DAG.getLoad(MVT::i32, Chain, VAArgOp, DAG.getSrcValue(NULL));
+  SDOperand Result = DAG.getLoad(ArgVT, VAList.getValue(1), VAList,
+                                 DAG.getSrcValue(NULL));
+  unsigned Amt;
+  if (ArgVT == MVT::i32 || ArgVT == MVT::f32)
+    Amt = 4;
+  else {
+    assert((ArgVT == MVT::i64 || ArgVT == MVT::f64) &&
+           "Other types should have been promoted for varargs!");
+    Amt = 8;
   }
+  VAList = DAG.getNode(ISD::ADD, VAList.getValueType(), VAList,
+                      DAG.getConstant(Amt, VAList.getValueType()));
+  Chain = DAG.getNode(ISD::STORE, MVT::Other, Chain,
+                      VAList, VAArgOp, DAG.getSrcValue(NULL));
   return std::make_pair(Result, Chain);
 }
 
