@@ -1100,7 +1100,15 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
   case ISD::SRL:
   case ISD::SRA:
     Tmp1 = LegalizeOp(Node->getOperand(0));   // LHS
-    Tmp2 = LegalizeOp(Node->getOperand(1));   // RHS
+    switch (getTypeAction(Node->getOperand(1).getValueType())) {
+    case Expand: assert(0 && "Not possible");
+    case Legal:
+      Tmp2 = LegalizeOp(Node->getOperand(1)); // Legalize the RHS.
+      break;
+    case Promote:
+      Tmp2 = PromoteOp(Node->getOperand(1));  // Promote the RHS.
+      break;
+    }
     if (Tmp1 != Node->getOperand(0) ||
         Tmp2 != Node->getOperand(1))
       Result = DAG.getNode(Node->getOpcode(), Node->getValueType(0), Tmp1,Tmp2);
@@ -1327,13 +1335,14 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
           TLI.getOperationAction(Node->getOpcode(), 
                                  Node->getOperand(0).getValueType()) 
           == TargetLowering::Expand) {
+        SDOperand Op0 = LegalizeOp(Node->getOperand(0));
         Tmp1 = DAG.getNode(ISD::SINT_TO_FP, Node->getValueType(0), 
-                           Node->getOperand(0));
+                           Op0);
         
         SDOperand SignSet = DAG.getSetCC(ISD::SETLT, TLI.getSetCCResultTy(), 
-                                         Node->getOperand(0),
+                                         Op0,
                                          DAG.getConstant(0, 
-                                         Node->getOperand(0).getValueType()));
+                                         Op0.getValueType()));
         SDOperand Zero = getIntPtrConstant(0), Four = getIntPtrConstant(4);
         SDOperand CstOffset = DAG.getNode(ISD::SELECT, Zero.getValueType(),
                                           SignSet, Four, Zero);
