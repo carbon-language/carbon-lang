@@ -8,7 +8,7 @@
 # Indicates our relative path to the top of the project's root directory.
 #
 LEVEL = .
-DIRS = lib tools
+DIRS = lib
 EXTRA_DIST = include
 
 #
