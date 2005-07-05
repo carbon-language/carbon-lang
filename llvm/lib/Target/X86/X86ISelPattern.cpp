@@ -175,13 +175,12 @@ namespace {
                 bool isTailCall, SDOperand Callee, ArgListTy &Args,
                 SelectionDAG &DAG);
 
-    virtual std::pair<SDOperand, SDOperand>
-    LowerVAStart(SDOperand Chain, SelectionDAG &DAG, SDOperand Dest);
-
+    virtual SDOperand LowerVAStart(SDOperand Chain, SDOperand VAListP,
+                                   Value *VAListV, SelectionDAG &DAG);
     virtual std::pair<SDOperand,SDOperand>
-    LowerVAArgNext(SDOperand Chain, SDOperand VAList,
-                   const Type *ArgTy, SelectionDAG &DAG);
-
+      LowerVAArg(SDOperand Chain, SDOperand VAListP, Value *VAListV,
+                 const Type *ArgTy, SelectionDAG &DAG);
+    
     virtual std::pair<SDOperand, SDOperand>
     LowerFrameReturnAddress(bool isFrameAddr, SDOperand Chain, unsigned Depth,
                             SelectionDAG &DAG);
@@ -442,22 +441,24 @@ X86TargetLowering::LowerCCCCallTo(SDOperand Chain, const Type *RetTy,
   return std::make_pair(ResultVal, Chain);
 }
 
-std::pair<SDOperand,SDOperand> 
-X86TargetLowering::LowerVAStart(SDOperand Chain, SelectionDAG &DAG,
-                                SDOperand Dest) {
+SDOperand
+X86TargetLowering::LowerVAStart(SDOperand Chain, SDOperand VAListP,
+                                Value *VAListV, SelectionDAG &DAG) {
   // vastart just stores the address of the VarArgsFrameIndex slot.
   SDOperand FR = DAG.getFrameIndex(VarArgsFrameIndex, MVT::i32);
-  SDOperand Result = DAG.getNode(ISD::STORE, MVT::Other, Chain, FR, Dest,
-                                 DAG.getSrcValue(NULL));
-  return std::make_pair(Result, Result);
+  return DAG.getNode(ISD::STORE, MVT::Other, Chain, FR, VAListP,
+                     DAG.getSrcValue(VAListV));
 }
 
-std::pair<SDOperand,SDOperand> 
-X86TargetLowering::LowerVAArgNext(SDOperand Chain, SDOperand VAList,
-                                  const Type *ArgTy, SelectionDAG &DAG) {
+
+std::pair<SDOperand,SDOperand>
+X86TargetLowering::LowerVAArg(SDOperand Chain, SDOperand VAListP,
+                              Value *VAListV, const Type *ArgTy,
+                              SelectionDAG &DAG) {
   MVT::ValueType ArgVT = getValueType(ArgTy);
-  SDOperand Val = DAG.getLoad(MVT::i32, Chain, VAList, DAG.getSrcValue(NULL));
-  SDOperand Result = DAG.getLoad(ArgVT, Val.getValue(1), Val,
+  SDOperand Val = DAG.getLoad(MVT::i32, Chain,
+                              VAListP, DAG.getSrcValue(VAListV));
+  SDOperand Result = DAG.getLoad(ArgVT, Chain, Val,
                                  DAG.getSrcValue(NULL));
   unsigned Amt;
   if (ArgVT == MVT::i32)
@@ -470,7 +471,7 @@ X86TargetLowering::LowerVAArgNext(SDOperand Chain, SDOperand VAList,
   Val = DAG.getNode(ISD::ADD, Val.getValueType(), Val,
                     DAG.getConstant(Amt, Val.getValueType()));
   Chain = DAG.getNode(ISD::STORE, MVT::Other, Chain,
-                      Val, VAList, DAG.getSrcValue(NULL));
+                      Val, VAListP, DAG.getSrcValue(VAListV));
   return std::make_pair(Result, Chain);
 }
 

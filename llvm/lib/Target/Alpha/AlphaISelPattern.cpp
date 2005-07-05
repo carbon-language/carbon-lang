@@ -156,21 +156,15 @@ namespace {
                 bool isTailCall, SDOperand Callee, ArgListTy &Args,
                 SelectionDAG &DAG);
 
-    virtual std::pair<SDOperand, SDOperand>
-    LowerVAStart(SDOperand Chain, SelectionDAG &DAG, SDOperand Dest);
-
+    virtual SDOperand LowerVAStart(SDOperand Chain, SDOperand VAListP,
+                                   Value *VAListV, SelectionDAG &DAG);
+    virtual SDOperand LowerVACopy(SDOperand Chain, SDOperand SrcP, Value *SrcV,
+                                  SDOperand DestP, Value *DestV,
+                                  SelectionDAG &DAG);
     virtual std::pair<SDOperand,SDOperand>
-    LowerVAArgNext(SDOperand Chain, SDOperand VAList,
-                   const Type *ArgTy, SelectionDAG &DAG);
-
-    std::pair<SDOperand,SDOperand>
-    LowerVACopy(SDOperand Chain, SDOperand Src, SDOperand Dest, 
-                                SelectionDAG &DAG);
-
-    virtual std::pair<SDOperand, SDOperand>
-    LowerFrameReturnAddress(bool isFrameAddr, SDOperand Chain, unsigned Depth,
-                            SelectionDAG &DAG);
-
+      LowerVAArg(SDOperand Chain, SDOperand VAListP, Value *VAListV,
+                 const Type *ArgTy, SelectionDAG &DAG);
+    
     void restoreGP(MachineBasicBlock* BB)
     {
       BuildMI(BB, Alpha::BIS, 2, Alpha::R29).addReg(GP).addReg(GP);
@@ -415,35 +409,34 @@ AlphaTargetLowering::LowerCallTo(SDOperand Chain,
   return std::make_pair(TheCall, Chain);
 }
 
-std::pair<SDOperand, SDOperand>
-AlphaTargetLowering::LowerVAStart(SDOperand Chain, SelectionDAG &DAG, 
-                                  SDOperand Dest) {
-  // vastart just stores the address of the VarArgsBase and VarArgsOffset
+SDOperand AlphaTargetLowering::LowerVAStart(SDOperand Chain, SDOperand VAListP,
+                                            Value *VAListV, SelectionDAG &DAG) {
+  // vastart stores the address of the VarArgsBase and VarArgsOffset
   SDOperand FR  = DAG.getFrameIndex(VarArgsBase, MVT::i64);
-  SDOperand S1  = DAG.getNode(ISD::STORE, MVT::Other, Chain, FR, Dest, 
-                              DAG.getSrcValue(NULL));
-  SDOperand SA2 = DAG.getNode(ISD::ADD, MVT::i64, Dest, 
+  SDOperand S1  = DAG.getNode(ISD::STORE, MVT::Other, Chain, FR, VAListP, 
+                              DAG.getSrcValue(VAListV));
+  SDOperand SA2 = DAG.getNode(ISD::ADD, MVT::i64, VAListP, 
                               DAG.getConstant(8, MVT::i64));
-  SDOperand S2  = DAG.getNode(ISD::TRUNCSTORE, MVT::Other,   S1, 
-                              DAG.getConstant(VarArgsOffset, MVT::i64), SA2, 
-                              DAG.getSrcValue(NULL), MVT::i32);
-  return std::make_pair(S2, S2);
+  return DAG.getNode(ISD::TRUNCSTORE, MVT::Other, S1, 
+                     DAG.getConstant(VarArgsOffset, MVT::i64), SA2, 
+                     DAG.getSrcValue(VAListV, 8), MVT::i32);
 }
 
 std::pair<SDOperand,SDOperand> AlphaTargetLowering::
-LowerVAArgNext(SDOperand Chain, SDOperand VAList,
-               const Type *ArgTy, SelectionDAG &DAG) {
-  SDOperand Base = DAG.getLoad(MVT::i64, Chain, VAList, DAG.getSrcValue(NULL));
-  SDOperand Tmp = DAG.getNode(ISD::ADD, MVT::i64, VAList, 
+LowerVAArg(SDOperand Chain, SDOperand VAListP, Value *VAListV,
+           const Type *ArgTy, SelectionDAG &DAG) {
+  SDOperand Base = DAG.getLoad(MVT::i64, Chain, VAListP,
+                               DAG.getSrcValue(VAListV));
+  SDOperand Tmp = DAG.getNode(ISD::ADD, MVT::i64, VAListP, 
                               DAG.getConstant(8, MVT::i64));
   SDOperand Offset = DAG.getNode(ISD::SEXTLOAD, MVT::i64, Base.getValue(1), 
-                                 Tmp, DAG.getSrcValue(NULL), MVT::i32);
+                                 Tmp, DAG.getSrcValue(VAListV, 8), MVT::i32);
   SDOperand DataPtr = DAG.getNode(ISD::ADD, MVT::i64, Base, Offset);
   if (ArgTy->isFloatingPoint())
   {
     //if fp && Offset < 6*8, then subtract 6*8 from DataPtr
       SDOperand FPDataPtr = DAG.getNode(ISD::SUB, MVT::i64, DataPtr,
-                                    DAG.getConstant(8*6, MVT::i64));
+                                        DAG.getConstant(8*6, MVT::i64));
       SDOperand CC = DAG.getSetCC(ISD::SETLT, MVT::i64, 
                                   Offset, DAG.getConstant(8*6, MVT::i64));
       DataPtr = DAG.getNode(ISD::SELECT, MVT::i64, CC, FPDataPtr, DataPtr);
@@ -464,40 +457,29 @@ LowerVAArgNext(SDOperand Chain, SDOperand VAList,
                                     DAG.getConstant(8, MVT::i64));
   SDOperand Update = DAG.getNode(ISD::TRUNCSTORE, MVT::Other, 
                                  Result.getValue(1), NewOffset, 
-                                 Tmp, DAG.getSrcValue(NULL), MVT::i32);
+                                 Tmp, DAG.getSrcValue(VAListV, 8), MVT::i32);
   Result = DAG.getNode(ISD::TRUNCATE, getValueType(ArgTy), Result);
 
   return std::make_pair(Result, Update);
 }
 
-std::pair<SDOperand,SDOperand> AlphaTargetLowering::
-LowerVACopy(SDOperand Chain, SDOperand Src, SDOperand Dest, 
-            SelectionDAG &DAG) {
-  //Default to returning the input list
-  SDOperand Val = DAG.getLoad(getPointerTy(), Chain, Src, 
-                              DAG.getSrcValue(NULL));
+
+SDOperand AlphaTargetLowering::
+LowerVACopy(SDOperand Chain, SDOperand SrcP, Value *SrcV, SDOperand DestP,
+            Value *DestV, SelectionDAG &DAG) {
+  SDOperand Val = DAG.getLoad(getPointerTy(), Chain, SrcP, 
+                              DAG.getSrcValue(SrcV));
   SDOperand Result = DAG.getNode(ISD::STORE, MVT::Other, Val.getValue(1),
-                                 Val, Dest, DAG.getSrcValue(NULL));
-  SDOperand NP = DAG.getNode(ISD::ADD, MVT::i64, Src, 
+                                 Val, DestP, DAG.getSrcValue(DestV));
+  SDOperand NP = DAG.getNode(ISD::ADD, MVT::i64, SrcP, 
                              DAG.getConstant(8, MVT::i64));
-  Val = DAG.getNode(ISD::SEXTLOAD, MVT::i64, Result, NP, DAG.getSrcValue(NULL), 
-                    MVT::i32);
-  SDOperand NPD = DAG.getNode(ISD::ADD, MVT::i64, Dest, 
+  Val = DAG.getNode(ISD::SEXTLOAD, MVT::i64, Result, NP,
+                    DAG.getSrcValue(SrcV, 8), MVT::i32);
+  SDOperand NPD = DAG.getNode(ISD::ADD, MVT::i64, DestP, 
                              DAG.getConstant(8, MVT::i64));
-  Result = DAG.getNode(ISD::TRUNCSTORE, MVT::Other, Val.getValue(1),
-                       Val, NPD, DAG.getSrcValue(NULL), MVT::i32);
-  return std::make_pair(Result, Result);
+  return DAG.getNode(ISD::TRUNCSTORE, MVT::Other, Val.getValue(1),
+                     Val, NPD, DAG.getSrcValue(DestV, 8), MVT::i32);
 }
-
-std::pair<SDOperand, SDOperand> AlphaTargetLowering::
-LowerFrameReturnAddress(bool isFrameAddress, SDOperand Chain, unsigned Depth,
-                        SelectionDAG &DAG) {
-  abort();
-}
-
-
-
-
 
 namespace {
 

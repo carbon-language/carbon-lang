@@ -113,16 +113,11 @@ namespace {
                 bool isTailCall, SDOperand Callee, ArgListTy &Args,
                 SelectionDAG &DAG);
 
-    virtual std::pair<SDOperand, SDOperand>
-    LowerVAStart(SDOperand Chain, SelectionDAG &DAG, SDOperand Dest);
-
+    virtual SDOperand LowerVAStart(SDOperand Chain, SDOperand VAListP,
+                                   Value *VAListV, SelectionDAG &DAG);
     virtual std::pair<SDOperand,SDOperand>
-    LowerVAArgNext(SDOperand Chain, SDOperand VAList,
-                   const Type *ArgTy, SelectionDAG &DAG);
-
-    virtual std::pair<SDOperand, SDOperand>
-    LowerFrameReturnAddress(bool isFrameAddr, SDOperand Chain, unsigned Depth,
-                            SelectionDAG &DAG);
+      LowerVAArg(SDOperand Chain, SDOperand VAListP, Value *VAListV,
+                 const Type *ArgTy, SelectionDAG &DAG);
 
     void restoreGP_SP_RP(MachineBasicBlock* BB)
     {
@@ -379,21 +374,24 @@ IA64TargetLowering::LowerCallTo(SDOperand Chain,
   return std::make_pair(TheCall, Chain);
 }
 
-std::pair<SDOperand, SDOperand>
-IA64TargetLowering::LowerVAStart(SDOperand Chain, SelectionDAG &DAG, SDOperand Dest) {
+SDOperand
+IA64TargetLowering::LowerVAStart(SDOperand Chain, SDOperand VAListP,
+                                 Value *VAListV, SelectionDAG &DAG) {
   // vastart just stores the address of the VarArgsFrameIndex slot.
   SDOperand FR = DAG.getFrameIndex(VarArgsFrameIndex, MVT::i64);
-  SDOperand Result = DAG.getNode(ISD::STORE, MVT::Other, Chain, FR, Dest, DAG.getSrcValue(NULL));
-  return std::make_pair(Result, Result);
+  return DAG.getNode(ISD::STORE, MVT::Other, Chain, FR,
+                     VAListP, DAG.getSrcValue(VAListV));
 }
 
 std::pair<SDOperand,SDOperand> IA64TargetLowering::
-LowerVAArgNext(SDOperand Chain, SDOperand VAList,
-               const Type *ArgTy, SelectionDAG &DAG) {
+LowerVAArg(SDOperand Chain, SDOperand VAListP, Value *VAListV,
+           const Type *ArgTy, SelectionDAG &DAG) {
 
   MVT::ValueType ArgVT = getValueType(ArgTy);
-  SDOperand Val = DAG.getLoad(MVT::i64, Chain, VAList, DAG.getSrcValue(NULL));
-  SDOperand Result = DAG.getLoad(ArgVT, DAG.getEntryNode(), Val, DAG.getSrcValue(NULL));
+  SDOperand Val = DAG.getLoad(MVT::i64, Chain,
+                              VAListP, DAG.getSrcValue(VAListV));
+  SDOperand Result = DAG.getLoad(ArgVT, DAG.getEntryNode(), Val,
+                                 DAG.getSrcValue(NULL));
   unsigned Amt;
   if (ArgVT == MVT::i32 || ArgVT == MVT::f32)
     Amt = 8;
@@ -405,18 +403,9 @@ LowerVAArgNext(SDOperand Chain, SDOperand VAList,
   Val = DAG.getNode(ISD::ADD, Val.getValueType(), Val, 
                     DAG.getConstant(Amt, Val.getValueType()));
   Chain = DAG.getNode(ISD::STORE, MVT::Other, Chain,
-                      Val, VAList, DAG.getSrcValue(NULL));
+                      Val, VAListP, DAG.getSrcValue(VAListV));
   return std::make_pair(Result, Chain);
 }
-
-std::pair<SDOperand, SDOperand> IA64TargetLowering::
-LowerFrameReturnAddress(bool isFrameAddress, SDOperand Chain, unsigned Depth,
-                        SelectionDAG &DAG) {
-
-  assert(0 && "LowerFrameReturnAddress not done yet\n");
-  abort();
-}
-
 
 namespace {
 
