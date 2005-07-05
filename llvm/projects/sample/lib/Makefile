@@ -8,6 +8,6 @@ LEVEL=..
 #
 # List all of the subdirectories that we will compile.
 #
-DIRS=lsqcor
+DIRS=sample
 
 include $(LEVEL)/Makefile.common
