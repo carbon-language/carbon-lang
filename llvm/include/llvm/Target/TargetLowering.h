@@ -26,6 +26,7 @@
 #include <vector>
 
 namespace llvm {
+  class Value;
   class Function;
   class TargetMachine;
   class TargetData;
@@ -266,25 +267,29 @@ public:
               ArgListTy &Args, SelectionDAG &DAG) = 0;
 
   /// LowerVAStart - This lowers the llvm.va_start intrinsic.  If not
-  /// implemented, this method prints a message and aborts.
-  virtual std::pair<SDOperand, SDOperand>
-  LowerVAStart(SDOperand Chain, SelectionDAG &DAG, SDOperand Dest);
+  /// implemented, this method prints a message and aborts.  This method should
+  /// return the modified chain value.  Note that VAListPtr* correspond to the
+  /// llvm.va_start operand.
+  virtual SDOperand LowerVAStart(SDOperand Chain, SDOperand VAListP,
+                                 Value *VAListV, SelectionDAG &DAG);
 
   /// LowerVAEnd - This lowers llvm.va_end and returns the resultant chain.  If
   /// not implemented, this defaults to a noop.
-  virtual SDOperand LowerVAEnd(SDOperand Chain, SDOperand L, SelectionDAG &DAG);
+  virtual SDOperand LowerVAEnd(SDOperand Chain, SDOperand LP, Value *LV,
+                               SelectionDAG &DAG);
 
-  /// LowerVACopy - This lowers llvm.va_copy and returns the resultant
-  /// value/chain pair.  If not implemented, this defaults to returning the
-  /// input operand.
-  virtual std::pair<SDOperand,SDOperand>
-  LowerVACopy(SDOperand Chain, SDOperand Src, SDOperand Dest, SelectionDAG &DAG);
+  /// LowerVACopy - This lowers llvm.va_copy and returns the resultant chain.
+  /// If not implemented, this defaults to loading a pointer from the input and
+  /// storing it to the output.
+  virtual SDOperand LowerVACopy(SDOperand Chain, SDOperand SrcP, Value *SrcV,
+                                SDOperand DestP, Value *DestV,
+                                SelectionDAG &DAG);
 
-  /// LowerVAArgNext - This lowers the instruction 
-  /// If not implemented, this prints a message and aborts.
+  /// LowerVAArg - This lowers the vaarg instruction.  If not implemented, this
+  /// prints a message and aborts.
   virtual std::pair<SDOperand,SDOperand>
-  LowerVAArgNext(SDOperand Chain, SDOperand VAList,
-                 const Type *ArgTy, SelectionDAG &DAG);
+  LowerVAArg(SDOperand Chain, SDOperand VAListP, Value *VAListV,
+             const Type *ArgTy, SelectionDAG &DAG);
 
   /// LowerFrameReturnAddress - This hook lowers a call to llvm.returnaddress or
   /// llvm.frameaddress (depending on the value of the first argument).  The

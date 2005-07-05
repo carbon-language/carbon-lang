@@ -837,34 +837,37 @@ void SelectionDAGLowering::visitFree(FreeInst &I) {
   DAG.setRoot(Result.second);
 }
 
-std::pair<SDOperand, SDOperand>
-TargetLowering::LowerVAStart(SDOperand Chain, SelectionDAG &DAG, SDOperand Dest) {
+SDOperand TargetLowering::LowerVAStart(SDOperand Chain,
+                                       SDOperand VAListP, Value *VAListV,
+                                       SelectionDAG &DAG) {
   // We have no sane default behavior, just emit a useful error message and bail
   // out.
   std::cerr << "Variable arguments handling not implemented on this target!\n";
   abort();
-  return std::make_pair(SDOperand(), SDOperand());
+  return SDOperand();
 }
 
-SDOperand TargetLowering::LowerVAEnd(SDOperand Chain, SDOperand L,
+SDOperand TargetLowering::LowerVAEnd(SDOperand Chain, SDOperand LP, Value *LV,
                                      SelectionDAG &DAG) {
   // Default to a noop.
   return Chain;
 }
 
-std::pair<SDOperand,SDOperand>
-TargetLowering::LowerVACopy(SDOperand Chain, SDOperand Src, SDOperand Dest, 
-                            SelectionDAG &DAG) {
-  //Default to returning the input list
-  SDOperand Val = DAG.getLoad(getPointerTy(), Chain, Src, DAG.getSrcValue(NULL));
+SDOperand TargetLowering::LowerVACopy(SDOperand Chain,
+                                      SDOperand SrcP, Value *SrcV,
+                                      SDOperand DestP, Value *DestV,
+                                      SelectionDAG &DAG) {
+  // Default to copying the input list.
+  SDOperand Val = DAG.getLoad(getPointerTy(), Chain,
+                              SrcP, DAG.getSrcValue(SrcV));
   SDOperand Result = DAG.getNode(ISD::STORE, MVT::Other, Val.getValue(1),
-                                 Val, Dest, DAG.getSrcValue(NULL));
-  return std::make_pair(Result, Result);
+                                 Val, DestP, DAG.getSrcValue(DestV));
+  return Result;
 }
 
 std::pair<SDOperand,SDOperand>
-TargetLowering::LowerVAArgNext(SDOperand Chain, SDOperand VAList,
-                               const Type *ArgTy, SelectionDAG &DAG) {
+TargetLowering::LowerVAArg(SDOperand Chain, SDOperand VAListP, Value *VAListV,
+                           const Type *ArgTy, SelectionDAG &DAG) {
   // We have no sane default behavior, just emit a useful error message and bail
   // out.
   std::cerr << "Variable arguments handling not implemented on this target!\n";
@@ -874,28 +877,28 @@ TargetLowering::LowerVAArgNext(SDOperand Chain, SDOperand VAList,
 
 
 void SelectionDAGLowering::visitVAStart(CallInst &I) {
-  std::pair<SDOperand,SDOperand> Result = TLI.LowerVAStart(getRoot(), DAG, getValue(I.getOperand(1)));
-  setValue(&I, Result.first);
-  DAG.setRoot(Result.second);
+  DAG.setRoot(TLI.LowerVAStart(getRoot(), getValue(I.getOperand(1)),
+                               I.getOperand(1), DAG));
 }
 
 void SelectionDAGLowering::visitVAArg(VAArgInst &I) {
   std::pair<SDOperand,SDOperand> Result =
-    TLI.LowerVAArgNext(getRoot(), getValue(I.getOperand(0)),
+    TLI.LowerVAArg(getRoot(), getValue(I.getOperand(0)), I.getOperand(0),
                    I.getType(), DAG);
   setValue(&I, Result.first);
   DAG.setRoot(Result.second);
 }
 
 void SelectionDAGLowering::visitVAEnd(CallInst &I) {
-  DAG.setRoot(TLI.LowerVAEnd(getRoot(), getValue(I.getOperand(1)), DAG));
+  DAG.setRoot(TLI.LowerVAEnd(getRoot(), getValue(I.getOperand(1)), 
+                             I.getOperand(1), DAG));
 }
 
 void SelectionDAGLowering::visitVACopy(CallInst &I) {
-  std::pair<SDOperand,SDOperand> Result =
-    TLI.LowerVACopy(getRoot(), getValue(I.getOperand(2)), getValue(I.getOperand(1)), DAG);
-  setValue(&I, Result.first);
-  DAG.setRoot(Result.second);
+  SDOperand Result =
+    TLI.LowerVACopy(getRoot(), getValue(I.getOperand(2)), I.getOperand(2),
+                    getValue(I.getOperand(1)), I.getOperand(1), DAG);
+  DAG.setRoot(Result);
 }
 
 
