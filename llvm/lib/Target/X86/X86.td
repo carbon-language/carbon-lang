@@ -61,7 +61,7 @@ def IntelAsmWriter : AsmWriter {
 
 def X86 : Target {
   // Specify the callee saved registers.
-  let CalleeSavedRegisters = [ESI, EDI, EBX, EBP];
+  let CalleeSavedRegisters = [ESI, EDI, EBX, EBP, XMM4, XMM5, XMM6, XMM7];
 
   // Yes, pointers are 32-bits in size.
   let PointerType = i32;

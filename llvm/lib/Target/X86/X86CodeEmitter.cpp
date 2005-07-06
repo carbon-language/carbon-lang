@@ -361,8 +361,18 @@ void Emitter::emitInstruction(const MachineInstr &MI) {
   // Emit the repeat opcode prefix as needed.
   if ((Desc.TSFlags & X86II::Op0Mask) == X86II::REP) MCE.emitByte(0xF3);
 
-  // Emit instruction prefixes if necessary
-  if (Desc.TSFlags & X86II::OpSize) MCE.emitByte(0x66);// Operand size...
+  // Emit the operand size opcode prefix as needed.
+  if (Desc.TSFlags & X86II::OpSize) MCE.emitByte(0x66);
+
+  // Emit the double precision sse fp opcode prefix as needed.
+  if ((Desc.TSFlags & X86II::Op0Mask) == X86II::XD) {
+    MCE.emitByte(0xF2); MCE.emitByte(0x0F);
+  }
+
+  // Emit the double precision sse fp opcode prefix as needed.
+  if ((Desc.TSFlags & X86II::Op0Mask) == X86II::XS) {
+    MCE.emitByte(0xF3); MCE.emitByte(0x0F);
+  }
 
   switch (Desc.TSFlags & X86II::Op0Mask) {
   case X86II::TB:

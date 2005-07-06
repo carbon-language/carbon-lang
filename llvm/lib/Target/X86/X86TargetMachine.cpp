@@ -26,6 +26,7 @@
 using namespace llvm;
 
 X86VectorEnum llvm::X86Vector = NoSSE;
+bool llvm::X86ScalarSSE = false;
 
 /// X86TargetMachineModule - Note that this is used on hosts that cannot link
 /// in a library unless there are references into the library.  In particular,
@@ -41,8 +42,11 @@ namespace {
   cl::opt<bool> DisableOutput("disable-x86-llc-output", cl::Hidden,
                               cl::desc("Disable the X86 asm printer, for use "
                                        "when profiling the code generator."));
+  cl::opt<bool, true> EnableSSEFP("enable-sse-scalar-fp",
+                cl::desc("Perform FP math in SSE regs instead of the FP stack"),
+                cl::location(X86ScalarSSE),
+                cl::init(false));
 
-#if 0
   // FIXME: This should eventually be handled with target triples and
   // subtarget support!
   cl::opt<X86VectorEnum, true>
@@ -54,7 +58,6 @@ namespace {
        clEnumValN(SSE3, "sse3", "  Enable SSE, SSE2, and SSE3 support"),
        clEnumValEnd),
     cl::location(X86Vector), cl::init(NoSSE));
-#endif
 
   // Register the target.
   RegisterTarget<X86TargetMachine> X("x86", "  IA-32 (Pentium and above)");
@@ -91,6 +94,8 @@ X86TargetMachine::X86TargetMachine(const Module &M, IntrinsicLowering *IL)
   : TargetMachine("X86", IL, true, 4, 4, 4, 4, 4),
     FrameInfo(TargetFrameInfo::StackGrowsDown, 8, -4),
     JITInfo(*this) {
+  // Scalar SSE FP requires at least SSE2
+  X86ScalarSSE &= X86Vector >= SSE2;
 }
 
 

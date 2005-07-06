@@ -52,6 +52,7 @@ static unsigned getIdx(unsigned SpillSize) {
   case 32: return 2;
   case 64: return 3;   // FP in 64-bit spill mode.
   case 80: return 4;   // FP in 80-bit spill mode.
+  case 128: return 5;  // XMM reg in 128 bit mode.
   }
 }
 
@@ -59,18 +60,24 @@ void X86RegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                           MachineBasicBlock::iterator MI,
                                           unsigned SrcReg, int FrameIdx) const {
   static const unsigned Opcode[] =
-    { X86::MOV8mr, X86::MOV16mr, X86::MOV32mr, X86::FST64m, X86::FSTP80m };
+    { X86::MOV8mr, X86::MOV16mr, X86::MOV32mr, X86::FST64m, X86::FSTP80m,
+      X86::MOVAPDmr };
   unsigned Idx = getIdx(getSpillSize(SrcReg));
-  addFrameReference(BuildMI(MBB, MI, Opcode[Idx], 5), FrameIdx).addReg(SrcReg);
+  unsigned Opc = Opcode[Idx];
+  if (X86ScalarSSE && Opc == X86::FST64m) Opc = X86::MOVSDmr;
+  addFrameReference(BuildMI(MBB, MI, Opc, 5), FrameIdx).addReg(SrcReg);
 }
 
 void X86RegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
                                            MachineBasicBlock::iterator MI,
                                            unsigned DestReg, int FrameIdx)const{
   static const unsigned Opcode[] =
-    { X86::MOV8rm, X86::MOV16rm, X86::MOV32rm, X86::FLD64m, X86::FLD80m };
+    { X86::MOV8rm, X86::MOV16rm, X86::MOV32rm, X86::FLD64m, X86::FLD80m,
+      X86::MOVAPDrm };
   unsigned Idx = getIdx(getSpillSize(DestReg));
-  addFrameReference(BuildMI(MBB, MI, Opcode[Idx], 4, DestReg), FrameIdx);
+  unsigned Opc = Opcode[Idx];
+  if (X86ScalarSSE && Opc == X86::FLD64m) Opc = X86::MOVSDrm;
+  addFrameReference(BuildMI(MBB, MI, Opc, 4, DestReg), FrameIdx);
 }
 
 void X86RegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
@@ -78,8 +85,11 @@ void X86RegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
                                    unsigned DestReg, unsigned SrcReg,
                                    const TargetRegisterClass *RC) const {
   static const unsigned Opcode[] =
-    { X86::MOV8rr, X86::MOV16rr, X86::MOV32rr, X86::FpMOV, X86::FpMOV };
-  BuildMI(MBB, MI, Opcode[getIdx(RC->getSize()*8)], 1, DestReg).addReg(SrcReg);
+    { X86::MOV8rr, X86::MOV16rr, X86::MOV32rr, X86::FpMOV, X86::FpMOV,
+      X86::MOVAPDrr };
+  unsigned Opc = Opcode[getIdx(RC->getSize()*8)];
+  if (X86ScalarSSE && Opc == X86::FpMOV) Opc = X86::MOVAPDrr;
+  BuildMI(MBB, MI, Opc, 1, DestReg).addReg(SrcReg);
 }
 
 static MachineInstr *MakeMInst(unsigned Opcode, unsigned FrameIndex,

@@ -28,6 +28,7 @@ enum X86VectorEnum {
 };
 
 extern X86VectorEnum X86Vector;
+extern bool X86ScalarSSE;
 
 /// createX86SimpleInstructionSelector - This pass converts an LLVM function
 /// into a machine code representation in a very simple peep-hole fashion.  The

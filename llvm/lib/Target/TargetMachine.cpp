@@ -27,6 +27,7 @@ namespace llvm {
   bool NoExcessFPPrecision;
   int  PatternISelTriState;
   bool UnsafeFPMath;
+  bool PICEnabled;
 };
 namespace {
   cl::opt<bool, true> PrintCode("print-machineinstrs",
@@ -51,6 +52,11 @@ namespace {
   EnableUnsafeFPMath("enable-unsafe-fp-math",
                cl::desc("Enable optimizations that may decrease FP precision"),
                cl::location(UnsafeFPMath),
+               cl::init(false));
+  cl::opt<bool, true>
+  EnablePIC("enable-pic",
+               cl::desc("Enable generation of position independant code"),
+               cl::location(PICEnabled),
                cl::init(false));
 };
 

@@ -99,8 +99,8 @@ def R32 : RegisterClass<i32, 32, [EAX, ECX, EDX, ESI, EDI, EBX, EBP, ESP]> {
 // FIXME: These registers can contain both integer and fp values.  We should
 // figure out the right way to deal with that.  For now, since they'll be used
 // for scalar FP, they are being declared f64
-def RXMM : RegisterClass<f64, 128, [XMM0, XMM1, XMM2, XMM3, 
-                                    XMM4, XMM5, XMM6, XMM7]>;
+def RXMM : RegisterClass<f64, 32, [XMM0, XMM1, XMM2, XMM3, 
+                                   XMM4, XMM5, XMM6, XMM7]>;
 
 // FIXME: This sets up the floating point register files as though they are f64
 // values, though they really are f80 values.  This will cause us to spill

@@ -107,6 +107,10 @@ namespace X86II {
     DA = 5 << Op0Shift,   DB = 6 << Op0Shift,
     DC = 7 << Op0Shift,   DD = 8 << Op0Shift,
     DE = 9 << Op0Shift,   DF = 10 << Op0Shift,
+    
+    // XS, XD - These prefix codes are for single and double precision scalar
+    // floating point operations performed in the SSE registers.
+    XD = 11 << Op0Shift,   XS = 12 << Op0Shift,
 
     //===------------------------------------------------------------------===//
     // This two-bit field describes the size of an immediate operand.  Zero is
