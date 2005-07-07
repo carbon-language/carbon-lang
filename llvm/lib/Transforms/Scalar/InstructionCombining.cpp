@@ -45,9 +45,9 @@
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
-#include "llvm/Support/InstIterator.h"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Support/PatternMatch.h"
+#include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
 #include <algorithm>
@@ -4400,7 +4400,8 @@ Instruction *InstCombiner::visitPHINode(PHINode &PN) {
     // However, because we don't have dom info, we can't do a perfect job.
     if (Instruction *I = dyn_cast<Instruction>(V)) {
       // We know that the instruction dominates the PHI if there are no undef
-      // values coming in.
+      // values coming in.  If the instruction is defined in the entry block,
+      // and is not an invoke, we know it is ok.
       if (I->getParent() != &I->getParent()->getParent()->front() ||
           isa<InvokeInst>(I))
         for (unsigned i = 0, e = PN.getNumIncomingValues(); i != e; ++i)
@@ -5226,9 +5227,32 @@ bool InstCombiner::runOnFunction(Function &F) {
   bool Changed = false;
   TD = &getAnalysis<TargetData>();
 
-  for (inst_iterator i = inst_begin(F), e = inst_end(F); i != e; ++i)
-    WorkList.push_back(&*i);
+  {
+    // Populate the worklist with the reachable instructions.
+    std::set<BasicBlock*> Visited;
+    for (df_ext_iterator<BasicBlock*> BB = df_ext_begin(&F.front(), Visited),
+           E = df_ext_end(&F.front(), Visited); BB != E; ++BB)
+      for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I)
+        WorkList.push_back(I);
+ 
+    // Do a quick scan over the function.  If we find any blocks that are
+    // unreachable, remove any instructions inside of them.  This prevents
+    // the instcombine code from having to deal with some bad special cases.
+    for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
+      if (!Visited.count(BB)) {
+        Instruction *Term = BB->getTerminator();
+        while (Term != BB->begin()) {   // Remove instrs bottom-up
+          BasicBlock::iterator I = Term; --I;
 
+          DEBUG(std::cerr << "IC: DCE: " << *I);
+          ++NumDeadInst;
+
+          if (!I->use_empty())
+            I->replaceAllUsesWith(UndefValue::get(I->getType()));
+          I->eraseFromParent();
+        }
+      }
+  }
 
   while (!WorkList.empty()) {
     Instruction *I = WorkList.back();  // Get an instruction from the worklist
