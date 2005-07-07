@@ -11,17 +11,18 @@
 // the ELF file in the following order:
 //
 //  #1. ELF Header
-//  #2. '.data' section
-//  #3. '.bss' section
+//  #2. '.text' section
+//  #3. '.data' section
+//  #4. '.bss' section  (conceptual position in file)
 //  ...
 //  #X. '.shstrtab' section
 //  #Y. Section Table
 //
 // The entries in the section table are laid out as:
 //  #0. Null entry [required]
-//  #1. ".data" entry - global variables with initializers.     [ if needed ]
-//  #2. ".bss" entry  - global variables without initializers.  [ if needed ]
-//  #3. ".text" entry - the program code
+//  #1. ".text" entry - the program code
+//  #2. ".data" entry - global variables with initializers.     [ if needed ]
+//  #3. ".bss" entry  - global variables without initializers.  [ if needed ]
 //  ...
 //  #N. ".shstrtab" entry - String table for the section names.
 
@@ -83,62 +84,50 @@ bool ELFWriter::doInitialization(Module &M) {
   // Add the null section.
   SectionList.push_back(ELFSection());
 
-  // Okay, the ELF header has been completed, emit the .data section next.
-  ELFSection DataSection(".data", OutputBuffer.size());
-  for (Module::global_iterator I = M.global_begin(), E = M.global_end();
-       I != E; ++I)
-    EmitDATASectionGlobal(I);
+  // Start up the symbol table.  The first entry in the symtab is the null
+  // entry.
+  SymbolTable.push_back(ELFSym(0));
 
-  // If the .data section is nonempty, add it to our list.
-  if ((DataSection.Size = OutputBuffer.size()-DataSection.Offset)) {
-    DataSection.Align = 4;   // FIXME: Compute!
-    SectionList.push_back(DataSection);
-  }
 
-  // Okay, emit the .bss section next.
-  ELFSection BSSSection(".bss", OutputBuffer.size());
-  for (Module::global_iterator I = M.global_begin(), E = M.global_end();
-       I != E; ++I)
-    EmitBSSSectionGlobal(I);
 
-  // If the .bss section is nonempty, add it to our list.
-  if ((BSSSection.Size = OutputBuffer.size()-BSSSection.Offset)) {
-    BSSSection.Align = 4;  // FIXME: Compute!
-    SectionList.push_back(BSSSection);
-  }
-
+  // FIXME: Should start the .text section.
   return false;
 }
 
-// isCOMM - A global variable should be emitted to the common area if it is zero
-// initialized and has linkage that permits it to be merged with other globals.
-static bool isCOMM(GlobalVariable *GV) {
-  return GV->getInitializer()->isNullValue() &&
-    (GV->hasLinkOnceLinkage() || GV->hasInternalLinkage() ||
-     GV->hasWeakLinkage());
-}
+void ELFWriter::EmitGlobal(GlobalVariable *GV, ELFSection &DataSection,
+                           ELFSection &BSSSection) {
+  // If this is an external global, emit it...
+  assert(GV->hasInitializer() && "FIXME: unimp");
+  
+  // If this global has a zero initializer, it is part of the .bss or common
+  // section.
+  if (GV->getInitializer()->isNullValue()) {
+    // If this global is part of the common block, add it now.  Variables are
+    // part of the common block if they are zero initialized and allowed to be
+    // merged with other symbols.
+    if (GV->hasLinkOnceLinkage() || GV->hasWeakLinkage()) {
+      ELFSym CommonSym(GV);
+      // Value for common symbols is the alignment required.
+      const Type *GVType = (const Type*)GV->getType();
+      CommonSym.Value = TM.getTargetData().getTypeAlignment(GVType);
+      CommonSym.Size  = TM.getTargetData().getTypeSize(GVType);
+      CommonSym.SetBind(ELFSym::STB_GLOBAL);
+      CommonSym.SetType(ELFSym::STT_OBJECT);
+      // TODO SOMEDAY: add ELF visibility.
+      CommonSym.SectionIdx = ELFSection::SHN_COMMON;
+      SymbolTable.push_back(CommonSym);
+      return;
+    }
 
-// EmitDATASectionGlobal - Emit a global variable to the .data section if it
-// belongs there.
-void ELFWriter::EmitDATASectionGlobal(GlobalVariable *GV) {
-  if (!GV->hasInitializer()) return;
+    // FIXME: Implement the .bss section.
+    return;
+  }
 
-  // Do not emit a symbol here if it should be emitted to the common area.
-  if (isCOMM(GV)) return;
+  // FIXME: handle .rodata
+  //assert(!GV->isConstant() && "unimp");
 
-  EmitGlobal(GV);
-}
-
-void ELFWriter::EmitBSSSectionGlobal(GlobalVariable *GV) {
-  if (!GV->hasInitializer()) return;
-
-  // FIXME: We don't support BSS yet!
-  return;
-
-  EmitGlobal(GV);
-}
-
-void ELFWriter::EmitGlobal(GlobalVariable *GV) {
+  // FIXME: handle .data
+  //assert(0 && "unimp");
 }
 
 
@@ -149,6 +138,37 @@ bool ELFWriter::runOnMachineFunction(MachineFunction &MF) {
 /// doFinalization - Now that the module has been completely processed, emit
 /// the ELF file to 'O'.
 bool ELFWriter::doFinalization(Module &M) {
+  // Okay, the .text section has now been finalized.
+  // FIXME: finalize the .text section.
+
+  // Okay, the ELF header and .text sections have been completed, build the
+  // .data, .bss, and "common" sections next.
+  ELFSection DataSection(".data", OutputBuffer.size());
+  ELFSection BSSSection (".bss");
+  for (Module::global_iterator I = M.global_begin(), E = M.global_end();
+       I != E; ++I)
+    EmitGlobal(I, DataSection, BSSSection);
+
+  // If the .data section is nonempty, add it to our list.
+  if (DataSection.Size) {
+    DataSection.Align = 4;   // FIXME: Compute!
+    // FIXME: Set the right flags and stuff.
+    SectionList.push_back(DataSection);
+  }
+
+  // If the .bss section is nonempty, add it to our list.
+  if (BSSSection.Size) {
+    BSSSection.Offset = OutputBuffer.size();
+    BSSSection.Align = 4;  // FIXME: Compute!
+    // FIXME: Set the right flags and stuff.
+    SectionList.push_back(BSSSection);
+  }
+
+  // Emit the symbol table now, if non-empty.
+  EmitSymbolTable();
+
+  // FIXME: Emit the relocations now.
+
   // Emit the string table for the sections in the ELF file we have.
   EmitSectionTableStringTable();
 
@@ -163,13 +183,80 @@ bool ELFWriter::doFinalization(Module &M) {
   return false;
 }
 
+/// EmitSymbolTable - If the current symbol table is non-empty, emit the string
+/// table for it and then the symbol table itself.
+void ELFWriter::EmitSymbolTable() {
+  if (SymbolTable.size() == 1) return;  // Only the null entry.
+
+  // FIXME: compact all local symbols to the start of the symtab.
+  unsigned FirstNonLocalSymbol = 1;
+
+  SectionList.push_back(ELFSection(".strtab", OutputBuffer.size()));
+  ELFSection &StrTab = SectionList.back();
+  StrTab.Type = ELFSection::SHT_STRTAB;
+  StrTab.Align = 1;
+
+  // Set the zero'th symbol to a null byte, as required.
+  outbyte(0);
+  SymbolTable[0].NameIdx = 0;
+  unsigned Index = 1;
+  for (unsigned i = 1, e = SymbolTable.size(); i != e; ++i) {
+    // FIXME: USE A MANGLER!!
+    const std::string &Name = SymbolTable[i].GV->getName();
+
+    if (Name.empty()) {
+      SymbolTable[i].NameIdx = 0;
+    } else {
+      SymbolTable[i].NameIdx = Index;
+
+      // Add the name to the output buffer, including the null terminator.
+      OutputBuffer.insert(OutputBuffer.end(), Name.begin(), Name.end());
+
+      // Add a null terminator.
+      OutputBuffer.push_back(0);
+
+      // Keep track of the number of bytes emitted to this section.
+      Index += Name.size()+1;
+    }
+  }
+
+  StrTab.Size = OutputBuffer.size()-StrTab.Offset;
+
+  // Now that we have emitted the string table and know the offset into the
+  // string table of each symbol, emit the symbol table itself.
+  assert(!is64Bit && "Should this be 8 byte aligned for 64-bit?"
+         " (check .Align below also)");
+  align(4);
+
+  SectionList.push_back(ELFSection(".symtab", OutputBuffer.size()));
+  ELFSection &SymTab = SectionList.back();
+  SymTab.Type = ELFSection::SHT_SYMTAB;
+  SymTab.Align = 4;   // FIXME: check for ELF64
+  SymTab.Link = SectionList.size()-2;  // Section Index of .strtab.
+  SymTab.Info = FirstNonLocalSymbol;   // First non-STB_LOCAL symbol.
+  SymTab.EntSize = 16; // Size of each symtab entry. FIXME: wrong for ELF64
+
+  assert(!is64Bit && "check this!");
+  for (unsigned i = 0, e = SymbolTable.size(); i != e; ++i) {
+    ELFSym &Sym = SymbolTable[i];
+    outword(Sym.NameIdx);
+    outaddr(Sym.Value);
+    outword(Sym.Size);
+    outbyte(Sym.Info);
+    outbyte(Sym.Other);
+    outhalf(Sym.SectionIdx);
+  }
+
+  SymTab.Size = OutputBuffer.size()-SymTab.Offset;
+}
+
 /// EmitSectionTableStringTable - This method adds and emits a section for the
 /// ELF Section Table string table: the string table that holds all of the
 /// section names.
 void ELFWriter::EmitSectionTableStringTable() {
   // First step: add the section for the string table to the list of sections:
   SectionList.push_back(ELFSection(".shstrtab", OutputBuffer.size()));
-  SectionList.back().Type = 3;     // SHT_STRTAB
+  SectionList.back().Type = ELFSection::SHT_STRTAB;
 
   // Now that we know which section number is the .shstrtab section, update the
   // e_shstrndx entry in the ELF header.
