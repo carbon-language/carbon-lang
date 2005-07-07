@@ -94,10 +94,10 @@ namespace {
       setOperationAction(ISD::EXTLOAD, MVT::i1,  Promote);
       setOperationAction(ISD::EXTLOAD, MVT::f32, Expand);
  
-      setOperationAction(ISD::ZEXTLOAD, MVT::i1,  Expand);
+      setOperationAction(ISD::ZEXTLOAD, MVT::i1,  Promote);
       setOperationAction(ISD::ZEXTLOAD, MVT::i32, Expand);
 
-      setOperationAction(ISD::SEXTLOAD, MVT::i1,  Expand);
+      setOperationAction(ISD::SEXTLOAD, MVT::i1,  Promote);
       setOperationAction(ISD::SEXTLOAD, MVT::i8,  Expand);
       setOperationAction(ISD::SEXTLOAD, MVT::i16, Expand);
 
@@ -613,6 +613,7 @@ static void getValueInfo(const Value* v, int& type, int& fun, int& offset)
       ++i;
     offset = i;
   } else if (const Instruction* I = dyn_cast<Instruction>(v)) {
+    assert(dyn_cast<PointerType>(I->getType()));
     type = 3;
     const BasicBlock* bb = I->getParent();
     const Function* F = bb->getParent();
@@ -627,6 +628,13 @@ static void getValueInfo(const Value* v, int& type, int& fun, int& offset)
     for(BasicBlock::const_iterator ii = bb->begin(); &*ii != I; ++ii)
       ++i;
     offset = i;
+  } else if (const Constant* C = dyn_cast<Constant>(v)) {
+    //Don't know how to look these up yet
+    type = 0;
+    fun = 0;
+    offset = 0;
+  } else {
+    assert(0 && "Error in value marking");
   }
   //type = 4: register spilling
   //type = 5: global address loading or constant loading
@@ -1407,6 +1415,10 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
         BuildMI(BB, Alpha::BSR, 1, Alpha::R26)
           .addGlobalAddress(GASD->getGlobal(),true);
       } else {
+        //Must always reread relocation table before a call
+        if (GASD)
+          ExprMap.erase(N.getOperand(1));
+
         //no need to restore GP as we are doing an indirect call
         Tmp1 = SelectExpr(N.getOperand(1));
         BuildMI(BB, Alpha::BIS, 2, Alpha::R27).addReg(Tmp1).addReg(Tmp1);
