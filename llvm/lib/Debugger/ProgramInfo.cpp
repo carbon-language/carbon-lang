@@ -172,8 +172,8 @@ SourceFile &SourceFileInfo::getSourceText() const {
   if (SourceText == 0) { // Read the file in if we haven't already.
     sys::Path tmpPath;
     if (!Directory.empty())
-      tmpPath.setDirectory(Directory);
-    tmpPath.appendFile(BaseName);
+      tmpPath.set(Directory);
+    tmpPath.appendComponent(BaseName);
     if (tmpPath.canRead())
       SourceText = new SourceFile(tmpPath.toString(), Descriptor);
     else

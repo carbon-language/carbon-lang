@@ -899,7 +899,7 @@ Linker::LinkModules(Module *Dest, Module *Src, std::string *ErrorMsg) {
   // If the source library's module id is in the dependent library list of the
   // destination library, remove it since that module is now linked in.
   sys::Path modId;
-  modId.setFile(Src->getModuleIdentifier());
+  modId.set(Src->getModuleIdentifier());
   if (!modId.isEmpty())
     Dest->removeLibrary(modId.getBasename());
 

@@ -480,7 +480,7 @@ int main(int argc, char **argv, char **envp) {
                        gcc, envp);
 
         // Remove the assembly language file.
-        AssemblyFile.destroyFile();
+        AssemblyFile.destroy();
       } else if (NativeCBE) {
         sys::Path CFile (OutputFilename);
         CFile.appendSuffix("cbe.c");
@@ -505,7 +505,7 @@ int main(int argc, char **argv, char **envp) {
         GenerateNative(OutputFilename, CFile.toString(), Libraries, gcc, envp);
 
         // Remove the assembly language file.
-        CFile.destroyFile();
+        CFile.destroy();
 
       } else {
         EmitShellScript(argv);

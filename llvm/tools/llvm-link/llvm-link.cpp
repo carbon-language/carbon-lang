@@ -50,7 +50,7 @@ static cl::opt<bool> NoCompress("disable-compression", cl::init(false),
 //
 static inline std::auto_ptr<Module> LoadFile(const std::string &FN) {
   sys::Path Filename;
-  if (!Filename.setFile(FN)) {
+  if (!Filename.set(FN)) {
     std::cerr << "Invalid file name: '" << FN << "'\n";
     return std::auto_ptr<Module>();
   }

@@ -293,7 +293,7 @@ std::set<sys::Path> recurseDirectories(const sys::Path& path) {
 void buildPaths(bool checkExistence = true) {
   for (unsigned i = 0; i < Members.size(); i++) {
     sys::Path aPath;
-    if (!aPath.setFile(Members[i]))
+    if (!aPath.set(Members[i]))
       throw std::string("File member name invalid: ") + Members[i];
     if (checkExistence) {
       if (!aPath.exists())
@@ -431,7 +431,7 @@ void doExtract() {
       // Make sure the intervening directories are created
       if (I->hasPath()) {
         sys::Path dirs(I->getPath());
-        dirs.elideFile();
+        dirs.eraseComponent();
         dirs.createDirectory(/*create_parents=*/true);
       }
 
@@ -669,7 +669,7 @@ int main(int argc, char **argv) {
 
     // Check the path name of the archive
     sys::Path ArchivePath;
-    if (!ArchivePath.setFile(ArchiveName))
+    if (!ArchivePath.set(ArchiveName))
       throw std::string("Archive name invalid: ") + ArchiveName;
 
     // Create or open the archive object.

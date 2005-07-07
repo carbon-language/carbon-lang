@@ -84,7 +84,7 @@ Path::isValid() const {
 Path
 Path::GetRootDirectory() {
   Path result;
-  result.setDirectory("/");
+  result.set("/");
   return result;
 }
 
@@ -98,7 +98,7 @@ Path::GetTemporaryDirectory() {
   if (0 == mkdtemp(pathname))
     ThrowErrno(std::string(pathname) + ": can't create temporary directory");
   Path result;
-  result.setDirectory(pathname);
+  result.set(pathname);
   assert(result.isValid() && "mkdtemp didn't create a valid pathname!");
   return result;
 #elif defined(HAVE_MKSTEMP)
@@ -117,7 +117,7 @@ Path::GetTemporaryDirectory() {
   if (-1 == ::mkdir(pathname, S_IRWXU)) // end race condition
     ThrowErrno(std::string(pathname) + ": can't create temporary directory");
   Path result;
-  result.setDirectory(pathname);
+  result.set(pathname);
   assert(result.isValid() && "mkstemp didn't create a valid pathname!");
   return result;
 #elif defined(HAVE_MKTEMP)
@@ -134,7 +134,7 @@ Path::GetTemporaryDirectory() {
   if (-1 == ::mkdir(TmpName, S_IRWXU))
     ThrowErrno(std::string(TmpName) + ": can't create temporary directory");
   Path result;
-  result.setDirectory(TmpName);
+  result.set(TmpName);
   assert(result.isValid() && "mktemp didn't create a valid pathname!");
   return result;
 #else
@@ -155,7 +155,7 @@ Path::GetTemporaryDirectory() {
   if (-1 == ::mkdir(pathname, S_IRWXU))
     ThrowErrno(std::string(pathname) + ": can't create temporary directory");
   Path result;
-  result.setDirectory(pathname);
+  result.set(pathname);
   assert(result.isValid() && "mkstemp didn't create a valid pathname!");
   return result;
 #endif
@@ -167,14 +167,14 @@ static void getPathList(const char*path, std::vector<sys::Path>& Paths) {
   Path tmpPath;
   while( delim != 0 ) {
     std::string tmp(at, size_t(delim-at));
-    if (tmpPath.setDirectory(tmp))
+    if (tmpPath.set(tmp))
       if (tmpPath.canRead())
         Paths.push_back(tmpPath);
     at = delim + 1;
     delim = strchr(at, ':');
   }
   if (*at != 0)
-    if (tmpPath.setDirectory(std::string(at)))
+    if (tmpPath.set(std::string(at)))
       if (tmpPath.canRead())
         Paths.push_back(tmpPath);
 
@@ -204,7 +204,7 @@ Path::GetBytecodeLibraryPaths(std::vector<sys::Path>& Paths) {
 #ifdef LLVM_LIBDIR
   {
     Path tmpPath;
-    if (tmpPath.setDirectory(LLVM_LIBDIR))
+    if (tmpPath.set(LLVM_LIBDIR))
       if (tmpPath.canRead())
         Paths.push_back(tmpPath);
   }
@@ -222,7 +222,7 @@ Path::GetUserHomeDirectory() {
   const char* home = getenv("HOME");
   if (home) {
     Path result;
-    if (result.setDirectory(home))
+    if (result.set(home))
       return result;
   }
   return GetRootDirectory();
@@ -230,12 +230,20 @@ Path::GetUserHomeDirectory() {
 
 bool
 Path::isFile() const {
-  return (isValid() && path[path.length()-1] != '/');
+  struct stat buf;
+  if (0 != stat(path.c_str(), &buf)) {
+    ThrowErrno(path + ": can't determine type of path object: ");
+  }
+  return S_ISREG(buf.st_mode);
 }
 
 bool
 Path::isDirectory() const {
-  return (isValid() && path[path.length()-1] == '/');
+  struct stat buf;
+  if (0 != stat(path.c_str(), &buf)) {
+    ThrowErrno(path + ": can't determine type of path object: ");
+  }
+  return S_ISDIR(buf.st_mode);
 }
 
 std::string
@@ -357,8 +365,6 @@ Path::getStatusInfo(StatusInfo& info) const {
   info.user = buf.st_uid;
   info.group = buf.st_gid;
   info.isDir = S_ISDIR(buf.st_mode);
-  if (info.isDir && path[path.length()-1] != '/')
-    path += '/';
 }
 
 static bool AddPermissionBits(const std::string& Filename, int bits) {
@@ -419,8 +425,6 @@ Path::getDirectoryContents(std::set<Path>& result) const {
         ThrowErrno(aPath.path + 
           ": can't determine file object type", stat_errno);
       }
-      if (S_ISDIR(buf.st_mode))
-        aPath.path += "/";
       result.insert(aPath);
     }
   }
@@ -430,124 +434,84 @@ Path::getDirectoryContents(std::set<Path>& result) const {
 }
 
 bool
-Path::setDirectory(const std::string& a_path) {
-  if (a_path.size() == 0)
+Path::set(const std::string& a_path) {
+  if (a_path.empty())
     return false;
-  Path save(*this);
+  std::string save(path);
   path = a_path;
-  size_t last = a_path.size() -1;
-  if (a_path[last] != '/')
-    path += '/';
   if (!isValid()) {
-    path = save.path;
+    path = save;
     return false;
   }
   return true;
 }
 
 bool
-Path::setFile(const std::string& a_path) {
-  if (a_path.size() == 0)
+Path::appendComponent(const std::string& name) {
+  if (name.empty())
     return false;
-  Path save(*this);
-  path = a_path;
-  size_t last = a_path.size() - 1;
-  while (last > 0 && a_path[last] == '/')
-    last--;
-  path.erase(last+1);
+  std::string save(path);
+  if (!path.empty()) {
+    size_t last = path.size() - 1;
+    if (path[last] != '/') 
+      path += '/';
+  }
+  path += name;
   if (!isValid()) {
-    path = save.path;
+    path = save;
     return false;
   }
   return true;
 }
 
 bool
-Path::appendDirectory(const std::string& dir) {
-  if (isFile()) 
-    return false;
-  Path save(*this);
-  path += dir;
-  path += "/";
-  if (!isValid()) {
-    path = save.path;
-    return false;
-  }
-  return true;
-}
-
-bool
-Path::elideDirectory() {
-  if (isFile()) 
-    return false;
+Path::eraseComponent() {
   size_t slashpos = path.rfind('/',path.size());
-  if (slashpos == 0 || slashpos == std::string::npos)
-    return false;
+  if (slashpos == 0 || slashpos == std::string::npos) {
+    path.erase();
+    return true;
+  }
   if (slashpos == path.size() - 1)
     slashpos = path.rfind('/',slashpos-1);
-  if (slashpos == std::string::npos)
-    return false;
+  if (slashpos == std::string::npos) {
+    path.erase();
+    return true;
+  }
   path.erase(slashpos);
   return true;
 }
 
 bool
-Path::appendFile(const std::string& file) {
-  if (!isDirectory()) 
-    return false;
-  Path save(*this);
-  path += file;
-  if (!isValid()) {
-    path = save.path;
-    return false;
-  }
-  return true;
-}
-
-bool
-Path::elideFile() {
-  if (isDirectory()) 
-    return false;
-  size_t slashpos = path.rfind('/',path.size());
-  if (slashpos == std::string::npos)
-    return false;
-  path.erase(slashpos+1);
-  return true;
-}
-
-bool
 Path::appendSuffix(const std::string& suffix) {
-  if (isDirectory()) 
-    return false;
-  Path save(*this);
+  std::string save(path);
   path.append(".");
   path.append(suffix);
   if (!isValid()) {
-    path = save.path;
+    path = save;
     return false;
   }
   return true;
 }
 
-bool 
-Path::elideSuffix() {
-  if (isDirectory()) return false;
+bool
+Path::eraseSuffix() {
+  std::string save(path);
   size_t dotpos = path.rfind('.',path.size());
   size_t slashpos = path.rfind('/',path.size());
-  if (slashpos != std::string::npos && dotpos != std::string::npos &&
+  if (slashpos != std::string::npos && 
+      dotpos != std::string::npos &&
       dotpos > slashpos) {
     path.erase(dotpos, path.size()-dotpos);
-    return true;
   }
-  return false;
+  if (!isValid()) {
+    path = save;
+    return false;
+  }
+  return true;
 }
-
 
 bool
 Path::createDirectory( bool create_parents) {
-  // Make sure we're dealing with a directory
-  if (!isDirectory()) return false;
-
   // Get a writeable copy of the path name
   char pathname[MAXPATHLEN];
   path.copy(pathname,MAXPATHLEN);
@@ -586,9 +550,6 @@ Path::createDirectory( bool create_parents) {
 
 bool
 Path::createFile() {
-  // Make sure we're dealing with a file
-  if (!isFile()) return false; 
-
   // Create the file
   int fd = ::creat(path.c_str(), S_IRUSR | S_IWUSR);
   if (fd < 0)
@@ -600,10 +561,6 @@ Path::createFile() {
 
 bool
 Path::createTemporaryFile(bool reuse_current) {
-  // Make sure we're dealing with a file
-  if (!isFile()) 
-    return false;
-
   // Make this into a unique file name
   makeUnique( reuse_current );
 
@@ -617,45 +574,38 @@ Path::createTemporaryFile(bool reuse_current) {
 }
 
 bool
-Path::destroyDirectory(bool remove_contents) const {
+Path::destroy(bool remove_contents) const {
   // Make sure we're dealing with a directory
-  if (!isDirectory()) return false;
-
-  // If it doesn't exist, we're done.
-  if (!exists()) return true;
-
-  if (remove_contents) {
-    // Recursively descend the directory to remove its content
-    std::string cmd("/bin/rm -rf ");
-    cmd += path;
-    system(cmd.c_str());
-  } else {
-    // Otherwise, try to just remove the one directory
-    char pathname[MAXPATHLEN];
-    path.copy(pathname,MAXPATHLEN);
-    int lastchar = path.length() - 1 ; 
-    if (pathname[lastchar] == '/') 
-      pathname[lastchar] = 0;
-    else
-      pathname[lastchar+1] = 0;
-    if ( 0 != rmdir(pathname))
-      ThrowErrno(std::string(pathname) + ": can't destroy directory");
+  if (isFile()) {
+    if (0 != unlink(path.c_str()))
+      ThrowErrno(path + ": can't destroy file");
+  } else if (isDirectory()) {
+    if (remove_contents) {
+      // Recursively descend the directory to remove its content
+      std::string cmd("/bin/rm -rf ");
+      cmd += path;
+      system(cmd.c_str());
+    } else {
+      // Otherwise, try to just remove the one directory
+      char pathname[MAXPATHLEN];
+      path.copy(pathname,MAXPATHLEN);
+      int lastchar = path.length() - 1 ; 
+      if (pathname[lastchar] == '/') 
+        pathname[lastchar] = 0;
+      else
+        pathname[lastchar+1] = 0;
+      if ( 0 != rmdir(pathname))
+        ThrowErrno(std::string(pathname) + ": can't destroy directory");
+    }
   }
+  else
+    return false;
   return true;
 }
 
 bool
-Path::destroyFile() const {
-  if (!isFile()) return false;
-  if (0 != unlink(path.c_str()))
-    ThrowErrno(path + ": can't destroy file");
-  return true;
-}
-
-bool
-Path::renameFile(const Path& newName) {
-  if (!isFile()) return false;
-  if (0 != rename(path.c_str(), newName.c_str()))
+Path::rename(const Path& newName) {
+  if (0 != ::rename(path.c_str(), newName.c_str()))
     ThrowErrno(std::string("can't rename '") + path + "' as '" + 
                newName.toString() + "' ");
   return true;
@@ -663,7 +613,6 @@ Path::renameFile(const Path& newName) {
 
 bool
 Path::setStatusInfo(const StatusInfo& si) const {
-  if (!isFile()) return false;
   struct utimbuf utb;
   utb.actime = si.modTime.toPosixTime();
   utb.modtime = utb.actime;

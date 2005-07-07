@@ -42,7 +42,7 @@ Program::FindProgramByName(const std::string& progName) {
   if (progName.length() == 0) // no program
     return Path();
   Path temp;
-  if (!temp.setFile(progName)) // invalid name
+  if (!temp.set(progName)) // invalid name
     return Path();
   // FIXME: have to check for absolute filename - we cannot assume anything
   // about "." being in $PATH
@@ -64,8 +64,8 @@ Program::FindProgramByName(const std::string& progName) {
 
     // Check to see if this first directory contains the executable...
     Path FilePath;
-    if (FilePath.setDirectory(std::string(PathStr,Colon))) {
-      FilePath.appendFile(progName);
+    if (FilePath.set(std::string(PathStr,Colon))) {
+      FilePath.appendComponent(progName);
       if (FilePath.canExecute())
         return FilePath;                    // Found the executable!
     }

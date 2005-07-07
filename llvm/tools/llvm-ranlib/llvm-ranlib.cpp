@@ -59,7 +59,7 @@ int main(int argc, char **argv) {
 
     // Check the path name of the archive
     sys::Path ArchivePath;
-    if (!ArchivePath.setFile(ArchiveName))
+    if (!ArchivePath.set(ArchiveName))
       throw std::string("Archive name invalid: ") + ArchiveName;
 
     // Make sure it exists, we don't create empty archives

@@ -58,7 +58,7 @@ ReducePassList::doTest(std::vector<const PassInfo*> &Prefix,
     if (BD.runPasses(Prefix, PfxOutput))
       return KeepPrefix;
 
-    PrefixOutput.setFile(PfxOutput);
+    PrefixOutput.set(PfxOutput);
     OrigProgram = BD.Program;
 
     BD.Program = ParseInputFile(PrefixOutput.toString());
@@ -67,7 +67,7 @@ ReducePassList::doTest(std::vector<const PassInfo*> &Prefix,
                 << PrefixOutput << "'!\n";
       exit(1);
     }
-    PrefixOutput.destroyFile();
+    PrefixOutput.destroy();
   }
 
   std::cout << "Checking to see if these passes crash: "

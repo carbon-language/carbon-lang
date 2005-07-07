@@ -318,7 +318,7 @@ namespace {
         {
           std::string progname;
           if (parseProgramName(progname))
-            action.program.setFile(progname);
+            action.program.set(progname);
           else
             error("Expecting a program name");
 
@@ -547,8 +547,8 @@ LLVMC_ConfigDataProvider::ReadConfigData(const std::string& ftype) {
     // Try the environment variable
     const char* conf = getenv("LLVM_CONFIG_DIR");
     if (conf) {
-      confFile.setDirectory(conf);
-      confFile.appendFile(ftype);
+      confFile.set(conf);
+      confFile.appendComponent(ftype);
       if (!confFile.canRead())
         throw std::string("Configuration file for '") + ftype +
                           "' is not available.";
@@ -556,20 +556,20 @@ LLVMC_ConfigDataProvider::ReadConfigData(const std::string& ftype) {
       // Try the user's home directory
       confFile = sys::Path::GetUserHomeDirectory();
       if (!confFile.isEmpty()) {
-        confFile.appendDirectory(".llvm");
-        confFile.appendDirectory("etc");
-        confFile.appendFile(ftype);
+        confFile.appendComponent(".llvm");
+        confFile.appendComponent("etc");
+        confFile.appendComponent(ftype);
         if (!confFile.canRead())
           confFile.clear();
       }
       if (confFile.isEmpty()) {
         // Okay, try the LLVM installation directory
         confFile = sys::Path::GetLLVMConfigDir();
-        confFile.appendFile(ftype);
+        confFile.appendComponent(ftype);
         if (!confFile.canRead()) {
           // Okay, try the "standard" place
           confFile = sys::Path::GetLLVMDefaultConfigDir();
-          confFile.appendFile(ftype);
+          confFile.appendComponent(ftype);
           if (!confFile.canRead()) {
             throw std::string("Configuration file for '") + ftype +
                               "' is not available.";
@@ -579,7 +579,7 @@ LLVMC_ConfigDataProvider::ReadConfigData(const std::string& ftype) {
     }
   } else {
     confFile = configDir;
-    confFile.appendFile(ftype);
+    confFile.appendComponent(ftype);
     if (!confFile.canRead())
       throw std::string("Configuration file for '") + ftype +
                         "' is not available.";

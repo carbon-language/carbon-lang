@@ -195,12 +195,18 @@ Path::GetUserHomeDirectory() {
 
 bool
 Path::isFile() const {
-  return (isValid() && path[path.length()-1] != '/');
+  WIN32_FILE_ATTRIBUTE_DATA fi;
+  if (!GetFileAttributesEx(path.c_str(), GetFileExInfoStandard, &fi))
+    ThrowError(std::string(path) + ": Can't get status: ");
+  return fi.dwFileAttributes & FILE_ATTRIBUTE_NORMAL;
 }
 
 bool
 Path::isDirectory() const {
-  return (isValid() && path[path.length()-1] == '/');
+  WIN32_FILE_ATTRIBUTE_DATA fi;
+  if (!GetFileAttributesEx(path.c_str(), GetFileExInfoStandard, &fi))
+    ThrowError(std::string(path) + ": Can't get status: ");
+  return fi.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY;
 }
 
 std::string

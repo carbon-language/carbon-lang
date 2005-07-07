@@ -134,7 +134,7 @@ public:
     StringVector::const_iterator E = paths.end();
     while (I != E) {
       sys::Path tmp;
-      tmp.setDirectory(*I);
+      tmp.set(*I);
       IncludePaths.push_back(tmp);
       ++I;
     }
@@ -149,7 +149,7 @@ public:
     StringVector::const_iterator E = paths.end();
     while (I != E) {
       sys::Path tmp;
-      tmp.setDirectory(*I);
+      tmp.set(*I);
       LibraryPaths.push_back(tmp);
       ++I;
     }
@@ -188,7 +188,7 @@ private:
   void cleanup() {
     if (!isSet(KEEP_TEMPS_FLAG)) {
       if (TempDir.isDirectory() && TempDir.canWrite())
-        TempDir.destroyDirectory(/*remove_contents=*/true);
+        TempDir.destroy(/*remove_contents=*/true);
     } else {
       std::cout << "Temporary files are in " << TempDir << "\n";
     }
@@ -197,7 +197,7 @@ private:
   sys::Path MakeTempFile(const std::string& basename,
                          const std::string& suffix) {
     sys::Path result(TempDir);
-    if (!result.appendFile(basename))
+    if (!result.appendComponent(basename))
       throw basename + ": can't use this file name";
     if (!result.appendSuffix(suffix))
       throw suffix + ": can't use this file suffix";
@@ -448,13 +448,13 @@ private:
   llvm::sys::Path GetPathForLinkageItem(const std::string& link_item,
                                         bool native = false) {
     sys::Path fullpath;
-    fullpath.setFile(link_item);
+    fullpath.set(link_item);
     if (fullpath.canRead())
       return fullpath;
     for (PathVector::iterator PI = LibraryPaths.begin(),
          PE = LibraryPaths.end(); PI != PE; ++PI) {
-      fullpath.setDirectory(PI->toString());
-      fullpath.appendFile(link_item);
+      fullpath.set(PI->toString());
+      fullpath.appendComponent(link_item);
       if (fullpath.canRead())
         return fullpath;
       if (native) {
@@ -463,16 +463,16 @@ private:
         fullpath.appendSuffix("bc");
         if (fullpath.canRead())
           return fullpath;
-        fullpath.elideSuffix();
+        fullpath.eraseSuffix();
         fullpath.appendSuffix("o");
         if (fullpath.canRead())
           return fullpath;
         fullpath = *PI;
-        fullpath.appendFile(std::string("lib") + link_item);
+        fullpath.appendComponent(std::string("lib") + link_item);
         fullpath.appendSuffix("a");
         if (fullpath.canRead())
           return fullpath;
-        fullpath.elideSuffix();
+        fullpath.eraseSuffix();
         fullpath.appendSuffix("so");
         if (fullpath.canRead())
           return fullpath;
@@ -693,7 +693,7 @@ public:
               /// The output of the translator is an LLVM Assembly program
               /// We need to translate it to bytecode
               Action* action = new Action();
-              action->program.setFile("llvm-as");
+              action->program.set("llvm-as");
               action->args.push_back(InFile.toString());
               action->args.push_back("-o");
               InFile.appendSuffix("bc");
@@ -735,7 +735,7 @@ public:
                 /// The output of the optimizer is an LLVM Assembly program
                 /// We need to translate it to bytecode with llvm-as
                 Action* action = new Action();
-                action->program.setFile("llvm-as");
+                action->program.set("llvm-as");
                 action->args.push_back(InFile.toString());
                 action->args.push_back("-f");
                 action->args.push_back("-o");
@@ -764,7 +764,7 @@ public:
           Action* action = new Action();
           if (isSet(EMIT_NATIVE_FLAG)) {
             // Use llc to get the native assembly file
-            action->program.setFile("llc");
+            action->program.set("llc");
             action->args.push_back(InFile.toString());
             action->args.push_back("-f");
             action->args.push_back("-o");
@@ -777,7 +777,7 @@ public:
             actions.push_back(action);
           } else {
             // Just convert back to llvm assembly with llvm-dis
-            action->program.setFile("llvm-dis");
+            action->program.set("llvm-dis");
             action->args.push_back(InFile.toString());
             action->args.push_back("-f");
             action->args.push_back("-o");
@@ -820,7 +820,7 @@ public:
 
         // Set up the linking action with llvm-ld
         Action* link = new Action();
-        link->program.setFile("llvm-ld");
+        link->program.set("llvm-ld");
 
         // Add in the optimization level requested
         switch (optLevel) {

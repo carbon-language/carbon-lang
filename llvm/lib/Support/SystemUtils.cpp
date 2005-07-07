@@ -45,9 +45,9 @@ sys::Path llvm::FindExecutable(const std::string &ExeName,
   // if ProgramPath contains at least one / character, indicating that it is a
   // relative path to bugpoint itself.
   sys::Path Result ( ProgramPath );
-  Result.elideFile();
+  Result.eraseComponent();
   if (!Result.isEmpty()) {
-    Result.appendFile(ExeName);
+    Result.appendComponent(ExeName);
     if (Result.canExecute())
       return Result;
   }

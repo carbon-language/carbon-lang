@@ -112,7 +112,7 @@ RETSIGTYPE SignalHandler(int Sig) {
 
   if (DirectoriesToRemove != 0)
     while (!DirectoriesToRemove->empty()) {
-      DirectoriesToRemove->back().destroyDirectory(true);
+      DirectoriesToRemove->back().destroy(true);
       DirectoriesToRemove->pop_back();
     }
 

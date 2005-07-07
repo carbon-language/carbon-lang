@@ -313,9 +313,9 @@ int main(int argc, char **argv, char **envp ) {
 
       if (!SaveTemps) {
         // Remove the assembly language file.
-        AssemblyFile.destroyFile();
+        AssemblyFile.destroy();
         // Remove the bytecode language file.
-        sys::Path(RealBytecodeOutput).destroyFile();
+        sys::Path(RealBytecodeOutput).destroy();
       }
 
     } else if (NativeCBE) {
@@ -345,9 +345,9 @@ int main(int argc, char **argv, char **envp ) {
 
       if (!SaveTemps) {
         // Remove the assembly language file.
-        CFile.destroyFile();
+        CFile.destroy();
         // Remove the bytecode language file.
-        sys::Path(RealBytecodeOutput).destroyFile();
+        sys::Path(RealBytecodeOutput).destroy();
       }
 
     } else if (!LinkAsLibrary) {

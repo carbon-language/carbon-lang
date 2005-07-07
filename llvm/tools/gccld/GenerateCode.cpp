@@ -152,15 +152,11 @@ static bool isBytecodeLibrary(const sys::Path &FullPath) {
 static bool isBytecodeLPath(const std::string &LibPath) {
   bool isBytecodeLPath = false;
 
-  // Make sure the -L path has a '/' character
-  // because llvm-g++ passes them without the ending
-  // '/' char and sys::Path doesn't think it is a
-  // directory (see: sys::Path::isDirectory) without it
-  std::string dir = LibPath;
-  if ( dir[dir.length()-1] != '/' )
-  dir.append("/");
+  sys::Path LPath(LibPath);
 
-  sys::Path LPath(dir);
+  // Make sure its a directory
+  if (!LPath.isDirectory())
+    return isBytecodeLPath;
 
   // Grab the contents of the -L path
   std::set<sys::Path> Files;

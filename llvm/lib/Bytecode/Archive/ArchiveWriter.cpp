@@ -450,17 +450,17 @@ Archive::writeToDisk(bool CreateSymbolTable, bool TruncateNames, bool Compress){
       // Close up shop
       FinalFile.close();
       arch.close();
-      TmpArchive.destroyFile();
+      TmpArchive.destroy();
 
     } else {
       // We don't have to insert the symbol table, so just renaming the temp
       // file to the correct name will suffice.
-      TmpArchive.renameFile(archPath);
+      TmpArchive.rename(archPath);
     }
   } catch (...) {
     // Make sure we clean up.
     if (TmpArchive.exists())
-      TmpArchive.destroyFile();
+      TmpArchive.destroy();
     throw;
   }
 }

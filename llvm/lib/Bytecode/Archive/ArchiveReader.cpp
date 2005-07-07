@@ -187,7 +187,7 @@ Archive::parseMemberHeader(const char*& At, const char* End) {
   member->next = 0;
   member->prev = 0;
   member->parent = this;
-  member->path.setFile(pathname);
+  member->path.set(pathname);
   member->info.fileSize = MemberSize;
   member->info.modTime.fromEpochTime(atoi(Hdr->date));
   unsigned int mode;

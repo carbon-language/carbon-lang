@@ -219,24 +219,22 @@ namespace sys {
       bool isValid() const;
 
       /// This function determines if the contents of the path name are
-      /// empty. That is, the path has a zero length.
+      /// empty. That is, the path has a zero length. This does NOT determine if
+      /// if the file is empty. Use the getSize method for that.
       /// @returns true iff the path is empty.
       /// @brief Determines if the path name is empty (invalid).
       bool isEmpty() const { return path.empty(); }
 
-      /// This function determines if the path name in this object is intended
-      /// to reference a legal file name (as opposed to a directory name). This
-      /// function does not verify anything with the file system, it merely
-      /// determines if the syntax of the path represents a file name or not.
+      /// This function determines if the object referenced by this path is
+      /// a file or not. This function accesses the under lying file system to
+      /// determine the type of entity referenced by the path.
       /// @returns true if this path name references a file.
       /// @brief Determines if the path name references a file.
       bool isFile() const;
 
-      /// This function determines if the path name in this object is intended
-      /// to reference a legal directory name (as opposed to a file name). This
-      /// function does not verify anything with the file system, it merely
-      /// determines if the syntax of the path represents a directory name or
-      /// not.
+      /// This function determines if the object referenced by this path is a
+      /// directory or not. This function accesses the underlying file system to
+      /// determine the type of entity referenced by the path.
       /// @returns true if the path name references a directory
       /// @brief Determines if the path name references a directory.
       bool isDirectory() const;
@@ -297,35 +295,34 @@ namespace sys {
       bool isDynamicLibrary() const;
 
       /// This function determines if the path name references an existing file
-      /// or directory in the file system. Unlike isFile and isDirectory, this
-      /// function actually checks for the existence of the file or directory.
-      /// @returns true if the pathname references an existing file.
+      /// or directory in the file system. 
+      /// @returns true if the pathname references an existing file or 
+      /// directory.
       /// @brief Determines if the path is a file or directory in
       /// the file system.
       bool exists() const;
 
       /// This function determines if the path name references a readable file
-      /// or directory in the file system. Unlike isFile and isDirectory, this
-      /// function actually checks for the existence and readability (by the
-      /// current program) of the file or directory.
+      /// or directory in the file system. This function checks for 
+      /// the existence and readability (by the current program) of the file 
+      /// or directory.
       /// @returns true if the pathname references a readable file.
       /// @brief Determines if the path is a readable file or directory
       /// in the file system.
       bool canRead() const;
 
       /// This function determines if the path name references a writable file
-      /// or directory in the file system. Unlike isFile and isDirectory, this
-      /// function actually checks for the existence and writability (by the
-      /// current program) of the file or directory.
+      /// or directory in the file system. This function checks for the 
+      /// existence and writability (by the current program) of the file or 
+      /// directory.
       /// @returns true if the pathname references a writable file.
       /// @brief Determines if the path is a writable file or directory
       /// in the file system.
       bool canWrite() const;
 
       /// This function determines if the path name references an executable
-      /// file in the file system. Unlike isFile and isDirectory, this
-      /// function actually checks for the existence and executability (by
-      /// the current program) of the file.
+      /// file in the file system. This function checks for the existence and 
+      /// executability (by the current program) of the file.
       /// @returns true if the pathname references an executable file.
       /// @brief Determines if the path is an executable file in the file
       /// system.
@@ -338,17 +335,16 @@ namespace sys {
       /// @brief Returns the path as a std::string.
       const std::string& toString() const { return path; }
 
-      /// This function returns the last component of the path name. If the
-      /// isDirectory() function would return true then this returns the name
-      /// of the last directory in the path. If the isFile() function would
-      /// return true then this function returns the name of the file without
-      /// any of the preceding directories.
+      /// This function returns the last component of the path name. The last
+      /// component is the file or directory name occuring after the last
+      /// directory separator.
       /// @returns std::string containing the last component of the path name.
       /// @brief Returns the last component of the path name.
       std::string getLast() const;
 
-      /// This function strips off the path and suffix of the file name and
-      /// returns just the basename.
+      /// This function strips off the path and suffix of the file or directory
+      /// name and returns just the basename. For example /a/foo.bar would cause
+      /// this function to return "foo".
       /// @returns std::string containing the basename of the path
       /// @throws nothing
       /// @brief Get the base name of the path
@@ -361,26 +357,20 @@ namespace sys {
       /// @brief Build a list of directory's contents.
       bool getDirectoryContents(std::set<Path>& paths) const;
 
-      /// This method attempts to destroy the directory named by the last in
-      /// the Path name.  If \p remove_contents is false, an attempt will be
-      /// made to remove just the directory that this Path object refers to
-      /// (the final Path component). If \p remove_contents is true, an attempt
-      /// will be made to remove the entire contents of the directory,
-      /// recursively.
+      /// This method attempts to destroy the file or directory named by the 
+      /// last component of the Path. If the Path refers to a directory and the
+      /// \p destroy_contents is false, an attempt will be made to remove just 
+      /// the directory (the final Path component). If \p destroy_contents is 
+      /// true, an attempt will be made to remove the entire contents of the 
+      /// directory, recursively. If the Path refers to a file, the
+      /// \p destroy_contents parameter is ignored.
       /// @param destroy_contents Indicates whether the contents of a destroyed
       /// directory should also be destroyed (recursively).
-      /// @returns false if the Path does not refer to a directory, true
-      /// otherwise.
+      /// @returns true if the file/directory was destroyed, false if the path
+      /// refers to something that is neither a file nor a directory.
       /// @throws std::string if there is an error.
       /// @brief Removes the file or directory from the filesystem.
-      bool destroyDirectory( bool destroy_contents = false ) const;
-
-      /// This method attempts to destroy the file named by the last item in the
-      /// Path name.
-      /// @returns false if the Path does not refer to a file, true otherwise.
-      /// @throws std::string if there is an error.
-      /// @brief Destroy the file this Path refers to.
-      bool destroyFile() const;
+      bool destroy( bool destroy_contents = false ) const;
 
       /// Obtain a 'C' string for the path name.
       /// @returns a 'C' string containing the path name.
@@ -437,64 +427,32 @@ namespace sys {
       /// @brief Make the file readable;
       void makeExecutable();
 
-      /// This method attempts to set the Path object to \p unverified_path
-      /// and interpret the name as a directory name.  The \p unverified_path
-      /// is verified. If verification succeeds then \p unverified_path
-      /// is accepted as a directory and true is returned. Otherwise,
-      /// the Path object remains unchanged and false is returned.
+      /// This method sets the Path object to \p unverified_path. This can fail
+      /// if the \p unverified_path does not pass the syntactic checks of the
+      /// isValid method. If verification fails, the Path object remains 
+      /// unchanged and false is returned. Otherwise true is returned and the
+      /// Path object takes on the path value of \p unverified_path
       /// @returns true if the path was set, false otherwise.
       /// @param unverified_path The path to be set in Path object.
       /// @throws nothing
       /// @brief Set a full path from a std::string
-      bool setDirectory(const std::string& unverified_path);
+      bool set(const std::string& unverified_path);
 
-      /// This method attempts to set the Path object to \p unverified_path
-      /// and interpret the name as a file name.  The \p unverified_path
-      /// is verified. If verification succeeds then \p unverified_path
-      /// is accepted as a file name and true is returned. Otherwise,
-      /// the Path object remains unchanged and false is returned.
-      /// @returns true if the path was set, false otherwise.
-      /// @param unverified_path The path to be set in Path object.
+      /// One path component is removed from the Path. If only one component is
+      /// present in the path, the Path object becomes empty. If the Path object
+      /// is empty, no change is made.
       /// @throws nothing
-      /// @brief Set a full path from a std::string
-      bool setFile(const std::string& unverified_path);
-
-      /// The \p dirname is added to the end of the Path if it is a legal
-      /// directory name for the operating system. The precondition for this
-      /// function is that the Path must reference a directory name (i.e.
-      /// isDirectory() returns true).
-      /// @param dirname A string providing the directory name to
-      /// be added to the end of the path.
-      /// @returns false if the directory name could not be added
-      /// @throws nothing
-      /// @brief Adds the name of a directory to a Path.
-      bool appendDirectory( const std::string& dirname );
-
-      /// One directory component is removed from the Path name. The Path must
-      /// refer to a non-root directory name (i.e. isDirectory() returns true
-      /// but isRootDirectory() returns false). Upon exit, the Path will
-      /// refer to the directory above it.
-      /// @throws nothing
-      /// @returns false if the directory name could not be removed.
+      /// @returns false if the path component could not be removed.
       /// @brief Removes the last directory component of the Path.
-      bool elideDirectory();
+      bool eraseComponent();
 
-      /// The \p filename is added to the end of the Path if it is a legal
-      /// directory name for the operating system. The precondition for this
-      /// function is that the Path reference a directory name (i.e.
-      /// isDirectory() returns true).
+      /// The \p component is added to the end of the Path if it is a legal
+      /// name for the operating system. A directory separator will be added if
+      /// needed. 
       /// @throws nothing
-      /// @returns false if the file name could not be added.
-      /// @brief Appends the name of a file.
-      bool appendFile( const std::string& filename );
-
-      /// One file component is removed from the Path name. The Path must
-      /// refer to a file (i.e. isFile() returns true). Upon exit,
-      /// the Path will refer to the directory above it.
-      /// @throws nothing
-      /// @returns false if the file name could not be removed
-      /// @brief Removes the last file component of the path.
-      bool elideFile();
+      /// @returns false if the path component could not be added.
+      /// @brief Appends one path component to the Path.
+      bool appendComponent( const std::string& component );
 
       /// A period and the \p suffix are appended to the end of the pathname.
       /// The precondition for this function is that the Path reference a file
@@ -506,7 +464,7 @@ namespace sys {
       /// @brief Adds a period and the \p suffix to the end of the pathname.
       bool appendSuffix(const std::string& suffix);
 
-      /// The suffix of the filename is removed. The suffix begins with and
+      /// The suffix of the filename is erased. The suffix begins with and
       /// includes the last . character in the filename after the last directory
       /// separator and extends until the end of the name. If no . character is
       /// after the last directory separator, then the file name is left
@@ -515,7 +473,7 @@ namespace sys {
       /// @returns false if there was no suffix to remove, true otherwise.
       /// @throws nothing
       /// @brief Remove the suffix from a path name.
-      bool elideSuffix();
+      bool eraseSuffix();
 
       /// The current Path name is made unique in the file system. Upon return,
       /// the Path will have been changed to make a unique file in the file
@@ -566,7 +524,7 @@ namespace sys {
       /// @returns false if the Path does not refer to a file, true otherwise.
       /// @throws std::string if there is an file system error.
       /// @brief Rename one file as another.
-      bool renameFile(const Path& newName);
+      bool rename(const Path& newName);
 
       /// This method sets the access time, modification time, and permission
       /// mode of the file associated with \p this as given by \p si.

@@ -69,7 +69,6 @@ Linker::verbose(const std::string& message) {
 
 void
 Linker::addPath(const sys::Path& path) {
-  assert(path.isDirectory() && "Can only insert directories into the path");
   LibPaths.push_back(path);
 }
 
@@ -77,7 +76,7 @@ void
 Linker::addPaths(const std::vector<std::string>& paths) {
   for (unsigned i = 0; i != paths.size(); ++i) {
     sys::Path aPath;
-    aPath.setDirectory(paths[i]);
+    aPath.set(paths[i]);
     LibPaths.push_back(aPath);
   }
 }
@@ -118,26 +117,35 @@ Linker::LoadObject(const sys::Path &FN) {
 static inline sys::Path IsLibrary(const std::string& Name,
                                   const sys::Path& Directory) {
 
-  assert(Directory.isDirectory() && "Need to specify a directory");
   sys::Path FullPath(Directory);
-  FullPath.appendFile("lib" + Name);
 
-  FullPath.appendSuffix("a");
-  if (FullPath.isArchive())
-    return FullPath;
+  // Make sure the directory actually is a directory in the file system.
+  if (FullPath.isDirectory())
+  {
+    // Try the libX.a form
+    FullPath.appendComponent("lib" + Name);
+    FullPath.appendSuffix("a");
+    if (FullPath.isArchive())
+      return FullPath;
 
-  FullPath.elideSuffix();
-  FullPath.appendSuffix("bca");
-  if (FullPath.isArchive())
-    return FullPath;
+    // Try the libX.bca form
+    FullPath.eraseSuffix();
+    FullPath.appendSuffix("bca");
+    if (FullPath.isArchive())
+      return FullPath;
 
-  FullPath.elideSuffix();
-  FullPath.appendSuffix(&(LTDL_SHLIB_EXT[1]));
-  if (FullPath.isDynamicLibrary())  // Native shared library?
-    return FullPath;
-  if (FullPath.isBytecodeFile())    // .so file containing bytecode?
-    return FullPath;
+    // Try the libX.so form
+    FullPath.eraseSuffix();
+    FullPath.appendSuffix(&(LTDL_SHLIB_EXT[1]));
+    if (FullPath.isDynamicLibrary())  // Native shared library?
+      return FullPath;
+    if (FullPath.isBytecodeFile())    // .so file containing bytecode?
+      return FullPath;
 
+    // Not found .. fall through
+  }
+
+  // Indicate that the library was not found in the directory.
   FullPath.clear();
   return FullPath;
 }

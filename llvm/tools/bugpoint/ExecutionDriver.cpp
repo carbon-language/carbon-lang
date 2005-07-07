@@ -281,7 +281,7 @@ std::string BugDriver::compileSharedObject(const std::string &BytecodeFile) {
     exit(1);
 
   // Remove the intermediate C file
-  OutputCFile.destroyFile();
+  OutputCFile.destroy();
 
   return "./" + SharedObjectFile;
 }
@@ -302,9 +302,9 @@ bool BugDriver::diffProgram(const std::string &BytecodeFile,
 
   // If we're checking the program exit code, assume anything nonzero is bad.
   if (CheckProgramExitCode && ProgramExitedNonzero) {
-    Output.destroyFile();
+    Output.destroy();
     if (RemoveBytecode)
-      sys::Path(BytecodeFile).destroyFile();
+      sys::Path(BytecodeFile).destroy();
     return true;
   }
 
@@ -321,10 +321,11 @@ bool BugDriver::diffProgram(const std::string &BytecodeFile,
   }
 
   // Remove the generated output.
-  Output.destroyFile();
+  Output.destroy();
 
   // Remove the bytecode file if we are supposed to.
-  if (RemoveBytecode) sys::Path(BytecodeFile).destroyFile();
+  if (RemoveBytecode) 
+    sys::Path(BytecodeFile).destroy();
   return FilesDifferent;
 }
 

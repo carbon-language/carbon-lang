@@ -27,7 +27,7 @@ Path
 Path::GetLLVMConfigDir() {
   Path result;
 #ifdef LLVM_ETCDIR
-  if (result.setDirectory(LLVM_ETCDIR))
+  if (result.set(LLVM_ETCDIR))
     return result;
 #endif
   return GetLLVMDefaultConfigDir();
@@ -80,10 +80,10 @@ Path::FindLibrary(std::string& name) {
   GetSystemLibraryPaths(LibPaths);
   for (unsigned i = 0; i < LibPaths.size(); ++i) {
     sys::Path FullPath(LibPaths[i]);
-    FullPath.appendFile("lib" + name + LTDL_SHLIB_EXT);
+    FullPath.appendComponent("lib" + name + LTDL_SHLIB_EXT);
     if (FullPath.isDynamicLibrary())
       return FullPath;
-    FullPath.elideSuffix();
+    FullPath.eraseSuffix();
     FullPath.appendSuffix("a");
     if (FullPath.isArchive())
       return FullPath;
