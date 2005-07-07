@@ -2379,6 +2379,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
     //
     MVT::ValueType PromoteType = MVT::Other;
     MVT::ValueType SrcTy = N.getOperand(0).getValueType();
+    unsigned RealDestReg = Result;
     switch (SrcTy) {
     case MVT::i1:
     case MVT::i8:
@@ -2426,7 +2427,25 @@ unsigned ISel::SelectExpr(SDOperand N) {
       break;
     default: break; // No promotion required.
     }
-    return Result;
+
+    if (Node->getOpcode() == ISD::UINT_TO_FP && Result != RealDestReg) {
+      // If this is a cast from uint -> double, we need to be careful when if
+      // the "sign" bit is set.  If so, we don't want to make a negative number,
+      // we want to make a positive number.  Emit code to add an offset if the
+      // sign bit is set.
+
+      // Compute whether the sign bit is set by shifting the reg right 31 bits.
+      unsigned IsNeg = MakeReg(MVT::i32);
+      BuildMI(BB, X86::SHR32ri, 2, IsNeg).addReg(Tmp1).addImm(31);
+
+      // Create a CP value that has the offset in one word and 0 in the other.
+      static ConstantInt *TheOffset = ConstantUInt::get(Type::ULongTy,
+                                                        0x4f80000000000000ULL);
+      unsigned CPI = F->getConstantPool()->getConstantPoolIndex(TheOffset);
+      BuildMI(BB, X86::FADD32m, 5, RealDestReg).addReg(Result)
+        .addConstantPoolIndex(CPI).addZImm(4).addReg(IsNeg).addSImm(0);
+    }
+    return RealDestReg;
   }
   case ISD::FP_TO_SINT:
   case ISD::FP_TO_UINT: {
