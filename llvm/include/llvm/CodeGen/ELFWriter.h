@@ -86,10 +86,14 @@ namespace llvm {
       unsigned Info;
       unsigned Align;
       unsigned EntSize;
-      ELFSection() : Type(0), Flags(0), Addr(0), Offset(0), Size(0), Link(0),
-                     Info(0), Align(0), EntSize(0) {
-      }
-      ELFSection(const char *name, unsigned offset)
+
+      enum { SHT_NULL = 0, SHT_PROGBITS = 1, SHT_SYMTAB = 2, SHT_STRTAB = 3,
+             SHT_RELA = 4, SHT_HASH = 5, SHT_DYNAMIC = 6, SHT_NOTE = 7,
+             SHT_NOBITS = 8, SHT_REL = 9, SHT_SHLIB = 10, SHT_DYNSYM = 11 };
+      enum { SHN_UNDEF = 0, SHN_ABS = 0xFFF1, SHN_COMMON = 0xFFF2 };
+      enum { SHF_WRITE = 1, SHF_ALLOC = 2, SHF_EXECINSTR = 4 };
+
+      ELFSection(const char *name = "", unsigned offset = 0)
         : Name(name), Type(0), Flags(0), Addr(0), Offset(offset), Size(0),
           Link(0), Info(0), Align(0), EntSize(0) {
       }
@@ -100,6 +104,41 @@ namespace llvm {
     /// is constructed from this info.
     std::vector<ELFSection> SectionList;
 
+    /// ELFSym - This struct contains information about each symbol that is
+    /// added to logical symbol table for the module.  This is eventually
+    /// turned into a real symbol table in the file.
+    struct ELFSym {
+      GlobalValue *GV;        // The global value this corresponds to.
+      //std::string Name;       // Name of the symbol.
+      unsigned NameIdx;       // Index in .strtab of name, once emitted.
+      uint64_t Value;
+      unsigned Size;
+      unsigned char Info;
+      unsigned char Other;
+      unsigned short SectionIdx;
+
+      enum { STB_LOCAL = 0, STB_GLOBAL = 1, STB_WEAK = 2 };
+      enum { STT_NOTYPE = 0, STT_OBJECT = 1, STT_FUNC = 2, STT_SECTION = 3,
+             STT_FILE = 4 };
+      ELFSym(GlobalValue *gv) : GV(gv), Value(0), Size(0), Info(0),
+                                Other(0), SectionIdx(0) {}
+
+      void SetBind(unsigned X) {
+        assert(X == (X & 0xF) && "Bind value out of range!");
+        Info = (Info & 0x0F) | (X << 4);
+      }
+      void SetType(unsigned X) {
+        assert(X == (X & 0xF) && "Type value out of range!");
+        Info = (Info & 0xF0) | X;
+      }
+    };
+
+    /// SymbolTable - This is the list of symbols we have emitted to the file.
+    /// This actually gets rearranged before emission to OutputBuffer (to put
+    /// the local symbols first in the list).
+    std::vector<ELFSym> SymbolTable;
+
+
     // As we accumulate the ELF file into OutputBuffer, we occasionally need to
     // keep track of locations to update later (e.g. the location of the section
     // table in the ELF header.  These members keep track of the offset in
@@ -108,6 +147,15 @@ namespace llvm {
     unsigned ELFHeader_e_shoff_Offset;     // e_shoff    in ELF header.
     unsigned ELFHeader_e_shstrndx_Offset;  // e_shstrndx in ELF header.
     unsigned ELFHeader_e_shnum_Offset;     // e_shnum    in ELF header.
+
+    // align - Emit padding into the file until the current output position is
+    // aligned to the specified power of two boundary.
+    void align(unsigned Boundary) {
+      assert(Boundary && (Boundary & (Boundary-1)) == 0 &&
+             "Must align to 2^k boundary");
+      while (OutputBuffer.size() & (Boundary-1))
+        outbyte(0xAB);
+    }
 
     void outbyte(unsigned char X) { OutputBuffer.push_back(X); }
     void outhalf(unsigned short X) {
@@ -162,9 +210,10 @@ namespace llvm {
     }
 
   private:
-    void EmitDATASectionGlobal(GlobalVariable *GV);
-    void EmitBSSSectionGlobal(GlobalVariable *GV);
-    void EmitGlobal(GlobalVariable *GV);
+    void EmitGlobal(GlobalVariable *GV, ELFSection &DataSection,
+                    ELFSection &BSSSection);
+
+    void EmitSymbolTable();
 
     void EmitSectionTableStringTable();
     void EmitSectionTable();
