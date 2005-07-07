@@ -94,7 +94,7 @@ Path::GetTemporaryDirectory() {
     throw std::string("Can't determine temporary directory");
 
   Path result;
-  result.setDirectory(pathname);
+  result.set(pathname);
 
   // Append a subdirectory passed on our process id so multiple LLVMs don't
   // step on each other's toes.
@@ -128,7 +128,7 @@ Path::Path(const std::string& unverified_path)
 Path
 Path::GetRootDirectory() {
   Path result;
-  result.setDirectory("/");
+  result.set("C:\\");
   return result;
 }
 
@@ -138,14 +138,14 @@ static void getPathList(const char*path, std::vector<sys::Path>& Paths) {
   Path tmpPath;
   while( delim != 0 ) {
     std::string tmp(at, size_t(delim-at));
-    if (tmpPath.setDirectory(tmp))
+    if (tmpPath.set(tmp))
       if (tmpPath.canRead())
         Paths.push_back(tmpPath);
     at = delim + 1;
     delim = strchr(at, ';');
   }
   if (*at != 0)
-    if (tmpPath.setDirectory(std::string(at)))
+    if (tmpPath.set(std::string(at)))
       if (tmpPath.canRead())
         Paths.push_back(tmpPath);
 
@@ -166,7 +166,7 @@ Path::GetBytecodeLibraryPaths(std::vector<sys::Path>& Paths) {
 #ifdef LLVM_LIBDIR
   {
     Path tmpPath;
-    if (tmpPath.setDirectory(LLVM_LIBDIR))
+    if (tmpPath.set(LLVM_LIBDIR))
       if (tmpPath.canRead())
         Paths.push_back(tmpPath);
   }
@@ -186,7 +186,7 @@ Path::GetUserHomeDirectory() {
   const char* home = getenv("HOME");
   if (home) {
     Path result;
-    if (result.setDirectory(home))
+    if (result.set(home))
       return result;
   }
   return GetRootDirectory();
@@ -380,58 +380,40 @@ Path::getDirectoryContents(std::set<Path>& result) const {
 }
 
 bool
-Path::setDirectory(const std::string& a_path) {
+Path::set(const std::string& a_path) {
   if (a_path.size() == 0)
     return false;
-  Path save(*this);
+  std::string save(path);
   path = a_path;
   FlipBackSlashes(path);
   size_t last = a_path.size() -1;
-  if (a_path[last] != '/')
-    path += '/';
   if (!isValid()) {
-    path = save.path;
+    path = save;
     return false;
   }
   return true;
 }
 
 bool
-Path::setFile(const std::string& a_path) {
-  if (a_path.size() == 0)
+Path::appendComponent(const std::string& dir) {
+  if (name.empty())
     return false;
-  Path save(*this);
-  path = a_path;
-  FlipBackSlashes(path);
-  size_t last = a_path.size() - 1;
-  while (last > 0 && a_path[last] == '/')
-    last--;
-  path.erase(last+1);
+  std::string save(path);
+  if (!path.empty()) {
+    size_t last = path.size() - 1;
+    if (path[last] != '/') 
+      path += '/';
+  }
+  path += name;
   if (!isValid()) {
-    path = save.path;
+    path = save;
     return false;
   }
   return true;
 }
 
 bool
-Path::appendDirectory(const std::string& dir) {
-  if (isFile())
-    return false;
-  Path save(*this);
-  path += dir;
-  path += "/";
-  if (!isValid()) {
-    path = save.path;
-    return false;
-  }
-  return true;
-}
-
-bool
-Path::elideDirectory() {
-  if (isFile())
-    return false;
+Path::eraseComponent() {
   size_t slashpos = path.rfind('/',path.size());
   if (slashpos == 0 || slashpos == std::string::npos)
     return false;
@@ -444,46 +426,19 @@ Path::elideDirectory() {
 }
 
 bool
-Path::appendFile(const std::string& file) {
-  if (!isDirectory())
-    return false;
-  Path save(*this);
-  path += file;
-  if (!isValid()) {
-    path = save.path;
-    return false;
-  }
-  return true;
-}
-
-bool
-Path::elideFile() {
-  if (isDirectory())
-    return false;
-  size_t slashpos = path.rfind('/',path.size());
-  if (slashpos == std::string::npos)
-    return false;
-  path.erase(slashpos+1);
-  return true;
-}
-
-bool
 Path::appendSuffix(const std::string& suffix) {
-  if (isDirectory())
-    return false;
-  Path save(*this);
+  std::string save(path);
   path.append(".");
   path.append(suffix);
   if (!isValid()) {
-    path = save.path;
+    path = save;
     return false;
   }
   return true;
 }
 
 bool
-Path::elideSuffix() {
-  if (isDirectory()) return false;
+Path::eraseSuffix() {
   size_t dotpos = path.rfind('.',path.size());
   size_t slashpos = path.rfind('/',path.size());
   if (slashpos != std::string::npos && dotpos != std::string::npos &&
@@ -494,12 +449,8 @@ Path::elideSuffix() {
   return false;
 }
 
-
 bool
 Path::createDirectory( bool create_parents) {
-  // Make sure we're dealing with a directory
-  if (!isDirectory()) return false;
-
   // Get a writeable copy of the path name
   char *pathname = reinterpret_cast<char *>(_alloca(path.length()+1));
   path.copy(pathname,path.length());
@@ -548,9 +499,6 @@ Path::createDirectory( bool create_parents) {
 
 bool
 Path::createFile() {
-  // Make sure we're dealing with a file
-  if (!isFile()) return false;
-
   // Create the file
   HANDLE h = CreateFile(path.c_str(), GENERIC_WRITE, 0, NULL, CREATE_NEW,
                         FILE_ATTRIBUTE_NORMAL, NULL);
@@ -562,89 +510,83 @@ Path::createFile() {
 }
 
 bool
-Path::destroyDirectory(bool remove_contents) const {
-  // Make sure we're dealing with a directory
-  if (!isDirectory()) return false;
+Path::destroy(bool remove_contents) const {
+  if (isFile()) {
+    DWORD attr = GetFileAttributes(path.c_str());
 
-  // If it doesn't exist, we're done.
-  if (!exists()) return true;
+    // If it doesn't exist, we're done.
+    if (attr == INVALID_FILE_ATTRIBUTES)
+      return true;
 
-  char *pathname = reinterpret_cast<char *>(_alloca(path.length()+2));
-  int lastchar = path.length() - 1 ;
-  path.copy(pathname,lastchar+2);
-
-  // Make path end with '/*'.
-  pathname[lastchar+1] = '*';
-  pathname[lastchar+2] = 0;
-
-  if (remove_contents) {
-    WIN32_FIND_DATA fd;
-    HANDLE h = FindFirstFile(pathname, &fd);
-
-    // It's a bad idea to alter the contents of a directory while enumerating
-    // its contents.  So build a list of its contents first, then destroy them.
-
-    if (h != INVALID_HANDLE_VALUE) {
-      std::vector<Path> list;
-
-      do {
-        if (strcmp(fd.cFileName, ".") == 0)
-          continue;
-        if (strcmp(fd.cFileName, "..") == 0)
-          continue;
-
-        Path aPath(path + &fd.cFileName[0]);
-        if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-          aPath.path += "/";
-        list.push_back(aPath);
-      } while (FindNextFile(h, &fd));
-
-      DWORD err = GetLastError();
-      FindClose(h);
-      if (err != ERROR_NO_MORE_FILES) {
-        SetLastError(err);
-        ThrowError(path + ": Can't read directory: ");
-      }
-
-      for (std::vector<Path>::iterator I = list.begin(); I != list.end(); ++I) {
-        Path &aPath = *I;
-        if (aPath.isDirectory())
-          aPath.destroyDirectory(true);
-        else
-          aPath.destroyFile();
-      }
-    } else {
-      if (GetLastError() != ERROR_FILE_NOT_FOUND)
-        ThrowError(path + ": Can't read directory: ");
+    // Read-only files cannot be deleted on Windows.  Must remove the read-only
+    // attribute first.
+    if (attr & FILE_ATTRIBUTE_READONLY) {
+      if (!SetFileAttributes(path.c_str(), attr & ~FILE_ATTRIBUTE_READONLY))
+        ThrowError(path + ": Can't destroy file: ");
     }
-  }
 
-  pathname[lastchar] = 0;
-  if (!RemoveDirectory(pathname))
-    ThrowError(std::string(pathname) + ": Can't destroy directory: ");
-  return true;
-}
-
-bool
-Path::destroyFile() const {
-  if (!isFile()) return false;
-
-  DWORD attr = GetFileAttributes(path.c_str());
-
-  // If it doesn't exist, we're done.
-  if (attr == INVALID_FILE_ATTRIBUTES)
-    return true;
-
-  // Read-only files cannot be deleted on Windows.  Must remove the read-only
-  // attribute first.
-  if (attr & FILE_ATTRIBUTE_READONLY) {
-    if (!SetFileAttributes(path.c_str(), attr & ~FILE_ATTRIBUTE_READONLY))
+    if (!DeleteFile(path.c_str()))
       ThrowError(path + ": Can't destroy file: ");
-  }
+    return true;
+  } else if (isDirectory()) {
 
-  if (!DeleteFile(path.c_str()))
-    ThrowError(path + ": Can't destroy file: ");
-  return true;
+    // If it doesn't exist, we're done.
+    if (!exists()) 
+      return true;
+
+    char *pathname = reinterpret_cast<char *>(_alloca(path.length()+2));
+    int lastchar = path.length() - 1 ;
+    path.copy(pathname,lastchar+2);
+
+    // Make path end with '/*'.
+    pathname[lastchar+1] = '*';
+    pathname[lastchar+2] = 0;
+
+    if (remove_contents) {
+      WIN32_FIND_DATA fd;
+      HANDLE h = FindFirstFile(pathname, &fd);
+
+      // It's a bad idea to alter the contents of a directory while enumerating
+      // its contents. So build a list of its contents first, then destroy them.
+
+      if (h != INVALID_HANDLE_VALUE) {
+        std::vector<Path> list;
+
+        do {
+          if (strcmp(fd.cFileName, ".") == 0)
+            continue;
+          if (strcmp(fd.cFileName, "..") == 0)
+            continue;
+
+          Path aPath(path + &fd.cFileName[0]);
+          if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+            aPath.path += "/";
+          list.push_back(aPath);
+        } while (FindNextFile(h, &fd));
+
+        DWORD err = GetLastError();
+        FindClose(h);
+        if (err != ERROR_NO_MORE_FILES) {
+          SetLastError(err);
+          ThrowError(path + ": Can't read directory: ");
+        }
+
+        for (std::vector<Path>::iterator I = list.begin(); I != list.end(); 
+             ++I) {
+          Path &aPath = *I;
+          aPath.destroy(true);
+        }
+      } else {
+        if (GetLastError() != ERROR_FILE_NOT_FOUND)
+          ThrowError(path + ": Can't read directory: ");
+      }
+    }
+
+    pathname[lastchar] = 0;
+    if (!RemoveDirectory(pathname))
+      ThrowError(std::string(pathname) + ": Can't destroy directory: ");
+    return true;
+  }
 }
 
 bool Path::getMagicNumber(std::string& Magic, unsigned len) const {
@@ -676,7 +618,8 @@ bool Path::getMagicNumber(std::string& Magic, unsigned len) const {
 }
 
 bool
-Path::renameFile(const Path& newName) {
+Path::rename(const Path& newName) {
+  // FIXME: This should rename a directory too.
   if (!isFile()) return false;
   if (!MoveFile(path.c_str(), newName.c_str()))
     ThrowError("Can't move '" + path + 
@@ -766,10 +709,6 @@ Path::makeUnique(bool reuse_current) {
 
 bool
 Path::createTemporaryFile(bool reuse_current) {
-  // Make sure we're dealing with a file
-  if (!isFile()) 
-    return false;
-
   // Make this into a unique file name
   makeUnique( reuse_current );
 
