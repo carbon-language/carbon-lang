@@ -3027,7 +3027,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
 
     if (N.getOpcode() == ISD::SDIV) {
       // We can fold loads into FpDIVs, but not really into any others.
-      if (N.getValueType() == MVT::f64 || !X86ScalarSSE) {
+      if (N.getValueType() == MVT::f64 && !X86ScalarSSE) {
         // Check for reversed and unreversed DIV.
         if (isFoldableLoad(N.getOperand(0), N.getOperand(1), true)) {
           if (N.getOperand(0).getOpcode() == ISD::EXTLOAD)
