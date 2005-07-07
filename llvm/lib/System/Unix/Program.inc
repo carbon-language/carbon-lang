@@ -46,7 +46,7 @@ Program::FindProgramByName(const std::string& progName) {
     return Path();
   // FIXME: have to check for absolute filename - we cannot assume anything
   // about "." being in $PATH
-  if (temp.executable()) // already executable as is
+  if (temp.canExecute()) // already executable as is
     return temp;
 
   // At this point, the file name is valid and its not executable
@@ -66,7 +66,7 @@ Program::FindProgramByName(const std::string& progName) {
     Path FilePath;
     if (FilePath.setDirectory(std::string(PathStr,Colon))) {
       FilePath.appendFile(progName);
-      if (FilePath.executable())
+      if (FilePath.canExecute())
         return FilePath;                    // Found the executable!
     }
 
@@ -109,7 +109,7 @@ Program::ExecuteAndWait(const Path& path,
                         const Path** redirects,
                         unsigned secondsToWait
 ) {
-  if (!path.executable())
+  if (!path.canExecute())
     throw path.toString() + " is not executable"; 
 
 #ifdef HAVE_SYS_WAIT_H

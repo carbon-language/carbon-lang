@@ -62,14 +62,14 @@ sys::IdentifyFileType(const char*magic, unsigned length) {
 
 bool
 Path::isArchive() const {
-  if (readable())
+  if (canRead())
     return hasMagicNumber("!<arch>\012");
   return false;
 }
 
 bool
 Path::isDynamicLibrary() const {
-  if (readable())
+  if (canRead())
     return hasMagicNumber("\177ELF");
   return false;
 }

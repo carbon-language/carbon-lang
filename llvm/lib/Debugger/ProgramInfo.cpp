@@ -174,7 +174,7 @@ SourceFile &SourceFileInfo::getSourceText() const {
     if (!Directory.empty())
       tmpPath.setDirectory(Directory);
     tmpPath.appendFile(BaseName);
-    if (tmpPath.readable())
+    if (tmpPath.canRead())
       SourceText = new SourceFile(tmpPath.toString(), Descriptor);
     else
       SourceText = new SourceFile(BaseName, Descriptor);

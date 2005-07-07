@@ -153,7 +153,7 @@ Linker::FindLib(const std::string &Filename)
 {
   // Determine if the pathname can be found as it stands.
   sys::Path FilePath(Filename);
-  if (FilePath.readable() &&
+  if (FilePath.canRead() &&
       (FilePath.isArchive() || FilePath.isDynamicLibrary()))
     return FilePath;
 

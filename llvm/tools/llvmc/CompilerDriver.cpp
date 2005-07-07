@@ -187,7 +187,7 @@ private:
 
   void cleanup() {
     if (!isSet(KEEP_TEMPS_FLAG)) {
-      if (TempDir.isDirectory() && TempDir.writable())
+      if (TempDir.isDirectory() && TempDir.canWrite())
         TempDir.destroyDirectory(/*remove_contents=*/true);
     } else {
       std::cout << "Temporary files are in " << TempDir << "\n";
@@ -415,7 +415,7 @@ private:
       if (progpath.isEmpty())
         throw std::string("Can't find program '" +
                           action->program.toString()+"'");
-      else if (progpath.executable())
+      else if (progpath.canExecute())
         action->program = progpath;
       else
         throw std::string("Program '"+action->program.toString()+
@@ -449,32 +449,32 @@ private:
                                         bool native = false) {
     sys::Path fullpath;
     fullpath.setFile(link_item);
-    if (fullpath.readable())
+    if (fullpath.canRead())
       return fullpath;
     for (PathVector::iterator PI = LibraryPaths.begin(),
          PE = LibraryPaths.end(); PI != PE; ++PI) {
       fullpath.setDirectory(PI->toString());
       fullpath.appendFile(link_item);
-      if (fullpath.readable())
+      if (fullpath.canRead())
         return fullpath;
       if (native) {
         fullpath.appendSuffix("a");
       } else {
         fullpath.appendSuffix("bc");
-        if (fullpath.readable())
+        if (fullpath.canRead())
           return fullpath;
         fullpath.elideSuffix();
         fullpath.appendSuffix("o");
-        if (fullpath.readable())
+        if (fullpath.canRead())
           return fullpath;
         fullpath = *PI;
         fullpath.appendFile(std::string("lib") + link_item);
         fullpath.appendSuffix("a");
-        if (fullpath.readable())
+        if (fullpath.canRead())
           return fullpath;
         fullpath.elideSuffix();
         fullpath.appendSuffix("so");
-        if (fullpath.readable())
+        if (fullpath.canRead())
           return fullpath;
       }
     }
@@ -494,7 +494,7 @@ private:
     // First, see if the unadorned file name is not readable. If so,
     // we must track down the file in the lib search path.
     sys::Path fullpath;
-    if (!link_item.readable()) {
+    if (!link_item.canRead()) {
       // look for the library using the -L arguments specified
       // on the command line.
       fullpath = GetPathForLinkageItem(link_item.toString());

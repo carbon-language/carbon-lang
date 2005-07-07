@@ -48,7 +48,7 @@ sys::Path llvm::FindExecutable(const std::string &ExeName,
   Result.elideFile();
   if (!Result.isEmpty()) {
     Result.appendFile(ExeName);
-    if (Result.executable())
+    if (Result.canExecute())
       return Result;
   }
 

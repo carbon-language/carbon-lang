@@ -118,7 +118,7 @@ bool Linker::LinkInLibraries(const std::vector<std::string> &Libraries) {
 ///
 bool Linker::LinkInFile(const sys::Path &File) {
   // Make sure we can at least read the file
-  if (!File.readable())
+  if (!File.canRead())
     return error("Cannot find linker input '" + File.toString() + "'");
 
   // A user may specify an ar archive without -l, perhaps because it

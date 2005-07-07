@@ -119,7 +119,7 @@ void DumpSymbolNamesFromModule (Module *M) {
 void DumpSymbolNamesFromFile (std::string &Filename) {
   std::string ErrorMessage;
   sys::Path aPath(Filename);
-  if (Filename != "-" && !aPath.readable()) {
+  if (Filename != "-" && !aPath.canRead()) {
     std::cerr << ToolName << ": " << Filename << ": " << strerror (errno)
               << "\n";
     return;

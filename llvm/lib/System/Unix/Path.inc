@@ -168,14 +168,14 @@ static void getPathList(const char*path, std::vector<sys::Path>& Paths) {
   while( delim != 0 ) {
     std::string tmp(at, size_t(delim-at));
     if (tmpPath.setDirectory(tmp))
-      if (tmpPath.readable())
+      if (tmpPath.canRead())
         Paths.push_back(tmpPath);
     at = delim + 1;
     delim = strchr(at, ':');
   }
   if (*at != 0)
     if (tmpPath.setDirectory(std::string(at)))
-      if (tmpPath.readable())
+      if (tmpPath.canRead())
         Paths.push_back(tmpPath);
 
 }
@@ -205,7 +205,7 @@ Path::GetBytecodeLibraryPaths(std::vector<sys::Path>& Paths) {
   {
     Path tmpPath;
     if (tmpPath.setDirectory(LLVM_LIBDIR))
-      if (tmpPath.readable())
+      if (tmpPath.canRead())
         Paths.push_back(tmpPath);
   }
 #endif
@@ -305,17 +305,17 @@ Path::exists() const {
 }
 
 bool
-Path::readable() const {
+Path::canRead() const {
   return 0 == access(path.c_str(), F_OK | R_OK );
 }
 
 bool
-Path::writable() const {
+Path::canWrite() const {
   return 0 == access(path.c_str(), F_OK | W_OK );
 }
 
 bool
-Path::executable() const {
+Path::canExecute() const {
   struct stat st;
   int r = stat(path.c_str(), &st);
   if (r != 0 || !S_ISREG(st.st_mode))
