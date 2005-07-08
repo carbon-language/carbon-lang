@@ -441,7 +441,7 @@ int GCC::MakeSharedObject(const std::string &InputFile, FileType fileType,
     InputFile.c_str(),           // Specify the input filename...
 #if defined(sparc) || defined(__sparc__) || defined(__sparcv9)
     "-G",                        // Compile a shared library, `-G' for Sparc
-#elif (defined(__POWERPC__) || defined(__ppc__)) && defined(__APPLE__)
+#elif defined(__APPLE__)
     "-single_module",            // link all source files into a single module
     "-dynamiclib",               // `-dynamiclib' for MacOS X/PowerPC
     "-undefined",                // in data segment, rather than generating

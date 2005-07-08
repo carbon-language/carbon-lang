@@ -19,6 +19,8 @@
 #include "X86.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/ADT/Statistic.h"
+#include <set>
+
 
 namespace llvm {
 namespace x86 {
@@ -35,6 +37,9 @@ struct X86SharedAsmPrinter : public AsmPrinter {
 
   bool forCygwin;
   bool forDarwin;
+
+  // Necessary for Darwin to print out the apprioriate types of linker stubs
+  std::set<std::string> FnStubs, GVStubs, LinkOnceStubs;
 
   inline static bool isScale(const MachineOperand &MO) {
     return MO.isImmediate() &&

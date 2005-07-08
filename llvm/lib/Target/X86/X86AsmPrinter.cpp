@@ -50,7 +50,7 @@ bool X86SharedAsmPrinter::doInitialization(Module& M) {
   } else if (TT.empty()) {
   #if defined(__CYGWIN__) || defined(__MINGW32__)
     forCygwin = true;
-  #elif defined(__MACOSX__)
+  #elif defined(__APPLE__)
     forDarwin = true;
   #elif defined(_WIN32)
     leadingUnderscore = true;
@@ -79,7 +79,10 @@ void X86SharedAsmPrinter::printConstantPool(MachineConstantPool *MCP) {
   if (CP.empty()) return;
 
   for (unsigned i = 0, e = CP.size(); i != e; ++i) {
-    O << "\t.section .rodata\n";
+    if (forDarwin)
+      O << "\t.data\n";
+    else
+      O << "\t.section .rodata\n";
     emitAlignment(TD.getTypeAlignmentShift(CP[i]->getType()));
     O << ".CPI" << CurrentFnName << "_" << i << ":\t\t\t\t\t" << CommentString
       << *CP[i] << "\n";
@@ -104,10 +107,13 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
   		(I->hasLinkOnceLinkage() || I->hasInternalLinkage() ||
   			I->hasWeakLinkage() /* FIXME: Verify correct */)) {
   		SwitchSection(O, CurSection, ".data");
-  		if (!forCygwin && I->hasInternalLinkage())
-  		  O << "\t.local " << name << "\n";
-  		O << "\t.comm " << name << "," << TD.getTypeSize(C->getType());
-  		if (!forCygwin)
+  		if (!forCygwin && !forDarwin && I->hasInternalLinkage())
+        O << "\t.local " << name << "\n";
+      if (forDarwin && I->hasInternalLinkage())
+         O << "\t.lcomm " << name << "," << Size << "," << Align;
+      else 
+        O << "\t.comm " << name << "," << Size;
+  		if (!forCygwin && !forDarwin)
   		  O << "," << (1 << Align);
   		O << "\t\t# ";
   		WriteAsOperand(O, I, true, true, &M);
@@ -152,6 +158,47 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
   		emitGlobalConstant(C);
   	  }
     }
+  
+  if (forDarwin) {
+    // Output stubs for dynamically-linked functions
+    unsigned j = 1;
+    for (std::set<std::string>::iterator i = FnStubs.begin(), e = FnStubs.end();
+         i != e; ++i, ++j)
+    {
+      O << "\t.symbol_stub\n";
+      O << "L" << *i << "$stub:\n";
+      O << "\t.indirect_symbol " << *i << "\n";
+      O << "\tjmp\t*L" << j << "$lz\n";
+      O << "L" << *i << "$stub_binder:\n";
+      O << "\tpushl\t$L" << j << "$lz\n";
+      O << "\tjmp\tdyld_stub_binding_helper\n";
+      O << "\t.section __DATA, __la_sym_ptr3,lazy_symbol_pointers\n";
+      O << "L" << j << "$lz:\n";
+      O << "\t.indirect_symbol " << *i << "\n";
+      O << "\t.long\tL" << *i << "$stub_binder\n";
+    }
+
+    O << "\n";
+  
+    // Output stubs for external global variables
+    if (GVStubs.begin() != GVStubs.end())
+      O << ".data\n.non_lazy_symbol_pointer\n";
+    for (std::set<std::string>::iterator i = GVStubs.begin(), e = GVStubs.end();
+         i != e; ++i) {
+      O << "L" << *i << "$non_lazy_ptr:\n";
+      O << "\t.indirect_symbol " << *i << "\n";
+      O << "\t.long\t0\n";
+    }
+
+    // Output stubs for link-once variables
+    if (LinkOnceStubs.begin() != LinkOnceStubs.end())
+      O << ".data\n.align 2\n";
+    for (std::set<std::string>::iterator i = LinkOnceStubs.begin(),
+         e = LinkOnceStubs.end(); i != e; ++i) {
+      O << "L" << *i << "$non_lazy_ptr:\n"
+        << "\t.long\t" << *i << '\n';
+    }
+  }
 
   AsmPrinter::doFinalization(M);
   return false; // success

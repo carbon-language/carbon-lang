@@ -86,6 +86,37 @@ void X86ATTAsmPrinter::printOp(const MachineOperand &MO, bool isCallOp) {
     abort ();
     return;
   case MachineOperand::MO_GlobalAddress: {
+    // Darwin block shameless ripped from PowerPCAsmPrinter.cpp
+    if (forDarwin) {
+      if (!isCallOp) O << '$';
+      GlobalValue *GV = MO.getGlobal();
+      std::string Name = Mang->getValueName(GV);
+
+      // Dynamically-resolved functions need a stub for the function.  Be
+      // wary however not to output $stub for external functions whose addresses
+      // are taken.  Those should be emitted as $non_lazy_ptr below.
+      Function *F = dyn_cast<Function>(GV);
+      if (F && isCallOp && F->isExternal()) {
+        FnStubs.insert(Name);
+        O << "L" << Name << "$stub";
+        return;
+      }
+
+      // Link-once, External, or Weakly-linked global variables need 
+      // non-lazily-resolved stubs
+      if (GV->hasLinkOnceLinkage()) {
+        LinkOnceStubs.insert(Name);
+        O << "L" << Name << "$non_lazy_ptr";
+        return;
+      }
+      if (GV->isExternal() || GV->hasWeakLinkage()) {
+        GVStubs.insert(Name);
+        O << "L" << Name << "$non_lazy_ptr";
+        return;
+      }
+      O << Mang->getValueName(GV);
+      return;
+    }
     if (!isCallOp) O << '$';
     O << Mang->getValueName(MO.getGlobal());
     int Offset = MO.getOffset();
@@ -96,6 +127,12 @@ void X86ATTAsmPrinter::printOp(const MachineOperand &MO, bool isCallOp) {
     return;
   }
   case MachineOperand::MO_ExternalSymbol:
+    if (isCallOp && forDarwin) {
+      std::string Name(GlobalPrefix); Name += MO.getSymbolName();
+      FnStubs.insert(Name);
+      O << "L" << Name << "$stub";
+      return;
+    }
     if (!isCallOp) O << '$';
     O << GlobalPrefix << MO.getSymbolName();
     return;

@@ -44,7 +44,6 @@ namespace {
 
   struct PowerPCAsmPrinter : public AsmPrinter {
     std::set<std::string> FnStubs, GVStubs, LinkOnceStubs;
-    std::set<std::string> Strings;
 
     PowerPCAsmPrinter(std::ostream &O, TargetMachine &TM)
       : AsmPrinter(O, TM), LabelNumber(0) {}
