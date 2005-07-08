@@ -504,19 +504,15 @@ Path::appendSuffix(const std::string& suffix) {
 
 bool
 Path::eraseSuffix() {
-  std::string save(path);
   size_t dotpos = path.rfind('.',path.size());
   size_t slashpos = path.rfind('/',path.size());
-  if (slashpos != std::string::npos && 
-      dotpos != std::string::npos &&
-      dotpos > slashpos) {
-    path.erase(dotpos, path.size()-dotpos);
+  if (dotpos != std::string::npos) {
+    if (slashpos == std::string::npos || dotpos > slashpos) {
+      path.erase(dotpos, path.size()-dotpos);
+	  return true;
+    }
   }
-  if (!isValid()) {
-    path = save;
-    return false;
-  }
-  return true;
+  return false;
 }
 
 bool
