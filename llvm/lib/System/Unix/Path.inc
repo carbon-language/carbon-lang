@@ -509,7 +509,7 @@ Path::eraseSuffix() {
   if (dotpos != std::string::npos) {
     if (slashpos == std::string::npos || dotpos > slashpos) {
       path.erase(dotpos, path.size()-dotpos);
-	  return true;
+      return true;
     }
   }
   return false;

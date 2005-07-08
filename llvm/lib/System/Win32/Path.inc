@@ -49,7 +49,7 @@ Path::isValid() const {
       return false;
       rootslash = 2;
   }
-  
+
   // Look for a UNC path, and if found adjust our notion of the root slash.
   if (len > 3 && path[0] == '/' && path[1] == '/') {
     rootslash = path.find('/', 2);
@@ -63,7 +63,7 @@ Path::isValid() const {
                          "\027\030\031\032\033\034\035\036\037")
       != std::string::npos)
     return false;
-    
+
   // Remove trailing slash, unless it's a root slash.
   if (len > rootslash+1 && path[len-1] == '/')
     path.erase(--len);
@@ -157,14 +157,14 @@ static void getPathList(const char*path, std::vector<sys::Path>& Paths) {
     at = delim + 1;
     delim = strchr(at, ';');
   }
-  
+
   if (*at != 0)
     if (tmpPath.set(std::string(at)))
       if (tmpPath.canRead())
         Paths.push_back(tmpPath);
 }
 
-void 
+void
 Path::GetSystemLibraryPaths(std::vector<sys::Path>& Paths) {
   Paths.push_back(sys::Path("C:\\WINDOWS\\SYSTEM32"));
   Paths.push_back(sys::Path("C:\\WINDOWS"));
@@ -246,7 +246,7 @@ bool Path::hasMagicNumber(const std::string &Magic) const {
   return false;
 }
 
-bool 
+bool
 Path::isBytecodeFile() const {
   std::string actualMagic;
   if (!getMagicNumber(actualMagic, 4))
@@ -364,11 +364,10 @@ Path::getDirectoryContents(std::set<Path>& result) const {
   WIN32_FIND_DATA fd;
   std::string searchpath = path;
   if (path.size() == 0 || searchpath[path.size()-1] == '/')
-	searchpath += "*";
+    searchpath += "*";
   else
     searchpath += "/*";
-	
-  
+
   HANDLE h = FindFirstFile(searchpath.c_str(), &fd);
   if (h == INVALID_HANDLE_VALUE) {
     if (GetLastError() == ERROR_FILE_NOT_FOUND)
@@ -414,7 +413,7 @@ Path::appendComponent(const std::string& name) {
   std::string save(path);
   if (!path.empty()) {
     size_t last = path.size() - 1;
-    if (path[last] != '/') 
+    if (path[last] != '/')
       path += '/';
   }
   path += name;
@@ -453,7 +452,7 @@ Path::eraseSuffix() {
   if (dotpos != std::string::npos) {
     if (slashpos == std::string::npos || dotpos > slashpos) {
       path.erase(dotpos, path.size()-dotpos);
-	  return true;
+      return true;
     }
   }
   return false;
@@ -466,7 +465,7 @@ Path::createDirectoryOnDisk(bool create_parents) {
   char *pathname = reinterpret_cast<char *>(_alloca(len+2));
   path.copy(pathname, len);
   pathname[len] = 0;
-  
+
   // Make sure it ends with a slash.
   if (len == 0 || pathname[len - 1] != '/') {
     pathname[len] = '/';
@@ -547,7 +546,7 @@ Path::eraseFromDisk(bool remove_contents) const {
     return true;
   } else /* isDirectory() */ {
     // If it doesn't exist, we're done.
-    if (!exists()) 
+    if (!exists())
       return true;
 
     char *pathname = reinterpret_cast<char *>(_alloca(path.length()+3));
@@ -576,8 +575,8 @@ Path::eraseFromDisk(bool remove_contents) const {
           if (strcmp(fd.cFileName, "..") == 0)
             continue;
 
-		  Path aPath(path);
-		  aPath.appendComponent(&fd.cFileName[0]);
+          Path aPath(path);
+          aPath.appendComponent(&fd.cFileName[0]);
           list.push_back(aPath);
         } while (FindNextFile(h, &fd));
 
@@ -588,7 +587,7 @@ Path::eraseFromDisk(bool remove_contents) const {
           ThrowError(path + ": Can't read directory: ");
         }
 
-        for (std::vector<Path>::iterator I = list.begin(); I != list.end(); 
+        for (std::vector<Path>::iterator I = list.begin(); I != list.end();
              ++I) {
           Path &aPath = *I;
           aPath.eraseFromDisk(true);
@@ -637,7 +636,7 @@ bool Path::getMagicNumber(std::string& Magic, unsigned len) const {
 bool
 Path::renamePathOnDisk(const Path& newName) {
   if (!MoveFile(path.c_str(), newName.c_str()))
-    ThrowError("Can't move '" + path + 
+    ThrowError("Can't move '" + path +
                "' to '" + newName.path + "': ");
   return true;
 }
@@ -693,16 +692,16 @@ Path::setStatusInfoOnDisk(const StatusInfo& si) const {
   return true;
 }
 
-void 
+void
 sys::CopyFile(const sys::Path &Dest, const sys::Path &Src) {
   // Can't use CopyFile macro defined in Windows.h because it would mess up the
   // above line.  We use the expansion it would have in a non-UNICODE build.
   if (!::CopyFileA(Src.c_str(), Dest.c_str(), false))
-    ThrowError("Can't copy '" + Src.toString() + 
+    ThrowError("Can't copy '" + Src.toString() +
                "' to '" + Dest.toString() + "': ");
 }
 
-void 
+void
 Path::makeUnique(bool reuse_current) {
   if (reuse_current && !exists())
     return; // File doesn't exist already, just use it!
