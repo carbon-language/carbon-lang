@@ -231,6 +231,8 @@ Path::GetUserHomeDirectory() {
 
 bool
 Path::isFile() const {
+  if (!exists())
+    return false;
   struct stat buf;
   if (0 != stat(path.c_str(), &buf)) {
     ThrowErrno(path + ": can't determine type of path object: ");
@@ -240,6 +242,8 @@ Path::isFile() const {
 
 bool
 Path::isDirectory() const {
+  if (!exists())
+    return false;
   struct stat buf;
   if (0 != stat(path.c_str(), &buf)) {
     ThrowErrno(path + ": can't determine type of path object: ");
@@ -249,6 +253,8 @@ Path::isDirectory() const {
 
 bool
 Path::isHidden() const {
+  if (!exists())
+    return false;
   size_t slash = path.rfind('/');
   return (slash != std::string::npos && 
           slash < path.length()-1 && 
@@ -269,6 +275,8 @@ Path::getBasename() const {
 }
 
 bool Path::hasMagicNumber(const std::string &Magic) const {
+  if (!isFile())
+    return false;
   size_t len = Magic.size();
   assert(len < 1024 && "Request for magic string too long");
   char* buf = (char*) alloca(1 + len);
@@ -303,6 +311,8 @@ bool Path::getMagicNumber(std::string& Magic, unsigned len) const {
 
 bool 
 Path::isBytecodeFile() const {
+  if (!isFile())
+    return false;
   char buffer[ 4];
   buffer[0] = 0;
   int fd = ::open(path.c_str(),O_RDONLY);
@@ -334,11 +344,13 @@ Path::canWrite() const {
 
 bool
 Path::canExecute() const {
+  if (0 != access(path.c_str(), R_OK | X_OK ))
+    return false;
   struct stat st;
   int r = stat(path.c_str(), &st);
   if (r != 0 || !S_ISREG(st.st_mode))
     return false;
-  return 0 == access(path.c_str(), R_OK | X_OK );
+  return true;
 }
 
 std::string 

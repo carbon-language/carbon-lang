@@ -213,6 +213,8 @@ Path::isFile() const {
 
 bool
 Path::isDirectory() const {
+  if (!exists())
+    return false;
   WIN32_FILE_ATTRIBUTE_DATA fi;
   if (!GetFileAttributesEx(path.c_str(), GetFileExInfoStandard, &fi))
     ThrowError(std::string(path) + ": Can't get status: ");
@@ -221,6 +223,8 @@ Path::isDirectory() const {
 
 bool
 Path::isHidden() const {
+  if (!exists())
+    return false;
   WIN32_FILE_ATTRIBUTE_DATA fi;
   if (!GetFileAttributesEx(path.c_str(), GetFileExInfoStandard, &fi))
     ThrowError(std::string(path) + ": Can't get status: ");
@@ -248,6 +252,8 @@ bool Path::hasMagicNumber(const std::string &Magic) const {
 
 bool
 Path::isBytecodeFile() const {
+  if (!isFile())
+    return false;
   std::string actualMagic;
   if (!getMagicNumber(actualMagic, 4))
     return false;
