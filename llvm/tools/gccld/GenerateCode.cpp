@@ -154,9 +154,20 @@ static bool isBytecodeLPath(const std::string &LibPath) {
 
   sys::Path LPath(LibPath);
 
-  // Make sure its a directory
-  if (!LPath.isDirectory())
+  // Make sure it exists
+  if (!LPath.exists())
     return isBytecodeLPath;
+
+  // Make sure its a directory
+  try
+  {
+    if (!LPath.isDirectory())
+      return isBytecodeLPath;
+  }
+  catch (std::string& xcptn)
+  {
+    return isBytecodeLPath;
+  }
 
   // Grab the contents of the -L path
   std::set<sys::Path> Files;
