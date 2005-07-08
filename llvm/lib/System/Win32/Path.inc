@@ -43,9 +43,18 @@ Path::isValid() const {
   // and followed by something.
   size_t len = path.size();
   size_t pos = path.rfind(':',len);
+  size_t rootslash = 0;
   if (pos != std::string::npos) {
     if (pos != 1 || !isalpha(path[0]) || len < 3)
       return false;
+      rootslash = 2;
+  }
+  
+  // Look for a UNC path, and if found adjust our notion of the root slash.
+  if (len > 3 && path[0] == '/' && path[1] == '/') {
+    rootslash = path.find('/', 2);
+    if (rootslash == std::string::npos)
+      rootslash = 0;
   }
 
   // Check for illegal characters.
@@ -54,6 +63,10 @@ Path::isValid() const {
                          "\027\030\031\032\033\034\035\036\037")
       != std::string::npos)
     return false;
+    
+  // Remove trailing slash, unless it's a root slash.
+  if (len > rootslash+1 && path[len-1] == '/')
+    path.erase(--len);
 
   // Check each component for legality.
   for (pos = 0; pos < len; ++pos) {
@@ -136,7 +149,7 @@ static void getPathList(const char*path, std::vector<sys::Path>& Paths) {
   const char* at = path;
   const char* delim = strchr(at, ';');
   Path tmpPath;
-  while( delim != 0 ) {
+  while (delim != 0) {
     std::string tmp(at, size_t(delim-at));
     if (tmpPath.set(tmp))
       if (tmpPath.canRead())
@@ -144,17 +157,17 @@ static void getPathList(const char*path, std::vector<sys::Path>& Paths) {
     at = delim + 1;
     delim = strchr(at, ';');
   }
+  
   if (*at != 0)
     if (tmpPath.set(std::string(at)))
       if (tmpPath.canRead())
         Paths.push_back(tmpPath);
-
 }
 
 void 
 Path::GetSystemLibraryPaths(std::vector<sys::Path>& Paths) {
-  Paths.push_back(sys::Path("C:\\WINDOWS\\SYSTEM32\\"));
-  Paths.push_back(sys::Path("C:\\WINDOWS\\"));
+  Paths.push_back(sys::Path("C:\\WINDOWS\\SYSTEM32"));
+  Paths.push_back(sys::Path("C:\\WINDOWS"));
 }
 
 void
@@ -177,7 +190,7 @@ Path::GetBytecodeLibraryPaths(std::vector<sys::Path>& Paths) {
 Path
 Path::GetLLVMDefaultConfigDir() {
   // TODO: this isn't going to fly on Windows
-  return Path("/etc/llvm/");
+  return Path("/etc/llvm");
 }
 
 Path
@@ -208,9 +221,10 @@ Path::isDirectory() const {
 
 bool
 Path::isHidden() const {
-  // FIXME: implement this correctly for Win32. It should check the hidden file
-  // attribute.
-  return false;
+  WIN32_FILE_ATTRIBUTE_DATA fi;
+  if (!GetFileAttributesEx(path.c_str(), GetFileExInfoStandard, &fi))
+    ThrowError(std::string(path) + ": Can't get status: ");
+  return fi.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN;
 }
 
 std::string
@@ -276,15 +290,10 @@ Path::getLast() const {
   if (pos == std::string::npos)
     return path;
 
-  // If the last character is a slash
-  if (pos == path.length()-1) {
-    // Find the second to last slash
-    size_t pos2 = path.rfind('/', pos-1);
-    if (pos2 == std::string::npos)
-      return path.substr(0,pos);
-    else
-      return path.substr(pos2+1,pos-pos2-1);
-  }
+  // If the last character is a slash, we have a root directory
+  if (pos == path.length()-1)
+    return path;
+
   // Return everything after the last slash
   return path.substr(pos+1);
 }
@@ -307,10 +316,6 @@ Path::getStatusInfo(StatusInfo& info) const {
   info.modTime.fromWin32Time(ft);
 
   info.isDir = fi.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY;
-  if (info.isDir && path[path.length() - 1] != '/')
-    path += '/';
-  else if (!info.isDir && path[path.length() - 1] == '/')
-    path.erase(path.length() - 1);
 }
 
 static bool AddPermissionBits(const std::string& Filename, int bits) {
@@ -357,7 +362,13 @@ Path::getDirectoryContents(std::set<Path>& result) const {
 
   result.clear();
   WIN32_FIND_DATA fd;
-  std::string searchpath = path + "*";
+  std::string searchpath = path;
+  if (path.size() == 0 || searchpath[path.size()-1] == '/')
+	searchpath += "*";
+  else
+    searchpath += "/*";
+	
+  
   HANDLE h = FindFirstFile(searchpath.c_str(), &fd);
   if (h == INVALID_HANDLE_VALUE) {
     if (GetLastError() == ERROR_FILE_NOT_FOUND)
@@ -368,9 +379,8 @@ Path::getDirectoryContents(std::set<Path>& result) const {
   do {
     if (fd.cFileName[0] == '.')
       continue;
-    Path aPath(path + &fd.cFileName[0]);
-    if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-      aPath.path += "/";
+    Path aPath(path);
+    aPath.appendComponent(&fd.cFileName[0]);
     result.insert(aPath);
   } while (FindNextFile(h, &fd));
 
@@ -390,7 +400,6 @@ Path::set(const std::string& a_path) {
   std::string save(path);
   path = a_path;
   FlipBackSlashes(path);
-  size_t last = a_path.size() -1;
   if (!isValid()) {
     path = save;
     return false;
@@ -419,11 +428,7 @@ Path::appendComponent(const std::string& name) {
 bool
 Path::eraseComponent() {
   size_t slashpos = path.rfind('/',path.size());
-  if (slashpos == 0 || slashpos == std::string::npos)
-    return false;
-  if (slashpos == path.size() - 1)
-    slashpos = path.rfind('/',slashpos-1);
-  if (slashpos == std::string::npos)
+  if (slashpos == path.size() - 1 || slashpos == std::string::npos)
     return false;
   path.erase(slashpos);
   return true;
@@ -445,20 +450,28 @@ bool
 Path::eraseSuffix() {
   size_t dotpos = path.rfind('.',path.size());
   size_t slashpos = path.rfind('/',path.size());
-  if (slashpos != std::string::npos && dotpos != std::string::npos &&
-      dotpos > slashpos) {
-    path.erase(dotpos, path.size()-dotpos);
-    return true;
+  if (dotpos != std::string::npos) {
+    if (slashpos == std::string::npos || dotpos > slashpos) {
+      path.erase(dotpos, path.size()-dotpos);
+	  return true;
+    }
   }
   return false;
 }
 
 bool
-Path::createDirectoryOnDisk( bool create_parents) {
+Path::createDirectoryOnDisk(bool create_parents) {
   // Get a writeable copy of the path name
-  char *pathname = reinterpret_cast<char *>(_alloca(path.length()+1));
-  path.copy(pathname,path.length());
-  pathname[path.length()] = 0;
+  size_t len = path.length();
+  char *pathname = reinterpret_cast<char *>(_alloca(len+2));
+  path.copy(pathname, len);
+  pathname[len] = 0;
+  
+  // Make sure it ends with a slash.
+  if (len == 0 || pathname[len - 1] != '/') {
+    pathname[len] = '/';
+    pathname[++len] = 0;
+  }
 
   // Determine starting point for initial / search.
   char *next = pathname;
@@ -493,7 +506,7 @@ Path::createDirectoryOnDisk( bool create_parents) {
     }
   } else {
     // Drop trailing slash.
-    pathname[path.size()-1] = 0;
+    pathname[len-1] = 0;
     if (!CreateDirectory(pathname, NULL)) {
       ThrowError(std::string(pathname) + ": Can't create directory: ");
     }
@@ -533,16 +546,17 @@ Path::eraseFromDisk(bool remove_contents) const {
       ThrowError(path + ": Can't destroy file: ");
     return true;
   } else /* isDirectory() */ {
-
     // If it doesn't exist, we're done.
     if (!exists()) 
       return true;
 
-    char *pathname = reinterpret_cast<char *>(_alloca(path.length()+2));
+    char *pathname = reinterpret_cast<char *>(_alloca(path.length()+3));
     int lastchar = path.length() - 1 ;
-    path.copy(pathname,lastchar+2);
+    path.copy(pathname, lastchar+1);
 
     // Make path end with '/*'.
+    if (pathname[lastchar] != '/')
+      pathname[++lastchar] = '/';
     pathname[lastchar+1] = '*';
     pathname[lastchar+2] = 0;
 
@@ -562,9 +576,8 @@ Path::eraseFromDisk(bool remove_contents) const {
           if (strcmp(fd.cFileName, "..") == 0)
             continue;
 
-          Path aPath(path + &fd.cFileName[0]);
-          if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
-            aPath.path += "/";
+		  Path aPath(path);
+		  aPath.appendComponent(&fd.cFileName[0]);
           list.push_back(aPath);
         } while (FindNextFile(h, &fd));
 
@@ -623,8 +636,6 @@ bool Path::getMagicNumber(std::string& Magic, unsigned len) const {
 
 bool
 Path::renamePathOnDisk(const Path& newName) {
-  // FIXME: This should rename a directory too.
-  if (!isFile()) return false;
   if (!MoveFile(path.c_str(), newName.c_str()))
     ThrowError("Can't move '" + path + 
                "' to '" + newName.path + "': ");

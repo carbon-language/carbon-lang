@@ -123,7 +123,7 @@ static void Cleanup() {
   if (FilesToRemove != NULL)
     while (!FilesToRemove->empty()) {
       try {
-        FilesToRemove->back().destroy();
+        FilesToRemove->back().eraseFromDisk();
       } catch (...) {
       }
       FilesToRemove->pop_back();
@@ -132,7 +132,7 @@ static void Cleanup() {
   if (DirectoriesToRemove != NULL)
     while (!DirectoriesToRemove->empty()) {
       try {
-        DirectoriesToRemove->back().destroy(true);
+        DirectoriesToRemove->back().eraseFromDisk(true);
       } catch (...) {
       }
       DirectoriesToRemove->pop_back();
