@@ -155,7 +155,7 @@ namespace sys {
       /// @brief Construct an empty (and invalid) path.
       Path() : path() {}
 
-      /// This constructor will accept a std::string as a path but if verifies
+      /// This constructor will accept a std::string as a path but it verifies
       /// that the path string has a legal syntax for the operating system on
       /// which it is running. This allows a path to be taken in from outside
       /// the program. However, if the path is not valid, the Path object will
