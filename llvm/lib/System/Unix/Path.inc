@@ -246,6 +246,15 @@ Path::isDirectory() const {
   return S_ISDIR(buf.st_mode);
 }
 
+bool
+Path::isHidden() const {
+  size_t slash = path.rfind('/');
+  return (slash != std::string::npos && 
+          slash < path.length()-1 && 
+          path[slash+1] == '.') || 
+         (!path.empty() && slash == std::string::npos && path[0] == '.');
+}
+
 std::string
 Path::getBasename() const {
   // Find the last slash
@@ -388,17 +397,17 @@ static bool AddPermissionBits(const std::string& Filename, int bits) {
   return true;
 }
 
-void Path::makeReadable() {
+void Path::makeReadableOnDisk() {
   if (!AddPermissionBits(path,0444))
     ThrowErrno(path + ": can't make file readable");
 }
 
-void Path::makeWriteable() {
+void Path::makeWriteableOnDisk() {
   if (!AddPermissionBits(path,0222))
     ThrowErrno(path + ": can't make file writable");
 }
 
-void Path::makeExecutable() {
+void Path::makeExecutableOnDisk() {
   if (!AddPermissionBits(path,0111))
     ThrowErrno(path + ": can't make file executable");
 }
@@ -511,7 +520,7 @@ Path::eraseSuffix() {
 }
 
 bool
-Path::createDirectory( bool create_parents) {
+Path::createDirectoryOnDisk( bool create_parents) {
   // Get a writeable copy of the path name
   char pathname[MAXPATHLEN];
   path.copy(pathname,MAXPATHLEN);
@@ -549,7 +558,7 @@ Path::createDirectory( bool create_parents) {
 }
 
 bool
-Path::createFile() {
+Path::createFileOnDisk() {
   // Create the file
   int fd = ::creat(path.c_str(), S_IRUSR | S_IWUSR);
   if (fd < 0)
@@ -560,7 +569,7 @@ Path::createFile() {
 }
 
 bool
-Path::createTemporaryFile(bool reuse_current) {
+Path::createTemporaryFileOnDisk(bool reuse_current) {
   // Make this into a unique file name
   makeUnique( reuse_current );
 
@@ -574,7 +583,7 @@ Path::createTemporaryFile(bool reuse_current) {
 }
 
 bool
-Path::destroy(bool remove_contents) const {
+Path::eraseFromDisk(bool remove_contents) const {
   // Make sure we're dealing with a directory
   if (isFile()) {
     if (0 != unlink(path.c_str()))
@@ -604,7 +613,7 @@ Path::destroy(bool remove_contents) const {
 }
 
 bool
-Path::rename(const Path& newName) {
+Path::renamePathOnDisk(const Path& newName) {
   if (0 != ::rename(path.c_str(), newName.c_str()))
     ThrowErrno(std::string("can't rename '") + path + "' as '" + 
                newName.toString() + "' ");
@@ -612,7 +621,7 @@ Path::rename(const Path& newName) {
 }
 
 bool
-Path::setStatusInfo(const StatusInfo& si) const {
+Path::setStatusInfoOnDisk(const StatusInfo& si) const {
   struct utimbuf utb;
   utb.actime = si.modTime.toPosixTime();
   utb.modtime = utb.actime;

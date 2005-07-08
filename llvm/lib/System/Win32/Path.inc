@@ -103,10 +103,10 @@ Path::GetTemporaryDirectory() {
 
   // If there's a directory left over from a previous LLVM execution that
   // happened to have the same process id, get rid of it.
-  result.destroy(true);
+  result.eraseFromDisk(true);
 
   // And finally (re-)create the empty directory.
-  result.createDirectory(false);
+  result.createDirectoryOnDisk(false);
   TempDirectory = new Path(result);
   return *TempDirectory;
 }
@@ -204,6 +204,13 @@ Path::isDirectory() const {
   if (!GetFileAttributesEx(path.c_str(), GetFileExInfoStandard, &fi))
     ThrowError(std::string(path) + ": Can't get status: ");
   return fi.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY;
+}
+
+bool
+Path::isHidden() const {
+  // FIXME: implement this correctly for Win32. It should check the hidden file
+  // attribute.
+  return false;
 }
 
 std::string
@@ -322,11 +329,11 @@ static bool AddPermissionBits(const std::string& Filename, int bits) {
   return true;
 }
 
-void Path::makeReadable() {
+void Path::makeReadableOnDisk() {
   // All files are readable on Windows (ignoring security attributes).
 }
 
-void Path::makeWriteable() {
+void Path::makeWriteableOnDisk() {
   DWORD attr = GetFileAttributes(path.c_str());
 
   // If it doesn't exist, we're done.
@@ -339,7 +346,7 @@ void Path::makeWriteable() {
   }
 }
 
-void Path::makeExecutable() {
+void Path::makeExecutableOnDisk() {
   // All files are executable on Windows (ignoring security attributes).
 }
 
@@ -447,7 +454,7 @@ Path::eraseSuffix() {
 }
 
 bool
-Path::createDirectory( bool create_parents) {
+Path::createDirectoryOnDisk( bool create_parents) {
   // Get a writeable copy of the path name
   char *pathname = reinterpret_cast<char *>(_alloca(path.length()+1));
   path.copy(pathname,path.length());
@@ -495,7 +502,7 @@ Path::createDirectory( bool create_parents) {
 }
 
 bool
-Path::createFile() {
+Path::createFileOnDisk() {
   // Create the file
   HANDLE h = CreateFile(path.c_str(), GENERIC_WRITE, 0, NULL, CREATE_NEW,
                         FILE_ATTRIBUTE_NORMAL, NULL);
@@ -507,7 +514,7 @@ Path::createFile() {
 }
 
 bool
-Path::destroy(bool remove_contents) const {
+Path::eraseFromDisk(bool remove_contents) const {
   if (isFile()) {
     DWORD attr = GetFileAttributes(path.c_str());
 
@@ -571,7 +578,7 @@ Path::destroy(bool remove_contents) const {
         for (std::vector<Path>::iterator I = list.begin(); I != list.end(); 
              ++I) {
           Path &aPath = *I;
-          aPath.destroy(true);
+          aPath.eraseFromDisk(true);
         }
       } else {
         if (GetLastError() != ERROR_FILE_NOT_FOUND)
@@ -615,7 +622,7 @@ bool Path::getMagicNumber(std::string& Magic, unsigned len) const {
 }
 
 bool
-Path::rename(const Path& newName) {
+Path::renamePathOnDisk(const Path& newName) {
   // FIXME: This should rename a directory too.
   if (!isFile()) return false;
   if (!MoveFile(path.c_str(), newName.c_str()))
@@ -625,7 +632,7 @@ Path::rename(const Path& newName) {
 }
 
 bool
-Path::setStatusInfo(const StatusInfo& si) const {
+Path::setStatusInfoOnDisk(const StatusInfo& si) const {
   if (!isFile()) return false;
 
   HANDLE h = CreateFile(path.c_str(),
@@ -705,7 +712,7 @@ Path::makeUnique(bool reuse_current) {
 }
 
 bool
-Path::createTemporaryFile(bool reuse_current) {
+Path::createTemporaryFileOnDisk(bool reuse_current) {
   // Make this into a unique file name
   makeUnique( reuse_current );
 

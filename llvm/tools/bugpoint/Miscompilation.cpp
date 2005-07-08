@@ -99,7 +99,7 @@ ReduceMiscompilingPasses::doTest(std::vector<const PassInfo*> &Prefix,
   // If the prefix maintains the predicate by itself, only keep the prefix!
   if (BD.diffProgram(BytecodeResult)) {
     std::cout << " nope.\n";
-    sys::Path(BytecodeResult).destroy();
+    sys::Path(BytecodeResult).eraseFromDisk();
     return KeepPrefix;
   }
   std::cout << " yup.\n";      // No miscompilation!
@@ -113,7 +113,7 @@ ReduceMiscompilingPasses::doTest(std::vector<const PassInfo*> &Prefix,
               << BytecodeResult << "'!\n";
     exit(1);
   }
-  sys::Path(BytecodeResult).destroy();  // No longer need the file on disk
+  sys::Path(BytecodeResult).eraseFromDisk();  // No longer need the file on disk
 
   // Don't check if there are no passes in the suffix.
   if (Suffix.empty())
@@ -775,9 +775,9 @@ static bool TestCodeGenerator(BugDriver &BD, Module *Test, Module *Safe) {
     std::cerr << ": still failing!\n";
   else
     std::cerr << ": didn't fail.\n";
-  TestModuleBC.destroy();
-  SafeModuleBC.destroy();
-  sys::Path(SharedObject).destroy();
+  TestModuleBC.eraseFromDisk();
+  SafeModuleBC.eraseFromDisk();
+  sys::Path(SharedObject).eraseFromDisk();
 
   return Result;
 }

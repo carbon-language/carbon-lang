@@ -188,7 +188,7 @@ private:
   void cleanup() {
     if (!isSet(KEEP_TEMPS_FLAG)) {
       if (TempDir.isDirectory() && TempDir.canWrite())
-        TempDir.destroy(/*remove_contents=*/true);
+        TempDir.eraseFromDisk(/*remove_contents=*/true);
     } else {
       std::cout << "Temporary files are in " << TempDir << "\n";
     }

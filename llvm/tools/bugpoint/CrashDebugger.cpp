@@ -67,7 +67,7 @@ ReducePassList::doTest(std::vector<const PassInfo*> &Prefix,
                 << PrefixOutput << "'!\n";
       exit(1);
     }
-    PrefixOutput.destroy();
+    PrefixOutput.eraseFromDisk();
   }
 
   std::cout << "Checking to see if these passes crash: "

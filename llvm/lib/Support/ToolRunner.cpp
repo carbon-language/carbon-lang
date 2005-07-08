@@ -65,7 +65,7 @@ static void ProcessFailure(sys::Path ProgPath, const char** Args) {
     ErrorFile.close();
   }
 
-  ErrorFilename.destroy();
+  ErrorFilename.eraseFromDisk();
   throw ToolExecutionError(OS.str());
 }
 
@@ -176,7 +176,7 @@ void LLC::OutputAsm(const std::string &Bytecode, sys::Path &OutputAsmFile) {
 void LLC::compileProgram(const std::string &Bytecode) {
   sys::Path OutputAsmFile;
   OutputAsm(Bytecode, OutputAsmFile);
-  OutputAsmFile.destroy();
+  OutputAsmFile.eraseFromDisk();
 }
 
 int LLC::ExecuteProgram(const std::string &Bytecode,
@@ -321,7 +321,7 @@ void CBE::OutputC(const std::string &Bytecode, sys::Path& OutputCFile) {
 void CBE::compileProgram(const std::string &Bytecode) {
   sys::Path OutputCFile;
   OutputC(Bytecode, OutputCFile);
-  OutputCFile.destroy();
+  OutputCFile.eraseFromDisk();
 }
 
 int CBE::ExecuteProgram(const std::string &Bytecode,

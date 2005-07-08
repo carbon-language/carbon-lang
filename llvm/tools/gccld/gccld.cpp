@@ -313,9 +313,9 @@ int main(int argc, char **argv, char **envp ) {
 
       if (!SaveTemps) {
         // Remove the assembly language file.
-        AssemblyFile.destroy();
+        AssemblyFile.eraseFromDisk();
         // Remove the bytecode language file.
-        sys::Path(RealBytecodeOutput).destroy();
+        sys::Path(RealBytecodeOutput).eraseFromDisk();
       }
 
     } else if (NativeCBE) {
@@ -345,21 +345,21 @@ int main(int argc, char **argv, char **envp ) {
 
       if (!SaveTemps) {
         // Remove the assembly language file.
-        CFile.destroy();
+        CFile.eraseFromDisk();
         // Remove the bytecode language file.
-        sys::Path(RealBytecodeOutput).destroy();
+        sys::Path(RealBytecodeOutput).eraseFromDisk();
       }
 
     } else if (!LinkAsLibrary) {
       EmitShellScript(argv);
 
       // Make the bytecode file readable and directly executable in LLEE
-      sys::Path(RealBytecodeOutput).makeExecutable();
-      sys::Path(RealBytecodeOutput).makeReadable();
+      sys::Path(RealBytecodeOutput).makeExecutableOnDisk();
+      sys::Path(RealBytecodeOutput).makeReadableOnDisk();
     }
 
     // Make the output, whether native or script, executable as well...
-    sys::Path(OutputFilename).makeExecutable();
+    sys::Path(OutputFilename).makeExecutableOnDisk();
 
   } catch (const char*msg) {
     std::cerr << argv[0] << ": " << msg << "\n";

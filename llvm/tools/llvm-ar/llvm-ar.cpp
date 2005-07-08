@@ -432,7 +432,7 @@ void doExtract() {
       if (I->hasPath()) {
         sys::Path dirs(I->getPath());
         dirs.eraseComponent();
-        dirs.createDirectory(/*create_parents=*/true);
+        dirs.createDirectoryOnDisk(/*create_parents=*/true);
       }
 
       // Open up a file stream for writing
@@ -455,7 +455,7 @@ void doExtract() {
       // If we're supposed to retain the original modification times, etc. do so
       // now.
       if (OriginalDates)
-        I->getPath().setStatusInfo(I->getStatusInfo());
+        I->getPath().setStatusInfoOnDisk(I->getStatusInfo());
     }
   }
 }

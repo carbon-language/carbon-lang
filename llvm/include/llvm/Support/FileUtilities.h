@@ -45,7 +45,7 @@ namespace llvm {
     ~FileRemover() {
       if (DeleteIt)
         try {
-          Filename.destroy();
+          Filename.eraseFromDisk();
         } catch (...) {}             // Ignore problems deleting the file.
     }
 

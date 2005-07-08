@@ -374,7 +374,7 @@ Archive::writeToDisk(bool CreateSymbolTable, bool TruncateNames, bool Compress){
 
   // Create a temporary file to store the archive in
   sys::Path TmpArchive = archPath;
-  TmpArchive.createTemporaryFile();
+  TmpArchive.createTemporaryFileOnDisk();
 
   // Make sure the temporary gets removed if we crash
   sys::RemoveFileOnSignal(TmpArchive);
@@ -450,17 +450,17 @@ Archive::writeToDisk(bool CreateSymbolTable, bool TruncateNames, bool Compress){
       // Close up shop
       FinalFile.close();
       arch.close();
-      TmpArchive.destroy();
+      TmpArchive.eraseFromDisk();
 
     } else {
       // We don't have to insert the symbol table, so just renaming the temp
       // file to the correct name will suffice.
-      TmpArchive.rename(archPath);
+      TmpArchive.renamePathOnDisk(archPath);
     }
   } catch (...) {
     // Make sure we clean up.
     if (TmpArchive.exists())
-      TmpArchive.destroy();
+      TmpArchive.eraseFromDisk();
     throw;
   }
 }

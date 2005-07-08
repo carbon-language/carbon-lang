@@ -480,7 +480,7 @@ int main(int argc, char **argv, char **envp) {
                        gcc, envp);
 
         // Remove the assembly language file.
-        AssemblyFile.destroy();
+        AssemblyFile.eraseFromDisk();
       } else if (NativeCBE) {
         sys::Path CFile (OutputFilename);
         CFile.appendSuffix("cbe.c");
@@ -505,18 +505,18 @@ int main(int argc, char **argv, char **envp) {
         GenerateNative(OutputFilename, CFile.toString(), Libraries, gcc, envp);
 
         // Remove the assembly language file.
-        CFile.destroy();
+        CFile.eraseFromDisk();
 
       } else {
         EmitShellScript(argv);
       }
 
       // Make the script executable...
-      sys::Path(OutputFilename).makeExecutable();
+      sys::Path(OutputFilename).makeExecutableOnDisk();
 
       // Make the bytecode file readable and directly executable in LLEE as well
-      sys::Path(RealBytecodeOutput).makeExecutable();
-      sys::Path(RealBytecodeOutput).makeReadable();
+      sys::Path(RealBytecodeOutput).makeExecutableOnDisk();
+      sys::Path(RealBytecodeOutput).makeReadableOnDisk();
     }
 
     return 0;
