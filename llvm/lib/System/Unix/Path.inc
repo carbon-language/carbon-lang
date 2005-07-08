@@ -68,17 +68,18 @@ Path::Path(const std::string& unverified_path) : path(unverified_path) {
 
 bool 
 Path::isValid() const {
+  // Check some obvious things
   if (path.empty()) 
     return false;
   else if (path.length() >= MAXPATHLEN)
     return false;
-#if defined(HAVE_REALPATH)
-  char pathname[MAXPATHLEN];
-  if (0 == realpath(path.c_str(), pathname))
-    if (errno != EACCES && errno != EIO && errno != ENOENT && errno != ENOTDIR)
-      return false;
-#endif
-  return true;
+
+  // Check that the characters are ascii chars
+  size_t len = path.length();
+  unsigned i = 0;
+  while (i < len && isascii(path[i])) 
+    ++i;
+  return i >= len; 
 }
 
 Path
@@ -504,6 +505,7 @@ Path::appendSuffix(const std::string& suffix) {
 
 bool
 Path::eraseSuffix() {
+  std::string save = path;
   size_t dotpos = path.rfind('.',path.size());
   size_t slashpos = path.rfind('/',path.size());
   if (dotpos != std::string::npos) {
@@ -512,6 +514,8 @@ Path::eraseSuffix() {
       return true;
     }
   }
+  if (!isValid())
+    path = save;
   return false;
 }
 
