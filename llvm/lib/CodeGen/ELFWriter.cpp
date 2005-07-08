@@ -96,9 +96,22 @@ bool ELFWriter::doInitialization(Module &M) {
 
 void ELFWriter::EmitGlobal(GlobalVariable *GV, ELFSection &DataSection,
                            ELFSection &BSSSection) {
-  // If this is an external global, emit it...
-  assert(GV->hasInitializer() && "FIXME: unimp");
+  // If this is an external global, emit it now.  TODO: Note that it would be
+  // better to ignore the symbol here and only add it to the symbol table if
+  // referenced.
+  if (!GV->hasInitializer()) {
+    ELFSym ExternalSym(GV);
+    ExternalSym.SetBind(ELFSym::STB_GLOBAL);
+    ExternalSym.SetType(ELFSym::STT_NOTYPE);
+    ExternalSym.SectionIdx = ELFSection::SHN_UNDEF;
+    SymbolTable.push_back(ExternalSym);
+    return;
+  }
   
+  const Type *GVType = (const Type*)GV->getType();
+  unsigned Align = TM.getTargetData().getTypeAlignment(GVType);
+  unsigned Size  = TM.getTargetData().getTypeSize(GVType);
+
   // If this global has a zero initializer, it is part of the .bss or common
   // section.
   if (GV->getInitializer()->isNullValue()) {
@@ -108,9 +121,8 @@ void ELFWriter::EmitGlobal(GlobalVariable *GV, ELFSection &DataSection,
     if (GV->hasLinkOnceLinkage() || GV->hasWeakLinkage()) {
       ELFSym CommonSym(GV);
       // Value for common symbols is the alignment required.
-      const Type *GVType = (const Type*)GV->getType();
-      CommonSym.Value = TM.getTargetData().getTypeAlignment(GVType);
-      CommonSym.Size  = TM.getTargetData().getTypeSize(GVType);
+      CommonSym.Value = Align;
+      CommonSym.Size  = Size;
       CommonSym.SetBind(ELFSym::STB_GLOBAL);
       CommonSym.SetType(ELFSym::STT_OBJECT);
       // TODO SOMEDAY: add ELF visibility.
@@ -119,7 +131,40 @@ void ELFWriter::EmitGlobal(GlobalVariable *GV, ELFSection &DataSection,
       return;
     }
 
-    // FIXME: Implement the .bss section.
+    // Otherwise, this symbol is part of the .bss section.  Emit it now.
+
+    // Handle alignment.  Ensure section is aligned at least as much as required
+    // by this symbol.
+    BSSSection.Align = std::max(BSSSection.Align, Align);
+
+    // Within the section, emit enough virtual padding to get us to an alignment
+    // boundary.
+    if (Align)
+      BSSSection.Size = (BSSSection.Size + Align - 1) & ~(Align-1);
+
+    ELFSym BSSSym(GV);
+    BSSSym.Value = BSSSection.Size;
+    BSSSym.Size = Size;
+    BSSSym.SetType(ELFSym::STT_OBJECT);
+
+    switch (GV->getLinkage()) {
+    default:  // weak/linkonce handled above
+      assert(0 && "Unexpected linkage type!");
+    case GlobalValue::AppendingLinkage:  // FIXME: This should be improved!
+    case GlobalValue::ExternalLinkage:
+      BSSSym.SetBind(ELFSym::STB_GLOBAL);
+      break;
+    case GlobalValue::InternalLinkage:
+      BSSSym.SetBind(ELFSym::STB_LOCAL);
+      break;
+    }
+
+    // Set the idx of the .bss section
+    BSSSym.SectionIdx = &BSSSection-&SectionList[0];
+    SymbolTable.push_back(BSSSym);
+
+    // Reserve space in the .bss section for this symbol.
+    BSSSection.Size += Size;
     return;
   }
 
@@ -143,26 +188,26 @@ bool ELFWriter::doFinalization(Module &M) {
 
   // Okay, the ELF header and .text sections have been completed, build the
   // .data, .bss, and "common" sections next.
-  ELFSection DataSection(".data", OutputBuffer.size());
-  ELFSection BSSSection (".bss");
+  SectionList.push_back(ELFSection(".data", OutputBuffer.size()));
+  SectionList.push_back(ELFSection(".bss"));
+  ELFSection &DataSection = *(SectionList.end()-2);
+  ELFSection &BSSSection = SectionList.back();
   for (Module::global_iterator I = M.global_begin(), E = M.global_end();
        I != E; ++I)
     EmitGlobal(I, DataSection, BSSSection);
 
-  // If the .data section is nonempty, add it to our list.
-  if (DataSection.Size) {
-    DataSection.Align = 4;   // FIXME: Compute!
-    // FIXME: Set the right flags and stuff.
-    SectionList.push_back(DataSection);
-  }
+  // Finish up the data section.
+  DataSection.Type  = ELFSection::SHT_PROGBITS;
+  DataSection.Flags = ELFSection::SHF_WRITE | ELFSection::SHF_ALLOC;
 
-  // If the .bss section is nonempty, add it to our list.
-  if (BSSSection.Size) {
-    BSSSection.Offset = OutputBuffer.size();
-    BSSSection.Align = 4;  // FIXME: Compute!
-    // FIXME: Set the right flags and stuff.
-    SectionList.push_back(BSSSection);
-  }
+  // The BSS Section logically starts at the end of the Data Section (adjusted
+  // to the required alignment of the BSSSection).
+  BSSSection.Offset = DataSection.Offset+DataSection.Size;
+  BSSSection.Type   = ELFSection::SHT_NOBITS; 
+  BSSSection.Flags  = ELFSection::SHF_WRITE | ELFSection::SHF_ALLOC;
+  if (BSSSection.Align)
+    BSSSection.Offset = (BSSSection.Offset+BSSSection.Align-1) &
+                        ~(BSSSection.Align-1);
 
   // Emit the symbol table now, if non-empty.
   EmitSymbolTable();
