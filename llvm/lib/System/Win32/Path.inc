@@ -99,11 +99,11 @@ Path::GetTemporaryDirectory() {
   // Append a subdirectory passed on our process id so multiple LLVMs don't
   // step on each other's toes.
   sprintf(pathname, "LLVM_%u", GetCurrentProcessId());
-  result.appendDirectory(pathname);
+  result.appendComponent(pathname);
 
   // If there's a directory left over from a previous LLVM execution that
   // happened to have the same process id, get rid of it.
-  result.destroyDirectory(true);
+  result.destroy(true);
 
   // And finally (re-)create the empty directory.
   result.createDirectory(false);
@@ -195,10 +195,7 @@ Path::GetUserHomeDirectory() {
 
 bool
 Path::isFile() const {
-  WIN32_FILE_ATTRIBUTE_DATA fi;
-  if (!GetFileAttributesEx(path.c_str(), GetFileExInfoStandard, &fi))
-    ThrowError(std::string(path) + ": Can't get status: ");
-  return fi.dwFileAttributes & FILE_ATTRIBUTE_NORMAL;
+  return !isDirectory();
 }
 
 bool
@@ -395,7 +392,7 @@ Path::set(const std::string& a_path) {
 }
 
 bool
-Path::appendComponent(const std::string& dir) {
+Path::appendComponent(const std::string& name) {
   if (name.empty())
     return false;
   std::string save(path);
@@ -528,7 +525,7 @@ Path::destroy(bool remove_contents) const {
     if (!DeleteFile(path.c_str()))
       ThrowError(path + ": Can't destroy file: ");
     return true;
-  } else if (isDirectory()) {
+  } else /* isDirectory() */ {
 
     // If it doesn't exist, we're done.
     if (!exists()) 

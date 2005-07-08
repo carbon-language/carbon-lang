@@ -31,9 +31,9 @@ Program::FindProgramByName(const std::string& progName) {
   if (progName.length() == 0) // no program
     return Path();
   Path temp;
-  if (!temp.setFile(progName)) // invalid name
+  if (!temp.set(progName)) // invalid name
     return Path();
-  if (temp.executable()) // already executable as is
+  if (temp.canExecute()) // already executable as is
     return temp;
 
   // At this point, the file name is valid and its not executable.
@@ -101,7 +101,7 @@ Program::ExecuteAndWait(const Path& path,
                         const char** envp,
                         const Path** redirects,
                         unsigned secondsToWait) {
-  if (!path.executable())
+  if (!path.canExecute())
     throw path.toString() + " is not executable"; 
 
   // Windows wants a command line, not an array of args, to pass to the new
