@@ -271,7 +271,11 @@ Path::getBasename() const {
   else
     slash++;
 
-  return path.substr(slash, path.rfind('.'));
+  size_t dot = path.rfind('.');
+  if (dot == std::string::npos || dot < slash)
+    return path.substr(slash);
+  else
+    return path.substr(slash, dot - slash);
 }
 
 bool Path::hasMagicNumber(const std::string &Magic) const {
@@ -521,7 +525,7 @@ Path::eraseSuffix() {
   size_t dotpos = path.rfind('.',path.size());
   size_t slashpos = path.rfind('/',path.size());
   if (dotpos != std::string::npos) {
-    if (slashpos == std::string::npos || dotpos > slashpos) {
+    if (slashpos == std::string::npos || dotpos > slashpos+1) {
       path.erase(dotpos, path.size()-dotpos);
       return true;
     }
