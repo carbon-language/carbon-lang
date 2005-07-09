@@ -25,6 +25,16 @@
 // We need to undo a macro defined in Windows.h, otherwise we won't compile:
 #undef CopyFile
 
+// Windows happily accepts either forward or backward slashes, though any path
+// returned by a Win32 API will have backward slashes.  As LLVM code basically
+// assumes forward slashes are used, backward slashs are converted where they
+// can be introduced into a path.
+//
+// Another invariant is that a path ends with a slash if and only if the path
+// is a root directory.  Any other use of a trailing slash is stripped.  Unlike
+// in Unix, Windows has a rather complicated notion of a root path and this
+// invariant helps simply the code.
+
 static void FlipBackSlashes(std::string& s) {
   for (size_t i = 0; i < s.size(); i++)
     if (s[i] == '\\')
@@ -141,7 +151,7 @@ Path::Path(const std::string& unverified_path)
 Path
 Path::GetRootDirectory() {
   Path result;
-  result.set("C:\\");
+  result.set("C:/");
   return result;
 }
 
@@ -166,8 +176,8 @@ static void getPathList(const char*path, std::vector<sys::Path>& Paths) {
 
 void
 Path::GetSystemLibraryPaths(std::vector<sys::Path>& Paths) {
-  Paths.push_back(sys::Path("C:\\WINDOWS\\SYSTEM32"));
-  Paths.push_back(sys::Path("C:\\WINDOWS"));
+  Paths.push_back(sys::Path("C:/WINDOWS/SYSTEM32"));
+  Paths.push_back(sys::Path("C:/WINDOWS"));
 }
 
 void
@@ -208,27 +218,41 @@ Path::GetUserHomeDirectory() {
 
 bool
 Path::isFile() const {
-  return !isDirectory();
+  WIN32_FILE_ATTRIBUTE_DATA fi;
+  BOOL rc = GetFileAttributesEx(path.c_str(), GetFileExInfoStandard, &fi);
+  if (rc)
+    return !(fi.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY);
+  else if (GetLastError() != ERROR_NOT_FOUND)
+    ThrowError(std::string(path) + ": Can't get status: ");
+  return false;
 }
 
 bool
 Path::isDirectory() const {
-  if (!exists())
-    return false;
   WIN32_FILE_ATTRIBUTE_DATA fi;
-  if (!GetFileAttributesEx(path.c_str(), GetFileExInfoStandard, &fi))
+  BOOL rc = GetFileAttributesEx(path.c_str(), GetFileExInfoStandard, &fi);
+  if (rc)
+    return fi.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY;
+  else if (GetLastError() != ERROR_NOT_FOUND)
     ThrowError(std::string(path) + ": Can't get status: ");
-  return fi.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY;
+  return false;
 }
 
 bool
 Path::isHidden() const {
-  if (!exists())
-    return false;
   WIN32_FILE_ATTRIBUTE_DATA fi;
-  if (!GetFileAttributesEx(path.c_str(), GetFileExInfoStandard, &fi))
+  BOOL rc = GetFileAttributesEx(path.c_str(), GetFileExInfoStandard, &fi);
+  if (rc)
+    return fi.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN;
+  else if (GetLastError() != ERROR_NOT_FOUND)
     ThrowError(std::string(path) + ": Can't get status: ");
-  return fi.dwFileAttributes & FILE_ATTRIBUTE_HIDDEN;
+  return false;
+}
+
+bool
+Path::isRootDirectory() const {
+  size_t len = path.size();
+  return len > 0 && path[len-1] == '/';
 }
 
 std::string
@@ -240,7 +264,11 @@ Path::getBasename() const {
   else
     slash++;
 
-  return path.substr(slash, path.rfind('.'));
+  size_t dot = path.rfind('.');
+  if (dot == std::string::npos || dot < slash)
+    return path.substr(slash);
+  else
+    return path.substr(slash, dot - slash);
 }
 
 bool Path::hasMagicNumber(const std::string &Magic) const {
@@ -435,7 +463,12 @@ Path::eraseComponent() {
   size_t slashpos = path.rfind('/',path.size());
   if (slashpos == path.size() - 1 || slashpos == std::string::npos)
     return false;
+  std::string save(path);
   path.erase(slashpos);
+  if (!isValid()) {
+    path = save;
+    return false;
+  }
   return true;
 }
 
@@ -456,8 +489,13 @@ Path::eraseSuffix() {
   size_t dotpos = path.rfind('.',path.size());
   size_t slashpos = path.rfind('/',path.size());
   if (dotpos != std::string::npos) {
-    if (slashpos == std::string::npos || dotpos > slashpos) {
+    if (slashpos == std::string::npos || dotpos > slashpos+1) {
+      std::string save(path);
       path.erase(dotpos, path.size()-dotpos);
+      if (!isValid()) {
+        path = save;
+        return false;
+      }
       return true;
     }
   }
@@ -550,7 +588,7 @@ Path::eraseFromDisk(bool remove_contents) const {
     if (!DeleteFile(path.c_str()))
       ThrowError(path + ": Can't destroy file: ");
     return true;
-  } else /* isDirectory() */ {
+  } else if (isDirectory()) {
     // If it doesn't exist, we're done.
     if (!exists())
       return true;
@@ -608,6 +646,9 @@ Path::eraseFromDisk(bool remove_contents) const {
     if (!RemoveDirectory(pathname))
       ThrowError(std::string(pathname) + ": Can't destroy directory: ");
     return true;
+  } else {
+    // It appears the path doesn't exist.
+    return false;
   }
 }
 
@@ -649,6 +690,7 @@ Path::renamePathOnDisk(const Path& newName) {
 
 bool
 Path::setStatusInfoOnDisk(const StatusInfo& si) const {
+  // FIXME: should work on directories also.
   if (!isFile()) return false;
 
   HANDLE h = CreateFile(path.c_str(),
@@ -717,7 +759,9 @@ Path::makeUnique(bool reuse_current) {
   unsigned offset = path.size();
   path.copy(FNBuffer, offset);
 
-  // Find a numeric suffix that isn't used by an existing file.
+  // Find a numeric suffix that isn't used by an existing file.  Assume there
+  // won't be more than 1 million files with the same prefix.  Probably a safe
+  // bet.
   static unsigned FCounter = 0;
   do {
     sprintf(FNBuffer+offset, "-%06u", FCounter);
@@ -730,7 +774,7 @@ Path::makeUnique(bool reuse_current) {
 bool
 Path::createTemporaryFileOnDisk(bool reuse_current) {
   // Make this into a unique file name
-  makeUnique( reuse_current );
+  makeUnique(reuse_current);
 
   // Now go and create it
   HANDLE h = CreateFile(path.c_str(), GENERIC_WRITE, 0, NULL, CREATE_NEW,
