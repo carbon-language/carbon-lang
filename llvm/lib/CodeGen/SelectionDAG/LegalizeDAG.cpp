@@ -679,7 +679,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       Tmp3 = PromoteOp(Node->getOperand(1));
       Result = DAG.getNode(ISD::TRUNCSTORE, MVT::Other, Tmp1, Tmp3, Tmp2,
                            Node->getOperand(3),
-                           Node->getOperand(1).getValueType()); 
+                          DAG.getValueType(Node->getOperand(1).getValueType()));
       break;
 
     case Expand:
@@ -718,8 +718,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(1) ||
           Tmp3 != Node->getOperand(2))
         Result = DAG.getNode(ISD::TRUNCSTORE, MVT::Other, Tmp1, Tmp2, Tmp3,
-                             Node->getOperand(3),
-                             cast<MVTSDNode>(Node)->getExtraValueType());
+                             Node->getOperand(3), Node->getOperand(4));
       break;
     case Promote:
     case Expand:
@@ -1482,7 +1481,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         SDOperand StackSlot = DAG.getFrameIndex(SSFI, TLI.getPointerTy());
         Result = DAG.getNode(ISD::TRUNCSTORE, MVT::Other, DAG.getEntryNode(),
                              Node->getOperand(0), StackSlot,
-                             DAG.getSrcValue(NULL), ExtraVT);
+                             DAG.getSrcValue(NULL), DAG.getValueType(ExtraVT));
         Result = DAG.getNode(ISD::EXTLOAD, Node->getValueType(0),
                              Result, StackSlot, DAG.getSrcValue(NULL), ExtraVT);
       } else {

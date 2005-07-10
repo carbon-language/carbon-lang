@@ -235,7 +235,6 @@ void SelectionDAG::DeleteNodeIfDead(SDNode *N, void *NodeSet) {
                                      cast<SetCCSDNode>(N)->getCondition(),
                                      N->getValueType(0))));
     break;
-  case ISD::TRUNCSTORE:
   case ISD::EXTLOAD:
   case ISD::SEXTLOAD:
   case ISD::ZEXTLOAD: {
@@ -1465,6 +1464,20 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
   return getNode(Opcode, VT, Ops);
 }
 
+SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
+                                SDOperand N1, SDOperand N2, SDOperand N3,
+                                SDOperand N4, SDOperand N5) {
+  std::vector<SDOperand> Ops;
+  Ops.reserve(5);
+  Ops.push_back(N1);
+  Ops.push_back(N2);
+  Ops.push_back(N3);
+  Ops.push_back(N4);
+  Ops.push_back(N5);
+  return getNode(Opcode, VT, Ops);
+}
+
+
 SDOperand SelectionDAG::getSrcValue(const Value *V, int Offset) {
   assert((!V || isa<PointerType>(V->getType())) &&
          "SrcValue is not a pointer?");
@@ -1496,6 +1509,27 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
       else                 // Unconditional branch to false dest.
         return getNode(ISD::BR, MVT::Other, Ops[0], Ops[3]);
     break;
+
+  case ISD::TRUNCSTORE: {
+    assert(Ops.size() == 5 && "TRUNCSTORE takes 5 operands!");
+    MVT::ValueType EVT = cast<VTSDNode>(Ops[4])->getVT();
+#if 0 // FIXME: If the target supports EVT natively, convert to a truncate/store
+    // If this is a truncating store of a constant, convert to the desired type
+    // and store it instead.
+    if (isa<Constant>(Ops[0])) {
+      SDOperand Op = getNode(ISD::TRUNCATE, EVT, N1);
+      if (isa<Constant>(Op))
+        N1 = Op;
+    }
+    // Also for ConstantFP?
+#endif
+    if (Ops[0].getValueType() == EVT)       // Normal store?
+      return getNode(ISD::STORE, VT, Ops[0], Ops[1], Ops[2], Ops[3]);
+    assert(Ops[1].getValueType() > EVT && "Not a truncation?");
+    assert(MVT::isInteger(Ops[1].getValueType()) == MVT::isInteger(EVT) &&
+           "Can't do FP-INT conversion!");
+    break;
+  }
   }
 
   // Memoize nodes.
@@ -1595,47 +1629,6 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,SDOperand N1,
   AllNodes.push_back(N);
   return SDOperand(N, 0);
 }
-
-SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,SDOperand N1,
-                                SDOperand N2, SDOperand N3, SDOperand N4,
-                                MVT::ValueType EVT) {
-  switch (Opcode) {
-  default:  assert(0 && "Bad opcode for this accessor!");
-  case ISD::TRUNCSTORE:
-#if 0 // FIXME: If the target supports EVT natively, convert to a truncate/store
-    // If this is a truncating store of a constant, convert to the desired type
-    // and store it instead.
-    if (isa<Constant>(N1)) {
-      SDOperand Op = getNode(ISD::TRUNCATE, EVT, N1);
-      if (isa<Constant>(Op))
-        N1 = Op;
-    }
-    // Also for ConstantFP?
-#endif
-    if (N1.getValueType() == EVT)       // Normal store?
-      return getNode(ISD::STORE, VT, N1, N2, N3, N4);
-    assert(N2.getValueType() > EVT && "Not a truncation?");
-    assert(MVT::isInteger(N2.getValueType()) == MVT::isInteger(EVT) &&
-           "Can't do FP-INT conversion!");
-    break;
-  }
-
-  EVTStruct NN;
-  NN.Opcode = Opcode;
-  NN.VT = VT;
-  NN.EVT = EVT;
-  NN.Ops.push_back(N1);
-  NN.Ops.push_back(N2);
-  NN.Ops.push_back(N3);
-  NN.Ops.push_back(N4);
-
-  SDNode *&N = MVTSDNodes[NN];
-  if (N) return SDOperand(N, 0);
-  N = new MVTSDNode(Opcode, VT, N1, N2, N3, N4, EVT);
-  AllNodes.push_back(N);
-  return SDOperand(N, 0);
-}
-
 
 /// hasNUsesOfValue - Return true if there are exactly NUSES uses of the
 /// indicated value.  This method ignores uses of other values defined by this

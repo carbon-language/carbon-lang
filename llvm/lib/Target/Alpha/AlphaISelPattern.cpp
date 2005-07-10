@@ -419,7 +419,7 @@ SDOperand AlphaTargetLowering::LowerVAStart(SDOperand Chain, SDOperand VAListP,
                               DAG.getConstant(8, MVT::i64));
   return DAG.getNode(ISD::TRUNCSTORE, MVT::Other, S1, 
                      DAG.getConstant(VarArgsOffset, MVT::i64), SA2, 
-                     DAG.getSrcValue(VAListV, 8), MVT::i32);
+                     DAG.getSrcValue(VAListV, 8), DAG.getValueType(MVT::i32));
 }
 
 std::pair<SDOperand,SDOperand> AlphaTargetLowering::
@@ -457,7 +457,8 @@ LowerVAArg(SDOperand Chain, SDOperand VAListP, Value *VAListV,
                                     DAG.getConstant(8, MVT::i64));
   SDOperand Update = DAG.getNode(ISD::TRUNCSTORE, MVT::Other, 
                                  Result.getValue(1), NewOffset, 
-                                 Tmp, DAG.getSrcValue(VAListV, 8), MVT::i32);
+                                 Tmp, DAG.getSrcValue(VAListV, 8),
+                                 DAG.getValueType(MVT::i32));
   Result = DAG.getNode(ISD::TRUNCATE, getValueType(ArgTy), Result);
 
   return std::make_pair(Result, Update);
@@ -478,7 +479,8 @@ LowerVACopy(SDOperand Chain, SDOperand SrcP, Value *SrcV, SDOperand DestP,
   SDOperand NPD = DAG.getNode(ISD::ADD, MVT::i64, DestP, 
                              DAG.getConstant(8, MVT::i64));
   return DAG.getNode(ISD::TRUNCSTORE, MVT::Other, Val.getValue(1),
-                     Val, NPD, DAG.getSrcValue(DestV, 8), MVT::i32);
+                     Val, NPD, DAG.getSrcValue(DestV, 8),
+                     DAG.getValueType(MVT::i32));
 }
 
 namespace {
@@ -2283,7 +2285,7 @@ void AlphaISel::Select(SDOperand N) {
         case MVT::f32: Opc = Alpha::STS; break;
         }
       } else { //ISD::TRUNCSTORE
-        switch(cast<MVTSDNode>(Node)->getExtraValueType()) {
+        switch(cast<VTSDNode>(Node->getOperand(4))->getVT()) {
         default: assert(0 && "unknown Type in store");
         case MVT::i1: //FIXME: DAG does not promote this load
         case MVT::i8: Opc = Alpha::STB; break;

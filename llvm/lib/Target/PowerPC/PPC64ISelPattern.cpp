@@ -1593,7 +1593,7 @@ void ISel::Select(SDOperand N) {
         case MVT::f32: Opc = PPC::STFS; break;
         }
       } else { //ISD::TRUNCSTORE
-        switch(cast<MVTSDNode>(Node)->getExtraValueType()) {
+        switch(cast<VTSDNode>(Node->getOperand(4))->getVT()) {
         default: assert(0 && "unknown Type in store");
         case MVT::i1: //FIXME: DAG does not promote this load
         case MVT::i8:  Opc= PPC::STB; break;

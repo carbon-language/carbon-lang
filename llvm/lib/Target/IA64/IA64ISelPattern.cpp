@@ -2361,7 +2361,7 @@ void ISel::Select(SDOperand N) {
           case MVT::f64: Opc = IA64::STF8; break;
         }
       } else { // truncstore
-        switch(cast<MVTSDNode>(Node)->getExtraValueType()) {
+        switch(cast<VTSDNode>(Node->getOperand(4))->getVT()) {
           default: assert(0 && "unknown type in truncstore");
           case MVT::i1: Opc = IA64::ST1; isBool=true; break;
                         //FIXME: DAG does not promote this load?

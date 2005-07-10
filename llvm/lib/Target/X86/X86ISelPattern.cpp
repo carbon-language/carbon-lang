@@ -4009,7 +4009,7 @@ static SDOperand GetAdjustedArgumentStores(SDOperand Chain, int Offset,
     StoreVT = Chain.getOperand(1).getValueType();
     break;
   case ISD::TRUNCSTORE:  // FLOAT store
-    StoreVT = cast<MVTSDNode>(Chain)->getExtraValueType();
+    StoreVT = cast<VTSDNode>(Chain.getOperand(4))->getVT();
     break;
   }
 
@@ -4043,7 +4043,7 @@ static SDOperand GetAdjustedArgumentStores(SDOperand Chain, int Offset,
                        FIN);
   assert(Chain.getOpcode() == ISD::TRUNCSTORE);
   return DAG.getNode(ISD::TRUNCSTORE, MVT::Other, InChain, Chain.getOperand(1),
-                     FIN, DAG.getSrcValue(NULL), StoreVT);
+                     FIN, DAG.getSrcValue(NULL), DAG.getValueType(StoreVT));
 }
 
 
@@ -4366,10 +4366,9 @@ void ISel::Select(SDOperand N) {
     SelectExpr(N.getValue(0));
     return;
 
-  case ISD::TRUNCSTORE: {  // truncstore chain, val, ptr :storety
-    // On X86, we can represent all types except for Bool and Float natively.
+  case ISD::TRUNCSTORE: {  // truncstore chain, val, ptr, SRCVALUE, storety
     X86AddressMode AM;
-    MVT::ValueType StoredTy = cast<MVTSDNode>(Node)->getExtraValueType();
+    MVT::ValueType StoredTy = cast<VTSDNode>(N.getOperand(4))->getVT();
     assert((StoredTy == MVT::i1 || StoredTy == MVT::f32 ||
             StoredTy == MVT::i16 /*FIXME: THIS IS JUST FOR TESTING!*/)
            && "Unsupported TRUNCSTORE for this target!");

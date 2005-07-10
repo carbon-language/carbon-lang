@@ -489,7 +489,7 @@ void ISel::Select(SDOperand N) {
       Tmp2 = SelectExpr(Address);
 
       unsigned VT = opcode == ISD::STORE ? 
-        Value.getValueType() : cast<MVTSDNode>(Node)->getExtraValueType();
+        Value.getValueType() : cast<VTSDNode>(Node->getOperand(4))->getVT();
       switch(VT) {
       default: assert(0 && "unknown Type in store");
       case MVT::f64: Opc = V8::STDFrr; break;
