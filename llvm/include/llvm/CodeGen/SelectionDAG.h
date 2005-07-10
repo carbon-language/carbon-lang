@@ -171,6 +171,9 @@ public:
   SDOperand getNode(unsigned Opcode, MVT::ValueType VT,
                     SDOperand N1, SDOperand N2, SDOperand N3, SDOperand N4);
   SDOperand getNode(unsigned Opcode, MVT::ValueType VT,
+                    SDOperand N1, SDOperand N2, SDOperand N3, SDOperand N4,
+                    SDOperand N5);
+  SDOperand getNode(unsigned Opcode, MVT::ValueType VT,
                     std::vector<SDOperand> &Children);
   SDOperand getNode(unsigned Opcode, std::vector<MVT::ValueType> &ResultTys,
                     std::vector<SDOperand> &Ops);
@@ -183,9 +186,6 @@ public:
                     SDOperand N, MVT::ValueType EVT);
   SDOperand getNode(unsigned Opcode, MVT::ValueType VT, SDOperand N1,
                     SDOperand N2, SDOperand N3, MVT::ValueType EVT);
-  SDOperand getNode(unsigned Opcode, MVT::ValueType VT, SDOperand N1,
-                    SDOperand N2, SDOperand N3, SDOperand N4,
-                    MVT::ValueType EVT);
 
 
   /// getLoad - Loads are not normal binary operators: their result type is not

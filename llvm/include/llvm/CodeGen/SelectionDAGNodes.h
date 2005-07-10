@@ -176,7 +176,8 @@ namespace ISD {
     FNEG, FABS, FSQRT, FSIN, FCOS,
 
     // Other operators.  LOAD and STORE have token chains as their first
-    // operand, then the same operands as an LLVM load/store instruction.
+    // operand, then the same operands as an LLVM load/store instruction, then a
+    // SRCVALUE node that provides alias analysis information.
     LOAD, STORE,
 
     // EXTLOAD, SEXTLOAD, ZEXTLOAD - These three operators are instances of the
@@ -197,9 +198,9 @@ namespace ISD {
 
     // TRUNCSTORE - This operators truncates (for integer) or rounds (for FP) a
     // value and stores it to memory in one operation.  This can be used for
-    // either integer or floating point operands, and the stored type
-    // represented as the 'extra' value type in the MVTSDNode representing the
-    // operator.  This node has the same three operands as a standard store.
+    // either integer or floating point operands.  The first four operands of
+    // this are the same as a standard store.  The fifth is the ValueType to
+    // store it as (which will be smaller than the source value).
     TRUNCSTORE,
 
     // DYNAMIC_STACKALLOC - Allocate some number of bytes on the stack aligned
@@ -877,12 +878,6 @@ protected:
     : SDNode(Opc, Op0, Op1, Op2), ExtraValueType(EVT) {
     setValueTypes(VT1, VT2);
   }
-
-  MVTSDNode(unsigned Opc, MVT::ValueType VT,
-            SDOperand Op0, SDOperand Op1, SDOperand Op2, SDOperand Op3, MVT::ValueType EVT)
-    : SDNode(Opc, Op0, Op1, Op2, Op3), ExtraValueType(EVT) {
-    setValueTypes(VT);
-  }
 public:
 
   MVT::ValueType getExtraValueType() const { return ExtraValueType; }
@@ -892,8 +887,7 @@ public:
     return
       N->getOpcode() == ISD::EXTLOAD  ||
       N->getOpcode() == ISD::SEXTLOAD ||
-      N->getOpcode() == ISD::ZEXTLOAD ||
-      N->getOpcode() == ISD::TRUNCSTORE;
+      N->getOpcode() == ISD::ZEXTLOAD;
   }
 };
 
