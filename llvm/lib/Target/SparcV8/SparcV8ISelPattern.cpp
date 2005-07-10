@@ -340,7 +340,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
       SDOperand Address = N.getOperand(1);
       Select(Chain);
       unsigned Adr = SelectExpr(Address);
-      switch(cast<MVTSDNode>(Node)->getExtraValueType()) {
+      switch(cast<VTSDNode>(Node->getOperand(3))->getVT()) {
       case MVT::i32: Opc = V8::LD;
       case MVT::i16: Opc = opcode == ISD::ZEXTLOAD ? V8::LDUH : V8::LDSH; break;
       case MVT::i8:  Opc = opcode == ISD::ZEXTLOAD ? V8::LDUB : V8::LDSB; break;

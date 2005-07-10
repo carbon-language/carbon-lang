@@ -1934,7 +1934,7 @@ bool ISel::isFoldableLoad(SDOperand Op, SDOperand OtherOp, bool FloatPromoteOk){
     if (isa<ConstantPoolSDNode>(Op.getOperand(1)))
       return false;
   } else if (FloatPromoteOk && Op.getOpcode() == ISD::EXTLOAD &&
-             cast<MVTSDNode>(Op)->getExtraValueType() == MVT::f32) {
+             cast<VTSDNode>(Op.getOperand(3))->getVT() == MVT::f32) {
     // FIXME: currently can't fold constant pool indexes.
     if (isa<ConstantPoolSDNode>(Op.getOperand(1)))
       return false;
@@ -3377,7 +3377,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
 
     if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(N.getOperand(1)))
       if (Node->getValueType(0) == MVT::f64) {
-        assert(cast<MVTSDNode>(Node)->getExtraValueType() == MVT::f32 &&
+        assert(cast<VTSDNode>(Node->getOperand(3))->getVT() == MVT::f32 &&
                "Bad EXTLOAD!");
         addConstantPoolReference(BuildMI(BB, X86::FLD32m, 4, Result),
                                  CP->getIndex());
@@ -3397,12 +3397,12 @@ unsigned ISel::SelectExpr(SDOperand N) {
     switch (Node->getValueType(0)) {
     default: assert(0 && "Unknown type to sign extend to.");
     case MVT::f64:
-      assert(cast<MVTSDNode>(Node)->getExtraValueType() == MVT::f32 &&
+      assert(cast<VTSDNode>(Node->getOperand(3))->getVT() == MVT::f32 &&
              "Bad EXTLOAD!");
       addFullAddress(BuildMI(BB, X86::FLD32m, 5, Result), AM);
       break;
     case MVT::i32:
-      switch (cast<MVTSDNode>(Node)->getExtraValueType()) {
+      switch (cast<VTSDNode>(Node->getOperand(3))->getVT()) {
       default:
         assert(0 && "Bad zero extend!");
       case MVT::i1:
@@ -3415,12 +3415,12 @@ unsigned ISel::SelectExpr(SDOperand N) {
       }
       break;
     case MVT::i16:
-      assert(cast<MVTSDNode>(Node)->getExtraValueType() <= MVT::i8 &&
+      assert(cast<VTSDNode>(Node->getOperand(3))->getVT() <= MVT::i8 &&
              "Bad zero extend!");
       addFullAddress(BuildMI(BB, X86::MOVSX16rm8, 5, Result), AM);
       break;
     case MVT::i8:
-      assert(cast<MVTSDNode>(Node)->getExtraValueType() == MVT::i1 &&
+      assert(cast<VTSDNode>(Node->getOperand(3))->getVT() == MVT::i1 &&
              "Bad zero extend!");
       addFullAddress(BuildMI(BB, X86::MOV8rm, 5, Result), AM);
       break;
@@ -3448,7 +3448,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
     case MVT::i8: assert(0 && "Cannot sign extend from bool!");
     default: assert(0 && "Unknown type to sign extend to.");
     case MVT::i32:
-      switch (cast<MVTSDNode>(Node)->getExtraValueType()) {
+      switch (cast<VTSDNode>(Node->getOperand(3))->getVT()) {
       default:
       case MVT::i1: assert(0 && "Cannot sign extend from bool!");
       case MVT::i8:
@@ -3460,7 +3460,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
       }
       break;
     case MVT::i16:
-      assert(cast<MVTSDNode>(Node)->getExtraValueType() == MVT::i8 &&
+      assert(cast<VTSDNode>(Node->getOperand(3))->getVT() == MVT::i8 &&
              "Cannot sign extend from bool!");
       addFullAddress(BuildMI(BB, X86::MOVSX16rm8, 5, Result), AM);
       break;

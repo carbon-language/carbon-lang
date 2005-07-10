@@ -1815,9 +1815,7 @@ pC = pA OR pB
 
   case ISD::SIGN_EXTEND_INREG: {
     Tmp1 = SelectExpr(N.getOperand(0));
-    MVTSDNode* MVN = dyn_cast<MVTSDNode>(Node);
-    switch(MVN->getExtraValueType())
-    {
+    switch(cast<VTSDNode>(Node->getOperand(1))->getVT()) {
     default:
       Node->dump();
       assert(0 && "don't know how to sign extend this type");
@@ -1963,7 +1961,8 @@ pC = pA OR pB
         case MVT::f64: Opc = IA64::LDF8; break;
       }
     } else { // this is an EXTLOAD or ZEXTLOAD
-      MVT::ValueType TypeBeingLoaded = cast<MVTSDNode>(Node)->getExtraValueType();
+      MVT::ValueType TypeBeingLoaded =
+        cast<VTSDNode>(Node->getOperand(3))->getVT();
       switch (TypeBeingLoaded) {
         default: assert(0 && "Cannot extload/zextload this type!");
         // FIXME: bools?

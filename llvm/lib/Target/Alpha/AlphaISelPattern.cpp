@@ -429,8 +429,8 @@ LowerVAArg(SDOperand Chain, SDOperand VAListP, Value *VAListV,
                                DAG.getSrcValue(VAListV));
   SDOperand Tmp = DAG.getNode(ISD::ADD, MVT::i64, VAListP, 
                               DAG.getConstant(8, MVT::i64));
-  SDOperand Offset = DAG.getNode(ISD::SEXTLOAD, MVT::i64, Base.getValue(1), 
-                                 Tmp, DAG.getSrcValue(VAListV, 8), MVT::i32);
+  SDOperand Offset = DAG.getExtLoad(ISD::SEXTLOAD, MVT::i64, Base.getValue(1), 
+                                    Tmp, DAG.getSrcValue(VAListV, 8), MVT::i32);
   SDOperand DataPtr = DAG.getNode(ISD::ADD, MVT::i64, Base, Offset);
   if (ArgTy->isFloatingPoint())
   {
@@ -444,11 +444,11 @@ LowerVAArg(SDOperand Chain, SDOperand VAListP, Value *VAListV,
 
   SDOperand Result;
   if (ArgTy == Type::IntTy)
-    Result = DAG.getNode(ISD::SEXTLOAD, MVT::i64, Offset.getValue(1), DataPtr, 
-                         DAG.getSrcValue(NULL), MVT::i32);
+    Result = DAG.getExtLoad(ISD::SEXTLOAD, MVT::i64, Offset.getValue(1),
+                            DataPtr, DAG.getSrcValue(NULL), MVT::i32);
   else if (ArgTy == Type::UIntTy)
-    Result = DAG.getNode(ISD::ZEXTLOAD, MVT::i64, Offset.getValue(1), DataPtr, 
-                         DAG.getSrcValue(NULL), MVT::i32);
+    Result = DAG.getExtLoad(ISD::ZEXTLOAD, MVT::i64, Offset.getValue(1),
+                            DataPtr, DAG.getSrcValue(NULL), MVT::i32);
   else
     Result = DAG.getLoad(getValueType(ArgTy), Offset.getValue(1), DataPtr, 
                          DAG.getSrcValue(NULL));
@@ -474,8 +474,8 @@ LowerVACopy(SDOperand Chain, SDOperand SrcP, Value *SrcV, SDOperand DestP,
                                  Val, DestP, DAG.getSrcValue(DestV));
   SDOperand NP = DAG.getNode(ISD::ADD, MVT::i64, SrcP, 
                              DAG.getConstant(8, MVT::i64));
-  Val = DAG.getNode(ISD::SEXTLOAD, MVT::i64, Result, NP,
-                    DAG.getSrcValue(SrcV, 8), MVT::i32);
+  Val = DAG.getExtLoad(ISD::SEXTLOAD, MVT::i64, Result, NP,
+                       DAG.getSrcValue(SrcV, 8), MVT::i32);
   SDOperand NPD = DAG.getNode(ISD::ADD, MVT::i64, DestP, 
                              DAG.getConstant(8, MVT::i64));
   return DAG.getNode(ISD::TRUNCSTORE, MVT::Other, Val.getValue(1),
@@ -1252,7 +1252,7 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
         case MVT::f32: Opc = Alpha::LDS; break;
         }
       else
-        switch (cast<MVTSDNode>(Node)->getExtraValueType()) {
+        switch (cast<VTSDNode>(Node->getOperand(3))->getVT()) {
         default: Node->dump(); assert(0 && "Bad sign extend!");
         case MVT::i32: Opc = Alpha::LDL;
           assert(opcode != ISD::ZEXTLOAD && "Not sext"); break;
@@ -1279,7 +1279,8 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
             .addImm(getUID());
         BuildMI(BB, GetRelVersion(Opc), 2, Result)
           .addGlobalAddress(GASD->getGlobal()).addReg(Tmp1);
-      } else if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(Address)) {
+      } else if (ConstantPoolSDNode *CP =
+                     dyn_cast<ConstantPoolSDNode>(Address)) {
         AlphaLowering.restoreGP(BB);
         has_sym = true;
         Tmp1 = MakeReg(MVT::i64);
@@ -1473,8 +1474,7 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
       }
 
       //Alpha has instructions for a bunch of signed 32 bit stuff
-      if( dyn_cast<MVTSDNode>(Node)->getExtraValueType() == MVT::i32)
-      {
+      if(cast<VTSDNode>(Node->getOperand(1))->getVT() == MVT::i32) {
         switch (N.getOperand(0).getOpcode()) {
         case ISD::ADD:
         case ISD::SUB:
@@ -1485,7 +1485,7 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
             //FIXME: first check for Scaled Adds and Subs!
             ConstantSDNode* CSD = NULL;
             if(!isMul && N.getOperand(0).getOperand(0).getOpcode() == ISD::SHL &&
-               (CSD = dyn_cast<ConstantSDNode>(N.getOperand(0).getOperand(0).getOperand(1))) &&
+               (CSD = cast<ConstantSDNode>(N.getOperand(0).getOperand(0).getOperand(1))) &&
                (CSD->getValue() == 2 || CSD->getValue() == 3))
             {
               bool use4 = CSD->getValue() == 2;
@@ -1495,7 +1495,7 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
                       2,Result).addReg(Tmp1).addReg(Tmp2);
             }
             else if(isAdd && N.getOperand(0).getOperand(1).getOpcode() == ISD::SHL &&
-                    (CSD = dyn_cast<ConstantSDNode>(N.getOperand(0).getOperand(1).getOperand(1))) &&
+                    (CSD = cast<ConstantSDNode>(N.getOperand(0).getOperand(1).getOperand(1))) &&
                     (CSD->getValue() == 2 || CSD->getValue() == 3))
             {
               bool use4 = CSD->getValue() == 2;
@@ -1524,10 +1524,8 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
         }
       } //Every thing else fall though too, including unhandled opcodes above
       Tmp1 = SelectExpr(N.getOperand(0));
-      MVTSDNode* MVN = dyn_cast<MVTSDNode>(Node);
       //std::cerr << "SrcT: " << MVN->getExtraValueType() << "\n";
-      switch(MVN->getExtraValueType())
-      {
+      switch(cast<VTSDNode>(Node->getOperand(1))->getVT()) {
       default:
         Node->dump();
         assert(0 && "Sign Extend InReg not there yet");
@@ -1636,7 +1634,7 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
       SDOperand Chain   = N.getOperand(0);
 
       Select(Chain);
-      unsigned r = dyn_cast<RegSDNode>(Node)->getReg();
+      unsigned r = cast<RegSDNode>(Node)->getReg();
       //std::cerr << "CopyFromReg " << Result << " = " << r << "\n";
       if (MVT::isFloatingPoint(N.getValue(0).getValueType()))
         BuildMI(BB, Alpha::CPYS, 2, Result).addReg(r).addReg(r);
@@ -1943,8 +1941,7 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
       SDOperand CC = N.getOperand(0);
       SetCCSDNode* SetCC = dyn_cast<SetCCSDNode>(CC.Val);
 
-      if (CC.getOpcode() == ISD::SETCC &&
-          !MVT::isInteger(SetCC->getOperand(0).getValueType()))
+      if (SetCC && !MVT::isInteger(SetCC->getOperand(0).getValueType()))
       { //FP Setcc -> Select yay!
 
         
@@ -2296,7 +2293,7 @@ void AlphaISel::Select(SDOperand N) {
 
       int i, j, k;
       if (EnableAlphaLSMark) 
-        getValueInfo(dyn_cast<SrcValueSDNode>(N.getOperand(3))->getValue(), 
+        getValueInfo(cast<SrcValueSDNode>(N.getOperand(3))->getValue(), 
                      i, j, k);
 
       GlobalAddressSDNode *GASD = dyn_cast<GlobalAddressSDNode>(Address);

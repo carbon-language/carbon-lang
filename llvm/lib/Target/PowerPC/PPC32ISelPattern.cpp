@@ -1690,7 +1690,7 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
   case ISD::ZEXTLOAD:
   case ISD::SEXTLOAD: {
     MVT::ValueType TypeBeingLoaded = (ISD::LOAD == opcode) ?
-      Node->getValueType(0) : cast<MVTSDNode>(Node)->getExtraValueType();
+      Node->getValueType(0) : cast<VTSDNode>(Node->getOperand(3))->getVT();
     bool sext = (ISD::SEXTLOAD == opcode);
 
     // Make sure we generate both values.
@@ -1828,7 +1828,7 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
   case ISD::SIGN_EXTEND:
   case ISD::SIGN_EXTEND_INREG:
     Tmp1 = SelectExpr(N.getOperand(0));
-    switch(cast<MVTSDNode>(Node)->getExtraValueType()) {
+    switch(cast<VTSDNode>(Node->getOperand(1))->getVT()) {
     default: Node->dump(); assert(0 && "Unhandled SIGN_EXTEND type"); break;
     case MVT::i16:
       BuildMI(BB, PPC::EXTSH, 1, Result).addReg(Tmp1);
