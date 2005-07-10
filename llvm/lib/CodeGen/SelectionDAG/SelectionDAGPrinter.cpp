@@ -88,8 +88,6 @@ std::string DOTGraphTraits<SelectionDAG*>::getNodeLabel(const SDNode *Node,
   } else if (const ExternalSymbolSDNode *ES =
              dyn_cast<ExternalSymbolSDNode>(Node)) {
     Op += "'" + std::string(ES->getSymbol()) + "'";
-  } else if (const MVTSDNode *M = dyn_cast<MVTSDNode>(Node)) {
-    Op = Op + " ty=" + MVT::getValueTypeString(M->getExtraValueType());
   } else if (const SrcValueSDNode *M = dyn_cast<SrcValueSDNode>(Node)) {
     if (M->getValue())
       Op += "<" + M->getValue()->getName() + ":" + itostr(M->getOffset()) + ">";

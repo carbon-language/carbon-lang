@@ -235,18 +235,6 @@ void SelectionDAG::DeleteNodeIfDead(SDNode *N, void *NodeSet) {
                                      cast<SetCCSDNode>(N)->getCondition(),
                                      N->getValueType(0))));
     break;
-  case ISD::EXTLOAD:
-  case ISD::SEXTLOAD:
-  case ISD::ZEXTLOAD: {
-    EVTStruct NN;
-    NN.Opcode = N->getOpcode();
-    NN.VT = N->getValueType(0);
-    NN.EVT = cast<MVTSDNode>(N)->getExtraValueType();
-    for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
-      NN.Ops.push_back(N->getOperand(i));
-    MVTSDNodes.erase(NN);
-    break;
-  }
   default:
     if (N->getNumOperands() == 1)
       UnaryOps.erase(std::make_pair(N->getOpcode(),
@@ -795,7 +783,7 @@ static bool MaskedValueIsZero(const SDOperand &Op, uint64_t Mask,
            TLI.getSetCCResultContents() == TargetLowering::ZeroOrOneSetCCResult;
 
   case ISD::ZEXTLOAD:
-    SrcBits = MVT::getSizeInBits(cast<MVTSDNode>(Op)->getExtraValueType());
+    SrcBits = MVT::getSizeInBits(cast<VTSDNode>(Op.getOperand(3))->getVT());
     return (Mask & ((1ULL << SrcBits)-1)) == 0; // Returning only the zext bits.
   case ISD::ZERO_EXTEND:
     SrcBits = MVT::getSizeInBits(Op.getOperand(0).getValueType());
@@ -1248,7 +1236,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     
     // If we are sign extending a sextload, return just the load.
     if (N1.getOpcode() == ISD::SEXTLOAD)
-      if (cast<MVTSDNode>(N1)->getExtraValueType() <= EVT)
+      if (cast<VTSDNode>(N1.getOperand(3))->getVT() <= EVT)
         return N1;
 
     // If we are extending the result of a setcc, and we already know the
@@ -1333,6 +1321,22 @@ SDOperand SelectionDAG::getLoad(MVT::ValueType VT,
   N->setValueTypes(VT, MVT::Other);
   AllNodes.push_back(N);
   return SDOperand(N, 0);
+}
+
+
+SDOperand SelectionDAG::getExtLoad(unsigned Opcode, MVT::ValueType VT,
+                                   SDOperand Chain, SDOperand Ptr, SDOperand SV,
+                                   MVT::ValueType EVT) {
+  std::vector<SDOperand> Ops;
+  Ops.reserve(4);
+  Ops.push_back(Chain);
+  Ops.push_back(Ptr);
+  Ops.push_back(SV);
+  Ops.push_back(getValueType(EVT));
+  std::vector<MVT::ValueType> VTs;
+  VTs.reserve(2);
+  VTs.push_back(VT); VTs.push_back(MVT::Other);  // Add token chain.
+  return getNode(Opcode, VTs, Ops);
 }
 
 SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
@@ -1547,11 +1551,29 @@ SDOperand SelectionDAG::getNode(unsigned Opcode,
   if (ResultTys.size() == 1)
     return getNode(Opcode, ResultTys[0], Ops);
 
+  switch (Opcode) {
+  case ISD::EXTLOAD:
+  case ISD::SEXTLOAD:
+  case ISD::ZEXTLOAD: {
+    MVT::ValueType EVT = cast<VTSDNode>(Ops[3])->getVT();
+    assert(Ops.size() == 4 && ResultTys.size() == 2 && "Bad *EXTLOAD!");
+    // If they are asking for an extending load from/to the same thing, return a
+    // normal load.
+    if (ResultTys[0] == EVT)
+      return getLoad(ResultTys[0], Ops[0], Ops[1], Ops[2]);
+    assert(EVT < ResultTys[0] &&
+           "Should only be an extending load, not truncating!");
+    assert((Opcode == ISD::EXTLOAD || MVT::isInteger(ResultTys[0])) &&
+           "Cannot sign/zero extend a FP load!");
+    assert(MVT::isInteger(ResultTys[0]) == MVT::isInteger(EVT) &&
+           "Cannot convert from FP to Int or Int -> FP!");
+    break;
+  }
+
   // FIXME: figure out how to safely handle things like
   // int foo(int x) { return 1 << (x & 255); }
   // int bar() { return foo(256); }
 #if 0
-  switch (Opcode) {
   case ISD::SRA_PARTS:
   case ISD::SRL_PARTS:
   case ISD::SHL_PARTS:
@@ -1567,8 +1589,8 @@ SDOperand SelectionDAG::getNode(unsigned Opcode,
           return getNode(Opcode, VT, N1, N2, N3.getOperand(0));
       }
     break;
-  }
 #endif
+  }
 
   // Memoize the node.
   SDNode *&N = ArbitraryNodes[std::make_pair(Opcode, std::make_pair(ResultTys,
@@ -1576,56 +1598,6 @@ SDOperand SelectionDAG::getNode(unsigned Opcode,
   if (N) return SDOperand(N, 0);
   N = new SDNode(Opcode, Ops);
   N->setValueTypes(ResultTys);
-  AllNodes.push_back(N);
-  return SDOperand(N, 0);
-}
-
-
-SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,SDOperand N1,
-                                MVT::ValueType EVT) {
-  EVTStruct NN;
-  NN.Opcode = Opcode;
-  NN.VT = VT;
-  NN.EVT = EVT;
-  NN.Ops.push_back(N1);
-
-  SDNode *&N = MVTSDNodes[NN];
-  if (N) return SDOperand(N, 0);
-  N = new MVTSDNode(Opcode, VT, N1, EVT);
-  AllNodes.push_back(N);
-  return SDOperand(N, 0);
-}
-
-SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,SDOperand N1,
-                                SDOperand N2, SDOperand N3, MVT::ValueType EVT) {
-  switch (Opcode) {
-  default:  assert(0 && "Bad opcode for this accessor!");
-  case ISD::EXTLOAD:
-  case ISD::SEXTLOAD:
-  case ISD::ZEXTLOAD:
-    // If they are asking for an extending load from/to the same thing, return a
-    // normal load.
-    if (VT == EVT)
-      return getLoad(VT, N1, N2, N3);
-    assert(EVT < VT && "Should only be an extending load, not truncating!");
-    assert((Opcode == ISD::EXTLOAD || MVT::isInteger(VT)) &&
-           "Cannot sign/zero extend a FP load!");
-    assert(MVT::isInteger(VT) == MVT::isInteger(EVT) &&
-           "Cannot convert from FP to Int or Int -> FP!");
-    break;
-  }
-
-  EVTStruct NN;
-  NN.Opcode = Opcode;
-  NN.VT = VT;
-  NN.EVT = EVT;
-  NN.Ops.push_back(N1);
-  NN.Ops.push_back(N2);
-  NN.Ops.push_back(N3);
-
-  SDNode *&N = MVTSDNodes[NN];
-  if (N) return SDOperand(N, 0);
-  N = new MVTSDNode(Opcode, VT, MVT::Other, N1, N2, N3, EVT);
   AllNodes.push_back(N);
   return SDOperand(N, 0);
 }
@@ -1836,8 +1808,6 @@ void SDNode::dump() const {
   } else if (const ExternalSymbolSDNode *ES =
              dyn_cast<ExternalSymbolSDNode>(this)) {
     std::cerr << "'" << ES->getSymbol() << "'";
-  } else if (const MVTSDNode *M = dyn_cast<MVTSDNode>(this)) {
-    std::cerr << " - Ty = " << MVT::getValueTypeString(M->getExtraValueType());
   } else if (const SrcValueSDNode *M = dyn_cast<SrcValueSDNode>(this)) {
     if (M->getValue())
       std::cerr << "<" << M->getValue() << ":" << M->getOffset() << ">";

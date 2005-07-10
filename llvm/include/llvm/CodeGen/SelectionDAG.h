@@ -178,21 +178,14 @@ public:
   SDOperand getNode(unsigned Opcode, std::vector<MVT::ValueType> &ResultTys,
                     std::vector<SDOperand> &Ops);
 
-  // getNode - These versions take an extra value type for extending and
-  // truncating loads, stores, rounds, extends etc.
-  SDOperand getNode(unsigned Opcode, MVT::ValueType VT, SDOperand N1,
-                    SDOperand N2, MVT::ValueType EVT);
-  SDOperand getNode(unsigned Opcode, MVT::ValueType VT,
-                    SDOperand N, MVT::ValueType EVT);
-  SDOperand getNode(unsigned Opcode, MVT::ValueType VT, SDOperand N1,
-                    SDOperand N2, SDOperand N3, MVT::ValueType EVT);
-
 
   /// getLoad - Loads are not normal binary operators: their result type is not
   /// determined by their operands, and they produce a value AND a token chain.
   ///
   SDOperand getLoad(MVT::ValueType VT, SDOperand Chain, SDOperand Ptr,
                     SDOperand SV);
+  SDOperand getExtLoad(unsigned Opcode, MVT::ValueType VT, SDOperand Chain,
+                       SDOperand Ptr, SDOperand SV, MVT::ValueType EVT);
 
   // getSrcValue - construct a node to track a Value* through the backend
   SDOperand getSrcValue(const Value* I, int offset = 0);
@@ -227,6 +220,7 @@ private:
   std::map<unsigned, SDNode*> ConstantPoolIndices;
   std::map<MachineBasicBlock *, SDNode*> BBNodes;
   std::vector<SDNode*> ValueTypeNodes;
+  std::map<std::string, SDNode*> ExternalSymbols;
   std::map<std::pair<unsigned,
                      std::pair<MVT::ValueType, std::vector<SDOperand> > >,
            SDNode*> OneResultNodes;
@@ -234,23 +228,6 @@ private:
                      std::pair<std::vector<MVT::ValueType>,
                                std::vector<SDOperand> > >,
            SDNode*> ArbitraryNodes;
-
-  std::map<std::string, SDNode*> ExternalSymbols;
-  struct EVTStruct {
-    unsigned Opcode;
-    MVT::ValueType VT, EVT;
-    std::vector<SDOperand> Ops;
-    bool operator<(const EVTStruct &RHS) const {
-      if (Opcode < RHS.Opcode) return true;
-      if (Opcode > RHS.Opcode) return false;
-      if (VT < RHS.VT) return true;
-      if (VT > RHS.VT) return false;
-      if (EVT < RHS.EVT) return true;
-      if (EVT > RHS.EVT) return false;
-      return Ops < RHS.Ops;
-    }
-  };
-  std::map<EVTStruct, SDNode*> MVTSDNodes;
 };
 
 template <> struct GraphTraits<SelectionDAG*> : public GraphTraits<SDNode*> {

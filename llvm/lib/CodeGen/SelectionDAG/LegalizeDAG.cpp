@@ -317,8 +317,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       SDOperand CPIdx = DAG.getConstantPool(CP->getConstantPoolIndex(LLVMC),
                                             TLI.getPointerTy());
       if (Extend) {
-        Result = DAG.getNode(ISD::EXTLOAD, MVT::f64, DAG.getEntryNode(), CPIdx,
-                             DAG.getSrcValue(NULL), MVT::f32);
+        Result = DAG.getExtLoad(ISD::EXTLOAD, MVT::f64, DAG.getEntryNode(),
+                                CPIdx, DAG.getSrcValue(NULL), MVT::f32);
       } else {
         Result = DAG.getLoad(VT, DAG.getEntryNode(), CPIdx,
                              DAG.getSrcValue(NULL));
@@ -495,13 +495,13 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
     Tmp2 = LegalizeOp(Node->getOperand(1));  // Legalize the pointer.
 
-    MVT::ValueType SrcVT = cast<MVTSDNode>(Node)->getExtraValueType();
+    MVT::ValueType SrcVT = cast<VTSDNode>(Node->getOperand(3))->getVT();
     switch (TLI.getOperationAction(Node->getOpcode(), SrcVT)) {
     default: assert(0 && "This action is not supported yet!");
     case TargetLowering::Promote:
       assert(SrcVT == MVT::i1 && "Can only promote EXTLOAD from i1 -> i8!");
-      Result = DAG.getNode(Node->getOpcode(), Node->getValueType(0),
-                           Tmp1, Tmp2, Node->getOperand(2), MVT::i8);
+      Result = DAG.getExtLoad(Node->getOpcode(), Node->getValueType(0),
+                              Tmp1, Tmp2, Node->getOperand(2), MVT::i8);
       // Since loads produce two values, make sure to remember that we legalized
       // both of them.
       AddLegalizedOperand(SDOperand(Node, 0), Result);
@@ -511,8 +511,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     case TargetLowering::Legal:
       if (Tmp1 != Node->getOperand(0) ||
           Tmp2 != Node->getOperand(1))
-        Result = DAG.getNode(Node->getOpcode(), Node->getValueType(0),
-                             Tmp1, Tmp2, Node->getOperand(2), SrcVT);
+        Result = DAG.getExtLoad(Node->getOpcode(), Node->getValueType(0),
+                                Tmp1, Tmp2, Node->getOperand(2), SrcVT);
       else
         Result = SDOperand(Node, 0);
 
@@ -534,8 +534,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
              "EXTLOAD should always be supported!");
       // Turn the unsupported load into an EXTLOAD followed by an explicit
       // zero/sign extend inreg.
-      Result = DAG.getNode(ISD::EXTLOAD, Node->getValueType(0),
-                           Tmp1, Tmp2, Node->getOperand(2), SrcVT);
+      Result = DAG.getExtLoad(ISD::EXTLOAD, Node->getValueType(0),
+                              Tmp1, Tmp2, Node->getOperand(2), SrcVT);
       SDOperand ValRes;
       if (Node->getOpcode() == ISD::SEXTLOAD)
         ValRes = DAG.getNode(ISD::SIGN_EXTEND_INREG, Result.getValueType(),
@@ -1362,8 +1362,9 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         else {
           assert(Node->getValueType(0) == MVT::f64 && "Unexpected conversion");
           FudgeInReg = 
-            LegalizeOp(DAG.getNode(ISD::EXTLOAD, MVT::f64, DAG.getEntryNode(),
-                                   CPIdx, DAG.getSrcValue(NULL), MVT::f32));
+            LegalizeOp(DAG.getExtLoad(ISD::EXTLOAD, MVT::f64,
+                                      DAG.getEntryNode(), CPIdx,
+                                      DAG.getSrcValue(NULL), MVT::f32));
         }
         Result = DAG.getNode(ISD::ADD, Node->getValueType(0), Tmp1, FudgeInReg);
         break;
@@ -1451,7 +1452,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     case TargetLowering::Legal:
       if (Tmp1 != Node->getOperand(0))
         Result = DAG.getNode(Node->getOpcode(), Node->getValueType(0), Tmp1,
-                             ExtraVT);
+                             DAG.getValueType(ExtraVT));
       break;
     case TargetLowering::Expand:
       // If this is an integer extend and shifts are supported, do that.
@@ -1482,8 +1483,9 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         Result = DAG.getNode(ISD::TRUNCSTORE, MVT::Other, DAG.getEntryNode(),
                              Node->getOperand(0), StackSlot,
                              DAG.getSrcValue(NULL), DAG.getValueType(ExtraVT));
-        Result = DAG.getNode(ISD::EXTLOAD, Node->getValueType(0),
-                             Result, StackSlot, DAG.getSrcValue(NULL), ExtraVT);
+        Result = DAG.getExtLoad(ISD::EXTLOAD, Node->getValueType(0),
+                                Result, StackSlot, DAG.getSrcValue(NULL),
+                                ExtraVT);
       } else {
         assert(0 && "Unknown op");
       }
@@ -1768,11 +1770,11 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
     Tmp2 = LegalizeOp(Node->getOperand(1));   // Legalize the pointer.
     // FIXME: When the DAG combiner exists, change this to use EXTLOAD!
     if (MVT::isInteger(NVT))
-      Result = DAG.getNode(ISD::ZEXTLOAD, NVT, Tmp1, Tmp2, Node->getOperand(2),
-                           VT);
+      Result = DAG.getExtLoad(ISD::ZEXTLOAD, NVT, Tmp1, Tmp2,
+                              Node->getOperand(2), VT);
     else
-      Result = DAG.getNode(ISD::EXTLOAD, NVT, Tmp1, Tmp2, Node->getOperand(2),
-                           VT);
+      Result = DAG.getExtLoad(ISD::EXTLOAD, NVT, Tmp1, Tmp2,
+                              Node->getOperand(2), VT);
 
     // Remember that we legalized the chain.
     AddLegalizedOperand(Op.getValue(1), Result.getValue(1));
@@ -2277,8 +2279,8 @@ ExpandIntToFP(bool isSigned, MVT::ValueType DestTy, SDOperand Source) {
                                DAG.getSrcValue(NULL));
     else {
       assert(DestTy == MVT::f64 && "Unexpected conversion");
-      FudgeInReg = DAG.getNode(ISD::EXTLOAD, MVT::f64, DAG.getEntryNode(),
-                               CPIdx, DAG.getSrcValue(NULL), MVT::f32);
+      FudgeInReg = DAG.getExtLoad(ISD::EXTLOAD, MVT::f64, DAG.getEntryNode(),
+                                  CPIdx, DAG.getSrcValue(NULL), MVT::f32);
     }
     return DAG.getNode(ISD::ADD, DestTy, SignedConv, FudgeInReg);
   }

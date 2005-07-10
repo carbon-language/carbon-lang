@@ -180,11 +180,11 @@ namespace ISD {
     // SRCVALUE node that provides alias analysis information.
     LOAD, STORE,
 
-    // EXTLOAD, SEXTLOAD, ZEXTLOAD - These three operators are instances of the
-    // MVTSDNode.  All of these load a value from memory and extend them to a
-    // larger value (e.g. load a byte into a word register).  All three of these
-    // have two operands, a chain and a pointer to load from.  The extra value
-    // type is the source type being loaded.
+    // EXTLOAD, SEXTLOAD, ZEXTLOAD - These three operators all load a value from
+    // memory and extend them to a larger value (e.g. load a byte into a word
+    // register).  All three of these have four operands, a token chain, a
+    // pointer to load from, a SRCVALUE for alias analysis, and a VALUETYPE node
+    // indicating the type to load.
     //
     // SEXTLOAD loads the integer operand and sign extends it to a larger
     //          integer result type.
@@ -862,34 +862,6 @@ public:
   }
 };
 
-
-/// MVTSDNode - This class is used for operators that require an extra
-/// value-type to be kept with the node.
-class MVTSDNode : public SDNode {
-  MVT::ValueType ExtraValueType;
-protected:
-  friend class SelectionDAG;
-  MVTSDNode(unsigned Opc, MVT::ValueType VT1, SDOperand Op0, MVT::ValueType EVT)
-    : SDNode(Opc, Op0), ExtraValueType(EVT) {
-    setValueTypes(VT1);
-  }
-  MVTSDNode(unsigned Opc, MVT::ValueType VT1, MVT::ValueType VT2,
-            SDOperand Op0, SDOperand Op1, SDOperand Op2, MVT::ValueType EVT)
-    : SDNode(Opc, Op0, Op1, Op2), ExtraValueType(EVT) {
-    setValueTypes(VT1, VT2);
-  }
-public:
-
-  MVT::ValueType getExtraValueType() const { return ExtraValueType; }
-
-  static bool classof(const MVTSDNode *) { return true; }
-  static bool classof(const SDNode *N) {
-    return
-      N->getOpcode() == ISD::EXTLOAD  ||
-      N->getOpcode() == ISD::SEXTLOAD ||
-      N->getOpcode() == ISD::ZEXTLOAD;
-  }
-};
 
 class SDNodeIterator : public forward_iterator<SDNode, ptrdiff_t> {
   SDNode *Node;
