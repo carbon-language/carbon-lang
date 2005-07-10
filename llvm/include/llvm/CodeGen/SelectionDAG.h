@@ -100,6 +100,7 @@ public:
   SDOperand getConstantPool(unsigned CPIdx, MVT::ValueType VT);
   SDOperand getBasicBlock(MachineBasicBlock *MBB);
   SDOperand getExternalSymbol(const char *Sym, MVT::ValueType VT);
+  SDOperand getValueType(MVT::ValueType);
 
   SDOperand getCopyToReg(SDOperand Chain, SDOperand N, unsigned Reg) {
     // Note: these are auto-CSE'd because the caller doesn't make requests that
@@ -225,6 +226,7 @@ private:
   std::map<int, SDNode*> FrameIndices;
   std::map<unsigned, SDNode*> ConstantPoolIndices;
   std::map<MachineBasicBlock *, SDNode*> BBNodes;
+  std::vector<SDNode*> ValueTypeNodes;
   std::map<std::pair<unsigned,
                      std::pair<MVT::ValueType, std::vector<SDOperand> > >,
            SDNode*> OneResultNodes;

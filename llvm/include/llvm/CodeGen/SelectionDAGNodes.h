@@ -55,7 +55,7 @@ namespace ISD {
 
     // Various leaf nodes.
     Constant, ConstantFP, GlobalAddress, FrameIndex, ConstantPool,
-    BasicBlock, ExternalSymbol,
+    BasicBlock, ExternalSymbol, VALUETYPE,
 
     // CopyToReg - This node has chain and child nodes, and an associated
     // register number.  The instruction selector must guarantee that the value
@@ -148,8 +148,8 @@ namespace ISD {
     // SIGN_EXTEND_INREG - This operator atomically performs a SHL/SRA pair to
     // sign extend a small value in a large integer register (e.g. sign
     // extending the low 8 bits of a 32-bit register to fill the top 24 bits
-    // with the 7th bit).  The size of the smaller type is indicated by the
-    // ExtraValueType in the MVTSDNode for the operator.
+    // with the 7th bit).  The size of the smaller type is indicated by the 1th
+    // operand, a ValueType node.
     SIGN_EXTEND_INREG,
 
     // FP_TO_[US]INT - Convert a floating point value to a signed or unsigned
@@ -164,8 +164,8 @@ namespace ISD {
     // FP_ROUND_INREG - This operator takes a floating point register, and
     // rounds it to a floating point value.  It then promotes it and returns it
     // in a register of the same size.  This operation effectively just discards
-    // excess precision.  The type to round down to is specified by the
-    // ExtraValueType in the MVTSDNode (currently always 64->32->64).
+    // excess precision.  The type to round down to is specified by the 1th
+    // operation, a VTSDNode (currently always 64->32->64).
     FP_ROUND_INREG,
 
     // FP_EXTEND - Extend a smaller FP type into a larger FP type.
@@ -843,6 +843,25 @@ public:
   }
 };
 
+/// VTSDNode - This class is used to represent MVT::ValueType's, which are used
+/// to parameterize some operations.
+class VTSDNode : public SDNode {
+  MVT::ValueType ValueType;
+protected:
+  friend class SelectionDAG;
+  VTSDNode(MVT::ValueType VT)
+    : SDNode(ISD::VALUETYPE, MVT::Other), ValueType(VT) {}
+public:
+
+  MVT::ValueType getVT() const { return ValueType; }
+
+  static bool classof(const VTSDNode *) { return true; }
+  static bool classof(const SDNode *N) {
+    return N->getOpcode() == ISD::VALUETYPE;
+  }
+};
+
+
 /// MVTSDNode - This class is used for operators that require an extra
 /// value-type to be kept with the node.
 class MVTSDNode : public SDNode {
@@ -871,8 +890,6 @@ public:
   static bool classof(const MVTSDNode *) { return true; }
   static bool classof(const SDNode *N) {
     return
-      N->getOpcode() == ISD::SIGN_EXTEND_INREG ||
-      N->getOpcode() == ISD::FP_ROUND_INREG ||
       N->getOpcode() == ISD::EXTLOAD  ||
       N->getOpcode() == ISD::SEXTLOAD ||
       N->getOpcode() == ISD::ZEXTLOAD ||
@@ -930,9 +947,6 @@ template <> struct GraphTraits<SDNode*> {
     return SDNodeIterator::end(N);
   }
 };
-
-
-
 
 } // end llvm namespace
 

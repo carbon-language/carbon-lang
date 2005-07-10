@@ -220,7 +220,9 @@ void SelectionDAG::DeleteNodeIfDead(SDNode *N, void *NodeSet) {
   case ISD::ExternalSymbol:
     ExternalSymbols.erase(cast<ExternalSymbolSDNode>(N)->getSymbol());
     break;
-
+  case ISD::VALUETYPE:
+    ValueTypeNodes[cast<VTSDNode>(N)->getVT()] = 0;
+    break;
   case ISD::LOAD:
     Loads.erase(std::make_pair(N->getOperand(1),
                                std::make_pair(N->getOperand(0),
@@ -234,8 +236,6 @@ void SelectionDAG::DeleteNodeIfDead(SDNode *N, void *NodeSet) {
                                      N->getValueType(0))));
     break;
   case ISD::TRUNCSTORE:
-  case ISD::SIGN_EXTEND_INREG:
-  case ISD::FP_ROUND_INREG:
   case ISD::EXTLOAD:
   case ISD::SEXTLOAD:
   case ISD::ZEXTLOAD: {
@@ -372,6 +372,17 @@ SDOperand SelectionDAG::getBasicBlock(MachineBasicBlock *MBB) {
   N = new BasicBlockSDNode(MBB);
   AllNodes.push_back(N);
   return SDOperand(N, 0);
+}
+
+SDOperand SelectionDAG::getValueType(MVT::ValueType VT) {
+  if ((unsigned)VT >= ValueTypeNodes.size())
+    ValueTypeNodes.resize(VT+1);
+  if (ValueTypeNodes[VT] == 0) {
+    ValueTypeNodes[VT] = new VTSDNode(VT);
+    AllNodes.push_back(ValueTypeNodes[VT]);
+  }
+
+  return SDOperand(ValueTypeNodes[VT], 0);
 }
 
 SDOperand SelectionDAG::getExternalSymbol(const char *Sym, MVT::ValueType VT) {
@@ -864,6 +875,22 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     assert(MVT::isInteger(VT) && MVT::isInteger(N2.getValueType()) &&
            VT != MVT::i1 && "Shifts only work on integers");
     break;
+  case ISD::FP_ROUND_INREG: {
+    MVT::ValueType EVT = cast<VTSDNode>(N2)->getVT();
+    assert(VT == N1.getValueType() && "Not an inreg round!");
+    assert(MVT::isFloatingPoint(VT) && MVT::isFloatingPoint(EVT) &&
+           "Cannot FP_ROUND_INREG integer types");
+    assert(EVT <= VT && "Not rounding down!");
+    break;
+  }
+  case ISD::SIGN_EXTEND_INREG: {
+    MVT::ValueType EVT = cast<VTSDNode>(N2)->getVT();
+    assert(VT == N1.getValueType() && "Not an inreg extend!");
+    assert(MVT::isInteger(VT) && MVT::isInteger(EVT) &&
+           "Cannot *_EXTEND_INREG FP types");
+    assert(EVT <= VT && "Not extending!");
+  }
+
   default: break;
   }
 #endif
@@ -918,6 +945,10 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     case ISD::SRA:    // sra -1, X -> -1
       if (N1C->isAllOnesValue()) return N1;
       break;
+    case ISD::SIGN_EXTEND_INREG:  // SIGN_EXTEND_INREG N1C, EVT
+      // Extending a constant?  Just return the extended constant.
+      SDOperand Tmp = getNode(ISD::TRUNCATE, cast<VTSDNode>(N2)->getVT(), N1);
+      return getNode(ISD::SIGN_EXTEND, VT, Tmp);
     }
   }
 
@@ -1026,7 +1057,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
         // If we are masking out the part of our input that was extended, just
         // mask the input to the extension directly.
         unsigned ExtendBits =
-          MVT::getSizeInBits(cast<MVTSDNode>(N1)->getExtraValueType());
+          MVT::getSizeInBits(cast<VTSDNode>(N1.getOperand(1))->getVT());
         if ((C2 & (~0ULL << ExtendBits)) == 0)
           return getNode(ISD::AND, VT, N1.getOperand(0), N2);
       }
@@ -1072,7 +1103,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
 
   ConstantFPSDNode *N1CFP = dyn_cast<ConstantFPSDNode>(N1.Val);
   ConstantFPSDNode *N2CFP = dyn_cast<ConstantFPSDNode>(N2.Val);
-  if (N1CFP)
+  if (N1CFP) {
     if (N2CFP) {
       double C1 = N1CFP->getValue(), C2 = N2CFP->getValue();
       switch (Opcode) {
@@ -1094,6 +1125,11 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
         std::swap(N1, N2);
       }
     }
+
+    if (Opcode == ISD::FP_ROUND_INREG)
+      return getNode(ISD::FP_EXTEND, VT,
+                     getNode(ISD::FP_ROUND, cast<VTSDNode>(N2)->getVT(), N1));
+  }
 
   // Finally, fold operations that do not require constants.
   switch (Opcode) {
@@ -1199,6 +1235,42 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     if (N2.getOpcode() == ISD::FNEG)          // (A- (-B) -> A+B
       return getNode(ISD::ADD, VT, N1, N2.getOperand(0));
     break;
+  case ISD::FP_ROUND_INREG:
+    if (cast<VTSDNode>(N2)->getVT() == VT) return N1;  // Not actually rounding.
+    break;
+  case ISD::SIGN_EXTEND_INREG: {
+    MVT::ValueType EVT = cast<VTSDNode>(N2)->getVT();
+    if (EVT == VT) return N1;  // Not actually extending
+
+    // If we are sign extending an extension, use the original source.
+    if (N1.getOpcode() == ISD::SIGN_EXTEND_INREG)
+      if (cast<VTSDNode>(N1.getOperand(1))->getVT() <= EVT)
+        return N1;
+    
+    // If we are sign extending a sextload, return just the load.
+    if (N1.getOpcode() == ISD::SEXTLOAD)
+      if (cast<MVTSDNode>(N1)->getExtraValueType() <= EVT)
+        return N1;
+
+    // If we are extending the result of a setcc, and we already know the
+    // contents of the top bits, eliminate the extension.
+    if (N1.getOpcode() == ISD::SETCC &&
+        TLI.getSetCCResultContents() ==
+                        TargetLowering::ZeroOrNegativeOneSetCCResult)
+      return N1;
+
+    // If we are sign extending the result of an (and X, C) operation, and we
+    // know the extended bits are zeros already, don't do the extend.
+    if (N1.getOpcode() == ISD::AND)
+      if (ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1.getOperand(1))) {
+        uint64_t Mask = N1C->getValue();
+        unsigned NumBits = MVT::getSizeInBits(EVT);
+        if ((Mask & (~0ULL << (NumBits-1))) == 0)
+          return N1;
+      }
+    break;
+  }
+
   // FIXME: figure out how to safely handle things like
   // int foo(int x) { return 1 << (x & 255); }
   // int bar() { return foo(256); }
@@ -1207,7 +1279,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
   case ISD::SRL:
   case ISD::SRA:
     if (N2.getOpcode() == ISD::SIGN_EXTEND_INREG &&
-        cast<MVTSDNode>(N2)->getExtraValueType() != MVT::i1)
+        cast<VTSDNode>(N2.getOperand(1))->getVT() != MVT::i1)
       return getNode(Opcode, VT, N1, N2.getOperand(0));
     else if (N2.getOpcode() == ISD::AND)
       if (ConstantSDNode *AndRHS = dyn_cast<ConstantSDNode>(N2.getOperand(1))) {
@@ -1450,7 +1522,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode,
   case ISD::SRL_PARTS:
   case ISD::SHL_PARTS:
     if (N3.getOpcode() == ISD::SIGN_EXTEND_INREG &&
-        cast<MVTSDNode>(N3)->getExtraValueType() != MVT::i1)
+        cast<VTSDNode>(N3.getOperand(1))->getVT() != MVT::i1)
       return getNode(Opcode, VT, N1, N2, N3.getOperand(0));
     else if (N3.getOpcode() == ISD::AND)
       if (ConstantSDNode *AndRHS = dyn_cast<ConstantSDNode>(N3.getOperand(1))) {
@@ -1477,61 +1549,6 @@ SDOperand SelectionDAG::getNode(unsigned Opcode,
 
 SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,SDOperand N1,
                                 MVT::ValueType EVT) {
-
-  switch (Opcode) {
-  default: assert(0 && "Bad opcode for this accessor!");
-  case ISD::FP_ROUND_INREG:
-    assert(VT == N1.getValueType() && "Not an inreg round!");
-    assert(MVT::isFloatingPoint(VT) && MVT::isFloatingPoint(EVT) &&
-           "Cannot FP_ROUND_INREG integer types");
-    if (EVT == VT) return N1;  // Not actually rounding
-    assert(EVT < VT && "Not rounding down!");
-
-    if (isa<ConstantFPSDNode>(N1))
-      return getNode(ISD::FP_EXTEND, VT, getNode(ISD::FP_ROUND, EVT, N1));
-    break;
-  case ISD::SIGN_EXTEND_INREG:
-    assert(VT == N1.getValueType() && "Not an inreg extend!");
-    assert(MVT::isInteger(VT) && MVT::isInteger(EVT) &&
-           "Cannot *_EXTEND_INREG FP types");
-    if (EVT == VT) return N1;  // Not actually extending
-    assert(EVT < VT && "Not extending!");
-
-    // Extending a constant?  Just return the extended constant.
-    if (ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1.Val)) {
-      SDOperand Tmp = getNode(ISD::TRUNCATE, EVT, N1);
-      return getNode(ISD::SIGN_EXTEND, VT, Tmp);
-    }
-
-    // If we are sign extending an extension, use the original source.
-    if (N1.getOpcode() == ISD::SIGN_EXTEND_INREG)
-      if (cast<MVTSDNode>(N1)->getExtraValueType() <= EVT)
-        return N1;
-
-    // If we are sign extending a sextload, return just the load.
-    if (N1.getOpcode() == ISD::SEXTLOAD && Opcode == ISD::SIGN_EXTEND_INREG)
-      if (cast<MVTSDNode>(N1)->getExtraValueType() <= EVT)
-        return N1;
-
-    // If we are extending the result of a setcc, and we already know the
-    // contents of the top bits, eliminate the extension.
-    if (N1.getOpcode() == ISD::SETCC &&
-        TLI.getSetCCResultContents() ==
-                        TargetLowering::ZeroOrNegativeOneSetCCResult)
-      return N1;
-
-    // If we are sign extending the result of an (and X, C) operation, and we
-    // know the extended bits are zeros already, don't do the extend.
-    if (N1.getOpcode() == ISD::AND)
-      if (ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1.getOperand(1))) {
-        uint64_t Mask = N1C->getValue();
-        unsigned NumBits = MVT::getSizeInBits(EVT);
-        if ((Mask & (~0ULL << (NumBits-1))) == 0)
-          return N1;
-      }
-    break;
-  }
-
   EVTStruct NN;
   NN.Opcode = Opcode;
   NN.VT = VT;

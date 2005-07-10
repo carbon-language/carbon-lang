@@ -539,7 +539,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       SDOperand ValRes;
       if (Node->getOpcode() == ISD::SEXTLOAD)
         ValRes = DAG.getNode(ISD::SIGN_EXTEND_INREG, Result.getValueType(),
-                             Result, SrcVT);
+                             Result, DAG.getValueType(SrcVT));
       else
         ValRes = DAG.getZeroExtendInReg(Result, SrcVT);
       AddLegalizedOperand(SDOperand(Node, 0), ValRes);
@@ -808,8 +808,10 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         case ISD::SETGT:
         case ISD::SETLT:
         case ISD::SETLE:
-          Tmp1 = DAG.getNode(ISD::SIGN_EXTEND_INREG, NVT, Tmp1, VT);
-          Tmp2 = DAG.getNode(ISD::SIGN_EXTEND_INREG, NVT, Tmp2, VT);
+          Tmp1 = DAG.getNode(ISD::SIGN_EXTEND_INREG, NVT, Tmp1,
+                             DAG.getValueType(VT));
+          Tmp2 = DAG.getNode(ISD::SIGN_EXTEND_INREG, NVT, Tmp2,
+                             DAG.getValueType(VT));
           break;
         }
 
@@ -1403,7 +1405,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         // NOTE: Any extend would work here...
         Result = DAG.getNode(ISD::ZERO_EXTEND, Op.getValueType(), Result);
         Result = DAG.getNode(ISD::SIGN_EXTEND_INREG, Result.getValueType(),
-                             Result, Node->getOperand(0).getValueType());
+                             Result,
+                          DAG.getValueType(Node->getOperand(0).getValueType()));
         break;
       case ISD::TRUNCATE:
         Result = PromoteOp(Node->getOperand(0));
@@ -1424,7 +1427,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       case ISD::SINT_TO_FP:
         Result = PromoteOp(Node->getOperand(0));
         Result = DAG.getNode(ISD::SIGN_EXTEND_INREG, Result.getValueType(),
-                             Result, Node->getOperand(0).getValueType());
+                             Result,
+                         DAG.getValueType(Node->getOperand(0).getValueType()));
         Result = DAG.getNode(ISD::SINT_TO_FP, Op.getValueType(), Result);
         break;
       case ISD::UINT_TO_FP:
@@ -1439,7 +1443,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
   case ISD::FP_ROUND_INREG:
   case ISD::SIGN_EXTEND_INREG: {
     Tmp1 = LegalizeOp(Node->getOperand(0));
-    MVT::ValueType ExtraVT = cast<MVTSDNode>(Node)->getExtraValueType();
+    MVT::ValueType ExtraVT = cast<VTSDNode>(Node->getOperand(1))->getVT();
 
     // If this operation is not supported, convert it to a shl/shr or load/store
     // pair.
@@ -1593,7 +1597,7 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
       // The high bits are not guaranteed to be anything.  Insert an extend.
       if (Node->getOpcode() == ISD::SIGN_EXTEND)
         Result = DAG.getNode(ISD::SIGN_EXTEND_INREG, NVT, Result,
-                             Node->getOperand(0).getValueType());
+                         DAG.getValueType(Node->getOperand(0).getValueType()));
       else
         Result = DAG.getZeroExtendInReg(Result,
                                         Node->getOperand(0).getValueType());
@@ -1610,7 +1614,8 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
     case Legal:
       // Input is legal?  Do an FP_ROUND_INREG.
       Result = LegalizeOp(Node->getOperand(0));
-      Result = DAG.getNode(ISD::FP_ROUND_INREG, NVT, Result, VT);
+      Result = DAG.getNode(ISD::FP_ROUND_INREG, NVT, Result,
+                           DAG.getValueType(VT));
       break;
     }
     break;
@@ -1628,7 +1633,8 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
       Result = PromoteOp(Node->getOperand(0));
       if (Node->getOpcode() == ISD::SINT_TO_FP)
         Result = DAG.getNode(ISD::SIGN_EXTEND_INREG, Result.getValueType(),
-                             Result, Node->getOperand(0).getValueType());
+                             Result,
+                         DAG.getValueType(Node->getOperand(0).getValueType()));
       else
         Result = DAG.getZeroExtendInReg(Result,
                                         Node->getOperand(0).getValueType());
@@ -1640,7 +1646,8 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
                              Node->getOperand(0));
       // Round if we cannot tolerate excess precision.
       if (NoExcessFPPrecision)
-        Result = DAG.getNode(ISD::FP_ROUND_INREG, NVT, Result, VT);
+        Result = DAG.getNode(ISD::FP_ROUND_INREG, NVT, Result,
+                             DAG.getValueType(VT));
       break;
     }
     break;
@@ -1679,7 +1686,8 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
     assert(Tmp1.getValueType() == NVT);
     Result = DAG.getNode(Node->getOpcode(), NVT, Tmp1);
     if(NoExcessFPPrecision)
-      Result = DAG.getNode(ISD::FP_ROUND_INREG, NVT, Result, VT);
+      Result = DAG.getNode(ISD::FP_ROUND_INREG, NVT, Result,
+                           DAG.getValueType(VT));
     break;
 
   case ISD::AND:
@@ -1702,7 +1710,8 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
     // FIXME: Why would we need to round FP ops more than integer ones?
     //     Is Round(Add(Add(A,B),C)) != Round(Add(Round(Add(A,B)), C))
     if (MVT::isFloatingPoint(NVT) && NoExcessFPPrecision)
-      Result = DAG.getNode(ISD::FP_ROUND_INREG, NVT, Result, VT);
+      Result = DAG.getNode(ISD::FP_ROUND_INREG, NVT, Result,
+                           DAG.getValueType(VT));
     break;
 
   case ISD::SDIV:
@@ -1711,14 +1720,17 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
     Tmp1 = PromoteOp(Node->getOperand(0));
     Tmp2 = PromoteOp(Node->getOperand(1));
     if (MVT::isInteger(NVT)) {
-      Tmp1 = DAG.getNode(ISD::SIGN_EXTEND_INREG, NVT, Tmp1, VT);
-      Tmp2 = DAG.getNode(ISD::SIGN_EXTEND_INREG, NVT, Tmp2, VT);
+      Tmp1 = DAG.getNode(ISD::SIGN_EXTEND_INREG, NVT, Tmp1,
+                         DAG.getValueType(VT));
+      Tmp2 = DAG.getNode(ISD::SIGN_EXTEND_INREG, NVT, Tmp2,
+                         DAG.getValueType(VT));
     }
     Result = DAG.getNode(Node->getOpcode(), NVT, Tmp1, Tmp2);
 
     // Perform FP_ROUND: this is probably overly pessimistic.
     if (MVT::isFloatingPoint(NVT) && NoExcessFPPrecision)
-      Result = DAG.getNode(ISD::FP_ROUND_INREG, NVT, Result, VT);
+      Result = DAG.getNode(ISD::FP_ROUND_INREG, NVT, Result,
+                           DAG.getValueType(VT));
     break;
 
   case ISD::UDIV:
@@ -1740,7 +1752,8 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
   case ISD::SRA:
     // The input value must be properly sign extended.
     Tmp1 = PromoteOp(Node->getOperand(0));
-    Tmp1 = DAG.getNode(ISD::SIGN_EXTEND_INREG, NVT, Tmp1, VT);
+    Tmp1 = DAG.getNode(ISD::SIGN_EXTEND_INREG, NVT, Tmp1,
+                       DAG.getValueType(VT));
     Tmp2 = LegalizeOp(Node->getOperand(1));
     Result = DAG.getNode(ISD::SRA, NVT, Tmp1, Tmp2);
     break;
@@ -2520,7 +2533,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
       In = PromoteOp(Node->getOperand(0));
       // Emit the appropriate sign_extend_inreg to get the value we want.
       In = DAG.getNode(ISD::SIGN_EXTEND_INREG, In.getValueType(), In,
-                       Node->getOperand(0).getValueType());
+                       DAG.getValueType(Node->getOperand(0).getValueType()));
       break;
     }
 
