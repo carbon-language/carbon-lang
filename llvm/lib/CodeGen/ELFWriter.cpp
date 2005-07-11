@@ -40,7 +40,13 @@
 #include "llvm/Support/Mangler.h"
 using namespace llvm;
 
+//===----------------------------------------------------------------------===//
+//                       ELFCodeEmitter Implementation
+//===----------------------------------------------------------------------===//
+
 namespace llvm {
+  /// ELFCodeEmitter - This class is used by the ELFWriter to emit the code for
+  /// functions to the ELF file.
   class ELFCodeEmitter : public MachineCodeEmitter {
     ELFWriter &EW;
     std::vector<unsigned char> &OutputBuffer;
@@ -48,55 +54,8 @@ namespace llvm {
   public:
     ELFCodeEmitter(ELFWriter &ew) : EW(ew), OutputBuffer(EW.OutputBuffer) {}
 
-    void startFunction(MachineFunction &F) {
-      // Align the output buffer to the appropriate alignment.
-      unsigned Align = 16;   // FIXME: GENERICIZE!!
-      ELFWriter::ELFSection &TextSection = EW.SectionList.back();
-      
-      // Upgrade the section alignment if required.
-      if (TextSection.Align < Align) TextSection.Align = Align;
-      
-      // Add padding zeros to the end of the buffer to make sure that the
-      // function will start on the correct byte alignment within the section.
-      size_t SectionOff = OutputBuffer.size()-TextSection.Offset;
-      if (SectionOff & (Align-1)) {
-        // Add padding to get alignment to the correct place.
-        size_t Pad = Align-(SectionOff & (Align-1));
-        OutputBuffer.resize(OutputBuffer.size()+Pad);
-      }
-
-      FnStart = OutputBuffer.size();
-    }
-    void finishFunction(MachineFunction &F) {
-      // We now know the size of the function, add a symbol to represent it.
-      ELFWriter::ELFSym FnSym(F.getFunction());
-
-      // Figure out the binding (linkage) of the symbol.
-      switch (F.getFunction()->getLinkage()) {
-      default:
-        // appending linkage is illegal for functions.
-        assert(0 && "Unknown linkage type!");
-      case GlobalValue::ExternalLinkage:
-        FnSym.SetBind(ELFWriter::ELFSym::STB_GLOBAL);
-        break;
-      case GlobalValue::LinkOnceLinkage:
-      case GlobalValue::WeakLinkage:
-        FnSym.SetBind(ELFWriter::ELFSym::STB_WEAK);
-        break;
-      case GlobalValue::InternalLinkage:
-        FnSym.SetBind(ELFWriter::ELFSym::STB_LOCAL);
-        break;
-      }
-
-      FnSym.SetType(ELFWriter::ELFSym::STT_FUNC);
-      FnSym.SectionIdx = EW.SectionList.size()-1;  // .text section.
-      // Value = Offset from start of .text
-      FnSym.Value = FnStart - EW.SectionList.back().Offset;
-      FnSym.Size = OutputBuffer.size()-FnStart;
-
-      // Finally, add it to the symtab.
-      EW.SymbolTable.push_back(FnSym);
-    }
+    void startFunction(MachineFunction &F);
+    void finishFunction(MachineFunction &F);
 
     void emitConstantPool(MachineConstantPool *MCP) {
       if (MCP->isEmpty()) return;
@@ -123,7 +82,8 @@ namespace llvm {
     virtual uint64_t getConstantPoolEntryAddress(unsigned Index) {
       assert(0 && "CP not implementated yet!");
     }
-    /// JIT SPECIFIC FUNCTIONS
+
+    /// JIT SPECIFIC FUNCTIONS - DO NOT IMPLEMENT THESE HERE!
     void startFunctionStub(unsigned StubSize) {
       assert(0 && "JIT specific function called!");
       abort();
@@ -136,6 +96,64 @@ namespace llvm {
   };
 }
 
+/// startFunction - This callback is invoked when a new machine function is
+/// about to be emitted.
+void ELFCodeEmitter::startFunction(MachineFunction &F) {
+  // Align the output buffer to the appropriate alignment.
+  unsigned Align = 16;   // FIXME: GENERICIZE!!
+  ELFWriter::ELFSection &TextSection = EW.SectionList.back();
+  
+  // Upgrade the section alignment if required.
+  if (TextSection.Align < Align) TextSection.Align = Align;
+  
+  // Add padding zeros to the end of the buffer to make sure that the
+  // function will start on the correct byte alignment within the section.
+  size_t SectionOff = OutputBuffer.size()-TextSection.Offset;
+  if (SectionOff & (Align-1)) {
+    // Add padding to get alignment to the correct place.
+    size_t Pad = Align-(SectionOff & (Align-1));
+    OutputBuffer.resize(OutputBuffer.size()+Pad);
+  }
+  
+  FnStart = OutputBuffer.size();
+}
+
+/// finishFunction - This callback is invoked after the function is completely
+/// finished.
+void ELFCodeEmitter::finishFunction(MachineFunction &F) {
+  // We now know the size of the function, add a symbol to represent it.
+  ELFWriter::ELFSym FnSym(F.getFunction());
+  
+  // Figure out the binding (linkage) of the symbol.
+  switch (F.getFunction()->getLinkage()) {
+  default:
+    // appending linkage is illegal for functions.
+    assert(0 && "Unknown linkage type!");
+  case GlobalValue::ExternalLinkage:
+    FnSym.SetBind(ELFWriter::ELFSym::STB_GLOBAL);
+    break;
+  case GlobalValue::LinkOnceLinkage:
+  case GlobalValue::WeakLinkage:
+    FnSym.SetBind(ELFWriter::ELFSym::STB_WEAK);
+    break;
+  case GlobalValue::InternalLinkage:
+    FnSym.SetBind(ELFWriter::ELFSym::STB_LOCAL);
+    break;
+  }
+  
+  FnSym.SetType(ELFWriter::ELFSym::STT_FUNC);
+  FnSym.SectionIdx = EW.SectionList.size()-1;  // .text section.
+  // Value = Offset from start of .text
+  FnSym.Value = FnStart - EW.SectionList.back().Offset;
+  FnSym.Size = OutputBuffer.size()-FnStart;
+  
+  // Finally, add it to the symtab.
+  EW.SymbolTable.push_back(FnSym);
+}
+
+//===----------------------------------------------------------------------===//
+//                          ELFWriter Implementation
+//===----------------------------------------------------------------------===//
 
 ELFWriter::ELFWriter(std::ostream &o, TargetMachine &tm) : O(o), TM(tm) {
   e_machine = 0;  // e_machine defaults to 'No Machine'
