@@ -185,7 +185,7 @@ MSchedGraphSB::MSchedGraphSB(std::vector<const MachineBasicBlock*> &bbs,
     llvmBBs.insert((*MBB)->getBasicBlock());
 
   //create predicate nodes
-  DEBUG("Create predicate nodes\n");
+  DEBUG(std::cerr << "Create predicate nodes\n");
   for(std::vector<const MachineBasicBlock*>::iterator MBB = bbs.begin(), ME = bbs.end()-1; 
        MBB != ME; ++MBB) {
     //Get LLVM basic block
