@@ -464,7 +464,7 @@ void ExecutionEngine::InitializeMemory(const Constant *Init, void *Addr) {
   case Type::ArrayTyID: {
     const ConstantArray *CPA = cast<ConstantArray>(Init);
     unsigned ElementSize =
-      getTargetData().getTypeSize(cast<ArrayType>(CPA->getType())->getElementType());
+      getTargetData().getTypeSize(CPA->getType()->getElementType());
     for (unsigned i = 0, e = CPA->getNumOperands(); i != e; ++i)
       InitializeMemory(CPA->getOperand(i), (char*)Addr+i*ElementSize);
     return;
@@ -494,7 +494,8 @@ void ExecutionEngine::emitGlobals() {
 
   // Loop over all of the global variables in the program, allocating the memory
   // to hold them.
-  for (Module::const_global_iterator I = getModule().global_begin(), E = getModule().global_end();
+  Module &M = getModule();
+  for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
        I != E; ++I)
     if (!I->isExternal()) {
       // Get the type of the global...
@@ -518,7 +519,7 @@ void ExecutionEngine::emitGlobals() {
 
   // Now that all of the globals are set up in memory, loop through them all and
   // initialize their contents.
-  for (Module::const_global_iterator I = getModule().global_begin(), E = getModule().global_end();
+  for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
        I != E; ++I)
     if (!I->isExternal())
       EmitGlobalVariable(I);
