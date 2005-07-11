@@ -19,12 +19,22 @@
 namespace llvm {
   class GlobalVariable;
   class Mangler;
+  class MachineCodeEmitter;
+  class ELFCodeEmitter;
 
   /// ELFWriter - This class implements the common target-independent code for
   /// writing ELF files.  Targets should derive a class from this to
   /// parameterize the output format.
   ///
   class ELFWriter : public MachineFunctionPass {
+    friend class ELFCodeEmitter;
+  public:
+    MachineCodeEmitter &getMachineCodeEmitter() const {
+      return *(MachineCodeEmitter*)MCE;
+    }
+
+    ~ELFWriter();
+
   protected:
     ELFWriter(std::ostream &O, TargetMachine &TM);
 
@@ -39,6 +49,10 @@ namespace llvm {
     /// Mang - The object used to perform name mangling for this module.
     ///
     Mangler *Mang;
+
+    /// MCE - The MachineCodeEmitter object that we are exposing to emit machine
+    /// code for functions to the .o file.
+    ELFCodeEmitter *MCE;
 
     //===------------------------------------------------------------------===//
     // Properties to be set by the derived class ctor, used to configure the
@@ -142,7 +156,6 @@ namespace llvm {
     /// This actually gets rearranged before emission to OutputBuffer (to put
     /// the local symbols first in the list).
     std::vector<ELFSym> SymbolTable;
-
 
     // As we accumulate the ELF file into OutputBuffer, we occasionally need to
     // keep track of locations to update later (e.g. the location of the section
