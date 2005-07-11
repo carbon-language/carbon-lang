@@ -740,10 +740,8 @@ static const char *DoesntAccessMemoryTable[] = {
   "nexttoward", "nexttowardf", "nexttowardd",
   "nextafter", "nextafterf", "nextafterd",
 
-  // glibc functions:
-  "__fpclassify", "__fpclassifyf", "__fpclassifyl",
+  // ISO C99:
   "__signbit", "__signbitf", "__signbitl",
-  "__errno_location",
 };
 
 static const unsigned DAMTableSize =
