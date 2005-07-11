@@ -35,6 +35,7 @@
 #include "llvm/CodeGen/ELFWriter.h"
 #include "llvm/Module.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Support/Mangler.h"
 using namespace llvm;
 
 ELFWriter::ELFWriter(std::ostream &o, TargetMachine &tm) : O(o), TM(tm) {
@@ -48,6 +49,8 @@ ELFWriter::ELFWriter(std::ostream &o, TargetMachine &tm) : O(o), TM(tm) {
 // doInitialization - Emit the file header and all of the global variables for
 // the module to the ELF file.
 bool ELFWriter::doInitialization(Module &M) {
+  Mang = new Mangler(M);
+
   outbyte(0x7F);                     // EI_MAG0
   outbyte('E');                      // EI_MAG1
   outbyte('L');                      // EI_MAG2
@@ -225,6 +228,9 @@ bool ELFWriter::doFinalization(Module &M) {
 
   // Free the output buffer.
   std::vector<unsigned char>().swap(OutputBuffer);
+
+  // Release the name mangler object.
+  delete Mang; Mang = 0;
   return false;
 }
 
@@ -246,8 +252,8 @@ void ELFWriter::EmitSymbolTable() {
   SymbolTable[0].NameIdx = 0;
   unsigned Index = 1;
   for (unsigned i = 1, e = SymbolTable.size(); i != e; ++i) {
-    // FIXME: USE A MANGLER!!
-    const std::string &Name = SymbolTable[i].GV->getName();
+    // Use the name mangler to uniquify the LLVM symbol.
+    std::string Name = Mang->getValueName(SymbolTable[i].GV);
 
     if (Name.empty()) {
       SymbolTable[i].NameIdx = 0;
