@@ -18,6 +18,7 @@
 
 namespace llvm {
   class GlobalVariable;
+  class Mangler;
 
   /// ELFWriter - This class implements the common target-independent code for
   /// writing ELF files.  Targets should derive a class from this to
@@ -34,6 +35,10 @@ namespace llvm {
     /// Target machine description.
     ///
     TargetMachine &TM;
+
+    /// Mang - The object used to perform name mangling for this module.
+    ///
+    Mangler *Mang;
 
     //===------------------------------------------------------------------===//
     // Properties to be set by the derived class ctor, used to configure the
