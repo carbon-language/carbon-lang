@@ -31,12 +31,12 @@ Statistic<> llvm::x86::EmittedInsts("asm-printer",
 enum AsmWriterFlavorTy { att, intel };
 cl::opt<AsmWriterFlavorTy>
 AsmWriterFlavor("x86-asm-syntax",
-	cl::desc("Choose style of code to emit from X86 backend:"),
-	cl::values(
-				clEnumVal(att,   "  Emit AT&T-style assembly"),
-				clEnumVal(intel, "  Emit Intel-style assembly"),
-				clEnumValEnd),
-	cl::init(att));
+                cl::desc("Choose style of code to emit from X86 backend:"),
+                cl::values(
+                           clEnumVal(att,   "  Emit AT&T-style assembly"),
+                           clEnumVal(intel, "  Emit Intel-style assembly"),
+                           clEnumValEnd),
+                cl::init(att));
 
 /// doInitialization
 bool X86SharedAsmPrinter::doInitialization(Module& M) {
@@ -48,15 +48,15 @@ bool X86SharedAsmPrinter::doInitialization(Module& M) {
                 TT.find("mingw")  != std::string::npos;
     forDarwin = TT.find("darwin") != std::string::npos;
   } else if (TT.empty()) {
-  #if defined(__CYGWIN__) || defined(__MINGW32__)
+#if defined(__CYGWIN__) || defined(__MINGW32__)
     forCygwin = true;
-  #elif defined(__APPLE__)
+#elif defined(__APPLE__)
     forDarwin = true;
-  #elif defined(_WIN32)
+#elif defined(_WIN32)
     leadingUnderscore = true;
-  #else
+#else
     leadingUnderscore = false;
-  #endif
+#endif
   }
   if (leadingUnderscore || forCygwin || forDarwin)
     GlobalPrefix = "_";
@@ -95,76 +95,74 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
   std::string CurSection;
 
   // Print out module-level global variables here.
-  for (Module::const_global_iterator I = M.global_begin(), E = M.global_end(); I != E; ++I)
-  	if (I->hasInitializer()) {   // External global require no code
-  	  O << "\n\n";
-  	  std::string name = Mang->getValueName(I);
-  	  Constant *C = I->getInitializer();
-  	  unsigned Size = TD.getTypeSize(C->getType());
-  	  unsigned Align = TD.getTypeAlignmentShift(C->getType());
-
-  	  if (C->isNullValue() &&
-  		(I->hasLinkOnceLinkage() || I->hasInternalLinkage() ||
-  			I->hasWeakLinkage() /* FIXME: Verify correct */)) {
-  		SwitchSection(O, CurSection, ".data");
-  		if (!forCygwin && !forDarwin && I->hasInternalLinkage())
-        O << "\t.local " << name << "\n";
-      if (forDarwin && I->hasInternalLinkage())
-         O << "\t.lcomm " << name << "," << Size << "," << Align;
-      else 
-        O << "\t.comm " << name << "," << Size;
-  		if (!forCygwin && !forDarwin)
-  		  O << "," << (1 << Align);
-  		O << "\t\t# ";
-  		WriteAsOperand(O, I, true, true, &M);
-  		O << "\n";
-  	  } else {
-  		switch (I->getLinkage()) {
-  		case GlobalValue::LinkOnceLinkage:
-  		case GlobalValue::WeakLinkage:   // FIXME: Verify correct for weak.
-  		  // Nonnull linkonce -> weak
-  		  O << "\t.weak " << name << "\n";
-  		  SwitchSection(O, CurSection, "");
-  		  O << "\t.section\t.llvm.linkonce.d." << name << ",\"aw\",@progbits\n";
-  		  break;
-  		case GlobalValue::AppendingLinkage:
-  		  // FIXME: appending linkage variables should go into a section of
-  		  // their name or something.  For now, just emit them as external.
-  		case GlobalValue::ExternalLinkage:
-  		  // If external or appending, declare as a global symbol
-  		  O << "\t.globl " << name << "\n";
-  		  // FALL THROUGH
-  		case GlobalValue::InternalLinkage:
-  		  if (C->isNullValue())
-  		    SwitchSection(O, CurSection, ".bss");
-  		  else
-  		    SwitchSection(O, CurSection, ".data");
-  		  break;
-  		case GlobalValue::GhostLinkage:
-  		  std::cerr << "GhostLinkage cannot appear in X86AsmPrinter!\n";
-  		  abort();
-  		}
-
-  		emitAlignment(Align);
-  		if (!forCygwin && !forDarwin) {
-  		  O << "\t.type " << name << ",@object\n";
-  		  O << "\t.size " << name << "," << Size << "\n";
-  		}
-  		O << name << ":\t\t\t\t# ";
-  		WriteAsOperand(O, I, true, true, &M);
-  		O << " = ";
-  		WriteAsOperand(O, C, false, false, &M);
-  		O << "\n";
-  		emitGlobalConstant(C);
-  	  }
+  for (Module::const_global_iterator I = M.global_begin(),
+         E = M.global_end(); I != E; ++I)
+    if (I->hasInitializer()) {   // External global require no code
+      O << "\n\n";
+      std::string name = Mang->getValueName(I);
+      Constant *C = I->getInitializer();
+      unsigned Size = TD.getTypeSize(C->getType());
+      unsigned Align = TD.getTypeAlignmentShift(C->getType());
+      
+      if (C->isNullValue() &&
+          (I->hasLinkOnceLinkage() || I->hasInternalLinkage() ||
+           I->hasWeakLinkage() /* FIXME: Verify correct */)) {
+        SwitchSection(O, CurSection, ".data");
+        if (!forCygwin && !forDarwin && I->hasInternalLinkage())
+          O << "\t.local " << name << "\n";
+        if (forDarwin && I->hasInternalLinkage())
+          O << "\t.lcomm " << name << "," << Size << "," << Align;
+        else 
+          O << "\t.comm " << name << "," << Size;
+        if (!forCygwin && !forDarwin)
+          O << "," << (1 << Align);
+        O << "\t\t# ";
+        WriteAsOperand(O, I, true, true, &M);
+        O << "\n";
+      } else {
+        switch (I->getLinkage()) {
+        default: assert(0 && "Unknown linkage type!");
+        case GlobalValue::LinkOnceLinkage:
+        case GlobalValue::WeakLinkage:   // FIXME: Verify correct for weak.
+          // Nonnull linkonce -> weak
+          O << "\t.weak " << name << "\n";
+          SwitchSection(O, CurSection, "");
+          O << "\t.section\t.llvm.linkonce.d." << name << ",\"aw\",@progbits\n";
+          break;
+        case GlobalValue::AppendingLinkage:
+          // FIXME: appending linkage variables should go into a section of
+          // their name or something.  For now, just emit them as external.
+        case GlobalValue::ExternalLinkage:
+          // If external or appending, declare as a global symbol
+          O << "\t.globl " << name << "\n";
+          // FALL THROUGH
+        case GlobalValue::InternalLinkage:
+          if (C->isNullValue())
+            SwitchSection(O, CurSection, ".bss");
+          else
+            SwitchSection(O, CurSection, ".data");
+          break;
+        }
+        
+        emitAlignment(Align);
+        if (!forCygwin && !forDarwin) {
+          O << "\t.type " << name << ",@object\n";
+          O << "\t.size " << name << "," << Size << "\n";
+        }
+        O << name << ":\t\t\t\t# ";
+        WriteAsOperand(O, I, true, true, &M);
+        O << " = ";
+        WriteAsOperand(O, C, false, false, &M);
+        O << "\n";
+        emitGlobalConstant(C);
+      }
     }
   
   if (forDarwin) {
     // Output stubs for dynamically-linked functions
     unsigned j = 1;
     for (std::set<std::string>::iterator i = FnStubs.begin(), e = FnStubs.end();
-         i != e; ++i, ++j)
-    {
+         i != e; ++i, ++j) {
       O << "\t.symbol_stub\n";
       O << "L" << *i << "$stub:\n";
       O << "\t.indirect_symbol " << *i << "\n";
