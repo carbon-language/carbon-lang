@@ -34,9 +34,78 @@
 
 #include "llvm/CodeGen/ELFWriter.h"
 #include "llvm/Module.h"
+#include "llvm/CodeGen/MachineCodeEmitter.h"
+#include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/Mangler.h"
 using namespace llvm;
+
+namespace llvm {
+  class ELFCodeEmitter : public MachineCodeEmitter {
+    ELFWriter &EW;
+    std::vector<unsigned char> &OutputBuffer;
+    size_t FnStart;
+  public:
+    ELFCodeEmitter(ELFWriter &ew) : EW(ew), OutputBuffer(EW.OutputBuffer) {}
+
+    void startFunction(MachineFunction &F) {
+      // Align the output buffer to the appropriate alignment.
+      unsigned Align = 16;   // FIXME: GENERICIZE!!
+      ELFWriter::ELFSection &TextSection = EW.SectionList.back();
+      
+      // Upgrade the section alignment if required.
+      if (TextSection.Align < Align) TextSection.Align = Align;
+      
+      // Add padding zeros to the end of the buffer to make sure that the
+      // function will start on the correct byte alignment within the section.
+      size_t SectionOff = OutputBuffer.size()-TextSection.Offset;
+      if (SectionOff & (Align-1)) {
+        // Add padding to get alignment to the correct place.
+        size_t Pad = Align-(SectionOff & (Align-1));
+        OutputBuffer.resize(OutputBuffer.size()+Pad);
+      }
+
+      FnStart = OutputBuffer.size();
+    }
+    void finishFunction(MachineFunction &F) {}
+    void emitConstantPool(MachineConstantPool *MCP) {
+      if (MCP->isEmpty()) return;
+      assert(0 && "unimp");
+    }
+    virtual void emitByte(unsigned char B) {
+      OutputBuffer.push_back(B);
+    }
+    virtual void emitWordAt(unsigned W, unsigned *Ptr) {
+      assert(0 && "ni");
+    }
+    virtual void emitWord(unsigned W) {
+      assert(0 && "ni");
+    }
+    virtual uint64_t getCurrentPCValue() {
+      return OutputBuffer.size();
+    }
+    virtual uint64_t getCurrentPCOffset() {
+      return OutputBuffer.size()-FnStart;
+    }
+    void addRelocation(const MachineRelocation &MR) {
+      assert(0 && "relo not handled yet!");
+    }
+    virtual uint64_t getConstantPoolEntryAddress(unsigned Index) {
+      assert(0 && "CP not implementated yet!");
+    }
+    /// JIT SPECIFIC FUNCTIONS
+    void startFunctionStub(unsigned StubSize) {
+      assert(0 && "JIT specific function called!");
+      abort();
+    }
+    void *finishFunctionStub(const Function *F) {
+      assert(0 && "JIT specific function called!");
+      abort();
+      return 0;
+    }
+  };
+}
+
 
 ELFWriter::ELFWriter(std::ostream &o, TargetMachine &tm) : O(o), TM(tm) {
   e_machine = 0;  // e_machine defaults to 'No Machine'
@@ -44,6 +113,13 @@ ELFWriter::ELFWriter(std::ostream &o, TargetMachine &tm) : O(o), TM(tm) {
 
   is64Bit = TM.getTargetData().getPointerSizeInBits() == 64;  
   isLittleEndian = TM.getTargetData().isLittleEndian();
+
+  // Create the machine code emitter object for this target.
+  MCE = new ELFCodeEmitter(*this);
+}
+
+ELFWriter::~ELFWriter() {
+  delete MCE;
 }
 
 // doInitialization - Emit the file header and all of the global variables for
@@ -91,9 +167,8 @@ bool ELFWriter::doInitialization(Module &M) {
   // entry.
   SymbolTable.push_back(ELFSym(0));
 
+  SectionList.push_back(ELFSection(".text", OutputBuffer.size()));
 
-
-  // FIXME: Should start the .text section.
   return false;
 }
 
@@ -180,14 +255,24 @@ void ELFWriter::EmitGlobal(GlobalVariable *GV, ELFSection &DataSection,
 
 
 bool ELFWriter::runOnMachineFunction(MachineFunction &MF) {
+  // Nothing to do here, this is all done through the MCE object above.
   return false;
 }
 
 /// doFinalization - Now that the module has been completely processed, emit
 /// the ELF file to 'O'.
 bool ELFWriter::doFinalization(Module &M) {
-  // Okay, the .text section has now been finalized.
-  // FIXME: finalize the .text section.
+  // Okay, the .text section has now been finalized.  If it contains nothing, do
+  // not emit it.
+  uint64_t TextSize = OutputBuffer.size() - SectionList.back().Offset;
+  if (TextSize == 0) {
+    SectionList.pop_back();
+  } else {
+    ELFSection &Text = SectionList.back();
+    Text.Size = TextSize;
+    Text.Type = ELFSection::SHT_PROGBITS;
+    Text.Flags = ELFSection::SHF_EXECINSTR | ELFSection::SHF_ALLOC;
+  }
 
   // Okay, the ELF header and .text sections have been completed, build the
   // .data, .bss, and "common" sections next.
