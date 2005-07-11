@@ -127,9 +127,8 @@ namespace llvm {
     /// added to logical symbol table for the module.  This is eventually
     /// turned into a real symbol table in the file.
     struct ELFSym {
-      GlobalValue *GV;        // The global value this corresponds to.
-      //std::string Name;       // Name of the symbol.
-      unsigned NameIdx;       // Index in .strtab of name, once emitted.
+      const GlobalValue *GV;    // The global value this corresponds to.
+      unsigned NameIdx;         // Index in .strtab of name, once emitted.
       uint64_t Value;
       unsigned Size;
       unsigned char Info;
@@ -139,8 +138,8 @@ namespace llvm {
       enum { STB_LOCAL = 0, STB_GLOBAL = 1, STB_WEAK = 2 };
       enum { STT_NOTYPE = 0, STT_OBJECT = 1, STT_FUNC = 2, STT_SECTION = 3,
              STT_FILE = 4 };
-      ELFSym(GlobalValue *gv) : GV(gv), Value(0), Size(0), Info(0),
-                                Other(0), SectionIdx(0) {}
+      ELFSym(const GlobalValue *gv) : GV(gv), Value(0), Size(0), Info(0),
+                                      Other(0), SectionIdx(0) {}
 
       void SetBind(unsigned X) {
         assert(X == (X & 0xF) && "Bind value out of range!");
