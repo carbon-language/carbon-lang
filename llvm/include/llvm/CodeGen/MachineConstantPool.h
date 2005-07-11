@@ -46,6 +46,10 @@ public:
     return Constants.size()-1;
   }
 
+  /// isEmpty - Return true if this constant pool contains no constants.
+  ///
+  bool isEmpty() const { return Constants.empty(); }
+
   const std::vector<Constant*> &getConstants() const { return Constants; }
 
   /// print - Used by the MachineFunction printer to print information about
