@@ -67,7 +67,37 @@ namespace llvm {
 
       FnStart = OutputBuffer.size();
     }
-    void finishFunction(MachineFunction &F) {}
+    void finishFunction(MachineFunction &F) {
+      // We now know the size of the function, add a symbol to represent it.
+      ELFWriter::ELFSym FnSym(F.getFunction());
+
+      // Figure out the binding (linkage) of the symbol.
+      switch (F.getFunction()->getLinkage()) {
+      default:
+        // appending linkage is illegal for functions.
+        assert(0 && "Unknown linkage type!");
+      case GlobalValue::ExternalLinkage:
+        FnSym.SetBind(ELFWriter::ELFSym::STB_GLOBAL);
+        break;
+      case GlobalValue::LinkOnceLinkage:
+      case GlobalValue::WeakLinkage:
+        FnSym.SetBind(ELFWriter::ELFSym::STB_WEAK);
+        break;
+      case GlobalValue::InternalLinkage:
+        FnSym.SetBind(ELFWriter::ELFSym::STB_LOCAL);
+        break;
+      }
+
+      FnSym.SetType(ELFWriter::ELFSym::STT_FUNC);
+      FnSym.SectionIdx = EW.SectionList.size()-1;  // .text section.
+      // Value = Offset from start of .text
+      FnSym.Value = FnStart - EW.SectionList.back().Offset;
+      FnSym.Size = OutputBuffer.size()-FnStart;
+
+      // Finally, add it to the symtab.
+      EW.SymbolTable.push_back(FnSym);
+    }
+
     void emitConstantPool(MachineConstantPool *MCP) {
       if (MCP->isEmpty()) return;
       assert(0 && "unimp");
