@@ -13,7 +13,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "X86.h"
+#include "llvm/PassManager.h"
 #include "llvm/CodeGen/ELFWriter.h"
+#include "llvm/Target/TargetMachine.h"
 using namespace llvm;
 
 namespace {
@@ -25,10 +27,12 @@ namespace {
   };
 }
 
-/// createX86ELFObjectWriterPass - Returns a pass that outputs the generated
-/// code as an ELF object file.
+/// addX86ELFObjectWriterPass - Returns a pass that outputs the generated code
+/// as an ELF object file.
 ///
-FunctionPass *llvm::createX86ELFObjectWriterPass(std::ostream &O,
-                                                 TargetMachine &TM) {
-  return new X86ELFWriter(O, TM);
+void llvm::addX86ELFObjectWriterPass(PassManager &FPM,
+                                     std::ostream &O, TargetMachine &TM) {
+  X86ELFWriter *EW = new X86ELFWriter(O, TM);
+  FPM.add(EW);
+  FPM.add(createX86CodeEmitterPass(EW->getMachineCodeEmitter()));
 }

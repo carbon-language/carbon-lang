@@ -20,8 +20,10 @@
 namespace llvm {
 
 class TargetMachine;
+class PassManager;
 class FunctionPass;
 class IntrinsicLowering;
+class MachineCodeEmitter;
 
 enum X86VectorEnum {
   NoSSE, SSE, SSE2, SSE3
@@ -59,16 +61,19 @@ FunctionPass *createX86FloatingPointStackifierPass();
 
 /// createX86CodePrinterPass - Returns a pass that prints the X86
 /// assembly code for a MachineFunction to the given output stream,
-/// using the given target machine description.  This should work
-/// regardless of whether the function is in SSA form.
+/// using the given target machine description.
 ///
-FunctionPass *createX86CodePrinterPass(std::ostream &o,TargetMachine &tm);
+FunctionPass *createX86CodePrinterPass(std::ostream &o, TargetMachine &tm);
 
-/// createX86ELFObjectWriterPass - Returns a pass that outputs the generated
+/// createX86CodeEmitterPass - Return a pass that emits the collected X86 code
+/// to the specified MCE object.
+FunctionPass *createX86CodeEmitterPass(MachineCodeEmitter &MCE);
+
+/// addX86ELFObjectWriterPass - Add passes to the FPM that output the generated
 /// code as an ELF object file.
 ///
-FunctionPass *createX86ELFObjectWriterPass(std::ostream &o, TargetMachine &tm);
-
+void addX86ELFObjectWriterPass(PassManager &FPM,
+                               std::ostream &o, TargetMachine &tm);
 
 /// createX86EmitCodeToMemory - Returns a pass that converts a register
 /// allocated function into raw machine code in a dynamically

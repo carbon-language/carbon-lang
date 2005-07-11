@@ -68,18 +68,10 @@ namespace {
   };
 }
 
-/// addPassesToEmitMachineCode - Add passes to the specified pass manager to get
-/// machine code emitted.  This uses a MachineCodeEmitter object to handle
-/// actually outputting the machine code and resolving things like the address
-/// of functions.  This method should returns true if machine code emission is
-/// not supported.
-///
-bool X86TargetMachine::addPassesToEmitMachineCode(FunctionPassManager &PM,
-                                                  MachineCodeEmitter &MCE) {
-  PM.add(new Emitter(MCE));
-  // Delete machine code for this function
-  PM.add(createMachineCodeDeleter());
-  return false;
+/// createX86CodeEmitterPass - Return a pass that emits the collected X86 code
+/// to the specified MCE object.
+FunctionPass *llvm::createX86CodeEmitterPass(MachineCodeEmitter &MCE) {
+  return new Emitter(MCE);
 }
 
 bool Emitter::runOnMachineFunction(MachineFunction &MF) {

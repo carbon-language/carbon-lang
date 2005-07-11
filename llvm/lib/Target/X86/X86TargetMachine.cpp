@@ -162,7 +162,7 @@ bool X86TargetMachine::addPassesToEmitFile(PassManager &PM, std::ostream &Out,
       // FIXME: We only support emission of ELF files for now, this should check
       // the target triple and decide on the format to write (e.g. COFF on
       // win32).
-      PM.add(createX86ELFObjectWriterPass(Out, *this));
+      addX86ELFObjectWriterPass(PM, Out, *this);
       break;
     }
 
@@ -225,3 +225,10 @@ void X86JITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
     PM.add(createX86CodePrinterPass(std::cerr, TM));
 }
 
+bool X86TargetMachine::addPassesToEmitMachineCode(FunctionPassManager &PM,
+                                                  MachineCodeEmitter &MCE) {
+  PM.add(createX86CodeEmitterPass(MCE));
+  // Delete machine code for this function
+  PM.add(createMachineCodeDeleter());
+  return false;
+}
