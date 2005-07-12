@@ -64,6 +64,10 @@ protected: // Can only create subclasses...
   ///
   TargetMachine(const std::string &name, IntrinsicLowering *IL,
                 const Module &M);
+
+  /// getSubtargetImpl - virtual method implemented by subclasses that returns
+  /// a reference to that target's TargetSubtarget-derived member variable.
+  virtual const TargetSubtarget *getSubtargetImpl() const { return 0; }
 public:
   virtual ~TargetMachine();
 
@@ -98,11 +102,14 @@ public:
   virtual const TargetFrameInfo        *getFrameInfo() const { return 0; }
   const TargetData &getTargetData() const { return DataLayout; }
 
-  virtual const TargetSubtarget *getSubtargetImpl() const { return 0; }
+  /// getSubtarget - This method returns a pointer to the specified type of 
+  /// TargetSubtarget.  In debug builds, it verifies that the object being
+  /// returned is of the correct type.
   template<typename STC> STC *getSubtarget() const {
-    assert(getSubtargetImpl() && dynamic_cast<STC*>(getSubtargetImpl()) &&
+    const TargetSubtarget *TST = getSubtargetImpl();
+    assert(getSubtargetImpl() && dynamic_cast<STC*>(TST) &&
            "Not the right kind of subtarget!");
-    return (STC*)getSubtargetImpl();
+    return (STC*)TST;
   }
 
   /// getRegisterInfo - If register information is available, return it.  If
