@@ -16,7 +16,7 @@
 using namespace llvm;
 
 X86Subtarget::X86Subtarget(const Module &M) 
-  : TargetSubtarget(M), stackAlignment(8), 
+  : TargetSubtarget(), stackAlignment(8), 
     indirectExternAndWeakGlobals(false), asmDarwinLinkerStubs(false),
     asmLeadingUnderscore(false), asmAlignmentIsInBytes(false),
     asmPrintDotLocalConstants(false), asmPrintDotLCommConstants(false),

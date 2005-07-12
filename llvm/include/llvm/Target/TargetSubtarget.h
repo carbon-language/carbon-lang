@@ -16,8 +16,6 @@
 
 namespace llvm {
 
-class Module;
-
 //===----------------------------------------------------------------------===//
 ///
 /// TargetSubtarget - Generic base class for all target subtargets.  All
@@ -28,10 +26,7 @@ class TargetSubtarget {
   TargetSubtarget(const TargetSubtarget&);   // DO NOT IMPLEMENT
   void operator=(const TargetSubtarget&);  // DO NOT IMPLEMENT
 protected: // Can only create subclasses...
-  /// This constructor initializes the data members to match that 
-  /// of the specified module.
-  ///
-  TargetSubtarget(const Module &M);
+  TargetSubtarget();
 public:
   virtual ~TargetSubtarget();
 };
