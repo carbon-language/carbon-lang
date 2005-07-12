@@ -151,6 +151,9 @@
 /* Define to 1 if you have the `elf' library (-lelf). */
 #undef HAVE_LIBELF
 
+/* Define to 1 if you have the `pthread' library (-lpthread). */
+#undef HAVE_LIBPTHREAD
+
 /* Define to 1 if you have the <limits.h> header file. */
 #undef HAVE_LIMITS_H
 
@@ -215,6 +218,9 @@
 
 /* Define to have the %a format string */
 #undef HAVE_PRINTF_A
+
+/* Define to 1 if you have the <pthread.h> header file. */
+#undef HAVE_PTHREAD_H
 
 /* Have pthread_mutex_lock */
 #undef HAVE_PTHREAD_MUTEX_LOCK
