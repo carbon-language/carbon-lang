@@ -17,6 +17,6 @@ using namespace llvm;
 //---------------------------------------------------------------------------
 // TargetSubtarget Class
 //
-TargetSubtarget::TargetSubtarget(const Module &M) {}
+TargetSubtarget::TargetSubtarget() {}
 
 TargetSubtarget::~TargetSubtarget() {}
