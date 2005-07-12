@@ -110,7 +110,18 @@ namespace llvm {
              SHT_RELA = 4, SHT_HASH = 5, SHT_DYNAMIC = 6, SHT_NOTE = 7,
              SHT_NOBITS = 8, SHT_REL = 9, SHT_SHLIB = 10, SHT_DYNSYM = 11 };
       enum { SHN_UNDEF = 0, SHN_ABS = 0xFFF1, SHN_COMMON = 0xFFF2 };
-      enum { SHF_WRITE = 1, SHF_ALLOC = 2, SHF_EXECINSTR = 4 };
+      enum {   // SHF - ELF Section Header Flags
+        SHF_WRITE            = 1 << 0, // Writable
+        SHF_ALLOC            = 1 << 1, // Mapped into the process addr space
+        SHF_EXECINSTR        = 1 << 2, // Executable
+        SHF_MERGE            = 1 << 4, // Might be merged if equal
+        SHF_STRINGS          = 1 << 5, // Contains null-terminated strings
+        SHF_INFO_LINK        = 1 << 6, // 'sh_info' contains SHT index
+        SHF_LINK_ORDER       = 1 << 7, // Preserve order after combining
+        SHF_OS_NONCONFORMING = 1 << 8, // nonstandard OS support required
+        SHF_GROUP            = 1 << 9, // Section is a member of a group
+        SHF_TLS              = 1 << 10,// Section holds thread-local data
+      };
 
       ELFSection(const char *name = "", unsigned offset = 0)
         : Name(name), Type(0), Flags(0), Addr(0), Offset(offset), Size(0),
