@@ -208,11 +208,38 @@ namespace llvm {
         OutputBuffer.push_back((X >>  0) & 255);
       }
     }
+    void outxword(uint64_t X) {
+      if (isLittleEndian) {
+        OutputBuffer.push_back((X >>  0) & 255);
+        OutputBuffer.push_back((X >>  8) & 255);
+        OutputBuffer.push_back((X >> 16) & 255);
+        OutputBuffer.push_back((X >> 24) & 255);
+        OutputBuffer.push_back((X >> 32) & 255);
+        OutputBuffer.push_back((X >> 40) & 255);
+        OutputBuffer.push_back((X >> 48) & 255);
+        OutputBuffer.push_back((X >> 56) & 255);
+      } else {
+        OutputBuffer.push_back((X >> 56) & 255);
+        OutputBuffer.push_back((X >> 48) & 255);
+        OutputBuffer.push_back((X >> 40) & 255);
+        OutputBuffer.push_back((X >> 32) & 255);
+        OutputBuffer.push_back((X >> 24) & 255);
+        OutputBuffer.push_back((X >> 16) & 255);
+        OutputBuffer.push_back((X >>  8) & 255);
+        OutputBuffer.push_back((X >>  0) & 255);
+      }
+    }
+    void outaddr32(unsigned X) {
+      outword(X);
+    }
+    void outaddr64(uint64_t X) {
+      outxword(X);
+    }
     void outaddr(uint64_t X) {
       if (!is64Bit)
         outword((unsigned)X);
       else
-        assert(0 && "Emission of 64-bit data not implemented yet!");
+        outxword(X);
     }
 
     // fix functions - Replace an existing entry at an offset.
