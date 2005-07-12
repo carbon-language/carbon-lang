@@ -686,28 +686,47 @@ static void CleanupAndPrepareModules(BugDriver &BD, Module *&Test,
 
         // Rewrite uses of F in global initializers, etc. to uses of a wrapper
         // function that dynamically resolves the calls to F via our JIT API
-        if (F->use_begin() != F->use_end()) {
+        if (!F->use_empty()) {
+          // Create a new global to hold the cached function pointer.
+          Constant *NullPtr = ConstantPointerNull::get(F->getType());
+          GlobalVariable *Cache =
+            new GlobalVariable(F->getType(), false,GlobalValue::InternalLinkage,
+                               NullPtr,F->getName()+".fpcache", F->getParent());
+          
           // Construct a new stub function that will re-route calls to F
           const FunctionType *FuncTy = F->getFunctionType();
           Function *FuncWrapper = new Function(FuncTy,
                                                GlobalValue::InternalLinkage,
                                                F->getName() + "_wrapper",
                                                F->getParent());
-          BasicBlock *Header = new BasicBlock("header", FuncWrapper);
-
+          BasicBlock *EntryBB  = new BasicBlock("entry", FuncWrapper);
+          BasicBlock *DoCallBB = new BasicBlock("usecache", FuncWrapper);
+          BasicBlock *LookupBB = new BasicBlock("lookupfp", FuncWrapper);
+          
+          // Check to see if we already looked up the value.
+          Value *CachedVal = new LoadInst(Cache, "fpcache", EntryBB);
+          Value *IsNull = new SetCondInst(Instruction::SetEQ, CachedVal,
+                                          NullPtr, "isNull", EntryBB);
+          new BranchInst(LookupBB, DoCallBB, IsNull, EntryBB);
+          
           // Resolve the call to function F via the JIT API:
           //
           // call resolver(GetElementPtr...)
-          CallInst *resolve = new CallInst(resolverFunc, ResolverArgs,
-                                           "resolver");
-          Header->getInstList().push_back(resolve);
+          CallInst *Resolver = new CallInst(resolverFunc, ResolverArgs,
+                                            "resolver", LookupBB);
           // cast the result from the resolver to correctly-typed function
-          CastInst *castResolver =
-            new CastInst(resolve, PointerType::get(F->getFunctionType()),
-                         "resolverCast");
-          Header->getInstList().push_back(castResolver);
-
-          // Save the argument list
+          CastInst *CastedResolver =
+            new CastInst(Resolver, PointerType::get(F->getFunctionType()),
+                         "resolverCast", LookupBB);
+          // Save the value in our cache.
+          new StoreInst(CastedResolver, Cache, LookupBB);
+          new BranchInst(DoCallBB, LookupBB);
+          
+          PHINode *FuncPtr = new PHINode(NullPtr->getType(), "fp", DoCallBB);
+          FuncPtr->addIncoming(CastedResolver, LookupBB);
+          FuncPtr->addIncoming(CachedVal, EntryBB);
+          
+          // Save the argument list.
           std::vector<Value*> Args;
           for (Function::arg_iterator i = FuncWrapper->arg_begin(),
                  e = FuncWrapper->arg_end(); i != e; ++i)
@@ -715,17 +734,13 @@ static void CleanupAndPrepareModules(BugDriver &BD, Module *&Test,
 
           // Pass on the arguments to the real function, return its result
           if (F->getReturnType() == Type::VoidTy) {
-            CallInst *Call = new CallInst(castResolver, Args);
-            Header->getInstList().push_back(Call);
-            ReturnInst *Ret = new ReturnInst();
-            Header->getInstList().push_back(Ret);
+            CallInst *Call = new CallInst(FuncPtr, Args, "", DoCallBB);
+            new ReturnInst(DoCallBB);
           } else {
-            CallInst *Call = new CallInst(castResolver, Args, "redir");
-            Header->getInstList().push_back(Call);
-            ReturnInst *Ret = new ReturnInst(Call);
-            Header->getInstList().push_back(Ret);
+            CallInst *Call = new CallInst(FuncPtr, Args, "retval", DoCallBB);
+            new ReturnInst(Call, DoCallBB);
           }
-
+          
           // Use the wrapper function instead of the old function
           F->replaceAllUsesWith(FuncWrapper);
         }
