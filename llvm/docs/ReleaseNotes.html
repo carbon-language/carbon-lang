@@ -77,6 +77,14 @@ a large number of new features and enhancements, described below.</p>
 <h1>
  See <a href="/releases/1.5/docs/ReleaseNotes.html">LLVM 1.5 Release Notes</a>
 </h1>
+<ol>
+  <li>The JIT now uses mutexes to protect its internal data structures. This
+  allows multi-threaded programs to be run from the JIT or interpreter without
+  corruption of the internal data structures. See 
+  <a href="http://llvm.cs.uiuc.edu/PR418">PR418</a> and
+  <a href="http://llvm.cs.uiuc.edu/PR540">PR540</a> for the details.
+  </li>
+</ol>
 </div>
 
 <!--=========================================================================-->
@@ -180,10 +188,6 @@ components, please contact us on the llvmdev list.</p>
 <ul>
   <li>In the JIT, <tt>dlsym()</tt> on a symbol compiled by the JIT will not
   work.</li>
-  <li>The JIT does not use mutexes to protect its internal data structures. As
-  such, execution of a threaded program could cause these data structures to be
-  corrupted.
-  </li>
   <li><a href="http://llvm.cs.uiuc.edu/PR240">The lower-invoke pass does not 
     mark values live across a setjmp as volatile</a>. This missing feature 
   only affects targets whose setjmp/longjmp libraries do not save and restore 
