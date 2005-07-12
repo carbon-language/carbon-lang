@@ -130,6 +130,9 @@
 			<File
 				RelativePath="..\..\lib\Target\TargetSchedInfo.cpp">
 			</File>
+			<File
+				RelativePath="..\..\lib\Target\TargetSubtarget.cpp">
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -164,6 +167,9 @@
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\Target\TargetSchedInfo.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\Target\TargetSubtarget.h">
 			</File>
 		</Filter>
 	</Files>

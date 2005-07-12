@@ -179,6 +179,9 @@
 				RelativePath="..\..\lib\Target\X86\X86RegisterInfo.cpp">
 			</File>
 			<File
+				RelativePath="..\..\lib\Target\X86\X86Subtarget.cpp">
+			</File>
+			<File
 				RelativePath="..\..\lib\Target\X86\X86TargetMachine.cpp">
 			</File>
 		</Filter>
@@ -215,6 +218,9 @@
 			</File>
 			<File
 				RelativePath="..\..\lib\Target\X86\X86RegisterInfo.td">
+			</File>
+			<File
+				RelativePath="..\..\lib\Target\X86\X86Subtarget.h">
 			</File>
 			<File
 				RelativePath="..\..\lib\Target\X86\X86TargetMachine.h">
