@@ -101,22 +101,22 @@ void X86ATTAsmPrinter::printOp(const MachineOperand &MO, bool isCallOp) {
       if (F && isCallOp && F->isExternal()) {
         FnStubs.insert(Name);
         O << "L" << Name << "$stub";
-        return;
-      }
-
-      // Link-once, External, or Weakly-linked global variables need 
-      // non-lazily-resolved stubs
-      if (GV->hasLinkOnceLinkage()) {
+      } else if (GV->hasLinkOnceLinkage()) {
+        // Link-once, External, or Weakly-linked global variables need 
+        // non-lazily-resolved stubs
         LinkOnceStubs.insert(Name);
         O << "L" << Name << "$non_lazy_ptr";
-        return;
-      }
-      if (GV->isExternal() || GV->hasWeakLinkage()) {
+      } else if (GV->isExternal() || GV->hasWeakLinkage()) {
         GVStubs.insert(Name);
         O << "L" << Name << "$non_lazy_ptr";
-        return;
+      } else {
+        O << Mang->getValueName(GV);
       }
-      O << Mang->getValueName(GV);
+      int Offset = MO.getOffset();
+      if (Offset > 0)
+        O << "+" << Offset;
+      else if (Offset < 0)
+        O << Offset;
       return;
     }
     if (!isCallOp) O << '$';
