@@ -81,6 +81,7 @@ namespace llvm {
     }
     virtual uint64_t getConstantPoolEntryAddress(unsigned Index) {
       assert(0 && "CP not implementated yet!");
+      return 0;
     }
 
     /// JIT SPECIFIC FUNCTIONS - DO NOT IMPLEMENT THESE HERE!
