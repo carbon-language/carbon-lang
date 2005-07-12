@@ -58,6 +58,7 @@ bool X86SharedAsmPrinter::doInitialization(Module& M) {
     leadingUnderscore = false;
 #endif
   }
+  
   if (leadingUnderscore || forCygwin || forDarwin)
     GlobalPrefix = "_";
 
@@ -159,6 +160,16 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
     }
   
   if (forDarwin) {
+    // Output stubs for external global variables
+    if (GVStubs.begin() != GVStubs.end())
+      O << "\t.non_lazy_symbol_pointer\n";
+    for (std::set<std::string>::iterator i = GVStubs.begin(), e = GVStubs.end();
+         i != e; ++i) {
+      O << "L" << *i << "$non_lazy_ptr:\n";
+      O << "\t.indirect_symbol " << *i << "\n";
+      O << "\t.long\t0\n";
+    }
+
     // Output stubs for dynamically-linked functions
     unsigned j = 1;
     for (std::set<std::string>::iterator i = FnStubs.begin(), e = FnStubs.end();
@@ -178,16 +189,6 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
 
     O << "\n";
   
-    // Output stubs for external global variables
-    if (GVStubs.begin() != GVStubs.end())
-      O << ".data\n.non_lazy_symbol_pointer\n";
-    for (std::set<std::string>::iterator i = GVStubs.begin(), e = GVStubs.end();
-         i != e; ++i) {
-      O << "L" << *i << "$non_lazy_ptr:\n";
-      O << "\t.indirect_symbol " << *i << "\n";
-      O << "\t.long\t0\n";
-    }
-
     // Output stubs for link-once variables
     if (LinkOnceStubs.begin() != LinkOnceStubs.end())
       O << ".data\n.align 2\n";

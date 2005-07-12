@@ -53,7 +53,8 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
       printMachineInstruction(II);
     }
   }
-  O << "\t.size " << CurrentFnName << ", .-" << CurrentFnName << "\n";
+  if (!forDarwin)
+    O << "\t.size " << CurrentFnName << ", .-" << CurrentFnName << "\n";
 
   // We didn't modify anything.
   return false;
