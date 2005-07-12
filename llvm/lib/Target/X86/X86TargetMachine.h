@@ -19,12 +19,14 @@
 #include "llvm/PassManager.h"
 #include "X86InstrInfo.h"
 #include "X86JITInfo.h"
+#include "X86Subtarget.h"
 
 namespace llvm {
 class IntrinsicLowering;
 
 class X86TargetMachine : public TargetMachine {
   X86InstrInfo    InstrInfo;
+  X86Subtarget    Subtarget;
   TargetFrameInfo FrameInfo;
   X86JITInfo      JITInfo;
 public:
@@ -33,6 +35,7 @@ public:
   virtual const X86InstrInfo     *getInstrInfo() const { return &InstrInfo; }
   virtual const TargetFrameInfo  *getFrameInfo() const { return &FrameInfo; }
   virtual       TargetJITInfo    *getJITInfo()         { return &JITInfo; }
+  virtual const TargetSubtarget  *getSubtargetImpl() const{ return &Subtarget; }
   virtual const MRegisterInfo    *getRegisterInfo() const {
     return &InstrInfo.getRegisterInfo();
   }

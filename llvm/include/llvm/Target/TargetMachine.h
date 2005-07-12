@@ -19,6 +19,7 @@
 
 namespace llvm {
 
+class TargetSubtarget;
 class TargetInstrInfo;
 class TargetInstrDescriptor;
 class TargetJITInfo;
@@ -96,6 +97,13 @@ public:
   virtual const TargetInstrInfo        *getInstrInfo() const { return 0; }
   virtual const TargetFrameInfo        *getFrameInfo() const { return 0; }
   const TargetData &getTargetData() const { return DataLayout; }
+
+  virtual const TargetSubtarget *getSubtargetImpl() const { return 0; }
+  template<typename STC> STC *getSubtarget() const {
+    assert(getSubtargetImpl() && dynamic_cast<STC*>(getSubtargetImpl()) &&
+           "Not the right kind of subtarget!");
+    return (STC*)getSubtargetImpl();
+  }
 
   /// getRegisterInfo - If register information is available, return it.  If
   /// not, return null.  This is kept separate from RegInfo until RegInfo has

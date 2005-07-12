@@ -92,7 +92,9 @@ unsigned X86TargetMachine::getModuleMatchQuality(const Module &M) {
 ///
 X86TargetMachine::X86TargetMachine(const Module &M, IntrinsicLowering *IL)
   : TargetMachine("X86", IL, true, 4, 4, 4, 4, 4),
-    FrameInfo(TargetFrameInfo::StackGrowsDown, 8, -4),
+    Subtarget(M),
+    FrameInfo(TargetFrameInfo::StackGrowsDown,
+              Subtarget.getStackAlignment(), -4),
     JITInfo(*this) {
   // Scalar SSE FP requires at least SSE2
   X86ScalarSSE &= X86Vector >= SSE2;

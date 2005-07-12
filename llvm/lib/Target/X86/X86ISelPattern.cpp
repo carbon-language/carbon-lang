@@ -14,6 +14,7 @@
 #include "X86.h"
 #include "X86InstrBuilder.h"
 #include "X86RegisterInfo.h"
+#include "X86Subtarget.h"
 #include "llvm/CallingConv.h"
 #include "llvm/Constants.h"
 #include "llvm/Instructions.h"
@@ -26,6 +27,7 @@
 #include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetLowering.h"
+#include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/MathExtras.h"
@@ -996,8 +998,13 @@ namespace {
 
     /// TheDAG - The DAG being selected during Select* operations.
     SelectionDAG *TheDAG;
+    
+    /// Subtarget - Keep a pointer to the X86Subtarget around so that we can 
+    /// make the right decision when generating code for different targets.
+    const X86Subtarget *Subtarget;
   public:
     ISel(TargetMachine &TM) : SelectionDAGISel(X86Lowering), X86Lowering(TM) {
+      Subtarget = TM.getSubtarget<const X86Subtarget>();
     }
 
     virtual const char *getPassName() const {
@@ -1314,8 +1321,18 @@ bool ISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM) {
     break;
   case ISD::GlobalAddress:
     if (AM.GV == 0) {
-      AM.GV = cast<GlobalAddressSDNode>(N)->getGlobal();
-      return false;
+      GlobalValue *GV = cast<GlobalAddressSDNode>(N)->getGlobal();
+      // For Darwin, external and weak symbols are indirect, so we want to load
+      // the value at address GV, not the value of GV itself.  This means that
+      // the GlobalAddress must be in the base or index register of the address,
+      // not the GV offset field.
+      if (Subtarget->getIndirectExternAndWeakGlobals() && 
+          (GV->hasWeakLinkage() || GV->isExternal())) {
+        break;
+      } else {
+        AM.GV = GV;
+        return false;
+      }
     }
     break;
   case ISD::Constant:
@@ -2236,7 +2253,15 @@ unsigned ISel::SelectExpr(SDOperand N) {
     return Result;
   case ISD::GlobalAddress: {
     GlobalValue *GV = cast<GlobalAddressSDNode>(N)->getGlobal();
-    BuildMI(BB, X86::MOV32ri, 1, Result).addGlobalAddress(GV);
+    // For Darwin, external and weak symbols are indirect, so we want to load
+    // the value at address GV, not the value of GV itself.
+    if (Subtarget->getIndirectExternAndWeakGlobals() && 
+        (GV->hasWeakLinkage() || GV->isExternal())) {
+      BuildMI(BB, X86::MOV32rm, 4, Result).addReg(0).addZImm(1).addReg(0)
+        .addGlobalAddress(GV, false, 0);
+    } else {
+      BuildMI(BB, X86::MOV32ri, 1, Result).addGlobalAddress(GV);
+    }
     return Result;
   }
   case ISD::ExternalSymbol: {
