@@ -590,51 +590,37 @@ void AlphaISel::EmitFunctionEntryCode(Function &Fn, MachineFunction &MF) {
 
 static void getValueInfo(const Value* v, int& type, int& fun, int& offset)
 {
+  fun = type = offset = 0;
   if (v == NULL) {
     type = 0;
-    fun = 0;
-    offset = 0;
   } else if (const GlobalValue* GV = dyn_cast<GlobalValue>(v)) {
     type = 1;
-    fun = 0;
     const Module* M = GV->getParent();
-      int i = 0;
-      for(Module::const_global_iterator ii = M->global_begin(); &*ii != GV; ++ii)
-        ++i;
-      offset = i;
+    for(Module::const_global_iterator ii = M->global_begin(); &*ii != GV; ++ii)
+      ++offset;
   } else if (const Argument* Arg = dyn_cast<Argument>(v)) {
     type = 2;
     const Function* F = Arg->getParent();
     const Module* M = F->getParent();
-    int i = 0;
     for(Module::const_iterator ii = M->begin(); &*ii != F; ++ii)
-      ++i;
-    fun = i;
-    i = 0;
+      ++fun;
     for(Function::const_arg_iterator ii = F->arg_begin(); &*ii != Arg; ++ii)
-      ++i;
-    offset = i;
+      ++offset;
   } else if (const Instruction* I = dyn_cast<Instruction>(v)) {
     assert(dyn_cast<PointerType>(I->getType()));
     type = 3;
     const BasicBlock* bb = I->getParent();
     const Function* F = bb->getParent();
     const Module* M = F->getParent();
-    int i = 0;
     for(Module::const_iterator ii = M->begin(); &*ii != F; ++ii)
-      ++i;
-    fun = i;
-    i = 0;
+      ++fun;
     for(Function::const_iterator ii = F->begin(); &*ii != bb; ++ii)
-      i += ii->size();
+      offset += ii->size();
     for(BasicBlock::const_iterator ii = bb->begin(); &*ii != I; ++ii)
-      ++i;
-    offset = i;
+      ++offset;
   } else if (const Constant* C = dyn_cast<Constant>(v)) {
     //Don't know how to look these up yet
     type = 0;
-    fun = 0;
-    offset = 0;
   } else {
     assert(0 && "Error in value marking");
   }
@@ -1485,7 +1471,7 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
             //FIXME: first check for Scaled Adds and Subs!
             ConstantSDNode* CSD = NULL;
             if(!isMul && N.getOperand(0).getOperand(0).getOpcode() == ISD::SHL &&
-               (CSD = cast<ConstantSDNode>(N.getOperand(0).getOperand(0).getOperand(1))) &&
+               (CSD = dyn_cast<ConstantSDNode>(N.getOperand(0).getOperand(0).getOperand(1))) &&
                (CSD->getValue() == 2 || CSD->getValue() == 3))
             {
               bool use4 = CSD->getValue() == 2;
@@ -1495,7 +1481,7 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
                       2,Result).addReg(Tmp1).addReg(Tmp2);
             }
             else if(isAdd && N.getOperand(0).getOperand(1).getOpcode() == ISD::SHL &&
-                    (CSD = cast<ConstantSDNode>(N.getOperand(0).getOperand(1).getOperand(1))) &&
+                    (CSD = dyn_cast<ConstantSDNode>(N.getOperand(0).getOperand(1).getOperand(1))) &&
                     (CSD->getValue() == 2 || CSD->getValue() == 3))
             {
               bool use4 = CSD->getValue() == 2;
@@ -1504,7 +1490,7 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
               BuildMI(BB, use4?Alpha::S4ADDL:Alpha::S8ADDL, 2,Result).addReg(Tmp1).addReg(Tmp2);
             }
             else if(N.getOperand(0).getOperand(1).getOpcode() == ISD::Constant &&
-               cast<ConstantSDNode>(N.getOperand(0).getOperand(1))->getValue() <= 255)
+                    cast<ConstantSDNode>(N.getOperand(0).getOperand(1))->getValue() <= 255)
             { //Normal imm add/sub
               Opc = isAdd ? Alpha::ADDLi : (isMul ? Alpha::MULLi : Alpha::SUBLi);
               Tmp1 = SelectExpr(N.getOperand(0).getOperand(0));
