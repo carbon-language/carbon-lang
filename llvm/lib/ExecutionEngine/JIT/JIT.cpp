@@ -30,13 +30,15 @@
 using namespace llvm;
 
 JIT::JIT(ModuleProvider *MP, TargetMachine &tm, TargetJITInfo &tji)
-  : ExecutionEngine(MP), TM(tm), TJI(tji), PM(MP) {
+  : ExecutionEngine(MP), TM(tm), TJI(tji), state(MP) {
   setTargetData(TM.getTargetData());
 
   // Initialize MCE
   MCE = createEmitter(*this);
 
   // Add target data
+  MutexGuard locked(lock);
+  FunctionPassManager& PM = state.getPM(locked);
   PM.add(new TargetData(TM.getTargetData()));
 
   // Compile LLVM Code down to machine code in the intermediate representation
@@ -216,18 +218,20 @@ GenericValue JIT::runFunction(Function *F,
 void JIT::runJITOnFunction(Function *F) {
   static bool isAlreadyCodeGenerating = false;
   assert(!isAlreadyCodeGenerating && "Error: Recursive compilation detected!");
+	
+  MutexGuard locked(lock);
 
   // JIT the function
   isAlreadyCodeGenerating = true;
-  PM.run(*F);
+  state.getPM(locked).run(*F);
   isAlreadyCodeGenerating = false;
 
   // If the function referred to a global variable that had not yet been
   // emitted, it allocates memory for the global, but doesn't emit it yet.  Emit
   // all of these globals now.
-  while (!PendingGlobals.empty()) {
-    const GlobalVariable *GV = PendingGlobals.back();
-    PendingGlobals.pop_back();
+  while (!state.getPendingGlobals(locked).empty()) {
+    const GlobalVariable *GV = state.getPendingGlobals(locked).back();
+    state.getPendingGlobals(locked).pop_back();
     EmitGlobalVariable(GV);
   }
 }
@@ -236,6 +240,8 @@ void JIT::runJITOnFunction(Function *F) {
 /// specified function, compiling it if neccesary.
 ///
 void *JIT::getPointerToFunction(Function *F) {
+  MutexGuard locked(lock);
+
   if (void *Addr = getPointerToGlobalIfAvailable(F))
     return Addr;   // Check if function already code gen'd
 
@@ -270,6 +276,8 @@ void *JIT::getPointerToFunction(Function *F) {
 /// variable, possibly emitting it to memory if needed.  This is used by the
 /// Emitter.
 void *JIT::getOrEmitGlobalVariable(const GlobalVariable *GV) {
+  MutexGuard locked(lock);
+
   void *Ptr = getPointerToGlobalIfAvailable(GV);
   if (Ptr) return Ptr;
 
@@ -287,7 +295,7 @@ void *JIT::getOrEmitGlobalVariable(const GlobalVariable *GV) {
     // compilation.
     uint64_t S = getTargetData().getTypeSize(GV->getType()->getElementType());
     Ptr = new char[(size_t)S];
-    PendingGlobals.push_back(GV);
+    state.getPendingGlobals(locked).push_back(GV);
   }
   addGlobalMapping(GV, Ptr);
   return Ptr;

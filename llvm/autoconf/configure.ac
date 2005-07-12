@@ -606,12 +606,10 @@ dnl===
 dnl===-----------------------------------------------------------------------===
 
 dnl Configure header files
-AC_CONFIG_HEADERS(include/llvm/Config/config.h)
-
+AC_CONFIG_HEADERS([include/llvm/Config/config.h])
 AC_CONFIG_HEADERS([include/llvm/Support/DataTypes.h])
 AC_CONFIG_HEADERS([include/llvm/ADT/hash_map])
 AC_CONFIG_HEADERS([include/llvm/ADT/hash_set])
-AC_CONFIG_HEADERS([include/llvm/Support/ThreadSupport.h])
 AC_CONFIG_HEADERS([include/llvm/ADT/iterator])
 
 dnl Configure the makefile's configuration data

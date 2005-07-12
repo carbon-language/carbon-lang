@@ -50,16 +50,18 @@ ExecutionEngine::~ExecutionEngine() {
 /// at the specified address.
 ///
 const GlobalValue *ExecutionEngine::getGlobalValueAtAddress(void *Addr) {
+  MutexGuard locked(lock);
+
   // If we haven't computed the reverse mapping yet, do so first.
-  if (GlobalAddressReverseMap.empty()) {
+  if (state.getGlobalAddressReverseMap(locked).empty()) {
     for (std::map<const GlobalValue*, void *>::iterator I =
-           GlobalAddressMap.begin(), E = GlobalAddressMap.end(); I != E; ++I)
-      GlobalAddressReverseMap.insert(std::make_pair(I->second, I->first));
+           state.getGlobalAddressMap(locked).begin(), E = state.getGlobalAddressMap(locked).end(); I != E; ++I)
+      state.getGlobalAddressReverseMap(locked).insert(std::make_pair(I->second, I->first));
   }
 
   std::map<void *, const GlobalValue*>::iterator I =
-    GlobalAddressReverseMap.find(Addr);
-  return I != GlobalAddressReverseMap.end() ? I->second : 0;
+    state.getGlobalAddressReverseMap(locked).find(Addr);
+  return I != state.getGlobalAddressReverseMap(locked).end() ? I->second : 0;
 }
 
 // CreateArgv - Turn a vector of strings into a nice argv style array of
@@ -168,8 +170,9 @@ void *ExecutionEngine::getPointerToGlobal(const GlobalValue *GV) {
   if (Function *F = const_cast<Function*>(dyn_cast<Function>(GV)))
     return getPointerToFunction(F);
 
-  assert(GlobalAddressMap[GV] && "Global hasn't had an address allocated yet?");
-  return GlobalAddressMap[GV];
+  MutexGuard locked(lock);
+  assert(state.getGlobalAddressMap(locked)[GV] && "Global hasn't had an address allocated yet?");
+  return state.getGlobalAddressMap(locked)[GV];
 }
 
 /// FIXME: document

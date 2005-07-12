@@ -30489,14 +30489,11 @@ _ACEOF
 
           ac_config_headers="$ac_config_headers include/llvm/Config/config.h"
 
-
           ac_config_headers="$ac_config_headers include/llvm/Support/DataTypes.h"
 
           ac_config_headers="$ac_config_headers include/llvm/ADT/hash_map"
 
           ac_config_headers="$ac_config_headers include/llvm/ADT/hash_set"
-
-          ac_config_headers="$ac_config_headers include/llvm/Support/ThreadSupport.h"
 
           ac_config_headers="$ac_config_headers include/llvm/ADT/iterator"
 
@@ -31106,7 +31103,6 @@ do
   "include/llvm/Support/DataTypes.h" ) CONFIG_HEADERS="$CONFIG_HEADERS include/llvm/Support/DataTypes.h" ;;
   "include/llvm/ADT/hash_map" ) CONFIG_HEADERS="$CONFIG_HEADERS include/llvm/ADT/hash_map" ;;
   "include/llvm/ADT/hash_set" ) CONFIG_HEADERS="$CONFIG_HEADERS include/llvm/ADT/hash_set" ;;
-  "include/llvm/Support/ThreadSupport.h" ) CONFIG_HEADERS="$CONFIG_HEADERS include/llvm/Support/ThreadSupport.h" ;;
   "include/llvm/ADT/iterator" ) CONFIG_HEADERS="$CONFIG_HEADERS include/llvm/ADT/iterator" ;;
   *) { { echo "$as_me:$LINENO: error: invalid argument: $ac_config_target" >&5
 echo "$as_me: error: invalid argument: $ac_config_target" >&2;}

@@ -19,6 +19,7 @@
 #include <map>
 #include <cassert>
 #include <string>
+#include "llvm/Support/MutexGuard.h"
 
 namespace llvm {
 
@@ -33,10 +34,9 @@ class TargetData;
 class Type;
 class IntrinsicLowering;
 
-class ExecutionEngine {
-  Module &CurMod;
-  const TargetData *TD;
 
+class ExecutionEngineState {
+private:
   /// GlobalAddressMap - A mapping between LLVM global values and their
   /// actualized version...
   std::map<const GlobalValue*, void *> GlobalAddressMap;
@@ -46,6 +46,24 @@ class ExecutionEngine {
   /// at the address.  This map is not computed unless getGlobalValueAtAddress
   /// is called at some point.
   std::map<void *, const GlobalValue*> GlobalAddressReverseMap;
+
+public:
+  std::map<const GlobalValue*, void *>& getGlobalAddressMap(const MutexGuard& locked) {
+    return GlobalAddressMap;
+  }
+
+  std::map<void *, const GlobalValue*>& getGlobalAddressReverseMap(const MutexGuard& locked) {
+    return GlobalAddressReverseMap;
+  }
+};
+
+
+class ExecutionEngine {
+  Module &CurMod;
+  const TargetData *TD;
+
+  ExecutionEngineState state;
+
 protected:
   ModuleProvider *MP;
 
@@ -54,6 +72,10 @@ protected:
   }
 
 public:
+  /// lock - This lock is protects the ExecutionEngine, JIT, JITResolver and JITEmitter classes.
+  /// It must be held while changing the internal state of any of those classes.
+  sys::Mutex lock; // Used to make this class and subclasses thread-safe
+
   ExecutionEngine(ModuleProvider *P);
   ExecutionEngine(Module *M);
   virtual ~ExecutionEngine();
@@ -81,13 +103,15 @@ public:
 
 
   void addGlobalMapping(const GlobalValue *GV, void *Addr) {
-    void *&CurVal = GlobalAddressMap[GV];
+    MutexGuard locked(lock);
+
+    void *&CurVal = state.getGlobalAddressMap(locked)[GV];
     assert((CurVal == 0 || Addr == 0) && "GlobalMapping already established!");
     CurVal = Addr;
 
     // If we are using the reverse mapping, add it too
-    if (!GlobalAddressReverseMap.empty()) {
-      const GlobalValue *&V = GlobalAddressReverseMap[Addr];
+    if (!state.getGlobalAddressReverseMap(locked).empty()) {
+      const GlobalValue *&V = state.getGlobalAddressReverseMap(locked)[Addr];
       assert((V == 0 || GV == 0) && "GlobalMapping already established!");
       V = GV;
     }
@@ -96,21 +120,25 @@ public:
   /// clearAllGlobalMappings - Clear all global mappings and start over again
   /// use in dynamic compilation scenarios when you want to move globals
   void clearAllGlobalMappings() {
-    GlobalAddressMap.clear();
-    GlobalAddressReverseMap.clear();
+    MutexGuard locked(lock);
+
+    state.getGlobalAddressMap(locked).clear();
+    state.getGlobalAddressReverseMap(locked).clear();
   }
 
   /// updateGlobalMapping - Replace an existing mapping for GV with a new
   /// address.  This updates both maps as required.
   void updateGlobalMapping(const GlobalValue *GV, void *Addr) {
-    void *&CurVal = GlobalAddressMap[GV];
-    if (CurVal && !GlobalAddressReverseMap.empty())
-      GlobalAddressReverseMap.erase(CurVal);
+    MutexGuard locked(lock);
+
+    void *&CurVal = state.getGlobalAddressMap(locked)[GV];
+    if (CurVal && !state.getGlobalAddressReverseMap(locked).empty())
+      state.getGlobalAddressReverseMap(locked).erase(CurVal);
     CurVal = Addr;
 
     // If we are using the reverse mapping, add it too
-    if (!GlobalAddressReverseMap.empty()) {
-      const GlobalValue *&V = GlobalAddressReverseMap[Addr];
+    if (!state.getGlobalAddressReverseMap(locked).empty()) {
+      const GlobalValue *&V = state.getGlobalAddressReverseMap(locked)[Addr];
       assert((V == 0 || GV == 0) && "GlobalMapping already established!");
       V = GV;
     }
@@ -120,8 +148,10 @@ public:
   /// global value if it is available, otherwise it returns null.
   ///
   void *getPointerToGlobalIfAvailable(const GlobalValue *GV) {
-    std::map<const GlobalValue*, void*>::iterator I = GlobalAddressMap.find(GV);
-    return I != GlobalAddressMap.end() ? I->second : 0;
+    MutexGuard locked(lock);
+
+    std::map<const GlobalValue*, void*>::iterator I = state.getGlobalAddressMap(locked).find(GV);
+    return I != state.getGlobalAddressMap(locked).end() ? I->second : 0;
   }
 
   /// getPointerToGlobal - This returns the address of the specified global

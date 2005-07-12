@@ -27,17 +27,34 @@ class TargetMachine;
 class TargetJITInfo;
 class MachineCodeEmitter;
 
-class JIT : public ExecutionEngine {
-  TargetMachine &TM;       // The current target we are compiling to
-  TargetJITInfo &TJI;      // The JITInfo for the target we are compiling to
-
+class JITState {
+private:
   FunctionPassManager PM;  // Passes to compile a function
-  MachineCodeEmitter *MCE; // MCE object
 
   /// PendingGlobals - Global variables which have had memory allocated for them
   /// while a function was code generated, but which have not been initialized
   /// yet.
   std::vector<const GlobalVariable*> PendingGlobals;
+
+public:
+  JITState(ModuleProvider *MP) : PM(MP) {}
+
+  FunctionPassManager& getPM(const MutexGuard& locked) {
+    return PM;
+  }
+
+  std::vector<const GlobalVariable*>& getPendingGlobals(const MutexGuard& locked) {
+    return PendingGlobals;
+  }
+};
+
+
+class JIT : public ExecutionEngine {
+  TargetMachine &TM;       // The current target we are compiling to
+  TargetJITInfo &TJI;      // The JITInfo for the target we are compiling to
+  MachineCodeEmitter *MCE; // MCE object
+
+  JITState state;
 
   JIT(ModuleProvider *MP, TargetMachine &tm, TargetJITInfo &tji);
 public:

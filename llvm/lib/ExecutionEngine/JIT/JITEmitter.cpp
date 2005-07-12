@@ -120,6 +120,28 @@ void JITMemoryManager::endFunctionBody(unsigned char *FunctionEnd) {
 // JIT lazy compilation code.
 //
 namespace {
+  class JITResolverState {
+  private:
+    /// FunctionToStubMap - Keep track of the stub created for a particular
+    /// function so that we can reuse them if necessary.
+    std::map<Function*, void*> FunctionToStubMap;
+
+    /// StubToFunctionMap - Keep track of the function that each stub
+    /// corresponds to.
+    std::map<void*, Function*> StubToFunctionMap;
+  
+  public:
+    std::map<Function*, void*>& getFunctionToStubMap(const MutexGuard& locked) {
+      assert(locked.holds(TheJIT->lock));
+      return FunctionToStubMap;
+    }
+    
+    std::map<void*, Function*>& getStubToFunctionMap(const MutexGuard& locked) {
+      assert(locked.holds(TheJIT->lock));
+      return StubToFunctionMap;
+    }
+  };
+  
   /// JITResolver - Keep track of, and resolve, call sites for functions that
   /// have not yet been compiled.
   class JITResolver {
@@ -130,13 +152,7 @@ namespace {
     /// rewrite instructions to use.
     TargetJITInfo::LazyResolverFn LazyResolverFn;
 
-    // FunctionToStubMap - Keep track of the stub created for a particular
-    // function so that we can reuse them if necessary.
-    std::map<Function*, void*> FunctionToStubMap;
-
-    // StubToFunctionMap - Keep track of the function that each stub corresponds
-    // to.
-    std::map<void*, Function*> StubToFunctionMap;
+    JITResolverState state;
 
     /// ExternalFnToStubMap - This is the equivalent of FunctionToStubMap for
     /// external functions.
@@ -159,8 +175,9 @@ namespace {
     /// instruction without the use of a stub, record the location of the use so
     /// we know which function is being used at the location.
     void *AddCallbackAtLocation(Function *F, void *Location) {
+      MutexGuard locked(TheJIT->lock);
       /// Get the target-specific JIT resolver function.
-      StubToFunctionMap[Location] = F;
+      state.getStubToFunctionMap(locked)[Location] = F;
       return (void*)LazyResolverFn;
     }
 
@@ -181,8 +198,10 @@ static JITResolver &getJITResolver(MachineCodeEmitter *MCE = 0) {
 /// getFunctionStub - This returns a pointer to a function stub, creating
 /// one on demand as needed.
 void *JITResolver::getFunctionStub(Function *F) {
+  MutexGuard locked(TheJIT->lock);
+
   // If we already have a stub for this function, recycle it.
-  void *&Stub = FunctionToStubMap[F];
+  void *&Stub = state.getFunctionToStubMap(locked)[F];
   if (Stub) return Stub;
 
   // Call the lazy resolver function unless we already KNOW it is an external
@@ -207,7 +226,7 @@ void *JITResolver::getFunctionStub(Function *F) {
 
   // Finally, keep track of the stub-to-Function mapping so that the
   // JITCompilerFn knows which function to compile!
-  StubToFunctionMap[Stub] = F;
+  state.getStubToFunctionMap(locked)[Stub] = F;
   return Stub;
 }
 
@@ -231,16 +250,21 @@ void *JITResolver::getExternalFunctionStub(void *FnAddr) {
 void *JITResolver::JITCompilerFn(void *Stub) {
   JITResolver &JR = getJITResolver();
 
+  MutexGuard locked(TheJIT->lock);
+
   // The address given to us for the stub may not be exactly right, it might be
   // a little bit after the stub.  As such, use upper_bound to find it.
   std::map<void*, Function*>::iterator I =
-    JR.StubToFunctionMap.upper_bound(Stub);
-  assert(I != JR.StubToFunctionMap.begin() && "This is not a known stub!");
+    JR.state.getStubToFunctionMap(locked).upper_bound(Stub);
+  assert(I != JR.state.getStubToFunctionMap(locked).begin() && "This is not a known stub!");
   Function *F = (--I)->second;
 
-  // The target function will rewrite the stub so that the compilation callback
-  // function is no longer called from this stub.
-  JR.StubToFunctionMap.erase(I);
+  // We might like to remove the stub from the StubToFunction map.
+  // We can't do that! Multiple threads could be stuck, waiting to acquire the
+  // lock above. As soon as the 1st function finishes compiling the function,
+  // the next one will be released, and needs to be able to find the function it needs
+  // to call.
+  //JR.state.getStubToFunctionMap(locked).erase(I);
 
   DEBUG(std::cerr << "JIT: Lazily resolving function '" << F->getName()
                   << "' In stub ptr = " << Stub << " actual ptr = "
@@ -249,7 +273,7 @@ void *JITResolver::JITCompilerFn(void *Stub) {
   void *Result = TheJIT->getPointerToFunction(F);
 
   // We don't need to reuse this stub in the future, as F is now compiled.
-  JR.FunctionToStubMap.erase(F);
+  JR.state.getFunctionToStubMap(locked).erase(F);
 
   // FIXME: We could rewrite all references to this stub if we knew them.
   return Result;
