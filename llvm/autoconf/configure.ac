@@ -417,6 +417,7 @@ dnl===-----------------------------------------------------------------------===
 dnl libelf is for sparc only; we can ignore it if we don't have it
 AC_CHECK_LIB(elf, elf_begin)
 
+
 dnl lt_dlopen may be required for plugin support.
 AC_SEARCH_LIBS(lt_dlopen,ltdl,AC_DEFINE([HAVE_LT_DLOPEN],[1],
               [Define if lt_dlopen() is available on this platform]),
@@ -434,6 +435,7 @@ AC_SEARCH_LIBS(mallinfo,malloc,AC_DEFINE([HAVE_MALLINFO],[1],
 
 dnl pthread locking functions are optional - but llvm will not be thread-safe
 dnl without locks.
+AC_CHECK_LIB(pthread,pthread_mutex_init)
 AC_SEARCH_LIBS(pthread_mutex_lock,pthread,
                AC_DEFINE([HAVE_PTHREAD_MUTEX_LOCK],[1],
                          [Have pthread_mutex_lock]))
@@ -456,7 +458,8 @@ AC_HEADER_SYS_WAIT
 AC_HEADER_TIME
 
 AC_CHECK_HEADERS([dlfcn.h execinfo.h fcntl.h inttypes.h limits.h link.h])
-AC_CHECK_HEADERS([malloc.h signal.h stdint.h unistd.h utime.h windows.h])
+AC_CHECK_HEADERS([malloc.h pthread.h signal.h stdint.h unistd.h utime.h])
+AC_CHECK_HEADERS([windows.h])
 AC_CHECK_HEADERS([sys/mman.h sys/param.h sys/resource.h sys/time.h sys/types.h])
 AC_CHECK_HEADERS([rw/stdex/hash_map.h rw/stdex/hash_set.h])
 
