@@ -33,7 +33,7 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   // Print out labels for the function.
   O << "\t.text\n";
-  emitAlignment(4);
+  emitAlignment(4);     // FIXME: This should be parameterized somewhere.
   O << "\t.globl\t" << CurrentFnName << "\n";
   if (!forCygwin && !forDarwin)
     O << "\t.type\t" << CurrentFnName << ", @function\n";
