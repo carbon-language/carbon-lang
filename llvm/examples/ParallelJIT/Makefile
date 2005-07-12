@@ -1,8 +1,8 @@
-##===- examples/HowToUseJIT/Makefile -----------------------*- Makefile -*-===##
+##===- examples/ParallelJIT/Makefile -----------------------*- Makefile -*-===##
 # 
 #                     The LLVM Compiler Infrastructure
 #
-# This file was developed by Valery A. Khamenya and is distributed under
+# This file was developed by Reid A. Spencer and is distributed under
 # the University of Illinois Open Source License. See LICENSE.TXT for details.
 # 
 ##===----------------------------------------------------------------------===##
