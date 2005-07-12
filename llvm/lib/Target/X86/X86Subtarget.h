@@ -21,7 +21,8 @@ class Module;
 
 class X86Subtarget : public TargetSubtarget {
 protected:
-  /// Used by the target machine to set up the target frame info
+  /// stackAlignment - The minimum alignment known to hold of the stack frame on
+  /// entry to the function and which must be maintained by every function.
   unsigned stackAlignment;
   
   /// Used by instruction selector
@@ -39,16 +40,18 @@ public:
   /// of the specified module.
   ///
   X86Subtarget(const Module &M);
-  
-  /// Returns the preferred stack alignment for the current target triple, or
-  /// the default if no target triple is set.
+
+  /// getStackAlignment - Returns the minimum alignment known to hold of the
+  /// stack frame on entry to the function and which must be maintained by every
+  /// function for this subtarget.
   unsigned getStackAlignment() const { return stackAlignment; }
   
   /// Returns true if the instruction selector should treat global values
   /// referencing external or weak symbols as indirect rather than direct 
   /// references.
-  bool getIndirectExternAndWeakGlobals() const { 
-    return indirectExternAndWeakGlobals; }
+  bool getIndirectExternAndWeakGlobals() const {
+    return indirectExternAndWeakGlobals;
+  }
 };
 } // End llvm namespace
 

@@ -21,7 +21,7 @@ X86Subtarget::X86Subtarget(const Module &M)
     asmLeadingUnderscore(false), asmAlignmentIsInBytes(false),
     asmPrintDotLocalConstants(false), asmPrintDotLCommConstants(false),
     asmPrintConstantAlignment(false) {
-  // Declare a boolean for each platform
+  // Declare a boolean for each major platform.
   bool forCygwin = false;
   bool forDarwin = false;
   bool forWindows = false;
@@ -40,20 +40,18 @@ X86Subtarget::X86Subtarget(const Module &M)
 #elif defined(__APPLE__)
     forDarwin = true;
 #elif defined(_WIN32)
-    forWindws = true;
+    forWindows = true;
 #endif
   }
 
   if (forCygwin) {
     asmLeadingUnderscore = true;
-  }
-  if (forDarwin) {
+  } else if (forDarwin) {
     stackAlignment = 16;
     indirectExternAndWeakGlobals = true;
     asmDarwinLinkerStubs = true;
     asmLeadingUnderscore = true;
     asmPrintDotLCommConstants = true;
-  }
-  if (forWindows) {
+  } else if (forWindows) {
   }
 }
