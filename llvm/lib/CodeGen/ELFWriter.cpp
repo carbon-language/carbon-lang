@@ -197,11 +197,10 @@ bool ELFWriter::doInitialization(Module &M) {
   outaddr(0);                        // e_shoff
   outword(e_flags);                  // e_flags = whatever the target wants
 
-  assert(!is64Bit && "These sizes need to be adjusted for 64-bit!");
-  outhalf(52);                       // e_ehsize = ELF header size
+  outhalf(is64Bit ? 64 : 52);        // e_ehsize = ELF header size
   outhalf(0);                        // e_phentsize = prog header entry size
   outhalf(0);                        // e_phnum     = # prog header entries = 0
-  outhalf(40);                       // e_shentsize = sect header entry size
+  outhalf(is64Bit ? 64 : 40);        // e_shentsize = sect header entry size
 
   
   ELFHeader_e_shnum_Offset = OutputBuffer.size();
@@ -409,27 +408,36 @@ void ELFWriter::EmitSymbolTable() {
 
   // Now that we have emitted the string table and know the offset into the
   // string table of each symbol, emit the symbol table itself.
-  assert(!is64Bit && "Should this be 8 byte aligned for 64-bit?"
-         " (check .Align below also)");
-  align(4);
+  align(is64Bit ? 8 : 4);
 
   SectionList.push_back(ELFSection(".symtab", OutputBuffer.size()));
   ELFSection &SymTab = SectionList.back();
   SymTab.Type = ELFSection::SHT_SYMTAB;
-  SymTab.Align = 4;   // FIXME: check for ELF64
+  SymTab.Align = is64Bit ? 8 : 4;
   SymTab.Link = SectionList.size()-2;  // Section Index of .strtab.
   SymTab.Info = FirstNonLocalSymbol;   // First non-STB_LOCAL symbol.
   SymTab.EntSize = 16; // Size of each symtab entry. FIXME: wrong for ELF64
 
-  assert(!is64Bit && "check this!");
-  for (unsigned i = 0, e = SymbolTable.size(); i != e; ++i) {
-    ELFSym &Sym = SymbolTable[i];
-    outword(Sym.NameIdx);
-    outaddr(Sym.Value);
-    outword(Sym.Size);
-    outbyte(Sym.Info);
-    outbyte(Sym.Other);
-    outhalf(Sym.SectionIdx);
+  if (!is64Bit) {   // 32-bit and 64-bit formats are shuffled a bit.
+    for (unsigned i = 0, e = SymbolTable.size(); i != e; ++i) {
+      ELFSym &Sym = SymbolTable[i];
+      outword(Sym.NameIdx);
+      outaddr32(Sym.Value);
+      outword(Sym.Size);
+      outbyte(Sym.Info);
+      outbyte(Sym.Other);
+      outhalf(Sym.SectionIdx);
+    }
+  } else {
+    for (unsigned i = 0, e = SymbolTable.size(); i != e; ++i) {
+      ELFSym &Sym = SymbolTable[i];
+      outword(Sym.NameIdx);
+      outbyte(Sym.Info);
+      outbyte(Sym.Other);
+      outhalf(Sym.SectionIdx);
+      outaddr64(Sym.Value);
+      outxword(Sym.Size);
+    }
   }
 
   SymTab.Size = OutputBuffer.size()-SymTab.Offset;
