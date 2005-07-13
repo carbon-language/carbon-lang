@@ -906,7 +906,12 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
 
     SDOperand Tmp4;
     switch (getTypeAction(Node->getOperand(3).getValueType())) {
-    case Expand: assert(0 && "Cannot expand this yet!");
+    case Expand: {
+      // Length is too big, just take the lo-part of the length.
+      SDOperand HiPart;
+      ExpandOp(Node->getOperand(3), HiPart, Tmp4);
+      break;
+    }
     case Legal:
       Tmp4 = LegalizeOp(Node->getOperand(3));
       break;
