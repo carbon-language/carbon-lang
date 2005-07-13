@@ -66,14 +66,14 @@ namespace llvm
     /// @name Platform Dependent Data
     /// @{
     private:
-        void* data_; ///< We don't know what the data will be
+      void* data_; ///< We don't know what the data will be
 
     /// @}
     /// @name Do Not Implement
     /// @{
     private: 
-	Mutex(const Mutex & original);
-	void operator=(const Mutex &);
+	    Mutex(const Mutex & original);
+	    void operator=(const Mutex &);
     /// @}
     };
   }

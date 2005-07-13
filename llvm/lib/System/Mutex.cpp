@@ -14,15 +14,16 @@
 #include "llvm/System/Mutex.h"
 #include "llvm/Config/config.h"
 
-namespace llvm {
-using namespace sys;
-
 //===----------------------------------------------------------------------===//
 //=== WARNING: Implementation here must contain only TRULY operating system
 //===          independent code.
 //===----------------------------------------------------------------------===//
 
 #if defined(HAVE_PTHREAD_H) && defined(HAVE_PTHREAD_MUTEX_LOCK)
+
+namespace llvm {
+using namespace sys;
+
 #include <cassert>
 #include <pthread.h>
 #include <stdlib.h>
@@ -132,6 +133,7 @@ Mutex::tryacquire()
 }
 
 }
+
 #elif defined(LLVM_ON_UNIX)
 #include "Unix/Mutex.inc"
 #elif defined( LLVM_ON_WIN32)

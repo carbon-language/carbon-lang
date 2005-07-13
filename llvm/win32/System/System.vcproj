@@ -117,6 +117,9 @@
 				RelativePath="..\..\lib\System\Memory.cpp">
 			</File>
 			<File
+				RelativePath="..\..\lib\System\Mutex.cpp">
+			</File>
+			<File
 				RelativePath="..\..\lib\System\Path.cpp">
 			</File>
 			<File
@@ -146,6 +149,9 @@
 				RelativePath="..\..\include\llvm\System\Memory.h">
 			</File>
 			<File
+				RelativePath="..\..\include\llvm\System\Mutex.h">
+			</File>
+			<File
 				RelativePath="..\..\include\llvm\System\Path.h">
 			</File>
 			<File
@@ -172,6 +178,9 @@
 			</File>
 			<File
 				RelativePath="..\..\lib\System\Win32\Memory.inc">
+			</File>
+			<File
+				RelativePath="..\..\lib\System\Win32\Mutex.inc">
 			</File>
 			<File
 				RelativePath="..\..\lib\System\Win32\Path.inc">

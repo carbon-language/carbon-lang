@@ -2,7 +2,7 @@
 // 
 //                     The LLVM Compiler Infrastructure
 //
-// This file was developed by Reid Spencer and is distributed under the 
+// This file was developed by Jeff Cohen and is distributed under the 
 // University of Illinois Open Source License. See LICENSE.TXT for details.
 // 
 //===----------------------------------------------------------------------===//
@@ -16,31 +16,42 @@
 //===          is guaranteed to work on *all* Win32 variants.
 //===----------------------------------------------------------------------===//
 
-namespace llvm
-{
+#include "Win32.h"
+#include "llvm/System/Mutex.h"
+
+namespace llvm {
 using namespace sys;
 
-Mutex::Mutex( bool recursive)
+Mutex::Mutex(bool /*recursive*/)
 {
+  data_ = new CRITICAL_SECTION;
+  InitializeCriticalSection((LPCRITICAL_SECTION)data_);
 }
 
 Mutex::~Mutex()
 {
+  DeleteCriticalSection((LPCRITICAL_SECTION)data_);
+  data_ = 0;
 }
 
 bool 
 Mutex::acquire()
 {
+  EnterCriticalSection((LPCRITICAL_SECTION)data_);
+  return true;
 }
 
 bool 
 Mutex::release()
 {
+  LeaveCriticalSection((LPCRITICAL_SECTION)data_);
+  return true;
 }
 
 bool 
-Mutex::tryacquire( void )
+Mutex::tryacquire()
 {
+  return TryEnterCriticalSection((LPCRITICAL_SECTION)data_);
 }
 
 }
