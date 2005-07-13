@@ -972,7 +972,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       std::pair<SDOperand,SDOperand> CallResult =
         TLI.LowerCallTo(Tmp1, Type::VoidTy, false, CallingConv::C, false,
                         DAG.getExternalSymbol(FnName, IntPtr), Args, DAG);
-      Result = LegalizeOp(CallResult.second);
+      Result = CallResult.second;
+      NeedsAnotherIteration = true;
       break;
     }
     case TargetLowering::Custom:
