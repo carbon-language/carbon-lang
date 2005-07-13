@@ -304,6 +304,10 @@ AC_PROG_RANLIB
 AC_PATH_PROG(RM,   [rm],   [rm])
 AC_PATH_PROG(SED,  [sed],  [sed])
 AC_PATH_PROG(TAR,  [tar],  [gtar])
+AC_PATH_PROG(GRAPHVIZ, [Graphviz], [echo GraphViz])
+if test "$GRAPHVIZ" != "echo GraphViz" ; then
+  AC_DEFINE([HAVE_GRAPHVIZ],[1],[Define if the Graphviz program is available])
+fi
 
 dnl Find the install program
 AC_PROG_INSTALL

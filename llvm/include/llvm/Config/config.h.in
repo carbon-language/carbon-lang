@@ -121,6 +121,9 @@
 /* Does not have hash_set in gnu namespace */
 #undef HAVE_GNU_EXT_HASH_SET
 
+/* Define if the Graphviz program is available */
+#undef HAVE_GRAPHVIZ
+
 /* Define to 1 if you have the `index' function. */
 #undef HAVE_INDEX
 
