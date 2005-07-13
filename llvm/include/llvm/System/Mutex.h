@@ -72,8 +72,8 @@ namespace llvm
     /// @name Do Not Implement
     /// @{
     private: 
-	    Mutex(const Mutex & original);
-	    void operator=(const Mutex &);
+      Mutex(const Mutex & original);
+      void operator=(const Mutex &);
     /// @}
     };
   }
