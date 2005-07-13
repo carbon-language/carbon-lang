@@ -31,6 +31,7 @@ Mutex::Mutex(bool /*recursive*/)
 Mutex::~Mutex()
 {
   DeleteCriticalSection((LPCRITICAL_SECTION)data_);
+  delete (LPCRITICAL_SECTION)data_;
   data_ = 0;
 }
 
