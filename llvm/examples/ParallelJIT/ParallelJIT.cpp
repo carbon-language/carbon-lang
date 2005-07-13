@@ -223,7 +223,7 @@ void* callFunc( void* param )
   synchronize.block(); // wait until other threads are at this point
   GenericValue gv = p->EE->runFunction(p->F, Args);
           
-  return (void*) gv.IntVal;
+  return (void*) intptr_t(gv.IntVal);
 }
 
 int main() 
@@ -275,21 +275,21 @@ int main()
           std::cerr << "Could not join thread" << std::endl;
           return 1;
   }
-  std::cout << "Add1 returned " << (int) returnValue << std::endl;
+  std::cout << "Add1 returned " << intptr_t(returnValue) << std::endl;
   
   result = pthread_join( fibThread1, &returnValue );
   if ( result != 0 ) {
           std::cerr << "Could not join thread" << std::endl;
           return 1;
   }
-  std::cout << "Fib1 returned " << (int) returnValue << std::endl;
+  std::cout << "Fib1 returned " << intptr_t(returnValue) << std::endl;
   
   result = pthread_join( fibThread2, &returnValue );
   if ( result != 0 ) {
           std::cerr << "Could not join thread" << std::endl;
           return 1;
   }
-  std::cout << "Fib2 returned " << (int) returnValue << std::endl;
+  std::cout << "Fib2 returned " << intptr_t(returnValue) << std::endl;
   
   return 0;
 }
