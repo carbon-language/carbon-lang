@@ -62,8 +62,10 @@ Mutex::Mutex( bool recursive)
     errorcode = pthread_mutexattr_settype(&attr, kind);
     assert(errorcode == 0);
 
+#ifndef __FreeBSD__
     // Make it a process local mutex
     errorcode = pthread_mutexattr_setpshared(&attr, PTHREAD_PROCESS_PRIVATE);
+#endif
 
     // Initialize the mutex
     errorcode = pthread_mutex_init(mutex, &attr);
