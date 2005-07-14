@@ -103,9 +103,7 @@ std::string DOTGraphTraits<SelectionDAG*>::getNodeLabel(const SDNode *Node,
 ///
 void SelectionDAG::viewGraph() {
 // This code is only for debugging!
-#ifdef NDEBUG
-  std::cerr << "SelectionDAG::viewGraph is only available in debug builds!\n";
-#else
+#ifndef NDEBUG
   std::string Filename = "/tmp/dag." +
     getMachineFunction().getFunction()->getName() + ".dot";
   std::cerr << "Writing '" << Filename << "'... ";
@@ -122,21 +120,26 @@ void SelectionDAG::viewGraph() {
 
 #ifdef HAVE_GRAPHVIZ
   std::cerr << "Running 'Graphviz' program... " << std::flush;
-  if (system(("Graphviz " + Filename).c_str())) {
+  if (system((LLVM_PATH_GRAPHVIZ " " + Filename).c_str())) {
     std::cerr << "Error viewing graph: 'Graphviz' not in path?\n";
   } else {
     return;
   }
 #endif
 
+#ifdef HAVE_GV
   std::cerr << "Running 'dot' program... " << std::flush;
   if (system(("dot -Tps -Nfontname=Courier -Gsize=7.5,10 " + Filename
               + " > /tmp/dag.tempgraph.ps").c_str())) {
     std::cerr << "Error viewing graph: 'dot' not in path?\n";
   } else {
     std::cerr << "\n";
-    system("gv /tmp/dag.tempgraph.ps");
+    system(LLVM_PATH_GV " /tmp/dag.tempgraph.ps");
   }
   system(("rm " + Filename + " /tmp/dag.tempgraph.ps").c_str());
+  return;
 #endif
+#endif
+  std::cerr << "SelectionDAG::viewGraph is only available in debug builds on "
+            << "systems with Graphviz or gv!\n";
 }
