@@ -124,6 +124,9 @@
 /* Define if the Graphviz program is available */
 #undef HAVE_GRAPHVIZ
 
+/* Define if the gv program is available */
+#undef HAVE_GV
+
 /* Define to 1 if you have the `index' function. */
 #undef HAVE_INDEX
 
@@ -394,6 +397,9 @@
 
 /* Define to path to Graphviz program if found or 'echo Graphviz' otherwise */
 #undef LLVM_PATH_GRAPHVIZ
+
+/* Define to path to gv program if found or 'echo gv' otherwise */
+#undef LLVM_PATH_GV
 
 /* Installation prefix directory */
 #undef LLVM_PREFIX

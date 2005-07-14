@@ -307,8 +307,14 @@ AC_PATH_PROG(TAR,  [tar],  [gtar])
 AC_PATH_PROG(GRAPHVIZ, [Graphviz], [echo Graphviz])
 if test "$GRAPHVIZ" != "echo Graphviz" ; then
   AC_DEFINE([HAVE_GRAPHVIZ],[1],[Define if the Graphviz program is available])
-  AC_DEFINE([LLVM_PATH_GRAPHVIZ],"$GRAPHVIZ",
+  AC_DEFINE_UNQUOTED([LLVM_PATH_GRAPHVIZ],"$GRAPHVIZ",
    [Define to path to Graphviz program if found or 'echo Graphviz' otherwise])
+fi
+AC_PATH_PROG(GV, [gv], [echo gv])
+if test "$GRAPHVIZ" != "echo gv" ; then
+  AC_DEFINE([HAVE_GV],[1],[Define if the gv program is available])
+  AC_DEFINE_UNQUOTED([LLVM_PATH_GV],"$GV",
+   [Define to path to gv program if found or 'echo gv' otherwise])
 fi
 
 dnl Find the install program
