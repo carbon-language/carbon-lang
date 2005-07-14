@@ -70,6 +70,7 @@ struct X86IntelAsmPrinter : public X86SharedAsmPrinter {
 
   void printMachineInstruction(const MachineInstr *MI);
   void printOp(const MachineOperand &MO, bool elideOffsetKeyword = false);
+  void printSSECC(const MachineInstr *MI, unsigned Op, MVT::ValueType VT);
   void printMemReference(const MachineInstr *MI, unsigned Op);
   bool runOnMachineFunction(MachineFunction &F);
   bool doInitialization(Module &M);

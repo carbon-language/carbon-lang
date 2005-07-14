@@ -51,6 +51,7 @@ struct X86ATTAsmPrinter : public X86SharedAsmPrinter {
 
   void printMachineInstruction(const MachineInstr *MI);
   void printOp(const MachineOperand &MO, bool isCallOperand = false);
+  void printSSECC(const MachineInstr *MI, unsigned Op, MVT::ValueType VT);
   void printMemReference(const MachineInstr *MI, unsigned Op);
   bool runOnMachineFunction(MachineFunction &F);
 };

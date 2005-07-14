@@ -58,6 +58,22 @@ bool X86IntelAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   return false;
 }
 
+void X86IntelAsmPrinter::printSSECC(const MachineInstr *MI, unsigned Op,
+                                  MVT::ValueType VT) {
+  unsigned char value = MI->getOperand(Op).getImmedValue();
+  assert(value <= 7 && "Invalid ssecc argument!");
+  switch (value) {
+  case 0: O << "eq"; break;
+  case 1: O << "lt"; break;
+  case 2: O << "le"; break;
+  case 3: O << "unord"; break;
+  case 4: O << "neq"; break;
+  case 5: O << "nlt"; break;
+  case 6: O << "nle"; break;
+  case 7: O << "ord"; break;
+  }
+}
+
 void X86IntelAsmPrinter::printOp(const MachineOperand &MO,
                                  bool elideOffsetKeyword /* = false */) {
   const MRegisterInfo &RI = *TM.getRegisterInfo();
