@@ -392,6 +392,9 @@
 /* Define if this is Win32ish platform */
 #undef LLVM_ON_WIN32
 
+/* Define to path to Graphviz program if found or 'echo Graphviz' otherwise */
+#undef LLVM_PATH_GRAPHVIZ
+
 /* Installation prefix directory */
 #undef LLVM_PREFIX
 
