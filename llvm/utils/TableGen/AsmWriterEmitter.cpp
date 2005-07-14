@@ -155,12 +155,35 @@ AsmWriterInst::AsmWriterInst(const CodeGenInstruction &CGI, unsigned Variant) {
       LastEmitted = DollarPos+2;
     } else {
       // Get the name of the variable.
-      // TODO: should eventually handle ${foo}bar as $foo
       std::string::size_type VarEnd = DollarPos+1;
+
+      // handle ${foo}bar as $foo by detecting whether the character following
+      // the dollar sign is a curly brace.  If so, advance VarEnd and DollarPos
+      // so the variable name does not contain the leading curly brace.
+      bool hasCurlyBraces = false;
+      if (VarEnd < AsmString.size() && '{' == AsmString[VarEnd]) {
+        hasCurlyBraces = true;
+        ++DollarPos;
+        ++VarEnd;
+      }
+
       while (VarEnd < AsmString.size() && isIdentChar(AsmString[VarEnd]))
         ++VarEnd;
       std::string VarName(AsmString.begin()+DollarPos+1,
                           AsmString.begin()+VarEnd);
+
+      // In order to avoid starting the next string at the terminating curly
+      // brace, advance the end position past it if we found an opening curly
+      // brace.
+      if (hasCurlyBraces) {
+        if (VarEnd >= AsmString.size())
+          throw "Reached end of string before terminating curly brace in '"
+                + CGI.Name + "'";
+        if (AsmString[VarEnd] != '}')
+          throw "Variant name beginning with '{' did not end with '}' in '"
+                + CGI.Name + "'";
+        ++VarEnd;
+      }
       if (VarName.empty())
         throw "Stray '$' in '" + CGI.Name + "' asm string, maybe you want $$?";
 
