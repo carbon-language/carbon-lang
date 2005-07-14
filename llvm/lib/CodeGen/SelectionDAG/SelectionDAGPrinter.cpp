@@ -102,6 +102,10 @@ std::string DOTGraphTraits<SelectionDAG*>::getNodeLabel(const SDNode *Node,
 /// rendered using 'dot'.
 ///
 void SelectionDAG::viewGraph() {
+// This code is only for debugging!
+#ifdef NDEBUG
+  std::cerr << "SelectionDAG::viewGraph is only available in debug builds!\n";
+#else
   std::string Filename = "/tmp/dag." +
     getMachineFunction().getFunction()->getName() + ".dot";
   std::cerr << "Writing '" << Filename << "'... ";
@@ -134,4 +138,5 @@ void SelectionDAG::viewGraph() {
     system("gv /tmp/dag.tempgraph.ps");
   }
   system(("rm " + Filename + " /tmp/dag.tempgraph.ps").c_str());
+#endif
 }
