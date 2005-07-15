@@ -16,6 +16,7 @@
 #include "llvm/Function.h"
 #include "llvm/Support/GraphWriter.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/Config/config.h"
 #include <fstream>
 using namespace llvm;
 
