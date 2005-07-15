@@ -116,7 +116,8 @@ AsmWriterInst::AsmWriterInst(const CodeGenInstruction &CGI, unsigned Variant) {
       LastEmitted = DollarPos;
     } else if (AsmString[DollarPos] == '{') {
       if (inVariant)
-        throw "Nested variants found for instruction '" + CGI.Name + "'!";
+        throw "Nested variants found for instruction '" + 
+              CGI.TheDef->getName() + "'!";
       LastEmitted = DollarPos+1;
       inVariant = true;   // We are now inside of the variant!
       for (unsigned i = 0; i != Variant; ++i) {
@@ -126,7 +127,8 @@ AsmWriterInst::AsmWriterInst(const CodeGenInstruction &CGI, unsigned Variant) {
         std::string::size_type NP =
           AsmString.find_first_of("|}", LastEmitted);
         if (NP == std::string::npos)
-          throw "Incomplete variant for instruction '" + CGI.Name + "'!";
+          throw "Incomplete variant for instruction '" + 
+                CGI.TheDef->getName() + "'!";
         LastEmitted = NP+1;
         if (AsmString[NP] == '}') {
           inVariant = false;        // No text for this variant.
@@ -136,17 +138,18 @@ AsmWriterInst::AsmWriterInst(const CodeGenInstruction &CGI, unsigned Variant) {
     } else if (AsmString[DollarPos] == '|') {
       if (!inVariant)
         throw "'|' character found outside of a variant in instruction '"
-          + CGI.Name + "'!";
+          + CGI.TheDef->getName() + "'!";
       // Move to the end of variant list.
       std::string::size_type NP = AsmString.find('}', LastEmitted);
       if (NP == std::string::npos)
-        throw "Incomplete variant for instruction '" + CGI.Name + "'!";
+        throw "Incomplete variant for instruction '" + 
+              CGI.TheDef->getName() + "'!";
       LastEmitted = NP+1;
       inVariant = false;
     } else if (AsmString[DollarPos] == '}') {
       if (!inVariant)
         throw "'}' character found outside of a variant in instruction '"
-          + CGI.Name + "'!";
+          + CGI.TheDef->getName() + "'!";
       LastEmitted = DollarPos+1;
       inVariant = false;
     } else if (DollarPos+1 != AsmString.size() &&
@@ -178,14 +181,15 @@ AsmWriterInst::AsmWriterInst(const CodeGenInstruction &CGI, unsigned Variant) {
       if (hasCurlyBraces) {
         if (VarEnd >= AsmString.size())
           throw "Reached end of string before terminating curly brace in '"
-                + CGI.Name + "'";
+                + CGI.TheDef->getName() + "'";
         if (AsmString[VarEnd] != '}')
           throw "Variant name beginning with '{' did not end with '}' in '"
-                + CGI.Name + "'";
+                + CGI.TheDef->getName() + "'";
         ++VarEnd;
       }
       if (VarName.empty())
-        throw "Stray '$' in '" + CGI.Name + "' asm string, maybe you want $$?";
+        throw "Stray '$' in '" + CGI.TheDef->getName() + 
+              "' asm string, maybe you want $$?";
 
       unsigned OpNo = CGI.getOperandNamed(VarName);
       CodeGenInstruction::OperandInfo OpInfo = CGI.OperandList[OpNo];
@@ -196,7 +200,7 @@ AsmWriterInst::AsmWriterInst(const CodeGenInstruction &CGI, unsigned Variant) {
       if (CGI.isTwoAddress && MIOp != 0) {
         if (MIOp == 1)
           throw "Should refer to operand #0 instead of #1 for two-address"
-            " instruction '" + CGI.Name + "'!";
+            " instruction '" + CGI.TheDef->getName() + "'!";
         --MIOp;
       }
 
