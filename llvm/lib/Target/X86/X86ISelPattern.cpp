@@ -1687,9 +1687,9 @@ void ISel::EmitSelectCC(SDOperand Cond, MVT::ValueType SVT,
     /*missing*/0,  /*missing*/0, X86::FCMOVB , X86::FCMOVBE,
     X86::FCMOVA ,  X86::FCMOVAE, X86::FCMOVP , X86::FCMOVNP
   };
-  static const unsigned SSE_CMOVTAB[] = {
+  static const int SSE_CMOVTAB[] = {
     0 /* CMPEQSS */, 4 /* CMPNEQSS */, 1 /* CMPLTSS */, 2 /* CMPLESS */,
-    2 /* CMPLESS */, 1 /* CMPLTSS */, /*missing*/0, /*missing*/0,
+    1 /* CMPLTSS */, 2 /* CMPLESS */, /*missing*/0, /*missing*/0,
     /*missing*/0,  /*missing*/0, /*missing*/0, /*missing*/0
   };
 
@@ -1761,33 +1761,12 @@ void ISel::EmitSelectCC(SDOperand Cond, MVT::ValueType SVT,
   // There's no SSE equivalent of FCMOVE.  In some cases we can fake it up, in
   // Others we will have to do the PowerPC thing and generate an MBB for the
   // true and false values and select between them with a PHI.
-  if (X86ScalarSSE) { 
-    if (CondCode != NOT_SET) {
-      unsigned CMPSOpc = (SVT == MVT::f64) ? X86::CMPSDrr : X86::CMPSSrr;
-      unsigned CMPSImm = SSE_CMOVTAB[CondCode];
-      // FIXME check for min
-      // FIXME check for max
-      // FIXME check for reverse
-      unsigned LHS = SelectExpr(Cond.getOperand(0));
-      unsigned RHS = SelectExpr(Cond.getOperand(1));
-      // emit compare mask
-      unsigned MaskReg = MakeReg(SVT);
-      BuildMI(BB, CMPSOpc, 3, MaskReg).addReg(LHS).addReg(RHS).addImm(CMPSImm);
-      // emit and with mask
-      unsigned TrueMask = MakeReg(SVT);
-      unsigned AndOpc = (SVT == MVT::f32) ? X86::ANDPSrr : X86::ANDPDrr;
-      BuildMI(BB, AndOpc, 2, TrueMask).addReg(RTrue).addReg(MaskReg);
-      // emit and with inverse mask
-      unsigned FalseMask = MakeReg(SVT);
-      unsigned AndnOpc = (SVT == MVT::f32) ? X86::ANDNPSrr : X86::ANDNPDrr;
-      BuildMI(BB, AndnOpc, 2, FalseMask).addReg(RFalse).addReg(MaskReg);
-      // emit or into dest reg
-      unsigned OROpc = (SVT == MVT::f32) ? X86::ORPSrr : X86::ORPDrr;
-      BuildMI(BB, OROpc, 2, RDest).addReg(TrueMask).addReg(FalseMask);
-      return;
+  if (X86ScalarSSE && (SVT == MVT::f32 || SVT == MVT::f64)) { 
+    if (0 && CondCode != NOT_SET) {
+      // FIXME: check for min and max
     } else {
-      // do the test and branch thing
-      // Get the condition into the zero flag.
+      // FIXME: emit a direct compare and branch rather than setting a cond reg
+      //        and testing it.
       unsigned CondReg = SelectExpr(Cond);
       BuildMI(BB, X86::TEST8rr, 2).addReg(CondReg).addReg(CondReg);
 
@@ -2184,6 +2163,11 @@ unsigned ISel::SelectExpr(SDOperand N) {
     Tmp1 = SelectExpr(N.getOperand(0));
     BuildMI(BB, X86::CVTSS2SDrr, 1, Result).addReg(Tmp1);
     return Result;
+  case ISD::FP_ROUND:
+    assert(X86ScalarSSE && "Scalar SSE FP must be enabled to use f32"); 
+    Tmp1 = SelectExpr(N.getOperand(0));
+    BuildMI(BB, X86::CVTSD2SSrr, 1, Result).addReg(Tmp1);
+    return Result;
   case ISD::CopyFromReg:
     Select(N.getOperand(0));
     if (Result == 1) {
@@ -2482,9 +2466,9 @@ unsigned ISel::SelectExpr(SDOperand N) {
     // CVTSD2SI instructions.
     if (ISD::FP_TO_SINT == N.getOpcode() && X86ScalarSSE) {
       if (MVT::f32 == N.getOperand(0).getValueType()) {
-        BuildMI(BB, X86::CVTSS2SIrr, 1, Result).addReg(Tmp1);
+        BuildMI(BB, X86::CVTTSS2SIrr, 1, Result).addReg(Tmp1);
       } else if (MVT::f64 == N.getOperand(0).getValueType()) {
-        BuildMI(BB, X86::CVTSD2SIrr, 1, Result).addReg(Tmp1);
+        BuildMI(BB, X86::CVTTSD2SIrr, 1, Result).addReg(Tmp1);
       } else {
         assert(0 && "Not an f32 or f64?");
         abort();
@@ -4485,8 +4469,18 @@ void ISel::Select(SDOperand N) {
         SelectAddress(N.getOperand(2), AM);
         Select(N.getOperand(0));
       }
-      addFullAddress(BuildMI(BB, X86::MOV32mi, 4+1),
-                     AM).addGlobalAddress(GA->getGlobal());
+      GlobalValue *GV = GA->getGlobal();
+      // For Darwin, external and weak symbols are indirect, so we want to load
+      // the value at address GV, not the value of GV itself.
+      if (Subtarget->getIndirectExternAndWeakGlobals() && 
+          (GV->hasWeakLinkage() || GV->isExternal())) {
+        Tmp1 = MakeReg(MVT::i32);
+        BuildMI(BB, X86::MOV32rm, 4, Tmp1).addReg(0).addZImm(1).addReg(0)
+          .addGlobalAddress(GV, false, 0);
+        addFullAddress(BuildMI(BB, X86::MOV32mr, 4+1),AM).addReg(Tmp1);
+      } else {
+        addFullAddress(BuildMI(BB, X86::MOV32mi, 4+1),AM).addGlobalAddress(GV);
+      }
       return;
     }
 

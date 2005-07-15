@@ -20,6 +20,9 @@ class X86MemOperand<ValueType Ty> : Operand<Ty> {
   let NumMIOperands = 4;
   let PrintMethod = "printMemoryOperand";
 }
+def SSECC : Operand<i8> {
+  let PrintMethod = "printSSECC";
+}
 
 def i8mem  : X86MemOperand<i8>;
 def i16mem : X86MemOperand<i16>;
@@ -188,7 +191,7 @@ def JG  : IBr<0x8F, (ops i32imm:$dst), "jg $dst">, TB;
 let isCall = 1 in
   // All calls clobber the non-callee saved registers...
   let Defs = [EAX, ECX, EDX, FP0, FP1, FP2, FP3, FP4, FP5, FP6, ST0,
-              XMM0, XMM1, XMM2, XMM3] in {
+              XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7] in {
     def CALLpcrel32 : I<0xE8, RawFrm, (ops calltarget:$dst), "call $dst">;
     def CALL32r     : I<0xFF, MRM2r, (ops R32:$dst), "call {*}$dst">;
     def CALL32m     : I<0xFF, MRM2m, (ops i32mem:$dst), "call {*}$dst">;
@@ -1425,17 +1428,21 @@ def MOVAPDrm: I<0x28, MRMSrcMem, (ops RXMM:$dst, f64mem:$src),
 def MOVAPDmr: I<0x29, MRMDestMem, (ops f64mem:$dst, RXMM:$src),
                 "movapd {$src, $dst|$dst, $src}">, TB, OpSize;
 
-def CVTSD2SIrr: I<0x2D, MRMSrcReg, (ops R32:$dst, RXMM:$src),
-                "cvtsd2si {$src, $dst|$dst, $src}">, XD;
-def CVTSD2SIrm: I<0x2D, MRMSrcMem, (ops R32:$dst, f64mem:$src),
-                "cvtsd2si {$src, $dst|$dst, $src}">, XD;
-def CVTSS2SIrr: I<0x2D, MRMSrcReg, (ops R32:$dst, RXMM:$src),
-                "cvtss2si {$src, $dst|$dst, $src}">, XS;
-def CVTSS2SIrm: I<0x2D, MRMSrcMem, (ops R32:$dst, f32mem:$src),
-                "cvtss2si {$src, $dst|$dst, $src}">, XS;
-def CVTSS2SDrr: I<0x5A, MRMSrcReg, (ops R32:$dst, RXMM:$src),
+def CVTTSD2SIrr: I<0x2C, MRMSrcReg, (ops R32:$dst, RXMM:$src),
+                "cvttsd2si {$src, $dst|$dst, $src}">, XD;
+def CVTTSD2SIrm: I<0x2C, MRMSrcMem, (ops R32:$dst, f64mem:$src),
+                "cvttsd2si {$src, $dst|$dst, $src}">, XD;
+def CVTTSS2SIrr: I<0x2C, MRMSrcReg, (ops R32:$dst, RXMM:$src),
+                "cvttss2si {$src, $dst|$dst, $src}">, XS;
+def CVTTSS2SIrm: I<0x2C, MRMSrcMem, (ops R32:$dst, f32mem:$src),
+                "cvttss2si {$src, $dst|$dst, $src}">, XS;
+def CVTSD2SSrr: I<0x5A, MRMSrcReg, (ops RXMM:$dst, RXMM:$src),
+                "cvtsd2ss {$src, $dst|$dst, $src}">, XS;
+def CVTSD2SSrm: I<0x5A, MRMSrcMem, (ops RXMM:$dst, f64mem:$src), 
+                "cvtsd2ss {$src, $dst|$dst, $src}">, XS;
+def CVTSS2SDrr: I<0x5A, MRMSrcReg, (ops RXMM:$dst, RXMM:$src),
                 "cvtss2sd {$src, $dst|$dst, $src}">, XD;
-def CVTSS2SDrm: I<0x5A, MRMSrcMem, (ops R32:$dst, f32mem:$src),
+def CVTSS2SDrm: I<0x5A, MRMSrcMem, (ops RXMM:$dst, f32mem:$src),
                 "cvtss2sd {$src, $dst|$dst, $src}">, XD;
 def CVTSI2SSrr: I<0x2A, MRMSrcReg, (ops R32:$dst, RXMM:$src),
                 "cvtsi2ss {$src, $dst|$dst, $src}">, XS;
@@ -1515,17 +1522,17 @@ def SUBSDrr : I<0x5C, MRMSrcReg, (ops RXMM:$dst, RXMM:$src1, RXMM:$src),
                 "subsd {$src, $dst|$dst, $src}">, XD;
 
 def CMPSSrr : I<0xC2, MRMSrcReg, 
-                (ops RXMM:$dst, RXMM:$src1, RXMM:$src, i8imm:$pred),
-                "cmpss {$src, $dst, $pred|$dst, $src, $pred}">, XS;
+                (ops RXMM:$dst, RXMM:$src1, RXMM:$src, SSECC:$cc),
+                "cmp${cc}ss {$src, $dst|$dst, $src}">, XS;
 def CMPSSrm : I<0xC2, MRMSrcMem, 
-                (ops RXMM:$dst, RXMM:$src1, f32mem:$src, i8imm:$pred),
-                "cmpss {$src, $dst, $pred|$dst, $src, $pred}">, XS;
+                (ops RXMM:$dst, RXMM:$src1, f32mem:$src, SSECC:$cc),
+                "cmp${cc}ss {$src, $dst|$dst, $src}">, XS;
 def CMPSDrr : I<0xC2, MRMSrcReg, 
-                (ops RXMM:$dst, RXMM:$src1, RXMM:$src, i8imm:$pred),
-                "cmpss {$src, $dst, $pred|$dst, $src, $pred}">, XD;
+                (ops RXMM:$dst, RXMM:$src1, RXMM:$src, SSECC:$cc),
+                "cmp${cc}sd {$src, $dst|$dst, $src}">, XD;
 def CMPSDrm : I<0xC2, MRMSrcMem, 
-                (ops RXMM:$dst, RXMM:$src1, f64mem:$src, i8imm:$pred),
-                "cmpss {$src, $dst, $pred|$dst, $src, $pred}">, XD;
+                (ops RXMM:$dst, RXMM:$src1, f64mem:$src, SSECC:$cc),
+                "cmp${cc}sd {$src, $dst|$dst, $src}">, XD;
 }
 
 //===----------------------------------------------------------------------===//
