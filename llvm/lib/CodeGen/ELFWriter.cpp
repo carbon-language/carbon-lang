@@ -2,8 +2,8 @@
 //
 //                     The LLVM Compiler Infrastructure
 //
-// This file was developed by the LLVM research group and is distributed under
-// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// This file was developed by Chris Lattner and is distributed under the
+// University of Illinois Open Source License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
 //
@@ -104,10 +104,9 @@ void ELFCodeEmitter::startFunction(MachineFunction &F) {
   // Align the output buffer to the appropriate alignment.
   unsigned Align = 16;   // FIXME: GENERICIZE!!
   // Get the ELF Section that this function belongs in.
-  ES = &EW.getSection(".text");
-  ES->Type  = ELFWriter::ELFSection::SHT_PROGBITS;
-  ES->Flags = ELFWriter::ELFSection::SHF_EXECINSTR |
-              ELFWriter::ELFSection::SHF_ALLOC;
+  ES = &EW.getSection(".text", ELFWriter::ELFSection::SHT_PROGBITS,
+                      ELFWriter::ELFSection::SHF_EXECINSTR |
+                      ELFWriter::ELFSection::SHF_ALLOC);
   OutBuffer = &ES->SectionData;
   
   // Upgrade the section alignment if required.
@@ -215,7 +214,7 @@ bool ELFWriter::doInitialization(Module &M) {
   outhalf(FH, 0);                 // e_shstrndx  = Section # of '.shstrtab'
 
   // Add the null section, which is required to be first in the file.
-  getSection("");
+  getSection("", 0, 0);
 
   // Start up the symbol table.  The first entry in the symtab is the null
   // entry.
@@ -316,13 +315,13 @@ bool ELFWriter::runOnMachineFunction(MachineFunction &MF) {
 bool ELFWriter::doFinalization(Module &M) {
   // Okay, the ELF header and .text sections have been completed, build the
   // .data, .bss, and "common" sections next.
-  ELFSection &DataSection = getSection(".data");
-  DataSection.Type  = ELFSection::SHT_PROGBITS;
-  DataSection.Flags = ELFSection::SHF_WRITE | ELFSection::SHF_ALLOC;
+  ELFSection &DataSection =
+    getSection(".data", ELFSection::SHT_PROGBITS,
+               ELFSection::SHF_WRITE | ELFSection::SHF_ALLOC);
 
-  ELFSection &BSSSection = getSection(".bss");
-  BSSSection.Type   = ELFSection::SHT_NOBITS; 
-  BSSSection.Flags  = ELFSection::SHF_WRITE | ELFSection::SHF_ALLOC;
+  ELFSection &BSSSection =
+    getSection(".bss", ELFSection::SHT_NOBITS,
+               ELFSection::SHF_WRITE | ELFSection::SHF_ALLOC);
 
   for (Module::global_iterator I = M.global_begin(), E = M.global_end();
        I != E; ++I)
@@ -356,8 +355,7 @@ void ELFWriter::EmitSymbolTable() {
   // FIXME: compact all local symbols to the start of the symtab.
   unsigned FirstNonLocalSymbol = 1;
 
-  ELFSection &StrTab = getSection(".strtab");
-  StrTab.Type = ELFSection::SHT_STRTAB;
+  ELFSection &StrTab = getSection(".strtab", ELFSection::SHT_STRTAB, 0);
   StrTab.Align = 1;
 
   DataBuffer &StrTabBuf = StrTab.SectionData;
@@ -390,8 +388,7 @@ void ELFWriter::EmitSymbolTable() {
 
   // Now that we have emitted the string table and know the offset into the
   // string table of each symbol, emit the symbol table itself.
-  ELFSection &SymTab = getSection(".symtab");
-  SymTab.Type = ELFSection::SHT_SYMTAB;
+  ELFSection &SymTab = getSection(".symtab", ELFSection::SHT_SYMTAB, 0);
   SymTab.Align = is64Bit ? 8 : 4;
   SymTab.Link = SymTab.SectionIdx;     // Section Index of .strtab.
   SymTab.Info = FirstNonLocalSymbol;   // First non-STB_LOCAL symbol.
@@ -428,8 +425,7 @@ void ELFWriter::EmitSymbolTable() {
 /// section names.
 void ELFWriter::EmitSectionTableStringTable() {
   // First step: add the section for the string table to the list of sections:
-  ELFSection &SHStrTab = getSection(".shstrtab");
-  SHStrTab.Type = ELFSection::SHT_STRTAB;
+  ELFSection &SHStrTab = getSection(".shstrtab", ELFSection::SHT_STRTAB, 0);
 
   // Now that we know which section number is the .shstrtab section, update the
   // e_shstrndx entry in the ELF header.
