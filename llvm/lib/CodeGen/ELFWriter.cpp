@@ -223,8 +223,7 @@ bool ELFWriter::doInitialization(Module &M) {
   return false;
 }
 
-void ELFWriter::EmitGlobal(GlobalVariable *GV, ELFSection &DataSection,
-                           ELFSection &BSSSection) {
+void ELFWriter::EmitGlobal(GlobalVariable *GV) {
   // If this is an external global, emit it now.  TODO: Note that it would be
   // better to ignore the symbol here and only add it to the symbol table if
   // referenced.
@@ -264,6 +263,7 @@ void ELFWriter::EmitGlobal(GlobalVariable *GV, ELFSection &DataSection,
 
     // Handle alignment.  Ensure section is aligned at least as much as required
     // by this symbol.
+    ELFSection &BSSSection = getBSSSection();
     BSSSection.Align = std::max(BSSSection.Align, Align);
 
     // Within the section, emit enough virtual padding to get us to an alignment
@@ -315,17 +315,9 @@ bool ELFWriter::runOnMachineFunction(MachineFunction &MF) {
 bool ELFWriter::doFinalization(Module &M) {
   // Okay, the ELF header and .text sections have been completed, build the
   // .data, .bss, and "common" sections next.
-  ELFSection &DataSection =
-    getSection(".data", ELFSection::SHT_PROGBITS,
-               ELFSection::SHF_WRITE | ELFSection::SHF_ALLOC);
-
-  ELFSection &BSSSection =
-    getSection(".bss", ELFSection::SHT_NOBITS,
-               ELFSection::SHF_WRITE | ELFSection::SHF_ALLOC);
-
   for (Module::global_iterator I = M.global_begin(), E = M.global_end();
        I != E; ++I)
-    EmitGlobal(I, DataSection, BSSSection);
+    EmitGlobal(I);
 
   // Emit the symbol table now, if non-empty.
   EmitSymbolTable();
