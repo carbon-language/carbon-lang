@@ -106,7 +106,16 @@ namespace {
       addRegisterClass(MVT::i16, X86::R16RegisterClass);
       addRegisterClass(MVT::i32, X86::R32RegisterClass);
       
+      // Promote all UINT_TO_FP to larger SINT_TO_FP's, as X86 doesn't have this
+      // operation.
+      setOperationAction(ISD::UINT_TO_FP       , MVT::i1   , Promote);
+      setOperationAction(ISD::UINT_TO_FP       , MVT::i8   , Promote);
+      setOperationAction(ISD::UINT_TO_FP       , MVT::i16  , Promote);
+      setOperationAction(ISD::UINT_TO_FP       , MVT::i32  , Promote);
+       
+      // We can handle SINT_TO_FP from i64 even though i64 isn't legal.
       setOperationAction(ISD::SINT_TO_FP       , MVT::i64  , Custom);
+      
       setOperationAction(ISD::BRCONDTWOWAY     , MVT::Other, Expand);
       setOperationAction(ISD::MEMMOVE          , MVT::Other, Expand);
       setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i16  , Expand);
@@ -911,6 +920,10 @@ LowerFrameReturnAddress(bool isFrameAddress, SDOperand Chain, unsigned Depth,
   }
   return std::make_pair(Result, Chain);
 }
+
+//===----------------------------------------------------------------------===//
+//                           X86 Custom Lowering Hooks
+//===----------------------------------------------------------------------===//
 
 /// LowerOperation - Provide custom lowering hooks for some operations.
 ///
@@ -2346,8 +2359,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
     BuildMI(BB, Opc, 1, Result).addReg(Tmp2);
     return Result;
 
-  case ISD::SINT_TO_FP:
-  case ISD::UINT_TO_FP: {
+  case ISD::SINT_TO_FP: {
     Tmp1 = SelectExpr(N.getOperand(0));  // Get the operand register
     unsigned PromoteOpcode = 0;
 
@@ -2357,17 +2369,14 @@ unsigned ISel::SelectExpr(SDOperand N) {
       MVT::ValueType SrcTy = N.getOperand(0).getValueType();
       MVT::ValueType DstTy = N.getValueType();
       switch (SrcTy) {
-      case MVT::i1:
-      case MVT::i8:
-        PromoteOpcode = (N.getOpcode() == ISD::UINT_TO_FP) ?
-          X86::MOVZX32rr8 : X86::MOVSX32rr8;
+      case MVT::i1:   // FIXME: Should teach legalize about SINT_TO_FP i1/i8/i16
+      case MVT::i8:   // promotion, just like UINT_TO_FP promotion.
+        PromoteOpcode = X86::MOVSX32rr8;
         break;
       case MVT::i16:
-        PromoteOpcode = (N.getOpcode() == ISD::UINT_TO_FP) ?
-          X86::MOVZX32rr16 : X86::MOVSX32rr16;
+        PromoteOpcode = X86::MOVSX32rr16;
         break;
       default:
-        assert(N.getOpcode() != ISD::UINT_TO_FP);
         break;
       }
       if (PromoteOpcode) {
@@ -2386,36 +2395,21 @@ unsigned ISel::SelectExpr(SDOperand N) {
     // are no unsigned FLD instructions, so we must promote an unsigned value to
     // a larger signed value, then use FLD on the larger value.
     //
-    MVT::ValueType PromoteType = MVT::Other;
     MVT::ValueType SrcTy = N.getOperand(0).getValueType();
-    unsigned RealDestReg = Result;
     switch (SrcTy) {
     case MVT::i1:
     case MVT::i8:
       // We don't have the facilities for directly loading byte sized data from
       // memory (even signed).  Promote it to 16 bits.
-      PromoteType = MVT::i16;
-      PromoteOpcode = Node->getOpcode() == ISD::SINT_TO_FP ?
-        X86::MOVSX16rr8 : X86::MOVZX16rr8;
-      break;
-    case MVT::i16:
-      if (Node->getOpcode() == ISD::UINT_TO_FP) {
-        PromoteType = MVT::i32;
-        PromoteOpcode = X86::MOVZX32rr16;
-      }
+
+      // FIXME: move to legalize.
+      Tmp2 = MakeReg(MVT::i16);
+      BuildMI(BB, X86::MOVSX16rr8, 1, Tmp2).addReg(Tmp1);
+      SrcTy = MVT::i16;
+      Tmp1 = Tmp2;
       break;
     default:
-      // Don't fild into the real destination.
-      if (Node->getOpcode() == ISD::UINT_TO_FP)
-        Result = MakeReg(Node->getValueType(0));
       break;
-    }
-
-    if (PromoteType != MVT::Other) {
-      Tmp2 = MakeReg(PromoteType);
-      BuildMI(BB, PromoteOpcode, 1, Tmp2).addReg(Tmp1);
-      SrcTy = PromoteType;
-      Tmp1 = Tmp2;
     }
 
     // Spill the integer to memory and reload it from there.
@@ -2425,36 +2419,16 @@ unsigned ISel::SelectExpr(SDOperand N) {
 
     switch (SrcTy) {
     case MVT::i32:
-      addFrameReference(BuildMI(BB, X86::MOV32mr, 5),
-                        FrameIdx).addReg(Tmp1);
+      addFrameReference(BuildMI(BB, X86::MOV32mr, 5), FrameIdx).addReg(Tmp1);
       addFrameReference(BuildMI(BB, X86::FILD32m, 5, Result), FrameIdx);
       break;
     case MVT::i16:
-      addFrameReference(BuildMI(BB, X86::MOV16mr, 5),
-                        FrameIdx).addReg(Tmp1);
+      addFrameReference(BuildMI(BB, X86::MOV16mr, 5), FrameIdx).addReg(Tmp1);
       addFrameReference(BuildMI(BB, X86::FILD16m, 5, Result), FrameIdx);
       break;
     default: break; // No promotion required.
     }
-
-    if (Node->getOpcode() == ISD::UINT_TO_FP && Result != RealDestReg) {
-      // If this is a cast from uint -> double, we need to be careful when if
-      // the "sign" bit is set.  If so, we don't want to make a negative number,
-      // we want to make a positive number.  Emit code to add an offset if the
-      // sign bit is set.
-
-      // Compute whether the sign bit is set by shifting the reg right 31 bits.
-      unsigned IsNeg = MakeReg(MVT::i32);
-      BuildMI(BB, X86::SHR32ri, 2, IsNeg).addReg(Tmp1).addImm(31);
-
-      // Create a CP value that has the offset in one word and 0 in the other.
-      static ConstantInt *TheOffset = ConstantUInt::get(Type::ULongTy,
-                                                        0x4f80000000000000ULL);
-      unsigned CPI = F->getConstantPool()->getConstantPoolIndex(TheOffset);
-      BuildMI(BB, X86::FADD32m, 5, RealDestReg).addReg(Result)
-        .addConstantPoolIndex(CPI).addZImm(4).addReg(IsNeg).addSImm(0);
-    }
-    return RealDestReg;
+    return Result;
   }
   case ISD::FP_TO_SINT:
   case ISD::FP_TO_UINT: {
