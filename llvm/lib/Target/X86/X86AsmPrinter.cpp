@@ -62,9 +62,12 @@ bool X86SharedAsmPrinter::doInitialization(Module& M) {
   if (leadingUnderscore || forCygwin || forDarwin)
     GlobalPrefix = "_";
 
-  if (forDarwin)
+  if (forDarwin) {
     AlignmentIsInBytes = false;
-
+    Data64bitsDirective = 0;       // we can't emit a 64-bit unit
+    ZeroDirective = "\t.space\t";  // ".space N" emits N zeros.
+  }
+  
   return AsmPrinter::doInitialization(M);
 }
 
