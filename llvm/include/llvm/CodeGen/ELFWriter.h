@@ -2,8 +2,8 @@
 //
 //                     The LLVM Compiler Infrastructure
 //
-// This file was developed by the LLVM research group and is distributed under
-// the University of Illinois Open Source License. See LICENSE.TXT for details.
+// This file was developed by Chris Lattner and is distributed under the
+// University of Illinois Open Source License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
 //
@@ -165,6 +165,15 @@ namespace llvm {
       return *SN;
     }
 
+    ELFSection &getDataSection() {
+      return getSection(".data", ELFSection::SHT_PROGBITS,
+                        ELFSection::SHF_WRITE | ELFSection::SHF_ALLOC);
+    }
+    ELFSection &getBSSSection() {
+      return getSection(".bss", ELFSection::SHT_NOBITS,
+                        ELFSection::SHF_WRITE | ELFSection::SHF_ALLOC);
+    }
+
     /// ELFSym - This struct contains information about each symbol that is
     /// added to logical symbol table for the module.  This is eventually
     /// turned into a real symbol table in the file.
@@ -302,8 +311,7 @@ namespace llvm {
     }
 
   private:
-    void EmitGlobal(GlobalVariable *GV, ELFSection &DataSection,
-                    ELFSection &BSSSection);
+    void EmitGlobal(GlobalVariable *GV);
 
     void EmitSymbolTable();
 
