@@ -15,6 +15,7 @@
 #define LLVM_CODEGEN_ELFWRITER_H
 
 #include "llvm/CodeGen/MachineFunctionPass.h"
+#include <list>
 
 namespace llvm {
   class GlobalVariable;
@@ -34,6 +35,8 @@ namespace llvm {
     }
 
     ~ELFWriter();
+
+    typedef std::vector<unsigned char> DataBuffer;
 
   protected:
     ELFWriter(std::ostream &O, TargetMachine &TM);
@@ -85,14 +88,14 @@ namespace llvm {
     bool doFinalization(Module &M);
 
   private:
-    // The buffer we are accumulating the file into.  Note that this should be
+    // The buffer we accumulate the file header into.  Note that this should be
     // changed into something much more efficient later (and the bytecode writer
     // as well!).
-    std::vector<unsigned char> OutputBuffer;
+    DataBuffer FileHeader;
 
     /// ELFSection - This struct contains information about each section that is
-    /// emitted to the OutputBuffer.  This is eventually turned into the section
-    /// header table at the end of the file.
+    /// emitted to the file.  This is eventually turned into the section header
+    /// table at the end of the file.
     struct ELFSection {
       std::string Name;       // Name of the section.
       unsigned NameIdx;       // Index in .shstrtab of name, once emitted.
@@ -105,6 +108,14 @@ namespace llvm {
       unsigned Info;
       unsigned Align;
       unsigned EntSize;
+
+      /// SectionIdx - The number of the section in the Section Table.
+      ///
+      unsigned short SectionIdx;
+
+      /// SectionData - The actual data for this section which we are building
+      /// up for emission to the file.
+      DataBuffer SectionData;
 
       enum { SHT_NULL = 0, SHT_PROGBITS = 1, SHT_SYMTAB = 2, SHT_STRTAB = 3,
              SHT_RELA = 4, SHT_HASH = 5, SHT_DYNAMIC = 6, SHT_NOTE = 7,
@@ -123,8 +134,8 @@ namespace llvm {
         SHF_TLS              = 1 << 10,// Section holds thread-local data
       };
 
-      ELFSection(const char *name = "", unsigned offset = 0)
-        : Name(name), Type(0), Flags(0), Addr(0), Offset(offset), Size(0),
+      ELFSection(const std::string &name)
+        : Name(name), Type(0), Flags(0), Addr(0), Offset(0), Size(0),
           Link(0), Info(0), Align(0), EntSize(0) {
       }
     };
@@ -132,7 +143,24 @@ namespace llvm {
     /// SectionList - This is the list of sections that we have emitted to the
     /// file.  Once the file has been completely built, the section header table
     /// is constructed from this info.
-    std::vector<ELFSection> SectionList;
+    std::list<ELFSection> SectionList;
+    unsigned NumSections;   // Always = SectionList.size()
+
+    /// SectionLookup - This is a mapping from section name to section number in
+    /// the SectionList.
+    std::map<std::string, ELFSection*> SectionLookup;
+
+    /// getSection - Return the section with the specified name, creating a new
+    /// section if one does not already exist.
+    ELFSection &getSection(const std::string &Name) {
+      ELFSection *&SN = SectionLookup[Name];
+      if (SN) return *SN;
+
+      SectionList.push_back(Name);
+      SN = &SectionList.back();
+      SN->SectionIdx = NumSections++;
+      return *SN;
+    }
 
     /// ELFSym - This struct contains information about each symbol that is
     /// added to logical symbol table for the module.  This is eventually
@@ -163,103 +191,109 @@ namespace llvm {
     };
 
     /// SymbolTable - This is the list of symbols we have emitted to the file.
-    /// This actually gets rearranged before emission to OutputBuffer (to put
-    /// the local symbols first in the list).
+    /// This actually gets rearranged before emission to the file (to put the
+    /// local symbols first in the list).
     std::vector<ELFSym> SymbolTable;
 
-    // As we accumulate the ELF file into OutputBuffer, we occasionally need to
-    // keep track of locations to update later (e.g. the location of the section
-    // table in the ELF header.  These members keep track of the offset in
-    // OffsetBuffer of these various pieces to update and other locations in the
-    // file.
+    // As we complete the ELF file, we need to update fields in the ELF header
+    // (e.g. the location of the section table).  These members keep track of
+    // the offset in ELFHeader of these various pieces to update and other
+    // locations in the file.
     unsigned ELFHeader_e_shoff_Offset;     // e_shoff    in ELF header.
     unsigned ELFHeader_e_shstrndx_Offset;  // e_shstrndx in ELF header.
     unsigned ELFHeader_e_shnum_Offset;     // e_shnum    in ELF header.
 
+
     // align - Emit padding into the file until the current output position is
     // aligned to the specified power of two boundary.
-    void align(unsigned Boundary) {
+    static void align(DataBuffer &Output, unsigned Boundary) {
       assert(Boundary && (Boundary & (Boundary-1)) == 0 &&
              "Must align to 2^k boundary");
-      while (OutputBuffer.size() & (Boundary-1))
-        outbyte(0xAB);
+      size_t Size = Output.size();
+      if (Size & (Boundary-1)) {
+        // Add padding to get alignment to the correct place.
+        size_t Pad = Boundary-(Size & (Boundary-1));
+        Output.resize(Size+Pad);
+      }
     }
 
-    void outbyte(unsigned char X) { OutputBuffer.push_back(X); }
-    void outhalf(unsigned short X) {
+    static void outbyte(DataBuffer &Output, unsigned char X) {
+      Output.push_back(X);
+    }
+    void outhalf(DataBuffer &Output, unsigned short X) {
       if (isLittleEndian) {
-        OutputBuffer.push_back(X&255);
-        OutputBuffer.push_back(X >> 8);
+        Output.push_back(X&255);
+        Output.push_back(X >> 8);
       } else {
-        OutputBuffer.push_back(X >> 8);
-        OutputBuffer.push_back(X&255);
+        Output.push_back(X >> 8);
+        Output.push_back(X&255);
       }
     }
-    void outword(unsigned X) {
+    void outword(DataBuffer &Output, unsigned X) {
       if (isLittleEndian) {
-        OutputBuffer.push_back((X >>  0) & 255);
-        OutputBuffer.push_back((X >>  8) & 255);
-        OutputBuffer.push_back((X >> 16) & 255);
-        OutputBuffer.push_back((X >> 24) & 255);
+        Output.push_back((X >>  0) & 255);
+        Output.push_back((X >>  8) & 255);
+        Output.push_back((X >> 16) & 255);
+        Output.push_back((X >> 24) & 255);
       } else {
-        OutputBuffer.push_back((X >> 24) & 255);
-        OutputBuffer.push_back((X >> 16) & 255);
-        OutputBuffer.push_back((X >>  8) & 255);
-        OutputBuffer.push_back((X >>  0) & 255);
+        Output.push_back((X >> 24) & 255);
+        Output.push_back((X >> 16) & 255);
+        Output.push_back((X >>  8) & 255);
+        Output.push_back((X >>  0) & 255);
       }
     }
-    void outxword(uint64_t X) {
+    void outxword(DataBuffer &Output, uint64_t X) {
       if (isLittleEndian) {
-        OutputBuffer.push_back((X >>  0) & 255);
-        OutputBuffer.push_back((X >>  8) & 255);
-        OutputBuffer.push_back((X >> 16) & 255);
-        OutputBuffer.push_back((X >> 24) & 255);
-        OutputBuffer.push_back((X >> 32) & 255);
-        OutputBuffer.push_back((X >> 40) & 255);
-        OutputBuffer.push_back((X >> 48) & 255);
-        OutputBuffer.push_back((X >> 56) & 255);
+        Output.push_back((X >>  0) & 255);
+        Output.push_back((X >>  8) & 255);
+        Output.push_back((X >> 16) & 255);
+        Output.push_back((X >> 24) & 255);
+        Output.push_back((X >> 32) & 255);
+        Output.push_back((X >> 40) & 255);
+        Output.push_back((X >> 48) & 255);
+        Output.push_back((X >> 56) & 255);
       } else {
-        OutputBuffer.push_back((X >> 56) & 255);
-        OutputBuffer.push_back((X >> 48) & 255);
-        OutputBuffer.push_back((X >> 40) & 255);
-        OutputBuffer.push_back((X >> 32) & 255);
-        OutputBuffer.push_back((X >> 24) & 255);
-        OutputBuffer.push_back((X >> 16) & 255);
-        OutputBuffer.push_back((X >>  8) & 255);
-        OutputBuffer.push_back((X >>  0) & 255);
+        Output.push_back((X >> 56) & 255);
+        Output.push_back((X >> 48) & 255);
+        Output.push_back((X >> 40) & 255);
+        Output.push_back((X >> 32) & 255);
+        Output.push_back((X >> 24) & 255);
+        Output.push_back((X >> 16) & 255);
+        Output.push_back((X >>  8) & 255);
+        Output.push_back((X >>  0) & 255);
       }
     }
-    void outaddr32(unsigned X) {
-      outword(X);
+    void outaddr32(DataBuffer &Output, unsigned X) {
+      outword(Output, X);
     }
-    void outaddr64(uint64_t X) {
-      outxword(X);
+    void outaddr64(DataBuffer &Output, uint64_t X) {
+      outxword(Output, X);
     }
-    void outaddr(uint64_t X) {
+    void outaddr(DataBuffer &Output, uint64_t X) {
       if (!is64Bit)
-        outword((unsigned)X);
+        outword(Output, (unsigned)X);
       else
-        outxword(X);
+        outxword(Output, X);
     }
 
     // fix functions - Replace an existing entry at an offset.
-    void fixhalf(unsigned short X, unsigned Offset) {
-      unsigned char *P = &OutputBuffer[Offset];
+    void fixhalf(DataBuffer &Output, unsigned short X, unsigned Offset) {
+      unsigned char *P = &Output[Offset];
       P[0] = (X >> (isLittleEndian ?  0 : 8)) & 255;
       P[1] = (X >> (isLittleEndian ?  8 : 0)) & 255;
     }
 
-    void fixword(unsigned X, unsigned Offset) {
-      unsigned char *P = &OutputBuffer[Offset];
+    void fixword(DataBuffer &Output, unsigned X, unsigned Offset) {
+      unsigned char *P = &Output[Offset];
       P[0] = (X >> (isLittleEndian ?  0 : 24)) & 255;
       P[1] = (X >> (isLittleEndian ?  8 : 16)) & 255;
       P[2] = (X >> (isLittleEndian ? 16 :  8)) & 255;
       P[3] = (X >> (isLittleEndian ? 24 :  0)) & 255;
     }
 
-    void fixaddr(uint64_t X, unsigned Offset) {
+    void fixaddr(DataBuffer &Output, uint64_t X, unsigned Offset) {
       if (!is64Bit)
-        fixword((unsigned)X, Offset);
+        fixword(Output, (unsigned)X, Offset);
       else
         assert(0 && "Emission of 64-bit data not implemented yet!");
     }
@@ -271,7 +305,7 @@ namespace llvm {
     void EmitSymbolTable();
 
     void EmitSectionTableStringTable();
-    void EmitSectionTable();
+    void OutputSectionsAndSectionTable();
   };
 }
 
