@@ -112,6 +112,11 @@ namespace {
       setOperationAction(ISD::UINT_TO_FP       , MVT::i8   , Promote);
       setOperationAction(ISD::UINT_TO_FP       , MVT::i16  , Promote);
       setOperationAction(ISD::UINT_TO_FP       , MVT::i32  , Promote);
+
+      // Promote i1/i8 SINT_TO_FP to larger SINT_TO_FP's, as X86 doesn't have
+      // this operation.
+      setOperationAction(ISD::SINT_TO_FP       , MVT::i1   , Promote);
+      setOperationAction(ISD::SINT_TO_FP       , MVT::i8   , Promote);
        
       // We can handle SINT_TO_FP from i64 even though i64 isn't legal.
       setOperationAction(ISD::SINT_TO_FP       , MVT::i64  , Custom);
@@ -151,9 +156,13 @@ namespace {
         addRegisterClass(MVT::f32, X86::RXMMRegisterClass);
         addRegisterClass(MVT::f64, X86::RXMMRegisterClass);
         
+        // SSE has no load+extend ops
         setOperationAction(ISD::EXTLOAD,  MVT::f32, Expand);
         setOperationAction(ISD::ZEXTLOAD, MVT::f32, Expand);
-        
+
+        // SSE has no i16 to fp conversion, only i32
+        setOperationAction(ISD::SINT_TO_FP, MVT::i16, Promote);
+
         // We don't support sin/cos/sqrt/fmod
         setOperationAction(ISD::FSIN , MVT::f64, Expand);
         setOperationAction(ISD::FCOS , MVT::f64, Expand);
@@ -2363,56 +2372,17 @@ unsigned ISel::SelectExpr(SDOperand N) {
     Tmp1 = SelectExpr(N.getOperand(0));  // Get the operand register
     unsigned PromoteOpcode = 0;
 
-    // We can handle any sint to fp, and 8 and 16 uint to fp with the direct 
-    // sse conversion instructions.
+    // We can handle any sint to fp with the direct sse conversion instructions.
     if (X86ScalarSSE) {
-      MVT::ValueType SrcTy = N.getOperand(0).getValueType();
-      MVT::ValueType DstTy = N.getValueType();
-      switch (SrcTy) {
-      case MVT::i1:   // FIXME: Should teach legalize about SINT_TO_FP i1/i8/i16
-      case MVT::i8:   // promotion, just like UINT_TO_FP promotion.
-        PromoteOpcode = X86::MOVSX32rr8;
-        break;
-      case MVT::i16:
-        PromoteOpcode = X86::MOVSX32rr16;
-        break;
-      default:
-        break;
-      }
-      if (PromoteOpcode) {
-        BuildMI(BB, PromoteOpcode, 1, Tmp2).addReg(Tmp1);
-        Tmp1 = Tmp2;
-      }
-      Opc = (DstTy == MVT::f64) ? X86::CVTSI2SDrr : X86::CVTSI2SSrr;
+      Opc = (N.getValueType() == MVT::f64) ? X86::CVTSI2SDrr : X86::CVTSI2SSrr;
       BuildMI(BB, Opc, 1, Result).addReg(Tmp1);
       return Result;
     }
     
-    // FIXME: Most of this grunt work should be done by legalize!
     ContainsFPCode = true;
 
-    // Promote the integer to a type supported by FLD.  We do this because there
-    // are no unsigned FLD instructions, so we must promote an unsigned value to
-    // a larger signed value, then use FLD on the larger value.
-    //
-    MVT::ValueType SrcTy = N.getOperand(0).getValueType();
-    switch (SrcTy) {
-    case MVT::i1:
-    case MVT::i8:
-      // We don't have the facilities for directly loading byte sized data from
-      // memory (even signed).  Promote it to 16 bits.
-
-      // FIXME: move to legalize.
-      Tmp2 = MakeReg(MVT::i16);
-      BuildMI(BB, X86::MOVSX16rr8, 1, Tmp2).addReg(Tmp1);
-      SrcTy = MVT::i16;
-      Tmp1 = Tmp2;
-      break;
-    default:
-      break;
-    }
-
     // Spill the integer to memory and reload it from there.
+    MVT::ValueType SrcTy = N.getOperand(0).getValueType();
     unsigned Size = MVT::getSizeInBits(SrcTy)/8;
     MachineFunction *F = BB->getParent();
     int FrameIdx = F->getFrameInfo()->CreateStackObject(Size, Size);
@@ -3345,8 +3315,13 @@ unsigned ISel::SelectExpr(SDOperand N) {
         SelectAddress(Address, AM);
         Select(Chain);
       }
-
-      addFullAddress(BuildMI(BB, X86::FILD64m, 4, Result), AM);
+      if (X86ScalarSSE) {
+        addFullAddress(BuildMI(BB, X86::FILD64m, 4, X86::FP0), AM);
+        addFullAddress(BuildMI(BB, X86::FST64m, 5), AM).addReg(X86::FP0);
+        addFullAddress(BuildMI(BB, X86::MOVSDrm, 4, Result), AM);
+      } else {
+        addFullAddress(BuildMI(BB, X86::FILD64m, 4, Result), AM);
+      }
     }
     return Result;
 

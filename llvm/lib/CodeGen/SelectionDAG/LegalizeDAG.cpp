@@ -126,7 +126,8 @@ private:
                           SDOperand Source);
 
   SDOperand ExpandLegalUINT_TO_FP(SDOperand LegalOp, MVT::ValueType DestVT);
-  SDOperand PromoteLegalUINT_TO_FP(SDOperand LegalOp, MVT::ValueType DestVT);
+  SDOperand PromoteLegalINT_TO_FP(SDOperand LegalOp, MVT::ValueType DestVT,
+                                  bool isSigned);
  
   bool ExpandShift(unsigned Opc, SDOperand Op, SDOperand Amt,
                    SDOperand &Lo, SDOperand &Hi);
@@ -197,8 +198,9 @@ SDOperand SelectionDAGLegalize::ExpandLegalUINT_TO_FP(SDOperand Op0,
 /// we promote it.  At this point, we know that the result and operand types are
 /// legal for the target, and that there is a legal UINT_TO_FP or SINT_TO_FP
 /// operation that takes a larger input.
-SDOperand SelectionDAGLegalize::PromoteLegalUINT_TO_FP(SDOperand LegalOp,
-                                                       MVT::ValueType DestVT) {
+SDOperand SelectionDAGLegalize::PromoteLegalINT_TO_FP(SDOperand LegalOp,
+                                                      MVT::ValueType DestVT,
+                                                      bool isSigned) {
   // First step, figure out the appropriate *INT_TO_FP operation to use.
   MVT::ValueType NewInTy = LegalOp.getValueType();
   
@@ -221,6 +223,7 @@ SDOperand SelectionDAGLegalize::PromoteLegalUINT_TO_FP(SDOperand LegalOp,
         break;
     }
     if (OpToUse) break;
+    if (isSigned) continue;
     
     // If the target supports UINT_TO_FP of this type, use it.
     switch (TLI.getOperationAction(ISD::UINT_TO_FP, NewInTy)) {
@@ -244,7 +247,8 @@ SDOperand SelectionDAGLegalize::PromoteLegalUINT_TO_FP(SDOperand LegalOp,
   // Okay, we found the operation and type to use.  Zero extend our input to the
   // desired type then run the operation on it.
   return DAG.getNode(OpToUse, DestVT,
-                     DAG.getNode(ISD::ZERO_EXTEND, NewInTy, LegalOp));
+                     DAG.getNode(isSigned ? ISD::SIGN_EXTEND : ISD::ZERO_EXTEND,
+                                 NewInTy, LegalOp));
 }
 
 void SelectionDAGLegalize::LegalizeDAG() {
@@ -1438,18 +1442,24 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     switch (getTypeAction(Node->getOperand(0).getValueType())) {
     case Legal:
       //still made need to expand if the op is illegal, but the types are legal
-      if (Node->getOpcode() == ISD::UINT_TO_FP) {
+      if (Node->getOpcode() == ISD::UINT_TO_FP ||
+          Node->getOpcode() == ISD::SINT_TO_FP) {
+        bool isSigned = Node->getOpcode() == ISD::SINT_TO_FP;
         switch (TLI.getOperationAction(Node->getOpcode(), 
                                        Node->getOperand(0).getValueType())) {
         default: assert(0 && "Unknown operation action!");
         case TargetLowering::Expand:
-          Result = ExpandLegalUINT_TO_FP(LegalizeOp(Node->getOperand(0)),
-                                         Node->getValueType(0));
+          if (!isSigned)
+            Result = ExpandLegalUINT_TO_FP(LegalizeOp(Node->getOperand(0)),
+                                           Node->getValueType(0));
+          else
+            assert(0 && "Legalize cannot Expand SINT_TO_FP yet");
           AddLegalizedOperand(Op, Result);
           return Result;
         case TargetLowering::Promote:
-          Result = PromoteLegalUINT_TO_FP(LegalizeOp(Node->getOperand(0)),
-                                          Node->getValueType(0));
+          Result = PromoteLegalINT_TO_FP(LegalizeOp(Node->getOperand(0)),
+                                         Node->getValueType(0),
+                                         isSigned);
           AddLegalizedOperand(Op, Result);
           return Result;
         case TargetLowering::Legal:
