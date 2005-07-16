@@ -152,13 +152,16 @@ namespace llvm {
 
     /// getSection - Return the section with the specified name, creating a new
     /// section if one does not already exist.
-    ELFSection &getSection(const std::string &Name) {
+    ELFSection &getSection(const std::string &Name,
+                           unsigned Type, unsigned Flags = 0) {
       ELFSection *&SN = SectionLookup[Name];
       if (SN) return *SN;
 
       SectionList.push_back(Name);
       SN = &SectionList.back();
       SN->SectionIdx = NumSections++;
+      SN->Type = Type;
+      SN->Flags = Flags;
       return *SN;
     }
 
