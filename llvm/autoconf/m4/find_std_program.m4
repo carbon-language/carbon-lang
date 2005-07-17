@@ -24,23 +24,29 @@ fi
 dnl Find a program via --with options, in the path, or well known places
 dnl
 dnl Parameters:
-dnl   $1 - program name
+dnl   $1 - program's executable name
 dnl   $2 - header file name to check (optional)
 dnl   $3 - library file name to check (optional)
+dnl   $4 - alternate (long) name for the program
 AC_DEFUN([FIND_STD_PROGRAM],
 [m4_define([allcapsname],translit($1,a-z,A-Z))
-AC_MSG_CHECKING([for ]$1[ bin/lib/include locations])
+m4_define([stdprog_long_name],ifelse($4,,translit($1,[ !@#$%^&*()-+={}[]:;"',./?],[-]),translit($4,[ !@#$%^&*()-+={}[]:;"',./?],[-])))
+AC_MSG_CHECKING([for ]stdprog_long_name()[ bin/lib/include locations])
 AC_ARG_WITH($1,
-  AS_HELP_STRING([--with-]$1[=DIR],[Specify that ]$1['s install prefix is DIR]),
-    $1[pfxdir=$withval],$1[pfxdir=nada])
+  AS_HELP_STRING([--with-]stdprog_long_name()[=DIR],
+  [Specify that the ]stdprog_long_name()[ install prefix is DIR]),
+  $1[pfxdir=$withval],$1[pfxdir=nada])
 AC_ARG_WITH($1[-bin],
-  AS_HELP_STRING([--with-]$1[-bin=DIR],[Specify that ]$1[ binary are in DIR]),
+  AS_HELP_STRING([--with-]stdprog_long_name()[-bin=DIR],
+  [Specify that the ]stdprog_long_name()[ binary is in DIR]),
     $1[bindir=$withval],$1[bindir=nada])
 AC_ARG_WITH($1[-lib],
-  AS_HELP_STRING([--with-]$1[-lib=DIR],[Specify that ]$1[ libs are in DIR]),
+  AS_HELP_STRING([--with-]stdprog_long_name()[-lib=DIR],
+  [Specify that ]stdprog_long_name()[ libraries are in DIR]),
   $1[libdir=$withval],$1[libdir=nada])
 AC_ARG_WITH($1[-inc],
-  AS_HELP_STRING([--with-]$1[-inc=DIR],[Specify that ]$1[ includes are in DIR]),
+  AS_HELP_STRING([--with-]stdprog_long_name()[-inc=DIR],
+  [Specify that the ]stdprog_long_name()[ includes are in DIR]),
   $1[incdir=$withval],$1[incdir=nada])
 pfxvar=$1pfxdir
 binvar=$1bindir
