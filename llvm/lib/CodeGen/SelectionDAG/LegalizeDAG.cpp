@@ -158,8 +158,6 @@ SelectionDAGLegalize::SelectionDAGLegalize(SelectionDAG &dag)
 /// legal for the target.
 SDOperand SelectionDAGLegalize::ExpandLegalUINT_TO_FP(SDOperand Op0,
                                                       MVT::ValueType DestVT) {
-  assert(Op0.getValueType() == MVT::i32 &&
-         "This code only works for i32 input: extend in the future");
   SDOperand Tmp1 = DAG.getNode(ISD::SINT_TO_FP, DestVT, Op0);
   
   SDOperand SignSet = DAG.getSetCC(ISD::SETLT, TLI.getSetCCResultTy(), 
@@ -170,7 +168,17 @@ SDOperand SelectionDAGLegalize::ExpandLegalUINT_TO_FP(SDOperand Op0,
   SDOperand CstOffset = DAG.getNode(ISD::SELECT, Zero.getValueType(),
                                     SignSet, Four, Zero);
   
-  uint64_t FF = 0x5f800000ULL;
+  // If the sign bit of the integer is set, the large number will be treated as
+  // a negative number.  To counteract this, the dynamic code adds an offset
+  // depending on the data type.
+  uint64_t FF;
+  switch (Op0.getValueType()) {
+  default: assert(0 && "Unsupported integer type!");
+  case MVT::i8 : FF = 0x43800000ULL; break;  // 2^8  (as a float)
+  case MVT::i16: FF = 0x47800000ULL; break;  // 2^16 (as a float)
+  case MVT::i32: FF = 0x4F800000ULL; break;  // 2^32 (as a float)
+  case MVT::i64: FF = 0x5F800000ULL; break;  // 2^64 (as a float)
+  }
   if (TLI.isLittleEndian()) FF <<= 32;
   static Constant *FudgeFactor = ConstantUInt::get(Type::ULongTy, FF);
   
