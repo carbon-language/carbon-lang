@@ -2367,10 +2367,17 @@ Instruction *InstCombiner::FoldGEPSetCC(User *GEPLHS, Value *RHS,
       else if (NumDifferences == 1) {
         Value *LHSV = GEPLHS->getOperand(DiffOperand);
         Value *RHSV = GEPRHS->getOperand(DiffOperand);
-        if (LHSV->getType() != RHSV->getType())
-          LHSV = InsertNewInstBefore(new CastInst(LHSV, RHSV->getType(),
-                                                  LHSV->getName()+".c"), I);
-          return new SetCondInst(Cond, LHSV, RHSV);
+
+        // Convert the operands to signed values to make sure to perform a
+        // signed comparison.
+        const Type *NewTy = LHSV->getType()->getSignedVersion();
+        if (LHSV->getType() != NewTy)
+          LHSV = InsertNewInstBefore(new CastInst(LHSV, NewTy,
+                                                  LHSV->getName()), I);
+        if (RHSV->getType() != NewTy)
+          RHSV = InsertNewInstBefore(new CastInst(RHSV, NewTy,
+                                                  RHSV->getName()), I);
+        return new SetCondInst(Cond, LHSV, RHSV);
       }
     }
 
