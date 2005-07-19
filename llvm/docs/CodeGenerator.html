@@ -383,11 +383,31 @@ href="TableGenFundamentals.html">TableGen</a> description of the register file.
   <a name="targetinstrinfo">The <tt>TargetInstrInfo</tt> class</a>
 </div>
 
+<div class="doc_text">
+  <p>The <tt>TargetInstrInfo</tt> class is used to describe the machine 
+  instructions supported by the target. It is essentially an array of 
+  <tt>TargetInstrDescriptor</tt> objects, each of which describes one
+  instruction the target supports. Descriptors define things like the mnemonic
+  for the opcode, the number of operands, the size of the largets immediate
+  field the instruction can contain, the latency of the instruction in machine
+  cycles, etc.</p>
+</div>
+
 <!-- ======================================================================= -->
 <div class="doc_subsection">
   <a name="targetframeinfo">The <tt>TargetFrameInfo</tt> class</a>
 </div>
 
+<div class="doc_text">
+  <p>The <tt>TargetFrameInfo</tt> class is used to provide information about the
+  stack frame layout of the target. It holds the direction of stack growth, 
+  the known stack alignment on entry to each function, and the offset to the 
+  locals area.  The offset to the local area is the offset from the stack 
+  pointer on function entry to the first location where function data (local 
+  variables, spill locations) can be stored.</p>
+  <p>The class also provides several functions for computing alignment and
+  offsets for various situations.</p>
+</div>
 <!-- ======================================================================= -->
 <div class="doc_subsection">
   <a name="targetjitinfo">The <tt>TargetJITInfo</tt> class</a>
