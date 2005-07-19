@@ -403,9 +403,6 @@ void SelectionDAGLowering::visitRet(ReturnInst &I) {
       Op1 = DAG.getNode(ISD::ZERO_EXTEND, TmpVT, Op1);
     break;
   case MVT::f32:
-    // Extend float to double.
-    Op1 = DAG.getNode(ISD::FP_EXTEND, MVT::f64, Op1);
-    break;
   case MVT::i64:
   case MVT::f64:
     break; // No extension needed!
