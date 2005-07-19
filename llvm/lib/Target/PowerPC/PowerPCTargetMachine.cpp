@@ -30,18 +30,12 @@
 using namespace llvm;
 
 namespace llvm {
-  bool PPCCRopts;
   cl::opt<bool> AIX("aix",
                     cl::desc("Generate AIX/xcoff instead of Darwin/MachO"),
                     cl::Hidden);
   cl::opt<bool> EnablePPCLSR("enable-lsr-for-ppc",
                              cl::desc("Enable LSR for PPC (beta)"),
                              cl::Hidden);
-  cl::opt<bool, true> EnablePPCCRopts("enable-cc-opts",
-                            cl::desc("Enable opts using condition regs (beta)"),
-                            cl::location(PPCCRopts),
-                            cl::init(false),
-                            cl::Hidden);
 }
 
 namespace {

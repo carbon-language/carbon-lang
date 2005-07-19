@@ -17,9 +17,9 @@
 #include "PowerPCInstrBuilder.h"
 #include "PowerPCInstrInfo.h"
 #include "PPC32TargetMachine.h"
-#include "llvm/Constants.h"                   // FIXME: REMOVE
+#include "llvm/Constants.h"
 #include "llvm/Function.h"
-#include "llvm/CodeGen/MachineConstantPool.h" // FIXME: REMOVE
+#include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/SelectionDAG.h"
@@ -563,7 +563,6 @@ public:
   unsigned SelectCC(SDOperand CC, unsigned &Opc, bool &Inv, unsigned &Idx);
   unsigned SelectCCExpr(SDOperand N, unsigned& Opc, bool &Inv, unsigned &Idx);
   unsigned SelectExpr(SDOperand N, bool Recording=false);
-  unsigned SelectExprFP(SDOperand N, unsigned Result);
   void Select(SDOperand N);
 
   bool SelectAddr(SDOperand N, unsigned& Reg, int& offset);
@@ -1155,8 +1154,6 @@ unsigned ISel::SelectCC(SDOperand CC, unsigned& Opc, bool &Inv, unsigned& Idx) {
       BuildMI(BB, CompareOpc, 2, Result).addReg(Tmp1).addReg(Tmp2);
     }
   } else {
-    if (PPCCRopts)
-      return SelectCCExpr(CC, Opc, Inv, Idx);
     // If this isn't a SetCC, then select the value and compare it against zero,
     // treating it as if it were a boolean.
     Opc = PPC::BNE;
@@ -1271,307 +1268,6 @@ void ISel::SelectBranchCC(SDOperand N)
   return;
 }
 
-unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
-{
-  unsigned Tmp1, Tmp2, Tmp3;
-  unsigned Opc = 0;
-  SDNode *Node = N.Val;
-  MVT::ValueType DestType = N.getValueType();
-  unsigned opcode = N.getOpcode();
-
-  switch (opcode) {
-  default:
-    Node->dump();
-    assert(0 && "Node not handled!\n");
-
-  case ISD::SELECT: {
-    // Attempt to generate FSEL.  We can do this whenever we have an FP result,
-    // and an FP comparison in the SetCC node.
-    SetCCSDNode* SetCC = dyn_cast<SetCCSDNode>(N.getOperand(0).Val);
-    if (SetCC && N.getOperand(0).getOpcode() == ISD::SETCC &&
-        !MVT::isInteger(SetCC->getOperand(0).getValueType()) &&
-        SetCC->getCondition() != ISD::SETEQ &&
-        SetCC->getCondition() != ISD::SETNE) {
-      MVT::ValueType VT = SetCC->getOperand(0).getValueType();
-      unsigned TV = SelectExpr(N.getOperand(1)); // Use if TRUE
-      unsigned FV = SelectExpr(N.getOperand(2)); // Use if FALSE
-
-      ConstantFPSDNode *CN = dyn_cast<ConstantFPSDNode>(SetCC->getOperand(1));
-      if (CN && (CN->isExactlyValue(-0.0) || CN->isExactlyValue(0.0))) {
-        switch(SetCC->getCondition()) {
-        default: assert(0 && "Invalid FSEL condition"); abort();
-        case ISD::SETULT:
-        case ISD::SETLT:
-          std::swap(TV, FV);  // fsel is natively setge, swap operands for setlt
-        case ISD::SETUGE:
-        case ISD::SETGE:
-          Tmp1 = SelectExpr(SetCC->getOperand(0));   // Val to compare against
-          BuildMI(BB, PPC::FSEL, 3, Result).addReg(Tmp1).addReg(TV).addReg(FV);
-          return Result;
-        case ISD::SETUGT:
-        case ISD::SETGT:
-          std::swap(TV, FV);  // fsel is natively setge, swap operands for setlt
-        case ISD::SETULE:
-        case ISD::SETLE: {
-          if (SetCC->getOperand(0).getOpcode() == ISD::FNEG) {
-            Tmp2 = SelectExpr(SetCC->getOperand(0).getOperand(0));
-          } else {
-            Tmp2 = MakeReg(VT);
-            Tmp1 = SelectExpr(SetCC->getOperand(0));   // Val to compare against
-            BuildMI(BB, PPC::FNEG, 1, Tmp2).addReg(Tmp1);
-          }
-          BuildMI(BB, PPC::FSEL, 3, Result).addReg(Tmp2).addReg(TV).addReg(FV);
-          return Result;
-        }
-        }
-      } else {
-        Opc = (MVT::f64 == VT) ? PPC::FSUB : PPC::FSUBS;
-        Tmp1 = SelectExpr(SetCC->getOperand(0));   // Val to compare against
-        Tmp2 = SelectExpr(SetCC->getOperand(1));
-        Tmp3 =  MakeReg(VT);
-        switch(SetCC->getCondition()) {
-        default: assert(0 && "Invalid FSEL condition"); abort();
-        case ISD::SETULT:
-        case ISD::SETLT:
-          BuildMI(BB, Opc, 2, Tmp3).addReg(Tmp1).addReg(Tmp2);
-          BuildMI(BB, PPC::FSEL, 3, Result).addReg(Tmp3).addReg(FV).addReg(TV);
-          return Result;
-        case ISD::SETUGE:
-        case ISD::SETGE:
-          BuildMI(BB, Opc, 2, Tmp3).addReg(Tmp1).addReg(Tmp2);
-          BuildMI(BB, PPC::FSEL, 3, Result).addReg(Tmp3).addReg(TV).addReg(FV);
-          return Result;
-        case ISD::SETUGT:
-        case ISD::SETGT:
-          BuildMI(BB, Opc, 2, Tmp3).addReg(Tmp2).addReg(Tmp1);
-          BuildMI(BB, PPC::FSEL, 3, Result).addReg(Tmp3).addReg(FV).addReg(TV);
-          return Result;
-        case ISD::SETULE:
-        case ISD::SETLE:
-          BuildMI(BB, Opc, 2, Tmp3).addReg(Tmp2).addReg(Tmp1);
-          BuildMI(BB, PPC::FSEL, 3, Result).addReg(Tmp3).addReg(TV).addReg(FV);
-          return Result;
-        }
-      }
-      assert(0 && "Should never get here");
-      return 0;
-    }
-
-    bool Inv;
-    unsigned TrueValue = SelectExpr(N.getOperand(1)); //Use if TRUE
-    unsigned FalseValue = SelectExpr(N.getOperand(2)); //Use if FALSE
-    unsigned CCReg = SelectCC(N.getOperand(0), Opc, Inv, Tmp3);
-
-    // Create an iterator with which to insert the MBB for copying the false
-    // value and the MBB to hold the PHI instruction for this SetCC.
-    MachineBasicBlock *thisMBB = BB;
-    const BasicBlock *LLVM_BB = BB->getBasicBlock();
-    ilist<MachineBasicBlock>::iterator It = BB;
-    ++It;
-
-    //  thisMBB:
-    //  ...
-    //   TrueVal = ...
-    //   cmpTY ccX, r1, r2
-    //   bCC copy1MBB
-    //   fallthrough --> copy0MBB
-    MachineBasicBlock *copy0MBB = new MachineBasicBlock(LLVM_BB);
-    MachineBasicBlock *sinkMBB = new MachineBasicBlock(LLVM_BB);
-    BuildMI(BB, Opc, 2).addReg(CCReg).addMBB(sinkMBB);
-    MachineFunction *F = BB->getParent();
-    F->getBasicBlockList().insert(It, copy0MBB);
-    F->getBasicBlockList().insert(It, sinkMBB);
-    // Update machine-CFG edges
-    BB->addSuccessor(copy0MBB);
-    BB->addSuccessor(sinkMBB);
-
-    //  copy0MBB:
-    //   %FalseValue = ...
-    //   # fallthrough to sinkMBB
-    BB = copy0MBB;
-    // Update machine-CFG edges
-    BB->addSuccessor(sinkMBB);
-
-    //  sinkMBB:
-    //   %Result = phi [ %FalseValue, copy0MBB ], [ %TrueValue, thisMBB ]
-    //  ...
-    BB = sinkMBB;
-    BuildMI(BB, PPC::PHI, 4, Result).addReg(FalseValue)
-      .addMBB(copy0MBB).addReg(TrueValue).addMBB(thisMBB);
-    return Result;
-  }
-
-  case ISD::FNEG:
-    if (!NoExcessFPPrecision &&
-        ISD::ADD == N.getOperand(0).getOpcode() &&
-        N.getOperand(0).Val->hasOneUse() &&
-        ISD::MUL == N.getOperand(0).getOperand(0).getOpcode() &&
-        N.getOperand(0).getOperand(0).Val->hasOneUse()) {
-      ++FusedFP; // Statistic
-      Tmp1 = SelectExpr(N.getOperand(0).getOperand(0).getOperand(0));
-      Tmp2 = SelectExpr(N.getOperand(0).getOperand(0).getOperand(1));
-      Tmp3 = SelectExpr(N.getOperand(0).getOperand(1));
-      Opc = DestType == MVT::f64 ? PPC::FNMADD : PPC::FNMADDS;
-      BuildMI(BB, Opc, 3, Result).addReg(Tmp1).addReg(Tmp2).addReg(Tmp3);
-    } else if (!NoExcessFPPrecision &&
-        ISD::ADD == N.getOperand(0).getOpcode() &&
-        N.getOperand(0).Val->hasOneUse() &&
-        ISD::MUL == N.getOperand(0).getOperand(1).getOpcode() &&
-        N.getOperand(0).getOperand(1).Val->hasOneUse()) {
-      ++FusedFP; // Statistic
-      Tmp1 = SelectExpr(N.getOperand(0).getOperand(1).getOperand(0));
-      Tmp2 = SelectExpr(N.getOperand(0).getOperand(1).getOperand(1));
-      Tmp3 = SelectExpr(N.getOperand(0).getOperand(0));
-      Opc = DestType == MVT::f64 ? PPC::FNMADD : PPC::FNMADDS;
-      BuildMI(BB, Opc, 3, Result).addReg(Tmp1).addReg(Tmp2).addReg(Tmp3);
-    } else if (ISD::FABS == N.getOperand(0).getOpcode()) {
-      Tmp1 = SelectExpr(N.getOperand(0).getOperand(0));
-      BuildMI(BB, PPC::FNABS, 1, Result).addReg(Tmp1);
-    } else {
-      Tmp1 = SelectExpr(N.getOperand(0));
-      BuildMI(BB, PPC::FNEG, 1, Result).addReg(Tmp1);
-    }
-    return Result;
-
-  case ISD::FABS:
-    Tmp1 = SelectExpr(N.getOperand(0));
-    BuildMI(BB, PPC::FABS, 1, Result).addReg(Tmp1);
-    return Result;
-
-  case ISD::FP_ROUND:
-    assert (DestType == MVT::f32 &&
-            N.getOperand(0).getValueType() == MVT::f64 &&
-            "only f64 to f32 conversion supported here");
-    Tmp1 = SelectExpr(N.getOperand(0));
-    BuildMI(BB, PPC::FRSP, 1, Result).addReg(Tmp1);
-    return Result;
-
-  case ISD::FP_EXTEND:
-    assert (DestType == MVT::f64 &&
-            N.getOperand(0).getValueType() == MVT::f32 &&
-            "only f32 to f64 conversion supported here");
-    Tmp1 = SelectExpr(N.getOperand(0));
-    BuildMI(BB, PPC::FMR, 1, Result).addReg(Tmp1);
-    return Result;
-
-  case ISD::CopyFromReg:
-    if (Result == 1)
-      Result = ExprMap[N.getValue(0)] = MakeReg(N.getValue(0).getValueType());
-    Tmp1 = dyn_cast<RegSDNode>(Node)->getReg();
-    BuildMI(BB, PPC::FMR, 1, Result).addReg(Tmp1);
-    return Result;
-
-  case ISD::ConstantFP: {
-    ConstantFPSDNode *CN = cast<ConstantFPSDNode>(N);
-    Result = getConstDouble(CN->getValue(), Result);
-    return Result;
-  }
-
-  case ISD::ADD:
-    if (!NoExcessFPPrecision && N.getOperand(0).getOpcode() == ISD::MUL &&
-        N.getOperand(0).Val->hasOneUse()) {
-      ++FusedFP; // Statistic
-      Tmp1 = SelectExpr(N.getOperand(0).getOperand(0));
-      Tmp2 = SelectExpr(N.getOperand(0).getOperand(1));
-      Tmp3 = SelectExpr(N.getOperand(1));
-      Opc = DestType == MVT::f64 ? PPC::FMADD : PPC::FMADDS;
-      BuildMI(BB, Opc, 3, Result).addReg(Tmp1).addReg(Tmp2).addReg(Tmp3);
-      return Result;
-    }
-    if (!NoExcessFPPrecision && N.getOperand(1).getOpcode() == ISD::MUL &&
-        N.getOperand(1).Val->hasOneUse()) {
-      ++FusedFP; // Statistic
-      Tmp1 = SelectExpr(N.getOperand(1).getOperand(0));
-      Tmp2 = SelectExpr(N.getOperand(1).getOperand(1));
-      Tmp3 = SelectExpr(N.getOperand(0));
-      Opc = DestType == MVT::f64 ? PPC::FMADD : PPC::FMADDS;
-      BuildMI(BB, Opc, 3, Result).addReg(Tmp1).addReg(Tmp2).addReg(Tmp3);
-      return Result;
-    }
-    Opc = DestType == MVT::f64 ? PPC::FADD : PPC::FADDS;
-    Tmp1 = SelectExpr(N.getOperand(0));
-    Tmp2 = SelectExpr(N.getOperand(1));
-    BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
-    return Result;
-
-  case ISD::SUB:
-    if (!NoExcessFPPrecision && N.getOperand(0).getOpcode() == ISD::MUL &&
-        N.getOperand(0).Val->hasOneUse()) {
-      ++FusedFP; // Statistic
-      Tmp1 = SelectExpr(N.getOperand(0).getOperand(0));
-      Tmp2 = SelectExpr(N.getOperand(0).getOperand(1));
-      Tmp3 = SelectExpr(N.getOperand(1));
-      Opc = DestType == MVT::f64 ? PPC::FMSUB : PPC::FMSUBS;
-      BuildMI(BB, Opc, 3, Result).addReg(Tmp1).addReg(Tmp2).addReg(Tmp3);
-      return Result;
-    }
-    if (!NoExcessFPPrecision && N.getOperand(1).getOpcode() == ISD::MUL &&
-        N.getOperand(1).Val->hasOneUse()) {
-      ++FusedFP; // Statistic
-      Tmp1 = SelectExpr(N.getOperand(1).getOperand(0));
-      Tmp2 = SelectExpr(N.getOperand(1).getOperand(1));
-      Tmp3 = SelectExpr(N.getOperand(0));
-      Opc = DestType == MVT::f64 ? PPC::FNMSUB : PPC::FNMSUBS;
-      BuildMI(BB, Opc, 3, Result).addReg(Tmp1).addReg(Tmp2).addReg(Tmp3);
-      return Result;
-    }
-    Opc = DestType == MVT::f64 ? PPC::FSUB : PPC::FSUBS;
-    Tmp1 = SelectExpr(N.getOperand(0));
-    Tmp2 = SelectExpr(N.getOperand(1));
-    BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
-    return Result;
-
-  case ISD::MUL:
-  case ISD::SDIV:
-    switch( opcode ) {
-    case ISD::MUL:  Opc = DestType == MVT::f64 ? PPC::FMUL : PPC::FMULS; break;
-    case ISD::SDIV: Opc = DestType == MVT::f64 ? PPC::FDIV : PPC::FDIVS; break;
-    };
-    Tmp1 = SelectExpr(N.getOperand(0));
-    Tmp2 = SelectExpr(N.getOperand(1));
-    BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
-    return Result;
-
-  case ISD::UINT_TO_FP:
-  case ISD::SINT_TO_FP: {
-    assert (N.getOperand(0).getValueType() == MVT::i32
-            && "int to float must operate on i32");
-    bool IsUnsigned = (ISD::UINT_TO_FP == opcode);
-    Tmp1 = SelectExpr(N.getOperand(0));  // Get the operand register
-    Tmp2 = MakeReg(MVT::f64); // temp reg to load the integer value into
-    Tmp3 = MakeReg(MVT::i32); // temp reg to hold the conversion constant
-
-    int FrameIdx = BB->getParent()->getFrameInfo()->CreateStackObject(8, 8);
-    MachineConstantPool *CP = BB->getParent()->getConstantPool();
-
-    if (IsUnsigned) {
-      unsigned ConstF = getConstDouble(0x1.000000p52);
-      // Store the hi & low halves of the fp value, currently in int regs
-      BuildMI(BB, PPC::LIS, 1, Tmp3).addSImm(0x4330);
-      addFrameReference(BuildMI(BB, PPC::STW, 3).addReg(Tmp3), FrameIdx);
-      addFrameReference(BuildMI(BB, PPC::STW, 3).addReg(Tmp1), FrameIdx, 4);
-      addFrameReference(BuildMI(BB, PPC::LFD, 2, Tmp2), FrameIdx);
-      // Generate the return value with a subtract
-      BuildMI(BB, PPC::FSUB, 2, Result).addReg(Tmp2).addReg(ConstF);
-    } else {
-      unsigned ConstF = getConstDouble(0x1.000008p52);
-      unsigned TmpL = MakeReg(MVT::i32);
-      // Store the hi & low halves of the fp value, currently in int regs
-      BuildMI(BB, PPC::LIS, 1, Tmp3).addSImm(0x4330);
-      addFrameReference(BuildMI(BB, PPC::STW, 3).addReg(Tmp3), FrameIdx);
-      BuildMI(BB, PPC::XORIS, 2, TmpL).addReg(Tmp1).addImm(0x8000);
-      addFrameReference(BuildMI(BB, PPC::STW, 3).addReg(TmpL), FrameIdx, 4);
-      addFrameReference(BuildMI(BB, PPC::LFD, 2, Tmp2), FrameIdx);
-      // Generate the return value with a subtract
-      BuildMI(BB, PPC::FSUB, 2, Result).addReg(Tmp2).addReg(ConstF);
-    }
-    return Result;
-  }
-  }
-  assert(0 && "Should never get here");
-  return 0;
-}
-
 unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
   unsigned Result;
   unsigned Tmp1, Tmp2, Tmp3;
@@ -1619,14 +1315,6 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
       ExprMap[N.getValue(i)] = MakeReg(Node->getValueType(i));
     break;
   }
-
-  if (ISD::CopyFromReg == opcode)
-    DestType = N.getValue(0).getValueType();
-
-  if (DestType == MVT::f64 || DestType == MVT::f32)
-    if (ISD::LOAD != opcode && ISD::EXTLOAD != opcode &&
-        ISD::UNDEF != opcode && ISD::CALL != opcode && ISD::TAILCALL != opcode)
-      return SelectExprFP(N, Result);
 
   switch (opcode) {
   default:
@@ -1843,10 +1531,14 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
     return Result;
 
   case ISD::CopyFromReg:
+    DestType = N.getValue(0).getValueType();
     if (Result == 1)
-      Result = ExprMap[N.getValue(0)] = MakeReg(N.getValue(0).getValueType());
+      Result = ExprMap[N.getValue(0)] = MakeReg(DestType);
     Tmp1 = dyn_cast<RegSDNode>(Node)->getReg();
-    BuildMI(BB, PPC::OR, 2, Result).addReg(Tmp1).addReg(Tmp1);
+    if (MVT::isInteger(DestType))
+      BuildMI(BB, PPC::OR, 2, Result).addReg(Tmp1).addReg(Tmp1);
+    else
+      BuildMI(BB, PPC::FMR, 1, Result).addReg(Tmp1);
     return Result;
 
   case ISD::SHL:
@@ -1890,7 +1582,33 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
     return Result;
 
   case ISD::ADD:
-    assert (DestType == MVT::i32 && "Only do arithmetic on i32s!");
+    if (!MVT::isInteger(DestType)) {
+      if (!NoExcessFPPrecision && N.getOperand(0).getOpcode() == ISD::MUL &&
+          N.getOperand(0).Val->hasOneUse()) {
+        ++FusedFP; // Statistic
+        Tmp1 = SelectExpr(N.getOperand(0).getOperand(0));
+        Tmp2 = SelectExpr(N.getOperand(0).getOperand(1));
+        Tmp3 = SelectExpr(N.getOperand(1));
+        Opc = DestType == MVT::f64 ? PPC::FMADD : PPC::FMADDS;
+        BuildMI(BB, Opc, 3, Result).addReg(Tmp1).addReg(Tmp2).addReg(Tmp3);
+        return Result;
+      }
+      if (!NoExcessFPPrecision && N.getOperand(1).getOpcode() == ISD::MUL &&
+          N.getOperand(1).Val->hasOneUse()) {
+        ++FusedFP; // Statistic
+        Tmp1 = SelectExpr(N.getOperand(1).getOperand(0));
+        Tmp2 = SelectExpr(N.getOperand(1).getOperand(1));
+        Tmp3 = SelectExpr(N.getOperand(0));
+        Opc = DestType == MVT::f64 ? PPC::FMADD : PPC::FMADDS;
+        BuildMI(BB, Opc, 3, Result).addReg(Tmp1).addReg(Tmp2).addReg(Tmp3);
+        return Result;
+      }
+      Opc = DestType == MVT::f64 ? PPC::FADD : PPC::FADDS;
+      Tmp1 = SelectExpr(N.getOperand(0));
+      Tmp2 = SelectExpr(N.getOperand(1));
+      BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
+      return Result;
+    }
     Tmp1 = SelectExpr(N.getOperand(0));
     switch(getImmediateForOpcode(N.getOperand(1), opcode, Tmp2)) {
       default: assert(0 && "unhandled result code");
@@ -1908,15 +1626,6 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
     return Result;
 
   case ISD::AND:
-    if (PPCCRopts) {
-      if (N.getOperand(0).getOpcode() == ISD::SETCC ||
-          N.getOperand(1).getOpcode() == ISD::SETCC) {
-        bool Inv;
-        Tmp1 = SelectCCExpr(N, Opc, Inv, Tmp2);
-        MoveCRtoGPR(Tmp1, Inv, Tmp2, Result);
-        return Result;
-      }
-    }
     // FIXME: should add check in getImmediateForOpcode to return a value
     // indicating the immediate is a run of set bits so we can emit a bitfield
     // clear with RLWINM instead.
@@ -1977,15 +1686,6 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
   case ISD::OR:
     if (SelectBitfieldInsert(N, Result))
       return Result;
-    if (PPCCRopts) {
-      if (N.getOperand(0).getOpcode() == ISD::SETCC ||
-          N.getOperand(1).getOpcode() == ISD::SETCC) {
-        bool Inv;
-        Tmp1 = SelectCCExpr(N, Opc, Inv, Tmp2);
-        MoveCRtoGPR(Tmp1, Inv, Tmp2, Result);
-        return Result;
-      }
-    }
     Tmp1 = SelectExpr(N.getOperand(0));
     switch(getImmediateForOpcode(N.getOperand(1), opcode, Tmp2)) {
       default: assert(0 && "unhandled result code");
@@ -2058,6 +1758,33 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
   }
 
   case ISD::SUB:
+    if (!MVT::isInteger(DestType)) {
+      if (!NoExcessFPPrecision && N.getOperand(0).getOpcode() == ISD::MUL &&
+          N.getOperand(0).Val->hasOneUse()) {
+        ++FusedFP; // Statistic
+        Tmp1 = SelectExpr(N.getOperand(0).getOperand(0));
+        Tmp2 = SelectExpr(N.getOperand(0).getOperand(1));
+        Tmp3 = SelectExpr(N.getOperand(1));
+        Opc = DestType == MVT::f64 ? PPC::FMSUB : PPC::FMSUBS;
+        BuildMI(BB, Opc, 3, Result).addReg(Tmp1).addReg(Tmp2).addReg(Tmp3);
+        return Result;
+      }
+      if (!NoExcessFPPrecision && N.getOperand(1).getOpcode() == ISD::MUL &&
+          N.getOperand(1).Val->hasOneUse()) {
+        ++FusedFP; // Statistic
+        Tmp1 = SelectExpr(N.getOperand(1).getOperand(0));
+        Tmp2 = SelectExpr(N.getOperand(1).getOperand(1));
+        Tmp3 = SelectExpr(N.getOperand(0));
+        Opc = DestType == MVT::f64 ? PPC::FNMSUB : PPC::FNMSUBS;
+        BuildMI(BB, Opc, 3, Result).addReg(Tmp1).addReg(Tmp2).addReg(Tmp3);
+        return Result;
+      }
+      Opc = DestType == MVT::f64 ? PPC::FSUB : PPC::FSUBS;
+      Tmp1 = SelectExpr(N.getOperand(0));
+      Tmp2 = SelectExpr(N.getOperand(1));
+      BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
+      return Result;
+    }
     if (1 == getImmediateForOpcode(N.getOperand(0), opcode, Tmp1, true)) {
       Tmp2 = SelectExpr(N.getOperand(1));
       BuildMI(BB, PPC::SUBFIC, 2, Result).addReg(Tmp2).addSImm(Tmp1);
@@ -2077,7 +1804,13 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
       BuildMI(BB, PPC::MULLI, 2, Result).addReg(Tmp1).addSImm(Tmp2);
     else {
       Tmp2 = SelectExpr(N.getOperand(1));
-      BuildMI(BB, PPC::MULLW, 2, Result).addReg(Tmp1).addReg(Tmp2);
+      switch (DestType) {
+      default: assert(0 && "Unknown type to ISD::MUL"); break;
+      case MVT::i32: Opc = PPC::MULLW; break;
+      case MVT::f32: Opc = PPC::FMULS; break;
+      case MVT::f64: Opc = PPC::FMUL; break;
+      }
+      BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
     }
     return Result;
 
@@ -2115,10 +1848,15 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
         return SelectExpr(BuildSDIVSequence(N));
       else
         return SelectExpr(BuildUDIVSequence(N));
-    }
+    }    
     Tmp1 = SelectExpr(N.getOperand(0));
     Tmp2 = SelectExpr(N.getOperand(1));
-    Opc = (ISD::UDIV == opcode) ? PPC::DIVWU : PPC::DIVW;
+    switch (DestType) {
+    default: assert(0 && "Unknown type to ISD::SDIV"); break;
+    case MVT::i32: Opc = (ISD::UDIV == opcode) ? PPC::DIVWU : PPC::DIVW; break;
+    case MVT::f32: Opc = PPC::FDIVS; break;
+    case MVT::f64: Opc = PPC::FDIV; break;
+    }
     BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
     return Result;
 
@@ -2355,6 +2093,78 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
     return 0;
 
   case ISD::SELECT: {
+    SetCCSDNode* SetCC = dyn_cast<SetCCSDNode>(N.getOperand(0).Val);
+    if (SetCC && N.getOperand(0).getOpcode() == ISD::SETCC &&
+        !MVT::isInteger(SetCC->getOperand(0).getValueType()) &&
+        !MVT::isInteger(N.getOperand(1).getValueType()) &&
+        !MVT::isInteger(N.getOperand(2).getValueType()) &&
+        SetCC->getCondition() != ISD::SETEQ &&
+        SetCC->getCondition() != ISD::SETNE) {
+      MVT::ValueType VT = SetCC->getOperand(0).getValueType();
+      unsigned TV = SelectExpr(N.getOperand(1)); // Use if TRUE
+      unsigned FV = SelectExpr(N.getOperand(2)); // Use if FALSE
+
+      ConstantFPSDNode *CN = dyn_cast<ConstantFPSDNode>(SetCC->getOperand(1));
+      if (CN && (CN->isExactlyValue(-0.0) || CN->isExactlyValue(0.0))) {
+        switch(SetCC->getCondition()) {
+        default: assert(0 && "Invalid FSEL condition"); abort();
+        case ISD::SETULT:
+        case ISD::SETLT:
+          std::swap(TV, FV);  // fsel is natively setge, swap operands for setlt
+        case ISD::SETUGE:
+        case ISD::SETGE:
+          Tmp1 = SelectExpr(SetCC->getOperand(0));   // Val to compare against
+          BuildMI(BB, PPC::FSEL, 3, Result).addReg(Tmp1).addReg(TV).addReg(FV);
+          return Result;
+        case ISD::SETUGT:
+        case ISD::SETGT:
+          std::swap(TV, FV);  // fsel is natively setge, swap operands for setlt
+        case ISD::SETULE:
+        case ISD::SETLE: {
+          if (SetCC->getOperand(0).getOpcode() == ISD::FNEG) {
+            Tmp2 = SelectExpr(SetCC->getOperand(0).getOperand(0));
+          } else {
+            Tmp2 = MakeReg(VT);
+            Tmp1 = SelectExpr(SetCC->getOperand(0));   // Val to compare against
+            BuildMI(BB, PPC::FNEG, 1, Tmp2).addReg(Tmp1);
+          }
+          BuildMI(BB, PPC::FSEL, 3, Result).addReg(Tmp2).addReg(TV).addReg(FV);
+          return Result;
+        }
+        }
+      } else {
+        Opc = (MVT::f64 == VT) ? PPC::FSUB : PPC::FSUBS;
+        Tmp1 = SelectExpr(SetCC->getOperand(0));   // Val to compare against
+        Tmp2 = SelectExpr(SetCC->getOperand(1));
+        Tmp3 =  MakeReg(VT);
+        switch(SetCC->getCondition()) {
+        default: assert(0 && "Invalid FSEL condition"); abort();
+        case ISD::SETULT:
+        case ISD::SETLT:
+          BuildMI(BB, Opc, 2, Tmp3).addReg(Tmp1).addReg(Tmp2);
+          BuildMI(BB, PPC::FSEL, 3, Result).addReg(Tmp3).addReg(FV).addReg(TV);
+          return Result;
+        case ISD::SETUGE:
+        case ISD::SETGE:
+          BuildMI(BB, Opc, 2, Tmp3).addReg(Tmp1).addReg(Tmp2);
+          BuildMI(BB, PPC::FSEL, 3, Result).addReg(Tmp3).addReg(TV).addReg(FV);
+          return Result;
+        case ISD::SETUGT:
+        case ISD::SETGT:
+          BuildMI(BB, Opc, 2, Tmp3).addReg(Tmp2).addReg(Tmp1);
+          BuildMI(BB, PPC::FSEL, 3, Result).addReg(Tmp3).addReg(FV).addReg(TV);
+          return Result;
+        case ISD::SETULE:
+        case ISD::SETLE:
+          BuildMI(BB, Opc, 2, Tmp3).addReg(Tmp2).addReg(Tmp1);
+          BuildMI(BB, PPC::FSEL, 3, Result).addReg(Tmp3).addReg(TV).addReg(FV);
+          return Result;
+        }
+      }
+      assert(0 && "Should never get here");
+      return 0;
+    }
+
     bool Inv;
     unsigned TrueValue = SelectExpr(N.getOperand(1)); //Use if TRUE
     unsigned FalseValue = SelectExpr(N.getOperand(2)); //Use if FALSE
@@ -2419,8 +2229,102 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
       }
     }
     return Result;
+
+  case ISD::ConstantFP: {
+    ConstantFPSDNode *CN = cast<ConstantFPSDNode>(N);
+    Result = getConstDouble(CN->getValue(), Result);
+    return Result;
   }
 
+  case ISD::FNEG:
+    if (!NoExcessFPPrecision &&
+        ISD::ADD == N.getOperand(0).getOpcode() &&
+        N.getOperand(0).Val->hasOneUse() &&
+        ISD::MUL == N.getOperand(0).getOperand(0).getOpcode() &&
+        N.getOperand(0).getOperand(0).Val->hasOneUse()) {
+      ++FusedFP; // Statistic
+      Tmp1 = SelectExpr(N.getOperand(0).getOperand(0).getOperand(0));
+      Tmp2 = SelectExpr(N.getOperand(0).getOperand(0).getOperand(1));
+      Tmp3 = SelectExpr(N.getOperand(0).getOperand(1));
+      Opc = DestType == MVT::f64 ? PPC::FNMADD : PPC::FNMADDS;
+      BuildMI(BB, Opc, 3, Result).addReg(Tmp1).addReg(Tmp2).addReg(Tmp3);
+    } else if (!NoExcessFPPrecision &&
+        ISD::ADD == N.getOperand(0).getOpcode() &&
+        N.getOperand(0).Val->hasOneUse() &&
+        ISD::MUL == N.getOperand(0).getOperand(1).getOpcode() &&
+        N.getOperand(0).getOperand(1).Val->hasOneUse()) {
+      ++FusedFP; // Statistic
+      Tmp1 = SelectExpr(N.getOperand(0).getOperand(1).getOperand(0));
+      Tmp2 = SelectExpr(N.getOperand(0).getOperand(1).getOperand(1));
+      Tmp3 = SelectExpr(N.getOperand(0).getOperand(0));
+      Opc = DestType == MVT::f64 ? PPC::FNMADD : PPC::FNMADDS;
+      BuildMI(BB, Opc, 3, Result).addReg(Tmp1).addReg(Tmp2).addReg(Tmp3);
+    } else if (ISD::FABS == N.getOperand(0).getOpcode()) {
+      Tmp1 = SelectExpr(N.getOperand(0).getOperand(0));
+      BuildMI(BB, PPC::FNABS, 1, Result).addReg(Tmp1);
+    } else {
+      Tmp1 = SelectExpr(N.getOperand(0));
+      BuildMI(BB, PPC::FNEG, 1, Result).addReg(Tmp1);
+    }
+    return Result;
+
+  case ISD::FABS:
+    Tmp1 = SelectExpr(N.getOperand(0));
+    BuildMI(BB, PPC::FABS, 1, Result).addReg(Tmp1);
+    return Result;
+
+  case ISD::FP_ROUND:
+    assert (DestType == MVT::f32 &&
+            N.getOperand(0).getValueType() == MVT::f64 &&
+            "only f64 to f32 conversion supported here");
+    Tmp1 = SelectExpr(N.getOperand(0));
+    BuildMI(BB, PPC::FRSP, 1, Result).addReg(Tmp1);
+    return Result;
+
+  case ISD::FP_EXTEND:
+    assert (DestType == MVT::f64 &&
+            N.getOperand(0).getValueType() == MVT::f32 &&
+            "only f32 to f64 conversion supported here");
+    Tmp1 = SelectExpr(N.getOperand(0));
+    BuildMI(BB, PPC::FMR, 1, Result).addReg(Tmp1);
+    return Result;
+
+  case ISD::UINT_TO_FP:
+  case ISD::SINT_TO_FP: {
+    assert (N.getOperand(0).getValueType() == MVT::i32
+            && "int to float must operate on i32");
+    bool IsUnsigned = (ISD::UINT_TO_FP == opcode);
+    Tmp1 = SelectExpr(N.getOperand(0));  // Get the operand register
+    Tmp2 = MakeReg(MVT::f64); // temp reg to load the integer value into
+    Tmp3 = MakeReg(MVT::i32); // temp reg to hold the conversion constant
+
+    int FrameIdx = BB->getParent()->getFrameInfo()->CreateStackObject(8, 8);
+    MachineConstantPool *CP = BB->getParent()->getConstantPool();
+
+    if (IsUnsigned) {
+      unsigned ConstF = getConstDouble(0x1.000000p52);
+      // Store the hi & low halves of the fp value, currently in int regs
+      BuildMI(BB, PPC::LIS, 1, Tmp3).addSImm(0x4330);
+      addFrameReference(BuildMI(BB, PPC::STW, 3).addReg(Tmp3), FrameIdx);
+      addFrameReference(BuildMI(BB, PPC::STW, 3).addReg(Tmp1), FrameIdx, 4);
+      addFrameReference(BuildMI(BB, PPC::LFD, 2, Tmp2), FrameIdx);
+      // Generate the return value with a subtract
+      BuildMI(BB, PPC::FSUB, 2, Result).addReg(Tmp2).addReg(ConstF);
+    } else {
+      unsigned ConstF = getConstDouble(0x1.000008p52);
+      unsigned TmpL = MakeReg(MVT::i32);
+      // Store the hi & low halves of the fp value, currently in int regs
+      BuildMI(BB, PPC::LIS, 1, Tmp3).addSImm(0x4330);
+      addFrameReference(BuildMI(BB, PPC::STW, 3).addReg(Tmp3), FrameIdx);
+      BuildMI(BB, PPC::XORIS, 2, TmpL).addReg(Tmp1).addImm(0x8000);
+      addFrameReference(BuildMI(BB, PPC::STW, 3).addReg(TmpL), FrameIdx, 4);
+      addFrameReference(BuildMI(BB, PPC::LFD, 2, Tmp2), FrameIdx);
+      // Generate the return value with a subtract
+      BuildMI(BB, PPC::FSUB, 2, Result).addReg(Tmp2).addReg(ConstF);
+    }
+    return Result;
+  }
+  }
   return 0;
 }
 
