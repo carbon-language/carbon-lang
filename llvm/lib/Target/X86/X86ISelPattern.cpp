@@ -189,6 +189,11 @@ namespace {
         addLegalFPImmediate(-1.0); // FLD1/FCHS
       }
       computeRegisterProperties();
+
+      maxStoresPerMemSet = 8; // For %llvm.memset -> sequence of stores
+      maxStoresPerMemCpy = 8; // For %llvm.memcpy -> sequence of stores
+      maxStoresPerMemMove = 8; // For %llvm.memmove -> sequence of stores
+      allowUnalignedStores = true; // x86 supports it!
     }
     
     // Return the number of bytes that a function should pop when it returns (in

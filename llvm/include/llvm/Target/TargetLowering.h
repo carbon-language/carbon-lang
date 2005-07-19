@@ -12,6 +12,7 @@
 //
 //  1. Which ValueTypes are natively supported by the target.
 //  2. Which operations are supported for supported ValueTypes.
+//  3. Cost thresholds for alternative implementations of certain operations.
 //
 // In addition it has a few other components, like information about FP
 // immediates.
@@ -186,6 +187,31 @@ public:
   unsigned getNumElements(MVT::ValueType VT) const {
     return NumElementsForVT[VT];
   }
+
+  /// This function returns the maximum number of store operations permitted
+  /// to replace a call to llvm.memset. The value is set by the target at the
+  /// performance threshold for such a replacement.
+  /// @brief Get maximum # of store operations permitted for llvm.memset
+  unsigned getMaxStoresPerMemSet() const { return maxStoresPerMemSet; }
+
+  /// This function returns the maximum number of store operations permitted
+  /// to replace a call to llvm.memcpy. The value is set by the target at the
+  /// performance threshold for such a replacement.
+  /// @brief Get maximum # of store operations permitted for llvm.memcpy
+  unsigned getMaxStoresPerMemCpy() const { return maxStoresPerMemCpy; }
+
+  /// This function returns the maximum number of store operations permitted
+  /// to replace a call to llvm.memmove. The value is set by the target at the
+  /// performance threshold for such a replacement.
+  /// @brief Get maximum # of store operations permitted for llvm.memmove
+  unsigned getMaxStoresPerMemMove() const { return maxStoresPerMemMove; }
+
+  /// This function returns true if the target allows unaligned stores. This is
+  /// used in situations where an array copy/move/set is converted to a sequence
+  /// of store operations. It ensures that such replacements don't generate 
+  /// code that causes an alignment error (trap) on the target machine. 
+  /// @brief Determine if the target supports unaligned stores.
+  bool allowsUnalignedStores() const { return allowUnalignedStores; }
 
   //===--------------------------------------------------------------------===//
   // TargetLowering Configuration Methods - These methods should be invoked by
@@ -365,6 +391,47 @@ private:
 
   std::vector<std::pair<MVT::ValueType,
                         TargetRegisterClass*> > AvailableRegClasses;
+
+protected:
+  /// When lowering %llvm.memset this field specifies the maximum number of
+  /// store operations that may be substituted for the call to memset. Targets
+  /// must set this value based on the cost threshold for that target. Targets
+  /// should assume that the memset will be done using as many of the largest
+  /// store operations first, followed by smaller ones, if necessary, per
+  /// alignment restrictions. For example, storing 9 bytes on a 32-bit machine
+  /// with 16-bit alignment would result in four 2-byte stores and one 1-byte 
+  /// store.  This only applies to setting a constant array of a constant size.
+  /// @brief Specify maximum number of store instructions per memset call.
+  unsigned maxStoresPerMemSet;
+
+  /// When lowering %llvm.memcpy this field specifies the maximum number of
+  /// store operations that may be substituted for a call to memcpy. Targets
+  /// must set this value based on the cost threshold for that target. Targets
+  /// should assume that the memcpy will be done using as many of the largest
+  /// store operations first, followed by smaller ones, if necessary, per
+  /// alignment restrictions. For example, storing 7 bytes on a 32-bit machine
+  /// with 32-bit alignment would result in one 4-byte store, a one 2-byte store
+  /// and one 1-byte store. This only applies to copying a constant array of
+  /// constant size.
+  /// @brief Specify maximum bytes of store instructions per memcpy call.
+  unsigned maxStoresPerMemCpy;
+
+  /// When lowering %llvm.memmove this field specifies the maximum number of
+  /// store instructions that may be substituted for a call to memmove. Targets
+  /// must set this value based on the cost threshold for that target. Targets
+  /// should assume that the memmove will be done using as many of the largest
+  /// store operations first, followed by smaller ones, if necessary, per
+  /// alignment restrictions. For example, moving 9 bytes on a 32-bit machine 
+  /// with 8-bit alignment would result in nine 1-byte stores.  This only 
+  /// applies to copying a constant array of constant size.
+  /// @brief Specify maximum bytes of store instructions per memmove call.
+  unsigned maxStoresPerMemMove;
+
+  /// This field specifies whether the target machine permits unaligned stores.
+  /// This is used to determine the size of store operations for copying 
+  /// small arrays and other similar tasks.
+  /// @brief Indicate whether the target machine permits unaligned stores.
+  bool allowUnalignedStores;
 };
 } // end llvm namespace
 
