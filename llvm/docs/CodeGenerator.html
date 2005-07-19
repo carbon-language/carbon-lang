@@ -388,9 +388,9 @@ href="TableGenFundamentals.html">TableGen</a> description of the register file.
   instructions supported by the target. It is essentially an array of 
   <tt>TargetInstrDescriptor</tt> objects, each of which describes one
   instruction the target supports. Descriptors define things like the mnemonic
-  for the opcode, the number of operands, the size of the largets immediate
-  field the instruction can contain, the latency of the instruction in machine
-  cycles, etc.</p>
+  for the opcode, the number of operands, the list of implicit register uses
+  and defs, whether the instruction has certain target-independent properties 
+  (accesses memory, is commutable, etc), and holds any target-specific flags.</p>
 </div>
 
 <!-- ======================================================================= -->
@@ -405,8 +405,6 @@ href="TableGenFundamentals.html">TableGen</a> description of the register file.
   locals area.  The offset to the local area is the offset from the stack 
   pointer on function entry to the first location where function data (local 
   variables, spill locations) can be stored.</p>
-  <p>The class also provides several functions for computing alignment and
-  offsets for various situations.</p>
 </div>
 <!-- ======================================================================= -->
 <div class="doc_subsection">
