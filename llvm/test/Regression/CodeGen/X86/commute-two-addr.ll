@@ -4,6 +4,9 @@
 ; Make sure there are only 3 mov's for each testcase
 ; RUN: llvm-as < %s | llc -march=x86 -x86-asm-syntax=intel | grep 'mov ' | wc -l | grep 6
 
+
+target triple = "i686-pc-linux-gnu"
+
 %G = external global int
 
 declare void %ext(int)
