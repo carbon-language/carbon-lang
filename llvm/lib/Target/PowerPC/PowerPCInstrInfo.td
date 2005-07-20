@@ -55,6 +55,9 @@ def symbolLo: Operand<i32> {
 def crbit: Operand<i8> {
   let PrintMethod = "printcrbit";
 }
+def crbitm: Operand<i8> {
+  let PrintMethod = "printcrbitm";
+}
 
 // Pseudo-instructions:
 def PHI : Pseudo<(ops), "; PHI">;
@@ -314,6 +317,11 @@ def FNEG   : XForm_26<63, 40, (ops FPRC:$frD, FPRC:$frB),
                       "fneg $frD, $frB">;
 def FRSP   : XForm_26<63, 12, (ops FPRC:$frD, FPRC:$frB),
                       "frsp $frD, $frB">;
+def FSQRT  : XForm_26<63, 22, (ops FPRC:$frD, FPRC:$frB),
+                      "fsqrt $frD, $frB">;
+def FSQRTS : XForm_26<59, 22, (ops FPRC:$frD, FPRC:$frB),
+                      "fsqrts $frD, $frB">;
+                      
 let isStore = 1 in {
 def STFSX : XForm_28<31, 663, (ops FPRC:$frS, GPRC:$rA, GPRC:$rB),
                      "stfsx $frS, $rA, $rB">;
@@ -360,7 +368,7 @@ def MFLR  : XFXForm_1_ext<31, 339, 256, (ops GPRC:$rT), "mflr $rT">;
 def MFCR  : XFXForm_3<31, 19, (ops GPRC:$rT), "mfcr $rT">;
 def MTCRF : XFXForm_5<31, 0, 144, (ops CRRC:$FXM, GPRC:$rS),
                       "mtcrf $FXM, $rS">;
-def MFCRF : XFXForm_5<31, 1, 19, (ops GPRC:$rT, CRRC:$FXM),
+def MFOCRF : XFXForm_5<31, 1, 19, (ops GPRC:$rT, crbitm:$FXM),
                       "mfcr $rT, $FXM">;
 def MTCTR : XFXForm_7_ext<31, 467, 288, (ops GPRC:$rS), "mtctr $rS">;
 def MTLR  : XFXForm_7_ext<31, 467, 256, (ops GPRC:$rS), "mtlr $rS">;

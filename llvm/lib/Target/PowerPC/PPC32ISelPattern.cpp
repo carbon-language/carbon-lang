@@ -35,6 +35,11 @@
 #include <algorithm>
 using namespace llvm;
 
+// FIXME: temporary.
+#include "llvm/Support/CommandLine.h"
+static cl::opt<bool> EnableGPOPT("enable-gpopt", cl::Hidden,
+                                 cl::desc("Enable optimizations for GP cpus"));
+
 //===----------------------------------------------------------------------===//
 //  PPC32TargetLowering - PPC32 Implementation of the TargetLowering interface
 namespace {
@@ -67,13 +72,17 @@ namespace {
       // We don't support sin/cos/sqrt/fmod
       setOperationAction(ISD::FSIN , MVT::f64, Expand);
       setOperationAction(ISD::FCOS , MVT::f64, Expand);
-      setOperationAction(ISD::FSQRT, MVT::f64, Expand);
       setOperationAction(ISD::SREM , MVT::f64, Expand);
       setOperationAction(ISD::FSIN , MVT::f32, Expand);
       setOperationAction(ISD::FCOS , MVT::f32, Expand);
-      setOperationAction(ISD::FSQRT, MVT::f32, Expand);
       setOperationAction(ISD::SREM , MVT::f32, Expand);
 
+      // If we're enabling GP optimizations, use hardware square root
+      if (!EnableGPOPT) {
+        setOperationAction(ISD::FSQRT, MVT::f64, Expand);
+        setOperationAction(ISD::FSQRT, MVT::f32, Expand);
+      }
+            
       //PowerPC does not have CTPOP or CTTZ
       setOperationAction(ISD::CTPOP, MVT::i32  , Expand);
       setOperationAction(ISD::CTTZ , MVT::i32  , Expand);
@@ -961,7 +970,7 @@ unsigned ISel::getConstDouble(double doubleVal, unsigned Result=0) {
 void ISel::MoveCRtoGPR(unsigned CCReg, bool Inv, unsigned Idx, unsigned Result){
   unsigned IntCR = MakeReg(MVT::i32);
   BuildMI(BB, PPC::MCRF, 1, PPC::CR7).addReg(CCReg);
-  BuildMI(BB, PPC::MFCR, 1, IntCR).addReg(PPC::CR7);
+  BuildMI(BB, EnableGPOPT ? PPC::MFOCRF : PPC::MFCR, 1, IntCR).addReg(PPC::CR7);
   if (Inv) {
     unsigned Tmp1 = MakeReg(MVT::i32);
     BuildMI(BB, PPC::RLWINM, 4, Tmp1).addReg(IntCR).addImm(32-(3-Idx))
@@ -2271,6 +2280,12 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
   case ISD::FABS:
     Tmp1 = SelectExpr(N.getOperand(0));
     BuildMI(BB, PPC::FABS, 1, Result).addReg(Tmp1);
+    return Result;
+
+  case ISD::FSQRT:
+    Tmp1 = SelectExpr(N.getOperand(0));
+    Opc = DestType == MVT::f64 ? PPC::FSQRT : PPC::FSQRTS;
+    BuildMI(BB, Opc, 1, Result).addReg(Tmp1);
     return Result;
 
   case ISD::FP_ROUND:

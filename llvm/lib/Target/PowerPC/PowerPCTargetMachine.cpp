@@ -170,14 +170,14 @@ void PowerPCJITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
 ///
 PPC32TargetMachine::PPC32TargetMachine(const Module &M, IntrinsicLowering *IL)
   : PowerPCTargetMachine(PPC32ID, IL,
-                         TargetData(PPC32ID,false,4,4,4,4,4,4,2,1,1),
+                         TargetData(PPC32ID,false,4,4,8,4,4,4,2,1,1),
                          PowerPCFrameInfo(*this, false)), JITInfo(*this) {}
 
 /// PPC64TargetMachine ctor - Create a LP64 architecture model
 ///
 PPC64TargetMachine::PPC64TargetMachine(const Module &M, IntrinsicLowering *IL)
   : PowerPCTargetMachine(PPC64ID, IL,
-                         TargetData(PPC64ID,false,8,4,4,4,4,4,2,1,1),
+                         TargetData(PPC64ID,false,8,4,8,4,4,4,2,1,1),
                          PowerPCFrameInfo(*this, true)) {}
 
 unsigned PPC32TargetMachine::getModuleMatchQuality(const Module &M) {

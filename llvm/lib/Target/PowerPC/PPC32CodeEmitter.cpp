@@ -187,9 +187,9 @@ int PPC32CodeEmitter::getMachineOpValue(MachineInstr &MI, MachineOperand &MO) {
   if (MO.isRegister()) {
     rv = enumRegToMachineReg(MO.getReg());
 
-    // Special encoding for MTCRF and MFCRF, which uses a bit mask for the
+    // Special encoding for MTCRF and MFOCRF, which uses a bit mask for the
     // register, not the register number directly.
-    if ((MI.getOpcode() == PPC::MTCRF || MI.getOpcode() == PPC::MFCRF) &&
+    if ((MI.getOpcode() == PPC::MTCRF || MI.getOpcode() == PPC::MFOCRF) &&
         (MO.getReg() >= PPC::CR0 && MO.getReg() <= PPC::CR7)) {
       rv = 0x80 >> rv;
     }
