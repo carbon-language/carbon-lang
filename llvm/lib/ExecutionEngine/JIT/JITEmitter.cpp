@@ -30,6 +30,7 @@ using namespace llvm;
 
 namespace {
   Statistic<> NumBytes("jit", "Number of bytes of machine code compiled");
+  Statistic<> NumRelos("jit", "Number of relocations applied");
   JIT *TheJIT = 0;
 }
 
@@ -391,6 +392,8 @@ void JITEmitter::finishFunction(MachineFunction &F) {
   NumBytes += CurByte-CurBlock;
 
   if (!Relocations.empty()) {
+    NumRelos += Relocations.size();
+
     // Resolve the relocations to concrete pointers.
     for (unsigned i = 0, e = Relocations.size(); i != e; ++i) {
       MachineRelocation &MR = Relocations[i];
