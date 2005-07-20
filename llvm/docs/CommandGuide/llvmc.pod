@@ -10,23 +10,22 @@ B<llvmc> [I<options>] [I<filenames>...]
 
 =head1 DESCRIPTION
 
-The B<llvmc> command is a configurable driver for invoking other 
-LLVM (and non-LLVM) tools in order to compile, optimize and link software
-for multiple languages. For those familiar with the GNU Compiler 
-Collection's B<gcc> tool, it is very similar. This tool has the
-following main goals or purposes:
+B<llvmc> is a configurable driver for invoking other LLVM (and non-LLVM) tools
+in order to compile, optimize and link software for multiple languages. For
+those familiar with FSF's B<gcc> tool, it is very similar.  B<llvmc> has the
+following goals:
 
 =over
 
-=item * A Single point of access to the LLVM tool set.
+=item * provide a single point of access to the LLVM tool set,
 
-=item * Hide the complexities of the LLVM tools through a single interface.
+=item * hide the complexities of the LLVM tools through a single interface,
 
-=item * Make integration of existing non-LLVM tools simple.
+=item * make integration of existing non-LLVM tools simple,
 
-=item * Extend the capabilities of minimal front ends.
+=item * extend the capabilities of minimal front ends, and
 
-=item * Make the interface for compiling consistent for all languages.
+=item * make the interface for compiling consistent for all languages.
 
 =back
 
