@@ -1317,7 +1317,13 @@ struct FoldSetCCLogical {
 /// this predicate to simplify operations downstream.  V and Mask are known to
 /// be the same type.
 static bool MaskedValueIsZero(Value *V, ConstantIntegral *Mask) {
-  if (isa<UndefValue>(V) || Mask->isNullValue())
+  // Note, we cannot consider 'undef' to be "IsZero" here.  The problem is that
+  // we cannot optimize based on the assumption that it is zero without changing
+  // to to an explicit zero.  If we don't change it to zero, other code could 
+  // optimized based on the contradictory assumption that it is non-zero.
+  // Because instcombine aggressively folds operations with undef args anyway,
+  // this won't lose us code quality.
+  if (Mask->isNullValue())
     return true;
   if (ConstantIntegral *CI = dyn_cast<ConstantIntegral>(V))
     return ConstantExpr::getAnd(CI, Mask)->isNullValue();
@@ -3134,7 +3140,7 @@ Instruction *InstCombiner::visitShiftInst(ShiftInst &I) {
       return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
   }
   if (isa<UndefValue>(Op1)) {
-    if (isLeftShift || I.getType()->isUnsigned())
+    if (isLeftShift || I.getType()->isUnsigned())// X << undef, X >>u undef -> 0
       return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
     else
       return ReplaceInstUsesWith(I, Op0);          // X >>s undef -> X
