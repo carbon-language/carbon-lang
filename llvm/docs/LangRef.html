@@ -143,6 +143,8 @@
           <li><a href="#i_memmove">'<tt>llvm.memmove</tt>' Intrinsic</a></li>
           <li><a href="#i_memset">'<tt>llvm.memset</tt>' Intrinsic</a></li>
           <li><a href="#i_isunordered">'<tt>llvm.isunordered</tt>' Intrinsic</a></li>
+          <li><a href="#i_sqrt">'<tt>llvm.sqrt</tt>' Intrinsic</a></li>
+
         </ol>
       </li>
       <li><a href="#int_count">Bit counting Intrinsics</a>
@@ -3132,6 +3134,41 @@ false.
 </p>
 </div>
 
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="i_sqrt">'<tt>llvm.sqrt</tt>' Intrinsic</a>
+</div>
+
+<div class="doc_text">
+
+<h5>Syntax:</h5>
+<pre>
+  declare &lt;float or double&gt; %llvm.sqrt(&lt;float or double&gt; Val)
+</pre>
+
+<h5>Overview:</h5>
+
+<p>
+The '<tt>llvm.sqrt</tt>' intrinsic returns the sqrt of the specified operand,
+returning the same value as the libm '<tt>sqrt</tt>' function would.  Unlike
+<tt>sqrt</tt> in libm, however, <tt>llvm.sqrt</tt> has undefined behavior for
+negative numbers (which allows for better optimization).
+</p>
+
+<h5>Arguments:</h5>
+
+<p>
+The argument and return value are floating point numbers of the same type.
+</p>
+
+<h5>Semantics:</h5>
+
+<p>
+This function returns the sqrt of the specified operand if it is a positive
+floating point number.
+</p>
+</div>
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
