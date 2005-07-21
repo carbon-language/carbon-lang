@@ -177,7 +177,7 @@ PPC32TargetMachine::PPC32TargetMachine(const Module &M, IntrinsicLowering *IL)
 ///
 PPC64TargetMachine::PPC64TargetMachine(const Module &M, IntrinsicLowering *IL)
   : PowerPCTargetMachine(PPC64ID, IL,
-                         TargetData(PPC64ID,false,8,4,8,4,4,4,2,1,1),
+                         TargetData(PPC64ID,false,8,4,4,4,4,4,2,1,1),
                          PowerPCFrameInfo(*this, true)) {}
 
 unsigned PPC32TargetMachine::getModuleMatchQuality(const Module &M) {
