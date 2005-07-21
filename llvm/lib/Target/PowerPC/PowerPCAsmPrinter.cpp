@@ -192,6 +192,7 @@ namespace {
 
     void printConstantPool(MachineConstantPool *MCP);
     bool runOnMachineFunction(MachineFunction &F);
+    bool doInitialization(Module &M);
     bool doFinalization(Module &M);
   };
 
@@ -424,6 +425,14 @@ void DarwinAsmPrinter::printConstantPool(MachineConstantPool *MCP) {
       << *CP[i] << "\n";
     emitGlobalConstant(CP[i]);
   }
+}
+
+bool DarwinAsmPrinter::doInitialization(Module &M) {
+  // FIXME: implment subtargets for PowerPC and pick this up from there.
+  O << "\t.machine ppc970\n";
+
+  AsmPrinter::doInitialization(M);
+  return false;
 }
 
 bool DarwinAsmPrinter::doFinalization(Module &M) {
