@@ -685,7 +685,7 @@ void PPC32ISel::copyConstantToRegister(MachineBasicBlock *MBB,
     unsigned Reg1 = makeAnotherReg(Type::IntTy);
     unsigned Opcode = (Ty == Type::FloatTy) ? PPC::LFS : PPC::LFD;
     // Move value at base + distance into return reg
-    BuildMI(*MBB, IP, PPC::LOADHiAddr, 2, Reg1)
+    BuildMI(*MBB, IP, PPC::ADDIS, 2, Reg1)
       .addReg(getGlobalBaseReg()).addConstantPoolIndex(CPI);
     BuildMI(*MBB, IP, Opcode, 2, R).addConstantPoolIndex(CPI).addReg(Reg1);
   } else if (isa<ConstantPointerNull>(C)) {
@@ -696,7 +696,7 @@ void PPC32ISel::copyConstantToRegister(MachineBasicBlock *MBB,
     unsigned TmpReg = makeAnotherReg(GV->getType());
 
     // Move value at base + distance into return reg
-    BuildMI(*MBB, IP, PPC::LOADHiAddr, 2, TmpReg)
+    BuildMI(*MBB, IP, PPC::ADDIS, 2, TmpReg)
       .addReg(getGlobalBaseReg()).addGlobalAddress(GV);
 
     if (GV->hasWeakLinkage() || GV->isExternal()) {

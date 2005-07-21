@@ -28,6 +28,9 @@ FunctionPass *createPPC32ISelPattern(TargetMachine &TM);
 FunctionPass *createPPC64ISelPattern(TargetMachine &TM);
 FunctionPass *createDarwinAsmPrinter(std::ostream &OS, TargetMachine &TM);
 FunctionPass *createAIXAsmPrinter(std::ostream &OS, TargetMachine &TM);
+
+extern bool GPOPT;
+extern bool PICEnabled;
 } // end namespace llvm;
 
 // GCC #defines PPC on Linux but we use it as our namespace name

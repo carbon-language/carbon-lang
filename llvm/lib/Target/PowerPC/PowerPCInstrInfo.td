@@ -108,17 +108,17 @@ let isCall = 1,
 // register and an immediate are of this type.
 //
 let isLoad = 1 in {
-def LBZ : DForm_1<34, (ops GPRC:$rD, s16imm:$disp, GPRC:$rA),
+def LBZ : DForm_1<34, (ops GPRC:$rD, symbolLo:$disp, GPRC:$rA),
                   "lbz $rD, $disp($rA)">;
-def LHA : DForm_1<42, (ops GPRC:$rD, s16imm:$disp, GPRC:$rA),
+def LHA : DForm_1<42, (ops GPRC:$rD, symbolLo:$disp, GPRC:$rA),
                   "lha $rD, $disp($rA)">;
-def LHZ : DForm_1<40, (ops GPRC:$rD, s16imm:$disp, GPRC:$rA),
+def LHZ : DForm_1<40, (ops GPRC:$rD, symbolLo:$disp, GPRC:$rA),
                   "lhz $rD, $disp($rA)">;
 def LMW : DForm_1<46, (ops GPRC:$rD, s16imm:$disp, GPRC:$rA),
                   "lmw $rD, $disp($rA)">;
 def LWZ : DForm_1<32, (ops GPRC:$rD, symbolLo:$disp, GPRC:$rA),
                   "lwz $rD, $disp($rA)">;
-def LWZU : DForm_1<35, (ops GPRC:$rD, symbolLo:$disp, GPRC:$rA),
+def LWZU : DForm_1<35, (ops GPRC:$rD, s16imm:$disp, GPRC:$rA),
                    "lwzu $rD, $disp($rA)">;
 }
 def ADDI   : DForm_2<14, (ops GPRC:$rD, GPRC:$rA, s16imm:$imm),
@@ -127,28 +127,26 @@ def ADDIC  : DForm_2<12, (ops GPRC:$rD, GPRC:$rA, s16imm:$imm),
                      "addic $rD, $rA, $imm">;
 def ADDICo : DForm_2<13, (ops GPRC:$rD, GPRC:$rA, s16imm:$imm),
                      "addic. $rD, $rA, $imm">;
-def ADDIS  : DForm_2<15, (ops GPRC:$rD, GPRC:$rA, s16imm:$imm),
+def ADDIS  : DForm_2<15, (ops GPRC:$rD, GPRC:$rA, symbolHi:$imm),
                      "addis $rD, $rA, $imm">;
 def LA     : DForm_2<14, (ops GPRC:$rD, GPRC:$rA, symbolLo:$sym),
                      "la $rD, $sym($rA)">;
-def LOADHiAddr : DForm_2<15, (ops GPRC:$rD, GPRC:$rA, symbolHi:$sym),
-                         "addis $rD, $rA, $sym">;
 def MULLI  : DForm_2< 7, (ops GPRC:$rD, GPRC:$rA, s16imm:$imm),
                      "mulli $rD, $rA, $imm">;
 def SUBFIC : DForm_2< 8, (ops GPRC:$rD, GPRC:$rA, s16imm:$imm),
                      "subfic $rD, $rA, $imm">;
 def LI  : DForm_2_r0<14, (ops GPRC:$rD, s16imm:$imm),
                      "li $rD, $imm">;
-def LIS : DForm_2_r0<15, (ops GPRC:$rD, s16imm:$imm),
+def LIS : DForm_2_r0<15, (ops GPRC:$rD, symbolHi:$imm),
                      "lis $rD, $imm">;
 let isStore = 1 in {
 def STMW : DForm_3<47, (ops GPRC:$rS, s16imm:$disp, GPRC:$rA),
                    "stmw $rS, $disp($rA)">;
-def STB  : DForm_3<38, (ops GPRC:$rS, s16imm:$disp, GPRC:$rA),
+def STB  : DForm_3<38, (ops GPRC:$rS, symbolLo:$disp, GPRC:$rA),
                    "stb $rS, $disp($rA)">;
-def STH  : DForm_3<44, (ops GPRC:$rS, s16imm:$disp, GPRC:$rA),
+def STH  : DForm_3<44, (ops GPRC:$rS, symbolLo:$disp, GPRC:$rA),
                    "sth $rS, $disp($rA)">;
-def STW  : DForm_3<36, (ops GPRC:$rS, s16imm:$disp, GPRC:$rA),
+def STW  : DForm_3<36, (ops GPRC:$rS, symbolLo:$disp, GPRC:$rA),
                    "stw $rS, $disp($rA)">;
 def STWU : DForm_3<37, (ops GPRC:$rS, s16imm:$disp, GPRC:$rA),
                    "stwu $rS, $disp($rA)">;
@@ -185,9 +183,9 @@ def LFD : DForm_8<50, (ops GPRC:$rD, symbolLo:$disp, GPRC:$rA),
                   "lfd $rD, $disp($rA)">;
 }
 let isStore = 1 in {
-def STFS : DForm_9<52, (ops GPRC:$rS, s16imm:$disp, GPRC:$rA),
+def STFS : DForm_9<52, (ops GPRC:$rS, symbolLo:$disp, GPRC:$rA),
                    "stfs $rS, $disp($rA)">;
-def STFD : DForm_9<54, (ops GPRC:$rS, s16imm:$disp, GPRC:$rA),
+def STFD : DForm_9<54, (ops GPRC:$rS, symbolLo:$disp, GPRC:$rA),
                    "stfd $rS, $disp($rA)">;
 }
 

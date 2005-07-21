@@ -35,11 +35,6 @@
 #include <algorithm>
 using namespace llvm;
 
-// FIXME: temporary.
-#include "llvm/Support/CommandLine.h"
-static cl::opt<bool> EnableGPOPT("enable-gpopt", cl::Hidden,
-                                 cl::desc("Enable optimizations for GP cpus"));
-
 //===----------------------------------------------------------------------===//
 //  PPC32TargetLowering - PPC32 Implementation of the TargetLowering interface
 namespace {
@@ -78,7 +73,7 @@ namespace {
       setOperationAction(ISD::SREM , MVT::f32, Expand);
 
       // If we're enabling GP optimizations, use hardware square root
-      if (!EnableGPOPT) {
+      if (!GPOPT) {
         setOperationAction(ISD::FSQRT, MVT::f64, Expand);
         setOperationAction(ISD::FSQRT, MVT::f32, Expand);
       }
@@ -959,8 +954,11 @@ unsigned ISel::getConstDouble(double doubleVal, unsigned Result=0) {
   MachineConstantPool *CP = BB->getParent()->getConstantPool();
   ConstantFP *CFP = ConstantFP::get(Type::DoubleTy, doubleVal);
   unsigned CPI = CP->getConstantPoolIndex(CFP);
-  BuildMI(BB, PPC::LOADHiAddr, 2, Tmp1).addReg(getGlobalBaseReg())
-    .addConstantPoolIndex(CPI);
+  if (PICEnabled)
+    BuildMI(BB, PPC::ADDIS, 2, Tmp1).addReg(getGlobalBaseReg())
+      .addConstantPoolIndex(CPI);
+  else
+    BuildMI(BB, PPC::LIS, 1, Tmp1).addConstantPoolIndex(CPI);
   BuildMI(BB, PPC::LFD, 2, Result).addConstantPoolIndex(CPI).addReg(Tmp1);
   return Result;
 }
@@ -970,7 +968,7 @@ unsigned ISel::getConstDouble(double doubleVal, unsigned Result=0) {
 void ISel::MoveCRtoGPR(unsigned CCReg, bool Inv, unsigned Idx, unsigned Result){
   unsigned IntCR = MakeReg(MVT::i32);
   BuildMI(BB, PPC::MCRF, 1, PPC::CR7).addReg(CCReg);
-  BuildMI(BB, EnableGPOPT ? PPC::MFOCRF : PPC::MFCR, 1, IntCR).addReg(PPC::CR7);
+  BuildMI(BB, GPOPT ? PPC::MFOCRF : PPC::MFCR, 1, IntCR).addReg(PPC::CR7);
   if (Inv) {
     unsigned Tmp1 = MakeReg(MVT::i32);
     BuildMI(BB, PPC::RLWINM, 4, Tmp1).addReg(IntCR).addImm(32-(3-Idx))
@@ -1359,8 +1357,11 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
   case ISD::ConstantPool:
     Tmp1 = cast<ConstantPoolSDNode>(N)->getIndex();
     Tmp2 = MakeReg(MVT::i32);
-    BuildMI(BB, PPC::LOADHiAddr, 2, Tmp2).addReg(getGlobalBaseReg())
-      .addConstantPoolIndex(Tmp1);
+    if (PICEnabled)
+      BuildMI(BB, PPC::ADDIS, 2, Tmp2).addReg(getGlobalBaseReg())
+        .addConstantPoolIndex(Tmp1);
+    else
+      BuildMI(BB, PPC::LIS, 1, Tmp2).addConstantPoolIndex(Tmp1);
     BuildMI(BB, PPC::LA, 2, Result).addReg(Tmp2).addConstantPoolIndex(Tmp1);
     return Result;
 
@@ -1372,8 +1373,11 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
   case ISD::GlobalAddress: {
     GlobalValue *GV = cast<GlobalAddressSDNode>(N)->getGlobal();
     Tmp1 = MakeReg(MVT::i32);
-    BuildMI(BB, PPC::LOADHiAddr, 2, Tmp1).addReg(getGlobalBaseReg())
-      .addGlobalAddress(GV);
+    if (PICEnabled)
+      BuildMI(BB, PPC::ADDIS, 2, Tmp1).addReg(getGlobalBaseReg())
+        .addGlobalAddress(GV);
+    else
+      BuildMI(BB, PPC::LIS, 2, Tmp1).addGlobalAddress(GV);
     if (GV->hasWeakLinkage() || GV->isExternal()) {
       BuildMI(BB, PPC::LWZ, 2, Result).addGlobalAddress(GV).addReg(Tmp1);
     } else {
@@ -1413,13 +1417,29 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
     if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(Address)) {
       Tmp1 = MakeReg(MVT::i32);
       int CPI = CP->getIndex();
-      BuildMI(BB, PPC::LOADHiAddr, 2, Tmp1).addReg(getGlobalBaseReg())
-        .addConstantPoolIndex(CPI);
+      if (PICEnabled)
+        BuildMI(BB, PPC::ADDIS, 2, Tmp1).addReg(getGlobalBaseReg())
+          .addConstantPoolIndex(CPI);
+      else
+        BuildMI(BB, PPC::LIS, 1, Tmp1).addConstantPoolIndex(CPI);
       BuildMI(BB, Opc, 2, Result).addConstantPoolIndex(CPI).addReg(Tmp1);
-    }
-    else if(Address.getOpcode() == ISD::FrameIndex) {
+    } else if (Address.getOpcode() == ISD::FrameIndex) {
       Tmp1 = cast<FrameIndexSDNode>(Address)->getIndex();
       addFrameReference(BuildMI(BB, Opc, 2, Result), (int)Tmp1);
+    } else if(GlobalAddressSDNode *GN = dyn_cast<GlobalAddressSDNode>(Address)){
+      GlobalValue *GV = GN->getGlobal();
+      Tmp1 = MakeReg(MVT::i32);
+      if (PICEnabled)
+        BuildMI(BB, PPC::ADDIS, 2, Tmp1).addReg(getGlobalBaseReg())
+          .addGlobalAddress(GV);
+      else
+        BuildMI(BB, PPC::LIS, 2, Tmp1).addGlobalAddress(GV);
+      if (GV->hasWeakLinkage() || GV->isExternal()) {
+        Tmp2 = MakeReg(MVT::i32);
+        BuildMI(BB, PPC::LWZ, 2, Tmp2).addGlobalAddress(GV).addReg(Tmp1);
+        Tmp1 = Tmp2;
+      }
+      BuildMI(BB, Opc, 2, Result).addGlobalAddress(GV).addReg(Tmp1);
     } else {
       int offset;
       bool idx = SelectAddr(Address, Tmp1, offset);
@@ -2344,7 +2364,7 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
 }
 
 void ISel::Select(SDOperand N) {
-  unsigned Tmp1, Tmp2, Opc;
+  unsigned Tmp1, Tmp2, Tmp3, Opc;
   unsigned opcode = N.getOpcode();
 
   if (!ExprMap.insert(std::make_pair(N, 1)).second)
@@ -2432,49 +2452,59 @@ void ISel::Select(SDOperand N) {
     BuildMI(BB, PPC::BLR, 0); // Just emit a 'ret' instruction
     return;
   case ISD::TRUNCSTORE:
-  case ISD::STORE:
-    {
-      SDOperand Chain   = N.getOperand(0);
-      SDOperand Value   = N.getOperand(1);
-      SDOperand Address = N.getOperand(2);
-      Select(Chain);
+  case ISD::STORE: {
+    SDOperand Chain   = N.getOperand(0);
+    SDOperand Value   = N.getOperand(1);
+    SDOperand Address = N.getOperand(2);
+    Select(Chain);
 
-      Tmp1 = SelectExpr(Value); //value
+    Tmp1 = SelectExpr(Value); //value
 
-      if (opcode == ISD::STORE) {
-        switch(Value.getValueType()) {
-        default: assert(0 && "unknown Type in store");
-        case MVT::i32: Opc = PPC::STW; break;
-        case MVT::f64: Opc = PPC::STFD; break;
-        case MVT::f32: Opc = PPC::STFS; break;
-        }
-      } else { //ISD::TRUNCSTORE
-        switch(cast<VTSDNode>(Node->getOperand(4))->getVT()) {
-        default: assert(0 && "unknown Type in store");
-        case MVT::i1:
-        case MVT::i8: Opc  = PPC::STB; break;
-        case MVT::i16: Opc = PPC::STH; break;
-        }
+    if (opcode == ISD::STORE) {
+      switch(Value.getValueType()) {
+      default: assert(0 && "unknown Type in store");
+      case MVT::i32: Opc = PPC::STW; break;
+      case MVT::f64: Opc = PPC::STFD; break;
+      case MVT::f32: Opc = PPC::STFS; break;
       }
-
-      if(Address.getOpcode() == ISD::FrameIndex)
-      {
-        Tmp2 = cast<FrameIndexSDNode>(Address)->getIndex();
-        addFrameReference(BuildMI(BB, Opc, 3).addReg(Tmp1), (int)Tmp2);
+    } else { //ISD::TRUNCSTORE
+      switch(cast<VTSDNode>(Node->getOperand(4))->getVT()) {
+      default: assert(0 && "unknown Type in store");
+      case MVT::i1:
+      case MVT::i8: Opc  = PPC::STB; break;
+      case MVT::i16: Opc = PPC::STH; break;
       }
-      else
-      {
-        int offset;
-        bool idx = SelectAddr(Address, Tmp2, offset);
-        if (idx) {
-          Opc = IndexedOpForOp(Opc);
-          BuildMI(BB, Opc, 3).addReg(Tmp1).addReg(Tmp2).addReg(offset);
-        } else {
-          BuildMI(BB, Opc, 3).addReg(Tmp1).addImm(offset).addReg(Tmp2);
-        }
-      }
-      return;
     }
+
+    if(Address.getOpcode() == ISD::FrameIndex) {
+      Tmp2 = cast<FrameIndexSDNode>(Address)->getIndex();
+      addFrameReference(BuildMI(BB, Opc, 3).addReg(Tmp1), (int)Tmp2);
+    } else if(GlobalAddressSDNode *GN = dyn_cast<GlobalAddressSDNode>(Address)){
+      GlobalValue *GV = GN->getGlobal();
+      Tmp2 = MakeReg(MVT::i32);
+      if (PICEnabled)
+        BuildMI(BB, PPC::ADDIS, 2, Tmp2).addReg(getGlobalBaseReg())
+          .addGlobalAddress(GV);
+      else
+        BuildMI(BB, PPC::LIS, 2, Tmp2).addGlobalAddress(GV);
+      if (GV->hasWeakLinkage() || GV->isExternal()) {
+        Tmp3 = MakeReg(MVT::i32);
+        BuildMI(BB, PPC::LWZ, 2, Tmp3).addGlobalAddress(GV).addReg(Tmp2);
+        Tmp2 = Tmp3;
+      }
+      BuildMI(BB, Opc, 3).addReg(Tmp1).addGlobalAddress(GV).addReg(Tmp2);
+    } else {
+      int offset;
+      bool idx = SelectAddr(Address, Tmp2, offset);
+      if (idx) {
+        Opc = IndexedOpForOp(Opc);
+        BuildMI(BB, Opc, 3).addReg(Tmp1).addReg(Tmp2).addReg(offset);
+      } else {
+        BuildMI(BB, Opc, 3).addReg(Tmp1).addImm(offset).addReg(Tmp2);
+      }
+    }
+    return;
+  }
   case ISD::EXTLOAD:
   case ISD::SEXTLOAD:
   case ISD::ZEXTLOAD:

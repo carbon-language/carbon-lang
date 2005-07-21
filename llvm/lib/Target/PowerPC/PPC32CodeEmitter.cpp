@@ -28,10 +28,6 @@ namespace {
     TargetMachine &TM;
     MachineCodeEmitter &MCE;
 
-    /// MovePCtoLROffset - When/if we see a MovePCtoLR instruction, we record
-    /// its address in the function into this pointer.
-    void *MovePCtoLROffset;
-
     // Tracks which instruction references which BasicBlock
     std::vector<std::pair<MachineBasicBlock*, unsigned*> > BBRefs;
     // Tracks where each BasicBlock starts
@@ -87,7 +83,6 @@ bool PPC32TargetMachine::addPassesToEmitMachineCode(FunctionPassManager &PM,
 }
 
 bool PPC32CodeEmitter::runOnMachineFunction(MachineFunction &MF) {
-  MovePCtoLROffset = 0;
   MCE.startFunction(MF);
   MCE.emitConstantPool(MF.getConstantPool());
   for (MachineFunction::iterator BB = MF.begin(), E = MF.end(); BB != E; ++BB)
@@ -120,6 +115,7 @@ bool PPC32CodeEmitter::runOnMachineFunction(MachineFunction &MF) {
 }
 
 void PPC32CodeEmitter::emitBasicBlock(MachineBasicBlock &MBB) {
+  assert(!PICEnabled && "CodeEmitter does not support PIC!");
   BBLocations[&MBB] = MCE.getCurrentPCValue();
   for (MachineBasicBlock::iterator I = MBB.begin(), E = MBB.end(); I != E; ++I){
     MachineInstr &MI = *I;
@@ -131,10 +127,7 @@ void PPC32CodeEmitter::emitBasicBlock(MachineBasicBlock &MBB) {
     case PPC::IMPLICIT_DEF:
       break; // pseudo opcode, no side effects
     case PPC::MovePCtoLR:
-      assert(MovePCtoLROffset == 0 &&
-             "Multiple MovePCtoLR instructions in the function?");
-      MovePCtoLROffset = (void*)(intptr_t)MCE.getCurrentPCValue();
-      emitWord(0x48000005);    // bl 1
+      assert(0 && "CodeEmitter does not support MovePCtoLR instruction");
       break;
     }
   }
@@ -200,55 +193,59 @@ int PPC32CodeEmitter::getMachineOpValue(MachineInstr &MI, MachineOperand &MO) {
                       MO.getGlobal()->hasWeakLinkage() ||
                       MO.getGlobal()->isExternal();
     unsigned Reloc = 0;
-    int Offset = 0;
     if (MI.getOpcode() == PPC::CALLpcrel)
       Reloc = PPC::reloc_pcrel_bx;
     else {
-      assert(MovePCtoLROffset && "MovePCtoLR not seen yet?");
-      Offset = -((intptr_t)MovePCtoLROffset+4);
-
-      if (MI.getOpcode() == PPC::LOADHiAddr) {
+      switch (MI.getOpcode()) {
+      default: MI.dump(); assert(0 && "Unknown instruction for relocation!");
+      case PPC::LIS:
         if (isExternal)
           Reloc = PPC::reloc_absolute_ptr_high;   // Pointer to stub
-        else
+        else 
           Reloc = PPC::reloc_absolute_high;       // Pointer to symbol
-
-      } else if (MI.getOpcode() == PPC::LA) {
+        break;
+      case PPC::LA:
         assert(!isExternal && "Something in the ISEL changed\n");
-
         Reloc = PPC::reloc_absolute_low;
-      } else if (MI.getOpcode() == PPC::LWZ) {
-        Reloc = PPC::reloc_absolute_ptr_low;
-
-        assert(isExternal && "Something in the ISEL changed\n");
-      } else {
-        // These don't show up for global value references AFAIK, only for
-        // constant pool refs: PPC::LFS, PPC::LFD
-        assert(0 && "Unknown instruction for relocation!");
+        break;
+      case PPC::LBZ:
+      case PPC::LHA:
+      case PPC::LHZ:
+      case PPC::LWZ:
+      case PPC::LFS:
+      case PPC::LFD:
+      case PPC::STB:
+      case PPC::STH:
+      case PPC::STW:
+      case PPC::STFS:
+      case PPC::STFD:
+        if (isExternal)
+          Reloc = PPC::reloc_absolute_ptr_low;
+        else 
+          Reloc = PPC::reloc_absolute_low;
+        break;
       }
     }
     if (MO.isGlobalAddress())
       MCE.addRelocation(MachineRelocation(MCE.getCurrentPCOffset(),
-                                          Reloc, MO.getGlobal(), Offset));
+                                          Reloc, MO.getGlobal(), 0));
     else
       MCE.addRelocation(MachineRelocation(MCE.getCurrentPCOffset(),
-                                          Reloc, MO.getSymbolName(), Offset));
+                                          Reloc, MO.getSymbolName(), 0));
   } else if (MO.isMachineBasicBlock()) {
     unsigned* CurrPC = (unsigned*)(intptr_t)MCE.getCurrentPCValue();
     BBRefs.push_back(std::make_pair(MO.getMachineBasicBlock(), CurrPC));
   } else if (MO.isConstantPoolIndex()) {
     unsigned index = MO.getConstantPoolIndex();
-    assert(MovePCtoLROffset && "MovePCtoLR not seen yet?");
-    rv = MCE.getConstantPoolEntryAddress(index) - (intptr_t)MovePCtoLROffset-4;
-
     unsigned Opcode = MI.getOpcode();
-    if (Opcode == PPC::LOADHiAddr) {
-      // LoadHiAddr wants hi16(addr - &MovePCtoLR)
+    rv = MCE.getConstantPoolEntryAddress(index);
+    if (Opcode == PPC::LIS) {
+      // lis wants hi16(addr)
       if ((short)rv < 0) rv += 1 << 16;
       rv >>= 16;
     } else if (Opcode == PPC::LWZ || Opcode == PPC::LA ||
                Opcode == PPC::LFS || Opcode == PPC::LFD) {
-      // These load opcodes want lo16(addr - &MovePCtoLR)
+      // These load opcodes want lo16(addr)
       rv &= 0xffff;
     } else {
       assert(0 && "Unknown constant pool using instruction!");

@@ -135,21 +135,28 @@ namespace {
     }
     void printSymbolHi(const MachineInstr *MI, unsigned OpNo,
                        MVT::ValueType VT) {
-      O << "ha16(";
-      printOp(MI->getOperand(OpNo));
-      O << "-\"L0000" << LabelNumber << "$pb\")";
+      if (MI->getOperand(OpNo).isImmediate()) {
+        printS16ImmOperand(MI, OpNo, VT);
+      } else {
+        O << "ha16(";
+        printOp(MI->getOperand(OpNo));
+        if (PICEnabled)
+          O << "-\"L0000" << LabelNumber << "$pb\")";
+        else
+          O << ')';
+      }
     }
     void printSymbolLo(const MachineInstr *MI, unsigned OpNo,
                        MVT::ValueType VT) {
-      // FIXME: Because LFS, LFD, and LWZ can be used either with a s16imm or
-      // a lo16 of a global or constant pool operand, we must handle both here.
-      // this isn't a great design, but it works for now.
       if (MI->getOperand(OpNo).isImmediate()) {
-        O << (short)MI->getOperand(OpNo).getImmedValue();
+        printS16ImmOperand(MI, OpNo, VT);
       } else {
         O << "lo16(";
         printOp(MI->getOperand(OpNo));
-        O << "-\"L0000" << LabelNumber << "$pb\")";
+        if (PICEnabled)
+          O << "-\"L0000" << LabelNumber << "$pb\")";
+        else
+          O << ')';
       }
     }
     void printcrbit(const MachineInstr *MI, unsigned OpNo,
@@ -428,9 +435,7 @@ void DarwinAsmPrinter::printConstantPool(MachineConstantPool *MCP) {
 }
 
 bool DarwinAsmPrinter::doInitialization(Module &M) {
-  // FIXME: implment subtargets for PowerPC and pick this up from there.
-  O << "\t.machine ppc970\n";
-
+  if (GPOPT) O << "\t.machine ppc970\n";
   AsmPrinter::doInitialization(M);
   return false;
 }
@@ -504,6 +509,7 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
   for (std::set<std::string>::iterator i = FnStubs.begin(), e = FnStubs.end();
        i != e; ++i)
   {
+    if (PICEnabled) {
     O << ".data\n";
     O << ".section __TEXT,__picsymbolstub1,symbol_stubs,pure_instructions,32\n";
     emitAlignment(2);
@@ -523,6 +529,20 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
     O << "L" << *i << "$lazy_ptr:\n";
     O << "\t.indirect_symbol " << *i << "\n";
     O << "\t.long dyld_stub_binding_helper\n";
+    } else {
+    O << "\t.section __TEXT,__symbol_stub1,symbol_stubs,pure_instructions,16\n";
+    emitAlignment(4);
+    O << "L" << *i << "$stub:\n";
+    O << "\t.indirect_symbol " << *i << "\n";
+    O << "\tlis r11,ha16(L" << *i << "$lazy_ptr)\n";
+    O << "\tlwzu r12,lo16(L" << *i << "$lazy_ptr)(r11)\n";
+    O << "\tmtctr r12\n";
+    O << "\tbctr\n";
+    O << "\t.lazy_symbol_pointer\n";
+    O << "L" << *i << "$lazy_ptr:\n";
+    O << "\t.indirect_symbol " << *i << "\n";
+    O << "\t.long dyld_stub_binding_helper\n";
+    }
   }
 
   O << "\n";

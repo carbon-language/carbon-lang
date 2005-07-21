@@ -29,6 +29,8 @@
 #include <iostream>
 using namespace llvm;
 
+bool llvm::GPOPT = false;
+
 namespace llvm {
   cl::opt<bool> AIX("aix",
                     cl::desc("Generate AIX/xcoff instead of Darwin/MachO"),
@@ -36,6 +38,9 @@ namespace llvm {
   cl::opt<bool> EnablePPCLSR("enable-lsr-for-ppc",
                              cl::desc("Enable LSR for PPC (beta)"),
                              cl::Hidden);
+  cl::opt<bool, true> EnableGPOPT("enable-gpopt", cl::Hidden,
+                                  cl::location(GPOPT),
+                                  cl::desc("Enable optimizations for GP cpus"));
 }
 
 namespace {
@@ -127,8 +132,11 @@ bool PowerPCTargetMachine::addPassesToEmitFile(PassManager &PM,
 }
 
 void PowerPCJITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
-  bool LP64 = (0 != dynamic_cast<PPC64TargetMachine *>(&TM));
+  // The JIT does not support or need PIC.
+  PICEnabled = false;
 
+  bool LP64 = (0 != dynamic_cast<PPC64TargetMachine *>(&TM));
+  
   if (EnablePPCLSR) {
     PM.add(createLoopStrengthReducePass());
     PM.add(createCFGSimplificationPass());
@@ -170,7 +178,7 @@ void PowerPCJITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
 ///
 PPC32TargetMachine::PPC32TargetMachine(const Module &M, IntrinsicLowering *IL)
   : PowerPCTargetMachine(PPC32ID, IL,
-                         TargetData(PPC32ID,false,4,4,8,4,4,4,2,1,1),
+                         TargetData(PPC32ID,false,4,4,4,4,4,4,2,1,1),
                          PowerPCFrameInfo(*this, false)), JITInfo(*this) {}
 
 /// PPC64TargetMachine ctor - Create a LP64 architecture model

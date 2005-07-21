@@ -563,7 +563,7 @@ unsigned ISel::getConstDouble(double doubleVal, unsigned Result=0) {
   MachineConstantPool *CP = BB->getParent()->getConstantPool();
   ConstantFP *CFP = ConstantFP::get(Type::DoubleTy, doubleVal);
   unsigned CPI = CP->getConstantPoolIndex(CFP);
-  BuildMI(BB, PPC::LOADHiAddr, 2, Tmp1).addReg(getGlobalBaseReg())
+  BuildMI(BB, PPC::ADDIS, 2, Tmp1).addReg(getGlobalBaseReg())
     .addConstantPoolIndex(CPI);
   BuildMI(BB, PPC::LFD, 2, Result).addConstantPoolIndex(CPI).addReg(Tmp1);
   return Result;
@@ -909,7 +909,7 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
       // Load constant fp value
       unsigned Tmp4 = MakeReg(MVT::i32);
       unsigned TmpL = MakeReg(MVT::i32);
-      BuildMI(BB, PPC::LOADHiAddr, 2, Tmp4).addReg(getGlobalBaseReg())
+      BuildMI(BB, PPC::ADDIS, 2, Tmp4).addReg(getGlobalBaseReg())
         .addConstantPoolIndex(CPI);
       BuildMI(BB, PPC::LFD, 2, ConstF).addConstantPoolIndex(CPI).addReg(Tmp4);
       // Store the hi & low halves of the fp value, currently in int regs
@@ -1002,7 +1002,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
   case ISD::ConstantPool:
     Tmp1 = cast<ConstantPoolSDNode>(N)->getIndex();
     Tmp2 = MakeReg(MVT::i64);
-    BuildMI(BB, PPC::LOADHiAddr, 2, Tmp2).addReg(getGlobalBaseReg())
+    BuildMI(BB, PPC::ADDIS, 2, Tmp2).addReg(getGlobalBaseReg())
       .addConstantPoolIndex(Tmp1);
     BuildMI(BB, PPC::LA, 2, Result).addReg(Tmp2).addConstantPoolIndex(Tmp1);
     return Result;
@@ -1015,7 +1015,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
   case ISD::GlobalAddress: {
     GlobalValue *GV = cast<GlobalAddressSDNode>(N)->getGlobal();
     Tmp1 = MakeReg(MVT::i64);
-    BuildMI(BB, PPC::LOADHiAddr, 2, Tmp1).addReg(getGlobalBaseReg())
+    BuildMI(BB, PPC::ADDIS, 2, Tmp1).addReg(getGlobalBaseReg())
       .addGlobalAddress(GV);
     if (GV->hasWeakLinkage() || GV->isExternal()) {
       BuildMI(BB, PPC::LD, 2, Result).addGlobalAddress(GV).addReg(Tmp1);
@@ -1057,7 +1057,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
     if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(Address)) {
       Tmp1 = MakeReg(MVT::i64);
       int CPI = CP->getIndex();
-      BuildMI(BB, PPC::LOADHiAddr, 2, Tmp1).addReg(getGlobalBaseReg())
+      BuildMI(BB, PPC::ADDIS, 2, Tmp1).addReg(getGlobalBaseReg())
         .addConstantPoolIndex(CPI);
       BuildMI(BB, Opc, 2, Result).addConstantPoolIndex(CPI).addReg(Tmp1);
     }
