@@ -32,23 +32,33 @@ class GlobalValue;
 ///   4. An optional constant value to be added to the reference.
 ///   5. A bit, CanRewrite, which indicates to the JIT that a function stub is
 ///      not needed for the relocation.
+///   6. An index into the GOT, if the target uses a GOT
 ///
 class MachineRelocation {
   /// OffsetTypeExternal - The low 24-bits of this value is the offset from the
   /// start of the code buffer of the relocation to perform.  Bit 24 of this is
   /// set if Target should use ExtSym instead of GV, Bit 25 is the CanRewrite
   /// bit, and the high 6 bits hold the relocation type.
+  // FIXME: with the additional types of relocatable things, rearrange the
+  // storage of things to be a bit more effiecient
   unsigned OffsetTypeExternal;
   union {
     GlobalValue *GV;     // If this is a pointer to an LLVM global
     const char *ExtSym;  // If this is a pointer to a named symbol
     void *Result;        // If this has been resolved to a resolved pointer
+    unsigned GOTIndex;   // Index in the GOT of this symbol/global
+    unsigned CPool;      // Index in the Constant Pool
   } Target;
   intptr_t ConstantVal;
+  bool GOTRelative; //out of bits in OffsetTypeExternal
+  bool isConstPool;
+
 public:
   MachineRelocation(unsigned Offset, unsigned RelocationType, GlobalValue *GV,
-                    intptr_t cst = 0, bool DoesntNeedFunctionStub = 0)
-    : OffsetTypeExternal(Offset + (RelocationType << 26)), ConstantVal(cst) {
+                    intptr_t cst = 0, bool DoesntNeedFunctionStub = 0, 
+                    bool GOTrelative = 0)
+    : OffsetTypeExternal(Offset + (RelocationType << 26)), ConstantVal(cst),
+      GOTRelative(GOTrelative), isConstPool(0) {
     assert((Offset & ~((1 << 24)-1)) == 0 && "Code offset too large!");
     assert((RelocationType & ~63) == 0 && "Relocation type too large!");
     Target.GV = GV;
@@ -57,12 +67,21 @@ public:
   }
 
   MachineRelocation(unsigned Offset, unsigned RelocationType, const char *ES,
-                    intptr_t cst = 0)
+                    intptr_t cst = 0, bool GOTrelative = 0)
     : OffsetTypeExternal(Offset + (1 << 24) + (RelocationType << 26)),
-    ConstantVal(cst) {
+      ConstantVal(cst), GOTRelative(GOTrelative), isConstPool(0) {
     assert((Offset & ~((1 << 24)-1)) == 0 && "Code offset too large!");
     assert((RelocationType & ~63) == 0 && "Relocation type too large!");
     Target.ExtSym = ES;
+  }
+
+  MachineRelocation(unsigned Offset, unsigned RelocationType, unsigned CPI,
+                    intptr_t cst = 0)
+    : OffsetTypeExternal(Offset + (RelocationType << 26)),
+      ConstantVal(cst), GOTRelative(0), isConstPool(1) {
+    assert((Offset & ~((1 << 24)-1)) == 0 && "Code offset too large!");
+    assert((RelocationType & ~63) == 0 && "Relocation type too large!");
+    Target.CPool = CPI;
   }
 
   /// getMachineCodeOffset - Return the offset into the code buffer that the
@@ -87,13 +106,25 @@ public:
   /// isGlobalValue - Return true if this relocation is a GlobalValue, as
   /// opposed to a constant string.
   bool isGlobalValue() const {
-    return (OffsetTypeExternal & (1 << 24)) == 0;
+    return (OffsetTypeExternal & (1 << 24)) == 0 && !isConstantPoolIndex();
   }
 
   /// isString - Return true if this is a constant string.
   ///
   bool isString() const {
-    return !isGlobalValue();
+    return !isGlobalValue() && !isConstantPoolIndex();
+  }
+
+  /// isConstantPoolIndex - Return true if this is a constant pool reference.
+  ///
+  bool isConstantPoolIndex() const {
+    return isConstPool;
+  }
+
+  /// isGOTRelative - Return true the target wants the index into the GOT of
+  /// the symbol rather than the address of the symbol.
+  bool isGOTRelative() const {
+    return GOTRelative;
   }
 
   /// doesntNeedFunctionStub - This function returns true if the JIT for this
@@ -119,6 +150,13 @@ public:
     return Target.ExtSym;
   }
 
+  /// getConstantPoolIndex - If this is a const pool reference, return
+  /// the index into the constant pool.
+  unsigned getConstantPoolIndex() const {
+    assert(isConstantPoolIndex() && "This is not a constant pool reference!");
+    return Target.CPool;
+  }
+
   /// getResultPointer - Once this has been resolved to point to an actual
   /// address, this returns the pointer.
   void *getResultPointer() const {
@@ -130,6 +168,19 @@ public:
   void setResultPointer(void *Ptr) {
     Target.Result = Ptr;
   }
+
+  /// setGOTIndex - Set the GOT index to a specific value.
+  void setGOTIndex(unsigned idx) {
+    Target.GOTIndex = idx;
+  }
+
+  /// getGOTIndex - Once this has been resolved to an entry in the GOT,
+  /// this returns that index.  The index is from the lowest address entry 
+  /// in the GOT.
+  unsigned getGOTIndex() const {
+    return Target.GOTIndex;
+  }
+
 };
 
 }

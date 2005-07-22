@@ -77,9 +77,17 @@ namespace llvm {
     /// it must rewrite the code to contain the actual addresses of any
     /// referenced global symbols.
     virtual void relocate(void *Function, MachineRelocation *MR,
-                          unsigned NumRelocs) {
+                          unsigned NumRelocs, unsigned char* GOTBase) {
       assert(NumRelocs == 0 && "This target does not have relocations!");
     }
+
+    /// needsGOT - Allows a target to specify that it would like the
+    // JIT to manage a GOT for it.
+    bool needsGOT() const { return useGOT; }
+
+  protected:
+    bool useGOT;
+
   };
 } // End llvm namespace
 
