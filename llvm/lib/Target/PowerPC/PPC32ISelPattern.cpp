@@ -45,6 +45,7 @@ namespace {
     PPC32TargetLowering(TargetMachine &TM) : TargetLowering(TM) {
       // Fold away setcc operations if possible.
       setSetCCIsExpensive();
+      PICEnabled = true;
 
       // Set up the register classes.
       addRegisterClass(MVT::i32, PPC32::GPRCRegisterClass);
