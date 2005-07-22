@@ -1493,6 +1493,19 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
               Tmp2 = cast<ConstantSDNode>(N.getOperand(0).getOperand(1))->getValue();
               BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addImm(Tmp2);
             }
+            else if(N.getOperand(0).getOperand(1).getOpcode() == ISD::Constant &&
+                    !isMul &&
+                    (CSD = dyn_cast<ConstantSDNode>(N.getOperand(0).getOperand(1))) &&
+                    (((int64_t)(CSD->getValue() << 32) >> 32) >= -255) &&
+                    (((int64_t)(CSD->getValue() << 32) >> 32) <= 0))
+            { //handle canonicalization
+              Opc = isAdd ? Alpha::SUBLi : Alpha::ADDLi;
+              Tmp1 = SelectExpr(N.getOperand(0).getOperand(0));
+              int64_t t = cast<ConstantSDNode>(N.getOperand(0).getOperand(1))->getValue();
+              t = 0 - ((t << 32) >> 32);
+              assert(t >= 0 && t <= 255);
+              BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addImm(t);
+            }
             else
             { //Normal add/sub
               Opc = isAdd ? Alpha::ADDL : (isMul ? Alpha::MULL : Alpha::SUBL);
@@ -1792,6 +1805,14 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
         Tmp1 = SelectExpr(N.getOperand(0));
         BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addImm(CSD->getValue());
       }
+      else if((CSD = dyn_cast<ConstantSDNode>(N.getOperand(1))) &&
+              (int64_t)CSD->getValue() >= 255 &&
+              (int64_t)CSD->getValue() <= 0)              
+      { //inverted imm add/sub
+        Opc = isAdd ? Alpha::SUBQi : Alpha::ADDQi;
+        Tmp1 = SelectExpr(N.getOperand(0));
+        BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addImm((int64_t)CSD->getValue());
+      }
       //larger addi
       else if((CSD = dyn_cast<ConstantSDNode>(N.getOperand(1))) &&
               CSD->getSignExtended() <= 32767 &&
@@ -2061,17 +2082,39 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
   case ISD::Constant:
     {
       int64_t val = (int64_t)cast<ConstantSDNode>(N)->getValue();
+      int zero_extend_top = 0;
+      if (val > 0 && (val & 0xFFFFFFFF00000000) == 0 &&
+          ((int32_t)val < 0)) {
+        //try a small load and zero extend
+        val = (int32_t)val;
+        zero_extend_top = 15;
+      }
+
       if (val <= IMM_HIGH && val >= IMM_LOW) {
-        BuildMI(BB, Alpha::LDA, 2, Result).addImm(val).addReg(Alpha::R31);
+        if(!zero_extend_top)
+          BuildMI(BB, Alpha::LDA, 2, Result).addImm(val).addReg(Alpha::R31);
+        else {
+          Tmp1 = MakeReg(MVT::i64);
+          BuildMI(BB, Alpha::LDA, 2, Tmp1).addImm(val).addReg(Alpha::R31);
+          BuildMI(BB, Alpha::ZAPNOT, 2, Result).addReg(Tmp1).addImm(zero_extend_top);
+        }
       }
       else if (val <= (int64_t)IMM_HIGH +(int64_t)IMM_HIGH* (int64_t)IMM_MULT &&
                val >= (int64_t)IMM_LOW + (int64_t)IMM_LOW * (int64_t)IMM_MULT) {
         Tmp1 = MakeReg(MVT::i64);
         BuildMI(BB, Alpha::LDAH, 2, Tmp1).addImm(getUpper16(val))
           .addReg(Alpha::R31);
-        BuildMI(BB, Alpha::LDA, 2, Result).addImm(getLower16(val)).addReg(Tmp1);
+        if (!zero_extend_top)
+          BuildMI(BB, Alpha::LDA, 2, Result).addImm(getLower16(val)).addReg(Tmp1);
+        else {
+          Tmp3 = MakeReg(MVT::i64);
+          BuildMI(BB, Alpha::LDA, 2, Tmp3).addImm(getLower16(val)).addReg(Tmp1);
+          BuildMI(BB, Alpha::ZAPNOT, 2, Result).addReg(Tmp3).addImm(zero_extend_top);
+        }
       }
       else {
+        //re-get the val since we are going to mem anyway
+        val = (int64_t)cast<ConstantSDNode>(N)->getValue();
         MachineConstantPool *CP = BB->getParent()->getConstantPool();
         ConstantUInt *C = 
           ConstantUInt::get(Type::getPrimitiveType(Type::ULongTyID) , val);
