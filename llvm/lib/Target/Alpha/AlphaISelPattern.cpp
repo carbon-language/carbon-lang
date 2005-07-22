@@ -1125,7 +1125,7 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
     Opc = opcode == ISD::CTPOP ? Alpha::CTPOP :
     (opcode == ISD::CTTZ ? Alpha::CTTZ : Alpha::CTLZ);
     Tmp1 = SelectExpr(N.getOperand(0));
-    BuildMI(BB, Opc, 1, Result).addReg(Tmp1);
+    BuildMI(BB, Opc, 1, Result).addReg(Alpha::R31).addReg(Tmp1);
     return Result;
 
   case ISD::MULHU:
@@ -1331,7 +1331,7 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
       Select(N.getOperand(0));
 
       // The chain for this call is now lowered.
-      ExprMap.insert(std::make_pair(N.getValue(Node->getNumValues()-1), notIn));
+      ExprMap[N.getValue(Node->getNumValues()-1)] = notIn;
 
       //grab the arguments
       std::vector<unsigned> argvregs;
@@ -1404,10 +1404,6 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
         BuildMI(BB, Alpha::BSR, 1, Alpha::R26)
           .addGlobalAddress(GASD->getGlobal(),true);
       } else {
-        //Must always reread relocation table before a call
-        if (GASD)
-          ExprMap.erase(N.getOperand(1));
-
         //no need to restore GP as we are doing an indirect call
         Tmp1 = SelectExpr(N.getOperand(1));
         BuildMI(BB, Alpha::BIS, 2, Alpha::R27).addReg(Tmp1).addReg(Tmp1);
@@ -1522,10 +1518,10 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
           break;
         }
       case MVT::i16:
-        BuildMI(BB, Alpha::SEXTW, 1, Result).addReg(Tmp1);
+        BuildMI(BB, Alpha::SEXTW, 1, Result).addReg(Alpha::R31).addReg(Tmp1);
         break;
       case MVT::i8:
-        BuildMI(BB, Alpha::SEXTB, 1, Result).addReg(Tmp1);
+        BuildMI(BB, Alpha::SEXTB, 1, Result).addReg(Alpha::R31).addReg(Tmp1);
         break;
       case MVT::i1:
         Tmp2 = MakeReg(MVT::i64);
@@ -2247,7 +2243,7 @@ void AlphaISel::Select(SDOperand N) {
     }
     // Just emit a 'ret' instruction
     AlphaLowering.restoreRA(BB);
-    BuildMI(BB, Alpha::RET, 1, Alpha::R31).addReg(Alpha::R26);
+    BuildMI(BB, Alpha::RET, 2, Alpha::R31).addReg(Alpha::R26).addImm(1);
     return;
 
   case ISD::TRUNCSTORE:

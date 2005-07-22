@@ -17,6 +17,12 @@
 //Floating-point
 //PALcode
 
+def u8imm   : Operand<i8>;
+def s14imm  : Operand<i16>;
+def s16imm  : Operand<i16>;
+def s21imm  : Operand<i32>;
+def s64imm  : Operand<i64>;
+
 //===----------------------------------------------------------------------===//
 // Instruction format superclass
 //===----------------------------------------------------------------------===//
@@ -32,19 +38,53 @@ class InstAlpha<bits<6> op, dag OL, string asmstr> : Instruction {          // A
 }
 
 //3.3.1
-class MForm<bits<6> opcode, dag OL, string asmstr> : InstAlpha<opcode, OL, asmstr> {
+class MForm<bits<6> opcode, string asmstr> 
+        : InstAlpha<opcode, (ops GPRC:$RA, s16imm:$DISP, GPRC:$RB), asmstr> {
   bits<5> Ra;
-  bits<5> Rb;
   bits<16> disp;
+  bits<5> Rb;
 
   let Inst{25-21} = Ra;
   let Inst{20-16} = Rb;
   let Inst{15-0} = disp;
 }
 
+class MgForm<bits<6> opcode, string asmstr> 
+        : InstAlpha<opcode, (ops GPRC:$RA, s16imm:$DISP, GPRC:$RB, s16imm:$NUM), asmstr> {
+  bits<5> Ra;
+  bits<16> disp;
+  bits<5> Rb;
+
+  let Inst{25-21} = Ra;
+  let Inst{20-16} = Rb;
+  let Inst{15-0} = disp;
+}
+
+class MbrForm<bits<6> opcode, bits<2> TB, dag OL, string asmstr> : InstAlpha<opcode, OL, asmstr> {
+  bits<5> Ra;
+  bits<5> Rb;
+  bits<14> disp;
+
+  let Inst{25-21} = Ra;
+  let Inst{20-16} = Rb;
+  let Inst{15-14} = TB;
+  let Inst{13-0} = disp;
+}
+
 //3.3.2
 let isBranch = 1, isTerminator = 1 in
-class BForm<bits<6> opcode, dag OL, string asmstr> : InstAlpha<opcode, OL, asmstr> {
+class BForm<bits<6> opcode, string asmstr> 
+    : InstAlpha<opcode, (ops GPRC:$RA, s21imm:$DISP), asmstr> {
+  bits<5> Ra;
+  bits<21> disp;
+
+  let Inst{25-21} = Ra;
+  let Inst{20-0} = disp;
+}
+
+let isBranch = 1, isTerminator = 1 in
+class FBForm<bits<6> opcode, string asmstr> 
+    : InstAlpha<opcode, (ops FPRC:$RA, s21imm:$DISP), asmstr> {
   bits<5> Ra;
   bits<21> disp;
 
@@ -53,23 +93,53 @@ class BForm<bits<6> opcode, dag OL, string asmstr> : InstAlpha<opcode, OL, asmst
 }
 
 //3.3.3
-class OForm<bits<6> opcode, bits<7> fun, dag OL, string asmstr> : InstAlpha<opcode, OL, asmstr> {
+class OForm<bits<6> opcode, bits<7> fun, string asmstr> 
+        : InstAlpha<opcode, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), asmstr> {
+  bits<5> Rc;
   bits<5> Ra;
   bits<5> Rb;
-  bits<3> SBZ;
+  bits<7> Function = fun;
+
+  let Inst{25-21} = Ra;
+  let Inst{20-16} = Rb;
+  let Inst{15-13} = 0;
+  let Inst{12} = 0;
+  let Inst{11-5} = Function;
+  let Inst{4-0} = Rc;
+}
+
+class OcmForm<bits<6> opcode, bits<7> fun, dag OL, string asmstr> 
+        : InstAlpha<opcode, OL, asmstr> {
+  bits<5> Ra;
+  bits<5> Rb;
   bits<7> Function = fun;
   bits<5> Rc;
 
   let Inst{25-21} = Ra;
   let Inst{20-16} = Rb;
-  let Inst{15-13} = SBZ;
+  let Inst{15-13} = 0;
   let Inst{12} = 0;
   let Inst{11-5} = Function;
   let Inst{4-0} = Rc;
 }
 
 
-class OFormL<bits<6> opcode, bits<7> fun, dag OL, string asmstr> : InstAlpha<opcode, OL, asmstr> {
+class OFormL<bits<6> opcode, bits<7> fun, string asmstr> 
+        : InstAlpha<opcode, (ops GPRC:$RC, GPRC:$RA, u8imm:$L), asmstr> {
+  bits<5> Rc;
+  bits<5> Ra;
+  bits<8> LIT;
+  bits<7> Function = fun;
+
+  let Inst{25-21} = Ra;
+  let Inst{20-13} = LIT;
+  let Inst{12} = 1;
+  let Inst{11-5} = Function;
+  let Inst{4-0} = Rc;
+}
+
+class OcmFormL<bits<6> opcode, bits<7> fun, dag OL, string asmstr> 
+        : InstAlpha<opcode, OL, asmstr> {
   bits<5> Ra;
   bits<8> LIT;
   bits<7> Function = fun;
