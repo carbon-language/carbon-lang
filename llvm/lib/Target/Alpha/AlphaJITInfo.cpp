@@ -51,7 +51,7 @@ static TargetJITInfo::JITCompilerFn JITCompilerFunction;
 //static AlphaJITInfo* AlphaJTI;
 
 extern "C" {
-#if 0
+#ifdef __alpha
 
   void AlphaCompilationCallbackC(long* oldsp)
   {

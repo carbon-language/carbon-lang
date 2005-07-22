@@ -51,7 +51,7 @@ unsigned AlphaTargetMachine::getModuleMatchQuality(const Module &M) {
 }
 
 unsigned AlphaTargetMachine::getJITMatchQuality() {
-#if 0
+#ifdef __alpha
   return 10;
 #else
   return 0;
