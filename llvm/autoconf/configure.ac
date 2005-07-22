@@ -212,7 +212,7 @@ else
     Sparc)   AC_SUBST(JIT,[[TARGET_HAS_JIT=1]]) ;;
     PowerPC) AC_SUBST(JIT,[[TARGET_HAS_JIT=1]]) ;;
     x86_64)  AC_SUBST(JIT,[[]]) ;;
-    Alpha)   AC_SUBST(JIT,[[]]) ;;
+    Alpha)   AC_SUBST(JIT,[[TARGET_HAS_JIT=1]]) ;;
     IA64)    AC_SUBST(JIT,[[]]) ;;
     *)       AC_SUBST(JIT,[[]]) ;;
   esac

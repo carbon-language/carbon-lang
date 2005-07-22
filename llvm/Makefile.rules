@@ -602,6 +602,18 @@ ifdef ENABLE_PPC_JIT
   JIT_LIBS += LLVMPowerPC LLVMSelectionDAG
 endif
 
+# You can enable the Alpha JIT on a non-Alpha host by setting the flag
+# ENABLE_ALPHA_JIT on the make command line. If not, it will still be
+# enabled automagically on an PowerPC host.
+ifeq ($(ARCH), Alpha)
+  ENABLE_ALPHA_JIT = 1
+endif
+
+# What the PowerPC JIT requires
+ifdef ENABLE_ALPHA_JIT
+  JIT_LIBS += LLVMAlpha LLVMSelectionDAG
+endif
+
 LLVMLIBS := $(JIT_LIBS) LLVMScalarOpts LLVMAnalysis.a LLVMTransformUtils.a \
             LLVMBCReader LLVMCore LLVMSupport.a LLVMTarget.a LLVMbzip2 \
             LLVMSystem.a $(PLATFORMLIBDL)

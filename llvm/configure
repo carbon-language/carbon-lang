@@ -2997,7 +2997,7 @@ else
  ;;
     x86_64)  JIT=
  ;;
-    Alpha)   JIT=
+    Alpha)   JIT=TARGET_HAS_JIT=1
  ;;
     IA64)    JIT=
  ;;
