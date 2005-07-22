@@ -609,7 +609,7 @@ ifeq ($(ARCH), Alpha)
   ENABLE_ALPHA_JIT = 1
 endif
 
-# What the PowerPC JIT requires
+# What the Alpha JIT requires
 ifdef ENABLE_ALPHA_JIT
   JIT_LIBS += LLVMAlpha LLVMSelectionDAG
 endif
