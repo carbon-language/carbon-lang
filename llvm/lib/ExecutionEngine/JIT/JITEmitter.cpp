@@ -52,8 +52,9 @@ namespace {
     unsigned char *FunctionBase; // Start of the function body area
     unsigned char *ConstantPool; // Memory allocated for constant pools
     unsigned char *CurStubPtr, *CurFunctionPtr, *CurConstantPtr;
+    unsigned char *GOTBase; //Target Specific reserved memory
   public:
-    JITMemoryManager();
+    JITMemoryManager(bool useGOT);
     ~JITMemoryManager();
 
     inline unsigned char *allocateStub(unsigned StubSize);
@@ -61,26 +62,34 @@ namespace {
                                            unsigned Alignment);
     inline unsigned char *startFunctionBody();
     inline void endFunctionBody(unsigned char *FunctionEnd);
+    inline unsigned char* getGOTBase() const;
+
+    inline bool isManagingGOT() const;
   };
 }
 
-JITMemoryManager::JITMemoryManager() {
+JITMemoryManager::JITMemoryManager(bool useGOT) {
   // Allocate a 16M block of memory...
   MemBlock = sys::Memory::AllocateRWX((16 << 20));
   MemBase = reinterpret_cast<unsigned char*>(MemBlock.base());
-  FunctionBase = MemBase + 512*1024; // Use 512k for stubs
+  ConstantPool = MemBase;
+  GOTBase = ConstantPool + 512*1024; //512 for constants
+  //8k number of entries in the GOT
+  FunctionBase = GOTBase + 8192 * sizeof(void*) + 512*1024; // Use 512k for stubs
+
+  //make it easier to tell if we are managing the GOT
+  if (!useGOT)
+    GOTBase = NULL;
 
   // Allocate stubs backwards from the function base, allocate functions forward
   // from the function base.
   CurStubPtr = CurFunctionPtr = FunctionBase;
 
-  ConstantPool = new unsigned char [512*1024]; // Use 512k for constant pools
   CurConstantPtr = ConstantPool + 512*1024;
 }
 
 JITMemoryManager::~JITMemoryManager() {
   sys::Memory::ReleaseRWX(MemBlock);
-  delete[] ConstantPool;
 }
 
 unsigned char *JITMemoryManager::allocateStub(unsigned StubSize) {
@@ -115,6 +124,14 @@ unsigned char *JITMemoryManager::startFunctionBody() {
 void JITMemoryManager::endFunctionBody(unsigned char *FunctionEnd) {
   assert(FunctionEnd > CurFunctionPtr);
   CurFunctionPtr = FunctionEnd;
+}
+
+unsigned char* JITMemoryManager::getGOTBase() const {
+  return GOTBase;
+}
+
+bool JITMemoryManager::isManagingGOT() const {
+  return GOTBase != NULL;
 }
 
 //===----------------------------------------------------------------------===//
@@ -320,8 +337,17 @@ namespace {
     /// Relocations - These are the relocations that the function needs, as
     /// emitted.
     std::vector<MachineRelocation> Relocations;
+
   public:
-    JITEmitter(JIT &jit) { TheJIT = &jit; }
+    JITEmitter(JIT &jit)
+      :MemMgr(jit.getJITInfo().needsGOT()), 
+       nextGOTIndex(0)
+    {
+      TheJIT = &jit; 
+      DEBUG(std::cerr << 
+            (MemMgr.isManagingGOT() ? "JIT is managing GOT\n" 
+             : "JIT is not managing GOT\n"));
+    }
 
     virtual void startFunction(MachineFunction &F);
     virtual void finishFunction(MachineFunction &F);
@@ -342,6 +368,8 @@ namespace {
 
   private:
     void *getPointerToGlobal(GlobalValue *GV, void *Reference, bool NoNeedStub);
+    unsigned nextGOTIndex;
+    std::map<void*, unsigned> revGOTMap;
   };
 }
 
@@ -388,7 +416,6 @@ void JITEmitter::startFunction(MachineFunction &F) {
 
 void JITEmitter::finishFunction(MachineFunction &F) {
   MemMgr.endFunctionBody(CurByte);
-  ConstantPoolAddresses.clear();
   NumBytes += CurByte-CurBlock;
 
   if (!Relocations.empty()) {
@@ -404,15 +431,29 @@ void JITEmitter::finishFunction(MachineFunction &F) {
         // If the target REALLY wants a stub for this function, emit it now.
         if (!MR.doesntNeedFunctionStub())
           ResultPtr = getJITResolver(this).getExternalFunctionStub(ResultPtr);
-      } else
+      } else if (MR.isGlobalValue()) 
         ResultPtr = getPointerToGlobal(MR.getGlobalValue(),
                                        CurBlock+MR.getMachineCodeOffset(),
                                        MR.doesntNeedFunctionStub());
+      else //ConstantPoolIndex
+        ResultPtr = 
+          (void*)getConstantPoolEntryAddress(MR.getConstantPoolIndex());
+      
       MR.setResultPointer(ResultPtr);
+
+      // if we are managing the got, check to see if this pointer has all ready
+      // been allocated a GOT entry.  If not, give it the next one.
+      if (MemMgr.isManagingGOT()) {
+        if (!revGOTMap[ResultPtr])
+          revGOTMap[ResultPtr] = ++nextGOTIndex;
+        ((void**)MemMgr.getGOTBase())[revGOTMap[ResultPtr]] = ResultPtr;
+        if(MR.isGOTRelative())
+          MR.setGOTIndex(revGOTMap[ResultPtr]);
+      }
     }
 
     TheJIT->getJITInfo().relocate(CurBlock, &Relocations[0],
-                                  Relocations.size());
+                                  Relocations.size(), MemMgr.getGOTBase());
   }
 
   DEBUG(std::cerr << "JIT: Finished CodeGen of [" << (void*)CurBlock
@@ -420,6 +461,7 @@ void JITEmitter::finishFunction(MachineFunction &F) {
                   << ": " << CurByte-CurBlock << " bytes of text, "
                   << Relocations.size() << " relocations\n");
   Relocations.clear();
+  ConstantPoolAddresses.clear();
 }
 
 void JITEmitter::emitConstantPool(MachineConstantPool *MCP) {
