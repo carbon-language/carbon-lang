@@ -604,7 +604,7 @@ endif
 
 # You can enable the Alpha JIT on a non-Alpha host by setting the flag
 # ENABLE_ALPHA_JIT on the make command line. If not, it will still be
-# enabled automagically on an PowerPC host.
+# enabled automagically on an Alpha host.
 ifeq ($(ARCH), Alpha)
   ENABLE_ALPHA_JIT = 1
 endif
