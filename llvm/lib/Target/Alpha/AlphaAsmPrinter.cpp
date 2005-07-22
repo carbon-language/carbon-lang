@@ -239,6 +239,7 @@ bool AlphaAsmPrinter::doInitialization(Module &M)
     O << "\t.arch ev6\n";
   else
     O << "\t.arch ev56\n";
+  O << "\t.set noat\n";
   return false;
 }
 

@@ -226,8 +226,16 @@ void AlphaRegisterInfo::emitPrologue(MachineFunction &MF) const {
   MachineFrameInfo *MFI = MF.getFrameInfo();
   bool FP = hasFP(MF);
 
+  static int curgpdist = 0;
+
   //handle GOP offset
-  BuildMI(MBB, MBBI, Alpha::LDGP, 0);
+  BuildMI(MBB, MBBI, Alpha::LDAHg, 3, Alpha::R29)
+    .addGlobalAddress(const_cast<Function*>(MF.getFunction()))
+    .addReg(Alpha::R27).addImm(++curgpdist);
+  BuildMI(MBB, MBBI, Alpha::LDAg, 3, Alpha::R29)
+    .addGlobalAddress(const_cast<Function*>(MF.getFunction()))
+    .addReg(Alpha::R29).addImm(curgpdist);
+
   //evil const_cast until MO stuff setup to handle const
   BuildMI(MBB, MBBI, Alpha::ALTENT, 1).addGlobalAddress(const_cast<Function*>(MF.getFunction()), true);
 

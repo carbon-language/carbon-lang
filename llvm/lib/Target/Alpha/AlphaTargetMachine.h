@@ -18,6 +18,7 @@
 #include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/PassManager.h"
 #include "AlphaInstrInfo.h"
+#include "AlphaJITInfo.h"
 
 namespace llvm {
 
@@ -27,6 +28,7 @@ class IntrinsicLowering;
 class AlphaTargetMachine : public TargetMachine {
   AlphaInstrInfo InstrInfo;
   TargetFrameInfo FrameInfo;
+  AlphaJITInfo JITInfo;
 
 public:
   AlphaTargetMachine(const Module &M, IntrinsicLowering *IL);
@@ -36,6 +38,20 @@ public:
   virtual const MRegisterInfo *getRegisterInfo() const {
     return &InstrInfo.getRegisterInfo();
   }
+  virtual TargetJITInfo* getJITInfo() {
+    return &JITInfo;
+  }
+
+  static unsigned getJITMatchQuality();
+
+  /// addPassesToEmitMachineCode - Add passes to the specified pass manager to
+  /// get machine code emitted.  This uses a MachineCodeEmitter object to handle
+  /// actually outputting the machine code and resolving things like the address
+  /// of functions.  This method should returns true if machine code emission is
+  /// not supported.
+  ///
+  virtual bool addPassesToEmitMachineCode(FunctionPassManager &PM,
+                                          MachineCodeEmitter &MCE);
 
   virtual bool addPassesToEmitFile(PassManager &PM, std::ostream &Out,
                                    CodeGenFileType FileType);

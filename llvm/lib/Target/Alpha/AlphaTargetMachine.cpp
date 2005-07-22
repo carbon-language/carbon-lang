@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Alpha.h"
+#include "AlphaJITInfo.h"
 #include "AlphaTargetMachine.h"
 #include "llvm/Module.h"
 #include "llvm/CodeGen/Passes.h"
@@ -49,9 +50,18 @@ unsigned AlphaTargetMachine::getModuleMatchQuality(const Module &M) {
   return 0;
 }
 
+unsigned AlphaTargetMachine::getJITMatchQuality() {
+#if 0
+  return 10;
+#else
+  return 0;
+#endif
+}
+
 AlphaTargetMachine::AlphaTargetMachine( const Module &M, IntrinsicLowering *IL)
   : TargetMachine("alpha", IL, true),
-    FrameInfo(TargetFrameInfo::StackGrowsDown, 8, 0) //TODO: check these
+    FrameInfo(TargetFrameInfo::StackGrowsDown, 8, 0), //TODO: check these
+    JITInfo(*this)
 {}
 
 /// addPassesToEmitFile - Add passes to the specified pass manager to implement
@@ -96,6 +106,50 @@ bool AlphaTargetMachine::addPassesToEmitFile(PassManager &PM,
 
   PM.add(createAlphaCodePrinterPass(Out, *this));
 
+  PM.add(createMachineCodeDeleter());
+  return false;
+}
+
+void AlphaJITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
+
+  if (EnableAlphaLSR) {
+    PM.add(createLoopStrengthReducePass());
+    PM.add(createCFGSimplificationPass());
+  }
+
+  // FIXME: Implement efficient support for garbage collection intrinsics.
+  PM.add(createLowerGCPass());
+
+  // FIXME: Implement the invoke/unwind instructions!
+  PM.add(createLowerInvokePass());
+
+  // FIXME: Implement the switch instruction in the instruction selector!
+  PM.add(createLowerSwitchPass());
+
+  // Make sure that no unreachable blocks are instruction selected.
+  PM.add(createUnreachableBlockEliminationPass());
+
+  PM.add(createAlphaPatternInstructionSelector(TM));
+
+  if (PrintMachineCode)
+    PM.add(createMachineFunctionPrinterPass(&std::cerr));
+
+  PM.add(createRegisterAllocator());
+
+  if (PrintMachineCode)
+    PM.add(createMachineFunctionPrinterPass(&std::cerr));
+
+  PM.add(createPrologEpilogCodeInserter());
+
+  // Must run branch selection immediately preceding the asm printer
+  //PM.add(createAlphaBranchSelectionPass());
+
+}
+
+bool AlphaTargetMachine::addPassesToEmitMachineCode(FunctionPassManager &PM,
+                                                    MachineCodeEmitter &MCE) {
+  PM.add(createAlphaCodeEmitterPass(MCE));
+  // Delete machine code for this function
   PM.add(createMachineCodeDeleter());
   return false;
 }
