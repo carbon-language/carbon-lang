@@ -174,7 +174,7 @@ void *X86JITInfo::emitFunctionStub(void *Fn, MachineCodeEmitter &MCE) {
 /// it must rewrite the code to contain the actual addresses of any
 /// referenced global symbols.
 void X86JITInfo::relocate(void *Function, MachineRelocation *MR,
-                          unsigned NumRelocs) {
+                          unsigned NumRelocs, unsigned char* GOTBase) {
   for (unsigned i = 0; i != NumRelocs; ++i, ++MR) {
     void *RelocPos = (char*)Function + MR->getMachineCodeOffset();
     intptr_t ResultPtr = (intptr_t)MR->getResultPointer();

@@ -188,7 +188,7 @@ void *PPC32JITInfo::emitFunctionStub(void *Fn, MachineCodeEmitter &MCE) {
 
 
 void PPC32JITInfo::relocate(void *Function, MachineRelocation *MR,
-                            unsigned NumRelocs) {
+                            unsigned NumRelocs, unsigned char* GOTBase) {
   for (unsigned i = 0; i != NumRelocs; ++i, ++MR) {
     unsigned *RelocPos = (unsigned*)Function + MR->getMachineCodeOffset()/4;
     intptr_t ResultPtr = (intptr_t)MR->getResultPointer();

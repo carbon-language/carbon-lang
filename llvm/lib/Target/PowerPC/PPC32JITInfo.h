@@ -27,7 +27,7 @@ namespace llvm {
     virtual void *emitFunctionStub(void *Fn, MachineCodeEmitter &MCE);
     virtual LazyResolverFn getLazyResolverFunction(JITCompilerFn);
     virtual void relocate(void *Function, MachineRelocation *MR,
-                          unsigned NumRelocs);
+                          unsigned NumRelocs, unsigned char* GOTBase);
 
     /// replaceMachineCodeForFunction - Make it so that calling the function
     /// whose machine code is at OLD turns into a call to NEW, perhaps by

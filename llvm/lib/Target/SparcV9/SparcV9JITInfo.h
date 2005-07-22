@@ -55,7 +55,7 @@ namespace llvm {
     /// it must rewrite the code to contain the actual addresses of any
     /// referenced global symbols.
     virtual void relocate(void *Function, MachineRelocation *MR,
-                          unsigned NumRelocs);
+                          unsigned NumRelocs, unsigned char* GOTBase);
   };
 }
 
