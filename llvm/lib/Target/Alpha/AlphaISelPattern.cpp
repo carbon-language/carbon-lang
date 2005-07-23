@@ -2083,7 +2083,7 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
     {
       int64_t val = (int64_t)cast<ConstantSDNode>(N)->getValue();
       int zero_extend_top = 0;
-      if (val > 0 && (val & 0xFFFFFFFF00000000) == 0 &&
+      if (val > 0 && (val & 0xFFFFFFFF00000000ULL) == 0 &&
           ((int32_t)val < 0)) {
         //try a small load and zero extend
         val = (int32_t)val;
