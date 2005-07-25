@@ -45,7 +45,6 @@ namespace {
     PPC32TargetLowering(TargetMachine &TM) : TargetLowering(TM) {
       // Fold away setcc operations if possible.
       setSetCCIsExpensive();
-      PICEnabled = true;
 
       // Set up the register classes.
       addRegisterClass(MVT::i32, PPC32::GPRCRegisterClass);
@@ -1438,9 +1437,10 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
       if (GV->hasWeakLinkage() || GV->isExternal()) {
         Tmp2 = MakeReg(MVT::i32);
         BuildMI(BB, PPC::LWZ, 2, Tmp2).addGlobalAddress(GV).addReg(Tmp1);
-        Tmp1 = Tmp2;
+        BuildMI(BB, Opc, 2, Result).addSImm(0).addReg(Tmp2);
+      } else {
+        BuildMI(BB, Opc, 2, Result).addGlobalAddress(GV).addReg(Tmp1);
       }
-      BuildMI(BB, Opc, 2, Result).addGlobalAddress(GV).addReg(Tmp1);
     } else {
       int offset;
       bool idx = SelectAddr(Address, Tmp1, offset);
@@ -2491,9 +2491,10 @@ void ISel::Select(SDOperand N) {
       if (GV->hasWeakLinkage() || GV->isExternal()) {
         Tmp3 = MakeReg(MVT::i32);
         BuildMI(BB, PPC::LWZ, 2, Tmp3).addGlobalAddress(GV).addReg(Tmp2);
-        Tmp2 = Tmp3;
+        BuildMI(BB, Opc, 3).addReg(Tmp1).addSImm(0).addReg(Tmp3);
+      } else {
+        BuildMI(BB, Opc, 3).addReg(Tmp1).addGlobalAddress(GV).addReg(Tmp2);
       }
-      BuildMI(BB, Opc, 3).addReg(Tmp1).addGlobalAddress(GV).addReg(Tmp2);
     } else {
       int offset;
       bool idx = SelectAddr(Address, Tmp2, offset);
