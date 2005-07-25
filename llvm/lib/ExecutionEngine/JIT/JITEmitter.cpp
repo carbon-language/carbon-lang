@@ -437,7 +437,7 @@ void JITEmitter::finishFunction(MachineFunction &F) {
                                        MR.doesntNeedFunctionStub());
       else //ConstantPoolIndex
         ResultPtr = 
-          (void*)getConstantPoolEntryAddress(MR.getConstantPoolIndex());
+       (void*)(intptr_t)getConstantPoolEntryAddress(MR.getConstantPoolIndex());
       
       MR.setResultPointer(ResultPtr);
 
