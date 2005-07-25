@@ -48,22 +48,22 @@ AC_ARG_WITH($1[-inc],
   AS_HELP_STRING([--with-]stdprog_long_name()[-inc=DIR],
   [Specify that the ]stdprog_long_name()[ includes are in DIR]),
   $1[incdir=$withval],$1[incdir=nada])
-pfxvar=$1pfxdir
-binvar=$1bindir
-incvar=$1incdir
-libvar=$1libdir
-if test "${!pfxvar}" != "nada" ; then
-  CHECK_STD_PROGRAM(${!pfxvar},$1,$2,$3)
-elif test "${!binvar}" != "nada" ; then
-  if test "${!libvar}" != "nada" ; then
-    if test "${!incvar}" != "nada" ; then
-      if test -d "${!binvar}" ; then
-        if test -d "${!incvar}" ; then
-          if test -d "${!libvar}" ; then
-            AC_SUBST(allcapsname(),${!binvar}/$1)
-            AC_SUBST(allcapsname()[_BIN],${!binvar})
-            AC_SUBST(allcapsname()[_INC],${!incvar})
-            AC_SUBST(allcapsname()[_LIB],${!libvar})
+eval pfxval=\$\{$1pfxdir\}
+eval binval=\$\{$1bindir\}
+eval incval=\$\{$1incdir\}
+eval libvar=\$\{$1libdir\}
+if test "${pfxval}" != "nada" ; then
+  CHECK_STD_PROGRAM(${pfxval},$1,$2,$3)
+elif test "${binval}" != "nada" ; then
+  if test "${libval}" != "nada" ; then
+    if test "${incval}" != "nada" ; then
+      if test -d "${binval}" ; then
+        if test -d "${incval}" ; then
+          if test -d "${libval}" ; then
+            AC_SUBST(allcapsname(),${binval}/$1)
+            AC_SUBST(allcapsname()[_BIN],${binval})
+            AC_SUBST(allcapsname()[_INC],${incval})
+            AC_SUBST(allcapsname()[_LIB],${libval})
             AC_SUBST([USE_]allcapsname(),[1])
             AC_MSG_RESULT([found via --with options])
           else
@@ -95,17 +95,17 @@ else
     AC_MSG_RESULT([found in PATH at ]$tmppfxdir)
   else
     checkresult="yes"
-    checkvar="USE_"allcapsname()
+    eval checkval=\$\{"USE_"allcapsname()\}
     CHECK_STD_PROGRAM([/usr],$1,$2,$3)
-    if test -z "${!checkvar}" ; then
+    if test -z "${checkval}" ; then
       CHECK_STD_PROGRAM([/usr/local],$1,$2,$3)
-      if test -z "${!checkvar}" ; then
+      if test -z "${checkval}" ; then
         CHECK_STD_PROGRAM([/sw],$1,$2,$3)
-        if test -z "${!checkvar}" ; then
+        if test -z "${checkval}" ; then
           CHECK_STD_PROGRAM([/opt],$1,$2,$3)
-          if test -z "${!checkvar}" ; then
+          if test -z "${checkval}" ; then
             CHECK_STD_PROGRAM([/],$1,$2,$3)
-            if test -z "${!checkvar}" ; then
+            if test -z "${checkval}" ; then
               checkresult="no"
             fi
           fi
