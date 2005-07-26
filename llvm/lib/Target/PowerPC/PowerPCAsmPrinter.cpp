@@ -474,11 +474,9 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
             << ".section __DATA,__datacoal_nt,coalesced,no_toc\n";
           LinkOnceStubs.insert(name);
           break;
-        case GlobalValue::WeakLinkage:   // FIXME: Verify correct for weak.
-          // Nonnull linkonce -> weak
-          O << "\t.weak " << name << "\n";
-          SwitchSection(O, CurSection, "");
-          O << "\t.section\t.llvm.linkonce.d." << name << ",\"aw\",@progbits\n";
+        case GlobalValue::WeakLinkage:
+          O << ".weak_definition " << name << '\n'
+            << ".private_extern " << name << '\n';
           break;
         case GlobalValue::AppendingLinkage:
           // FIXME: appending linkage variables should go into a section of
@@ -647,7 +645,8 @@ bool AIXAsmPrinter::doInitialization(Module &M) {
     << "\t.csect .text[PR]\n";
 
   // Print out module-level global variables
-  for (Module::const_global_iterator I = M.global_begin(), E = M.global_end(); I != E; ++I) {
+  for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
+       I != E; ++I) {
     if (!I->hasInitializer())
       continue;
 
@@ -666,7 +665,8 @@ bool AIXAsmPrinter::doInitialization(Module &M) {
 
   // Output labels for globals
   if (M.global_begin() != M.global_end()) O << "\t.toc\n";
-  for (Module::const_global_iterator I = M.global_begin(), E = M.global_end(); I != E; ++I) {
+  for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
+       I != E; ++I) {
     const GlobalVariable *GV = I;
     // Do not output labels for unused variables
     if (GV->isExternal() && GV->use_begin() == GV->use_end())
@@ -688,7 +688,8 @@ bool AIXAsmPrinter::doInitialization(Module &M) {
 bool AIXAsmPrinter::doFinalization(Module &M) {
   const TargetData &TD = TM.getTargetData();
   // Print out module-level global variables
-  for (Module::const_global_iterator I = M.global_begin(), E = M.global_end(); I != E; ++I) {
+  for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
+       I != E; ++I) {
     if (I->hasInitializer() || I->hasExternalLinkage())
       continue;
 
