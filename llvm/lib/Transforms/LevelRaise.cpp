@@ -96,143 +96,6 @@ static inline bool isReinterpretingCast(const CastInst *CI) {
   return!CI->getOperand(0)->getType()->isLosslesslyConvertibleTo(CI->getType());
 }
 
-
-// Peephole optimize the following instructions:
-// %t1 = cast ? to x *
-// %t2 = add x * %SP, %t1              ;; Constant must be 2nd operand
-//
-// Into: %t3 = getelementptr {<...>} * %SP, <element indices>
-//       %t2 = cast <eltype> * %t3 to {<...>}*
-//
-static bool HandleCastToPointer(BasicBlock::iterator BI,
-                                const PointerType *DestPTy,
-                                const TargetData &TD) {
-  CastInst &CI = cast<CastInst>(*BI);
-  if (CI.use_empty()) return false;
-
-  // Scan all of the uses, looking for any uses that are not add or sub
-  // instructions.  If we have non-adds, do not make this transformation.
-  //
-  bool HasSubUse = false;  // Keep track of any subtracts...
-  for (Value::use_iterator I = CI.use_begin(), E = CI.use_end();
-       I != E; ++I)
-    if (BinaryOperator *BO = dyn_cast<BinaryOperator>(*I)) {
-      if ((BO->getOpcode() != Instruction::Add &&
-           BO->getOpcode() != Instruction::Sub) ||
-          // Avoid add sbyte* %X, %X cases...
-          BO->getOperand(0) == BO->getOperand(1))
-        return false;
-      else
-        HasSubUse |= BO->getOpcode() == Instruction::Sub;
-    } else {
-      return false;
-    }
-
-  std::vector<Value*> Indices;
-  Value *Src = CI.getOperand(0);
-  const Type *Result = ConvertibleToGEP(DestPTy, Src, Indices, TD, &BI);
-  if (Result == 0) return false;  // Not convertible...
-
-  // Cannot handle subtracts if there is more than one index required...
-  if (HasSubUse && Indices.size() != 1) return false;
-
-  PRINT_PEEPHOLE2("cast-add-to-gep:in", *Src, CI);
-
-  // If we have a getelementptr capability... transform all of the
-  // add instruction uses into getelementptr's.
-  while (!CI.use_empty()) {
-    BinaryOperator *I = cast<BinaryOperator>(*CI.use_begin());
-    assert((I->getOpcode() == Instruction::Add ||
-            I->getOpcode() == Instruction::Sub) &&
-           "Use is not a valid add instruction!");
-
-    // Get the value added to the cast result pointer...
-    Value *OtherPtr = I->getOperand((I->getOperand(0) == &CI) ? 1 : 0);
-
-    Instruction *GEP = new GetElementPtrInst(OtherPtr, Indices, I->getName());
-    PRINT_PEEPHOLE1("cast-add-to-gep:i", *I);
-
-    // If the instruction is actually a subtract, we are guaranteed to only have
-    // one index (from code above), so we just need to negate the pointer index
-    // long value.
-    if (I->getOpcode() == Instruction::Sub) {
-      Instruction *Neg = BinaryOperator::createNeg(GEP->getOperand(1),
-                                       GEP->getOperand(1)->getName()+".neg", I);
-      GEP->setOperand(1, Neg);
-    }
-
-    if (GEP->getType() == I->getType()) {
-      // Replace the old add instruction with the shiny new GEP inst
-      ReplaceInstWithInst(I, GEP);
-    } else {
-      // If the type produced by the gep instruction differs from the original
-      // add instruction type, insert a cast now.
-      //
-
-      // Insert the GEP instruction before the old add instruction...
-      I->getParent()->getInstList().insert(I, GEP);
-
-      PRINT_PEEPHOLE1("cast-add-to-gep:o", *GEP);
-      GEP = new CastInst(GEP, I->getType());
-
-      // Replace the old add instruction with the shiny new GEP inst
-      ReplaceInstWithInst(I, GEP);
-    }
-
-    PRINT_PEEPHOLE1("cast-add-to-gep:o", *GEP);
-  }
-  return true;
-}
-
-// Peephole optimize the following instructions:
-// %t1 = cast ulong <const int> to {<...>} *
-// %t2 = add {<...>} * %SP, %t1              ;; Constant must be 2nd operand
-//
-//    or
-// %t1 = cast {<...>}* %SP to int*
-// %t5 = cast ulong <const int> to int*
-// %t2 = add int* %t1, %t5                   ;; int is same size as field
-//
-// Into: %t3 = getelementptr {<...>} * %SP, <element indices>
-//       %t2 = cast <eltype> * %t3 to {<...>}*
-//
-static bool PeepholeOptimizeAddCast(BasicBlock *BB, BasicBlock::iterator &BI,
-                                    Value *AddOp1, CastInst *AddOp2,
-                                    const TargetData &TD) {
-  const CompositeType *CompTy;
-  Value *OffsetVal = AddOp2->getOperand(0);
-  Value *SrcPtr = 0;  // Of type pointer to struct...
-
-  if ((CompTy = getPointedToComposite(AddOp1->getType()))) {
-    SrcPtr = AddOp1;                      // Handle the first case...
-  } else if (CastInst *AddOp1c = dyn_cast<CastInst>(AddOp1)) {
-    SrcPtr = AddOp1c->getOperand(0);      // Handle the second case...
-    CompTy = getPointedToComposite(SrcPtr->getType());
-  }
-
-  // Only proceed if we have detected all of our conditions successfully...
-  if (!CompTy || !SrcPtr || !OffsetVal->getType()->isInteger())
-    return false;
-
-  std::vector<Value*> Indices;
-  if (!ConvertibleToGEP(SrcPtr->getType(), OffsetVal, Indices, TD, &BI))
-    return false;  // Not convertible... perhaps next time
-
-  if (getPointedToComposite(AddOp1->getType())) {  // case 1
-    PRINT_PEEPHOLE2("add-to-gep1:in", *AddOp2, *BI);
-  } else {
-    PRINT_PEEPHOLE3("add-to-gep2:in", *AddOp1, *AddOp2, *BI);
-  }
-
-  GetElementPtrInst *GEP = new GetElementPtrInst(SrcPtr, Indices,
-                                                 AddOp2->getName(), BI);
-
-  Instruction *NCI = new CastInst(GEP, AddOp1->getType());
-  ReplaceInstWithInst(BB->getInstList(), BI, NCI);
-  PRINT_PEEPHOLE2("add-to-gep:out", *GEP, *NCI);
-  return true;
-}
-
 bool RPR::PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
   Instruction *I = BI;
   const TargetData &TD = getAnalysis<TargetData>();
@@ -317,18 +180,6 @@ bool RPR::PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
 
         BI = BB->begin();  // Rescan basic block.  BI might be invalidated.
         ++NumExprTreesConv;
-        return true;
-      }
-    }
-
-    // Otherwise find out it this cast is a cast to a pointer type, which is
-    // then added to some other pointer, then loaded or stored through.  If
-    // so, convert the add into a getelementptr instruction...
-    //
-    if (const PointerType *DestPTy = dyn_cast<PointerType>(DestTy)) {
-      if (HandleCastToPointer(BI, DestPTy, TD)) {
-        BI = BB->begin();  // Rescan basic block.  BI might be invalidated.
-        ++NumGEPInstFormed;
         return true;
       }
     }
@@ -494,14 +345,6 @@ bool RPR::PeepholeOptimize(BasicBlock *BB, BasicBlock::iterator &BI) {
             return true;
           }
 
-  } else if (I->getOpcode() == Instruction::Add &&
-             isa<CastInst>(I->getOperand(1))) {
-
-    if (PeepholeOptimizeAddCast(BB, BI, I->getOperand(0),
-                                cast<CastInst>(I->getOperand(1)), TD)) {
-      ++NumGEPInstFormed;
-      return true;
-    }
   } else if (CallInst *CI = dyn_cast<CallInst>(I)) {
     // If we have a call with all varargs arguments, convert the call to use the
     // actual argument types present...

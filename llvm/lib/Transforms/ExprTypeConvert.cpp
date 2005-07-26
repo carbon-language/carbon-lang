@@ -252,32 +252,6 @@ bool llvm::ExpressionConvertibleToType(Value *V, const Type *Ty,
 
     if (ElTy) break;   // Found a number of zeros we can strip off!
 
-    // Otherwise, we can convert a GEP from one form to the other iff the
-    // current gep is of the form 'getelementptr sbyte*, long N
-    // and we could convert this to an appropriate GEP for the new type.
-    //
-    if (GEP->getNumOperands() == 2 &&
-        GEP->getType() == PointerType::get(Type::SByteTy)) {
-
-      // Do not Check to see if our incoming pointer can be converted
-      // to be a ptr to an array of the right type... because in more cases than
-      // not, it is simply not analyzable because of pointer/array
-      // discrepancies.  To fix this, we will insert a cast before the GEP.
-      //
-
-      // Check to see if 'N' is an expression that can be converted to
-      // the appropriate size... if so, allow it.
-      //
-      std::vector<Value*> Indices;
-      const Type *ElTy = ConvertibleToGEP(PTy, I->getOperand(1), Indices, TD);
-      if (ElTy == PVTy) {
-        if (!ExpressionConvertibleToType(I->getOperand(0),
-                                         PointerType::get(ElTy), CTMap, TD))
-          return false;  // Can't continue, ExConToTy might have polluted set!
-        break;
-      }
-    }
-
     // Otherwise, it could be that we have something like this:
     //     getelementptr [[sbyte] *] * %reg115, long %reg138    ; [sbyte]**
     // and want to convert it into something like this:
@@ -459,32 +433,6 @@ Value *llvm::ConvertExpressionToType(Value *V, const Type *Ty,
       }
     }
 
-    if (Res == 0 && GEP->getNumOperands() == 2 &&
-        GEP->getType() == PointerType::get(Type::SByteTy)) {
-
-      // Otherwise, we can convert a GEP from one form to the other iff the
-      // current gep is of the form 'getelementptr sbyte*, unsigned N
-      // and we could convert this to an appropriate GEP for the new type.
-      //
-      const PointerType *NewSrcTy = PointerType::get(PVTy);
-      BasicBlock::iterator It = I;
-
-      // Check to see if 'N' is an expression that can be converted to
-      // the appropriate size... if so, allow it.
-      //
-      std::vector<Value*> Indices;
-      const Type *ElTy = ConvertibleToGEP(NewSrcTy, I->getOperand(1),
-                                          Indices, TD, &It);
-      if (ElTy) {
-        assert(ElTy == PVTy && "Internal error, setup wrong!");
-        Res = new GetElementPtrInst(Constant::getNullValue(NewSrcTy),
-                                    Indices, Name);
-        VMC.ExprMap[I] = Res;
-        Res->setOperand(0, ConvertExpressionToType(I->getOperand(0),
-                                                   NewSrcTy, VMC, TD));
-      }
-    }
-
     // Otherwise, it could be that we have something like this:
     //     getelementptr [[sbyte] *] * %reg115, uint %reg138    ; [sbyte]**
     // and want to convert it into something like this:
@@ -637,23 +585,6 @@ static bool OperandConvertibleToType(User *U, Value *V, const Type *Ty,
     return true;
 
   case Instruction::Add:
-    if (isa<PointerType>(Ty)) {
-      Value *IndexVal = I->getOperand(V == I->getOperand(0) ? 1 : 0);
-      std::vector<Value*> Indices;
-      if (const Type *ETy = ConvertibleToGEP(Ty, IndexVal, Indices, TD)) {
-        const Type *RetTy = PointerType::get(ETy);
-
-        // Only successful if we can convert this type to the required type
-        if (ValueConvertibleToType(I, RetTy, CTMap, TD)) {
-          CTMap[I] = RetTy;
-          return true;
-        }
-        // We have to return failure here because ValueConvertibleToType could
-        // have polluted our map
-        return false;
-      }
-    }
-    // FALLTHROUGH
   case Instruction::Sub: {
     if (!Ty->isInteger() && !Ty->isFloatingPoint()) return false;
 
@@ -779,47 +710,6 @@ static bool OperandConvertibleToType(User *U, Value *V, const Type *Ty,
     }
     return false;
   }
-
-  case Instruction::GetElementPtr:
-    if (V != I->getOperand(0) || !isa<PointerType>(Ty)) return false;
-
-    // If we have a two operand form of getelementptr, this is really little
-    // more than a simple addition.  As with addition, check to see if the
-    // getelementptr instruction can be changed to index into the new type.
-    //
-    if (I->getNumOperands() == 2) {
-      const Type *OldElTy = cast<PointerType>(I->getType())->getElementType();
-      uint64_t DataSize = TD.getTypeSize(OldElTy);
-      Value *Index = I->getOperand(1);
-      Instruction *TempScale = 0;
-
-      // If the old data element is not unit sized, we have to create a scale
-      // instruction so that ConvertibleToGEP will know the REAL amount we are
-      // indexing by.  Note that this is never inserted into the instruction
-      // stream, so we have to delete it when we're done.
-      //
-      if (DataSize != 1) {
-        Value *CST;
-        if (Index->getType()->isSigned())
-          CST = ConstantSInt::get(Index->getType(), DataSize);
-        else
-          CST = ConstantUInt::get(Index->getType(), DataSize);
-
-        TempScale = BinaryOperator::create(Instruction::Mul, Index, CST);
-        Index = TempScale;
-      }
-
-      // Check to see if the second argument is an expression that can
-      // be converted to the appropriate size... if so, allow it.
-      //
-      std::vector<Value*> Indices;
-      const Type *ElTy = ConvertibleToGEP(Ty, Index, Indices, TD);
-      delete TempScale;   // Free our temporary multiply if we made it
-
-      if (ElTy == 0) return false;  // Cannot make conversion...
-      return ValueConvertibleToType(I, PointerType::get(ElTy), CTMap, TD);
-    }
-    return false;
 
   case Instruction::PHI: {
     PHINode *PN = cast<PHINode>(I);
@@ -964,23 +854,6 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
     break;
 
   case Instruction::Add:
-    if (isa<PointerType>(NewTy)) {
-      Value *IndexVal = I->getOperand(OldVal == I->getOperand(0) ? 1 : 0);
-      std::vector<Value*> Indices;
-      BasicBlock::iterator It = I;
-
-      if (const Type *ETy = ConvertibleToGEP(NewTy, IndexVal, Indices, TD,&It)){
-        // If successful, convert the add to a GEP
-        //const Type *RetTy = PointerType::get(ETy);
-        // First operand is actually the given pointer...
-        Res = new GetElementPtrInst(NewVal, Indices, Name);
-        assert(cast<PointerType>(Res->getType())->getElementType() == ETy &&
-               "ConvertibleToGEP broken!");
-        break;
-      }
-    }
-    // FALLTHROUGH
-
   case Instruction::Sub:
   case Instruction::SetEQ:
   case Instruction::SetNE: {
@@ -1101,64 +974,6 @@ static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
     }
     break;
   }
-
-
-  case Instruction::GetElementPtr: {
-    // Convert a one index getelementptr into just about anything that is
-    // desired.
-    //
-    BasicBlock::iterator It = I;
-    const Type *OldElTy = cast<PointerType>(I->getType())->getElementType();
-    uint64_t DataSize = TD.getTypeSize(OldElTy);
-    Value *Index = I->getOperand(1);
-
-    if (DataSize != 1) {
-      // Insert a multiply of the old element type is not a unit size...
-      Value *CST;
-      if (Index->getType()->isSigned())
-        CST = ConstantSInt::get(Index->getType(), DataSize);
-      else
-        CST = ConstantUInt::get(Index->getType(), DataSize);
-
-      Index = BinaryOperator::create(Instruction::Mul, Index, CST, "scale", It);
-    }
-
-    // Perform the conversion now...
-    //
-    std::vector<Value*> Indices;
-    const Type *ElTy = ConvertibleToGEP(NewVal->getType(),Index,Indices,TD,&It);
-    assert(ElTy != 0 && "GEP Conversion Failure!");
-    Res = new GetElementPtrInst(NewVal, Indices, Name);
-    assert(Res->getType() == PointerType::get(ElTy) &&
-           "ConvertibleToGet failed!");
-  }
-#if 0
-    if (I->getType() == PointerType::get(Type::SByteTy)) {
-      // Convert a getelementptr sbyte * %reg111, uint 16 freely back to
-      // anything that is a pointer type...
-      //
-      BasicBlock::iterator It = I;
-
-      // Check to see if the second argument is an expression that can
-      // be converted to the appropriate size... if so, allow it.
-      //
-      std::vector<Value*> Indices;
-      const Type *ElTy = ConvertibleToGEP(NewVal->getType(), I->getOperand(1),
-                                          Indices, TD, &It);
-      assert(ElTy != 0 && "GEP Conversion Failure!");
-
-      Res = new GetElementPtrInst(NewVal, Indices, Name);
-    } else {
-      // Convert a getelementptr ulong * %reg123, uint %N
-      // to        getelementptr  long * %reg123, uint %N
-      // ... where the type must simply stay the same size...
-      //
-      GetElementPtrInst *GEP = cast<GetElementPtrInst>(I);
-      std::vector<Value*> Indices(GEP->idx_begin(), GEP->idx_end());
-      Res = new GetElementPtrInst(NewVal, Indices, Name);
-    }
-#endif
-    break;
 
   case Instruction::PHI: {
     PHINode *OldPN = cast<PHINode>(I);

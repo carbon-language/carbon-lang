@@ -90,16 +90,3 @@ const Type *llvm::getStructOffsetType(const Type *Ty, unsigned &Offset,
   Offset = unsigned(ThisOffset + SubOffs);
   return LeafTy;
 }
-
-// ConvertibleToGEP - This function returns true if the specified value V is
-// a valid index into a pointer of type Ty.  If it is valid, Idx is filled in
-// with the values that would be appropriate to make this a getelementptr
-// instruction.  The type returned is the root type that the GEP would point to
-//
-const Type *llvm::ConvertibleToGEP(const Type *Ty, Value *OffsetVal,
-                                   std::vector<Value*> &Indices,
-                                   const TargetData &TD,
-                                   BasicBlock::iterator *BI) {
-  return 0;
-}
-
