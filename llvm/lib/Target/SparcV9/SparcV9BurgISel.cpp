@@ -11,7 +11,7 @@
 // construct a forest of BURG instruction trees (class InstrForest) and then
 // uses the BURG-generated tree grammar (BURM) to find the optimal instruction
 // sequences for the SparcV9.
-//      
+//
 //===----------------------------------------------------------------------===//
 
 #include "MachineInstrAnnot.h"
@@ -2339,7 +2339,7 @@ CreateMulConstInstruction(const TargetMachine &target, Function* F,
           CreateShiftInstructions(target, F, opCode, lval, NULL, pow,
                                   tmpNeg, mvec, mcfi);
         }
-          
+
       }
 
       if (mvec.size() > 0 && needNeg) {
@@ -2883,9 +2883,9 @@ static bool CodeGenIntrinsic(Intrinsic::ID iid, CallInst &callInstr,
   case Intrinsic::vacopy:
     {
       MachineCodeForInstruction& m1 = MachineCodeForInstruction::get(&callInstr);
-      TmpInstruction* VReg = 
+      TmpInstruction* VReg =
         new TmpInstruction(m1, callInstr.getOperand(1)->getType());
-      
+
       // Simple store of current va_list (arg2) to new va_list (arg1)
       mvec.push_back(BuildMI(V9::LDXi, 3).
                      addReg(callInstr.getOperand(2)).addSImm(0).addRegDef(VReg));
@@ -2926,7 +2926,7 @@ extern bool ThisIsAChainRule(int eruleno) {
     default:
       break;
     }
-  return false; 
+  return false;
 }
 
 /// GetInstructionsByRule - Choose machine instructions for the

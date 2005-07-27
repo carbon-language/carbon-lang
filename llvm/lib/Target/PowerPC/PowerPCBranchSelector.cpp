@@ -92,7 +92,7 @@ namespace {
           if (OpcodeToReplace == PPC::COND_BRANCH) {
             MachineBasicBlock::iterator MBBJ = MBBI;
             ++MBBJ;
-            
+
             // condbranch operands:
             // 0. CR0 register
             // 1. bc opcode

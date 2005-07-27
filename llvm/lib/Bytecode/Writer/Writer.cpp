@@ -628,7 +628,7 @@ void BytecodeWriter::outputInstruction(const Instruction &I) {
       Opcode = 57;      // FastCC invoke.
     else if (II->getCallingConv() != CallingConv::C)
       Opcode = 56;      // Invoke escape sequence.
-      
+
   } else if (isa<LoadInst>(I) && cast<LoadInst>(I).isVolatile()) {
     Opcode = 62;
   } else if (isa<StoreInst>(I) && cast<StoreInst>(I).isVolatile()) {

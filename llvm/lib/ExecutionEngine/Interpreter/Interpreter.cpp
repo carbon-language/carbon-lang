@@ -77,7 +77,7 @@ void Interpreter::runAtExitHandlers () {
 
 /// run - Start execution with the specified function and arguments.
 ///
-GenericValue 
+GenericValue
 Interpreter::runFunction(Function *F,
                          const std::vector<GenericValue> &ArgValues) {
   assert (F && "Function *F was null at entry to run()");

@@ -791,7 +791,7 @@ PhyRegAlloc::insertCallerSavingCode(std::vector<MachineInstr*> &instrnsBefore,
           // if the value is in both LV sets (i.e., live before and after
           // the call machine instruction)
           unsigned Reg = MRI.getUnifiedRegNum(RCID, Color);
-        
+
           // if we haven't already pushed this register...
           if( PushedRegSet.find(Reg) == PushedRegSet.end() ) {
             unsigned RegType = MRI.getRegTypeForLR(LR);
@@ -861,7 +861,7 @@ PhyRegAlloc::insertCallerSavingCode(std::vector<MachineInstr*> &instrnsBefore,
             if (AdIAft.size() > 0)
               instrnsAfter.insert(instrnsAfter.end(),
                                   AdIAft.begin(), AdIAft.end());
-        
+
             PushedRegSet.insert(Reg);
 
             if(DEBUG_RA) {
@@ -872,7 +872,7 @@ PhyRegAlloc::insertCallerSavingCode(std::vector<MachineInstr*> &instrnsBefore,
               std::cerr << " -and After:\n\t ";
               for_each(instrnsAfter.begin(), instrnsAfter.end(),
                        std::mem_fun(&MachineInstr::dump));
-            }   
+            }
           } // if not already pushed
         } // if LR has a volatile color
       } // if LR has color

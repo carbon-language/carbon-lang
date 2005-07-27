@@ -25,14 +25,14 @@ namespace llvm {
 
   /// Create ModuloSchedulingPass
   FunctionPass *createDependenceAnalyzer() {
-    return new DependenceAnalyzer(); 
+    return new DependenceAnalyzer();
   }
 }
 
 Statistic<> NoDeps("depanalyzer-nodeps", "Number of dependences eliminated");
-Statistic<> NumDeps("depanalyzer-deps", 
+Statistic<> NumDeps("depanalyzer-deps",
                     "Number of dependences could not eliminate");
-Statistic<> AdvDeps("depanalyzer-advdeps", 
+Statistic<> AdvDeps("depanalyzer-advdeps",
                     "Number of dependences using advanced techniques");
 
 bool DependenceAnalyzer::runOnFunction(Function &F) {
@@ -43,25 +43,25 @@ bool DependenceAnalyzer::runOnFunction(Function &F) {
   return  false;
 }
 
-static RegisterAnalysis<DependenceAnalyzer>X("depanalyzer", 
+static RegisterAnalysis<DependenceAnalyzer>X("depanalyzer",
                                              "Dependence Analyzer");
- 
+
 //  - Get inter and intra dependences between loads and stores
 //
-// Overview of Method: 
-// Step 1: Use alias analysis to determine dependencies if values are loop 
-//       invariant 
-// Step 2: If pointers are not GEP, then there is a dependence.  
-// Step 3: Compare GEP base pointers with AA. If no alias, no dependence. 
-//         If may alias, then add a dependence. If must alias, then analyze 
-//         further (Step 4) 
+// Overview of Method:
+// Step 1: Use alias analysis to determine dependencies if values are loop
+//       invariant
+// Step 2: If pointers are not GEP, then there is a dependence.
+// Step 3: Compare GEP base pointers with AA. If no alias, no dependence.
+//         If may alias, then add a dependence. If must alias, then analyze
+//         further (Step 4)
 // Step 4: do advanced analysis
-void DependenceAnalyzer::AnalyzeDeps(Value *val, Value *val2, bool valLoad, 
-                                     bool val2Load, 
-                                     std::vector<Dependence> &deps, 
-                                     BasicBlock *BB, 
+void DependenceAnalyzer::AnalyzeDeps(Value *val, Value *val2, bool valLoad,
+                                     bool val2Load,
+                                     std::vector<Dependence> &deps,
+                                     BasicBlock *BB,
                                      bool srcBeforeDest) {
-    
+
   bool loopInvariant = true;
 
   //Check if both are instructions and prove not loop invariant if possible
@@ -71,8 +71,8 @@ void DependenceAnalyzer::AnalyzeDeps(Value *val, Value *val2, bool valLoad,
   if(Instruction *val2Inst = dyn_cast<Instruction>(val2))
     if(val2Inst->getParent() == BB)
       loopInvariant = false;
-   
-    
+
+
   //If Loop invariant, let AA decide
   if(loopInvariant) {
     if(AA->alias(val, (unsigned)TD->getTypeSize(val->getType()),
@@ -84,7 +84,7 @@ void DependenceAnalyzer::AnalyzeDeps(Value *val, Value *val2, bool valLoad,
       ++NoDeps;
     return;
   }
-    
+
   //Otherwise, continue with step 2
 
   GetElementPtrInst *GP = dyn_cast<GetElementPtrInst>(val);
@@ -120,7 +120,7 @@ void DependenceAnalyzer::AnalyzeDeps(Value *val, Value *val2, bool valLoad,
 
 
 // advancedDepAnalysis - Do advanced data dependence tests
-void DependenceAnalyzer::advancedDepAnalysis(GetElementPtrInst *gp1, 
+void DependenceAnalyzer::advancedDepAnalysis(GetElementPtrInst *gp1,
                                              GetElementPtrInst *gp2,
                                              bool valLoad,
                                              bool val2Load,
@@ -139,7 +139,7 @@ void DependenceAnalyzer::advancedDepAnalysis(GetElementPtrInst *gp1,
     if(Constant *c2 = dyn_cast<Constant>(gp2->getOperand(1)))
       if(c1->isNullValue() && c2->isNullValue())
         GPok = true;
-  
+
   if(!GPok) {
     createDep(deps, valLoad, val2Load, srcBeforeDest);
     return;
@@ -153,7 +153,7 @@ void DependenceAnalyzer::advancedDepAnalysis(GetElementPtrInst *gp1,
     Gep1Idx = c1->getOperand(0);
   if(CastInst *c2 = dyn_cast<CastInst>(Gep2Idx))
     Gep2Idx = c2->getOperand(0);
-  
+
   //Get SCEV for each index into the area
   SCEVHandle SV1 = SE->getSCEV(Gep1Idx);
   SCEVHandle SV2 = SE->getSCEV(Gep2Idx);
@@ -188,7 +188,7 @@ void DependenceAnalyzer::advancedDepAnalysis(GetElementPtrInst *gp1,
     createDep(deps, valLoad, val2Load, srcBeforeDest);
     return;
   }
-  
+
   if(B1->getValue()->getRawValue() != 1 || B2->getValue()->getRawValue() != 1) {
     createDep(deps, valLoad, val2Load, srcBeforeDest);
     return;
@@ -214,7 +214,7 @@ void DependenceAnalyzer::advancedDepAnalysis(GetElementPtrInst *gp1,
     ++NoDeps;
     return;
   }
-  
+
   //Find constant index difference
   int diff = A1->getValue()->getRawValue() - A2->getValue()->getRawValue();
   //std::cerr << diff << "\n";
@@ -223,14 +223,14 @@ void DependenceAnalyzer::advancedDepAnalysis(GetElementPtrInst *gp1,
 
   if(diff > 0)
     createDep(deps, valLoad, val2Load, srcBeforeDest, diff);
-  
+
   //assert(diff > 0 && "Expected diff to be greater then 0");
 }
 
 // Create dependences once its determined these two instructions
 // references the same memory
-void DependenceAnalyzer::createDep(std::vector<Dependence> &deps, 
-                                   bool valLoad, bool val2Load, 
+void DependenceAnalyzer::createDep(std::vector<Dependence> &deps,
+                                   bool valLoad, bool val2Load,
                                    bool srcBeforeDest, int diff) {
 
   //If the source instruction occurs after the destination instruction
@@ -240,7 +240,7 @@ void DependenceAnalyzer::createDep(std::vector<Dependence> &deps,
 
   //If load/store pair
   if(valLoad && !val2Load) {
-    if(srcBeforeDest) 
+    if(srcBeforeDest)
       //Anti Dep
       deps.push_back(Dependence(diff, Dependence::AntiDep));
     else
@@ -250,7 +250,7 @@ void DependenceAnalyzer::createDep(std::vector<Dependence> &deps,
   }
   //If store/load pair
   else if(!valLoad && val2Load) {
-    if(srcBeforeDest) 
+    if(srcBeforeDest)
       //True Dep
       deps.push_back(Dependence(diff, Dependence::TrueDep));
     else
@@ -266,10 +266,10 @@ void DependenceAnalyzer::createDep(std::vector<Dependence> &deps,
 }
 
 
-  
+
 //Get Dependence Info for a pair of Instructions
-DependenceResult DependenceAnalyzer::getDependenceInfo(Instruction *inst1, 
-                                                       Instruction *inst2, 
+DependenceResult DependenceAnalyzer::getDependenceInfo(Instruction *inst1,
+                                                       Instruction *inst2,
                                                        bool srcBeforeDest) {
   std::vector<Dependence> deps;
 
@@ -281,24 +281,24 @@ DependenceResult DependenceAnalyzer::getDependenceInfo(Instruction *inst1,
     return DependenceResult(deps);
 
   if(LoadInst *ldInst = dyn_cast<LoadInst>(inst1)) {
-      
+
     if(StoreInst *stInst = dyn_cast<StoreInst>(inst2))
-      AnalyzeDeps(ldInst->getOperand(0), stInst->getOperand(1), 
+      AnalyzeDeps(ldInst->getOperand(0), stInst->getOperand(1),
                   true, false, deps, ldInst->getParent(), srcBeforeDest);
   }
   else if(StoreInst *stInst = dyn_cast<StoreInst>(inst1)) {
-      
+
     if(LoadInst *ldInst = dyn_cast<LoadInst>(inst2))
-      AnalyzeDeps(stInst->getOperand(1), ldInst->getOperand(0), false, true, 
+      AnalyzeDeps(stInst->getOperand(1), ldInst->getOperand(0), false, true,
                   deps, ldInst->getParent(), srcBeforeDest);
-      
+
     else if(StoreInst *stInst2 = dyn_cast<StoreInst>(inst2))
-      AnalyzeDeps(stInst->getOperand(1), stInst2->getOperand(1), false, false, 
+      AnalyzeDeps(stInst->getOperand(1), stInst2->getOperand(1), false, false,
                   deps, stInst->getParent(), srcBeforeDest);
   }
   else
     assert(0 && "Expected a load or a store\n");
-    
+
   DependenceResult dr = DependenceResult(deps);
   return dr;
 }

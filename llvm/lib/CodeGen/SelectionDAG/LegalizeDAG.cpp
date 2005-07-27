@@ -128,7 +128,7 @@ private:
   SDOperand ExpandLegalUINT_TO_FP(SDOperand LegalOp, MVT::ValueType DestVT);
   SDOperand PromoteLegalINT_TO_FP(SDOperand LegalOp, MVT::ValueType DestVT,
                                   bool isSigned);
- 
+
   bool ExpandShift(unsigned Opc, SDOperand Op, SDOperand Amt,
                    SDOperand &Lo, SDOperand &Hi);
   void ExpandShiftParts(unsigned NodeOp, SDOperand Op, SDOperand Amt,
@@ -152,22 +152,22 @@ SelectionDAGLegalize::SelectionDAGLegalize(SelectionDAG &dag)
          "Too many value types for ValueTypeActions to hold!");
 }
 
-/// ExpandLegalUINT_TO_FP - This function is responsible for legalizing a 
+/// ExpandLegalUINT_TO_FP - This function is responsible for legalizing a
 /// UINT_TO_FP operation of the specified operand when the target requests that
 /// we expand it.  At this point, we know that the result and operand types are
 /// legal for the target.
 SDOperand SelectionDAGLegalize::ExpandLegalUINT_TO_FP(SDOperand Op0,
                                                       MVT::ValueType DestVT) {
   SDOperand Tmp1 = DAG.getNode(ISD::SINT_TO_FP, DestVT, Op0);
-  
-  SDOperand SignSet = DAG.getSetCC(ISD::SETLT, TLI.getSetCCResultTy(), 
+
+  SDOperand SignSet = DAG.getSetCC(ISD::SETLT, TLI.getSetCCResultTy(),
                                    Op0,
-                                   DAG.getConstant(0, 
+                                   DAG.getConstant(0,
                                                    Op0.getValueType()));
   SDOperand Zero = getIntPtrConstant(0), Four = getIntPtrConstant(4);
   SDOperand CstOffset = DAG.getNode(ISD::SELECT, Zero.getValueType(),
                                     SignSet, Four, Zero);
-  
+
   // If the sign bit of the integer is set, the large number will be treated as
   // a negative number.  To counteract this, the dynamic code adds an offset
   // depending on the data type.
@@ -181,7 +181,7 @@ SDOperand SelectionDAGLegalize::ExpandLegalUINT_TO_FP(SDOperand Op0,
   }
   if (TLI.isLittleEndian()) FF <<= 32;
   static Constant *FudgeFactor = ConstantUInt::get(Type::ULongTy, FF);
-  
+
   MachineConstantPool *CP = DAG.getMachineFunction().getConstantPool();
   SDOperand CPIdx = DAG.getConstantPool(CP->getConstantPoolIndex(FudgeFactor),
                                         TLI.getPointerTy());
@@ -196,12 +196,12 @@ SDOperand SelectionDAGLegalize::ExpandLegalUINT_TO_FP(SDOperand Op0,
                                            DAG.getEntryNode(), CPIdx,
                                            DAG.getSrcValue(NULL), MVT::f32));
   }
-  
+
   NeedsAnotherIteration = true;
   return DAG.getNode(ISD::ADD, DestVT, Tmp1, FudgeInReg);
 }
 
-/// PromoteLegalUINT_TO_FP - This function is responsible for legalizing a 
+/// PromoteLegalUINT_TO_FP - This function is responsible for legalizing a
 /// UINT_TO_FP operation of the specified operand when the target requests that
 /// we promote it.  At this point, we know that the result and operand types are
 /// legal for the target, and that there is a legal UINT_TO_FP or SINT_TO_FP
@@ -211,14 +211,14 @@ SDOperand SelectionDAGLegalize::PromoteLegalINT_TO_FP(SDOperand LegalOp,
                                                       bool isSigned) {
   // First step, figure out the appropriate *INT_TO_FP operation to use.
   MVT::ValueType NewInTy = LegalOp.getValueType();
-  
+
   unsigned OpToUse = 0;
-  
+
   // Scan for the appropriate larger type to use.
   while (1) {
     NewInTy = (MVT::ValueType)(NewInTy+1);
     assert(MVT::isInteger(NewInTy) && "Ran out of possibilities!");
-    
+
     // If the target supports SINT_TO_FP of this type, use it.
     switch (TLI.getOperationAction(ISD::SINT_TO_FP, NewInTy)) {
       default: break;
@@ -232,7 +232,7 @@ SDOperand SelectionDAGLegalize::PromoteLegalINT_TO_FP(SDOperand LegalOp,
     }
     if (OpToUse) break;
     if (isSigned) continue;
-    
+
     // If the target supports UINT_TO_FP of this type, use it.
     switch (TLI.getOperationAction(ISD::UINT_TO_FP, NewInTy)) {
       default: break;
@@ -245,13 +245,13 @@ SDOperand SelectionDAGLegalize::PromoteLegalINT_TO_FP(SDOperand LegalOp,
         break;
     }
     if (OpToUse) break;
-    
+
     // Otherwise, try a larger type.
   }
 
   // Make sure to legalize any nodes we create here in the next pass.
   NeedsAnotherIteration = true;
-  
+
   // Okay, we found the operation and type to use.  Zero extend our input to the
   // desired type then run the operation on it.
   return DAG.getNode(OpToUse, DestVT,
@@ -760,7 +760,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
           float    F;
         } V;
         V.F = CFP->getValue();
-        Result = DAG.getNode(ISD::STORE, MVT::Other, Tmp1, 
+        Result = DAG.getNode(ISD::STORE, MVT::Other, Tmp1,
                              DAG.getConstant(V.I, MVT::i32), Tmp2,
                              Node->getOperand(3));
       } else {
@@ -770,7 +770,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
           double   F;
         } V;
         V.F = CFP->getValue();
-        Result = DAG.getNode(ISD::STORE, MVT::Other, Tmp1, 
+        Result = DAG.getNode(ISD::STORE, MVT::Other, Tmp1,
                              DAG.getConstant(V.I, MVT::i64), Tmp2,
                              Node->getOperand(3));
       }
@@ -1282,15 +1282,15 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         break;
       case ISD::CTTZ:
         //if Tmp1 == sizeinbits(NVT) then Tmp1 = sizeinbits(Old VT)
-        Tmp2 = DAG.getSetCC(ISD::SETEQ, TLI.getSetCCResultTy(), Tmp1, 
+        Tmp2 = DAG.getSetCC(ISD::SETEQ, TLI.getSetCCResultTy(), Tmp1,
                             DAG.getConstant(getSizeInBits(NVT), NVT));
-        Result = DAG.getNode(ISD::SELECT, NVT, Tmp2, 
+        Result = DAG.getNode(ISD::SELECT, NVT, Tmp2,
                            DAG.getConstant(getSizeInBits(OVT),NVT), Tmp1);
         break;
       case ISD::CTLZ:
         //Tmp1 = Tmp1 - (sizeinbits(NVT) - sizeinbits(Old VT))
-        Result = DAG.getNode(ISD::SUB, NVT, Tmp1, 
-                             DAG.getConstant(getSizeInBits(NVT) - 
+        Result = DAG.getNode(ISD::SUB, NVT, Tmp1,
+                             DAG.getConstant(getSizeInBits(NVT) -
                                              getSizeInBits(OVT), NVT));
         break;
       }
@@ -1314,7 +1314,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
           //x = (x & mask[i][len/8]) + (x >> (1 << i) & mask[i][len/8])
           Tmp2 = DAG.getConstant(mask[i], VT);
           Tmp3 = DAG.getConstant(1ULL << i, ShVT);
-          Tmp1 = DAG.getNode(ISD::ADD, VT, 
+          Tmp1 = DAG.getNode(ISD::ADD, VT,
                              DAG.getNode(ISD::AND, VT, Tmp1, Tmp2),
                              DAG.getNode(ISD::AND, VT,
                                          DAG.getNode(ISD::SRL, VT, Tmp1, Tmp3),
@@ -1329,16 +1329,16 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
            x = x | (x >> 2);
            ...
            x = x | (x >>16);
-           x = x | (x >>32); // for 64-bit input 
+           x = x | (x >>32); // for 64-bit input
            return popcount(~x);
-        
+
            but see also: http://www.hackersdelight.org/HDcode/nlz.cc */
         MVT::ValueType VT = Tmp1.getValueType();
         MVT::ValueType ShVT = TLI.getShiftAmountTy();
         unsigned len = getSizeInBits(VT);
         for (unsigned i = 0; (1U << i) <= (len / 2); ++i) {
           Tmp3 = DAG.getConstant(1ULL << i, ShVT);
-          Tmp1 = DAG.getNode(ISD::OR, VT, Tmp1,  
+          Tmp1 = DAG.getNode(ISD::OR, VT, Tmp1,
                              DAG.getNode(ISD::SRL, VT, Tmp1, Tmp3));
         }
         Tmp3 = DAG.getNode(ISD::XOR, VT, Tmp1, DAG.getConstant(~0ULL, VT));
@@ -1346,20 +1346,20 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         break;
       }
       case ISD::CTTZ: {
-        // for now, we use: { return popcount(~x & (x - 1)); } 
+        // for now, we use: { return popcount(~x & (x - 1)); }
         // unless the target has ctlz but not ctpop, in which case we use:
         // { return 32 - nlz(~x & (x-1)); }
         // see also http://www.hackersdelight.org/HDcode/ntz.cc
         MVT::ValueType VT = Tmp1.getValueType();
         Tmp2 = DAG.getConstant(~0ULL, VT);
-        Tmp3 = DAG.getNode(ISD::AND, VT, 
+        Tmp3 = DAG.getNode(ISD::AND, VT,
                            DAG.getNode(ISD::XOR, VT, Tmp1, Tmp2),
                            DAG.getNode(ISD::SUB, VT, Tmp1,
                                        DAG.getConstant(1, VT)));
         // If ISD::CTLZ is legal and CTPOP isn't, then do that instead
         if (TLI.getOperationAction(ISD::CTPOP, VT) != TargetLowering::Legal &&
             TLI.getOperationAction(ISD::CTLZ, VT) == TargetLowering::Legal) {
-          Result = LegalizeOp(DAG.getNode(ISD::SUB, VT, 
+          Result = LegalizeOp(DAG.getNode(ISD::SUB, VT,
                                         DAG.getConstant(getSizeInBits(VT), VT),
                                         DAG.getNode(ISD::CTLZ, VT, Tmp3)));
         } else {
@@ -1374,7 +1374,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       break;
     }
     break;
-    
+
     // Unary operators
   case ISD::FABS:
   case ISD::FNEG:
@@ -1453,7 +1453,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       if (Node->getOpcode() == ISD::UINT_TO_FP ||
           Node->getOpcode() == ISD::SINT_TO_FP) {
         bool isSigned = Node->getOpcode() == ISD::SINT_TO_FP;
-        switch (TLI.getOperationAction(Node->getOpcode(), 
+        switch (TLI.getOperationAction(Node->getOpcode(),
                                        Node->getOperand(0).getValueType())) {
         default: assert(0 && "Unknown operation action!");
         case TargetLowering::Expand:
@@ -1936,15 +1936,15 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
       break;
     case ISD::CTTZ:
       //if Tmp1 == sizeinbits(NVT) then Tmp1 = sizeinbits(Old VT)
-      Tmp2 = DAG.getSetCC(ISD::SETEQ, MVT::i1, Tmp1, 
+      Tmp2 = DAG.getSetCC(ISD::SETEQ, MVT::i1, Tmp1,
                           DAG.getConstant(getSizeInBits(NVT), NVT));
-      Result = DAG.getNode(ISD::SELECT, NVT, Tmp2, 
+      Result = DAG.getNode(ISD::SELECT, NVT, Tmp2,
                            DAG.getConstant(getSizeInBits(VT),NVT), Tmp1);
       break;
     case ISD::CTLZ:
       //Tmp1 = Tmp1 - (sizeinbits(NVT) - sizeinbits(Old VT))
-      Result = DAG.getNode(ISD::SUB, NVT, Tmp1, 
-                           DAG.getConstant(getSizeInBits(NVT) - 
+      Result = DAG.getNode(ISD::SUB, NVT, Tmp1,
+                           DAG.getConstant(getSizeInBits(NVT) -
                                            getSizeInBits(VT), NVT));
       break;
     }
@@ -2282,7 +2282,7 @@ static SDOperand FindInputOutputChains(SDNode *OpNode, SDNode *&OutChain,
   return SDOperand(LatestCallSeqEnd, 0);
 }
 
-/// SpliceCallInto - Given the result chain of a libcall (CallResult), and a 
+/// SpliceCallInto - Given the result chain of a libcall (CallResult), and a
 void SelectionDAGLegalize::SpliceCallInto(const SDOperand &CallResult,
                                           SDNode *OutChain) {
   // Nothing to splice it into?
@@ -2558,7 +2558,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     unsigned IncrementSize = MVT::getSizeInBits(Lo.getValueType())/8;
     Ptr = DAG.getNode(ISD::ADD, Ptr.getValueType(), Ptr,
                       getIntPtrConstant(IncrementSize));
-    //Is this safe?  declaring that the two parts of the split load  
+    //Is this safe?  declaring that the two parts of the split load
     //are from the same instruction?
     Hi = DAG.getLoad(NVT, Ch, Ptr, Node->getOperand(2));
 

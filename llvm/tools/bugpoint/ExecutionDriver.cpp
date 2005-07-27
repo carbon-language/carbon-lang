@@ -324,7 +324,7 @@ bool BugDriver::diffProgram(const std::string &BytecodeFile,
   Output.eraseFromDisk();
 
   // Remove the bytecode file if we are supposed to.
-  if (RemoveBytecode) 
+  if (RemoveBytecode)
     sys::Path(BytecodeFile).eraseFromDisk();
   return FilesDifferent;
 }

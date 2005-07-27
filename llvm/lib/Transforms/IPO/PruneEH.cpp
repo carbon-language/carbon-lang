@@ -149,24 +149,24 @@ bool PruneEH::SimplifyFunction(Function *F) {
                                                             II->op_end()),
                                         Name, II);
           Call->setCallingConv(II->getCallingConv());
-          
+
           // Anything that used the value produced by the invoke instruction
           // now uses the value produced by the call instruction.
           II->replaceAllUsesWith(Call);
           BasicBlock *UnwindBlock = II->getUnwindDest();
           UnwindBlock->removePredecessor(II->getParent());
-          
+
           // Insert a branch to the normal destination right before the
           // invoke.
           new BranchInst(II->getNormalDest(), II);
-          
+
           // Finally, delete the invoke instruction!
           BB->getInstList().pop_back();
 
           // If the unwind block is now dead, nuke it.
           if (pred_begin(UnwindBlock) == pred_end(UnwindBlock))
             DeleteBasicBlock(UnwindBlock);  // Delete the new BB.
-          
+
           ++NumRemoved;
           MadeChange = true;
         }
@@ -221,6 +221,6 @@ void PruneEH::DeleteBasicBlock(BasicBlock *BB) {
 
   for (unsigned i = 0, e = Succs.size(); i != e; ++i)
     Succs[i]->removePredecessor(BB);
-  
+
   BB->eraseFromParent();
 }

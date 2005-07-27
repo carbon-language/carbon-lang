@@ -408,7 +408,7 @@ size_t Compressor::decompress(const char *in, size_t size,
 
       // Decompress it
       int bzerr = BZ_OK;
-      while ( BZ_OK == (bzerr = BZ2_bzDecompress(&bzdata)) && 
+      while ( BZ_OK == (bzerr = BZ2_bzDecompress(&bzdata)) &&
               bzdata.avail_in != 0 ) {
         if (0 != getdata_uns(bzdata.next_out, bzdata.avail_out,cb,context)) {
           BZ2_bzDecompressEnd(&bzdata);

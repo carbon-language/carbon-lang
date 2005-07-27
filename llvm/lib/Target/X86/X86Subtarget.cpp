@@ -15,8 +15,8 @@
 #include "llvm/Module.h"
 using namespace llvm;
 
-X86Subtarget::X86Subtarget(const Module &M) 
-  : TargetSubtarget(), stackAlignment(8), 
+X86Subtarget::X86Subtarget(const Module &M)
+  : TargetSubtarget(), stackAlignment(8),
     indirectExternAndWeakGlobals(false), asmDarwinLinkerStubs(false),
     asmLeadingUnderscore(false), asmAlignmentIsInBytes(false),
     asmPrintDotLocalConstants(false), asmPrintDotLCommConstants(false),
@@ -25,7 +25,7 @@ X86Subtarget::X86Subtarget(const Module &M)
   bool forCygwin = false;
   bool forDarwin = false;
   bool forWindows = false;
-  
+
   // Set the boolean corresponding to the current target triple, or the default
   // if one cannot be determined, to true.
   const std::string& TT = M.getTargetTriple();

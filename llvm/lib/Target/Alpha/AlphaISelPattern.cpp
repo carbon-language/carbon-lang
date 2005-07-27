@@ -64,7 +64,7 @@ namespace {
       //Move an Ireg to a FPreg
       ITOF,
       //Move a  FPreg to an Ireg
-      FTOI, 
+      FTOI,
     };
   }
 }
@@ -93,7 +93,7 @@ namespace {
 
       setOperationAction(ISD::EXTLOAD, MVT::i1,  Promote);
       setOperationAction(ISD::EXTLOAD, MVT::f32, Expand);
- 
+
       setOperationAction(ISD::ZEXTLOAD, MVT::i1,  Promote);
       setOperationAction(ISD::ZEXTLOAD, MVT::i32, Expand);
 
@@ -164,7 +164,7 @@ namespace {
     virtual std::pair<SDOperand,SDOperand>
       LowerVAArg(SDOperand Chain, SDOperand VAListP, Value *VAListV,
                  const Type *ArgTy, SelectionDAG &DAG);
-    
+
     void restoreGP(MachineBasicBlock* BB)
     {
       BuildMI(BB, Alpha::BIS, 2, Alpha::R29).addReg(GP).addReg(GP);
@@ -203,8 +203,8 @@ SDOperand AlphaTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
         } else {
           int SSFI = MF.getFrameInfo()->CreateStackObject(8, 8);
           SDOperand StackSlot = DAG.getFrameIndex(SSFI, getPointerTy());
-          SDOperand Store = DAG.getNode(ISD::STORE, MVT::Other, 
-                                        DAG.getEntryNode(), Op.getOperand(0), 
+          SDOperand Store = DAG.getNode(ISD::STORE, MVT::Other,
+                                        DAG.getEntryNode(), Op.getOperand(0),
                                         StackSlot, DAG.getSrcValue(NULL));
           SRC = DAG.getLoad(Op.getValueType(), Store.getValue(0), StackSlot,
                             DAG.getSrcValue(NULL));
@@ -289,7 +289,7 @@ AlphaTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG)
       case MVT::i16:
       case MVT::i32:
       case MVT::i64:
-        args_int[count] = AddLiveIn(MF, args_int[count], 
+        args_int[count] = AddLiveIn(MF, args_int[count],
                                     getRegClassFor(MVT::i64));
         argt = DAG.getCopyFromReg(args_int[count], VT, DAG.getRoot());
         if (VT != MVT::i64)
@@ -322,15 +322,15 @@ AlphaTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG)
       int FI = MFI->CreateFixedObject(8, -8 * (6 - i));
       if (i == 0) VarArgsBase = FI;
       SDOperand SDFI = DAG.getFrameIndex(FI, MVT::i64);
-      LS.push_back(DAG.getNode(ISD::STORE, MVT::Other, DAG.getRoot(), argt, 
+      LS.push_back(DAG.getNode(ISD::STORE, MVT::Other, DAG.getRoot(), argt,
                                SDFI, DAG.getSrcValue(NULL)));
-      
+
       if (args_float[i] < 1024)
         args_float[i] = AddLiveIn(MF,args_float[i], getRegClassFor(MVT::f64));
       argt = DAG.getCopyFromReg(args_float[i], MVT::f64, DAG.getRoot());
       FI = MFI->CreateFixedObject(8, - 8 * (12 - i));
       SDFI = DAG.getFrameIndex(FI, MVT::i64);
-      LS.push_back(DAG.getNode(ISD::STORE, MVT::Other, DAG.getRoot(), argt, 
+      LS.push_back(DAG.getNode(ISD::STORE, MVT::Other, DAG.getRoot(), argt,
                                SDFI, DAG.getSrcValue(NULL)));
     }
 
@@ -363,7 +363,7 @@ std::pair<SDOperand, SDOperand>
 AlphaTargetLowering::LowerCallTo(SDOperand Chain,
                                  const Type *RetTy, bool isVarArg,
                                  unsigned CallingConv, bool isTailCall,
-                                 SDOperand Callee, ArgListTy &Args, 
+                                 SDOperand Callee, ArgListTy &Args,
                                  SelectionDAG &DAG) {
   int NumBytes = 0;
   if (Args.size() > 6)
@@ -413,12 +413,12 @@ SDOperand AlphaTargetLowering::LowerVAStart(SDOperand Chain, SDOperand VAListP,
                                             Value *VAListV, SelectionDAG &DAG) {
   // vastart stores the address of the VarArgsBase and VarArgsOffset
   SDOperand FR  = DAG.getFrameIndex(VarArgsBase, MVT::i64);
-  SDOperand S1  = DAG.getNode(ISD::STORE, MVT::Other, Chain, FR, VAListP, 
+  SDOperand S1  = DAG.getNode(ISD::STORE, MVT::Other, Chain, FR, VAListP,
                               DAG.getSrcValue(VAListV));
-  SDOperand SA2 = DAG.getNode(ISD::ADD, MVT::i64, VAListP, 
+  SDOperand SA2 = DAG.getNode(ISD::ADD, MVT::i64, VAListP,
                               DAG.getConstant(8, MVT::i64));
-  return DAG.getNode(ISD::TRUNCSTORE, MVT::Other, S1, 
-                     DAG.getConstant(VarArgsOffset, MVT::i64), SA2, 
+  return DAG.getNode(ISD::TRUNCSTORE, MVT::Other, S1,
+                     DAG.getConstant(VarArgsOffset, MVT::i64), SA2,
                      DAG.getSrcValue(VAListV, 8), DAG.getValueType(MVT::i32));
 }
 
@@ -427,9 +427,9 @@ LowerVAArg(SDOperand Chain, SDOperand VAListP, Value *VAListV,
            const Type *ArgTy, SelectionDAG &DAG) {
   SDOperand Base = DAG.getLoad(MVT::i64, Chain, VAListP,
                                DAG.getSrcValue(VAListV));
-  SDOperand Tmp = DAG.getNode(ISD::ADD, MVT::i64, VAListP, 
+  SDOperand Tmp = DAG.getNode(ISD::ADD, MVT::i64, VAListP,
                               DAG.getConstant(8, MVT::i64));
-  SDOperand Offset = DAG.getExtLoad(ISD::SEXTLOAD, MVT::i64, Base.getValue(1), 
+  SDOperand Offset = DAG.getExtLoad(ISD::SEXTLOAD, MVT::i64, Base.getValue(1),
                                     Tmp, DAG.getSrcValue(VAListV, 8), MVT::i32);
   SDOperand DataPtr = DAG.getNode(ISD::ADD, MVT::i64, Base, Offset);
   if (ArgTy->isFloatingPoint())
@@ -437,7 +437,7 @@ LowerVAArg(SDOperand Chain, SDOperand VAListP, Value *VAListV,
     //if fp && Offset < 6*8, then subtract 6*8 from DataPtr
       SDOperand FPDataPtr = DAG.getNode(ISD::SUB, MVT::i64, DataPtr,
                                         DAG.getConstant(8*6, MVT::i64));
-      SDOperand CC = DAG.getSetCC(ISD::SETLT, MVT::i64, 
+      SDOperand CC = DAG.getSetCC(ISD::SETLT, MVT::i64,
                                   Offset, DAG.getConstant(8*6, MVT::i64));
       DataPtr = DAG.getNode(ISD::SELECT, MVT::i64, CC, FPDataPtr, DataPtr);
   }
@@ -450,13 +450,13 @@ LowerVAArg(SDOperand Chain, SDOperand VAListP, Value *VAListV,
     Result = DAG.getExtLoad(ISD::ZEXTLOAD, MVT::i64, Offset.getValue(1),
                             DataPtr, DAG.getSrcValue(NULL), MVT::i32);
   else
-    Result = DAG.getLoad(getValueType(ArgTy), Offset.getValue(1), DataPtr, 
+    Result = DAG.getLoad(getValueType(ArgTy), Offset.getValue(1), DataPtr,
                          DAG.getSrcValue(NULL));
 
-  SDOperand NewOffset = DAG.getNode(ISD::ADD, MVT::i64, Offset, 
+  SDOperand NewOffset = DAG.getNode(ISD::ADD, MVT::i64, Offset,
                                     DAG.getConstant(8, MVT::i64));
-  SDOperand Update = DAG.getNode(ISD::TRUNCSTORE, MVT::Other, 
-                                 Result.getValue(1), NewOffset, 
+  SDOperand Update = DAG.getNode(ISD::TRUNCSTORE, MVT::Other,
+                                 Result.getValue(1), NewOffset,
                                  Tmp, DAG.getSrcValue(VAListV, 8),
                                  DAG.getValueType(MVT::i32));
   Result = DAG.getNode(ISD::TRUNCATE, getValueType(ArgTy), Result);
@@ -468,15 +468,15 @@ LowerVAArg(SDOperand Chain, SDOperand VAListP, Value *VAListV,
 SDOperand AlphaTargetLowering::
 LowerVACopy(SDOperand Chain, SDOperand SrcP, Value *SrcV, SDOperand DestP,
             Value *DestV, SelectionDAG &DAG) {
-  SDOperand Val = DAG.getLoad(getPointerTy(), Chain, SrcP, 
+  SDOperand Val = DAG.getLoad(getPointerTy(), Chain, SrcP,
                               DAG.getSrcValue(SrcV));
   SDOperand Result = DAG.getNode(ISD::STORE, MVT::Other, Val.getValue(1),
                                  Val, DestP, DAG.getSrcValue(DestV));
-  SDOperand NP = DAG.getNode(ISD::ADD, MVT::i64, SrcP, 
+  SDOperand NP = DAG.getNode(ISD::ADD, MVT::i64, SrcP,
                              DAG.getConstant(8, MVT::i64));
   Val = DAG.getExtLoad(ISD::SEXTLOAD, MVT::i64, Result, NP,
                        DAG.getSrcValue(SrcV, 8), MVT::i32);
-  SDOperand NPD = DAG.getNode(ISD::ADD, MVT::i64, DestP, 
+  SDOperand NPD = DAG.getNode(ISD::ADD, MVT::i64, DestP,
                              DAG.getConstant(8, MVT::i64));
   return DAG.getNode(ISD::TRUNCSTORE, MVT::Other, Val.getValue(1),
                      Val, NPD, DAG.getSrcValue(DestV, 8),
@@ -514,7 +514,7 @@ class AlphaISel : public SelectionDAGISel {
   int max_depth;
 
 public:
-  AlphaISel(TargetMachine &TM) : SelectionDAGISel(AlphaLowering), 
+  AlphaISel(TargetMachine &TM) : SelectionDAGISel(AlphaLowering),
     AlphaLowering(TM)
   {}
 
@@ -535,9 +535,9 @@ public:
     if(has_sym)
       ++count_ins;
     if(EnableAlphaCount)
-      std::cerr << "COUNT: " 
-                << BB->getParent()->getFunction ()->getName() << " " 
-                << BB->getNumber() << " " 
+      std::cerr << "COUNT: "
+                << BB->getParent()->getFunction ()->getName() << " "
+                << BB->getNumber() << " "
                 << max_depth << " "
                 << count_ins << " "
                 << count_outs << "\n";
@@ -546,7 +546,7 @@ public:
     ExprMap.clear();
     CCInvMap.clear();
   }
-  
+
   virtual void EmitFunctionEntryCode(Function &Fn, MachineFunction &MF);
 
   unsigned SelectExpr(SDOperand N);
@@ -1032,7 +1032,7 @@ void AlphaISel::SelectBranchCC(SDOperand N)
         return;
       }
     } else { //FP
-      //Any comparison between 2 values should be codegened as an folded 
+      //Any comparison between 2 values should be codegened as an folded
       //branch, as moving CC to the integer register is very expensive
       //for a cmp b: c = a - b;
       //a = b: c = 0
@@ -1298,7 +1298,7 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
   case ISD::GlobalAddress:
     AlphaLowering.restoreGP(BB);
     has_sym = true;
- 
+
     Reg = Result = MakeReg(MVT::i64);
 
     if (EnableAlphaLSMark)
@@ -1559,7 +1559,7 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
 
           switch (SetCC->getCondition()) {
           default: Node->dump(); assert(0 && "Unknown integer comparison!");
-          case ISD::SETEQ: 
+          case ISD::SETEQ:
             Opc = isConst ? Alpha::CMPEQi : Alpha::CMPEQ; dir=1; break;
           case ISD::SETLT:
             Opc = isConst ? Alpha::CMPLTi : Alpha::CMPLT; dir = 1; break;
@@ -1675,7 +1675,7 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
     //Check operand(0) == Not
     if (N.getOperand(0).getOpcode() == ISD::XOR &&
         N.getOperand(0).getOperand(1).getOpcode() == ISD::Constant &&
-        cast<ConstantSDNode>(N.getOperand(0).getOperand(1))->getSignExtended() 
+        cast<ConstantSDNode>(N.getOperand(0).getOperand(1))->getSignExtended()
         == -1) {
       switch(opcode) {
         case ISD::AND: Opc = Alpha::BIC; break;
@@ -1730,8 +1730,8 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
       case ISD::SHL: Opc = Alpha::SL; break;
       case ISD::SRL: Opc = Alpha::SRL; break;
       case ISD::SRA: Opc = Alpha::SRA; break;
-      case ISD::MUL: 
-        Opc = isFP ? (DestType == MVT::f64 ? Alpha::MULT : Alpha::MULS) 
+      case ISD::MUL:
+        Opc = isFP ? (DestType == MVT::f64 ? Alpha::MULT : Alpha::MULS)
           : Alpha::MULQ;
         break;
       };
@@ -1807,7 +1807,7 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
       }
       else if((CSD = dyn_cast<ConstantSDNode>(N.getOperand(1))) &&
               (int64_t)CSD->getValue() >= 255 &&
-              (int64_t)CSD->getValue() <= 0)              
+              (int64_t)CSD->getValue() <= 0)
       { //inverted imm add/sub
         Opc = isAdd ? Alpha::SUBQi : Alpha::ADDQi;
         Tmp1 = SelectExpr(N.getOperand(0));
@@ -1903,7 +1903,7 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
     }
     Tmp1 = SelectExpr(N.getOperand(0));
     Tmp2 = SelectExpr(N.getOperand(1));
-    SDOperand Addr = 
+    SDOperand Addr =
       ISelDAG->getExternalSymbol(opstr, AlphaLowering.getPointerTy());
     Tmp3 = SelectExpr(Addr);
     //set up regs explicitly (helps Reg alloc)
@@ -1947,7 +1947,7 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
       if (SetCC && !MVT::isInteger(SetCC->getOperand(0).getValueType()))
       { //FP Setcc -> Select yay!
 
-        
+
         //for a cmp b: c = a - b;
         //a = b: c = 0
         //a < b: c < 0
@@ -2000,7 +2000,7 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
 //         // Get the condition into the zero flag.
 //         BuildMI(BB, Alpha::FCMOVEQ, 3, Result).addReg(TV).addReg(FV).addReg(Tmp4);
         return Result;
-      }  
+      }
     } else {
       //FIXME: look at parent to decide if intCC can be folded, or if setCC(FP)
       //and can save stack use
@@ -2116,7 +2116,7 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
         //re-get the val since we are going to mem anyway
         val = (int64_t)cast<ConstantSDNode>(N)->getValue();
         MachineConstantPool *CP = BB->getParent()->getConstantPool();
-        ConstantUInt *C = 
+        ConstantUInt *C =
           ConstantUInt::get(Type::getPrimitiveType(Type::ULongTyID) , val);
         unsigned CPI = CP->getConstantPoolIndex(C);
         AlphaLowering.restoreGP(BB);
@@ -2317,8 +2317,8 @@ void AlphaISel::Select(SDOperand N) {
       }
 
       int i, j, k;
-      if (EnableAlphaLSMark) 
-        getValueInfo(cast<SrcValueSDNode>(N.getOperand(3))->getValue(), 
+      if (EnableAlphaLSMark)
+        getValueInfo(cast<SrcValueSDNode>(N.getOperand(3))->getValue(),
                      i, j, k);
 
       GlobalAddressSDNode *GASD = dyn_cast<GlobalAddressSDNode>(Address);

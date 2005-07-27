@@ -77,7 +77,7 @@ namespace {
         setOperationAction(ISD::FSQRT, MVT::f64, Expand);
         setOperationAction(ISD::FSQRT, MVT::f32, Expand);
       }
-            
+
       //PowerPC does not have CTPOP or CTTZ
       setOperationAction(ISD::CTPOP, MVT::i32  , Expand);
       setOperationAction(ISD::CTTZ , MVT::i32  , Expand);
@@ -103,11 +103,11 @@ namespace {
 
     virtual SDOperand LowerVAStart(SDOperand Chain, SDOperand VAListP,
                                    Value *VAListV, SelectionDAG &DAG);
-    
+
     virtual std::pair<SDOperand,SDOperand>
       LowerVAArg(SDOperand Chain, SDOperand VAListP, Value *VAListV,
                  const Type *ArgTy, SelectionDAG &DAG);
-    
+
     virtual std::pair<SDOperand, SDOperand>
     LowerFrameReturnAddress(bool isFrameAddr, SDOperand Chain, unsigned Depth,
                             SelectionDAG &DAG);
@@ -288,7 +288,7 @@ PPC32TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
 std::pair<SDOperand, SDOperand>
 PPC32TargetLowering::LowerCallTo(SDOperand Chain,
                                  const Type *RetTy, bool isVarArg,
-                                 unsigned CallingConv, bool isTailCall, 
+                                 unsigned CallingConv, bool isTailCall,
                                  SDOperand Callee, ArgListTy &Args,
                                  SelectionDAG &DAG) {
   // args_to_use will accumulate outgoing args for the ISD::CALL case in
@@ -992,7 +992,7 @@ void ISel::MoveCRtoGPR(unsigned CCReg, bool Inv, unsigned Idx, unsigned Result){
 bool ISel::SelectBitfieldInsert(SDOperand OR, unsigned Result) {
   bool IsRotate = false;
   unsigned TgtMask = 0xFFFFFFFF, InsMask = 0xFFFFFFFF, Amount = 0;
-  
+
   SDOperand Op0 = OR.getOperand(0);
   SDOperand Op1 = OR.getOperand(1);
 
@@ -1046,21 +1046,21 @@ bool ISel::SelectBitfieldInsert(SDOperand OR, unsigned Result) {
   // constant as its input, make that the inserted value so that we can combine
   // the shift into the rotate part of the rlwimi instruction
   if (Op0Opc == ISD::AND && Op1Opc == ISD::AND) {
-    if (Op1.getOperand(0).getOpcode() == ISD::SHL || 
+    if (Op1.getOperand(0).getOpcode() == ISD::SHL ||
         Op1.getOperand(0).getOpcode() == ISD::SRL) {
-      if (ConstantSDNode *CN = 
+      if (ConstantSDNode *CN =
           dyn_cast<ConstantSDNode>(Op1.getOperand(0).getOperand(1).Val)) {
-        Amount = Op1.getOperand(0).getOpcode() == ISD::SHL ? 
+        Amount = Op1.getOperand(0).getOpcode() == ISD::SHL ?
           CN->getValue() : 32 - CN->getValue();
         Tmp3 = SelectExpr(Op1.getOperand(0).getOperand(0));
       }
     } else if (Op0.getOperand(0).getOpcode() == ISD::SHL ||
                Op0.getOperand(0).getOpcode() == ISD::SRL) {
-      if (ConstantSDNode *CN = 
+      if (ConstantSDNode *CN =
           dyn_cast<ConstantSDNode>(Op0.getOperand(0).getOperand(1).Val)) {
         std::swap(Op0, Op1);
         std::swap(TgtMask, InsMask);
-        Amount = Op1.getOperand(0).getOpcode() == ISD::SHL ? 
+        Amount = Op1.getOperand(0).getOpcode() == ISD::SHL ?
           CN->getValue() : 32 - CN->getValue();
         Tmp3 = SelectExpr(Op1.getOperand(0).getOperand(0));
       }
@@ -1878,7 +1878,7 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
         return SelectExpr(BuildSDIVSequence(N));
       else
         return SelectExpr(BuildUDIVSequence(N));
-    }    
+    }
     Tmp1 = SelectExpr(N.getOperand(0));
     Tmp2 = SelectExpr(N.getOperand(1));
     switch (DestType) {

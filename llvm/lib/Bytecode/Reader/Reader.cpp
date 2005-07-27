@@ -682,9 +682,9 @@ void BytecodeReader::ParseInstruction(std::vector<unsigned> &Oprnds,
     const Type* ArgTy = getValue(iType, Oprnds[0])->getType();
     Function* NF = TheModule->getOrInsertFunction("llvm.va_copy", ArgTy, ArgTy, 0);
 
-    //b = vaarg a, t -> 
+    //b = vaarg a, t ->
     //foo = alloca 1 of t
-    //bar = vacopy a 
+    //bar = vacopy a
     //store bar -> foo
     //b = vaarg foo, t
     AllocaInst* foo = new AllocaInst(ArgTy, 0, "vaarg.fix");

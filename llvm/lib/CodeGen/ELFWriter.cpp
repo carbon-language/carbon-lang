@@ -108,15 +108,15 @@ void ELFCodeEmitter::startFunction(MachineFunction &F) {
                       ELFWriter::ELFSection::SHF_EXECINSTR |
                       ELFWriter::ELFSection::SHF_ALLOC);
   OutBuffer = &ES->SectionData;
-  
+
   // Upgrade the section alignment if required.
   if (ES->Align < Align) ES->Align = Align;
-  
+
   // Add padding zeros to the end of the buffer to make sure that the
   // function will start on the correct byte alignment within the section.
   size_t SectionOff = OutBuffer->size();
   ELFWriter::align(*OutBuffer, Align);
-  
+
   FnStart = OutBuffer->size();
 }
 
@@ -125,7 +125,7 @@ void ELFCodeEmitter::startFunction(MachineFunction &F) {
 void ELFCodeEmitter::finishFunction(MachineFunction &F) {
   // We now know the size of the function, add a symbol to represent it.
   ELFWriter::ELFSym FnSym(F.getFunction());
-  
+
   // Figure out the binding (linkage) of the symbol.
   switch (F.getFunction()->getLinkage()) {
   default:
@@ -149,7 +149,7 @@ void ELFCodeEmitter::finishFunction(MachineFunction &F) {
   FnSym.SectionIdx = ES->SectionIdx;
     FnSym.Value = FnStart;   // Value = Offset from start of Section.
   FnSym.Size = OutBuffer->size()-FnStart;
-  
+
   // Finally, add it to the symtab.
   EW.SymbolTable.push_back(FnSym);
 }
@@ -162,7 +162,7 @@ ELFWriter::ELFWriter(std::ostream &o, TargetMachine &tm) : O(o), TM(tm) {
   e_machine = 0;  // e_machine defaults to 'No Machine'
   e_flags = 0;    // e_flags defaults to 0, no flags.
 
-  is64Bit = TM.getTargetData().getPointerSizeInBits() == 64;  
+  is64Bit = TM.getTargetData().getPointerSizeInBits() == 64;
   isLittleEndian = TM.getTargetData().isLittleEndian();
 
   // Create the machine code emitter object for this target.
@@ -181,7 +181,7 @@ bool ELFWriter::doInitialization(Module &M) {
 
   // Local alias to shortenify coming code.
   std::vector<unsigned char> &FH = FileHeader;
-    
+
   outbyte(FH, 0x7F);                     // EI_MAG0
   outbyte(FH, 'E');                      // EI_MAG1
   outbyte(FH, 'L');                      // EI_MAG2
@@ -190,7 +190,7 @@ bool ELFWriter::doInitialization(Module &M) {
   outbyte(FH, isLittleEndian ? 1 : 2);   // EI_DATA
   outbyte(FH, 1);                        // EI_VERSION
   FH.resize(16);                         // EI_PAD up to 16 bytes.
-  
+
   // This should change for shared objects.
   outhalf(FH, 1);                 // e_type = ET_REL
   outhalf(FH, e_machine);         // e_machine = whatever the target wants
@@ -207,7 +207,7 @@ bool ELFWriter::doInitialization(Module &M) {
   outhalf(FH, 0);                 // e_phnum     = # prog header entries = 0
   outhalf(FH, is64Bit ? 64 : 40); // e_shentsize = sect hdr entry size
 
-  
+
   ELFHeader_e_shnum_Offset = FH.size();
   outhalf(FH, 0);                 // e_shnum     = # of section header ents
   ELFHeader_e_shstrndx_Offset = FH.size();
@@ -235,7 +235,7 @@ void ELFWriter::EmitGlobal(GlobalVariable *GV) {
     SymbolTable.push_back(ExternalSym);
     return;
   }
-  
+
   const Type *GVType = (const Type*)GV->getType();
   unsigned Align = TM.getTargetData().getTypeAlignment(GVType);
   unsigned Size  = TM.getTargetData().getTypeSize(GVType);
@@ -473,11 +473,11 @@ void ELFWriter::OutputSectionsAndSectionTable() {
   // Now that we know where all of the sections will be emitted, set the e_shnum
   // entry in the ELF header.
   fixhalf(FileHeader, NumSections, ELFHeader_e_shnum_Offset);
-  
+
   // Now that we know the offset in the file of the section table, update the
   // e_shoff address in the ELF header.
   fixaddr(FileHeader, FileOff, ELFHeader_e_shoff_Offset);
-  
+
   // Now that we know all of the data in the file header, emit it and all of the
   // sections!
   O.write((char*)&FileHeader[0], FileHeader.size());
@@ -516,7 +516,7 @@ void ELFWriter::OutputSectionsAndSectionTable() {
   for (size_t NewFileOff = (FileOff+TableAlign-1) & ~(TableAlign-1);
        FileOff != NewFileOff; ++FileOff)
     O.put(0xAB);
-  
+
   // Emit the section table itself.
   O.write((char*)&Table[0], Table.size());
 }

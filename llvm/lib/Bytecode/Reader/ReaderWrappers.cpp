@@ -170,17 +170,17 @@ static ModuleProvider* CheckVarargs(ModuleProvider* MP) {
 
   if(Function* F = M->getNamedFunction("llvm.va_start")) {
     assert(F->arg_size() == 0 && "Obsolete va_start takes 0 argument!");
-    
+
     //foo = va_start()
     // ->
     //bar = alloca typeof(foo)
     //va_start(bar)
     //foo = load bar
-    
+
     const Type* RetTy = Type::getPrimitiveType(Type::VoidTyID);
     const Type* ArgTy = F->getFunctionType()->getReturnType();
     const Type* ArgTyPtr = PointerType::get(ArgTy);
-    Function* NF = M->getOrInsertFunction("llvm.va_start", 
+    Function* NF = M->getOrInsertFunction("llvm.va_start",
                                                RetTy, ArgTyPtr, 0);
 
     for(Value::use_iterator I = F->use_begin(), E = F->use_end(); I != E;)
@@ -193,7 +193,7 @@ static ModuleProvider* CheckVarargs(ModuleProvider* MP) {
       }
     F->setName("");
   }
-    
+
   if(Function* F = M->getNamedFunction("llvm.va_end")) {
     assert(F->arg_size() == 1 && "Obsolete va_end takes 1 argument!");
     //vaend foo
@@ -203,9 +203,9 @@ static ModuleProvider* CheckVarargs(ModuleProvider* MP) {
     const Type* RetTy = Type::getPrimitiveType(Type::VoidTyID);
     const Type* ArgTy = F->getFunctionType()->getParamType(0);
     const Type* ArgTyPtr = PointerType::get(ArgTy);
-    Function* NF = M->getOrInsertFunction("llvm.va_end", 
+    Function* NF = M->getOrInsertFunction("llvm.va_end",
                                                  RetTy, ArgTyPtr, 0);
-    
+
     for(Value::use_iterator I = F->use_begin(), E = F->use_end(); I != E;)
       if (CallInst* CI = dyn_cast<CallInst>(*I++)) {
         AllocaInst* bar = new AllocaInst(ArgTy, 0, "vaend.fix.1", CI);
@@ -215,7 +215,7 @@ static ModuleProvider* CheckVarargs(ModuleProvider* MP) {
       }
     F->setName("");
   }
-  
+
   if(Function* F = M->getNamedFunction("llvm.va_copy")) {
     assert(F->arg_size() == 1 && "Obsolete va_copy takes 1 argument!");
     //foo = vacopy(bar)
@@ -225,13 +225,13 @@ static ModuleProvider* CheckVarargs(ModuleProvider* MP) {
     //store bar -> b
     //vacopy(a, b)
     //foo = load a
-    
+
     const Type* RetTy = Type::getPrimitiveType(Type::VoidTyID);
     const Type* ArgTy = F->getFunctionType()->getReturnType();
     const Type* ArgTyPtr = PointerType::get(ArgTy);
-    Function* NF = M->getOrInsertFunction("llvm.va_copy", 
+    Function* NF = M->getOrInsertFunction("llvm.va_copy",
                                           RetTy, ArgTyPtr, ArgTyPtr, 0);
-    
+
     for(Value::use_iterator I = F->use_begin(), E = F->use_end(); I != E;)
       if (CallInst* CI = dyn_cast<CallInst>(*I++)) {
         AllocaInst* a = new AllocaInst(ArgTy, 0, "vacopy.fix.1", CI);

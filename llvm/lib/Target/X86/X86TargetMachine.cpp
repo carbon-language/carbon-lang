@@ -105,7 +105,7 @@ X86TargetMachine::X86TargetMachine(const Module &M, IntrinsicLowering *IL)
 // does to emit statically compiled machine code.
 bool X86TargetMachine::addPassesToEmitFile(PassManager &PM, std::ostream &Out,
                                            CodeGenFileType FileType) {
-  if (FileType != TargetMachine::AssemblyFile && 
+  if (FileType != TargetMachine::AssemblyFile &&
       FileType != TargetMachine::ObjectFile) return true;
 
   // FIXME: Implement efficient support for garbage collection intrinsics.

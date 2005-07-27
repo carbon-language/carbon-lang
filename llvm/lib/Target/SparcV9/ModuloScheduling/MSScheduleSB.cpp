@@ -21,7 +21,7 @@
 using namespace llvm;
 
 //Check if all resources are free
-bool resourcesFree(MSchedGraphSBNode*, int, 
+bool resourcesFree(MSchedGraphSBNode*, int,
 std::map<int, std::map<int, int> > &resourceNumPerCycle);
 
 //Returns a boolean indicating if the start cycle needs to be increased/decreased
@@ -84,12 +84,12 @@ bool MSScheduleSB::resourceAvailable(int resourceNum, int cycle) {
         isFree = false;
     }
   }
-  
+
   return isFree;
 }
 
 void MSScheduleSB::useResource(int resourceNum, int cycle) {
-  
+
   //Get Map for this cycle
   if(resourceNumPerCycle.count(cycle)) {
     if(resourceNumPerCycle[cycle].count(resourceNum)) {
@@ -105,7 +105,7 @@ void MSScheduleSB::useResource(int resourceNum, int cycle) {
     resourceUse[resourceNum] = 1;
     resourceNumPerCycle[cycle] = resourceUse;
   }
-  
+
 }
 
 bool MSScheduleSB::resourcesFree(MSchedGraphSBNode *node, int cycle, int II) {
@@ -129,34 +129,34 @@ bool MSScheduleSB::resourcesFree(MSchedGraphSBNode *node, int cycle, int II) {
   //Now check all cycles for conflicts
   for(int index = 0; index < (int) cyclesMayConflict.size(); ++index) {
     currentCycle = cyclesMayConflict[index];
-    
+
     //Get resource usage for this instruction
     InstrRUsage rUsage = msi->getInstrRUsage(node->getInst()->getOpcode());
     std::vector<std::vector<resourceId_t> > resources = rUsage.resourcesByCycle;
-    
+
     //Loop over resources in each cycle and increments their usage count
     for(unsigned i=0; i < resources.size(); ++i) {
       for(unsigned j=0; j < resources[i].size(); ++j) {
-        
+
         //Get Resource to check its availability
         int resourceNum = resources[i][j];
-        
+
         DEBUG(std::cerr << "Attempting to schedule Resource Num: " << resourceNum << " in cycle: " << currentCycle << "\n");
-        
-        success = resourceAvailable(resourceNum, currentCycle); 
-        
+
+        success = resourceAvailable(resourceNum, currentCycle);
+
         if(!success)
           break;
-        
+
       }
-      
+
       if(!success)
         break;
-      
+
       //Increase cycle
       currentCycle++;
     }
-    
+
     if(!success)
       return false;
   }
@@ -168,7 +168,7 @@ bool MSScheduleSB::resourcesFree(MSchedGraphSBNode *node, int cycle, int II) {
     //Get resource usage for this instruction
     InstrRUsage rUsage = msi->getInstrRUsage(node->getInst()->getOpcode());
     std::vector<std::vector<resourceId_t> > resources = rUsage.resourcesByCycle;
-    
+
     //Loop over resources in each cycle and increments their usage count
     for(unsigned i=0; i < resources.size(); ++i) {
       for(unsigned j=0; j < resources[i].size(); ++j) {
@@ -195,7 +195,7 @@ bool MSScheduleSB::constructKernel(int II, std::vector<MSchedGraphSBNode*> &bran
 
   //Using the schedule, fold up into kernel and check resource conflicts as we go
   std::vector<std::pair<MSchedGraphSBNode*, int> > tempKernel;
-  
+
   int stageNum = ((schedule.rbegin()->first-offset)+1)/ II;
   int maxSN = 0;
 
@@ -212,7 +212,7 @@ bool MSScheduleSB::constructKernel(int II, std::vector<MSchedGraphSBNode*> &bran
 
           tempKernel.push_back(std::make_pair(*I, count));
           maxSN = std::max(maxSN, count);
-          
+
         }
       }
       ++count;
@@ -293,7 +293,7 @@ bool MSScheduleSB::defPreviousStage(Value *def, int stage) {
      }
     }
   }
-  
+
   assert(0 && "We should always have found the def in our kernel\n");
 }
 

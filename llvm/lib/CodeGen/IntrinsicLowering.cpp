@@ -150,7 +150,7 @@ static Value *LowerCTPOP(Value *V, Instruction *IP) {
       ConstantExpr::getCast(ConstantUInt::get(Type::ULongTy,
                                               MaskValues[ct]), V->getType());
     Value *LHS = BinaryOperator::createAnd(V, MaskCst, "cppop.and1", IP);
-    Value *VShift = new ShiftInst(Instruction::Shr, V, 
+    Value *VShift = new ShiftInst(Instruction::Shr, V,
                       ConstantInt::get(Type::UByteTy, i), "ctpop.sh", IP);
     Value *RHS = BinaryOperator::createAnd(VShift, MaskCst, "cppop.and2", IP);
     V = BinaryOperator::createAdd(LHS, RHS, "ctpop.step", IP);

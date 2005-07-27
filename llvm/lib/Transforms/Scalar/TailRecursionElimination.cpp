@@ -117,7 +117,7 @@ bool TailCallElim::runOnFunction(Function &F) {
   for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB) {
     if (!FunctionContainsEscapingAllocas)
       FunctionContainsEscapingAllocas = CheckForEscapingAllocas(BB);
-    
+
     if (ReturnInst *Ret = dyn_cast<ReturnInst>(BB->getTerminator()))
       MadeChange |= ProcessReturningBlock(Ret, OldEntry, ArgumentPHIs);
   }

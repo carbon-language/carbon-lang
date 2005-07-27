@@ -59,7 +59,7 @@ extern "C" {
     void* CameFromOrig = (void*)*(oldsp - 2);
 
     void* Target = JITCompilerFunction(CameFromStub);
-    
+
     //rewrite the stub to an unconditional branch
     EmitBranchToAt(CameFromStub, Target, false);
 
@@ -256,7 +256,7 @@ void AlphaJITInfo::relocate(void *Function, MachineRelocation *MR,
       case 0x08: //LDA
         assert(gpdistmap[make_pair(Function, MR->getConstantVal())] &&
                "LDAg without seeing LDAHg");
-        idx = &GOTBase[GOToffset * 8] - 
+        idx = &GOTBase[GOToffset * 8] -
           (unsigned char*)gpdistmap[make_pair(Function, MR->getConstantVal())];
         idx = getLower16(idx);
         DEBUG(std::cerr << "LDA: " << idx << "\n");

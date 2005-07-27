@@ -302,7 +302,7 @@ private:
                 tmp.replace(0,9,LLVMGXX);
               else if (*PI == "%llvmcc1%")
                 tmp.replace(0,9,LLVMCC1);
-              else if (*PI == "%llvmcc1plus%") 
+              else if (*PI == "%llvmcc1plus%")
                 tmp.replace(0,9,LLVMCC1);
               else
                 found = false;

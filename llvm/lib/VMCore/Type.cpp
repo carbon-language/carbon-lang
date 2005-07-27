@@ -143,8 +143,8 @@ unsigned Type::getPrimitiveSize() const {
   case Type::UByteTyID: return 1;
   case Type::UShortTyID:
   case Type::ShortTyID: return 2;
-  case Type::FloatTyID: 
-  case Type::IntTyID: 
+  case Type::FloatTyID:
+  case Type::IntTyID:
   case Type::UIntTyID: return 4;
   case Type::LongTyID:
   case Type::ULongTyID:
@@ -160,7 +160,7 @@ unsigned Type::getPrimitiveSizeInBits() const {
   case Type::UByteTyID: return 8;
   case Type::UShortTyID:
   case Type::ShortTyID: return 16;
-  case Type::FloatTyID: 
+  case Type::FloatTyID:
   case Type::IntTyID:
   case Type::UIntTyID: return 32;
   case Type::LongTyID:

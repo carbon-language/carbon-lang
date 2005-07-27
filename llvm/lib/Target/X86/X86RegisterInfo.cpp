@@ -387,10 +387,10 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
 
       MachineInstr *New = 0;
       if (Old->getOpcode() == X86::ADJCALLSTACKDOWN) {
-	New=BuildMI(X86::SUB32ri, 1, X86::ESP, MachineOperand::UseAndDef)
+        New=BuildMI(X86::SUB32ri, 1, X86::ESP, MachineOperand::UseAndDef)
               .addZImm(Amount);
       } else {
-	assert(Old->getOpcode() == X86::ADJCALLSTACKUP);
+        assert(Old->getOpcode() == X86::ADJCALLSTACKUP);
         // factor out the amount the callee already popped.
         unsigned CalleeAmt = Old->getOperand(1).getImmedValue();
         Amount -= CalleeAmt;
@@ -407,7 +407,7 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
     // something off the stack pointer, add it back.  We do this until we have
     // more advanced stack pointer tracking ability.
     if (unsigned CalleeAmt = I->getOperand(1).getImmedValue()) {
-      MachineInstr *New = 
+      MachineInstr *New =
         BuildMI(X86::SUB32ri, 1, X86::ESP,
                 MachineOperand::UseAndDef).addZImm(CalleeAmt);
       MBB.insert(I, New);
@@ -475,7 +475,7 @@ void X86RegisterInfo::emitPrologue(MachineFunction &MF) const {
 
     // Save EBP into the appropriate stack slot...
     MI = addRegOffset(BuildMI(X86::MOV32mr, 5),    // mov [ESP-<offset>], EBP
-		      X86::ESP, EBPOffset+NumBytes).addReg(X86::EBP);
+                      X86::ESP, EBPOffset+NumBytes).addReg(X86::EBP);
     MBB.insert(MBBI, MI);
 
     // Update EBP with the new base value...

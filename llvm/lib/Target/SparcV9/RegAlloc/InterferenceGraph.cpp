@@ -120,7 +120,7 @@ void InterferenceGraph::setInterference(const V9LiveRange *const LR1,
 // return whether two live ranges interfere
 //----------------------------------------------------------------------------
 unsigned InterferenceGraph::getInterference(const V9LiveRange *const LR1,
-                                            const V9LiveRange *const LR2) 
+                                            const V9LiveRange *const LR2)
                                             const {
   assert(LR1 != LR2);
   assertIGNode(this, LR1->getUserIGNode());

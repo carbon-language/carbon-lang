@@ -226,7 +226,7 @@ IA64TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
         // Create the frame index object for this incoming parameter...
         ArgOffset = 16 + 8 * (count - 8);
         int FI = MFI->CreateFixedObject(8, ArgOffset);
-        
+
         // Create the SelectionDAG nodes corresponding to a load
         //from this parameter
         SDOperand FIN = DAG.getFrameIndex(FI, MVT::i64);
@@ -307,7 +307,7 @@ std::pair<SDOperand, SDOperand>
 IA64TargetLowering::LowerCallTo(SDOperand Chain,
                                 const Type *RetTy, bool isVarArg,
                                 unsigned CallingConv, bool isTailCall,
-                                SDOperand Callee, ArgListTy &Args, 
+                                SDOperand Callee, ArgListTy &Args,
                                 SelectionDAG &DAG) {
 
   MachineFunction &MF = DAG.getMachineFunction();
@@ -400,7 +400,7 @@ LowerVAArg(SDOperand Chain, SDOperand VAListP, Value *VAListV,
            "Other types should have been promoted for varargs!");
     Amt = 8;
   }
-  Val = DAG.getNode(ISD::ADD, Val.getValueType(), Val, 
+  Val = DAG.getNode(ISD::ADD, Val.getValueType(), Val,
                     DAG.getConstant(Amt, Val.getValueType()));
   Chain = DAG.getNode(ISD::STORE, MVT::Other, Chain,
                       Val, VAListP, DAG.getSrcValue(VAListV));
@@ -494,22 +494,22 @@ void boothEncode(std::string inString, std::string& boothEncodedString) {
   int lim=inString.size();
 
   while(curpos<lim) {
-    if(inString[curpos]=='1') { // if we see a '1', look for a run of them 
+    if(inString[curpos]=='1') { // if we see a '1', look for a run of them
       int runlength=0;
       std::string replaceString="N";
-     
+
       // find the run length
       for(;inString[curpos+runlength]=='1';runlength++) ;
 
       for(int i=0; i<runlength-1; i++)
-	replaceString+="0";
+        replaceString+="0";
       replaceString+="1";
 
       if(runlength>1) {
-	inString.replace(curpos, runlength+1, replaceString);
-	curpos+=runlength-1;
+        inString.replace(curpos, runlength+1, replaceString);
+        curpos+=runlength-1;
       } else
-	curpos++;
+        curpos++;
     } else { // a zero, we just keep chugging along
       curpos++;
     }
@@ -529,7 +529,7 @@ void boothEncode(std::string inString, std::string& boothEncodedString) {
 
 struct shiftaddblob { // this encodes stuff like (x=) "A << B [+-] C << D"
   unsigned firstVal;    // A
-  unsigned firstShift;  // B 
+  unsigned firstShift;  // B
   unsigned secondVal;   // C
   unsigned secondShift; // D
   bool isSub;
@@ -555,7 +555,7 @@ unsigned lefevre(const std::string inString,
   }
 
   std::vector<int> p,n;
-  
+
   for(int i=0; i<=length; i++) {
     if (s.c_str()[length-i]=='P') {
       p.push_back(i);
@@ -609,49 +609,49 @@ unsigned lefevre(const std::string inString,
     int z=abs(int_d)-1;
 
     if(int_d>0) {
-      
+
       for(unsigned base=0; base<retstring.size(); base++) {
-	if( ((base+z+1) < retstring.size()) &&
-	   retstring.c_str()[base]=='P' &&
-	   retstring.c_str()[base+z+1]=='P')
-	{
-	  // match
-	  x++;
-	  retstring.replace(base, 1, "0");
-	  retstring.replace(base+z+1, 1, "p");
-	}
+        if( ((base+z+1) < retstring.size()) &&
+           retstring.c_str()[base]=='P' &&
+           retstring.c_str()[base+z+1]=='P')
+        {
+          // match
+          x++;
+          retstring.replace(base, 1, "0");
+          retstring.replace(base+z+1, 1, "p");
+        }
       }
 
       for(unsigned base=0; base<retstring.size(); base++) {
-	if( ((base+z+1) < retstring.size()) &&
-	   retstring.c_str()[base]=='N' &&
-	   retstring.c_str()[base+z+1]=='N')
-	{
-	  // match
-	  x++;
-	  retstring.replace(base, 1, "0");
-	  retstring.replace(base+z+1, 1, "n");
-	}
+        if( ((base+z+1) < retstring.size()) &&
+           retstring.c_str()[base]=='N' &&
+           retstring.c_str()[base+z+1]=='N')
+        {
+          // match
+          x++;
+          retstring.replace(base, 1, "0");
+          retstring.replace(base+z+1, 1, "n");
+        }
       }
 
     } else {
       for(unsigned base=0; base<retstring.size(); base++) {
-	if( ((base+z+1) < retstring.size()) &&
-	    ((retstring.c_str()[base]=='P' &&
-	     retstring.c_str()[base+z+1]=='N') ||
-	    (retstring.c_str()[base]=='N' &&
-	     retstring.c_str()[base+z+1]=='P')) ) {
-	  // match
-	  x++;
-	  
-	  if(retstring.c_str()[base]=='P') {
-	    retstring.replace(base, 1, "0");
-	    retstring.replace(base+z+1, 1, "p");
-	  } else { // retstring[base]=='N'
-	    retstring.replace(base, 1, "0");
-	    retstring.replace(base+z+1, 1, "n");
-	  }
-	}
+        if( ((base+z+1) < retstring.size()) &&
+            ((retstring.c_str()[base]=='P' &&
+             retstring.c_str()[base+z+1]=='N') ||
+            (retstring.c_str()[base]=='N' &&
+             retstring.c_str()[base+z+1]=='P')) ) {
+          // match
+          x++;
+
+          if(retstring.c_str()[base]=='P') {
+            retstring.replace(base, 1, "0");
+            retstring.replace(base+z+1, 1, "p");
+          } else { // retstring[base]=='N'
+            retstring.replace(base, 1, "0");
+            retstring.replace(base+z+1, 1, "n");
+          }
+        }
       }
     }
 
@@ -660,11 +660,11 @@ unsigned lefevre(const std::string inString,
       t = retstring;
       c = int_d; // tofix
     }
-    
+
   } d.pop_back(); // hmm
 
   u = t;
-  
+
   for(unsigned i=0; i<t.length(); i++) {
     if(t.c_str()[i]=='p' || t.c_str()[i]=='n')
       t.replace(i, 1, "0");
@@ -684,7 +684,7 @@ unsigned lefevre(const std::string inString,
     c=-c;
   } else
     f=false;
-  
+
   int pos=0;
   while(u[pos]=='0')
     pos++;
@@ -699,9 +699,9 @@ unsigned lefevre(const std::string inString,
       bool isN=(u[p]=='N');
 
       if(isP)
-	u.replace(p, 1, "N");
+        u.replace(p, 1, "N");
       if(isN)
-	u.replace(p, 1, "P");
+        u.replace(p, 1, "P");
     }
   }
 
@@ -710,7 +710,7 @@ unsigned lefevre(const std::string inString,
   int i = lefevre(u, ops);
 
   shiftaddblob blob;
-  
+
   blob.firstVal=i; blob.firstShift=c;
   blob.isSub=f;
   blob.secondVal=i; blob.secondShift=0;
@@ -731,9 +731,9 @@ unsigned lefevre(const std::string inString,
       bool isN=(t.c_str()[p]=='N');
 
       if(isP)
-	t.replace(p, 1, "N");
+        t.replace(p, 1, "N");
       if(isN)
-	t.replace(p, 1, "P");
+        t.replace(p, 1, "P");
     }
   }
 
@@ -764,7 +764,7 @@ unsigned lefevre(const std::string inString,
       break;
       //assert
   }
- 
+
   ops.push_back(blob);
   return ops.size();
 }
@@ -808,7 +808,7 @@ SDOperand ISel::BuildConstmulSequence(SDOperand N) {
 
   assert(ops.size() < 80 && "constmul code has gone haywire\n");
   SDOperand results[80]; // temporary results (of adds/subs of shifts)
-  
+
   // now turn 'ops' into DAG bits
   for(unsigned i=0; i<ops.size(); i++) {
     SDOperand amt = ISelDAG->getConstant(ops[i].firstShift, MVT::i64);
@@ -830,11 +830,11 @@ SDOperand ISel::BuildConstmulSequence(SDOperand N) {
   if(preliminaryShift) {
     SDOperand finalshift = ISelDAG->getConstant(preliminaryShift, MVT::i64);
     shiftedresult = ISelDAG->getNode(ISD::SHL, MVT::i64,
-	results[ops.size()-1], finalshift);
+        results[ops.size()-1], finalshift);
   } else { // there was no preliminary divide-by-power-of-2 required
     shiftedresult = results[ops.size()-1];
   }
- 
+
   SDOperand finalresult;
   if(flippedSign) { // if we were multiplying by a negative constant:
     SDOperand zero = ISelDAG->getConstant(0, MVT::i64);
@@ -843,8 +843,8 @@ SDOperand ISel::BuildConstmulSequence(SDOperand N) {
   } else { // there was no preliminary multiply by -1 required
     finalresult = shiftedresult;
   }
-  
-  return finalresult; 
+
+  return finalresult;
 }
 
 /// ExactLog2 - This function solves for (Val == 1 << (N-1)) and returns N.  It
@@ -1098,7 +1098,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
             .addReg(Tmp1);
           break;
       }
-      
+
       return Result;
   }
 
@@ -1316,7 +1316,7 @@ assert(0 && "hmm, ISD::SIGN_EXTEND: shouldn't ever be reached. bad luck!\n");
         Tmp1 = SelectExpr(N.getOperand(0).getOperand(0));
         int shl_amt = CSD->getValue();
         Tmp3 = SelectExpr(N.getOperand(1));
-        
+
         BuildMI(BB, IA64::SHLADD, 3, Result)
           .addReg(Tmp1).addImm(shl_amt).addReg(Tmp3);
         return Result; // early exit
@@ -1344,21 +1344,21 @@ assert(0 && "hmm, ISD::SIGN_EXTEND: shouldn't ever be reached. bad luck!\n");
 
     if(DestType != MVT::f64) { // TODO: speed!
       if(N.getOperand(1).getOpcode() != ISD::Constant) { // if not a const mul
-	// boring old integer multiply with xma
-	Tmp1 = SelectExpr(N.getOperand(0));
-	Tmp2 = SelectExpr(N.getOperand(1));
+        // boring old integer multiply with xma
+        Tmp1 = SelectExpr(N.getOperand(0));
+        Tmp2 = SelectExpr(N.getOperand(1));
 
-	unsigned TempFR1=MakeReg(MVT::f64);
-	unsigned TempFR2=MakeReg(MVT::f64);
-	unsigned TempFR3=MakeReg(MVT::f64);
-	BuildMI(BB, IA64::SETFSIG, 1, TempFR1).addReg(Tmp1);
-	BuildMI(BB, IA64::SETFSIG, 1, TempFR2).addReg(Tmp2);
-	BuildMI(BB, IA64::XMAL, 1, TempFR3).addReg(TempFR1).addReg(TempFR2)
-	  .addReg(IA64::F0);
-	BuildMI(BB, IA64::GETFSIG, 1, Result).addReg(TempFR3);
-	return Result; // early exit
+        unsigned TempFR1=MakeReg(MVT::f64);
+        unsigned TempFR2=MakeReg(MVT::f64);
+        unsigned TempFR3=MakeReg(MVT::f64);
+        BuildMI(BB, IA64::SETFSIG, 1, TempFR1).addReg(Tmp1);
+        BuildMI(BB, IA64::SETFSIG, 1, TempFR2).addReg(Tmp2);
+        BuildMI(BB, IA64::XMAL, 1, TempFR3).addReg(TempFR1).addReg(TempFR2)
+          .addReg(IA64::F0);
+        BuildMI(BB, IA64::GETFSIG, 1, Result).addReg(TempFR3);
+        return Result; // early exit
       } else { // we are multiplying by an integer constant! yay
-	return Reg = SelectExpr(BuildConstmulSequence(N)); // avert your eyes!
+        return Reg = SelectExpr(BuildConstmulSequence(N)); // avert your eyes!
       }
     }
     else { // floating point multiply
@@ -1799,7 +1799,7 @@ pC = pA OR pB
         unsigned ModulusResult = MakeReg(MVT::f64);
         unsigned TmpF = MakeReg(MVT::f64);
         unsigned TmpI = MakeReg(MVT::i64);
-        
+
         BuildMI(BB, IA64::SUB, 2, TmpI).addReg(IA64::r0).addReg(Tmp2);
         BuildMI(BB, IA64::SETFSIG, 1, TmpF).addReg(TmpI);
         BuildMI(BB, IA64::XMAL, 3, ModulusResult)
@@ -1843,7 +1843,7 @@ pC = pA OR pB
           Tmp2 = SelectExpr(N.getOperand(1));
         } else // not comparing against a constant
           Tmp2 = SelectExpr(N.getOperand(1));
-        
+
         switch (SetCC->getCondition()) {
         default: assert(0 && "Unknown integer comparison!");
         case ISD::SETEQ:
@@ -1956,7 +1956,7 @@ pC = pA OR pB
         case MVT::i16: Opc = IA64::LD2; break;
         case MVT::i32: Opc = IA64::LD4; break;
         case MVT::i64: Opc = IA64::LD8; break;
-                
+
         case MVT::f32: Opc = IA64::LDF4; break;
         case MVT::f64: Opc = IA64::LDF8; break;
       }
@@ -2037,7 +2037,7 @@ pC = pA OR pB
         BuildMI(BB, Opc, 1, dummy).addReg(Tmp2);
         // we compare to 0. true? 0. false? 1.
         BuildMI(BB, IA64::CMPNE, 2, Result).addReg(dummy).addReg(IA64::r0);
-      }        
+      }
     }
 
     return Result;
@@ -2114,7 +2114,7 @@ pC = pA OR pB
       for (int i = 8, e = argvregs.size(); i < e; ++i)
       {
         unsigned tempAddr = MakeReg(MVT::i64);
-        
+
         switch(N.getOperand(i+2).getValueType()) {
         default:
           Node->dump();
@@ -2157,7 +2157,7 @@ pC = pA OR pB
       }
     else { // otherwise we need to get the function descriptor
            // load the branch target (function)'s entry point and
-	   // GP, then branch
+           // GP, then branch
       Tmp1 = SelectExpr(N.getOperand(1));
 
       unsigned targetEntryPoint=MakeReg(MVT::i64);
@@ -2355,7 +2355,7 @@ void ISel::Select(SDOperand N) {
           case MVT::i16: Opc = IA64::ST2; break;
           case MVT::i32: Opc = IA64::ST4; break;
           case MVT::i64: Opc = IA64::ST8; break;
-                        
+
           case MVT::f32: Opc = IA64::STF4; break;
           case MVT::f64: Opc = IA64::STF8; break;
         }
@@ -2394,7 +2394,7 @@ void ISel::Select(SDOperand N) {
       } else if(N.getOperand(2).getOpcode() == ISD::FrameIndex) {
 
         // FIXME? (what about bools?)
-        
+
         unsigned dummy = MakeReg(MVT::i64);
         BuildMI(BB, IA64::MOV, 1, dummy)
           .addFrameIndex(cast<FrameIndexSDNode>(N.getOperand(2))->getIndex());

@@ -418,7 +418,7 @@ DSGraph &BUDataStructures::CreateGraphForExternalFunction(const Function &Fn) {
   DSG->getReturnNodes().insert(std::make_pair(F, DSNodeHandle()));
 
   if (F->getName() == "free") { // Taking the address of free.
-    
+
     // Free should take a single pointer argument, mark it as heap memory.
     DSNode *N = new DSNode(0, DSG);
     N->setHeapNodeMarker();

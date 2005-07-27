@@ -173,7 +173,7 @@ SchedPriorities::chooseByRule2(std::vector<candIndex>& mcands) {
 inline int
 SchedPriorities::chooseByRule3(std::vector<candIndex>& mcands) {
   assert(mcands.size() >= 1 && "Should have at least one candidate here.");
-  int maxUses = candsAsHeap.getNode(mcands[0])->getNumOutEdges();       
+  int maxUses = candsAsHeap.getNode(mcands[0])->getNumOutEdges();
   int indexWithMaxUses = 0;
   for (unsigned i=1, N = mcands.size(); i < N; i++) {
     int numUses = candsAsHeap.getNode(mcands[i])->getNumOutEdges();

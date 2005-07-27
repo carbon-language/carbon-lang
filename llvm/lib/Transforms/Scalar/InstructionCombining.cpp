@@ -1319,7 +1319,7 @@ struct FoldSetCCLogical {
 static bool MaskedValueIsZero(Value *V, ConstantIntegral *Mask) {
   // Note, we cannot consider 'undef' to be "IsZero" here.  The problem is that
   // we cannot optimize based on the assumption that it is zero without changing
-  // to to an explicit zero.  If we don't change it to zero, other code could 
+  // to to an explicit zero.  If we don't change it to zero, other code could
   // optimized based on the contradictory assumption that it is non-zero.
   // Because instcombine aggressively folds operations with undef args anyway,
   // this won't lose us code quality.
@@ -2308,7 +2308,7 @@ Instruction *InstCombiner::FoldGEPSetCC(User *GEPLHS, Value *RHS,
     // compare the base pointer.
     if (PtrBase != GEPRHS->getOperand(0)) {
       bool IndicesTheSame = GEPLHS->getNumOperands()==GEPRHS->getNumOperands();
-      IndicesTheSame &= GEPLHS->getOperand(0)->getType() == 
+      IndicesTheSame &= GEPLHS->getOperand(0)->getType() ==
                         GEPRHS->getOperand(0)->getType();
       if (IndicesTheSame)
         for (unsigned i = 1, e = GEPLHS->getNumOperands(); i != e; ++i)
@@ -3103,7 +3103,7 @@ Instruction *InstCombiner::visitSetCondInstWithCastAndCast(SetCondInst &SCI) {
         }
       }
 
-      // Finally, return the value computed.    
+      // Finally, return the value computed.
       if (SCI.getOpcode() == Instruction::SetLT) {
         return ReplaceInstUsesWith(SCI, Result);
       } else {
@@ -3167,7 +3167,7 @@ Instruction *InstCombiner::visitShiftInst(ShiftInst &I) {
       return new CastInst(V, I.getType());
     }
   }
-  
+
   if (ConstantUInt *CUI = dyn_cast<ConstantUInt>(Op1)) {
     // shl uint X, 32 = 0 and shr ubyte Y, 9 = 0, ... just don't eliminate shr
     // of a signed value.
@@ -3623,7 +3623,7 @@ Instruction *InstCombiner::visitCastInst(CastInst &CI) {
         if (ConstantInt *Op1C = dyn_cast<ConstantInt>(Op1)) {
           if (Op1C->getRawValue() == 0) {
             // If the input only has the low bit set, simplify directly.
-            Constant *Not1 = 
+            Constant *Not1 =
               ConstantExpr::getNot(ConstantInt::get(Op0->getType(), 1));
             // cast (X != 0) to int  --> X if X&~1 == 0
             if (MaskedValueIsZero(Op0, cast<ConstantIntegral>(Not1))) {
@@ -3666,7 +3666,7 @@ Instruction *InstCombiner::visitCastInst(CastInst &CI) {
           if ((Op1C->getRawValue() & Op1C->getRawValue()-1) == 0) {
             // cast (X == 1) to int -> X iff X has only the low bit set.
             if (Op1C->getRawValue() == 1) {
-              Constant *Not1 = 
+              Constant *Not1 =
                 ConstantExpr::getNot(ConstantInt::get(Op0->getType(), 1));
               if (MaskedValueIsZero(Op0, cast<ConstantIntegral>(Not1))) {
                 if (CI.getType() == Op0->getType())
@@ -5247,7 +5247,7 @@ bool InstCombiner::runOnFunction(Function &F) {
            E = df_ext_end(&F.front(), Visited); BB != E; ++BB)
       for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I)
         WorkList.push_back(I);
- 
+
     // Do a quick scan over the function.  If we find any blocks that are
     // unreachable, remove any instructions inside of them.  This prevents
     // the instcombine code from having to deal with some bad special cases.

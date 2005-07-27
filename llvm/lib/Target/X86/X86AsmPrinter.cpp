@@ -25,7 +25,7 @@
 using namespace llvm;
 using namespace x86;
 
-Statistic<> llvm::x86::EmittedInsts("asm-printer", 
+Statistic<> llvm::x86::EmittedInsts("asm-printer",
                                     "Number of machine instrs printed");
 
 enum AsmWriterFlavorTy { att, intel };
@@ -58,7 +58,7 @@ bool X86SharedAsmPrinter::doInitialization(Module& M) {
     leadingUnderscore = false;
 #endif
   }
-  
+
   if (leadingUnderscore || forCygwin || forDarwin)
     GlobalPrefix = "_";
 
@@ -67,7 +67,7 @@ bool X86SharedAsmPrinter::doInitialization(Module& M) {
     Data64bitsDirective = 0;       // we can't emit a 64-bit unit
     ZeroDirective = "\t.space\t";  // ".space N" emits N zeros.
   }
-  
+
   return AsmPrinter::doInitialization(M);
 }
 
@@ -107,7 +107,7 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
       Constant *C = I->getInitializer();
       unsigned Size = TD.getTypeSize(C->getType());
       unsigned Align = TD.getTypeAlignmentShift(C->getType());
-      
+
       if (C->isNullValue() &&
           (I->hasLinkOnceLinkage() || I->hasInternalLinkage() ||
            I->hasWeakLinkage() /* FIXME: Verify correct */)) {
@@ -116,7 +116,7 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
           O << "\t.local " << name << "\n";
         if (forDarwin && I->hasInternalLinkage())
           O << "\t.lcomm " << name << "," << Size << "," << Align;
-        else 
+        else
           O << "\t.comm " << name << "," << Size;
         if (!forCygwin && !forDarwin)
           O << "," << (1 << Align);
@@ -147,7 +147,7 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
             SwitchSection(O, CurSection, ".data");
           break;
         }
-        
+
         emitAlignment(Align);
         if (!forCygwin && !forDarwin) {
           O << "\t.type " << name << ",@object\n";
@@ -161,7 +161,7 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
         emitGlobalConstant(C);
       }
     }
-  
+
   if (forDarwin) {
     // Output stubs for external global variables
     if (GVStubs.begin() != GVStubs.end())
@@ -191,7 +191,7 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
     }
 
     O << "\n";
-  
+
     // Output stubs for link-once variables
     if (LinkOnceStubs.begin() != LinkOnceStubs.end())
       O << ".data\n.align 2\n";

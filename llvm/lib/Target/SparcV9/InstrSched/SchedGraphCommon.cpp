@@ -173,8 +173,8 @@ void SchedGraphCommon::eraseOutgoingEdges(SchedGraphNodeCommon* node,
 
 void SchedGraphCommon::eraseIncidentEdges(SchedGraphNodeCommon* node,
                                           bool addDummyEdges) {
-  this->eraseIncomingEdges(node, addDummyEdges);        
-  this->eraseOutgoingEdges(node, addDummyEdges);        
+  this->eraseIncomingEdges(node, addDummyEdges);
+  this->eraseOutgoingEdges(node, addDummyEdges);
 }
 
 } // End llvm namespace

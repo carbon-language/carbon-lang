@@ -16,7 +16,7 @@
 
 using namespace llvm;
 
-TargetFrameInfo::~TargetFrameInfo() 
+TargetFrameInfo::~TargetFrameInfo()
 {
 }
 

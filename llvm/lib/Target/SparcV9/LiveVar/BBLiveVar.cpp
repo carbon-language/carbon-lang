@@ -82,9 +82,9 @@ void BBLiveVar::calcDefUseSets() {
         if (MI->getOpcode() == V9::PHI) {         // for a phi node
           const Value *ArgVal = Op;
           const BasicBlock *PredBB = cast<BasicBlock>(*++OpI); // next ptr is BB
-        
+
           PredToEdgeInSetMap[PredBB].insert(ArgVal);
-        
+
           if (DEBUG_LV >= LV_DEBUG_Verbose)
             std::cerr << "   - phi operand " << RAV(ArgVal) << " came from BB "
                       << RAV(PredBB) << "\n";
@@ -111,7 +111,7 @@ void BBLiveVar::calcDefUseSets() {
 }
 
 
-        
+
 //-----------------------------------------------------------------------------
 // To add an operand which is a def
 //-----------------------------------------------------------------------------

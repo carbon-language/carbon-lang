@@ -30,7 +30,7 @@ namespace {
     virtual bool runOnMachineFunction(MachineFunction &MF);
 
     bool PeepholeOptimize(MachineBasicBlock &MBB,
-			  MachineBasicBlock::iterator &I);
+                          MachineBasicBlock::iterator &I);
 
     virtual const char *getPassName() const { return "X86 Peephole Optimizer"; }
   };
@@ -44,17 +44,17 @@ bool PH::runOnMachineFunction(MachineFunction &MF) {
   for (MachineFunction::iterator BI = MF.begin(), E = MF.end(); BI != E; ++BI)
     for (MachineBasicBlock::iterator I = BI->begin(); I != BI->end(); )
       if (PeepholeOptimize(*BI, I)) {
-	Changed = true;
+        Changed = true;
         ++NumPHOpts;
       } else
-	++I;
+        ++I;
 
   return Changed;
 }
 
 
 bool PH::PeepholeOptimize(MachineBasicBlock &MBB,
-			  MachineBasicBlock::iterator &I) {
+                          MachineBasicBlock::iterator &I) {
   assert(I != MBB.end());
   MachineBasicBlock::iterator NextI = next(I);
 
@@ -218,20 +218,20 @@ bool PH::PeepholeOptimize(MachineBasicBlock &MBB,
     if (MI->getOperand(1).isImmediate()) {         // avoid mov EAX, <value>
       int Val = MI->getOperand(1).getImmedValue();
       if (Val == 0) {                              // mov EAX, 0 -> xor EAX, EAX
-	static const unsigned Opcode[] ={X86::XOR8rr,X86::XOR16rr,X86::XOR32rr};
-	unsigned Reg = MI->getOperand(0).getReg();
-	I = MBB.insert(MBB.erase(I),
+        static const unsigned Opcode[] ={X86::XOR8rr,X86::XOR16rr,X86::XOR32rr};
+        unsigned Reg = MI->getOperand(0).getReg();
+        I = MBB.insert(MBB.erase(I),
                        BuildMI(Opcode[Size], 2, Reg).addReg(Reg).addReg(Reg));
-	return true;
+        return true;
       } else if (Val == -1) {                     // mov EAX, -1 -> or EAX, -1
-	// TODO: 'or Reg, -1' has a smaller encoding than 'mov Reg, -1'
+        // TODO: 'or Reg, -1' has a smaller encoding than 'mov Reg, -1'
       }
     }
     return false;
 #endif
   case X86::BSWAP32r:        // Change bswap EAX, bswap EAX into nothing
     if (Next->getOpcode() == X86::BSWAP32r &&
-	MI->getOperand(0).getReg() == Next->getOperand(0).getReg()) {
+        MI->getOperand(0).getReg() == Next->getOperand(0).getReg()) {
       I = MBB.erase(MBB.erase(I));
       return true;
     }
@@ -314,7 +314,7 @@ namespace {
     virtual bool runOnMachineFunction(MachineFunction &MF);
 
     bool PeepholeOptimize(MachineBasicBlock &MBB,
-			  MachineBasicBlock::iterator &I);
+                          MachineBasicBlock::iterator &I);
 
     virtual const char *getPassName() const {
       return "X86 SSA-based Peephole Optimizer";

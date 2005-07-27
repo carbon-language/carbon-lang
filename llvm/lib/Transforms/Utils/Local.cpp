@@ -245,10 +245,10 @@ bool llvm::canConstantFoldCallTo(Function *F) {
   switch (Name[0])
   {
     case 'a':
-      return Name == "acos" || Name == "asin" || Name == "atan" || 
+      return Name == "acos" || Name == "asin" || Name == "atan" ||
              Name == "atan2";
     case 'c':
-      return Name == "ceil" || Name == "cos" || Name == "cosf" || 
+      return Name == "ceil" || Name == "cos" || Name == "cosf" ||
              Name == "cosh";
     case 'e':
       return Name == "exp";
@@ -374,7 +374,7 @@ Constant *llvm::ConstantFoldCall(Function *F,
 
 bool llvm::isInstructionTriviallyDead(Instruction *I) {
   if (!I->use_empty() || isa<TerminatorInst>(I)) return false;
- 
+
   if (!I->mayWriteToMemory()) return true;
 
   if (CallInst *CI = dyn_cast<CallInst>(I))

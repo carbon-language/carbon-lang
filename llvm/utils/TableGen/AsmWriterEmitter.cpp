@@ -116,7 +116,7 @@ AsmWriterInst::AsmWriterInst(const CodeGenInstruction &CGI, unsigned Variant) {
       LastEmitted = DollarPos;
     } else if (AsmString[DollarPos] == '{') {
       if (inVariant)
-        throw "Nested variants found for instruction '" + 
+        throw "Nested variants found for instruction '" +
               CGI.TheDef->getName() + "'!";
       LastEmitted = DollarPos+1;
       inVariant = true;   // We are now inside of the variant!
@@ -127,7 +127,7 @@ AsmWriterInst::AsmWriterInst(const CodeGenInstruction &CGI, unsigned Variant) {
         std::string::size_type NP =
           AsmString.find_first_of("|}", LastEmitted);
         if (NP == std::string::npos)
-          throw "Incomplete variant for instruction '" + 
+          throw "Incomplete variant for instruction '" +
                 CGI.TheDef->getName() + "'!";
         LastEmitted = NP+1;
         if (AsmString[NP] == '}') {
@@ -142,7 +142,7 @@ AsmWriterInst::AsmWriterInst(const CodeGenInstruction &CGI, unsigned Variant) {
       // Move to the end of variant list.
       std::string::size_type NP = AsmString.find('}', LastEmitted);
       if (NP == std::string::npos)
-        throw "Incomplete variant for instruction '" + 
+        throw "Incomplete variant for instruction '" +
               CGI.TheDef->getName() + "'!";
       LastEmitted = NP+1;
       inVariant = false;
@@ -188,7 +188,7 @@ AsmWriterInst::AsmWriterInst(const CodeGenInstruction &CGI, unsigned Variant) {
         ++VarEnd;
       }
       if (VarName.empty())
-        throw "Stray '$' in '" + CGI.TheDef->getName() + 
+        throw "Stray '$' in '" + CGI.TheDef->getName() +
               "' asm string, maybe you want $$?";
 
       unsigned OpNo = CGI.getOperandNamed(VarName);

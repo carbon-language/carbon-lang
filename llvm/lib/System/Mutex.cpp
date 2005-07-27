@@ -29,9 +29,9 @@ using namespace sys;
 #include <stdlib.h>
 
 // This variable is useful for situations where the pthread library has been
-// compiled with weak linkage for its interface symbols. This allows the 
+// compiled with weak linkage for its interface symbols. This allows the
 // threading support to be turned off by simply not linking against -lpthread.
-// In that situation, the value of pthread_mutex_init will be 0 and 
+// In that situation, the value of pthread_mutex_init will be 0 and
 // consequently pthread_enabled will be false. In such situations, all the
 // pthread operations become no-ops and the functions all return false. If
 // pthread_mutex_init does have an address, then mutex support is enabled.
@@ -48,7 +48,7 @@ Mutex::Mutex( bool recursive)
   if (pthread_enabled)
   {
     // Declare the pthread_mutex data structures
-    pthread_mutex_t* mutex = 
+    pthread_mutex_t* mutex =
       static_cast<pthread_mutex_t*>(malloc(sizeof(pthread_mutex_t)));
     pthread_mutexattr_t attr;
 
@@ -92,10 +92,10 @@ Mutex::~Mutex()
   }
 }
 
-bool 
+bool
 Mutex::acquire()
 {
-  if (pthread_enabled) 
+  if (pthread_enabled)
   {
     pthread_mutex_t* mutex = reinterpret_cast<pthread_mutex_t*>(data_);
     assert(mutex != 0);
@@ -106,7 +106,7 @@ Mutex::acquire()
   return false;
 }
 
-bool 
+bool
 Mutex::release()
 {
   if (pthread_enabled)
@@ -120,7 +120,7 @@ Mutex::release()
   return false;
 }
 
-bool 
+bool
 Mutex::tryacquire()
 {
   if (pthread_enabled)

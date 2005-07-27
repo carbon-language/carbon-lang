@@ -119,7 +119,7 @@ static unsigned AddLiveIn(MachineFunction &MF, unsigned PReg,
 std::vector<SDOperand>
 V8TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG)
 {
-  static const unsigned IncomingArgRegs[] = 
+  static const unsigned IncomingArgRegs[] =
     { V8::I0, V8::I1, V8::I2, V8::I3, V8::I4, V8::I5 };
   std::vector<SDOperand> ArgValues;
 
@@ -154,8 +154,8 @@ V8TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG)
       case MVT::i8:
       case MVT::i16:
       case MVT::i32:
-        argt = DAG.getCopyFromReg(AddLiveIn(MF, IncomingArgRegs[ArgNo], 
-                                            getRegClassFor(MVT::i32)), 
+        argt = DAG.getCopyFromReg(AddLiveIn(MF, IncomingArgRegs[ArgNo],
+                                            getRegClassFor(MVT::i32)),
                                   VT, DAG.getRoot());
         if (VT != MVT::i32)
           argt = DAG.getNode(ISD::TRUNCATE, VT, argt);
@@ -198,7 +198,7 @@ std::pair<SDOperand, SDOperand>
 V8TargetLowering::LowerCallTo(SDOperand Chain,
                                  const Type *RetTy, bool isVarArg,
                                  unsigned CallingConv, bool isTailCall,
-                                 SDOperand Callee, ArgListTy &Args, 
+                                 SDOperand Callee, ArgListTy &Args,
                                  SelectionDAG &DAG) {
   //FIXME
   return std::make_pair(Chain, Chain);
@@ -243,7 +243,7 @@ public:
     // Clear state used for selection.
     ExprMap.clear();
   }
-  
+
   virtual void EmitFunctionEntryCode(Function &Fn, MachineFunction &MF);
 
   unsigned SelectExpr(SDOperand N);
@@ -347,7 +347,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
       case MVT::f64: Opc = V8::LDFSRrr;
       case MVT::f32: Opc = V8::LDDFrr;
       default:
-        Node->dump(); 
+        Node->dump();
         assert(0 && "Bad type!");
         break;
       }
@@ -374,7 +374,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
       SDOperand Chain   = N.getOperand(0);
       Select(Chain);
       unsigned r = dyn_cast<RegSDNode>(Node)->getReg();
-      
+
       BuildMI(BB, V8::ORrr, 2, Result).addReg(r).addReg(V8::G0);
       return Result;
     }
@@ -411,7 +411,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
     Tmp2 = SelectExpr(N.getOperand(1));
     BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
     return Result;
-   
+
   }
   return 0;
 }
@@ -488,7 +488,7 @@ void ISel::Select(SDOperand N) {
       Tmp1 = SelectExpr(Value);
       Tmp2 = SelectExpr(Address);
 
-      unsigned VT = opcode == ISD::STORE ? 
+      unsigned VT = opcode == ISD::STORE ?
         Value.getValueType() : cast<VTSDNode>(Node->getOperand(4))->getVT();
       switch(VT) {
       default: assert(0 && "unknown Type in store");

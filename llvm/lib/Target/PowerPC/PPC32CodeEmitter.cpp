@@ -201,7 +201,7 @@ int PPC32CodeEmitter::getMachineOpValue(MachineInstr &MI, MachineOperand &MO) {
       case PPC::LIS:
         if (isExternal)
           Reloc = PPC::reloc_absolute_ptr_high;   // Pointer to stub
-        else 
+        else
           Reloc = PPC::reloc_absolute_high;       // Pointer to symbol
         break;
       case PPC::LA:
@@ -221,7 +221,7 @@ int PPC32CodeEmitter::getMachineOpValue(MachineInstr &MI, MachineOperand &MO) {
       case PPC::STFD:
         if (isExternal)
           Reloc = PPC::reloc_absolute_ptr_low;
-        else 
+        else
           Reloc = PPC::reloc_absolute_low;
         break;
       }

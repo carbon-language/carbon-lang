@@ -169,11 +169,11 @@ int AlphaCodeEmitter::getMachineOpValue(MachineInstr &MI, MachineOperand &MO) {
     rv = getAlphaRegNumber(MO.getReg());
   } else if (MO.isImmediate()) {
     rv = MO.getImmedValue();
-  } else if (MO.isGlobalAddress() || MO.isExternalSymbol() 
+  } else if (MO.isGlobalAddress() || MO.isExternalSymbol()
              || MO.isConstantPoolIndex()) {
     DEBUG(std::cerr << MO << " is a relocated op for " << MI << "\n";);
-    bool isExternal = MO.isExternalSymbol() || 
-      (MO.isGlobalAddress() && 
+    bool isExternal = MO.isExternalSymbol() ||
+      (MO.isGlobalAddress() &&
        ( MO.getGlobal()->hasWeakLinkage() ||
          MO.getGlobal()->isExternal()) );
     unsigned Reloc = 0;
@@ -213,7 +213,7 @@ int AlphaCodeEmitter::getMachineOpValue(MachineInstr &MI, MachineOperand &MO) {
                                           true));
     else
       MCE.addRelocation(MachineRelocation((unsigned)MCE.getCurrentPCOffset(),
-                                          Reloc, MO.getConstantPoolIndex(), 
+                                          Reloc, MO.getConstantPoolIndex(),
                                           Offset));
   } else if (MO.isMachineBasicBlock()) {
     unsigned* CurrPC = (unsigned*)(intptr_t)MCE.getCurrentPCValue();

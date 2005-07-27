@@ -218,7 +218,7 @@ GenericValue JIT::runFunction(Function *F,
 void JIT::runJITOnFunction(Function *F) {
   static bool isAlreadyCodeGenerating = false;
   assert(!isAlreadyCodeGenerating && "Error: Recursive compilation detected!");
-	
+
   MutexGuard locked(lock);
 
   // JIT the function

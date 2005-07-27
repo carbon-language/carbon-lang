@@ -107,7 +107,7 @@ bool llvm::InlineFunction(CallSite CS) {
         }
   }
 
-  // If we are inlining tail call instruction through an invoke or 
+  // If we are inlining tail call instruction through an invoke or
   if (MustClearTailCallFlags) {
     for (Function::iterator BB = FirstNewBlock, E = Caller->end();
          BB != E; ++BB)

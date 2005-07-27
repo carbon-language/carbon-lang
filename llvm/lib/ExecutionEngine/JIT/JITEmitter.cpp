@@ -147,19 +147,19 @@ namespace {
     /// StubToFunctionMap - Keep track of the function that each stub
     /// corresponds to.
     std::map<void*, Function*> StubToFunctionMap;
-  
+
   public:
     std::map<Function*, void*>& getFunctionToStubMap(const MutexGuard& locked) {
       assert(locked.holds(TheJIT->lock));
       return FunctionToStubMap;
     }
-    
+
     std::map<void*, Function*>& getStubToFunctionMap(const MutexGuard& locked) {
       assert(locked.holds(TheJIT->lock));
       return StubToFunctionMap;
     }
   };
-  
+
   /// JITResolver - Keep track of, and resolve, call sites for functions that
   /// have not yet been compiled.
   class JITResolver {
@@ -340,12 +340,12 @@ namespace {
 
   public:
     JITEmitter(JIT &jit)
-      :MemMgr(jit.getJITInfo().needsGOT()), 
+      :MemMgr(jit.getJITInfo().needsGOT()),
        nextGOTIndex(0)
     {
-      TheJIT = &jit; 
-      DEBUG(std::cerr << 
-            (MemMgr.isManagingGOT() ? "JIT is managing GOT\n" 
+      TheJIT = &jit;
+      DEBUG(std::cerr <<
+            (MemMgr.isManagingGOT() ? "JIT is managing GOT\n"
              : "JIT is not managing GOT\n"));
     }
 
@@ -431,14 +431,14 @@ void JITEmitter::finishFunction(MachineFunction &F) {
         // If the target REALLY wants a stub for this function, emit it now.
         if (!MR.doesntNeedFunctionStub())
           ResultPtr = getJITResolver(this).getExternalFunctionStub(ResultPtr);
-      } else if (MR.isGlobalValue()) 
+      } else if (MR.isGlobalValue())
         ResultPtr = getPointerToGlobal(MR.getGlobalValue(),
                                        CurBlock+MR.getMachineCodeOffset(),
                                        MR.doesntNeedFunctionStub());
       else //ConstantPoolIndex
-        ResultPtr = 
+        ResultPtr =
        (void*)(intptr_t)getConstantPoolEntryAddress(MR.getConstantPoolIndex());
-      
+
       MR.setResultPointer(ResultPtr);
 
       // if we are managing the got, check to see if this pointer has all ready

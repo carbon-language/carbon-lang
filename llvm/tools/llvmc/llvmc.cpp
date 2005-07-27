@@ -343,7 +343,7 @@ int main(int argc, char **argv) {
 
       if (filePos != 0 && (libPos == 0 || filePos < libPos)) {
         // Add a source file
-        InpList.push_back(std::make_pair(*fileIt, 
+        InpList.push_back(std::make_pair(*fileIt,
                                          GetFileType(*fileIt, filePos)));
         ++fileIt;
       } else if ( libPos != 0 && (filePos == 0 || libPos < filePos) ) {

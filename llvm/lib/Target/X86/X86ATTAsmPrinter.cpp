@@ -102,7 +102,7 @@ void X86ATTAsmPrinter::printOp(const MachineOperand &MO, bool isCallOp) {
         FnStubs.insert(Name);
         O << "L" << Name << "$stub";
       } else if (GV->hasLinkOnceLinkage()) {
-        // Link-once, External, or Weakly-linked global variables need 
+        // Link-once, External, or Weakly-linked global variables need
         // non-lazily-resolved stubs
         LinkOnceStubs.insert(Name);
         O << "L" << Name << "$non_lazy_ptr";

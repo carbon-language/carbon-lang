@@ -716,7 +716,7 @@ void SelectionDAGLowering::visitCall(CallInst &I) {
         Ops.push_back(getValue(I.getOperand(1)));
         Tmp = DAG.getNode(F->getIntrinsicID() == Intrinsic::readport ?
                           ISD::READPORT : ISD::READIO, VTs, Ops);
-                          
+
         setValue(&I, Tmp);
         DAG.setRoot(Tmp.getValue(1));
         return;
@@ -887,7 +887,7 @@ void SelectionDAGLowering::visitVAArg(VAArgInst &I) {
 }
 
 void SelectionDAGLowering::visitVAEnd(CallInst &I) {
-  DAG.setRoot(TLI.LowerVAEnd(getRoot(), getValue(I.getOperand(1)), 
+  DAG.setRoot(TLI.LowerVAEnd(getRoot(), getValue(I.getOperand(1)),
                              I.getOperand(1), DAG));
 }
 

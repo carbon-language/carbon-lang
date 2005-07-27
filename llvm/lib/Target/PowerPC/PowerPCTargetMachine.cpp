@@ -136,7 +136,7 @@ void PowerPCJITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
   PICEnabled = false;
 
   bool LP64 = (0 != dynamic_cast<PPC64TargetMachine *>(&TM));
-  
+
   if (EnablePPCLSR) {
     PM.add(createLoopStrengthReducePass());
     PM.add(createCFGSimplificationPass());

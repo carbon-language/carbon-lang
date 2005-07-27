@@ -1212,7 +1212,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     break;
   case ISD::SUB:
     if (N1.getOpcode() == ISD::ADD) {
-      if (N1.Val->getOperand(0) == N2 && 
+      if (N1.Val->getOperand(0) == N2 &&
           !MVT::isFloatingPoint(N2.getValueType()))
         return N1.Val->getOperand(1);         // (A+B)-A == B
       if (N1.Val->getOperand(1) == N2 &&
@@ -1233,7 +1233,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     if (N1.getOpcode() == ISD::SIGN_EXTEND_INREG)
       if (cast<VTSDNode>(N1.getOperand(1))->getVT() <= EVT)
         return N1;
-    
+
     // If we are sign extending a sextload, return just the load.
     if (N1.getOpcode() == ISD::SEXTLOAD)
       if (cast<VTSDNode>(N1.getOperand(3))->getVT() <= EVT)
@@ -1311,7 +1311,7 @@ void SDNode::setAdjCallChain(SDOperand N) {
 
 
 SDOperand SelectionDAG::getLoad(MVT::ValueType VT,
-                                SDOperand Chain, SDOperand Ptr, 
+                                SDOperand Chain, SDOperand Ptr,
                                 SDOperand SV) {
   SDNode *&N = Loads[std::make_pair(Ptr, std::make_pair(Chain, VT))];
   if (N) return SDOperand(N, 0);
@@ -1457,7 +1457,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
 }
 
 SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
-                                SDOperand N1, SDOperand N2, SDOperand N3, 
+                                SDOperand N1, SDOperand N2, SDOperand N3,
                                 SDOperand N4) {
   std::vector<SDOperand> Ops;
   Ops.reserve(4);

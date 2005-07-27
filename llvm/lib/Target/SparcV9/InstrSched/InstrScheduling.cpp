@@ -672,14 +672,14 @@ MarkSuccessorsReady(SchedulingManager& S, const SchedGraphNode* node)
         && ! S.schedPrio.nodeIsReady(*SI))
     {
       // successor not scheduled and not marked ready; check *its* preds.
-        
+
       bool succIsReady = true;
       for (sg_pred_const_iterator P=pred_begin(*SI); P != pred_end(*SI); ++P)
         if (! (*P)->isDummyNode() && ! S.isScheduled(*P)) {
           succIsReady = false;
           break;
         }
-        
+
       if (succIsReady)  // add the successor to the ready list
         S.schedPrio.insertReady(*SI);
     }
@@ -828,7 +828,7 @@ FindSlotChoices(SchedulingManager& S,
           S.addChoiceToSlot(s, S.getChoice(i));
           noSlotFound = false;
         }
-        
+
       // No slot before `delayedNodeSlot' was found for this opCode
       // Use a later slot, and allow some delay slots to fall in
       // the next cycle.
@@ -838,9 +838,9 @@ FindSlotChoices(SchedulingManager& S,
             S.addChoiceToSlot(s, S.getChoice(i));
             break;
           }
-        
+
       assert(s < S.nslots && "No feasible slot for instruction?");
-        
+
       highestSlotUsed = std::max(highestSlotUsed, (int) s);
     }
 
@@ -867,7 +867,7 @@ FindSlotChoices(SchedulingManager& S,
     const SchedGraphNode* breakingNode=S.getChoice(indexForBreakingNode);
     unsigned breakingSlot = INT_MAX;
     unsigned int nslotsToUse = S.nslots;
-        
+
     // Find the last possible slot for this instruction.
     for (int s = S.nslots-1; s >= (int) startSlot; s--)
       if (S.schedInfo.instrCanUseSlot(breakingNode->getOpcode(), s)) {
@@ -884,7 +884,7 @@ FindSlotChoices(SchedulingManager& S,
          i < S.getNumChoices() && i < indexForBreakingNode; i++)
     {
       MachineOpCode opCode =S.getChoice(i)->getOpcode();
-        
+
       // If a higher priority instruction cannot be assigned to
       // any earlier slots, don't schedule the breaking instruction.
       //
@@ -896,10 +896,10 @@ FindSlotChoices(SchedulingManager& S,
             foundLowerSlot = true;
             nslotsToUse = breakingSlot; // RESETS LOOP UPPER BOUND!
           }
-                
+
           S.addChoiceToSlot(s, S.getChoice(i));
         }
-        
+
       if (!foundLowerSlot)
         breakingSlot = INT_MAX;         // disable breaking instr
     }
@@ -912,7 +912,7 @@ FindSlotChoices(SchedulingManager& S,
       nslotsToUse = breakingSlot;
     } else
       nslotsToUse = S.nslots;
-        
+
     // For lower priority instructions than the one that breaks the
     // group, only assign them to slots lower than the breaking slot.
     // Otherwise, just ignore the instruction.
@@ -1198,7 +1198,7 @@ static void ReplaceNopsWithUsefulInstr(SchedulingManager& S,
         sdelayNodeVec.push_back(graph->getGraphNodeForInstr(MBBI));
       else {
         nopNodeVec.push_back(graph->getGraphNodeForInstr(MBBI));
-        
+
         //remove the MI from the Machine Code For Instruction
         const TerminatorInst *TI = MBB.getBasicBlock()->getTerminator();
         MachineCodeForInstruction& llvmMvec =
@@ -1350,7 +1350,7 @@ DelaySlotInfo::scheduleDelayedNode(SchedulingManager& S)
           nextTime++;
         }
       } while (S.isched.getInstr(nextSlot, nextTime) != NULL);
-        
+
       S.scheduleInstr(delayNodeVec[i], nextSlot, nextTime);
       break;
     }
@@ -1457,7 +1457,7 @@ namespace {
 
 bool InstructionSchedulingWithSSA::runOnFunction(Function &F)
 {
-  SchedGraphSet graphSet(&F, target);   
+  SchedGraphSet graphSet(&F, target);
 
   if (SchedDebugLevel >= Sched_PrintSchedGraphs) {
       std::cerr << "\n*** SCHEDULING GRAPHS FOR INSTRUCTION SCHEDULING\n";

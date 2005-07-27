@@ -3510,7 +3510,7 @@ void X86ISel::emitCastOperation(MachineBasicBlock *BB,
         unsigned FltAlign = TM.getTargetData().getFloatAlignment();
         int FrameIdx = F->getFrameInfo()->CreateStackObject(4, FltAlign);
         addFrameReference(BuildMI(*BB, IP, X86::FST32m, 5),
-			  FrameIdx).addReg(SrcReg);
+                          FrameIdx).addReg(SrcReg);
         addFrameReference(BuildMI(*BB, IP, X86::FLD32m, 5, DestReg), FrameIdx);
       }
     } else if (SrcClass == cLong) {

@@ -105,7 +105,7 @@ namespace {
       addRegisterClass(MVT::i8, X86::R8RegisterClass);
       addRegisterClass(MVT::i16, X86::R16RegisterClass);
       addRegisterClass(MVT::i32, X86::R32RegisterClass);
-      
+
       // Promote all UINT_TO_FP to larger SINT_TO_FP's, as X86 doesn't have this
       // operation.
       setOperationAction(ISD::UINT_TO_FP       , MVT::i1   , Promote);
@@ -117,10 +117,10 @@ namespace {
       // this operation.
       setOperationAction(ISD::SINT_TO_FP       , MVT::i1   , Promote);
       setOperationAction(ISD::SINT_TO_FP       , MVT::i8   , Promote);
-       
+
       // We can handle SINT_TO_FP from i64 even though i64 isn't legal.
       setOperationAction(ISD::SINT_TO_FP       , MVT::i64  , Custom);
-      
+
       setOperationAction(ISD::BRCONDTWOWAY     , MVT::Other, Expand);
       setOperationAction(ISD::MEMMOVE          , MVT::Other, Expand);
       setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i16  , Expand);
@@ -137,7 +137,7 @@ namespace {
       setOperationAction(ISD::CTPOP            , MVT::i32  , Expand);
       setOperationAction(ISD::CTTZ             , MVT::i32  , Expand);
       setOperationAction(ISD::CTLZ             , MVT::i32  , Expand);
-      
+
       setOperationAction(ISD::READIO           , MVT::i1   , Expand);
       setOperationAction(ISD::READIO           , MVT::i8   , Expand);
       setOperationAction(ISD::READIO           , MVT::i16  , Expand);
@@ -146,16 +146,16 @@ namespace {
       setOperationAction(ISD::WRITEIO          , MVT::i8   , Expand);
       setOperationAction(ISD::WRITEIO          , MVT::i16  , Expand);
       setOperationAction(ISD::WRITEIO          , MVT::i32  , Expand);
-      
+
       // These should be promoted to a larger select which is supported.
       setOperationAction(ISD::SELECT           , MVT::i1   , Promote);
       setOperationAction(ISD::SELECT           , MVT::i8   , Promote);
-      
+
       if (X86ScalarSSE) {
         // Set up the FP register classes.
         addRegisterClass(MVT::f32, X86::RXMMRegisterClass);
         addRegisterClass(MVT::f64, X86::RXMMRegisterClass);
-        
+
         // SSE has no load+extend ops
         setOperationAction(ISD::EXTLOAD,  MVT::f32, Expand);
         setOperationAction(ISD::ZEXTLOAD, MVT::f32, Expand);
@@ -177,12 +177,12 @@ namespace {
       } else {
         // Set up the FP register classes.
         addRegisterClass(MVT::f64, X86::RFPRegisterClass);
-        
+
         if (!UnsafeFPMath) {
           setOperationAction(ISD::FSIN           , MVT::f64  , Expand);
           setOperationAction(ISD::FCOS           , MVT::f64  , Expand);
         }
-        
+
         addLegalFPImmediate(+0.0); // FLD0
         addLegalFPImmediate(+1.0); // FLD1
         addLegalFPImmediate(-0.0); // FLD0/FCHS
@@ -195,7 +195,7 @@ namespace {
       maxStoresPerMemMove = 8; // For %llvm.memmove -> sequence of stores
       allowUnalignedStores = true; // x86 supports it!
     }
-    
+
     // Return the number of bytes that a function should pop when it returns (in
     // addition to the space used by the return address).
     //
@@ -217,7 +217,7 @@ namespace {
     /// LowerCallTo - This hook lowers an abstract call to a function into an
     /// actual call.
     virtual std::pair<SDOperand, SDOperand>
-    LowerCallTo(SDOperand Chain, const Type *RetTy, bool isVarArg, unsigned CC, 
+    LowerCallTo(SDOperand Chain, const Type *RetTy, bool isVarArg, unsigned CC,
                 bool isTailCall, SDOperand Callee, ArgListTy &Args,
                 SelectionDAG &DAG);
 
@@ -226,7 +226,7 @@ namespace {
     virtual std::pair<SDOperand,SDOperand>
       LowerVAArg(SDOperand Chain, SDOperand VAListP, Value *VAListV,
                  const Type *ArgTy, SelectionDAG &DAG);
-    
+
     virtual std::pair<SDOperand, SDOperand>
     LowerFrameReturnAddress(bool isFrameAddr, SDOperand Chain, unsigned Depth,
                             SelectionDAG &DAG);
@@ -240,7 +240,7 @@ namespace {
     LowerCCCCallTo(SDOperand Chain, const Type *RetTy, bool isVarArg,
                    bool isTailCall,
                    SDOperand Callee, ArgListTy &Args, SelectionDAG &DAG);
- 
+
     // Fast Calling Convention implementation.
     std::vector<SDOperand> LowerFastCCArguments(Function &F, SelectionDAG &DAG);
     std::pair<SDOperand, SDOperand>
@@ -259,7 +259,7 @@ X86TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
 std::pair<SDOperand, SDOperand>
 X86TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
                                bool isVarArg, unsigned CallingConv,
-                               bool isTailCall, 
+                               bool isTailCall,
                                SDOperand Callee, ArgListTy &Args,
                                SelectionDAG &DAG) {
   assert((!isVarArg || CallingConv == CallingConv::C) &&
@@ -579,7 +579,7 @@ X86TargetLowering::LowerFastCCArguments(Function &F, SelectionDAG &DAG) {
     unsigned ArgIncrement = 4;
     unsigned ObjSize = 0;
     SDOperand ArgValue;
-    
+
     switch (ObjectVT) {
     default: assert(0 && "Unhandled argument type!");
     case MVT::i1:
@@ -1025,8 +1025,8 @@ namespace {
 
     /// TheDAG - The DAG being selected during Select* operations.
     SelectionDAG *TheDAG;
-    
-    /// Subtarget - Keep a pointer to the X86Subtarget around so that we can 
+
+    /// Subtarget - Keep a pointer to the X86Subtarget around so that we can
     /// make the right decision when generating code for different targets.
     const X86Subtarget *Subtarget;
   public:
@@ -1353,7 +1353,7 @@ bool ISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM) {
       // the value at address GV, not the value of GV itself.  This means that
       // the GlobalAddress must be in the base or index register of the address,
       // not the GV offset field.
-      if (Subtarget->getIndirectExternAndWeakGlobals() && 
+      if (Subtarget->getIndirectExternAndWeakGlobals() &&
           (GV->hasWeakLinkage() || GV->isExternal())) {
         break;
       } else {
@@ -1788,7 +1788,7 @@ void ISel::EmitSelectCC(SDOperand Cond, MVT::ValueType SVT,
   // There's no SSE equivalent of FCMOVE.  In some cases we can fake it up, in
   // Others we will have to do the PowerPC thing and generate an MBB for the
   // true and false values and select between them with a PHI.
-  if (X86ScalarSSE && (SVT == MVT::f32 || SVT == MVT::f64)) { 
+  if (X86ScalarSSE && (SVT == MVT::f32 || SVT == MVT::f64)) {
     if (0 && CondCode != NOT_SET) {
       // FIXME: check for min and max
     } else {
@@ -1846,7 +1846,7 @@ void ISel::EmitSelectCC(SDOperand Cond, MVT::ValueType SVT,
     case MVT::f64: Opc = CMOVTABFP[CondCode]; break;
     }
   }
-  
+
   // Finally, if we weren't able to fold this, just emit the condition and test
   // it.
   if (CondCode == NOT_SET || Opc == 0) {
@@ -2186,12 +2186,12 @@ unsigned ISel::SelectExpr(SDOperand N) {
     Node->dump();
     assert(0 && "Node not handled!\n");
   case ISD::FP_EXTEND:
-    assert(X86ScalarSSE && "Scalar SSE FP must be enabled to use f32"); 
+    assert(X86ScalarSSE && "Scalar SSE FP must be enabled to use f32");
     Tmp1 = SelectExpr(N.getOperand(0));
     BuildMI(BB, X86::CVTSS2SDrr, 1, Result).addReg(Tmp1);
     return Result;
   case ISD::FP_ROUND:
-    assert(X86ScalarSSE && "Scalar SSE FP must be enabled to use f32"); 
+    assert(X86ScalarSSE && "Scalar SSE FP must be enabled to use f32");
     Tmp1 = SelectExpr(N.getOperand(0));
     BuildMI(BB, X86::CVTSD2SSrr, 1, Result).addReg(Tmp1);
     return Result;
@@ -2216,7 +2216,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
       BuildMI(BB, X86::MOV32rr, 1,
               Result).addReg(cast<RegSDNode>(Node)->getReg());
       return Result;
-    }                                                                   
+    }
 
   case ISD::FrameIndex:
     Tmp1 = cast<FrameIndexSDNode>(N)->getIndex();
@@ -2266,7 +2266,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
     GlobalValue *GV = cast<GlobalAddressSDNode>(N)->getGlobal();
     // For Darwin, external and weak symbols are indirect, so we want to load
     // the value at address GV, not the value of GV itself.
-    if (Subtarget->getIndirectExternAndWeakGlobals() && 
+    if (Subtarget->getIndirectExternAndWeakGlobals() &&
         (GV->hasWeakLinkage() || GV->isExternal())) {
       BuildMI(BB, X86::MOV32rm, 4, Result).addReg(0).addZImm(1).addReg(0)
         .addGlobalAddress(GV, false, 0);
@@ -2383,7 +2383,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
       BuildMI(BB, Opc, 1, Result).addReg(Tmp1);
       return Result;
     }
-    
+
     ContainsFPCode = true;
 
     // Spill the integer to memory and reload it from there.
@@ -2423,7 +2423,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
         abort();
       }
       return Result;
-    } 
+    }
 
     // Change the floating point control register to use "round towards zero"
     // mode when truncating to an integer value.
@@ -2836,8 +2836,8 @@ unsigned ISel::SelectExpr(SDOperand N) {
       case MVT::i32: Opc = 7; break;
       case MVT::f32: Opc = 8; break;
         // For F64, handle promoted load operations (from F32) as well!
-      case MVT::f64: 
-        assert((!X86ScalarSSE || Op1.getOpcode() == ISD::LOAD) && 
+      case MVT::f64:
+        assert((!X86ScalarSSE || Op1.getOpcode() == ISD::LOAD) &&
                "SSE load should have been promoted");
         Opc = Op1.getOpcode() == ISD::LOAD ? 9 : 8; break;
       }
@@ -3273,12 +3273,12 @@ unsigned ISel::SelectExpr(SDOperand N) {
     case MVT::i16: Opc = X86::MOV16rm; break;
     case MVT::i32: Opc = X86::MOV32rm; break;
     case MVT::f32: Opc = X86::MOVSSrm; break;
-    case MVT::f64: 
+    case MVT::f64:
       if (X86ScalarSSE) {
         Opc = X86::MOVSDrm;
       } else {
         Opc = X86::FLD64m;
-        ContainsFPCode = true; 
+        ContainsFPCode = true;
       }
       break;
     }
@@ -3497,7 +3497,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
       unsigned RegOp1 = SelectExpr(N.getOperand(4));
       unsigned RegOp2 =
         Node->getNumOperands() > 5 ? SelectExpr(N.getOperand(5)) : 0;
-      
+
       switch (N.getOperand(4).getValueType()) {
       default: assert(0 && "Bad thing to pass in regs");
       case MVT::i1:
@@ -3595,7 +3595,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
         assert(0 && "readport already emitted!?");
     } else
       Result = ExprMap[N.getValue(0)] = MakeReg(N.getValue(0).getValueType());
-    
+
     Select(Node->getOperand(0));  // Select the chain.
 
     // If the port is a single-byte constant, use the immediate form.
@@ -3640,7 +3640,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
       std::cerr << "Cannot do input on this data type";
       exit(1);
     }
-    
+
   }
 
   return 0;
@@ -4066,7 +4066,7 @@ void ISel::EmitFastCCToFastCCTailCall(SDNode *TailCallNode) {
     RegOp1 = SelectExpr(TailCallNode->getOperand(4));
     if (TailCallNode->getNumOperands() > 5)
       RegOp2 = SelectExpr(TailCallNode->getOperand(5));
-      
+
     switch (TailCallNode->getOperand(4).getValueType()) {
     default: assert(0 && "Bad thing to pass in regs");
     case MVT::i1:
@@ -4167,12 +4167,12 @@ void ISel::Select(SDOperand N) {
       case MVT::i16: Opc = X86::MOV16rr; break;
       case MVT::i32: Opc = X86::MOV32rr; break;
       case MVT::f32: Opc = X86::MOVAPSrr; break;
-      case MVT::f64: 
+      case MVT::f64:
         if (X86ScalarSSE) {
           Opc = X86::MOVAPDrr;
         } else {
-          Opc = X86::FpMOV; 
-          ContainsFPCode = true; 
+          Opc = X86::FpMOV;
+          ContainsFPCode = true;
         }
         break;
       }
@@ -4191,8 +4191,8 @@ void ISel::Select(SDOperand N) {
       assert(0 && "Unknown return instruction!");
     case 3:
       assert(N.getOperand(1).getValueType() == MVT::i32 &&
-	     N.getOperand(2).getValueType() == MVT::i32 &&
-	     "Unknown two-register value!");
+             N.getOperand(2).getValueType() == MVT::i32 &&
+             "Unknown two-register value!");
       if (getRegPressure(N.getOperand(1)) > getRegPressure(N.getOperand(2))) {
         Tmp1 = SelectExpr(N.getOperand(1));
         Tmp2 = SelectExpr(N.getOperand(2));
@@ -4224,7 +4224,7 @@ void ISel::Select(SDOperand N) {
           addFrameReference(BuildMI(BB, X86::MOVSSmr, 5), FrameIdx).addReg(Tmp1);
           addFrameReference(BuildMI(BB, X86::FLD32m, 4, X86::FP0), FrameIdx);
           BuildMI(BB, X86::FpSETRESULT, 1).addReg(X86::FP0);
-          ContainsFPCode = true; 
+          ContainsFPCode = true;
         } else {
           assert(0 && "MVT::f32 only legal with scalar sse fp");
           abort();
@@ -4239,7 +4239,7 @@ void ISel::Select(SDOperand N) {
           addFrameReference(BuildMI(BB, X86::MOVSDmr, 5), FrameIdx).addReg(Tmp1);
           addFrameReference(BuildMI(BB, X86::FLD64m, 4, X86::FP0), FrameIdx);
           BuildMI(BB, X86::FpSETRESULT, 1).addReg(X86::FP0);
-          ContainsFPCode = true; 
+          ContainsFPCode = true;
         } else {
           BuildMI(BB, X86::FpSETRESULT, 1).addReg(Tmp1);
         }
@@ -4367,7 +4367,7 @@ void ISel::Select(SDOperand N) {
     default: assert(0 && "Cannot truncstore this type!");
     case MVT::i1: Opc = X86::MOV8mr; break;
     case MVT::f32:
-      assert(!X86ScalarSSE && "Cannot truncstore scalar SSE regs"); 
+      assert(!X86ScalarSSE && "Cannot truncstore scalar SSE regs");
       Opc = X86::FST32m; break;
     }
 
@@ -4426,7 +4426,7 @@ void ISel::Select(SDOperand N) {
       GlobalValue *GV = GA->getGlobal();
       // For Darwin, external and weak symbols are indirect, so we want to load
       // the value at address GV, not the value of GV itself.
-      if (Subtarget->getIndirectExternAndWeakGlobals() && 
+      if (Subtarget->getIndirectExternAndWeakGlobals() &&
           (GV->hasWeakLinkage() || GV->isExternal())) {
         Tmp1 = MakeReg(MVT::i32);
         BuildMI(BB, X86::MOV32rm, 4, Tmp1).addReg(0).addZImm(1).addReg(0)

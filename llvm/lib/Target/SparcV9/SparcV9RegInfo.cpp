@@ -474,7 +474,7 @@ void SparcV9RegInfo::colorMethodArgs(const Function *Meth,
           cpMem2RegMI(InstrnsBefore,
                       getFramePointer(), TmpOff, UniLRReg, regType);
         }
-        else {  
+        else {
           cpReg2RegMI(InstrnsBefore, UniArgReg, UniLRReg, regType);
         }
       }

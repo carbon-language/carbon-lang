@@ -121,7 +121,7 @@ unsigned Reassociate::getRank(Value *V) {
 
   unsigned &CachedRank = ValueRankMap[I];
   if (CachedRank) return CachedRank;    // Rank already known?
-  
+
   // If this is an expression, return the 1+MAX(rank(LHS), rank(RHS)) so that
   // we can reassociate expressions for code motion!  Since we do not recurse
   // for PHI nodes, we cannot have infinite recursion here, because there
@@ -130,7 +130,7 @@ unsigned Reassociate::getRank(Value *V) {
   for (unsigned i = 0, e = I->getNumOperands();
        i != e && Rank != MaxRank; ++i)
     Rank = std::max(Rank, getRank(I->getOperand(i)));
-  
+
   // If this is a not or neg instruction, do not count it for rank.  This
   // assures us that X and ~X will have the same rank.
   if (!I->getType()->isIntegral() ||
@@ -139,7 +139,7 @@ unsigned Reassociate::getRank(Value *V) {
 
   //DEBUG(std::cerr << "Calculated Rank[" << V->getName() << "] = "
   //<< Rank << "\n");
-  
+
   return CachedRank = Rank;
 }
 
@@ -176,7 +176,7 @@ static Instruction *LowerNegateToMultiply(Instruction *Neg) {
 void Reassociate::LinearizeExpr(BinaryOperator *I) {
   BinaryOperator *LHS = cast<BinaryOperator>(I->getOperand(0));
   BinaryOperator *RHS = cast<BinaryOperator>(I->getOperand(1));
-  assert(isReassociableOp(LHS, I->getOpcode()) && 
+  assert(isReassociableOp(LHS, I->getOpcode()) &&
          isReassociableOp(RHS, I->getOpcode()) &&
          "Not an expression that needs linearization?");
 
@@ -190,7 +190,7 @@ void Reassociate::LinearizeExpr(BinaryOperator *I) {
   I->setOperand(1, RHS->getOperand(0));
   RHS->setOperand(0, LHS);
   I->setOperand(0, RHS);
-  
+
   ++NumLinear;
   MadeChange = true;
   DEBUG(std::cerr << "Linearized: " << *I);
@@ -363,7 +363,7 @@ static Instruction *BreakUpSubtract(Instruction *Sub) {
   // Everyone now refers to the add instruction.
   Sub->replaceAllUsesWith(New);
   Sub->eraseFromParent();
-  
+
   DEBUG(std::cerr << "Negated: " << *New);
   return New;
 }
@@ -536,7 +536,7 @@ void Reassociate::OptimizeExpression(unsigned Opcode,
   //case Instruction::Mul:
   }
 
-  if (IterateOptimization) 
+  if (IterateOptimization)
     OptimizeExpression(Opcode, Ops);
 }
 
@@ -590,13 +590,13 @@ void Reassociate::ReassociateBB(BasicBlock *BB) {
     // If this instruction is a commutative binary operator, process it.
     if (!BI->isAssociative()) continue;
     BinaryOperator *I = cast<BinaryOperator>(BI);
-    
+
     // If this is an interior node of a reassociable tree, ignore it until we
     // get to the root of the tree, to avoid N^2 analysis.
     if (I->hasOneUse() && isReassociableOp(I->use_back(), I->getOpcode()))
       continue;
 
-    // First, walk the expression tree, linearizing the tree, collecting 
+    // First, walk the expression tree, linearizing the tree, collecting
     std::vector<ValueEntry> Ops;
     LinearizeExprTree(I, Ops);
 
@@ -619,7 +619,7 @@ void Reassociate::ReassociateBB(BasicBlock *BB) {
     // this is a multiply tree used only by an add, and the immediate is a -1.
     // In this case we reassociate to put the negation on the outside so that we
     // can fold the negation into the add: (-X)*Y + Z -> Z-X*Y
-    if (I->getOpcode() == Instruction::Mul && I->hasOneUse() && 
+    if (I->getOpcode() == Instruction::Mul && I->hasOneUse() &&
         cast<Instruction>(I->use_back())->getOpcode() == Instruction::Add &&
         isa<ConstantInt>(Ops.back().Op) &&
         cast<ConstantInt>(Ops.back().Op)->isAllOnesValue()) {

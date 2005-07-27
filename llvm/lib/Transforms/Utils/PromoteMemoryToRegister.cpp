@@ -665,7 +665,7 @@ void llvm::PromoteMemToReg(const std::vector<AllocaInst*> &Allocas,
     // undef into the alloca right after the alloca itself.
     for (unsigned i = 0, e = RetryList.size(); i != e; ++i) {
       BasicBlock::iterator BBI = RetryList[i];
-      
+
       new StoreInst(UndefValue::get(RetryList[i]->getAllocatedType()),
                     RetryList[i], ++BBI);
     }

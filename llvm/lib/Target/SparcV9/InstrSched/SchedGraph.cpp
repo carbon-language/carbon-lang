@@ -365,7 +365,7 @@ void SchedGraph::addMachineRegEdges(RegToRefVecMap& regToRefVecMap,
               new SchedGraphEdge(prevNode, node, regNum,
                                  SchedGraphEdge::AntiDep);
           }
-        
+
           if (prevIsDef)
             if (!isDef || isDefAndUse)
               new SchedGraphEdge(prevNode, node, regNum,
@@ -646,7 +646,7 @@ void SchedGraph::buildGraph(const TargetMachine& target) {
   this->addMachineRegEdges(regToRefVecMap, target);
 
   // Finally, add edges from the dummy root and to dummy leaf
-  this->addDummyEdges();                
+  this->addDummyEdges();
 }
 
 
@@ -691,13 +691,13 @@ void SchedGraphEdge::print(std::ostream &os) const {
      << sink->getNodeId() << "] : ";
 
   switch(depType) {
-  case SchedGraphEdge::CtrlDep:         
+  case SchedGraphEdge::CtrlDep:
     os<< "Control Dep";
     break;
   case SchedGraphEdge::ValueDep:
     os<< "Reg Value " << *val;
     break;
-  case SchedGraphEdge::MemoryDep:       
+  case SchedGraphEdge::MemoryDep:
     os<< "Memory Dep";
     break;
   case SchedGraphEdge::MachineRegister:

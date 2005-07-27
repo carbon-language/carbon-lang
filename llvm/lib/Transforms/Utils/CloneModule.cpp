@@ -55,7 +55,7 @@ Module *llvm::CloneModule(const Module *M) {
 
   // Loop over the functions in the module, making external functions as before
   for (Module::const_iterator I = M->begin(), E = M->end(); I != E; ++I) {
-    Function *NF = 
+    Function *NF =
       new Function(cast<FunctionType>(I->getType()->getElementType()),
                    GlobalValue::ExternalLinkage, I->getName(), New);
     NF->setCallingConv(I->getCallingConv());
