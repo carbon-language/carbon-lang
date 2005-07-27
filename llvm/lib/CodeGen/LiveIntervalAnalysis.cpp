@@ -206,8 +206,10 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
 /// print - Implement the dump method.
 void LiveIntervals::print(std::ostream &O, const Module* ) const {
   O << "********** INTERVALS **********\n";
-  for (const_iterator I = begin(), E = end(); I != E; ++I)
-    O << "  " << I->second << "\n";
+  for (const_iterator I = begin(), E = end(); I != E; ++I) {
+    I->second.print(std::cerr, mri_);
+    std::cerr << "\n";
+  }
 
   O << "********** MACHINEINSTRS **********\n";
   for (MachineFunction::iterator mbbi = mf_->begin(), mbbe = mf_->end();
