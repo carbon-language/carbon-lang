@@ -245,8 +245,13 @@ void PPC32RegisterInfo::emitPrologue(MachineFunction &MF) const {
     NumBytes += MFI->getMaxCallFrameSize();
   }
 
-  // Do we need to allocate space on the stack?
-  if (NumBytes == 0) return;
+  // If we are a leaf function, and use up to 224 bytes of stack space, 
+  // and don't have a frame pointer, then we do not need to adjust the stack
+  // pointer (we fit in the Red Zone).
+  if ((NumBytes == 0) || (NumBytes <= 224 && !hasFP(MF) && !MFI->hasCalls())) {
+    MFI->setStackSize(0);
+    return;
+  }
 
   // Add the size of R1 to  NumBytes size for the store of R1 to the bottom
   // of the stack and round the size to a multiple of the alignment.
@@ -258,7 +263,7 @@ void PPC32RegisterInfo::emitPrologue(MachineFunction &MF) const {
   // Update frame info to pretend that this is part of the stack...
   MFI->setStackSize(NumBytes);
 
-  // adjust stack pointer: r1 -= numbytes
+  // If , adjust stack pointer: r1 -= numbytes.
   if (NumBytes <= 32768) {
     MI=BuildMI(PPC::STWU,3).addReg(PPC::R1).addSImm(-NumBytes).addReg(PPC::R1);
     MBB.insert(MBBI, MI);

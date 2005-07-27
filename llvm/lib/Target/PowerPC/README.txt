@@ -3,7 +3,6 @@ TODO:
 * implement do-loop -> bdnz transform
 * implement powerpc-64 for darwin
 * use stfiwx in float->int
-* take advantage of the darwin red zone in PPC32RegisterInfo.cpp
 * be able to combine sequences like the following into 2 instructions:
 	lis r2, ha16(l2__ZTV4Cell)
 	la r2, lo16(l2__ZTV4Cell)(r2)
