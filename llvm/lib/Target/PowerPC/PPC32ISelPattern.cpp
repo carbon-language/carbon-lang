@@ -1656,9 +1656,6 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
     return Result;
 
   case ISD::AND:
-    // FIXME: should add check in getImmediateForOpcode to return a value
-    // indicating the immediate is a run of set bits so we can emit a bitfield
-    // clear with RLWINM instead.
     switch(getImmediateForOpcode(N.getOperand(1), opcode, Tmp2)) {
       default: assert(0 && "unhandled result code");
       case 0: // No immediate
@@ -1690,6 +1687,7 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
         Tmp3 = Tmp2 >> 16;  // MB
         Tmp2 &= 0xFFFF;     // ME
 
+        // FIXME: Catch SHL-AND in addition to SRL-AND in this block.
         if (N.getOperand(0).getOpcode() == ISD::SRL)
           if (ConstantSDNode *SA =
               dyn_cast<ConstantSDNode>(N.getOperand(0).getOperand(1))) {

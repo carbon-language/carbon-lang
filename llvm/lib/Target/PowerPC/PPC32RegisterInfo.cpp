@@ -263,7 +263,7 @@ void PPC32RegisterInfo::emitPrologue(MachineFunction &MF) const {
   // Update frame info to pretend that this is part of the stack...
   MFI->setStackSize(NumBytes);
 
-  // If , adjust stack pointer: r1 -= numbytes.
+  // Adjust stack pointer: r1 -= numbytes.
   if (NumBytes <= 32768) {
     MI=BuildMI(PPC::STWU,3).addReg(PPC::R1).addSImm(-NumBytes).addReg(PPC::R1);
     MBB.insert(MBBI, MI);
