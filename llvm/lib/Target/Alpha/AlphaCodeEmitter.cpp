@@ -101,7 +101,7 @@ bool AlphaCodeEmitter::runOnMachineFunction(MachineFunction &MF) {
 }
 
 void AlphaCodeEmitter::emitBasicBlock(MachineBasicBlock &MBB) {
-  uint64_t Addr = MCE.getCurrentPCValue();
+  uintptr_t Addr = MCE.getCurrentPCValue();
   BasicBlockAddrs[&MBB] = (unsigned*)Addr;
 
   for (MachineBasicBlock::iterator I = MBB.begin(), E = MBB.end();
@@ -216,7 +216,7 @@ int AlphaCodeEmitter::getMachineOpValue(MachineInstr &MI, MachineOperand &MO) {
                                           Reloc, MO.getConstantPoolIndex(), 
                                           Offset));
   } else if (MO.isMachineBasicBlock()) {
-    unsigned* CurrPC = (unsigned*)MCE.getCurrentPCValue();
+    unsigned* CurrPC = (unsigned*)(intptr_t)MCE.getCurrentPCValue();
     BBRefs.push_back(std::make_pair(MO.getMachineBasicBlock(), CurrPC));
   }else {
     std::cerr << "ERROR: Unknown type of MachineOperand: " << MO << "\n";
