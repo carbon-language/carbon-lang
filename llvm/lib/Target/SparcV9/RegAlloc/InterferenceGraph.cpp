@@ -68,7 +68,7 @@ void InterferenceGraph::createGraph()
     // init IG matrix
     for(unsigned int i=0; i < Size; i++)
       for(unsigned int j=0; j < Size; j++)
-	IG[i][j] = 0;
+        IG[i][j] = 0;
 }
 
 //-----------------------------------------------------------------------------
@@ -88,7 +88,7 @@ void InterferenceGraph::addLRToIG(V9LiveRange *const LR)
 // that there is some wrong logic in some other method.
 //-----------------------------------------------------------------------------
 void InterferenceGraph::setInterference(const V9LiveRange *const LR1,
-					const V9LiveRange *const LR2 ) {
+                                        const V9LiveRange *const LR2 ) {
   assert(LR1 != LR2);
 
   IGNode *IGNode1 = LR1->getUserIGNode();
@@ -147,7 +147,7 @@ unsigned InterferenceGraph::getInterference(const V9LiveRange *const LR1,
 //----------------------------------------------------------------------------
 
 void InterferenceGraph::mergeIGNodesOfLRs(const V9LiveRange *LR1,
-					                            V9LiveRange *LR2) {
+                                                                    V9LiveRange *LR2) {
 
   assert( LR1 != LR2);                  // cannot merge the same live range
 
@@ -226,7 +226,7 @@ void InterferenceGraph::printIG() const {
       std::cerr << " [" << i << "] ";
 
       for( unsigned int j=0; j < Size; j++)
-	if(IG[i][j])
+        if(IG[i][j])
           std::cerr << "(" << i << "," << j << ") ";
       std::cerr << "\n";
     }

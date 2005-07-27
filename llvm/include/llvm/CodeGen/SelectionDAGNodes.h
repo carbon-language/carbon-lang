@@ -508,7 +508,7 @@ public:
     assert(ResNo < Values.size() && "Illegal result number!");
     return Values[ResNo];
   }
-  
+
   typedef std::vector<MVT::ValueType>::const_iterator value_iterator;
   value_iterator value_begin() const { return Values.begin(); }
   value_iterator value_end() const { return Values.end(); }
@@ -523,7 +523,7 @@ public:
 
   /// setAdjCallChain - This method should only be used by the legalizer.
   void setAdjCallChain(SDOperand N);
-  
+
 protected:
   friend class SelectionDAG;
 

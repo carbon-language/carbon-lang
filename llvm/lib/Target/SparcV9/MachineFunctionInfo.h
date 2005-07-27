@@ -33,13 +33,13 @@ class SparcV9FunctionInfo : public MachineFunctionInfo {
   hash_set<const Constant*> constantsForConstPool;
   hash_map<const Value*, int> offsets;
 
-  unsigned	staticStackSize;
-  unsigned	automaticVarsSize;
-  unsigned	regSpillsSize;
-  unsigned	maxOptionalArgsSize;
-  unsigned	maxOptionalNumArgs;
-  unsigned	currentTmpValuesSize;
-  unsigned	maxTmpValuesSize;
+  unsigned      staticStackSize;
+  unsigned      automaticVarsSize;
+  unsigned      regSpillsSize;
+  unsigned      maxOptionalArgsSize;
+  unsigned      maxOptionalNumArgs;
+  unsigned      currentTmpValuesSize;
+  unsigned      maxTmpValuesSize;
   bool          compiledAsLeaf;
   bool          spillsAreaFrozen;
   bool          automaticVarsAreaFrozen;

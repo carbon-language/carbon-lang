@@ -84,40 +84,40 @@ public:
 
   inline unsigned       size() const { return _size; }
 
-  const SchedGraphNode* getNode	(const_iterator i) const { return (*i)->node; }
-  CycleCount_t		getDelay(const_iterator i) const { return (*i)->delay;}
+  const SchedGraphNode* getNode (const_iterator i) const { return (*i)->node; }
+  CycleCount_t          getDelay(const_iterator i) const { return (*i)->delay;}
 
-  inline void		makeHeap() {
+  inline void           makeHeap() {
     // make_heap(begin(), end(), NDPLessThan);
   }
 
-  inline iterator	findNode(const SchedGraphNode* node) {
+  inline iterator       findNode(const SchedGraphNode* node) {
     for (iterator I=begin(); I != end(); ++I)
       if (getNode(I) == node)
-	return I;
+        return I;
     return end();
   }
 
-  inline void	  removeNode	(const SchedGraphNode* node) {
+  inline void     removeNode    (const SchedGraphNode* node) {
     iterator ndpPtr = findNode(node);
     if (ndpPtr != end())
       {
-	delete *ndpPtr;
-	erase(ndpPtr);
-	--_size;
+        delete *ndpPtr;
+        erase(ndpPtr);
+        --_size;
       }
   };
 
-  void		  insert(const SchedGraphNode* node, CycleCount_t delay) {
+  void            insert(const SchedGraphNode* node, CycleCount_t delay) {
     NodeDelayPair* ndp = new NodeDelayPair(node, delay);
     if (_size == 0 || front()->delay < delay)
       push_front(ndp);
     else
       {
-	iterator I=begin();
-	for ( ; I != end() && getDelay(I) >= delay; ++I)
-	  ;
-	std::list<NodeDelayPair*>::insert(I, ndp);
+        iterator I=begin();
+        for ( ; I != end() && getDelay(I) >= delay; ++I)
+          ;
+        std::list<NodeDelayPair*>::insert(I, ndp);
       }
     _size++;
   }
@@ -135,25 +135,25 @@ public:
 
 
   // This must be called before scheduling begins.
-  void		initialize		();
+  void          initialize              ();
 
-  CycleCount_t	getTime			() const { return curTime; }
-  CycleCount_t	getEarliestReadyTime	() const { return earliestReadyTime; }
-  unsigned	getNumReady		() const { return candsAsHeap.size(); }
-  bool		nodeIsReady		(const SchedGraphNode* node) const {
+  CycleCount_t  getTime                 () const { return curTime; }
+  CycleCount_t  getEarliestReadyTime    () const { return earliestReadyTime; }
+  unsigned      getNumReady             () const { return candsAsHeap.size(); }
+  bool          nodeIsReady             (const SchedGraphNode* node) const {
     return (candsAsSet.find(node) != candsAsSet.end());
   }
 
-  void		issuedReadyNodeAt	(CycleCount_t curTime,
-					 const SchedGraphNode* node);
+  void          issuedReadyNodeAt       (CycleCount_t curTime,
+                                         const SchedGraphNode* node);
 
-  void		insertReady		(const SchedGraphNode* node);
+  void          insertReady             (const SchedGraphNode* node);
 
-  void		updateTime		(CycleCount_t /*unused*/);
+  void          updateTime              (CycleCount_t /*unused*/);
 
-  const SchedGraphNode* getNextHighest	(const SchedulingManager& S,
-					 CycleCount_t curTime);
-					// choose next highest priority instr
+  const SchedGraphNode* getNextHighest  (const SchedulingManager& S,
+                                         CycleCount_t curTime);
+                                        // choose next highest priority instr
 
 private:
   typedef NodeHeap::iterator candIndex;
@@ -167,30 +167,30 @@ private:
   std::vector<CycleCount_t> nodeEarliestUseVec;
   std::vector<CycleCount_t> earliestReadyTimeForNode;
   CycleCount_t earliestReadyTime;
-  NodeHeap candsAsHeap;				// candidate nodes, ready to go
+  NodeHeap candsAsHeap;                         // candidate nodes, ready to go
   hash_set<const SchedGraphNode*> candsAsSet;   //same entries as candsAsHeap,
-						//   but as set for fast lookup
+                                                //   but as set for fast lookup
   std::vector<candIndex> mcands;                // holds pointers into cands
-  candIndex nextToTry;				// next cand after the last
-						//   one tried in this cycle
+  candIndex nextToTry;                          // next cand after the last
+                                                //   one tried in this cycle
 
-  int		chooseByRule1		(std::vector<candIndex>& mcands);
-  int		chooseByRule2		(std::vector<candIndex>& mcands);
-  int		chooseByRule3		(std::vector<candIndex>& mcands);
+  int           chooseByRule1           (std::vector<candIndex>& mcands);
+  int           chooseByRule2           (std::vector<candIndex>& mcands);
+  int           chooseByRule3           (std::vector<candIndex>& mcands);
 
-  void		findSetWithMaxDelay	(std::vector<candIndex>& mcands,
-					 const SchedulingManager& S);
+  void          findSetWithMaxDelay     (std::vector<candIndex>& mcands,
+                                         const SchedulingManager& S);
 
-  void		computeDelays		(const SchedGraph* graph);
+  void          computeDelays           (const SchedGraph* graph);
 
-  void		initializeReadyHeap	(const SchedGraph* graph);
+  void          initializeReadyHeap     (const SchedGraph* graph);
 
-  bool		instructionHasLastUse	(FunctionLiveVarInfo& LVI,
-					 const SchedGraphNode* graphNode);
+  bool          instructionHasLastUse   (FunctionLiveVarInfo& LVI,
+                                         const SchedGraphNode* graphNode);
 
   // NOTE: The next two return references to the actual vector entries.
   //       Use the following two if you don't need to modify the value.
-  CycleCount_t&	getNodeDelayRef		(const SchedGraphNode* node) {
+  CycleCount_t& getNodeDelayRef         (const SchedGraphNode* node) {
     assert(node->getNodeId() < nodeDelayVec.size());
     return nodeDelayVec[node->getNodeId()];
   }

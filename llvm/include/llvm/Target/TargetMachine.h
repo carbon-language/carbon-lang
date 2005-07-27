@@ -102,7 +102,7 @@ public:
   virtual const TargetFrameInfo        *getFrameInfo() const { return 0; }
   const TargetData &getTargetData() const { return DataLayout; }
 
-  /// getSubtarget - This method returns a pointer to the specified type of 
+  /// getSubtarget - This method returns a pointer to the specified type of
   /// TargetSubtarget.  In debug builds, it verifies that the object being
   /// returned is of the correct type.
   template<typename STC> STC *getSubtarget() const {

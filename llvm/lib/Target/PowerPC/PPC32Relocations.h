@@ -16,7 +16,7 @@
 
 #include "llvm/CodeGen/MachineRelocation.h"
 
-// Hack to rid us of a PPC pre-processor symbol which is erroneously 
+// Hack to rid us of a PPC pre-processor symbol which is erroneously
 // defined in a PowerPC header file (bug in Linux/PPC)
 #ifdef PPC
 #undef PPC

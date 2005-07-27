@@ -31,18 +31,18 @@ class ModulePass;
 class GetElementPtrInst;
 
 enum SparcV9InstrSchedClass {
-  SPARC_NONE,		/* Instructions with no scheduling restrictions */
-  SPARC_IEUN,		/* Integer class that can use IEU0 or IEU1 */
-  SPARC_IEU0,		/* Integer class IEU0 */
-  SPARC_IEU1,		/* Integer class IEU1 */
-  SPARC_FPM,		/* FP Multiply or Divide instructions */
-  SPARC_FPA,		/* All other FP instructions */	
-  SPARC_CTI,		/* Control-transfer instructions */
-  SPARC_LD,		/* Load instructions */
-  SPARC_ST,		/* Store instructions */
-  SPARC_SINGLE,		/* Instructions that must issue by themselves */
+  SPARC_NONE,           /* Instructions with no scheduling restrictions */
+  SPARC_IEUN,           /* Integer class that can use IEU0 or IEU1 */
+  SPARC_IEU0,           /* Integer class IEU0 */
+  SPARC_IEU1,           /* Integer class IEU1 */
+  SPARC_FPM,            /* FP Multiply or Divide instructions */
+  SPARC_FPA,            /* All other FP instructions */
+  SPARC_CTI,            /* Control-transfer instructions */
+  SPARC_LD,             /* Load instructions */
+  SPARC_ST,             /* Store instructions */
+  SPARC_SINGLE,         /* Instructions that must issue by themselves */
 
-  SPARC_INV,		/* This should stay at the end for the next value */
+  SPARC_INV,            /* This should stay at the end for the next value */
   SPARC_NUM_SCHED_CLASSES = SPARC_INV
 };
 
@@ -65,7 +65,7 @@ namespace V9 {
 
     // End-of-array marker
     INVALID_OPCODE,
-    NUM_REAL_OPCODES = PHI,		// number of valid opcodes
+    NUM_REAL_OPCODES = PHI,             // number of valid opcodes
     NUM_TOTAL_OPCODES = INVALID_OPCODE
   };
 }

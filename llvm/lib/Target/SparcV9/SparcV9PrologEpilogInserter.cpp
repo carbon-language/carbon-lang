@@ -82,8 +82,8 @@ void InsertPrologEpilogCode::InsertPrologCode(MachineFunction &MF)
     // Do this by creating a code sequence equivalent to:
     //        SETSW -(stackSize), %g1
     int uregNum = TM.getRegInfo()->getUnifiedRegNum(
-			 TM.getRegInfo()->getRegClassIDOfType(Type::IntTy),
-			 SparcV9IntRegClass::g1);
+                         TM.getRegInfo()->getRegClassIDOfType(Type::IntTy),
+                         SparcV9IntRegClass::g1);
 
     MachineInstr* M = BuildMI(V9::SETHI, 2).addSImm(C)
       .addMReg(uregNum, MachineOperand::Def);

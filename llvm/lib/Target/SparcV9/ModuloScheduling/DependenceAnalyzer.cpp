@@ -31,9 +31,9 @@ namespace llvm {
 
 Statistic<> NoDeps("depanalyzer-nodeps", "Number of dependences eliminated");
 Statistic<> NumDeps("depanalyzer-deps", 
-		    "Number of dependences could not eliminate");
+                    "Number of dependences could not eliminate");
 Statistic<> AdvDeps("depanalyzer-advdeps", 
-		    "Number of dependences using advanced techniques");
+                    "Number of dependences using advanced techniques");
 
 bool DependenceAnalyzer::runOnFunction(Function &F) {
   AA = &getAnalysis<AliasAnalysis>();
@@ -44,7 +44,7 @@ bool DependenceAnalyzer::runOnFunction(Function &F) {
 }
 
 static RegisterAnalysis<DependenceAnalyzer>X("depanalyzer", 
-					     "Dependence Analyzer");
+                                             "Dependence Analyzer");
  
 //  - Get inter and intra dependences between loads and stores
 //
@@ -57,10 +57,10 @@ static RegisterAnalysis<DependenceAnalyzer>X("depanalyzer",
 //         further (Step 4) 
 // Step 4: do advanced analysis
 void DependenceAnalyzer::AnalyzeDeps(Value *val, Value *val2, bool valLoad, 
-				     bool val2Load, 
-				     std::vector<Dependence> &deps, 
-				     BasicBlock *BB, 
-				     bool srcBeforeDest) {
+                                     bool val2Load, 
+                                     std::vector<Dependence> &deps, 
+                                     BasicBlock *BB, 
+                                     bool srcBeforeDest) {
     
   bool loopInvariant = true;
 
@@ -76,7 +76,7 @@ void DependenceAnalyzer::AnalyzeDeps(Value *val, Value *val2, bool valLoad,
   //If Loop invariant, let AA decide
   if(loopInvariant) {
     if(AA->alias(val, (unsigned)TD->getTypeSize(val->getType()),
-		 val2,(unsigned)TD->getTypeSize(val2->getType()))
+                 val2,(unsigned)TD->getTypeSize(val2->getType()))
        != AliasAnalysis::NoAlias) {
       createDep(deps, valLoad, val2Load, srcBeforeDest);
     }
@@ -102,7 +102,7 @@ void DependenceAnalyzer::AnalyzeDeps(Value *val, Value *val2, bool valLoad,
   Value *GPop = GP->getOperand(0);
   Value *GP2op = GP2->getOperand(0);
   int alias = AA->alias(GPop, (unsigned)TD->getTypeSize(GPop->getType()),
-			GP2op,(unsigned)TD->getTypeSize(GP2op->getType()));
+                        GP2op,(unsigned)TD->getTypeSize(GP2op->getType()));
 
 
   if(alias == AliasAnalysis::MustAlias) {
@@ -121,11 +121,11 @@ void DependenceAnalyzer::AnalyzeDeps(Value *val, Value *val2, bool valLoad,
 
 // advancedDepAnalysis - Do advanced data dependence tests
 void DependenceAnalyzer::advancedDepAnalysis(GetElementPtrInst *gp1, 
-					     GetElementPtrInst *gp2,
-					     bool valLoad,
-					     bool val2Load,
-					     std::vector<Dependence> &deps,
-					     bool srcBeforeDest) {
+                                             GetElementPtrInst *gp2,
+                                             bool valLoad,
+                                             bool val2Load,
+                                             std::vector<Dependence> &deps,
+                                             bool srcBeforeDest) {
 
   //Check if both GEPs are in a simple form: 3 ops, constant 0 as second arg
   if(gp1->getNumOperands() != 3 || gp2->getNumOperands() != 3) {
@@ -138,7 +138,7 @@ void DependenceAnalyzer::advancedDepAnalysis(GetElementPtrInst *gp1,
   if(Constant *c1 = dyn_cast<Constant>(gp1->getOperand(1)))
     if(Constant *c2 = dyn_cast<Constant>(gp2->getOperand(1)))
       if(c1->isNullValue() && c2->isNullValue())
-	GPok = true;
+        GPok = true;
   
   if(!GPok) {
     createDep(deps, valLoad, val2Load, srcBeforeDest);
@@ -230,8 +230,8 @@ void DependenceAnalyzer::advancedDepAnalysis(GetElementPtrInst *gp1,
 // Create dependences once its determined these two instructions
 // references the same memory
 void DependenceAnalyzer::createDep(std::vector<Dependence> &deps, 
-				   bool valLoad, bool val2Load, 
-				   bool srcBeforeDest, int diff) {
+                                   bool valLoad, bool val2Load, 
+                                   bool srcBeforeDest, int diff) {
 
   //If the source instruction occurs after the destination instruction
   //(execution order), then this dependence is across iterations
@@ -269,8 +269,8 @@ void DependenceAnalyzer::createDep(std::vector<Dependence> &deps,
   
 //Get Dependence Info for a pair of Instructions
 DependenceResult DependenceAnalyzer::getDependenceInfo(Instruction *inst1, 
-						       Instruction *inst2, 
-						       bool srcBeforeDest) {
+                                                       Instruction *inst2, 
+                                                       bool srcBeforeDest) {
   std::vector<Dependence> deps;
 
   DEBUG(std::cerr << "Inst1: " << *inst1 << "\n");
@@ -284,17 +284,17 @@ DependenceResult DependenceAnalyzer::getDependenceInfo(Instruction *inst1,
       
     if(StoreInst *stInst = dyn_cast<StoreInst>(inst2))
       AnalyzeDeps(ldInst->getOperand(0), stInst->getOperand(1), 
-		  true, false, deps, ldInst->getParent(), srcBeforeDest);
+                  true, false, deps, ldInst->getParent(), srcBeforeDest);
   }
   else if(StoreInst *stInst = dyn_cast<StoreInst>(inst1)) {
       
     if(LoadInst *ldInst = dyn_cast<LoadInst>(inst2))
       AnalyzeDeps(stInst->getOperand(1), ldInst->getOperand(0), false, true, 
-		  deps, ldInst->getParent(), srcBeforeDest);
+                  deps, ldInst->getParent(), srcBeforeDest);
       
     else if(StoreInst *stInst2 = dyn_cast<StoreInst>(inst2))
       AnalyzeDeps(stInst->getOperand(1), stInst2->getOperand(1), false, false, 
-		  deps, stInst->getParent(), srcBeforeDest);
+                  deps, stInst->getParent(), srcBeforeDest);
   }
   else
     assert(0 && "Expected a load or a store\n");

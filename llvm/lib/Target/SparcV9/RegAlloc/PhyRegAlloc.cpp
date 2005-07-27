@@ -131,7 +131,7 @@ void PhyRegAlloc::createIGNodeListsAndIGs() {
 /// instruction.
 ///
 void PhyRegAlloc::addInterference(const Value *Def, const ValueSet *LVSet,
-				  bool isCallInst) {
+                                  bool isCallInst) {
   ValueSet::const_iterator LIt = LVSet->begin();
 
   // get the live range of instruction
@@ -167,7 +167,7 @@ void PhyRegAlloc::addInterference(const Value *Def, const ValueSet *LVSet,
 /// the return value does not interfere with that call itself).
 ///
 void PhyRegAlloc::setCallInterferences(const MachineInstr *MInst,
-				       const ValueSet *LVSetAft) {
+                                       const ValueSet *LVSetAft) {
   if (DEBUG_RA >= RA_DEBUG_Interference)
     std::cerr << "\n For call inst: " << *MInst;
 
@@ -185,7 +185,7 @@ void PhyRegAlloc::setCallInterferences(const MachineInstr *MInst,
         std::cerr << "\n\tLR after Call: " << *LR << "\n";
       LR->setCallInterference();
       if (DEBUG_RA >= RA_DEBUG_Interference)
-	    std::cerr << "\n  ++After adding call interference for LR: " << *LR << "\n";
+            std::cerr << "\n  ++After adding call interference for LR: " << *LR << "\n";
     }
   }
 
@@ -242,29 +242,29 @@ void PhyRegAlloc::buildInterferenceGraphs() {
       bool isCallInst = TM.getInstrInfo()->isCall(MInst->getOpcode());
 
       if (isCallInst) {
-	// set the isCallInterference flag of each live range which extends
-	// across this call instruction. This information is used by graph
-	// coloring algorithm to avoid allocating volatile colors to live ranges
-	// that span across calls (since they have to be saved/restored)
-	setCallInterferences(MInst, &LVSetAI);
+        // set the isCallInterference flag of each live range which extends
+        // across this call instruction. This information is used by graph
+        // coloring algorithm to avoid allocating volatile colors to live ranges
+        // that span across calls (since they have to be saved/restored)
+        setCallInterferences(MInst, &LVSetAI);
       }
 
       // iterate over all MI operands to find defs
       for (MachineInstr::const_val_op_iterator OpI = MInst->begin(),
              OpE = MInst->end(); OpI != OpE; ++OpI) {
-       	if (OpI.isDef()) // create a new LR since def
-	  addInterference(*OpI, &LVSetAI, isCallInst);
+        if (OpI.isDef()) // create a new LR since def
+          addInterference(*OpI, &LVSetAI, isCallInst);
 
-	// Calculate the spill cost of each live range
-	V9LiveRange *LR = LRI->getLiveRangeForValue(*OpI);
-	if (LR) LR->addSpillCost(BBLoopDepthCost);
+        // Calculate the spill cost of each live range
+        V9LiveRange *LR = LRI->getLiveRangeForValue(*OpI);
+        if (LR) LR->addSpillCost(BBLoopDepthCost);
       }
       // Also add interference for any implicit definitions in a machine
       // instr (currently, only calls have this).
       unsigned NumOfImpRefs =  MInst->getNumImplicitRefs();
       for (unsigned z=0; z < NumOfImpRefs; z++)
         if (MInst->getImplicitOp(z).isDef())
-	  addInterference( MInst->getImplicitRef(z), &LVSetAI, isCallInst );
+          addInterference( MInst->getImplicitRef(z), &LVSetAI, isCallInst );
     } // for all machine instructions in BB
   } // for all BBs in function
 
@@ -294,13 +294,13 @@ void PhyRegAlloc::addInterf4PseudoInstr(const MachineInstr *MInst) {
       const V9LiveRange *LROfOp2 = LRI->getLiveRangeForValue(*It2);
 
       if (LROfOp2) {
-	RegClass *RCOfOp1 = LROfOp1->getRegClass();
-	RegClass *RCOfOp2 = LROfOp2->getRegClass();
+        RegClass *RCOfOp1 = LROfOp1->getRegClass();
+        RegClass *RCOfOp2 = LROfOp2->getRegClass();
 
-	if (RCOfOp1 == RCOfOp2 ){
-	  RCOfOp1->setInterference( LROfOp1, LROfOp2 );
-	  setInterf = true;
-	}
+        if (RCOfOp1 == RCOfOp2 ){
+          RCOfOp1->setInterference( LROfOp1, LROfOp2 );
+          setInterf = true;
+        }
       } // if Op2 has a LR
     } // for all other defs in machine instr
   } // for all operands in an instruction
@@ -556,7 +556,7 @@ void PhyRegAlloc::updateMachineCode()
 
       // do not process Phis
       if (MInst->getOpcode() == V9::PHI)
-	continue;
+        continue;
 
       // if there are any added instructions...
       if (AddedInstrMap.count(MInst)) {
@@ -614,14 +614,14 @@ void PhyRegAlloc::updateMachineCode()
 void PhyRegAlloc::insertCode4SpilledLR(const V9LiveRange *LR,
                                        MachineBasicBlock::iterator& MII,
                                        MachineBasicBlock &MBB,
-				       const unsigned OpNum) {
+                                       const unsigned OpNum) {
   MachineInstr *MInst = MII;
   const BasicBlock *BB = MBB.getBasicBlock();
 
   assert((! TM.getInstrInfo()->isCall(MInst->getOpcode()) || OpNum == 0) &&
          "Outgoing arg of a call must be handled elsewhere (func arg ok)");
   assert(! TM.getInstrInfo()->isReturn(MInst->getOpcode()) &&
-	 "Return value of a ret must be handled elsewhere");
+         "Return value of a ret must be handled elsewhere");
 
   MachineOperand& Op = MInst->getOperand(OpNum);
   bool isDef =  Op.isDef();
@@ -778,33 +778,33 @@ PhyRegAlloc::insertCallerSavingCode(std::vector<MachineInstr*> &instrnsBefore,
     if (LR) {
       if (! LR->isMarkedForSpill()) {
         assert(LR->hasColor() && "LR is neither spilled nor colored?");
-	unsigned RCID = LR->getRegClassID();
-	unsigned Color = LR->getColor();
+        unsigned RCID = LR->getRegClassID();
+        unsigned Color = LR->getColor();
 
-	if (MRI.isRegVolatile(RCID, Color) ) {
-	  // if this is a call to the first-level reoptimizer
-	  // instrumentation entry point, and the register is not
-	  // modified by call, don't save and restore it.
-	  if (isLLVMFirstTrigger && !MRI.modifiedByCall(RCID, Color))
-	    continue;
+        if (MRI.isRegVolatile(RCID, Color) ) {
+          // if this is a call to the first-level reoptimizer
+          // instrumentation entry point, and the register is not
+          // modified by call, don't save and restore it.
+          if (isLLVMFirstTrigger && !MRI.modifiedByCall(RCID, Color))
+            continue;
 
-	  // if the value is in both LV sets (i.e., live before and after
-	  // the call machine instruction)
-	  unsigned Reg = MRI.getUnifiedRegNum(RCID, Color);
-	
-	  // if we haven't already pushed this register...
-	  if( PushedRegSet.find(Reg) == PushedRegSet.end() ) {
-	    unsigned RegType = MRI.getRegTypeForLR(LR);
+          // if the value is in both LV sets (i.e., live before and after
+          // the call machine instruction)
+          unsigned Reg = MRI.getUnifiedRegNum(RCID, Color);
+        
+          // if we haven't already pushed this register...
+          if( PushedRegSet.find(Reg) == PushedRegSet.end() ) {
+            unsigned RegType = MRI.getRegTypeForLR(LR);
 
-	    // Now get two instructions - to push on stack and pop from stack
-	    // and add them to InstrnsBefore and InstrnsAfter of the
-	    // call instruction
-	    int StackOff =
+            // Now get two instructions - to push on stack and pop from stack
+            // and add them to InstrnsBefore and InstrnsAfter of the
+            // call instruction
+            int StackOff =
               MF->getInfo<SparcV9FunctionInfo>()->pushTempValue(MRI.getSpilledRegSize(RegType));
 
-	    //---- Insert code for pushing the reg on stack ----------
+            //---- Insert code for pushing the reg on stack ----------
 
-	    std::vector<MachineInstr*> AdIBef, AdIAft;
+            std::vector<MachineInstr*> AdIBef, AdIAft;
 
             // We may need a scratch register to copy the saved value
             // to/from memory.  This may itself have to insert code to
@@ -834,8 +834,8 @@ PhyRegAlloc::insertCallerSavingCode(std::vector<MachineInstr*> &instrnsBefore,
               instrnsBefore.insert(instrnsBefore.end(),
                                    AdIAft.begin(), AdIAft.end());
 
-	    //---- Insert code for popping the reg from the stack ----------
-	    AdIBef.clear();
+            //---- Insert code for popping the reg from the stack ----------
+            AdIBef.clear();
             AdIAft.clear();
 
             // We may need a scratch register to copy the saved value
@@ -855,26 +855,26 @@ PhyRegAlloc::insertCallerSavingCode(std::vector<MachineInstr*> &instrnsBefore,
               instrnsAfter.insert(instrnsAfter.end(),
                                   AdIBef.begin(), AdIBef.end());
 
-	    MRI.cpMem2RegMI(instrnsAfter, MRI.getFramePointer(), StackOff,
+            MRI.cpMem2RegMI(instrnsAfter, MRI.getFramePointer(), StackOff,
                             Reg, RegType, scratchReg);
 
             if (AdIAft.size() > 0)
               instrnsAfter.insert(instrnsAfter.end(),
                                   AdIAft.begin(), AdIAft.end());
-	
-	    PushedRegSet.insert(Reg);
+        
+            PushedRegSet.insert(Reg);
 
-	    if(DEBUG_RA) {
-	      std::cerr << "\nFor call inst:" << *CallMI;
-	      std::cerr << " -inserted caller saving instrs: Before:\n\t ";
+            if(DEBUG_RA) {
+              std::cerr << "\nFor call inst:" << *CallMI;
+              std::cerr << " -inserted caller saving instrs: Before:\n\t ";
               for_each(instrnsBefore.begin(), instrnsBefore.end(),
                        std::mem_fun(&MachineInstr::dump));
-	      std::cerr << " -and After:\n\t ";
+              std::cerr << " -and After:\n\t ";
               for_each(instrnsAfter.begin(), instrnsAfter.end(),
                        std::mem_fun(&MachineInstr::dump));
-	    }	
-	  } // if not already pushed
-	} // if LR has a volatile color
+            }   
+          } // if not already pushed
+        } // if LR has a volatile color
       } // if LR has color
     } // if there is a LR for Var
   } // for each value in the LV set after instruction
@@ -1280,7 +1280,7 @@ bool PhyRegAlloc::runOnFunction (Function &F) {
   // RegClassList.  This must be done before calling constructLiveRanges().
   for (unsigned rc = 0; rc != NumOfRegClasses; ++rc)
     RegClassList.push_back (new RegClass (Fn, TM.getRegInfo(),
-					  MRI.getMachineRegClass(rc)));
+                                          MRI.getMachineRegClass(rc)));
 
   LRI->constructLiveRanges();            // create LR info
   if (DEBUG_RA >= RA_DEBUG_LiveRanges)

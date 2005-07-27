@@ -71,7 +71,7 @@ Issue and grouping constraints:
 -- Shift instructions cannot be grouped with other IEU0-specific instructions.
 -- CC setting instructions cannot be grouped with other IEU1-specific instrs.
 -- Several instructions must be issued in a single-instruction group:
-	MOVcc or MOVr, MULs/x and DIVs/x, SAVE/RESTORE, many others
+        MOVcc or MOVr, MULs/x and DIVs/x, SAVE/RESTORE, many others
 -- A CALL or JMPL breaks a group, ie, is not combined with subsequent instrs.
 --
 --
@@ -357,7 +357,7 @@ static const InstrClassRUsage CTIClassRUsage = {
   /*numEntries*/ 4,
   /* V[] */ {
     /*Cycle G */ { AllIssueSlots.rid,    0, 1 },
-		 { CTIIssueSlots.rid,    0, 1 },
+                 { CTIIssueSlots.rid,    0, 1 },
     /*Cycle E */ { IAlu0.rid,            1, 1 },
     /*Cycles E-C */ { CTIDelayCycle.rid, 1, 2 }
     /*Cycle C */
@@ -423,79 +423,79 @@ static const InstrIssueDelta  SparcV9InstrIssueDeltas[] = {
 
   // opCode,  isSingleIssue,  breaksGroup,  numBubbles
 
-				// Special cases for single-issue only
-				// Other single issue cases are below.
-//{ V9::LDDA,		true,	true,	0 },
-//{ V9::STDA,		true,	true,	0 },
-//{ V9::LDDF,		true,	true,	0 },
-//{ V9::LDDFA,		true,	true,	0 },
-  { V9::ADDCr,		true,	true,	0 },
-  { V9::ADDCi,		true,	true,	0 },
-  { V9::ADDCccr,	true,	true,	0 },
-  { V9::ADDCcci,	true,	true,	0 },
-  { V9::SUBCr,		true,	true,	0 },
-  { V9::SUBCi,		true,	true,	0 },
-  { V9::SUBCccr,	true,	true,	0 },
-  { V9::SUBCcci,	true,	true,	0 },
-//{ V9::LDSTUB,		true,	true,	0 },
-//{ V9::SWAP,		true,	true,	0 },
-//{ V9::SWAPA,		true,	true,	0 },
-//{ V9::CAS,		true,	true,	0 },
-//{ V9::CASA,		true,	true,	0 },
-//{ V9::CASX,		true,	true,	0 },
-//{ V9::CASXA,		true,	true,	0 },
-//{ V9::LDFSR,		true,	true,	0 },
-//{ V9::LDFSRA,		true,	true,	0 },
-//{ V9::LDXFSR,		true,	true,	0 },
-//{ V9::LDXFSRA,	true,	true,	0 },
-//{ V9::STFSR,		true,	true,	0 },
-//{ V9::STFSRA,		true,	true,	0 },
-//{ V9::STXFSR,		true,	true,	0 },
-//{ V9::STXFSRA,	true,	true,	0 },
-//{ V9::SAVED,		true,	true,	0 },
-//{ V9::RESTORED,	true,	true,	0 },
-//{ V9::FLUSH,		true,	true,	9 },
-//{ V9::FLUSHW,		true,	true,	9 },
-//{ V9::ALIGNADDR,	true,	true,	0 },
-//{ V9::DONE,		true,	true,	0 },
-//{ V9::RETRY,		true,	true,	0 },
-//{ V9::TCC,		true,	true,	0 },
-//{ V9::SHUTDOWN,	true,	true,	0 },
+                                // Special cases for single-issue only
+                                // Other single issue cases are below.
+//{ V9::LDDA,           true,   true,   0 },
+//{ V9::STDA,           true,   true,   0 },
+//{ V9::LDDF,           true,   true,   0 },
+//{ V9::LDDFA,          true,   true,   0 },
+  { V9::ADDCr,          true,   true,   0 },
+  { V9::ADDCi,          true,   true,   0 },
+  { V9::ADDCccr,        true,   true,   0 },
+  { V9::ADDCcci,        true,   true,   0 },
+  { V9::SUBCr,          true,   true,   0 },
+  { V9::SUBCi,          true,   true,   0 },
+  { V9::SUBCccr,        true,   true,   0 },
+  { V9::SUBCcci,        true,   true,   0 },
+//{ V9::LDSTUB,         true,   true,   0 },
+//{ V9::SWAP,           true,   true,   0 },
+//{ V9::SWAPA,          true,   true,   0 },
+//{ V9::CAS,            true,   true,   0 },
+//{ V9::CASA,           true,   true,   0 },
+//{ V9::CASX,           true,   true,   0 },
+//{ V9::CASXA,          true,   true,   0 },
+//{ V9::LDFSR,          true,   true,   0 },
+//{ V9::LDFSRA,         true,   true,   0 },
+//{ V9::LDXFSR,         true,   true,   0 },
+//{ V9::LDXFSRA,        true,   true,   0 },
+//{ V9::STFSR,          true,   true,   0 },
+//{ V9::STFSRA,         true,   true,   0 },
+//{ V9::STXFSR,         true,   true,   0 },
+//{ V9::STXFSRA,        true,   true,   0 },
+//{ V9::SAVED,          true,   true,   0 },
+//{ V9::RESTORED,       true,   true,   0 },
+//{ V9::FLUSH,          true,   true,   9 },
+//{ V9::FLUSHW,         true,   true,   9 },
+//{ V9::ALIGNADDR,      true,   true,   0 },
+//{ V9::DONE,           true,   true,   0 },
+//{ V9::RETRY,          true,   true,   0 },
+//{ V9::TCC,            true,   true,   0 },
+//{ V9::SHUTDOWN,       true,   true,   0 },
 
-				// Special cases for breaking group *before*
-				// CURRENTLY NOT SUPPORTED!
-  { V9::CALL,		false,	false,	0 },
-  { V9::JMPLCALLr,	false,	false,	0 },
-  { V9::JMPLCALLi,	false,	false,	0 },
-  { V9::JMPLRETr,	false,	false,	0 },
-  { V9::JMPLRETi,	false,	false,	0 },
+                                // Special cases for breaking group *before*
+                                // CURRENTLY NOT SUPPORTED!
+  { V9::CALL,           false,  false,  0 },
+  { V9::JMPLCALLr,      false,  false,  0 },
+  { V9::JMPLCALLi,      false,  false,  0 },
+  { V9::JMPLRETr,       false,  false,  0 },
+  { V9::JMPLRETi,       false,  false,  0 },
 
-				// Special cases for breaking the group *after*
-  { V9::MULXr,		true,	true,	(4+34)/2 },
-  { V9::MULXi,		true,	true,	(4+34)/2 },
-  { V9::FDIVS,		false,	true,	0 },
-  { V9::FDIVD,		false,	true,	0 },
-  { V9::FDIVQ,		false,	true,	0 },
-  { V9::FSQRTS,		false,	true,	0 },
-  { V9::FSQRTD,		false,	true,	0 },
-  { V9::FSQRTQ,		false,	true,	0 },
+                                // Special cases for breaking the group *after*
+  { V9::MULXr,          true,   true,   (4+34)/2 },
+  { V9::MULXi,          true,   true,   (4+34)/2 },
+  { V9::FDIVS,          false,  true,   0 },
+  { V9::FDIVD,          false,  true,   0 },
+  { V9::FDIVQ,          false,  true,   0 },
+  { V9::FSQRTS,         false,  true,   0 },
+  { V9::FSQRTD,         false,  true,   0 },
+  { V9::FSQRTQ,         false,  true,   0 },
 //{ V9::FCMP{LE,GT,NE,EQ}, false, true, 0 },
 
-				// Instructions that introduce bubbles
-//{ V9::MULScc,		true,	true,	2 },
-//{ V9::SMULcc,		true,	true,	(4+18)/2 },
-//{ V9::UMULcc,		true,	true,	(4+19)/2 },
-  { V9::SDIVXr,		true,	true,	68 },
-  { V9::SDIVXi,		true,	true,	68 },
-  { V9::UDIVXr,		true,	true,	68 },
-  { V9::UDIVXi,		true,	true,	68 },
-//{ V9::SDIVcc,		true,	true,	36 },
-//{ V9::UDIVcc,		true,	true,	37 },
-  { V9::WRCCRr,		true,	true,	4 },
-  { V9::WRCCRi,		true,	true,	4 },
-//{ V9::WRPR,		true,	true,	4 },
-//{ V9::RDCCR,		true,	true,	0 }, // no bubbles after, but see below
-//{ V9::RDPR,		true,	true,	0 },
+                                // Instructions that introduce bubbles
+//{ V9::MULScc,         true,   true,   2 },
+//{ V9::SMULcc,         true,   true,   (4+18)/2 },
+//{ V9::UMULcc,         true,   true,   (4+19)/2 },
+  { V9::SDIVXr,         true,   true,   68 },
+  { V9::SDIVXi,         true,   true,   68 },
+  { V9::UDIVXr,         true,   true,   68 },
+  { V9::UDIVXi,         true,   true,   68 },
+//{ V9::SDIVcc,         true,   true,   36 },
+//{ V9::UDIVcc,         true,   true,   37 },
+  { V9::WRCCRr,         true,   true,   4 },
+  { V9::WRCCRi,         true,   true,   4 },
+//{ V9::WRPR,           true,   true,   4 },
+//{ V9::RDCCR,          true,   true,   0 }, // no bubbles after, but see below
+//{ V9::RDPR,           true,   true,   0 },
 };
 
 
@@ -738,14 +738,14 @@ static const InstrRUsageDelta SparcV9InstrUsageDeltas[] = {
 SparcV9SchedInfo::SparcV9SchedInfo(const TargetMachine& tgt)
   : TargetSchedInfo(tgt,
                      (unsigned int) SPARC_NUM_SCHED_CLASSES,
-		     SparcV9RUsageDesc,
-		     SparcV9InstrUsageDeltas,
-		     SparcV9InstrIssueDeltas,
-		     sizeof(SparcV9InstrUsageDeltas)/sizeof(InstrRUsageDelta),
-		     sizeof(SparcV9InstrIssueDeltas)/sizeof(InstrIssueDelta))
+                     SparcV9RUsageDesc,
+                     SparcV9InstrUsageDeltas,
+                     SparcV9InstrIssueDeltas,
+                     sizeof(SparcV9InstrUsageDeltas)/sizeof(InstrRUsageDelta),
+                     sizeof(SparcV9InstrIssueDeltas)/sizeof(InstrIssueDelta))
 {
   maxNumIssueTotal = 4;
-  longestIssueConflict = 0;		// computed from issuesGaps[]
+  longestIssueConflict = 0;             // computed from issuesGaps[]
 
   // must be called after above parameters are initialized.
   initializeResources();

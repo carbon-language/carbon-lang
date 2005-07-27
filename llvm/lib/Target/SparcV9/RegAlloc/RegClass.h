@@ -87,8 +87,8 @@ class RegClass {
  public:
 
   RegClass(const Function *M,
-	   const SparcV9RegInfo *_MRI_,
-	   const TargetRegClassInfo *_MRC_);
+           const SparcV9RegInfo *_MRI_,
+           const TargetRegClassInfo *_MRC_);
 
   inline void createInterferenceGraph() { IG.createGraph(); }
 
@@ -113,15 +113,15 @@ class RegClass {
     { IG.addLRToIG(LR); }
 
   inline void setInterference(const V9LiveRange *const LR1,
-			      const V9LiveRange *const LR2)
+                              const V9LiveRange *const LR2)
     { IG.setInterference(LR1, LR2); }
 
   inline unsigned getInterference(const V9LiveRange *const LR1,
-			      const V9LiveRange *const LR2) const
+                              const V9LiveRange *const LR2) const
     { return IG.getInterference(LR1, LR2); }
 
   inline void mergeIGNodesOfLRs(const V9LiveRange *const LR1,
-				V9LiveRange *const LR2)
+                                V9LiveRange *const LR2)
     { IG.mergeIGNodesOfLRs(LR1, LR2); }
 
 

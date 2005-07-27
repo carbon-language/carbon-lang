@@ -54,12 +54,12 @@ void BBLiveVar::calcDefUseSets() {
     for (MachineInstr::const_val_op_iterator OpI = MI->begin(), OpE = MI->end();
          OpI != OpE; ++OpI)
       if (OpI.isDef()) // add to Defs if this operand is a def
-	addDef(*OpI);
+        addDef(*OpI);
 
     // do for implicit operands as well
     for (unsigned i = 0; i < MI->getNumImplicitRefs(); ++i)
       if (MI->getImplicitOp(i).isDef())
-	addDef(MI->getImplicitRef(i));
+        addDef(MI->getImplicitRef(i));
 
     // iterate over MI operands to find uses
     for (MachineInstr::const_val_op_iterator OpI = MI->begin(), OpE = MI->end();
@@ -67,7 +67,7 @@ void BBLiveVar::calcDefUseSets() {
       const Value *Op = *OpI;
 
       if (isa<BasicBlock>(Op))
-	continue;             // don't process labels
+        continue;             // don't process labels
 
       if (OpI.isUse()) { // add to Uses only if this operand is a use
         //
@@ -79,16 +79,16 @@ void BBLiveVar::calcDefUseSets() {
         // Put Phi operands in UseSet for the incoming edge, not node.
         // They must not "hide" later defs, and must be handled specially
         // during set propagation over the CFG.
-	if (MI->getOpcode() == V9::PHI) {         // for a phi node
+        if (MI->getOpcode() == V9::PHI) {         // for a phi node
           const Value *ArgVal = Op;
-	  const BasicBlock *PredBB = cast<BasicBlock>(*++OpI); // next ptr is BB
-	
-	  PredToEdgeInSetMap[PredBB].insert(ArgVal);
-	
-	  if (DEBUG_LV >= LV_DEBUG_Verbose)
-	    std::cerr << "   - phi operand " << RAV(ArgVal) << " came from BB "
+          const BasicBlock *PredBB = cast<BasicBlock>(*++OpI); // next ptr is BB
+        
+          PredToEdgeInSetMap[PredBB].insert(ArgVal);
+        
+          if (DEBUG_LV >= LV_DEBUG_Verbose)
+            std::cerr << "   - phi operand " << RAV(ArgVal) << " came from BB "
                       << RAV(PredBB) << "\n";
-	} // if( IsPhi )
+        } // if( IsPhi )
         else {
           // It is not a Phi use: add to regular use set and remove later defs.
           addUse(Op);
@@ -102,16 +102,16 @@ void BBLiveVar::calcDefUseSets() {
       const Value *Op = MI->getImplicitRef(i);
 
       if (Op->getType() == Type::LabelTy)             // don't process labels
-	continue;
+        continue;
 
       if (MI->getImplicitOp(i).isUse())
-	addUse(Op);
+        addUse(Op);
     }
   } // for all machine instructions
 }
 
 
-	
+        
 //-----------------------------------------------------------------------------
 // To add an operand which is a def
 //-----------------------------------------------------------------------------
@@ -208,7 +208,7 @@ bool BBLiveVar::applyFlowFunc(hash_map<const BasicBlock*,
 
       // if the predec POID is lower than mine
       if (PredLVBB->getPOId() <= POID)
-	needAnotherIt = true;
+        needAnotherIt = true;
     }
   }  // for
 

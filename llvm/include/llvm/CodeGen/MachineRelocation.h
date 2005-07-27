@@ -55,7 +55,7 @@ class MachineRelocation {
 
 public:
   MachineRelocation(unsigned Offset, unsigned RelocationType, GlobalValue *GV,
-                    intptr_t cst = 0, bool DoesntNeedFunctionStub = 0, 
+                    intptr_t cst = 0, bool DoesntNeedFunctionStub = 0,
                     bool GOTrelative = 0)
     : OffsetTypeExternal(Offset + (RelocationType << 26)), ConstantVal(cst),
       GOTRelative(GOTrelative), isConstPool(0) {
@@ -175,7 +175,7 @@ public:
   }
 
   /// getGOTIndex - Once this has been resolved to an entry in the GOT,
-  /// this returns that index.  The index is from the lowest address entry 
+  /// this returns that index.  The index is from the lowest address entry
   /// in the GOT.
   unsigned getGOTIndex() const {
     return Target.GOTIndex;

@@ -56,7 +56,7 @@ namespace llvm {
   private:
     friend class MSchedGraphSBNode;
     MSchedGraphSBEdge(MSchedGraphSBNode *destination, MSchedGraphSBEdgeType type,
-		    unsigned deptype, unsigned diff)
+                    unsigned deptype, unsigned diff)
       : dest(destination), depType(type), depOrderType(deptype), iteDiff(diff) {}
 
     MSchedGraphSBNode *dest;
@@ -84,10 +84,10 @@ namespace llvm {
 
   public:
     MSchedGraphSBNode(const MachineInstr* inst, MSchedGraphSB *graph,
-		    unsigned index, unsigned late=0, bool isBranch=false);
-    MSchedGraphSBNode(const MachineInstr* inst, std::vector<const MachineInstr*> &other, 
-		      MSchedGraphSB *graph,
-		      unsigned index, unsigned late=0, bool isPNode=true);
+                    unsigned index, unsigned late=0, bool isBranch=false);
+    MSchedGraphSBNode(const MachineInstr* inst, std::vector<const MachineInstr*> &other,
+                      MSchedGraphSB *graph,
+                      unsigned index, unsigned late=0, bool isPNode=true);
     MSchedGraphSBNode(const MSchedGraphSBNode &N);
 
     //Iterators - Predecessor and Succussor
@@ -101,12 +101,12 @@ namespace llvm {
     pred_const_iterator pred_end() const { return Predecessors.end(); }
 
     typedef MSchedGraphSBNodeIterator<std::vector<MSchedGraphSBEdge>::const_iterator,
-				    const MSchedGraphSBNode> succ_const_iterator;
+                                    const MSchedGraphSBNode> succ_const_iterator;
     succ_const_iterator succ_begin() const;
     succ_const_iterator succ_end() const;
 
     typedef MSchedGraphSBNodeIterator<std::vector<MSchedGraphSBEdge>::iterator,
-				    MSchedGraphSBNode> succ_iterator;
+                                    MSchedGraphSBNode> succ_iterator;
     succ_iterator succ_begin();
     succ_iterator succ_end();
     unsigned succ_size() { return Successors.size(); }
@@ -126,17 +126,17 @@ namespace llvm {
 
     void deleteSuccessor(MSchedGraphSBNode *node) {
       for (unsigned i = 0; i != Successors.size(); ++i)
-	if (Successors[i].getDest() == node) {
-	  Successors.erase(Successors.begin()+i);
-	  node->Predecessors.erase(std::find(node->Predecessors.begin(),
-					     node->Predecessors.end(), this));
-	  --i; //Decrease index var since we deleted a node
-	}
+        if (Successors[i].getDest() == node) {
+          Successors.erase(Successors.begin()+i);
+          node->Predecessors.erase(std::find(node->Predecessors.begin(),
+                                             node->Predecessors.end(), this));
+          --i; //Decrease index var since we deleted a node
+        }
     }
 
     void addOutEdge(MSchedGraphSBNode *destination,
-		    MSchedGraphSBEdge::MSchedGraphSBEdgeType type,
-		    unsigned deptype, unsigned diff=0) {
+                    MSchedGraphSBEdge::MSchedGraphSBEdgeType type,
+                    unsigned deptype, unsigned diff=0) {
       Successors.push_back(MSchedGraphSBEdge(destination, type, deptype,diff));
       destination->Predecessors.push_back(this);
     }
@@ -215,7 +215,7 @@ namespace llvm {
 
   // ostream << operator for MSGraphNode class
   inline std::ostream &operator<<(std::ostream &os,
-				  const MSchedGraphSBNode &node) {
+                                  const MSchedGraphSBNode &node) {
     node.print(os);
     return os;
   }
@@ -253,29 +253,29 @@ namespace llvm {
     typedef std::pair<int, MSchedGraphSBNode*> OpIndexNodePair;
     void buildNodesAndEdges(std::map<const MachineInstr*, unsigned> &ignoreInstrs, DependenceAnalyzer &DA, std::map<MachineInstr*, Instruction*> &machineTollvm, std::map<MSchedGraphSBNode*, std::set<MachineInstr*> > &liveOutsideTrace);
     void addValueEdges(std::vector<OpIndexNodePair> &NodesInMap,
-		       MSchedGraphSBNode *node,
-		       bool nodeIsUse, bool nodeIsDef, std::vector<const MachineInstr*> &phiInstrs, int diff=0);
+                       MSchedGraphSBNode *node,
+                       bool nodeIsUse, bool nodeIsDef, std::vector<const MachineInstr*> &phiInstrs, int diff=0);
     void addMachRegEdges(std::map<int,
-			 std::vector<OpIndexNodePair> >& regNumtoNodeMap);
+                         std::vector<OpIndexNodePair> >& regNumtoNodeMap);
     void addMemEdges(const std::vector<MSchedGraphSBNode*>& memInst,
-		     DependenceAnalyzer &DA, std::map<MachineInstr*, Instruction*> &machineTollvm);
-    
+                     DependenceAnalyzer &DA, std::map<MachineInstr*, Instruction*> &machineTollvm);
+
 
     bool instrCauseException(MachineOpCode opCode);
 
   public:
     MSchedGraphSB(const MachineBasicBlock *bb, const TargetMachine &targ,
-		std::map<const MachineInstr*, unsigned> &ignoreInstrs,
-		DependenceAnalyzer &DA, std::map<MachineInstr*, Instruction*> &machineTollvm);
+                std::map<const MachineInstr*, unsigned> &ignoreInstrs,
+                DependenceAnalyzer &DA, std::map<MachineInstr*, Instruction*> &machineTollvm);
 
     //Copy constructor with maps to link old nodes to new nodes
     MSchedGraphSB(const MSchedGraphSB &G, std::map<MSchedGraphSBNode*, MSchedGraphSBNode*> &newNodes);
-    
-    MSchedGraphSB(std::vector<const MachineBasicBlock*> &bbs, 
-		const TargetMachine &targ, 
-		std::map<const MachineInstr*, unsigned> &ignoreInstrs, 
-		DependenceAnalyzer &DA, 
-		std::map<MachineInstr*, Instruction*> &machineTollvm);
+
+    MSchedGraphSB(std::vector<const MachineBasicBlock*> &bbs,
+                const TargetMachine &targ,
+                std::map<const MachineInstr*, unsigned> &ignoreInstrs,
+                DependenceAnalyzer &DA,
+                std::map<MachineInstr*, Instruction*> &machineTollvm);
 
     //Print graph
     void print(std::ostream &os) const;
@@ -311,7 +311,7 @@ namespace llvm {
   // Provide specializations of GraphTraits to be able to use graph
   // iterators on the scheduling graph
   static MSchedGraphSBNode& getSecond(std::pair<const MachineInstr* const,
-				    MSchedGraphSBNode*> &Pair) {
+                                    MSchedGraphSBNode*> &Pair) {
     return *Pair.second;
   }
 
@@ -350,7 +350,7 @@ namespace llvm {
       return N->succ_end();
     }
     typedef std::pointer_to_unary_function<std::pair<const MachineInstr* const,
-						     MSchedGraphSBNode*>&, MSchedGraphSBNode&> DerefFun;
+                                                     MSchedGraphSBNode*>&, MSchedGraphSBNode&> DerefFun;
 
     typedef mapped_iterator<MSchedGraphSB::iterator, DerefFun> nodes_iterator;
     static nodes_iterator nodes_begin(MSchedGraphSB *G) {
@@ -395,7 +395,7 @@ namespace llvm {
     }
 
     typedef std::pointer_to_unary_function<std::pair<const MachineInstr* const,
-						     MSchedGraphSBNode*>&, MSchedGraphSBNode&> DerefFun;
+                                                     MSchedGraphSBNode*>&, MSchedGraphSBNode&> DerefFun;
 
     typedef mapped_iterator<MSchedGraphSB::iterator, DerefFun> nodes_iterator;
     static nodes_iterator nodes_begin(MSchedGraphSB *G) {

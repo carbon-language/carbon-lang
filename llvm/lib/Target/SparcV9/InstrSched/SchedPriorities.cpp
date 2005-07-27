@@ -28,7 +28,7 @@ namespace llvm {
 
 std::ostream &operator<<(std::ostream &os, const NodeDelayPair* nd) {
   return os << "Delay for node " << nd->node->getNodeId()
-	    << " = " << (long)nd->delay << "\n";
+            << " = " << (long)nd->delay << "\n";
 }
 
 
@@ -118,7 +118,7 @@ SchedPriorities::insertReady(const SchedGraphNode* node) {
 
 void
 SchedPriorities::issuedReadyNodeAt(CycleCount_t curTime,
-				   const SchedGraphNode* node) {
+                                   const SchedGraphNode* node) {
   candsAsHeap.removeNode(node);
   candsAsSet.erase(node);
   mcands.clear(); // ensure reset choices is called before any more choices
@@ -156,8 +156,8 @@ SchedPriorities::issuedReadyNodeAt(CycleCount_t curTime,
 
 inline int
 SchedPriorities::chooseByRule1(std::vector<candIndex>& mcands) {
-  return (mcands.size() == 1)? 0	// only one choice exists so take it
-			     : -1;	// -1 indicates multiple choices
+  return (mcands.size() == 1)? 0        // only one choice exists so take it
+                             : -1;      // -1 indicates multiple choices
 }
 
 inline int
@@ -165,7 +165,7 @@ SchedPriorities::chooseByRule2(std::vector<candIndex>& mcands) {
   assert(mcands.size() >= 1 && "Should have at least one candidate here.");
   for (unsigned i=0, N = mcands.size(); i < N; i++)
     if (instructionHasLastUse(methodLiveVarInfo,
-			      candsAsHeap.getNode(mcands[i])))
+                              candsAsHeap.getNode(mcands[i])))
       return i;
   return -1;
 }
@@ -173,7 +173,7 @@ SchedPriorities::chooseByRule2(std::vector<candIndex>& mcands) {
 inline int
 SchedPriorities::chooseByRule3(std::vector<candIndex>& mcands) {
   assert(mcands.size() >= 1 && "Should have at least one candidate here.");
-  int maxUses = candsAsHeap.getNode(mcands[0])->getNumOutEdges();	
+  int maxUses = candsAsHeap.getNode(mcands[0])->getNumOutEdges();       
   int indexWithMaxUses = 0;
   for (unsigned i=1, N = mcands.size(); i < N; i++) {
     int numUses = candsAsHeap.getNode(mcands[i])->getNumOutEdges();
@@ -187,7 +187,7 @@ SchedPriorities::chooseByRule3(std::vector<candIndex>& mcands) {
 
 const SchedGraphNode*
 SchedPriorities::getNextHighest(const SchedulingManager& S,
-				CycleCount_t curTime) {
+                                CycleCount_t curTime) {
   int nextIdx = -1;
   const SchedGraphNode* nextChoice = NULL;
 
@@ -195,7 +195,7 @@ SchedPriorities::getNextHighest(const SchedulingManager& S,
     findSetWithMaxDelay(mcands, S);
 
   while (nextIdx < 0 && mcands.size() > 0) {
-    nextIdx = chooseByRule1(mcands);	 // rule 1
+    nextIdx = chooseByRule1(mcands);     // rule 1
 
     if (nextIdx == -1)
       nextIdx = chooseByRule2(mcands); // rule 2
@@ -204,7 +204,7 @@ SchedPriorities::getNextHighest(const SchedulingManager& S,
       nextIdx = chooseByRule3(mcands); // rule 3
 
     if (nextIdx == -1)
-      nextIdx = 0;			 // default to first choice by delays
+      nextIdx = 0;                       // default to first choice by delays
 
     // We have found the next best candidate.  Check if it ready in
     // the current cycle, and if it is feasible.
@@ -231,7 +231,7 @@ SchedPriorities::getNextHighest(const SchedulingManager& S,
 
 void
 SchedPriorities::findSetWithMaxDelay(std::vector<candIndex>& mcands,
-				     const SchedulingManager& S)
+                                     const SchedulingManager& S)
 {
   if (mcands.size() == 0 && nextToTry != candsAsHeap.end())
     { // out of choices at current maximum delay;
@@ -239,8 +239,8 @@ SchedPriorities::findSetWithMaxDelay(std::vector<candIndex>& mcands,
       candIndex next = nextToTry;
       CycleCount_t maxDelay = candsAsHeap.getDelay(next);
       for (; next != candsAsHeap.end()
-	     && candsAsHeap.getDelay(next) == maxDelay; ++next)
-	mcands.push_back(next);
+             && candsAsHeap.getDelay(next) == maxDelay; ++next)
+        mcands.push_back(next);
 
       nextToTry = next;
 
@@ -258,7 +258,7 @@ SchedPriorities::findSetWithMaxDelay(std::vector<candIndex>& mcands,
 
 bool
 SchedPriorities::instructionHasLastUse(FunctionLiveVarInfo &LVI,
-				       const SchedGraphNode* graphNode) {
+                                       const SchedGraphNode* graphNode) {
   const MachineInstr *MI = graphNode->getMachineInstr();
 
   hash_map<const MachineInstr*, bool>::const_iterator

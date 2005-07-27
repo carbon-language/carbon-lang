@@ -49,7 +49,7 @@ namespace llvm
 
       /// Attempts to release the lock. If the lock is held by the current
       /// thread, the lock is released allowing other threads to acquire the
-      /// lock. 
+      /// lock.
       /// @returns false if any kind of error occurs, true otherwise.
       /// @brief Unconditionally release the lock.
       bool release(void);
@@ -61,7 +61,7 @@ namespace llvm
       /// available, true otherwise.
       /// @brief Try to acquire the lock.
       bool tryacquire();
- 
+
     //@}
     /// @name Platform Dependent Data
     /// @{
@@ -71,7 +71,7 @@ namespace llvm
     /// @}
     /// @name Do Not Implement
     /// @{
-    private: 
+    private:
       Mutex(const Mutex & original);
       void operator=(const Mutex &);
     /// @}

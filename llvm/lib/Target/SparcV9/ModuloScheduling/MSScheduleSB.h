@@ -28,7 +28,7 @@ namespace llvm {
     std::map<int, std::map<int, int> > resourceNumPerCycle;
 
     //Check if all resources are free
-    bool resourcesFree(MSchedGraphSBNode*, int, int II); 
+    bool resourcesFree(MSchedGraphSBNode*, int, int II);
     bool resourceAvailable(int resourceNum, int cycle);
     void useResource(int resourceNum, int cycle);
 

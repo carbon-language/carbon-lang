@@ -118,7 +118,7 @@ private:
   SavedStateMapTy FnAllocState;
 
   void addInterference(const Value *Def, const ValueSet *LVSet,
-		       bool isCallInst);
+                       bool isCallInst);
   bool markAllocatedRegs(MachineInstr* MInst);
 
   void addInterferencesForArgs();
@@ -131,10 +131,10 @@ private:
   void finishSavingState(Module &M);
 
   void setCallInterferences(const MachineInstr *MI,
-			    const ValueSet *LVSetAft);
+                            const ValueSet *LVSetAft);
 
   void move2DelayedInstr(const MachineInstr *OrigMI,
-			 const MachineInstr *DelayedMI);
+                         const MachineInstr *DelayedMI);
 
   void markUnusableSugColors();
   void allocateStackSpace4SpilledLRs();
@@ -158,7 +158,7 @@ private:
                          MachineBasicBlock &MBB);
 
   int getUsableUniRegAtMI(int RegType, const ValueSet *LVSetBef,
-			  MachineInstr *MI,
+                          MachineInstr *MI,
                           std::vector<MachineInstr*>& MIBef,
                           std::vector<MachineInstr*>& MIAft);
 

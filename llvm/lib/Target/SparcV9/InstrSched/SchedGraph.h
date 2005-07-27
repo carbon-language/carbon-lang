@@ -38,11 +38,11 @@ class SchedGraphNode : public SchedGraphNodeCommon {
 
 
   SchedGraphNode(unsigned nodeId, MachineBasicBlock *mbb, int indexInBB,
-		 const TargetMachine& Target);
+                 const TargetMachine& Target);
   ~SchedGraphNode();
 
-  friend class SchedGraph;		// give access for ctor and dtor
-  friend class SchedGraphEdge;		// give access for adding edges
+  friend class SchedGraph;              // give access for ctor and dtor
+  friend class SchedGraphEdge;          // give access for adding edges
 
 public:
 
@@ -95,10 +95,10 @@ protected:
   }
 
 private:
-  friend class SchedGraphSet;		// give access to ctor
+  friend class SchedGraphSet;           // give access to ctor
 
-  inline void	noteGraphNodeForInstr	(const MachineInstr* minstr,
-					 SchedGraphNode* node) {
+  inline void   noteGraphNodeForInstr   (const MachineInstr* minstr,
+                                         SchedGraphNode* node) {
     assert((*this)[minstr] == NULL);
     (*this)[minstr] = node;
   }
@@ -109,41 +109,41 @@ private:
   void buildGraph(const TargetMachine& target);
 
   void  buildNodesForBB(const TargetMachine& target,MachineBasicBlock &MBB,
-			std::vector<SchedGraphNode*>& memNV,
-			std::vector<SchedGraphNode*>& callNV,
-			RegToRefVecMap& regToRefVecMap,
-			ValueToDefVecMap& valueToDefVecMap);
+                        std::vector<SchedGraphNode*>& memNV,
+                        std::vector<SchedGraphNode*>& callNV,
+                        RegToRefVecMap& regToRefVecMap,
+                        ValueToDefVecMap& valueToDefVecMap);
 
 
   void findDefUseInfoAtInstr(const TargetMachine& target, SchedGraphNode* node,
-			     std::vector<SchedGraphNode*>& memNV,
-			     std::vector<SchedGraphNode*>& callNV,
-			     RegToRefVecMap& regToRefVecMap,
-			     ValueToDefVecMap& valueToDefVecMap);
+                             std::vector<SchedGraphNode*>& memNV,
+                             std::vector<SchedGraphNode*>& callNV,
+                             RegToRefVecMap& regToRefVecMap,
+                             ValueToDefVecMap& valueToDefVecMap);
 
   void addEdgesForInstruction(const MachineInstr& minstr,
-			      const ValueToDefVecMap& valueToDefVecMap,
-			      const TargetMachine& target);
+                              const ValueToDefVecMap& valueToDefVecMap,
+                              const TargetMachine& target);
 
   void addCDEdges(const TerminatorInst* term, const TargetMachine& target);
 
   void addMemEdges(const std::vector<SchedGraphNode*>& memNod,
-		   const TargetMachine& target);
+                   const TargetMachine& target);
 
   void addCallCCEdges(const std::vector<SchedGraphNode*>& memNod,
-		      MachineBasicBlock& bbMvec,
-		      const TargetMachine& target);
+                      MachineBasicBlock& bbMvec,
+                      const TargetMachine& target);
 
   void addCallDepEdges(const std::vector<SchedGraphNode*>& callNV,
-		       const TargetMachine& target);
+                       const TargetMachine& target);
 
   void addMachineRegEdges(RegToRefVecMap& regToRefVecMap,
-			  const TargetMachine& target);
+                          const TargetMachine& target);
 
   void addEdgesForValue(SchedGraphNode* refNode, const RefVec& defVec,
-			const Value* defValue, bool  refNodeIsDef,
-			bool  refNodeIsDefAndUse,
-			const TargetMachine& target);
+                        const Value* defValue, bool  refNodeIsDef,
+                        bool  refNodeIsDefAndUse,
+                        const TargetMachine& target);
 
   void addDummyEdges();
 

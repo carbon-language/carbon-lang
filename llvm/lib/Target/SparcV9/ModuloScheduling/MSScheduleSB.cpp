@@ -33,10 +33,10 @@ bool MSScheduleSB::insert(MSchedGraphSBNode *node, int cycle, int II) {
     if (schedule[cycle].size() < numIssue) {
       //Now check if all the resources in their respective cycles are available
       if(resourcesFree(node, cycle, II)) {
-	//Insert to preserve dependencies
-	addToSchedule(cycle,node);
-	DEBUG(std::cerr << "Found spot in map, and there is an issue slot\n");
-	return false;
+        //Insert to preserve dependencies
+        addToSchedule(cycle,node);
+        DEBUG(std::cerr << "Found spot in map, and there is an issue slot\n");
+        return false;
       }
     }
   }
@@ -81,7 +81,7 @@ bool MSScheduleSB::resourceAvailable(int resourceNum, int cycle) {
     if(resourceNumPerCycle[cycle].count(resourceNum)) {
       int maxRes = CPUResource::getCPUResource(resourceNum)->maxNumUsers;
       if(resourceNumPerCycle[cycle][resourceNum] >= maxRes)
-	isFree = false;
+        isFree = false;
     }
   }
   
@@ -137,21 +137,21 @@ bool MSScheduleSB::resourcesFree(MSchedGraphSBNode *node, int cycle, int II) {
     //Loop over resources in each cycle and increments their usage count
     for(unsigned i=0; i < resources.size(); ++i) {
       for(unsigned j=0; j < resources[i].size(); ++j) {
-	
-	//Get Resource to check its availability
-	int resourceNum = resources[i][j];
-	
-	DEBUG(std::cerr << "Attempting to schedule Resource Num: " << resourceNum << " in cycle: " << currentCycle << "\n");
-	
-	success = resourceAvailable(resourceNum, currentCycle); 
-	
-	if(!success)
-	  break;
-	
+        
+        //Get Resource to check its availability
+        int resourceNum = resources[i][j];
+        
+        DEBUG(std::cerr << "Attempting to schedule Resource Num: " << resourceNum << " in cycle: " << currentCycle << "\n");
+        
+        success = resourceAvailable(resourceNum, currentCycle); 
+        
+        if(!success)
+          break;
+        
       }
       
       if(!success)
-	break;
+        break;
       
       //Increase cycle
       currentCycle++;
@@ -172,8 +172,8 @@ bool MSScheduleSB::resourcesFree(MSchedGraphSBNode *node, int cycle, int II) {
     //Loop over resources in each cycle and increments their usage count
     for(unsigned i=0; i < resources.size(); ++i) {
       for(unsigned j=0; j < resources[i].size(); ++j) {
-	int resourceNum = resources[i][j];
-	useResource(resourceNum, currentCycle);
+        int resourceNum = resources[i][j];
+        useResource(resourceNum, currentCycle);
       }
       currentCycle++;
     }
@@ -205,15 +205,15 @@ bool MSScheduleSB::constructKernel(int II, std::vector<MSchedGraphSBNode*> &bran
     int count = 0;
     for(int i = index; i <= (schedule.rbegin()->first); i+=II) {
       if(schedule.count(i)) {
-	for(std::vector<MSchedGraphSBNode*>::iterator I = schedule[i].begin(),
-	      E = schedule[i].end(); I != E; ++I) {
-	  //Check if its a branch
-	  assert(!(*I)->isBranch() && "Branch should not be schedule!");
+        for(std::vector<MSchedGraphSBNode*>::iterator I = schedule[i].begin(),
+              E = schedule[i].end(); I != E; ++I) {
+          //Check if its a branch
+          assert(!(*I)->isBranch() && "Branch should not be schedule!");
 
-	  tempKernel.push_back(std::make_pair(*I, count));
-	  maxSN = std::max(maxSN, count);
-	  
-	}
+          tempKernel.push_back(std::make_pair(*I, count));
+          maxSN = std::max(maxSN, count);
+          
+        }
       }
       ++count;
     }
@@ -231,14 +231,14 @@ bool MSScheduleSB::constructKernel(int II, std::vector<MSchedGraphSBNode*> &bran
       for(std::map<const MachineInstr*, unsigned>::iterator N = indVar.begin(), NE = indVar.end(); N != NE; ++N) {
 
 
-	if(N->second < I->first->getIndex())
-	  tmpMap[N->second] = (MachineInstr*) N->first;
+        if(N->second < I->first->getIndex())
+          tmpMap[N->second] = (MachineInstr*) N->first;
       }
 
       //Add to kernel, and delete from indVar
       for(std::map<unsigned, MachineInstr*>::iterator N = tmpMap.begin(), NE = tmpMap.end(); N != NE; ++N) {
-	kernel.push_back(std::make_pair(N->second, 0));
-	indVar.erase(N->second);
+        kernel.push_back(std::make_pair(N->second, 0));
+        indVar.erase(N->second);
       }
     }
 
@@ -247,7 +247,7 @@ bool MSScheduleSB::constructKernel(int II, std::vector<MSchedGraphSBNode*> &bran
       //assert(I->second == 0 && "Predicate node must be from current iteration\n");
       std::vector<const MachineInstr*> otherInstrs = I->first->getOtherInstrs();
       for(std::vector<const MachineInstr*>::iterator O = otherInstrs.begin(), OE = otherInstrs.end(); O != OE; ++O) {
-	kernel.push_back(std::make_pair((MachineInstr*) *O, I->second));
+        kernel.push_back(std::make_pair((MachineInstr*) *O, I->second));
       }
     }
 
@@ -285,10 +285,10 @@ bool MSScheduleSB::defPreviousStage(Value *def, int stage) {
      const MachineOperand &mOp = inst->getOperand(i);
      if(mOp.getType() == MachineOperand::MO_VirtualRegister && mOp.isDef()) {
        if(def == mOp.getVRegValue()) {
-	 if(P->second >= stage)
-	   return false;
-	 else
-	   return true;
+         if(P->second >= stage)
+           return false;
+         else
+           return true;
        }
      }
     }
@@ -309,7 +309,7 @@ void MSScheduleSB::print(std::ostream &os) const {
 
   os << "Kernel:\n";
   for(std::vector<std::pair<MachineInstr*, int> >::const_iterator I = kernel.begin(),
-	E = kernel.end(); I != E; ++I)
+        E = kernel.end(); I != E; ++I)
     os << "Node: " << *(I->first) << " Stage: " << I->second << "\n";
 }
 

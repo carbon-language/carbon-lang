@@ -27,20 +27,20 @@ namespace sys {
   /// in the operating system's filesystem and provides various basic operations
   /// on it.  Note that this class only represents the name of a path to a file
   /// or directory which may or may not be valid for a given machine's file
-  /// system. The class is patterned after the java.io.File class with various 
-  /// extensions and several omissions (not relevant to LLVM).  A Path object 
-  /// ensures that the path it encapsulates is syntactically valid for the 
-  /// operating system it is running on but does not ensure correctness for 
-  /// any particular file system. That is, a syntactically valid path might 
+  /// system. The class is patterned after the java.io.File class with various
+  /// extensions and several omissions (not relevant to LLVM).  A Path object
+  /// ensures that the path it encapsulates is syntactically valid for the
+  /// operating system it is running on but does not ensure correctness for
+  /// any particular file system. That is, a syntactically valid path might
   /// specify path components that do not exist in the file system and using
   /// such a Path to act on the file system could produce errors. There is one
-  /// invalid Path value which is permitted: the empty path.  The class should 
-  /// never allow a syntactically invalid non-empty path name to be assigned. 
+  /// invalid Path value which is permitted: the empty path.  The class should
+  /// never allow a syntactically invalid non-empty path name to be assigned.
   /// Empty paths are required in order to indicate an error result in some
-  /// situations. If the path is empty, the isValid operation will return 
-  /// false. All operations will fail if isValid is false. Operations that 
+  /// situations. If the path is empty, the isValid operation will return
+  /// false. All operations will fail if isValid is false. Operations that
   /// change the path will either return false if it would cause a syntactically
-  /// invalid path name (in which case the Path object is left unchanged) or 
+  /// invalid path name (in which case the Path object is left unchanged) or
   /// throw an std::string exception indicating the error. The methods are
   /// grouped into four basic categories: Path Accessors (provide information
   /// about the path without accessing disk), Disk Accessors (provide
@@ -323,16 +323,16 @@ namespace sys {
       bool isDynamicLibrary() const;
 
       /// This function determines if the path name references an existing file
-      /// or directory in the file system. 
-      /// @returns true if the pathname references an existing file or 
+      /// or directory in the file system.
+      /// @returns true if the pathname references an existing file or
       /// directory.
       /// @brief Determines if the path is a file or directory in
       /// the file system.
       bool exists() const;
 
       /// This function determines if the path name references a readable file
-      /// or directory in the file system. This function checks for 
-      /// the existence and readability (by the current program) of the file 
+      /// or directory in the file system. This function checks for
+      /// the existence and readability (by the current program) of the file
       /// or directory.
       /// @returns true if the pathname references a readable file.
       /// @brief Determines if the path is a readable file or directory
@@ -340,8 +340,8 @@ namespace sys {
       bool canRead() const;
 
       /// This function determines if the path name references a writable file
-      /// or directory in the file system. This function checks for the 
-      /// existence and writability (by the current program) of the file or 
+      /// or directory in the file system. This function checks for the
+      /// existence and writability (by the current program) of the file or
       /// directory.
       /// @returns true if the pathname references a writable file.
       /// @brief Determines if the path is a writable file or directory
@@ -349,7 +349,7 @@ namespace sys {
       bool canWrite() const;
 
       /// This function determines if the path name references an executable
-      /// file in the file system. This function checks for the existence and 
+      /// file in the file system. This function checks for the existence and
       /// executability (by the current program) of the file.
       /// @returns true if the pathname references an executable file.
       /// @brief Determines if the path is an executable file in the file
@@ -400,7 +400,7 @@ namespace sys {
 
       /// This method sets the Path object to \p unverified_path. This can fail
       /// if the \p unverified_path does not pass the syntactic checks of the
-      /// isValid() method. If verification fails, the Path object remains 
+      /// isValid() method. If verification fails, the Path object remains
       /// unchanged and false is returned. Otherwise true is returned and the
       /// Path object takes on the path value of \p unverified_path
       /// @returns true if the path was set, false otherwise.
@@ -417,7 +417,7 @@ namespace sys {
 
       /// The \p component is added to the end of the Path if it is a legal
       /// name for the operating system. A directory separator will be added if
-      /// needed. 
+      /// needed.
       /// @returns false if the path component could not be added.
       /// @brief Appends one path component to the Path.
       bool appendComponent( const std::string& component );
@@ -469,7 +469,7 @@ namespace sys {
       /// @brief Make the file readable;
       void makeExecutableOnDisk();
 
-      /// This method allows the last modified time stamp and permission bits 
+      /// This method allows the last modified time stamp and permission bits
       /// to be set on the disk object referenced by the Path.
       /// @throws std::string if an error occurs.
       /// @returns true
@@ -480,8 +480,8 @@ namespace sys {
       /// same name as the Path object. The \p create_parents parameter controls
       /// whether intermediate directories are created or not. if \p
       /// create_parents is true, then an attempt will be made to create all
-      /// intermediate directories, as needed. If \p create_parents is false, 
-      /// then only the final directory component of the Path name will be 
+      /// intermediate directories, as needed. If \p create_parents is false,
+      /// then only the final directory component of the Path name will be
       /// created. The created directory will have no entries.
       /// @returns false if the Path does not reference a directory, true
       /// otherwise.
@@ -507,7 +507,7 @@ namespace sys {
       /// file is created.  Note that this will both change the Path object
       /// *and* create the corresponding file. This function will ensure that
       /// the newly generated temporary file name is unique in the file system.
-      /// @param reuse_current When set to true, this parameter indicates that 
+      /// @param reuse_current When set to true, this parameter indicates that
       /// if the current file name does not exist then it will be used without
       /// modification.
       /// @returns true if successful, false if the file couldn't be created.
@@ -517,18 +517,18 @@ namespace sys {
       bool createTemporaryFileOnDisk(bool reuse_current = false);
 
       /// This method renames the file referenced by \p this as \p newName. The
-      /// file referenced by \p this must exist. The file referenced by 
+      /// file referenced by \p this must exist. The file referenced by
       /// \p newName does not need to exist.
       /// @returns true
       /// @throws std::string if there is an file system error.
       /// @brief Rename one file as another.
       bool renamePathOnDisk(const Path& newName);
 
-      /// This method attempts to destroy the file or directory named by the 
+      /// This method attempts to destroy the file or directory named by the
       /// last component of the Path. If the Path refers to a directory and the
-      /// \p destroy_contents is false, an attempt will be made to remove just 
-      /// the directory (the final Path component). If \p destroy_contents is 
-      /// true, an attempt will be made to remove the entire contents of the 
+      /// \p destroy_contents is false, an attempt will be made to remove just
+      /// the directory (the final Path component). If \p destroy_contents is
+      /// true, an attempt will be made to remove the entire contents of the
       /// directory, recursively. If the Path refers to a file, the
       /// \p destroy_contents parameter is ignored.
       /// @param destroy_contents Indicates whether the contents of a destroyed

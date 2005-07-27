@@ -33,8 +33,8 @@ using namespace llvm;
 
 //MSchedGraphNode constructor
 MSchedGraphNode::MSchedGraphNode(const MachineInstr* inst,
-				 MSchedGraph *graph, unsigned idx,
-				 unsigned late, bool isBranch) 
+                                 MSchedGraph *graph, unsigned idx,
+                                 unsigned late, bool isBranch) 
   : Inst(inst), Parent(graph), index(idx), latency(late), 
     isBranchInstr(isBranch) {
 
@@ -76,7 +76,7 @@ MSchedGraphEdge MSchedGraphNode::getInEdge(MSchedGraphNode *pred) {
 //Get the iteration difference for the edge from this node to its successor
 unsigned MSchedGraphNode::getIteDiff(MSchedGraphNode *succ) {
   for(std::vector<MSchedGraphEdge>::iterator I = Successors.begin(), 
-	E = Successors.end();
+        E = Successors.end();
       I != E; ++I) {
     if(I->getDest() == succ)
       return I->getIteDiff();
@@ -90,7 +90,7 @@ unsigned MSchedGraphNode::getInEdgeNum(MSchedGraphNode *pred) {
   //return the edge the corresponds to this in edge
   int count = 0;
   for(MSchedGraphNode::succ_iterator I = pred->succ_begin(), 
-	E = pred->succ_end();
+        E = pred->succ_end();
       I != E; ++I) {
     if(*I == this)
       return count;
@@ -111,7 +111,7 @@ bool MSchedGraphNode::isSuccessor(MSchedGraphNode *succ) {
 //Dtermine if pred is a predecessor of this node
 bool MSchedGraphNode::isPredecessor(MSchedGraphNode *pred) {
   if(std::find( Predecessors.begin(),  Predecessors.end(), 
-		pred) !=   Predecessors.end())
+                pred) !=   Predecessors.end())
     return true;
   else
     return false;
@@ -119,11 +119,11 @@ bool MSchedGraphNode::isPredecessor(MSchedGraphNode *pred) {
 
 //Add a node to the graph
 void MSchedGraph::addNode(const MachineInstr *MI,
-			  MSchedGraphNode *node) {
+                          MSchedGraphNode *node) {
 
   //Make sure node does not already exist
   assert(GraphMap.find(MI) == GraphMap.end()
-	 && "New MSchedGraphNode already exists for this instruction");
+         && "New MSchedGraphNode already exists for this instruction");
 
   GraphMap[MI] = node;
 }
@@ -149,10 +149,10 @@ void MSchedGraph::deleteNode(MSchedGraphNode *node) {
 //is a special case in Modulo Scheduling.  We only want to deal with
 //the body of the loop.
 MSchedGraph::MSchedGraph(const MachineBasicBlock *bb, 
-			 const TargetMachine &targ, 
-			 std::map<const MachineInstr*, unsigned> &ignoreInstrs, 
-			 DependenceAnalyzer &DA, 
-			 std::map<MachineInstr*, Instruction*> &machineTollvm)
+                         const TargetMachine &targ, 
+                         std::map<const MachineInstr*, unsigned> &ignoreInstrs, 
+                         DependenceAnalyzer &DA, 
+                         std::map<MachineInstr*, Instruction*> &machineTollvm)
   : Target(targ) {
 
   //Make sure BB is not null,
@@ -172,10 +172,10 @@ MSchedGraph::MSchedGraph(const MachineBasicBlock *bb,
 //is a special case in Modulo Scheduling.  We only want to deal with
 //the body of the loop.
 MSchedGraph::MSchedGraph(std::vector<const MachineBasicBlock*> &bbs, 
-			 const TargetMachine &targ, 
-			 std::map<const MachineInstr*, unsigned> &ignoreInstrs, 
-			 DependenceAnalyzer &DA, 
-			 std::map<MachineInstr*, Instruction*> &machineTollvm)
+                         const TargetMachine &targ, 
+                         std::map<const MachineInstr*, unsigned> &ignoreInstrs, 
+                         DependenceAnalyzer &DA, 
+                         std::map<MachineInstr*, Instruction*> &machineTollvm)
   : BBs(bbs), Target(targ) {
 
   //Make sure there is at least one BB and it is not null,
@@ -191,7 +191,7 @@ MSchedGraph::MSchedGraph(std::vector<const MachineBasicBlock*> &bbs,
 
 //Copies the graph and keeps a map from old to new nodes
 MSchedGraph::MSchedGraph(const MSchedGraph &G, 
-			 std::map<MSchedGraphNode*, MSchedGraphNode*> &newNodes) 
+                         std::map<MSchedGraphNode*, MSchedGraphNode*> &newNodes) 
   : Target(G.Target) {
 
   BBs = G.BBs;
@@ -199,7 +199,7 @@ MSchedGraph::MSchedGraph(const MSchedGraph &G,
   std::map<MSchedGraphNode*, MSchedGraphNode*> oldToNew;
   //Copy all nodes
   for(MSchedGraph::const_iterator N = G.GraphMap.begin(), 
-	NE = G.GraphMap.end(); N != NE; ++N) {
+        NE = G.GraphMap.end(); N != NE; ++N) {
 
     MSchedGraphNode *newNode = new MSchedGraphNode(*(N->second));
     oldToNew[&*(N->second)] = newNode;
@@ -272,8 +272,8 @@ int MSchedGraph::totalDelay() {
 }
 //Experimental code to add edges from the branch to all nodes dependent upon it.
 void hasPath(MSchedGraphNode *node, std::set<MSchedGraphNode*> &visited, 
-	   std::set<MSchedGraphNode*> &branches, MSchedGraphNode *startNode,
-	   std::set<std::pair<MSchedGraphNode*,MSchedGraphNode*> > &newEdges ) {
+           std::set<MSchedGraphNode*> &branches, MSchedGraphNode *startNode,
+           std::set<std::pair<MSchedGraphNode*,MSchedGraphNode*> > &newEdges ) {
 
   visited.insert(node);
   DEBUG(std::cerr << "Visiting: " << *node << "\n");
@@ -287,7 +287,7 @@ void hasPath(MSchedGraphNode *node, std::set<MSchedGraphNode*> &visited,
     //only visit if we have not already
     else if(!visited.count(dest)) {
       if(edge->getIteDiff() == 0)
-	hasPath(dest, visited, branches, startNode, newEdges);}
+        hasPath(dest, visited, branches, startNode, newEdges);}
 
   }
 
@@ -302,7 +302,7 @@ void MSchedGraph::addBranchEdges() {
       I != E; ++I) {
     if(I->second->isBranch())
       if(I->second->hasPredecessors())
-	branches.insert(I->second);
+        branches.insert(I->second);
   }
 
   //See if there is a path first instruction to the branches, if so, add an
@@ -318,8 +318,8 @@ void MSchedGraph::addBranchEdges() {
   unsigned min = GraphMap.size();
   if(newEdges.size() == 1) {
     ((newEdges.begin())->first)->addOutEdge(((newEdges.begin())->second),
-			   MSchedGraphEdge::BranchDep,
-			   MSchedGraphEdge::NonDataDep, 1);
+                           MSchedGraphEdge::BranchDep,
+                           MSchedGraphEdge::NonDataDep, 1);
   }
   else {
 
@@ -331,13 +331,13 @@ void MSchedGraph::addBranchEdges() {
       DEBUG(std::cerr << "Branch Edge from: " << *(I->first) << " to " << *(I->second) << "\n");
 
       //      if(I->second->getIndex() <= min) {
-	start = I->first;
-	end = I->second;
-	//min = I->second->getIndex();
-	//}
-	start->addOutEdge(end,
-			  MSchedGraphEdge::BranchDep,
-			  MSchedGraphEdge::NonDataDep, 1);
+        start = I->first;
+        end = I->second;
+        //min = I->second->getIndex();
+        //}
+        start->addOutEdge(end,
+                          MSchedGraphEdge::BranchDep,
+                          MSchedGraphEdge::NonDataDep, 1);
     }
   }
 }
@@ -345,8 +345,8 @@ void MSchedGraph::addBranchEdges() {
 
 //Add edges between the nodes
 void MSchedGraph::buildNodesAndEdges(std::map<const MachineInstr*, unsigned> &ignoreInstrs,
-				     DependenceAnalyzer &DA,
-		       std::map<MachineInstr*, Instruction*> &machineTollvm) {
+                                     DependenceAnalyzer &DA,
+                       std::map<MachineInstr*, Instruction*> &machineTollvm) {
   
 
   //Get Machine target information for calculating latency
@@ -361,18 +361,18 @@ void MSchedGraph::buildNodesAndEdges(std::map<const MachineInstr*, unsigned> &ig
   unsigned index = 0;
 
   for(std::vector<const MachineBasicBlock*>::iterator B = BBs.begin(), 
-	BE = BBs.end(); B != BE; ++B) {
+        BE = BBs.end(); B != BE; ++B) {
     
     const MachineBasicBlock *BB = *B;
 
     //Loop over instructions in MBB and add nodes and edges
     for (MachineBasicBlock::const_iterator MI = BB->begin(), e = BB->end(); 
-	 MI != e; ++MI) {
+         MI != e; ++MI) {
       
       //Ignore indvar instructions
       if(ignoreInstrs.count(MI)) {
-	++index;
-	continue;
+        ++index;
+        continue;
       }
       
       //Get each instruction of machine basic block, get the delay
@@ -386,16 +386,16 @@ void MSchedGraph::buildNodesAndEdges(std::map<const MachineInstr*, unsigned> &ig
       //Check if subsequent instructions can be issued before
       //the result is ready, if so use min delay.
       if(MTI->hasResultInterlock(MIopCode))
-	delay = MTI->minLatency(MIopCode);
+        delay = MTI->minLatency(MIopCode);
       else
 #endif
-	//Get delay
-	delay = MTI->maxLatency(opCode);
+        //Get delay
+        delay = MTI->maxLatency(opCode);
       
       //Create new node for this machine instruction and add to the graph.
       //Create only if not a nop
       if(MTI->isNop(opCode))
-	continue;
+        continue;
       
       //Sparc BE does not use PHI opcode, so assert on this case
       assert(opCode != TargetInstrInfo::PHI && "Did not expect PHI opcode");
@@ -404,74 +404,74 @@ void MSchedGraph::buildNodesAndEdges(std::map<const MachineInstr*, unsigned> &ig
       
       //We want to flag the branch node to treat it special
       if(MTI->isBranch(opCode))
-	isBranch = true;
+        isBranch = true;
       
       //Node is created and added to the graph automatically
       MSchedGraphNode *node =  new MSchedGraphNode(MI, this, index, delay, 
-						   isBranch);
+                                                   isBranch);
       
       DEBUG(std::cerr << "Created Node: " << *node << "\n");
       
       //Check OpCode to keep track of memory operations to add memory
       //dependencies later.
       if(MTI->isLoad(opCode) || MTI->isStore(opCode))
-	memInstructions.push_back(node);
+        memInstructions.push_back(node);
       
       //Loop over all operands, and put them into the register number to
       //graph node map for determining dependencies
       //If an operands is a use/def, we have an anti dependence to itself
       for(unsigned i=0; i < MI->getNumOperands(); ++i) {
-	//Get Operand
-	const MachineOperand &mOp = MI->getOperand(i);
-	
-	//Check if it has an allocated register
-	if(mOp.hasAllocatedReg()) {
-	  int regNum = mOp.getReg();
-	  
-	  if(regNum != SparcV9::g0) {
-	    //Put into our map
-	    regNumtoNodeMap[regNum].push_back(std::make_pair(i, node));
-	  }
-	  continue;
-	}
-	
-	
-	//Add virtual registers dependencies
-	//Check if any exist in the value map already and create dependencies
-	//between them.
-	if(mOp.getType() == MachineOperand::MO_VirtualRegister 
-	   ||  mOp.getType() == MachineOperand::MO_CCRegister) {
-	  
-	  //Make sure virtual register value is not null
-	  assert((mOp.getVRegValue() != NULL) && "Null value is defined");
-	  
-	  //Check if this is a read operation in a phi node, if so DO NOT PROCESS
-	  if(mOp.isUse() && (opCode == TargetInstrInfo::PHI)) {
-	    DEBUG(std::cerr << "Read Operation in a PHI node\n");
-	    continue;
-	  }
-	  
-	  if (const Value* srcI = mOp.getVRegValue()) {
-	    
-	    //Find value in the map
-	    std::map<const Value*, std::vector<OpIndexNodePair> >::iterator V
-	      = valuetoNodeMap.find(srcI);
-	    
-	    //If there is something in the map already, add edges from
-	    //those instructions
-	    //to this one we are processing
-	    if(V != valuetoNodeMap.end()) {
-	      addValueEdges(V->second, node, mOp.isUse(), mOp.isDef(), phiInstrs);
-	      
-	      //Add to value map
-	      V->second.push_back(std::make_pair(i,node));
-	    }
-	    //Otherwise put it in the map
-	    else
-	      //Put into value map
-	      valuetoNodeMap[mOp.getVRegValue()].push_back(std::make_pair(i, node));
-	  }
-	}
+        //Get Operand
+        const MachineOperand &mOp = MI->getOperand(i);
+        
+        //Check if it has an allocated register
+        if(mOp.hasAllocatedReg()) {
+          int regNum = mOp.getReg();
+          
+          if(regNum != SparcV9::g0) {
+            //Put into our map
+            regNumtoNodeMap[regNum].push_back(std::make_pair(i, node));
+          }
+          continue;
+        }
+        
+        
+        //Add virtual registers dependencies
+        //Check if any exist in the value map already and create dependencies
+        //between them.
+        if(mOp.getType() == MachineOperand::MO_VirtualRegister 
+           ||  mOp.getType() == MachineOperand::MO_CCRegister) {
+          
+          //Make sure virtual register value is not null
+          assert((mOp.getVRegValue() != NULL) && "Null value is defined");
+          
+          //Check if this is a read operation in a phi node, if so DO NOT PROCESS
+          if(mOp.isUse() && (opCode == TargetInstrInfo::PHI)) {
+            DEBUG(std::cerr << "Read Operation in a PHI node\n");
+            continue;
+          }
+          
+          if (const Value* srcI = mOp.getVRegValue()) {
+            
+            //Find value in the map
+            std::map<const Value*, std::vector<OpIndexNodePair> >::iterator V
+              = valuetoNodeMap.find(srcI);
+            
+            //If there is something in the map already, add edges from
+            //those instructions
+            //to this one we are processing
+            if(V != valuetoNodeMap.end()) {
+              addValueEdges(V->second, node, mOp.isUse(), mOp.isDef(), phiInstrs);
+              
+              //Add to value map
+              V->second.push_back(std::make_pair(i,node));
+            }
+            //Otherwise put it in the map
+            else
+              //Put into value map
+              valuetoNodeMap[mOp.getVRegValue()].push_back(std::make_pair(i, node));
+          }
+        }
       }
       ++index;
     }
@@ -480,15 +480,15 @@ void MSchedGraph::buildNodesAndEdges(std::map<const MachineInstr*, unsigned> &ig
     //phiInstr list to process
     const BasicBlock *llvm_bb = BB->getBasicBlock();
     for(BasicBlock::const_iterator I = llvm_bb->begin(), E = llvm_bb->end(); 
-	I != E; ++I) {
+        I != E; ++I) {
       if(const PHINode *PN = dyn_cast<PHINode>(I)) {
-	MachineCodeForInstruction & tempMvec = MachineCodeForInstruction::get(PN);
-	for (unsigned j = 0; j < tempMvec.size(); j++) {
-	  if(!ignoreInstrs.count(tempMvec[j])) {
-	    DEBUG(std::cerr << "Inserting phi instr into map: " << *tempMvec[j] << "\n");
-	    phiInstrs.push_back((MachineInstr*) tempMvec[j]);
-	  }
-	}
+        MachineCodeForInstruction & tempMvec = MachineCodeForInstruction::get(PN);
+        for (unsigned j = 0; j < tempMvec.size(); j++) {
+          if(!ignoreInstrs.count(tempMvec[j])) {
+            DEBUG(std::cerr << "Inserting phi instr into map: " << *tempMvec[j] << "\n");
+            phiInstrs.push_back((MachineInstr*) tempMvec[j]);
+          }
+        }
       }
       
     }
@@ -498,14 +498,14 @@ void MSchedGraph::buildNodesAndEdges(std::map<const MachineInstr*, unsigned> &ig
     
     //Finally deal with PHI Nodes and Value*
     for(std::vector<const MachineInstr*>::iterator I = phiInstrs.begin(), 
-	  E = phiInstrs.end(); I != E;  ++I) {
+          E = phiInstrs.end(); I != E;  ++I) {
       
       //Get Node for this instruction
       std::map<const MachineInstr*, MSchedGraphNode*>::iterator X;
       X = find(*I);
       
       if(X == GraphMap.end())
-	continue;
+        continue;
       
       MSchedGraphNode *node = X->second;
       
@@ -513,38 +513,38 @@ void MSchedGraph::buildNodesAndEdges(std::map<const MachineInstr*, unsigned> &ig
       
       //Loop over operands for this instruction and add value edges
       for(unsigned i=0; i < (*I)->getNumOperands(); ++i) {
-	//Get Operand
-	const MachineOperand &mOp = (*I)->getOperand(i);
-	if((mOp.getType() == MachineOperand::MO_VirtualRegister 
-	    ||  mOp.getType() == MachineOperand::MO_CCRegister) && mOp.isUse()) {
-	  
-	  //find the value in the map
-	  if (const Value* srcI = mOp.getVRegValue()) {
-	    
-	    //Find value in the map
-	    std::map<const Value*, std::vector<OpIndexNodePair> >::iterator V
-	      = valuetoNodeMap.find(srcI);
-	    
-	    //If there is something in the map already, add edges from
-	    //those instructions
-	    //to this one we are processing
-	    if(V != valuetoNodeMap.end()) {
-	      addValueEdges(V->second, node, mOp.isUse(), mOp.isDef(), 
-			    phiInstrs, 1);
-	    }
-	  }
-	}
+        //Get Operand
+        const MachineOperand &mOp = (*I)->getOperand(i);
+        if((mOp.getType() == MachineOperand::MO_VirtualRegister 
+            ||  mOp.getType() == MachineOperand::MO_CCRegister) && mOp.isUse()) {
+          
+          //find the value in the map
+          if (const Value* srcI = mOp.getVRegValue()) {
+            
+            //Find value in the map
+            std::map<const Value*, std::vector<OpIndexNodePair> >::iterator V
+              = valuetoNodeMap.find(srcI);
+            
+            //If there is something in the map already, add edges from
+            //those instructions
+            //to this one we are processing
+            if(V != valuetoNodeMap.end()) {
+              addValueEdges(V->second, node, mOp.isUse(), mOp.isDef(), 
+                            phiInstrs, 1);
+            }
+          }
+        }
       }
     }
   }
 }
 //Add dependencies for Value*s
 void MSchedGraph::addValueEdges(std::vector<OpIndexNodePair> &NodesInMap,
-				MSchedGraphNode *destNode, bool nodeIsUse,
-				bool nodeIsDef, std::vector<const MachineInstr*> &phiInstrs, int diff) {
+                                MSchedGraphNode *destNode, bool nodeIsUse,
+                                bool nodeIsDef, std::vector<const MachineInstr*> &phiInstrs, int diff) {
 
   for(std::vector<OpIndexNodePair>::iterator I = NodesInMap.begin(),
-	E = NodesInMap.end(); I != E; ++I) {
+        E = NodesInMap.end(); I != E; ++I) {
 
     //Get node in vectors machine operand that is the same value as node
     MSchedGraphNode *srcNode = I->second;
@@ -552,26 +552,26 @@ void MSchedGraph::addValueEdges(std::vector<OpIndexNodePair> &NodesInMap,
 
     if(diff > 0)
       if(std::find(phiInstrs.begin(), phiInstrs.end(), srcNode->getInst()) == phiInstrs.end())
-	continue;
+        continue;
 
     //Node is a Def, so add output dep.
     if(nodeIsDef) {
       if(mOp.isUse()) {
-	DEBUG(std::cerr << "Edge from " << *srcNode << " to " << *destNode << " (itediff=" << diff << ", type=anti)\n");
-	srcNode->addOutEdge(destNode, MSchedGraphEdge::ValueDep,
-			    MSchedGraphEdge::AntiDep, diff);
+        DEBUG(std::cerr << "Edge from " << *srcNode << " to " << *destNode << " (itediff=" << diff << ", type=anti)\n");
+        srcNode->addOutEdge(destNode, MSchedGraphEdge::ValueDep,
+                            MSchedGraphEdge::AntiDep, diff);
       }
       if(mOp.isDef()) {
-	DEBUG(std::cerr << "Edge from " << *srcNode << " to " << *destNode << " (itediff=" << diff << ", type=output)\n");
-	srcNode->addOutEdge(destNode, MSchedGraphEdge::ValueDep,
-			    MSchedGraphEdge::OutputDep, diff);
+        DEBUG(std::cerr << "Edge from " << *srcNode << " to " << *destNode << " (itediff=" << diff << ", type=output)\n");
+        srcNode->addOutEdge(destNode, MSchedGraphEdge::ValueDep,
+                            MSchedGraphEdge::OutputDep, diff);
       }
     }
     if(nodeIsUse) {
       if(mOp.isDef()) {
-	DEBUG(std::cerr << "Edge from " << *srcNode << " to " << *destNode << " (itediff=" << diff << ", type=true)\n");
-	srcNode->addOutEdge(destNode, MSchedGraphEdge::ValueDep,
-			    MSchedGraphEdge::TrueDep, diff);
+        DEBUG(std::cerr << "Edge from " << *srcNode << " to " << *destNode << " (itediff=" << diff << ", type=true)\n");
+        srcNode->addOutEdge(destNode, MSchedGraphEdge::ValueDep,
+                            MSchedGraphEdge::TrueDep, diff);
       }
     }
   }
@@ -609,71 +609,71 @@ void MSchedGraph::addMachRegEdges(std::map<int, std::vector<OpIndexNodePair> >& 
 
       //Look at all instructions after this in execution order
       for(unsigned j=i+1; j < Nodes.size(); ++j) {
-	
-	//Sink node is a write
-	if(Nodes[j].second->getInst()->getOperand(Nodes[j].first).isDef()) {
-	              //Src only uses the register (read)
+        
+        //Sink node is a write
+        if(Nodes[j].second->getInst()->getOperand(Nodes[j].first).isDef()) {
+                      //Src only uses the register (read)
             if(srcIsUse)
-	      srcNode->addOutEdge(Nodes[j].second, 
-				  MSchedGraphEdge::MachineRegister,
-				  MSchedGraphEdge::AntiDep);
-	
+              srcNode->addOutEdge(Nodes[j].second, 
+                                  MSchedGraphEdge::MachineRegister,
+                                  MSchedGraphEdge::AntiDep);
+        
             else if(srcIsUseandDef) {
-	      srcNode->addOutEdge(Nodes[j].second, 
-				  MSchedGraphEdge::MachineRegister,
-				  MSchedGraphEdge::AntiDep);
-	      
-	      srcNode->addOutEdge(Nodes[j].second, 
-				  MSchedGraphEdge::MachineRegister,
-				  MSchedGraphEdge::OutputDep);
-	    }
+              srcNode->addOutEdge(Nodes[j].second, 
+                                  MSchedGraphEdge::MachineRegister,
+                                  MSchedGraphEdge::AntiDep);
+              
+              srcNode->addOutEdge(Nodes[j].second, 
+                                  MSchedGraphEdge::MachineRegister,
+                                  MSchedGraphEdge::OutputDep);
+            }
             else
-	      srcNode->addOutEdge(Nodes[j].second, 
-				  MSchedGraphEdge::MachineRegister,
-				  MSchedGraphEdge::OutputDep);
-	}
-	//Dest node is a read
-	else {
-	  if(!srcIsUse || srcIsUseandDef)
-	    srcNode->addOutEdge(Nodes[j].second, 
-				MSchedGraphEdge::MachineRegister,
-				MSchedGraphEdge::TrueDep);
-	}
+              srcNode->addOutEdge(Nodes[j].second, 
+                                  MSchedGraphEdge::MachineRegister,
+                                  MSchedGraphEdge::OutputDep);
+        }
+        //Dest node is a read
+        else {
+          if(!srcIsUse || srcIsUseandDef)
+            srcNode->addOutEdge(Nodes[j].second, 
+                                MSchedGraphEdge::MachineRegister,
+                                MSchedGraphEdge::TrueDep);
+        }
 
       }
 
       //Look at all the instructions before this one since machine registers
       //could live across iterations.
       for(unsigned j = 0; j < i; ++j) {
-		//Sink node is a write
-	if(Nodes[j].second->getInst()->getOperand(Nodes[j].first).isDef()) {
-	              //Src only uses the register (read)
+                //Sink node is a write
+        if(Nodes[j].second->getInst()->getOperand(Nodes[j].first).isDef()) {
+                      //Src only uses the register (read)
             if(srcIsUse)
-	      srcNode->addOutEdge(Nodes[j].second, 
-				  MSchedGraphEdge::MachineRegister,
-				  MSchedGraphEdge::AntiDep, 1);
+              srcNode->addOutEdge(Nodes[j].second, 
+                                  MSchedGraphEdge::MachineRegister,
+                                  MSchedGraphEdge::AntiDep, 1);
             else if(srcIsUseandDef) {
-	      srcNode->addOutEdge(Nodes[j].second, 
-				  MSchedGraphEdge::MachineRegister,
-				  MSchedGraphEdge::AntiDep, 1);
-	      
-	      srcNode->addOutEdge(Nodes[j].second, 
-				  MSchedGraphEdge::MachineRegister,
-				  MSchedGraphEdge::OutputDep, 1);
-	    }
+              srcNode->addOutEdge(Nodes[j].second, 
+                                  MSchedGraphEdge::MachineRegister,
+                                  MSchedGraphEdge::AntiDep, 1);
+              
+              srcNode->addOutEdge(Nodes[j].second, 
+                                  MSchedGraphEdge::MachineRegister,
+                                  MSchedGraphEdge::OutputDep, 1);
+            }
             else
-	      srcNode->addOutEdge(Nodes[j].second, 
-				  MSchedGraphEdge::MachineRegister,
-				  MSchedGraphEdge::OutputDep, 1);
-	}
-	//Dest node is a read
-	else {
-	  if(!srcIsUse || srcIsUseandDef)
-	    srcNode->addOutEdge(Nodes[j].second, 
-				MSchedGraphEdge::MachineRegister,
-				MSchedGraphEdge::TrueDep,1 );
-	}
-	
+              srcNode->addOutEdge(Nodes[j].second, 
+                                  MSchedGraphEdge::MachineRegister,
+                                  MSchedGraphEdge::OutputDep, 1);
+        }
+        //Dest node is a read
+        else {
+          if(!srcIsUse || srcIsUseandDef)
+            srcNode->addOutEdge(Nodes[j].second, 
+                                MSchedGraphEdge::MachineRegister,
+                                MSchedGraphEdge::TrueDep,1 );
+        }
+        
 
       }
 
@@ -686,8 +686,8 @@ void MSchedGraph::addMachRegEdges(std::map<int, std::vector<OpIndexNodePair> >& 
 //Add edges between all loads and stores
 //Can be less strict with alias analysis and data dependence analysis.
 void MSchedGraph::addMemEdges(const std::vector<MSchedGraphNode*>& memInst, 
-		      DependenceAnalyzer &DA, 
-		      std::map<MachineInstr*, Instruction*> &machineTollvm) {
+                      DependenceAnalyzer &DA, 
+                      std::map<MachineInstr*, Instruction*> &machineTollvm) {
 
   //Get Target machine instruction info
   const TargetInstrInfo *TMI = Target.getInstrInfo();
@@ -707,7 +707,7 @@ void MSchedGraph::addMemEdges(const std::vector<MSchedGraphNode*>& memInst,
 
       //No self loops
       if(destIndex == srcIndex)
-	continue;
+        continue;
 
       MachineInstr *destInst = (MachineInstr*) memInst[destIndex]->getInst();
 
@@ -717,7 +717,7 @@ void MSchedGraph::addMemEdges(const std::vector<MSchedGraphNode*>& memInst,
       //Assuming instructions without corresponding llvm instructions
       //are from constant pools.
       if (!machineTollvm.count(srcInst) || !machineTollvm.count(destInst))
-	continue;
+        continue;
       
       bool useDepAnalyzer = true;
 
@@ -726,78 +726,78 @@ void MSchedGraph::addMemEdges(const std::vector<MSchedGraphNode*>& memInst,
       Instruction *srcLLVM = machineTollvm[srcInst];
       Instruction *destLLVM = machineTollvm[destInst];
       if(!isa<LoadInst>(srcLLVM) 
-	 && !isa<StoreInst>(srcLLVM)) {
-	if(isa<BinaryOperator>(srcLLVM)) {
-	  if(isa<ConstantFP>(srcLLVM->getOperand(0)) || isa<ConstantFP>(srcLLVM->getOperand(1)))
-	    continue;
-	}
-	useDepAnalyzer = false;
+         && !isa<StoreInst>(srcLLVM)) {
+        if(isa<BinaryOperator>(srcLLVM)) {
+          if(isa<ConstantFP>(srcLLVM->getOperand(0)) || isa<ConstantFP>(srcLLVM->getOperand(1)))
+            continue;
+        }
+        useDepAnalyzer = false;
       }
       if(!isa<LoadInst>(destLLVM) 
-	 && !isa<StoreInst>(destLLVM)) {
-	if(isa<BinaryOperator>(destLLVM)) {
-	  if(isa<ConstantFP>(destLLVM->getOperand(0)) || isa<ConstantFP>(destLLVM->getOperand(1)))
-	    continue;
-	}
-	useDepAnalyzer = false;
+         && !isa<StoreInst>(destLLVM)) {
+        if(isa<BinaryOperator>(destLLVM)) {
+          if(isa<ConstantFP>(destLLVM->getOperand(0)) || isa<ConstantFP>(destLLVM->getOperand(1)))
+            continue;
+        }
+        useDepAnalyzer = false;
       }
 
       //Use dep analysis when we have corresponding llvm loads/stores
       if(useDepAnalyzer) {
-	bool srcBeforeDest = true;
-	if(destIndex < srcIndex)
-	  srcBeforeDest = false;
+        bool srcBeforeDest = true;
+        if(destIndex < srcIndex)
+          srcBeforeDest = false;
 
-	DependenceResult dr = DA.getDependenceInfo(machineTollvm[srcInst], 
-						   machineTollvm[destInst], 
-						   srcBeforeDest);
-	
-	for(std::vector<Dependence>::iterator d = dr.dependences.begin(), 
-	      de = dr.dependences.end(); d != de; ++d) {
-	  //Add edge from load to store
-	  memInst[srcIndex]->addOutEdge(memInst[destIndex], 
-					MSchedGraphEdge::MemoryDep, 
-					d->getDepType(), d->getIteDiff());
-	  
-	}
+        DependenceResult dr = DA.getDependenceInfo(machineTollvm[srcInst], 
+                                                   machineTollvm[destInst], 
+                                                   srcBeforeDest);
+        
+        for(std::vector<Dependence>::iterator d = dr.dependences.begin(), 
+              de = dr.dependences.end(); d != de; ++d) {
+          //Add edge from load to store
+          memInst[srcIndex]->addOutEdge(memInst[destIndex], 
+                                        MSchedGraphEdge::MemoryDep, 
+                                        d->getDepType(), d->getIteDiff());
+          
+        }
       }
       //Otherwise, we can not do any further analysis and must make a dependence
       else {
-		
-	//Get the machine opCode to determine type of memory instruction
-	MachineOpCode destNodeOpCode = destInst->getOpcode();
+                
+        //Get the machine opCode to determine type of memory instruction
+        MachineOpCode destNodeOpCode = destInst->getOpcode();
 
-	//Get the Value* that we are reading from the load, always the first op
-	const MachineOperand &mOp = srcInst->getOperand(0);
-	const MachineOperand &mOp2 = destInst->getOperand(0);
-	
-	if(mOp.hasAllocatedReg())
-	  if(mOp.getReg() == SparcV9::g0)
-	    continue;
-	if(mOp2.hasAllocatedReg())
-	  if(mOp2.getReg() == SparcV9::g0)
-	    continue;
+        //Get the Value* that we are reading from the load, always the first op
+        const MachineOperand &mOp = srcInst->getOperand(0);
+        const MachineOperand &mOp2 = destInst->getOperand(0);
+        
+        if(mOp.hasAllocatedReg())
+          if(mOp.getReg() == SparcV9::g0)
+            continue;
+        if(mOp2.hasAllocatedReg())
+          if(mOp2.getReg() == SparcV9::g0)
+            continue;
 
-	DEBUG(std::cerr << "Adding dependence for machine instructions\n");
-	//Load-Store deps
-	if(TMI->isLoad(srcNodeOpCode)) {
+        DEBUG(std::cerr << "Adding dependence for machine instructions\n");
+        //Load-Store deps
+        if(TMI->isLoad(srcNodeOpCode)) {
 
-	  if(TMI->isStore(destNodeOpCode))
-	    memInst[srcIndex]->addOutEdge(memInst[destIndex], 
-					  MSchedGraphEdge::MemoryDep, 
-					  MSchedGraphEdge::AntiDep, 0);
-	}
-	else if(TMI->isStore(srcNodeOpCode)) {
-	  if(TMI->isStore(destNodeOpCode))
-	    memInst[srcIndex]->addOutEdge(memInst[destIndex], 
-					  MSchedGraphEdge::MemoryDep, 
-					  MSchedGraphEdge::OutputDep, 0);
+          if(TMI->isStore(destNodeOpCode))
+            memInst[srcIndex]->addOutEdge(memInst[destIndex], 
+                                          MSchedGraphEdge::MemoryDep, 
+                                          MSchedGraphEdge::AntiDep, 0);
+        }
+        else if(TMI->isStore(srcNodeOpCode)) {
+          if(TMI->isStore(destNodeOpCode))
+            memInst[srcIndex]->addOutEdge(memInst[destIndex], 
+                                          MSchedGraphEdge::MemoryDep, 
+                                          MSchedGraphEdge::OutputDep, 0);
 
-	  else
-	    memInst[srcIndex]->addOutEdge(memInst[destIndex], 
-					  MSchedGraphEdge::MemoryDep, 
-					  MSchedGraphEdge::TrueDep, 0);
-	}
+          else
+            memInst[srcIndex]->addOutEdge(memInst[destIndex], 
+                                          MSchedGraphEdge::MemoryDep, 
+                                          MSchedGraphEdge::TrueDep, 0);
+        }
       }
     }
   }

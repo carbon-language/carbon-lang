@@ -9,7 +9,7 @@
 //
 // Methods of class for temporary intermediate values used within the current
 // SparcV9 backend.
-//	
+//      
 //===----------------------------------------------------------------------===//
 
 #include "SparcV9TmpInstr.h"

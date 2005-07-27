@@ -67,7 +67,7 @@ namespace sys {
       /// Not all operating systems support this feature. Where it is not
       /// supported, the function should return 65536 as the value.
       static int GetCurrentUserId();
-      
+
       /// This static function will return the process' current group id number.
       /// Not all operating systems support this feature. Where it is not
       /// supported, the function should return 65536 as the value.

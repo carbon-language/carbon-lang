@@ -158,11 +158,11 @@ void MappingInfoAsmPrinter::buildBBMIMap(Function &FI, MappingInfo &Map) {
 
 void MappingInfo::byteVector::dumpAssembly (std::ostream &Out) {
   for (iterator i = begin (), e = end (); i != e; ++i)
-	Out << ".byte " << (int)*i << "\n";
+        Out << ".byte " << (int)*i << "\n";
 }
 
 static void writePrologue (std::ostream &Out, const std::string &comment,
-			   const std::string &symName) {
+                           const std::string &symName) {
   // Prologue:
   // Output a comment describing the object.
   Out << "!" << comment << "\n";

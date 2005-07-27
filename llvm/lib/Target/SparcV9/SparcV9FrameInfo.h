@@ -53,7 +53,7 @@ public:
   }
 
   virtual int getOutgoingArgOffset(MachineFunction& mcInfo,
-				   unsigned argNum) const {
+                                   unsigned argNum) const {
     return FirstOutgoingArgOffsetFromSP + argNum * SizeOfEachArgOnStack;
   }
 

@@ -24,10 +24,10 @@ protected:
   /// stackAlignment - The minimum alignment known to hold of the stack frame on
   /// entry to the function and which must be maintained by every function.
   unsigned stackAlignment;
-  
+
   /// Used by instruction selector
   bool indirectExternAndWeakGlobals;
-  
+
   /// Used by the asm printer
   bool asmDarwinLinkerStubs;
   bool asmLeadingUnderscore;
@@ -36,7 +36,7 @@ protected:
   bool asmPrintDotLCommConstants;
   bool asmPrintConstantAlignment;
 public:
-  /// This constructor initializes the data members to match that 
+  /// This constructor initializes the data members to match that
   /// of the specified module.
   ///
   X86Subtarget(const Module &M);
@@ -45,9 +45,9 @@ public:
   /// stack frame on entry to the function and which must be maintained by every
   /// function for this subtarget.
   unsigned getStackAlignment() const { return stackAlignment; }
-  
+
   /// Returns true if the instruction selector should treat global values
-  /// referencing external or weak symbols as indirect rather than direct 
+  /// referencing external or weak symbols as indirect rather than direct
   /// references.
   bool getIndirectExternAndWeakGlobals() const {
     return indirectExternAndWeakGlobals;

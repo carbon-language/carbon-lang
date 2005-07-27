@@ -34,9 +34,9 @@ namespace llvm {
     int depth;
     int height;
     MSNodeAttributes(int asap=-1, int alap=-1, int mob=-1,
-			     int d=-1, int h=-1) : ASAP(asap), ALAP(alap),
-						   MOB(mob), depth(d),
-						   height(h) {}
+                             int d=-1, int h=-1) : ASAP(asap), ALAP(alap),
+                                                   MOB(mob), depth(d),
+                                                   height(h) {}
   };
 
 
@@ -80,7 +80,7 @@ namespace llvm {
     bool CreateDefMap(MachineBasicBlock *BI);
     bool MachineBBisValid(const MachineBasicBlock *BI);
     bool assocIndVar(Instruction *I, std::set<Instruction*> &indVar,
-		     std::vector<Instruction*> &stack, BasicBlock *BB);
+                     std::vector<Instruction*> &stack, BasicBlock *BB);
     int calculateResMII(const MachineBasicBlock *BI);
     int calculateRecMII(MSchedGraph *graph, int MII);
     void calculateNodeAttributes(MSchedGraph *graph, int MII);
@@ -96,36 +96,36 @@ namespace llvm {
     int findMaxASAP();
     void orderNodes();
     void findAllReccurrences(MSchedGraphNode *node,
-			     std::vector<MSchedGraphNode*> &visitedNodes, int II);
+                             std::vector<MSchedGraphNode*> &visitedNodes, int II);
     void addReccurrence(std::vector<MSchedGraphNode*> &recurrence, int II, MSchedGraphNode*, MSchedGraphNode*);
     void addSCC(std::vector<MSchedGraphNode*> &SCC, std::map<MSchedGraphNode*, MSchedGraphNode*> &newNodes);
 
     void findAllCircuits(MSchedGraph *MSG, int II);
     bool circuit(MSchedGraphNode *v, std::vector<MSchedGraphNode*> &stack,
-		 std::set<MSchedGraphNode*> &blocked,
-		 std::vector<MSchedGraphNode*> &SCC, MSchedGraphNode *s,
-		 std::map<MSchedGraphNode*, std::set<MSchedGraphNode*> > &B, int II,
-		 std::map<MSchedGraphNode*, MSchedGraphNode*> &newNodes);
+                 std::set<MSchedGraphNode*> &blocked,
+                 std::vector<MSchedGraphNode*> &SCC, MSchedGraphNode *s,
+                 std::map<MSchedGraphNode*, std::set<MSchedGraphNode*> > &B, int II,
+                 std::map<MSchedGraphNode*, MSchedGraphNode*> &newNodes);
 
     void unblock(MSchedGraphNode *u, std::set<MSchedGraphNode*> &blocked,
-		 std::map<MSchedGraphNode*, std::set<MSchedGraphNode*> > &B);
+                 std::map<MSchedGraphNode*, std::set<MSchedGraphNode*> > &B);
 
     void addRecc(std::vector<MSchedGraphNode*> &stack, std::map<MSchedGraphNode*, MSchedGraphNode*> &newNodes);
 
-    void searchPath(MSchedGraphNode *node, 
-		    std::vector<MSchedGraphNode*> &path,
-		    std::set<MSchedGraphNode*> &nodesToAdd,
-		    std::set<MSchedGraphNode*> &new_reccurence);
+    void searchPath(MSchedGraphNode *node,
+                    std::vector<MSchedGraphNode*> &path,
+                    std::set<MSchedGraphNode*> &nodesToAdd,
+                    std::set<MSchedGraphNode*> &new_reccurence);
 
     void pathToRecc(MSchedGraphNode *node,
-		    std::vector<MSchedGraphNode*> &path,
-		    std::set<MSchedGraphNode*> &poSet, std::set<MSchedGraphNode*> &lastNodes);
+                    std::vector<MSchedGraphNode*> &path,
+                    std::set<MSchedGraphNode*> &poSet, std::set<MSchedGraphNode*> &lastNodes);
 
     void computePartialOrder();
 
     bool computeSchedule(const MachineBasicBlock *BB, MSchedGraph *MSG);
-    bool scheduleNode(MSchedGraphNode *node, 
-		      int start, int end);
+    bool scheduleNode(MSchedGraphNode *node,
+                      int start, int end);
 
     void predIntersect(std::set<MSchedGraphNode*> &CurrentSet, std::set<MSchedGraphNode*> &IntersectResult);
     void succIntersect(std::set<MSchedGraphNode*> &CurrentSet, std::set<MSchedGraphNode*> &IntersectResult);
@@ -159,7 +159,7 @@ namespace llvm {
       /// before we run.
       AU.addRequired<LoopInfo>();
       AU.addRequired<ScalarEvolution>();
-      
+
       AU.addRequired<DependenceAnalyzer>();
     }
 

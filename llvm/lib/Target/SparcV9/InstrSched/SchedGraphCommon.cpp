@@ -25,10 +25,10 @@ class SchedGraphCommon;
 // class SchedGraphEdge
 //
 SchedGraphEdge::SchedGraphEdge(SchedGraphNodeCommon* _src,
-			       SchedGraphNodeCommon* _sink,
-			       SchedGraphEdgeDepType _depType,
-			       unsigned int     _depOrderType,
-			       int _minDelay)
+                               SchedGraphNodeCommon* _sink,
+                               SchedGraphEdgeDepType _depType,
+                               unsigned int     _depOrderType,
+                               int _minDelay)
   : src(_src), sink(_sink), depType(_depType), depOrderType(_depOrderType),
     minDelay((_minDelay >= 0)? _minDelay : _src->getLatency()), val(NULL) {
 
@@ -39,10 +39,10 @@ SchedGraphEdge::SchedGraphEdge(SchedGraphNodeCommon* _src,
 }
 
 SchedGraphEdge::SchedGraphEdge(SchedGraphNodeCommon*  _src,
-			       SchedGraphNodeCommon*  _sink,
-			       const Value*     _val,
-			       unsigned int     _depOrderType,
-			       int              _minDelay)
+                               SchedGraphNodeCommon*  _sink,
+                               const Value*     _val,
+                               unsigned int     _depOrderType,
+                               int              _minDelay)
   : src(_src), sink(_sink), depType(ValueDep), depOrderType(_depOrderType),
     minDelay((_minDelay >= 0)? _minDelay : _src->getLatency()), val(_val) {
   iteDiff=0;
@@ -52,10 +52,10 @@ SchedGraphEdge::SchedGraphEdge(SchedGraphNodeCommon*  _src,
 }
 
 SchedGraphEdge::SchedGraphEdge(SchedGraphNodeCommon*  _src,
-			       SchedGraphNodeCommon*  _sink,
-			       unsigned int     _regNum,
-			       unsigned int     _depOrderType,
-			       int             _minDelay)
+                               SchedGraphNodeCommon*  _sink,
+                               unsigned int     _regNum,
+                               unsigned int     _depOrderType,
+                               int             _minDelay)
   : src(_src), sink(_sink), depType(MachineRegister),
     depOrderType(_depOrderType),
     minDelay((_minDelay >= 0)? _minDelay : _src->getLatency()),
@@ -67,9 +67,9 @@ SchedGraphEdge::SchedGraphEdge(SchedGraphNodeCommon*  _src,
 }
 
 SchedGraphEdge::SchedGraphEdge(SchedGraphNodeCommon* _src,
-			       SchedGraphNodeCommon* _sink,
-			       ResourceId      _resourceId,
-			       int             _minDelay)
+                               SchedGraphNodeCommon* _sink,
+                               ResourceId      _resourceId,
+                               int             _minDelay)
   : src(_src), sink(_sink), depType(MachineResource), depOrderType(NonDataDep),
     minDelay((_minDelay >= 0)? _minDelay : _src->getLatency()),
     resourceId(_resourceId) {
@@ -125,7 +125,7 @@ SchedGraphCommon::~SchedGraphCommon() {
 
 
 void SchedGraphCommon::eraseIncomingEdges(SchedGraphNodeCommon* node,
-					  bool addDummyEdges) {
+                                          bool addDummyEdges) {
   // Delete and disconnect all in-edges for the node
   for (SchedGraphNodeCommon::iterator I = node->beginInEdges();
        I != node->endInEdges(); ++I) {
@@ -134,13 +134,13 @@ void SchedGraphCommon::eraseIncomingEdges(SchedGraphNodeCommon* node,
     delete *I;
 
     if (addDummyEdges && srcNode != getRoot() &&
-	srcNode->beginOutEdges() == srcNode->endOutEdges()) {
+        srcNode->beginOutEdges() == srcNode->endOutEdges()) {
 
       // srcNode has no more out edges, so add an edge to dummy EXIT node
       assert(node != getLeaf() && "Adding edge that was just removed?");
       (void) new SchedGraphEdge(srcNode, getLeaf(),
-				SchedGraphEdge::CtrlDep,
-				SchedGraphEdge::NonDataDep, 0);
+                                SchedGraphEdge::CtrlDep,
+                                SchedGraphEdge::NonDataDep, 0);
     }
   }
 
@@ -148,7 +148,7 @@ void SchedGraphCommon::eraseIncomingEdges(SchedGraphNodeCommon* node,
 }
 
 void SchedGraphCommon::eraseOutgoingEdges(SchedGraphNodeCommon* node,
-					  bool addDummyEdges) {
+                                          bool addDummyEdges) {
   // Delete and disconnect all out-edges for the node
   for (SchedGraphNodeCommon::iterator I = node->beginOutEdges();
        I != node->endOutEdges(); ++I) {
@@ -157,14 +157,14 @@ void SchedGraphCommon::eraseOutgoingEdges(SchedGraphNodeCommon* node,
     delete *I;
 
     if (addDummyEdges &&
-	sinkNode != getLeaf() &&
-	sinkNode->beginInEdges() == sinkNode->endInEdges()) {
+        sinkNode != getLeaf() &&
+        sinkNode->beginInEdges() == sinkNode->endInEdges()) {
 
       //sinkNode has no more in edges, so add an edge from dummy ENTRY node
       assert(node != getRoot() && "Adding edge that was just removed?");
       (void) new SchedGraphEdge(getRoot(), sinkNode,
-				SchedGraphEdge::CtrlDep,
-				SchedGraphEdge::NonDataDep, 0);
+                                SchedGraphEdge::CtrlDep,
+                                SchedGraphEdge::NonDataDep, 0);
     }
   }
 
@@ -172,9 +172,9 @@ void SchedGraphCommon::eraseOutgoingEdges(SchedGraphNodeCommon* node,
 }
 
 void SchedGraphCommon::eraseIncidentEdges(SchedGraphNodeCommon* node,
-					  bool addDummyEdges) {
-  this->eraseIncomingEdges(node, addDummyEdges);	
-  this->eraseOutgoingEdges(node, addDummyEdges);	
+                                          bool addDummyEdges) {
+  this->eraseIncomingEdges(node, addDummyEdges);        
+  this->eraseOutgoingEdges(node, addDummyEdges);        
 }
 
 } // End llvm namespace

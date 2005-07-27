@@ -110,7 +110,7 @@ inline Interval::succ_iterator succ_begin(Interval *I) {
 inline Interval::succ_iterator succ_end(Interval *I)   {
   return I->Successors.end();
 }
-  
+
 /// pred_begin/pred_end - define methods so that Intervals may be used
 /// just like BasicBlocks can with the pred_* functions, and *::pred_iterator.
 ///
@@ -128,7 +128,7 @@ template <> struct GraphTraits<Interval*> {
   static NodeType *getEntryNode(Interval *I) { return I; }
 
   /// nodes_iterator/begin/end - Allow iteration over all nodes in the graph
-  static inline ChildIteratorType child_begin(NodeType *N) { 
+  static inline ChildIteratorType child_begin(NodeType *N) {
     return succ_begin(N);
   }
   static inline ChildIteratorType child_end(NodeType *N) {

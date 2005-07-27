@@ -78,8 +78,8 @@ class LiveRangeInfo {
 public:
 
   LiveRangeInfo(const Function *F,
-		const TargetMachine& tm,
-		std::vector<RegClass *> & RCList);
+                const TargetMachine& tm,
+                std::vector<RegClass *> & RCList);
 
 
   /// Destructor to destroy all LiveRanges in the V9LiveRange Map

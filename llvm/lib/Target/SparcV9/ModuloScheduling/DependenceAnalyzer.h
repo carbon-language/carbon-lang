@@ -22,7 +22,7 @@
 #include <vector>
 
 namespace llvm {
-  
+
 
   //class to represent a dependence
   struct Dependence {
@@ -49,22 +49,22 @@ namespace llvm {
 
 
   class DependenceAnalyzer : public FunctionPass {
- 
+
 
     AliasAnalysis *AA;
     TargetData *TD;
     ScalarEvolution *SE;
 
-    void advancedDepAnalysis(GetElementPtrInst *gp1, GetElementPtrInst *gp2, 
-			     bool valLoad, bool val2Load,
-			     std::vector<Dependence> &deps, bool srcBeforeDest);
+    void advancedDepAnalysis(GetElementPtrInst *gp1, GetElementPtrInst *gp2,
+                             bool valLoad, bool val2Load,
+                             std::vector<Dependence> &deps, bool srcBeforeDest);
 
-    void AnalyzeDeps(Value *val, Value *val2, bool val1Load, bool val2Load, 
-		     std::vector<Dependence> &deps, BasicBlock *BB, 
-		     bool srcBeforeDest);
-    
-    void createDep(std::vector<Dependence> &deps, bool valLoad, bool val2Load, 
-		   bool srcBeforeDest, int diff = 0);
+    void AnalyzeDeps(Value *val, Value *val2, bool val1Load, bool val2Load,
+                     std::vector<Dependence> &deps, BasicBlock *BB,
+                     bool srcBeforeDest);
+
+    void createDep(std::vector<Dependence> &deps, bool valLoad, bool val2Load,
+                   bool srcBeforeDest, int diff = 0);
 
   public:
     DependenceAnalyzer() { AA = 0; TD = 0; SE = 0; }
@@ -80,8 +80,8 @@ namespace llvm {
     }
 
     //get dependence info
-    DependenceResult getDependenceInfo(Instruction *inst1, Instruction *inst2, 
-				       bool srcBeforeDest);
+    DependenceResult getDependenceInfo(Instruction *inst1, Instruction *inst2,
+                                       bool srcBeforeDest);
 
   };
 

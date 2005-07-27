@@ -62,7 +62,7 @@ namespace {
   };
 
   static void writePrologue (std::ostream &Out, const std::string &comment,
-			     const std::string &symName) {
+                             const std::string &symName) {
     // Prologue:
     // Output a comment describing the object.
     Out << "!" << comment << "\n";
@@ -80,7 +80,7 @@ namespace {
     Out << ".end_" << symName << ":\n";
     // Output size directive giving the size of the object:
     Out << "\t.size " << symName << ", .end_" << symName << "-" << symName
-	<< "\n";
+        << "\n";
   }
 
   // SparcV9BytecodeWriter - Write bytecode out to a stream that is sparc'ified

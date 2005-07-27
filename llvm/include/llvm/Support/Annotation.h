@@ -81,7 +81,7 @@ public:
 //===----------------------------------------------------------------------===//
 //
 // Annotable - This class is used as a base class for all objects that would
-// like to have annotation capability.  
+// like to have annotation capability.
 //
 // Annotable objects keep their annotation list sorted as annotations are
 // inserted and deleted.  This is used to ensure that annotations with identical

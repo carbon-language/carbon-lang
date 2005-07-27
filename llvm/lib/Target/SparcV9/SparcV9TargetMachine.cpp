@@ -64,10 +64,10 @@ namespace {
                  cl::desc("Emit LLVM-to-MachineCode mapping info to assembly"));
 
   cl::opt<bool> EnableModSched("enable-modsched",
-		 cl::desc("Enable modulo scheduling pass"), cl::Hidden);
+                 cl::desc("Enable modulo scheduling pass"), cl::Hidden);
 
   cl::opt<bool> EnableSBModSched("enable-modschedSB",
-	 cl::desc("Enable superblock modulo scheduling (experimental)"), cl::Hidden);
+         cl::desc("Enable superblock modulo scheduling (experimental)"), cl::Hidden);
 
   // Register the target.
   RegisterTarget<SparcV9TargetMachine> X("sparcv9", "  SPARC V9");

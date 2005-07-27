@@ -30,7 +30,7 @@ namespace llvm {
 unsigned V9LiveRange::getRegClassID() const { return getRegClass()->getID(); }
 
 LiveRangeInfo::LiveRangeInfo(const Function *F, const TargetMachine &tm,
-			     std::vector<RegClass *> &RCL)
+                             std::vector<RegClass *> &RCL)
   : Meth(F), TM(tm), RegClassList(RCL), MRI(*tm.getRegInfo()) { }
 
 
@@ -177,15 +177,15 @@ void LiveRangeInfo::constructLiveRanges() {
       // CallRetInstrList for processing its args, ret value, and ret addr.
       //
       if(TM.getInstrInfo()->isReturn(MInst->getOpcode()) ||
-	 TM.getInstrInfo()->isCall(MInst->getOpcode()))
-	CallRetInstrList.push_back(MInst);
+         TM.getInstrInfo()->isCall(MInst->getOpcode()))
+        CallRetInstrList.push_back(MInst);
 
       // iterate over explicit MI operands and create a new LR
       // for each operand that is defined by the instruction
       for (MachineInstr::val_op_iterator OpI = MInst->begin(),
              OpE = MInst->end(); OpI != OpE; ++OpI)
-	if (OpI.isDef()) {
-	  const Value *Def = *OpI;
+        if (OpI.isDef()) {
+          const Value *Def = *OpI;
           bool isCC = (OpI.getMachineOperand().getType()
                        == MachineOperand::MO_CCRegister);
           V9LiveRange* LR = createOrAddToLiveRange(Def, isCC);
@@ -197,13 +197,13 @@ void LiveRangeInfo::constructLiveRanges() {
             LR->setColor(MRI.getClassRegNum(OpI.getMachineOperand().getReg(),
                                             getClassId));
           }
-	}
+        }
 
       // iterate over implicit MI operands and create a new LR
       // for each operand that is defined by the instruction
       for (unsigned i = 0; i < MInst->getNumImplicitRefs(); ++i)
-	if (MInst->getImplicitOp(i).isDef()) {
-	  const Value *Def = MInst->getImplicitRef(i);
+        if (MInst->getImplicitOp(i).isDef()) {
+          const Value *Def = MInst->getImplicitRef(i);
           V9LiveRange* LR = createOrAddToLiveRange(Def, /*isCC*/ false);
 
           // If the implicit operand has a pre-assigned register,
@@ -214,7 +214,7 @@ void LiveRangeInfo::constructLiveRanges() {
                                 MInst->getImplicitOp(i).getReg(),
                                 getClassId));
           }
-	}
+        }
 
     } // for all machine instructions in the BB
   } // for all BBs in function
@@ -265,10 +265,10 @@ void LiveRangeInfo::suggestRegs4CallRets() {
        for each definition (def) in inst
          for each operand (op) of inst that is a use
            if the def and op are of the same register type
-	     if the def and op do not interfere //i.e., not simultaneously live
-	       if (degree(LR of def) + degree(LR of op)) <= # avail regs
-	         if both LRs do not have suggested colors
-		    merge2IGNodes(def, op) // i.e., merge 2 LRs
+             if the def and op do not interfere //i.e., not simultaneously live
+               if (degree(LR of def) + degree(LR of op)) <= # avail regs
+                 if both LRs do not have suggested colors
+                    merge2IGNodes(def, op) // i.e., merge 2 LRs
 
 */
 //---------------------------------------------------------------------------
@@ -332,40 +332,40 @@ void LiveRangeInfo::coalesceLRs()
       const MachineInstr *MI = MII;
 
       if( DEBUG_RA >= RA_DEBUG_LiveRanges) {
-	std::cerr << " *Iterating over machine instr ";
-	MI->dump();
-	std::cerr << "\n";
+        std::cerr << " *Iterating over machine instr ";
+        MI->dump();
+        std::cerr << "\n";
       }
 
       // iterate over  MI operands to find defs
       for(MachineInstr::const_val_op_iterator DefI = MI->begin(),
             DefE = MI->end(); DefI != DefE; ++DefI) {
-	if (DefI.isDef()) { // this operand is modified
-	  V9LiveRange *LROfDef = getLiveRangeForValue( *DefI );
-	  RegClass *RCOfDef = LROfDef->getRegClass();
+        if (DefI.isDef()) { // this operand is modified
+          V9LiveRange *LROfDef = getLiveRangeForValue( *DefI );
+          RegClass *RCOfDef = LROfDef->getRegClass();
 
-	  MachineInstr::const_val_op_iterator UseI = MI->begin(),
+          MachineInstr::const_val_op_iterator UseI = MI->begin(),
             UseE = MI->end();
-	  for( ; UseI != UseE; ++UseI) { // for all uses
- 	    V9LiveRange *LROfUse = getLiveRangeForValue( *UseI );
-	    if (!LROfUse) {             // if LR of use is not found
-	      //don't warn about labels
-	      if (!isa<BasicBlock>(*UseI) && DEBUG_RA >= RA_DEBUG_LiveRanges)
-		std::cerr << " !! Warning: No LR for use " << RAV(*UseI)<< "\n";
-	      continue;                 // ignore and continue
-	    }
+          for( ; UseI != UseE; ++UseI) { // for all uses
+            V9LiveRange *LROfUse = getLiveRangeForValue( *UseI );
+            if (!LROfUse) {             // if LR of use is not found
+              //don't warn about labels
+              if (!isa<BasicBlock>(*UseI) && DEBUG_RA >= RA_DEBUG_LiveRanges)
+                std::cerr << " !! Warning: No LR for use " << RAV(*UseI)<< "\n";
+              continue;                 // ignore and continue
+            }
 
-	    if (LROfUse == LROfDef)     // nothing to merge if they are same
-	      continue;
+            if (LROfUse == LROfDef)     // nothing to merge if they are same
+              continue;
 
-	    if (MRI.getRegTypeForLR(LROfDef) ==
+            if (MRI.getRegTypeForLR(LROfDef) ==
                 MRI.getRegTypeForLR(LROfUse)) {
-	      // If the two RegTypes are the same
-	      if (!RCOfDef->getInterference(LROfDef, LROfUse) ) {
+              // If the two RegTypes are the same
+              if (!RCOfDef->getInterference(LROfDef, LROfUse) ) {
 
-		unsigned CombinedDegree =
-		  LROfDef->getUserIGNode()->getNumOfNeighbors() +
-		  LROfUse->getUserIGNode()->getNumOfNeighbors();
+                unsigned CombinedDegree =
+                  LROfDef->getUserIGNode()->getNumOfNeighbors() +
+                  LROfUse->getUserIGNode()->getNumOfNeighbors();
 
                 if (CombinedDegree > RCOfDef->getNumOfAvailRegs()) {
                   // get more precise estimate of combined degree
@@ -373,19 +373,19 @@ void LiveRangeInfo::coalesceLRs()
                     getCombinedDegree(LROfUse->getUserIGNode());
                 }
 
-		if (CombinedDegree <= RCOfDef->getNumOfAvailRegs()) {
-		  // if both LRs do not have different pre-assigned colors
-		  // and both LRs do not have suggested colors
+                if (CombinedDegree <= RCOfDef->getNumOfAvailRegs()) {
+                  // if both LRs do not have different pre-assigned colors
+                  // and both LRs do not have suggested colors
                   if (! InterfsPreventCoalescing(*LROfDef, *LROfUse)) {
-		    RCOfDef->mergeIGNodesOfLRs(LROfDef, LROfUse);
-		    unionAndUpdateLRs(LROfDef, LROfUse);
-		  }
+                    RCOfDef->mergeIGNodesOfLRs(LROfDef, LROfUse);
+                    unionAndUpdateLRs(LROfDef, LROfUse);
+                  }
 
-		} // if combined degree is less than # of regs
-	      } // if def and use do not interfere
-	    }// if reg classes are the same
-	  } // for all uses
-	} // if def
+                } // if combined degree is less than # of regs
+              } // if def and use do not interfere
+            }// if reg classes are the same
+          } // for all uses
+        } // if def
       } // for all defs
     } // for all machine instructions
   } // for all BBs

@@ -37,11 +37,11 @@ class MappingInfo {
 public:
   void outByte (unsigned char b) { bytes.push_back (b); }
   MappingInfo (std::string Comment, std::string SymbolPrefix,
-	           unsigned FunctionNumber) : comment(Comment),
-        	   symbolPrefix(SymbolPrefix), functionNumber(FunctionNumber) {}
+                   unsigned FunctionNumber) : comment(Comment),
+                   symbolPrefix(SymbolPrefix), functionNumber(FunctionNumber) {}
   void dumpAssembly (std::ostream &Out);
   unsigned char *getBytes (unsigned &length) {
-	length = bytes.size(); return &bytes[0];
+        length = bytes.size(); return &bytes[0];
   }
 };
 

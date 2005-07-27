@@ -72,12 +72,12 @@ SchedGraphNode::SchedGraphNode(unsigned NID, MachineBasicBlock *mbb,
 // Method: SchedGraphNode Destructor
 //
 // Description:
-//	Free memory allocated by the SchedGraphNode object.
+//      Free memory allocated by the SchedGraphNode object.
 //
 // Notes:
-//	Do not delete the edges here.  The base class will take care of that.
-//	Only handle subclass specific stuff here (where currently there is
-//	none).
+//      Do not delete the edges here.  The base class will take care of that.
+//      Only handle subclass specific stuff here (where currently there is
+//      none).
 //
 SchedGraphNode::~SchedGraphNode() {
 }
@@ -94,11 +94,11 @@ SchedGraph::SchedGraph(MachineBasicBlock &mbb, const TargetMachine& target)
 // Method: SchedGraph Destructor
 //
 // Description:
-//	This method deletes memory allocated by the SchedGraph object.
+//      This method deletes memory allocated by the SchedGraph object.
 //
 // Notes:
-//	Do not delete the graphRoot or graphLeaf here.  The base class handles
-//	that bit of work.
+//      Do not delete the graphRoot or graphLeaf here.  The base class handles
+//      that bit of work.
 //
 SchedGraph::~SchedGraph() {
   for (const_iterator I = begin(); I != end(); ++I)
@@ -139,7 +139,7 @@ void SchedGraph::addDummyEdges() {
 
 
 void SchedGraph::addCDEdges(const TerminatorInst* term,
-			    const TargetMachine& target) {
+                            const TargetMachine& target) {
   const TargetInstrInfo& mii = *target.getInstrInfo();
   MachineCodeForInstruction &termMvec = MachineCodeForInstruction::get(term);
 
@@ -150,7 +150,7 @@ void SchedGraph::addCDEdges(const TerminatorInst* term,
          ! mii.isReturn(termMvec[first]->getOpcode()))
     ++first;
   assert(first < termMvec.size() &&
-	 "No branch instructions for terminator?  Ok, but weird!");
+         "No branch instructions for terminator?  Ok, but weird!");
   if (first == termMvec.size())
     return;
 
@@ -171,7 +171,7 @@ void SchedGraph::addCDEdges(const TerminatorInst* term,
         assert(brNode && "No node for instr generated for branch/ret?");
         (void) new SchedGraphEdge(brNode, toNode, SchedGraphEdge::CtrlDep,
                                   SchedGraphEdge::NonDataDep, 0);
-        break;			// only one incoming edge is enough
+        break;                  // only one incoming edge is enough
       }
   }
 
@@ -194,7 +194,7 @@ void SchedGraph::addCDEdges(const TerminatorInst* term,
 
     SchedGraphNode* fromNode = getGraphNodeForInstr(I);
     if (fromNode == NULL)
-      continue;			// dummy instruction, e.g., PHI
+      continue;                 // dummy instruction, e.g., PHI
 
     (void) new SchedGraphEdge(fromNode, firstBrNode,
                               SchedGraphEdge::CtrlDep,
@@ -241,7 +241,7 @@ static const unsigned int SG_DepOrderArray[][3] = {
 // latency does not otherwise matter (true dependences enforce that).
 //
 void SchedGraph::addMemEdges(const std::vector<SchedGraphNode*>& memNodeVec,
-			     const TargetMachine& target) {
+                             const TargetMachine& target) {
   const TargetInstrInfo& mii = *target.getInstrInfo();
 
   // Instructions in memNodeVec are in execution order within the basic block,
@@ -273,7 +273,7 @@ void SchedGraph::addMemEdges(const std::vector<SchedGraphNode*>& memNodeVec,
 // like with control dependences.
 //
 void SchedGraph::addCallDepEdges(const std::vector<SchedGraphNode*>& callDepNodeVec,
-				 const TargetMachine& target) {
+                                 const TargetMachine& target) {
   const TargetInstrInfo& mii = *target.getInstrInfo();
 
   // Instructions in memNodeVec are in execution order within the basic block,
@@ -283,15 +283,15 @@ void SchedGraph::addCallDepEdges(const std::vector<SchedGraphNode*>& callDepNode
     if (mii.isCall(callDepNodeVec[ic]->getOpcode())) {
       // Add SG_CALL_REF edges from all preds to this instruction.
       for (unsigned jc=0; jc < ic; jc++)
-	(void) new SchedGraphEdge(callDepNodeVec[jc], callDepNodeVec[ic],
-				  SchedGraphEdge::MachineRegister,
-				  MachineIntRegsRID,  0);
+        (void) new SchedGraphEdge(callDepNodeVec[jc], callDepNodeVec[ic],
+                                  SchedGraphEdge::MachineRegister,
+                                  MachineIntRegsRID,  0);
 
       // And do the same from this instruction to all successors.
       for (unsigned jc=ic+1; jc < NC; jc++)
-	(void) new SchedGraphEdge(callDepNodeVec[ic], callDepNodeVec[jc],
-				  SchedGraphEdge::MachineRegister,
-				  MachineIntRegsRID,  0);
+        (void) new SchedGraphEdge(callDepNodeVec[ic], callDepNodeVec[jc],
+                                  SchedGraphEdge::MachineRegister,
+                                  MachineIntRegsRID,  0);
     }
 
 #ifdef CALL_DEP_NODE_VEC_CANNOT_WORK
@@ -331,7 +331,7 @@ void SchedGraph::addCallDepEdges(const std::vector<SchedGraphNode*>& callDepNode
 
 
 void SchedGraph::addMachineRegEdges(RegToRefVecMap& regToRefVecMap,
-				    const TargetMachine& target) {
+                                    const TargetMachine& target) {
   // This code assumes that two registers with different numbers are
   // not aliased!
   //
@@ -365,7 +365,7 @@ void SchedGraph::addMachineRegEdges(RegToRefVecMap& regToRefVecMap,
               new SchedGraphEdge(prevNode, node, regNum,
                                  SchedGraphEdge::AntiDep);
           }
-	
+        
           if (prevIsDef)
             if (!isDef || isDefAndUse)
               new SchedGraphEdge(prevNode, node, regNum,
@@ -382,11 +382,11 @@ void SchedGraph::addMachineRegEdges(RegToRefVecMap& regToRefVecMap,
 // We do not consider other uses because we are not building use-use deps.
 //
 void SchedGraph::addEdgesForValue(SchedGraphNode* refNode,
-				  const RefVec& defVec,
-				  const Value* defValue,
-				  bool  refNodeIsDef,
-				  bool  refNodeIsUse,
-				  const TargetMachine& target) {
+                                  const RefVec& defVec,
+                                  const Value* defValue,
+                                  bool  refNodeIsDef,
+                                  bool  refNodeIsUse,
+                                  const TargetMachine& target) {
   // Add true or output dep edges from all def nodes before refNode in BB.
   // Add anti or output dep edges to all def nodes after refNode.
   for (RefVec::const_iterator I=defVec.begin(), E=defVec.end(); I != E; ++I) {
@@ -415,8 +415,8 @@ void SchedGraph::addEdgesForValue(SchedGraphNode* refNode,
 
 
 void SchedGraph::addEdgesForInstruction(const MachineInstr& MI,
-					const ValueToDefVecMap& valueToDefVecMap,
-					const TargetMachine& target) {
+                                        const ValueToDefVecMap& valueToDefVecMap,
+                                        const TargetMachine& target) {
   SchedGraphNode* node = getGraphNodeForInstr(&MI);
   if (node == NULL)
     return;
@@ -443,7 +443,7 @@ void SchedGraph::addEdgesForInstruction(const MachineInstr& MI,
     case MachineOperand::MO_UnextendedImmed:
     case MachineOperand::MO_PCRelativeDisp:
     case MachineOperand::MO_ConstantPoolIndex:
-      break;	// nothing to do for immediate fields
+      break;    // nothing to do for immediate fields
 
     default:
       assert(0 && "Unknown machine operand type in SchedGraph builder");
@@ -468,11 +468,11 @@ void SchedGraph::addEdgesForInstruction(const MachineInstr& MI,
 
 
 void SchedGraph::findDefUseInfoAtInstr(const TargetMachine& target,
-				       SchedGraphNode* node,
-				       std::vector<SchedGraphNode*>& memNodeVec,
-				       std::vector<SchedGraphNode*>& callDepNodeVec,
-				       RegToRefVecMap& regToRefVecMap,
-				       ValueToDefVecMap& valueToDefVecMap) {
+                                       SchedGraphNode* node,
+                                       std::vector<SchedGraphNode*>& memNodeVec,
+                                       std::vector<SchedGraphNode*>& callDepNodeVec,
+                                       RegToRefVecMap& regToRefVecMap,
+                                       ValueToDefVecMap& valueToDefVecMap) {
   const TargetInstrInfo& mii = *target.getInstrInfo();
 
   MachineOpCode opCode = node->getOpcode();
@@ -550,11 +550,11 @@ void SchedGraph::findDefUseInfoAtInstr(const TargetMachine& target,
 
 
 void SchedGraph::buildNodesForBB(const TargetMachine& target,
-				 MachineBasicBlock& MBB,
-				 std::vector<SchedGraphNode*>& memNodeVec,
-				 std::vector<SchedGraphNode*>& callDepNodeVec,
-				 RegToRefVecMap& regToRefVecMap,
-				 ValueToDefVecMap& valueToDefVecMap) {
+                                 MachineBasicBlock& MBB,
+                                 std::vector<SchedGraphNode*>& memNodeVec,
+                                 std::vector<SchedGraphNode*>& callDepNodeVec,
+                                 RegToRefVecMap& regToRefVecMap,
+                                 ValueToDefVecMap& valueToDefVecMap) {
   const TargetInstrInfo& mii = *target.getInstrInfo();
 
   // Build graph nodes for each VM instruction and gather def/use info.
@@ -646,7 +646,7 @@ void SchedGraph::buildGraph(const TargetMachine& target) {
   this->addMachineRegEdges(regToRefVecMap, target);
 
   // Finally, add edges from the dummy root and to dummy leaf
-  this->addDummyEdges();		
+  this->addDummyEdges();                
 }
 
 
@@ -654,7 +654,7 @@ void SchedGraph::buildGraph(const TargetMachine& target) {
 // class SchedGraphSet
 //
 SchedGraphSet::SchedGraphSet(const Function* _function,
-			     const TargetMachine& target) :
+                             const TargetMachine& target) :
   function(_function) {
   buildGraphsForMethod(function, target);
 }
@@ -679,7 +679,7 @@ void SchedGraphSet::dump() const {
 
 
 void SchedGraphSet::buildGraphsForMethod(const Function *F,
-					 const TargetMachine& target) {
+                                         const TargetMachine& target) {
   MachineFunction &MF = MachineFunction::get(F);
   for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I)
     addGraph(new SchedGraph(*I, target));
@@ -691,13 +691,13 @@ void SchedGraphEdge::print(std::ostream &os) const {
      << sink->getNodeId() << "] : ";
 
   switch(depType) {
-  case SchedGraphEdge::CtrlDep:		
+  case SchedGraphEdge::CtrlDep:         
     os<< "Control Dep";
     break;
   case SchedGraphEdge::ValueDep:
     os<< "Reg Value " << *val;
     break;
-  case SchedGraphEdge::MemoryDep:	
+  case SchedGraphEdge::MemoryDep:       
     os<< "Memory Dep";
     break;
   case SchedGraphEdge::MachineRegister:

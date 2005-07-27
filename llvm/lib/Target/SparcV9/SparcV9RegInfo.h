@@ -129,7 +129,7 @@ public:
   // To find the register class used for a specified Type
   //
   unsigned getRegClassIDOfType  (const Type *type,
-					 bool isCCReg = false) const;
+                                         bool isCCReg = false) const;
 
   // To find the register class to which a specified register belongs
   //
@@ -165,7 +165,7 @@ public:
                                     LiveRangeInfo& LRI) const;
 
   void suggestReg4RetValue(MachineInstr *RetI,
-				   LiveRangeInfo& LRI) const;
+                                   LiveRangeInfo& LRI) const;
 
   void colorMethodArgs(const Function *Func,
                            LiveRangeInfo &LRI,
@@ -259,7 +259,7 @@ private:
   // as required. See SparcV9RegInfo.cpp for the implementation.
   //
   void suggestReg4RetAddr(MachineInstr *RetMI,
-			  LiveRangeInfo &LRI) const;
+                          LiveRangeInfo &LRI) const;
 
   void suggestReg4CallAddr(MachineInstr *CallMI, LiveRangeInfo &LRI) const;
 

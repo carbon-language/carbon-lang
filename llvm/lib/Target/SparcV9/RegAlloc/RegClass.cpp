@@ -25,7 +25,7 @@ namespace llvm {
 //----------------------------------------------------------------------------
 RegClass::RegClass(const Function *M,
                    const SparcV9RegInfo *_MRI_,
-		   const TargetRegClassInfo *_MRC_)
+                   const TargetRegClassInfo *_MRC_)
                   :  Meth(M), MRI(_MRI_), MRC(_MRC_),
                      RegClassID( _MRC_->getRegClassID() ),
                      IG(this), IGNodeStack() {
@@ -136,7 +136,7 @@ bool  RegClass::pushUnconstrainedIGNodes()
       IGNode->pushOnStack();            // set OnStack and dec deg of neighs
 
       if (DEBUG_RA >= RA_DEBUG_Coloring) {
-	std::cerr << " pushed un-constrained IGNode " << IGNode->getIndex()
+        std::cerr << " pushed un-constrained IGNode " << IGNode->getIndex()
                   << " on to stack\n";
       }
     }
@@ -169,15 +169,15 @@ IGNode * RegClass::getIGNodeWithMinSpillCost() {
 
     if (!IGNode->isOnStack()) {
       double SpillCost = (double) IGNode->getParentLR()->getSpillCost() /
-	(double) (IGNode->getCurDegree() + 1);
+        (double) (IGNode->getCurDegree() + 1);
 
       if (isFirstNode) {         // for the first IG node
-	MinSpillCost = SpillCost;
-	MinCostIGNode = IGNode;
-	isFirstNode = false;
+        MinSpillCost = SpillCost;
+        MinCostIGNode = IGNode;
+        isFirstNode = false;
       } else if (MinSpillCost > SpillCost) {
-	MinSpillCost = SpillCost;
-	MinCostIGNode = IGNode;
+        MinSpillCost = SpillCost;
+        MinCostIGNode = IGNode;
       }
     }
   }

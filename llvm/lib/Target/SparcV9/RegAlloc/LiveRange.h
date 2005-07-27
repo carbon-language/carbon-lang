@@ -184,7 +184,7 @@ public:
   }
 };
 
-static inline std::ostream &operator << (std::ostream &os, 
+static inline std::ostream &operator << (std::ostream &os,
                                          const V9LiveRange &lr) {
   os << "LiveRange@" << (void *)(&lr);
   return os;

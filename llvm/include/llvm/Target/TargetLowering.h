@@ -208,8 +208,8 @@ public:
 
   /// This function returns true if the target allows unaligned stores. This is
   /// used in situations where an array copy/move/set is converted to a sequence
-  /// of store operations. It ensures that such replacements don't generate 
-  /// code that causes an alignment error (trap) on the target machine. 
+  /// of store operations. It ensures that such replacements don't generate
+  /// code that causes an alignment error (trap) on the target machine.
   /// @brief Determine if the target supports unaligned stores.
   bool allowsUnalignedStores() const { return allowUnalignedStores; }
 
@@ -399,7 +399,7 @@ protected:
   /// should assume that the memset will be done using as many of the largest
   /// store operations first, followed by smaller ones, if necessary, per
   /// alignment restrictions. For example, storing 9 bytes on a 32-bit machine
-  /// with 16-bit alignment would result in four 2-byte stores and one 1-byte 
+  /// with 16-bit alignment would result in four 2-byte stores and one 1-byte
   /// store.  This only applies to setting a constant array of a constant size.
   /// @brief Specify maximum number of store instructions per memset call.
   unsigned maxStoresPerMemSet;
@@ -421,14 +421,14 @@ protected:
   /// must set this value based on the cost threshold for that target. Targets
   /// should assume that the memmove will be done using as many of the largest
   /// store operations first, followed by smaller ones, if necessary, per
-  /// alignment restrictions. For example, moving 9 bytes on a 32-bit machine 
-  /// with 8-bit alignment would result in nine 1-byte stores.  This only 
+  /// alignment restrictions. For example, moving 9 bytes on a 32-bit machine
+  /// with 8-bit alignment would result in nine 1-byte stores.  This only
   /// applies to copying a constant array of constant size.
   /// @brief Specify maximum bytes of store instructions per memmove call.
   unsigned maxStoresPerMemMove;
 
   /// This field specifies whether the target machine permits unaligned stores.
-  /// This is used to determine the size of store operations for copying 
+  /// This is used to determine the size of store operations for copying
   /// small arrays and other similar tasks.
   /// @brief Indicate whether the target machine permits unaligned stores.
   bool allowUnalignedStores;

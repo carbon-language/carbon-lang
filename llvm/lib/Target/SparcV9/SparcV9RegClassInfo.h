@@ -90,7 +90,7 @@ struct SparcV9IntRegClass : public TargetRegClassInfo {
 
 class SparcV9FloatRegClass : public TargetRegClassInfo {
   int findFloatColor(const V9LiveRange *LR, unsigned Start,
-		     unsigned End,
+                     unsigned End,
                      const std::vector<bool> &IsColorUsedArr) const;
 public:
   SparcV9FloatRegClass(unsigned ID)

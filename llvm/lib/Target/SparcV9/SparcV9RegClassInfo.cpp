@@ -49,13 +49,13 @@ void SparcV9IntRegClass::colorIGNode(IGNode * Node,
     unsigned SugCol = LR->getSuggestedColor();
     if (!IsColorUsedArr[SugCol]) {
       if (LR->isSuggestedColorUsable()) {
-	// if the suggested color is volatile, we should use it only if
-	// there are no call interferences. Otherwise, it will get spilled.
-	if (DEBUG_RA)
-	  std::cerr << "\n  -Coloring with sug color: " << SugCol;
+        // if the suggested color is volatile, we should use it only if
+        // there are no call interferences. Otherwise, it will get spilled.
+        if (DEBUG_RA)
+          std::cerr << "\n  -Coloring with sug color: " << SugCol;
 
-	LR->setColor(LR->getSuggestedColor());
-	return;
+        LR->setColor(LR->getSuggestedColor());
+        return;
       } else if(DEBUG_RA) {
         std::cerr << "\n Couldn't alloc Sug col - LR volatile & calls interf";
       }
@@ -195,8 +195,8 @@ void SparcV9FloatCCRegClass::colorIGNode(IGNode *Node,
 //     If the LR is a double try to allocate f32 - f63
 //     If the above fails or LR is single precision
 //        If the LR does not interfere with a call
-//	   start allocating from f0
-//	Else start allocating from f6
+//         start allocating from f0
+//      Else start allocating from f6
 //     If a color is still not found because LR interferes with a call
 //        Search in f0 - f6. If found mark for spill across calls.
 //     If a color is still not fond, mark for spilling
@@ -298,8 +298,8 @@ void SparcV9FloatRegClass::colorIGNode(IGNode * Node,
     // color could be found.
     // Now try to allocate even a volatile color
     ColorFound = findFloatColor(LR, SparcV9FloatRegClass::StartOfAllRegs,
-				SparcV9FloatRegClass::StartOfNonVolatileRegs,
-				IsColorUsedArr);
+                                SparcV9FloatRegClass::StartOfNonVolatileRegs,
+                                IsColorUsedArr);
   }
 
   if (ColorFound >= 0) {
@@ -355,7 +355,7 @@ int SparcV9FloatRegClass::findUnusedColor(int RegTypeWanted,
     for (unsigned c = 0; c < NC; c+=2)
       if (!IsColorUsedArr[c]) {
         assert(!IsColorUsedArr[c+1] && "Incorrect used regs for FP double!");
-	return c;
+        return c;
       }
     return -1;
   }
@@ -381,7 +381,7 @@ int SparcV9FloatRegClass::findFloatColor(const V9LiveRange *LR,
       if (!IsColorUsedArr[c]) {
         assert(!IsColorUsedArr[c+1] &&
                "Incorrect marking of used regs for SparcV9 FP double!");
-	return c;
+        return c;
       }
   } else {
     // find first unused color for a single

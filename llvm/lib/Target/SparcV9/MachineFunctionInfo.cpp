@@ -71,15 +71,15 @@ SizeToAlignment(unsigned size, const TargetMachine& target)
 
 void SparcV9FunctionInfo::CalculateArgSize() {
   maxOptionalArgsSize = ComputeMaxOptionalArgsSize(MF.getTarget(),
-						   MF.getFunction(),
+                                                   MF.getFunction(),
                                                    maxOptionalNumArgs);
   staticStackSize = maxOptionalArgsSize + 176;
 }
 
 int
 SparcV9FunctionInfo::computeOffsetforLocalVar(const Value* val,
-					      unsigned &getPaddedSize,
-					      unsigned  sizeToUse)
+                                              unsigned &getPaddedSize,
+                                              unsigned  sizeToUse)
 {
   if (sizeToUse == 0) {
     // All integer types smaller than ints promote to 4 byte integers.
@@ -92,7 +92,7 @@ SparcV9FunctionInfo::computeOffsetforLocalVar(const Value* val,
 
   bool growUp;
   int firstOffset = MF.getTarget().getFrameInfo()->getFirstAutomaticVarOffset(MF,
-						 			     growUp);
+                                                                             growUp);
   int offset = growUp? firstOffset + getAutomaticVarsSize()
                      : firstOffset - (getAutomaticVarsSize() + sizeToUse);
 
@@ -158,7 +158,7 @@ SparcV9FunctionInfo::pushTempValue(unsigned size)
                      : firstOffset - (currentTmpValuesSize + size);
 
   int aligned = MF.getTarget().getFrameInfo()->adjustAlignment(offset, growUp,
-							      align);
+                                                              align);
   size += abs(aligned - offset); // include alignment padding in size
 
   incrementTmpAreaSize(size);    // update "current" size of tmp area

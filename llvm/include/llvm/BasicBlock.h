@@ -160,7 +160,7 @@ public:
   /// splitBasicBlock - This splits a basic block into two at the specified
   /// instruction.  Note that all instructions BEFORE the specified iterator
   /// stay as part of the original basic block, an unconditional branch is added
-  /// to the original BB, and the rest of the instructions in the BB are moved 
+  /// to the original BB, and the rest of the instructions in the BB are moved
   /// to the new BB, including the old terminator.  The newly formed BasicBlock
   /// is returned.  This function invalidates the specified iterator.
   ///
