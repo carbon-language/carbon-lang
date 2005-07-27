@@ -404,7 +404,7 @@ fi
 dnl Verify that GCC is version 3.0 or higher
 if test "$GCC" = "yes"
 then
-  gccmajor=`$CC --version | head -n 1 | awk '{print $NF;}' | cut -d. -f1`
+  gccmajor=`$CC --version | head -n 1 | sed 's/[[^0-9]]*\([[0-9.]]\).*/\1/'` 
   if test "$gccmajor" -lt "3"
   then
     AC_MSG_ERROR([gcc 3.x required, but you have a lower version])
