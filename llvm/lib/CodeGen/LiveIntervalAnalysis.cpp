@@ -671,6 +671,7 @@ void LiveIntervals::joinIntervalsInMachineBB(MachineBasicBlock *MBB) {
       if ((TriviallyJoinable || IntB.joinable(IntA, MIDefIdx)) &&
           !overlapsAliases(&IntA, &IntB)) {
         IntB.join(IntA, MIDefIdx);
+        DEBUG(std::cerr << "Joined.  Result = " << IntB << "\n");
 
         if (!MRegisterInfo::isPhysicalRegister(regA)) {
           r2iMap_.erase(regA);
@@ -683,7 +684,6 @@ void LiveIntervals::joinIntervalsInMachineBB(MachineBasicBlock *MBB) {
           IntA.swap(IntB);
           r2iMap_.erase(regB);
         }
-        DEBUG(std::cerr << "Joined.  Result = " << IntB << "\n");
         ++numJoins;
       } else {
         DEBUG(std::cerr << "Interference!\n");
