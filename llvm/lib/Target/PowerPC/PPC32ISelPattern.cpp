@@ -1293,7 +1293,8 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
   MVT::ValueType DestType = N.getValueType();
 
   if (Node->getOpcode() == ISD::CopyFromReg &&
-      MRegisterInfo::isVirtualRegister(cast<RegSDNode>(Node)->getReg()))
+      (MRegisterInfo::isVirtualRegister(cast<RegSDNode>(Node)->getReg()) ||
+       cast<RegSDNode>(Node)->getReg() == PPC::R1))
     // Just use the specified register as our input.
     return cast<RegSDNode>(Node)->getReg();
 
