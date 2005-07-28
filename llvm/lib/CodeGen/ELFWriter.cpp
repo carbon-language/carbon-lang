@@ -85,6 +85,11 @@ namespace llvm {
       return 0;
     }
 
+    virtual unsigned char* allocateGlobal(unsigned size, unsigned alignment) {
+      assert(0 && "Globals not implemented yet!");
+      return 0;
+    }
+
     /// JIT SPECIFIC FUNCTIONS - DO NOT IMPLEMENT THESE HERE!
     void startFunctionStub(unsigned StubSize) {
       assert(0 && "JIT specific function called!");

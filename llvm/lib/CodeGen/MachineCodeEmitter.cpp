@@ -51,6 +51,9 @@ namespace {
       std::cout << "<relocation> ";
     }
 
+    virtual unsigned char* allocateGlobal(unsigned size, unsigned alignment)
+    { return 0; }
+
     uint64_t getConstantPoolEntryAddress(unsigned Num) { return 0; }
     uint64_t getCurrentPCValue() { return 0; }
     uint64_t getCurrentPCOffset() { return 0; }
@@ -142,6 +145,10 @@ namespace {
     uint64_t getConstantPoolEntryAddress(unsigned Num) {
       return MCE.getConstantPoolEntryAddress(Num);
     }
+
+    virtual unsigned char* allocateGlobal(unsigned size, unsigned alignment)
+    { return MCE.allocateGlobal(size, alignment); }
+
     uint64_t getCurrentPCValue() {
       return MCE.getCurrentPCValue();
     }
