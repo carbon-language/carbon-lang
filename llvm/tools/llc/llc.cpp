@@ -123,11 +123,6 @@ int main(int argc, char **argv) {
     PassManager Passes;
     Passes.add(new TargetData(TD));
 
-#ifndef NDEBUG
-    if(!NoVerify)
-      Passes.add(createVerifierPass());
-#endif
-
     // Create a new pass for each one specified on the command line
     for (unsigned i = 0; i < LLCPassList.size(); ++i) {
       const PassInfo *aPass = LLCPassList[i];
@@ -141,6 +136,10 @@ int main(int argc, char **argv) {
       }
     }
 
+#ifndef NDEBUG
+    if(!NoVerify)
+      Passes.add(createVerifierPass());
+#endif
 
     // Figure out where we are going to send the output...
     std::ostream *Out = 0;
