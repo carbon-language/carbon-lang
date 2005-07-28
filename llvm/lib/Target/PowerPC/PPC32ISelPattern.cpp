@@ -511,7 +511,7 @@ LowerFrameReturnAddress(bool isFrameAddress, SDOperand Chain, unsigned Depth,
 namespace {
 Statistic<>Recorded("ppc-codegen", "Number of recording ops emitted");
 Statistic<>FusedFP("ppc-codegen", "Number of fused fp operations");
-Statistic<>MultiBranch("ppc-codegen", "Number of setcc logical ops collapsed");
+Statistic<>FrameOff("ppc-codegen", "Number of frame idx offsets collapsed");
 //===--------------------------------------------------------------------===//
 /// ISel - PPC32 specific code to select PPC32 machine instructions for
 /// SelectionDAG operations.
@@ -569,7 +569,7 @@ public:
   unsigned SelectExpr(SDOperand N, bool Recording=false);
   void Select(SDOperand N);
 
-  bool SelectAddr(SDOperand N, unsigned& Reg, int& offset);
+  unsigned SelectAddr(SDOperand N, unsigned& Reg, int& offset);
   void SelectBranchCC(SDOperand N);
 };
 
@@ -1189,7 +1189,6 @@ unsigned ISel::SelectCCExpr(SDOperand N, unsigned& Opc, bool &Inv,
     break;
   case ISD::OR:
   case ISD::AND:
-    ++MultiBranch;
     Tmp1 = SelectCCExpr(N.getOperand(0), Opc, Inv0, Idx0);
     Tmp2 = SelectCCExpr(N.getOperand(1), Opc1, Inv1, Idx1);
     CROpc = getCROpForSetCC(N.getOpcode(), Inv0, Inv1);
@@ -1213,21 +1212,30 @@ unsigned ISel::SelectCCExpr(SDOperand N, unsigned& Opc, bool &Inv,
 }
 
 /// Check to see if the load is a constant offset from a base register
-bool ISel::SelectAddr(SDOperand N, unsigned& Reg, int& offset)
+unsigned ISel::SelectAddr(SDOperand N, unsigned& Reg, int& offset)
 {
   unsigned imm = 0, opcode = N.getOpcode();
   if (N.getOpcode() == ISD::ADD) {
-    Reg = SelectExpr(N.getOperand(0));
+    bool isFrame = N.getOperand(0).getOpcode() == ISD::FrameIndex;
     if (1 == getImmediateForOpcode(N.getOperand(1), opcode, imm)) {
       offset = imm;
-      return false;
+      if (isFrame) {
+        ++FrameOff;
+        Reg = cast<FrameIndexSDNode>(N.getOperand(0))->getIndex();
+        return 1;
+      } else {
+        Reg = SelectExpr(N.getOperand(0));
+        return 0;
+      }
+    } else {
+      Reg = SelectExpr(N.getOperand(0));
+      offset = SelectExpr(N.getOperand(1));
+      return 2;
     }
-    offset = SelectExpr(N.getOperand(1));
-    return true;
   }
   Reg = SelectExpr(N);
   offset = 0;
-  return false;
+  return 0;
 }
 
 void ISel::SelectBranchCC(SDOperand N)
@@ -1443,12 +1451,18 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
       }
     } else {
       int offset;
-      bool idx = SelectAddr(Address, Tmp1, offset);
-      if (idx) {
+      switch(SelectAddr(Address, Tmp1, offset)) {
+      default: assert(0 && "Unhandled return value from SelectAddr");
+      case 0:   // imm offset, no frame, no index
+        BuildMI(BB, Opc, 2, Result).addSImm(offset).addReg(Tmp1);
+        break;
+      case 1:   // imm offset + frame index
+        addFrameReference(BuildMI(BB, Opc, 2, Result), (int)Tmp1, offset);
+        break;
+      case 2:   // base+index addressing
         Opc = IndexedOpForOp(Opc);
         BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(offset);
-      } else {
-        BuildMI(BB, Opc, 2, Result).addSImm(offset).addReg(Tmp1);
+        break;
       }
     }
     return Result;
@@ -2495,12 +2509,18 @@ void ISel::Select(SDOperand N) {
       }
     } else {
       int offset;
-      bool idx = SelectAddr(Address, Tmp2, offset);
-      if (idx) {
+      switch(SelectAddr(Address, Tmp2, offset)) {
+      default: assert(0 && "Unhandled return value from SelectAddr");
+      case 0:   // imm offset, no frame, no index
+        BuildMI(BB, Opc, 3).addReg(Tmp1).addSImm(offset).addReg(Tmp2);
+        break;
+      case 1:   // imm offset + frame index
+        addFrameReference(BuildMI(BB, Opc, 3).addReg(Tmp1), (int)Tmp2, offset);
+        break;
+      case 2:   // base+index addressing
         Opc = IndexedOpForOp(Opc);
         BuildMI(BB, Opc, 3).addReg(Tmp1).addReg(Tmp2).addReg(offset);
-      } else {
-        BuildMI(BB, Opc, 3).addReg(Tmp1).addImm(offset).addReg(Tmp2);
+        break;
       }
     }
     return;
