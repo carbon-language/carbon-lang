@@ -180,6 +180,9 @@ int AlphaCodeEmitter::getMachineOpValue(MachineInstr &MI, MachineOperand &MO) {
     int Offset = 0;
     bool useGOT = false;
     switch (MI.getOpcode()) {
+    case Alpha::BSR:
+      Reloc = Alpha::reloc_bsr;
+      break;
     case Alpha::LDLr:
     case Alpha::LDQr:
     case Alpha::LDBUr:

@@ -859,7 +859,7 @@ void AlphaISel::MoveFP2Int(unsigned src, unsigned dst, bool isDouble)
   unsigned Opc;
   if (EnableAlphaFTOI) {
     Opc = isDouble ? Alpha::FTOIT : Alpha::FTOIS;
-    BuildMI(BB, Opc, 1, dst).addReg(src);
+    BuildMI(BB, Opc, 1, dst).addReg(src).addReg(Alpha::F31);
   } else {
     //The hard way:
     // Spill the integer to memory and reload it from there.
@@ -886,7 +886,7 @@ void AlphaISel::MoveInt2FP(unsigned src, unsigned dst, bool isDouble)
   unsigned Opc;
   if (EnableAlphaFTOI) {
     Opc = isDouble?Alpha::ITOFT:Alpha::ITOFS;
-    BuildMI(BB, Opc, 1, dst).addReg(src);
+    BuildMI(BB, Opc, 1, dst).addReg(src).addReg(Alpha::R31);
   } else {
     //The hard way:
     // Spill the integer to memory and reload it from there.
@@ -946,7 +946,7 @@ bool AlphaISel::SelectFPSetCC(SDOperand N, unsigned dst)
       //assert(0 && "Setcc On float?\n");
       std::cerr << "Setcc on float!\n";
       Tmp3 = MakeReg(MVT::f64);
-      BuildMI(BB, Alpha::CVTST, 1, Tmp3).addReg(Tmp1);
+      BuildMI(BB, Alpha::CVTST, 1, Tmp3).addReg(Alpha::F31).addReg(Tmp1);
       Tmp1 = Tmp3;
     }
   if (SetCC->getOperand(1).getValueType() == MVT::f32)
@@ -954,7 +954,7 @@ bool AlphaISel::SelectFPSetCC(SDOperand N, unsigned dst)
       //assert (0 && "Setcc On float?\n");
       std::cerr << "Setcc on float!\n";
       Tmp3 = MakeReg(MVT::f64);
-      BuildMI(BB, Alpha::CVTST, 1, Tmp3).addReg(Tmp2);
+      BuildMI(BB, Alpha::CVTST, 1, Tmp3).addReg(Alpha::F31).addReg(Tmp2);
       Tmp2 = Tmp3;
     }
 
@@ -1447,10 +1447,10 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
         Tmp2 = SelectExpr(N.getOperand(0).getOperand(1));
         MoveInt2FP(Tmp1, Tmp4, true);
         MoveInt2FP(Tmp2, Tmp5, true);
-        BuildMI(BB, Alpha::CVTQT, 1, Tmp6).addReg(Tmp4);
-        BuildMI(BB, Alpha::CVTQT, 1, Tmp7).addReg(Tmp5);
+        BuildMI(BB, Alpha::CVTQT, 1, Tmp6).addReg(Alpha::F31).addReg(Tmp4);
+        BuildMI(BB, Alpha::CVTQT, 1, Tmp7).addReg(Alpha::F31).addReg(Tmp5);
         BuildMI(BB, Alpha::DIVT, 2, Tmp8).addReg(Tmp6).addReg(Tmp7);
-        BuildMI(BB, Alpha::CVTTQ, 1, Tmp9).addReg(Tmp8);
+        BuildMI(BB, Alpha::CVTTQ, 1, Tmp9).addReg(Alpha::F31).addReg(Tmp8);
         MoveFP2Int(Tmp9, Result, true);
         return Result;
       }
@@ -1925,11 +1925,11 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
       if (SrcType == MVT::f32)
         {
           Tmp2 = MakeReg(MVT::f64);
-          BuildMI(BB, Alpha::CVTST, 1, Tmp2).addReg(Tmp1);
+          BuildMI(BB, Alpha::CVTST, 1, Tmp2).addReg(Alpha::F31).addReg(Tmp1);
           Tmp1 = Tmp2;
         }
       Tmp2 = MakeReg(MVT::f64);
-      BuildMI(BB, Alpha::CVTTQ, 1, Tmp2).addReg(Tmp1);
+      BuildMI(BB, Alpha::CVTTQ, 1, Tmp2).addReg(Alpha::F31).addReg(Tmp1);
       MoveFP2Int(Tmp2, Result, true);
 
       return Result;
@@ -2153,7 +2153,7 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
             N.getOperand(0).getValueType() == MVT::f64 &&
             "only f64 to f32 conversion supported here");
     Tmp1 = SelectExpr(N.getOperand(0));
-    BuildMI(BB, Alpha::CVTTS, 1, Result).addReg(Tmp1);
+    BuildMI(BB, Alpha::CVTTS, 1, Result).addReg(Alpha::F31).addReg(Tmp1);
     return Result;
 
   case ISD::FP_EXTEND:
@@ -2161,7 +2161,7 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
             N.getOperand(0).getValueType() == MVT::f32 &&
             "only f32 to f64 conversion supported here");
     Tmp1 = SelectExpr(N.getOperand(0));
-    BuildMI(BB, Alpha::CVTST, 1, Result).addReg(Tmp1);
+    BuildMI(BB, Alpha::CVTST, 1, Result).addReg(Alpha::F31).addReg(Tmp1);
     return Result;
 
   case ISD::ConstantFP:
@@ -2186,7 +2186,7 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
       Tmp2 = MakeReg(MVT::f64);
       MoveInt2FP(Tmp1, Tmp2, true);
       Opc = DestType == MVT::f64 ? Alpha::CVTQT : Alpha::CVTQS;
-      BuildMI(BB, Opc, 1, Result).addReg(Tmp2);
+      BuildMI(BB, Opc, 1, Result).addReg(Alpha::F31).addReg(Tmp2);
       return Result;
     }
   }

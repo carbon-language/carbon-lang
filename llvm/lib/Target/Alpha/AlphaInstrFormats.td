@@ -153,11 +153,25 @@ class OcmFormL<bits<6> opcode, bits<7> fun, dag OL, string asmstr>
 }
 
 //3.3.4
-class FPForm<bits<6> opcode, bits<11> fun, dag OL, string asmstr> : InstAlpha<opcode, OL, asmstr> {
+class FPForm<bits<6> opcode, bits<11> fun, string asmstr> 
+        : InstAlpha<opcode, (ops FPRC:$RC, FPRC:$RA, FPRC:$RB), asmstr> {
+  bits<5> Fc;
   bits<5> Fa;
   bits<5> Fb;
   bits<11> Function = fun;
+
+  let Inst{25-21} = Fa;
+  let Inst{20-16} = Fb;
+  let Inst{15-5} = Function;
+  let Inst{4-0} = Fc;
+}
+
+class FPFormCM<bits<6> opcode, bits<11> fun, dag OL, string asmstr> 
+        : InstAlpha<opcode, OL, asmstr> {
   bits<5> Fc;
+  bits<5> Fa;
+  bits<5> Fb;
+  bits<11> Function = fun;
 
   let Inst{25-21} = Fa;
   let Inst{20-16} = Fb;

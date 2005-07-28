@@ -245,6 +245,7 @@ void AlphaJITInfo::relocate(void *Function, MachineRelocation *MR,
   for (unsigned i = 0; i != NumRelocs; ++i, ++MR) {
     unsigned *RelocPos = (unsigned*)Function + MR->getMachineCodeOffset()/4;
     long idx = 0;
+    bool doCommon = true;
     switch ((Alpha::RelocationType)MR->getRelocationType()) {
     default: assert(0 && "Unknown relocation type!");
     case Alpha::reloc_literal:
@@ -289,9 +290,18 @@ void AlphaJITInfo::relocate(void *Function, MachineRelocation *MR,
         assert(0 && "Cannot handle gpdist yet");
       }
       break;
+    case Alpha::reloc_bsr: {
+      idx = (((unsigned char*)MR->getResultPointer() - 
+             (unsigned char*)RelocPos) >> 2) + 1; //skip first 2 inst of fun
+      *RelocPos |= (idx & ((1 << 21)-1));
+      doCommon = false;
+      break;
     }
-    short x = (short)idx;
-    assert(x == idx);
-    *(short*)RelocPos = x;
+    }
+    if (doCommon) {
+      short x = (short)idx;
+      assert(x == idx);
+      *(short*)RelocPos = x;
+    }
   }
 }
