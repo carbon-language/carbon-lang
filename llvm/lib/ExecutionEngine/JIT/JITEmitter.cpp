@@ -60,6 +60,8 @@ namespace {
     inline unsigned char *allocateStub(unsigned StubSize);
     inline unsigned char *allocateConstant(unsigned ConstantSize,
                                            unsigned Alignment);
+    inline unsigned char* allocateGlobal(unsigned Size, 
+                                         unsigned Alignment);
     inline unsigned char *startFunctionBody();
     inline void endFunctionBody(unsigned char *FunctionEnd);
     inline unsigned char* getGOTBase() const;
@@ -110,6 +112,21 @@ unsigned char *JITMemoryManager::allocateConstant(unsigned ConstantSize,
 
   if (CurConstantPtr < ConstantPool) {
     std::cerr << "JIT ran out of memory for constant pools!\n";
+    abort();
+  }
+  return CurConstantPtr;
+}
+
+unsigned char *JITMemoryManager::allocateGlobal(unsigned Size,
+                                                unsigned Alignment) {
+  // For now, intersperse them with Constants
+  // Reserve space and align pointer.
+  CurConstantPtr -= Size;
+  CurConstantPtr =
+    (unsigned char *)((intptr_t)CurConstantPtr & ~((intptr_t)Alignment - 1));
+
+  if (CurConstantPtr < ConstantPool) {
+    std::cerr << "JIT ran out of memory for Globals!\n";
     abort();
   }
   return CurConstantPtr;
@@ -175,8 +192,13 @@ namespace {
     /// ExternalFnToStubMap - This is the equivalent of FunctionToStubMap for
     /// external functions.
     std::map<void*, void*> ExternalFnToStubMap;
+
+    //map addresses to indexes in the GOT
+    std::map<void*, unsigned> revGOTMap;
+    unsigned nextGOTIndex;
+
   public:
-    JITResolver(MachineCodeEmitter &mce) : MCE(mce) {
+    JITResolver(MachineCodeEmitter &mce) : MCE(mce), nextGOTIndex(0) {
       LazyResolverFn =
         TheJIT->getJITInfo().getLazyResolverFunction(JITCompilerFn);
     }
@@ -198,6 +220,11 @@ namespace {
       state.getStubToFunctionMap(locked)[Location] = F;
       return (void*)LazyResolverFn;
     }
+
+    /// getGOTIndexForAddress - Return a new or existing index in the GOT for
+    /// and address.  This function only manages slots, it does not manage the
+    /// contents of the slots or the memory associated with the GOT.
+    unsigned getGOTIndexForAddr(void* addr);
 
     /// JITCompilerFn - This function is called to resolve a stub to a compiled
     /// address.  If the LLVM Function corresponding to the stub has not yet
@@ -261,6 +288,17 @@ void *JITResolver::getExternalFunctionStub(void *FnAddr) {
   return Stub;
 }
 
+unsigned JITResolver::getGOTIndexForAddr(void* addr) {
+  unsigned idx = revGOTMap[addr];
+  if (!idx) {
+    idx = ++nextGOTIndex;
+    revGOTMap[addr] = idx;
+    DEBUG(std::cerr << "Adding GOT entry " << idx
+          << " for addr " << addr << "\n");
+    //    ((void**)MemMgr.getGOTBase())[idx] = addr;
+  }
+  return idx;
+}
 
 /// JITCompilerFn - This function is called when a lazy compilation stub has
 /// been entered.  It looks up which function this stub corresponds to, compiles
@@ -294,6 +332,15 @@ void *JITResolver::JITCompilerFn(void *Stub) {
   JR.state.getFunctionToStubMap(locked).erase(F);
 
   // FIXME: We could rewrite all references to this stub if we knew them.
+
+  // What we will do is set the compiled function address to map to the 
+  // same GOT entry as the stub so that later clients may update the GOT 
+  // if they see it still using the stub address.
+  // Note: this is done so the Resolver doesn't have to manage GOT memory
+  // Do this without allocating map space if the target isn't using a GOT
+  if(JR.revGOTMap.find(Stub) != JR.revGOTMap.end())
+    JR.revGOTMap[Result] = JR.revGOTMap[Stub];
+
   return Result;
 }
 
@@ -340,8 +387,7 @@ namespace {
 
   public:
     JITEmitter(JIT &jit)
-      :MemMgr(jit.getJITInfo().needsGOT()),
-       nextGOTIndex(0)
+      :MemMgr(jit.getJITInfo().needsGOT())
     {
       TheJIT = &jit;
       DEBUG(std::cerr <<
@@ -365,11 +411,10 @@ namespace {
     virtual uint64_t getCurrentPCValue();
     virtual uint64_t getCurrentPCOffset();
     virtual uint64_t getConstantPoolEntryAddress(unsigned Entry);
+    virtual unsigned char* allocateGlobal(unsigned size, unsigned alignment);
 
   private:
     void *getPointerToGlobal(GlobalValue *GV, void *Reference, bool NoNeedStub);
-    unsigned nextGOTIndex;
-    std::map<void*, unsigned> revGOTMap;
   };
 }
 
@@ -441,19 +486,32 @@ void JITEmitter::finishFunction(MachineFunction &F) {
 
       MR.setResultPointer(ResultPtr);
 
-      // if we are managing the got, check to see if this pointer has all ready
-      // been allocated a GOT entry.  If not, give it the next one.
-      if (MemMgr.isManagingGOT()) {
-        if (!revGOTMap[ResultPtr])
-          revGOTMap[ResultPtr] = ++nextGOTIndex;
-        ((void**)MemMgr.getGOTBase())[revGOTMap[ResultPtr]] = ResultPtr;
-        if(MR.isGOTRelative())
-          MR.setGOTIndex(revGOTMap[ResultPtr]);
+      // if we are managing the GOT and the relocation wants an index,
+      // give it one
+      if (MemMgr.isManagingGOT() && !MR.isConstantPoolIndex() &&
+          MR.isGOTRelative()) {
+        unsigned idx = getJITResolver(this).getGOTIndexForAddr(ResultPtr);
+        MR.setGOTIndex(idx);
+        if (((void**)MemMgr.getGOTBase())[idx] != ResultPtr) {
+          DEBUG(std::cerr << "GOT was out of date for " << ResultPtr
+                << " pointing at " << ((void**)MemMgr.getGOTBase())[idx] << "\n");
+          ((void**)MemMgr.getGOTBase())[idx] = ResultPtr;
+        }
       }
     }
 
     TheJIT->getJITInfo().relocate(CurBlock, &Relocations[0],
                                   Relocations.size(), MemMgr.getGOTBase());
+  }
+
+  //Update the GOT entry for F to point to the new code.
+  if(MemMgr.isManagingGOT()) {
+    unsigned idx = getJITResolver(this).getGOTIndexForAddr((void*)CurBlock);
+    if (((void**)MemMgr.getGOTBase())[idx] != (void*)CurBlock) {
+      DEBUG(std::cerr << "GOT was out of date for " << (void*)CurBlock 
+            << " pointing at " << ((void**)MemMgr.getGOTBase())[idx] << "\n");
+      ((void**)MemMgr.getGOTBase())[idx] = (void*)CurBlock;
+    }
   }
 
   DEBUG(std::cerr << "JIT: Finished CodeGen of [" << (void*)CurBlock
@@ -514,6 +572,11 @@ uint64_t JITEmitter::getConstantPoolEntryAddress(unsigned ConstantNum) {
   assert(ConstantNum < ConstantPoolAddresses.size() &&
          "Invalid ConstantPoolIndex!");
   return (intptr_t)ConstantPoolAddresses[ConstantNum];
+}
+
+unsigned char* JITEmitter::allocateGlobal(unsigned size, unsigned alignment)
+{
+  return MemMgr.allocateGlobal(size, alignment);
 }
 
 // getCurrentPCValue - This returns the address that the next emitted byte

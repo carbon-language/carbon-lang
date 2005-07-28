@@ -94,6 +94,12 @@ public:
   //
   virtual uint64_t getConstantPoolEntryAddress(unsigned Index) = 0;
 
+  // allocateGlobal - Allocate some space for a global variable.  This is
+  // used by the JIT to allocate space in the global variable region.
+  virtual unsigned char* allocateGlobal(unsigned size, unsigned alignment) {
+    return new unsigned char[(size_t)size];
+  }
+
   /// createDebugEmitter - Return a dynamically allocated machine
   /// code emitter, which just prints the opcodes and fields out the cout.  This
   /// can be used for debugging users of the MachineCodeEmitter interface.
