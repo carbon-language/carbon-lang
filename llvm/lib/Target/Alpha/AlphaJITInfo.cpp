@@ -23,23 +23,52 @@
 using namespace std;
 using namespace llvm;
 
+#define BUILD_OFormatI(Op, RA, LIT, FUN, RC) \
+  ((Op << 26) | (RA << 21) | (LIT << 13) | (1 << 12) | (FUN << 5) | (RC))
+#define BUILD_OFormat(Op, RA, RB, FUN, RC) \
+  ((Op << 26) | (RA << 21) | (RB << 16) | (FUN << 5) | (RC))
+
 #define BUILD_LDA(RD, RS, IMM16) \
   ((0x08 << 26) | ((RD) << 21) | ((RS) << 16) | ((IMM16) & 65535))
 #define BUILD_LDAH(RD, RS, IMM16) \
   ((0x09 << 26) | ((RD) << 21) | ((RS) << 16) | ((IMM16) & 65535))
 
-#define MERGE_PARTS(HH, HL, LH, LL) \
-  (((HH * 65536 + HL) << 32) + (LH * 65536 + LL))
-
 #define BUILD_LDQ(RD, RS, IMM16) \
   ((0x29 << 26) | ((RD) << 21) | ((RS) << 16) | ((IMM16) & 0xFFFF))
 
 #define BUILD_JMP(RD, RS, IMM16) \
-  ((0x1A << 26) | ((RD) << 21) | ((RS) << 16) | ((IMM16) & 0xFFFF))
+  ((0x1A << 26) | ((RD) << 21) | ((RS) << 16) | (0x00 << 14) | ((IMM16) & 0x3FFF))
+#define BUILD_JSR(RD, RS, IMM16) \
+  ((0x1A << 26) | ((RD) << 21) | ((RS) << 16) | (0x01 << 14) | ((IMM16) & 0x3FFF))
 
-static void EmitBranchToAt(void *At, void *To, bool isCall) {
-  //FIXME
-  assert(0);
+#define BUILD_SLLi(RD, RS, IMM8) \
+  (BUILD_OFormatI(0x12, RS, IMM8, 0x39, RD))
+
+#define BUILD_ORi(RD, RS, IMM8) \
+  (BUILD_OFormatI(0x11, RS, IMM8, 0x20, RD))
+
+#define BUILD_OR(RD, RS, RT) \
+  (BUILD_OFormat(0x11, RS, RT, 0x20, RD))
+
+
+
+static void EmitBranchToAt(void *At, void *To) {
+  unsigned long Fn = (unsigned long)To;
+
+  unsigned *AtI = (unsigned*)At;
+
+  AtI[0] = BUILD_OR(0, 27, 27);
+
+  DEBUG(std::cerr << "Stub targeting " << To << "\n");
+
+  for (int x = 1; x <= 8; ++x) {
+    AtI[2*x - 1] = BUILD_SLLi(27,27,8);
+    unsigned d = (Fn >> (64 - 8 * x)) & 0x00FF;
+    DEBUG(std::cerr << "outputing " << hex << d << dec << "\n");
+    AtI[2*x] = BUILD_ORi(27, 27, d);
+  }
+  AtI[17] = BUILD_JMP(31,27,0); //jump, preserving ra, and setting pv
+  AtI[18] = 0x00FFFFFF; //mark this as a stub
 }
 
 void AlphaJITInfo::replaceMachineCodeForFunction(void *Old, void *New) {
@@ -53,55 +82,22 @@ static TargetJITInfo::JITCompilerFn JITCompilerFunction;
 extern "C" {
 #ifdef __alpha
 
-  void AlphaCompilationCallbackC(long* oldsp)
+  void AlphaCompilationCallbackC(long* oldpv, void* CameFromStub)
   {
-    void* CameFromStub = (void*)*(oldsp - 1);
-    void* CameFromOrig = (void*)*(oldsp - 2);
-
     void* Target = JITCompilerFunction(CameFromStub);
 
     //rewrite the stub to an unconditional branch
-    EmitBranchToAt(CameFromStub, Target, false);
+    if (((unsigned*)CameFromStub)[18] == 0x00FFFFFF) {
+      DEBUG(std::cerr << "Came from a stub, rewriting\n");
+      EmitBranchToAt(CameFromStub, Target);
+    } else {
+      DEBUG(std::cerr << "confused, didn't come from stub at " << CameFromStub
+            << " old jump vector " << oldpv 
+            << " new jump vector " << Target << "\n");
+    }
 
     //Change pv to new Target
-    *(oldsp - 1) = (long)Target;
-
-    //special epilog
-    register long* RSP asm ("$0") = oldsp;
-    __asm__ __volatile__ (
-      "ldq $16,   0($0)\n"
-      "ldq $17,   8($0)\n"
-      "ldq $18,  16($0)\n"
-      "ldq $19,  24($0)\n"
-      "ldq $20,  32($0)\n"
-      "ldq $21,  40($0)\n"
-      "ldt $f16, 48($0)\n"
-      "ldt $f17, 56($0)\n"
-      "ldt $f18, 64($0)\n"
-      "ldt $f19, 72($0)\n"
-      "ldt $f20, 80($0)\n"
-      "ldt $f21, 88($0)\n"
-      "ldq $9,   96($0)\n"
-      "ldq $10, 104($0)\n"
-      "ldq $11, 112($0)\n"
-      "ldq $12, 120($0)\n"
-      "ldq $13, 128($0)\n"
-      "ldq $14, 136($0)\n"
-      "ldt $f2, 144($0)\n"
-      "ldt $f3, 152($0)\n"
-      "ldt $f4, 160($0)\n"
-      "ldt $f5, 168($0)\n"
-      "ldt $f6, 176($0)\n"
-      "ldt $f7, 184($0)\n"
-      "ldt $f8, 192($0)\n"
-      "ldt $f9, 200($0)\n"
-      "ldq $15, 208($0)\n"
-      "ldq $26, 216($0)\n"
-      "ldq $27, 224($0)\n"
-      "bis $30, $0, $0\n" //restore sp
-      "jmp $31, ($27)\n" //jump to the new function
-      "and $0, $31, $31\n" //dummy use of r0
-    );
+    *oldpv = (long)Target;
   }
 
   void AlphaCompilationCallback(void);
@@ -114,12 +110,11 @@ extern "C" {
       ".ent AlphaCompilationCallback\n"
 "AlphaCompilationCallback:\n"
       //      //get JIT's GOT
-      //      "ldgp\n"
+      "ldgp $29, 0($27)\n"
       //Save args, callee saved, and perhaps others?
       //args: $16-$21 $f16-$f21     (12)
       //callee: $9-$14 $f2-$f9      (14)
       //others: fp:$15 ra:$26 pv:$27 (3)
-      "bis $0, $30, $30\n" //0 = sp
       "lda $30, -232($30)\n"
       "stq $16,   0($30)\n"
       "stq $17,   8($30)\n"
@@ -150,8 +145,43 @@ extern "C" {
       "stq $15, 208($30)\n"
       "stq $26, 216($30)\n"
       "stq $27, 224($30)\n"
-      "bis $16, $0, $0\n" //pass the old sp as the first arg
-      "bsr $31, AlphaCompilationCallbackC\n"
+
+      "addq $30, 224, $16\n" //pass the addr of saved pv as the first arg
+      "bis $0, $0, $17\n" //pass the roughly stub addr in second arg
+      "jsr $26, AlphaCompilationCallbackC\n" //call without saving ra
+
+      "ldq $16,   0($30)\n"
+      "ldq $17,   8($30)\n"
+      "ldq $18,  16($30)\n"
+      "ldq $19,  24($30)\n"
+      "ldq $20,  32($30)\n"
+      "ldq $21,  40($30)\n"
+      "ldt $f16, 48($30)\n"
+      "ldt $f17, 56($30)\n"
+      "ldt $f18, 64($30)\n"
+      "ldt $f19, 72($30)\n"
+      "ldt $f20, 80($30)\n"
+      "ldt $f21, 88($30)\n"
+      "ldq $9,   96($30)\n"
+      "ldq $10, 104($30)\n"
+      "ldq $11, 112($30)\n"
+      "ldq $12, 120($30)\n"
+      "ldq $13, 128($30)\n"
+      "ldq $14, 136($30)\n"
+      "ldt $f2, 144($30)\n"
+      "ldt $f3, 152($30)\n"
+      "ldt $f4, 160($30)\n"
+      "ldt $f5, 168($30)\n"
+      "ldt $f6, 176($30)\n"
+      "ldt $f7, 184($30)\n"
+      "ldt $f8, 192($30)\n"
+      "ldt $f9, 200($30)\n"
+      "ldq $15, 208($30)\n"
+      "ldq $26, 216($30)\n"
+      "ldq $27, 224($30)\n" //this was updated in the callback with the target
+
+      "lda $30, 232($30)\n" //restore sp
+      "jmp $31, ($27)\n" //jump to the new function
       ".end AlphaCompilationCallback\n"
       );
 #else
@@ -163,21 +193,15 @@ extern "C" {
 }
 
 void *AlphaJITInfo::emitFunctionStub(void *Fn, MachineCodeEmitter &MCE) {
-//   // If this is just a call to an external function, emit a branch instead of a
-//   // call.  This means looking up Fn and storing that in R27 so as to appear to
-//   // have called there originally
-//   if (Fn != AlphaCompilationCallback) {
-//     int idx = AlphaJTI->getNewGOTEntry(Fn);
-//     //R27 = ldq idx(R29)
-//     //R31 = JMP R27, 0
-//     MCE.startFunctionStub(2*4);
-//     void *Addr = (void*)(intptr_t)MCE.getCurrentPCValue();
-//     MCE.emitWord(BUILD_LDQ(27, 29, idx << 3));
-//     MCE.emitWord(BUILD_JMP(31, 27, 0));
-//     return MCE.finishFunctionStub(0);
-//   }
-
-  assert(0 && "Need to be able to jump to this guy too");
+  //assert(Fn == AlphaCompilationCallback && "Where are you going?\n");
+  //Do things in a stupid slow way!
+  MCE.startFunctionStub(19*4);
+  void* Addr = (void*)(intptr_t)MCE.getCurrentPCValue();
+  for (int x = 0; x < 19; ++ x)
+    MCE.emitWord(0);
+  EmitBranchToAt(Addr, Fn);
+  DEBUG(std::cerr << "Emitting Stub to " << Fn << " at [" << Addr << "]\n");
+  return MCE.finishFunctionStub(0);
 }
 
 TargetJITInfo::LazyResolverFn

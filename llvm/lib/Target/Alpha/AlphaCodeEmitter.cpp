@@ -178,6 +178,7 @@ int AlphaCodeEmitter::getMachineOpValue(MachineInstr &MI, MachineOperand &MO) {
          MO.getGlobal()->isExternal()) );
     unsigned Reloc = 0;
     int Offset = 0;
+    bool useGOT = false;
     switch (MI.getOpcode()) {
     case Alpha::LDLr:
     case Alpha::LDQr:
@@ -193,6 +194,7 @@ int AlphaCodeEmitter::getMachineOpValue(MachineInstr &MI, MachineOperand &MO) {
       break;
     case Alpha::LDQl:
       Reloc = Alpha::reloc_literal;
+      useGOT = true;
       break;
     case Alpha::LDAg:
     case Alpha::LDAHg:
@@ -206,7 +208,7 @@ int AlphaCodeEmitter::getMachineOpValue(MachineInstr &MI, MachineOperand &MO) {
     if (MO.isGlobalAddress())
       MCE.addRelocation(MachineRelocation((unsigned)MCE.getCurrentPCOffset(),
                                           Reloc, MO.getGlobal(), Offset,
-                                          true, true));
+                                          false, useGOT));
     else if (MO.isExternalSymbol())
       MCE.addRelocation(MachineRelocation((unsigned)MCE.getCurrentPCOffset(),
                                           Reloc, MO.getSymbolName(), Offset,
