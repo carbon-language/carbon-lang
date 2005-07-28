@@ -53,6 +53,13 @@
 # undef HAVE_MKDTEMP
 #endif
 
+namespace {
+inline bool lastIsSlash(const std::string& path) {
+  return !path.empty() && path[path.length() - 1] == '/';
+}
+
+}
+
 namespace llvm {
 using namespace sys;
 
@@ -437,11 +444,15 @@ Path::getDirectoryContents(std::set<Path>& result) const {
   if (direntries == 0)
     ThrowErrno(path + ": can't open directory");
 
+  std::string dirPath = path;
+  if (!lastIsSlash(dirPath))
+    dirPath += '/';
+
   result.clear();
   struct dirent* de = ::readdir(direntries);
   for ( ; de != 0; de = ::readdir(direntries)) {
     if (de->d_name[0] != '.') {
-      Path aPath(path + (const char*)de->d_name);
+      Path aPath(dirPath + (const char*)de->d_name);
       struct stat buf;
       if (0 != stat(aPath.path.c_str(), &buf)) {
         int stat_errno = errno;
@@ -477,11 +488,8 @@ Path::appendComponent(const std::string& name) {
   if (name.empty())
     return false;
   std::string save(path);
-  if (!path.empty()) {
-    size_t last = path.size() - 1;
-    if (path[last] != '/') 
-      path += '/';
-  }
+  if (!lastIsSlash(path))
+    path += '/';
   path += name;
   if (!isValid()) {
     path = save;
