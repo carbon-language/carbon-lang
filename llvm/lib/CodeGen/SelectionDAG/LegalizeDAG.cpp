@@ -1438,62 +1438,103 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     break;
 
     // Conversion operators.  The source and destination have different types.
-  case ISD::ZERO_EXTEND:
-  case ISD::SIGN_EXTEND:
-  case ISD::TRUNCATE:
-  case ISD::FP_EXTEND:
-  case ISD::FP_ROUND:
-  case ISD::FP_TO_SINT:
-  case ISD::FP_TO_UINT:
   case ISD::SINT_TO_FP:
-  case ISD::UINT_TO_FP:
+  case ISD::UINT_TO_FP: {
+    bool isSigned = Node->getOpcode() == ISD::SINT_TO_FP;
     switch (getTypeAction(Node->getOperand(0).getValueType())) {
     case Legal:
-      //still made need to expand if the op is illegal, but the types are legal
-      if (Node->getOpcode() == ISD::UINT_TO_FP ||
-          Node->getOpcode() == ISD::SINT_TO_FP) {
-        bool isSigned = Node->getOpcode() == ISD::SINT_TO_FP;
-        switch (TLI.getOperationAction(Node->getOpcode(),
-                                       Node->getOperand(0).getValueType())) {
-        default: assert(0 && "Unknown operation action!");
-        case TargetLowering::Expand:
-          if (!isSigned)
-            Result = ExpandLegalUINT_TO_FP(LegalizeOp(Node->getOperand(0)),
-                                           Node->getValueType(0));
-          else
-            assert(0 && "Legalize cannot Expand SINT_TO_FP yet");
-          AddLegalizedOperand(Op, Result);
-          return Result;
-        case TargetLowering::Promote:
-          Result = PromoteLegalINT_TO_FP(LegalizeOp(Node->getOperand(0)),
-                                         Node->getValueType(0),
-                                         isSigned);
-          AddLegalizedOperand(Op, Result);
-          return Result;
-        case TargetLowering::Legal:
-          break;
-        }
+      switch (TLI.getOperationAction(Node->getOpcode(), 
+                                     Node->getOperand(0).getValueType())) {
+      default: assert(0 && "Unknown operation action!");
+      case TargetLowering::Expand:
+        assert(!isSigned && "Legalize cannot Expand SINT_TO_FP yet");
+        Result = ExpandLegalUINT_TO_FP(LegalizeOp(Node->getOperand(0)),
+                                       Node->getValueType(0));
+        AddLegalizedOperand(Op, Result);
+        return Result;
+      case TargetLowering::Promote:
+        Result = PromoteLegalINT_TO_FP(LegalizeOp(Node->getOperand(0)),
+                                       Node->getValueType(0),
+                                       isSigned);
+        AddLegalizedOperand(Op, Result);
+        return Result;
+      case TargetLowering::Legal:
+        break;
       }
+
       Tmp1 = LegalizeOp(Node->getOperand(0));
       if (Tmp1 != Node->getOperand(0))
         Result = DAG.getNode(Node->getOpcode(), Node->getValueType(0), Tmp1);
       break;
     case Expand:
-      if (Node->getOpcode() == ISD::SINT_TO_FP ||
-          Node->getOpcode() == ISD::UINT_TO_FP) {
-        Result = ExpandIntToFP(Node->getOpcode() == ISD::SINT_TO_FP,
-                               Node->getValueType(0), Node->getOperand(0));
-        break;
-      } else if (Node->getOpcode() == ISD::TRUNCATE) {
-        // In the expand case, we must be dealing with a truncate, because
-        // otherwise the result would be larger than the source.
-        ExpandOp(Node->getOperand(0), Tmp1, Tmp2);
-
-        // Since the result is legal, we should just be able to truncate the low
-        // part of the source.
-        Result = DAG.getNode(ISD::TRUNCATE, Node->getValueType(0), Tmp1);
-        break;
+      Result = ExpandIntToFP(Node->getOpcode() == ISD::SINT_TO_FP,
+                             Node->getValueType(0), Node->getOperand(0));
+      break;
+    case Promote:
+      if (isSigned) {
+        Result = PromoteOp(Node->getOperand(0));
+        Result = DAG.getNode(ISD::SIGN_EXTEND_INREG, Result.getValueType(),
+                 Result, DAG.getValueType(Node->getOperand(0).getValueType()));
+        Result = DAG.getNode(ISD::SINT_TO_FP, Op.getValueType(), Result);
+      } else {
+        Result = PromoteOp(Node->getOperand(0));
+        Result = DAG.getZeroExtendInReg(Result,
+                                        Node->getOperand(0).getValueType());
+        Result = DAG.getNode(ISD::UINT_TO_FP, Op.getValueType(), Result);
       }
+      break;
+    }
+    break;
+  }
+  case ISD::TRUNCATE:
+    switch (getTypeAction(Node->getOperand(0).getValueType())) {
+    case Legal:
+      Tmp1 = LegalizeOp(Node->getOperand(0));
+      if (Tmp1 != Node->getOperand(0))
+        Result = DAG.getNode(Node->getOpcode(), Node->getValueType(0), Tmp1);
+      break;
+    case Expand:
+      ExpandOp(Node->getOperand(0), Tmp1, Tmp2);
+
+      // Since the result is legal, we should just be able to truncate the low
+      // part of the source.
+      Result = DAG.getNode(ISD::TRUNCATE, Node->getValueType(0), Tmp1);
+      break;
+    case Promote:
+      Result = PromoteOp(Node->getOperand(0));
+      Result = DAG.getNode(ISD::TRUNCATE, Op.getValueType(), Result);
+      break;
+    }
+    break;
+    
+  case ISD::FP_TO_SINT:
+  case ISD::FP_TO_UINT:
+    switch (getTypeAction(Node->getOperand(0).getValueType())) {
+    case Legal:
+      Tmp1 = LegalizeOp(Node->getOperand(0));
+      if (Tmp1 != Node->getOperand(0))
+        Result = DAG.getNode(Node->getOpcode(), Node->getValueType(0), Tmp1);
+      break;
+    case Expand:
+      assert(0 && "Shouldn't need to expand other operators here!");
+    case Promote:
+      Result = PromoteOp(Node->getOperand(0));
+      Result = DAG.getNode(Node->getOpcode(), Op.getValueType(), Result);
+      break;
+    }
+    break;
+        
+  case ISD::ZERO_EXTEND:
+  case ISD::SIGN_EXTEND:
+  case ISD::FP_EXTEND:
+  case ISD::FP_ROUND:
+    switch (getTypeAction(Node->getOperand(0).getValueType())) {
+    case Legal:
+      Tmp1 = LegalizeOp(Node->getOperand(0));
+      if (Tmp1 != Node->getOperand(0))
+        Result = DAG.getNode(Node->getOpcode(), Node->getValueType(0), Tmp1);
+      break;
+    case Expand:
       assert(0 && "Shouldn't need to expand other operators here!");
 
     case Promote:
@@ -1513,10 +1554,6 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
                              Result,
                           DAG.getValueType(Node->getOperand(0).getValueType()));
         break;
-      case ISD::TRUNCATE:
-        Result = PromoteOp(Node->getOperand(0));
-        Result = DAG.getNode(ISD::TRUNCATE, Op.getValueType(), Result);
-        break;
       case ISD::FP_EXTEND:
         Result = PromoteOp(Node->getOperand(0));
         if (Result.getValueType() != Op.getValueType())
@@ -1524,23 +1561,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
           Result = DAG.getNode(ISD::FP_EXTEND, Op.getValueType(), Result);
         break;
       case ISD::FP_ROUND:
-      case ISD::FP_TO_SINT:
-      case ISD::FP_TO_UINT:
         Result = PromoteOp(Node->getOperand(0));
         Result = DAG.getNode(Node->getOpcode(), Op.getValueType(), Result);
-        break;
-      case ISD::SINT_TO_FP:
-        Result = PromoteOp(Node->getOperand(0));
-        Result = DAG.getNode(ISD::SIGN_EXTEND_INREG, Result.getValueType(),
-                             Result,
-                         DAG.getValueType(Node->getOperand(0).getValueType()));
-        Result = DAG.getNode(ISD::SINT_TO_FP, Op.getValueType(), Result);
-        break;
-      case ISD::UINT_TO_FP:
-        Result = PromoteOp(Node->getOperand(0));
-        Result = DAG.getZeroExtendInReg(Result,
-                                        Node->getOperand(0).getValueType());
-        Result = DAG.getNode(ISD::UINT_TO_FP, Op.getValueType(), Result);
         break;
       }
     }
