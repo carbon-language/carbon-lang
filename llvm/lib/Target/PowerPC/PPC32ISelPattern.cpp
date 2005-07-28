@@ -1385,7 +1385,7 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
       BuildMI(BB, PPC::ADDIS, 2, Tmp1).addReg(getGlobalBaseReg())
         .addGlobalAddress(GV);
     else
-      BuildMI(BB, PPC::LIS, 2, Tmp1).addGlobalAddress(GV);
+      BuildMI(BB, PPC::LIS, 1, Tmp1).addGlobalAddress(GV);
     if (GV->hasWeakLinkage() || GV->isExternal()) {
       BuildMI(BB, PPC::LWZ, 2, Result).addGlobalAddress(GV).addReg(Tmp1);
     } else {
@@ -1441,7 +1441,7 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
         BuildMI(BB, PPC::ADDIS, 2, Tmp1).addReg(getGlobalBaseReg())
           .addGlobalAddress(GV);
       else
-        BuildMI(BB, PPC::LIS, 2, Tmp1).addGlobalAddress(GV);
+        BuildMI(BB, PPC::LIS, 1, Tmp1).addGlobalAddress(GV);
       if (GV->hasWeakLinkage() || GV->isExternal()) {
         Tmp2 = MakeReg(MVT::i32);
         BuildMI(BB, PPC::LWZ, 2, Tmp2).addGlobalAddress(GV).addReg(Tmp1);
@@ -2499,7 +2499,7 @@ void ISel::Select(SDOperand N) {
         BuildMI(BB, PPC::ADDIS, 2, Tmp2).addReg(getGlobalBaseReg())
           .addGlobalAddress(GV);
       else
-        BuildMI(BB, PPC::LIS, 2, Tmp2).addGlobalAddress(GV);
+        BuildMI(BB, PPC::LIS, 1, Tmp2).addGlobalAddress(GV);
       if (GV->hasWeakLinkage() || GV->isExternal()) {
         Tmp3 = MakeReg(MVT::i32);
         BuildMI(BB, PPC::LWZ, 2, Tmp3).addGlobalAddress(GV).addReg(Tmp2);
