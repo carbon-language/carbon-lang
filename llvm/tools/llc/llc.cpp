@@ -22,6 +22,8 @@
 #include "llvm/Pass.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/PluginLoader.h"
+#include "llvm/Support/PassNameParser.h"
+#include "llvm/Analysis/Verifier.h"
 #include "llvm/System/Signals.h"
 #include "llvm/Config/config.h"
 #include <fstream>
@@ -56,6 +58,14 @@ FileType("filetype", cl::init(TargetMachine::AssemblyFile),
        clEnumValN(TargetMachine::DynamicLibrary, "dynlib",
                   "  Emit a native dynamic library ('.so') file"),
        clEnumValEnd));
+
+// The LLCPassList is populated with passes that were registered using
+//  PassInfo::LLC by the FilteredPassNameParser:
+cl::list<const PassInfo*, bool, FilteredPassNameParser<PassInfo::LLC> >
+LLCPassList(cl::desc("Passes Available"));
+
+cl::opt<bool> NoVerify("disable-verify", cl::Hidden,
+		       cl::desc("Do not verify input module"));
 
 
 // GetFileNameRoot - Helper function to get the basename of a filename.
@@ -112,6 +122,25 @@ int main(int argc, char **argv) {
     // Build up all of the passes that we want to do to the module...
     PassManager Passes;
     Passes.add(new TargetData(TD));
+
+#ifndef NDEBUG
+    if(!NoVerify)
+      Passes.add(createVerifierPass());
+#endif
+
+    // Create a new pass for each one specified on the command line
+    for (unsigned i = 0; i < LLCPassList.size(); ++i) {
+      const PassInfo *aPass = LLCPassList[i];
+
+      if (aPass->getNormalCtor()) {
+        Pass *P = aPass->getNormalCtor()();
+        Passes.add(P);
+      } else {
+        std::cerr << argv[0] << ": cannot create pass: "
+                  << aPass->getPassName() << "\n";
+      }
+    }
+
 
     // Figure out where we are going to send the output...
     std::ostream *Out = 0;
