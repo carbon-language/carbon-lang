@@ -23,7 +23,7 @@ namespace llvm {
   protected:
     TargetMachine &TM;
   public:
-    PowerPCJITInfo(TargetMachine &tm) : TM(tm) {}
+    PowerPCJITInfo(TargetMachine &tm) : TM(tm) {useGOT = 0;}
 
     /// addPassesToJITCompile - Add passes to the specified pass manager to
     /// implement a fast dynamic compiler for this target.  Return true if this

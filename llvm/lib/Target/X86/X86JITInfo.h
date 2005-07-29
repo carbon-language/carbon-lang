@@ -23,7 +23,7 @@ namespace llvm {
   class X86JITInfo : public TargetJITInfo {
     TargetMachine &TM;
   public:
-    X86JITInfo(TargetMachine &tm) : TM(tm) {}
+    X86JITInfo(TargetMachine &tm) : TM(tm) {useGOT = 0;}
 
     /// addPassesToJITCompile - Add passes to the specified pass manager to
     /// implement a fast dynamic compiler for this target.  Return true if this

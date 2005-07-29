@@ -24,7 +24,7 @@ namespace llvm {
   class SparcV9JITInfo : public TargetJITInfo {
     TargetMachine &TM;
   public:
-    SparcV9JITInfo(TargetMachine &tm) : TM(tm) {}
+    SparcV9JITInfo(TargetMachine &tm) : TM(tm) {useGOT = 0;}
 
     /// addPassesToJITCompile - Add passes to the specified pass manager to
     /// implement a fast dynamic compiler for this target.  Return true if this
