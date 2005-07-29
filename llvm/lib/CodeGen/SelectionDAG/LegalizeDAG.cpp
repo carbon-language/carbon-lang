@@ -2772,12 +2772,30 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     // These operators cannot be expanded directly, emit them as calls to
     // library functions.
   case ISD::FP_TO_SINT:
+    if (TLI.getOperationAction(ISD::FP_TO_SINT, VT) == TargetLowering::Custom) {
+      SDOperand Op = DAG.getNode(ISD::FP_TO_SINT, VT,
+                                 LegalizeOp(Node->getOperand(0)));
+      // Now that the custom expander is done, expand the result, which is still
+      // VT.
+      ExpandOp(TLI.LowerOperation(Op, DAG), Lo, Hi);
+      break;
+    }
+    
     if (Node->getOperand(0).getValueType() == MVT::f32)
       Lo = ExpandLibCall("__fixsfdi", Node, Hi);
     else
       Lo = ExpandLibCall("__fixdfdi", Node, Hi);
     break;
   case ISD::FP_TO_UINT:
+    if (TLI.getOperationAction(ISD::FP_TO_UINT, VT) == TargetLowering::Custom) {
+      SDOperand Op = DAG.getNode(ISD::FP_TO_UINT, VT,
+                                 LegalizeOp(Node->getOperand(0)));
+      // Now that the custom expander is done, expand the result, which is still
+      // VT.
+      ExpandOp(TLI.LowerOperation(Op, DAG), Lo, Hi);
+      break;
+    }
+    
     if (Node->getOperand(0).getValueType() == MVT::f32)
       Lo = ExpandLibCall("__fixunssfdi", Node, Hi);
     else
