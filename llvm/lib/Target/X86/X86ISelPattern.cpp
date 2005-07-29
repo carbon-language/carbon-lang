@@ -132,6 +132,18 @@ namespace {
         setOperationAction(ISD::FP_TO_SINT       , MVT::i64  , Custom);
       }
       
+      // Handle FP_TO_UINT by promoting the destination to a larger signed
+      // conversion.
+      setOperationAction(ISD::FP_TO_UINT       , MVT::i1   , Promote);
+      setOperationAction(ISD::FP_TO_UINT       , MVT::i8   , Promote);
+      setOperationAction(ISD::FP_TO_UINT       , MVT::i16  , Promote);
+      setOperationAction(ISD::FP_TO_UINT       , MVT::i32  , Promote);
+
+      // Promote i1/i8 FP_TO_SINT to larger FP_TO_SINTS's, as X86 doesn't have
+      // this operation.
+      setOperationAction(ISD::FP_TO_SINT       , MVT::i1   , Promote);
+      setOperationAction(ISD::FP_TO_SINT       , MVT::i8   , Promote);
+      
       setOperationAction(ISD::BRCONDTWOWAY     , MVT::Other, Expand);
       setOperationAction(ISD::MEMMOVE          , MVT::Other, Expand);
       setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i16  , Expand);
@@ -2437,15 +2449,13 @@ unsigned ISel::SelectExpr(SDOperand N) {
     }
     return Result;
   }
-  case ISD::FP_TO_SINT:
-  case ISD::FP_TO_UINT: {
-    // FIXME: Most of this grunt work should be done by legalize!
+  case ISD::FP_TO_SINT: {
     Tmp1 = SelectExpr(N.getOperand(0));  // Get the operand register
 
     // If the target supports SSE2 and is performing FP operations in SSE regs
     // instead of the FP stack, then we can use the efficient CVTSS2SI and
     // CVTSD2SI instructions.
-    if (ISD::FP_TO_SINT == N.getOpcode() && X86ScalarSSE) {
+    if (X86ScalarSSE) {
       if (MVT::f32 == N.getOperand(0).getValueType()) {
         BuildMI(BB, X86::CVTTSS2SIrr, 1, Result).addReg(Tmp1);
       } else if (MVT::f64 == N.getOperand(0).getValueType()) {
@@ -2480,33 +2490,17 @@ unsigned ISel::SelectExpr(SDOperand N) {
     addFrameReference(BuildMI(BB, X86::MOV8mr, 5),
                       CWFrameIdx, 1).addReg(HighPartOfCW);
 
-    // We don't have the facilities for directly storing byte sized data to
-    // memory.  Promote it to 16 bits.  We also must promote unsigned values to
-    // larger classes because we only have signed FP stores.
-    MVT::ValueType StoreClass = Node->getValueType(0);
-    if (StoreClass == MVT::i8 || Node->getOpcode() == ISD::FP_TO_UINT)
-      switch (StoreClass) {
-      case MVT::i1:
-      case MVT::i8:  StoreClass = MVT::i16; break;
-      case MVT::i16: StoreClass = MVT::i32; break;
-      case MVT::i32: StoreClass = MVT::i64; break;
-      default: assert(0 && "Unknown store class!");
-      }
-
     // Spill the integer to memory and reload it from there.
-    unsigned Size = MVT::getSizeInBits(StoreClass)/8;
+    unsigned Size = MVT::getSizeInBits(Node->getValueType(0))/8;
     int FrameIdx = F->getFrameInfo()->CreateStackObject(Size, Size);
 
-    switch (StoreClass) {
-    default: assert(0 && "Unknown store class!");
+    switch (Node->getValueType(0)) {
+    default: assert(0 && "Unsupported store class!");
     case MVT::i16:
       addFrameReference(BuildMI(BB, X86::FIST16m, 5), FrameIdx).addReg(Tmp1);
       break;
     case MVT::i32:
       addFrameReference(BuildMI(BB, X86::FIST32m, 5), FrameIdx).addReg(Tmp1);
-      break;
-    case MVT::i64:
-      addFrameReference(BuildMI(BB, X86::FISTP64m, 5), FrameIdx).addReg(Tmp1);
       break;
     }
 
@@ -2518,10 +2512,6 @@ unsigned ISel::SelectExpr(SDOperand N) {
       break;
     case MVT::i16:
       addFrameReference(BuildMI(BB, X86::MOV16rm, 4, Result), FrameIdx);
-      break;
-    case MVT::i8:
-    case MVT::i1:
-      addFrameReference(BuildMI(BB, X86::MOV8rm, 4, Result), FrameIdx);
       break;
     }
 
