@@ -128,6 +128,8 @@ private:
   SDOperand ExpandLegalUINT_TO_FP(SDOperand LegalOp, MVT::ValueType DestVT);
   SDOperand PromoteLegalINT_TO_FP(SDOperand LegalOp, MVT::ValueType DestVT,
                                   bool isSigned);
+  SDOperand PromoteLegalFP_TO_INT(SDOperand LegalOp, MVT::ValueType DestVT,
+                                  bool isSigned);
 
   bool ExpandShift(unsigned Opc, SDOperand Op, SDOperand Amt,
                    SDOperand &Lo, SDOperand &Hi);
@@ -202,7 +204,7 @@ SDOperand SelectionDAGLegalize::ExpandLegalUINT_TO_FP(SDOperand Op0,
 }
 
 /// PromoteLegalUINT_TO_FP - This function is responsible for legalizing a
-/// UINT_TO_FP operation of the specified operand when the target requests that
+/// *INT_TO_FP operation of the specified operand when the target requests that
 /// we promote it.  At this point, we know that the result and operand types are
 /// legal for the target, and that there is a legal UINT_TO_FP or SINT_TO_FP
 /// operation that takes a larger input.
@@ -258,6 +260,63 @@ SDOperand SelectionDAGLegalize::PromoteLegalINT_TO_FP(SDOperand LegalOp,
                      DAG.getNode(isSigned ? ISD::SIGN_EXTEND : ISD::ZERO_EXTEND,
                                  NewInTy, LegalOp));
 }
+
+/// PromoteLegalFP_TO_INT - This function is responsible for legalizing a
+/// FP_TO_*INT operation of the specified operand when the target requests that
+/// we promote it.  At this point, we know that the result and operand types are
+/// legal for the target, and that there is a legal FP_TO_UINT or FP_TO_SINT
+/// operation that returns a larger result.
+SDOperand SelectionDAGLegalize::PromoteLegalFP_TO_INT(SDOperand LegalOp,
+                                                      MVT::ValueType DestVT,
+                                                      bool isSigned) {
+  // First step, figure out the appropriate FP_TO*INT operation to use.
+  MVT::ValueType NewOutTy = DestVT;
+  
+  unsigned OpToUse = 0;
+  
+  // Scan for the appropriate larger type to use.
+  while (1) {
+    NewOutTy = (MVT::ValueType)(NewOutTy+1);
+    assert(MVT::isInteger(NewOutTy) && "Ran out of possibilities!");
+    
+    // If the target supports FP_TO_SINT returning this type, use it.
+    switch (TLI.getOperationAction(ISD::FP_TO_SINT, NewOutTy)) {
+    default: break;
+    case TargetLowering::Legal:
+      if (!TLI.hasNativeSupportFor(NewOutTy))
+        break;  // Can't use this datatype.
+      // FALL THROUGH.
+    case TargetLowering::Custom:
+      OpToUse = ISD::FP_TO_SINT;
+      break;
+    }
+    if (OpToUse) break;
+    
+    // If the target supports FP_TO_UINT of this type, use it.
+    switch (TLI.getOperationAction(ISD::FP_TO_UINT, NewOutTy)) {
+    default: break;
+    case TargetLowering::Legal:
+      if (!TLI.hasNativeSupportFor(NewOutTy))
+        break;  // Can't use this datatype.
+      // FALL THROUGH.
+    case TargetLowering::Custom:
+      OpToUse = ISD::FP_TO_UINT;
+      break;
+    }
+    if (OpToUse) break;
+    
+    // Otherwise, try a larger type.
+  }
+  
+  // Make sure to legalize any nodes we create here in the next pass.
+  NeedsAnotherIteration = true;
+  
+  // Okay, we found the operation and type to use.  Truncate the result of the
+  // extended FP_TO_*INT operation to the desired size.
+  return DAG.getNode(ISD::TRUNCATE, DestVT,
+                     DAG.getNode(OpToUse, NewOutTy, LegalOp));
+}
+
 
 void SelectionDAGLegalize::LegalizeDAG() {
   SDOperand OldRoot = DAG.getRoot();
@@ -1511,6 +1570,20 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
   case ISD::FP_TO_UINT:
     switch (getTypeAction(Node->getOperand(0).getValueType())) {
     case Legal:
+      switch (TLI.getOperationAction(Node->getOpcode(), Node->getValueType(0))){
+      default: assert(0 && "Unknown operation action!");
+      case TargetLowering::Expand:
+        assert(0 && "Cannot expand FP_TO*INT yet");
+      case TargetLowering::Promote:
+        Result = PromoteLegalFP_TO_INT(LegalizeOp(Node->getOperand(0)),
+                                       Node->getValueType(0),
+                                       Node->getOpcode() == ISD::FP_TO_SINT);
+        AddLegalizedOperand(Op, Result);
+        return Result;
+      case TargetLowering::Legal:
+        break;
+      }
+     
       Tmp1 = LegalizeOp(Node->getOperand(0));
       if (Tmp1 != Node->getOperand(0))
         Result = DAG.getNode(Node->getOpcode(), Node->getValueType(0), Tmp1);
