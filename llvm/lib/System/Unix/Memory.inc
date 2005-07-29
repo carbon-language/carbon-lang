@@ -25,7 +25,7 @@ namespace llvm {
 /// to emit code to the memory then jump to it.  Getting this type of memory
 /// is very OS specific.
 ///
-MemoryBlock Memory::AllocateRWX(unsigned NumBytes) {
+MemoryBlock Memory::AllocateRWX(unsigned NumBytes, const MemoryBlock* NearBlock) {
   if (NumBytes == 0) return MemoryBlock();
 
   long pageSize = Process::GetPageSize();
@@ -47,10 +47,16 @@ MemoryBlock Memory::AllocateRWX(unsigned NumBytes) {
   MAP_ANON
 #endif
   ;
-  void *pa = ::mmap(0, pageSize*NumPages, PROT_READ|PROT_WRITE|PROT_EXEC,
+
+  void* start = NearBlock ? (unsigned char*) NearBlock->base() + NearBlock->size() : 0;
+
+  void *pa = ::mmap(start, pageSize*NumPages, PROT_READ|PROT_WRITE|PROT_EXEC,
                     flags, fd, 0);
   if (pa == MAP_FAILED) {
-    ThrowErrno("Can't allocate RWX Memory");
+    if (NearBlock) //Try again without a near hint
+      return AllocateRWX(NumBytes, 0);
+    else
+      ThrowErrno("Can't allocate RWX Memory");
   }
   MemoryBlock result;
   result.Address = pa;

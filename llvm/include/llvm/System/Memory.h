@@ -43,9 +43,11 @@ namespace sys {
       /// This method allocates a block of Read/Write/Execute memory that is
       /// suitable for executing dynamically generated code (e.g. JIT). An
       /// attempt to allocate \p NumBytes bytes of virtual memory is made.
+      /// \p NearBlock may point to an existing allocation in which case
+      /// an attempt is made to allocate more memory near the existing block.
       /// @throws std::string if an error occurred.
       /// @brief Allocate Read/Write/Execute memory.
-      static MemoryBlock AllocateRWX(unsigned NumBytes);
+      static MemoryBlock AllocateRWX(unsigned NumBytes, const MemoryBlock* NearBlock);
 
       /// This method releases a block of Read/Write/Execute memory that was
       /// allocated with the AllocateRWX method. It should not be used to

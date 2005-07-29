@@ -23,11 +23,13 @@ using namespace sys;
 //===          and must not be UNIX code
 //===----------------------------------------------------------------------===//
 
-MemoryBlock Memory::AllocateRWX(unsigned NumBytes) {
+MemoryBlock Memory::AllocateRWX(unsigned NumBytes, const MemoryBlock* NearBlock) {
   if (NumBytes == 0) return MemoryBlock();
 
   static const long pageSize = Process::GetPageSize();
   unsigned NumPages = (NumBytes+pageSize-1)/pageSize;
+
+  //FIXME: support NearBlock if ever needed on Win64.
 
   void *pa = VirtualAlloc(NULL, NumPages*pageSize, MEM_COMMIT,
                   PAGE_EXECUTE_READWRITE);

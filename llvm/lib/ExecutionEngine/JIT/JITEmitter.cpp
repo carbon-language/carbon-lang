@@ -26,6 +26,8 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/System/Memory.h"
+#include <list>
+#include <algorithm>
 using namespace llvm;
 
 namespace {
@@ -47,12 +49,15 @@ namespace {
   /// are emitting is.  This never bothers to release the memory, because when
   /// we are ready to destroy the JIT, the program exits.
   class JITMemoryManager {
-    sys::MemoryBlock  MemBlock;  // Virtual memory block allocated RWX
-    unsigned char *MemBase;      // Base of block of memory, start of stub mem
+    std::list<sys::MemoryBlock> Blocks; // List of blocks allocated by the JIT
     unsigned char *FunctionBase; // Start of the function body area
-    unsigned char *ConstantPool; // Memory allocated for constant pools
-    unsigned char *CurStubPtr, *CurFunctionPtr, *CurConstantPtr;
+    unsigned char *GlobalBase; // Start of the Global area
+    unsigned char *ConstantBase; // Memory allocated for constant pools
+    unsigned char *CurStubPtr, *CurFunctionPtr, *CurConstantPtr, *CurGlobalPtr;
     unsigned char *GOTBase; //Target Specific reserved memory
+
+    // centralize memory block allocation
+    sys::MemoryBlock getNewMemoryBlock(unsigned size);
   public:
     JITMemoryManager(bool useGOT);
     ~JITMemoryManager();
@@ -71,32 +76,45 @@ namespace {
 }
 
 JITMemoryManager::JITMemoryManager(bool useGOT) {
-  // Allocate a 16M block of memory...
-  MemBlock = sys::Memory::AllocateRWX((16 << 20));
-  MemBase = reinterpret_cast<unsigned char*>(MemBlock.base());
-  ConstantPool = MemBase;
-  GOTBase = ConstantPool + 512*1024; //512 for constants
-  //8k number of entries in the GOT
-  FunctionBase = GOTBase + 8192 * sizeof(void*) + 512*1024; // Use 512k for stubs
+  // Allocate a 16M block of memory for functions
+  sys::MemoryBlock FunBlock = getNewMemoryBlock(16 << 20);
+  // Allocate a 1M block of memory for Constants
+  sys::MemoryBlock ConstBlock = getNewMemoryBlock(1 << 20);
+  // Allocate a 1M Block of memory for Globals
+  sys::MemoryBlock GVBlock = getNewMemoryBlock(1 << 20);
 
-  //make it easier to tell if we are managing the GOT
-  if (!useGOT)
-    GOTBase = NULL;
+  Blocks.push_front(FunBlock);
+  Blocks.push_front(ConstBlock);
+  Blocks.push_front(GVBlock);
 
-  // Allocate stubs backwards from the function base, allocate functions forward
-  // from the function base.
-  CurStubPtr = CurFunctionPtr = FunctionBase;
+  FunctionBase = reinterpret_cast<unsigned char*>(FunBlock.base());
+  ConstantBase = reinterpret_cast<unsigned char*>(ConstBlock.base());
+  GlobalBase = reinterpret_cast<unsigned char*>(GVBlock.base());
 
-  CurConstantPtr = ConstantPool + 512*1024;
+  //Allocate the GOT just like a global array
+  GOTBase = NULL;
+  if (useGOT)
+    GOTBase = allocateGlobal(sizeof(void*) * 8192, 8);
+
+  // Allocate stubs backwards from the base, allocate functions forward
+  // from the base.
+  CurStubPtr = CurFunctionPtr = FunctionBase + 512*1024;// Use 512k for stubs
+
+  CurConstantPtr = ConstantBase + ConstBlock.size();
+  CurGlobalPtr = GlobalBase + GVBlock.size();
 }
 
 JITMemoryManager::~JITMemoryManager() {
-  sys::Memory::ReleaseRWX(MemBlock);
+  for (std::list<sys::MemoryBlock>::iterator ib = Blocks.begin(), ie = Blocks.end();
+       ib != ie; ++ib)
+    sys::Memory::ReleaseRWX(*ib);
+  Blocks.clear();
 }
 
 unsigned char *JITMemoryManager::allocateStub(unsigned StubSize) {
   CurStubPtr -= StubSize;
-  if (CurStubPtr < MemBase) {
+  if (CurStubPtr < FunctionBase) {
+    //FIXME: allocate a new block
     std::cerr << "JIT ran out of memory for function stubs!\n";
     abort();
   }
@@ -110,26 +128,31 @@ unsigned char *JITMemoryManager::allocateConstant(unsigned ConstantSize,
   CurConstantPtr =
     (unsigned char *)((intptr_t)CurConstantPtr & ~((intptr_t)Alignment - 1));
 
-  if (CurConstantPtr < ConstantPool) {
-    std::cerr << "JIT ran out of memory for constant pools!\n";
-    abort();
+  if (CurConstantPtr < ConstantBase) {
+    //Either allocate another MB or 2xConstantSize
+    sys::MemoryBlock ConstBlock = getNewMemoryBlock(2 * ConstantSize);
+    ConstantBase = reinterpret_cast<unsigned char*>(ConstBlock.base());
+    CurConstantPtr = ConstantBase + ConstBlock.size();
+    return allocateConstant(ConstantSize, Alignment);
   }
   return CurConstantPtr;
 }
 
 unsigned char *JITMemoryManager::allocateGlobal(unsigned Size,
                                                 unsigned Alignment) {
-  // For now, intersperse them with Constants
-  // Reserve space and align pointer.
-  CurConstantPtr -= Size;
-  CurConstantPtr =
-    (unsigned char *)((intptr_t)CurConstantPtr & ~((intptr_t)Alignment - 1));
+ // Reserve space and align pointer.
+  CurGlobalPtr -= Size;
+  CurGlobalPtr =
+    (unsigned char *)((intptr_t)CurGlobalPtr & ~((intptr_t)Alignment - 1));
 
-  if (CurConstantPtr < ConstantPool) {
-    std::cerr << "JIT ran out of memory for Globals!\n";
-    abort();
+  if (CurGlobalPtr < GlobalBase) {
+    //Either allocate another MB or 2xSize
+    sys::MemoryBlock GVBlock =  getNewMemoryBlock(2 * Size);
+    GlobalBase = reinterpret_cast<unsigned char*>(GVBlock.base());
+    CurGlobalPtr = GlobalBase + GVBlock.size();
+    return allocateGlobal(Size, Alignment);
   }
-  return CurConstantPtr;
+  return CurGlobalPtr;
 }
 
 unsigned char *JITMemoryManager::startFunctionBody() {
@@ -149,6 +172,23 @@ unsigned char* JITMemoryManager::getGOTBase() const {
 
 bool JITMemoryManager::isManagingGOT() const {
   return GOTBase != NULL;
+}
+
+sys::MemoryBlock JITMemoryManager::getNewMemoryBlock(unsigned size) {
+  const sys::MemoryBlock* BOld = 0;
+  if (Blocks.size())
+    BOld = &Blocks.front();
+  //never allocate less than 1 MB
+  sys::MemoryBlock B;
+  try {
+    B = sys::Memory::AllocateRWX(std::max(((unsigned)1 << 20), size), BOld);
+  } catch (std::string& err) {
+    std::cerr << "Allocation failed when allocating new memory in the JIT\n";
+    std::cerr << err << "\n";
+    abort();
+  }
+  Blocks.push_front(B);
+  return B;
 }
 
 //===----------------------------------------------------------------------===//
