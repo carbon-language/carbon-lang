@@ -54,6 +54,12 @@ namespace {
       /// address) and two outputs (FP value and token chain).
       FILD64m,
 
+      /// FISTP64m - This instruction implements FP_TO_SINT with a
+      /// 64-bit destination in memory and a FP reg source.  This corresponds to
+      /// the X86::FISTP64m instruction.  It has two inputs (token chain and
+      /// address) and two outputs (FP value and token chain).
+      FISTP64m,
+      
       /// CALL/TAILCALL - These operations represent an abstract X86 call
       /// instruction, which includes a bunch of information.  In particular the
       /// operands of these node are:
@@ -118,9 +124,13 @@ namespace {
       setOperationAction(ISD::SINT_TO_FP       , MVT::i1   , Promote);
       setOperationAction(ISD::SINT_TO_FP       , MVT::i8   , Promote);
 
-      // We can handle SINT_TO_FP from i64 even though i64 isn't legal.
-      setOperationAction(ISD::SINT_TO_FP       , MVT::i64  , Custom);
-
+      if (!X86ScalarSSE) {
+        // We can handle SINT_TO_FP and FP_TO_SINT from/TO i64 even though i64
+        // isn't legal.
+        setOperationAction(ISD::SINT_TO_FP       , MVT::i64  , Custom);
+        setOperationAction(ISD::FP_TO_SINT       , MVT::i64  , Custom);
+      }
+      
       setOperationAction(ISD::BRCONDTWOWAY     , MVT::Other, Expand);
       setOperationAction(ISD::MEMMOVE          , MVT::Other, Expand);
       setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i16  , Expand);
@@ -944,7 +954,7 @@ LowerFrameReturnAddress(bool isFrameAddress, SDOperand Chain, unsigned Depth,
 SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   switch (Op.getOpcode()) {
   default: assert(0 && "Should not custom lower this!");
-  case ISD::SINT_TO_FP:
+  case ISD::SINT_TO_FP: {
     assert(Op.getValueType() == MVT::f64 &&
            Op.getOperand(0).getValueType() == MVT::i64 &&
            "Unknown SINT_TO_FP to lower!");
@@ -962,6 +972,27 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     Ops.push_back(Store);
     Ops.push_back(StackSlot);
     return DAG.getNode(X86ISD::FILD64m, RTs, Ops);
+  }
+  case ISD::FP_TO_SINT: {
+    assert(Op.getValueType() == MVT::i64 &&
+           Op.getOperand(0).getValueType() == MVT::f64 &&
+           "Unknown FP_TO_SINT to lower!");
+    // We lower FP->sint64 into FISTP64, followed by a load, all to a temporary
+    // stack slot.
+    MachineFunction &MF = DAG.getMachineFunction();
+    int SSFI = MF.getFrameInfo()->CreateStackObject(8, 8);
+    SDOperand StackSlot = DAG.getFrameIndex(SSFI, getPointerTy());
+
+    // Build the FISTP64
+    std::vector<SDOperand> Ops;
+    Ops.push_back(DAG.getEntryNode());
+    Ops.push_back(Op.getOperand(0));
+    Ops.push_back(StackSlot);
+    SDOperand FISTP = DAG.getNode(X86ISD::FISTP64m, MVT::Other, Ops);
+    
+    // Load the result.
+    return DAG.getLoad(MVT::i64, FISTP, StackSlot, DAG.getSrcValue(NULL));
+  }
   }
 }
 
@@ -2475,7 +2506,8 @@ unsigned ISel::SelectExpr(SDOperand N) {
       break;
     case MVT::i64:
       addFrameReference(BuildMI(BB, X86::FISTP64m, 5), FrameIdx).addReg(Tmp1);
-      break;    }
+      break;
+    }
 
     switch (Node->getValueType(0)) {
     default:
@@ -3320,16 +3352,11 @@ unsigned ISel::SelectExpr(SDOperand N) {
         SelectAddress(Address, AM);
         Select(Chain);
       }
-      if (X86ScalarSSE) {
-        addFullAddress(BuildMI(BB, X86::FILD64m, 4, X86::FP0), AM);
-        addFullAddress(BuildMI(BB, X86::FST64m, 5), AM).addReg(X86::FP0);
-        addFullAddress(BuildMI(BB, X86::MOVSDrm, 4, Result), AM);
-      } else {
-        addFullAddress(BuildMI(BB, X86::FILD64m, 4, Result), AM);
-      }
+
+      addFullAddress(BuildMI(BB, X86::FILD64m, 4, Result), AM);
     }
     return Result;
-
+   
   case ISD::EXTLOAD:          // Arbitrarily codegen extloads as MOVZX*
   case ISD::ZEXTLOAD: {
     // Make sure we generate both values.
@@ -4328,6 +4355,23 @@ void ISel::Select(SDOperand N) {
     ExprMap.erase(N);
     SelectExpr(N.getValue(0));
     return;
+    
+  case X86ISD::FISTP64m: {
+    assert(N.getOperand(1).getValueType() == MVT::f64);
+    X86AddressMode AM;
+    Select(N.getOperand(0));   // Select the token chain
+
+    unsigned ValReg;
+    if (getRegPressure(N.getOperand(1)) > getRegPressure(N.getOperand(2))) {
+      ValReg = SelectExpr(N.getOperand(1));
+      SelectAddress(N.getOperand(2), AM);
+     } else {
+       SelectAddress(N.getOperand(2), AM);
+       ValReg = SelectExpr(N.getOperand(1));
+     }
+    addFullAddress(BuildMI(BB, X86::FISTP64m, 5), AM).addReg(ValReg);
+    return;
+  }
 
   case ISD::TRUNCSTORE: {  // truncstore chain, val, ptr, SRCVALUE, storety
     X86AddressMode AM;
