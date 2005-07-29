@@ -54,11 +54,12 @@ namespace {
       /// address) and two outputs (FP value and token chain).
       FILD64m,
 
-      /// FISTP64m - This instruction implements FP_TO_SINT with a
-      /// 64-bit destination in memory and a FP reg source.  This corresponds to
-      /// the X86::FISTP64m instruction.  It has two inputs (token chain and
-      /// address) and two outputs (FP value and token chain).
-      FISTP64m,
+      /// FP_TO_INT*_IN_MEM - This instruction implements FP_TO_SINT with the
+      /// integer destination in memory and a FP reg source.  This corresponds
+      /// to the X86::FIST*m instructions and the rounding mode change stuff. It
+      /// has two inputs (token chain and address) and two outputs (FP value and
+      /// token chain).
+      FP_TO_INT64_IN_MEM,
       
       /// CALL/TAILCALL - These operations represent an abstract X86 call
       /// instruction, which includes a bunch of information.  In particular the
@@ -988,10 +989,10 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     Ops.push_back(DAG.getEntryNode());
     Ops.push_back(Op.getOperand(0));
     Ops.push_back(StackSlot);
-    SDOperand FISTP = DAG.getNode(X86ISD::FISTP64m, MVT::Other, Ops);
+    SDOperand FIST = DAG.getNode(X86ISD::FP_TO_INT64_IN_MEM, MVT::Other, Ops);
     
     // Load the result.
-    return DAG.getLoad(MVT::i64, FISTP, StackSlot, DAG.getSrcValue(NULL));
+    return DAG.getLoad(MVT::i64, FIST, StackSlot, DAG.getSrcValue(NULL));
   }
   }
 }
@@ -4356,7 +4357,7 @@ void ISel::Select(SDOperand N) {
     SelectExpr(N.getValue(0));
     return;
     
-  case X86ISD::FISTP64m: {
+  case X86ISD::FP_TO_INT64_IN_MEM: {
     assert(N.getOperand(1).getValueType() == MVT::f64);
     X86AddressMode AM;
     Select(N.getOperand(0));   // Select the token chain
@@ -4369,7 +4370,34 @@ void ISel::Select(SDOperand N) {
        SelectAddress(N.getOperand(2), AM);
        ValReg = SelectExpr(N.getOperand(1));
      }
+    
+    // Change the floating point control register to use "round towards zero"
+    // mode when truncating to an integer value.
+    //
+    MachineFunction *F = BB->getParent();
+    int CWFrameIdx = F->getFrameInfo()->CreateStackObject(2, 2);
+    addFrameReference(BuildMI(BB, X86::FNSTCW16m, 4), CWFrameIdx);
+    
+    // Load the old value of the high byte of the control word...
+    unsigned HighPartOfCW = MakeReg(MVT::i8);
+    addFrameReference(BuildMI(BB, X86::MOV8rm, 4, HighPartOfCW),
+                      CWFrameIdx, 1);
+    
+    // Set the high part to be round to zero...
+    addFrameReference(BuildMI(BB, X86::MOV8mi, 5),
+                      CWFrameIdx, 1).addImm(12);
+    
+    // Reload the modified control word now...
+    addFrameReference(BuildMI(BB, X86::FLDCW16m, 4), CWFrameIdx);
+    
+    // Restore the memory image of control word to original value
+    addFrameReference(BuildMI(BB, X86::MOV8mr, 5),
+                      CWFrameIdx, 1).addReg(HighPartOfCW);
+    
     addFullAddress(BuildMI(BB, X86::FISTP64m, 5), AM).addReg(ValReg);
+    
+    // Reload the original control word now.
+    addFrameReference(BuildMI(BB, X86::FLDCW16m, 4), CWFrameIdx);
     return;
   }
 
