@@ -4332,20 +4332,17 @@ void ISel::Select(SDOperand N) {
     addFrameReference(BuildMI(BB, X86::FNSTCW16m, 4), CWFrameIdx);
     
     // Load the old value of the high byte of the control word...
-    unsigned HighPartOfCW = MakeReg(MVT::i8);
-    addFrameReference(BuildMI(BB, X86::MOV8rm, 4, HighPartOfCW),
-                      CWFrameIdx, 1);
+    unsigned OldCW = MakeReg(MVT::i16);
+    addFrameReference(BuildMI(BB, X86::MOV16rm, 4, OldCW), CWFrameIdx);
     
     // Set the high part to be round to zero...
-    addFrameReference(BuildMI(BB, X86::MOV8mi, 5),
-                      CWFrameIdx, 1).addImm(12);
+    addFrameReference(BuildMI(BB, X86::MOV16mi, 5), CWFrameIdx).addImm(0xB7F);
     
     // Reload the modified control word now...
     addFrameReference(BuildMI(BB, X86::FLDCW16m, 4), CWFrameIdx);
     
     // Restore the memory image of control word to original value
-    addFrameReference(BuildMI(BB, X86::MOV8mr, 5),
-                      CWFrameIdx, 1).addReg(HighPartOfCW);
+    addFrameReference(BuildMI(BB, X86::MOV16mr, 5), CWFrameIdx).addReg(OldCW);
 
     // Get the X86 opcode to use.
     switch (N.getOpcode()) {
