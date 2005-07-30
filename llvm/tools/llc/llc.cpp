@@ -65,7 +65,7 @@ cl::list<const PassInfo*, bool, FilteredPassNameParser<PassInfo::LLC> >
 LLCPassList(cl::desc("Passes Available"));
 
 cl::opt<bool> NoVerify("disable-verify", cl::Hidden,
-		       cl::desc("Do not verify input module"));
+                       cl::desc("Do not verify input module"));
 
 
 // GetFileNameRoot - Helper function to get the basename of a filename.

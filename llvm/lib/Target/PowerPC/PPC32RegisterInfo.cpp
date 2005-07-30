@@ -245,7 +245,7 @@ void PPC32RegisterInfo::emitPrologue(MachineFunction &MF) const {
     NumBytes += MFI->getMaxCallFrameSize();
   }
 
-  // If we are a leaf function, and use up to 224 bytes of stack space, 
+  // If we are a leaf function, and use up to 224 bytes of stack space,
   // and don't have a frame pointer, then we do not need to adjust the stack
   // pointer (we fit in the Red Zone).
   if ((NumBytes == 0) || (NumBytes <= 224 && !hasFP(MF) && !MFI->hasCalls())) {

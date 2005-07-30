@@ -65,7 +65,7 @@ namespace {
     inline unsigned char *allocateStub(unsigned StubSize);
     inline unsigned char *allocateConstant(unsigned ConstantSize,
                                            unsigned Alignment);
-    inline unsigned char* allocateGlobal(unsigned Size, 
+    inline unsigned char* allocateGlobal(unsigned Size,
                                          unsigned Alignment);
     inline unsigned char *startFunctionBody();
     inline void endFunctionBody(unsigned char *FunctionEnd);
@@ -373,8 +373,8 @@ void *JITResolver::JITCompilerFn(void *Stub) {
 
   // FIXME: We could rewrite all references to this stub if we knew them.
 
-  // What we will do is set the compiled function address to map to the 
-  // same GOT entry as the stub so that later clients may update the GOT 
+  // What we will do is set the compiled function address to map to the
+  // same GOT entry as the stub so that later clients may update the GOT
   // if they see it still using the stub address.
   // Note: this is done so the Resolver doesn't have to manage GOT memory
   // Do this without allocating map space if the target isn't using a GOT
@@ -548,7 +548,7 @@ void JITEmitter::finishFunction(MachineFunction &F) {
   if(MemMgr.isManagingGOT()) {
     unsigned idx = getJITResolver(this).getGOTIndexForAddr((void*)CurBlock);
     if (((void**)MemMgr.getGOTBase())[idx] != (void*)CurBlock) {
-      DEBUG(std::cerr << "GOT was out of date for " << (void*)CurBlock 
+      DEBUG(std::cerr << "GOT was out of date for " << (void*)CurBlock
             << " pointing at " << ((void**)MemMgr.getGOTBase())[idx] << "\n");
       ((void**)MemMgr.getGOTBase())[idx] = (void*)CurBlock;
     }

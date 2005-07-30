@@ -92,7 +92,7 @@ extern "C" {
       EmitBranchToAt(CameFromStub, Target);
     } else {
       DEBUG(std::cerr << "confused, didn't come from stub at " << CameFromStub
-            << " old jump vector " << oldpv 
+            << " old jump vector " << oldpv
             << " new jump vector " << Target << "\n");
     }
 
@@ -291,7 +291,7 @@ void AlphaJITInfo::relocate(void *Function, MachineRelocation *MR,
       }
       break;
     case Alpha::reloc_bsr: {
-      idx = (((unsigned char*)MR->getResultPointer() - 
+      idx = (((unsigned char*)MR->getResultPointer() -
              (unsigned char*)RelocPos) >> 2) + 1; //skip first 2 inst of fun
       *RelocPos |= (idx & ((1 << 21)-1));
       doCommon = false;

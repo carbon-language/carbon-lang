@@ -271,14 +271,14 @@ SDOperand SelectionDAGLegalize::PromoteLegalFP_TO_INT(SDOperand LegalOp,
                                                       bool isSigned) {
   // First step, figure out the appropriate FP_TO*INT operation to use.
   MVT::ValueType NewOutTy = DestVT;
-  
+
   unsigned OpToUse = 0;
-  
+
   // Scan for the appropriate larger type to use.
   while (1) {
     NewOutTy = (MVT::ValueType)(NewOutTy+1);
     assert(MVT::isInteger(NewOutTy) && "Ran out of possibilities!");
-    
+
     // If the target supports FP_TO_SINT returning this type, use it.
     switch (TLI.getOperationAction(ISD::FP_TO_SINT, NewOutTy)) {
     default: break;
@@ -291,7 +291,7 @@ SDOperand SelectionDAGLegalize::PromoteLegalFP_TO_INT(SDOperand LegalOp,
       break;
     }
     if (OpToUse) break;
-    
+
     // If the target supports FP_TO_UINT of this type, use it.
     switch (TLI.getOperationAction(ISD::FP_TO_UINT, NewOutTy)) {
     default: break;
@@ -304,13 +304,13 @@ SDOperand SelectionDAGLegalize::PromoteLegalFP_TO_INT(SDOperand LegalOp,
       break;
     }
     if (OpToUse) break;
-    
+
     // Otherwise, try a larger type.
   }
-  
+
   // Make sure to legalize any nodes we create here in the next pass.
   NeedsAnotherIteration = true;
-  
+
   // Okay, we found the operation and type to use.  Truncate the result of the
   // extended FP_TO_*INT operation to the desired size.
   return DAG.getNode(ISD::TRUNCATE, DestVT,
@@ -1502,7 +1502,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     bool isSigned = Node->getOpcode() == ISD::SINT_TO_FP;
     switch (getTypeAction(Node->getOperand(0).getValueType())) {
     case Legal:
-      switch (TLI.getOperationAction(Node->getOpcode(), 
+      switch (TLI.getOperationAction(Node->getOpcode(),
                                      Node->getOperand(0).getValueType())) {
       default: assert(0 && "Unknown operation action!");
       case TargetLowering::Expand:
@@ -1565,7 +1565,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       break;
     }
     break;
-    
+
   case ISD::FP_TO_SINT:
   case ISD::FP_TO_UINT:
     switch (getTypeAction(Node->getOperand(0).getValueType())) {
@@ -1590,7 +1590,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         NeedsAnotherIteration = true;
         return Result;
       }
-     
+
       if (Tmp1 != Node->getOperand(0))
         Result = DAG.getNode(Node->getOpcode(), Node->getValueType(0), Tmp1);
       break;
@@ -1602,7 +1602,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       break;
     }
     break;
-        
+
   case ISD::ZERO_EXTEND:
   case ISD::SIGN_EXTEND:
   case ISD::FP_EXTEND:
@@ -2785,7 +2785,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
       case Legal: Op = LegalizeOp(Node->getOperand(0)); break;
       case Promote: Op = PromoteOp(Node->getOperand(0)); break;
       }
-      
+
       Op = TLI.LowerOperation(DAG.getNode(ISD::FP_TO_SINT, VT, Op), DAG);
 
       // Now that the custom expander is done, expand the result, which is still
@@ -2793,12 +2793,13 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
       ExpandOp(Op, Lo, Hi);
       break;
     }
-    
+
     if (Node->getOperand(0).getValueType() == MVT::f32)
       Lo = ExpandLibCall("__fixsfdi", Node, Hi);
     else
       Lo = ExpandLibCall("__fixdfdi", Node, Hi);
     break;
+
   case ISD::FP_TO_UINT:
     if (TLI.getOperationAction(ISD::FP_TO_UINT, VT) == TargetLowering::Custom) {
       SDOperand Op = DAG.getNode(ISD::FP_TO_UINT, VT,
@@ -2808,7 +2809,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
       ExpandOp(TLI.LowerOperation(Op, DAG), Lo, Hi);
       break;
     }
-    
+
     if (Node->getOperand(0).getValueType() == MVT::f32)
       Lo = ExpandLibCall("__fixunssfdi", Node, Hi);
     else

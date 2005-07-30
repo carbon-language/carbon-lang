@@ -172,7 +172,7 @@ static bool CanReduceSCEV(const SCEVHandle &SH, Loop *L) {
   if (SCEVUnknown *SU = dyn_cast<SCEVUnknown>(AddRec->getOperand(1)))
     if (SU->getValue()->getType()->isUnsigned())
       return true;
-  
+
   // Otherwise, no, we can't handle it yet.
   return false;
 }
@@ -192,7 +192,7 @@ static SCEVHandle GetAdjustedIndex(const SCEVHandle &Idx, uint64_t TySize,
 
   // This index is scaled by the type size being indexed.
   if (TySize != 1)
-    Result = SCEVMulExpr::get(Result, 
+    Result = SCEVMulExpr::get(Result,
                               SCEVConstant::get(ConstantUInt::get(UIntPtrTy,
                                                                   TySize)));
   return Result;
@@ -216,7 +216,7 @@ void LoopStrengthReduce::AnalyzeGetElementPtrUsers(GetElementPtrInst *GEP,
   Value *BasePtr;
   if (Constant *CB = dyn_cast<Constant>(GEP->getOperand(0)))
     BasePtr = ConstantExpr::getCast(CB, UIntPtrTy);
-  else { 
+  else {
     Value *&BP = CastedBasePointers[GEP->getOperand(0)];
     if (BP == 0) {
       BasicBlock::iterator InsertPt;
@@ -321,7 +321,7 @@ void LoopStrengthReduce::AnalyzeGetElementPtrUsers(GetElementPtrInst *GEP,
     DEBUG(std::cerr << "FOUND USER: " << *User
           << "   OF STRIDE: " << *Step << " BASE = " << *Base << "\n");
 
-    
+
     // Okay, we found a user that we cannot reduce.  Analyze the instruction
     // and decide what to do with it.
     IVUsesByStride[Step].addUser(Base, User, GEP);
@@ -351,7 +351,7 @@ bool LoopStrengthReduce::AddUsersIfInteresting(Instruction *I, Loop *L) {
   assert(Step->getType()->isUnsigned() && "Bad step value!");
 
   std::set<GetElementPtrInst*> AnalyzedGEPs;
-  
+
   for (Value::use_iterator UI = I->use_begin(), E = I->use_end(); UI != E;++UI){
     Instruction *User = cast<Instruction>(*UI);
 
@@ -364,12 +364,12 @@ bool LoopStrengthReduce::AddUsersIfInteresting(Instruction *I, Loop *L) {
     if (LI->getLoopFor(User->getParent()) != L)
       continue;
 
-    // Next, see if this user is analyzable itself!    
+    // Next, see if this user is analyzable itself!
     if (!AddUsersIfInteresting(User, L)) {
       if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(User)) {
         // If this is a getelementptr instruction, figure out what linear
         // expression of induction variable is actually being used.
-        // 
+        //
         if (AnalyzedGEPs.insert(GEP).second)   // Not already analyzed?
           AnalyzeGetElementPtrUsers(GEP, I, L);
       } else {
@@ -426,12 +426,12 @@ void BasedUser::dump() const {
 /// isTargetConstant - Return true if the following can be referenced by the
 /// immediate field of a target instruction.
 static bool isTargetConstant(const SCEVHandle &V) {
-  
+
   // FIXME: Look at the target to decide if &GV is a legal constant immediate.
   if (isa<SCEVConstant>(V)) return true;
-  
+
   return false;     // ENABLE this for x86
-   
+
   if (SCEVUnknown *SU = dyn_cast<SCEVUnknown>(V))
     if (ConstantExpr *CE = dyn_cast<ConstantExpr>(SU->getValue()))
       if (CE->getOpcode() == Instruction::Cast)
@@ -455,7 +455,7 @@ static SCEVHandle GetImmediateValues(SCEVHandle Val, bool isAddress) {
     for (; i != SAE->getNumOperands(); ++i)
       if (isTargetConstant(SAE->getOperand(i))) {
         SCEVHandle ImmVal = SAE->getOperand(i);
-       
+
         // If there are any other immediates that we can handle here, pull them
         // out too.
         for (++i; i != SAE->getNumOperands(); ++i)
@@ -481,8 +481,8 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(Value *Stride,
   // eventually emit the object.
   std::vector<std::pair<SCEVHandle, BasedUser> > UsersToProcess;
   UsersToProcess.reserve(Uses.Users.size());
-  
-  SCEVHandle ZeroBase = SCEVUnknown::getIntegerSCEV(0, 
+
+  SCEVHandle ZeroBase = SCEVUnknown::getIntegerSCEV(0,
                                               Uses.Users[0].first->getType());
 
   for (unsigned i = 0, e = Uses.Users.size(); i != e; ++i)
@@ -497,7 +497,7 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(Value *Stride,
   for (unsigned i = 0, e = UsersToProcess.size(); i != e; ++i) {
     bool isAddress = isa<LoadInst>(UsersToProcess[i].second.Inst) ||
                      isa<StoreInst>(UsersToProcess[i].second.Inst);
-    UsersToProcess[i].second.Imm = GetImmediateValues(UsersToProcess[i].first, 
+    UsersToProcess[i].second.Imm = GetImmediateValues(UsersToProcess[i].first,
                                                       isAddress);
     UsersToProcess[i].first = SCEV::getMinusSCEV(UsersToProcess[i].first,
                                                  UsersToProcess[i].second.Imm);
@@ -511,14 +511,14 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(Value *Stride,
   Instruction *PreInsertPt = Preheader->getTerminator();
   Instruction *PhiInsertBefore = L->getHeader()->begin();
 
-  assert(isa<PHINode>(PhiInsertBefore) && 
+  assert(isa<PHINode>(PhiInsertBefore) &&
          "How could this loop have IV's without any phis?");
   PHINode *SomeLoopPHI = cast<PHINode>(PhiInsertBefore);
   assert(SomeLoopPHI->getNumIncomingValues() == 2 &&
          "This loop isn't canonicalized right");
   BasicBlock *LatchBlock =
    SomeLoopPHI->getIncomingBlock(SomeLoopPHI->getIncomingBlock(0) == Preheader);
-  
+
   // FIXME: This loop needs increasing levels of intelligence.
   // STAGE 0: just emit everything as its own base.  <-- We are here
   // STAGE 1: factor out common vars from bases, and try and push resulting
@@ -534,7 +534,7 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(Value *Stride,
     PHINode *NewPHI = new PHINode(ReplacedTy, Replaced->getName()+".str",
                                   PhiInsertBefore);
 
-    // Emit the initial base value into the loop preheader, and add it to the 
+    // Emit the initial base value into the loop preheader, and add it to the
     // Phi node.
     Value *BaseV = Rewriter.expandCodeFor(UsersToProcess.front().first,
                                           PreInsertPt, ReplacedTy);
@@ -552,7 +552,7 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(Value *Stride,
 
     // Emit the code to add the immediate offset to the Phi value, just before
     // the instruction that we identified as using this stride and base.
-    // First, empty the SCEVExpander's expression map  so that we are guaranteed 
+    // First, empty the SCEVExpander's expression map  so that we are guaranteed
     // to have the code emitted where we expect it.
     Rewriter.clear();
     SCEVHandle NewValSCEV = SCEVAddExpr::get(SCEVUnknown::get(NewPHI),
@@ -560,16 +560,16 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(Value *Stride,
     Value *newVal = Rewriter.expandCodeFor(NewValSCEV,
                                            UsersToProcess.front().second.Inst,
                                            ReplacedTy);
-    
+
     // Replace the use of the operand Value with the new Phi we just created.
-    DEBUG(std::cerr << "REPLACING: " << *Replaced << "IN: " << 
+    DEBUG(std::cerr << "REPLACING: " << *Replaced << "IN: " <<
           *UsersToProcess.front().second.Inst << "WITH: "<< *newVal << '\n');
     UsersToProcess.front().second.Inst->replaceUsesOfWith(Replaced, newVal);
-    
+
     // Mark old value we replaced as possibly dead, so that it is elminated
     // if we just replaced the last use of that value.
     DeadInsts.insert(cast<Instruction>(Replaced));
-    
+
     UsersToProcess.erase(UsersToProcess.begin());
     ++NumReduced;
 
@@ -578,7 +578,7 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(Value *Stride,
 
   // IMPORTANT TODO: Figure out how to partition the IV's with this stride, but
   // different starting values, into different PHIs.
-  
+
   // BEFORE writing this, it's probably useful to handle GEP's.
 
   // NOTE: pull all constants together, for REG+IMM addressing, include &GV in

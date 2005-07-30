@@ -62,7 +62,7 @@ namespace {
       FP_TO_INT16_IN_MEM,
       FP_TO_INT32_IN_MEM,
       FP_TO_INT64_IN_MEM,
-      
+
       /// CALL/TAILCALL - These operations represent an abstract X86 call
       /// instruction, which includes a bunch of information.  In particular the
       /// operands of these node are:
@@ -135,7 +135,7 @@ namespace {
         setOperationAction(ISD::FP_TO_SINT     , MVT::i32  , Custom);
         setOperationAction(ISD::FP_TO_SINT     , MVT::i16  , Custom);
       }
-      
+
       // Handle FP_TO_UINT by promoting the destination to a larger signed
       // conversion.
       setOperationAction(ISD::FP_TO_UINT       , MVT::i1   , Promote);
@@ -147,7 +147,7 @@ namespace {
       // this operation.
       setOperationAction(ISD::FP_TO_SINT       , MVT::i1   , Promote);
       setOperationAction(ISD::FP_TO_SINT       , MVT::i8   , Promote);
-      
+
       setOperationAction(ISD::BRCONDTWOWAY     , MVT::Other, Expand);
       setOperationAction(ISD::MEMMOVE          , MVT::Other, Expand);
       setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i16  , Expand);
@@ -1008,14 +1008,14 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     case MVT::i32: Opc = X86ISD::FP_TO_INT32_IN_MEM; break;
     case MVT::i64: Opc = X86ISD::FP_TO_INT64_IN_MEM; break;
     }
-    
+
     // Build the FP_TO_INT*_IN_MEM
     std::vector<SDOperand> Ops;
     Ops.push_back(DAG.getEntryNode());
     Ops.push_back(Op.getOperand(0));
     Ops.push_back(StackSlot);
     SDOperand FIST = DAG.getNode(Opc, MVT::Other, Ops);
-    
+
     // Load the result.
     return DAG.getLoad(Op.getValueType(), FIST, StackSlot,
                        DAG.getSrcValue(NULL));
@@ -3308,7 +3308,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
       addFullAddress(BuildMI(BB, X86::FILD64m, 4, Result), AM);
     }
     return Result;
-   
+
   case ISD::EXTLOAD:          // Arbitrarily codegen extloads as MOVZX*
   case ISD::ZEXTLOAD: {
     // Make sure we generate both values.
@@ -4307,7 +4307,7 @@ void ISel::Select(SDOperand N) {
     ExprMap.erase(N);
     SelectExpr(N.getValue(0));
     return;
-    
+
   case X86ISD::FP_TO_INT16_IN_MEM:
   case X86ISD::FP_TO_INT32_IN_MEM:
   case X86ISD::FP_TO_INT64_IN_MEM: {
@@ -4323,24 +4323,24 @@ void ISel::Select(SDOperand N) {
        SelectAddress(N.getOperand(2), AM);
        ValReg = SelectExpr(N.getOperand(1));
      }
-    
+
     // Change the floating point control register to use "round towards zero"
     // mode when truncating to an integer value.
     //
     MachineFunction *F = BB->getParent();
     int CWFrameIdx = F->getFrameInfo()->CreateStackObject(2, 2);
     addFrameReference(BuildMI(BB, X86::FNSTCW16m, 4), CWFrameIdx);
-    
+
     // Load the old value of the high byte of the control word...
     unsigned OldCW = MakeReg(MVT::i16);
     addFrameReference(BuildMI(BB, X86::MOV16rm, 4, OldCW), CWFrameIdx);
-    
+
     // Set the high part to be round to zero...
     addFrameReference(BuildMI(BB, X86::MOV16mi, 5), CWFrameIdx).addImm(0xC7F);
-    
+
     // Reload the modified control word now...
     addFrameReference(BuildMI(BB, X86::FLDCW16m, 4), CWFrameIdx);
-    
+
     // Restore the memory image of control word to original value
     addFrameReference(BuildMI(BB, X86::MOV16mr, 5), CWFrameIdx).addReg(OldCW);
 
@@ -4350,9 +4350,9 @@ void ISel::Select(SDOperand N) {
     case X86ISD::FP_TO_INT32_IN_MEM: Tmp1 = X86::FIST32m; break;
     case X86ISD::FP_TO_INT64_IN_MEM: Tmp1 = X86::FISTP64m; break;
     }
-    
+
     addFullAddress(BuildMI(BB, Tmp1, 5), AM).addReg(ValReg);
-    
+
     // Reload the original control word now.
     addFrameReference(BuildMI(BB, X86::FLDCW16m, 4), CWFrameIdx);
     return;
