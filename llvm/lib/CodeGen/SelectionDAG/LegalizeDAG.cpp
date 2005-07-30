@@ -1570,21 +1570,27 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
   case ISD::FP_TO_UINT:
     switch (getTypeAction(Node->getOperand(0).getValueType())) {
     case Legal:
+      Tmp1 = LegalizeOp(Node->getOperand(0));
+
       switch (TLI.getOperationAction(Node->getOpcode(), Node->getValueType(0))){
       default: assert(0 && "Unknown operation action!");
       case TargetLowering::Expand:
         assert(0 && "Cannot expand FP_TO*INT yet");
       case TargetLowering::Promote:
-        Result = PromoteLegalFP_TO_INT(LegalizeOp(Node->getOperand(0)),
-                                       Node->getValueType(0),
+        Result = PromoteLegalFP_TO_INT(Tmp1, Node->getValueType(0),
                                        Node->getOpcode() == ISD::FP_TO_SINT);
         AddLegalizedOperand(Op, Result);
         return Result;
       case TargetLowering::Legal:
         break;
+      case TargetLowering::Custom:
+        Result = DAG.getNode(Node->getOpcode(), Node->getValueType(0), Tmp1);
+        Result = TLI.LowerOperation(Result, DAG);
+        AddLegalizedOperand(Op, Result);
+        NeedsAnotherIteration = true;
+        return Result;
       }
      
-      Tmp1 = LegalizeOp(Node->getOperand(0));
       if (Tmp1 != Node->getOperand(0))
         Result = DAG.getNode(Node->getOpcode(), Node->getValueType(0), Tmp1);
       break;
