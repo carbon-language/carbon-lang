@@ -331,7 +331,7 @@ void LoopStrengthReduce::AnalyzeGetElementPtrUsers(GetElementPtrInst *GEP,
 /// reducible SCEV, recursively add its users to the IVUsesByStride set and
 /// return true.  Otherwise, return false.
 bool LoopStrengthReduce::AddUsersIfInteresting(Instruction *I, Loop *L) {
-  if (I->getType() == Type::VoidTy) return false
+  if (I->getType() == Type::VoidTy) return false;
   SCEVHandle ISE = SE->getSCEV(I);
   if (!CanReduceSCEV(ISE, L)) return false;
 
