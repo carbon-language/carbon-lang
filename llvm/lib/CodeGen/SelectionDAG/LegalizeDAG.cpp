@@ -2779,11 +2779,18 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     // library functions.
   case ISD::FP_TO_SINT:
     if (TLI.getOperationAction(ISD::FP_TO_SINT, VT) == TargetLowering::Custom) {
-      SDOperand Op = DAG.getNode(ISD::FP_TO_SINT, VT,
-                                 LegalizeOp(Node->getOperand(0)));
+      SDOperand Op;
+      switch (getTypeAction(Node->getOperand(0).getValueType())) {
+      case Expand: assert(0 && "cannot expand FP!");
+      case Legal: Op = LegalizeOp(Node->getOperand(0)); break;
+      case Promote: Op = PromoteOp(Node->getOperand(0)); break;
+      }
+      
+      Op = TLI.LowerOperation(DAG.getNode(ISD::FP_TO_SINT, VT, Op), DAG);
+
       // Now that the custom expander is done, expand the result, which is still
       // VT.
-      ExpandOp(TLI.LowerOperation(Op, DAG), Lo, Hi);
+      ExpandOp(Op, Lo, Hi);
       break;
     }
     
