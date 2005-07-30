@@ -158,6 +158,9 @@
 				RelativePath="..\..\lib\Analysis\ScalarEvolution.cpp">
 			</File>
 			<File
+				RelativePath="..\..\lib\Analysis\ScalarEvolutionExpander.cpp">
+			</File>
+			<File
 				RelativePath="..\..\lib\Analysis\Trace.cpp">
 			</File>
 			<File
@@ -295,6 +298,9 @@
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\Analysis\ScalarEvolution.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\Analysis\ScalarEvolutionExpander.h">
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\Analysis\ScalarEvolutionExpressions.h">

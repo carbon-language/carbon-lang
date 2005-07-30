@@ -29,6 +29,7 @@
 #include "llvm/Target/TargetData.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Debug.h"
+#include <algorithm>
 #include <set>
 using namespace llvm;
 
