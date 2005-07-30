@@ -59,6 +59,8 @@ namespace {
       /// to the X86::FIST*m instructions and the rounding mode change stuff. It
       /// has two inputs (token chain and address) and two outputs (FP value and
       /// token chain).
+      FP_TO_INT16_IN_MEM,
+      FP_TO_INT32_IN_MEM,
       FP_TO_INT64_IN_MEM,
       
       /// CALL/TAILCALL - These operations represent an abstract X86 call
@@ -128,8 +130,10 @@ namespace {
       if (!X86ScalarSSE) {
         // We can handle SINT_TO_FP and FP_TO_SINT from/TO i64 even though i64
         // isn't legal.
-        setOperationAction(ISD::SINT_TO_FP       , MVT::i64  , Custom);
-        setOperationAction(ISD::FP_TO_SINT       , MVT::i64  , Custom);
+        setOperationAction(ISD::SINT_TO_FP     , MVT::i64  , Custom);
+        setOperationAction(ISD::FP_TO_SINT     , MVT::i64  , Custom);
+        setOperationAction(ISD::FP_TO_SINT     , MVT::i32  , Custom);
+        setOperationAction(ISD::FP_TO_SINT     , MVT::i16  , Custom);
       }
       
       // Handle FP_TO_UINT by promoting the destination to a larger signed
@@ -987,24 +991,34 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     return DAG.getNode(X86ISD::FILD64m, RTs, Ops);
   }
   case ISD::FP_TO_SINT: {
-    assert(Op.getValueType() == MVT::i64 &&
+    assert(Op.getValueType() <= MVT::i64 && Op.getValueType() >= MVT::i16 &&
            Op.getOperand(0).getValueType() == MVT::f64 &&
            "Unknown FP_TO_SINT to lower!");
     // We lower FP->sint64 into FISTP64, followed by a load, all to a temporary
     // stack slot.
     MachineFunction &MF = DAG.getMachineFunction();
-    int SSFI = MF.getFrameInfo()->CreateStackObject(8, 8);
+    unsigned MemSize = MVT::getSizeInBits(Op.getValueType())/8;
+    int SSFI = MF.getFrameInfo()->CreateStackObject(MemSize, MemSize);
     SDOperand StackSlot = DAG.getFrameIndex(SSFI, getPointerTy());
 
-    // Build the FISTP64
+    unsigned Opc;
+    switch (Op.getValueType()) {
+    default: assert(0 && "Invalid FP_TO_SINT to lower!");
+    case MVT::i16: Opc = X86ISD::FP_TO_INT16_IN_MEM; break;
+    case MVT::i32: Opc = X86ISD::FP_TO_INT32_IN_MEM; break;
+    case MVT::i64: Opc = X86ISD::FP_TO_INT64_IN_MEM; break;
+    }
+    
+    // Build the FP_TO_INT*_IN_MEM
     std::vector<SDOperand> Ops;
     Ops.push_back(DAG.getEntryNode());
     Ops.push_back(Op.getOperand(0));
     Ops.push_back(StackSlot);
-    SDOperand FIST = DAG.getNode(X86ISD::FP_TO_INT64_IN_MEM, MVT::Other, Ops);
+    SDOperand FIST = DAG.getNode(Opc, MVT::Other, Ops);
     
     // Load the result.
-    return DAG.getLoad(MVT::i64, FIST, StackSlot, DAG.getSrcValue(NULL));
+    return DAG.getLoad(Op.getValueType(), FIST, StackSlot,
+                       DAG.getSrcValue(NULL));
   }
   }
 }
@@ -2449,76 +2463,23 @@ unsigned ISel::SelectExpr(SDOperand N) {
     }
     return Result;
   }
-  case ISD::FP_TO_SINT: {
+  case ISD::FP_TO_SINT:
     Tmp1 = SelectExpr(N.getOperand(0));  // Get the operand register
 
     // If the target supports SSE2 and is performing FP operations in SSE regs
     // instead of the FP stack, then we can use the efficient CVTSS2SI and
     // CVTSD2SI instructions.
-    if (X86ScalarSSE) {
-      if (MVT::f32 == N.getOperand(0).getValueType()) {
-        BuildMI(BB, X86::CVTTSS2SIrr, 1, Result).addReg(Tmp1);
-      } else if (MVT::f64 == N.getOperand(0).getValueType()) {
-        BuildMI(BB, X86::CVTTSD2SIrr, 1, Result).addReg(Tmp1);
-      } else {
-        assert(0 && "Not an f32 or f64?");
-        abort();
-      }
-      return Result;
+    assert(X86ScalarSSE);
+    if (MVT::f32 == N.getOperand(0).getValueType()) {
+      BuildMI(BB, X86::CVTTSS2SIrr, 1, Result).addReg(Tmp1);
+    } else if (MVT::f64 == N.getOperand(0).getValueType()) {
+      BuildMI(BB, X86::CVTTSD2SIrr, 1, Result).addReg(Tmp1);
+    } else {
+      assert(0 && "Not an f32 or f64?");
+      abort();
     }
-
-    // Change the floating point control register to use "round towards zero"
-    // mode when truncating to an integer value.
-    //
-    MachineFunction *F = BB->getParent();
-    int CWFrameIdx = F->getFrameInfo()->CreateStackObject(2, 2);
-    addFrameReference(BuildMI(BB, X86::FNSTCW16m, 4), CWFrameIdx);
-
-    // Load the old value of the high byte of the control word...
-    unsigned HighPartOfCW = MakeReg(MVT::i8);
-    addFrameReference(BuildMI(BB, X86::MOV8rm, 4, HighPartOfCW),
-                      CWFrameIdx, 1);
-
-    // Set the high part to be round to zero...
-    addFrameReference(BuildMI(BB, X86::MOV8mi, 5),
-                      CWFrameIdx, 1).addImm(12);
-
-    // Reload the modified control word now...
-    addFrameReference(BuildMI(BB, X86::FLDCW16m, 4), CWFrameIdx);
-
-    // Restore the memory image of control word to original value
-    addFrameReference(BuildMI(BB, X86::MOV8mr, 5),
-                      CWFrameIdx, 1).addReg(HighPartOfCW);
-
-    // Spill the integer to memory and reload it from there.
-    unsigned Size = MVT::getSizeInBits(Node->getValueType(0))/8;
-    int FrameIdx = F->getFrameInfo()->CreateStackObject(Size, Size);
-
-    switch (Node->getValueType(0)) {
-    default: assert(0 && "Unsupported store class!");
-    case MVT::i16:
-      addFrameReference(BuildMI(BB, X86::FIST16m, 5), FrameIdx).addReg(Tmp1);
-      break;
-    case MVT::i32:
-      addFrameReference(BuildMI(BB, X86::FIST32m, 5), FrameIdx).addReg(Tmp1);
-      break;
-    }
-
-    switch (Node->getValueType(0)) {
-    default:
-      assert(0 && "Unknown integer type!");
-    case MVT::i32:
-      addFrameReference(BuildMI(BB, X86::MOV32rm, 4, Result), FrameIdx);
-      break;
-    case MVT::i16:
-      addFrameReference(BuildMI(BB, X86::MOV16rm, 4, Result), FrameIdx);
-      break;
-    }
-
-    // Reload the original control word now.
-    addFrameReference(BuildMI(BB, X86::FLDCW16m, 4), CWFrameIdx);
     return Result;
-  }
+
   case ISD::ADD:
     Op0 = N.getOperand(0);
     Op1 = N.getOperand(1);
@@ -4347,6 +4308,8 @@ void ISel::Select(SDOperand N) {
     SelectExpr(N.getValue(0));
     return;
     
+  case X86ISD::FP_TO_INT16_IN_MEM:
+  case X86ISD::FP_TO_INT32_IN_MEM:
   case X86ISD::FP_TO_INT64_IN_MEM: {
     assert(N.getOperand(1).getValueType() == MVT::f64);
     X86AddressMode AM;
@@ -4383,8 +4346,15 @@ void ISel::Select(SDOperand N) {
     // Restore the memory image of control word to original value
     addFrameReference(BuildMI(BB, X86::MOV8mr, 5),
                       CWFrameIdx, 1).addReg(HighPartOfCW);
+
+    // Get the X86 opcode to use.
+    switch (N.getOpcode()) {
+    case X86ISD::FP_TO_INT16_IN_MEM: Tmp1 = X86::FIST16m; break;
+    case X86ISD::FP_TO_INT32_IN_MEM: Tmp1 = X86::FIST32m; break;
+    case X86ISD::FP_TO_INT64_IN_MEM: Tmp1 = X86::FISTP64m; break;
+    }
     
-    addFullAddress(BuildMI(BB, X86::FISTP64m, 5), AM).addReg(ValReg);
+    addFullAddress(BuildMI(BB, Tmp1, 5), AM).addReg(ValReg);
     
     // Reload the original control word now.
     addFrameReference(BuildMI(BB, X86::FLDCW16m, 4), CWFrameIdx);
