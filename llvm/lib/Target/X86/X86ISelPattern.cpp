@@ -4336,7 +4336,7 @@ void ISel::Select(SDOperand N) {
     addFrameReference(BuildMI(BB, X86::MOV16rm, 4, OldCW), CWFrameIdx);
     
     // Set the high part to be round to zero...
-    addFrameReference(BuildMI(BB, X86::MOV16mi, 5), CWFrameIdx).addImm(0xB7F);
+    addFrameReference(BuildMI(BB, X86::MOV16mi, 5), CWFrameIdx).addImm(0xC7F);
     
     // Reload the modified control word now...
     addFrameReference(BuildMI(BB, X86::FLDCW16m, 4), CWFrameIdx);
