@@ -355,16 +355,16 @@ def CPYSE : FPForm<0x17, 0x022, "cpyse $RA,$RB,$RC">; //Copy sign and exponent
 def CPYSN : FPForm<0x17, 0x021, "cpysn $RA,$RB,$RC">; //Copy sign negate
 
 //Basic Floating point ops
-def ADDS  : FPForm<0x16, 0x080, "adds/su $RA,$RB,$RC">;  //Add S_floating
-def ADDT  : FPForm<0x16, 0x0A0, "addt/su $RA,$RB,$RC">;  //Add T_floating
-def SUBS  : FPForm<0x16, 0x081, "subs/su $RA,$RB,$RC">;  //Subtract S_floating
-def SUBT  : FPForm<0x16, 0x0A1, "subt/su $RA,$RB,$RC">;  //Subtract T_floating
-def DIVS  : FPForm<0x16, 0x083, "divs/su $RA,$RB,$RC">;  //Divide S_floating
-def DIVT  : FPForm<0x16, 0x0A3, "divt/su $RA,$RB,$RC">;  //Divide T_floating
-def MULS  : FPForm<0x16, 0x082, "muls/su $RA,$RB,$RC">;  //Multiply S_floating
-def MULT  : FPForm<0x16, 0x0A2, "mult/su $RA,$RB,$RC">;  //Multiply T_floating
-def SQRTS : FPForm<0x14, 0x08B, "sqrts $RA,$RB,$RC">;  //Square root S_floating
-def SQRTT : FPForm<0x14, 0x0AB, "sqrtt $RA,$RB,$RC">;  //Square root T_floating
+def ADDS  : FPForm<0x16, 0x580, "adds/su $RA,$RB,$RC">;  //Add S_floating
+def ADDT  : FPForm<0x16, 0x5A0, "addt/su $RA,$RB,$RC">;  //Add T_floating
+def SUBS  : FPForm<0x16, 0x581, "subs/su $RA,$RB,$RC">;  //Subtract S_floating
+def SUBT  : FPForm<0x16, 0x5A1, "subt/su $RA,$RB,$RC">;  //Subtract T_floating
+def DIVS  : FPForm<0x16, 0x583, "divs/su $RA,$RB,$RC">;  //Divide S_floating
+def DIVT  : FPForm<0x16, 0x5A3, "divt/su $RA,$RB,$RC">;  //Divide T_floating
+def MULS  : FPForm<0x16, 0x582, "muls/su $RA,$RB,$RC">;  //Multiply S_floating
+def MULT  : FPForm<0x16, 0x5A2, "mult/su $RA,$RB,$RC">;  //Multiply T_floating
+def SQRTS : FPForm<0x14, 0x58B, "sqrts/su $RA,$RB,$RC">;  //Square root S_floating
+def SQRTT : FPForm<0x14, 0x5AB, "sqrtt/su $RA,$RB,$RC">;  //Square root T_floating
 
 //INT reg to FP reg and back again
 //not supported on 21164
@@ -379,8 +379,8 @@ def ITOFT : FPForm<0x14, 0x024, "itoft $RA,$RC">; //Integer to floating move, T_
 def CVTQS : FPForm<0x16, 0x0BC, "cvtqs $RB,$RC">; //Convert quadword to S_floating
 def CVTQT : FPForm<0x16, 0x0BE, "cvtqt $RB,$RC">; //Convert quadword to T_floating
 def CVTST : FPForm<0x16, 0x2AC, "cvtsts $RB,$RC">; //Convert S_floating to T_floating
-def CVTTQ : FPForm<0x16, 0x0AF, "cvttq/svc $RB,$RC">; //Convert T_floating to quadword
-def CVTTS : FPForm<0x16, 0x2AC, "cvtts/su $RB,$RC">; //Convert T_floating to S_floating
+def CVTTQ : FPForm<0x16, 0x52F, "cvttq/svc $RB,$RC">; //Convert T_floating to quadword
+def CVTTS : FPForm<0x16, 0x5AC, "cvtts/su $RB,$RC">; //Convert T_floating to S_floating
 
 //S_floating : IEEE Single
 //T_floating : IEEE Double
