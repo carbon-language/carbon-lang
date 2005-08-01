@@ -678,7 +678,7 @@ static struct ms magic(int64_t d) {
   const uint64_t two63 = 9223372036854775808ULL; // 2^63
   struct ms mag;
 
-  ad = abs(d);
+  ad = llabs(d);
   t = two63 + ((uint64_t)d >> 63);
   anc = t - 1 - t%ad;   // absolute value of nc
   p = 63;               // initialize p
@@ -1847,9 +1847,9 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
       //check if we can convert into a shift!
       if ((CSD = dyn_cast<ConstantSDNode>(N.getOperand(1).Val)) &&
           (int64_t)CSD->getSignExtended() != 0 &&
-          ExactLog2(abs((int64_t)CSD->getSignExtended())) != 0)
+          ExactLog2(llabs(CSD->getSignExtended())) != 0)
       {
-        unsigned k = ExactLog2(abs(CSD->getSignExtended()));
+        unsigned k = ExactLog2(llabs(CSD->getSignExtended()));
         Tmp1 = SelectExpr(N.getOperand(0));
         if (k == 1)
           Tmp2 = Tmp1;
