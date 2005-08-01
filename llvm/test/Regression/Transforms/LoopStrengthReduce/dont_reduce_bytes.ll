@@ -3,6 +3,8 @@
 
 ; RUN: llvm-as < %s | opt -loop-reduce | llvm-dis | grep 'getelementptr.*PTR.*INDVAR'
 
+; XFAIL: *
+
 declare bool %pred(int)
 
 void %test(sbyte* %PTR) {
