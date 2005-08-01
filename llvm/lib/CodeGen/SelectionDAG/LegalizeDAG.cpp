@@ -1786,7 +1786,7 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
     case Expand:
       ExpandOp(Node->getOperand(0), Tmp1, Tmp2);
       // Truncate the low part of the expanded value to the result type
-      Result = DAG.getNode(ISD::TRUNCATE, VT, Tmp1);
+      Result = DAG.getNode(ISD::TRUNCATE, NVT, Tmp1);
     }
     break;
   case ISD::SIGN_EXTEND:
