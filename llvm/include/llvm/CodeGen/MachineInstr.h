@@ -503,10 +503,10 @@ public:
   void dump() const;
   friend std::ostream& operator<<(std::ostream& os, const MachineInstr& minstr);
 
-  //
   // Define iterators to access the Value operands of the Machine Instruction.
   // Note that these iterators only enumerate the explicit operands.
-  // begin() and end() are defined to produce these iterators...
+  // begin() and end() are defined to produce these iterators.  NOTE, these are
+  // SparcV9 specific!
   //
   template<class _MI, class _V> class ValOpIterator;
   typedef ValOpIterator<const MachineInstr*,const Value*> const_val_op_iterator;
@@ -711,7 +711,7 @@ public:
   void SetRegForImplicitRef(unsigned i, int regNum);
 
   //
-  // Iterator to enumerate machine operands.
+  // Iterator to enumerate machine operands.  NOTE, this is SPARCV9 specific!
   //
   template<class MITy, class VTy>
   class ValOpIterator : public forward_iterator<VTy, ptrdiff_t> {
@@ -763,10 +763,9 @@ public:
     }
   };
 
-  // define begin() and end()
+  // Note: These are Sparc-V9 specific!
   val_op_iterator begin() { return val_op_iterator::begin(this); }
   val_op_iterator end()   { return val_op_iterator::end(this); }
-
   const_val_op_iterator begin() const {
     return const_val_op_iterator::begin(this);
   }
