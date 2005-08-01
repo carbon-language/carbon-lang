@@ -91,17 +91,17 @@ JITMemoryManager::JITMemoryManager(bool useGOT) {
   ConstantBase = reinterpret_cast<unsigned char*>(ConstBlock.base());
   GlobalBase = reinterpret_cast<unsigned char*>(GVBlock.base());
 
-  //Allocate the GOT just like a global array
-  GOTBase = NULL;
-  if (useGOT)
-    GOTBase = allocateGlobal(sizeof(void*) * 8192, 8);
-
   // Allocate stubs backwards from the base, allocate functions forward
   // from the base.
   CurStubPtr = CurFunctionPtr = FunctionBase + 512*1024;// Use 512k for stubs
 
   CurConstantPtr = ConstantBase + ConstBlock.size();
   CurGlobalPtr = GlobalBase + GVBlock.size();
+
+  //Allocate the GOT just like a global array
+  GOTBase = NULL;
+  if (useGOT)
+    GOTBase = allocateGlobal(sizeof(void*) * 8192, 8);
 }
 
 JITMemoryManager::~JITMemoryManager() {
