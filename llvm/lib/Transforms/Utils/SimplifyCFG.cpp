@@ -849,13 +849,13 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
     while (!BB->empty()) {
       Instruction &I = BB->back();
       // If this instruction is used, replace uses with an arbitrary
-      // constant value.  Because control flow can't get here, we don't care
+      // value.  Because control flow can't get here, we don't care
       // what we replace the value with.  Note that since this block is
       // unreachable, and all values contained within it must dominate their
       // uses, that all uses will eventually be removed.
       if (!I.use_empty())
-        // Make all users of this instruction reference the constant instead
-        I.replaceAllUsesWith(Constant::getNullValue(I.getType()));
+        // Make all users of this instruction use undef instead
+        I.replaceAllUsesWith(UndefValue::get(I.getType()));
 
       // Remove the instruction from the basic block
       BB->getInstList().pop_back();
