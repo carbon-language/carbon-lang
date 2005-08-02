@@ -247,6 +247,8 @@ static bool ExtractLoops(BugDriver &BD,
                          std::vector<Function*> &MiscompiledFunctions) {
   bool MadeChange = false;
   while (1) {
+    if (BugpointIsInterrupted) return MadeChange;
+    
     Module *ToNotOptimize = CloneModule(BD.getProgram());
     Module *ToOptimize = SplitFunctionsOutOfModule(ToNotOptimize,
                                                    MiscompiledFunctions);
@@ -506,7 +508,8 @@ DebugAMiscompilation(BugDriver &BD,
 
   // See if we can rip any loops out of the miscompiled functions and still
   // trigger the problem.
-  if (ExtractLoops(BD, TestFn, MiscompiledFunctions)) {
+  if (!BugpointIsInterrupted && 
+      ExtractLoops(BD, TestFn, MiscompiledFunctions)) {
     // Okay, we extracted some loops and the problem still appears.  See if we
     // can eliminate some of the created functions from being candidates.
 
@@ -526,7 +529,8 @@ DebugAMiscompilation(BugDriver &BD,
     std::cout << '\n';
   }
 
-  if (ExtractBlocks(BD, TestFn, MiscompiledFunctions)) {
+  if (!BugpointIsInterrupted &&
+      ExtractBlocks(BD, TestFn, MiscompiledFunctions)) {
     // Okay, we extracted some blocks and the problem still appears.  See if we
     // can eliminate some of the created functions from being candidates.
 
