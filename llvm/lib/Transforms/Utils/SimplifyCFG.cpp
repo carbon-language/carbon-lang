@@ -894,9 +894,16 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
           // Move all PHI nodes in BB to Succ if they are alive, otherwise
           // delete them.
           while (PHINode *PN = dyn_cast<PHINode>(&BB->front()))
-            if (PN->use_empty())
-              BB->getInstList().erase(BB->begin());  // Nuke instruction.
-            else {
+            if (PN->use_empty() || Succ->getSinglePredecessor() == 0) {
+              // We can only move the PHI node into Succ if BB dominates Succ.
+              // Since BB only has a single successor (Succ), the PHI nodes
+              // will dominate Succ, unless Succ has multiple predecessors.  In
+              // this case, the PHIs are either dead, or have references in dead
+              // blocks.  In either case, we can just remove them.
+              if (!PN->use_empty())   // Uses in dead block?
+                PN->replaceAllUsesWith(UndefValue::get(PN->getType()));
+              PN->eraseFromParent();  // Nuke instruction.
+            } else {
               // The instruction is alive, so this means that Succ must have
               // *ONLY* had BB as a predecessor, and the PHI node is still valid
               // now.  Simply move it into Succ, because we know that BB
