@@ -36,6 +36,15 @@ namespace sys {
   /// @brief Print a stack trace if a fatal signal occurs.
   void PrintStackTraceOnErrorSignal();
 
+  /// This function registers a function to be called when the user "interrupts"
+  /// the program (typically by pressing ctrl-c).  When the user interrupts the
+  /// program, the specified interrupt function is called instead of the program
+  /// being killed, and the interrupt function automatically disabled.  Note
+  /// that interrupt functions are not allowed to call any non-reentrant
+  /// functions.  An null interrupt function pointer disables the current
+  /// installed function.
+  /// @brief Register a function to be called when ctrl-c is pressed.
+  void SetInterruptFunction(void (*IF)());
 } // End sys namespace
 } // End llvm namespace
 
