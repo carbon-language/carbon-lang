@@ -26,6 +26,8 @@ static bool isNumberChar(char C) {
   case '0': case '1': case '2': case '3': case '4':
   case '5': case '6': case '7': case '8': case '9':
   case '.': case '+': case '-':
+  case 'D':  // Strange exponential notation.
+  case 'd':  // Strange exponential notation.
   case 'e':
   case 'E': return true;
   default: return false;
@@ -56,10 +58,26 @@ static bool CompareNumbers(char *&F1P, char *&F2P, char *F1End, char *F2End,
   while (isspace(*F2P) && F2P != F2End)
     ++F2P;
 
-  // If we stop on numbers, compare their difference.
+  // If we stop on numbers, compare their difference.  Note that some ugliness
+  // is built into this to permit support for numbers that use "D" or "d" as
+  // their exponential marker, e.g. "1.234D45".  This occurs in 200.sixtrack in
+  // spec2k.
   if (isNumberChar(*F1P) && isNumberChar(*F2P)) {
-    V1 = strtod(F1P, &F1NumEnd);
-    V2 = strtod(F2P, &F2NumEnd);
+    bool isDNotation;
+    do {
+      isDNotation = false;
+      V1 = strtod(F1P, &F1NumEnd);
+      V2 = strtod(F2P, &F2NumEnd);
+
+      if (*F1NumEnd == 'D' || *F1NumEnd == 'd') {
+        *F1NumEnd = 'e';  // Strange exponential notation!
+        isDNotation = true;
+      }
+      if (*F2NumEnd == 'D' || *F2NumEnd == 'd') {
+        *F2NumEnd = 'e';  // Strange exponential notation!
+        isDNotation = true;
+      }
+    } while (isDNotation);
   } else {
     // Otherwise, the diff failed.
     F1NumEnd = F1P;
