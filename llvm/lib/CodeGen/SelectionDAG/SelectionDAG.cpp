@@ -16,6 +16,7 @@
 #include "llvm/GlobalValue.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
+#include "llvm/Support/MathExtras.h"
 #include "llvm/Target/TargetLowering.h"
 #include <iostream>
 #include <set>
@@ -43,15 +44,6 @@ static bool isAssociativeBinOp(unsigned Opcode) {
   case ISD::XOR: return true;
   default: return false; // FIXME: Need associative info for user ops!
   }
-}
-
-static unsigned ExactLog2(uint64_t Val) {
-  unsigned Count = 0;
-  while (Val != 1) {
-    Val >>= 1;
-    ++Count;
-  }
-  return Count;
 }
 
 // isInvertibleForFree - Return true if there is no cost to emitting the logical
@@ -527,7 +519,7 @@ SDOperand SelectionDAG::getSetCC(ISD::CondCode Cond, MVT::ValueType VT,
             // Perform the xform if the AND RHS is a single bit.
             if ((AndRHS->getValue() & (AndRHS->getValue()-1)) == 0) {
               return getNode(ISD::SRL, VT, N1,
-                             getConstant(ExactLog2(AndRHS->getValue()),
+                             getConstant(Log2_64(AndRHS->getValue()),
                                                    TLI.getShiftAmountTy()));
             }
           } else if (Cond == ISD::SETEQ && C2 == AndRHS->getValue()) {
@@ -535,7 +527,7 @@ SDOperand SelectionDAG::getSetCC(ISD::CondCode Cond, MVT::ValueType VT,
             // Perform the xform if C2 is a single bit.
             if ((C2 & (C2-1)) == 0) {
               return getNode(ISD::SRL, VT, N1,
-                             getConstant(ExactLog2(C2),TLI.getShiftAmountTy()));
+                             getConstant(Log2_64(C2),TLI.getShiftAmountTy()));
             }
           }
         }
@@ -956,7 +948,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
 
       // FIXME: Move this to the DAG combiner when it exists.
       if ((C2 & C2-1) == 0) {
-        SDOperand ShAmt = getConstant(ExactLog2(C2), TLI.getShiftAmountTy());
+        SDOperand ShAmt = getConstant(Log2_64(C2), TLI.getShiftAmountTy());
         return getNode(ISD::SHL, VT, N1, ShAmt);
       }
       break;
@@ -974,7 +966,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     case ISD::UDIV:
       // FIXME: Move this to the DAG combiner when it exists.
       if ((C2 & C2-1) == 0 && C2) {
-        SDOperand ShAmt = getConstant(ExactLog2(C2), TLI.getShiftAmountTy());
+        SDOperand ShAmt = getConstant(Log2_64(C2), TLI.getShiftAmountTy());
         return getNode(ISD::SRL, VT, N1, ShAmt);
       }
       break;
@@ -1410,7 +1402,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
               // exists.
               if (ConstantSDNode *AC = dyn_cast<ConstantSDNode>(N2))
                 if ((AC->getValue() & (AC->getValue()-1)) == 0) {
-                  unsigned ShCtV = ExactLog2(AC->getValue());
+                  unsigned ShCtV = Log2_64(AC->getValue());
                   ShCtV = MVT::getSizeInBits(XType)-ShCtV-1;
                   SDOperand ShCt = getConstant(ShCtV, TLI.getShiftAmountTy());
                   SDOperand Shift = getNode(ISD::SRL, XType,

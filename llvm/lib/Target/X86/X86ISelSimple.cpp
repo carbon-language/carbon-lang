@@ -29,6 +29,7 @@
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/InstVisitor.h"
+#include "llvm/Support/MathExtras.h"
 #include "llvm/ADT/Statistic.h"
 using namespace llvm;
 
@@ -2496,19 +2497,6 @@ void X86ISel::doMultiply(MachineBasicBlock *MBB,
   }
 }
 
-// ExactLog2 - This function solves for (Val == 1 << (N-1)) and returns N.  It
-// returns zero when the input is not exactly a power of two.
-static unsigned ExactLog2(unsigned Val) {
-  if (Val == 0 || (Val & (Val-1))) return 0;
-  unsigned Count = 0;
-  while (Val != 1) {
-    Val >>= 1;
-    ++Count;
-  }
-  return Count+1;
-}
-
-
 /// doMultiplyConst - This function is specialized to efficiently codegen an 8,
 /// 16, or 32-bit integer multiply by a constant.
 void X86ISel::doMultiplyConst(MachineBasicBlock *MBB,
@@ -2573,35 +2561,37 @@ void X86ISel::doMultiplyConst(MachineBasicBlock *MBB,
   }
 
   // If the element size is exactly a power of 2, use a shift to get it.
-  if (unsigned Shift = ExactLog2(ConstRHS)) {
+  if (isPowerOf2_32(ConstRHS)) {
+    unsigned Shift = Log2_32(ConstRHS);
     switch (Class) {
     default: assert(0 && "Unknown class for this function!");
     case cByte:
-      BuildMI(*MBB, IP, X86::SHL8ri,2, DestReg).addReg(op0Reg).addImm(Shift-1);
+      BuildMI(*MBB, IP, X86::SHL8ri,2, DestReg).addReg(op0Reg).addImm(Shift);
       return;
     case cShort:
-      BuildMI(*MBB, IP, X86::SHL16ri,2, DestReg).addReg(op0Reg).addImm(Shift-1);
+      BuildMI(*MBB, IP, X86::SHL16ri,2, DestReg).addReg(op0Reg).addImm(Shift);
       return;
     case cInt:
-      BuildMI(*MBB, IP, X86::SHL32ri,2, DestReg).addReg(op0Reg).addImm(Shift-1);
+      BuildMI(*MBB, IP, X86::SHL32ri,2, DestReg).addReg(op0Reg).addImm(Shift);
       return;
     }
   }
 
   // If the element size is a negative power of 2, use a shift/neg to get it.
-  if (unsigned Shift = ExactLog2(-ConstRHS)) {
+  if (isPowerOf2_32(-ConstRHS)) {
+    unsigned Shift = Log2_32(-ConstRHS);
     TmpReg = makeAnotherReg(DestTy);
     BuildMI(*MBB, IP, NEGrTab[Class], 1, TmpReg).addReg(op0Reg);
     switch (Class) {
     default: assert(0 && "Unknown class for this function!");
     case cByte:
-      BuildMI(*MBB, IP, X86::SHL8ri,2, DestReg).addReg(TmpReg).addImm(Shift-1);
+      BuildMI(*MBB, IP, X86::SHL8ri,2, DestReg).addReg(TmpReg).addImm(Shift);
       return;
     case cShort:
-      BuildMI(*MBB, IP, X86::SHL16ri,2, DestReg).addReg(TmpReg).addImm(Shift-1);
+      BuildMI(*MBB, IP, X86::SHL16ri,2, DestReg).addReg(TmpReg).addImm(Shift);
       return;
     case cInt:
-      BuildMI(*MBB, IP, X86::SHL32ri,2, DestReg).addReg(TmpReg).addImm(Shift-1);
+      BuildMI(*MBB, IP, X86::SHL32ri,2, DestReg).addReg(TmpReg).addImm(Shift);
       return;
     }
   }
@@ -2917,7 +2907,8 @@ void X86ISel::emitDivRemOperation(MachineBasicBlock *BB,
         V = -V;
         isNeg = true;      // Maybe it's a negative power of 2.
       }
-      if (unsigned Log = ExactLog2(V)) {
+      if (isPowerOf2_32(V)) {
+        unsigned Log = Log2_32(V);
         --Log;
         unsigned Op0Reg = getReg(Op0, BB, IP);
         unsigned TmpReg = makeAnotherReg(Op0->getType());

@@ -26,10 +26,34 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/InstVisitor.h"
+#include "llvm/Support/MathExtras.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/ADT/Statistic.h"
 #include <vector>
 using namespace llvm;
+
+
+// IsRunOfOnes - returns true if Val consists of one contiguous run of 1's with
+// any number of 0's on either side.  the 1's are allowed to wrap from LSB to
+// MSB.  so 0x000FFF0, 0x0000FFFF, and 0xFF0000FF are all runs.  0x0F0F0000 is
+// not, since all 1's are not contiguous.
+static bool IsRunOfOnes(unsigned Val, unsigned &MB, unsigned &ME) {
+  if (isShiftedMask_32(Val)) {
+    // look for the first non-zero bit
+    MB = CountLeadingZeros_32(Val);
+    // look for the first zero bit after the run of ones
+    ME = CountLeadingZeros_32((Val - 1) ^ Val);
+    return true;
+  } else if (isShiftedMask_32(Val = ~Val)) { // invert mask
+    // effectively look for the first zero bit
+    ME = CountLeadingZeros_32(Val) - 1;
+    // effectively look for the first one bit after the run of zeros
+    MB = CountLeadingZeros_32((Val - 1) ^ Val) + 1;
+    return true;
+  }
+  // no run present
+  return false;
+}
 
 namespace {
   /// TypeClass - Used by the PowerPC backend to group LLVM types by their basic
@@ -2085,73 +2109,6 @@ void PPC32ISel::emitBinaryFPOperation(MachineBasicBlock *BB,
   BuildMI(*BB, IP, Opcode, 2, DestReg).addReg(Op0r).addReg(Op1r);
 }
 
-// ExactLog2 - This function solves for (Val == 1 << (N-1)) and returns N.  It
-// returns zero when the input is not exactly a power of two.
-static unsigned ExactLog2(unsigned Val) {
-  if (Val == 0 || (Val & (Val-1))) return 0;
-  unsigned Count = 0;
-  while (Val != 1) {
-    Val >>= 1;
-    ++Count;
-  }
-  return Count;
-}
-
-// isRunOfOnes - returns true if Val consists of one contiguous run of 1's with
-// any number of 0's on either side.  the 1's are allowed to wrap from LSB to
-// MSB.  so 0x000FFF0, 0x0000FFFF, and 0xFF0000FF are all runs.  0x0F0F0000 is
-// not, since all 1's are not contiguous.
-static bool isRunOfOnes(unsigned Val, unsigned &MB, unsigned &ME) {
-  bool isRun = true;
-  MB = 0;
-  ME = 0;
-
-  // look for first set bit
-  int i = 0;
-  for (; i < 32; i++) {
-    if ((Val & (1 << (31 - i))) != 0) {
-      MB = i;
-      ME = i;
-      break;
-    }
-  }
-
-  // look for last set bit
-  for (; i < 32; i++) {
-    if ((Val & (1 << (31 - i))) == 0)
-      break;
-    ME = i;
-  }
-
-  // look for next set bit
-  for (; i < 32; i++) {
-    if ((Val & (1 << (31 - i))) != 0)
-      break;
-  }
-
-  // if we exhausted all the bits, we found a match at this point for 0*1*0*
-  if (i == 32)
-    return true;
-
-  // since we just encountered more 1's, if it doesn't wrap around to the
-  // most significant bit of the word, then we did not find a match to 1*0*1* so
-  // exit.
-  if (MB != 0)
-    return false;
-
-  // look for last set bit
-  for (MB = i; i < 32; i++) {
-    if ((Val & (1 << (31 - i))) == 0)
-      break;
-  }
-
-  // if we exhausted all the bits, then we found a match for 1*0*1*, otherwise,
-  // the value is not a run of ones.
-  if (i == 32)
-    return true;
-  return false;
-}
-
 /// isInsertAndHalf - Helper function for emitBitfieldInsert.  Returns true if
 /// OpUser has one use, is used by an or instruction, and is itself an and whose
 /// second operand is a constant int.  Optionally, set OrI to the Or instruction
@@ -2281,7 +2238,7 @@ bool PPC32ISel::emitBitfieldInsert(User *OpUser, unsigned DestReg) {
   // succeeded in matching one of the cases for generating rlwimi.  Update the
   // skip lists and users of the Instruction::Or.
   unsigned MB, ME;
-  if (((TgtMask ^ InsMask) == 0xFFFFFFFF) && isRunOfOnes(InsMask, MB, ME)) {
+  if (((TgtMask ^ InsMask) == 0xFFFFFFFF) && IsRunOfOnes(InsMask, MB, ME)) {
     SkipList.push_back(Op0User);
     SkipList.push_back(Op1User);
     SkipList.push_back(OptAndI);
@@ -2320,7 +2277,7 @@ bool PPC32ISel::emitBitfieldExtract(MachineBasicBlock *MBB,
   if (matched == false)
     return false;
 
-  if (isRunOfOnes(Imm, MB, ME)) {
+  if (IsRunOfOnes(Imm, MB, ME)) {
     unsigned SrcReg = getReg(Op, MBB, IP);
     BuildMI(*MBB, IP, PPC::RLWINM, 4, DestReg).addReg(SrcReg).addImm(Rotate)
       .addImm(MB).addImm(ME);
@@ -2361,7 +2318,7 @@ void PPC32ISel::emitBinaryConstOperation(MachineBasicBlock *MBB,
 
   if (Opcode == 2 && !Op1->isNullValue()) {
     unsigned MB, ME, mask = Op1->getRawValue();
-    if (isRunOfOnes(mask, MB, ME)) {
+    if (IsRunOfOnes(mask, MB, ME)) {
       BuildMI(*MBB, IP, PPC::RLWINM, 4, DestReg).addReg(Op0Reg).addImm(0)
         .addImm(MB).addImm(ME);
       return;
@@ -2582,7 +2539,9 @@ void PPC32ISel::doMultiplyConst(MachineBasicBlock *MBB,
   }
 
   // If the element size is exactly a power of 2, use a shift to get it.
-  if (unsigned Shift = ExactLog2(CI->getRawValue())) {
+  uint64_t C = CI->getRawValue();
+  if (isPowerOf2_64(C)) {
+    unsigned Shift = Log2_64(C);
     ConstantUInt *ShiftCI = ConstantUInt::get(Type::UByteTy, Shift);
     emitShiftOperation(MBB, IP, Op0, ShiftCI, true, Op0->getType(), 0, DestReg);
     return;
@@ -2729,8 +2688,8 @@ void PPC32ISel::emitDivRemOperation(MachineBasicBlock *MBB,
         return;
       }
 
-      unsigned log2V = ExactLog2(V);
-      if (log2V != 0 && Ty->isSigned()) {
+      if (isPowerOf2_32(V) && Ty->isSigned()) {
+        unsigned log2V = Log2_32(V);
         unsigned Op0Reg = getReg(Op0, MBB, IP);
         unsigned TmpReg = makeAnotherReg(Op0->getType());
 

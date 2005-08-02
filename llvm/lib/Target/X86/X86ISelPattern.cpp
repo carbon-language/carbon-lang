@@ -3023,7 +3023,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
           RHS = -RHS;
         }
         if (RHS && (RHS & (RHS-1)) == 0) {   // Signed division by power of 2?
-          unsigned Log = log2(RHS);
+          unsigned Log = Log2_32(RHS);
           unsigned SAROpc, SHROpc, ADDOpc, NEGOpc;
           switch (N.getValueType()) {
           default: assert("Unknown type to signed divide!");

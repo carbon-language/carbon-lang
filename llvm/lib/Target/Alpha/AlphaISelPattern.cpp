@@ -801,20 +801,6 @@ SDOperand AlphaISel::BuildUDIVSequence(SDOperand N) {
   return Q;
 }
 
-//From PPC32
-/// ExactLog2 - This function solves for (Val == 1 << (N-1)) and returns N.  It
-/// returns zero when the input is not exactly a power of two.
-static unsigned ExactLog2(uint64_t Val) {
-  if (Val == 0 || (Val & (Val-1))) return 0;
-  unsigned Count = 0;
-  while (Val != 1) {
-    Val >>= 1;
-    ++Count;
-  }
-  return Count;
-}
-
-
 //These describe LDAx
 static const int IMM_LOW  = -32768;
 static const int IMM_HIGH = 32767;

@@ -2306,7 +2306,6 @@ CreateMulConstInstruction(const TargetMachine &target, Function* F,
                                                    constOp->getType(),
                                                    isValidConst);
     if (isValidConst) {
-      unsigned pow;
       bool needNeg = false;
       if (C < 0) {
         needNeg = true;
@@ -2323,7 +2322,8 @@ CreateMulConstInstruction(const TargetMachine &target, Function* F,
         else
           M = BuildMI(V9::ADDr,3).addReg(lval).addMReg(Zero).addRegDef(destVal);
         mvec.push_back(M);
-      } else if (isPowerOf2(C, pow)) {
+      } else if (isPowerOf2_64(C)) {
+        unsigned pow = Log2_64(C);
         if(!needNeg) {
         unsigned opSize = target.getTargetData().getTypeSize(resultType);
         MachineOpCode opCode = (opSize <= 32)? V9::SLLr5 : V9::SLLXr6;
@@ -2464,7 +2464,6 @@ static void CreateDivConstInstruction(TargetMachine &target,
   const Type* resultType = instrNode->getInstruction()->getType();
 
   if (resultType->isInteger()) {
-    unsigned pow;
     bool isValidConst;
     int64_t C = (int64_t) ConvertConstantToIntType(target, constOp,
                                                    constOp->getType(),
@@ -2479,7 +2478,8 @@ static void CreateDivConstInstruction(TargetMachine &target,
       if (C == 1) {
         mvec.push_back(BuildMI(V9::ADDr, 3).addReg(LHS).addMReg(ZeroReg)
                        .addRegDef(destVal));
-      } else if (isPowerOf2(C, pow)) {
+      } else if (isPowerOf2_64(C)) {
+        unsigned pow = Log2_64(C);
         unsigned opCode;
         Value* shiftOperand;
         unsigned opSize = target.getTargetData().getTypeSize(resultType);
@@ -2539,7 +2539,7 @@ static void CreateDivConstInstruction(TargetMachine &target,
                        .addRegDef(destVal));
       }
 
-      if (needNeg && (C == 1 || isPowerOf2(C, pow))) {
+      if (needNeg && (C == 1 || isPowerOf2_64(C))) {
         // insert <reg = SUB 0, reg> after the instr to flip the sign
         mvec.push_back(CreateIntNegInstruction(target, destVal));
       }

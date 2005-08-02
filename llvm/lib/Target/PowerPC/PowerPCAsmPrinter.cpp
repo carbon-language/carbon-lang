@@ -698,7 +698,7 @@ bool AIXAsmPrinter::doFinalization(Module &M) {
       O << "\t.lcomm " << Name << ",16,_global.bss_c";
     } else {
       O << "\t.comm " << Name << "," << TD.getTypeSize(I->getType())
-        << "," << log2((unsigned)TD.getTypeAlignment(I->getType()));
+        << "," << Log2_32((unsigned)TD.getTypeAlignment(I->getType()));
     }
     O << "\t\t# ";
     WriteAsOperand(O, I, true, true, &M);

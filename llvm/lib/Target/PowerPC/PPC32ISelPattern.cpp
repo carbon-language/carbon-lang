@@ -35,6 +35,29 @@
 #include <algorithm>
 using namespace llvm;
 
+
+// IsRunOfOnes - returns true if Val consists of one contiguous run of 1's with
+// any number of 0's on either side.  the 1's are allowed to wrap from LSB to
+// MSB.  so 0x000FFF0, 0x0000FFFF, and 0xFF0000FF are all runs.  0x0F0F0000 is
+// not, since all 1's are not contiguous.
+static bool IsRunOfOnes(unsigned Val, unsigned &MB, unsigned &ME) {
+  if (isShiftedMask_32(Val)) {
+    // look for the first non-zero bit
+    MB = CountLeadingZeros_32(Val);
+    // look for the first zero bit after the run of ones
+    ME = CountLeadingZeros_32((Val - 1) ^ Val);
+    return true;
+  } else if (isShiftedMask_32(Val = ~Val)) { // invert mask
+    // effectively look for the first zero bit
+    ME = CountLeadingZeros_32(Val) - 1;
+    // effectively look for the first one bit after the run of zeros
+    MB = CountLeadingZeros_32((Val - 1) ^ Val) + 1;
+    return true;
+  }
+  // no run present
+  return false;
+}
+
 //===----------------------------------------------------------------------===//
 //  PPC32TargetLowering - PPC32 Implementation of the TargetLowering interface
 namespace {
@@ -321,6 +344,7 @@ PPC32TargetLowering::LowerCallTo(SDOperand Chain,
 
     // Just to be safe, we'll always reserve the full 24 bytes of linkage area
     // plus 32 bytes of argument space in case any called code gets funky on us.
+    // (Required by ABI to support var arg)
     if (NumBytes < 56) NumBytes = 56;
 
     // Adjust the stack pointer for the new arguments...
@@ -664,36 +688,36 @@ static unsigned getImmediateForOpcode(SDOperand N, unsigned Opcode,
   switch(Opcode) {
   default: return 0;
   case ISD::ADD:
-    if (v <= 32767 && v >= -32768) { Imm = v & 0xFFFF; return 1; }
+    if (isInt16(v))             { Imm = v & 0xFFFF; return 1; }
     if ((v & 0x0000FFFF) == 0) { Imm = v >> 16; return 2; }
     break;
   case ISD::AND: {
     unsigned MB, ME;
     if (IsRunOfOnes(v, MB, ME)) { Imm = MB << 16 | ME & 0xFFFF; return 5; }
-    if (v >= 0 && v <= 65535) { Imm = v & 0xFFFF; return 1; }
+    if (isUInt16(v))            { Imm = v & 0xFFFF; return 1; }
     if ((v & 0x0000FFFF) == 0) { Imm = v >> 16; return 2; }
     break;
   }
   case ISD::XOR:
   case ISD::OR:
-    if (v >= 0 && v <= 65535) { Imm = v & 0xFFFF; return 1; }
+    if (isUInt16(v))            { Imm = v & 0xFFFF; return 1; }
     if ((v & 0x0000FFFF) == 0) { Imm = v >> 16; return 2; }
     break;
   case ISD::MUL:
-    if (v <= 32767 && v >= -32768) { Imm = v & 0xFFFF; return 1; }
+    if (isInt16(v))             { Imm = v & 0xFFFF; return 1; }
     break;
   case ISD::SUB:
     // handle subtract-from separately from subtract, since subi is really addi
-    if (U && v <= 32767 && v >= -32768) { Imm = v & 0xFFFF; return 1; }
-    if (!U && v <= 32768 && v >= -32767) { Imm = (-v) & 0xFFFF; return 1; }
+    if (U && isInt16(v))        { Imm = v    & 0xFFFF; return 1; }
+    if (!U && isInt16(-v))      { Imm = (-v) & 0xFFFF; return 1; }
     break;
   case ISD::SETCC:
-    if (U && (v >= 0 && v <= 65535)) { Imm = v & 0xFFFF; return 1; }
-    if (!U && (v <= 32767 && v >= -32768)) { Imm = v & 0xFFFF; return 1; }
+    if (U && isUInt16(v))       { Imm = v & 0xFFFF; return 1; }
+    if (!U && isInt16(v))       { Imm = v & 0xFFFF; return 1; }
     break;
   case ISD::SDIV:
-    if ((Imm = ExactLog2(v))) { return 3; }
-    if ((Imm = ExactLog2(-v))) { Imm = -Imm; return 3; }
+    if (isPowerOf2_32(v))       { Imm = Log2_32(v); return 3; }
+    if (isPowerOf2_32(-v))      { Imm = Log2_32(-v); return 3; }
     if (v <= -2 || v >= 2) { return 4; }
     break;
   case ISD::UDIV:
@@ -807,7 +831,7 @@ struct mu {
 static struct ms magic(int d) {
   int p;
   unsigned int ad, anc, delta, q1, r1, q2, r2, t;
-  const unsigned int two31 = 2147483648U; // 2^31
+  const unsigned int two31 = 0x80000000U;
   struct ms mag;
 
   ad = abs(d);

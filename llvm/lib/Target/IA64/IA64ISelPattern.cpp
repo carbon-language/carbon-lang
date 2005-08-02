@@ -847,29 +847,6 @@ SDOperand ISel::BuildConstmulSequence(SDOperand N) {
   return finalresult;
 }
 
-/// ExactLog2 - This function solves for (Val == 1 << (N-1)) and returns N.  It
-/// returns zero when the input is not exactly a power of two.
-static unsigned ExactLog2(uint64_t Val) {
-  if (Val == 0 || (Val & (Val-1))) return 0;
-  unsigned Count = 0;
-  while (Val != 1) {
-    Val >>= 1;
-    ++Count;
-  }
-  return Count;
-}
-
-/// ExactLog2sub1 - This function solves for (Val == (1 << (N-1))-1)
-/// and returns N.  It returns 666 if Val is not 2^n -1 for some n.
-static unsigned ExactLog2sub1(uint64_t Val) {
-  unsigned int n;
-  for(n=0; n<64; n++) {
-    if(Val==(uint64_t)((1LL<<n)-1))
-      return n;
-  }
-  return 666;
-}
-
 /// ponderIntegerDivisionBy - When handling integer divides, if the divide
 /// is by a constant such that we can efficiently codegen it, this
 /// function says what to do. Currently, it returns 0 if the division must
@@ -882,7 +859,8 @@ static unsigned ponderIntegerDivisionBy(SDOperand N, bool isSigned,
 
   int64_t v = (int64_t)cast<ConstantSDNode>(N)->getSignExtended();
 
-  if ((Imm = ExactLog2(v))) { // if a division by a power of two, say so
+  if (isPowerOf2_64(v)) { // if a division by a power of two, say so
+    Imm = Log2_64(v);
     return 1;
   }
 
@@ -895,7 +873,8 @@ static unsigned ponderIntegerAndWith(SDOperand N, unsigned& Imm) {
 
   int64_t v = (int64_t)cast<ConstantSDNode>(N)->getSignExtended();
 
-  if ((Imm = ExactLog2sub1(v))!=666) { // if ANDing with ((2^n)-1) for some n
+  if (isMask_64(v)) { // if ANDing with ((2^n)-1) for some n
+    Imm = Log2_64(v);
     return 1; // say so
   }
 

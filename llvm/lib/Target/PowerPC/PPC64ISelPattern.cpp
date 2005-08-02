@@ -34,7 +34,7 @@
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
-//  PPC32TargetLowering - PPC32 Implementation of the TargetLowering interface
+//  PPC64TargetLowering - PPC64 Implementation of the TargetLowering interface
 namespace {
   class PPC64TargetLowering : public TargetLowering {
     int VarArgsFrameIndex;            // FrameIndex for start of varargs area.
@@ -258,6 +258,7 @@ PPC64TargetLowering::LowerCallTo(SDOperand Chain,
 
     // Just to be safe, we'll always reserve the full 48 bytes of linkage area
     // plus 64 bytes of argument space in case any called code gets funky on us.
+    // (Required by ABI to support var arg)
     if (NumBytes < 112) NumBytes = 112;
 
     // Adjust the stack pointer for the new arguments...
@@ -397,7 +398,7 @@ namespace {
 Statistic<>NotLogic("ppc-codegen", "Number of inverted logical ops");
 Statistic<>FusedFP("ppc-codegen", "Number of fused fp operations");
 //===--------------------------------------------------------------------===//
-/// ISel - PPC32 specific code to select PPC32 machine instructions for
+/// ISel - PPC64 specific code to select PPC64 machine instructions for
 /// SelectionDAG operations.
 //===--------------------------------------------------------------------===//
 class ISel : public SelectionDAGISel {
@@ -447,18 +448,6 @@ public:
   void SelectBranchCC(SDOperand N);
 };
 
-/// ExactLog2 - This function solves for (Val == 1 << (N-1)) and returns N.  It
-/// returns zero when the input is not exactly a power of two.
-static unsigned ExactLog2(unsigned Val) {
-  if (Val == 0 || (Val & (Val-1))) return 0;
-  unsigned Count = 0;
-  while (Val != 1) {
-    Val >>= 1;
-    ++Count;
-  }
-  return Count;
-}
-
 /// getImmediateForOpcode - This method returns a value indicating whether
 /// the ConstantSDNode N can be used as an immediate to Opcode.  The return
 /// values are either 0, 1 or 2.  0 indicates that either N is not a
@@ -477,25 +466,25 @@ static unsigned getImmediateForOpcode(SDOperand N, unsigned Opcode,
   switch(Opcode) {
   default: return 0;
   case ISD::ADD:
-    if (v <= 32767 && v >= -32768) { Imm = v & 0xFFFF; return 1; }
+    if (isInt16(v))            { Imm = v & 0xFFFF; return 1; }
     if ((v & 0x0000FFFF) == 0) { Imm = v >> 16; return 2; }
     break;
   case ISD::AND:
   case ISD::XOR:
   case ISD::OR:
-    if (v >= 0 && v <= 65535) { Imm = v & 0xFFFF; return 1; }
+    if (isUInt16(v))           { Imm = v & 0xFFFF; return 1; }
     if ((v & 0x0000FFFF) == 0) { Imm = v >> 16; return 2; }
     break;
   case ISD::MUL:
   case ISD::SUB:
-    if (v <= 32767 && v >= -32768) { Imm = v & 0xFFFF; return 1; }
+    if (isInt16(v))            { Imm = v & 0xFFFF; return 1; }
     break;
   case ISD::SETCC:
-    if (U && (v >= 0 && v <= 65535)) { Imm = v & 0xFFFF; return 1; }
-    if (!U && (v <= 32767 && v >= -32768)) { Imm = v & 0xFFFF; return 1; }
+    if (U && isUInt16(v))      { Imm = v & 0xFFFF; return 1; }
+    if (!U && isInt16(v))      { Imm = v & 0xFFFF; return 1; }
     break;
   case ISD::SDIV:
-    if ((Imm = ExactLog2(v))) { return 3; }
+    if (isPowerOf2_32(v))      { Imm = Log2_32(v); return 3; }
     break;
   }
   return 0;
@@ -1636,7 +1625,7 @@ void ISel::Select(SDOperand N) {
 }
 
 
-/// createPPC32PatternInstructionSelector - This pass converts an LLVM function
+/// createPPC64PatternInstructionSelector - This pass converts an LLVM function
 /// into a machine code representation using pattern matching and a machine
 /// description file.
 ///

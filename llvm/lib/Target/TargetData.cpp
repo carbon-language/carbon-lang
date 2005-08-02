@@ -229,7 +229,7 @@ unsigned char TargetData::getTypeAlignment(const Type *Ty) const {
 unsigned char TargetData::getTypeAlignmentShift(const Type *Ty) const {
   unsigned Align = getTypeAlignment(Ty);
   assert(!(Align & (Align-1)) && "Alignment is not a power of two!");
-  return log2(Align);
+  return Log2_32(Align);
 }
 
 /// getIntPtrType - Return an unsigned integer type that is the same size or
