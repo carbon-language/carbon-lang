@@ -232,6 +232,10 @@ void LoopStrengthReduce::AnalyzeGetElementPtrUsers(GetElementPtrInst *GEP,
         else
           ++InsertPt;
       }
+      
+      // Do not insert casts into the middle of PHI node blocks.
+      while (isa<PHINode>(InsertPt)) ++InsertPt;
+      
       BP = new CastInst(GEP->getOperand(0), UIntPtrTy,
                         GEP->getOperand(0)->getName(), InsertPt);
     }
