@@ -1833,9 +1833,8 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
       //check if we can convert into a shift!
       if ((CSD = dyn_cast<ConstantSDNode>(N.getOperand(1).Val)) &&
           (int64_t)CSD->getSignExtended() != 0 &&
-          ExactLog2(llabs(CSD->getSignExtended())) != 0)
-      {
-        unsigned k = ExactLog2(llabs(CSD->getSignExtended()));
+          isPowerOf2_64(llabs(CSD->getSignExtended()))) {
+        unsigned k = Log2_64(llabs(CSD->getSignExtended()));
         Tmp1 = SelectExpr(N.getOperand(0));
         if (k == 1)
           Tmp2 = Tmp1;
