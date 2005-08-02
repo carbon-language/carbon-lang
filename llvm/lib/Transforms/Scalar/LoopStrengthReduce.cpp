@@ -71,6 +71,9 @@ namespace {
     const TargetData *TD;
     const Type *UIntPtrTy;
     bool Changed;
+
+    /// MaxTargetAMSize - This is the maximum power-of-two scale value that the
+    /// target can handle for free with its addressing modes.
     unsigned MaxTargetAMSize;
 
     /// IVUsesByStride - Keep track of all uses of induction variables that we
@@ -649,15 +652,14 @@ void LoopStrengthReduce::runOnLoop(Loop *L) {
       // compared against some value to decide loop termination.
       if (PN->hasOneUse()) {
         BinaryOperator *BO = dyn_cast<BinaryOperator>(*(PN->use_begin()));
-        if (BO && BO->getOpcode() == Instruction::Add)
-          if (BO->hasOneUse()) {
-            if (PN == dyn_cast<PHINode>(*(BO->use_begin()))) {
-              DeadInsts.insert(BO);
-              // Break the cycle, then delete the PHI.
-              PN->replaceAllUsesWith(UndefValue::get(PN->getType()));
-              PN->eraseFromParent();
-            }
+        if (BO && BO->hasOneUse()) {
+          if (PN == *(BO->use_begin())) {
+            DeadInsts.insert(BO);
+            // Break the cycle, then delete the PHI.
+            PN->replaceAllUsesWith(UndefValue::get(PN->getType()));
+            PN->eraseFromParent();
           }
+        }
       }
     }
     DeleteTriviallyDeadInstructions(DeadInsts);
