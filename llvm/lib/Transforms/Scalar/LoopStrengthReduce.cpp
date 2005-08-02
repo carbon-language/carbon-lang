@@ -632,7 +632,7 @@ void LoopStrengthReduce::runOnLoop(Loop *L) {
 
     BasicBlock::iterator I = L->getHeader()->begin();
     PHINode *PN;
-    for (; (PN = dyn_cast<PHINode>(I)); ) {
+    while ((PN = dyn_cast<PHINode>(I))) {
       ++I;  // Preincrement iterator to avoid invalidating it when deleting PN.
       
       // At this point, we know that we have killed one or more GEP instructions.
@@ -664,5 +664,6 @@ void LoopStrengthReduce::runOnLoop(Loop *L) {
   }
 
   IVUsesByStride.clear();
+  CastedBasePointers.clear();
   return;
 }
