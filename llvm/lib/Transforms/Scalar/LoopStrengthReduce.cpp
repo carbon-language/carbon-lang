@@ -622,7 +622,9 @@ void LoopStrengthReduce::runOnLoop(Loop *L) {
 
     BasicBlock::iterator I = L->getHeader()->begin();
     PHINode *PN;
-    for (; (PN = dyn_cast<PHINode>(I)); ++I) {
+    for (; (PN = dyn_cast<PHINode>(I)); ) {
+      ++I;  // Preincrement iterator to avoid invalidating it when deleting PN.
+      
       // At this point, we know that we have killed one or more GEP instructions.
       // It is worth checking to see if the cann indvar is also dead, so that we
       // can remove it as well.  The requirements for the cann indvar to be
