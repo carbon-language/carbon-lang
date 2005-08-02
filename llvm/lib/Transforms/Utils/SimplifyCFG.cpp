@@ -894,7 +894,7 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
           // Move all PHI nodes in BB to Succ if they are alive, otherwise
           // delete them.
           while (PHINode *PN = dyn_cast<PHINode>(&BB->front()))
-            if (PN->use_empty() || Succ->getSinglePredecessor() == 0) {
+            if (PN->use_empty() /*|| Succ->getSinglePredecessor() == 0*/) {
               // We can only move the PHI node into Succ if BB dominates Succ.
               // Since BB only has a single successor (Succ), the PHI nodes
               // will dominate Succ, unless Succ has multiple predecessors.  In
