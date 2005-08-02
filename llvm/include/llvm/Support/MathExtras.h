@@ -86,7 +86,7 @@ inline unsigned CountLeadingZeros_32(unsigned Value) {
   unsigned Count; // result
   #if __GNUC__ >= 4
     // PowerPC is defined for __builtin_clz(0)
-    #if defined(__ppc__) || defined(__ppc64__)
+    #if !defined(__ppc__) && !defined(__ppc64__)
       if (!Value) return 32;
     #endif
     Count = __builtin_clz(Value);
@@ -113,7 +113,7 @@ inline unsigned CountLeadingZeros_64(uint64_t Value) {
   unsigned Count; // result
   #if __GNUC__ >= 4
     // PowerPC is defined for __builtin_clzll(0)
-    #if defined(__ppc__) || defined(__ppc64__)
+    #if !defined(__ppc__) && !defined(__ppc64__)
       if (!Value) return 64;
     #endif
     Count = __builtin_clzll(Value);
