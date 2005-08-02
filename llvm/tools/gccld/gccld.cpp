@@ -308,8 +308,8 @@ int main(int argc, char **argv, char **envp ) {
                        Verbose);
       if (Verbose) std::cout << "Generating Native Code\n";
       GenerateNative(OutputFilename, AssemblyFile.toString(),
-                     LibPaths, Libraries, gcc, envp, LinkAsLibrary, RPath,
-                     SOName, Verbose);
+                     LibPaths, Libraries, gcc, envp, LinkAsLibrary,
+                     NoInternalize, RPath, SOName, Verbose);
 
       if (!SaveTemps) {
         // Remove the assembly language file.
@@ -340,8 +340,8 @@ int main(int argc, char **argv, char **envp ) {
       GenerateCFile(CFile.toString(), RealBytecodeOutput, llc, Verbose);
       if (Verbose) std::cout << "Generating Native Code\n";
       GenerateNative(OutputFilename, CFile.toString(),
-                     LibPaths, Libraries, gcc, envp, LinkAsLibrary, RPath,
-                     SOName, Verbose);
+                     LibPaths, Libraries, gcc, envp, LinkAsLibrary,
+                     NoInternalize, RPath, SOName, Verbose);
 
       if (!SaveTemps) {
         // Remove the assembly language file.

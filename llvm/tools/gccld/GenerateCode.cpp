@@ -325,8 +325,7 @@ int llvm::GenerateAssembly(const std::string &OutputFilename,
   return sys::Program::ExecuteAndWait(llc, &args[0]);
 }
 
-/// GenerateAssembly - generates a native assembly language source file from the
-/// specified bytecode file.
+/// GenerateCFile - generates a C source file from the specified bytecode file.
 int llvm::GenerateCFile(const std::string &OutputFile,
                         const std::string &InputFile,
                         const sys::Path &llc,
@@ -344,8 +343,8 @@ int llvm::GenerateCFile(const std::string &OutputFile,
   return sys::Program::ExecuteAndWait(llc, &args[0]);
 }
 
-/// GenerateNative - generates a native assembly language source file from the
-/// specified assembly source file.
+/// GenerateNative - generates a native executable file from the specified
+/// assembly source file.
 ///
 /// Inputs:
 ///  InputFilename  - The name of the output bytecode file.
@@ -365,6 +364,7 @@ int llvm::GenerateNative(const std::string &OutputFilename,
                          const std::vector<std::string> &Libraries,
                          const sys::Path &gcc, char ** const envp,
                          bool Shared,
+                         bool ExportAllAsDynamic,
                          const std::string &RPath,
                          const std::string &SOName,
                          bool Verbose) {
@@ -400,6 +400,7 @@ int llvm::GenerateNative(const std::string &OutputFilename,
   args.push_back(InputFilename.c_str());
 
   if (Shared) args.push_back("-shared");
+  if (ExportAllAsDynamic) args.push_back("-export-dynamic");
   if (!RPath.empty()) {
     std::string rp = "-Wl,-rpath," + RPath;
     args.push_back(rp.c_str());
