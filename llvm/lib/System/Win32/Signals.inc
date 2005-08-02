@@ -114,8 +114,8 @@ void sys::PrintStackTraceOnErrorSignal() {
 
 
 void sys::SetInterruptFunction(void (*IF)()) {
-  InterruptFunction = IF;
   RegisterHandler();
+  InterruptFunction = IF;
   LeaveCriticalSection(&CriticalSection);
 }
 }
@@ -239,6 +239,7 @@ static LONG WINAPI LLVMUnhandledExceptionFilter(LPEXCEPTION_POINTERS ep) {
 }
 
 static BOOL WINAPI LLVMConsoleCtrlHandler(DWORD dwCtrlType) {
+  // We are running in our very own thread, courtesy of Windows.
   EnterCriticalSection(&CriticalSection);
   Cleanup();
 
@@ -248,13 +249,9 @@ static BOOL WINAPI LLVMConsoleCtrlHandler(DWORD dwCtrlType) {
   InterruptFunction = 0;      // Don't run it on another CTRL-C.
 
   if (IF) {
-    try {
-      IF();                   // Run it now.
-    } catch (...) {
-      // Kill the process on an exception.
-      LeaveCriticalSection(&CriticalSection);
-      return FALSE;
-    }
+    // Note: if the interrupt function throws an exception, there is nothing
+    // to catch it in this thread so it will kill the process.
+    IF();                     // Run it now.
     LeaveCriticalSection(&CriticalSection);
     return TRUE;              // Don't kill the process.
   }
