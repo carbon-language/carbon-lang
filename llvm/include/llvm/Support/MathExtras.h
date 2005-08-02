@@ -88,7 +88,7 @@ inline unsigned CountLeadingZeros_32(unsigned Value) {
     // PowerPC is defined for __builtin_clz(0)
     #if defined(__ppc__) || defined(__ppc64__)
       if (!Value) return 32;
-#endif
+    #endif
     Count = __builtin_clz(Value);
   #else
     if (!Value) return 32;
@@ -117,7 +117,8 @@ inline unsigned CountLeadingZeros_64(uint64_t Value) {
       if (!Value) return 64;
     #endif
     Count = __builtin_clzll(Value);
-  #elif sizeof(long) == sizeof(int64_t)
+  #else
+  if (sizeof(long) == sizeof(int64_t)) {
     if (!Value) return 64;
     Count = 0;
     // bisecton method for count leading zeros
@@ -127,8 +128,8 @@ inline unsigned CountLeadingZeros_64(uint64_t Value) {
         Count |= Shift;
         Value = Tmp;
       }
-}
-  #else
+    }
+  } else {
     // get hi portion
     unsigned Hi = Hi_32(Value);
 
@@ -142,7 +143,8 @@ inline unsigned CountLeadingZeros_64(uint64_t Value) {
         // same as 32 bit value
         Count = CountLeadingZeros_32(Lo);
     }
-  #endif
+  }
+#endif
   return Count;
 }
 
