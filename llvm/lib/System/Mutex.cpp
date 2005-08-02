@@ -38,7 +38,7 @@ using namespace sys;
 // Note: all LLVM tools will link against -lpthread if its available since it
 //       is configured into the LIBS variable.
 // Note: this line of code generates a warning if pthread_mutex_init is not
-//       declared with weak linkage. Its safe to ignore the warning.
+//       declared with weak linkage. It's safe to ignore the warning.
 static const bool pthread_enabled = static_cast<bool>(pthread_mutex_init);
 
 // Construct a Mutex using pthread calls
