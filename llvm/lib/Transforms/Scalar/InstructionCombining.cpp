@@ -46,6 +46,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/InstVisitor.h"
+#include "llvm/Support/MathExtras.h"
 #include "llvm/Support/PatternMatch.h"
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/Statistic.h"
@@ -359,19 +360,6 @@ static User *dyn_castGetElementPtr(Value *V) {
     if (CE->getOpcode() == Instruction::GetElementPtr)
       return cast<User>(V);
   return false;
-}
-
-// Log2 - Calculate the log base 2 for the specified value if it is exactly a
-// power of 2.
-static unsigned Log2(uint64_t Val) {
-  assert(Val > 1 && "Values 0 and 1 should be handled elsewhere!");
-  unsigned Count = 0;
-  while (Val != 1) {
-    if (Val & 1) return 0;    // Multiple bits set?
-    Val >>= 1;
-    ++Count;
-  }
-  return Count;
 }
 
 // AddOne, SubOne - Add or subtract a constant one from an integer constant...
@@ -934,9 +922,11 @@ Instruction *InstCombiner::visitMul(BinaryOperator &I) {
         return BinaryOperator::createNeg(Op0, I.getName());
 
       int64_t Val = (int64_t)cast<ConstantInt>(CI)->getRawValue();
-      if (uint64_t C = Log2(Val))            // Replace X*(2^C) with X << C
+      if (isPowerOf2_64(Val)) {          // Replace X*(2^C) with X << C
+        uint64_t C = Log2_64(Val);
         return new ShiftInst(Instruction::Shl, Op0,
                              ConstantUInt::get(Type::UByteTy, C));
+      }
     } else if (ConstantFP *Op1F = dyn_cast<ConstantFP>(Op1)) {
       if (Op1F->isNullValue())
         return ReplaceInstUsesWith(I, Op1);
@@ -1039,9 +1029,11 @@ Instruction *InstCombiner::visitDiv(BinaryOperator &I) {
     // if so, convert to a right shift.
     if (ConstantUInt *C = dyn_cast<ConstantUInt>(RHS))
       if (uint64_t Val = C->getValue())    // Don't break X / 0
-        if (uint64_t C = Log2(Val))
+        if (isPowerOf2_64(Val)) {
+          uint64_t C = Log2_64(Val);
           return new ShiftInst(Instruction::Shr, Op0,
                                ConstantUInt::get(Type::UByteTy, C));
+        }
 
     // -X/C -> X/-C
     if (RHS->getType()->isSigned())
@@ -1072,9 +1064,8 @@ Instruction *InstCombiner::visitDiv(BinaryOperator &I) {
         }
 
         uint64_t TVA = STO->getValue(), FVA = SFO->getValue();
-        unsigned TSA = 0, FSA = 0;
-        if ((TVA == 1 || (TSA = Log2(TVA))) &&    // Log2 fails for 0 & 1.
-            (FVA == 1 || (FSA = Log2(FVA)))) {
+        if (isPowerOf2_64(TVA) && isPowerOf2_64(FVA)) {
+          unsigned TSA = Log2_64(TVA), FSA = Log2_64(FVA);
           Constant *TC = ConstantUInt::get(Type::UByteTy, TSA);
           Instruction *TSI = new ShiftInst(Instruction::Shr, Op0,
                                            TC, SI->getName()+".t");
@@ -2777,9 +2768,10 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
           // If we have a signed (X % (2^c)) == 0, turn it into an unsigned one.
           if (CI->isNullValue() && isa<ConstantSInt>(BO->getOperand(1)) &&
               BO->hasOneUse() &&
-              cast<ConstantSInt>(BO->getOperand(1))->getValue() > 1)
-            if (unsigned L2 =
-                Log2(cast<ConstantSInt>(BO->getOperand(1))->getValue())) {
+              cast<ConstantSInt>(BO->getOperand(1))->getValue() > 1) {
+            int64_t V = cast<ConstantSInt>(BO->getOperand(1))->getValue();
+            if (isPowerOf2_64(V)) {
+              unsigned L2 = Log2_64(V);
               const Type *UTy = BO->getType()->getUnsignedVersion();
               Value *NewX = InsertNewInstBefore(new CastInst(BO->getOperand(0),
                                                              UTy, "tmp"), I);
@@ -2789,6 +2781,7 @@ Instruction *InstCombiner::visitSetCondInst(SetCondInst &I) {
               return BinaryOperator::create(I.getOpcode(), NewRem,
                                             Constant::getNullValue(UTy));
             }
+          }
           break;
 
         case Instruction::Add:
@@ -3638,7 +3631,7 @@ Instruction *InstCombiner::visitCastInst(CastInst &CI) {
             if (match(Op0, m_And(m_Value(), m_ConstantInt(AndRHS))))
               if (AndRHS->getRawValue() &&
                   (AndRHS->getRawValue() & (AndRHS->getRawValue()-1)) == 0) {
-                unsigned ShiftAmt = Log2(AndRHS->getRawValue());
+                unsigned ShiftAmt = Log2_64(AndRHS->getRawValue());
                 // Perform an unsigned shr by shiftamt.  Convert input to
                 // unsigned if it is signed.
                 Value *In = Op0;
