@@ -72,36 +72,41 @@ inline bool isPowerOf2_32(unsigned Value) {
   return Value && !(Value & (Value - 1));
 }
 
-// isPowerOf2_64 - This function returns true if the argument is a power of two > 0
-// (64 bit edition.)
+// isPowerOf2_64 - This function returns true if the argument is a power of two
+// > 0 (64 bit edition.)
 inline bool isPowerOf2_64(uint64_t Value) {
   return Value && !(Value & (Value - 1LL));
 }
 
+// CountLeadingZeros_32 - this function performs the platform optimal form of
+// counting the number of zeros from the most significant bit to the first one
+// bit.  Ex. CountLeadingZeros_32(0x00F000FF) == 8.
+// Returns 32 if the word is zero.
 // CountLeadingZeros_32 - this function performs the platform optimal form
-// of counting the number of zeros from the most significant bit to the first one bit.
-// Ex. CountLeadingZeros_32(0x00F000FF) == 8.
+// of counting the number of zeros from the most significant bit to the first
+// one bit.  Ex. CountLeadingZeros_32(0x00F000FF) == 8.
 // Returns 32 if the word is zero.
 inline unsigned CountLeadingZeros_32(unsigned Value) {
   unsigned Count; // result
-  #if __GNUC__ >= 4
-    // PowerPC is defined for __builtin_clz(0)
-    #if !defined(__ppc__) && !defined(__ppc64__)
-      if (!Value) return 32;
-    #endif
-    Count = __builtin_clz(Value);
-  #else
-    if (!Value) return 32;
-    Count = 0;
-    // bisecton method for count leading zeros
-    for (unsigned Shift = 32 >> 1; Shift; Shift >>= 1) {
-        unsigned Tmp = Value >> Shift;
-        if (Tmp) {
-            Count |= Shift;
-            Value = Tmp;
-        }
+#if __GNUC__ >= 4
+  // PowerPC is defined for __builtin_clz(0)
+#if !defined(__ppc__) && !defined(__ppc64__)
+  if (!Value) return 32;
+#endif
+  Count = __builtin_clz(Value);
+#else
+  if (!Value) return 32;
+  Count = 0;
+  // bisecton method for count leading zeros
+  for (unsigned Shift = 32 >> 1; Shift; Shift >>= 1) {
+    unsigned Tmp = Value >> Shift;
+    if (Tmp) {
+      Value = Tmp;
+    } else {
+      Count |= Shift;
     }
-  #endif
+  }
+#endif
   return Count;
 }
 
@@ -111,13 +116,13 @@ inline unsigned CountLeadingZeros_32(unsigned Value) {
 // Returns 64 if the word is zero.
 inline unsigned CountLeadingZeros_64(uint64_t Value) {
   unsigned Count; // result
-  #if __GNUC__ >= 4
-    // PowerPC is defined for __builtin_clzll(0)
-    #if !defined(__ppc__) && !defined(__ppc64__)
-      if (!Value) return 64;
-    #endif
-    Count = __builtin_clzll(Value);
-  #else
+#if __GNUC__ >= 4
+  // PowerPC is defined for __builtin_clzll(0)
+#if defined(__ppc__) || defined(__ppc64__)
+  if (!Value) return 64;
+#endif
+  Count = __builtin_clzll(Value);
+#else
   if (sizeof(long) == sizeof(int64_t)) {
     if (!Value) return 64;
     Count = 0;
@@ -125,8 +130,9 @@ inline unsigned CountLeadingZeros_64(uint64_t Value) {
     for (uint64_t Shift = 64 >> 1; Shift; Shift >>= 1) {
       uint64_t Tmp = Value >> Shift;
       if (Tmp) {
-        Count |= Shift;
         Value = Tmp;
+      } else {
+        Count |= Shift;
       }
     }
   } else {
