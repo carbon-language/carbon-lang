@@ -24,6 +24,9 @@
 
 namespace {
 
+/// InterruptFunction - The function to call if ctrl-c is pressed.
+void (*InterruptFunction)() = 0;
+
 std::vector<std::string> *FilesToRemove = 0 ;
 std::vector<llvm::sys::Path> *DirectoriesToRemove = 0;
 
@@ -116,8 +119,16 @@ RETSIGTYPE SignalHandler(int Sig) {
       DirectoriesToRemove->pop_back();
     }
 
-  if (std::find(IntSigs, IntSigsEnd, Sig) != IntSigsEnd)
-    exit(1);   // If this is an interrupt signal, exit the program
+  if (std::find(IntSigs, IntSigsEnd, Sig) != IntSigsEnd) {
+    if (InterruptFunction) {
+      void (*IF)() = InterruptFunction;
+      InterruptFunction = 0;
+      IF();        // run the interrupt function.
+      return;
+    } else {
+      exit(1);   // If this is an interrupt signal, exit the program
+    }
+  }
 
   // Otherwise if it is a fault (like SEGV) output the stacktrace to
   // STDERR (if we can) and reissue the signal to die...
@@ -133,6 +144,11 @@ void RegisterHandler(int Signal) {
 }
 
 namespace llvm {
+
+void sys::SetInterruptFunction(void (*IF)()) {
+  InterruptFunction = IF;
+  RegisterHandler(SIGINT);
+}
 
 // RemoveFileOnSignal - The public API
 void sys::RemoveFileOnSignal(const sys::Path &Filename) {

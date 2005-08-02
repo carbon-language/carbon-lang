@@ -109,6 +109,10 @@ void sys::PrintStackTraceOnErrorSignal() {
   LeaveCriticalSection(&CriticalSection);
 }
 
+
+void sys::SetInterruptFunction(void (*IF)()) {
+  // Currently unimplemented.
+}
 }
 
 static void Cleanup() {
