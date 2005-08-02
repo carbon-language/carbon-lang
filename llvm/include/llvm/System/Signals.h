@@ -42,7 +42,8 @@ namespace sys {
   /// being killed, and the interrupt function automatically disabled.  Note
   /// that interrupt functions are not allowed to call any non-reentrant
   /// functions.  An null interrupt function pointer disables the current
-  /// installed function.
+  /// installed function.  Note also that the handler may be executed on a
+  /// different thread on some platforms.
   /// @brief Register a function to be called when ctrl-c is pressed.
   void SetInterruptFunction(void (*IF)());
 } // End sys namespace

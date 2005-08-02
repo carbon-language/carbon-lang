@@ -29,6 +29,9 @@
 static LONG WINAPI LLVMUnhandledExceptionFilter(LPEXCEPTION_POINTERS ep);
 static BOOL WINAPI LLVMConsoleCtrlHandler(DWORD dwCtrlType);
 
+// InterruptFunction - The function to call if ctrl-c is pressed.
+static void (*InterruptFunction)() = 0;
+
 static std::vector<llvm::sys::Path> *FilesToRemove = NULL;
 static std::vector<llvm::sys::Path> *DirectoriesToRemove = NULL;
 static bool RegisteredUnhandledExceptionFilter = false;
@@ -111,7 +114,9 @@ void sys::PrintStackTraceOnErrorSignal() {
 
 
 void sys::SetInterruptFunction(void (*IF)()) {
-  // Currently unimplemented.
+  InterruptFunction = IF;
+  RegisterHandler();
+  LeaveCriticalSection(&CriticalSection);
 }
 }
 
@@ -234,9 +239,28 @@ static LONG WINAPI LLVMUnhandledExceptionFilter(LPEXCEPTION_POINTERS ep) {
 }
 
 static BOOL WINAPI LLVMConsoleCtrlHandler(DWORD dwCtrlType) {
+  EnterCriticalSection(&CriticalSection);
   Cleanup();
 
+  // If an interrupt function has been set, go and run one it; otherwise,
+  // the process dies.
+  void (*IF)() = InterruptFunction;
+  InterruptFunction = 0;      // Don't run it on another CTRL-C.
+
+  if (IF) {
+    try {
+      IF();                   // Run it now.
+    } catch (...) {
+      // Kill the process on an exception.
+      LeaveCriticalSection(&CriticalSection);
+      return FALSE;
+    }
+    LeaveCriticalSection(&CriticalSection);
+    return TRUE;              // Don't kill the process.
+  }
+
   // Allow normal processing to take place; i.e., the process dies.
+  LeaveCriticalSection(&CriticalSection);
   return FALSE;
 }
 
