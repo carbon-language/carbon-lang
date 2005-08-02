@@ -571,6 +571,10 @@ public:
 
   unsigned SelectAddr(SDOperand N, unsigned& Reg, int& offset);
   void SelectBranchCC(SDOperand N);
+  
+  virtual const char *getPassName() const {
+    return "PowerPC Pattern Instruction Selection";
+  } 
 };
 
 /// ExactLog2 - This function solves for (Val == 1 << (N-1)) and returns N.  It
