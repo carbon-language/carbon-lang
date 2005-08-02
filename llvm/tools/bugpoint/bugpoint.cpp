@@ -32,13 +32,21 @@ InputFilenames(cl::Positional, cl::OneOrMore,
 static cl::list<const PassInfo*, bool, PassNameParser>
 PassList(cl::desc("Passes available:"), cl::ZeroOrMore);
 
+/// BugpointIsInterrupted - Set to true when the user presses ctrl-c.
+bool llvm::BugpointIsInterrupted = false;
+
+static void BugpointInterruptFunction() {
+  BugpointIsInterrupted = true;
+}
+
 int main(int argc, char **argv) {
   cl::ParseCommandLineOptions(argc, argv,
                               " LLVM automatic testcase reducer. See\nhttp://"
                               "llvm.cs.uiuc.edu/docs/CommandGuide/bugpoint.html"
                               " for more information.\n");
   sys::PrintStackTraceOnErrorSignal();
-
+  sys::SetInterruptFunction(BugpointInterruptFunction);
+  
   BugDriver D(argv[0]);
   if (D.addSources(InputFilenames)) return 1;
   D.addPasses(PassList.begin(), PassList.end());

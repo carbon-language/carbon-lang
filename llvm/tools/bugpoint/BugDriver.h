@@ -35,6 +35,10 @@ class GCC;
 
 extern bool DisableSimplifyCFG;
 
+/// BugpointIsInterrupted - Set to true when the user presses ctrl-c.
+///
+extern bool BugpointIsInterrupted;
+
 class BugDriver {
   const std::string ToolName;  // Name of bugpoint
   std::string ReferenceOutputFile; // Name of `good' output file

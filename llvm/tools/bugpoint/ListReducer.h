@@ -19,6 +19,8 @@
 #include <iostream>
 
 namespace llvm {
+  
+  extern bool BugpointIsInterrupted;
 
 template<typename ElTy>
 struct ListReducer {
@@ -62,6 +64,12 @@ struct ListReducer {
 
     unsigned MidTop = TheList.size();
     while (MidTop > 1) {
+      // Halt if the user presses ctrl-c.
+      if (BugpointIsInterrupted) {
+        std::cerr << "\n\n*** Reduction Interrupted, cleaning up...\n\n";
+        return true;
+      }
+      
       unsigned Mid = MidTop / 2;
       std::vector<ElTy> Prefix(TheList.begin(), TheList.begin()+Mid);
       std::vector<ElTy> Suffix(TheList.begin()+Mid, TheList.end());
@@ -97,6 +105,11 @@ struct ListReducer {
         Changed = false;
         std::vector<ElTy> TrimmedList;
         for (unsigned i = 1; i < TheList.size()-1; ++i) { // Check interior elts
+          if (BugpointIsInterrupted) {
+            std::cerr << "\n\n*** Reduction Interrupted, cleaning up...\n\n";
+            return true;
+          }
+          
           std::vector<ElTy> TestList(TheList);
           TestList.erase(TestList.begin()+i);
 

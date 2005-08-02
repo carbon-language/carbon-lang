@@ -261,8 +261,6 @@ bool ReduceCrashingBlocks::TestBlocks(std::vector<const BasicBlock*> &BBs) {
 /// on a program, try to destructively reduce the program while still keeping
 /// the predicate true.
 static bool DebugACrash(BugDriver &BD,  bool (*TestFn)(BugDriver &, Module *)) {
-  bool AnyReduction = false;
-
   // See if we can get away with nuking all of the global variable initializers
   // in the program...
   if (BD.getProgram()->global_begin() != BD.getProgram()->global_end()) {
@@ -282,7 +280,6 @@ static bool DebugACrash(BugDriver &BD,  bool (*TestFn)(BugDriver &, Module *)) {
       std::cout << "\nChecking to see if we can delete global inits: ";
       if (TestFn(BD, M)) {  // Still crashes?
         BD.setNewProgram(M);
-        AnyReduction = true;
         std::cout << "\n*** Able to remove all global initializers!\n";
       } else {                       // No longer crashes?
         std::cout << "  - Removing all global inits hides problem!\n";
@@ -298,17 +295,15 @@ static bool DebugACrash(BugDriver &BD,  bool (*TestFn)(BugDriver &, Module *)) {
     if (!I->isExternal())
       Functions.push_back(I);
 
-  if (Functions.size() > 1) {
+  if (Functions.size() > 1 && !BugpointIsInterrupted) {
     std::cout << "\n*** Attempting to reduce the number of functions "
       "in the testcase\n";
 
     unsigned OldSize = Functions.size();
     ReduceCrashingFunctions(BD, TestFn).reduceList(Functions);
 
-    if (Functions.size() < OldSize) {
+    if (Functions.size() < OldSize)
       BD.EmitProgressBytecode("reduced-function");
-      AnyReduction = true;
-    }
   }
 
   // Attempt to delete entire basic blocks at a time to speed up
@@ -316,7 +311,7 @@ static bool DebugACrash(BugDriver &BD,  bool (*TestFn)(BugDriver &, Module *)) {
   // to a return instruction then running simplifycfg, which can potentially
   // shrinks the code dramatically quickly
   //
-  if (!DisableSimplifyCFG) {
+  if (!DisableSimplifyCFG && !BugpointIsInterrupted) {
     std::vector<const BasicBlock*> Blocks;
     for (Module::const_iterator I = BD.getProgram()->begin(),
            E = BD.getProgram()->end(); I != E; ++I)
@@ -329,6 +324,7 @@ static bool DebugACrash(BugDriver &BD,  bool (*TestFn)(BugDriver &, Module *)) {
   // larger chunks of instructions at a time!
   unsigned Simplification = 2;
   do {
+    if (BugpointIsInterrupted) break;
     --Simplification;
     std::cout << "\n*** Attempting to reduce testcase by deleting instruc"
               << "tions: Simplification Level #" << Simplification << '\n';
@@ -357,6 +353,8 @@ static bool DebugACrash(BugDriver &BD,  bool (*TestFn)(BugDriver &, Module *)) {
             if (InstructionsToSkipBeforeDeleting) {
               --InstructionsToSkipBeforeDeleting;
             } else {
+              if (BugpointIsInterrupted) goto ExitLoops;
+
               std::cout << "Checking instruction '" << I->getName() << "': ";
               Module *M = BD.deleteInstructionFromProgram(I, Simplification);
 
@@ -365,7 +363,6 @@ static bool DebugACrash(BugDriver &BD,  bool (*TestFn)(BugDriver &, Module *)) {
                 // Yup, it does, we delete the old module, and continue trying
                 // to reduce the testcase...
                 BD.setNewProgram(M);
-                AnyReduction = true;
                 InstructionsToSkipBeforeDeleting = CurInstructionNum;
                 goto TryAgain;  // I wish I had a multi-level break here!
               }
@@ -381,22 +378,23 @@ static bool DebugACrash(BugDriver &BD,  bool (*TestFn)(BugDriver &, Module *)) {
     }
 
   } while (Simplification);
+ExitLoops:
 
   // Try to clean up the testcase by running funcresolve and globaldce...
-  std::cout << "\n*** Attempting to perform final cleanups: ";
-  Module *M = CloneModule(BD.getProgram());
-  M = BD.performFinalCleanups(M, true);
+  if (!BugpointIsInterrupted) {
+    std::cout << "\n*** Attempting to perform final cleanups: ";
+    Module *M = CloneModule(BD.getProgram());
+    M = BD.performFinalCleanups(M, true);
 
-  // Find out if the pass still crashes on the cleaned up program...
-  if (TestFn(BD, M)) {
-    BD.setNewProgram(M);     // Yup, it does, keep the reduced version...
-    AnyReduction = true;
-  } else {
-    delete M;
+    // Find out if the pass still crashes on the cleaned up program...
+    if (TestFn(BD, M)) {
+      BD.setNewProgram(M);     // Yup, it does, keep the reduced version...
+    } else {
+      delete M;
+    }
   }
 
-  if (AnyReduction)
-    BD.EmitProgressBytecode("reduced-simplified");
+  BD.EmitProgressBytecode("reduced-simplified");
 
   return false;
 }
@@ -414,7 +412,8 @@ bool BugDriver::debugOptimizerCrash() {
 
   // Reduce the list of passes which causes the optimizer to crash...
   unsigned OldSize = PassesToRun.size();
-  ReducePassList(*this).reduceList(PassesToRun);
+  if (!BugpointIsInterrupted)
+    ReducePassList(*this).reduceList(PassesToRun);
 
   std::cout << "\n*** Found crashing pass"
             << (PassesToRun.size() == 1 ? ": " : "es: ")

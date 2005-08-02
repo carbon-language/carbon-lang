@@ -407,6 +407,8 @@ bool ReduceMiscompiledBlocks::TestFuncs(const std::vector<BasicBlock*> &BBs) {
 static bool ExtractBlocks(BugDriver &BD,
                           bool (*TestFn)(BugDriver &, Module *, Module *),
                           std::vector<Function*> &MiscompiledFunctions) {
+  if (BugpointIsInterrupted) return false;
+  
   std::vector<BasicBlock*> Blocks;
   for (unsigned i = 0, e = MiscompiledFunctions.size(); i != e; ++i)
     for (Function::iterator I = MiscompiledFunctions[i]->begin(),
@@ -493,7 +495,8 @@ DebugAMiscompilation(BugDriver &BD,
       MiscompiledFunctions.push_back(I);
 
   // Do the reduction...
-  ReduceMiscompilingFunctions(BD, TestFn).reduceList(MiscompiledFunctions);
+  if (!BugpointIsInterrupted)
+    ReduceMiscompilingFunctions(BD, TestFn).reduceList(MiscompiledFunctions);
 
   std::cout << "\n*** The following function"
             << (MiscompiledFunctions.size() == 1 ? " is" : "s are")
@@ -513,7 +516,8 @@ DebugAMiscompilation(BugDriver &BD,
     DisambiguateGlobalSymbols(BD.getProgram());
 
     // Do the reduction...
-    ReduceMiscompilingFunctions(BD, TestFn).reduceList(MiscompiledFunctions);
+    if (!BugpointIsInterrupted)
+      ReduceMiscompilingFunctions(BD, TestFn).reduceList(MiscompiledFunctions);
 
     std::cout << "\n*** The following function"
               << (MiscompiledFunctions.size() == 1 ? " is" : "s are")
@@ -570,11 +574,12 @@ static bool TestOptimizer(BugDriver &BD, Module *Test, Module *Safe) {
 ///
 bool BugDriver::debugMiscompilation() {
   // Make sure something was miscompiled...
-  if (!ReduceMiscompilingPasses(*this).reduceList(PassesToRun)) {
-    std::cerr << "*** Optimized program matches reference output!  No problem "
-              << "detected...\nbugpoint can't help you with your problem!\n";
-    return false;
-  }
+  if (!BugpointIsInterrupted)
+    if (!ReduceMiscompilingPasses(*this).reduceList(PassesToRun)) {
+      std::cerr << "*** Optimized program matches reference output!  No problem"
+                << " detected...\nbugpoint can't help you with your problem!\n";
+      return false;
+    }
 
   std::cout << "\n*** Found miscompiling pass"
             << (getPassesToRun().size() == 1 ? "" : "es") << ": "
@@ -663,7 +668,7 @@ static void CleanupAndPrepareModules(BugDriver &BD, Module *&Test,
   for (Module::iterator F = Safe->begin(), E = Safe->end(); F != E; ++F) {
     if (F->isExternal() && !F->use_empty() && &*F != resolverFunc &&
         F->getIntrinsicID() == 0 /* ignore intrinsics */) {
-      Function *TestFn = Test->getFunction(F->getName(), F->getFunctionType());
+      Function *TestFn = Test->getNamedFunction(F->getName());
 
       // Don't forward functions which are external in the test module too.
       if (TestFn && !TestFn->isExternal()) {
