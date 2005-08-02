@@ -251,6 +251,9 @@ void LoopStrengthReduce::AnalyzeGetElementPtrUsers(GetElementPtrInst *GEP,
                                                                 UIntPtrTy));
     } else {
       SCEVHandle Idx = SE->getSCEV(GEP->getOperand(i));
+
+      // If this operand is reducible, and it's not the one we are looking at
+      // currently, do not process the GEP at this time.
       if (CanReduceSCEV(Idx, L))
         return;
       Base = SCEVAddExpr::get(Base, GetAdjustedIndex(Idx,
@@ -287,6 +290,13 @@ void LoopStrengthReduce::AnalyzeGetElementPtrUsers(GetElementPtrInst *GEP,
 
   assert(CanReduceSCEV(GEPIndexExpr, L) && "Non reducible idx??");
 
+  // FIXME: If the base is not loop invariant, we currently cannot emit this.
+  if (!Base->isLoopInvariant(L)) {
+    DEBUG(std::cerr << "IGNORING GEP due to non-invaiant base: "
+                    << *Base << "\n");
+    return;
+  }
+  
   Base = SCEVAddExpr::get(Base, cast<SCEVAddRecExpr>(GEPIndexExpr)->getStart());
   SCEVHandle Stride = cast<SCEVAddRecExpr>(GEPIndexExpr)->getOperand(1);
 
