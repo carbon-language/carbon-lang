@@ -1,5 +1,6 @@
 ; All of these ands and shifts should be folded into rlwimi's
-; RUN: llvm-as < rlwimi.ll | llc -march=ppc32 | not grep and
+; RUN: llvm-as < rlwimi.ll | llc -march=ppc32 | not grep and && 
+; RUN: llvm-as < rlwimi.ll | llc -march=ppc32 | grep rlwimi | wc -l | grep 8
 
 implementation   ; Functions:
 
@@ -53,10 +54,19 @@ entry:
 	ret int %tmp.9
 }
 
-int %test9(int %x, int %y) {
+int %test7(int %x, int %y) {
 entry:
 	%tmp.2 = and int %x, -65536		; <int> [#uses=1]
 	%tmp.5 = and int %y, 65535		; <int> [#uses=1]
 	%tmp.7 = or int %tmp.5, %tmp.2		; <int> [#uses=1]
 	ret int %tmp.7
+}
+
+uint %test8(uint %bar) {
+entry:
+	%tmp.3 = shl uint %bar, ubyte 1		; <uint> [#uses=1]
+	%tmp.4 = and uint %tmp.3, 2		; <uint> [#uses=1]
+	%tmp.6 = and uint %bar, 4294967293		; <uint> [#uses=1]
+	%tmp.7 = or uint %tmp.4, %tmp.6		; <uint> [#uses=1]
+	ret uint %tmp.7
 }
