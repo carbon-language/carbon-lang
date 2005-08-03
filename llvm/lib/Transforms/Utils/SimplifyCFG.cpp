@@ -805,7 +805,7 @@ static bool FoldValueComparisonIntoPredecessors(TerminatorInst *TI) {
   return Changed;
 }
 
-/// HoistThenElseCodeToIf - Given a conditional branch that codes to BB1 and
+/// HoistThenElseCodeToIf - Given a conditional branch that goes to BB1 and
 /// BB2, hoist any common code in the two blocks up into the branch block.  The
 /// caller of this function guarantees that BI's block dominates BB1 and BB2.
 static bool HoistThenElseCodeToIf(BranchInst *BI) {
@@ -818,7 +818,8 @@ static bool HoistThenElseCodeToIf(BranchInst *BI) {
   BasicBlock *BB2 = BI->getSuccessor(1);  // The false destination
 
   Instruction *I1 = BB1->begin(), *I2 = BB2->begin();
-  if (I1->getOpcode() != I2->getOpcode() || !I1->isIdenticalTo(I2))
+  if (I1->getOpcode() != I2->getOpcode() || !I1->isIdenticalTo(I2) ||
+      isa<PHINode>(I1))
     return false;
 
   // If we get here, we can hoist at least one instruction.
