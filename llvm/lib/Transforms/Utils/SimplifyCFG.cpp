@@ -67,55 +67,25 @@ static void AddPredecessorToBlock(BasicBlock *Succ, BasicBlock *NewPred,
   }
 }
 
-// PropagatePredecessorsForPHIs - This gets "Succ" ready to have the
-// predecessors from "BB".  This is a little tricky because "Succ" has PHI
-// nodes, which need to have extra slots added to them to hold the merge edges
-// from BB's predecessors, and BB itself might have had PHI nodes in it.  This
-// function returns true (failure) if the Succ BB already has a predecessor that
-// is a predecessor of BB and incoming PHI arguments would not be discernible.
+// CanPropagatePredecessorsForPHIs - Return true if we can fold BB, an
+// almost-empty BB ending in an unconditional branch to Succ, into succ.
 //
 // Assumption: Succ is the single successor for BB.
 //
-static bool PropagatePredecessorsForPHIs(BasicBlock *BB, BasicBlock *Succ) {
+static bool CanPropagatePredecessorsForPHIs(BasicBlock *BB, BasicBlock *Succ) {
   assert(*succ_begin(BB) == Succ && "Succ is not successor of BB!");
 
   if (!isa<PHINode>(Succ->front()))
-    return false;  // We can make the transformation, no problem.
-
-  // If there is more than one predecessor, and there are PHI nodes in
-  // the successor, then we need to add incoming edges for the PHI nodes
-  //
-  const std::vector<BasicBlock*> BBPreds(pred_begin(BB), pred_end(BB));
+    return true;  // We can make the transformation, no problem.
 
   // Check to see if one of the predecessors of BB is already a predecessor of
   // Succ.  If so, we cannot do the transformation if there are any PHI nodes
   // with incompatible values coming in from the two edges!
   //
   if (!SafeToMergeTerminators(BB->getTerminator(), Succ->getTerminator()))
-    return true;   // Cannot merge.
+    return false;   // Cannot merge.
 
-  // Loop over all of the PHI nodes in the successor BB.
-  for (BasicBlock::iterator I = Succ->begin(); isa<PHINode>(I); ++I) {
-    PHINode *PN = cast<PHINode>(I);
-    Value *OldVal = PN->removeIncomingValue(BB, false);
-    assert(OldVal && "No entry in PHI for Pred BB!");
-
-    // If this incoming value is one of the PHI nodes in BB, the new entries in
-    // the PHI node are the entries from the old PHI.
-    if (isa<PHINode>(OldVal) && cast<PHINode>(OldVal)->getParent() == BB) {
-      PHINode *OldValPN = cast<PHINode>(OldVal);
-      for (unsigned i = 0, e = OldValPN->getNumIncomingValues(); i != e; ++i)
-        PN->addIncoming(OldValPN->getIncomingValue(i),
-                        OldValPN->getIncomingBlock(i));
-    } else {
-      for (std::vector<BasicBlock*>::const_iterator PredI = BBPreds.begin(),
-             End = BBPreds.end(); PredI != End; ++PredI) {
-        // Add an incoming value for each of the new incoming values...
-        PN->addIncoming(OldVal, *PredI);
-      }
-    }
-  }
-  return false;
+  return true;
 }
 
 /// TryToSimplifyUncondBranchFromEmptyBlock - BB contains an unconditional
@@ -128,9 +98,38 @@ static bool TryToSimplifyUncondBranchFromEmptyBlock(BasicBlock *BB,
   // if this transformation fails (returns true) then we cannot do this
   // transformation!
   //
-  if (PropagatePredecessorsForPHIs(BB, Succ)) return false;
+  if (!CanPropagatePredecessorsForPHIs(BB, Succ)) return false;
   
   DEBUG(std::cerr << "Killing Trivial BB: \n" << *BB);
+  
+  if (isa<PHINode>(Succ->begin())) {
+    // If there is more than one pred of succ, and there are PHI nodes in
+    // the successor, then we need to add incoming edges for the PHI nodes
+    //
+    const std::vector<BasicBlock*> BBPreds(pred_begin(BB), pred_end(BB));
+    
+    // Loop over all of the PHI nodes in the successor of BB.
+    for (BasicBlock::iterator I = Succ->begin(); isa<PHINode>(I); ++I) {
+      PHINode *PN = cast<PHINode>(I);
+      Value *OldVal = PN->removeIncomingValue(BB, false);
+      assert(OldVal && "No entry in PHI for Pred BB!");
+      
+      // If this incoming value is one of the PHI nodes in BB, the new entries in
+      // the PHI node are the entries from the old PHI.
+      if (isa<PHINode>(OldVal) && cast<PHINode>(OldVal)->getParent() == BB) {
+        PHINode *OldValPN = cast<PHINode>(OldVal);
+        for (unsigned i = 0, e = OldValPN->getNumIncomingValues(); i != e; ++i)
+          PN->addIncoming(OldValPN->getIncomingValue(i),
+                          OldValPN->getIncomingBlock(i));
+      } else {
+        for (std::vector<BasicBlock*>::const_iterator PredI = BBPreds.begin(),
+             End = BBPreds.end(); PredI != End; ++PredI) {
+          // Add an incoming value for each of the new incoming values...
+          PN->addIncoming(OldVal, *PredI);
+        }
+      }
+    }
+  }
   
   if (isa<PHINode>(&BB->front())) {
     std::vector<BasicBlock*>
