@@ -91,6 +91,66 @@ static bool PropagatePredecessorsForPHIs(BasicBlock *BB, BasicBlock *Succ) {
   return false;
 }
 
+/// TryToSimplifyUncondBranchFromEmptyBlock - BB contains an unconditional
+/// branch to Succ, and contains no instructions other than PHI nodes and the
+/// branch.  If possible, eliminate BB.
+static bool TryToSimplifyUncondBranchFromEmptyBlock(BasicBlock *BB,
+                                                    BasicBlock *Succ) {
+  // If our successor has PHI nodes, then we need to update them to include
+  // entries for BB's predecessors, not for BB itself.  Be careful though,
+  // if this transformation fails (returns true) then we cannot do this
+  // transformation!
+  //
+  if (PropagatePredecessorsForPHIs(BB, Succ)) return false;
+  
+  DEBUG(std::cerr << "Killing Trivial BB: \n" << *BB);
+  
+  if (isa<PHINode>(&BB->front())) {
+    std::vector<BasicBlock*>
+    OldSuccPreds(pred_begin(Succ), pred_end(Succ));
+    
+    // Move all PHI nodes in BB to Succ if they are alive, otherwise
+    // delete them.
+    while (PHINode *PN = dyn_cast<PHINode>(&BB->front()))
+      if (PN->use_empty() /*|| Succ->getSinglePredecessor() == 0*/) {
+        // We can only move the PHI node into Succ if BB dominates Succ.
+        // Since BB only has a single successor (Succ), the PHI nodes
+        // will dominate Succ, unless Succ has multiple predecessors.  In
+        // this case, the PHIs are either dead, or have references in dead
+        // blocks.  In either case, we can just remove them.
+        if (!PN->use_empty())   // Uses in dead block?
+          PN->replaceAllUsesWith(UndefValue::get(PN->getType()));
+        PN->eraseFromParent();  // Nuke instruction.
+      } else {
+        // The instruction is alive, so this means that Succ must have
+        // *ONLY* had BB as a predecessor, and the PHI node is still valid
+        // now.  Simply move it into Succ, because we know that BB
+        // strictly dominated Succ.
+        BB->getInstList().remove(BB->begin());
+        Succ->getInstList().push_front(PN);
+        
+        // We need to add new entries for the PHI node to account for
+        // predecessors of Succ that the PHI node does not take into
+        // account.  At this point, since we know that BB dominated succ,
+        // this means that we should any newly added incoming edges should
+        // use the PHI node as the value for these edges, because they are
+        // loop back edges.
+        for (unsigned i = 0, e = OldSuccPreds.size(); i != e; ++i)
+          if (OldSuccPreds[i] != BB)
+            PN->addIncoming(PN, OldSuccPreds[i]);
+      }
+  }
+    
+  // Everything that jumped to BB now goes to Succ.
+  std::string OldName = BB->getName();
+  BB->replaceAllUsesWith(Succ);
+  BB->eraseFromParent();              // Delete the old basic block.
+  
+  if (!OldName.empty() && !Succ->hasName())  // Transfer name if we can
+    Succ->setName(OldName);
+  return true;
+}
+
 /// GetIfCondition - Given a basic block (BB) with two predecessors (and
 /// presumably PHI nodes in it), check to see if the merge at this block is due
 /// to an "if condition".  If so, return the boolean condition that determines
@@ -820,7 +880,6 @@ namespace {
   };
 }
 
-
 // SimplifyCFG - This function is used to do simplification of a CFG.  For
 // example, it adjusts branches to branches to eliminate the extra hop, it
 // eliminates unreachable basic blocks, and does other "peephole" optimization
@@ -867,73 +926,6 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
   // Check to see if we can constant propagate this terminator instruction
   // away...
   Changed |= ConstantFoldTerminator(BB);
-
-  // Check to see if this block has no non-phi instructions and only a single
-  // successor.  If so, replace references to this basic block with references
-  // to the successor.
-  succ_iterator SI(succ_begin(BB));
-  if (SI != succ_end(BB) && ++SI == succ_end(BB)) {  // One succ?
-    BasicBlock::iterator BBI = BB->begin();  // Skip over phi nodes...
-    while (isa<PHINode>(*BBI)) ++BBI;
-
-    BasicBlock *Succ = *succ_begin(BB); // There is exactly one successor.
-    if (BBI->isTerminator() &&  // Terminator is the only non-phi instruction!
-        Succ != BB) {           // Don't hurt infinite loops!
-      // If our successor has PHI nodes, then we need to update them to include
-      // entries for BB's predecessors, not for BB itself.  Be careful though,
-      // if this transformation fails (returns true) then we cannot do this
-      // transformation!
-      //
-      if (!PropagatePredecessorsForPHIs(BB, Succ)) {
-        DEBUG(std::cerr << "Killing Trivial BB: \n" << *BB);
-
-        if (isa<PHINode>(&BB->front())) {
-          std::vector<BasicBlock*>
-            OldSuccPreds(pred_begin(Succ), pred_end(Succ));
-
-          // Move all PHI nodes in BB to Succ if they are alive, otherwise
-          // delete them.
-          while (PHINode *PN = dyn_cast<PHINode>(&BB->front()))
-            if (PN->use_empty() /*|| Succ->getSinglePredecessor() == 0*/) {
-              // We can only move the PHI node into Succ if BB dominates Succ.
-              // Since BB only has a single successor (Succ), the PHI nodes
-              // will dominate Succ, unless Succ has multiple predecessors.  In
-              // this case, the PHIs are either dead, or have references in dead
-              // blocks.  In either case, we can just remove them.
-              if (!PN->use_empty())   // Uses in dead block?
-                PN->replaceAllUsesWith(UndefValue::get(PN->getType()));
-              PN->eraseFromParent();  // Nuke instruction.
-            } else {
-              // The instruction is alive, so this means that Succ must have
-              // *ONLY* had BB as a predecessor, and the PHI node is still valid
-              // now.  Simply move it into Succ, because we know that BB
-              // strictly dominated Succ.
-              BB->getInstList().remove(BB->begin());
-              Succ->getInstList().push_front(PN);
-
-              // We need to add new entries for the PHI node to account for
-              // predecessors of Succ that the PHI node does not take into
-              // account.  At this point, since we know that BB dominated succ,
-              // this means that we should any newly added incoming edges should
-              // use the PHI node as the value for these edges, because they are
-              // loop back edges.
-              for (unsigned i = 0, e = OldSuccPreds.size(); i != e; ++i)
-                if (OldSuccPreds[i] != BB)
-                  PN->addIncoming(PN, OldSuccPreds[i]);
-            }
-        }
-
-        // Everything that jumped to BB now goes to Succ.
-        std::string OldName = BB->getName();
-        BB->replaceAllUsesWith(Succ);
-        BB->eraseFromParent();              // Delete the old basic block.
-
-        if (!OldName.empty() && !Succ->hasName())  // Transfer name if we can
-          Succ->setName(OldName);
-        return true;
-      }
-    }
-  }
 
   // If this is a returning block with only PHI nodes in it, fold the return
   // instruction into any unconditional branch predecessors.
@@ -1105,7 +1097,17 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
           return SimplifyCFG(BB) || 1;
     }
   } else if (BranchInst *BI = dyn_cast<BranchInst>(BB->getTerminator())) {
-    if (BI->isConditional()) {
+    if (BI->isUnconditional()) {
+      BasicBlock::iterator BBI = BB->begin();  // Skip over phi nodes...
+      while (isa<PHINode>(*BBI)) ++BBI;
+
+      BasicBlock *Succ = BI->getSuccessor(0);
+      if (BBI->isTerminator() &&  // Terminator is the only non-phi instruction!
+          Succ != BB)             // Don't hurt infinite loops!
+        if (TryToSimplifyUncondBranchFromEmptyBlock(BB, Succ))
+          return 1;
+      
+    } else {  // Conditional branch
       if (Value *CompVal = isValueEqualityComparison(BI)) {
         // If we only have one predecessor, and if it is a branch on this value,
         // see if that predecessor totally determines the outcome of this
@@ -1180,15 +1182,7 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
       // If this block ends with a branch instruction, and if there is one
       // predecessor, see if the previous block ended with a branch on the same
       // condition, which makes this conditional branch redundant.
-      pred_iterator PI(pred_begin(BB)), PE(pred_end(BB));
-      BasicBlock *OnlyPred = *PI++;
-      for (; PI != PE; ++PI)// Search all predecessors, see if they are all same
-        if (*PI != OnlyPred) {
-          OnlyPred = 0;       // There are multiple different predecessors...
-          break;
-        }
-
-      if (OnlyPred)
+      if (BasicBlock *OnlyPred = BB->getSinglePredecessor())
         if (BranchInst *PBI = dyn_cast<BranchInst>(OnlyPred->getTerminator()))
           if (PBI->isConditional() &&
               PBI->getCondition() == BI->getCondition() &&
