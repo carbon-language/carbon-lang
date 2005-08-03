@@ -554,24 +554,25 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(Value *Stride,
    SomeLoopPHI->getIncomingBlock(SomeLoopPHI->getIncomingBlock(0) == Preheader);
 
   // FIXME: This loop needs increasing levels of intelligence.
-  // STAGE 0: just emit everything as its own base.  <-- We are here
+  // STAGE 0: just emit everything as its own base.
   // STAGE 1: factor out common vars from bases, and try and push resulting
-  //          constants into Imm field.
+  //          constants into Imm field.  <-- We are here
   // STAGE 2: factor out large constants to try and make more constants
   //          acceptable for target loads and stores.
-  std::sort(UsersToProcess.begin(), UsersToProcess.end());
 
+  // Sort by the base value, so that all IVs with identical bases are next to
+  // each other.  
+  std::sort(UsersToProcess.begin(), UsersToProcess.end());
   while (!UsersToProcess.empty()) {
+    SCEVHandle Base = UsersToProcess.front().first;
+    
     // Create a new Phi for this base, and stick it in the loop header.
-    Value *Replaced = UsersToProcess.front().second.OperandValToReplace;
-    const Type *ReplacedTy = Replaced->getType();
-    PHINode *NewPHI = new PHINode(ReplacedTy, Replaced->getName()+".str",
-                                  PhiInsertBefore);
+    const Type *ReplacedTy = Base->getType();
+    PHINode *NewPHI = new PHINode(ReplacedTy, "iv.", PhiInsertBefore);
 
     // Emit the initial base value into the loop preheader, and add it to the
     // Phi node.
-    Value *BaseV = Rewriter.expandCodeFor(UsersToProcess.front().first,
-                                          PreInsertPt, ReplacedTy);
+    Value *BaseV = Rewriter.expandCodeFor(Base, PreInsertPt, ReplacedTy);
     NewPHI->addIncoming(BaseV, Preheader);
 
     // Emit the increment of the base value before the terminator of the loop
@@ -585,28 +586,31 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(Value *Stride,
     NewPHI->addIncoming(IncV, LatchBlock);
 
     // Emit the code to add the immediate offset to the Phi value, just before
-    // the instruction that we identified as using this stride and base.
-    // First, empty the SCEVExpander's expression map  so that we are guaranteed
-    // to have the code emitted where we expect it.
-    Rewriter.clear();
-    SCEVHandle NewValSCEV = SCEVAddExpr::get(SCEVUnknown::get(NewPHI),
-                                             UsersToProcess.front().second.Imm);
-    Value *newVal = Rewriter.expandCodeFor(NewValSCEV,
-                                           UsersToProcess.front().second.Inst,
-                                           ReplacedTy);
+    // the instructions that we identified as using this stride and base.
+    while (!UsersToProcess.empty() && UsersToProcess.front().first == Base) {
+      BasedUser &User = UsersToProcess.front().second;
 
-    // Replace the use of the operand Value with the new Phi we just created.
-    DEBUG(std::cerr << "REPLACING: " << *Replaced << "IN: " <<
-          *UsersToProcess.front().second.Inst << "WITH: "<< *newVal << '\n');
-    UsersToProcess.front().second.Inst->replaceUsesOfWith(Replaced, newVal);
+      // Clear the SCEVExpander's expression map so that we are guaranteed
+      // to have the code emitted where we expect it.
+      Rewriter.clear();
+      SCEVHandle NewValSCEV = SCEVAddExpr::get(SCEVUnknown::get(NewPHI),
+                                               User.Imm);
+      Value *Replaced = UsersToProcess.front().second.OperandValToReplace;
+      Value *newVal = Rewriter.expandCodeFor(NewValSCEV, User.Inst,
+                                             Replaced->getType());
 
-    // Mark old value we replaced as possibly dead, so that it is elminated
-    // if we just replaced the last use of that value.
-    DeadInsts.insert(cast<Instruction>(Replaced));
+      // Replace the use of the operand Value with the new Phi we just created.
+      DEBUG(std::cerr << "REPLACING: " << *Replaced << "IN: " <<
+            *User.Inst << "WITH: "<< *newVal << '\n');
+      User.Inst->replaceUsesOfWith(Replaced, newVal);
 
-    UsersToProcess.erase(UsersToProcess.begin());
-    ++NumReduced;
+      // Mark old value we replaced as possibly dead, so that it is elminated
+      // if we just replaced the last use of that value.
+      DeadInsts.insert(cast<Instruction>(Replaced));
 
+      UsersToProcess.erase(UsersToProcess.begin());
+      ++NumReduced;
+    }
     // TODO: Next, find out which base index is the most common, pull it out.
   }
 
