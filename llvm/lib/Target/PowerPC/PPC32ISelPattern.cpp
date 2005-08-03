@@ -36,7 +36,7 @@
 using namespace llvm;
 
 
-// IsRunOfOnes - returns true if Val consists of one contiguous run of 1's with
+// IsRunOfOnes - Returns true if Val consists of one contiguous run of 1's with
 // any number of 0's on either side.  the 1's are allowed to wrap from LSB to
 // MSB.  so 0x000FFF0, 0x0000FFFF, and 0xFF0000FF are all runs.  0x0F0F0000 is
 // not, since all 1's are not contiguous.
