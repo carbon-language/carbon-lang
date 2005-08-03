@@ -60,7 +60,7 @@ unsigned AlphaTargetMachine::getJITMatchQuality() {
 
 AlphaTargetMachine::AlphaTargetMachine( const Module &M, IntrinsicLowering *IL)
   : TargetMachine("alpha", IL, true),
-    FrameInfo(TargetFrameInfo::StackGrowsDown, 8, 0), //TODO: check these
+    FrameInfo(TargetFrameInfo::StackGrowsDown, 16, 0),
     JITInfo(*this)
 {}
 
