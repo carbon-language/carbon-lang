@@ -153,8 +153,8 @@ static bool TryToSimplifyUncondBranchFromEmptyBlock(BasicBlock *BB,
         // *ONLY* had BB as a predecessor, and the PHI node is still valid
         // now.  Simply move it into Succ, because we know that BB
         // strictly dominated Succ.
-        BB->getInstList().remove(BB->begin());
-        Succ->getInstList().push_front(PN);
+        Succ->getInstList().splice(Succ->begin(),
+                                   BB->getInstList(), BB->begin());
         
         // We need to add new entries for the PHI node to account for
         // predecessors of Succ that the PHI node does not take into
