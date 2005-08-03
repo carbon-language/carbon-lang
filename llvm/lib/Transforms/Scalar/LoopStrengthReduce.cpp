@@ -149,7 +149,8 @@ DeleteTriviallyDeadInstructions(std::set<Instruction*> &Insts) {
       for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
         if (Instruction *U = dyn_cast<Instruction>(I->getOperand(i)))
           Insts.insert(U);
-      I->getParent()->getInstList().erase(I);
+      SE->deleteInstructionFromRecords(I);
+      I->eraseFromParent();
       Changed = true;
     }
   }
@@ -661,6 +662,7 @@ void LoopStrengthReduce::runOnLoop(Loop *L) {
             DeadInsts.insert(BO);
             // Break the cycle, then delete the PHI.
             PN->replaceAllUsesWith(UndefValue::get(PN->getType()));
+            SE->deleteInstructionFromRecords(PN);
             PN->eraseFromParent();
           }
         }
