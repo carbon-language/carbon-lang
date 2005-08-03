@@ -15,6 +15,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "loop-reduce"
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Constants.h"
 #include "llvm/Instructions.h"
@@ -553,6 +554,8 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(Value *Stride,
   BasicBlock *LatchBlock =
    SomeLoopPHI->getIncomingBlock(SomeLoopPHI->getIncomingBlock(0) == Preheader);
 
+  DEBUG(std::cerr << "INSERTING IVs of STRIDE " << *Stride << ":\n");
+  
   // FIXME: This loop needs increasing levels of intelligence.
   // STAGE 0: just emit everything as its own base.
   // STAGE 1: factor out common vars from bases, and try and push resulting
@@ -565,7 +568,9 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(Value *Stride,
   std::sort(UsersToProcess.begin(), UsersToProcess.end());
   while (!UsersToProcess.empty()) {
     SCEVHandle Base = UsersToProcess.front().first;
-    
+
+    DEBUG(std::cerr << "  INSERTING PHI with BASE = " << *Base << ":\n");
+   
     // Create a new Phi for this base, and stick it in the loop header.
     const Type *ReplacedTy = Base->getType();
     PHINode *NewPHI = new PHINode(ReplacedTy, "iv.", PhiInsertBefore);
@@ -595,14 +600,14 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(Value *Stride,
       Rewriter.clear();
       SCEVHandle NewValSCEV = SCEVAddExpr::get(SCEVUnknown::get(NewPHI),
                                                User.Imm);
-      Value *Replaced = UsersToProcess.front().second.OperandValToReplace;
+      Value *Replaced = User.OperandValToReplace;
       Value *newVal = Rewriter.expandCodeFor(NewValSCEV, User.Inst,
                                              Replaced->getType());
 
       // Replace the use of the operand Value with the new Phi we just created.
-      DEBUG(std::cerr << "REPLACING: " << *Replaced << "IN: " <<
-            *User.Inst << "WITH: "<< *newVal << '\n');
       User.Inst->replaceUsesOfWith(Replaced, newVal);
+      DEBUG(std::cerr << "    CHANGED: IMM =" << *User.Imm << "  Inst = "
+            << *User.Inst);
 
       // Mark old value we replaced as possibly dead, so that it is elminated
       // if we just replaced the last use of that value.
