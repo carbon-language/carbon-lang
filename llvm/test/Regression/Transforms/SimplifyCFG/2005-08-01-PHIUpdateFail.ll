@@ -1,4 +1,5 @@
 ; RUN: llvm-as < %s | opt -simplifycfg -disable-output
+; XFAIL: *
 
 void %main() {
 entry:
