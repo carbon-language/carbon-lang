@@ -483,8 +483,7 @@ static SCEVHandle GetImmediateValues(SCEVHandle Val, bool isAddress) {
   if (isTargetConstant(Val))
     return Val;
 
-  SCEVAddExpr *SAE = dyn_cast<SCEVAddExpr>(Val);
-  if (SAE) {
+  if (SCEVAddExpr *SAE = dyn_cast<SCEVAddExpr>(Val)) {
     unsigned i = 0;
     for (; i != SAE->getNumOperands(); ++i)
       if (isTargetConstant(SAE->getOperand(i))) {
@@ -497,6 +496,9 @@ static SCEVHandle GetImmediateValues(SCEVHandle Val, bool isAddress) {
             ImmVal = SCEVAddExpr::get(ImmVal, SAE->getOperand(i));
         return ImmVal;
       }
+  } else if (SCEVAddRecExpr *SARE = dyn_cast<SCEVAddRecExpr>(Val)) {
+    // Try to pull immediates out of the start value of nested addrec's.
+    return GetImmediateValues(SARE->getStart(), isAddress);
   }
 
   return SCEVUnknown::getIntegerSCEV(0, Val->getType());
