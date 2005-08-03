@@ -50,16 +50,31 @@ namespace {
     PHINode *CachedPHINode;
     std::map<Value *, GEPCache> Map;
   };
-
-  struct IVUse {
+  
+  /// IVStrideUse - Keep track of one use of a strided induction variable, where
+  /// the stride is stored externally.  The Offset member keeps track of the 
+  /// offset from the IV, User is the actual user of the operand, and 'Operand'
+  /// is the operand # of the User that is the use.
+  struct IVStrideUse {
+    SCEVHandle Offset;
+    Instruction *User;
+    Value *OperandValToReplace;
+    
+    IVStrideUse(const SCEVHandle &Offs, Instruction *U, Value *O)
+      : Offset(Offs), User(U), OperandValToReplace(O) {}
+  };
+  
+  /// IVUsersOfOneStride - This structure keeps track of all instructions that
+  /// have an operand that is based on the trip count multiplied by some stride.
+  /// The stride for all of these users is common and kept external to this
+  /// structure.
+  struct IVUsersOfOneStride {
     /// Users - Keep track of all of the users of this stride as well as the
-    /// initial value.
-    std::vector<std::pair<SCEVHandle, Instruction*> > Users;
-    std::vector<Instruction *> UserOperands;
-
-    void addUser(SCEVHandle &SH, Instruction *U, Instruction *V) {
-      Users.push_back(std::make_pair(SH, U));
-      UserOperands.push_back(V);
+    /// initial value and the operand that uses the IV.
+    std::vector<IVStrideUse> Users;
+    
+    void addUser(const SCEVHandle &Offset,Instruction *User, Value *Operand) {
+      Users.push_back(IVStrideUse(Offset, User, Operand));
     }
   };
 
@@ -78,7 +93,7 @@ namespace {
 
     /// IVUsesByStride - Keep track of all uses of induction variables that we
     /// are interested in.  The key of the map is the stride of the access.
-    std::map<Value*, IVUse> IVUsesByStride;
+    std::map<Value*, IVUsersOfOneStride> IVUsesByStride;
 
     /// CastedBasePointers - As we need to lower getelementptr instructions, we
     /// cast the pointer input to uintptr_t.  This keeps track of the casted
@@ -120,8 +135,8 @@ namespace {
     void AnalyzeGetElementPtrUsers(GetElementPtrInst *GEP, Instruction *I,
                                    Loop *L);
 
-    void StrengthReduceStridedIVUsers(Value *Stride, IVUse &Uses, Loop *L,
-                                      bool isOnlyStride);
+    void StrengthReduceStridedIVUsers(Value *Stride, IVUsersOfOneStride &Uses,
+                                      Loop *L, bool isOnlyStride);
 
     void strengthReduceGEP(GetElementPtrInst *GEPI, Loop *L,
                            GEPCache* GEPCache,
@@ -339,7 +354,6 @@ void LoopStrengthReduce::AnalyzeGetElementPtrUsers(GetElementPtrInst *GEP,
     DEBUG(std::cerr << "FOUND USER: " << *User
           << "   OF STRIDE: " << *Step << " BASE = " << *Base << "\n");
 
-
     // Okay, we found a user that we cannot reduce.  Analyze the instruction
     // and decide what to do with it.
     IVUsesByStride[Step].addUser(Base, User, GEP);
@@ -410,8 +424,9 @@ namespace {
     /// Inst - The instruction using the induction variable.
     Instruction *Inst;
 
-    /// Op - The value to replace with the EmittedBase.
-    Value *Op;
+    /// OperandValToReplace - The operand value of Inst to replace with the
+    /// EmittedBase.
+    Value *OperandValToReplace;
 
     /// Imm - The immediate value that should be added to the base immediately
     /// before Inst, because it will be folded into the imm field of the
@@ -422,8 +437,8 @@ namespace {
     /// operation.  This is null if we should just use zero so far.
     Value *EmittedBase;
 
-    BasedUser(Instruction *I, Value *V, const SCEVHandle &IMM)
-      : Inst(I), Op(V), Imm(IMM), EmittedBase(0) {}
+    BasedUser(Instruction *I, Value *Op, const SCEVHandle &IMM)
+      : Inst(I), OperandValToReplace(Op), Imm(IMM), EmittedBase(0) {}
 
 
     // No need to compare these.
@@ -490,7 +505,8 @@ static SCEVHandle GetImmediateValues(SCEVHandle Val, bool isAddress) {
 /// stride of IV.  All of the users may have different starting values, and this
 /// may not be the only stride (we know it is if isOnlyStride is true).
 void LoopStrengthReduce::StrengthReduceStridedIVUsers(Value *Stride,
-                                                      IVUse &Uses, Loop *L,
+                                                      IVUsersOfOneStride &Uses,
+                                                      Loop *L,
                                                       bool isOnlyStride) {
   // Transform our list of users and offsets to a bit more complex table.  In
   // this new vector, the first entry for each element is the base of the
@@ -501,12 +517,12 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(Value *Stride,
   UsersToProcess.reserve(Uses.Users.size());
 
   SCEVHandle ZeroBase = SCEVUnknown::getIntegerSCEV(0,
-                                              Uses.Users[0].first->getType());
+                                              Uses.Users[0].Offset->getType());
 
   for (unsigned i = 0, e = Uses.Users.size(); i != e; ++i)
-    UsersToProcess.push_back(std::make_pair(Uses.Users[i].first,
-                                            BasedUser(Uses.Users[i].second,
-                                                      Uses.UserOperands[i],
+    UsersToProcess.push_back(std::make_pair(Uses.Users[i].Offset,
+                                            BasedUser(Uses.Users[i].User,
+                                             Uses.Users[i].OperandValToReplace,
                                                       ZeroBase)));
 
   // First pass, figure out what we can represent in the immediate fields of
@@ -547,7 +563,7 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(Value *Stride,
 
   while (!UsersToProcess.empty()) {
     // Create a new Phi for this base, and stick it in the loop header.
-    Value *Replaced = UsersToProcess.front().second.Op;
+    Value *Replaced = UsersToProcess.front().second.OperandValToReplace;
     const Type *ReplacedTy = Replaced->getType();
     PHINode *NewPHI = new PHINode(ReplacedTy, Replaced->getName()+".str",
                                   PhiInsertBefore);
@@ -630,8 +646,8 @@ void LoopStrengthReduce::runOnLoop(Loop *L) {
   // If we only have one stride, we can more aggressively eliminate some things.
   bool HasOneStride = IVUsesByStride.size() == 1;
 
-  for (std::map<Value*, IVUse>::iterator SI = IVUsesByStride.begin(),
-         E = IVUsesByStride.end(); SI != E; ++SI)
+  for (std::map<Value*, IVUsersOfOneStride>::iterator SI
+        = IVUsesByStride.begin(), E = IVUsesByStride.end(); SI != E; ++SI)
     StrengthReduceStridedIVUsers(SI->first, SI->second, L, HasOneStride);
 
   // Clean up after ourselves
