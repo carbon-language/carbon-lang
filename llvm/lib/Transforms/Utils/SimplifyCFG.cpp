@@ -98,8 +98,35 @@ static bool CanPropagatePredecessorsForPHIs(BasicBlock *BB, BasicBlock *Succ) {
         }
       }
   }
+    
+  // Finally, if BB has PHI nodes that are used by things other than the PHIs in
+  // Succ and Succ has predecessors that are not Succ and not Pred, we cannot
+  // fold these blocks, as we don't know whether BB dominates Succ or not to
+  // update the PHI nodes correctly.
+  if (!isa<PHINode>(BB->begin()) || Succ->getSinglePredecessor()) return true;
 
-  return true;
+  // If the predecessors of Succ are only BB and Succ itself, we can handle this.
+  bool IsSafe = true;
+  for (pred_iterator PI = pred_begin(Succ), E = pred_end(Succ); PI != E; ++PI)
+    if (*PI != Succ && *PI != BB) {
+      IsSafe = false;
+      break;
+    }
+  if (IsSafe) return true;
+  
+  // If the PHI nodes in BB are only used by instructions in Succ, we are ok.
+  IsSafe = true;
+  for (BasicBlock::iterator I = BB->begin(); isa<PHINode>(I) && IsSafe; ++I) {
+    PHINode *PN = cast<PHINode>(I);
+    for (Value::use_iterator UI = PN->use_begin(), E = PN->use_end(); UI != E;
+         ++UI)
+      if (cast<Instruction>(*UI)->getParent() != Succ) {
+        IsSafe = false;
+        break;
+      }
+  }
+  
+  return IsSafe;
 }
 
 /// TryToSimplifyUncondBranchFromEmptyBlock - BB contains an unconditional
