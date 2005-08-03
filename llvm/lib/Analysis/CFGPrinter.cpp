@@ -24,6 +24,7 @@
 #include "llvm/Assembly/Writer.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/GraphWriter.h"
+#include "llvm/Config/config.h"
 #include <sstream>
 #include <fstream>
 using namespace llvm;
@@ -137,6 +138,7 @@ namespace {
 /// being a 'dot' and 'gv' program in your path.
 ///
 void Function::viewCFG() const {
+#ifndef NDEBUG
   std::string Filename = "/tmp/cfg." + getName() + ".dot";
   std::cerr << "Writing '" << Filename << "'... ";
   std::ofstream F(Filename.c_str());
@@ -150,6 +152,17 @@ void Function::viewCFG() const {
   F.close();
   std::cerr << "\n";
 
+#ifdef HAVE_GRAPHVIZ
+  std::cerr << "Running 'Graphviz' program... " << std::flush;
+  if (system((LLVM_PATH_GRAPHVIZ " " + Filename).c_str())) {
+    std::cerr << "Error viewing graph: 'Graphviz' not in path?\n";
+  } else {
+    system(("rm " + Filename).c_str());
+    return;
+  }
+#endif
+  
+#ifdef HAVE_GV
   std::cerr << "Running 'dot' program... " << std::flush;
   if (system(("dot -Tps -Nfontname=Courier -Gsize=7.5,10 " + Filename
               + " > /tmp/cfg.tempgraph.ps").c_str())) {
@@ -159,6 +172,13 @@ void Function::viewCFG() const {
     system("gv /tmp/cfg.tempgraph.ps");
   }
   system(("rm " + Filename + " /tmp/cfg.tempgraph.ps").c_str());
+  return;
+#endif
+#endif
+  std::cerr << "Function::viewCFG is only available in debug builds on "
+            << "systems with Graphviz or gv!\n";
+
+  system(("rm " + Filename).c_str());
 }
 
 /// viewCFGOnly - This function is meant for use from the debugger.  It works
