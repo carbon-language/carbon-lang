@@ -24,6 +24,49 @@
 #include <map>
 using namespace llvm;
 
+/// SafeToMergeTerminators - Return true if it is safe to merge these two
+/// terminator instructions together.
+///
+static bool SafeToMergeTerminators(TerminatorInst *SI1, TerminatorInst *SI2) {
+  if (SI1 == SI2) return false;  // Can't merge with self!
+  
+  // It is not safe to merge these two switch instructions if they have a common
+  // successor, and if that successor has a PHI node, and if *that* PHI node has
+  // conflicting incoming values from the two switch blocks.
+  BasicBlock *SI1BB = SI1->getParent();
+  BasicBlock *SI2BB = SI2->getParent();
+  std::set<BasicBlock*> SI1Succs(succ_begin(SI1BB), succ_end(SI1BB));
+  
+  for (succ_iterator I = succ_begin(SI2BB), E = succ_end(SI2BB); I != E; ++I)
+    if (SI1Succs.count(*I))
+      for (BasicBlock::iterator BBI = (*I)->begin();
+           isa<PHINode>(BBI); ++BBI) {
+        PHINode *PN = cast<PHINode>(BBI);
+        if (PN->getIncomingValueForBlock(SI1BB) !=
+            PN->getIncomingValueForBlock(SI2BB))
+          return false;
+      }
+        
+  return true;
+}
+
+/// AddPredecessorToBlock - Update PHI nodes in Succ to indicate that there will
+/// now be entries in it from the 'NewPred' block.  The values that will be
+/// flowing into the PHI nodes will be the same as those coming in from
+/// ExistPred, an existing predecessor of Succ.
+static void AddPredecessorToBlock(BasicBlock *Succ, BasicBlock *NewPred,
+                                  BasicBlock *ExistPred) {
+  assert(std::find(succ_begin(ExistPred), succ_end(ExistPred), Succ) !=
+         succ_end(ExistPred) && "ExistPred is not a predecessor of Succ!");
+  if (!isa<PHINode>(Succ->begin())) return; // Quick exit if nothing to do
+  
+  for (BasicBlock::iterator I = Succ->begin(); isa<PHINode>(I); ++I) {
+    PHINode *PN = cast<PHINode>(I);
+    Value *V = PN->getIncomingValueForBlock(ExistPred);
+    PN->addIncoming(V, NewPred);
+  }
+}
+
 // PropagatePredecessorsForPHIs - This gets "Succ" ready to have the
 // predecessors from "BB".  This is a little tricky because "Succ" has PHI
 // nodes, which need to have extra slots added to them to hold the merge edges
@@ -48,24 +91,8 @@ static bool PropagatePredecessorsForPHIs(BasicBlock *BB, BasicBlock *Succ) {
   // Succ.  If so, we cannot do the transformation if there are any PHI nodes
   // with incompatible values coming in from the two edges!
   //
-  for (pred_iterator PI = pred_begin(Succ), PE = pred_end(Succ); PI != PE; ++PI)
-    if (std::find(BBPreds.begin(), BBPreds.end(), *PI) != BBPreds.end()) {
-      // Loop over all of the PHI nodes checking to see if there are
-      // incompatible values coming in.
-      for (BasicBlock::iterator I = Succ->begin(); isa<PHINode>(I); ++I) {
-        PHINode *PN = cast<PHINode>(I);
-        // Loop up the entries in the PHI node for BB and for *PI if the values
-        // coming in are non-equal, we cannot merge these two blocks (instead we
-        // should insert a conditional move or something, then merge the
-        // blocks).
-        int Idx1 = PN->getBasicBlockIndex(BB);
-        int Idx2 = PN->getBasicBlockIndex(*PI);
-        assert(Idx1 != -1 && Idx2 != -1 &&
-               "Didn't have entries for my predecessors??");
-        if (PN->getIncomingValue(Idx1) != PN->getIncomingValue(Idx2))
-          return true;  // Values are not equal...
-      }
-    }
+  if (!SafeToMergeTerminators(BB->getTerminator(), Succ->getTerminator()))
+    return true;   // Cannot merge.
 
   // Loop over all of the PHI nodes in the successor BB.
   for (BasicBlock::iterator I = Succ->begin(); isa<PHINode>(I); ++I) {
@@ -395,49 +422,6 @@ static void ErasePossiblyDeadInstructionTree(Instruction *I) {
     for (unsigned i = 0, e = Operands.size(); i != e; ++i)
       if (Instruction *OpI = dyn_cast<Instruction>(Operands[i]))
         ErasePossiblyDeadInstructionTree(OpI);
-  }
-}
-
-/// SafeToMergeTerminators - Return true if it is safe to merge these two
-/// terminator instructions together.
-///
-static bool SafeToMergeTerminators(TerminatorInst *SI1, TerminatorInst *SI2) {
-  if (SI1 == SI2) return false;  // Can't merge with self!
-
-  // It is not safe to merge these two switch instructions if they have a common
-  // successor, and if that successor has a PHI node, and if *that* PHI node has
-  // conflicting incoming values from the two switch blocks.
-  BasicBlock *SI1BB = SI1->getParent();
-  BasicBlock *SI2BB = SI2->getParent();
-  std::set<BasicBlock*> SI1Succs(succ_begin(SI1BB), succ_end(SI1BB));
-
-  for (succ_iterator I = succ_begin(SI2BB), E = succ_end(SI2BB); I != E; ++I)
-    if (SI1Succs.count(*I))
-      for (BasicBlock::iterator BBI = (*I)->begin();
-           isa<PHINode>(BBI); ++BBI) {
-        PHINode *PN = cast<PHINode>(BBI);
-        if (PN->getIncomingValueForBlock(SI1BB) !=
-            PN->getIncomingValueForBlock(SI2BB))
-          return false;
-      }
-
-  return true;
-}
-
-/// AddPredecessorToBlock - Update PHI nodes in Succ to indicate that there will
-/// now be entries in it from the 'NewPred' block.  The values that will be
-/// flowing into the PHI nodes will be the same as those coming in from
-/// ExistPred, an existing predecessor of Succ.
-static void AddPredecessorToBlock(BasicBlock *Succ, BasicBlock *NewPred,
-                                  BasicBlock *ExistPred) {
-  assert(std::find(succ_begin(ExistPred), succ_end(ExistPred), Succ) !=
-         succ_end(ExistPred) && "ExistPred is not a predecessor of Succ!");
-  if (!isa<PHINode>(Succ->begin())) return; // Quick exit if nothing to do
-
-  for (BasicBlock::iterator I = Succ->begin(); isa<PHINode>(I); ++I) {
-    PHINode *PN = cast<PHINode>(I);
-    Value *V = PN->getIncomingValueForBlock(ExistPred);
-    PN->addIncoming(V, NewPred);
   }
 }
 
