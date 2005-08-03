@@ -1471,6 +1471,13 @@ def UCOMISSrr: I<0x2E, MRMSrcReg, (ops RXMM:$dst, RXMM:$src),
 def UCOMISSrm: I<0x2E, MRMSrcMem, (ops RXMM:$dst, f32mem:$src),
                 "ucomiss {$src, $dst|$dst, $src}">, TB;
 
+// Pseudo-instructions that map to fld0 to xorps/xorpd for sse.
+// FIXME: remove when we can teach regalloc that xor reg, reg is ok.
+def FLD0SS : I<0x57, MRMSrcReg, (ops RXMM:$dst),
+                "xorps $dst, $dst">, TB;
+def FLD0SD : I<0x57, MRMSrcReg, (ops RXMM:$dst),
+                "xorpd $dst, $dst">, TB, OpSize;
+
 let isTwoAddress = 1 in {
 let isCommutable = 1 in {
 def ADDSSrr : I<0x58, MRMSrcReg, (ops RXMM:$dst, RXMM:$src1, RXMM:$src),
@@ -1489,6 +1496,10 @@ def ORPSrr : I<0x56, MRMSrcReg, (ops RXMM:$dst, RXMM:$src1, RXMM:$src),
                 "orps {$src, $dst|$dst, $src}">, TB;
 def ORPDrr : I<0x56, MRMSrcReg, (ops RXMM:$dst, RXMM:$src1, RXMM:$src),
                 "orpd {$src, $dst|$dst, $src}">, TB, OpSize;
+def XORPSrr : I<0x57, MRMSrcReg, (ops RXMM:$dst, RXMM:$src1, RXMM:$src),
+                "xorps {$src, $dst|$dst, $src}">, TB;
+def XORPDrr : I<0x57, MRMSrcReg, (ops RXMM:$dst, RXMM:$src1, RXMM:$src),
+                "xorpd {$src, $dst|$dst, $src}">, TB, OpSize;
 }
 def ANDNPSrr : I<0x55, MRMSrcReg, (ops RXMM:$dst, RXMM:$src1, RXMM:$src),
                 "andnps {$src, $dst|$dst, $src}">, TB;

@@ -189,6 +189,7 @@ namespace {
 
         // SSE has no i16 to fp conversion, only i32
         setOperationAction(ISD::SINT_TO_FP, MVT::i16, Promote);
+        setOperationAction(ISD::FP_TO_SINT, MVT::i16, Promote);
 
         // We don't support sin/cos/sqrt/fmod
         setOperationAction(ISD::FSIN , MVT::f64, Expand);
@@ -201,6 +202,8 @@ namespace {
         setOperationAction(ISD::FABS , MVT::f32, Expand);
         setOperationAction(ISD::FNEG , MVT::f32, Expand);
         setOperationAction(ISD::SREM , MVT::f32, Expand);
+
+        addLegalFPImmediate(+0.0); // xorps / xorpd
       } else {
         // Set up the FP register classes.
         addRegisterClass(MVT::f64, X86::RFPRegisterClass);
@@ -1114,8 +1117,8 @@ namespace {
     bool EmitOrOpOp(SDOperand Op1, SDOperand Op2, unsigned DestReg);
     void EmitCMP(SDOperand LHS, SDOperand RHS, bool isOnlyUse);
     bool EmitBranchCC(MachineBasicBlock *Dest, SDOperand Chain, SDOperand Cond);
-    void EmitSelectCC(SDOperand Cond, MVT::ValueType SVT,
-                      unsigned RTrue, unsigned RFalse, unsigned RDest);
+    void EmitSelectCC(SDOperand Cond, SDOperand True, SDOperand False, 
+                      MVT::ValueType SVT, unsigned RDest);
     unsigned SelectExpr(SDOperand N);
 
     X86AddressMode SelectAddrExprs(const X86ISelAddressMode &IAM);
@@ -1747,11 +1750,11 @@ bool ISel::EmitBranchCC(MachineBasicBlock *Dest, SDOperand Chain,
 }
 
 /// EmitSelectCC - Emit code into BB that performs a select operation between
-/// the two registers RTrue and RFalse, generating a result into RDest.  Return
-/// true if the fold cannot be performed.
+/// the two registers RTrue and RFalse, generating a result into RDest.
 ///
-void ISel::EmitSelectCC(SDOperand Cond, MVT::ValueType SVT,
-                        unsigned RTrue, unsigned RFalse, unsigned RDest) {
+void ISel::EmitSelectCC(SDOperand Cond, SDOperand True, SDOperand False,
+                        MVT::ValueType SVT, unsigned RDest) {
+  unsigned RTrue, RFalse;
   enum Condition {
     EQ, NE, LT, LE, GT, GE, B, BE, A, AE, P, NP,
     NOT_SET
@@ -1773,12 +1776,13 @@ void ISel::EmitSelectCC(SDOperand Cond, MVT::ValueType SVT,
     X86::FCMOVA ,  X86::FCMOVAE, X86::FCMOVP , X86::FCMOVNP
   };
   static const int SSE_CMOVTAB[] = {
-    0 /* CMPEQSS */, 4 /* CMPNEQSS */, 1 /* CMPLTSS */, 2 /* CMPLESS */,
-    1 /* CMPLTSS */, 2 /* CMPLESS */, /*missing*/0, /*missing*/0,
-    /*missing*/0,  /*missing*/0, /*missing*/0, /*missing*/0
+    /*CMPEQ*/   0, /*CMPNEQ*/   4, /*missing*/  0, /*missing*/  0,
+    /*missing*/ 0, /*missing*/  0, /*CMPLT*/    1, /*CMPLE*/    2,
+    /*CMPNLE*/  6, /*CMPNLT*/   5, /*CMPUNORD*/ 3, /*CMPORD*/   7
   };
-
-  if (SetCCSDNode *SetCC = dyn_cast<SetCCSDNode>(Cond)) {
+  
+  SetCCSDNode *SetCC;
+  if ((SetCC = dyn_cast<SetCCSDNode>(Cond))) {
     if (MVT::isInteger(SetCC->getOperand(0).getValueType())) {
       switch (SetCC->getCondition()) {
       default: assert(0 && "Unknown integer comparison!");
@@ -1792,20 +1796,6 @@ void ISel::EmitSelectCC(SDOperand Cond, MVT::ValueType SVT,
       case ISD::SETUGT: CondCode = A; break;
       case ISD::SETULE: CondCode = BE; break;
       case ISD::SETUGE: CondCode = AE; break;
-      }
-    } else if (X86ScalarSSE) {
-      switch (SetCC->getCondition()) {
-      default: assert(0 && "Unknown scalar fp comparison!");
-      case ISD::SETEQ:  CondCode = EQ; break;
-      case ISD::SETNE:  CondCode = NE; break;
-      case ISD::SETULT:
-      case ISD::SETLT:  CondCode = LT; break;
-      case ISD::SETULE:
-      case ISD::SETLE:  CondCode = LE; break;
-      case ISD::SETUGT:
-      case ISD::SETGT:  CondCode = GT; break;
-      case ISD::SETUGE:
-      case ISD::SETGE:  CondCode = GE; break;
       }
     } else {
       // On a floating point condition, the flags are set as follows:
@@ -1843,55 +1833,106 @@ void ISel::EmitSelectCC(SDOperand Cond, MVT::ValueType SVT,
     }
   }
 
-  // There's no SSE equivalent of FCMOVE.  In some cases we can fake it up, in
-  // Others we will have to do the PowerPC thing and generate an MBB for the
-  // true and false values and select between them with a PHI.
+  // There's no SSE equivalent of FCMOVE.  For cases where we set a condition
+  // code above and one of the results of the select is +0.0, then we can fake 
+  // it up through a clever AND with mask.  Otherwise, we will fall through to
+  // the code below that will use a PHI node to select the right value.
   if (X86ScalarSSE && (SVT == MVT::f32 || SVT == MVT::f64)) {
-    if (0 && CondCode != NOT_SET) {
-      // FIXME: check for min and max
-    } else {
-      // FIXME: emit a direct compare and branch rather than setting a cond reg
-      //        and testing it.
-      unsigned CondReg = SelectExpr(Cond);
-      BuildMI(BB, X86::TEST8rr, 2).addReg(CondReg).addReg(CondReg);
-
-      // Create an iterator with which to insert the MBB for copying the false
-      // value and the MBB to hold the PHI instruction for this SetCC.
-      MachineBasicBlock *thisMBB = BB;
-      const BasicBlock *LLVM_BB = BB->getBasicBlock();
-      ilist<MachineBasicBlock>::iterator It = BB;
-      ++It;
-
-      //  thisMBB:
-      //  ...
-      //   TrueVal = ...
-      //   cmpTY ccX, r1, r2
-      //   bCC sinkMBB
-      //   fallthrough --> copy0MBB
-      MachineBasicBlock *copy0MBB = new MachineBasicBlock(LLVM_BB);
-      MachineBasicBlock *sinkMBB = new MachineBasicBlock(LLVM_BB);
-      BuildMI(BB, X86::JNE, 1).addMBB(sinkMBB);
-      MachineFunction *F = BB->getParent();
-      F->getBasicBlockList().insert(It, copy0MBB);
-      F->getBasicBlockList().insert(It, sinkMBB);
-      // Update machine-CFG edges
-      BB->addSuccessor(copy0MBB);
-      BB->addSuccessor(sinkMBB);
-
-      //  copy0MBB:
-      //   %FalseValue = ...
-      //   # fallthrough to sinkMBB
-      BB = copy0MBB;
-      // Update machine-CFG edges
-      BB->addSuccessor(sinkMBB);
-
-      //  sinkMBB:
-      //   %Result = phi [ %FalseValue, copy0MBB ], [ %TrueValue, thisMBB ]
-      //  ...
-      BB = sinkMBB;
-      BuildMI(BB, X86::PHI, 4, RDest).addReg(RFalse)
-        .addMBB(copy0MBB).addReg(RTrue).addMBB(thisMBB);
+    if (SetCC && SetCC->getOperand(0).getValueType() == SVT && 
+        NOT_SET != CondCode) {
+      ConstantFPSDNode *CT = dyn_cast<ConstantFPSDNode>(True);
+      ConstantFPSDNode *CF = dyn_cast<ConstantFPSDNode>(False);
+      bool TrueZero = CT && CT->isExactlyValue(0.0);
+      bool FalseZero = CF && CF->isExactlyValue(0.0);
+      if (TrueZero || FalseZero) {
+        SDOperand LHS = Cond.getOperand(0);
+        SDOperand RHS = Cond.getOperand(1);
+        
+        // Select the two halves of the condition
+        unsigned RLHS, RRHS;
+        if (getRegPressure(LHS) > getRegPressure(RHS)) {
+          RLHS = SelectExpr(LHS);
+          RRHS = SelectExpr(RHS);
+        } else {
+          RRHS = SelectExpr(RHS);
+          RLHS = SelectExpr(LHS);
+        }
+        
+        // Emit the comparison and generate a mask from it
+        unsigned MaskReg = MakeReg(SVT);
+        unsigned Opc = (SVT == MVT::f32) ? X86::CMPSSrr : X86::CMPSDrr;
+        BuildMI(BB, Opc, 3, MaskReg).addReg(RLHS).addReg(RRHS)
+          .addImm(SSE_CMOVTAB[CondCode]);
+        
+        if (TrueZero) {
+          RFalse = SelectExpr(False);
+          Opc = (SVT == MVT::f32) ? X86::ANDNPSrr : X86::ANDNPDrr;
+          BuildMI(BB, Opc, 2, RDest).addReg(MaskReg).addReg(RFalse);
+        } else {
+          RTrue = SelectExpr(True);
+          Opc = (SVT == MVT::f32) ? X86::ANDPSrr : X86::ANDPDrr;
+          BuildMI(BB, Opc, 2, RDest).addReg(MaskReg).addReg(RTrue);
+        }
+        return;
+      }
     }
+  }
+    
+  // Select the true and false values for use in both the SSE PHI case, and the
+  // integer or x87 cmov cases below.
+  if (getRegPressure(True) > getRegPressure(False)) {
+    RTrue = SelectExpr(True);
+    RFalse = SelectExpr(False);
+  } else {
+    RFalse = SelectExpr(False);
+    RTrue = SelectExpr(True);
+  }
+
+  // Since there's no SSE equivalent of FCMOVE, and we couldn't generate an
+  // AND with mask, we'll have to do the normal RISC thing and generate a PHI
+  // node to select between the true and false values.
+  if (X86ScalarSSE && (SVT == MVT::f32 || SVT == MVT::f64)) {
+    // FIXME: emit a direct compare and branch rather than setting a cond reg
+    //        and testing it.
+    unsigned CondReg = SelectExpr(Cond);
+    BuildMI(BB, X86::TEST8rr, 2).addReg(CondReg).addReg(CondReg);
+    
+    // Create an iterator with which to insert the MBB for copying the false
+    // value and the MBB to hold the PHI instruction for this SetCC.
+    MachineBasicBlock *thisMBB = BB;
+    const BasicBlock *LLVM_BB = BB->getBasicBlock();
+    ilist<MachineBasicBlock>::iterator It = BB;
+    ++It;
+    
+    //  thisMBB:
+    //  ...
+    //   TrueVal = ...
+    //   cmpTY ccX, r1, r2
+    //   bCC sinkMBB
+    //   fallthrough --> copy0MBB
+    MachineBasicBlock *copy0MBB = new MachineBasicBlock(LLVM_BB);
+    MachineBasicBlock *sinkMBB = new MachineBasicBlock(LLVM_BB);
+    BuildMI(BB, X86::JNE, 1).addMBB(sinkMBB);
+    MachineFunction *F = BB->getParent();
+    F->getBasicBlockList().insert(It, copy0MBB);
+    F->getBasicBlockList().insert(It, sinkMBB);
+    // Update machine-CFG edges
+    BB->addSuccessor(copy0MBB);
+    BB->addSuccessor(sinkMBB);
+    
+    //  copy0MBB:
+    //   %FalseValue = ...
+    //   # fallthrough to sinkMBB
+    BB = copy0MBB;
+    // Update machine-CFG edges
+    BB->addSuccessor(sinkMBB);
+    
+    //  sinkMBB:
+    //   %Result = phi [ %FalseValue, copy0MBB ], [ %TrueValue, thisMBB ]
+    //  ...
+    BB = sinkMBB;
+    BuildMI(BB, X86::PHI, 4, RDest).addReg(RFalse)
+      .addMBB(copy0MBB).addReg(RTrue).addMBB(thisMBB);
     return;
   }
 
@@ -2285,6 +2326,13 @@ unsigned ISel::SelectExpr(SDOperand N) {
     addConstantPoolReference(BuildMI(BB, X86::LEA32r, 4, Result), Tmp1);
     return Result;
   case ISD::ConstantFP:
+    if (X86ScalarSSE) {
+      assert(cast<ConstantFPSDNode>(N)->isExactlyValue(+0.0) &&
+             "SSE only supports +0.0");
+      Opc = (N.getValueType() == MVT::f32) ? X86::FLD0SS : X86::FLD0SD;
+      BuildMI(BB, Opc, 0, Result);
+      return Result;
+    }
     ContainsFPCode = true;
     Tmp1 = Result;   // Intermediate Register
     if (cast<ConstantFPSDNode>(N)->getValue() < 0.0 ||
@@ -2969,14 +3017,8 @@ unsigned ISel::SelectExpr(SDOperand N) {
   }
 
   case ISD::SELECT:
-    if (getRegPressure(N.getOperand(1)) > getRegPressure(N.getOperand(2))) {
-      Tmp2 = SelectExpr(N.getOperand(1));
-      Tmp3 = SelectExpr(N.getOperand(2));
-    } else {
-      Tmp3 = SelectExpr(N.getOperand(2));
-      Tmp2 = SelectExpr(N.getOperand(1));
-    }
-    EmitSelectCC(N.getOperand(0), N.getValueType(), Tmp2, Tmp3, Result);
+    EmitSelectCC(N.getOperand(0), N.getOperand(1), N.getOperand(2),
+                 N.getValueType(), Result);
     return Result;
 
   case ISD::SDIV:
