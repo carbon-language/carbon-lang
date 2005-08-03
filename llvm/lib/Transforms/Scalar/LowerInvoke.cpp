@@ -283,7 +283,9 @@ bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
       // Create the receiver block if there is a critical edge to the normal
       // destination.
       SplitCriticalEdge(II, 0, this);
-      Instruction *InsertLoc = II->getNormalDest()->begin();
+      BasicBlock::iterator InsertLoc = II->getNormalDest()->begin();
+      while (isa<PHINode>(InsertLoc)) ++InsertLoc;
+      
 
       // Insert a normal call instruction on the normal execution path.
       std::string Name = II->getName(); II->setName("");
