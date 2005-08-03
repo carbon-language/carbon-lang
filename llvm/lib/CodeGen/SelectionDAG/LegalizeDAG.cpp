@@ -1306,12 +1306,18 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     case TargetLowering::Promote:
     case TargetLowering::Custom:
       assert(0 && "Cannot promote/custom handle this yet!");
-    case TargetLowering::Expand: {
-      MVT::ValueType VT = Node->getValueType(0);
-      unsigned Opc = (Node->getOpcode() == ISD::UREM) ? ISD::UDIV : ISD::SDIV;
-      Result = DAG.getNode(Opc, VT, Tmp1, Tmp2);
-      Result = DAG.getNode(ISD::MUL, VT, Result, Tmp2);
-      Result = DAG.getNode(ISD::SUB, VT, Tmp1, Result);
+    case TargetLowering::Expand:
+      if (MVT::isInteger(Node->getValueType(0))) {
+        MVT::ValueType VT = Node->getValueType(0);
+        unsigned Opc = (Node->getOpcode() == ISD::UREM) ? ISD::UDIV : ISD::SDIV;
+        Result = DAG.getNode(Opc, VT, Tmp1, Tmp2);
+        Result = DAG.getNode(ISD::MUL, VT, Result, Tmp2);
+        Result = DAG.getNode(ISD::SUB, VT, Tmp1, Result);
+      } else {
+        // Floating point mod -> fmod libcall.
+        const char *FnName = Node->getValueType(0) == MVT::f32 ? "fmodf":"fmod";
+        SDOperand Dummy;
+        Result = ExpandLibCall(FnName, Node, Dummy);
       }
       break;
     }

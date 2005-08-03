@@ -124,6 +124,7 @@ void SelectionDAG::viewGraph() {
   if (system((LLVM_PATH_GRAPHVIZ " " + Filename).c_str())) {
     std::cerr << "Error viewing graph: 'Graphviz' not in path?\n";
   } else {
+    system(("rm " + Filename).c_str());
     return;
   }
 #endif
@@ -143,4 +144,5 @@ void SelectionDAG::viewGraph() {
 #endif
   std::cerr << "SelectionDAG::viewGraph is only available in debug builds on "
             << "systems with Graphviz or gv!\n";
+  system(("rm " + Filename).c_str());
 }
