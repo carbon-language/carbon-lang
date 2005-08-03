@@ -18,8 +18,9 @@
 
 namespace llvm {
 
-// NOTE: The following support functions use the _32/_64 extensions instead of type 
-// overloading so that signed and unsigned integers can be used without ambiguity.
+// NOTE: The following support functions use the _32/_64 extensions instead of  
+// type overloading so that signed and unsigned integers can be used without
+// ambiguity.
 
 
 // Hi_32 - This function returns the high 32 bits of a 64 bit value.
@@ -40,34 +41,34 @@ inline bool isUInt16(int Value)     { return (unsigned short)Value == Value; }
 inline bool isInt32 (int64_t Value) { return (  signed int  )Value == Value; }
 inline bool isUInt32(int64_t Value) { return (unsigned int  )Value == Value; }
 
-// isMask_32 - This function returns true if the argument is a sequence of ones starting 
-// at the least significant bit with the remainder zero (32 bit version.)
+// isMask_32 - This function returns true if the argument is a sequence of ones  
+// starting at the least significant bit with the remainder zero (32 bit version.)
 // Ex. isMask_32(0x0000FFFFU) == true.
 inline const bool isMask_32(unsigned Value) {
   return Value && ((Value + 1) & Value) == 0;
 }
 
-// isMask_64 - This function returns true if the argument is a sequence of ones starting 
-// at the least significant bit with the remainder zero (64 bit version.)
+// isMask_64 - This function returns true if the argument is a sequence of ones  
+// starting at the least significant bit with the remainder zero (64 bit version.)
 inline const bool isMask_64(uint64_t Value) {
   return Value && ((Value + 1) & Value) == 0;
 }
 
-// isShiftedMask_32 - This function returns true if the argument contains a sequence of ones 
-// with the remainder zero (32 bit version.)
+// isShiftedMask_32 - This function returns true if the argument contains a  
+// sequence of ones with the remainder zero (32 bit version.)
 // Ex. isShiftedMask_32(0x0000FF00U) == true.
 inline const bool isShiftedMask_32(unsigned Value) {
   return isMask_32((Value - 1) | Value);
 }
 
-// isShiftedMask_64 - This function returns true if the argument contains a sequence of ones 
-// with the remainder zero (64 bit version.)
+// isShiftedMask_64 - This function returns true if the argument contains a  
+// sequence of ones with the remainder zero (64 bit version.)
 inline const bool isShiftedMask_64(uint64_t Value) {
   return isMask_64((Value - 1) | Value);
 }
 
-// isPowerOf2_32 - This function returns true if the argument is a power of two > 0.
-// Ex. isPowerOf2_32(0x00100000U) == true (32 bit edition.)
+// isPowerOf2_32 - This function returns true if the argument is a power of 
+// two > 0. Ex. isPowerOf2_32(0x00100000U) == true (32 bit edition.)
 inline bool isPowerOf2_32(unsigned Value) {
   return Value && !(Value & (Value - 1));
 }
@@ -111,14 +112,14 @@ inline unsigned CountLeadingZeros_32(unsigned Value) {
 }
 
 // CountLeadingZeros_64 - This function performs the platform optimal form
-// of counting the number of zeros from the most significant bit to the first one bit
-// (64 bit edition.)
+// of counting the number of zeros from the most significant bit to the first 
+// one bit (64 bit edition.)
 // Returns 64 if the word is zero.
 inline unsigned CountLeadingZeros_64(uint64_t Value) {
   unsigned Count; // result
 #if __GNUC__ >= 4
   // PowerPC is defined for __builtin_clzll(0)
-#if defined(__ppc__) || defined(__ppc64__)
+#if !defined(__ppc__) && !defined(__ppc64__)
   if (!Value) return 64;
 #endif
   Count = __builtin_clzll(Value);
@@ -154,15 +155,15 @@ inline unsigned CountLeadingZeros_64(uint64_t Value) {
   return Count;
 }
 
-// Log2_32 - This function returns the floor log base 2 of the specified value, -1 if the value is zero.
-// (32 bit edition.)
+// Log2_32 - This function returns the floor log base 2 of the specified value, 
+// -1 if the value is zero. (32 bit edition.)
 // Ex. Log2_32(32) == 5, Log2_32(1) == 0, Log2_32(0) == -1
 inline unsigned Log2_32(unsigned Value) {
     return 31 - CountLeadingZeros_32(Value);
   }
 
-// Log2_64 - This function returns the floor log base 2 of the specified value, -1 if the value is zero.
-// (64 bit edition.)
+// Log2_64 - This function returns the floor log base 2 of the specified value, 
+// -1 if the value is zero. (64 bit edition.)
 inline unsigned Log2_64(unsigned Value) {
     return 63 - CountLeadingZeros_64(Value);
 }
