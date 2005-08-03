@@ -142,12 +142,12 @@ inline unsigned CountLeadingZeros_64(uint64_t Value) {
     // if some bits in hi portion
     if (Hi) {
         // leading zeros in hi portion plus all bits in lo portion
-        Count = CountLeadingZeros_32(Hi) + 32;
+        Count = CountLeadingZeros_32(Hi);
     } else {
         // get lo portion
         unsigned Lo = Lo_32(Value);
         // same as 32 bit value
-        Count = CountLeadingZeros_32(Lo);
+        Count = CountLeadingZeros_32(Lo)+32;
     }
   }
 #endif
