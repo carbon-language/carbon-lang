@@ -283,10 +283,20 @@ bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
       // Create the receiver block if there is a critical edge to the normal
       // destination.
       SplitCriticalEdge(II, 0, this);
-      BasicBlock::iterator InsertLoc = II->getNormalDest()->begin();
-      while (isa<PHINode>(InsertLoc)) ++InsertLoc;
       
+      // There should not be any PHI nodes in II->getNormalDest() now.  It has
+      // a single predecessor, so any PHI nodes are unneeded.  Remove them now
+      // by replacing them with their single input value.
+      assert(II->getNormalDest()->getSinglePredecessor() &&
+             "Split crit edge doesn't have a single predecessor!");
 
+      BasicBlock::iterator InsertLoc = II->getNormalDest()->begin();
+      while (PHINode *PN = dyn_cast<PHINode>(InsertLoc)) {
+        PN->replaceAllUsesWith(PN->getIncomingValue(0));
+        PN->eraseFromParent();        
+        InsertLoc = II->getNormalDest()->begin();
+      }
+      
       // Insert a normal call instruction on the normal execution path.
       std::string Name = II->getName(); II->setName("");
       CallInst *NewCall = new CallInst(II->getCalledValue(),
