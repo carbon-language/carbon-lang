@@ -164,7 +164,7 @@ inline unsigned Log2_32(unsigned Value) {
 
 // Log2_64 - This function returns the floor log base 2 of the specified value, 
 // -1 if the value is zero. (64 bit edition.)
-inline unsigned Log2_64(unsigned Value) {
+inline unsigned Log2_64(uint64_t Value) {
     return 63 - CountLeadingZeros_64(Value);
 }
 
