@@ -75,15 +75,29 @@ static void AddPredecessorToBlock(BasicBlock *Succ, BasicBlock *NewPred,
 static bool CanPropagatePredecessorsForPHIs(BasicBlock *BB, BasicBlock *Succ) {
   assert(*succ_begin(BB) == Succ && "Succ is not successor of BB!");
 
-  if (!isa<PHINode>(Succ->front()))
-    return true;  // We can make the transformation, no problem.
-
   // Check to see if one of the predecessors of BB is already a predecessor of
   // Succ.  If so, we cannot do the transformation if there are any PHI nodes
   // with incompatible values coming in from the two edges!
   //
-  if (!SafeToMergeTerminators(BB->getTerminator(), Succ->getTerminator()))
-    return false;   // Cannot merge.
+  if (isa<PHINode>(Succ->front())) {
+    std::set<BasicBlock*> BBPreds(pred_begin(BB), pred_end(BB));
+    for (pred_iterator PI = pred_begin(Succ), PE = pred_end(Succ);\
+         PI != PE; ++PI)
+      if (std::find(BBPreds.begin(), BBPreds.end(), *PI) != BBPreds.end()) {
+        // Loop over all of the PHI nodes checking to see if there are
+        // incompatible values coming in.
+        for (BasicBlock::iterator I = Succ->begin(); isa<PHINode>(I); ++I) {
+          PHINode *PN = cast<PHINode>(I);
+          // Loop up the entries in the PHI node for BB and for *PI if the
+          // values coming in are non-equal, we cannot merge these two blocks
+          // (instead we should insert a conditional move or something, then
+          // merge the blocks).
+          if (PN->getIncomingValueForBlock(BB) !=
+              PN->getIncomingValueForBlock(*PI))
+            return false;  // Values are not equal...
+        }
+      }
+  }
 
   return true;
 }
@@ -114,8 +128,8 @@ static bool TryToSimplifyUncondBranchFromEmptyBlock(BasicBlock *BB,
       Value *OldVal = PN->removeIncomingValue(BB, false);
       assert(OldVal && "No entry in PHI for Pred BB!");
       
-      // If this incoming value is one of the PHI nodes in BB, the new entries in
-      // the PHI node are the entries from the old PHI.
+      // If this incoming value is one of the PHI nodes in BB, the new entries
+      // in the PHI node are the entries from the old PHI.
       if (isa<PHINode>(OldVal) && cast<PHINode>(OldVal)->getParent() == BB) {
         PHINode *OldValPN = cast<PHINode>(OldVal);
         for (unsigned i = 0, e = OldValPN->getNumIncomingValues(); i != e; ++i)
@@ -138,15 +152,10 @@ static bool TryToSimplifyUncondBranchFromEmptyBlock(BasicBlock *BB,
     // Move all PHI nodes in BB to Succ if they are alive, otherwise
     // delete them.
     while (PHINode *PN = dyn_cast<PHINode>(&BB->front()))
-      if (PN->use_empty() /*|| Succ->getSinglePredecessor() == 0*/) {
-        // We can only move the PHI node into Succ if BB dominates Succ.
-        // Since BB only has a single successor (Succ), the PHI nodes
-        // will dominate Succ, unless Succ has multiple predecessors.  In
-        // this case, the PHIs are either dead, or have references in dead
-        // blocks.  In either case, we can just remove them.
-        if (!PN->use_empty())   // Uses in dead block?
-          PN->replaceAllUsesWith(UndefValue::get(PN->getType()));
-        PN->eraseFromParent();  // Nuke instruction.
+      if (PN->use_empty()) {
+        // Just remove the dead phi.  This happens if Succ's PHIs were the only
+        // users of the PHI nodes.
+        PN->eraseFromParent();
       } else {
         // The instruction is alive, so this means that Succ must have
         // *ONLY* had BB as a predecessor, and the PHI node is still valid
