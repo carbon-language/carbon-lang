@@ -1,8 +1,6 @@
 ; Check that this test makes INDVAR and related stuff dead.
 ; RUN: llvm-as < %s | opt -loop-reduce | llvm-dis | grep phi | wc -l | grep 2
 
-; XFAIL: *
-
 declare bool %pred()
 
 void %test1({ int, int }* %P) {
