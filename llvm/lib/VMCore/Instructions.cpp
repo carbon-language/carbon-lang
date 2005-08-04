@@ -135,7 +135,7 @@ void PHINode::resizeOperands(unsigned NumOps) {
 /// hasConstantValue - If the specified PHI node always merges together the same
 /// value, return the value, otherwise return null.
 ///
-Value *PHINode::hasConstantValue() {
+Value *PHINode::hasConstantValue(bool AllowNonDominatingInstruction) {
   // If the PHI node only has one incoming value, eliminate the PHI node...
   if (getNumIncomingValues() == 1)
     return getIncomingValue(0);

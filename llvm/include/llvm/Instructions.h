@@ -807,7 +807,7 @@ public:
   /// hasConstantValue - If the specified PHI node always merges together the 
   /// same value, return the value, otherwise return null.
   ///
-  Value *hasConstantValue();
+  Value *hasConstantValue(bool AllowNonDominatingInstruction = false);
   
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const PHINode *) { return true; }
