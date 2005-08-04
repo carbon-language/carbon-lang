@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | lli -force-interpreter=false -regalloc=simple
+; RUN: llvm-as < %s | llc -march=x86 -regalloc=simple
 
 int %main(int %B) {
 	;%B = add int 0, 1
