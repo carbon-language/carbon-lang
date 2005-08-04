@@ -138,9 +138,10 @@ namespace {
     Value *getCastedVersionOf(Value *V);
 private:
     void runOnLoop(Loop *L);
-    bool AddUsersIfInteresting(Instruction *I, Loop *L);
-    void AnalyzeGetElementPtrUsers(GetElementPtrInst *GEP, Instruction *I,
-                                   Loop *L);
+    bool AddUsersIfInteresting(Instruction *I, Loop *L,
+                               std::set<Instruction*> &Processed);
+    SCEVHandle GetExpressionSCEV(Instruction *E, Loop *L);
+
 
     void StrengthReduceStridedIVUsers(Value *Stride, IVUsersOfOneStride &Uses,
                                       Loop *L, bool isOnlyStride);
@@ -234,48 +235,24 @@ static bool CanReduceSCEV(const SCEVHandle &SH, Loop *L) {
   return false;
 }
 
-
-/// GetAdjustedIndex - Adjust the specified GEP sequential type index to match
-/// the size of the pointer type, and scale it by the type size.
-static SCEVHandle GetAdjustedIndex(const SCEVHandle &Idx, uint64_t TySize,
-                                   const Type *UIntPtrTy) {
-  SCEVHandle Result = Idx;
-  if (Result->getType()->getUnsignedVersion() != UIntPtrTy) {
-    if (UIntPtrTy->getPrimitiveSize() < Result->getType()->getPrimitiveSize())
-      Result = SCEVTruncateExpr::get(Result, UIntPtrTy);
-    else
-      Result = SCEVZeroExtendExpr::get(Result, UIntPtrTy);
-  }
-
-  // This index is scaled by the type size being indexed.
-  if (TySize != 1)
-    Result = SCEVMulExpr::get(Result,
-                              SCEVConstant::get(ConstantUInt::get(UIntPtrTy,
-                                                                  TySize)));
-  return Result;
-}
-
-
-/// AnalyzeGetElementPtrUsers - Analyze all of the users of the specified
-/// getelementptr instruction, adding them to the IVUsesByStride table.  Note
-/// that we only want to analyze a getelementptr instruction once, and it can
-/// have multiple operands that are uses of the indvar (e.g. A[i][i]).  Because
-/// of this, we only process a GEP instruction if its first recurrent operand is
-/// "op", otherwise we will either have already processed it or we will sometime
-/// later.
-void LoopStrengthReduce::AnalyzeGetElementPtrUsers(GetElementPtrInst *GEP,
-                                                   Instruction *Op, Loop *L) {
+/// GetExpressionSCEV - Compute and return the SCEV for the specified
+/// instruction.
+SCEVHandle LoopStrengthReduce::GetExpressionSCEV(Instruction *Exp, Loop *L) {
+  GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(Exp);
+  if (!GEP)
+    return SE->getSCEV(Exp);
+    
   // Analyze all of the subscripts of this getelementptr instruction, looking
   // for uses that are determined by the trip count of L.  First, skip all
   // operands the are not dependent on the IV.
 
   // Build up the base expression.  Insert an LLVM cast of the pointer to
   // uintptr_t first.
-  SCEVHandle Base = SCEVUnknown::get(getCastedVersionOf(GEP->getOperand(0)));
+  SCEVHandle GEPVal = SCEVUnknown::get(getCastedVersionOf(GEP->getOperand(0)));
 
   gep_type_iterator GTI = gep_type_begin(GEP);
-  unsigned i = 1;
-  for (; GEP->getOperand(i) != Op; ++i, ++GTI) {
+  
+  for (unsigned i = 1, e = GEP->getNumOperands(); i != e; ++i, ++GTI) {
     // If this is a use of a recurrence that we can analyze, and it comes before
     // Op does in the GEP operand list, we will handle this when we process this
     // operand.
@@ -283,104 +260,37 @@ void LoopStrengthReduce::AnalyzeGetElementPtrUsers(GetElementPtrInst *GEP,
       const StructLayout *SL = TD->getStructLayout(STy);
       unsigned Idx = cast<ConstantUInt>(GEP->getOperand(i))->getValue();
       uint64_t Offset = SL->MemberOffsets[Idx];
-      Base = SCEVAddExpr::get(Base, SCEVUnknown::getIntegerSCEV(Offset,
-                                                                UIntPtrTy));
+      GEPVal = SCEVAddExpr::get(GEPVal,
+                                SCEVUnknown::getIntegerSCEV(Offset, UIntPtrTy));
     } else {
-      SCEVHandle Idx = SE->getSCEV(GEP->getOperand(i));
-
-      // If this operand is reducible, and it's not the one we are looking at
-      // currently, do not process the GEP at this time.
-      if (CanReduceSCEV(Idx, L))
-        return;
-      Base = SCEVAddExpr::get(Base, GetAdjustedIndex(Idx,
-                             TD->getTypeSize(GTI.getIndexedType()), UIntPtrTy));
+      SCEVHandle Idx = SE->getSCEV(getCastedVersionOf(GEP->getOperand(i)));
+      uint64_t TypeSize = TD->getTypeSize(GTI.getIndexedType());
+      if (TypeSize != 1)
+        Idx = SCEVMulExpr::get(Idx,
+                               SCEVConstant::get(ConstantUInt::get(UIntPtrTy,
+                                                                   TypeSize)));
+      GEPVal = SCEVAddExpr::get(GEPVal, Idx);
     }
   }
 
-  // Get the index, convert it to intptr_t.
-  SCEVHandle GEPIndexExpr =
-    GetAdjustedIndex(SE->getSCEV(Op), TD->getTypeSize(GTI.getIndexedType()),
-                     UIntPtrTy);
-
-  // Process all remaining subscripts in the GEP instruction.
-  for (++i, ++GTI; i != GEP->getNumOperands(); ++i, ++GTI)
-    if (const StructType *STy = dyn_cast<StructType>(*GTI)) {
-      const StructLayout *SL = TD->getStructLayout(STy);
-      unsigned Idx = cast<ConstantUInt>(GEP->getOperand(i))->getValue();
-      uint64_t Offset = SL->MemberOffsets[Idx];
-      Base = SCEVAddExpr::get(Base, SCEVUnknown::getIntegerSCEV(Offset,
-                                                                UIntPtrTy));
-    } else {
-      SCEVHandle Idx = SE->getSCEV(GEP->getOperand(i));
-      if (CanReduceSCEV(Idx, L)) {   // Another IV subscript
-        GEPIndexExpr = SCEVAddExpr::get(GEPIndexExpr,
-                    GetAdjustedIndex(Idx, TD->getTypeSize(GTI.getIndexedType()),
-                                   UIntPtrTy));
-        assert(CanReduceSCEV(GEPIndexExpr, L) &&
-               "Cannot reduce the sum of two reducible SCEV's??");
-      } else {
-        Base = SCEVAddExpr::get(Base, GetAdjustedIndex(Idx,
-                             TD->getTypeSize(GTI.getIndexedType()), UIntPtrTy));
-      }
-    }
-
-  assert(CanReduceSCEV(GEPIndexExpr, L) && "Non reducible idx??");
-
-  // FIXME: If the base is not loop invariant, we currently cannot emit this.
-  if (!Base->isLoopInvariant(L)) {
-    DEBUG(std::cerr << "IGNORING GEP due to non-invariant base: "
-                    << *Base << "\n");
-    return;
-  }
-  
-  Base = SCEVAddExpr::get(Base, cast<SCEVAddRecExpr>(GEPIndexExpr)->getStart());
-  SCEVHandle Stride = cast<SCEVAddRecExpr>(GEPIndexExpr)->getOperand(1);
-
-  DEBUG(std::cerr << "GEP BASE  : " << *Base << "\n");
-  DEBUG(std::cerr << "GEP STRIDE: " << *Stride << "\n");
-
-  Value *Step = 0;   // Step of ISE.
-  if (SCEVConstant *SC = dyn_cast<SCEVConstant>(Stride))
-    /// Always get the step value as an unsigned value.
-    Step = ConstantExpr::getCast(SC->getValue(),
-                               SC->getValue()->getType()->getUnsignedVersion());
-  else
-    Step = cast<SCEVUnknown>(Stride)->getValue();
-  assert(Step->getType()->isUnsigned() && "Bad step value!");
-
-
-  // Now that we know the base and stride contributed by the GEP instruction,
-  // process all users.
-  for (Value::use_iterator UI = GEP->use_begin(), E = GEP->use_end();
-       UI != E; ++UI) {
-    Instruction *User = cast<Instruction>(*UI);
-
-    // Do not infinitely recurse on PHI nodes.
-    if (isa<PHINode>(User) && User->getParent() == L->getHeader())
-      continue;
-
-    // If this is an instruction defined in a nested loop, or outside this loop,
-    // don't mess with it.
-    if (LI->getLoopFor(User->getParent()) != L)
-      continue;
-
-    DEBUG(std::cerr << "FOUND USER: " << *User
-          << "   OF STRIDE: " << *Step << " BASE = " << *Base << "\n");
-
-    // Okay, we found a user that we cannot reduce.  Analyze the instruction
-    // and decide what to do with it.
-    IVUsesByStride[Step].addUser(Base, User, GEP);
-  }
+  //assert(CanReduceSCEV(GEPVal, L) && "Cannot reduce this use of IV?");  
+  return GEPVal;
 }
 
 /// AddUsersIfInteresting - Inspect the specified instruction.  If it is a
 /// reducible SCEV, recursively add its users to the IVUsesByStride set and
 /// return true.  Otherwise, return false.
-bool LoopStrengthReduce::AddUsersIfInteresting(Instruction *I, Loop *L) {
+bool LoopStrengthReduce::AddUsersIfInteresting(Instruction *I, Loop *L,
+                                            std::set<Instruction*> &Processed) {
   if (I->getType() == Type::VoidTy) return false;
-  SCEVHandle ISE = SE->getSCEV(I);
-  if (!CanReduceSCEV(ISE, L)) return false;
-
+  if (!Processed.insert(I).second)
+    return true;    // Instruction already handled.
+  
+  SCEVHandle ISE = GetExpressionSCEV(I, L);
+  if (!CanReduceSCEV(ISE, L))
+    return false;  // Non-analyzable expression, e.g. a rem instr.
+  
+  // NOT SAFE with generalized EXPRS
   SCEVAddRecExpr *AR = cast<SCEVAddRecExpr>(ISE);
   SCEVHandle Start = AR->getStart();
 
@@ -394,8 +304,6 @@ bool LoopStrengthReduce::AddUsersIfInteresting(Instruction *I, Loop *L) {
   else
     Step = cast<SCEVUnknown>(AR->getOperand(1))->getValue();
   assert(Step->getType()->isUnsigned() && "Bad step value!");
-
-  std::set<GetElementPtrInst*> AnalyzedGEPs;
 
   for (Value::use_iterator UI = I->use_begin(), E = I->use_end(); UI != E;++UI){
     Instruction *User = cast<Instruction>(*UI);
@@ -413,16 +321,7 @@ bool LoopStrengthReduce::AddUsersIfInteresting(Instruction *I, Loop *L) {
       // Okay, we found a user that we cannot reduce.  Analyze the instruction
       // and decide what to do with it.
       IVUsesByStride[Step].addUser(Start, User, I);
-      continue;
-    }
-
-    // Next, see if this user is analyzable itself!
-    if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(User)) {
-      // If this is a getelementptr instruction, figure out what linear
-      // expression of induction variable is actually being used.
-      if (AnalyzedGEPs.insert(GEP).second)   // Not already analyzed?
-        AnalyzeGetElementPtrUsers(GEP, I, L);
-    } else if (!AddUsersIfInteresting(User, L)) {
+    } else if (!AddUsersIfInteresting(User, L, Processed)) {
       DEBUG(std::cerr << "FOUND USER: " << *User
             << "   OF SCEV: " << *ISE << "\n");
 
@@ -655,8 +554,9 @@ void LoopStrengthReduce::runOnLoop(Loop *L) {
   // Next, find all uses of induction variables in this loop, and catagorize
   // them by stride.  Start by finding all of the PHI nodes in the header for
   // this loop.  If they are induction variables, inspect their uses.
+  std::set<Instruction*> Processed;   // Don't reprocess instructions.
   for (BasicBlock::iterator I = L->getHeader()->begin(); isa<PHINode>(I); ++I)
-    AddUsersIfInteresting(I, L);
+    AddUsersIfInteresting(I, L, Processed);
 
   // If we have nothing to do, return.
   //if (IVUsesByStride.empty()) return;
