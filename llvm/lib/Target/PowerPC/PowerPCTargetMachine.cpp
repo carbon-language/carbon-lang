@@ -19,6 +19,7 @@
 #include "PPC64JITInfo.h"
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
+#include "llvm/Analysis/Verifier.h"
 #include "llvm/CodeGen/IntrinsicLowering.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/Passes.h"
@@ -30,11 +31,17 @@
 using namespace llvm;
 
 bool llvm::GPOPT = false;
+PPCTargetEnum llvm::PPCTarget = TargetDefault;
 
 namespace llvm {
-  cl::opt<bool> AIX("aix",
-                    cl::desc("Generate AIX/xcoff instead of Darwin/MachO"),
-                    cl::Hidden);
+  cl::opt<PPCTargetEnum, true>
+  PPCTargetArg(
+         cl::desc("Force generation of code for a specific PPC target:"),
+         cl::values(
+                    clEnumValN(TargetAIX,  "aix", "  Enable AIX codegen"),
+                    clEnumValN(TargetDarwin,"darwin","  Enable Darwin codegen"),
+                    clEnumValEnd),
+         cl::location(PPCTarget), cl::init(TargetDefault));
   cl::opt<bool> EnablePPCLSR("enable-lsr-for-ppc",
                              cl::desc("Enable LSR for PPC (beta)"),
                              cl::Hidden);
@@ -62,7 +69,12 @@ PowerPCTargetMachine::PowerPCTargetMachine(const std::string &name,
                                            const Module &M,
                                            const TargetData &TD,
                                            const PowerPCFrameInfo &TFI)
-: TargetMachine(name, IL, TD), FrameInfo(TFI), Subtarget(M) {}
+: TargetMachine(name, IL, TD), FrameInfo(TFI), Subtarget(M) {
+  if (TargetDefault == PPCTarget) {
+    if (Subtarget.IsAIX()) PPCTarget = TargetAIX;
+    if (Subtarget.IsDarwin()) PPCTarget = TargetDarwin;
+  }
+}
 
 unsigned PPC32TargetMachine::getJITMatchQuality() {
 #if defined(__POWERPC__) || defined (__ppc__) || defined(_POWER)
@@ -84,6 +96,7 @@ bool PowerPCTargetMachine::addPassesToEmitFile(PassManager &PM,
 
   if (EnablePPCLSR) {
     PM.add(createLoopStrengthReducePass());
+    PM.add(createVerifierPass());
     PM.add(createCFGSimplificationPass());
   }
 
@@ -122,10 +135,19 @@ bool PowerPCTargetMachine::addPassesToEmitFile(PassManager &PM,
   // Must run branch selection immediately preceding the asm printer
   PM.add(createPPCBranchSelectionPass());
 
-  if (AIX)
+  // Decide which asm printer to use.  If the user has not specified one on
+  // the command line, choose whichever one matches the default (current host).
+  switch (PPCTarget) {
+  case TargetDefault:
+    assert(0 && "Default host has no asm printer!");
+    break;
+  case TargetAIX:
     PM.add(createAIXAsmPrinter(Out, *this));
-  else
+    break;
+  case TargetDarwin:
     PM.add(createDarwinAsmPrinter(Out, *this));
+    break;
+  }
 
   PM.add(createMachineCodeDeleter());
   return false;

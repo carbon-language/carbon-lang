@@ -22,7 +22,7 @@ def GPRC : RegisterClass<i64, 64,
 {
   let Methods = [{
     iterator allocation_order_begin(MachineFunction &MF) const {
-      return begin() + (AIX ? 1 : 0);
+      return begin() + ((TargetAIX == PPCTarget) ? 1 : 0);
     }
     iterator allocation_order_end(MachineFunction &MF) const {
       if (hasFP(MF))

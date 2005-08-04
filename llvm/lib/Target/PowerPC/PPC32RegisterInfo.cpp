@@ -31,11 +31,6 @@
 #include <iostream>
 using namespace llvm;
 
-namespace llvm {
-  // Switch toggling compilation for AIX
-  extern cl::opt<bool> AIX;
-}
-
 PPC32RegisterInfo::PPC32RegisterInfo()
   : PPC32GenRegisterInfo(PPC::ADJCALLSTACKDOWN, PPC::ADJCALLSTACKUP) {
   ImmToIdxMap[PPC::LD]   = PPC::LDX;    ImmToIdxMap[PPC::STD]  = PPC::STDX;

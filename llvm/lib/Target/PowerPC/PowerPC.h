@@ -22,6 +22,10 @@ namespace llvm {
 class FunctionPass;
 class TargetMachine;
 
+enum PPCTargetEnum {
+  TargetDefault, TargetAIX, TargetDarwin
+};
+
 FunctionPass *createPPCBranchSelectionPass();
 FunctionPass *createPPC32ISelSimple(TargetMachine &TM);
 FunctionPass *createPPC32ISelPattern(TargetMachine &TM);
@@ -31,6 +35,7 @@ FunctionPass *createAIXAsmPrinter(std::ostream &OS, TargetMachine &TM);
 
 extern bool GPOPT;
 extern bool PICEnabled;
+extern PPCTargetEnum PPCTarget;
 } // end namespace llvm;
 
 // GCC #defines PPC on Linux but we use it as our namespace name
