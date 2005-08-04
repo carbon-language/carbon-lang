@@ -356,6 +356,10 @@ namespace {
     BasedUser(Instruction *I, Value *Op, const SCEVHandle &IMM)
       : Inst(I), OperandValToReplace(Op), Imm(IMM), EmittedBase(0) {}
 
+    // Once we rewrite the code to insert the new IVs we want, update the
+    // operands of Inst to use the new expression 'NewBase', with 'Imm' added
+    // to it.
+    void RewriteInstructionToUseNewBase(Value *NewBase, SCEVExpander &Rewriter);
 
     // No need to compare these.
     bool operator<(const BasedUser &BU) const { return 0; }
@@ -371,6 +375,45 @@ void BasedUser::dump() const {
 
   std::cerr << "   Inst: " << *Inst;
 }
+
+// Once we rewrite the code to insert the new IVs we want, update the
+// operands of Inst to use the new expression 'NewBase', with 'Imm' added
+// to it.
+void BasedUser::RewriteInstructionToUseNewBase(Value *NewBase,
+                                               SCEVExpander &Rewriter) {
+  if (!isa<PHINode>(Inst)) {
+    SCEVHandle NewValSCEV = SCEVAddExpr::get(SCEVUnknown::get(NewBase), Imm);
+    Value *NewVal = Rewriter.expandCodeFor(NewValSCEV, Inst,
+                                           OperandValToReplace->getType());
+    
+    // Replace the use of the operand Value with the new Phi we just created.
+    Inst->replaceUsesOfWith(OperandValToReplace, NewVal);
+    DEBUG(std::cerr << "    CHANGED: IMM =" << *Imm << "  Inst = " << *Inst);
+    return;
+  }
+  
+  // PHI nodes are more complex.  We have to insert one copy of the NewBase+Imm
+  // expression into each operand block that uses it.
+  PHINode *PN = cast<PHINode>(Inst);
+  for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
+    if (PN->getIncomingValue(i) == OperandValToReplace) {
+      // FIXME: this should split any critical edges.
+
+      // Insert the code into the end of the predecessor block.
+      BasicBlock::iterator InsertPt = PN->getIncomingBlock(i)->getTerminator();
+      
+      SCEVHandle NewValSCEV = SCEVAddExpr::get(SCEVUnknown::get(NewBase), Imm);
+      Value *NewVal = Rewriter.expandCodeFor(NewValSCEV, InsertPt,
+                                             OperandValToReplace->getType());
+      
+      // Replace the use of the operand Value with the new Phi we just created.
+      PN->setIncomingValue(i, NewVal);
+      Rewriter.clear();
+    }
+  }
+  DEBUG(std::cerr << "    CHANGED: IMM =" << *Imm << "  Inst = " << *Inst);
+}
+
 
 /// isTargetConstant - Return true if the following can be referenced by the
 /// immediate field of a target instruction.
@@ -526,20 +569,14 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(Value *Stride,
       // Clear the SCEVExpander's expression map so that we are guaranteed
       // to have the code emitted where we expect it.
       Rewriter.clear();
-      SCEVHandle NewValSCEV = SCEVAddExpr::get(SCEVUnknown::get(NewPHI),
-                                               User.Imm);
-      Value *Replaced = User.OperandValToReplace;
-      Value *newVal = Rewriter.expandCodeFor(NewValSCEV, User.Inst,
-                                             Replaced->getType());
-
-      // Replace the use of the operand Value with the new Phi we just created.
-      User.Inst->replaceUsesOfWith(Replaced, newVal);
-      DEBUG(std::cerr << "    CHANGED: IMM =" << *User.Imm << "  Inst = "
-            << *User.Inst);
+      
+      // Now that we know what we need to do, insert code before User for the
+      // immediate and any loop-variant expressions.
+      User.RewriteInstructionToUseNewBase(NewPHI, Rewriter);
 
       // Mark old value we replaced as possibly dead, so that it is elminated
       // if we just replaced the last use of that value.
-      DeadInsts.insert(cast<Instruction>(Replaced));
+      DeadInsts.insert(cast<Instruction>(User.OperandValToReplace));
 
       UsersToProcess.erase(UsersToProcess.begin());
       ++NumReduced;
@@ -549,11 +586,6 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(Value *Stride,
 
   // IMPORTANT TODO: Figure out how to partition the IV's with this stride, but
   // different starting values, into different PHIs.
-
-  // BEFORE writing this, it's probably useful to handle GEP's.
-
-  // NOTE: pull all constants together, for REG+IMM addressing, include &GV in
-  // 'IMM' if the target supports it.
 }
 
 
