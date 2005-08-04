@@ -393,9 +393,16 @@ bool LoopStrengthReduce::AddUsersIfInteresting(Instruction *I, Loop *L) {
       continue;
 
     // If this is an instruction defined in a nested loop, or outside this loop,
-    // don't mess with it.
-    if (LI->getLoopFor(User->getParent()) != L)
+    // don't recurse into it.
+    if (LI->getLoopFor(User->getParent()) != L) {
+      DEBUG(std::cerr << "FOUND USER in nested loop: " << *User
+            << "   OF SCEV: " << *ISE << "\n");
+      
+      // Okay, we found a user that we cannot reduce.  Analyze the instruction
+      // and decide what to do with it.
+      IVUsesByStride[Step].addUser(Start, User, I);
       continue;
+    }
 
     // Next, see if this user is analyzable itself!
     if (!AddUsersIfInteresting(User, L)) {
