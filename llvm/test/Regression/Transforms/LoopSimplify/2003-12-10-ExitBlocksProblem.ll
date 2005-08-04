@@ -4,7 +4,7 @@
 ;
 ; This is distilled from a monsterous crafty example.
 
-; RUN: llvm-as < %s | opt -licm | lli
+; RUN: llvm-as < %s | opt -licm -disable-output
 
 %G = weak global int 0		; <int*> [#uses=13]
 
