@@ -37,21 +37,6 @@ using namespace llvm;
 namespace {
   Statistic<> NumReduced ("loop-reduce", "Number of GEPs strength reduced");
 
-  class GEPCache {
-  public:
-    GEPCache() : CachedPHINode(0), Map() {}
-
-    GEPCache *get(Value *v) {
-      std::map<Value *, GEPCache>::iterator I = Map.find(v);
-      if (I == Map.end())
-        I = Map.insert(std::pair<Value *, GEPCache>(v, GEPCache())).first;
-      return &I->second;
-    }
-
-    PHINode *CachedPHINode;
-    std::map<Value *, GEPCache> Map;
-  };
-  
   /// IVStrideUse - Keep track of one use of a strided induction variable, where
   /// the stride is stored externally.  The Offset member keeps track of the 
   /// offset from the IV, User is the actual user of the operand, and 'Operand'
@@ -145,11 +130,6 @@ private:
 
     void StrengthReduceStridedIVUsers(Value *Stride, IVUsersOfOneStride &Uses,
                                       Loop *L, bool isOnlyStride);
-
-    void strengthReduceGEP(GetElementPtrInst *GEPI, Loop *L,
-                           GEPCache* GEPCache,
-                           Instruction *InsertBefore,
-                           std::set<Instruction*> &DeadInsts);
     void DeleteTriviallyDeadInstructions(std::set<Instruction*> &Insts);
   };
   RegisterOpt<LoopStrengthReduce> X("loop-reduce",
