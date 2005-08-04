@@ -96,10 +96,10 @@ namespace {
     /// are interested in.  The key of the map is the stride of the access.
     std::map<Value*, IVUsersOfOneStride> IVUsesByStride;
 
-    /// CastedBasePointers - As we need to lower getelementptr instructions, we
-    /// cast the pointer input to uintptr_t.  This keeps track of the casted
-    /// values for the pointers we have processed so far.
-    std::map<Value*, Value*> CastedBasePointers;
+    /// CastedValues - As we need to cast values to uintptr_t, this keeps track
+    /// of the casted version of each value.  This is accessed by
+    /// getCastedVersionOf.
+    std::map<Value*, Value*> CastedPointers;
 
     /// DeadInsts - Keep track of instructions we may have made dead, so that
     /// we can remove them after we are done working.
@@ -119,6 +119,8 @@ namespace {
 
       for (LoopInfo::iterator I = LI->begin(), E = LI->end(); I != E; ++I)
         runOnLoop(*I);
+      
+      CastedPointers.clear();
       return Changed;
     }
 
@@ -130,7 +132,11 @@ namespace {
       AU.addRequired<TargetData>();
       AU.addRequired<ScalarEvolution>();
     }
-  private:
+    
+    /// getCastedVersionOf - Return the specified value casted to uintptr_t.
+    ///
+    Value *getCastedVersionOf(Value *V);
+private:
     void runOnLoop(Loop *L);
     bool AddUsersIfInteresting(Instruction *I, Loop *L);
     void AnalyzeGetElementPtrUsers(GetElementPtrInst *GEP, Instruction *I,
@@ -152,6 +158,37 @@ namespace {
 FunctionPass *llvm::createLoopStrengthReducePass(unsigned MaxTargetAMSize) {
   return new LoopStrengthReduce(MaxTargetAMSize);
 }
+
+/// getCastedVersionOf - Return the specified value casted to uintptr_t.
+///
+Value *LoopStrengthReduce::getCastedVersionOf(Value *V) {
+  if (V->getType() == UIntPtrTy) return V;
+  if (Constant *CB = dyn_cast<Constant>(V))
+    return ConstantExpr::getCast(CB, UIntPtrTy);
+
+  Value *&New = CastedPointers[V];
+  if (New) return New;
+  
+  BasicBlock::iterator InsertPt;
+  if (Argument *Arg = dyn_cast<Argument>(V)) {
+    // Insert into the entry of the function, after any allocas.
+    InsertPt = Arg->getParent()->begin()->begin();
+    while (isa<AllocaInst>(InsertPt)) ++InsertPt;
+  } else {
+    if (InvokeInst *II = dyn_cast<InvokeInst>(V)) {
+      InsertPt = II->getNormalDest()->begin();
+    } else {
+      InsertPt = cast<Instruction>(V);
+      ++InsertPt;
+    }
+
+    // Do not insert casts into the middle of PHI node blocks.
+    while (isa<PHINode>(InsertPt)) ++InsertPt;
+  }
+    
+  return New = new CastInst(V, UIntPtrTy, V->getName(), InsertPt);
+}
+
 
 /// DeleteTriviallyDeadInstructions - If any of the instructions is the
 /// specified set are trivially dead, delete them and see if this makes any of
@@ -218,6 +255,7 @@ static SCEVHandle GetAdjustedIndex(const SCEVHandle &Idx, uint64_t TySize,
   return Result;
 }
 
+
 /// AnalyzeGetElementPtrUsers - Analyze all of the users of the specified
 /// getelementptr instruction, adding them to the IVUsesByStride table.  Note
 /// that we only want to analyze a getelementptr instruction once, and it can
@@ -233,33 +271,7 @@ void LoopStrengthReduce::AnalyzeGetElementPtrUsers(GetElementPtrInst *GEP,
 
   // Build up the base expression.  Insert an LLVM cast of the pointer to
   // uintptr_t first.
-  Value *BasePtr;
-  if (Constant *CB = dyn_cast<Constant>(GEP->getOperand(0)))
-    BasePtr = ConstantExpr::getCast(CB, UIntPtrTy);
-  else {
-    Value *&BP = CastedBasePointers[GEP->getOperand(0)];
-    if (BP == 0) {
-      BasicBlock::iterator InsertPt;
-      if (isa<Argument>(GEP->getOperand(0))) {
-        InsertPt = GEP->getParent()->getParent()->begin()->begin();
-      } else {
-        InsertPt = cast<Instruction>(GEP->getOperand(0));
-        if (InvokeInst *II = dyn_cast<InvokeInst>(GEP->getOperand(0)))
-          InsertPt = II->getNormalDest()->begin();
-        else
-          ++InsertPt;
-      }
-      
-      // Do not insert casts into the middle of PHI node blocks.
-      while (isa<PHINode>(InsertPt)) ++InsertPt;
-      
-      BP = new CastInst(GEP->getOperand(0), UIntPtrTy,
-                        GEP->getOperand(0)->getName(), InsertPt);
-    }
-    BasePtr = BP;
-  }
-
-  SCEVHandle Base = SCEVUnknown::get(BasePtr);
+  SCEVHandle Base = SCEVUnknown::get(getCastedVersionOf(GEP->getOperand(0)));
 
   gep_type_iterator GTI = gep_type_begin(GEP);
   unsigned i = 1;
@@ -316,7 +328,7 @@ void LoopStrengthReduce::AnalyzeGetElementPtrUsers(GetElementPtrInst *GEP,
 
   // FIXME: If the base is not loop invariant, we currently cannot emit this.
   if (!Base->isLoopInvariant(L)) {
-    DEBUG(std::cerr << "IGNORING GEP due to non-invaiant base: "
+    DEBUG(std::cerr << "IGNORING GEP due to non-invariant base: "
                     << *Base << "\n");
     return;
   }
@@ -703,6 +715,5 @@ void LoopStrengthReduce::runOnLoop(Loop *L) {
   }
 
   IVUsesByStride.clear();
-  CastedBasePointers.clear();
   return;
 }
