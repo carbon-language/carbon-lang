@@ -2,6 +2,7 @@
 ; gets reduced, making INDVAR dead.
 
 ; RUN: llvm-as < %s | opt -loop-reduce | llvm-dis | not grep INDVAR
+; XFAIL: *
 
 declare bool %pred()
 declare int %getidx()
