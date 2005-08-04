@@ -1486,13 +1486,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         case ISD::FCOS:  FnName = VT == MVT::f32 ? "cosf"  : "cos"; break;
         default: assert(0 && "Unreachable!");
         }
-        std::vector<std::pair<SDOperand, const Type*> > Args;
-        Args.push_back(std::make_pair(Tmp1, T));
-        // FIXME: should use ExpandLibCall!
-        std::pair<SDOperand,SDOperand> CallResult =
-          TLI.LowerCallTo(DAG.getEntryNode(), T, false, CallingConv::C, true,
-                          DAG.getExternalSymbol(FnName, VT), Args, DAG);
-        Result = LegalizeOp(CallResult.first);
+        SDOperand Dummy;
+        Result = ExpandLibCall(FnName, Node, Dummy);
         break;
       }
       default:
