@@ -160,7 +160,7 @@ void Function::viewCFG() const {
     system(("rm " + Filename).c_str());
     return;
   }
-#endif
+#endif  // HAVE_GRAPHVIZ
   
 #ifdef HAVE_GV
   std::cerr << "Running 'dot' program... " << std::flush;
@@ -173,12 +173,14 @@ void Function::viewCFG() const {
   }
   system(("rm " + Filename + " /tmp/cfg.tempgraph.ps").c_str());
   return;
-#endif
-#endif
+#endif  // HAVE_GV
+#endif  // NDEBUG
   std::cerr << "Function::viewCFG is only available in debug builds on "
             << "systems with Graphviz or gv!\n";
 
+#ifndef NDEBUG
   system(("rm " + Filename).c_str());
+#endif
 }
 
 /// viewCFGOnly - This function is meant for use from the debugger.  It works
