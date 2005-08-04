@@ -80,17 +80,6 @@ void CondProp::SimplifyBlock(BasicBlock *BB) {
       SimplifyPredecessors(SI);
   }
 
-  // See if we can fold any PHI nodes in this block now.
-  // FIXME: This would not be required if removePredecessor did this for us!!
-  PHINode *PN;
-  for (BasicBlock::iterator I = BB->begin(); (PN = dyn_cast<PHINode>(I++)); )
-    if (Value *PNV = hasConstantValue(PN))
-      if (!isa<Instruction>(PNV)) {
-        PN->replaceAllUsesWith(PNV);
-        PN->eraseFromParent();
-        MadeChange = true;
-      }
-
   // If possible, simplify the terminator of this block.
   if (ConstantFoldTerminator(BB))
     MadeChange = true;

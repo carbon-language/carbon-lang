@@ -4401,7 +4401,7 @@ static bool DeadPHICycle(PHINode *PN, std::set<PHINode*> &PotentiallyDeadPHIs) {
 // PHINode simplification
 //
 Instruction *InstCombiner::visitPHINode(PHINode &PN) {
-  if (Value *V = hasConstantValue(&PN)) {
+  if (Value *V = PN.hasConstantValue()) {
     // If V is an instruction, we have to be certain that it dominates PN.
     // However, because we don't have dom info, we can't do a perfect job.
     if (Instruction *I = dyn_cast<Instruction>(V)) {

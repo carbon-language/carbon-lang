@@ -74,16 +74,6 @@ bool isInstructionTriviallyDead(Instruction *I);
 bool dceInstruction(BasicBlock::iterator &BBI);
 
 //===----------------------------------------------------------------------===//
-//  PHI Instruction Simplification
-//
-
-/// hasConstantValue - If the specified PHI node always merges together the same
-/// value, return the value, otherwise return null.
-///
-Value *hasConstantValue(PHINode *PN);
-
-
-//===----------------------------------------------------------------------===//
 //  Control Flow Graph Restructuring...
 //
 

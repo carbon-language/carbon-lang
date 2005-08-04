@@ -804,6 +804,11 @@ public:
     return getIncomingValue(getBasicBlockIndex(BB));
   }
 
+  /// hasConstantValue - If the specified PHI node always merges together the 
+  /// same value, return the value, otherwise return null.
+  ///
+  Value *hasConstantValue();
+  
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const PHINode *) { return true; }
   static inline bool classof(const Instruction *I) {

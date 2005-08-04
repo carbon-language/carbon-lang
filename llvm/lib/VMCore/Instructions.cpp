@@ -132,6 +132,36 @@ void PHINode::resizeOperands(unsigned NumOps) {
   OperandList = NewOps;
 }
 
+/// hasConstantValue - If the specified PHI node always merges together the same
+/// value, return the value, otherwise return null.
+///
+Value *PHINode::hasConstantValue() {
+  // If the PHI node only has one incoming value, eliminate the PHI node...
+  if (getNumIncomingValues() == 1)
+    return getIncomingValue(0);
+  
+  // Otherwise if all of the incoming values are the same for the PHI, replace
+  // the PHI node with the incoming value.
+  //
+  Value *InVal = 0;
+  for (unsigned i = 0, e = getNumIncomingValues(); i != e; ++i)
+    if (getIncomingValue(i) != this &&  // Not the PHI node itself...
+        !isa<UndefValue>(getIncomingValue(i)))
+      if (InVal && getIncomingValue(i) != InVal)
+        return 0;  // Not the same, bail out.
+      else
+        InVal = getIncomingValue(i);
+  
+  // The only case that could cause InVal to be null is if we have a PHI node
+  // that only has entries for itself.  In this case, there is no entry into the
+  // loop, so kill the PHI.
+  //
+  if (InVal == 0) InVal = UndefValue::get(getType());
+  
+  // All of the incoming values are the same, return the value now.
+  return InVal;
+}
+
 
 //===----------------------------------------------------------------------===//
 //                        CallInst Implementation

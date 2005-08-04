@@ -189,8 +189,16 @@ void BasicBlock::removePredecessor(BasicBlock *Pred,
     // Okay, now we know that we need to remove predecessor #pred_idx from all
     // PHI nodes.  Iterate over each PHI node fixing them up
     PHINode *PN;
-    for (iterator II = begin(); (PN = dyn_cast<PHINode>(II)); ++II)
+    for (iterator II = begin(); (PN = dyn_cast<PHINode>(II)); ++II) {
       PN->removeIncomingValue(Pred, false);
+      // If all incoming values to the Phi are the same, we can replace the Phi
+      // with that value.
+      if (Value *PNV = PN->hasConstantValue())
+        if (!isa<Instruction>(PNV)) {
+          PN->replaceAllUsesWith(PNV);
+          PN->eraseFromParent();
+        }
+    }
   }
 }
 

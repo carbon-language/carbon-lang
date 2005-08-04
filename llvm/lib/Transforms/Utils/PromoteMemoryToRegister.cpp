@@ -24,7 +24,6 @@
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/AliasSetTracker.h"
 #include "llvm/ADT/StringExtras.h"
-#include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/StableBasicBlockNumbering.h"
 #include <algorithm>
@@ -348,7 +347,7 @@ void PromoteMem2Reg::run() {
     PHINode *SomePHI = 0;
     for (unsigned i = 0, e = PNs.size(); i != e; ++i)
       if (PNs[i]) {
-        if (Value *V = hasConstantValue(PNs[i])) {
+        if (Value *V = PNs[i]->hasConstantValue()) {
           if (!isa<Instruction>(V) || dominates(cast<Instruction>(V), PNs[i])) {
             if (AST && isa<PointerType>(PNs[i]->getType()))
               AST->deleteValue(PNs[i]);

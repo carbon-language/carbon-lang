@@ -41,7 +41,6 @@
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Support/CFG.h"
-#include "llvm/Transforms/Utils/Local.h"
 #include "llvm/ADT/SetOperations.h"
 #include "llvm/ADT/SetVector.h"
 #include "llvm/ADT/Statistic.h"
@@ -257,7 +256,7 @@ BasicBlock *LoopSimplify::SplitBlockPredecessors(BasicBlock *BB,
       PN->addIncoming(InVal, NewBB);
 
       // Can we eliminate this phi node now?
-      if (Value *V = hasConstantValue(PN)) {
+      if (Value *V = PN->hasConstantValue()) {
         if (!isa<Instruction>(V) ||
             getAnalysis<DominatorSet>().dominates(cast<Instruction>(V), PN)) {
           PN->replaceAllUsesWith(V);
@@ -443,7 +442,7 @@ static PHINode *FindPHIToPartitionLoops(Loop *L, DominatorSet &DS,
   for (BasicBlock::iterator I = L->getHeader()->begin(); isa<PHINode>(I); ) {
     PHINode *PN = cast<PHINode>(I);
     ++I;
-    if (Value *V = hasConstantValue(PN))
+    if (Value *V = PN->hasConstantValue())
       if (!isa<Instruction>(V) || DS.dominates(cast<Instruction>(V), PN)) {
         // This is a degenerate PHI already, don't modify it!
         PN->replaceAllUsesWith(V);
