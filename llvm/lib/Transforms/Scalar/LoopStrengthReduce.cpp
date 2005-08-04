@@ -166,8 +166,10 @@ Value *LoopStrengthReduce::getCastedVersionOf(Value *V) {
     // Do not insert casts into the middle of PHI node blocks.
     while (isa<PHINode>(InsertPt)) ++InsertPt;
   }
-    
-  return New = new CastInst(V, UIntPtrTy, V->getName(), InsertPt);
+  
+  New = new CastInst(V, UIntPtrTy, V->getName(), InsertPt);
+  DeadInsts.insert(cast<Instruction>(New));
+  return New;
 }
 
 
@@ -190,30 +192,6 @@ DeleteTriviallyDeadInstructions(std::set<Instruction*> &Insts) {
   }
 }
 
-
-/// CanReduceSCEV - Return true if we can strength reduce this scalar evolution
-/// in the specified loop.
-static bool CanReduceSCEV(const SCEVHandle &SH, Loop *L) {
-  SCEVAddRecExpr *AddRec = dyn_cast<SCEVAddRecExpr>(SH);
-  if (!AddRec || AddRec->getLoop() != L) return false;
-
-  // FIXME: Generalize to non-affine IV's.
-  if (!AddRec->isAffine()) return false;
-
-  // FIXME: generalize to IV's with more complex strides (must emit stride
-  // expression outside of loop!)
-  if (isa<SCEVConstant>(AddRec->getOperand(1)))
-    return true;
-
-  // We handle steps by unsigned values, because we know we won't have to insert
-  // a cast for them.
-  if (SCEVUnknown *SU = dyn_cast<SCEVUnknown>(AddRec->getOperand(1)))
-    if (SU->getValue()->getType()->isUnsigned())
-      return true;
-
-  // Otherwise, no, we can't handle it yet.
-  return false;
-}
 
 /// GetExpressionSCEV - Compute and return the SCEV for the specified
 /// instruction.
@@ -243,7 +221,9 @@ SCEVHandle LoopStrengthReduce::GetExpressionSCEV(Instruction *Exp, Loop *L) {
       GEPVal = SCEVAddExpr::get(GEPVal,
                                 SCEVUnknown::getIntegerSCEV(Offset, UIntPtrTy));
     } else {
-      SCEVHandle Idx = SE->getSCEV(getCastedVersionOf(GEP->getOperand(i)));
+      Value *OpVal = getCastedVersionOf(GEP->getOperand(i));
+      SCEVHandle Idx = SE->getSCEV(OpVal);
+
       uint64_t TypeSize = TD->getTypeSize(GTI.getIndexedType());
       if (TypeSize != 1)
         Idx = SCEVMulExpr::get(Idx,
@@ -253,8 +233,56 @@ SCEVHandle LoopStrengthReduce::GetExpressionSCEV(Instruction *Exp, Loop *L) {
     }
   }
 
-  //assert(CanReduceSCEV(GEPVal, L) && "Cannot reduce this use of IV?");  
   return GEPVal;
+}
+
+/// getSCEVStartAndStride - Compute the start and stride of this expression,
+/// returning false if the expression is not a start/stride pair, or true if it
+/// is.  The stride must be a loop invariant expression, but the start may be
+/// a mix of loop invariant and loop variant expressions.
+static bool getSCEVStartAndStride(const SCEVHandle &SH, Loop *L,
+                                  SCEVHandle &Start, Value *&Stride) {
+  SCEVHandle TheAddRec = Start;   // Initialize to zero.
+
+  // If the outer level is an AddExpr, the operands are all start values except
+  // for a nested AddRecExpr.
+  if (SCEVAddExpr *AE = dyn_cast<SCEVAddExpr>(SH)) {
+    for (unsigned i = 0, e = AE->getNumOperands(); i != e; ++i)
+      if (SCEVAddRecExpr *AddRec =
+             dyn_cast<SCEVAddRecExpr>(AE->getOperand(i))) {
+        if (AddRec->getLoop() == L)
+          TheAddRec = SCEVAddExpr::get(AddRec, TheAddRec);
+        else
+          return false;  // Nested IV of some sort?
+      } else {
+        Start = SCEVAddExpr::get(Start, AE->getOperand(i));
+      }
+        
+  } else if (SCEVAddRecExpr *AddRec = dyn_cast<SCEVAddRecExpr>(SH)) {
+    TheAddRec = SH;
+  } else {
+    return false;  // not analyzable.
+  }
+  
+  SCEVAddRecExpr *AddRec = dyn_cast<SCEVAddRecExpr>(TheAddRec);
+  if (!AddRec || AddRec->getLoop() != L) return false;
+  
+  // FIXME: Generalize to non-affine IV's.
+  if (!AddRec->isAffine()) return false;
+
+  Start = SCEVAddExpr::get(Start, AddRec->getOperand(0));
+  
+  // FIXME: generalize to IV's with more complex strides (must emit stride
+  // expression outside of loop!)
+  if (!isa<SCEVConstant>(AddRec->getOperand(1)))
+    return false;
+  
+  SCEVConstant *StrideC = cast<SCEVConstant>(AddRec->getOperand(1));
+  Stride = StrideC->getValue();
+
+  assert(Stride->getType()->isUnsigned() &&
+         "Constants should be canonicalized to unsigned!");
+  return true;
 }
 
 /// AddUsersIfInteresting - Inspect the specified instruction.  If it is a
@@ -266,25 +294,16 @@ bool LoopStrengthReduce::AddUsersIfInteresting(Instruction *I, Loop *L,
   if (!Processed.insert(I).second)
     return true;    // Instruction already handled.
   
+  // Get the symbolic expression for this instruction.
   SCEVHandle ISE = GetExpressionSCEV(I, L);
-  if (!CanReduceSCEV(ISE, L))
-    return false;  // Non-analyzable expression, e.g. a rem instr.
+  if (isa<SCEVCouldNotCompute>(ISE)) return false;
   
-  // NOT SAFE with generalized EXPRS
-  SCEVAddRecExpr *AR = cast<SCEVAddRecExpr>(ISE);
-  SCEVHandle Start = AR->getStart();
-
-  // Get the step value, canonicalizing to an unsigned integer type so that
-  // lookups in the map will match.
-  Value *Step = 0;   // Step of ISE.
-  if (SCEVConstant *SC = dyn_cast<SCEVConstant>(AR->getOperand(1)))
-    /// Always get the step value as an unsigned value.
-    Step = ConstantExpr::getCast(SC->getValue(),
-                               SC->getValue()->getType()->getUnsignedVersion());
-  else
-    Step = cast<SCEVUnknown>(AR->getOperand(1))->getValue();
-  assert(Step->getType()->isUnsigned() && "Bad step value!");
-
+  // Get the start and stride for this expression.
+  SCEVHandle Start = SCEVUnknown::getIntegerSCEV(0, ISE->getType());
+  Value *Stride = 0;
+  if (!getSCEVStartAndStride(ISE, L, Start, Stride))
+    return false;  // Non-reducible symbolic expression, bail out.
+  
   for (Value::use_iterator UI = I->use_begin(), E = I->use_end(); UI != E;++UI){
     Instruction *User = cast<Instruction>(*UI);
 
@@ -294,20 +313,21 @@ bool LoopStrengthReduce::AddUsersIfInteresting(Instruction *I, Loop *L,
 
     // If this is an instruction defined in a nested loop, or outside this loop,
     // don't recurse into it.
+    bool AddUserToIVUsers = false;
     if (LI->getLoopFor(User->getParent()) != L) {
       DEBUG(std::cerr << "FOUND USER in nested loop: " << *User
             << "   OF SCEV: " << *ISE << "\n");
-      
-      // Okay, we found a user that we cannot reduce.  Analyze the instruction
-      // and decide what to do with it.
-      IVUsesByStride[Step].addUser(Start, User, I);
+      AddUserToIVUsers = true;
     } else if (!AddUsersIfInteresting(User, L, Processed)) {
       DEBUG(std::cerr << "FOUND USER: " << *User
             << "   OF SCEV: " << *ISE << "\n");
+      AddUserToIVUsers = true;
+    }
 
+    if (AddUserToIVUsers) {
       // Okay, we found a user that we cannot reduce.  Analyze the instruction
       // and decide what to do with it.
-      IVUsesByStride[Step].addUser(Start, User, I);
+      IVUsesByStride[Stride].addUser(Start, User, I);
     }
   }
   return true;
@@ -372,28 +392,27 @@ static bool isTargetConstant(const SCEVHandle &V) {
 
 /// GetImmediateValues - Look at Val, and pull out any additions of constants
 /// that can fit into the immediate field of instructions in the target.
-static SCEVHandle GetImmediateValues(SCEVHandle Val, bool isAddress) {
-  if (!isAddress)
-    return SCEVUnknown::getIntegerSCEV(0, Val->getType());
-  if (isTargetConstant(Val))
+static SCEVHandle GetImmediateValues(SCEVHandle Val, bool isAddress, Loop *L) {
+  if (isAddress && isTargetConstant(Val))
     return Val;
 
   if (SCEVAddExpr *SAE = dyn_cast<SCEVAddExpr>(Val)) {
     unsigned i = 0;
-    for (; i != SAE->getNumOperands(); ++i)
-      if (isTargetConstant(SAE->getOperand(i))) {
-        SCEVHandle ImmVal = SAE->getOperand(i);
+    SCEVHandle Imm = SCEVUnknown::getIntegerSCEV(0, Val->getType());
 
-        // If there are any other immediates that we can handle here, pull them
-        // out too.
-        for (++i; i != SAE->getNumOperands(); ++i)
-          if (isTargetConstant(SAE->getOperand(i)))
-            ImmVal = SCEVAddExpr::get(ImmVal, SAE->getOperand(i));
-        return ImmVal;
+    for (; i != SAE->getNumOperands(); ++i)
+      if (isAddress && isTargetConstant(SAE->getOperand(i))) {
+        Imm = SCEVAddExpr::get(Imm, SAE->getOperand(i));
+      } else if (!SAE->getOperand(i)->isLoopInvariant(L)) {
+        // If this is a loop-variant expression, it must stay in the immediate
+        // field of the expression.
+        Imm = SCEVAddExpr::get(Imm, SAE->getOperand(i));
       }
+        
+    return Imm;
   } else if (SCEVAddRecExpr *SARE = dyn_cast<SCEVAddRecExpr>(Val)) {
     // Try to pull immediates out of the start value of nested addrec's.
-    return GetImmediateValues(SARE->getStart(), isAddress);
+    return GetImmediateValues(SARE->getStart(), isAddress, L);
   }
 
   return SCEVUnknown::getIntegerSCEV(0, Val->getType());
@@ -427,10 +446,16 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(Value *Stride,
   // instructions.  If we can represent anything there, move it to the imm
   // fields of the BasedUsers.
   for (unsigned i = 0, e = UsersToProcess.size(); i != e; ++i) {
-    bool isAddress = isa<LoadInst>(UsersToProcess[i].second.Inst) ||
-                     isa<StoreInst>(UsersToProcess[i].second.Inst);
-    UsersToProcess[i].second.Imm = GetImmediateValues(UsersToProcess[i].first,
-                                                      isAddress);
+    // Addressing modes can be folded into loads and stores.  Be careful that
+    // the store is through the expression, not of the expression though.
+    bool isAddress = isa<LoadInst>(UsersToProcess[i].second.Inst);
+    if (StoreInst *SI = dyn_cast<StoreInst>(UsersToProcess[i].second.Inst))
+      if (SI->getOperand(1) == UsersToProcess[i].second.OperandValToReplace)
+        isAddress = true;
+          
+    UsersToProcess[i].second.Imm =
+          GetImmediateValues(UsersToProcess[i].first, isAddress, L);
+                                                        
     UsersToProcess[i].first = SCEV::getMinusSCEV(UsersToProcess[i].first,
                                                  UsersToProcess[i].second.Imm);
 
