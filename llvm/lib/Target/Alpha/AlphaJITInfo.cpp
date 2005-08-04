@@ -64,7 +64,7 @@ static void EmitBranchToAt(void *At, void *To) {
   for (int x = 1; x <= 8; ++x) {
     AtI[2*x - 1] = BUILD_SLLi(27,27,8);
     unsigned d = (Fn >> (64 - 8 * x)) & 0x00FF;
-    DEBUG(std::cerr << "outputing " << hex << d << dec << "\n");
+    //    DEBUG(std::cerr << "outputing " << hex << d << dec << "\n");
     AtI[2*x] = BUILD_ORi(27, 27, d);
   }
   AtI[17] = BUILD_JMP(31,27,0); //jump, preserving ra, and setting pv

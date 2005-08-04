@@ -89,9 +89,11 @@ bool AlphaCodeEmitter::runOnMachineFunction(MachineFunction &MF) {
   for (unsigned i = 0, e = BBRefs.size(); i != e; ++i) {
     unsigned* Location = (unsigned*)BasicBlockAddrs[BBRefs[i].first];
     unsigned* Ref = (unsigned*)BBRefs[i].second;
-    intptr_t BranchTargetDisp = (((unsigned char*)Location  - (unsigned char*)Ref) >> 2) - 1;
+    intptr_t BranchTargetDisp = 
+      (((unsigned char*)Location  - (unsigned char*)Ref) >> 2) - 1;
     DEBUG(std::cerr << "Fixup @ " << (void*)Ref << " to " << (void*)Location
-          << " Disp " << BranchTargetDisp << " using " <<  (BranchTargetDisp & ((1 << 22)-1)) << "\n");
+          << " Disp " << BranchTargetDisp 
+          << " using " <<  (BranchTargetDisp & ((1 << 22)-1)) << "\n");
     *Ref |= (BranchTargetDisp & ((1 << 21)-1));
   }
   BBRefs.clear();
@@ -115,6 +117,7 @@ void AlphaCodeEmitter::emitBasicBlock(MachineBasicBlock &MBB) {
     case Alpha::ALTENT:
     case Alpha::PCLABEL:
     case Alpha::MEMLABEL:
+    case Alpha::IDEF:
       break; //skip these
     }
   }
