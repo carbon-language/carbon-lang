@@ -427,7 +427,12 @@ void DarwinAsmPrinter::printConstantPool(MachineConstantPool *MCP) {
 
   for (unsigned i = 0, e = CP.size(); i != e; ++i) {
     O << "\t.const\n";
-    emitAlignment(TD.getTypeAlignmentShift(CP[i]->getType()));
+    // FIXME: force doubles to be naturally aligned.  We should handle this
+    // more correctly in the future.
+    if (Type::DoubleTy == CP[i]->getType())
+      emitAlignment(3);
+    else
+      emitAlignment(TD.getTypeAlignmentShift(CP[i]->getType()));
     O << ".CPI" << CurrentFnName << "_" << i << ":\t\t\t\t\t" << CommentString
       << *CP[i] << "\n";
     emitGlobalConstant(CP[i]);
