@@ -405,21 +405,18 @@ bool LoopStrengthReduce::AddUsersIfInteresting(Instruction *I, Loop *L) {
     }
 
     // Next, see if this user is analyzable itself!
-    if (!AddUsersIfInteresting(User, L)) {
-      if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(User)) {
-        // If this is a getelementptr instruction, figure out what linear
-        // expression of induction variable is actually being used.
-        //
-        if (AnalyzedGEPs.insert(GEP).second)   // Not already analyzed?
-          AnalyzeGetElementPtrUsers(GEP, I, L);
-      } else {
-        DEBUG(std::cerr << "FOUND USER: " << *User
-              << "   OF SCEV: " << *ISE << "\n");
+    if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(User)) {
+      // If this is a getelementptr instruction, figure out what linear
+      // expression of induction variable is actually being used.
+      if (AnalyzedGEPs.insert(GEP).second)   // Not already analyzed?
+        AnalyzeGetElementPtrUsers(GEP, I, L);
+    } else if (!AddUsersIfInteresting(User, L)) {
+      DEBUG(std::cerr << "FOUND USER: " << *User
+            << "   OF SCEV: " << *ISE << "\n");
 
-        // Okay, we found a user that we cannot reduce.  Analyze the instruction
-        // and decide what to do with it.
-        IVUsesByStride[Step].addUser(Start, User, I);
-      }
+      // Okay, we found a user that we cannot reduce.  Analyze the instruction
+      // and decide what to do with it.
+      IVUsesByStride[Step].addUser(Start, User, I);
     }
   }
   return true;
