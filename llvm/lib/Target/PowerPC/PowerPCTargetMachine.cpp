@@ -59,10 +59,10 @@ namespace {
 
 PowerPCTargetMachine::PowerPCTargetMachine(const std::string &name,
                                            IntrinsicLowering *IL,
+                                           const Module &M,
                                            const TargetData &TD,
                                            const PowerPCFrameInfo &TFI)
-  : TargetMachine(name, IL, TD), FrameInfo(TFI)
-{}
+: TargetMachine(name, IL, TD), FrameInfo(TFI), Subtarget(M) {}
 
 unsigned PPC32TargetMachine::getJITMatchQuality() {
 #if defined(__POWERPC__) || defined (__ppc__) || defined(_POWER)
@@ -177,14 +177,14 @@ void PowerPCJITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
 /// PowerPCTargetMachine ctor - Create an ILP32 architecture model
 ///
 PPC32TargetMachine::PPC32TargetMachine(const Module &M, IntrinsicLowering *IL)
-  : PowerPCTargetMachine(PPC32ID, IL,
+  : PowerPCTargetMachine(PPC32ID, IL, M,
                          TargetData(PPC32ID,false,4,4,4,4,4,4,2,1,1),
                          PowerPCFrameInfo(*this, false)), JITInfo(*this) {}
 
 /// PPC64TargetMachine ctor - Create a LP64 architecture model
 ///
 PPC64TargetMachine::PPC64TargetMachine(const Module &M, IntrinsicLowering *IL)
-  : PowerPCTargetMachine(PPC64ID, IL,
+  : PowerPCTargetMachine(PPC64ID, IL, M,
                          TargetData(PPC64ID,false,8,4,4,4,4,4,2,1,1),
                          PowerPCFrameInfo(*this, true)) {}
 

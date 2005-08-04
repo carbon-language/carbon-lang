@@ -14,9 +14,11 @@
 #ifndef POWERPC_TARGETMACHINE_H
 #define POWERPC_TARGETMACHINE_H
 
-#include "PowerPCFrameInfo.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/PassManager.h"
+#include "PowerPCFrameInfo.h"
+#include "PowerPCSubtarget.h"
 
 namespace llvm {
 
@@ -24,13 +26,15 @@ class GlobalValue;
 class IntrinsicLowering;
 
 class PowerPCTargetMachine : public TargetMachine {
-  PowerPCFrameInfo FrameInfo;
-
+  PowerPCFrameInfo  FrameInfo;
+  PPCSubtarget      Subtarget;
 protected:
   PowerPCTargetMachine(const std::string &name, IntrinsicLowering *IL,
-                       const TargetData &TD, const PowerPCFrameInfo &TFI);
+                       const Module &M, const TargetData &TD, 
+                       const PowerPCFrameInfo &TFI);
 public:
   virtual const TargetFrameInfo  *getFrameInfo() const { return &FrameInfo; }
+  virtual const TargetSubtarget  *getSubtargetImpl() const{ return &Subtarget; }
 
   virtual bool addPassesToEmitFile(PassManager &PM, std::ostream &Out,
                                    CodeGenFileType FileType);

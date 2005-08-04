@@ -1,4 +1,4 @@
-//===- X86Subtarget.cpp - X86 Instruction Information -----------*- C++ -*-===//
+//===-- X86Subtarget.cpp - X86 Subtarget Information ------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
