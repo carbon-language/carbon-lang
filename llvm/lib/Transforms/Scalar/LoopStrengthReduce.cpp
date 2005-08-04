@@ -36,6 +36,7 @@ using namespace llvm;
 
 namespace {
   Statistic<> NumReduced ("loop-reduce", "Number of GEPs strength reduced");
+  Statistic<> NumInserted("loop-reduce", "Number of PHIs inserted");
 
   /// IVStrideUse - Keep track of one use of a strided induction variable, where
   /// the stride is stored externally.  The Offset member keeps track of the 
@@ -433,38 +434,54 @@ static bool isTargetConstant(const SCEVHandle &V) {
   return false;
 }
 
-/// GetImmediateValues - Look at Val, and pull out any additions of constants
+/// MoveImmediateValues - Look at Val, and pull out any additions of constants
 /// that can fit into the immediate field of instructions in the target.
-static SCEVHandle GetImmediateValues(SCEVHandle Val, bool isAddress, Loop *L) {
-  if (isAddress && isTargetConstant(Val))
-    return Val;
-
+/// Accumulate these immediate values into the Imm value.
+static void MoveImmediateValues(SCEVHandle &Val, SCEVHandle &Imm,
+                                bool isAddress, Loop *L) {
   if (SCEVAddExpr *SAE = dyn_cast<SCEVAddExpr>(Val)) {
-    unsigned i = 0;
-    SCEVHandle Imm = SCEVUnknown::getIntegerSCEV(0, Val->getType());
-
-    for (; i != SAE->getNumOperands(); ++i)
+    std::vector<SCEVHandle> NewOps;
+    NewOps.reserve(SAE->getNumOperands());
+    
+    for (unsigned i = 0; i != SAE->getNumOperands(); ++i)
       if (isAddress && isTargetConstant(SAE->getOperand(i))) {
         Imm = SCEVAddExpr::get(Imm, SAE->getOperand(i));
       } else if (!SAE->getOperand(i)->isLoopInvariant(L)) {
         // If this is a loop-variant expression, it must stay in the immediate
         // field of the expression.
         Imm = SCEVAddExpr::get(Imm, SAE->getOperand(i));
+      } else {
+        NewOps.push_back(SAE->getOperand(i));
       }
-        
-    return Imm;
+
+    if (NewOps.empty())
+      Val = SCEVUnknown::getIntegerSCEV(0, Val->getType());
+    else
+      Val = SCEVAddExpr::get(NewOps);
+    return;
   } else if (SCEVAddRecExpr *SARE = dyn_cast<SCEVAddRecExpr>(Val)) {
     // Try to pull immediates out of the start value of nested addrec's.
-    return GetImmediateValues(SARE->getStart(), isAddress, L);
+    SCEVHandle Start = SARE->getStart();
+    MoveImmediateValues(Start, Imm, isAddress, L);
+    
+    if (Start != SARE->getStart()) {
+      std::vector<SCEVHandle> Ops(SARE->op_begin(), SARE->op_end());
+      Ops[0] = Start;
+      Val = SCEVAddRecExpr::get(Ops, SARE->getLoop());
+    }
+    return;
   }
 
-  if (!Val->isLoopInvariant(L)) {
-    // If this is a loop-variant expression, it must stay in the immediate
-    // field of the expression.
-    return Val;
+  // Loop-variant expressions must stay in the immediate field of the
+  // expression.
+  if ((isAddress && isTargetConstant(Val)) ||
+      !Val->isLoopInvariant(L)) {
+    Imm = SCEVAddExpr::get(Imm, Val);
+    Val = SCEVUnknown::getIntegerSCEV(0, Val->getType());
+    return;
   }
-    
-  return SCEVUnknown::getIntegerSCEV(0, Val->getType());
+
+  // Otherwise, no immediates to move.
 }
 
 /// StrengthReduceStridedIVUsers - Strength reduce all of the users of a single
@@ -502,14 +519,11 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(Value *Stride,
       if (SI->getOperand(1) == UsersToProcess[i].second.OperandValToReplace)
         isAddress = true;
           
-    UsersToProcess[i].second.Imm =
-          GetImmediateValues(UsersToProcess[i].first, isAddress, L);
-                                                        
-    UsersToProcess[i].first = SCEV::getMinusSCEV(UsersToProcess[i].first,
-                                                 UsersToProcess[i].second.Imm);
+    MoveImmediateValues(UsersToProcess[i].first, UsersToProcess[i].second.Imm,
+                        isAddress, L);
 
-    DEBUG(std::cerr << "BASE: " << *UsersToProcess[i].first);
-    DEBUG(UsersToProcess[i].second.dump());
+    assert(UsersToProcess[i].first->isLoopInvariant(L) &&
+           "Base value is not loop invariant!");
   }
 
   SCEVExpander Rewriter(*SE, *LI);
@@ -545,6 +559,7 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(Value *Stride,
     // Create a new Phi for this base, and stick it in the loop header.
     const Type *ReplacedTy = Base->getType();
     PHINode *NewPHI = new PHINode(ReplacedTy, "iv.", PhiInsertBefore);
+    ++NumInserted;
 
     // Emit the initial base value into the loop preheader, and add it to the
     // Phi node.
