@@ -415,6 +415,12 @@ static SCEVHandle GetImmediateValues(SCEVHandle Val, bool isAddress, Loop *L) {
     return GetImmediateValues(SARE->getStart(), isAddress, L);
   }
 
+  if (!Val->isLoopInvariant(L)) {
+    // If this is a loop-variant expression, it must stay in the immediate
+    // field of the expression.
+    return Val;
+  }
+    
   return SCEVUnknown::getIntegerSCEV(0, Val->getType());
 }
 
