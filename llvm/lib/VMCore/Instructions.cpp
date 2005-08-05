@@ -144,9 +144,11 @@ Value *PHINode::hasConstantValue(bool AllowNonDominatingInstruction) const {
   // the PHI node with the incoming value.
   //
   Value *InVal = 0;
+  bool HasUndefInput = false;
   for (unsigned i = 0, e = getNumIncomingValues(); i != e; ++i)
-    if (getIncomingValue(i) != this &&  // Not the PHI node itself...
-        !isa<UndefValue>(getIncomingValue(i)))
+    if (isa<UndefValue>(getIncomingValue(i)))
+      HasUndefInput = true;
+    else if (getIncomingValue(i) != this)  // Not the PHI node itself...
       if (InVal && getIncomingValue(i) != InVal)
         return 0;  // Not the same, bail out.
       else
@@ -158,6 +160,16 @@ Value *PHINode::hasConstantValue(bool AllowNonDominatingInstruction) const {
   //
   if (InVal == 0) InVal = UndefValue::get(getType());
   
+  // If we have a PHI node like phi(X, undef, X), where X is defined by some
+  // instruction, we cannot always return X as the result of the PHI node.  Only
+  // do this if X is not an instruction (thus it must dominate the PHI block),
+  // or if the client is prepared to deal with this possibility.
+  if (HasUndefInput && !AllowNonDominatingInstruction)
+    if (Instruction *IV = dyn_cast<Instruction>(InVal))
+      // If it's in the entry block, it dominates everything.
+      if (IV->getParent() != &IV->getParent()->getParent()->front())
+        return 0;   // Cannot guarantee that InVal dominates this PHINode.
+
   // All of the incoming values are the same, return the value now.
   return InVal;
 }
