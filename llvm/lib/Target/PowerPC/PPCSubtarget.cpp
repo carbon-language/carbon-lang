@@ -12,7 +12,23 @@
 //===----------------------------------------------------------------------===//
 
 #include "PowerPCSubtarget.h"
+#include "PowerPC.h"
 #include "llvm/Module.h"
+#include "llvm/Support/CommandLine.h"
+using namespace llvm;
+PPCTargetEnum llvm::PPCTarget = TargetDefault;
+
+namespace llvm {
+  cl::opt<PPCTargetEnum, true>
+  PPCTargetArg(cl::desc("Force generation of code for a specific PPC target:"),
+               cl::values(
+                          clEnumValN(TargetAIX,  "aix", "  Enable AIX codegen"),
+                          clEnumValN(TargetDarwin,"darwin","  Enable Darwin codegen"),
+                          clEnumValEnd),
+               cl::location(PPCTarget), cl::init(TargetDefault));
+  cl::opt<bool> EnableGPOPT("enable-gpopt", cl::Hidden,
+                             cl::desc("Enable optimizations for GP cpus"));
+}
 
 #if defined(__APPLE__)
 #include <mach/mach.h>
@@ -33,25 +49,26 @@ static boolean_t IsGP() {
 } 
 #endif
 
-using namespace llvm;
-
 PPCSubtarget::PPCSubtarget(const Module &M)
-  : TargetSubtarget(), stackAlignment(16), isGigaProcessor(false), isAIX(false),
-    isDarwin(false) {
-  // Set the boolean corresponding to the current target triple, or the default
+  : StackAlignment(16), IsGigaProcessor(false), IsAIX(false), IsDarwin(false) {
+
+    // Set the boolean corresponding to the current target triple, or the default
   // if one cannot be determined, to true.
   const std::string& TT = M.getTargetTriple();
   if (TT.length() > 5) {
-    isDarwin = TT.find("darwin") != std::string::npos;
+    IsDarwin = TT.find("darwin") != std::string::npos;
 #if defined(__APPLE__)
-    isGigaProcessor = IsGP();
+    IsGigaProcessor = IsGP();
 #endif
   } else if (TT.empty()) {
 #if defined(_POWER)
-    isAIX = true;
+    IsAIX = true;
 #elif defined(__APPLE__)
-    isDarwin = true;
-    isGigaProcessor = IsGP();
+    IsDarwin = true;
+    IsGigaProcessor = IsGP();
 #endif
   }
+  
+  // If GP opts are forced on by the commandline, do so now.
+  if (EnableGPOPT) IsGigaProcessor = true;
 }

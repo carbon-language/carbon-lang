@@ -23,12 +23,12 @@ class PPCSubtarget : public TargetSubtarget {
 protected:
   /// stackAlignment - The minimum alignment known to hold of the stack frame on
   /// entry to the function and which must be maintained by every function.
-  unsigned stackAlignment;
+  unsigned StackAlignment;
 
   /// Used by the ISel to turn in optimizations for POWER4-derived architectures
-  bool isGigaProcessor;
-  bool isAIX;
-  bool isDarwin;
+  bool IsGigaProcessor;
+  bool IsAIX;
+  bool IsDarwin;
 public:
   /// This constructor initializes the data members to match that
   /// of the specified module.
@@ -38,10 +38,12 @@ public:
   /// getStackAlignment - Returns the minimum alignment known to hold of the
   /// stack frame on entry to the function and which must be maintained by every
   /// function for this subtarget.
-  unsigned getStackAlignment() const { return stackAlignment; }
+  unsigned getStackAlignment() const { return StackAlignment; }
 
-  bool IsAIX() const { return isAIX; }
-  bool IsDarwin() const { return isDarwin; }
+  bool isAIX() const { return IsAIX; }
+  bool isDarwin() const { return IsDarwin; }
+  
+  bool isGigaProcessor() const { return IsGigaProcessor; }
 };
 } // End llvm namespace
 

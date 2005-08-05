@@ -19,6 +19,7 @@
 #define DEBUG_TYPE "asmprinter"
 #include "PowerPC.h"
 #include "PowerPCTargetMachine.h"
+#include "PowerPCSubtarget.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
@@ -440,7 +441,8 @@ void DarwinAsmPrinter::printConstantPool(MachineConstantPool *MCP) {
 }
 
 bool DarwinAsmPrinter::doInitialization(Module &M) {
-  if (GPOPT) O << "\t.machine ppc970\n";
+  if (TM.getSubtarget<PPCSubtarget>().isGigaProcessor())
+    O << "\t.machine ppc970\n";
   AsmPrinter::doInitialization(M);
   return false;
 }

@@ -33,7 +33,6 @@ FunctionPass *createPPC64ISelPattern(TargetMachine &TM);
 FunctionPass *createDarwinAsmPrinter(std::ostream &OS, TargetMachine &TM);
 FunctionPass *createAIXAsmPrinter(std::ostream &OS, TargetMachine &TM);
 
-extern bool GPOPT;
 extern bool PICEnabled;
 extern PPCTargetEnum PPCTarget;
 } // end namespace llvm;

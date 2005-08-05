@@ -96,7 +96,7 @@ namespace {
       setOperationAction(ISD::SREM , MVT::f32, Expand);
 
       // If we're enabling GP optimizations, use hardware square root
-      if (!GPOPT) {
+      if (!TM.getSubtarget<PPCSubtarget>().isGigaProcessor()) {
         setOperationAction(ISD::FSQRT, MVT::f64, Expand);
         setOperationAction(ISD::FSQRT, MVT::f32, Expand);
       }
@@ -536,6 +536,7 @@ namespace {
 Statistic<>Recorded("ppc-codegen", "Number of recording ops emitted");
 Statistic<>FusedFP("ppc-codegen", "Number of fused fp operations");
 Statistic<>FrameOff("ppc-codegen", "Number of frame idx offsets collapsed");
+
 //===--------------------------------------------------------------------===//
 /// ISel - PPC32 specific code to select PPC32 machine instructions for
 /// SelectionDAG operations.
@@ -929,7 +930,9 @@ unsigned ISel::getConstDouble(double doubleVal, unsigned Result=0) {
 void ISel::MoveCRtoGPR(unsigned CCReg, bool Inv, unsigned Idx, unsigned Result){
   unsigned IntCR = MakeReg(MVT::i32);
   BuildMI(BB, PPC::MCRF, 1, PPC::CR7).addReg(CCReg);
-  BuildMI(BB, GPOPT ? PPC::MFOCRF : PPC::MFCR, 1, IntCR).addReg(PPC::CR7);
+  bool GPOpt =
+    TLI.getTargetMachine().getSubtarget<PPCSubtarget>().isGigaProcessor();
+  BuildMI(BB, GPOpt ? PPC::MFOCRF : PPC::MFCR, 1, IntCR).addReg(PPC::CR7);
   if (Inv) {
     unsigned Tmp1 = MakeReg(MVT::i32);
     BuildMI(BB, PPC::RLWINM, 4, Tmp1).addReg(IntCR).addImm(32-(3-Idx))

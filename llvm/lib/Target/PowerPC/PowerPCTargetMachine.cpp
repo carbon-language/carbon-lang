@@ -30,25 +30,8 @@
 #include <iostream>
 using namespace llvm;
 
-bool llvm::GPOPT = false;
-PPCTargetEnum llvm::PPCTarget = TargetDefault;
-
-namespace llvm {
-  cl::opt<PPCTargetEnum, true>
-  PPCTargetArg(
-         cl::desc("Force generation of code for a specific PPC target:"),
-         cl::values(
-                    clEnumValN(TargetAIX,  "aix", "  Enable AIX codegen"),
-                    clEnumValN(TargetDarwin,"darwin","  Enable Darwin codegen"),
-                    clEnumValEnd),
-         cl::location(PPCTarget), cl::init(TargetDefault));
-  cl::opt<bool> EnablePPCLSR("enable-lsr-for-ppc",
-                             cl::desc("Enable LSR for PPC (beta)"),
-                             cl::Hidden);
-  cl::opt<bool, true> EnableGPOPT("enable-gpopt", cl::Hidden,
-                                  cl::location(GPOPT),
-                                  cl::desc("Enable optimizations for GP cpus"));
-}
+static cl::opt<bool> EnablePPCLSR("enable-lsr-for-ppc", cl::Hidden,
+                                  cl::desc("Enable LSR for PPC (beta)"));
 
 namespace {
   const std::string PPC32ID = "PowerPC/32bit";
@@ -71,8 +54,8 @@ PowerPCTargetMachine::PowerPCTargetMachine(const std::string &name,
                                            const PowerPCFrameInfo &TFI)
 : TargetMachine(name, IL, TD), FrameInfo(TFI), Subtarget(M) {
   if (TargetDefault == PPCTarget) {
-    if (Subtarget.IsAIX()) PPCTarget = TargetAIX;
-    if (Subtarget.IsDarwin()) PPCTarget = TargetDarwin;
+    if (Subtarget.isAIX()) PPCTarget = TargetAIX;
+    if (Subtarget.isDarwin()) PPCTarget = TargetDarwin;
   }
 }
 
