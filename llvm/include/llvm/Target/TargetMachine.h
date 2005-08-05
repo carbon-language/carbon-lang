@@ -105,11 +105,11 @@ public:
   /// getSubtarget - This method returns a pointer to the specified type of
   /// TargetSubtarget.  In debug builds, it verifies that the object being
   /// returned is of the correct type.
-  template<typename STC> STC *getSubtarget() const {
+  template<typename STC> const STC &getSubtarget() const {
     const TargetSubtarget *TST = getSubtargetImpl();
-    assert(getSubtargetImpl() && dynamic_cast<STC*>(TST) &&
+    assert(TST && dynamic_cast<const STC*>(TST) &&
            "Not the right kind of subtarget!");
-    return (STC*)TST;
+    return *static_cast<const STC*>(TST);
   }
 
   /// getRegisterInfo - If register information is available, return it.  If
