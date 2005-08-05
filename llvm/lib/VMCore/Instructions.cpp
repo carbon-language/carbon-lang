@@ -138,8 +138,11 @@ void PHINode::resizeOperands(unsigned NumOps) {
 Value *PHINode::hasConstantValue(bool AllowNonDominatingInstruction) const {
   // If the PHI node only has one incoming value, eliminate the PHI node...
   if (getNumIncomingValues() == 1)
-    return getIncomingValue(0);
-  
+    if (getIncomingValue(0) != this)   // not  X = phi X
+      return getIncomingValue(0);
+    else
+      return UndefValue::get(getType());  // Self cycle is dead.
+      
   // Otherwise if all of the incoming values are the same for the PHI, replace
   // the PHI node with the incoming value.
   //
