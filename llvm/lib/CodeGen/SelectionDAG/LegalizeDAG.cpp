@@ -1478,7 +1478,6 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       case ISD::FSIN:
       case ISD::FCOS: {
         MVT::ValueType VT = Node->getValueType(0);
-        Type *T = VT == MVT::f32 ? Type::FloatTy : Type::DoubleTy;
         const char *FnName = 0;
         switch(Node->getOpcode()) {
         case ISD::FSQRT: FnName = VT == MVT::f32 ? "sqrtf" : "sqrt"; break;
@@ -2263,7 +2262,7 @@ bool SelectionDAGLegalize::ExpandShift(unsigned Opc, SDOperand Op,SDOperand Amt,
 /// Found.
 static void FindLatestCallSeqStart(SDNode *Node, SDNode *&Found) {
   if (Node->getNodeDepth() <= Found->getNodeDepth()) return;
-
+  
   // If we found an CALLSEQ_START, we already know this node occurs later
   // than the Found node. Just remember this node and return.
   if (Node->getOpcode() == ISD::CALLSEQ_START) {
@@ -2323,8 +2322,7 @@ static SDNode *FindCallSeqEnd(SDNode *Node) {
   assert(TheChain.getValueType() == MVT::Other && "Is not a token chain!");
 
   for (SDNode::use_iterator UI = Node->use_begin(),
-         E = Node->use_end(); ; ++UI) {
-    assert(UI != E && "Didn't find a user of the tokchain, no CALLSEQ_END!");
+         E = Node->use_end(); UI != E; ++UI) {
 
     // Make sure to only follow users of our token chain.
     SDNode *User = *UI;
@@ -2333,8 +2331,7 @@ static SDNode *FindCallSeqEnd(SDNode *Node) {
         if (SDNode *Result = FindCallSeqEnd(User))
           return Result;
   }
-  assert(0 && "Unreachable");
-  abort();
+  return 0;
 }
 
 /// FindCallSeqStart - Given a chained node that is part of a call sequence,
