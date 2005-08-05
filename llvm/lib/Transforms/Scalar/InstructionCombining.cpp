@@ -4401,25 +4401,8 @@ static bool DeadPHICycle(PHINode *PN, std::set<PHINode*> &PotentiallyDeadPHIs) {
 // PHINode simplification
 //
 Instruction *InstCombiner::visitPHINode(PHINode &PN) {
-  if (Value *V = PN.hasConstantValue()) {
-    // If V is an instruction, we have to be certain that it dominates PN.
-    // However, because we don't have dom info, we can't do a perfect job.
-    if (Instruction *I = dyn_cast<Instruction>(V)) {
-      // We know that the instruction dominates the PHI if there are no undef
-      // values coming in.  If the instruction is defined in the entry block,
-      // and is not an invoke, we know it is ok.
-      if (I->getParent() != &I->getParent()->getParent()->front() ||
-          isa<InvokeInst>(I))
-        for (unsigned i = 0, e = PN.getNumIncomingValues(); i != e; ++i)
-          if (isa<UndefValue>(PN.getIncomingValue(i))) {
-            V = 0;
-            break;
-          }
-    }
-
-    if (V)
-      return ReplaceInstUsesWith(PN, V);
-  }
+  if (Value *V = PN.hasConstantValue())
+    return ReplaceInstUsesWith(PN, V);
 
   // If the only user of this instruction is a cast instruction, and all of the
   // incoming values are constants, change this PHI to merge together the casted
