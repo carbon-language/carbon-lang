@@ -106,7 +106,6 @@ namespace {
       for (LoopInfo::iterator I = LI->begin(), E = LI->end(); I != E; ++I)
         runOnLoop(*I);
       
-      CastedPointers.clear();
       return Changed;
     }
 
@@ -672,6 +671,7 @@ void LoopStrengthReduce::runOnLoop(Loop *L) {
     DeleteTriviallyDeadInstructions(DeadInsts);
   }
 
+  CastedPointers.clear();
   IVUsesByStride.clear();
   return;
 }
