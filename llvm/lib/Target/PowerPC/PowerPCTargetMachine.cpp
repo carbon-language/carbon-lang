@@ -138,12 +138,10 @@ bool PowerPCTargetMachine::addPassesToEmitFile(PassManager &PM,
   // Decide which asm printer to use.  If the user has not specified one on
   // the command line, choose whichever one matches the default (current host).
   switch (PPCTarget) {
-  case TargetDefault:
-    assert(0 && "Default host has no asm printer!");
-    break;
   case TargetAIX:
     PM.add(createAIXAsmPrinter(Out, *this));
     break;
+  case TargetDefault:
   case TargetDarwin:
     PM.add(createDarwinAsmPrinter(Out, *this));
     break;
