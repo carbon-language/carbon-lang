@@ -43,6 +43,9 @@ PPCSubtarget::PPCSubtarget(const Module &M)
   const std::string& TT = M.getTargetTriple();
   if (TT.length() > 5) {
     isDarwin = TT.find("darwin") != std::string::npos;
+#if defined(__APPLE__)
+    isGigaProcessor = IsGP();
+#endif
   } else if (TT.empty()) {
 #if defined(_POWER)
     isAIX = true;
