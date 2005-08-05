@@ -1092,7 +1092,7 @@ namespace {
     const X86Subtarget *Subtarget;
   public:
     ISel(TargetMachine &TM) : SelectionDAGISel(X86Lowering), X86Lowering(TM) {
-      Subtarget = TM.getSubtarget<const X86Subtarget>();
+      Subtarget = &TM.getSubtarget<X86Subtarget>();
     }
 
     virtual const char *getPassName() const {
