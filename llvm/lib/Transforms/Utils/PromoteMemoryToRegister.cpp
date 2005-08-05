@@ -347,7 +347,7 @@ void PromoteMem2Reg::run() {
     PHINode *SomePHI = 0;
     for (unsigned i = 0, e = PNs.size(); i != e; ++i)
       if (PNs[i]) {
-        if (Value *V = PNs[i]->hasConstantValue()) {
+        if (Value *V = PNs[i]->hasConstantValue(true)) {
           if (!isa<Instruction>(V) || dominates(cast<Instruction>(V), PNs[i])) {
             if (AST && isa<PointerType>(PNs[i]->getType()))
               AST->deleteValue(PNs[i]);

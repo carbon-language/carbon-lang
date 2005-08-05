@@ -256,7 +256,7 @@ BasicBlock *LoopSimplify::SplitBlockPredecessors(BasicBlock *BB,
       PN->addIncoming(InVal, NewBB);
 
       // Can we eliminate this phi node now?
-      if (Value *V = PN->hasConstantValue()) {
+      if (Value *V = PN->hasConstantValue(true)) {
         if (!isa<Instruction>(V) ||
             getAnalysis<DominatorSet>().dominates(cast<Instruction>(V), PN)) {
           PN->replaceAllUsesWith(V);
