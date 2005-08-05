@@ -21,6 +21,7 @@
 #include "llvm/CallingConv.h"
 #include "llvm/Constants.h"
 #include <iostream>
+#include <set>
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
@@ -2285,8 +2286,10 @@ static void FindLatestCallSeqStart(SDNode *Node, SDNode *&Found) {
 /// FindEarliestCallSeqEnd - Scan down the dag to find the earliest (lowest
 /// NodeDepth) node that is an CallSeqEnd operation and occurs more recent
 /// than Found.
-static void FindEarliestCallSeqEnd(SDNode *Node, SDNode *&Found) {
-  if (Found && Node->getNodeDepth() >= Found->getNodeDepth()) return;
+static void FindEarliestCallSeqEnd(SDNode *Node, SDNode *&Found,
+                                   std::set<SDNode*> &Visited) {
+  if ((Found && Node->getNodeDepth() >= Found->getNodeDepth()) ||
+      !Visited.insert(Node).second) return;
 
   // If we found an CALLSEQ_END, we already know this node occurs earlier
   // than the Found node. Just remember this node and return.
@@ -2299,10 +2302,10 @@ static void FindEarliestCallSeqEnd(SDNode *Node, SDNode *&Found) {
   SDNode::use_iterator UI = Node->use_begin(), E = Node->use_end();
   if (UI == E) return;
   for (--E; UI != E; ++UI)
-    FindEarliestCallSeqEnd(*UI, Found);
+    FindEarliestCallSeqEnd(*UI, Found, Visited);
 
   // Tail recurse for the last iteration.
-  FindEarliestCallSeqEnd(*UI, Found);
+  FindEarliestCallSeqEnd(*UI, Found, Visited);
 }
 
 /// FindCallSeqEnd - Given a chained node that is part of a call sequence,
@@ -2372,7 +2375,8 @@ static SDOperand FindInputOutputChains(SDNode *OpNode, SDNode *&OutChain,
   // Finally, find the first call that this must come before, first we find the
   // CallSeqEnd that ends the call.
   OutChain = 0;
-  FindEarliestCallSeqEnd(OpNode, OutChain);
+  std::set<SDNode*> Visited;
+  FindEarliestCallSeqEnd(OpNode, OutChain, Visited);
 
   // If we found one, translate from the adj up to the callseq_start.
   if (OutChain)
