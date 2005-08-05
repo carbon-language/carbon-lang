@@ -167,7 +167,8 @@ Value *PHINode::hasConstantValue(bool AllowNonDominatingInstruction) const {
   if (HasUndefInput && !AllowNonDominatingInstruction)
     if (Instruction *IV = dyn_cast<Instruction>(InVal))
       // If it's in the entry block, it dominates everything.
-      if (IV->getParent() != &IV->getParent()->getParent()->front())
+      if (IV->getParent() != &IV->getParent()->getParent()->front() ||
+          isa<InvokeInst>(IV))
         return 0;   // Cannot guarantee that InVal dominates this PHINode.
 
   // All of the incoming values are the same, return the value now.
