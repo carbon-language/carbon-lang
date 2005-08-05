@@ -215,6 +215,11 @@ void SelectionDAG::DeleteNodeIfDead(SDNode *N, void *NodeSet) {
   case ISD::VALUETYPE:
     ValueTypeNodes[cast<VTSDNode>(N)->getVT()] = 0;
     break;
+  case ISD::SRCVALUE: {
+    SrcValueSDNode *SVN = cast<SrcValueSDNode>(N);
+    ValueNodes.erase(std::make_pair(SVN->getValue(), SVN->getOffset()));
+    break;
+  }    
   case ISD::LOAD:
     Loads.erase(std::make_pair(N->getOperand(1),
                                std::make_pair(N->getOperand(0),
