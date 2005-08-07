@@ -1215,6 +1215,7 @@ static bool isLowOnes(const ConstantInt *CI) {
 // This is the same as lowones(~X).
 static bool isHighOnes(const ConstantInt *CI) {
   uint64_t V = ~CI->getRawValue();
+  if (~V == 0) return false;  // 0's does not match "1+"
 
   // There won't be bits set in parts that the type doesn't contain.
   V &= ConstantInt::getAllOnesValue(CI->getType())->getRawValue();
@@ -1635,6 +1636,37 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
           return Res;
     } else if (CastInst *CI = dyn_cast<CastInst>(Op0)) {
       const Type *SrcTy = CI->getOperand(0)->getType();
+
+      // If this is an integer truncation or change from signed-to-unsigned, and
+      // if the source is an and/or with immediate, transform it.  This
+      // frequently occurs for bitfield accesses.
+      if (Instruction *CastOp = dyn_cast<Instruction>(CI->getOperand(0))) {
+        if (SrcTy->getPrimitiveSizeInBits() >= 
+              I.getType()->getPrimitiveSizeInBits() &&
+            CastOp->getNumOperands() == 2)
+          if (ConstantInt *AndCI =dyn_cast<ConstantInt>(CastOp->getOperand(1)))
+            if (CastOp->getOpcode() == Instruction::And) {
+              // Change: and (cast (and X, C1) to T), C2
+              // into  : and (cast X to T), trunc(C1)&C2
+              // This will folds the two ands together, which may allow other
+              // simplifications.
+              Instruction *NewCast =
+                new CastInst(CastOp->getOperand(0), I.getType(),
+                             CastOp->getName()+".shrunk");
+              NewCast = InsertNewInstBefore(NewCast, I);
+              
+              Constant *C3=ConstantExpr::getCast(AndCI, I.getType());//trunc(C1)
+              C3 = ConstantExpr::getAnd(C3, AndRHS);            // trunc(C1)&C2
+              return BinaryOperator::createAnd(NewCast, C3);
+            } else if (CastOp->getOpcode() == Instruction::Or) {
+              // Change: and (cast (or X, C1) to T), C2
+              // into  : trunc(C1)&C2 iff trunc(C1)&C2 == C2
+              Constant *C3=ConstantExpr::getCast(AndCI, I.getType());//trunc(C1)
+              if (ConstantExpr::getAnd(C3, AndRHS) == AndRHS)   // trunc(C1)&C2
+                return ReplaceInstUsesWith(I, AndRHS);
+            }
+      }
+
 
       // If this is an integer sign or zero extension instruction.
       if (SrcTy->isIntegral() &&
