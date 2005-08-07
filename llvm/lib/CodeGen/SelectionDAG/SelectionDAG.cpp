@@ -770,8 +770,6 @@ static bool MaskedValueIsZero(const SDOperand &Op, uint64_t Mask,
 
   // If we know the result of a setcc has the top bits zero, use this info.
   switch (Op.getOpcode()) {
-  case ISD::UNDEF:
-    return true;
   case ISD::Constant:
     return (cast<ConstantSDNode>(Op)->getValue() & Mask) == 0;
 
@@ -1044,6 +1042,13 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
           MVT::getSizeInBits(cast<VTSDNode>(N1.getOperand(1))->getVT());
         if ((C2 & (~0ULL << ExtendBits)) == 0)
           return getNode(ISD::AND, VT, N1.getOperand(0), N2);
+      } else if (N1.getOpcode() == ISD::OR) {
+        if (ConstantSDNode *ORI = dyn_cast<ConstantSDNode>(N1.getOperand(1)))
+          if ((ORI->getValue() & C2) == C2) {
+            // If the 'or' is setting all of the bits that we are masking for,
+            // we know the result of the AND will be the AND mask itself.
+            return N2;
+          }
       }
       break;
     case ISD::OR:
