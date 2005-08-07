@@ -137,7 +137,7 @@ bool TailCallElim::runOnFunction(Function &F) {
     if (FunctionContainsEscapingAllocas && CannotTCETailMarkedCall)
       break;
 
-    FunctionContainsEscapingAllocas =
+    FunctionContainsEscapingAllocas |=
       CheckForEscapingAllocas(BB, CannotTCETailMarkedCall);
   }
 
