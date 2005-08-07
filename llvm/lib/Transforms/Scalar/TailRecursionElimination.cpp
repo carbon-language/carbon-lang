@@ -51,6 +51,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Scalar.h"
+#include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
@@ -68,7 +69,9 @@ namespace {
 
   private:
     bool ProcessReturningBlock(ReturnInst *RI, BasicBlock *&OldEntry,
-                               std::vector<PHINode*> &ArgumentPHIs);
+                               bool &TailCallsAreMarkedTail,
+                               std::vector<PHINode*> &ArgumentPHIs,
+                               bool CannotTailCallElimCallsMarkedTail);
     bool CanMoveAboveCall(Instruction *I, CallInst *CI);
     Value *CanTransformAccumulatorRecursion(Instruction *I, CallInst *CI);
   };
@@ -93,12 +96,21 @@ static bool AllocaMightEscapeToCalls(AllocaInst *AI) {
 /// FunctionContainsAllocas - Scan the specified basic block for alloca
 /// instructions.  If it contains any that might be accessed by calls, return
 /// true.
-static bool CheckForEscapingAllocas(BasicBlock *BB) {
+static bool CheckForEscapingAllocas(BasicBlock *BB,
+                                    bool &CannotTCETailMarkedCall) {
+  bool RetVal = false;
   for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I)
-    if (AllocaInst *AI = dyn_cast<AllocaInst>(I))
-      if (AllocaMightEscapeToCalls(AI))
-        return true;
-  return false;
+    if (AllocaInst *AI = dyn_cast<AllocaInst>(I)) {
+      RetVal |= AllocaMightEscapeToCalls(AI);
+
+      // If this alloca is in the body of the function, or if it is a variable
+      // sized allocation, we cannot tail call eliminate calls marked 'tail'
+      // with this mechanism.
+      if (BB != &BB->getParent()->front() ||
+          !isa<ConstantInt>(AI->getArraySize()))
+        CannotTCETailMarkedCall = true;
+    }
+  return RetVal;
 }
 
 bool TailCallElim::runOnFunction(Function &F) {
@@ -107,20 +119,33 @@ bool TailCallElim::runOnFunction(Function &F) {
   if (F.getFunctionType()->isVarArg()) return false;
 
   BasicBlock *OldEntry = 0;
+  bool TailCallsAreMarkedTail = false;
   std::vector<PHINode*> ArgumentPHIs;
   bool MadeChange = false;
 
   bool FunctionContainsEscapingAllocas = false;
 
+  // CannotTCETailMarkedCall - If true, we cannot perform TCE on tail calls
+  // marked with the 'tail' attribute, because doing so would cause the stack
+  // size to increase (real TCE would deallocate variable sized allocas, TCE
+  // doesn't).
+  bool CannotTCETailMarkedCall = false;
+
   // Loop over the function, looking for any returning blocks, and keeping track
   // of whether this function has any non-trivially used allocas.
   for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB) {
-    if (!FunctionContainsEscapingAllocas)
-      FunctionContainsEscapingAllocas = CheckForEscapingAllocas(BB);
+    if (FunctionContainsEscapingAllocas && CannotTCETailMarkedCall)
+      break;
 
-    if (ReturnInst *Ret = dyn_cast<ReturnInst>(BB->getTerminator()))
-      MadeChange |= ProcessReturningBlock(Ret, OldEntry, ArgumentPHIs);
+    FunctionContainsEscapingAllocas =
+      CheckForEscapingAllocas(BB, CannotTCETailMarkedCall);
   }
+
+  // Second pass, change any tail calls to loops.
+  for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
+    if (ReturnInst *Ret = dyn_cast<ReturnInst>(BB->getTerminator()))
+      MadeChange |= ProcessReturningBlock(Ret, OldEntry, TailCallsAreMarkedTail,
+                                          ArgumentPHIs,CannotTCETailMarkedCall);
 
   // If we eliminated any tail recursions, it's possible that we inserted some
   // silly PHI nodes which just merge an initial value (the incoming operand)
@@ -131,23 +156,11 @@ bool TailCallElim::runOnFunction(Function &F) {
     unsigned NumIncoming = ArgumentPHIs[0]->getNumIncomingValues();
     for (unsigned i = 0, e = ArgumentPHIs.size(); i != e; ++i) {
       PHINode *PN = ArgumentPHIs[i];
-      Value *V = 0;
-      for (unsigned op = 0, e = NumIncoming; op != e; ++op) {
-        Value *Op = PN->getIncomingValue(op);
-        if (Op != PN) {
-          if (V == 0) {
-            V = Op;     // First value seen?
-          } else if (V != Op) {
-            V = 0;
-            break;
-          }
-        }
-      }
 
       // If the PHI Node is a dynamic constant, replace it with the value it is.
-      if (V) {
-        PN->replaceAllUsesWith(V);
-        PN->getParent()->getInstList().erase(PN);
+      if (Value *PNV = PN->hasConstantValue()) {
+        PN->replaceAllUsesWith(PNV);
+        PN->eraseFromParent();
       }
     }
   }
@@ -268,7 +281,9 @@ Value *TailCallElim::CanTransformAccumulatorRecursion(Instruction *I,
 }
 
 bool TailCallElim::ProcessReturningBlock(ReturnInst *Ret, BasicBlock *&OldEntry,
-                                         std::vector<PHINode*> &ArgumentPHIs) {
+                                         bool &TailCallsAreMarkedTail,
+                                         std::vector<PHINode*> &ArgumentPHIs,
+                                       bool CannotTailCallElimCallsMarkedTail) {
   BasicBlock *BB = Ret->getParent();
   Function *F = BB->getParent();
 
@@ -288,6 +303,11 @@ bool TailCallElim::ProcessReturningBlock(ReturnInst *Ret, BasicBlock *&OldEntry,
       return false;          // Didn't find a potential tail call.
     --BBI;
   }
+
+  // If this call is marked as a tail call, and if there are dynamic allocas in
+  // the function, we cannot perform this optimization.
+  if (CI->isTailCall() && CannotTailCallElimCallsMarkedTail)
+    return false;
 
   // If we are introducing accumulator recursion to eliminate associative
   // operations after the call instruction, this variable contains the initial
@@ -334,6 +354,17 @@ bool TailCallElim::ProcessReturningBlock(ReturnInst *Ret, BasicBlock *&OldEntry,
     BasicBlock *NewEntry = new BasicBlock(OldName, F, OldEntry);
     new BranchInst(OldEntry, NewEntry);
 
+    // If this tail call is marked 'tail' and if there are any allocas in the
+    // entry block, move them up to the new entry block.
+    TailCallsAreMarkedTail = CI->isTailCall();
+    if (TailCallsAreMarkedTail)
+      // Move all fixed sized allocas from OldEntry to NewEntry.
+      for (BasicBlock::iterator OEBI = OldEntry->begin(), E = OldEntry->end(),
+             NEBI = NewEntry->begin(); OEBI != E; )
+        if (AllocaInst *AI = dyn_cast<AllocaInst>(OEBI++))
+          if (isa<ConstantInt>(AI->getArraySize()))
+            NewEntry->getInstList().splice(NEBI, OldEntry->getInstList(), AI);
+
     // Now that we have created a new block, which jumps to the entry
     // block, insert a PHI node for each argument of the function.
     // For now, we initialize each PHI to only have the real arguments
@@ -347,6 +378,15 @@ bool TailCallElim::ProcessReturningBlock(ReturnInst *Ret, BasicBlock *&OldEntry,
       ArgumentPHIs.push_back(PN);
     }
   }
+
+  // If this function has self recursive calls in the tail position where some
+  // are marked tail and some are not, only transform one flavor or another.  We
+  // have to choose whether we move allocas in the entry block to the new entry
+  // block or not, so we can't make a good choice for both.  NOTE: We could do
+  // slightly better here in the case that the function has no entry block
+  // allocas.
+  if (TailCallsAreMarkedTail && !CI->isTailCall())
+    return false;
 
   // Ok, now that we know we have a pseudo-entry block WITH all of the
   // required PHI nodes, add entries into the PHI node for the actual
