@@ -36,7 +36,7 @@ namespace {
 /// This statistic keeps track of the total number of library calls that have
 /// been simplified regardless of which call it is.
 Statistic<> SimplifiedLibCalls("simplify-libcalls",
-  "Total number of library calls simplified");
+  "Number of library calls simplified");
 
 // Forward declarations
 class LibCallOptimization;
