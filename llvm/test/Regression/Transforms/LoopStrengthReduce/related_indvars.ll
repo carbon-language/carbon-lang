@@ -1,7 +1,6 @@
 ; RUN: llvm-as < %s | opt -loop-reduce | llvm-dis | grep phi | wc -l | grep 1
 
 ; This should only result in one PHI node!
-; XFAIL: *
 
 ; void foo(double *D, double *E, double F) {
 ;   while (D != E)

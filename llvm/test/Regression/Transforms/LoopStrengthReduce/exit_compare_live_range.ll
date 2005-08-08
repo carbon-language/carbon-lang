@@ -3,7 +3,6 @@
 ; immediately before the conditional branch.
 ;
 ; RUN: llvm-as < %s | opt -loop-reduce | llvm-dis | %prcontext 'br bool' 1 | grep set
-; XFAIL: *
 
 void %foo(float* %D, uint %E) {
 entry:
