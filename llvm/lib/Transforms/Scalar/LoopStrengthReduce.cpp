@@ -542,6 +542,8 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(Value *Stride,
   }
 
   SCEVExpander Rewriter(*SE, *LI);
+  SCEVExpander PreheaderRewriter(*SE, *LI);
+
   BasicBlock  *Preheader = L->getLoopPreheader();
   Instruction *PreInsertPt = Preheader->getTerminator();
   Instruction *PhiInsertBefore = L->getHeader()->begin();
@@ -578,7 +580,8 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(Value *Stride,
 
     // Emit the initial base value into the loop preheader, and add it to the
     // Phi node.
-    Value *BaseV = Rewriter.expandCodeFor(Base, PreInsertPt, ReplacedTy);
+    Value *BaseV = PreheaderRewriter.expandCodeFor(Base, PreInsertPt,
+                                                   ReplacedTy);
     NewPHI->addIncoming(BaseV, Preheader);
 
     // Emit the increment of the base value before the terminator of the loop
