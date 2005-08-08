@@ -1890,9 +1890,10 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
 
   case ISD::MUL:
     Tmp1 = SelectExpr(N.getOperand(0));
-    if (1 == getImmediateForOpcode(N.getOperand(1), opcode, Tmp2))
+    if (isImmediate(N.getOperand(1), Tmp2) && isInt16(Tmp2)) {
+      Tmp2 = Lo16(Tmp2);
       BuildMI(BB, PPC::MULLI, 2, Result).addReg(Tmp1).addSImm(Tmp2);
-    else {
+    } else {
       Tmp2 = SelectExpr(N.getOperand(1));
       switch (DestType) {
       default: assert(0 && "Unknown type to ISD::MUL"); break;
@@ -1913,31 +1914,39 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
     return Result;
 
   case ISD::SDIV:
-  case ISD::UDIV:
-    switch (getImmediateForOpcode(N.getOperand(1), opcode, Tmp3)) {
-    default: break;
-    // If this is an sdiv by a power of two, we can use an srawi/addze pair.
-    case 3:
-      Tmp1 = MakeReg(MVT::i32);
-      Tmp2 = SelectExpr(N.getOperand(0));
-      if ((int)Tmp3 < 0) {
-        unsigned Tmp4 = MakeReg(MVT::i32);
-        BuildMI(BB, PPC::SRAWI, 2, Tmp1).addReg(Tmp2).addImm(-Tmp3);
-        BuildMI(BB, PPC::ADDZE, 1, Tmp4).addReg(Tmp1);
-        BuildMI(BB, PPC::NEG, 1, Result).addReg(Tmp4);
-      } else {
+    if (isImmediate(N.getOperand(1), Tmp3)) {
+      if ((signed)Tmp3 > 0 && isPowerOf2_32(Tmp3)) {
+        Tmp3 = Log2_32(Tmp3);
+        Tmp1 = MakeReg(MVT::i32);
+        Tmp2 = SelectExpr(N.getOperand(0));
         BuildMI(BB, PPC::SRAWI, 2, Tmp1).addReg(Tmp2).addImm(Tmp3);
         BuildMI(BB, PPC::ADDZE, 1, Result).addReg(Tmp1);
+        return Result;
+      } else if ((signed)Tmp3 < 0 && isPowerOf2_32(-Tmp3)) {
+        Tmp3 = Log2_32(-Tmp3);
+        unsigned Tmp4 = MakeReg(MVT::i32);
+        BuildMI(BB, PPC::SRAWI, 2, Tmp1).addReg(Tmp2).addImm(Tmp3);
+        BuildMI(BB, PPC::ADDZE, 1, Tmp4).addReg(Tmp1);
+        BuildMI(BB, PPC::NEG, 1, Result).addReg(Tmp4);
+        return Result;
       }
-      return Result;
+    }
+    // fall thru
+  case ISD::UDIV:
     // If this is a divide by constant, we can emit code using some magic
     // constants to implement it as a multiply instead.
-    case 4:
-      ExprMap.erase(N);
-      if (opcode == ISD::SDIV)
-        return SelectExpr(BuildSDIVSequence(N));
-      else
-        return SelectExpr(BuildUDIVSequence(N));
+    if (isImmediate(N.getOperand(1), Tmp3)) {
+      if (opcode == ISD::SDIV) {
+        if ((signed)Tmp3 < -1 || (signed)Tmp3 > 1) {
+          ExprMap.erase(N);
+          return SelectExpr(BuildSDIVSequence(N));
+        }
+      } else {
+        if ((signed)Tmp3 > 1) {
+          ExprMap.erase(N);
+          return SelectExpr(BuildUDIVSequence(N));
+        }
+      }
     }
     Tmp1 = SelectExpr(N.getOperand(0));
     Tmp2 = SelectExpr(N.getOperand(1));
