@@ -345,6 +345,12 @@ namespace {
   /// BasedUser - For a particular base value, keep information about how we've
   /// partitioned the expression so far.
   struct BasedUser {
+    /// Base - The Base value for the PHI node that needs to be inserted for
+    /// this use.  As the use is processed, information gets moved from this
+    /// field to the Imm field (below).  BasedUser values are sorted by this
+    /// field.
+    SCEVHandle Base;
+    
     /// Inst - The instruction using the induction variable.
     Instruction *Inst;
 
@@ -366,24 +372,27 @@ namespace {
     // This can only be set in special cases, such as the terminating setcc
     // instruction for a loop.
     bool isUseOfPostIncrementedValue;
-
-    BasedUser(Instruction *I, Value *Op, const SCEVHandle &IMM, bool iUOPIV)
-      : Inst(I), OperandValToReplace(Op), Imm(IMM), EmittedBase(0),
-        isUseOfPostIncrementedValue(iUOPIV) {}
+    
+    BasedUser(IVStrideUse &IVSU)
+      : Base(IVSU.Offset), Inst(IVSU.User), 
+        OperandValToReplace(IVSU.OperandValToReplace), 
+        Imm(SCEVUnknown::getIntegerSCEV(0, Base->getType())), EmittedBase(0),
+        isUseOfPostIncrementedValue(IVSU.isUseOfPostIncrementedValue) {}
 
     // Once we rewrite the code to insert the new IVs we want, update the
     // operands of Inst to use the new expression 'NewBase', with 'Imm' added
     // to it.
     void RewriteInstructionToUseNewBase(Value *NewBase, SCEVExpander &Rewriter);
 
-    // No need to compare these.
-    bool operator<(const BasedUser &BU) const { return 0; }
+    // Sort by the Base field.
+    bool operator<(const BasedUser &BU) const { return Base < BU.Base; }
 
     void dump() const;
   };
 }
 
 void BasedUser::dump() const {
+  std::cerr << " Base=" << *Base;
   std::cerr << " Imm=" << *Imm;
   if (EmittedBase)
     std::cerr << "  EB=" << *EmittedBase;
@@ -543,7 +552,6 @@ static void MoveImmediateValues(SCEVHandle &Val, SCEVHandle &Imm,
   // Otherwise, no immediates to move.
 }
 
-
 /// StrengthReduceStridedIVUsers - Strength reduce all of the users of a single
 /// stride of IV.  All of the users may have different starting values, and this
 /// may not be the only stride (we know it is if isOnlyStride is true).
@@ -552,30 +560,21 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(Value *Stride,
                                                       Loop *L,
                                                       bool isOnlyStride) {
   // Transform our list of users and offsets to a bit more complex table.  In
-  // this new vector, the first entry for each element is the base of the
-  // strided access, and the second is the BasedUser object for the use.  We
-  // progressively move information from the first to the second entry, until we
-  // eventually emit the object.
-  std::vector<std::pair<SCEVHandle, BasedUser> > UsersToProcess;
+  // this new vector, each 'BasedUser' contains 'Base' the base of the
+  // strided accessas well as the old information from Uses.  We progressively
+  // move information from the Base field to the Imm field, until we eventually
+  // have the full access expression to rewrite the use.
+  std::vector<BasedUser> UsersToProcess;
   UsersToProcess.reserve(Uses.Users.size());
-
-  SCEVHandle ZeroBase = SCEVUnknown::getIntegerSCEV(0,
-                                              Uses.Users[0].Offset->getType());
-
-  for (unsigned i = 0, e = Uses.Users.size(); i != e; ++i)
-    UsersToProcess.push_back(std::make_pair(Uses.Users[i].Offset,
-                                            BasedUser(Uses.Users[i].User,
-                                             Uses.Users[i].OperandValToReplace,
-                                                      ZeroBase,
-                                   Uses.Users[i].isUseOfPostIncrementedValue)));
-  
-  // Move any loop invariant operands from the offset field to the immediate
-  // field of the use, so that we don't try to use something before it is
-  // computed.
-  for (unsigned i = 0, e = UsersToProcess.size(); i != e; ++i) {
-    MoveLoopVariantsToImediateField(UsersToProcess[i].first,
-                                    UsersToProcess[i].second.Imm, L);
-    assert(UsersToProcess[i].first->isLoopInvariant(L) &&
+  for (unsigned i = 0, e = Uses.Users.size(); i != e; ++i) {
+    UsersToProcess.push_back(Uses.Users[i]);
+    
+    // Move any loop invariant operands from the offset field to the immediate
+    // field of the use, so that we don't try to use something before it is
+    // computed.
+    MoveLoopVariantsToImediateField(UsersToProcess.back().Base,
+                                    UsersToProcess.back().Imm, L);
+    assert(UsersToProcess.back().Base->isLoopInvariant(L) &&
            "Base value is not loop invariant!");
   }
   
@@ -593,19 +592,20 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(Value *Stride,
          "This loop isn't canonicalized right");
   BasicBlock *LatchBlock =
    SomeLoopPHI->getIncomingBlock(SomeLoopPHI->getIncomingBlock(0) == Preheader);
-  
+
+
   // Next, figure out what we can represent in the immediate fields of
   // instructions.  If we can represent anything there, move it to the imm
   // fields of the BasedUsers.
   for (unsigned i = 0, e = UsersToProcess.size(); i != e; ++i) {
     // Addressing modes can be folded into loads and stores.  Be careful that
     // the store is through the expression, not of the expression though.
-    bool isAddress = isa<LoadInst>(UsersToProcess[i].second.Inst);
-    if (StoreInst *SI = dyn_cast<StoreInst>(UsersToProcess[i].second.Inst))
-      if (SI->getOperand(1) == UsersToProcess[i].second.OperandValToReplace)
+    bool isAddress = isa<LoadInst>(UsersToProcess[i].Inst);
+    if (StoreInst *SI = dyn_cast<StoreInst>(UsersToProcess[i].Inst))
+      if (SI->getOperand(1) == UsersToProcess[i].OperandValToReplace)
         isAddress = true;
     
-    MoveImmediateValues(UsersToProcess[i].first, UsersToProcess[i].second.Imm,
+    MoveImmediateValues(UsersToProcess[i].Base, UsersToProcess[i].Imm,
                         isAddress, L);
   }
  
@@ -617,7 +617,7 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(Value *Stride,
   // each other.  
   std::sort(UsersToProcess.begin(), UsersToProcess.end());
   while (!UsersToProcess.empty()) {
-    SCEVHandle Base = UsersToProcess.front().first;
+    SCEVHandle Base = UsersToProcess.front().Base;
 
     DEBUG(std::cerr << "  INSERTING PHI with BASE = " << *Base << ":\n");
    
@@ -644,8 +644,8 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(Value *Stride,
 
     // Emit the code to add the immediate offset to the Phi value, just before
     // the instructions that we identified as using this stride and base.
-    while (!UsersToProcess.empty() && UsersToProcess.front().first == Base) {
-      BasedUser &User = UsersToProcess.front().second;
+    while (!UsersToProcess.empty() && UsersToProcess.front().Base == Base) {
+      BasedUser &User = UsersToProcess.front();
 
       // Clear the SCEVExpander's expression map so that we are guaranteed
       // to have the code emitted where we expect it.
