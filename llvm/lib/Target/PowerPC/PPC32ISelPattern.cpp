@@ -673,65 +673,6 @@ static unsigned Lo16(unsigned x)  { return x & 0x0000FFFF; }
 static unsigned Hi16(unsigned x)  { return Lo16(x >> 16); }
 static unsigned HA16(unsigned x)  { return Hi16((signed)x - (signed short)x); }
 
-/// getImmediateForOpcode - This method returns a value indicating whether
-/// the ConstantSDNode N can be used as an immediate to Opcode.  The return
-/// values are either 0, 1 or 2.  0 indicates that either N is not a
-/// ConstantSDNode, or is not suitable for use by that opcode.
-/// Return value codes for turning into an enum someday:
-/// 1: constant may be used in normal immediate form.
-/// 2: constant may be used in shifted immediate form.
-/// 3: log base 2 of the constant may be used.
-/// 4: constant is suitable for integer division conversion
-/// 5: constant is a bitfield mask
-///
-static unsigned getImmediateForOpcode(SDOperand N, unsigned Opcode,
-                                      unsigned& Imm, bool U = false) {
-  if (N.getOpcode() != ISD::Constant) return 0;
-
-  int v = (int)cast<ConstantSDNode>(N)->getSignExtended();
-
-  switch(Opcode) {
-  default: return 0;
-  case ISD::ADD:
-    if (isInt16(v))             { Imm = v & 0xFFFF; return 1; }
-    if ((v & 0x0000FFFF) == 0) { Imm = v >> 16; return 2; }
-    break;
-  case ISD::AND: {
-    unsigned MB, ME;
-    if (isRunOfOnes(v, MB, ME)) { Imm = MB << 16 | ME & 0xFFFF; return 5; }
-    if (isUInt16(v))            { Imm = v & 0xFFFF; return 1; }
-    if ((v & 0x0000FFFF) == 0) { Imm = v >> 16; return 2; }
-    break;
-  }
-  case ISD::XOR:
-  case ISD::OR:
-    if (isUInt16(v))            { Imm = v & 0xFFFF; return 1; }
-    if ((v & 0x0000FFFF) == 0) { Imm = v >> 16; return 2; }
-    break;
-  case ISD::MUL:
-    if (isInt16(v))             { Imm = v & 0xFFFF; return 1; }
-    break;
-  case ISD::SUB:
-    // handle subtract-from separately from subtract, since subi is really addi
-    if (U && isInt16(v))        { Imm = v    & 0xFFFF; return 1; }
-    if (!U && isInt16(-v))      { Imm = (-v) & 0xFFFF; return 1; }
-    break;
-  case ISD::SETCC:
-    if (U && isUInt16(v))       { Imm = v & 0xFFFF; return 1; }
-    if (!U && isInt16(v))       { Imm = v & 0xFFFF; return 1; }
-    break;
-  case ISD::SDIV:
-    if (isPowerOf2_32(v))       { Imm = Log2_32(v); return 3; }
-    if (isPowerOf2_32(-v))      { Imm = Log2_32(-v); return 3; }
-    if (v <= -2 || v >= 2) { return 4; }
-    break;
-  case ISD::UDIV:
-    if (v > 1) { return 4; }
-    break;
-  }
-  return 0;
-}
-
 /// NodeHasRecordingVariant - If SelectExpr can always produce code for
 /// NodeOpcode that also sets CR0 as a side effect, return true.  Otherwise,
 /// return false.
