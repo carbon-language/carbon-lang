@@ -1709,58 +1709,49 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
     return Result;
 
   case ISD::AND:
-    switch(getImmediateForOpcode(N.getOperand(1), opcode, Tmp2)) {
-      default: assert(0 && "unhandled result code");
-      case 0: // No immediate
-        // Check for andc: and, (xor a, -1), b
-        if (N.getOperand(0).getOpcode() == ISD::XOR &&
-          N.getOperand(0).getOperand(1).getOpcode() == ISD::Constant &&
-        cast<ConstantSDNode>(N.getOperand(0).getOperand(1))->isAllOnesValue()) {
+    if (isImmediate(N.getOperand(1), Tmp2)) {
+      if (isShiftedMask_32(Tmp2) || isShiftedMask_32(~Tmp2)) {
+        unsigned SH, MB, ME;
+        Opc = Recording ? PPC::RLWINMo : PPC::RLWINM;
+        unsigned OprOpc;
+        if (isOprShiftImm(N.getOperand(0), OprOpc, Tmp3) &&
+            isRotateAndMask(OprOpc, Tmp3, Tmp2, false, SH, MB, ME)) {
           Tmp1 = SelectExpr(N.getOperand(0).getOperand(0));
-          Tmp2 = SelectExpr(N.getOperand(1));
-          BuildMI(BB, PPC::ANDC, 2, Result).addReg(Tmp2).addReg(Tmp1);
-          return Result;
+        } else {
+          Tmp1 = SelectExpr(N.getOperand(0));
+          isRunOfOnes(Tmp2, MB, ME);
+          SH = 0;
         }
-        // It wasn't and-with-complement, emit a regular and
-        Tmp1 = SelectExpr(N.getOperand(0));
-        Tmp2 = SelectExpr(N.getOperand(1));
-        Opc = Recording ? PPC::ANDo : PPC::AND;
-        BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
-        break;
-      case 1: // Low immediate
+        BuildMI(BB, Opc, 4, Result).addReg(Tmp1).addImm(SH)
+          .addImm(MB).addImm(ME);
+        RecordSuccess = true;
+        return Result;
+      } else if (isUInt16(Tmp2)) {
+        Tmp2 = Lo16(Tmp2);
         Tmp1 = SelectExpr(N.getOperand(0));
         BuildMI(BB, PPC::ANDIo, 2, Result).addReg(Tmp1).addImm(Tmp2);
-        break;
-      case 2: // Shifted immediate
+        RecordSuccess = true;
+        return Result;
+      } else if (isUInt16(Tmp2)) {
+        Tmp2 = Hi16(Tmp2);
         Tmp1 = SelectExpr(N.getOperand(0));
         BuildMI(BB, PPC::ANDISo, 2, Result).addReg(Tmp1).addImm(Tmp2);
-        break;
-      case 5: // Bitfield mask
-        Opc = Recording ? PPC::RLWINMo : PPC::RLWINM;
-        Tmp3 = Tmp2 >> 16;  // MB
-        Tmp2 &= 0xFFFF;     // ME
-
-        // FIXME: Catch SHL-AND in addition to SRL-AND in this block.
-        if (N.getOperand(0).getOpcode() == ISD::SRL)
-          if (ConstantSDNode *SA =
-              dyn_cast<ConstantSDNode>(N.getOperand(0).getOperand(1))) {
-
-            // We can fold the RLWINM and the SRL together if the mask is
-            // clearing the top bits which are rotated around.
-            unsigned RotAmt = 32-(SA->getValue() & 31);
-            if (Tmp2 <= RotAmt) {
-              Tmp1 = SelectExpr(N.getOperand(0).getOperand(0));
-              BuildMI(BB, Opc, 4, Result).addReg(Tmp1).addImm(RotAmt)
-                .addImm(Tmp3).addImm(Tmp2);
-              break;
-            }
-          }
-
-        Tmp1 = SelectExpr(N.getOperand(0));
-        BuildMI(BB, Opc, 4, Result).addReg(Tmp1).addImm(0)
-          .addImm(Tmp3).addImm(Tmp2);
-        break;
+        RecordSuccess = true;
+       return Result;
+      }
     }
+    if (isOprNot(N.getOperand(0))) {
+      Tmp1 = SelectExpr(N.getOperand(0).getOperand(0));
+      Tmp2 = SelectExpr(N.getOperand(1));
+      BuildMI(BB, PPC::ANDC, 2, Result).addReg(Tmp2).addReg(Tmp1);
+      RecordSuccess = false;
+      return Result;
+    }
+    // emit a regular and
+    Tmp1 = SelectExpr(N.getOperand(0));
+    Tmp2 = SelectExpr(N.getOperand(1));
+    Opc = Recording ? PPC::ANDo : PPC::AND;
+    BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
     RecordSuccess = true;
     return Result;
 
