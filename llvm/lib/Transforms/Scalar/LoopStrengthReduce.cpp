@@ -454,6 +454,45 @@ static bool isTargetConstant(const SCEVHandle &V) {
   return false;
 }
 
+/// MoveLoopVariantsToImediateField - Move any subexpressions from Val that are
+/// loop varying to the Imm operand.
+static void MoveLoopVariantsToImediateField(SCEVHandle &Val, SCEVHandle &Imm,
+                                            Loop *L) {
+  if (Val->isLoopInvariant(L)) return;  // Nothing to do.
+  
+  if (SCEVAddExpr *SAE = dyn_cast<SCEVAddExpr>(Val)) {
+    std::vector<SCEVHandle> NewOps;
+    NewOps.reserve(SAE->getNumOperands());
+    
+    for (unsigned i = 0; i != SAE->getNumOperands(); ++i)
+      if (!SAE->getOperand(i)->isLoopInvariant(L)) {
+        // If this is a loop-variant expression, it must stay in the immediate
+        // field of the expression.
+        Imm = SCEVAddExpr::get(Imm, SAE->getOperand(i));
+      } else {
+        NewOps.push_back(SAE->getOperand(i));
+      }
+
+    if (NewOps.empty())
+      Val = SCEVUnknown::getIntegerSCEV(0, Val->getType());
+    else
+      Val = SCEVAddExpr::get(NewOps);
+  } else if (SCEVAddRecExpr *SARE = dyn_cast<SCEVAddRecExpr>(Val)) {
+    // Try to pull immediates out of the start value of nested addrec's.
+    SCEVHandle Start = SARE->getStart();
+    MoveLoopVariantsToImediateField(Start, Imm, L);
+    
+    std::vector<SCEVHandle> Ops(SARE->op_begin(), SARE->op_end());
+    Ops[0] = Start;
+    Val = SCEVAddRecExpr::get(Ops, SARE->getLoop());
+  } else {
+    // Otherwise, all of Val is variant, move the whole thing over.
+    Imm = SCEVAddExpr::get(Imm, Val);
+    Val = SCEVUnknown::getIntegerSCEV(0, Val->getType());
+  }
+}
+
+
 /// MoveImmediateValues - Look at Val, and pull out any additions of constants
 /// that can fit into the immediate field of instructions in the target.
 /// Accumulate these immediate values into the Imm value.
@@ -504,6 +543,7 @@ static void MoveImmediateValues(SCEVHandle &Val, SCEVHandle &Imm,
   // Otherwise, no immediates to move.
 }
 
+
 /// StrengthReduceStridedIVUsers - Strength reduce all of the users of a single
 /// stride of IV.  All of the users may have different starting values, and this
 /// may not be the only stride (we know it is if isOnlyStride is true).
@@ -528,25 +568,17 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(Value *Stride,
                                              Uses.Users[i].OperandValToReplace,
                                                       ZeroBase,
                                    Uses.Users[i].isUseOfPostIncrementedValue)));
-
-  // First pass, figure out what we can represent in the immediate fields of
-  // instructions.  If we can represent anything there, move it to the imm
-  // fields of the BasedUsers.
+  
+  // Move any loop invariant operands from the offset field to the immediate
+  // field of the use, so that we don't try to use something before it is
+  // computed.
   for (unsigned i = 0, e = UsersToProcess.size(); i != e; ++i) {
-    // Addressing modes can be folded into loads and stores.  Be careful that
-    // the store is through the expression, not of the expression though.
-    bool isAddress = isa<LoadInst>(UsersToProcess[i].second.Inst);
-    if (StoreInst *SI = dyn_cast<StoreInst>(UsersToProcess[i].second.Inst))
-      if (SI->getOperand(1) == UsersToProcess[i].second.OperandValToReplace)
-        isAddress = true;
-          
-    MoveImmediateValues(UsersToProcess[i].first, UsersToProcess[i].second.Imm,
-                        isAddress, L);
-
+    MoveLoopVariantsToImediateField(UsersToProcess[i].first,
+                                    UsersToProcess[i].second.Imm, L);
     assert(UsersToProcess[i].first->isLoopInvariant(L) &&
            "Base value is not loop invariant!");
   }
-
+  
   SCEVExpander Rewriter(*SE, *LI);
   SCEVExpander PreheaderRewriter(*SE, *LI);
 
@@ -561,16 +593,26 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(Value *Stride,
          "This loop isn't canonicalized right");
   BasicBlock *LatchBlock =
    SomeLoopPHI->getIncomingBlock(SomeLoopPHI->getIncomingBlock(0) == Preheader);
-
+  
+  // Next, figure out what we can represent in the immediate fields of
+  // instructions.  If we can represent anything there, move it to the imm
+  // fields of the BasedUsers.
+  for (unsigned i = 0, e = UsersToProcess.size(); i != e; ++i) {
+    // Addressing modes can be folded into loads and stores.  Be careful that
+    // the store is through the expression, not of the expression though.
+    bool isAddress = isa<LoadInst>(UsersToProcess[i].second.Inst);
+    if (StoreInst *SI = dyn_cast<StoreInst>(UsersToProcess[i].second.Inst))
+      if (SI->getOperand(1) == UsersToProcess[i].second.OperandValToReplace)
+        isAddress = true;
+    
+    MoveImmediateValues(UsersToProcess[i].first, UsersToProcess[i].second.Imm,
+                        isAddress, L);
+  }
+ 
+  
+  
   DEBUG(std::cerr << "INSERTING IVs of STRIDE " << *Stride << ":\n");
   
-  // FIXME: This loop needs increasing levels of intelligence.
-  // STAGE 0: just emit everything as its own base.
-  // STAGE 1: factor out common vars from bases, and try and push resulting
-  //          constants into Imm field.  <-- We are here
-  // STAGE 2: factor out large constants to try and make more constants
-  //          acceptable for target loads and stores.
-
   // Sort by the base value, so that all IVs with identical bases are next to
   // each other.  
   std::sort(UsersToProcess.begin(), UsersToProcess.end());
