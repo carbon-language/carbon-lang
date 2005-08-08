@@ -65,6 +65,15 @@ void Instruction::eraseFromParent() {
   getParent()->getInstList().erase(this);
 }
 
+/// moveBefore - Unlink this instruction from its current basic block and
+/// insert it into the basic block that MovePos lives in, right before
+/// MovePos.
+void Instruction::moveBefore(Instruction *MovePos) {
+  MovePos->getParent()->getInstList().splice(MovePos,getParent()->getInstList(),
+                                             this);
+}
+
+
 const char *Instruction::getOpcodeName(unsigned OpCode) {
   switch (OpCode) {
   // Terminators
