@@ -93,6 +93,11 @@ public:
   ///
   void eraseFromParent();
 
+  /// moveBefore - Unlink this instruction from its current basic block and
+  /// insert it into the basic block that MovePos lives in, right before
+  /// MovePos.
+  void moveBefore(Instruction *MovePos);
+
   // ---------------------------------------------------------------------------
   /// Subclass classification... getOpcode() returns a member of
   /// one of the enums that is coming soon (down below)...
