@@ -378,18 +378,32 @@ class XFXForm_3<bits<6> opcode, bits<10> xo, dag OL, string asmstr>
   let Inst{31}    = 0;
 }
 
-class XFXForm_5<bits<6> opcode, bit mfcrf, bits<10> xo, 
-                dag OL, string asmstr> : I<opcode, OL, asmstr> {
+class XFXForm_5<bits<6> opcode, bits<10> xo, dag OL, string asmstr> 
+  : I<opcode, OL, asmstr> {
   bits<8>  FXM;
   bits<5>  ST;
    
   let Inst{6-10}  = ST;
-  let Inst{11}    = mfcrf;
+  let Inst{11}    = 0;
   let Inst{12-19} = FXM;
   let Inst{20}    = 0;
   let Inst{21-30} = xo;
   let Inst{31}    = 0;
 }
+
+class XFXForm_5a<bits<6> opcode, bits<10> xo, dag OL, string asmstr> 
+  : I<opcode, OL, asmstr> {
+  bits<5>  ST;
+  bits<8>  FXM;
+   
+  let Inst{6-10}  = ST;
+  let Inst{11}    = 1;
+  let Inst{12-19} = FXM;
+  let Inst{20}    = 0;
+  let Inst{21-30} = xo;
+  let Inst{31}    = 0;
+}
+
 
 class XFXForm_7<bits<6> opcode, bits<10> xo, dag OL, string asmstr>
   : XFXForm_1<opcode, xo, OL, asmstr>;

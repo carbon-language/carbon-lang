@@ -364,10 +364,10 @@ def MCRF   : XLForm_3<19, 0, (ops CRRC:$BF, CRRC:$BFA),
 def MFCTR : XFXForm_1_ext<31, 339, 288, (ops GPRC:$rT), "mfctr $rT">;
 def MFLR  : XFXForm_1_ext<31, 339, 256, (ops GPRC:$rT), "mflr $rT">;
 def MFCR  : XFXForm_3<31, 19, (ops GPRC:$rT), "mfcr $rT">;
-def MTCRF : XFXForm_5<31, 0, 144, (ops CRRC:$FXM, GPRC:$rS),
+def MTCRF : XFXForm_5<31, 144, (ops CRRC:$FXM, GPRC:$rS),
                       "mtcrf $FXM, $rS">;
-def MFOCRF : XFXForm_5<31, 1, 19, (ops GPRC:$rT, crbitm:$FXM),
-                      "mfcr $rT, $FXM">;
+def MFOCRF : XFXForm_5a<31, 19, (ops GPRC:$rT, crbitm:$FXM),
+                        "mfcr $rT, $FXM">;
 def MTCTR : XFXForm_7_ext<31, 467, 288, (ops GPRC:$rS), "mtctr $rS">;
 def MTLR  : XFXForm_7_ext<31, 467, 256, (ops GPRC:$rS), "mtlr $rS">;
 
