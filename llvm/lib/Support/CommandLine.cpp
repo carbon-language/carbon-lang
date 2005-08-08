@@ -335,11 +335,8 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
                                    " does not require a value!");
       }
       UnboundedFound |= EatsUnboundedNumberOfValues(Opt);
-      
-      if (Opt->getNumOccurrencesFlag() == cl::ZeroOrMore
-          || Opt->getNumOccurrencesFlag() == cl::OneOrMore)
-          HasUnlimitedPositionals = true;
     }
+    HasUnlimitedPositionals = UnboundedFound || ConsumeAfterOpt;
   }
 
   // PositionalVals - A vector of "positional" arguments we accumulate into
