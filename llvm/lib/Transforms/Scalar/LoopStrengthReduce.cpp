@@ -46,9 +46,16 @@ namespace {
     SCEVHandle Offset;
     Instruction *User;
     Value *OperandValToReplace;
+
+    // isUseOfPostIncrementedValue - True if this should use the
+    // post-incremented version of this IV, not the preincremented version.
+    // This can only be set in special cases, such as the terminating setcc
+    // instruction for a loop.
+    bool isUseOfPostIncrementedValue;
     
     IVStrideUse(const SCEVHandle &Offs, Instruction *U, Value *O)
-      : Offset(Offs), User(U), OperandValToReplace(O) {}
+      : Offset(Offs), User(U), OperandValToReplace(O),
+        isUseOfPostIncrementedValue(false) {}
   };
   
   /// IVUsersOfOneStride - This structure keeps track of all instructions that
@@ -127,6 +134,7 @@ private:
                                std::set<Instruction*> &Processed);
     SCEVHandle GetExpressionSCEV(Instruction *E, Loop *L);
 
+    void OptimizeIndvars(Loop *L);
 
     void StrengthReduceStridedIVUsers(Value *Stride, IVUsersOfOneStride &Uses,
                                       Loop *L, bool isOnlyStride);
@@ -353,8 +361,15 @@ namespace {
     /// operation.  This is null if we should just use zero so far.
     Value *EmittedBase;
 
-    BasedUser(Instruction *I, Value *Op, const SCEVHandle &IMM)
-      : Inst(I), OperandValToReplace(Op), Imm(IMM), EmittedBase(0) {}
+    // isUseOfPostIncrementedValue - True if this should use the
+    // post-incremented version of this IV, not the preincremented version.
+    // This can only be set in special cases, such as the terminating setcc
+    // instruction for a loop.
+    bool isUseOfPostIncrementedValue;
+
+    BasedUser(Instruction *I, Value *Op, const SCEVHandle &IMM, bool iUOPIV)
+      : Inst(I), OperandValToReplace(Op), Imm(IMM), EmittedBase(0),
+        isUseOfPostIncrementedValue(iUOPIV) {}
 
     // Once we rewrite the code to insert the new IVs we want, update the
     // operands of Inst to use the new expression 'NewBase', with 'Imm' added
@@ -505,7 +520,8 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(Value *Stride,
     UsersToProcess.push_back(std::make_pair(Uses.Users[i].Offset,
                                             BasedUser(Uses.Users[i].User,
                                              Uses.Users[i].OperandValToReplace,
-                                                      ZeroBase)));
+                                                      ZeroBase,
+                                   Uses.Users[i].isUseOfPostIncrementedValue)));
 
   // First pass, figure out what we can represent in the immediate fields of
   // instructions.  If we can represent anything there, move it to the imm
@@ -586,7 +602,15 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(Value *Stride,
       
       // Now that we know what we need to do, insert code before User for the
       // immediate and any loop-variant expressions.
-      User.RewriteInstructionToUseNewBase(NewPHI, Rewriter);
+      Value *NewBase = NewPHI;
+
+      // If this instruction wants to use the post-incremented value, move it
+      // after the post-inc and use its value instead of the PHI.
+      if (User.isUseOfPostIncrementedValue) {
+        NewBase = IncV;
+        User.Inst->moveBefore(LatchBlock->getTerminator());
+      }
+      User.RewriteInstructionToUseNewBase(NewBase, Rewriter);
 
       // Mark old value we replaced as possibly dead, so that it is elminated
       // if we just replaced the last use of that value.
@@ -602,6 +626,76 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(Value *Stride,
   // different starting values, into different PHIs.
 }
 
+// OptimizeIndvars - Now that IVUsesByStride is set up with all of the indvar
+// uses in the loop, look to see if we can eliminate some, in favor of using
+// common indvars for the different uses.
+void LoopStrengthReduce::OptimizeIndvars(Loop *L) {
+  // TODO: implement optzns here.
+
+
+
+
+  // Finally, get the terminating condition for the loop if possible.  If we
+  // can, we want to change it to use a post-incremented version of its
+  // induction variable, to allow coallescing the live ranges for the IV into
+  // one register value.
+  PHINode *SomePHI = cast<PHINode>(L->getHeader()->begin());
+  BasicBlock  *Preheader = L->getLoopPreheader();
+  BasicBlock *LatchBlock =
+   SomePHI->getIncomingBlock(SomePHI->getIncomingBlock(0) == Preheader);
+  BranchInst *TermBr = dyn_cast<BranchInst>(LatchBlock->getTerminator());
+  if (!TermBr || TermBr->isUnconditional() ||
+      !isa<SetCondInst>(TermBr->getCondition()))
+    return;
+  SetCondInst *Cond = cast<SetCondInst>(TermBr->getCondition());
+
+  // Search IVUsesByStride to find Cond's IVUse if there is one.
+  IVStrideUse *CondUse = 0;
+  Value *CondStride = 0;
+
+  for (std::map<Value*, IVUsersOfOneStride>::iterator I =IVUsesByStride.begin(),
+         E = IVUsesByStride.end(); I != E && !CondUse; ++I)
+    for (std::vector<IVStrideUse>::iterator UI = I->second.Users.begin(),
+           E = I->second.Users.end(); UI != E; ++UI)
+      if (UI->User == Cond) {
+        CondUse = &*UI;
+        CondStride = I->first;
+        // NOTE: we could handle setcc instructions with multiple uses here, but
+        // InstCombine does it as well for simple uses, it's not clear that it
+        // occurs enough in real life to handle.
+        break;
+      }
+  if (!CondUse) return;  // setcc doesn't use the IV.
+
+  // setcc stride is complex, don't mess with users.
+  if (!isa<ConstantInt>(CondStride)) return;
+
+  // It's possible for the setcc instruction to be anywhere in the loop, and
+  // possible for it to have multiple users.  If it is not immediately before
+  // the latch block branch, move it.
+  if (&*++BasicBlock::iterator(Cond) != (Instruction*)TermBr) {
+    if (Cond->hasOneUse()) {   // Condition has a single use, just move it.
+      Cond->moveBefore(TermBr);
+    } else {
+      // Otherwise, clone the terminating condition and insert into the loopend.
+      Cond = cast<SetCondInst>(Cond->clone());
+      Cond->setName(L->getHeader()->getName() + ".termcond");
+      LatchBlock->getInstList().insert(TermBr, Cond);
+      
+      // Clone the IVUse, as the old use still exists!
+      IVUsesByStride[CondStride].addUser(CondUse->Offset, Cond,
+                                         CondUse->OperandValToReplace);
+      CondUse = &IVUsesByStride[CondStride].Users.back();
+    }
+  }
+
+  // If we get to here, we know that we can transform the setcc instruction to
+  // use the post-incremented version of the IV, allowing us to coallesce the
+  // live ranges for the IV correctly.
+  CondUse->Offset = SCEV::getMinusSCEV(CondUse->Offset,
+                                       SCEVUnknown::get(CondStride));
+  CondUse->isUseOfPostIncrementedValue = true;
+}
 
 void LoopStrengthReduce::runOnLoop(Loop *L) {
   // First step, transform all loops nesting inside of this loop.
@@ -616,7 +710,14 @@ void LoopStrengthReduce::runOnLoop(Loop *L) {
     AddUsersIfInteresting(I, L, Processed);
 
   // If we have nothing to do, return.
-  //if (IVUsesByStride.empty()) return;
+  if (IVUsesByStride.empty()) return;
+
+  // Optimize induction variables.  Some indvar uses can be transformed to use
+  // strides that will be needed for other purposes.  A common example of this
+  // is the exit test for the loop, which can often be rewritten to use the
+  // computation of some other indvar to decide when to terminate the loop.
+  OptimizeIndvars(L);
+
 
   // FIXME: We can widen subreg IV's here for RISC targets.  e.g. instead of
   // doing computation in byte values, promote to 32-bit values if safe.
