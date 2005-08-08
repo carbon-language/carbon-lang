@@ -36,28 +36,6 @@
 using namespace llvm;
 
 
-// IsRunOfOnes - Returns true iff Val consists of one contiguous run of 1s with
-// any number of 0s on either side.  The 1s are allowed to wrap from LSB to
-// MSB, so 0x000FFF0, 0x0000FFFF, and 0xFF0000FF are all runs.  0x0F0F0000 is
-// not, since all 1s are not contiguous.
-static bool IsRunOfOnes(unsigned Val, unsigned &MB, unsigned &ME) {
-  if (isShiftedMask_32(Val)) {
-    // look for the first non-zero bit
-    MB = CountLeadingZeros_32(Val);
-    // look for the first zero bit after the run of ones
-    ME = CountLeadingZeros_32((Val - 1) ^ Val);
-    return true;
-  } else if (isShiftedMask_32(Val = ~Val)) { // invert mask
-    // effectively look for the first zero bit
-    ME = CountLeadingZeros_32(Val) - 1;
-    // effectively look for the first one bit after the run of zeros
-    MB = CountLeadingZeros_32((Val - 1) ^ Val) + 1;
-    return true;
-  }
-  // no run present
-  return false;
-}
-
 //===----------------------------------------------------------------------===//
 //  PPC32TargetLowering - PPC32 Implementation of the TargetLowering interface
 namespace {
@@ -602,6 +580,28 @@ public:
   } 
 };
 
+// isRunOfOnes - Returns true iff Val consists of one contiguous run of 1s with
+// any number of 0s on either side.  The 1s are allowed to wrap from LSB to
+// MSB, so 0x000FFF0, 0x0000FFFF, and 0xFF0000FF are all runs.  0x0F0F0000 is
+// not, since all 1s are not contiguous.
+static bool isRunOfOnes(unsigned Val, unsigned &MB, unsigned &ME) {
+  if (isShiftedMask_32(Val)) {
+    // look for the first non-zero bit
+    MB = CountLeadingZeros_32(Val);
+    // look for the first zero bit after the run of ones
+    ME = CountLeadingZeros_32((Val - 1) ^ Val);
+    return true;
+  } else if (isShiftedMask_32(Val = ~Val)) { // invert mask
+    // effectively look for the first zero bit
+    ME = CountLeadingZeros_32(Val) - 1;
+    // effectively look for the first one bit after the run of zeros
+    MB = CountLeadingZeros_32((Val - 1) ^ Val) + 1;
+    return true;
+  }
+  // no run present
+  return false;
+}
+
 /// getImmediateForOpcode - This method returns a value indicating whether
 /// the ConstantSDNode N can be used as an immediate to Opcode.  The return
 /// values are either 0, 1 or 2.  0 indicates that either N is not a
@@ -627,7 +627,7 @@ static unsigned getImmediateForOpcode(SDOperand N, unsigned Opcode,
     break;
   case ISD::AND: {
     unsigned MB, ME;
-    if (IsRunOfOnes(v, MB, ME)) { Imm = MB << 16 | ME & 0xFFFF; return 5; }
+    if (isRunOfOnes(v, MB, ME)) { Imm = MB << 16 | ME & 0xFFFF; return 5; }
     if (isUInt16(v))            { Imm = v & 0xFFFF; return 1; }
     if ((v & 0x0000FFFF) == 0) { Imm = v >> 16; return 2; }
     break;
@@ -1036,7 +1036,7 @@ bool ISel::SelectBitfieldInsert(SDOperand OR, unsigned Result) {
   // of set bits).  Given that, Select the arguments and generate the rlwimi
   // instruction.
   unsigned MB, ME;
-  if (((TgtMask & InsMask) == 0) && IsRunOfOnes(InsMask, MB, ME)) {
+  if (((TgtMask & InsMask) == 0) && isRunOfOnes(InsMask, MB, ME)) {
     unsigned Tmp1, Tmp2;
     bool fullMask = (TgtMask ^ InsMask) == 0xFFFFFFFF;
     // Check for rotlwi / rotrwi here, a special case of bitfield insert
