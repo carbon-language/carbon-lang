@@ -602,6 +602,77 @@ static bool isRunOfOnes(unsigned Val, unsigned &MB, unsigned &ME) {
   return false;
 }
 
+// isRotateAndMask - Returns true if Mask and Shift can be folded in to a rotate
+// and mask opcode and mask operation.
+static bool isRotateAndMask(unsigned Opcode, unsigned Shift, unsigned Mask,
+                            bool IsShiftMask,
+                            unsigned &SH, unsigned &MB, unsigned &ME) {
+  if (Shift > 31) return false;
+  unsigned Indeterminant = ~0;       // bit mask marking indeterminant results
+  
+  if (Opcode == ISD::SHL) { // shift left
+    // apply shift to mask if it comes first
+    if (IsShiftMask) Mask = Mask << Shift;
+    // determine which bits are made indeterminant by shift
+    Indeterminant = ~(0xFFFFFFFFu << Shift);
+  } else if (Opcode == ISD::SRA || Opcode == ISD::SRL) { // shift rights
+    // apply shift to mask if it comes first
+    if (IsShiftMask) Mask = Mask >> Shift;
+    // determine which bits are made indeterminant by shift
+    Indeterminant = ~(0xFFFFFFFFu >> Shift);
+    // adjust for the left rotate
+    Shift = 32 - Shift;
+  }
+  
+  // if the mask doesn't intersect any Indeterminant bits
+  if (!(Mask & Indeterminant)) {
+    SH = Shift;
+    // make sure the mask is still a mask (wrap arounds may not be)
+    return isRunOfOnes(Mask, MB, ME);
+  }
+  
+  // can't do it
+  return false;
+}
+
+// isImmediate - This method tests to see if a constant operand.
+// If so Imm will receive the 32 bit value.
+static bool isImmediate(SDOperand N, unsigned& Imm) {
+  // test for constant
+  if (N.getOpcode() == ISD::Constant) {
+    // retrieve value
+    Imm = (unsigned)cast<ConstantSDNode>(N)->getSignExtended();
+    // passes muster
+    return true;
+  }
+  // not a constant
+  return false;
+}
+
+// isOprShiftImm - Returns true if the specified operand is a shift opcode with
+// a immediate shift count less than 32.
+static bool isOprShiftImm(SDOperand N, unsigned& Opc, unsigned& SH) {
+  Opc = N.getOpcode();
+  return (Opc == ISD::SHL || Opc == ISD::SRL || Opc == ISD::SRA) &&
+         isImmediate(N.getOperand(1), SH) && SH < 32;
+}
+
+// isOprNot - Returns true if the specified operand is an xor with immediate -1.
+static bool isOprNot(SDOperand N) {
+  unsigned Imm;
+  return N.getOpcode() == ISD::XOR &&
+         isImmediate(N.getOperand(1), Imm) && (signed)Imm == -1;
+}
+
+// Immediate constant composers.
+// Lo16 - grabs the lo 16 bits from a 32 bit constant.
+// Hi16 - grabs the hi 16 bits from a 32 bit constant.
+// HA16 - computes the hi bits required if the lo bits are add/subtracted in
+// arithmethically.
+static unsigned Lo16(unsigned x)  { return x & 0x0000FFFF; }
+static unsigned Hi16(unsigned x)  { return Lo16(x >> 16); }
+static unsigned HA16(unsigned x)  { return Hi16((signed)x - (signed short)x); }
+
 /// getImmediateForOpcode - This method returns a value indicating whether
 /// the ConstantSDNode N can be used as an immediate to Opcode.  The return
 /// values are either 0, 1 or 2.  0 indicates that either N is not a
