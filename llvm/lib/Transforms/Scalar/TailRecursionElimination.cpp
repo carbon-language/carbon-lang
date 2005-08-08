@@ -363,7 +363,7 @@ bool TailCallElim::ProcessReturningBlock(ReturnInst *Ret, BasicBlock *&OldEntry,
              NEBI = NewEntry->begin(); OEBI != E; )
         if (AllocaInst *AI = dyn_cast<AllocaInst>(OEBI++))
           if (isa<ConstantInt>(AI->getArraySize()))
-            NewEntry->getInstList().splice(NEBI, OldEntry->getInstList(), AI);
+            AI->moveBefore(NEBI);
 
     // Now that we have created a new block, which jumps to the entry
     // block, insert a PHI node for each argument of the function.

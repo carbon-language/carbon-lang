@@ -184,7 +184,7 @@ void Reassociate::LinearizeExpr(BinaryOperator *I) {
 
   // Move the RHS instruction to live immediately before I, avoiding breaking
   // dominator properties.
-  I->getParent()->getInstList().splice(I, RHS->getParent()->getInstList(), RHS);
+  RHS->moveBefore(I);
 
   // Move operands around to do the linearization.
   I->setOperand(1, RHS->getOperand(0));
@@ -261,8 +261,7 @@ void Reassociate::LinearizeExprTree(BinaryOperator *I,
 
   // Move LHS right before I to make sure that the tree expression dominates all
   // values.
-  I->getParent()->getInstList().splice(I,
-                                      LHSBO->getParent()->getInstList(), LHSBO);
+  LHSBO->moveBefore(I);
 
   // Linearize the expression tree on the LHS.
   LinearizeExprTree(LHSBO, Ops);

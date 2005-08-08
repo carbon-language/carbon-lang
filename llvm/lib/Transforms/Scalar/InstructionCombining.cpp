@@ -5238,8 +5238,7 @@ static bool TryToSinkInstruction(Instruction *I, BasicBlock *DestBlock) {
   BasicBlock::iterator InsertPos = DestBlock->begin();
   while (isa<PHINode>(InsertPos)) ++InsertPos;
 
-  BasicBlock *SrcBlock = I->getParent();
-  DestBlock->getInstList().splice(InsertPos, SrcBlock->getInstList(), I);
+  I->moveBefore(InsertPos);
   ++NumSunkInst;
   return true;
 }
