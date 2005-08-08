@@ -1689,19 +1689,23 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
       return Result;
     }
     Tmp1 = SelectExpr(N.getOperand(0));
-    switch(getImmediateForOpcode(N.getOperand(1), opcode, Tmp2)) {
-      default: assert(0 && "unhandled result code");
-      case 0: // No immediate
-        Tmp2 = SelectExpr(N.getOperand(1));
-        BuildMI(BB, PPC::ADD, 2, Result).addReg(Tmp1).addReg(Tmp2);
-        break;
-      case 1: // Low immediate
+    if (isImmediate(N.getOperand(1), Tmp2)) {
+      Tmp3 = HA16(Tmp2);
+      Tmp2 = Lo16(Tmp2);
+      if (Tmp2 && Tmp3) {
+        unsigned Reg = MakeReg(MVT::i32);
+        BuildMI(BB, PPC::ADDI, 2, Reg).addReg(Tmp1).addSImm(Tmp2);
+        BuildMI(BB, PPC::ADDIS, 2, Result).addReg(Reg).addSImm(Tmp3);
+      } else if (Tmp2) {
         BuildMI(BB, PPC::ADDI, 2, Result).addReg(Tmp1).addSImm(Tmp2);
-        break;
-      case 2: // Shifted immediate
-        BuildMI(BB, PPC::ADDIS, 2, Result).addReg(Tmp1).addSImm(Tmp2);
-        break;
+      } else {
+        BuildMI(BB, PPC::ADDIS, 2, Result).addReg(Tmp1).addSImm(Tmp3);
+      }
+      return Result;
     }
+    
+    Tmp2 = SelectExpr(N.getOperand(1));
+    BuildMI(BB, PPC::ADD, 2, Result).addReg(Tmp1).addReg(Tmp2);
     return Result;
 
   case ISD::AND:
