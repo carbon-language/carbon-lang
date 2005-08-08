@@ -1758,37 +1758,40 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
   case ISD::OR:
     if (SelectBitfieldInsert(N, Result))
       return Result;
+      
     Tmp1 = SelectExpr(N.getOperand(0));
-    switch(getImmediateForOpcode(N.getOperand(1), opcode, Tmp2)) {
-      default: assert(0 && "unhandled result code");
-      case 0: // No immediate
-        Tmp2 = SelectExpr(N.getOperand(1));
-        Opc = Recording ? PPC::ORo : PPC::OR;
-        RecordSuccess = true;
-        BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
-        break;
-      case 1: // Low immediate
+    if (isImmediate(N.getOperand(1), Tmp2)) {
+      Tmp3 = Hi16(Tmp2);
+      Tmp2 = Lo16(Tmp2);
+      if (Tmp2 && Tmp3) {
+        unsigned Reg = MakeReg(MVT::i32);
+        BuildMI(BB, PPC::ORI, 2, Reg).addReg(Tmp1).addImm(Tmp2);
+        BuildMI(BB, PPC::ORIS, 2, Result).addReg(Reg).addImm(Tmp3);
+      } else if (Tmp2) {
         BuildMI(BB, PPC::ORI, 2, Result).addReg(Tmp1).addImm(Tmp2);
-        break;
-      case 2: // Shifted immediate
-        BuildMI(BB, PPC::ORIS, 2, Result).addReg(Tmp1).addImm(Tmp2);
-        break;
+      } else {
+        BuildMI(BB, PPC::ORIS, 2, Result).addReg(Tmp1).addImm(Tmp3);
+      }
+    } else {
+      Tmp2 = SelectExpr(N.getOperand(1));
+      Opc = Recording ? PPC::ORo : PPC::OR;
+      RecordSuccess = true;
+      BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
     }
     return Result;
 
   case ISD::XOR: {
     // Check for EQV: xor, (xor a, -1), b
     if (N.getOperand(0).getOpcode() == ISD::XOR &&
-        N.getOperand(0).getOperand(1).getOpcode() == ISD::Constant &&
-        cast<ConstantSDNode>(N.getOperand(0).getOperand(1))->isAllOnesValue()) {
+        isImmediate(N.getOperand(0).getOperand(1), Tmp2) &&
+        (signed)Tmp2 == -1) {
       Tmp1 = SelectExpr(N.getOperand(0).getOperand(0));
       Tmp2 = SelectExpr(N.getOperand(1));
       BuildMI(BB, PPC::EQV, 2, Result).addReg(Tmp1).addReg(Tmp2);
       return Result;
     }
     // Check for NOT, NOR, EQV, and NAND: xor (copy, or, xor, and), -1
-    if (N.getOperand(1).getOpcode() == ISD::Constant &&
-        cast<ConstantSDNode>(N.getOperand(1))->isAllOnesValue()) {
+    if (isOprNot(N)) {
       switch(N.getOperand(0).getOpcode()) {
       case ISD::OR:
         Tmp1 = SelectExpr(N.getOperand(0).getOperand(0));
@@ -1813,23 +1816,26 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
       return Result;
     }
     Tmp1 = SelectExpr(N.getOperand(0));
-    switch(getImmediateForOpcode(N.getOperand(1), opcode, Tmp2)) {
-      default: assert(0 && "unhandled result code");
-      case 0: // No immediate
-        Tmp2 = SelectExpr(N.getOperand(1));
-        BuildMI(BB, PPC::XOR, 2, Result).addReg(Tmp1).addReg(Tmp2);
-        break;
-      case 1: // Low immediate
+    if (isImmediate(N.getOperand(1), Tmp2)) {
+      Tmp3 = Hi16(Tmp2);
+      Tmp2 = Lo16(Tmp2);
+      if (Tmp2 && Tmp3) {
+        unsigned Reg = MakeReg(MVT::i32);
+        BuildMI(BB, PPC::XORI, 2, Reg).addReg(Tmp1).addImm(Tmp2);
+        BuildMI(BB, PPC::XORIS, 2, Result).addReg(Reg).addImm(Tmp3);
+      } else if (Tmp2) {
         BuildMI(BB, PPC::XORI, 2, Result).addReg(Tmp1).addImm(Tmp2);
-        break;
-      case 2: // Shifted immediate
-        BuildMI(BB, PPC::XORIS, 2, Result).addReg(Tmp1).addImm(Tmp2);
-        break;
+      } else {
+        BuildMI(BB, PPC::XORIS, 2, Result).addReg(Tmp1).addImm(Tmp3);
+      }
+    } else {
+      Tmp2 = SelectExpr(N.getOperand(1));
+      BuildMI(BB, PPC::XOR, 2, Result).addReg(Tmp1).addReg(Tmp2);
     }
     return Result;
   }
 
-  case ISD::SUB:
+   case ISD::SUB:
     if (!MVT::isInteger(DestType)) {
       if (!NoExcessFPPrecision && N.getOperand(0).getOpcode() == ISD::MUL &&
           N.getOperand(0).Val->hasOneUse()) {
@@ -1857,17 +1863,29 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
       BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
       return Result;
     }
-    if (1 == getImmediateForOpcode(N.getOperand(0), opcode, Tmp1, true)) {
+    if (isImmediate(N.getOperand(0), Tmp1) && isInt16(Tmp1)) {
       Tmp2 = SelectExpr(N.getOperand(1));
       BuildMI(BB, PPC::SUBFIC, 2, Result).addReg(Tmp2).addSImm(Tmp1);
-    } else if (1 == getImmediateForOpcode(N.getOperand(1), opcode, Tmp2)) {
+      return Result;
+    } else if (isImmediate(N.getOperand(1), Tmp2)) {
       Tmp1 = SelectExpr(N.getOperand(0));
-      BuildMI(BB, PPC::ADDI, 2, Result).addReg(Tmp1).addSImm(Tmp2);
-    } else {
-      Tmp1 = SelectExpr(N.getOperand(0));
-      Tmp2 = SelectExpr(N.getOperand(1));
-      BuildMI(BB, PPC::SUBF, 2, Result).addReg(Tmp2).addReg(Tmp1);
-    }
+      Tmp2 = -Tmp2;
+      Tmp3 = HA16(Tmp2);
+      Tmp2 = Lo16(Tmp2);
+      if (Tmp2 && Tmp3) {
+        unsigned Reg = MakeReg(MVT::i32);
+        BuildMI(BB, PPC::ADDI, 2, Reg).addReg(Tmp1).addSImm(Tmp2);
+        BuildMI(BB, PPC::ADDIS, 2, Result).addReg(Reg).addSImm(Tmp3);
+      } else if (Tmp2) {
+        BuildMI(BB, PPC::ADDI, 2, Result).addReg(Tmp1).addSImm(Tmp2);
+      } else {
+        BuildMI(BB, PPC::ADDIS, 2, Result).addReg(Tmp1).addSImm(Tmp3);
+      }
+      return Result;
+    }    
+    Tmp1 = SelectExpr(N.getOperand(0));
+    Tmp2 = SelectExpr(N.getOperand(1));
+    BuildMI(BB, PPC::SUBF, 2, Result).addReg(Tmp2).addReg(Tmp1);
     return Result;
 
   case ISD::MUL:
