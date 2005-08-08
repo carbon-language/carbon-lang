@@ -297,6 +297,10 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
 
   // Check out the positional arguments to collect information about them.
   unsigned NumPositionalRequired = 0;
+  
+  // Determine whether or not there are an unlimited number of positionals
+  bool HasUnlimitedPositionals = false;
+  
   Option *ConsumeAfterOpt = 0;
   if (!PositionalOpts.empty()) {
     if (PositionalOpts[0]->getNumOccurrencesFlag() == cl::ConsumeAfter) {
@@ -331,6 +335,10 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
                                    " does not require a value!");
       }
       UnboundedFound |= EatsUnboundedNumberOfValues(Opt);
+      
+      if (Opt->getNumOccurrencesFlag() == cl::ZeroOrMore
+          || Opt->getNumOccurrencesFlag() == cl::OneOrMore)
+          HasUnlimitedPositionals = true;
     }
   }
 
@@ -484,7 +492,13 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
               << "Must specify at least " << NumPositionalRequired
               << " positional arguments: See: " << argv[0] << " --help\n";
     ErrorParsing = true;
-
+  } else if (!HasUnlimitedPositionals
+             && PositionalVals.size() > PositionalOpts.size()) {
+    std::cerr << ProgramName
+              << ": Too many positional arguments specified!\n"
+              << "Can specify at most " << PositionalOpts.size()
+              << " positional arguments: See: " << argv[0] << " --help\n";
+    ErrorParsing = true;
 
   } else if (ConsumeAfterOpt == 0) {
     // Positional args have already been handled if ConsumeAfter is specified...
