@@ -1186,7 +1186,7 @@ unsigned ISel::SelectCCExpr(SDOperand N, unsigned& Opc, bool &Inv,
   return Result;
 }
 
-/// Check to see if the load is a constant offset from a base register
+/// Check to see if the load is a constant offset from a base register.
 unsigned ISel::SelectAddr(SDOperand N, unsigned& Reg, int& offset)
 {
   unsigned imm = 0, opcode = N.getOpcode();
@@ -1206,6 +1206,22 @@ unsigned ISel::SelectAddr(SDOperand N, unsigned& Reg, int& offset)
       Reg = SelectExpr(N.getOperand(0));
       offset = SelectExpr(N.getOperand(1));
       return 2;
+    }
+  }
+  // Now check if we're dealing with a global, and whether or not we should emit
+  // an optimized load or store for statics.
+  if(GlobalAddressSDNode *GN = dyn_cast<GlobalAddressSDNode>(N)) {
+    GlobalValue *GV = GN->getGlobal();
+    if (!GV->hasWeakLinkage() && !GV->isExternal()) {
+      unsigned GlobalHi = MakeReg(MVT::i32);
+      if (PICEnabled)
+        BuildMI(BB, PPC::ADDIS, 2, GlobalHi).addReg(getGlobalBaseReg())
+          .addGlobalAddress(GV);
+      else
+        BuildMI(BB, PPC::LIS, 1, GlobalHi).addGlobalAddress(GV);
+      Reg = GlobalHi;
+      offset = 0;
+      return 3;
     }
   }
   Reg = SelectExpr(N);
@@ -1410,21 +1426,6 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
     } else if (Address.getOpcode() == ISD::FrameIndex) {
       Tmp1 = cast<FrameIndexSDNode>(Address)->getIndex();
       addFrameReference(BuildMI(BB, Opc, 2, Result), (int)Tmp1);
-    } else if(GlobalAddressSDNode *GN = dyn_cast<GlobalAddressSDNode>(Address)){
-      GlobalValue *GV = GN->getGlobal();
-      Tmp1 = MakeReg(MVT::i32);
-      if (PICEnabled)
-        BuildMI(BB, PPC::ADDIS, 2, Tmp1).addReg(getGlobalBaseReg())
-          .addGlobalAddress(GV);
-      else
-        BuildMI(BB, PPC::LIS, 1, Tmp1).addGlobalAddress(GV);
-      if (GV->hasWeakLinkage() || GV->isExternal()) {
-        Tmp2 = MakeReg(MVT::i32);
-        BuildMI(BB, PPC::LWZ, 2, Tmp2).addGlobalAddress(GV).addReg(Tmp1);
-        BuildMI(BB, Opc, 2, Result).addSImm(0).addReg(Tmp2);
-      } else {
-        BuildMI(BB, Opc, 2, Result).addGlobalAddress(GV).addReg(Tmp1);
-      }
     } else {
       int offset;
       switch(SelectAddr(Address, Tmp1, offset)) {
@@ -1439,6 +1440,11 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
         Opc = IndexedOpForOp(Opc);
         BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(offset);
         break;
+      case 3: {
+        GlobalAddressSDNode *GN = cast<GlobalAddressSDNode>(Address);
+        GlobalValue *GV = GN->getGlobal();
+        BuildMI(BB, Opc, 2, Result).addGlobalAddress(GV).addReg(Tmp1);
+      }
       }
     }
     return Result;
@@ -2490,21 +2496,6 @@ void ISel::Select(SDOperand N) {
     if(Address.getOpcode() == ISD::FrameIndex) {
       Tmp2 = cast<FrameIndexSDNode>(Address)->getIndex();
       addFrameReference(BuildMI(BB, Opc, 3).addReg(Tmp1), (int)Tmp2);
-    } else if(GlobalAddressSDNode *GN = dyn_cast<GlobalAddressSDNode>(Address)){
-      GlobalValue *GV = GN->getGlobal();
-      Tmp2 = MakeReg(MVT::i32);
-      if (PICEnabled)
-        BuildMI(BB, PPC::ADDIS, 2, Tmp2).addReg(getGlobalBaseReg())
-          .addGlobalAddress(GV);
-      else
-        BuildMI(BB, PPC::LIS, 1, Tmp2).addGlobalAddress(GV);
-      if (GV->hasWeakLinkage() || GV->isExternal()) {
-        Tmp3 = MakeReg(MVT::i32);
-        BuildMI(BB, PPC::LWZ, 2, Tmp3).addGlobalAddress(GV).addReg(Tmp2);
-        BuildMI(BB, Opc, 3).addReg(Tmp1).addSImm(0).addReg(Tmp3);
-      } else {
-        BuildMI(BB, Opc, 3).addReg(Tmp1).addGlobalAddress(GV).addReg(Tmp2);
-      }
     } else {
       int offset;
       switch(SelectAddr(Address, Tmp2, offset)) {
@@ -2519,6 +2510,11 @@ void ISel::Select(SDOperand N) {
         Opc = IndexedOpForOp(Opc);
         BuildMI(BB, Opc, 3).addReg(Tmp1).addReg(Tmp2).addReg(offset);
         break;
+      case 3: {
+        GlobalAddressSDNode *GN = cast<GlobalAddressSDNode>(Address);
+        GlobalValue *GV = GN->getGlobal();
+        BuildMI(BB, Opc, 3).addReg(Tmp1).addGlobalAddress(GV).addReg(Tmp2);
+      }
       }
     }
     return;
