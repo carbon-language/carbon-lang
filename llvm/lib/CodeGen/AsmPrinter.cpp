@@ -302,7 +302,9 @@ void AsmPrinter::emitGlobalConstant(const Constant *CV) {
     O << Data32bitsDirective;
     break;
   case Type::ULongTyID: case Type::LongTyID:
-    assert (0 && "Should have already output double-word constant.");
+    assert(Data64bitsDirective &&"Target cannot handle 64-bit constant exprs!");
+    O << Data64bitsDirective;
+    break;
   case Type::FloatTyID: case Type::DoubleTyID:
     assert (0 && "Should have already output floating point constant.");
   default:
