@@ -1136,11 +1136,10 @@ bool ISel::SelectBitfieldInsert(SDOperand OR, unsigned Result) {
 /// wider than the implicit mask, then we can get rid of the AND and let the
 /// shift do the mask.
 unsigned ISel::FoldIfWideZeroExtend(SDOperand N) {
-  unsigned C;
+  unsigned C, MB, ME;
   if (N.getOpcode() == ISD::AND &&
-      5 == getImmediateForOpcode(N.getOperand(1), ISD::AND, C) && // isMask
-      31 == (C & 0xFFFF) && // ME
-      26 >= (C >> 16))      // MB
+      isImmediate(N.getOperand(1), C) && isRunOfOnes(C, MB, ME) &&
+      MB <= 26 && ME == 31)
     return SelectExpr(N.getOperand(0));
   else
     return SelectExpr(N);
@@ -1162,10 +1161,10 @@ unsigned ISel::SelectCC(SDOperand CC, unsigned& Opc, bool &Inv, unsigned& Idx) {
     Opc = getBCCForSetCC(SetCC->getCondition(), U);
     Idx = getCRIdxForSetCC(SetCC->getCondition(), Inv);
 
-    // Pass the optional argument U to getImmediateForOpcode for SETCC,
-    // so that it knows whether the SETCC immediate range is signed or not.
-    if (1 == getImmediateForOpcode(SetCC->getOperand(1), ISD::SETCC,
-                                   Tmp2, U)) {
+    // Use U to determine whether the SETCC immediate range is signed or not.
+    if (isImmediate(SetCC->getOperand(1), Tmp2) &&
+        ((U && isUInt16(Tmp2)) || (!U && isInt16(Tmp2)))) {
+      Tmp2 = Lo16(Tmp2);
       // For comparisons against zero, we can implicity set CR0 if a recording
       // variant (e.g. 'or.' instead of 'or') of the instruction that defines
       // operand zero of the SetCC node is available.
@@ -1252,8 +1251,8 @@ unsigned ISel::SelectAddr(SDOperand N, unsigned& Reg, int& offset)
   unsigned imm = 0, opcode = N.getOpcode();
   if (N.getOpcode() == ISD::ADD) {
     bool isFrame = N.getOperand(0).getOpcode() == ISD::FrameIndex;
-    if (1 == getImmediateForOpcode(N.getOperand(1), opcode, imm)) {
-      offset = imm;
+    if (isImmediate(N.getOperand(1), imm) && isInt16(imm)) {
+      offset = Lo16(imm);
       if (isFrame) {
         ++FrameOff;
         Reg = cast<FrameIndexSDNode>(N.getOperand(0))->getIndex();
