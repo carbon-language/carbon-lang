@@ -1095,6 +1095,20 @@ namespace {
     /// expression and create a new one.
     SCEVHandle getSCEV(Value *V);
 
+    /// hasSCEV - Return true if the SCEV for this value has already been
+    /// computed.
+    bool hasSCEV(Value *V) const {
+      return Scalars.count(V);
+    }
+
+    /// setSCEV - Insert the specified SCEV into the map of current SCEVs for
+    /// the specified value.
+    void setSCEV(Value *V, const SCEVHandle &H) {
+      bool isNew = Scalars.insert(std::make_pair(V, H)).second;
+      assert(isNew && "This entry already existed!");
+    }
+
+
     /// getSCEVAtScope - Compute the value of the specified expression within
     /// the indicated loop (which may be null to indicate in no loop).  If the
     /// expression cannot be evaluated, return UnknownValue itself.
@@ -2326,6 +2340,20 @@ void ScalarEvolution::getAnalysisUsage(AnalysisUsage &AU) const {
 SCEVHandle ScalarEvolution::getSCEV(Value *V) const {
   return ((ScalarEvolutionsImpl*)Impl)->getSCEV(V);
 }
+
+/// hasSCEV - Return true if the SCEV for this value has already been
+/// computed.
+bool ScalarEvolution::hasSCEV(Value *V) const {
+  ((ScalarEvolutionsImpl*)Impl)->hasSCEV(V);
+}
+
+
+/// setSCEV - Insert the specified SCEV into the map of current SCEVs for
+/// the specified value.
+void ScalarEvolution::setSCEV(Value *V, const SCEVHandle &H) {
+  ((ScalarEvolutionsImpl*)Impl)->setSCEV(V, H);
+}
+
 
 SCEVHandle ScalarEvolution::getIterationCount(const Loop *L) const {
   return ((ScalarEvolutionsImpl*)Impl)->getIterationCount(L);
