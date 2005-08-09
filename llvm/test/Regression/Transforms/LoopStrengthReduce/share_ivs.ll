@@ -4,8 +4,6 @@
 ; loop invariant value (B) added to it inside of the loop, instead of having
 ; a whole indvar based on B for it.
 
-; XFAIL: *
-
 declare bool %cond(uint)
 
 void %test(uint %B) {
