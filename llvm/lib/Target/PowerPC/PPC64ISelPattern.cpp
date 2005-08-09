@@ -565,24 +565,23 @@ unsigned ISel::SelectSetCR0(SDOperand CC) {
 
   // If the first operand to the select is a SETCC node, then we can fold it
   // into the branch that selects which value to return.
-  SetCCSDNode* SetCC = dyn_cast<SetCCSDNode>(CC.Val);
-  if (SetCC && CC.getOpcode() == ISD::SETCC) {
+  if (CC.getOpcode() == ISD::SETCC) {
     bool U;
-    Opc = getBCCForSetCC(SetCC->getCondition(), U);
-    Tmp1 = SelectExpr(SetCC->getOperand(0));
+    Opc = getBCCForSetCC(cast<CondCodeSDNode>(CC.getOperand(2))->get(), U);
+    Tmp1 = SelectExpr(CC.getOperand(0));
 
     // Pass the optional argument U to getImmediateForOpcode for SETCC,
     // so that it knows whether the SETCC immediate range is signed or not.
-    if (1 == getImmediateForOpcode(SetCC->getOperand(1), ISD::SETCC,
+    if (1 == getImmediateForOpcode(CC.getOperand(1), ISD::SETCC,
                                    Tmp2, U)) {
       if (U)
         BuildMI(BB, PPC::CMPLWI, 2, PPC::CR0).addReg(Tmp1).addImm(Tmp2);
       else
         BuildMI(BB, PPC::CMPWI, 2, PPC::CR0).addReg(Tmp1).addSImm(Tmp2);
     } else {
-      bool IsInteger = MVT::isInteger(SetCC->getOperand(0).getValueType());
+      bool IsInteger = MVT::isInteger(CC.getOperand(0).getValueType());
       unsigned CompareOpc = CompareOpcodes[2 * IsInteger + U];
-      Tmp2 = SelectExpr(SetCC->getOperand(1));
+      Tmp2 = SelectExpr(CC.getOperand(1));
       BuildMI(BB, CompareOpc, 2, PPC::CR0).addReg(Tmp1).addReg(Tmp2);
     }
   } else {
@@ -650,21 +649,22 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
     assert(0 && "Node not handled!\n");
 
   case ISD::SELECT: {
+    SDNode *Cond = N.getOperand(0).Val;
     // Attempt to generate FSEL.  We can do this whenever we have an FP result,
     // and an FP comparison in the SetCC node.
-    SetCCSDNode* SetCC = dyn_cast<SetCCSDNode>(N.getOperand(0).Val);
-    if (SetCC && N.getOperand(0).getOpcode() == ISD::SETCC &&
-        !MVT::isInteger(SetCC->getOperand(0).getValueType()) &&
-        SetCC->getCondition() != ISD::SETEQ &&
-        SetCC->getCondition() != ISD::SETNE) {
-      MVT::ValueType VT = SetCC->getOperand(0).getValueType();
-      Tmp1 = SelectExpr(SetCC->getOperand(0));   // Val to compare against
+    if (Cond->getOpcode() == ISD::SETCC &&
+        !MVT::isInteger(N.getOperand(1).getValueType()) &&
+        cast<CondCodeSDNode>(Cond->getOperand(2))->get() != ISD::SETEQ &&
+        cast<CondCodeSDNode>(Cond->getOperand(2))->get() != ISD::SETNE) {
+      MVT::ValueType VT = Cond->getOperand(0).getValueType();
+      ISD::CondCode CC = cast<CondCodeSDNode>(Cond->getOperand(2))->get();
+      Tmp1 = SelectExpr(Cond->getOperand(0));   // Val to compare against
       unsigned TV = SelectExpr(N.getOperand(1)); // Use if TRUE
       unsigned FV = SelectExpr(N.getOperand(2)); // Use if FALSE
 
-      ConstantFPSDNode *CN = dyn_cast<ConstantFPSDNode>(SetCC->getOperand(1));
+      ConstantFPSDNode *CN = dyn_cast<ConstantFPSDNode>(Cond->getOperand(1));
       if (CN && (CN->isExactlyValue(-0.0) || CN->isExactlyValue(0.0))) {
-        switch(SetCC->getCondition()) {
+        switch(CC) {
         default: assert(0 && "Invalid FSEL condition"); abort();
         case ISD::SETULT:
         case ISD::SETLT:
@@ -691,9 +691,9 @@ unsigned ISel::SelectExprFP(SDOperand N, unsigned Result)
         }
       } else {
         Opc = (MVT::f64 == VT) ? PPC::FSUB : PPC::FSUBS;
-        Tmp2 = SelectExpr(SetCC->getOperand(1));
+        Tmp2 = SelectExpr(Cond->getOperand(1));
         Tmp3 =  MakeReg(VT);
-        switch(SetCC->getCondition()) {
+        switch(CC) {
         default: assert(0 && "Invalid FSEL condition"); abort();
         case ISD::SETULT:
         case ISD::SETLT:
@@ -1357,54 +1357,51 @@ unsigned ISel::SelectExpr(SDOperand N) {
     return Result;
   }
 
-  case ISD::SETCC:
-    if (SetCCSDNode *SetCC = dyn_cast<SetCCSDNode>(Node)) {
-      Opc = SelectSetCR0(N);
+  case ISD::SETCC: {
+    Opc = SelectSetCR0(N);
 
-      unsigned TrueValue = MakeReg(MVT::i32);
-      BuildMI(BB, PPC::LI, 1, TrueValue).addSImm(1);
-      unsigned FalseValue = MakeReg(MVT::i32);
-      BuildMI(BB, PPC::LI, 1, FalseValue).addSImm(0);
+    unsigned TrueValue = MakeReg(MVT::i32);
+    BuildMI(BB, PPC::LI, 1, TrueValue).addSImm(1);
+    unsigned FalseValue = MakeReg(MVT::i32);
+    BuildMI(BB, PPC::LI, 1, FalseValue).addSImm(0);
 
-      // Create an iterator with which to insert the MBB for copying the false
-      // value and the MBB to hold the PHI instruction for this SetCC.
-      MachineBasicBlock *thisMBB = BB;
-      const BasicBlock *LLVM_BB = BB->getBasicBlock();
-      ilist<MachineBasicBlock>::iterator It = BB;
-      ++It;
+    // Create an iterator with which to insert the MBB for copying the false
+    // value and the MBB to hold the PHI instruction for this SetCC.
+    MachineBasicBlock *thisMBB = BB;
+    const BasicBlock *LLVM_BB = BB->getBasicBlock();
+    ilist<MachineBasicBlock>::iterator It = BB;
+    ++It;
 
-      //  thisMBB:
-      //  ...
-      //   cmpTY cr0, r1, r2
-      //   %TrueValue = li 1
-      //   bCC sinkMBB
-      MachineBasicBlock *copy0MBB = new MachineBasicBlock(LLVM_BB);
-      MachineBasicBlock *sinkMBB = new MachineBasicBlock(LLVM_BB);
-      BuildMI(BB, Opc, 2).addReg(PPC::CR0).addMBB(sinkMBB);
-      MachineFunction *F = BB->getParent();
-      F->getBasicBlockList().insert(It, copy0MBB);
-      F->getBasicBlockList().insert(It, sinkMBB);
-      // Update machine-CFG edges
-      BB->addSuccessor(copy0MBB);
-      BB->addSuccessor(sinkMBB);
+    //  thisMBB:
+    //  ...
+    //   cmpTY cr0, r1, r2
+    //   %TrueValue = li 1
+    //   bCC sinkMBB
+    MachineBasicBlock *copy0MBB = new MachineBasicBlock(LLVM_BB);
+    MachineBasicBlock *sinkMBB = new MachineBasicBlock(LLVM_BB);
+    BuildMI(BB, Opc, 2).addReg(PPC::CR0).addMBB(sinkMBB);
+    MachineFunction *F = BB->getParent();
+    F->getBasicBlockList().insert(It, copy0MBB);
+    F->getBasicBlockList().insert(It, sinkMBB);
+    // Update machine-CFG edges
+    BB->addSuccessor(copy0MBB);
+    BB->addSuccessor(sinkMBB);
 
-      //  copy0MBB:
-      //   %FalseValue = li 0
-      //   fallthrough
-      BB = copy0MBB;
-      // Update machine-CFG edges
-      BB->addSuccessor(sinkMBB);
+    //  copy0MBB:
+    //   %FalseValue = li 0
+    //   fallthrough
+    BB = copy0MBB;
+    // Update machine-CFG edges
+    BB->addSuccessor(sinkMBB);
 
-      //  sinkMBB:
-      //   %Result = phi [ %FalseValue, copy0MBB ], [ %TrueValue, thisMBB ]
-      //  ...
-      BB = sinkMBB;
-      BuildMI(BB, PPC::PHI, 4, Result).addReg(FalseValue)
-        .addMBB(copy0MBB).addReg(TrueValue).addMBB(thisMBB);
-      return Result;
-    }
-    assert(0 && "Is this legal?");
-    return 0;
+    //  sinkMBB:
+    //   %Result = phi [ %FalseValue, copy0MBB ], [ %TrueValue, thisMBB ]
+    //  ...
+    BB = sinkMBB;
+    BuildMI(BB, PPC::PHI, 4, Result).addReg(FalseValue)
+      .addMBB(copy0MBB).addReg(TrueValue).addMBB(thisMBB);
+    return Result;
+  }
 
   case ISD::SELECT: {
     unsigned TrueValue = SelectExpr(N.getOperand(1)); //Use if TRUE

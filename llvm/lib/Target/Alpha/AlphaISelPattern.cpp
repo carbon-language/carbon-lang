@@ -437,8 +437,8 @@ LowerVAArg(SDOperand Chain, SDOperand VAListP, Value *VAListV,
     //if fp && Offset < 6*8, then subtract 6*8 from DataPtr
       SDOperand FPDataPtr = DAG.getNode(ISD::SUB, MVT::i64, DataPtr,
                                         DAG.getConstant(8*6, MVT::i64));
-      SDOperand CC = DAG.getSetCC(ISD::SETLT, MVT::i64,
-                                  Offset, DAG.getConstant(8*6, MVT::i64));
+      SDOperand CC = DAG.getSetCC(MVT::i64, Offset,
+                                  DAG.getConstant(8*6, MVT::i64), ISD::SETLT);
       DataPtr = DAG.getNode(ISD::SELECT, MVT::i64, CC, FPDataPtr, DataPtr);
   }
 
@@ -896,15 +896,14 @@ void AlphaISel::MoveInt2FP(unsigned src, unsigned dst, bool isDouble)
 
 bool AlphaISel::SelectFPSetCC(SDOperand N, unsigned dst)
 {
-  SDNode *Node = N.Val;
+  SDNode *SetCC = N.Val;
   unsigned Opc, Tmp1, Tmp2, Tmp3;
-  SetCCSDNode *SetCC = dyn_cast<SetCCSDNode>(Node);
-
+  ISD::CondCode CC = cast<CondCodeSDNode>(SetCC->getOperand(2))->get();
   bool rev = false;
   bool inv = false;
 
-  switch (SetCC->getCondition()) {
-  default: Node->dump(); assert(0 && "Unknown FP comparison!");
+  switch (CC) {
+  default: SetCC->dump(); assert(0 && "Unknown FP comparison!");
   case ISD::SETEQ: Opc = Alpha::CMPTEQ; break;
   case ISD::SETLT: Opc = Alpha::CMPTLT; break;
   case ISD::SETLE: Opc = Alpha::CMPTLE; break;
@@ -978,16 +977,14 @@ void AlphaISel::SelectBranchCC(SDOperand N)
 
   if (CC.getOpcode() == ISD::SETCC)
   {
-    SetCCSDNode* SetCC = dyn_cast<SetCCSDNode>(CC.Val);
-    if (MVT::isInteger(SetCC->getOperand(0).getValueType())) {
+    ISD::CondCode cCode= cast<CondCodeSDNode>(CC.getOperand(2))->get();
+    if (MVT::isInteger(CC.getOperand(0).getValueType())) {
       //Dropping the CC is only useful if we are comparing to 0
-      bool RightZero = SetCC->getOperand(1).getOpcode() == ISD::Constant &&
-        cast<ConstantSDNode>(SetCC->getOperand(1))->getValue() == 0;
+      bool RightZero = CC.getOperand(1).getOpcode() == ISD::Constant &&
+        cast<ConstantSDNode>(CC.getOperand(1))->getValue() == 0;
       bool isNE = false;
 
       //Fix up CC
-      ISD::CondCode cCode= SetCC->getCondition();
-
       if(cCode == ISD::SETNE)
         isNE = true;
 
@@ -1006,7 +1003,7 @@ void AlphaISel::SelectBranchCC(SDOperand N)
         case ISD::SETUGE: assert(0 && "x (unsgined >= 0 is always true"); break;
         case ISD::SETNE:  Opc = Alpha::BNE; break;
         }
-        unsigned Tmp1 = SelectExpr(SetCC->getOperand(0)); //Cond
+        unsigned Tmp1 = SelectExpr(CC.getOperand(0)); //Cond
         BuildMI(BB, Opc, 2).addReg(Tmp1).addMBB(Dest);
         return;
       } else {
@@ -1029,26 +1026,26 @@ void AlphaISel::SelectBranchCC(SDOperand N)
       unsigned Tmp3;
 
       ConstantFPSDNode *CN;
-      if ((CN = dyn_cast<ConstantFPSDNode>(SetCC->getOperand(1)))
+      if ((CN = dyn_cast<ConstantFPSDNode>(CC.getOperand(1)))
           && (CN->isExactlyValue(+0.0) || CN->isExactlyValue(-0.0)))
-        Tmp3 = SelectExpr(SetCC->getOperand(0));
-      else if ((CN = dyn_cast<ConstantFPSDNode>(SetCC->getOperand(0)))
+        Tmp3 = SelectExpr(CC.getOperand(0));
+      else if ((CN = dyn_cast<ConstantFPSDNode>(CC.getOperand(0)))
           && (CN->isExactlyValue(+0.0) || CN->isExactlyValue(-0.0)))
       {
-        Tmp3 = SelectExpr(SetCC->getOperand(1));
+        Tmp3 = SelectExpr(CC.getOperand(1));
         invTest = true;
       }
       else
       {
-        unsigned Tmp1 = SelectExpr(SetCC->getOperand(0));
-        unsigned Tmp2 = SelectExpr(SetCC->getOperand(1));
-        bool isD = SetCC->getOperand(0).getValueType() == MVT::f64;
+        unsigned Tmp1 = SelectExpr(CC.getOperand(0));
+        unsigned Tmp2 = SelectExpr(CC.getOperand(1));
+        bool isD = CC.getOperand(0).getValueType() == MVT::f64;
         Tmp3 = MakeReg(isD ? MVT::f64 : MVT::f32);
         BuildMI(BB, isD ? Alpha::SUBT : Alpha::SUBS, 2, Tmp3)
           .addReg(Tmp1).addReg(Tmp2);
       }
 
-      switch (SetCC->getCondition()) {
+      switch (cCode) {
       default: CC.Val->dump(); assert(0 && "Unknown FP comparison!");
       case ISD::SETEQ: Opc = invTest ? Alpha::FBNE : Alpha::FBEQ; break;
       case ISD::SETLT: Opc = invTest ? Alpha::FBGT : Alpha::FBLT; break;
@@ -1533,71 +1530,70 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
 
   case ISD::SETCC:
     {
-      if (SetCCSDNode *SetCC = dyn_cast<SetCCSDNode>(Node)) {
-        if (MVT::isInteger(SetCC->getOperand(0).getValueType())) {
-          bool isConst = false;
-          int dir;
+      ISD::CondCode CC = cast<CondCodeSDNode>(N.getOperand(2))->get();
+      if (MVT::isInteger(N.getOperand(0).getValueType())) {
+        bool isConst = false;
+        int dir;
 
-          //Tmp1 = SelectExpr(N.getOperand(0));
-          if(N.getOperand(1).getOpcode() == ISD::Constant &&
-             cast<ConstantSDNode>(N.getOperand(1))->getValue() <= 255)
-            isConst = true;
+        //Tmp1 = SelectExpr(N.getOperand(0));
+        if(N.getOperand(1).getOpcode() == ISD::Constant &&
+           cast<ConstantSDNode>(N.getOperand(1))->getValue() <= 255)
+          isConst = true;
 
-          switch (SetCC->getCondition()) {
-          default: Node->dump(); assert(0 && "Unknown integer comparison!");
-          case ISD::SETEQ:
-            Opc = isConst ? Alpha::CMPEQi : Alpha::CMPEQ; dir=1; break;
-          case ISD::SETLT:
-            Opc = isConst ? Alpha::CMPLTi : Alpha::CMPLT; dir = 1; break;
-          case ISD::SETLE:
-            Opc = isConst ? Alpha::CMPLEi : Alpha::CMPLE; dir = 1; break;
-          case ISD::SETGT: Opc = Alpha::CMPLT; dir = 2; break;
-          case ISD::SETGE: Opc = Alpha::CMPLE; dir = 2; break;
-          case ISD::SETULT:
-            Opc = isConst ? Alpha::CMPULTi : Alpha::CMPULT; dir = 1; break;
-          case ISD::SETUGT: Opc = Alpha::CMPULT; dir = 2; break;
-          case ISD::SETULE:
-            Opc = isConst ? Alpha::CMPULEi : Alpha::CMPULE; dir = 1; break;
-          case ISD::SETUGE: Opc = Alpha::CMPULE; dir = 2; break;
-          case ISD::SETNE: {//Handle this one special
-            //std::cerr << "Alpha does not have a setne.\n";
-            //abort();
-            Tmp1 = SelectExpr(N.getOperand(0));
+        switch (CC) {
+        default: Node->dump(); assert(0 && "Unknown integer comparison!");
+        case ISD::SETEQ:
+          Opc = isConst ? Alpha::CMPEQi : Alpha::CMPEQ; dir=1; break;
+        case ISD::SETLT:
+          Opc = isConst ? Alpha::CMPLTi : Alpha::CMPLT; dir = 1; break;
+        case ISD::SETLE:
+          Opc = isConst ? Alpha::CMPLEi : Alpha::CMPLE; dir = 1; break;
+        case ISD::SETGT: Opc = Alpha::CMPLT; dir = 2; break;
+        case ISD::SETGE: Opc = Alpha::CMPLE; dir = 2; break;
+        case ISD::SETULT:
+          Opc = isConst ? Alpha::CMPULTi : Alpha::CMPULT; dir = 1; break;
+        case ISD::SETUGT: Opc = Alpha::CMPULT; dir = 2; break;
+        case ISD::SETULE:
+          Opc = isConst ? Alpha::CMPULEi : Alpha::CMPULE; dir = 1; break;
+        case ISD::SETUGE: Opc = Alpha::CMPULE; dir = 2; break;
+        case ISD::SETNE: {//Handle this one special
+          //std::cerr << "Alpha does not have a setne.\n";
+          //abort();
+          Tmp1 = SelectExpr(N.getOperand(0));
+          Tmp2 = SelectExpr(N.getOperand(1));
+          Tmp3 = MakeReg(MVT::i64);
+          BuildMI(BB, Alpha::CMPEQ, 2, Tmp3).addReg(Tmp1).addReg(Tmp2);
+          //Remeber we have the Inv for this CC
+          CCInvMap[N] = Tmp3;
+          //and invert
+          BuildMI(BB, Alpha::CMPEQ, 2, Result).addReg(Alpha::R31).addReg(Tmp3);
+          return Result;
+        }
+        }
+        if (dir == 1) {
+          Tmp1 = SelectExpr(N.getOperand(0));
+          if (isConst) {
+            Tmp2 = cast<ConstantSDNode>(N.getOperand(1))->getValue();
+            BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addImm(Tmp2);
+          } else {
             Tmp2 = SelectExpr(N.getOperand(1));
-            Tmp3 = MakeReg(MVT::i64);
-            BuildMI(BB, Alpha::CMPEQ, 2, Tmp3).addReg(Tmp1).addReg(Tmp2);
-            //Remeber we have the Inv for this CC
-            CCInvMap[N] = Tmp3;
-            //and invert
-            BuildMI(BB, Alpha::CMPEQ, 2, Result).addReg(Alpha::R31).addReg(Tmp3);
-            return Result;
-          }
-          }
-          if (dir == 1) {
-            Tmp1 = SelectExpr(N.getOperand(0));
-            if (isConst) {
-              Tmp2 = cast<ConstantSDNode>(N.getOperand(1))->getValue();
-              BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addImm(Tmp2);
-            } else {
-              Tmp2 = SelectExpr(N.getOperand(1));
-              BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
-            }
-          } else { //if (dir == 2) {
-            Tmp1 = SelectExpr(N.getOperand(1));
-            Tmp2 = SelectExpr(N.getOperand(0));
             BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
           }
-        } else {
-          //do the comparison
-          Tmp1 = MakeReg(MVT::f64);
-          bool inv = SelectFPSetCC(N, Tmp1);
-
-          //now arrange for Result (int) to have a 1 or 0
-          Tmp2 = MakeReg(MVT::i64);
-          BuildMI(BB, Alpha::ADDQi, 2, Tmp2).addReg(Alpha::R31).addImm(1);
-          Opc = inv?Alpha::CMOVNEi_FP:Alpha::CMOVEQi_FP;
-          BuildMI(BB, Opc, 3, Result).addReg(Tmp2).addImm(0).addReg(Tmp1);
+        } else { //if (dir == 2) {
+          Tmp1 = SelectExpr(N.getOperand(1));
+          Tmp2 = SelectExpr(N.getOperand(0));
+          BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
         }
+      } else {
+        //do the comparison
+        Tmp1 = MakeReg(MVT::f64);
+        bool inv = SelectFPSetCC(N, Tmp1);
+
+        //now arrange for Result (int) to have a 1 or 0
+        Tmp2 = MakeReg(MVT::i64);
+        BuildMI(BB, Alpha::ADDQi, 2, Tmp2).addReg(Alpha::R31).addImm(1);
+        Opc = inv?Alpha::CMOVNEi_FP:Alpha::CMOVEQi_FP;
+        BuildMI(BB, Opc, 3, Result).addReg(Tmp2).addImm(0).addReg(Tmp1);
       }
       return Result;
     }
@@ -1927,10 +1923,10 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
       unsigned FV = SelectExpr(N.getOperand(2)); //Use if FALSE
 
       SDOperand CC = N.getOperand(0);
-      SetCCSDNode* SetCC = dyn_cast<SetCCSDNode>(CC.Val);
 
-      if (SetCC && !MVT::isInteger(SetCC->getOperand(0).getValueType()))
-      { //FP Setcc -> Select yay!
+      if (CC.getOpcode() == ISD::SETCC &&
+          !MVT::isInteger(CC.getOperand(0).getValueType())) {
+        //FP Setcc -> Select yay!
 
 
         //for a cmp b: c = a - b;
@@ -1942,26 +1938,26 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
         unsigned Tmp3;
 
         ConstantFPSDNode *CN;
-        if ((CN = dyn_cast<ConstantFPSDNode>(SetCC->getOperand(1)))
+        if ((CN = dyn_cast<ConstantFPSDNode>(CC.getOperand(1)))
             && (CN->isExactlyValue(+0.0) || CN->isExactlyValue(-0.0)))
-          Tmp3 = SelectExpr(SetCC->getOperand(0));
-        else if ((CN = dyn_cast<ConstantFPSDNode>(SetCC->getOperand(0)))
+          Tmp3 = SelectExpr(CC.getOperand(0));
+        else if ((CN = dyn_cast<ConstantFPSDNode>(CC.getOperand(0)))
                  && (CN->isExactlyValue(+0.0) || CN->isExactlyValue(-0.0)))
         {
-          Tmp3 = SelectExpr(SetCC->getOperand(1));
+          Tmp3 = SelectExpr(CC.getOperand(1));
           invTest = true;
         }
         else
         {
-          unsigned Tmp1 = SelectExpr(SetCC->getOperand(0));
-          unsigned Tmp2 = SelectExpr(SetCC->getOperand(1));
-          bool isD = SetCC->getOperand(0).getValueType() == MVT::f64;
+          unsigned Tmp1 = SelectExpr(CC.getOperand(0));
+          unsigned Tmp2 = SelectExpr(CC.getOperand(1));
+          bool isD = CC.getOperand(0).getValueType() == MVT::f64;
           Tmp3 = MakeReg(isD ? MVT::f64 : MVT::f32);
           BuildMI(BB, isD ? Alpha::SUBT : Alpha::SUBS, 2, Tmp3)
             .addReg(Tmp1).addReg(Tmp2);
         }
 
-        switch (SetCC->getCondition()) {
+        switch (cast<CondCodeSDNode>(CC.getOperand(2))->get()) {
         default: CC.Val->dump(); assert(0 && "Unknown FP comparison!");
         case ISD::SETEQ: Opc = invTest ? Alpha::FCMOVNE : Alpha::FCMOVEQ; break;
         case ISD::SETLT: Opc = invTest ? Alpha::FCMOVGT : Alpha::FCMOVLT; break;
@@ -1996,10 +1992,9 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
       //BuildMI(BB, Alpha::CMOVEQ, 2, Result).addReg(Tmp2).addReg(Tmp3).addReg(Tmp1);
 
       SDOperand CC = N.getOperand(0);
-      SetCCSDNode* SetCC = dyn_cast<SetCCSDNode>(CC.Val);
 
       if (CC.getOpcode() == ISD::SETCC &&
-          !MVT::isInteger(SetCC->getOperand(0).getValueType()))
+          !MVT::isInteger(CC.getOperand(0).getValueType()))
       { //FP Setcc -> Int Select
         Tmp1 = MakeReg(MVT::f64);
         Tmp2 = SelectExpr(N.getOperand(1)); //Use if TRUE
@@ -2012,15 +2007,15 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
       if (CC.getOpcode() == ISD::SETCC) {
         //Int SetCC -> Select
         //Dropping the CC is only useful if we are comparing to 0
-        if((SetCC->getOperand(1).getOpcode() == ISD::Constant &&
-            cast<ConstantSDNode>(SetCC->getOperand(1))->getValue() == 0))
+        if((CC.getOperand(1).getOpcode() == ISD::Constant &&
+            cast<ConstantSDNode>(CC.getOperand(1))->getValue() == 0))
         {
           //figure out a few things
           bool useImm = N.getOperand(2).getOpcode() == ISD::Constant &&
             cast<ConstantSDNode>(N.getOperand(2))->getValue() <= 255;
 
           //Fix up CC
-          ISD::CondCode cCode= SetCC->getCondition();
+          ISD::CondCode cCode= cast<CondCodeSDNode>(CC.getOperand(2))->get();
           if (useImm) //Invert sense to get Imm field right
             cCode = ISD::getSetCCInverse(cCode, true);
 
@@ -2039,7 +2034,7 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
           case ISD::SETUGE: assert(0 && "unsgined >= 0 is always true"); break;
           case ISD::SETNE:  Opc = useImm?Alpha::CMOVNEi:Alpha::CMOVNE;    break;
           }
-          Tmp1 = SelectExpr(SetCC->getOperand(0)); //Cond
+          Tmp1 = SelectExpr(CC.getOperand(0)); //Cond
 
           if (useImm) {
             Tmp3 = SelectExpr(N.getOperand(1)); //Use if FALSE

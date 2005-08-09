@@ -1809,109 +1809,103 @@ pC = pA OR pB
 
   case ISD::SETCC: {
     Tmp1 = SelectExpr(N.getOperand(0));
+    ISD::CondCode CC = cast<CondCodeSDNode>(Node->getOperand(2))->get();
+    if (MVT::isInteger(N.getOperand(0).getValueType())) {
 
-    if (SetCCSDNode *SetCC = dyn_cast<SetCCSDNode>(Node)) {
-      if (MVT::isInteger(SetCC->getOperand(0).getValueType())) {
+      if(ConstantSDNode *CSDN =
+           dyn_cast<ConstantSDNode>(N.getOperand(1))) {
+      // if we are comparing against a constant zero
+      if(CSDN->getValue()==0)
+        Tmp2 = IA64::r0; // then we can just compare against r0
+      else
+        Tmp2 = SelectExpr(N.getOperand(1));
+      } else // not comparing against a constant
+        Tmp2 = SelectExpr(N.getOperand(1));
 
-        if(ConstantSDNode *CSDN =
-             dyn_cast<ConstantSDNode>(N.getOperand(1))) {
-        // if we are comparing against a constant zero
-        if(CSDN->getValue()==0)
-          Tmp2 = IA64::r0; // then we can just compare against r0
+      switch (CC) {
+      default: assert(0 && "Unknown integer comparison!");
+      case ISD::SETEQ:
+        BuildMI(BB, IA64::CMPEQ, 2, Result).addReg(Tmp1).addReg(Tmp2);
+        break;
+      case ISD::SETGT:
+        BuildMI(BB, IA64::CMPGT, 2, Result).addReg(Tmp1).addReg(Tmp2);
+        break;
+      case ISD::SETGE:
+        BuildMI(BB, IA64::CMPGE, 2, Result).addReg(Tmp1).addReg(Tmp2);
+        break;
+      case ISD::SETLT:
+        BuildMI(BB, IA64::CMPLT, 2, Result).addReg(Tmp1).addReg(Tmp2);
+        break;
+      case ISD::SETLE:
+        BuildMI(BB, IA64::CMPLE, 2, Result).addReg(Tmp1).addReg(Tmp2);
+        break;
+      case ISD::SETNE:
+        BuildMI(BB, IA64::CMPNE, 2, Result).addReg(Tmp1).addReg(Tmp2);
+        break;
+      case ISD::SETULT:
+        BuildMI(BB, IA64::CMPLTU, 2, Result).addReg(Tmp1).addReg(Tmp2);
+        break;
+      case ISD::SETUGT:
+        BuildMI(BB, IA64::CMPGTU, 2, Result).addReg(Tmp1).addReg(Tmp2);
+        break;
+      case ISD::SETULE:
+        BuildMI(BB, IA64::CMPLEU, 2, Result).addReg(Tmp1).addReg(Tmp2);
+        break;
+      case ISD::SETUGE:
+        BuildMI(BB, IA64::CMPGEU, 2, Result).addReg(Tmp1).addReg(Tmp2);
+        break;
+      }
+    } else { // if not integer, should be FP.
+      assert(N.getOperand(0).getValueType() != MVT::f32 &&
+          "error: SETCC should have had incoming f32 promoted to f64!\n");
+
+      if(ConstantFPSDNode *CFPSDN =
+           dyn_cast<ConstantFPSDNode>(N.getOperand(1))) {
+
+        // if we are comparing against a constant +0.0 or +1.0
+        if(CFPSDN->isExactlyValue(+0.0))
+          Tmp2 = IA64::F0; // then we can just compare against f0
+        else if(CFPSDN->isExactlyValue(+1.0))
+          Tmp2 = IA64::F1; // or f1
         else
           Tmp2 = SelectExpr(N.getOperand(1));
-        } else // not comparing against a constant
-          Tmp2 = SelectExpr(N.getOperand(1));
+      } else // not comparing against a constant
+        Tmp2 = SelectExpr(N.getOperand(1));
 
-        switch (SetCC->getCondition()) {
-        default: assert(0 && "Unknown integer comparison!");
-        case ISD::SETEQ:
-          BuildMI(BB, IA64::CMPEQ, 2, Result).addReg(Tmp1).addReg(Tmp2);
-          break;
-        case ISD::SETGT:
-          BuildMI(BB, IA64::CMPGT, 2, Result).addReg(Tmp1).addReg(Tmp2);
-          break;
-        case ISD::SETGE:
-          BuildMI(BB, IA64::CMPGE, 2, Result).addReg(Tmp1).addReg(Tmp2);
-          break;
-        case ISD::SETLT:
-          BuildMI(BB, IA64::CMPLT, 2, Result).addReg(Tmp1).addReg(Tmp2);
-          break;
-        case ISD::SETLE:
-          BuildMI(BB, IA64::CMPLE, 2, Result).addReg(Tmp1).addReg(Tmp2);
-          break;
-        case ISD::SETNE:
-          BuildMI(BB, IA64::CMPNE, 2, Result).addReg(Tmp1).addReg(Tmp2);
-          break;
-        case ISD::SETULT:
-          BuildMI(BB, IA64::CMPLTU, 2, Result).addReg(Tmp1).addReg(Tmp2);
-          break;
-        case ISD::SETUGT:
-          BuildMI(BB, IA64::CMPGTU, 2, Result).addReg(Tmp1).addReg(Tmp2);
-          break;
-        case ISD::SETULE:
-          BuildMI(BB, IA64::CMPLEU, 2, Result).addReg(Tmp1).addReg(Tmp2);
-          break;
-        case ISD::SETUGE:
-          BuildMI(BB, IA64::CMPGEU, 2, Result).addReg(Tmp1).addReg(Tmp2);
-          break;
-        }
-      }
-      else { // if not integer, should be FP. FIXME: what about bools? ;)
-        assert(SetCC->getOperand(0).getValueType() != MVT::f32 &&
-            "error: SETCC should have had incoming f32 promoted to f64!\n");
-
-        if(ConstantFPSDNode *CFPSDN =
-             dyn_cast<ConstantFPSDNode>(N.getOperand(1))) {
-
-          // if we are comparing against a constant +0.0 or +1.0
-          if(CFPSDN->isExactlyValue(+0.0))
-            Tmp2 = IA64::F0; // then we can just compare against f0
-          else if(CFPSDN->isExactlyValue(+1.0))
-            Tmp2 = IA64::F1; // or f1
-          else
-            Tmp2 = SelectExpr(N.getOperand(1));
-        } else // not comparing against a constant
-          Tmp2 = SelectExpr(N.getOperand(1));
-
-        switch (SetCC->getCondition()) {
-        default: assert(0 && "Unknown FP comparison!");
-        case ISD::SETEQ:
-          BuildMI(BB, IA64::FCMPEQ, 2, Result).addReg(Tmp1).addReg(Tmp2);
-          break;
-        case ISD::SETGT:
-          BuildMI(BB, IA64::FCMPGT, 2, Result).addReg(Tmp1).addReg(Tmp2);
-          break;
-        case ISD::SETGE:
-          BuildMI(BB, IA64::FCMPGE, 2, Result).addReg(Tmp1).addReg(Tmp2);
-          break;
-        case ISD::SETLT:
-          BuildMI(BB, IA64::FCMPLT, 2, Result).addReg(Tmp1).addReg(Tmp2);
-          break;
-        case ISD::SETLE:
-          BuildMI(BB, IA64::FCMPLE, 2, Result).addReg(Tmp1).addReg(Tmp2);
-          break;
-        case ISD::SETNE:
-          BuildMI(BB, IA64::FCMPNE, 2, Result).addReg(Tmp1).addReg(Tmp2);
-          break;
-        case ISD::SETULT:
-          BuildMI(BB, IA64::FCMPLTU, 2, Result).addReg(Tmp1).addReg(Tmp2);
-          break;
-        case ISD::SETUGT:
-          BuildMI(BB, IA64::FCMPGTU, 2, Result).addReg(Tmp1).addReg(Tmp2);
-          break;
-        case ISD::SETULE:
-          BuildMI(BB, IA64::FCMPLEU, 2, Result).addReg(Tmp1).addReg(Tmp2);
-          break;
-        case ISD::SETUGE:
-          BuildMI(BB, IA64::FCMPGEU, 2, Result).addReg(Tmp1).addReg(Tmp2);
-          break;
-        }
+      switch (CC) {
+      default: assert(0 && "Unknown FP comparison!");
+      case ISD::SETEQ:
+        BuildMI(BB, IA64::FCMPEQ, 2, Result).addReg(Tmp1).addReg(Tmp2);
+        break;
+      case ISD::SETGT:
+        BuildMI(BB, IA64::FCMPGT, 2, Result).addReg(Tmp1).addReg(Tmp2);
+        break;
+      case ISD::SETGE:
+        BuildMI(BB, IA64::FCMPGE, 2, Result).addReg(Tmp1).addReg(Tmp2);
+        break;
+      case ISD::SETLT:
+        BuildMI(BB, IA64::FCMPLT, 2, Result).addReg(Tmp1).addReg(Tmp2);
+        break;
+      case ISD::SETLE:
+        BuildMI(BB, IA64::FCMPLE, 2, Result).addReg(Tmp1).addReg(Tmp2);
+        break;
+      case ISD::SETNE:
+        BuildMI(BB, IA64::FCMPNE, 2, Result).addReg(Tmp1).addReg(Tmp2);
+        break;
+      case ISD::SETULT:
+        BuildMI(BB, IA64::FCMPLTU, 2, Result).addReg(Tmp1).addReg(Tmp2);
+        break;
+      case ISD::SETUGT:
+        BuildMI(BB, IA64::FCMPGTU, 2, Result).addReg(Tmp1).addReg(Tmp2);
+        break;
+      case ISD::SETULE:
+        BuildMI(BB, IA64::FCMPLEU, 2, Result).addReg(Tmp1).addReg(Tmp2);
+        break;
+      case ISD::SETUGE:
+        BuildMI(BB, IA64::FCMPGEU, 2, Result).addReg(Tmp1).addReg(Tmp2);
+        break;
       }
     }
-    else
-      assert(0 && "this setcc not implemented yet");
-
     return Result;
   }
 

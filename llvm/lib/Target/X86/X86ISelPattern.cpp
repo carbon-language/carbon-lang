@@ -1663,15 +1663,15 @@ bool ISel::EmitBranchCC(MachineBasicBlock *Dest, SDOperand Chain,
         return false;
       }
 
-  SetCCSDNode *SetCC = dyn_cast<SetCCSDNode>(Cond);
-  if (SetCC == 0)
+  if (Cond.getOpcode() != ISD::SETCC)
     return true;                       // Can only handle simple setcc's so far.
+  ISD::CondCode CC = cast<CondCodeSDNode>(Cond.getOperand(2))->get();
 
   unsigned Opc;
 
   // Handle integer conditions first.
-  if (MVT::isInteger(SetCC->getOperand(0).getValueType())) {
-    switch (SetCC->getCondition()) {
+  if (MVT::isInteger(Cond.getOperand(0).getValueType())) {
+    switch (CC) {
     default: assert(0 && "Illegal integer SetCC!");
     case ISD::SETEQ: Opc = X86::JE; break;
     case ISD::SETGT: Opc = X86::JG; break;
@@ -1685,7 +1685,7 @@ bool ISel::EmitBranchCC(MachineBasicBlock *Dest, SDOperand Chain,
     case ISD::SETUGE: Opc = X86::JAE; break;
     }
     Select(Chain);
-    EmitCMP(SetCC->getOperand(0), SetCC->getOperand(1), SetCC->hasOneUse());
+    EmitCMP(Cond.getOperand(0), Cond.getOperand(1), Cond.hasOneUse());
     BuildMI(BB, Opc, 1).addMBB(Dest);
     return false;
   }
@@ -1699,7 +1699,7 @@ bool ISel::EmitBranchCC(MachineBasicBlock *Dest, SDOperand Chain,
   //  1 | 0 | 0 | X == Y
   //  1 | 1 | 1 | unordered
   //
-  switch (SetCC->getCondition()) {
+  switch (CC) {
   default: assert(0 && "Invalid FP setcc!");
   case ISD::SETUEQ:
   case ISD::SETEQ:   Opc = X86::JE;  break;     // True if ZF = 1
@@ -1742,7 +1742,7 @@ bool ISel::EmitBranchCC(MachineBasicBlock *Dest, SDOperand Chain,
   }
 
   Select(Chain);
-  EmitCMP(SetCC->getOperand(0), SetCC->getOperand(1), SetCC->hasOneUse());
+  EmitCMP(Cond.getOperand(0), Cond.getOperand(1), Cond.hasOneUse());
   BuildMI(BB, Opc, 1).addMBB(Dest);
   if (Opc2)
     BuildMI(BB, Opc2, 1).addMBB(Dest);
@@ -1781,10 +1781,10 @@ void ISel::EmitSelectCC(SDOperand Cond, SDOperand True, SDOperand False,
     /*CMPNLE*/  6, /*CMPNLT*/   5, /*CMPUNORD*/ 3, /*CMPORD*/   7
   };
   
-  SetCCSDNode *SetCC;
-  if ((SetCC = dyn_cast<SetCCSDNode>(Cond))) {
-    if (MVT::isInteger(SetCC->getOperand(0).getValueType())) {
-      switch (SetCC->getCondition()) {
+  if (Cond.getOpcode() == ISD::SETCC) {
+    ISD::CondCode CC = cast<CondCodeSDNode>(Cond.getOperand(2))->get();
+    if (MVT::isInteger(Cond.getOperand(0).getValueType())) {
+      switch (CC) {
       default: assert(0 && "Unknown integer comparison!");
       case ISD::SETEQ:  CondCode = EQ; break;
       case ISD::SETGT:  CondCode = GT; break;
@@ -1805,7 +1805,7 @@ void ISel::EmitSelectCC(SDOperand Cond, SDOperand True, SDOperand False,
       //  1 | 0 | 0 | X == Y
       //  1 | 1 | 1 | unordered
       //
-      switch (SetCC->getCondition()) {
+      switch (CC) {
       default: assert(0 && "Unknown FP comparison!");
       case ISD::SETUEQ:
       case ISD::SETEQ:  CondCode = EQ; break;     // True if ZF = 1
@@ -1831,49 +1831,50 @@ void ISel::EmitSelectCC(SDOperand Cond, SDOperand True, SDOperand False,
         break;
       }
     }
-  }
+  
 
-  // There's no SSE equivalent of FCMOVE.  For cases where we set a condition
-  // code above and one of the results of the select is +0.0, then we can fake 
-  // it up through a clever AND with mask.  Otherwise, we will fall through to
-  // the code below that will use a PHI node to select the right value.
-  if (X86ScalarSSE && (SVT == MVT::f32 || SVT == MVT::f64)) {
-    if (SetCC && SetCC->getOperand(0).getValueType() == SVT && 
-        NOT_SET != CondCode) {
-      ConstantFPSDNode *CT = dyn_cast<ConstantFPSDNode>(True);
-      ConstantFPSDNode *CF = dyn_cast<ConstantFPSDNode>(False);
-      bool TrueZero = CT && CT->isExactlyValue(0.0);
-      bool FalseZero = CF && CF->isExactlyValue(0.0);
-      if (TrueZero || FalseZero) {
-        SDOperand LHS = Cond.getOperand(0);
-        SDOperand RHS = Cond.getOperand(1);
-        
-        // Select the two halves of the condition
-        unsigned RLHS, RRHS;
-        if (getRegPressure(LHS) > getRegPressure(RHS)) {
-          RLHS = SelectExpr(LHS);
-          RRHS = SelectExpr(RHS);
-        } else {
-          RRHS = SelectExpr(RHS);
-          RLHS = SelectExpr(LHS);
+    // There's no SSE equivalent of FCMOVE.  For cases where we set a condition
+    // code above and one of the results of the select is +0.0, then we can fake
+    // it up through a clever AND with mask.  Otherwise, we will fall through to
+    // the code below that will use a PHI node to select the right value.
+    if (X86ScalarSSE && (SVT == MVT::f32 || SVT == MVT::f64)) {
+      if (Cond.getOperand(0).getValueType() == SVT && 
+          NOT_SET != CondCode) {
+        ConstantFPSDNode *CT = dyn_cast<ConstantFPSDNode>(True);
+        ConstantFPSDNode *CF = dyn_cast<ConstantFPSDNode>(False);
+        bool TrueZero = CT && CT->isExactlyValue(0.0);
+        bool FalseZero = CF && CF->isExactlyValue(0.0);
+        if (TrueZero || FalseZero) {
+          SDOperand LHS = Cond.getOperand(0);
+          SDOperand RHS = Cond.getOperand(1);
+          
+          // Select the two halves of the condition
+          unsigned RLHS, RRHS;
+          if (getRegPressure(LHS) > getRegPressure(RHS)) {
+            RLHS = SelectExpr(LHS);
+            RRHS = SelectExpr(RHS);
+          } else {
+            RRHS = SelectExpr(RHS);
+            RLHS = SelectExpr(LHS);
+          }
+          
+          // Emit the comparison and generate a mask from it
+          unsigned MaskReg = MakeReg(SVT);
+          unsigned Opc = (SVT == MVT::f32) ? X86::CMPSSrr : X86::CMPSDrr;
+          BuildMI(BB, Opc, 3, MaskReg).addReg(RLHS).addReg(RRHS)
+            .addImm(SSE_CMOVTAB[CondCode]);
+          
+          if (TrueZero) {
+            RFalse = SelectExpr(False);
+            Opc = (SVT == MVT::f32) ? X86::ANDNPSrr : X86::ANDNPDrr;
+            BuildMI(BB, Opc, 2, RDest).addReg(MaskReg).addReg(RFalse);
+          } else {
+            RTrue = SelectExpr(True);
+            Opc = (SVT == MVT::f32) ? X86::ANDPSrr : X86::ANDPDrr;
+            BuildMI(BB, Opc, 2, RDest).addReg(MaskReg).addReg(RTrue);
+          }
+          return;
         }
-        
-        // Emit the comparison and generate a mask from it
-        unsigned MaskReg = MakeReg(SVT);
-        unsigned Opc = (SVT == MVT::f32) ? X86::CMPSSrr : X86::CMPSDrr;
-        BuildMI(BB, Opc, 3, MaskReg).addReg(RLHS).addReg(RRHS)
-          .addImm(SSE_CMOVTAB[CondCode]);
-        
-        if (TrueZero) {
-          RFalse = SelectExpr(False);
-          Opc = (SVT == MVT::f32) ? X86::ANDNPSrr : X86::ANDNPDrr;
-          BuildMI(BB, Opc, 2, RDest).addReg(MaskReg).addReg(RFalse);
-        } else {
-          RTrue = SelectExpr(True);
-          Opc = (SVT == MVT::f32) ? X86::ANDPSrr : X86::ANDPDrr;
-          BuildMI(BB, Opc, 2, RDest).addReg(MaskReg).addReg(RTrue);
-        }
-        return;
       }
     }
   }
@@ -3281,7 +3282,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
 
   case ISD::SETCC:
     EmitCMP(N.getOperand(0), N.getOperand(1), Node->hasOneUse());
-    EmitSetCC(BB, Result, cast<SetCCSDNode>(N)->getCondition(),
+    EmitSetCC(BB, Result, cast<CondCodeSDNode>(N.getOperand(2))->get(),
               MVT::isFloatingPoint(N.getOperand(1).getValueType()));
     return Result;
   case ISD::LOAD:
