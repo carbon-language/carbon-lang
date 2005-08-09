@@ -207,8 +207,8 @@ private:
   
   // Try to simplify a setcc built with the specified operands and cc.  If
   // unable to simplify it, return a null SDOperand.
-  SDOperand SimplfySetCC(MVT::ValueType VT, SDOperand N1,
-                         SDOperand N2, ISD::CondCode Cond);
+  SDOperand SimplifySetCC(MVT::ValueType VT, SDOperand N1,
+                          SDOperand N2, ISD::CondCode Cond);
 
   
   // Maps to auto-CSE operations.
