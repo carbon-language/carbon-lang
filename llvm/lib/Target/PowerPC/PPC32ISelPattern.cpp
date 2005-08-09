@@ -1871,6 +1871,8 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
         return Result;
       } else if ((signed)Tmp3 < 0 && isPowerOf2_32(-Tmp3)) {
         Tmp3 = Log2_32(-Tmp3);
+        Tmp2 = SelectExpr(N.getOperand(0));
+        Tmp1 = MakeReg(MVT::i32);
         unsigned Tmp4 = MakeReg(MVT::i32);
         BuildMI(BB, PPC::SRAWI, 2, Tmp1).addReg(Tmp2).addImm(Tmp3);
         BuildMI(BB, PPC::ADDZE, 1, Tmp4).addReg(Tmp1);
