@@ -195,6 +195,14 @@ namespace llvm {
     /// specified expression.
     SCEVHandle getSCEV(Value *V) const;
 
+    /// hasSCEV - Return true if the SCEV for this value has already been
+    /// computed.
+    bool hasSCEV(Value *V) const;
+
+    /// setSCEV - Insert the specified SCEV into the map of current SCEVs for
+    /// the specified value.
+    void setSCEV(Value *V, const SCEVHandle &H);
+
     /// getSCEVAtScope - Return a SCEV expression handle for the specified value
     /// at the specified scope in the program.  The L value specifies a loop
     /// nest to evaluate the expression at, where null is the top-level or a
