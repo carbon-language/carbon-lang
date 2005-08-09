@@ -635,13 +635,13 @@ static bool isRotateAndMask(unsigned Opcode, unsigned Shift, unsigned Mask,
   return false;
 }
 
-// isImmediate - This method tests to see if a constant operand.
+// isIntImmediate - This method tests to see if a constant operand.
 // If so Imm will receive the 32 bit value.
-static bool isImmediate(SDOperand N, unsigned& Imm) {
+static bool isIntImmediate(SDOperand N, unsigned& Imm) {
   // test for constant
-  if (N.getOpcode() == ISD::Constant) {
+  if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N)) {
     // retrieve value
-    Imm = (unsigned)cast<ConstantSDNode>(N)->getSignExtended();
+    Imm = (unsigned)CN->getSignExtended();
     // passes muster
     return true;
   }
@@ -654,14 +654,14 @@ static bool isImmediate(SDOperand N, unsigned& Imm) {
 static bool isOprShiftImm(SDOperand N, unsigned& Opc, unsigned& SH) {
   Opc = N.getOpcode();
   return (Opc == ISD::SHL || Opc == ISD::SRL || Opc == ISD::SRA) &&
-         isImmediate(N.getOperand(1), SH) && SH < 32;
+         isIntImmediate(N.getOperand(1), SH) && SH < 32;
 }
 
 // isOprNot - Returns true if the specified operand is an xor with immediate -1.
 static bool isOprNot(SDOperand N) {
   unsigned Imm;
   return N.getOpcode() == ISD::XOR &&
-         isImmediate(N.getOperand(1), Imm) && (signed)Imm == -1;
+         isIntImmediate(N.getOperand(1), Imm) && (signed)Imm == -1;
 }
 
 // Immediate constant composers.
@@ -1079,7 +1079,7 @@ bool ISel::SelectBitfieldInsert(SDOperand OR, unsigned Result) {
 unsigned ISel::FoldIfWideZeroExtend(SDOperand N) {
   unsigned C, MB, ME;
   if (N.getOpcode() == ISD::AND &&
-      isImmediate(N.getOperand(1), C) && isRunOfOnes(C, MB, ME) &&
+      isIntImmediate(N.getOperand(1), C) && isRunOfOnes(C, MB, ME) &&
       MB <= 26 && ME == 31)
     return SelectExpr(N.getOperand(0));
   else
@@ -1103,7 +1103,7 @@ unsigned ISel::SelectCC(SDOperand CC, unsigned& Opc, bool &Inv, unsigned& Idx) {
     Idx = getCRIdxForSetCC(SetCC->getCondition(), Inv);
 
     // Use U to determine whether the SETCC immediate range is signed or not.
-    if (isImmediate(SetCC->getOperand(1), Tmp2) &&
+    if (isIntImmediate(SetCC->getOperand(1), Tmp2) &&
         ((U && isUInt16(Tmp2)) || (!U && isInt16(Tmp2)))) {
       Tmp2 = Lo16(Tmp2);
       // For comparisons against zero, we can implicity set CR0 if a recording
@@ -1192,7 +1192,7 @@ unsigned ISel::SelectAddr(SDOperand N, unsigned& Reg, int& offset)
   unsigned imm = 0, opcode = N.getOpcode();
   if (N.getOpcode() == ISD::ADD) {
     bool isFrame = N.getOperand(0).getOpcode() == ISD::FrameIndex;
-    if (isImmediate(N.getOperand(1), imm) && isInt16(imm)) {
+    if (isIntImmediate(N.getOperand(1), imm) && isInt16(imm)) {
       offset = Lo16(imm);
       if (isFrame) {
         ++FrameOff;
@@ -1636,7 +1636,7 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
       return Result;
     }
     Tmp1 = SelectExpr(N.getOperand(0));
-    if (isImmediate(N.getOperand(1), Tmp2)) {
+    if (isIntImmediate(N.getOperand(1), Tmp2)) {
       Tmp3 = HA16(Tmp2);
       Tmp2 = Lo16(Tmp2);
       if (Tmp2 && Tmp3) {
@@ -1656,7 +1656,7 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
     return Result;
 
   case ISD::AND:
-    if (isImmediate(N.getOperand(1), Tmp2)) {
+    if (isIntImmediate(N.getOperand(1), Tmp2)) {
       if (isShiftedMask_32(Tmp2) || isShiftedMask_32(~Tmp2)) {
         unsigned SH, MB, ME;
         Opc = Recording ? PPC::RLWINMo : PPC::RLWINM;
@@ -1707,7 +1707,7 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
       return Result;
       
     Tmp1 = SelectExpr(N.getOperand(0));
-    if (isImmediate(N.getOperand(1), Tmp2)) {
+    if (isIntImmediate(N.getOperand(1), Tmp2)) {
       Tmp3 = Hi16(Tmp2);
       Tmp2 = Lo16(Tmp2);
       if (Tmp2 && Tmp3) {
@@ -1730,7 +1730,7 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
   case ISD::XOR: {
     // Check for EQV: xor, (xor a, -1), b
     if (N.getOperand(0).getOpcode() == ISD::XOR &&
-        isImmediate(N.getOperand(0).getOperand(1), Tmp2) &&
+        isIntImmediate(N.getOperand(0).getOperand(1), Tmp2) &&
         (signed)Tmp2 == -1) {
       Tmp1 = SelectExpr(N.getOperand(0).getOperand(0));
       Tmp2 = SelectExpr(N.getOperand(1));
@@ -1763,7 +1763,7 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
       return Result;
     }
     Tmp1 = SelectExpr(N.getOperand(0));
-    if (isImmediate(N.getOperand(1), Tmp2)) {
+    if (isIntImmediate(N.getOperand(1), Tmp2)) {
       Tmp3 = Hi16(Tmp2);
       Tmp2 = Lo16(Tmp2);
       if (Tmp2 && Tmp3) {
@@ -1810,11 +1810,11 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
       BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
       return Result;
     }
-    if (isImmediate(N.getOperand(0), Tmp1) && isInt16(Tmp1)) {
+    if (isIntImmediate(N.getOperand(0), Tmp1) && isInt16(Tmp1)) {
       Tmp2 = SelectExpr(N.getOperand(1));
       BuildMI(BB, PPC::SUBFIC, 2, Result).addReg(Tmp2).addSImm(Tmp1);
       return Result;
-    } else if (isImmediate(N.getOperand(1), Tmp2)) {
+    } else if (isIntImmediate(N.getOperand(1), Tmp2)) {
       Tmp1 = SelectExpr(N.getOperand(0));
       Tmp2 = -Tmp2;
       Tmp3 = HA16(Tmp2);
@@ -1837,7 +1837,7 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
 
   case ISD::MUL:
     Tmp1 = SelectExpr(N.getOperand(0));
-    if (isImmediate(N.getOperand(1), Tmp2) && isInt16(Tmp2)) {
+    if (isIntImmediate(N.getOperand(1), Tmp2) && isInt16(Tmp2)) {
       Tmp2 = Lo16(Tmp2);
       BuildMI(BB, PPC::MULLI, 2, Result).addReg(Tmp1).addSImm(Tmp2);
     } else {
@@ -1861,7 +1861,7 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
     return Result;
 
   case ISD::SDIV:
-    if (isImmediate(N.getOperand(1), Tmp3)) {
+    if (isIntImmediate(N.getOperand(1), Tmp3)) {
       if ((signed)Tmp3 > 0 && isPowerOf2_32(Tmp3)) {
         Tmp3 = Log2_32(Tmp3);
         Tmp1 = MakeReg(MVT::i32);
@@ -1884,7 +1884,7 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
   case ISD::UDIV:
     // If this is a divide by constant, we can emit code using some magic
     // constants to implement it as a multiply instead.
-    if (isImmediate(N.getOperand(1), Tmp3)) {
+    if (isIntImmediate(N.getOperand(1), Tmp3)) {
       if (opcode == ISD::SDIV) {
         if ((signed)Tmp3 < -1 || (signed)Tmp3 > 1) {
           ExprMap.erase(N);
