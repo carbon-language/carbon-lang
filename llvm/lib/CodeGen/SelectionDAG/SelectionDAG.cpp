@@ -379,8 +379,10 @@ SDOperand SelectionDAG::getCondCode(ISD::CondCode Cond) {
   if ((unsigned)Cond >= CondCodeNodes.size())
     CondCodeNodes.resize(Cond+1);
   
-  if (CondCodeNodes[Cond] == 0)
+  if (CondCodeNodes[Cond] == 0) {
     CondCodeNodes[Cond] = new CondCodeSDNode(Cond);
+    AllNodes.push_back(CondCodeNodes[Cond]);
+  }
   return SDOperand(CondCodeNodes[Cond], 0);
 }
 
