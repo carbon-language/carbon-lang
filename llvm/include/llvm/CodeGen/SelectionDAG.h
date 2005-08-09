@@ -152,9 +152,7 @@ public:
     return NN;
   }
 
-
-  SDOperand getSetCC(ISD::CondCode, MVT::ValueType VT,
-                     SDOperand LHS, SDOperand RHS);
+  SDOperand getCondCode(ISD::CondCode Cond);
 
   /// getZeroExtendInReg - Return the expression required to zero extend the Op
   /// value assuming it was the smaller SrcTy value.
@@ -178,7 +176,14 @@ public:
   SDOperand getNode(unsigned Opcode, std::vector<MVT::ValueType> &ResultTys,
                     std::vector<SDOperand> &Ops);
 
-
+  /// getSetCC - Helper function to make it easier to build SetCC's if you just
+  /// have an ISD::CondCode instead of an SDOperand.
+  ///
+  SDOperand getSetCC(MVT::ValueType VT, SDOperand LHS, SDOperand RHS,
+                     ISD::CondCode Cond) {
+    return getNode(ISD::SETCC, VT, LHS, RHS, getCondCode(Cond));
+  }
+  
   /// getLoad - Loads are not normal binary operators: their result type is not
   /// determined by their operands, and they produce a value AND a token chain.
   ///
@@ -199,16 +204,20 @@ public:
 
 private:
   void DeleteNodeIfDead(SDNode *N, void *NodeSet);
+  
+  // Try to simplify a setcc built with the specified operands and cc.  If
+  // unable to simplify it, return a null SDOperand.
+  SDOperand SimplfySetCC(MVT::ValueType VT, SDOperand N1,
+                         SDOperand N2, ISD::CondCode Cond);
 
+  
   // Maps to auto-CSE operations.
   std::map<std::pair<unsigned, std::pair<SDOperand, MVT::ValueType> >,
            SDNode *> UnaryOps;
   std::map<std::pair<unsigned, std::pair<SDOperand, SDOperand> >,
            SDNode *> BinaryOps;
 
-  std::map<std::pair<std::pair<SDOperand, SDOperand>,
-                     std::pair<ISD::CondCode, MVT::ValueType> >,
-           SetCCSDNode*> SetCCs;
+  std::vector<CondCodeSDNode*> CondCodeNodes;
 
   std::map<std::pair<SDOperand, std::pair<SDOperand, MVT::ValueType> >,
            SDNode *> Loads;

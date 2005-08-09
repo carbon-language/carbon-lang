@@ -163,10 +163,9 @@ SDOperand SelectionDAGLegalize::ExpandLegalUINT_TO_FP(SDOperand Op0,
                                                       MVT::ValueType DestVT) {
   SDOperand Tmp1 = DAG.getNode(ISD::SINT_TO_FP, DestVT, Op0);
 
-  SDOperand SignSet = DAG.getSetCC(ISD::SETLT, TLI.getSetCCResultTy(),
-                                   Op0,
-                                   DAG.getConstant(0,
-                                                   Op0.getValueType()));
+  SDOperand SignSet = DAG.getSetCC(TLI.getSetCCResultTy(), Op0,
+                                   DAG.getConstant(0, Op0.getValueType()),
+                                   ISD::SETLT);
   SDOperand Zero = getIntPtrConstant(0), Four = getIntPtrConstant(4);
   SDOperand CstOffset = DAG.getNode(ISD::SELECT, Zero.getValueType(),
                                     SignSet, Four, Zero);
@@ -945,8 +944,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       Tmp1 = LegalizeOp(Node->getOperand(0));   // LHS
       Tmp2 = LegalizeOp(Node->getOperand(1));   // RHS
       if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(1))
-        Result = DAG.getSetCC(cast<SetCCSDNode>(Node)->getCondition(),
-                              Node->getValueType(0), Tmp1, Tmp2);
+        Result = DAG.getNode(ISD::SETCC, Node->getValueType(0), Tmp1, Tmp2,
+                             Node->getOperand(2));
       break;
     case Promote:
       Tmp1 = PromoteOp(Node->getOperand(0));   // LHS
@@ -961,7 +960,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         // that we could insert sign extends for ALL conditions, but zero extend
         // is cheaper on many machines (an AND instead of two shifts), so prefer
         // it.
-        switch (cast<SetCCSDNode>(Node)->getCondition()) {
+        switch (cast<CondCodeSDNode>(Node->getOperand(2))->get()) {
         default: assert(0 && "Unknown integer comparison!");
         case ISD::SETEQ:
         case ISD::SETNE:
@@ -987,14 +986,14 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         }
 
       }
-      Result = DAG.getSetCC(cast<SetCCSDNode>(Node)->getCondition(),
-                            Node->getValueType(0), Tmp1, Tmp2);
+      Result = DAG.getNode(ISD::SETCC, Node->getValueType(0), Tmp1, Tmp2,
+                           Node->getOperand(2));
       break;
     case Expand:
       SDOperand LHSLo, LHSHi, RHSLo, RHSHi;
       ExpandOp(Node->getOperand(0), LHSLo, LHSHi);
       ExpandOp(Node->getOperand(1), RHSLo, RHSHi);
-      switch (cast<SetCCSDNode>(Node)->getCondition()) {
+      switch (cast<CondCodeSDNode>(Node->getOperand(2))->get()) {
       case ISD::SETEQ:
       case ISD::SETNE:
         if (RHSLo == RHSHi)
@@ -1002,32 +1001,32 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
             if (RHSCST->isAllOnesValue()) {
               // Comparison to -1.
               Tmp1 = DAG.getNode(ISD::AND, LHSLo.getValueType(), LHSLo, LHSHi);
-              Result = DAG.getSetCC(cast<SetCCSDNode>(Node)->getCondition(),
-                                    Node->getValueType(0), Tmp1, RHSLo);
+              Result = DAG.getNode(ISD::SETCC, Node->getValueType(0), Tmp1,
+                                   RHSLo, Node->getOperand(2));
               break;
             }
 
         Tmp1 = DAG.getNode(ISD::XOR, LHSLo.getValueType(), LHSLo, RHSLo);
         Tmp2 = DAG.getNode(ISD::XOR, LHSLo.getValueType(), LHSHi, RHSHi);
         Tmp1 = DAG.getNode(ISD::OR, Tmp1.getValueType(), Tmp1, Tmp2);
-        Result = DAG.getSetCC(cast<SetCCSDNode>(Node)->getCondition(),
-                              Node->getValueType(0), Tmp1,
-                              DAG.getConstant(0, Tmp1.getValueType()));
+        Result = DAG.getNode(ISD::SETCC, Node->getValueType(0), Tmp1,
+                             DAG.getConstant(0, Tmp1.getValueType()),
+                             Node->getOperand(2));
         break;
       default:
         // If this is a comparison of the sign bit, just look at the top part.
         // X > -1,  x < 0
         if (ConstantSDNode *CST = dyn_cast<ConstantSDNode>(Node->getOperand(1)))
-          if ((cast<SetCCSDNode>(Node)->getCondition() == ISD::SETLT &&
+          if ((cast<CondCodeSDNode>(Node->getOperand(2))->get() == ISD::SETLT &&
                CST->getValue() == 0) ||              // X < 0
-              (cast<SetCCSDNode>(Node)->getCondition() == ISD::SETGT &&
+              (cast<CondCodeSDNode>(Node->getOperand(2))->get() == ISD::SETGT &&
                (CST->isAllOnesValue())))             // X > -1
-            return DAG.getSetCC(cast<SetCCSDNode>(Node)->getCondition(),
-                                Node->getValueType(0), LHSHi, RHSHi);
+            return DAG.getNode(ISD::SETCC, Node->getValueType(0), LHSHi, RHSHi,
+                               Node->getOperand(2));
 
         // FIXME: This generated code sucks.
         ISD::CondCode LowCC;
-        switch (cast<SetCCSDNode>(Node)->getCondition()) {
+        switch (cast<CondCodeSDNode>(Node->getOperand(2))->get()) {
         default: assert(0 && "Unknown integer setcc!");
         case ISD::SETLT:
         case ISD::SETULT: LowCC = ISD::SETULT; break;
@@ -1045,10 +1044,10 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
 
         // NOTE: on targets without efficient SELECT of bools, we can always use
         // this identity: (B1 ? B2 : B3) --> (B1 & B2)|(!B1&B3)
-        Tmp1 = DAG.getSetCC(LowCC, Node->getValueType(0), LHSLo, RHSLo);
-        Tmp2 = DAG.getSetCC(cast<SetCCSDNode>(Node)->getCondition(),
-                            Node->getValueType(0), LHSHi, RHSHi);
-        Result = DAG.getSetCC(ISD::SETEQ, Node->getValueType(0), LHSHi, RHSHi);
+        Tmp1 = DAG.getSetCC(Node->getValueType(0), LHSLo, RHSLo, LowCC);
+        Tmp2 = DAG.getNode(ISD::SETCC, Node->getValueType(0), LHSHi, RHSHi,
+                           Node->getOperand(2));
+        Result = DAG.getSetCC(Node->getValueType(0), LHSHi, RHSHi, ISD::SETEQ);
         Result = DAG.getNode(ISD::SELECT, Tmp1.getValueType(),
                              Result, Tmp1, Tmp2);
         break;
@@ -1348,8 +1347,9 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         break;
       case ISD::CTTZ:
         //if Tmp1 == sizeinbits(NVT) then Tmp1 = sizeinbits(Old VT)
-        Tmp2 = DAG.getSetCC(ISD::SETEQ, TLI.getSetCCResultTy(), Tmp1,
-                            DAG.getConstant(getSizeInBits(NVT), NVT));
+        Tmp2 = DAG.getSetCC(TLI.getSetCCResultTy(), Tmp1,
+                            DAG.getConstant(getSizeInBits(NVT), NVT),
+                            ISD::SETEQ);
         Result = DAG.getNode(ISD::SELECT, NVT, Tmp2,
                            DAG.getConstant(getSizeInBits(OVT),NVT), Tmp1);
         break;
@@ -1469,7 +1469,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         // Expand Y = FABS(X) -> Y = (X >u 0.0) ? X : fneg(X).
         MVT::ValueType VT = Node->getValueType(0);
         Tmp2 = DAG.getConstantFP(0.0, VT);
-        Tmp2 = DAG.getSetCC(ISD::SETUGT, TLI.getSetCCResultTy(), Tmp1, Tmp2);
+        Tmp2 = DAG.getSetCC(TLI.getSetCCResultTy(), Tmp1, Tmp2, ISD::SETUGT);
         Tmp3 = DAG.getNode(ISD::FNEG, VT, Tmp1);
         Result = DAG.getNode(ISD::SELECT, VT, Tmp2, Tmp1, Tmp3);
         Result = LegalizeOp(Result);
@@ -1764,9 +1764,8 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
   case ISD::SETCC:
     assert(getTypeAction(TLI.getSetCCResultTy()) == Legal &&
            "SetCC type is not legal??");
-    Result = DAG.getSetCC(cast<SetCCSDNode>(Node)->getCondition(),
-                          TLI.getSetCCResultTy(), Node->getOperand(0),
-                          Node->getOperand(1));
+    Result = DAG.getNode(ISD::SETCC, TLI.getSetCCResultTy(),Node->getOperand(0),
+                         Node->getOperand(1), Node->getOperand(2));
     Result = LegalizeOp(Result);
     break;
 
@@ -2038,8 +2037,8 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
       break;
     case ISD::CTTZ:
       //if Tmp1 == sizeinbits(NVT) then Tmp1 = sizeinbits(Old VT)
-      Tmp2 = DAG.getSetCC(ISD::SETEQ, MVT::i1, Tmp1,
-                          DAG.getConstant(getSizeInBits(NVT), NVT));
+      Tmp2 = DAG.getSetCC(MVT::i1, Tmp1,
+                          DAG.getConstant(getSizeInBits(NVT), NVT), ISD::SETEQ);
       Result = DAG.getNode(ISD::SELECT, NVT, Tmp2,
                            DAG.getConstant(getSizeInBits(VT),NVT), Tmp1);
       break;
@@ -2216,8 +2215,8 @@ bool SelectionDAGLegalize::ExpandShift(unsigned Opc, SDOperand Op,SDOperand Amt,
                                DAG.getConstant(NVTBits, ShTy), ShAmt);
 
   // Compare the unmasked shift amount against 32.
-  SDOperand Cond = DAG.getSetCC(ISD::SETGE, TLI.getSetCCResultTy(), ShAmt,
-                                DAG.getConstant(NVTBits, ShTy));
+  SDOperand Cond = DAG.getSetCC(TLI.getSetCCResultTy(), ShAmt,
+                                DAG.getConstant(NVTBits, ShTy), ISD::SETGE);
 
   if (TLI.getShiftAmountFlavor() != TargetLowering::Mask) {
     ShAmt = DAG.getNode(ISD::AND, ShTy, ShAmt,             // ShAmt &= 31
@@ -2236,9 +2235,9 @@ bool SelectionDAGLegalize::ExpandShift(unsigned Opc, SDOperand Op,SDOperand Amt,
     Lo = DAG.getNode(ISD::SELECT, NVT, Cond, DAG.getConstant(0, NVT), T2);
   } else {
     SDOperand HiLoPart = DAG.getNode(ISD::SELECT, NVT,
-                                     DAG.getSetCC(ISD::SETEQ,
-                                                  TLI.getSetCCResultTy(), NAmt,
-                                                  DAG.getConstant(32, ShTy)),
+                                     DAG.getSetCC(TLI.getSetCCResultTy(), NAmt,
+                                                  DAG.getConstant(32, ShTy),
+                                                  ISD::SETEQ),
                                      DAG.getConstant(0, NVT),
                                      DAG.getNode(ISD::SHL, NVT, InH, NAmt));
     SDOperand T1 = DAG.getNode(ISD::OR, NVT,// T1 = (Hi << NAmt) | (Lo >> Amt)
@@ -2468,8 +2467,9 @@ ExpandIntToFP(bool isSigned, MVT::ValueType DestTy, SDOperand Source) {
     SDOperand SignedConv = ExpandIntToFP(true, DestTy,
                    DAG.getNode(ISD::BUILD_PAIR, Source.getValueType(), Lo, Hi));
 
-    SDOperand SignSet = DAG.getSetCC(ISD::SETLT, TLI.getSetCCResultTy(), Hi,
-                                     DAG.getConstant(0, Hi.getValueType()));
+    SDOperand SignSet = DAG.getSetCC(TLI.getSetCCResultTy(), Hi,
+                                     DAG.getConstant(0, Hi.getValueType()),
+                                     ISD::SETLT);
     SDOperand Zero = getIntPtrConstant(0), Four = getIntPtrConstant(4);
     SDOperand CstOffset = DAG.getNode(ISD::SELECT, Zero.getValueType(),
                                       SignSet, Four, Zero);
@@ -2627,8 +2627,8 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     ExpandOp(Node->getOperand(0), Lo, Hi);
     SDOperand BitsC = DAG.getConstant(MVT::getSizeInBits(NVT), NVT);
     SDOperand HLZ = DAG.getNode(ISD::CTLZ, NVT, Hi);
-    SDOperand TopNotZero = DAG.getSetCC(ISD::SETNE, TLI.getSetCCResultTy(),
-                                        HLZ, BitsC);
+    SDOperand TopNotZero = DAG.getSetCC(TLI.getSetCCResultTy(), HLZ, BitsC,
+                                        ISD::SETNE);
     SDOperand LowPart = DAG.getNode(ISD::CTLZ, NVT, Lo);
     LowPart = DAG.getNode(ISD::ADD, NVT, LowPart, BitsC);
 
@@ -2642,8 +2642,8 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     ExpandOp(Node->getOperand(0), Lo, Hi);
     SDOperand BitsC = DAG.getConstant(MVT::getSizeInBits(NVT), NVT);
     SDOperand LTZ = DAG.getNode(ISD::CTTZ, NVT, Lo);
-    SDOperand BotNotZero = DAG.getSetCC(ISD::SETNE, TLI.getSetCCResultTy(),
-                                        LTZ, BitsC);
+    SDOperand BotNotZero = DAG.getSetCC(TLI.getSetCCResultTy(), LTZ, BitsC,
+                                        ISD::SETNE);
     SDOperand HiPart = DAG.getNode(ISD::CTTZ, NVT, Hi);
     HiPart = DAG.getNode(ISD::ADD, NVT, HiPart, BitsC);
 

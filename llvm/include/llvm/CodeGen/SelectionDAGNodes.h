@@ -55,7 +55,7 @@ namespace ISD {
 
     // Various leaf nodes.
     Constant, ConstantFP, GlobalAddress, FrameIndex, ConstantPool,
-    BasicBlock, ExternalSymbol, VALUETYPE,
+    BasicBlock, ExternalSymbol, VALUETYPE, CONDCODE,
 
     // CopyToReg - This node has chain and child nodes, and an associated
     // register number.  The instruction selector must guarantee that the value
@@ -107,9 +107,9 @@ namespace ISD {
     SELECT,
 
     // SetCC operator - This evaluates to a boolean (i1) true value if the
-    // condition is true.  These nodes are instances of the
-    // SetCCSDNode class, which contains the condition code as extra
-    // state.
+    // condition is true.  The operands to this are the left and right operands
+    // to compare (ops #0, and #1) and the condition code to compare them with
+    // (op #2) as a CondCodeSDNode.
     SETCC,
 
     // ADD_PARTS/SUB_PARTS - These operators take two logical operands which are
@@ -827,20 +827,20 @@ public:
   }
 };
 
-class SetCCSDNode : public SDNode {
+class CondCodeSDNode : public SDNode {
   ISD::CondCode Condition;
 protected:
   friend class SelectionDAG;
-  SetCCSDNode(ISD::CondCode Cond, SDOperand LHS, SDOperand RHS)
-    : SDNode(ISD::SETCC, LHS, RHS), Condition(Cond) {
+  CondCodeSDNode(ISD::CondCode Cond)
+    : SDNode(ISD::CONDCODE, MVT::Other), Condition(Cond) {
   }
 public:
 
-  ISD::CondCode getCondition() const { return Condition; }
+  ISD::CondCode get() const { return Condition; }
 
-  static bool classof(const SetCCSDNode *) { return true; }
+  static bool classof(const CondCodeSDNode *) { return true; }
   static bool classof(const SDNode *N) {
-    return N->getOpcode() == ISD::SETCC;
+    return N->getOpcode() == ISD::CONDCODE;
   }
 };
 

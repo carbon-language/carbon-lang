@@ -482,7 +482,7 @@ void SelectionDAGLowering::visitSetCC(User &I,ISD::CondCode SignedOpcode,
   ISD::CondCode Opcode = SignedOpcode;
   if (I.getOperand(0)->getType()->isUnsigned())
     Opcode = UnsignedOpcode;
-  setValue(&I, DAG.getSetCC(Opcode, MVT::i1, Op1, Op2));
+  setValue(&I, DAG.getSetCC(MVT::i1, Op1, Op2, Opcode));
 }
 
 void SelectionDAGLowering::visitSelect(User &I) {
@@ -504,7 +504,7 @@ void SelectionDAGLowering::visitCast(User &I) {
     // Cast to bool is a comparison against zero, not truncation to zero.
     SDOperand Zero = isInteger(SrcTy) ? DAG.getConstant(0, N.getValueType()) :
                                        DAG.getConstantFP(0.0, N.getValueType());
-    setValue(&I, DAG.getSetCC(ISD::SETNE, MVT::i1, N, Zero));
+    setValue(&I, DAG.getSetCC(MVT::i1, N, Zero, ISD::SETNE));
   } else if (isInteger(SrcTy)) {
     if (isInteger(DestTy)) {        // Int -> Int cast
       if (DestTy < SrcTy)   // Truncating cast?
@@ -738,8 +738,8 @@ void SelectionDAGLowering::visitCall(CallInst &I) {
         return;
 
       case Intrinsic::isunordered:
-        setValue(&I, DAG.getSetCC(ISD::SETUO, MVT::i1,getValue(I.getOperand(1)),
-                                  getValue(I.getOperand(2))));
+        setValue(&I, DAG.getSetCC(MVT::i1,getValue(I.getOperand(1)),
+                                  getValue(I.getOperand(2)), ISD::SETUO));
         return;
 
       case Intrinsic::sqrt:
