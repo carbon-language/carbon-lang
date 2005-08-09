@@ -204,8 +204,12 @@ DeleteTriviallyDeadInstructions(std::set<Instruction*> &Insts) {
 /// GetExpressionSCEV - Compute and return the SCEV for the specified
 /// instruction.
 SCEVHandle LoopStrengthReduce::GetExpressionSCEV(Instruction *Exp, Loop *L) {
+  // Scalar Evolutions doesn't know how to compute SCEV's for GEP instructions.
+  // If this is a GEP that SE doesn't know about, compute it now and insert it.
+  // If this is not a GEP, or if we have already done this computation, just let
+  // SE figure it out.
   GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(Exp);
-  if (!GEP)
+  if (!GEP || SE->hasSCEV(GEP))
     return SE->getSCEV(Exp);
     
   // Analyze all of the subscripts of this getelementptr instruction, looking
@@ -241,6 +245,7 @@ SCEVHandle LoopStrengthReduce::GetExpressionSCEV(Instruction *Exp, Loop *L) {
     }
   }
 
+  SE->setSCEV(GEP, GEPVal);
   return GEPVal;
 }
 
@@ -692,7 +697,7 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(Value *Stride,
   assert(SomeLoopPHI->getNumIncomingValues() == 2 &&
          "This loop isn't canonicalized right");
   BasicBlock *LatchBlock =
-    SomeLoopPHI->getIncomingBlock(SomeLoopPHI->getIncomingBlock(0) == Preheader);
+   SomeLoopPHI->getIncomingBlock(SomeLoopPHI->getIncomingBlock(0) == Preheader);
   
   // Create a new Phi for this base, and stick it in the loop header.
   const Type *ReplacedTy = CommonExprs->getType();
@@ -898,10 +903,10 @@ void LoopStrengthReduce::runOnLoop(Loop *L) {
     while ((PN = dyn_cast<PHINode>(I))) {
       ++I;  // Preincrement iterator to avoid invalidating it when deleting PN.
       
-      // At this point, we know that we have killed one or more GEP instructions.
-      // It is worth checking to see if the cann indvar is also dead, so that we
-      // can remove it as well.  The requirements for the cann indvar to be
-      // considered dead are:
+      // At this point, we know that we have killed one or more GEP
+      // instructions.  It is worth checking to see if the cann indvar is also
+      // dead, so that we can remove it as well.  The requirements for the cann
+      // indvar to be considered dead are:
       // 1. the cann indvar has one use
       // 2. the use is an add instruction
       // 3. the add has one use
