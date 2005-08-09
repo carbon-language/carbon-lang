@@ -386,8 +386,8 @@ SDOperand SelectionDAG::getCondCode(ISD::CondCode Cond) {
   return SDOperand(CondCodeNodes[Cond], 0);
 }
 
-SDOperand SelectionDAG::SimplfySetCC(MVT::ValueType VT, SDOperand N1,
-                                     SDOperand N2, ISD::CondCode Cond) {
+SDOperand SelectionDAG::SimplifySetCC(MVT::ValueType VT, SDOperand N1,
+                                      SDOperand N2, ISD::CondCode Cond) {
   // These setcc operations always fold.
   switch (Cond) {
   default: break;
@@ -484,17 +484,15 @@ SDOperand SelectionDAG::SimplfySetCC(MVT::ValueType VT, SDOperand N1,
       if (Cond == ISD::SETGE || Cond == ISD::SETUGE) {
         if (C2 == MinVal) return getConstant(1, VT);   // X >= MIN --> true
         --C2;                                          // X >= C1 --> X > (C1-1)
-        Cond = (Cond == ISD::SETGE) ? ISD::SETGT : ISD::SETUGT;
-        N2 = getConstant(C2, N2.getValueType());
-        N2C = cast<ConstantSDNode>(N2.Val);
+        return getSetCC(VT, N1, getConstant(C2, N2.getValueType()),
+                        (Cond == ISD::SETGE) ? ISD::SETGT : ISD::SETUGT);
       }
 
       if (Cond == ISD::SETLE || Cond == ISD::SETULE) {
         if (C2 == MaxVal) return getConstant(1, VT);   // X <= MAX --> true
         ++C2;                                          // X <= C1 --> X < (C1+1)
-        Cond = (Cond == ISD::SETLE) ? ISD::SETLT : ISD::SETULT;
-        N2 = getConstant(C2, N2.getValueType());
-        N2C = cast<ConstantSDNode>(N2.Val);
+        return getSetCC(VT, N1, getConstant(C2, N2.getValueType()),
+                        (Cond == ISD::SETLE) ? ISD::SETLT : ISD::SETULT);
       }
 
       if ((Cond == ISD::SETLT || Cond == ISD::SETULT) && C2 == MinVal)
@@ -566,8 +564,7 @@ SDOperand SelectionDAG::SimplfySetCC(MVT::ValueType VT, SDOperand N1,
       }
     } else {
       // Ensure that the constant occurs on the RHS.
-      Cond = ISD::getSetCCSwappedOperands(Cond);
-      std::swap(N1, N2);
+      return getSetCC(VT, N2, N1, ISD::getSetCCSwappedOperands(Cond));
     }
 
   if (N1 == N2) {
@@ -581,7 +578,9 @@ SDOperand SelectionDAG::SimplfySetCC(MVT::ValueType VT, SDOperand N1,
       return getConstant(UOF, VT);
     // Otherwise, we can't fold it.  However, we can simplify it to SETUO/SETO
     // if it is not already.
-    Cond = UOF == 0 ? ISD::SETUO : ISD::SETO;
+    ISD::CondCode NewCond = UOF == 0 ? ISD::SETUO : ISD::SETO;
+    if (NewCond != Cond)
+      return getSetCC(VT, N1, N2, NewCond);
   }
 
   if ((Cond == ISD::SETEQ || Cond == ISD::SETNE) &&
@@ -1356,7 +1355,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
   switch (Opcode) {
   case ISD::SETCC: {
     // Use SimplifySetCC  to simplify SETCC's.
-    SDOperand Simp = SimplfySetCC(VT, N1, N2, cast<CondCodeSDNode>(N3)->get());
+    SDOperand Simp = SimplifySetCC(VT, N1, N2, cast<CondCodeSDNode>(N3)->get());
     if (Simp.Val) return Simp;
     break;
   }
