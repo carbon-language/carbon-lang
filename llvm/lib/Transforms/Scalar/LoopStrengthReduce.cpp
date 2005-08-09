@@ -608,7 +608,10 @@ RemoveCommonExpressionsFromUseBases(std::vector<BasedUser> &Uses) {
       for (unsigned j = 0, e = AE->getNumOperands(); j != e; ++j)
         if (!SubExpressionUseCounts.count(AE->getOperand(j)))
           NewOps.push_back(AE->getOperand(j));
-      Uses[i].Base = SCEVAddExpr::get(NewOps);
+      if (NewOps.size() == 0)
+        Uses[i].Base = Zero;
+      else
+        Uses[i].Base = SCEVAddExpr::get(NewOps);
     } else {
       // If the base is zero (which is common), return zero now, there are no
       // CSEs we can find.
