@@ -2140,6 +2140,7 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
     ISD::CondCode CC;
     if (Cond->getOpcode() == ISD::SETCC &&
         !MVT::isInteger(N.getOperand(1).getValueType()) &&
+        !MVT::isInteger(Cond->getOperand(1).getValueType()) &&
         cast<CondCodeSDNode>(Cond->getOperand(2))->get() != ISD::SETEQ &&
         cast<CondCodeSDNode>(Cond->getOperand(2))->get() != ISD::SETNE) {
       MVT::ValueType VT = Cond->getOperand(0).getValueType();
