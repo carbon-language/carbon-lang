@@ -2344,7 +2344,7 @@ SCEVHandle ScalarEvolution::getSCEV(Value *V) const {
 /// hasSCEV - Return true if the SCEV for this value has already been
 /// computed.
 bool ScalarEvolution::hasSCEV(Value *V) const {
-  ((ScalarEvolutionsImpl*)Impl)->hasSCEV(V);
+  return ((ScalarEvolutionsImpl*)Impl)->hasSCEV(V);
 }
 
 
