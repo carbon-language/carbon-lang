@@ -569,9 +569,9 @@ public:
   unsigned FoldIfWideZeroExtend(SDOperand N);
   unsigned SelectCC(SDOperand CC, unsigned &Opc, bool &Inv, unsigned &Idx);
   unsigned SelectCCExpr(SDOperand N, unsigned& Opc, bool &Inv, unsigned &Idx);
-  bool SelectIntImmediateExpr(SDOperand N, unsigned Result, unsigned C,
+  bool SelectIntImmediateExpr(SDOperand N, unsigned Result,
                               unsigned OCHi, unsigned OCLo,
-                              bool IsArithmetic);
+                              bool IsArithmetic = false, bool Negate = false);
   unsigned SelectExpr(SDOperand N, bool Recording=false);
   void Select(SDOperand N);
 
@@ -1279,11 +1279,17 @@ void ISel::SelectBranchCC(SDOperand N)
 }
 
 // SelectIntImmediateExpr - Choose code for opcodes with immediate value.
-// Note: immediate constant must be second operand so that the use count can be
-// determined.
-bool ISel::SelectIntImmediateExpr(SDOperand N, unsigned Result, unsigned C,
+bool ISel::SelectIntImmediateExpr(SDOperand N, unsigned Result,
                                   unsigned OCHi, unsigned OCLo,
-                                  bool IsArithmetic) {
+                                  bool IsArithmetic, bool Negate) {
+  // check constant
+  ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.getOperand(1));
+  // exit if not a constant
+  if (!CN) return false;
+  // extract immediate
+  unsigned C = (unsigned)CN->getSignExtended();
+  // negate if required (ISD::SUB)
+  if (Negate) C = -C;
   // get the hi and lo portions of constant
   unsigned Hi = IsArithmetic ? HA16(C) : Hi16(C);
   unsigned Lo = Lo16(C);
@@ -1293,8 +1299,7 @@ bool ISel::SelectIntImmediateExpr(SDOperand N, unsigned Result, unsigned C,
   if (Hi && Lo) {
     // exit if usage indicates it would be better to load immediate into a 
     // register
-    if (dyn_cast<ConstantSDNode>(N.getOperand(1))->use_size() > 2) 
-      return false;
+    if (CN->use_size() > 2) return false;
     // need intermediate result for two instructions
     Tmp = MakeReg(MVT::i32);
   }
@@ -1678,11 +1683,8 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
       BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
       return Result;
     }
-    if (isIntImmediate(N.getOperand(1), Tmp2)) {
-      if (SelectIntImmediateExpr(N, Result, Tmp2, PPC::ADDIS, PPC::ADDI, true))
-        return Result;
-    }
-    
+    if (SelectIntImmediateExpr(N, Result, PPC::ADDIS, PPC::ADDI, true))
+      return Result;
     Tmp1 = SelectExpr(N.getOperand(0));
     Tmp2 = SelectExpr(N.getOperand(1));
     BuildMI(BB, PPC::ADD, 2, Result).addReg(Tmp1).addReg(Tmp2);
@@ -1738,10 +1740,8 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
   case ISD::OR:
     if (SelectBitfieldInsert(N, Result))
       return Result;
-    if (isIntImmediate(N.getOperand(1), Tmp2)) {
-      if (SelectIntImmediateExpr(N, Result, Tmp2, PPC::ORIS, PPC::ORI, false))
-        return Result;
-    }
+    if (SelectIntImmediateExpr(N, Result, PPC::ORIS, PPC::ORI))
+      return Result;
     // emit regular or
     Tmp1 = SelectExpr(N.getOperand(0));
     Tmp2 = SelectExpr(N.getOperand(1));
@@ -1783,10 +1783,8 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
       }
       return Result;
     }
-    if (isIntImmediate(N.getOperand(1), Tmp2)) {
-      if (SelectIntImmediateExpr(N, Result, Tmp2, PPC::XORIS, PPC::XORI, false))
-        return Result;
-    }
+    if (SelectIntImmediateExpr(N, Result, PPC::XORIS, PPC::XORI))
+      return Result;
     // emit regular xor
     Tmp1 = SelectExpr(N.getOperand(0));
     Tmp2 = SelectExpr(N.getOperand(1));
@@ -1823,13 +1821,13 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
       return Result;
     }
     if (isIntImmediate(N.getOperand(0), Tmp1) && isInt16(Tmp1)) {
+      Tmp1 = Lo16(Tmp1);
       Tmp2 = SelectExpr(N.getOperand(1));
       BuildMI(BB, PPC::SUBFIC, 2, Result).addReg(Tmp2).addSImm(Tmp1);
       return Result;
-    } else if (isIntImmediate(N.getOperand(1), Tmp2)) {
-      if (SelectIntImmediateExpr(N, Result, -Tmp2, PPC::ADDIS, PPC::ADDI, true))
+    }
+    if (SelectIntImmediateExpr(N, Result, PPC::ADDIS, PPC::ADDI, true, true))
         return Result;
-    }    
     Tmp1 = SelectExpr(N.getOperand(0));
     Tmp2 = SelectExpr(N.getOperand(1));
     BuildMI(BB, PPC::SUBF, 2, Result).addReg(Tmp2).addReg(Tmp1);
