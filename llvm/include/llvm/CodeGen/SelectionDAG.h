@@ -183,6 +183,19 @@ public:
                      ISD::CondCode Cond) {
     return getNode(ISD::SETCC, VT, LHS, RHS, getCondCode(Cond));
   }
+
+  /// getSelectCC - Helper function to make it easier to build SelectCC's if you
+  /// just have an ISD::CondCode instead of an SDOperand.
+  ///
+  SDOperand getSelectCC(SDOperand LHS, SDOperand RHS,
+                        SDOperand True, SDOperand False, ISD::CondCode Cond) {
+    MVT::ValueType VT = True.getValueType();
+    assert(LHS.getValueType() == RHS.getValueType() &&
+           "LHS and RHS of condition must have same type!");
+    assert(True.getValueType() == False.getValueType() &&
+           "True and False arms of SelectCC must have same type!");
+    return getNode(ISD::SELECT_CC, VT, LHS, RHS, True, False,getCondCode(Cond));
+  }
   
   /// getLoad - Loads are not normal binary operators: their result type is not
   /// determined by their operands, and they produce a value AND a token chain.

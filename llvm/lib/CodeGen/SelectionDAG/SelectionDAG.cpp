@@ -686,8 +686,6 @@ SDOperand SelectionDAG::SimplifySetCC(MVT::ValueType VT, SDOperand N1,
   return SDOperand();
 }
 
-
-
 /// getNode - Gets or creates the specified node.
 ///
 SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT) {
@@ -1702,6 +1700,7 @@ const char *SDNode::getOperationName() const {
 
   case ISD::SETCC:       return "setcc";
   case ISD::SELECT:      return "select";
+  case ISD::SELECT_CC:   return "select_cc";
   case ISD::ADD_PARTS:   return "add_parts";
   case ISD::SUB_PARTS:   return "sub_parts";
   case ISD::SHL_PARTS:   return "shl_parts";

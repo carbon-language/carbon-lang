@@ -362,7 +362,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
   std::map<SDOperand, SDOperand>::iterator I = LegalizedNodes.find(Op);
   if (I != LegalizedNodes.end()) return I->second;
 
-  SDOperand Tmp1, Tmp2, Tmp3;
+  SDOperand Tmp1, Tmp2, Tmp3, Tmp4;
 
   SDOperand Result = Op;
 
@@ -911,6 +911,17 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
 
     switch (TLI.getOperationAction(Node->getOpcode(), Tmp2.getValueType())) {
     default: assert(0 && "This action is not supported yet!");
+    case TargetLowering::Expand:
+      if (Tmp1.getOpcode() == ISD::SETCC) {
+        Result = DAG.getSelectCC(Tmp1.getOperand(0), Tmp1.getOperand(1), 
+                              Tmp2, Tmp3,
+                              cast<CondCodeSDNode>(Tmp1.getOperand(2))->get());
+      } else {
+        Result = DAG.getSelectCC(Tmp1, 
+                                 DAG.getConstant(0, Tmp1.getValueType()),
+                                 Tmp2, Tmp3, ISD::SETNE);
+      }
+      break;
     case TargetLowering::Legal:
       if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(1) ||
           Tmp3 != Node->getOperand(2))
@@ -936,6 +947,29 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       Result = DAG.getNode(TruncOp, Node->getValueType(0), Result);
       break;
     }
+    }
+    break;
+  case ISD::SELECT_CC:
+    Tmp3 = LegalizeOp(Node->getOperand(2));   // True
+    Tmp4 = LegalizeOp(Node->getOperand(3));   // False
+    
+    if (getTypeAction(Node->getOperand(0).getValueType()) == Legal) {
+      Tmp1 = LegalizeOp(Node->getOperand(0));   // LHS
+      Tmp2 = LegalizeOp(Node->getOperand(1));   // RHS
+      if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(1) ||
+          Tmp3 != Node->getOperand(2) || Tmp4 != Node->getOperand(3)) {
+        Result = DAG.getNode(ISD::SELECT_CC, Node->getValueType(0), Tmp1, Tmp2, 
+                             Tmp3, Tmp4, Node->getOperand(4));
+      }
+      break;
+    } else {
+      Tmp1 = LegalizeOp(DAG.getNode(ISD::SETCC, TLI.getSetCCResultTy(),
+                                    Node->getOperand(0),  // LHS
+                                    Node->getOperand(1),  // RHS
+                                    Node->getOperand(4)));
+      Result = DAG.getSelectCC(Tmp1,
+                               DAG.getConstant(0, Tmp1.getValueType()), 
+                               Tmp3, Tmp4, ISD::SETNE);
     }
     break;
   case ISD::SETCC:
@@ -1999,6 +2033,13 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
     Tmp3 = PromoteOp(Node->getOperand(2));   // Legalize the op1
     Result = DAG.getNode(ISD::SELECT, NVT, Tmp1, Tmp2, Tmp3);
     break;
+  case ISD::SELECT_CC:
+    Tmp2 = PromoteOp(Node->getOperand(2));   // True
+    Tmp3 = PromoteOp(Node->getOperand(3));   // False
+    Result = DAG.getNode(ISD::SELECT_CC, NVT, Node->getOperand(0),
+                         Node->getOperand(1), Tmp2, Tmp3,
+                         Node->getOperand(4));
+    break;
   case ISD::TAILCALL:
   case ISD::CALL: {
     Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
@@ -2731,6 +2772,16 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     ExpandOp(Node->getOperand(2), RL, RH);
     Lo = DAG.getNode(ISD::SELECT, NVT, C, LL, RL);
     Hi = DAG.getNode(ISD::SELECT, NVT, C, LH, RH);
+    break;
+  }
+  case ISD::SELECT_CC: {
+    SDOperand TL, TH, FL, FH;
+    ExpandOp(Node->getOperand(2), TL, TH);
+    ExpandOp(Node->getOperand(3), FL, FH);
+    Lo = DAG.getNode(ISD::SELECT_CC, NVT, Node->getOperand(0),
+                     Node->getOperand(1), TL, FL, Node->getOperand(4));
+    Hi = DAG.getNode(ISD::SELECT_CC, NVT, Node->getOperand(0),
+                     Node->getOperand(1), TH, FH, Node->getOperand(4));
     break;
   }
   case ISD::SIGN_EXTEND: {

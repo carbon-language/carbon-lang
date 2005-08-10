@@ -103,8 +103,14 @@ namespace ISD {
     // Counting operators
     CTTZ, CTLZ, CTPOP,
 
-    // Select operator.
-    SELECT,
+    // Select
+    SELECT, 
+    
+    // Select with condition operator - This selects between a true value and 
+    // a false value (ops #2 and #3) based on the boolean result of comparing
+    // the lhs and rhs (ops #0 and #1) of a conditional expression with the 
+    // condition code in op #4, a CondCodeSDNode.
+    SELECT_CC,
 
     // SetCC operator - This evaluates to a boolean (i1) true value if the
     // condition is true.  The operands to this are the left and right operands
