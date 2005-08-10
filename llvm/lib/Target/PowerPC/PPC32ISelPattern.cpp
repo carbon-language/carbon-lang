@@ -569,6 +569,9 @@ public:
   unsigned FoldIfWideZeroExtend(SDOperand N);
   unsigned SelectCC(SDOperand CC, unsigned &Opc, bool &Inv, unsigned &Idx);
   unsigned SelectCCExpr(SDOperand N, unsigned& Opc, bool &Inv, unsigned &Idx);
+  bool SelectIntImmediateExpr(SDOperand N, unsigned Result, unsigned C,
+                              unsigned OCHi, unsigned OCLo,
+                              bool IsArithmetic);
   unsigned SelectExpr(SDOperand N, bool Recording=false);
   void Select(SDOperand N);
 
@@ -1275,6 +1278,45 @@ void ISel::SelectBranchCC(SDOperand N)
   return;
 }
 
+// SelectIntImmediateExpr - Choose code for opcodes with immediate value.
+// Note: immediate constant must be second operand so that the use count can be
+// determined.
+bool ISel::SelectIntImmediateExpr(SDOperand N, unsigned Result, unsigned C,
+                                  unsigned OCHi, unsigned OCLo,
+                                  bool IsArithmetic) {
+  // get the hi and lo portions of constant
+  unsigned Hi = IsArithmetic ? HA16(C) : Hi16(C);
+  unsigned Lo = Lo16(C);
+  // assume no intermediate result from lo instruction (same as final result)
+  unsigned Tmp = Result;
+  // check if two instructions are needed
+  if (Hi && Lo) {
+    // exit if usage indicates it would be better to load immediate into a 
+    // register
+    if (dyn_cast<ConstantSDNode>(N.getOperand(1))->use_size() > 2) 
+      return false;
+    // need intermediate result for two instructions
+    Tmp = MakeReg(MVT::i32);
+  }
+  // get first operand
+  unsigned Opr0 = SelectExpr(N.getOperand(0));
+  // is a lo instruction needed
+  if (Lo) {
+    // generate instruction for hi portion
+    const MachineInstrBuilder &MIBLo = BuildMI(BB, OCLo, 2, Tmp).addReg(Opr0);
+    if (IsArithmetic) MIBLo.addSImm(Lo); else MIBLo.addImm(Lo);
+    // need to switch out first operand for hi instruction
+    Opr0 = Tmp;
+  }
+  // is a ho instruction needed
+  if (Hi) {
+    // generate instruction for hi portion
+    const MachineInstrBuilder &MIBHi = BuildMI(BB, OCHi, 2, Result).addReg(Opr0);
+    if (IsArithmetic) MIBHi.addSImm(Hi); else MIBHi.addImm(Hi);
+  }
+  return true;
+}
+
 unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
   unsigned Result;
   unsigned Tmp1, Tmp2, Tmp3;
@@ -1636,22 +1678,12 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
       BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
       return Result;
     }
-    Tmp1 = SelectExpr(N.getOperand(0));
     if (isIntImmediate(N.getOperand(1), Tmp2)) {
-      Tmp3 = HA16(Tmp2);
-      Tmp2 = Lo16(Tmp2);
-      if (Tmp2 && Tmp3) {
-        unsigned Reg = MakeReg(MVT::i32);
-        BuildMI(BB, PPC::ADDI, 2, Reg).addReg(Tmp1).addSImm(Tmp2);
-        BuildMI(BB, PPC::ADDIS, 2, Result).addReg(Reg).addSImm(Tmp3);
-      } else if (Tmp2) {
-        BuildMI(BB, PPC::ADDI, 2, Result).addReg(Tmp1).addSImm(Tmp2);
-      } else {
-        BuildMI(BB, PPC::ADDIS, 2, Result).addReg(Tmp1).addSImm(Tmp3);
-      }
-      return Result;
+      if (SelectIntImmediateExpr(N, Result, Tmp2, PPC::ADDIS, PPC::ADDI, true))
+        return Result;
     }
     
+    Tmp1 = SelectExpr(N.getOperand(0));
     Tmp2 = SelectExpr(N.getOperand(1));
     BuildMI(BB, PPC::ADD, 2, Result).addReg(Tmp1).addReg(Tmp2);
     return Result;
@@ -1706,26 +1738,16 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
   case ISD::OR:
     if (SelectBitfieldInsert(N, Result))
       return Result;
-      
-    Tmp1 = SelectExpr(N.getOperand(0));
     if (isIntImmediate(N.getOperand(1), Tmp2)) {
-      Tmp3 = Hi16(Tmp2);
-      Tmp2 = Lo16(Tmp2);
-      if (Tmp2 && Tmp3) {
-        unsigned Reg = MakeReg(MVT::i32);
-        BuildMI(BB, PPC::ORI, 2, Reg).addReg(Tmp1).addImm(Tmp2);
-        BuildMI(BB, PPC::ORIS, 2, Result).addReg(Reg).addImm(Tmp3);
-      } else if (Tmp2) {
-        BuildMI(BB, PPC::ORI, 2, Result).addReg(Tmp1).addImm(Tmp2);
-      } else {
-        BuildMI(BB, PPC::ORIS, 2, Result).addReg(Tmp1).addImm(Tmp3);
-      }
-    } else {
-      Tmp2 = SelectExpr(N.getOperand(1));
-      Opc = Recording ? PPC::ORo : PPC::OR;
-      RecordSuccess = true;
-      BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
+      if (SelectIntImmediateExpr(N, Result, Tmp2, PPC::ORIS, PPC::ORI, false))
+        return Result;
     }
+    // emit regular or
+    Tmp1 = SelectExpr(N.getOperand(0));
+    Tmp2 = SelectExpr(N.getOperand(1));
+    Opc = Recording ? PPC::ORo : PPC::OR;
+    RecordSuccess = true;
+    BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
     return Result;
 
   case ISD::XOR: {
@@ -1763,23 +1785,14 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
       }
       return Result;
     }
-    Tmp1 = SelectExpr(N.getOperand(0));
     if (isIntImmediate(N.getOperand(1), Tmp2)) {
-      Tmp3 = Hi16(Tmp2);
-      Tmp2 = Lo16(Tmp2);
-      if (Tmp2 && Tmp3) {
-        unsigned Reg = MakeReg(MVT::i32);
-        BuildMI(BB, PPC::XORI, 2, Reg).addReg(Tmp1).addImm(Tmp2);
-        BuildMI(BB, PPC::XORIS, 2, Result).addReg(Reg).addImm(Tmp3);
-      } else if (Tmp2) {
-        BuildMI(BB, PPC::XORI, 2, Result).addReg(Tmp1).addImm(Tmp2);
-      } else {
-        BuildMI(BB, PPC::XORIS, 2, Result).addReg(Tmp1).addImm(Tmp3);
-      }
-    } else {
-      Tmp2 = SelectExpr(N.getOperand(1));
-      BuildMI(BB, PPC::XOR, 2, Result).addReg(Tmp1).addReg(Tmp2);
+      if (SelectIntImmediateExpr(N, Result, Tmp2, PPC::XORIS, PPC::XORI, false))
+        return Result;
     }
+    // emit regular xor
+    Tmp1 = SelectExpr(N.getOperand(0));
+    Tmp2 = SelectExpr(N.getOperand(1));
+    BuildMI(BB, PPC::XOR, 2, Result).addReg(Tmp1).addReg(Tmp2);
     return Result;
   }
 
@@ -1816,20 +1829,8 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
       BuildMI(BB, PPC::SUBFIC, 2, Result).addReg(Tmp2).addSImm(Tmp1);
       return Result;
     } else if (isIntImmediate(N.getOperand(1), Tmp2)) {
-      Tmp1 = SelectExpr(N.getOperand(0));
-      Tmp2 = -Tmp2;
-      Tmp3 = HA16(Tmp2);
-      Tmp2 = Lo16(Tmp2);
-      if (Tmp2 && Tmp3) {
-        unsigned Reg = MakeReg(MVT::i32);
-        BuildMI(BB, PPC::ADDI, 2, Reg).addReg(Tmp1).addSImm(Tmp2);
-        BuildMI(BB, PPC::ADDIS, 2, Result).addReg(Reg).addSImm(Tmp3);
-      } else if (Tmp2) {
-        BuildMI(BB, PPC::ADDI, 2, Result).addReg(Tmp1).addSImm(Tmp2);
-      } else {
-        BuildMI(BB, PPC::ADDIS, 2, Result).addReg(Tmp1).addSImm(Tmp3);
-      }
-      return Result;
+      if (SelectIntImmediateExpr(N, Result, -Tmp2, PPC::ADDIS, PPC::ADDI, true))
+        return Result;
     }    
     Tmp1 = SelectExpr(N.getOperand(0));
     Tmp2 = SelectExpr(N.getOperand(1));
