@@ -197,9 +197,7 @@ bool LoopSimplify::ProcessLoop(Loop *L) {
   DominatorSet &DS = getAnalysis<DominatorSet>();
   for (BasicBlock::iterator I = L->getHeader()->begin();
        (PN = dyn_cast<PHINode>(I++)); )
-    if (Value *V = PN->hasConstantValue(true))
-      if (!isa<Instruction>(V) ||
-          DS.dominates(cast<Instruction>(V)->getParent(), L->getHeader())) {
+    if (Value *V = PN->hasConstantValue()) {
         PN->replaceAllUsesWith(V);
         PN->eraseFromParent();
       }
