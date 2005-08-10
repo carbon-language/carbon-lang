@@ -1752,9 +1752,7 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
 
   case ISD::XOR: {
     // Check for EQV: xor, (xor a, -1), b
-    if (N.getOperand(0).getOpcode() == ISD::XOR &&
-        isIntImmediate(N.getOperand(0).getOperand(1), Tmp2) &&
-        (signed)Tmp2 == -1) {
+    if (isOprNot(N.getOperand(0))) {
       Tmp1 = SelectExpr(N.getOperand(0).getOperand(0));
       Tmp2 = SelectExpr(N.getOperand(1));
       BuildMI(BB, PPC::EQV, 2, Result).addReg(Tmp1).addReg(Tmp2);
