@@ -71,7 +71,7 @@ namespace {
       AU.addPreserved<ImmediateDominators>();
       AU.addPreserved<DominatorTree>();
       AU.addPreserved<DominanceFrontier>();
-      AU.addPreservedID(BreakCriticalEdgesID);  // No crit edges added....
+      AU.addPreservedID(BreakCriticalEdgesID);  // No critical edges added.
     }
   private:
     bool ProcessLoop(Loop *L);
@@ -190,8 +190,23 @@ bool LoopSimplify::ProcessLoop(Loop *L) {
     Changed = true;
   }
 
+  // Scan over the PHI nodes in the loop header.  Since they now have only two
+  // incoming values (the loop is canonicalized), we may have simplified the PHI
+  // down to 'X = phi [X, Y]', which should be replaced with 'Y'.
+  PHINode *PN;
+  DominatorSet &DS = getAnalysis<DominatorSet>();
+  for (BasicBlock::iterator I = L->getHeader()->begin();
+       (PN = dyn_cast<PHINode>(I++)); )
+    if (Value *V = PN->hasConstantValue(true))
+      if (!isa<Instruction>(V) ||
+          DS.dominates(cast<Instruction>(V)->getParent(), L->getHeader())) {
+        PN->replaceAllUsesWith(V);
+        PN->eraseFromParent();
+      }
+
   for (Loop::iterator I = L->begin(), E = L->end(); I != E; ++I)
     Changed |= ProcessLoop(*I);
+
   return Changed;
 }
 
