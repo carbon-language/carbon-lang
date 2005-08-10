@@ -626,12 +626,21 @@ SDOperand SelectionDAG::SimplifySetCC(MVT::ValueType VT, SDOperand N1,
     if (N2.getOpcode() == ISD::ADD || N2.getOpcode() == ISD::SUB ||
         N2.getOpcode() == ISD::XOR) {
       // Simplify  X == (X+Z) -->  Z == 0
-      if (N2.getOperand(0) == N1)
+      if (N2.getOperand(0) == N1) {
         return getSetCC(VT, N2.getOperand(1),
                         getConstant(0, N2.getValueType()), Cond);
-      else if (N2.getOperand(1) == N1)
-        return getSetCC(VT, N2.getOperand(0), getConstant(0, N2.getValueType()),
-                        Cond);
+      } else if (N2.getOperand(1) == N1) {
+        if (isCommutativeBinOp(N2.getOpcode())) {
+          return getSetCC(VT, N2.getOperand(0),
+                          getConstant(0, N2.getValueType()), Cond);
+        } else {
+          assert(N2.getOpcode() == ISD::SUB && "Unexpected operation!");
+          // X == (Z-X)  --> X<<1 == Z
+          return getSetCC(VT, getNode(ISD::SHL, N2.getValueType(), N1, 
+                                      getConstant(1, TLI.getShiftAmountTy())),
+                          N2.getOperand(0), Cond);
+        }
+      }
     }
   }
 
