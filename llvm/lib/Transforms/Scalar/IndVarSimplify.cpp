@@ -128,9 +128,9 @@ void IndVarSimplify::EliminatePointerRecurrence(PHINode *PN,
   unsigned PreheaderIdx = PN->getBasicBlockIndex(Preheader);
   unsigned BackedgeIdx = PreheaderIdx^1;
   if (GetElementPtrInst *GEPI =
-      dyn_cast<GetElementPtrInst>(PN->getIncomingValue(BackedgeIdx)))
+          dyn_cast<GetElementPtrInst>(PN->getIncomingValue(BackedgeIdx)))
     if (GEPI->getOperand(0) == PN) {
-      assert(GEPI->getNumOperands() == 2 && "GEP types must mismatch!");
+      assert(GEPI->getNumOperands() == 2 && "GEP types must match!");
 
       // Okay, we found a pointer recurrence.  Transform this pointer
       // recurrence into an integer recurrence.  Compute the value that gets
@@ -407,13 +407,13 @@ void IndVarSimplify::runOnLoop(Loop *L) {
     if (PN->getType()->isInteger()) {  // FIXME: when we have fast-math, enable!
       SCEVHandle SCEV = SE->getSCEV(PN);
       if (SCEV->hasComputableLoopEvolution(L))
-        // FIXME: Without a strength reduction pass, it is an extremely bad idea
-        // to indvar substitute anything more complex than a linear induction
-        // variable.  Doing so will put expensive multiply instructions inside
-        // of the loop.  For now just disable indvar subst on anything more
-        // complex than a linear addrec.
+        // FIXME: It is an extremely bad idea to indvar substitute anything more
+        // complex than affine induction variables.  Doing so will put expensive
+        // polynomial evaluations inside of the loop, and the str reduction pass
+        // currently can only reduce affine polynomials.  For now just disable
+        // indvar subst on anything more complex than an affine addrec.
         if (SCEVAddRecExpr *AR = dyn_cast<SCEVAddRecExpr>(SCEV))
-          if (AR->getNumOperands() == 2 && isa<SCEVConstant>(AR->getOperand(1)))
+          if (AR->isAffine())
             IndVars.push_back(std::make_pair(PN, SCEV));
     }
   }
