@@ -1,4 +1,3 @@
-; XFAIL: *
 ; RUN: llvm-as < %s | opt -indvars | llvm-dis | grep indvar
 
 %G = global long 0
