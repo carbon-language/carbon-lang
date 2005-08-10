@@ -1322,7 +1322,8 @@ assert(0 && "hmm, ISD::SIGN_EXTEND: shouldn't ever be reached. bad luck!\n");
   case ISD::MUL: {
 
     if(DestType != MVT::f64) { // TODO: speed!
-      if(N.getOperand(1).getOpcode() != ISD::Constant) { // if not a const mul
+/* FIXME if(N.getOperand(1).getOpcode() != ISD::Constant) { // if not a const mul
+ */
         // boring old integer multiply with xma
         Tmp1 = SelectExpr(N.getOperand(0));
         Tmp2 = SelectExpr(N.getOperand(1));
@@ -1336,9 +1337,9 @@ assert(0 && "hmm, ISD::SIGN_EXTEND: shouldn't ever be reached. bad luck!\n");
           .addReg(IA64::F0);
         BuildMI(BB, IA64::GETFSIG, 1, Result).addReg(TempFR3);
         return Result; // early exit
-      } else { // we are multiplying by an integer constant! yay
+     /* FIXME } else { // we are multiplying by an integer constant! yay
         return Reg = SelectExpr(BuildConstmulSequence(N)); // avert your eyes!
-      }
+      } */
     }
     else { // floating point multiply
       Tmp1 = SelectExpr(N.getOperand(0));
