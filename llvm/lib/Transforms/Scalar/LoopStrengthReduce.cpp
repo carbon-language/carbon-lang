@@ -423,21 +423,28 @@ void BasedUser::RewriteInstructionToUseNewBase(const SCEVHandle &NewBase,
   }
   
   // PHI nodes are more complex.  We have to insert one copy of the NewBase+Imm
-  // expression into each operand block that uses it.
+  // expression into each operand block that uses it.  Note that PHI nodes can
+  // have multiple entries for the same predecessor.  We use a map to make sure
+  // that a PHI node only has a single Value* for each predecessor (which also
+  // prevents us from inserting duplicate code in some blocks).
+  std::map<BasicBlock*, Value*> InsertedCode;
   PHINode *PN = cast<PHINode>(Inst);
   for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
     if (PN->getIncomingValue(i) == OperandValToReplace) {
       // FIXME: this should split any critical edges.
 
-      // Insert the code into the end of the predecessor block.
-      BasicBlock::iterator InsertPt = PN->getIncomingBlock(i)->getTerminator();
+      Value *&Code = InsertedCode[PN->getIncomingBlock(i)];
+      if (!Code) {
+        // Insert the code into the end of the predecessor block.
+        BasicBlock::iterator InsertPt =PN->getIncomingBlock(i)->getTerminator();
       
-      SCEVHandle NewValSCEV = SCEVAddExpr::get(NewBase, Imm);
-      Value *NewVal = Rewriter.expandCodeFor(NewValSCEV, InsertPt,
-                                             OperandValToReplace->getType());
+        SCEVHandle NewValSCEV = SCEVAddExpr::get(NewBase, Imm);
+        Code = Rewriter.expandCodeFor(NewValSCEV, InsertPt,
+                                      OperandValToReplace->getType());
+      }
       
       // Replace the use of the operand Value with the new Phi we just created.
-      PN->setIncomingValue(i, NewVal);
+      PN->setIncomingValue(i, Code);
       Rewriter.clear();
     }
   }
