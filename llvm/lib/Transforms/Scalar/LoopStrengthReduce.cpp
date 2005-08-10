@@ -37,6 +37,7 @@ using namespace llvm;
 namespace {
   Statistic<> NumReduced ("loop-reduce", "Number of GEPs strength reduced");
   Statistic<> NumInserted("loop-reduce", "Number of PHIs inserted");
+  Statistic<> NumVariable("loop-reduce","Number of PHIs with variable strides");
 
   /// IVStrideUse - Keep track of one use of a strided induction variable, where
   /// the stride is stored externally.  The Offset member keeps track of the 
@@ -87,7 +88,7 @@ namespace {
 
     /// IVUsesByStride - Keep track of all uses of induction variables that we
     /// are interested in.  The key of the map is the stride of the access.
-    std::map<Value*, IVUsersOfOneStride> IVUsesByStride;
+    std::map<SCEVHandle, IVUsersOfOneStride> IVUsesByStride;
 
     /// CastedValues - As we need to cast values to uintptr_t, this keeps track
     /// of the casted version of each value.  This is accessed by
@@ -136,7 +137,8 @@ private:
 
     void OptimizeIndvars(Loop *L);
 
-    void StrengthReduceStridedIVUsers(Value *Stride, IVUsersOfOneStride &Uses,
+    void StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
+                                      IVUsersOfOneStride &Uses,
                                       Loop *L, bool isOnlyStride);
     void DeleteTriviallyDeadInstructions(std::set<Instruction*> &Insts);
   };
@@ -254,7 +256,7 @@ SCEVHandle LoopStrengthReduce::GetExpressionSCEV(Instruction *Exp, Loop *L) {
 /// is.  The stride must be a loop invariant expression, but the start may be
 /// a mix of loop invariant and loop variant expressions.
 static bool getSCEVStartAndStride(const SCEVHandle &SH, Loop *L,
-                                  SCEVHandle &Start, Value *&Stride) {
+                                  SCEVHandle &Start, SCEVHandle &Stride) {
   SCEVHandle TheAddRec = Start;   // Initialize to zero.
 
   // If the outer level is an AddExpr, the operands are all start values except
@@ -285,16 +287,17 @@ static bool getSCEVStartAndStride(const SCEVHandle &SH, Loop *L,
 
   Start = SCEVAddExpr::get(Start, AddRec->getOperand(0));
   
-  // FIXME: generalize to IV's with more complex strides (must emit stride
-  // expression outside of loop!)
   if (!isa<SCEVConstant>(AddRec->getOperand(1)))
-    return false;
-  
-  SCEVConstant *StrideC = cast<SCEVConstant>(AddRec->getOperand(1));
-  Stride = StrideC->getValue();
+    DEBUG(std::cerr << "[" << L->getHeader()->getName()
+                    << "] Variable stride: " << *AddRec << "\n");
 
-  assert(Stride->getType()->isUnsigned() &&
+  Stride = AddRec->getOperand(1);
+  // Check that all constant strides are the unsigned type, we don't want to
+  // have two IV's one of signed stride 4 and one of unsigned stride 4 to not be
+  // merged.
+  assert((!isa<SCEVConstant>(Stride) || Stride->getType()->isUnsigned()) &&
          "Constants should be canonicalized to unsigned!");
+
   return true;
 }
 
@@ -313,7 +316,7 @@ bool LoopStrengthReduce::AddUsersIfInteresting(Instruction *I, Loop *L,
   
   // Get the start and stride for this expression.
   SCEVHandle Start = SCEVUnknown::getIntegerSCEV(0, ISE->getType());
-  Value *Stride = 0;
+  SCEVHandle Stride = Start;
   if (!getSCEVStartAndStride(ISE, L, Start, Stride))
     return false;  // Non-reducible symbolic expression, bail out.
   
@@ -638,7 +641,7 @@ RemoveCommonExpressionsFromUseBases(std::vector<BasedUser> &Uses) {
 /// StrengthReduceStridedIVUsers - Strength reduce all of the users of a single
 /// stride of IV.  All of the users may have different starting values, and this
 /// may not be the only stride (we know it is if isOnlyStride is true).
-void LoopStrengthReduce::StrengthReduceStridedIVUsers(Value *Stride,
+void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
                                                       IVUsersOfOneStride &Uses,
                                                       Loop *L,
                                                       bool isOnlyStride) {
@@ -711,6 +714,12 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(Value *Stride,
   PHINode *NewPHI = new PHINode(ReplacedTy, "iv.", PhiInsertBefore);
   ++NumInserted;
   
+  // Insert the stride into the preheader.
+  Value *StrideV = PreheaderRewriter.expandCodeFor(Stride, PreInsertPt,
+                                                   ReplacedTy);
+  if (!isa<ConstantInt>(StrideV)) ++NumVariable;
+
+
   // Emit the initial base value into the loop preheader, and add it to the
   // Phi node.
   Value *PHIBaseV = PreheaderRewriter.expandCodeFor(CommonExprs, PreInsertPt,
@@ -720,7 +729,7 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(Value *Stride,
   // Emit the increment of the base value before the terminator of the loop
   // latch block, and add it to the Phi node.
   SCEVHandle IncExp = SCEVAddExpr::get(SCEVUnknown::get(NewPHI),
-                                       SCEVUnknown::get(Stride));
+                                       SCEVUnknown::get(StrideV));
   
   Value *IncV = Rewriter.expandCodeFor(IncExp, LatchBlock->getTerminator(),
                                        ReplacedTy);
@@ -815,15 +824,16 @@ void LoopStrengthReduce::OptimizeIndvars(Loop *L) {
 
   // Search IVUsesByStride to find Cond's IVUse if there is one.
   IVStrideUse *CondUse = 0;
-  Value *CondStride = 0;
+  const SCEVHandle *CondStride = 0;
 
-  for (std::map<Value*, IVUsersOfOneStride>::iterator I =IVUsesByStride.begin(),
-         E = IVUsesByStride.end(); I != E && !CondUse; ++I)
+  for (std::map<SCEVHandle, IVUsersOfOneStride>::iterator 
+         I = IVUsesByStride.begin(), E = IVUsesByStride.end();
+       I != E && !CondUse; ++I)
     for (std::vector<IVStrideUse>::iterator UI = I->second.Users.begin(),
            E = I->second.Users.end(); UI != E; ++UI)
       if (UI->User == Cond) {
         CondUse = &*UI;
-        CondStride = I->first;
+        CondStride = &I->first;
         // NOTE: we could handle setcc instructions with multiple uses here, but
         // InstCombine does it as well for simple uses, it's not clear that it
         // occurs enough in real life to handle.
@@ -832,7 +842,8 @@ void LoopStrengthReduce::OptimizeIndvars(Loop *L) {
   if (!CondUse) return;  // setcc doesn't use the IV.
 
   // setcc stride is complex, don't mess with users.
-  if (!isa<ConstantInt>(CondStride)) return;
+  // FIXME: Evaluate whether this is a good idea or not.
+  if (!isa<SCEVConstant>(*CondStride)) return;
 
   // It's possible for the setcc instruction to be anywhere in the loop, and
   // possible for it to have multiple users.  If it is not immediately before
@@ -847,17 +858,16 @@ void LoopStrengthReduce::OptimizeIndvars(Loop *L) {
       LatchBlock->getInstList().insert(TermBr, Cond);
       
       // Clone the IVUse, as the old use still exists!
-      IVUsesByStride[CondStride].addUser(CondUse->Offset, Cond,
+      IVUsesByStride[*CondStride].addUser(CondUse->Offset, Cond,
                                          CondUse->OperandValToReplace);
-      CondUse = &IVUsesByStride[CondStride].Users.back();
+      CondUse = &IVUsesByStride[*CondStride].Users.back();
     }
   }
 
   // If we get to here, we know that we can transform the setcc instruction to
   // use the post-incremented version of the IV, allowing us to coallesce the
   // live ranges for the IV correctly.
-  CondUse->Offset = SCEV::getMinusSCEV(CondUse->Offset,
-                                       SCEVUnknown::get(CondStride));
+  CondUse->Offset = SCEV::getMinusSCEV(CondUse->Offset, *CondStride);
   CondUse->isUseOfPostIncrementedValue = true;
 }
 
@@ -897,7 +907,7 @@ void LoopStrengthReduce::runOnLoop(Loop *L) {
 
   // Note: this processes each stride/type pair individually.  All users passed
   // into StrengthReduceStridedIVUsers have the same type AND stride.
-  for (std::map<Value*, IVUsersOfOneStride>::iterator SI
+  for (std::map<SCEVHandle, IVUsersOfOneStride>::iterator SI
         = IVUsesByStride.begin(), E = IVUsesByStride.end(); SI != E; ++SI)
     StrengthReduceStridedIVUsers(SI->first, SI->second, L, HasOneStride);
 
