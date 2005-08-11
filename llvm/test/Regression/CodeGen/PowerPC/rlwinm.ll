@@ -1,5 +1,8 @@
 ; All of these ands and shifts should be folded into rlwimi's
 ; RUN: llvm-as < rlwinm.ll | llc -march=ppc32 | not grep and && 
+; RUN: llvm-as < rlwinm.ll | llc -march=ppc32 | not grep srawi && 
+; RUN: llvm-as < rlwinm.ll | llc -march=ppc32 | not grep srwi && 
+; RUN: llvm-as < rlwinm.ll | llc -march=ppc32 | not grep slwi && 
 ; RUN: llvm-as < rlwinm.ll | llc -march=ppc32 | grep rlwinm | wc -l | grep 8
 
 implementation   ; Functions:

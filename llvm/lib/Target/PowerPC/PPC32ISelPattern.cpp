@@ -664,6 +664,13 @@ static bool isIntImmediate(SDOperand N, unsigned& Imm) {
   return false;
 }
 
+// isOpcWithIntImmediate - This method tests to see if the node is a specific
+// opcode and that it has a immediate integer right operand.
+// If so Imm will receive the 32 bit value.
+static bool isOpcWithIntImmediate(SDOperand N, unsigned Opc, unsigned& Imm) {
+  return N.getOpcode() == Opc && isIntImmediate(N.getOperand(1), Imm);
+}
+
 // isOprShiftImm - Returns true if the specified operand is a shift opcode with
 // a immediate shift count less than 32.
 static bool isOprShiftImm(SDOperand N, unsigned& Opc, unsigned& SH) {
@@ -675,8 +682,7 @@ static bool isOprShiftImm(SDOperand N, unsigned& Opc, unsigned& SH) {
 // isOprNot - Returns true if the specified operand is an xor with immediate -1.
 static bool isOprNot(SDOperand N) {
   unsigned Imm;
-  return N.getOpcode() == ISD::XOR &&
-         isIntImmediate(N.getOperand(1), Imm) && (signed)Imm == -1;
+  return isOpcWithIntImmediate(N, ISD::XOR, Imm) && (signed)Imm == -1;
 }
 
 // Immediate constant composers.
@@ -1089,10 +1095,8 @@ bool ISel::SelectBitfieldInsert(SDOperand OR, unsigned Result) {
 /// wider than the implicit mask, then we can get rid of the AND and let the
 /// shift do the mask.
 unsigned ISel::FoldIfWideZeroExtend(SDOperand N) {
-  unsigned C, MB, ME;
-  if (N.getOpcode() == ISD::AND &&
-      isIntImmediate(N.getOperand(1), C) && isRunOfOnes(C, MB, ME) &&
-      MB <= 26 && ME == 31)
+  unsigned C;
+  if (isOpcWithIntImmediate(N, ISD::AND, C) && isMask_32(C) && C > 63)
     return SelectExpr(N.getOperand(0));
   else
     return SelectExpr(N);
@@ -1580,35 +1584,62 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
     return Result;
 
   case ISD::SHL:
-    Tmp1 = SelectExpr(N.getOperand(0));
     if (isIntImmediate(N.getOperand(1), Tmp2)) {
+      unsigned SH, MB, ME;
+      if (isOpcWithIntImmediate(N.getOperand(0), ISD::AND, Tmp3) &&
+          isRotateAndMask(ISD::SHL, Tmp2, Tmp3, true, SH, MB, ME)) {
+        Tmp1 = SelectExpr(N.getOperand(0).getOperand(0));
+        BuildMI(BB, PPC::RLWINM, 4, Result).addReg(Tmp1).addImm(SH)
+          .addImm(MB).addImm(ME);
+        return Result;
+      }
+      Tmp1 = SelectExpr(N.getOperand(0));
       Tmp2 &= 0x1F;
       BuildMI(BB, PPC::RLWINM, 4, Result).addReg(Tmp1).addImm(Tmp2).addImm(0)
         .addImm(31-Tmp2);
     } else {
+      Tmp1 = SelectExpr(N.getOperand(0));
       Tmp2 = FoldIfWideZeroExtend(N.getOperand(1));
       BuildMI(BB, PPC::SLW, 2, Result).addReg(Tmp1).addReg(Tmp2);
     }
     return Result;
 
   case ISD::SRL:
-    Tmp1 = SelectExpr(N.getOperand(0));
     if (isIntImmediate(N.getOperand(1), Tmp2)) {
+      unsigned SH, MB, ME;
+      if (isOpcWithIntImmediate(N.getOperand(0), ISD::AND, Tmp3) &&
+          isRotateAndMask(ISD::SRL, Tmp2, Tmp3, true, SH, MB, ME)) {
+        Tmp1 = SelectExpr(N.getOperand(0).getOperand(0));
+        BuildMI(BB, PPC::RLWINM, 4, Result).addReg(Tmp1).addImm(SH)
+          .addImm(MB).addImm(ME);
+        return Result;
+      }
+      Tmp1 = SelectExpr(N.getOperand(0));
       Tmp2 &= 0x1F;
       BuildMI(BB, PPC::RLWINM, 4, Result).addReg(Tmp1).addImm(32-Tmp2)
         .addImm(Tmp2).addImm(31);
     } else {
+      Tmp1 = SelectExpr(N.getOperand(0));
       Tmp2 = FoldIfWideZeroExtend(N.getOperand(1));
       BuildMI(BB, PPC::SRW, 2, Result).addReg(Tmp1).addReg(Tmp2);
     }
     return Result;
 
   case ISD::SRA:
-    Tmp1 = SelectExpr(N.getOperand(0));
     if (isIntImmediate(N.getOperand(1), Tmp2)) {
+      unsigned SH, MB, ME;
+      if (isOpcWithIntImmediate(N.getOperand(0), ISD::AND, Tmp3) &&
+          isRotateAndMask(ISD::SRA, Tmp2, Tmp3, true, SH, MB, ME)) {
+        Tmp1 = SelectExpr(N.getOperand(0).getOperand(0));
+        BuildMI(BB, PPC::RLWINM, 4, Result).addReg(Tmp1).addImm(SH)
+          .addImm(MB).addImm(ME);
+        return Result;
+      }
+      Tmp1 = SelectExpr(N.getOperand(0));
       Tmp2 &= 0x1F;
       BuildMI(BB, PPC::SRAWI, 2, Result).addReg(Tmp1).addImm(Tmp2);
     } else {
+      Tmp1 = SelectExpr(N.getOperand(0));
       Tmp2 = FoldIfWideZeroExtend(N.getOperand(1));
       BuildMI(BB, PPC::SRAW, 2, Result).addReg(Tmp1).addReg(Tmp2);
     }
