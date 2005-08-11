@@ -983,6 +983,7 @@ void ISel::MoveCRtoGPR(unsigned CCReg, ISD::CondCode CC, unsigned Result){
 bool ISel::SelectBitfieldInsert(SDOperand OR, unsigned Result) {
   bool IsRotate = false;
   unsigned TgtMask = 0xFFFFFFFF, InsMask = 0xFFFFFFFF, Amount = 0;
+  unsigned Value;
 
   SDOperand Op0 = OR.getOperand(0);
   SDOperand Op1 = OR.getOperand(1);
@@ -997,34 +998,32 @@ bool ISel::SelectBitfieldInsert(SDOperand OR, unsigned Result) {
     return false;
 
   // Generate Mask value for Target
-  if (ConstantSDNode *CN =
-      dyn_cast<ConstantSDNode>(Op0.getOperand(1).Val)) {
+  if (isIntImmediate(Op0.getOperand(1), Value)) {
     switch(Op0Opc) {
-    case ISD::SHL: TgtMask <<= (unsigned)CN->getValue(); break;
-    case ISD::SRL: TgtMask >>= (unsigned)CN->getValue(); break;
-    case ISD::AND: TgtMask &= (unsigned)CN->getValue(); break;
+    case ISD::SHL: TgtMask <<= Value; break;
+    case ISD::SRL: TgtMask >>= Value; break;
+    case ISD::AND: TgtMask &= Value; break;
     }
   } else {
     return false;
   }
 
   // Generate Mask value for Insert
-  if (ConstantSDNode *CN =
-      dyn_cast<ConstantSDNode>(Op1.getOperand(1).Val)) {
+  if (isIntImmediate(Op1.getOperand(1), Value)) {
     switch(Op1Opc) {
     case ISD::SHL:
-      Amount = CN->getValue();
+      Amount = Value;
       InsMask <<= Amount;
       if (Op0Opc == ISD::SRL) IsRotate = true;
       break;
     case ISD::SRL:
-      Amount = CN->getValue();
+      Amount = Value;
       InsMask >>= Amount;
       Amount = 32-Amount;
       if (Op0Opc == ISD::SHL) IsRotate = true;
       break;
     case ISD::AND:
-      InsMask &= (unsigned)CN->getValue();
+      InsMask &= Value;
       break;
     }
   } else {
@@ -1039,20 +1038,18 @@ bool ISel::SelectBitfieldInsert(SDOperand OR, unsigned Result) {
   if (Op0Opc == ISD::AND && Op1Opc == ISD::AND) {
     if (Op1.getOperand(0).getOpcode() == ISD::SHL ||
         Op1.getOperand(0).getOpcode() == ISD::SRL) {
-      if (ConstantSDNode *CN =
-          dyn_cast<ConstantSDNode>(Op1.getOperand(0).getOperand(1).Val)) {
+      if (isIntImmediate(Op1.getOperand(0).getOperand(1), Value)) {
         Amount = Op1.getOperand(0).getOpcode() == ISD::SHL ?
-          CN->getValue() : 32 - CN->getValue();
+          Value : 32 - Value;
         Tmp3 = SelectExpr(Op1.getOperand(0).getOperand(0));
       }
     } else if (Op0.getOperand(0).getOpcode() == ISD::SHL ||
                Op0.getOperand(0).getOpcode() == ISD::SRL) {
-      if (ConstantSDNode *CN =
-          dyn_cast<ConstantSDNode>(Op0.getOperand(0).getOperand(1).Val)) {
+      if (isIntImmediate(Op0.getOperand(0).getOperand(1), Value)) {
         std::swap(Op0, Op1);
         std::swap(TgtMask, InsMask);
         Amount = Op1.getOperand(0).getOpcode() == ISD::SHL ?
-          CN->getValue() : 32 - CN->getValue();
+          Value : 32 - Value;
         Tmp3 = SelectExpr(Op1.getOperand(0).getOperand(0));
       }
     }
@@ -1584,8 +1581,8 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
 
   case ISD::SHL:
     Tmp1 = SelectExpr(N.getOperand(0));
-    if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
-      Tmp2 = CN->getValue() & 0x1F;
+    if (isIntImmediate(N.getOperand(1), Tmp2)) {
+      Tmp2 &= 0x1F;
       BuildMI(BB, PPC::RLWINM, 4, Result).addReg(Tmp1).addImm(Tmp2).addImm(0)
         .addImm(31-Tmp2);
     } else {
@@ -1596,8 +1593,8 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
 
   case ISD::SRL:
     Tmp1 = SelectExpr(N.getOperand(0));
-    if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
-      Tmp2 = CN->getValue() & 0x1F;
+    if (isIntImmediate(N.getOperand(1), Tmp2)) {
+      Tmp2 &= 0x1F;
       BuildMI(BB, PPC::RLWINM, 4, Result).addReg(Tmp1).addImm(32-Tmp2)
         .addImm(Tmp2).addImm(31);
     } else {
@@ -1608,8 +1605,8 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
 
   case ISD::SRA:
     Tmp1 = SelectExpr(N.getOperand(0));
-    if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
-      Tmp2 = CN->getValue() & 0x1F;
+    if (isIntImmediate(N.getOperand(1), Tmp2)) {
+      Tmp2 &= 0x1F;
       BuildMI(BB, PPC::SRAWI, 2, Result).addReg(Tmp1).addImm(Tmp2);
     } else {
       Tmp2 = FoldIfWideZeroExtend(N.getOperand(1));
