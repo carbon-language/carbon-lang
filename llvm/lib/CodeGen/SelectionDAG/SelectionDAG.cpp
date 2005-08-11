@@ -1495,6 +1495,22 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
         return getNode(ISD::AND, AType, Shift, N3);
       }
     }
+    
+    // Check to see if this is an integer abs. select_cc setl[te] X, 0, -X, X ->
+    // Y = sra (X, size(X)-1); xor (add (X, Y), Y)
+    if (N2C && N2C->isNullValue() && (CC == ISD::SETLT || CC == ISD::SETLE) &&
+        N1 == N4 && N3.getOpcode() == ISD::SUB && N1 == N3.getOperand(1)) {
+      if (ConstantSDNode *SubC = dyn_cast<ConstantSDNode>(N3.getOperand(0))) {
+        MVT::ValueType XType = N1.getValueType();
+        if (SubC->isNullValue() && MVT::isInteger(XType)) {
+          SDOperand Shift = getNode(ISD::SRA, XType, N1,
+                                    getConstant(MVT::getSizeInBits(XType)-1,
+                                                TLI.getShiftAmountTy()));
+          return getNode(ISD::XOR, XType, getNode(ISD::ADD, XType, N1, Shift), 
+                         Shift);
+        }
+      }
+    }
   }
         
   std::vector<SDOperand> Ops;
