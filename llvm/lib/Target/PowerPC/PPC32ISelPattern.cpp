@@ -563,6 +563,14 @@ public:
     ISelDAG = 0;
   }
 
+  // convenience functions for virtual register creation
+  inline unsigned MakeIntReg() {
+    return RegMap->createVirtualRegister(PPC32::GPRCRegisterClass);
+  }
+  inline unsigned MakeFPReg() {
+    return RegMap->createVirtualRegister(PPC32::FPRCRegisterClass);
+  }
+  
   // dag -> dag expanders for integer divide by constant
   SDOperand BuildSDIVSequence(SDOperand N);
   SDOperand BuildUDIVSequence(SDOperand N);
@@ -917,7 +925,7 @@ unsigned ISel::getGlobalBaseReg() {
     // Insert the set of GlobalBaseReg into the first MBB of the function
     MachineBasicBlock &FirstMBB = BB->getParent()->front();
     MachineBasicBlock::iterator MBBI = FirstMBB.begin();
-    GlobalBaseReg = MakeReg(MVT::i32);
+    GlobalBaseReg = MakeIntReg();
     BuildMI(FirstMBB, MBBI, PPC::MovePCtoLR, 0, PPC::LR);
     BuildMI(FirstMBB, MBBI, PPC::MFLR, 1, GlobalBaseReg).addReg(PPC::LR);
     GlobalBaseInitialized = true;
@@ -928,8 +936,8 @@ unsigned ISel::getGlobalBaseReg() {
 /// getConstDouble - Loads a floating point value into a register, via the
 /// Constant Pool.  Optionally takes a register in which to load the value.
 unsigned ISel::getConstDouble(double doubleVal, unsigned Result=0) {
-  unsigned Tmp1 = MakeReg(MVT::i32);
-  if (0 == Result) Result = MakeReg(MVT::f64);
+  unsigned Tmp1 = MakeIntReg();
+  if (0 == Result) Result = MakeFPReg();
   MachineConstantPool *CP = BB->getParent()->getConstantPool();
   ConstantFP *CFP = ConstantFP::get(Type::DoubleTy, doubleVal);
   unsigned CPI = CP->getConstantPoolIndex(CFP);
@@ -946,14 +954,14 @@ unsigned ISel::getConstDouble(double doubleVal, unsigned Result=0) {
 /// Inv is true, then invert the result.
 void ISel::MoveCRtoGPR(unsigned CCReg, ISD::CondCode CC, unsigned Result){
   bool Inv;
-  unsigned IntCR = MakeReg(MVT::i32);
+  unsigned IntCR = MakeIntReg();
   unsigned Idx = getCRIdxForSetCC(CC, Inv);
   BuildMI(BB, PPC::MCRF, 1, PPC::CR7).addReg(CCReg);
   bool GPOpt =
     TLI.getTargetMachine().getSubtarget<PPCSubtarget>().isGigaProcessor();
   BuildMI(BB, GPOpt ? PPC::MFOCRF : PPC::MFCR, 1, IntCR).addReg(PPC::CR7);
   if (Inv) {
-    unsigned Tmp1 = MakeReg(MVT::i32);
+    unsigned Tmp1 = MakeIntReg();
     BuildMI(BB, PPC::RLWINM, 4, Tmp1).addReg(IntCR).addImm(32-(3-Idx))
       .addImm(31).addImm(31);
     BuildMI(BB, PPC::XORI, 2, Result).addReg(Tmp1).addImm(1);
@@ -1165,7 +1173,7 @@ unsigned ISel::SelectAddr(SDOperand N, unsigned& Reg, int& offset)
   if(GlobalAddressSDNode *GN = dyn_cast<GlobalAddressSDNode>(N)) {
     GlobalValue *GV = GN->getGlobal();
     if (!GV->hasWeakLinkage() && !GV->isExternal()) {
-      unsigned GlobalHi = MakeReg(MVT::i32);
+      unsigned GlobalHi = MakeIntReg();
       if (PICEnabled)
         BuildMI(BB, PPC::ADDIS, 2, GlobalHi).addReg(getGlobalBaseReg())
           .addGlobalAddress(GV);
@@ -1260,7 +1268,7 @@ bool ISel::SelectIntImmediateExpr(SDOperand N, unsigned Result,
     // register
     if (CN->use_size() > 2) return false;
     // need intermediate result for two instructions
-    Tmp = MakeReg(MVT::i32);
+    Tmp = MakeIntReg();
   }
   // get first operand
   unsigned Opr0 = SelectExpr(N.getOperand(0));
@@ -1363,7 +1371,7 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
 
   case ISD::ConstantPool:
     Tmp1 = cast<ConstantPoolSDNode>(N)->getIndex();
-    Tmp2 = MakeReg(MVT::i32);
+    Tmp2 = MakeIntReg();
     if (PICEnabled)
       BuildMI(BB, PPC::ADDIS, 2, Tmp2).addReg(getGlobalBaseReg())
         .addConstantPoolIndex(Tmp1);
@@ -1379,7 +1387,7 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
 
   case ISD::GlobalAddress: {
     GlobalValue *GV = cast<GlobalAddressSDNode>(N)->getGlobal();
-    Tmp1 = MakeReg(MVT::i32);
+    Tmp1 = MakeIntReg();
     if (PICEnabled)
       BuildMI(BB, PPC::ADDIS, 2, Tmp1).addReg(getGlobalBaseReg())
         .addGlobalAddress(GV);
@@ -1422,7 +1430,7 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
     }
 
     if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(Address)) {
-      Tmp1 = MakeReg(MVT::i32);
+      Tmp1 = MakeIntReg();
       int CPI = CP->getIndex();
       if (PICEnabled)
         BuildMI(BB, PPC::ADDIS, 2, Tmp1).addReg(getGlobalBaseReg())
@@ -1821,7 +1829,7 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
     if (isIntImmediate(N.getOperand(1), Tmp3)) {
       if ((signed)Tmp3 > 0 && isPowerOf2_32(Tmp3)) {
         Tmp3 = Log2_32(Tmp3);
-        Tmp1 = MakeReg(MVT::i32);
+        Tmp1 = MakeIntReg();
         Tmp2 = SelectExpr(N.getOperand(0));
         BuildMI(BB, PPC::SRAWI, 2, Tmp1).addReg(Tmp2).addImm(Tmp3);
         BuildMI(BB, PPC::ADDZE, 1, Result).addReg(Tmp1);
@@ -1829,8 +1837,8 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
       } else if ((signed)Tmp3 < 0 && isPowerOf2_32(-Tmp3)) {
         Tmp3 = Log2_32(-Tmp3);
         Tmp2 = SelectExpr(N.getOperand(0));
-        Tmp1 = MakeReg(MVT::i32);
-        unsigned Tmp4 = MakeReg(MVT::i32);
+        Tmp1 = MakeIntReg();
+        unsigned Tmp4 = MakeIntReg();
         BuildMI(BB, PPC::SRAWI, 2, Tmp1).addReg(Tmp2).addImm(Tmp3);
         BuildMI(BB, PPC::ADDZE, 1, Tmp4).addReg(Tmp1);
         BuildMI(BB, PPC::NEG, 1, Result).addReg(Tmp4);
@@ -1891,12 +1899,12 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
     unsigned ShiftOpLo = SelectExpr(N.getOperand(0));
     unsigned ShiftOpHi = SelectExpr(N.getOperand(1));
     unsigned SHReg = FoldIfWideZeroExtend(N.getOperand(2));
-    Tmp1 = MakeReg(MVT::i32);
-    Tmp2 = MakeReg(MVT::i32);
-    Tmp3 = MakeReg(MVT::i32);
-    unsigned Tmp4 = MakeReg(MVT::i32);
-    unsigned Tmp5 = MakeReg(MVT::i32);
-    unsigned Tmp6 = MakeReg(MVT::i32);
+    Tmp1 = MakeIntReg();
+    Tmp2 = MakeIntReg();
+    Tmp3 = MakeIntReg();
+    unsigned Tmp4 = MakeIntReg();
+    unsigned Tmp5 = MakeIntReg();
+    unsigned Tmp6 = MakeIntReg();
     BuildMI(BB, PPC::SUBFIC, 2, Tmp1).addReg(SHReg).addSImm(32);
     if (ISD::SHL_PARTS == opcode) {
       BuildMI(BB, PPC::SLW, 2, Tmp2).addReg(ShiftOpHi).addReg(SHReg);
@@ -1933,7 +1941,7 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
       BuildMI(BB, PPC::BLE, 2).addReg(PPC::CR0).addMBB(PhiMBB);
       // Select correct least significant half if the shift amount > 32
       BB = TmpMBB;
-      unsigned Tmp7 = MakeReg(MVT::i32);
+      unsigned Tmp7 = MakeIntReg();
       BuildMI(BB, PPC::OR, 2, Tmp7).addReg(Tmp6).addReg(Tmp6);
       TmpMBB->addSuccessor(PhiMBB);
       BB = PhiMBB;
@@ -1948,7 +1956,7 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
     bool U = (ISD::FP_TO_UINT == opcode);
     Tmp1 = SelectExpr(N.getOperand(0));
     if (!U) {
-      Tmp2 = MakeReg(MVT::f64);
+      Tmp2 = MakeFPReg();
       BuildMI(BB, PPC::FCTIWZ, 1, Tmp2).addReg(Tmp1);
       int FrameIdx = BB->getParent()->getFrameInfo()->CreateStackObject(8, 8);
       addFrameReference(BuildMI(BB, PPC::STFD, 3).addReg(Tmp2), FrameIdx);
@@ -1958,14 +1966,14 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
       unsigned Zero = getConstDouble(0.0);
       unsigned MaxInt = getConstDouble((1LL << 32) - 1);
       unsigned Border = getConstDouble(1LL << 31);
-      unsigned UseZero = MakeReg(MVT::f64);
-      unsigned UseMaxInt = MakeReg(MVT::f64);
-      unsigned UseChoice = MakeReg(MVT::f64);
-      unsigned TmpReg = MakeReg(MVT::f64);
-      unsigned TmpReg2 = MakeReg(MVT::f64);
-      unsigned ConvReg = MakeReg(MVT::f64);
-      unsigned IntTmp = MakeReg(MVT::i32);
-      unsigned XorReg = MakeReg(MVT::i32);
+      unsigned UseZero = MakeFPReg();
+      unsigned UseMaxInt = MakeFPReg();
+      unsigned UseChoice = MakeFPReg();
+      unsigned TmpReg = MakeFPReg();
+      unsigned TmpReg2 = MakeFPReg();
+      unsigned ConvReg = MakeFPReg();
+      unsigned IntTmp = MakeIntReg();
+      unsigned XorReg = MakeIntReg();
       MachineFunction *F = BB->getParent();
       int FrameIdx = F->getFrameInfo()->CreateStackObject(8, 8);
       // Update machine-CFG edges
@@ -2025,13 +2033,13 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
         switch (CC) {
         default: Node->dump(); assert(0 && "Unhandled SetCC condition"); abort();
         case ISD::SETEQ:
-          Tmp2 = MakeReg(MVT::i32);
+          Tmp2 = MakeIntReg();
           BuildMI(BB, PPC::CNTLZW, 1, Tmp2).addReg(Tmp1);
           BuildMI(BB, PPC::RLWINM, 4, Result).addReg(Tmp2).addImm(27)
             .addImm(5).addImm(31);
           break;
         case ISD::SETNE:
-          Tmp2 = MakeReg(MVT::i32);
+          Tmp2 = MakeIntReg();
           BuildMI(BB, PPC::ADDIC, 2, Tmp2).addReg(Tmp1).addSImm(-1);
           BuildMI(BB, PPC::SUBFE, 2, Result).addReg(Tmp2).addReg(Tmp1);
           break;
@@ -2040,8 +2048,8 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
             .addImm(31).addImm(31);
           break;
         case ISD::SETGT:
-          Tmp2 = MakeReg(MVT::i32);
-          Tmp3 = MakeReg(MVT::i32);
+          Tmp2 = MakeIntReg();
+          Tmp3 = MakeIntReg();
           BuildMI(BB, PPC::NEG, 2, Tmp2).addReg(Tmp1);
           BuildMI(BB, PPC::ANDC, 2, Tmp3).addReg(Tmp2).addReg(Tmp1);
           BuildMI(BB, PPC::RLWINM, 4, Result).addReg(Tmp3).addImm(1)
@@ -2054,29 +2062,29 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
         switch (CC) {
         default: assert(0 && "Unhandled SetCC condition"); abort();
         case ISD::SETEQ:
-          Tmp2 = MakeReg(MVT::i32);
-          Tmp3 = MakeReg(MVT::i32);
+          Tmp2 = MakeIntReg();
+          Tmp3 = MakeIntReg();
           BuildMI(BB, PPC::ADDIC, 2, Tmp2).addReg(Tmp1).addSImm(1);
           BuildMI(BB, PPC::LI, 1, Tmp3).addSImm(0);
           BuildMI(BB, PPC::ADDZE, 1, Result).addReg(Tmp3);
           break;
         case ISD::SETNE:
-          Tmp2 = MakeReg(MVT::i32);
-          Tmp3 = MakeReg(MVT::i32);
+          Tmp2 = MakeIntReg();
+          Tmp3 = MakeIntReg();
           BuildMI(BB, PPC::NOR, 2, Tmp2).addReg(Tmp1).addReg(Tmp1);
           BuildMI(BB, PPC::ADDIC, 2, Tmp3).addReg(Tmp2).addSImm(-1);
           BuildMI(BB, PPC::SUBFE, 2, Result).addReg(Tmp3).addReg(Tmp2);
           break;
         case ISD::SETLT:
-          Tmp2 = MakeReg(MVT::i32);
-          Tmp3 = MakeReg(MVT::i32);
+          Tmp2 = MakeIntReg();
+          Tmp3 = MakeIntReg();
           BuildMI(BB, PPC::ADDI, 2, Tmp2).addReg(Tmp1).addSImm(1);
           BuildMI(BB, PPC::AND, 2, Tmp3).addReg(Tmp2).addReg(Tmp1);
           BuildMI(BB, PPC::RLWINM, 4, Result).addReg(Tmp3).addImm(1)
             .addImm(31).addImm(31);
           break;
         case ISD::SETGT:
-          Tmp2 = MakeReg(MVT::i32);
+          Tmp2 = MakeIntReg();
           BuildMI(BB, PPC::RLWINM, 4, Tmp2).addReg(Tmp1).addImm(1)
             .addImm(31).addImm(31);
           BuildMI(BB, PPC::XORI, 2, Result).addReg(Tmp2).addImm(1);
@@ -2217,7 +2225,7 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
         if (v < 32768 && v >= -32768) {
           BuildMI(BB, PPC::LI, 1, Result).addSImm(v);
         } else {
-          Tmp1 = MakeReg(MVT::i32);
+          Tmp1 = MakeIntReg();
           BuildMI(BB, PPC::LIS, 1, Tmp1).addSImm(v >> 16);
           BuildMI(BB, PPC::ORI, 2, Result).addReg(Tmp1).addImm(v & 0xFFFF);
         }
@@ -2296,8 +2304,8 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
             && "int to float must operate on i32");
     bool IsUnsigned = (ISD::UINT_TO_FP == opcode);
     Tmp1 = SelectExpr(N.getOperand(0));  // Get the operand register
-    Tmp2 = MakeReg(MVT::f64); // temp reg to load the integer value into
-    Tmp3 = MakeReg(MVT::i32); // temp reg to hold the conversion constant
+    Tmp2 = MakeFPReg(); // temp reg to load the integer value into
+    Tmp3 = MakeIntReg(); // temp reg to hold the conversion constant
 
     int FrameIdx = BB->getParent()->getFrameInfo()->CreateStackObject(8, 8);
     MachineConstantPool *CP = BB->getParent()->getConstantPool();
@@ -2313,7 +2321,7 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
       BuildMI(BB, PPC::FSUB, 2, Result).addReg(Tmp2).addReg(ConstF);
     } else {
       unsigned ConstF = getConstDouble(0x1.000008p52);
-      unsigned TmpL = MakeReg(MVT::i32);
+      unsigned TmpL = MakeIntReg();
       // Store the hi & low halves of the fp value, currently in int regs
       BuildMI(BB, PPC::LIS, 1, Tmp3).addSImm(0x4330);
       addFrameReference(BuildMI(BB, PPC::STW, 3).addReg(Tmp3), FrameIdx);
