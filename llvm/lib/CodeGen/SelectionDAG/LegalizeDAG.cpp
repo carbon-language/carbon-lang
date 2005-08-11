@@ -2782,6 +2782,8 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
                      Node->getOperand(1), TL, FL, Node->getOperand(4));
     Hi = DAG.getNode(ISD::SELECT_CC, NVT, Node->getOperand(0),
                      Node->getOperand(1), TH, FH, Node->getOperand(4));
+    Lo = LegalizeOp(Lo);
+    Hi = LegalizeOp(Hi);
     break;
   }
   case ISD::SIGN_EXTEND: {

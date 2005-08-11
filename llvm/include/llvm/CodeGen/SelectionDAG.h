@@ -190,10 +190,6 @@ public:
   SDOperand getSelectCC(SDOperand LHS, SDOperand RHS,
                         SDOperand True, SDOperand False, ISD::CondCode Cond) {
     MVT::ValueType VT = True.getValueType();
-    assert(LHS.getValueType() == RHS.getValueType() &&
-           "LHS and RHS of condition must have same type!");
-    assert(True.getValueType() == False.getValueType() &&
-           "True and False arms of SelectCC must have same type!");
     return getNode(ISD::SELECT_CC, VT, LHS, RHS, True, False,getCondCode(Cond));
   }
   
