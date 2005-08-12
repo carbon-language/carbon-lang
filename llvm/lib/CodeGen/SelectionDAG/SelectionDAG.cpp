@@ -993,6 +993,24 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
         return getNode(ISD::UNDEF, N1.getValueType());
       }
       if (C2 == 0) return N1;
+      
+      if (Opcode == ISD::SRA) {
+        // If the sign bit is known to be zero, switch this to a SRL.
+        if (MaskedValueIsZero(N1,
+                              1ULL << MVT::getSizeInBits(N1.getValueType())-1,
+                              TLI))
+          return getNode(ISD::SRL, N1.getValueType(), N1, N2);
+      } else {
+        // If the part left over is known to be zero, the whole thing is zero.
+        uint64_t TypeMask = ~0ULL >> (64-MVT::getSizeInBits(N1.getValueType()));
+        if (Opcode == ISD::SRL) {
+          if (MaskedValueIsZero(N1, TypeMask << C2, TLI))
+            return getConstant(0, N1.getValueType());
+        } else if (Opcode == ISD::SHL) {
+          if (MaskedValueIsZero(N1, TypeMask >> C2, TLI))
+            return getConstant(0, N1.getValueType());
+        }
+      }
 
       if (Opcode == ISD::SHL && N1.getNumOperands() == 2)
         if (ConstantSDNode *OpSA = dyn_cast<ConstantSDNode>(N1.getOperand(1))) {
