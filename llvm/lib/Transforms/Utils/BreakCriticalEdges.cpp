@@ -124,8 +124,8 @@ bool llvm::SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum, Pass *P) {
     // We no longer enter through TIBB, now we come in through NewBB.  Revector
     // exactly one entry in the PHI node that used to come from TIBB to come
     // from NewBB.
-    Value *InVal = PN->removeIncomingValue(TIBB, false);
-    PN->addIncoming(InVal, NewBB);
+    int BBIdx = PN->getBasicBlockIndex(TIBB);
+    PN->setIncomingBlock(BBIdx, NewBB);
   }
 
   // If we don't have a pass object, we can't update anything...
