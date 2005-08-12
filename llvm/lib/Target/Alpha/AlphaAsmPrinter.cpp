@@ -222,7 +222,7 @@ void AlphaAsmPrinter::printConstantPool(MachineConstantPool *MCP) {
 
   if (CP.empty()) return;
 
-  SwitchSection(O, "section .rodata");
+  SwitchSection(O, "rodata");
   for (unsigned i = 0, e = CP.size(); i != e; ++i) {
     //    SwitchSection(O, "section .rodata, \"dr\"");
     emitAlignment(TD.getTypeAlignmentShift(CP[i]->getType()));
@@ -252,7 +252,7 @@ void AlphaAsmPrinter::SwitchSection(std::ostream &OS, const char *NewSection)
   if (CurSection != NewSection) {
     CurSection = NewSection;
     if (!CurSection.empty())
-      OS << "\t." << NewSection << "\n";
+      OS << "\t.section ." << NewSection << "\n";
   }
 }
 
@@ -297,7 +297,7 @@ bool AlphaAsmPrinter::doFinalization(Module &M) {
           // FALL THROUGH
         case GlobalValue::InternalLinkage:
           if (C->isNullValue())
-            SwitchSection(O, "bss"); //was .bss
+            SwitchSection(O, "bss");
           else
             SwitchSection(O, "data");
           break;
