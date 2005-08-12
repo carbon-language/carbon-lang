@@ -26,6 +26,7 @@
 #include "llvm/Analysis/ScalarEvolutionExpander.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
+#include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/ADT/Statistic.h"
@@ -391,7 +392,7 @@ namespace {
     // operands of Inst to use the new expression 'NewBase', with 'Imm' added
     // to it.
     void RewriteInstructionToUseNewBase(const SCEVHandle &NewBase,
-                                        SCEVExpander &Rewriter);
+                                        SCEVExpander &Rewriter, Pass *P);
 
     // Sort by the Base field.
     bool operator<(const BasedUser &BU) const { return Base < BU.Base; }
@@ -413,12 +414,12 @@ void BasedUser::dump() const {
 // operands of Inst to use the new expression 'NewBase', with 'Imm' added
 // to it.
 void BasedUser::RewriteInstructionToUseNewBase(const SCEVHandle &NewBase,
-                                               SCEVExpander &Rewriter) {
+                                               SCEVExpander &Rewriter,
+                                               Pass *P) {
   if (!isa<PHINode>(Inst)) {
     SCEVHandle NewValSCEV = SCEVAddExpr::get(NewBase, Imm);
     Value *NewVal = Rewriter.expandCodeFor(NewValSCEV, Inst,
                                            OperandValToReplace->getType());
-    
     // Replace the use of the operand Value with the new Phi we just created.
     Inst->replaceUsesOfWith(OperandValToReplace, NewVal);
     DEBUG(std::cerr << "    CHANGED: IMM =" << *Imm << "  Inst = " << *Inst);
@@ -434,7 +435,19 @@ void BasedUser::RewriteInstructionToUseNewBase(const SCEVHandle &NewBase,
   PHINode *PN = cast<PHINode>(Inst);
   for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
     if (PN->getIncomingValue(i) == OperandValToReplace) {
-      // FIXME: this should split any critical edges.
+      // If this is a critical edge, split the edge so that we do not insert the
+      // code on all predecessor/successor paths.
+      if (e != 1 &&
+          PN->getIncomingBlock(i)->getTerminator()->getNumSuccessors() > 1) {
+        TerminatorInst *PredTI = PN->getIncomingBlock(i)->getTerminator();
+        for (unsigned Succ = 0; ; ++Succ) {
+          assert(Succ != PredTI->getNumSuccessors() &&"Didn't find successor?");
+          if (PredTI->getSuccessor(Succ) == PN->getParent()) {
+            SplitCriticalEdge(PredTI, Succ, P);
+            break;
+          }
+        }
+      }
 
       Value *&Code = InsertedCode[PN->getIncomingBlock(i)];
       if (!Code) {
@@ -623,7 +636,7 @@ RemoveCommonExpressionsFromUseBases(std::vector<BasedUser> &Uses) {
       for (unsigned j = 0, e = AE->getNumOperands(); j != e; ++j)
         if (!SubExpressionUseCounts.count(AE->getOperand(j)))
           NewOps.push_back(AE->getOperand(j));
-      if (NewOps.size() == 0)
+      if (NewOps.empty())
         Uses[i].Base = Zero;
       else
         Uses[i].Base = SCEVAddExpr::get(NewOps);
@@ -783,7 +796,7 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
         // Add BaseV to the PHI value if needed.
         RewriteExpr = SCEVAddExpr::get(RewriteExpr, SCEVUnknown::get(BaseV));
       
-      User.RewriteInstructionToUseNewBase(RewriteExpr, Rewriter);
+      User.RewriteInstructionToUseNewBase(RewriteExpr, Rewriter, this);
 
       // Mark old value we replaced as possibly dead, so that it is elminated
       // if we just replaced the last use of that value.
