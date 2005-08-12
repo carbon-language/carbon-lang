@@ -392,7 +392,8 @@ namespace {
     // operands of Inst to use the new expression 'NewBase', with 'Imm' added
     // to it.
     void RewriteInstructionToUseNewBase(const SCEVHandle &NewBase,
-                                        SCEVExpander &Rewriter, Pass *P);
+                                        SCEVExpander &Rewriter, Loop *L,
+                                        Pass *P);
 
     // Sort by the Base field.
     bool operator<(const BasedUser &BU) const { return Base < BU.Base; }
@@ -415,7 +416,7 @@ void BasedUser::dump() const {
 // to it.
 void BasedUser::RewriteInstructionToUseNewBase(const SCEVHandle &NewBase,
                                                SCEVExpander &Rewriter,
-                                               Pass *P) {
+                                               Loop *L, Pass *P) {
   if (!isa<PHINode>(Inst)) {
     SCEVHandle NewValSCEV = SCEVAddExpr::get(NewBase, Imm);
     Value *NewVal = Rewriter.expandCodeFor(NewValSCEV, Inst,
@@ -443,7 +444,18 @@ void BasedUser::RewriteInstructionToUseNewBase(const SCEVHandle &NewBase,
         for (unsigned Succ = 0; ; ++Succ) {
           assert(Succ != PredTI->getNumSuccessors() &&"Didn't find successor?");
           if (PredTI->getSuccessor(Succ) == PN->getParent()) {
+            // First step, split the critical edge.
             SplitCriticalEdge(PredTI, Succ, P);
+            
+            // Next step: move the basic block.  In particular, if the PHI node
+            // is outside of the loop, and PredTI is in the loop, we want to
+            // move the block to be immediately before the PHI block, not
+            // immediately after PredTI.
+            if (L->contains(PredTI->getParent()) &&
+                !L->contains(PN->getParent())) {
+              BasicBlock *NewBB = PN->getIncomingBlock(i);
+              NewBB->moveBefore(PN->getParent());
+            }
             break;
           }
         }
@@ -796,7 +808,7 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
         // Add BaseV to the PHI value if needed.
         RewriteExpr = SCEVAddExpr::get(RewriteExpr, SCEVUnknown::get(BaseV));
       
-      User.RewriteInstructionToUseNewBase(RewriteExpr, Rewriter, this);
+      User.RewriteInstructionToUseNewBase(RewriteExpr, Rewriter, L, this);
 
       // Mark old value we replaced as possibly dead, so that it is elminated
       // if we just replaced the last use of that value.
