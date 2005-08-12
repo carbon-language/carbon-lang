@@ -101,6 +101,11 @@ public:
   /// and deletes it.
   ///
   void eraseFromParent();
+  
+  /// moveBefore - Unlink this instruction from its current function and
+  /// insert it into the function that MovePos lives in, right before
+  /// MovePos.
+  void moveBefore(BasicBlock *MovePos);
 
   /// getSinglePredecessor - If this basic block has a single predecessor block,
   /// return the block, otherwise return a null pointer.
