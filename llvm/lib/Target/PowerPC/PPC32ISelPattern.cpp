@@ -640,7 +640,7 @@ static bool isRotateAndMask(unsigned Opcode, unsigned Shift, unsigned Mask,
   }
   
   // if the mask doesn't intersect any Indeterminant bits
-  if (!(Mask & Indeterminant)) {
+  if (Mask && !(Mask & Indeterminant)) {
     SH = Shift;
     // make sure the mask is still a mask (wrap arounds may not be)
     return isRunOfOnes(Mask, MB, ME);
