@@ -299,36 +299,36 @@ def LDAH : MForm<0x09, "ldah $RA,$DISP($RB)">;  //Load address high
 
 
 //Loads, int, Rellocated Low form
-def LDLr : MForm<0x28,  "ldl $RA,$DISP($RB) !gprellow">; // Load sign-extended longword
-def LDQr : MForm<0x29,  "ldq $RA,$DISP($RB) !gprellow">; //Load quadword
-def LDBUr : MForm<0x0A, "ldbu $RA,$DISP($RB) !gprellow">; //Load zero-extended byte
-def LDWUr : MForm<0x0C, "ldwu $RA,$DISP($RB) !gprellow">; //Load zero-extended word
+def LDLr : MForm<0x28,  "ldl $RA,$DISP($RB)\t\t!gprellow">; // Load sign-extended longword
+def LDQr : MForm<0x29,  "ldq $RA,$DISP($RB)\t\t!gprellow">; //Load quadword
+def LDBUr : MForm<0x0A, "ldbu $RA,$DISP($RB)\t\t!gprellow">; //Load zero-extended byte
+def LDWUr : MForm<0x0C, "ldwu $RA,$DISP($RB)\t\t!gprellow">; //Load zero-extended word
 
 //Loads, float, Rellocated Low form
-def LDSr : MForm<0x22, "lds $RA,$DISP($RB) !gprellow">; //Load S_floating
-def LDTr : MForm<0x23, "ldt $RA,$DISP($RB) !gprellow">; //Load T_floating
+def LDSr : MForm<0x22, "lds $RA,$DISP($RB)\t\t!gprellow">; //Load S_floating
+def LDTr : MForm<0x23, "ldt $RA,$DISP($RB)\t\t!gprellow">; //Load T_floating
 
 //Load address, rellocated low and high form
-def LDAr : MForm<0x08,  "lda $RA,$DISP($RB) !gprellow">;  //Load address
-def LDAHr : MForm<0x09, "ldah $RA,$DISP($RB) !gprelhigh">;  //Load address high
+def LDAr : MForm<0x08,  "lda $RA,$DISP($RB)\t\t!gprellow">;  //Load address
+def LDAHr : MForm<0x09, "ldah $RA,$DISP($RB)\t\t!gprelhigh">;  //Load address high
 
 //load address, rellocated gpdist form
-def LDAg : MgForm<0x08,  "lda $RA,0($RB) !gpdisp!$NUM">;  //Load address
-def LDAHg : MgForm<0x09, "ldah $RA,0($RB) !gpdisp!$NUM">;  //Load address
+def LDAg : MgForm<0x08,  "lda $RA,0($RB)\t\t!gpdisp!$NUM">;  //Load address
+def LDAHg : MgForm<0x09, "ldah $RA,0($RB)\t\t!gpdisp!$NUM">;  //Load address
 
 
 //Load quad, rellocated literal form
-def LDQl : MForm<0x29, "ldq $RA,$DISP($RB) !literal">; //Load quadword
+def LDQl : MForm<0x29, "ldq $RA,$DISP($RB)\t\t!literal">; //Load quadword
 
 //Stores, int
-def STBr : MForm<0x0E, "stb $RA,$DISP($RB) !gprellow">; // Store byte
-def STWr : MForm<0x0D, "stw $RA,$DISP($RB) !gprellow">; // Store word
-def STLr : MForm<0x2C, "stl $RA,$DISP($RB) !gprellow">; // Store longword
-def STQr : MForm<0x2D, "stq $RA,$DISP($RB) !gprellow">; //Store quadword
+def STBr : MForm<0x0E, "stb $RA,$DISP($RB)\t\t!gprellow">; // Store byte
+def STWr : MForm<0x0D, "stw $RA,$DISP($RB)\t\t!gprellow">; // Store word
+def STLr : MForm<0x2C, "stl $RA,$DISP($RB)\t\t!gprellow">; // Store longword
+def STQr : MForm<0x2D, "stq $RA,$DISP($RB)\t\t!gprellow">; //Store quadword
 
 //Stores, float
-def STSr : MForm<0x26, "sts $RA,$DISP($RB) !gprellow">; //Store S_floating
-def STTr : MForm<0x27, "stt $RA,$DISP($RB) !gprellow">; //Store T_floating
+def STSr : MForm<0x26, "sts $RA,$DISP($RB)\t\t!gprellow">; //Store S_floating
+def STTr : MForm<0x27, "stt $RA,$DISP($RB)\t\t!gprellow">; //Store T_floating
 
 
 //Branches, int
