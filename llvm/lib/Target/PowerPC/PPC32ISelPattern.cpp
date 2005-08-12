@@ -1717,10 +1717,17 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
        return Result;
       }
     }
+    if (isOprNot(N.getOperand(1))) {
+      Tmp1 = SelectExpr(N.getOperand(0));
+      Tmp2 = SelectExpr(N.getOperand(1).getOperand(0));
+      BuildMI(BB, PPC::ANDC, 2, Result).addReg(Tmp1).addReg(Tmp2);
+      RecordSuccess = false;
+      return Result;
+    }
     if (isOprNot(N.getOperand(0))) {
-      Tmp1 = SelectExpr(N.getOperand(0).getOperand(0));
-      Tmp2 = SelectExpr(N.getOperand(1));
-      BuildMI(BB, PPC::ANDC, 2, Result).addReg(Tmp2).addReg(Tmp1);
+      Tmp1 = SelectExpr(N.getOperand(1));
+      Tmp2 = SelectExpr(N.getOperand(0).getOperand(0));
+      BuildMI(BB, PPC::ANDC, 2, Result).addReg(Tmp1).addReg(Tmp2);
       RecordSuccess = false;
       return Result;
     }
@@ -1737,6 +1744,20 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
       return Result;
     if (SelectIntImmediateExpr(N, Result, PPC::ORIS, PPC::ORI))
       return Result;
+    if (isOprNot(N.getOperand(1))) {
+      Tmp1 = SelectExpr(N.getOperand(0));
+      Tmp2 = SelectExpr(N.getOperand(1).getOperand(0));
+      BuildMI(BB, PPC::ORC, 2, Result).addReg(Tmp1).addReg(Tmp2);
+      RecordSuccess = false;
+      return Result;
+    }
+    if (isOprNot(N.getOperand(0))) {
+      Tmp1 = SelectExpr(N.getOperand(1));
+      Tmp2 = SelectExpr(N.getOperand(0).getOperand(0));
+      BuildMI(BB, PPC::ORC, 2, Result).addReg(Tmp1).addReg(Tmp2);
+      RecordSuccess = false;
+      return Result;
+    }
     // emit regular or
     Tmp1 = SelectExpr(N.getOperand(0));
     Tmp2 = SelectExpr(N.getOperand(1));
