@@ -325,21 +325,6 @@ void LoopSimplify::InsertPreheaderForLoop(Loop *L) {
   if (Loop *Parent = L->getParentLoop())
     Parent->addBasicBlockToLoop(NewBB, getAnalysis<LoopInfo>());
 
-  // If the header for the loop used to be an exit node for another loop, then
-  // we need to update this to know that the loop-preheader is now the exit
-  // node.  Note that the only loop that could have our header as an exit node
-  // is a sibling loop, ie, one with the same parent loop, or one if it's
-  // children.
-  //
-  LoopInfo::iterator ParentLoops, ParentLoopsE;
-  if (Loop *Parent = L->getParentLoop()) {
-    ParentLoops = Parent->begin();
-    ParentLoopsE = Parent->end();
-  } else {      // Must check top-level loops...
-    ParentLoops = getAnalysis<LoopInfo>().begin();
-    ParentLoopsE = getAnalysis<LoopInfo>().end();
-  }
-
   DominatorSet &DS = getAnalysis<DominatorSet>();  // Update dominator info
   DominatorTree &DT = getAnalysis<DominatorTree>();
 
