@@ -14,9 +14,7 @@
 #include "PowerPCTargetMachine.h"
 #include "PowerPCFrameInfo.h"
 #include "PPC32TargetMachine.h"
-#include "PPC64TargetMachine.h"
 #include "PPC32JITInfo.h"
-#include "PPC64JITInfo.h"
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
 #include "llvm/Analysis/Verifier.h"
@@ -35,16 +33,10 @@ static cl::opt<bool> EnablePPCLSR("enable-lsr-for-ppc", cl::Hidden,
 
 namespace {
   const std::string PPC32ID = "PowerPC/32bit";
-  const std::string PPC64ID = "PowerPC/64bit";
 
   // Register the targets
   RegisterTarget<PPC32TargetMachine>
   X("ppc32", "  PowerPC 32-bit");
-
-#if 0
-  RegisterTarget<PPC64TargetMachine>
-  Y("ppc64", "  PowerPC 64-bit (unimplemented)");
-#endif
 }
 
 PowerPCTargetMachine::PowerPCTargetMachine(const std::string &name,
@@ -75,8 +67,6 @@ bool PowerPCTargetMachine::addPassesToEmitFile(PassManager &PM,
                                                 CodeGenFileType FileType) {
   if (FileType != TargetMachine::AssemblyFile) return true;
 
-  bool LP64 = (0 != dynamic_cast<PPC64TargetMachine *>(this));
-
   if (EnablePPCLSR) {
     PM.add(createLoopStrengthReducePass());
     PM.add(createVerifierPass());
@@ -98,9 +88,7 @@ bool PowerPCTargetMachine::addPassesToEmitFile(PassManager &PM,
   PM.add(createUnreachableBlockEliminationPass());
 
   // Default to pattern ISel
-  if (LP64)
-    PM.add(createPPC64ISelPattern(*this));
-  else if (PatternISelTriState == 0)
+  if (PatternISelTriState == 0)
     PM.add(createPPC32ISelSimple(*this));
   else
     PM.add(createPPC32ISelPattern(*this));
@@ -138,8 +126,6 @@ void PowerPCJITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
   // The JIT does not support or need PIC.
   PICEnabled = false;
 
-  bool LP64 = (0 != dynamic_cast<PPC64TargetMachine *>(&TM));
-
   if (EnablePPCLSR) {
     PM.add(createLoopStrengthReducePass());
     PM.add(createCFGSimplificationPass());
@@ -160,9 +146,7 @@ void PowerPCJITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
   PM.add(createUnreachableBlockEliminationPass());
 
   // Default to pattern ISel
-  if (LP64)
-    PM.add(createPPC64ISelPattern(TM));
-  else if (PatternISelTriState == 0)
+  if (PatternISelTriState == 0)
     PM.add(createPPC32ISelSimple(TM));
   else
     PM.add(createPPC32ISelPattern(TM));
@@ -184,13 +168,6 @@ PPC32TargetMachine::PPC32TargetMachine(const Module &M, IntrinsicLowering *IL)
                          TargetData(PPC32ID,false,4,4,4,4,4,4,2,1,1),
                          PowerPCFrameInfo(*this, false)), JITInfo(*this) {}
 
-/// PPC64TargetMachine ctor - Create a LP64 architecture model
-///
-PPC64TargetMachine::PPC64TargetMachine(const Module &M, IntrinsicLowering *IL)
-  : PowerPCTargetMachine(PPC64ID, IL, M,
-                         TargetData(PPC64ID,false,8,4,4,4,4,4,2,1,1),
-                         PowerPCFrameInfo(*this, true)) {}
-
 unsigned PPC32TargetMachine::getModuleMatchQuality(const Module &M) {
   // We strongly match "powerpc-*".
   std::string TT = M.getTargetTriple();
@@ -200,17 +177,6 @@ unsigned PPC32TargetMachine::getModuleMatchQuality(const Module &M) {
   if (M.getEndianness()  == Module::BigEndian &&
       M.getPointerSize() == Module::Pointer32)
     return 10;                                   // Weak match
-  else if (M.getEndianness() != Module::AnyEndianness ||
-           M.getPointerSize() != Module::AnyPointerSize)
-    return 0;                                    // Match for some other target
-
-  return getJITMatchQuality()/2;
-}
-
-unsigned PPC64TargetMachine::getModuleMatchQuality(const Module &M) {
-  if (M.getEndianness()  == Module::BigEndian &&
-      M.getPointerSize() == Module::Pointer64)
-    return 10;                                   // Direct match
   else if (M.getEndianness() != Module::AnyEndianness ||
            M.getPointerSize() != Module::AnyPointerSize)
     return 0;                                    // Match for some other target
