@@ -19,6 +19,7 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Analysis/Dominators.h"
+#include "llvm/Analysis/LoopInfo.h"
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
 #include "llvm/Type.h"
@@ -37,6 +38,7 @@ namespace {
       AU.addPreserved<ImmediateDominators>();
       AU.addPreserved<DominatorTree>();
       AU.addPreserved<DominanceFrontier>();
+      AU.addPreserved<LoopInfo>();
 
       // No loop canonicalization guarantees are broken by this pass.
       AU.addPreservedID(LoopSimplifyID);
@@ -170,6 +172,35 @@ bool llvm::SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum, Pass *P) {
     DominanceFrontier::DomSetType NewDFSet;
     NewDFSet.insert(DestBB);
     DF->addBasicBlock(NewBB, NewDFSet);
+  }
+  
+  // Update LoopInfo if it is around.
+  if (LoopInfo *LI = P->getAnalysisToUpdate<LoopInfo>()) {
+    // If one or the other blocks were not in a loop, the new block is not
+    // either, and thus LI doesn't need to be updated.
+    if (Loop *TIL = LI->getLoopFor(TIBB))
+      if (Loop *DestLoop = LI->getLoopFor(DestBB)) {
+        if (TIL == DestLoop) {
+          // Both in the same loop, the NewBB joins loop.
+          DestLoop->addBasicBlockToLoop(NewBB, *LI);
+        } else if (TIL->contains(DestLoop->getHeader())) {
+          // Edge from an outer loop to an inner loop.  Add to the outer lopo.
+          TIL->addBasicBlockToLoop(NewBB, *LI);
+        } else if (DestLoop->contains(TIL->getHeader())) {
+          // Edge from an inner loop to an outer loop.  Add to the outer lopo.
+          DestLoop->addBasicBlockToLoop(NewBB, *LI);
+        } else {
+          // Edge from two loops with no containment relation.  Because these
+          // are natural loops, we know that the destination block must be the
+          // header of its loop (adding a branch into a loop elsewhere would
+          // create an irreducible loop).
+          assert(DestLoop->getHeader() == DestBB &&
+                 "Should not create irreducible loops!");
+          if (Loop *P = DestLoop->getParentLoop())
+            P->addBasicBlockToLoop(NewBB, *LI);
+        }
+      }
+    
   }
   return true;
 }
