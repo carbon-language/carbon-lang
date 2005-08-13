@@ -593,6 +593,36 @@ static void MoveImmediateValues(SCEVHandle &Val, SCEVHandle &Imm,
   // Otherwise, no immediates to move.
 }
 
+
+/// IncrementAddExprUses - Decompose the specified expression into its added
+/// subexpressions, and increment SubExpressionUseCounts for each of these
+/// decomposed parts.
+static void SeparateSubExprs(std::vector<SCEVHandle> &SubExprs,
+                             SCEVHandle Expr) {
+  if (SCEVAddExpr *AE = dyn_cast<SCEVAddExpr>(Expr)) {
+    for (unsigned j = 0, e = AE->getNumOperands(); j != e; ++j)
+      SeparateSubExprs(SubExprs, AE->getOperand(j));
+  } else if (SCEVAddRecExpr *SARE = dyn_cast<SCEVAddRecExpr>(Expr)) {
+    SCEVHandle Zero = SCEVUnknown::getIntegerSCEV(0, Expr->getType());
+    if (SARE->getOperand(0) == Zero) {
+      SubExprs.push_back(Expr);
+    } else {
+      // Compute the addrec with zero as its base.
+      std::vector<SCEVHandle> Ops(SARE->op_begin(), SARE->op_end());
+      Ops[0] = Zero;   // Start with zero base.
+      SubExprs.push_back(SCEVAddRecExpr::get(Ops, SARE->getLoop()));
+      
+
+      SeparateSubExprs(SubExprs, SARE->getOperand(0));
+    }
+  } else if (!isa<SCEVConstant>(Expr) ||
+             !cast<SCEVConstant>(Expr)->getValue()->isNullValue()) {
+    // Do not add zero.
+    SubExprs.push_back(Expr);
+  }
+}
+
+
 /// RemoveCommonExpressionsFromUseBases - Look through all of the uses in Bases,
 /// removing any common subexpressions from it.  Anything truly common is
 /// removed, accumulated, and returned.  This looks for things like (a+b+c) and
@@ -613,17 +643,21 @@ RemoveCommonExpressionsFromUseBases(std::vector<BasedUser> &Uses) {
   // If any subexpressions are used Uses.size() times, they are common.
   std::map<SCEVHandle, unsigned> SubExpressionUseCounts;
   
-  for (unsigned i = 0; i != NumUses; ++i)
-    if (SCEVAddExpr *AE = dyn_cast<SCEVAddExpr>(Uses[i].Base)) {
-      for (unsigned j = 0, e = AE->getNumOperands(); j != e; ++j)
-        SubExpressionUseCounts[AE->getOperand(j)]++;
-    } else {
-      // If the base is zero (which is common), return zero now, there are no
-      // CSEs we can find.
-      if (Uses[i].Base == Zero) return Result;
-      SubExpressionUseCounts[Uses[i].Base]++;
-    }
-  
+  std::vector<SCEVHandle> SubExprs;
+  for (unsigned i = 0; i != NumUses; ++i) {
+    // If the base is zero (which is common), return zero now, there are no
+    // CSEs we can find.
+    if (Uses[i].Base == Zero) return Zero;
+
+    // Split the expression into subexprs.
+    SeparateSubExprs(SubExprs, Uses[i].Base);
+    // Add one to SubExpressionUseCounts for each subexpr present.
+    for (unsigned j = 0, e = SubExprs.size(); j != e; ++j)
+      SubExpressionUseCounts[SubExprs[j]]++;
+    SubExprs.clear();
+  }
+
+
   // Now that we know how many times each is used, build Result.
   for (std::map<SCEVHandle, unsigned>::iterator I =
        SubExpressionUseCounts.begin(), E = SubExpressionUseCounts.end();
@@ -640,24 +674,23 @@ RemoveCommonExpressionsFromUseBases(std::vector<BasedUser> &Uses) {
   if (Result == Zero) return Result;
   
   // Otherwise, remove all of the CSE's we found from each of the base values.
-  for (unsigned i = 0; i != NumUses; ++i)
-    if (SCEVAddExpr *AE = dyn_cast<SCEVAddExpr>(Uses[i].Base)) {
-      std::vector<SCEVHandle> NewOps;
-      
-      // Remove all of the values that are now in SubExpressionUseCounts.
-      for (unsigned j = 0, e = AE->getNumOperands(); j != e; ++j)
-        if (!SubExpressionUseCounts.count(AE->getOperand(j)))
-          NewOps.push_back(AE->getOperand(j));
-      if (NewOps.empty())
-        Uses[i].Base = Zero;
-      else
-        Uses[i].Base = SCEVAddExpr::get(NewOps);
-    } else {
-      // If the base is zero (which is common), return zero now, there are no
-      // CSEs we can find.
-      assert(Uses[i].Base == Result);
+  for (unsigned i = 0; i != NumUses; ++i) {
+    // Split the expression into subexprs.
+    SeparateSubExprs(SubExprs, Uses[i].Base);
+
+    // Remove any common subexpressions.
+    for (unsigned j = 0, e = SubExprs.size(); j != e; ++j)
+      if (SubExpressionUseCounts.count(SubExprs[j])) {
+        SubExprs.erase(SubExprs.begin()+j);
+        --j; --e;
+      }
+    
+    // Finally, the non-shared expressions together.
+    if (SubExprs.empty())
       Uses[i].Base = Zero;
-    }
+    else
+      Uses[i].Base = SCEVAddExpr::get(SubExprs);
+  }
  
   return Result;
 }
