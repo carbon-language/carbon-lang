@@ -686,9 +686,10 @@ SDOperand SelectionDAG::SimplifySetCC(MVT::ValueType VT, SDOperand N1,
   return SDOperand();
 }
 
-SDOperand SelectionDAG::SimplifySelectCC(MVT::ValueType VT, ISD::CondCode CC,
-                                    SDOperand N1, SDOperand N2, SDOperand N3,
-                                    SDOperand N4) {
+SDOperand SelectionDAG::SimplifySelectCC(SDOperand N1, SDOperand N2, 
+                                         SDOperand N3, SDOperand N4, 
+                                         ISD::CondCode CC) {
+  MVT::ValueType VT = N3.getValueType();
   ConstantSDNode *N2C = dyn_cast<ConstantSDNode>(N2.Val);
   ConstantSDNode *N3C = dyn_cast<ConstantSDNode>(N3.Val);
   ConstantSDNode *N4C = dyn_cast<ConstantSDNode>(N4.Val);
@@ -1490,9 +1491,8 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
         return getNode(ISD::AND, VT, N1, N2);
     }
     if (N1.getOpcode() == ISD::SETCC) {
-      SDOperand Simp = SimplifySelectCC(VT, 
-                                  cast<CondCodeSDNode>(N1.getOperand(2))->get(),
-                                  N1.getOperand(0), N1.getOperand(1), N2, N3);
+      SDOperand Simp = SimplifySelectCC(N1.getOperand(0), N1.getOperand(1), N2, 
+                             N3, cast<CondCodeSDNode>(N1.getOperand(2))->get());
       if (Simp.Val) return Simp;
     }
     break;
@@ -1541,8 +1541,10 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
            "LHS and RHS of condition must have same type!");
     assert(N3.getValueType() == N4.getValueType() &&
            "True and False arms of SelectCC must have same type!");
-    SDOperand Simp = SimplifySelectCC(VT, cast<CondCodeSDNode>(N5)->get(), N1, 
-                                      N2, N3, N4);
+    assert(N3.getValueType() == VT &&
+           "select_cc node must be of same type as true and false value!");
+    SDOperand Simp = SimplifySelectCC(N1, N2, N3, N4, 
+                                      cast<CondCodeSDNode>(N5)->get());
     if (Simp.Val) return Simp;
   }
         

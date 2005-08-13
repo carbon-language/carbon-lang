@@ -222,9 +222,8 @@ private:
   /// SimplifySelectCC - Try to simplify a select_cc built with the specified
   /// operands and cc.  This can be used to simplify both the select_cc node,
   /// and a select node whose first operand is a setcc.
-  SDOperand SimplifySelectCC(MVT::ValueType VT, ISD::CondCode CC,
-                             SDOperand N1, SDOperand N2, SDOperand N3,
-                             SDOperand N4);
+  SDOperand SimplifySelectCC(SDOperand N1, SDOperand N2, SDOperand N3,
+                             SDOperand N4, ISD::CondCode CC);
     
   // Maps to auto-CSE operations.
   std::map<std::pair<unsigned, std::pair<SDOperand, MVT::ValueType> >,
