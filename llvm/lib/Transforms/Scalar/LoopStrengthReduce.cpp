@@ -690,6 +690,7 @@ RemoveCommonExpressionsFromUseBases(std::vector<BasedUser> &Uses) {
       Uses[i].Base = Zero;
     else
       Uses[i].Base = SCEVAddExpr::get(SubExprs);
+    SubExprs.clear();
   }
  
   return Result;
