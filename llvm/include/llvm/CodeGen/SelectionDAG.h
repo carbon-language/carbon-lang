@@ -214,12 +214,18 @@ public:
 private:
   void DeleteNodeIfDead(SDNode *N, void *NodeSet);
   
-  // Try to simplify a setcc built with the specified operands and cc.  If
-  // unable to simplify it, return a null SDOperand.
+  /// SimplifySetCC - Try to simplify a setcc built with the specified operands 
+  /// and cc.  If unable to simplify it, return a null SDOperand.
   SDOperand SimplifySetCC(MVT::ValueType VT, SDOperand N1,
                           SDOperand N2, ISD::CondCode Cond);
 
-  
+  /// SimplifySelectCC - Try to simplify a select_cc built with the specified
+  /// operands and cc.  This can be used to simplify both the select_cc node,
+  /// and a select node whose first operand is a setcc.
+  SDOperand SimplifySelectCC(MVT::ValueType VT, ISD::CondCode CC,
+                             SDOperand N1, SDOperand N2, SDOperand N3,
+                             SDOperand N4);
+    
   // Maps to auto-CSE operations.
   std::map<std::pair<unsigned, std::pair<SDOperand, MVT::ValueType> >,
            SDNode *> UnaryOps;

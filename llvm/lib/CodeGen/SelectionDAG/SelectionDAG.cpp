@@ -686,6 +686,80 @@ SDOperand SelectionDAG::SimplifySetCC(MVT::ValueType VT, SDOperand N1,
   return SDOperand();
 }
 
+SDOperand SelectionDAG::SimplifySelectCC(MVT::ValueType VT, ISD::CondCode CC,
+                                    SDOperand N1, SDOperand N2, SDOperand N3,
+                                    SDOperand N4) {
+  ConstantSDNode *N2C = dyn_cast<ConstantSDNode>(N2.Val);
+  ConstantSDNode *N3C = dyn_cast<ConstantSDNode>(N3.Val);
+  ConstantSDNode *N4C = dyn_cast<ConstantSDNode>(N4.Val);
+  
+  // Check to see if we can simplify the select into an fabs node
+  if (ConstantFPSDNode *CFP = dyn_cast<ConstantFPSDNode>(N2)) {
+    // Allow either -0.0 or 0.0
+    if (CFP->getValue() == 0.0) {
+      // select (setg[te] X, +/-0.0), X, fneg(X) -> fabs
+      if ((CC == ISD::SETGE || CC == ISD::SETGT) &&
+          N1 == N3 && N4.getOpcode() == ISD::FNEG &&
+          N1 == N4.getOperand(0))
+        return getNode(ISD::FABS, VT, N1);
+      
+      // select (setl[te] X, +/-0.0), fneg(X), X -> fabs
+      if ((CC == ISD::SETLT || CC == ISD::SETLE) &&
+          N1 == N4 && N3.getOpcode() == ISD::FNEG &&
+          N3.getOperand(0) == N4)
+        return getNode(ISD::FABS, VT, N4);
+    }
+  }
+  
+  // Check to see if we can perform the "gzip trick", transforming
+  // select_cc setlt X, 0, A, 0 -> and (sra X, size(X)-1), A
+  if (N2C && N2C->isNullValue() && N4C && N4C->isNullValue() &&
+      MVT::isInteger(N1.getValueType()) && 
+      MVT::isInteger(N3.getValueType()) && CC == ISD::SETLT) {
+    MVT::ValueType XType = N1.getValueType();
+    MVT::ValueType AType = N3.getValueType();
+    if (XType >= AType) {
+      // and (sra X, size(X)-1, A) -> "and (srl X, C2), A" iff A is a
+      // single-bit constant.  FIXME: remove once the dag combiner
+      // exists.
+      if (N3C && ((N3C->getValue() & (N3C->getValue()-1)) == 0)) {
+        unsigned ShCtV = Log2_64(N3C->getValue());
+        ShCtV = MVT::getSizeInBits(XType)-ShCtV-1;
+        SDOperand ShCt = getConstant(ShCtV, TLI.getShiftAmountTy());
+        SDOperand Shift = getNode(ISD::SRL, XType, N1, ShCt);
+        if (XType > AType)
+          Shift = getNode(ISD::TRUNCATE, AType, Shift);
+        return getNode(ISD::AND, AType, Shift, N3);
+      }
+      SDOperand Shift = getNode(ISD::SRA, XType, N1,
+                                getConstant(MVT::getSizeInBits(XType)-1,
+                                            TLI.getShiftAmountTy()));
+      if (XType > AType)
+        Shift = getNode(ISD::TRUNCATE, AType, Shift);
+      return getNode(ISD::AND, AType, Shift, N3);
+    }
+  }
+  
+  // Check to see if this is an integer abs. select_cc setl[te] X, 0, -X, X ->
+  // Y = sra (X, size(X)-1); xor (add (X, Y), Y)
+  if (N2C && N2C->isNullValue() && (CC == ISD::SETLT || CC == ISD::SETLE) &&
+      N1 == N4 && N3.getOpcode() == ISD::SUB && N1 == N3.getOperand(1)) {
+    if (ConstantSDNode *SubC = dyn_cast<ConstantSDNode>(N3.getOperand(0))) {
+      MVT::ValueType XType = N1.getValueType();
+      if (SubC->isNullValue() && MVT::isInteger(XType)) {
+        SDOperand Shift = getNode(ISD::SRA, XType, N1,
+                                  getConstant(MVT::getSizeInBits(XType)-1,
+                                              TLI.getShiftAmountTy()));
+        return getNode(ISD::XOR, XType, getNode(ISD::ADD, XType, N1, Shift), 
+                       Shift);
+      }
+    }
+  }
+  
+  // Could not fold it.
+  return SDOperand();
+}
+
 /// getNode - Gets or creates the specified node.
 ///
 SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT) {
@@ -1415,6 +1489,12 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
       if (N1 == N3)   // X ? Y : X --> X ? Y : 0 --> X & Y
         return getNode(ISD::AND, VT, N1, N2);
     }
+    if (N1.getOpcode() == ISD::SETCC) {
+      SDOperand Simp = SimplifySelectCC(VT, 
+                                  cast<CondCodeSDNode>(N1.getOperand(2))->get(),
+                                  N1.getOperand(0), N1.getOperand(1), N2, N3);
+      if (Simp.Val) return Simp;
+    }
     break;
   case ISD::BRCOND:
     if (N2C)
@@ -1461,74 +1541,9 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
            "LHS and RHS of condition must have same type!");
     assert(N3.getValueType() == N4.getValueType() &&
            "True and False arms of SelectCC must have same type!");
-    
-    ConstantSDNode *N2C = dyn_cast<ConstantSDNode>(N2.Val);
-    ConstantSDNode *N3C = dyn_cast<ConstantSDNode>(N3.Val);
-    ConstantSDNode *N4C = dyn_cast<ConstantSDNode>(N4.Val);
-    ISD::CondCode CC = cast<CondCodeSDNode>(N5)->get();
-
-    // Check to see if we can simplify the select into an fabs node
-    if (ConstantFPSDNode *CFP = dyn_cast<ConstantFPSDNode>(N2)) {
-      // Allow either -0.0 or 0.0
-      if (CFP->getValue() == 0.0) {
-        // select (setg[te] X, +/-0.0), X, fneg(X) -> fabs
-        if ((CC == ISD::SETGE || CC == ISD::SETGT) &&
-            N1 == N3 && N4.getOpcode() == ISD::FNEG &&
-            N1 == N4.getOperand(0))
-          return getNode(ISD::FABS, VT, N1);
-        
-        // select (setl[te] X, +/-0.0), fneg(X), X -> fabs
-        if ((CC == ISD::SETLT || CC == ISD::SETLE) &&
-            N1 == N4 && N3.getOpcode() == ISD::FNEG &&
-            N3.getOperand(0) == N4)
-          return getNode(ISD::FABS, VT, N4);
-      }
-    }
-    
-    // Check to see if we can perform the "gzip trick", transforming
-    // select_cc setlt X, 0, A, 0 -> and (sra X, size(X)-1), A
-    if (N2C && N2C->isNullValue() && N4C && N4C->isNullValue() &&
-        MVT::isInteger(N1.getValueType()) && 
-        MVT::isInteger(N3.getValueType()) && CC == ISD::SETLT) {
-      MVT::ValueType XType = N1.getValueType();
-      MVT::ValueType AType = N3.getValueType();
-      if (XType >= AType) {
-        // and (sra X, size(X)-1, A) -> "and (srl X, C2), A" iff A is a
-        // single-bit constant.  FIXME: remove once the dag combiner
-        // exists.
-        if (N3C && ((N3C->getValue() & (N3C->getValue()-1)) == 0)) {
-          unsigned ShCtV = Log2_64(N3C->getValue());
-          ShCtV = MVT::getSizeInBits(XType)-ShCtV-1;
-          SDOperand ShCt = getConstant(ShCtV, TLI.getShiftAmountTy());
-          SDOperand Shift = getNode(ISD::SRL, XType, N1, ShCt);
-          if (XType > AType)
-            Shift = getNode(ISD::TRUNCATE, AType, Shift);
-          return getNode(ISD::AND, AType, Shift, N3);
-        }
-        SDOperand Shift = getNode(ISD::SRA, XType, N1,
-                                  getConstant(MVT::getSizeInBits(XType)-1,
-                                              TLI.getShiftAmountTy()));
-        if (XType > AType)
-          Shift = getNode(ISD::TRUNCATE, AType, Shift);
-        return getNode(ISD::AND, AType, Shift, N3);
-      }
-    }
-    
-    // Check to see if this is an integer abs. select_cc setl[te] X, 0, -X, X ->
-    // Y = sra (X, size(X)-1); xor (add (X, Y), Y)
-    if (N2C && N2C->isNullValue() && (CC == ISD::SETLT || CC == ISD::SETLE) &&
-        N1 == N4 && N3.getOpcode() == ISD::SUB && N1 == N3.getOperand(1)) {
-      if (ConstantSDNode *SubC = dyn_cast<ConstantSDNode>(N3.getOperand(0))) {
-        MVT::ValueType XType = N1.getValueType();
-        if (SubC->isNullValue() && MVT::isInteger(XType)) {
-          SDOperand Shift = getNode(ISD::SRA, XType, N1,
-                                    getConstant(MVT::getSizeInBits(XType)-1,
-                                                TLI.getShiftAmountTy()));
-          return getNode(ISD::XOR, XType, getNode(ISD::ADD, XType, N1, Shift), 
-                         Shift);
-        }
-      }
-    }
+    SDOperand Simp = SimplifySelectCC(VT, cast<CondCodeSDNode>(N5)->get(), N1, 
+                                      N2, N3, N4);
+    if (Simp.Val) return Simp;
   }
         
   std::vector<SDOperand> Ops;
