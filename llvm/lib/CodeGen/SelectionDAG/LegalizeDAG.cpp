@@ -1610,7 +1610,25 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       switch (TLI.getOperationAction(Node->getOpcode(), Node->getValueType(0))){
       default: assert(0 && "Unknown operation action!");
       case TargetLowering::Expand:
-        assert(0 && "Cannot expand FP_TO*INT yet");
+        if (Node->getOpcode() == ISD::FP_TO_UINT) {
+          SDOperand True, False;
+          MVT::ValueType VT =  Node->getOperand(0).getValueType();
+          MVT::ValueType NVT = Node->getValueType(0);
+          unsigned ShiftAmt = MVT::getSizeInBits(Node->getValueType(0))-1;
+          Tmp2 = DAG.getConstantFP((double)(1ULL << ShiftAmt), VT);
+          Tmp3 = DAG.getSetCC(TLI.getSetCCResultTy(),
+                            Node->getOperand(0), Tmp2, ISD::SETLT);
+          True = DAG.getNode(ISD::FP_TO_SINT, NVT, Node->getOperand(0));
+          False = DAG.getNode(ISD::FP_TO_SINT, NVT,
+                              DAG.getNode(ISD::SUB, VT, Node->getOperand(0),
+                                          Tmp2));
+          False = DAG.getNode(ISD::XOR, NVT, False, 
+                              DAG.getConstant(1ULL << ShiftAmt, NVT));
+          Result = LegalizeOp(DAG.getNode(ISD::SELECT, NVT, Tmp3, True, False));
+        } else {
+          assert(0 && "Do not know how to expand FP_TO_SINT yet!");
+        }
+        break;
       case TargetLowering::Promote:
         Result = PromoteLegalFP_TO_INT(Tmp1, Node->getValueType(0),
                                        Node->getOpcode() == ISD::FP_TO_SINT);
@@ -1907,7 +1925,18 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
     case Expand:
       assert(0 && "not implemented");
     }
-    Result = DAG.getNode(Node->getOpcode(), NVT, Tmp1);
+    // If we're promoting a UINT to a larger size, check to see if the new node
+    // will be legal.  If it isn't, check to see if FP_TO_SINT is legal, since
+    // we can use that instead.  This allows us to generate better code for
+    // FP_TO_UINT for small destination sizes on targets where FP_TO_UINT is not
+    // legal, such as PowerPC.
+    if (Node->getOpcode() == ISD::FP_TO_UINT && 
+        TargetLowering::Legal != TLI.getOperationAction(ISD::FP_TO_UINT, NVT) &&
+        TargetLowering::Legal == TLI.getOperationAction(ISD::FP_TO_SINT, NVT)) {
+      Result = DAG.getNode(ISD::FP_TO_SINT, NVT, Tmp1);
+    } else {
+      Result = DAG.getNode(Node->getOpcode(), NVT, Tmp1);
+    }
     break;
 
   case ISD::FABS:
@@ -2078,7 +2107,7 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
       break;
     case ISD::CTTZ:
       //if Tmp1 == sizeinbits(NVT) then Tmp1 = sizeinbits(Old VT)
-      Tmp2 = DAG.getSetCC(MVT::i1, Tmp1,
+      Tmp2 = DAG.getSetCC(TLI.getSetCCResultTy(), Tmp1,
                           DAG.getConstant(getSizeInBits(NVT), NVT), ISD::SETEQ);
       Result = DAG.getNode(ISD::SELECT, NVT, Tmp2,
                            DAG.getConstant(getSizeInBits(VT),NVT), Tmp1);
