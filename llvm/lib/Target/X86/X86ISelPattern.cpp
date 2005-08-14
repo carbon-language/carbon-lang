@@ -141,12 +141,20 @@ namespace {
       setOperationAction(ISD::FP_TO_UINT       , MVT::i1   , Promote);
       setOperationAction(ISD::FP_TO_UINT       , MVT::i8   , Promote);
       setOperationAction(ISD::FP_TO_UINT       , MVT::i16  , Promote);
-      setOperationAction(ISD::FP_TO_UINT       , MVT::i32  , Promote);
+
+      if (!X86ScalarSSE)
+        setOperationAction(ISD::FP_TO_UINT     , MVT::i32  , Promote);
 
       // Promote i1/i8 FP_TO_SINT to larger FP_TO_SINTS's, as X86 doesn't have
       // this operation.
       setOperationAction(ISD::FP_TO_SINT       , MVT::i1   , Promote);
       setOperationAction(ISD::FP_TO_SINT       , MVT::i8   , Promote);
+      setOperationAction(ISD::FP_TO_SINT       , MVT::i16  , Promote);
+
+      // Expand FP_TO_UINT into a select.
+      // FIXME: We would like to use a Custom expander here eventually to do
+      // the optimal thing for SSE vs. the default expansion in the legalizer.
+      setOperationAction(ISD::FP_TO_UINT       , MVT::i32  , Expand);
 
       setOperationAction(ISD::BRCONDTWOWAY     , MVT::Other, Expand);
       setOperationAction(ISD::MEMMOVE          , MVT::Other, Expand);
