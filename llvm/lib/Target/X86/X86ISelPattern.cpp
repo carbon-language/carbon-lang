@@ -151,11 +151,6 @@ namespace {
       setOperationAction(ISD::FP_TO_SINT       , MVT::i8   , Promote);
       setOperationAction(ISD::FP_TO_SINT       , MVT::i16  , Promote);
 
-      // Expand FP_TO_UINT into a select.
-      // FIXME: We would like to use a Custom expander here eventually to do
-      // the optimal thing for SSE vs. the default expansion in the legalizer.
-      setOperationAction(ISD::FP_TO_UINT       , MVT::i32  , Expand);
-
       setOperationAction(ISD::BRCONDTWOWAY     , MVT::Other, Expand);
       setOperationAction(ISD::MEMMOVE          , MVT::Other, Expand);
       setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i16  , Expand);
@@ -199,6 +194,11 @@ namespace {
         setOperationAction(ISD::SINT_TO_FP, MVT::i16, Promote);
         setOperationAction(ISD::FP_TO_SINT, MVT::i16, Promote);
 
+        // Expand FP_TO_UINT into a select.
+        // FIXME: We would like to use a Custom expander here eventually to do
+        // the optimal thing for SSE vs. the default expansion in the legalizer.
+        setOperationAction(ISD::FP_TO_UINT       , MVT::i32  , Expand);
+        
         // We don't support sin/cos/sqrt/fmod
         setOperationAction(ISD::FSIN , MVT::f64, Expand);
         setOperationAction(ISD::FCOS , MVT::f64, Expand);
