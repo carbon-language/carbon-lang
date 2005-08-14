@@ -8,7 +8,11 @@
 ##===----------------------------------------------------------------------===##
 LEVEL = ../..
 LIBRARYNAME = LLVMCore
+
+include $(LEVEL)/Makefile.config
+ifeq ($(ARCH),Alpha)
 BUILD_ARCHIVE = 1
+endif
 
 include $(LEVEL)/Makefile.common
 
