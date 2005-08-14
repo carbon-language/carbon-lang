@@ -8,6 +8,23 @@ TODO:
 	la r2, lo16(l2__ZTV4Cell)(r2)
 	addi r2, r2, 8
 
+* Teach LLVM how to codegen this:
+unsigned short foo(float a) { return a; }
+as:
+_foo:
+        fctiwz f0,f1
+        stfd f0,-8(r1)
+        lhz r3,-2(r1)
+        blr
+not:
+_foo:
+        fctiwz f0, f1
+        stfd f0, -8(r1)
+        lwz r2, -4(r1)
+        rlwinm r3, r2, 0, 16, 31
+        blr
+
+
 * Support 'update' load/store instructions.  These are cracked on the G5, but
   are still a codesize win.
 

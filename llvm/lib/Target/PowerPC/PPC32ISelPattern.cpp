@@ -88,6 +88,9 @@ namespace {
       setOperationAction(ISD::SELECT, MVT::f32, Expand);
       setOperationAction(ISD::SELECT, MVT::f64, Expand);
 
+      // PowerPC does not have FP_TO_UINT
+      setOperationAction(ISD::FP_TO_UINT, MVT::i32, Expand);
+      
       setSetCCResultContents(ZeroOrOneSetCCResult);
       addLegalFPImmediate(+0.0); // Necessary for FSEL
       addLegalFPImmediate(-0.0); //
@@ -1341,8 +1344,8 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
 
   switch (opcode) {
   default:
-    Node->dump();
-    assert(0 && "\nNode not handled!\n");
+    Node->dump(); std::cerr << '\n';
+    assert(0 && "Node not handled!\n");
   case ISD::UNDEF:
     BuildMI(BB, PPC::IMPLICIT_DEF, 0, Result);
     return Result;
@@ -2000,75 +2003,14 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
     return Result+N.ResNo;
   }
 
-  case ISD::FP_TO_UINT:
   case ISD::FP_TO_SINT: {
-    bool U = (ISD::FP_TO_UINT == opcode);
     Tmp1 = SelectExpr(N.getOperand(0));
-    if (!U) {
-      Tmp2 = MakeFPReg();
-      BuildMI(BB, PPC::FCTIWZ, 1, Tmp2).addReg(Tmp1);
-      int FrameIdx = BB->getParent()->getFrameInfo()->CreateStackObject(8, 8);
-      addFrameReference(BuildMI(BB, PPC::STFD, 3).addReg(Tmp2), FrameIdx);
-      addFrameReference(BuildMI(BB, PPC::LWZ, 2, Result), FrameIdx, 4);
-      return Result;
-    } else {
-      unsigned Zero = getConstDouble(0.0);
-      unsigned MaxInt = getConstDouble((1LL << 32) - 1);
-      unsigned Border = getConstDouble(1LL << 31);
-      unsigned UseZero = MakeFPReg();
-      unsigned UseMaxInt = MakeFPReg();
-      unsigned UseChoice = MakeFPReg();
-      unsigned TmpReg = MakeFPReg();
-      unsigned TmpReg2 = MakeFPReg();
-      unsigned ConvReg = MakeFPReg();
-      unsigned IntTmp = MakeIntReg();
-      unsigned XorReg = MakeIntReg();
-      MachineFunction *F = BB->getParent();
-      int FrameIdx = F->getFrameInfo()->CreateStackObject(8, 8);
-      // Update machine-CFG edges
-      MachineBasicBlock *XorMBB = new MachineBasicBlock(BB->getBasicBlock());
-      MachineBasicBlock *PhiMBB = new MachineBasicBlock(BB->getBasicBlock());
-      MachineBasicBlock *OldMBB = BB;
-      ilist<MachineBasicBlock>::iterator It = BB; ++It;
-      F->getBasicBlockList().insert(It, XorMBB);
-      F->getBasicBlockList().insert(It, PhiMBB);
-      BB->addSuccessor(XorMBB);
-      BB->addSuccessor(PhiMBB);
-      // Convert from floating point to unsigned 32-bit value
-      // Use 0 if incoming value is < 0.0
-      BuildMI(BB, PPC::FSEL, 3, UseZero).addReg(Tmp1).addReg(Tmp1).addReg(Zero);
-      // Use 2**32 - 1 if incoming value is >= 2**32
-      BuildMI(BB, PPC::FSUB, 2, UseMaxInt).addReg(MaxInt).addReg(Tmp1);
-      BuildMI(BB, PPC::FSEL, 3, UseChoice).addReg(UseMaxInt).addReg(UseZero)
-        .addReg(MaxInt);
-      // Subtract 2**31
-      BuildMI(BB, PPC::FSUB, 2, TmpReg).addReg(UseChoice).addReg(Border);
-      // Use difference if >= 2**31
-      BuildMI(BB, PPC::FCMPU, 2, PPC::CR0).addReg(UseChoice).addReg(Border);
-      BuildMI(BB, PPC::FSEL, 3, TmpReg2).addReg(TmpReg).addReg(TmpReg)
-        .addReg(UseChoice);
-      // Convert to integer
-      BuildMI(BB, PPC::FCTIWZ, 1, ConvReg).addReg(TmpReg2);
-      addFrameReference(BuildMI(BB, PPC::STFD, 3).addReg(ConvReg), FrameIdx);
-      addFrameReference(BuildMI(BB, PPC::LWZ, 2, IntTmp), FrameIdx, 4);
-      BuildMI(BB, PPC::BLT, 2).addReg(PPC::CR0).addMBB(PhiMBB);
-      BuildMI(BB, PPC::B, 1).addMBB(XorMBB);
-
-      // XorMBB:
-      //   add 2**31 if input was >= 2**31
-      BB = XorMBB;
-      BuildMI(BB, PPC::XORIS, 2, XorReg).addReg(IntTmp).addImm(0x8000);
-      XorMBB->addSuccessor(PhiMBB);
-
-      // PhiMBB:
-      //   DestReg = phi [ IntTmp, OldMBB ], [ XorReg, XorMBB ]
-      BB = PhiMBB;
-      BuildMI(BB, PPC::PHI, 4, Result).addReg(IntTmp).addMBB(OldMBB)
-        .addReg(XorReg).addMBB(XorMBB);
-      return Result;
-    }
-    assert(0 && "Should never get here");
-    return 0;
+    Tmp2 = MakeFPReg();
+    BuildMI(BB, PPC::FCTIWZ, 1, Tmp2).addReg(Tmp1);
+    int FrameIdx = BB->getParent()->getFrameInfo()->CreateStackObject(8, 8);
+    addFrameReference(BuildMI(BB, PPC::STFD, 3).addReg(Tmp2), FrameIdx);
+    addFrameReference(BuildMI(BB, PPC::LWZ, 2, Result), FrameIdx, 4);
+    return Result;
   }
 
   case ISD::SETCC: {
@@ -2217,8 +2159,12 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
       assert(0 && "Should never get here");
     }
 
-    unsigned TrueValue = SelectExpr(N.getOperand(2)); //Use if TRUE
-    unsigned FalseValue = SelectExpr(N.getOperand(3)); //Use if FALSE
+    // If the False value only has one use, we can generate better code by
+    // selecting it in the fallthrough basic block rather than here, which
+    // increases register pressure.
+    bool FalseHasOneUse = N.getOperand(3).Val->hasOneUse();
+    unsigned TrueValue = SelectExpr(N.getOperand(2));
+    unsigned FalseValue = FalseHasOneUse ? 0 : SelectExpr(N.getOperand(3));
     unsigned CCReg = SelectCC(N.getOperand(0), N.getOperand(1), CC);
     Opc = getBCCForSetCC(CC);
     
@@ -2249,6 +2195,7 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
     //   %FalseValue = ...
     //   # fallthrough to sinkMBB
     BB = copy0MBB;
+    if (FalseHasOneUse) FalseValue = SelectExpr(N.getOperand(3));
     // Update machine-CFG edges
     BB->addSuccessor(sinkMBB);
 
