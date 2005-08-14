@@ -2162,9 +2162,8 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
     // If the False value only has one use, we can generate better code by
     // selecting it in the fallthrough basic block rather than here, which
     // increases register pressure.
-    bool FalseHasOneUse = N.getOperand(3).Val->hasOneUse();
     unsigned TrueValue = SelectExpr(N.getOperand(2));
-    unsigned FalseValue = FalseHasOneUse ? 0 : SelectExpr(N.getOperand(3));
+    unsigned FalseValue = SelectExpr(N.getOperand(3));
     unsigned CCReg = SelectCC(N.getOperand(0), N.getOperand(1), CC);
     Opc = getBCCForSetCC(CC);
     
@@ -2195,7 +2194,6 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
     //   %FalseValue = ...
     //   # fallthrough to sinkMBB
     BB = copy0MBB;
-    if (FalseHasOneUse) FalseValue = SelectExpr(N.getOperand(3));
     // Update machine-CFG edges
     BB->addSuccessor(sinkMBB);
 

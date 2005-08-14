@@ -1625,6 +1625,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
           False = DAG.getNode(ISD::XOR, NVT, False, 
                               DAG.getConstant(1ULL << ShiftAmt, NVT));
           Result = LegalizeOp(DAG.getNode(ISD::SELECT, NVT, Tmp3, True, False));
+          return Result;
         } else {
           assert(0 && "Do not know how to expand FP_TO_SINT yet!");
         }
