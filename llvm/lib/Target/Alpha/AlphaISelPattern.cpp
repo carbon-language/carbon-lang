@@ -588,6 +588,46 @@ void AlphaISel::EmitFunctionEntryCode(Function &Fn, MachineFunction &MF) {
   }
 }
 
+static bool isSIntImmediate(SDOperand N, int64_t& Imm) {
+  // test for constant
+  if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N)) {
+    // retrieve value
+    Imm = CN->getSignExtended();
+    // passes muster
+    return true;
+  }
+  // not a constant
+  return false;
+}
+
+// isSIntImmediateBounded - This method tests to see if a constant operand
+// bounded s.t. low <= Imm <= high
+// If so Imm will receive the 64 bit value.
+static bool isSIntImmediateBounded(SDOperand N, int64_t& Imm, 
+                                   int64_t low, int64_t high) {
+  if (isSIntImmediate(N, Imm) && Imm <= high && Imm >= high)
+    return true;
+  return false;
+}
+static bool isUIntImmediate(SDOperand N, uint64_t& Imm) {
+  // test for constant
+  if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N)) {
+    // retrieve value
+    Imm = (uint64_t)CN->getValue();
+    // passes muster
+    return true;
+  }
+  // not a constant
+  return false;
+}
+
+static bool isUIntImmediateBounded(SDOperand N, uint64_t& Imm, 
+                                   uint64_t low, uint64_t high) {
+  if (isUIntImmediate(N, Imm) && Imm <= high && Imm >= high)
+    return true;
+  return false;
+}
+
 static void getValueInfo(const Value* v, int& type, int& fun, int& offset)
 {
   fun = type = offset = 0;
@@ -1072,6 +1112,8 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
   unsigned Tmp1, Tmp2 = 0, Tmp3;
   unsigned Opc = 0;
   unsigned opcode = N.getOpcode();
+  int64_t SImm;
+  uint64_t UImm;
 
   SDNode *Node = N.Val;
   MVT::ValueType DestType = N.getValueType();
@@ -1158,18 +1200,9 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
     }
 
     Select(N.getOperand(0));
-    if (ConstantSDNode* CN = dyn_cast<ConstantSDNode>(N.getOperand(1)))
-    {
-      if (CN->getValue() < 32000)
-      {
-        BuildMI(BB, Alpha::LDA, 2, Alpha::R30)
-          .addImm(-CN->getValue()).addReg(Alpha::R30);
-      } else {
-        Tmp1 = SelectExpr(N.getOperand(1));
-        // Subtract size from stack pointer, thereby allocating some space.
-        BuildMI(BB, Alpha::SUBQ, 2, Alpha::R30).addReg(Alpha::R30).addReg(Tmp1);
-      }
-    } else {
+    if (isSIntImmediateBounded(N.getOperand(1), SImm, 0, 32767))
+      BuildMI(BB, Alpha::LDA, 2, Alpha::R30).addImm(-SImm).addReg(Alpha::R30);
+    else {
       Tmp1 = SelectExpr(N.getOperand(1));
       // Subtract size from stack pointer, thereby allocating some space.
       BuildMI(BB, Alpha::SUBQ, 2, Alpha::R30).addReg(Alpha::R30).addReg(Tmp1);
@@ -1448,46 +1481,37 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
             bool isAdd = N.getOperand(0).getOpcode() == ISD::ADD;
             bool isMul = N.getOperand(0).getOpcode() == ISD::MUL;
             //FIXME: first check for Scaled Adds and Subs!
-            ConstantSDNode* CSD = NULL;
             if(!isMul && N.getOperand(0).getOperand(0).getOpcode() == ISD::SHL &&
-               (CSD = dyn_cast<ConstantSDNode>(N.getOperand(0).getOperand(0).getOperand(1))) &&
-               (CSD->getValue() == 2 || CSD->getValue() == 3))
+               isSIntImmediateBounded(N.getOperand(0).getOperand(0).getOperand(1), SImm, 2, 3))
             {
-              bool use4 = CSD->getValue() == 2;
+              bool use4 = SImm == 2;
               Tmp1 = SelectExpr(N.getOperand(0).getOperand(0).getOperand(0));
               Tmp2 = SelectExpr(N.getOperand(0).getOperand(1));
               BuildMI(BB, isAdd?(use4?Alpha::S4ADDL:Alpha::S8ADDL):(use4?Alpha::S4SUBL:Alpha::S8SUBL),
                       2,Result).addReg(Tmp1).addReg(Tmp2);
             }
             else if(isAdd && N.getOperand(0).getOperand(1).getOpcode() == ISD::SHL &&
-                    (CSD = dyn_cast<ConstantSDNode>(N.getOperand(0).getOperand(1).getOperand(1))) &&
-                    (CSD->getValue() == 2 || CSD->getValue() == 3))
+                    isSIntImmediateBounded(N.getOperand(0).getOperand(1).getOperand(1), SImm, 2, 3))
             {
-              bool use4 = CSD->getValue() == 2;
+              bool use4 = SImm == 2;
               Tmp1 = SelectExpr(N.getOperand(0).getOperand(1).getOperand(0));
               Tmp2 = SelectExpr(N.getOperand(0).getOperand(0));
               BuildMI(BB, use4?Alpha::S4ADDL:Alpha::S8ADDL, 2,Result).addReg(Tmp1).addReg(Tmp2);
             }
-            else if(N.getOperand(0).getOperand(1).getOpcode() == ISD::Constant &&
-                    cast<ConstantSDNode>(N.getOperand(0).getOperand(1))->getValue() <= 255)
+            else if(isSIntImmediateBounded(N.getOperand(0).getOperand(1), SImm, 0, 255)) 
             { //Normal imm add/sub
               Opc = isAdd ? Alpha::ADDLi : (isMul ? Alpha::MULLi : Alpha::SUBLi);
               Tmp1 = SelectExpr(N.getOperand(0).getOperand(0));
-              Tmp2 = cast<ConstantSDNode>(N.getOperand(0).getOperand(1))->getValue();
-              BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addImm(Tmp2);
+              BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addImm(SImm);
             }
-            else if(N.getOperand(0).getOperand(1).getOpcode() == ISD::Constant &&
-                    !isMul &&
-                    (CSD = dyn_cast<ConstantSDNode>(N.getOperand(0).getOperand(1))) &&
-                    (((int64_t)(CSD->getValue() << 32) >> 32) >= -255) &&
-                    (((int64_t)(CSD->getValue() << 32) >> 32) <= 0))
+            else if(!isMul && isSIntImmediate(N.getOperand(0).getOperand(1), SImm) &&
+                    (((SImm << 32) >> 32) >= -255) && (((SImm << 32) >> 32) <= 0))
             { //handle canonicalization
               Opc = isAdd ? Alpha::SUBLi : Alpha::ADDLi;
               Tmp1 = SelectExpr(N.getOperand(0).getOperand(0));
-              int64_t t = cast<ConstantSDNode>(N.getOperand(0).getOperand(1))->getValue();
-              t = 0 - ((t << 32) >> 32);
-              assert(t >= 0 && t <= 255);
-              BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addImm(t);
+              SImm = 0 - ((SImm << 32) >> 32);
+              assert(SImm >= 0 && SImm <= 255);
+              BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addImm(SImm);
             }
             else
             { //Normal add/sub
@@ -1536,8 +1560,7 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
         int dir;
 
         //Tmp1 = SelectExpr(N.getOperand(0));
-        if(N.getOperand(1).getOpcode() == ISD::Constant &&
-           cast<ConstantSDNode>(N.getOperand(1))->getValue() <= 255)
+        if(isSIntImmediate(N.getOperand(1), SImm) && SImm <= 255 && SImm >= 0)
           isConst = true;
 
         switch (CC) {
@@ -1573,8 +1596,7 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
         if (dir == 1) {
           Tmp1 = SelectExpr(N.getOperand(0));
           if (isConst) {
-            Tmp2 = cast<ConstantSDNode>(N.getOperand(1))->getValue();
-            BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addImm(Tmp2);
+            BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addImm(SImm);
           } else {
             Tmp2 = SelectExpr(N.getOperand(1));
             BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
@@ -1624,27 +1646,24 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
     //constant immediate test
   case ISD::XOR:
     //Match Not
-    if (N.getOperand(1).getOpcode() == ISD::Constant &&
-        cast<ConstantSDNode>(N.getOperand(1))->getSignExtended() == -1)
-      {
-        Tmp1 = SelectExpr(N.getOperand(0));
-        BuildMI(BB, Alpha::ORNOT, 2, Result).addReg(Alpha::R31).addReg(Tmp1);
-        return Result;
-      }
+    if (isSIntImmediate(N.getOperand(1), SImm) && SImm == -1) {
+      Tmp1 = SelectExpr(N.getOperand(0));
+      BuildMI(BB, Alpha::ORNOT, 2, Result).addReg(Alpha::R31).addReg(Tmp1);
+      return Result;
+    }
     //Fall through
   case ISD::AND:
     //handle zap
-    if (opcode == ISD::AND && N.getOperand(1).getOpcode() == ISD::Constant)
+    if (opcode == ISD::AND && isUIntImmediate(N.getOperand(1), UImm))
     {
-      uint64_t k = cast<ConstantSDNode>(N.getOperand(1))->getValue();
       unsigned int build = 0;
       for(int i = 0; i < 8; ++i)
       {
-        if ((k & 0x00FF) == 0x00FF)
+        if ((UImm & 0x00FF) == 0x00FF)
           build |= 1 << i;
-        else if ((k & 0x00FF) != 0)
+        else if ((UImm & 0x00FF) != 0)
         { build = 0; break; }
-        k >>= 8;
+        UImm >>= 8;
       }
       if (build)
       {
@@ -1656,9 +1675,7 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
   case ISD::OR:
     //Check operand(0) == Not
     if (N.getOperand(0).getOpcode() == ISD::XOR &&
-        N.getOperand(0).getOperand(1).getOpcode() == ISD::Constant &&
-        cast<ConstantSDNode>(N.getOperand(0).getOperand(1))->getSignExtended()
-        == -1) {
+        isSIntImmediate(N.getOperand(0).getOperand(1), SImm) && SImm == -1) {
       switch(opcode) {
         case ISD::AND: Opc = Alpha::BIC; break;
         case ISD::OR:  Opc = Alpha::ORNOT; break;
@@ -1671,9 +1688,7 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
     }
     //Check operand(1) == Not
     if (N.getOperand(1).getOpcode() == ISD::XOR &&
-        N.getOperand(1).getOperand(1).getOpcode() == ISD::Constant &&
-        cast<ConstantSDNode>(N.getOperand(1).getOperand(1))->getSignExtended()
-        == -1) {
+        isSIntImmediate(N.getOperand(1).getOperand(1), SImm) && SImm == -1) {
       switch(opcode) {
         case ISD::AND: Opc = Alpha::BIC; break;
         case ISD::OR:  Opc = Alpha::ORNOT; break;
@@ -1689,9 +1704,7 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
   case ISD::SRL:
   case ISD::SRA:
   case ISD::MUL:
-    if(N.getOperand(1).getOpcode() == ISD::Constant &&
-       cast<ConstantSDNode>(N.getOperand(1))->getValue() <= 255)
-    {
+    if(isSIntImmediateBounded(N.getOperand(1), SImm, 0, 255)) {
       switch(opcode) {
       case ISD::AND: Opc = Alpha::ANDi; break;
       case ISD::OR:  Opc = Alpha::BISi; break;
@@ -1702,8 +1715,7 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
       case ISD::MUL: Opc = Alpha::MULQi; break;
       };
       Tmp1 = SelectExpr(N.getOperand(0));
-      Tmp2 = cast<ConstantSDNode>(N.getOperand(1))->getValue();
-      BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addImm(Tmp2);
+      BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addImm(SImm);
     } else {
       switch(opcode) {
       case ISD::AND: Opc = Alpha::AND; break;
@@ -1748,16 +1760,14 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
 
       //first check for Scaled Adds and Subs!
       //Valid for add and sub
-      ConstantSDNode* CSD = NULL;
-      if(N.getOperand(0).getOpcode() == ISD::SHL &&
-         (CSD = dyn_cast<ConstantSDNode>(N.getOperand(0).getOperand(1))) &&
-         (CSD->getValue() == 2 || CSD->getValue() == 3))
-      {
-        bool use4 = CSD->getValue() == 2;
+      if(N.getOperand(0).getOpcode() == ISD::SHL && 
+         isSIntImmediate(N.getOperand(0).getOperand(1), SImm) &&
+         (SImm == 2 || SImm == 3)) {
+        bool use4 = SImm == 2;
         Tmp2 = SelectExpr(N.getOperand(0).getOperand(0));
-        if ((CSD = dyn_cast<ConstantSDNode>(N.getOperand(1))) && CSD->getValue() <= 255)
+        if (isSIntImmediateBounded(N.getOperand(1), SImm, 0, 255))
           BuildMI(BB, isAdd?(use4?Alpha::S4ADDQi:Alpha::S8ADDQi):(use4?Alpha::S4SUBQi:Alpha::S8SUBQi),
-                  2, Result).addReg(Tmp2).addImm(CSD->getValue());
+                  2, Result).addReg(Tmp2).addImm(SImm);
         else {
           Tmp1 = SelectExpr(N.getOperand(1));
           BuildMI(BB, isAdd?(use4?Alpha::S4ADDQi:Alpha::S8ADDQi):(use4?Alpha::S4SUBQi:Alpha::S8SUBQi),
@@ -1766,45 +1776,37 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
       }
       //Position prevents subs
       else if(N.getOperand(1).getOpcode() == ISD::SHL && isAdd &&
-              (CSD = dyn_cast<ConstantSDNode>(N.getOperand(1).getOperand(1))) &&
-              (CSD->getValue() == 2 || CSD->getValue() == 3))
-      {
-        bool use4 = CSD->getValue() == 2;
+              isSIntImmediate(N.getOperand(1).getOperand(1), SImm) &&
+              (SImm == 2 || SImm == 3)) {
+        bool use4 = SImm == 2;
         Tmp2 = SelectExpr(N.getOperand(1).getOperand(0));
-        if ((CSD = dyn_cast<ConstantSDNode>(N.getOperand(0))) && CSD->getValue() <= 255)
-          BuildMI(BB, use4?Alpha::S4ADDQi:Alpha::S8ADDQi, 2, Result).addReg(Tmp2)
-            .addImm(CSD->getValue());
+        if (isSIntImmediateBounded(N.getOperand(0), SImm, 0, 255))
+          BuildMI(BB, use4?Alpha::S4ADDQi:Alpha::S8ADDQi, 2, Result).addReg(Tmp2).addImm(SImm);
         else {
           Tmp1 = SelectExpr(N.getOperand(0));
           BuildMI(BB, use4?Alpha::S4ADDQ:Alpha::S8ADDQ, 2, Result).addReg(Tmp2).addReg(Tmp1);
         }
       }
       //small addi
-      else if((CSD = dyn_cast<ConstantSDNode>(N.getOperand(1))) &&
-              CSD->getValue() <= 255)
+      else if(isSIntImmediateBounded(N.getOperand(1), SImm, 0, 255))
       { //Normal imm add/sub
         Opc = isAdd ? Alpha::ADDQi : Alpha::SUBQi;
         Tmp1 = SelectExpr(N.getOperand(0));
-        BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addImm(CSD->getValue());
+        BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addImm(SImm);
       }
-      else if((CSD = dyn_cast<ConstantSDNode>(N.getOperand(1))) &&
-              (int64_t)CSD->getValue() >= 255 &&
-              (int64_t)CSD->getValue() <= 0)
+      else if(isSIntImmediateBounded(N.getOperand(1), SImm, -255, 0))
       { //inverted imm add/sub
         Opc = isAdd ? Alpha::SUBQi : Alpha::ADDQi;
         Tmp1 = SelectExpr(N.getOperand(0));
-        BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addImm((int64_t)CSD->getValue());
+        BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addImm(-SImm);
       }
       //larger addi
-      else if((CSD = dyn_cast<ConstantSDNode>(N.getOperand(1))) &&
-              CSD->getSignExtended() <= 32767 &&
-              CSD->getSignExtended() >= -32767)
+      else if(isSIntImmediateBounded(N.getOperand(1), SImm, -32767, 32767))
       { //LDA
         Tmp1 = SelectExpr(N.getOperand(0));
-        Tmp2 = (long)CSD->getSignExtended();
         if (!isAdd)
-          Tmp2 = -Tmp2;
-        BuildMI(BB, Alpha::LDA, 2, Result).addImm(Tmp2).addReg(Tmp1);
+          SImm = -SImm;
+        BuildMI(BB, Alpha::LDA, 2, Result).addImm(SImm).addReg(Tmp1);
       }
       //give up and do the operation
       else {
@@ -1825,12 +1827,10 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
         .addReg(Tmp1).addReg(Tmp2);
       return Result;
     } else {
-      ConstantSDNode* CSD;
       //check if we can convert into a shift!
-      if ((CSD = dyn_cast<ConstantSDNode>(N.getOperand(1).Val)) &&
-          (int64_t)CSD->getSignExtended() != 0 &&
-          isPowerOf2_64(llabs(CSD->getSignExtended()))) {
-        unsigned k = Log2_64(llabs(CSD->getSignExtended()));
+      if (isSIntImmediate(N.getOperand(1), SImm) &&
+          SImm != 0 && isPowerOf2_64(llabs(SImm))) {
+        unsigned k = Log2_64(llabs(SImm));
         Tmp1 = SelectExpr(N.getOperand(0));
         if (k == 1)
           Tmp2 = Tmp1;
@@ -1843,7 +1843,7 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
         BuildMI(BB, Alpha::SRLi, 2, Tmp3).addReg(Tmp2).addImm(64-k);
         unsigned Tmp4 = MakeReg(MVT::i64);
         BuildMI(BB, Alpha::ADDQ, 2, Tmp4).addReg(Tmp3).addReg(Tmp1);
-        if ((int64_t)CSD->getSignExtended() > 0)
+        if (SImm > 0)
           BuildMI(BB, Alpha::SRAi, 2, Result).addReg(Tmp4).addImm(k);
         else
         {
@@ -1858,10 +1858,7 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
 
   case ISD::UDIV:
     {
-      ConstantSDNode* CSD;
-      if ((CSD = dyn_cast<ConstantSDNode>(N.getOperand(1).Val)) &&
-          ((int64_t)CSD->getSignExtended() >= 2 ||
-           (int64_t)CSD->getSignExtended() <= -2))
+      if (isSIntImmediate(N.getOperand(1), SImm) && (SImm >= 2 || SImm <= -2))
       {
         // If this is a divide by constant, we can emit code using some magic
         // constants to implement it as a multiply instead.
@@ -2007,12 +2004,9 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
       if (CC.getOpcode() == ISD::SETCC) {
         //Int SetCC -> Select
         //Dropping the CC is only useful if we are comparing to 0
-        if((CC.getOperand(1).getOpcode() == ISD::Constant &&
-            cast<ConstantSDNode>(CC.getOperand(1))->getValue() == 0))
-        {
+        if(isSIntImmediateBounded(CC.getOperand(1), SImm, 0, 0)) {
           //figure out a few things
-          bool useImm = N.getOperand(2).getOpcode() == ISD::Constant &&
-            cast<ConstantSDNode>(N.getOperand(2))->getValue() <= 255;
+          bool useImm = isSIntImmediateBounded(N.getOperand(2), SImm, 0, 255);
 
           //Fix up CC
           ISD::CondCode cCode= cast<CondCodeSDNode>(CC.getOperand(2))->get();
@@ -2038,9 +2032,7 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
 
           if (useImm) {
             Tmp3 = SelectExpr(N.getOperand(1)); //Use if FALSE
-            BuildMI(BB, Opc, 2, Result).addReg(Tmp3)
-                .addImm(cast<ConstantSDNode>(N.getOperand(2))->getValue())
-                .addReg(Tmp1);
+            BuildMI(BB, Opc, 2, Result).addReg(Tmp3).addImm(SImm).addReg(Tmp1);
           } else {
             Tmp2 = SelectExpr(N.getOperand(1)); //Use if TRUE
             Tmp3 = SelectExpr(N.getOperand(2)); //Use if FALSE
