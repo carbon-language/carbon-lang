@@ -7,6 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
+// Top-level implementation for the PowerPC target.
 //
 //===----------------------------------------------------------------------===//
 
@@ -27,9 +28,6 @@
 #include "llvm/Support/CommandLine.h"
 #include <iostream>
 using namespace llvm;
-
-static cl::opt<bool> EnablePPCLSR("enable-lsr-for-ppc", cl::Hidden,
-                                  cl::desc("Enable LSR for PPC (beta)"));
 
 namespace {
   const std::string PPC32ID = "PowerPC/32bit";
@@ -67,11 +65,9 @@ bool PowerPCTargetMachine::addPassesToEmitFile(PassManager &PM,
                                                 CodeGenFileType FileType) {
   if (FileType != TargetMachine::AssemblyFile) return true;
 
-  if (EnablePPCLSR) {
-    PM.add(createLoopStrengthReducePass());
-    PM.add(createVerifierPass());
-    PM.add(createCFGSimplificationPass());
-  }
+  // Run loop strength reduction before anything else.
+  PM.add(createLoopStrengthReducePass());
+  PM.add(createCFGSimplificationPass());
 
   // FIXME: Implement efficient support for garbage collection intrinsics.
   PM.add(createLowerGCPass());
@@ -82,15 +78,14 @@ bool PowerPCTargetMachine::addPassesToEmitFile(PassManager &PM,
   // FIXME: Implement the switch instruction in the instruction selector!
   PM.add(createLowerSwitchPass());
 
-  PM.add(createLowerConstantExpressionsPass());
-
   // Make sure that no unreachable blocks are instruction selected.
   PM.add(createUnreachableBlockEliminationPass());
 
   // Default to pattern ISel
-  if (PatternISelTriState == 0)
+  if (PatternISelTriState == 0) {
+    PM.add(createLowerConstantExpressionsPass());
     PM.add(createPPC32ISelSimple(*this));
-  else
+  } else
     PM.add(createPPC32ISelPattern(*this));
 
   if (PrintMachineCode)
@@ -126,10 +121,9 @@ void PowerPCJITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
   // The JIT does not support or need PIC.
   PICEnabled = false;
 
-  if (EnablePPCLSR) {
-    PM.add(createLoopStrengthReducePass());
-    PM.add(createCFGSimplificationPass());
-  }
+  // Run loop strength reduction before anything else.
+  PM.add(createLoopStrengthReducePass());
+  PM.add(createCFGSimplificationPass());
 
   // FIXME: Implement efficient support for garbage collection intrinsics.
   PM.add(createLowerGCPass());
@@ -140,16 +134,16 @@ void PowerPCJITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
   // FIXME: Implement the switch instruction in the instruction selector!
   PM.add(createLowerSwitchPass());
 
-  PM.add(createLowerConstantExpressionsPass());
-
   // Make sure that no unreachable blocks are instruction selected.
   PM.add(createUnreachableBlockEliminationPass());
 
   // Default to pattern ISel
-  if (PatternISelTriState == 0)
+  if (PatternISelTriState == 0) {
+    PM.add(createLowerConstantExpressionsPass());
     PM.add(createPPC32ISelSimple(TM));
-  else
+  } else {
     PM.add(createPPC32ISelPattern(TM));
+  }
 
   PM.add(createRegisterAllocator());
   PM.add(createPrologEpilogCodeInserter());
