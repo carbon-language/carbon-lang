@@ -2303,6 +2303,7 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
 
     int FrameIdx = BB->getParent()->getFrameInfo()->CreateStackObject(8, 8);
     MachineConstantPool *CP = BB->getParent()->getConstantPool();
+    Opc = DestType == MVT::f64 ? PPC::FSUB : PPC::FSUBS;
 
     if (IsUnsigned) {
       unsigned ConstF = getConstDouble(0x1.000000p52);
@@ -2312,7 +2313,7 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
       addFrameReference(BuildMI(BB, PPC::STW, 3).addReg(Tmp1), FrameIdx, 4);
       addFrameReference(BuildMI(BB, PPC::LFD, 2, Tmp2), FrameIdx);
       // Generate the return value with a subtract
-      BuildMI(BB, DestType == MVT::f64 ? PPC::FSUB : PPC::FSUBS, 2, Result).addReg(Tmp2).addReg(ConstF);
+      BuildMI(BB, Opc, 2, Result).addReg(Tmp2).addReg(ConstF);
     } else {
       unsigned ConstF = getConstDouble(0x1.000008p52);
       unsigned TmpL = MakeIntReg();
@@ -2323,7 +2324,7 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
       addFrameReference(BuildMI(BB, PPC::STW, 3).addReg(TmpL), FrameIdx, 4);
       addFrameReference(BuildMI(BB, PPC::LFD, 2, Tmp2), FrameIdx);
       // Generate the return value with a subtract
-      BuildMI(BB, DestType == MVT::f64 ? PPC::FSUB : PPC::FSUBS, 2, Result).addReg(Tmp2).addReg(ConstF);
+      BuildMI(BB, Opc, 2, Result).addReg(Tmp2).addReg(ConstF);
     }
     return Result;
   }
