@@ -148,7 +148,6 @@ public:
     ConstantAggregateZeroVal, // This is an instance of ConstantAggregateNull
     SimpleConstantVal,        // This is some other type of Constant
     InstructionVal,           // This is an instance of Instruction
-    ValueListVal              // This is for bcreader, a special ValTy
   };
   unsigned getValueType() const {
     return SubclassID;
