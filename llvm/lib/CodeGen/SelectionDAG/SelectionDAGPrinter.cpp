@@ -47,26 +47,14 @@ namespace llvm {
 
 std::string DOTGraphTraits<SelectionDAG*>::getNodeLabel(const SDNode *Node,
                                                         const SelectionDAG *G) {
-  std::string Op = Node->getOperationName();
+  std::string Op = Node->getOperationName(G);
 
-  for (unsigned i = 0, e = Node->getNumValues(); i != e; ++i) {
-    switch (Node->getValueType(i)) {
-    default: Op += ":unknownvt!"; break;
-    case MVT::Other: Op += ":ch"; break;
-    case MVT::i1:    Op += ":i1"; break;
-    case MVT::i8:    Op += ":i8"; break;
-    case MVT::i16:   Op += ":i16"; break;
-    case MVT::i32:   Op += ":i32"; break;
-    case MVT::i64:   Op += ":i64"; break;
-    case MVT::i128:  Op += ":i128"; break;
-    case MVT::f32:   Op += ":f32"; break;
-    case MVT::f64:   Op += ":f64"; break;
-    case MVT::f80:   Op += ":f80"; break;
-    case MVT::f128:  Op += ":f128"; break;
-    case MVT::isVoid: Op += ":void"; break;
-    }
-  }
-
+  for (unsigned i = 0, e = Node->getNumValues(); i != e; ++i)
+    if (Node->getValueType(i) == MVT::Other)
+      Op += ":ch";
+    else
+      Op = Op + ":" + MVT::getValueTypeString(Node->getValueType(i));
+    
   if (const ConstantSDNode *CSDN = dyn_cast<ConstantSDNode>(Node)) {
     Op += ": " + utostr(CSDN->getValue());
   } else if (const ConstantFPSDNode *CSDN = dyn_cast<ConstantFPSDNode>(Node)) {
