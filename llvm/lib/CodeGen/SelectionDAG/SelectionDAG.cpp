@@ -18,6 +18,8 @@
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Target/TargetLowering.h"
+#include "llvm/Target/TargetInstrInfo.h"
+#include "llvm/Target/TargetMachine.h"
 #include <iostream>
 #include <set>
 #include <cmath>
@@ -1752,9 +1754,18 @@ bool SDNode::hasNUsesOfValue(unsigned NUses, unsigned Value) {
 }
 
 
-const char *SDNode::getOperationName() const {
+const char *SDNode::getOperationName(const SelectionDAG *G) const {
   switch (getOpcode()) {
-  default: return "<<Unknown>>";
+  default:
+    if (getOpcode() < ISD::BUILTIN_OP_END)
+      return "<<Unknown DAG Node>>";
+    else {
+      if (G)
+        if (const TargetInstrInfo *TII = G->getTarget().getInstrInfo())
+          return TII->getName(getOpcode()-ISD::BUILTIN_OP_END);
+      return "<<Unknown Target Node>>";
+    }
+   
   case ISD::PCMARKER:      return "PCMarker";
   case ISD::SRCVALUE:      return "SrcValue";
   case ISD::EntryToken:    return "EntryToken";
@@ -1883,7 +1894,8 @@ const char *SDNode::getOperationName() const {
   }
 }
 
-void SDNode::dump() const {
+void SDNode::dump() const { dump(0); }
+void SDNode::dump(const SelectionDAG *G) const {
   std::cerr << (void*)this << ": ";
 
   for (unsigned i = 0, e = getNumValues(); i != e; ++i) {
@@ -1893,7 +1905,7 @@ void SDNode::dump() const {
     else
       std::cerr << MVT::getValueTypeString(getValueType(i));
   }
-  std::cerr << " = " << getOperationName();
+  std::cerr << " = " << getOperationName(G);
 
   std::cerr << " ";
   for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
@@ -1934,17 +1946,17 @@ void SDNode::dump() const {
   }
 }
 
-static void DumpNodes(SDNode *N, unsigned indent) {
+static void DumpNodes(SDNode *N, unsigned indent, const SelectionDAG *G) {
   for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
     if (N->getOperand(i).Val->hasOneUse())
-      DumpNodes(N->getOperand(i).Val, indent+2);
+      DumpNodes(N->getOperand(i).Val, indent+2, G);
     else
       std::cerr << "\n" << std::string(indent+2, ' ')
                 << (void*)N->getOperand(i).Val << ": <multiple use>";
 
 
   std::cerr << "\n" << std::string(indent, ' ');
-  N->dump();
+  N->dump(G);
 }
 
 void SelectionDAG::dump() const {
@@ -1954,10 +1966,10 @@ void SelectionDAG::dump() const {
 
   for (unsigned i = 0, e = Nodes.size(); i != e; ++i) {
     if (!Nodes[i]->hasOneUse() && Nodes[i] != getRoot().Val)
-      DumpNodes(Nodes[i], 2);
+      DumpNodes(Nodes[i], 2, this);
   }
 
-  DumpNodes(getRoot().Val, 2);
+  DumpNodes(getRoot().Val, 2, this);
 
   std::cerr << "\n\n";
 }
