@@ -296,7 +296,27 @@ public:
       FuncInfo.ValueMap.find(V);
     assert(VMI != FuncInfo.ValueMap.end() && "Value not in map!");
 
-    return N = DAG.getCopyFromReg(VMI->second, VT, DAG.getEntryNode());
+    unsigned InReg = VMI->second;
+   
+    // If this type is not legal, make it so now.
+    MVT::ValueType DestVT = TLI.getTypeToTransformTo(VT);
+    
+    N = DAG.getCopyFromReg(DAG.getEntryNode(), InReg, DestVT);
+    if (DestVT < VT) {
+      // Source must be expanded.  This input value is actually coming from the
+      // register pair VMI->second and VMI->second+1.
+      N = DAG.getNode(ISD::BUILD_PAIR, VT, N,
+                      DAG.getCopyFromReg(DAG.getEntryNode(), InReg+1, DestVT));
+    } else {
+      if (DestVT > VT) { // Promotion case
+        if (MVT::isFloatingPoint(VT))
+          N = DAG.getNode(ISD::FP_ROUND, VT, N);
+        else
+          N = DAG.getNode(ISD::TRUNCATE, VT, N);
+      }
+    }
+    
+    return N;
   }
 
   const SDOperand &setValue(const Value *V, SDOperand NewN) {
@@ -957,12 +977,31 @@ bool SelectionDAGISel::runOnFunction(Function &Fn) {
 
 SDOperand SelectionDAGISel::
 CopyValueToVirtualRegister(SelectionDAGLowering &SDL, Value *V, unsigned Reg) {
-  SelectionDAG &DAG = SDL.DAG;
   SDOperand Op = SDL.getValue(V);
   assert((Op.getOpcode() != ISD::CopyFromReg ||
-          cast<RegSDNode>(Op)->getReg() != Reg) &&
+          cast<RegisterSDNode>(Op.getOperand(1))->getReg() != Reg) &&
          "Copy from a reg to the same reg!");
-  return DAG.getCopyToReg(SDL.getRoot(), Op, Reg);
+  
+  // If this type is not legal, we must make sure to not create an invalid
+  // register use.
+  MVT::ValueType SrcVT = Op.getValueType();
+  MVT::ValueType DestVT = TLI.getTypeToTransformTo(SrcVT);
+  SelectionDAG &DAG = SDL.DAG;
+  if (SrcVT == DestVT) {
+    return DAG.getCopyToReg(SDL.getRoot(), Reg, Op);
+  } else if (SrcVT < DestVT) {
+    // The src value is promoted to the register.
+    Op = DAG.getNode(ISD::ZERO_EXTEND, DestVT, Op);
+    return DAG.getCopyToReg(SDL.getRoot(), Reg, Op);
+  } else  {
+    // The src value is expanded into multiple registers.
+    SDOperand Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, DestVT,
+                               Op, DAG.getConstant(0, MVT::i32));
+    SDOperand Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, DestVT,
+                               Op, DAG.getConstant(1, MVT::i32));
+    Op = DAG.getCopyToReg(SDL.getRoot(), Reg, Lo);
+    return DAG.getCopyToReg(Op, Reg+1, Hi);
+  }
 }
 
 /// IsOnlyUsedInOneBasicBlock - If the specified argument is only used in a

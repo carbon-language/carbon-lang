@@ -101,30 +101,25 @@ public:
   SDOperand getBasicBlock(MachineBasicBlock *MBB);
   SDOperand getExternalSymbol(const char *Sym, MVT::ValueType VT);
   SDOperand getValueType(MVT::ValueType);
+  SDOperand getRegister(unsigned Reg, MVT::ValueType VT);
 
-  SDOperand getCopyToReg(SDOperand Chain, SDOperand N, unsigned Reg) {
-    // Note: these are auto-CSE'd because the caller doesn't make requests that
-    // could cause duplicates to occur.
-    SDNode *NN = new RegSDNode(ISD::CopyToReg, Chain, N, Reg);
-    NN->setValueTypes(MVT::Other);
-    AllNodes.push_back(NN);
-    return SDOperand(NN, 0);
+  SDOperand getCopyToReg(SDOperand Chain, unsigned Reg, SDOperand N) {
+    return getNode(ISD::CopyToReg, MVT::Other, Chain,
+                   getRegister(Reg, N.getValueType()), N);
   }
 
-  SDOperand getCopyFromReg(unsigned Reg, MVT::ValueType VT, SDOperand Chain) {
-    // Note: These nodes are auto-CSE'd by the caller of this method.
-    SDNode *NN = new RegSDNode(ISD::CopyFromReg, Chain, Reg);
-    NN->setValueTypes(VT, MVT::Other);
-    AllNodes.push_back(NN);
-    return SDOperand(NN, 0);
+  SDOperand getCopyFromReg(SDOperand Chain, unsigned Reg, MVT::ValueType VT) {
+    std::vector<MVT::ValueType> ResultTys;
+    ResultTys.push_back(VT);
+    ResultTys.push_back(MVT::Other);
+    std::vector<SDOperand> Ops;
+    Ops.push_back(Chain);
+    Ops.push_back(getRegister(Reg, VT));
+    return getNode(ISD::CopyFromReg, ResultTys, Ops);
   }
 
-  SDOperand getImplicitDef(SDOperand Chain, unsigned Reg) {
-    // Note: These nodes are auto-CSE'd by the caller of this method.
-    SDNode *NN = new RegSDNode(ISD::ImplicitDef, Chain, Reg);
-    NN->setValueTypes(MVT::Other);
-    AllNodes.push_back(NN);
-    return SDOperand(NN, 0);
+  SDOperand getImplicitDef(SDOperand Chain, unsigned Reg, MVT::ValueType VT) {
+    return getNode(ISD::ImplicitDef, MVT::Other, Chain, getRegister(Reg, VT));
   }
 
   /// getCall - Note that this destroys the vector of RetVals passed in.
@@ -255,6 +250,7 @@ private:
   std::map<std::pair<unsigned, std::pair<SDOperand, SDOperand> >,
            SDNode *> BinaryOps;
 
+  std::vector<RegisterSDNode*> RegNodes;
   std::vector<CondCodeSDNode*> CondCodeNodes;
 
   std::map<std::pair<SDOperand, std::pair<SDOperand, MVT::ValueType> >,

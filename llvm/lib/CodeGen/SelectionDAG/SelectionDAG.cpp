@@ -250,6 +250,9 @@ void SelectionDAG::RemoveNodeFromCSEMaps(SDNode *N) {
   case ISD::VALUETYPE:
     ValueTypeNodes[cast<VTSDNode>(N)->getVT()] = 0;
     break;
+  case ISD::Register:
+    RegNodes[cast<RegisterSDNode>(N)->getReg()] = 0;
+    break;
   case ISD::SRCVALUE: {
     SrcValueSDNode *SVN = cast<SrcValueSDNode>(N);
     ValueNodes.erase(std::make_pair(SVN->getValue(), SVN->getOffset()));
@@ -396,6 +399,20 @@ SDOperand SelectionDAG::getCondCode(ISD::CondCode Cond) {
     AllNodes.push_back(CondCodeNodes[Cond]);
   }
   return SDOperand(CondCodeNodes[Cond], 0);
+}
+
+SDOperand SelectionDAG::getRegister(unsigned Reg, MVT::ValueType VT) {
+  if (Reg >= RegNodes.size())
+    RegNodes.resize(Reg+1);
+  RegisterSDNode *&Result = RegNodes[Reg];
+  if (Result) {
+    assert(Result->getValueType(0) == VT &&
+           "Inconsistent value types for machine registers");
+  } else {
+    Result = new RegisterSDNode(Reg, VT);
+    AllNodes.push_back(Result);
+  }
+  return SDOperand(Result, 0);
 }
 
 SDOperand SelectionDAG::SimplifySetCC(MVT::ValueType VT, SDOperand N1,
@@ -1779,6 +1796,7 @@ const char *SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::GlobalAddress: return "GlobalAddress";
   case ISD::FrameIndex:    return "FrameIndex";
   case ISD::BasicBlock:    return "BasicBlock";
+  case ISD::Register:      return "Register";
   case ISD::ExternalSymbol: return "ExternalSymbol";
   case ISD::ConstantPool:  return "ConstantPoolIndex";
   case ISD::CopyToReg:     return "CopyToReg";
@@ -1939,8 +1957,8 @@ void SDNode::dump(const SelectionDAG *G) const {
     if (LBB)
       std::cerr << LBB->getName() << " ";
     std::cerr << (const void*)BBDN->getBasicBlock() << ">";
-  } else if (const RegSDNode *C2V = dyn_cast<RegSDNode>(this)) {
-    std::cerr << "<reg #" << C2V->getReg() << ">";
+  } else if (const RegisterSDNode *C2V = dyn_cast<RegisterSDNode>(this)) {
+    std::cerr << " #" << C2V->getReg();
   } else if (const ExternalSymbolSDNode *ES =
              dyn_cast<ExternalSymbolSDNode>(this)) {
     std::cerr << "'" << ES->getSymbol() << "'";

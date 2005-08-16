@@ -405,8 +405,9 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
   case ISD::CopyFromReg:
     Tmp1 = LegalizeOp(Node->getOperand(0));
     if (Tmp1 != Node->getOperand(0))
-      Result = DAG.getCopyFromReg(cast<RegSDNode>(Node)->getReg(),
-                                  Node->getValueType(0), Tmp1);
+      Result = DAG.getCopyFromReg(Tmp1, 
+                            cast<RegisterSDNode>(Node->getOperand(1))->getReg(),
+                                  Node->getValueType(0));
     else
       Result = Op.getValue(0);
 
@@ -418,7 +419,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
   case ISD::ImplicitDef:
     Tmp1 = LegalizeOp(Node->getOperand(0));
     if (Tmp1 != Node->getOperand(0))
-      Result = DAG.getImplicitDef(Tmp1, cast<RegSDNode>(Node)->getReg());
+      Result = DAG.getNode(ISD::ImplicitDef, MVT::Other,
+                           Tmp1, Node->getOperand(1));
     break;
   case ISD::UNDEF: {
     MVT::ValueType VT = Op.getValueType();
@@ -844,29 +846,13 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
   case ISD::CopyToReg:
     Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
 
-    switch (getTypeAction(Node->getOperand(1).getValueType())) {
-    case Legal:
-      // Legalize the incoming value (must be legal).
-      Tmp2 = LegalizeOp(Node->getOperand(1));
-      if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(1))
-        Result = DAG.getCopyToReg(Tmp1, Tmp2, cast<RegSDNode>(Node)->getReg());
-      break;
-    case Promote:
-      Tmp2 = PromoteOp(Node->getOperand(1));
-      Result = DAG.getCopyToReg(Tmp1, Tmp2, cast<RegSDNode>(Node)->getReg());
-      break;
-    case Expand:
-      SDOperand Lo, Hi;
-      ExpandOp(Node->getOperand(1), Lo, Hi);
-      unsigned Reg = cast<RegSDNode>(Node)->getReg();
-      Lo = DAG.getCopyToReg(Tmp1, Lo, Reg);
-      Hi = DAG.getCopyToReg(Tmp1, Hi, Reg+1);
-      // Note that the copytoreg nodes are independent of each other.
-      Result = DAG.getNode(ISD::TokenFactor, MVT::Other, Lo, Hi);
-      assert(isTypeLegal(Result.getValueType()) &&
-             "Cannot expand multiple times yet (i64 -> i16)");
-      break;
-    }
+    assert(getTypeAction(Node->getOperand(2).getValueType()) == Legal &&
+           "Register type must be legal!");
+    // Legalize the incoming value (must be legal).
+    Tmp2 = LegalizeOp(Node->getOperand(2));
+    if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(2))
+      Result = DAG.getNode(ISD::CopyToReg, MVT::Other, Tmp1,
+                           Node->getOperand(1), Tmp2);
     break;
 
   case ISD::RET:
@@ -1913,6 +1899,8 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
   NeedsAnotherIteration = true;
 
   switch (Node->getOpcode()) {
+  case ISD::CopyFromReg:
+    assert(0 && "CopyFromReg must be legal!");
   default:
     std::cerr << "NODE: "; Node->dump(); std::cerr << "\n";
     assert(0 && "Do not know how to promote this operator!");
@@ -1927,12 +1915,6 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
   case ISD::ConstantFP:
     Result = DAG.getNode(ISD::FP_EXTEND, NVT, Op);
     assert(isa<ConstantFPSDNode>(Result) && "Didn't constant fold fp_extend?");
-    break;
-  case ISD::CopyFromReg:
-    Result = DAG.getCopyFromReg(cast<RegSDNode>(Node)->getReg(), NVT,
-                                Node->getOperand(0));
-    // Remember that we legalized the chain.
-    AddLegalizedOperand(Op.getValue(1), Result.getValue(1));
     break;
 
   case ISD::SETCC:
@@ -2770,7 +2752,9 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
   NeedsAnotherIteration = true;
 
   switch (Node->getOpcode()) {
-  default:
+   case ISD::CopyFromReg:
+      assert(0 && "CopyFromReg must be legal!");
+   default:
     std::cerr << "NODE: "; Node->dump(); std::cerr << "\n";
     assert(0 && "Do not know how to expand this operator!");
     abort();
@@ -2782,19 +2766,6 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     uint64_t Cst = cast<ConstantSDNode>(Node)->getValue();
     Lo = DAG.getConstant(Cst, NVT);
     Hi = DAG.getConstant(Cst >> MVT::getSizeInBits(NVT), NVT);
-    break;
-  }
-
-  case ISD::CopyFromReg: {
-    unsigned Reg = cast<RegSDNode>(Node)->getReg();
-    // Aggregate register values are always in consequtive pairs.
-    Lo = DAG.getCopyFromReg(Reg, NVT, Node->getOperand(0));
-    Hi = DAG.getCopyFromReg(Reg+1, NVT, Lo.getValue(1));
-
-    // Remember that we legalized the chain.
-    AddLegalizedOperand(Op.getValue(1), Hi.getValue(1));
-
-    assert(isTypeLegal(NVT) && "Cannot expand this multiple times yet!");
     break;
   }
 

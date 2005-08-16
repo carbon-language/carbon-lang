@@ -72,8 +72,8 @@ std::string DOTGraphTraits<SelectionDAG*>::getNodeLabel(const SDNode *Node,
     if (LBB)
       Op += LBB->getName();
     //Op += " " + (const void*)BBDN->getBasicBlock();
-  } else if (const RegSDNode *C2V = dyn_cast<RegSDNode>(Node)) {
-    Op += " #" + utostr(C2V->getReg());
+  } else if (const RegisterSDNode *R = dyn_cast<RegisterSDNode>(Node)) {
+    Op += " #" + utostr(R->getReg());
   } else if (const ExternalSymbolSDNode *ES =
              dyn_cast<ExternalSymbolSDNode>(Node)) {
     Op += "'" + std::string(ES->getSymbol()) + "'";

@@ -55,12 +55,10 @@ namespace ISD {
 
     // Various leaf nodes.
     Constant, ConstantFP, GlobalAddress, FrameIndex, ConstantPool,
-    BasicBlock, ExternalSymbol, VALUETYPE, CONDCODE,
+    BasicBlock, ExternalSymbol, VALUETYPE, CONDCODE, Register,
 
-    // CopyToReg - This node has chain and child nodes, and an associated
-    // register number.  The instruction selector must guarantee that the value
-    // of the value node is available in the register stored in the RegSDNode
-    // object.
+    // CopyToReg - This node has three operands: a chain, a register number to
+    // set to this value, and a value.  
     CopyToReg,
 
     // CopyFromReg - This node indicates that the input value is a virtual or
@@ -69,10 +67,9 @@ namespace ISD {
     CopyFromReg,
 
     // ImplicitDef - This node indicates that the specified register is
-    // implicitly defined by some operation (e.g. its a live-in argument).  This
-    // register is indicated in the RegSDNode object.  The only operand to this
-    // is the token chain coming in, the only result is the token chain going
-    // out.
+    // implicitly defined by some operation (e.g. its a live-in argument).  The
+    // two operands to this are the token chain coming in and the register.
+    // The only result is the token chain going out.
     ImplicitDef,
 
     // UNDEF - An undefined node
@@ -830,24 +827,19 @@ public:
 };
 
 
-class RegSDNode : public SDNode {
+class RegisterSDNode : public SDNode {
   unsigned Reg;
 protected:
   friend class SelectionDAG;
-  RegSDNode(unsigned Opc, SDOperand Chain, SDOperand Src, unsigned reg)
-    : SDNode(Opc, Chain, Src), Reg(reg) {
-  }
-  RegSDNode(unsigned Opc, SDOperand Chain, unsigned reg)
-    : SDNode(Opc, Chain), Reg(reg) {}
+  RegisterSDNode(unsigned reg, MVT::ValueType VT)
+    : SDNode(ISD::Register, VT), Reg(reg) {}
 public:
 
   unsigned getReg() const { return Reg; }
 
-  static bool classof(const RegSDNode *) { return true; }
+  static bool classof(const RegisterSDNode *) { return true; }
   static bool classof(const SDNode *N) {
-    return N->getOpcode() == ISD::CopyToReg ||
-           N->getOpcode() == ISD::CopyFromReg ||
-           N->getOpcode() == ISD::ImplicitDef;
+    return N->getOpcode() == ISD::Register;
   }
 };
 
