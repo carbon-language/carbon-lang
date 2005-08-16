@@ -521,8 +521,9 @@ public:
 
   /// getOperationName - Return the opcode of this operation for printing.
   ///
-  const char* getOperationName() const;
+  const char* getOperationName(const SelectionDAG *G = 0) const;
   void dump() const;
+  void dump(const SelectionDAG *G) const;
 
   static bool classof(const SDNode *) { return true; }
 
