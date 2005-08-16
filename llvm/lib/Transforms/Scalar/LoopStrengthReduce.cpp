@@ -737,15 +737,23 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
   // fields of the BasedUsers.  We do this so that it increases the commonality
   // of the remaining uses.
   for (unsigned i = 0, e = UsersToProcess.size(); i != e; ++i) {
-    // Addressing modes can be folded into loads and stores.  Be careful that
-    // the store is through the expression, not of the expression though.
-    bool isAddress = isa<LoadInst>(UsersToProcess[i].Inst);
-    if (StoreInst *SI = dyn_cast<StoreInst>(UsersToProcess[i].Inst))
-      if (SI->getOperand(1) == UsersToProcess[i].OperandValToReplace)
-        isAddress = true;
-    
-    MoveImmediateValues(UsersToProcess[i].Base, UsersToProcess[i].Imm,
-                        isAddress, L);
+    // If the user is not in the current loop, this means it is using the exit
+    // value of the IV.  Do not put anything in the base, make sure it's all in
+    // the immediate field to allow as much factoring as possible.
+    if (!L->contains(UsersToProcess[i].Inst->getParent())) {
+      std::swap(UsersToProcess[i].Base, UsersToProcess[i].Imm);
+    } else {
+      
+      // Addressing modes can be folded into loads and stores.  Be careful that
+      // the store is through the expression, not of the expression though.
+      bool isAddress = isa<LoadInst>(UsersToProcess[i].Inst);
+      if (StoreInst *SI = dyn_cast<StoreInst>(UsersToProcess[i].Inst))
+        if (SI->getOperand(1) == UsersToProcess[i].OperandValToReplace)
+          isAddress = true;
+      
+      MoveImmediateValues(UsersToProcess[i].Base, UsersToProcess[i].Imm,
+                          isAddress, L);
+    }
   }
  
   // Now that we know what we need to do, insert the PHI node itself.
