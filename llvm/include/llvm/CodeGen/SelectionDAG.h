@@ -204,14 +204,23 @@ public:
   // getSrcValue - construct a node to track a Value* through the backend
   SDOperand getSrcValue(const Value* I, int offset = 0);
 
-  void replaceAllUsesWith(SDOperand Old, SDOperand New) {
-    assert(Old != New && "RAUW self!");
-    assert(0 && "Unimplemented!");
-  }
-
+  
+  /// SelectNodeTo - These are used for target selectors to *mutate* the
+  /// specified node to have the specified return type, Target opcode, and
+  /// operands.  Note that target opcodes are stored as
+  /// ISD::BUILTIN_OP_END+TargetOpcode in the node opcode field.
+  void SelectNodeTo(SDNode *N, MVT::ValueType VT, unsigned TargetOpc,
+                    SDOperand Op1);
+  void SelectNodeTo(SDNode *N, MVT::ValueType VT, unsigned TargetOpc,
+                    SDOperand Op1, SDOperand Op2);
+  void SelectNodeTo(SDNode *N, MVT::ValueType VT, unsigned TargetOpc,
+                    SDOperand Op1, SDOperand Op2, SDOperand Op3);
+  
+  
   void dump() const;
 
 private:
+  void RemoveNodeFromCSEMaps(SDNode *N);
   void DeleteNodeIfDead(SDNode *N, void *NodeSet);
   
   /// SimplifySetCC - Try to simplify a setcc built with the specified operands 

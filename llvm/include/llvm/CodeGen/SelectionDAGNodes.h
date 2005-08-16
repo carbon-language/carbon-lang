@@ -592,10 +592,17 @@ protected:
     NodeDepth = ND+1;
   }
 
-  virtual ~SDNode() {
-    // FIXME: Drop uses.
-  }
+  virtual ~SDNode() {}
 
+  /// MorphNodeTo - This clears the return value and operands list, and sets the
+  /// opcode of the node to the specified value.  This should only be used by
+  /// the SelectionDAG class.
+  void MorphNodeTo(unsigned Opc) {
+    NodeType = Opc;
+    Values.clear();
+    Operands.clear();
+  }
+  
   void setValueTypes(MVT::ValueType VT) {
     Values.reserve(1);
     Values.push_back(VT);
@@ -609,7 +616,22 @@ protected:
   void setValueTypes(std::vector<MVT::ValueType> &VTs) {
     std::swap(Values, VTs);
   }
-
+  
+  void setOperands(SDOperand Op0) {
+    Operands.reserve(1);
+    Operands.push_back(Op0);
+  }
+  void setOperands(SDOperand Op0, SDOperand Op1) {
+    Operands.reserve(2);
+    Operands.push_back(Op0);
+    Operands.push_back(Op1);
+  }
+  void setOperands(SDOperand Op0, SDOperand Op1, SDOperand Op2) {
+    Operands.reserve(3);
+    Operands.push_back(Op0);
+    Operands.push_back(Op1);
+    Operands.push_back(Op2);
+  }
   void removeUser(SDNode *User) {
     // Remove this user from the operand's use list.
     for (unsigned i = Uses.size(); ; --i) {
