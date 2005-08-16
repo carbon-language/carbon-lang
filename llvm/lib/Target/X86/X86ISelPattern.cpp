@@ -429,8 +429,8 @@ X86TargetLowering::LowerCCCCallTo(SDOperand Chain, const Type *RetTy,
 
     // Arguments go on the stack in reverse order, as specified by the ABI.
     unsigned ArgOffset = 0;
-    SDOperand StackPtr = DAG.getCopyFromReg(X86::ESP, MVT::i32,
-                                            DAG.getEntryNode());
+    SDOperand StackPtr = DAG.getCopyFromReg(DAG.getEntryNode(),
+                                            X86::ESP, MVT::i32);
     std::vector<SDOperand> Stores;
 
     for (unsigned i = 0, e = Args.size(); i != e; ++i) {
@@ -627,7 +627,7 @@ X86TargetLowering::LowerFastCCArguments(Function &F, SelectionDAG &DAG) {
         if (!I->use_empty()) {
           unsigned VReg = AddLiveIn(MF, NumIntRegs ? X86::DL : X86::AL,
                                     X86::R8RegisterClass);
-          ArgValue = DAG.getCopyFromReg(VReg, MVT::i8, DAG.getRoot());
+          ArgValue = DAG.getCopyFromReg(DAG.getRoot(), VReg, MVT::i8);
           DAG.setRoot(ArgValue.getValue(1));
         }
         ++NumIntRegs;
@@ -641,7 +641,7 @@ X86TargetLowering::LowerFastCCArguments(Function &F, SelectionDAG &DAG) {
         if (!I->use_empty()) {
           unsigned VReg = AddLiveIn(MF, NumIntRegs ? X86::DX : X86::AX,
                                     X86::R16RegisterClass);
-          ArgValue = DAG.getCopyFromReg(VReg, MVT::i16, DAG.getRoot());
+          ArgValue = DAG.getCopyFromReg(DAG.getRoot(), VReg, MVT::i16);
           DAG.setRoot(ArgValue.getValue(1));
         }
         ++NumIntRegs;
@@ -654,7 +654,7 @@ X86TargetLowering::LowerFastCCArguments(Function &F, SelectionDAG &DAG) {
         if (!I->use_empty()) {
           unsigned VReg = AddLiveIn(MF,NumIntRegs ? X86::EDX : X86::EAX,
                                     X86::R32RegisterClass);
-          ArgValue = DAG.getCopyFromReg(VReg, MVT::i32, DAG.getRoot());
+          ArgValue = DAG.getCopyFromReg(DAG.getRoot(), VReg, MVT::i32);
           DAG.setRoot(ArgValue.getValue(1));
         }
         ++NumIntRegs;
@@ -668,8 +668,8 @@ X86TargetLowering::LowerFastCCArguments(Function &F, SelectionDAG &DAG) {
           unsigned BotReg = AddLiveIn(MF, X86::EAX, X86::R32RegisterClass);
           unsigned TopReg = AddLiveIn(MF, X86::EDX, X86::R32RegisterClass);
 
-          SDOperand Low=DAG.getCopyFromReg(BotReg, MVT::i32, DAG.getRoot());
-          SDOperand Hi =DAG.getCopyFromReg(TopReg, MVT::i32, Low.getValue(1));
+          SDOperand Low = DAG.getCopyFromReg(DAG.getRoot(), BotReg, MVT::i32);
+          SDOperand Hi  = DAG.getCopyFromReg(Low.getValue(1), TopReg, MVT::i32);
           DAG.setRoot(Hi.getValue(1));
 
           ArgValue = DAG.getNode(ISD::BUILD_PAIR, MVT::i64, Low, Hi);
@@ -679,7 +679,7 @@ X86TargetLowering::LowerFastCCArguments(Function &F, SelectionDAG &DAG) {
       } else if (NumIntRegs == 1) {
         if (!I->use_empty()) {
           unsigned BotReg = AddLiveIn(MF, X86::EDX, X86::R32RegisterClass);
-          SDOperand Low = DAG.getCopyFromReg(BotReg, MVT::i32, DAG.getRoot());
+          SDOperand Low = DAG.getCopyFromReg(DAG.getRoot(), BotReg, MVT::i32);
           DAG.setRoot(Low.getValue(1));
 
           // Load the high part from memory.
@@ -809,8 +809,8 @@ X86TargetLowering::LowerFastCCCallTo(SDOperand Chain, const Type *RetTy,
 
   // Arguments go on the stack in reverse order, as specified by the ABI.
   unsigned ArgOffset = 0;
-  SDOperand StackPtr = DAG.getCopyFromReg(X86::ESP, MVT::i32,
-                                          DAG.getEntryNode());
+  SDOperand StackPtr = DAG.getCopyFromReg(DAG.getEntryNode(),
+                                          X86::ESP, MVT::i32);
   NumIntRegs = 0;
   std::vector<SDOperand> Stores;
   std::vector<SDOperand> RegValuesToPass;
@@ -2249,11 +2249,10 @@ unsigned ISel::SelectExpr(SDOperand N) {
   SDOperand Op0, Op1;
 
   if (Node->getOpcode() == ISD::CopyFromReg) {
-    if (MRegisterInfo::isVirtualRegister(cast<RegSDNode>(Node)->getReg()) ||
-        cast<RegSDNode>(Node)->getReg() == X86::ESP) {
-      // Just use the specified register as our input.
-      return cast<RegSDNode>(Node)->getReg();
-    }
+    unsigned Reg = cast<RegisterSDNode>(Node->getOperand(1))->getReg();
+    // Just use the specified register as our input if we can.
+    if (MRegisterInfo::isVirtualRegister(Reg) || Reg == X86::ESP)
+      return Reg;
   }
 
   unsigned &Reg = ExprMap[N];
@@ -2310,20 +2309,18 @@ unsigned ISel::SelectExpr(SDOperand N) {
       Reg = Result = ExprMap[N.getValue(0)] =
         MakeReg(N.getValue(0).getValueType());
     }
+    Tmp1 = cast<RegisterSDNode>(Node->getOperand(1))->getReg();
     switch (Node->getValueType(0)) {
     default: assert(0 && "Cannot CopyFromReg this!");
     case MVT::i1:
     case MVT::i8:
-      BuildMI(BB, X86::MOV8rr, 1,
-              Result).addReg(cast<RegSDNode>(Node)->getReg());
+      BuildMI(BB, X86::MOV8rr, 1, Result).addReg(Tmp1);
       return Result;
     case MVT::i16:
-      BuildMI(BB, X86::MOV16rr, 1,
-              Result).addReg(cast<RegSDNode>(Node)->getReg());
+      BuildMI(BB, X86::MOV16rr, 1, Result).addReg(Tmp1);
       return Result;
     case MVT::i32:
-      BuildMI(BB, X86::MOV32rr, 1,
-              Result).addReg(cast<RegSDNode>(Node)->getReg());
+      BuildMI(BB, X86::MOV32rr, 1, Result).addReg(Tmp1);
       return Result;
     }
 
@@ -4012,13 +4009,14 @@ static SDOperand GetAdjustedArgumentStores(SDOperand Chain, int Offset,
 
   if (OrigDest.getOpcode() == ISD::CopyFromReg) {
     OrigOffset = 0;
-    assert(cast<RegSDNode>(OrigDest)->getReg() == X86::ESP);
+    assert(cast<RegisterSDNode>(OrigDest.getOperand(1))->getReg() == X86::ESP);
   } else {
     // We expect only (ESP+C)
     assert(OrigDest.getOpcode() == ISD::ADD &&
            isa<ConstantSDNode>(OrigDest.getOperand(1)) &&
            OrigDest.getOperand(0).getOpcode() == ISD::CopyFromReg &&
-           cast<RegSDNode>(OrigDest.getOperand(0))->getReg() == X86::ESP);
+           cast<RegisterSDNode>(OrigDest.getOperand(0).getOperand(1))->getReg()
+                 == X86::ESP);
     OrigOffset = cast<ConstantSDNode>(OrigDest.getOperand(1))->getValue();
   }
 
@@ -4181,17 +4179,17 @@ void ISel::Select(SDOperand N) {
     }
     return;
   case ISD::CopyToReg:
-    if (getRegPressure(N.getOperand(0)) > getRegPressure(N.getOperand(1))) {
+    if (getRegPressure(N.getOperand(0)) > getRegPressure(N.getOperand(2))) {
       Select(N.getOperand(0));
-      Tmp1 = SelectExpr(N.getOperand(1));
+      Tmp1 = SelectExpr(N.getOperand(2));
     } else {
-      Tmp1 = SelectExpr(N.getOperand(1));
+      Tmp1 = SelectExpr(N.getOperand(2));
       Select(N.getOperand(0));
     }
-    Tmp2 = cast<RegSDNode>(N)->getReg();
+    Tmp2 = cast<RegisterSDNode>(N.getOperand(1))->getReg();
 
     if (Tmp1 != Tmp2) {
-      switch (N.getOperand(1).getValueType()) {
+      switch (N.getOperand(2).getValueType()) {
       default: assert(0 && "Invalid type for operation!");
       case MVT::i1:
       case MVT::i8:  Opc = X86::MOV8rr; break;

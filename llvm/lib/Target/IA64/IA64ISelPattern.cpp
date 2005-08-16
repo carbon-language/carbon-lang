@@ -201,8 +201,8 @@ IA64TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
             // FP args go into f8..f15 as needed: (hence the ++)
             argPreg[count] = args_FP[used_FPArgs++];
             argOpc[count] = IA64::FMOV;
-            argt = newroot = DAG.getCopyFromReg(argVreg[count],
-                getValueType(I->getType()), DAG.getRoot());
+            argt = newroot = DAG.getCopyFromReg(DAG.getRoot(), argVreg[count],
+                                                getValueType(I->getType()));
             break;
           case MVT::i1: // NOTE: as far as C abi stuff goes,
                         // bools are just boring old ints
@@ -217,7 +217,7 @@ IA64TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
             argPreg[count] = args_int[count];
             argOpc[count] = IA64::MOV;
             argt = newroot =
-              DAG.getCopyFromReg(argVreg[count], MVT::i64, DAG.getRoot());
+              DAG.getCopyFromReg(DAG.getRoot(), argVreg[count], MVT::i64);
             if ( getValueType(I->getType()) != MVT::i64)
               argt = DAG.getNode(ISD::TRUNCATE, getValueType(I->getType()),
                   newroot);
@@ -919,7 +919,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
 
   if (Node->getOpcode() == ISD::CopyFromReg)
     // Just use the specified register as our input.
-    return dyn_cast<RegSDNode>(Node)->getReg();
+    return cast<RegisterSDNode>(Node->getOperand(1))->getReg();
 
   unsigned &Reg = ExprMap[N];
   if (Reg) return Reg;
@@ -2026,7 +2026,7 @@ pC = pA OR pB
       SDOperand Chain   = N.getOperand(0);
 
       Select(Chain);
-      unsigned r = dyn_cast<RegSDNode>(Node)->getReg();
+      unsigned r = cast<RegisterSDNode>(Node->getOperand(1))->getReg();
 
       if(N.getValueType() == MVT::i1) // if a bool, we use pseudocode
         BuildMI(BB, IA64::PCMPEQUNC, 3, Result)
@@ -2209,17 +2209,19 @@ void ISel::Select(SDOperand N) {
 
   case ISD::CopyToReg: {
     Select(N.getOperand(0));
-    Tmp1 = SelectExpr(N.getOperand(1));
-    Tmp2 = cast<RegSDNode>(N)->getReg();
+    Tmp1 = SelectExpr(N.getOperand(2));
+    Tmp2 = cast<RegisterSDNode>(N.getOperand(1))->getReg();
 
     if (Tmp1 != Tmp2) {
-      if(N.getValueType() == MVT::i1) // if a bool, we use pseudocode
+      // if a bool, we use pseudocode
+      if (N.getOperand(2).getValueType() == MVT::i1)
         BuildMI(BB, IA64::PCMPEQUNC, 3, Tmp2)
           .addReg(IA64::r0).addReg(IA64::r0).addReg(Tmp1);
                                    // (Tmp1) Tmp2 = cmp.eq.unc(r0,r0)
       else
         BuildMI(BB, IA64::MOV, 1, Tmp2).addReg(Tmp1);
                       // XXX is this the right way 'round? ;)
+      // FIXME: WHAT ABOUT FLOATING POINT?
     }
     return;
   }
@@ -2288,7 +2290,8 @@ void ISel::Select(SDOperand N) {
 
   case ISD::ImplicitDef: {
     Select(N.getOperand(0));
-    BuildMI(BB, IA64::IDEF, 0, cast<RegSDNode>(N)->getReg());
+    BuildMI(BB, IA64::IDEF, 0, 
+            cast<RegisterSDNode>(N.getOperand(1))->getReg());
     return;
   }
 

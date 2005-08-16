@@ -283,7 +283,7 @@ AlphaTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG)
       case MVT::f64:
       case MVT::f32:
         args_float[count] = AddLiveIn(MF,args_float[count], getRegClassFor(VT));
-        argt = DAG.getCopyFromReg(args_float[count], VT, DAG.getRoot());
+        argt = DAG.getCopyFromReg(DAG.getRoot(), args_float[count], VT);
         break;
       case MVT::i1:
       case MVT::i8:
@@ -292,7 +292,7 @@ AlphaTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG)
       case MVT::i64:
         args_int[count] = AddLiveIn(MF, args_int[count],
                                     getRegClassFor(MVT::i64));
-        argt = DAG.getCopyFromReg(args_int[count], VT, DAG.getRoot());
+        argt = DAG.getCopyFromReg(DAG.getRoot(), args_int[count], VT);
         if (VT != MVT::i64)
           argt = DAG.getNode(ISD::TRUNCATE, VT, argt);
         break;
@@ -319,7 +319,7 @@ AlphaTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG)
     for (int i = 0; i < 6; ++i) {
       if (args_int[i] < 1024)
         args_int[i] = AddLiveIn(MF,args_int[i], getRegClassFor(MVT::i64));
-      SDOperand argt = DAG.getCopyFromReg(args_int[i], MVT::i64, DAG.getRoot());
+      SDOperand argt = DAG.getCopyFromReg(DAG.getRoot(), args_int[i], MVT::i64);
       int FI = MFI->CreateFixedObject(8, -8 * (6 - i));
       if (i == 0) VarArgsBase = FI;
       SDOperand SDFI = DAG.getFrameIndex(FI, MVT::i64);
@@ -328,7 +328,7 @@ AlphaTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG)
 
       if (args_float[i] < 1024)
         args_float[i] = AddLiveIn(MF,args_float[i], getRegClassFor(MVT::f64));
-      argt = DAG.getCopyFromReg(args_float[i], MVT::f64, DAG.getRoot());
+      argt = DAG.getCopyFromReg(DAG.getRoot(), args_float[i], MVT::f64);
       FI = MFI->CreateFixedObject(8, - 8 * (12 - i));
       SDFI = DAG.getFrameIndex(FI, MVT::i64);
       LS.push_back(DAG.getNode(ISD::STORE, MVT::Other, DAG.getRoot(), argt,
@@ -1634,7 +1634,7 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
       SDOperand Chain   = N.getOperand(0);
 
       Select(Chain);
-      unsigned r = cast<RegSDNode>(Node)->getReg();
+      unsigned r = cast<RegisterSDNode>(Node->getOperand(1))->getReg();
       //std::cerr << "CopyFromReg " << Result << " = " << r << "\n";
       if (MVT::isFloatingPoint(N.getValue(0).getValueType()))
         BuildMI(BB, Alpha::CPYS, 2, Result).addReg(r).addReg(r);
@@ -2199,7 +2199,8 @@ void AlphaISel::Select(SDOperand N) {
   case ISD::ImplicitDef:
     ++count_ins;
     Select(N.getOperand(0));
-    BuildMI(BB, Alpha::IDEF, 0, cast<RegSDNode>(N)->getReg());
+    BuildMI(BB, Alpha::IDEF, 0,
+            cast<RegisterSDNode>(N.getOperand(1))->getReg());
     return;
 
   case ISD::EntryToken: return;  // Noop
@@ -2216,12 +2217,12 @@ void AlphaISel::Select(SDOperand N) {
   case ISD::CopyToReg:
     ++count_outs;
     Select(N.getOperand(0));
-    Tmp1 = SelectExpr(N.getOperand(1));
-    Tmp2 = cast<RegSDNode>(N)->getReg();
+    Tmp1 = SelectExpr(N.getOperand(2));
+    Tmp2 = cast<RegisterSDNode>(N.getOperand(1))->getReg();
 
     if (Tmp1 != Tmp2) {
-      if (N.getOperand(1).getValueType() == MVT::f64 ||
-          N.getOperand(1).getValueType() == MVT::f32)
+      if (N.getOperand(2).getValueType() == MVT::f64 ||
+          N.getOperand(2).getValueType() == MVT::f32)
         BuildMI(BB, Alpha::CPYS, 2, Tmp2).addReg(Tmp1).addReg(Tmp1);
       else
         BuildMI(BB, Alpha::BIS, 2, Tmp2).addReg(Tmp1).addReg(Tmp1);
