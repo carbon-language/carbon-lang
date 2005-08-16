@@ -347,8 +347,9 @@ replaceSymbolicValuesWithConcrete(const SCEVHandle &Sym,
 
 bool SCEVAddRecExpr::isLoopInvariant(const Loop *QueryLoop) const {
   // This recurrence is invariant w.r.t to QueryLoop iff QueryLoop doesn't
-  // contain L.
-  return !QueryLoop->contains(L->getHeader());
+  // contain L and if the start is invariant.
+  return !QueryLoop->contains(L->getHeader()) &&
+         getOperand(0)->isLoopInvariant(QueryLoop);
 }
 
 
