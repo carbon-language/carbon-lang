@@ -1602,7 +1602,11 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
       else                 // Unconditional branch to false dest.
         return getNode(ISD::BR, MVT::Other, Ops[0], Ops[3]);
     break;
-
+  case ISD::BRTWOWAY_CC:
+    assert(Ops.size() == 6 && "BRTWOWAY_CC takes 6 operands!");
+    assert(Ops[2].getValueType() == Ops[3].getValueType() &&
+           "LHS and RHS of comparison must have same type!");
+    break;
   case ISD::TRUNCSTORE: {
     assert(Ops.size() == 5 && "TRUNCSTORE takes 5 operands!");
     MVT::ValueType EVT = cast<VTSDNode>(Ops[4])->getVT();
@@ -1833,6 +1837,8 @@ const char *SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::BR:      return "br";
   case ISD::BRCOND:  return "brcond";
   case ISD::BRCONDTWOWAY:  return "brcondtwoway";
+  case ISD::BR_CC:  return "br_cc";
+  case ISD::BRTWOWAY_CC:  return "brtwoway_cc";
   case ISD::RET:     return "ret";
   case ISD::CALL:    return "call";
   case ISD::TAILCALL:return "tailcall";

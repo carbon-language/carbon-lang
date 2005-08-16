@@ -233,6 +233,18 @@ namespace ISD {
     // operation to BRCOND/BR pairs when necessary.
     BRCONDTWOWAY,
 
+    // BR_CC - Conditional branch.  The behavior is like that of SELECT_CC, in
+    // that the condition is represented as condition code, and two nodes to
+    // compare, rather than as a combined SetCC node.  The operands in order are
+    // chain, cc, lhs, rhs, block to branch to if condition is true.
+    BR_CC,
+    
+    // BRTWOWAY_CC - Two-way conditional branch.  The operands in order are
+    // chain, cc, lhs, rhs, block to branch to if condition is true, block to
+    // branch to if condition is false.  Targets usually do not implement this,
+    // preferring to have legalize demote the operation to BRCOND/BR pairs.
+    BRTWOWAY_CC,
+    
     // RET - Return from function.  The first operand is the chain,
     // and any subsequent operands are the return values for the
     // function.  This operation can have variable number of operands.

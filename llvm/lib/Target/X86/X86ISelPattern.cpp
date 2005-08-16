@@ -152,6 +152,7 @@ namespace {
       setOperationAction(ISD::FP_TO_SINT       , MVT::i16  , Promote);
 
       setOperationAction(ISD::BRCONDTWOWAY     , MVT::Other, Expand);
+      setOperationAction(ISD::BRTWOWAY_CC      , MVT::Other, Expand);
       setOperationAction(ISD::MEMMOVE          , MVT::Other, Expand);
       setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i16  , Expand);
       setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1   , Expand);

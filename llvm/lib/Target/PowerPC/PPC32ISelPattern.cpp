@@ -713,22 +713,11 @@ unsigned ISel::SelectAddr(SDOperand N, unsigned& Reg, int& offset)
 void ISel::SelectBranchCC(SDOperand N)
 {
   MachineBasicBlock *Dest =
-    cast<BasicBlockSDNode>(N.getOperand(2))->getBasicBlock();
+    cast<BasicBlockSDNode>(N.getOperand(4))->getBasicBlock();
 
   Select(N.getOperand(0));  //chain
-  
-  // FIXME: Until we have Branch_CC and Branch_Twoway_CC, we're going to have to
-  // Fake it up by hand by checking to see if op 1 is a SetCC, or a boolean.
-  unsigned CCReg;
-  ISD::CondCode CC;
-  SDOperand Cond = N.getOperand(1);
-  if (Cond.getOpcode() == ISD::SETCC) {
-    CC = cast<CondCodeSDNode>(Cond.getOperand(2))->get();
-    CCReg = SelectCC(Cond.getOperand(0), Cond.getOperand(1), CC);
-  } else {
-    CC = ISD::SETNE;
-    CCReg = SelectCC(Cond, ISelDAG->getConstant(0, Cond.getValueType()), CC);
-  }
+  ISD::CondCode CC = cast<CondCodeSDNode>(N.getOperand(1))->get();
+  unsigned CCReg = SelectCC(N.getOperand(2), N.getOperand(3), CC);
   unsigned Opc = getBCCForSetCC(CC);
 
   // Iterate to the next basic block
@@ -739,9 +728,9 @@ void ISel::SelectBranchCC(SDOperand N)
   // and build a PowerPC branch pseudo-op, suitable for long branch conversion
   // if necessary by the branch selection pass.  Otherwise, emit a standard
   // conditional branch.
-  if (N.getOpcode() == ISD::BRCONDTWOWAY) {
+  if (N.getOpcode() == ISD::BRTWOWAY_CC) {
     MachineBasicBlock *Fallthrough =
-      cast<BasicBlockSDNode>(N.getOperand(3))->getBasicBlock();
+      cast<BasicBlockSDNode>(N.getOperand(5))->getBasicBlock();
     if (Dest != It) {
       BuildMI(BB, PPC::COND_BRANCH, 4).addReg(CCReg).addImm(Opc)
         .addMBB(Dest).addMBB(Fallthrough);
@@ -1882,8 +1871,8 @@ void ISel::Select(SDOperand N) {
     BuildMI(BB, PPC::B, 1).addMBB(Dest);
     return;
   }
-  case ISD::BRCOND:
-  case ISD::BRCONDTWOWAY:
+  case ISD::BR_CC:
+  case ISD::BRTWOWAY_CC:
     SelectBranchCC(N);
     return;
   case ISD::CopyToReg:

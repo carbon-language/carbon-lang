@@ -193,6 +193,21 @@ public:
     return getNode(ISD::SELECT_CC, VT, LHS, RHS, True, False,getCondCode(Cond));
   }
   
+  /// getBR2Way_CC - Helper function to make it easier to build BRTWOWAY_CC
+  /// nodes.
+  ///
+  SDOperand getBR2Way_CC(SDOperand Chain, SDOperand CCNode, SDOperand LHS, 
+                         SDOperand RHS, SDOperand True, SDOperand False) {
+    std::vector<SDOperand> Ops;
+    Ops.push_back(Chain);
+    Ops.push_back(CCNode);
+    Ops.push_back(LHS);
+    Ops.push_back(RHS);
+    Ops.push_back(True);
+    Ops.push_back(False);
+    return getNode(ISD::BRTWOWAY_CC, MVT::Other, Ops);
+  }
+
   /// getLoad - Loads are not normal binary operators: their result type is not
   /// determined by their operands, and they produce a value AND a token chain.
   ///

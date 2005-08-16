@@ -66,6 +66,10 @@ PPC32TargetLowering::PPC32TargetLowering(TargetMachine &TM)
   setOperationAction(ISD::SELECT, MVT::i32, Expand);
   setOperationAction(ISD::SELECT, MVT::f32, Expand);
   setOperationAction(ISD::SELECT, MVT::f64, Expand);
+
+  // PowerPC does not have BRCOND* which requires SetCC
+  setOperationAction(ISD::BRCOND,       MVT::Other, Expand);
+  setOperationAction(ISD::BRCONDTWOWAY, MVT::Other, Expand);
   
   // PowerPC does not have FP_TO_UINT
   setOperationAction(ISD::FP_TO_UINT, MVT::i32, Expand);

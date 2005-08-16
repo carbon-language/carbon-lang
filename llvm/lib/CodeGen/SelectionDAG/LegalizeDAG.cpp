@@ -594,7 +594,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
 
   case ISD::BRCOND:
     Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
-
+    
     switch (getTypeAction(Node->getOperand(1).getValueType())) {
     case Expand: assert(0 && "It's impossible to expand bools");
     case Legal:
@@ -604,10 +604,63 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       Tmp2 = PromoteOp(Node->getOperand(1));  // Promote the condition.
       break;
     }
-    // Basic block destination (Op#2) is always legal.
-    if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(1))
-      Result = DAG.getNode(ISD::BRCOND, MVT::Other, Tmp1, Tmp2,
-                           Node->getOperand(2));
+      
+    switch (TLI.getOperationAction(ISD::BRCOND, MVT::Other)) {  
+    default: assert(0 && "This action is not supported yet!");
+    case TargetLowering::Expand:
+      // Expand brcond's setcc into its constituent parts and create a BR_CC
+      // Node.
+      if (Tmp2.getOpcode() == ISD::SETCC) {
+        Result = DAG.getNode(ISD::BR_CC, MVT::Other, Tmp1, Tmp2.getOperand(2),
+                             Tmp2.getOperand(0), Tmp2.getOperand(1),
+                             Node->getOperand(2));
+      } else {
+        Result = DAG.getNode(ISD::BR_CC, MVT::Other, Tmp1, 
+                             DAG.getCondCode(ISD::SETNE), Tmp2,
+                             DAG.getConstant(0, Tmp2.getValueType()),
+                             Node->getOperand(2));
+      }
+      break;
+    case TargetLowering::Legal:
+      // Basic block destination (Op#2) is always legal.
+      if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(1))
+        Result = DAG.getNode(ISD::BRCOND, MVT::Other, Tmp1, Tmp2,
+                             Node->getOperand(2));
+        break;
+    }
+    break;
+  case ISD::BR_CC:
+    Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
+    
+    if (getTypeAction(Node->getOperand(2).getValueType()) == Legal) {
+      Tmp2 = LegalizeOp(Node->getOperand(2));   // LHS
+      Tmp3 = LegalizeOp(Node->getOperand(3));   // RHS
+      if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(2) ||
+          Tmp3 != Node->getOperand(3)) {
+        Result = DAG.getNode(ISD::BR_CC, MVT::Other, Tmp1, Node->getOperand(1),
+                             Tmp2, Tmp3, Node->getOperand(4));
+      }
+      break;
+    } else {
+      Tmp2 = LegalizeOp(DAG.getNode(ISD::SETCC, TLI.getSetCCResultTy(),
+                                    Node->getOperand(2),  // LHS
+                                    Node->getOperand(3),  // RHS
+                                    Node->getOperand(1)));
+      // If we get a SETCC back from legalizing the SETCC node we just
+      // created, then use its LHS, RHS, and CC directly in creating a new
+      // node.  Otherwise, select between the true and false value based on
+      // comparing the result of the legalized with zero.
+      if (Tmp2.getOpcode() == ISD::SETCC) {
+        Result = DAG.getNode(ISD::BR_CC, MVT::Other, Tmp1, Tmp2.getOperand(2),
+                             Tmp2.getOperand(0), Tmp2.getOperand(1),
+                             Node->getOperand(4));
+      } else {
+        Result = DAG.getNode(ISD::BR_CC, MVT::Other, Tmp1, 
+                             DAG.getCondCode(ISD::SETNE),
+                             Tmp2, DAG.getConstant(0, Tmp2.getValueType()), 
+                             Node->getOperand(4));
+      }
+    }
     break;
   case ISD::BRCONDTWOWAY:
     Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
@@ -636,13 +689,71 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       }
       break;
     case TargetLowering::Expand:
-      Result = DAG.getNode(ISD::BRCOND, MVT::Other, Tmp1, Tmp2,
+      // If BRTWOWAY_CC is legal for this target, then simply expand this node
+      // to that.  Otherwise, skip BRTWOWAY_CC and expand directly to a
+      // BRCOND/BR pair.
+      if (TLI.getOperationAction(ISD::BRTWOWAY_CC, MVT::Other) == 
+          TargetLowering::Legal) {
+        if (Tmp2.getOpcode() == ISD::SETCC) {
+          Result = DAG.getBR2Way_CC(Tmp1, Tmp2.getOperand(2),
+                                    Tmp2.getOperand(0), Tmp2.getOperand(1),
+                                    Node->getOperand(2), Node->getOperand(3));
+        } else {
+          Result = DAG.getBR2Way_CC(Tmp1, DAG.getCondCode(ISD::SETNE), Tmp2, 
+                                    DAG.getConstant(0, Tmp2.getValueType()),
+                                    Node->getOperand(2), Node->getOperand(3));
+        }
+      } else {
+        Result = DAG.getNode(ISD::BRCOND, MVT::Other, Tmp1, Tmp2,
                            Node->getOperand(2));
-      Result = DAG.getNode(ISD::BR, MVT::Other, Result, Node->getOperand(3));
+        Result = DAG.getNode(ISD::BR, MVT::Other, Result, Node->getOperand(3));
+      }
       break;
     }
     break;
-
+  case ISD::BRTWOWAY_CC:
+    Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
+    if (getTypeAction(Node->getOperand(2).getValueType()) == Legal) {
+      Tmp2 = LegalizeOp(Node->getOperand(2));   // LHS
+      Tmp3 = LegalizeOp(Node->getOperand(3));   // RHS
+      if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(2) ||
+          Tmp3 != Node->getOperand(3)) {
+        Result = DAG.getBR2Way_CC(Tmp1, Node->getOperand(1), Tmp2, Tmp3,
+                                  Node->getOperand(4), Node->getOperand(5));
+      }
+      break;
+    } else {
+      Tmp2 = LegalizeOp(DAG.getNode(ISD::SETCC, TLI.getSetCCResultTy(),
+                                    Node->getOperand(2),  // LHS
+                                    Node->getOperand(3),  // RHS
+                                    Node->getOperand(1)));
+      // If this target does not support BRTWOWAY_CC, lower it to a BRCOND/BR
+      // pair.
+      switch (TLI.getOperationAction(ISD::BRTWOWAY_CC, MVT::Other)) {
+      default: assert(0 && "This action is not supported yet!");
+      case TargetLowering::Legal:
+        // If we get a SETCC back from legalizing the SETCC node we just
+        // created, then use its LHS, RHS, and CC directly in creating a new
+        // node.  Otherwise, select between the true and false value based on
+        // comparing the result of the legalized with zero.
+        if (Tmp2.getOpcode() == ISD::SETCC) {
+          Result = DAG.getBR2Way_CC(Tmp1, Tmp2.getOperand(2),
+                                    Tmp2.getOperand(0), Tmp2.getOperand(1),
+                                    Node->getOperand(4), Node->getOperand(5));
+        } else {
+          Result = DAG.getBR2Way_CC(Tmp1, DAG.getCondCode(ISD::SETNE), Tmp2, 
+                                    DAG.getConstant(0, Tmp2.getValueType()),
+                                    Node->getOperand(4), Node->getOperand(5));
+        }
+        break;
+      case TargetLowering::Expand: 
+        Result = DAG.getNode(ISD::BRCOND, MVT::Other, Tmp1, Tmp2,
+                             Node->getOperand(4));
+        Result = DAG.getNode(ISD::BR, MVT::Other, Result, Node->getOperand(5));
+        break;
+      }
+    }
+    break;
   case ISD::LOAD:
     Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
     Tmp2 = LegalizeOp(Node->getOperand(1));  // Legalize the pointer.
@@ -967,9 +1078,19 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
                                     Node->getOperand(0),  // LHS
                                     Node->getOperand(1),  // RHS
                                     Node->getOperand(4)));
-      Result = DAG.getSelectCC(Tmp1,
-                               DAG.getConstant(0, Tmp1.getValueType()), 
-                               Tmp3, Tmp4, ISD::SETNE);
+      // If we get a SETCC back from legalizing the SETCC node we just
+      // created, then use its LHS, RHS, and CC directly in creating a new
+      // node.  Otherwise, select between the true and false value based on
+      // comparing the result of the legalized with zero.
+      if (Tmp1.getOpcode() == ISD::SETCC) {
+        Result = DAG.getNode(ISD::SELECT_CC, Tmp3.getValueType(),
+                             Tmp1.getOperand(0), Tmp1.getOperand(1),
+                             Tmp3, Tmp4, Tmp1.getOperand(2));
+      } else {
+        Result = DAG.getSelectCC(Tmp1,
+                                 DAG.getConstant(0, Tmp1.getValueType()), 
+                                 Tmp3, Tmp4, ISD::SETNE);
+      }
     }
     break;
   case ISD::SETCC:
