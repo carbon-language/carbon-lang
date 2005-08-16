@@ -128,8 +128,8 @@ PPC32TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
         if (!ArgLive) break;
           if (GPR_remaining > 0) {
             MF.addLiveIn(GPR[GPR_idx]);
-            argt = newroot = DAG.getCopyFromReg(GPR[GPR_idx], MVT::i32,
-                                                DAG.getRoot());
+            argt = newroot = DAG.getCopyFromReg(DAG.getRoot(),
+                                                GPR[GPR_idx], MVT::i32);
             if (ObjectVT != MVT::i32)
               argt = DAG.getNode(ISD::TRUNCATE, ObjectVT, newroot);
           } else {
@@ -141,14 +141,14 @@ PPC32TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
           if (GPR_remaining > 0) {
             SDOperand argHi, argLo;
             MF.addLiveIn(GPR[GPR_idx]);
-            argHi = DAG.getCopyFromReg(GPR[GPR_idx], MVT::i32, DAG.getRoot());
+            argHi = DAG.getCopyFromReg(DAG.getRoot(), GPR[GPR_idx], MVT::i32);
             // If we have two or more remaining argument registers, then both halves
             // of the i64 can be sourced from there.  Otherwise, the lower half will
             // have to come off the stack.  This can happen when an i64 is preceded
             // by 28 bytes of arguments.
             if (GPR_remaining > 1) {
               MF.addLiveIn(GPR[GPR_idx+1]);
-              argLo = DAG.getCopyFromReg(GPR[GPR_idx+1], MVT::i32, argHi);
+              argLo = DAG.getCopyFromReg(argHi, GPR[GPR_idx+1], MVT::i32);
             } else {
               int FI = MFI->CreateFixedObject(4, ArgOffset+4);
               SDOperand FIN = DAG.getFrameIndex(FI, MVT::i32);
@@ -168,8 +168,8 @@ PPC32TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
         if (!ArgLive) break;
           if (FPR_remaining > 0) {
             MF.addLiveIn(FPR[FPR_idx]);
-            argt = newroot = DAG.getCopyFromReg(FPR[FPR_idx], ObjectVT,
-                                                DAG.getRoot());
+            argt = newroot = DAG.getCopyFromReg(DAG.getRoot(), 
+                                                FPR[FPR_idx], ObjectVT);
             --FPR_remaining;
             ++FPR_idx;
           } else {
@@ -217,7 +217,7 @@ PPC32TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
     std::vector<SDOperand> MemOps;
     for (; GPR_remaining > 0; --GPR_remaining, ++GPR_idx) {
       MF.addLiveIn(GPR[GPR_idx]);
-      SDOperand Val = DAG.getCopyFromReg(GPR[GPR_idx], MVT::i32, DAG.getRoot());
+      SDOperand Val = DAG.getCopyFromReg(DAG.getRoot(), GPR[GPR_idx], MVT::i32);
       SDOperand Store = DAG.getNode(ISD::STORE, MVT::Other, Val.getValue(1),
                                     Val, FIN, DAG.getSrcValue(NULL));
       MemOps.push_back(Store);
@@ -298,8 +298,8 @@ PPC32TargetLowering::LowerCallTo(SDOperand Chain,
     // Set up a copy of the stack pointer for use loading and storing any
     // arguments that may not fit in the registers available for argument
     // passing.
-    SDOperand StackPtr = DAG.getCopyFromReg(PPC::R1, MVT::i32,
-                                            DAG.getEntryNode());
+    SDOperand StackPtr = DAG.getCopyFromReg(DAG.getEntryNode(),
+                                            PPC::R1, MVT::i32);
     
     // Figure out which arguments are going to go in registers, and which in
     // memory.  Also, if this is a vararg function, floating point operations

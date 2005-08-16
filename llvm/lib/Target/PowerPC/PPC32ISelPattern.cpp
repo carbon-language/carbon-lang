@@ -808,11 +808,12 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
   SDNode *Node = N.Val;
   MVT::ValueType DestType = N.getValueType();
 
-  if (Node->getOpcode() == ISD::CopyFromReg &&
-      (MRegisterInfo::isVirtualRegister(cast<RegSDNode>(Node)->getReg()) ||
-       cast<RegSDNode>(Node)->getReg() == PPC::R1))
+  if (Node->getOpcode() == ISD::CopyFromReg) {
+    unsigned Reg = cast<RegisterSDNode>(Node->getOperand(1))->getReg();
     // Just use the specified register as our input.
-    return cast<RegSDNode>(Node)->getReg();
+    if (MRegisterInfo::isVirtualRegister(Reg) || Reg == PPC::R1)
+      return Reg;
+  }
 
   unsigned &Reg = ExprMap[N];
   if (Reg) return Reg;
@@ -1085,7 +1086,7 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
     DestType = N.getValue(0).getValueType();
     if (Result == 1)
       Result = ExprMap[N.getValue(0)] = MakeReg(DestType);
-    Tmp1 = dyn_cast<RegSDNode>(Node)->getReg();
+    Tmp1 = dyn_cast<RegisterSDNode>(Node->getOperand(1))->getReg();
     if (MVT::isInteger(DestType))
       BuildMI(BB, PPC::OR, 2, Result).addReg(Tmp1).addReg(Tmp1);
     else
@@ -1877,12 +1878,12 @@ void ISel::Select(SDOperand N) {
     return;
   case ISD::CopyToReg:
     Select(N.getOperand(0));
-    Tmp1 = SelectExpr(N.getOperand(1));
-    Tmp2 = cast<RegSDNode>(N)->getReg();
+    Tmp1 = SelectExpr(N.getOperand(2));
+    Tmp2 = cast<RegisterSDNode>(N.getOperand(1))->getReg();
 
     if (Tmp1 != Tmp2) {
-      if (N.getOperand(1).getValueType() == MVT::f64 ||
-          N.getOperand(1).getValueType() == MVT::f32)
+      if (N.getOperand(2).getValueType() == MVT::f64 ||
+          N.getOperand(2).getValueType() == MVT::f32)
         BuildMI(BB, PPC::FMR, 1, Tmp2).addReg(Tmp1);
       else
         BuildMI(BB, PPC::OR, 2, Tmp2).addReg(Tmp1).addReg(Tmp1);
@@ -1890,7 +1891,8 @@ void ISel::Select(SDOperand N) {
     return;
   case ISD::ImplicitDef:
     Select(N.getOperand(0));
-    BuildMI(BB, PPC::IMPLICIT_DEF, 0, cast<RegSDNode>(N)->getReg());
+    BuildMI(BB, PPC::IMPLICIT_DEF, 0,
+            cast<RegisterSDNode>(N.getOperand(1))->getReg());
     return;
   case ISD::RET:
     switch (N.getNumOperands()) {
