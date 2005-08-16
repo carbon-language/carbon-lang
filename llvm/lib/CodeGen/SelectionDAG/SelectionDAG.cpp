@@ -177,12 +177,40 @@ void SelectionDAG::RemoveDeadNodes(SDNode *N) {
   delete DummyNode;
 }
 
+
 void SelectionDAG::DeleteNodeIfDead(SDNode *N, void *NodeSet) {
   if (!N->use_empty())
     return;
 
   // Okay, we really are going to delete this node.  First take this out of the
   // appropriate CSE map.
+  RemoveNodeFromCSEMaps(N);
+  
+  // Next, brutally remove the operand list.  This is safe to do, as there are
+  // no cycles in the graph.
+  while (!N->Operands.empty()) {
+    SDNode *O = N->Operands.back().Val;
+    N->Operands.pop_back();
+    O->removeUser(N);
+    
+    // Now that we removed this operand, see if there are no uses of it left.
+    DeleteNodeIfDead(O, NodeSet);
+  }
+  
+  // Remove the node from the nodes set and delete it.
+  std::set<SDNode*> &AllNodeSet = *(std::set<SDNode*>*)NodeSet;
+  AllNodeSet.erase(N);
+  
+  // Now that the node is gone, check to see if any of the operands of this node
+  // are dead now.
+  delete N;  
+}
+
+/// RemoveNodeFromCSEMaps - Take the specified node out of the CSE map that
+/// correspond to it.  This is useful when we're about to delete or repurpose
+/// the node.  We don't want future request for structurally identical nodes
+/// to return N anymore.
+void SelectionDAG::RemoveNodeFromCSEMaps(SDNode *N) {
   switch (N->getOpcode()) {
   case ISD::Constant:
     Constants.erase(std::make_pair(cast<ConstantSDNode>(N)->getValue(),
@@ -253,24 +281,6 @@ void SelectionDAG::DeleteNodeIfDead(SDNode *N, void *NodeSet) {
     }
     break;
   }
-
-  // Next, brutally remove the operand list.
-  while (!N->Operands.empty()) {
-    SDNode *O = N->Operands.back().Val;
-    N->Operands.pop_back();
-    O->removeUser(N);
-
-    // Now that we removed this operand, see if there are no uses of it left.
-    DeleteNodeIfDead(O, NodeSet);
-  }
-
-  // Remove the node from the nodes set and delete it.
-  std::set<SDNode*> &AllNodeSet = *(std::set<SDNode*>*)NodeSet;
-  AllNodeSet.erase(N);
-
-  // Now that the node is gone, check to see if any of the operands of this node
-  // are dead now.
-  delete N;
 }
 
 
@@ -1678,6 +1688,36 @@ SDOperand SelectionDAG::getNode(unsigned Opcode,
   AllNodes.push_back(N);
   return SDOperand(N, 0);
 }
+
+
+/// SelectNodeTo - These are used for target selectors to *mutate* the
+/// specified node to have the specified return type, Target opcode, and
+/// operands.  Note that target opcodes are stored as
+/// ISD::BUILTIN_OP_END+TargetOpcode in the node opcode field.
+void SelectionDAG::SelectNodeTo(SDNode *N, MVT::ValueType VT,
+                                unsigned TargetOpc, SDOperand Op1) {
+  RemoveNodeFromCSEMaps(N);
+  N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc);
+  N->setValueTypes(VT);
+  N->setOperands(Op1);
+}
+void SelectionDAG::SelectNodeTo(SDNode *N, MVT::ValueType VT,
+                                unsigned TargetOpc, SDOperand Op1,
+                                SDOperand Op2) {
+  RemoveNodeFromCSEMaps(N);
+  N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc);
+  N->setValueTypes(VT);
+  N->setOperands(Op1, Op2);
+}
+void SelectionDAG::SelectNodeTo(SDNode *N, MVT::ValueType VT,
+                                unsigned TargetOpc, SDOperand Op1,
+                                SDOperand Op2, SDOperand Op3) {
+  RemoveNodeFromCSEMaps(N);
+  N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc);
+  N->setValueTypes(VT);
+  N->setOperands(Op1, Op2, Op3);
+}
+
 
 /// hasNUsesOfValue - Return true if there are exactly NUSES uses of the
 /// indicated value.  This method ignores uses of other values defined by this

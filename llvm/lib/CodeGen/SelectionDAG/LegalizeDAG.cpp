@@ -203,7 +203,7 @@ SDOperand SelectionDAGLegalize::ExpandLegalUINT_TO_FP(SDOperand Op0,
   return DAG.getNode(ISD::ADD, DestVT, Tmp1, FudgeInReg);
 }
 
-/// PromoteLegalUINT_TO_FP - This function is responsible for legalizing a
+/// PromoteLegalINT_TO_FP - This function is responsible for legalizing a
 /// *INT_TO_FP operation of the specified operand when the target requests that
 /// we promote it.  At this point, we know that the result and operand types are
 /// legal for the target, and that there is a legal UINT_TO_FP or SINT_TO_FP
