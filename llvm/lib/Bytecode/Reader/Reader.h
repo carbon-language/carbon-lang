@@ -80,7 +80,7 @@ public:
   class ValueList : public User {
     std::vector<Use> Uses;
   public:
-    ValueList() : User(Type::VoidTy, Value::ValueListVal, 0, 0) {}
+    ValueList() : User(Type::VoidTy, Value::ArgumentVal, 0, 0) {}
 
     // vector compatibility methods
     unsigned size() const { return getNumOperands(); }
