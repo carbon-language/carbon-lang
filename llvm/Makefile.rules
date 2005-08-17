@@ -625,7 +625,7 @@ endif
 # (defined by the user's project) and "LLVM" libs (defined 
 # by the # LLVM project).
 #---------------------------------------------------------
-#some versions of gcc on alpha produce to many symbols, so use a .a file
+# Some versions of gcc on Alpha produce too many symbols, so use a .a file
 ifeq ($(ARCH),Alpha)
 USEDLIBS :=  $(subst LLVMCore, LLVMCore.a, $(USEDLIBS))
 LLVMLIBS := $(subst LLVMCore, LLVMCore.a, $(LLVMLIBS))
