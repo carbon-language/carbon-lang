@@ -218,6 +218,10 @@ void SelectionDAG::RemoveNodeFromCSEMaps(SDNode *N) {
     Constants.erase(std::make_pair(cast<ConstantSDNode>(N)->getValue(),
                                    N->getValueType(0)));
     break;
+  case ISD::TargetConstant:
+    TargetConstants.erase(std::make_pair(cast<ConstantSDNode>(N)->getValue(),
+                                         N->getValueType(0)));
+    break;
   case ISD::ConstantFP: {
     union {
       double DV;
@@ -309,7 +313,20 @@ SDOperand SelectionDAG::getConstant(uint64_t Val, MVT::ValueType VT) {
 
   SDNode *&N = Constants[std::make_pair(Val, VT)];
   if (N) return SDOperand(N, 0);
-  N = new ConstantSDNode(Val, VT);
+  N = new ConstantSDNode(false, Val, VT);
+  AllNodes.push_back(N);
+  return SDOperand(N, 0);
+}
+
+SDOperand SelectionDAG::getTargetConstant(uint64_t Val, MVT::ValueType VT) {
+  assert(MVT::isInteger(VT) && "Cannot create FP integer constant!");
+  // Mask out any bits that are not valid for this constant.
+  if (VT != MVT::i64)
+    Val &= ((uint64_t)1 << MVT::getSizeInBits(VT)) - 1;
+  
+  SDNode *&N = TargetConstants[std::make_pair(Val, VT)];
+  if (N) return SDOperand(N, 0);
+  N = new ConstantSDNode(true, Val, VT);
   AllNodes.push_back(N);
   return SDOperand(N, 0);
 }
@@ -1792,6 +1809,7 @@ const char *SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::EntryToken:    return "EntryToken";
   case ISD::TokenFactor:   return "TokenFactor";
   case ISD::Constant:      return "Constant";
+  case ISD::TargetConstant: return "TargetConstant";
   case ISD::ConstantFP:    return "ConstantFP";
   case ISD::GlobalAddress: return "GlobalAddress";
   case ISD::FrameIndex:    return "FrameIndex";
