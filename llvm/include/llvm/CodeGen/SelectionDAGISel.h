@@ -40,9 +40,7 @@ public:
 
   SelectionDAGISel(TargetLowering &tli) : TLI(tli) {}
 
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-    AU.setPreservesAll();
-  }
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const;
 
   virtual bool runOnFunction(Function &Fn);
 
