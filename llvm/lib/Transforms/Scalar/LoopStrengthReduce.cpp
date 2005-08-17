@@ -744,7 +744,10 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
     // value of the IV.  Do not put anything in the base, make sure it's all in
     // the immediate field to allow as much factoring as possible.
     if (!L->contains(UsersToProcess[i].Inst->getParent())) {
-      std::swap(UsersToProcess[i].Base, UsersToProcess[i].Imm);
+      UsersToProcess[i].Imm = SCEVAddExpr::get(UsersToProcess[i].Imm,
+                                               UsersToProcess[i].Base);
+      UsersToProcess[i].Base = 
+        SCEVUnknown::getIntegerSCEV(0, UsersToProcess[i].Base->getType());
     } else {
       
       // Addressing modes can be folded into loads and stores.  Be careful that
