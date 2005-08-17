@@ -199,7 +199,6 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
       break;
     }
   }
-
   case ISD::ADD: {
     MVT::ValueType Ty = N->getValueType(0);
     if (Ty == MVT::i32) {
@@ -281,7 +280,35 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
                          Select(N->getOperand(0)),
                          Select(N->getOperand(1)));
     break;
-  }    
+  }
+  case ISD::FNEG: {
+    SDOperand Val = Select(N->getOperand(0));
+    MVT::ValueType Ty = N->getValueType(0);
+    if (Val.Val->hasOneUse()) {
+      unsigned Opc;
+      switch (Val.getTargetOpcode()) {
+      default:          Opc = 0;            break;
+      case PPC::FABS:   Opc = PPC::FNABS;   break;
+      case PPC::FMADD:  Opc = PPC::FNMADD;  break;
+      case PPC::FMADDS: Opc = PPC::FNMADDS; break;
+      case PPC::FMSUB:  Opc = PPC::FNMSUB;  break;
+      case PPC::FMSUBS: Opc = PPC::FNMSUBS; break;
+      }
+      // If we inverted the opcode, then emit the new instruction with the
+      // inverted opcode and the original instruction's operands.  Otherwise, 
+      // fall through and generate a fneg instruction.
+      if (Opc) {
+        if (PPC::FNABS == Opc)
+          CurDAG->SelectNodeTo(N, Ty, Opc, Val.getOperand(0));
+        else
+          CurDAG->SelectNodeTo(N, Ty, Opc, Val.getOperand(0),
+                               Val.getOperand(1), Val.getOperand(2));
+        break;
+      }
+    }
+    CurDAG->SelectNodeTo(N, Ty, PPC::FNEG, Val);
+    break;
+  }
   case ISD::RET: {
     SDOperand Chain = Select(N->getOperand(0));     // Token chain.
 
