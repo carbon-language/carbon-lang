@@ -428,6 +428,8 @@ public:
   inline unsigned getNodeDepth() const;
   inline unsigned getNumOperands() const;
   inline const SDOperand &getOperand(unsigned i) const;
+  inline bool isTargetOpcode() const;
+  inline unsigned getTargetOpcode() const;
 
   /// hasOneUse - Return true if there is exactly one operation using this
   /// result value of the defining operator.
@@ -480,6 +482,11 @@ public:
   //  Accessors
   //
   unsigned getOpcode()  const { return NodeType; }
+  bool isTargetOpcode() const { return NodeType >= ISD::BUILTIN_OP_END; }
+  unsigned getTargetOpcode() const {
+    assert(isTargetOpcode() && "Not a target opcode!");
+    return NodeType - ISD::BUILTIN_OP_END;
+  }
 
   size_t use_size() const { return Uses.size(); }
   bool use_empty() const { return Uses.empty(); }
@@ -690,6 +697,12 @@ inline unsigned SDOperand::getNumOperands() const {
 }
 inline const SDOperand &SDOperand::getOperand(unsigned i) const {
   return Val->getOperand(i);
+}
+inline bool SDOperand::isTargetOpcode() const {
+  return Val->isTargetOpcode();
+}
+inline unsigned SDOperand::getTargetOpcode() const {
+  return Val->getTargetOpcode();
 }
 inline bool SDOperand::hasOneUse() const {
   return Val->hasNUsesOfValue(1, ResNo);
