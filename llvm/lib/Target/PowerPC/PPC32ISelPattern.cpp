@@ -36,14 +36,15 @@
 using namespace llvm;
 
 namespace {
-Statistic<>Recorded("ppc-codegen", "Number of recording ops emitted");
-Statistic<>FusedFP("ppc-codegen", "Number of fused fp operations");
-Statistic<>FrameOff("ppc-codegen", "Number of frame idx offsets collapsed");
+Statistic<> Recorded("ppc-codegen", "Number of recording ops emitted");
+Statistic<> FusedFP ("ppc-codegen", "Number of fused fp operations");
+Statistic<> FrameOff("ppc-codegen", "Number of frame idx offsets collapsed");
 
 //===--------------------------------------------------------------------===//
-/// ISel - PPC32 specific code to select PPC32 machine instructions for
-/// SelectionDAG operations.
+// ISel - PPC32 specific code to select PPC32 machine instructions for
+// SelectionDAG operations.
 //===--------------------------------------------------------------------===//
+
 class ISel : public SelectionDAGISel {
   PPC32TargetLowering PPC32Lowering;
   SelectionDAG *ISelDAG;  // Hack to support us having a dag->dag transform
@@ -764,7 +765,7 @@ bool ISel::SelectIntImmediateExpr(SDOperand N, unsigned Result,
   // exit if not a constant
   if (!CN) return false;
   // extract immediate
-  unsigned C = (unsigned)CN->getSignExtended();
+  unsigned C = (unsigned)CN->getValue();
   // negate if required (ISD::SUB)
   if (Negate) C = -C;
   // get the hi and lo portions of constant
@@ -784,17 +785,15 @@ bool ISel::SelectIntImmediateExpr(SDOperand N, unsigned Result,
   unsigned Opr0 = SelectExpr(N.getOperand(0));
   // is a lo instruction needed
   if (Lo) {
-    // generate instruction for hi portion
-    const MachineInstrBuilder &MIBLo = BuildMI(BB, OCLo, 2, Tmp).addReg(Opr0);
-    if (IsArithmetic) MIBLo.addSImm(Lo); else MIBLo.addImm(Lo);
+    // generate instruction for lo portion
+    BuildMI(BB, OCLo, 2, Tmp).addReg(Opr0).addImm(Lo);
     // need to switch out first operand for hi instruction
     Opr0 = Tmp;
   }
-  // is a ho instruction needed
+  // is a hi instruction needed
   if (Hi) {
     // generate instruction for hi portion
-    const MachineInstrBuilder &MIBHi = BuildMI(BB, OCHi, 2, Result).addReg(Opr0);
-    if (IsArithmetic) MIBHi.addSImm(Hi); else MIBHi.addImm(Hi);
+    BuildMI(BB, OCHi, 2, Result).addReg(Opr0).addImm(Hi);
   }
   return true;
 }
