@@ -15,6 +15,7 @@
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
+#include "llvm/Support/MathExtras.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Target/TargetOptions.h"
@@ -204,10 +205,9 @@ SDOperand SelectionDAGLegalize::ExpandLegalINT_TO_FP(bool isSigned,
     SDOperand Load = DAG.getLoad(MVT::f64, Store2, StackSlot,
                                DAG.getSrcValue(NULL));
     // FP constant to bias correct the final result
-    uint64_t   SignedBias = 0x4330000080000000ULL;
-    uint64_t UnsignedBias = 0x4330000000000000ULL;
-    SDOperand Bias = DAG.getConstantFP(isSigned ? *(double *)&SignedBias
-                                                : *(double *)&UnsignedBias,
+    SDOperand Bias = DAG.getConstantFP(isSigned ?
+                                            BitsToDouble(0x4330000080000000ULL)
+                                          : BitsToDouble(0x4330000000000000ULL),
                                      MVT::f64);
     // subtract the bias
     SDOperand Sub = DAG.getNode(ISD::SUB, MVT::f64, Load, Bias);
