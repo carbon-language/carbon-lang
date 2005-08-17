@@ -94,6 +94,7 @@ public:
   void RemoveDeadNodes(SDNode *N = 0);
 
   SDOperand getConstant(uint64_t Val, MVT::ValueType VT);
+  SDOperand getTargetConstant(uint64_t Val, MVT::ValueType VT);
   SDOperand getConstantFP(double Val, MVT::ValueType VT);
   SDOperand getGlobalAddress(const GlobalValue *GV, MVT::ValueType VT);
   SDOperand getFrameIndex(int FI, MVT::ValueType VT);
@@ -226,7 +227,18 @@ public:
   void SelectNodeTo(SDNode *N, MVT::ValueType VT, unsigned TargetOpc,
                     SDOperand Op1, SDOperand Op2, SDOperand Op3);
   
-  
+  SDOperand getTargetNode(unsigned Opcode, MVT::ValueType VT,
+                          SDOperand Op1) {
+    return getNode(ISD::BUILTIN_OP_END+Opcode, VT, Op1);
+  }
+  SDOperand getTargetNode(unsigned Opcode, MVT::ValueType VT,
+                          SDOperand Op1, SDOperand Op2) {
+    return getNode(ISD::BUILTIN_OP_END+Opcode, VT, Op1, Op2);
+  }
+  SDOperand getTargetNode(unsigned Opcode, MVT::ValueType VT,
+                          SDOperand Op1, SDOperand Op2, SDOperand Op3) {
+    return getNode(ISD::BUILTIN_OP_END+Opcode, VT, Op1, Op2, Op3);
+  }
   void dump() const;
 
 private:
@@ -258,6 +270,7 @@ private:
 
   std::map<const GlobalValue*, SDNode*> GlobalValues;
   std::map<std::pair<uint64_t, MVT::ValueType>, SDNode*> Constants;
+  std::map<std::pair<uint64_t, MVT::ValueType>, SDNode*> TargetConstants;
   std::map<std::pair<uint64_t, MVT::ValueType>, SDNode*> ConstantFPs;
   std::map<int, SDNode*> FrameIndices;
   std::map<unsigned, SDNode*> ConstantPoolIndices;

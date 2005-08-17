@@ -56,6 +56,10 @@ namespace ISD {
     // Various leaf nodes.
     Constant, ConstantFP, GlobalAddress, FrameIndex, ConstantPool,
     BasicBlock, ExternalSymbol, VALUETYPE, CONDCODE, Register,
+    
+    // TargetConstant - Like Constant, but the DAG does not do any folding or
+    // simplification of the constant.  This is used by the DAG->DAG selector.
+    TargetConstant,
 
     // CopyToReg - This node has three operands: a chain, a register number to
     // set to this value, and a value.  
@@ -681,8 +685,8 @@ class ConstantSDNode : public SDNode {
   uint64_t Value;
 protected:
   friend class SelectionDAG;
-  ConstantSDNode(uint64_t val, MVT::ValueType VT)
-    : SDNode(ISD::Constant, VT), Value(val) {
+  ConstantSDNode(bool isTarget, uint64_t val, MVT::ValueType VT)
+    : SDNode(isTarget ? ISD::TargetConstant : ISD::Constant, VT), Value(val) {
   }
 public:
 
@@ -702,7 +706,8 @@ public:
 
   static bool classof(const ConstantSDNode *) { return true; }
   static bool classof(const SDNode *N) {
-    return N->getOpcode() == ISD::Constant;
+    return N->getOpcode() == ISD::Constant ||
+           N->getOpcode() == ISD::TargetConstant;
   }
 };
 
