@@ -74,6 +74,10 @@ PPC32TargetLowering::PPC32TargetLowering(TargetMachine &TM)
   // PowerPC does not have FP_TO_UINT
   setOperationAction(ISD::FP_TO_UINT, MVT::i32, Expand);
   
+  // PowerPC does not have [U|S]INT_TO_FP
+  setOperationAction(ISD::SINT_TO_FP, MVT::i32, Expand);
+  setOperationAction(ISD::UINT_TO_FP, MVT::i32, Expand);
+
   setSetCCResultContents(ZeroOrOneSetCCResult);
   addLegalFPImmediate(+0.0); // Necessary for FSEL
   addLegalFPImmediate(-0.0); //
