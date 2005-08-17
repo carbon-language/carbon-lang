@@ -239,10 +239,17 @@ public:
                           SDOperand Op1, SDOperand Op2, SDOperand Op3) {
     return getNode(ISD::BUILTIN_OP_END+Opcode, VT, Op1, Op2, Op3);
   }
+  
+  /// ReplaceAllUsesWith - Modify anything using 'From' to use 'To' instead.
+  /// This can cause recursive merging of nodes in the DAG.
+  ///
+  void ReplaceAllUsesWith(SDNode *From, SDNode *To);
+  
   void dump() const;
 
 private:
   void RemoveNodeFromCSEMaps(SDNode *N);
+  SDNode *AddNonLeafNodeToCSEMaps(SDNode *N);
   void DeleteNodeIfDead(SDNode *N, void *NodeSet);
   
   /// SimplifySetCC - Try to simplify a setcc built with the specified operands 
