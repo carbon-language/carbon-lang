@@ -641,25 +641,33 @@ protected:
   void setOperands(SDOperand Op0) {
     Operands.reserve(1);
     Operands.push_back(Op0);
+    Op0.Val->Uses.push_back(this);
   }
   void setOperands(SDOperand Op0, SDOperand Op1) {
     Operands.reserve(2);
     Operands.push_back(Op0);
     Operands.push_back(Op1);
+    Op0.Val->Uses.push_back(this); Op1.Val->Uses.push_back(this);
   }
   void setOperands(SDOperand Op0, SDOperand Op1, SDOperand Op2) {
     Operands.reserve(3);
     Operands.push_back(Op0);
     Operands.push_back(Op1);
     Operands.push_back(Op2);
+    Op0.Val->Uses.push_back(this); Op1.Val->Uses.push_back(this);
+    Op2.Val->Uses.push_back(this);
+  }
+  void addUser(SDNode *User) {
+    Uses.push_back(User);
   }
   void removeUser(SDNode *User) {
     // Remove this user from the operand's use list.
     for (unsigned i = Uses.size(); ; --i) {
       assert(i != 0 && "Didn't find user!");
       if (Uses[i-1] == User) {
-        Uses.erase(Uses.begin()+i-1);
-        break;
+        Uses[i-1] = Uses.back();
+        Uses.pop_back();
+        return;
       }
     }
   }
