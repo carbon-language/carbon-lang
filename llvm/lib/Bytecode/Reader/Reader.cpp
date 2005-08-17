@@ -27,6 +27,7 @@
 #include "llvm/Config/alloca.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/Compressor.h"
+#include "llvm/Support/MathExtras.h"
 #include "llvm/ADT/StringExtras.h"
 #include <sstream>
 #include <algorithm>
@@ -162,29 +163,19 @@ inline void BytecodeReader::read_data(void *Ptr, void *End) {
 inline void BytecodeReader::read_float(float& FloatVal) {
   /// FIXME: This isn't optimal, it has size problems on some platforms
   /// where FP is not IEEE.
-  union {
-    float f;
-    uint32_t i;
-  } FloatUnion;
-  FloatUnion.i = At[0] | (At[1] << 8) | (At[2] << 16) | (At[3] << 24);
+  FloatVal = BitsToFloat(At[0] | (At[1] << 8) | (At[2] << 16) | (At[3] << 24));
   At+=sizeof(uint32_t);
-  FloatVal = FloatUnion.f;
 }
 
 /// Read a double value in little-endian order
 inline void BytecodeReader::read_double(double& DoubleVal) {
   /// FIXME: This isn't optimal, it has size problems on some platforms
   /// where FP is not IEEE.
-  union {
-    double d;
-    uint64_t i;
-  } DoubleUnion;
-  DoubleUnion.i = (uint64_t(At[0]) <<  0) | (uint64_t(At[1]) << 8) |
-                  (uint64_t(At[2]) << 16) | (uint64_t(At[3]) << 24) |
-                  (uint64_t(At[4]) << 32) | (uint64_t(At[5]) << 40) |
-                  (uint64_t(At[6]) << 48) | (uint64_t(At[7]) << 56);
+  DoubleVal = BitsToDouble((uint64_t(At[0]) <<  0) | (uint64_t(At[1]) << 8) |
+                           (uint64_t(At[2]) << 16) | (uint64_t(At[3]) << 24) |
+                           (uint64_t(At[4]) << 32) | (uint64_t(At[5]) << 40) |
+                           (uint64_t(At[6]) << 48) | (uint64_t(At[7]) << 56));
   At+=sizeof(uint64_t);
-  DoubleVal = DoubleUnion.d;
 }
 
 /// Read a block header and obtain its type and size

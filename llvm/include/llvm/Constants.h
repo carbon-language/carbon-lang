@@ -23,6 +23,7 @@
 #include "llvm/Constant.h"
 #include "llvm/Type.h"
 #include "llvm/Support/DataTypes.h"
+#include "llvm/Support/MathExtras.h"
 
 namespace llvm {
 
@@ -277,12 +278,7 @@ public:
   /// getNullValue.  Don't depend on == for doubles to tell us it's zero, it
   /// considers -0.0 to be null as well as 0.0.  :(
   virtual bool isNullValue() const {
-    union {
-      double V;
-      uint64_t I;
-    } T;
-    T.V = Val;
-    return T.I == 0;
+    return DoubleToBits(Val) == 0;
   }
 
   /// isExactlyValue - We don't rely on operator== working on double values, as
@@ -290,17 +286,7 @@ public:
   /// As such, this method can be used to do an exact bit-for-bit comparison of
   /// two floating point values.
   bool isExactlyValue(double V) const {
-    union {
-      double V;
-      uint64_t I;
-    } T1;
-    T1.V = Val;
-    union {
-      double V;
-      uint64_t I;
-    } T2;
-    T2.V = V;
-    return T1.I == T2.I;
+    return DoubleToBits(V) == DoubleToBits(Val);
   }
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:

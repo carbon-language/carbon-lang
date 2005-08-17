@@ -27,6 +27,7 @@
 #include "llvm/SymbolTable.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/Compressor.h"
+#include "llvm/Support/MathExtras.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Statistic.h"
 #include <cstring>
@@ -139,33 +140,25 @@ inline void BytecodeWriter::output_data(const void *Ptr, const void *End) {
 inline void BytecodeWriter::output_float(float& FloatVal) {
   /// FIXME: This isn't optimal, it has size problems on some platforms
   /// where FP is not IEEE.
-  union {
-    float f;
-    uint32_t i;
-  } FloatUnion;
-  FloatUnion.f = FloatVal;
-  Out.push_back( static_cast<unsigned char>( (FloatUnion.i & 0xFF )));
-  Out.push_back( static_cast<unsigned char>( (FloatUnion.i >> 8) & 0xFF));
-  Out.push_back( static_cast<unsigned char>( (FloatUnion.i >> 16) & 0xFF));
-  Out.push_back( static_cast<unsigned char>( (FloatUnion.i >> 24) & 0xFF));
+  uint32_t i = FloatToBits(FloatVal);
+  Out.push_back( static_cast<unsigned char>( (i & 0xFF )));
+  Out.push_back( static_cast<unsigned char>( (i >> 8) & 0xFF));
+  Out.push_back( static_cast<unsigned char>( (i >> 16) & 0xFF));
+  Out.push_back( static_cast<unsigned char>( (i >> 24) & 0xFF));
 }
 
 inline void BytecodeWriter::output_double(double& DoubleVal) {
   /// FIXME: This isn't optimal, it has size problems on some platforms
   /// where FP is not IEEE.
-  union {
-    double d;
-    uint64_t i;
-  } DoubleUnion;
-  DoubleUnion.d = DoubleVal;
-  Out.push_back( static_cast<unsigned char>( (DoubleUnion.i & 0xFF )));
-  Out.push_back( static_cast<unsigned char>( (DoubleUnion.i >> 8) & 0xFF));
-  Out.push_back( static_cast<unsigned char>( (DoubleUnion.i >> 16) & 0xFF));
-  Out.push_back( static_cast<unsigned char>( (DoubleUnion.i >> 24) & 0xFF));
-  Out.push_back( static_cast<unsigned char>( (DoubleUnion.i >> 32) & 0xFF));
-  Out.push_back( static_cast<unsigned char>( (DoubleUnion.i >> 40) & 0xFF));
-  Out.push_back( static_cast<unsigned char>( (DoubleUnion.i >> 48) & 0xFF));
-  Out.push_back( static_cast<unsigned char>( (DoubleUnion.i >> 56) & 0xFF));
+  uint64_t i = DoubleToBits(DoubleVal);
+  Out.push_back( static_cast<unsigned char>( (i & 0xFF )));
+  Out.push_back( static_cast<unsigned char>( (i >> 8) & 0xFF));
+  Out.push_back( static_cast<unsigned char>( (i >> 16) & 0xFF));
+  Out.push_back( static_cast<unsigned char>( (i >> 24) & 0xFF));
+  Out.push_back( static_cast<unsigned char>( (i >> 32) & 0xFF));
+  Out.push_back( static_cast<unsigned char>( (i >> 40) & 0xFF));
+  Out.push_back( static_cast<unsigned char>( (i >> 48) & 0xFF));
+  Out.push_back( static_cast<unsigned char>( (i >> 56) & 0xFF));
 }
 
 inline BytecodeBlock::BytecodeBlock(unsigned ID, BytecodeWriter& w,

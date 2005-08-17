@@ -247,22 +247,12 @@ void V8Printer::emitGlobalConstant(const Constant *CV) {
     switch (CFP->getType()->getTypeID()) {
     default: assert(0 && "Unknown floating point type!");
     case Type::FloatTyID: {
-      union FU {                            // Abide by C TBAA rules
-        float FVal;
-        unsigned UVal;
-      } U;
-      U.FVal = Val;
-      O << ".long\t" << U.UVal << "\t! float " << Val << "\n";
+      O << ".long\t" << FloatToBits(Val) << "\t! float " << Val << "\n";
       return;
     }
     case Type::DoubleTyID: {
-      union DU {                            // Abide by C TBAA rules
-        double FVal;
-        uint64_t UVal;
-      } U;
-      U.FVal = Val;
-      O << ".word\t0x" << std::hex << (U.UVal >> 32) << std::dec << "\t! double " << Val << "\n";
-      O << ".word\t0x" << std::hex << (U.UVal & 0xffffffffUL) << std::dec << "\t! double " << Val << "\n";
+      O << ".word\t0x" << std::hex << (DoubleToBits(Val) >> 32) << std::dec << "\t! double " << Val << "\n";
+      O << ".word\t0x" << std::hex << (DoubleToBits(Val) & 0xffffffffUL) << std::dec << "\t! double " << Val << "\n";
       return;
     }
     }

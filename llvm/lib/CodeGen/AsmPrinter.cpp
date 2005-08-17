@@ -15,6 +15,7 @@
 #include "llvm/Constants.h"
 #include "llvm/Instruction.h"
 #include "llvm/Support/Mangler.h"
+#include "llvm/Support/MathExtras.h"
 #include "llvm/Target/TargetMachine.h"
 using namespace llvm;
 
@@ -222,39 +223,27 @@ void AsmPrinter::emitGlobalConstant(const Constant *CV) {
     // precision...
     double Val = CFP->getValue();
     if (CFP->getType() == Type::DoubleTy) {
-      union DU {                            // Abide by C TBAA rules
-        double FVal;
-        uint64_t UVal;
-      } U;
-      U.FVal = Val;
-
       if (Data64bitsDirective)
-        O << Data64bitsDirective << U.UVal << "\t" << CommentString
+        O << Data64bitsDirective << DoubleToBits(Val) << "\t" << CommentString
           << " double value: " << Val << "\n";
       else if (TD.isBigEndian()) {
-        O << Data32bitsDirective << unsigned(U.UVal >> 32)
+        O << Data32bitsDirective << unsigned(DoubleToBits(Val) >> 32)
           << "\t" << CommentString << " double most significant word "
           << Val << "\n";
-        O << Data32bitsDirective << unsigned(U.UVal)
+        O << Data32bitsDirective << unsigned(DoubleToBits(Val))
           << "\t" << CommentString << " double least significant word "
           << Val << "\n";
       } else {
-        O << Data32bitsDirective << unsigned(U.UVal)
+        O << Data32bitsDirective << unsigned(DoubleToBits(Val))
           << "\t" << CommentString << " double least significant word " << Val
           << "\n";
-        O << Data32bitsDirective << unsigned(U.UVal >> 32)
+        O << Data32bitsDirective << unsigned(DoubleToBits(Val) >> 32)
           << "\t" << CommentString << " double most significant word " << Val
           << "\n";
       }
       return;
     } else {
-      union FU {                            // Abide by C TBAA rules
-        float FVal;
-        int32_t UVal;
-      } U;
-      U.FVal = (float)Val;
-
-      O << Data32bitsDirective << U.UVal << "\t" << CommentString
+      O << Data32bitsDirective << FloatToBits(Val) << "\t" << CommentString
         << " float " << Val << "\n";
       return;
     }

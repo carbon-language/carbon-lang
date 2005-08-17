@@ -32,6 +32,7 @@
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/InstVisitor.h"
 #include "llvm/Support/Mangler.h"
+#include "llvm/Support/MathExtras.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/MathExtras.h"
@@ -585,14 +586,10 @@ void CWriter::printConstant(Constant *CPV) {
         const unsigned long SignalNaN = 0x7ff4UL;
 
         // We need to grab the first part of the FP #
-        union {
-          double   d;
-          uint64_t ll;
-        } DHex;
         char Buffer[100];
 
-        DHex.d = FPC->getValue();
-        sprintf(Buffer, "0x%llx", (unsigned long long)DHex.ll);
+        uint64_t ll = DoubleToBits(FPC->getValue());
+        sprintf(Buffer, "0x%llx", (unsigned long long)ll);
 
         std::string Num(&Buffer[0], &Buffer[6]);
         unsigned long Val = strtoul(Num.c_str(), 0, 16);
@@ -953,16 +950,6 @@ bool CWriter::doInitialization(Module &M) {
 
 /// Output all floating point constants that cannot be printed accurately...
 void CWriter::printFloatingPointConstants(Function &F) {
-  union {
-    double D;
-    uint64_t U;
-  } DBLUnion;
-
-  union {
-    float F;
-    unsigned U;
-  } FLTUnion;
-
   // Scan the module for floating point constants.  If any FP constant is used
   // in the function, we want to redirect it here so that we do not depend on
   // the precision of the printed form, unless the printed form preserves
@@ -979,14 +966,12 @@ void CWriter::printFloatingPointConstants(Function &F) {
         FPConstantMap[FPC] = FPCounter;  // Number the FP constants
 
         if (FPC->getType() == Type::DoubleTy) {
-          DBLUnion.D = Val;
           Out << "static const ConstantDoubleTy FPConstant" << FPCounter++
-              << " = 0x" << std::hex << DBLUnion.U << std::dec
+              << " = 0x" << std::hex << DoubleToBits(Val) << std::dec
               << "ULL;    /* " << Val << " */\n";
         } else if (FPC->getType() == Type::FloatTy) {
-          FLTUnion.F = Val;
           Out << "static const ConstantFloatTy FPConstant" << FPCounter++
-              << " = 0x" << std::hex << FLTUnion.U << std::dec
+              << " = 0x" << std::hex << FloatToBits(Val) << std::dec
               << "U;    /* " << Val << " */\n";
         } else
           assert(0 && "Unknown float type!");

@@ -25,6 +25,7 @@
 #include "llvm/ADT/GraphTraits.h"
 #include "llvm/ADT/iterator"
 #include "llvm/Support/DataTypes.h"
+#include "llvm/Support/MathExtras.h"
 #include <cassert>
 #include <vector>
 
@@ -742,17 +743,7 @@ public:
   /// As such, this method can be used to do an exact bit-for-bit comparison of
   /// two floating point values.
   bool isExactlyValue(double V) const {
-    union {
-      double V;
-      uint64_t I;
-    } T1;
-    T1.V = Value;
-    union {
-      double V;
-      uint64_t I;
-    } T2;
-    T2.V = V;
-    return T1.I == T2.I;
+    return DoubleToBits(V) == DoubleToBits(Value);
   }
 
   static bool classof(const ConstantFPSDNode *) { return true; }

@@ -19,6 +19,7 @@
 #include "llvm/SymbolTable.h"
 #include "llvm/Module.h"
 #include "llvm/ADT/StringExtras.h"
+#include "llvm/Support/MathExtras.h"
 #include <algorithm>
 #include <iostream>
 using namespace llvm;
@@ -796,24 +797,14 @@ namespace llvm {
   struct ConstantCreator<ConstantFP, Type, uint64_t> {
     static ConstantFP *create(const Type *Ty, uint64_t V) {
       assert(Ty == Type::DoubleTy);
-      union {
-        double F;
-        uint64_t I;
-      } T;
-      T.I = V;
-      return new ConstantFP(Ty, T.F);
+      return new ConstantFP(Ty, BitsToDouble(V));
     }
   };
   template<>
   struct ConstantCreator<ConstantFP, Type, uint32_t> {
     static ConstantFP *create(const Type *Ty, uint32_t V) {
       assert(Ty == Type::FloatTy);
-      union {
-        float F;
-        uint32_t I;
-      } T;
-      T.I = V;
-      return new ConstantFP(Ty, T.F);
+      return new ConstantFP(Ty, BitsToFloat(V));
     }
   };
 }
@@ -824,20 +815,10 @@ static ValueMap<uint32_t, Type, ConstantFP> FloatConstants;
 ConstantFP *ConstantFP::get(const Type *Ty, double V) {
   if (Ty == Type::FloatTy) {
     // Force the value through memory to normalize it.
-    union {
-      float F;
-      uint32_t I;
-    } T;
-    T.F = (float)V;
-    return FloatConstants.getOrCreate(Ty, T.I);
+    return FloatConstants.getOrCreate(Ty, FloatToBits(V));
   } else {
     assert(Ty == Type::DoubleTy);
-    union {
-      double F;
-      uint64_t I;
-    } T;
-    T.F = V;
-    return DoubleConstants.getOrCreate(Ty, T.I);
+    return DoubleConstants.getOrCreate(Ty, DoubleToBits(V));
   }
 }
 

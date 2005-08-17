@@ -29,6 +29,7 @@
 #include "llvm/Support/CFG.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/Support/MathExtras.h"
 #include <algorithm>
 using namespace llvm;
 
@@ -431,18 +432,9 @@ static void WriteConstantInt(std::ostream &Out, const Constant *CV,
 
     // Otherwise we could not reparse it to exactly the same value, so we must
     // output the string in hexadecimal format!
-    //
-    // Behave nicely in the face of C TBAA rules... see:
-    // http://www.nullstone.com/htmls/category/aliastyp.htm
-    //
-    union {
-      double D;
-      uint64_t U;
-    } V;
-    V.D = CFP->getValue();
     assert(sizeof(double) == sizeof(uint64_t) &&
            "assuming that double is 64 bits!");
-    Out << "0x" << utohexstr(V.U);
+    Out << "0x" << utohexstr(DoubleToBits(CFP->getValue()));
 
   } else if (isa<ConstantAggregateZero>(CV)) {
     Out << "zeroinitializer";

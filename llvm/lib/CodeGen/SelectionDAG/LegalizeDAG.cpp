@@ -975,23 +975,17 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     // Turn 'store float 1.0, Ptr' -> 'store int 0x12345678, Ptr'
     if (ConstantFPSDNode *CFP =dyn_cast<ConstantFPSDNode>(Node->getOperand(1))){
       if (CFP->getValueType(0) == MVT::f32) {
-        union {
-          unsigned I;
-          float    F;
-        } V;
-        V.F = CFP->getValue();
         Result = DAG.getNode(ISD::STORE, MVT::Other, Tmp1,
-                             DAG.getConstant(V.I, MVT::i32), Tmp2,
+                             DAG.getConstant(FloatToBits(CFP->getValue()),
+                                             MVT::i32),
+                             Tmp2,
                              Node->getOperand(3));
       } else {
         assert(CFP->getValueType(0) == MVT::f64 && "Unknown FP type!");
-        union {
-          uint64_t I;
-          double   F;
-        } V;
-        V.F = CFP->getValue();
         Result = DAG.getNode(ISD::STORE, MVT::Other, Tmp1,
-                             DAG.getConstant(V.I, MVT::i64), Tmp2,
+                             DAG.getConstant(DoubleToBits(CFP->getValue()),
+                                             MVT::i64),
+                             Tmp2,
                              Node->getOperand(3));
       }
       Node = Result.Val;
