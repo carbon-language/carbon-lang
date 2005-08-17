@@ -1816,41 +1816,9 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
     return Result;
 
   case ISD::UINT_TO_FP:
-  case ISD::SINT_TO_FP: {
-    assert (N.getOperand(0).getValueType() == MVT::i32
-            && "int to float must operate on i32");
-    bool IsUnsigned = (ISD::UINT_TO_FP == opcode);
-    Tmp1 = SelectExpr(N.getOperand(0));  // Get the operand register
-    Tmp2 = MakeFPReg(); // temp reg to load the integer value into
-    Tmp3 = MakeIntReg(); // temp reg to hold the conversion constant
-
-    int FrameIdx = BB->getParent()->getFrameInfo()->CreateStackObject(8, 8);
-    MachineConstantPool *CP = BB->getParent()->getConstantPool();
-    Opc = DestType == MVT::f64 ? PPC::FSUB : PPC::FSUBS;
-
-    if (IsUnsigned) {
-      unsigned ConstF = getConstDouble(0x1.000000p52);
-      // Store the hi & low halves of the fp value, currently in int regs
-      BuildMI(BB, PPC::LIS, 1, Tmp3).addSImm(0x4330);
-      addFrameReference(BuildMI(BB, PPC::STW, 3).addReg(Tmp3), FrameIdx);
-      addFrameReference(BuildMI(BB, PPC::STW, 3).addReg(Tmp1), FrameIdx, 4);
-      addFrameReference(BuildMI(BB, PPC::LFD, 2, Tmp2), FrameIdx);
-      // Generate the return value with a subtract
-      BuildMI(BB, Opc, 2, Result).addReg(Tmp2).addReg(ConstF);
-    } else {
-      unsigned ConstF = getConstDouble(0x1.000008p52);
-      unsigned TmpL = MakeIntReg();
-      // Store the hi & low halves of the fp value, currently in int regs
-      BuildMI(BB, PPC::LIS, 1, Tmp3).addSImm(0x4330);
-      addFrameReference(BuildMI(BB, PPC::STW, 3).addReg(Tmp3), FrameIdx);
-      BuildMI(BB, PPC::XORIS, 2, TmpL).addReg(Tmp1).addImm(0x8000);
-      addFrameReference(BuildMI(BB, PPC::STW, 3).addReg(TmpL), FrameIdx, 4);
-      addFrameReference(BuildMI(BB, PPC::LFD, 2, Tmp2), FrameIdx);
-      // Generate the return value with a subtract
-      BuildMI(BB, Opc, 2, Result).addReg(Tmp2).addReg(ConstF);
-    }
+  case ISD::SINT_TO_FP:
+    assert (0 && "int to float implemented in legalizer");
     return Result;
-  }
   }
   return 0;
 }
