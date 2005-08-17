@@ -1814,11 +1814,6 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
     Tmp1 = SelectExpr(N.getOperand(0));
     BuildMI(BB, PPC::FMR, 1, Result).addReg(Tmp1);
     return Result;
-
-  case ISD::UINT_TO_FP:
-  case ISD::SINT_TO_FP:
-    assert (0 && "int to float implemented in legalizer");
-    return Result;
   }
   return 0;
 }
