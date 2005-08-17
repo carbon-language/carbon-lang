@@ -119,7 +119,15 @@ namespace {
     }
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-      AU.setPreservesCFG();
+      // We split critical edges, so we change the CFG.  However, we do update
+      // many analyses if they are around.
+      AU.addPreservedID(LoopSimplifyID);
+      AU.addPreserved<LoopInfo>();
+      AU.addPreserved<DominatorSet>();
+      AU.addPreserved<ImmediateDominators>();
+      AU.addPreserved<DominanceFrontier>();
+      AU.addPreserved<DominatorTree>();
+
       AU.addRequiredID(LoopSimplifyID);
       AU.addRequired<LoopInfo>();
       AU.addRequired<DominatorSet>();
@@ -440,25 +448,20 @@ void BasedUser::RewriteInstructionToUseNewBase(const SCEVHandle &NewBase,
       // code on all predecessor/successor paths.
       if (e != 1 &&
           PN->getIncomingBlock(i)->getTerminator()->getNumSuccessors() > 1) {
-        TerminatorInst *PredTI = PN->getIncomingBlock(i)->getTerminator();
-        for (unsigned Succ = 0; ; ++Succ) {
-          assert(Succ != PredTI->getNumSuccessors() &&"Didn't find successor?");
-          if (PredTI->getSuccessor(Succ) == PN->getParent()) {
-            // First step, split the critical edge.
-            SplitCriticalEdge(PredTI, Succ, P);
+
+        // First step, split the critical edge.
+        SplitCriticalEdge(PN->getIncomingBlock(i), PN->getParent(), P);
             
-            // Next step: move the basic block.  In particular, if the PHI node
-            // is outside of the loop, and PredTI is in the loop, we want to
-            // move the block to be immediately before the PHI block, not
-            // immediately after PredTI.
-            if (L->contains(PredTI->getParent()) &&
-                !L->contains(PN->getParent())) {
-              BasicBlock *NewBB = PN->getIncomingBlock(i);
-              NewBB->moveBefore(PN->getParent());
-            }
-            break;
-          }
+        // Next step: move the basic block.  In particular, if the PHI node
+        // is outside of the loop, and PredTI is in the loop, we want to
+        // move the block to be immediately before the PHI block, not
+        // immediately after PredTI.
+        if (L->contains(PN->getIncomingBlock(i)) &&
+            !L->contains(PN->getParent())) {
+          BasicBlock *NewBB = PN->getIncomingBlock(i);
+          NewBB->moveBefore(PN->getParent());
         }
+        break;
       }
 
       Value *&Code = InsertedCode[PN->getIncomingBlock(i)];
