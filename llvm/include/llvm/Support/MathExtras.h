@@ -181,9 +181,9 @@ inline double BitsToDouble(uint64_t Bits) {
 
 // BitsToFloat - This function takes a 32-bit integer and returns the bit
 // equivalent float.
-inline float BitsToFloat(unsigned Bits) {
+inline float BitsToFloat(uint32_t Bits) {
   union {
-    unsigned I;
+    uint32_t I;
     float F;
   } T;
   T.I = Bits;
@@ -203,9 +203,9 @@ inline uint64_t DoubleToBits(double Double) {
 
 // FloatToBits - This function takes a float and returns the bit
 // equivalent 32-bit integer.
-inline unsigned FloatToBits(float Float) {
+inline uint32_t FloatToBits(float Float) {
   union {
-    unsigned I;
+    uint32_t I;
     float F;
   } T;
   T.F = Float;
