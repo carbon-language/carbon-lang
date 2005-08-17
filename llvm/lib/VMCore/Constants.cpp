@@ -812,6 +812,15 @@ namespace llvm {
 static ValueMap<uint64_t, Type, ConstantFP> DoubleConstants;
 static ValueMap<uint32_t, Type, ConstantFP> FloatConstants;
 
+bool ConstantFP::isNullValue() const {
+  return DoubleToBits(Val) == 0;
+}
+
+bool ConstantFP::isExactlyValue(double V) const {
+  return DoubleToBits(V) == DoubleToBits(Val);
+}
+
+
 ConstantFP *ConstantFP::get(const Type *Ty, double V) {
   if (Ty == Type::FloatTy) {
     // Force the value through memory to normalize it.
