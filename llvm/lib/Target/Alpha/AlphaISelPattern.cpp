@@ -284,6 +284,7 @@ AlphaTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG)
       case MVT::f32:
         args_float[count] = AddLiveIn(MF,args_float[count], getRegClassFor(VT));
         argt = DAG.getCopyFromReg(DAG.getRoot(), args_float[count], VT);
+        DAG.setRoot(argt.getValue(1));
         break;
       case MVT::i1:
       case MVT::i8:
@@ -292,12 +293,12 @@ AlphaTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG)
       case MVT::i64:
         args_int[count] = AddLiveIn(MF, args_int[count],
                                     getRegClassFor(MVT::i64));
-        argt = DAG.getCopyFromReg(DAG.getRoot(), args_int[count], VT);
+        argt = DAG.getCopyFromReg(DAG.getRoot(), args_int[count], MVT::i64);
+        DAG.setRoot(argt.getValue(1));
         if (VT != MVT::i64)
           argt = DAG.getNode(ISD::TRUNCATE, VT, argt);
         break;
       }
-      DAG.setRoot(argt.getValue(1));
     } else { //more args
       // Create the frame index object for this incoming parameter...
       int FI = MFI->CreateFixedObject(8, 8 * (count - 6));
