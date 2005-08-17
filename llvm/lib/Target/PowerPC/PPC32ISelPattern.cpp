@@ -1436,16 +1436,36 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
   case ISD::SUB_PARTS: {
     assert(N.getNumOperands() == 4 && N.getValueType() == MVT::i32 &&
            "Not an i64 add/sub!");
-    // Emit all of the operands.
-    std::vector<unsigned> InVals;
-    for (unsigned i = 0, e = N.getNumOperands(); i != e; ++i)
-      InVals.push_back(SelectExpr(N.getOperand(i)));
+    unsigned Tmp4 = 0;
+    bool ME = isIntImmediate(N.getOperand(3),Tmp3) && ((signed)Tmp3 == -1);
+    bool ZE = isIntImmediate(N.getOperand(3),Tmp3) && (Tmp3 == 0);
+    bool IM = isIntImmediate(N.getOperand(2),Tmp3) && ((signed)Tmp3 >= -32768 ||
+                                                       (signed)Tmp3 <   32768);
+    Tmp1 = SelectExpr(N.getOperand(0));
+    Tmp2 = SelectExpr(N.getOperand(1));
+    if (!IM || N.getOpcode() == ISD::SUB_PARTS)
+      Tmp3 = SelectExpr(N.getOperand(2));
+    if ((!ME && !ZE) || N.getOpcode() == ISD::SUB_PARTS)
+      Tmp4 = SelectExpr(N.getOperand(3));
+    
     if (N.getOpcode() == ISD::ADD_PARTS) {
-      BuildMI(BB, PPC::ADDC, 2, Result).addReg(InVals[0]).addReg(InVals[2]);
-      BuildMI(BB, PPC::ADDE, 2, Result+1).addReg(InVals[1]).addReg(InVals[3]);
+      // Codegen the low 32 bits of the add.  Interestingly, there is no shifted
+      // form of add immediate carrying.
+      if (IM)
+        BuildMI(BB, PPC::ADDIC, 2, Result).addReg(Tmp1).addSImm(Tmp3);
+      else
+        BuildMI(BB, PPC::ADDC, 2, Result).addReg(Tmp1).addReg(Tmp3);
+      // Codegen the high 32 bits, adding zero, minus one, or the full value
+      // along with the carry flag produced by addc/addic to tmp2.
+      if (ZE)
+        BuildMI(BB, PPC::ADDZE, 1, Result+1).addReg(Tmp2);
+      else if (ME)
+        BuildMI(BB, PPC::ADDME, 1, Result+1).addReg(Tmp2);
+      else
+        BuildMI(BB, PPC::ADDE, 2, Result+1).addReg(Tmp2).addReg(Tmp4);
     } else {
-      BuildMI(BB, PPC::SUBFC, 2, Result).addReg(InVals[2]).addReg(InVals[0]);
-      BuildMI(BB, PPC::SUBFE, 2, Result+1).addReg(InVals[3]).addReg(InVals[1]);
+      BuildMI(BB, PPC::SUBFC, 2, Result).addReg(Tmp3).addReg(Tmp1);
+      BuildMI(BB, PPC::SUBFE, 2, Result+1).addReg(Tmp4).addReg(Tmp2);
     }
     return Result+N.ResNo;
   }
@@ -1716,10 +1736,6 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
   case ISD::Constant:
     switch (N.getValueType()) {
     default: assert(0 && "Cannot use constants of this type!");
-    case MVT::i1:
-      BuildMI(BB, PPC::LI, 1, Result)
-        .addSImm(!cast<ConstantSDNode>(N)->isNullValue());
-      break;
     case MVT::i32:
       {
         int v = (int)cast<ConstantSDNode>(N)->getSignExtended();
