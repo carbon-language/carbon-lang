@@ -126,7 +126,9 @@ private:
   SDOperand ExpandIntToFP(bool isSigned, MVT::ValueType DestTy,
                           SDOperand Source);
 
-  SDOperand ExpandLegalUINT_TO_FP(SDOperand LegalOp, MVT::ValueType DestVT);
+  SDOperand ExpandLegalINT_TO_FP(bool isSigned,
+                                 SDOperand LegalOp,
+                                 MVT::ValueType DestVT);
   SDOperand PromoteLegalINT_TO_FP(SDOperand LegalOp, MVT::ValueType DestVT,
                                   bool isSigned);
   SDOperand PromoteLegalFP_TO_INT(SDOperand LegalOp, MVT::ValueType DestVT,
@@ -155,12 +157,71 @@ SelectionDAGLegalize::SelectionDAGLegalize(SelectionDAG &dag)
          "Too many value types for ValueTypeActions to hold!");
 }
 
-/// ExpandLegalUINT_TO_FP - This function is responsible for legalizing a
-/// UINT_TO_FP operation of the specified operand when the target requests that
+/// ExpandLegalINT_TO_FP - This function is responsible for legalizing a
+/// INT_TO_FP operation of the specified operand when the target requests that
 /// we expand it.  At this point, we know that the result and operand types are
 /// legal for the target.
-SDOperand SelectionDAGLegalize::ExpandLegalUINT_TO_FP(SDOperand Op0,
-                                                      MVT::ValueType DestVT) {
+SDOperand SelectionDAGLegalize::ExpandLegalINT_TO_FP(bool isSigned,
+                                                     SDOperand Op0,
+                                                     MVT::ValueType DestVT) {
+  if (Op0.getValueType() == MVT::i32) {
+    // simple 32-bit [signed|unsigned] integer to float/double expansion
+    
+    // get the stack frame index of a 8 byte buffer
+    MachineFunction &MF = DAG.getMachineFunction();
+    int SSFI = MF.getFrameInfo()->CreateStackObject(8, 8);
+    // get address of 8 byte buffer
+    SDOperand StackSlot = DAG.getFrameIndex(SSFI, TLI.getPointerTy());
+    // word offset constant for Hi/Lo address computation
+    SDOperand WordOff = DAG.getConstant(sizeof(int), TLI.getPointerTy());
+    // set up Hi and Lo (into buffer) address based on endian
+    SDOperand Hi, Lo;
+    if (TLI.isLittleEndian()) {
+      Hi = DAG.getNode(ISD::ADD, TLI.getPointerTy(), StackSlot, WordOff);
+      Lo = StackSlot;
+    } else {
+      Hi = StackSlot;
+      Lo = DAG.getNode(ISD::ADD, TLI.getPointerTy(), StackSlot, WordOff);
+    }
+    // if signed map to unsigned space
+    SDOperand Op0Mapped;
+    if (isSigned) {
+      // constant used to invert sign bit (signed to unsigned mapping)
+      SDOperand SignBit = DAG.getConstant(0x80000000u, MVT::i32);
+      Op0Mapped = DAG.getNode(ISD::XOR, MVT::i32, Op0, SignBit);
+    } else {
+      Op0Mapped = Op0;
+    }
+    // store the lo of the constructed double - based on integer input
+    SDOperand Store1 = DAG.getNode(ISD::STORE, MVT::Other, DAG.getEntryNode(),
+                                   Op0Mapped, Lo, DAG.getSrcValue(NULL));
+    // initial hi portion of constructed double
+    SDOperand InitialHi = DAG.getConstant(0x43300000u, MVT::i32);
+    // store the hi of the constructed double - biased exponent
+    SDOperand Store2 = DAG.getNode(ISD::STORE, MVT::Other, Store1,
+                                   InitialHi, Hi, DAG.getSrcValue(NULL));
+    // load the constructed double
+    SDOperand Load = DAG.getLoad(MVT::f64, Store2, StackSlot,
+                               DAG.getSrcValue(NULL));
+    // FP constant to bias correct the final result
+    SDOperand Bias = DAG.getConstantFP(isSigned ? 0x1.000008p52 : 0x1.000000p52,
+                                     MVT::f64);
+    // subtract the bias
+    SDOperand Sub = DAG.getNode(ISD::SUB, MVT::f64, Load, Bias);
+    // final result
+    SDOperand Result;
+    // handle final rounding
+    if (DestVT == MVT::f64) {
+      // do nothing
+      Result = Sub;
+    } else {
+     // if f32 then cast to f32
+      Result = DAG.getNode(ISD::FP_ROUND, MVT::f32, Sub);
+    }
+    NeedsAnotherIteration = true;
+    return Result;
+  }
+  assert(!isSigned && "Legalize cannot Expand SINT_TO_FP for i64 yet");
   SDOperand Tmp1 = DAG.getNode(ISD::SINT_TO_FP, DestVT, Op0);
 
   SDOperand SignSet = DAG.getSetCC(TLI.getSetCCResultTy(), Op0,
@@ -170,9 +231,9 @@ SDOperand SelectionDAGLegalize::ExpandLegalUINT_TO_FP(SDOperand Op0,
   SDOperand CstOffset = DAG.getNode(ISD::SELECT, Zero.getValueType(),
                                     SignSet, Four, Zero);
 
-  // If the sign bit of the integer is set, the large number will be treated as
-  // a negative number.  To counteract this, the dynamic code adds an offset
-  // depending on the data type.
+  // If the sign bit of the integer is set, the large number will be treated
+  // as a negative number.  To counteract this, the dynamic code adds an
+  // offset depending on the data type.
   uint64_t FF;
   switch (Op0.getValueType()) {
   default: assert(0 && "Unsupported integer type!");
@@ -1648,9 +1709,9 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
                                      Node->getOperand(0).getValueType())) {
       default: assert(0 && "Unknown operation action!");
       case TargetLowering::Expand:
-        assert(!isSigned && "Legalize cannot Expand SINT_TO_FP yet");
-        Result = ExpandLegalUINT_TO_FP(LegalizeOp(Node->getOperand(0)),
-                                       Node->getValueType(0));
+        Result = ExpandLegalINT_TO_FP(isSigned,
+                                      LegalizeOp(Node->getOperand(0)),
+                                      Node->getValueType(0));
         AddLegalizedOperand(Op, Result);
         return Result;
       case TargetLowering::Promote:
