@@ -84,6 +84,13 @@ inline bool SplitCriticalEdge(BasicBlock *Succ, pred_iterator PI, Pass *P = 0) {
   return MadeChange;
 }
 
+inline bool SplitCriticalEdge(BasicBlock *Src, BasicBlock *Dst, Pass *P = 0) {
+  for (succ_iterator SI = succ_begin(Src); ; ++SI) {
+    assert(SI != succ_end(Src) && "Edge doesn't exist");
+    if (*SI == Dst)
+      return SplitCriticalEdge(Src, SI, P);
+  }
+}
 } // End llvm namespace
 
 #endif
