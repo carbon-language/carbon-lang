@@ -614,7 +614,14 @@ protected:
   void MorphNodeTo(unsigned Opc) {
     NodeType = Opc;
     Values.clear();
-    Operands.clear();
+    
+    // Clear the operands list, updating used nodes to remove this from their
+    // use list.
+    while (!Operands.empty()) {
+      SDNode *O = Operands.back().Val;
+      Operands.pop_back();
+      O->removeUser(this);
+    }
   }
   
   void setValueTypes(MVT::ValueType VT) {
