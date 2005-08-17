@@ -606,7 +606,7 @@ static bool isSIntImmediate(SDOperand N, int64_t& Imm) {
 // If so Imm will receive the 64 bit value.
 static bool isSIntImmediateBounded(SDOperand N, int64_t& Imm, 
                                    int64_t low, int64_t high) {
-  if (isSIntImmediate(N, Imm) && Imm <= high && Imm >= high)
+  if (isSIntImmediate(N, Imm) && Imm <= high && Imm >= low)
     return true;
   return false;
 }
@@ -624,7 +624,7 @@ static bool isUIntImmediate(SDOperand N, uint64_t& Imm) {
 
 static bool isUIntImmediateBounded(SDOperand N, uint64_t& Imm, 
                                    uint64_t low, uint64_t high) {
-  if (isUIntImmediate(N, Imm) && Imm <= high && Imm >= high)
+  if (isUIntImmediate(N, Imm) && Imm <= high && Imm >= low)
     return true;
   return false;
 }
