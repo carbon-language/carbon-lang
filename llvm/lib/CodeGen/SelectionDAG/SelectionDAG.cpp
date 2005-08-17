@@ -57,6 +57,21 @@ static bool isInvertibleForFree(SDOperand N) {
   return false;
 }
 
+//===----------------------------------------------------------------------===//
+//                              ConstantFPSDNode Class
+//===----------------------------------------------------------------------===//
+
+/// isExactlyValue - We don't rely on operator== working on double values, as
+/// it returns true for things that are clearly not equal, like -0.0 and 0.0.
+/// As such, this method can be used to do an exact bit-for-bit comparison of
+/// two floating point values.
+bool ConstantFPSDNode::isExactlyValue(double V) const {
+  return DoubleToBits(V) == DoubleToBits(Value);
+}
+
+//===----------------------------------------------------------------------===//
+//                              ISD Class
+//===----------------------------------------------------------------------===//
 
 /// getSetCCSwappedOperands - Return the operation corresponding to (Y op X)
 /// when given the operation for (X op Y).
@@ -140,6 +155,9 @@ const TargetMachine &SelectionDAG::getTarget() const {
   return TLI.getTargetMachine();
 }
 
+//===----------------------------------------------------------------------===//
+//                              SelectionDAG Class
+//===----------------------------------------------------------------------===//
 
 /// RemoveDeadNodes - This method deletes all unreachable nodes in the
 /// SelectionDAG, including nodes (like loads) that have uses of their token
@@ -1822,7 +1840,9 @@ void SelectionDAG::ReplaceAllUsesWith(SDNode *From, SDNode *To) {
   }
 }
 
-
+//===----------------------------------------------------------------------===//
+//                              SDNode Class
+//===----------------------------------------------------------------------===//
 
 /// hasNUsesOfValue - Return true if there are exactly NUSES uses of the
 /// indicated value.  This method ignores uses of other values defined by this
