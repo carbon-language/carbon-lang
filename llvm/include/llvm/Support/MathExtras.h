@@ -168,6 +168,50 @@ inline unsigned Log2_64(uint64_t Value) {
     return 63 - CountLeadingZeros_64(Value);
 }
 
+// BitsToDouble - This function takes a 64-bit integer and returns the bit
+// equivalent double.
+inline double BitsToDouble(uint64_t Bits) {
+  union {
+    uint64_t L;
+    double D;
+  } T;
+  T.L = Bits;
+  return T.D;
+}
+
+// BitsToFloat - This function takes a 32-bit integer and returns the bit
+// equivalent float.
+inline float BitsToFloat(unsigned Bits) {
+  union {
+    unsigned I;
+    float F;
+  } T;
+  T.I = Bits;
+  return T.F;
+}
+
+// DoubleToBits - This function takes a double and returns the bit
+// equivalent 64-bit integer.
+inline uint64_t DoubleToBits(double Double) {
+  union {
+    uint64_t L;
+    double D;
+  } T;
+  T.D = Double;
+  return T.L;
+}
+
+// FloatToBits - This function takes a float and returns the bit
+// equivalent 32-bit integer.
+inline unsigned FloatToBits(float Float) {
+  union {
+    unsigned I;
+    float F;
+  } T;
+  T.F = Float;
+  return T.I;
+}
+
 // Platform-independent wrappers for the C99 isnan() function.
 int IsNAN (float f);
 int IsNAN (double d);
