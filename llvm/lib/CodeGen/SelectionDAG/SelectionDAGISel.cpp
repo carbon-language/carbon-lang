@@ -991,7 +991,10 @@ CopyValueToVirtualRegister(SelectionDAGLowering &SDL, Value *V, unsigned Reg) {
     return DAG.getCopyToReg(SDL.getRoot(), Reg, Op);
   } else if (SrcVT < DestVT) {
     // The src value is promoted to the register.
-    Op = DAG.getNode(ISD::ZERO_EXTEND, DestVT, Op);
+    if (MVT::isFloatingPoint(SrcVT))
+      Op = DAG.getNode(ISD::FP_EXTEND, DestVT, Op);
+    else
+      Op = DAG.getNode(ISD::ZERO_EXTEND, DestVT, Op);
     return DAG.getCopyToReg(SDL.getRoot(), Reg, Op);
   } else  {
     // The src value is expanded into multiple registers.
