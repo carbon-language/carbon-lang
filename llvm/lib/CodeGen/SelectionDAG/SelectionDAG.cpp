@@ -152,7 +152,8 @@ void SelectionDAG::RemoveDeadNodes(SDNode *N) {
   // to the root node, preventing it from being deleted.
   SDNode *DummyNode = new SDNode(ISD::EntryToken, getRoot());
 
-  DeleteNodeIfDead(N, &AllNodeSet);
+  // If we have a hint to start from, use it.
+  if (N) DeleteNodeIfDead(N, &AllNodeSet);
 
  Restart:
   unsigned NumNodes = AllNodeSet.size();
@@ -291,6 +292,51 @@ void SelectionDAG::RemoveNodeFromCSEMaps(SDNode *N) {
     break;
   }
 }
+
+/// AddNonLeafNodeToCSEMaps - Add the specified node back to the CSE maps.  It
+/// has been taken out and modified in some way.  If the specified node already
+/// exists in the CSE maps, do not modify the maps, but return the existing node
+/// instead.  If it doesn't exist, add it and return null.
+///
+SDNode *SelectionDAG::AddNonLeafNodeToCSEMaps(SDNode *N) {
+  assert(N->getNumOperands() && "This is a leaf node!");
+  if (N->getOpcode() == ISD::LOAD) {
+    SDNode *&L = Loads[std::make_pair(N->getOperand(1),
+                                      std::make_pair(N->getOperand(0),
+                                                     N->getValueType(0)))];
+    if (L) return L;
+    L = N;
+  } else if (N->getNumOperands() == 1) {
+    SDNode *&U = UnaryOps[std::make_pair(N->getOpcode(),
+                                         std::make_pair(N->getOperand(0),
+                                                        N->getValueType(0)))];
+    if (U) return U;
+    U = N;
+  } else if (N->getNumOperands() == 2) {
+    SDNode *&B = BinaryOps[std::make_pair(N->getOpcode(),
+                                          std::make_pair(N->getOperand(0),
+                                                         N->getOperand(1)))];
+    if (B) return B;
+    B = N;
+  } else if (N->getNumValues() == 1) {
+    std::vector<SDOperand> Ops(N->op_begin(), N->op_end());
+    SDNode *&ORN = OneResultNodes[std::make_pair(N->getOpcode(),
+                                  std::make_pair(N->getValueType(0), Ops))];
+    if (ORN) return ORN;
+    ORN = N;
+  } else {
+    // Remove the node from the ArbitraryNodes map.
+    std::vector<MVT::ValueType> RV(N->value_begin(), N->value_end());
+    std::vector<SDOperand>     Ops(N->op_begin(), N->op_end());
+    SDNode *&AN = ArbitraryNodes[std::make_pair(N->getOpcode(),
+                                                std::make_pair(RV, Ops))];
+    if (AN) return AN;
+    AN = N;
+  }
+  return 0;
+  
+}
+
 
 
 SelectionDAG::~SelectionDAG() {
@@ -1757,6 +1803,36 @@ void SelectionDAG::SelectNodeTo(SDNode *N, MVT::ValueType VT,
   N->setValueTypes(VT);
   N->setOperands(Op1, Op2, Op3);
 }
+
+/// ReplaceAllUsesWith - Modify anything using 'From' to use 'To' instead.
+/// This can cause recursive merging of nodes in the DAG.
+///
+void SelectionDAG::ReplaceAllUsesWith(SDNode *From, SDNode *To) {
+  assert(From != To && "Cannot replace uses of with self");
+  while (!From->use_empty()) {
+    // Process users until they are all gone.
+    SDNode *U = *From->use_begin();
+    
+    // This node is about to morph, remove its old self from the CSE maps.
+    RemoveNodeFromCSEMaps(U);
+    
+    for (unsigned i = 0, e = U->getNumOperands(); i != e; ++i)
+      if (U->getOperand(i).Val == From) {
+        assert(From->getValueType(U->getOperand(i).ResNo) ==
+               To->getValueType(U->getOperand(i).ResNo));
+        From->removeUser(U);
+        U->Operands[i].Val = To;
+        To->addUser(U);
+      }
+        
+    // Now that we have modified U, add it back to the CSE maps.  If it already
+    // exists there, recursively merge the results together.
+    if (SDNode *Existing = AddNonLeafNodeToCSEMaps(U))
+      ReplaceAllUsesWith(U, Existing);
+      // U is now dead.
+  }
+}
+
 
 
 /// hasNUsesOfValue - Return true if there are exactly NUSES uses of the
