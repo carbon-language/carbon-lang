@@ -199,6 +199,25 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
       break;
     }
   }
+  case ISD::SIGN_EXTEND_INREG:
+    switch(cast<VTSDNode>(N->getOperand(1))->getVT()) {
+    default: assert(0 && "Illegal type in SIGN_EXTEND_INREG"); break;
+    case MVT::i16:
+      CurDAG->SelectNodeTo(N, MVT::i32, PPC::EXTSH, Select(N->getOperand(0)));
+      break;
+    case MVT::i8:
+      CurDAG->SelectNodeTo(N, MVT::i32, PPC::EXTSB, Select(N->getOperand(0)));
+      break;
+    case MVT::i1:
+      CurDAG->SelectNodeTo(N, MVT::i32, PPC::SUBFIC, Select(N->getOperand(0)),
+                           getI32Imm(0));
+      break;
+    }
+    break;
+  case ISD::CTLZ:
+    assert(N->getValueType(0) == MVT::i32);
+    CurDAG->SelectNodeTo(N, MVT::i32, PPC::CNTLZW, Select(N->getOperand(0)));
+    break;
   case ISD::ADD: {
     MVT::ValueType Ty = N->getValueType(0);
     if (Ty == MVT::i32) {
@@ -298,23 +317,30 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
                          Select(N->getOperand(1)));
     break;
   }
-  case ISD::MULHS: {
+  case ISD::MULHS:
     assert(N->getValueType(0) == MVT::i32);
-    CurDAG->SelectNodeTo(N, N->getValueType(0), PPC::MULHW, 
-                         Select(N->getOperand(0)), Select(N->getOperand(1)));
+    CurDAG->SelectNodeTo(N, MVT::i32, PPC::MULHW, Select(N->getOperand(0)), 
+                         Select(N->getOperand(1)));
     break;
-  }
-  case ISD::MULHU: {
+  case ISD::MULHU:
     assert(N->getValueType(0) == MVT::i32);
-    CurDAG->SelectNodeTo(N, N->getValueType(0), PPC::MULHWU, 
-                         Select(N->getOperand(0)), Select(N->getOperand(1)));
+    CurDAG->SelectNodeTo(N, MVT::i32, PPC::MULHWU, Select(N->getOperand(0)),
+                         Select(N->getOperand(1)));
     break;
-  }
-  case ISD::FABS: {
+  case ISD::FABS:
     CurDAG->SelectNodeTo(N, N->getValueType(0), PPC::FABS, 
                          Select(N->getOperand(0)));
     break;
-  }
+  case ISD::FP_EXTEND:
+    assert(MVT::f64 == N->getValueType(0) && 
+           MVT::f32 == N->getOperand(0).getValueType() && "Illegal FP_EXTEND");
+    CurDAG->SelectNodeTo(N, MVT::f64, PPC::FMR, Select(N->getOperand(0)));
+    break;
+  case ISD::FP_ROUND:
+    assert(MVT::f32 == N->getValueType(0) && 
+           MVT::f64 == N->getOperand(0).getValueType() && "Illegal FP_ROUND");
+    CurDAG->SelectNodeTo(N, MVT::f32, PPC::FRSP, Select(N->getOperand(0)));
+    break;
   case ISD::FNEG: {
     SDOperand Val = Select(N->getOperand(0));
     MVT::ValueType Ty = N->getValueType(0);
