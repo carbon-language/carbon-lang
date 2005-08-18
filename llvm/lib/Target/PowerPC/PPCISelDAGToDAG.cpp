@@ -90,6 +90,71 @@ static bool isIntImmediate(SDNode *N, unsigned& Imm) {
   return false;
 }
 
+// isOprShiftImm - Returns true if the specified operand is a shift opcode with
+// a immediate shift count less than 32.
+static bool isOprShiftImm(SDNode *N, unsigned& Opc, unsigned& SH) {
+  Opc = N->getOpcode();
+  return (Opc == ISD::SHL || Opc == ISD::SRL || Opc == ISD::SRA) &&
+    isIntImmediate(N->getOperand(1).Val, SH) && SH < 32;
+}
+
+// isRunOfOnes - Returns true iff Val consists of one contiguous run of 1s with
+// any number of 0s on either side.  The 1s are allowed to wrap from LSB to
+// MSB, so 0x000FFF0, 0x0000FFFF, and 0xFF0000FF are all runs.  0x0F0F0000 is
+// not, since all 1s are not contiguous.
+static bool isRunOfOnes(unsigned Val, unsigned &MB, unsigned &ME) {
+  if (isShiftedMask_32(Val)) {
+    // look for the first non-zero bit
+    MB = CountLeadingZeros_32(Val);
+    // look for the first zero bit after the run of ones
+    ME = CountLeadingZeros_32((Val - 1) ^ Val);
+    return true;
+  } else if (isShiftedMask_32(Val = ~Val)) { // invert mask
+                                             // effectively look for the first zero bit
+    ME = CountLeadingZeros_32(Val) - 1;
+    // effectively look for the first one bit after the run of zeros
+    MB = CountLeadingZeros_32((Val - 1) ^ Val) + 1;
+    return true;
+  }
+  // no run present
+  return false;
+}
+
+// isRotateAndMask - Returns true if Mask and Shift can be folded in to a rotate
+// and mask opcode and mask operation.
+static bool isRotateAndMask(SDNode *N, unsigned Mask, bool IsShiftMask,
+                            unsigned &SH, unsigned &MB, unsigned &ME) {
+  unsigned Shift  = 32;
+  unsigned Indeterminant = ~0;  // bit mask marking indeterminant results
+  unsigned Opcode = N->getOpcode();
+  if (!isIntImmediate(N->getOperand(1).Val, Shift) || (Shift > 31))
+    return false;
+  
+  if (Opcode == ISD::SHL) {
+    // apply shift left to mask if it comes first
+    if (IsShiftMask) Mask = Mask << Shift;
+    // determine which bits are made indeterminant by shift
+    Indeterminant = ~(0xFFFFFFFFu << Shift);
+  } else if (Opcode == ISD::SRA || Opcode == ISD::SRL) { 
+    // apply shift right to mask if it comes first
+    if (IsShiftMask) Mask = Mask >> Shift;
+    // determine which bits are made indeterminant by shift
+    Indeterminant = ~(0xFFFFFFFFu >> Shift);
+    // adjust for the left rotate
+    Shift = 32 - Shift;
+  } else {
+    return false;
+  }
+  
+  // if the mask doesn't intersect any Indeterminant bits
+  if (Mask && !(Mask & Indeterminant)) {
+    SH = Shift;
+    // make sure the mask is still a mask (wrap arounds may not be)
+    return isRunOfOnes(Mask, MB, ME);
+  }
+  return false;
+}
+
 // isOpcWithIntImmediate - This method tests to see if the node is a specific
 // opcode and that it has a immediate integer right operand.
 // If so Imm will receive the 32 bit value.
@@ -346,6 +411,46 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
     CurDAG->SelectNodeTo(N, MVT::i32, PPC::MULHWU, Select(N->getOperand(0)),
                          Select(N->getOperand(1)));
     break;
+  case ISD::AND: {
+    unsigned Imm, SH, MB, ME;
+    // If this is an and of a value rotated between 0 and 31 bits and then and'd
+    // with a mask, emit rlwinm
+    if (isIntImmediate(N->getOperand(1), Imm) && (isShiftedMask_32(Imm) ||
+                                                  isShiftedMask_32(~Imm))) {
+      SDOperand Val;
+      if (isRotateAndMask(N->getOperand(0).Val, Imm, false, SH, MB, ME)) {
+        Val = Select(N->getOperand(0).getOperand(0));
+      } else {
+        Val = Select(N->getOperand(0));
+        isRunOfOnes(Imm, MB, ME);
+        SH = 0;
+      }
+      CurDAG->SelectNodeTo(N, MVT::i32, PPC::RLWINM, Val, getI32Imm(SH),
+                           getI32Imm(MB), getI32Imm(ME));
+      break;
+    }
+    // If this is an and with an immediate that isn't a mask, then codegen it as
+    // high and low 16 bit immediate ands.
+    if (SDNode *I = SelectIntImmediateExpr(N->getOperand(0), 
+                                           N->getOperand(1),
+                                           PPC::ANDISo, PPC::ANDIo)) {
+      CurDAG->ReplaceAllUsesWith(N, I); 
+      N = I;
+      break;
+    }
+    // Finally, check for the case where we are being asked to select
+    // and (not(a), b) or and (a, not(b)) which can be selected as andc.
+    if (isOprNot(N->getOperand(0).Val))
+      CurDAG->SelectNodeTo(N, MVT::i32, PPC::ANDC, Select(N->getOperand(1)),
+                           Select(N->getOperand(0).getOperand(0)));
+    else if (isOprNot(N->getOperand(1).Val))
+      CurDAG->SelectNodeTo(N, MVT::i32, PPC::ANDC, Select(N->getOperand(0)),
+                           Select(N->getOperand(1).getOperand(0)));
+    else
+      CurDAG->SelectNodeTo(N, MVT::i32, PPC::AND, Select(N->getOperand(0)),
+                           Select(N->getOperand(1)));
+    break;
+  }
   case ISD::XOR:
     // Check whether or not this node is a logical 'not'.  This is represented
     // by llvm as a xor with the constant value -1 (all bits set).  If this is a
