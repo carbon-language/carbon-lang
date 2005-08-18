@@ -35,19 +35,9 @@ namespace {
   class PPC32DAGToDAGISel : public SelectionDAGISel {
     PPC32TargetLowering PPC32Lowering;
     
-    unsigned GlobalBaseReg;
-    bool GlobalBaseInitialized;
   public:
     PPC32DAGToDAGISel(TargetMachine &TM)
       : SelectionDAGISel(PPC32Lowering), PPC32Lowering(TM) {}
-    
-    /// runOnFunction - Override this function in order to reset our
-    /// per-function variables.
-    virtual bool runOnFunction(Function &Fn) {
-      // Make sure we re-emit a set of the global base reg if necessary
-      GlobalBaseInitialized = false;
-      return SelectionDAGISel::runOnFunction(Fn);
-    }
     
     /// getI32Imm - Return a target constant with the specified value, of type
     /// i32.
