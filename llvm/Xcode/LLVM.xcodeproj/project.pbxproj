@@ -868,6 +868,7 @@
 		DE66F41508ABF37000323D32 /* HowToUseJIT.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = HowToUseJIT.cpp; path = HowToUseJIT/HowToUseJIT.cpp; sourceTree = "<group>"; };
 		DE66F41E08ABF37000323D32 /* ModuleMaker.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = ModuleMaker.cpp; path = ModuleMaker/ModuleMaker.cpp; sourceTree = "<group>"; };
 		DE66F42608ABF37000323D32 /* ParallelJIT.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = ParallelJIT.cpp; path = ParallelJIT/ParallelJIT.cpp; sourceTree = "<group>"; };
+		DE694D9F08B51E0C0039C106 /* ScheduleDAG.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = ScheduleDAG.cpp; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -1083,6 +1084,7 @@
 		DE66ED8308ABEC2B00323D32 /* SelectionDAG */ = {
 			isa = PBXGroup;
 			children = (
+				DE694D9F08B51E0C0039C106 /* ScheduleDAG.cpp */,
 				DE66ED9008ABEC2B00323D32 /* LegalizeDAG.cpp */,
 				DE66ED9208ABEC2B00323D32 /* SelectionDAG.cpp */,
 				DE66ED9308ABEC2B00323D32 /* SelectionDAGISel.cpp */,
