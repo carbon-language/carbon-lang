@@ -177,7 +177,7 @@ static bool isIntImmediate(SDOperand N, unsigned& Imm) {
   // test for constant
   if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N)) {
     // retrieve value
-    Imm = (unsigned)CN->getSignExtended();
+    Imm = (unsigned)CN->getValue();
     // passes muster
     return true;
   }
