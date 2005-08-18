@@ -62,8 +62,6 @@ namespace {
       Select(DAG.getRoot());
       DAG.RemoveDeadNodes();
       
-      DAG.viewGraph();
-
       // Emit machine code to BB. 
       ScheduleAndEmitDAG(DAG);
     }
