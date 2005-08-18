@@ -486,6 +486,51 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
       CurDAG->SelectNodeTo(N, MVT::i32, PPC::XOR, Select(N->getOperand(0)),
                            Select(N->getOperand(1)));
     break;
+  case ISD::SHL: {
+    unsigned Imm, SH, MB, ME;
+    if (isOpcWithIntImmediate(N->getOperand(0).Val, ISD::AND, Imm) &&
+        isRotateAndMask(N, Imm, true, SH, MB, ME))
+      CurDAG->SelectNodeTo(N, MVT::i32, PPC::RLWINM, 
+                           Select(N->getOperand(0).getOperand(0)),
+                           getI32Imm(SH), getI32Imm(MB), getI32Imm(ME));
+    else if (isIntImmediate(N->getOperand(1), Imm))
+      CurDAG->SelectNodeTo(N, MVT::i32, PPC::RLWINM, Select(N->getOperand(0)),
+                           getI32Imm(Imm), getI32Imm(0), getI32Imm(31-Imm));
+    else
+      CurDAG->SelectNodeTo(N, MVT::i32, PPC::SLW, Select(N->getOperand(0)),
+                           Select(N->getOperand(1)));
+    break;
+  }
+  case ISD::SRL: {
+    unsigned Imm, SH, MB, ME;
+    if (isOpcWithIntImmediate(N->getOperand(0).Val, ISD::AND, Imm) &&
+        isRotateAndMask(N, Imm, true, SH, MB, ME))
+      CurDAG->SelectNodeTo(N, MVT::i32, PPC::RLWINM, 
+                           Select(N->getOperand(0).getOperand(0)),
+                           getI32Imm(SH), getI32Imm(MB), getI32Imm(ME));
+    else if (isIntImmediate(N->getOperand(1), Imm))
+      CurDAG->SelectNodeTo(N, MVT::i32, PPC::RLWINM, Select(N->getOperand(0)),
+                           getI32Imm(32-Imm), getI32Imm(Imm), getI32Imm(31));
+    else
+      CurDAG->SelectNodeTo(N, MVT::i32, PPC::SRW, Select(N->getOperand(0)),
+                           Select(N->getOperand(1)));
+    break;
+  }
+  case ISD::SRA: {
+    unsigned Imm, SH, MB, ME;
+    if (isOpcWithIntImmediate(N->getOperand(0).Val, ISD::AND, Imm) &&
+        isRotateAndMask(N, Imm, true, SH, MB, ME))
+      CurDAG->SelectNodeTo(N, MVT::i32, PPC::RLWINM, 
+                           Select(N->getOperand(0).getOperand(0)),
+                           getI32Imm(SH), getI32Imm(MB), getI32Imm(ME));
+    else if (isIntImmediate(N->getOperand(1), Imm))
+      CurDAG->SelectNodeTo(N, MVT::i32, PPC::SRAWI, Select(N->getOperand(0)), 
+                           getI32Imm(Imm));
+    else
+      CurDAG->SelectNodeTo(N, MVT::i32, PPC::SRAW, Select(N->getOperand(0)),
+                           Select(N->getOperand(1)));
+    break;
+  }
   case ISD::FABS:
     CurDAG->SelectNodeTo(N, N->getValueType(0), PPC::FABS, 
                          Select(N->getOperand(0)));
