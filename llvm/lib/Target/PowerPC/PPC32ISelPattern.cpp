@@ -246,23 +246,6 @@ static unsigned getBCCForSetCC(ISD::CondCode CC) {
   return 0;
 }
 
-/// getCROpForOp - Return the condition register opcode (or inverted opcode)
-/// associated with the SelectionDAG opcode.
-static unsigned getCROpForSetCC(unsigned Opcode, bool Inv1, bool Inv2) {
-  switch (Opcode) {
-  default: assert(0 && "Unknown opcode!"); abort();
-  case ISD::AND:
-    if (Inv1 && Inv2) return PPC::CRNOR; // De Morgan's Law
-    if (!Inv1 && !Inv2) return PPC::CRAND;
-    if (Inv1 ^ Inv2) return PPC::CRANDC;
-  case ISD::OR:
-    if (Inv1 && Inv2) return PPC::CRNAND; // De Morgan's Law
-    if (!Inv1 && !Inv2) return PPC::CROR;
-    if (Inv1 ^ Inv2) return PPC::CRORC;
-  }
-  return 0;
-}
-
 /// getCRIdxForSetCC - Return the index of the condition register field
 /// associated with the SetCC condition, and whether or not the field is
 /// treated as inverted.  That is, lt = 0; ge = 0 inverted.
@@ -1735,15 +1718,15 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
   case ISD::Constant: {
     assert(N.getValueType() == MVT::i32 &&
            "Only i32 constants are legal on this target!");
-    int v = (int)cast<ConstantSDNode>(N)->getValue();
+    unsigned v = (unsigned)cast<ConstantSDNode>(N)->getValue();
     unsigned Hi = HA16(v);
     unsigned Lo = Lo16(v);
     if (Hi && Lo) {
       Tmp1 = MakeIntReg();
-      BuildMI(BB, PPC::LIS, 1, Tmp1).addSImm(Hi);
+      BuildMI(BB, PPC::LIS, 1, Tmp1).addSImm(v >> 16);
       BuildMI(BB, PPC::ORI, 2, Result).addReg(Tmp1).addImm(Lo);
     } else if (Hi) {
-      BuildMI(BB, PPC::LIS, 1, Result).addSImm(Hi);
+      BuildMI(BB, PPC::LIS, 1, Result).addSImm(v >> 16);
     } else {
       BuildMI(BB, PPC::LI, 1, Result).addSImm(Lo);
     }
