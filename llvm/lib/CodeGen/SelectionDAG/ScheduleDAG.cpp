@@ -17,7 +17,16 @@
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetInstrInfo.h"
+#include "llvm/Support/CommandLine.h"
 using namespace llvm;
+
+#ifndef _NDEBUG
+static cl::opt<bool>
+ViewDAGs("view-sched-dags", cl::Hidden,
+         cl::desc("Pop up a window to show sched dags as they are processed"));
+#else
+static const bool ViewDAGS = 0;
+#endif
 
 namespace {
   class SimpleSched {
@@ -112,5 +121,6 @@ unsigned SimpleSched::Emit(SDOperand Op) {
 /// Pick a safe ordering and emit instructions for each target node in the
 /// graph.
 void SelectionDAGISel::ScheduleAndEmitDAG(SelectionDAG &SD) {
+  if (ViewDAGs) SD.viewGraph();
   SimpleSched(SD, BB).Run();  
 }
