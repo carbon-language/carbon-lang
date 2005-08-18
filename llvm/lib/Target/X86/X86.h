@@ -32,12 +32,6 @@ enum X86VectorEnum {
 extern X86VectorEnum X86Vector;
 extern bool X86ScalarSSE;
 
-/// createX86SimpleInstructionSelector - This pass converts an LLVM function
-/// into a machine code representation in a very simple peep-hole fashion.  The
-/// generated code sucks but the implementation is nice and simple.
-///
-FunctionPass *createX86SimpleInstructionSelector(TargetMachine &TM);
-
 /// createX86PatternInstructionSelector - This pass converts an LLVM function
 /// into a machine code representation in a more aggressive way.
 ///

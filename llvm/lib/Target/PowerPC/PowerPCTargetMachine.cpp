@@ -85,13 +85,9 @@ bool PowerPCTargetMachine::addPassesToEmitFile(PassManager &PM,
   PM.add(createUnreachableBlockEliminationPass());
 
   // Install an instruction selector.
-  if (EnablePPCDAGDAG) {
+  if (EnablePPCDAGDAG)
     PM.add(createPPC32ISelDag(*this));
-    
-  } else if (PatternISelTriState == 0) {
-    PM.add(createLowerConstantExpressionsPass());
-    PM.add(createPPC32ISelSimple(*this));
-  } else
+  else
     PM.add(createPPC32ISelPattern(*this));
 
   if (PrintMachineCode)
@@ -143,13 +139,8 @@ void PowerPCJITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
   // Make sure that no unreachable blocks are instruction selected.
   PM.add(createUnreachableBlockEliminationPass());
 
-  // Default to pattern ISel
-  if (PatternISelTriState == 0) {
-    PM.add(createLowerConstantExpressionsPass());
-    PM.add(createPPC32ISelSimple(TM));
-  } else {
-    PM.add(createPPC32ISelPattern(TM));
-  }
+  // Install an instruction selector.
+  PM.add(createPPC32ISelPattern(TM));
 
   PM.add(createRegisterAllocator());
   PM.add(createPrologEpilogCodeInserter());

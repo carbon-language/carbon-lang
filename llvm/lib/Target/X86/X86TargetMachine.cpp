@@ -120,11 +120,8 @@ bool X86TargetMachine::addPassesToEmitFile(PassManager &PM, std::ostream &Out,
   // Make sure that no unreachable blocks are instruction selected.
   PM.add(createUnreachableBlockEliminationPass());
 
-  // Default to pattern ISel
-  if (PatternISelTriState == 0)
-    PM.add(createX86SimpleInstructionSelector(*this));
-  else
-    PM.add(createX86PatternInstructionSelector(*this));
+  // Install an instruction selector.
+  PM.add(createX86PatternInstructionSelector(*this));
 
   // Run optional SSA-based machine code optimizations next...
   if (!NoSSAPeephole)
@@ -191,11 +188,8 @@ void X86JITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
   // Make sure that no unreachable blocks are instruction selected.
   PM.add(createUnreachableBlockEliminationPass());
 
-  // Default to pattern ISel
-  if (PatternISelTriState == 0)
-    PM.add(createX86SimpleInstructionSelector(TM));
-  else
-    PM.add(createX86PatternInstructionSelector(TM));
+  // Install an instruction selector.
+  PM.add(createX86PatternInstructionSelector(TM));
 
   // Run optional SSA-based machine code optimizations next...
   if (!NoSSAPeephole)
