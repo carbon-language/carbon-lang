@@ -281,6 +281,35 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
                          Select(N->getOperand(1)));
     break;
   }
+  case ISD::MUL: {
+    unsigned Imm, Opc;
+    if (isIntImmediate(N->getOperand(1), Imm) && isInt16(Imm)) {
+      CurDAG->SelectNodeTo(N, N->getValueType(0), PPC::MULLI, 
+                           Select(N->getOperand(0)), getI32Imm(Lo16(Imm)));
+      break;
+    } 
+    switch (N->getValueType(0)) {
+      default: assert(0 && "Unhandled multiply type!");
+      case MVT::i32: Opc = PPC::MULLW; break;
+      case MVT::f32: Opc = PPC::FMULS; break;
+      case MVT::f64: Opc = PPC::FMUL;  break;
+    }
+    CurDAG->SelectNodeTo(N, N->getValueType(0), Opc, Select(N->getOperand(0)), 
+                         Select(N->getOperand(1)));
+    break;
+  }
+  case ISD::MULHS: {
+    assert(N->getValueType(0) == MVT::i32);
+    CurDAG->SelectNodeTo(N, N->getValueType(0), PPC::MULHW, 
+                         Select(N->getOperand(0)), Select(N->getOperand(1)));
+    break;
+  }
+  case ISD::MULHU: {
+    assert(N->getValueType(0) == MVT::i32);
+    CurDAG->SelectNodeTo(N, N->getValueType(0), PPC::MULHWU, 
+                         Select(N->getOperand(0)), Select(N->getOperand(1)));
+    break;
+  }
   case ISD::FNEG: {
     SDOperand Val = Select(N->getOperand(0));
     MVT::ValueType Ty = N->getValueType(0);
