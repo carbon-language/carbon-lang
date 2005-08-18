@@ -5,47 +5,47 @@
 
 implementation   ; Functions:
 
-int %_Z2f1v() {
+int %f1() {
 entry:
         ret int 1
 }
 
-int %_Z2f2v() {
+int %f2() {
 entry:
         ret int -1
 }
 
-int %_Z2f3v() {
+int %f3() {
 entry:
         ret int 0
 }
 
-int %_Z2f4v() {
+int %f4() {
 entry:
         ret int 32767
 }
 
-int %_Z2f5v() {
+int %f5() {
 entry:
         ret int 65535
 }
 
-int %_Z2f6v() {
+int %f6() {
 entry:
         ret int 65536
 }
 
-int %_Z2f7v() {
+int %f7() {
 entry:
         ret int 131071
 }
 
-int %_Z2f8v() {
+int %f8() {
 entry:
         ret int 2147483647
 }
 
-int %_Z2f9v() {
+int %f9() {
 entry:
         ret int -2147483648
 }
