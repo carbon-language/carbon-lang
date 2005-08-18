@@ -80,6 +80,29 @@ namespace {
   };
 }
 
+// isIntImmediate - This method tests to see if a constant operand.
+// If so Imm will receive the 32 bit value.
+static bool isIntImmediate(SDNode *N, unsigned& Imm) {
+  if (N->getOpcode() == ISD::Constant) {
+    Imm = cast<ConstantSDNode>(N)->getValue();
+    return true;
+  }
+  return false;
+}
+
+// isOpcWithIntImmediate - This method tests to see if the node is a specific
+// opcode and that it has a immediate integer right operand.
+// If so Imm will receive the 32 bit value.
+static bool isOpcWithIntImmediate(SDNode *N, unsigned Opc, unsigned& Imm) {
+  return N->getOpcode() == Opc && isIntImmediate(N->getOperand(1).Val, Imm);
+}
+
+// isOprNot - Returns true if the specified operand is an xor with immediate -1.
+static bool isOprNot(SDNode *N) {
+  unsigned Imm;
+  return isOpcWithIntImmediate(N, ISD::XOR, Imm) && (signed)Imm == -1;
+}
+
 // Immediate constant composers.
 // Lo16 - grabs the lo 16 bits from a 32 bit constant.
 // Hi16 - grabs the hi 16 bits from a 32 bit constant.
@@ -208,10 +231,6 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
     case MVT::i8:
       CurDAG->SelectNodeTo(N, MVT::i32, PPC::EXTSB, Select(N->getOperand(0)));
       break;
-    case MVT::i1:
-      CurDAG->SelectNodeTo(N, MVT::i32, PPC::SUBFIC, Select(N->getOperand(0)),
-                           getI32Imm(0));
-      break;
     }
     break;
   case ISD::CTLZ:
@@ -326,6 +345,46 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
     assert(N->getValueType(0) == MVT::i32);
     CurDAG->SelectNodeTo(N, MVT::i32, PPC::MULHWU, Select(N->getOperand(0)),
                          Select(N->getOperand(1)));
+    break;
+  case ISD::XOR:
+    // Check whether or not this node is a logical 'not'.  This is represented
+    // by llvm as a xor with the constant value -1 (all bits set).  If this is a
+    // 'not', then fold 'or' into 'nor', and so forth for the supported ops.
+    if (isOprNot(N)) {
+      unsigned Opc;
+      switch(N->getOperand(0).getOpcode()) {
+      default:        Opc = 0;          break;
+      case ISD::OR:   Opc = PPC::NOR;   break;
+      case ISD::AND:  Opc = PPC::NAND;  break;
+      case ISD::XOR:  Opc = PPC::EQV;   break;
+      }
+      if (Opc)
+        CurDAG->SelectNodeTo(N, MVT::i32, Opc, 
+                             Select(N->getOperand(0).getOperand(0)),
+                             Select(N->getOperand(0).getOperand(1)));
+      else
+        CurDAG->SelectNodeTo(N, MVT::i32, PPC::NOR, Select(N->getOperand(0)),
+                             Select(N->getOperand(0)));
+      break;
+    }
+    // If this is a xor with an immediate other than -1, then codegen it as high
+    // and low 16 bit immediate xors.
+    if (SDNode *I = SelectIntImmediateExpr(N->getOperand(0), 
+                                           N->getOperand(1),
+                                           PPC::XORIS, PPC::XORI)) {
+      CurDAG->ReplaceAllUsesWith(N, I); 
+      N = I;
+      break;
+    }
+    // Finally, check for the case where we are being asked to select
+    // xor (not(a), b) which is equivalent to not(xor a, b), which is eqv
+    if (isOprNot(N->getOperand(0).Val))
+      CurDAG->SelectNodeTo(N, MVT::i32, PPC::EQV, 
+                           Select(N->getOperand(0).getOperand(0)),
+                           Select(N->getOperand(1)));
+    else
+      CurDAG->SelectNodeTo(N, MVT::i32, PPC::XOR, Select(N->getOperand(0)),
+                           Select(N->getOperand(1)));
     break;
   case ISD::FABS:
     CurDAG->SelectNodeTo(N, N->getValueType(0), PPC::FABS, 
