@@ -277,15 +277,18 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
   case ISD::Constant: {
     assert(N->getValueType(0) == MVT::i32);
     unsigned v = (unsigned)cast<ConstantSDNode>(N)->getValue();
-    if ((unsigned)(short)v == v) {
-      CurDAG->SelectNodeTo(N, MVT::i32, PPC::LI, getI32Imm(v));
-      break;
-    } else {
-      SDOperand Top = CurDAG->getTargetNode(PPC::LIS, MVT::i32,
-                                            getI32Imm(unsigned(v) >> 16));
+    unsigned Hi = HA16(v);
+    unsigned Lo = Lo16(v);
+    if (Hi && Lo) {
+      SDOperand Top = CurDAG->getTargetNode(PPC::LIS, MVT::i32, 
+                                            getI32Imm(v >> 16));
       CurDAG->SelectNodeTo(N, MVT::i32, PPC::ORI, Top, getI32Imm(v & 0xFFFF));
-      break;
+    } else if (Lo) {
+      CurDAG->SelectNodeTo(N, MVT::i32, PPC::LI, getI32Imm(v));
+    } else {
+      CurDAG->SelectNodeTo(N, MVT::i32, PPC::LIS, getI32Imm(v >> 16));
     }
+    break;
   }
   case ISD::SIGN_EXTEND_INREG:
     switch(cast<VTSDNode>(N->getOperand(1))->getVT()) {
@@ -412,12 +415,13 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
                          Select(N->getOperand(1)));
     break;
   case ISD::AND: {
-    unsigned Imm, SH, MB, ME;
+    unsigned Imm;
     // If this is an and of a value rotated between 0 and 31 bits and then and'd
     // with a mask, emit rlwinm
     if (isIntImmediate(N->getOperand(1), Imm) && (isShiftedMask_32(Imm) ||
                                                   isShiftedMask_32(~Imm))) {
       SDOperand Val;
+      unsigned SH, MB, ME;
       if (isRotateAndMask(N->getOperand(0).Val, Imm, false, SH, MB, ME)) {
         Val = Select(N->getOperand(0).getOperand(0));
       } else {

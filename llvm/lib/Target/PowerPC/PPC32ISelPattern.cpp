@@ -1736,7 +1736,7 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
     assert(N.getValueType() == MVT::i32 &&
            "Only i32 constants are legal on this target!");
     int v = (int)cast<ConstantSDNode>(N)->getValue();
-    unsigned Hi = Hi16(v);
+    unsigned Hi = HA16(v);
     unsigned Lo = Lo16(v);
     if (Hi && Lo) {
       Tmp1 = MakeIntReg();
