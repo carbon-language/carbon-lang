@@ -36,11 +36,6 @@
 #include <iostream>
 using namespace llvm;
 
-static cl::opt<bool>
-SplitPHICritEdges("split-phi-constant-crit-edges", cl::Hidden,
-         cl::desc("Split critical edges for PHI values that are constants"));
-
-
 #ifndef _NDEBUG
 static cl::opt<bool>
 ViewDAGs("view-isel-dags", cl::Hidden,
@@ -966,8 +961,8 @@ unsigned SelectionDAGISel::MakeReg(MVT::ValueType VT) {
 }
 
 void SelectionDAGISel::getAnalysisUsage(AnalysisUsage &AU) const {
-  if (!SplitPHICritEdges)
-    AU.setPreservesAll();
+  // FIXME: we only modify the CFG to split critical edges.  This
+  // updates dom and loop info.
 }
 
 
@@ -979,15 +974,14 @@ bool SelectionDAGISel::runOnFunction(Function &Fn) {
   // First pass, split all critical edges for PHI nodes with incoming values
   // that are constants, this way the load of the constant into a vreg will not
   // be placed into MBBs that are used some other way.
-  if (SplitPHICritEdges)
-    for (Function::iterator BB = Fn.begin(), E = Fn.end(); BB != E; ++BB) {
-      PHINode *PN;
-      for (BasicBlock::iterator BBI = BB->begin();
-           (PN = dyn_cast<PHINode>(BBI)); ++BBI)
-        for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
-          if (isa<Constant>(PN->getIncomingValue(i)))
-            SplitCriticalEdge(PN->getIncomingBlock(i), BB);
-    }
+  for (Function::iterator BB = Fn.begin(), E = Fn.end(); BB != E; ++BB) {
+    PHINode *PN;
+    for (BasicBlock::iterator BBI = BB->begin();
+         (PN = dyn_cast<PHINode>(BBI)); ++BBI)
+      for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
+        if (isa<Constant>(PN->getIncomingValue(i)))
+          SplitCriticalEdge(PN->getIncomingBlock(i), BB);
+  }
 
   FunctionLoweringInfo FuncInfo(TLI, Fn, MF);
 
