@@ -237,7 +237,8 @@ CodeGenInstruction::CodeGenInstruction(Record *R, const std::string &AsmStr)
   isCommutable = R->getValueAsBit("isCommutable");
   isTerminator = R->getValueAsBit("isTerminator");
   hasDelaySlot = R->getValueAsBit("hasDelaySlot");
-
+  hasVariableNumberOfOperands = false;
+  
   try {
     DagInit *DI = R->getValueAsDag("OperandList");
 
@@ -248,18 +249,20 @@ CodeGenInstruction::CodeGenInstruction(Record *R, const std::string &AsmStr)
         MVT::ValueType Ty;
         std::string PrintMethod = "printOperand";
         unsigned NumOps = 1;
-        if (Rec->isSubClassOf("RegisterClass"))
+        if (Rec->isSubClassOf("RegisterClass")) {
           Ty = getValueType(Rec->getValueAsDef("RegType"));
-        else if (Rec->isSubClassOf("Operand")) {
+        } else if (Rec->isSubClassOf("Operand")) {
           Ty = getValueType(Rec->getValueAsDef("Type"));
           PrintMethod = Rec->getValueAsString("PrintMethod");
           NumOps = Rec->getValueAsInt("NumMIOperands");
+        } else if (Rec->getName() == "variable_ops") {
+          hasVariableNumberOfOperands = true;
         } else
           throw "Unknown operand class '" + Rec->getName() +
                 "' in instruction '" + R->getName() + "' instruction!";
 
         OperandList.push_back(OperandInfo(Rec, Ty, DI->getArgName(i),
-                                          PrintMethod, MIOperandNo));
+                                          PrintMethod, MIOperandNo, NumOps));
         MIOperandNo += NumOps;
       } else {
         throw "Illegal operand for the '" + R->getName() + "' instruction!";

@@ -56,10 +56,12 @@ namespace llvm {
       /// OperandList may not match the MachineInstr operand num.  Until it
       /// does, this contains the MI operand index of this operand.
       unsigned MIOperandNo;
+      unsigned MINumOperands;   // The number of operands.
 
       OperandInfo(Record *R, MVT::ValueType T, const std::string &N,
-                  const std::string &PMN, unsigned MION)
-        : Rec(R), Ty(T), Name(N), PrinterMethodName(PMN), MIOperandNo(MION) {}
+                  const std::string &PMN, unsigned MION, unsigned MINO)
+        : Rec(R), Ty(T), Name(N), PrinterMethodName(PMN), MIOperandNo(MION),
+          MINumOperands(MINO) {}
     };
 
     /// OperandList - The list of declared operands, along with their declared
@@ -78,6 +80,7 @@ namespace llvm {
     bool isCommutable;
     bool isTerminator;
     bool hasDelaySlot;
+    bool hasVariableNumberOfOperands;
 
     CodeGenInstruction(Record *R, const std::string &AsmStr);
 
