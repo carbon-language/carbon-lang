@@ -352,19 +352,18 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
     // 'not', then fold 'or' into 'nor', and so forth for the supported ops.
     if (isOprNot(N)) {
       unsigned Opc;
-      switch(N->getOperand(0).getOpcode()) {
+      SDOperand Val = Select(N->getOperand(0));
+      switch (Val.getTargetOpcode()) {
       default:        Opc = 0;          break;
-      case ISD::OR:   Opc = PPC::NOR;   break;
-      case ISD::AND:  Opc = PPC::NAND;  break;
-      case ISD::XOR:  Opc = PPC::EQV;   break;
+      case PPC::OR:   Opc = PPC::NOR;   break;
+      case PPC::AND:  Opc = PPC::NAND;  break;
+      case PPC::XOR:  Opc = PPC::EQV;   break;
       }
       if (Opc)
-        CurDAG->SelectNodeTo(N, MVT::i32, Opc, 
-                             Select(N->getOperand(0).getOperand(0)),
-                             Select(N->getOperand(0).getOperand(1)));
+        CurDAG->SelectNodeTo(N, MVT::i32, Opc, Val.getOperand(0),
+                             Val.getOperand(1));
       else
-        CurDAG->SelectNodeTo(N, MVT::i32, PPC::NOR, Select(N->getOperand(0)),
-                             Select(N->getOperand(0)));
+        CurDAG->SelectNodeTo(N, MVT::i32, PPC::NOR, Val, Val);
       break;
     }
     // If this is a xor with an immediate other than -1, then codegen it as high
