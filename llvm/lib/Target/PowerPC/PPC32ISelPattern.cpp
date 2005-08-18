@@ -1719,16 +1719,18 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
     assert(N.getValueType() == MVT::i32 &&
            "Only i32 constants are legal on this target!");
     unsigned v = (unsigned)cast<ConstantSDNode>(N)->getValue();
-    unsigned Hi = HA16(v);
-    unsigned Lo = Lo16(v);
-    if (Hi && Lo) {
-      Tmp1 = MakeIntReg();
-      BuildMI(BB, PPC::LIS, 1, Tmp1).addSImm(v >> 16);
-      BuildMI(BB, PPC::ORI, 2, Result).addReg(Tmp1).addImm(Lo);
-    } else if (Hi) {
-      BuildMI(BB, PPC::LIS, 1, Result).addSImm(v >> 16);
+    if (isInt16(v)) {
+      BuildMI(BB, PPC::LI, 1, Result).addSImm(Lo16(v));
     } else {
-      BuildMI(BB, PPC::LI, 1, Result).addSImm(Lo);
+      unsigned Hi = Hi16(v);
+      unsigned Lo = Lo16(v);
+      if (Lo) {
+        Tmp1 = MakeIntReg();
+        BuildMI(BB, PPC::LIS, 1, Tmp1).addSImm(Hi);
+        BuildMI(BB, PPC::ORI, 2, Result).addReg(Tmp1).addImm(Lo);
+      } else {
+        BuildMI(BB, PPC::LIS, 1, Result).addSImm(Hi);
+      }
     }
     return Result;
   }
