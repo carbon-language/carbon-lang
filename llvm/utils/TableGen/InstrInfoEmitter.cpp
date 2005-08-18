@@ -46,14 +46,21 @@ void InstrInfoEmitter::runEnums(std::ostream &OS) {
   OS << "} // End llvm namespace \n";
 }
 
-void InstrInfoEmitter::printDefList(ListInit *LI, const std::string &Name,
-                                    std::ostream &OS) const {
-  OS << "static const unsigned " << Name << "[] = { ";
-  for (unsigned j = 0, e = LI->getSize(); j != e; ++j)
-    if (DefInit *DI = dynamic_cast<DefInit*>(LI->getElement(j)))
-      OS << getQualifiedName(DI->getDef()) << ", ";
+static std::vector<Record*> GetDefList(ListInit *LI, const std::string &Name) {
+  std::vector<Record*> Result;
+  for (unsigned i = 0, e = LI->getSize(); i != e; ++i)
+    if (DefInit *DI = dynamic_cast<DefInit*>(LI->getElement(i)))
+      Result.push_back(DI->getDef());
     else
       throw "Illegal value in '" + Name + "' list!";
+  return Result;
+}
+
+void InstrInfoEmitter::printDefList(const std::vector<Record*> &Uses,
+                                    unsigned Num, std::ostream &OS) const {
+  OS << "static const unsigned ImplicitList" << Num << "[] = { ";
+  for (unsigned i = 0, e = Uses.size(); i != e; ++i)
+    OS << getQualifiedName(Uses[i]) << ", ";
   OS << "0 };\n";
 }
 
@@ -69,34 +76,50 @@ void InstrInfoEmitter::run(std::ostream &OS) {
   Record *PHI = InstrInfo->getValueAsDef("PHIInst");
 
   // Emit empty implicit uses and defs lists
-  OS << "static const unsigned EmptyImpUses[] = { 0 };\n"
-     << "static const unsigned EmptyImpDefs[] = { 0 };\n";
+  OS << "static const unsigned EmptyImpList[] = { 0 };\n";
 
-  // Emit all of the instruction's implicit uses and defs...
+  // Keep track of all of the def lists we have emitted already.
+  std::map<std::vector<Record*>, unsigned> EmittedLists;
+  std::map<ListInit*, unsigned> ListNumbers;
+  unsigned ListNumber = 0;
+ 
+  // Emit all of the instruction's implicit uses and defs.
   for (CodeGenTarget::inst_iterator II = Target.inst_begin(),
          E = Target.inst_end(); II != E; ++II) {
     Record *Inst = II->second.TheDef;
     ListInit *LI = Inst->getValueAsListInit("Uses");
-    if (LI->getSize()) printDefList(LI, Inst->getName()+"ImpUses", OS);
+    if (LI->getSize()) {
+      std::vector<Record*> Uses = GetDefList(LI, Inst->getName());
+      unsigned &IL = EmittedLists[Uses];
+      if (!IL) printDefList(Uses, IL = ++ListNumber, OS);
+      ListNumbers[LI] = IL;
+    }
     LI = Inst->getValueAsListInit("Defs");
-    if (LI->getSize()) printDefList(LI, Inst->getName()+"ImpDefs", OS);
+    if (LI->getSize()) {
+      std::vector<Record*> Uses = GetDefList(LI, Inst->getName());
+      unsigned &IL = EmittedLists[Uses];
+      if (!IL) printDefList(Uses, IL = ++ListNumber, OS);
+      ListNumbers[LI] = IL;
+    }
   }
 
   OS << "\nstatic const TargetInstrDescriptor " << TargetName
      << "Insts[] = {\n";
-  emitRecord(Target.getPHIInstruction(), 0, InstrInfo, OS);
+  emitRecord(Target.getPHIInstruction(), 0, InstrInfo, ListNumbers, OS);
 
   unsigned i = 0;
   for (CodeGenTarget::inst_iterator II = Target.inst_begin(),
          E = Target.inst_end(); II != E; ++II)
     if (II->second.TheDef != PHI)
-      emitRecord(II->second, ++i, InstrInfo, OS);
+      emitRecord(II->second, ++i, InstrInfo, ListNumbers, OS);
   OS << "};\n";
   OS << "} // End llvm namespace \n";
 }
 
 void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,
-                                  Record *InstrInfo, std::ostream &OS) {
+                                  Record *InstrInfo,
+                                  std::map<ListInit*, unsigned> &ListNumbers,
+                                  std::ostream &OS) {
   OS << "  { \"";
   if (Inst.Name.empty())
     OS << Inst.TheDef->getName();
@@ -134,15 +157,15 @@ void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,
   // Emit the implicit uses and defs lists...
   LI = Inst.TheDef->getValueAsListInit("Uses");
   if (!LI->getSize())
-    OS << "EmptyImpUses, ";
+    OS << "EmptyImpList, ";
   else
-    OS << Inst.TheDef->getName() << "ImpUses, ";
+    OS << "ImplicitList" << ListNumbers[LI] << ", ";
 
   LI = Inst.TheDef->getValueAsListInit("Defs");
   if (!LI->getSize())
-    OS << "EmptyImpDefs ";
+    OS << "EmptyImpList ";
   else
-    OS << Inst.TheDef->getName() << "ImpDefs ";
+    OS << "ImplicitList" << ListNumbers[LI] << " ";
 
   OS << " },  // Inst #" << Num << " = " << Inst.TheDef->getName() << "\n";
 }

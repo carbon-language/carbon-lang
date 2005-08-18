@@ -16,6 +16,8 @@
 #define INSTRINFO_EMITTER_H
 
 #include "TableGenBackend.h"
+#include <vector>
+#include <map>
 
 namespace llvm {
 
@@ -35,10 +37,12 @@ public:
   // runEnums - Print out enum values for all of the instructions.
   void runEnums(std::ostream &OS);
 private:
-  void printDefList(ListInit *LI, const std::string &Name,
+  void printDefList(const std::vector<Record*> &Uses, unsigned Num,
                     std::ostream &OS) const;
   void emitRecord(const CodeGenInstruction &Inst, unsigned Num,
-                  Record *InstrInfo, std::ostream &OS);
+                  Record *InstrInfo, 
+                  std::map<ListInit*, unsigned> &ListNumbers,
+                  std::ostream &OS);
   void emitShiftedValue(Record *R, StringInit *Val, IntInit *Shift,
                         std::ostream &OS);
 };
