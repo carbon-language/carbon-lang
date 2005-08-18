@@ -437,7 +437,7 @@ unsigned ISel::getGlobalBaseReg() {
     MachineBasicBlock::iterator MBBI = FirstMBB.begin();
     GlobalBaseReg = MakeIntReg();
     BuildMI(FirstMBB, MBBI, PPC::MovePCtoLR, 0, PPC::LR);
-    BuildMI(FirstMBB, MBBI, PPC::MFLR, 1, GlobalBaseReg).addReg(PPC::LR);
+    BuildMI(FirstMBB, MBBI, PPC::MFLR, 1, GlobalBaseReg);
     GlobalBaseInitialized = true;
   }
   return GlobalBaseReg;

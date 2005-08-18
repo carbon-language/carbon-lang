@@ -83,7 +83,7 @@ PPC32RegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
   };
   unsigned OC = Opcode[getIdx(getClass(SrcReg))];
   if (SrcReg == PPC::LR) {
-    BuildMI(MBB, MI, PPC::MFLR, 1, PPC::R11).addReg(PPC::LR);
+    BuildMI(MBB, MI, PPC::MFLR, 1, PPC::R11);
     addFrameReference(BuildMI(MBB, MI, OC, 3).addReg(PPC::R11),FrameIdx);
   } else if (PPC32::CRRCRegisterClass == getClass(SrcReg)) {
     BuildMI(MBB, MI, PPC::MFCR, 0, PPC::R11);
