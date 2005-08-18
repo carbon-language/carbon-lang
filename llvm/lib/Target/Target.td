@@ -145,6 +145,10 @@ class Instruction {
 ///     (ops R32:$dst, R32:$src) or something similar.
 def ops;
 
+/// variable_ops definition - Mark this instruction as taking a variable number
+/// of operands.
+def variable_ops;
+
 /// Operand Types - These provide the built-in operand types that may be used
 /// by a target.  Targets can optionally provide their own operand types as
 /// needed, though this should not be needed for RISC targets.
