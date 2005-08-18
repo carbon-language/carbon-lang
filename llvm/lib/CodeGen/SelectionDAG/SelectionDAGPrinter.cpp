@@ -82,6 +82,8 @@ std::string DOTGraphTraits<SelectionDAG*>::getNodeLabel(const SDNode *Node,
       Op += "<" + M->getValue()->getName() + ":" + itostr(M->getOffset()) + ">";
     else
       Op += "<null:" + itostr(M->getOffset()) + ">";
+  } else if (const VTSDNode *N = dyn_cast<VTSDNode>(Node)) {
+    std::cerr << ":" << getValueTypeString(N->getVT());
   }
   return Op;
 }

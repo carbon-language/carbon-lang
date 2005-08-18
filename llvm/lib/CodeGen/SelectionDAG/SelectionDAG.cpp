@@ -1891,6 +1891,7 @@ const char *SDNode::getOperationName(const SelectionDAG *G) const {
    
   case ISD::PCMARKER:      return "PCMarker";
   case ISD::SRCVALUE:      return "SrcValue";
+  case ISD::VALUETYPE:     return "ValueType";
   case ISD::EntryToken:    return "EntryToken";
   case ISD::TokenFactor:   return "TokenFactor";
   case ISD::Constant:      return "Constant";
@@ -2070,6 +2071,8 @@ void SDNode::dump(const SelectionDAG *G) const {
       std::cerr << "<" << M->getValue() << ":" << M->getOffset() << ">";
     else
       std::cerr << "<null:" << M->getOffset() << ">";
+  } else if (const VTSDNode *N = dyn_cast<VTSDNode>(this)) {
+    std::cerr << ":" << getValueTypeString(N->getVT());
   }
 }
 
