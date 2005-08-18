@@ -1738,12 +1738,16 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
     case MVT::i32:
       {
         int v = (int)cast<ConstantSDNode>(N)->getSignExtended();
-        if (v < 32768 && v >= -32768) {
-          BuildMI(BB, PPC::LI, 1, Result).addSImm(v);
-        } else {
+        unsigned Hi = Hi16(v);
+        unsigned Lo = Lo16(v);
+        if (Hi && Lo) {
           Tmp1 = MakeIntReg();
-          BuildMI(BB, PPC::LIS, 1, Tmp1).addSImm(v >> 16);
-          BuildMI(BB, PPC::ORI, 2, Result).addReg(Tmp1).addImm(v & 0xFFFF);
+          BuildMI(BB, PPC::LIS, 1, Tmp1).addSImm(Hi);
+          BuildMI(BB, PPC::ORI, 2, Result).addReg(Tmp1).addImm(Lo);
+        } else if (Lo) {
+          BuildMI(BB, PPC::LI, 1, Result).addSImm(Lo);
+        } else {
+          BuildMI(BB, PPC::LIS, 1, Result).addSImm(Hi);
         }
       }
     }
