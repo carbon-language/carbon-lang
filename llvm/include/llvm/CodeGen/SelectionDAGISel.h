@@ -49,6 +49,11 @@ public:
   virtual void EmitFunctionEntryCode(Function &Fn, MachineFunction &MF) {}
   virtual void InstructionSelectBasicBlock(SelectionDAG &SD) = 0;
 
+protected:
+  /// Pick a safe ordering and emit instructions for each target node in the
+  /// graph.
+  void ScheduleAndEmitDAG(SelectionDAG &SD);
+  
 private:
   SDOperand CopyValueToVirtualRegister(SelectionDAGLowering &SDL,
                                        Value *V, unsigned Reg);
