@@ -58,10 +58,14 @@ namespace {
     /// SelectionDAGISel when it has created a SelectionDAG for us to codegen.
     virtual void InstructionSelectBasicBlock(SelectionDAG &DAG) {
       DEBUG(BB->dump());
-      // Codegen the basic block.
+      // Select target instructions for the DAG.
       Select(DAG.getRoot());
       DAG.RemoveDeadNodes();
+      
       DAG.viewGraph();
+
+      // Emit machine code to BB. 
+      ScheduleAndEmitDAG(DAG);
     }
  
     virtual const char *getPassName() const {
