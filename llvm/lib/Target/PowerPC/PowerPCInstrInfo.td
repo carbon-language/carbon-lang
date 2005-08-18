@@ -1,4 +1,3 @@
-
 //===- PowerPCInstrInfo.td - The PowerPC Instruction Set -----*- tablegen -*-=//
 // 
 //                     The LLVM Compiler Infrastructure
@@ -60,18 +59,19 @@ def crbitm: Operand<i8> {
 }
 
 // Pseudo-instructions:
-def PHI : Pseudo<(ops), "; PHI">;
+def PHI : Pseudo<(ops variable_ops), "; PHI">;
 let isLoad = 1 in {
-def ADJCALLSTACKDOWN : Pseudo<(ops), "; ADJCALLSTACKDOWN">;
-def ADJCALLSTACKUP : Pseudo<(ops), "; ADJCALLSTACKUP">;
+def ADJCALLSTACKDOWN : Pseudo<(ops u16imm), "; ADJCALLSTACKDOWN">;
+def ADJCALLSTACKUP : Pseudo<(ops u16imm), "; ADJCALLSTACKUP">;
 }
-def IMPLICIT_DEF : Pseudo<(ops), "; IMPLICIT_DEF">;
+def IMPLICIT_DEF : Pseudo<(ops variable_ops), "; IMPLICIT_DEF">;
 
 let Defs = [LR] in
   def MovePCtoLR : Pseudo<(ops piclabel:$label), "bl $label">;
 
 let isBranch = 1, isTerminator = 1 in {
-  def COND_BRANCH : Pseudo<(ops), "; COND_BRANCH">;
+  def COND_BRANCH : Pseudo<(ops CRRC:$crS, u16imm, target:$true, target:$false),
+                           "; COND_BRANCH">;
   def B   : IForm<18, 0, 0, (ops target:$func), "b $func">;
 //def BA  : IForm<18, 1, 0, (ops target:$func), "ba $func">;
   def BL  : IForm<18, 0, 1, (ops target:$func), "bl $func">;
@@ -100,8 +100,9 @@ let isCall = 1,
           LR,XER,CTR,
           CR0,CR1,CR5,CR6,CR7] in {
   // Convenient aliases for call instructions
-  def CALLpcrel : IForm<18, 0, 1, (ops target:$func), "bl $func">;
-  def CALLindirect : XLForm_2_ext<19, 528, 20, 0, 1, (ops), "bctrl">;
+  def CALLpcrel : IForm<18, 0, 1, (ops target:$func, variable_ops), "bl $func">;
+  def CALLindirect : XLForm_2_ext<19, 528, 20, 0, 1,
+                                  (ops variable_ops), "bctrl">;
 }
 
 // D-Form instructions.  Most instructions that perform an operation on a
