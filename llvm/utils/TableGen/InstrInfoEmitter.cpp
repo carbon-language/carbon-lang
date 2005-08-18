@@ -102,7 +102,7 @@ void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,
     OS << Inst.TheDef->getName();
   else
     OS << Inst.Name;
-  OS << "\",\t-1, -1, 0, false, 0, 0, 0, 0";
+  OS << "\",\t" << Inst.OperandList.size() << ", -1, 0, false, 0, 0, 0, 0";
 
   // Emit all of the target indepedent flags...
   if (Inst.isReturn)     OS << "|M_RET_FLAG";
