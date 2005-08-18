@@ -310,6 +310,11 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
                          Select(N->getOperand(0)), Select(N->getOperand(1)));
     break;
   }
+  case ISD::FABS: {
+    CurDAG->SelectNodeTo(N, N->getValueType(0), PPC::FABS, 
+                         Select(N->getOperand(0)));
+    break;
+  }
   case ISD::FNEG: {
     SDOperand Val = Select(N->getOperand(0));
     MVT::ValueType Ty = N->getValueType(0);
@@ -336,6 +341,12 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
       }
     }
     CurDAG->SelectNodeTo(N, Ty, PPC::FNEG, Val);
+    break;
+  }
+  case ISD::FSQRT: {
+    MVT::ValueType Ty = N->getValueType(0);
+    CurDAG->SelectNodeTo(N, Ty, Ty == MVT::f64 ? PPC::FSQRT : PPC::FSQRTS,
+                         Select(N->getOperand(0)));
     break;
   }
   case ISD::RET: {
