@@ -226,6 +226,8 @@ public:
                     SDOperand Op1, SDOperand Op2);
   void SelectNodeTo(SDNode *N, MVT::ValueType VT, unsigned TargetOpc,
                     SDOperand Op1, SDOperand Op2, SDOperand Op3);
+  void SelectNodeTo(SDNode *N, MVT::ValueType VT, unsigned TargetOpc,
+                    SDOperand Op1, SDOperand Op2, SDOperand Op3, SDOperand Op4);
   
   SDOperand getTargetNode(unsigned Opcode, MVT::ValueType VT,
                           SDOperand Op1) {

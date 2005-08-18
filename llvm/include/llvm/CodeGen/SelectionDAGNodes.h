@@ -664,6 +664,15 @@ protected:
     Op0.Val->Uses.push_back(this); Op1.Val->Uses.push_back(this);
     Op2.Val->Uses.push_back(this);
   }
+  void setOperands(SDOperand Op0, SDOperand Op1, SDOperand Op2, SDOperand Op3) {
+    Operands.reserve(4);
+    Operands.push_back(Op0);
+    Operands.push_back(Op1);
+    Operands.push_back(Op2);
+    Operands.push_back(Op3);
+    Op0.Val->Uses.push_back(this); Op1.Val->Uses.push_back(this);
+    Op2.Val->Uses.push_back(this); Op3.Val->Uses.push_back(this);
+  }
   void addUser(SDNode *User) {
     Uses.push_back(User);
   }
