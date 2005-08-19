@@ -75,8 +75,12 @@ let Namespace = "X86" in {
 def R8  : RegisterClass<"X86", i8,  8, [AL, CL, DL, AH, CH, DH, BL, BH]>;
 
 def R16 : RegisterClass<"X86", i16, 16, [AX, CX, DX, SI, DI, BX, BP, SP]> {
-  let Methods = [{
-    iterator allocation_order_end(MachineFunction &MF) const {
+  let MethodProtos = [{
+    iterator allocation_order_end(MachineFunction &MF) const;
+  }];
+  let MethodBodies = [{
+    R16Class::iterator
+    R16Class::allocation_order_end(MachineFunction &MF) const {
       if (hasFP(MF))     // Does the function dedicate EBP to being a frame ptr?
         return end()-2;  // If so, don't allocate SP or BP
       else
@@ -86,8 +90,12 @@ def R16 : RegisterClass<"X86", i16, 16, [AX, CX, DX, SI, DI, BX, BP, SP]> {
 }
 
 def R32 : RegisterClass<"X86", i32, 32, [EAX, ECX, EDX, ESI, EDI, EBX, EBP, ESP]> {
-  let Methods = [{
-    iterator allocation_order_end(MachineFunction &MF) const {
+  let MethodProtos = [{
+    iterator allocation_order_end(MachineFunction &MF) const;
+  }];
+  let MethodBodies = [{
+    R32Class::iterator
+    R32Class::allocation_order_end(MachineFunction &MF) const {
       if (hasFP(MF))     // Does the function dedicate EBP to being a frame ptr?
         return end()-2;  // If so, don't allocate ESP or EBP
       else
@@ -115,8 +123,12 @@ def RFP : RegisterClass<"X86", f64, 32, [FP0, FP1, FP2, FP3, FP4, FP5, FP6]>;
 // for transforming FPn allocations to STn registers)
 def RST : RegisterClass<"X86", f64, 32,
                         [ST0, ST1, ST2, ST3, ST4, ST5, ST6, ST7]> {
-  let Methods = [{
-    iterator allocation_order_end(MachineFunction &MF) const {
+    let MethodProtos = [{
+    iterator allocation_order_end(MachineFunction &MF) const;
+  }];
+  let MethodBodies = [{
+    RSTClass::iterator
+    RSTClass::allocation_order_end(MachineFunction &MF) const {
       return begin();
     }
   }];

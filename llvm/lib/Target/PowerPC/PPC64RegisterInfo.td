@@ -20,11 +20,17 @@ def GPRC : RegisterClass<"PPC64", i64, 64,
       R30, R29, R28, R27, R26, R25, R24, R23, R22, R21, R20, R19, R18, R17,
       R16, R15, R14, R13, R31, R0, R1, LR]>
 {
-  let Methods = [{
-    iterator allocation_order_begin(MachineFunction &MF) const {
+  let MethodProtos = [{
+    iterator allocation_order_begin(MachineFunction &MF) const;
+    iterator allocation_order_end(MachineFunction &MF) const;
+  }];
+  let MethodBodies = [{
+    GPRCClass::iterator
+    GPRCClass::allocation_order_begin(MachineFunction &MF) const {
       return begin() + ((TargetAIX == PPCTarget) ? 1 : 0);
     }
-    iterator allocation_order_end(MachineFunction &MF) const {
+    GPRCClass::iterator
+    GPRCClass::allocation_order_end(MachineFunction &MF) const {
       if (hasFP(MF))
         return end()-4;
       else

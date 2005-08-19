@@ -100,9 +100,11 @@ class RegisterClass<string namespace, ValueType regType, int alignment,
   //
   list<Register> MemberList = regList;
 
-  // Methods - This member can be used to insert arbitrary code into a generated
-  // register class.   The normal usage of this is to overload virtual methods.
-  code Methods = [{}];
+  // MethodProtos/MethodBodies - These members can be used to insert arbitrary
+  // code into a generated register class.   The normal usage of this is to 
+  // overload virtual methods.
+  code MethodProtos = [{}];
+  code MethodBodies = [{}];
 }
 
 

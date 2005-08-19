@@ -97,8 +97,13 @@ def IntRegs : RegisterClass<"V8", i32, 32, [L0, L1, L2, L3, L4, L5, L6, L7,
                                      G0, // constant zero
                                      G5, G6, G7 // reserved for kernel
                                      ]> {
-  let Methods = [{
-    iterator allocation_order_end(MachineFunction &MF) const {
+  let MethodProtos = [{
+    iterator allocation_order_end(MachineFunction &MF) const;
+  }];
+  let MethodBodies = [{
+    IntRegsClass::iterator
+    IntRegsClass::allocation_order_end(MachineFunction &MF) const {
+      // FIXME: These special regs should be taken out of the regclass!
       return end()-10;  // Don't allocate special registers
     }
   }];
