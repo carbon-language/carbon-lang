@@ -72,9 +72,9 @@ let Namespace = "X86" in {
 // dependences between upper and lower parts of the register.  BL and BH are
 // last because they are call clobbered. Both Athlon and P4 chips suffer this
 // issue.
-def R8  : RegisterClass<i8,  8, [AL, CL, DL, AH, CH, DH, BL, BH]>;
+def R8  : RegisterClass<"X86", i8,  8, [AL, CL, DL, AH, CH, DH, BL, BH]>;
 
-def R16 : RegisterClass<i16, 16, [AX, CX, DX, SI, DI, BX, BP, SP]> {
+def R16 : RegisterClass<"X86", i16, 16, [AX, CX, DX, SI, DI, BX, BP, SP]> {
   let Methods = [{
     iterator allocation_order_end(MachineFunction &MF) const {
       if (hasFP(MF))     // Does the function dedicate EBP to being a frame ptr?
@@ -85,7 +85,7 @@ def R16 : RegisterClass<i16, 16, [AX, CX, DX, SI, DI, BX, BP, SP]> {
   }];
 }
 
-def R32 : RegisterClass<i32, 32, [EAX, ECX, EDX, ESI, EDI, EBX, EBP, ESP]> {
+def R32 : RegisterClass<"X86", i32, 32, [EAX, ECX, EDX, ESI, EDI, EBX, EBP, ESP]> {
   let Methods = [{
     iterator allocation_order_end(MachineFunction &MF) const {
       if (hasFP(MF))     // Does the function dedicate EBP to being a frame ptr?
@@ -99,8 +99,8 @@ def R32 : RegisterClass<i32, 32, [EAX, ECX, EDX, ESI, EDI, EBX, EBP, ESP]> {
 // FIXME: These registers can contain both integer and fp values.  We should
 // figure out the right way to deal with that.  For now, since they'll be used
 // for scalar FP, they are being declared f64
-def RXMM : RegisterClass<f64, 32, [XMM0, XMM1, XMM2, XMM3, 
-                                   XMM4, XMM5, XMM6, XMM7]>;
+def RXMM : RegisterClass<"X86", f64, 32,
+                         [XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7]>;
 
 // FIXME: This sets up the floating point register files as though they are f64
 // values, though they really are f80 values.  This will cause us to spill
@@ -108,12 +108,13 @@ def RXMM : RegisterClass<f64, 32, [XMM0, XMM1, XMM2, XMM3,
 // faster on common hardware.  In reality, this should be controlled by a
 // command line option or something.
 
-def RFP : RegisterClass<f64, 32, [FP0, FP1, FP2, FP3, FP4, FP5, FP6]>;
+def RFP : RegisterClass<"X86", f64, 32, [FP0, FP1, FP2, FP3, FP4, FP5, FP6]>;
 
 // Floating point stack registers (these are not allocatable by the
 // register allocator - the floating point stackifier is responsible
 // for transforming FPn allocations to STn registers)
-def RST : RegisterClass<f64, 32, [ST0, ST1, ST2, ST3, ST4, ST5, ST6, ST7]> {
+def RST : RegisterClass<"X86", f64, 32,
+                        [ST0, ST1, ST2, ST3, ST4, ST5, ST6, ST7]> {
   let Methods = [{
     iterator allocation_order_end(MachineFunction &MF) const {
       return begin();
