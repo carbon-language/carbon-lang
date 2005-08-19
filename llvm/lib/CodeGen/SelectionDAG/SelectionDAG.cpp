@@ -17,6 +17,7 @@
 #include "llvm/Assembly/Writer.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/Support/MathExtras.h"
+#include "llvm/Target/MRegisterInfo.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
@@ -2069,7 +2070,7 @@ void SDNode::dump(const SelectionDAG *G) const {
     if (LBB)
       std::cerr << LBB->getName() << " ";
     std::cerr << (const void*)BBDN->getBasicBlock() << ">";
-  } else if (const RegisterSDNode *C2V = dyn_cast<RegisterSDNode>(this)) {
+  } else if (const RegisterSDNode *R = dyn_cast<RegisterSDNode>(this)) {
     if (G && MRegisterInfo::isPhysicalRegister(R->getReg())) {
       std::cerr << " " <<G->getTarget().getRegisterInfo()->getName(R->getReg());
     } else {
