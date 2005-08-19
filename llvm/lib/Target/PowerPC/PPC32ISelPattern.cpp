@@ -469,7 +469,10 @@ void ISel::MoveCRtoGPR(unsigned CCReg, ISD::CondCode CC, unsigned Result){
   BuildMI(BB, PPC::MCRF, 1, PPC::CR7).addReg(CCReg);
   bool GPOpt =
     TLI.getTargetMachine().getSubtarget<PPCSubtarget>().isGigaProcessor();
-  BuildMI(BB, GPOpt ? PPC::MFOCRF : PPC::MFCR, 1, IntCR).addReg(PPC::CR7);
+  if (GPOpt)
+    BuildMI(BB, PPC::MFOCRF, 1, IntCR).addReg(PPC::CR7);
+  else
+    BuildMI(BB, PPC::MFCR, 0, IntCR);
   if (Inv) {
     unsigned Tmp1 = MakeIntReg();
     BuildMI(BB, PPC::RLWINM, 4, Tmp1).addReg(IntCR).addImm(32-(3-Idx))
