@@ -1220,7 +1220,7 @@ assert(0 && "hmm, ISD::SIGN_EXTEND: shouldn't ever be reached. bad luck!\n");
     case MVT::i16: depositPos=0; depositLen=16; break;
     case MVT::i32: depositPos=0; depositLen=32; break;
     }
-    BuildMI(BB, IA64::DEPZ, 1, Result).addReg(Tmp1)
+    BuildMI(BB, IA64::DEPZ, 3, Result).addReg(Tmp1)
       .addImm(depositPos).addImm(depositLen);
     return Result;
   }
@@ -1439,7 +1439,7 @@ assert(0 && "hmm, ISD::SIGN_EXTEND: shouldn't ever be reached. bad luck!\n");
     case MVT::i32:
     case MVT::i64: {
       Tmp1 = SelectExpr(N.getOperand(0));
-      switch (ponderIntegerAndWith(N.getOperand(1), Tmp3)) {
+/* FIXME     switch (ponderIntegerAndWith(N.getOperand(1), Tmp3)) {
         case 1: // ANDing a constant that is 2^n-1 for some n
           switch (Tmp3) {
             case 8:  // if AND 0x00000000000000FF, be quaint and use zxt1
@@ -1457,7 +1457,7 @@ assert(0 && "hmm, ISD::SIGN_EXTEND: shouldn't ever be reached. bad luck!\n");
               break;
           }
           return Result; // early exit
-      } // fallthrough and emit a simple AND:
+  FIXME } */ // fallthrough and emit a simple AND:
       Tmp2 = SelectExpr(N.getOperand(1));
       BuildMI(BB, IA64::AND, 2, Result).addReg(Tmp1).addReg(Tmp2);
     }
