@@ -61,16 +61,18 @@ void RegisterInfoEmitter::runHeader(std::ostream &OS) {
      << "  const unsigned* getCalleeSaveRegs() const;\n"
      << "};\n\n";
 
-  std::vector<Record*> RegisterClasses =
-    Records.getAllDerivedDefinitions("RegisterClass");
+  const std::vector<CodeGenRegisterClass> &RegisterClasses =
+    Target.getRegisterClasses();
 
-  OS << "namespace " << TargetName << " { // Register classes\n";
-  for (unsigned i = 0, e = RegisterClasses.size(); i != e; ++i) {
-    const std::string &Name = RegisterClasses[i]->getName();
-    if (Name.size() < 9 || Name[9] != '.')       // Ignore anonymous classes
-      OS << "  extern TargetRegisterClass *" << Name << "RegisterClass;\n";
+  if (!RegisterClasses.empty()) {
+    OS << "namespace " << RegisterClasses[0].Namespace
+       << " { // Register classes\n";
+    for (unsigned i = 0, e = RegisterClasses.size(); i != e; ++i) {
+      const std::string &Name = RegisterClasses[i].getName();
+      OS << "  extern TargetRegisterClass * const "<< Name <<"RegisterClass;\n";
+    }
+    OS << "} // end of namespace " << TargetName << "\n\n";
   }
-  OS << "} // end of namespace " << TargetName << "\n\n";
   OS << "} // End llvm namespace \n";
 }
 
@@ -90,7 +92,6 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
     Target.getRegisterClasses();
 
   std::set<Record*> RegistersFound;
-  std::vector<std::string> RegClassNames;
 
   // Loop over all of the register classes... emitting each one.
   OS << "namespace {     // Register classes...\n";
@@ -102,15 +103,10 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
   for (unsigned rc = 0, e = RegisterClasses.size(); rc != e; ++rc) {
     const CodeGenRegisterClass &RC = RegisterClasses[rc];
 
-    std::string Name = RC.getName();
-    if (Name.size() > 9 && Name[9] == '.') {
-      static unsigned AnonCounter = 0;
-      Name = "AnonRegClass_"+utostr(AnonCounter++);
-    }
-
-    RegClassNames.push_back(Name);
-
-    // Emit the register list now...
+    // Give the register class a legal C name if it's anonymous.
+    std::string Name = RC.TheDef->getName();
+  
+    // Emit the register list now.
     OS << "  // " << Name << " Register Class...\n  const unsigned " << Name
        << "[] = {\n    ";
     for (unsigned i = 0, e = RC.Elements.size(); i != e; ++i) {
@@ -130,12 +126,25 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
        << "    " << Name << "Class() : TargetRegisterClass("
        << RC.SpillSize/8 << ", " << RC.SpillAlignment/8 << ", " << Name << ", "
        << Name << " + " << RC.Elements.size() << ") {}\n"
-       << RC.MethodDefinitions << "  } " << Name << "Instance;\n\n";
+       << RC.MethodDefinitions << "  };\n\n";
+  }
+  OS << "}  // end anonymous namespace\n\n";
+  
+  // Now that all of the structs have been emitted, emit the instances.
+  if (!RegisterClasses.empty()) {
+    OS << "namespace " << RegisterClasses[0].Namespace
+       << " {   // Register class instances\n";
+    for (unsigned i = 0, e = RegisterClasses.size(); i != e; ++i)
+      OS << "  " << RegisterClasses[i].getName()  << "Class\t"
+         << RegisterClasses[i].getName() << "RegClassInstance;\n";
+    OS << "}\n";
   }
 
+  OS << "\nnamespace {\n";
   OS << "  const TargetRegisterClass* const RegisterClasses[] = {\n";
-  for (unsigned i = 0, e = RegClassNames.size(); i != e; ++i)
-    OS << "    &" << RegClassNames[i] << "Instance,\n";
+  for (unsigned i = 0, e = RegisterClasses.size(); i != e; ++i)
+    OS << "    &" << getQualifiedName(RegisterClasses[i].TheDef)
+       << "RegClassInstance,\n";
   OS << "  };\n";
 
   // Emit register class aliases...
@@ -228,15 +237,16 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
   OS << "  };\n";      // End of register descriptors...
   OS << "}\n\n";       // End of anonymous namespace...
 
-  OS << "namespace " << Target.getName() << " { // Register classes\n";
-  for (unsigned i = 0, e = RegisterClasses.size(); i != e; ++i) {
-    const std::string &Name = RegisterClasses[i].getName();
-    if (Name.size() < 9 || Name[9] != '.')    // Ignore anonymous classes
-      OS << "  TargetRegisterClass *" << Name << "RegisterClass = &"
-         << Name << "Instance;\n";
+  if (!RegisterClasses.empty()) {
+    OS << "namespace " << RegisterClasses[0].Namespace
+       << " { // Register classes\n";
+    for (unsigned i = 0, e = RegisterClasses.size(); i != e; ++i) {
+      OS << "  TargetRegisterClass * const " << RegisterClasses[i].getName()
+         << "RegisterClass = &" << getQualifiedName(RegisterClasses[i].TheDef)
+         << "RegClassInstance;\n";
+    }
+    OS << "} // end of namespace " << RegisterClasses[0].Namespace << "\n\n";
   }
-  OS << "} // end of namespace " << Target.getName() << "\n\n";
-
 
 
   std::string ClassName = Target.getName() + "GenRegisterInfo";
@@ -245,7 +255,7 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
   OS << ClassName << "::" << ClassName
      << "(int CallFrameSetupOpcode, int CallFrameDestroyOpcode)\n"
      << "  : MRegisterInfo(RegisterDescriptors, " << Registers.size()+1
-     << ", RegisterClasses, RegisterClasses+" << RegClassNames.size() << ",\n "
+     << ", RegisterClasses, RegisterClasses+" << RegisterClasses.size() <<",\n "
      << "                 CallFrameSetupOpcode, CallFrameDestroyOpcode) {}\n\n";
 
   // Emit the getCalleeSaveRegs method...
