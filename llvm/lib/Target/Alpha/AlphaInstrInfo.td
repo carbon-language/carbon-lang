@@ -18,11 +18,11 @@ include "AlphaInstrFormats.td"
   // //#define GP    $29
   // //#define SP    $30
 
-def PHI : PseudoInstAlpha<(ops ), "#phi">;
+def PHI : PseudoInstAlpha<(ops variable_ops), "#phi">;
 def IDEF : PseudoInstAlpha<(ops GPRC:$RA), "#idef $RA">;
-def WTF : PseudoInstAlpha<(ops ), "#wtf">;
-def ADJUSTSTACKUP : PseudoInstAlpha<(ops ), "ADJUP">;
-def ADJUSTSTACKDOWN : PseudoInstAlpha<(ops ), "ADJDOWN">;
+def WTF : PseudoInstAlpha<(ops variable_ops), "#wtf">;
+def ADJUSTSTACKUP : PseudoInstAlpha<(ops variable_ops), "ADJUP">;
+def ADJUSTSTACKDOWN : PseudoInstAlpha<(ops variable_ops), "ADJDOWN">;
 def ALTENT : PseudoInstAlpha<(ops s64imm:$TARGET), "$TARGET:\n">;
 def PCLABEL : PseudoInstAlpha<(ops s64imm:$num), "PCMARKER_$num:\n">;
 def MEMLABEL : PseudoInstAlpha<(ops s64imm:$i, s64imm:$j, s64imm:$k, s64imm:$m),
