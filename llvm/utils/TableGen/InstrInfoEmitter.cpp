@@ -103,6 +103,21 @@ void InstrInfoEmitter::run(std::ostream &OS) {
     }
   }
 
+  // Emit all of the operand info records.
+  OS << "\n";
+  for (CodeGenTarget::inst_iterator II = Target.inst_begin(),
+       E = Target.inst_end(); II != E; ++II) {
+    const CodeGenInstruction &Inst = II->second;
+    if (!Inst.hasVariableNumberOfOperands) {
+      OS << "static const TargetOperandInfo " << Inst.TheDef->getName()
+         << "_Operands[] = {";
+      // FIXME: Emit operand info.
+      OS << "};\n";
+    }
+  }
+  
+  // Emit all of the TargetInstrDescriptor records.
+  //
   OS << "\nstatic const TargetInstrDescriptor " << TargetName
      << "Insts[] = {\n";
   emitRecord(Target.getPHIInstruction(), 0, InstrInfo, ListNumbers, OS);
@@ -173,10 +188,16 @@ void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,
 
   LI = Inst.TheDef->getValueAsListInit("Defs");
   if (!LI->getSize())
-    OS << "EmptyImpList ";
+    OS << "EmptyImpList, ";
   else
-    OS << "ImplicitList" << ListNumbers[LI] << " ";
+    OS << "ImplicitList" << ListNumbers[LI] << ", ";
 
+  // Emit the operand info.
+  if (NumOperands == -1)
+    OS << "0 ";
+  else
+    OS << Inst.TheDef->getName() << "_Operands ";
+  
   OS << " },  // Inst #" << Num << " = " << Inst.TheDef->getName() << "\n";
 }
 

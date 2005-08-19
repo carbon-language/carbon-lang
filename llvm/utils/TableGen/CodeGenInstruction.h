@@ -35,6 +35,7 @@ namespace llvm {
     /// operand list for a tablegen instruction.
     struct OperandInfo {
       /// Rec - The definition this operand is declared as.
+      ///
       Record *Rec;
 
       /// Ty - The MachineValueType of the operand.
