@@ -15,10 +15,14 @@
 #include "PowerPC.h"
 #include "PPC32TargetMachine.h"
 #include "PPC32ISelLowering.h"
+#include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/GlobalValue.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/MathExtras.h"
 using namespace llvm;
@@ -34,16 +38,26 @@ namespace {
   ///
   class PPC32DAGToDAGISel : public SelectionDAGISel {
     PPC32TargetLowering PPC32Lowering;
-    
+    unsigned GlobalBaseReg;
   public:
     PPC32DAGToDAGISel(TargetMachine &TM)
       : SelectionDAGISel(PPC32Lowering), PPC32Lowering(TM) {}
     
+    virtual bool runOnFunction(Function &Fn) {
+      // Make sure we re-emit a set of the global base reg if necessary
+      GlobalBaseReg = 0;
+      return SelectionDAGISel::runOnFunction(Fn);
+    }
+   
     /// getI32Imm - Return a target constant with the specified value, of type
     /// i32.
     inline SDOperand getI32Imm(unsigned Imm) {
       return CurDAG->getTargetConstant(Imm, MVT::i32);
     }
+
+    /// getGlobalBaseReg - insert code into the entry mbb to materialize the PIC
+    /// base register.  Return the virtual register that holds this value.
+    unsigned getGlobalBaseReg();
     
     // Select - Convert the specified operand from a target-independent to a
     // target-specific node if it hasn't already been changed.
@@ -72,6 +86,23 @@ namespace {
     } 
   };
 }
+
+/// getGlobalBaseReg - Output the instructions required to put the
+/// base address to use for accessing globals into a register.
+///
+unsigned PPC32DAGToDAGISel::getGlobalBaseReg() {
+  if (!GlobalBaseReg) {
+    // Insert the set of GlobalBaseReg into the first MBB of the function
+    MachineBasicBlock &FirstMBB = BB->getParent()->front();
+    MachineBasicBlock::iterator MBBI = FirstMBB.begin();
+    SSARegMap *RegMap = BB->getParent()->getSSARegMap();
+    GlobalBaseReg = RegMap->createVirtualRegister(PPC32::GPRCRegisterClass);
+    BuildMI(FirstMBB, MBBI, PPC::MovePCtoLR, 0, PPC::LR);
+    BuildMI(FirstMBB, MBBI, PPC::MFLR, 1, GlobalBaseReg);
+  }
+  return GlobalBaseReg;
+}
+
 
 // isIntImmediate - This method tests to see if a constant operand.
 // If so Imm will receive the 32 bit value.
@@ -390,6 +421,22 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
     } else {
       CurDAG->SelectNodeTo(N, MVT::i32, PPC::LIS, getI32Imm(v >> 16));
     }
+    break;
+  }
+  case ISD::GlobalAddress: {
+    GlobalValue *GV = cast<GlobalAddressSDNode>(N)->getGlobal();
+    SDOperand Tmp;
+    SDOperand GA = CurDAG->getTargetGlobalAddress(GV, MVT::i32);
+    if (PICEnabled) {
+      SDOperand PICBaseReg = CurDAG->getRegister(getGlobalBaseReg(), MVT::i32);
+      Tmp = CurDAG->getTargetNode(PPC::ADDIS, MVT::i32, PICBaseReg, GA);
+    } else {
+      Tmp = CurDAG->getTargetNode(PPC::LIS, MVT::i32, GA);
+    }
+    if (GV->hasWeakLinkage() || GV->isExternal())
+      CurDAG->SelectNodeTo(N, MVT::i32, PPC::LWZ, GA, Tmp);
+    else
+      CurDAG->SelectNodeTo(N, MVT::i32, PPC::LA, Tmp, GA);
     break;
   }
   case ISD::SIGN_EXTEND_INREG:
