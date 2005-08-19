@@ -64,6 +64,24 @@ void InstrInfoEmitter::printDefList(const std::vector<Record*> &Uses,
   OS << "0 };\n";
 }
 
+static std::vector<Record*> GetOperandInfo(const CodeGenInstruction &Inst) {
+  std::vector<Record*> Result;
+  if (Inst.hasVariableNumberOfOperands)
+    return Result;  // No info for variable operand instrs.
+
+  for (unsigned i = 0, e = Inst.OperandList.size(); i != e; ++i) {
+    if (Inst.OperandList[i].Rec->isSubClassOf("RegisterClass"))
+      Result.push_back(Inst.OperandList[i].Rec);
+    else {
+      // This might be a multiple operand thing.
+      // FIXME: Targets like X86 have registers in their multi-operand operands.
+      for (unsigned j = 0, e = Inst.OperandList[i].MINumOperands; j != e; ++j)
+        Result.push_back(0);
+    }
+  }
+  return Result;
+}
+
 
 // run - Emit the main instruction description records for the target...
 void InstrInfoEmitter::run(std::ostream &OS) {
@@ -103,15 +121,27 @@ void InstrInfoEmitter::run(std::ostream &OS) {
     }
   }
 
+  std::map<std::vector<Record*>, unsigned> OperandInfosEmitted;
+  unsigned OperandListNum = 0;
+  OperandInfosEmitted[std::vector<Record*>()] = ++OperandListNum;
+  
   // Emit all of the operand info records.
   OS << "\n";
   for (CodeGenTarget::inst_iterator II = Target.inst_begin(),
        E = Target.inst_end(); II != E; ++II) {
-    const CodeGenInstruction &Inst = II->second;
-    if (!Inst.hasVariableNumberOfOperands) {
-      OS << "static const TargetOperandInfo " << Inst.TheDef->getName()
-         << "_Operands[] = {";
-      // FIXME: Emit operand info.
+    std::vector<Record*> OperandInfo = GetOperandInfo(II->second);
+    unsigned &N = OperandInfosEmitted[OperandInfo];
+    if (N == 0) {
+      N = ++OperandListNum;
+      OS << "static const TargetOperandInfo OperandInfo" << N << "[] = { ";
+      for (unsigned i = 0, e = OperandInfo.size(); i != e; ++i) {
+        if (Record *RC = OperandInfo[i]) {
+          // FIXME: BAD: REQUIRES RUNTIME INIT
+          OS << "{ " << getQualifiedName(RC) << "RegisterClass }, ";
+        } else {
+          OS << "{ 0 }, ";
+        }
+      }
       OS << "};\n";
     }
   }
@@ -120,13 +150,15 @@ void InstrInfoEmitter::run(std::ostream &OS) {
   //
   OS << "\nstatic const TargetInstrDescriptor " << TargetName
      << "Insts[] = {\n";
-  emitRecord(Target.getPHIInstruction(), 0, InstrInfo, ListNumbers, OS);
+  emitRecord(Target.getPHIInstruction(), 0, InstrInfo, ListNumbers,
+             OperandInfosEmitted, OS);
 
   unsigned i = 0;
   for (CodeGenTarget::inst_iterator II = Target.inst_begin(),
          E = Target.inst_end(); II != E; ++II)
     if (II->second.TheDef != PHI)
-      emitRecord(II->second, ++i, InstrInfo, ListNumbers, OS);
+      emitRecord(II->second, ++i, InstrInfo, ListNumbers,
+                 OperandInfosEmitted, OS);
   OS << "};\n";
   OS << "} // End llvm namespace \n";
 }
@@ -134,6 +166,7 @@ void InstrInfoEmitter::run(std::ostream &OS) {
 void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,
                                   Record *InstrInfo,
                                   std::map<ListInit*, unsigned> &ListNumbers,
+                               std::map<std::vector<Record*>, unsigned> &OpInfo,
                                   std::ostream &OS) {
   int NumOperands;
   if (Inst.hasVariableNumberOfOperands)
@@ -193,10 +226,11 @@ void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,
     OS << "ImplicitList" << ListNumbers[LI] << ", ";
 
   // Emit the operand info.
-  if (NumOperands == -1)
-    OS << "0 ";
+  std::vector<Record*> OperandInfo = GetOperandInfo(Inst);
+  if (OperandInfo.empty())
+    OS << "0";
   else
-    OS << Inst.TheDef->getName() << "_Operands ";
+    OS << "OperandInfo" << OpInfo[OperandInfo];
   
   OS << " },  // Inst #" << Num << " = " << Inst.TheDef->getName() << "\n";
 }
