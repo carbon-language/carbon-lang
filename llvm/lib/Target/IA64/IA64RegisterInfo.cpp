@@ -339,24 +339,3 @@ void IA64RegisterInfo::emitEpilogue(MachineFunction &MF,
 
 #include "IA64GenRegisterInfo.inc"
 
-const TargetRegisterClass*
-IA64RegisterInfo::getRegClassForType(const Type* Ty) const {
-  switch (Ty->getTypeID()) {
-  default:              assert(0 && "Invalid type to getClass!");
-  case Type::LongTyID:
-  case Type::ULongTyID:
-  case Type::BoolTyID:
-  case Type::SByteTyID:
-  case Type::UByteTyID:
-  case Type::ShortTyID:
-  case Type::UShortTyID:
-  case Type::IntTyID:
-  case Type::UIntTyID:
-  case Type::PointerTyID: return &GRInstance;
-
-  case Type::FloatTyID:
-  case Type::DoubleTyID: return &FPInstance;
-  }
-}
-
-
