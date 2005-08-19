@@ -24,7 +24,6 @@ namespace llvm {
 
 struct X86RegisterInfo : public X86GenRegisterInfo {
   X86RegisterInfo();
-  const TargetRegisterClass* getRegClassForType(const Type* Ty) const;
 
   /// Code Generation virtual methods...
   void storeRegToStackSlot(MachineBasicBlock &MBB,

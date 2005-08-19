@@ -572,22 +572,3 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
 
 #include "X86GenRegisterInfo.inc"
 
-const TargetRegisterClass*
-X86RegisterInfo::getRegClassForType(const Type* Ty) const {
-  switch (Ty->getTypeID()) {
-  case Type::LongTyID:
-  case Type::ULongTyID: assert(0 && "Long values can't fit in registers!");
-  default:              assert(0 && "Invalid type to getClass!");
-  case Type::BoolTyID:
-  case Type::SByteTyID:
-  case Type::UByteTyID:   return &R8Instance;
-  case Type::ShortTyID:
-  case Type::UShortTyID:  return &R16Instance;
-  case Type::IntTyID:
-  case Type::UIntTyID:
-  case Type::PointerTyID: return &R32Instance;
-
-  case Type::FloatTyID:
-  case Type::DoubleTyID: return &RFPInstance;
-  }
-}
