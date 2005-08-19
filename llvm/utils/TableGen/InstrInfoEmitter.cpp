@@ -120,14 +120,22 @@ void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,
                                   Record *InstrInfo,
                                   std::map<ListInit*, unsigned> &ListNumbers,
                                   std::ostream &OS) {
+  int NumOperands;
+  if (Inst.hasVariableNumberOfOperands)
+    NumOperands = -1;
+  else if (!Inst.OperandList.empty())
+    // Each logical operand can be multiple MI operands.
+    NumOperands = Inst.OperandList.back().MIOperandNo +
+                  Inst.OperandList.back().MINumOperands;
+  else
+    NumOperands = 0;
+  
   OS << "  { \"";
   if (Inst.Name.empty())
     OS << Inst.TheDef->getName();
   else
     OS << Inst.Name;
-  OS << "\",\t" << -1
-     //Inst.OperandList.size()
-     << ", -1, 0, false, 0, 0, 0, 0";
+  OS << "\",\t" << NumOperands << ", -1, 0, false, 0, 0, 0, 0";
 
   // Emit all of the target indepedent flags...
   if (Inst.isReturn)     OS << "|M_RET_FLAG";
