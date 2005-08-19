@@ -79,7 +79,10 @@ class RegisterGroup<string n, list<Register> aliases> : Register<n> {
 // register classes.  This also defines the default allocation order of
 // registers by register allocators.
 //
-class RegisterClass<ValueType regType, int alignment, list<Register> regList> {
+class RegisterClass<string namespace, ValueType regType, int alignment,
+                    list<Register> regList> {
+  string Namespace = namespace;
+
   // RegType - Specify the ValueType of the registers in this register class.
   // Note that all registers in a register class must have the same ValueType.
   //
