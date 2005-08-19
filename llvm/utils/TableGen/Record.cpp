@@ -589,6 +589,18 @@ void RecordVal::print(std::ostream &OS, bool PrintSem) const {
   if (PrintSem) OS << ";\n";
 }
 
+void Record::setName(const std::string &Name) {
+  if (Records.getDef(getName()) == this) {
+    Records.removeDef(getName());
+    this->Name = Name;
+    Records.addDef(this);
+  } else {
+    Records.removeClass(getName());
+    this->Name = Name;
+    Records.addClass(this);
+  }
+}
+
 /// resolveReferencesTo - If anything in this record refers to RV, replace the
 /// reference to RV with the RHS of RV.  If RV is null, we resolve all possible
 /// references.

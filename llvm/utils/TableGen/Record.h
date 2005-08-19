@@ -898,6 +898,7 @@ public:
   ~Record() {}
 
   const std::string &getName() const { return Name; }
+  void setName(const std::string &Name);  // Also updates RecordKeeper.
   const std::vector<std::string> &getTemplateArgs() const {
     return TemplateArgs;
   }
@@ -1058,6 +1059,19 @@ public:
     Defs.insert(std::make_pair(R->getName(), R));
   }
 
+  /// removeClass - Remove, but do not delete, the specified record.
+  ///
+  void removeClass(const std::string &Name) {
+    assert(Classes.count(Name) && "Class does not exist!");
+    Classes.erase(Name);
+  }
+  /// removeDef - Remove, but do not delete, the specified record.
+  ///
+  void removeDef(const std::string &Name) {
+    assert(Defs.count(Name) && "Def does not exist!");
+    Defs.erase(Name);
+  }
+  
   //===--------------------------------------------------------------------===//
   // High-level helper methods, useful for tablegen backends...
 
