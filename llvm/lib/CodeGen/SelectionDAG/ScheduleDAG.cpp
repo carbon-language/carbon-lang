@@ -73,11 +73,16 @@ unsigned SimpleSched::Emit(SDOperand Op) {
     // Target nodes have any register or immediate operands before any chain
     // nodes.  Check that the DAG matches the TD files's expectation of #
     // operands.
-    assert((unsigned(II.numOperands) == Op.getNumOperands() ||
-            // It could be some number of operands followed by a token chain.
-           (unsigned(II.numOperands)+1 == Op.getNumOperands() &&
-            Op.getOperand(II.numOperands).getValueType() == MVT::Other)) &&
+#ifndef _NDEBUG
+    unsigned Operands = Op.getNumOperands();
+    if (Operands && Op.getOperand(Operands-1).getValueType() == MVT::Other)
+      --Operands;
+    unsigned Results = Op.Val->getNumValues();
+    if (Results && Op.getOperand(Results-1).getValueType() == MVT::Other)
+      --Results;
+    assert(unsigned(II.numOperands) == Operands+Results &&
            "#operands for dag node doesn't match .td file!"); 
+#endif
 
     // Create the new machine instruction.
     MachineInstr *MI = new MachineInstr(Opc, II.numOperands, true, true);
@@ -107,9 +112,15 @@ unsigned SimpleSched::Emit(SDOperand Op) {
     BB->insert(BB->end(), MI);
   } else {
     switch (Op.getOpcode()) {
-    default: assert(0 &&
-                    "This target-independent node should have been selected!");
+    default:
+      Op.Val->dump(); 
+      assert(0 && "This target-independent node should have been selected!");
     case ISD::EntryToken: break;
+    case ISD::CopyToReg: {
+      unsigned Val = Emit(Op.getOperand(2));
+      // FIXME: DO THE COPY NOW.
+      break;
+    }
     }
   }
   
