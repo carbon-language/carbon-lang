@@ -13,6 +13,8 @@
 
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/Target/MRegisterInfo.h"
+#include "llvm/Target/TargetMachine.h"
 #include "llvm/Function.h"
 #include "llvm/Support/GraphWriter.h"
 #include "llvm/ADT/StringExtras.h"
@@ -73,7 +75,11 @@ std::string DOTGraphTraits<SelectionDAG*>::getNodeLabel(const SDNode *Node,
       Op += LBB->getName();
     //Op += " " + (const void*)BBDN->getBasicBlock();
   } else if (const RegisterSDNode *R = dyn_cast<RegisterSDNode>(Node)) {
-    Op += " #" + utostr(R->getReg());
+    if (G && MRegisterInfo::isPhysicalRegister(R->getReg())) {
+      Op = Op + " " + G->getTarget().getRegisterInfo()->getName(R->getReg());
+    } else {
+      Op += " #" + utostr(R->getReg());
+    }
   } else if (const ExternalSymbolSDNode *ES =
              dyn_cast<ExternalSymbolSDNode>(Node)) {
     Op += "'" + std::string(ES->getSymbol()) + "'";

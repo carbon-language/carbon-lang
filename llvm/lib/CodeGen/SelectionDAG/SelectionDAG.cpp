@@ -2070,7 +2070,11 @@ void SDNode::dump(const SelectionDAG *G) const {
       std::cerr << LBB->getName() << " ";
     std::cerr << (const void*)BBDN->getBasicBlock() << ">";
   } else if (const RegisterSDNode *C2V = dyn_cast<RegisterSDNode>(this)) {
-    std::cerr << " #" << C2V->getReg();
+    if (G && MRegisterInfo::isPhysicalRegister(R->getReg())) {
+      std::cerr << " " <<G->getTarget().getRegisterInfo()->getName(R->getReg());
+    } else {
+      std::cerr << " #" << R->getReg();
+    }
   } else if (const ExternalSymbolSDNode *ES =
              dyn_cast<ExternalSymbolSDNode>(this)) {
     std::cerr << "'" << ES->getSymbol() << "'";
