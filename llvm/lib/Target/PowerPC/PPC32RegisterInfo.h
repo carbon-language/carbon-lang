@@ -26,7 +26,6 @@ class PPC32RegisterInfo : public PPC32GenRegisterInfo {
   std::map<unsigned, unsigned> ImmToIdxMap;
 public:
   PPC32RegisterInfo();
-  const TargetRegisterClass* getRegClassForType(const Type* Ty) const;
 
   /// Code Generation virtual methods...
   void storeRegToStackSlot(MachineBasicBlock &MBB,
