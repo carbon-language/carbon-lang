@@ -29,6 +29,7 @@ class Instruction;
 class Constant;
 class Function;
 class MachineCodeForInstruction;
+class TargetRegisterClass;
 
 //---------------------------------------------------------------------------
 // Data types used to define information about a single machine instruction
@@ -72,6 +73,19 @@ const unsigned M_COMMUTABLE            = 1 << 11;
 // before control flow occurs.
 const unsigned M_TERMINATOR_FLAG       = 1 << 12;
 
+/// TargetOperandInfo - This holds information about one operand of a machine
+/// instruction, indicating the register class for register operands, etc.
+///
+class TargetOperandInfo {
+public:
+  /// RegClass - This specifies the register class of the operand if the
+  /// operand is a register.  If not, this contains null.
+  const TargetRegisterClass *RegClass;
+  
+  /// Currently no other information.
+};
+
+
 class TargetInstrDescriptor {
 public:
   const char *    Name;          // Assembly language mnemonic for the opcode.
@@ -87,6 +101,7 @@ public:
   unsigned        TSFlags;       // Target Specific Flag values
   const unsigned *ImplicitUses;  // Registers implicitly read by this instr
   const unsigned *ImplicitDefs;  // Registers implicitly defined by this instr
+  const TargetOperandInfo *OpInfo; // 'numOperands' entries about operands.
 };
 
 
