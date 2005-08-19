@@ -333,26 +333,6 @@ void AlphaRegisterInfo::emitEpilogue(MachineFunction &MF,
 
 #include "AlphaGenRegisterInfo.inc"
 
-const TargetRegisterClass*
-AlphaRegisterInfo::getRegClassForType(const Type* Ty) const {
-  switch (Ty->getTypeID()) {
-    default:              assert(0 && "Invalid type to getClass!");
-    case Type::BoolTyID:
-    case Type::SByteTyID:
-    case Type::UByteTyID:
-    case Type::ShortTyID:
-    case Type::UShortTyID:
-    case Type::IntTyID:
-    case Type::UIntTyID:
-    case Type::PointerTyID:
-    case Type::LongTyID:
-    case Type::ULongTyID:  return &GPRCInstance;
-
-  case Type::FloatTyID:
-  case Type::DoubleTyID: return &FPRCInstance;
-  }
-}
-
 std::string AlphaRegisterInfo::getPrettyName(unsigned reg)
 {
   std::string s(RegisterDescriptors[reg].Name);

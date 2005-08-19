@@ -23,7 +23,6 @@ class Type;
 
 struct AlphaRegisterInfo : public AlphaGenRegisterInfo {
   AlphaRegisterInfo();
-  const TargetRegisterClass* getRegClassForType(const Type* Ty) const;
 
   /// Code Generation virtual methods...
   void storeRegToStackSlot(MachineBasicBlock &MBB,
