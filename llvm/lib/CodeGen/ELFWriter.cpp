@@ -499,7 +499,7 @@ void ELFWriter::OutputSectionsAndSectionTable() {
     if (S.Align)
       for (size_t NewFileOff = (FileOff+S.Align-1) & ~(S.Align-1);
            FileOff != NewFileOff; ++FileOff)
-        O.put(0xAB);
+        O.put((char)0xAB);
     O.write((char*)&S.SectionData[0], S.SectionData.size());
     FileOff += S.SectionData.size();
 
@@ -520,7 +520,7 @@ void ELFWriter::OutputSectionsAndSectionTable() {
   // Align output for the section table.
   for (size_t NewFileOff = (FileOff+TableAlign-1) & ~(TableAlign-1);
        FileOff != NewFileOff; ++FileOff)
-    O.put(0xAB);
+    O.put((char)0xAB);
 
   // Emit the section table itself.
   O.write((char*)&Table[0], Table.size());
