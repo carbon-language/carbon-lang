@@ -32,6 +32,7 @@ namespace llvm {
 
   struct CodeGenRegisterClass {
     Record *TheDef;
+    std::string Namespace;
     std::vector<Record*> Elements;
     unsigned SpillSize;
     unsigned SpillAlignment;

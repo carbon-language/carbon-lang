@@ -143,6 +143,13 @@ void CodeGenTarget::ReadRegisterClasses() const {
 }
 
 CodeGenRegisterClass::CodeGenRegisterClass(Record *R) : TheDef(R) {
+  // Rename anonymous register classes.
+  if (R->getName().size() > 9 && R->getName()[9] == '.') {
+    static unsigned AnonCounter = 0;
+    R->setName("AnonRegClass_"+utostr(AnonCounter++));
+  } 
+  
+  Namespace = R->getValueAsString("Namespace");
   SpillSize = R->getValueAsInt("Size");
   SpillAlignment = R->getValueAsInt("Alignment");
 
