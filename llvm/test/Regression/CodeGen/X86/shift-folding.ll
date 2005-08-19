@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -enable-pattern-isel=1 | grep 's[ah][rl]l' | wc -l | grep 1
+; RUN: llvm-as < %s | llc -march=x86 | grep 's[ah][rl]l' | wc -l | grep 1
 
 int* %test1(int *%P, uint %X) {
 	%Y = shr uint %X, ubyte 2
