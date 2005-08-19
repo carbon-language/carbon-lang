@@ -26,12 +26,12 @@ SparcV8RegisterInfo::SparcV8RegisterInfo()
                            V8::ADJCALLSTACKUP) {}
 
 static const TargetRegisterClass *getClass(unsigned SrcReg) {
-  if (SparcV8::IntRegsRegisterClass->contains(SrcReg))
-    return SparcV8::IntRegsRegisterClass;
-  else if (SparcV8::FPRegsRegisterClass->contains(SrcReg))
-    return SparcV8::FPRegsRegisterClass;
-  else if (SparcV8::DFPRegsRegisterClass->contains(SrcReg))
-    return SparcV8::DFPRegsRegisterClass;
+  if (V8::IntRegsRegisterClass->contains(SrcReg))
+    return V8::IntRegsRegisterClass;
+  else if (V8::FPRegsRegisterClass->contains(SrcReg))
+    return V8::FPRegsRegisterClass;
+  else if (V8::DFPRegsRegisterClass->contains(SrcReg))
+    return V8::DFPRegsRegisterClass;
   else {
     std::cerr << "Error: register of unknown class found: " << SrcReg << "\n";
     abort ();
@@ -44,13 +44,13 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
   const TargetRegisterClass *RC = getClass(SrcReg);
 
   // On the order of operands here: think "[FrameIdx + 0] = SrcReg".
-  if (RC == SparcV8::IntRegsRegisterClass)
+  if (RC == V8::IntRegsRegisterClass)
     BuildMI (MBB, I, V8::ST, 3).addFrameIndex (FrameIdx).addSImm (0)
       .addReg (SrcReg);
-  else if (RC == SparcV8::FPRegsRegisterClass)
+  else if (RC == V8::FPRegsRegisterClass)
     BuildMI (MBB, I, V8::STFri, 3).addFrameIndex (FrameIdx).addSImm (0)
       .addReg (SrcReg);
-  else if (RC == SparcV8::DFPRegsRegisterClass)
+  else if (RC == V8::DFPRegsRegisterClass)
     BuildMI (MBB, I, V8::STDFri, 3).addFrameIndex (FrameIdx).addSImm (0)
       .addReg (SrcReg);
   else
@@ -61,12 +61,12 @@ void SparcV8RegisterInfo::
 loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                      unsigned DestReg, int FrameIdx) const {
   const TargetRegisterClass *RC = getClass(DestReg);
-  if (RC == SparcV8::IntRegsRegisterClass)
+  if (RC == V8::IntRegsRegisterClass)
     BuildMI (MBB, I, V8::LD, 2, DestReg).addFrameIndex (FrameIdx).addSImm (0);
-  else if (RC == SparcV8::FPRegsRegisterClass)
+  else if (RC == V8::FPRegsRegisterClass)
     BuildMI (MBB, I, V8::LDFri, 2, DestReg).addFrameIndex (FrameIdx)
       .addSImm (0);
-  else if (RC == SparcV8::DFPRegsRegisterClass)
+  else if (RC == V8::DFPRegsRegisterClass)
     BuildMI (MBB, I, V8::LDDFri, 2, DestReg).addFrameIndex (FrameIdx)
       .addSImm (0);
   else
@@ -77,11 +77,11 @@ void SparcV8RegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
                                        MachineBasicBlock::iterator I,
                                        unsigned DestReg, unsigned SrcReg,
                                        const TargetRegisterClass *RC) const {
-  if (RC == SparcV8::IntRegsRegisterClass)
+  if (RC == V8::IntRegsRegisterClass)
     BuildMI (MBB, I, V8::ORrr, 2, DestReg).addReg (V8::G0).addReg (SrcReg);
-  else if (RC == SparcV8::FPRegsRegisterClass)
+  else if (RC == V8::FPRegsRegisterClass)
     BuildMI (MBB, I, V8::FMOVS, 1, DestReg).addReg (SrcReg);
-  else if (RC == SparcV8::DFPRegsRegisterClass)
+  else if (RC == V8::DFPRegsRegisterClass)
     BuildMI (MBB, I, V8::FpMOVD, 1, DestReg).addReg (SrcReg);
   else
     assert (0 && "Can't copy this register");
@@ -158,8 +158,8 @@ void SparcV8RegisterInfo::emitEpilogue(MachineFunction &MF,
 const TargetRegisterClass*
 SparcV8RegisterInfo::getRegClassForType(const Type* Ty) const {
   switch (Ty->getTypeID()) {
-  case Type::FloatTyID:  return &FPRegsInstance;
-  case Type::DoubleTyID: return &DFPRegsInstance;
+  case Type::FloatTyID:  return V8::FPRegsRegisterClass;
+  case Type::DoubleTyID: return V8::DFPRegsRegisterClass;
   case Type::LongTyID:
   case Type::ULongTyID:  assert(0 && "Long values do not fit in registers!");
   default:               assert(0 && "Invalid type to getClass!");
@@ -170,7 +170,7 @@ SparcV8RegisterInfo::getRegClassForType(const Type* Ty) const {
   case Type::UShortTyID:
   case Type::IntTyID:
   case Type::UIntTyID:
-  case Type::PointerTyID: return &IntRegsInstance;
+  case Type::PointerTyID: return V8::IntRegsRegisterClass;
   }
 }
 
