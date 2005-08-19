@@ -3283,7 +3283,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
     case MVT::i32: Opc = X86::SAR32rCL; break;
     }
     BuildMI(BB, X86::MOV8rr, 1, X86::CL).addReg(Tmp2);
-    BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
+    BuildMI(BB, Opc, 1, Result).addReg(Tmp1);
     return Result;
 
   case ISD::SETCC:
