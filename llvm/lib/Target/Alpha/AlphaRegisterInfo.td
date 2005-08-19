@@ -79,7 +79,7 @@ def F30 : FPR<30, "$f30">;  def F31 : FPR<31, "$f31">;
 
 /// Register classes
 // Don't allocate 15, 28, 30, 31
-def GPRC : RegisterClass<i64, 64,
+def GPRC : RegisterClass<"Alpha", i64, 64,
      // Volatile
      [R0, R1, R2, R3, R4, R5, R6, R7, R8, R16, R17, R18, R19, R20, R21, R22,
       R23, R24, R25, 
@@ -93,7 +93,7 @@ def GPRC : RegisterClass<i64, 64,
 
 // Don't allocate 15, 29, 30, 31
 // Allocation volatiles only for now
-def FPRC : RegisterClass<f64, 64, [F0, F1, 
+def FPRC : RegisterClass<"Alpha", f64, 64, [F0, F1, 
         F10, F11, F12, F13, F14, F15, F16, F17, F18, F19,
         F20, F21, F22, F23, F24, F25, F26, F27, F28, F29, F30,
         // Saved:
