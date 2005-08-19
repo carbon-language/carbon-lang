@@ -197,7 +197,7 @@ void CodeEmitterGen::run(std::ostream &o) {
         // this is not an operand!!
         if (beginBitInInst != -1) {
           o << "      // op" << op << ": " << Vals[i].getName() << "\n"
-            << "      int64_t op" << op
+            << "      int op" << op
             <<" = getMachineOpValue(MI, MI.getOperand("<<op<<"));\n";
           //<< "   MachineOperand &op" << op <<" = MI.getOperand("<<op<<");\n";
           OpOrder[Vals[i].getName()] = op++;
