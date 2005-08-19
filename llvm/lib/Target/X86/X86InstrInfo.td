@@ -142,13 +142,13 @@ class Ii32<bits<8> o, Format f, dag ops, string asm>
 // Instruction list...
 //
 
-def PHI : I<0, Pseudo, (ops), "PHINODE">;        // PHI node.
+def PHI : I<0, Pseudo, (ops variable_ops), "PHINODE">;        // PHI node.
 def NOOP : I<0x90, RawFrm, (ops), "nop">; // nop
 
-def ADJCALLSTACKDOWN : I<0, Pseudo, (ops), "#ADJCALLSTACKDOWN">;
-def ADJCALLSTACKUP   : I<0, Pseudo, (ops), "#ADJCALLSTACKUP">;
-def IMPLICIT_USE     : I<0, Pseudo, (ops), "#IMPLICIT_USE">;
-def IMPLICIT_DEF     : I<0, Pseudo, (ops), "#IMPLICIT_DEF">;
+def ADJCALLSTACKDOWN : I<0, Pseudo, (ops i32imm), "#ADJCALLSTACKDOWN">;
+def ADJCALLSTACKUP   : I<0, Pseudo, (ops i32imm, i32imm), "#ADJCALLSTACKUP">;
+def IMPLICIT_USE     : I<0, Pseudo, (ops variable_ops), "#IMPLICIT_USE">;
+def IMPLICIT_DEF     : I<0, Pseudo, (ops variable_ops), "#IMPLICIT_DEF">;
 let isTerminator = 1 in
   let Defs = [FP0, FP1, FP2, FP3, FP4, FP5, FP6] in
     def FP_REG_KILL  : I<0, Pseudo, (ops), "#FP_REG_KILL">;
@@ -1582,18 +1582,22 @@ def FpSETRESULT : FPI<0, Pseudo, SpecialFP, (ops RFP), "">,
 // FADD reg, mem: Before stackification, these are represented by:
 // R1 = FADD* R2, [mem]
 def FADD32m  : FPI<0xD8, MRM0m, OneArgFPRW,    // ST(0) = ST(0) + [mem32real]
-                   (ops f32mem:$src), "fadd{s} $src">;
+                   (ops f32mem:$src, variable_ops),
+                   "fadd{s} $src">;
 def FADD64m  : FPI<0xDC, MRM0m, OneArgFPRW,    // ST(0) = ST(0) + [mem64real]
-                   (ops f64mem:$src), "fadd{l} $src">;
+                   (ops f64mem:$src, variable_ops),
+                   "fadd{l} $src">;
 //def FIADD16m : FPI<0xDE, MRM0m, OneArgFPRW>;    // ST(0) = ST(0) + [mem16int]
 //def FIADD32m : FPI<0xDA, MRM0m, OneArgFPRW>;    // ST(0) = ST(0) + [mem32int]
 
 // FMUL reg, mem: Before stackification, these are represented by:
 // R1 = FMUL* R2, [mem]
 def FMUL32m  : FPI<0xD8, MRM1m, OneArgFPRW,    // ST(0) = ST(0) * [mem32real]
-                   (ops f32mem:$src), "fmul{s} $src">;
+                   (ops f32mem:$src, variable_ops),
+                   "fmul{s} $src">;
 def FMUL64m  : FPI<0xDC, MRM1m, OneArgFPRW,    // ST(0) = ST(0) * [mem64real]
-                   (ops f64mem:$src), "fmul{l} $src">;
+                   (ops f64mem:$src, variable_ops),
+                   "fmul{l} $src">;
 // ST(0) = ST(0) * [mem16int]
 //def FIMUL16m : FPI16m<"fimul", 0xDE, MRM1m, OneArgFPRW>;
 // ST(0) = ST(0) * [mem32int]
@@ -1616,9 +1620,11 @@ def FSUB64m  : FPI<0xDC, MRM4m, OneArgFPRW,    // ST(0) = ST(0) - [mem64real]
 // Note that the order of operands does not reflect the operation being
 // performed.
 def FSUBR32m  : FPI<0xD8, MRM5m, OneArgFPRW,  // ST(0) = [mem32real] - ST(0)
-                    (ops f32mem:$src), "fsubr{s} $src">;
+                    (ops f32mem:$src, variable_ops),
+                    "fsubr{s} $src">;
 def FSUBR64m  : FPI<0xDC, MRM5m, OneArgFPRW,  // ST(0) = [mem64real] - ST(0)
-                    (ops f64mem:$src), "fsubr{l} $src">;
+                    (ops f64mem:$src, variable_ops),
+                    "fsubr{l} $src">;
 // ST(0) = [mem16int] - ST(0)
 //def FISUBR16m : FPI16m<"fisubr", 0xDE, MRM5m, OneArgFPRW>;
 // ST(0) = [mem32int] - ST(0)
@@ -1627,9 +1633,11 @@ def FSUBR64m  : FPI<0xDC, MRM5m, OneArgFPRW,  // ST(0) = [mem64real] - ST(0)
 // FDIV reg, mem: Before stackification, these are represented by:
 // R1 = FDIV* R2, [mem]
 def FDIV32m  : FPI<0xD8, MRM6m, OneArgFPRW,    // ST(0) = ST(0) / [mem32real]
-                   (ops f32mem:$src), "fdiv{s} $src">;
+                   (ops f32mem:$src, variable_ops),
+                   "fdiv{s} $src">;
 def FDIV64m  : FPI<0xDC, MRM6m, OneArgFPRW,    // ST(0) = ST(0) / [mem64real]
-                   (ops f64mem:$src), "fdiv{l} $src">;
+                   (ops f64mem:$src, variable_ops),
+                   "fdiv{l} $src">;
 // ST(0) = ST(0) / [mem16int]
 //def FIDIV16m : FPI16m<"fidiv", 0xDE, MRM6m, OneArgFPRW>;
 // ST(0) = ST(0) / [mem32int]
@@ -1652,61 +1660,122 @@ def FDIVR64m  : FPI<0xDC, MRM7m, OneArgFPRW,  // ST(0) = [mem64real] / ST(0)
 // Floating point cmovs...
 let isTwoAddress = 1, Uses = [ST0], Defs = [ST0] in {
   def FCMOVB  : FPI<0xC0, AddRegFrm, CondMovFP,
-                    (ops RST:$op), "fcmovb {$op, %ST(0)|%ST(0), $op}">, DA;
+                    (ops RST:$op, variable_ops),
+                    "fcmovb {$op, %ST(0)|%ST(0), $op}">, DA;
   def FCMOVBE : FPI<0xD0, AddRegFrm, CondMovFP,
-                    (ops RST:$op), "fcmovbe {$op, %ST(0)|%ST(0), $op}">, DA;
+                    (ops RST:$op, variable_ops),
+                    "fcmovbe {$op, %ST(0)|%ST(0), $op}">, DA;
   def FCMOVE  : FPI<0xC8, AddRegFrm, CondMovFP,
-                    (ops RST:$op), "fcmove {$op, %ST(0)|%ST(0), $op}">, DA;
+                    (ops RST:$op, variable_ops),
+                    "fcmove {$op, %ST(0)|%ST(0), $op}">, DA;
   def FCMOVP  : FPI<0xD8, AddRegFrm, CondMovFP,
-                    (ops RST:$op), "fcmovu  {$op, %ST(0)|%ST(0), $op}">, DA;
+                    (ops RST:$op, variable_ops),
+                    "fcmovu  {$op, %ST(0)|%ST(0), $op}">, DA;
   def FCMOVAE : FPI<0xC0, AddRegFrm, CondMovFP,
-                    (ops RST:$op), "fcmovae {$op, %ST(0)|%ST(0), $op}">, DB;
+                    (ops RST:$op, variable_ops),
+                    "fcmovae {$op, %ST(0)|%ST(0), $op}">, DB;
   def FCMOVA  : FPI<0xD0, AddRegFrm, CondMovFP,
-                    (ops RST:$op), "fcmova {$op, %ST(0)|%ST(0), $op}">, DB;
+                    (ops RST:$op, variable_ops),
+                    "fcmova {$op, %ST(0)|%ST(0), $op}">, DB;
   def FCMOVNE : FPI<0xC8, AddRegFrm, CondMovFP,
-                    (ops RST:$op), "fcmovne {$op, %ST(0)|%ST(0), $op}">, DB;
+                    (ops RST:$op, variable_ops),
+                    "fcmovne {$op, %ST(0)|%ST(0), $op}">, DB;
   def FCMOVNP : FPI<0xD8, AddRegFrm, CondMovFP,
-                    (ops RST:$op), "fcmovnu {$op, %ST(0)|%ST(0), $op}">, DB;
+                    (ops RST:$op, variable_ops),
+                    "fcmovnu {$op, %ST(0)|%ST(0), $op}">, DB;
 }
 
 // Floating point loads & stores...
-def FLDrr   : FPI<0xC0, AddRegFrm, NotFP, (ops    RST:$src), "fld $src">, D9;
-def FLD32m  : FPI<0xD9, MRM0m, ZeroArgFP, (ops f32mem:$src), "fld{s} $src">;
-def FLD64m  : FPI<0xDD, MRM0m, ZeroArgFP, (ops f64mem:$src), "fld{l} $src">;
-def FLD80m  : FPI<0xDB, MRM5m, ZeroArgFP, (ops f80mem:$src), "fld{t} $src">;
-def FILD16m : FPI<0xDF, MRM0m, ZeroArgFP, (ops i16mem:$src), "fild{s} $src">;
-def FILD32m : FPI<0xDB, MRM0m, ZeroArgFP, (ops i32mem:$src), "fild{l} $src">;
-def FILD64m : FPI<0xDF, MRM5m, ZeroArgFP, (ops i64mem:$src), "fild{ll} $src">;
+// FIXME: these are all marked variable_ops because they have an implicit 
+// destination.  Instructions like FILD* that are generated by the instruction
+//  selector (not the fp stackifier) need more accurate operand accounting.
+def FLDrr   : FPI<0xC0, AddRegFrm, NotFP,
+                  (ops RST:$src, variable_ops),
+                  "fld $src">, D9;
+def FLD32m  : FPI<0xD9, MRM0m, ZeroArgFP,
+                  (ops f32mem:$src, variable_ops),
+                  "fld{s} $src">;
+def FLD64m  : FPI<0xDD, MRM0m, ZeroArgFP,
+                  (ops f64mem:$src, variable_ops),
+                  "fld{l} $src">;
+def FLD80m  : FPI<0xDB, MRM5m, ZeroArgFP,
+                  (ops f80mem:$src, variable_ops),
+                  "fld{t} $src">;
+def FILD16m : FPI<0xDF, MRM0m, ZeroArgFP,
+                  (ops i16mem:$src, variable_ops),
+                  "fild{s} $src">;
+def FILD32m : FPI<0xDB, MRM0m, ZeroArgFP,
+                  (ops i32mem:$src, variable_ops),
+                  "fild{l} $src">;
+def FILD64m : FPI<0xDF, MRM5m, ZeroArgFP,
+                  (ops i64mem:$src, variable_ops),
+                  "fild{ll} $src">;
 
-def FSTrr    : FPI<0xD0, AddRegFrm, NotFP, (ops RST:$op), "fst $op">, DD;
-def FSTPrr   : FPI<0xD8, AddRegFrm, NotFP, (ops RST:$op), "fstp $op">, DD;
-def FST32m   : FPI<0xD9, MRM2m, OneArgFP, (ops f32mem:$op), "fst{s} $op">;
-def FST64m   : FPI<0xDD, MRM2m, OneArgFP, (ops f64mem:$op), "fst{l} $op">;
-def FSTP32m  : FPI<0xD9, MRM3m, OneArgFP, (ops f32mem:$op), "fstp{s} $op">;
-def FSTP64m  : FPI<0xDD, MRM3m, OneArgFP, (ops f64mem:$op), "fstp{l} $op">;
-def FSTP80m  : FPI<0xDB, MRM7m, OneArgFP, (ops f80mem:$op), "fstp{t} $op">;
+def FSTrr    : FPI<0xD0, AddRegFrm, NotFP,
+                   (ops RST:$op, variable_ops),
+                   "fst $op">, DD;
+def FSTPrr   : FPI<0xD8, AddRegFrm, NotFP,
+                   (ops RST:$op, variable_ops),
+                   "fstp $op">, DD;
+def FST32m   : FPI<0xD9, MRM2m, OneArgFP,
+                   (ops f32mem:$op, variable_ops),
+                   "fst{s} $op">;
+def FST64m   : FPI<0xDD, MRM2m, OneArgFP,
+                   (ops f64mem:$op, variable_ops),
+                   "fst{l} $op">;
+def FSTP32m  : FPI<0xD9, MRM3m, OneArgFP,
+                   (ops f32mem:$op, variable_ops),
+                   "fstp{s} $op">;
+def FSTP64m  : FPI<0xDD, MRM3m, OneArgFP,
+                   (ops f64mem:$op, variable_ops),
+                   "fstp{l} $op">;
+def FSTP80m  : FPI<0xDB, MRM7m, OneArgFP,
+                   (ops f80mem:$op, variable_ops),
+                   "fstp{t} $op">;
 
-def FIST16m  : FPI<0xDF, MRM2m , OneArgFP, (ops i16mem:$op), "fist{s} $op">;
-def FIST32m  : FPI<0xDB, MRM2m , OneArgFP, (ops i32mem:$op), "fist{l} $op">;
-def FISTP16m : FPI<0xDF, MRM3m , NotFP   , (ops i16mem:$op), "fistp{s} $op">;
-def FISTP32m : FPI<0xDB, MRM3m , NotFP   , (ops i32mem:$op), "fistp{l} $op">;
-def FISTP64m : FPI<0xDF, MRM7m , OneArgFP, (ops i64mem:$op), "fistp{ll} $op">;
+def FIST16m  : FPI<0xDF, MRM2m , OneArgFP,
+                   (ops i16mem:$op, variable_ops),
+                   "fist{s} $op">;
+def FIST32m  : FPI<0xDB, MRM2m , OneArgFP,
+                   (ops i32mem:$op, variable_ops),
+                   "fist{l} $op">;
+def FISTP16m : FPI<0xDF, MRM3m , NotFP   ,
+                   (ops i16mem:$op, variable_ops),
+                   "fistp{s} $op">;
+def FISTP32m : FPI<0xDB, MRM3m , NotFP   ,
+                   (ops i32mem:$op, variable_ops),
+                   "fistp{l} $op">;
+def FISTP64m : FPI<0xDF, MRM7m , OneArgFP,
+                   (ops i64mem:$op, variable_ops),
+                   "fistp{ll} $op">;
 
 def FXCH     : FPI<0xC8, AddRegFrm, NotFP,
                    (ops RST:$op), "fxch $op">, D9;      // fxch ST(i), ST(0)
 
 // Floating point constant loads...
-def FLD0 : FPI<0xEE, RawFrm, ZeroArgFP, (ops), "fldz">, D9;
-def FLD1 : FPI<0xE8, RawFrm, ZeroArgFP, (ops), "fld1">, D9;
+def FLD0 : FPI<0xEE, RawFrm, ZeroArgFP, (ops variable_ops), "fldz">, D9;
+def FLD1 : FPI<0xE8, RawFrm, ZeroArgFP, (ops variable_ops), "fld1">, D9;
 
 
 // Unary operations...
-def FCHS  : FPI<0xE0, RawFrm, OneArgFPRW, (ops), "fchs" >, D9; // f1 = fchs f2
-def FABS  : FPI<0xE1, RawFrm, OneArgFPRW, (ops), "fabs" >, D9; // f1 = fabs f2
-def FSQRT : FPI<0xFA, RawFrm, OneArgFPRW, (ops), "fsqrt">, D9; // fsqrt ST(0)
-def FSIN  : FPI<0xFE, RawFrm, OneArgFPRW, (ops), "fsin" >, D9; // fsin  ST(0)
-def FCOS  : FPI<0xFF, RawFrm, OneArgFPRW, (ops), "fcos" >, D9; // fcos  ST(0)
-def FTST  : FPI<0xE4, RawFrm, OneArgFP  , (ops), "ftst" >, D9; // ftst ST(0)
+def FCHS  : FPI<0xE0, RawFrm, OneArgFPRW,   // f1 = fchs f2
+                (ops variable_ops),
+                "fchs">, D9;
+def FABS  : FPI<0xE1, RawFrm, OneArgFPRW,   // f1 = fabs f2
+                (ops variable_ops),
+                "fabs">, D9;
+def FSQRT : FPI<0xFA, RawFrm, OneArgFPRW,   // fsqrt ST(0)
+                (ops variable_ops),
+                "fsqrt">, D9;
+def FSIN  : FPI<0xFE, RawFrm, OneArgFPRW,   // fsin  ST(0)
+                (ops variable_ops),
+                "fsin">, D9;
+def FCOS  : FPI<0xFF, RawFrm, OneArgFPRW,   // fcos  ST(0)
+                (ops variable_ops),
+                "fcos">, D9;
+def FTST  : FPI<0xE4, RawFrm, OneArgFP  ,   // ftst ST(0)
+                (ops variable_ops),
+                "ftst">, D9;
 
 // Binary arithmetic operations...
 class FPST0rInst<bits<8> o, dag ops, string asm>
@@ -1770,20 +1839,20 @@ def FDIVRPrST0 : FPrST0PInst<0xF0, (ops RST:$op),  // ST(i) = ST(0) / ST(i), pop
 
 // Floating point compares
 def FUCOMr    : FPI<0xE0, AddRegFrm, CompareFP,   // FPSW = cmp ST(0) with ST(i)
-                    (ops RST:$reg),
+                    (ops RST:$reg, variable_ops),
                     "fucom $reg">, DD, Imp<[ST0],[]>;
-def FUCOMPr   : I<0xE8, AddRegFrm,
-                  (ops RST:$reg),           // FPSW = cmp ST(0) with ST(i), pop
+def FUCOMPr   : I<0xE8, AddRegFrm,           // FPSW = cmp ST(0) with ST(i), pop
+                  (ops RST:$reg, variable_ops),
                   "fucomp $reg">, DD, Imp<[ST0],[]>;
-def FUCOMPPr  : I<0xE9, RawFrm,
-                  (ops),                    // cmp ST(0) with ST(1), pop, pop
+def FUCOMPPr  : I<0xE9, RawFrm,                // cmp ST(0) with ST(1), pop, pop
+                  (ops variable_ops),
                   "fucompp">, DA, Imp<[ST0],[]>;
 
 def FUCOMIr  : FPI<0xE8, AddRegFrm, CompareFP,  // CC = cmp ST(0) with ST(i)
-                   (ops RST:$reg),
+                   (ops RST:$reg, variable_ops),
                    "fucomi {$reg, %ST(0)|%ST(0), $reg}">, DB, Imp<[ST0],[]>;
 def FUCOMIPr : I<0xE8, AddRegFrm,              // CC = cmp ST(0) with ST(i), pop
-                 (ops RST:$reg),
+                 (ops RST:$reg, variable_ops),
                  "fucomip {$reg, %ST(0)|%ST(0), $reg}">, DF, Imp<[ST0],[]>;
 
 
