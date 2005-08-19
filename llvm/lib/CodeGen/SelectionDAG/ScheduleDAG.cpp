@@ -36,14 +36,16 @@ namespace {
     MachineBasicBlock *BB;
     const TargetMachine &TM;
     const TargetInstrInfo &TII;
+    const MRegisterInfo &MRI;
     SSARegMap *RegMap;
     
     std::map<SDNode *, unsigned> EmittedOps;
   public:
     SimpleSched(SelectionDAG &D, MachineBasicBlock *bb)
       : DAG(D), BB(bb), TM(D.getTarget()), TII(*TM.getInstrInfo()),
-        RegMap(BB->getParent()->getSSARegMap()) {
+        MRI(*TM.getRegisterInfo()), RegMap(BB->getParent()->getSSARegMap()) {
       assert(&TII && "Target doesn't provide instr info?");
+      assert(&MRI && "Target doesn't provide register info?");
     }
     
     void Run() {
@@ -131,7 +133,9 @@ unsigned SimpleSched::Emit(SDOperand Op) {
     case ISD::EntryToken: break;
     case ISD::CopyToReg: {
       unsigned Val = Emit(Op.getOperand(2));
-      // FIXME: DO THE COPY NOW.
+      MRI.copyRegToReg(*BB, BB->end(),
+                       cast<RegisterSDNode>(Op.getOperand(1))->getReg(), Val,
+                       RegMap->getRegClass(Val));
       break;
     }
     }
