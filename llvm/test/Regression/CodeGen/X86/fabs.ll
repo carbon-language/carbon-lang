@@ -1,5 +1,5 @@
 ; Make sure this testcase codegens to the fabs instruction, not a call to fabsf
-; RUN: llvm-as < %s | llc -march=x86 -enable-pattern-isel=1 | grep 'fabs$' | wc -l | grep 2
+; RUN: llvm-as < %s | llc -march=x86 | grep 'fabs$' | wc -l | grep 2
 
 declare float %fabsf(float)
 

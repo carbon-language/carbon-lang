@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 -x86-asm-syntax=intel -enable-pattern-isel=1 | grep sh[lr]d | wc -l | grep 5
+; RUN: llvm-as < %s | llc -march=x86 -x86-asm-syntax=intel grep sh[lr]d | wc -l | grep 5
 
 long %test1(long %X, ubyte %C) {
 	%Y = shl long %X, ubyte %C
