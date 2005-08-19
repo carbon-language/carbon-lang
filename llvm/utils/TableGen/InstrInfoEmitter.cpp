@@ -136,8 +136,7 @@ void InstrInfoEmitter::run(std::ostream &OS) {
       OS << "static const TargetOperandInfo OperandInfo" << N << "[] = { ";
       for (unsigned i = 0, e = OperandInfo.size(); i != e; ++i) {
         if (Record *RC = OperandInfo[i]) {
-          // FIXME: BAD: REQUIRES RUNTIME INIT
-          OS << "{ " << getQualifiedName(RC) << "RegisterClass }, ";
+          OS << "{ &" << getQualifiedName(RC) << "RegClass }, ";
         } else {
           OS << "{ 0 }, ";
         }
