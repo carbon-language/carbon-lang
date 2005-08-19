@@ -257,6 +257,7 @@ CodeGenInstruction::CodeGenInstruction(Record *R, const std::string &AsmStr)
           NumOps = Rec->getValueAsInt("NumMIOperands");
         } else if (Rec->getName() == "variable_ops") {
           hasVariableNumberOfOperands = true;
+          continue;
         } else
           throw "Unknown operand class '" + Rec->getName() +
                 "' in instruction '" + R->getName() + "' instruction!";
