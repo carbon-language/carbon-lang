@@ -36,7 +36,7 @@ namespace llvm {
     std::vector<Record*> Elements;
     unsigned SpillSize;
     unsigned SpillAlignment;
-    std::string MethodDefinitions;
+    std::string MethodProtos, MethodBodies;
 
     const std::string &getName() const;
 

@@ -126,7 +126,8 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
        << "    " << Name << "Class() : TargetRegisterClass("
        << RC.SpillSize/8 << ", " << RC.SpillAlignment/8 << ", " << Name << ", "
        << Name << " + " << RC.Elements.size() << ") {}\n"
-       << RC.MethodDefinitions << "  };\n\n";
+       << RC.MethodProtos << "  };\n";
+    OS << RC.MethodBodies << "\n";
   }
   OS << "}  // end anonymous namespace\n\n";
   
