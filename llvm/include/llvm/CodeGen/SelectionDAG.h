@@ -97,6 +97,7 @@ public:
   SDOperand getTargetConstant(uint64_t Val, MVT::ValueType VT);
   SDOperand getConstantFP(double Val, MVT::ValueType VT);
   SDOperand getGlobalAddress(const GlobalValue *GV, MVT::ValueType VT);
+  SDOperand getTargetGlobalAddress(const GlobalValue *GV, MVT::ValueType VT);
   SDOperand getFrameIndex(int FI, MVT::ValueType VT);
   SDOperand getConstantPool(unsigned CPIdx, MVT::ValueType VT);
   SDOperand getBasicBlock(MachineBasicBlock *MBB);
@@ -288,6 +289,7 @@ private:
            SDNode *> Loads;
 
   std::map<const GlobalValue*, SDNode*> GlobalValues;
+  std::map<const GlobalValue*, SDNode*> TargetGlobalValues;
   std::map<std::pair<uint64_t, MVT::ValueType>, SDNode*> Constants;
   std::map<std::pair<uint64_t, MVT::ValueType>, SDNode*> TargetConstants;
   std::map<std::pair<uint64_t, MVT::ValueType>, SDNode*> ConstantFPs;

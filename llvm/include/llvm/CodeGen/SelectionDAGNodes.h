@@ -60,6 +60,11 @@ namespace ISD {
     // TargetConstant - Like Constant, but the DAG does not do any folding or
     // simplification of the constant.  This is used by the DAG->DAG selector.
     TargetConstant,
+    
+    // TargetGlobalAddress - Like GlobalAddress, but the DAG does no folding or
+    // anything else with this node, and this is valid in the target-specific
+    // dag, turning into a GlobalAddress operand.
+    TargetGlobalAddress,
 
     // CopyToReg - This node has three operands: a chain, a register number to
     // set to this value, and a value.  
@@ -775,8 +780,8 @@ class GlobalAddressSDNode : public SDNode {
   GlobalValue *TheGlobal;
 protected:
   friend class SelectionDAG;
-  GlobalAddressSDNode(const GlobalValue *GA, MVT::ValueType VT)
-    : SDNode(ISD::GlobalAddress, VT) {
+  GlobalAddressSDNode(bool isTarget, const GlobalValue *GA, MVT::ValueType VT)
+    : SDNode(isTarget ? ISD::TargetGlobalAddress : ISD::GlobalAddress, VT) {
     TheGlobal = const_cast<GlobalValue*>(GA);
   }
 public:
@@ -785,7 +790,8 @@ public:
 
   static bool classof(const GlobalAddressSDNode *) { return true; }
   static bool classof(const SDNode *N) {
-    return N->getOpcode() == ISD::GlobalAddress;
+    return N->getOpcode() == ISD::GlobalAddress ||
+           N->getOpcode() == ISD::TargetGlobalAddress;
   }
 };
 
