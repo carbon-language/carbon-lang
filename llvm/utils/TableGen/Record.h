@@ -888,7 +888,7 @@ inline std::ostream &operator<<(std::ostream &OS, const RecordVal &RV) {
 }
 
 class Record {
-  const std::string Name;
+  std::string Name;
   std::vector<std::string> TemplateArgs;
   std::vector<RecordVal> Values;
   std::vector<Record*> SuperClasses;
