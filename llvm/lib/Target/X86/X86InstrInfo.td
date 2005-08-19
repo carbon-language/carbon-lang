@@ -1606,9 +1606,11 @@ def FMUL64m  : FPI<0xDC, MRM1m, OneArgFPRW,    // ST(0) = ST(0) * [mem64real]
 // FSUB reg, mem: Before stackification, these are represented by:
 // R1 = FSUB* R2, [mem]
 def FSUB32m  : FPI<0xD8, MRM4m, OneArgFPRW,    // ST(0) = ST(0) - [mem32real]
-                   (ops f32mem:$src), "fsub{s} $src">;
+                   (ops f32mem:$src, variable_ops),
+                   "fsub{s} $src">;
 def FSUB64m  : FPI<0xDC, MRM4m, OneArgFPRW,    // ST(0) = ST(0) - [mem64real]
-                   (ops f64mem:$src), "fsub{l} $src">;
+                   (ops f64mem:$src, variable_ops),
+                   "fsub{l} $src">;
 // ST(0) = ST(0) - [mem16int]
 //def FISUB16m : FPI16m<"fisub", 0xDE, MRM4m, OneArgFPRW>;
 // ST(0) = ST(0) - [mem32int]
@@ -1648,9 +1650,11 @@ def FDIV64m  : FPI<0xDC, MRM6m, OneArgFPRW,    // ST(0) = ST(0) / [mem64real]
 // Note that the order of operands does not reflect the operation being
 // performed.
 def FDIVR32m  : FPI<0xD8, MRM7m, OneArgFPRW,  // ST(0) = [mem32real] / ST(0)
-                    (ops f32mem:$src), "fdivr{s} $src">;
+                    (ops f32mem:$src, variable_ops),
+                    "fdivr{s} $src">;
 def FDIVR64m  : FPI<0xDC, MRM7m, OneArgFPRW,  // ST(0) = [mem64real] / ST(0)
-                    (ops f64mem:$src), "fdivr{l} $src">;
+                    (ops f64mem:$src, variable_ops),
+                    "fdivr{l} $src">;
 // ST(0) = [mem16int] / ST(0)
 //def FIDIVR16m : FPI16m<"fidivr", 0xDE, MRM7m, OneArgFPRW>;
 // ST(0) = [mem32int] / ST(0)
