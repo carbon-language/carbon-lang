@@ -347,7 +347,7 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
     } else {
       std::vector<SDOperand> Ops;
       for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
-        Ops.push_back(Select(N->getOperand(0)));
+        Ops.push_back(Select(N->getOperand(i)));
       New = CurDAG->getNode(ISD::TokenFactor, MVT::Other, Ops);
     }
     
