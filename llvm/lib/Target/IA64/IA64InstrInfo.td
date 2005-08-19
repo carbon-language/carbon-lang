@@ -36,13 +36,14 @@ def s64imm  : Operand<i64> {
 let PrintMethod = "printCallOperand" in
   def calltarget : Operand<i64>;
   
-def PHI : PseudoInstIA64<(ops), "PHI">;
-def IDEF : PseudoInstIA64<(ops), "// IDEF">;
-def IUSE : PseudoInstIA64<(ops), "// IUSE">;
-def WTF : PseudoInstIA64<(ops), "que??">;
-def ADJUSTCALLSTACKUP : PseudoInstIA64<(ops), "// ADJUSTCALLSTACKUP">;
-def ADJUSTCALLSTACKDOWN : PseudoInstIA64<(ops), "// ADJUSTCALLSTACKDOWN">;
-def PSEUDO_ALLOC : PseudoInstIA64<(ops), "// PSEUDO_ALLOC">;
+def PHI : PseudoInstIA64<(ops variable_ops), "PHI">;
+def IDEF : PseudoInstIA64<(ops variable_ops), "// IDEF">;
+def IUSE : PseudoInstIA64<(ops variable_ops), "// IUSE">;
+def ADJUSTCALLSTACKUP : PseudoInstIA64<(ops variable_ops),
+                                        "// ADJUSTCALLSTACKUP">;
+def ADJUSTCALLSTACKDOWN : PseudoInstIA64<(ops variable_ops),
+                                         "// ADJUSTCALLSTACKDOWN">;
+def PSEUDO_ALLOC : PseudoInstIA64<(ops GR), "// PSEUDO_ALLOC">;
 
 def ALLOC : AForm<0x03, 0x0b,
   (ops GR:$dst, i8imm:$inputs, i8imm:$locals, i8imm:$outputs, i8imm:$rotating),
