@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=ppc32 -enable-ppc-pattern-isel | not grep rlwinm
+; RUN: llvm-as < %s | llc -march=ppc32 | not grep rlwinm
 
 int %setcc_one_or_zero(int* %a) {
 entry:

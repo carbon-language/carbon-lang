@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=ppc32 -enable-ppc-pattern-isel | not grep cmp
+; RUN: llvm-as < %s | llc -march=ppc32 | not grep cmp
 
 int %seli32_1(int %a) {
 entry:

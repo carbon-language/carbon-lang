@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=ppc32 -enable-ppc-pattern-isel | not grep fneg
+; RUN: llvm-as < %s | llc -march=ppc32 | not grep fneg
 
 double %test_FNEG_sel(double %A, double %B, double %C) {
     %D = sub double -0.0, %A
