@@ -255,6 +255,9 @@ void SelectionDAG::RemoveNodeFromCSEMaps(SDNode *N) {
   case ISD::GlobalAddress:
     GlobalValues.erase(cast<GlobalAddressSDNode>(N)->getGlobal());
     break;
+  case ISD::TargetGlobalAddress:
+    TargetGlobalValues.erase(cast<GlobalAddressSDNode>(N)->getGlobal());
+    break;
   case ISD::FrameIndex:
     FrameIndices.erase(cast<FrameIndexSDNode>(N)->getIndex());
     break;
@@ -413,7 +416,16 @@ SDOperand SelectionDAG::getGlobalAddress(const GlobalValue *GV,
                                          MVT::ValueType VT) {
   SDNode *&N = GlobalValues[GV];
   if (N) return SDOperand(N, 0);
-  N = new GlobalAddressSDNode(GV,VT);
+  N = new GlobalAddressSDNode(false, GV, VT);
+  AllNodes.push_back(N);
+  return SDOperand(N, 0);
+}
+
+SDOperand SelectionDAG::getTargetGlobalAddress(const GlobalValue *GV,
+                                               MVT::ValueType VT) {
+  SDNode *&N = TargetGlobalValues[GV];
+  if (N) return SDOperand(N, 0);
+  N = new GlobalAddressSDNode(true, GV, VT);
   AllNodes.push_back(N);
   return SDOperand(N, 0);
 }
@@ -1907,6 +1919,7 @@ const char *SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::TargetConstant: return "TargetConstant";
   case ISD::ConstantFP:    return "ConstantFP";
   case ISD::GlobalAddress: return "GlobalAddress";
+  case ISD::TargetGlobalAddress: return "TargetGlobalAddress";
   case ISD::FrameIndex:    return "FrameIndex";
   case ISD::BasicBlock:    return "BasicBlock";
   case ISD::Register:      return "Register";
