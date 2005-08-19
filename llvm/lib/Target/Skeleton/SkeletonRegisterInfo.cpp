@@ -67,23 +67,3 @@ void SkeletonRegisterInfo::emitEpilogue(MachineFunction &MF,
 
 #include "SkeletonGenRegisterInfo.inc"
 
-const TargetRegisterClass*
-SkeletonRegisterInfo::getRegClassForType(const Type* Ty) const {
-  switch (Ty->getTypeID()) {
-  case Type::LongTyID:
-  case Type::ULongTyID: assert(0 && "Long values can't fit in registers!");
-  default:              assert(0 && "Invalid type to getClass!");
-  case Type::BoolTyID:
-  case Type::SByteTyID:
-  case Type::UByteTyID:
-  case Type::ShortTyID:
-  case Type::UShortTyID:
-  case Type::IntTyID:
-  case Type::UIntTyID:
-  case Type::PointerTyID: return &GPRCInstance;
-
-  case Type::FloatTyID:
-  case Type::DoubleTyID: return &FPRCInstance;
-  }
-}
-

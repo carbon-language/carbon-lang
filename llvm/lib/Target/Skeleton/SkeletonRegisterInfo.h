@@ -21,7 +21,6 @@ namespace llvm {
 
   struct SkeletonRegisterInfo : public SkeletonGenRegisterInfo {
     SkeletonRegisterInfo();
-    const TargetRegisterClass* getRegClassForType(const Type* Ty) const;
 
     void storeRegToStackSlot(MachineBasicBlock &MBB,
                              MachineBasicBlock::iterator MBBI,
