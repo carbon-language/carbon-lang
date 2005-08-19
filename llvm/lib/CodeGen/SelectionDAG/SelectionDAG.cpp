@@ -1171,7 +1171,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
       if (Opcode == ISD::SRA) {
         // If the sign bit is known to be zero, switch this to a SRL.
         if (MaskedValueIsZero(N1,
-                              1ULL << MVT::getSizeInBits(N1.getValueType())-1,
+                              1ULL << (MVT::getSizeInBits(N1.getValueType())-1),
                               TLI))
           return getNode(ISD::SRL, N1.getValueType(), N1, N2);
       } else {
