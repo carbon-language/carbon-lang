@@ -69,7 +69,17 @@ void RegisterInfoEmitter::runHeader(std::ostream &OS) {
        << " { // Register classes\n";
     for (unsigned i = 0, e = RegisterClasses.size(); i != e; ++i) {
       const std::string &Name = RegisterClasses[i].getName();
-      OS << "  extern TargetRegisterClass * const "<< Name <<"RegisterClass;\n";
+
+      // Output the register class definition.
+      OS << "  struct " << Name << "Class : public TargetRegisterClass {\n"
+         << "    " << Name << "Class();\n"
+         << RegisterClasses[i].MethodProtos << "  };\n";
+
+      // Output the extern for the instance.
+      OS << "  extern " << Name << "Class\t" << Name << "RegClass;\n";
+      // Output the extern for the pointer to the instance (should remove).
+      OS << "  static TargetRegisterClass * const "<< Name <<"RegisterClass = &"
+         << Name << "RegClass;\n";
     }
     OS << "} // end of namespace " << TargetName << "\n\n";
   }
@@ -121,13 +131,6 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
       RegClassesBelongedTo.insert(std::make_pair(Reg, &RC));
     }
     OS << "\n  };\n\n";
-
-    OS << "  struct " << Name << "Class : public TargetRegisterClass {\n"
-       << "    " << Name << "Class() : TargetRegisterClass("
-       << RC.SpillSize/8 << ", " << RC.SpillAlignment/8 << ", " << Name << ", "
-       << Name << " + " << RC.Elements.size() << ") {}\n"
-       << RC.MethodProtos << "  };\n";
-    OS << RC.MethodBodies << "\n";
   }
   OS << "}  // end anonymous namespace\n\n";
   
@@ -137,7 +140,17 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
        << " {   // Register class instances\n";
     for (unsigned i = 0, e = RegisterClasses.size(); i != e; ++i)
       OS << "  " << RegisterClasses[i].getName()  << "Class\t"
-         << RegisterClasses[i].getName() << "RegClassInstance;\n";
+         << RegisterClasses[i].getName() << "RegClass;\n";
+    
+    for (unsigned i = 0, e = RegisterClasses.size(); i != e; ++i) {
+      const CodeGenRegisterClass &RC = RegisterClasses[i];
+      OS << RC.MethodBodies << "\n";
+      OS << RC.getName() << "Class::" << RC.getName()
+        << "Class()  : TargetRegisterClass(" << RC.SpillSize/8 << ", "
+        << RC.SpillAlignment/8 << ", " << RC.getName() << ", "
+        << RC.getName() << " + " << RC.Elements.size() << ") {}\n";
+    }
+  
     OS << "}\n";
   }
 
@@ -145,7 +158,7 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
   OS << "  const TargetRegisterClass* const RegisterClasses[] = {\n";
   for (unsigned i = 0, e = RegisterClasses.size(); i != e; ++i)
     OS << "    &" << getQualifiedName(RegisterClasses[i].TheDef)
-       << "RegClassInstance,\n";
+       << "RegClass,\n";
   OS << "  };\n";
 
   // Emit register class aliases...
@@ -237,18 +250,6 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
   }
   OS << "  };\n";      // End of register descriptors...
   OS << "}\n\n";       // End of anonymous namespace...
-
-  if (!RegisterClasses.empty()) {
-    OS << "namespace " << RegisterClasses[0].Namespace
-       << " { // Register classes\n";
-    for (unsigned i = 0, e = RegisterClasses.size(); i != e; ++i) {
-      OS << "  TargetRegisterClass * const " << RegisterClasses[i].getName()
-         << "RegisterClass = &" << getQualifiedName(RegisterClasses[i].TheDef)
-         << "RegClassInstance;\n";
-    }
-    OS << "} // end of namespace " << RegisterClasses[0].Namespace << "\n\n";
-  }
-
 
   std::string ClassName = Target.getName() + "GenRegisterInfo";
 
