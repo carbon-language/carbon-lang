@@ -39,7 +39,7 @@ const TargetInstrDescriptor llvm::SparcV9MachineInstrDesc[] = {
           NUMDELAYSLOTS, LATENCY, SCHEDCLASS, INSTFLAGS)             \
   { OPCODESTRING, NUMOPERANDS, RESULTPOS, MAXIMM, IMMSE,             \
           NUMDELAYSLOTS, LATENCY, SCHEDCLASS, INSTFLAGS, 0,          \
-          ImplicitRegUseList, ImplicitRegUseList },
+          ImplicitRegUseList, ImplicitRegUseList, 0 },
 #include "SparcV9Instr.def"
 };
 
