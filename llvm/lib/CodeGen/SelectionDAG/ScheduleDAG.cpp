@@ -115,6 +115,9 @@ unsigned SimpleSched::Emit(SDOperand Op) {
         MI->addZeroExtImm64Operand(C->getValue());
       } else if (RegisterSDNode*R =dyn_cast<RegisterSDNode>(Op.getOperand(i))) {
         MI->addRegOperand(R->getReg(), MachineOperand::Use);
+      } else if (GlobalAddressSDNode *TGA =
+                       dyn_cast<GlobalAddressSDNode>(Op.getOperand(i))) {
+        MI->addGlobalAddressOperand(TGA->getGlobal(), false, 0);
       } else {
         unsigned R = Emit(Op.getOperand(i));
         // Add an operand, unless this corresponds to a chain node.
