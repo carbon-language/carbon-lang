@@ -13,8 +13,10 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "sched"
+#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
 #include "llvm/CodeGen/SelectionDAG.h"
+#include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Support/CommandLine.h"
@@ -34,11 +36,13 @@ namespace {
     MachineBasicBlock *BB;
     const TargetMachine &TM;
     const TargetInstrInfo &TII;
+    SSARegMap *RegMap;
     
     std::map<SDNode *, unsigned> EmittedOps;
   public:
     SimpleSched(SelectionDAG &D, MachineBasicBlock *bb)
-      : DAG(D), BB(bb), TM(D.getTarget()), TII(*TM.getInstrInfo()) {
+      : DAG(D), BB(bb), TM(D.getTarget()), TII(*TM.getInstrInfo()),
+        RegMap(BB->getParent()->getSSARegMap()) {
       assert(&TII && "Target doesn't provide instr info?");
     }
     
@@ -73,14 +77,14 @@ unsigned SimpleSched::Emit(SDOperand Op) {
     // Target nodes have any register or immediate operands before any chain
     // nodes.  Check that the DAG matches the TD files's expectation of #
     // operands.
+    unsigned NumResults = Op.Val->getNumValues();
+    if (NumResults && Op.getOperand(NumResults-1).getValueType() == MVT::Other)
+      --NumResults;
 #ifndef _NDEBUG
     unsigned Operands = Op.getNumOperands();
     if (Operands && Op.getOperand(Operands-1).getValueType() == MVT::Other)
       --Operands;
-    unsigned Results = Op.Val->getNumValues();
-    if (Results && Op.getOperand(Results-1).getValueType() == MVT::Other)
-      --Results;
-    assert(unsigned(II.numOperands) == Operands+Results &&
+    assert(unsigned(II.numOperands) == Operands+NumResults &&
            "#operands for dag node doesn't match .td file!"); 
 #endif
 
@@ -89,9 +93,18 @@ unsigned SimpleSched::Emit(SDOperand Op) {
     
     // Add result register values for things that are defined by this
     // instruction.
-    assert(Op.Val->getNumValues() == 1 &&
-           Op.getValue(0).getValueType() == MVT::Other &&
-           "Return values not implemented yet");
+    if (NumResults) {
+      // Create the result registers for this node and add the result regs to
+      // the machine instruction.
+      const TargetOperandInfo *OpInfo = II.OpInfo;
+      ResultReg = RegMap->createVirtualRegister(OpInfo[0].RegClass);
+      MI->addRegOperand(ResultReg, MachineOperand::Def);
+      for (unsigned i = 1; i != NumResults; ++i) {
+        assert(OpInfo[i].RegClass && "Isn't a register operand!");
+        MI->addRegOperand(RegMap->createVirtualRegister(OpInfo[0].RegClass),
+                          MachineOperand::Def);
+      }
+    }
     
     // Emit all of the operands of this instruction, adding them to the
     // instruction as appropriate.
