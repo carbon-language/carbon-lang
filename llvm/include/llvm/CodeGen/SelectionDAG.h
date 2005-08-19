@@ -241,6 +241,16 @@ public:
                           SDOperand Op1, SDOperand Op2, SDOperand Op3) {
     return getNode(ISD::BUILTIN_OP_END+Opcode, VT, Op1, Op2, Op3);
   }
+  SDOperand getTargetNode(unsigned Opcode, MVT::ValueType VT,
+                          SDOperand Op1, SDOperand Op2, SDOperand Op3,
+                          SDOperand Op4) {
+    return getNode(ISD::BUILTIN_OP_END+Opcode, VT, Op1, Op2, Op3, Op4);
+  }
+  SDOperand getTargetNode(unsigned Opcode, MVT::ValueType VT,
+                          SDOperand Op1, SDOperand Op2, SDOperand Op3,
+                          SDOperand Op4, SDOperand Op5) {
+    return getNode(ISD::BUILTIN_OP_END+Opcode, VT, Op1, Op2, Op3, Op4, Op5);
+  }
   
   /// ReplaceAllUsesWith - Modify anything using 'From' to use 'To' instead.
   /// This can cause recursive merging of nodes in the DAG.
