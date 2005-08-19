@@ -131,11 +131,41 @@ unsigned SimpleSched::Emit(SDOperand Op) {
       Op.Val->dump(); 
       assert(0 && "This target-independent node should have been selected!");
     case ISD::EntryToken: break;
+    case ISD::TokenFactor:
+      for (unsigned i = 0, e = Op.getNumOperands(); i != e; ++i)
+        Emit(Op.getOperand(i));
+      break;
     case ISD::CopyToReg: {
+      Emit(Op.getOperand(0));   // Emit the chain.
       unsigned Val = Emit(Op.getOperand(2));
       MRI.copyRegToReg(*BB, BB->end(),
                        cast<RegisterSDNode>(Op.getOperand(1))->getReg(), Val,
                        RegMap->getRegClass(Val));
+      break;
+    }
+    case ISD::CopyFromReg: {
+      Emit(Op.getOperand(0));   // Emit the chain.
+      unsigned SrcReg = cast<RegisterSDNode>(Op.getOperand(1))->getReg();
+      
+      // Figure out the register class to create for the destreg.
+      const TargetRegisterClass *TRC;
+      if (MRegisterInfo::isVirtualRegister(SrcReg)) {
+        TRC = RegMap->getRegClass(SrcReg);
+      } else {
+        // FIXME: we don't know what register class to generate this for.  Do
+        // a brute force search and pick the first match. :(
+        for (MRegisterInfo::regclass_iterator I = MRI.regclass_begin(),
+               E = MRI.regclass_end(); I != E; ++I)
+          if ((*I)->contains(SrcReg)) {
+            TRC = *I;
+            break;
+          }
+        assert(TRC && "Couldn't find register class for reg copy!");
+      }
+      
+      // Create the reg, emit the copy.
+      ResultReg = RegMap->createVirtualRegister(TRC);
+      MRI.copyRegToReg(*BB, BB->end(), ResultReg, SrcReg, TRC);
       break;
     }
     }
