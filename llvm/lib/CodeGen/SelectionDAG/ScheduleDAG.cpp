@@ -151,7 +151,7 @@ unsigned SimpleSched::Emit(SDOperand Op) {
       unsigned SrcReg = cast<RegisterSDNode>(Op.getOperand(1))->getReg();
       
       // Figure out the register class to create for the destreg.
-      const TargetRegisterClass *TRC;
+      const TargetRegisterClass *TRC = 0;
       if (MRegisterInfo::isVirtualRegister(SrcReg)) {
         TRC = RegMap->getRegClass(SrcReg);
       } else {
