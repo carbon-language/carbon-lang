@@ -875,7 +875,7 @@ static unsigned ponderIntegerAndWith(SDOperand N, unsigned& Imm) {
   int64_t v = (int64_t)cast<ConstantSDNode>(N)->getSignExtended();
 
   if (isMask_64(v)) { // if ANDing with ((2^n)-1) for some n
-    Imm = Log2_64(v);
+    Imm = Log2_64(v) + 1;
     return 1; // say so
   }
 
