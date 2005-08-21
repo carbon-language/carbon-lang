@@ -121,6 +121,9 @@ unsigned SimpleSched::Emit(SDOperand Op) {
       } else if (BasicBlockSDNode *BB =
                        dyn_cast<BasicBlockSDNode>(Op.getOperand(i))) {
         MI->addMachineBasicBlockOperand(BB->getBasicBlock());
+      } else if (FrameIndexSDNode *FI =
+                       dyn_cast<FrameIndexSDNode>(Op.getOperand(i))) {
+        MI->addFrameIndexOperand(FI->getIndex());
       } else {
         unsigned R = Emit(Op.getOperand(i));
         // Add an operand, unless this corresponds to a chain node.
@@ -136,9 +139,7 @@ unsigned SimpleSched::Emit(SDOperand Op) {
     default:
       Op.Val->dump(); 
       assert(0 && "This target-independent node should have been selected!");
-    case ISD::EntryToken:
-    case ISD::BasicBlock:
-      break;
+    case ISD::EntryToken: break;
     case ISD::TokenFactor:
       for (unsigned i = 0, e = Op.getNumOperands(); i != e; ++i)
         Emit(Op.getOperand(i));
