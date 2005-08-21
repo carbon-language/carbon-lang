@@ -80,7 +80,7 @@ unsigned SimpleSched::Emit(SDOperand Op) {
     // nodes.  Check that the DAG matches the TD files's expectation of #
     // operands.
     unsigned NumResults = Op.Val->getNumValues();
-    if (NumResults && Op.getOperand(NumResults-1).getValueType() == MVT::Other)
+    if (NumResults && Op.Val->getValueType(NumResults-1) == MVT::Other)
       --NumResults;
 #ifndef _NDEBUG
     unsigned Operands = Op.getNumOperands();
@@ -118,6 +118,9 @@ unsigned SimpleSched::Emit(SDOperand Op) {
       } else if (GlobalAddressSDNode *TGA =
                        dyn_cast<GlobalAddressSDNode>(Op.getOperand(i))) {
         MI->addGlobalAddressOperand(TGA->getGlobal(), false, 0);
+      } else if (BasicBlockSDNode *BB =
+                       dyn_cast<BasicBlockSDNode>(Op.getOperand(i))) {
+        MI->addMachineBasicBlockOperand(BB->getBasicBlock());
       } else {
         unsigned R = Emit(Op.getOperand(i));
         // Add an operand, unless this corresponds to a chain node.
@@ -133,7 +136,9 @@ unsigned SimpleSched::Emit(SDOperand Op) {
     default:
       Op.Val->dump(); 
       assert(0 && "This target-independent node should have been selected!");
-    case ISD::EntryToken: break;
+    case ISD::EntryToken:
+    case ISD::BasicBlock:
+      break;
     case ISD::TokenFactor:
       for (unsigned i = 0, e = Op.getNumOperands(); i != e; ++i)
         Emit(Op.getOperand(i));
