@@ -707,10 +707,6 @@ void ISel::SelectBranchCC(SDOperand N)
   unsigned CCReg = SelectCC(N.getOperand(2), N.getOperand(3), CC);
   unsigned Opc = getBCCForSetCC(CC);
 
-  // Iterate to the next basic block
-  ilist<MachineBasicBlock>::iterator It = BB;
-  ++It;
-
   // If this is a two way branch, then grab the fallthrough basic block argument
   // and build a PowerPC branch pseudo-op, suitable for long branch conversion
   // if necessary by the branch selection pass.  Otherwise, emit a standard
@@ -718,19 +714,14 @@ void ISel::SelectBranchCC(SDOperand N)
   if (N.getOpcode() == ISD::BRTWOWAY_CC) {
     MachineBasicBlock *Fallthrough =
       cast<BasicBlockSDNode>(N.getOperand(5))->getBasicBlock();
-    if (Dest != It) {
-      BuildMI(BB, PPC::COND_BRANCH, 4).addReg(CCReg).addImm(Opc)
-        .addMBB(Dest).addMBB(Fallthrough);
-      if (Fallthrough != It)
-        BuildMI(BB, PPC::B, 1).addMBB(Fallthrough);
-    } else {
-      if (Fallthrough != It) {
-        Opc = PPC32InstrInfo::invertPPCBranchOpcode(Opc);
-        BuildMI(BB, PPC::COND_BRANCH, 4).addReg(CCReg).addImm(Opc)
-          .addMBB(Fallthrough).addMBB(Dest);
-      }
-    }
+    BuildMI(BB, PPC::COND_BRANCH, 4).addReg(CCReg).addImm(Opc)
+      .addMBB(Dest).addMBB(Fallthrough);
+    BuildMI(BB, PPC::B, 1).addMBB(Fallthrough);
   } else {
+    // Iterate to the next basic block
+    ilist<MachineBasicBlock>::iterator It = BB;
+    ++It;
+
     // If the fallthrough path is off the end of the function, which would be
     // undefined behavior, set it to be the same as the current block because
     // we have nothing better to set it to, and leaving it alone will cause the
