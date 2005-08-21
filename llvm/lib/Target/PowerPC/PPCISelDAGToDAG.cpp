@@ -69,6 +69,10 @@ namespace {
                                    bool Negate = false);
     SDNode *SelectBitfieldInsert(SDNode *N);
 
+    /// SelectCC - Select a comparison of the specified values with the
+    /// specified condition code, returning the CR# of the expression.
+    SDOperand SelectCC(SDOperand LHS, SDOperand RHS, ISD::CondCode CC);
+
     /// InstructionSelectBasicBlock - This callback is invoked by
     /// SelectionDAGISel when it has created a SelectionDAG for us to codegen.
     virtual void InstructionSelectBasicBlock(SelectionDAG &DAG) {
@@ -352,6 +356,47 @@ SDNode *PPC32DAGToDAGISel::SelectIntImmediateExpr(SDOperand LHS, SDOperand RHS,
   return Opr0.Val;
 }
 
+
+/// SelectCC - Select a comparison of the specified values with the specified
+/// condition code, returning the CR# of the expression.
+SDOperand PPC32DAGToDAGISel::SelectCC(SDOperand LHS, SDOperand RHS,
+                                      ISD::CondCode CC) {
+  // Always select the LHS.
+  LHS = Select(LHS);
+
+  // Use U to determine whether the SETCC immediate range is signed or not.
+  if (MVT::isInteger(LHS.getValueType())) {
+    bool U = ISD::isUnsignedIntSetCC(CC);
+    unsigned Imm;
+    if (isIntImmediate(RHS, Imm) && 
+        ((U && isUInt16(Imm)) || (!U && isInt16(Imm))))
+      return CurDAG->getTargetNode(U ? PPC::CMPLWI : PPC::CMPWI, MVT::i32,
+                                   LHS, getI32Imm(Lo16(Imm)));
+    return CurDAG->getTargetNode(U ? PPC::CMPLW : PPC::CMPW, MVT::i32,
+                                 LHS, Select(RHS));
+  } else {
+    return CurDAG->getTargetNode(PPC::FCMPU, MVT::i32, LHS, Select(RHS));
+  }
+}
+
+/// getBCCForSetCC - Returns the PowerPC condition branch mnemonic corresponding
+/// to Condition.
+static unsigned getBCCForSetCC(ISD::CondCode CC) {
+  switch (CC) {
+  default: assert(0 && "Unknown condition!"); abort();
+  case ISD::SETEQ:  return PPC::BEQ;
+  case ISD::SETNE:  return PPC::BNE;
+  case ISD::SETULT:
+  case ISD::SETLT:  return PPC::BLT;
+  case ISD::SETULE:
+  case ISD::SETLE:  return PPC::BLE;
+  case ISD::SETUGT:
+  case ISD::SETGT:  return PPC::BGT;
+  case ISD::SETUGE:
+  case ISD::SETGE:  return PPC::BGE;
+  }
+  return 0;
+}
 
 // Select - Convert the specified operand from a target-independent to a
 // target-specific node if it hasn't already been changed.
@@ -788,6 +833,44 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
 
     // Finally, select this to a blr (return) instruction.
     CurDAG->SelectNodeTo(N, MVT::Other, PPC::BLR, Chain);
+    break;
+  }
+
+  case ISD::BR_CC:
+  case ISD::BRTWOWAY_CC: {
+    SDOperand Chain = Select(N->getOperand(0));
+    MachineBasicBlock *Dest =
+      cast<BasicBlockSDNode>(N->getOperand(4))->getBasicBlock();
+    ISD::CondCode CC = cast<CondCodeSDNode>(N->getOperand(1))->get();
+    SDOperand CondCode = SelectCC(N->getOperand(2), N->getOperand(3), CC);
+    unsigned Opc = getBCCForSetCC(CC);
+
+    // If this is a two way branch, then grab the fallthrough basic block
+    // argument and build a PowerPC branch pseudo-op, suitable for long branch
+    // conversion if necessary by the branch selection pass.  Otherwise, emit a
+    // standard conditional branch.
+    if (N->getOpcode() == ISD::BRTWOWAY_CC) {
+      MachineBasicBlock *Fallthrough =
+        cast<BasicBlockSDNode>(N->getOperand(5))->getBasicBlock();
+      SDOperand CB = CurDAG->getTargetNode(PPC::COND_BRANCH, MVT::Other,
+                                           CondCode, getI32Imm(Opc),
+                                           N->getOperand(4), N->getOperand(5),
+                                           Chain);
+      CurDAG->SelectNodeTo(N, MVT::Other, PPC::B, N->getOperand(5), CB);
+    } else {
+      // Iterate to the next basic block
+      ilist<MachineBasicBlock>::iterator It = BB;
+      ++It;
+
+      // If the fallthrough path is off the end of the function, which would be
+      // undefined behavior, set it to be the same as the current block because
+      // we have nothing better to set it to, and leaving it alone will cause
+      // the PowerPC Branch Selection pass to crash.
+      if (It == BB->getParent()->end()) It = Dest;
+      CurDAG->SelectNodeTo(N, MVT::Other, PPC::COND_BRANCH, CondCode,
+                           getI32Imm(Opc), N->getOperand(4),
+                           CurDAG->getBasicBlock(It), Chain);
+    }
     break;
   }
   }
