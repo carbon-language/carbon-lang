@@ -1832,6 +1832,16 @@ void SelectionDAG::SelectNodeTo(SDNode *N, MVT::ValueType VT,
   N->setValueTypes(VT);
   N->setOperands(Op1, Op2, Op3);
 }
+void SelectionDAG::SelectNodeTo(SDNode *N, MVT::ValueType VT1,
+                                MVT::ValueType VT2,
+                                unsigned TargetOpc, SDOperand Op1,
+                                SDOperand Op2, SDOperand Op3) {
+  RemoveNodeFromCSEMaps(N);
+  N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc);
+  N->setValueTypes(VT1, VT2);
+  N->setOperands(Op1, Op2, Op3);
+}
+
 void SelectionDAG::SelectNodeTo(SDNode *N, MVT::ValueType VT,
                                 unsigned TargetOpc, SDOperand Op1,
                                 SDOperand Op2, SDOperand Op3, SDOperand Op4) {
