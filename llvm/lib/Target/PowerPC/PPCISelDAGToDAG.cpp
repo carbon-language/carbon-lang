@@ -57,7 +57,7 @@ namespace {
 
     /// getGlobalBaseReg - insert code into the entry mbb to materialize the PIC
     /// base register.  Return the virtual register that holds this value.
-    unsigned getGlobalBaseReg();
+    SDOperand getGlobalBaseReg();
     
     // Select - Convert the specified operand from a target-independent to a
     // target-specific node if it hasn't already been changed.
@@ -72,6 +72,11 @@ namespace {
     /// SelectCC - Select a comparison of the specified values with the
     /// specified condition code, returning the CR# of the expression.
     SDOperand SelectCC(SDOperand LHS, SDOperand RHS, ISD::CondCode CC);
+
+    /// SelectAddr - Given the specified address, return the two operands for a
+    /// load/store instruction, and return true if it should be an indexed [r+r]
+    /// operation.
+    bool SelectAddr(SDOperand Addr, SDOperand &Op1, SDOperand &Op2);
 
     /// InstructionSelectBasicBlock - This callback is invoked by
     /// SelectionDAGISel when it has created a SelectionDAG for us to codegen.
@@ -94,7 +99,7 @@ namespace {
 /// getGlobalBaseReg - Output the instructions required to put the
 /// base address to use for accessing globals into a register.
 ///
-unsigned PPC32DAGToDAGISel::getGlobalBaseReg() {
+SDOperand PPC32DAGToDAGISel::getGlobalBaseReg() {
   if (!GlobalBaseReg) {
     // Insert the set of GlobalBaseReg into the first MBB of the function
     MachineBasicBlock &FirstMBB = BB->getParent()->front();
@@ -104,7 +109,7 @@ unsigned PPC32DAGToDAGISel::getGlobalBaseReg() {
     BuildMI(FirstMBB, MBBI, PPC::MovePCtoLR, 0, PPC::LR);
     BuildMI(FirstMBB, MBBI, PPC::MFLR, 1, GlobalBaseReg);
   }
-  return GlobalBaseReg;
+  return CurDAG->getRegister(GlobalBaseReg, MVT::i32);
 }
 
 
@@ -356,6 +361,58 @@ SDNode *PPC32DAGToDAGISel::SelectIntImmediateExpr(SDOperand LHS, SDOperand RHS,
   return Opr0.Val;
 }
 
+/// SelectAddr - Given the specified address, return the two operands for a
+/// load/store instruction, and return true if it should be an indexed [r+r]
+/// operation.
+bool PPC32DAGToDAGISel::SelectAddr(SDOperand Addr, SDOperand &Op1,
+                                   SDOperand &Op2) {
+  unsigned imm = 0;
+  if (Addr.getOpcode() == ISD::ADD) {
+    if (isIntImmediate(Addr.getOperand(1), imm) && isInt16(imm)) {
+      Op1 = getI32Imm(Lo16(imm));
+      if (isa<FrameIndexSDNode>(Addr.getOperand(0))) {
+        ++FrameOff;
+        Op2 = Addr.getOperand(0);
+      } else {
+        Op2 = Select(Addr.getOperand(0));
+      }
+      return false;
+    } else {
+      Op1 = Select(Addr.getOperand(0));
+      Op2 = Select(Addr.getOperand(1));
+      return true;   // [r+r]
+    }
+  }
+
+  // Now check if we're dealing with a global, and whether or not we should emit
+  // an optimized load or store for statics.
+  if (GlobalAddressSDNode *GN = dyn_cast<GlobalAddressSDNode>(Addr)) {
+    GlobalValue *GV = GN->getGlobal();
+    if (!GV->hasWeakLinkage() && !GV->isExternal()) {
+      Op1 = CurDAG->getTargetGlobalAddress(GV, MVT::i32);
+      if (PICEnabled)
+        Op2 = CurDAG->getTargetNode(PPC::ADDIS, MVT::i32, getGlobalBaseReg(),
+                                    Op1);
+      else
+        Op2 = CurDAG->getTargetNode(PPC::LIS, MVT::i32, Op1);
+      return false;
+    }
+  } else if (isa<FrameIndexSDNode>(Addr)) {
+    Op1 = getI32Imm(0);
+    Op2 = Addr;
+    return false;
+  } else if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(Addr)) {
+    Op1 = Addr;
+    if (PICEnabled)
+      Op2 = CurDAG->getTargetNode(PPC::ADDIS, MVT::i32, getGlobalBaseReg(),Op1);
+    else
+      Op2 = CurDAG->getTargetNode(PPC::LIS, MVT::i32, Op1);
+    return false;
+  }
+  Op1 = getI32Imm(0);
+  Op2 = Select(Addr);
+  return false;
+}
 
 /// SelectCC - Select a comparison of the specified values with the specified
 /// condition code, returning the CR# of the expression.
@@ -397,6 +454,7 @@ static unsigned getBCCForSetCC(ISD::CondCode CC) {
   }
   return 0;
 }
+
 
 // Select - Convert the specified operand from a target-independent to a
 // target-specific node if it hasn't already been changed.
@@ -472,12 +530,11 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
     GlobalValue *GV = cast<GlobalAddressSDNode>(N)->getGlobal();
     SDOperand Tmp;
     SDOperand GA = CurDAG->getTargetGlobalAddress(GV, MVT::i32);
-    if (PICEnabled) {
-      SDOperand PICBaseReg = CurDAG->getRegister(getGlobalBaseReg(), MVT::i32);
-      Tmp = CurDAG->getTargetNode(PPC::ADDIS, MVT::i32, PICBaseReg, GA);
-    } else {
+    if (PICEnabled)
+      Tmp = CurDAG->getTargetNode(PPC::ADDIS, MVT::i32, getGlobalBaseReg(), GA);
+    else
       Tmp = CurDAG->getTargetNode(PPC::LIS, MVT::i32, GA);
-    }
+
     if (GV->hasWeakLinkage() || GV->isExternal())
       CurDAG->SelectNodeTo(N, MVT::i32, PPC::LWZ, GA, Tmp);
     else
@@ -806,6 +863,37 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
                          Select(N->getOperand(0)));
     break;
   }
+  case ISD::LOAD:
+  case ISD::EXTLOAD:
+  case ISD::ZEXTLOAD:
+  case ISD::SEXTLOAD: {
+    SDOperand Op1, Op2;
+    bool isIdx = SelectAddr(N->getOperand(1), Op1, Op2);
+
+    MVT::ValueType TypeBeingLoaded = (N->getOpcode() == ISD::LOAD) ?
+      N->getValueType(0) : cast<VTSDNode>(N->getOperand(3))->getVT();
+    unsigned Opc;
+    switch (TypeBeingLoaded) {
+    default: N->dump(); assert(0 && "Cannot load this type!");
+    case MVT::i1:
+    case MVT::i8:  Opc = isIdx ? PPC::LBZX : PPC::LBZ; break;
+    case MVT::i16:
+      if (N->getOpcode() == ISD::SEXTLOAD) { // SEXT load?
+        Opc = isIdx ? PPC::LHAX : PPC::LHA;
+      } else {
+        Opc = isIdx ? PPC::LHZX : PPC::LHZ;
+      }
+      break;
+    case MVT::i32: Opc = isIdx ? PPC::LWZX : PPC::LWZ; break;
+    case MVT::f32: Opc = isIdx ? PPC::LFSX : PPC::LFS; break;
+    case MVT::f64: Opc = isIdx ? PPC::LFDX : PPC::LFD; break;
+    }
+
+    CurDAG->SelectNodeTo(N, N->getValueType(0), MVT::Other, Opc,
+                         Op1, Op2, Select(N->getOperand(0)));
+    break;
+  }
+
   case ISD::RET: {
     SDOperand Chain = Select(N->getOperand(0));     // Token chain.
 
