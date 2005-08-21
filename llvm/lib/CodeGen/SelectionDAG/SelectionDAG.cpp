@@ -1831,6 +1831,15 @@ void SelectionDAG::SelectNodeTo(SDNode *N, MVT::ValueType VT,
   N->setValueTypes(VT);
   N->setOperands(Op1, Op2, Op3, Op4);
 }
+void SelectionDAG::SelectNodeTo(SDNode *N, MVT::ValueType VT,
+                                unsigned TargetOpc, SDOperand Op1,
+                                SDOperand Op2, SDOperand Op3, SDOperand Op4,
+                                SDOperand Op5) {
+  RemoveNodeFromCSEMaps(N);
+  N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc);
+  N->setValueTypes(VT);
+  N->setOperands(Op1, Op2, Op3, Op4, Op5);
+}
 
 /// ReplaceAllUsesWith - Modify anything using 'From' to use 'To' instead.
 /// This can cause recursive merging of nodes in the DAG.
