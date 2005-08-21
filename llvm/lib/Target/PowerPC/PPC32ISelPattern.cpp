@@ -1675,7 +1675,16 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
     // selecting it in the fallthrough basic block rather than here, which
     // increases register pressure.
     unsigned TrueValue = SelectExpr(N.getOperand(2));
-    unsigned FalseValue = SelectExpr(N.getOperand(3));
+    unsigned FalseValue;
+
+    // If the false value is simple enough, evaluate it inline in the false
+    // block.
+    if (isa<ConstantSDNode>(N.getOperand(3)) ||
+        isa<ConstantFPSDNode>(N.getOperand(3)) ||
+        isa<GlobalAddressSDNode>(N.getOperand(3)))
+      FalseValue = 0;
+    else
+      FalseValue = SelectExpr(N.getOperand(3));
     unsigned CCReg = SelectCC(N.getOperand(0), N.getOperand(1), CC);
     Opc = getBCCForSetCC(CC);
     
@@ -1706,6 +1715,12 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
     //   %FalseValue = ...
     //   # fallthrough to sinkMBB
     BB = copy0MBB;
+
+    // If the false value is simple enough, evaluate it here, to avoid it being
+    // evaluated on the true edge.
+    if (FalseValue == 0)
+      FalseValue = SelectExpr(N.getOperand(3));
+
     // Update machine-CFG edges
     BB->addSuccessor(sinkMBB);
 
