@@ -681,6 +681,10 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
                              Tmp2.getOperand(0), Tmp2.getOperand(1),
                              Node->getOperand(2));
       } else {
+        // Make sure the condition is either zero or one.  It may have been
+        // promoted from something else.
+        Tmp2 = DAG.getZeroExtendInReg(Tmp2, MVT::i1);
+        
         Result = DAG.getNode(ISD::BR_CC, MVT::Other, Tmp1, 
                              DAG.getCondCode(ISD::SETNE), Tmp2,
                              DAG.getConstant(0, Tmp2.getValueType()),
@@ -1072,6 +1076,9 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
                               Tmp2, Tmp3,
                               cast<CondCodeSDNode>(Tmp1.getOperand(2))->get());
       } else {
+        // Make sure the condition is either zero or one.  It may have been
+        // promoted from something else.
+        Tmp1 = DAG.getZeroExtendInReg(Tmp1, MVT::i1);
         Result = DAG.getSelectCC(Tmp1, 
                                  DAG.getConstant(0, Tmp1.getValueType()),
                                  Tmp2, Tmp3, ISD::SETNE);
