@@ -79,15 +79,8 @@ def CR2 : CR<2, "cr2">; def CR3 : CR<3, "cr3">;
 def CR4 : CR<4, "cr4">; def CR5 : CR<5, "cr5">;
 def CR6 : CR<6, "cr6">; def CR7 : CR<7, "cr7">;
 
-// Floating-point status and control register
-def FPSCR : SPR<0, "fpscr">;
-// fiXed-point Exception Register? :-)
-def XER : SPR<1, "xer">;
 // Link register
 def LR : SPR<2,   "lr">;
 // Count register
 def CTR : SPR<3, "ctr">;
-// These are the "time base" registers which are read-only in user mode.
-def TBL : SPR<4, "tbl">;
-def TBU : SPR<5, "tbu">;
 
