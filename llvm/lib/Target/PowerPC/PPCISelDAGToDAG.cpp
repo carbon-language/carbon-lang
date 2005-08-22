@@ -962,7 +962,7 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
     break;
   }
   }
-  return SDOperand(N, 0);
+  return SDOperand(N, Op.ResNo);
 }
 
 
