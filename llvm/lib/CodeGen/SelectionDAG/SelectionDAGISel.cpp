@@ -337,7 +337,7 @@ public:
   void visitUnwind(UnwindInst &I) { assert(0 && "TODO"); }
 
   //
-  void visitBinary(User &I, unsigned Opcode);
+  void visitBinary(User &I, unsigned Opcode, bool isShift = false);
   void visitAdd(User &I) { visitBinary(I, ISD::ADD); }
   void visitSub(User &I);
   void visitMul(User &I) { visitBinary(I, ISD::MUL); }
@@ -350,9 +350,9 @@ public:
   void visitAnd(User &I) { visitBinary(I, ISD::AND); }
   void visitOr (User &I) { visitBinary(I, ISD::OR); }
   void visitXor(User &I) { visitBinary(I, ISD::XOR); }
-  void visitShl(User &I) { visitBinary(I, ISD::SHL); }
+  void visitShl(User &I) { visitBinary(I, ISD::SHL, true); }
   void visitShr(User &I) {
-    visitBinary(I, I.getType()->isUnsigned() ? ISD::SRL : ISD::SRA);
+    visitBinary(I, I.getType()->isUnsigned() ? ISD::SRL : ISD::SRA, true);
   }
 
   void visitSetCC(User &I, ISD::CondCode SignedOpc, ISD::CondCode UnsignedOpc);
@@ -486,11 +486,11 @@ void SelectionDAGLowering::visitSub(User &I) {
   visitBinary(I, ISD::SUB);
 }
 
-void SelectionDAGLowering::visitBinary(User &I, unsigned Opcode) {
+void SelectionDAGLowering::visitBinary(User &I, unsigned Opcode, bool isShift) {
   SDOperand Op1 = getValue(I.getOperand(0));
   SDOperand Op2 = getValue(I.getOperand(1));
 
-  if (isa<ShiftInst>(I))
+  if (isShift)
     Op2 = DAG.getNode(ISD::ZERO_EXTEND, TLI.getShiftAmountTy(), Op2);
 
   setValue(&I, DAG.getNode(Opcode, Op1.getValueType(), Op1, Op2));
