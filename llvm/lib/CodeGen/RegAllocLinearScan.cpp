@@ -603,6 +603,8 @@ void RA::assignRegOrStackSlotAtInterval(LiveInterval* cur)
 unsigned RA::getFreePhysReg(LiveInterval* cur)
 {
   std::vector<unsigned> inactiveCounts(mri_->getNumRegs(), 0);
+  unsigned MaxInactiveCount = 0;
+  
   for (IntervalPtrs::iterator i = inactive_.begin(), e = inactive_.end();
        i != e; ++i) {
     unsigned reg = i->first->reg;
@@ -610,19 +612,43 @@ unsigned RA::getFreePhysReg(LiveInterval* cur)
            "Can only allocate virtual registers!");
     reg = vrm_->getPhys(reg);
     ++inactiveCounts[reg];
+    MaxInactiveCount = std::max(MaxInactiveCount, inactiveCounts[reg]);
   }
 
   const TargetRegisterClass* rc = mf_->getSSARegMap()->getRegClass(cur->reg);
 
-  unsigned freeReg = 0;
-  for (TargetRegisterClass::iterator i = rc->allocation_order_begin(*mf_),
-       e = rc->allocation_order_end(*mf_); i != e; ++i) {
-    unsigned reg = *i;
-    if (prt_->isRegAvail(reg) &&
-        (!freeReg || inactiveCounts[freeReg] < inactiveCounts[reg]))
-        freeReg = reg;
+  unsigned FreeReg = 0;
+  unsigned FreeRegInactiveCount = 0;
+  
+  // Scan for the first available register.
+  TargetRegisterClass::iterator I = rc->allocation_order_begin(*mf_);
+  TargetRegisterClass::iterator E = rc->allocation_order_end(*mf_);
+  for (; I != E; ++I)
+    if (prt_->isRegAvail(*I)) {
+      FreeReg = *I;
+      FreeRegInactiveCount = inactiveCounts[FreeReg];
+      break;
+    }
+  
+  // If there are no free regs, or if this reg has the max inactive count,
+  // return this register.
+  if (FreeReg == 0 || FreeRegInactiveCount == MaxInactiveCount) return FreeReg;
+  
+  // Continue scanning the registers, looking for the one with the highest
+  // inactive count.  Alkis found that this reduced register pressure very
+  // slightly on X86 (in rev 1.94 of this file), though this should probably be
+  // reevaluated now.
+  for (; I != E; ++I) {
+    unsigned Reg = *I;
+    if (prt_->isRegAvail(Reg) && FreeRegInactiveCount < inactiveCounts[Reg]) {
+      FreeReg = Reg;
+      FreeRegInactiveCount = inactiveCounts[Reg];
+      if (FreeRegInactiveCount == MaxInactiveCount)
+        break;    // We found the one with the max inactive count.
+    }
   }
-  return freeReg;
+  
+  return FreeReg;
 }
 
 FunctionPass* llvm::createLinearScanRegisterAllocator() {
