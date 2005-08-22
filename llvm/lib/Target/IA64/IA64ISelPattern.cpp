@@ -441,6 +441,7 @@ namespace {
     // a dag->dag to transform mul-by-constant-int to shifts+adds/subs
     SDOperand BuildConstmulSequence(SDOperand N);
 
+    const char *getPassName() const { return "IA64 Instruction Selector"; }
   };
 }
 
