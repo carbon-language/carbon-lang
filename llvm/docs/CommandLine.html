@@ -1714,7 +1714,7 @@ our example, we implement <tt>parse</tt> as:</p>
 
   <b>while</b> (1) {
     <b>switch</b> (*End++) {
-    <b>case</b> 0: break;          <i>// No error</i>
+    <b>case</b> 0: <b>return</b> false;   <i>// No error</i>
     <b>case</b> 'i':               <i>// Ignore the 'i' in KiB if people use that</i>
     <b>case</b> 'b': <b>case</b> 'B':     <i>// Ignore B suffix</i>
       <b>break</b>;
@@ -1728,7 +1728,6 @@ our example, we implement <tt>parse</tt> as:</p>
       <b>return</b> O.error(": '" + Arg + "' value invalid for file size argument!");
     }
   }
-  <b>return</b> false;
 }
 </pre></div>
 
