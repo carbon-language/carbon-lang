@@ -111,7 +111,16 @@ unsigned SimpleSched::Emit(SDOperand Op) {
     // Emit all of the operands of this instruction, adding them to the
     // instruction as appropriate.
     for (unsigned i = 0, e = Op.getNumOperands(); i != e; ++i) {
-      if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Op.getOperand(i))) {
+      if (Op.getOperand(i).isTargetOpcode()) {
+        // Note that this case is redundant with the final else block, but we
+        // include it because it is the most common and it makes the logic
+        // simpler here.
+        unsigned R = Emit(Op.getOperand(i));
+        // Add an operand, unless this corresponds to a chain node.
+        if (Op.getOperand(i).getValueType() != MVT::Other)
+          MI->addRegOperand(R, MachineOperand::Use);
+      } else if (ConstantSDNode *C =
+                                   dyn_cast<ConstantSDNode>(Op.getOperand(i))) {
         MI->addZeroExtImm64Operand(C->getValue());
       } else if (RegisterSDNode*R =dyn_cast<RegisterSDNode>(Op.getOperand(i))) {
         MI->addRegOperand(R->getReg(), MachineOperand::Use);
@@ -124,6 +133,9 @@ unsigned SimpleSched::Emit(SDOperand Op) {
       } else if (FrameIndexSDNode *FI =
                        dyn_cast<FrameIndexSDNode>(Op.getOperand(i))) {
         MI->addFrameIndexOperand(FI->getIndex());
+      } else if (ConstantPoolSDNode *CP = 
+                    dyn_cast<ConstantPoolSDNode>(Op.getOperand(i))) {
+        MI->addConstantPoolIndexOperand(CP->getIndex());
       } else {
         unsigned R = Emit(Op.getOperand(i));
         // Add an operand, unless this corresponds to a chain node.
