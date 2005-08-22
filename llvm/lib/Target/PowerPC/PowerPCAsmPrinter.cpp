@@ -89,7 +89,7 @@ namespace {
       const MachineOperand &MO = MI->getOperand(OpNo);
       if (MO.getType() == MachineOperand::MO_MachineRegister) {
         assert(MRegisterInfo::isPhysicalRegister(MO.getReg())&&"Not physreg??");
-        O << LowercaseString(TM.getRegisterInfo()->get(MO.getReg()).Name);
+        O << TM.getRegisterInfo()->get(MO.getReg()).Name;
       } else if (MO.isImmediate()) {
         O << MO.getImmedValue();
       } else {
@@ -275,7 +275,7 @@ void PowerPCAsmPrinter::printOp(const MachineOperand &MO, bool IsCallOp) {
     // FALLTHROUGH
   case MachineOperand::MO_MachineRegister:
   case MachineOperand::MO_CCRegister:
-    O << LowercaseString(RI.get(MO.getReg()).Name);
+    O << RI.get(MO.getReg()).Name;
     return;
 
   case MachineOperand::MO_SignExtendedImmed:
