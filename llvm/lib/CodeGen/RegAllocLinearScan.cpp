@@ -381,29 +381,64 @@ void RA::assignRegOrStackSlotAtInterval(LiveInterval* cur)
       SpillWeightsToAdd.push_back(std::make_pair(reg, i->first->weight));
     }
   }
-
-  // For every interval in fixed we overlap with, mark the register as not free
-  // and update spill weights.
-  for (unsigned i = 0, e = fixed_.size(); i != e; ++i) {
-    IntervalPtr &IP = fixed_[i];
-    LiveInterval *I = IP.first;
-    if (I->endNumber() > StartPosition) {
-      LiveInterval::iterator II = I->advanceTo(IP.second, StartPosition);
-      IP.second = II;
-      if (II != I->begin() && II->start > StartPosition)
-        --II;
-      if (cur->overlapsFrom(*I, II)) {
-        unsigned reg = I->reg;
-        prt_->addRegUse(reg);
-        SpillWeightsToAdd.push_back(std::make_pair(reg, I->weight));
+  
+  // Speculatively check to see if we can get a register right now.  If not,
+  // we know we won't be able to by adding more constraints.  If so, we can
+  // check to see if it is valid.  Doing an exhaustive search of the fixed_ list
+  // is very bad (it contains all callee clobbered registers for any functions
+  // with a call), so we want to avoid doing that if possible.
+  unsigned physReg = getFreePhysReg(cur);
+  if (physReg) {
+    // We got a register.  However, if it's in the fixed_ list, we might
+    // conflict with it.  Check to see if we conflict with it.
+    bool ConflictsWithFixed = false;
+    for (unsigned i = 0, e = fixed_.size(); i != e; ++i) {
+      if (physReg == fixed_[i].first->reg) {
+        // Okay, this reg is on the fixed list.  Check to see if we actually
+        // conflict.
+        IntervalPtr &IP = fixed_[i];
+        LiveInterval *I = IP.first;
+        if (I->endNumber() > StartPosition) {
+          LiveInterval::iterator II = I->advanceTo(IP.second, StartPosition);
+          IP.second = II;
+          if (II != I->begin() && II->start > StartPosition)
+            --II;
+          if (cur->overlapsFrom(*I, II))
+            ConflictsWithFixed = true;
+        }
+  
+        break;
       }
     }
-  }
+    
+    // Okay, the register picked by our speculative getFreePhysReg call turned
+    // out to be in use.  Actually add all of the conflicting fixed registers to
+    // prt so we can do an accurate query.
+    if (ConflictsWithFixed) {
+      // For every interval in fixed we overlap with, mark the register as not free
+      // and update spill weights.
+      for (unsigned i = 0, e = fixed_.size(); i != e; ++i) {
+        IntervalPtr &IP = fixed_[i];
+        LiveInterval *I = IP.first;
+        if (I->endNumber() > StartPosition) {
+          LiveInterval::iterator II = I->advanceTo(IP.second, StartPosition);
+          IP.second = II;
+          if (II != I->begin() && II->start > StartPosition)
+            --II;
+          if (cur->overlapsFrom(*I, II)) {
+            unsigned reg = I->reg;
+            prt_->addRegUse(reg);
+            SpillWeightsToAdd.push_back(std::make_pair(reg, I->weight));
+          }
+        }
+      }
 
-  // Using the newly updated prt_ object, which includes conflicts in the
-  // future, see if there are any registers available.
-  unsigned physReg = getFreePhysReg(cur);
-  
+      // Using the newly updated prt_ object, which includes conflicts in the
+      // future, see if there are any registers available.
+      physReg = getFreePhysReg(cur);
+    }
+  }
+    
   // Restore the physical register tracker, removing information about the
   // future.
   *prt_ = backupPrt;
