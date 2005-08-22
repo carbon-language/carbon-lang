@@ -365,23 +365,11 @@ void RA::assignRegOrStackSlotAtInterval(LiveInterval* cur)
 
   PhysRegTracker backupPrt = *prt_;
 
-  std::vector<float> SpillWeights;
-  SpillWeights.assign(mri_->getNumRegs(), 0.0);
-
+  std::vector<std::pair<unsigned, float> > SpillWeightsToAdd;
   unsigned StartPosition = cur->beginNumber();
 
-  // for each interval in active, update spill weights.
-  for (IntervalPtrs::const_iterator i = active_.begin(), e = active_.end();
-       i != e; ++i) {
-    unsigned reg = i->first->reg;
-    assert(MRegisterInfo::isVirtualRegister(reg) &&
-           "Can only allocate virtual registers!");
-    reg = vrm_->getPhys(reg);
-    updateSpillWeights(SpillWeights, reg, i->first->weight, mri_);
-  }
-
   // for every interval in inactive we overlap with, mark the
-  // register as not free and update spill weights
+  // register as not free and update spill weights.
   for (IntervalPtrs::const_iterator i = inactive_.begin(),
          e = inactive_.end(); i != e; ++i) {
     if (cur->overlapsFrom(*i->first, i->second-1)) {
@@ -390,7 +378,7 @@ void RA::assignRegOrStackSlotAtInterval(LiveInterval* cur)
              "Can only allocate virtual registers!");
       reg = vrm_->getPhys(reg);
       prt_->addRegUse(reg);
-      updateSpillWeights(SpillWeights, reg, i->first->weight, mri_);
+      SpillWeightsToAdd.push_back(std::make_pair(reg, i->first->weight));
     }
   }
 
@@ -407,14 +395,19 @@ void RA::assignRegOrStackSlotAtInterval(LiveInterval* cur)
       if (cur->overlapsFrom(*I, II)) {
         unsigned reg = I->reg;
         prt_->addRegUse(reg);
-        updateSpillWeights(SpillWeights, reg, I->weight, mri_);
+        SpillWeightsToAdd.push_back(std::make_pair(reg, I->weight));
       }
     }
   }
 
+  // Using the newly updated prt_ object, which includes conflicts in the
+  // future, see if there are any registers available.
   unsigned physReg = getFreePhysReg(cur);
-  // restore the physical register tracker
+  
+  // Restore the physical register tracker, removing information about the
+  // future.
   *prt_ = backupPrt;
+  
   // if we find a free register, we are done: assign this virtual to
   // the free physical register and add this interval to the active
   // list.
@@ -428,6 +421,22 @@ void RA::assignRegOrStackSlotAtInterval(LiveInterval* cur)
   }
   DEBUG(std::cerr << "no free registers\n");
 
+  // Compile the spill weights into an array that is better for scanning.
+  std::vector<float> SpillWeights(mri_->getNumRegs(), 0.0);
+  for (std::vector<std::pair<unsigned, float> >::iterator
+       I = SpillWeightsToAdd.begin(), E = SpillWeightsToAdd.end(); I != E; ++I)
+    updateSpillWeights(SpillWeights, I->first, I->second, mri_);
+  
+  // for each interval in active, update spill weights.
+  for (IntervalPtrs::const_iterator i = active_.begin(), e = active_.end();
+       i != e; ++i) {
+    unsigned reg = i->first->reg;
+    assert(MRegisterInfo::isVirtualRegister(reg) &&
+           "Can only allocate virtual registers!");
+    reg = vrm_->getPhys(reg);
+    updateSpillWeights(SpillWeights, reg, i->first->weight, mri_);
+  }
+ 
   DEBUG(std::cerr << "\tassigning stack slot at interval "<< *cur << ":\n");
 
   float minWeight = float(HUGE_VAL);
