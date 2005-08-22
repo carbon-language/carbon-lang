@@ -894,6 +894,32 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
     break;
   }
 
+  case ISD::TRUNCSTORE:
+  case ISD::STORE: {
+    SDOperand AddrOp1, AddrOp2;
+    bool isIdx = SelectAddr(N->getOperand(2), AddrOp1, AddrOp2);
+
+    unsigned Opc;
+    if (N->getOpcode() == ISD::STORE) {
+      switch (N->getOperand(1).getValueType()) {
+      default: assert(0 && "unknown Type in store");
+      case MVT::i32: Opc = isIdx ? PPC::STWX  : PPC::STW; break;
+      case MVT::f64: Opc = isIdx ? PPC::STFDX : PPC::STFD; break;
+      case MVT::f32: Opc = isIdx ? PPC::STFSX : PPC::STFS; break;
+      }
+    } else { //ISD::TRUNCSTORE
+      switch(cast<VTSDNode>(N->getOperand(4))->getVT()) {
+      default: assert(0 && "unknown Type in store");
+      case MVT::i1:
+      case MVT::i8:  Opc = isIdx ? PPC::STBX : PPC::STB; break;
+      case MVT::i16: Opc = isIdx ? PPC::STHX : PPC::STH; break;
+      }
+    }
+
+    CurDAG->SelectNodeTo(N, MVT::Other, Opc, Select(N->getOperand(1)),
+                         AddrOp1, AddrOp2, Select(N->getOperand(0)));
+    break;
+  }
   case ISD::RET: {
     SDOperand Chain = Select(N->getOperand(0));     // Token chain.
 
