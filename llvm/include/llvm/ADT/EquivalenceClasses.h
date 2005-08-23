@@ -138,6 +138,8 @@ public:
   iterator begin() const { return TheMapping.begin(); }
   iterator end() const { return TheMapping.end(); }
 
+  bool empty() const { return TheMapping.empty(); }
+
   /// member_* Iterate over the members of an equivalence class.
   ///
   class member_iterator;
