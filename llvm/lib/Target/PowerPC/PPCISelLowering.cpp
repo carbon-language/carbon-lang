@@ -17,8 +17,14 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/Function.h"
+#include "llvm/Support/CommandLine.h"
 
 using namespace llvm;
+
+namespace llvm {
+  cl::opt<bool> SetCCIllegal("-ppc-setcc-is-illegal", cl::Hidden,
+                             cl::desc("Make ISD::SETCC illegal on PowerPC"));
+}
 
 PPC32TargetLowering::PPC32TargetLowering(TargetMachine &TM)
   : TargetLowering(TM) {
@@ -78,6 +84,10 @@ PPC32TargetLowering::PPC32TargetLowering(TargetMachine &TM)
   setOperationAction(ISD::SINT_TO_FP, MVT::i32, Expand);
   setOperationAction(ISD::UINT_TO_FP, MVT::i32, Expand);
 
+  // PowerPC does not have SETCC
+  if (SetCCIllegal)
+    setOperationAction(ISD::SETCC, MVT::i32, Expand);
+  
   setSetCCResultContents(ZeroOrOneSetCCResult);
   addLegalFPImmediate(+0.0); // Necessary for FSEL
   addLegalFPImmediate(-0.0); //
