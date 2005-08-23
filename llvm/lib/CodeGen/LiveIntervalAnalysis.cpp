@@ -431,12 +431,8 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock* mbb,
 
       // If this redefinition is dead, we need to add a dummy unit live
       // range covering the def slot.
-      for (LiveVariables::killed_iterator KI = lv_->dead_begin(mi),
-             E = lv_->dead_end(mi); KI != E; ++KI)
-        if (KI->second == interval.reg) {
-          interval.addRange(LiveRange(RedefIndex, RedefIndex+1, 0));
-          break;
-        }
+      if (lv_->RegisterDefIsDead(mi, interval.reg))
+        interval.addRange(LiveRange(RedefIndex, RedefIndex+1, 0));
 
       DEBUG(std::cerr << "RESULT: " << interval);
 
@@ -496,13 +492,10 @@ void LiveIntervals::handlePhysicalRegisterDef(MachineBasicBlock *MBB,
   // If it is not used after definition, it is considered dead at
   // the instruction defining it. Hence its interval is:
   // [defSlot(def), defSlot(def)+1)
-  for (KillIter ki = lv_->dead_begin(mi), ke = lv_->dead_end(mi);
-       ki != ke; ++ki) {
-    if (interval.reg == ki->second) {
-      DEBUG(std::cerr << " dead");
-      end = getDefIndex(start) + 1;
-      goto exit;
-    }
+  if (lv_->RegisterDefIsDead(mi, interval.reg)) {
+    DEBUG(std::cerr << " dead");
+    end = getDefIndex(start) + 1;
+    goto exit;
   }
 
   // If it is not dead on definition, it must be killed by a
@@ -512,13 +505,10 @@ void LiveIntervals::handlePhysicalRegisterDef(MachineBasicBlock *MBB,
     ++mi;
     assert(mi != MBB->end() && "physreg was not killed in defining block!");
     baseIndex += InstrSlots::NUM;
-    for (KillIter ki = lv_->killed_begin(mi), ke = lv_->killed_end(mi);
-         ki != ke; ++ki) {
-      if (interval.reg == ki->second) {
-        DEBUG(std::cerr << " killed");
-        end = getUseIndex(baseIndex) + 1;
-        goto exit;
-      }
+    if (lv_->KillsRegister(mi, interval.reg)) {
+      DEBUG(std::cerr << " killed");
+      end = getUseIndex(baseIndex) + 1;
+      goto exit;
     }
   }
 
