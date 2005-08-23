@@ -125,9 +125,9 @@ void LiveVariables::HandlePhysRegDef(unsigned Reg, MachineInstr *MI) {
   // Does this kill a previous version of this register?
   if (MachineInstr *LastUse = PhysRegInfo[Reg]) {
     if (PhysRegUsed[Reg])
-      RegistersKilled.insert(std::make_pair(LastUse, Reg));
+      RegistersKilled[LastUse].push_back(Reg);
     else
-      RegistersDead.insert(std::make_pair(LastUse, Reg));
+      RegistersDead[LastUse].push_back(Reg);
   }
   PhysRegInfo[Reg] = MI;
   PhysRegUsed[Reg] = false;
@@ -136,9 +136,9 @@ void LiveVariables::HandlePhysRegDef(unsigned Reg, MachineInstr *MI) {
        unsigned Alias = *AliasSet; ++AliasSet) {
     if (MachineInstr *LastUse = PhysRegInfo[Alias]) {
       if (PhysRegUsed[Alias])
-        RegistersKilled.insert(std::make_pair(LastUse, Alias));
+        RegistersKilled[LastUse].push_back(Alias);
       else
-        RegistersDead.insert(std::make_pair(LastUse, Alias));
+        RegistersDead[LastUse].push_back(Alias);
     }
     PhysRegInfo[Alias] = MI;
     PhysRegUsed[Alias] = false;
@@ -293,12 +293,12 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
   for (unsigned i = 0, e = VirtRegInfo.size(); i != e; ++i)
     for (unsigned j = 0, e = VirtRegInfo[i].Kills.size(); j != e; ++j) {
       if (VirtRegInfo[i].Kills[j] == VirtRegInfo[i].DefInst)
-        RegistersDead.insert(std::make_pair(VirtRegInfo[i].Kills[j],
-                             i + MRegisterInfo::FirstVirtualRegister));
+        RegistersDead[VirtRegInfo[i].Kills[j]].push_back(
+                                    i + MRegisterInfo::FirstVirtualRegister);
 
       else
-        RegistersKilled.insert(std::make_pair(VirtRegInfo[i].Kills[j],
-                               i + MRegisterInfo::FirstVirtualRegister));
+        RegistersKilled[VirtRegInfo[i].Kills[j]].push_back(
+                                    i + MRegisterInfo::FirstVirtualRegister);
     }
 
   // Check to make sure there are no unreachable blocks in the MC CFG for the
@@ -342,21 +342,23 @@ void LiveVariables::instructionChanged(MachineInstr *OldMI,
   // Move the killed information over...
   killed_iterator I, E;
   tie(I, E) = killed_range(OldMI);
-  std::vector<unsigned> Regs;
-  for (killed_iterator A = I; A != E; ++A)
-    Regs.push_back(A->second);
-  RegistersKilled.erase(I, E);
-
-  for (unsigned i = 0, e = Regs.size(); i != e; ++i)
-    RegistersKilled.insert(std::make_pair(NewMI, Regs[i]));
-  Regs.clear();
+  if (I != E) {
+    std::vector<unsigned> &V = RegistersKilled[NewMI];
+    bool WasEmpty = V.empty();
+    V.insert(V.end(), I, E);
+    if (!WasEmpty)
+      std::sort(V.begin(), V.end());   // Keep the reg list sorted.
+    RegistersKilled.erase(OldMI);
+  }
 
   // Move the dead information over...
   tie(I, E) = dead_range(OldMI);
-  for (killed_iterator A = I; A != E; ++A)
-    Regs.push_back(A->second);
-  RegistersDead.erase(I, E);
-
-  for (unsigned i = 0, e = Regs.size(); i != e; ++i)
-    RegistersDead.insert(std::make_pair(NewMI, Regs[i]));
+  if (I != E) {
+    std::vector<unsigned> &V = RegistersDead[NewMI];
+    bool WasEmpty = V.empty();
+    V.insert(V.end(), I, E);
+    if (!WasEmpty)
+      std::sort(V.begin(), V.end());   // Keep the reg list sorted.
+    RegistersDead.erase(OldMI);
+  }
 }

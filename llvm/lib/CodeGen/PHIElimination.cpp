@@ -125,19 +125,14 @@ bool PNE::EliminatePHINodes(MachineFunction &MF, MachineBasicBlock &MBB) {
       // of any registers, or if the value itself is dead, we need to move this
       // information over to the new copy we just inserted.
       //
-      std::pair<LiveVariables::killed_iterator, LiveVariables::killed_iterator>
-        RKs = LV->killed_range(MPhi);
-      std::vector<std::pair<MachineInstr*, unsigned> > Range;
-      if (RKs.first != RKs.second) // Delete the range.
-        LV->removeVirtualRegistersKilled(RKs.first, RKs.second);
+      LV->removeVirtualRegistersKilled(MPhi);
 
-      RKs = LV->dead_range(MPhi);
+      std::pair<LiveVariables::killed_iterator, LiveVariables::killed_iterator>
+        RKs = LV->dead_range(MPhi);
       if (RKs.first != RKs.second) {
-        // Works as above...
-        Range.assign(RKs.first, RKs.second);
-        LV->removeVirtualRegistersDead(RKs.first, RKs.second);
-        for (unsigned i = 0, e = Range.size(); i != e; ++i)
-          LV->addVirtualRegisterDead(Range[i].second, PHICopy);
+        for (LiveVariables::killed_iterator I = RKs.first; I != RKs.second; ++I)
+          LV->addVirtualRegisterDead(*I, PHICopy);
+        LV->removeVirtualRegistersDead(MPhi);
       }
     }
 

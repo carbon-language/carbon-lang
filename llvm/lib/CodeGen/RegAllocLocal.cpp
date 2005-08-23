@@ -525,7 +525,7 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
     //
     for (LiveVariables::killed_iterator KI = LV->killed_begin(MI),
            KE = LV->killed_end(MI); KI != KE; ++KI) {
-      unsigned VirtReg = KI->second;
+      unsigned VirtReg = *KI;
       unsigned PhysReg = VirtReg;
       if (MRegisterInfo::isVirtualRegister(VirtReg)) {
         // If the virtual register was never materialized into a register, it
@@ -605,7 +605,7 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
     //
     for (LiveVariables::killed_iterator KI = LV->dead_begin(MI),
            KE = LV->dead_end(MI); KI != KE; ++KI) {
-      unsigned VirtReg = KI->second;
+      unsigned VirtReg = *KI;
       unsigned PhysReg = VirtReg;
       if (MRegisterInfo::isVirtualRegister(VirtReg)) {
         unsigned &PhysRegSlot = getVirt2PhysRegMapSlot(VirtReg);
