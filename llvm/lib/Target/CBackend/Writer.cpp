@@ -871,6 +871,9 @@ bool CWriter::doInitialization(Module &M) {
   }
 
   // Function declarations
+  Out << "double fmod(double, double);\n";   // Support for FP rem
+  Out << "float fmodf(float, float);\n";
+  
   if (!M.empty()) {
     Out << "\n/* Function Declarations */\n";
     for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I) {
@@ -1348,6 +1351,17 @@ void CWriter::visitBinaryOperator(Instruction &I) {
   if (BinaryOperator::isNeg(&I)) {
     Out << "-(";
     writeOperand(BinaryOperator::getNegArgument(cast<BinaryOperator>(&I)));
+    Out << ")";
+  } else if (I.getOpcode() == Instruction::Rem && 
+             I.getType()->isFloatingPoint()) {
+    // Output a call to fmod/fmodf instead of emitting a%b
+    if (I.getType() == Type::FloatTy)
+      Out << "fmodf(";
+    else
+      Out << "fmod(";
+    writeOperand(I.getOperand(0));
+    Out << ", ";
+    writeOperand(I.getOperand(1));
     Out << ")";
   } else {
     writeOperand(I.getOperand(0));
