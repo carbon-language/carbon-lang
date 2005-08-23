@@ -40,7 +40,8 @@ class LiveVariables : public MachineFunctionPass {
 public:
   struct VarInfo {
     /// DefInst - The machine instruction that defines this register.
-    MachineInstr      *DefInst;
+    ///
+    MachineInstr *DefInst;
 
     /// AliveBlocks - Set of blocks of which this value is alive completely
     /// through.  This is a bit set which uses the basic block number as an
@@ -76,18 +77,22 @@ private:
   ///
   std::vector<VarInfo> VirtRegInfo;
 
-  /// RegistersKilled - This multimap keeps track of all of the registers that
+  /// RegistersKilled - This map keeps track of all of the registers that
   /// are dead immediately after an instruction reads its operands.  If an
   /// instruction does not have an entry in this map, it kills no registers.
   ///
-  std::multimap<MachineInstr*, unsigned> RegistersKilled;
+  std::map<MachineInstr*, std::vector<unsigned> > RegistersKilled;
 
-  /// RegistersDead - This multimap keeps track of all of the registers that are
+  /// RegistersDead - This map keeps track of all of the registers that are
   /// dead immediately after an instruction executes, which are not dead after
   /// the operands are evaluated.  In practice, this only contains registers
   /// which are defined by an instruction, but never used.
   ///
-  std::multimap<MachineInstr*, unsigned> RegistersDead;
+  std::map<MachineInstr*, std::vector<unsigned> > RegistersDead;
+  
+  /// Dummy - An always empty vector used for instructions without dead or
+  /// killed operands.
+  std::vector<unsigned> Dummy;
 
   /// AllocatablePhysicalRegisters - This vector keeps track of which registers
   /// are actually register allocatable by the target machine.  We can not track
@@ -110,51 +115,67 @@ public:
 
   /// killed_iterator - Iterate over registers killed by a machine instruction
   ///
-  typedef std::multimap<MachineInstr*, unsigned>::iterator killed_iterator;
+  typedef std::vector<unsigned>::iterator killed_iterator;
 
+  std::vector<unsigned> &getKillsVector(MachineInstr *MI) {
+    std::map<MachineInstr*, std::vector<unsigned> >::iterator I = 
+      RegistersKilled.find(MI);
+    return I != RegistersKilled.end() ? I->second : Dummy;
+  }
+  std::vector<unsigned> &getDeadDefsVector(MachineInstr *MI) {
+    std::map<MachineInstr*, std::vector<unsigned> >::iterator I = 
+      RegistersDead.find(MI);
+    return I != RegistersDead.end() ? I->second : Dummy;
+  }
+  
+    
   /// killed_begin/end - Get access to the range of registers killed by a
   /// machine instruction.
   killed_iterator killed_begin(MachineInstr *MI) {
-    return RegistersKilled.lower_bound(MI);
+    return getKillsVector(MI).begin();
   }
   killed_iterator killed_end(MachineInstr *MI) {
-    return RegistersKilled.upper_bound(MI);
+    return getKillsVector(MI).end();
   }
   std::pair<killed_iterator, killed_iterator>
   killed_range(MachineInstr *MI) {
-    return RegistersKilled.equal_range(MI);
+    std::vector<unsigned> &V = getKillsVector(MI);
+    return std::make_pair(V.begin(), V.end());
   }
 
   /// KillsRegister - Return true if the specified instruction kills the
   /// specified register.
   bool KillsRegister(MachineInstr *MI, unsigned Reg) const {
-    typedef std::multimap<MachineInstr*, unsigned>::const_iterator cki;
-    std::pair<cki, cki> KIP = RegistersKilled.equal_range(MI);
-    for (; KIP.first != KIP.second; ++KIP.first)
-      if (KIP.first->second == Reg)
-        return true;
+    std::map<MachineInstr*, std::vector<unsigned> >::const_iterator I = 
+      RegistersKilled.find(MI);
+    if (I != RegistersKilled.end())
+      for (std::vector<unsigned>::const_iterator CI = I->second.begin(),
+           E = I->second.end(); CI != E; ++CI)
+        if (*CI == Reg) return true;
     return false;
   }
 
   killed_iterator dead_begin(MachineInstr *MI) {
-    return RegistersDead.lower_bound(MI);
+    return getDeadDefsVector(MI).begin();
   }
   killed_iterator dead_end(MachineInstr *MI) {
-    return RegistersDead.upper_bound(MI);
+    return getDeadDefsVector(MI).end();
   }
   std::pair<killed_iterator, killed_iterator>
   dead_range(MachineInstr *MI) {
-    return RegistersDead.equal_range(MI);
+    std::vector<unsigned> &V = getDeadDefsVector(MI);
+    return std::make_pair(V.begin(), V.end());
   }
   
   /// RegisterDefIsDead - Return true if the specified instruction defines the
   /// specified register, but that definition is dead.
   bool RegisterDefIsDead(MachineInstr *MI, unsigned Reg) const {
-    typedef std::multimap<MachineInstr*, unsigned>::const_iterator cki;
-    std::pair<cki, cki> KIP = RegistersDead.equal_range(MI);
-    for (; KIP.first != KIP.second; ++KIP.first)
-      if (KIP.first->second == Reg)
-        return true;
+    std::map<MachineInstr*, std::vector<unsigned> >::const_iterator I = 
+      RegistersDead.find(MI);
+    if (I != RegistersDead.end())
+      for (std::vector<unsigned>::const_iterator CI = I->second.begin(),
+           E = I->second.end(); CI != E; ++CI)
+        if (*CI == Reg) return true;
     return false;
   }
 
@@ -185,23 +206,20 @@ public:
                                    MachineInstr *MI) {
     if (!getVarInfo(reg).removeKill(MI))
       return false;
-    for (killed_iterator i = killed_begin(MI), e = killed_end(MI); i != e; ) {
-      if (i->second == reg)
-        RegistersKilled.erase(i++);
-      else
-        ++i;
-    }
+
+    std::vector<unsigned> &V = getKillsVector(MI);
+    for (unsigned i = 0, e = V.size(); i != e; ++i)
+      if (V[i] == reg) {
+        V.erase(V.begin()+i);
+        return true;
+      }
     return true;
   }
 
-  /// removeVirtualRegistersKilled - Remove all of the specified killed
-  /// registers from the live variable information.
-  void removeVirtualRegistersKilled(killed_iterator B, killed_iterator E) {
-    for (killed_iterator I = B; I != E; ++I) { // Remove VarInfo entries...
-      bool removed = getVarInfo(I->second).removeKill(I->first);
-      assert(removed && "kill not in register's VarInfo?");
-    }
-    RegistersKilled.erase(B, E);
+  /// removeVirtualRegistersKilled - Remove all killed info for the specified
+  /// instruction.
+  void removeVirtualRegistersKilled(MachineInstr *MI) {
+    RegistersKilled.erase(MI);
   }
 
   /// addVirtualRegisterDead - Add information about the fact that the specified
@@ -222,21 +240,19 @@ public:
     if (!getVarInfo(reg).removeKill(MI))
       return false;
 
-    for (killed_iterator i = killed_begin(MI), e = killed_end(MI); i != e; ) {
-      if (i->second == reg)
-        RegistersKilled.erase(i++);
-      else
-        ++i;
-    }
+    std::vector<unsigned> &V = getDeadDefsVector(MI);
+    for (unsigned i = 0, e = V.size(); i != e; ++i)
+      if (V[i] == reg) {
+        V.erase(V.begin()+i);
+        return true;
+      }
     return true;
   }
 
   /// removeVirtualRegistersDead - Remove all of the specified dead
   /// registers from the live variable information.
-  void removeVirtualRegistersDead(killed_iterator B, killed_iterator E) {
-    for (killed_iterator I = B; I != E; ++I)  // Remove VarInfo entries...
-      getVarInfo(I->second).removeKill(I->first);
-    RegistersDead.erase(B, E);
+  void removeVirtualRegistersDead(MachineInstr *MI) {
+    RegistersDead.erase(MI);
   }
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
