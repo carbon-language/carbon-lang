@@ -212,8 +212,8 @@ bool FPS::processBasicBlock(MachineFunction &MF, MachineBasicBlock &BB) {
 
     // Get dead variables list now because the MI pointer may be deleted as part
     // of processing!
-    LiveVariables::killed_iterator IB = LV->dead_begin(MI);
-    LiveVariables::killed_iterator IE = LV->dead_end(MI);
+    LiveVariables::killed_iterator IB, IE;
+    tie(IB, IE) = LV->dead_range(MI);
 
     DEBUG(
       const MRegisterInfo *MRI = MF.getTarget().getRegisterInfo();
@@ -222,7 +222,7 @@ bool FPS::processBasicBlock(MachineFunction &MF, MachineBasicBlock &BB) {
       if (I != E) {
         std::cerr << "Killed Operands:";
         for (; I != E; ++I)
-          std::cerr << " %" << MRI->getName(I->second);
+          std::cerr << " %" << MRI->getName(*I);
         std::cerr << "\n";
       }
     );
@@ -241,7 +241,7 @@ bool FPS::processBasicBlock(MachineFunction &MF, MachineBasicBlock &BB) {
     // Check to see if any of the values defined by this instruction are dead
     // after definition.  If so, pop them.
     for (; IB != IE; ++IB) {
-      unsigned Reg = IB->second;
+      unsigned Reg = *IB;
       if (Reg >= X86::FP0 && Reg <= X86::FP6) {
         DEBUG(std::cerr << "Register FP#" << Reg-X86::FP0 << " is dead!\n");
         freeStackSlotAfter(I, Reg-X86::FP0);
