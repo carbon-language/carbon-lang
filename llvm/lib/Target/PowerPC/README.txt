@@ -51,3 +51,23 @@ _foo:
 	b .LBBl42__2E_expand_function_8_674	; loopentry.24
 	b .LBBl42__2E_expand_function_8_42	; NewDefault
 	b .LBBl42__2E_expand_function_8_42	; NewDefault
+
+* Codegen this:
+
+   void test2(int X) {
+     if (X == 0x12345678) bar();
+   }
+
+    as:
+
+       xoris r0,r3,0x1234
+       cmpwi cr0,r0,0x5678
+       beq cr0,L6
+
+    not:
+
+        lis r2, 4660
+        ori r2, r2, 22136 
+        cmpw cr0, r3, r2  
+        bne .LBB_test2_2
+
