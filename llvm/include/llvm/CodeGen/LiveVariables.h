@@ -127,8 +127,9 @@ public:
 
   /// KillsRegister - Return true if the specified instruction kills the
   /// specified register.
-  bool KillsRegister(MachineInstr *MI, unsigned Reg) {
-    std::pair<killed_iterator, killed_iterator> KIP = killed_range(MI);
+  bool KillsRegister(MachineInstr *MI, unsigned Reg) const {
+    typedef std::multimap<MachineInstr*, unsigned>::const_iterator cki;
+    std::pair<cki, cki> KIP = RegistersKilled.equal_range(MI);
     for (; KIP.first != KIP.second; ++KIP.first)
       if (KIP.first->second == Reg)
         return true;
@@ -144,6 +145,17 @@ public:
   std::pair<killed_iterator, killed_iterator>
   dead_range(MachineInstr *MI) {
     return RegistersDead.equal_range(MI);
+  }
+  
+  /// RegisterDefIsDead - Return true if the specified instruction defines the
+  /// specified register, but that definition is dead.
+  bool RegisterDefIsDead(MachineInstr *MI, unsigned Reg) const {
+    typedef std::multimap<MachineInstr*, unsigned>::const_iterator cki;
+    std::pair<cki, cki> KIP = RegistersDead.equal_range(MI);
+    for (; KIP.first != KIP.second; ++KIP.first)
+      if (KIP.first->second == Reg)
+        return true;
+    return false;
   }
 
   //===--------------------------------------------------------------------===//
