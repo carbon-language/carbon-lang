@@ -330,30 +330,6 @@ def STFDX : XForm_28<31, 727, (ops FPRC:$frS, GPRC:$rA, GPRC:$rB),
 
 // XL-Form instructions.  condition register logical ops.
 //
-def CRAND  : XLForm_1<19, 257, (ops CRRC:$D, crbit:$Db,
-                      CRRC:$A, crbit:$Ab, CRRC:$B, crbit:$Bb),
-                      "crand $Db, $Ab, $Bb">;
-def CRANDC : XLForm_1<19, 129, (ops CRRC:$D, crbit:$Db,
-                      CRRC:$A, crbit:$Ab, CRRC:$B, crbit:$Bb),
-                      "crandc $Db, $Ab, $Bb">;
-def CREQV  : XLForm_1<19, 289, (ops CRRC:$D, crbit:$Db,
-                      CRRC:$A, crbit:$Ab, CRRC:$B, crbit:$Bb),
-                      "creqv $Db, $Ab, $Bb">;
-def CRNAND : XLForm_1<19, 225, (ops CRRC:$D, crbit:$Db,
-                      CRRC:$A, crbit:$Ab, CRRC:$B, crbit:$Bb),
-                      "crnand $Db, $Ab, $Bb">;
-def CRNOR  : XLForm_1<19, 33, (ops CRRC:$D, crbit:$Db,
-                      CRRC:$A, crbit:$Ab, CRRC:$B, crbit:$Bb),
-                      "crnor $Db, $Ab, $Bb">;
-def CROR   : XLForm_1<19, 449, (ops CRRC:$D, crbit:$Db,
-                      CRRC:$A, crbit:$Ab, CRRC:$B, crbit:$Bb),
-                      "cror $Db, $Ab, $Bb">;
-def CRORC  : XLForm_1<19, 417, (ops CRRC:$D, crbit:$Db,
-                      CRRC:$A, crbit:$Ab, CRRC:$B, crbit:$Bb),
-                      "crorc $Db, $Ab, $Bb">;
-def CRXOR  : XLForm_1<19, 193, (ops CRRC:$D, crbit:$Db,
-                      CRRC:$A, crbit:$Ab, CRRC:$B, crbit:$Bb),
-                      "crxor $Db, $Ab, $Bb">;
 def MCRF   : XLForm_3<19, 0, (ops CRRC:$BF, CRRC:$BFA),
                       "mcrf $BF, $BFA">;
 
