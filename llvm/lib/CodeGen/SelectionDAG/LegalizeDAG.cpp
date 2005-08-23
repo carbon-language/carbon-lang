@@ -1068,7 +1068,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     Tmp2 = LegalizeOp(Node->getOperand(1));   // TrueVal
     Tmp3 = LegalizeOp(Node->getOperand(2));   // FalseVal
 
-    switch (TLI.getOperationAction(Node->getOpcode(), Tmp2.getValueType())) {
+    switch (TLI.getOperationAction(ISD::SELECT, Tmp2.getValueType())) {
     default: assert(0 && "This action is not supported yet!");
     case TargetLowering::Expand:
       if (Tmp1.getOpcode() == ISD::SETCC) {
@@ -1149,9 +1149,6 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     case Legal:
       Tmp1 = LegalizeOp(Node->getOperand(0));   // LHS
       Tmp2 = LegalizeOp(Node->getOperand(1));   // RHS
-      if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(1))
-        Result = DAG.getNode(ISD::SETCC, Node->getValueType(0), Tmp1, Tmp2,
-                             Node->getOperand(2));
       break;
     case Promote:
       Tmp1 = PromoteOp(Node->getOperand(0));   // LHS
@@ -1190,10 +1187,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
                              DAG.getValueType(VT));
           break;
         }
-
       }
-      Result = DAG.getNode(ISD::SETCC, Node->getValueType(0), Tmp1, Tmp2,
-                           Node->getOperand(2));
       break;
     case Expand:
       SDOperand LHSLo, LHSHi, RHSLo, RHSHi;
@@ -1207,17 +1201,14 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
             if (RHSCST->isAllOnesValue()) {
               // Comparison to -1.
               Tmp1 = DAG.getNode(ISD::AND, LHSLo.getValueType(), LHSLo, LHSHi);
-              Result = DAG.getNode(ISD::SETCC, Node->getValueType(0), Tmp1,
-                                   RHSLo, Node->getOperand(2));
+              Tmp2 = RHSLo;
               break;
             }
 
         Tmp1 = DAG.getNode(ISD::XOR, LHSLo.getValueType(), LHSLo, RHSLo);
         Tmp2 = DAG.getNode(ISD::XOR, LHSLo.getValueType(), LHSHi, RHSHi);
         Tmp1 = DAG.getNode(ISD::OR, Tmp1.getValueType(), Tmp1, Tmp2);
-        Result = DAG.getNode(ISD::SETCC, Node->getValueType(0), Tmp1,
-                             DAG.getConstant(0, Tmp1.getValueType()),
-                             Node->getOperand(2));
+        Tmp2 = DAG.getConstant(0, Tmp1.getValueType());
         break;
       default:
         // If this is a comparison of the sign bit, just look at the top part.
@@ -1226,9 +1217,11 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
           if ((cast<CondCodeSDNode>(Node->getOperand(2))->get() == ISD::SETLT &&
                CST->getValue() == 0) ||              // X < 0
               (cast<CondCodeSDNode>(Node->getOperand(2))->get() == ISD::SETGT &&
-               (CST->isAllOnesValue())))             // X > -1
-            return DAG.getNode(ISD::SETCC, Node->getValueType(0), LHSHi, RHSHi,
-                               Node->getOperand(2));
+               (CST->isAllOnesValue()))) {            // X > -1
+            Tmp1 = LHSHi;
+            Tmp2 = RHSHi;
+            break;
+          }
 
         // FIXME: This generated code sucks.
         ISD::CondCode LowCC;
@@ -1254,10 +1247,30 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         Tmp2 = DAG.getNode(ISD::SETCC, Node->getValueType(0), LHSHi, RHSHi,
                            Node->getOperand(2));
         Result = DAG.getSetCC(Node->getValueType(0), LHSHi, RHSHi, ISD::SETEQ);
-        Result = DAG.getNode(ISD::SELECT, Tmp1.getValueType(),
-                             Result, Tmp1, Tmp2);
-        break;
+        Result = LegalizeOp(DAG.getNode(ISD::SELECT, Tmp1.getValueType(),
+                                        Result, Tmp1, Tmp2));
+        return Result;
       }
+    }
+
+    switch(TLI.getOperationAction(ISD::SETCC, Node->getOperand(0).getValueType())) {
+    default: 
+      assert(0 && "Cannot handle this action for SETCC yet!");
+      break;
+    case TargetLowering::Legal:
+      if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(1))
+        Result = DAG.getNode(ISD::SETCC, Node->getValueType(0), Tmp1, Tmp2,
+                             Node->getOperand(2));
+      break;
+    case TargetLowering::Expand:
+      // Expand a setcc node into a select_cc of the same condition, lhs, and
+      // rhs that selects between const 1 (true) and const 0 (false).
+      MVT::ValueType VT = Node->getValueType(0);
+      Result = DAG.getNode(ISD::SELECT_CC, VT, Tmp1, Tmp2, 
+                           DAG.getConstant(1, VT), DAG.getConstant(0, VT),
+                           Node->getOperand(2));
+      Result = LegalizeOp(Result);
+      break;
     }
     break;
 
