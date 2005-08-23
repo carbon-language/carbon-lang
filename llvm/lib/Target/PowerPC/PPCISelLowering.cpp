@@ -22,7 +22,7 @@
 using namespace llvm;
 
 namespace llvm {
-  cl::opt<bool> SetCCIllegal("-ppc-setcc-is-illegal", cl::Hidden,
+  cl::opt<bool> SetCCIllegal("ppc-setcc-is-illegal", cl::Hidden,
                              cl::desc("Make ISD::SETCC illegal on PowerPC"));
 }
 
