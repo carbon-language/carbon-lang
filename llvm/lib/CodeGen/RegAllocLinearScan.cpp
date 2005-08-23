@@ -12,6 +12,9 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "regalloc"
+#include "LiveIntervalAnalysis.h"
+#include "PhysRegTracker.h"
+#include "VirtRegMap.h"
 #include "llvm/Function.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
@@ -19,12 +22,10 @@
 #include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/Target/MRegisterInfo.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Support/Debug.h"
+#include "llvm/ADT/EquivalenceClasses.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
-#include "LiveIntervalAnalysis.h"
-#include "PhysRegTracker.h"
-#include "VirtRegMap.h"
+#include "llvm/Support/Debug.h"
 #include <algorithm>
 #include <cmath>
 #include <set>
@@ -44,6 +45,12 @@ namespace {
     typedef std::pair<LiveInterval*, LiveInterval::iterator> IntervalPtr;
     typedef std::vector<IntervalPtr> IntervalPtrs;
   private:
+    /// RelatedRegClasses - This structure is built the first time a function is
+    /// compiled, and keeps track of which register classes have registers that
+    /// belong to multiple classes or have aliases that are in other classes.
+    EquivalenceClasses<const TargetRegisterClass*> RelatedRegClasses;
+    std::map<unsigned, const TargetRegisterClass*> OneClassForEachPhysReg;
+
     MachineFunction* mf_;
     const TargetMachine* tm_;
     const MRegisterInfo* mri_;
@@ -119,6 +126,8 @@ namespace {
     /// stack slot. returns the stack slot
     int assignVirt2StackSlot(unsigned virtReg);
 
+    void ComputeRelatedRegClasses();
+
     template <typename ItTy>
     void printIntervals(const char* const str, ItTy i, ItTy e) const {
       if (str) std::cerr << str << " intervals:\n";
@@ -134,12 +143,51 @@ namespace {
   };
 }
 
+void RA::ComputeRelatedRegClasses() {
+  const MRegisterInfo &MRI = *mri_;
+  
+  // First pass, add all reg classes to the union, and determine at least one
+  // reg class that each register is in.
+  bool HasAliases = false;
+  for (MRegisterInfo::regclass_iterator RCI = MRI.regclass_begin(),
+       E = MRI.regclass_end(); RCI != E; ++RCI) {
+    RelatedRegClasses.insert(*RCI);
+    for (TargetRegisterClass::iterator I = (*RCI)->begin(), E = (*RCI)->end();
+         I != E; ++I) {
+      HasAliases = HasAliases || *MRI.getAliasSet(*I) != 0;
+      
+      const TargetRegisterClass *&PRC = OneClassForEachPhysReg[*I];
+      if (PRC) {
+        // Already processed this register.  Just make sure we know that
+        // multiple register classes share a register.
+        RelatedRegClasses.unionSets(PRC, *RCI);
+      } else {
+        PRC = *RCI;
+      }
+    }
+  }
+  
+  // Second pass, now that we know conservatively what register classes each reg
+  // belongs to, add info about aliases.  We don't need to do this for targets
+  // without register aliases.
+  if (HasAliases)
+    for (std::map<unsigned, const TargetRegisterClass*>::iterator
+         I = OneClassForEachPhysReg.begin(), E = OneClassForEachPhysReg.end();
+         I != E; ++I)
+      for (const unsigned *AS = MRI.getAliasSet(I->first); *AS; ++AS)
+        RelatedRegClasses.unionSets(I->second, OneClassForEachPhysReg[*AS]);
+}
+
 bool RA::runOnMachineFunction(MachineFunction &fn) {
   mf_ = &fn;
   tm_ = &fn.getTarget();
   mri_ = tm_->getRegisterInfo();
   li_ = &getAnalysis<LiveIntervals>();
 
+  // If this is the first function compiled, compute the related reg classes.
+  if (RelatedRegClasses.empty())
+    ComputeRelatedRegClasses();
+  
   PhysRegsUsed = new bool[mri_->getNumRegs()];
   std::fill(PhysRegsUsed, PhysRegsUsed+mri_->getNumRegs(), false);
   fn.setUsedPhysRegs(PhysRegsUsed);
@@ -367,18 +415,24 @@ void RA::assignRegOrStackSlotAtInterval(LiveInterval* cur)
 
   std::vector<std::pair<unsigned, float> > SpillWeightsToAdd;
   unsigned StartPosition = cur->beginNumber();
-
+  const TargetRegisterClass *RC = mf_->getSSARegMap()->getRegClass(cur->reg);
+  const TargetRegisterClass *RCLeader = RelatedRegClasses.getLeaderValue(RC);
+      
   // for every interval in inactive we overlap with, mark the
   // register as not free and update spill weights.
   for (IntervalPtrs::const_iterator i = inactive_.begin(),
          e = inactive_.end(); i != e; ++i) {
-    if (cur->overlapsFrom(*i->first, i->second-1)) {
-      unsigned reg = i->first->reg;
-      assert(MRegisterInfo::isVirtualRegister(reg) &&
-             "Can only allocate virtual registers!");
-      reg = vrm_->getPhys(reg);
-      prt_->addRegUse(reg);
-      SpillWeightsToAdd.push_back(std::make_pair(reg, i->first->weight));
+    unsigned Reg = i->first->reg;
+    assert(MRegisterInfo::isVirtualRegister(Reg) &&
+           "Can only allocate virtual registers!");
+    const TargetRegisterClass *RegRC = mf_->getSSARegMap()->getRegClass(Reg);
+    // If this is not in a related reg class to the register we're allocating, 
+    // don't check it.
+    if (RelatedRegClasses.getLeaderValue(RegRC) == RCLeader &&
+        cur->overlapsFrom(*i->first, i->second-1)) {
+      Reg = vrm_->getPhys(Reg);
+      prt_->addRegUse(Reg);
+      SpillWeightsToAdd.push_back(std::make_pair(Reg, i->first->weight));
     }
   }
   
@@ -415,12 +469,15 @@ void RA::assignRegOrStackSlotAtInterval(LiveInterval* cur)
     // out to be in use.  Actually add all of the conflicting fixed registers to
     // prt so we can do an accurate query.
     if (ConflictsWithFixed) {
-      // For every interval in fixed we overlap with, mark the register as not free
-      // and update spill weights.
+      // For every interval in fixed we overlap with, mark the register as not
+      // free and update spill weights.
       for (unsigned i = 0, e = fixed_.size(); i != e; ++i) {
         IntervalPtr &IP = fixed_[i];
         LiveInterval *I = IP.first;
-        if (I->endNumber() > StartPosition) {
+
+        const TargetRegisterClass *RegRC = OneClassForEachPhysReg[I->reg];
+        if (RelatedRegClasses.getLeaderValue(RegRC) == RCLeader &&       
+            I->endNumber() > StartPosition) {
           LiveInterval::iterator II = I->advanceTo(IP.second, StartPosition);
           IP.second = II;
           if (II != I->begin() && II->start > StartPosition)
@@ -476,9 +533,8 @@ void RA::assignRegOrStackSlotAtInterval(LiveInterval* cur)
 
   float minWeight = float(HUGE_VAL);
   unsigned minReg = 0;
-  const TargetRegisterClass* rc = mf_->getSSARegMap()->getRegClass(cur->reg);
-  for (TargetRegisterClass::iterator i = rc->allocation_order_begin(*mf_),
-       e = rc->allocation_order_end(*mf_); i != e; ++i) {
+  for (TargetRegisterClass::iterator i = RC->allocation_order_begin(*mf_),
+       e = RC->allocation_order_end(*mf_); i != e; ++i) {
     unsigned reg = *i;
     if (minWeight > SpillWeights[reg]) {
       minWeight = SpillWeights[reg];
@@ -649,14 +705,23 @@ unsigned RA::getFreePhysReg(LiveInterval* cur)
   std::vector<unsigned> inactiveCounts(mri_->getNumRegs(), 0);
   unsigned MaxInactiveCount = 0;
   
+  const TargetRegisterClass *RC = mf_->getSSARegMap()->getRegClass(cur->reg);
+  const TargetRegisterClass *RCLeader = RelatedRegClasses.getLeaderValue(RC);
+ 
   for (IntervalPtrs::iterator i = inactive_.begin(), e = inactive_.end();
        i != e; ++i) {
     unsigned reg = i->first->reg;
     assert(MRegisterInfo::isVirtualRegister(reg) &&
            "Can only allocate virtual registers!");
-    reg = vrm_->getPhys(reg);
-    ++inactiveCounts[reg];
-    MaxInactiveCount = std::max(MaxInactiveCount, inactiveCounts[reg]);
+
+    // If this is not in a related reg class to the register we're allocating, 
+    // don't check it.
+    const TargetRegisterClass *RegRC = mf_->getSSARegMap()->getRegClass(reg);
+    if (RelatedRegClasses.getLeaderValue(RegRC) == RCLeader) {
+      reg = vrm_->getPhys(reg);
+      ++inactiveCounts[reg];
+      MaxInactiveCount = std::max(MaxInactiveCount, inactiveCounts[reg]);
+    }
   }
 
   const TargetRegisterClass* rc = mf_->getSSARegMap()->getRegClass(cur->reg);
