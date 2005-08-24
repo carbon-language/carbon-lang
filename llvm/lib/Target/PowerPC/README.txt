@@ -52,6 +52,8 @@ _foo:
 	b .LBBl42__2E_expand_function_8_42	; NewDefault
 	b .LBBl42__2E_expand_function_8_42	; NewDefault
 
+===-------------------------------------------------------------------------===
+
 * Codegen this:
 
    void test2(int X) {
@@ -71,3 +73,31 @@ _foo:
         cmpw cr0, r3, r2  
         bne .LBB_test2_2
 
+===-------------------------------------------------------------------------===
+
+Lump the constant pool for each function into ONE pic object, and reference
+pieces of it as offsets from the start.  For functions like this (contrived
+to have lots of constants obviously):
+
+double X(double Y) { return (Y*1.23 + 4.512)*2.34 + 14.38; }
+
+We generate:
+
+_X:
+        lis r2, ha16(.CPI_X_0)
+        lfd f0, lo16(.CPI_X_0)(r2)
+        lis r2, ha16(.CPI_X_1)
+        lfd f2, lo16(.CPI_X_1)(r2)
+        fmadd f0, f1, f0, f2
+        lis r2, ha16(.CPI_X_2)
+        lfd f1, lo16(.CPI_X_2)(r2)
+        lis r2, ha16(.CPI_X_3)
+        lfd f2, lo16(.CPI_X_3)(r2)
+        fmadd f1, f0, f1, f2
+        blr
+
+It would be better to materialize .CPI_X into a register, then use immediates
+off of the register to avoid the lis's.  This is even more important in PIC 
+mode.
+
+===-------------------------------------------------------------------------===
