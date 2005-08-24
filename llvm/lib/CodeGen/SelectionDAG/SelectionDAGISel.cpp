@@ -1228,11 +1228,11 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB, MachineFunction &MF,
   DEBUG(std::cerr << "Legalized selection DAG:\n");
   DEBUG(DAG.dump());
 
+  if (ViewDAGs) DAG.viewGraph();
+
   // Third, instruction select all of the operations to machine code, adding the
   // code to the MachineBasicBlock.
   InstructionSelectBasicBlock(DAG);
-
-  if (ViewDAGs) DAG.viewGraph();
 
   DEBUG(std::cerr << "Selected machine code:\n");
   DEBUG(BB->dump());
