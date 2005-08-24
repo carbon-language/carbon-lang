@@ -129,7 +129,8 @@ private:
 /// instances to all the call sites in a module, relatively efficiently. The
 /// purpose of this pass is to provide optimizations for calls to well-known
 /// functions with well-known semantics, such as those in the c library. The
-/// class provides the basic infrastructure for handling runOnModule.  Whenever /// this pass finds a function call, it asks the appropriate optimizer to
+/// class provides the basic infrastructure for handling runOnModule.  Whenever
+/// this pass finds a function call, it asks the appropriate optimizer to
 /// validate the call (ValidateLibraryCall). If it is validated, then
 /// the OptimizeCall method is also called.
 /// @brief A ModulePass for optimizing well-known function calls.
@@ -306,22 +307,22 @@ public:
   }
 
   /// @brief Return a Function* for the memcpy libcall
-  Function* get_memcpy()
-  {
-    if (!memcpy_func)
-    {
-      // Note: this is for llvm.memcpy intrinsic
-      std::vector<const Type*> args;
-      args.push_back(PointerType::get(Type::SByteTy));
-      args.push_back(PointerType::get(Type::SByteTy));
-      args.push_back(Type::UIntTy);
-      args.push_back(Type::UIntTy);
-      FunctionType* memcpy_type = FunctionType::get(Type::VoidTy, args, false);
-      memcpy_func = M->getOrInsertFunction("llvm.memcpy",memcpy_type);
+  Function* get_memcpy() {
+    if (!memcpy_func) {
+      const Type *SBP = PointerType::get(Type::SByteTy);
+      memcpy_func = M->getOrInsertFunction("llvm.memcpy", Type::VoidTy,SBP, SBP,
+                                           Type::UIntTy, Type::UIntTy, 0);
     }
     return memcpy_func;
   }
 
+  Function* get_floorf() {
+    if (!floorf_func)
+      floorf_func = M->getOrInsertFunction("floorf", Type::FloatTy,
+                                           Type::FloatTy, 0);
+    return floorf_func;
+  }
+  
 private:
   /// @brief Reset our cached data for a new Module
   void reset(Module& mod)
@@ -335,6 +336,7 @@ private:
     sqrt_func   = 0;
     strcpy_func = 0;
     strlen_func = 0;
+    floorf_func = 0;
   }
 
 private:
@@ -345,6 +347,7 @@ private:
   Function* sqrt_func;   ///< Cached sqrt function
   Function* strcpy_func; ///< Cached strcpy function
   Function* strlen_func; ///< Cached strlen function
+  Function* floorf_func; ///< Cached floorf function
   Module* M;             ///< Cached Module
   TargetData* TD;        ///< Cached TargetData
 };
@@ -1238,7 +1241,7 @@ public:
       else if (Op2V == -1.0)
       {
         // pow(x,-1.0)    -> 1.0/x
-        BinaryOperator* div_inst= BinaryOperator::create(Instruction::Div,
+        BinaryOperator* div_inst= BinaryOperator::createDiv(
           ConstantFP::get(Ty,1.0), base, ci->getName()+".pow", ci);
         ci->replaceAllUsesWith(div_inst);
         ci->eraseFromParent();
@@ -1641,7 +1644,7 @@ public:
     CastInst* cast =
       new CastInst(ci->getOperand(1),Type::UIntTy,
         ci->getOperand(1)->getName()+".uint",ci);
-    BinaryOperator* sub_inst = BinaryOperator::create(Instruction::Sub,cast,
+    BinaryOperator* sub_inst = BinaryOperator::createSub(cast,
         ConstantUInt::get(Type::UIntTy,0x30),
         ci->getOperand(1)->getName()+".sub",ci);
     SetCondInst* setcond_inst = new SetCondInst(Instruction::SetLE,sub_inst,
@@ -1682,7 +1685,7 @@ public:
   {
     // toascii(c)   -> (c & 0x7f)
     Value* chr = ci->getOperand(1);
-    BinaryOperator* and_inst = BinaryOperator::create(Instruction::And,chr,
+    BinaryOperator* and_inst = BinaryOperator::createAnd(chr,
         ConstantInt::get(chr->getType(),0x7F),ci->getName()+".toascii",ci);
     ci->replaceAllUsesWith(and_inst);
     ci->eraseFromParent();
@@ -1753,7 +1756,7 @@ public:
       new CallInst(F, ci->getOperand(1), inst_name, ci);
     if (arg_type != Type::IntTy)
       call = new CastInst(call, Type::IntTy, inst_name, ci);
-    BinaryOperator* add = BinaryOperator::create(Instruction::Add, call,
+    BinaryOperator* add = BinaryOperator::createAdd(call,
       ConstantSInt::get(Type::IntTy,1), inst_name, ci);
     SetCondInst* eq = new SetCondInst(Instruction::SetEQ,ci->getOperand(1),
       ConstantSInt::get(ci->getOperand(1)->getType(),0),inst_name,ci);
@@ -1790,6 +1793,41 @@ public:
       "Number of 'ffsll' calls simplified") {}
 
 } FFSLLOptimizer;
+
+
+/// This LibCallOptimization will simplify calls to the "floor" library
+/// function.
+/// @brief Simplify the floor library function.
+struct FloorOptimization : public LibCallOptimization {
+  FloorOptimization()
+    : LibCallOptimization("floor", "Number of 'floor' calls simplified") {}
+  
+  /// @brief Make sure that the "floor" function has the right prototype
+  virtual bool ValidateCalledFunction(const Function *F, SimplifyLibCalls &SLC){
+    return F->arg_size() == 1 && F->arg_begin()->getType() == Type::DoubleTy &&
+           F->getReturnType() == Type::DoubleTy;
+  }
+  
+  virtual bool OptimizeCall(CallInst *CI, SimplifyLibCalls &SLC) {
+    // If this is a float argument passed in, convert to floorf.
+    // e.g. floor((double)FLT) -> (double)floorf(FLT).  There can be no loss of
+    // precision due to this.
+    if (CastInst *Cast = dyn_cast<CastInst>(CI->getOperand(1)))
+      if (Cast->getOperand(0)->getType() == Type::FloatTy) {
+        Value *New = new CallInst(SLC.get_floorf(), Cast->getOperand(0),
+                                  CI->getName(), CI);
+        New = new CastInst(New, Type::DoubleTy, CI->getName(), CI);
+        CI->replaceAllUsesWith(New);
+        CI->eraseFromParent();
+        if (Cast->use_empty())
+          Cast->eraseFromParent();
+        return true;
+      }
+    return false; // opt failed
+  }
+} FloorOptimizer;
+
+
 
 /// A function to compute the length of a null-terminated constant array of
 /// integers.  This function can't rely on the size of the constant array
