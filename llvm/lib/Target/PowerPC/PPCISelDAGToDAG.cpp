@@ -28,7 +28,6 @@
 using namespace llvm;
 
 namespace {
-  Statistic<> Recorded("ppc-codegen", "Number of recording ops emitted");
   Statistic<> FusedFP ("ppc-codegen", "Number of fused fp operations");
   Statistic<> FrameOff("ppc-codegen", "Number of frame idx offsets collapsed");
     
@@ -599,8 +598,11 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
     if (Ty == MVT::i32) {
       unsigned Imm;
       if (isIntImmediate(N->getOperand(0), Imm) && isInt16(Imm)) {
-        CurDAG->SelectNodeTo(N, Ty, PPC::SUBFIC, Select(N->getOperand(1)),
-                             getI32Imm(Lo16(Imm)));
+        if (0 == Imm)
+          CurDAG->SelectNodeTo(N, Ty, PPC::NEG, Select(N->getOperand(1)));
+        else
+          CurDAG->SelectNodeTo(N, Ty, PPC::SUBFIC, Select(N->getOperand(1)),
+                               getI32Imm(Lo16(Imm)));
         break;
       }
       if (SDNode *I = SelectIntImmediateExpr(N->getOperand(0), N->getOperand(1),
