@@ -34,6 +34,7 @@
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Config/alloca.h"
+#include <algorithm>
 using namespace llvm;
 
 static RegisterAnalysis<LiveVariables> X("livevars", "Live Variable Analysis");
@@ -51,6 +52,25 @@ LiveVariables::VarInfo &LiveVariables::getVarInfo(unsigned RegIdx) {
   return VirtRegInfo[RegIdx];
 }
 
+bool LiveVariables::KillsRegister(MachineInstr *MI, unsigned Reg) const {
+  std::map<MachineInstr*, std::vector<unsigned> >::const_iterator I = 
+  RegistersKilled.find(MI);
+  if (I == RegistersKilled.end()) return false;
+  
+  // Do a binary search, as these lists can grow pretty big, particularly for
+  // call instructions on targets with lots of call-clobbered registers.
+  return std::binary_search(I->second.begin(), I->second.end(), Reg);
+}
+
+bool LiveVariables::RegisterDefIsDead(MachineInstr *MI, unsigned Reg) const {
+  std::map<MachineInstr*, std::vector<unsigned> >::const_iterator I = 
+  RegistersDead.find(MI);
+  if (I == RegistersDead.end()) return false;
+  
+  // Do a binary search, as these lists can grow pretty big, particularly for
+  // call instructions on targets with lots of call-clobbered registers.
+  return std::binary_search(I->second.begin(), I->second.end(), Reg);
+}
 
 
 void LiveVariables::MarkVirtRegAliveInBlock(VarInfo &VRInfo,
@@ -301,6 +321,16 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &MF) {
                                     i + MRegisterInfo::FirstVirtualRegister);
     }
 
+  // Walk through the RegistersKilled/Dead sets, and sort the registers killed
+  // or dead.  This allows us to use efficient binary search for membership
+  // testing.
+  for (std::map<MachineInstr*, std::vector<unsigned> >::iterator
+       I = RegistersKilled.begin(), E = RegistersKilled.end(); I != E; ++I)
+    std::sort(I->second.begin(), I->second.end());
+  for (std::map<MachineInstr*, std::vector<unsigned> >::iterator
+       I = RegistersDead.begin(), E = RegistersDead.end(); I != E; ++I)
+    std::sort(I->second.begin(), I->second.end());
+  
   // Check to make sure there are no unreachable blocks in the MC CFG for the
   // function.  If so, it is due to a bug in the instruction selector or some
   // other part of the code generator if this happens.
