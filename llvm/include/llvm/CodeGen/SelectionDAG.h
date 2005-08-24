@@ -260,11 +260,16 @@ public:
                           SDOperand Op4, SDOperand Op5) {
     return getNode(ISD::BUILTIN_OP_END+Opcode, VT, Op1, Op2, Op3, Op4, Op5);
   }
+  SDOperand getTargetNode(unsigned Opcode, MVT::ValueType VT,
+                          std::vector<SDOperand> &Ops) {
+    return getNode(ISD::BUILTIN_OP_END+Opcode, VT, Ops);
+  }
   
   /// ReplaceAllUsesWith - Modify anything using 'From' to use 'To' instead.
   /// This can cause recursive merging of nodes in the DAG.
   ///
   void ReplaceAllUsesWith(SDNode *From, SDNode *To);
+  void ReplaceAllUsesWith(SDNode *From, const std::vector<SDOperand> &To);
   
   void dump() const;
 
