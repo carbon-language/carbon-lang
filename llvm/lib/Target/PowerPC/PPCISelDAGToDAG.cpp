@@ -917,7 +917,7 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
       case MVT::i16: Opc = isIdx ? PPC::STHX : PPC::STH; break;
       }
     }
-
+    
     CurDAG->SelectNodeTo(N, MVT::Other, Opc, Select(N->getOperand(1)),
                          AddrOp1, AddrOp2, Select(N->getOperand(0)));
     break;
@@ -928,9 +928,105 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
     unsigned Amt = cast<ConstantSDNode>(N->getOperand(1))->getValue();
     unsigned Opc = N->getOpcode() == ISD::CALLSEQ_START ?
                        PPC::ADJCALLSTACKDOWN : PPC::ADJCALLSTACKUP;
-    CurDAG->SelectNodeTo(N, MVT::Other, Opc, Select(N->getOperand(0)),
-                         getI32Imm(Amt));
+    CurDAG->SelectNodeTo(N, MVT::Other, Opc, 
+                         getI32Imm(Amt), Select(N->getOperand(0)));
     break;
+  }
+  case ISD::CALL:
+  case ISD::TAILCALL: {
+    SDOperand Chain = Select(N->getOperand(0));
+
+    unsigned CallOpcode;
+    std::vector<SDOperand> CallOperands;
+    
+    if (GlobalAddressSDNode *GASD =
+        dyn_cast<GlobalAddressSDNode>(N->getOperand(1))) {
+      CallOpcode = PPC::CALLpcrel;
+      CallOperands.push_back(CurDAG->getTargetGlobalAddress(GASD->getGlobal(),
+                                                            MVT::i32));
+    } else if (ExternalSymbolSDNode *ESSDN =
+               dyn_cast<ExternalSymbolSDNode>(N->getOperand(1))) {
+      CallOpcode = PPC::CALLpcrel;
+      CallOperands.push_back(N->getOperand(1));
+    } else {
+      // Copy the callee address into the CTR register.
+      SDOperand Callee = Select(N->getOperand(1));
+      Chain = CurDAG->getTargetNode(PPC::MTCTR, MVT::Other, Callee, Chain);
+
+      // Copy the callee address into R12 on darwin.
+      SDOperand R12 = CurDAG->getRegister(PPC::R12, MVT::i32);
+      Chain = CurDAG->getNode(ISD::CopyToReg, MVT::Other, R12, Callee, Chain);
+      
+      CallOperands.push_back(getI32Imm(20));  // Information to encode indcall
+      CallOperands.push_back(getI32Imm(0));   // Information to encode indcall
+      CallOperands.push_back(R12);
+      CallOpcode = PPC::CALLindirect;
+    }
+    
+    unsigned GPR_idx = 0, FPR_idx = 0;
+    static const unsigned GPR[] = {
+      PPC::R3, PPC::R4, PPC::R5, PPC::R6,
+      PPC::R7, PPC::R8, PPC::R9, PPC::R10,
+    };
+    static const unsigned FPR[] = {
+      PPC::F1, PPC::F2, PPC::F3, PPC::F4, PPC::F5, PPC::F6, PPC::F7,
+      PPC::F8, PPC::F9, PPC::F10, PPC::F11, PPC::F12, PPC::F13
+    };
+    
+    for (unsigned i = 2, e = N->getNumOperands(); i != e; ++i)
+      if (N->getOperand(i).getOpcode() != ISD::UNDEF) {
+        unsigned DestReg = 0;
+        MVT::ValueType RegTy;
+        if (N->getOperand(i).getValueType() == MVT::i32) {
+          assert(GPR_idx < 8 && "Too many int args");
+          DestReg = GPR[GPR_idx++];
+          RegTy = MVT::i32;
+        } else {
+          assert(MVT::isFloatingPoint(Op.getValueType()) &&
+                 "Unpromoted integer arg?");
+          assert(FPR_idx < 13 && "Too many fp args");
+          DestReg = FPR[FPR_idx++];
+          RegTy = MVT::f64;   // Even if this is really f32!
+        }
+        
+        SDOperand Reg = CurDAG->getRegister(DestReg, RegTy);
+        Chain = CurDAG->getNode(ISD::CopyToReg, MVT::Other, Chain, Reg,
+                                Select(N->getOperand(i)));
+        CallOperands.push_back(Reg);
+      }
+
+    // Finally, once everything is in registers to pass to the call, emit the
+    // call itself.
+    CallOperands.push_back(Chain);
+    Chain = CurDAG->getTargetNode(CallOpcode, MVT::Other, CallOperands);
+    
+    std::vector<SDOperand> CallResults;
+    
+    // If the call has results, copy the values out of the ret val registers.
+    switch (N->getValueType(0)) {
+    default: assert(0 && "Unexpected ret value!");
+    case MVT::Other: break;
+    case MVT::i32:
+      if (N->getValueType(1) == MVT::i32) {
+        Chain = CurDAG->getCopyFromReg(Chain, PPC::R4, MVT::i32).getValue(1);
+        CallResults.push_back(Chain.getValue(0));
+        Chain = CurDAG->getCopyFromReg(Chain, PPC::R3, MVT::i32).getValue(1);
+        CallResults.push_back(Chain.getValue(0));
+      } else {
+        Chain = CurDAG->getCopyFromReg(Chain, PPC::R3, MVT::i32).getValue(1);
+        CallResults.push_back(Chain.getValue(0));
+      }
+      break;
+    case MVT::f32:
+    case MVT::f64:
+      Chain = CurDAG->getCopyFromReg(Chain, PPC::F1, MVT::f64).getValue(1);
+      CallResults.push_back(Chain.getValue(0));
+      break;
+    }
+    
+    CallResults.push_back(Chain);
+    CurDAG->ReplaceAllUsesWith(N, CallResults);
+    return CallResults[Op.ResNo];
   }
   case ISD::RET: {
     SDOperand Chain = Select(N->getOperand(0));     // Token chain.
