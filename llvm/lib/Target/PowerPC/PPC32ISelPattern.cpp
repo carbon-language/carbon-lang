@@ -830,7 +830,10 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
     Node->dump(); std::cerr << '\n';
     assert(0 && "Node not handled!\n");
   case ISD::UNDEF:
-    BuildMI(BB, PPC::IMPLICIT_DEF, 0, Result);
+    if (Node->getValueType(0) == MVT::i32)
+      BuildMI(BB, PPC::IMPLICIT_DEF_GPR, 0, Result);
+    else
+      BuildMI(BB, PPC::IMPLICIT_DEF_FP, 0, Result);
     return Result;
   case ISD::DYNAMIC_STACKALLOC:
     // Generate both result values.  FIXME: Need a better commment here?
@@ -1872,8 +1875,11 @@ void ISel::Select(SDOperand N) {
     return;
   case ISD::ImplicitDef:
     Select(N.getOperand(0));
-    BuildMI(BB, PPC::IMPLICIT_DEF, 0,
-            cast<RegisterSDNode>(N.getOperand(1))->getReg());
+    Tmp1 = cast<RegisterSDNode>(N.getOperand(1))->getReg();
+    if (N.getOperand(1).getValueType() == MVT::i32)
+      BuildMI(BB, PPC::IMPLICIT_DEF_GPR, 0, Tmp1);
+    else
+      BuildMI(BB, PPC::IMPLICIT_DEF_FP, 0, Tmp1);
     return;
   case ISD::RET:
     switch (N.getNumOperands()) {

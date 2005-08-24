@@ -40,7 +40,8 @@ namespace {
         // minor pessimization that saves us from having to worry about
         // keeping the offsets up to date later when we emit long branch glue.
         return 12;
-      case PPC::IMPLICIT_DEF: // no asm emitted
+      case PPC::IMPLICIT_DEF_GPR: // no asm emitted
+      case PPC::IMPLICIT_DEF_FP: // no asm emitted
         return 0;
       default:
         break;

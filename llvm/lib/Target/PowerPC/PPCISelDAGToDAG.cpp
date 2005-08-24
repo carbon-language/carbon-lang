@@ -469,7 +469,6 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
     std::cerr << "\n";
     abort();
   case ISD::EntryToken:       // These leaves remain the same.
-  case ISD::UNDEF:
     return Op;
   case ISD::TokenFactor: {
     SDOperand New;
@@ -525,6 +524,12 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
     }
     break;
   }
+  case ISD::UNDEF:
+    if (N->getValueType(0) == MVT::i32)
+      CurDAG->SelectNodeTo(N, MVT::i32, PPC::IMPLICIT_DEF_GPR);
+    else
+      CurDAG->SelectNodeTo(N, N->getValueType(0), PPC::IMPLICIT_DEF_FP);
+    break;
   case ISD::GlobalAddress: {
     GlobalValue *GV = cast<GlobalAddressSDNode>(N)->getGlobal();
     SDOperand Tmp;

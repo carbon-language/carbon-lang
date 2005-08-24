@@ -124,7 +124,8 @@ void PPC32CodeEmitter::emitBasicBlock(MachineBasicBlock &MBB) {
     default:
       emitWord(getBinaryCodeForInstr(*I));
       break;
-    case PPC::IMPLICIT_DEF:
+    case PPC::IMPLICIT_DEF_GPR:
+    case PPC::IMPLICIT_DEF_FP:
       break; // pseudo opcode, no side effects
     case PPC::MovePCtoLR:
       assert(0 && "CodeEmitter does not support MovePCtoLR instruction");

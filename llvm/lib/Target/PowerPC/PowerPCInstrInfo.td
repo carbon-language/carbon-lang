@@ -64,7 +64,8 @@ let isLoad = 1 in {
 def ADJCALLSTACKDOWN : Pseudo<(ops u16imm), "; ADJCALLSTACKDOWN">;
 def ADJCALLSTACKUP : Pseudo<(ops u16imm), "; ADJCALLSTACKUP">;
 }
-def IMPLICIT_DEF : Pseudo<(ops variable_ops), "; IMPLICIT_DEF">;
+def IMPLICIT_DEF_GPR : Pseudo<(ops GPRC:$rD), "; $rD = IMPLICIT_DEF_GPRC">;
+def IMPLICIT_DEF_FP  : Pseudo<(ops FPRC:$rD), "; %rD = IMPLICIT_DEF_FP">;
 
 let Defs = [LR] in
   def MovePCtoLR : Pseudo<(ops piclabel:$label), "bl $label">;
