@@ -854,9 +854,9 @@ SDOperand SelectionDAG::SimplifySelectCC(SDOperand N1, SDOperand N2,
   }
   
   // Check to see if this is the equivalent of seteq X, 0.
-  // select_cc seteq X, 0, 1, 0 -> setcc X, 0, seteq -> srl (ctlz X), size(X)-1
+  // select_cc eq X, 0, 1, 0 -> setcc X, 0, eq -> srl (ctlz X), log2(size(X))
   if (N2C && N2C->isNullValue() && N4C && N4C->isNullValue() &&
-      N3C && (N3C->getValue() == 1)) {
+      N3C && (N3C->getValue() == 1ULL) && CC == ISD::SETEQ) {
     MVT::ValueType XType = N1.getValueType();
     if (TLI.getOperationAction(ISD::SETCC, TLI.getSetCCResultTy()) == 
         TargetLowering::Legal) {
@@ -865,7 +865,7 @@ SDOperand SelectionDAG::SimplifySelectCC(SDOperand N1, SDOperand N2,
     if (TLI.getOperationAction(ISD::CTLZ, XType) == TargetLowering::Legal) {
       SDOperand Ctlz = getNode(ISD::CTLZ, XType, N1);
       return getNode(ISD::SRL, XType, Ctlz, 
-                     getConstant(MVT::getSizeInBits(XType)-1,
+                     getConstant(Log2_32(MVT::getSizeInBits(XType)),
                                  TLI.getShiftAmountTy()));
     }
   }
