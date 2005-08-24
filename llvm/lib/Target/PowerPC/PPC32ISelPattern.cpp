@@ -1052,9 +1052,6 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
     case MVT::i8:
       BuildMI(BB, PPC::EXTSB, 1, Result).addReg(Tmp1);
       break;
-    case MVT::i1:
-      BuildMI(BB, PPC::SUBFIC, 2, Result).addReg(Tmp1).addSImm(0);
-      break;
     }
     return Result;
 
@@ -1325,7 +1322,10 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
     if (isIntImmediate(N.getOperand(0), Tmp1) && isInt16(Tmp1)) {
       Tmp1 = Lo16(Tmp1);
       Tmp2 = SelectExpr(N.getOperand(1));
-      BuildMI(BB, PPC::SUBFIC, 2, Result).addReg(Tmp2).addSImm(Tmp1);
+      if (0 == Tmp1)
+        BuildMI(BB, PPC::NEG, 1, Result).addReg(Tmp2);
+      else
+        BuildMI(BB, PPC::SUBFIC, 2, Result).addReg(Tmp2).addSImm(Tmp1);
       return Result;
     }
     if (SelectIntImmediateExpr(N, Result, PPC::ADDIS, PPC::ADDI, true, true))
@@ -1662,6 +1662,27 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
       assert(0 && "Should never get here");
     }
 
+    // handle the setcc cases here.  select_cc lhs, 0, 1, 0, cc
+    ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N.getOperand(1));
+    ConstantSDNode *N2C = dyn_cast<ConstantSDNode>(N.getOperand(2));
+    ConstantSDNode *N3C = dyn_cast<ConstantSDNode>(N.getOperand(3));
+    if (N1C && N2C && N3C && N1C->isNullValue() && N3C->isNullValue() &&
+        N2C->getValue() == 1ULL && (CC == ISD::SETNE || CC == ISD::SETEQ)) {
+      Tmp1 = SelectExpr(Node->getOperand(0));
+      Tmp2 = MakeIntReg();
+      if (CC == ISD::SETNE) {
+        BuildMI(BB, PPC::ADDIC, 2, Tmp2).addReg(Tmp1).addSImm(-1);
+        BuildMI(BB, PPC::SUBFE, 2, Result).addReg(Tmp2).addReg(Tmp1);
+      } else {
+        Tmp3 = MakeIntReg();
+        BuildMI(BB, PPC::NEG, 2, Tmp2).addReg(Tmp1);
+        BuildMI(BB, PPC::ANDC, 2, Tmp3).addReg(Tmp2).addReg(Tmp1);
+        BuildMI(BB, PPC::RLWINM, 4, Result).addReg(Tmp3).addImm(1).addImm(31)
+          .addImm(31);
+      }
+      return Result;
+    }
+    
     // If the False value only has one use, we can generate better code by
     // selecting it in the fallthrough basic block rather than here, which
     // increases register pressure.
