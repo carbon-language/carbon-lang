@@ -82,16 +82,20 @@ unsigned SimpleSched::Emit(SDOperand Op) {
     unsigned NumResults = Op.Val->getNumValues();
     if (NumResults && Op.Val->getValueType(NumResults-1) == MVT::Other)
       --NumResults;
+
+    unsigned NodeOperands = Op.getNumOperands();
+    if (NodeOperands &&    // Ignore chain if it exists.
+        Op.getOperand(NodeOperands-1).getValueType() == MVT::Other)
+      --NodeOperands;
+   
+    unsigned NumMIOperands = NodeOperands+NumResults;
 #ifndef _NDEBUG
-    unsigned Operands = Op.getNumOperands();
-    if (Operands && Op.getOperand(Operands-1).getValueType() == MVT::Other)
-      --Operands;
-    assert(unsigned(II.numOperands) == Operands+NumResults &&
+    assert((unsigned(II.numOperands) == NumMIOperands || II.numOperands == -1)&&
            "#operands for dag node doesn't match .td file!"); 
 #endif
 
     // Create the new machine instruction.
-    MachineInstr *MI = new MachineInstr(Opc, II.numOperands, true, true);
+    MachineInstr *MI = new MachineInstr(Opc, NumMIOperands, true, true);
     
     // Add result register values for things that are defined by this
     // instruction.
@@ -136,6 +140,9 @@ unsigned SimpleSched::Emit(SDOperand Op) {
       } else if (ConstantPoolSDNode *CP = 
                     dyn_cast<ConstantPoolSDNode>(Op.getOperand(i))) {
         MI->addConstantPoolIndexOperand(CP->getIndex());
+      } else if (ExternalSymbolSDNode *ES = 
+                 dyn_cast<ExternalSymbolSDNode>(Op.getOperand(i))) {
+        MI->addExternalSymbolOperand(ES->getSymbol(), false);
       } else {
         unsigned R = Emit(Op.getOperand(i));
         // Add an operand, unless this corresponds to a chain node.
