@@ -1882,6 +1882,12 @@ SDOperand SelectionDAG::getNode(unsigned Opcode,
 /// operands.  Note that target opcodes are stored as
 /// ISD::BUILTIN_OP_END+TargetOpcode in the node opcode field.
 void SelectionDAG::SelectNodeTo(SDNode *N, MVT::ValueType VT,
+                                unsigned TargetOpc) {
+  RemoveNodeFromCSEMaps(N);
+  N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc);
+  N->setValueTypes(VT);
+}
+void SelectionDAG::SelectNodeTo(SDNode *N, MVT::ValueType VT,
                                 unsigned TargetOpc, SDOperand Op1) {
   RemoveNodeFromCSEMaps(N);
   N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc);

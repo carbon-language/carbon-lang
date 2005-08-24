@@ -221,6 +221,7 @@ public:
   /// specified node to have the specified return type, Target opcode, and
   /// operands.  Note that target opcodes are stored as
   /// ISD::BUILTIN_OP_END+TargetOpcode in the node opcode field.
+  void SelectNodeTo(SDNode *N, MVT::ValueType VT, unsigned TargetOpc);
   void SelectNodeTo(SDNode *N, MVT::ValueType VT, unsigned TargetOpc,
                     SDOperand Op1);
   void SelectNodeTo(SDNode *N, MVT::ValueType VT, unsigned TargetOpc,
