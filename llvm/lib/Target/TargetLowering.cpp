@@ -47,7 +47,7 @@ static void SetValueTypeAction(MVT::ValueType VT,
       PromoteTo = MVT::f64;
     else {
       unsigned LargerReg = VT+1;
-      while (!TLI.hasNativeSupportFor((MVT::ValueType)LargerReg)) {
+      while (!TLI.isTypeLegal((MVT::ValueType)LargerReg)) {
         ++LargerReg;
         assert(MVT::isInteger((MVT::ValueType)LargerReg) &&
                "Nothing to promote to??");
@@ -96,7 +96,7 @@ void TargetLowering::computeRegisterProperties() {
     if (getNumElements((MVT::ValueType)IntReg) != 1)
       SetValueTypeAction((MVT::ValueType)IntReg, Expand, *this, TransformToType,
                          ValueTypeActions);
-    else if (!hasNativeSupportFor((MVT::ValueType)IntReg))
+    else if (!isTypeLegal((MVT::ValueType)IntReg))
       // Otherwise, if we don't have native support, we must promote to a
       // larger type.
       SetValueTypeAction((MVT::ValueType)IntReg, Promote, *this,
@@ -105,13 +105,13 @@ void TargetLowering::computeRegisterProperties() {
       TransformToType[(MVT::ValueType)IntReg] = (MVT::ValueType)IntReg;
 
   // If the target does not have native support for F32, promote it to F64.
-  if (!hasNativeSupportFor(MVT::f32))
+  if (!isTypeLegal(MVT::f32))
     SetValueTypeAction(MVT::f32, Promote, *this,
                        TransformToType, ValueTypeActions);
   else
     TransformToType[MVT::f32] = MVT::f32;
 
-  assert(hasNativeSupportFor(MVT::f64) && "Target does not support FP?");
+  assert(isTypeLegal(MVT::f64) && "Target does not support FP?");
   TransformToType[MVT::f64] = MVT::f64;
 }
 
