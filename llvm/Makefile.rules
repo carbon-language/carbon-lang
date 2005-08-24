@@ -28,6 +28,13 @@ TopLevelTargets  := check dist dist-check dist-clean tags dist-gzip dist-bzip2 \
 UserTargets      := $(RecursiveTargets) $(LocalTargets) $(TopLevelTargets)
 InternalTargets  := preconditions distdir dist-hook
 
+FilesToConfig := \
+  include/llvm/Config/config.h \
+  include/llvm/Support/DataTypes.h \
+  include/llvm/ADT/hash_map \
+  include/llvm/ADT/hash_set \
+  include/llvm/ADT/iterator
+
 ################################################################################
 # INITIALIZATION: Basic things the makefile needs
 ################################################################################
@@ -76,6 +83,9 @@ endif
 ifneq ($(MakefileConfigIn),)
 PreConditions      += $(MakefileConfig)
 endif
+
+FilesToConfigPATH  := $(addprefix $(PROJ_OBJ_ROOT)/,$(FilesToConfig))
+PreConditions      += $(FilesToConfigPATH)
 
 preconditions : $(PreConditions)
 
@@ -133,6 +143,11 @@ $(ConfigStatusScript): $(ConfigureScript)
 	  fi ; \
 	  $(ConfigStatusScript) --recheck $(ConfigureScriptFLAGS) && \
 	  $(ConfigStatusScript)
+
+.PRECIOUS: $(FilesToConfigPATH)
+$(FilesToConfigPATH) : $(PROJ_OBJ_ROOT)/% : $(PROJ_SRC_ROOT)/%.in 
+	$(Echo) Regenerating $*
+	$(Verb) cd $(PROJ_OBJ_ROOT) && $(ConfigStatusScript) $*
 
 #------------------------------------------------------------------------
 # Make sure the configuration makefile is up to date
@@ -1576,3 +1591,4 @@ printvars::
 	$(Echo) "YaccFiles    : " '$(YaccFiles)'
 	$(Echo) "LexFiles     : " '$(LexFiles)'
 	$(Echo) "Module       : " '$(Module)'
+	$(Echo) "FilesToConfig: " '$(FilesToConfigPATH)'
