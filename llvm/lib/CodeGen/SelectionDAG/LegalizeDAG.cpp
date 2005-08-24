@@ -289,7 +289,7 @@ SDOperand SelectionDAGLegalize::PromoteLegalINT_TO_FP(SDOperand LegalOp,
     switch (TLI.getOperationAction(ISD::SINT_TO_FP, NewInTy)) {
       default: break;
       case TargetLowering::Legal:
-        if (!TLI.hasNativeSupportFor(NewInTy))
+        if (!TLI.isTypeLegal(NewInTy))
           break;  // Can't use this datatype.
         // FALL THROUGH.
       case TargetLowering::Custom:
@@ -303,7 +303,7 @@ SDOperand SelectionDAGLegalize::PromoteLegalINT_TO_FP(SDOperand LegalOp,
     switch (TLI.getOperationAction(ISD::UINT_TO_FP, NewInTy)) {
       default: break;
       case TargetLowering::Legal:
-        if (!TLI.hasNativeSupportFor(NewInTy))
+        if (!TLI.isTypeLegal(NewInTy))
           break;  // Can't use this datatype.
         // FALL THROUGH.
       case TargetLowering::Custom:
@@ -347,7 +347,7 @@ SDOperand SelectionDAGLegalize::PromoteLegalFP_TO_INT(SDOperand LegalOp,
     switch (TLI.getOperationAction(ISD::FP_TO_SINT, NewOutTy)) {
     default: break;
     case TargetLowering::Legal:
-      if (!TLI.hasNativeSupportFor(NewOutTy))
+      if (!TLI.isTypeLegal(NewOutTy))
         break;  // Can't use this datatype.
       // FALL THROUGH.
     case TargetLowering::Custom:
@@ -360,7 +360,7 @@ SDOperand SelectionDAGLegalize::PromoteLegalFP_TO_INT(SDOperand LegalOp,
     switch (TLI.getOperationAction(ISD::FP_TO_UINT, NewOutTy)) {
     default: break;
     case TargetLowering::Legal:
-      if (!TLI.hasNativeSupportFor(NewOutTy))
+      if (!TLI.isTypeLegal(NewOutTy))
         break;  // Can't use this datatype.
       // FALL THROUGH.
     case TargetLowering::Custom:
@@ -396,7 +396,7 @@ void SelectionDAGLegalize::LegalizeDAG() {
 }
 
 SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
-  assert(getTypeAction(Op.getValueType()) == Legal &&
+  assert(isTypeLegal(Op.getValueType()) &&
          "Caller should expand or promote operands that are not legal!");
   SDNode *Node = Op.Val;
 
@@ -463,8 +463,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
   case ISD::GlobalAddress:
   case ISD::ExternalSymbol:
   case ISD::ConstantPool:           // Nothing to do.
-    assert(getTypeAction(Node->getValueType(0)) == Legal &&
-           "This must be legal!");
+    assert(isTypeLegal(Node->getValueType(0)) && "This must be legal!");
     break;
   case ISD::CopyFromReg:
     Tmp1 = LegalizeOp(Node->getOperand(0));
@@ -544,8 +543,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       if (isDouble && CFP->isExactlyValue((float)CFP->getValue()) &&
           // Only do this if the target has a native EXTLOAD instruction from
           // f32.
-          TLI.getOperationAction(ISD::EXTLOAD,
-                                 MVT::f32) == TargetLowering::Legal) {
+          TLI.isOperationLegal(ISD::EXTLOAD, MVT::f32)) {
         LLVMC = cast<ConstantFP>(ConstantExpr::getCast(LLVMC, Type::FloatTy));
         VT = MVT::f32;
         Extend = true;
@@ -702,7 +700,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
   case ISD::BR_CC:
     Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
     
-    if (getTypeAction(Node->getOperand(2).getValueType()) == Legal) {
+    if (isTypeLegal(Node->getOperand(2).getValueType())) {
       Tmp2 = LegalizeOp(Node->getOperand(2));   // LHS
       Tmp3 = LegalizeOp(Node->getOperand(3));   // RHS
       if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(2) ||
@@ -762,8 +760,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       // If BRTWOWAY_CC is legal for this target, then simply expand this node
       // to that.  Otherwise, skip BRTWOWAY_CC and expand directly to a
       // BRCOND/BR pair.
-      if (TLI.getOperationAction(ISD::BRTWOWAY_CC, MVT::Other) == 
-          TargetLowering::Legal) {
+      if (TLI.isOperationLegal(ISD::BRTWOWAY_CC, MVT::Other)) {
         if (Tmp2.getOpcode() == ISD::SETCC) {
           Result = DAG.getBR2Way_CC(Tmp1, Tmp2.getOperand(2),
                                     Tmp2.getOperand(0), Tmp2.getOperand(1),
@@ -783,7 +780,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     break;
   case ISD::BRTWOWAY_CC:
     Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
-    if (getTypeAction(Node->getOperand(2).getValueType()) == Legal) {
+    if (isTypeLegal(Node->getOperand(2).getValueType())) {
       Tmp2 = LegalizeOp(Node->getOperand(2));   // LHS
       Tmp3 = LegalizeOp(Node->getOperand(3));   // RHS
       if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(2) ||
@@ -914,7 +911,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
   case ISD::CopyToReg:
     Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
 
-    assert(getTypeAction(Node->getOperand(2).getValueType()) == Legal &&
+    assert(isTypeLegal(Node->getOperand(2).getValueType()) &&
            "Register type must be legal!");
     // Legalize the incoming value (must be legal).
     Tmp2 = LegalizeOp(Node->getOperand(2));
@@ -1115,7 +1112,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     Tmp3 = LegalizeOp(Node->getOperand(2));   // True
     Tmp4 = LegalizeOp(Node->getOperand(3));   // False
     
-    if (getTypeAction(Node->getOperand(0).getValueType()) == Legal) {
+    if (isTypeLegal(Node->getOperand(0).getValueType())) {
       Tmp1 = LegalizeOp(Node->getOperand(0));   // LHS
       Tmp2 = LegalizeOp(Node->getOperand(1));   // RHS
       if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(1) ||
@@ -1642,8 +1639,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
                            DAG.getNode(ISD::SUB, VT, Tmp1,
                                        DAG.getConstant(1, VT)));
         // If ISD::CTLZ is legal and CTPOP isn't, then do that instead
-        if (TLI.getOperationAction(ISD::CTPOP, VT) != TargetLowering::Legal &&
-            TLI.getOperationAction(ISD::CTLZ, VT) == TargetLowering::Legal) {
+        if (!TLI.isOperationLegal(ISD::CTPOP, VT) &&
+            TLI.isOperationLegal(ISD::CTLZ, VT)) {
           Result = LegalizeOp(DAG.getNode(ISD::SUB, VT,
                                         DAG.getConstant(getSizeInBits(VT), VT),
                                         DAG.getNode(ISD::CTLZ, VT, Tmp3)));
@@ -1996,8 +1993,7 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
     break;
 
   case ISD::SETCC:
-    assert(getTypeAction(TLI.getSetCCResultTy()) == Legal &&
-           "SetCC type is not legal??");
+    assert(isTypeLegal(TLI.getSetCCResultTy()) && "SetCC type is not legal??");
     Result = DAG.getNode(ISD::SETCC, TLI.getSetCCResultTy(),Node->getOperand(0),
                          Node->getOperand(1), Node->getOperand(2));
     Result = LegalizeOp(Result);
@@ -2113,8 +2109,8 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
     // FP_TO_UINT for small destination sizes on targets where FP_TO_UINT is not
     // legal, such as PowerPC.
     if (Node->getOpcode() == ISD::FP_TO_UINT && 
-        TargetLowering::Legal != TLI.getOperationAction(ISD::FP_TO_UINT, NVT) &&
-        TargetLowering::Legal == TLI.getOperationAction(ISD::FP_TO_SINT, NVT)) {
+        !TLI.isOperationLegal(ISD::FP_TO_UINT, NVT) &&
+        TLI.isOperationLegal(ISD::FP_TO_SINT, NVT)) {
       Result = DAG.getNode(ISD::FP_TO_SINT, NVT, Tmp1);
     } else {
       Result = DAG.getNode(Node->getOpcode(), NVT, Tmp1);
@@ -2457,8 +2453,7 @@ bool SelectionDAGLegalize::ExpandShift(unsigned Opc, SDOperand Op,SDOperand Amt,
 
   // If we have an efficient select operation (or if the selects will all fold
   // away), lower to some complex code, otherwise just emit the libcall.
-  if (TLI.getOperationAction(ISD::SELECT, NVT) != TargetLowering::Legal &&
-      !isa<ConstantSDNode>(Amt))
+  if (!TLI.isOperationLegal(ISD::SELECT, NVT) && !isa<ConstantSDNode>(Amt))
     return false;
 
   SDOperand InL, InH;
@@ -2700,7 +2695,7 @@ SDOperand SelectionDAGLegalize::ExpandLibCall(const char *Name, SDNode *Node,
 /// destination type is legal.
 SDOperand SelectionDAGLegalize::
 ExpandIntToFP(bool isSigned, MVT::ValueType DestTy, SDOperand Source) {
-  assert(getTypeAction(DestTy) == Legal && "Destination type is not legal!");
+  assert(isTypeLegal(DestTy) && "Destination type is not legal!");
   assert(getTypeAction(Source.getValueType()) == Expand &&
          "This is not an expansion!");
   assert(Source.getValueType() == MVT::i64 && "Only handle expand from i64!");
@@ -3077,7 +3072,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
       break;
 
     // If this target supports SHL_PARTS, use it.
-    if (TLI.getOperationAction(ISD::SHL_PARTS, NVT) == TargetLowering::Legal) {
+    if (TLI.isOperationLegal(ISD::SHL_PARTS, NVT)) {
       ExpandShiftParts(ISD::SHL_PARTS, Node->getOperand(0), Node->getOperand(1),
                        Lo, Hi);
       break;
@@ -3093,7 +3088,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
       break;
 
     // If this target supports SRA_PARTS, use it.
-    if (TLI.getOperationAction(ISD::SRA_PARTS, NVT) == TargetLowering::Legal) {
+    if (TLI.isOperationLegal(ISD::SRA_PARTS, NVT)) {
       ExpandShiftParts(ISD::SRA_PARTS, Node->getOperand(0), Node->getOperand(1),
                        Lo, Hi);
       break;
@@ -3108,7 +3103,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
       break;
 
     // If this target supports SRL_PARTS, use it.
-    if (TLI.getOperationAction(ISD::SRL_PARTS, NVT) == TargetLowering::Legal) {
+    if (TLI.isOperationLegal(ISD::SRL_PARTS, NVT)) {
       ExpandShiftParts(ISD::SRL_PARTS, Node->getOperand(0), Node->getOperand(1),
                        Lo, Hi);
       break;
@@ -3127,7 +3122,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
                   Lo, Hi);
     break;
   case ISD::MUL: {
-    if (TLI.getOperationAction(ISD::MULHU, NVT) == TargetLowering::Legal) {
+    if (TLI.isOperationLegal(ISD::MULHU, NVT)) {
       SDOperand LL, LH, RL, RH;
       ExpandOp(Node->getOperand(0), LL, LH);
       ExpandOp(Node->getOperand(1), RL, RH);
