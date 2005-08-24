@@ -980,8 +980,8 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
                                                             true);
     } else {
       Tmp1 = SelectExpr(N.getOperand(1));
+      BuildMI(BB, PPC::MTCTR, 1).addReg(Tmp1);
       BuildMI(BB, PPC::OR, 2, PPC::R12).addReg(Tmp1).addReg(Tmp1);
-      BuildMI(BB, PPC::MTCTR, 1).addReg(PPC::R12);
       CallMI = BuildMI(PPC::CALLindirect, 3).addImm(20).addImm(0)
         .addReg(PPC::R12);
     }
@@ -995,9 +995,6 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
     for(int i = 0, e = ArgVR.size(); i < e; ++i) {
       switch(N.getOperand(i+2).getValueType()) {
       default: Node->dump(); assert(0 && "Unknown value type for call");
-      case MVT::i1:
-      case MVT::i8:
-      case MVT::i16:
       case MVT::i32:
         assert(GPR_idx < 8 && "Too many int args");
         if (N.getOperand(i+2).getOpcode() != ISD::UNDEF) {
@@ -1022,9 +1019,6 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
     switch (Node->getValueType(0)) {
     default: assert(0 && "Unknown value type for call result!");
     case MVT::Other: return 1;
-    case MVT::i1:
-    case MVT::i8:
-    case MVT::i16:
     case MVT::i32:
       if (Node->getValueType(1) == MVT::i32) {
         BuildMI(BB, PPC::OR, 2, Result+1).addReg(PPC::R3).addReg(PPC::R3);
