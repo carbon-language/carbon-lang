@@ -145,16 +145,8 @@ public:
 
   /// KillsRegister - Return true if the specified instruction kills the
   /// specified register.
-  bool KillsRegister(MachineInstr *MI, unsigned Reg) const {
-    std::map<MachineInstr*, std::vector<unsigned> >::const_iterator I = 
-      RegistersKilled.find(MI);
-    if (I != RegistersKilled.end())
-      for (std::vector<unsigned>::const_iterator CI = I->second.begin(),
-           E = I->second.end(); CI != E; ++CI)
-        if (*CI == Reg) return true;
-    return false;
-  }
-
+  bool KillsRegister(MachineInstr *MI, unsigned Reg) const;
+  
   killed_iterator dead_begin(MachineInstr *MI) {
     return getDeadDefsVector(MI).begin();
   }
@@ -169,16 +161,8 @@ public:
   
   /// RegisterDefIsDead - Return true if the specified instruction defines the
   /// specified register, but that definition is dead.
-  bool RegisterDefIsDead(MachineInstr *MI, unsigned Reg) const {
-    std::map<MachineInstr*, std::vector<unsigned> >::const_iterator I = 
-      RegistersDead.find(MI);
-    if (I != RegistersDead.end())
-      for (std::vector<unsigned>::const_iterator CI = I->second.begin(),
-           E = I->second.end(); CI != E; ++CI)
-        if (*CI == Reg) return true;
-    return false;
-  }
-
+  bool RegisterDefIsDead(MachineInstr *MI, unsigned Reg) const;
+  
   //===--------------------------------------------------------------------===//
   //  API to update live variable information
 
@@ -193,7 +177,17 @@ public:
   /// instruction.
   ///
   void addVirtualRegisterKilled(unsigned IncomingReg, MachineInstr *MI) {
-    RegistersKilled.insert(std::make_pair(MI, IncomingReg));
+    std::vector<unsigned> &V = RegistersKilled[MI];
+    // Insert in a sorted order.
+    if (V.empty() || IncomingReg > V.back()) {
+      V.push_back(IncomingReg);
+    } else {
+      std::vector<unsigned>::iterator I = V.begin();
+      for (; *I < IncomingReg; ++I)
+        /*empty*/;
+      if (*I != IncomingReg)   // Don't insert duplicates.
+        V.insert(I, IncomingReg);
+    }
     getVarInfo(IncomingReg).Kills.push_back(MI);
   }
 
@@ -226,7 +220,17 @@ public:
   /// register is dead after being used by the specified instruction.
   ///
   void addVirtualRegisterDead(unsigned IncomingReg, MachineInstr *MI) {
-    RegistersDead.insert(std::make_pair(MI, IncomingReg));
+    std::vector<unsigned> &V = RegistersDead[MI];
+    // Insert in a sorted order.
+    if (V.empty() || IncomingReg > V.back()) {
+      V.push_back(IncomingReg);
+    } else {
+      std::vector<unsigned>::iterator I = V.begin();
+      for (; *I < IncomingReg; ++I)
+        /*empty*/;
+      if (*I != IncomingReg)   // Don't insert duplicates.
+        V.insert(I, IncomingReg);
+    }
     getVarInfo(IncomingReg).Kills.push_back(MI);
   }
 
