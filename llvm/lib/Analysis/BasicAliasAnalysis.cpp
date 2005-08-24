@@ -720,6 +720,8 @@ static const char *DoesntAccessMemoryTable[] = {
   "hypot",
   "sin", "sinf", "sinl",
   "tan", "tanf", "tanl",      "tanh", "tanhf", "tanhl",
+  
+  "floor", "floorf", "floorl", "ceil", "ceilf", "ceill",
 
   // ctype.h
   "isalnum", "isalpha", "iscntrl", "isdigit", "isgraph", "islower", "isprint"
