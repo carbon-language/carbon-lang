@@ -1,4 +1,3 @@
-; Test that the StrCatOptimizer works correctly
 ; RUN: llvm-as < %s | opt -simplify-libcalls | llvm-dis | not grep 'call.*pow'
 
 declare double %pow(double,double)
