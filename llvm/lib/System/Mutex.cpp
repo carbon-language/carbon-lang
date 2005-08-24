@@ -11,22 +11,35 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/System/Mutex.h"
 #include "llvm/Config/config.h"
+#include "llvm/System/Mutex.h"
 
 //===----------------------------------------------------------------------===//
 //=== WARNING: Implementation here must contain only TRULY operating system
 //===          independent code.
 //===----------------------------------------------------------------------===//
 
-#if defined(HAVE_PTHREAD_H) && defined(HAVE_PTHREAD_MUTEX_LOCK)
-
+#if !defined(ENABLE_THREADS) || ENABLE_THREADS == 0
+// Define all methods as no-ops if threading is explicitly disabled
 namespace llvm {
 using namespace sys;
+Mutex::Mutex( bool recursive) { }
+Mutex::~Mutex() { }
+bool Mutex::acquire() { return true; }
+bool Mutex::release() { return true; }
+bool Mutex::tryacquire() { return true; }
+}
+#else
+
+#if defined(HAVE_PTHREAD_H) && defined(HAVE_PTHREAD_MUTEX_LOCK)
 
 #include <cassert>
 #include <pthread.h>
 #include <stdlib.h>
+
+namespace llvm {
+using namespace sys;
+
 
 // This variable is useful for situations where the pthread library has been
 // compiled with weak linkage for its interface symbols. This allows the
@@ -142,4 +155,5 @@ Mutex::tryacquire()
 #include "Win32/Mutex.inc"
 #else
 #warning Neither LLVM_ON_UNIX nor LLVM_ON_WIN32 was set in System/Mutex.cpp
+#endif
 #endif

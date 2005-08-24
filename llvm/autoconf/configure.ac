@@ -230,6 +230,18 @@ case "$enableval" in
   *) AC_MSG_ERROR([Invalid setting for --enable-doxygen. Use "yes" or "no"]) ;;
 esac
 
+dnl Allow disablement of threads
+AC_ARG_ENABLE(threads,
+              AS_HELP_STRING([--enable-threads],
+                             [Use threads if available (default is YES)]),,
+                             enableval=yes)
+case "$enableval" in
+  yes) AC_SUBST(ENABLE_THREADS,[1]) ;;
+  no)  AC_SUBST(ENABLE_THREADS,[0]) ;;
+  *) AC_MSG_ERROR([Invalid setting for --enable-threads. Use "yes" or "no"]) ;;
+esac
+AC_DEFINE_UNQUOTED([ENABLE_THREADS],$ENABLE_THREADS,[Define if threads enabled])
+
 dnl Allow specific targets to be specified for building (or not)
 TARGETS_TO_BUILD=""
 AC_ARG_ENABLE([targets],AS_HELP_STRING([--enable-target],
@@ -447,10 +459,12 @@ AC_SEARCH_LIBS(mallinfo,malloc,AC_DEFINE([HAVE_MALLINFO],[1],
 
 dnl pthread locking functions are optional - but llvm will not be thread-safe
 dnl without locks.
-AC_CHECK_LIB(pthread,pthread_mutex_init)
-AC_SEARCH_LIBS(pthread_mutex_lock,pthread,
-               AC_DEFINE([HAVE_PTHREAD_MUTEX_LOCK],[1],
-                         [Have pthread_mutex_lock]))
+if test "$ENABLE_THREADS" -eq 1 ; then
+  AC_CHECK_LIB(pthread,pthread_mutex_init)
+  AC_SEARCH_LIBS(pthread_mutex_lock,pthread,
+                 AC_DEFINE([HAVE_PTHREAD_MUTEX_LOCK],[1],
+                           [Have pthread_mutex_lock]))
+fi
 
 dnl===-----------------------------------------------------------------------===
 dnl===
@@ -470,10 +484,12 @@ AC_HEADER_SYS_WAIT
 AC_HEADER_TIME
 
 AC_CHECK_HEADERS([dlfcn.h execinfo.h fcntl.h inttypes.h limits.h link.h])
-AC_CHECK_HEADERS([malloc.h pthread.h signal.h stdint.h unistd.h utime.h])
-AC_CHECK_HEADERS([windows.h])
+AC_CHECK_HEADERS([malloc.h signal.h stdint.h unistd.h utime.h windows.h])
 AC_CHECK_HEADERS([sys/mman.h sys/param.h sys/resource.h sys/time.h sys/types.h])
 AC_CHECK_HEADERS([rw/stdex/hash_map.h rw/stdex/hash_set.h])
+if test "$ENABLE_THREADS" -eq 1 ; then
+  AC_CHECK_HEADERS(pthread.h)
+fi
 
 dnl===-----------------------------------------------------------------------===
 dnl===

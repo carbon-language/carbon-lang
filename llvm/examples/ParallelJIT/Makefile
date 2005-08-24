@@ -14,3 +14,5 @@ EXAMPLE_TOOL = 1
 LLVMLIBS := JIT
 
 include $(LEVEL)/Makefile.common
+
+LIBS += -lpthread
