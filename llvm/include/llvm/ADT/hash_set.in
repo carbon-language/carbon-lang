@@ -83,10 +83,11 @@ template <class DataType> struct hash {
 */
 
 template <typename ValueType,
-	  class _HashFcn = hash<ValueType>,
-	  class _EqualKey = equal_to<ValueType>,
-	  class _A = allocator <ValueType> >
-class hash_set : public rw_hashset<ValueType, class _HashFcn, class _EqualKey, class _A> {
+  class _HashFcn = hash<ValueType>,
+  class _EqualKey = equal_to<ValueType>,
+  class _A = allocator <ValueType> >
+class hash_set : 
+  public rw_hashset<ValueType, class _HashFcn, class _EqualKey, class _A> {
 };
 
 } // end HASH_NAMESPACE;
