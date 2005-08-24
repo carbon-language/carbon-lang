@@ -1667,19 +1667,11 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
     ConstantSDNode *N2C = dyn_cast<ConstantSDNode>(N.getOperand(2));
     ConstantSDNode *N3C = dyn_cast<ConstantSDNode>(N.getOperand(3));
     if (N1C && N2C && N3C && N1C->isNullValue() && N3C->isNullValue() &&
-        N2C->getValue() == 1ULL && (CC == ISD::SETNE || CC == ISD::SETEQ)) {
+        N2C->getValue() == 1ULL && CC == ISD::SETNE) {
       Tmp1 = SelectExpr(Node->getOperand(0));
       Tmp2 = MakeIntReg();
-      if (CC == ISD::SETNE) {
-        BuildMI(BB, PPC::ADDIC, 2, Tmp2).addReg(Tmp1).addSImm(-1);
-        BuildMI(BB, PPC::SUBFE, 2, Result).addReg(Tmp2).addReg(Tmp1);
-      } else {
-        Tmp3 = MakeIntReg();
-        BuildMI(BB, PPC::NEG, 2, Tmp2).addReg(Tmp1);
-        BuildMI(BB, PPC::ANDC, 2, Tmp3).addReg(Tmp2).addReg(Tmp1);
-        BuildMI(BB, PPC::RLWINM, 4, Result).addReg(Tmp3).addImm(1).addImm(31)
-          .addImm(31);
-      }
+      BuildMI(BB, PPC::ADDIC, 2, Tmp2).addReg(Tmp1).addSImm(-1);
+      BuildMI(BB, PPC::SUBFE, 2, Result).addReg(Tmp2).addReg(Tmp1);
       return Result;
     }
     
