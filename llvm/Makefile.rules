@@ -84,7 +84,7 @@ ifneq ($(MakefileConfigIn),)
 PreConditions      += $(MakefileConfig)
 endif
 
-FilesToConfigPATH  := $(addprefix $(PROJ_OBJ_ROOT)/,$(FilesToConfig))
+FilesToConfigPATH  := $(addprefix $(LLVM_OBJ_ROOT)/,$(FilesToConfig))
 PreConditions      += $(FilesToConfigPATH)
 
 preconditions : $(PreConditions)
@@ -145,9 +145,9 @@ $(ConfigStatusScript): $(ConfigureScript)
 	  $(ConfigStatusScript)
 
 .PRECIOUS: $(FilesToConfigPATH)
-$(FilesToConfigPATH) : $(PROJ_OBJ_ROOT)/% : $(PROJ_SRC_ROOT)/%.in 
+$(FilesToConfigPATH) : $(LLVM_OBJ_ROOT)/% : $(LLVM_SRC_ROOT)/%.in 
 	$(Echo) Regenerating $*
-	$(Verb) cd $(PROJ_OBJ_ROOT) && $(ConfigStatusScript) $*
+	$(Verb) cd $(LLVM_OBJ_ROOT) && $(ConfigStatusScript) $*
 
 #------------------------------------------------------------------------
 # Make sure the configuration makefile is up to date
