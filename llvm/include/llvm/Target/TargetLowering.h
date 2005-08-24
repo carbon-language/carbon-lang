@@ -99,10 +99,10 @@ public:
     return RC;
   }
 
-  /// hasNativeSupportFor - Return true if the target has native support for the
+  /// isTypeLegal - Return true if the target has native support for the
   /// specified value type.  This means that it has a register that directly
   /// holds it without promotions or expansions.
-  bool hasNativeSupportFor(MVT::ValueType VT) const {
+  bool isTypeLegal(MVT::ValueType VT) const {
     return RegClassForVT[VT] != 0;
   }
 
@@ -132,15 +132,17 @@ public:
     return LegalFPImmediates.end();
   }
 
-  /// getOperationAction - Return how this operation should be
+  /// getOperationAction - Return how this operation should be treated: either
+  /// it is legal, needs to be promoted to a larger size, needs to be
+  /// expanded to some other code sequence, or the target has a custom expander
+  /// for it.
   LegalizeAction getOperationAction(unsigned Op, MVT::ValueType VT) const {
     return (LegalizeAction)((OpActions[Op] >> (2*VT)) & 3);
   }
-
-  /// hasNativeSupportForOperation - Return true if this operation is legal for
-  /// this type.
-  ///
-  bool hasNativeSupportForOperation(unsigned Op, MVT::ValueType VT) const {
+  
+  /// isOperationLegal - Return true if the specified operation is legal on this
+  /// target.
+  bool isOperationLegal(unsigned Op, MVT::ValueType VT) const {
     return getOperationAction(Op, VT) == Legal;
   }
 
@@ -154,8 +156,8 @@ public:
       NVT = (MVT::ValueType)(NVT+1);
       assert(MVT::isInteger(NVT) == MVT::isInteger(VT) && NVT != MVT::isVoid &&
              "Didn't find type to promote to!");
-    } while (!hasNativeSupportFor(NVT) ||
-             getOperationAction(Op, NVT) == Promote);
+    } while (!isTypeLegal(NVT) ||
+              getOperationAction(Op, NVT) == Promote);
     return NVT;
   }
 
