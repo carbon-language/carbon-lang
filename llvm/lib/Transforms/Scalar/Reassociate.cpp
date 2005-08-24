@@ -496,9 +496,15 @@ void Reassociate::OptimizeExpression(unsigned Opcode,
           ++NumAnnihil;
         } else {
           assert(Opcode == Instruction::Xor);
+          if (e == 2) {
+            Ops[0].Op = Constant::getNullValue(Ops[0].Op->getType());
+            Ops.erase(Ops.begin()+1, Ops.end());
+            ++NumAnnihil;
+            return;
+          }
           // ... X^X -> ...
           Ops.erase(Ops.begin()+i, Ops.begin()+i+2);
-          i -= 2; e -= 2;
+          i -= 1; e -= 2;
           IterateOptimization = true;
           ++NumAnnihil;
         }
