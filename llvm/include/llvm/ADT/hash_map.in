@@ -84,7 +84,8 @@ template <typename KeyType,
           class _HashFcn = hash<KeyType>,
           class _EqualKey = equal_to<KeyType>,
           class _A = allocator <ValueType> >
-class hash_map : public rw_hashmap<KeyType, ValueType, class _HashFcn, class _EqualKey, class _A> {
+class hash_map : public rw_hashmap<KeyType, ValueType, class _HashFcn, 
+                                   class _EqualKey, class _A> {
 };
 
 template <typename KeyType,
@@ -92,7 +93,8 @@ template <typename KeyType,
           class _HashFcn = hash<KeyType>,
           class _EqualKey = equal_to<KeyType>,
           class _A = allocator <ValueType> >
-class hash_multimap : public rw_hashmultimap<KeyType, ValueType, class _HashFcn, class _EqualKey, class _A> {
+class hash_multimap : public rw_hashmultimap<KeyType, ValueType, class _HashFcn,
+                                             class _EqualKey, class _A> {
 };
 
 } // end HASH_NAMESPACE;
