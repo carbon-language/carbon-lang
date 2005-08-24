@@ -853,20 +853,35 @@ SDOperand SelectionDAG::SimplifySelectCC(SDOperand N1, SDOperand N2,
     }
   }
   
-  // Check to see if this is the equivalent of seteq X, 0.
-  // select_cc eq X, 0, 1, 0 -> setcc X, 0, eq -> srl (ctlz X), log2(size(X))
-  if (N2C && N2C->isNullValue() && N4C && N4C->isNullValue() &&
-      N3C && (N3C->getValue() == 1ULL) && CC == ISD::SETEQ) {
+  // Check to see if this is the equivalent of setcc X, 0
+  if (N4C && N4C->isNullValue() && N3C && (N3C->getValue() == 1ULL)) {
     MVT::ValueType XType = N1.getValueType();
     if (TLI.getOperationAction(ISD::SETCC, TLI.getSetCCResultTy()) == 
         TargetLowering::Legal) {
-      return getSetCC(TLI.getSetCCResultTy(), N1, N2, ISD::SETEQ);
+      return getSetCC(TLI.getSetCCResultTy(), N1, N2, CC);
     }
-    if (TLI.getOperationAction(ISD::CTLZ, XType) == TargetLowering::Legal) {
+    // seteq X, 0 -> srl (ctlz X, log2(size(X)))
+    if (N2C && N2C->isNullValue() && CC == ISD::SETEQ && 
+        TLI.getOperationAction(ISD::CTLZ, XType) == TargetLowering::Legal) {
       SDOperand Ctlz = getNode(ISD::CTLZ, XType, N1);
       return getNode(ISD::SRL, XType, Ctlz, 
                      getConstant(Log2_32(MVT::getSizeInBits(XType)),
                                  TLI.getShiftAmountTy()));
+    }
+    // setgt X, 0 -> srl (and (-X, ~X), size(X)-1)
+    if (N2C && N2C->isNullValue() && CC == ISD::SETGT) { 
+      SDOperand NegN1 = getNode(ISD::SUB, XType, getConstant(0, XType), N1);
+      SDOperand NotN1 = getNode(ISD::XOR, XType, N1, getConstant(~0ULL, XType));
+      return getNode(ISD::SRL, XType, getNode(ISD::AND, XType, NegN1, NotN1),
+                     getConstant(MVT::getSizeInBits(XType)-1,
+                                 TLI.getShiftAmountTy()));
+    }
+    // setgt X, -1 -> xor (srl (X, size(X)-1), 1)
+    if (N2C && N2C->isAllOnesValue() && CC == ISD::SETGT) {
+      SDOperand Sign = getNode(ISD::SRL, XType, N1,
+                               getConstant(MVT::getSizeInBits(XType)-1,
+                                           TLI.getShiftAmountTy()));
+      return getNode(ISD::XOR, XType, Sign, getConstant(1, XType));
     }
   }
 
