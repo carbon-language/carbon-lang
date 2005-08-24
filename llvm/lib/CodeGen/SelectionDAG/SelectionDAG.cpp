@@ -534,8 +534,7 @@ SDOperand SelectionDAG::SimplifySetCC(MVT::ValueType VT, SDOperand N1,
       case ISD::SETGE:  return getConstant((int64_t)C1 >= (int64_t)C2, VT);
       }
     } else {
-      // If the LHS is a ZERO_EXTEND and if this is an ==/!= comparison, perform
-      // the comparison on the input.
+      // If the LHS is a ZERO_EXTEND, perform the comparison on the input.
       if (N1.getOpcode() == ISD::ZERO_EXTEND) {
         unsigned InSize = MVT::getSizeInBits(N1.getOperand(0).getValueType());
 
@@ -577,6 +576,25 @@ SDOperand SelectionDAG::SimplifySetCC(MVT::ValueType VT, SDOperand N1,
         default:
           break;   // todo, be more careful with signed comparisons
         }
+      } else if (N1.getOpcode() == ISD::SIGN_EXTEND_INREG &&
+                 (Cond == ISD::SETEQ || Cond == ISD::SETNE)) {
+        MVT::ValueType ExtSrcTy = cast<VTSDNode>(N1.getOperand(1))->getVT();
+        unsigned ExtSrcTyBits = MVT::getSizeInBits(ExtSrcTy);
+        MVT::ValueType ExtDstTy = N1.getValueType();
+        unsigned ExtDstTyBits = MVT::getSizeInBits(ExtDstTy);
+        
+        // If the extended part has any inconsistent bits, it cannot ever
+        // compare equal.  In other words, they have to be all ones or all
+        // zeros.
+        uint64_t ExtBits =
+          (~0ULL >> 64-ExtSrcTyBits) & (~0ULL << (ExtDstTyBits-1));
+        if ((C2 & ExtBits) != 0 && (C2 & ExtBits) != ExtBits)
+          return getConstant(Cond == ISD::SETNE, VT);
+        
+        // Otherwise, make this a use of a zext.
+        return getSetCC(VT, getZeroExtendInReg(N1.getOperand(0), ExtSrcTy),
+                        getConstant(C2 & (~0ULL >> 64-ExtSrcTyBits), ExtDstTy),
+                        Cond);
       }
 
       uint64_t MinVal, MaxVal;
@@ -1689,18 +1707,6 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
 SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
                                 SDOperand N1, SDOperand N2, SDOperand N3,
                                 SDOperand N4, SDOperand N5) {
-  if (ISD::SELECT_CC == Opcode) {
-    assert(N1.getValueType() == N2.getValueType() &&
-           "LHS and RHS of condition must have same type!");
-    assert(N3.getValueType() == N4.getValueType() &&
-           "True and False arms of SelectCC must have same type!");
-    assert(N3.getValueType() == VT &&
-           "select_cc node must be of same type as true and false value!");
-    SDOperand Simp = SimplifySelectCC(N1, N2, N3, N4, 
-                                      cast<CondCodeSDNode>(N5)->get());
-    if (Simp.Val) return Simp;
-  }
-        
   std::vector<SDOperand> Ops;
   Ops.reserve(5);
   Ops.push_back(N1);
@@ -1766,6 +1772,40 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     assert(Ops[1].getValueType() > EVT && "Not a truncation?");
     assert(MVT::isInteger(Ops[1].getValueType()) == MVT::isInteger(EVT) &&
            "Can't do FP-INT conversion!");
+    break;
+  }
+  case ISD::SELECT_CC: {
+    assert(Ops.size() == 5 && "TRUNCSTORE takes 5 operands!");
+    assert(Ops[0].getValueType() == Ops[1].getValueType() &&
+           "LHS and RHS of condition must have same type!");
+    assert(Ops[2].getValueType() == Ops[3].getValueType() &&
+           "True and False arms of SelectCC must have same type!");
+    assert(Ops[2].getValueType() == VT &&
+           "select_cc node must be of same type as true and false value!");
+    SDOperand Simp = SimplifySelectCC(Ops[0], Ops[1], Ops[2], Ops[3], 
+                                      cast<CondCodeSDNode>(Ops[4])->get());
+    if (Simp.Val) return Simp;
+    break;
+  }
+  case ISD::BR_CC: {
+    assert(Ops.size() == 5 && "TRUNCSTORE takes 5 operands!");
+    assert(Ops[2].getValueType() == Ops[3].getValueType() &&
+           "LHS/RHS of comparison should match types!");
+    // Use SimplifySetCC  to simplify SETCC's.
+    SDOperand Simp = SimplifySetCC(MVT::i1, Ops[2], Ops[3],
+                                   cast<CondCodeSDNode>(Ops[1])->get());
+    if (Simp.Val) {
+      if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Simp)) {
+        if (C->getValue() & 1) // Unconditional branch
+          return getNode(ISD::BR, MVT::Other, Ops[0], Ops[4]);
+        else
+          return Ops[0];          // Unconditional Fall through
+      } else if (Simp.Val->getOpcode() == ISD::SETCC) {
+        Ops[2] = Simp.getOperand(0);
+        Ops[3] = Simp.getOperand(1);
+        Ops[1] = Simp.getOperand(2);
+      }
+    }
     break;
   }
   }
@@ -1915,7 +1955,7 @@ void SelectionDAG::ReplaceAllUsesWith(SDNode *From, SDNode *To) {
     
     for (unsigned i = 0, e = U->getNumOperands(); i != e; ++i)
       if (U->getOperand(i).Val == From) {
-        assert(From->getValueType(U->getOperand(i).ResNo) ==
+        assert(U->getOperand(i).getValueType() ==
                To->getValueType(U->getOperand(i).ResNo));
         From->removeUser(U);
         U->Operands[i].Val = To;
@@ -1929,6 +1969,41 @@ void SelectionDAG::ReplaceAllUsesWith(SDNode *From, SDNode *To) {
       // U is now dead.
   }
 }
+
+void SelectionDAG::ReplaceAllUsesWith(SDNode *From,
+                                      const std::vector<SDOperand> &To) {
+  assert(From->getNumValues() == To.size() &&
+         "Incorrect number of values to replace with!");
+  if (To.size() == 1 && To[0].ResNo == 0) {
+    // Degenerate case handled above.
+    ReplaceAllUsesWith(From, To[0].Val);
+    return;
+  }
+
+  while (!From->use_empty()) {
+    // Process users until they are all gone.
+    SDNode *U = *From->use_begin();
+    
+    // This node is about to morph, remove its old self from the CSE maps.
+    RemoveNodeFromCSEMaps(U);
+    
+    for (unsigned i = 0, e = U->getNumOperands(); i != e; ++i)
+      if (U->getOperand(i).Val == From) {
+        const SDOperand &ToOp = To[U->getOperand(i).ResNo];
+        assert(U->getOperand(i).getValueType() == ToOp.getValueType());
+        From->removeUser(U);
+        U->Operands[i] = ToOp;
+        ToOp.Val->addUser(U);
+      }
+        
+    // Now that we have modified U, add it back to the CSE maps.  If it already
+    // exists there, recursively merge the results together.
+    if (SDNode *Existing = AddNonLeafNodeToCSEMaps(U))
+      ReplaceAllUsesWith(U, Existing);
+    // U is now dead.
+  }
+}
+
 
 //===----------------------------------------------------------------------===//
 //                              SDNode Class
