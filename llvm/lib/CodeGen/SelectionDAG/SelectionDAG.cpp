@@ -1026,7 +1026,9 @@ static bool MaskedValueIsZero(const SDOperand &Op, uint64_t Mask,
   case ISD::SELECT:
     return MaskedValueIsZero(Op.getOperand(1), Mask, TLI) &&
            MaskedValueIsZero(Op.getOperand(2), Mask, TLI);
-
+  case ISD::SELECT_CC:
+    return MaskedValueIsZero(Op.getOperand(2), Mask, TLI) &&
+           MaskedValueIsZero(Op.getOperand(3), Mask, TLI);
   case ISD::SRL:
     // (ushr X, C1) & C2 == 0   iff  X & (C2 << C1) == 0
     if (ConstantSDNode *ShAmt = dyn_cast<ConstantSDNode>(Op.getOperand(1))) {
@@ -1043,6 +1045,13 @@ static bool MaskedValueIsZero(const SDOperand &Op, uint64_t Mask,
       return MaskedValueIsZero(Op.getOperand(0), NewVal, TLI);
     }
     return false;
+  case ISD::CTTZ:
+  case ISD::CTLZ:
+  case ISD::CTPOP:
+    // Bit counting instructions can not set the high bits of the result
+    // register.  The max number of bits sets depends on the input.
+    return (Mask & (MVT::getSizeInBits(Op.getValueType())*2-1)) == 0;
+    
     // TODO we could handle some SRA cases here.
   default: break;
   }
