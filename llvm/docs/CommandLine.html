@@ -712,8 +712,8 @@ vector:</p>
   <i>bits</i> |= 1 << (unsigned)<i>enum</i>;
 </pre></div>
 
-<p>An option specified more than once is redundant as far as the result is
-concerned. The argument position information is however updated.</p>
+<p>Options that are specified multiple times are redundant.  Any instances after
+the first are discarded.</p>
 
 <p>Reworking the above list example, we could replace <a href="#list">
 <tt>cl::list</tt></a> with <a href="#bits"><tt>cl::bits</tt></a>:</p>
