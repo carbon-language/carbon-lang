@@ -179,15 +179,15 @@ def CMPLWI : DForm_6_ext<10, (ops CRRC:$dst, GPRC:$src1, u16imm:$src2),
 def CMPLDI : DForm_6_ext<10, (ops CRRC:$dst, GPRC:$src1, u16imm:$src2),
                          "cmpldi $dst, $src1, $src2">, isPPC64;
 let isLoad = 1 in {
-def LFS : DForm_8<48, (ops GPRC:$rD, symbolLo:$disp, GPRC:$rA),
+def LFS : DForm_8<48, (ops FPRC:$rD, symbolLo:$disp, GPRC:$rA),
                   "lfs $rD, $disp($rA)">;
-def LFD : DForm_8<50, (ops GPRC:$rD, symbolLo:$disp, GPRC:$rA),
+def LFD : DForm_8<50, (ops FPRC:$rD, symbolLo:$disp, GPRC:$rA),
                   "lfd $rD, $disp($rA)">;
 }
 let isStore = 1 in {
-def STFS : DForm_9<52, (ops GPRC:$rS, symbolLo:$disp, GPRC:$rA),
+def STFS : DForm_9<52, (ops FPRC:$rS, symbolLo:$disp, GPRC:$rA),
                    "stfs $rS, $disp($rA)">;
-def STFD : DForm_9<54, (ops GPRC:$rS, symbolLo:$disp, GPRC:$rA),
+def STFD : DForm_9<54, (ops FPRC:$rS, symbolLo:$disp, GPRC:$rA),
                    "stfd $rS, $disp($rA)">;
 }
 
