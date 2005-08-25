@@ -79,6 +79,9 @@ namespace {
     /// operation.
     bool SelectAddr(SDOperand Addr, SDOperand &Op1, SDOperand &Op2);
 
+    SDOperand BuildSDIVSequence(SDNode *N);
+    SDOperand BuildUDIVSequence(SDNode *N);
+    
     /// InstructionSelectBasicBlock - This callback is invoked by
     /// SelectionDAGISel when it has created a SelectionDAG for us to codegen.
     virtual void InstructionSelectBasicBlock(SelectionDAG &DAG) {
@@ -480,6 +483,149 @@ static unsigned getCRIdxForSetCC(ISD::CondCode CC, bool& Inv) {
   return 0;
 }
 
+// Structure used to return the necessary information to codegen an SDIV as
+// a multiply.
+struct ms {
+  int m; // magic number
+  int s; // shift amount
+};
+
+struct mu {
+  unsigned int m; // magic number
+  int a;          // add indicator
+  int s;          // shift amount
+};
+
+/// magic - calculate the magic numbers required to codegen an integer sdiv as
+/// a sequence of multiply and shifts.  Requires that the divisor not be 0, 1,
+/// or -1.
+static struct ms magic(int d) {
+  int p;
+  unsigned int ad, anc, delta, q1, r1, q2, r2, t;
+  const unsigned int two31 = 0x80000000U;
+  struct ms mag;
+  
+  ad = abs(d);
+  t = two31 + ((unsigned int)d >> 31);
+  anc = t - 1 - t%ad;   // absolute value of nc
+  p = 31;               // initialize p
+  q1 = two31/anc;       // initialize q1 = 2p/abs(nc)
+  r1 = two31 - q1*anc;  // initialize r1 = rem(2p,abs(nc))
+  q2 = two31/ad;        // initialize q2 = 2p/abs(d)
+  r2 = two31 - q2*ad;   // initialize r2 = rem(2p,abs(d))
+  do {
+    p = p + 1;
+    q1 = 2*q1;        // update q1 = 2p/abs(nc)
+    r1 = 2*r1;        // update r1 = rem(2p/abs(nc))
+    if (r1 >= anc) {  // must be unsigned comparison
+      q1 = q1 + 1;
+      r1 = r1 - anc;
+    }
+    q2 = 2*q2;        // update q2 = 2p/abs(d)
+    r2 = 2*r2;        // update r2 = rem(2p/abs(d))
+    if (r2 >= ad) {   // must be unsigned comparison
+      q2 = q2 + 1;
+      r2 = r2 - ad;
+    }
+    delta = ad - r2;
+  } while (q1 < delta || (q1 == delta && r1 == 0));
+  
+  mag.m = q2 + 1;
+  if (d < 0) mag.m = -mag.m; // resulting magic number
+  mag.s = p - 32;            // resulting shift
+  return mag;
+}
+
+/// magicu - calculate the magic numbers required to codegen an integer udiv as
+/// a sequence of multiply, add and shifts.  Requires that the divisor not be 0.
+static struct mu magicu(unsigned d)
+{
+  int p;
+  unsigned int nc, delta, q1, r1, q2, r2;
+  struct mu magu;
+  magu.a = 0;               // initialize "add" indicator
+  nc = - 1 - (-d)%d;
+  p = 31;                   // initialize p
+  q1 = 0x80000000/nc;       // initialize q1 = 2p/nc
+  r1 = 0x80000000 - q1*nc;  // initialize r1 = rem(2p,nc)
+  q2 = 0x7FFFFFFF/d;        // initialize q2 = (2p-1)/d
+  r2 = 0x7FFFFFFF - q2*d;   // initialize r2 = rem((2p-1),d)
+  do {
+    p = p + 1;
+    if (r1 >= nc - r1 ) {
+      q1 = 2*q1 + 1;  // update q1
+      r1 = 2*r1 - nc; // update r1
+    }
+    else {
+      q1 = 2*q1; // update q1
+      r1 = 2*r1; // update r1
+    }
+    if (r2 + 1 >= d - r2) {
+      if (q2 >= 0x7FFFFFFF) magu.a = 1;
+      q2 = 2*q2 + 1;     // update q2
+      r2 = 2*r2 + 1 - d; // update r2
+    }
+    else {
+      if (q2 >= 0x80000000) magu.a = 1;
+      q2 = 2*q2;     // update q2
+      r2 = 2*r2 + 1; // update r2
+    }
+    delta = d - 1 - r2;
+  } while (p < 64 && (q1 < delta || (q1 == delta && r1 == 0)));
+  magu.m = q2 + 1; // resulting magic number
+  magu.s = p - 32;  // resulting shift
+  return magu;
+}
+
+/// BuildSDIVSequence - Given an ISD::SDIV node expressing a divide by constant,
+/// return a DAG expression to select that will generate the same value by
+/// multiplying by a magic number.  See:
+/// <http://the.wall.riscom.net/books/proc/ppc/cwg/code2.html>
+SDOperand PPC32DAGToDAGISel::BuildSDIVSequence(SDNode *N) {
+  int d = (int)cast<ConstantSDNode>(N->getOperand(1))->getValue();
+  ms magics = magic(d);
+  // Multiply the numerator (operand 0) by the magic value
+  SDOperand Q = CurDAG->getNode(ISD::MULHS, MVT::i32, N->getOperand(0),
+                                CurDAG->getConstant(magics.m, MVT::i32));
+  // If d > 0 and m < 0, add the numerator
+  if (d > 0 && magics.m < 0)
+    Q = CurDAG->getNode(ISD::ADD, MVT::i32, Q, N->getOperand(0));
+  // If d < 0 and m > 0, subtract the numerator.
+  if (d < 0 && magics.m > 0)
+    Q = CurDAG->getNode(ISD::SUB, MVT::i32, Q, N->getOperand(0));
+  // Shift right algebraic if shift value is nonzero
+  if (magics.s > 0)
+    Q = CurDAG->getNode(ISD::SRA, MVT::i32, Q,
+                        CurDAG->getConstant(magics.s, MVT::i32));
+  // Extract the sign bit and add it to the quotient
+  SDOperand T =
+    CurDAG->getNode(ISD::SRL, MVT::i32, Q, CurDAG->getConstant(31, MVT::i32));
+  return CurDAG->getNode(ISD::ADD, MVT::i32, Q, T);
+}
+
+/// BuildUDIVSequence - Given an ISD::UDIV node expressing a divide by constant,
+/// return a DAG expression to select that will generate the same value by
+/// multiplying by a magic number.  See:
+/// <http://the.wall.riscom.net/books/proc/ppc/cwg/code2.html>
+SDOperand PPC32DAGToDAGISel::BuildUDIVSequence(SDNode *N) {
+  unsigned d = (unsigned)cast<ConstantSDNode>(N->getOperand(1))->getValue();
+  mu magics = magicu(d);
+  // Multiply the numerator (operand 0) by the magic value
+  SDOperand Q = CurDAG->getNode(ISD::MULHU, MVT::i32, N->getOperand(0),
+                                CurDAG->getConstant(magics.m, MVT::i32));
+  if (magics.a == 0) {
+    return CurDAG->getNode(ISD::SRL, MVT::i32, Q,
+                           CurDAG->getConstant(magics.s, MVT::i32));
+  } else {
+    SDOperand NPQ = CurDAG->getNode(ISD::SUB, MVT::i32, N->getOperand(0), Q);
+    NPQ = CurDAG->getNode(ISD::SRL, MVT::i32, NPQ,
+                           CurDAG->getConstant(1, MVT::i32));
+    NPQ = CurDAG->getNode(ISD::ADD, MVT::i32, NPQ, Q);
+    return CurDAG->getNode(ISD::SRL, MVT::i32, NPQ,
+                           CurDAG->getConstant(magics.s-1, MVT::i32));
+  }
+}
+
 // Select - Convert the specified operand from a target-independent to a
 // target-specific node if it hasn't already been changed.
 SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
@@ -739,11 +885,42 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
                                 Op.getValue(0));
         CurDAG->SelectNodeTo(N, MVT::i32, PPC::NEG, PT);
         break;
+      } else if (Imm) {
+        SDOperand Result = Select(BuildSDIVSequence(N));
+        assert(Result.ResNo == 0);
+        CurDAG->ReplaceAllUsesWith(N, Result.Val);
+        N = Result.Val;
+        break;
       }
     }
-    assert(0 && "SDIV not implemented yet!");
-    abort();
-  }    
+    
+    unsigned Opc;
+    switch (N->getValueType(0)) {
+    default: assert(0 && "Unknown type to ISD::SDIV"); break;
+    case MVT::i32: Opc = PPC::DIVW; break;
+    case MVT::f32: Opc = PPC::FDIVS; break;
+    case MVT::f64: Opc = PPC::FDIV; break;
+    }
+    CurDAG->SelectNodeTo(N, N->getValueType(0), Opc, Select(N->getOperand(0)),
+                         Select(N->getOperand(1)));
+    break;
+  }
+  case ISD::UDIV: {
+    // If this is a divide by constant, we can emit code using some magic
+    // constants to implement it as a multiply instead.
+    unsigned Imm;
+    if (isIntImmediate(N->getOperand(1), Imm) && (signed)Imm > 1) {
+      SDOperand Result = Select(BuildUDIVSequence(N));
+      assert(Result.ResNo == 0);
+      CurDAG->ReplaceAllUsesWith(N, Result.Val);
+      N = Result.Val;
+      break;
+    }
+    
+    CurDAG->SelectNodeTo(N, MVT::i32, PPC::DIVWU, Select(N->getOperand(0)),
+                         Select(N->getOperand(1)));
+    break;
+  }
   case ISD::MULHS:
     assert(N->getValueType(0) == MVT::i32);
     CurDAG->SelectNodeTo(N, MVT::i32, PPC::MULHW, Select(N->getOperand(0)), 
