@@ -984,6 +984,188 @@ public:
 };
 
 //===----------------------------------------------------------------------===//
+// bits_storage class
+
+// Default storage class definition: external storage.  This implementation
+// assumes the user will specify a variable to store the data into with the
+// cl::location(x) modifier.
+//
+template<class DataType, class StorageClass>
+class bits_storage {
+  unsigned long *Location;   // Where to store the bits...
+  
+  template<class T>
+  static unsigned Bit(const T &V) {
+    unsigned BitPos = (unsigned)V;
+    assert(BitPos < sizeof(unsigned long) * 8 &&
+          "enum exceeds width of bit vector!");
+    return 1 << BitPos;
+  }
+
+public:
+  bits_storage() : Location(0) {}
+
+  bool setLocation(Option &O, unsigned long &L) {
+    if (Location)
+      return O.error(": cl::location(x) specified more than once!");
+    Location = &L;
+    return false;
+  }
+
+  template<class T>
+  void addValue(const T &V) {
+    assert(Location != 0 && "cl::location(...) not specified for a command "
+           "line option with external storage!");
+    *Location |= Bit(V);
+  }
+  
+  unsigned long getBits() { return *Location; }
+  
+  template<class T>
+  bool isSet(const T &V) {
+    return (*Location & Bit(V)) != 0;
+  }
+};
+
+
+// Define how to hold bits.  Since we can inherit from a class, we do so. 
+// This makes us exactly compatible with the bits in all cases that it is used.
+//
+template<class DataType>
+class bits_storage<DataType, bool> {
+  unsigned long Bits;   // Where to store the bits...
+  
+  template<class T>
+  static unsigned Bit(const T &V) {
+    unsigned BitPos = (unsigned)V;
+    assert(BitPos < sizeof(unsigned long) * 8 &&
+          "enum exceeds width of bit vector!");
+    return 1 << BitPos;
+  }
+  
+public:
+  template<class T>
+  void addValue(const T &V) {
+    Bits |=  Bit(V);
+  }
+  
+  unsigned long getBits() { return Bits; }
+  
+  template<class T>
+  bool isSet(const T &V) {
+    return (Bits & Bit(V)) != 0;
+  }
+};
+
+
+//===----------------------------------------------------------------------===//
+// bits - A bit vector of command options.
+//
+template <class DataType, class Storage = bool,
+          class ParserClass = parser<DataType> >
+class bits : public Option, public bits_storage<DataType, Storage> {
+  std::vector<unsigned> Positions;
+  ParserClass Parser;
+
+  virtual enum NumOccurrences getNumOccurrencesFlagDefault() const {
+    return ZeroOrMore;
+  }
+  virtual enum ValueExpected getValueExpectedFlagDefault() const {
+    return Parser.getValueExpectedFlagDefault();
+  }
+
+  virtual bool handleOccurrence(unsigned pos, const char *ArgName,
+                                const std::string &Arg) {
+    typename ParserClass::parser_data_type Val =
+      typename ParserClass::parser_data_type();
+    if (Parser.parse(*this, ArgName, Arg, Val))
+      return true;  // Parse Error!
+    addValue(Val);
+    setPosition(pos);
+    Positions.push_back(pos);
+    return false;
+  }
+
+  // Forward printing stuff to the parser...
+  virtual unsigned getOptionWidth() const {return Parser.getOptionWidth(*this);}
+  virtual void printOptionInfo(unsigned GlobalWidth) const {
+    Parser.printOptionInfo(*this, GlobalWidth);
+  }
+
+  void done() {
+    addArgument(ArgStr);
+    Parser.initialize(*this);
+  }
+public:
+  ParserClass &getParser() { return Parser; }
+
+  unsigned getPosition(unsigned optnum) const {
+    assert(optnum < this->size() && "Invalid option index");
+    return Positions[optnum];
+  }
+
+  // One option...
+  template<class M0t>
+  bits(const M0t &M0) {
+    apply(M0, this);
+    done();
+  }
+  // Two options...
+  template<class M0t, class M1t>
+  bits(const M0t &M0, const M1t &M1) {
+    apply(M0, this); apply(M1, this);
+    done();
+  }
+  // Three options...
+  template<class M0t, class M1t, class M2t>
+  bits(const M0t &M0, const M1t &M1, const M2t &M2) {
+    apply(M0, this); apply(M1, this); apply(M2, this);
+    done();
+  }
+  // Four options...
+  template<class M0t, class M1t, class M2t, class M3t>
+  bits(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3) {
+    apply(M0, this); apply(M1, this); apply(M2, this); apply(M3, this);
+    done();
+  }
+  // Five options...
+  template<class M0t, class M1t, class M2t, class M3t, class M4t>
+  bits(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3,
+       const M4t &M4) {
+    apply(M0, this); apply(M1, this); apply(M2, this); apply(M3, this);
+    apply(M4, this);
+    done();
+  }
+  // Six options...
+  template<class M0t, class M1t, class M2t, class M3t,
+           class M4t, class M5t>
+  bits(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3,
+       const M4t &M4, const M5t &M5) {
+    apply(M0, this); apply(M1, this); apply(M2, this); apply(M3, this);
+    apply(M4, this); apply(M5, this);
+    done();
+  }
+  // Seven options...
+  template<class M0t, class M1t, class M2t, class M3t,
+           class M4t, class M5t, class M6t>
+  bits(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3,
+      const M4t &M4, const M5t &M5, const M6t &M6) {
+    apply(M0, this); apply(M1, this); apply(M2, this); apply(M3, this);
+    apply(M4, this); apply(M5, this); apply(M6, this);
+    done();
+  }
+  // Eight options...
+  template<class M0t, class M1t, class M2t, class M3t,
+           class M4t, class M5t, class M6t, class M7t>
+  bits(const M0t &M0, const M1t &M1, const M2t &M2, const M3t &M3,
+      const M4t &M4, const M5t &M5, const M6t &M6, const M7t &M7) {
+    apply(M0, this); apply(M1, this); apply(M2, this); apply(M3, this);
+    apply(M4, this); apply(M5, this); apply(M6, this); apply(M7, this);
+    done();
+  }
+};
+
+//===----------------------------------------------------------------------===//
 // Aliased command line option (alias this name to a preexisting name)
 //
 
