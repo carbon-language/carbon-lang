@@ -695,10 +695,36 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
       case MVT::f32: Opc = PPC::FMULS; break;
       case MVT::f64: Opc = PPC::FMUL;  break;
     }
-    CurDAG->SelectNodeTo(N, N->getValueType(0), Opc, Select(N->getOperand(0)), 
+    CurDAG->SelectNodeTo(N, MVT::i32, Opc, Select(N->getOperand(0)), 
                          Select(N->getOperand(1)));
     break;
   }
+  case ISD::SDIV: {
+    unsigned Imm;
+    if (isIntImmediate(N->getOperand(1), Imm)) {
+      if ((signed)Imm > 0 && isPowerOf2_32(Imm)) {
+        SDOperand Op =
+          CurDAG->getTargetNode(PPC::SRAWI, MVT::i32, MVT::Flag,
+                                Select(N->getOperand(0)),
+                                getI32Imm(Log2_32(Imm)));
+        CurDAG->SelectNodeTo(N, MVT::i32, PPC::ADDZE,
+                             Op.getValue(0), Op.getValue(1));
+        break;
+      } else if ((signed)Imm < 0 && isPowerOf2_32(-Imm)) {
+        SDOperand Op =
+          CurDAG->getTargetNode(PPC::SRAWI, MVT::Flag, MVT::i32,
+                                Select(N->getOperand(0)),
+                                getI32Imm(Log2_32(-Imm)));
+        SDOperand PT =
+          CurDAG->getTargetNode(PPC::ADDZE, MVT::i32, Op.getValue(1),
+                                Op.getValue(0));
+        CurDAG->SelectNodeTo(N, MVT::i32, PPC::NEG, PT);
+        break;
+      }
+    }
+    assert(0 && "SDIV not implemented yet!");
+    abort();
+  }    
   case ISD::MULHS:
     assert(N->getValueType(0) == MVT::i32);
     CurDAG->SelectNodeTo(N, MVT::i32, PPC::MULHW, Select(N->getOperand(0)), 
