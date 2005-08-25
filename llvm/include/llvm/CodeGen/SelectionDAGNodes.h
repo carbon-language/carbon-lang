@@ -65,6 +65,7 @@ namespace ISD {
     // anything else with this node, and this is valid in the target-specific
     // dag, turning into a GlobalAddress operand.
     TargetGlobalAddress,
+    TargetFrameIndex,
 
     // CopyToReg - This node has three operands: a chain, a register number to
     // set to this value, and a value.  
@@ -812,15 +813,16 @@ class FrameIndexSDNode : public SDNode {
   int FI;
 protected:
   friend class SelectionDAG;
-  FrameIndexSDNode(int fi, MVT::ValueType VT)
-    : SDNode(ISD::FrameIndex, VT), FI(fi) {}
+  FrameIndexSDNode(int fi, MVT::ValueType VT, bool isTarg)
+    : SDNode(isTarg ? ISD::TargetFrameIndex : ISD::FrameIndex, VT), FI(fi) {}
 public:
 
   int getIndex() const { return FI; }
 
   static bool classof(const FrameIndexSDNode *) { return true; }
   static bool classof(const SDNode *N) {
-    return N->getOpcode() == ISD::FrameIndex;
+    return N->getOpcode() == ISD::FrameIndex ||
+           N->getOpcode() == ISD::TargetFrameIndex;
   }
 };
 

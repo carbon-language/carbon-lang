@@ -261,6 +261,9 @@ void SelectionDAG::RemoveNodeFromCSEMaps(SDNode *N) {
   case ISD::FrameIndex:
     FrameIndices.erase(cast<FrameIndexSDNode>(N)->getIndex());
     break;
+  case ISD::TargetFrameIndex:
+    TargetFrameIndices.erase(cast<FrameIndexSDNode>(N)->getIndex());
+    break;
   case ISD::ConstantPool:
     ConstantPoolIndices.erase(cast<ConstantPoolSDNode>(N)->getIndex());
     break;
@@ -433,7 +436,15 @@ SDOperand SelectionDAG::getTargetGlobalAddress(const GlobalValue *GV,
 SDOperand SelectionDAG::getFrameIndex(int FI, MVT::ValueType VT) {
   SDNode *&N = FrameIndices[FI];
   if (N) return SDOperand(N, 0);
-  N = new FrameIndexSDNode(FI, VT);
+  N = new FrameIndexSDNode(FI, VT, false);
+  AllNodes.push_back(N);
+  return SDOperand(N, 0);
+}
+
+SDOperand SelectionDAG::getTargetFrameIndex(int FI, MVT::ValueType VT) {
+  SDNode *&N = TargetFrameIndices[FI];
+  if (N) return SDOperand(N, 0);
+  N = new FrameIndexSDNode(FI, VT, true);
   AllNodes.push_back(N);
   return SDOperand(N, 0);
 }
@@ -2071,6 +2082,7 @@ const char *SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::GlobalAddress: return "GlobalAddress";
   case ISD::TargetGlobalAddress: return "TargetGlobalAddress";
   case ISD::FrameIndex:    return "FrameIndex";
+  case ISD::TargetFrameIndex: return "TargetFrameIndex";
   case ISD::BasicBlock:    return "BasicBlock";
   case ISD::Register:      return "Register";
   case ISD::ExternalSymbol: return "ExternalSymbol";
