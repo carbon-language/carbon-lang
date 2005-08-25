@@ -1021,9 +1021,14 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     break;
   }
 
-  SDNode *&N = UnaryOps[std::make_pair(Opcode, std::make_pair(Operand, VT))];
-  if (N) return SDOperand(N, 0);
-  N = new SDNode(Opcode, Operand);
+  SDNode *N;
+  if (VT != MVT::Flag) { // Don't CSE flag producing nodes
+    SDNode *&E = UnaryOps[std::make_pair(Opcode, std::make_pair(Operand, VT))];
+    if (E) return SDOperand(N, 0);
+    E = N = new SDNode(Opcode, Operand);
+  } else {
+    N = new SDNode(Opcode, Operand);
+  }
   N->setValueTypes(VT);
   AllNodes.push_back(N);
   return SDOperand(N, 0);
@@ -1582,7 +1587,8 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
 
   // Memoize this node if possible.
   SDNode *N;
-  if (Opcode != ISD::CALLSEQ_START && Opcode != ISD::CALLSEQ_END) {
+  if (Opcode != ISD::CALLSEQ_START && Opcode != ISD::CALLSEQ_END &&
+      VT != MVT::Flag) {
     SDNode *&BON = BinaryOps[std::make_pair(Opcode, std::make_pair(N1, N2))];
     if (BON) return SDOperand(BON, 0);
 
@@ -1704,11 +1710,15 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
   Ops.push_back(N2);
   Ops.push_back(N3);
 
-  // Memoize nodes.
-  SDNode *&N = OneResultNodes[std::make_pair(Opcode, std::make_pair(VT, Ops))];
-  if (N) return SDOperand(N, 0);
-
-  N = new SDNode(Opcode, N1, N2, N3);
+  // Memoize node if it doesn't produce a flag.
+  SDNode *N;
+  if (VT != MVT::Flag) {
+    SDNode *&E = OneResultNodes[std::make_pair(Opcode,std::make_pair(VT, Ops))];
+    if (E) return SDOperand(E, 0);
+    E = N = new SDNode(Opcode, N1, N2, N3);
+  } else {
+    N = new SDNode(Opcode, N1, N2, N3);
+  }
   N->setValueTypes(VT);
   AllNodes.push_back(N);
   return SDOperand(N, 0);
@@ -1833,9 +1843,15 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
   }
 
   // Memoize nodes.
-  SDNode *&N = OneResultNodes[std::make_pair(Opcode, std::make_pair(VT, Ops))];
-  if (N) return SDOperand(N, 0);
-  N = new SDNode(Opcode, Ops);
+  SDNode *N;
+  if (VT != MVT::Flag) {
+    SDNode *&E =
+      OneResultNodes[std::make_pair(Opcode, std::make_pair(VT, Ops))];
+    if (E) return SDOperand(E, 0);
+    E = N = new SDNode(Opcode, Ops);
+  } else {
+    N = new SDNode(Opcode, Ops);
+  }
   N->setValueTypes(VT);
   AllNodes.push_back(N);
   return SDOperand(N, 0);
@@ -1888,11 +1904,16 @@ SDOperand SelectionDAG::getNode(unsigned Opcode,
 #endif
   }
 
-  // Memoize the node.
-  SDNode *&N = ArbitraryNodes[std::make_pair(Opcode, std::make_pair(ResultTys,
-                                                                    Ops))];
-  if (N) return SDOperand(N, 0);
-  N = new SDNode(Opcode, Ops);
+  // Memoize the node unless it returns a flag.
+  SDNode *N;
+  if (ResultTys.back() != MVT::Flag) {
+    SDNode *&E =
+      ArbitraryNodes[std::make_pair(Opcode, std::make_pair(ResultTys, Ops))];
+    if (E) return SDOperand(E, 0);
+    E = N = new SDNode(Opcode, Ops);
+  } else {
+    N = new SDNode(Opcode, Ops);
+  }
   N->setValueTypes(ResultTys);
   AllNodes.push_back(N);
   return SDOperand(N, 0);
