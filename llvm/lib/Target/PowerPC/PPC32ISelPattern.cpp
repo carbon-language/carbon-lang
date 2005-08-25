@@ -1522,7 +1522,7 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
       if (Tmp3 == 0) {
         Tmp1 = SelectExpr(Node->getOperand(0));
         switch (CC) {
-        default: Node->dump(); assert(0 && "Unhandled SetCC condition"); abort();
+        default: Node->dump(); assert(0 && "Unhandled SetCC condition");abort();
         case ISD::SETEQ:
           Tmp2 = MakeIntReg();
           BuildMI(BB, PPC::CNTLZW, 1, Tmp2).addReg(Tmp1);
