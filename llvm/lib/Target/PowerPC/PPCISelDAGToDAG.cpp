@@ -15,6 +15,7 @@
 #include "PowerPC.h"
 #include "PPC32TargetMachine.h"
 #include "PPC32ISelLowering.h"
+#include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/SSARegMap.h"
@@ -22,6 +23,7 @@
 #include "llvm/CodeGen/SelectionDAGISel.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/Constants.h"
 #include "llvm/GlobalValue.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/MathExtras.h"
@@ -141,12 +143,15 @@ static bool isRunOfOnes(unsigned Val, unsigned &MB, unsigned &ME) {
     // look for the first zero bit after the run of ones
     ME = CountLeadingZeros_32((Val - 1) ^ Val);
     return true;
-  } else if (isShiftedMask_32(Val = ~Val)) { // invert mask
-                                             // effectively look for the first zero bit
-    ME = CountLeadingZeros_32(Val) - 1;
-    // effectively look for the first one bit after the run of zeros
-    MB = CountLeadingZeros_32((Val - 1) ^ Val) + 1;
-    return true;
+  } else {
+    Val = ~Val; // invert mask
+    if (isShiftedMask_32(Val)) {
+      // effectively look for the first zero bit
+      ME = CountLeadingZeros_32(Val) - 1;
+      // effectively look for the first one bit after the run of zeros
+      MB = CountLeadingZeros_32((Val - 1) ^ Val) + 1;
+      return true;
+    }
   }
   // no run present
   return false;
@@ -523,6 +528,20 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
     } else {
       CurDAG->SelectNodeTo(N, MVT::i32, PPC::LIS, getI32Imm(v >> 16));
     }
+    break;
+  }
+  case ISD::ConstantFP: {  // FIXME: this should get sucked into the legalizer
+    MachineConstantPool *CP = CurDAG->getMachineFunction().getConstantPool();
+    Constant *CFP = ConstantFP::get(Type::FloatTy,
+                                    cast<ConstantFPSDNode>(N)->getValue());
+    SDOperand CPN = CurDAG->getConstantPool(CP->getConstantPoolIndex(CFP),
+                                            MVT::i32);
+    SDOperand Tmp;
+    if (PICEnabled)
+      Tmp = CurDAG->getTargetNode(PPC::ADDIS, MVT::i32, getGlobalBaseReg(),CPN);
+    else
+      Tmp = CurDAG->getTargetNode(PPC::LIS, MVT::i32, CPN);
+    CurDAG->SelectNodeTo(N, N->getValueType(0), PPC::LFS, CPN, Tmp);
     break;
   }
   case ISD::UNDEF:
