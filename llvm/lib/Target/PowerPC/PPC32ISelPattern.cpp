@@ -1384,7 +1384,7 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
   case ISD::UDIV:
     // If this is a divide by constant, we can emit code using some magic
     // constants to implement it as a multiply instead.
-    if (isIntImmediate(N.getOperand(1), Tmp3) && (signed)Tmp3 > 1) {
+    if (isIntImmediate(N.getOperand(1), Tmp3) && Tmp3) {
       ExprMap.erase(N);
       return SelectExpr(BuildUDIVSequence(N));
     }
@@ -1404,33 +1404,41 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
     assert(N.getNumOperands() == 4 && N.getValueType() == MVT::i32 &&
            "Not an i64 add/sub!");
     unsigned Tmp4 = 0;
-    bool ME = isIntImmediate(N.getOperand(3),Tmp3) && ((signed)Tmp3 == -1);
-    bool ZE = isIntImmediate(N.getOperand(3),Tmp3) && (Tmp3 == 0);
-    bool IM = isIntImmediate(N.getOperand(2),Tmp3) && ((signed)Tmp3 >= -32768 ||
-                                                       (signed)Tmp3 <   32768);
     Tmp1 = SelectExpr(N.getOperand(0));
     Tmp2 = SelectExpr(N.getOperand(1));
-    if (!IM || N.getOpcode() == ISD::SUB_PARTS)
-      Tmp3 = SelectExpr(N.getOperand(2));
-    if ((!ME && !ZE) || N.getOpcode() == ISD::SUB_PARTS)
-      Tmp4 = SelectExpr(N.getOperand(3));
     
     if (N.getOpcode() == ISD::ADD_PARTS) {
-      // Codegen the low 32 bits of the add.  Interestingly, there is no shifted
-      // form of add immediate carrying.
-      if (IM)
+      bool ME, ZE;
+      if (isIntImmediate(N.getOperand(3), Tmp3)) {
+        ME = (signed)Tmp3 == -1;
+        ZE = Tmp3 == 0;
+      }
+      
+      if (!ZE && !ME)
+        Tmp4 = SelectExpr(N.getOperand(3));
+
+      if (isIntImmediate(N.getOperand(2), Tmp3) &&
+          ((signed)Tmp3 >= -32768 || (signed)Tmp3 < 32768)) {
+        // Codegen the low 32 bits of the add.  Interestingly, there is no
+        // shifted form of add immediate carrying.
         BuildMI(BB, PPC::ADDIC, 2, Result).addReg(Tmp1).addSImm(Tmp3);
-      else
+      } else {
+        Tmp3 = SelectExpr(N.getOperand(2));
         BuildMI(BB, PPC::ADDC, 2, Result).addReg(Tmp1).addReg(Tmp3);
+      }
+      
       // Codegen the high 32 bits, adding zero, minus one, or the full value
       // along with the carry flag produced by addc/addic to tmp2.
-      if (ZE)
+      if (ZE) {
         BuildMI(BB, PPC::ADDZE, 1, Result+1).addReg(Tmp2);
-      else if (ME)
+      } else if (ME) {
         BuildMI(BB, PPC::ADDME, 1, Result+1).addReg(Tmp2);
-      else
+      } else {
         BuildMI(BB, PPC::ADDE, 2, Result+1).addReg(Tmp2).addReg(Tmp4);
+      }
     } else {
+      Tmp3 = SelectExpr(N.getOperand(2));
+      Tmp4 = SelectExpr(N.getOperand(3));
       BuildMI(BB, PPC::SUBFC, 2, Result).addReg(Tmp3).addReg(Tmp1);
       BuildMI(BB, PPC::SUBFE, 2, Result+1).addReg(Tmp4).addReg(Tmp2);
     }
