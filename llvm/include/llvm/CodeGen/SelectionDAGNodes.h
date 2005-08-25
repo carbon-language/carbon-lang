@@ -66,6 +66,7 @@ namespace ISD {
     // dag, turning into a GlobalAddress operand.
     TargetGlobalAddress,
     TargetFrameIndex,
+    TargetConstantPool,
 
     // CopyToReg - This node has three operands: a chain, a register number to
     // set to this value, and a value.  
@@ -830,15 +831,17 @@ class ConstantPoolSDNode : public SDNode {
   unsigned CPI;
 protected:
   friend class SelectionDAG;
-  ConstantPoolSDNode(unsigned cpi, MVT::ValueType VT)
-    : SDNode(ISD::ConstantPool, VT), CPI(cpi) {}
+  ConstantPoolSDNode(unsigned cpi, MVT::ValueType VT, bool isTarget)
+    : SDNode(isTarget ? ISD::TargetConstantPool : ISD::ConstantPool, VT),
+      CPI(cpi) {}
 public:
 
   unsigned getIndex() const { return CPI; }
 
   static bool classof(const ConstantPoolSDNode *) { return true; }
   static bool classof(const SDNode *N) {
-    return N->getOpcode() == ISD::ConstantPool;
+    return N->getOpcode() == ISD::ConstantPool ||
+           N->getOpcode() == ISD::TargetConstantPool;
   }
 };
 
