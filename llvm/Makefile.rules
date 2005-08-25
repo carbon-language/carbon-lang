@@ -144,10 +144,15 @@ $(ConfigStatusScript): $(ConfigureScript)
 	  $(ConfigStatusScript) --recheck $(ConfigureScriptFLAGS) && \
 	  $(ConfigStatusScript)
 
+#------------------------------------------------------------------------
+# If we're buildilng LLVM, then make sure the generated headers are Up2Dt
+#------------------------------------------------------------------------
+ifeq ($(LLVM_OBJ_ROOT),$(PROJ_OBJ_ROOT))
 .PRECIOUS: $(FilesToConfigPATH)
 $(FilesToConfigPATH) : $(LLVM_OBJ_ROOT)/% : $(LLVM_SRC_ROOT)/%.in 
 	$(Echo) Regenerating $*
 	$(Verb) cd $(LLVM_OBJ_ROOT) && $(ConfigStatusScript) $*
+endif
 
 #------------------------------------------------------------------------
 # Make sure the configuration makefile is up to date
