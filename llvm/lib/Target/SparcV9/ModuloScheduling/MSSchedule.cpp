@@ -288,6 +288,7 @@ bool MSSchedule::defPreviousStage(Value *def, int stage) {
   }
 
   assert(0 && "We should always have found the def in our kernel\n");
+  abort();
 }
 
 
