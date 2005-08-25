@@ -987,7 +987,7 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
           DestReg = GPR[GPR_idx++];
           RegTy = MVT::i32;
         } else {
-          assert(MVT::isFloatingPoint(Op.getValueType()) &&
+          assert(MVT::isFloatingPoint(N->getOperand(i).getValueType()) &&
                  "Unpromoted integer arg?");
           assert(FPR_idx < 13 && "Too many fp args");
           DestReg = FPR[FPR_idx++];
