@@ -213,7 +213,16 @@ public:
   /// removeVirtualRegistersKilled - Remove all killed info for the specified
   /// instruction.
   void removeVirtualRegistersKilled(MachineInstr *MI) {
-    RegistersKilled.erase(MI);
+    std::map<MachineInstr*, std::vector<unsigned> >::iterator I = 
+      RegistersKilled.find(MI);
+    if (I != RegistersKilled.end()) {
+      std::vector<unsigned> &Regs = I->second;
+      for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
+        bool removed = getVarInfo(Regs[i]).removeKill(MI);
+        assert(removed && "kill not in register's VarInfo?");
+      }
+      RegistersKilled.erase(I);
+    }
   }
 
   /// addVirtualRegisterDead - Add information about the fact that the specified
@@ -256,7 +265,16 @@ public:
   /// removeVirtualRegistersDead - Remove all of the specified dead
   /// registers from the live variable information.
   void removeVirtualRegistersDead(MachineInstr *MI) {
-    RegistersDead.erase(MI);
+    std::map<MachineInstr*, std::vector<unsigned> >::iterator I = 
+      RegistersDead.find(MI);
+    if (I != RegistersDead.end()) {
+      std::vector<unsigned> &Regs = I->second;
+      for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
+        bool removed = getVarInfo(Regs[i]).removeKill(MI);
+        assert(removed && "kill not in register's VarInfo?");
+      }
+      RegistersDead.erase(I);
+    }
   }
 
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
