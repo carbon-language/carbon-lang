@@ -23,6 +23,7 @@
                                     set of possibilities</a></li>
       <li><a href="#namedalternatives">Named alternatives</a></li>
       <li><a href="#list">Parsing a list of options</a></li>
+      <li><a href="#bits">Collecting options as a set of flags</a></li>
       <li><a href="#description">Adding freeform text to help output</a></li>
     </ol></li>
 
@@ -61,6 +62,7 @@
             <tt>cl::ParseEnvironmentOptions</tt> function</a></li>
         <li><a href="#cl::opt">The <tt>cl::opt</tt> class</a></li>
         <li><a href="#cl::list">The <tt>cl::list</tt> class</a></li>
+        <li><a href="#cl::bits">The <tt>cl::bits</tt> class</a></li>
         <li><a href="#cl::alias">The <tt>cl::alias</tt> class</a></li>
         <li><a href="#cl::extrahelp">The <tt>cl::extrahelp</tt> class</a></li>
         </ul></li>
@@ -690,6 +692,65 @@ CommandLine library that it is an error if the user does not specify any
 checking we have to do.</p>
 
 </div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="bits">Collecting options as a set of flags</a>
+</div>
+
+<div class="doc_text">
+
+<p>Instead of collecting sets of options in a list, it is also possible to
+gather information for enum values in a bit vector.  The represention used by
+the <a href="#bits"><tt>cl::bits</tt></a> class is an <tt>unsigned long</tt>
+integer.  An enum value is represented by a 0/1 in the enum's ordinal value bit
+position. 1 indicating that the enum was specified, 0 otherwise.  As each
+specified value is parsed, the resulting enum's bit is set in the option's bit
+vector:</p>
+
+<div class="doc_code"><pre>
+  <i>bits</i> |= 1 << (unsigned)<i>enum</i>;
+</pre></div>
+
+<p>An option specified more than once is redundant as far as the result is
+concerned. The argument position information is however updated.</p>
+
+<p>Reworking the above list example, we could replace <a href="#list">
+<tt>cl::list</tt></a> with <a href="#bits"><tt>cl::bits</tt></a>:</p>
+
+<div class="doc_code"><pre>
+<a href="#cl::bits">cl::bits</a>&lt;Opts&gt; OptimizationBits(<a href="#cl::desc">cl::desc</a>("<i>Available Optimizations:</i>"),
+  <a href="#cl::values">cl::values</a>(
+    clEnumVal(dce               , "<i>Dead Code Elimination</i>"),
+    clEnumVal(constprop         , "<i>Constant Propagation</i>"),
+   clEnumValN(inlining, "<i>inline</i>", "<i>Procedure Integration</i>"),
+    clEnumVal(strip             , "<i>Strip Symbols</i>"),
+  clEnumValEnd));
+</pre></div>
+
+<p>To test to see if <tt>constprop</tt> was specified, we can use the
+<tt>cl:bits::isSet</tt> function:</p>
+
+<div class="doc_code"><pre>
+  if (OptimizationBits.isSet(constprop)) {
+    ...
+  }
+</pre></div>
+
+<p>It's also possible to get the raw bit vector using the
+<tt>cl::bits::getBits</tt> function:</p>
+
+<div class="doc_code"><pre>
+  unsigned long bits = OptimizationBits.getBits();
+</pre></div>
+
+<p>Finally, if external storage is used, then the location specified must be of
+type <tt>unsigned long</tt>. In all other ways a <a
+href="#bits"><tt>cl::bits</tt></a> option is morally equivalent to a <a
+href="#list"> <tt>cl::list</tt></a> option</p>
+
+</div>
+
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
@@ -1503,6 +1564,31 @@ href="#cl::opt"><tt>cl::opt</tt></a> class, except that the second argument is
 the <b>type</b> of the external storage, not a boolean value.  For this class,
 the marker type '<tt>bool</tt>' is used to indicate that internal storage should
 be used.</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="cl::bits">The <tt>cl::bits</tt> class</a>
+</div>
+
+<div class="doc_text">
+
+<p>The <tt>cl::bits</tt> class is the class used to represent a list of command
+line options in the form of a bit vector.  It is also a templated class which
+can take up to three arguments:</p>
+
+<div class="doc_code"><pre>
+<b>namespace</b> cl {
+  <b>template</b> &lt;<b>class</b> DataType, <b>class</b> Storage = <b>bool</b>,
+            <b>class</b> ParserClass = parser&lt;DataType&gt; &gt;
+  <b>class</b> bits;
+}
+</pre></div>
+
+<p>This class works the exact same as the <a
+href="#cl::opt"><tt>cl::lists</tt></a> class, except that the second argument
+must be of <b>type</b> <tt>unsigned long</tt> if external storage is used.</p>
 
 </div>
 
