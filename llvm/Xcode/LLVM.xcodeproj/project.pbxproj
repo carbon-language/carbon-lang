@@ -33,7 +33,6 @@
 /* End PBXBuildStyle section */
 
 /* Begin PBXFileReference section */
-		CFB4CABE08BE01F50035DBBF /* Search.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Search.h; sourceTree = "<group>"; };
 		DE66EC5B08ABE86900323D32 /* AsmWriter.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = AsmWriter.cpp; path = ../lib/VMCore/AsmWriter.cpp; sourceTree = SOURCE_ROOT; };
 		DE66EC5C08ABE86A00323D32 /* BasicBlock.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = BasicBlock.cpp; path = ../lib/VMCore/BasicBlock.cpp; sourceTree = SOURCE_ROOT; };
 		DE66EC5D08ABE86A00323D32 /* ConstantFolding.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = ConstantFolding.cpp; path = ../lib/VMCore/ConstantFolding.cpp; sourceTree = SOURCE_ROOT; };
@@ -1927,7 +1926,6 @@
 				DE66F28708ABF03200323D32 /* PassNameParser.h */,
 				DE66F28808ABF03200323D32 /* PatternMatch.h */,
 				DE66F28908ABF03200323D32 /* PluginLoader.h */,
-				CFB4CABE08BE01F50035DBBF /* Search.h */,
 				DE66F28A08ABF03200323D32 /* SlowOperationInformer.h */,
 				DE66F28B08ABF03200323D32 /* StableBasicBlockNumbering.h */,
 				DE66F28C08ABF03200323D32 /* SystemUtils.h */,
@@ -2210,7 +2208,7 @@
 /* Begin PBXLegacyTarget section */
 		D28A88AD04BDD90700651E21 /* LLVM */ = {
 			isa = PBXLegacyTarget;
-			buildArgumentsString = "$(ACTION)";
+			buildArgumentsString = "$(ACTION) -j 4";
 			buildConfigurationList = DE66EC4C08ABE78900323D32 /* Build configuration list for PBXLegacyTarget "LLVM" */;
 			buildPhases = (
 			);
