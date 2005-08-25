@@ -1062,7 +1062,10 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
     CurDAG->SelectNodeTo(N, MVT::Other, PPC::BLR, Chain);
     break;
   }
-
+  case ISD::BR:
+    CurDAG->SelectNodeTo(N, MVT::Other, PPC::B, N->getOperand(1),
+                         Select(N->getOperand(0)));
+    break;
   case ISD::BR_CC:
   case ISD::BRTWOWAY_CC: {
     SDOperand Chain = Select(N->getOperand(0));
