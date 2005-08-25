@@ -40,8 +40,9 @@ namespace MVT {  // MVT = Machine Value Types
     f64             =  8,   // This is a 64 bit floating point value
     f80             =  9,   // This is a 80 bit floating point value
     f128            = 10,   // This is a 128 bit floating point value
+    Flag           =  11,   // This is a condition code or machine flag.
 
-    isVoid          = 11,   // This has no value
+    isVoid          = 12,   // This has no value
 
     LAST_VALUETYPE,         // This always remains at the end of the list.
   };

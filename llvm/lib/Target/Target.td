@@ -35,8 +35,9 @@ def i128   : ValueType<128,  5>;   // 128-bit integer value
 def f32    : ValueType<32 ,  7>;   // 32-bit floating point value
 def f64    : ValueType<64 ,  8>;   // 64-bit floating point value
 def f80    : ValueType<80 ,  9>;   // 80-bit floating point value
-def f128   : ValueType<128,  9>;   // 128-bit floating point value
-def isVoid : ValueType<0  , 11>;   // Produces no value
+def f128   : ValueType<128, 10>;   // 128-bit floating point value
+def FlagVT : ValueType<0  , 11>;   // Condition code or machine flag
+def isVoid : ValueType<0  , 12>;   // Produces no value
 
 //===----------------------------------------------------------------------===//
 // Register file description - These classes are used to fill in the target
