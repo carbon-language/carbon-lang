@@ -76,14 +76,22 @@ unsigned SimpleSched::Emit(SDOperand Op) {
     unsigned Opc = Op.getTargetOpcode();
     const TargetInstrDescriptor &II = TII.get(Opc);
 
-    // Target nodes have any register or immediate operands before any chain
-    // nodes.  Check that the DAG matches the TD files's expectation of #
-    // operands.
+    // The results of target nodes have register or immediate operands first,
+    // then an optional chain, and optional flag operands (which do not go into
+    // the machine instrs).
     unsigned NumResults = Op.Val->getNumValues();
-    if (NumResults && Op.Val->getValueType(NumResults-1) == MVT::Other)
+    while (NumResults && Op.Val->getValueType(NumResults-1) == MVT::Flag)
       --NumResults;
+    if (NumResults && Op.Val->getValueType(NumResults-1) == MVT::Other)
+      --NumResults;    // Skip over chain result.
 
+    // The inputs to target nodes have any actual inputs first, followed by an
+    // optional chain operand, then flag operands.  Compute the number of actual
+    // operands that  will go into the machine instr.
     unsigned NodeOperands = Op.getNumOperands();
+    while (NodeOperands &&
+           Op.getOperand(NodeOperands-1).getValueType() == MVT::Flag)
+      --NodeOperands;
     if (NodeOperands &&    // Ignore chain if it exists.
         Op.getOperand(NodeOperands-1).getValueType() == MVT::Other)
       --NodeOperands;
@@ -120,8 +128,9 @@ unsigned SimpleSched::Emit(SDOperand Op) {
         // include it because it is the most common and it makes the logic
         // simpler here.
         unsigned R = Emit(Op.getOperand(i));
-        // Add an operand, unless this corresponds to a chain node.
-        if (Op.getOperand(i).getValueType() != MVT::Other)
+        // Add an operand, unless this corresponds to a chain or flag node.
+        MVT::ValueType VT = Op.getOperand(i).getValueType();
+        if (VT != MVT::Other && VT != MVT::Flag)
           MI->addRegOperand(R, MachineOperand::Use);
       } else if (ConstantSDNode *C =
                                    dyn_cast<ConstantSDNode>(Op.getOperand(i))) {
@@ -145,8 +154,9 @@ unsigned SimpleSched::Emit(SDOperand Op) {
         MI->addExternalSymbolOperand(ES->getSymbol(), false);
       } else {
         unsigned R = Emit(Op.getOperand(i));
-        // Add an operand, unless this corresponds to a chain node.
-        if (Op.getOperand(i).getValueType() != MVT::Other)
+        // Add an operand, unless this corresponds to a chain or flag node.
+        MVT::ValueType VT = Op.getOperand(i).getValueType();
+        if (VT != MVT::Other && VT != MVT::Flag)
           MI->addRegOperand(R, MachineOperand::Use);
       }
     }
