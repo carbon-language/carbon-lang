@@ -1375,29 +1375,23 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
         BuildMI(BB, PPC::ADDZE, 1, Tmp4).addReg(Tmp1);
         BuildMI(BB, PPC::NEG, 1, Result).addReg(Tmp4);
         return Result;
+      } else if (Tmp3) {
+        ExprMap.erase(N);
+        return SelectExpr(BuildSDIVSequence(N));
       }
     }
     // fall thru
   case ISD::UDIV:
     // If this is a divide by constant, we can emit code using some magic
     // constants to implement it as a multiply instead.
-    if (isIntImmediate(N.getOperand(1), Tmp3)) {
-      if (opcode == ISD::SDIV) {
-        if ((signed)Tmp3 < -1 || (signed)Tmp3 > 1) {
-          ExprMap.erase(N);
-          return SelectExpr(BuildSDIVSequence(N));
-        }
-      } else {
-        if ((signed)Tmp3 > 1) {
-          ExprMap.erase(N);
-          return SelectExpr(BuildUDIVSequence(N));
-        }
-      }
+    if (isIntImmediate(N.getOperand(1), Tmp3) && (signed)Tmp3 > 1) {
+      ExprMap.erase(N);
+      return SelectExpr(BuildUDIVSequence(N));
     }
     Tmp1 = SelectExpr(N.getOperand(0));
     Tmp2 = SelectExpr(N.getOperand(1));
     switch (DestType) {
-    default: assert(0 && "Unknown type to ISD::SDIV"); break;
+    default: assert(0 && "Unknown type to ISD::DIV"); break;
     case MVT::i32: Opc = (ISD::UDIV == opcode) ? PPC::DIVWU : PPC::DIVW; break;
     case MVT::f32: Opc = PPC::FDIVS; break;
     case MVT::f64: Opc = PPC::FDIV; break;
