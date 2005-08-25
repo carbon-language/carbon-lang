@@ -28,13 +28,6 @@ TopLevelTargets  := check dist dist-check dist-clean tags dist-gzip dist-bzip2 \
 UserTargets      := $(RecursiveTargets) $(LocalTargets) $(TopLevelTargets)
 InternalTargets  := preconditions distdir dist-hook
 
-FilesToConfig := \
-  include/llvm/Config/config.h \
-  include/llvm/Support/DataTypes.h \
-  include/llvm/ADT/hash_map \
-  include/llvm/ADT/hash_set \
-  include/llvm/ADT/iterator
-
 ################################################################################
 # INITIALIZATION: Basic things the makefile needs
 ################################################################################
@@ -84,10 +77,7 @@ ifneq ($(MakefileConfigIn),)
 PreConditions      += $(MakefileConfig)
 endif
 
-FilesToConfigPATH  := $(addprefix $(LLVM_OBJ_ROOT)/,$(FilesToConfig))
-PreConditions      += $(FilesToConfigPATH)
-
-preconditions : $(PreConditions)
+preconditions: $(PreConditions)
 
 #------------------------------------------------------------------------
 # Make sure the BUILT_SOURCES are built first
@@ -143,16 +133,6 @@ $(ConfigStatusScript): $(ConfigureScript)
 	  fi ; \
 	  $(ConfigStatusScript) --recheck $(ConfigureScriptFLAGS) && \
 	  $(ConfigStatusScript)
-
-#------------------------------------------------------------------------
-# If we're buildilng LLVM, then make sure the generated headers are Up2Dt
-#------------------------------------------------------------------------
-ifeq ($(LLVM_OBJ_ROOT),$(PROJ_OBJ_ROOT))
-.PRECIOUS: $(FilesToConfigPATH)
-$(FilesToConfigPATH) : $(LLVM_OBJ_ROOT)/% : $(LLVM_SRC_ROOT)/%.in 
-	$(Echo) Regenerating $*
-	$(Verb) cd $(LLVM_OBJ_ROOT) && $(ConfigStatusScript) $*
-endif
 
 #------------------------------------------------------------------------
 # Make sure the configuration makefile is up to date

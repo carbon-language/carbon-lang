@@ -51,3 +51,21 @@ dist-hook::
 
 tools-only: all
 libs-only: all
+
+#------------------------------------------------------------------------
+# Make sure the generated headers are up-to-date. This must be kept in
+# sync with the AC_CONFIG_HEADER invocations in autoconf/configure.ac
+#------------------------------------------------------------------------
+FilesToConfig := \
+  include/llvm/Config/config.h \
+  include/llvm/Support/DataTypes.h \
+  include/llvm/ADT/hash_map \
+  include/llvm/ADT/hash_set \
+  include/llvm/ADT/iterator
+FilesToConfigPATH  := $(addprefix $(LLVM_OBJ_ROOT)/,$(FilesToConfig))
+
+all-local:: $(FilesToConfigPATH)
+$(FilesToConfigPATH) : $(LLVM_OBJ_ROOT)/% : $(LLVM_SRC_ROOT)/%.in 
+	$(Echo) Regenerating $*
+	$(Verb) cd $(LLVM_OBJ_ROOT) && $(ConfigStatusScript) $*
+.PRECIOUS: $(FilesToConfigPATH)
