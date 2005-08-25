@@ -557,6 +557,16 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
                          getI32Imm(0));
     break;
   }
+  case ISD::ConstantPool: {
+    unsigned CPIIdx = cast<ConstantPoolSDNode>(N)->getIndex();
+    SDOperand Tmp, CPI = CurDAG->getTargetConstantPool(CPIIdx, MVT::i32);
+    if (PICEnabled)
+      Tmp = CurDAG->getTargetNode(PPC::ADDIS, MVT::i32, getGlobalBaseReg(),CPI);
+    else
+      Tmp = CurDAG->getTargetNode(PPC::LIS, MVT::i32, CPI);
+    CurDAG->SelectNodeTo(N, MVT::i32, PPC::LA, Tmp, CPI);
+    break;
+  }
   case ISD::GlobalAddress: {
     GlobalValue *GV = cast<GlobalAddressSDNode>(N)->getGlobal();
     SDOperand Tmp;
