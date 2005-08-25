@@ -1153,7 +1153,6 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
       CarryFromLo = CurDAG->getTargetNode(PPC::ADDC, MVT::i32, MVT::Flag,
                                           LHSL, Select(N->getOperand(2)));
     }
-    Result.push_back(CarryFromLo);
     CarryFromLo = CarryFromLo.getValue(1);
     
     // Codegen the high 32 bits, adding zero, minus one, or the full value
@@ -1167,6 +1166,7 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
       ResultHi = CurDAG->getTargetNode(PPC::ADDE, MVT::i32, LHSH,
                                        Select(N->getOperand(3)), CarryFromLo);
     Result.push_back(ResultHi);
+    Result.push_back(CarryFromLo.getValue(0));
     CurDAG->ReplaceAllUsesWith(N, Result);
     return Result[Op.ResNo];
   }
