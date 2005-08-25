@@ -460,6 +460,25 @@ static unsigned getBCCForSetCC(ISD::CondCode CC) {
   return 0;
 }
 
+/// getCRIdxForSetCC - Return the index of the condition register field
+/// associated with the SetCC condition, and whether or not the field is
+/// treated as inverted.  That is, lt = 0; ge = 0 inverted.
+static unsigned getCRIdxForSetCC(ISD::CondCode CC, bool& Inv) {
+  switch (CC) {
+  default: assert(0 && "Unknown condition!"); abort();
+  case ISD::SETULT:
+  case ISD::SETLT:  Inv = false;  return 0;
+  case ISD::SETUGE:
+  case ISD::SETGE:  Inv = true;   return 0;
+  case ISD::SETUGT:
+  case ISD::SETGT:  Inv = false;  return 1;
+  case ISD::SETULE:
+  case ISD::SETLE:  Inv = true;   return 1;
+  case ISD::SETEQ:  Inv = false;  return 2;
+  case ISD::SETNE:  Inv = true;   return 2;
+  }
+  return 0;
+}
 
 // Select - Convert the specified operand from a target-independent to a
 // target-specific node if it hasn't already been changed.
@@ -988,6 +1007,108 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
     
     CurDAG->SelectNodeTo(N, MVT::Other, Opc, Select(N->getOperand(1)),
                          AddrOp1, AddrOp2, Select(N->getOperand(0)));
+    break;
+  }
+    
+  case ISD::SETCC: {
+    unsigned Imm;
+    ISD::CondCode CC = cast<CondCodeSDNode>(N->getOperand(2))->get();
+    if (isIntImmediate(N->getOperand(1), Imm)) {
+      // We can codegen setcc op, imm very efficiently compared to a brcond.
+      // Check for those cases here.
+      // setcc op, 0
+      if (Imm == 0) {
+        SDOperand Op = Select(N->getOperand(0));
+        switch (CC) {
+        default: assert(0 && "Unhandled SetCC condition"); abort();
+        case ISD::SETEQ:
+          Op = CurDAG->getTargetNode(PPC::CNTLZW, MVT::i32, Op);
+          CurDAG->SelectNodeTo(N, MVT::i32, PPC::RLWINM, Op, getI32Imm(27),
+                               getI32Imm(5), getI32Imm(31));
+          break;
+        case ISD::SETNE: {
+          SDOperand AD = CurDAG->getTargetNode(PPC::ADDIC, MVT::i32, MVT::Flag,
+                                               Op, getI32Imm(~0U));
+          CurDAG->SelectNodeTo(N, MVT::i32, PPC::SUBFE, AD, Op, AD.getValue(1));
+          break;
+        }
+        case ISD::SETLT:
+          CurDAG->SelectNodeTo(N, MVT::i32, PPC::RLWINM, Op, getI32Imm(1),
+                               getI32Imm(31), getI32Imm(31));
+          break;
+        case ISD::SETGT: {
+          SDOperand T = CurDAG->getTargetNode(PPC::NEG, MVT::i32, Op);
+          T = CurDAG->getTargetNode(PPC::ANDC, MVT::i32, T, Op);;
+          CurDAG->SelectNodeTo(N, MVT::i32, PPC::RLWINM, T, getI32Imm(1),
+                               getI32Imm(31), getI32Imm(31));
+          break;
+        }
+        }
+        break;
+      } else if (Imm == ~0U) {        // setcc op, -1
+        SDOperand Op = Select(N->getOperand(0));
+        switch (CC) {
+        default: assert(0 && "Unhandled SetCC condition"); abort();
+        case ISD::SETEQ:
+          Op = CurDAG->getTargetNode(PPC::ADDIC, MVT::i32, MVT::Flag,
+                                     Op, getI32Imm(1));
+          CurDAG->SelectNodeTo(N, MVT::i32, PPC::ADDZE,
+                               CurDAG->getTargetNode(PPC::LI, MVT::i32,
+                                                     getI32Imm(0)),
+                               Op.getValue(1));
+          break;
+        case ISD::SETNE: {
+          Op = CurDAG->getTargetNode(PPC::NOR, MVT::i32, Op, Op);
+          SDOperand AD = CurDAG->getTargetNode(PPC::ADDIC, MVT::i32, Op,
+                                               getI32Imm(~0U));
+          CurDAG->SelectNodeTo(N, MVT::i32, PPC::SUBFE, AD, Op, AD.getValue(1));
+          break;
+        }
+        case ISD::SETLT: {
+          SDOperand AD = CurDAG->getTargetNode(PPC::ADDI, MVT::i32, Op,
+                                               getI32Imm(1));
+          SDOperand AN = CurDAG->getTargetNode(PPC::AND, MVT::i32, AD, Op);
+          CurDAG->SelectNodeTo(N, MVT::i32, PPC::RLWINM, AN, getI32Imm(1),
+                               getI32Imm(31), getI32Imm(31));
+          break;
+        }
+        case ISD::SETGT:
+          Op = CurDAG->getTargetNode(PPC::RLWINM, MVT::i32, Op, getI32Imm(1),
+                                     getI32Imm(31), getI32Imm(31));
+          CurDAG->SelectNodeTo(N, MVT::i32, PPC::XORI, Op, getI32Imm(1));
+          break;
+        }
+        break;
+      }
+    }
+    
+    bool Inv;
+    unsigned Idx = getCRIdxForSetCC(CC, Inv);
+    SDOperand CCReg =
+      SelectCC(Select(N->getOperand(0)), Select(N->getOperand(1)), CC);
+    SDOperand IntCR;
+    if (TLI.getTargetMachine().getSubtarget<PPCSubtarget>().isGigaProcessor()) {
+      IntCR = CurDAG->getTargetNode(PPC::MFOCRF, MVT::i32, CCReg);
+    } else {
+      assert(0 && "Not imp yet!");
+      // FIXME: HOW DO WE DO THIS??
+#if 0
+      //SDOperand CR7Op = CurDAG->getCopyToReg();
+      BuildMI(BB, PPC::MCRF, 1, PPC::CR7).addReg(CCReg);
+      BuildMI(BB, PPC::MFCR, 0, IntCR);
+#endif
+    }
+    
+    if (!Inv) {
+      CurDAG->SelectNodeTo(N, MVT::i32, PPC::RLWINM, IntCR,
+                           getI32Imm(32-(3-Idx)), getI32Imm(31), getI32Imm(31));
+    } else {
+      SDOperand Tmp =
+      CurDAG->getTargetNode(PPC::RLWINM, MVT::i32, IntCR,
+                            getI32Imm(32-(3-Idx)), getI32Imm(31),getI32Imm(31));
+      CurDAG->SelectNodeTo(N, MVT::i32, PPC::XORI, Tmp, getI32Imm(1));
+    }
+      
     break;
   }
 
