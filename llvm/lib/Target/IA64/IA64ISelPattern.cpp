@@ -569,7 +569,7 @@ unsigned lefevre(const std::string inString,
   }
 
   std::string t, u;
-  int c;
+  int c = 0;
   bool f;
   std::map<const int, int> w;
 
