@@ -3984,6 +3984,7 @@ static SDOperand GetAdjustedArgumentStores(SDOperand Chain, int Offset,
                                            SelectionDAG &DAG) {
   MVT::ValueType StoreVT;
   switch (Chain.getOpcode()) {
+  default: assert(0 && "Unexpected node!");
   case ISD::CALLSEQ_START:
     // If we found the start of the call sequence, we're done.  We actually
     // strip off the CALLSEQ_START node, to avoid generating the
