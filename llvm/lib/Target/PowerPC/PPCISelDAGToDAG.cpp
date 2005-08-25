@@ -369,9 +369,10 @@ bool PPC32DAGToDAGISel::SelectAddr(SDOperand Addr, SDOperand &Op1,
   if (Addr.getOpcode() == ISD::ADD) {
     if (isIntImmediate(Addr.getOperand(1), imm) && isInt16(imm)) {
       Op1 = getI32Imm(Lo16(imm));
-      if (isa<FrameIndexSDNode>(Addr.getOperand(0))) {
+      if (FrameIndexSDNode *FI =
+            dyn_cast<FrameIndexSDNode>(Addr.getOperand(0))) {
         ++FrameOff;
-        Op2 = Addr.getOperand(0);
+        Op2 = CurDAG->getTargetFrameIndex(FI->getIndex(), MVT::i32);
       } else {
         Op2 = Select(Addr.getOperand(0));
       }
@@ -396,9 +397,9 @@ bool PPC32DAGToDAGISel::SelectAddr(SDOperand Addr, SDOperand &Op1,
         Op2 = CurDAG->getTargetNode(PPC::LIS, MVT::i32, Op1);
       return false;
     }
-  } else if (isa<FrameIndexSDNode>(Addr)) {
+  } else if (FrameIndexSDNode *FI = dyn_cast<FrameIndexSDNode>(Addr)) {
     Op1 = getI32Imm(0);
-    Op2 = Addr;
+    Op2 = CurDAG->getTargetFrameIndex(FI->getIndex(), MVT::i32);
     return false;
   } else if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(Addr)) {
     Op1 = Addr;
@@ -530,6 +531,13 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
     else
       CurDAG->SelectNodeTo(N, N->getValueType(0), PPC::IMPLICIT_DEF_FP);
     break;
+  case ISD::FrameIndex: {
+    int FI = cast<FrameIndexSDNode>(N)->getIndex();
+    CurDAG->SelectNodeTo(N, MVT::i32, PPC::ADDI,
+                         CurDAG->getTargetFrameIndex(FI, MVT::i32),
+                         getI32Imm(0));
+    break;
+  }
   case ISD::GlobalAddress: {
     GlobalValue *GV = cast<GlobalAddressSDNode>(N)->getGlobal();
     SDOperand Tmp;
