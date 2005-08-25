@@ -909,7 +909,7 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
     // If this is a divide by constant, we can emit code using some magic
     // constants to implement it as a multiply instead.
     unsigned Imm;
-    if (isIntImmediate(N->getOperand(1), Imm) && (signed)Imm > 1) {
+    if (isIntImmediate(N->getOperand(1), Imm) && Imm) {
       SDOperand Result = Select(BuildUDIVSequence(N));
       assert(Result.ResNo == 0);
       CurDAG->ReplaceAllUsesWith(N, Result.Val);
@@ -1129,6 +1129,62 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
                          Select(N->getOperand(0)));
     break;
   }
+    
+  case ISD::ADD_PARTS: {
+    SDOperand LHSL = Select(N->getOperand(0));
+    SDOperand LHSH = Select(N->getOperand(1));
+   
+    unsigned Imm;
+    bool ME, ZE;
+    if (isIntImmediate(N->getOperand(3), Imm)) {
+      ME = (signed)Imm == -1;
+      ZE = Imm == 0;
+    }
+
+    std::vector<SDOperand> Result;
+    SDOperand CarryFromLo;
+    if (isIntImmediate(N->getOperand(2), Imm) &&
+        ((signed)Imm >= -32768 || (signed)Imm < 32768)) {
+      // Codegen the low 32 bits of the add.  Interestingly, there is no
+      // shifted form of add immediate carrying.
+      CarryFromLo = CurDAG->getTargetNode(PPC::ADDIC, MVT::i32, MVT::Flag,
+                                          LHSL, getI32Imm(Imm));
+    } else {
+      CarryFromLo = CurDAG->getTargetNode(PPC::ADDC, MVT::i32, MVT::Flag,
+                                          LHSL, Select(N->getOperand(2)));
+    }
+    Result.push_back(CarryFromLo);
+    CarryFromLo = CarryFromLo.getValue(1);
+    
+    // Codegen the high 32 bits, adding zero, minus one, or the full value
+    // along with the carry flag produced by addc/addic.
+    SDOperand ResultHi;
+    if (ZE)
+      ResultHi = CurDAG->getTargetNode(PPC::ADDZE, MVT::i32, LHSH, CarryFromLo);
+    else if (ME)
+      ResultHi = CurDAG->getTargetNode(PPC::ADDME, MVT::i32, LHSH, CarryFromLo);
+    else
+      ResultHi = CurDAG->getTargetNode(PPC::ADDE, MVT::i32, LHSH,
+                                       Select(N->getOperand(3)), CarryFromLo);
+    Result.push_back(ResultHi);
+    CurDAG->ReplaceAllUsesWith(N, Result);
+    return Result[Op.ResNo];
+  }
+  case ISD::SUB_PARTS: {
+    SDOperand LHSL = Select(N->getOperand(0));
+    SDOperand LHSH = Select(N->getOperand(1));
+    SDOperand RHSL = Select(N->getOperand(2));
+    SDOperand RHSH = Select(N->getOperand(3));
+
+    std::vector<SDOperand> Result;
+    Result.push_back(CurDAG->getTargetNode(PPC::SUBFC, MVT::i32, MVT::Flag,
+                                           RHSL, LHSL));
+    Result.push_back(CurDAG->getTargetNode(PPC::SUBFE, MVT::i32, RHSH, LHSH,
+                                           Result[0].getValue(1)));
+    CurDAG->ReplaceAllUsesWith(N, Result);
+    return Result[Op.ResNo];
+  }
+    
   case ISD::LOAD:
   case ISD::EXTLOAD:
   case ISD::ZEXTLOAD:
@@ -1419,7 +1475,7 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
       if (N->getNumOperands() > 2) {
         assert(N->getOperand(1).getValueType() == MVT::i32 &&
                N->getOperand(2).getValueType() == MVT::i32 &&
-               N->getNumOperands() == 2 && "Unknown two-register ret value!");
+               N->getNumOperands() == 3 && "Unknown two-register ret value!");
         Val = Select(N->getOperand(2));
         Chain = CurDAG->getCopyToReg(Chain, PPC::R4, Val);
       }
