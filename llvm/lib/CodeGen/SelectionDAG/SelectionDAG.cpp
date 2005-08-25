@@ -843,6 +843,7 @@ SDOperand SelectionDAG::SimplifySelectCC(SDOperand N1, SDOperand N2,
                                          SDOperand N3, SDOperand N4, 
                                          ISD::CondCode CC) {
   MVT::ValueType VT = N3.getValueType();
+  ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1.Val);
   ConstantSDNode *N2C = dyn_cast<ConstantSDNode>(N2.Val);
   ConstantSDNode *N3C = dyn_cast<ConstantSDNode>(N3.Val);
   ConstantSDNode *N4C = dyn_cast<ConstantSDNode>(N4.Val);
@@ -865,6 +866,23 @@ SDOperand SelectionDAG::SimplifySelectCC(SDOperand N1, SDOperand N2,
     }
   }
   
+  // check to see if we're select_cc'ing a select_cc.
+  // this allows us to turn:
+  // select_cc set[eq,ne] (select_cc cc, lhs, rhs, 1, 0), 0, true, false ->
+  // select_cc cc, lhs, rhs, true, false
+  if ((N1C && N1C->isNullValue() && N2.getOpcode() == ISD::SELECT_CC) ||
+      (N2C && N2C->isNullValue() && N1.getOpcode() == ISD::SELECT_CC) &&
+      (CC == ISD::SETEQ || CC == ISD::SETNE)) {
+    SDOperand SCC = N1C ? N2 : N1;
+    ConstantSDNode *SCCT = dyn_cast<ConstantSDNode>(SCC.getOperand(2));
+    ConstantSDNode *SCCF = dyn_cast<ConstantSDNode>(SCC.getOperand(3));
+    if (SCCT && SCCF && SCCF->isNullValue() && SCCT->getValue() == 1ULL) {
+      if (CC == ISD::SETEQ) std::swap(N3, N4);
+      return getNode(ISD::SELECT_CC, N3.getValueType(), SCC.getOperand(0), 
+                     SCC.getOperand(1), N3, N4, SCC.getOperand(4));
+    }
+  }
+      
   // Check to see if we can perform the "gzip trick", transforming
   // select_cc setlt X, 0, A, 0 -> and (sra X, size(X)-1), A
   if (N2C && N2C->isNullValue() && N4C && N4C->isNullValue() &&
@@ -894,7 +912,7 @@ SDOperand SelectionDAG::SimplifySelectCC(SDOperand N1, SDOperand N2,
     }
   }
   
-  // Check to see if this is the equivalent of setcc X, 0
+  // Check to see if this is the equivalent of setcc
   if (N4C && N4C->isNullValue() && N3C && (N3C->getValue() == 1ULL)) {
     MVT::ValueType XType = N1.getValueType();
     if (TLI.isOperationLegal(ISD::SETCC, TLI.getSetCCResultTy()))
