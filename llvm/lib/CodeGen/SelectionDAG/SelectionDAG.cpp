@@ -897,13 +897,12 @@ SDOperand SelectionDAG::SimplifySelectCC(SDOperand N1, SDOperand N2,
   // Check to see if this is the equivalent of setcc X, 0
   if (N4C && N4C->isNullValue() && N3C && (N3C->getValue() == 1ULL)) {
     MVT::ValueType XType = N1.getValueType();
-    if (TLI.getOperationAction(ISD::SETCC, TLI.getSetCCResultTy()) == 
-        TargetLowering::Legal) {
+    if (TLI.isOperationLegal(ISD::SETCC, TLI.getSetCCResultTy()))
       return getSetCC(TLI.getSetCCResultTy(), N1, N2, CC);
-    }
+
     // seteq X, 0 -> srl (ctlz X, log2(size(X)))
     if (N2C && N2C->isNullValue() && CC == ISD::SETEQ && 
-        TLI.getOperationAction(ISD::CTLZ, XType) == TargetLowering::Legal) {
+        TLI.isOperationLegal(ISD::CTLZ, XType)) {
       SDOperand Ctlz = getNode(ISD::CTLZ, XType, N1);
       return getNode(ISD::SRL, XType, Ctlz, 
                      getConstant(Log2_32(MVT::getSizeInBits(XType)),
