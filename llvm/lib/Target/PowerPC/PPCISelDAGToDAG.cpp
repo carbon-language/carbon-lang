@@ -1087,17 +1087,23 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
     SDOperand CCReg =
       SelectCC(Select(N->getOperand(0)), Select(N->getOperand(1)), CC);
     SDOperand IntCR;
-    if (TLI.getTargetMachine().getSubtarget<PPCSubtarget>().isGigaProcessor()) {
-      IntCR = CurDAG->getTargetNode(PPC::MFOCRF, MVT::i32, CCReg);
-    } else {
-      assert(0 && "Not imp yet!");
-      // FIXME: HOW DO WE DO THIS??
-#if 0
-      //SDOperand CR7Op = CurDAG->getCopyToReg();
-      BuildMI(BB, PPC::MCRF, 1, PPC::CR7).addReg(CCReg);
-      BuildMI(BB, PPC::MFCR, 0, IntCR);
-#endif
-    }
+
+    // Force the ccreg into CR7.
+    SDOperand CR7Reg = CurDAG->getRegister(PPC::CR7, MVT::i32);
+    
+    std::vector<MVT::ValueType> VTs;
+    VTs.push_back(MVT::Other);
+    VTs.push_back(MVT::Flag);    // NONSTANDARD CopyToReg node: defines a flag
+    std::vector<SDOperand> Ops;
+    Ops.push_back(CurDAG->getEntryNode());
+    Ops.push_back(CR7Reg);
+    Ops.push_back(CCReg);
+    CCReg = CurDAG->getNode(ISD::CopyToReg, VTs, Ops).getValue(1);
+    
+    if (TLI.getTargetMachine().getSubtarget<PPCSubtarget>().isGigaProcessor())
+      IntCR = CurDAG->getTargetNode(PPC::MFOCRF, MVT::i32, CR7Reg, CCReg);
+    else
+      IntCR = CurDAG->getTargetNode(PPC::MFCR, MVT::i32, CCReg);
     
     if (!Inv) {
       CurDAG->SelectNodeTo(N, MVT::i32, PPC::RLWINM, IntCR,
