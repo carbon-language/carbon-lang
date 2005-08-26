@@ -1122,7 +1122,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
           TLI.LowerOperation(DAG.getNode(ISD::SELECT_CC, Node->getValueType(0),
                                          Node->getOperand(0),
                                          Node->getOperand(1), Tmp3, Tmp4,
-                                         Node->getOperand(5)), DAG);
+                                         Node->getOperand(4)), DAG);
         if (Tmp.Val) {
           Result = LegalizeOp(Tmp);
           break;
