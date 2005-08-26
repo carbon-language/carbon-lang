@@ -279,8 +279,11 @@ public:
   }
   
   /// ReplaceAllUsesWith - Modify anything using 'From' to use 'To' instead.
-  /// This can cause recursive merging of nodes in the DAG.
+  /// This can cause recursive merging of nodes in the DAG.  Use the first
+  /// version if 'From' is known to have a single result, use the second
+  /// if you have two nodes with identical results, use the third otherwise.
   ///
+  void ReplaceAllUsesWith(SDOperand From, SDOperand Op);
   void ReplaceAllUsesWith(SDNode *From, SDNode *To);
   void ReplaceAllUsesWith(SDNode *From, const std::vector<SDOperand> &To);
   
