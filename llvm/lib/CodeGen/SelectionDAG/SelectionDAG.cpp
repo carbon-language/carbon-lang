@@ -1042,7 +1042,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
   SDNode *N;
   if (VT != MVT::Flag) { // Don't CSE flag producing nodes
     SDNode *&E = UnaryOps[std::make_pair(Opcode, std::make_pair(Operand, VT))];
-    if (E) return SDOperand(N, 0);
+    if (E) return SDOperand(E, 0);
     E = N = new SDNode(Opcode, Operand);
   } else {
     N = new SDNode(Opcode, Operand);
