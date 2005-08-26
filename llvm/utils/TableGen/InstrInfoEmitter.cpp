@@ -40,6 +40,7 @@ void InstrInfoEmitter::runEnums(std::ostream &OS) {
     OS << "    " << NumberedInstructions[i]->TheDef->getName()
        << ", \t// " << i << "\n";
   }
+  OS << "    INSTRUCTION_LIST_END\n";
   OS << "  };\n";
   if (!Namespace.empty())
     OS << "}\n";
