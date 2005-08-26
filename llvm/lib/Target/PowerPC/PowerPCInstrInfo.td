@@ -349,7 +349,7 @@ def MCRF   : XLForm_3<19, 0, (ops CRRC:$BF, CRRC:$BFA),
 def MFCTR : XFXForm_1_ext<31, 339, 288, (ops GPRC:$rT), "mfctr $rT">;
 def MFLR  : XFXForm_1_ext<31, 339, 256, (ops GPRC:$rT), "mflr $rT">;
 def MFCR  : XFXForm_3<31, 19, (ops GPRC:$rT), "mfcr $rT">;
-def MTCRF : XFXForm_5<31, 144, (ops CRRC:$FXM, GPRC:$rS),
+def MTCRF : XFXForm_5<31, 144, (ops crbitm:$FXM, GPRC:$rS),
                       "mtcrf $FXM, $rS">;
 def MFOCRF : XFXForm_5a<31, 19, (ops GPRC:$rT, crbitm:$FXM),
                         "mfcr $rT, $FXM">;
