@@ -1942,64 +1942,62 @@ SDOperand SelectionDAG::getNode(unsigned Opcode,
 /// specified node to have the specified return type, Target opcode, and
 /// operands.  Note that target opcodes are stored as
 /// ISD::BUILTIN_OP_END+TargetOpcode in the node opcode field.
-void SelectionDAG::SelectNodeTo(SDNode *N, MVT::ValueType VT,
-                                unsigned TargetOpc) {
+void SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
+                                MVT::ValueType VT) {
   RemoveNodeFromCSEMaps(N);
   N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc);
   N->setValueTypes(VT);
 }
-void SelectionDAG::SelectNodeTo(SDNode *N, MVT::ValueType VT,
-                                unsigned TargetOpc, SDOperand Op1) {
+void SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
+                                MVT::ValueType VT, SDOperand Op1) {
   RemoveNodeFromCSEMaps(N);
   N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc);
   N->setValueTypes(VT);
   N->setOperands(Op1);
 }
-void SelectionDAG::SelectNodeTo(SDNode *N, MVT::ValueType VT,
-                                unsigned TargetOpc, SDOperand Op1,
+void SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
+                                MVT::ValueType VT, SDOperand Op1,
                                 SDOperand Op2) {
   RemoveNodeFromCSEMaps(N);
   N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc);
   N->setValueTypes(VT);
   N->setOperands(Op1, Op2);
 }
-void SelectionDAG::SelectNodeTo(SDNode *N,
+void SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc, 
                                 MVT::ValueType VT1, MVT::ValueType VT2,
-                                unsigned TargetOpc, SDOperand Op1,
-                                SDOperand Op2) {
+                                SDOperand Op1, SDOperand Op2) {
   RemoveNodeFromCSEMaps(N);
   N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc);
   N->setValueTypes(VT1, VT2);
   N->setOperands(Op1, Op2);
 }
-void SelectionDAG::SelectNodeTo(SDNode *N, MVT::ValueType VT,
-                                unsigned TargetOpc, SDOperand Op1,
+void SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
+                                MVT::ValueType VT, SDOperand Op1,
                                 SDOperand Op2, SDOperand Op3) {
   RemoveNodeFromCSEMaps(N);
   N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc);
   N->setValueTypes(VT);
   N->setOperands(Op1, Op2, Op3);
 }
-void SelectionDAG::SelectNodeTo(SDNode *N, MVT::ValueType VT1,
-                                MVT::ValueType VT2,
-                                unsigned TargetOpc, SDOperand Op1,
-                                SDOperand Op2, SDOperand Op3) {
+void SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
+                                MVT::ValueType VT1, MVT::ValueType VT2,
+                                SDOperand Op1, SDOperand Op2, SDOperand Op3) {
   RemoveNodeFromCSEMaps(N);
   N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc);
   N->setValueTypes(VT1, VT2);
   N->setOperands(Op1, Op2, Op3);
 }
 
-void SelectionDAG::SelectNodeTo(SDNode *N, MVT::ValueType VT,
-                                unsigned TargetOpc, SDOperand Op1,
+void SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
+                                MVT::ValueType VT, SDOperand Op1,
                                 SDOperand Op2, SDOperand Op3, SDOperand Op4) {
   RemoveNodeFromCSEMaps(N);
   N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc);
   N->setValueTypes(VT);
   N->setOperands(Op1, Op2, Op3, Op4);
 }
-void SelectionDAG::SelectNodeTo(SDNode *N, MVT::ValueType VT,
-                                unsigned TargetOpc, SDOperand Op1,
+void SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
+                                MVT::ValueType VT, SDOperand Op1,
                                 SDOperand Op2, SDOperand Op3, SDOperand Op4,
                                 SDOperand Op5) {
   RemoveNodeFromCSEMaps(N);

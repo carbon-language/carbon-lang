@@ -687,11 +687,11 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
     if (Hi && Lo) {
       SDOperand Top = CurDAG->getTargetNode(PPC::LIS, MVT::i32, 
                                             getI32Imm(v >> 16));
-      CurDAG->SelectNodeTo(N, MVT::i32, PPC::ORI, Top, getI32Imm(v & 0xFFFF));
+      CurDAG->SelectNodeTo(N, PPC::ORI, MVT::i32, Top, getI32Imm(v & 0xFFFF));
     } else if (Lo) {
-      CurDAG->SelectNodeTo(N, MVT::i32, PPC::LI, getI32Imm(v));
+      CurDAG->SelectNodeTo(N, PPC::LI, MVT::i32, getI32Imm(v));
     } else {
-      CurDAG->SelectNodeTo(N, MVT::i32, PPC::LIS, getI32Imm(v >> 16));
+      CurDAG->SelectNodeTo(N, PPC::LIS, MVT::i32, getI32Imm(v >> 16));
     }
     break;
   }
@@ -706,18 +706,18 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
       Tmp = CurDAG->getTargetNode(PPC::ADDIS, MVT::i32, getGlobalBaseReg(),CPN);
     else
       Tmp = CurDAG->getTargetNode(PPC::LIS, MVT::i32, CPN);
-    CurDAG->SelectNodeTo(N, N->getValueType(0), PPC::LFS, CPN, Tmp);
+    CurDAG->SelectNodeTo(N, PPC::LFS, N->getValueType(0), CPN, Tmp);
     break;
   }
   case ISD::UNDEF:
     if (N->getValueType(0) == MVT::i32)
-      CurDAG->SelectNodeTo(N, MVT::i32, PPC::IMPLICIT_DEF_GPR);
+      CurDAG->SelectNodeTo(N, PPC::IMPLICIT_DEF_GPR, MVT::i32);
     else
-      CurDAG->SelectNodeTo(N, N->getValueType(0), PPC::IMPLICIT_DEF_FP);
+      CurDAG->SelectNodeTo(N, PPC::IMPLICIT_DEF_FP, N->getValueType(0));
     break;
   case ISD::FrameIndex: {
     int FI = cast<FrameIndexSDNode>(N)->getIndex();
-    CurDAG->SelectNodeTo(N, MVT::i32, PPC::ADDI,
+    CurDAG->SelectNodeTo(N, PPC::ADDI, MVT::i32,
                          CurDAG->getTargetFrameIndex(FI, MVT::i32),
                          getI32Imm(0));
     break;
@@ -729,7 +729,7 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
       Tmp = CurDAG->getTargetNode(PPC::ADDIS, MVT::i32, getGlobalBaseReg(),CPI);
     else
       Tmp = CurDAG->getTargetNode(PPC::LIS, MVT::i32, CPI);
-    CurDAG->SelectNodeTo(N, MVT::i32, PPC::LA, Tmp, CPI);
+    CurDAG->SelectNodeTo(N, PPC::LA, MVT::i32, Tmp, CPI);
     break;
   }
   case ISD::GlobalAddress: {
@@ -742,25 +742,25 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
       Tmp = CurDAG->getTargetNode(PPC::LIS, MVT::i32, GA);
 
     if (GV->hasWeakLinkage() || GV->isExternal())
-      CurDAG->SelectNodeTo(N, MVT::i32, PPC::LWZ, GA, Tmp);
+      CurDAG->SelectNodeTo(N, PPC::LWZ, MVT::i32, GA, Tmp);
     else
-      CurDAG->SelectNodeTo(N, MVT::i32, PPC::LA, Tmp, GA);
+      CurDAG->SelectNodeTo(N, PPC::LA, MVT::i32, Tmp, GA);
     break;
   }
   case ISD::SIGN_EXTEND_INREG:
     switch(cast<VTSDNode>(N->getOperand(1))->getVT()) {
     default: assert(0 && "Illegal type in SIGN_EXTEND_INREG"); break;
     case MVT::i16:
-      CurDAG->SelectNodeTo(N, MVT::i32, PPC::EXTSH, Select(N->getOperand(0)));
+      CurDAG->SelectNodeTo(N, PPC::EXTSH, MVT::i32, Select(N->getOperand(0)));
       break;
     case MVT::i8:
-      CurDAG->SelectNodeTo(N, MVT::i32, PPC::EXTSB, Select(N->getOperand(0)));
+      CurDAG->SelectNodeTo(N, PPC::EXTSB, MVT::i32, Select(N->getOperand(0)));
       break;
     }
     break;
   case ISD::CTLZ:
     assert(N->getValueType(0) == MVT::i32);
-    CurDAG->SelectNodeTo(N, MVT::i32, PPC::CNTLZW, Select(N->getOperand(0)));
+    CurDAG->SelectNodeTo(N, PPC::CNTLZW, MVT::i32, Select(N->getOperand(0)));
     break;
   case ISD::ADD: {
     MVT::ValueType Ty = N->getValueType(0);
@@ -770,7 +770,7 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
         CurDAG->ReplaceAllUsesWith(N, I);
         N = I;
       } else {
-        CurDAG->SelectNodeTo(N, Ty, PPC::ADD, Select(N->getOperand(0)),
+        CurDAG->SelectNodeTo(N, PPC::ADD, MVT::i32, Select(N->getOperand(0)),
                              Select(N->getOperand(1)));
       }
       break;
@@ -780,7 +780,7 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
       if (N->getOperand(0).getOpcode() == ISD::MUL &&
           N->getOperand(0).Val->hasOneUse()) {
         ++FusedFP; // Statistic
-        CurDAG->SelectNodeTo(N, Ty, Ty == MVT::f64 ? PPC::FMADD : PPC::FMADDS,
+        CurDAG->SelectNodeTo(N, Ty == MVT::f64 ? PPC::FMADD : PPC::FMADDS, Ty,
                              Select(N->getOperand(0).getOperand(0)),
                              Select(N->getOperand(0).getOperand(1)),
                              Select(N->getOperand(1)));
@@ -788,7 +788,7 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
       } else if (N->getOperand(1).getOpcode() == ISD::MUL &&
                  N->getOperand(1).hasOneUse()) {
         ++FusedFP; // Statistic
-        CurDAG->SelectNodeTo(N, Ty, Ty == MVT::f64 ? PPC::FMADD : PPC::FMADDS,
+        CurDAG->SelectNodeTo(N, Ty == MVT::f64 ? PPC::FMADD : PPC::FMADDS, Ty,
                              Select(N->getOperand(1).getOperand(0)),
                              Select(N->getOperand(1).getOperand(1)),
                              Select(N->getOperand(0)));
@@ -796,7 +796,7 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
       }
     }
     
-    CurDAG->SelectNodeTo(N, Ty, Ty == MVT::f64 ? PPC::FADD : PPC::FADDS,
+    CurDAG->SelectNodeTo(N, Ty == MVT::f64 ? PPC::FADD : PPC::FADDS, Ty,
                          Select(N->getOperand(0)), Select(N->getOperand(1)));
     break;
   }
@@ -806,9 +806,9 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
       unsigned Imm;
       if (isIntImmediate(N->getOperand(0), Imm) && isInt16(Imm)) {
         if (0 == Imm)
-          CurDAG->SelectNodeTo(N, Ty, PPC::NEG, Select(N->getOperand(1)));
+          CurDAG->SelectNodeTo(N, PPC::NEG, Ty, Select(N->getOperand(1)));
         else
-          CurDAG->SelectNodeTo(N, Ty, PPC::SUBFIC, Select(N->getOperand(1)),
+          CurDAG->SelectNodeTo(N, PPC::SUBFIC, Ty, Select(N->getOperand(1)),
                                getI32Imm(Lo16(Imm)));
         break;
       }
@@ -817,7 +817,7 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
         CurDAG->ReplaceAllUsesWith(N, I);
         N = I;
       } else {
-        CurDAG->SelectNodeTo(N, Ty, PPC::SUBF, Select(N->getOperand(1)),
+        CurDAG->SelectNodeTo(N, PPC::SUBF, Ty, Select(N->getOperand(1)),
                              Select(N->getOperand(0)));
       }
       break;
@@ -827,7 +827,7 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
       if (N->getOperand(0).getOpcode() == ISD::MUL &&
           N->getOperand(0).Val->hasOneUse()) {
         ++FusedFP; // Statistic
-        CurDAG->SelectNodeTo(N, Ty, Ty == MVT::f64 ? PPC::FMSUB : PPC::FMSUBS,
+        CurDAG->SelectNodeTo(N, Ty == MVT::f64 ? PPC::FMSUB : PPC::FMSUBS, Ty,
                              Select(N->getOperand(0).getOperand(0)),
                              Select(N->getOperand(0).getOperand(1)),
                              Select(N->getOperand(1)));
@@ -835,14 +835,14 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
       } else if (N->getOperand(1).getOpcode() == ISD::MUL &&
                  N->getOperand(1).Val->hasOneUse()) {
         ++FusedFP; // Statistic
-        CurDAG->SelectNodeTo(N, Ty, Ty == MVT::f64 ? PPC::FNMSUB : PPC::FNMSUBS,
+        CurDAG->SelectNodeTo(N, Ty == MVT::f64 ? PPC::FNMSUB : PPC::FNMSUBS, Ty,
                              Select(N->getOperand(1).getOperand(0)),
                              Select(N->getOperand(1).getOperand(1)),
                              Select(N->getOperand(0)));
         break;
       }
     }
-    CurDAG->SelectNodeTo(N, Ty, Ty == MVT::f64 ? PPC::FSUB : PPC::FSUBS,
+    CurDAG->SelectNodeTo(N, Ty == MVT::f64 ? PPC::FSUB : PPC::FSUBS, Ty,
                          Select(N->getOperand(0)),
                          Select(N->getOperand(1)));
     break;
@@ -850,7 +850,7 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
   case ISD::MUL: {
     unsigned Imm, Opc;
     if (isIntImmediate(N->getOperand(1), Imm) && isInt16(Imm)) {
-      CurDAG->SelectNodeTo(N, N->getValueType(0), PPC::MULLI, 
+      CurDAG->SelectNodeTo(N, PPC::MULLI, MVT::i32,
                            Select(N->getOperand(0)), getI32Imm(Lo16(Imm)));
       break;
     } 
@@ -860,7 +860,7 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
       case MVT::f32: Opc = PPC::FMULS; break;
       case MVT::f64: Opc = PPC::FMUL;  break;
     }
-    CurDAG->SelectNodeTo(N, MVT::i32, Opc, Select(N->getOperand(0)), 
+    CurDAG->SelectNodeTo(N, Opc, N->getValueType(0), Select(N->getOperand(0)), 
                          Select(N->getOperand(1)));
     break;
   }
@@ -872,7 +872,7 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
           CurDAG->getTargetNode(PPC::SRAWI, MVT::i32, MVT::Flag,
                                 Select(N->getOperand(0)),
                                 getI32Imm(Log2_32(Imm)));
-        CurDAG->SelectNodeTo(N, MVT::i32, PPC::ADDZE,
+        CurDAG->SelectNodeTo(N, PPC::ADDZE, MVT::i32, 
                              Op.getValue(0), Op.getValue(1));
         break;
       } else if ((signed)Imm < 0 && isPowerOf2_32(-Imm)) {
@@ -883,7 +883,7 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
         SDOperand PT =
           CurDAG->getTargetNode(PPC::ADDZE, MVT::i32, Op.getValue(1),
                                 Op.getValue(0));
-        CurDAG->SelectNodeTo(N, MVT::i32, PPC::NEG, PT);
+        CurDAG->SelectNodeTo(N, PPC::NEG, MVT::i32, PT);
         break;
       } else if (Imm) {
         SDOperand Result = Select(BuildSDIVSequence(N));
@@ -901,7 +901,7 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
     case MVT::f32: Opc = PPC::FDIVS; break;
     case MVT::f64: Opc = PPC::FDIV; break;
     }
-    CurDAG->SelectNodeTo(N, N->getValueType(0), Opc, Select(N->getOperand(0)),
+    CurDAG->SelectNodeTo(N, Opc, N->getValueType(0), Select(N->getOperand(0)),
                          Select(N->getOperand(1)));
     break;
   }
@@ -917,18 +917,18 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
       break;
     }
     
-    CurDAG->SelectNodeTo(N, MVT::i32, PPC::DIVWU, Select(N->getOperand(0)),
+    CurDAG->SelectNodeTo(N, PPC::DIVWU, MVT::i32, Select(N->getOperand(0)),
                          Select(N->getOperand(1)));
     break;
   }
   case ISD::MULHS:
     assert(N->getValueType(0) == MVT::i32);
-    CurDAG->SelectNodeTo(N, MVT::i32, PPC::MULHW, Select(N->getOperand(0)), 
+    CurDAG->SelectNodeTo(N, PPC::MULHW, MVT::i32, Select(N->getOperand(0)), 
                          Select(N->getOperand(1)));
     break;
   case ISD::MULHU:
     assert(N->getValueType(0) == MVT::i32);
-    CurDAG->SelectNodeTo(N, MVT::i32, PPC::MULHWU, Select(N->getOperand(0)),
+    CurDAG->SelectNodeTo(N, PPC::MULHWU, MVT::i32, Select(N->getOperand(0)),
                          Select(N->getOperand(1)));
     break;
   case ISD::AND: {
@@ -946,7 +946,7 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
         isRunOfOnes(Imm, MB, ME);
         SH = 0;
       }
-      CurDAG->SelectNodeTo(N, MVT::i32, PPC::RLWINM, Val, getI32Imm(SH),
+      CurDAG->SelectNodeTo(N, PPC::RLWINM, MVT::i32, Val, getI32Imm(SH),
                            getI32Imm(MB), getI32Imm(ME));
       break;
     }
@@ -962,13 +962,13 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
     // Finally, check for the case where we are being asked to select
     // and (not(a), b) or and (a, not(b)) which can be selected as andc.
     if (isOprNot(N->getOperand(0).Val))
-      CurDAG->SelectNodeTo(N, MVT::i32, PPC::ANDC, Select(N->getOperand(1)),
+      CurDAG->SelectNodeTo(N, PPC::ANDC, MVT::i32, Select(N->getOperand(1)),
                            Select(N->getOperand(0).getOperand(0)));
     else if (isOprNot(N->getOperand(1).Val))
-      CurDAG->SelectNodeTo(N, MVT::i32, PPC::ANDC, Select(N->getOperand(0)),
+      CurDAG->SelectNodeTo(N, PPC::ANDC, MVT::i32, Select(N->getOperand(0)),
                            Select(N->getOperand(1).getOperand(0)));
     else
-      CurDAG->SelectNodeTo(N, MVT::i32, PPC::AND, Select(N->getOperand(0)),
+      CurDAG->SelectNodeTo(N, PPC::AND, MVT::i32, Select(N->getOperand(0)),
                            Select(N->getOperand(1)));
     break;
   }
@@ -988,13 +988,13 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
     // Finally, check for the case where we are being asked to select
     // 'or (not(a), b)' or 'or (a, not(b))' which can be selected as orc.
     if (isOprNot(N->getOperand(0).Val))
-      CurDAG->SelectNodeTo(N, MVT::i32, PPC::ORC, Select(N->getOperand(1)),
+      CurDAG->SelectNodeTo(N, PPC::ORC, MVT::i32, Select(N->getOperand(1)),
                            Select(N->getOperand(0).getOperand(0)));
     else if (isOprNot(N->getOperand(1).Val))
-      CurDAG->SelectNodeTo(N, MVT::i32, PPC::ORC, Select(N->getOperand(0)),
+      CurDAG->SelectNodeTo(N, PPC::ORC, MVT::i32, Select(N->getOperand(0)),
                            Select(N->getOperand(1).getOperand(0)));
     else
-      CurDAG->SelectNodeTo(N, MVT::i32, PPC::OR, Select(N->getOperand(0)),
+      CurDAG->SelectNodeTo(N, PPC::OR, MVT::i32, Select(N->getOperand(0)),
                            Select(N->getOperand(1)));
     break;
   case ISD::XOR:
@@ -1011,10 +1011,10 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
       case PPC::XOR:  Opc = PPC::EQV;   break;
       }
       if (Opc)
-        CurDAG->SelectNodeTo(N, MVT::i32, Opc, Val.getOperand(0),
+        CurDAG->SelectNodeTo(N, Opc, MVT::i32, Val.getOperand(0),
                              Val.getOperand(1));
       else
-        CurDAG->SelectNodeTo(N, MVT::i32, PPC::NOR, Val, Val);
+        CurDAG->SelectNodeTo(N, PPC::NOR, MVT::i32, Val, Val);
       break;
     }
     // If this is a xor with an immediate other than -1, then codegen it as high
@@ -1029,25 +1029,25 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
     // Finally, check for the case where we are being asked to select
     // xor (not(a), b) which is equivalent to not(xor a, b), which is eqv
     if (isOprNot(N->getOperand(0).Val))
-      CurDAG->SelectNodeTo(N, MVT::i32, PPC::EQV, 
+      CurDAG->SelectNodeTo(N, PPC::EQV, MVT::i32, 
                            Select(N->getOperand(0).getOperand(0)),
                            Select(N->getOperand(1)));
     else
-      CurDAG->SelectNodeTo(N, MVT::i32, PPC::XOR, Select(N->getOperand(0)),
+      CurDAG->SelectNodeTo(N, PPC::XOR, MVT::i32, Select(N->getOperand(0)),
                            Select(N->getOperand(1)));
     break;
   case ISD::SHL: {
     unsigned Imm, SH, MB, ME;
     if (isOpcWithIntImmediate(N->getOperand(0).Val, ISD::AND, Imm) &&
         isRotateAndMask(N, Imm, true, SH, MB, ME))
-      CurDAG->SelectNodeTo(N, MVT::i32, PPC::RLWINM, 
+      CurDAG->SelectNodeTo(N, PPC::RLWINM, MVT::i32, 
                            Select(N->getOperand(0).getOperand(0)),
                            getI32Imm(SH), getI32Imm(MB), getI32Imm(ME));
     else if (isIntImmediate(N->getOperand(1), Imm))
-      CurDAG->SelectNodeTo(N, MVT::i32, PPC::RLWINM, Select(N->getOperand(0)),
+      CurDAG->SelectNodeTo(N, PPC::RLWINM, MVT::i32, Select(N->getOperand(0)),
                            getI32Imm(Imm), getI32Imm(0), getI32Imm(31-Imm));
     else
-      CurDAG->SelectNodeTo(N, MVT::i32, PPC::SLW, Select(N->getOperand(0)),
+      CurDAG->SelectNodeTo(N, PPC::SLW, MVT::i32, Select(N->getOperand(0)),
                            Select(N->getOperand(1)));
     break;
   }
@@ -1055,14 +1055,14 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
     unsigned Imm, SH, MB, ME;
     if (isOpcWithIntImmediate(N->getOperand(0).Val, ISD::AND, Imm) &&
         isRotateAndMask(N, Imm, true, SH, MB, ME))
-      CurDAG->SelectNodeTo(N, MVT::i32, PPC::RLWINM, 
+      CurDAG->SelectNodeTo(N, PPC::RLWINM, MVT::i32, 
                            Select(N->getOperand(0).getOperand(0)),
                            getI32Imm(SH), getI32Imm(MB), getI32Imm(ME));
     else if (isIntImmediate(N->getOperand(1), Imm))
-      CurDAG->SelectNodeTo(N, MVT::i32, PPC::RLWINM, Select(N->getOperand(0)),
+      CurDAG->SelectNodeTo(N, PPC::RLWINM, MVT::i32, Select(N->getOperand(0)),
                            getI32Imm(32-Imm), getI32Imm(Imm), getI32Imm(31));
     else
-      CurDAG->SelectNodeTo(N, MVT::i32, PPC::SRW, Select(N->getOperand(0)),
+      CurDAG->SelectNodeTo(N, PPC::SRW, MVT::i32, Select(N->getOperand(0)),
                            Select(N->getOperand(1)));
     break;
   }
@@ -1070,30 +1070,30 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
     unsigned Imm, SH, MB, ME;
     if (isOpcWithIntImmediate(N->getOperand(0).Val, ISD::AND, Imm) &&
         isRotateAndMask(N, Imm, true, SH, MB, ME))
-      CurDAG->SelectNodeTo(N, MVT::i32, PPC::RLWINM, 
+      CurDAG->SelectNodeTo(N, PPC::RLWINM, MVT::i32, 
                            Select(N->getOperand(0).getOperand(0)),
                            getI32Imm(SH), getI32Imm(MB), getI32Imm(ME));
     else if (isIntImmediate(N->getOperand(1), Imm))
-      CurDAG->SelectNodeTo(N, MVT::i32, PPC::SRAWI, Select(N->getOperand(0)), 
+      CurDAG->SelectNodeTo(N, PPC::SRAWI, MVT::i32, Select(N->getOperand(0)), 
                            getI32Imm(Imm));
     else
-      CurDAG->SelectNodeTo(N, MVT::i32, PPC::SRAW, Select(N->getOperand(0)),
+      CurDAG->SelectNodeTo(N, PPC::SRAW, MVT::i32, Select(N->getOperand(0)),
                            Select(N->getOperand(1)));
     break;
   }
   case ISD::FABS:
-    CurDAG->SelectNodeTo(N, N->getValueType(0), PPC::FABS, 
+    CurDAG->SelectNodeTo(N, PPC::FABS, N->getValueType(0), 
                          Select(N->getOperand(0)));
     break;
   case ISD::FP_EXTEND:
     assert(MVT::f64 == N->getValueType(0) && 
            MVT::f32 == N->getOperand(0).getValueType() && "Illegal FP_EXTEND");
-    CurDAG->SelectNodeTo(N, MVT::f64, PPC::FMR, Select(N->getOperand(0)));
+    CurDAG->SelectNodeTo(N, PPC::FMR, MVT::f64, Select(N->getOperand(0)));
     break;
   case ISD::FP_ROUND:
     assert(MVT::f32 == N->getValueType(0) && 
            MVT::f64 == N->getOperand(0).getValueType() && "Illegal FP_ROUND");
-    CurDAG->SelectNodeTo(N, MVT::f32, PPC::FRSP, Select(N->getOperand(0)));
+    CurDAG->SelectNodeTo(N, PPC::FRSP, MVT::f32, Select(N->getOperand(0)));
     break;
   case ISD::FNEG: {
     SDOperand Val = Select(N->getOperand(0));
@@ -1113,19 +1113,19 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
       // fall through and generate a fneg instruction.
       if (Opc) {
         if (PPC::FNABS == Opc)
-          CurDAG->SelectNodeTo(N, Ty, Opc, Val.getOperand(0));
+          CurDAG->SelectNodeTo(N, Opc, Ty, Val.getOperand(0));
         else
-          CurDAG->SelectNodeTo(N, Ty, Opc, Val.getOperand(0),
+          CurDAG->SelectNodeTo(N, Opc, Ty, Val.getOperand(0),
                                Val.getOperand(1), Val.getOperand(2));
         break;
       }
     }
-    CurDAG->SelectNodeTo(N, Ty, PPC::FNEG, Val);
+    CurDAG->SelectNodeTo(N, PPC::FNEG, Ty, Val);
     break;
   }
   case ISD::FSQRT: {
     MVT::ValueType Ty = N->getValueType(0);
-    CurDAG->SelectNodeTo(N, Ty, Ty == MVT::f64 ? PPC::FSQRT : PPC::FSQRTS,
+    CurDAG->SelectNodeTo(N, Ty == MVT::f64 ? PPC::FSQRT : PPC::FSQRTS, Ty,
                          Select(N->getOperand(0)));
     break;
   }
@@ -1249,7 +1249,7 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
     case MVT::f64: Opc = isIdx ? PPC::LFDX : PPC::LFD; break;
     }
 
-    CurDAG->SelectNodeTo(N, N->getValueType(0), MVT::Other, Opc,
+    CurDAG->SelectNodeTo(N, Opc, N->getValueType(0), MVT::Other,
                          Op1, Op2, Select(N->getOperand(0)));
     break;
   }
@@ -1276,7 +1276,7 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
       }
     }
     
-    CurDAG->SelectNodeTo(N, MVT::Other, Opc, Select(N->getOperand(1)),
+    CurDAG->SelectNodeTo(N, Opc, MVT::Other, Select(N->getOperand(1)),
                          AddrOp1, AddrOp2, Select(N->getOperand(0)));
     break;
   }
@@ -1294,23 +1294,23 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
         default: assert(0 && "Unhandled SetCC condition"); abort();
         case ISD::SETEQ:
           Op = CurDAG->getTargetNode(PPC::CNTLZW, MVT::i32, Op);
-          CurDAG->SelectNodeTo(N, MVT::i32, PPC::RLWINM, Op, getI32Imm(27),
+          CurDAG->SelectNodeTo(N, PPC::RLWINM, MVT::i32, Op, getI32Imm(27),
                                getI32Imm(5), getI32Imm(31));
           break;
         case ISD::SETNE: {
           SDOperand AD = CurDAG->getTargetNode(PPC::ADDIC, MVT::i32, MVT::Flag,
                                                Op, getI32Imm(~0U));
-          CurDAG->SelectNodeTo(N, MVT::i32, PPC::SUBFE, AD, Op, AD.getValue(1));
+          CurDAG->SelectNodeTo(N, PPC::SUBFE, MVT::i32, AD, Op, AD.getValue(1));
           break;
         }
         case ISD::SETLT:
-          CurDAG->SelectNodeTo(N, MVT::i32, PPC::RLWINM, Op, getI32Imm(1),
+          CurDAG->SelectNodeTo(N, PPC::RLWINM, MVT::i32, Op, getI32Imm(1),
                                getI32Imm(31), getI32Imm(31));
           break;
         case ISD::SETGT: {
           SDOperand T = CurDAG->getTargetNode(PPC::NEG, MVT::i32, Op);
           T = CurDAG->getTargetNode(PPC::ANDC, MVT::i32, T, Op);;
-          CurDAG->SelectNodeTo(N, MVT::i32, PPC::RLWINM, T, getI32Imm(1),
+          CurDAG->SelectNodeTo(N, PPC::RLWINM, MVT::i32, T, getI32Imm(1),
                                getI32Imm(31), getI32Imm(31));
           break;
         }
@@ -1323,7 +1323,7 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
         case ISD::SETEQ:
           Op = CurDAG->getTargetNode(PPC::ADDIC, MVT::i32, MVT::Flag,
                                      Op, getI32Imm(1));
-          CurDAG->SelectNodeTo(N, MVT::i32, PPC::ADDZE,
+          CurDAG->SelectNodeTo(N, PPC::ADDZE, MVT::i32, 
                                CurDAG->getTargetNode(PPC::LI, MVT::i32,
                                                      getI32Imm(0)),
                                Op.getValue(1));
@@ -1332,21 +1332,21 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
           Op = CurDAG->getTargetNode(PPC::NOR, MVT::i32, Op, Op);
           SDOperand AD = CurDAG->getTargetNode(PPC::ADDIC, MVT::i32, Op,
                                                getI32Imm(~0U));
-          CurDAG->SelectNodeTo(N, MVT::i32, PPC::SUBFE, AD, Op, AD.getValue(1));
+          CurDAG->SelectNodeTo(N, PPC::SUBFE, MVT::i32, AD, Op, AD.getValue(1));
           break;
         }
         case ISD::SETLT: {
           SDOperand AD = CurDAG->getTargetNode(PPC::ADDI, MVT::i32, Op,
                                                getI32Imm(1));
           SDOperand AN = CurDAG->getTargetNode(PPC::AND, MVT::i32, AD, Op);
-          CurDAG->SelectNodeTo(N, MVT::i32, PPC::RLWINM, AN, getI32Imm(1),
+          CurDAG->SelectNodeTo(N, PPC::RLWINM, MVT::i32, AN, getI32Imm(1),
                                getI32Imm(31), getI32Imm(31));
           break;
         }
         case ISD::SETGT:
           Op = CurDAG->getTargetNode(PPC::RLWINM, MVT::i32, Op, getI32Imm(1),
                                      getI32Imm(31), getI32Imm(31));
-          CurDAG->SelectNodeTo(N, MVT::i32, PPC::XORI, Op, getI32Imm(1));
+          CurDAG->SelectNodeTo(N, PPC::XORI, MVT::i32, Op, getI32Imm(1));
           break;
         }
         break;
@@ -1377,13 +1377,13 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
       IntCR = CurDAG->getTargetNode(PPC::MFCR, MVT::i32, CCReg);
     
     if (!Inv) {
-      CurDAG->SelectNodeTo(N, MVT::i32, PPC::RLWINM, IntCR,
+      CurDAG->SelectNodeTo(N, PPC::RLWINM, MVT::i32, IntCR,
                            getI32Imm(32-(3-Idx)), getI32Imm(31), getI32Imm(31));
     } else {
       SDOperand Tmp =
       CurDAG->getTargetNode(PPC::RLWINM, MVT::i32, IntCR,
                             getI32Imm(32-(3-Idx)), getI32Imm(31),getI32Imm(31));
-      CurDAG->SelectNodeTo(N, MVT::i32, PPC::XORI, Tmp, getI32Imm(1));
+      CurDAG->SelectNodeTo(N, PPC::XORI, MVT::i32, Tmp, getI32Imm(1));
     }
       
     break;
@@ -1394,7 +1394,7 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
     unsigned Amt = cast<ConstantSDNode>(N->getOperand(1))->getValue();
     unsigned Opc = N->getOpcode() == ISD::CALLSEQ_START ?
                        PPC::ADJCALLSTACKDOWN : PPC::ADJCALLSTACKUP;
-    CurDAG->SelectNodeTo(N, MVT::Other, Opc, 
+    CurDAG->SelectNodeTo(N, Opc, MVT::Other,
                          getI32Imm(Amt), Select(N->getOperand(0)));
     break;
   }
@@ -1520,11 +1520,11 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
     }
 
     // Finally, select this to a blr (return) instruction.
-    CurDAG->SelectNodeTo(N, MVT::Other, PPC::BLR, Chain);
+    CurDAG->SelectNodeTo(N, PPC::BLR, MVT::Other, Chain);
     break;
   }
   case ISD::BR:
-    CurDAG->SelectNodeTo(N, MVT::Other, PPC::B, N->getOperand(1),
+    CurDAG->SelectNodeTo(N, PPC::B, MVT::Other, N->getOperand(1),
                          Select(N->getOperand(0)));
     break;
   case ISD::BR_CC:
@@ -1547,7 +1547,7 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
                                            CondCode, getI32Imm(Opc),
                                            N->getOperand(4), N->getOperand(5),
                                            Chain);
-      CurDAG->SelectNodeTo(N, MVT::Other, PPC::B, N->getOperand(5), CB);
+      CurDAG->SelectNodeTo(N, PPC::B, MVT::Other, N->getOperand(5), CB);
     } else {
       // Iterate to the next basic block
       ilist<MachineBasicBlock>::iterator It = BB;
@@ -1558,7 +1558,7 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
       // we have nothing better to set it to, and leaving it alone will cause
       // the PowerPC Branch Selection pass to crash.
       if (It == BB->getParent()->end()) It = Dest;
-      CurDAG->SelectNodeTo(N, MVT::Other, PPC::COND_BRANCH, CondCode,
+      CurDAG->SelectNodeTo(N, PPC::COND_BRANCH, MVT::Other, CondCode,
                            getI32Imm(Opc), N->getOperand(4),
                            CurDAG->getBasicBlock(It), Chain);
     }
