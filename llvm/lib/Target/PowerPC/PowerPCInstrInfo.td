@@ -88,17 +88,17 @@ let isBranch = 1, isTerminator = 1 in {
   // FIXME: 4*CR# needs to be added to the BI field!
   // This will only work for CR0 as it stands now
   def BLT : BForm<16, 0, 0, 12, 0, (ops CRRC:$crS, target:$block),
-                  "blt $block">;
+                  "blt $crS, $block">;
   def BLE : BForm<16, 0, 0, 4,  1, (ops CRRC:$crS, target:$block),
-                  "ble $block">;
+                  "ble $crS, $block">;
   def BEQ : BForm<16, 0, 0, 12, 2, (ops CRRC:$crS, target:$block),
-                  "beq $block">;
+                  "beq $crS, $block">;
   def BGE : BForm<16, 0, 0, 4,  0, (ops CRRC:$crS, target:$block),
-                  "bge $block">;
+                  "bge $crS, $block">;
   def BGT : BForm<16, 0, 0, 12, 1, (ops CRRC:$crS, target:$block),
-                  "bgt $block">;
+                  "bgt $crS, $block">;
   def BNE : BForm<16, 0, 0, 4,  2, (ops CRRC:$crS, target:$block),
-                  "bne $block">;
+                  "bne $crS, $block">;
 }
 
 let isCall = 1, 
