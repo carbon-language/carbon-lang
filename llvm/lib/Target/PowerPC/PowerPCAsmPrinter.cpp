@@ -160,14 +160,6 @@ namespace {
           O << ')';
       }
     }
-    void printcrbit(const MachineInstr *MI, unsigned OpNo,
-                       MVT::ValueType VT) {
-      unsigned char value = MI->getOperand(OpNo).getImmedValue();
-      assert(value <= 3 && "Invalid crbit argument!");
-      unsigned CCReg = MI->getOperand(OpNo-1).getReg();
-      unsigned RegNo = enumRegToMachineReg(CCReg);
-      O << 4 * RegNo + value;
-    }
     void printcrbitm(const MachineInstr *MI, unsigned OpNo,
                        MVT::ValueType VT) {
       unsigned CCReg = MI->getOperand(OpNo).getReg();

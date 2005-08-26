@@ -51,9 +51,6 @@ def symbolHi: Operand<i32> {
 def symbolLo: Operand<i32> {
   let PrintMethod = "printSymbolLo";
 }
-def crbit: Operand<i8> {
-  let PrintMethod = "printcrbit";
-}
 def crbitm: Operand<i8> {
   let PrintMethod = "printcrbitm";
 }
