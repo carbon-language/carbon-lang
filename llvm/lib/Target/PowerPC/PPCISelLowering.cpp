@@ -16,15 +16,9 @@
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/SelectionDAG.h"
+#include "llvm/Constants.h"
 #include "llvm/Function.h"
-#include "llvm/Support/CommandLine.h"
 using namespace llvm;
-
-namespace llvm {
-  cl::opt<bool> FSELTMP("ppc-fsel-custom-legalizer", cl::Hidden,
-                             cl::desc("Use a custom expander for fsel on ppc"));
-}
-
 
 PPC32TargetLowering::PPC32TargetLowering(TargetMachine &TM)
   : TargetLowering(TM) {
@@ -73,11 +67,9 @@ PPC32TargetLowering::PPC32TargetLowering(TargetMachine &TM)
   setOperationAction(ISD::SELECT, MVT::f32, Expand);
   setOperationAction(ISD::SELECT, MVT::f64, Expand);
   
-  // PowerPC wants to turn select_cc of FP into fsel.
-  if (FSELTMP) {
-    setOperationAction(ISD::SELECT_CC, MVT::f32, Custom);
-    setOperationAction(ISD::SELECT_CC, MVT::f64, Custom);
-  }
+  // PowerPC wants to turn select_cc of FP into fsel when possible.
+  setOperationAction(ISD::SELECT_CC, MVT::f32, Custom);
+  setOperationAction(ISD::SELECT_CC, MVT::f64, Custom);
 
   // PowerPC does not have BRCOND* which requires SetCC
   setOperationAction(ISD::BRCOND,       MVT::Other, Expand);
@@ -91,12 +83,21 @@ PPC32TargetLowering::PPC32TargetLowering(TargetMachine &TM)
   setOperationAction(ISD::UINT_TO_FP, MVT::i32, Expand);
 
   setSetCCResultContents(ZeroOrOneSetCCResult);
-  if (!FSELTMP) {
-    addLegalFPImmediate(+0.0); // Necessary for FSEL
-    addLegalFPImmediate(-0.0); //
-  }
   
   computeRegisterProperties();
+}
+
+/// isFloatingPointZero - Return true if this is 0.0 or -0.0.
+static bool isFloatingPointZero(SDOperand Op) {
+  if (ConstantFPSDNode *CFP = dyn_cast<ConstantFPSDNode>(Op))
+    return CFP->isExactlyValue(-0.0) || CFP->isExactlyValue(0.0);
+  else if (Op.getOpcode() == ISD::EXTLOAD || Op.getOpcode() == ISD::LOAD) {
+    // Maybe this has already been legalized into the constant pool?
+    if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(Op.getOperand(1)))
+      if (ConstantFP *CFP = dyn_cast<ConstantFP>(CP->get()))
+        return CFP->isExactlyValue(-0.0) || CFP->isExactlyValue(0.0);
+  }
+  return false;
 }
 
 /// LowerOperation - Provide custom lowering hooks for some operations.
@@ -114,6 +115,26 @@ SDOperand PPC32TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
       SDOperand LHS = Op.getOperand(0), RHS = Op.getOperand(1);
       SDOperand TV  = Op.getOperand(2), FV  = Op.getOperand(3);
 
+      // If the RHS of the comparison is a 0.0, we don't need to do the
+      // subtraction at all.
+      if (isFloatingPointZero(RHS))
+        switch (CC) {
+        default: assert(0 && "Invalid FSEL condition"); abort();
+        case ISD::SETULT:
+        case ISD::SETLT:
+          std::swap(TV, FV);  // fsel is natively setge, swap operands for setlt
+        case ISD::SETUGE:
+        case ISD::SETGE:
+          return DAG.getTargetNode(PPC::FSEL, ResVT, LHS, TV, FV);
+        case ISD::SETUGT:
+        case ISD::SETGT:
+          std::swap(TV, FV);  // fsel is natively setge, swap operands for setlt
+        case ISD::SETULE:
+        case ISD::SETLE:
+          return DAG.getTargetNode(PPC::FSEL, ResVT,
+                                   DAG.getNode(ISD::FNEG, ResVT, LHS), TV, FV);
+        }
+      
       switch (CC) {
       default: assert(0 && "Invalid FSEL condition"); abort();
       case ISD::SETULT:
