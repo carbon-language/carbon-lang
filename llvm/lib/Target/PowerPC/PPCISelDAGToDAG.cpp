@@ -694,18 +694,6 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
     }
     break;
   }
-  case ISD::ConstantFP: {  // FIXME: this should get sucked into the legalizer
-    Constant *CFP = ConstantFP::get(Type::FloatTy,
-                                    cast<ConstantFPSDNode>(N)->getValue());
-    SDOperand CPN = CurDAG->getConstantPool(CFP, MVT::i32);
-    SDOperand Tmp;
-    if (PICEnabled)
-      Tmp = CurDAG->getTargetNode(PPC::ADDIS, MVT::i32, getGlobalBaseReg(),CPN);
-    else
-      Tmp = CurDAG->getTargetNode(PPC::LIS, MVT::i32, CPN);
-    CurDAG->SelectNodeTo(N, PPC::LFS, N->getValueType(0), CPN, Tmp);
-    break;
-  }
   case ISD::UNDEF:
     if (N->getValueType(0) == MVT::i32)
       CurDAG->SelectNodeTo(N, PPC::IMPLICIT_DEF_GPR, MVT::i32);

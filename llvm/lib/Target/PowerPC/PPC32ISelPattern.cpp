@@ -97,7 +97,6 @@ public:
   SDOperand BuildUDIVSequence(SDOperand N);
 
   unsigned getGlobalBaseReg();
-  unsigned getConstDouble(double floatVal, unsigned Result);
   void MoveCRtoGPR(unsigned CCReg, ISD::CondCode CC, unsigned Result);
   bool SelectBitfieldInsert(SDOperand OR, unsigned Result);
   unsigned FoldIfWideZeroExtend(SDOperand N);
@@ -441,23 +440,6 @@ unsigned ISel::getGlobalBaseReg() {
     GlobalBaseInitialized = true;
   }
   return GlobalBaseReg;
-}
-
-/// getConstDouble - Loads a floating point value into a register, via the
-/// Constant Pool.  Optionally takes a register in which to load the value.
-unsigned ISel::getConstDouble(double doubleVal, unsigned Result=0) {
-  unsigned Tmp1 = MakeIntReg();
-  if (0 == Result) Result = MakeFPReg();
-  MachineConstantPool *CP = BB->getParent()->getConstantPool();
-  ConstantFP *CFP = ConstantFP::get(Type::DoubleTy, doubleVal);
-  unsigned CPI = CP->getConstantPoolIndex(CFP);
-  if (PICEnabled)
-    BuildMI(BB, PPC::ADDIS, 2, Tmp1).addReg(getGlobalBaseReg())
-      .addConstantPoolIndex(CPI);
-  else
-    BuildMI(BB, PPC::LIS, 1, Tmp1).addConstantPoolIndex(CPI);
-  BuildMI(BB, PPC::LFD, 2, Result).addConstantPoolIndex(CPI).addReg(Tmp1);
-  return Result;
 }
 
 /// MoveCRtoGPR - Move CCReg[Idx] to the least significant bit of Result.  If
@@ -1602,72 +1584,6 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
     
   case ISD::SELECT_CC: {
     ISD::CondCode CC = cast<CondCodeSDNode>(N.getOperand(4))->get();
-    if (!MVT::isInteger(N.getOperand(0).getValueType()) &&
-        !MVT::isInteger(N.getOperand(2).getValueType()) &&
-        CC != ISD::SETEQ && CC != ISD::SETNE) {
-      MVT::ValueType VT = N.getOperand(0).getValueType();
-      unsigned TV = SelectExpr(N.getOperand(2)); // Use if TRUE
-      unsigned FV = SelectExpr(N.getOperand(3)); // Use if FALSE
-
-      ConstantFPSDNode *CN = dyn_cast<ConstantFPSDNode>(N.getOperand(1));
-      if (CN && (CN->isExactlyValue(-0.0) || CN->isExactlyValue(0.0))) {
-        switch(CC) {
-        default: assert(0 && "Invalid FSEL condition"); abort();
-        case ISD::SETULT:
-        case ISD::SETLT:
-          std::swap(TV, FV);  // fsel is natively setge, swap operands for setlt
-        case ISD::SETUGE:
-        case ISD::SETGE:
-          Tmp1 = SelectExpr(N.getOperand(0));   // Val to compare against
-          BuildMI(BB, PPC::FSEL, 3, Result).addReg(Tmp1).addReg(TV).addReg(FV);
-          return Result;
-        case ISD::SETUGT:
-        case ISD::SETGT:
-          std::swap(TV, FV);  // fsel is natively setge, swap operands for setlt
-        case ISD::SETULE:
-        case ISD::SETLE: {
-          if (N.getOperand(0).getOpcode() == ISD::FNEG) {
-            Tmp2 = SelectExpr(N.getOperand(0).getOperand(0));
-          } else {
-            Tmp2 = MakeReg(VT);
-            Tmp1 = SelectExpr(N.getOperand(0));   // Val to compare against
-            BuildMI(BB, PPC::FNEG, 1, Tmp2).addReg(Tmp1);
-          }
-          BuildMI(BB, PPC::FSEL, 3, Result).addReg(Tmp2).addReg(TV).addReg(FV);
-          return Result;
-        }
-        }
-      } else {
-        Opc = (MVT::f64 == VT) ? PPC::FSUB : PPC::FSUBS;
-        Tmp1 = SelectExpr(N.getOperand(0));   // Val to compare against
-        Tmp2 = SelectExpr(N.getOperand(1));
-        Tmp3 =  MakeReg(VT);
-        switch(CC) {
-        default: assert(0 && "Invalid FSEL condition"); abort();
-        case ISD::SETULT:
-        case ISD::SETLT:
-          BuildMI(BB, Opc, 2, Tmp3).addReg(Tmp1).addReg(Tmp2);
-          BuildMI(BB, PPC::FSEL, 3, Result).addReg(Tmp3).addReg(FV).addReg(TV);
-          return Result;
-        case ISD::SETUGE:
-        case ISD::SETGE:
-          BuildMI(BB, Opc, 2, Tmp3).addReg(Tmp1).addReg(Tmp2);
-          BuildMI(BB, PPC::FSEL, 3, Result).addReg(Tmp3).addReg(TV).addReg(FV);
-          return Result;
-        case ISD::SETUGT:
-        case ISD::SETGT:
-          BuildMI(BB, Opc, 2, Tmp3).addReg(Tmp2).addReg(Tmp1);
-          BuildMI(BB, PPC::FSEL, 3, Result).addReg(Tmp3).addReg(FV).addReg(TV);
-          return Result;
-        case ISD::SETULE:
-        case ISD::SETLE:
-          BuildMI(BB, Opc, 2, Tmp3).addReg(Tmp2).addReg(Tmp1);
-          BuildMI(BB, PPC::FSEL, 3, Result).addReg(Tmp3).addReg(TV).addReg(FV);
-          return Result;
-        }
-      }
-      assert(0 && "Should never get here");
-    }
 
     // handle the setcc cases here.  select_cc lhs, 0, 1, 0, cc
     ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N.getOperand(1));
@@ -1762,12 +1678,6 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
         BuildMI(BB, PPC::LIS, 1, Result).addSImm(Hi);
       }
     }
-    return Result;
-  }
-
-  case ISD::ConstantFP: {
-    ConstantFPSDNode *CN = cast<ConstantFPSDNode>(N);
-    Result = getConstDouble(CN->getValue(), Result);
     return Result;
   }
 
