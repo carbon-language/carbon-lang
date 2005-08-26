@@ -338,7 +338,7 @@ public:
   //
   
   // InsertAtEndOfBasicBlock - This method should be implemented by targets that
-  // mark instructions with the 'usesCustomDAGSChedInserter' flag.  These
+  // mark instructions with the 'usesCustomDAGSchedInserter' flag.  These
   // instructions are special in various ways, which require special support to
   // insert.  The specified MachineInstr is created but not inserted into any
   // basic blocks, and the scheduler passes ownership of it to this method.
