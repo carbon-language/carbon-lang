@@ -2008,8 +2008,16 @@ void SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
 /// ReplaceAllUsesWith - Modify anything using 'From' to use 'To' instead.
 /// This can cause recursive merging of nodes in the DAG.
 ///
-void SelectionDAG::ReplaceAllUsesWith(SDNode *From, SDNode *To) {
+/// This version assumes From/To have a single result value.
+///
+void SelectionDAG::ReplaceAllUsesWith(SDOperand FromN, SDOperand ToN) {
+  SDNode *From = FromN.Val, *To = ToN.Val;
+  assert(From->getNumValues() == 1 && To->getNumValues() == 1 &&
+         "Cannot replace with this method!");
   assert(From != To && "Cannot replace uses of with self");
+  assert(From->getValueType(0) == To->getValueType(0) &&
+         "Replacing with different values");
+  
   while (!From->use_empty()) {
     // Process users until they are all gone.
     SDNode *U = *From->use_begin();
@@ -2019,8 +2027,43 @@ void SelectionDAG::ReplaceAllUsesWith(SDNode *From, SDNode *To) {
     
     for (unsigned i = 0, e = U->getNumOperands(); i != e; ++i)
       if (U->getOperand(i).Val == From) {
-        assert(U->getOperand(i).getValueType() ==
-               To->getValueType(U->getOperand(i).ResNo));
+        From->removeUser(U);
+        U->Operands[i].Val = To;
+        To->addUser(U);
+      }
+
+    // Now that we have modified U, add it back to the CSE maps.  If it already
+    // exists there, recursively merge the results together.
+    if (SDNode *Existing = AddNonLeafNodeToCSEMaps(U))
+      ReplaceAllUsesWith(U, Existing);
+      // U is now dead.
+  }
+}
+
+/// ReplaceAllUsesWith - Modify anything using 'From' to use 'To' instead.
+/// This can cause recursive merging of nodes in the DAG.
+///
+/// This version assumes From/To have matching types and numbers of result
+/// values.
+///
+void SelectionDAG::ReplaceAllUsesWith(SDNode *From, SDNode *To) {
+  assert(From != To && "Cannot replace uses of with self");
+  assert(From->getNumValues() == To->getNumValues() &&
+         "Cannot use this version of ReplaceAllUsesWith!");
+  if (From->getNumValues() == 1) {  // If possible, use the faster version.
+    ReplaceAllUsesWith(SDOperand(From, 0), SDOperand(To, 0));
+    return;
+  }
+  
+  while (!From->use_empty()) {
+    // Process users until they are all gone.
+    SDNode *U = *From->use_begin();
+    
+    // This node is about to morph, remove its old self from the CSE maps.
+    RemoveNodeFromCSEMaps(U);
+    
+    for (unsigned i = 0, e = U->getNumOperands(); i != e; ++i)
+      if (U->getOperand(i).Val == From) {
         From->removeUser(U);
         U->Operands[i].Val = To;
         To->addUser(U);
@@ -2030,17 +2073,22 @@ void SelectionDAG::ReplaceAllUsesWith(SDNode *From, SDNode *To) {
     // exists there, recursively merge the results together.
     if (SDNode *Existing = AddNonLeafNodeToCSEMaps(U))
       ReplaceAllUsesWith(U, Existing);
-      // U is now dead.
+    // U is now dead.
   }
 }
 
+/// ReplaceAllUsesWith - Modify anything using 'From' to use 'To' instead.
+/// This can cause recursive merging of nodes in the DAG.
+///
+/// This version can replace From with any result values.  To must match the
+/// number and types of values returned by From.
 void SelectionDAG::ReplaceAllUsesWith(SDNode *From,
                                       const std::vector<SDOperand> &To) {
   assert(From->getNumValues() == To.size() &&
          "Incorrect number of values to replace with!");
-  if (To.size() == 1 && To[0].ResNo == 0) {
+  if (To.size() == 1) {
     // Degenerate case handled above.
-    ReplaceAllUsesWith(From, To[0].Val);
+    ReplaceAllUsesWith(SDOperand(From, 0), To[0]);
     return;
   }
 
