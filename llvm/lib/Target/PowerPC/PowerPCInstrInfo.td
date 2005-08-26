@@ -80,18 +80,18 @@ let isBranch = 1, isTerminator = 1 in {
 
   // FIXME: 4*CR# needs to be added to the BI field!
   // This will only work for CR0 as it stands now
-  def BLT : BForm_ext<16, 0, 0, 12, 0, (ops CRRC:$crS, target:$block),
-                      "blt $block">;
-  def BLE : BForm_ext<16, 0, 0, 4,  1, (ops CRRC:$crS, target:$block),
-                      "ble $block">;
-  def BEQ : BForm_ext<16, 0, 0, 12, 2, (ops CRRC:$crS, target:$block),
-                      "beq $block">;
-  def BGE : BForm_ext<16, 0, 0, 4,  0, (ops CRRC:$crS, target:$block),
-                      "bge $block">;
-  def BGT : BForm_ext<16, 0, 0, 12, 1, (ops CRRC:$crS, target:$block),
-                      "bgt $block">;
-  def BNE : BForm_ext<16, 0, 0, 4,  2, (ops CRRC:$crS, target:$block),
-                      "bne $block">;
+  def BLT : BForm<16, 0, 0, 12, 0, (ops CRRC:$crS, target:$block),
+                  "blt $block">;
+  def BLE : BForm<16, 0, 0, 4,  1, (ops CRRC:$crS, target:$block),
+                  "ble $block">;
+  def BEQ : BForm<16, 0, 0, 12, 2, (ops CRRC:$crS, target:$block),
+                  "beq $block">;
+  def BGE : BForm<16, 0, 0, 4,  0, (ops CRRC:$crS, target:$block),
+                  "bge $block">;
+  def BGT : BForm<16, 0, 0, 12, 1, (ops CRRC:$crS, target:$block),
+                  "bgt $block">;
+  def BNE : BForm<16, 0, 0, 4,  2, (ops CRRC:$crS, target:$block),
+                  "bne $block">;
 }
 
 let isCall = 1, 
