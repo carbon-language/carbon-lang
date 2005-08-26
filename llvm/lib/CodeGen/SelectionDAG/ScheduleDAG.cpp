@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "sched"
+#include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
 #include "llvm/CodeGen/SelectionDAG.h"
@@ -38,12 +39,14 @@ namespace {
     const TargetInstrInfo &TII;
     const MRegisterInfo &MRI;
     SSARegMap *RegMap;
+    MachineConstantPool *ConstPool;
     
     std::map<SDNode *, unsigned> EmittedOps;
   public:
     SimpleSched(SelectionDAG &D, MachineBasicBlock *bb)
       : DAG(D), BB(bb), TM(D.getTarget()), TII(*TM.getInstrInfo()),
-        MRI(*TM.getRegisterInfo()), RegMap(BB->getParent()->getSSARegMap()) {
+        MRI(*TM.getRegisterInfo()), RegMap(BB->getParent()->getSSARegMap()),
+        ConstPool(BB->getParent()->getConstantPool()) {
       assert(&TII && "Target doesn't provide instr info?");
       assert(&MRI && "Target doesn't provide register info?");
     }
@@ -148,7 +151,8 @@ unsigned SimpleSched::Emit(SDOperand Op) {
         MI->addFrameIndexOperand(FI->getIndex());
       } else if (ConstantPoolSDNode *CP = 
                     dyn_cast<ConstantPoolSDNode>(Op.getOperand(i))) {
-        MI->addConstantPoolIndexOperand(CP->getIndex());
+        unsigned Idx = ConstPool->getConstantPoolIndex(CP->get());
+        MI->addConstantPoolIndexOperand(Idx);
       } else if (ExternalSymbolSDNode *ES = 
                  dyn_cast<ExternalSymbolSDNode>(Op.getOperand(i))) {
         MI->addExternalSymbolOperand(ES->getSymbol(), false);

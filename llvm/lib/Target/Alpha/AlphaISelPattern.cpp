@@ -1216,7 +1216,8 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
     return Result;
 
   case ISD::ConstantPool:
-    Tmp1 = cast<ConstantPoolSDNode>(N)->getIndex();
+    Tmp1 = BB->getParent()->getConstantPool()->
+       getConstantPoolIndex(cast<ConstantPoolSDNode>(N)->get());
     AlphaLowering.restoreGP(BB);
     Tmp2 = MakeReg(MVT::i64);
     BuildMI(BB, Alpha::LDAHr, 2, Tmp2).addConstantPoolIndex(Tmp1)
@@ -1285,16 +1286,18 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
           .addGlobalAddress(GASD->getGlobal()).addReg(Tmp1);
       } else if (ConstantPoolSDNode *CP =
                      dyn_cast<ConstantPoolSDNode>(Address)) {
+        unsigned CPIdx = BB->getParent()->getConstantPool()->
+             getConstantPoolIndex(CP->get());
         AlphaLowering.restoreGP(BB);
         has_sym = true;
         Tmp1 = MakeReg(MVT::i64);
-        BuildMI(BB, Alpha::LDAHr, 2, Tmp1).addConstantPoolIndex(CP->getIndex())
+        BuildMI(BB, Alpha::LDAHr, 2, Tmp1).addConstantPoolIndex(CPIdx)
           .addReg(Alpha::R29);
         if (EnableAlphaLSMark)
           BuildMI(BB, Alpha::MEMLABEL, 4).addImm(i).addImm(j).addImm(k)
             .addImm(getUID());
         BuildMI(BB, GetRelVersion(Opc), 2, Result)
-          .addConstantPoolIndex(CP->getIndex()).addReg(Tmp1);
+          .addConstantPoolIndex(CPIdx).addReg(Tmp1);
       } else if(Address.getOpcode() == ISD::FrameIndex) {
         if (EnableAlphaLSMark)
           BuildMI(BB, Alpha::MEMLABEL, 4).addImm(i).addImm(j).addImm(k)

@@ -11,11 +11,12 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Constants.h"
+#include "llvm/Function.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/Target/MRegisterInfo.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Function.h"
 #include "llvm/Support/GraphWriter.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Config/config.h"
@@ -67,7 +68,8 @@ std::string DOTGraphTraits<SelectionDAG*>::getNodeLabel(const SDNode *Node,
   } else if (const FrameIndexSDNode *FIDN = dyn_cast<FrameIndexSDNode>(Node)) {
     Op += " " + itostr(FIDN->getIndex());
   } else if (const ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(Node)){
-    Op += "<" + utostr(CP->getIndex()) + ">";
+    if (ConstantFP *CFP = dyn_cast<ConstantFP>(CP->get()))
+      Op += "<" + ftostr(CFP->getValue()) + ">";
   } else if (const BasicBlockSDNode *BBDN = dyn_cast<BasicBlockSDNode>(Node)) {
     Op = "BB: ";
     const Value *LBB = (const Value*)BBDN->getBasicBlock()->getBasicBlock();

@@ -265,10 +265,10 @@ void SelectionDAG::RemoveNodeFromCSEMaps(SDNode *N) {
     TargetFrameIndices.erase(cast<FrameIndexSDNode>(N)->getIndex());
     break;
   case ISD::ConstantPool:
-    ConstantPoolIndices.erase(cast<ConstantPoolSDNode>(N)->getIndex());
+    ConstantPoolIndices.erase(cast<ConstantPoolSDNode>(N)->get());
     break;
   case ISD::TargetConstantPool:
-    TargetConstantPoolIndices.erase(cast<ConstantPoolSDNode>(N)->getIndex());
+    TargetConstantPoolIndices.erase(cast<ConstantPoolSDNode>(N)->get());
     break;
   case ISD::BasicBlock:
     BBNodes.erase(cast<BasicBlockSDNode>(N)->getBasicBlock());
@@ -452,19 +452,18 @@ SDOperand SelectionDAG::getTargetFrameIndex(int FI, MVT::ValueType VT) {
   return SDOperand(N, 0);
 }
 
-SDOperand SelectionDAG::getConstantPool(unsigned CPIdx, MVT::ValueType VT) {
-  SDNode *N = ConstantPoolIndices[CPIdx];
+SDOperand SelectionDAG::getConstantPool(Constant *C, MVT::ValueType VT) {
+  SDNode *&N = ConstantPoolIndices[C];
   if (N) return SDOperand(N, 0);
-  N = new ConstantPoolSDNode(CPIdx, VT, false);
+  N = new ConstantPoolSDNode(C, VT, false);
   AllNodes.push_back(N);
   return SDOperand(N, 0);
 }
 
-SDOperand SelectionDAG::getTargetConstantPool(unsigned CPIdx,
-                                              MVT::ValueType VT) {
-  SDNode *N = TargetConstantPoolIndices[CPIdx];
+SDOperand SelectionDAG::getTargetConstantPool(Constant *C, MVT::ValueType VT) {
+  SDNode *&N = TargetConstantPoolIndices[C];
   if (N) return SDOperand(N, 0);
-  N = new ConstantPoolSDNode(CPIdx, VT, true);
+  N = new ConstantPoolSDNode(C, VT, true);
   AllNodes.push_back(N);
   return SDOperand(N, 0);
 }
@@ -2134,8 +2133,8 @@ const char *SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::BasicBlock:    return "BasicBlock";
   case ISD::Register:      return "Register";
   case ISD::ExternalSymbol: return "ExternalSymbol";
-  case ISD::ConstantPool:  return "ConstantPoolIndex";
-  case ISD::TargetConstantPool:  return "TargetConstantPoolIndex";
+  case ISD::ConstantPool:  return "ConstantPool";
+  case ISD::TargetConstantPool:  return "TargetConstantPool";
   case ISD::CopyToReg:     return "CopyToReg";
   case ISD::CopyFromReg:   return "CopyFromReg";
   case ISD::ImplicitDef:   return "ImplicitDef";
@@ -2287,7 +2286,7 @@ void SDNode::dump(const SelectionDAG *G) const {
   } else if (const FrameIndexSDNode *FIDN = dyn_cast<FrameIndexSDNode>(this)) {
     std::cerr << "<" << FIDN->getIndex() << ">";
   } else if (const ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(this)){
-    std::cerr << "<" << CP->getIndex() << ">";
+    std::cerr << "<" << *CP->get() << ">";
   } else if (const BasicBlockSDNode *BBDN = dyn_cast<BasicBlockSDNode>(this)) {
     std::cerr << "<";
     const Value *LBB = (const Value*)BBDN->getBasicBlock()->getBasicBlock();

@@ -12,7 +12,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/CodeGen/SelectionDAG.h"
-#include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/Support/MathExtras.h"
@@ -248,9 +247,7 @@ SDOperand SelectionDAGLegalize::ExpandLegalINT_TO_FP(bool isSigned,
   if (TLI.isLittleEndian()) FF <<= 32;
   static Constant *FudgeFactor = ConstantUInt::get(Type::ULongTy, FF);
 
-  MachineConstantPool *CP = DAG.getMachineFunction().getConstantPool();
-  SDOperand CPIdx = DAG.getConstantPool(CP->getConstantPoolIndex(FudgeFactor),
-                                        TLI.getPointerTy());
+  SDOperand CPIdx = DAG.getConstantPool(FudgeFactor, TLI.getPointerTy());
   CPIdx = DAG.getNode(ISD::ADD, TLI.getPointerTy(), CPIdx, CstOffset);
   SDOperand FudgeInReg;
   if (DestVT == MVT::f32)
@@ -529,8 +526,6 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
 
     if (!isLegal) {
       // Otherwise we need to spill the constant to memory.
-      MachineConstantPool *CP = DAG.getMachineFunction().getConstantPool();
-
       bool Extend = false;
 
       // If a FP immediate is precise when represented as a float, we put it
@@ -549,8 +544,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         Extend = true;
       }
 
-      SDOperand CPIdx = DAG.getConstantPool(CP->getConstantPoolIndex(LLVMC),
-                                            TLI.getPointerTy());
+      SDOperand CPIdx = DAG.getConstantPool(LLVMC, TLI.getPointerTy());
       if (Extend) {
         Result = DAG.getExtLoad(ISD::EXTLOAD, MVT::f64, DAG.getEntryNode(),
                                 CPIdx, DAG.getSrcValue(NULL), MVT::f32);
@@ -2751,9 +2745,7 @@ ExpandIntToFP(bool isSigned, MVT::ValueType DestTy, SDOperand Source) {
     if (TLI.isLittleEndian()) FF <<= 32;
     static Constant *FudgeFactor = ConstantUInt::get(Type::ULongTy, FF);
 
-    MachineConstantPool *CP = DAG.getMachineFunction().getConstantPool();
-    SDOperand CPIdx = DAG.getConstantPool(CP->getConstantPoolIndex(FudgeFactor),
-                                          TLI.getPointerTy());
+    SDOperand CPIdx = DAG.getConstantPool(FudgeFactor, TLI.getPointerTy());
     CPIdx = DAG.getNode(ISD::ADD, TLI.getPointerTy(), CPIdx, CstOffset);
     SDOperand FudgeInReg;
     if (DestTy == MVT::f32)

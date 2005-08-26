@@ -956,7 +956,8 @@ unsigned ISel::SelectExpr(SDOperand N) {
   }
 
   case ISD::ConstantPool: {
-    Tmp1 = cast<ConstantPoolSDNode>(N)->getIndex();
+    Tmp1 = BB->getParent()->getConstantPool()->
+          getConstantPoolIndex(cast<ConstantPoolSDNode>(N)->get());
     IA64Lowering.restoreGP(BB); // FIXME: do i really need this?
     BuildMI(BB, IA64::ADD, 2, Result).addConstantPoolIndex(Tmp1)
       .addReg(IA64::r1);
@@ -1974,10 +1975,12 @@ pC = pA OR pB
         BuildMI(BB, IA64::CMPNE, 2, Result).addReg(dummy3).addReg(IA64::r0);
       }
     } else if(ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(Address)) {
+      unsigned CPIdx = BB->getParent()->getConstantPool()->
+         getConstantPoolIndex(cast<ConstantPoolSDNode>(N)->get());
       Select(Chain);
       IA64Lowering.restoreGP(BB);
       unsigned dummy = MakeReg(MVT::i64);
-      BuildMI(BB, IA64::ADD, 2, dummy).addConstantPoolIndex(CP->getIndex())
+      BuildMI(BB, IA64::ADD, 2, dummy).addConstantPoolIndex(CPIdx)
         .addReg(IA64::r1); // CPI+GP
       if(!isBool)
         BuildMI(BB, Opc, 1, Result).addReg(dummy);

@@ -828,15 +828,15 @@ public:
 };
 
 class ConstantPoolSDNode : public SDNode {
-  unsigned CPI;
+  Constant *C;
 protected:
   friend class SelectionDAG;
-  ConstantPoolSDNode(unsigned cpi, MVT::ValueType VT, bool isTarget)
+  ConstantPoolSDNode(Constant *c, MVT::ValueType VT, bool isTarget)
     : SDNode(isTarget ? ISD::TargetConstantPool : ISD::ConstantPool, VT),
-      CPI(cpi) {}
+    C(c) {}
 public:
 
-  unsigned getIndex() const { return CPI; }
+  Constant *get() const { return C; }
 
   static bool classof(const ConstantPoolSDNode *) { return true; }
   static bool classof(const SDNode *N) {

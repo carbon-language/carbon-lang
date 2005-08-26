@@ -15,7 +15,6 @@
 #include "PowerPC.h"
 #include "PPC32TargetMachine.h"
 #include "PPC32ISelLowering.h"
-#include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/SSARegMap.h"
@@ -696,11 +695,9 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
     break;
   }
   case ISD::ConstantFP: {  // FIXME: this should get sucked into the legalizer
-    MachineConstantPool *CP = CurDAG->getMachineFunction().getConstantPool();
     Constant *CFP = ConstantFP::get(Type::FloatTy,
                                     cast<ConstantFPSDNode>(N)->getValue());
-    SDOperand CPN = CurDAG->getConstantPool(CP->getConstantPoolIndex(CFP),
-                                            MVT::i32);
+    SDOperand CPN = CurDAG->getConstantPool(CFP, MVT::i32);
     SDOperand Tmp;
     if (PICEnabled)
       Tmp = CurDAG->getTargetNode(PPC::ADDIS, MVT::i32, getGlobalBaseReg(),CPN);
@@ -723,8 +720,8 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
     break;
   }
   case ISD::ConstantPool: {
-    unsigned CPIIdx = cast<ConstantPoolSDNode>(N)->getIndex();
-    SDOperand Tmp, CPI = CurDAG->getTargetConstantPool(CPIIdx, MVT::i32);
+    Constant *C = cast<ConstantPoolSDNode>(N)->get();
+    SDOperand Tmp, CPI = CurDAG->getTargetConstantPool(C, MVT::i32);
     if (PICEnabled)
       Tmp = CurDAG->getTargetNode(PPC::ADDIS, MVT::i32, getGlobalBaseReg(),CPI);
     else

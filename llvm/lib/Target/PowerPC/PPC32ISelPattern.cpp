@@ -866,7 +866,8 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
     return Result;
 
   case ISD::ConstantPool:
-    Tmp1 = cast<ConstantPoolSDNode>(N)->getIndex();
+    Tmp1 = BB->getParent()->getConstantPool()->
+               getConstantPoolIndex(cast<ConstantPoolSDNode>(N)->get());
     Tmp2 = MakeIntReg();
     if (PICEnabled)
       BuildMI(BB, PPC::ADDIS, 2, Tmp2).addReg(getGlobalBaseReg())
@@ -927,7 +928,8 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
 
     if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(Address)) {
       Tmp1 = MakeIntReg();
-      int CPI = CP->getIndex();
+      unsigned CPI = BB->getParent()->getConstantPool()->
+        getConstantPoolIndex(CP->get());
       if (PICEnabled)
         BuildMI(BB, PPC::ADDIS, 2, Tmp1).addReg(getGlobalBaseReg())
           .addConstantPoolIndex(CPI);

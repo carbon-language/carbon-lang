@@ -2329,7 +2329,8 @@ unsigned ISel::SelectExpr(SDOperand N) {
     addFrameReference(BuildMI(BB, X86::LEA32r, 4, Result), (int)Tmp1);
     return Result;
   case ISD::ConstantPool:
-    Tmp1 = cast<ConstantPoolSDNode>(N)->getIndex();
+    Tmp1 = BB->getParent()->getConstantPool()->
+         getConstantPoolIndex(cast<ConstantPoolSDNode>(N)->get());
     addConstantPoolReference(BuildMI(BB, X86::LEA32r, 4, Result), Tmp1);
     return Result;
   case ISD::ConstantFP:
@@ -3317,8 +3318,10 @@ unsigned ISel::SelectExpr(SDOperand N) {
     }
 
     if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(N.getOperand(1))){
+      unsigned CPIdx = BB->getParent()->getConstantPool()->
+         getConstantPoolIndex(CP->get());
       Select(N.getOperand(0));
-      addConstantPoolReference(BuildMI(BB, Opc, 4, Result), CP->getIndex());
+      addConstantPoolReference(BuildMI(BB, Opc, 4, Result), CPIdx);
     } else {
       X86AddressMode AM;
 
@@ -3370,8 +3373,10 @@ unsigned ISel::SelectExpr(SDOperand N) {
       if (Node->getValueType(0) == MVT::f64) {
         assert(cast<VTSDNode>(Node->getOperand(3))->getVT() == MVT::f32 &&
                "Bad EXTLOAD!");
-        addConstantPoolReference(BuildMI(BB, X86::FLD32m, 4, Result),
-                                 CP->getIndex());
+        unsigned CPIdx = BB->getParent()->getConstantPool()->
+          getConstantPoolIndex(cast<ConstantPoolSDNode>(N)->get());
+
+        addConstantPoolReference(BuildMI(BB, X86::FLD32m, 4, Result), CPIdx);
         return Result;
       }
 
