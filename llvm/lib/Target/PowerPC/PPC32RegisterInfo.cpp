@@ -81,11 +81,12 @@ PPC32RegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
   static const unsigned Opcode[] = {
     PPC::STB, PPC::STH, PPC::STW, PPC::STFS, PPC::STFD
   };
-  unsigned OC = Opcode[getIdx(getClass(SrcReg))];
+  const TargetRegisterClass *RegClass = getClass(SrcReg);
+  unsigned OC = Opcode[getIdx(RegClass)];
   if (SrcReg == PPC::LR) {
     BuildMI(MBB, MI, PPC::MFLR, 1, PPC::R11);
     addFrameReference(BuildMI(MBB, MI, OC, 3).addReg(PPC::R11),FrameIdx);
-  } else if (PPC32::CRRCRegisterClass == getClass(SrcReg)) {
+  } else if (RegClass == PPC32::CRRCRegisterClass) {
     BuildMI(MBB, MI, PPC::MFCR, 0, PPC::R11);
     addFrameReference(BuildMI(MBB, MI, OC, 3).addReg(PPC::R11),FrameIdx);
   } else {
@@ -96,15 +97,16 @@ PPC32RegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
 void
 PPC32RegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
                                         MachineBasicBlock::iterator MI,
-                                        unsigned DestReg, int FrameIdx) const{
+                                        unsigned DestReg, int FrameIdx) const {
   static const unsigned Opcode[] = {
     PPC::LBZ, PPC::LHZ, PPC::LWZ, PPC::LFS, PPC::LFD
   };
-  unsigned OC = Opcode[getIdx(getClass(DestReg))];
+  const TargetRegisterClass *RegClass = getClass(SrcReg);
+  unsigned OC = Opcode[getIdx(RegClass)];
   if (DestReg == PPC::LR) {
     addFrameReference(BuildMI(MBB, MI, OC, 2, PPC::R11), FrameIdx);
     BuildMI(MBB, MI, PPC::MTLR, 1).addReg(PPC::R11);
-  } else if (PPC32::CRRCRegisterClass == getClass(DestReg)) {
+  } else if (RegClass == PPC32::CRRCRegisterClass) {
     addFrameReference(BuildMI(MBB, MI, OC, 2, PPC::R11), FrameIdx);
     BuildMI(MBB, MI, PPC::MTCRF, 1, DestReg).addReg(PPC::R11);
   } else {
@@ -139,8 +141,7 @@ void PPC32RegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
 // if frame pointer elimination is disabled.
 //
 static bool hasFP(MachineFunction &MF) {
-  MachineFrameInfo *MFI = MF.getFrameInfo();
-  return MFI->hasVarSizedObjects();
+  return NoFramePointerElim || MF.getFrameInfo()->hasVarSizedObjects();
 }
 
 void PPC32RegisterInfo::
