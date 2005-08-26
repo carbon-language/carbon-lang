@@ -125,34 +125,34 @@ SDOperand PPC32TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
           std::swap(TV, FV);  // fsel is natively setge, swap operands for setlt
         case ISD::SETUGE:
         case ISD::SETGE:
-          return DAG.getTargetNode(PPC::FSEL, ResVT, LHS, TV, FV);
+          return DAG.getNode(PPCISD::FSEL, ResVT, LHS, TV, FV);
         case ISD::SETUGT:
         case ISD::SETGT:
           std::swap(TV, FV);  // fsel is natively setge, swap operands for setlt
         case ISD::SETULE:
         case ISD::SETLE:
-          return DAG.getTargetNode(PPC::FSEL, ResVT,
-                                   DAG.getNode(ISD::FNEG, ResVT, LHS), TV, FV);
+          return DAG.getNode(PPCISD::FSEL, ResVT,
+                             DAG.getNode(ISD::FNEG, ResVT, LHS), TV, FV);
         }
       
       switch (CC) {
       default: assert(0 && "Invalid FSEL condition"); abort();
       case ISD::SETULT:
       case ISD::SETLT:
-        return DAG.getTargetNode(PPC::FSEL, ResVT,
-                                 DAG.getNode(ISD::SUB, CmpVT, LHS, RHS), FV,TV);
+        return DAG.getNode(PPCISD::FSEL, ResVT,
+                           DAG.getNode(ISD::SUB, CmpVT, LHS, RHS), FV, TV);
       case ISD::SETUGE:
       case ISD::SETGE:
-        return DAG.getTargetNode(PPC::FSEL, ResVT,
-                                 DAG.getNode(ISD::SUB, CmpVT, LHS, RHS), TV,FV);
+        return DAG.getNode(PPCISD::FSEL, ResVT,
+                           DAG.getNode(ISD::SUB, CmpVT, LHS, RHS), TV, FV);
       case ISD::SETUGT:
       case ISD::SETGT:
-        return DAG.getTargetNode(PPC::FSEL, ResVT,
-                                 DAG.getNode(ISD::SUB, CmpVT, RHS, LHS), FV,TV);
+        return DAG.getNode(PPCISD::FSEL, ResVT,
+                           DAG.getNode(ISD::SUB, CmpVT, RHS, LHS), FV, TV);
       case ISD::SETULE:
       case ISD::SETLE:
-        return DAG.getTargetNode(PPC::FSEL, ResVT,
-                                 DAG.getNode(ISD::SUB, CmpVT, RHS, LHS), TV,FV);
+        return DAG.getNode(PPCISD::FSEL, ResVT,
+                           DAG.getNode(ISD::SUB, CmpVT, RHS, LHS), TV, FV);
       }
     }
     break;    

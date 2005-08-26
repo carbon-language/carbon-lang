@@ -1,4 +1,4 @@
-//===-- PPC32ISelLowering.cpp - PPC32 DAG Lowering Impl. --------*- C++ -*-===//
+//===-- PPC32ISelLowering.h - PPC32 DAG Lowering Interface ------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -16,8 +16,21 @@
 #define LLVM_TARGET_POWERPC_PPC32ISELLOWERING_H
 
 #include "llvm/Target/TargetLowering.h"
+#include "llvm/CodeGen/SelectionDAG.h"
+#include "PowerPC.h"
 
 namespace llvm {
+  namespace PPCISD {
+    enum NodeType {
+      // Start the numbering where the builting ops and target ops leave off.
+      FIRST_NUMBER = ISD::BUILTIN_OP_END+PPC::INSTRUCTION_LIST_END,
+
+      /// FSEL - Traditional three-operand fsel node.
+      ///
+      FSEL,
+    };
+  }  
+  
   class PPC32TargetLowering : public TargetLowering {
     int VarArgsFrameIndex;            // FrameIndex for start of varargs area.
     int ReturnAddrIndex;              // FrameIndex for return slot.

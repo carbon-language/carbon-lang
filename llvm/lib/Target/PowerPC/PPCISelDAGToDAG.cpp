@@ -629,7 +629,8 @@ SDOperand PPC32DAGToDAGISel::BuildUDIVSequence(SDNode *N) {
 // target-specific node if it hasn't already been changed.
 SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
   SDNode *N = Op.Val;
-  if (N->getOpcode() >= ISD::BUILTIN_OP_END)
+  if (N->getOpcode() >= ISD::BUILTIN_OP_END &&
+      N->getOpcode() < PPCISD::FIRST_NUMBER)
     return Op;   // Already selected.
   
   switch (N->getOpcode()) {
@@ -746,6 +747,12 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
   case ISD::CTLZ:
     assert(N->getValueType(0) == MVT::i32);
     CurDAG->SelectNodeTo(N, PPC::CNTLZW, MVT::i32, Select(N->getOperand(0)));
+    break;
+  case PPCISD::FSEL:
+    CurDAG->SelectNodeTo(N, PPC::FSEL, N->getValueType(0),
+                         Select(N->getOperand(0)),
+                         Select(N->getOperand(1)),
+                         Select(N->getOperand(2)));
     break;
   case ISD::ADD: {
     MVT::ValueType Ty = N->getValueType(0);

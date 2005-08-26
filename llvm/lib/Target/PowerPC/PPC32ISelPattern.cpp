@@ -811,7 +811,7 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
   default:
     Node->dump(); std::cerr << '\n';
     assert(0 && "Node not handled!\n");
-  case ISD::BUILTIN_OP_END+PPC::FSEL:
+  case PPCISD::FSEL:
     Tmp1 = SelectExpr(N.getOperand(0));
     Tmp2 = SelectExpr(N.getOperand(1));
     Tmp3 = SelectExpr(N.getOperand(2));
