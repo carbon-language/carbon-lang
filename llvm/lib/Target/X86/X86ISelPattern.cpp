@@ -3374,7 +3374,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
         assert(cast<VTSDNode>(Node->getOperand(3))->getVT() == MVT::f32 &&
                "Bad EXTLOAD!");
         unsigned CPIdx = BB->getParent()->getConstantPool()->
-          getConstantPoolIndex(cast<ConstantPoolSDNode>(N)->get());
+          getConstantPoolIndex(CP->get());
 
         addConstantPoolReference(BuildMI(BB, X86::FLD32m, 4, Result), CPIdx);
         return Result;

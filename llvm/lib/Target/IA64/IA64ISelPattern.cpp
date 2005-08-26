@@ -1976,7 +1976,7 @@ pC = pA OR pB
       }
     } else if(ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(Address)) {
       unsigned CPIdx = BB->getParent()->getConstantPool()->
-         getConstantPoolIndex(cast<ConstantPoolSDNode>(N)->get());
+                           getConstantPoolIndex(CP->get());
       Select(Chain);
       IA64Lowering.restoreGP(BB);
       unsigned dummy = MakeReg(MVT::i64);
