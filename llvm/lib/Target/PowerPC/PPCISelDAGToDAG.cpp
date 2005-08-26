@@ -1376,6 +1376,27 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
     break;
   }
 
+  case ISD::SELECT_CC: {
+    ISD::CondCode CC = cast<CondCodeSDNode>(N->getOperand(4))->get();
+    
+    // handle the setcc cases here.  select_cc lhs, 0, 1, 0, cc
+    if (ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N->getOperand(1)))
+      if (ConstantSDNode *N2C = dyn_cast<ConstantSDNode>(N->getOperand(2)))
+        if (ConstantSDNode *N3C = dyn_cast<ConstantSDNode>(N->getOperand(3)))
+          if (N1C->isNullValue() && N3C->isNullValue() &&
+              N2C->getValue() == 1ULL && CC == ISD::SETNE) {
+            SDOperand LHS = Select(N->getOperand(0));
+            SDOperand Tmp =
+              CurDAG->getTargetNode(PPC::ADDIC, MVT::i32, MVT::Flag,
+                                    LHS, getI32Imm(~0U));
+            CurDAG->SelectNodeTo(N, PPC::SUBFE, MVT::i32, Tmp, LHS,
+                                 Tmp.getValue(1));
+            break;
+          }
+    
+    assert(0 && "Select_cc not implemented yet!");
+  }
+    
   case ISD::CALLSEQ_START:
   case ISD::CALLSEQ_END: {
     unsigned Amt = cast<ConstantSDNode>(N->getOperand(1))->getValue();
