@@ -197,6 +197,8 @@ void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,
   if (Inst.isConvertibleToThreeAddress) OS << "|M_CONVERTIBLE_TO_3_ADDR";
   if (Inst.isCommutable) OS << "|M_COMMUTABLE";
   if (Inst.isTerminator) OS << "|M_TERMINATOR_FLAG";
+  if (Inst.usesCustomDAGSChedInserter)
+    OS << "|M_USES_CUSTOM_DAG_SCHED_INSERTION";
   OS << ", 0";
 
   // Emit all of the target-specific flags...

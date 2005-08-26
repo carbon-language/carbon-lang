@@ -81,6 +81,7 @@ namespace llvm {
     bool isCommutable;
     bool isTerminator;
     bool hasDelaySlot;
+    bool usesCustomDAGSChedInserter;
     bool hasVariableNumberOfOperands;
 
     CodeGenInstruction(Record *R, const std::string &AsmStr);
