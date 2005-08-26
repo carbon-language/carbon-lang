@@ -2015,8 +2015,6 @@ void SelectionDAG::ReplaceAllUsesWith(SDOperand FromN, SDOperand ToN) {
   assert(From->getNumValues() == 1 && To->getNumValues() == 1 &&
          "Cannot replace with this method!");
   assert(From != To && "Cannot replace uses of with self");
-  assert(From->getValueType(0) == To->getValueType(0) &&
-         "Replacing with different values");
   
   while (!From->use_empty()) {
     // Process users until they are all gone.
@@ -2102,7 +2100,6 @@ void SelectionDAG::ReplaceAllUsesWith(SDNode *From,
     for (unsigned i = 0, e = U->getNumOperands(); i != e; ++i)
       if (U->getOperand(i).Val == From) {
         const SDOperand &ToOp = To[U->getOperand(i).ResNo];
-        assert(U->getOperand(i).getValueType() == ToOp.getValueType());
         From->removeUser(U);
         U->Operands[i] = ToOp;
         ToOp.Val->addUser(U);
