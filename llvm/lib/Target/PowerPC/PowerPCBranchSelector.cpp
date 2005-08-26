@@ -106,12 +106,13 @@ namespace {
 
             int Displacement = OffsetMap[trueMBB] - ByteCount;
             unsigned Opcode = MBBI->getOperand(1).getImmedValue();
+            unsigned CRReg = MBBI->getOperand(0).getReg();
             unsigned Inverted = PPC32InstrInfo::invertPPCBranchOpcode(Opcode);
 
             if (Displacement >= -32768 && Displacement <= 32767) {
-              BuildMI(*MBB, MBBJ, Opcode, 2).addReg(PPC::CR0).addMBB(trueMBB);
+              BuildMI(*MBB, MBBJ, Opcode, 2).addReg(CRReg).addMBB(trueMBB);
             } else {
-              BuildMI(*MBB, MBBJ, Inverted, 2).addReg(PPC::CR0).addSImm(8);
+              BuildMI(*MBB, MBBJ, Inverted, 2).addReg(CRReg).addSImm(8);
               BuildMI(*MBB, MBBJ, PPC::B, 1).addMBB(trueMBB);
               BuildMI(*MBB, MBBJ, PPC::B, 1).addMBB(falseMBB);
             }
