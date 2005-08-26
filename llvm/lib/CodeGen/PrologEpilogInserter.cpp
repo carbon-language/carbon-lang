@@ -217,13 +217,25 @@ void PEI::saveCallerSavedRegisters(MachineFunction &Fn) {
       while (I2 != MBB->begin() && TII.isTerminatorInstr((--I2)->getOpcode()))
         I = I2;
 
+      bool AtStart = I2 == MBB->begin();
+      MachineBasicBlock::iterator BeforeI = I;
+      if (!AtStart)
+        --BeforeI;
+      
       // Restore all registers immediately before the return and any terminators
       // that preceed it.
       for (unsigned i = 0, e = RegsToSave.size(); i != e; ++i) {
         RegInfo->loadRegFromStackSlot(*MBB, I, RegsToSave[i], StackSlots[i]);
         assert(I != MBB->begin() &&
                "loadRegFromStackSlot didn't insert any code!");
-        --I;  // Insert in reverse order
+        // Insert in reverse order.  loadRegFromStackSlot can insert multiple
+        // instructions.
+        if (AtStart)
+          I = MBB->begin();
+        else {
+          I = BeforeI;
+          ++I;
+        }
       }
     }
 }
