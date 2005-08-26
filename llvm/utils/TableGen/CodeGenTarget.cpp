@@ -250,7 +250,7 @@ CodeGenInstruction::CodeGenInstruction(Record *R, const std::string &AsmStr)
   isCommutable = R->getValueAsBit("isCommutable");
   isTerminator = R->getValueAsBit("isTerminator");
   hasDelaySlot = R->getValueAsBit("hasDelaySlot");
-  usesCustomDAGSchedInserter = R->getValueAsBit("usesCustomDAGSChedInserter");
+  usesCustomDAGSchedInserter = R->getValueAsBit("usesCustomDAGSchedInserter");
   hasVariableNumberOfOperands = false;
   
   try {
