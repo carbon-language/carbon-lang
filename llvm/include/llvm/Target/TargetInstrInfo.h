@@ -73,6 +73,11 @@ const unsigned M_COMMUTABLE            = 1 << 11;
 // before control flow occurs.
 const unsigned M_TERMINATOR_FLAG       = 1 << 12;
 
+// M_USES_CUSTOM_DAG_SCHED_INSERTION - Set if this instruction requires custom
+// insertion support when the DAG scheduler is inserting it into a machine basic
+// block.
+const unsigned M_USES_CUSTOM_DAG_SCHED_INSERTION = 1 << 13;
+
 /// TargetOperandInfo - This holds information about one operand of a machine
 /// instruction, indicating the register class for register operands, etc.
 ///
@@ -264,6 +269,13 @@ public:
     return get(Opcode).Flags & M_DELAY_SLOT_FLAG;
   }
 
+  /// usesCustomDAGSchedInsertionHook - Return true if this instruction requires
+  /// custom insertion support when the DAG scheduler is inserting it into a
+  /// machine basic block.
+ bool usesCustomDAGSchedInsertionHook(unsigned Opcode) const {
+    return get(Opcode).Flags & M_USES_CUSTOM_DAG_SCHED_INSERTION;
+ }
+  
   virtual bool hasResultInterlock(MachineOpCode Opcode) const {
     return true;
   }
