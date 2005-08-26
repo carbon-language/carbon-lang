@@ -44,10 +44,12 @@ PPC32RegisterInfo::PPC32RegisterInfo()
 }
 
 static const TargetRegisterClass *getClass(unsigned SrcReg) {
+  if (PPC32::GPRCRegisterClass->contains(SrcReg))
+    return PPC32::GPRCRegisterClass;
   if (PPC32::FPRCRegisterClass->contains(SrcReg))
     return PPC32::FPRCRegisterClass;
-  assert(PPC32::GPRCRegisterClass->contains(SrcReg) && "Reg not FPR or GPR");
-  return PPC32::GPRCRegisterClass;
+  assert(PPC32::CRRCRegisterClass->contains(SrcReg) &&"Reg not FPR, GPR, CRRC");
+  return PPC32::CRRCRegisterClass;
 }
 
 static unsigned getIdx(const TargetRegisterClass *RC) {
@@ -101,7 +103,7 @@ PPC32RegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
   static const unsigned Opcode[] = {
     PPC::LBZ, PPC::LHZ, PPC::LWZ, PPC::LFS, PPC::LFD
   };
-  const TargetRegisterClass *RegClass = getClass(SrcReg);
+  const TargetRegisterClass *RegClass = getClass(DestReg);
   unsigned OC = Opcode[getIdx(RegClass)];
   if (DestReg == PPC::LR) {
     addFrameReference(BuildMI(MBB, MI, OC, 2, PPC::R11), FrameIdx);
