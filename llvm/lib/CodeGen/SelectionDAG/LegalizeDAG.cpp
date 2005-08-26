@@ -1113,12 +1113,30 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     Tmp4 = LegalizeOp(Node->getOperand(3));   // False
     
     if (isTypeLegal(Node->getOperand(0).getValueType())) {
-      Tmp1 = LegalizeOp(Node->getOperand(0));   // LHS
-      Tmp2 = LegalizeOp(Node->getOperand(1));   // RHS
-      if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(1) ||
-          Tmp3 != Node->getOperand(2) || Tmp4 != Node->getOperand(3)) {
-        Result = DAG.getNode(ISD::SELECT_CC, Node->getValueType(0), Tmp1, Tmp2, 
-                             Tmp3, Tmp4, Node->getOperand(4));
+      // Everything is legal, see if we should expand this op or something.
+      switch (TLI.getOperationAction(ISD::SELECT_CC,
+                                     Node->getOperand(0).getValueType())) {
+      default: assert(0 && "This action is not supported yet!");
+      case TargetLowering::Custom: {
+        SDOperand Tmp =
+          TLI.LowerOperation(DAG.getNode(ISD::SELECT_CC, Node->getValueType(0),
+                                         Node->getOperand(0),
+                                         Node->getOperand(1), Tmp3, Tmp4,
+                                         Node->getOperand(5)), DAG);
+        if (Tmp.Val) {
+          Result = LegalizeOp(Tmp);
+          break;
+        }
+      } // FALLTHROUGH if the target can't lower this operation after all.
+      case TargetLowering::Legal:
+        Tmp1 = LegalizeOp(Node->getOperand(0));   // LHS
+        Tmp2 = LegalizeOp(Node->getOperand(1));   // RHS
+        if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(1) ||
+            Tmp3 != Node->getOperand(2) || Tmp4 != Node->getOperand(3)) {
+          Result = DAG.getNode(ISD::SELECT_CC, Node->getValueType(0), Tmp1, Tmp2, 
+                               Tmp3, Tmp4, Node->getOperand(4));
+        }
+        break;
       }
       break;
     } else {
