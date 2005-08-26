@@ -67,6 +67,16 @@ def ADJCALLSTACKUP : Pseudo<(ops u16imm), "; ADJCALLSTACKUP">;
 def IMPLICIT_DEF_GPR : Pseudo<(ops GPRC:$rD), "; $rD = IMPLICIT_DEF_GPRC">;
 def IMPLICIT_DEF_FP  : Pseudo<(ops FPRC:$rD), "; %rD = IMPLICIT_DEF_FP">;
 
+// SELECT_CC_* - Used to implement the SELECT_CC DAG operation.  Expanded by the
+// scheduler into a branch sequence.
+let usesCustomDAGSchedInserter = 1 in {  // Expanded by the scheduler.
+  def SELECT_CC_Int : Pseudo<(ops GPRC:$dst, CRRC:$cond, GPRC:$T, GPRC:$F,
+                              i32imm:$BROPC), "; SELECT_CC PSEUDO!">;
+  def SELECT_CC_FP  : Pseudo<(ops FPRC:$dst, CRRC:$cond, FPRC:$T, FPRC:$F,
+                             i32imm:$BROPC), "; SELECT_CC PSEUDO!">;
+}
+
+
 let Defs = [LR] in
   def MovePCtoLR : Pseudo<(ops piclabel:$label), "bl $label">;
 

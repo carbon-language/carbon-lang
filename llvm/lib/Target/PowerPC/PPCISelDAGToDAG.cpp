@@ -1400,8 +1400,17 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
                                  Tmp.getValue(1));
             break;
           }
-    
-    assert(0 && "Select_cc not implemented yet!");
+
+    SDOperand CCReg = SelectCC(Select(N->getOperand(0)),
+                               Select(N->getOperand(1)), CC);
+    unsigned BROpc = getBCCForSetCC(CC);
+
+    bool isFP = MVT::isFloatingPoint(N->getValueType(0));
+    unsigned SelectCCOp = isFP ? PPC::SELECT_CC_FP : PPC::SELECT_CC_Int;
+    CurDAG->SelectNodeTo(N, SelectCCOp, N->getValueType(0), CCReg,
+                         Select(N->getOperand(2)), Select(N->getOperand(3)),
+                         getI32Imm(BROpc));
+    break;
   }
     
   case ISD::CALLSEQ_START:

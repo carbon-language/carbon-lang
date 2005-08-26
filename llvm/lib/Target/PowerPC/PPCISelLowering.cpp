@@ -15,6 +15,7 @@
 #include "PPC32TargetMachine.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/Constants.h"
 #include "llvm/Function.h"
@@ -553,3 +554,57 @@ LowerFrameReturnAddress(bool isFrameAddress, SDOperand Chain, unsigned Depth,
   assert(0 && "LowerFrameReturnAddress unimplemented");
   abort();
 }
+
+MachineBasicBlock *
+PPC32TargetLowering::InsertAtEndOfBasicBlock(MachineInstr *MI,
+                                             MachineBasicBlock *BB) {
+  assert((MI->getOpcode() == PPC::SELECT_CC_Int ||
+          MI->getOpcode() == PPC::SELECT_CC_FP) &&
+         "Unexpected instr type to insert");
+  
+  // To "insert" a SELECT_CC instruction, we actually have to insert the diamond
+  // control-flow pattern.  The incoming instruction knows the destination vreg
+  // to set, the condition code register to branch on, the true/false values to
+  // select between, and a branch opcode to use.
+  const BasicBlock *LLVM_BB = BB->getBasicBlock();
+  ilist<MachineBasicBlock>::iterator It = BB;
+  ++It;
+  
+  //  thisMBB:
+  //  ...
+  //   TrueVal = ...
+  //   cmpTY ccX, r1, r2
+  //   bCC copy1MBB
+  //   fallthrough --> copy0MBB
+  MachineBasicBlock *thisMBB = BB;
+  MachineBasicBlock *copy0MBB = new MachineBasicBlock(LLVM_BB);
+  MachineBasicBlock *sinkMBB = new MachineBasicBlock(LLVM_BB);
+  BuildMI(BB, MI->getOperand(4).getImmedValue(), 2)
+    .addReg(MI->getOperand(1).getReg()).addMBB(sinkMBB);
+  MachineFunction *F = BB->getParent();
+  F->getBasicBlockList().insert(It, copy0MBB);
+  F->getBasicBlockList().insert(It, sinkMBB);
+  // Update machine-CFG edges
+  BB->addSuccessor(copy0MBB);
+  BB->addSuccessor(sinkMBB);
+  
+  //  copy0MBB:
+  //   %FalseValue = ...
+  //   # fallthrough to sinkMBB
+  BB = copy0MBB;
+  
+  // Update machine-CFG edges
+  BB->addSuccessor(sinkMBB);
+  
+  //  sinkMBB:
+  //   %Result = phi [ %FalseValue, copy0MBB ], [ %TrueValue, thisMBB ]
+  //  ...
+  BB = sinkMBB;
+  BuildMI(BB, PPC::PHI, 4, MI->getOperand(0).getReg())
+    .addReg(MI->getOperand(3).getReg()).addMBB(copy0MBB)
+    .addReg(MI->getOperand(2).getReg()).addMBB(thisMBB);
+
+  delete MI;   // The pseudo instruction is gone now.
+  return BB;
+}
+
