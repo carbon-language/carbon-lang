@@ -1608,7 +1608,6 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
     // block.
     if (N.getOperand(3).Val->hasOneUse() &&
         (isa<ConstantSDNode>(N.getOperand(3)) ||
-         isa<ConstantFPSDNode>(N.getOperand(3)) ||
          isa<GlobalAddressSDNode>(N.getOperand(3))))
       FalseValue = 0;
     else
