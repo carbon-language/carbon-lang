@@ -992,12 +992,12 @@ public:
 //
 template<class DataType, class StorageClass>
 class bits_storage {
-  unsigned long *Location;   // Where to store the bits...
+  unsigned *Location;   // Where to store the bits...
   
   template<class T>
   static unsigned Bit(const T &V) {
     unsigned BitPos = (unsigned)V;
-    assert(BitPos < sizeof(unsigned long) * 8 &&
+    assert(BitPos < sizeof(unsigned) * 8 &&
           "enum exceeds width of bit vector!");
     return 1 << BitPos;
   }
@@ -1005,7 +1005,7 @@ class bits_storage {
 public:
   bits_storage() : Location(0) {}
 
-  bool setLocation(Option &O, unsigned long &L) {
+  bool setLocation(Option &O, unsigned &L) {
     if (Location)
       return O.error(": cl::location(x) specified more than once!");
     Location = &L;
@@ -1019,7 +1019,7 @@ public:
     *Location |= Bit(V);
   }
   
-  unsigned long getBits() { return *Location; }
+  unsigned getBits() { return *Location; }
   
   template<class T>
   bool isSet(const T &V) {
@@ -1033,12 +1033,12 @@ public:
 //
 template<class DataType>
 class bits_storage<DataType, bool> {
-  unsigned long Bits;   // Where to store the bits...
+  unsigned Bits;   // Where to store the bits...
   
   template<class T>
   static unsigned Bit(const T &V) {
     unsigned BitPos = (unsigned)V;
-    assert(BitPos < sizeof(unsigned long) * 8 &&
+    assert(BitPos < sizeof(unsigned) * 8 &&
           "enum exceeds width of bit vector!");
     return 1 << BitPos;
   }
@@ -1049,7 +1049,7 @@ public:
     Bits |=  Bit(V);
   }
   
-  unsigned long getBits() { return Bits; }
+  unsigned getBits() { return Bits; }
   
   template<class T>
   bool isSet(const T &V) {
