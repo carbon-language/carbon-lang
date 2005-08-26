@@ -1320,6 +1320,16 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
 
     switch (TLI.getOperationAction(Node->getOpcode(), MVT::Other)) {
     default: assert(0 && "This action not implemented for this operation!");
+    case TargetLowering::Custom: {
+      SDOperand Tmp =
+        TLI.LowerOperation(DAG.getNode(Node->getOpcode(), MVT::Other, Tmp1, 
+                                       Tmp2, Tmp3, Tmp4, Tmp5), DAG);
+      if (Tmp.Val) {
+        Result = LegalizeOp(Tmp);
+        break;
+      }
+      // FALLTHROUGH if the target thinks it is legal.
+    }
     case TargetLowering::Legal:
       if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(1) ||
           Tmp3 != Node->getOperand(2) || Tmp4 != Node->getOperand(3) ||
@@ -1363,14 +1373,6 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       NeedsAnotherIteration = true;
       break;
     }
-    case TargetLowering::Custom:
-      std::vector<SDOperand> Ops;
-      Ops.push_back(Tmp1); Ops.push_back(Tmp2); Ops.push_back(Tmp3);
-      Ops.push_back(Tmp4); Ops.push_back(Tmp5);
-      Result = DAG.getNode(Node->getOpcode(), MVT::Other, Ops);
-      Result = TLI.LowerOperation(Result, DAG);
-      Result = LegalizeOp(Result);
-      break;
     }
     break;
   }
@@ -1817,14 +1819,21 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
                                        Node->getOpcode() == ISD::FP_TO_SINT);
         AddLegalizedOperand(Op, Result);
         return Result;
+      case TargetLowering::Custom: {
+        SDOperand Tmp =
+          DAG.getNode(Node->getOpcode(), Node->getValueType(0), Tmp1);
+        Tmp = TLI.LowerOperation(Tmp, DAG);
+        if (Tmp.Val) {
+          AddLegalizedOperand(Op, Tmp);
+          NeedsAnotherIteration = true;
+          return Result;
+        } else {
+          // The target thinks this is legal afterall.
+          break;
+        }
+      }
       case TargetLowering::Legal:
         break;
-      case TargetLowering::Custom:
-        Result = DAG.getNode(Node->getOpcode(), Node->getValueType(0), Tmp1);
-        Result = TLI.LowerOperation(Result, DAG);
-        AddLegalizedOperand(Op, Result);
-        NeedsAnotherIteration = true;
-        return Result;
       }
 
       if (Tmp1 != Node->getOperand(0))
@@ -2746,9 +2755,13 @@ ExpandIntToFP(bool isSigned, MVT::ValueType DestTy, SDOperand Source) {
   case TargetLowering::Legal:
   case TargetLowering::Expand:
     break;   // This case is handled below.
-  case TargetLowering::Custom:
-    Source = DAG.getNode(ISD::SINT_TO_FP, DestTy, Source);
-    return LegalizeOp(TLI.LowerOperation(Source, DAG));
+  case TargetLowering::Custom: {
+    SDOperand NV = TLI.LowerOperation(DAG.getNode(ISD::SINT_TO_FP, DestTy,
+                                                  Source), DAG);
+    if (NV.Val)
+      return LegalizeOp(NV);
+    break;   // The target decided this was legal after all
+  }
   }
 
   // Expand the source, then glue it back together for the call.  We must expand
@@ -3040,8 +3053,10 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
 
       // Now that the custom expander is done, expand the result, which is still
       // VT.
-      ExpandOp(Op, Lo, Hi);
-      break;
+      if (Op.Val) {
+        ExpandOp(Op, Lo, Hi);
+        break;
+      }
     }
 
     if (Node->getOperand(0).getValueType() == MVT::f32)
@@ -3056,8 +3071,11 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
                                  LegalizeOp(Node->getOperand(0)));
       // Now that the custom expander is done, expand the result, which is still
       // VT.
-      ExpandOp(TLI.LowerOperation(Op, DAG), Lo, Hi);
-      break;
+      Op = TLI.LowerOperation(Op, DAG);
+      if (Op.Val) {
+        ExpandOp(Op, Lo, Hi);
+        break;
+      }
     }
 
     if (Node->getOperand(0).getValueType() == MVT::f32)
