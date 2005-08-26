@@ -20,6 +20,7 @@
 #include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetInstrInfo.h"
+#include "llvm/Target/TargetLowering.h"
 #include "llvm/Support/CommandLine.h"
 using namespace llvm;
 
@@ -166,7 +167,13 @@ unsigned SimpleSched::Emit(SDOperand Op) {
     }
 
     // Now that we have emitted all operands, emit this instruction itself.
-    BB->insert(BB->end(), MI);
+    if ((II.Flags & M_USES_CUSTOM_DAG_SCHED_INSERTION) == 0) {
+      BB->insert(BB->end(), MI);
+    } else {
+      // Insert this instruction into the end of the basic block, potentially
+      // taking some custom action.
+      BB = DAG.getTargetLoweringInfo().InsertAtEndOfBasicBlock(MI, BB);
+    }
   } else {
     switch (Op.getOpcode()) {
     default:
