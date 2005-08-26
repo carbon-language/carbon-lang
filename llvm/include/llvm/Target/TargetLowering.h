@@ -35,6 +35,8 @@ namespace llvm {
   class SDNode;
   class SDOperand;
   class SelectionDAG;
+  class MachineBasicBlock;
+  class MachineInstr;
 
 //===----------------------------------------------------------------------===//
 /// TargetLowering - This class defines information used to lower LLVM code to
