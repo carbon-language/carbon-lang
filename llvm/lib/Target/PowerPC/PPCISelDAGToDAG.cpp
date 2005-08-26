@@ -1188,8 +1188,8 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
     SDOperand HI = Select(N->getOperand(0));
     SDOperand LO = Select(N->getOperand(1));
     SDOperand SH = Select(N->getOperand(2));
-    SDOperand SH_LO_R = CurDAG->getTargetNode(PPC::SUBFIC, MVT::i32, SH,
-                                              getI32Imm(32));
+    SDOperand SH_LO_R = CurDAG->getTargetNode(PPC::SUBFIC, MVT::i32, MVT::Flag,
+                                              SH, getI32Imm(32));
     SDOperand SH_LO_L = CurDAG->getTargetNode(PPC::ADDI, MVT::i32, SH, 
                                           getI32Imm((unsigned)-32));
     SDOperand HI_SHL = CurDAG->getTargetNode(PPC::SLW, MVT::i32, HI, SH);
@@ -1207,8 +1207,8 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
     SDOperand HI = Select(N->getOperand(0));
     SDOperand LO = Select(N->getOperand(1));
     SDOperand SH = Select(N->getOperand(2));
-    SDOperand SH_HI_L = CurDAG->getTargetNode(PPC::SUBFIC, MVT::i32, SH,
-                                              getI32Imm(32));
+    SDOperand SH_HI_L = CurDAG->getTargetNode(PPC::SUBFIC, MVT::i32, MVT::Flag,
+                                              SH, getI32Imm(32));
     SDOperand SH_HI_R = CurDAG->getTargetNode(PPC::ADDI, MVT::i32, SH, 
                                               getI32Imm((unsigned)-32));
     SDOperand LO_SHR = CurDAG->getTargetNode(PPC::SRW, MVT::i32, LO, SH);
