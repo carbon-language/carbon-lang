@@ -24,6 +24,10 @@ namespace llvm {
   public:
     PPC32TargetLowering(TargetMachine &TM);
     
+    /// LowerOperation - Provide custom lowering hooks for some operations.
+    ///
+    virtual SDOperand LowerOperation(SDOperand Op, SelectionDAG &DAG);
+    
     /// LowerArguments - This hook must be implemented to indicate how we should
     /// lower the arguments for the specified function, into the specified DAG.
     virtual std::vector<SDOperand>

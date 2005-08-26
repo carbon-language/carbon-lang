@@ -829,6 +829,12 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
   default:
     Node->dump(); std::cerr << '\n';
     assert(0 && "Node not handled!\n");
+  case ISD::BUILTIN_OP_END+PPC::FSEL:
+    Tmp1 = SelectExpr(N.getOperand(0));
+    Tmp2 = SelectExpr(N.getOperand(1));
+    Tmp3 = SelectExpr(N.getOperand(2));
+    BuildMI(BB, PPC::FSEL, 3, Result).addReg(Tmp1).addReg(Tmp2).addReg(Tmp3);
+    return Result;
   case ISD::UNDEF:
     if (Node->getValueType(0) == MVT::i32)
       BuildMI(BB, PPC::IMPLICIT_DEF_GPR, 0, Result);

@@ -17,7 +17,14 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/Function.h"
+#include "llvm/Support/CommandLine.h"
 using namespace llvm;
+
+namespace llvm {
+  cl::opt<bool> FSELTMP("ppc-fsel-custom-legalizer", cl::Hidden,
+                             cl::desc("Use a custom expander for fsel on ppc"));
+}
+
 
 PPC32TargetLowering::PPC32TargetLowering(TargetMachine &TM)
   : TargetLowering(TM) {
@@ -65,6 +72,12 @@ PPC32TargetLowering::PPC32TargetLowering(TargetMachine &TM)
   setOperationAction(ISD::SELECT, MVT::i32, Expand);
   setOperationAction(ISD::SELECT, MVT::f32, Expand);
   setOperationAction(ISD::SELECT, MVT::f64, Expand);
+  
+  // PowerPC wants to turn select_cc of FP into fsel.
+  if (FSELTMP) {
+    setOperationAction(ISD::SELECT_CC, MVT::f32, Custom);
+    setOperationAction(ISD::SELECT_CC, MVT::f64, Custom);
+  }
 
   // PowerPC does not have BRCOND* which requires SetCC
   setOperationAction(ISD::BRCOND,       MVT::Other, Expand);
@@ -78,10 +91,52 @@ PPC32TargetLowering::PPC32TargetLowering(TargetMachine &TM)
   setOperationAction(ISD::UINT_TO_FP, MVT::i32, Expand);
 
   setSetCCResultContents(ZeroOrOneSetCCResult);
-  addLegalFPImmediate(+0.0); // Necessary for FSEL
-  addLegalFPImmediate(-0.0); //
+  if (!FSELTMP) {
+    addLegalFPImmediate(+0.0); // Necessary for FSEL
+    addLegalFPImmediate(-0.0); //
+  }
   
   computeRegisterProperties();
+}
+
+/// LowerOperation - Provide custom lowering hooks for some operations.
+///
+SDOperand PPC32TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
+  switch (Op.getOpcode()) {
+  default: assert(0 && "Wasn't expecting to be able to lower this!"); 
+  case ISD::SELECT_CC:
+    // Turn FP only select_cc's into fsel instructions.
+    if (MVT::isFloatingPoint(Op.getOperand(0).getValueType()) &&
+        MVT::isFloatingPoint(Op.getOperand(2).getValueType())) {
+      ISD::CondCode CC = cast<CondCodeSDNode>(Op.getOperand(4))->get();
+      MVT::ValueType ResVT = Op.getValueType();
+      MVT::ValueType CmpVT = Op.getOperand(0).getValueType();
+      SDOperand LHS = Op.getOperand(0), RHS = Op.getOperand(1);
+      SDOperand TV  = Op.getOperand(2), FV  = Op.getOperand(3);
+
+      switch (CC) {
+      default: assert(0 && "Invalid FSEL condition"); abort();
+      case ISD::SETULT:
+      case ISD::SETLT:
+        return DAG.getTargetNode(PPC::FSEL, ResVT,
+                                 DAG.getNode(ISD::SUB, CmpVT, LHS, RHS), FV,TV);
+      case ISD::SETUGE:
+      case ISD::SETGE:
+        return DAG.getTargetNode(PPC::FSEL, ResVT,
+                                 DAG.getNode(ISD::SUB, CmpVT, LHS, RHS), TV,FV);
+      case ISD::SETUGT:
+      case ISD::SETGT:
+        return DAG.getTargetNode(PPC::FSEL, ResVT,
+                                 DAG.getNode(ISD::SUB, CmpVT, RHS, LHS), FV,TV);
+      case ISD::SETULE:
+      case ISD::SETLE:
+        return DAG.getTargetNode(PPC::FSEL, ResVT,
+                                 DAG.getNode(ISD::SUB, CmpVT, RHS, LHS), TV,FV);
+      }
+    }
+    break;    
+  }
+  return SDOperand();
 }
 
 std::vector<SDOperand>
