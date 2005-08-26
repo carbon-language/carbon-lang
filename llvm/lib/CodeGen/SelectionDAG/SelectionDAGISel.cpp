@@ -1077,9 +1077,15 @@ LowerArguments(BasicBlock *BB, SelectionDAGLowering &SDL,
            AI != E; ++AI,++a)
         if (!AI->use_empty()) {
           SDL.setValue(AI, Args[a]);
-          SDOperand Copy =
-            CopyValueToVirtualRegister(SDL, AI, FuncInfo.ValueMap[AI]);
-          UnorderedChains.push_back(Copy);
+          
+          if (IsOnlyUsedInOneBasicBlock(AI) == F.begin()) {
+            // Only used in the entry block, no need to copy it to a vreg for
+            // other blocks.
+          } else {
+            SDOperand Copy =
+              CopyValueToVirtualRegister(SDL, AI, FuncInfo.ValueMap[AI]);
+            UnorderedChains.push_back(Copy);
+          }
         }
     } else {
       // Otherwise, if any argument is only accessed in a single basic block,
