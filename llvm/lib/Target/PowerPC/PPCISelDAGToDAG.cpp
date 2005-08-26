@@ -654,7 +654,7 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
     }
     
     if (New.Val != N) {
-      CurDAG->ReplaceAllUsesWith(N, New.Val);
+      CurDAG->ReplaceAllUsesWith(Op, New);
       N = New.Val;
     }
     break;
@@ -673,7 +673,7 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
     if (Chain != N->getOperand(0) || Val != N->getOperand(2)) {
       SDOperand New = CurDAG->getNode(ISD::CopyToReg, MVT::Other,
                                       Chain, Reg, Val);
-      CurDAG->ReplaceAllUsesWith(N, New.Val);
+      CurDAG->ReplaceAllUsesWith(Op, New);
       N = New.Val;
     }
     break;    
@@ -752,7 +752,7 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
     if (Ty == MVT::i32) {
       if (SDNode *I = SelectIntImmediateExpr(N->getOperand(0), N->getOperand(1),
                                              PPC::ADDIS, PPC::ADDI, true)) {
-        CurDAG->ReplaceAllUsesWith(N, I);
+        CurDAG->ReplaceAllUsesWith(Op, SDOperand(I, 0));
         N = I;
       } else {
         CurDAG->SelectNodeTo(N, PPC::ADD, MVT::i32, Select(N->getOperand(0)),
@@ -799,7 +799,7 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
       }
       if (SDNode *I = SelectIntImmediateExpr(N->getOperand(0), N->getOperand(1),
                                           PPC::ADDIS, PPC::ADDI, true, true)) {
-        CurDAG->ReplaceAllUsesWith(N, I);
+        CurDAG->ReplaceAllUsesWith(Op, SDOperand(I, 0));
         N = I;
       } else {
         CurDAG->SelectNodeTo(N, PPC::SUBF, Ty, Select(N->getOperand(1)),
@@ -873,7 +873,7 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
       } else if (Imm) {
         SDOperand Result = Select(BuildSDIVSequence(N));
         assert(Result.ResNo == 0);
-        CurDAG->ReplaceAllUsesWith(N, Result.Val);
+        CurDAG->ReplaceAllUsesWith(Op, Result);
         N = Result.Val;
         break;
       }
@@ -897,7 +897,7 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
     if (isIntImmediate(N->getOperand(1), Imm) && Imm) {
       SDOperand Result = Select(BuildUDIVSequence(N));
       assert(Result.ResNo == 0);
-      CurDAG->ReplaceAllUsesWith(N, Result.Val);
+      CurDAG->ReplaceAllUsesWith(Op, Result);
       N = Result.Val;
       break;
     }
@@ -940,7 +940,7 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
     if (SDNode *I = SelectIntImmediateExpr(N->getOperand(0), 
                                            N->getOperand(1),
                                            PPC::ANDISo, PPC::ANDIo)) {
-      CurDAG->ReplaceAllUsesWith(N, I); 
+      CurDAG->ReplaceAllUsesWith(Op, SDOperand(I, 0));
       N = I;
       break;
     }
@@ -959,14 +959,14 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
   }
   case ISD::OR:
     if (SDNode *I = SelectBitfieldInsert(N)) {
-      CurDAG->ReplaceAllUsesWith(N, I);
+      CurDAG->ReplaceAllUsesWith(Op, SDOperand(I, 0));
       N = I;
       break;
     }
     if (SDNode *I = SelectIntImmediateExpr(N->getOperand(0), 
                                            N->getOperand(1),
                                            PPC::ORIS, PPC::ORI)) {
-      CurDAG->ReplaceAllUsesWith(N, I); 
+      CurDAG->ReplaceAllUsesWith(Op, SDOperand(I, 0));
       N = I;
       break;
     }
@@ -1007,7 +1007,7 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
     if (SDNode *I = SelectIntImmediateExpr(N->getOperand(0), 
                                            N->getOperand(1),
                                            PPC::XORIS, PPC::XORI)) {
-      CurDAG->ReplaceAllUsesWith(N, I); 
+      CurDAG->ReplaceAllUsesWith(Op, SDOperand(I, 0));
       N = I;
       break;
     }
@@ -1070,11 +1070,13 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
     CurDAG->SelectNodeTo(N, PPC::FABS, N->getValueType(0), 
                          Select(N->getOperand(0)));
     break;
-  case ISD::FP_EXTEND:
+  case ISD::FP_EXTEND: {
     assert(MVT::f64 == N->getValueType(0) && 
            MVT::f32 == N->getOperand(0).getValueType() && "Illegal FP_EXTEND");
-    CurDAG->SelectNodeTo(N, PPC::FMR, MVT::f64, Select(N->getOperand(0)));
-    break;
+    SDOperand Tmp = Select(N->getOperand(0));
+    CurDAG->ReplaceAllUsesWith(Op, Tmp);  // Just use the operand as the result.
+    return Tmp;
+  }
   case ISD::FP_ROUND:
     assert(MVT::f32 == N->getValueType(0) && 
            MVT::f64 == N->getOperand(0).getValueType() && "Illegal FP_ROUND");
