@@ -896,7 +896,7 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
     
     unsigned Opc;
     switch (N->getValueType(0)) {
-    default: assert(0 && "Unknown type to ISD::SDIV"); break;
+    default: assert(0 && "Unknown type to ISD::SDIV");
     case MVT::i32: Opc = PPC::DIVW; break;
     case MVT::f32: Opc = PPC::FDIVS; break;
     case MVT::f64: Opc = PPC::FDIV; break;
@@ -1135,7 +1135,7 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
     SDOperand LHSH = Select(N->getOperand(1));
    
     unsigned Imm;
-    bool ME, ZE;
+    bool ME = false, ZE = false;
     if (isIntImmediate(N->getOperand(3), Imm)) {
       ME = (signed)Imm == -1;
       ZE = Imm == 0;

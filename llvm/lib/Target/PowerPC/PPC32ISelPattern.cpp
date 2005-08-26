@@ -1414,7 +1414,7 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
     Tmp2 = SelectExpr(N.getOperand(1));
     
     if (N.getOpcode() == ISD::ADD_PARTS) {
-      bool ME, ZE;
+      bool ME = false, ZE = false;
       if (isIntImmediate(N.getOperand(3), Tmp3)) {
         ME = (signed)Tmp3 == -1;
         ZE = Tmp3 == 0;
