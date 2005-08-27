@@ -52,8 +52,9 @@ namespace {
       assert(&MRI && "Target doesn't provide register info?");
     }
     
-    void Run() {
+    MachineBasicBlock *Run() {
       Emit(DAG.getRoot());
+      return BB;
     }
     
   private:
@@ -229,5 +230,5 @@ unsigned SimpleSched::Emit(SDOperand Op) {
 /// graph.
 void SelectionDAGISel::ScheduleAndEmitDAG(SelectionDAG &SD) {
   if (ViewDAGs) SD.viewGraph();
-  SimpleSched(SD, BB).Run();  
+  BB = SimpleSched(SD, BB).Run();  
 }
