@@ -1078,7 +1078,7 @@ LowerArguments(BasicBlock *BB, SelectionDAGLowering &SDL,
         if (!AI->use_empty()) {
           SDL.setValue(AI, Args[a]);
           
-          if (IsOnlyUsedInOneBasicBlock(AI) == F.begin()) {
+          if (0 && IsOnlyUsedInOneBasicBlock(AI) == F.begin()) {
             // Only used in the entry block, no need to copy it to a vreg for
             // other blocks.
           } else {
