@@ -1158,9 +1158,9 @@ LexFiles  := $(filter %.l,$(Sources))
 
 ifneq ($(LexFiles),)
 
-LexOutput := $(strip $(patsubst %.l,%.cpp,$(LexFiles)))
-
-.PRECIOUS: $(LexOutput)
+# Cancel built-in rules for lex
+%.c: %.l
+%.cpp: %.l
 
 # Note the extra sed filtering here, used to cut down on the warnings emited 
 # by GCC.  The last line is a gross hack to work around flex aparently not 
@@ -1168,13 +1168,17 @@ LexOutput := $(strip $(patsubst %.l,%.cpp,$(LexFiles)))
 # uninitialized string buffers in LLVM we can generate very long tokens, so 
 # this is a hack around it.
 # FIXME.  (f.e. char Buffer[10000] )
-%.cpp: %.l
+$(PROJ_SRC_DIR)/%.cpp: $(PROJ_SRC_DIR)/%.l
 	$(Echo) Flexing $*.l
-	$(Verb) $(FLEX) -t $< | \
+	$(Verb) $(FLEX) -t $(PROJ_SRC_DIR)/$*.l | \
 	$(SED) 's/void yyunput/inline void yyunput/' | \
 	$(SED) 's/void \*yy_flex_realloc/inline void *yy_flex_realloc/' | \
 	$(SED) 's/#define YY_BUF_SIZE 16384/#define YY_BUF_SIZE (16384*64)/' \
-	  > $@
+	  > $(PROJ_SRC_DIR)/$*.cpp
+	$(Echo) "*** DON'T FORGET TO CHECK IN $*.cpp (generated file)"
+
+LexObjs := $(patsubst %.l,$(ObjDir)/%.o,$(LexFiles))
+$(LexObjs): $(ObjDir)/%.o : $(PROJ_SRC_DIR)/%.cpp
 
 clean-local::
 	-$(Verb) $(RM) -f $(LexOutput)
@@ -1189,7 +1193,7 @@ endif
 
 YaccFiles  := $(filter %.y,$(Sources))
 ifneq ($(YaccFiles),)
-YaccOutput := $(addprefix $(patsubst %.y,%,$(YaccFiles)),.h .cpp .output)
+YaccOutput := $(addprefix $(patsubst %.y,%,$(YaccFiles)),.output)
 
 .PRECIOUS: $(YaccOutput)
 
@@ -1199,14 +1203,14 @@ YaccOutput := $(addprefix $(patsubst %.y,%,$(YaccFiles)),.h .cpp .output)
 %.h: %.y
 
 # Rule for building the bison parsers...
-%.cpp %.h : %.y
+$(PROJ_SRC_DIR)/%.cpp $(PROJ_SRC_DIR)/%.h : $(PROJ_SRC_DIR)/%.y
 	$(Echo) "Bisoning $*.y"
-	$(Verb) $(BISON) -v -d -p $(<F:%Parser.y=%) -o $*.tab.c  $<
-	$(Verb) $(MV) -f $*.tab.c $*.cpp
-	$(Verb) $(MV) -f $*.tab.h $*.h
+	$(Verb) $(BISON) -v -d -p $(<F:%Parser.y=%) -o $*.tab.c $<
+	$(Verb) $(MV) -f $*.tab.c $(PROJ_SRC_DIR)/$*.cpp
+	$(Verb) $(MV) -f $*.tab.h $(PROJ_SRC_DIR)/$*.h
+	$(Echo) "*** DON'T FORGET TO CHECK IN $*.cpp and $*.h (generated files)"
 
 clean-local::
-	-$(Verb) $(RM) -f $(YaccOutput)
 	$(Verb) $(RM) -f $(YaccOutput)
 endif
 

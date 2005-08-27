@@ -17,8 +17,4 @@ include $(LEVEL)/Makefile.common
 # (which depend on the source file) won't get generated until bison is done
 # generating the C source and header files for the parser.
 #
-FileLexer.cpp: FileParser.h
-
-clean::
-	$(Verb) $(RM) -f FileParser.cpp FileParser.h FileLexer.cpp CommandLine.cpp
-	$(Verb) $(RM) -f FileParser.output
+$(ObjDir)/FileLexer.o : $(PROJ_SRC_DIR)/FileParser.h 

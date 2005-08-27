@@ -9,7 +9,6 @@
 
 LEVEL = ../..
 LIBRARYNAME := LLVMAsmParser
-BUILT_SOURCES := llvmAsmParser.cpp llvmAsmParser.h Lexer.cpp
 
 include $(LEVEL)/Makefile.common
 
@@ -17,4 +16,4 @@ include $(LEVEL)/Makefile.common
 # Make the object code file for the lexer depend upon the header file generated
 # by the Bison parser.  This prevents the Lexer from being compiled before the
 # header file it needs is built.
-$(OBJDIR)/Lexer.o: llvmAsmParser.h
+$(ObjDir)/Lexer.o: $(PROJ_SRC_DIR)/llvmAsmParser.h
