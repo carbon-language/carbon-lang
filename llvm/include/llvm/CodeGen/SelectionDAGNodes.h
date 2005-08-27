@@ -48,7 +48,7 @@ namespace ISD {
     // EntryToken - This is the marker used to indicate the start of the region.
     EntryToken,
 
-    // Token factor - This node is takes multiple tokens as input and produces a
+    // Token factor - This node takes multiple tokens as input and produces a
     // single token result.  This is used to represent the fact that the operand
     // operators are independent of each other.
     TokenFactor,
