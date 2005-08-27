@@ -27,8 +27,8 @@ TargetLowering::TargetLowering(TargetMachine &tm)
   ShiftAmountTy = SetCCResultTy = PointerTy = getValueType(TD.getIntPtrType());
   ShiftAmtHandling = Undefined;
   memset(RegClassForVT, 0,MVT::LAST_VALUETYPE*sizeof(TargetRegisterClass*));
-  maxStoresPerMemSet = maxStoresPerMemCpy = maxStoresPerMemMove = 0;
-  allowUnalignedStores = false;
+  maxStoresPerMemSet = maxStoresPerMemCpy = maxStoresPerMemMove = 8;
+  allowUnalignedMemoryAccesses = false;
 }
 
 TargetLowering::~TargetLowering() {}

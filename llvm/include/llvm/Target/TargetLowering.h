@@ -210,12 +210,14 @@ public:
   /// @brief Get maximum # of store operations permitted for llvm.memmove
   unsigned getMaxStoresPerMemMove() const { return maxStoresPerMemMove; }
 
-  /// This function returns true if the target allows unaligned stores. This is
-  /// used in situations where an array copy/move/set is converted to a sequence
-  /// of store operations. It ensures that such replacements don't generate
-  /// code that causes an alignment error (trap) on the target machine.
-  /// @brief Determine if the target supports unaligned stores.
-  bool allowsUnalignedStores() const { return allowUnalignedStores; }
+  /// This function returns true if the target allows unaligned memory accesses.
+  /// This is used, for example, in situations where an array copy/move/set is 
+  /// converted to a sequence of store operations. It's use helps to ensure that
+  /// such replacements don't generate code that causes an alignment error 
+  /// (trap) on the target machine. 
+  /// @brief Determine if the target supports unaligned memory accesses.
+  bool allowsUnalignedMemoryAccesses() const 
+    { return allowUnalignedMemoryAccesses; }
 
   //===--------------------------------------------------------------------===//
   // TargetLowering Configuration Methods - These methods should be invoked by
@@ -442,11 +444,11 @@ protected:
   /// @brief Specify maximum bytes of store instructions per memmove call.
   unsigned maxStoresPerMemMove;
 
-  /// This field specifies whether the target machine permits unaligned stores.
-  /// This is used to determine the size of store operations for copying
-  /// small arrays and other similar tasks.
-  /// @brief Indicate whether the target machine permits unaligned stores.
-  bool allowUnalignedStores;
+  /// This field specifies whether the target machine permits unaligned memory
+  /// accesses.  This is used, for example, to determine the size of store 
+  /// operations when copying small arrays and other similar tasks.
+  /// @brief Indicate whether the target permits unaligned memory accesses.
+  bool allowUnalignedMemoryAccesses;
 };
 } // end llvm namespace
 
