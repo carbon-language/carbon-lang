@@ -2084,7 +2084,7 @@ void SelectionDAG::ReplaceAllUsesWith(SDNode *From,
                                       const std::vector<SDOperand> &To) {
   assert(From->getNumValues() == To.size() &&
          "Incorrect number of values to replace with!");
-  if (To.size() == 1) {
+  if (To.size() == 1 && To[0].Val->getNumValues() == 1) {
     // Degenerate case handled above.
     ReplaceAllUsesWith(SDOperand(From, 0), To[0]);
     return;
