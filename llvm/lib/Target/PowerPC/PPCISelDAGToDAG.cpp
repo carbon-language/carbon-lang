@@ -17,6 +17,7 @@
 #include "PPC32ISelLowering.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
@@ -1080,15 +1081,26 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
   case ISD::FP_EXTEND: {
     assert(MVT::f64 == N->getValueType(0) && 
            MVT::f32 == N->getOperand(0).getValueType() && "Illegal FP_EXTEND");
-    SDOperand Tmp = Select(N->getOperand(0));
-    CurDAG->ReplaceAllUsesWith(Op, Tmp);  // Just use the operand as the result.
-    return Tmp;
+    std::vector<SDOperand> Tmp;
+    Tmp.push_back(Select(N->getOperand(0)));
+    CurDAG->ReplaceAllUsesWith(N, Tmp);  // Just use the operand as the result.
+    return Tmp[0];
   }
   case ISD::FP_ROUND:
     assert(MVT::f32 == N->getValueType(0) && 
            MVT::f64 == N->getOperand(0).getValueType() && "Illegal FP_ROUND");
     CurDAG->SelectNodeTo(N, PPC::FRSP, MVT::f32, Select(N->getOperand(0)));
     break;
+  case ISD::FP_TO_SINT: {
+    SDOperand In = Select(N->getOperand(0));
+    In = CurDAG->getTargetNode(PPC::FCTIWZ, MVT::f64, In);
+
+    int FrameIdx = BB->getParent()->getFrameInfo()->CreateStackObject(8, 8);
+    SDOperand FI = CurDAG->getTargetFrameIndex(FrameIdx, MVT::f64);
+    SDOperand ST = CurDAG->getTargetNode(PPC::STFD, MVT::Other, In, FI, getI32Imm(0));
+    CurDAG->SelectNodeTo(N, PPC::LWZ, MVT::i32, MVT::Other, FI, getI32Imm(4), ST);
+    break;
+  }
   case ISD::FNEG: {
     SDOperand Val = Select(N->getOperand(0));
     MVT::ValueType Ty = N->getValueType(0);
