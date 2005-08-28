@@ -996,7 +996,7 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
     if (isOprNot(N)) {
       unsigned Opc;
       SDOperand Val = Select(N->getOperand(0));
-      switch (Val.getTargetOpcode()) {
+      switch (Val.isTargetOpcode() ? Val.getTargetOpcode() : 0) {
       default:        Opc = 0;          break;
       case PPC::OR:   Opc = PPC::NOR;   break;
       case PPC::AND:  Opc = PPC::NAND;  break;
@@ -1094,7 +1094,7 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
     MVT::ValueType Ty = N->getValueType(0);
     if (Val.Val->hasOneUse()) {
       unsigned Opc;
-      switch (Val.getTargetOpcode()) {
+      switch (Val.isTargetOpcode() ? Val.getTargetOpcode() : 0) {
       default:          Opc = 0;            break;
       case PPC::FABS:   Opc = PPC::FNABS;   break;
       case PPC::FMADD:  Opc = PPC::FNMADD;  break;
