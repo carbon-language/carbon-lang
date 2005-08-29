@@ -87,7 +87,7 @@ namespace {
     virtual void InstructionSelectBasicBlock(SelectionDAG &DAG) {
       DEBUG(BB->dump());
       // Select target instructions for the DAG.
-      Select(DAG.getRoot());
+      DAG.setRoot(Select(DAG.getRoot()));
       DAG.RemoveDeadNodes();
       
       // Emit machine code to BB. 
