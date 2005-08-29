@@ -228,6 +228,33 @@ void SelectionDAG::DeleteNodeIfDead(SDNode *N, void *NodeSet) {
   delete N;  
 }
 
+void SelectionDAG::DeleteNode(SDNode *N) {
+  assert(N->use_empty() && "Cannot delete a node that is not dead!");
+
+  // First take this out of the appropriate CSE map.
+  RemoveNodeFromCSEMaps(N);
+
+  // Remove it from the AllNodes list.
+  for (std::vector<SDNode*>::iterator I = AllNodes.begin(); ; ++I) {
+    assert(I != AllNodes.end() && "Node not in AllNodes list??");
+    if (*I == N) {
+      // Erase from the vector, which is not ordered.
+      std::swap(*I, AllNodes.back());
+      AllNodes.pop_back();
+      break;
+    }
+  }
+    
+  // Drop all of the operands and decrement used nodes use counts.
+  while (!N->Operands.empty()) {
+    SDNode *O = N->Operands.back().Val;
+    N->Operands.pop_back();
+    O->removeUser(N);
+  }
+  
+  delete N;
+}
+
 /// RemoveNodeFromCSEMaps - Take the specified node out of the CSE map that
 /// correspond to it.  This is useful when we're about to delete or repurpose
 /// the node.  We don't want future request for structurally identical nodes
