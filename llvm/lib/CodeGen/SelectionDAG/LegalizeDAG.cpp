@@ -1266,6 +1266,10 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     default: 
       assert(0 && "Cannot handle this action for SETCC yet!");
       break;
+    case TargetLowering::Promote:
+      Result = DAG.getNode(ISD::SETCC, Node->getValueType(0), Tmp1, Tmp2,
+                           Node->getOperand(2));
+      break;
     case TargetLowering::Legal:
       if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(1))
         Result = DAG.getNode(ISD::SETCC, Node->getValueType(0), Tmp1, Tmp2,
