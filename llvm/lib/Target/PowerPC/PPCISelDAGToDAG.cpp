@@ -1373,8 +1373,8 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
           break;
         case ISD::SETNE: {
           Op = CurDAG->getTargetNode(PPC::NOR, MVT::i32, Op, Op);
-          SDOperand AD = CurDAG->getTargetNode(PPC::ADDIC, MVT::i32, Op,
-                                               getI32Imm(~0U));
+          SDOperand AD = CurDAG->getTargetNode(PPC::ADDIC, MVT::i32, MVT::Flag,
+                                                Op, getI32Imm(~0U));
           CurDAG->SelectNodeTo(N, PPC::SUBFE, MVT::i32, AD, Op, AD.getValue(1));
           break;
         }
