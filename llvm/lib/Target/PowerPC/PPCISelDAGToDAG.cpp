@@ -1457,7 +1457,7 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
 
       // Copy the callee address into R12 on darwin.
       SDOperand R12 = CurDAG->getRegister(PPC::R12, MVT::i32);
-      Chain = CurDAG->getNode(ISD::CopyToReg, MVT::Other, R12, Callee, Chain);
+      Chain = CurDAG->getNode(ISD::CopyToReg, MVT::Other, Chain, R12, Callee);
       
       CallOperands.push_back(getI32Imm(20));  // Information to encode indcall
       CallOperands.push_back(getI32Imm(0));   // Information to encode indcall
