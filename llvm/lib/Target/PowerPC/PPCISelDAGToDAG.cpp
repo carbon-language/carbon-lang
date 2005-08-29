@@ -1479,27 +1479,28 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
       PPC::F8, PPC::F9, PPC::F10, PPC::F11, PPC::F12, PPC::F13
     };
     
-    for (unsigned i = 2, e = N->getNumOperands(); i != e; ++i)
+    for (unsigned i = 2, e = N->getNumOperands(); i != e; ++i) {
+      unsigned DestReg = 0;
+      MVT::ValueType RegTy;
+      if (N->getOperand(i).getValueType() == MVT::i32) {
+        assert(GPR_idx < 8 && "Too many int args");
+        DestReg = GPR[GPR_idx++];
+        RegTy = MVT::i32;
+      } else {
+        assert(MVT::isFloatingPoint(N->getOperand(i).getValueType()) &&
+               "Unpromoted integer arg?");
+        assert(FPR_idx < 13 && "Too many fp args");
+        DestReg = FPR[FPR_idx++];
+        RegTy = MVT::f64;   // Even if this is really f32!
+      }
+
       if (N->getOperand(i).getOpcode() != ISD::UNDEF) {
-        unsigned DestReg = 0;
-        MVT::ValueType RegTy;
-        if (N->getOperand(i).getValueType() == MVT::i32) {
-          assert(GPR_idx < 8 && "Too many int args");
-          DestReg = GPR[GPR_idx++];
-          RegTy = MVT::i32;
-        } else {
-          assert(MVT::isFloatingPoint(N->getOperand(i).getValueType()) &&
-                 "Unpromoted integer arg?");
-          assert(FPR_idx < 13 && "Too many fp args");
-          DestReg = FPR[FPR_idx++];
-          RegTy = MVT::f64;   // Even if this is really f32!
-        }
-        
         SDOperand Reg = CurDAG->getRegister(DestReg, RegTy);
         Chain = CurDAG->getNode(ISD::CopyToReg, MVT::Other, Chain, Reg,
                                 Select(N->getOperand(i)));
         CallOperands.push_back(Reg);
       }
+    }
 
     // Finally, once everything is in registers to pass to the call, emit the
     // call itself.
