@@ -685,16 +685,20 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
     unsigned v = (unsigned)cast<ConstantSDNode>(N)->getValue();
     unsigned Hi = HA16(v);
     unsigned Lo = Lo16(v);
+
+    // NOTE: This doesn't use SelectNodeTo, because doing that will prevent 
+    // folding shared immediates into other the second instruction that 
+    // uses it.
     if (Hi && Lo) {
       SDOperand Top = CurDAG->getTargetNode(PPC::LIS, MVT::i32, 
                                             getI32Imm(v >> 16));
-      CurDAG->SelectNodeTo(N, PPC::ORI, MVT::i32, Top, getI32Imm(v & 0xFFFF));
+      return CurDAG->getTargetNode(PPC::ORI, MVT::i32, Top, 
+                                   getI32Imm(v & 0xFFFF));
     } else if (Lo) {
-      CurDAG->SelectNodeTo(N, PPC::LI, MVT::i32, getI32Imm(v));
+      return CurDAG->getTargetNode(PPC::LI, MVT::i32, getI32Imm(v));
     } else {
-      CurDAG->SelectNodeTo(N, PPC::LIS, MVT::i32, getI32Imm(v >> 16));
+      return CurDAG->getTargetNode(PPC::LIS, MVT::i32, getI32Imm(v >> 16));
     }
-    break;
   }
   case ISD::UNDEF:
     if (N->getValueType(0) == MVT::i32)
