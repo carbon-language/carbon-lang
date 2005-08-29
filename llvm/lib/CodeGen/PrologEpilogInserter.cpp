@@ -217,7 +217,7 @@ void PEI::saveCallerSavedRegisters(MachineFunction &Fn) {
       while (I2 != MBB->begin() && TII.isTerminatorInstr((--I2)->getOpcode()))
         I = I2;
 
-      bool AtStart = I2 == MBB->begin();
+      bool AtStart = I == MBB->begin();
       MachineBasicBlock::iterator BeforeI = I;
       if (!AtStart)
         --BeforeI;
