@@ -1838,7 +1838,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         if (Tmp.Val) {
           AddLegalizedOperand(Op, Tmp);
           NeedsAnotherIteration = true;
-          return Result;
+          return Tmp;
         } else {
           // The target thinks this is legal afterall.
           break;
