@@ -1097,8 +1097,8 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
 
     int FrameIdx = BB->getParent()->getFrameInfo()->CreateStackObject(8, 8);
     SDOperand FI = CurDAG->getTargetFrameIndex(FrameIdx, MVT::f64);
-    SDOperand ST = CurDAG->getTargetNode(PPC::STFD, MVT::Other, In, FI, getI32Imm(0));
-    CurDAG->SelectNodeTo(N, PPC::LWZ, MVT::i32, MVT::Other, FI, getI32Imm(4), ST);
+    SDOperand ST = CurDAG->getTargetNode(PPC::STFD, MVT::Other, In, getI32Imm(0), FI);
+    CurDAG->SelectNodeTo(N, PPC::LWZ, MVT::i32, MVT::Other, getI32Imm(4), FI, ST);
     break;
   }
   case ISD::FNEG: {
