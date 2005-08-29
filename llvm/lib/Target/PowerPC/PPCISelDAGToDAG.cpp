@@ -738,6 +738,37 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
       CurDAG->SelectNodeTo(N, PPC::LA, MVT::i32, Tmp, GA);
     break;
   }
+  case ISD::DYNAMIC_STACKALLOC: {
+    // FIXME: We are currently ignoring the requested alignment for handling
+    // greater than the stack alignment.  This will need to be revisited at some
+    // point.  Align = N.getOperand(2);
+    if (!isa<ConstantSDNode>(N->getOperand(2)) ||
+        cast<ConstantSDNode>(N->getOperand(2))->getValue() != 0) {
+      std::cerr << "Cannot allocate stack object with greater alignment than"
+                << " the stack alignment yet!";
+      abort();
+    }
+    SDOperand Chain = Select(N->getOperand(0));
+    SDOperand Amt   = Select(N->getOperand(1));
+    
+    SDOperand R1Reg = CurDAG->getRegister(PPC::R1, MVT::i32);
+    
+    // Subtract the amount (guaranteed to be a multiple of the stack alignment)
+    // from the stack pointer, giving us the result pointer.
+    SDOperand Result = CurDAG->getTargetNode(PPC::SUBF, MVT::i32, Amt, R1Reg);
+
+    // Copy this result back into R1.
+    Chain = CurDAG->getNode(ISD::CopyToReg, MVT::Other, Chain, R1Reg, Result);
+    
+    // Copy this result back out of R1 to make sure we're not using the stack
+    // space without decrementing the stack pointer.
+    Result = CurDAG->getCopyFromReg(Chain, PPC::R1, MVT::i32);
+    
+    // Finally, replace the DYNAMIC_STACKALLOC with the copyfromreg.
+    CurDAG->ReplaceAllUsesWith(N, Result.Val);
+    N = Result.Val;
+    break;
+  }      
   case ISD::SIGN_EXTEND_INREG:
     switch(cast<VTSDNode>(N->getOperand(1))->getVT()) {
     default: assert(0 && "Illegal type in SIGN_EXTEND_INREG"); break;
@@ -1101,8 +1132,10 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
 
     int FrameIdx = BB->getParent()->getFrameInfo()->CreateStackObject(8, 8);
     SDOperand FI = CurDAG->getTargetFrameIndex(FrameIdx, MVT::f64);
-    SDOperand ST = CurDAG->getTargetNode(PPC::STFD, MVT::Other, In, getI32Imm(0), FI);
-    CurDAG->SelectNodeTo(N, PPC::LWZ, MVT::i32, MVT::Other, getI32Imm(4), FI, ST);
+    SDOperand ST = CurDAG->getTargetNode(PPC::STFD, MVT::Other, In,
+                                         getI32Imm(0), FI);
+    CurDAG->SelectNodeTo(N, PPC::LWZ, MVT::i32, MVT::Other,
+                         getI32Imm(4), FI, ST);
     break;
   }
   case ISD::FNEG: {
