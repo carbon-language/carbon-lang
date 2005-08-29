@@ -385,6 +385,9 @@ int GCC::ExecuteProgram(const std::string &ProgramFile,
     GCCArgs.push_back("-fno-strict-aliasing");
   } else {
     GCCArgs.push_back("assembler");
+#ifdef __APPLE__
+    GCCArgs.push_back("-force_cpusubtype_ALL");
+#endif
   }
   GCCArgs.push_back(ProgramFile.c_str());  // Specify the input filename...
   GCCArgs.push_back("-o");
