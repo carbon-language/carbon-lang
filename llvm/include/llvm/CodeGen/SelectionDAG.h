@@ -287,6 +287,11 @@ public:
   void ReplaceAllUsesWith(SDNode *From, SDNode *To);
   void ReplaceAllUsesWith(SDNode *From, const std::vector<SDOperand> &To);
   
+  
+  /// DeleteNode - Remove the specified node from the system.  This node must
+  /// have no referrers.
+  void DeleteNode(SDNode *N);
+  
   void dump() const;
 
 private:
