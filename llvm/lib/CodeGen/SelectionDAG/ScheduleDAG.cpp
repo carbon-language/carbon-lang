@@ -97,6 +97,7 @@ unsigned SimpleSched::Emit(SDOperand Op) {
     while (NodeOperands &&
            Op.getOperand(NodeOperands-1).getValueType() == MVT::Flag)
       --NodeOperands;
+    
     if (NodeOperands &&    // Ignore chain if it exists.
         Op.getOperand(NodeOperands-1).getValueType() == MVT::Other)
       --NodeOperands;
@@ -125,18 +126,24 @@ unsigned SimpleSched::Emit(SDOperand Op) {
       }
     }
     
-    // Emit all of the operands of this instruction, adding them to the
+    // If there is a token chain operand, emit it first, as a hack to get avoid
+    // really bad cases.
+    if (Op.getNumOperands() > NodeOperands &&
+        Op.getOperand(NodeOperands).getValueType() == MVT::Other)
+      Emit(Op.getOperand(NodeOperands));
+    
+    // Emit all of the actual operands of this instruction, adding them to the
     // instruction as appropriate.
-    for (unsigned i = 0, e = Op.getNumOperands(); i != e; ++i) {
+    for (unsigned i = 0; i != NodeOperands; ++i) {
       if (Op.getOperand(i).isTargetOpcode()) {
         // Note that this case is redundant with the final else block, but we
         // include it because it is the most common and it makes the logic
         // simpler here.
-        unsigned R = Emit(Op.getOperand(i));
-        // Add an operand, unless this corresponds to a chain or flag node.
-        MVT::ValueType VT = Op.getOperand(i).getValueType();
-        if (VT != MVT::Other && VT != MVT::Flag)
-          MI->addRegOperand(R, MachineOperand::Use);
+        assert(Op.getOperand(i).getValueType() != MVT::Other &&
+               Op.getOperand(i).getValueType() != MVT::Flag &&
+               "Chain and flag operands should occur at end of operand list!");
+        
+        MI->addRegOperand(Emit(Op.getOperand(i)), MachineOperand::Use);
       } else if (ConstantSDNode *C =
                                    dyn_cast<ConstantSDNode>(Op.getOperand(i))) {
         MI->addZeroExtImm64Operand(C->getValue());
@@ -159,14 +166,26 @@ unsigned SimpleSched::Emit(SDOperand Op) {
                  dyn_cast<ExternalSymbolSDNode>(Op.getOperand(i))) {
         MI->addExternalSymbolOperand(ES->getSymbol(), false);
       } else {
-        unsigned R = Emit(Op.getOperand(i));
-        // Add an operand, unless this corresponds to a chain or flag node.
-        MVT::ValueType VT = Op.getOperand(i).getValueType();
-        if (VT != MVT::Other && VT != MVT::Flag)
-          MI->addRegOperand(R, MachineOperand::Use);
+        assert(Op.getOperand(i).getValueType() != MVT::Other &&
+               Op.getOperand(i).getValueType() != MVT::Flag &&
+               "Chain and flag operands should occur at end of operand list!");
+        MI->addRegOperand(Emit(Op.getOperand(i)), MachineOperand::Use);
       }
     }
 
+    // Finally, if this node has any flag operands, we *must* emit them last, to
+    // avoid emitting operations that might clobber the flags.
+    if (Op.getNumOperands() > NodeOperands) {
+      unsigned i = NodeOperands;
+      if (Op.getOperand(i).getValueType() == MVT::Other)
+        ++i;  // the chain is already selected.
+      for (; i != Op.getNumOperands(); ++i) {
+        assert(Op.getOperand(i).getValueType() == MVT::Flag &&
+               "Must be flag operands!");
+        Emit(Op.getOperand(i));
+      }
+    }
+    
     // Now that we have emitted all operands, emit this instruction itself.
     if ((II.Flags & M_USES_CUSTOM_DAG_SCHED_INSERTION) == 0) {
       BB->insert(BB->end(), MI);
