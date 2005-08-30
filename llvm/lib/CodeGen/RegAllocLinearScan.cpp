@@ -444,10 +444,16 @@ void RA::assignRegOrStackSlotAtInterval(LiveInterval* cur)
   unsigned physReg = getFreePhysReg(cur);
   if (physReg) {
     // We got a register.  However, if it's in the fixed_ list, we might
-    // conflict with it.  Check to see if we conflict with it.
+    // conflict with it.  Check to see if we conflict with it or any of its
+    // aliases.
+    std::set<unsigned> RegAliases;
+    for (const unsigned *AS = mri_->getAliasSet(physReg); *AS; ++AS)
+      RegAliases.insert(*AS);
+    
     bool ConflictsWithFixed = false;
     for (unsigned i = 0, e = fixed_.size(); i != e; ++i) {
-      if (physReg == fixed_[i].first->reg) {
+      if (physReg == fixed_[i].first->reg ||
+          RegAliases.count(fixed_[i].first->reg)) {
         // Okay, this reg is on the fixed list.  Check to see if we actually
         // conflict.
         IntervalPtr &IP = fixed_[i];
@@ -457,11 +463,11 @@ void RA::assignRegOrStackSlotAtInterval(LiveInterval* cur)
           IP.second = II;
           if (II != I->begin() && II->start > StartPosition)
             --II;
-          if (cur->overlapsFrom(*I, II))
+          if (cur->overlapsFrom(*I, II)) {
             ConflictsWithFixed = true;
+            break;
+          }
         }
-  
-        break;
       }
     }
     
