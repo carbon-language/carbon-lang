@@ -2388,10 +2388,7 @@ void SelectionDAGLegalize::ExpandShiftParts(unsigned NodeOp,
   Ops.push_back(LHSL);
   Ops.push_back(LHSH);
   Ops.push_back(Amt);
-  std::vector<MVT::ValueType> VTs;
-  VTs.push_back(LHSL.getValueType());
-  VTs.push_back(LHSH.getValueType());
-  VTs.push_back(Amt.getValueType());
+  std::vector<MVT::ValueType> VTs(2, LHSL.getValueType());
   Lo = DAG.getNode(NodeOp, VTs, Ops);
   Hi = Lo.getValue(1);
 }
