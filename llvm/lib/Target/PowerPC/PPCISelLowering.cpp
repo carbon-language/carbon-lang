@@ -111,6 +111,10 @@ SDOperand PPC32TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     if (MVT::isFloatingPoint(Op.getOperand(0).getValueType()) &&
         MVT::isFloatingPoint(Op.getOperand(2).getValueType())) {
       ISD::CondCode CC = cast<CondCodeSDNode>(Op.getOperand(4))->get();
+      
+      // Cannot handle SETEQ/SETNE.
+      if (CC == ISD::SETEQ || CC == ISD::SETNE) break;
+      
       MVT::ValueType ResVT = Op.getValueType();
       MVT::ValueType CmpVT = Op.getOperand(0).getValueType();
       SDOperand LHS = Op.getOperand(0), RHS = Op.getOperand(1);
