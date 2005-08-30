@@ -52,6 +52,13 @@ namespace ISD {
     // single token result.  This is used to represent the fact that the operand
     // operators are independent of each other.
     TokenFactor,
+    
+    // AssertSext, AssertZext - These nodes record if a register contains a 
+    // value that has already been zero or sign extended from a narrower type.  
+    // These nodes take two operands.  The first is the node that has already 
+    // been extended, and the second is a value type node indicating the width
+    // of the extension
+    AssertSext, AssertZext,
 
     // Various leaf nodes.
     Constant, ConstantFP, GlobalAddress, FrameIndex, ConstantPool,
