@@ -167,7 +167,8 @@ static bool isRotateAndMask(SDNode *N, unsigned Mask, bool IsShiftMask,
   unsigned Shift  = 32;
   unsigned Indeterminant = ~0;  // bit mask marking indeterminant results
   unsigned Opcode = N->getOpcode();
-  if (!isIntImmediate(N->getOperand(1).Val, Shift) || (Shift > 31))
+  if (N->getNumOperands() != 2 ||
+      !isIntImmediate(N->getOperand(1).Val, Shift) || (Shift > 31))
     return false;
   
   if (Opcode == ISD::SHL) {
