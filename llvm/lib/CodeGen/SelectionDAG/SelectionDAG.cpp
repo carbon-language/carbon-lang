@@ -632,7 +632,6 @@ SDOperand SelectionDAG::SimplifySetCC(MVT::ValueType VT, SDOperand N1,
         MVT::ValueType ExtDstTy = N1.getValueType();
         unsigned ExtDstTyBits = MVT::getSizeInBits(ExtDstTy);
 
-        if (Cond == ISD::SETEQ || Cond == ISD::SETNE) {
         // If the extended part has any inconsistent bits, it cannot ever
         // compare equal.  In other words, they have to be all ones or all
         // zeros.
@@ -645,7 +644,6 @@ SDOperand SelectionDAG::SimplifySetCC(MVT::ValueType VT, SDOperand N1,
         return getSetCC(VT, getZeroExtendInReg(N1.getOperand(0), ExtSrcTy),
                         getConstant(C2 & (~0ULL >> 64-ExtSrcTyBits), ExtDstTy),
                         Cond);
-        }
       }
 
       uint64_t MinVal, MaxVal;
