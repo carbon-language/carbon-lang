@@ -355,7 +355,7 @@ private:
   std::map<std::pair<unsigned, std::pair<SDOperand, SDOperand> >,
            SDNode *> BinaryOps;
 
-  std::vector<RegisterSDNode*> RegNodes;
+  std::map<std::pair<unsigned, MVT::ValueType>, RegisterSDNode*> RegNodes;
   std::vector<CondCodeSDNode*> CondCodeNodes;
 
   std::map<std::pair<SDOperand, std::pair<SDOperand, MVT::ValueType> >,
