@@ -1512,6 +1512,8 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
       PPC::F8, PPC::F9, PPC::F10, PPC::F11, PPC::F12, PPC::F13
     };
     
+    SDOperand InFlag;  // Null incoming flag value.
+    
     for (unsigned i = 2, e = N->getNumOperands(); i != e; ++i) {
       unsigned DestReg = 0;
       MVT::ValueType RegTy;
@@ -1528,17 +1530,21 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
       }
 
       if (N->getOperand(i).getOpcode() != ISD::UNDEF) {
-        SDOperand Reg = CurDAG->getRegister(DestReg, RegTy);
-        Chain = CurDAG->getNode(ISD::CopyToReg, MVT::Other, Chain, Reg,
-                                Select(N->getOperand(i)));
-        CallOperands.push_back(Reg);
+        Chain = CurDAG->getCopyToReg(Chain, DestReg,
+                                     Select(N->getOperand(i)), InFlag);
+        InFlag = Chain.getValue(1);
+        CallOperands.push_back(CurDAG->getRegister(DestReg, RegTy));
       }
     }
 
     // Finally, once everything is in registers to pass to the call, emit the
     // call itself.
-    CallOperands.push_back(Chain);
-    Chain = CurDAG->getTargetNode(CallOpcode, MVT::Other, CallOperands);
+    if (InFlag.Val)
+      CallOperands.push_back(InFlag);   // Strong dep on register copies.
+    else
+      CallOperands.push_back(Chain);    // Weak dep on whatever occurs before
+    Chain = CurDAG->getTargetNode(CallOpcode, MVT::Other, MVT::Flag,
+                                  CallOperands);
     
     std::vector<SDOperand> CallResults;
     
@@ -1548,18 +1554,22 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
     case MVT::Other: break;
     case MVT::i32:
       if (N->getValueType(1) == MVT::i32) {
-        Chain = CurDAG->getCopyFromReg(Chain, PPC::R4, MVT::i32).getValue(1);
+        Chain = CurDAG->getCopyFromReg(Chain, PPC::R4, MVT::i32, 
+                                       Chain.getValue(1)).getValue(1);
         CallResults.push_back(Chain.getValue(0));
-        Chain = CurDAG->getCopyFromReg(Chain, PPC::R3, MVT::i32).getValue(1);
+        Chain = CurDAG->getCopyFromReg(Chain, PPC::R3, MVT::i32,
+                                       Chain.getValue(1)).getValue(1);
         CallResults.push_back(Chain.getValue(0));
       } else {
-        Chain = CurDAG->getCopyFromReg(Chain, PPC::R3, MVT::i32).getValue(1);
+        Chain = CurDAG->getCopyFromReg(Chain, PPC::R3, MVT::i32,
+                                       Chain.getValue(1)).getValue(1);
         CallResults.push_back(Chain.getValue(0));
       }
       break;
     case MVT::f32:
     case MVT::f64:
-      Chain = CurDAG->getCopyFromReg(Chain, PPC::F1, MVT::f64).getValue(1);
+      Chain = CurDAG->getCopyFromReg(Chain, PPC::F1, MVT::f64,
+                                     Chain.getValue(1)).getValue(1);
       if (N->getValueType(0) == MVT::f64)
         CallResults.push_back(Chain.getValue(0));
       else
