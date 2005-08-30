@@ -1506,26 +1506,19 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
     
     for (unsigned i = 2, e = N->getNumOperands(); i != e; ++i) {
       unsigned DestReg = 0;
-      MVT::ValueType RegTy;
-      if (N->getOperand(i).getValueType() == MVT::i32) {
+      MVT::ValueType RegTy = N->getOperand(i).getValueType();
+      if (RegTy == MVT::i32) {
         assert(GPR_idx < 8 && "Too many int args");
         DestReg = GPR[GPR_idx++];
-        RegTy = MVT::i32;
       } else {
         assert(MVT::isFloatingPoint(N->getOperand(i).getValueType()) &&
                "Unpromoted integer arg?");
         assert(FPR_idx < 13 && "Too many fp args");
         DestReg = FPR[FPR_idx++];
-        RegTy = MVT::f64;   // Even if this is really f32!
       }
 
       if (N->getOperand(i).getOpcode() != ISD::UNDEF) {
         SDOperand Val = Select(N->getOperand(i));
-        if (Val.getValueType() != RegTy) {
-          // Use a register-register copy to handle f32 values in f64 registers.
-          assert(Val.getValueType() == MVT::f32 && RegTy == MVT::f64);
-          Val = CurDAG->getTargetNode(PPC::FMR, MVT::f64, Val);
-        }
         Chain = CurDAG->getCopyToReg(Chain, DestReg, Val, InFlag);
         InFlag = Chain.getValue(1);
         CallOperands.push_back(CurDAG->getRegister(DestReg, RegTy));
@@ -1563,14 +1556,9 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
       break;
     case MVT::f32:
     case MVT::f64:
-      Chain = CurDAG->getCopyFromReg(Chain, PPC::F1, MVT::f64,
+      Chain = CurDAG->getCopyFromReg(Chain, PPC::F1, N->getValueType(0),
                                      Chain.getValue(1)).getValue(1);
-      if (N->getValueType(0) == MVT::f64)
-        CallResults.push_back(Chain.getValue(0));
-      else
-        // Insert an FMR to convert the result to f32 from f64.
-        CallResults.push_back(CurDAG->getTargetNode(PPC::FMR, MVT::f32,
-                                                    Chain.getValue(0)));
+      CallResults.push_back(Chain.getValue(0));
       break;
     }
     
@@ -1583,18 +1571,11 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
 
     if (N->getNumOperands() > 1) {
       SDOperand Val = Select(N->getOperand(1));
-      switch (N->getOperand(1).getValueType()) {
-      default: assert(0 && "Unknown return type!");
-      case MVT::f32:
-        // Insert a copy to get the type right.
-        Val = CurDAG->getTargetNode(PPC::FMR, MVT::f64, Val);
-        // FALL THROUGH
-      case MVT::f64:
-        Chain = CurDAG->getCopyToReg(Chain, PPC::F1, Val);
-        break;
-      case MVT::i32:
+      if (N->getOperand(1).getValueType() == MVT::i32) {
         Chain = CurDAG->getCopyToReg(Chain, PPC::R3, Val);
-        break;
+      } else {
+        assert(MVT::isFloatingPoint(N->getOperand(1).getValueType()));
+        Chain = CurDAG->getCopyToReg(Chain, PPC::F1, Val);
       }
 
       if (N->getNumOperands() > 2) {
