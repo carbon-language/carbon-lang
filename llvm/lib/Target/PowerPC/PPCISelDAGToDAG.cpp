@@ -1208,8 +1208,8 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
     else
       ResultHi = CurDAG->getTargetNode(PPC::ADDE, MVT::i32, LHSH,
                                        Select(N->getOperand(3)), CarryFromLo);
-    Result.push_back(ResultHi);
     Result.push_back(CarryFromLo.getValue(0));
+    Result.push_back(ResultHi);
     CurDAG->ReplaceAllUsesWith(N, Result);
     return Result[Op.ResNo];
   }
