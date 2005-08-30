@@ -1113,14 +1113,13 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
     CurDAG->SelectNodeTo(N, PPC::FABS, N->getValueType(0), 
                          Select(N->getOperand(0)));
     break;
-  case ISD::FP_EXTEND: {
+  case ISD::FP_EXTEND:
     assert(MVT::f64 == N->getValueType(0) && 
            MVT::f32 == N->getOperand(0).getValueType() && "Illegal FP_EXTEND");
-    std::vector<SDOperand> Tmp;
-    Tmp.push_back(Select(N->getOperand(0)));
-    CurDAG->ReplaceAllUsesWith(N, Tmp);  // Just use the operand as the result.
-    return Tmp[0];
-  }
+    // We need to emit an FMR to make sure that the result has the right value
+    // type.
+    CurDAG->SelectNodeTo(N, PPC::FMR, MVT::f64, Select(N->getOperand(0)));
+    break;
   case ISD::FP_ROUND:
     assert(MVT::f32 == N->getValueType(0) && 
            MVT::f64 == N->getOperand(0).getValueType() && "Illegal FP_ROUND");
@@ -1560,7 +1559,12 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
     case MVT::f32:
     case MVT::f64:
       Chain = CurDAG->getCopyFromReg(Chain, PPC::F1, MVT::f64).getValue(1);
-      CallResults.push_back(Chain.getValue(0));
+      if (N->getValueType(0) == MVT::f64)
+        CallResults.push_back(Chain.getValue(0));
+      else
+        // Insert an FMR to convert the result to f32 from f64.
+        CallResults.push_back(CurDAG->getTargetNode(PPC::FMR, MVT::f32,
+                                                    Chain.getValue(0)));
       break;
     }
     
@@ -1575,8 +1579,11 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
       SDOperand Val = Select(N->getOperand(1));
       switch (N->getOperand(1).getValueType()) {
       default: assert(0 && "Unknown return type!");
-      case MVT::f64:
       case MVT::f32:
+        // Insert a copy to get the type right.
+        Val = CurDAG->getTargetNode(PPC::FMR, MVT::f64, Val);
+        // FALL THROUGH
+      case MVT::f64:
         Chain = CurDAG->getCopyToReg(Chain, PPC::F1, Val);
         break;
       case MVT::i32:
