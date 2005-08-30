@@ -112,6 +112,22 @@ public:
                    getRegister(Reg, N.getValueType()), N);
   }
 
+  // This version of the getCopyToReg method takes an extra operand, which
+  // indicates that there is potentially an incoming flag value (if Flag is not
+  // null) and that there should be a flag result.
+  SDOperand getCopyToReg(SDOperand Chain, unsigned Reg, SDOperand N,
+                         SDOperand Flag) {
+    std::vector<MVT::ValueType> VTs;
+    VTs.push_back(MVT::Other);
+    VTs.push_back(MVT::Flag);
+    std::vector<SDOperand> Ops;
+    Ops.push_back(Chain);
+    Ops.push_back(getRegister(Reg, N.getValueType()));
+    Ops.push_back(N);
+    if (Flag.Val) Ops.push_back(Flag);
+    return getNode(ISD::CopyToReg, VTs, Ops);
+  }
+  
   SDOperand getCopyFromReg(SDOperand Chain, unsigned Reg, MVT::ValueType VT) {
     std::vector<MVT::ValueType> ResultTys;
     ResultTys.push_back(VT);
@@ -119,6 +135,22 @@ public:
     std::vector<SDOperand> Ops;
     Ops.push_back(Chain);
     Ops.push_back(getRegister(Reg, VT));
+    return getNode(ISD::CopyFromReg, ResultTys, Ops);
+  }
+  
+  // This version of the getCopyFromReg method takes an extra operand, which
+  // indicates that there is potentially an incoming flag value (if Flag is not
+  // null) and that there should be a flag result.
+  SDOperand getCopyFromReg(SDOperand Chain, unsigned Reg, MVT::ValueType VT,
+                           SDOperand Flag) {
+    std::vector<MVT::ValueType> ResultTys;
+    ResultTys.push_back(VT);
+    ResultTys.push_back(MVT::Other);
+    ResultTys.push_back(MVT::Flag);
+    std::vector<SDOperand> Ops;
+    Ops.push_back(Chain);
+    Ops.push_back(getRegister(Reg, VT));
+    if (Flag.Val) Ops.push_back(Flag);
     return getNode(ISD::CopyFromReg, ResultTys, Ops);
   }
 
@@ -276,6 +308,13 @@ public:
   SDOperand getTargetNode(unsigned Opcode, MVT::ValueType VT,
                           std::vector<SDOperand> &Ops) {
     return getNode(ISD::BUILTIN_OP_END+Opcode, VT, Ops);
+  }
+  SDOperand getTargetNode(unsigned Opcode, MVT::ValueType VT1, 
+                          MVT::ValueType VT2, std::vector<SDOperand> &Ops) {
+    std::vector<MVT::ValueType> ResultTys;
+    ResultTys.push_back(VT1);
+    ResultTys.push_back(VT2);
+    return getNode(ISD::BUILTIN_OP_END+Opcode, ResultTys, Ops);
   }
   
   /// ReplaceAllUsesWith - Modify anything using 'From' to use 'To' instead.
