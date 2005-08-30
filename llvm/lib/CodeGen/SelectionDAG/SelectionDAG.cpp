@@ -631,7 +631,8 @@ SDOperand SelectionDAG::SimplifySetCC(MVT::ValueType VT, SDOperand N1,
         unsigned ExtSrcTyBits = MVT::getSizeInBits(ExtSrcTy);
         MVT::ValueType ExtDstTy = N1.getValueType();
         unsigned ExtDstTyBits = MVT::getSizeInBits(ExtDstTy);
-        
+
+        if (Cond == ISD::SETEQ || Cond == ISD::SETNE) {
         // If the extended part has any inconsistent bits, it cannot ever
         // compare equal.  In other words, they have to be all ones or all
         // zeros.
@@ -644,6 +645,7 @@ SDOperand SelectionDAG::SimplifySetCC(MVT::ValueType VT, SDOperand N1,
         return getSetCC(VT, getZeroExtendInReg(N1.getOperand(0), ExtSrcTy),
                         getConstant(C2 & (~0ULL >> 64-ExtSrcTyBits), ExtDstTy),
                         Cond);
+        }
       }
 
       uint64_t MinVal, MaxVal;
@@ -1192,6 +1194,8 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     assert(EVT <= VT && "Not rounding down!");
     break;
   }
+  case ISD::AssertSext:
+  case ISD::AssertZext:
   case ISD::SIGN_EXTEND_INREG: {
     MVT::ValueType EVT = cast<VTSDNode>(N2)->getVT();
     assert(VT == N1.getValueType() && "Not an inreg extend!");
@@ -1394,6 +1398,14 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
             // we know the result of the AND will be the AND mask itself.
             return N2;
           }
+      } else if (N1.getOpcode() == ISD::AssertZext) {
+        // If we are masking out the part of our input that was already masked
+        // out, just return the input directly.
+        unsigned ExtendBits =
+        MVT::getSizeInBits(cast<VTSDNode>(N1.getOperand(1))->getVT());
+        uint64_t ExtendMask = (1ULL << ExtendBits) - 1;
+        if (ExtendMask == C2)
+          return N1.getOperand(0);
       }
       break;
     case ISD::OR:
@@ -1579,14 +1591,15 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     if (EVT == VT) return N1;  // Not actually extending
 
     // If we are sign extending an extension, use the original source.
-    if (N1.getOpcode() == ISD::SIGN_EXTEND_INREG)
+    if (N1.getOpcode() == ISD::SIGN_EXTEND_INREG ||
+        N1.getOpcode() == ISD::AssertSext)
       if (cast<VTSDNode>(N1.getOperand(1))->getVT() <= EVT)
         return N1;
 
     // If we are sign extending a sextload, return just the load.
     if (N1.getOpcode() == ISD::SEXTLOAD)
       if (cast<VTSDNode>(N1.getOperand(3))->getVT() <= EVT)
-        return N1;
+        return N1;    
 
     // If we are extending the result of a setcc, and we already know the
     // contents of the top bits, eliminate the extension.
@@ -1594,7 +1607,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
         TLI.getSetCCResultContents() ==
                         TargetLowering::ZeroOrNegativeOneSetCCResult)
       return N1;
-
+    
     // If we are sign extending the result of an (and X, C) operation, and we
     // know the extended bits are zeros already, don't do the extend.
     if (N1.getOpcode() == ISD::AND)
@@ -2195,6 +2208,8 @@ const char *SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::VALUETYPE:     return "ValueType";
   case ISD::EntryToken:    return "EntryToken";
   case ISD::TokenFactor:   return "TokenFactor";
+  case ISD::AssertSext:    return "AssertSext";
+  case ISD::AssertZext:    return "AssertZext";
   case ISD::Constant:      return "Constant";
   case ISD::TargetConstant: return "TargetConstant";
   case ISD::ConstantFP:    return "ConstantFP";

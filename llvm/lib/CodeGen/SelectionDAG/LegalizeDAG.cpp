@@ -456,6 +456,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     assert(0 && "Do not know how to legalize this operator!");
     abort();
   case ISD::EntryToken:
+  case ISD::AssertSext:
+  case ISD::AssertZext:
   case ISD::FrameIndex:
   case ISD::GlobalAddress:
   case ISD::ExternalSymbol:
@@ -3158,11 +3160,28 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
       SDOperand LL, LH, RL, RH;
       ExpandOp(Node->getOperand(0), LL, LH);
       ExpandOp(Node->getOperand(1), RL, RH);
-      Hi = DAG.getNode(ISD::MULHU, NVT, LL, RL);
-      RH = DAG.getNode(ISD::MUL, NVT, LL, RH);
-      LH = DAG.getNode(ISD::MUL, NVT, LH, RL);
-      Hi = DAG.getNode(ISD::ADD, NVT, Hi, RH);
-      Hi = DAG.getNode(ISD::ADD, NVT, Hi, LH);
+      unsigned SH = MVT::getSizeInBits(RH.getValueType())-1;
+      // MULHS implicitly sign extends its inputs.  Check to see if ExpandOp
+      // extended the sign bit of the low half through the upper half, and if so
+      // emit a MULHS instead of the alternate sequence that is valid for any
+      // i64 x i64 multiply.
+      if (TLI.isOperationLegal(ISD::MULHS, NVT) &&
+          // is RH an extension of the sign bit of RL?
+          RH.getOpcode() == ISD::SRA && RH.getOperand(0) == RL &&
+          RH.getOperand(1).getOpcode() == ISD::Constant &&
+          cast<ConstantSDNode>(RH.getOperand(1))->getValue() == SH &&
+          // is LH an extension of the sign bit of LL?
+          LH.getOpcode() == ISD::SRA && LH.getOperand(0) == LL &&
+          LH.getOperand(1).getOpcode() == ISD::Constant &&
+          cast<ConstantSDNode>(LH.getOperand(1))->getValue() == SH) {
+        Hi = DAG.getNode(ISD::MULHS, NVT, LL, RL);
+      } else {
+        Hi = DAG.getNode(ISD::MULHU, NVT, LL, RL);
+        RH = DAG.getNode(ISD::MUL, NVT, LL, RH);
+        LH = DAG.getNode(ISD::MUL, NVT, LH, RL);
+        Hi = DAG.getNode(ISD::ADD, NVT, Hi, RH);
+        Hi = DAG.getNode(ISD::ADD, NVT, Hi, LH);
+      }
       Lo = DAG.getNode(ISD::MUL, NVT, LL, RL);
     } else {
       Lo = ExpandLibCall("__muldi3" , Node, Hi); break;
