@@ -1228,8 +1228,8 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
     return Result[Op.ResNo];
   }
   case ISD::SHL_PARTS: {
-    SDOperand HI = Select(N->getOperand(0));
-    SDOperand LO = Select(N->getOperand(1));
+    SDOperand LO = Select(N->getOperand(0));
+    SDOperand HI = Select(N->getOperand(1));
     SDOperand SH = Select(N->getOperand(2));
     SDOperand SH_LO_R = CurDAG->getTargetNode(PPC::SUBFIC, MVT::i32, MVT::Flag,
                                               SH, getI32Imm(32));
@@ -1247,8 +1247,8 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
     return Result[Op.ResNo];
   }
   case ISD::SRL_PARTS: {
-    SDOperand HI = Select(N->getOperand(0));
-    SDOperand LO = Select(N->getOperand(1));
+    SDOperand LO = Select(N->getOperand(0));
+    SDOperand HI = Select(N->getOperand(1));
     SDOperand SH = Select(N->getOperand(2));
     SDOperand SH_HI_L = CurDAG->getTargetNode(PPC::SUBFIC, MVT::i32, MVT::Flag,
                                               SH, getI32Imm(32));
