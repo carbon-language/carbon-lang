@@ -307,7 +307,8 @@ void SelectionDAG::RemoveNodeFromCSEMaps(SDNode *N) {
     ValueTypeNodes[cast<VTSDNode>(N)->getVT()] = 0;
     break;
   case ISD::Register:
-    RegNodes[cast<RegisterSDNode>(N)->getReg()] = 0;
+    RegNodes.erase(std::make_pair(cast<RegisterSDNode>(N)->getReg(),
+                                  N->getValueType(0)));
     break;
   case ISD::SRCVALUE: {
     SrcValueSDNode *SVN = cast<SrcValueSDNode>(N);
@@ -533,18 +534,13 @@ SDOperand SelectionDAG::getCondCode(ISD::CondCode Cond) {
   return SDOperand(CondCodeNodes[Cond], 0);
 }
 
-SDOperand SelectionDAG::getRegister(unsigned Reg, MVT::ValueType VT) {
-  if (Reg >= RegNodes.size())
-    RegNodes.resize(Reg+1);
-  RegisterSDNode *&Result = RegNodes[Reg];
-  if (Result) {
-    assert(Result->getValueType(0) == VT &&
-           "Inconsistent value types for machine registers");
-  } else {
-    Result = new RegisterSDNode(Reg, VT);
-    AllNodes.push_back(Result);
+SDOperand SelectionDAG::getRegister(unsigned RegNo, MVT::ValueType VT) {
+  RegisterSDNode *&Reg = RegNodes[std::make_pair(RegNo, VT)];
+  if (!Reg) {
+    Reg = new RegisterSDNode(RegNo, VT);
+    AllNodes.push_back(Reg);
   }
-  return SDOperand(Result, 0);
+  return SDOperand(Reg, 0);
 }
 
 SDOperand SelectionDAG::SimplifySetCC(MVT::ValueType VT, SDOperand N1,
