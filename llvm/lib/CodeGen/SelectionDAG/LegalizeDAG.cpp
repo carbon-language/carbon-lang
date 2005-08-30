@@ -2011,7 +2011,10 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
     Result = DAG.getNode(ISD::UNDEF, NVT);
     break;
   case ISD::Constant:
-    Result = DAG.getNode(ISD::SIGN_EXTEND, NVT, Op);
+    if (VT != MVT::i1)
+      Result = DAG.getNode(ISD::SIGN_EXTEND, NVT, Op);
+    else
+      Result = DAG.getNode(ISD::ZERO_EXTEND, NVT, Op);
     assert(isa<ConstantSDNode>(Result) && "Didn't constant fold zext?");
     break;
   case ISD::ConstantFP:
