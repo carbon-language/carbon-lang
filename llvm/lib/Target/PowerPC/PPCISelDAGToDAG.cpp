@@ -257,34 +257,33 @@ SDNode *PPC32DAGToDAGISel::SelectBitfieldInsert(SDNode *N) {
   // Generate Mask value for Target
   if (isIntImmediate(Op0.getOperand(1), Value)) {
     switch(Op0Opc) {
-      case ISD::SHL: TgtMask <<= Value; break;
-      case ISD::SRL: TgtMask >>= Value; break;
-      case ISD::AND: TgtMask &= Value; break;
+    case ISD::SHL: TgtMask <<= Value; break;
+    case ISD::SRL: TgtMask >>= Value; break;
+    case ISD::AND: TgtMask &= Value; break;
     }
   } else {
     return 0;
   }
   
   // Generate Mask value for Insert
-  if (isIntImmediate(Op1.getOperand(1), Value)) {
-    switch(Op1Opc) {
-      case ISD::SHL:
-        SH = Value;
-        InsMask <<= SH;
-        if (Op0Opc == ISD::SRL) IsRotate = true;
-          break;
-      case ISD::SRL:
-        SH = Value;
-        InsMask >>= SH;
-        SH = 32-SH;
-        if (Op0Opc == ISD::SHL) IsRotate = true;
-          break;
-      case ISD::AND:
-        InsMask &= Value;
-        break;
-    }
-  } else {
+  if (!isIntImmediate(Op1.getOperand(1), Value))
     return 0;
+  
+  switch(Op1Opc) {
+  case ISD::SHL:
+    SH = Value;
+    InsMask <<= SH;
+    if (Op0Opc == ISD::SRL) IsRotate = true;
+    break;
+  case ISD::SRL:
+    SH = Value;
+    InsMask >>= SH;
+    SH = 32-SH;
+    if (Op0Opc == ISD::SHL) IsRotate = true;
+    break;
+  case ISD::AND:
+    InsMask &= Value;
+    break;
   }
   
   // If both of the inputs are ANDs and one of them has a logical shift by
@@ -977,15 +976,6 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
       }
       CurDAG->SelectNodeTo(N, PPC::RLWINM, MVT::i32, Val, getI32Imm(SH),
                            getI32Imm(MB), getI32Imm(ME));
-      break;
-    }
-    // If this is an and with an immediate that isn't a mask, then codegen it as
-    // high and low 16 bit immediate ands.
-    if (SDNode *I = SelectIntImmediateExpr(N->getOperand(0), 
-                                           N->getOperand(1),
-                                           PPC::ANDISo, PPC::ANDIo)) {
-      CurDAG->ReplaceAllUsesWith(Op, SDOperand(I, 0));
-      N = I;
       break;
     }
     // Finally, check for the case where we are being asked to select
