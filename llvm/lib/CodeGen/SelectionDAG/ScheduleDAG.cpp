@@ -205,13 +205,13 @@ unsigned SimpleSched::Emit(SDOperand Op) {
         Emit(Op.getOperand(i));
       break;
     case ISD::CopyToReg: {
-      SDOperand ChainOp;
+      SDOperand FlagOp;
       if (Op.getNumOperands() == 4)
-        ChainOp = Op.getOperand(3);
-      if (Op.getOperand(0).Val != ChainOp.Val)
+        FlagOp = Op.getOperand(3);
+      if (Op.getOperand(0).Val != FlagOp.Val)
         Emit(Op.getOperand(0));   // Emit the chain.
       unsigned Val = Emit(Op.getOperand(2));
-      if (ChainOp.Val) Emit(ChainOp);
+      if (FlagOp.Val) Emit(FlagOp);
       MRI.copyRegToReg(*BB, BB->end(),
                        cast<RegisterSDNode>(Op.getOperand(1))->getReg(), Val,
                        RegMap->getRegClass(Val));
