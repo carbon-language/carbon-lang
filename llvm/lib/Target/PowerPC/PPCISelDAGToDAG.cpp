@@ -906,12 +906,12 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
         break;
       } else if ((signed)Imm < 0 && isPowerOf2_32(-Imm)) {
         SDOperand Op =
-          CurDAG->getTargetNode(PPC::SRAWI, MVT::Flag, MVT::i32,
+          CurDAG->getTargetNode(PPC::SRAWI, MVT::i32, MVT::Flag,
                                 Select(N->getOperand(0)),
                                 getI32Imm(Log2_32(-Imm)));
         SDOperand PT =
-          CurDAG->getTargetNode(PPC::ADDZE, MVT::i32, Op.getValue(1),
-                                Op.getValue(0));
+          CurDAG->getTargetNode(PPC::ADDZE, MVT::i32, Op.getValue(0),
+                                Op.getValue(1));
         CurDAG->SelectNodeTo(N, PPC::NEG, MVT::i32, PT);
         break;
       } else if (Imm) {
