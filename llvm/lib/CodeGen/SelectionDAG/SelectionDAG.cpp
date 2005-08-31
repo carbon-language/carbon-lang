@@ -632,13 +632,13 @@ SDOperand SelectionDAG::SimplifySetCC(MVT::ValueType VT, SDOperand N1,
         // compare equal.  In other words, they have to be all ones or all
         // zeros.
         uint64_t ExtBits =
-          (~0ULL >> 64-ExtSrcTyBits) & (~0ULL << (ExtDstTyBits-1));
+          (~0ULL >> (64-ExtSrcTyBits)) & (~0ULL << (ExtDstTyBits-1));
         if ((C2 & ExtBits) != 0 && (C2 & ExtBits) != ExtBits)
           return getConstant(Cond == ISD::SETNE, VT);
         
         // Otherwise, make this a use of a zext.
         return getSetCC(VT, getZeroExtendInReg(N1.getOperand(0), ExtSrcTy),
-                        getConstant(C2 & (~0ULL >> 64-ExtSrcTyBits), ExtDstTy),
+                        getConstant(C2 & (~0ULL>>(64-ExtSrcTyBits)), ExtDstTy),
                         Cond);
       }
 
