@@ -28,6 +28,10 @@ namespace llvm {
       /// FSEL - Traditional three-operand fsel node.
       ///
       FSEL,
+      
+      /// FCTIWZ - The FCTIWZ instruction, taking an f32 or f64 operand,
+      /// producing an f64 value.
+      FCTIWZ,
     };
   }  
   

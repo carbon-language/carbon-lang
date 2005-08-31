@@ -84,6 +84,9 @@ PPC32TargetLowering::PPC32TargetLowering(TargetMachine &TM)
   // PowerPC does not have FP_TO_UINT
   setOperationAction(ISD::FP_TO_UINT, MVT::i32, Expand);
   
+  // PowerPC turns FP_TO_SINT into FCTIWZ and some load/stores.
+  setOperationAction(ISD::FP_TO_SINT, MVT::i32, Custom);
+  
   // PowerPC does not have [U|S]INT_TO_FP
   setOperationAction(ISD::SINT_TO_FP, MVT::i32, Expand);
   setOperationAction(ISD::UINT_TO_FP, MVT::i32, Expand);
@@ -111,61 +114,76 @@ static bool isFloatingPointZero(SDOperand Op) {
 SDOperand PPC32TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   switch (Op.getOpcode()) {
   default: assert(0 && "Wasn't expecting to be able to lower this!"); 
-  case ISD::SELECT_CC:
+  case ISD::FP_TO_SINT: {
+    assert(Op.getValueType() == MVT::i32 &&
+           MVT::isFloatingPoint(Op.getOperand(0).getValueType()));
+    Op = DAG.getNode(PPCISD::FCTIWZ, MVT::f64, Op.getOperand(0));
+   
+    int FrameIdx =
+      DAG.getMachineFunction().getFrameInfo()->CreateStackObject(8, 8);
+    SDOperand FI = DAG.getFrameIndex(FrameIdx, MVT::i32);
+    SDOperand ST = DAG.getNode(ISD::STORE, MVT::Other, DAG.getEntryNode(),
+                               Op, FI, DAG.getSrcValue(0));
+    FI = DAG.getNode(ISD::ADD, MVT::i32, FI, DAG.getConstant(4, MVT::i32));
+    return DAG.getLoad(MVT::i32, ST, FI, DAG.getSrcValue(0));
+  }
+  case ISD::SELECT_CC: {
     // Turn FP only select_cc's into fsel instructions.
-    if (MVT::isFloatingPoint(Op.getOperand(0).getValueType()) &&
-        MVT::isFloatingPoint(Op.getOperand(2).getValueType())) {
-      ISD::CondCode CC = cast<CondCodeSDNode>(Op.getOperand(4))->get();
-      
-      // Cannot handle SETEQ/SETNE.
-      if (CC == ISD::SETEQ || CC == ISD::SETNE) break;
-      
-      MVT::ValueType ResVT = Op.getValueType();
-      MVT::ValueType CmpVT = Op.getOperand(0).getValueType();
-      SDOperand LHS = Op.getOperand(0), RHS = Op.getOperand(1);
-      SDOperand TV  = Op.getOperand(2), FV  = Op.getOperand(3);
+    if (!MVT::isFloatingPoint(Op.getOperand(0).getValueType()) ||
+        !MVT::isFloatingPoint(Op.getOperand(2).getValueType()))
+      break;
+    
+    ISD::CondCode CC = cast<CondCodeSDNode>(Op.getOperand(4))->get();
+    
+    // Cannot handle SETEQ/SETNE.
+    if (CC == ISD::SETEQ || CC == ISD::SETNE) break;
+    
+    MVT::ValueType ResVT = Op.getValueType();
+    MVT::ValueType CmpVT = Op.getOperand(0).getValueType();
+    SDOperand LHS = Op.getOperand(0), RHS = Op.getOperand(1);
+    SDOperand TV  = Op.getOperand(2), FV  = Op.getOperand(3);
 
-      // If the RHS of the comparison is a 0.0, we don't need to do the
-      // subtraction at all.
-      if (isFloatingPointZero(RHS))
-        switch (CC) {
-        default: assert(0 && "Invalid FSEL condition"); abort();
-        case ISD::SETULT:
-        case ISD::SETLT:
-          std::swap(TV, FV);  // fsel is natively setge, swap operands for setlt
-        case ISD::SETUGE:
-        case ISD::SETGE:
-          return DAG.getNode(PPCISD::FSEL, ResVT, LHS, TV, FV);
-        case ISD::SETUGT:
-        case ISD::SETGT:
-          std::swap(TV, FV);  // fsel is natively setge, swap operands for setlt
-        case ISD::SETULE:
-        case ISD::SETLE:
-          return DAG.getNode(PPCISD::FSEL, ResVT,
-                             DAG.getNode(ISD::FNEG, ResVT, LHS), TV, FV);
-        }
-      
+    // If the RHS of the comparison is a 0.0, we don't need to do the
+    // subtraction at all.
+    if (isFloatingPointZero(RHS))
       switch (CC) {
       default: assert(0 && "Invalid FSEL condition"); abort();
       case ISD::SETULT:
       case ISD::SETLT:
-        return DAG.getNode(PPCISD::FSEL, ResVT,
-                           DAG.getNode(ISD::SUB, CmpVT, LHS, RHS), FV, TV);
+        std::swap(TV, FV);  // fsel is natively setge, swap operands for setlt
       case ISD::SETUGE:
       case ISD::SETGE:
-        return DAG.getNode(PPCISD::FSEL, ResVT,
-                           DAG.getNode(ISD::SUB, CmpVT, LHS, RHS), TV, FV);
+        return DAG.getNode(PPCISD::FSEL, ResVT, LHS, TV, FV);
       case ISD::SETUGT:
       case ISD::SETGT:
-        return DAG.getNode(PPCISD::FSEL, ResVT,
-                           DAG.getNode(ISD::SUB, CmpVT, RHS, LHS), FV, TV);
+        std::swap(TV, FV);  // fsel is natively setge, swap operands for setlt
       case ISD::SETULE:
       case ISD::SETLE:
         return DAG.getNode(PPCISD::FSEL, ResVT,
-                           DAG.getNode(ISD::SUB, CmpVT, RHS, LHS), TV, FV);
+                           DAG.getNode(ISD::FNEG, ResVT, LHS), TV, FV);
       }
+    
+    switch (CC) {
+    default: assert(0 && "Invalid FSEL condition"); abort();
+    case ISD::SETULT:
+    case ISD::SETLT:
+      return DAG.getNode(PPCISD::FSEL, ResVT,
+                         DAG.getNode(ISD::SUB, CmpVT, LHS, RHS), FV, TV);
+    case ISD::SETUGE:
+    case ISD::SETGE:
+      return DAG.getNode(PPCISD::FSEL, ResVT,
+                         DAG.getNode(ISD::SUB, CmpVT, LHS, RHS), TV, FV);
+    case ISD::SETUGT:
+    case ISD::SETGT:
+      return DAG.getNode(PPCISD::FSEL, ResVT,
+                         DAG.getNode(ISD::SUB, CmpVT, RHS, LHS), FV, TV);
+    case ISD::SETULE:
+    case ISD::SETLE:
+      return DAG.getNode(PPCISD::FSEL, ResVT,
+                         DAG.getNode(ISD::SUB, CmpVT, RHS, LHS), TV, FV);
     }
-    break;    
+    break;
+  }
   case ISD::SHL: {
     assert(Op.getValueType() == MVT::i64 &&
            Op.getOperand(1).getValueType() == MVT::i32 && "Unexpected SHL!");

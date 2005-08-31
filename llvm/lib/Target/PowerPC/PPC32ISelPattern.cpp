@@ -22,7 +22,6 @@
 #include "llvm/Function.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFunction.h"
-#include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
 #include "llvm/CodeGen/SSARegMap.h"
@@ -818,6 +817,10 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
     Tmp3 = SelectExpr(N.getOperand(2));
     BuildMI(BB, PPC::FSEL, 3, Result).addReg(Tmp1).addReg(Tmp2).addReg(Tmp3);
     return Result;
+  case PPCISD::FCTIWZ:
+    Tmp1 = SelectExpr(N.getOperand(0));
+    BuildMI(BB, PPC::FCTIWZ, 1, Result).addReg(Tmp1);
+    return Result;
   case ISD::UNDEF:
     if (Node->getValueType(0) == MVT::i32)
       BuildMI(BB, PPC::IMPLICIT_DEF_GPR, 0, Result);
@@ -1434,16 +1437,6 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
       BuildMI(BB, PPC::SUBFE, 2, Result+1).addReg(Tmp4).addReg(Tmp2);
     }
     return Result+N.ResNo;
-  }
-
-  case ISD::FP_TO_SINT: {
-    Tmp1 = SelectExpr(N.getOperand(0));
-    Tmp2 = MakeFPReg();
-    BuildMI(BB, PPC::FCTIWZ, 1, Tmp2).addReg(Tmp1);
-    int FrameIdx = BB->getParent()->getFrameInfo()->CreateStackObject(8, 8);
-    addFrameReference(BuildMI(BB, PPC::STFD, 3).addReg(Tmp2), FrameIdx);
-    addFrameReference(BuildMI(BB, PPC::LWZ, 2, Result), FrameIdx, 4);
-    return Result;
   }
 
   case ISD::SETCC: {
