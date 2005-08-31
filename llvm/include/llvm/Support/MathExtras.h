@@ -83,10 +83,6 @@ inline bool isPowerOf2_64(uint64_t Value) {
 // counting the number of zeros from the most significant bit to the first one
 // bit.  Ex. CountLeadingZeros_32(0x00F000FF) == 8.
 // Returns 32 if the word is zero.
-// CountLeadingZeros_32 - this function performs the platform optimal form
-// of counting the number of zeros from the most significant bit to the first
-// one bit.  Ex. CountLeadingZeros_32(0x00F000FF) == 8.
-// Returns 32 if the word is zero.
 inline unsigned CountLeadingZeros_32(unsigned Value) {
   unsigned Count; // result
 #if __GNUC__ >= 4
@@ -155,12 +151,48 @@ inline unsigned CountLeadingZeros_64(uint64_t Value) {
   return Count;
 }
 
+// CountTrailingZeros_32 - this function performs the platform optimal form of
+// counting the number of zeros from the least significant bit to the first one
+// bit.  Ex. CountTrailingZeros_32(0xFF00FF00) == 8.
+// Returns 32 if the word is zero.
+inline unsigned CountTrailingZeros_32(unsigned Value) {
+  return 32 - CountLeadingZeros_32(~Value & (Value - 1));
+}
+
+// CountTrailingZeros_64 - This function performs the platform optimal form
+// of counting the number of zeros from the least significant bit to the first 
+// one bit (64 bit edition.)
+// Returns 64 if the word is zero.
+inline unsigned CountTrailingZeros_64(uint64_t Value) {
+  return 64 - CountLeadingZeros_64(~Value & (Value - 1));
+}
+
+// CountPopulation_32 - this function counts the number of set bits in a value.
+// Ex. CountPopulation(0xF000F000) = 8
+// Returns 0 if the word is zero.
+inline unsigned CountPopulation_32(unsigned Value) {
+  unsigned x, t;
+  x = Value - ((Value >> 1) & 0x55555555);
+  t = ((x >> 2) & 0x33333333);
+  x = (x & 0x33333333) + t;
+  x = (x + (x >> 4)) & 0x0F0F0F0F;
+  x = x + (x << 8);
+  x = x + (x << 16);
+  return x >> 24;
+}
+
+// CountPopulation_64 - this function counts the number of set bits in a value,
+// (64 bit edition.)
+inline unsigned CountPopulation_64(uint64_t Value) {
+  return CountPopulation_32(Value >> 32) + CountPopulation_32(Value);
+}
+
 // Log2_32 - This function returns the floor log base 2 of the specified value, 
 // -1 if the value is zero. (32 bit edition.)
 // Ex. Log2_32(32) == 5, Log2_32(1) == 0, Log2_32(0) == -1
 inline unsigned Log2_32(unsigned Value) {
     return 31 - CountLeadingZeros_32(Value);
-  }
+}
 
 // Log2_64 - This function returns the floor log base 2 of the specified value, 
 // -1 if the value is zero. (64 bit edition.)
