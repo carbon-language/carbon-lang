@@ -214,8 +214,13 @@ PPC32TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
         MF.addLiveIn(GPR[GPR_idx]);
         argt = newroot = DAG.getCopyFromReg(DAG.getRoot(),
                                             GPR[GPR_idx], MVT::i32);
-        if (ObjectVT != MVT::i32)
-          argt = DAG.getNode(ISD::TRUNCATE, ObjectVT, newroot);
+        if (ObjectVT != MVT::i32) {
+          unsigned AssertOp = I->getType()->isSigned() ? ISD::AssertSext 
+                                                       : ISD::AssertZext;
+          argt = DAG.getNode(AssertOp, MVT::i32, argt, 
+                             DAG.getValueType(ObjectVT));
+          argt = DAG.getNode(ISD::TRUNCATE, ObjectVT, argt);
+        }
       } else {
         needsLoad = true;
       }
