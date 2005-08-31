@@ -781,6 +781,10 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
     Reg = Result = (N.getValueType() != MVT::Other) ?
                             MakeReg(N.getValueType()) : 1;
     break;
+  case ISD::AssertSext:
+  case ISD::AssertZext:
+    // Don't allocate a vreg for these nodes.
+    return Reg = SelectExpr(N.getOperand(0));
   case ISD::TAILCALL:
   case ISD::CALL:
     // If this is a call instruction, make sure to prepare ALL of the result
