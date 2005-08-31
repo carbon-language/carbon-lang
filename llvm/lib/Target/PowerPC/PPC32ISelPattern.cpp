@@ -801,8 +801,6 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
     break;
   case ISD::ADD_PARTS:
   case ISD::SUB_PARTS:
-  case ISD::SHL_PARTS:
-  case ISD::SRL_PARTS:
     Result = MakeReg(Node->getValueType(0));
     ExprMap[N.getValue(0)] = Result;
     for (unsigned i = 1, e = N.Val->getNumValues(); i != e; ++i)
@@ -1434,41 +1432,6 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
       Tmp4 = SelectExpr(N.getOperand(3));
       BuildMI(BB, PPC::SUBFC, 2, Result).addReg(Tmp3).addReg(Tmp1);
       BuildMI(BB, PPC::SUBFE, 2, Result+1).addReg(Tmp4).addReg(Tmp2);
-    }
-    return Result+N.ResNo;
-  }
-
-  case ISD::SHL_PARTS:
-  case ISD::SRL_PARTS: {
-    assert(N.getNumOperands() == 3 && N.getValueType() == MVT::i32 &&
-           "Not an i64 shift!");
-    unsigned ShiftOpLo = SelectExpr(N.getOperand(0));
-    unsigned ShiftOpHi = SelectExpr(N.getOperand(1));
-    unsigned SHReg = FoldIfWideZeroExtend(N.getOperand(2));
-    Tmp1 = MakeIntReg();
-    Tmp2 = MakeIntReg();
-    Tmp3 = MakeIntReg();
-    unsigned Tmp4 = MakeIntReg();
-    unsigned Tmp5 = MakeIntReg();
-    unsigned Tmp6 = MakeIntReg();
-    BuildMI(BB, PPC::SUBFIC, 2, Tmp1).addReg(SHReg).addSImm(32);
-    if (ISD::SHL_PARTS == opcode) {
-      BuildMI(BB, PPC::SLW, 2, Tmp2).addReg(ShiftOpHi).addReg(SHReg);
-      BuildMI(BB, PPC::SRW, 2, Tmp3).addReg(ShiftOpLo).addReg(Tmp1);
-      BuildMI(BB, PPC::OR, 2, Tmp4).addReg(Tmp2).addReg(Tmp3);
-      BuildMI(BB, PPC::ADDI, 2, Tmp5).addReg(SHReg).addSImm(-32);
-      BuildMI(BB, PPC::SLW, 2, Tmp6).addReg(ShiftOpLo).addReg(Tmp5);
-      BuildMI(BB, PPC::OR, 2, Result+1).addReg(Tmp4).addReg(Tmp6);
-      BuildMI(BB, PPC::SLW, 2, Result).addReg(ShiftOpLo).addReg(SHReg);
-    } else {
-      assert (opcode == ISD::SRL_PARTS);
-      BuildMI(BB, PPC::SRW, 2, Tmp2).addReg(ShiftOpLo).addReg(SHReg);
-      BuildMI(BB, PPC::SLW, 2, Tmp3).addReg(ShiftOpHi).addReg(Tmp1);
-      BuildMI(BB, PPC::OR, 2, Tmp4).addReg(Tmp2).addReg(Tmp3);
-      BuildMI(BB, PPC::ADDI, 2, Tmp5).addReg(SHReg).addSImm(-32);
-      BuildMI(BB, PPC::SRW, 2, Tmp6).addReg(ShiftOpHi).addReg(Tmp5);
-      BuildMI(BB, PPC::OR, 2, Result).addReg(Tmp4).addReg(Tmp6);
-      BuildMI(BB, PPC::SRW, 2, Result+1).addReg(ShiftOpHi).addReg(SHReg);
     }
     return Result+N.ResNo;
   }

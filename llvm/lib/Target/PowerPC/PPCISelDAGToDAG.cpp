@@ -1220,44 +1220,6 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
     CurDAG->ReplaceAllUsesWith(N, Result);
     return Result[Op.ResNo];
   }
-  case ISD::SHL_PARTS: {
-    SDOperand LO = Select(N->getOperand(0));
-    SDOperand HI = Select(N->getOperand(1));
-    SDOperand SH = Select(N->getOperand(2));
-    SDOperand SH_LO_R = CurDAG->getTargetNode(PPC::SUBFIC, MVT::i32, MVT::Flag,
-                                              SH, getI32Imm(32));
-    SDOperand SH_LO_L = CurDAG->getTargetNode(PPC::ADDI, MVT::i32, SH, 
-                                          getI32Imm((unsigned)-32));
-    SDOperand HI_SHL = CurDAG->getTargetNode(PPC::SLW, MVT::i32, HI, SH);
-    SDOperand HI_LOR = CurDAG->getTargetNode(PPC::SRW, MVT::i32, LO, SH_LO_R);
-    SDOperand HI_LOL = CurDAG->getTargetNode(PPC::SLW, MVT::i32, LO, SH_LO_L);
-    SDOperand HI_OR =  CurDAG->getTargetNode(PPC::OR, MVT::i32, HI_SHL, HI_LOR);
-
-    std::vector<SDOperand> Result;
-    Result.push_back(CurDAG->getTargetNode(PPC::SLW, MVT::i32, LO, SH));
-    Result.push_back(CurDAG->getTargetNode(PPC::OR, MVT::i32, HI_OR, HI_LOL));
-    CurDAG->ReplaceAllUsesWith(N, Result);
-    return Result[Op.ResNo];
-  }
-  case ISD::SRL_PARTS: {
-    SDOperand LO = Select(N->getOperand(0));
-    SDOperand HI = Select(N->getOperand(1));
-    SDOperand SH = Select(N->getOperand(2));
-    SDOperand SH_HI_L = CurDAG->getTargetNode(PPC::SUBFIC, MVT::i32, MVT::Flag,
-                                              SH, getI32Imm(32));
-    SDOperand SH_HI_R = CurDAG->getTargetNode(PPC::ADDI, MVT::i32, SH, 
-                                              getI32Imm((unsigned)-32));
-    SDOperand LO_SHR = CurDAG->getTargetNode(PPC::SRW, MVT::i32, LO, SH);
-    SDOperand LO_HIL = CurDAG->getTargetNode(PPC::SLW, MVT::i32, HI, SH_HI_L);
-    SDOperand LO_HIR = CurDAG->getTargetNode(PPC::SRW, MVT::i32, HI, SH_HI_R);
-    SDOperand LO_OR =  CurDAG->getTargetNode(PPC::OR, MVT::i32, LO_SHR, LO_HIL);
-
-    std::vector<SDOperand> Result;
-    Result.push_back(CurDAG->getTargetNode(PPC::OR, MVT::i32, LO_OR, LO_HIR));
-    Result.push_back(CurDAG->getTargetNode(PPC::SRW, MVT::i32, HI, SH));
-    CurDAG->ReplaceAllUsesWith(N, Result);
-    return Result[Op.ResNo];
-  }
     
   case ISD::LOAD:
   case ISD::EXTLOAD:
