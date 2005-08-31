@@ -143,8 +143,7 @@ public:
   MachineConstantPool *getConstantPool() const { return ConstantPool; }
 
   /// MachineFunctionInfo - Keep track of various per-function pieces of
-  /// information for backends that would like to do so. (Currently,
-  /// SPARC and IA64.)
+  /// information for backends that would like to do so.
   ///
   template<typename Ty>
   Ty *getInfo() {
