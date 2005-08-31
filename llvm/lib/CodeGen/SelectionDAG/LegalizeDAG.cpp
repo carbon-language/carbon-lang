@@ -3101,6 +3101,19 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     break;
 
   case ISD::SHL:
+    // If the target wants custom lowering, do so.
+    if (TLI.getOperationAction(ISD::SHL, VT) == TargetLowering::Custom) {
+      SDOperand Op = DAG.getNode(ISD::SHL, VT, Node->getOperand(0),
+                                 LegalizeOp(Node->getOperand(1)));
+      Op = TLI.LowerOperation(Op, DAG);
+      if (Op.Val) {
+        // Now that the custom expander is done, expand the result, which is
+        // still VT.
+        ExpandOp(Op, Lo, Hi);
+        break;
+      }
+    }
+    
     // If we can emit an efficient shift operation, do so now.
     if (ExpandShift(ISD::SHL, Node->getOperand(0), Node->getOperand(1), Lo, Hi))
       break;
@@ -3117,6 +3130,19 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     break;
 
   case ISD::SRA:
+    // If the target wants custom lowering, do so.
+    if (TLI.getOperationAction(ISD::SRA, VT) == TargetLowering::Custom) {
+      SDOperand Op = DAG.getNode(ISD::SRA, VT, Node->getOperand(0),
+                                 LegalizeOp(Node->getOperand(1)));
+      Op = TLI.LowerOperation(Op, DAG);
+      if (Op.Val) {
+        // Now that the custom expander is done, expand the result, which is
+        // still VT.
+        ExpandOp(Op, Lo, Hi);
+        break;
+      }
+    }
+    
     // If we can emit an efficient shift operation, do so now.
     if (ExpandShift(ISD::SRA, Node->getOperand(0), Node->getOperand(1), Lo, Hi))
       break;
@@ -3132,6 +3158,19 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     Lo = ExpandLibCall("__ashrdi3", Node, Hi);
     break;
   case ISD::SRL:
+    // If the target wants custom lowering, do so.
+    if (TLI.getOperationAction(ISD::SRL, VT) == TargetLowering::Custom) {
+      SDOperand Op = DAG.getNode(ISD::SRL, VT, Node->getOperand(0),
+                                 LegalizeOp(Node->getOperand(1)));
+      Op = TLI.LowerOperation(Op, DAG);
+      if (Op.Val) {
+        // Now that the custom expander is done, expand the result, which is
+        // still VT.
+        ExpandOp(Op, Lo, Hi);
+        break;
+      }
+    }
+
     // If we can emit an efficient shift operation, do so now.
     if (ExpandShift(ISD::SRL, Node->getOperand(0), Node->getOperand(1), Lo, Hi))
       break;
