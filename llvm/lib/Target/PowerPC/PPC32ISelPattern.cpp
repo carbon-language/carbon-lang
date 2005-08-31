@@ -803,7 +803,6 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
   case ISD::SUB_PARTS:
   case ISD::SHL_PARTS:
   case ISD::SRL_PARTS:
-  case ISD::SRA_PARTS:
     Result = MakeReg(Node->getValueType(0));
     ExprMap[N.getValue(0)] = Result;
     for (unsigned i = 1, e = N.Val->getNumValues(); i != e; ++i)
@@ -1440,7 +1439,6 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
   }
 
   case ISD::SHL_PARTS:
-  case ISD::SRA_PARTS:
   case ISD::SRL_PARTS: {
     assert(N.getNumOperands() == 3 && N.getValueType() == MVT::i32 &&
            "Not an i64 shift!");
@@ -1462,7 +1460,8 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
       BuildMI(BB, PPC::SLW, 2, Tmp6).addReg(ShiftOpLo).addReg(Tmp5);
       BuildMI(BB, PPC::OR, 2, Result+1).addReg(Tmp4).addReg(Tmp6);
       BuildMI(BB, PPC::SLW, 2, Result).addReg(ShiftOpLo).addReg(SHReg);
-    } else if (ISD::SRL_PARTS == opcode) {
+    } else {
+      assert (opcode == ISD::SRL_PARTS);
       BuildMI(BB, PPC::SRW, 2, Tmp2).addReg(ShiftOpLo).addReg(SHReg);
       BuildMI(BB, PPC::SLW, 2, Tmp3).addReg(ShiftOpHi).addReg(Tmp1);
       BuildMI(BB, PPC::OR, 2, Tmp4).addReg(Tmp2).addReg(Tmp3);
@@ -1470,31 +1469,6 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
       BuildMI(BB, PPC::SRW, 2, Tmp6).addReg(ShiftOpHi).addReg(Tmp5);
       BuildMI(BB, PPC::OR, 2, Result).addReg(Tmp4).addReg(Tmp6);
       BuildMI(BB, PPC::SRW, 2, Result+1).addReg(ShiftOpHi).addReg(SHReg);
-    } else {
-      MachineBasicBlock *TmpMBB = new MachineBasicBlock(BB->getBasicBlock());
-      MachineBasicBlock *PhiMBB = new MachineBasicBlock(BB->getBasicBlock());
-      MachineBasicBlock *OldMBB = BB;
-      MachineFunction *F = BB->getParent();
-      ilist<MachineBasicBlock>::iterator It = BB; ++It;
-      F->getBasicBlockList().insert(It, TmpMBB);
-      F->getBasicBlockList().insert(It, PhiMBB);
-      BB->addSuccessor(TmpMBB);
-      BB->addSuccessor(PhiMBB);
-      BuildMI(BB, PPC::SRW, 2, Tmp2).addReg(ShiftOpLo).addReg(SHReg);
-      BuildMI(BB, PPC::SLW, 2, Tmp3).addReg(ShiftOpHi).addReg(Tmp1);
-      BuildMI(BB, PPC::OR, 2, Tmp4).addReg(Tmp2).addReg(Tmp3);
-      BuildMI(BB, PPC::ADDICo, 2, Tmp5).addReg(SHReg).addSImm(-32);
-      BuildMI(BB, PPC::SRAW, 2, Tmp6).addReg(ShiftOpHi).addReg(Tmp5);
-      BuildMI(BB, PPC::SRAW, 2, Result+1).addReg(ShiftOpHi).addReg(SHReg);
-      BuildMI(BB, PPC::BLE, 2).addReg(PPC::CR0).addMBB(PhiMBB);
-      // Select correct least significant half if the shift amount > 32
-      BB = TmpMBB;
-      unsigned Tmp7 = MakeIntReg();
-      BuildMI(BB, PPC::OR, 2, Tmp7).addReg(Tmp6).addReg(Tmp6);
-      TmpMBB->addSuccessor(PhiMBB);
-      BB = PhiMBB;
-      BuildMI(BB, PPC::PHI, 4, Result).addReg(Tmp4).addMBB(OldMBB)
-        .addReg(Tmp7).addMBB(TmpMBB);
     }
     return Result+N.ResNo;
   }
