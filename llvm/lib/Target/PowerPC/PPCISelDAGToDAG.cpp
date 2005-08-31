@@ -642,6 +642,9 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
     abort();
   case ISD::EntryToken:       // These leaves remain the same.
     return Op;
+  case ISD::AssertSext:
+  case ISD::AssertZext:
+    return Select(N->getOperand(0));
   case ISD::TokenFactor: {
     SDOperand New;
     if (N->getNumOperands() == 2) {
