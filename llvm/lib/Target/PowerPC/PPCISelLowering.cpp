@@ -71,6 +71,9 @@ PPC32TargetLowering::PPC32TargetLowering(TargetMachine &TM)
   // PowerPC wants to turn select_cc of FP into fsel when possible.
   setOperationAction(ISD::SELECT_CC, MVT::f32, Custom);
   setOperationAction(ISD::SELECT_CC, MVT::f64, Custom);
+  
+  // PowerPC wants to expand SRA_PARTS into SELECT_CC and stuff.
+  setOperationAction(ISD::SRA, MVT::i64, Custom);
 
   // PowerPC does not have BRCOND* which requires SetCC
   setOperationAction(ISD::BRCOND,       MVT::Other, Expand);
@@ -161,6 +164,31 @@ SDOperand PPC32TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
       }
     }
     break;    
+  case ISD::SRA:
+    assert(Op.getValueType() == MVT::i64 &&
+           Op.getOperand(1).getValueType() == MVT::i32 && "Unexpected SRA!");
+    // The generic code does a fine job expanding shift by a constant.
+    if (isa<ConstantSDNode>(Op.getOperand(1))) break;
+      
+    // Otherwise, expand into a bunch of logical ops, followed by a select_cc.
+    SDOperand Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, Op.getOperand(0),
+                               DAG.getConstant(0, MVT::i32));
+    SDOperand Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, Op.getOperand(0),
+                               DAG.getConstant(1, MVT::i32));
+    SDOperand Amt = Op.getOperand(1);
+    
+    SDOperand Tmp1 = DAG.getNode(ISD::SUB, MVT::i32,
+                                 DAG.getConstant(32, MVT::i32), Amt);
+    SDOperand Tmp2 = DAG.getNode(ISD::SRL, MVT::i32, Lo, Amt);
+    SDOperand Tmp3 = DAG.getNode(ISD::SHL, MVT::i32, Hi, Tmp1);
+    SDOperand Tmp4 = DAG.getNode(ISD::OR , MVT::i32, Tmp2, Tmp3);
+    SDOperand Tmp5 = DAG.getNode(ISD::ADD, MVT::i32, Amt,
+                                 DAG.getConstant(-32U, MVT::i32));
+    SDOperand Tmp6 = DAG.getNode(ISD::SRA, MVT::i32, Hi, Tmp5);
+    SDOperand OutHi = DAG.getNode(ISD::SRA, MVT::i32, Hi, Amt);
+    SDOperand OutLo = DAG.getSelectCC(Tmp5, DAG.getConstant(0, MVT::i32),
+                                      Tmp4, Tmp6, ISD::SETLE);
+    return DAG.getNode(ISD::BUILD_PAIR, MVT::i64, OutLo, OutHi);
   }
   return SDOperand();
 }
