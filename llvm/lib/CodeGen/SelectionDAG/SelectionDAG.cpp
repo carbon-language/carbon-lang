@@ -1099,7 +1099,7 @@ static bool MaskedValueIsZero(const SDOperand &Op, uint64_t Mask,
     return MaskedValueIsZero(Op.getOperand(0),Mask & ((1ULL << SrcBits)-1),TLI);
   case ISD::AssertZext:
     SrcBits = MVT::getSizeInBits(cast<VTSDNode>(Op.getOperand(1))->getVT());
-    return (Mask & ((1ULL << SrcBits)-1) == 0; // Returning only the zext bits.
+    return (Mask & ((1ULL << SrcBits)-1)) == 0; // Returning only the zext bits.
   case ISD::AND:
     // (X & C1) & C2 == 0   iff   C1 & C2 == 0.
     if (ConstantSDNode *AndRHS = dyn_cast<ConstantSDNode>(Op.getOperand(1)))
