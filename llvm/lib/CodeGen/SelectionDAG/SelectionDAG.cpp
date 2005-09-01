@@ -1394,14 +1394,6 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
             // we know the result of the AND will be the AND mask itself.
             return N2;
           }
-      } else if (N1.getOpcode() == ISD::AssertZext) {
-        // If we are masking out the part of our input that was already masked
-        // out, just return the input directly.
-        unsigned ExtendBits =
-        MVT::getSizeInBits(cast<VTSDNode>(N1.getOperand(1))->getVT());
-        uint64_t ExtendMask = (1ULL << ExtendBits) - 1;
-        if (ExtendMask == C2)
-          return N1.getOperand(0);
       }
       break;
     case ISD::OR:
@@ -1411,8 +1403,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
       break;
     case ISD::XOR:
       if (!C2) return N1;        // X xor 0 -> X
-      if (N2C->isAllOnesValue()) {
-        if (N1.Val->getOpcode() == ISD::SETCC){
+      if (N2C->getValue() == 1 && N1.Val->getOpcode() == ISD::SETCC) {
           SDNode *SetCC = N1.Val;
           // !(X op Y) -> (X !op Y)
           bool isInteger = MVT::isInteger(SetCC->getOperand(0).getValueType());
@@ -1420,7 +1411,8 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
           return getSetCC(SetCC->getValueType(0),
                           SetCC->getOperand(0), SetCC->getOperand(1),
                           ISD::getSetCCInverse(CC, isInteger));
-        } else if (N1.getOpcode() == ISD::AND || N1.getOpcode() == ISD::OR) {
+      } else if (N2C->isAllOnesValue()) {
+        if (N1.getOpcode() == ISD::AND || N1.getOpcode() == ISD::OR) {
           SDNode *Op = N1.Val;
           // !(X or Y) -> (!X and !Y) iff X or Y are freely invertible
           // !(X and Y) -> (!X or !Y) iff X or Y are freely invertible
