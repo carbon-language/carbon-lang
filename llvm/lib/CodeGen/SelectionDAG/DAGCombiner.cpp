@@ -263,28 +263,42 @@ void DAGCombiner::Run(bool AfterLegalize) {
 SDNode *DAGCombiner::visit(SDNode *N) {
   switch(N->getOpcode()) {
   default: break;
-  case ISD::TokenFactor:
-    return visitTokenFactor(N);
-  case ISD::ADD:
-    return visitAdd(N);
-  case ISD::SUB:
-    return visitSub(N);
-  case ISD::MUL:
-    return visitMul(N);
-  case ISD::SDIV:
-    return visitSdiv(N);
-  case ISD::UDIV:
-    return visitUdiv(N);
-  case ISD::SREM:
-    return visitSrem(N);
-  case ISD::UREM:
-    return visitUrem(N);
-  case ISD::SIGN_EXTEND:
-    return visitSignExtend(N);
-  case ISD::ZERO_EXTEND:
-    return visitZeroExtend(N);
-  case ISD::FNEG:
-    return visitFneg(N);
+  case ISD::TokenFactor:        return visitTokenFactor(N);
+  case ISD::ADD:                return visitAdd(N);
+  case ISD::SUB:                return visitSub(N);
+  case ISD::MUL:                return visitMul(N);
+  case ISD::SDIV:               return visitSdiv(N);
+  case ISD::UDIV:               return visitUdiv(N);
+  case ISD::SREM:               return visitSrem(N);
+  case ISD::UREM:               return visitUrem(N);
+  case ISD::MULHU:              return visitMulHiU(N);
+  case ISD::MULHS:              return visitMulHiS(N);
+  case ISD::AND:                return visitAnd(N);
+  case ISD::OR:                 return visitOr(N);
+  case ISD::XOR:                return visitXor(N);
+  case ISD::SHL:                return visitShl(N);
+  case ISD::SRA:                return visitSra(N);
+  case ISD::SRL:                return visitSrl(N);
+  case ISD::CTLZ:               return visitCtlz(N);
+  case ISD::CTTZ:               return visitCttz(N);
+  case ISD::CTPOP:              return visitCtpop(N);
+  case ISD::SIGN_EXTEND:        return visitSignExtend(N);
+  case ISD::ZERO_EXTEND:        return visitZeroExtend(N);
+  case ISD::SIGN_EXTEND_INREG:  return visitSignExtendInReg(N);
+  case ISD::TRUNCATE:           return visitTruncate(N);
+  case ISD::SINT_TO_FP:         return visitSintToFP(N);
+  case ISD::UINT_TO_FP:         return visitUintToFP(N);
+  case ISD::FP_TO_SINT:         return visitFPToSint(N);
+  case ISD::FP_TO_UINT:         return visitFPToUint(N);
+  case ISD::FP_ROUND:           return visitFPRound(N);
+  case ISD::FP_ROUND_INREG:     return visitFPRoundInReg(N);
+  case ISD::FP_EXTEND:          return visitFPExtend(N);
+  case ISD::FNEG:               return visitFneg(N);
+  case ISD::FABS:               return visitFabs(N);
+  case ISD::EXTLOAD:            return visitExtLoad(N);
+  case ISD::SEXTLOAD:           return visitSextLoad(N);
+  case ISD::ZEXTLOAD:           return visitZextLoad(N);
+  case ISD::TRUNCSTORE:         return visitTruncStore(N);
   }
   return 0;
 }
