@@ -1344,8 +1344,7 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
     
     bool Inv;
     unsigned Idx = getCRIdxForSetCC(CC, Inv);
-    SDOperand CCReg =
-      SelectCC(Select(N->getOperand(0)), Select(N->getOperand(1)), CC);
+    SDOperand CCReg = SelectCC(N->getOperand(0), N->getOperand(1), CC);
     SDOperand IntCR;
 
     // Force the ccreg into CR7.
@@ -1396,8 +1395,7 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
             break;
           }
 
-    SDOperand CCReg = SelectCC(Select(N->getOperand(0)),
-                               Select(N->getOperand(1)), CC);
+    SDOperand CCReg = SelectCC(N->getOperand(0), N->getOperand(1), CC);
     unsigned BROpc = getBCCForSetCC(CC);
 
     bool isFP = MVT::isFloatingPoint(N->getValueType(0));
