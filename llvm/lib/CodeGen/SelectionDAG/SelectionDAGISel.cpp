@@ -36,7 +36,7 @@
 #include <iostream>
 using namespace llvm;
 
-#ifndef _NDEBUG
+#ifndef NDEBUG
 static cl::opt<bool>
 ViewDAGs("view-isel-dags", cl::Hidden,
          cl::desc("Pop up a window to show isel dags as they are selected"));

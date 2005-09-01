@@ -24,7 +24,7 @@
 #include "llvm/Support/CommandLine.h"
 using namespace llvm;
 
-#ifndef _NDEBUG
+#ifndef NDEBUG
 static cl::opt<bool>
 ViewDAGs("view-sched-dags", cl::Hidden,
          cl::desc("Pop up a window to show sched dags as they are processed"));
@@ -103,7 +103,7 @@ unsigned SimpleSched::Emit(SDOperand Op) {
       --NodeOperands;
    
     unsigned NumMIOperands = NodeOperands+NumResults;
-#ifndef _NDEBUG
+#ifndef NDEBUG
     assert((unsigned(II.numOperands) == NumMIOperands || II.numOperands == -1)&&
            "#operands for dag node doesn't match .td file!"); 
 #endif
