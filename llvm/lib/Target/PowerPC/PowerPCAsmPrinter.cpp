@@ -384,7 +384,7 @@ bool DarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   // Print out labels for the function.
   O << "\t.text\n";
-  emitAlignment(2);
+  emitAlignment(4);
   O << "\t.globl\t" << CurrentFnName << "\n";
   O << CurrentFnName << ":\n";
 
