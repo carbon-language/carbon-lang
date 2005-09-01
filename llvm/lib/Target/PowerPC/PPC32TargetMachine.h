@@ -28,7 +28,8 @@ class PPC32TargetMachine : public PowerPCTargetMachine {
   PPC32JITInfo JITInfo;
 
 public:
-  PPC32TargetMachine(const Module &M, IntrinsicLowering *IL);
+  PPC32TargetMachine(const Module &M, IntrinsicLowering *IL,
+                     const std::string &FS);
   virtual const PPC32InstrInfo   *getInstrInfo() const { return &InstrInfo; }
   virtual const MRegisterInfo *getRegisterInfo() const {
     return &InstrInfo.getRegisterInfo();

@@ -30,7 +30,8 @@ class SparcV8TargetMachine : public TargetMachine {
   TargetFrameInfo FrameInfo;
   SparcV8JITInfo JITInfo;
 public:
-  SparcV8TargetMachine(const Module &M, IntrinsicLowering *IL);
+  SparcV8TargetMachine(const Module &M, IntrinsicLowering *IL,
+                       const std::string &FS);
 
   virtual const SparcV8InstrInfo *getInstrInfo() const { return &InstrInfo; }
   virtual const TargetFrameInfo  *getFrameInfo() const { return &FrameInfo; }

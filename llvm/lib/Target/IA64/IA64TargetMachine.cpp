@@ -72,7 +72,8 @@ unsigned IA64TargetMachine::getModuleMatchQuality(const Module &M) {
 
 /// IA64TargetMachine ctor - Create an LP64 architecture model
 ///
-IA64TargetMachine::IA64TargetMachine(const Module &M, IntrinsicLowering *IL)
+IA64TargetMachine::IA64TargetMachine(const Module &M, IntrinsicLowering *IL,
+                                     const std::string &FS)
   : TargetMachine("IA64", IL, true),
     FrameInfo(TargetFrameInfo::StackGrowsDown, 16, 0) { // FIXME? check this stuff
 }

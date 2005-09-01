@@ -30,7 +30,8 @@ class PowerPCTargetMachine : public TargetMachine {
   PPCSubtarget      Subtarget;
 protected:
   PowerPCTargetMachine(const std::string &name, IntrinsicLowering *IL,
-                       const Module &M, const TargetData &TD, 
+                       const Module &M, const std::string &FS,
+                       const TargetData &TD, 
                        const PowerPCFrameInfo &TFI);
 public:
   virtual const TargetFrameInfo  *getFrameInfo() const { return &FrameInfo; }

@@ -27,7 +27,8 @@ class IA64TargetMachine : public TargetMachine {
   TargetFrameInfo FrameInfo;
   //IA64JITInfo      JITInfo;
 public:
-  IA64TargetMachine(const Module &M, IntrinsicLowering *IL);
+  IA64TargetMachine(const Module &M, IntrinsicLowering *IL,
+                    const std::string &FS);
 
   virtual const IA64InstrInfo     *getInstrInfo() const { return &InstrInfo; }
   virtual const TargetFrameInfo  *getFrameInfo() const { return &FrameInfo; }

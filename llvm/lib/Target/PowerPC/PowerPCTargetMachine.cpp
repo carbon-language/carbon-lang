@@ -43,9 +43,10 @@ namespace {
 PowerPCTargetMachine::PowerPCTargetMachine(const std::string &name,
                                            IntrinsicLowering *IL,
                                            const Module &M,
+                                           const std::string &FS,
                                            const TargetData &TD,
                                            const PowerPCFrameInfo &TFI)
-: TargetMachine(name, IL, TD), FrameInfo(TFI), Subtarget(M) {
+: TargetMachine(name, IL, TD), FrameInfo(TFI), Subtarget(M, FS) {
   if (TargetDefault == PPCTarget) {
     if (Subtarget.isAIX()) PPCTarget = TargetAIX;
     if (Subtarget.isDarwin()) PPCTarget = TargetDarwin;
@@ -154,8 +155,9 @@ void PowerPCJITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
 
 /// PowerPCTargetMachine ctor - Create an ILP32 architecture model
 ///
-PPC32TargetMachine::PPC32TargetMachine(const Module &M, IntrinsicLowering *IL)
-  : PowerPCTargetMachine(PPC32ID, IL, M,
+PPC32TargetMachine::PPC32TargetMachine(const Module &M, IntrinsicLowering *IL,
+                                       const std::string &FS)
+  : PowerPCTargetMachine(PPC32ID, IL, M, FS,
                          TargetData(PPC32ID,false,4,4,4,4,4,4,2,1,1),
                          PowerPCFrameInfo(*this, false)), JITInfo(*this) {}
 

@@ -26,7 +26,8 @@ const TargetMachineRegistry::Entry *TargetMachineRegistry::List = 0;
 static TargetRegistrationListener *Listeners = 0;
 
 TargetMachineRegistry::Entry::Entry(const char *N, const char *SD,
-                       TargetMachine *(*CF)(const Module &, IntrinsicLowering*),
+                       TargetMachine *(*CF)(const Module &, IntrinsicLowering*,
+                                            const std::string &),
                            unsigned (*MMF)(const Module &M), unsigned (*JMF)())
   : Name(N), ShortDesc(SD), CtorFn(CF), ModuleMatchQualityFn(MMF),
     JITMatchQualityFn(JMF), Next(List) {

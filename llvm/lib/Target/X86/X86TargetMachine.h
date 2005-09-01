@@ -30,7 +30,8 @@ class X86TargetMachine : public TargetMachine {
   TargetFrameInfo FrameInfo;
   X86JITInfo      JITInfo;
 public:
-  X86TargetMachine(const Module &M, IntrinsicLowering *IL);
+  X86TargetMachine(const Module &M, IntrinsicLowering *IL,
+                   const std::string &FS);
 
   virtual const X86InstrInfo     *getInstrInfo() const { return &InstrInfo; }
   virtual const TargetFrameInfo  *getFrameInfo() const { return &FrameInfo; }

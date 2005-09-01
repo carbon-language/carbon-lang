@@ -31,7 +31,8 @@ namespace {
 /// SparcV8TargetMachine ctor - Create an ILP32 architecture model
 ///
 SparcV8TargetMachine::SparcV8TargetMachine(const Module &M,
-                                           IntrinsicLowering *IL)
+                                           IntrinsicLowering *IL,
+                                           const std::string &FS)
   : TargetMachine("SparcV8", IL, false, 4, 4),
     FrameInfo(TargetFrameInfo::StackGrowsDown, 8, 0), JITInfo(*this) {
 }

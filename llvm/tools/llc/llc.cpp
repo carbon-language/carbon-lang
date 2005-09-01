@@ -14,6 +14,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Bytecode/Reader.h"
+#include "llvm/Target/SubtargetFeature.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetMachineRegistry.h"
 #include "llvm/Transforms/Scalar.h"
@@ -46,6 +47,18 @@ static cl::opt<bool> Force("f", cl::desc("Overwrite output files"));
 
 static cl::opt<const TargetMachineRegistry::Entry*, false, TargetNameParser>
 MArch("march", cl::desc("Architecture to generate code for:"));
+
+static cl::opt<std::string>
+MCPU("mcpu", 
+  cl::desc("Target a specific cpu type"),
+  cl::value_desc("cpu-name"),
+  cl::init(""));
+
+static cl::list<std::string>
+MAttrs("mattr", 
+  cl::CommaSeparated,
+  cl::desc("Target specific attributes:"),
+  cl::value_desc("attributes"));
 
 cl::opt<TargetMachine::CodeGenFileType>
 FileType("filetype", cl::init(TargetMachine::AssemblyFile),
@@ -114,7 +127,17 @@ int main(int argc, char **argv) {
       }
     }
 
-    std::auto_ptr<TargetMachine> target(MArch->CtorFn(mod, 0));
+    // Package up features to be passed to target/subtarget
+    std::string FeaturesStr;
+    if (MCPU.size() || MAttrs.size()) {
+      SubtargetFeatures Features;
+      Features.setCPU(MCPU);
+      for (unsigned i = 0; i != MAttrs.size(); ++i)
+        Features.AddFeature(MAttrs[i]);
+      FeaturesStr = Features.getString();
+    }
+
+    std::auto_ptr<TargetMachine> target(MArch->CtorFn(mod, 0, FeaturesStr));
     assert(target.get() && "Could not allocate target machine!");
     TargetMachine &Target = *target.get();
     const TargetData &TD = Target.getTargetData();

@@ -31,7 +31,8 @@ class AlphaTargetMachine : public TargetMachine {
   AlphaJITInfo JITInfo;
 
 public:
-  AlphaTargetMachine(const Module &M, IntrinsicLowering *IL);
+  AlphaTargetMachine(const Module &M, IntrinsicLowering *IL,
+                     const std::string &FS);
 
   virtual const AlphaInstrInfo *getInstrInfo() const { return &InstrInfo; }
   virtual const TargetFrameInfo  *getFrameInfo() const { return &FrameInfo; }

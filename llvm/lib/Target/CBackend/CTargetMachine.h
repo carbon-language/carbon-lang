@@ -20,7 +20,8 @@ namespace llvm {
 class IntrinsicLowering;
 
 struct CTargetMachine : public TargetMachine {
-  CTargetMachine(const Module &M, IntrinsicLowering *IL) :
+  CTargetMachine(const Module &M, IntrinsicLowering *IL,
+                 const std::string &FS) :
     TargetMachine("CBackend", IL, M) {}
 
   // This is the only thing that actually does anything here.

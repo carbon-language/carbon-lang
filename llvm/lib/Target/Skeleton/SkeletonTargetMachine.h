@@ -28,7 +28,8 @@ namespace llvm {
     TargetFrameInfo FrameInfo;
     SkeletonJITInfo JITInfo;
   public:
-    SkeletonTargetMachine(const Module &M, IntrinsicLowering *IL);
+    SkeletonTargetMachine(const Module &M, IntrinsicLowering *IL,
+                          const std::string &FS);
 
     virtual const SkeletonInstrInfo *getInstrInfo() const { return &InstrInfo; }
     virtual const TargetFrameInfo  *getFrameInfo() const { return &FrameInfo; }

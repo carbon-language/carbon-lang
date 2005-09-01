@@ -16,6 +16,8 @@
 
 #include "llvm/Target/TargetSubtarget.h"
 
+#include <string>
+
 namespace llvm {
 class Module;
 
@@ -33,7 +35,7 @@ public:
   /// This constructor initializes the data members to match that
   /// of the specified module.
   ///
-  PPCSubtarget(const Module &M);
+  PPCSubtarget(const Module &M, const std::string &FS);
 
   /// getStackAlignment - Returns the minimum alignment known to hold of the
   /// stack frame on entry to the function and which must be maintained by every

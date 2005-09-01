@@ -15,6 +15,7 @@
 #include "JIT.h"
 #include "llvm/Module.h"
 #include "llvm/ModuleProvider.h"
+#include "llvm/Target/SubtargetFeature.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetMachineRegistry.h"
 #include <iostream>
@@ -22,6 +23,18 @@ using namespace llvm;
 
 static cl::opt<const TargetMachineRegistry::Entry*, false, TargetNameParser>
 MArch("march", cl::desc("Architecture to generate assembly for:"));
+
+static cl::opt<std::string>
+MCPU("mcpu", 
+  cl::desc("Target a specific cpu type"),
+  cl::value_desc("cpu-name"),
+  cl::init(""));
+
+static cl::list<std::string>
+MAttrs("mattr", 
+  cl::CommaSeparated,
+  cl::desc("Target specific attributes:"),
+  cl::value_desc("attributes"));
 
 /// create - Create an return a new JIT compiler if there is one available
 /// for the current target.  Otherwise, return null.
@@ -37,8 +50,18 @@ ExecutionEngine *JIT::create(ModuleProvider *MP, IntrinsicLowering *IL) {
               << "-march switch.\n";
   }
 
+  // Package up features to be passed to target/subtarget
+  std::string FeaturesStr;
+  if (MCPU.size() || MAttrs.size()) {
+    SubtargetFeatures Features;
+    Features.setCPU(MCPU);
+    for (unsigned i = 0; i != MAttrs.size(); ++i)
+      Features.AddFeature(MAttrs[i]);
+    FeaturesStr = Features.getString();
+  }
+
   // Allocate a target...
-  TargetMachine *Target = MArch->CtorFn(*MP->getModule(), IL);
+  TargetMachine *Target = MArch->CtorFn(*MP->getModule(), IL, FeaturesStr);
   assert(Target && "Could not allocate target machine!");
 
   // If the target supports JIT code generation, return a new JIT now.

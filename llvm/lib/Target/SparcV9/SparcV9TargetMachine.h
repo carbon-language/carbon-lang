@@ -32,7 +32,8 @@ class SparcV9TargetMachine : public TargetMachine {
   SparcV9FrameInfo frameInfo;
   SparcV9JITInfo   jitInfo;
 public:
-  SparcV9TargetMachine(const Module &M, IntrinsicLowering *IL);
+  SparcV9TargetMachine(const Module &M, IntrinsicLowering *IL,
+                       const std::string &FS);
 
   virtual const TargetInstrInfo  *getInstrInfo() const { return &instrInfo; }
   virtual const TargetSchedInfo  *getSchedInfo() const { return &schedInfo; }

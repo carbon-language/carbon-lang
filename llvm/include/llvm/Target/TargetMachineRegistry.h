@@ -49,7 +49,8 @@ namespace llvm {
     struct Entry {
       const char *Name;
       const char *ShortDesc;
-      TargetMachine *(*CtorFn)(const Module &, IntrinsicLowering*);
+      TargetMachine *(*CtorFn)(const Module &, IntrinsicLowering*,
+                      const std::string &);
       unsigned (*ModuleMatchQualityFn)(const Module &M);
       unsigned (*JITMatchQualityFn)();
 
@@ -57,7 +58,8 @@ namespace llvm {
 
     protected:
       Entry(const char *N, const char *SD,
-            TargetMachine *(*CF)(const Module &, IntrinsicLowering*),
+            TargetMachine *(*CF)(const Module &, IntrinsicLowering*,
+                                 const std::string &),
             unsigned (*MMF)(const Module &M), unsigned (*JMF)());
     private:
       const Entry *Next;  // Next entry in the linked list.
@@ -80,8 +82,9 @@ namespace llvm {
                                    &TargetMachineImpl::getJITMatchQuality) {
     }
   private:
-    static TargetMachine *Allocator(const Module &M, IntrinsicLowering *IL) {
-      return new TargetMachineImpl(M, IL);
+    static TargetMachine *Allocator(const Module &M, IntrinsicLowering *IL,
+                                    const std::string &FS) {
+      return new TargetMachineImpl(M, IL, FS);
     }
   };
 

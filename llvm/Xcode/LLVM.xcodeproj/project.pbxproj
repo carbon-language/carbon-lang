@@ -33,6 +33,8 @@
 /* End PBXBuildStyle section */
 
 /* Begin PBXFileReference section */
+		CF9BCD0808C74DE0001E7011 /* SubtargetFeature.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SubtargetFeature.h; sourceTree = "<group>"; };
+		CF9BCD1508C75070001E7011 /* SubtargetFeature.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SubtargetFeature.cpp; sourceTree = "<group>"; };
 		DE66EC5B08ABE86900323D32 /* AsmWriter.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = AsmWriter.cpp; path = ../lib/VMCore/AsmWriter.cpp; sourceTree = SOURCE_ROOT; };
 		DE66EC5C08ABE86A00323D32 /* BasicBlock.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = BasicBlock.cpp; path = ../lib/VMCore/BasicBlock.cpp; sourceTree = SOURCE_ROOT; };
 		DE66EC5D08ABE86A00323D32 /* ConstantFolding.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = ConstantFolding.cpp; path = ../lib/VMCore/ConstantFolding.cpp; sourceTree = SOURCE_ROOT; };
@@ -1249,6 +1251,7 @@
 				DE66EFC908ABEE5F00323D32 /* SparcV9 */,
 				DE66F09308ABEE6000323D32 /* X86 */,
 				DE66EF1008ABEE5E00323D32 /* MRegisterInfo.cpp */,
+				CF9BCD1508C75070001E7011 /* SubtargetFeature.cpp */,
 				DE66F08A08ABEE6000323D32 /* Target.td */,
 				DE66F08B08ABEE6000323D32 /* TargetData.cpp */,
 				DE66F08C08ABEE6000323D32 /* TargetFrameInfo.cpp */,
@@ -1958,6 +1961,7 @@
 			isa = PBXGroup;
 			children = (
 				DE66F2A008ABF03200323D32 /* MRegisterInfo.h */,
+				CF9BCD0808C74DE0001E7011 /* SubtargetFeature.h */,
 				DE66F2A108ABF03200323D32 /* TargetData.h */,
 				DE66F2A208ABF03200323D32 /* TargetFrameInfo.h */,
 				DE66F2A308ABF03200323D32 /* TargetInstrInfo.h */,
@@ -2218,7 +2222,7 @@
 				PRODUCT_NAME = LLVM;
 			};
 			buildToolPath = /usr/bin/make;
-			buildWorkingDirectory = /llvm/obj;
+			buildWorkingDirectory = /llvm/obj/;
 			dependencies = (
 			);
 			name = LLVM;

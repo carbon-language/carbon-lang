@@ -148,7 +148,8 @@ FunctionPass *llvm::createSparcV9MachineCodeDestructionPass() {
 
 
 SparcV9TargetMachine::SparcV9TargetMachine(const Module &M,
-                                           IntrinsicLowering *il)
+                                           IntrinsicLowering *il,
+                                           const std::string &FS)
   : TargetMachine("UltraSparcV9-Native", il, false),
     schedInfo(*this),
     regInfo(*this),

@@ -15,7 +15,7 @@
 #include "llvm/Module.h"
 using namespace llvm;
 
-X86Subtarget::X86Subtarget(const Module &M)
+X86Subtarget::X86Subtarget(const Module &M, const std::string &FS)
   : TargetSubtarget(), stackAlignment(8),
     indirectExternAndWeakGlobals(false), asmDarwinLinkerStubs(false),
     asmLeadingUnderscore(false), asmAlignmentIsInBytes(false),

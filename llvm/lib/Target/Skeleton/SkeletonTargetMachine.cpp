@@ -29,7 +29,8 @@ namespace {
 /// SkeletonTargetMachine ctor - Create an ILP32 architecture model
 ///
 SkeletonTargetMachine::SkeletonTargetMachine(const Module &M,
-                                           IntrinsicLowering *IL)
+                                           IntrinsicLowering *IL,
+                                           const std::string &FS)
   : TargetMachine("Skeleton", IL, true, 4, 4, 4, 4, 4),
     FrameInfo(TargetFrameInfo::StackGrowsDown, 8, -4), JITInfo(*this) {
 }
