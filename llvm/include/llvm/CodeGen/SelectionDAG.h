@@ -79,6 +79,12 @@ public:
   ///
   const SDOperand &setRoot(SDOperand N) { return Root = N; }
 
+  /// Combine - This iterates over the nodes in the SelectionDAG, folding
+  /// certain types of nodes together, or eliminating superfluous nodes.  When
+  /// the AfterLegalize argument is set to 'true', Combine takes care not to
+  /// generate any nodes that will be illegal on the target.
+  void Combine(bool AfterLegalize);
+  
   /// Legalize - This transforms the SelectionDAG into a SelectionDAG that is
   /// compatible with the target instruction selector, as indicated by the
   /// TargetLowering object.
