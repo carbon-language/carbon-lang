@@ -754,9 +754,12 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
     
     SDOperand R1Reg = CurDAG->getRegister(PPC::R1, MVT::i32);
     
+    SDOperand R1Val = CurDAG->getCopyFromReg(Chain, PPC::R1, MVT::i32);
+    Chain = R1Val.getValue(1);
+    
     // Subtract the amount (guaranteed to be a multiple of the stack alignment)
     // from the stack pointer, giving us the result pointer.
-    SDOperand Result = CurDAG->getTargetNode(PPC::SUBF, MVT::i32, Amt, R1Reg);
+    SDOperand Result = CurDAG->getTargetNode(PPC::SUBF, MVT::i32, Amt, R1Val);
 
     // Copy this result back into R1.
     Chain = CurDAG->getNode(ISD::CopyToReg, MVT::Other, Chain, R1Reg, Result);
