@@ -32,8 +32,8 @@ using namespace llvm;
 namespace {
   const char *PPC32ID = "PowerPC/32bit";
 
-  static cl::opt<bool> EnablePPCDAGDAG("enable-ppc-dag-isel", cl::Hidden,
-                            cl::desc("Enable DAG-to-DAG isel for PPC (beta)"));
+  static cl::opt<bool> DisablePPCDAGDAG("disable-ppc-dag-isel", cl::Hidden,
+                             cl::desc("Disable DAG-to-DAG isel for PPC"));
   
   // Register the targets
   RegisterTarget<PPC32TargetMachine>
@@ -86,7 +86,7 @@ bool PowerPCTargetMachine::addPassesToEmitFile(PassManager &PM,
   PM.add(createUnreachableBlockEliminationPass());
 
   // Install an instruction selector.
-  if (EnablePPCDAGDAG)
+  if (!DisablePPCDAGDAG)
     PM.add(createPPC32ISelDag(*this));
   else
     PM.add(createPPC32ISelPattern(*this));
