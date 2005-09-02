@@ -456,13 +456,18 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     assert(0 && "Do not know how to legalize this operator!");
     abort();
   case ISD::EntryToken:
-  case ISD::AssertSext:
-  case ISD::AssertZext:
   case ISD::FrameIndex:
   case ISD::GlobalAddress:
   case ISD::ExternalSymbol:
   case ISD::ConstantPool:           // Nothing to do.
     assert(isTypeLegal(Node->getValueType(0)) && "This must be legal!");
+    break;
+  case ISD::AssertSext:
+  case ISD::AssertZext:
+    Tmp1 = LegalizeOp(Node->getOperand(0));
+    if (Tmp1 != Node->getOperand(0))
+      Result = DAG.getNode(Node->getOpcode(), Node->getValueType(0), Tmp1,
+                           Node->getOperand(1));
     break;
   case ISD::CopyFromReg:
     Tmp1 = LegalizeOp(Node->getOperand(0));
