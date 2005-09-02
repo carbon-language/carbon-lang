@@ -1000,6 +1000,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     switch (Opcode) {
     default: break;
     case ISD::SIGN_EXTEND: return getConstant(C->getSignExtended(), VT);
+    case ISD::ANY_EXTEND:
     case ISD::ZERO_EXTEND: return getConstant(Val, VT);
     case ISD::TRUNCATE:    return getConstant(Val, VT);
     case ISD::SINT_TO_FP:  return getConstantFP(C->getSignExtended(), VT);
@@ -1034,11 +1035,18 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     if (OpOpcode == ISD::ZERO_EXTEND)   // (zext (zext x)) -> (zext x)
       return getNode(ISD::ZERO_EXTEND, VT, Operand.Val->getOperand(0));
     break;
+  case ISD::ANY_EXTEND:
+    if (Operand.getValueType() == VT) return Operand;   // noop extension
+    if (OpOpcode == ISD::ZERO_EXTEND || OpOpcode == ISD::SIGN_EXTEND)
+      // (ext (zext x)) -> (zext x)  and  (ext (sext x)) -> (sext x)
+      return getNode(OpOpcode, VT, Operand.Val->getOperand(0));
+    break;
   case ISD::TRUNCATE:
     if (Operand.getValueType() == VT) return Operand;   // noop truncate
     if (OpOpcode == ISD::TRUNCATE)
       return getNode(ISD::TRUNCATE, VT, Operand.Val->getOperand(0));
-    else if (OpOpcode == ISD::ZERO_EXTEND || OpOpcode == ISD::SIGN_EXTEND) {
+    else if (OpOpcode == ISD::ZERO_EXTEND || OpOpcode == ISD::SIGN_EXTEND ||
+             OpOpcode == ISD::ANY_EXTEND) {
       // If the source is smaller than the dest, we still need an extend.
       if (Operand.Val->getOperand(0).getValueType() < VT)
         return getNode(OpOpcode, VT, Operand.Val->getOperand(0));
@@ -1378,6 +1386,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
       // FIXME: Should add a corresponding version of this for
       // ZERO_EXTEND/SIGN_EXTEND by converting them to an ANY_EXTEND node which
       // we don't have yet.
+      // FIXME: NOW WE DO, add this.
 
       // and (sign_extend_inreg x:16:32), 1 -> and x, 1
       if (N1.getOpcode() == ISD::SIGN_EXTEND_INREG) {
@@ -2251,6 +2260,7 @@ const char *SDNode::getOperationName(const SelectionDAG *G) const {
   // Conversion operators.
   case ISD::SIGN_EXTEND: return "sign_extend";
   case ISD::ZERO_EXTEND: return "zero_extend";
+  case ISD::ANY_EXTEND:  return "any_extend";
   case ISD::SIGN_EXTEND_INREG: return "sign_extend_inreg";
   case ISD::TRUNCATE:    return "truncate";
   case ISD::FP_ROUND:    return "fp_round";
