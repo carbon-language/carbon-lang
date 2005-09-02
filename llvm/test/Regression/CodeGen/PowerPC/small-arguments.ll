@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=ppc32 | not grep 'extsh\|rlwinm r3, r3'
+; RUN: llvm-as < %s | llc -march=ppc32 | not grep 'extsh\|rlwinm'
 
 int %test1(short %X) {
 	%Y = cast short %X to int  ;; dead
