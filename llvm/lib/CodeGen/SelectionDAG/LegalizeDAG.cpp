@@ -1996,12 +1996,8 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
   SDOperand Result;
   SDNode *Node = Op.Val;
 
-  if (1 || !Node->hasOneUse()) {
-    std::map<SDOperand, SDOperand>::iterator I = PromotedNodes.find(Op);
-    if (I != PromotedNodes.end()) return I->second;
-  } else {
-    assert(!PromotedNodes.count(Op) && "Repromoted this node??");
-  }
+  std::map<SDOperand, SDOperand>::iterator I = PromotedNodes.find(Op);
+  if (I != PromotedNodes.end()) return I->second;
 
   // Promotion needs an optimization step to clean up after it, and is not
   // careful to avoid operations the target does not support.  Make sure that
@@ -2845,19 +2841,13 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
   assert(MVT::isInteger(NVT) && NVT < VT &&
          "Cannot expand to FP value or to larger int value!");
 
-  // If there is more than one use of this, see if we already expanded it.
-  // There is no use remembering values that only have a single use, as the map
-  // entries will never be reused.
-  if (1 || !Node->hasOneUse()) {
-    std::map<SDOperand, std::pair<SDOperand, SDOperand> >::iterator I
-      = ExpandedNodes.find(Op);
-    if (I != ExpandedNodes.end()) {
-      Lo = I->second.first;
-      Hi = I->second.second;
-      return;
-    }
-  } else {
-    assert(!ExpandedNodes.count(Op) && "Re-expanding a node!");
+  // See if we already expanded it.
+  std::map<SDOperand, std::pair<SDOperand, SDOperand> >::iterator I
+    = ExpandedNodes.find(Op);
+  if (I != ExpandedNodes.end()) {
+    Lo = I->second.first;
+    Hi = I->second.second;
+    return;
   }
 
   // Expanding to multiple registers needs to perform an optimization step, and
@@ -3262,11 +3252,9 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
   }
 
   // Remember in a map if the values will be reused later.
-  if (1 || !Node->hasOneUse()) {
-    bool isNew = ExpandedNodes.insert(std::make_pair(Op,
-                                            std::make_pair(Lo, Hi))).second;
-    assert(isNew && "Value already expanded?!?");
-  }
+  bool isNew = ExpandedNodes.insert(std::make_pair(Op,
+                                          std::make_pair(Lo, Hi))).second;
+  assert(isNew && "Value already expanded?!?");
 }
 
 
