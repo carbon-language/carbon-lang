@@ -1996,7 +1996,7 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
   SDOperand Result;
   SDNode *Node = Op.Val;
 
-  if (!Node->hasOneUse()) {
+  if (1 || !Node->hasOneUse()) {
     std::map<SDOperand, SDOperand>::iterator I = PromotedNodes.find(Op);
     if (I != PromotedNodes.end()) return I->second;
   } else {
@@ -2709,21 +2709,24 @@ SDOperand SelectionDAGLegalize::ExpandLibCall(const char *Name, SDNode *Node,
   std::pair<SDOperand,SDOperand> CallInfo =
     TLI.LowerCallTo(InChain, RetTy, false, CallingConv::C, false,
                     Callee, Args, DAG);
-  SpliceCallInto(CallInfo.second, OutChain);
 
-  NeedsAnotherIteration = true;
-
+  SDOperand Result;
   switch (getTypeAction(CallInfo.first.getValueType())) {
   default: assert(0 && "Unknown thing");
   case Legal:
-    return CallInfo.first;
+    Result = CallInfo.first;
+    break;
   case Promote:
     assert(0 && "Cannot promote this yet!");
   case Expand:
-    SDOperand Lo;
-    ExpandOp(CallInfo.first, Lo, Hi);
-    return Lo;
+    ExpandOp(CallInfo.first, Result, Hi);
+    CallInfo.second = LegalizeOp(CallInfo.second);
+    break;
   }
+  
+  SpliceCallInto(CallInfo.second, OutChain);
+  NeedsAnotherIteration = true;
+  return Result;
 }
 
 
@@ -2845,7 +2848,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
   // If there is more than one use of this, see if we already expanded it.
   // There is no use remembering values that only have a single use, as the map
   // entries will never be reused.
-  if (!Node->hasOneUse()) {
+  if (1 || !Node->hasOneUse()) {
     std::map<SDOperand, std::pair<SDOperand, SDOperand> >::iterator I
       = ExpandedNodes.find(Op);
     if (I != ExpandedNodes.end()) {
@@ -3259,7 +3262,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
   }
 
   // Remember in a map if the values will be reused later.
-  if (!Node->hasOneUse()) {
+  if (1 || !Node->hasOneUse()) {
     bool isNew = ExpandedNodes.insert(std::make_pair(Op,
                                             std::make_pair(Lo, Hi))).second;
     assert(isNew && "Value already expanded?!?");
