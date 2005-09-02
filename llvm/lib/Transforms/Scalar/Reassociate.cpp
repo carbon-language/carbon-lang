@@ -455,6 +455,7 @@ void Reassociate::OptimizeExpression(unsigned Opcode,
         Ops.pop_back();
       break;
     }
+  if (Ops.size() == 1) return;
 
   // Handle destructive annihilation do to identities between elements in the
   // argument list here.
@@ -467,6 +468,7 @@ void Reassociate::OptimizeExpression(unsigned Opcode,
     // If we find any, we can simplify the expression. X&~X == 0, X|~X == -1.
     for (unsigned i = 0, e = Ops.size(); i != e; ++i) {
       // First, check for X and ~X in the operand list.
+      assert(i < Ops.size());
       if (BinaryOperator::isNot(Ops[i].Op)) {    // Cannot occur for ^.
         Value *X = BinaryOperator::getNotArgument(Ops[i].Op);
         unsigned FoundX = FindInOperandList(Ops, i, X);
@@ -487,6 +489,7 @@ void Reassociate::OptimizeExpression(unsigned Opcode,
 
       // Next, check for duplicate pairs of values, which we assume are next to
       // each other, due to our sorting criteria.
+      assert(i < Ops.size());
       if (i+1 != Ops.size() && Ops[i+1].Op == Ops[i].Op) {
         if (Opcode == Instruction::And || Opcode == Instruction::Or) {
           // Drop duplicate values.
@@ -516,6 +519,7 @@ void Reassociate::OptimizeExpression(unsigned Opcode,
     // Scan the operand lists looking for X and -X pairs.  If we find any, we
     // can simplify the expression. X+-X == 0
     for (unsigned i = 0, e = Ops.size(); i != e; ++i) {
+      assert(i < Ops.size());
       // Check for X and -X in the operand list.
       if (BinaryOperator::isNeg(Ops[i].Op)) {
         Value *X = BinaryOperator::getNegArgument(Ops[i].Op);
@@ -524,15 +528,20 @@ void Reassociate::OptimizeExpression(unsigned Opcode,
           // Remove X and -X from the operand list.
           if (Ops.size() == 2) {
             Ops[0].Op = Constant::getNullValue(X->getType());
-            Ops.erase(Ops.begin()+1);
+            Ops.pop_back();
             ++NumAnnihil;
             return;
           } else {
             Ops.erase(Ops.begin()+i);
-            if (i < FoundX) --FoundX;
+            if (i < FoundX)
+              --FoundX;
+            else
+              --i;   // Need to back up an extra one.
             Ops.erase(Ops.begin()+FoundX);
             IterateOptimization = true;
             ++NumAnnihil;
+            --i;     // Revisit element.
+            e -= 2;  // Removed two elements.
           }
         }
       }
