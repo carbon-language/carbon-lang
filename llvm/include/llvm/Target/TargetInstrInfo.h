@@ -174,6 +174,34 @@ public:
   bool isTerminatorInstr(unsigned Opcode) const {
     return get(Opcode).Flags & M_TERMINATOR_FLAG;
   }
+  
+  bool isBranch(MachineOpCode Opcode) const {
+    return get(Opcode).Flags & M_BRANCH_FLAG;
+  }
+  
+  /// isBarrier - Returns true if the specified instruction stops control flow
+  /// from executing the instruction immediately following it.  Examples include
+  /// unconditional branches and return instructions.
+  bool isBarrier(MachineOpCode Opcode) const {
+    return get(Opcode).Flags & M_BARRIER_FLAG;
+  }
+  
+  bool isCall(MachineOpCode Opcode) const {
+    return get(Opcode).Flags & M_CALL_FLAG;
+  }
+  bool isLoad(MachineOpCode Opcode) const {
+    return get(Opcode).Flags & M_LOAD_FLAG;
+  }
+  bool isStore(MachineOpCode Opcode) const {
+    return get(Opcode).Flags & M_STORE_FLAG;
+  }
+  
+  /// usesCustomDAGSchedInsertionHook - Return true if this instruction requires
+  /// custom insertion support when the DAG scheduler is inserting it into a
+  /// machine basic block.
+  bool usesCustomDAGSchedInsertionHook(unsigned Opcode) const {
+    return get(Opcode).Flags & M_USES_CUSTOM_DAG_SCHED_INSERTION;
+  }
 
   /// Return true if the instruction is a register to register move
   /// and leave the source and dest operands in the passed parameters.
@@ -224,6 +252,7 @@ public:
     abort();
     return MI;
   }
+  
 
   //-------------------------------------------------------------------------
   // Code generation support for creating individual machine instructions
@@ -243,39 +272,13 @@ public:
   bool isNop(MachineOpCode Opcode) const {
     return get(Opcode).Flags & M_NOP_FLAG;
   }
-  bool isBranch(MachineOpCode Opcode) const {
-    return get(Opcode).Flags & M_BRANCH_FLAG;
-  }
-  /// isBarrier - Returns true if the specified instruction stops control flow
-  /// from executing the instruction immediately following it.  Examples include
-  /// unconditional branches and return instructions.
-  bool isBarrier(MachineOpCode Opcode) const {
-    return get(Opcode).Flags & M_BARRIER_FLAG;
-  }
-
-  bool isCall(MachineOpCode Opcode) const {
-    return get(Opcode).Flags & M_CALL_FLAG;
-  }
-  bool isLoad(MachineOpCode Opcode) const {
-    return get(Opcode).Flags & M_LOAD_FLAG;
-  }
-  bool isStore(MachineOpCode Opcode) const {
-    return get(Opcode).Flags & M_STORE_FLAG;
-  }
-
+  
   /// hasDelaySlot - Returns true if the specified instruction has a delay slot
   /// which must be filled by the code generator.
   bool hasDelaySlot(unsigned Opcode) const {
     return get(Opcode).Flags & M_DELAY_SLOT_FLAG;
   }
 
-  /// usesCustomDAGSchedInsertionHook - Return true if this instruction requires
-  /// custom insertion support when the DAG scheduler is inserting it into a
-  /// machine basic block.
- bool usesCustomDAGSchedInsertionHook(unsigned Opcode) const {
-    return get(Opcode).Flags & M_USES_CUSTOM_DAG_SCHED_INSERTION;
- }
-  
   virtual bool hasResultInterlock(MachineOpCode Opcode) const {
     return true;
   }
