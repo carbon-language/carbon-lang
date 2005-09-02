@@ -34,6 +34,7 @@ namespace llvm {
 //
 struct SubtargetFeatureKV {
   const char *Key;                      // K-V key string
+  const char *Desc;                     // Help descriptor
   uint32_t Value;                       // K-V integer value
   
   // Compare routine for std binary search
@@ -126,6 +127,10 @@ public:
   /// Adding Features.
   void AddFeature(const std::string &String, bool IsEnabled = true);
 
+  /// Display help for feature choices.
+  static void Help(const char *Heading,
+                   const SubtargetFeatureKV *Table, size_t TableSize);
+            
   /// Parse feature string for quick usage.
   static uint32_t Parse(const std::string &String,
                         const std::string &DefaultCPU,

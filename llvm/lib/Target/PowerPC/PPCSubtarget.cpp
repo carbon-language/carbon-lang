@@ -40,25 +40,31 @@ enum PowerPCFeature {
 
 /// Sorted (by key) array of values for CPU subtype.
 static const SubtargetFeatureKV PowerPCSubTypeKV[] = {
-  { "601"    , 0 },
-  { "602"    , 0 },
-  { "603"    , 0 },
-  { "603e"   , 0 },
-  { "603ev"  , 0 },
-  { "604"    , 0 },
-  { "604e"   , 0 },
-  { "620"    , 0 },
-  { "7400"   , PowerPCFeatureAltivec },
-  { "7450"   , PowerPCFeatureAltivec },
-  { "750"    , 0 },
-  { "970"    , PowerPCFeature64Bit | PowerPCFeatureAltivec |
+  { "601"    , "Select the PowerPC 601 processor", 0 },
+  { "602"    , "Select the PowerPC 602 processor", 0 },
+  { "603"    , "Select the PowerPC 603 processor", 0 },
+  { "603e"   , "Select the PowerPC 603e processor", 0 },
+  { "603ev"  , "Select the PowerPC 603ev processor", 0 },
+  { "604"    , "Select the PowerPC 604 processor", 0 },
+  { "604e"   , "Select the PowerPC 604e processor", 0 },
+  { "620"    , "Select the PowerPC 620 processor", 0 },
+  { "7400"   , "Select the PowerPC 7400 (G4) processor",
+               PowerPCFeatureAltivec },
+  { "7450"   , "Select the PowerPC 7450 (G4+) processor",
+               PowerPCFeatureAltivec },
+  { "750"    , "Select the PowerPC 750 (G3) processor", 0 },
+  { "970"    , "Select the PowerPC 970 (G5 - GPUL) processor",
+               PowerPCFeature64Bit | PowerPCFeatureAltivec |
                PowerPCFeatureFSqrt | PowerPCFeatureGPUL },
-  { "g3"     , 0 },
-  { "g4"     , PowerPCFeatureAltivec },
-  { "g4+"    , PowerPCFeatureAltivec },
-  { "g5"     , PowerPCFeature64Bit | PowerPCFeatureAltivec |
+  { "g3"     , "Select the PowerPC G3 (750) processor", 0 },
+  { "g4"     , "Select the PowerPC G4 (7400) processor",
+               PowerPCFeatureAltivec },
+  { "g4+"    , "Select the PowerPC G4+ (7450) processor",
+               PowerPCFeatureAltivec },
+  { "g5"     , "Select the PowerPC g5 (970 - GPUL)  processor",
+               PowerPCFeature64Bit | PowerPCFeatureAltivec |
                PowerPCFeatureFSqrt | PowerPCFeatureGPUL },
-  { "generic", 0 }
+  { "generic", "Select instructions for a generic PowerPC processor", 0 }
 };
 /// Length of PowerPCSubTypeKV.
 static const unsigned PowerPCSubTypeKVSize = sizeof(PowerPCSubTypeKV)
@@ -66,10 +72,10 @@ static const unsigned PowerPCSubTypeKVSize = sizeof(PowerPCSubTypeKV)
 
 /// Sorted (by key) array of values for CPU features.
 static SubtargetFeatureKV PowerPCFeatureKV[] = {
-  { "64bit"  , PowerPCFeature64Bit   },
-  { "altivec", PowerPCFeatureAltivec },
-  { "fsqrt"  , PowerPCFeatureFSqrt },
-  { "gpul"   , PowerPCFeatureGPUL    }
+  { "64bit"  , "Should 64 bit instructions be used"  , PowerPCFeature64Bit   },
+  { "altivec", "Should Altivec instructions be used" , PowerPCFeatureAltivec },
+  { "fsqrt"  , "Should the fsqrt instruction be used", PowerPCFeatureFSqrt   },
+  { "gpul"   , "Should GPUL instructions be used"    , PowerPCFeatureGPUL    }
  };
 /// Length of PowerPCFeatureKV.
 static const unsigned PowerPCFeatureKVSize = sizeof(PowerPCFeatureKV)

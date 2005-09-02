@@ -99,6 +99,29 @@ SubtargetFeatures::Find(const std::string &S,
   return F;
 }
 
+/// Display help for feature choices.
+void SubtargetFeatures::Help(const char *Heading,
+          const SubtargetFeatureKV *Table, size_t TableSize) {
+    // Determine the length of the longest key
+    size_t MaxLen = 0;
+    for (size_t i = 0; i < TableSize; i++)
+      MaxLen = std::max(MaxLen, std::strlen(Table[i].Key));
+    // Print heading
+    std::cerr << "Help for " << Heading << " choices\n\n";
+    // For each feature
+    for (size_t i = 0; i < TableSize; i++) {
+      // Compute required padding
+      size_t Pad = MaxLen - std::strlen(Table[i].Key) + 1;
+      // Print details
+      std::cerr << Table[i].Key << std::string(Pad, ' ') << " - "
+                << Table[i].Desc << "\n";
+    }
+    // Wrap it up
+    std::cerr << "\n\n";
+    // Leave tool
+    exit(1);
+}
+
 /// Parse feature string for quick usage.
 uint32_t SubtargetFeatures::Parse(const std::string &String,
                                   const std::string &DefaultCPU,
@@ -124,6 +147,8 @@ uint32_t SubtargetFeatures::Parse(const std::string &String,
   Split(Features, String);
   // Check if default is needed
   if (Features[0].empty()) Features[0] = DefaultCPU;
+  // Check for help
+  if (Features[0] == "help") Help("CPU", CPUTable, CPUTableSize);
   // Find CPU entry
   const SubtargetFeatureKV *CPUEntry =
                             Find(Features[0], CPUTable, CPUTableSize);
@@ -141,6 +166,8 @@ uint32_t SubtargetFeatures::Parse(const std::string &String,
   for (size_t i = 1; i < Features.size(); i++) {
     // Get next feature
     const std::string &Feature = Features[i];
+    // Check for help
+    if (Feature == "+help") Help("feature", FeatureTable, FeatureTableSize);
     // Find feature in table.
     const SubtargetFeatureKV *FeatureEntry =
                        Find(StripFlag(Feature), FeatureTable, FeatureTableSize);

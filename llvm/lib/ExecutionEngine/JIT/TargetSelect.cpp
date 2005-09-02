@@ -26,15 +26,15 @@ MArch("march", cl::desc("Architecture to generate assembly for:"));
 
 static cl::opt<std::string>
 MCPU("mcpu", 
-  cl::desc("Target a specific cpu type"),
+  cl::desc("Target a specific cpu type (-mcpu=help for list of choices)"),
   cl::value_desc("cpu-name"),
   cl::init(""));
 
 static cl::list<std::string>
 MAttrs("mattr", 
   cl::CommaSeparated,
-  cl::desc("Target specific attributes:"),
-  cl::value_desc("attributes"));
+  cl::desc("Target specific attributes (-mattr=help for list of choices)"),
+  cl::value_desc("attr1,+attr2, ..., -attrN"));
 
 /// create - Create an return a new JIT compiler if there is one available
 /// for the current target.  Otherwise, return null.
