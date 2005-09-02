@@ -1088,7 +1088,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         TLI.getTypeToPromoteTo(ISD::SELECT, Tmp2.getValueType());
       unsigned ExtOp, TruncOp;
       if (MVT::isInteger(Tmp2.getValueType())) {
-        ExtOp = ISD::ZERO_EXTEND;
+        ExtOp = ISD::ANY_EXTEND;
         TruncOp  = ISD::TRUNCATE;
       } else {
         ExtOp = ISD::FP_EXTEND;
@@ -1866,6 +1866,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     }
     break;
 
+  case ISD::ANY_EXTEND:
   case ISD::ZERO_EXTEND:
   case ISD::SIGN_EXTEND:
   case ISD::FP_EXTEND:
@@ -1881,17 +1882,19 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
 
     case Promote:
       switch (Node->getOpcode()) {
+      case ISD::ANY_EXTEND:
+        Result = PromoteOp(Node->getOperand(0));
+        Result = DAG.getNode(ISD::ANY_EXTEND, Op.getValueType(), Result);
+        break;
       case ISD::ZERO_EXTEND:
         Result = PromoteOp(Node->getOperand(0));
-        // NOTE: Any extend would work here...
-        Result = DAG.getNode(ISD::ZERO_EXTEND, Op.getValueType(), Result);
+        Result = DAG.getNode(ISD::ANY_EXTEND, Op.getValueType(), Result);
         Result = DAG.getZeroExtendInReg(Result,
                                         Node->getOperand(0).getValueType());
         break;
       case ISD::SIGN_EXTEND:
         Result = PromoteOp(Node->getOperand(0));
-        // NOTE: Any extend would work here...
-        Result = DAG.getNode(ISD::ZERO_EXTEND, Op.getValueType(), Result);
+        Result = DAG.getNode(ISD::ANY_EXTEND, Op.getValueType(), Result);
         Result = DAG.getNode(ISD::SIGN_EXTEND_INREG, Result.getValueType(),
                              Result,
                           DAG.getValueType(Node->getOperand(0).getValueType()));
@@ -2051,6 +2054,7 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
     break;
   case ISD::SIGN_EXTEND:
   case ISD::ZERO_EXTEND:
+  case ISD::ANY_EXTEND:
     switch (getTypeAction(Node->getOperand(0).getValueType())) {
     case Expand: assert(0 && "BUG: Smaller reg should have been promoted!");
     case Legal:
@@ -2065,7 +2069,7 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
       if (Node->getOpcode() == ISD::SIGN_EXTEND)
         Result = DAG.getNode(ISD::SIGN_EXTEND_INREG, NVT, Result,
                          DAG.getValueType(Node->getOperand(0).getValueType()));
-      else
+      else if (Node->getOpcode() == ISD::ZERO_EXTEND)
         Result = DAG.getZeroExtendInReg(Result,
                                         Node->getOperand(0).getValueType());
       break;
@@ -3008,6 +3012,22 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
                      Node->getOperand(1), TH, FH, Node->getOperand(4));
     Lo = LegalizeOp(Lo);
     Hi = LegalizeOp(Hi);
+    break;
+  }
+  case ISD::ANY_EXTEND: {
+    SDOperand In;
+    switch (getTypeAction(Node->getOperand(0).getValueType())) {
+    case Expand: assert(0 && "expand-expand not implemented yet!");
+    case Legal: In = LegalizeOp(Node->getOperand(0)); break;
+    case Promote:
+      In = PromoteOp(Node->getOperand(0));
+      break;
+    }
+    
+    // The low part is any extension of the input (which degenerates to a copy).
+    Lo = DAG.getNode(ISD::ANY_EXTEND, NVT, In);
+    // The high part is undefined.
+    Hi = DAG.getNode(ISD::UNDEF, NVT);
     break;
   }
   case ISD::SIGN_EXTEND: {
