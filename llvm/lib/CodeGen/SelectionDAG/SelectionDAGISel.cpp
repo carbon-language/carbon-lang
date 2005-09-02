@@ -491,7 +491,7 @@ void SelectionDAGLowering::visitBinary(User &I, unsigned Opcode, bool isShift) {
   SDOperand Op2 = getValue(I.getOperand(1));
 
   if (isShift)
-    Op2 = DAG.getNode(ISD::ZERO_EXTEND, TLI.getShiftAmountTy(), Op2);
+    Op2 = DAG.getNode(ISD::ANY_EXTEND, TLI.getShiftAmountTy(), Op2);
 
   setValue(&I, DAG.getNode(Opcode, Op1.getValueType(), Op1, Op2));
 }
@@ -1025,7 +1025,7 @@ CopyValueToVirtualRegister(SelectionDAGLowering &SDL, Value *V, unsigned Reg) {
     if (MVT::isFloatingPoint(SrcVT))
       Op = DAG.getNode(ISD::FP_EXTEND, DestVT, Op);
     else
-      Op = DAG.getNode(ISD::ZERO_EXTEND, DestVT, Op);
+      Op = DAG.getNode(ISD::ANY_EXTEND, DestVT, Op);
     return DAG.getCopyToReg(SDL.getRoot(), Reg, Op);
   } else  {
     // The src value is expanded into multiple registers.
@@ -1078,14 +1078,9 @@ LowerArguments(BasicBlock *BB, SelectionDAGLowering &SDL,
         if (!AI->use_empty()) {
           SDL.setValue(AI, Args[a]);
           
-          if (0 && IsOnlyUsedInOneBasicBlock(AI) == F.begin()) {
-            // Only used in the entry block, no need to copy it to a vreg for
-            // other blocks.
-          } else {
-            SDOperand Copy =
-              CopyValueToVirtualRegister(SDL, AI, FuncInfo.ValueMap[AI]);
-            UnorderedChains.push_back(Copy);
-          }
+          SDOperand Copy =
+            CopyValueToVirtualRegister(SDL, AI, FuncInfo.ValueMap[AI]);
+          UnorderedChains.push_back(Copy);
         }
     } else {
       // Otherwise, if any argument is only accessed in a single basic block,
