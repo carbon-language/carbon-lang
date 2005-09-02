@@ -131,10 +131,10 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
     for (MachineFunction::livein_iterator I = fn.livein_begin(),
            E = fn.livein_end(); I != E; ++I) {
       handlePhysicalRegisterDef(Entry, Entry->begin(),
-                                getOrCreateInterval(I->first), 0, 0);
+                                getOrCreateInterval(I->first), 0, 0, true);
       for (const unsigned* AS = mri_->getAliasSet(I->first); *AS; ++AS)
         handlePhysicalRegisterDef(Entry, Entry->begin(),
-                                  getOrCreateInterval(*AS), 0, 0);
+                                  getOrCreateInterval(*AS), 0, 0, true);
     }
   }
 
@@ -478,7 +478,8 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock* mbb,
 void LiveIntervals::handlePhysicalRegisterDef(MachineBasicBlock *MBB,
                                               MachineBasicBlock::iterator mi,
                                               LiveInterval& interval,
-                                              unsigned SrcReg, unsigned DestReg)
+                                              unsigned SrcReg, unsigned DestReg,
+                                              bool isLiveIn)
 {
   // A physical register cannot be live across basic block, so its
   // lifetime must end somewhere in its defining basic block.
@@ -501,9 +502,7 @@ void LiveIntervals::handlePhysicalRegisterDef(MachineBasicBlock *MBB,
   // If it is not dead on definition, it must be killed by a
   // subsequent instruction. Hence its interval is:
   // [defSlot(def), useSlot(kill)+1)
-  while (true) {
-    ++mi;
-    assert(mi != MBB->end() && "physreg was not killed in defining block!");
+  while (++mi != MBB->end()) {
     baseIndex += InstrSlots::NUM;
     if (lv_->KillsRegister(mi, interval.reg)) {
       DEBUG(std::cerr << " killed");
@@ -511,6 +510,12 @@ void LiveIntervals::handlePhysicalRegisterDef(MachineBasicBlock *MBB,
       goto exit;
     }
   }
+  
+  // The only case we should have a dead physreg here without a killing or
+  // instruction where we know it's dead is if it is live-in to the function
+  // and never used.
+  assert(isLiveIn && "physreg was not killed in defining block!");
+  end = getDefIndex(start) + 1;  // It's dead.
 
 exit:
   assert(start < end && "did not find end of interval?");
