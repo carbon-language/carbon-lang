@@ -158,6 +158,9 @@ namespace ISD {
     // ZERO_EXTEND - Used for integer types, zeroing the new bits.
     ZERO_EXTEND,
 
+    // ANY_EXTEND - Used for integer types.  The high bits are undefined.
+    ANY_EXTEND,
+    
     // TRUNCATE - Completely drop the high bits.
     TRUNCATE,
 
