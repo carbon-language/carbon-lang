@@ -326,7 +326,10 @@ void SelectionDAG::RemoveNodeFromCSEMaps(SDNode *N) {
     break;
   default:
     if (N->getNumValues() == 1) {
-      if (N->getNumOperands() == 1) {
+      if (N->getNumOperands() == 0) {
+        Erased = NullaryOps.erase(std::make_pair(N->getOpcode(),
+                                                 N->getValueType(0)));
+      } else if (N->getNumOperands() == 1) {
         Erased = 
           UnaryOps.erase(std::make_pair(N->getOpcode(),
                                         std::make_pair(N->getOperand(0),
@@ -1010,8 +1013,11 @@ SDOperand SelectionDAG::SimplifySelectCC(SDOperand N1, SDOperand N2,
 /// getNode - Gets or creates the specified node.
 ///
 SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT) {
-  SDNode *N = new SDNode(Opcode, VT);
-  AllNodes.push_back(N);
+  SDNode *&N = NullaryOps[std::make_pair(Opcode, VT)];
+  if (!N) {
+    N = new SDNode(Opcode, VT);
+    AllNodes.push_back(N);
+  }
   return SDOperand(N, 0);
 }
 
