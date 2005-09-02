@@ -1157,77 +1157,41 @@ unsigned ISel::SelectExpr(SDOperand N) {
     return Result;
   }
 
+  case ISD::ANY_EXTEND:
   case ISD::ZERO_EXTEND: {
     Tmp1 = SelectExpr(N.getOperand(0)); // value
 
-    switch (N.getOperand(0).getValueType()) {
-    default: assert(0 && "Cannot zero-extend this type!");
-    case MVT::i8:  Opc = IA64::ZXT1; break;
-    case MVT::i16: Opc = IA64::ZXT2; break;
-    case MVT::i32: Opc = IA64::ZXT4; break;
+    assert(N.getOperand(0).getValueType() == MVT::i1 && 
+           "Cannot zero-extend this type!");
 
-    // we handle bools differently! :
-    case MVT::i1: { // if the predicate reg has 1, we want a '1' in our GR.
-      unsigned dummy = MakeReg(MVT::i64);
-      // first load zero:
-      BuildMI(BB, IA64::MOV, 1, dummy).addReg(IA64::r0);
-      // ...then conditionally (PR:Tmp1) add 1:
-      BuildMI(BB, IA64::TPCADDIMM22, 2, Result).addReg(dummy)
-        .addImm(1).addReg(Tmp1);
-      return Result; // XXX early exit!
-    }
-    }
+    // if the predicate reg has 1, we want a '1' in our GR.
+    unsigned dummy = MakeReg(MVT::i64);
+    // first load zero:
+    BuildMI(BB, IA64::MOV, 1, dummy).addReg(IA64::r0);
+    // ...then conditionally (PR:Tmp1) add 1:
+    BuildMI(BB, IA64::TPCADDIMM22, 2, Result).addReg(dummy)
+      .addImm(1).addReg(Tmp1);
+    return Result; // XXX early exit!
+  }
 
-    BuildMI(BB, Opc, 1, Result).addReg(Tmp1);
-    return Result;
-   }
-
-  case ISD::SIGN_EXTEND: {   // we should only have to handle i1 -> i64 here!!!
-
-assert(0 && "hmm, ISD::SIGN_EXTEND: shouldn't ever be reached. bad luck!\n");
+  case ISD::SIGN_EXTEND:
+    assert(N.getOperand(0).getValueType() == MVT::i1 && 
+           "Cannot zero-extend this type!");
 
     Tmp1 = SelectExpr(N.getOperand(0)); // value
+    assert(0 && "don't know how to sign_extend from bool yet!");
+    abort();
 
-    switch (N.getOperand(0).getValueType()) {
-    default: assert(0 && "Cannot sign-extend this type!");
-    case MVT::i1:  assert(0 && "trying to sign extend a bool? ow.\n");
-      Opc = IA64::SXT1; break;
-      // FIXME: for now, we treat bools the same as i8s
-    case MVT::i8:  Opc = IA64::SXT1; break;
-    case MVT::i16: Opc = IA64::SXT2; break;
-    case MVT::i32: Opc = IA64::SXT4; break;
-    }
-
-    BuildMI(BB, Opc, 1, Result).addReg(Tmp1);
-    return Result;
-   }
-
-  case ISD::TRUNCATE: {
+  case ISD::TRUNCATE:
     // we use the funky dep.z (deposit (zero)) instruction to deposit bits
     // of R0 appropriately.
-    switch (N.getOperand(0).getValueType()) {
-    default: assert(0 && "Unknown truncate!");
-    case MVT::i64: break;
-    }
+    assert(N.getOperand(0).getValueType() == MVT::i64 && 
+           N.getValueType() == MVT::i1 && "Unknown truncate!");
     Tmp1 = SelectExpr(N.getOperand(0));
-    unsigned depositPos, depositLen;
 
-    switch (N.getValueType()) {
-    default: assert(0 && "Unknown truncate!");
-    case MVT::i1: {
-      // if input (normal reg) is 0, 0!=0 -> false (0), if 1, 1!=0 ->true (1):
-        BuildMI(BB, IA64::CMPNE, 2, Result).addReg(Tmp1)
-          .addReg(IA64::r0);
-        return Result; // XXX early exit!
-      }
-    case MVT::i8:  depositPos=0; depositLen=8;  break;
-    case MVT::i16: depositPos=0; depositLen=16; break;
-    case MVT::i32: depositPos=0; depositLen=32; break;
-    }
-    BuildMI(BB, IA64::DEPZ, 3, Result).addReg(Tmp1)
-      .addImm(depositPos).addImm(depositLen);
-    return Result;
-  }
+    // if input (normal reg) is 0, 0!=0 -> false (0), if 1, 1!=0 ->true (1):
+    BuildMI(BB, IA64::CMPNE, 2, Result).addReg(Tmp1).addReg(IA64::r0);
+    return Result; // XXX early exit!
 
 /*
   case ISD::FP_ROUND: {
