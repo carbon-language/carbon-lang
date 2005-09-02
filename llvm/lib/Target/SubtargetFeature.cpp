@@ -17,7 +17,7 @@
 #include <algorithm>
 #include <vector>
 #include <cassert>
-
+#include <cctype>
 
 using namespace llvm;
 

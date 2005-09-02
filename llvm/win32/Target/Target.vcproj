@@ -110,6 +110,9 @@
 				RelativePath="..\..\lib\Target\MRegisterInfo.cpp">
 			</File>
 			<File
+				RelativePath="..\..\lib\Target\SubtargetFeature.cpp">
+			</File>
+			<File
 				RelativePath="..\..\lib\Target\TargetData.cpp">
 			</File>
 			<File
@@ -140,6 +143,9 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
 			<File
 				RelativePath="..\..\include\llvm\Target\MRegisterInfo.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\Target\SubtargetFeature.h">
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\Target\TargetData.h">

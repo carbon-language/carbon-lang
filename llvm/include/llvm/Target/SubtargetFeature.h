@@ -23,6 +23,7 @@
 #include <vector>
 #include <iostream>
 #include <cassert>
+#include "llvm/Support/DataTypes.h"
 
 namespace llvm {
 
