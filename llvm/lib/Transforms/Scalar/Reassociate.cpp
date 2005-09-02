@@ -612,6 +612,12 @@ void Reassociate::ReassociateBB(BasicBlock *BB) {
     if (I->hasOneUse() && isReassociableOp(I->use_back(), I->getOpcode()))
       continue;
 
+    // If this is an add tree that is used by a sub instruction, ignore it 
+    // until we process the subtract.
+    if (I->hasOneUse() && I->getOpcode() == Instruction::Add &&
+        cast<Instruction>(I->use_back())->getOpcode() == Instruction::Sub)
+      continue;
+
     // First, walk the expression tree, linearizing the tree, collecting
     std::vector<ValueEntry> Ops;
     LinearizeExprTree(I, Ops);
