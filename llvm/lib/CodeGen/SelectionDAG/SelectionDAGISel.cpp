@@ -150,7 +150,8 @@ FunctionLoweringInfo::FunctionLoweringInfo(TargetLowering &tli,
         // TargetData.  It serves primarily to 8-byte align doubles for X86.
         if (Align < TySize && TySize <= 8) Align = TySize;
 
-        TySize *= CUI->getValue();   // Get total allocated size.
+        if (CUI->getValue())           // Don't produce zero sized stack objects
+          TySize *= CUI->getValue();   // Get total allocated size.
         StaticAllocaMap[AI] =
           MF.getFrameInfo()->CreateStackObject((unsigned)TySize, Align);
       }
