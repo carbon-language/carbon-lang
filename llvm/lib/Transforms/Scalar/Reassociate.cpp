@@ -318,16 +318,18 @@ static Value *NegateValue(Value *V, Instruction *BI) {
   //
   if (Instruction *I = dyn_cast<Instruction>(V))
     if (I->getOpcode() == Instruction::Add && I->hasOneUse()) {
-      Value *RHS = NegateValue(I->getOperand(1), BI);
-      Value *LHS = NegateValue(I->getOperand(0), BI);
+      // Push the negates through the add.
+      I->setOperand(0, NegateValue(I->getOperand(0), BI));
+      I->setOperand(1, NegateValue(I->getOperand(1), BI));
 
-      // We must actually insert a new add instruction here, because the neg
-      // instructions do not dominate the old add instruction in general.  By
-      // adding it now, we are assured that the neg instructions we just
-      // inserted dominate the instruction we are about to insert after them.
+      // We must move the add instruction here, because the neg instructions do
+      // not dominate the old add instruction in general.  By moving it, we are
+      // assured that the neg instructions we just inserted dominate the 
+      // instruction we are about to insert after them.
       //
-      return BinaryOperator::create(Instruction::Add, LHS, RHS,
-                                    I->getName()+".neg", BI);
+      I->moveBefore(BI);
+      I->setName(I->getName()+".neg");
+      return I;
     }
 
   // Insert a 'neg' instruction that subtracts the value from zero to get the
