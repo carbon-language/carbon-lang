@@ -356,6 +356,7 @@ private:
                              SDOperand N4, ISD::CondCode CC);
     
   // Maps to auto-CSE operations.
+  std::map<std::pair<unsigned, MVT::ValueType>, SDNode *> NullaryOps;
   std::map<std::pair<unsigned, std::pair<SDOperand, MVT::ValueType> >,
            SDNode *> UnaryOps;
   std::map<std::pair<unsigned, std::pair<SDOperand, SDOperand> >,
