@@ -29,7 +29,7 @@ static cl::opt<bool>
 ViewDAGs("view-sched-dags", cl::Hidden,
          cl::desc("Pop up a window to show sched dags as they are processed"));
 #else
-static const bool ViewDAGS = 0;
+static const bool ViewDAGs = 0;
 #endif
 
 namespace {

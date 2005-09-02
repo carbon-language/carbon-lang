@@ -41,7 +41,7 @@ static cl::opt<bool>
 ViewDAGs("view-isel-dags", cl::Hidden,
          cl::desc("Pop up a window to show isel dags as they are selected"));
 #else
-static const bool ViewDAGS = 0;
+static const bool ViewDAGs = 0;
 #endif
 
 namespace llvm {
