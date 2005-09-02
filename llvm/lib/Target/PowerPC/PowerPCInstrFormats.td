@@ -223,8 +223,11 @@ class XForm_base_r3xo_swapped
 class XForm_1<bits<6> opcode, bits<10> xo, dag OL, string asmstr> 
   : XForm_base_r3xo<opcode, xo, OL, asmstr>;
 
-class XForm_6<bits<6> opcode, bits<10> xo, dag OL, string asmstr> 
-  : XForm_base_r3xo_swapped<opcode, xo, OL, asmstr>;
+class XForm_6<bits<6> opcode, bits<10> xo, dag OL, string asmstr, 
+              list<dag> pattern> 
+  : XForm_base_r3xo_swapped<opcode, xo, OL, asmstr> {
+  let Pattern = pattern;
+}
 
 class XForm_8<bits<6> opcode, bits<10> xo, dag OL, string asmstr> 
   : XForm_base_r3xo<opcode, xo, OL, asmstr>;
@@ -233,9 +236,11 @@ class XForm_10<bits<6> opcode, bits<10> xo, dag OL, string asmstr>
   : XForm_base_r3xo_swapped<opcode, xo, OL, asmstr> {
 }
 
-class XForm_11<bits<6> opcode, bits<10> xo, dag OL, string asmstr> 
+class XForm_11<bits<6> opcode, bits<10> xo, dag OL, string asmstr,
+               list<dag> pattern> 
   : XForm_base_r3xo_swapped<opcode, xo, OL, asmstr> {
   let B = 0;
+  let Pattern = pattern;
 }
 
 class XForm_16<bits<6> opcode, bits<10> xo, dag OL, string asmstr>
