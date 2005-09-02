@@ -2394,6 +2394,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
     BuildMI(BB, X86::MOV32ri, 1, Result).addExternalSymbol(Sym);
     return Result;
   }
+  case ISD::ANY_EXTEND:   // treat any extend like zext
   case ISD::ZERO_EXTEND: {
     int DestIs16 = N.getValueType() == MVT::i16;
     int SrcIs16  = N.getOperand(0).getValueType() == MVT::i16;
