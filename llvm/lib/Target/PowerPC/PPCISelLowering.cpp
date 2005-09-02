@@ -54,7 +54,7 @@ PPC32TargetLowering::PPC32TargetLowering(TargetMachine &TM)
   setOperationAction(ISD::SREM , MVT::f32, Expand);
   
   // If we're enabling GP optimizations, use hardware square root
-  if (!TM.getSubtarget<PPCSubtarget>().isGigaProcessor()) {
+  if (!TM.getSubtarget<PPCSubtarget>().hasFSQRT()) {
     setOperationAction(ISD::FSQRT, MVT::f64, Expand);
     setOperationAction(ISD::FSQRT, MVT::f32, Expand);
   }

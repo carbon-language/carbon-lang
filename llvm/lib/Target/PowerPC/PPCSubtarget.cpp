@@ -25,11 +25,10 @@ namespace llvm {
   PPCTargetArg(cl::desc("Force generation of code for a specific PPC target:"),
                cl::values(
                           clEnumValN(TargetAIX,  "aix", "  Enable AIX codegen"),
-                          clEnumValN(TargetDarwin,"darwin","  Enable Darwin codegen"),
+                          clEnumValN(TargetDarwin,"darwin",
+                                     "  Enable Darwin codegen"),
                           clEnumValEnd),
                cl::location(PPCTarget), cl::init(TargetDefault));
-  cl::opt<bool> EnableGPOPT("enable-gpopt", cl::Hidden,
-                             cl::desc("Enable optimizations for GP cpus"));
 }
 
 enum PowerPCFeature {
@@ -126,7 +125,8 @@ PPCSubtarget::PPCSubtarget(const Module &M, const std::string &FS)
   SubtargetFeatures::Parse(FS, CPU,
                            PowerPCSubTypeKV, PowerPCSubTypeKVSize,
                            PowerPCFeatureKV, PowerPCFeatureKVSize);
-  IsGigaProcessor = (Bits & PowerPCFeatureGPUL) != 0;
+  IsGigaProcessor = (Bits & PowerPCFeatureGPUL ) != 0;
+  HasFSQRT        = (Bits & PowerPCFeatureFSqrt) != 0;
 
   // Set the boolean corresponding to the current target triple, or the default
   // if one cannot be determined, to true.
@@ -140,7 +140,4 @@ PPCSubtarget::PPCSubtarget(const Module &M, const std::string &FS)
     IsDarwin = true;
 #endif
   }
-  
-  // If GP opts are forced on by the commandline, do so now.
-  if (EnableGPOPT) IsGigaProcessor = true;
 }

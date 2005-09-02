@@ -29,6 +29,7 @@ protected:
 
   /// Used by the ISel to turn in optimizations for POWER4-derived architectures
   bool IsGigaProcessor;
+  bool HasFSQRT;
   bool IsAIX;
   bool IsDarwin;
 public:
@@ -42,6 +43,8 @@ public:
   /// function for this subtarget.
   unsigned getStackAlignment() const { return StackAlignment; }
 
+  bool hasFSQRT() const { return HasFSQRT; }
+  
   bool isAIX() const { return IsAIX; }
   bool isDarwin() const { return IsDarwin; }
   
