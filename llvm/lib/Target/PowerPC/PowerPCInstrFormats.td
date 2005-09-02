@@ -424,11 +424,14 @@ class XSForm_1<bits<6> opcode, bits<9> xo, dag OL, string asmstr>
 }
 
 // 1.7.11 XO-Form
-class XOForm_1<bits<6> opcode, bits<9> xo, bit oe, dag OL, string asmstr>
+class XOForm_1<bits<6> opcode, bits<9> xo, bit oe, dag OL, string asmstr,
+               list<dag> pattern>
          : I<opcode, OL, asmstr> {
   bits<5> RT;
   bits<5> RA;
   bits<5> RB;
+
+  let Pattern = pattern;
 
   bit RC = 0;    // set by isDOT
 
@@ -440,15 +443,9 @@ class XOForm_1<bits<6> opcode, bits<9> xo, bit oe, dag OL, string asmstr>
   let Inst{31}    = RC;  
 }
 
-class XOForm_1r<bits<6> opcode, bits<9> xo, bit oe, dag OL, string asmstr>
-  : XOForm_1<opcode, xo, oe, OL, asmstr> {
-  let Inst{11-15} = RB;
-  let Inst{16-20} = RA;
-}
-
 class XOForm_3<bits<6> opcode, bits<9> xo, bit oe, 
                dag OL, string asmstr>
-  : XOForm_1<opcode, xo, oe, OL, asmstr> {
+  : XOForm_1<opcode, xo, oe, OL, asmstr, []> {
   let RB = 0;
 }
 

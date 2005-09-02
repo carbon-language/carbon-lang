@@ -14,6 +14,15 @@
 
 include "PowerPCInstrFormats.td"
 
+def set;
+def mul;
+def udiv;
+def sdiv;
+def sub;
+def add;
+def mulhs;
+def mulhu;
+
 class isPPC64 { bit PPC64 = 1; }
 class isVMX   { bit VMX = 1; }
 class isDOT   {
@@ -70,7 +79,7 @@ let usesCustomDAGSchedInserter = 1 in {  // Expanded by the scheduler.
   def SELECT_CC_Int : Pseudo<(ops GPRC:$dst, CRRC:$cond, GPRC:$T, GPRC:$F,
                               i32imm:$BROPC), "; SELECT_CC PSEUDO!">;
   def SELECT_CC_FP  : Pseudo<(ops FPRC:$dst, CRRC:$cond, FPRC:$T, FPRC:$F,
-                             i32imm:$BROPC), "; SELECT_CC PSEUDO!">;
+                              i32imm:$BROPC), "; SELECT_CC PSEUDO!">;
 }
 
 
@@ -364,35 +373,47 @@ def SRADI  : XSForm_1<31, 413, (ops GPRC:$rA, GPRC:$rS, u6imm:$SH),
 // XO-Form instructions.  Arithmetic instructions that can set overflow bit
 //
 def ADD   : XOForm_1<31, 266, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
-                     "add $rT, $rA, $rB">;
+                     "add $rT, $rA, $rB",
+                     [(set GPRC:$rT, (add GPRC:$rA, GPRC:$rB))]>;
 def ADDC  : XOForm_1<31, 10, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
-                     "addc $rT, $rA, $rB">;
+                     "addc $rT, $rA, $rB",
+                     []>;
 def ADDE  : XOForm_1<31, 138, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
-                     "adde $rT, $rA, $rB">;
+                     "adde $rT, $rA, $rB",
+                     []>;
 def DIVD  : XOForm_1<31, 489, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
-                     "divd $rT, $rA, $rB">, isPPC64;
+                     "divd $rT, $rA, $rB",
+                     []>, isPPC64;
 def DIVDU : XOForm_1<31, 457, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
-                     "divdu $rT, $rA, $rB">, isPPC64;
+                     "divdu $rT, $rA, $rB",
+                     []>, isPPC64;
 def DIVW  : XOForm_1<31, 491, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
-                     "divw $rT, $rA, $rB">;
+                     "divw $rT, $rA, $rB",
+                     [(set GPRC:$rT, (sdiv GPRC:$rA, GPRC:$rB))]>;
 def DIVWU : XOForm_1<31, 459, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
-                     "divwu $rT, $rA, $rB">;
+                     "divwu $rT, $rA, $rB",
+                     [(set GPRC:$rT, (udiv GPRC:$rA, GPRC:$rB))]>;
 def MULHW : XOForm_1<31, 75, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
-                     "mulhw $rT, $rA, $rB">;
+                     "mulhw $rT, $rA, $rB",
+                     [(set GPRC:$rT, (mulhs GPRC:$rA, GPRC:$rB))]>;
 def MULHWU : XOForm_1<31, 11, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
-                     "mulhwu $rT, $rA, $rB">;
+                     "mulhwu $rT, $rA, $rB",
+                     [(set GPRC:$rT, (mulhu GPRC:$rA, GPRC:$rB))]>;
 def MULLD : XOForm_1<31, 233, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
-                     "mulld $rT, $rA, $rB">, isPPC64;
+                     "mulld $rT, $rA, $rB",
+                     []>, isPPC64;
 def MULLW : XOForm_1<31, 235, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
-                     "mullw $rT, $rA, $rB">;
+                     "mullw $rT, $rA, $rB",
+                     [(set GPRC:$rT, (mul GPRC:$rA, GPRC:$rB))]>;
 def SUBF  : XOForm_1<31, 40, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
-                     "subf $rT, $rA, $rB">;
+                     "subf $rT, $rA, $rB",
+                     [(set GPRC:$rT, (sub GPRC:$rB, GPRC:$rA))]>;
 def SUBFC : XOForm_1<31, 8, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
-                     "subfc $rT, $rA, $rB">;
+                     "subfc $rT, $rA, $rB",
+                     []>;
 def SUBFE : XOForm_1<31, 136, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
-                     "subfe $rT, $rA, $rB">;
-def SUB  : XOForm_1r<31, 40, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
-                     "sub $rT, $rA, $rB">;
+                     "subfe $rT, $rA, $rB",
+                     []>;
 def ADDME  : XOForm_3<31, 234, 0, (ops GPRC:$rT, GPRC:$rA),
                       "addme $rT, $rA">;
 def ADDZE  : XOForm_3<31, 202, 0, (ops GPRC:$rT, GPRC:$rA),
