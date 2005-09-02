@@ -613,12 +613,8 @@ PPC32TargetLowering::LowerCallTo(SDOperand Chain,
   
   std::vector<MVT::ValueType> RetVals;
   MVT::ValueType RetTyVT = getValueType(RetTy);
-  MVT::ValueType ActualRetTyVT = RetTyVT;
-  if (RetTyVT >= MVT::i1 && RetTyVT <= MVT::i16)
-    ActualRetTyVT = MVT::i32;   // Promote result to i32.
-    
   if (RetTyVT != MVT::isVoid)
-    RetVals.push_back(ActualRetTyVT);
+    RetVals.push_back(RetTyVT);
   RetVals.push_back(MVT::Other);
   
   SDOperand TheCall = SDOperand(DAG.getCall(RetVals,
@@ -626,17 +622,7 @@ PPC32TargetLowering::LowerCallTo(SDOperand Chain,
   Chain = TheCall.getValue(RetTyVT != MVT::isVoid);
   Chain = DAG.getNode(ISD::CALLSEQ_END, MVT::Other, Chain,
                       DAG.getConstant(NumBytes, getPointerTy()));
-  SDOperand RetVal = TheCall;
-  
-  // If the result is a small value, add a note so that we keep track of the
-  // information about whether it is sign or zero extended.
-  if (RetTyVT != ActualRetTyVT) {
-    RetVal = DAG.getNode(RetTy->isSigned() ? ISD::AssertSext : ISD::AssertZext,
-                         MVT::i32, RetVal, DAG.getValueType(RetTyVT));
-    RetVal = DAG.getNode(ISD::TRUNCATE, RetTyVT, RetVal);
-  }
-  
-  return std::make_pair(RetVal, Chain);
+  return std::make_pair(TheCall, Chain);
 }
 
 SDOperand PPC32TargetLowering::LowerVAStart(SDOperand Chain, SDOperand VAListP,
