@@ -260,89 +260,111 @@ void SelectionDAG::DeleteNode(SDNode *N) {
 /// the node.  We don't want future request for structurally identical nodes
 /// to return N anymore.
 void SelectionDAG::RemoveNodeFromCSEMaps(SDNode *N) {
+  bool Erased = false;
   switch (N->getOpcode()) {
   case ISD::Constant:
-    Constants.erase(std::make_pair(cast<ConstantSDNode>(N)->getValue(),
-                                   N->getValueType(0)));
+    Erased = Constants.erase(std::make_pair(cast<ConstantSDNode>(N)->getValue(),
+                                            N->getValueType(0)));
     break;
   case ISD::TargetConstant:
-    TargetConstants.erase(std::make_pair(cast<ConstantSDNode>(N)->getValue(),
-                                         N->getValueType(0)));
+    Erased = TargetConstants.erase(std::make_pair(
+                                    cast<ConstantSDNode>(N)->getValue(),
+                                                  N->getValueType(0)));
     break;
   case ISD::ConstantFP: {
     uint64_t V = DoubleToBits(cast<ConstantFPSDNode>(N)->getValue());
-    ConstantFPs.erase(std::make_pair(V, N->getValueType(0)));
+    Erased = ConstantFPs.erase(std::make_pair(V, N->getValueType(0)));
     break;
   }
   case ISD::CONDCODE:
     assert(CondCodeNodes[cast<CondCodeSDNode>(N)->get()] &&
            "Cond code doesn't exist!");
+    Erased = CondCodeNodes[cast<CondCodeSDNode>(N)->get()] != 0;
     CondCodeNodes[cast<CondCodeSDNode>(N)->get()] = 0;
     break;
   case ISD::GlobalAddress:
-    GlobalValues.erase(cast<GlobalAddressSDNode>(N)->getGlobal());
+    Erased = GlobalValues.erase(cast<GlobalAddressSDNode>(N)->getGlobal());
     break;
   case ISD::TargetGlobalAddress:
-    TargetGlobalValues.erase(cast<GlobalAddressSDNode>(N)->getGlobal());
+    Erased =TargetGlobalValues.erase(cast<GlobalAddressSDNode>(N)->getGlobal());
     break;
   case ISD::FrameIndex:
-    FrameIndices.erase(cast<FrameIndexSDNode>(N)->getIndex());
+    Erased = FrameIndices.erase(cast<FrameIndexSDNode>(N)->getIndex());
     break;
   case ISD::TargetFrameIndex:
-    TargetFrameIndices.erase(cast<FrameIndexSDNode>(N)->getIndex());
+    Erased = TargetFrameIndices.erase(cast<FrameIndexSDNode>(N)->getIndex());
     break;
   case ISD::ConstantPool:
-    ConstantPoolIndices.erase(cast<ConstantPoolSDNode>(N)->get());
+    Erased = ConstantPoolIndices.erase(cast<ConstantPoolSDNode>(N)->get());
     break;
   case ISD::TargetConstantPool:
-    TargetConstantPoolIndices.erase(cast<ConstantPoolSDNode>(N)->get());
+    Erased =TargetConstantPoolIndices.erase(cast<ConstantPoolSDNode>(N)->get());
     break;
   case ISD::BasicBlock:
-    BBNodes.erase(cast<BasicBlockSDNode>(N)->getBasicBlock());
+    Erased = BBNodes.erase(cast<BasicBlockSDNode>(N)->getBasicBlock());
     break;
   case ISD::ExternalSymbol:
-    ExternalSymbols.erase(cast<ExternalSymbolSDNode>(N)->getSymbol());
+    Erased = ExternalSymbols.erase(cast<ExternalSymbolSDNode>(N)->getSymbol());
     break;
   case ISD::VALUETYPE:
+    Erased = ValueTypeNodes[cast<VTSDNode>(N)->getVT()] != 0;
     ValueTypeNodes[cast<VTSDNode>(N)->getVT()] = 0;
     break;
   case ISD::Register:
-    RegNodes.erase(std::make_pair(cast<RegisterSDNode>(N)->getReg(),
-                                  N->getValueType(0)));
+    Erased = RegNodes.erase(std::make_pair(cast<RegisterSDNode>(N)->getReg(),
+                                           N->getValueType(0)));
     break;
   case ISD::SRCVALUE: {
     SrcValueSDNode *SVN = cast<SrcValueSDNode>(N);
-    ValueNodes.erase(std::make_pair(SVN->getValue(), SVN->getOffset()));
+    Erased =ValueNodes.erase(std::make_pair(SVN->getValue(), SVN->getOffset()));
     break;
   }    
   case ISD::LOAD:
-    Loads.erase(std::make_pair(N->getOperand(1),
-                               std::make_pair(N->getOperand(0),
-                                              N->getValueType(0))));
+    Erased = Loads.erase(std::make_pair(N->getOperand(1),
+                                        std::make_pair(N->getOperand(0),
+                                                       N->getValueType(0))));
     break;
   default:
-    if (N->getNumOperands() == 1)
-      UnaryOps.erase(std::make_pair(N->getOpcode(),
-                                    std::make_pair(N->getOperand(0),
-                                                   N->getValueType(0))));
-    else if (N->getNumOperands() == 2)
-      BinaryOps.erase(std::make_pair(N->getOpcode(),
-                                     std::make_pair(N->getOperand(0),
-                                                    N->getOperand(1))));
-    else if (N->getNumValues() == 1) {
-      std::vector<SDOperand> Ops(N->op_begin(), N->op_end());
-      OneResultNodes.erase(std::make_pair(N->getOpcode(),
-                                          std::make_pair(N->getValueType(0),
-                                                         Ops)));
+    if (N->getNumValues() == 1) {
+      if (N->getNumOperands() == 1) {
+        Erased = 
+          UnaryOps.erase(std::make_pair(N->getOpcode(),
+                                        std::make_pair(N->getOperand(0),
+                                                       N->getValueType(0))));
+      } else if (N->getNumOperands() == 2) {
+        Erased = 
+          BinaryOps.erase(std::make_pair(N->getOpcode(),
+                                         std::make_pair(N->getOperand(0),
+                                                        N->getOperand(1))));
+      } else { 
+        std::vector<SDOperand> Ops(N->op_begin(), N->op_end());
+        Erased = 
+          OneResultNodes.erase(std::make_pair(N->getOpcode(),
+                                              std::make_pair(N->getValueType(0),
+                                                             Ops)));
+      }
     } else {
       // Remove the node from the ArbitraryNodes map.
       std::vector<MVT::ValueType> RV(N->value_begin(), N->value_end());
       std::vector<SDOperand>     Ops(N->op_begin(), N->op_end());
-      ArbitraryNodes.erase(std::make_pair(N->getOpcode(),
-                                          std::make_pair(RV, Ops)));
+      Erased =
+        ArbitraryNodes.erase(std::make_pair(N->getOpcode(),
+                                            std::make_pair(RV, Ops)));
     }
     break;
   }
+#ifndef NDEBUG
+  // Verify that the node was actually in one of the CSE maps, unless it has a 
+  // flag result (which cannot be CSE'd) or is one of the special cases that are
+  // not subject to CSE.
+  if (!Erased && N->getValueType(N->getNumValues()-1) != MVT::Flag &&
+      N->getOpcode() != ISD::CALL && N->getOpcode() != ISD::CALLSEQ_START &&
+      N->getOpcode() != ISD::CALLSEQ_END) {
+    
+    N->dump();
+    assert(0 && "Node is not in map!");
+  }
+#endif
 }
 
 /// AddNonLeafNodeToCSEMaps - Add the specified node back to the CSE maps.  It
