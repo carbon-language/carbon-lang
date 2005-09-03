@@ -99,6 +99,8 @@ namespace {
   };
 }
 
+#include "PPC32GenDAGISel.inc"
+
 /// getGlobalBaseReg - Output the instructions required to put the
 /// base address to use for accessing globals into a register.
 ///
