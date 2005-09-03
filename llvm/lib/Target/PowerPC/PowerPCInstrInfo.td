@@ -20,7 +20,7 @@ class SDNode<string opcode, string sdclass = "SDNode"> {
 }
 
 def set;
-def input;
+def node;
 
 def imm        : SDNode<"ISD::Constant", "ConstantSDNode">;
 def vt         : SDNode<"ISD::VALUETYPE", "VTSDNode">;
@@ -40,23 +40,28 @@ def ctlz       : SDNode<"ISD::CTLZ">;
 /// PatFrag - Represents a pattern fragment.  This can match something on the
 /// DAG, frame a single node to multiply nested other fragments.
 ///
-class PatFrag<dag frag, code pred = [{}]> {
+class PatFrag<dag ops, dag frag, code pred = [{}]> {
+  dag Operands = ops;
   dag Fragment = frag;
   code Predicate = pred;
 }
+class PatLeaf<dag frag, code pred = [{}]> : PatFrag<(ops), frag, pred>;
 
 // Leaf fragments.
 
-def immAllOnes : PatFrag<(imm), [{ return N->isAllOnesValue(); }]>;
-def immZero    : PatFrag<(imm), [{ return N->isNullValue();    }]>;
+def immAllOnes : PatLeaf<(imm), [{ return N->isAllOnesValue(); }]>;
+def immZero    : PatLeaf<(imm), [{ return N->isNullValue();    }]>;
 
-def vtInt      : PatFrag<(vt),  [{ return MVT::isInteger(N->getVT()); }]>;
-def vtFP       : PatFrag<(vt),  [{ return MVT::isFloatingPoint(N->getVT()); }]>;
+def vtInt      : PatLeaf<(vt),  [{ return MVT::isInteger(N->getVT()); }]>;
+def vtFP       : PatLeaf<(vt),  [{ return MVT::isFloatingPoint(N->getVT()); }]>;
 
 // Other helper fragments.
 
-def not : PatFrag<(xor input:$in, immAllOnes)>;
-def ineg : PatFrag<(sub immZero, input:$in)>;
+def not  : PatFrag<(ops node:$in), (xor node:$in, immAllOnes)>;
+def ineg : PatFrag<(ops node:$in), (sub immZero, node:$in)>;
+
+
+
 
 
 class isPPC64 { bit PPC64 = 1; }
