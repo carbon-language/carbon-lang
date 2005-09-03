@@ -14,11 +14,16 @@
 
 include "PowerPCInstrFormats.td"
 
-class SDNode<string Opc> {
-  string Opcode = Opc;
+class SDNode<string opcode, string sdclass = "SDNode"> {
+  string Opcode  = opcode;
+  string SDClass = sdclass;
 }
 
 def set;
+def input;
+
+def imm        : SDNode<"ISD::Constant", "ConstantSDNode">;
+def vt         : SDNode<"ISD::VALUETYPE", "VTSDNode">;
 def and        : SDNode<"ISD::AND">;
 def or         : SDNode<"ISD::OR">;
 def xor        : SDNode<"ISD::XOR">;
@@ -31,6 +36,27 @@ def mulhs      : SDNode<"ISD::MULHS">;
 def mulhu      : SDNode<"ISD::MULHU">;
 def sext_inreg : SDNode<"ISD::SIGN_EXTEND_INREG">;
 def ctlz       : SDNode<"ISD::CTLZ">;
+
+/// PatFrag - Represents a pattern fragment.  This can match something on the
+/// DAG, frame a single node to multiply nested other fragments.
+///
+class PatFrag<dag frag, code pred = [{}]> {
+  dag Fragment = frag;
+  code Predicate = pred;
+}
+
+// Leaf fragments.
+
+def immAllOnes : PatFrag<(imm), [{ return N->isAllOnesValue(); }]>;
+def immZero    : PatFrag<(imm), [{ return N->isNullValue();    }]>;
+
+def vtInt      : PatFrag<(vt),  [{ return MVT::isInteger(N->getVT()); }]>;
+def vtFP       : PatFrag<(vt),  [{ return MVT::isFloatingPoint(N->getVT()); }]>;
+
+// Other helper fragments.
+
+def not : PatFrag<(xor input:$in, immAllOnes)>;
+def ineg : PatFrag<(sub immZero, input:$in)>;
 
 
 class isPPC64 { bit PPC64 = 1; }
@@ -249,6 +275,9 @@ def LWZX : XForm_1<31,  23, (ops GPRC:$dst, GPRC:$base, GPRC:$index),
 def LDX  : XForm_1<31,  21, (ops GPRC:$dst, GPRC:$base, GPRC:$index),
                    "ldx $dst, $base, $index">, isPPC64;
 }
+def NAND : XForm_6<31, 476, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
+                   "nand $rA, $rS, $rB",
+                   [(set GPRC:$rA, (not (and GPRC:$rS, GPRC:$rB)))]>;
 def AND  : XForm_6<31,  28, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    "and $rA, $rS, $rB",
                    [(set GPRC:$rT, (and GPRC:$rA, GPRC:$rB))]>;
@@ -257,25 +286,25 @@ def ANDo : XForm_6<31,  28, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    []>, isDOT;
 def ANDC : XForm_6<31,  60, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    "andc $rA, $rS, $rB",
-                   []>;
-def EQV  : XForm_6<31, 284, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
-                   "eqv $rA, $rS, $rB",
-                   []>;
-def NAND : XForm_6<31, 476, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
-                   "nand $rA, $rS, $rB",
-                   []>;
-def NOR  : XForm_6<31, 124, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
-                   "nor $rA, $rS, $rB",
-                   []>;
+                   [(set GPRC:$rA, (and GPRC:$rS, (not GPRC:$rB)))]>;
 def OR   : XForm_6<31, 444, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    "or $rA, $rS, $rB",
                    [(set GPRC:$rT, (or GPRC:$rA, GPRC:$rB))]>;
+def NOR  : XForm_6<31, 124, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
+                   "nor $rA, $rS, $rB",
+                   [(set GPRC:$rA, (not (or GPRC:$rS, GPRC:$rB)))]>;
 def ORo  : XForm_6<31, 444, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    "or. $rA, $rS, $rB",
                    []>, isDOT;
 def ORC  : XForm_6<31, 412, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    "orc $rA, $rS, $rB",
-                   []>;
+                   [(set GPRC:$rA, (or GPRC:$rS, (not GPRC:$rB)))]>;
+def EQV  : XForm_6<31, 284, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
+                   "eqv $rA, $rS, $rB",
+                   [(set GPRC:$rT, (not (xor GPRC:$rA, GPRC:$rB)))]>;
+def XOR  : XForm_6<31, 316, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
+                   "xor $rA, $rS, $rB",
+                   [(set GPRC:$rT, (xor GPRC:$rA, GPRC:$rB))]>;                   
 def SLD  : XForm_6<31,  27, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    "sld $rA, $rS, $rB",
                    []>, isPPC64;
@@ -294,9 +323,6 @@ def SRAD : XForm_6<31, 794, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
 def SRAW : XForm_6<31, 792, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    "sraw $rA, $rS, $rB",
                    []>;
-def XOR  : XForm_6<31, 316, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
-                   "xor $rA, $rS, $rB",
-                   [(set GPRC:$rT, (xor GPRC:$rA, GPRC:$rB))]>;
 let isStore = 1 in {
 def STBX  : XForm_8<31, 215, (ops GPRC:$rS, GPRC:$rA, GPRC:$rB),
                    "stbx $rS, $rA, $rB">;
