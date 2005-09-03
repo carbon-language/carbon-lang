@@ -362,7 +362,7 @@ void SelectionDAG::RemoveNodeFromCSEMaps(SDNode *N) {
   // not subject to CSE.
   if (!Erased && N->getValueType(N->getNumValues()-1) != MVT::Flag &&
       N->getOpcode() != ISD::CALL && N->getOpcode() != ISD::CALLSEQ_START &&
-      N->getOpcode() != ISD::CALLSEQ_END) {
+      N->getOpcode() != ISD::CALLSEQ_END && !N->isTargetOpcode()) {
     
     N->dump();
     assert(0 && "Node is not in map!");
