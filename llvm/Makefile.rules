@@ -1140,6 +1140,12 @@ $(ObjDir)/%GenCodeEmitter.inc.tmp: %.td $(ObjDir)/.dir
 	$(Echo) "Building $(<F) code emitter with tblgen"
 	$(Verb) $(TableGen) -gen-emitter -o $@ $<
 
+$(TARGET:%=$(ObjDir)/%GenDAGISel.inc.tmp): \
+$(ObjDir)/%GenDAGISel.inc.tmp : %.td $(ObjDir)/.dir
+	$(Echo) "Building $(<F) instruction selector implementation with tblgen"
+	$(Verb) $(TableGen) -gen-dag-isel -o $@ $<
+
+
 clean-local::
 	-$(Verb) $(RM) -f $(INCFiles)
 
