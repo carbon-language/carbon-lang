@@ -131,9 +131,9 @@ AlphaTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG)
   MachineBasicBlock& BB = MF.front();
   std::vector<SDOperand> ArgValues;
 
-  static const unsigned args_int[] = {
+  unsigned args_int[] = {
     Alpha::R16, Alpha::R17, Alpha::R18, Alpha::R19, Alpha::R20, Alpha::R21};
-  static const unsigned args_float[] = {
+  unsigned args_float[] = {
     Alpha::F16, Alpha::F17, Alpha::F18, Alpha::F19, Alpha::F20, Alpha::F21};
   unsigned added_int = 0;
   unsigned added_fp = 0;
@@ -155,7 +155,7 @@ AlphaTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG)
         abort();
       case MVT::f64:
       case MVT::f32:
-        MF.addLiveIn(args_float[count]);
+        args_float[count] = AddLiveIn(MF, args_float[count], getRegClassFor(VT));
         added_fp |= (1 << count);
         argt = DAG.getCopyFromReg(DAG.getRoot(), args_float[count], VT);
         DAG.setRoot(argt.getValue(1));
@@ -165,7 +165,7 @@ AlphaTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG)
       case MVT::i16:
       case MVT::i32:
       case MVT::i64:
-        MF.addLiveIn(args_int[count]);
+        args_int[count] = AddLiveIn(MF, args_int[count], getRegClassFor(MVT::i64));
         added_int |= (1 << count);
         argt = DAG.getCopyFromReg(DAG.getRoot(), args_int[count], MVT::i64);
         DAG.setRoot(argt.getValue(1));
@@ -198,7 +198,7 @@ AlphaTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG)
     std::vector<SDOperand> LS;
     for (int i = 0; i < 6; ++i) {
       if (!(added_int & (1 << i)))
-        MF.addLiveIn(args_int[i]);
+        args_int[i] = AddLiveIn(MF, args_int[i], getRegClassFor(MVT::i64));
       SDOperand argt = DAG.getCopyFromReg(DAG.getRoot(), args_int[i], MVT::i64);
       int FI = MFI->CreateFixedObject(8, -8 * (6 - i));
       if (i == 0) VarArgsBase = FI;
@@ -207,7 +207,7 @@ AlphaTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG)
                                SDFI, DAG.getSrcValue(NULL)));
 
       if (!(added_fp & (1 << i)))
-        MF.addLiveIn(args_float[i]);
+        args_float[i] = AddLiveIn(MF, args_float[i], getRegClassFor(MVT::f64));
       argt = DAG.getCopyFromReg(DAG.getRoot(), args_float[i], MVT::f64);
       FI = MFI->CreateFixedObject(8, - 8 * (12 - i));
       SDFI = DAG.getFrameIndex(FI, MVT::i64);

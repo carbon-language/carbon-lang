@@ -1733,6 +1733,11 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
       BuildMI(BB, Opc, 1, Result).addReg(Alpha::F31).addReg(Tmp2);
       return Result;
     }
+
+  case ISD::AssertSext:
+  case ISD::AssertZext:
+    return SelectExpr(N.getOperand(0));
+
   }
 
   return 0;
