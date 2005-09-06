@@ -101,3 +101,7 @@ off of the register to avoid the lis's.  This is even more important in PIC
 mode.
 
 ===-------------------------------------------------------------------------===
+
+Implement Newton-Rhapson method for improving estimate instructions to the
+correct accuracy, and implementing divide as multiply by reciprocal when it has
+more than one use.  Itanium will want this too.
