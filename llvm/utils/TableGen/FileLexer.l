@@ -214,10 +214,10 @@ ${Identifier}  { Filelval.StrVal = new std::string(yytext+1, yytext+yyleng);
 
 
 "/*"                    { BEGIN(comment); CommentDepth++; }
-<comment>[^*/]*         /* eat anything that's not a '*' or '/' */
-<comment>"*"+[^*/]*     /* eat up '*'s not followed by '/'s */
+<comment>[^*/]*         {} /* eat anything that's not a '*' or '/' */
+<comment>"*"+[^*/]*     {} /* eat up '*'s not followed by '/'s */
 <comment>"/*"           { ++CommentDepth; }
-<comment>"/"+[^*]*      /* eat up /'s not followed by *'s */
+<comment>"/"+[^*/]*     {} /* eat up /'s not followed by *'s */
 <comment>"*"+"/"        { if (!--CommentDepth) { BEGIN(INITIAL); } }
 <comment><<EOF>>        { err() << "Unterminated comment!\n"; exit(1); }
 
