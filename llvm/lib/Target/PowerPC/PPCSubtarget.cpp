@@ -132,6 +132,7 @@ PPCSubtarget::PPCSubtarget(const Module &M, const std::string &FS)
                            PowerPCSubTypeKV, PowerPCSubTypeKVSize,
                            PowerPCFeatureKV, PowerPCFeatureKVSize);
   IsGigaProcessor = (Bits & PowerPCFeatureGPUL ) != 0;
+  Is64Bit         = (Bits & PowerPCFeature64Bit) != 0;
   HasFSQRT        = (Bits & PowerPCFeatureFSqrt) != 0;
 
   // Set the boolean corresponding to the current target triple, or the default
