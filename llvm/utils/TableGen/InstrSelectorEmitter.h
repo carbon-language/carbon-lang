@@ -55,9 +55,9 @@ struct NodeType {
 
 
 
-/// TreePatternNode - Represent a node of the tree patterns.
+/// TreePatternNodeX - Represent a node of the tree patterns.
 ///
-class TreePatternNode {
+class TreePatternNodeX {
   /// Operator - The operation that this node represents... this is null if this
   /// is a leaf.
   Record *Operator;
@@ -68,16 +68,16 @@ class TreePatternNode {
 
   /// Children - If this is not a leaf (Operator != 0), this is the subtrees
   /// that we contain.
-  std::vector<std::pair<TreePatternNode*, std::string> > Children;
+  std::vector<std::pair<TreePatternNodeX*, std::string> > Children;
 
   /// Value - If this node is a leaf, this indicates what the thing is.
   ///
   Init *Value;
 public:
-  TreePatternNode(Record *o, const std::vector<std::pair<TreePatternNode*,
+  TreePatternNodeX(Record *o, const std::vector<std::pair<TreePatternNodeX*,
                                                          std::string> > &c)
     : Operator(o), Type(MVT::Other), Children(c), Value(0) {}
-  TreePatternNode(Init *V) : Operator(0), Type(MVT::Other), Value(V) {}
+  TreePatternNodeX(Init *V) : Operator(0), Type(MVT::Other), Value(V) {}
 
   Record *getOperator() const {
     assert(Operator && "This is a leaf node!");
@@ -89,7 +89,7 @@ public:
   bool isLeaf() const { return Operator == 0; }
 
   unsigned getNumChildren() const { return Children.size(); }
-  TreePatternNode *getChild(unsigned c) const {
+  TreePatternNodeX *getChild(unsigned c) const {
     assert(Operator != 0 && "This is a leaf node!");
     assert(c < Children.size() && "Child access out of range!");
     return Children[c].first;
@@ -111,7 +111,7 @@ public:
 
   /// clone - Make a copy of this tree and all of its children.
   ///
-  TreePatternNode *clone() const;
+  TreePatternNodeX *clone() const;
 
   void dump() const;
 
@@ -127,7 +127,7 @@ public:
   bool updateNodeType(MVT::ValueType VT, const std::string &RecName);
 };
 
-std::ostream &operator<<(std::ostream &OS, const TreePatternNode &N);
+std::ostream &operator<<(std::ostream &OS, const TreePatternNodeX &N);
 
 
 
@@ -146,13 +146,13 @@ private:
   /// Tree - The tree pattern which corresponds to this pattern.  Note that if
   /// there was a (set) node on the outside level that it has been stripped off.
   ///
-  TreePatternNode *Tree;
+  TreePatternNodeX *Tree;
 
   /// Result - If this is an instruction or expander pattern, this is the
   /// register result, specified with a (set) in the pattern.
   ///
   std::string ResultName;      // The name of the result value...
-  TreePatternNode *ResultNode; // The leaf node for the result register...
+  TreePatternNodeX *ResultNode; // The leaf node for the result register...
 
   /// TheRecord - The actual TableGen record corresponding to this pattern.
   ///
@@ -168,7 +168,7 @@ private:
 
   /// Args - This is a list of all of the arguments to this pattern, which are
   /// the non-void leaf nodes in this pattern.
-  std::vector<std::pair<TreePatternNode*, std::string> > Args;
+  std::vector<std::pair<TreePatternNodeX*, std::string> > Args;
 
   /// ISE - the instruction selector emitter coordinating this madness.
   ///
@@ -181,7 +181,7 @@ public:
           InstrSelectorEmitter &ise);
 
   /// Pattern - Constructor used for cloning nonterminal patterns
-  Pattern(TreePatternNode *tree, Record *rec, bool res,
+  Pattern(TreePatternNodeX *tree, Record *rec, bool res,
           InstrSelectorEmitter &ise)
     : PTy(Nonterminal), Tree(tree), ResultNode(0), TheRecord(rec),
       Resolved(res), ISE(ise) {
@@ -194,13 +194,13 @@ public:
 
   /// getTree - Return the tree pattern which corresponds to this pattern.
   ///
-  TreePatternNode *getTree() const { return Tree; }
+  TreePatternNodeX *getTree() const { return Tree; }
 
   Record *getResult() const {
     return ResultNode ? ResultNode->getValueRecord() : 0;
   }
   const std::string &getResultName() const { return ResultName; }
-  TreePatternNode *getResultNode() const { return ResultNode; }
+  TreePatternNodeX *getResultNode() const { return ResultNode; }
 
   /// getRecord - Return the actual TableGen record corresponding to this
   /// pattern.
@@ -208,7 +208,7 @@ public:
   Record *getRecord() const { return TheRecord; }
 
   unsigned getNumArgs() const { return Args.size(); }
-  TreePatternNode *getArg(unsigned i) const {
+  TreePatternNodeX *getArg(unsigned i) const {
     assert(i < Args.size() && "Argument reference out of range!");
     return Args[i].first;
   }
@@ -253,10 +253,10 @@ public:
   void dump() const;
 
 private:
-  void calculateArgs(TreePatternNode *N, const std::string &Name);
+  void calculateArgs(TreePatternNodeX *N, const std::string &Name);
   MVT::ValueType getIntrinsicType(Record *R) const;
-  TreePatternNode *ParseTreePattern(DagInit *DI);
-  bool InferTypes(TreePatternNode *N, bool &MadeChange);
+  TreePatternNodeX *ParseTreePattern(DagInit *DI);
+  bool InferTypes(TreePatternNodeX *N, bool &MadeChange);
 };
 
 std::ostream &operator<<(std::ostream &OS, const Pattern &P);
@@ -379,7 +379,7 @@ private:
   // pick.  This is structured this way to avoid reevaluations of non-obvious
   // subexpressions.
   void EmitMatchCosters(std::ostream &OS,
-            const std::vector<std::pair<Pattern*, TreePatternNode*> > &Patterns,
+            const std::vector<std::pair<Pattern*, TreePatternNodeX*> > &Patterns,
                         const std::string &VarPrefix, unsigned Indent);
 
   /// PrintExpanderOperand - Print out Arg as part of the instruction emission
@@ -389,7 +389,7 @@ private:
   /// to the BuildMI call.  If it is false, we are printing the result register
   /// name.
   void PrintExpanderOperand(Init *Arg, const std::string &NameVar,
-                            TreePatternNode *ArgDecl, Pattern *P,
+                            TreePatternNodeX *ArgDecl, Pattern *P,
                             bool PrintArg, std::ostream &OS);
 };
 

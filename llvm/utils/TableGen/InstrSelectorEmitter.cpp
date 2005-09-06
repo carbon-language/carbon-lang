@@ -33,12 +33,12 @@ NodeType::ArgResultTypes NodeType::Translate(Record *R) {
 
 
 //===----------------------------------------------------------------------===//
-// TreePatternNode implementation
+// TreePatternNodeX implementation
 //
 
 /// getValueRecord - Returns the value of this tree node as a record.  For now
 /// we only allow DefInit's as our leaf values, so this is used.
-Record *TreePatternNode::getValueRecord() const {
+Record *TreePatternNodeX::getValueRecord() const {
   DefInit *DI = dynamic_cast<DefInit*>(getValue());
   assert(DI && "Instruction Selector does not yet support non-def leaves!");
   return DI->getDef();
@@ -48,7 +48,7 @@ Record *TreePatternNode::getValueRecord() const {
 // updateNodeType - Set the node type of N to VT if VT contains information.  If
 // N already contains a conflicting type, then throw an exception
 //
-bool TreePatternNode::updateNodeType(MVT::ValueType VT,
+bool TreePatternNodeX::updateNodeType(MVT::ValueType VT,
                                      const std::string &RecName) {
   if (VT == MVT::Other || getType() == VT) return false;
   if (getType() == MVT::Other) {
@@ -63,7 +63,7 @@ bool TreePatternNode::updateNodeType(MVT::ValueType VT,
 /// are not themselves completely resolved, clone the nonterminal and resolve it
 /// with the using context we provide.
 ///
-void TreePatternNode::InstantiateNonterminals(InstrSelectorEmitter &ISE) {
+void TreePatternNodeX::InstantiateNonterminals(InstrSelectorEmitter &ISE) {
   if (!isLeaf()) {
     for (unsigned i = 0, e = getNumChildren(); i != e; ++i)
       getChild(i)->InstantiateNonterminals(ISE);
@@ -87,22 +87,22 @@ void TreePatternNode::InstantiateNonterminals(InstrSelectorEmitter &ISE) {
 
 /// clone - Make a copy of this tree and all of its children.
 ///
-TreePatternNode *TreePatternNode::clone() const {
-  TreePatternNode *New;
+TreePatternNodeX *TreePatternNodeX::clone() const {
+  TreePatternNodeX *New;
   if (isLeaf()) {
-    New = new TreePatternNode(Value);
+    New = new TreePatternNodeX(Value);
   } else {
-    std::vector<std::pair<TreePatternNode*, std::string> > CChildren;
+    std::vector<std::pair<TreePatternNodeX*, std::string> > CChildren;
     CChildren.reserve(Children.size());
     for (unsigned i = 0, e = getNumChildren(); i != e; ++i)
       CChildren.push_back(std::make_pair(getChild(i)->clone(),getChildName(i)));
-    New = new TreePatternNode(Operator, CChildren);
+    New = new TreePatternNodeX(Operator, CChildren);
   }
   New->setType(Type);
   return New;
 }
 
-std::ostream &llvm::operator<<(std::ostream &OS, const TreePatternNode &N) {
+std::ostream &llvm::operator<<(std::ostream &OS, const TreePatternNodeX &N) {
   if (N.isLeaf())
     return OS << N.getType() << ":" << *N.getValue();
   OS << "(" << N.getType() << ":";
@@ -116,7 +116,7 @@ std::ostream &llvm::operator<<(std::ostream &OS, const TreePatternNode &N) {
   return OS << ")";
 }
 
-void TreePatternNode::dump() const { std::cerr << *this; }
+void TreePatternNodeX::dump() const { std::cerr << *this; }
 
 //===----------------------------------------------------------------------===//
 // Pattern implementation
@@ -168,7 +168,7 @@ void Pattern::error(const std::string &Msg) const {
 /// calculateArgs - Compute the list of all of the arguments to this pattern,
 /// which are the non-void leaf nodes in this pattern.
 ///
-void Pattern::calculateArgs(TreePatternNode *N, const std::string &Name) {
+void Pattern::calculateArgs(TreePatternNodeX *N, const std::string &Name) {
   if (N->isLeaf() || N->getNumChildren() == 0) {
     if (N->getType() != MVT::isVoid)
       Args.push_back(std::make_pair(N, Name));
@@ -197,7 +197,7 @@ MVT::ValueType Pattern::getIntrinsicType(Record *R) const {
   return MVT::Other;
 }
 
-TreePatternNode *Pattern::ParseTreePattern(DagInit *Dag) {
+TreePatternNodeX *Pattern::ParseTreePattern(DagInit *Dag) {
   Record *Operator = Dag->getNodeType();
 
   if (Operator->isSubClassOf("ValueType")) {
@@ -207,9 +207,9 @@ TreePatternNode *Pattern::ParseTreePattern(DagInit *Dag) {
       error("Type cast only valid for a leaf node!");
 
     Init *Arg = Dag->getArg(0);
-    TreePatternNode *New;
+    TreePatternNodeX *New;
     if (DefInit *DI = dynamic_cast<DefInit*>(Arg)) {
-      New = new TreePatternNode(DI);
+      New = new TreePatternNodeX(DI);
       // If it's a regclass or something else known, set the type.
       New->setType(getIntrinsicType(DI->getDef()));
     } else if (DagInit *DI = dynamic_cast<DagInit*>(Arg)) {
@@ -228,7 +228,7 @@ TreePatternNode *Pattern::ParseTreePattern(DagInit *Dag) {
   if (!ISE.getNodeTypes().count(Operator))
     error("Unrecognized node '" + Operator->getName() + "'!");
 
-  std::vector<std::pair<TreePatternNode*, std::string> > Children;
+  std::vector<std::pair<TreePatternNodeX*, std::string> > Children;
 
   for (unsigned i = 0, e = Dag->getNumArgs(); i != e; ++i) {
     Init *Arg = Dag->getArg(i);
@@ -243,7 +243,7 @@ TreePatternNode *Pattern::ParseTreePattern(DagInit *Dag) {
                                 std::vector<std::pair<Init*, std::string> >()));
         --i;  // Revisit this node...
       } else {
-        Children.push_back(std::make_pair(new TreePatternNode(DefI),
+        Children.push_back(std::make_pair(new TreePatternNodeX(DefI),
                                           Dag->getArgName(i)));
         // If it's a regclass or something else known, set the type.
         Children.back().first->setType(getIntrinsicType(R));
@@ -254,7 +254,7 @@ TreePatternNode *Pattern::ParseTreePattern(DagInit *Dag) {
     }
   }
 
-  return new TreePatternNode(Operator, Children);
+  return new TreePatternNodeX(Operator, Children);
 }
 
 void Pattern::InferAllTypes() {
@@ -270,7 +270,7 @@ void Pattern::InferAllTypes() {
 // InferTypes - Perform type inference on the tree, returning true if there
 // are any remaining untyped nodes and setting MadeChange if any changes were
 // made.
-bool Pattern::InferTypes(TreePatternNode *N, bool &MadeChange) {
+bool Pattern::InferTypes(TreePatternNodeX *N, bool &MadeChange) {
   if (N->isLeaf()) return N->getType() == MVT::Other;
 
   bool AnyUnset = false;
@@ -283,7 +283,7 @@ bool Pattern::InferTypes(TreePatternNode *N, bool &MadeChange) {
     error("Incorrect number of children for " + Operator->getName() + " node!");
 
   for (unsigned i = 0, e = N->getNumChildren(); i != e; ++i) {
-    TreePatternNode *Child = N->getChild(i);
+    TreePatternNodeX *Child = N->getChild(i);
     AnyUnset |= InferTypes(Child, MadeChange);
 
     switch (NT.ArgTypes[i]) {
@@ -598,21 +598,21 @@ void InstrSelectorEmitter::CalculateComputableValues() {
 // MoveIdenticalPatterns - Given a tree pattern 'P', move all of the tree
 // patterns which have the same top-level structure as P from the 'From' list to
 // the 'To' list.
-static void MoveIdenticalPatterns(TreePatternNode *P,
-                    std::vector<std::pair<Pattern*, TreePatternNode*> > &From,
-                    std::vector<std::pair<Pattern*, TreePatternNode*> > &To) {
+static void MoveIdenticalPatterns(TreePatternNodeX *P,
+                    std::vector<std::pair<Pattern*, TreePatternNodeX*> > &From,
+                    std::vector<std::pair<Pattern*, TreePatternNodeX*> > &To) {
   assert(!P->isLeaf() && "All leaves are identical!");
 
-  const std::vector<TreePatternNode*> &PChildren = P->getChildren();
+  const std::vector<TreePatternNodeX*> &PChildren = P->getChildren();
   for (unsigned i = 0; i != From.size(); ++i) {
-    TreePatternNode *N = From[i].second;
+    TreePatternNodeX *N = From[i].second;
     assert(P->getOperator() == N->getOperator() &&"Differing operators?");
     assert(PChildren.size() == N->getChildren().size() &&
            "Nodes with different arity??");
     bool isDifferent = false;
     for (unsigned c = 0, e = PChildren.size(); c != e; ++c) {
-      TreePatternNode *PC = PChildren[c];
-      TreePatternNode *NC = N->getChild(c);
+      TreePatternNodeX *PC = PChildren[c];
+      TreePatternNodeX *NC = N->getChild(c);
       if (PC->isLeaf() != NC->isLeaf()) {
         isDifferent = true;
         break;
@@ -650,7 +650,7 @@ static std::string getNodeName(Record *R) {
 }
 
 
-static void EmitPatternPredicates(TreePatternNode *Tree,
+static void EmitPatternPredicates(TreePatternNodeX *Tree,
                                   const std::string &VarName, std::ostream &OS){
   OS << " && " << VarName << "->getNodeType() == ISD::"
      << getNodeName(Tree->getOperator());
@@ -661,7 +661,7 @@ static void EmitPatternPredicates(TreePatternNode *Tree,
                             VarName + "->getUse(" + utostr(c)+")", OS);
 }
 
-static void EmitPatternCosts(TreePatternNode *Tree, const std::string &VarName,
+static void EmitPatternCosts(TreePatternNodeX *Tree, const std::string &VarName,
                              std::ostream &OS) {
   for (unsigned c = 0, e = Tree->getNumChildren(); c != e; ++c)
     if (Tree->getChild(c)->isLeaf()) {
@@ -680,7 +680,7 @@ static void EmitPatternCosts(TreePatternNode *Tree, const std::string &VarName,
 // pick.  This is structured this way to avoid reevaluations of non-obvious
 // subexpressions.
 void InstrSelectorEmitter::EmitMatchCosters(std::ostream &OS,
-           const std::vector<std::pair<Pattern*, TreePatternNode*> > &Patterns,
+           const std::vector<std::pair<Pattern*, TreePatternNodeX*> > &Patterns,
                                             const std::string &VarPrefix,
                                             unsigned IndentAmt) {
   assert(!Patterns.empty() && "No patterns to emit matchers for!");
@@ -697,9 +697,9 @@ void InstrSelectorEmitter::EmitMatchCosters(std::ostream &OS,
   OS << "\n" << Indent << "// Operand matching costs...\n";
   std::set<std::string> ComputedValues;   // Avoid duplicate computations...
   for (unsigned i = 0, e = Patterns.size(); i != e; ++i) {
-    TreePatternNode *NParent = Patterns[i].second;
+    TreePatternNodeX *NParent = Patterns[i].second;
     for (unsigned c = 0, e = NParent->getNumChildren(); c != e; ++c) {
-      TreePatternNode *N = NParent->getChild(c);
+      TreePatternNodeX *N = NParent->getChild(c);
       if (N->isLeaf()) {
         Record *VR = N->getValueRecord();
         const std::string &LeafName = VR->getName();
@@ -723,11 +723,11 @@ void InstrSelectorEmitter::EmitMatchCosters(std::ostream &OS,
 #if 0
   // Separate out all of the patterns into groups based on what their top-level
   // signature looks like...
-  std::vector<std::pair<Pattern*, TreePatternNode*> > PatternsLeft(Patterns);
+  std::vector<std::pair<Pattern*, TreePatternNodeX*> > PatternsLeft(Patterns);
   while (!PatternsLeft.empty()) {
     // Process all of the patterns that have the same signature as the last
     // element...
-    std::vector<std::pair<Pattern*, TreePatternNode*> > Group;
+    std::vector<std::pair<Pattern*, TreePatternNodeX*> > Group;
     MoveIdenticalPatterns(PatternsLeft.back().second, PatternsLeft, Group);
     assert(!Group.empty() && "Didn't at least pick the source pattern?");
 
@@ -756,13 +756,13 @@ void InstrSelectorEmitter::EmitMatchCosters(std::ostream &OS,
       OS << "0;\n";
 
     // Loop over all of the operands, adding in their costs...
-    TreePatternNode *N = Group[0].second;
-    const std::vector<TreePatternNode*> &Children = N->getChildren();
+    TreePatternNodeX *N = Group[0].second;
+    const std::vector<TreePatternNodeX*> &Children = N->getChildren();
 
     // If necessary, emit conditionals to check for the appropriate tree
     // structure here...
     for (unsigned i = 0, e = Children.size(); i != e; ++i) {
-      TreePatternNode *C = Children[i];
+      TreePatternNodeX *C = Children[i];
       if (C->isLeaf()) {
         // We already calculated the cost for this leaf, add it in now...
         OS << Indent << "  " << LocCostName << " += "
@@ -774,7 +774,7 @@ void InstrSelectorEmitter::EmitMatchCosters(std::ostream &OS,
         OS << Indent << "  if (" << VarPrefix << "_Op" << i
            << "->getNodeType() == ISD::" << getNodeName(C->getOperator())
            << ") {\n";
-        std::vector<std::pair<Pattern*, TreePatternNode*> > SubPatterns;
+        std::vector<std::pair<Pattern*, TreePatternNodeX*> > SubPatterns;
         for (unsigned n = 0, e = Group.size(); n != e; ++n)
           SubPatterns.push_back(std::make_pair(Group[n].first,
                                                Group[n].second->getChild(i)));
@@ -796,7 +796,7 @@ void InstrSelectorEmitter::EmitMatchCosters(std::ostream &OS,
 
   for (unsigned i = 0, e = Patterns.size(); i != e; ++i) {
     Pattern *P = Patterns[i].first;
-    TreePatternNode *PTree = P->getTree();
+    TreePatternNodeX *PTree = P->getTree();
     unsigned PatternCost = 1;
 
     // Check to see if there are any non-leaf elements in the pattern.  If so,
@@ -838,8 +838,8 @@ void InstrSelectorEmitter::EmitMatchCosters(std::ostream &OS,
   }
 }
 
-static void ReduceAllOperands(TreePatternNode *N, const std::string &Name,
-             std::vector<std::pair<TreePatternNode*, std::string> > &Operands,
+static void ReduceAllOperands(TreePatternNodeX *N, const std::string &Name,
+             std::vector<std::pair<TreePatternNodeX*, std::string> > &Operands,
                               std::ostream &OS) {
   if (N->isLeaf()) {
     // If this is a leaf, register or nonterminal reference...
@@ -877,7 +877,7 @@ static void ReduceAllOperands(TreePatternNode *N, const std::string &Name,
 /// name.
 void InstrSelectorEmitter::PrintExpanderOperand(Init *Arg,
                                                 const std::string &NameVar,
-                                                TreePatternNode *ArgDeclNode,
+                                                TreePatternNodeX *ArgDeclNode,
                                                 Pattern *P, bool PrintArg,
                                                 std::ostream &OS) {
   if (DefInit *DI = dynamic_cast<DefInit*>(Arg)) {
@@ -939,7 +939,7 @@ void InstrSelectorEmitter::PrintExpanderOperand(Init *Arg,
 }
 
 static std::string getArgName(Pattern *P, const std::string &ArgName,
-       const std::vector<std::pair<TreePatternNode*, std::string> > &Operands) {
+       const std::vector<std::pair<TreePatternNodeX*, std::string> > &Operands) {
   assert(P->getNumArgs() == Operands.size() &&"Argument computation mismatch!");
   if (ArgName.empty()) return "";
 
@@ -1128,7 +1128,7 @@ void InstrSelectorEmitter::run(std::ostream &OS) {
            << "  unsigned Pattern = NoMatchPattern;\n"
            << "  unsigned MinCost = ~0U >> 1;\n";
 
-        std::vector<std::pair<Pattern*, TreePatternNode*> > Patterns;
+        std::vector<std::pair<Pattern*, TreePatternNodeX*> > Patterns;
         for (unsigned i = 0, e = J->second.size(); i != e; ++i)
           Patterns.push_back(std::make_pair(J->second[i],
                                             J->second[i]->getTree()));
@@ -1170,7 +1170,7 @@ void InstrSelectorEmitter::run(std::ostream &OS) {
         OS << "  case " << P->getRecord()->getName() << "_Pattern: {\n"
            << "    // " << *P << "\n";
         // Loop over the operands, reducing them...
-        std::vector<std::pair<TreePatternNode*, std::string> > Operands;
+        std::vector<std::pair<TreePatternNodeX*, std::string> > Operands;
         ReduceAllOperands(P->getTree(), "N", Operands, OS);
 
         // Now that we have reduced all of our operands, and have the values
@@ -1218,7 +1218,7 @@ void InstrSelectorEmitter::run(std::ostream &OS) {
           OS << ")";
 
           for (unsigned i = 0, e = Operands.size(); i != e; ++i) {
-            TreePatternNode *Op = Operands[i].first;
+            TreePatternNodeX *Op = Operands[i].first;
             if (Op->isLeaf()) {
               Record *RV = Op->getValueRecord();
               assert(RV->isSubClassOf("RegisterClass") &&
