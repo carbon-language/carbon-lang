@@ -817,6 +817,14 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
     Tmp3 = SelectExpr(N.getOperand(2));
     BuildMI(BB, PPC::FSEL, 3, Result).addReg(Tmp1).addReg(Tmp2).addReg(Tmp3);
     return Result;
+  case PPCISD::FCFID:
+    Tmp1 = SelectExpr(N.getOperand(0));
+    BuildMI(BB, PPC::FCFID, 1, Result).addReg(Tmp1);
+    return Result;
+  case PPCISD::FCTIDZ:
+    Tmp1 = SelectExpr(N.getOperand(0));
+    BuildMI(BB, PPC::FCTIDZ, 1, Result).addReg(Tmp1);
+    return Result;
   case PPCISD::FCTIWZ:
     Tmp1 = SelectExpr(N.getOperand(0));
     BuildMI(BB, PPC::FCTIWZ, 1, Result).addReg(Tmp1);
@@ -1084,13 +1092,13 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
       if (isOpcWithIntImmediate(N.getOperand(0), ISD::AND, Tmp3) &&
           isRotateAndMask(ISD::SRL, Tmp2, Tmp3, true, SH, MB, ME)) {
         Tmp1 = SelectExpr(N.getOperand(0).getOperand(0));
-        BuildMI(BB, PPC::RLWINM, 4, Result).addReg(Tmp1).addImm(SH)
+        BuildMI(BB, PPC::RLWINM, 4, Result).addReg(Tmp1).addImm(SH & 0x1F)
           .addImm(MB).addImm(ME);
         return Result;
       }
       Tmp1 = SelectExpr(N.getOperand(0));
       Tmp2 &= 0x1F;
-      BuildMI(BB, PPC::RLWINM, 4, Result).addReg(Tmp1).addImm(32-Tmp2)
+      BuildMI(BB, PPC::RLWINM, 4, Result).addReg(Tmp1).addImm((32-Tmp2) & 0x1F)
         .addImm(Tmp2).addImm(31);
     } else {
       Tmp1 = SelectExpr(N.getOperand(0));

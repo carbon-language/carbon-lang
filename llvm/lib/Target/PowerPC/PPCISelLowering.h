@@ -29,9 +29,15 @@ namespace llvm {
       ///
       FSEL,
       
-      /// FCTIWZ - The FCTIWZ instruction, taking an f32 or f64 operand,
-      /// producing an f64 value.
-      FCTIWZ,
+      /// FCFID - The FCFID instruction, taking an f64 operand and producing
+      /// and f64 value containing the FP representation of the integer that
+      /// was temporarily in the f64 operand.
+      FCFID,
+      
+      /// FCTI[D,W]Z - The FCTIDZ and FCTIWZ instructions, taking an f32 or f64 
+      /// operand, producing an f64 value containing the integer representation
+      /// of that FP value.
+      FCTIDZ, FCTIWZ,
     };
   }  
   

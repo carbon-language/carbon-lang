@@ -86,11 +86,18 @@ PPC32TargetLowering::PPC32TargetLowering(TargetMachine &TM)
   
   // PowerPC turns FP_TO_SINT into FCTIWZ and some load/stores.
   setOperationAction(ISD::FP_TO_SINT, MVT::i32, Custom);
-  
+
   // PowerPC does not have [U|S]INT_TO_FP
   setOperationAction(ISD::SINT_TO_FP, MVT::i32, Expand);
   setOperationAction(ISD::UINT_TO_FP, MVT::i32, Expand);
 
+  // 64 bit PowerPC implementations have instructions to facilitate conversion
+  // between i64 and fp.
+  if (TM.getSubtarget<PPCSubtarget>().is64Bit()) {
+    setOperationAction(ISD::FP_TO_SINT, MVT::i64, Custom);
+    setOperationAction(ISD::SINT_TO_FP, MVT::i64, Custom);
+  }
+  
   setSetCCResultContents(ZeroOrOneSetCCResult);
   
   computeRegisterProperties();
@@ -115,17 +122,43 @@ SDOperand PPC32TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   switch (Op.getOpcode()) {
   default: assert(0 && "Wasn't expecting to be able to lower this!"); 
   case ISD::FP_TO_SINT: {
-    assert(Op.getValueType() == MVT::i32 &&
-           MVT::isFloatingPoint(Op.getOperand(0).getValueType()));
-    Op = DAG.getNode(PPCISD::FCTIWZ, MVT::f64, Op.getOperand(0));
+    assert(MVT::isFloatingPoint(Op.getOperand(0).getValueType()));
+    switch (Op.getValueType()) {
+    default: assert(0 && "Unhandled FP_TO_SINT type in custom expander!");
+    case MVT::i32:
+      Op = DAG.getNode(PPCISD::FCTIWZ, MVT::f64, Op.getOperand(0));
+      break;
+    case MVT::i64:
+      Op = DAG.getNode(PPCISD::FCTIDZ, MVT::f64, Op.getOperand(0));
+      break;
+    }
    
     int FrameIdx =
       DAG.getMachineFunction().getFrameInfo()->CreateStackObject(8, 8);
     SDOperand FI = DAG.getFrameIndex(FrameIdx, MVT::i32);
     SDOperand ST = DAG.getNode(ISD::STORE, MVT::Other, DAG.getEntryNode(),
                                Op, FI, DAG.getSrcValue(0));
-    FI = DAG.getNode(ISD::ADD, MVT::i32, FI, DAG.getConstant(4, MVT::i32));
-    return DAG.getLoad(MVT::i32, ST, FI, DAG.getSrcValue(0));
+    if (Op.getOpcode() == PPCISD::FCTIDZ) {
+      Op = DAG.getLoad(MVT::i64, ST, FI, DAG.getSrcValue(0));
+    } else {
+      FI = DAG.getNode(ISD::ADD, MVT::i32, FI, DAG.getConstant(4, MVT::i32));
+      Op = DAG.getLoad(MVT::i32, ST, FI, DAG.getSrcValue(0));
+    }
+    return Op;
+  }
+  case ISD::SINT_TO_FP: {
+    assert(MVT::i64 == Op.getOperand(0).getValueType() && 
+           "Unhandled SINT_TO_FP type in custom expander!");
+    int FrameIdx =
+      DAG.getMachineFunction().getFrameInfo()->CreateStackObject(8, 8);
+    SDOperand FI = DAG.getFrameIndex(FrameIdx, MVT::i32);
+    SDOperand ST = DAG.getNode(ISD::STORE, MVT::Other, DAG.getEntryNode(),
+                               Op.getOperand(0), FI, DAG.getSrcValue(0));
+    SDOperand LD = DAG.getLoad(MVT::f64, ST, FI, DAG.getSrcValue(0));
+    SDOperand FP = DAG.getNode(PPCISD::FCFID, MVT::f64, LD);
+    if (MVT::f32 == Op.getValueType())
+      FP = DAG.getNode(ISD::FP_ROUND, MVT::f32, FP);
+    return FP;
   }
   case ISD::SELECT_CC: {
     // Turn FP only select_cc's into fsel instructions.

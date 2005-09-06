@@ -795,6 +795,14 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
                          Select(N->getOperand(1)),
                          Select(N->getOperand(2)));
     return SDOperand(N, 0);
+  case PPCISD::FCFID:
+    CurDAG->SelectNodeTo(N, PPC::FCFID, N->getValueType(0),
+                         Select(N->getOperand(0)));
+    return SDOperand(N, 0);
+  case PPCISD::FCTIDZ:
+    CurDAG->SelectNodeTo(N, PPC::FCTIDZ, N->getValueType(0),
+                         Select(N->getOperand(0)));
+    return SDOperand(N, 0);
   case PPCISD::FCTIWZ:
     CurDAG->SelectNodeTo(N, PPC::FCTIWZ, N->getValueType(0),
                          Select(N->getOperand(0)));
@@ -1085,10 +1093,11 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
         isRotateAndMask(N, Imm, true, SH, MB, ME))
       CurDAG->SelectNodeTo(N, PPC::RLWINM, MVT::i32, 
                            Select(N->getOperand(0).getOperand(0)),
-                           getI32Imm(SH), getI32Imm(MB), getI32Imm(ME));
+                           getI32Imm(SH & 0x1F), getI32Imm(MB), getI32Imm(ME));
     else if (isIntImmediate(N->getOperand(1), Imm))
       CurDAG->SelectNodeTo(N, PPC::RLWINM, MVT::i32, Select(N->getOperand(0)),
-                           getI32Imm(32-Imm), getI32Imm(Imm), getI32Imm(31));
+                           getI32Imm((32-Imm) & 0x1F), getI32Imm(Imm),
+                           getI32Imm(31));
     else
       CurDAG->SelectNodeTo(N, PPC::SRW, MVT::i32, Select(N->getOperand(0)),
                            Select(N->getOperand(1)));
