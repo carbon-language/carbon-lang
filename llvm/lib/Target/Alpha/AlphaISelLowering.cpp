@@ -135,8 +135,6 @@ AlphaTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG)
     Alpha::R16, Alpha::R17, Alpha::R18, Alpha::R19, Alpha::R20, Alpha::R21};
   unsigned args_float[] = {
     Alpha::F16, Alpha::F17, Alpha::F18, Alpha::F19, Alpha::F20, Alpha::F21};
-  unsigned added_int = 0;
-  unsigned added_fp = 0;
 
   int count = 0;
 
@@ -156,7 +154,6 @@ AlphaTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG)
       case MVT::f64:
       case MVT::f32:
         args_float[count] = AddLiveIn(MF, args_float[count], getRegClassFor(VT));
-        added_fp |= (1 << count);
         argt = DAG.getCopyFromReg(DAG.getRoot(), args_float[count], VT);
         DAG.setRoot(argt.getValue(1));
         break;
@@ -166,7 +163,6 @@ AlphaTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG)
       case MVT::i32:
       case MVT::i64:
         args_int[count] = AddLiveIn(MF, args_int[count], getRegClassFor(MVT::i64));
-        added_int |= (1 << count);
         argt = DAG.getCopyFromReg(DAG.getRoot(), args_int[count], MVT::i64);
         DAG.setRoot(argt.getValue(1));
         if (VT != MVT::i64) {
@@ -197,7 +193,7 @@ AlphaTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG)
     VarArgsOffset = count * 8;
     std::vector<SDOperand> LS;
     for (int i = 0; i < 6; ++i) {
-      if (!(added_int & (1 << i)))
+      if (args_int[i] < 1024)
         args_int[i] = AddLiveIn(MF, args_int[i], getRegClassFor(MVT::i64));
       SDOperand argt = DAG.getCopyFromReg(DAG.getRoot(), args_int[i], MVT::i64);
       int FI = MFI->CreateFixedObject(8, -8 * (6 - i));
@@ -206,7 +202,7 @@ AlphaTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG)
       LS.push_back(DAG.getNode(ISD::STORE, MVT::Other, DAG.getRoot(), argt,
                                SDFI, DAG.getSrcValue(NULL)));
 
-      if (!(added_fp & (1 << i)))
+      if (args_float[i] < 1024)
         args_float[i] = AddLiveIn(MF, args_float[i], getRegClassFor(MVT::f64));
       argt = DAG.getCopyFromReg(DAG.getRoot(), args_float[i], MVT::f64);
       FI = MFI->CreateFixedObject(8, - 8 * (12 - i));
@@ -278,8 +274,12 @@ AlphaTargetLowering::LowerCallTo(SDOperand Chain,
 
   std::vector<MVT::ValueType> RetVals;
   MVT::ValueType RetTyVT = getValueType(RetTy);
+  MVT::ValueType ActualRetTyVT = RetTyVT;
+  if (RetTyVT >= MVT::i1 && RetTyVT <= MVT::i32)
+    ActualRetTyVT = MVT::i64;
+
   if (RetTyVT != MVT::isVoid)
-    RetVals.push_back(RetTyVT);
+    RetVals.push_back(ActualRetTyVT);
   RetVals.push_back(MVT::Other);
 
   SDOperand TheCall = SDOperand(DAG.getCall(RetVals,
@@ -287,7 +287,15 @@ AlphaTargetLowering::LowerCallTo(SDOperand Chain,
   Chain = TheCall.getValue(RetTyVT != MVT::isVoid);
   Chain = DAG.getNode(ISD::CALLSEQ_END, MVT::Other, Chain,
                       DAG.getConstant(NumBytes, getPointerTy()));
-  return std::make_pair(TheCall, Chain);
+  SDOperand RetVal = TheCall;
+
+  if (RetTyVT != ActualRetTyVT) {
+    RetVal = DAG.getNode(RetTy->isSigned() ? ISD::AssertSext : ISD::AssertZext,
+                         MVT::i64, RetVal, DAG.getValueType(RetTyVT));
+    RetVal = DAG.getNode(ISD::TRUNCATE, RetTyVT, RetVal);
+  }
+
+  return std::make_pair(RetVal, Chain);
 }
 
 SDOperand AlphaTargetLowering::LowerVAStart(SDOperand Chain, SDOperand VAListP,

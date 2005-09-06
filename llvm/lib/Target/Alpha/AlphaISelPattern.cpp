@@ -691,10 +691,16 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
   unsigned &Reg = ExprMap[N];
   if (Reg) return Reg;
 
-  if (N.getOpcode() != ISD::CALL && N.getOpcode() != ISD::TAILCALL)
+  switch(N.getOpcode()) {
+  default:
     Reg = Result = (N.getValueType() != MVT::Other) ?
       MakeReg(N.getValueType()) : notIn;
-  else {
+      break;
+  case ISD::AssertSext:
+  case ISD::AssertZext:
+    return Reg = SelectExpr(N.getOperand(0));
+  case ISD::CALL:
+  case ISD::TAILCALL:
     // If this is a call instruction, make sure to prepare ALL of the result
     // values as well as the chain.
     if (Node->getNumValues() == 1)
@@ -706,6 +712,7 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
         ExprMap[N.getValue(i)] = MakeReg(Node->getValueType(i));
       ExprMap[SDOperand(Node, Node->getNumValues()-1)] = notIn;
     }
+    break;
   }
 
   switch (opcode) {
@@ -1003,10 +1010,6 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
       switch (Node->getValueType(0)) {
       default: Node->dump(); assert(0 && "Unknown value type for call result!");
       case MVT::Other: return notIn;
-      case MVT::i1:
-      case MVT::i8:
-      case MVT::i16:
-      case MVT::i32:
       case MVT::i64:
         BuildMI(BB, Alpha::BIS, 2, Result).addReg(Alpha::R0).addReg(Alpha::R0);
         break;
