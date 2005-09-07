@@ -62,6 +62,7 @@ namespace {
     // Select - Convert the specified operand from a target-independent to a
     // target-specific node if it hasn't already been changed.
     SDOperand Select(SDOperand Op);
+    SDOperand SelectCode(SDOperand Op);
     
     SDNode *SelectIntImmediateExpr(SDOperand LHS, SDOperand RHS,
                                    unsigned OCHi, unsigned OCLo,
@@ -636,16 +637,7 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
     return Op;   // Already selected.
   
   switch (N->getOpcode()) {
-  default:
-    std::cerr << "Cannot yet select: ";
-    N->dump();
-    std::cerr << "\n";
-    abort();
-  case ISD::EntryToken:       // These leaves remain the same.
-    return Op;
-  case ISD::AssertSext:
-  case ISD::AssertZext:
-    return Select(N->getOperand(0));
+  default: break;
   case ISD::TokenFactor: {
     SDOperand New;
     if (N->getNumOperands() == 2) {
@@ -1598,9 +1590,7 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
   }
   }
   
-  assert(0 && "Unreachable!");
-  abort();
-  return SDOperand(N, Op.ResNo);
+  return SelectCode(Op);
 }
 
 
