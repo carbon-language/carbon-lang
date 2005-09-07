@@ -157,8 +157,8 @@ uint32_t SubtargetFeatures::Parse(const std::string &String,
     // Set base feature bits
     Bits = CPUEntry->Value;
   } else {
-    std::cerr << Features[0]
-              << " is not a recognized processor for this target"
+    std::cerr << "'" << Features[0]
+              << "' is not a recognized processor for this target"
               << " (ignoring processor)"
               << "\n";
   }
@@ -177,8 +177,8 @@ uint32_t SubtargetFeatures::Parse(const std::string &String,
       if (isEnabled(Feature)) Bits |=  FeatureEntry->Value;
       else                    Bits &= ~FeatureEntry->Value;
     } else {
-      std::cerr << Feature
-                << " is not a recognized feature for this target"
+      std::cerr << "'" << Feature
+                << "' is not a recognized feature for this target"
                 << " (ignoring feature)"
                 << "\n";
     }
