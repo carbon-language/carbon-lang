@@ -328,9 +328,16 @@ public:
   /// version if 'From' is known to have a single result, use the second
   /// if you have two nodes with identical results, use the third otherwise.
   ///
-  void ReplaceAllUsesWith(SDOperand From, SDOperand Op);
-  void ReplaceAllUsesWith(SDNode *From, SDNode *To);
-  void ReplaceAllUsesWith(SDNode *From, const std::vector<SDOperand> &To);
+  /// These methods all take an optional vector, which (if not null) is 
+  /// populated with any nodes that are deleted from the SelectionDAG, due to
+  /// new equivalences that are discovered.
+  ///
+  void ReplaceAllUsesWith(SDOperand From, SDOperand Op,
+                          std::vector<SDNode*> *Deleted = 0);
+  void ReplaceAllUsesWith(SDNode *From, SDNode *To,
+                          std::vector<SDNode*> *Deleted = 0);
+  void ReplaceAllUsesWith(SDNode *From, const std::vector<SDOperand> &To,
+                          std::vector<SDNode*> *Deleted = 0);
   
   
   /// DeleteNode - Remove the specified node from the system.  This node must
@@ -343,6 +350,7 @@ private:
   void RemoveNodeFromCSEMaps(SDNode *N);
   SDNode *AddNonLeafNodeToCSEMaps(SDNode *N);
   void DeleteNodeIfDead(SDNode *N, void *NodeSet);
+  void DeleteNodeNotInCSEMaps(SDNode *N);
   
   /// SimplifySetCC - Try to simplify a setcc built with the specified operands 
   /// and cc.  If unable to simplify it, return a null SDOperand.
