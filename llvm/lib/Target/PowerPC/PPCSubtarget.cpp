@@ -123,7 +123,7 @@ PPCSubtarget::PPCSubtarget(const Module &M, const std::string &FS)
   : StackAlignment(16), IsGigaProcessor(false), IsAIX(false), IsDarwin(false) {
 
   // Determine default and user specified characteristics
-  std::string CPU;
+  std::string CPU = "generic";
 #if defined(__APPLE__)
   CPU = GetCurrentPowerPCCPU();
 #endif
