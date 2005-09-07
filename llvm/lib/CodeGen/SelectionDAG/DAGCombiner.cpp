@@ -37,6 +37,7 @@
 #define DEBUG_TYPE "dagcombine"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/CodeGen/SelectionDAG.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Target/TargetLowering.h"
 #include <cmath>
@@ -76,8 +77,8 @@ namespace {
     // Visitation implementation - Implement dag node combining for different
     // node types.  The semantics are as follows:
     // Return Value:
-    //    null        - No change was made
-    //   otherwise    - Node N should be replaced by the returned node.
+    //   SDOperand.Val == 0   - No change was made
+    //   otherwise            - N should be replaced by the returned Operand.
     //
     SDOperand visitTokenFactor(SDNode *N);
     SDOperand visitADD(SDNode *N);
@@ -266,9 +267,9 @@ void DAGCombiner::Run(bool RunningAfterLegalize) {
       // CombineTo was used.  Since CombineTo takes care of the worklist 
       // mechanics for us, we have no work to do in this case.
       if (RV.Val != N) {
-        std::cerr << "\nReplacing "; N->dump();
-        std::cerr << "\nWith: "; RV.Val->dump();
-        std::cerr << '\n';
+        DEBUG(std::cerr << "\nReplacing "; N->dump();
+              std::cerr << "\nWith: "; RV.Val->dump();
+              std::cerr << '\n');
         DAG.ReplaceAllUsesWith(SDOperand(N, 0), RV);
           
         // Push the new node and any users onto the worklist

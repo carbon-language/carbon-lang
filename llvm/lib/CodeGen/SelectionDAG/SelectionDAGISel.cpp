@@ -36,6 +36,18 @@
 #include <iostream>
 using namespace llvm;
 
+// Temporary command line code to enable use of the dag combiner as a beta
+// option.
+namespace llvm {
+  bool CombinerEnabled;
+}
+namespace {
+  cl::opt<bool, true>
+  CombineDAG("enable-dag-combiner", cl::Hidden,
+             cl::desc("Run the DAG combiner before and after Legalize"),
+             cl::location(CombinerEnabled),
+             cl::init(false));
+}
 #ifndef NDEBUG
 static cl::opt<bool>
 ViewDAGs("view-isel-dags", cl::Hidden,
@@ -43,6 +55,7 @@ ViewDAGs("view-isel-dags", cl::Hidden,
 #else
 static const bool ViewDAGs = 0;
 #endif
+
 
 namespace llvm {
   //===--------------------------------------------------------------------===//
@@ -1234,6 +1247,9 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB, MachineFunction &MF,
   // types that are not supported by the target.
   BuildSelectionDAG(DAG, LLVMBB, PHINodesToUpdate, FuncInfo);
 
+  // Run the DAG combiner in pre-legalize mode, if we are told to do so
+  if (CombinerEnabled) DAG.Combine(false);
+  
   DEBUG(std::cerr << "Lowered selection DAG:\n");
   DEBUG(DAG.dump());
 
@@ -1246,6 +1262,9 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB, MachineFunction &MF,
 
   if (ViewDAGs) DAG.viewGraph();
 
+  // Run the DAG combiner in post-legalize mode, if we are told to do so
+  if (CombinerEnabled) DAG.Combine(true);
+  
   // Third, instruction select all of the operations to machine code, adding the
   // code to the MachineBasicBlock.
   InstructionSelectBasicBlock(DAG);
