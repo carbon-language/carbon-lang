@@ -27,6 +27,11 @@
 #include <algorithm>
 using namespace llvm;
 
+// Temporary boolean for testing the dag combiner
+namespace llvm {
+  extern bool CombinerEnabled;
+}
+
 static bool isCommutativeBinOp(unsigned Opcode) {
   switch (Opcode) {
   case ISD::ADD:
@@ -233,6 +238,13 @@ void SelectionDAG::DeleteNode(SDNode *N) {
 
   // First take this out of the appropriate CSE map.
   RemoveNodeFromCSEMaps(N);
+
+  // Finally, remove uses due to operands of this node, remove from the 
+  // AllNodes list, and delete the node.
+  DeleteNodeNotInCSEMaps(N);
+}
+
+void SelectionDAG::DeleteNodeNotInCSEMaps(SDNode *N) {
 
   // Remove it from the AllNodes list.
   for (std::vector<SDNode*>::iterator I = AllNodes.begin(); ; ++I) {
@@ -1244,6 +1256,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
   ConstantSDNode *N2C = dyn_cast<ConstantSDNode>(N2.Val);
   if (N1C) {
     if (N2C) {
+      if (!CombinerEnabled) {
       uint64_t C1 = N1C->getValue(), C2 = N2C->getValue();
       switch (Opcode) {
       case ISD::ADD: return getConstant(C1 + C2, VT);
@@ -1271,7 +1284,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
       case ISD::SRA  : return getConstant(N1C->getSignExtended() >>(int)C2, VT);
       default: break;
       }
-
+      }
     } else {      // Cannonicalize constant to RHS if commutative
       if (isCommutativeBinOp(Opcode)) {
         std::swap(N1C, N2C);
@@ -1279,6 +1292,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
       }
     }
 
+    if (!CombinerEnabled) {
     switch (Opcode) {
     default: break;
     case ISD::SHL:    // shl  0, X -> 0
@@ -1294,6 +1308,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
       // Extending a constant?  Just return the extended constant.
       SDOperand Tmp = getNode(ISD::TRUNCATE, cast<VTSDNode>(N2)->getVT(), N1);
       return getNode(ISD::SIGN_EXTEND, VT, Tmp);
+    }
     }
   }
 
@@ -1478,6 +1493,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
   ConstantFPSDNode *N2CFP = dyn_cast<ConstantFPSDNode>(N2.Val);
   if (N1CFP) {
     if (N2CFP) {
+      if (!CombinerEnabled) {
       double C1 = N1CFP->getValue(), C2 = N2CFP->getValue();
       switch (Opcode) {
       case ISD::ADD: return getConstantFP(C1 + C2, VT);
@@ -1491,7 +1507,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
         break;
       default: break;
       }
-
+      }
     } else {      // Cannonicalize constant to RHS if commutative
       if (isCommutativeBinOp(Opcode)) {
         std::swap(N1CFP, N2CFP);
@@ -1507,10 +1523,12 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
   // Finally, fold operations that do not require constants.
   switch (Opcode) {
   case ISD::TokenFactor:
+    if (!CombinerEnabled) {
     if (N1.getOpcode() == ISD::EntryToken)
       return N2;
     if (N2.getOpcode() == ISD::EntryToken)
       return N1;
+    }
     break;
 
   case ISD::AND:
@@ -2075,7 +2093,8 @@ void SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
 ///
 /// This version assumes From/To have a single result value.
 ///
-void SelectionDAG::ReplaceAllUsesWith(SDOperand FromN, SDOperand ToN) {
+void SelectionDAG::ReplaceAllUsesWith(SDOperand FromN, SDOperand ToN,
+                                      std::vector<SDNode*> *Deleted) {
   SDNode *From = FromN.Val, *To = ToN.Val;
   assert(From->getNumValues() == 1 && To->getNumValues() == 1 &&
          "Cannot replace with this method!");
@@ -2097,9 +2116,12 @@ void SelectionDAG::ReplaceAllUsesWith(SDOperand FromN, SDOperand ToN) {
 
     // Now that we have modified U, add it back to the CSE maps.  If it already
     // exists there, recursively merge the results together.
-    if (SDNode *Existing = AddNonLeafNodeToCSEMaps(U))
-      ReplaceAllUsesWith(U, Existing);
+    if (SDNode *Existing = AddNonLeafNodeToCSEMaps(U)) {
+      ReplaceAllUsesWith(U, Existing, Deleted);
       // U is now dead.
+      if (Deleted) Deleted->push_back(U);
+      DeleteNodeNotInCSEMaps(U);
+    }
   }
 }
 
@@ -2109,12 +2131,13 @@ void SelectionDAG::ReplaceAllUsesWith(SDOperand FromN, SDOperand ToN) {
 /// This version assumes From/To have matching types and numbers of result
 /// values.
 ///
-void SelectionDAG::ReplaceAllUsesWith(SDNode *From, SDNode *To) {
+void SelectionDAG::ReplaceAllUsesWith(SDNode *From, SDNode *To,
+                                      std::vector<SDNode*> *Deleted) {
   assert(From != To && "Cannot replace uses of with self");
   assert(From->getNumValues() == To->getNumValues() &&
          "Cannot use this version of ReplaceAllUsesWith!");
   if (From->getNumValues() == 1) {  // If possible, use the faster version.
-    ReplaceAllUsesWith(SDOperand(From, 0), SDOperand(To, 0));
+    ReplaceAllUsesWith(SDOperand(From, 0), SDOperand(To, 0), Deleted);
     return;
   }
   
@@ -2134,9 +2157,12 @@ void SelectionDAG::ReplaceAllUsesWith(SDNode *From, SDNode *To) {
         
     // Now that we have modified U, add it back to the CSE maps.  If it already
     // exists there, recursively merge the results together.
-    if (SDNode *Existing = AddNonLeafNodeToCSEMaps(U))
-      ReplaceAllUsesWith(U, Existing);
-    // U is now dead.
+    if (SDNode *Existing = AddNonLeafNodeToCSEMaps(U)) {
+      ReplaceAllUsesWith(U, Existing, Deleted);
+      // U is now dead.
+      if (Deleted) Deleted->push_back(U);
+      DeleteNodeNotInCSEMaps(U);
+    }
   }
 }
 
@@ -2146,12 +2172,13 @@ void SelectionDAG::ReplaceAllUsesWith(SDNode *From, SDNode *To) {
 /// This version can replace From with any result values.  To must match the
 /// number and types of values returned by From.
 void SelectionDAG::ReplaceAllUsesWith(SDNode *From,
-                                      const std::vector<SDOperand> &To) {
+                                      const std::vector<SDOperand> &To,
+                                      std::vector<SDNode*> *Deleted) {
   assert(From->getNumValues() == To.size() &&
          "Incorrect number of values to replace with!");
   if (To.size() == 1 && To[0].Val->getNumValues() == 1) {
     // Degenerate case handled above.
-    ReplaceAllUsesWith(SDOperand(From, 0), To[0]);
+    ReplaceAllUsesWith(SDOperand(From, 0), To[0], Deleted);
     return;
   }
 
@@ -2172,9 +2199,12 @@ void SelectionDAG::ReplaceAllUsesWith(SDNode *From,
         
     // Now that we have modified U, add it back to the CSE maps.  If it already
     // exists there, recursively merge the results together.
-    if (SDNode *Existing = AddNonLeafNodeToCSEMaps(U))
-      ReplaceAllUsesWith(U, Existing);
-    // U is now dead.
+    if (SDNode *Existing = AddNonLeafNodeToCSEMaps(U)) {
+      ReplaceAllUsesWith(U, Existing, Deleted);
+      // U is now dead.
+      if (Deleted) Deleted->push_back(U);
+      DeleteNodeNotInCSEMaps(U);
+    }
   }
 }
 
