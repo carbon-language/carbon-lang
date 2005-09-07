@@ -866,6 +866,9 @@
 		DE8170AA08CFB44D0093BDEF /* TableGen.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = TableGen.cpp; sourceTree = "<group>"; };
 		DE8170AB08CFB44D0093BDEF /* TableGenBackend.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = TableGenBackend.cpp; sourceTree = "<group>"; };
 		DE8170AC08CFB44D0093BDEF /* TableGenBackend.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = TableGenBackend.h; sourceTree = "<group>"; };
+		DE8170C108CFB59B0093BDEF /* PPC32ISelDAGToDAG.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = PPC32ISelDAGToDAG.cpp; sourceTree = "<group>"; };
+		DE8170C408CFB5B20093BDEF /* PPC32ISelLowering.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = PPC32ISelLowering.cpp; sourceTree = "<group>"; };
+		DE8170C508CFB5B20093BDEF /* PPC32ISelLowering.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = PPC32ISelLowering.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -1373,6 +1376,9 @@
 				DE66EF5208ABEE5F00323D32 /* PPC32CodeEmitter.cpp */,
 				DE66EF5708ABEE5F00323D32 /* PPC32InstrInfo.cpp */,
 				DE66EF5808ABEE5F00323D32 /* PPC32InstrInfo.h */,
+				DE8170C108CFB59B0093BDEF /* PPC32ISelDAGToDAG.cpp */,
+				DE8170C408CFB5B20093BDEF /* PPC32ISelLowering.cpp */,
+				DE8170C508CFB5B20093BDEF /* PPC32ISelLowering.h */,
 				DE66EF5908ABEE5F00323D32 /* PPC32ISelPattern.cpp */,
 				DE66EF5B08ABEE5F00323D32 /* PPC32JITInfo.cpp */,
 				DE66EF5C08ABEE5F00323D32 /* PPC32JITInfo.h */,
