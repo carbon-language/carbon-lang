@@ -342,32 +342,38 @@ SDOperand DAGCombiner::visitADD(SDNode *N) {
   ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1);
   ConstantFPSDNode *N0CFP = dyn_cast<ConstantFPSDNode>(N0);
   ConstantFPSDNode *N1CFP = dyn_cast<ConstantFPSDNode>(N1);
+  MVT::ValueType VT = N0.getValueType();
   
   // fold (add c1, c2) -> c1+c2
   if (N0C && N1C)
-    return DAG.getConstant(N0C->getValue() + N1C->getValue(),
-                           N->getValueType(0));
+    return DAG.getConstant(N0C->getValue() + N1C->getValue(), VT);
   // fold (add x, 0) -> x
   if (N1C && N1C->isNullValue())
     return N0;
+  // fold (add (add x, c1), c2) -> (add x, c1+c2)
+  if (N1C && N0.getOpcode() == ISD::ADD && 
+      N0.getOperand(1).getOpcode() == ISD::Constant)
+    return DAG.getNode(ISD::ADD, VT, N0.getOperand(0), 
+                       DAG.getConstant(N1C->getValue() +
+                             cast<ConstantSDNode>(N0.getOperand(1))->getValue(),
+                             VT));
   // fold floating point (add c1, c2) -> c1+c2
   if (N0CFP && N1CFP)
-    return DAG.getConstantFP(N0CFP->getValue() + N1CFP->getValue(),
-                             N->getValueType(0));
+    return DAG.getConstantFP(N0CFP->getValue() + N1CFP->getValue(), VT);
   // fold (A + (-B)) -> A-B
   if (N1.getOpcode() == ISD::FNEG)
-    return DAG.getNode(ISD::SUB, N->getValueType(0), N0, N1.getOperand(0));
+    return DAG.getNode(ISD::SUB, VT, N0, N1.getOperand(0));
   // fold ((-A) + B) -> B-A
   if (N0.getOpcode() == ISD::FNEG)
-    return DAG.getNode(ISD::SUB, N->getValueType(0), N1, N0.getOperand(0));
+    return DAG.getNode(ISD::SUB, VT, N1, N0.getOperand(0));
   // fold ((0-A) + B) -> B-A
   if (N0.getOpcode() == ISD::SUB && isa<ConstantSDNode>(N0.getOperand(0)) &&
       cast<ConstantSDNode>(N0.getOperand(0))->isNullValue())
-    return DAG.getNode(ISD::SUB, N->getValueType(0), N1, N0.getOperand(1));
+    return DAG.getNode(ISD::SUB, VT, N1, N0.getOperand(1));
   // fold (A + (0-B)) -> A-B
   if (N1.getOpcode() == ISD::SUB && isa<ConstantSDNode>(N1.getOperand(0)) &&
       cast<ConstantSDNode>(N1.getOperand(0))->isNullValue())
-    return DAG.getNode(ISD::SUB, N->getValueType(0), N0, N1.getOperand(1));
+    return DAG.getNode(ISD::SUB, VT, N0, N1.getOperand(1));
   // fold (A+(B-A)) -> B for non-fp types
   if (N1.getOpcode() == ISD::SUB && N0 == N1.getOperand(1) &&
       !MVT::isFloatingPoint(N1.getValueType()))
