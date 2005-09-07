@@ -1256,7 +1256,6 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
   ConstantSDNode *N2C = dyn_cast<ConstantSDNode>(N2.Val);
   if (N1C) {
     if (N2C) {
-      if (!CombinerEnabled) {
       uint64_t C1 = N1C->getValue(), C2 = N2C->getValue();
       switch (Opcode) {
       case ISD::ADD: return getConstant(C1 + C2, VT);
@@ -1283,7 +1282,6 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
       case ISD::SRL  : return getConstant(C1 >> C2, VT);
       case ISD::SRA  : return getConstant(N1C->getSignExtended() >>(int)C2, VT);
       default: break;
-      }
       }
     } else {      // Cannonicalize constant to RHS if commutative
       if (isCommutativeBinOp(Opcode)) {
@@ -1315,6 +1313,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
   if (N2C) {
     uint64_t C2 = N2C->getValue();
 
+    if (!CombinerEnabled) {
     switch (Opcode) {
     case ISD::ADD:
       if (!C2) return N1;         // add X, 0 -> X
@@ -1481,6 +1480,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
       }
       break;
     }
+    }
 
     // Reassociate ((X op C1) op C2) if possible.
     if (N1.getOpcode() == Opcode && isAssociativeBinOp(Opcode))
@@ -1493,7 +1493,6 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
   ConstantFPSDNode *N2CFP = dyn_cast<ConstantFPSDNode>(N2.Val);
   if (N1CFP) {
     if (N2CFP) {
-      if (!CombinerEnabled) {
       double C1 = N1CFP->getValue(), C2 = N2CFP->getValue();
       switch (Opcode) {
       case ISD::ADD: return getConstantFP(C1 + C2, VT);
@@ -1507,7 +1506,6 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
         break;
       default: break;
       }
-      }
     } else {      // Cannonicalize constant to RHS if commutative
       if (isCommutativeBinOp(Opcode)) {
         std::swap(N1CFP, N2CFP);
@@ -1515,9 +1513,11 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
       }
     }
 
+    if (!CombinerEnabled) {
     if (Opcode == ISD::FP_ROUND_INREG)
       return getNode(ISD::FP_EXTEND, VT,
                      getNode(ISD::FP_ROUND, cast<VTSDNode>(N2)->getVT(), N1));
+    }
   }
 
   // Finally, fold operations that do not require constants.

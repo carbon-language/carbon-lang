@@ -223,11 +223,11 @@ static bool isSetCCEquivalent(SDOperand N, SDOperand &LHS, SDOperand &RHS,
   return false;
 }
 
-// isInvertibleForFree - Return true if there is no cost to emitting the logical
-// inverse of this node.
-static bool isInvertibleForFree(SDOperand N) {
+// isOneUseSetCC - Return true if this is a SetCC-equivalent operation with only
+// one use.  If this is true, it allows the users to invert the operation for
+// free when it is profitable to do so.
+static bool isOneUseSetCC(SDOperand N) {
   SDOperand N0, N1, N2;
-  if (isa<ConstantSDNode>(N.Val)) return true;
   if (isSetCCEquivalent(N, N0, N1, N2) && N.Val->hasOneUse())
     return true;
   return false;
@@ -270,7 +270,7 @@ void DAGCombiner::Run(bool RunningAfterLegalize) {
         DEBUG(std::cerr << "\nReplacing "; N->dump();
               std::cerr << "\nWith: "; RV.Val->dump();
               std::cerr << '\n');
-        DAG.ReplaceAllUsesWith(SDOperand(N, 0), RV);
+        DAG.ReplaceAllUsesWith(N, std::vector<SDOperand>(1, RV));
           
         // Push the new node and any users onto the worklist
         WorkList.push_back(RV.Val);
@@ -347,6 +347,11 @@ SDOperand DAGCombiner::visitADD(SDNode *N) {
   // fold (add c1, c2) -> c1+c2
   if (N0C && N1C)
     return DAG.getConstant(N0C->getValue() + N1C->getValue(), VT);
+  // canonicalize constant to RHS
+  if (N0C && !N1C) {
+    std::swap(N0, N1);
+    std::swap(N0C, N1C);
+  }
   // fold (add x, 0) -> x
   if (N1C && N1C->isNullValue())
     return N0;
@@ -426,6 +431,11 @@ SDOperand DAGCombiner::visitMUL(SDNode *N) {
   if (N0C && N1C)
     return DAG.getConstant(N0C->getValue() * N1C->getValue(),
                            N->getValueType(0));
+  // canonicalize constant to RHS
+  if (N0C && !N1C) {
+    std::swap(N0, N1);
+    std::swap(N0C, N1C);
+  }
   // fold (mul x, 0) -> 0
   if (N1C && N1C->isNullValue())
     return N1;
@@ -556,6 +566,11 @@ SDOperand DAGCombiner::visitAND(SDNode *N) {
   // fold (and c1, c2) -> c1&c2
   if (N0C && N1C)
     return DAG.getConstant(N0C->getValue() & N1C->getValue(), VT);
+  // canonicalize constant to RHS
+  if (N0C && !N1C) {
+    std::swap(N0, N1);
+    std::swap(N0C, N1C);
+  }
   // fold (and x, -1) -> x
   if (N1C && N1C->isAllOnesValue())
     return N0;
@@ -593,6 +608,11 @@ SDOperand DAGCombiner::visitOR(SDNode *N) {
   if (N0C && N1C)
     return DAG.getConstant(N0C->getValue() | N1C->getValue(),
                            N->getValueType(0));
+  // canonicalize constant to RHS
+  if (N0C && !N1C) {
+    std::swap(N0, N1);
+    std::swap(N0C, N1C);
+  }
   // fold (or x, 0) -> x
   if (N1C && N1C->isNullValue())
     return N0;
@@ -617,6 +637,11 @@ SDOperand DAGCombiner::visitXOR(SDNode *N) {
   // fold (xor c1, c2) -> c1^c2
   if (N0C && N1C)
     return DAG.getConstant(N0C->getValue() ^ N1C->getValue(), VT);
+  // canonicalize constant to RHS
+  if (N0C && !N1C) {
+    std::swap(N0, N1);
+    std::swap(N0C, N1C);
+  }
   // fold (xor x, 0) -> x
   if (N1C && N1C->isNullValue())
     return N0;
@@ -632,22 +657,28 @@ SDOperand DAGCombiner::visitXOR(SDNode *N) {
     assert(0 && "Unhandled SetCC Equivalent!");
     abort();
   }
-  // fold !(x or y) -> (!x and !y) iff x or y are freely invertible
-  if (N1C && N1C->isAllOnesValue() && N0.getOpcode() == ISD::OR) {
+  // fold !(x or y) -> (!x and !y) iff x or y are setcc
+  if (N1C && N1C->getValue() == 1 && 
+      (N0.getOpcode() == ISD::OR || N0.getOpcode() == ISD::AND)) {
     SDOperand LHS = N0.getOperand(0), RHS = N0.getOperand(1);
-    if (isInvertibleForFree(RHS) || isInvertibleForFree(LHS)) {
+    if (isOneUseSetCC(RHS) || isOneUseSetCC(LHS)) {
+      unsigned NewOpcode = N0.getOpcode() == ISD::AND ? ISD::OR : ISD::AND;
       LHS = DAG.getNode(ISD::XOR, VT, LHS, N1);  // RHS = ~LHS
       RHS = DAG.getNode(ISD::XOR, VT, RHS, N1);  // RHS = ~RHS
-      return DAG.getNode(ISD::AND, VT, LHS, RHS);
+      WorkList.push_back(LHS.Val); WorkList.push_back(RHS.Val);
+      return DAG.getNode(NewOpcode, VT, LHS, RHS);
     }
   }
-  // fold !(x and y) -> (!x or !y) iff x or y are freely invertible
-  if (N1C && N1C->isAllOnesValue() && N0.getOpcode() == ISD::AND) {
+  // fold !(x or y) -> (!x and !y) iff x or y are constants
+  if (N1C && N1C->isAllOnesValue() && 
+      (N0.getOpcode() == ISD::OR || N0.getOpcode() == ISD::AND)) {
     SDOperand LHS = N0.getOperand(0), RHS = N0.getOperand(1);
-    if (isInvertibleForFree(RHS) || isInvertibleForFree(LHS)) {
+    if (isa<ConstantSDNode>(RHS) || isa<ConstantSDNode>(LHS)) {
+      unsigned NewOpcode = N0.getOpcode() == ISD::AND ? ISD::OR : ISD::AND;
       LHS = DAG.getNode(ISD::XOR, VT, LHS, N1);  // RHS = ~LHS
       RHS = DAG.getNode(ISD::XOR, VT, RHS, N1);  // RHS = ~RHS
-      return DAG.getNode(ISD::OR, VT, LHS, RHS);
+      WorkList.push_back(LHS.Val); WorkList.push_back(RHS.Val);
+      return DAG.getNode(NewOpcode, VT, LHS, RHS);
     }
   }
   return SDOperand();
