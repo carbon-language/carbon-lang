@@ -839,6 +839,33 @@
 		DE66F41E08ABF37000323D32 /* ModuleMaker.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = ModuleMaker.cpp; path = ModuleMaker/ModuleMaker.cpp; sourceTree = "<group>"; };
 		DE66F42608ABF37000323D32 /* ParallelJIT.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = ParallelJIT.cpp; path = ParallelJIT/ParallelJIT.cpp; sourceTree = "<group>"; };
 		DE694D9F08B51E0C0039C106 /* ScheduleDAG.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = ScheduleDAG.cpp; sourceTree = "<group>"; };
+		DE81704008CFB44D0093BDEF /* fpcmp.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = fpcmp.cpp; path = fpcmp/fpcmp.cpp; sourceTree = "<group>"; };
+		DE81704F08CFB44D0093BDEF /* NightlyTest.gnuplot */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = NightlyTest.gnuplot; sourceTree = "<group>"; };
+		DE81705008CFB44D0093BDEF /* NightlyTest.pl */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.script.perl; path = NightlyTest.pl; sourceTree = "<group>"; };
+		DE81705108CFB44D0093BDEF /* NightlyTestTemplate.html */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.html; path = NightlyTestTemplate.html; sourceTree = "<group>"; };
+		DE81705908CFB44D0093BDEF /* AsmWriterEmitter.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = AsmWriterEmitter.cpp; sourceTree = "<group>"; };
+		DE81705A08CFB44D0093BDEF /* AsmWriterEmitter.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = AsmWriterEmitter.h; sourceTree = "<group>"; };
+		DE81705B08CFB44D0093BDEF /* CodeEmitterGen.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = CodeEmitterGen.cpp; sourceTree = "<group>"; };
+		DE81705C08CFB44D0093BDEF /* CodeEmitterGen.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = CodeEmitterGen.h; sourceTree = "<group>"; };
+		DE81705D08CFB44D0093BDEF /* CodeGenInstruction.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = CodeGenInstruction.h; sourceTree = "<group>"; };
+		DE81705E08CFB44D0093BDEF /* CodeGenRegisters.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = CodeGenRegisters.h; sourceTree = "<group>"; };
+		DE81705F08CFB44D0093BDEF /* CodeGenTarget.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = CodeGenTarget.cpp; sourceTree = "<group>"; };
+		DE81706008CFB44D0093BDEF /* CodeGenTarget.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = CodeGenTarget.h; sourceTree = "<group>"; };
+		DE81706708CFB44D0093BDEF /* DAGISelEmitter.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = DAGISelEmitter.cpp; sourceTree = "<group>"; };
+		DE81706808CFB44D0093BDEF /* DAGISelEmitter.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = DAGISelEmitter.h; sourceTree = "<group>"; };
+		DE81708408CFB44D0093BDEF /* FileLexer.l */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.lex; path = FileLexer.l; sourceTree = "<group>"; };
+		DE81708808CFB44D0093BDEF /* FileParser.y */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.yacc; path = FileParser.y; sourceTree = "<group>"; };
+		DE81708908CFB44D0093BDEF /* InstrInfoEmitter.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = InstrInfoEmitter.cpp; sourceTree = "<group>"; };
+		DE81708A08CFB44D0093BDEF /* InstrInfoEmitter.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = InstrInfoEmitter.h; sourceTree = "<group>"; };
+		DE81708B08CFB44D0093BDEF /* InstrSelectorEmitter.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = InstrSelectorEmitter.cpp; sourceTree = "<group>"; };
+		DE81708C08CFB44D0093BDEF /* InstrSelectorEmitter.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = InstrSelectorEmitter.h; sourceTree = "<group>"; };
+		DE81708E08CFB44D0093BDEF /* Record.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = Record.cpp; sourceTree = "<group>"; };
+		DE81708F08CFB44D0093BDEF /* Record.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = Record.h; sourceTree = "<group>"; };
+		DE81709008CFB44D0093BDEF /* RegisterInfoEmitter.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = RegisterInfoEmitter.cpp; sourceTree = "<group>"; };
+		DE81709108CFB44D0093BDEF /* RegisterInfoEmitter.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = RegisterInfoEmitter.h; sourceTree = "<group>"; };
+		DE8170AA08CFB44D0093BDEF /* TableGen.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = TableGen.cpp; sourceTree = "<group>"; };
+		DE8170AB08CFB44D0093BDEF /* TableGenBackend.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = TableGenBackend.cpp; sourceTree = "<group>"; };
+		DE8170AC08CFB44D0093BDEF /* TableGenBackend.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = TableGenBackend.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -859,6 +886,7 @@
 				DE66F0E108ABEFB300323D32 /* lib/Transforms */,
 				DE66EC7508ABE8EF00323D32 /* lib/VMCore */,
 				DE66F2BD08ABF14400323D32 /* tools */,
+				DE816FAC08CFB44C0093BDEF /* utils */,
 				DE66F38D08ABF35C00323D32 /* docs */,
 				DE66F3FD08ABF37000323D32 /* examples */,
 				DE66F38C08ABF35300323D32 /* CREDITS.TXT */,
@@ -2206,6 +2234,49 @@
 			name = examples;
 			path = ../examples;
 			sourceTree = SOURCE_ROOT;
+		};
+		DE816FAC08CFB44C0093BDEF /* utils */ = {
+			isa = PBXGroup;
+			children = (
+				DE81705708CFB44D0093BDEF /* TableGen */,
+				DE81704008CFB44D0093BDEF /* fpcmp.cpp */,
+				DE81704F08CFB44D0093BDEF /* NightlyTest.gnuplot */,
+				DE81705008CFB44D0093BDEF /* NightlyTest.pl */,
+				DE81705108CFB44D0093BDEF /* NightlyTestTemplate.html */,
+			);
+			name = utils;
+			path = ../utils;
+			sourceTree = SOURCE_ROOT;
+		};
+		DE81705708CFB44D0093BDEF /* TableGen */ = {
+			isa = PBXGroup;
+			children = (
+				DE81705908CFB44D0093BDEF /* AsmWriterEmitter.cpp */,
+				DE81705A08CFB44D0093BDEF /* AsmWriterEmitter.h */,
+				DE81705B08CFB44D0093BDEF /* CodeEmitterGen.cpp */,
+				DE81705C08CFB44D0093BDEF /* CodeEmitterGen.h */,
+				DE81705D08CFB44D0093BDEF /* CodeGenInstruction.h */,
+				DE81705E08CFB44D0093BDEF /* CodeGenRegisters.h */,
+				DE81705F08CFB44D0093BDEF /* CodeGenTarget.cpp */,
+				DE81706008CFB44D0093BDEF /* CodeGenTarget.h */,
+				DE81706708CFB44D0093BDEF /* DAGISelEmitter.cpp */,
+				DE81706808CFB44D0093BDEF /* DAGISelEmitter.h */,
+				DE81708408CFB44D0093BDEF /* FileLexer.l */,
+				DE81708808CFB44D0093BDEF /* FileParser.y */,
+				DE81708908CFB44D0093BDEF /* InstrInfoEmitter.cpp */,
+				DE81708A08CFB44D0093BDEF /* InstrInfoEmitter.h */,
+				DE81708B08CFB44D0093BDEF /* InstrSelectorEmitter.cpp */,
+				DE81708C08CFB44D0093BDEF /* InstrSelectorEmitter.h */,
+				DE81708E08CFB44D0093BDEF /* Record.cpp */,
+				DE81708F08CFB44D0093BDEF /* Record.h */,
+				DE81709008CFB44D0093BDEF /* RegisterInfoEmitter.cpp */,
+				DE81709108CFB44D0093BDEF /* RegisterInfoEmitter.h */,
+				DE8170AA08CFB44D0093BDEF /* TableGen.cpp */,
+				DE8170AB08CFB44D0093BDEF /* TableGenBackend.cpp */,
+				DE8170AC08CFB44D0093BDEF /* TableGenBackend.h */,
+			);
+			path = TableGen;
+			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
 
