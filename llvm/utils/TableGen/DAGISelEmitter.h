@@ -23,6 +23,21 @@ namespace llvm {
   class DagInit;
   class TreePattern;
   class DAGISelEmitter;
+  
+  /// SDNodeInfo - One of these records is created for each SDNode instance in
+  /// the target .td file.  This represents the various dag nodes we will be
+  /// processing.
+  class SDNodeInfo {
+    Record *Def;
+    std::string EnumName;
+    std::string SDClassName;
+  public:
+    SDNodeInfo(Record *R);  // Parse the specified record.
+    
+    Record *getRecord() const { return Def; }
+    const std::string &getEnumName() const { return EnumName; }
+    const std::string &getSDClassName() const { return SDClassName; }
+  };
 
   /// FIXME: TreePatternNode's can be shared in some cases (due to dag-shaped
   /// patterns), and as such should be ref counted.  We currently just leak all
@@ -181,6 +196,7 @@ class DAGISelEmitter : public TableGenBackend {
   RecordKeeper &Records;
   CodeGenTarget Target;
 
+  std::map<Record*, SDNodeInfo> SDNodes;
   std::map<Record*, TreePattern*> PatternFragments;
   std::vector<TreePattern*> Instructions;
 public:
@@ -188,6 +204,11 @@ public:
 
   // run - Output the isel, returning true on failure.
   void run(std::ostream &OS);
+  
+  const SDNodeInfo &getSDNodeInfo(Record *R) const {
+    assert(SDNodes.count(R) && "Unknown node!");
+    return SDNodes.find(R)->second;
+  }
 
   TreePattern *getPatternFragment(Record *R) const {
     assert(PatternFragments.count(R) && "Invalid pattern fragment request!");
@@ -195,6 +216,7 @@ public:
   }
   
 private:
+  void ParseNodeInfo();
   void ParseAndResolvePatternFragments(std::ostream &OS);
   void ParseAndResolveInstructions();
   void EmitInstructionSelector(std::ostream &OS);

@@ -18,6 +18,13 @@
 #include <set>
 using namespace llvm;
 
+//===----------------------------------------------------------------------===//
+// SDNodeInfo implementation
+//
+SDNodeInfo::SDNodeInfo(Record *R) : Def(R) {
+  EnumName    = R->getValueAsString("Opcode");
+  SDClassName = R->getValueAsString("SDClass");
+}
 
 //===----------------------------------------------------------------------===//
 // TreePatternNode implementation
@@ -349,6 +356,15 @@ void TreePattern::dump() const { print(std::cerr); }
 // DAGISelEmitter implementation
 //
 
+// Parse all of the SDNode definitions for the target, populating SDNodes.
+void DAGISelEmitter::ParseNodeInfo() {
+  std::vector<Record*> Nodes = Records.getAllDerivedDefinitions("SDNode");
+  while (!Nodes.empty()) {
+    SDNodes.insert(std::make_pair(Nodes.back(), Nodes.back()));
+    Nodes.pop_back();
+  }
+}
+
 /// ParseAndResolvePatternFragments - Parse all of the PatFrag definitions in
 /// the .td file, building up the PatternFragments map.  After we've collected
 /// them all, inline fragments together as necessary, so that there are no
@@ -458,6 +474,7 @@ void DAGISelEmitter::run(std::ostream &OS) {
   EmitSourceFileHeader("DAG Instruction Selector for the " + Target.getName() +
                        " target", OS);
   
+  ParseNodeInfo();
   ParseAndResolvePatternFragments(OS);
   ParseAndResolveInstructions();
   
