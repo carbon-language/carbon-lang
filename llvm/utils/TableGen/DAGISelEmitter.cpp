@@ -391,7 +391,7 @@ void DAGISelEmitter::ParseAndResolvePatternFragments(std::ostream &OS) {
     if (!CI->getValue().empty()) {
       assert(!P->getTrees()[0]->isLeaf() && "Can't be a leaf!");
       std::string ClassName =
-          P->getTrees()[0]->getOperator()->getValueAsString("SDClass");
+        getSDNodeInfo(P->getTrees()[0]->getOperator()).getSDClassName();
       const char *C2 = ClassName == "SDNode" ? "N" : "inN";
       
       OS << "static inline bool Predicate_" << Fragments[i]->getName()
