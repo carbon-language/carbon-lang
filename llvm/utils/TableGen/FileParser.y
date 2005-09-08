@@ -291,6 +291,34 @@ Value : INTVAL {
     }
     
     delete $1;
+  } | ID '<' ValueListNE '>' {
+    // This is a CLASS<initvalslist> expression.  This is supposed to synthesize
+    // a new anonymous definition, deriving from CLASS<initvalslist> with no
+    // body.
+    Record *Class = Records.getClass(*$1);
+    if (!Class) {
+      err() << "Expected a class, got '" << *$1 << "'!\n";
+      exit(1);
+    }
+    delete $1;
+    
+    static unsigned AnonCounter = 0;
+    Record *OldRec = CurRec;  // Save CurRec.
+    
+    // Create the new record, set it as CurRec temporarily.
+    CurRec = new Record("anonymous.val."+utostr(AnonCounter++));
+    addSubClass(Class, *$3);    // Add info about the subclass to CurRec.
+    delete $3;  // Free up the template args.
+    
+    CurRec->resolveReferences();
+    
+    Records.addDef(CurRec);
+    
+    // The result of the expression is a reference to the new record.
+    $$ = new DefInit(CurRec);
+    
+    // Restore the old CurRec
+    CurRec = OldRec;
   } | Value '{' BitList '}' {
     $$ = $1->convertInitializerBitRange(*$3);
     if ($$ == 0) {
@@ -543,12 +571,13 @@ ClassInst : CLASS ObjectBody {
 DefInst : DEF ObjectBody {
   $2->resolveReferences();
 
+  // If ObjectBody has template arguments, it's an error.
   if (!$2->getTemplateArgs().empty()) {
     err() << "Def '" << $2->getName()
           << "' is not permitted to have template arguments!\n";
     exit(1);
   }
-  // If ObjectBody has template arguments, it's an error.
+  // Ensure redefinition doesn't happen.
   if (Records.getDef($2->getName())) {
     err() << "Def '" << $2->getName() << "' already defined!\n";
     exit(1);
