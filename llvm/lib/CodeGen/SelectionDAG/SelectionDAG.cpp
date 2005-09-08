@@ -1480,13 +1480,13 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
       }
       break;
     }
-    }
 
     // Reassociate ((X op C1) op C2) if possible.
     if (N1.getOpcode() == Opcode && isAssociativeBinOp(Opcode))
       if (ConstantSDNode *N3C = dyn_cast<ConstantSDNode>(N1.Val->getOperand(1)))
         return getNode(Opcode, VT, N1.Val->getOperand(0),
                        getNode(Opcode, VT, N2, N1.Val->getOperand(1)));
+    }
   }
 
   ConstantFPSDNode *N1CFP = dyn_cast<ConstantFPSDNode>(N1.Val);
@@ -1597,9 +1597,12 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
                              N1.getOperand(0), N2.getOperand(0)));
     break;
   case ISD::XOR:
+    if (!CombinerEnabled) {
     if (N1 == N2) return getConstant(0, VT);  // xor X, Y -> 0
+    }
     break;
   case ISD::ADD:
+    if (!CombinerEnabled) {
     if (N2.getOpcode() == ISD::FNEG)          // (A+ (-B) -> A-B
       return getNode(ISD::SUB, VT, N1, N2.getOperand(0));
     if (N1.getOpcode() == ISD::FNEG)          // ((-A)+B) -> B-A
@@ -1613,8 +1616,10 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     if (N2.getOpcode() == ISD::SUB && N1 == N2.Val->getOperand(1) &&
         !MVT::isFloatingPoint(N2.getValueType()))
       return N2.Val->getOperand(0); // A+(B-A) -> B
+    }
     break;
   case ISD::SUB:
+    if (!CombinerEnabled) {
     if (N1.getOpcode() == ISD::ADD) {
       if (N1.Val->getOperand(0) == N2 &&
           !MVT::isFloatingPoint(N2.getValueType()))
@@ -1625,6 +1630,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     }
     if (N2.getOpcode() == ISD::FNEG)          // (A- (-B) -> A+B
       return getNode(ISD::ADD, VT, N1, N2.getOperand(0));
+    }
     break;
   case ISD::FP_ROUND_INREG:
     if (cast<VTSDNode>(N2)->getVT() == VT) return N1;  // Not actually rounding.
@@ -1632,7 +1638,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
   case ISD::SIGN_EXTEND_INREG: {
     MVT::ValueType EVT = cast<VTSDNode>(N2)->getVT();
     if (EVT == VT) return N1;  // Not actually extending
-
+    if (!CombinerEnabled) {
     // If we are sign extending an extension, use the original source.
     if (N1.getOpcode() == ISD::SIGN_EXTEND_INREG ||
         N1.getOpcode() == ISD::AssertSext)
@@ -1660,6 +1666,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
         if ((Mask & (~0ULL << (NumBits-1))) == 0)
           return N1;
       }
+    }
     break;
   }
 
