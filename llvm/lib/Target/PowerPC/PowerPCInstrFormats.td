@@ -123,10 +123,13 @@ class DForm_2_r0<bits<6> opcode, dag OL, string asmstr, list<dag> pattern>
 class DForm_3<bits<6> opcode, dag OL, string asmstr>
   : DForm_1<opcode, OL, asmstr>;
 
-class DForm_4<bits<6> opcode, dag OL, string asmstr> : I<opcode, OL, asmstr> {
+class DForm_4<bits<6> opcode, dag OL, string asmstr, list<dag> pattern>
+ : I<opcode, OL, asmstr> {
   bits<5>  B;
   bits<5>  A;
   bits<16> C;
+  
+  let Pattern = pattern;
   
   let Inst{6-10}  = A;
   let Inst{11-15} = B;

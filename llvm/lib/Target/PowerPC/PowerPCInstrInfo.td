@@ -72,15 +72,29 @@ def immSExt16  : PatLeaf<(imm), [{
   // field.  Used by instructions like 'addi'.
   return (int)N->getValue() == (short)N->getValue();
 }]>;
+def immZExt16  : PatLeaf<(imm), [{
+  // immZExt16 predicate - True if the immediate fits in a 16-bit zero extended
+  // field.  Used by instructions like 'ori'.
+  return (unsigned)N->getValue() == (unsigned short)N->getValue();
+}]>;
 def imm16Shifted : PatLeaf<(imm), [{
   // imm16Shifted predicate - True if only bits in the top 16-bits of the
   // immediate are set.  Used by instructions like 'addis'.
   return ((unsigned)N->getValue() & 0xFFFF0000U) == (unsigned)N->getValue();
 }], [{
-  // Transformation predicate: shift the immediate value down into the low bits.
+  // Transformation function: shift the immediate value down into the low bits.
   return getI32Imm((unsigned)N->getValue() >> 16);
 }]>;
 
+/*
+// Example of a legalize expander: Only for PPC64.
+def : Expander<(set i64:$dst, (fp_to_sint f64:$src)),
+               [(set f64:$tmp , (FCTIDZ f64:$src)),
+                (set i32:$tmpFI, (CreateNewFrameIndex 8, 8)),
+                (store f64:$tmp, i32:$tmpFI),
+                (set i64:$dst, (load i32:$tmpFI))],
+                Subtarget_PPC64>;
+*/
 
 class isPPC64 { bit PPC64 = 1; }
 class isVMX   { bit VMX = 1; }
@@ -238,17 +252,23 @@ def STWU : DForm_3<37, (ops GPRC:$rS, s16imm:$disp, GPRC:$rA),
                    "stwu $rS, $disp($rA)">;
 }
 def ANDIo : DForm_4<28, (ops GPRC:$dst, GPRC:$src1, u16imm:$src2),
-                    "andi. $dst, $src1, $src2">, isDOT;
+                    "andi. $dst, $src1, $src2",
+                    []>, isDOT;
 def ANDISo : DForm_4<29, (ops GPRC:$dst, GPRC:$src1, u16imm:$src2),
-                    "andis. $dst, $src1, $src2">, isDOT;
+                    "andis. $dst, $src1, $src2",
+                    []>, isDOT;
 def ORI   : DForm_4<24, (ops GPRC:$dst, GPRC:$src1, u16imm:$src2),
-                    "ori $dst, $src1, $src2">;
+                    "ori $dst, $src1, $src2",
+                    [(set GPRC:$rD, (or GPRC:$rA, immZExt16:$imm))]>;
 def ORIS  : DForm_4<25, (ops GPRC:$dst, GPRC:$src1, u16imm:$src2),
-                    "oris $dst, $src1, $src2">;
+                    "oris $dst, $src1, $src2",
+                    [(set GPRC:$rD, (or GPRC:$rA, imm16Shifted:$imm))]>;
 def XORI  : DForm_4<26, (ops GPRC:$dst, GPRC:$src1, u16imm:$src2),
-                    "xori $dst, $src1, $src2">;
+                    "xori $dst, $src1, $src2",
+                    [(set GPRC:$rD, (xor GPRC:$rA, immZExt16:$imm))]>;
 def XORIS : DForm_4<27, (ops GPRC:$dst, GPRC:$src1, u16imm:$src2),
-                    "xoris $dst, $src1, $src2">;
+                    "xoris $dst, $src1, $src2",
+                    [(set GPRC:$rD, (xor GPRC:$rA, imm16Shifted:$imm))]>;
 def NOP   : DForm_4_zero<24, (ops), "nop">;
 def CMPI  : DForm_5<11, (ops CRRC:$crD, i1imm:$L, GPRC:$rA, s16imm:$imm),
                     "cmpi $crD, $L, $rA, $imm">;
