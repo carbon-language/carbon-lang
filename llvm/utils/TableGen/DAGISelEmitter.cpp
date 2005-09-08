@@ -19,11 +19,51 @@
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
+// SDTypeConstraint implementation
+//
+
+SDTypeConstraint::SDTypeConstraint(Record *R) {
+  OperandNo = R->getValueAsInt("OperandNum");
+  
+  if (R->isSubClassOf("SDTCisVT")) {
+    ConstraintType = SDTCisVT;
+    x.SDTCisVT_Info.VT = getValueType(R->getValueAsDef("VT"));
+  } else if (R->isSubClassOf("SDTCisInt")) {
+    ConstraintType = SDTCisInt;
+  } else if (R->isSubClassOf("SDTCisFP")) {
+    ConstraintType = SDTCisFP;
+  } else if (R->isSubClassOf("SDTCisSameAs")) {
+    ConstraintType = SDTCisSameAs;
+    x.SDTCisSameAs_Info.OtherOperandNum = R->getValueAsInt("OtherOperandNum");
+  } else if (R->isSubClassOf("SDTCisVTSmallerThanOp")) {
+    ConstraintType = SDTCisVTSmallerThanOp;
+    x.SDTCisVTSmallerThanOp_Info.OtherOperandNum = 
+      R->getValueAsInt("OtherOperandNum");
+  } else {
+    std::cerr << "Unrecognized SDTypeConstraint '" << R->getName() << "'!\n";
+    exit(1);
+  }
+}
+
+//===----------------------------------------------------------------------===//
 // SDNodeInfo implementation
 //
 SDNodeInfo::SDNodeInfo(Record *R) : Def(R) {
   EnumName    = R->getValueAsString("Opcode");
   SDClassName = R->getValueAsString("SDClass");
+  Record *TypeProfile = R->getValueAsDef("TypeProfile");
+  NumResults = TypeProfile->getValueAsInt("NumResults");
+  NumOperands = TypeProfile->getValueAsInt("NumOperands");
+  
+  // Parse the type constraints.
+  ListInit *Constraints = TypeProfile->getValueAsListInit("Constraints");
+  for (unsigned i = 0, e = Constraints->getSize(); i != e; ++i) {
+    assert(dynamic_cast<DefInit*>(Constraints->getElement(i)) &&
+           "Constraints list should contain constraint definitions!");
+    Record *Constraint = 
+      static_cast<DefInit*>(Constraints->getElement(i))->getDef();
+    TypeConstraints.push_back(Constraint);
+  }
 }
 
 //===----------------------------------------------------------------------===//

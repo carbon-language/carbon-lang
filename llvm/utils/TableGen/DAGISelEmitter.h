@@ -24,6 +24,29 @@ namespace llvm {
   class TreePattern;
   class DAGISelEmitter;
   
+  /// SDTypeConstraint - This is a discriminated union of constraints,
+  /// corresponding to the SDTypeConstraint tablegen class in Target.td.
+  struct SDTypeConstraint {
+    SDTypeConstraint(Record *R);
+    
+    unsigned OperandNo;   // The operand # this constraint applies to.
+    enum { 
+      SDTCisVT, SDTCisInt, SDTCisFP, SDTCisSameAs, SDTCisVTSmallerThanOp
+    } ConstraintType;
+    
+    union {   // The discriminated union.
+      struct {
+        MVT::ValueType VT;
+      } SDTCisVT_Info;
+      struct {
+        unsigned OtherOperandNum;
+      } SDTCisSameAs_Info;
+      struct {
+        unsigned OtherOperandNum;
+      } SDTCisVTSmallerThanOp_Info;
+    } x;
+  };
+  
   /// SDNodeInfo - One of these records is created for each SDNode instance in
   /// the target .td file.  This represents the various dag nodes we will be
   /// processing.
@@ -31,12 +54,20 @@ namespace llvm {
     Record *Def;
     std::string EnumName;
     std::string SDClassName;
+    int NumResults, NumOperands;
+    std::vector<SDTypeConstraint> TypeConstraints;
   public:
     SDNodeInfo(Record *R);  // Parse the specified record.
     
+    int getNumResults() const { return NumResults; }
+    int getNumOperands() const { return NumOperands; }
     Record *getRecord() const { return Def; }
     const std::string &getEnumName() const { return EnumName; }
     const std::string &getSDClassName() const { return SDClassName; }
+    
+    const std::vector<SDTypeConstraint> &getTypeConstraints() {
+      return TypeConstraints;
+    }
   };
 
   /// FIXME: TreePatternNode's can be shared in some cases (due to dag-shaped
