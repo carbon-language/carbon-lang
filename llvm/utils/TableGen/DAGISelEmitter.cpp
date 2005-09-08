@@ -636,15 +636,14 @@ void DAGISelEmitter::ParseAndResolveInstructions() {
     // Inline pattern fragments into it.
     I->InlinePatternFragments();
     
-    // Infer as many types as possible.  Don't worry about it if we don't infer
-    // all of them, some may depend on the inputs of the pattern.
+    // Infer as many types as possible.  If we cannot infer all of them, we can
+    // never do anything with this instruction pattern: report it to the user.
     if (!I->InferAllTypes()) {
       I->dump();
       I->error("Could not infer all types in pattern!");
     }
 
     DEBUG(I->dump());
-    
     Instructions.push_back(I);
   }
 }
