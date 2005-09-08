@@ -21,7 +21,9 @@ namespace llvm {
   class Record;
   class Init;
   class DagInit;
+  class SDNodeInfo;
   class TreePattern;
+  class TreePatternNode;
   class DAGISelEmitter;
   
   /// SDTypeConstraint - This is a discriminated union of constraints,
@@ -45,6 +47,18 @@ namespace llvm {
         unsigned OtherOperandNum;
       } SDTCisVTSmallerThanOp_Info;
     } x;
+
+    /// ApplyTypeConstraint - Given a node in a pattern, apply this type
+    /// constraint to the nodes operands.  This returns true if it makes a
+    /// change, false otherwise.  If a type contradiction is found, throw an
+    /// exception.
+    bool ApplyTypeConstraint(TreePatternNode *N, const SDNodeInfo &NodeInfo,
+                             TreePattern &TP) const;
+    
+    /// getOperandNum - Return the node corresponding to operand #OpNo in tree
+    /// N, which has NumResults results.
+    TreePatternNode *getOperandNum(unsigned OpNo, TreePatternNode *N,
+                                   unsigned NumResults) const;
   };
   
   /// SDNodeInfo - One of these records is created for each SDNode instance in
@@ -54,19 +68,31 @@ namespace llvm {
     Record *Def;
     std::string EnumName;
     std::string SDClassName;
-    int NumResults, NumOperands;
+    unsigned NumResults;
+    int NumOperands;
     std::vector<SDTypeConstraint> TypeConstraints;
   public:
     SDNodeInfo(Record *R);  // Parse the specified record.
     
-    int getNumResults() const { return NumResults; }
+    unsigned getNumResults() const { return NumResults; }
     int getNumOperands() const { return NumOperands; }
     Record *getRecord() const { return Def; }
     const std::string &getEnumName() const { return EnumName; }
     const std::string &getSDClassName() const { return SDClassName; }
     
-    const std::vector<SDTypeConstraint> &getTypeConstraints() {
+    const std::vector<SDTypeConstraint> &getTypeConstraints() const {
       return TypeConstraints;
+    }
+
+    /// ApplyTypeConstraints - Given a node in a pattern, apply the type
+    /// constraints for this node to the operands of the node.  This returns
+    /// true if it makes a change, false otherwise.  If a type contradiction is
+    /// found, throw an exception.
+    bool ApplyTypeConstraints(TreePatternNode *N, TreePattern &TP) const {
+      bool MadeChange = false;
+      for (unsigned i = 0, e = TypeConstraints.size(); i != e; ++i)
+        MadeChange |= TypeConstraints[i].ApplyTypeConstraint(N, *this, TP);
+      return MadeChange;
     }
   };
 
@@ -106,6 +132,7 @@ namespace llvm {
     void setName(const std::string &N) { Name = N; }
     
     bool isLeaf() const { return Val != 0; }
+    bool hasTypeSet() const { return Ty != MVT::LAST_VALUETYPE; }
     MVT::ValueType getType() const { return Ty; }
     void setType(MVT::ValueType VT) { Ty = VT; }
     
@@ -130,6 +157,8 @@ namespace llvm {
     ///
     TreePatternNode *clone() const;
     
+    /// SubstituteFormalArguments - Replace the formal arguments in this tree
+    /// with actual values specified by ArgMap.
     void SubstituteFormalArguments(std::map<std::string,
                                             TreePatternNode*> &ArgMap);
 
@@ -137,7 +166,27 @@ namespace llvm {
     /// fragments, inline them into place, giving us a pattern without any
     /// PatFrag references.
     TreePatternNode *InlinePatternFragments(TreePattern &TP);
-        
+    
+    /// ApplyTypeConstraints - Apply all of the type constraints relevent to
+    /// this node and its children in the tree.  This returns true if it makes a
+    /// change, false otherwise.  If a type contradiction is found, throw an
+    /// exception.
+    bool ApplyTypeConstraints(TreePattern &TP);
+    
+    /// UpdateNodeType - Set the node type of N to VT if VT contains
+    /// information.  If N already contains a conflicting type, then throw an
+    /// exception.  This returns true if any information was updated.
+    ///
+    bool UpdateNodeType(MVT::ValueType VT, TreePattern &TP);
+    
+    /// ContainsUnresolvedType - Return true if this tree contains any
+    /// unresolved types.
+    bool ContainsUnresolvedType() const {
+      if (Ty == MVT::LAST_VALUETYPE) return true;
+      for (unsigned i = 0, e = getNumChildren(); i != e; ++i)
+        if (getChild(i)->ContainsUnresolvedType()) return true;
+      return false;
+    }
   };
   
   
@@ -205,6 +254,11 @@ namespace llvm {
       for (unsigned i = 0, e = Trees.size(); i != e; ++i)
         Trees[i] = Trees[i]->InlinePatternFragments(*this);
     }
+    
+    /// InferAllTypes - Infer/propagate as many types throughout the expression
+    /// patterns as possible.  Return true if all types are infered, false
+    /// otherwise.  Throw an exception if a type contradiction is found.
+    bool InferAllTypes();
     
     /// error - Throw an exception, prefixing it with information about this
     /// pattern.

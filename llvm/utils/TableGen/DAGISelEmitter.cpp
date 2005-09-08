@@ -45,6 +45,87 @@ SDTypeConstraint::SDTypeConstraint(Record *R) {
   }
 }
 
+/// getOperandNum - Return the node corresponding to operand #OpNo in tree
+/// N, which has NumResults results.
+TreePatternNode *SDTypeConstraint::getOperandNum(unsigned OpNo,
+                                                 TreePatternNode *N,
+                                                 unsigned NumResults) const {
+  assert(NumResults == 1 && "We only work with single result nodes so far!");
+  
+  if (OpNo < NumResults)
+    return N;  // FIXME: need value #
+  else
+    return N->getChild(OpNo-NumResults);
+}
+
+/// ApplyTypeConstraint - Given a node in a pattern, apply this type
+/// constraint to the nodes operands.  This returns true if it makes a
+/// change, false otherwise.  If a type contradiction is found, throw an
+/// exception.
+bool SDTypeConstraint::ApplyTypeConstraint(TreePatternNode *N,
+                                           const SDNodeInfo &NodeInfo,
+                                           TreePattern &TP) const {
+  unsigned NumResults = NodeInfo.getNumResults();
+  assert(NumResults == 1 && "We only work with single result nodes so far!");
+  
+  // Check that the number of operands is sane.
+  if (NodeInfo.getNumOperands() >= 0) {
+    if (N->getNumChildren() != (unsigned)NodeInfo.getNumOperands())
+      TP.error(N->getOperator()->getName() + " node requires exactly " +
+               itostr(NodeInfo.getNumOperands()) + " operands!");
+  }
+  
+  TreePatternNode *NodeToApply = getOperandNum(OperandNo, N, NumResults);
+  
+  switch (ConstraintType) {
+  default: assert(0 && "Unknown constraint type!");
+  case SDTCisVT:
+    // Operand must be a particular type.
+    return NodeToApply->UpdateNodeType(x.SDTCisVT_Info.VT, TP);
+  case SDTCisInt:
+    if (NodeToApply->hasTypeSet() && !MVT::isInteger(NodeToApply->getType()))
+      NodeToApply->UpdateNodeType(MVT::i1, TP);  // throw an error.
+
+    // FIXME: can tell from the target if there is only one Int type supported.
+    return false;
+  case SDTCisFP:
+    if (NodeToApply->hasTypeSet() &&
+        !MVT::isFloatingPoint(NodeToApply->getType()))
+      NodeToApply->UpdateNodeType(MVT::f32, TP);  // throw an error.
+    // FIXME: can tell from the target if there is only one FP type supported.
+    return false;
+  case SDTCisSameAs: {
+    TreePatternNode *OtherNode =
+      getOperandNum(x.SDTCisSameAs_Info.OtherOperandNum, N, NumResults);
+    return NodeToApply->UpdateNodeType(OtherNode->getType(), TP) |
+           OtherNode->UpdateNodeType(NodeToApply->getType(), TP);
+  }
+  case SDTCisVTSmallerThanOp: {
+    // The NodeToApply must be a leaf node that is a VT.  OtherOperandNum must
+    // have an integer type that is smaller than the VT.
+    if (!NodeToApply->isLeaf() ||
+        !dynamic_cast<DefInit*>(NodeToApply->getLeafValue()) ||
+        !static_cast<DefInit*>(NodeToApply->getLeafValue())->getDef()
+               ->isSubClassOf("ValueType"))
+      TP.error(N->getOperator()->getName() + " expects a VT operand!");
+    MVT::ValueType VT =
+     getValueType(static_cast<DefInit*>(NodeToApply->getLeafValue())->getDef());
+    if (!MVT::isInteger(VT))
+      TP.error(N->getOperator()->getName() + " VT operand must be integer!");
+    
+    TreePatternNode *OtherNode =
+      getOperandNum(x.SDTCisVTSmallerThanOp_Info.OtherOperandNum, N,NumResults);
+    if (OtherNode->hasTypeSet() &&
+        (!MVT::isInteger(OtherNode->getType()) ||
+         OtherNode->getType() <= VT))
+      OtherNode->UpdateNodeType(MVT::Other, TP);  // Throw an error.
+    return false;
+  }
+  }  
+  return false;
+}
+
+
 //===----------------------------------------------------------------------===//
 // SDNodeInfo implementation
 //
@@ -76,6 +157,23 @@ TreePatternNode::~TreePatternNode() {
     delete getChild(i);
 #endif
 }
+
+/// UpdateNodeType - Set the node type of N to VT if VT contains
+/// information.  If N already contains a conflicting type, then throw an
+/// exception.  This returns true if any information was updated.
+///
+bool TreePatternNode::UpdateNodeType(MVT::ValueType VT, TreePattern &TP) {
+  if (VT == MVT::LAST_VALUETYPE || getType() == VT) return false;
+  if (getType() == MVT::LAST_VALUETYPE) {
+    setType(VT);
+    return true;
+  }
+  
+  TP.error("Type inference contradiction found in node " + 
+           getOperator()->getName() + "!");
+  return true; // unreachable
+}
+
 
 void TreePatternNode::print(std::ostream &OS) const {
   if (isLeaf()) {
@@ -132,6 +230,8 @@ TreePatternNode *TreePatternNode::clone() const {
   return New;
 }
 
+/// SubstituteFormalArguments - Replace the formal arguments in this tree
+/// with actual values specified by ArgMap.
 void TreePatternNode::
 SubstituteFormalArguments(std::map<std::string, TreePatternNode*> &ArgMap) {
   if (isLeaf()) return;
@@ -195,6 +295,35 @@ TreePatternNode *TreePatternNode::InlinePatternFragments(TreePattern &TP) {
   //delete this;    // FIXME: implement refcounting!
   return FragTree;
 }
+
+/// ApplyTypeConstraints - Apply all of the type constraints relevent to
+/// this node and its children in the tree.  This returns true if it makes a
+/// change, false otherwise.  If a type contradiction is found, throw an
+/// exception.
+bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP) {
+  if (isLeaf()) return false;
+  
+  // special handling for set, which isn't really an SDNode.
+  if (getOperator()->getName() == "set") {
+    assert (getNumChildren() == 2 && "Only handle 2 operand set's for now!");
+    bool MadeChange = getChild(0)->ApplyTypeConstraints(TP);
+    MadeChange |= getChild(1)->ApplyTypeConstraints(TP);
+    
+    // Types of operands must match.
+    MadeChange |= getChild(0)->UpdateNodeType(getChild(1)->getType(), TP);
+    MadeChange |= getChild(1)->UpdateNodeType(getChild(0)->getType(), TP);
+    MadeChange |= UpdateNodeType(MVT::isVoid, TP);
+    return MadeChange;
+  }
+  
+  const SDNodeInfo &NI = TP.getDAGISelEmitter().getSDNodeInfo(getOperator());
+  
+  bool MadeChange = NI.ApplyTypeConstraints(this, TP);
+  for (unsigned i = 0, e = getNumChildren(); i != e; ++i)
+    MadeChange |= getChild(i)->ApplyTypeConstraints(TP);
+  return MadeChange;  
+}
+
 
 //===----------------------------------------------------------------------===//
 // TreePattern implementation
@@ -311,9 +440,8 @@ TreePatternNode *TreePattern::ParseTreePattern(DagInit *Dag) {
       return 0;
     }
     
-    // Apply the type cast...
-    assert(0 && "unimp yet");
-    //New->updateNodeType(getValueType(Operator), TheRecord->getName());
+    // Apply the type cast.
+    New->UpdateNodeType(getValueType(Operator), *this);
     return New;
   }
   
@@ -359,6 +487,23 @@ TreePatternNode *TreePattern::ParseTreePattern(DagInit *Dag) {
   }
   
   return new TreePatternNode(Operator, Children);
+}
+
+/// InferAllTypes - Infer/propagate as many types throughout the expression
+/// patterns as possible.  Return true if all types are infered, false
+/// otherwise.  Throw an exception if a type contradiction is found.
+bool TreePattern::InferAllTypes() {
+  bool MadeChange = true;
+  while (MadeChange) {
+    MadeChange = false;
+    for (unsigned i = 0, e = Trees.size(); i != e; ++i)
+      MadeChange |= Trees[i]->ApplyTypeConstraints(*this);
+  }
+  
+  bool HasUnresolvedTypes = false;
+  for (unsigned i = 0, e = Trees.size(); i != e; ++i)
+    HasUnresolvedTypes |= Trees[i]->ContainsUnresolvedType();
+  return !HasUnresolvedTypes;
 }
 
 void TreePattern::print(std::ostream &OS) const {
@@ -449,9 +594,22 @@ void DAGISelEmitter::ParseAndResolvePatternFragments(std::ostream &OS) {
   // that there are not references to PatFrags left inside of them.
   for (std::map<Record*, TreePattern*>::iterator I = PatternFragments.begin(),
        E = PatternFragments.end(); I != E; ++I) {
-    I->second->InlinePatternFragments();
+    TreePattern *ThePat = I->second;
+    ThePat->InlinePatternFragments();
+    
+    // Infer as many types as possible.  Don't worry about it if we don't infer
+    // all of them, some may depend on the inputs of the pattern.
+    try {
+      ThePat->InferAllTypes();
+    } catch (...) {
+      // If this pattern fragment is not supported by this target (no types can
+      // satisfy its constraints), just ignore it.  If the bogus pattern is
+      // actually used by instructions, the type consistency error will be
+      // reported there.
+    }
+    
     // If debugging, print out the pattern fragment result.
-    DEBUG(I->second->dump());
+    DEBUG(ThePat->dump());
   }
 }
 
@@ -473,12 +631,21 @@ void DAGISelEmitter::ParseAndResolveInstructions() {
       Trees.push_back((DagInit*)LI->getElement(j));
 
     // Parse the instruction.
-    Instructions.push_back(new TreePattern(TreePattern::Instruction, Instrs[i],
-                                           Trees, *this));
+    TreePattern *I = new TreePattern(TreePattern::Instruction, Instrs[i],
+                                     Trees, *this);
     // Inline pattern fragments into it.
-    Instructions.back()->InlinePatternFragments();
+    I->InlinePatternFragments();
     
-    DEBUG(Instructions.back()->dump());
+    // Infer as many types as possible.  Don't worry about it if we don't infer
+    // all of them, some may depend on the inputs of the pattern.
+    if (!I->InferAllTypes()) {
+      I->dump();
+      I->error("Could not infer all types in pattern!");
+    }
+
+    DEBUG(I->dump());
+    
+    Instructions.push_back(I);
   }
 }
 
