@@ -17,7 +17,8 @@ include "PowerPCInstrFormats.td"
 //===----------------------------------------------------------------------===//
 // Selection DAG Type Constraint definitions.
 //
-// Note that the semantics of these constraints are hard coded into tblgen.
+// Note that the semantics of these constraints are hard coded into tblgen.  To
+// modify or add constraints, you have to hack tblgen.
 //
 
 class SDTypeConstraint<int opnum> {
@@ -66,7 +67,9 @@ class SDTypeProfile<int numresults, int numoperands,
 // Builtin profiles.
 def SDTImm   : SDTypeProfile<1, 0, [SDTCisInt<0>]>;      // for 'imm'.
 def SDTVT    : SDTypeProfile<1, 0, [SDTCisVT<0, OtherVT>]>; // for 'vt'
-def SDTBinOp : SDTypeProfile<1, 2, [SDTCisSameAs<0, 1>, SDTCisSameAs<0, 2>]>;
+def SDTBinOp : SDTypeProfile<1, 2, [      // add, mul, etc.
+  SDTCisSameAs<0, 1>, SDTCisSameAs<0, 2>
+]>;
 def SDTIntBinOp : SDTypeProfile<1, 2, [   // and, or, xor, udiv, etc.
   SDTCisSameAs<0, 1>, SDTCisSameAs<0, 2>, SDTCisInt<0>
 ]>;
