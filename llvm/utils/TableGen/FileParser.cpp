@@ -1158,7 +1158,7 @@ case 20:
     addSubClass(Class, *yyvsp[-1].FieldList);    // Add info about the subclass to CurRec.
     delete yyvsp[-1].FieldList;  // Free up the template args.
     
-     CurRec->resolveReferences();
+    CurRec->resolveReferences();
     
     Records.addDef(CurRec);
     
