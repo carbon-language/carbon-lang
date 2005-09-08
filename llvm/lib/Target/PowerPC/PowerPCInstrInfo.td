@@ -14,28 +14,102 @@
 
 include "PowerPCInstrFormats.td"
 
-class SDNode<string opcode, string sdclass = "SDNode"> {
+//===----------------------------------------------------------------------===//
+// Selection DAG Type Constraint definitions.
+//
+// Note that the semantics of these constraints are hard coded into tblgen.
+//
+
+class SDTypeConstraint<int opnum> {
+  int OperandNum = opnum;
+}
+
+// SDTCisVT - The specified operand has exactly this VT.
+class SDTCisVT <int OpNum, ValueType vt> : SDTypeConstraint<OpNum> {
+  ValueType VT = vt;
+}
+
+// SDTCisInt - The specified operand is has integer type.
+class SDTCisInt<int OpNum> : SDTypeConstraint<OpNum>;
+
+// SDTCisFP - The specified operand is has floating point type.
+class SDTCisFP <int OpNum> : SDTypeConstraint<OpNum>;
+
+// SDTCisSameAs - The two specified operands have identical types.
+class SDTCisSameAs<int OpNum, int OtherOp> : SDTypeConstraint<OpNum> {
+  int OtherOperandNum = OtherOp;
+}
+
+// SDTCisVTSmallerThanOp - The specified operand is a VT SDNode, and its type is
+// smaller than the 'Other' operand.
+class SDTCisVTSmallerThanOp<int OpNum, int OtherOp> : SDTypeConstraint<OpNum> {
+  int OtherOperandNum = OtherOp;
+}
+
+//===----------------------------------------------------------------------===//
+// Selection DAG Type Profile definitions.
+//
+// These use the constraints defined above to describe the type requirements of
+// the various nodes.  These are not hard coded into tblgen, allowing targets to
+// add their own if needed.
+//
+
+// SDTypeProfile - This profile describes the type requirements of a Selection
+// DAG node.
+class SDTypeProfile<int numresults, int numoperands,
+                    list<SDTypeConstraint> constraints> {
+  int NumResults = numresults;
+  int NumOperands = numoperands;
+  list<SDTypeConstraint> Constraints = constraints;
+}
+
+// Builtin profiles.
+def SDTImm   : SDTypeProfile<1, 0, [SDTCisInt<0>]>;      // for 'imm'.
+def SDTVT    : SDTypeProfile<1, 0, [SDTCisVT<0, OtherVT>]>; // for 'vt'
+def SDTBinOp : SDTypeProfile<1, 2, [SDTCisSameAs<0, 1>, SDTCisSameAs<0, 2>]>;
+def SDTIntBinOp : SDTypeProfile<1, 2, [   // and, or, xor, udiv, etc.
+  SDTCisSameAs<0, 1>, SDTCisSameAs<0, 2>, SDTCisInt<0>
+]>;
+def SDTIntUnaryOp : SDTypeProfile<1, 1, [   // ctlz
+  SDTCisSameAs<0, 1>, SDTCisInt<0>
+]>;
+def SDTExtInreg : SDTypeProfile<1, 2, [   // sext_inreg
+  SDTCisSameAs<0, 1>, SDTCisInt<0>, SDTCisVT<2, OtherVT>,
+  SDTCisVTSmallerThanOp<2, 1>
+]>;
+
+
+//===----------------------------------------------------------------------===//
+// Selection DAG Node definitions.
+//
+class SDNode<string opcode, SDTypeProfile typeprof, string sdclass = "SDNode"> {
   string Opcode  = opcode;
   string SDClass = sdclass;
+  SDTypeProfile TypeProfile = typeprof;
 }
 
 def set;
 def node;
 
-def imm        : SDNode<"ISD::Constant", "ConstantSDNode">;
-def vt         : SDNode<"ISD::VALUETYPE", "VTSDNode">;
-def and        : SDNode<"ISD::AND">;
-def or         : SDNode<"ISD::OR">;
-def xor        : SDNode<"ISD::XOR">;
-def add        : SDNode<"ISD::ADD">;
-def sub        : SDNode<"ISD::SUB">;
-def mul        : SDNode<"ISD::MUL">;
-def sdiv       : SDNode<"ISD::SDIV">;
-def udiv       : SDNode<"ISD::UDIV">;
-def mulhs      : SDNode<"ISD::MULHS">;
-def mulhu      : SDNode<"ISD::MULHU">;
-def sext_inreg : SDNode<"ISD::SIGN_EXTEND_INREG">;
-def ctlz       : SDNode<"ISD::CTLZ">;
+def imm        : SDNode<"ISD::Constant"  , SDTImm     , "ConstantSDNode">;
+def vt         : SDNode<"ISD::VALUETYPE" , SDTVT      , "VTSDNode">;
+def and        : SDNode<"ISD::AND"       , SDTIntBinOp>;
+def or         : SDNode<"ISD::OR"        , SDTIntBinOp>;
+def xor        : SDNode<"ISD::XOR"       , SDTIntBinOp>;
+def add        : SDNode<"ISD::ADD"       , SDTBinOp>;
+def sub        : SDNode<"ISD::SUB"       , SDTBinOp>;
+def mul        : SDNode<"ISD::MUL"       , SDTBinOp>;
+def sdiv       : SDNode<"ISD::SDIV"      , SDTBinOp>;
+def udiv       : SDNode<"ISD::UDIV"      , SDTIntBinOp>;
+def mulhs      : SDNode<"ISD::MULHS"     , SDTIntBinOp>;
+def mulhu      : SDNode<"ISD::MULHU"     , SDTIntBinOp>;
+def sext_inreg : SDNode<"ISD::SIGN_EXTEND_INREG", SDTExtInreg>;
+def ctlz       : SDNode<"ISD::CTLZ"      , SDTIntUnaryOp>;
+
+
+//===----------------------------------------------------------------------===//
+// Selection DAG Pattern Fragments.
+//
 
 /// PatFrag - Represents a pattern fragment.  This can match something on the
 /// DAG, frame a single node to multiply nested other fragments.
@@ -65,7 +139,10 @@ def vtFP       : PatLeaf<(vt),  [{ return MVT::isFloatingPoint(N->getVT()); }]>;
 def not  : PatFrag<(ops node:$in), (xor node:$in, immAllOnes)>;
 def ineg : PatFrag<(ops node:$in), (sub immZero, node:$in)>;
 
-// PowerPC-Specific predicates.
+
+
+//===----------------------------------------------------------------------===//
+// PowerPC specific pattern fragments.
 
 def immSExt16  : PatLeaf<(imm), [{
   // immSExt16 predicate - True if the immediate fits in a 16-bit sign extended
@@ -96,6 +173,11 @@ def : Expander<(set i64:$dst, (fp_to_sint f64:$src)),
                 Subtarget_PPC64>;
 */
 
+
+
+//===----------------------------------------------------------------------===//
+// PowerPC Flag Definitions.
+
 class isPPC64 { bit PPC64 = 1; }
 class isVMX   { bit VMX = 1; }
 class isDOT   {
@@ -103,11 +185,10 @@ class isDOT   {
   bit RC  = 1;
 }
 
-let isTerminator = 1 in {
-  let isReturn = 1 in
-    def BLR : XLForm_2_ext<19, 16, 20, 0, 0, (ops), "blr">;
-  def BCTR : XLForm_2_ext<19, 528, 20, 0, 0, (ops), "bctr">;
-}
+
+
+//===----------------------------------------------------------------------===//
+// PowerPC Operand Definitions.
 
 def u5imm   : Operand<i8> {
   let PrintMethod = "printU5ImmOperand";
@@ -137,8 +218,14 @@ def crbitm: Operand<i8> {
   let PrintMethod = "printcrbitm";
 }
 
+
+
+//===----------------------------------------------------------------------===//
+// PowerPC Instruction Definitions.
+
 // Pseudo-instructions:
 def PHI : Pseudo<(ops variable_ops), "; PHI">;
+
 let isLoad = 1 in {
 def ADJCALLSTACKDOWN : Pseudo<(ops u16imm), "; ADJCALLSTACKDOWN">;
 def ADJCALLSTACKUP : Pseudo<(ops u16imm), "; ADJCALLSTACKUP">;
@@ -155,6 +242,12 @@ let usesCustomDAGSchedInserter = 1 in {  // Expanded by the scheduler.
                               i32imm:$BROPC), "; SELECT_CC PSEUDO!">;
 }
 
+
+let isTerminator = 1 in {
+  let isReturn = 1 in
+    def BLR : XLForm_2_ext<19, 16, 20, 0, 0, (ops), "blr">;
+  def BCTR : XLForm_2_ext<19, 528, 20, 0, 0, (ops), "bctr">;
+}
 
 let Defs = [LR] in
   def MovePCtoLR : Pseudo<(ops piclabel:$label), "bl $label">;
