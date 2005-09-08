@@ -153,8 +153,8 @@ static void addSubClass(Record *SC, const std::vector<Init*> &TemplateArgs) {
     // value or leaving them as the default if necessary.
     for (unsigned i = 0, e = TArgs.size(); i != e; ++i) {
       if (i < TemplateArgs.size()) {  // A value is specified for this temp-arg?
-	// Set it now.
-	setValue(TArgs[i], 0, TemplateArgs[i]);
+        // Set it now.
+        setValue(TArgs[i], 0, TemplateArgs[i]);
 
         // Resolve it next.
         CurRec->resolveReferencesTo(CurRec->getValue(TArgs[i]));
@@ -164,10 +164,10 @@ static void addSubClass(Record *SC, const std::vector<Init*> &TemplateArgs) {
         CurRec->removeValue(TArgs[i]);
 
       } else if (!CurRec->getValue(TArgs[i])->getValue()->isComplete()) {
-	err() << "ERROR: Value not specified for template argument #"
-	      << i << " (" << TArgs[i] << ") of subclass '" << SC->getName()
-	      << "'!\n";
-	exit(1);
+        err() << "ERROR: Value not specified for template argument #"
+              << i << " (" << TArgs[i] << ") of subclass '" << SC->getName()
+              << "'!\n";
+        exit(1);
       }
     }
   }
@@ -268,9 +268,9 @@ Value : INTVAL {
     for (unsigned i = 0, e = $2->size(); i != e; ++i) {
       struct Init *Bit = (*$2)[i]->convertInitializerTo(new BitRecTy());
       if (Bit == 0) {
-	err() << "Element #" << i << " (" << *(*$2)[i]
-	      << ") is not convertable to a bit!\n";
-	exit(1);
+        err() << "Element #" << i << " (" << *(*$2)[i]
+       	      << ") is not convertable to a bit!\n";
+        exit(1);
       }
       Init->setBit($2->size()-i-1, Bit);
     }
@@ -515,14 +515,14 @@ ObjectBody : OptID {
          } OptTemplateArgList ClassList {
            ParsingTemplateArgs = false;
            for (unsigned i = 0, e = $4->size(); i != e; ++i) {
-	     addSubClass((*$4)[i].first, *(*$4)[i].second);
+             addSubClass((*$4)[i].first, *(*$4)[i].second);
              // Delete the template arg values for the class
              delete (*$4)[i].second;
            }
            delete $4;   // Delete the class list...
 
-	   // Process any variables on the set stack...
-	   for (unsigned i = 0, e = LetStack.size(); i != e; ++i)
+           // Process any variables on the set stack...
+           for (unsigned i = 0, e = LetStack.size(); i != e; ++i)
              for (unsigned j = 0, e = LetStack[i].size(); j != e; ++j)
                setValue(LetStack[i][j].Name,
                         LetStack[i][j].HasBits ? &LetStack[i][j].Bits : 0,
