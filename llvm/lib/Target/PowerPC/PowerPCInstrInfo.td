@@ -60,10 +60,6 @@ def vtFP       : PatLeaf<(vt),  [{ return MVT::isFloatingPoint(N->getVT()); }]>;
 def not  : PatFrag<(ops node:$in), (xor node:$in, immAllOnes)>;
 def ineg : PatFrag<(ops node:$in), (sub immZero, node:$in)>;
 
-
-
-
-
 class isPPC64 { bit PPC64 = 1; }
 class isVMX   { bit VMX = 1; }
 class isDOT   {
@@ -476,13 +472,17 @@ def SUBFE : XOForm_1<31, 136, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
                      "subfe $rT, $rA, $rB",
                      []>;
 def ADDME  : XOForm_3<31, 234, 0, (ops GPRC:$rT, GPRC:$rA),
-                      "addme $rT, $rA">;
+                      "addme $rT, $rA",
+                      []>;
 def ADDZE  : XOForm_3<31, 202, 0, (ops GPRC:$rT, GPRC:$rA),
-                      "addze $rT, $rA">;
+                      "addze $rT, $rA",
+                      []>;
 def NEG    : XOForm_3<31, 104, 0, (ops GPRC:$rT, GPRC:$rA),
-                      "neg $rT, $rA">;
+                      "neg $rT, $rA",
+                      [(set GPRC:$rT, (ineg GPRC:$rA))]>;
 def SUBFZE : XOForm_3<31, 200, 0, (ops GPRC:$rT, GPRC:$rA),
-                      "subfze $rT, $rA">;
+                      "subfze $rT, $rA",
+                      []>;
 
 // A-Form instructions.  Most of the instructions executed in the FPU are of
 // this type.

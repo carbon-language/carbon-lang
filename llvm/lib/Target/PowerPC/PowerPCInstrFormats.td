@@ -449,8 +449,8 @@ class XOForm_1<bits<6> opcode, bits<9> xo, bit oe, dag OL, string asmstr,
 }
 
 class XOForm_3<bits<6> opcode, bits<9> xo, bit oe, 
-               dag OL, string asmstr>
-  : XOForm_1<opcode, xo, oe, OL, asmstr, []> {
+               dag OL, string asmstr, list<dag> pattern>
+  : XOForm_1<opcode, xo, oe, OL, asmstr, pattern> {
   let RB = 0;
 }
 
