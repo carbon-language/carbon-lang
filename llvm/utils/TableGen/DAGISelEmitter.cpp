@@ -142,6 +142,8 @@ TreePatternNode *TreePatternNode::InlinePatternFragments(TreePattern &TP) {
     FragTree->SubstituteFormalArguments(ArgMap);
   }
   
+  FragTree->setName(getName());
+  
   // Get a new copy of this fragment to stitch into here.
   //delete this;    // FIXME: implement refcounting!
   return FragTree;
@@ -420,7 +422,6 @@ void DAGISelEmitter::ParseAndResolveInstructions() {
     // Inline pattern fragments into it.
     Instructions.back()->InlinePatternFragments();
     
-    DEBUG(std::cerr << Instrs[i]->getName() << ": ");
     DEBUG(Instructions.back()->dump());
   }
 }
