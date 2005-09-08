@@ -81,7 +81,9 @@ class BForm<bits<6> opcode, bit aa, bit lk, bits<5> bo, bits<2> bicode, dag OL,
 }
 
 // 1.7.4 D-Form
-class DForm_base<bits<6> opcode, dag OL, string asmstr> : I<opcode, OL, asmstr>{
+class DForm_base<bits<6> opcode, dag OL, string asmstr, list<dag> pattern>
+   : I<opcode, OL, asmstr> {
+  let Pattern = pattern;
   bits<5>  A;
   bits<5>  B;
   bits<16> C;
@@ -91,7 +93,8 @@ class DForm_base<bits<6> opcode, dag OL, string asmstr> : I<opcode, OL, asmstr>{
   let Inst{16-31} = C;
 }
 
-class DForm_1<bits<6> opcode, dag OL, string asmstr> : I<opcode, OL, asmstr> {
+class DForm_1<bits<6> opcode, dag OL, string asmstr>
+   : I<opcode, OL, asmstr> {
   bits<5>  A;
   bits<16> C;
   bits<5>  B;
@@ -101,13 +104,15 @@ class DForm_1<bits<6> opcode, dag OL, string asmstr> : I<opcode, OL, asmstr> {
   let Inst{16-31} = C;
 }
 
-class DForm_2<bits<6> opcode, dag OL, string asmstr>
-  : DForm_base<opcode, OL, asmstr>;
+class DForm_2<bits<6> opcode, dag OL, string asmstr, list<dag> pattern>
+  : DForm_base<opcode, OL, asmstr, pattern>;
 
-class DForm_2_r0<bits<6> opcode, dag OL, string asmstr>
+class DForm_2_r0<bits<6> opcode, dag OL, string asmstr, list<dag> pattern>
   : I<opcode, OL, asmstr> {
   bits<5>  A;
   bits<16> B;
+  
+  let Pattern = pattern;
   
   let Inst{6-10}  = A;
   let Inst{11-15} = 0;

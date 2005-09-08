@@ -40,12 +40,17 @@ def ctlz       : SDNode<"ISD::CTLZ">;
 /// PatFrag - Represents a pattern fragment.  This can match something on the
 /// DAG, frame a single node to multiply nested other fragments.
 ///
-class PatFrag<dag ops, dag frag, code pred = [{}]> {
+class PatFrag<dag ops, dag frag, code pred = [{}], code xform = [{}]> {
   dag Operands = ops;
   dag Fragment = frag;
   code Predicate = pred;
+  code OperandTransform = xform;
 }
-class PatLeaf<dag frag, code pred = [{}]> : PatFrag<(ops), frag, pred>;
+
+// PatLeaf's are pattern fragments that have no operands.  This is just a helper
+// to define immediates and other common things concisely.
+class PatLeaf<dag frag, code pred = [{}], code xform = [{}]>
+ : PatFrag<(ops), frag, pred, xform>;
 
 // Leaf fragments.
 
@@ -59,6 +64,23 @@ def vtFP       : PatLeaf<(vt),  [{ return MVT::isFloatingPoint(N->getVT()); }]>;
 
 def not  : PatFrag<(ops node:$in), (xor node:$in, immAllOnes)>;
 def ineg : PatFrag<(ops node:$in), (sub immZero, node:$in)>;
+
+// PowerPC-Specific predicates.
+
+def immSExt16  : PatLeaf<(imm), [{
+  // immSExt16 predicate - True if the immediate fits in a 16-bit sign extended
+  // field.  Used by instructions like 'addi'.
+  return (int)N->getValue() == (short)N->getValue();
+}]>;
+def imm16Shifted : PatLeaf<(imm), [{
+  // imm16Shifted predicate - True if only bits in the top 16-bits of the
+  // immediate are set.  Used by instructions like 'addis'.
+  return ((unsigned)N->getValue() & 0xFFFF0000U) == (unsigned)N->getValue();
+}], [{
+  // Transformation predicate: shift the immediate value down into the low bits.
+  return getI32Imm((unsigned)N->getValue() >> 16);
+}]>;
+
 
 class isPPC64 { bit PPC64 = 1; }
 class isVMX   { bit VMX = 1; }
@@ -177,23 +199,32 @@ def LWZU : DForm_1<35, (ops GPRC:$rD, s16imm:$disp, GPRC:$rA),
                    "lwzu $rD, $disp($rA)">;
 }
 def ADDI   : DForm_2<14, (ops GPRC:$rD, GPRC:$rA, s16imm:$imm),
-                     "addi $rD, $rA, $imm">;
+                     "addi $rD, $rA, $imm",
+                     [(set GPRC:$rD, (add GPRC:$rA, immSExt16:$imm))]>;
 def ADDIC  : DForm_2<12, (ops GPRC:$rD, GPRC:$rA, s16imm:$imm),
-                     "addic $rD, $rA, $imm">;
+                     "addic $rD, $rA, $imm",
+                     []>;
 def ADDICo : DForm_2<13, (ops GPRC:$rD, GPRC:$rA, s16imm:$imm),
-                     "addic. $rD, $rA, $imm">;
+                     "addic. $rD, $rA, $imm",
+                     []>;
 def ADDIS  : DForm_2<15, (ops GPRC:$rD, GPRC:$rA, symbolHi:$imm),
-                     "addis $rD, $rA, $imm">;
+                     "addis $rD, $rA, $imm",
+                     [(set GPRC:$rD, (add GPRC:$rA, imm16Shifted:$imm))]>;
 def LA     : DForm_2<14, (ops GPRC:$rD, GPRC:$rA, symbolLo:$sym),
-                     "la $rD, $sym($rA)">;
+                     "la $rD, $sym($rA)",
+                     []>;
 def MULLI  : DForm_2< 7, (ops GPRC:$rD, GPRC:$rA, s16imm:$imm),
-                     "mulli $rD, $rA, $imm">;
+                     "mulli $rD, $rA, $imm",
+                     [(set GPRC:$rD, (mul GPRC:$rA, immSExt16:$imm))]>;
 def SUBFIC : DForm_2< 8, (ops GPRC:$rD, GPRC:$rA, s16imm:$imm),
-                     "subfic $rD, $rA, $imm">;
+                     "subfic $rD, $rA, $imm",
+                     []>;
 def LI  : DForm_2_r0<14, (ops GPRC:$rD, s16imm:$imm),
-                     "li $rD, $imm">;
+                     "li $rD, $imm",
+                     [(set GPRC:$rD, immSExt16:$imm)]>;
 def LIS : DForm_2_r0<15, (ops GPRC:$rD, symbolHi:$imm),
-                     "lis $rD, $imm">;
+                     "lis $rD, $imm",
+                     [(set GPRC:$rD, imm16Shifted:$imm)]>;
 let isStore = 1 in {
 def STMW : DForm_3<47, (ops GPRC:$rS, s16imm:$disp, GPRC:$rA),
                    "stmw $rS, $disp($rA)">;
