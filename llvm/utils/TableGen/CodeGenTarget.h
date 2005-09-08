@@ -47,9 +47,11 @@ class CodeGenTarget {
   mutable std::map<std::string, CodeGenInstruction> Instructions;
   mutable std::vector<CodeGenRegister> Registers;
   mutable std::vector<CodeGenRegisterClass> RegisterClasses;
+  mutable std::vector<MVT::ValueType> LegalValueTypes;
   void ReadRegisters() const;
   void ReadRegisterClasses() const;
   void ReadInstructions() const;
+  void ReadLegalValueTypes() const;
 public:
   CodeGenTarget();
 
@@ -70,16 +72,29 @@ public:
   ///
   Record *getAsmWriter() const;
 
-  const std::vector<CodeGenRegister> &getRegisters() {
+  const std::vector<CodeGenRegister> &getRegisters() const {
     if (Registers.empty()) ReadRegisters();
     return Registers;
   }
 
-  const std::vector<CodeGenRegisterClass> getRegisterClasses() {
+  const std::vector<CodeGenRegisterClass> &getRegisterClasses() const {
     if (RegisterClasses.empty()) ReadRegisterClasses();
     return RegisterClasses;
   }
 
+  const std::vector<MVT::ValueType> &getLegalValueTypes() const {
+    if (LegalValueTypes.empty()) ReadLegalValueTypes();
+    return LegalValueTypes;
+  }
+  
+  /// isLegalValueType - Return true if the specified value type is natively
+  /// supported by the target (i.e. there are registers that directly hold it).
+  bool isLegalValueType(MVT::ValueType VT) const {
+    const std::vector<MVT::ValueType> &LegalVTs = getLegalValueTypes();
+    for (unsigned i = 0, e = LegalVTs.size(); i != e; ++i)
+      if (LegalVTs[i] == VT) return true;
+    return false;    
+  }
 
   /// getInstructions - Return all of the instructions defined for this target.
   ///

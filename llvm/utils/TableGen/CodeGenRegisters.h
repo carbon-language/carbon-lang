@@ -17,6 +17,7 @@
 
 #include <string>
 #include <vector>
+#include "llvm/CodeGen/ValueTypes.h"
 
 namespace llvm {
   class Record;
@@ -36,6 +37,7 @@ namespace llvm {
     std::vector<Record*> Elements;
     unsigned SpillSize;
     unsigned SpillAlignment;
+    MVT::ValueType VT;
     std::string MethodProtos, MethodBodies;
 
     const std::string &getName() const;

@@ -152,6 +152,7 @@ CodeGenRegisterClass::CodeGenRegisterClass(Record *R) : TheDef(R) {
   Namespace = R->getValueAsString("Namespace");
   SpillSize = R->getValueAsInt("Size");
   SpillAlignment = R->getValueAsInt("Alignment");
+  VT = getValueType(R->getValueAsDef("RegType"));
 
   if (CodeInit *CI = dynamic_cast<CodeInit*>(R->getValueInit("MethodBodies")))
     MethodBodies = CI->getValue();
@@ -182,6 +183,11 @@ const std::string &CodeGenRegisterClass::getName() const {
   return TheDef->getName();
 }
 
+void CodeGenTarget::ReadLegalValueTypes() const {
+  const std::vector<CodeGenRegisterClass> &RCs = getRegisterClasses();
+  for (unsigned i = 0, e = RCs.size(); i != e; ++i)
+    LegalValueTypes.push_back(RCs[i].VT);
+}
 
 
 void CodeGenTarget::ReadInstructions() const {
