@@ -134,6 +134,33 @@ void PPC32RegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
   }
 }
 
+/// foldMemoryOperand - PowerPC (like most RISC's) can only fold spills into
+/// copy instructions, turning them into load/store instructions.
+MachineInstr *PPC32RegisterInfo::foldMemoryOperand(MachineInstr *MI,
+                                                   unsigned OpNum,
+                                                   int FrameIndex) const {
+  // Make sure this is a reg-reg copy.  Note that we can't handle MCRF, because
+  // it takes more than one instruction to store it.
+  unsigned Opc = MI->getOpcode();
+  
+  if ((Opc == PPC::OR &&
+       MI->getOperand(1).getReg() == MI->getOperand(2).getReg())) {
+    if (OpNum == 0) {  // move -> store
+      unsigned InReg = MI->getOperand(1).getReg();
+      return addFrameReference(BuildMI(PPC::STW,
+                                       3).addReg(InReg), FrameIndex);
+    } else {
+      unsigned OutReg = MI->getOperand(0).getReg();
+      return addFrameReference(BuildMI(PPC::LWZ, 2, OutReg), FrameIndex);
+    }
+    
+  } else if (Opc == PPC::FMR) {
+    // FIXME: We would be able to fold this, but we don't know whether to use a
+    // 32- or 64-bit load/store :(.
+  }
+  return 0;
+}
+
 //===----------------------------------------------------------------------===//
 // Stack Frame Processing methods
 //===----------------------------------------------------------------------===//
