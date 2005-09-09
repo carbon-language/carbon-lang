@@ -2263,7 +2263,8 @@ const char *SDNode::getOperationName(const SelectionDAG *G) const {
     else {
       if (G)
         if (const TargetInstrInfo *TII = G->getTarget().getInstrInfo())
-          return TII->getName(getOpcode()-ISD::BUILTIN_OP_END);
+          if (getOpcode()-ISD::BUILTIN_OP_END < TII->getNumOpcodes())
+            return TII->getName(getOpcode()-ISD::BUILTIN_OP_END);
       return "<<Unknown Target Node>>";
     }
    
