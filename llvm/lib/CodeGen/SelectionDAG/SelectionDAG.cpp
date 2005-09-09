@@ -1310,10 +1310,10 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     }
   }
 
+  if (!CombinerEnabled) {
   if (N2C) {
     uint64_t C2 = N2C->getValue();
 
-    if (!CombinerEnabled) {
     switch (Opcode) {
     case ISD::ADD:
       if (!C2) return N1;         // add X, 0 -> X
@@ -1486,7 +1486,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
       if (ConstantSDNode *N3C = dyn_cast<ConstantSDNode>(N1.Val->getOperand(1)))
         return getNode(Opcode, VT, N1.Val->getOperand(0),
                        getNode(Opcode, VT, N2, N1.Val->getOperand(1)));
-    }
+  }
   }
 
   ConstantFPSDNode *N1CFP = dyn_cast<ConstantFPSDNode>(N1.Val);
@@ -1533,6 +1533,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
 
   case ISD::AND:
   case ISD::OR:
+    if (!CombinerEnabled) {
     if (N1.Val->getOpcode() == ISD::SETCC && N2.Val->getOpcode() == ISD::SETCC){
       SDNode *LHS = N1.Val, *RHS = N2.Val;
       SDOperand LL = LHS->getOperand(0), RL = RHS->getOperand(0);
@@ -1595,6 +1596,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
       return getNode(ISD::ZERO_EXTEND, VT,
                      getNode(Opcode, N1.getOperand(0).getValueType(),
                              N1.getOperand(0), N2.getOperand(0)));
+    }
     break;
   case ISD::XOR:
     if (!CombinerEnabled) {

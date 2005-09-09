@@ -574,6 +574,7 @@ SDOperand DAGCombiner::visitMULHU(SDNode *N) {
 SDOperand DAGCombiner::visitAND(SDNode *N) {
   SDOperand N0 = N->getOperand(0);
   SDOperand N1 = N->getOperand(1);
+  SDOperand LL, LR, RL, RR, CC0, CC1;
   ConstantSDNode *N0C = dyn_cast<ConstantSDNode>(N0);
   ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1);
   MVT::ValueType VT = N1.getValueType();
@@ -620,12 +621,60 @@ SDOperand DAGCombiner::visitAND(SDNode *N) {
     if (ConstantSDNode *ORI = dyn_cast<ConstantSDNode>(N0.getOperand(1)))
       if ((ORI->getValue() & N1C->getValue()) == N1C->getValue())
         return N1;
+  // fold (and (setcc x), (setcc y)) -> (setcc (and x, y))
+  if (isSetCCEquivalent(N0, LL, LR, CC0) && isSetCCEquivalent(N1, RL, RR, CC1)){
+    ISD::CondCode Op0 = cast<CondCodeSDNode>(CC0)->get();
+    ISD::CondCode Op1 = cast<CondCodeSDNode>(CC1)->get();
+    
+    if (LR == RR && isa<ConstantSDNode>(LR) && Op0 == Op1 &&
+        MVT::isInteger(LL.getValueType())) {
+      // fold (X == 0) & (Y == 0) -> (X|Y == 0)
+      if (cast<ConstantSDNode>(LR)->getValue() == 0 && Op1 == ISD::SETEQ) {
+        SDOperand ORNode = DAG.getNode(ISD::OR, LR.getValueType(), LL, RL);
+        WorkList.push_back(ORNode.Val);
+        return DAG.getSetCC(VT, ORNode, LR, Op1);
+      }
+      // fold (X == -1) & (Y == -1) -> (X&Y == -1)
+      if (cast<ConstantSDNode>(LR)->isAllOnesValue() && Op1 == ISD::SETEQ) {
+        SDOperand ANDNode = DAG.getNode(ISD::AND, LR.getValueType(), LL, RL);
+        WorkList.push_back(ANDNode.Val);
+        return DAG.getSetCC(VT, ANDNode, LR, Op1);
+      }
+      // fold (X >  -1) & (Y >  -1) -> (X|Y > -1)
+      if (cast<ConstantSDNode>(LR)->isAllOnesValue() && Op1 == ISD::SETGT) {
+        SDOperand ORNode = DAG.getNode(ISD::OR, LR.getValueType(), LL, RL);
+        WorkList.push_back(ORNode.Val);
+        return DAG.getSetCC(VT, ORNode, LR, Op1);
+      }
+    }
+    // canonicalize equivalent to ll == rl
+    if (LL == RR && LR == RL) {
+      Op1 = ISD::getSetCCSwappedOperands(Op1);
+      std::swap(RL, RR);
+    }
+    if (LL == RL && LR == RR) {
+      bool isInteger = MVT::isInteger(LL.getValueType());
+      ISD::CondCode Result = ISD::getSetCCAndOperation(Op0, Op1, isInteger);
+      if (Result != ISD::SETCC_INVALID)
+        return DAG.getSetCC(N0.getValueType(), LL, LR, Result);
+    }
+  }
+  // fold (and (zext x), (zext y)) -> (zext (and x, y))
+  if (N0.getOpcode() == ISD::ZERO_EXTEND && 
+      N1.getOpcode() == ISD::ZERO_EXTEND &&
+      N0.getOperand(0).getValueType() == N1.getOperand(0).getValueType()) {
+    SDOperand ANDNode = DAG.getNode(ISD::AND, N0.getOperand(0).getValueType(),
+                                    N0.getOperand(0), N1.getOperand(0));
+    WorkList.push_back(ANDNode.Val);
+    return DAG.getNode(ISD::ZERO_EXTEND, VT, ANDNode);
+  }
   return SDOperand();
 }
 
 SDOperand DAGCombiner::visitOR(SDNode *N) {
   SDOperand N0 = N->getOperand(0);
   SDOperand N1 = N->getOperand(1);
+  SDOperand LL, LR, RL, RR, CC0, CC1;
   ConstantSDNode *N0C = dyn_cast<ConstantSDNode>(N0);
   ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1);
   MVT::ValueType VT = N1.getValueType();
@@ -660,6 +709,51 @@ SDOperand DAGCombiner::visitOR(SDNode *N) {
     if (N01C)
       return DAG.getNode(ISD::OR, VT, N0.getOperand(0),
                          DAG.getConstant(N1C->getValue()|N01C->getValue(), VT));
+  }
+  // fold (or (setcc x), (setcc y)) -> (setcc (or x, y))
+  if (isSetCCEquivalent(N0, LL, LR, CC0) && isSetCCEquivalent(N1, RL, RR, CC1)){
+    ISD::CondCode Op0 = cast<CondCodeSDNode>(CC0)->get();
+    ISD::CondCode Op1 = cast<CondCodeSDNode>(CC1)->get();
+    
+    if (LR == RR && isa<ConstantSDNode>(LR) && Op0 == Op1 &&
+        MVT::isInteger(LL.getValueType())) {
+      // fold (X != 0) | (Y != 0) -> (X|Y != 0)
+      // fold (X <  0) | (Y <  0) -> (X|Y < 0)
+      if (cast<ConstantSDNode>(LR)->getValue() == 0 && 
+          (Op1 == ISD::SETNE || Op1 == ISD::SETLT)) {
+        SDOperand ORNode = DAG.getNode(ISD::OR, LR.getValueType(), LL, RL);
+        WorkList.push_back(ORNode.Val);
+        return DAG.getSetCC(VT, ORNode, LR, Op1);
+      }
+      // fold (X != -1) | (Y != -1) -> (X&Y != -1)
+      // fold (X >  -1) | (Y >  -1) -> (X&Y >  -1)
+      if (cast<ConstantSDNode>(LR)->isAllOnesValue() && 
+          (Op1 == ISD::SETNE || Op1 == ISD::SETGT)) {
+        SDOperand ANDNode = DAG.getNode(ISD::AND, LR.getValueType(), LL, RL);
+        WorkList.push_back(ANDNode.Val);
+        return DAG.getSetCC(VT, ANDNode, LR, Op1);
+      }
+    }
+    // canonicalize equivalent to ll == rl
+    if (LL == RR && LR == RL) {
+      Op1 = ISD::getSetCCSwappedOperands(Op1);
+      std::swap(RL, RR);
+    }
+    if (LL == RL && LR == RR) {
+      bool isInteger = MVT::isInteger(LL.getValueType());
+      ISD::CondCode Result = ISD::getSetCCOrOperation(Op0, Op1, isInteger);
+      if (Result != ISD::SETCC_INVALID)
+        return DAG.getSetCC(N0.getValueType(), LL, LR, Result);
+    }
+  }
+  // fold (or (zext x), (zext y)) -> (zext (or x, y))
+  if (N0.getOpcode() == ISD::ZERO_EXTEND && 
+      N1.getOpcode() == ISD::ZERO_EXTEND &&
+      N0.getOperand(0).getValueType() == N1.getOperand(0).getValueType()) {
+    SDOperand ORNode = DAG.getNode(ISD::OR, N0.getOperand(0).getValueType(),
+                                   N0.getOperand(0), N1.getOperand(0));
+    WorkList.push_back(ORNode.Val);
+    return DAG.getNode(ISD::ZERO_EXTEND, VT, ORNode);
   }
   return SDOperand();
 }
@@ -733,6 +827,15 @@ SDOperand DAGCombiner::visitXOR(SDNode *N) {
   // fold (xor x, x) -> 0
   if (N0 == N1)
     return DAG.getConstant(0, VT);
+  // fold (xor (zext x), (zext y)) -> (zext (xor x, y))
+  if (N0.getOpcode() == ISD::ZERO_EXTEND && 
+      N1.getOpcode() == ISD::ZERO_EXTEND &&
+      N0.getOperand(0).getValueType() == N1.getOperand(0).getValueType()) {
+    SDOperand XORNode = DAG.getNode(ISD::XOR, N0.getOperand(0).getValueType(),
+                                   N0.getOperand(0), N1.getOperand(0));
+    WorkList.push_back(XORNode.Val);
+    return DAG.getNode(ISD::ZERO_EXTEND, VT, XORNode);
+  }
   return SDOperand();
 }
 
