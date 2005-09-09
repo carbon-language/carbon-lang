@@ -109,24 +109,44 @@ def mulhu      : SDNode<"ISD::MULHU"     , SDTIntBinOp>;
 def sext_inreg : SDNode<"ISD::SIGN_EXTEND_INREG", SDTExtInreg>;
 def ctlz       : SDNode<"ISD::CTLZ"      , SDTIntUnaryOp>;
 
+//===----------------------------------------------------------------------===//
+// Selection DAG Node Transformation Functions.
+//
+// This mechanism allows targets to manipulate nodes in the output DAG once a
+// match has been formed.  This is typically used to manipulate immediate
+// values.
+//
+class SDNodeXForm<SDNode opc, code xformFunction> {
+  SDNode Opcode = opc;
+  code XFormFunction = xformFunction;
+}
+
+def NOOP_SDNodeXForm : SDNodeXForm<imm, [{}]>;
+
 
 //===----------------------------------------------------------------------===//
 // Selection DAG Pattern Fragments.
+//
+// Pattern fragments are reusable chunks of dags that match specific things.
+// They can take arguments and have C++ predicates that control whether they
+// match.  They are intended to make the patterns for common instructions more
+// compact and readable.
 //
 
 /// PatFrag - Represents a pattern fragment.  This can match something on the
 /// DAG, frame a single node to multiply nested other fragments.
 ///
-class PatFrag<dag ops, dag frag, code pred = [{}], code xform = [{}]> {
+class PatFrag<dag ops, dag frag, code pred = [{}],
+              SDNodeXForm xform = NOOP_SDNodeXForm> {
   dag Operands = ops;
   dag Fragment = frag;
   code Predicate = pred;
-  code OperandTransform = xform;
+  SDNodeXForm OperandTransform = xform;
 }
 
 // PatLeaf's are pattern fragments that have no operands.  This is just a helper
 // to define immediates and other common things concisely.
-class PatLeaf<dag frag, code pred = [{}], code xform = [{}]>
+class PatLeaf<dag frag, code pred = [{}], SDNodeXForm xform = NOOP_SDNodeXForm>
  : PatFrag<(ops), frag, pred, xform>;
 
 // Leaf fragments.
@@ -142,10 +162,39 @@ def vtFP       : PatLeaf<(vt),  [{ return MVT::isFloatingPoint(N->getVT()); }]>;
 def not  : PatFrag<(ops node:$in), (xor node:$in, immAllOnes)>;
 def ineg : PatFrag<(ops node:$in), (sub immZero, node:$in)>;
 
+//===----------------------------------------------------------------------===//
+// Selection DAG Pattern Support.
+//
+// Patterns are what are actually matched against the target-flavored
+// instruction selection DAG.  Instructions defined by the target implicitly
+// define patterns in most cases, but patterns can also be explicitly added when
+// an operation is defined by a sequence of instructions (e.g. loading a large
+// immediate value on RISC targets that do not support immediates as large as
+// their GPRs).
+//
+
+class Pattern<dag patternToMatch, list<dag> resultInstrs> {
+  dag       PatternToMatch = patternToMatch;
+  list<dag> ResultInstrs   = resultInstrs;
+}
+
+// Pat - A simple (but common) form of a pattern, which produces a simple result
+// not needing a full list.
+class Pat<dag pattern, dag result> : Pattern<pattern, [result]>;
 
 
 //===----------------------------------------------------------------------===//
-// PowerPC specific pattern fragments.
+// PowerPC specific transformation functions and pattern fragments.
+//
+def LO16 : SDNodeXForm<imm, [{
+  // Transformation function: get the low 16 bits.
+  return getI32Imm((unsigned short)N->getValue());
+}]>;
+
+def HI16 : SDNodeXForm<imm, [{
+  // Transformation function: shift the immediate value down into the low bits.
+  return getI32Imm((unsigned)N->getValue() >> 16);
+}]>;
 
 def immSExt16  : PatLeaf<(imm), [{
   // immSExt16 predicate - True if the immediate fits in a 16-bit sign extended
@@ -156,15 +205,13 @@ def immZExt16  : PatLeaf<(imm), [{
   // immZExt16 predicate - True if the immediate fits in a 16-bit zero extended
   // field.  Used by instructions like 'ori'.
   return (unsigned)N->getValue() == (unsigned short)N->getValue();
-}]>;
+}], LO16>;
+
 def imm16Shifted : PatLeaf<(imm), [{
   // imm16Shifted predicate - True if only bits in the top 16-bits of the
   // immediate are set.  Used by instructions like 'addis'.
   return ((unsigned)N->getValue() & 0xFFFF0000U) == (unsigned)N->getValue();
-}], [{
-  // Transformation function: shift the immediate value down into the low bits.
-  return getI32Imm((unsigned)N->getValue() >> 16);
-}]>;
+}], HI16>;
 
 /*
 // Example of a legalize expander: Only for PPC64.
@@ -175,8 +222,6 @@ def : Expander<(set i64:$dst, (fp_to_sint f64:$src)),
                 (set i64:$dst, (load i32:$tmpFI))],
                 Subtarget_PPC64>;
 */
-
-
 
 //===----------------------------------------------------------------------===//
 // PowerPC Flag Definitions.
@@ -712,6 +757,24 @@ def RLDICR : MDForm_1<30, 1,
                       (ops GPRC:$rA, GPRC:$rS, u6imm:$SH, u6imm:$ME),
                       "rldicr $rA, $rS, $SH, $ME">, isPPC64;
 
+//===----------------------------------------------------------------------===//
+// PowerPC Instruction Patterns
+//
+
+// REDUNDANT WITH INSTRUCTION DEFINITION, ONLY FOR TESTING.
+def : Pat<(sext_inreg GPRC:$in, i8),
+          (EXTSB GPRC:$in)>;
+          
+// or by an arbitrary immediate.
+def : Pat<(or GPRC:$in, imm:$imm),
+          (ORIS (ORI GPRC:$in, (LO16 imm:$imm)), (HI16 imm:$imm))>;
+// xor by an arbitrary immediate.
+def : Pat<(xor GPRC:$in, imm:$imm),
+          (XORIS (XORI GPRC:$in, (LO16 imm:$imm)), (HI16 imm:$imm))>;
+
+//===----------------------------------------------------------------------===//
+// PowerPCInstrInfo Definition
+//
 def PowerPCInstrInfo : InstrInfo {
   let PHIInst  = PHI;
 
@@ -720,3 +783,4 @@ def PowerPCInstrInfo : InstrInfo {
 
   let isLittleEndianEncoding = 1;
 }
+
