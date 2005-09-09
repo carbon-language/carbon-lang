@@ -277,7 +277,7 @@ TreePatternNode *TreePatternNode::InlinePatternFragments(TreePattern &TP) {
     TP.error("'" + Op->getName() + "' fragment requires " +
              utostr(Frag->getNumArgs()) + " operands!");
 
-  TreePatternNode *FragTree = Frag->getTree(0)->clone();
+  TreePatternNode *FragTree = Frag->getOnlyTree()->clone();
 
   // Resolve formal arguments to their actual value.
   if (Frag->getNumArgs()) {
@@ -400,7 +400,7 @@ MVT::ValueType TreePattern::getIntrinsicType(Record *R) const {
   if (R->isSubClassOf("RegisterClass"))
     return getValueType(R->getValueAsDef("RegType"));
   else if (R->isSubClassOf("PatFrag")) {
-    //return ISE.ReadNonterminal(R)->getTree()->getType();
+    // Pattern fragment types will be resolved when they are inlined.
     return MVT::LAST_VALUETYPE;
   } else if (R->isSubClassOf("Register")) {
     assert(0 && "Explicit registers not handled here yet!\n");
@@ -574,9 +574,9 @@ void DAGISelEmitter::ParseAndResolvePatternFragments(std::ostream &OS) {
     CodeInit *CI =
       dynamic_cast<CodeInit*>(Fragments[i]->getValueInit("Predicate"));
     if (!CI->getValue().empty()) {
-      assert(!P->getTree(0)->isLeaf() && "Can't be a leaf!");
+      assert(!P->getOnlyTree()->isLeaf() && "Can't be a leaf!");
       std::string ClassName =
-        getSDNodeInfo(P->getTree(0)->getOperator()).getSDClassName();
+        getSDNodeInfo(P->getOnlyTree()->getOperator()).getSDClassName();
       const char *C2 = ClassName == "SDNode" ? "N" : "inN";
       
       OS << "static inline bool Predicate_" << Fragments[i]->getName()
@@ -584,7 +584,7 @@ void DAGISelEmitter::ParseAndResolvePatternFragments(std::ostream &OS) {
       if (ClassName != "SDNode")
         OS << "  " << ClassName << " *N = cast<" << ClassName << ">(inN);\n";
       OS << CI->getValue() << "\n}\n";
-      P->getTree(0)->setPredicateFn("Predicate_"+Fragments[i]->getName());
+      P->getOnlyTree()->setPredicateFn("Predicate_"+Fragments[i]->getName());
     }
   }
   

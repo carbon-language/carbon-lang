@@ -235,6 +235,10 @@ namespace llvm {
     const std::vector<TreePatternNode*> &getTrees() const { return Trees; }
     unsigned getNumTrees() const { return Trees.size(); }
     TreePatternNode *getTree(unsigned i) const { return Trees[i]; }
+    TreePatternNode *getOnlyTree() const {
+      assert(Trees.size() == 1 && "Doesn't have exactly one pattern!");
+      return Trees[0];
+    }
         
     /// getRecord - Return the actual TableGen record corresponding to this
     /// pattern.
