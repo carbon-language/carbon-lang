@@ -249,14 +249,26 @@ addIntervalsForSpills(const LiveInterval &li, VirtRegMap &vrm, int slot) {
 
       MachineBasicBlock::iterator mi = getInstructionFromIndex(index);
 
+      // NewRegLiveIn - This instruction might have multiple uses of the spilled
+      // register.  In this case, for the first use, keep track of the new vreg
+      // that we reload it into.  If we see a second use, reuse this vreg
+      // instead of creating live ranges for two reloads.
+      unsigned NewRegLiveIn = 0;
+
     for_operand:
       for (unsigned i = 0; i != mi->getNumOperands(); ++i) {
         MachineOperand& mop = mi->getOperand(i);
         if (mop.isRegister() && mop.getReg() == li.reg) {
-          // First thing, attempt to fold the memory reference into the
-          // instruction.  If we can do this, we don't need to insert spill
-          // code.
-          if (MachineInstr* fmi = mri_->foldMemoryOperand(mi, i, slot)) {
+          if (NewRegLiveIn && mop.isUse()) {
+            // We already emitted a reload of this value, reuse it for
+            // subsequent operands.
+            mi->SetMachineOperandReg(i, NewRegLiveIn);
+            DEBUG(std::cerr << "\t\t\t\treused reload into reg" << NewRegLiveIn
+                            << " for operand #" << i << '\n');
+            mi->dump();
+          } else if (MachineInstr* fmi = mri_->foldMemoryOperand(mi, i, slot)) {
+            // Attempt to fold the memory reference into the instruction.  If we
+            // can do this, we don't need to insert spill code.
             if (lv_)
               lv_->instructionChanged(mi, fmi);
             vrm.virtFolded(li.reg, mi, i, fmi);
@@ -288,11 +300,11 @@ addIntervalsForSpills(const LiveInterval &li, VirtRegMap &vrm, int slot) {
                                 getUseIndex(index));
 
             // create a new register for this spill
-            unsigned nReg = mf_->getSSARegMap()->createVirtualRegister(rc);
-            mi->SetMachineOperandReg(i, nReg);
+            NewRegLiveIn = mf_->getSSARegMap()->createVirtualRegister(rc);
+            mi->SetMachineOperandReg(i, NewRegLiveIn);
             vrm.grow();
-            vrm.assignVirt2StackSlot(nReg, slot);
-            LiveInterval& nI = getOrCreateInterval(nReg);
+            vrm.assignVirt2StackSlot(NewRegLiveIn, slot);
+            LiveInterval& nI = getOrCreateInterval(NewRegLiveIn);
             assert(nI.empty());
 
             // the spill weight is now infinity as it
@@ -305,7 +317,12 @@ addIntervalsForSpills(const LiveInterval &li, VirtRegMap &vrm, int slot) {
 
             // update live variables if it is available
             if (lv_)
-              lv_->addVirtualRegisterKilled(nReg, mi);
+              lv_->addVirtualRegisterKilled(NewRegLiveIn, mi);
+            
+            // If this is a live in, reuse it for subsequent live-ins.  If it's
+            // a def, we can't do this.
+            if (!mop.isUse()) NewRegLiveIn = 0;
+            
             DEBUG(std::cerr << "\t\t\t\tadded new interval: " << nI << '\n');
           }
         }
