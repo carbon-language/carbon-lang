@@ -149,14 +149,21 @@ MachineInstr *PPC32RegisterInfo::foldMemoryOperand(MachineInstr *MI,
       unsigned InReg = MI->getOperand(1).getReg();
       return addFrameReference(BuildMI(PPC::STW,
                                        3).addReg(InReg), FrameIndex);
-    } else {
+    } else {           // move -> load
       unsigned OutReg = MI->getOperand(0).getReg();
       return addFrameReference(BuildMI(PPC::LWZ, 2, OutReg), FrameIndex);
     }
     
   } else if (Opc == PPC::FMR) {
-    // FIXME: We would be able to fold this, but we don't know whether to use a
-    // 32- or 64-bit load/store :(.
+    // We currently always spill FP values as doubles.  :(
+    if (OpNum == 0) {  // move -> store
+      unsigned InReg = MI->getOperand(1).getReg();
+      return addFrameReference(BuildMI(PPC::STFD,
+                                       3).addReg(InReg), FrameIndex);
+    } else {           // move -> load
+      unsigned OutReg = MI->getOperand(0).getReg();
+      return addFrameReference(BuildMI(PPC::LFD, 2, OutReg), FrameIndex);
+    }
   }
   return 0;
 }
