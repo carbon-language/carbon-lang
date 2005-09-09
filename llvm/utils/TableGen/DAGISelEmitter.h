@@ -233,6 +233,8 @@ namespace llvm {
     /// getTrees - Return the tree patterns which corresponds to this pattern.
     ///
     const std::vector<TreePatternNode*> &getTrees() const { return Trees; }
+    unsigned getNumTrees() const { return Trees.size(); }
+    TreePatternNode *getTree(unsigned i) const { return Trees[i]; }
         
     /// getRecord - Return the actual TableGen record corresponding to this
     /// pattern.
