@@ -974,8 +974,12 @@ SDOperand SelectionDAG::SimplifySelectCC(SDOperand N1, SDOperand N2,
   // Check to see if this is the equivalent of setcc
   if (N4C && N4C->isNullValue() && N3C && (N3C->getValue() == 1ULL)) {
     MVT::ValueType XType = N1.getValueType();
-    if (TLI.isOperationLegal(ISD::SETCC, TLI.getSetCCResultTy()))
-      return getSetCC(TLI.getSetCCResultTy(), N1, N2, CC);
+    if (TLI.isOperationLegal(ISD::SETCC, TLI.getSetCCResultTy())) {
+      SDOperand Res = getSetCC(TLI.getSetCCResultTy(), N1, N2, CC);
+      if (Res.getValueType() != VT)
+        Res = getNode(ISD::ZERO_EXTEND, VT, Res);
+      return Res;
+    }
 
     // seteq X, 0 -> srl (ctlz X, log2(size(X)))
     if (N2C && N2C->isNullValue() && CC == ISD::SETEQ && 
