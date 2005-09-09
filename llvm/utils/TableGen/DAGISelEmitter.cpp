@@ -277,7 +277,7 @@ TreePatternNode *TreePatternNode::InlinePatternFragments(TreePattern &TP) {
     TP.error("'" + Op->getName() + "' fragment requires " +
              utostr(Frag->getNumArgs()) + " operands!");
 
-  TreePatternNode *FragTree = Frag->getTrees()[0]->clone();
+  TreePatternNode *FragTree = Frag->getTree(0)->clone();
 
   // Resolve formal arguments to their actual value.
   if (Frag->getNumArgs()) {
@@ -574,9 +574,9 @@ void DAGISelEmitter::ParseAndResolvePatternFragments(std::ostream &OS) {
     CodeInit *CI =
       dynamic_cast<CodeInit*>(Fragments[i]->getValueInit("Predicate"));
     if (!CI->getValue().empty()) {
-      assert(!P->getTrees()[0]->isLeaf() && "Can't be a leaf!");
+      assert(!P->getTree(0)->isLeaf() && "Can't be a leaf!");
       std::string ClassName =
-        getSDNodeInfo(P->getTrees()[0]->getOperator()).getSDClassName();
+        getSDNodeInfo(P->getTree(0)->getOperator()).getSDClassName();
       const char *C2 = ClassName == "SDNode" ? "N" : "inN";
       
       OS << "static inline bool Predicate_" << Fragments[i]->getName()
@@ -584,7 +584,7 @@ void DAGISelEmitter::ParseAndResolvePatternFragments(std::ostream &OS) {
       if (ClassName != "SDNode")
         OS << "  " << ClassName << " *N = cast<" << ClassName << ">(inN);\n";
       OS << CI->getValue() << "\n}\n";
-      P->getTrees()[0]->setPredicateFn("Predicate_"+Fragments[i]->getName());
+      P->getTree(0)->setPredicateFn("Predicate_"+Fragments[i]->getName());
     }
   }
   
@@ -642,6 +642,14 @@ void DAGISelEmitter::ParseAndResolveInstructions() {
       I->dump();
       I->error("Could not infer all types in pattern!");
     }
+    
+    // Verify that the top-level forms in the instruction are of void type.
+    for (unsigned j = 0, e = I->getNumTrees(); j != e; ++j)
+      if (I->getTree(j)->getType() != MVT::isVoid) {
+        I->dump();
+        I->error("Top-level forms in instruction pattern should have"
+                 " void types");
+      }
 
     DEBUG(I->dump());
     Instructions.push_back(I);
