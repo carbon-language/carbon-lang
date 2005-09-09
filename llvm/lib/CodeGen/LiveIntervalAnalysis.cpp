@@ -265,7 +265,6 @@ addIntervalsForSpills(const LiveInterval &li, VirtRegMap &vrm, int slot) {
             mi->SetMachineOperandReg(i, NewRegLiveIn);
             DEBUG(std::cerr << "\t\t\t\treused reload into reg" << NewRegLiveIn
                             << " for operand #" << i << '\n');
-            mi->dump();
           } else if (MachineInstr* fmi = mri_->foldMemoryOperand(mi, i, slot)) {
             // Attempt to fold the memory reference into the instruction.  If we
             // can do this, we don't need to insert spill code.
