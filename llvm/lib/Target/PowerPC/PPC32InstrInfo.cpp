@@ -76,3 +76,35 @@ bool PPC32InstrInfo::isMoveInstr(const MachineInstr& MI,
   }
   return false;
 }
+
+// commuteInstruction - We can commute rlwimi instructions, but only if the
+// rotate amt is zero.  We also have to munge the immediates a bit.
+MachineInstr *PPC32InstrInfo::commuteInstruction(MachineInstr *MI) const {
+  // Normal instructions can be commuted the obvious way.
+  if (MI->getOpcode() != PPC::RLWIMI)
+    return TargetInstrInfo::commuteInstruction(MI);
+  
+  // Cannot commute if it has a non-zero rotate count.
+  if (MI->getOperand(3).getImmedValue() != 0)
+    return 0;
+  
+  // If we have a zero rotate count, we have:
+  //   M = mask(MB,ME)
+  //   Op0 = (Op1 & ~M) | (Op2 & M)
+  // Change this to:
+  //   M = mask((ME+1)&31, (MB-1)&31)
+  //   Op0 = (Op2 & ~M) | (Op1 & M)
+
+  // Swap op1/op2
+  unsigned Reg1 = MI->getOperand(1).getReg();
+  unsigned Reg2 = MI->getOperand(2).getReg();
+  MI->SetMachineOperandReg(2, Reg1);
+  MI->SetMachineOperandReg(1, Reg2);
+  
+  // Swap the mask around.
+  unsigned MB = MI->getOperand(4).getImmedValue();
+  unsigned ME = MI->getOperand(5).getImmedValue();
+  MI->getOperand(4).setImmedValue((ME+1) & 31);
+  MI->getOperand(5).setImmedValue((MB-1) & 31);
+  return MI;
+}

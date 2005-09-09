@@ -733,7 +733,8 @@ def FSUBS : AForm_2<59, 20,
 
 // M-Form instructions.  rotate and mask instructions.
 //
-let isTwoAddress = 1 in {
+let isTwoAddress = 1, isCommutable = 1 in {
+// RLWIMI can be commuted if the rotate amount is zero.
 def RLWIMI : MForm_2<20,
                      (ops GPRC:$rA, GPRC:$rSi, GPRC:$rS, u5imm:$SH, u5imm:$MB, 
                       u5imm:$ME), "rlwimi $rA, $rS, $SH, $MB, $ME">;

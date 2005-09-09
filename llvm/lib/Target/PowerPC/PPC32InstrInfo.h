@@ -38,6 +38,10 @@ public:
                            unsigned& sourceReg,
                            unsigned& destReg) const;
 
+  // commuteInstruction - We can commute rlwimi instructions, but only if the
+  // rotate amt is zero.  We also have to munge the immediates a bit.
+  virtual MachineInstr *commuteInstruction(MachineInstr *MI) const;
+  
   static unsigned invertPPCBranchOpcode(unsigned Opcode) {
     switch (Opcode) {
     default: assert(0 && "Unknown PPC branch opcode!");
