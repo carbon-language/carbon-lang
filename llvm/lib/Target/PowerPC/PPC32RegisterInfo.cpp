@@ -214,8 +214,9 @@ PPC32RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const {
     // convert into indexed form of the instruction
     // sth 0:rA, 1:imm 2:(rB) ==> sthx 0:rA, 2:rB, 1:r0
     // addi 0:rA 1:rB, 2, imm ==> add 0:rA, 1:rB, 2:r0
-    unsigned NewOpcode = const_cast<std::map<unsigned, unsigned>& >(ImmToIdxMap)[MI.getOpcode()];
-    assert(NewOpcode && "No indexed form of load or store available!");
+    assert(ImmToIdxMap.count(MI.getOpcode()) &&
+           "No indexed form of load or store available!");
+    unsigned NewOpcode = ImmToIdxMap.find(MI.getOpcode())->second;
     MI.setOpcode(NewOpcode);
     MI.SetMachineOperandReg(1, MI.getOperand(i).getReg());
     MI.SetMachineOperandReg(2, PPC::R0);
