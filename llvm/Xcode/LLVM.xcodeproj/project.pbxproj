@@ -6,6 +6,34 @@
 	objectVersion = 42;
 	objects = {
 
+/* Begin PBXAggregateTarget section */
+		CF0329BC08D1BE8E0030FD33 /* LLVM full llc */ = {
+			isa = PBXAggregateTarget;
+			buildConfigurationList = CF0329C708D1BEC40030FD33 /* Build configuration list for PBXAggregateTarget "LLVM full llc" */;
+			buildPhases = (
+			);
+			buildSettings = {
+				OPTIMIZATION_CFLAGS = "";
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = "LLVM full llc";
+				SECTORDER_FLAGS = "";
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+			};
+			dependencies = (
+				CF0329BE08D1BE970030FD33 /* PBXTargetDependency */,
+				CF0329C008D1BE9B0030FD33 /* PBXTargetDependency */,
+			);
+			name = "LLVM full llc";
+			productName = "LLVM full llc";
+		};
+/* End PBXAggregateTarget section */
+
 /* Begin PBXBuildStyle section */
 		014CEA520018CE5811CA2923 /* Debug */ = {
 			isa = PBXBuildStyle;
@@ -31,6 +59,23 @@
 			name = Release;
 		};
 /* End PBXBuildStyle section */
+
+/* Begin PBXContainerItemProxy section */
+		CF0329BD08D1BE970030FD33 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 08FB7793FE84155DC02AAC07 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = CF0329B608D1BE110030FD33;
+			remoteInfo = "LLVM lib";
+		};
+		CF0329BF08D1BE9B0030FD33 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 08FB7793FE84155DC02AAC07 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = CF0329BB08D1BE5D0030FD33;
+			remoteInfo = "LLVM llc";
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
 		CF9BCD0808C74DE0001E7011 /* SubtargetFeature.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SubtargetFeature.h; sourceTree = "<group>"; };
@@ -2287,9 +2332,63 @@
 /* End PBXGroup section */
 
 /* Begin PBXLegacyTarget section */
+		CF0329B608D1BE110030FD33 /* LLVM lib */ = {
+			isa = PBXLegacyTarget;
+			buildArgumentsString = "$(ACTION) -j 4 ";
+			buildConfigurationList = CF0329B708D1BE530030FD33 /* Build configuration list for PBXLegacyTarget "LLVM lib" */;
+			buildPhases = (
+			);
+			buildSettings = {
+				OPTIMIZATION_CFLAGS = "";
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = "LLVM lib";
+				SECTORDER_FLAGS = "";
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+			};
+			buildToolPath = /usr/bin/make;
+			buildWorkingDirectory = ../../obj/lib;
+			dependencies = (
+			);
+			name = "LLVM lib";
+			passBuildSettingsInEnvironment = 0;
+			productName = "LLVM lib";
+		};
+		CF0329BB08D1BE5D0030FD33 /* LLVM llc */ = {
+			isa = PBXLegacyTarget;
+			buildArgumentsString = "$(ACTION) -j 4 ";
+			buildConfigurationList = CF0329C308D1BEC40030FD33 /* Build configuration list for PBXLegacyTarget "LLVM llc" */;
+			buildPhases = (
+			);
+			buildSettings = {
+				OPTIMIZATION_CFLAGS = "";
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = "LLVM llc";
+				SECTORDER_FLAGS = "";
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+			};
+			buildToolPath = /usr/bin/make;
+			buildWorkingDirectory = ../../obj/tools/llc;
+			dependencies = (
+			);
+			name = "LLVM llc";
+			passBuildSettingsInEnvironment = 0;
+			productName = "LLVM llc";
+		};
 		D28A88AD04BDD90700651E21 /* LLVM */ = {
 			isa = PBXLegacyTarget;
-			buildArgumentsString = "$(ACTION) -j 4";
+			buildArgumentsString = "$(ACTION) -j 4 ";
 			buildConfigurationList = DE66EC4C08ABE78900323D32 /* Build configuration list for PBXLegacyTarget "LLVM" */;
 			buildPhases = (
 			);
@@ -2299,7 +2398,7 @@
 				PRODUCT_NAME = LLVM;
 			};
 			buildToolPath = /usr/bin/make;
-			buildWorkingDirectory = /llvm/obj/;
+			buildWorkingDirectory = ../../obj;
 			dependencies = (
 			);
 			name = LLVM;
@@ -2323,11 +2422,192 @@
 			projectDirPath = "";
 			targets = (
 				D28A88AD04BDD90700651E21 /* LLVM */,
+				CF0329B608D1BE110030FD33 /* LLVM lib */,
+				CF0329BB08D1BE5D0030FD33 /* LLVM llc */,
+				CF0329BC08D1BE8E0030FD33 /* LLVM full llc */,
 			);
 		};
 /* End PBXProject section */
 
+/* Begin PBXTargetDependency section */
+		CF0329BE08D1BE970030FD33 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = CF0329B608D1BE110030FD33 /* LLVM lib */;
+			targetProxy = CF0329BD08D1BE970030FD33 /* PBXContainerItemProxy */;
+		};
+		CF0329C008D1BE9B0030FD33 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = CF0329BB08D1BE5D0030FD33 /* LLVM llc */;
+			targetProxy = CF0329BF08D1BE9B0030FD33 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
+		CF0329B808D1BE530030FD33 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				OPTIMIZATION_CFLAGS = "-O0";
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = "LLVM lib";
+				SECTORDER_FLAGS = "";
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+			};
+			name = Debug;
+		};
+		CF0329B908D1BE530030FD33 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				OPTIMIZATION_CFLAGS = "-O0";
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = "LLVM lib";
+				SECTORDER_FLAGS = "";
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+			};
+			name = Release;
+		};
+		CF0329BA08D1BE530030FD33 /* Default */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				OPTIMIZATION_CFLAGS = "-O0";
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = "LLVM lib";
+				SECTORDER_FLAGS = "";
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+			};
+			name = Default;
+		};
+		CF0329C408D1BEC40030FD33 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				OPTIMIZATION_CFLAGS = "-O0";
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = "LLVM llc";
+				SECTORDER_FLAGS = "";
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+			};
+			name = Debug;
+		};
+		CF0329C508D1BEC40030FD33 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				OPTIMIZATION_CFLAGS = "-O0";
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = "LLVM llc";
+				SECTORDER_FLAGS = "";
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+			};
+			name = Release;
+		};
+		CF0329C608D1BEC40030FD33 /* Default */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				OPTIMIZATION_CFLAGS = "-O0";
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = "LLVM llc";
+				SECTORDER_FLAGS = "";
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+			};
+			name = Default;
+		};
+		CF0329C808D1BEC40030FD33 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				OPTIMIZATION_CFLAGS = "-O0";
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = "LLVM full llc";
+				SECTORDER_FLAGS = "";
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+			};
+			name = Debug;
+		};
+		CF0329C908D1BEC40030FD33 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				OPTIMIZATION_CFLAGS = "-O0";
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = "LLVM full llc";
+				SECTORDER_FLAGS = "";
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+			};
+			name = Release;
+		};
+		CF0329CA08D1BEC40030FD33 /* Default */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				OPTIMIZATION_CFLAGS = "-O0";
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = "LLVM full llc";
+				SECTORDER_FLAGS = "";
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+			};
+			name = Default;
+		};
 		DE66EC4D08ABE78900323D32 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -2388,6 +2668,33 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		CF0329B708D1BE530030FD33 /* Build configuration list for PBXLegacyTarget "LLVM lib" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CF0329B808D1BE530030FD33 /* Debug */,
+				CF0329B908D1BE530030FD33 /* Release */,
+				CF0329BA08D1BE530030FD33 /* Default */,
+			);
+			defaultConfigurationIsVisible = 0;
+		};
+		CF0329C308D1BEC40030FD33 /* Build configuration list for PBXLegacyTarget "LLVM llc" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CF0329C408D1BEC40030FD33 /* Debug */,
+				CF0329C508D1BEC40030FD33 /* Release */,
+				CF0329C608D1BEC40030FD33 /* Default */,
+			);
+			defaultConfigurationIsVisible = 0;
+		};
+		CF0329C708D1BEC40030FD33 /* Build configuration list for PBXAggregateTarget "LLVM full llc" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CF0329C808D1BEC40030FD33 /* Debug */,
+				CF0329C908D1BEC40030FD33 /* Release */,
+				CF0329CA08D1BEC40030FD33 /* Default */,
+			);
+			defaultConfigurationIsVisible = 0;
+		};
 		DE66EC4C08ABE78900323D32 /* Build configuration list for PBXLegacyTarget "LLVM" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
