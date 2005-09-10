@@ -1043,10 +1043,23 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     switch (getTypeAction(Node->getOperand(1).getValueType())) {
     case Legal:
       Tmp2 = LegalizeOp(Node->getOperand(1));
-      if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(1) ||
-          Tmp3 != Node->getOperand(2))
+      
+      // The only promote case we handle is TRUNCSTORE:i1 X into
+      //   -> TRUNCSTORE:i8 (and X, 1)
+      if (cast<VTSDNode>(Node->getOperand(4))->getVT() == MVT::i1 &&
+          TLI.getOperationAction(ISD::TRUNCSTORE, MVT::i1) == 
+                TargetLowering::Promote) {
+        // Promote the bool to a mask then store.
+        Tmp2 = DAG.getNode(ISD::AND, Tmp2.getValueType(), Tmp2,
+                           DAG.getConstant(1, Tmp2.getValueType()));
+        Result = DAG.getNode(ISD::TRUNCSTORE, MVT::Other, Tmp1, Tmp2, Tmp3,
+                             Node->getOperand(3), DAG.getValueType(MVT::i8));
+
+      } else if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(1) ||
+                 Tmp3 != Node->getOperand(2)) {
         Result = DAG.getNode(ISD::TRUNCSTORE, MVT::Other, Tmp1, Tmp2, Tmp3,
                              Node->getOperand(3), Node->getOperand(4));
+      }
       break;
     case Promote:
     case Expand:
