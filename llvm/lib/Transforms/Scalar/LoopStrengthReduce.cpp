@@ -826,7 +826,7 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
     // this by forcing a noop cast to be inserted into the preheader in this
     // case.
     if (Constant *C = dyn_cast<Constant>(BaseV))
-      if (!C->isNullValue()) {
+      if (!C->isNullValue() && !isTargetConstant(Base)) {
         // We want this constant emitted into the preheader!
         BaseV = new CastInst(BaseV, BaseV->getType(), "preheaderinsert",
                              PreInsertPt);       
