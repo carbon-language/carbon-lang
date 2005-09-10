@@ -91,6 +91,9 @@ PPC32TargetLowering::PPC32TargetLowering(TargetMachine &TM)
   setOperationAction(ISD::SINT_TO_FP, MVT::i32, Expand);
   setOperationAction(ISD::UINT_TO_FP, MVT::i32, Expand);
 
+  // PowerPC does not have truncstore for i1.
+  setOperationAction(ISD::TRUNCSTORE, MVT::i1, Promote);
+  
   // 64 bit PowerPC implementations have instructions to facilitate conversion
   // between i64 and fp.
   if (TM.getSubtarget<PPCSubtarget>().is64Bit()) {

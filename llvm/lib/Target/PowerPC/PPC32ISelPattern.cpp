@@ -1795,7 +1795,6 @@ void ISel::Select(SDOperand N) {
     } else { //ISD::TRUNCSTORE
       switch(cast<VTSDNode>(Node->getOperand(4))->getVT()) {
       default: assert(0 && "unknown Type in store");
-      case MVT::i1:
       case MVT::i8: Opc  = PPC::STB; break;
       case MVT::i16: Opc = PPC::STH; break;
       }

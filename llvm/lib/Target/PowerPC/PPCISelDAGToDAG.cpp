@@ -1263,7 +1263,6 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
     } else { //ISD::TRUNCSTORE
       switch(cast<VTSDNode>(N->getOperand(4))->getVT()) {
       default: assert(0 && "unknown Type in store");
-      case MVT::i1:
       case MVT::i8:  Opc = isIdx ? PPC::STBX : PPC::STB; break;
       case MVT::i16: Opc = isIdx ? PPC::STHX : PPC::STH; break;
       }
