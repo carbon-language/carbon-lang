@@ -19,7 +19,7 @@
 
 namespace llvm {
   class Record;
-  class Init;
+  struct Init;
   class DagInit;
   class SDNodeInfo;
   class TreePattern;

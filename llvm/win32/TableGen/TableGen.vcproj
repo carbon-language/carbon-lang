@@ -133,6 +133,9 @@
 				RelativePath="..\..\utils\TableGen\CodeGenTarget.cpp">
 			</File>
 			<File
+				RelativePath="..\..\utils\TableGen\DAGISelEmitter.cpp">
+			</File>
+			<File
 				RelativePath="..\..\utils\TableGen\FileLexer.l">
 				<FileConfiguration
 					Name="Debug|Win32">
@@ -213,6 +216,9 @@ move $(InputDir)$(InputName).hpp $(InputDir)$(InputName).h
 			</File>
 			<File
 				RelativePath="..\..\utils\TableGen\CodeGenTarget.h">
+			</File>
+			<File
+				RelativePath="..\..\utils\TableGen\DAGISelEmitter.h">
 			</File>
 			<File
 				RelativePath="..\..\utils\TableGen\InstrInfoEmitter.h">
