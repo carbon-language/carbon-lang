@@ -176,7 +176,13 @@
 				Name="SelectionDAG"
 				Filter="">
 				<File
+					RelativePath="..\..\lib\CodeGen\SelectionDAG\DAGCombiner.cpp">
+				</File>
+				<File
 					RelativePath="..\..\lib\CodeGen\SelectionDAG\LegalizeDAG.cpp">
+				</File>
+				<File
+					RelativePath="..\..\lib\CodeGen\SelectionDAG\ScheduleDAG.cpp">
 				</File>
 				<File
 					RelativePath="..\..\lib\CodeGen\SelectionDAG\SelectionDAG.cpp">
