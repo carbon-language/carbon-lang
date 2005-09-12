@@ -121,6 +121,12 @@ public:
   ///
   BasicBlock *getLoopPreheader() const;
 
+  /// getLoopLatch - If there is a latch block for this loop, return it.  A
+  /// latch block is the canonical backedge for a loop.  A loop header in normal
+  /// form has two edges into it: one from a preheader and one from a latch
+  /// block.
+  BasicBlock *getLoopLatch() const;
+  
   /// getCanonicalInductionVariable - Check to see if the loop has a canonical
   /// induction variable: an integer recurrence that starts at 0 and increments
   /// by one each time through the loop.  If so, return the phi node that
