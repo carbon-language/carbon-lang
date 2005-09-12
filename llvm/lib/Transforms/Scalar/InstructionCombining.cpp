@@ -4925,6 +4925,15 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
 
   // None of the following transforms are legal for volatile loads.
   if (LI.isVolatile()) return 0;
+  
+  // If the instruction immediately before this is a store to the same address,
+  // do a simple form of store->load forwarding.
+  if (&LI.getParent()->front() != &LI) {
+    BasicBlock::iterator BBI = &LI; --BBI;
+    if (StoreInst *SI = dyn_cast<StoreInst>(BBI))
+      if (SI->getOperand(1) == LI.getOperand(0))
+        return ReplaceInstUsesWith(LI, SI->getOperand(0));
+  }
 
   if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(Op))
     if (isa<ConstantPointerNull>(GEPI->getOperand(0)) ||
