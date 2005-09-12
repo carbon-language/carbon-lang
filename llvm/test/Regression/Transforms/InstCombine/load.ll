@@ -72,3 +72,17 @@ int %test9(int* %P) {
 	%Z = sub int %X, %Y
 	ret int %Z
 }
+
+int %test10(bool %C, int* %P, int* %Q) {
+	br bool %C, label %T, label %F
+T:
+	store int 1, int* %Q
+	store int 0, int* %P
+	br label %C
+F:
+	store int 0, int* %P
+	br label %C
+C:
+	%V = load int* %P   ;; always 0
+	ret int %V
+}
