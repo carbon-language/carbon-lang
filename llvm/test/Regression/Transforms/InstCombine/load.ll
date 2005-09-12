@@ -65,3 +65,10 @@ int %test8(int* %P) {
 	%X = load int* %P        ;; Trivial store->load forwarding
 	ret int %X
 }
+
+int %test9(int* %P) {
+	%X = load int* %P        ;; Trivial load cse
+	%Y = load int* %P
+	%Z = sub int %X, %Y
+	ret int %Z
+}
