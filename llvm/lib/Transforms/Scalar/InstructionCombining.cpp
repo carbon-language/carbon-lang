@@ -5157,6 +5157,72 @@ Instruction *InstCombiner::visitStoreInst(StoreInst &SI) {
       if (Instruction *Res = InstCombineStoreToCast(*this, SI))
         return Res;
 
+  
+  // If this store is the last instruction in the basic block, and if the block
+  // ends with an unconditional branch, try to move it to the successor block.
+  BasicBlock::iterator BBI = &SI; ++BBI;
+  if (BranchInst *BI = dyn_cast<BranchInst>(BBI))
+    if (BI->isUnconditional()) {
+      // Check to see if the successor block has exactly two incoming edges.  If
+      // so, see if the other predecessor contains a store to the same location.
+      // if so, insert a PHI node (if needed) and move the stores down.
+      BasicBlock *Dest = BI->getSuccessor(0);
+
+      pred_iterator PI = pred_begin(Dest);
+      BasicBlock *Other = 0;
+      if (*PI != BI->getParent())
+        Other = *PI;
+      ++PI;
+      if (PI != pred_end(Dest)) {
+        if (*PI != BI->getParent())
+          if (Other)
+            Other = 0;
+          else
+            Other = *PI;
+        if (++PI != pred_end(Dest))
+          Other = 0;
+      }
+      if (Other) {  // If only one other pred...
+        BBI = Other->getTerminator();
+        // Make sure this other block ends in an unconditional branch and that
+        // there is an instruction before the branch.
+        if (isa<BranchInst>(BBI) && cast<BranchInst>(BBI)->isUnconditional() &&
+            BBI != Other->begin()) {
+          --BBI;
+          StoreInst *OtherStore = dyn_cast<StoreInst>(BBI);
+          
+          // If this instruction is a store to the same location.
+          if (OtherStore && OtherStore->getOperand(1) == SI.getOperand(1)) {
+            // Okay, we know we can perform this transformation.  Insert a PHI
+            // node now if we need it.
+            Value *MergedVal = OtherStore->getOperand(0);
+            if (MergedVal != SI.getOperand(0)) {
+              PHINode *PN = new PHINode(MergedVal->getType(), "storemerge");
+              PN->reserveOperandSpace(2);
+              PN->addIncoming(SI.getOperand(0), SI.getParent());
+              PN->addIncoming(OtherStore->getOperand(0), Other);
+              MergedVal = InsertNewInstBefore(PN, Dest->front());
+            }
+            
+            // Advance to a place where it is safe to insert the new store and
+            // insert it.
+            BBI = Dest->begin();
+            while (isa<PHINode>(BBI)) ++BBI;
+            InsertNewInstBefore(new StoreInst(MergedVal, SI.getOperand(1),
+                                              OtherStore->isVolatile()), *BBI);
+
+            // Nuke the old stores.
+            removeFromWorkList(&SI);
+            removeFromWorkList(OtherStore);
+            SI.eraseFromParent();
+            OtherStore->eraseFromParent();
+            ++NumCombined;
+            return 0;
+          }
+        }
+      }
+    }
+  
   return 0;
 }
 
