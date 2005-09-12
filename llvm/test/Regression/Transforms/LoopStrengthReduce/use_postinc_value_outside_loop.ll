@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -loop-reduce | llvm-dis | grep 'add uint %iv..inc, 1'
+; RUN: llvm-as < %s | opt -loop-reduce | llvm-dis | grep 'add uint %iv.*inc, 1'
 ;
 ; Make sure that the use of the IV outside of the loop (the store) uses the 
 ; post incremented value of the IV, not the preincremented value.  This 
