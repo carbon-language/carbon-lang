@@ -52,7 +52,7 @@ namespace {
     // isUseOfPostIncrementedValue - True if this should use the
     // post-incremented version of this IV, not the preincremented version.
     // This can only be set in special cases, such as the terminating setcc
-    // instruction for a loop.
+    // instruction for a loop or uses dominated by the loop.
     bool isUseOfPostIncrementedValue;
     
     IVStrideUse(const SCEVHandle &Offs, Instruction *U, Value *O)
@@ -351,8 +351,17 @@ bool LoopStrengthReduce::AddUsersIfInteresting(Instruction *I, Loop *L,
 
     if (AddUserToIVUsers) {
       // Okay, we found a user that we cannot reduce.  Analyze the instruction
-      // and decide what to do with it.
-      IVUsesByStride[Stride].addUser(Start, User, I);
+      // and decide what to do with it.  If we are a use inside of the loop, use
+      // the value before incrementation, otherwise use it after incrementation.
+      if (L->contains(User->getParent())) {
+        IVUsesByStride[Stride].addUser(Start, User, I);
+      } else {
+        // The value used will be incremented by the stride more than we are
+        // expecting, so subtract this off.
+        SCEVHandle NewStart = SCEV::getMinusSCEV(Start, Stride);
+        IVUsesByStride[Stride].addUser(NewStart, User, I);
+        IVUsesByStride[Stride].Users.back().isUseOfPostIncrementedValue = true;
+      }
     }
   }
   return true;
@@ -387,7 +396,8 @@ namespace {
     // isUseOfPostIncrementedValue - True if this should use the
     // post-incremented version of this IV, not the preincremented version.
     // This can only be set in special cases, such as the terminating setcc
-    // instruction for a loop.
+    // instruction for a loop and uses outside the loop that are dominated by
+    // the loop.
     bool isUseOfPostIncrementedValue;
     
     BasedUser(IVStrideUse &IVSU)
@@ -842,7 +852,11 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
       Value *RewriteOp = NewPHI;
       if (User.isUseOfPostIncrementedValue) {
         RewriteOp = IncV;
-        User.Inst->moveBefore(LatchBlock->getTerminator());
+
+        // If this user is in the loop, make sure it is the last thing in the
+        // loop to ensure it is dominated by the increment.
+        if (L->contains(User.Inst->getParent()))
+          User.Inst->moveBefore(LatchBlock->getTerminator());
       }
       SCEVHandle RewriteExpr = SCEVUnknown::get(RewriteOp);
 
