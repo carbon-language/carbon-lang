@@ -353,7 +353,11 @@ bool LoopStrengthReduce::AddUsersIfInteresting(Instruction *I, Loop *L,
       // Okay, we found a user that we cannot reduce.  Analyze the instruction
       // and decide what to do with it.  If we are a use inside of the loop, use
       // the value before incrementation, otherwise use it after incrementation.
-      if (L->contains(User->getParent())) {
+      if (L->contains(User->getParent()) ||
+          // Alternatively, if we are a use outside of the loop, but is not
+          // dominated by the latch block, we have to use the preincremented
+          // value.
+          !DS->dominates(L->getLoopLatch(), User->getParent())) {
         IVUsesByStride[Stride].addUser(Start, User, I);
       } else {
         // The value used will be incremented by the stride more than we are
@@ -784,13 +788,7 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
   Instruction *PreInsertPt = Preheader->getTerminator();
   Instruction *PhiInsertBefore = L->getHeader()->begin();
   
-  assert(isa<PHINode>(PhiInsertBefore) &&
-         "How could this loop have IV's without any phis?");
-  PHINode *SomeLoopPHI = cast<PHINode>(PhiInsertBefore);
-  assert(SomeLoopPHI->getNumIncomingValues() == 2 &&
-         "This loop isn't canonicalized right");
-  BasicBlock *LatchBlock =
-   SomeLoopPHI->getIncomingBlock(SomeLoopPHI->getIncomingBlock(0) == Preheader);
+  BasicBlock *LatchBlock = L->getLoopLatch();
   
   // Create a new Phi for this base, and stick it in the loop header.
   const Type *ReplacedTy = CommonExprs->getType();
