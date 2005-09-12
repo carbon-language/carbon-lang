@@ -373,10 +373,34 @@ BasicBlock *Loop::getLoopPreheader() const {
   if (SI != succ_end(Out))
     return 0;  // Multiple exits from the block, must not be a preheader.
 
-
   // If there is exactly one preheader, return it.  If there was zero, then Out
   // is still null.
   return Out;
+}
+
+/// getLoopLatch - If there is a latch block for this loop, return it.  A
+/// latch block is the canonical backedge for a loop.  A loop header in normal
+/// form has two edges into it: one from a preheader and one from a latch
+/// block.
+BasicBlock *Loop::getLoopLatch() const {
+  BasicBlock *Header = getHeader();
+  pred_iterator PI = pred_begin(Header), PE = pred_end(Header);
+  if (PI == PE) return 0;  // no preds?
+  
+  BasicBlock *Latch = 0;
+  if (contains(*PI))
+    Latch = *PI;
+  ++PI;
+  if (PI == PE) return 0;  // only one pred?
+  
+  if (contains(*PI)) {
+    if (Latch) return 0;  // multiple backedges
+    Latch = *PI;
+  }
+  ++PI;
+  if (PI != PE) return 0;  // more than two preds
+  
+  return Latch;  
 }
 
 /// getCanonicalInductionVariable - Check to see if the loop has a canonical
