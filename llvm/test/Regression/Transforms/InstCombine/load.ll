@@ -59,3 +59,9 @@ int %test7(int %X) {
 	%R = load int* %V
 	ret int %R
 }
+
+int %test8(int* %P) {
+	store int 1, int* %P
+	%X = load int* %P        ;; Trivial store->load forwarding
+	ret int %X
+}
