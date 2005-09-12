@@ -276,21 +276,6 @@ Value : INTVAL {
     }
     $$ = Init;
     delete $2;
-  } | ID {
-    if (const RecordVal *RV = (CurRec ? CurRec->getValue(*$1) : 0)) {
-      $$ = new VarInit(*$1, RV->getType());
-    } else if (CurRec && CurRec->isTemplateArg(CurRec->getName()+":"+*$1)) {
-      const RecordVal *RV = CurRec->getValue(CurRec->getName()+":"+*$1);
-      assert(RV && "Template arg doesn't exist??");
-      $$ = new VarInit(CurRec->getName()+":"+*$1, RV->getType());
-    } else if (Record *D = Records.getDef(*$1)) {
-      $$ = new DefInit(D);
-    } else {
-      err() << "Variable not defined: '" << *$1 << "'!\n";
-      exit(1);
-    }
-    
-    delete $1;
   } | ID '<' ValueListNE '>' {
     // This is a CLASS<initvalslist> expression.  This is supposed to synthesize
     // a new anonymous definition, deriving from CLASS<initvalslist> with no
@@ -319,6 +304,21 @@ Value : INTVAL {
     
     // Restore the old CurRec
     CurRec = OldRec;
+  } | ID {
+    if (const RecordVal *RV = (CurRec ? CurRec->getValue(*$1) : 0)) {
+      $$ = new VarInit(*$1, RV->getType());
+    } else if (CurRec && CurRec->isTemplateArg(CurRec->getName()+":"+*$1)) {
+      const RecordVal *RV = CurRec->getValue(CurRec->getName()+":"+*$1);
+      assert(RV && "Template arg doesn't exist??");
+      $$ = new VarInit(CurRec->getName()+":"+*$1, RV->getType());
+    } else if (Record *D = Records.getDef(*$1)) {
+      $$ = new DefInit(D);
+    } else {
+      err() << "Variable not defined: '" << *$1 << "'!\n";
+      exit(1);
+    }
+    
+    delete $1;
   } | Value '{' BitList '}' {
     $$ = $1->convertInitializerBitRange(*$3);
     if ($$ == 0) {
