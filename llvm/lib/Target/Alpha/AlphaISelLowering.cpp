@@ -193,7 +193,7 @@ AlphaTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG)
     VarArgsOffset = count * 8;
     std::vector<SDOperand> LS;
     for (int i = 0; i < 6; ++i) {
-      if (args_int[i] < 1024)
+      if (MRegisterInfo::isPhysicalRegister(args_int[i]))
         args_int[i] = AddLiveIn(MF, args_int[i], getRegClassFor(MVT::i64));
       SDOperand argt = DAG.getCopyFromReg(DAG.getRoot(), args_int[i], MVT::i64);
       int FI = MFI->CreateFixedObject(8, -8 * (6 - i));
@@ -202,7 +202,7 @@ AlphaTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG)
       LS.push_back(DAG.getNode(ISD::STORE, MVT::Other, DAG.getRoot(), argt,
                                SDFI, DAG.getSrcValue(NULL)));
 
-      if (args_float[i] < 1024)
+      if (MRegisterInfo::isPhysicalRegister(args_float[i]))
         args_float[i] = AddLiveIn(MF, args_float[i], getRegClassFor(MVT::f64));
       argt = DAG.getCopyFromReg(DAG.getRoot(), args_float[i], MVT::f64);
       FI = MFI->CreateFixedObject(8, - 8 * (12 - i));
