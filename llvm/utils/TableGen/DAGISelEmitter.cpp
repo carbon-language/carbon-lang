@@ -670,8 +670,7 @@ void DAGISelEmitter::ParseAndResolveInstructions() {
 void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
   // Emit boilerplate.
   OS << "// The main instruction selector code.\n"
-     << "SDOperand " << Target.getName()
-     << "SelectCode(SDOperand Op) {\n"
+     << "SDOperand SelectCode(SDOperand Op) {\n"
      << "  SDNode *N = Op.Val;\n"
      << "  if (N->getOpcode() >= ISD::BUILTIN_OP_END &&\n"
      << "      N->getOpcode() < PPCISD::FIRST_NUMBER)\n"
