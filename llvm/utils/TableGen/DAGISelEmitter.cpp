@@ -329,66 +329,15 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP) {
 // TreePattern implementation
 //
 
-TreePattern::TreePattern(PatternType pty, Record *TheRec,
-                         const std::vector<DagInit *> &RawPat,
-                         DAGISelEmitter &ise)
-  : PTy(pty), TheRecord(TheRec), ISE(ise) {
+TreePattern::TreePattern(Record *TheRec, const std::vector<DagInit *> &RawPat,
+                         DAGISelEmitter &ise) : TheRecord(TheRec), ISE(ise) {
 
   for (unsigned i = 0, e = RawPat.size(); i != e; ++i)
     Trees.push_back(ParseTreePattern(RawPat[i]));
-  
-  // Sanity checks and cleanup.
-  switch (PTy) {
-  case PatFrag: {
-    assert(Trees.size() == 1 && "How can we have more than one pattern here?");
-    
-    // Validate arguments list, convert it to map, to discard duplicates.
-    std::set<std::string> OperandsMap(Args.begin(), Args.end());
-
-    if (OperandsMap.count(""))
-      error("Cannot have unnamed 'node' values in pattern fragment!");
-      
-    // Parse the operands list.
-    DagInit *OpsList = TheRec->getValueAsDag("Operands");
-    if (OpsList->getNodeType()->getName() != "ops")
-      error("Operands list should start with '(ops ... '!");
-    
-    // Copy over the arguments.       
-    Args.clear();
-    for (unsigned i = 0, e = OpsList->getNumArgs(); i != e; ++i) {
-      if (!dynamic_cast<DefInit*>(OpsList->getArg(i)) ||
-          static_cast<DefInit*>(OpsList->getArg(i))->
-                          getDef()->getName() != "node")
-        error("Operands list should all be 'node' values.");
-      if (OpsList->getArgName(i).empty())
-        error("Operands list should have names for each operand!");
-      if (!OperandsMap.count(OpsList->getArgName(i)))
-        error("'" + OpsList->getArgName(i) +
-              "' does not occur in pattern or was multiply specified!");
-      OperandsMap.erase(OpsList->getArgName(i));
-      Args.push_back(OpsList->getArgName(i));
-    }
-    
-    if (!OperandsMap.empty())
-      error("Operands list does not contain an entry for operand '" +
-            *OperandsMap.begin() + "'!");
-    
-    break;
-  }
-  default:
-    if (!Args.empty())
-      error("Only pattern fragments can have operands (use 'node' values)!");
-    break;
-  }
 }
 
 void TreePattern::error(const std::string &Msg) const {
-  std::string M = "In ";
-  switch (PTy) {
-    case PatFrag:     M += "patfrag "; break;
-    case Instruction: M += "instruction "; break;
-  }
-  throw M + TheRecord->getName() + ": " + Msg;
+  throw "In " + TheRecord->getName() + ": " + Msg;
 }
 
 /// getIntrinsicType - Check to see if the specified record has an intrinsic
@@ -507,11 +456,6 @@ bool TreePattern::InferAllTypes() {
 }
 
 void TreePattern::print(std::ostream &OS) const {
-  switch (getPatternType()) {
-  case TreePattern::PatFrag:     OS << "PatFrag pattern "; break;
-  case TreePattern::Instruction: OS << "Inst pattern "; break;
-  }
-  
   OS << getRecord()->getName();
   if (!Args.empty()) {
     OS << "(" << Args[0];
@@ -565,9 +509,40 @@ void DAGISelEmitter::ParseAndResolvePatternFragments(std::ostream &OS) {
   for (unsigned i = 0, e = Fragments.size(); i != e; ++i) {
     std::vector<DagInit*> Trees;
     Trees.push_back(Fragments[i]->getValueAsDag("Fragment"));
-    TreePattern *P = new TreePattern(TreePattern::PatFrag, Fragments[i],
-                                     Trees, *this);
+    TreePattern *P = new TreePattern(Fragments[i], Trees, *this);
     PatternFragments[Fragments[i]] = P;
+    
+    // Validate the argument list, converting it to map, to discard duplicates.
+    std::vector<std::string> &Args = P->getArgList();
+    std::set<std::string> OperandsMap(Args.begin(), Args.end());
+    
+    if (OperandsMap.count(""))
+      P->error("Cannot have unnamed 'node' values in pattern fragment!");
+    
+    // Parse the operands list.
+    DagInit *OpsList = Fragments[i]->getValueAsDag("Operands");
+    if (OpsList->getNodeType()->getName() != "ops")
+      P->error("Operands list should start with '(ops ... '!");
+    
+    // Copy over the arguments.       
+    Args.clear();
+    for (unsigned j = 0, e = OpsList->getNumArgs(); j != e; ++j) {
+      if (!dynamic_cast<DefInit*>(OpsList->getArg(j)) ||
+          static_cast<DefInit*>(OpsList->getArg(j))->
+          getDef()->getName() != "node")
+        P->error("Operands list should all be 'node' values.");
+      if (OpsList->getArgName(j).empty())
+        P->error("Operands list should have names for each operand!");
+      if (!OperandsMap.count(OpsList->getArgName(j)))
+        P->error("'" + OpsList->getArgName(j) +
+                 "' does not occur in pattern or was multiply specified!");
+      OperandsMap.erase(OpsList->getArgName(j));
+      Args.push_back(OpsList->getArgName(j));
+    }
+    
+    if (!OperandsMap.empty())
+      P->error("Operands list does not contain an entry for operand '" +
+               *OperandsMap.begin() + "'!");
 
     // If there is a code init for this fragment, emit the predicate code and
     // keep track of the fact that this fragment uses it.
@@ -596,7 +571,7 @@ void DAGISelEmitter::ParseAndResolvePatternFragments(std::ostream &OS) {
        E = PatternFragments.end(); I != E; ++I) {
     TreePattern *ThePat = I->second;
     ThePat->InlinePatternFragments();
-    
+        
     // Infer as many types as possible.  Don't worry about it if we don't infer
     // all of them, some may depend on the inputs of the pattern.
     try {
@@ -631,8 +606,7 @@ void DAGISelEmitter::ParseAndResolveInstructions() {
       Trees.push_back((DagInit*)LI->getElement(j));
 
     // Parse the instruction.
-    TreePattern *I = new TreePattern(TreePattern::Instruction, Instrs[i],
-                                     Trees, *this);
+    TreePattern *I = new TreePattern(Instrs[i], Trees, *this);
     // Inline pattern fragments into it.
     I->InlinePatternFragments();
     

@@ -190,19 +190,10 @@ namespace llvm {
   };
   
   
-  /// TreePattern - Represent a pattern of one form or another.  Currently, two
-  /// types of patterns are possible: Instructions and PatFrags.
+  /// TreePattern - Represent a pattern, used for instructions, pattern
+  /// fragments, etc.
   ///
   class TreePattern {
-  public:
-    enum PatternType {
-      PatFrag, Instruction
-    };
-  private:
-    /// PTy - The type of pattern this is.
-    ///
-    PatternType PTy;
-    
     /// Trees - The list of pattern trees which corresponds to this pattern.
     /// Note that PatFrag's only have a single tree.
     ///
@@ -223,13 +214,9 @@ namespace llvm {
       
     /// TreePattern constructor - Parse the specified DagInits into the
     /// current record.
-    TreePattern(PatternType pty, Record *TheRec,
+    TreePattern(Record *TheRec,
                 const std::vector<DagInit *> &RawPat, DAGISelEmitter &ise);
         
-    /// getPatternType - Return what flavor of Record this pattern originated from
-    ///
-    PatternType getPatternType() const { return PTy; }
-    
     /// getTrees - Return the tree patterns which corresponds to this pattern.
     ///
     const std::vector<TreePatternNode*> &getTrees() const { return Trees; }
@@ -250,6 +237,7 @@ namespace llvm {
       assert(i < Args.size() && "Argument reference out of range!");
       return Args[i];
     }
+    std::vector<std::string> &getArgList() { return Args; }
     
     DAGISelEmitter &getDAGISelEmitter() const { return ISE; }
 
