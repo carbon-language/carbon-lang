@@ -4718,8 +4718,8 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
           }
     } else if (GEP.getNumOperands() == 2) {
       // Transform things like:
-      // %t = getelementptr ubyte* cast ([2 x sbyte]* %str to ubyte*), uint %V
-      // into:  %t1 = getelementptr [2 x sbyte*]* %str, int 0, uint %V; cast
+      // %t = getelementptr ubyte* cast ([2 x int]* %str to uint*), uint %V
+      // into:  %t1 = getelementptr [2 x int*]* %str, int 0, uint %V; cast
       const Type *SrcElTy = cast<PointerType>(X->getType())->getElementType();
       const Type *ResElTy=cast<PointerType>(PtrOp->getType())->getElementType();
       if (isa<ArrayType>(SrcElTy) &&
@@ -4729,6 +4729,66 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
                new GetElementPtrInst(X, Constant::getNullValue(Type::IntTy),
                                      GEP.getOperand(1), GEP.getName()), GEP);
         return new CastInst(V, GEP.getType());
+      }
+      
+      // Transform things like:
+      // getelementptr sbyte* cast ([100 x double]* X to sbyte*), int %tmp
+      //   (where tmp = 8*tmp2) into:
+      // getelementptr [100 x double]* %arr, int 0, int %tmp.2
+      
+      if (isa<ArrayType>(SrcElTy) &&
+          (ResElTy == Type::SByteTy || ResElTy == Type::UByteTy)) {
+        uint64_t ArrayEltSize =
+            TD->getTypeSize(cast<ArrayType>(SrcElTy)->getElementType());
+        
+        // Check to see if "tmp" is a scale by a multiple of ArrayEltSize.  We
+        // allow either a mul, shift, or constant here.
+        Value *NewIdx = 0;
+        ConstantInt *Scale = 0;
+        if (ArrayEltSize == 1) {
+          NewIdx = GEP.getOperand(1);
+          Scale = ConstantInt::get(NewIdx->getType(), 1);
+        } else if (ConstantInt *CI = dyn_cast<ConstantInt>(GEP.getOperand(1))) {
+          NewIdx = ConstantInt::get(NewIdx->getType(), 1);
+          Scale = CI;
+        } else if (Instruction *Inst =dyn_cast<Instruction>(GEP.getOperand(1))){
+          if (Inst->getOpcode() == Instruction::Shl &&
+              isa<ConstantInt>(Inst->getOperand(1))) {
+            unsigned ShAmt =cast<ConstantUInt>(Inst->getOperand(1))->getValue();
+            if (Inst->getType()->isSigned())
+              Scale = ConstantSInt::get(Inst->getType(), 1ULL << ShAmt);
+            else
+              Scale = ConstantUInt::get(Inst->getType(), 1ULL << ShAmt);
+            NewIdx = Inst->getOperand(0);
+          } else if (Inst->getOpcode() == Instruction::Mul &&
+                     isa<ConstantInt>(Inst->getOperand(1))) {
+            Scale = cast<ConstantInt>(Inst->getOperand(1));
+            NewIdx = Inst->getOperand(0);
+          }
+        }
+
+        // If the index will be to exactly the right offset with the scale taken
+        // out, perform the transformation.
+        if (Scale && Scale->getRawValue() % ArrayEltSize == 0) {
+          if (ConstantSInt *C = dyn_cast<ConstantSInt>(Scale))
+            Scale = ConstantSInt::get(C->getType(),
+                                      C->getRawValue()/(int64_t)ArrayEltSize);
+          else
+            Scale = ConstantUInt::get(Scale->getType(),
+                                      Scale->getRawValue() / ArrayEltSize);
+          if (Scale->getRawValue() != 1) {
+            Constant *C = ConstantExpr::getCast(Scale, NewIdx->getType());
+            Instruction *Sc = BinaryOperator::createMul(NewIdx, C, "idxscale");
+            NewIdx = InsertNewInstBefore(Sc, GEP);
+          }
+
+          // Insert the new GEP instruction.
+          Instruction *Idx =
+            new GetElementPtrInst(X, Constant::getNullValue(Type::IntTy),
+                                  NewIdx, GEP.getName());
+          Idx = InsertNewInstBefore(Idx, GEP);
+          return new CastInst(Idx, GEP.getType());
+        }
       }
     }
   }
