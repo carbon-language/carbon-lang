@@ -333,14 +333,14 @@ bool LoopStrengthReduce::AddUsersIfInteresting(Instruction *I, Loop *L,
     Instruction *User = cast<Instruction>(*UI);
 
     // Do not infinitely recurse on PHI nodes.
-    if (isa<PHINode>(User) && User->getParent() == L->getHeader())
+    if (isa<PHINode>(User) && Processed.count(User))
       continue;
 
     // If this is an instruction defined in a nested loop, or outside this loop,
     // don't recurse into it.
     bool AddUserToIVUsers = false;
     if (LI->getLoopFor(User->getParent()) != L) {
-      DEBUG(std::cerr << "FOUND USER in nested loop: " << *User
+      DEBUG(std::cerr << "FOUND USER in other loop: " << *User
             << "   OF SCEV: " << *ISE << "\n");
       AddUserToIVUsers = true;
     } else if (!AddUsersIfInteresting(User, L, Processed)) {
@@ -459,9 +459,13 @@ void BasedUser::RewriteInstructionToUseNewBase(const SCEVHandle &NewBase,
   for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i) {
     if (PN->getIncomingValue(i) == OperandValToReplace) {
       // If this is a critical edge, split the edge so that we do not insert the
-      // code on all predecessor/successor paths.
+      // code on all predecessor/successor paths.  We do this unless this is the
+      // canonical backedge for this loop, as this can make some inserted code
+      // be in an illegal position.
       if (e != 1 &&
-          PN->getIncomingBlock(i)->getTerminator()->getNumSuccessors() > 1) {
+          PN->getIncomingBlock(i)->getTerminator()->getNumSuccessors() > 1 &&
+          (PN->getParent() != L->getHeader() ||
+           !L->contains(PN->getIncomingBlock(i)))) {
 
         // First step, split the critical edge.
         SplitCriticalEdge(PN->getIncomingBlock(i), PN->getParent(), P);
