@@ -245,32 +245,10 @@ public:
     ExprMap.clear();
   }
 
-  virtual void EmitFunctionEntryCode(Function &Fn, MachineFunction &MF);
-
   unsigned SelectExpr(SDOperand N);
   void Select(SDOperand N);
 
 };
-}
-
-void ISel::EmitFunctionEntryCode(Function &Fn, MachineFunction &MF) {
-  // If this function has live-in values, emit the copies from pregs to vregs at
-  // the top of the function, before anything else.
-  MachineBasicBlock *BB = MF.begin();
-  if (MF.livein_begin() != MF.livein_end()) {
-    SSARegMap *RegMap = MF.getSSARegMap();
-    for (MachineFunction::livein_iterator LI = MF.livein_begin(),
-           E = MF.livein_end(); LI != E; ++LI) {
-      const TargetRegisterClass *RC = RegMap->getRegClass(LI->second);
-      if (RC == V8::GPRCRegisterClass) {
-        BuildMI(BB, V8::ORrr, 2, LI->second).addReg(LI->first).addReg(V8::G0);
-      } else if (RC == V8::FPRCRegisterClass) {
-        BuildMI(BB, V8::FMOVSrr, 2, LI->second).addReg(LI->first);
-      } else {
-        assert(0 && "Unknown regclass!");
-      }
-    }
-  }
 }
 
 //These describe LDAx
