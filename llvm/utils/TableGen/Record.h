@@ -1023,6 +1023,12 @@ public:
   /// the value is not the right type.
   ///
   DagInit *getValueAsDag(const std::string &FieldName) const;
+  
+  /// getValueAsCode - This method looks up the specified field and returns
+  /// its value as the string data in a CodeInit, throwing an exception if the
+  /// field does not exist or if the value is not a code object.
+  ///
+  std::string getValueAsCode(const std::string &FieldName) const;
 };
 
 std::ostream &operator<<(std::ostream &OS, const Record &R);

@@ -154,17 +154,8 @@ CodeGenRegisterClass::CodeGenRegisterClass(Record *R) : TheDef(R) {
   SpillAlignment = R->getValueAsInt("Alignment");
   VT = getValueType(R->getValueAsDef("RegType"));
 
-  if (CodeInit *CI = dynamic_cast<CodeInit*>(R->getValueInit("MethodBodies")))
-    MethodBodies = CI->getValue();
-  else
-    throw "Expected 'code' fragment for 'MethodBodies' value in register "
-          "class '" + getName() + "'!";
-
-  if (CodeInit *CI = dynamic_cast<CodeInit*>(R->getValueInit("MethodProtos")))
-    MethodProtos = CI->getValue();
-  else
-    throw "Expected 'code' fragment for 'MethodProtos' value in register "
-      "class '" + getName() + "'!";
+  MethodBodies = R->getValueAsCode("MethodBodies");
+  MethodProtos = R->getValueAsCode("MethodProtos");
   
   ListInit *RegList = R->getValueAsListInit("MemberList");
   for (unsigned i = 0, e = RegList->getSize(); i != e; ++i) {

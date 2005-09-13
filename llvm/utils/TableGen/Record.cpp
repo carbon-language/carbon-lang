@@ -773,6 +773,18 @@ DagInit *Record::getValueAsDag(const std::string &FieldName) const {
         "' does not have a dag initializer!";
 }
 
+std::string Record::getValueAsCode(const std::string &FieldName) const {
+  const RecordVal *R = getValue(FieldName);
+  if (R == 0 || R->getValue() == 0)
+    throw "Record `" + getName() + "' does not have a field named `" +
+      FieldName + "'!\n";
+  
+  if (const CodeInit *CI = dynamic_cast<const CodeInit*>(R->getValue()))
+    return CI->getValue();
+  throw "Record `" + getName() + "', field `" + FieldName +
+    "' does not have a code initializer!";
+}
+
 
 void RecordKeeper::dump() const { std::cerr << *this; }
 
