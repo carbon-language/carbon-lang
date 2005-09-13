@@ -17,6 +17,7 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/SelectionDAG.h"
+#include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/Constants.h"
 #include "llvm/Function.h"
 using namespace llvm;
@@ -310,6 +311,7 @@ PPC32TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
   MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo *MFI = MF.getFrameInfo();
   MachineBasicBlock& BB = MF.front();
+  SSARegMap *RegMap = MF.getSSARegMap();
   std::vector<SDOperand> ArgValues;
   
   unsigned ArgOffset = 24;
@@ -344,9 +346,9 @@ PPC32TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
       ObjSize = 4;
       if (!ArgLive) break;
       if (GPR_remaining > 0) {
-        MF.addLiveIn(GPR[GPR_idx]);
-        argt = newroot = DAG.getCopyFromReg(DAG.getRoot(),
-                                            GPR[GPR_idx], MVT::i32);
+        unsigned VReg = RegMap->createVirtualRegister(&PPC32::GPRCRegClass);
+        MF.addLiveIn(GPR[GPR_idx], VReg);
+        argt = newroot = DAG.getCopyFromReg(DAG.getRoot(), VReg, MVT::i32);
         if (ObjectVT != MVT::i32) {
           unsigned AssertOp = I->getType()->isSigned() ? ISD::AssertSext 
                                                        : ISD::AssertZext;
@@ -362,15 +364,17 @@ PPC32TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
       if (!ArgLive) break;
       if (GPR_remaining > 0) {
         SDOperand argHi, argLo;
-        MF.addLiveIn(GPR[GPR_idx]);
-        argHi = DAG.getCopyFromReg(DAG.getRoot(), GPR[GPR_idx], MVT::i32);
+        unsigned VReg = RegMap->createVirtualRegister(&PPC32::GPRCRegClass);
+        MF.addLiveIn(GPR[GPR_idx], VReg);
+        argHi = DAG.getCopyFromReg(DAG.getRoot(), VReg, MVT::i32);
         // If we have two or more remaining argument registers, then both halves
         // of the i64 can be sourced from there.  Otherwise, the lower half will
         // have to come off the stack.  This can happen when an i64 is preceded
         // by 28 bytes of arguments.
         if (GPR_remaining > 1) {
-          MF.addLiveIn(GPR[GPR_idx+1]);
-          argLo = DAG.getCopyFromReg(argHi, GPR[GPR_idx+1], MVT::i32);
+          unsigned VReg = RegMap->createVirtualRegister(&PPC32::GPRCRegClass);
+          MF.addLiveIn(GPR[GPR_idx+1], VReg);
+          argLo = DAG.getCopyFromReg(argHi, VReg, MVT::i32);
         } else {
           int FI = MFI->CreateFixedObject(4, ArgOffset+4);
           SDOperand FIN = DAG.getFrameIndex(FI, MVT::i32);
@@ -389,9 +393,9 @@ PPC32TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
       ObjSize = (ObjectVT == MVT::f64) ? 8 : 4;
       if (!ArgLive) break;
       if (FPR_remaining > 0) {
-        MF.addLiveIn(FPR[FPR_idx]);
-        argt = newroot = DAG.getCopyFromReg(DAG.getRoot(), 
-                                            FPR[FPR_idx], ObjectVT);
+        unsigned VReg = RegMap->createVirtualRegister(&PPC32::FPRCRegClass);
+        MF.addLiveIn(FPR[FPR_idx], VReg);
+        argt = newroot = DAG.getCopyFromReg(DAG.getRoot(), VReg, ObjectVT);
         --FPR_remaining;
         ++FPR_idx;
       } else {
@@ -438,8 +442,9 @@ PPC32TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
     // result of va_next.
     std::vector<SDOperand> MemOps;
     for (; GPR_remaining > 0; --GPR_remaining, ++GPR_idx) {
-      MF.addLiveIn(GPR[GPR_idx]);
-      SDOperand Val = DAG.getCopyFromReg(DAG.getRoot(), GPR[GPR_idx], MVT::i32);
+      unsigned VReg = RegMap->createVirtualRegister(&PPC32::GPRCRegClass);
+      MF.addLiveIn(GPR[GPR_idx], VReg);
+      SDOperand Val = DAG.getCopyFromReg(DAG.getRoot(), VReg, MVT::i32);
       SDOperand Store = DAG.getNode(ISD::STORE, MVT::Other, Val.getValue(1),
                                     Val, FIN, DAG.getSrcValue(NULL));
       MemOps.push_back(Store);
