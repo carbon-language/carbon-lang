@@ -261,6 +261,17 @@ static const Type *getPromotedType(const Type *Ty) {
   }
 }
 
+/// isCast - If the specified operand is a CastInst or a constant expr cast,
+/// return the operand value, otherwise return null.
+static Value *isCast(Value *V) {
+  if (CastInst *I = dyn_cast<CastInst>(V))
+    return I->getOperand(0);
+  else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V))
+    if (CE->getOpcode() == Instruction::Cast)
+      return CE->getOperand(0);
+  return 0;
+}
+
 // SimplifyCommutative - This performs a few simplifications for commutative
 // operators:
 //
@@ -4682,45 +4693,42 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
       // Replace all uses of the GEP with the new constexpr...
       return ReplaceInstUsesWith(GEP, CE);
     }
-  } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(PtrOp)) {
-    if (CE->getOpcode() == Instruction::Cast) {
-      if (HasZeroPointerIndex) {
-        // transform: GEP (cast [10 x ubyte]* X to [0 x ubyte]*), long 0, ...
-        // into     : GEP [10 x ubyte]* X, long 0, ...
-        //
-        // This occurs when the program declares an array extern like "int X[];"
-        //
-        Constant *X = CE->getOperand(0);
-        const PointerType *CPTy = cast<PointerType>(CE->getType());
-        if (const PointerType *XTy = dyn_cast<PointerType>(X->getType()))
-          if (const ArrayType *XATy =
-              dyn_cast<ArrayType>(XTy->getElementType()))
-            if (const ArrayType *CATy =
-                dyn_cast<ArrayType>(CPTy->getElementType()))
-              if (CATy->getElementType() == XATy->getElementType()) {
-                // At this point, we know that the cast source type is a pointer
-                // to an array of the same type as the destination pointer
-                // array.  Because the array type is never stepped over (there
-                // is a leading zero) we can fold the cast into this GEP.
-                GEP.setOperand(0, X);
-                return &GEP;
-              }
-      } else if (GEP.getNumOperands() == 2 &&
-                 isa<PointerType>(CE->getOperand(0)->getType())) {
-        // Transform things like:
-        // %t = getelementptr ubyte* cast ([2 x sbyte]* %str to ubyte*), uint %V
-        // into:  %t1 = getelementptr [2 x sbyte*]* %str, int 0, uint %V; cast
-        Constant *X = CE->getOperand(0);
-        const Type *SrcElTy = cast<PointerType>(X->getType())->getElementType();
-        const Type *ResElTy =cast<PointerType>(CE->getType())->getElementType();
-        if (isa<ArrayType>(SrcElTy) &&
-            TD->getTypeSize(cast<ArrayType>(SrcElTy)->getElementType()) ==
-            TD->getTypeSize(ResElTy)) {
-          Value *V = InsertNewInstBefore(
-                 new GetElementPtrInst(X, Constant::getNullValue(Type::IntTy),
-                                       GEP.getOperand(1), GEP.getName()), GEP);
-          return new CastInst(V, GEP.getType());
-        }
+  } else if (Value *X = isCast(PtrOp)) {  // Is the operand a cast?
+    if (!isa<PointerType>(X->getType())) {
+      // Not interesting.  Source pointer must be a cast from pointer.
+    } else if (HasZeroPointerIndex) {
+      // transform: GEP (cast [10 x ubyte]* X to [0 x ubyte]*), long 0, ...
+      // into     : GEP [10 x ubyte]* X, long 0, ...
+      //
+      // This occurs when the program declares an array extern like "int X[];"
+      //
+      const PointerType *CPTy = cast<PointerType>(PtrOp->getType());
+      const PointerType *XTy = cast<PointerType>(X->getType());
+      if (const ArrayType *XATy =
+          dyn_cast<ArrayType>(XTy->getElementType()))
+        if (const ArrayType *CATy =
+            dyn_cast<ArrayType>(CPTy->getElementType()))
+          if (CATy->getElementType() == XATy->getElementType()) {
+            // At this point, we know that the cast source type is a pointer
+            // to an array of the same type as the destination pointer
+            // array.  Because the array type is never stepped over (there
+            // is a leading zero) we can fold the cast into this GEP.
+            GEP.setOperand(0, X);
+            return &GEP;
+          }
+    } else if (GEP.getNumOperands() == 2) {
+      // Transform things like:
+      // %t = getelementptr ubyte* cast ([2 x sbyte]* %str to ubyte*), uint %V
+      // into:  %t1 = getelementptr [2 x sbyte*]* %str, int 0, uint %V; cast
+      const Type *SrcElTy = cast<PointerType>(X->getType())->getElementType();
+      const Type *ResElTy=cast<PointerType>(PtrOp->getType())->getElementType();
+      if (isa<ArrayType>(SrcElTy) &&
+          TD->getTypeSize(cast<ArrayType>(SrcElTy)->getElementType()) ==
+          TD->getTypeSize(ResElTy)) {
+        Value *V = InsertNewInstBefore(
+               new GetElementPtrInst(X, Constant::getNullValue(Type::IntTy),
+                                     GEP.getOperand(1), GEP.getName()), GEP);
+        return new CastInst(V, GEP.getType());
       }
     }
   }
