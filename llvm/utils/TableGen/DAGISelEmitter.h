@@ -302,6 +302,11 @@ public:
     return PatternFragments.find(R)->second;
   }
   
+  const std::pair<Record*, std::string> &getSDNodeTransform(Record *R) const {
+    assert(SDNodeXForms.count(R) && "Invalid transform!");
+    return SDNodeXForms.find(R)->second;
+  }
+  
 private:
   void ParseNodeInfo();
   void ParseNodeTransforms(std::ostream &OS);

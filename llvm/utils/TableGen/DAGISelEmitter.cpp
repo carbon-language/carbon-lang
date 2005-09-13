@@ -509,7 +509,7 @@ void DAGISelEmitter::ParseNodeTransforms(std::ostream &OS) {
     SDNodeXForms.insert(std::make_pair(XFormNode,
                                        std::make_pair(SDNode, Code)));
 
-    if (!Code.empty()) {
+    if (0 && !Code.empty()) {
       std::string ClassName = getSDNodeInfo(SDNode).getSDClassName();
       const char *C2 = ClassName == "SDNode" ? "N" : "inN";
 
@@ -592,6 +592,12 @@ void DAGISelEmitter::ParseAndResolvePatternFragments(std::ostream &OS) {
       OS << Code << "\n}\n";
       P->getOnlyTree()->setPredicateFn("Predicate_"+Fragments[i]->getName());
     }
+    
+    // If there is a node transformation corresponding to this, keep track of
+    // it.
+    Record *Transform = Fragments[i]->getValueAsDef("OperandTransform");
+    if (!getSDNodeTransform(Transform).second.empty())    // not noop xform?
+      P->getOnlyTree()->setTransformFn("Transform_"+Transform->getName());
   }
   
   OS << "\n\n";
