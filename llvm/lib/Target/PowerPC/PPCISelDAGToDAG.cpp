@@ -62,7 +62,6 @@ namespace {
     // Select - Convert the specified operand from a target-independent to a
     // target-specific node if it hasn't already been changed.
     SDOperand Select(SDOperand Op);
-    SDOperand SelectCode(SDOperand Op);
     
     SDNode *SelectIntImmediateExpr(SDOperand LHS, SDOperand RHS,
                                    unsigned OCHi, unsigned OCLo,
