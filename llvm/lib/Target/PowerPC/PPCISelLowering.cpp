@@ -312,10 +312,6 @@ PPC32TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
   MachineBasicBlock& BB = MF.front();
   std::vector<SDOperand> ArgValues;
   
-  // Due to the rather complicated nature of the PowerPC ABI, rather than a
-  // fixed size array of physical args, for the sake of simplicity let the STL
-  // handle tracking them for us.
-  std::vector<unsigned> argVR, argPR, argOp;
   unsigned ArgOffset = 24;
   unsigned GPR_remaining = 8;
   unsigned FPR_remaining = 13;
