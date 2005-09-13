@@ -1156,31 +1156,6 @@ static void EmitSpecialCodeForMain(MachineBasicBlock *BB,
 }
 
 void ISel::EmitFunctionEntryCode(Function &Fn, MachineFunction &MF) {
-  // If this function has live-in values, emit the copies from pregs to vregs at
-  // the top of the function, before anything else.
-  MachineBasicBlock *BB = MF.begin();
-  if (MF.livein_begin() != MF.livein_end()) {
-    SSARegMap *RegMap = MF.getSSARegMap();
-    for (MachineFunction::livein_iterator LI = MF.livein_begin(),
-         E = MF.livein_end(); LI != E; ++LI) {
-      const TargetRegisterClass *RC = RegMap->getRegClass(LI->second);
-      if (RC == X86::R8RegisterClass) {
-        BuildMI(BB, X86::MOV8rr, 1, LI->second).addReg(LI->first);
-      } else if (RC == X86::R16RegisterClass) {
-        BuildMI(BB, X86::MOV16rr, 1, LI->second).addReg(LI->first);
-      } else if (RC == X86::R32RegisterClass) {
-        BuildMI(BB, X86::MOV32rr, 1, LI->second).addReg(LI->first);
-      } else if (RC == X86::RFPRegisterClass) {
-        BuildMI(BB, X86::FpMOV, 1, LI->second).addReg(LI->first);
-      } else if (RC == X86::RXMMRegisterClass) {
-        BuildMI(BB, X86::MOVAPDrr, 1, LI->second).addReg(LI->first);
-      } else {
-        assert(0 && "Unknown regclass!");
-      }
-    }
-  }
-
-
   // If this is main, emit special code for main.
   if (Fn.hasExternalLinkage() && Fn.getName() == "main")
     EmitSpecialCodeForMain(BB, MF.getFrameInfo());
