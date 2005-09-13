@@ -509,11 +509,11 @@ void DAGISelEmitter::ParseNodeTransforms(std::ostream &OS) {
     SDNodeXForms.insert(std::make_pair(XFormNode,
                                        std::make_pair(SDNode, Code)));
 
-    if (0 && !Code.empty()) {
+    if (!Code.empty()) {
       std::string ClassName = getSDNodeInfo(SDNode).getSDClassName();
       const char *C2 = ClassName == "SDNode" ? "N" : "inN";
 
-      OS << "static inline SDOperand Transform_" << XFormNode->getName()
+      OS << "inline SDOperand Transform_" << XFormNode->getName()
          << "(SDNode *" << C2 << ") {\n";
       if (ClassName != "SDNode")
         OS << "  " << ClassName << " *N = cast<" << ClassName << ">(inN);\n";
@@ -585,7 +585,7 @@ void DAGISelEmitter::ParseAndResolvePatternFragments(std::ostream &OS) {
         getSDNodeInfo(P->getOnlyTree()->getOperator()).getSDClassName();
       const char *C2 = ClassName == "SDNode" ? "N" : "inN";
       
-      OS << "static inline bool Predicate_" << Fragments[i]->getName()
+      OS << "inline bool Predicate_" << Fragments[i]->getName()
          << "(SDNode *" << C2 << ") {\n";
       if (ClassName != "SDNode")
         OS << "  " << ClassName << " *N = cast<" << ClassName << ">(inN);\n";
@@ -671,7 +671,7 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
   // Emit boilerplate.
   OS << "// The main instruction selector code.\n"
      << "SDOperand " << Target.getName()
-     << "DAGToDAGISel::SelectCode(SDOperand Op) {\n"
+     << "SelectCode(SDOperand Op) {\n"
      << "  SDNode *N = Op.Val;\n"
      << "  if (N->getOpcode() >= ISD::BUILTIN_OP_END &&\n"
      << "      N->getOpcode() < PPCISD::FIRST_NUMBER)\n"
