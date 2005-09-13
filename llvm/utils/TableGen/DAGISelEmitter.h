@@ -120,6 +120,10 @@ namespace llvm {
     /// for a match.  If this string is empty, no predicate is involved.
     std::string PredicateFn;
     
+    /// TransformFn - The transformation function to execute on this node before
+    /// it can be substituted into the resulting instruction on a pattern match.
+    std::string TransformFn;
+    
     std::vector<TreePatternNode*> Children;
   public:
     TreePatternNode(Record *Op, const std::vector<TreePatternNode*> &Ch) 
@@ -147,6 +151,9 @@ namespace llvm {
     
     const std::string &getPredicateFn() const { return PredicateFn; }
     void setPredicateFn(const std::string &Fn) { PredicateFn = Fn; }
+
+    const std::string &getTransformFn() const { return TransformFn; }
+    void setTransformFn(const std::string &Fn) { TransformFn = Fn; }
     
     void print(std::ostream &OS) const;
     void dump() const;
@@ -276,6 +283,7 @@ class DAGISelEmitter : public TableGenBackend {
   CodeGenTarget Target;
 
   std::map<Record*, SDNodeInfo> SDNodes;
+  std::map<Record*, std::pair<Record*, std::string> > SDNodeXForms;
   std::map<Record*, TreePattern*> PatternFragments;
   std::vector<TreePattern*> Instructions;
 public:
@@ -296,6 +304,7 @@ public:
   
 private:
   void ParseNodeInfo();
+  void ParseNodeTransforms(std::ostream &OS);
   void ParseAndResolvePatternFragments(std::ostream &OS);
   void ParseAndResolveInstructions();
   void EmitInstructionSelector(std::ostream &OS);

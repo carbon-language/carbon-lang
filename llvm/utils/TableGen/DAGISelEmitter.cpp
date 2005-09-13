@@ -202,7 +202,9 @@ void TreePatternNode::print(std::ostream &OS) const {
   }
   
   if (!PredicateFn.empty())
-    OS << "<<" << PredicateFn << ">>";
+    OS << "<<P:" << PredicateFn << ">>";
+  if (!TransformFn.empty())
+    OS << "<<X:" << TransformFn << ">>";
   if (!getName().empty())
     OS << ":$" << getName();
 
@@ -227,6 +229,7 @@ TreePatternNode *TreePatternNode::clone() const {
   New->setName(getName());
   New->setType(getType());
   New->setPredicateFn(getPredicateFn());
+  New->setTransformFn(getTransformFn());
   return New;
 }
 
@@ -494,6 +497,35 @@ void DAGISelEmitter::ParseNodeInfo() {
   }
 }
 
+/// ParseNodeTransforms - Parse all SDNodeXForm instances into the SDNodeXForms
+/// map, and emit them to the file as functions.
+void DAGISelEmitter::ParseNodeTransforms(std::ostream &OS) {
+  OS << "\n// Node transformations.\n";
+  std::vector<Record*> Xforms = Records.getAllDerivedDefinitions("SDNodeXForm");
+  while (!Xforms.empty()) {
+    Record *XFormNode = Xforms.back();
+    Record *SDNode = XFormNode->getValueAsDef("Opcode");
+    std::string Code = XFormNode->getValueAsCode("XFormFunction");
+    SDNodeXForms.insert(std::make_pair(XFormNode,
+                                       std::make_pair(SDNode, Code)));
+
+    if (!Code.empty()) {
+      std::string ClassName = getSDNodeInfo(SDNode).getSDClassName();
+      const char *C2 = ClassName == "SDNode" ? "N" : "inN";
+
+      OS << "static inline SDOperand Transform_" << XFormNode->getName()
+         << "(SDNode *" << C2 << ") {\n";
+      if (ClassName != "SDNode")
+        OS << "  " << ClassName << " *N = cast<" << ClassName << ">(inN);\n";
+      OS << Code << "\n}\n";
+    }
+
+    Xforms.pop_back();
+  }
+}
+
+
+
 /// ParseAndResolvePatternFragments - Parse all of the PatFrag definitions in
 /// the .td file, building up the PatternFragments map.  After we've collected
 /// them all, inline fragments together as necessary, so that there are no
@@ -546,9 +578,8 @@ void DAGISelEmitter::ParseAndResolvePatternFragments(std::ostream &OS) {
 
     // If there is a code init for this fragment, emit the predicate code and
     // keep track of the fact that this fragment uses it.
-    CodeInit *CI =
-      dynamic_cast<CodeInit*>(Fragments[i]->getValueInit("Predicate"));
-    if (!CI->getValue().empty()) {
+    std::string Code = Fragments[i]->getValueAsCode("Predicate");
+    if (!Code.empty()) {
       assert(!P->getOnlyTree()->isLeaf() && "Can't be a leaf!");
       std::string ClassName =
         getSDNodeInfo(P->getOnlyTree()->getOperator()).getSDClassName();
@@ -558,7 +589,7 @@ void DAGISelEmitter::ParseAndResolvePatternFragments(std::ostream &OS) {
          << "(SDNode *" << C2 << ") {\n";
       if (ClassName != "SDNode")
         OS << "  " << ClassName << " *N = cast<" << ClassName << ">(inN);\n";
-      OS << CI->getValue() << "\n}\n";
+      OS << Code << "\n}\n";
       P->getOnlyTree()->setPredicateFn("Predicate_"+Fragments[i]->getName());
     }
   }
@@ -657,12 +688,12 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
      << "}\n";
 }
 
-
 void DAGISelEmitter::run(std::ostream &OS) {
   EmitSourceFileHeader("DAG Instruction Selector for the " + Target.getName() +
                        " target", OS);
   
   ParseNodeInfo();
+  ParseNodeTransforms(OS);
   ParseAndResolvePatternFragments(OS);
   ParseAndResolveInstructions();
   
