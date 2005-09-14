@@ -654,8 +654,12 @@ void DAGISelEmitter::ParseAndResolveInstructions() {
       I->error("Could not infer all types in pattern!");
     }
     
+    // SetDestinations - Keep track of all the virtual registers that are 'set'
+    // in the instruction, including what reg class they are.
+    std::map<std::string, Record*> SetDestinations;
+
     // Verify that the top-level forms in the instruction are of void type, and
-    // figure out how many of the instruction operands are destinations.
+    // fill in the SetDestinations map.
     for (unsigned j = 0, e = I->getNumTrees(); j != e; ++j) {
       TreePatternNode *Pat = I->getTree(j);
       if (Pat->getType() != MVT::isVoid) {
@@ -677,16 +681,29 @@ void DAGISelEmitter::ParseAndResolveInstructions() {
           TreePatternNode *Dest = Pat->getChild(i);
           if (!Dest->isLeaf())
             I->error("set destination should be a virtual register!");
-          
+
           DefInit *Val = dynamic_cast<DefInit*>(Dest->getLeafValue());
           if (!Val)
             I->error("set destination should be a virtual register!");
           
           if (!Val->getDef()->isSubClassOf("RegisterClass"))
             I->error("set destination should be a virtual register!");
+          if (Dest->getName().empty())
+            I->error("set destination must have a name!");
+          if (SetDestinations.count(Dest->getName()))
+            I->error("cannot set '" + Dest->getName() +"' multiple times");
+          SetDestinations[Dest->getName()] = Val->getDef();
         }
       }
     }
+
+    // Now that we have operands that are sets, inspect the operands list for
+    // the instruction.  This determines the order that operands are added to
+    // the machine instruction the node corresponds to.
+    assert(SetDestinations.size() == 1 &&
+           "This code only handles a single set right now!");
+
+
               
     DEBUG(I->dump());
     Instructions.push_back(I);
