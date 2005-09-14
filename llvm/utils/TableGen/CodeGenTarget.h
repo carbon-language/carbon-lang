@@ -103,6 +103,12 @@ public:
     return Instructions;
   }
 
+  CodeGenInstruction &getInstruction(const std::string &Name) const {
+    const std::map<std::string, CodeGenInstruction> &Insts = getInstructions();
+    assert(Insts.count(Name) && "Not an instruction!");
+    return const_cast<CodeGenInstruction&>(Insts.find(Name)->second);
+  }
+
   typedef std::map<std::string,
                    CodeGenInstruction>::const_iterator inst_iterator;
   inst_iterator inst_begin() const { return getInstructions().begin(); }
