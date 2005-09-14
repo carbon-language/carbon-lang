@@ -788,10 +788,7 @@ void DAGISelEmitter::ParseAndResolveInstructions() {
       if (i == CGI.OperandList.size())
         I->error("'" + InstResults.begin()->first +
                  "' set but does not appear in operand list!");
-      
       const std::string &OpName = CGI.OperandList[i].Name;
-      if (OpName.empty())
-        I->error("Operand #" + utostr(i) + " in operands list has no name!");
       
       // Check that it exists in InstResults.
       Record *R = InstResults[OpName];

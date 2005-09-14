@@ -285,8 +285,11 @@ CodeGenInstruction::CodeGenInstruction(Record *R, const std::string &AsmStr)
       throw "Unknown operand class '" + Rec->getName() +
             "' in instruction '" + R->getName() + "' instruction!";
 
-    if (!DI->getArgName(i).empty() && 
-        !OperandNames.insert(DI->getArgName(i)).second)
+    // Check that the operand has a name and that it's unique.
+    if (DI->getArgName(i).empty())
+      throw "In instruction '" + R->getName() + "', operand #" + utostr(i) +
+        " has no name!";
+    if (!OperandNames.insert(DI->getArgName(i)).second)
       throw "In instruction '" + R->getName() + "', operand #" + utostr(i) +
         " has the same name as a previous operand!";
     
