@@ -203,8 +203,8 @@ void TreePatternNode::print(std::ostream &OS) const {
   
   if (!PredicateFn.empty())
     OS << "<<P:" << PredicateFn << ">>";
-  if (!TransformFn.empty())
-    OS << "<<X:" << TransformFn << ">>";
+  if (TransformFn)
+    OS << "<<X:" << TransformFn->getName() << ">>";
   if (!getName().empty())
     OS << ":$" << getName();
 
@@ -598,7 +598,7 @@ void DAGISelEmitter::ParseAndResolvePatternFragments(std::ostream &OS) {
     // it.
     Record *Transform = Fragments[i]->getValueAsDef("OperandTransform");
     if (!getSDNodeTransform(Transform).second.empty())    // not noop xform?
-      P->getOnlyTree()->setTransformFn("Transform_"+Transform->getName());
+      P->getOnlyTree()->setTransformFn(Transform);
   }
   
   OS << "\n\n";
@@ -814,7 +814,8 @@ void DAGISelEmitter::ParseAndResolveInstructions() {
     // Loop over the inputs next.  Make a copy of InstInputs so we can destroy
     // the copy while we're checking the inputs.
     std::map<std::string, TreePatternNode*> InstInputsCheck(InstInputs);
-    
+
+    std::vector<TreePatternNode*> ResultNodeOperands;
     for (unsigned i = NumResults, e = CGI.OperandList.size(); i != e; ++i) {
       const std::string &OpName = CGI.OperandList[i].Name;
       if (OpName.empty())
@@ -824,20 +825,26 @@ void DAGISelEmitter::ParseAndResolveInstructions() {
         I->error("Operand $" + OpName +
                  " does not appear in the instruction pattern");
       TreePatternNode *InVal = InstInputsCheck[OpName];
-      InstInputsCheck.erase(OpName);
+      InstInputsCheck.erase(OpName);   // It occurred, remove from map.
       if (CGI.OperandList[i].Ty != InVal->getType())
         I->error("Operand $" + OpName +
                  "'s type disagrees between the operand and pattern");
+      
+      ResultNodeOperands.push_back(InVal->clone());
     }
     
     if (!InstInputsCheck.empty())
       I->error("Input operand $" + InstInputsCheck.begin()->first +
                " occurs in pattern but not in operands list!");
-               
+
+    TreePatternNode *ResultPattern =
+      new TreePatternNode(I->getRecord(), ResultNodeOperands);
+    
     unsigned NumOperands = CGI.OperandList.size()-NumResults;
      
     DEBUG(I->dump());
-    Instructions.push_back(DAGInstruction(I, NumResults, NumOperands));
+    Instructions.push_back(DAGInstruction(I, NumResults, NumOperands,
+                                          ResultPattern));
   }
    
   // If we can, convert the instructions to be patterns that are matched!
@@ -856,7 +863,7 @@ void DAGISelEmitter::ParseAndResolveInstructions() {
       continue;  // Not a set of a single value (not handled so far)
     
     TreePatternNode *SrcPattern = Pattern->getChild(1)->clone();
-    TreePatternNode *DstPattern = SrcPattern->clone();  // FIXME: WRONG
+    TreePatternNode *DstPattern = Instructions[i].getResultPattern();
     PatternsToMatch.push_back(std::make_pair(SrcPattern, DstPattern));
     DEBUG(std::cerr << "PATTERN TO MATCH: "; SrcPattern->dump();
           std::cerr << "\nRESULT DAG      : ";

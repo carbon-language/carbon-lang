@@ -122,14 +122,15 @@ namespace llvm {
     
     /// TransformFn - The transformation function to execute on this node before
     /// it can be substituted into the resulting instruction on a pattern match.
-    std::string TransformFn;
+    Record *TransformFn;
     
     std::vector<TreePatternNode*> Children;
   public:
     TreePatternNode(Record *Op, const std::vector<TreePatternNode*> &Ch) 
-      : Ty(MVT::LAST_VALUETYPE), Operator(Op), Val(0), Children(Ch) {}
+      : Ty(MVT::LAST_VALUETYPE), Operator(Op), Val(0), TransformFn(0),
+        Children(Ch) {}
     TreePatternNode(Init *val)    // leaf ctor
-      : Ty(MVT::LAST_VALUETYPE), Operator(0), Val(val) {}
+      : Ty(MVT::LAST_VALUETYPE), Operator(0), Val(val), TransformFn(0) {}
     ~TreePatternNode();
     
     const std::string &getName() const { return Name; }
@@ -152,8 +153,8 @@ namespace llvm {
     const std::string &getPredicateFn() const { return PredicateFn; }
     void setPredicateFn(const std::string &Fn) { PredicateFn = Fn; }
 
-    const std::string &getTransformFn() const { return TransformFn; }
-    void setTransformFn(const std::string &Fn) { TransformFn = Fn; }
+    Record *getTransformFn() const { return TransformFn; }
+    void setTransformFn(Record *Fn) { TransformFn = Fn; }
     
     void print(std::ostream &OS) const;
     void dump() const;
@@ -278,13 +279,17 @@ namespace llvm {
     TreePattern *Pattern;
     unsigned NumResults;
     unsigned NumOperands;
+    TreePatternNode *ResultPattern;
   public:
-    DAGInstruction(TreePattern *TP, unsigned results, unsigned ops)
-      : Pattern(TP), NumResults(results), NumOperands(ops) {}
+    DAGInstruction(TreePattern *TP, unsigned results, unsigned ops,
+                   TreePatternNode *resultPattern)
+      : Pattern(TP), NumResults(results), NumOperands(ops), 
+        ResultPattern(resultPattern) {}
 
     TreePattern *getPattern() const { return Pattern; }
     unsigned getNumResults() const { return NumResults; }
     unsigned getNumOperands() const { return NumOperands; }
+    TreePatternNode *getResultPattern() const { return ResultPattern; }
   };
   
   
