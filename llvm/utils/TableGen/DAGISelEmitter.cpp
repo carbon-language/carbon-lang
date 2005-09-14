@@ -654,16 +654,65 @@ void DAGISelEmitter::ParseAndResolveInstructions() {
       I->error("Could not infer all types in pattern!");
     }
     
-    // Verify that the top-level forms in the instruction are of void type.
-    for (unsigned j = 0, e = I->getNumTrees(); j != e; ++j)
-      if (I->getTree(j)->getType() != MVT::isVoid) {
+    // Verify that the top-level forms in the instruction are of void type, and
+    // figure out how many of the instruction operands are destinations.
+    for (unsigned j = 0, e = I->getNumTrees(); j != e; ++j) {
+      TreePatternNode *Pat = I->getTree(j);
+      if (Pat->getType() != MVT::isVoid) {
         I->dump();
         I->error("Top-level forms in instruction pattern should have"
                  " void types");
       }
-
+     
+      // Investigate sets.
+      if (Pat->getOperator()->getName() == "set") {
+        if (Pat->getNumChildren() == 0)
+          I->error("set requires operands!");
+        else if (Pat->getNumChildren() & 1)
+          I->error("set requires an even number of operands");
+        
+        // Check the set destinations.
+        unsigned NumValues = Pat->getNumChildren()/2;
+        for (unsigned i = 0; i != NumValues; ++i) {
+          TreePatternNode *Dest = Pat->getChild(i);
+          if (!Dest->isLeaf())
+            I->error("set destination should be a virtual register!");
+          
+          DefInit *Val = dynamic_cast<DefInit*>(Dest->getLeafValue());
+          if (!Val)
+            I->error("set destination should be a virtual register!");
+          
+          if (!Val->getDef()->isSubClassOf("RegisterClass"))
+            I->error("set destination should be a virtual register!");
+        }
+      }
+    }
+              
     DEBUG(I->dump());
     Instructions.push_back(I);
+  }
+   
+  // If we can, convert the instructions to be a patterns that are matched!
+  for (unsigned i = 0, e = Instructions.size(); i != e; ++i) {
+    TreePattern *I = Instructions[i];
+    
+    if (I->getNumTrees() != 1) {
+      std::cerr << "CANNOT HANDLE: " << I->getRecord()->getName() << " yet!";
+      continue;
+    }
+    TreePatternNode *Pattern = I->getTree(0);
+    if (Pattern->getOperator()->getName() != "set")
+      continue;  // Not a set (store or something?)
+    
+    if (Pattern->getNumChildren() != 2)
+      continue;  // Not a set of a single value (not handled so far)
+    
+    TreePatternNode *SrcPattern = Pattern->getChild(1)->clone();
+    TreePatternNode *DstPattern = SrcPattern->clone();  // FIXME: WRONG
+    PatternsToMatch.push_back(std::make_pair(SrcPattern, DstPattern));
+    DEBUG(std::cerr << "PATTERN TO MATCH: "; SrcPattern->dump();
+          std::cerr << "\nRESULT DAG      : ";
+          DstPattern->dump(); std::cerr << "\n");
   }
 }
 
@@ -697,6 +746,9 @@ void DAGISelEmitter::run(std::ostream &OS) {
   EmitSourceFileHeader("DAG Instruction Selector for the " + Target.getName() +
                        " target", OS);
   
+  OS << "// *** NOTE: This file is #included into the middle of the target\n"
+     << "// *** instruction selector class.  These functions are really "
+     << "methods.\n\n";
   ParseNodeInfo();
   ParseNodeTransforms(OS);
   ParseAndResolvePatternFragments(OS);
