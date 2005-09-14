@@ -282,10 +282,6 @@ namespace llvm {
     DAGInstruction(TreePattern *TP, unsigned results, unsigned ops)
       : Pattern(TP), NumResults(results), NumOperands(ops) {}
 
-    ~DAGInstruction() {
-      delete Pattern;
-    }
-
     TreePattern *getPattern() const { return Pattern; }
     unsigned getNumResults() const { return NumResults; }
     unsigned getNumOperands() const { return NumOperands; }

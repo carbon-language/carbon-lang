@@ -701,8 +701,8 @@ void DAGISelEmitter::ParseAndResolveInstructions() {
     // the instruction.  This determines the order that operands are added to
     // the machine instruction the node corresponds to.
     unsigned NumResults = SetDestinations.size();
-    assert(NumResults == 1 &&
-           "This code only handles a single set right now!");
+    //assert(NumResults == 1 &&
+    //       "This code only handles a single set right now!");
 
     unsigned NumOperands = 0;
               
