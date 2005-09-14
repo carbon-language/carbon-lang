@@ -4749,7 +4749,7 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
           NewIdx = GEP.getOperand(1);
           Scale = ConstantInt::get(NewIdx->getType(), 1);
         } else if (ConstantInt *CI = dyn_cast<ConstantInt>(GEP.getOperand(1))) {
-          NewIdx = ConstantInt::get(NewIdx->getType(), 1);
+          NewIdx = ConstantInt::get(CI->getType(), 1);
           Scale = CI;
         } else if (Instruction *Inst =dyn_cast<Instruction>(GEP.getOperand(1))){
           if (Inst->getOpcode() == Instruction::Shl &&
@@ -4772,7 +4772,8 @@ Instruction *InstCombiner::visitGetElementPtrInst(GetElementPtrInst &GEP) {
         if (Scale && Scale->getRawValue() % ArrayEltSize == 0) {
           if (ConstantSInt *C = dyn_cast<ConstantSInt>(Scale))
             Scale = ConstantSInt::get(C->getType(),
-                                      C->getRawValue()/(int64_t)ArrayEltSize);
+                                      (int64_t)C->getRawValue() / 
+                                      (int64_t)ArrayEltSize);
           else
             Scale = ConstantUInt::get(Scale->getType(),
                                       Scale->getRawValue() / ArrayEltSize);
