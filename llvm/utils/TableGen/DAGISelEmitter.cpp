@@ -830,7 +830,21 @@ void DAGISelEmitter::ParseAndResolveInstructions() {
         I->error("Operand $" + OpName +
                  "'s type disagrees between the operand and pattern");
       
-      ResultNodeOperands.push_back(InVal->clone());
+      // Construct the result for the dest-pattern operand list.
+      TreePatternNode *OpNode = InVal->clone();
+      
+      // No predicate is useful on the result.
+      OpNode->setPredicateFn("");
+      
+      // Promote the xform function to be an explicit node if set.
+      if (Record *Xform = OpNode->getTransformFn()) {
+        OpNode->setTransformFn(0);
+        std::vector<TreePatternNode*> Children;
+        Children.push_back(OpNode);
+        OpNode = new TreePatternNode(Xform, Children);
+      }
+      
+      ResultNodeOperands.push_back(OpNode);
     }
     
     if (!InstInputsCheck.empty())
