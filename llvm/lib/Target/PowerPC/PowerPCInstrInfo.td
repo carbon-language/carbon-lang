@@ -400,16 +400,16 @@ def ANDISo : DForm_4<29, (ops GPRC:$dst, GPRC:$src1, u16imm:$src2),
                     []>, isDOT;
 def ORI   : DForm_4<24, (ops GPRC:$dst, GPRC:$src1, u16imm:$src2),
                     "ori $dst, $src1, $src2",
-                    [(set GPRC:$rD, (or GPRC:$rA, immZExt16:$imm))]>;
+                    [(set GPRC:$dst, (or GPRC:$src1, immZExt16:$src2))]>;
 def ORIS  : DForm_4<25, (ops GPRC:$dst, GPRC:$src1, u16imm:$src2),
                     "oris $dst, $src1, $src2",
-                    [(set GPRC:$rD, (or GPRC:$rA, imm16Shifted:$imm))]>;
+                    [(set GPRC:$dst, (or GPRC:$src1, imm16Shifted:$src2))]>;
 def XORI  : DForm_4<26, (ops GPRC:$dst, GPRC:$src1, u16imm:$src2),
                     "xori $dst, $src1, $src2",
-                    [(set GPRC:$rD, (xor GPRC:$rA, immZExt16:$imm))]>;
+                    [(set GPRC:$dst, (xor GPRC:$src1, immZExt16:$src2))]>;
 def XORIS : DForm_4<27, (ops GPRC:$dst, GPRC:$src1, u16imm:$src2),
                     "xoris $dst, $src1, $src2",
-                    [(set GPRC:$rD, (xor GPRC:$rA, imm16Shifted:$imm))]>;
+                    [(set GPRC:$dst, (xor GPRC:$src2, imm16Shifted:$src2))]>;
 def NOP   : DForm_4_zero<24, (ops), "nop">;
 def CMPI  : DForm_5<11, (ops CRRC:$crD, i1imm:$L, GPRC:$rA, s16imm:$imm),
                     "cmpi $crD, $L, $rA, $imm">;
@@ -473,7 +473,7 @@ def NAND : XForm_6<31, 476, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    [(set GPRC:$rA, (not (and GPRC:$rS, GPRC:$rB)))]>;
 def AND  : XForm_6<31,  28, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    "and $rA, $rS, $rB",
-                   [(set GPRC:$rT, (and GPRC:$rA, GPRC:$rB))]>;
+                   [(set GPRC:$rA, (and GPRC:$rS, GPRC:$rB))]>;
 def ANDo : XForm_6<31,  28, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    "and. $rA, $rS, $rB",
                    []>, isDOT;
@@ -482,7 +482,7 @@ def ANDC : XForm_6<31,  60, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    [(set GPRC:$rA, (and GPRC:$rS, (not GPRC:$rB)))]>;
 def OR   : XForm_6<31, 444, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    "or $rA, $rS, $rB",
-                   [(set GPRC:$rT, (or GPRC:$rA, GPRC:$rB))]>;
+                   [(set GPRC:$rA, (or GPRC:$rS, GPRC:$rB))]>;
 def NOR  : XForm_6<31, 124, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    "nor $rA, $rS, $rB",
                    [(set GPRC:$rA, (not (or GPRC:$rS, GPRC:$rB)))]>;
@@ -494,10 +494,10 @@ def ORC  : XForm_6<31, 412, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    [(set GPRC:$rA, (or GPRC:$rS, (not GPRC:$rB)))]>;
 def EQV  : XForm_6<31, 284, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    "eqv $rA, $rS, $rB",
-                   [(set GPRC:$rT, (not (xor GPRC:$rA, GPRC:$rB)))]>;
+                   [(set GPRC:$rA, (not (xor GPRC:$rS, GPRC:$rB)))]>;
 def XOR  : XForm_6<31, 316, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    "xor $rA, $rS, $rB",
-                   [(set GPRC:$rT, (xor GPRC:$rA, GPRC:$rB))]>;                   
+                   [(set GPRC:$rA, (xor GPRC:$rS, GPRC:$rB))]>;                   
 def SLD  : XForm_6<31,  27, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    "sld $rA, $rS, $rB",
                    []>, isPPC64;
@@ -772,6 +772,12 @@ def : Pat<(or GPRC:$in, imm:$imm),
 // xor by an arbitrary immediate.
 def : Pat<(xor GPRC:$in, imm:$imm),
           (XORIS (XORI GPRC:$in, (LO16 imm:$imm)), (HI16 imm:$imm))>;
+
+// Same as above, but using a temporary.
+def : Pattern<(xor GPRC:$in, imm:$imm),
+              [(set GPRC:$tmp, (XORI GPRC:$in, (LO16 imm:$imm))),
+               (XORIS GPRC:$tmp, (HI16 imm:$imm))]>;
+
 
 //===----------------------------------------------------------------------===//
 // PowerPCInstrInfo Definition
