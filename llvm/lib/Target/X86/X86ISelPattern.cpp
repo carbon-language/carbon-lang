@@ -1157,6 +1157,7 @@ static void EmitSpecialCodeForMain(MachineBasicBlock *BB,
 
 void ISel::EmitFunctionEntryCode(Function &Fn, MachineFunction &MF) {
   // If this is main, emit special code for main.
+  MachineBasicBlock *BB = MF.begin();
   if (Fn.hasExternalLinkage() && Fn.getName() == "main")
     EmitSpecialCodeForMain(BB, MF.getFrameInfo());
 }
