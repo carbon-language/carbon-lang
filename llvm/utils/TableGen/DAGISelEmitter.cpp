@@ -631,7 +631,15 @@ void DAGISelEmitter::ParseAndResolvePatternFragments(std::ostream &OS) {
 static void HandleUse(TreePattern *I, TreePatternNode *Pat,
                       std::map<std::string, TreePatternNode*> &InstInputs) {
   // No name -> not interesting.
-  if (Pat->getName().empty()) return;
+  if (Pat->getName().empty()) {
+    if (Pat->isLeaf()) {
+      DefInit *DI = dynamic_cast<DefInit*>(Pat->getLeafValue());
+      if (DI && DI->getDef()->isSubClassOf("RegisterClass"))
+        I->error("Input " + DI->getDef()->getName() + " must be named!");
+
+    }
+    return;
+  }
 
   Record *Rec;
   if (Pat->isLeaf()) {
