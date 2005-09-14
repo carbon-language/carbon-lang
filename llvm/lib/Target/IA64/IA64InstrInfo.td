@@ -43,7 +43,7 @@ def ADJUSTCALLSTACKUP : PseudoInstIA64<(ops variable_ops),
                                         "// ADJUSTCALLSTACKUP">;
 def ADJUSTCALLSTACKDOWN : PseudoInstIA64<(ops variable_ops),
                                          "// ADJUSTCALLSTACKDOWN">;
-def PSEUDO_ALLOC : PseudoInstIA64<(ops GR), "// PSEUDO_ALLOC">;
+def PSEUDO_ALLOC : PseudoInstIA64<(ops GR:$foo), "// PSEUDO_ALLOC">;
 
 def ALLOC : AForm<0x03, 0x0b,
   (ops GR:$dst, i8imm:$inputs, i8imm:$locals, i8imm:$outputs, i8imm:$rotating),
