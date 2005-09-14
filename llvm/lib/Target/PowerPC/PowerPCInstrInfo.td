@@ -238,16 +238,16 @@ class isDOT   {
 //===----------------------------------------------------------------------===//
 // PowerPC Operand Definitions.
 
-def u5imm   : Operand<i8> {
+def u5imm   : Operand<i32> {
   let PrintMethod = "printU5ImmOperand";
 }
-def u6imm   : Operand<i8> {
+def u6imm   : Operand<i32> {
   let PrintMethod = "printU6ImmOperand";
 }
-def s16imm  : Operand<i16> {
+def s16imm  : Operand<i32> {
   let PrintMethod = "printS16ImmOperand";
 }
-def u16imm  : Operand<i16> {
+def u16imm  : Operand<i32> {
   let PrintMethod = "printU16ImmOperand";
 }
 def target : Operand<i32> {
@@ -409,7 +409,7 @@ def XORI  : DForm_4<26, (ops GPRC:$dst, GPRC:$src1, u16imm:$src2),
                     [(set GPRC:$dst, (xor GPRC:$src1, immZExt16:$src2))]>;
 def XORIS : DForm_4<27, (ops GPRC:$dst, GPRC:$src1, u16imm:$src2),
                     "xoris $dst, $src1, $src2",
-                    [(set GPRC:$dst, (xor GPRC:$src2, imm16Shifted:$src2))]>;
+                    [(set GPRC:$dst, (xor GPRC:$src1, imm16Shifted:$src2))]>;
 def NOP   : DForm_4_zero<24, (ops), "nop">;
 def CMPI  : DForm_5<11, (ops CRRC:$crD, i1imm:$L, GPRC:$rA, s16imm:$imm),
                     "cmpi $crD, $L, $rA, $imm">;
