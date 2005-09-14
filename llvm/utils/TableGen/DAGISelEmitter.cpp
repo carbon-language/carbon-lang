@@ -340,6 +340,7 @@ TreePattern::TreePattern(Record *TheRec, const std::vector<DagInit *> &RawPat,
 }
 
 void TreePattern::error(const std::string &Msg) const {
+  dump();
   throw "In " + TheRecord->getName() + ": " + Msg;
 }
 
@@ -625,6 +626,102 @@ void DAGISelEmitter::ParseAndResolvePatternFragments(std::ostream &OS) {
   }
 }
 
+/// HandleUse - Given "Pat" a leaf in the pattern, check to see if it is an
+/// instruction input.
+static void HandleUse(TreePattern *I, TreePatternNode *Pat,
+                      std::map<std::string, TreePatternNode*> &InstInputs) {
+  // No name -> not interesting.
+  if (Pat->getName().empty()) return;
+
+  Record *Rec;
+  if (Pat->isLeaf()) {
+    DefInit *DI = dynamic_cast<DefInit*>(Pat->getLeafValue());
+    if (!DI) I->error("Input $" + Pat->getName() + " must be an identifier!");
+    Rec = DI->getDef();
+  } else {
+    assert(Pat->getNumChildren() == 0 && "can't be a use with children!");
+    Rec = Pat->getOperator();
+  }
+
+  TreePatternNode *&Slot = InstInputs[Pat->getName()];
+  if (!Slot) {
+    Slot = Pat;
+  } else {
+    Record *SlotRec;
+    if (Slot->isLeaf()) {
+      Rec = dynamic_cast<DefInit*>(Slot->getLeafValue())->getDef();
+    } else {
+      assert(Slot->getNumChildren() == 0 && "can't be a use with children!");
+      SlotRec = Slot->getOperator();
+    }
+    
+    // Ensure that the inputs agree if we've already seen this input.
+    if (Rec != SlotRec)
+      I->error("All $" + Pat->getName() + " inputs must agree with each other");
+    if (Slot->getType() != Pat->getType())
+      I->error("All $" + Pat->getName() + " inputs must agree with each other");
+  }
+}
+
+/// FindPatternInputsAndOutputs - Scan the specified TreePatternNode (which is
+/// part of "I", the instruction), computing the set of inputs and outputs of
+/// the pattern.  Report errors if we see anything naughty.
+void DAGISelEmitter::
+FindPatternInputsAndOutputs(TreePattern *I, TreePatternNode *Pat,
+                            std::map<std::string, TreePatternNode*> &InstInputs,
+                            std::map<std::string, Record*> &InstResults) {
+  if (Pat->isLeaf()) {
+    HandleUse(I, Pat, InstInputs);
+    return;
+  } else if (Pat->getOperator()->getName() != "set") {
+    // If this is not a set, verify that the children nodes are not void typed,
+    // and recurse.
+    for (unsigned i = 0, e = Pat->getNumChildren(); i != e; ++i) {
+      if (Pat->getChild(i)->getType() == MVT::isVoid)
+        I->error("Cannot have void nodes inside of patterns!");
+      FindPatternInputsAndOutputs(I, Pat->getChild(i), InstInputs, InstResults);
+    }
+    
+    // If this is a non-leaf node with no children, treat it basically as if
+    // it were a leaf.  This handles nodes like (imm).
+    if (Pat->getNumChildren() == 0)
+      HandleUse(I, Pat, InstInputs);
+    
+    return;
+  } 
+  
+  // Otherwise, this is a set, validate and collect instruction results.
+  if (Pat->getNumChildren() == 0)
+    I->error("set requires operands!");
+  else if (Pat->getNumChildren() & 1)
+    I->error("set requires an even number of operands");
+  
+  // Check the set destinations.
+  unsigned NumValues = Pat->getNumChildren()/2;
+  for (unsigned i = 0; i != NumValues; ++i) {
+    TreePatternNode *Dest = Pat->getChild(i);
+    if (!Dest->isLeaf())
+      I->error("set destination should be a virtual register!");
+    
+    DefInit *Val = dynamic_cast<DefInit*>(Dest->getLeafValue());
+    if (!Val)
+      I->error("set destination should be a virtual register!");
+    
+    if (!Val->getDef()->isSubClassOf("RegisterClass"))
+      I->error("set destination should be a virtual register!");
+    if (Dest->getName().empty())
+      I->error("set destination must have a name!");
+    if (InstResults.count(Dest->getName()))
+      I->error("cannot set '" + Dest->getName() +"' multiple times");
+    InstResults[Dest->getName()] = Val->getDef();
+
+    // Verify and collect info from the computation.
+    FindPatternInputsAndOutputs(I, Pat->getChild(i+NumValues),
+                                InstInputs, InstResults);
+  }
+}
+
+
 /// ParseAndResolveInstructions - Parse all of the instructions, inlining and
 /// resolving any fragments involved.  This populates the Instructions list with
 /// fully resolved instructions.
@@ -654,12 +751,16 @@ void DAGISelEmitter::ParseAndResolveInstructions() {
       I->error("Could not infer all types in pattern!");
     }
     
-    // SetDestinations - Keep track of all the virtual registers that are 'set'
+    // InstInputs - Keep track of all of the inputs of the instruction, along 
+    // with the record they are declared as.
+    std::map<std::string, TreePatternNode*> InstInputs;
+    
+    // InstResults - Keep track of all the virtual registers that are 'set'
     // in the instruction, including what reg class they are.
-    std::map<std::string, Record*> SetDestinations;
-
+    std::map<std::string, Record*> InstResults;
+    
     // Verify that the top-level forms in the instruction are of void type, and
-    // fill in the SetDestinations map.
+    // fill in the InstResults map.
     for (unsigned j = 0, e = I->getNumTrees(); j != e; ++j) {
       TreePatternNode *Pat = I->getTree(j);
       if (Pat->getType() != MVT::isVoid) {
@@ -667,40 +768,15 @@ void DAGISelEmitter::ParseAndResolveInstructions() {
         I->error("Top-level forms in instruction pattern should have"
                  " void types");
       }
-     
-      // Investigate sets.
-      if (Pat->getOperator()->getName() == "set") {
-        if (Pat->getNumChildren() == 0)
-          I->error("set requires operands!");
-        else if (Pat->getNumChildren() & 1)
-          I->error("set requires an even number of operands");
-        
-        // Check the set destinations.
-        unsigned NumValues = Pat->getNumChildren()/2;
-        for (unsigned i = 0; i != NumValues; ++i) {
-          TreePatternNode *Dest = Pat->getChild(i);
-          if (!Dest->isLeaf())
-            I->error("set destination should be a virtual register!");
 
-          DefInit *Val = dynamic_cast<DefInit*>(Dest->getLeafValue());
-          if (!Val)
-            I->error("set destination should be a virtual register!");
-          
-          if (!Val->getDef()->isSubClassOf("RegisterClass"))
-            I->error("set destination should be a virtual register!");
-          if (Dest->getName().empty())
-            I->error("set destination must have a name!");
-          if (SetDestinations.count(Dest->getName()))
-            I->error("cannot set '" + Dest->getName() +"' multiple times");
-          SetDestinations[Dest->getName()] = Val->getDef();
-        }
-      }
+      // Find inputs and outputs, and verify the structure of the uses/defs.
+      FindPatternInputsAndOutputs(I, Pat, InstInputs, InstResults);
     }
 
-    // Now that we have operands that are sets, inspect the operands list for
-    // the instruction.  This determines the order that operands are added to
-    // the machine instruction the node corresponds to.
-    unsigned NumResults = SetDestinations.size();
+    // Now that we have inputs and outputs of the pattern, inspect the operands
+    // list for the instruction.  This determines the order that operands are
+    // added to the machine instruction the node corresponds to.
+    unsigned NumResults = InstResults.size();
 
     // Parse the operands list from the (ops) list, validating it.
     std::vector<std::string> &Args = I->getArgList();
@@ -709,12 +785,16 @@ void DAGISelEmitter::ParseAndResolveInstructions() {
 
     // Check that all of the results occur first in the list.
     for (unsigned i = 0; i != NumResults; ++i) {
+      if (NumResults == CGI.OperandList.size())
+        I->error("'" + InstResults.begin()->first +
+                 "' set but does not appear in operand list!");
+      
       const std::string &OpName = CGI.OperandList[i].Name;
       if (OpName.empty())
         I->error("Operand #" + utostr(i) + " in operands list has no name!");
       
-      // Check that it exists in SetDestinations.
-      Record *R = SetDestinations[OpName];
+      // Check that it exists in InstResults.
+      Record *R = InstResults[OpName];
       if (R == 0)
         I->error("Operand $" + OpName + " should be a set destination: all "
                  "outputs must occur before inputs in operand list!");
@@ -723,20 +803,31 @@ void DAGISelEmitter::ParseAndResolveInstructions() {
         I->error("Operand $" + OpName + " class mismatch!");
       
       // Okay, this one checks out.
-      SetDestinations.erase(OpName);
+      InstResults.erase(OpName);
+    }
+
+    // Loop over the inputs next.
+    for (unsigned i = NumResults, e = CGI.OperandList.size(); i != e; ++i) {
+      const std::string &OpName = CGI.OperandList[i].Name;
+      if (OpName.empty())
+        I->error("Operand #" + utostr(i) + " in operands list has no name!");
+
+      if (!InstInputs.count(OpName))
+        I->error("Operand $" + OpName +
+                 " does not appear in the instruction pattern");
+      TreePatternNode *InVal = InstInputs[OpName];
+      if (CGI.OperandList[i].Ty != InVal->getType())
+        I->error("Operand $" + OpName +
+                 "'s type disagrees between the operand and pattern");
     }
     
-    if (!SetDestinations.empty())
-      I->error("'" + SetDestinations.begin()->first +
-               "' set but does not appear in operand list!");
-
-    unsigned NumOperands = 0;
-              
+    unsigned NumOperands = CGI.OperandList.size()-NumResults;
+     
     DEBUG(I->dump());
     Instructions.push_back(DAGInstruction(I, NumResults, NumOperands));
   }
    
-  // If we can, convert the instructions to be a patterns that are matched!
+  // If we can, convert the instructions to be patterns that are matched!
   for (unsigned i = 0, e = Instructions.size(); i != e; ++i) {
     TreePattern *I = Instructions[i].getPattern();
     

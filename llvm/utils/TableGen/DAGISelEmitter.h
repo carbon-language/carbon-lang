@@ -330,6 +330,10 @@ private:
   void ParseNodeTransforms(std::ostream &OS);
   void ParseAndResolvePatternFragments(std::ostream &OS);
   void ParseAndResolveInstructions();
+  void FindPatternInputsAndOutputs(TreePattern *I, TreePatternNode *Pat,
+                                   std::map<std::string,
+                                            TreePatternNode*> &InstInputs,
+                                   std::map<std::string, Record*> &InstResults);
   void EmitInstructionSelector(std::ostream &OS);
 };
 
