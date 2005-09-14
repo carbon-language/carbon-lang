@@ -700,18 +700,19 @@ void DAGISelEmitter::ParseAndResolveInstructions() {
     // Now that we have operands that are sets, inspect the operands list for
     // the instruction.  This determines the order that operands are added to
     // the machine instruction the node corresponds to.
-    assert(SetDestinations.size() == 1 &&
+    unsigned NumResults = SetDestinations.size();
+    assert(NumResults == 1 &&
            "This code only handles a single set right now!");
 
-
+    unsigned NumOperands = 0;
               
     DEBUG(I->dump());
-    Instructions.push_back(I);
+    Instructions.push_back(DAGInstruction(I, NumResults, NumOperands));
   }
    
   // If we can, convert the instructions to be a patterns that are matched!
   for (unsigned i = 0, e = Instructions.size(); i != e; ++i) {
-    TreePattern *I = Instructions[i];
+    TreePattern *I = Instructions[i].getPattern();
     
     if (I->getNumTrees() != 1) {
       std::cerr << "CANNOT HANDLE: " << I->getRecord()->getName() << " yet!";
@@ -780,7 +781,5 @@ void DAGISelEmitter::run(std::ostream &OS) {
     delete I->second;
   PatternFragments.clear();
 
-  for (unsigned i = 0, e = Instructions.size(); i != e; ++i)
-    delete Instructions[i];
   Instructions.clear();
 }

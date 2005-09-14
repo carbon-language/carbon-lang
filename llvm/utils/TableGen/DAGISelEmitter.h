@@ -272,7 +272,24 @@ namespace llvm {
     MVT::ValueType getIntrinsicType(Record *R) const;
     TreePatternNode *ParseTreePattern(DagInit *DI);
   };
-  
+
+
+  class DAGInstruction {
+    TreePattern *Pattern;
+    unsigned NumResults;
+    unsigned NumOperands;
+  public:
+    DAGInstruction(TreePattern *TP, unsigned results, unsigned ops)
+      : Pattern(TP), NumResults(results), NumOperands(ops) {}
+
+    ~DAGInstruction() {
+      delete Pattern;
+    }
+
+    TreePattern *getPattern() const { return Pattern; }
+    unsigned getNumResults() const { return NumResults; }
+    unsigned getNumOperands() const { return NumOperands; }
+  };
   
   
 /// InstrSelectorEmitter - The top-level class which coordinates construction
@@ -285,7 +302,7 @@ class DAGISelEmitter : public TableGenBackend {
   std::map<Record*, SDNodeInfo> SDNodes;
   std::map<Record*, std::pair<Record*, std::string> > SDNodeXForms;
   std::map<Record*, TreePattern*> PatternFragments;
-  std::vector<TreePattern*> Instructions;
+  std::vector<DAGInstruction> Instructions;
   
   /// PatternsToMatch - All of the things we are matching on the DAG.  The first
   /// value is the pattern to match, the second pattern is the result to
