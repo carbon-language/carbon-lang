@@ -701,8 +701,34 @@ void DAGISelEmitter::ParseAndResolveInstructions() {
     // the instruction.  This determines the order that operands are added to
     // the machine instruction the node corresponds to.
     unsigned NumResults = SetDestinations.size();
-    //assert(NumResults == 1 &&
-    //       "This code only handles a single set right now!");
+
+    // Parse the operands list from the (ops) list, validating it.
+    std::vector<std::string> &Args = I->getArgList();
+    assert(Args.empty() && "Args list should still be empty here!");
+    CodeGenInstruction &CGI = Target.getInstruction(Instrs[i]->getName());
+
+    // Check that all of the results occur first in the list.
+    for (unsigned i = 0; i != NumResults; ++i) {
+      const std::string &OpName = CGI.OperandList[i].Name;
+      if (OpName.empty())
+        I->error("Operand #" + utostr(i) + " in operands list has no name!");
+      
+      // Check that it exists in SetDestinations.
+      Record *R = SetDestinations[OpName];
+      if (R == 0)
+        I->error("Operand $" + OpName + " should be a set destination: all "
+                 "outputs must occur before inputs in operand list!");
+      
+      if (CGI.OperandList[i].Rec != R)
+        I->error("Operand $" + OpName + " class mismatch!");
+      
+      // Okay, this one checks out.
+      SetDestinations.erase(OpName);
+    }
+    
+    if (!SetDestinations.empty())
+      I->error("'" + SetDestinations.begin()->first +
+               "' set but does not appear in operand list!");
 
     unsigned NumOperands = 0;
               
