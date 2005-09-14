@@ -785,7 +785,7 @@ void DAGISelEmitter::ParseAndResolveInstructions() {
 
     // Check that all of the results occur first in the list.
     for (unsigned i = 0; i != NumResults; ++i) {
-      if (NumResults == CGI.OperandList.size())
+      if (i == CGI.OperandList.size())
         I->error("'" + InstResults.begin()->first +
                  "' set but does not appear in operand list!");
       
