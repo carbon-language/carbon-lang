@@ -803,21 +803,29 @@ void DAGISelEmitter::ParseAndResolveInstructions() {
       InstResults.erase(OpName);
     }
 
-    // Loop over the inputs next.
+    // Loop over the inputs next.  Make a copy of InstInputs so we can destroy
+    // the copy while we're checking the inputs.
+    std::map<std::string, TreePatternNode*> InstInputsCheck(InstInputs);
+    
     for (unsigned i = NumResults, e = CGI.OperandList.size(); i != e; ++i) {
       const std::string &OpName = CGI.OperandList[i].Name;
       if (OpName.empty())
         I->error("Operand #" + utostr(i) + " in operands list has no name!");
 
-      if (!InstInputs.count(OpName))
+      if (!InstInputsCheck.count(OpName))
         I->error("Operand $" + OpName +
                  " does not appear in the instruction pattern");
-      TreePatternNode *InVal = InstInputs[OpName];
+      TreePatternNode *InVal = InstInputsCheck[OpName];
+      InstInputsCheck.erase(OpName);
       if (CGI.OperandList[i].Ty != InVal->getType())
         I->error("Operand $" + OpName +
                  "'s type disagrees between the operand and pattern");
     }
     
+    if (!InstInputsCheck.empty())
+      I->error("Input operand $" + InstInputsCheck.begin()->first +
+               " occurs in pattern but not in operands list!");
+               
     unsigned NumOperands = CGI.OperandList.size()-NumResults;
      
     DEBUG(I->dump());
