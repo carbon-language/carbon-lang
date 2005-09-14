@@ -627,8 +627,8 @@ void DAGISelEmitter::ParseAndResolvePatternFragments(std::ostream &OS) {
 }
 
 /// HandleUse - Given "Pat" a leaf in the pattern, check to see if it is an
-/// instruction input.
-static void HandleUse(TreePattern *I, TreePatternNode *Pat,
+/// instruction input.  Return true if this is a real use.
+static bool HandleUse(TreePattern *I, TreePatternNode *Pat,
                       std::map<std::string, TreePatternNode*> &InstInputs) {
   // No name -> not interesting.
   if (Pat->getName().empty()) {
@@ -638,7 +638,7 @@ static void HandleUse(TreePattern *I, TreePatternNode *Pat,
         I->error("Input " + DI->getDef()->getName() + " must be named!");
 
     }
-    return;
+    return false;
   }
 
   Record *Rec;
@@ -669,6 +669,7 @@ static void HandleUse(TreePattern *I, TreePatternNode *Pat,
     if (Slot->getType() != Pat->getType())
       I->error("All $" + Pat->getName() + " inputs must agree with each other");
   }
+  return true;
 }
 
 /// FindPatternInputsAndOutputs - Scan the specified TreePatternNode (which is
@@ -679,7 +680,9 @@ FindPatternInputsAndOutputs(TreePattern *I, TreePatternNode *Pat,
                             std::map<std::string, TreePatternNode*> &InstInputs,
                             std::map<std::string, Record*> &InstResults) {
   if (Pat->isLeaf()) {
-    HandleUse(I, Pat, InstInputs);
+    bool isUse = HandleUse(I, Pat, InstInputs);
+    if (!isUse && Pat->getTransformFn())
+      I->error("Cannot specify a transform function for a non-input value!");
     return;
   } else if (Pat->getOperator()->getName() != "set") {
     // If this is not a set, verify that the children nodes are not void typed,
@@ -692,9 +695,12 @@ FindPatternInputsAndOutputs(TreePattern *I, TreePatternNode *Pat,
     
     // If this is a non-leaf node with no children, treat it basically as if
     // it were a leaf.  This handles nodes like (imm).
+    bool isUse = false;
     if (Pat->getNumChildren() == 0)
-      HandleUse(I, Pat, InstInputs);
+      isUse = HandleUse(I, Pat, InstInputs);
     
+    if (!isUse && Pat->getTransformFn())
+      I->error("Cannot specify a transform function for a non-input value!");
     return;
   } 
   
@@ -703,6 +709,9 @@ FindPatternInputsAndOutputs(TreePattern *I, TreePatternNode *Pat,
     I->error("set requires operands!");
   else if (Pat->getNumChildren() & 1)
     I->error("set requires an even number of operands");
+  
+  if (Pat->getTransformFn())
+    I->error("Cannot specify a transform function on a set node!");
   
   // Check the set destinations.
   unsigned NumValues = Pat->getNumChildren()/2;
