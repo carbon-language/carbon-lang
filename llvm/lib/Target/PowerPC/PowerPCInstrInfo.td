@@ -275,8 +275,8 @@ def crbitm: Operand<i8> {
 def PHI : Pseudo<(ops variable_ops), "; PHI">;
 
 let isLoad = 1 in {
-def ADJCALLSTACKDOWN : Pseudo<(ops u16imm), "; ADJCALLSTACKDOWN">;
-def ADJCALLSTACKUP : Pseudo<(ops u16imm), "; ADJCALLSTACKUP">;
+def ADJCALLSTACKDOWN : Pseudo<(ops u16imm:$amt), "; ADJCALLSTACKDOWN">;
+def ADJCALLSTACKUP : Pseudo<(ops u16imm:$amt), "; ADJCALLSTACKUP">;
 }
 def IMPLICIT_DEF_GPR : Pseudo<(ops GPRC:$rD), "; $rD = IMPLICIT_DEF_GPRC">;
 def IMPLICIT_DEF_FP  : Pseudo<(ops FPRC:$rD), "; %rD = IMPLICIT_DEF_FP">;
@@ -301,7 +301,8 @@ let Defs = [LR] in
   def MovePCtoLR : Pseudo<(ops piclabel:$label), "bl $label">;
 
 let isBranch = 1, isTerminator = 1 in {
-  def COND_BRANCH : Pseudo<(ops CRRC:$crS, u16imm, target:$true, target:$false),
+  def COND_BRANCH : Pseudo<(ops CRRC:$crS, u16imm:$opc,
+                                target:$true, target:$false),
                            "; COND_BRANCH">;
   def B   : IForm<18, 0, 0, (ops target:$func), "b $func">;
 //def BA  : IForm<18, 1, 0, (ops target:$func), "ba $func">;

@@ -145,8 +145,9 @@ class Ii32<bits<8> o, Format f, dag ops, string asm>
 def PHI : I<0, Pseudo, (ops variable_ops), "PHINODE">;        // PHI node.
 def NOOP : I<0x90, RawFrm, (ops), "nop">; // nop
 
-def ADJCALLSTACKDOWN : I<0, Pseudo, (ops i32imm), "#ADJCALLSTACKDOWN">;
-def ADJCALLSTACKUP   : I<0, Pseudo, (ops i32imm, i32imm), "#ADJCALLSTACKUP">;
+def ADJCALLSTACKDOWN : I<0, Pseudo, (ops i32imm:$amt), "#ADJCALLSTACKDOWN">;
+def ADJCALLSTACKUP   : I<0, Pseudo, (ops i32imm:$amt1, i32imm:$amt2),
+                         "#ADJCALLSTACKUP">;
 def IMPLICIT_USE     : I<0, Pseudo, (ops variable_ops), "#IMPLICIT_USE">;
 def IMPLICIT_DEF     : I<0, Pseudo, (ops variable_ops), "#IMPLICIT_DEF">;
 let isTerminator = 1 in
@@ -1563,20 +1564,20 @@ class FPI<bits<8> o, Format F, FPFormat fp, dag ops, string asm>
 // forms of instructions for doing these operations.  Until the stackifier runs,
 // we prefer to be abstract.
 def FpMOV : FPI<0, Pseudo, SpecialFP,
-                (ops RFP, RFP), "">;   // f1 = fmov f2
+                (ops RFP:$dst, RFP:$src), "">;   // f1 = fmov f2
 def FpADD : FPI<0, Pseudo, TwoArgFP ,
-                (ops RFP, RFP, RFP), "">;    // f1 = fadd f2, f3
+                (ops RFP:$dst, RFP:$src1, RFP:$src2), "">; // f1 = fadd f2, f3
 def FpSUB : FPI<0, Pseudo, TwoArgFP ,
-                (ops RFP, RFP, RFP), "">;    // f1 = fsub f2, f3
+                (ops RFP:$dst, RFP:$src1, RFP:$src2), "">;    // f1 = fsub f2, f3
 def FpMUL : FPI<0, Pseudo, TwoArgFP ,
-                (ops RFP, RFP, RFP), "">;    // f1 = fmul f2, f3
+                (ops RFP:$dst, RFP:$src1, RFP:$src2), "">;    // f1 = fmul f2, f3
 def FpDIV : FPI<0, Pseudo, TwoArgFP ,
-                (ops RFP, RFP, RFP), "">;    // f1 = fdiv f2, f3
+                (ops RFP:$dst, RFP:$src1, RFP:$src2), "">;    // f1 = fdiv f2, f3
 
-def FpGETRESULT : FPI<0, Pseudo, SpecialFP, (ops RFP), "">,
+def FpGETRESULT : FPI<0, Pseudo, SpecialFP, (ops RFP:$dst), "">,
                   Imp<[ST0], []>;  // FPR = ST(0)
 
-def FpSETRESULT : FPI<0, Pseudo, SpecialFP, (ops RFP), "">,
+def FpSETRESULT : FPI<0, Pseudo, SpecialFP, (ops RFP:$src), "">,
                   Imp<[], [ST0]>;  // ST(0) = FPR
 
 // FADD reg, mem: Before stackification, these are represented by:
