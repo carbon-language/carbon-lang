@@ -333,8 +333,9 @@ public:
 private:
   void ParseNodeInfo();
   void ParseNodeTransforms(std::ostream &OS);
-  void ParseAndResolvePatternFragments(std::ostream &OS);
-  void ParseAndResolveInstructions();
+  void ParsePatternFragments(std::ostream &OS);
+  void ParseInstructions();
+  void ParsePatterns();
   void FindPatternInputsAndOutputs(TreePattern *I, TreePatternNode *Pat,
                                    std::map<std::string,
                                             TreePatternNode*> &InstInputs,

@@ -527,14 +527,14 @@ void DAGISelEmitter::ParseNodeTransforms(std::ostream &OS) {
 
 
 
-/// ParseAndResolvePatternFragments - Parse all of the PatFrag definitions in
-/// the .td file, building up the PatternFragments map.  After we've collected
-/// them all, inline fragments together as necessary, so that there are no
-/// references left inside a pattern fragment to a pattern fragment.
+/// ParsePatternFragments - Parse all of the PatFrag definitions in the .td
+/// file, building up the PatternFragments map.  After we've collected them all,
+/// inline fragments together as necessary, so that there are no references left
+/// inside a pattern fragment to a pattern fragment.
 ///
 /// This also emits all of the predicate functions to the output file.
 ///
-void DAGISelEmitter::ParseAndResolvePatternFragments(std::ostream &OS) {
+void DAGISelEmitter::ParsePatternFragments(std::ostream &OS) {
   std::vector<Record*> Fragments = Records.getAllDerivedDefinitions("PatFrag");
   
   // First step, parse all of the fragments and emit predicate functions.
@@ -739,10 +739,10 @@ FindPatternInputsAndOutputs(TreePattern *I, TreePatternNode *Pat,
 }
 
 
-/// ParseAndResolveInstructions - Parse all of the instructions, inlining and
-/// resolving any fragments involved.  This populates the Instructions list with
-/// fully resolved instructions.
-void DAGISelEmitter::ParseAndResolveInstructions() {
+/// ParseInstructions - Parse all of the instructions, inlining and resolving
+/// any fragments involved.  This populates the Instructions list with fully
+/// resolved instructions.
+void DAGISelEmitter::ParseInstructions() {
   std::vector<Record*> Instrs = Records.getAllDerivedDefinitions("Instruction");
   
   for (unsigned i = 0, e = Instrs.size(); i != e; ++i) {
@@ -888,10 +888,20 @@ void DAGISelEmitter::ParseAndResolveInstructions() {
     TreePatternNode *SrcPattern = Pattern->getChild(1)->clone();
     TreePatternNode *DstPattern = Instructions[i].getResultPattern();
     PatternsToMatch.push_back(std::make_pair(SrcPattern, DstPattern));
-    DEBUG(std::cerr << "PATTERN TO MATCH: "; SrcPattern->dump();
-          std::cerr << "\nRESULT DAG      : ";
-          DstPattern->dump(); std::cerr << "\n");
   }
+}
+
+void DAGISelEmitter::ParsePatterns() {
+
+
+
+
+  DEBUG(std::cerr << "\n\nPARSED PATTERNS TO MATCH:\n\n";
+        for (unsigned i = 0, e = PatternsToMatch.size(); i != e; ++i) {
+          std::cerr << "PATTERN: ";  PatternsToMatch[i].first->dump();
+          std::cerr << "\nRESULT:  ";PatternsToMatch[i].second->dump();
+          std::cerr << "\n";
+        });
 }
 
 void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
@@ -929,9 +939,10 @@ void DAGISelEmitter::run(std::ostream &OS) {
      << "methods.\n\n";
   ParseNodeInfo();
   ParseNodeTransforms(OS);
-  ParseAndResolvePatternFragments(OS);
-  ParseAndResolveInstructions();
-  
+  ParsePatternFragments(OS);
+  ParseInstructions();
+  ParsePatterns();
+
   // TODO: convert some instructions to expanders if needed or something.
   
   EmitInstructionSelector(OS);  
