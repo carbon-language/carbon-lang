@@ -317,7 +317,7 @@ class DAGISelEmitter : public TableGenBackend {
   std::map<Record*, SDNodeInfo> SDNodes;
   std::map<Record*, std::pair<Record*, std::string> > SDNodeXForms;
   std::map<Record*, TreePattern*> PatternFragments;
-  std::vector<DAGInstruction> Instructions;
+  std::map<Record*, DAGInstruction> Instructions;
   
   /// PatternsToMatch - All of the things we are matching on the DAG.  The first
   /// value is the pattern to match, the second pattern is the result to
@@ -342,6 +342,11 @@ public:
   const std::pair<Record*, std::string> &getSDNodeTransform(Record *R) const {
     assert(SDNodeXForms.count(R) && "Invalid transform!");
     return SDNodeXForms.find(R)->second;
+  }
+  
+  const DAGInstruction &getInstruction(Record *R) const {
+    assert(Instructions.count(R) && "Unknown instruction!");
+    return Instructions.find(R)->second;
   }
   
 private:

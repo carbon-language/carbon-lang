@@ -326,6 +326,10 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP) {
     return MadeChange;  
   } else {
     assert(getOperator()->isSubClassOf("Instruction") && "Unknown node type!");
+    
+    const DAGInstruction &Inst =
+      TP.getDAGISelEmitter().getInstruction(getOperator());
+    
     // TODO: type inference for instructions.
     return false;
   }
@@ -874,13 +878,15 @@ void DAGISelEmitter::ParseInstructions() {
       new TreePatternNode(I->getRecord(), ResultNodeOperands);
     
     DEBUG(I->dump());
-    Instructions.push_back(DAGInstruction(I, ResultTypes, OperandTypes,
-                                          ResultPattern));
+    Instructions.insert(std::make_pair(I->getRecord(),
+                                       DAGInstruction(I, ResultTypes,
+                                                OperandTypes, ResultPattern)));
   }
    
   // If we can, convert the instructions to be patterns that are matched!
-  for (unsigned i = 0, e = Instructions.size(); i != e; ++i) {
-    TreePattern *I = Instructions[i].getPattern();
+  for (std::map<Record*, DAGInstruction>::iterator II = Instructions.begin(),
+       E = Instructions.end(); II != E; ++II) {
+    TreePattern *I = II->second.getPattern();
     
     if (I->getNumTrees() != 1) {
       std::cerr << "CANNOT HANDLE: " << I->getRecord()->getName() << " yet!";
@@ -894,7 +900,7 @@ void DAGISelEmitter::ParseInstructions() {
       continue;  // Not a set of a single value (not handled so far)
     
     TreePatternNode *SrcPattern = Pattern->getChild(1)->clone();
-    TreePatternNode *DstPattern = Instructions[i].getResultPattern();
+    TreePatternNode *DstPattern = II->second.getResultPattern();
     PatternsToMatch.push_back(std::make_pair(SrcPattern, DstPattern));
   }
 }
@@ -931,7 +937,7 @@ void DAGISelEmitter::ParsePatterns() {
     // never do anything with this pattern: report it to the user.
 #if 0  // FIXME: ENABLE when we can infer though instructions!
     if (!Result->InferAllTypes())
-      Result->error("Could not infer all types in pattern!");
+      Result->error("Could not infer all types in pattern result!");
 #endif
    
     if (Result->getNumTrees() != 1)
