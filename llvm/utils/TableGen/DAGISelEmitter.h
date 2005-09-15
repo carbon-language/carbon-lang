@@ -20,6 +20,7 @@
 namespace llvm {
   class Record;
   struct Init;
+  class ListInit;
   class DagInit;
   class SDNodeInfo;
   class TreePattern;
@@ -222,8 +223,9 @@ namespace llvm {
       
     /// TreePattern constructor - Parse the specified DagInits into the
     /// current record.
-    TreePattern(Record *TheRec,
-                const std::vector<DagInit *> &RawPat, DAGISelEmitter &ise);
+    TreePattern(Record *TheRec, ListInit *RawPat, DAGISelEmitter &ise);
+    TreePattern(Record *TheRec, DagInit *Pat, DAGISelEmitter &ise);
+    TreePattern(Record *TheRec, TreePatternNode *Pat, DAGISelEmitter &ise);
         
     /// getTrees - Return the tree patterns which corresponds to this pattern.
     ///
@@ -285,14 +287,15 @@ namespace llvm {
   public:
     DAGInstruction(TreePattern *TP,
                    const std::vector<MVT::ValueType> &resultTypes,
-                   const std::vector<MVT::ValueType> &operandTypes,
-                   TreePatternNode *resultPattern)
+                   const std::vector<MVT::ValueType> &operandTypes)
       : Pattern(TP), ResultTypes(resultTypes), OperandTypes(operandTypes), 
-        ResultPattern(resultPattern) {}
+        ResultPattern(0) {}
 
     TreePattern *getPattern() const { return Pattern; }
     unsigned getNumResults() const { return ResultTypes.size(); }
     unsigned getNumOperands() const { return OperandTypes.size(); }
+    
+    void setResultPattern(TreePatternNode *R) { ResultPattern = R; }
     
     MVT::ValueType getResultType(unsigned RN) const {
       assert(RN < ResultTypes.size());
