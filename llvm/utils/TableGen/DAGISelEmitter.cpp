@@ -317,14 +317,18 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP) {
     MadeChange |= getChild(1)->UpdateNodeType(getChild(0)->getType(), TP);
     MadeChange |= UpdateNodeType(MVT::isVoid, TP);
     return MadeChange;
+  } else if (getOperator()->isSubClassOf("SDNode")) {
+    const SDNodeInfo &NI = TP.getDAGISelEmitter().getSDNodeInfo(getOperator());
+    
+    bool MadeChange = NI.ApplyTypeConstraints(this, TP);
+    for (unsigned i = 0, e = getNumChildren(); i != e; ++i)
+      MadeChange |= getChild(i)->ApplyTypeConstraints(TP);
+    return MadeChange;  
+  } else {
+    assert(getOperator()->isSubClassOf("Instruction") && "Unknown node type!");
+    // TODO: type inference for instructions.
+    return false;
   }
-  
-  const SDNodeInfo &NI = TP.getDAGISelEmitter().getSDNodeInfo(getOperator());
-  
-  bool MadeChange = NI.ApplyTypeConstraints(this, TP);
-  for (unsigned i = 0, e = getNumChildren(); i != e; ++i)
-    MadeChange |= getChild(i)->ApplyTypeConstraints(TP);
-  return MadeChange;  
 }
 
 
@@ -400,6 +404,8 @@ TreePatternNode *TreePattern::ParseTreePattern(DagInit *Dag) {
   
   // Verify that this is something that makes sense for an operator.
   if (!Operator->isSubClassOf("PatFrag") && !Operator->isSubClassOf("SDNode") &&
+      !Operator->isSubClassOf("Instruction") && 
+      !Operator->isSubClassOf("SDNodeXForm") &&
       Operator->getName() != "set")
     error("Unrecognized node '" + Operator->getName() + "'!");
   
@@ -763,10 +769,8 @@ void DAGISelEmitter::ParseInstructions() {
     
     // Infer as many types as possible.  If we cannot infer all of them, we can
     // never do anything with this instruction pattern: report it to the user.
-    if (!I->InferAllTypes()) {
-      I->dump();
+    if (!I->InferAllTypes())
       I->error("Could not infer all types in pattern!");
-    }
     
     // InstInputs - Keep track of all of the inputs of the instruction, along 
     // with the record they are declared as.
@@ -892,9 +896,46 @@ void DAGISelEmitter::ParseInstructions() {
 }
 
 void DAGISelEmitter::ParsePatterns() {
+  std::vector<Record*> Patterns = Records.getAllDerivedDefinitions("Pattern");
 
+  for (unsigned i = 0, e = Patterns.size(); i != e; ++i) {
+    std::vector<DagInit*> Trees;
+    Trees.push_back(Patterns[i]->getValueAsDag("PatternToMatch"));
+    TreePattern *Pattern = new TreePattern(Patterns[i], Trees, *this);
+    Trees.clear();
 
-
+    // Inline pattern fragments into it.
+    Pattern->InlinePatternFragments();
+    
+    // Infer as many types as possible.  If we cannot infer all of them, we can
+    // never do anything with this pattern: report it to the user.
+    if (!Pattern->InferAllTypes())
+      Pattern->error("Could not infer all types in pattern!");
+    
+    ListInit *LI = Patterns[i]->getValueAsListInit("ResultInstrs");
+    if (LI->getSize() == 0) continue;  // no pattern.
+    for (unsigned j = 0, e = LI->getSize(); j != e; ++j)
+      Trees.push_back((DagInit*)LI->getElement(j));
+    
+    // Parse the instruction.
+    TreePattern *Result = new TreePattern(Patterns[i], Trees, *this);
+    
+    // Inline pattern fragments into it.
+    Result->InlinePatternFragments();
+    
+    // Infer as many types as possible.  If we cannot infer all of them, we can
+    // never do anything with this pattern: report it to the user.
+#if 0  // FIXME: ENABLE when we can infer though instructions!
+    if (!Result->InferAllTypes())
+      Result->error("Could not infer all types in pattern!");
+#endif
+   
+    if (Result->getNumTrees() != 1)
+      Result->error("Cannot handle instructions producing instructions "
+                    "with temporaries yet!");
+    PatternsToMatch.push_back(std::make_pair(Pattern->getOnlyTree(),
+                                             Result->getOnlyTree()));
+  }
 
   DEBUG(std::cerr << "\n\nPARSED PATTERNS TO MATCH:\n\n";
         for (unsigned i = 0, e = PatternsToMatch.size(); i != e; ++i) {
