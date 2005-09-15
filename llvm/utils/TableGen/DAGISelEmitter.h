@@ -279,16 +279,30 @@ namespace llvm {
     TreePattern *Pattern;
     unsigned NumResults;
     unsigned NumOperands;
+    std::vector<MVT::ValueType> ResultTypes;
+    std::vector<MVT::ValueType> OperandTypes;
     TreePatternNode *ResultPattern;
   public:
-    DAGInstruction(TreePattern *TP, unsigned results, unsigned ops,
+    DAGInstruction(TreePattern *TP,
+                   const std::vector<MVT::ValueType> &resultTypes,
+                   const std::vector<MVT::ValueType> &operandTypes,
                    TreePatternNode *resultPattern)
-      : Pattern(TP), NumResults(results), NumOperands(ops), 
+      : Pattern(TP), ResultTypes(resultTypes), OperandTypes(operandTypes), 
         ResultPattern(resultPattern) {}
 
     TreePattern *getPattern() const { return Pattern; }
-    unsigned getNumResults() const { return NumResults; }
-    unsigned getNumOperands() const { return NumOperands; }
+    unsigned getNumResults() const { return ResultTypes.size(); }
+    unsigned getNumOperands() const { return OperandTypes.size(); }
+    
+    MVT::ValueType getResultType(unsigned RN) const {
+      assert(RN < ResultTypes.size());
+      return ResultTypes[RN];
+    }
+    
+    MVT::ValueType getOperandType(unsigned ON) const {
+      assert(ON < OperandTypes.size());
+      return OperandTypes[ON];
+    }
     TreePatternNode *getResultPattern() const { return ResultPattern; }
   };
   

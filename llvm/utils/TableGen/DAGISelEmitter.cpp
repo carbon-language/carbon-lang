@@ -805,6 +805,7 @@ void DAGISelEmitter::ParseInstructions() {
     CodeGenInstruction &CGI = Target.getInstruction(Instrs[i]->getName());
 
     // Check that all of the results occur first in the list.
+    std::vector<MVT::ValueType> ResultTypes;
     for (unsigned i = 0; i != NumResults; ++i) {
       if (i == CGI.OperandList.size())
         I->error("'" + InstResults.begin()->first +
@@ -820,6 +821,9 @@ void DAGISelEmitter::ParseInstructions() {
       if (CGI.OperandList[i].Rec != R)
         I->error("Operand $" + OpName + " class mismatch!");
       
+      // Remember the return type.
+      ResultTypes.push_back(CGI.OperandList[i].Ty);
+      
       // Okay, this one checks out.
       InstResults.erase(OpName);
     }
@@ -829,6 +833,7 @@ void DAGISelEmitter::ParseInstructions() {
     std::map<std::string, TreePatternNode*> InstInputsCheck(InstInputs);
 
     std::vector<TreePatternNode*> ResultNodeOperands;
+    std::vector<MVT::ValueType> OperandTypes;
     for (unsigned i = NumResults, e = CGI.OperandList.size(); i != e; ++i) {
       const std::string &OpName = CGI.OperandList[i].Name;
       if (OpName.empty())
@@ -842,6 +847,7 @@ void DAGISelEmitter::ParseInstructions() {
       if (CGI.OperandList[i].Ty != InVal->getType())
         I->error("Operand $" + OpName +
                  "'s type disagrees between the operand and pattern");
+      OperandTypes.push_back(InVal->getType());
       
       // Construct the result for the dest-pattern operand list.
       TreePatternNode *OpNode = InVal->clone();
@@ -867,10 +873,8 @@ void DAGISelEmitter::ParseInstructions() {
     TreePatternNode *ResultPattern =
       new TreePatternNode(I->getRecord(), ResultNodeOperands);
     
-    unsigned NumOperands = CGI.OperandList.size()-NumResults;
-     
     DEBUG(I->dump());
-    Instructions.push_back(DAGInstruction(I, NumResults, NumOperands,
+    Instructions.push_back(DAGInstruction(I, ResultTypes, OperandTypes,
                                           ResultPattern));
   }
    
