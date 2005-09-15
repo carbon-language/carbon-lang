@@ -775,9 +775,11 @@ def : Pat<(xor GPRC:$in, imm:$imm),
           (XORIS (XORI GPRC:$in, (LO16 imm:$imm)), (HI16 imm:$imm))>;
 
 // Same as above, but using a temporary.
+/*
 def : Pattern<(xor GPRC:$in, imm:$imm),
               [(set GPRC:$tmp, (XORI GPRC:$in, (LO16 imm:$imm))),
                (XORIS GPRC:$tmp, (HI16 imm:$imm))]>;
+*/
 
 
 //===----------------------------------------------------------------------===//
