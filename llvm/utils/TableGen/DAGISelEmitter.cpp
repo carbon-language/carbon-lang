@@ -697,7 +697,7 @@ static bool HandleUse(TreePattern *I, TreePatternNode *Pat,
   } else {
     Record *SlotRec;
     if (Slot->isLeaf()) {
-      Rec = dynamic_cast<DefInit*>(Slot->getLeafValue())->getDef();
+      SlotRec = dynamic_cast<DefInit*>(Slot->getLeafValue())->getDef();
     } else {
       assert(Slot->getNumChildren() == 0 && "can't be a use with children!");
       SlotRec = Slot->getOperator();
@@ -1018,13 +1018,16 @@ void DAGISelEmitter::run(std::ostream &OS) {
   OS << "// *** NOTE: This file is #included into the middle of the target\n"
      << "// *** instruction selector class.  These functions are really "
      << "methods.\n\n";
+  
   ParseNodeInfo();
   ParseNodeTransforms(OS);
   ParsePatternFragments(OS);
   ParseInstructions();
   ParsePatterns();
 
-  // TODO: convert some instructions to expanders if needed or something.
+  // At this point, we have full information about the 'Patterns' we need to
+  // parse, both implicitly from instructions as well as from explicit pattern
+  // definitions.
   
   EmitInstructionSelector(OS);  
   
