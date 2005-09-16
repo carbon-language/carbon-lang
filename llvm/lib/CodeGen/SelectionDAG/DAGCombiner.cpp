@@ -100,9 +100,9 @@ namespace {
     SDOperand visitCTLZ(SDNode *N);
     SDOperand visitCTTZ(SDNode *N);
     SDOperand visitCTPOP(SDNode *N);
-    // select
-    // select_cc
-    // setcc
+    SDOperand visitSELECT(SDNode *N);
+    SDOperand visitSELECT_CC(SDNode *N);
+    SDOperand visitSETCC(SDNode *N);
     SDOperand visitSIGN_EXTEND(SDNode *N);
     SDOperand visitZERO_EXTEND(SDNode *N);
     SDOperand visitSIGN_EXTEND_INREG(SDNode *N);
@@ -116,10 +116,13 @@ namespace {
     SDOperand visitFP_EXTEND(SDNode *N);
     SDOperand visitFNEG(SDNode *N);
     SDOperand visitFABS(SDNode *N);
-    // brcond
+    SDOperand visitBRCOND(SDNode *N);
     // brcondtwoway
     // br_cc
     // brtwoway_cc
+
+    SDOperand SimplifySetCC(MVT::ValueType VT, SDOperand N0, SDOperand N1,
+                            ISD::CondCode Cond);
 public:
     DAGCombiner(SelectionDAG &D)
       : DAG(D), TLI(D.getTargetLoweringInfo()), AfterLegalize(false) {}
@@ -234,6 +237,19 @@ static bool isOneUseSetCC(SDOperand N) {
   return false;
 }
 
+// FIXME: This should probably go in the ISD class rather than being duplicated
+// in several files.
+static bool isCommutativeBinOp(unsigned Opcode) {
+  switch (Opcode) {
+    case ISD::ADD:
+    case ISD::MUL:
+    case ISD::AND:
+    case ISD::OR:
+    case ISD::XOR: return true;
+    default: return false; // FIXME: Need commutative info for user ops!
+  }
+}
+
 void DAGCombiner::Run(bool RunningAfterLegalize) {
   // set the instance variable, so that the various visit routines may use it.
   AfterLegalize = RunningAfterLegalize;
@@ -307,6 +323,9 @@ SDOperand DAGCombiner::visit(SDNode *N) {
   case ISD::CTLZ:               return visitCTLZ(N);
   case ISD::CTTZ:               return visitCTTZ(N);
   case ISD::CTPOP:              return visitCTPOP(N);
+  case ISD::SELECT:             return visitSELECT(N);
+  case ISD::SELECT_CC:          return visitSELECT_CC(N);
+  case ISD::SETCC:              return visitSETCC(N);
   case ISD::SIGN_EXTEND:        return visitSIGN_EXTEND(N);
   case ISD::ZERO_EXTEND:        return visitZERO_EXTEND(N);
   case ISD::SIGN_EXTEND_INREG:  return visitSIGN_EXTEND_INREG(N);
@@ -669,6 +688,15 @@ SDOperand DAGCombiner::visitAND(SDNode *N) {
     WorkList.push_back(ANDNode.Val);
     return DAG.getNode(ISD::ZERO_EXTEND, VT, ANDNode);
   }
+  // fold (and (shl/srl x), (shl/srl y)) -> (shl/srl (and x, y))
+  if (((N0.getOpcode() == ISD::SHL && N1.getOpcode() == ISD::SHL) ||
+       (N0.getOpcode() == ISD::SRL && N1.getOpcode() == ISD::SRL)) &&
+      N0.getOperand(1) == N1.getOperand(1)) {
+    SDOperand ANDNode = DAG.getNode(ISD::AND, N0.getOperand(0).getValueType(),
+                                    N0.getOperand(0), N1.getOperand(0));
+    WorkList.push_back(ANDNode.Val);
+    return DAG.getNode(N0.getOpcode(), VT, ANDNode, N0.getOperand(1));
+  }
   return SDOperand();
 }
 
@@ -993,6 +1021,63 @@ SDOperand DAGCombiner::visitCTPOP(SDNode *N) {
   return SDOperand();
 }
 
+SDOperand DAGCombiner::visitSELECT(SDNode *N) {
+  SDOperand N0 = N->getOperand(0);
+  SDOperand N1 = N->getOperand(1);
+  SDOperand N2 = N->getOperand(2);
+  ConstantSDNode *N0C = dyn_cast<ConstantSDNode>(N0);
+  ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1);
+  ConstantSDNode *N2C = dyn_cast<ConstantSDNode>(N2);
+  MVT::ValueType VT = N->getValueType(0);
+  
+  // fold select C, X, X -> X
+  if (N1 == N2)
+    return N1;
+  // fold select true, X, Y -> X
+  if (N0C && !N0C->isNullValue())
+    return N1;
+  // fold select false, X, Y -> Y
+  if (N0C && N0C->isNullValue())
+    return N2;
+  // fold select C, 1, X -> C | X
+  if (MVT::i1 == VT && N1C && !N1C->isNullValue())
+    return DAG.getNode(ISD::OR, VT, N0, N2);
+  // fold select C, 0, X -> ~C & X
+  // FIXME: this should check for C type == X type, not i1?
+  if (MVT::i1 == VT && N1C && N1C->isNullValue()) {
+    SDOperand XORNode = DAG.getNode(ISD::XOR, VT, N0, DAG.getConstant(1, VT));
+    WorkList.push_back(XORNode.Val);
+    return DAG.getNode(ISD::AND, VT, XORNode, N2);
+  }
+  // fold select C, X, 1 -> ~C | X
+  if (MVT::i1 == VT && N2C && !N2C->isNullValue()) {
+    SDOperand XORNode = DAG.getNode(ISD::XOR, VT, N0, DAG.getConstant(1, VT));
+    WorkList.push_back(XORNode.Val);
+    return DAG.getNode(ISD::OR, VT, XORNode, N1);
+  }
+  // fold select C, X, 0 -> C & X
+  // FIXME: this should check for C type == X type, not i1?
+  if (MVT::i1 == VT && N2C && N2C->isNullValue())
+    return DAG.getNode(ISD::AND, VT, N0, N1);
+  // fold  X ? X : Y --> X ? 1 : Y --> X | Y
+  if (MVT::i1 == VT && N0 == N1)
+    return DAG.getNode(ISD::OR, VT, N0, N2);
+  // fold X ? Y : X --> X ? Y : 0 --> X & Y
+  if (MVT::i1 == VT && N0 == N2)
+    return DAG.getNode(ISD::AND, VT, N0, N1);
+  
+  return SDOperand();
+}
+
+SDOperand DAGCombiner::visitSELECT_CC(SDNode *N) {
+  return SDOperand();
+}
+
+SDOperand DAGCombiner::visitSETCC(SDNode *N) {
+  return SimplifySetCC(N->getValueType(0), N->getOperand(0), N->getOperand(1),
+                       cast<CondCodeSDNode>(N->getOperand(2))->get());
+}
+
 SDOperand DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
   SDOperand N0 = N->getOperand(0);
   ConstantSDNode *N0C = dyn_cast<ConstantSDNode>(N0);
@@ -1024,7 +1109,6 @@ SDOperand DAGCombiner::visitZERO_EXTEND(SDNode *N) {
 SDOperand DAGCombiner::visitSIGN_EXTEND_INREG(SDNode *N) {
   SDOperand N0 = N->getOperand(0);
   SDOperand N1 = N->getOperand(1);
-  SDOperand LHS, RHS, CC;
   ConstantSDNode *N0C = dyn_cast<ConstantSDNode>(N0);
   MVT::ValueType VT = N->getValueType(0);
   MVT::ValueType EVT = cast<VTSDNode>(N1)->getVT();
@@ -1203,6 +1287,342 @@ SDOperand DAGCombiner::visitFABS(SDNode *N) {
   if (N->getOperand(0).getOpcode() == ISD::FNEG)
     return DAG.getNode(ISD::FABS, N->getValueType(0), 
                        N->getOperand(0).getOperand(0));
+  return SDOperand();
+}
+
+SDOperand DAGCombiner::SimplifySetCC(MVT::ValueType VT, SDOperand N0,
+                                     SDOperand N1, ISD::CondCode Cond) {
+  // These setcc operations always fold.
+  switch (Cond) {
+  default: break;
+  case ISD::SETFALSE:
+  case ISD::SETFALSE2: return DAG.getConstant(0, VT);
+  case ISD::SETTRUE:
+  case ISD::SETTRUE2:  return DAG.getConstant(1, VT);
+  }
+
+  if (ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1.Val)) {
+    uint64_t C1 = N1C->getValue();
+    if (ConstantSDNode *N0C = dyn_cast<ConstantSDNode>(N0.Val)) {
+      uint64_t C0 = N0C->getValue();
+
+      // Sign extend the operands if required
+      if (ISD::isSignedIntSetCC(Cond)) {
+        C0 = N0C->getSignExtended();
+        C1 = N1C->getSignExtended();
+      }
+
+      switch (Cond) {
+      default: assert(0 && "Unknown integer setcc!");
+      case ISD::SETEQ:  return DAG.getConstant(C0 == C1, VT);
+      case ISD::SETNE:  return DAG.getConstant(C0 != C1, VT);
+      case ISD::SETULT: return DAG.getConstant(C0 <  C1, VT);
+      case ISD::SETUGT: return DAG.getConstant(C0 >  C1, VT);
+      case ISD::SETULE: return DAG.getConstant(C0 <= C1, VT);
+      case ISD::SETUGE: return DAG.getConstant(C0 >= C1, VT);
+      case ISD::SETLT:  return DAG.getConstant((int64_t)C0 <  (int64_t)C1, VT);
+      case ISD::SETGT:  return DAG.getConstant((int64_t)C0 >  (int64_t)C1, VT);
+      case ISD::SETLE:  return DAG.getConstant((int64_t)C0 <= (int64_t)C1, VT);
+      case ISD::SETGE:  return DAG.getConstant((int64_t)C0 >= (int64_t)C1, VT);
+      }
+    } else {
+      // If the LHS is a ZERO_EXTEND, perform the comparison on the input.
+      if (N0.getOpcode() == ISD::ZERO_EXTEND) {
+        unsigned InSize = MVT::getSizeInBits(N0.getOperand(0).getValueType());
+
+        // If the comparison constant has bits in the upper part, the
+        // zero-extended value could never match.
+        if (C1 & (~0ULL << InSize)) {
+          unsigned VSize = MVT::getSizeInBits(N0.getValueType());
+          switch (Cond) {
+          case ISD::SETUGT:
+          case ISD::SETUGE:
+          case ISD::SETEQ: return DAG.getConstant(0, VT);
+          case ISD::SETULT:
+          case ISD::SETULE:
+          case ISD::SETNE: return DAG.getConstant(1, VT);
+          case ISD::SETGT:
+          case ISD::SETGE:
+            // True if the sign bit of C1 is set.
+            return DAG.getConstant((C1 & (1ULL << VSize)) != 0, VT);
+          case ISD::SETLT:
+          case ISD::SETLE:
+            // True if the sign bit of C1 isn't set.
+            return DAG.getConstant((C1 & (1ULL << VSize)) == 0, VT);
+          default:
+            break;
+          }
+        }
+
+        // Otherwise, we can perform the comparison with the low bits.
+        switch (Cond) {
+        case ISD::SETEQ:
+        case ISD::SETNE:
+        case ISD::SETUGT:
+        case ISD::SETUGE:
+        case ISD::SETULT:
+        case ISD::SETULE:
+          return DAG.getSetCC(VT, N0.getOperand(0),
+                          DAG.getConstant(C1, N0.getOperand(0).getValueType()),
+                          Cond);
+        default:
+          break;   // todo, be more careful with signed comparisons
+        }
+      } else if (N0.getOpcode() == ISD::SIGN_EXTEND_INREG &&
+                 (Cond == ISD::SETEQ || Cond == ISD::SETNE)) {
+        MVT::ValueType ExtSrcTy = cast<VTSDNode>(N0.getOperand(1))->getVT();
+        unsigned ExtSrcTyBits = MVT::getSizeInBits(ExtSrcTy);
+        MVT::ValueType ExtDstTy = N0.getValueType();
+        unsigned ExtDstTyBits = MVT::getSizeInBits(ExtDstTy);
+
+        // If the extended part has any inconsistent bits, it cannot ever
+        // compare equal.  In other words, they have to be all ones or all
+        // zeros.
+        uint64_t ExtBits =
+          (~0ULL >> (64-ExtSrcTyBits)) & (~0ULL << (ExtDstTyBits-1));
+        if ((C1 & ExtBits) != 0 && (C1 & ExtBits) != ExtBits)
+          return DAG.getConstant(Cond == ISD::SETNE, VT);
+        
+        SDOperand ZextOp;
+        MVT::ValueType Op0Ty = N0.getOperand(0).getValueType();
+        if (Op0Ty == ExtSrcTy) {
+          ZextOp = N0.getOperand(0);
+        } else {
+          int64_t Imm = ~0ULL >> (64-ExtSrcTyBits);
+          ZextOp = DAG.getNode(ISD::AND, Op0Ty, N0.getOperand(0),
+                               DAG.getConstant(Imm, Op0Ty));
+        }
+        WorkList.push_back(ZextOp.Val);
+        // Otherwise, make this a use of a zext.
+        return DAG.getSetCC(VT, ZextOp, 
+                            DAG.getConstant(C1 & (~0ULL>>(64-ExtSrcTyBits)), 
+                                            ExtDstTy),
+                            Cond);
+      }
+
+      uint64_t MinVal, MaxVal;
+      unsigned OperandBitSize = MVT::getSizeInBits(N1C->getValueType(0));
+      if (ISD::isSignedIntSetCC(Cond)) {
+        MinVal = 1ULL << (OperandBitSize-1);
+        if (OperandBitSize != 1)   // Avoid X >> 64, which is undefined.
+          MaxVal = ~0ULL >> (65-OperandBitSize);
+        else
+          MaxVal = 0;
+      } else {
+        MinVal = 0;
+        MaxVal = ~0ULL >> (64-OperandBitSize);
+      }
+
+      // Canonicalize GE/LE comparisons to use GT/LT comparisons.
+      if (Cond == ISD::SETGE || Cond == ISD::SETUGE) {
+        if (C1 == MinVal) return DAG.getConstant(1, VT);   // X >= MIN --> true
+        --C1;                                          // X >= C0 --> X > (C0-1)
+        return DAG.getSetCC(VT, N0, DAG.getConstant(C1, N1.getValueType()),
+                        (Cond == ISD::SETGE) ? ISD::SETGT : ISD::SETUGT);
+      }
+
+      if (Cond == ISD::SETLE || Cond == ISD::SETULE) {
+        if (C1 == MaxVal) return DAG.getConstant(1, VT);   // X <= MAX --> true
+        ++C1;                                          // X <= C0 --> X < (C0+1)
+        return DAG.getSetCC(VT, N0, DAG.getConstant(C1, N1.getValueType()),
+                        (Cond == ISD::SETLE) ? ISD::SETLT : ISD::SETULT);
+      }
+
+      if ((Cond == ISD::SETLT || Cond == ISD::SETULT) && C1 == MinVal)
+        return DAG.getConstant(0, VT);      // X < MIN --> false
+
+      // Canonicalize setgt X, Min --> setne X, Min
+      if ((Cond == ISD::SETGT || Cond == ISD::SETUGT) && C1 == MinVal)
+        return DAG.getSetCC(VT, N0, N1, ISD::SETNE);
+
+      // If we have setult X, 1, turn it into seteq X, 0
+      if ((Cond == ISD::SETLT || Cond == ISD::SETULT) && C1 == MinVal+1)
+        return DAG.getSetCC(VT, N0, DAG.getConstant(MinVal, N0.getValueType()),
+                        ISD::SETEQ);
+      // If we have setugt X, Max-1, turn it into seteq X, Max
+      else if ((Cond == ISD::SETGT || Cond == ISD::SETUGT) && C1 == MaxVal-1)
+        return DAG.getSetCC(VT, N0, DAG.getConstant(MaxVal, N0.getValueType()),
+                        ISD::SETEQ);
+
+      // If we have "setcc X, C0", check to see if we can shrink the immediate
+      // by changing cc.
+
+      // SETUGT X, SINTMAX  -> SETLT X, 0
+      if (Cond == ISD::SETUGT && OperandBitSize != 1 &&
+          C1 == (~0ULL >> (65-OperandBitSize)))
+        return DAG.getSetCC(VT, N0, DAG.getConstant(0, N1.getValueType()),
+                            ISD::SETLT);
+
+      // FIXME: Implement the rest of these.
+
+      // Fold bit comparisons when we can.
+      if ((Cond == ISD::SETEQ || Cond == ISD::SETNE) &&
+          VT == N0.getValueType() && N0.getOpcode() == ISD::AND)
+        if (ConstantSDNode *AndRHS =
+                    dyn_cast<ConstantSDNode>(N0.getOperand(1))) {
+          if (Cond == ISD::SETNE && C1 == 0) {// (X & 8) != 0  -->  (X & 8) >> 3
+            // Perform the xform if the AND RHS is a single bit.
+            if ((AndRHS->getValue() & (AndRHS->getValue()-1)) == 0) {
+              return DAG.getNode(ISD::SRL, VT, N0,
+                             DAG.getConstant(Log2_64(AndRHS->getValue()),
+                                                   TLI.getShiftAmountTy()));
+            }
+          } else if (Cond == ISD::SETEQ && C1 == AndRHS->getValue()) {
+            // (X & 8) == 8  -->  (X & 8) >> 3
+            // Perform the xform if C1 is a single bit.
+            if ((C1 & (C1-1)) == 0) {
+              return DAG.getNode(ISD::SRL, VT, N0,
+                             DAG.getConstant(Log2_64(C1),TLI.getShiftAmountTy()));
+            }
+          }
+        }
+    }
+  } else if (isa<ConstantSDNode>(N0.Val)) {
+      // Ensure that the constant occurs on the RHS.
+    return DAG.getSetCC(VT, N1, N0, ISD::getSetCCSwappedOperands(Cond));
+  }
+
+  if (ConstantFPSDNode *N0C = dyn_cast<ConstantFPSDNode>(N0.Val))
+    if (ConstantFPSDNode *N1C = dyn_cast<ConstantFPSDNode>(N1.Val)) {
+      double C0 = N0C->getValue(), C1 = N1C->getValue();
+
+      switch (Cond) {
+      default: break; // FIXME: Implement the rest of these!
+      case ISD::SETEQ:  return DAG.getConstant(C0 == C1, VT);
+      case ISD::SETNE:  return DAG.getConstant(C0 != C1, VT);
+      case ISD::SETLT:  return DAG.getConstant(C0 < C1, VT);
+      case ISD::SETGT:  return DAG.getConstant(C0 > C1, VT);
+      case ISD::SETLE:  return DAG.getConstant(C0 <= C1, VT);
+      case ISD::SETGE:  return DAG.getConstant(C0 >= C1, VT);
+      }
+    } else {
+      // Ensure that the constant occurs on the RHS.
+      return DAG.getSetCC(VT, N1, N0, ISD::getSetCCSwappedOperands(Cond));
+    }
+
+  if (N0 == N1) {
+    // We can always fold X == Y for integer setcc's.
+    if (MVT::isInteger(N0.getValueType()))
+      return DAG.getConstant(ISD::isTrueWhenEqual(Cond), VT);
+    unsigned UOF = ISD::getUnorderedFlavor(Cond);
+    if (UOF == 2)   // FP operators that are undefined on NaNs.
+      return DAG.getConstant(ISD::isTrueWhenEqual(Cond), VT);
+    if (UOF == unsigned(ISD::isTrueWhenEqual(Cond)))
+      return DAG.getConstant(UOF, VT);
+    // Otherwise, we can't fold it.  However, we can simplify it to SETUO/SETO
+    // if it is not already.
+    ISD::CondCode NewCond = UOF == 0 ? ISD::SETUO : ISD::SETO;
+    if (NewCond != Cond)
+      return DAG.getSetCC(VT, N0, N1, NewCond);
+  }
+
+  if ((Cond == ISD::SETEQ || Cond == ISD::SETNE) &&
+      MVT::isInteger(N0.getValueType())) {
+    if (N0.getOpcode() == ISD::ADD || N0.getOpcode() == ISD::SUB ||
+        N0.getOpcode() == ISD::XOR) {
+      // Simplify (X+Y) == (X+Z) -->  Y == Z
+      if (N0.getOpcode() == N1.getOpcode()) {
+        if (N0.getOperand(0) == N1.getOperand(0))
+          return DAG.getSetCC(VT, N0.getOperand(1), N1.getOperand(1), Cond);
+        if (N0.getOperand(1) == N1.getOperand(1))
+          return DAG.getSetCC(VT, N0.getOperand(0), N1.getOperand(0), Cond);
+        if (isCommutativeBinOp(N0.getOpcode())) {
+          // If X op Y == Y op X, try other combinations.
+          if (N0.getOperand(0) == N1.getOperand(1))
+            return DAG.getSetCC(VT, N0.getOperand(1), N1.getOperand(0), Cond);
+          if (N0.getOperand(1) == N1.getOperand(0))
+            return DAG.getSetCC(VT, N0.getOperand(1), N1.getOperand(1), Cond);
+        }
+      }
+
+      // Simplify (X+Z) == X -->  Z == 0
+      if (N0.getOperand(0) == N1)
+        return DAG.getSetCC(VT, N0.getOperand(1),
+                        DAG.getConstant(0, N0.getValueType()), Cond);
+      if (N0.getOperand(1) == N1) {
+        if (isCommutativeBinOp(N0.getOpcode()))
+          return DAG.getSetCC(VT, N0.getOperand(0),
+                          DAG.getConstant(0, N0.getValueType()), Cond);
+        else {
+          assert(N0.getOpcode() == ISD::SUB && "Unexpected operation!");
+          // (Z-X) == X  --> Z == X<<1
+          SDOperand SH = DAG.getNode(ISD::SHL, N1.getValueType(),
+                                     N1, 
+                                     DAG.getConstant(1,TLI.getShiftAmountTy()));
+          WorkList.push_back(SH.Val);
+          return DAG.getSetCC(VT, N0.getOperand(0), SH, Cond);
+        }
+      }
+    }
+
+    if (N1.getOpcode() == ISD::ADD || N1.getOpcode() == ISD::SUB ||
+        N1.getOpcode() == ISD::XOR) {
+      // Simplify  X == (X+Z) -->  Z == 0
+      if (N1.getOperand(0) == N0) {
+        return DAG.getSetCC(VT, N1.getOperand(1),
+                        DAG.getConstant(0, N1.getValueType()), Cond);
+      } else if (N1.getOperand(1) == N0) {
+        if (isCommutativeBinOp(N1.getOpcode())) {
+          return DAG.getSetCC(VT, N1.getOperand(0),
+                          DAG.getConstant(0, N1.getValueType()), Cond);
+        } else {
+          assert(N1.getOpcode() == ISD::SUB && "Unexpected operation!");
+          // X == (Z-X)  --> X<<1 == Z
+          SDOperand SH = DAG.getNode(ISD::SHL, N1.getValueType(), N0, 
+                                     DAG.getConstant(1,TLI.getShiftAmountTy()));
+          WorkList.push_back(SH.Val);
+          return DAG.getSetCC(VT, SH, N1.getOperand(0), Cond);
+        }
+      }
+    }
+  }
+
+  // Fold away ALL boolean setcc's.
+  SDOperand Temp;
+  if (N0.getValueType() == MVT::i1) {
+    switch (Cond) {
+    default: assert(0 && "Unknown integer setcc!");
+    case ISD::SETEQ:  // X == Y  -> (X^Y)^1
+      Temp = DAG.getNode(ISD::XOR, MVT::i1, N0, N1);
+      N0 = DAG.getNode(ISD::XOR, MVT::i1, Temp, DAG.getConstant(1, MVT::i1));
+      WorkList.push_back(Temp.Val);
+      break;
+    case ISD::SETNE:  // X != Y   -->  (X^Y)
+      N0 = DAG.getNode(ISD::XOR, MVT::i1, N0, N1);
+      break;
+    case ISD::SETGT:  // X >s Y   -->  X == 0 & Y == 1  -->  X^1 & Y
+    case ISD::SETULT: // X <u Y   -->  X == 0 & Y == 1  -->  X^1 & Y
+      Temp = DAG.getNode(ISD::XOR, MVT::i1, N0, DAG.getConstant(1, MVT::i1));
+      N0 = DAG.getNode(ISD::AND, MVT::i1, N1, Temp);
+      WorkList.push_back(Temp.Val);
+      break;
+    case ISD::SETLT:  // X <s Y   --> X == 1 & Y == 0  -->  Y^1 & X
+    case ISD::SETUGT: // X >u Y   --> X == 1 & Y == 0  -->  Y^1 & X
+      Temp = DAG.getNode(ISD::XOR, MVT::i1, N1, DAG.getConstant(1, MVT::i1));
+      N0 = DAG.getNode(ISD::AND, MVT::i1, N0, Temp);
+      WorkList.push_back(Temp.Val);
+      break;
+    case ISD::SETULE: // X <=u Y  --> X == 0 | Y == 1  -->  X^1 | Y
+    case ISD::SETGE:  // X >=s Y  --> X == 0 | Y == 1  -->  X^1 | Y
+      Temp = DAG.getNode(ISD::XOR, MVT::i1, N0, DAG.getConstant(1, MVT::i1));
+      N0 = DAG.getNode(ISD::OR, MVT::i1, N1, Temp);
+      WorkList.push_back(Temp.Val);
+      break;
+    case ISD::SETUGE: // X >=u Y  --> X == 1 | Y == 0  -->  Y^1 | X
+    case ISD::SETLE:  // X <=s Y  --> X == 1 | Y == 0  -->  Y^1 | X
+      Temp = DAG.getNode(ISD::XOR, MVT::i1, N1, DAG.getConstant(1, MVT::i1));
+      N0 = DAG.getNode(ISD::OR, MVT::i1, N0, Temp);
+      break;
+    }
+    if (VT != MVT::i1) {
+      WorkList.push_back(N0.Val);
+      // FIXME: If running after legalize, we probably can't do this.
+      N0 = DAG.getNode(ISD::ZERO_EXTEND, VT, N0);
+    }
+    return N0;
+  }
+
+  // Could not fold it.
   return SDOperand();
 }
 
