@@ -134,6 +134,22 @@ void PPC32RegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
   }
 }
 
+unsigned PPC32RegisterInfo::isLoadFromStackSlot(MachineInstr *MI, 
+                                                int &FrameIndex) const {
+  switch (MI->getOpcode()) {
+  default: break;
+  case PPC::LWZ:
+  case PPC::LFD:
+    if (MI->getOperand(1).isImmediate() && !MI->getOperand(1).getImmedValue() &&
+        MI->getOperand(2).isFrameIndex()) {
+      FrameIndex = MI->getOperand(2).getFrameIndex();
+      return MI->getOperand(0).getReg();
+    }
+    break;
+  }
+  return 0;
+}
+
 /// foldMemoryOperand - PowerPC (like most RISC's) can only fold spills into
 /// copy instructions, turning them into load/store instructions.
 MachineInstr *PPC32RegisterInfo::foldMemoryOperand(MachineInstr *MI,

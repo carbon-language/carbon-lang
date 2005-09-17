@@ -40,6 +40,8 @@ public:
                     unsigned DestReg, unsigned SrcReg,
                     const TargetRegisterClass *RC) const;
 
+  unsigned isLoadFromStackSlot(MachineInstr *MI, int &FrameIndex) const;
+    
   /// foldMemoryOperand - PowerPC (like most RISC's) can only fold spills into
   /// copy instructions, turning them into load/store instructions.
   virtual MachineInstr* foldMemoryOperand(MachineInstr* MI, unsigned OpNum,
