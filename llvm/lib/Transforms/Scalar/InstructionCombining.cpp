@@ -3364,6 +3364,8 @@ Instruction *InstCombiner::visitShiftInst(ShiftInst &I) {
 
       if (BinaryOperator *Op0BO = dyn_cast<BinaryOperator>(Op0)) {
         // Turn ((X >> C) + Y) << C  ->  (X + (Y << C)) & (~0 << C)
+        Value *V1, *V2, *V3;
+        ConstantInt *CC;
         switch (Op0BO->getOpcode()) {
         default: break;
         case Instruction::Add:
@@ -3372,39 +3374,76 @@ Instruction *InstCombiner::visitShiftInst(ShiftInst &I) {
         case Instruction::Xor:
           // These operators commute.
           // Turn (Y + (X >> C)) << C  ->  (X + (Y << C)) & (~0 << C)
-          if (ShiftInst *XS = dyn_cast<ShiftInst>(Op0BO->getOperand(1)))
-            if (isLeftShift && XS->hasOneUse() && XS->getOperand(1) == CUI &&
-                XS->getOpcode() == Instruction::Shr) {
-              Instruction *YS = new ShiftInst(Instruction::Shl, 
-                                              Op0BO->getOperand(0), CUI,
-                                              Op0BO->getName());
-              InsertNewInstBefore(YS, I); // (Y << C)
-              Instruction *X = BinaryOperator::create(Op0BO->getOpcode(), YS,
-                                                      XS->getOperand(0),
-                                                      XS->getName());
-              InsertNewInstBefore(X, I);  // (X + (Y << C))
-              Constant *C2 = ConstantInt::getAllOnesValue(X->getType());
-              C2 = ConstantExpr::getShl(C2, CUI);
-              return BinaryOperator::createAnd(X, C2);
-            }
-          // Fall through.
+          if (isLeftShift && Op0BO->getOperand(1)->hasOneUse() &&
+              match(Op0BO->getOperand(1),
+                    m_Shr(m_Value(V1), m_ConstantInt(CC))) && CC == CUI) {
+            Instruction *YS = new ShiftInst(Instruction::Shl, 
+                                            Op0BO->getOperand(0), CUI,
+                                            Op0BO->getName());
+            InsertNewInstBefore(YS, I); // (Y << C)
+            Instruction *X = BinaryOperator::create(Op0BO->getOpcode(), YS,
+                                                    V1,
+                                               Op0BO->getOperand(1)->getName());
+            InsertNewInstBefore(X, I);  // (X + (Y << C))
+            Constant *C2 = ConstantInt::getAllOnesValue(X->getType());
+            C2 = ConstantExpr::getShl(C2, CUI);
+            return BinaryOperator::createAnd(X, C2);
+          }
+
+          // Turn (Y + ((X >> C) & CC)) << C  ->  ((X & (CC << C)) + (Y << C))
+          if (isLeftShift && Op0BO->getOperand(1)->hasOneUse() &&
+              match(Op0BO->getOperand(1),
+                    m_And(m_Shr(m_Value(V1), m_Value(V2)),
+                          m_ConstantInt(CC))) && V2 == CUI &&
+       cast<BinaryOperator>(Op0BO->getOperand(1))->getOperand(0)->hasOneUse()) {
+            Instruction *YS = new ShiftInst(Instruction::Shl, 
+                                            Op0BO->getOperand(0), CUI,
+                                            Op0BO->getName());
+            InsertNewInstBefore(YS, I); // (Y << C)
+            Instruction *XM =
+              BinaryOperator::createAnd(V1, ConstantExpr::getShl(CC, CUI),
+                                        V1->getName()+".mask");
+            InsertNewInstBefore(XM, I); // X & (CC << C)
+            
+            return BinaryOperator::create(Op0BO->getOpcode(), YS, XM);
+          }
+              
+          // FALL THROUGH.
         case Instruction::Sub:
           // Turn ((X >> C) + Y) << C  ->  (X + (Y << C)) & (~0 << C)
-          if (ShiftInst *XS = dyn_cast<ShiftInst>(Op0BO->getOperand(0)))
-            if (isLeftShift && XS->hasOneUse() && XS->getOperand(1) == CUI &&
-                XS->getOpcode() == Instruction::Shr) {
-              Instruction *YS = new ShiftInst(Instruction::Shl, 
-                                              Op0BO->getOperand(1), CUI,
-                                              Op0BO->getName());
-              InsertNewInstBefore(YS, I); // (Y << C)
-              Instruction *X = BinaryOperator::create(Op0BO->getOpcode(), YS,
-                                                      XS->getOperand(0),
-                                                      XS->getName());
-              InsertNewInstBefore(X, I);  // (X + (Y << C))
-              Constant *C2 = ConstantInt::getAllOnesValue(X->getType());
-              C2 = ConstantExpr::getShl(C2, CUI);
-              return BinaryOperator::createAnd(X, C2);
-            }
+          if (isLeftShift && Op0BO->getOperand(0)->hasOneUse() &&
+              match(Op0BO->getOperand(0),
+                    m_Shr(m_Value(V1), m_ConstantInt(CC))) && CC == CUI) {
+            Instruction *YS = new ShiftInst(Instruction::Shl, 
+                                            Op0BO->getOperand(1), CUI,
+                                            Op0BO->getName());
+            InsertNewInstBefore(YS, I); // (Y << C)
+            Instruction *X = BinaryOperator::create(Op0BO->getOpcode(), YS,
+                                                    V1,
+                                              Op0BO->getOperand(0)->getName());
+            InsertNewInstBefore(X, I);  // (X + (Y << C))
+            Constant *C2 = ConstantInt::getAllOnesValue(X->getType());
+            C2 = ConstantExpr::getShl(C2, CUI);
+            return BinaryOperator::createAnd(X, C2);
+          }
+
+          if (isLeftShift && Op0BO->getOperand(0)->hasOneUse() &&
+              match(Op0BO->getOperand(0),
+                    m_And(m_Shr(m_Value(V1), m_Value(V2)),
+                          m_ConstantInt(CC))) && V2 == CUI &&
+       cast<BinaryOperator>(Op0BO->getOperand(0))->getOperand(0)->hasOneUse()) {
+            Instruction *YS = new ShiftInst(Instruction::Shl, 
+                                            Op0BO->getOperand(1), CUI,
+                                            Op0BO->getName());
+            InsertNewInstBefore(YS, I); // (Y << C)
+            Instruction *XM =
+              BinaryOperator::createAnd(V1, ConstantExpr::getShl(CC, CUI),
+                                        V1->getName()+".mask");
+            InsertNewInstBefore(XM, I); // X & (CC << C)
+            
+            return BinaryOperator::create(Op0BO->getOpcode(), YS, XM);
+          }
+
           break;
         }
 
