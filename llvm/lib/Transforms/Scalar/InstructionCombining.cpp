@@ -3368,7 +3368,6 @@ Instruction *InstCombiner::visitShiftInst(ShiftInst &I) {
           if (ShiftInst *XS = dyn_cast<ShiftInst>(Op0BO->getOperand(1)))
             if (isLeftShift && XS->hasOneUse() && XS->getOperand(1) == CUI &&
                 XS->getOpcode() == Instruction::Shr) {
-              break;
               Instruction *YS = new ShiftInst(Instruction::Shl, 
                                               Op0BO->getOperand(0), CUI,
                                               Op0BO->getName());
@@ -3379,7 +3378,6 @@ Instruction *InstCombiner::visitShiftInst(ShiftInst &I) {
               InsertNewInstBefore(X, I);  // (X + (Y << C))
               Constant *C2 = ConstantInt::getAllOnesValue(X->getType());
               C2 = ConstantExpr::getShl(C2, CUI);
-              std::cerr << "FOLD1: " << *Op0BO;
               return BinaryOperator::createAnd(X, C2);
             }
           // Fall through.
@@ -3398,7 +3396,6 @@ Instruction *InstCombiner::visitShiftInst(ShiftInst &I) {
               InsertNewInstBefore(X, I);  // (X + (Y << C))
               Constant *C2 = ConstantInt::getAllOnesValue(X->getType());
               C2 = ConstantExpr::getShl(C2, CUI);
-              std::cerr << "FOLD2: " << *Op0BO;
               return BinaryOperator::createAnd(X, C2);
             }
           break;
