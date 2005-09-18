@@ -172,3 +172,11 @@ sbyte %test24(sbyte %X) {
         ret sbyte %Q
 }
 
+uint %test25(uint %tmp.2, uint %AA) {
+	%x = shr uint %AA, ubyte 17
+        %tmp.3 = shr uint %tmp.2, ubyte 17              ; <uint> [#uses=1]
+        %tmp.5 = add uint %tmp.3, %x            ; <uint> [#uses=1]
+        %tmp.6 = shl uint %tmp.5, ubyte 17              ; <uint> [#uses=1]
+	ret uint %tmp.6
+}
+
