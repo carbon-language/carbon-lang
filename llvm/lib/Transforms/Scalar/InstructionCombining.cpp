@@ -1941,7 +1941,6 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
           ConstantExpr::getAnd(C3, C2)->isNullValue() &&
           (C2->getRawValue() & (C2->getRawValue()+1)) == 0) {
         // Return V+C3.
-        std::cerr << "Simpl: " << *A << "Simpl2: " << *B << "Simpl3: " << I;
         return ReplaceInstUsesWith(I, V == A ? B : A);
       }
     }
