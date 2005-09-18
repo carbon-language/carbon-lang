@@ -196,3 +196,13 @@ int %test28(int %X) {
 	%Z = sub int 42, %Y
 	ret int %Z
 }
+
+uint %test29(uint %X, uint %x) {
+	%tmp.2 = sub uint %X, %x
+        %tmp.2.mask = and uint %tmp.2, 63               ; <uint> [#uses=1]
+        %tmp.6 = add uint %tmp.2.mask, %x               ; <uint> [#uses=1]
+        %tmp.7 = and uint %tmp.6, 63            ; <uint> [#uses=1]
+        %tmp.9 = and uint %tmp.2, 4294967232            ; <uint> [#uses=1]
+        %tmp.10 = or uint %tmp.7, %tmp.9                ; <uint> [#uses=1]
+	ret uint %tmp.10
+}
