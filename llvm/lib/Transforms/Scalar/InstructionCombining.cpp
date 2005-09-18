@@ -3387,7 +3387,7 @@ Instruction *InstCombiner::visitShiftInst(ShiftInst &I) {
             if (isLeftShift && XS->hasOneUse() && XS->getOperand(1) == CUI &&
                 XS->getOpcode() == Instruction::Shr) {
               Instruction *YS = new ShiftInst(Instruction::Shl, 
-                                              Op0BO->getOperand(0), CUI,
+                                              Op0BO->getOperand(1), CUI,
                                               Op0BO->getName());
               InsertNewInstBefore(YS, I); // (Y << C)
               Instruction *X = BinaryOperator::create(Op0BO->getOpcode(), YS,
