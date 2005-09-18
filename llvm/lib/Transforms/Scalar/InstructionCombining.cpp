@@ -225,7 +225,6 @@ namespace {
     
     Value *FoldLogicalPlusAnd(Value *LHS, Value *RHS, ConstantIntegral *Mask,
                               bool isSub, Instruction &I);
-
     Instruction *InsertRangeTest(Value *V, Constant *Lo, Constant *Hi,
                                  bool Inside, Instruction &IB);
   };
@@ -1995,19 +1994,27 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
       return BinaryOperator::createAnd(A, ConstantExpr::getOr(C1, C2));
 
 
-    // if A == (add B, C3)  or B == (add A, C4)
-    ConstantInt *C3 = 0;
-    Value *V = 0;
-    if ((match(A, m_Add(m_Value(V), m_ConstantInt(C3))) && V == B ||
-         match(B, m_Add(m_Value(V), m_ConstantInt(C3))) && V == A)) {
-      if (V == A) std::swap(C1, C2);
-      // We have: ((V + C3) & C1) | (V & C2)
-      // if C2 = ~C1 and (C3 & C2) == 0 and C2 is 0+1+
-      if (C1 == ConstantExpr::getNot(C2) &&
-          ConstantExpr::getAnd(C3, C2)->isNullValue() &&
-          (C2->getRawValue() & (C2->getRawValue()+1)) == 0) {
-        // Return V+C3.
-        return ReplaceInstUsesWith(I, V == A ? B : A);
+    // If we have: ((V + N) & C1) | (V & C2)
+    // .. and C2 = ~C1 and C2 is 0+1+ and (N & C2) == 0
+    // replace with V+N.
+    if (C1 == ConstantExpr::getNot(C2)) {
+      Value *V1, *V2;
+      if ((C2->getRawValue() & (C2->getRawValue()+1)) == 0 && // C2 == 0+1+
+          match(A, m_Add(m_Value(V1), m_Value(V2)))) {
+        // Add commutes, try both ways.
+        if (V1 == B && MaskedValueIsZero(V2, C2))
+          return ReplaceInstUsesWith(I, A);
+        if (V2 == B && MaskedValueIsZero(V1, C2))
+          return ReplaceInstUsesWith(I, A);
+      }
+      // Or commutes, try both ways.
+      if ((C1->getRawValue() & (C1->getRawValue()+1)) == 0 &&
+          match(B, m_Add(m_Value(V1), m_Value(V2)))) {
+        // Add commutes, try both ways.
+        if (V1 == A && MaskedValueIsZero(V2, C1))
+          return ReplaceInstUsesWith(I, B);
+        if (V2 == A && MaskedValueIsZero(V1, C1))
+          return ReplaceInstUsesWith(I, B);
       }
     }
   }
