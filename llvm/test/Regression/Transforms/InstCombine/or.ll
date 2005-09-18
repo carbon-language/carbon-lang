@@ -133,3 +133,11 @@ int %test20(int %x) {
 	%z = or int %y, %x
 	ret int %z
 }
+
+uint %test21(uint %tmp.1) {
+        %tmp.1.mask1 = add uint %tmp.1, 2
+        %tmp.3 = and uint %tmp.1.mask1, 4294967294
+        %tmp.5 = and uint %tmp.1, 1
+        %tmp.6 = or uint %tmp.5, %tmp.3   ;; add tmp.1, 2
+	ret uint %tmp.6
+}
