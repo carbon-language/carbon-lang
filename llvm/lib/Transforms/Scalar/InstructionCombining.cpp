@@ -1572,9 +1572,26 @@ Instruction *InstCombiner::InsertRangeTest(Value *V, Constant *Lo, Constant *Hi,
   return new SetCondInst(Instruction::SetGT, OffsetVal, AddCST);
 }
 
-/// FoldLogicalPlusAnd - We know that Mask is of the form 0+1+, and that this is
-/// part of an expression (LHS +/- RHS) & Mask, where isSub determines whether
-/// the operator is a sub.  If we can fold one of the following xforms:
+// isRunOfOnes - Returns true iff Val consists of one contiguous run of 1s with
+// any number of 0s on either side.  The 1s are allowed to wrap from LSB to
+// MSB, so 0x000FFF0, 0x0000FFFF, and 0xFF0000FF are all runs.  0x0F0F0000 is
+// not, since all 1s are not contiguous.
+static bool isRunOfOnes(ConstantIntegral *Val, unsigned &MB, unsigned &ME) {
+  uint64_t V = Val->getRawValue();
+  if (!isShiftedMask_64(V)) return false;
+
+  // look for the first zero bit after the run of ones
+  MB = 64-CountLeadingZeros_64((V - 1) ^ V);
+  // look for the first non-zero bit
+  ME = 64-CountLeadingZeros_64(V);
+  return true;
+}
+
+
+
+/// FoldLogicalPlusAnd - This is part of an expression (LHS +/- RHS) & Mask,
+/// where isSub determines whether the operator is a sub.  If we can fold one of
+/// the following xforms:
 /// 
 /// ((A & N) +/- B) & Mask -> (A +/- B) & Mask iff N&Mask == Mask
 /// ((A | N) +/- B) & Mask -> (A +/- B) & Mask iff N&Mask == 0
@@ -1594,12 +1611,30 @@ Value *InstCombiner::FoldLogicalPlusAnd(Value *LHS, Value *RHS,
   switch (LHSI->getOpcode()) {
   default: return 0;
   case Instruction::And:
-    if (ConstantExpr::getAnd(N, Mask) == Mask)
-      break;
+    if (ConstantExpr::getAnd(N, Mask) == Mask) {
+      // If the AndRHS is a power of two minus one (0+1+), this is simple.
+      if ((Mask->getRawValue() & Mask->getRawValue()+1) == 0)
+        break;
+
+      // Otherwise, if Mask is 0+1+0+, and if B is known to have the low 0+
+      // part, we don't need any explicit masks to take them out of A.  If that
+      // is all N is, ignore it.
+      unsigned MB, ME;
+      if (isRunOfOnes(Mask, MB, ME)) {  // begin/end bit of run, inclusive
+        Constant *Mask = ConstantInt::getAllOnesValue(RHS->getType());
+        Mask = ConstantExpr::getUShr(Mask,
+                                     ConstantInt::get(Type::UByteTy,
+                                                      (64-MB+1)));
+        if (MaskedValueIsZero(RHS, cast<ConstantIntegral>(Mask)))
+          break;
+      }
+    }
     return 0;
   case Instruction::Or:
   case Instruction::Xor:
-    if (ConstantExpr::getAnd(N, Mask)->isNullValue())
+    // If the AndRHS is a power of two minus one (0+1+), and N&Mask == 0
+    if ((Mask->getRawValue() & Mask->getRawValue()+1) == 0 &&
+        ConstantExpr::getAnd(N, Mask)->isNullValue())
       break;
     return 0;
   }
@@ -1683,27 +1718,21 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
           return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
         break;
       case Instruction::Add:
-        // If the AndRHS is a power of two minus one (0+1+).
-        if ((AndRHS->getRawValue() & AndRHS->getRawValue()+1) == 0) {
-          // ((A & N) + B) & AndRHS -> (A + B) & AndRHS iff N&AndRHS == AndRHS.
-          // ((A | N) + B) & AndRHS -> (A + B) & AndRHS iff N&AndRHS == 0
-          // ((A ^ N) + B) & AndRHS -> (A + B) & AndRHS iff N&AndRHS == 0
-          if (Value *V = FoldLogicalPlusAnd(Op0LHS, Op0RHS, AndRHS, false, I))
-            return BinaryOperator::createAnd(V, AndRHS);
-          if (Value *V = FoldLogicalPlusAnd(Op0RHS, Op0LHS, AndRHS, false, I))
-            return BinaryOperator::createAnd(V, AndRHS);  // Add commutes
-        }
+        // ((A & N) + B) & AndRHS -> (A + B) & AndRHS iff N&AndRHS == AndRHS.
+        // ((A | N) + B) & AndRHS -> (A + B) & AndRHS iff N&AndRHS == 0
+        // ((A ^ N) + B) & AndRHS -> (A + B) & AndRHS iff N&AndRHS == 0
+        if (Value *V = FoldLogicalPlusAnd(Op0LHS, Op0RHS, AndRHS, false, I))
+          return BinaryOperator::createAnd(V, AndRHS);
+        if (Value *V = FoldLogicalPlusAnd(Op0RHS, Op0LHS, AndRHS, false, I))
+          return BinaryOperator::createAnd(V, AndRHS);  // Add commutes
         break;
 
       case Instruction::Sub:
-        // If the AndRHS is a power of two minus one (0+1+).
-        if ((AndRHS->getRawValue() & AndRHS->getRawValue()+1) == 0) {
-          // ((A & N) - B) & AndRHS -> (A - B) & AndRHS iff N&AndRHS == AndRHS.
-          // ((A | N) - B) & AndRHS -> (A - B) & AndRHS iff N&AndRHS == 0
-          // ((A ^ N) - B) & AndRHS -> (A - B) & AndRHS iff N&AndRHS == 0
-          if (Value *V = FoldLogicalPlusAnd(Op0LHS, Op0RHS, AndRHS, true, I))
-            return BinaryOperator::createAnd(V, AndRHS);
-        }
+        // ((A & N) - B) & AndRHS -> (A - B) & AndRHS iff N&AndRHS == AndRHS.
+        // ((A | N) - B) & AndRHS -> (A - B) & AndRHS iff N&AndRHS == 0
+        // ((A ^ N) - B) & AndRHS -> (A - B) & AndRHS iff N&AndRHS == 0
+        if (Value *V = FoldLogicalPlusAnd(Op0LHS, Op0RHS, AndRHS, true, I))
+          return BinaryOperator::createAnd(V, AndRHS);
         break;
       }
 
