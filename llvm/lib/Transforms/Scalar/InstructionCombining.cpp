@@ -3355,9 +3355,58 @@ Instruction *InstCombiner::visitShiftInst(ShiftInst &I) {
         }
       }
 
-      // If the operand is an bitwise operator with a constant RHS, and the
-      // shift is the only use, we can pull it out of the shift.
-      if (BinaryOperator *Op0BO = dyn_cast<BinaryOperator>(Op0))
+      if (BinaryOperator *Op0BO = dyn_cast<BinaryOperator>(Op0)) {
+        // Turn ((X >> C) + Y) << C  ->  (X + (Y << C)) & (~0 << C)
+        switch (Op0BO->getOpcode()) {
+        default: break;
+        case Instruction::Add:
+        case Instruction::And:
+        case Instruction::Or:
+        case Instruction::Xor:
+          // These operators commute.
+          // Turn (Y + (X >> C)) << C  ->  (X + (Y << C)) & (~0 << C)
+          if (ShiftInst *XS = dyn_cast<ShiftInst>(Op0BO->getOperand(1)))
+            if (isLeftShift && XS->hasOneUse() && XS->getOperand(1) == CUI &&
+                XS->getOpcode() == Instruction::Shr) {
+              break;
+              Instruction *YS = new ShiftInst(Instruction::Shl, 
+                                              Op0BO->getOperand(0), CUI,
+                                              Op0BO->getName());
+              InsertNewInstBefore(YS, I); // (Y << C)
+              Instruction *X = BinaryOperator::create(Op0BO->getOpcode(), YS,
+                                                      XS->getOperand(0),
+                                                      XS->getName());
+              InsertNewInstBefore(X, I);  // (X + (Y << C))
+              Constant *C2 = ConstantInt::getAllOnesValue(X->getType());
+              C2 = ConstantExpr::getShl(C2, CUI);
+              std::cerr << "FOLD1: " << *Op0BO;
+              return BinaryOperator::createAnd(X, C2);
+            }
+          // Fall through.
+        case Instruction::Sub:
+          // Turn ((X >> C) + Y) << C  ->  (X + (Y << C)) & (~0 << C)
+          if (ShiftInst *XS = dyn_cast<ShiftInst>(Op0BO->getOperand(0)))
+            if (isLeftShift && XS->hasOneUse() && XS->getOperand(1) == CUI &&
+                XS->getOpcode() == Instruction::Shr) {
+              Instruction *YS = new ShiftInst(Instruction::Shl, 
+                                              Op0BO->getOperand(0), CUI,
+                                              Op0BO->getName());
+              InsertNewInstBefore(YS, I); // (Y << C)
+              Instruction *X = BinaryOperator::create(Op0BO->getOpcode(), YS,
+                                                      XS->getOperand(0),
+                                                      XS->getName());
+              InsertNewInstBefore(X, I);  // (X + (Y << C))
+              Constant *C2 = ConstantInt::getAllOnesValue(X->getType());
+              C2 = ConstantExpr::getShl(C2, CUI);
+              std::cerr << "FOLD2: " << *Op0BO;
+              return BinaryOperator::createAnd(X, C2);
+            }
+          break;
+        }
+
+
+        // If the operand is an bitwise operator with a constant RHS, and the
+        // shift is the only use, we can pull it out of the shift.
         if (ConstantInt *Op0C = dyn_cast<ConstantInt>(Op0BO->getOperand(1))) {
           bool isValid = true;     // Valid only for And, Or, Xor
           bool highBitSet = false; // Transform if high bit of constant set?
@@ -3400,6 +3449,7 @@ Instruction *InstCombiner::visitShiftInst(ShiftInst &I) {
                                           NewRHS);
           }
         }
+      }
     }
 
     // If this is a shift of a shift, see if we can fold the two together...
