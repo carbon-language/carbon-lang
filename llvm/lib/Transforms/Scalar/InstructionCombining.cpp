@@ -1921,10 +1921,31 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
     return BinaryOperator::createXor(InsertNewInstBefore(NOr, I), C1);
   }
 
-  // (A & C1)|(A & C2) == A & (C1|C2)
+  // (A & C1)|(B & C2)
   if (match(Op0, m_And(m_Value(A), m_ConstantInt(C1))) &&
-      match(Op1, m_And(m_Value(B), m_ConstantInt(C2))) && A == B)
-    return BinaryOperator::createAnd(A, ConstantExpr::getOr(C1, C2));
+      match(Op1, m_And(m_Value(B), m_ConstantInt(C2)))) {
+
+    if (A == B)  // (A & C1)|(A & C2) == A & (C1|C2)
+      return BinaryOperator::createAnd(A, ConstantExpr::getOr(C1, C2));
+
+
+    // if A == (add B, C3)  or B == (add A, C4)
+    ConstantInt *C3 = 0;
+    Value *V = 0;
+    if ((match(A, m_Add(m_Value(V), m_ConstantInt(C3))) && V == B ||
+         match(B, m_Add(m_Value(V), m_ConstantInt(C3))) && V == A)) {
+      if (V == A) std::swap(C1, C2);
+      // We have: ((V + C3) & C1) | (V & C2)
+      // if C2 = ~C1 and (C3 & C2) == 0 and C2 is 0+1+
+      if (C1 == ConstantExpr::getNot(C2) &&
+          ConstantExpr::getAnd(C3, C2)->isNullValue() &&
+          (C2->getRawValue() & (C2->getRawValue()+1)) == 0) {
+        // Return V+C3.
+        std::cerr << "Simpl: " << *A << "Simpl2: " << *B << "Simpl3: " << I;
+        return ReplaceInstUsesWith(I, V == A ? B : A);
+      }
+    }
+  }
 
   if (match(Op0, m_Not(m_Value(A)))) {   // ~A | Op1
     if (A == Op1)   // ~A | A == -1
@@ -2040,6 +2061,7 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
           }
         }
   }
+
   return Changed ? &I : 0;
 }
 
