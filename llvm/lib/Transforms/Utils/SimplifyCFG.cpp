@@ -944,8 +944,6 @@ static bool FoldCondBranchOnPHI(BranchInst *BI) {
           PredBBTI->setSuccessor(i, RealDest);
         }
       
-      std::cerr << *BB;
-      
       // Recurse, simplifying any other constants.
       return FoldCondBranchOnPHI(BI) | true;
     }
