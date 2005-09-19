@@ -18,6 +18,7 @@
 #include "llvm/Type.h"
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include <algorithm>
 #include <functional>
 #include <set>
@@ -889,6 +890,70 @@ HoistTerminator:
   return true;
 }
 
+/// FoldCondBranchOnPHI - If we have a conditional branch on a PHI node value
+/// that is defined in the same block as the branch and if any PHI entries are
+/// constants, thread edges corresponding to that entry to be branches to their
+/// ultimate destination.
+static bool FoldCondBranchOnPHI(BranchInst *BI) {
+  BasicBlock *BB = BI->getParent();
+  PHINode *PN = dyn_cast<PHINode>(BI->getCondition());
+  if (!PN || PN->getParent() != BB) return false;
+  
+  // Degenerate case of a single entry PHI.
+  if (PN->getNumIncomingValues() == 1) {
+    if (PN->getIncomingValue(0) != PN)
+      PN->replaceAllUsesWith(PN->getIncomingValue(0));
+    else
+      PN->replaceAllUsesWith(UndefValue::get(PN->getType()));
+    PN->eraseFromParent();
+    return true;    
+  }
+
+  // Now we know that this block has multiple preds and two succs.
+
+  // If this basic block contains anything other than the PHI and branch, bail
+  // out.  FIXME: improve this in the future.
+  BasicBlock::iterator BBI = BB->begin();
+  if (&*BBI != PN || &*++BBI != BI)
+    return false;
+  
+  // Okay, this is a simple enough basic block.  See if any phi values are
+  // constants.
+  for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
+    if (ConstantBool *CB = dyn_cast<ConstantBool>(PN->getIncomingValue(i))) {
+      // Okay, we now know that all edges from PredBB should be revectored to
+      // branch to RealDest.
+      BasicBlock *PredBB = PN->getIncomingBlock(i);
+      BasicBlock *RealDest = BI->getSuccessor(!CB->getValue());
+      
+      // If there are PHI nodes in the destination block, we have to add an
+      // entry for PredBB.  Instead of being smart about this, just split the
+      // critical edge, which will eliminate the PHI-ness.
+      if (isa<PHINode>(RealDest->begin())) {
+        SplitCriticalEdge(BI, !CB->getValue());
+        RealDest = BI->getSuccessor(!CB->getValue());
+      }
+      assert(!isa<PHINode>(RealDest->begin()) && "Crit edge split failure!");
+      
+      // Loop over all of the edges from PredBB to BB, changing them to branch
+      // to RealDest instead.
+      TerminatorInst *PredBBTI = PredBB->getTerminator();
+      for (unsigned i = 0, e = PredBBTI->getNumSuccessors(); i != e; ++i)
+        if (PredBBTI->getSuccessor(i) == BB) {
+          BB->removePredecessor(PredBB);
+          PredBBTI->setSuccessor(i, RealDest);
+        }
+      
+      std::cerr << *BB;
+      
+      // Recurse, simplifying any other constants.
+      return FoldCondBranchOnPHI(BI) | true;
+    }
+
+  return false;
+}
+
+
 namespace {
   /// ConstantIntOrdering - This class implements a stable ordering of constant
   /// integers that does not depend on their address.  This is important for
@@ -1144,6 +1209,14 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
           if (FoldValueComparisonIntoPredecessors(BI))
             return SimplifyCFG(BB) | true;
       }
+      
+      // If this is a branch on a phi node in the current block, thread control
+      // through this block if any PHI node entries are constants.
+      if (PHINode *PN = dyn_cast<PHINode>(BI->getCondition()))
+        if (PN->getParent() == BI->getParent())
+          if (FoldCondBranchOnPHI(BI))
+            return SimplifyCFG(BB) | true;
+        
 
       // If this basic block is ONLY a setcc and a branch, and if a predecessor
       // branches to us and one of our successors, fold the setcc into the
