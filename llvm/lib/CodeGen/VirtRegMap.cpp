@@ -466,36 +466,61 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, const VirtRegMap &VRM) {
                       << I->second.second);
       unsigned VirtReg = I->second.first;
       VirtRegMap::ModRef MR = I->second.second;
-      if (VRM.hasStackSlot(VirtReg)) {
-        int SS = VRM.getStackSlot(VirtReg);
-        DEBUG(std::cerr << " - StackSlot: " << SS << "\n");
-
-        // If this reference is not a use, any previous store is now dead.
-        // Otherwise, the store to this stack slot is not dead anymore.
-        std::map<int, MachineInstr*>::iterator MDSI = MaybeDeadStores.find(SS);
-        if (MDSI != MaybeDeadStores.end()) {
-          if (MR & VirtRegMap::isRef)   // Previous store is not dead.
-            MaybeDeadStores.erase(MDSI);
-          else {
-            // If we get here, the store is dead, nuke it now.
-            assert(MR == VirtRegMap::isMod && "Can't be modref!");
-            MBB.erase(MDSI->second);
-            MaybeDeadStores.erase(MDSI);
-            ++NumDSE;
-          }
-        }
-
-        // If the spill slot value is available, and this is a new definition of
-        // the value, the value is not available anymore.
-        if (MR & VirtRegMap::isMod) {
-          std::map<int, unsigned>::iterator It = SpillSlotsAvailable.find(SS);
-          if (It != SpillSlotsAvailable.end()) {
-            PhysRegsAvailable.erase(It->second);
-            SpillSlotsAvailable.erase(It);
-          }
-        }
-      } else {
+      if (!VRM.hasStackSlot(VirtReg)) {
         DEBUG(std::cerr << ": No stack slot!\n");
+        continue;
+      }
+      int SS = VRM.getStackSlot(VirtReg);
+      DEBUG(std::cerr << " - StackSlot: " << SS << "\n");
+      
+      // If this folded instruction is just a use, check to see if it's a
+      // straight load from the virt reg slot.
+      if ((MR & VirtRegMap::isRef) && !(MR & VirtRegMap::isMod)) {
+        int FrameIdx;
+        if (unsigned DestReg = MRI->isLoadFromStackSlot(&MI, FrameIdx)) {
+          // If this spill slot is available, insert a copy for it!
+          std::map<int, unsigned>::iterator It = SpillSlotsAvailable.find(SS);
+          if (FrameIdx == SS && It != SpillSlotsAvailable.end()) {
+            DEBUG(std::cerr << "Promoted Load To Copy: " << MI);
+            MachineFunction &MF = *MBB.getParent();
+            if (DestReg != It->second) {
+              MRI->copyRegToReg(MBB, &MI, DestReg, It->second,
+                                MF.getSSARegMap()->getRegClass(VirtReg));
+              // Revisit the copy if the destination is a vreg.
+              if (MRegisterInfo::isVirtualRegister(DestReg)) {
+                NextMII = &MI;
+                --NextMII;  // backtrack to the copy.
+              }
+            }
+            MBB.erase(&MI);
+            goto ProcessNextInst;
+          }
+        }
+      }
+
+      // If this reference is not a use, any previous store is now dead.
+      // Otherwise, the store to this stack slot is not dead anymore.
+      std::map<int, MachineInstr*>::iterator MDSI = MaybeDeadStores.find(SS);
+      if (MDSI != MaybeDeadStores.end()) {
+        if (MR & VirtRegMap::isRef)   // Previous store is not dead.
+          MaybeDeadStores.erase(MDSI);
+        else {
+          // If we get here, the store is dead, nuke it now.
+          assert(MR == VirtRegMap::isMod && "Can't be modref!");
+          MBB.erase(MDSI->second);
+          MaybeDeadStores.erase(MDSI);
+          ++NumDSE;
+        }
+      }
+
+      // If the spill slot value is available, and this is a new definition of
+      // the value, the value is not available anymore.
+      if (MR & VirtRegMap::isMod) {
+        std::map<int, unsigned>::iterator It = SpillSlotsAvailable.find(SS);
+        if (It != SpillSlotsAvailable.end()) {
+          PhysRegsAvailable.erase(It->second);
+          SpillSlotsAvailable.erase(It);
+        }
       }
     }
 
@@ -575,6 +600,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, const VirtRegMap &VRM) {
         }
       }
     }
+  ProcessNextInst:
     MII = NextMII;
   }
 }
