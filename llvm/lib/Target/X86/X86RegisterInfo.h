@@ -39,6 +39,9 @@ struct X86RegisterInfo : public X86GenRegisterInfo {
                     unsigned DestReg, unsigned SrcReg,
                     const TargetRegisterClass *RC) const;
 
+  unsigned isLoadFromStackSlot(MachineInstr *MI, int &FrameIndex) const;
+
+
   /// foldMemoryOperand - If this target supports it, fold a load or store of
   /// the specified stack slot into the specified machine instruction for the
   /// specified operand.  If this is possible, the target should perform the

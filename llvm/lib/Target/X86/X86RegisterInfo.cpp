@@ -92,6 +92,31 @@ void X86RegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
   BuildMI(MBB, MI, Opc, 1, DestReg).addReg(SrcReg);
 }
 
+unsigned X86RegisterInfo::isLoadFromStackSlot(MachineInstr *MI, 
+                                              int &FrameIndex) const {
+  switch (MI->getOpcode()) {
+  default: break;
+  case X86::MOV8rm:
+  case X86::MOV16rm:
+  case X86::MOV32rm:
+  case X86::FLD64m:
+  case X86::FLD80m:
+  case X86::MOVAPDrm:
+  case X86::MOVSDrm:
+    if (MI->getOperand(1).isFrameIndex() && MI->getOperand(2).isImmediate() &&
+        MI->getOperand(3).isRegister() && MI->getOperand(4).isImmediate() &&
+        MI->getOperand(2).getImmedValue() == 1 &&
+        MI->getOperand(3).getReg() == 0 &&
+        MI->getOperand(4).getImmedValue() == 0) {
+      FrameIndex = MI->getOperand(1).getFrameIndex();
+      return MI->getOperand(0).getReg();
+    }
+    break;
+  }
+  return 0;
+}
+
+
 static MachineInstr *MakeMInst(unsigned Opcode, unsigned FrameIndex,
                                MachineInstr *MI) {
   return addFrameReference(BuildMI(Opcode, 4), FrameIndex);
