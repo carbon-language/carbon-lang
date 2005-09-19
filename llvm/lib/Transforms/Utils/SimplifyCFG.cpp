@@ -897,7 +897,9 @@ HoistTerminator:
 static bool FoldCondBranchOnPHI(BranchInst *BI) {
   BasicBlock *BB = BI->getParent();
   PHINode *PN = dyn_cast<PHINode>(BI->getCondition());
-  if (!PN || PN->getParent() != BB) return false;
+  // NOTE: we currently cannot transform this case if the PHI node is used
+  // outside of the block.
+  if (!PN || PN->getParent() != BB || !PN->hasOneUse()) return false;
   
   // Degenerate case of a single entry PHI.
   if (PN->getNumIncomingValues() == 1) {
