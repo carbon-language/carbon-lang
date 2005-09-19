@@ -20,6 +20,14 @@
 // ZERO_EXTEND/SIGN_EXTEND by converting them to an ANY_EXTEND node which
 // we don't have yet.
 //
+// FIXME: select C, 16, 0 -> shr C, 4 
+// FIXME: select C, pow2, pow2 -> something smart
+// FIXME: trunc(select X, Y, Z) -> select X, trunc(Y), trunc(Z)
+// FIXME: (select C, load A, load B) -> load (select C, A, B)
+// FIXME: store -> load -> forward substitute
+// FIXME: Dead stores -> nuke
+// FIXME: shr X, (and Y,31) -> shr X, Y
+// FIXME: TRUNC (LOAD)   -> EXT_LOAD/LOAD(smaller)
 // FIXME: mul (x, const) -> shifts + adds
 // FIXME: undef values
 // FIXME: zero extend when top bits are 0 -> drop it ?
@@ -117,10 +125,13 @@ namespace {
     SDOperand visitFNEG(SDNode *N);
     SDOperand visitFABS(SDNode *N);
     SDOperand visitBRCOND(SDNode *N);
-    // brcondtwoway
-    // br_cc
-    // brtwoway_cc
+    SDOperand visitBRCONDTWOWAY(SDNode *N);
+    SDOperand visitBR_CC(SDNode *N);
+    SDOperand visitBRTWOWAY_CC(SDNode *N);
 
+    SDOperand SimplifySelect(SDOperand N0, SDOperand N1, SDOperand N2);
+    SDOperand SimplifySelectCC(SDOperand N0, SDOperand N1, SDOperand N2, 
+                               SDOperand N3, ISD::CondCode CC);
     SDOperand SimplifySetCC(MVT::ValueType VT, SDOperand N0, SDOperand N1,
                             ISD::CondCode Cond);
 public:
@@ -339,6 +350,10 @@ SDOperand DAGCombiner::visit(SDNode *N) {
   case ISD::FP_EXTEND:          return visitFP_EXTEND(N);
   case ISD::FNEG:               return visitFNEG(N);
   case ISD::FABS:               return visitFABS(N);
+  case ISD::BRCOND:             return visitBRCOND(N);
+  case ISD::BRCONDTWOWAY:       return visitBRCONDTWOWAY(N);
+  case ISD::BR_CC:              return visitBR_CC(N);
+  case ISD::BRTWOWAY_CC:        return visitBRTWOWAY_CC(N);
   }
   return SDOperand();
 }
@@ -1029,7 +1044,7 @@ SDOperand DAGCombiner::visitSELECT(SDNode *N) {
   ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1);
   ConstantSDNode *N2C = dyn_cast<ConstantSDNode>(N2);
   MVT::ValueType VT = N->getValueType(0);
-  
+
   // fold select C, X, X -> X
   if (N1 == N2)
     return N1;
@@ -1040,7 +1055,7 @@ SDOperand DAGCombiner::visitSELECT(SDNode *N) {
   if (N0C && N0C->isNullValue())
     return N2;
   // fold select C, 1, X -> C | X
-  if (MVT::i1 == VT && N1C && !N1C->isNullValue())
+  if (MVT::i1 == VT && N1C && N1C->getValue() == 1)
     return DAG.getNode(ISD::OR, VT, N0, N2);
   // fold select C, 0, X -> ~C & X
   // FIXME: this should check for C type == X type, not i1?
@@ -1050,7 +1065,7 @@ SDOperand DAGCombiner::visitSELECT(SDNode *N) {
     return DAG.getNode(ISD::AND, VT, XORNode, N2);
   }
   // fold select C, X, 1 -> ~C | X
-  if (MVT::i1 == VT && N2C && !N2C->isNullValue()) {
+  if (MVT::i1 == VT && N2C && N2C->getValue() == 1) {
     SDOperand XORNode = DAG.getNode(ISD::XOR, VT, N0, DAG.getConstant(1, VT));
     WorkList.push_back(XORNode.Val);
     return DAG.getNode(ISD::OR, VT, XORNode, N1);
@@ -1065,12 +1080,40 @@ SDOperand DAGCombiner::visitSELECT(SDNode *N) {
   // fold X ? Y : X --> X ? Y : 0 --> X & Y
   if (MVT::i1 == VT && N0 == N2)
     return DAG.getNode(ISD::AND, VT, N0, N1);
-  
+  // fold selects based on a setcc into other things, such as min/max/abs
+  if (N0.getOpcode() == ISD::SETCC)
+    return SimplifySelect(N0, N1, N2);
   return SDOperand();
 }
 
 SDOperand DAGCombiner::visitSELECT_CC(SDNode *N) {
-  return SDOperand();
+  SDOperand N0 = N->getOperand(0);
+  SDOperand N1 = N->getOperand(1);
+  SDOperand N2 = N->getOperand(2);
+  SDOperand N3 = N->getOperand(3);
+  SDOperand N4 = N->getOperand(4);
+  ConstantSDNode *N0C = dyn_cast<ConstantSDNode>(N0);
+  ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1);
+  ConstantSDNode *N2C = dyn_cast<ConstantSDNode>(N2);
+  ISD::CondCode CC = cast<CondCodeSDNode>(N4)->get();
+  
+  // Determine if the condition we're dealing with is constant
+  SDOperand SCC = SimplifySetCC(TLI.getSetCCResultTy(), N0, N1, CC);
+  ConstantSDNode *SCCC = dyn_cast<ConstantSDNode>(SCC);
+  bool constTrue = SCCC && SCCC->getValue() == 1;
+  bool constFalse = SCCC && SCCC->isNullValue();
+    
+  // fold select_cc lhs, rhs, x, x, cc -> x
+  if (N2 == N3)
+    return N2;
+  // fold select_cc true, x, y -> x
+  if (constTrue)
+    return N2;
+  // fold select_cc false, x, y -> y
+  if (constFalse)
+    return N3;
+  // fold select_cc into other things, such as min/max/abs
+  return SimplifySelectCC(N0, N1, N2, N3, CC);
 }
 
 SDOperand DAGCombiner::visitSETCC(SDNode *N) {
@@ -1287,6 +1330,59 @@ SDOperand DAGCombiner::visitFABS(SDNode *N) {
   if (N->getOperand(0).getOpcode() == ISD::FNEG)
     return DAG.getNode(ISD::FABS, N->getValueType(0), 
                        N->getOperand(0).getOperand(0));
+  return SDOperand();
+}
+
+SDOperand DAGCombiner::visitBRCOND(SDNode *N) {
+  SDOperand Chain = N->getOperand(0);
+  SDOperand N1 = N->getOperand(1);
+  SDOperand N2 = N->getOperand(2);
+  ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1);
+  
+  // never taken branch, fold to chain
+  if (N1C && N1C->isNullValue())
+    return Chain;
+  // unconditional branch
+  if (N1C && !N1C->isNullValue())
+    return DAG.getNode(ISD::BR, MVT::Other, Chain, N2);
+  return SDOperand();
+}
+
+SDOperand DAGCombiner::visitBRCONDTWOWAY(SDNode *N) {
+  SDOperand Chain = N->getOperand(0);
+  SDOperand N1 = N->getOperand(1);
+  SDOperand N2 = N->getOperand(2);
+  SDOperand N3 = N->getOperand(3);
+  ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1);
+  
+  // unconditional branch to true mbb
+  if (N1C && N1C->getValue() == 1)
+    return DAG.getNode(ISD::BR, MVT::Other, Chain, N2);
+  // unconditional branch to false mbb
+  if (N1C && N1C->isNullValue())
+    return DAG.getNode(ISD::BR, MVT::Other, Chain, N3);
+  return SDOperand();
+}
+
+SDOperand DAGCombiner::visitBR_CC(SDNode *N) {
+  // FIXME: come up with a common way between br_cc, brtwoway_cc, and select_cc
+  // to canonicalize the condition without calling getnode a bazillion times.
+  return SDOperand();
+}
+
+SDOperand DAGCombiner::visitBRTWOWAY_CC(SDNode *N) {
+  // FIXME: come up with a common way between br_cc, brtwoway_cc, and select_cc
+  // to canonicalize the condition without calling getnode a bazillion times.
+  return SDOperand();
+}
+
+SDOperand DAGCombiner::SimplifySelect(SDOperand N0, SDOperand N1, SDOperand N2){
+  return SDOperand();
+}
+
+SDOperand DAGCombiner::SimplifySelectCC(SDOperand N0, SDOperand N1, 
+                                        SDOperand N2, SDOperand N3,
+                                        ISD::CondCode CC) {
   return SDOperand();
 }
 
