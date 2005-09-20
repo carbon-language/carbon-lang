@@ -896,17 +896,24 @@ static bool BlockIsSimpleEnoughToThreadThrough(BasicBlock *BB) {
   BranchInst *BI = cast<BranchInst>(BB->getTerminator());
   Value *Cond = BI->getCondition();
   
+  unsigned Size = 0;
+  
   // If this basic block contains anything other than a PHI (which controls the
   // branch) and branch itself, bail out.  FIXME: improve this in the future.
-  for (BasicBlock::iterator BBI = BB->begin(); &*BBI != BI; ++BBI) {
-    if (!isa<PHINode>(BBI)) return false;
+  for (BasicBlock::iterator BBI = BB->begin(); &*BBI != BI; ++BBI, ++Size) {
+    if (Size > 10) return false;  // Don't clone large BB's.
     
-    if (&*BBI != Cond || !Cond->hasOneUse())
-      return false;
+    // We can only support instructions that are do not define values that are
+    // live outside of the current basic block.
+    for (Value::use_iterator UI = BBI->use_begin(), E = BBI->use_end();
+         UI != E; ++UI) {
+      Instruction *U = cast<Instruction>(*UI);
+      if (U->getParent() != BB || isa<PHINode>(U)) return false;
+    }
     
     // Looks ok, continue checking.
   }
-  
+
   return true;
 }
 
@@ -944,22 +951,64 @@ static bool FoldCondBranchOnPHI(BranchInst *BI) {
       BasicBlock *PredBB = PN->getIncomingBlock(i);
       BasicBlock *RealDest = BI->getSuccessor(!CB->getValue());
       
-      // If there are PHI nodes in the destination block, we have to add an
-      // entry for PredBB.  Instead of being smart about this, just split the
-      // critical edge, which will eliminate the PHI-ness.
-      if (isa<PHINode>(RealDest->begin())) {
-        SplitCriticalEdge(BI, !CB->getValue());
-        RealDest = BI->getSuccessor(!CB->getValue());
-      }
-      assert(!isa<PHINode>(RealDest->begin()) && "Crit edge split failure!");
+      if (RealDest == BB) continue;  // Skip self loops.
       
+      // The dest block might have PHI nodes, other predecessors and other
+      // difficult cases.  Instead of being smart about this, just insert a new
+      // block that jumps to the destination block, effectively splitting
+      // the edge we are about to create.
+      BasicBlock *EdgeBB = new BasicBlock(RealDest->getName()+".critedge",
+                                          RealDest->getParent(), RealDest);
+      new BranchInst(RealDest, EdgeBB);
+      PHINode *PN;
+      for (BasicBlock::iterator BBI = RealDest->begin();
+           (PN = dyn_cast<PHINode>(BBI)); ++BBI) {
+        Value *V = PN->getIncomingValueForBlock(BB);
+        PN->addIncoming(V, EdgeBB);
+      }
+
+      // BB may have instructions that are being threaded over.  Clone these
+      // instructions into EdgeBB.  We know that there will be no uses of the
+      // cloned instructions outside of EdgeBB.
+      BasicBlock::iterator InsertPt = EdgeBB->begin();
+      std::map<Value*, Value*> TranslateMap;  // Track translated values.
+      for (BasicBlock::iterator BBI = BB->begin(); &*BBI != BI; ++BBI) {
+        if (PHINode *PN = dyn_cast<PHINode>(BBI)) {
+          TranslateMap[PN] = PN->getIncomingValueForBlock(PredBB);
+        } else {
+          // Clone the instruction.
+          Instruction *N = BBI->clone();
+          if (BBI->hasName()) N->setName(BBI->getName()+".c");
+          
+          // Update operands due to translation.
+          for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
+            std::map<Value*, Value*>::iterator PI =
+              TranslateMap.find(N->getOperand(i));
+            if (PI != TranslateMap.end())
+              N->setOperand(i, PI->second);
+          }
+          
+          // Check for trivial simplification.
+          if (Constant *C = ConstantFoldInstruction(N)) {
+            std::cerr << "FOLDED: " << *N;
+            TranslateMap[BBI] = C;
+            delete N;   // Constant folded away, don't need actual inst
+          } else {
+            // Insert the new instruction into its new home.
+            EdgeBB->getInstList().insert(InsertPt, N);
+            if (!BBI->use_empty())
+              TranslateMap[BBI] = N;
+          }
+        }
+      }
+
       // Loop over all of the edges from PredBB to BB, changing them to branch
-      // to RealDest instead.
+      // to EdgeBB instead.
       TerminatorInst *PredBBTI = PredBB->getTerminator();
       for (unsigned i = 0, e = PredBBTI->getNumSuccessors(); i != e; ++i)
         if (PredBBTI->getSuccessor(i) == BB) {
           BB->removePredecessor(PredBB);
-          PredBBTI->setSuccessor(i, RealDest);
+          PredBBTI->setSuccessor(i, EdgeBB);
         }
       
       // Recurse, simplifying any other constants.
