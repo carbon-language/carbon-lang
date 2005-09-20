@@ -890,6 +890,26 @@ HoistTerminator:
   return true;
 }
 
+/// BlockIsSimpleEnoughToThreadThrough - Return true if we can thread a branch
+/// across this block.
+static bool BlockIsSimpleEnoughToThreadThrough(BasicBlock *BB) {
+  BranchInst *BI = cast<BranchInst>(BB->getTerminator());
+  Value *Cond = BI->getCondition();
+  
+  // If this basic block contains anything other than a PHI (which controls the
+  // branch) and branch itself, bail out.  FIXME: improve this in the future.
+  for (BasicBlock::iterator BBI = BB->begin(); &*BBI != BI; ++BBI) {
+    if (!isa<PHINode>(BBI)) return false;
+    
+    if (&*BBI != Cond || !Cond->hasOneUse())
+      return false;
+    
+    // Looks ok, continue checking.
+  }
+  
+  return true;
+}
+
 /// FoldCondBranchOnPHI - If we have a conditional branch on a PHI node value
 /// that is defined in the same block as the branch and if any PHI entries are
 /// constants, thread edges corresponding to that entry to be branches to their
@@ -899,7 +919,8 @@ static bool FoldCondBranchOnPHI(BranchInst *BI) {
   PHINode *PN = dyn_cast<PHINode>(BI->getCondition());
   // NOTE: we currently cannot transform this case if the PHI node is used
   // outside of the block.
-  if (!PN || PN->getParent() != BB || !PN->hasOneUse()) return false;
+  if (!PN || PN->getParent() != BB || !PN->hasOneUse())
+    return false;
   
   // Degenerate case of a single entry PHI.
   if (PN->getNumIncomingValues() == 1) {
@@ -912,12 +933,7 @@ static bool FoldCondBranchOnPHI(BranchInst *BI) {
   }
 
   // Now we know that this block has multiple preds and two succs.
-
-  // If this basic block contains anything other than the PHI and branch, bail
-  // out.  FIXME: improve this in the future.
-  BasicBlock::iterator BBI = BB->begin();
-  if (&*BBI != PN || &*++BBI != BI)
-    return false;
+  if (!BlockIsSimpleEnoughToThreadThrough(BB)) return false;
   
   // Okay, this is a simple enough basic block.  See if any phi values are
   // constants.
@@ -1272,22 +1288,44 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
                 }
               }
 
-      // If this block ends with a branch instruction, and if there is one
-      // predecessor, see if the previous block ended with a branch on the same
-      // condition, which makes this conditional branch redundant.
-      if (BasicBlock *OnlyPred = BB->getSinglePredecessor())
-        if (BranchInst *PBI = dyn_cast<BranchInst>(OnlyPred->getTerminator()))
-          if (PBI->isConditional() &&
+      // If this block ends with a branch instruction, and if there is a
+      // predecessor that ends on a branch of the same condition, make this 
+      // conditional branch redundant.
+      for (pred_iterator PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI)
+        if (BranchInst *PBI = dyn_cast<BranchInst>((*PI)->getTerminator()))
+          if (PBI != BI && PBI->isConditional() &&
               PBI->getCondition() == BI->getCondition() &&
-              (PBI->getSuccessor(0) != BB || PBI->getSuccessor(1) != BB)) {
+              PBI->getSuccessor(0) != PBI->getSuccessor(1)) {
             // Okay, the outcome of this conditional branch is statically
-            // knowable.  Delete the outgoing CFG edge that is impossible to
-            // execute.
-            bool CondIsTrue = PBI->getSuccessor(0) == BB;
-            BI->getSuccessor(CondIsTrue)->removePredecessor(BB);
-            new BranchInst(BI->getSuccessor(!CondIsTrue), BB);
-            BB->getInstList().erase(BI);
-            return SimplifyCFG(BB) | true;
+            // knowable.  If this block had a single pred, handle specially.
+            if (BB->getSinglePredecessor()) {
+              // Turn this into a branch on constant.
+              bool CondIsTrue = PBI->getSuccessor(0) == BB;
+              BI->setCondition(ConstantBool::get(CondIsTrue));
+              return SimplifyCFG(BB);  // Nuke the branch on constant.
+            }
+            
+            // Otherwise, if there are multiple predecessors, insert a PHI that
+            // merges in the constant and simplify the block result.
+            if (BlockIsSimpleEnoughToThreadThrough(BB)) {
+              PHINode *NewPN = new PHINode(Type::BoolTy,
+                                           BI->getCondition()->getName()+".pr",
+                                           BB->begin());
+              for (PI = pred_begin(BB), E = pred_end(BB); PI != E; ++PI)
+                if ((PBI = dyn_cast<BranchInst>((*PI)->getTerminator())) &&
+                    PBI != BI && PBI->isConditional() &&
+                    PBI->getCondition() == BI->getCondition() &&
+                    PBI->getSuccessor(0) != PBI->getSuccessor(1)) {
+                  bool CondIsTrue = PBI->getSuccessor(0) == BB;
+                  NewPN->addIncoming(ConstantBool::get(CondIsTrue), *PI);
+                } else {
+                  NewPN->addIncoming(BI->getCondition(), *PI);
+                }
+              
+              BI->setCondition(NewPN);
+              // This will thread the branch.
+              return SimplifyCFG(BB) | true;
+            }
           }
     }
   } else if (isa<UnreachableInst>(BB->getTerminator())) {
