@@ -22,7 +22,7 @@
 
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
-#include "LiveInterval.h"
+#include "llvm/CodeGen/LiveInterval.h"
 
 namespace llvm {
 

@@ -18,7 +18,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "LiveInterval.h"
+#include "llvm/CodeGen/LiveInterval.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Target/MRegisterInfo.h"
 #include <algorithm>

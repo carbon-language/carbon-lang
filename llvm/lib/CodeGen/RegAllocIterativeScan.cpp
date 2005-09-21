@@ -28,7 +28,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/STLExtras.h"
-#include "LiveIntervalAnalysis.h"
+#include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "PhysRegTracker.h"
 #include "VirtRegMap.h"
 #include <algorithm>

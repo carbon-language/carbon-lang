@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "regalloc"
-#include "LiveIntervalAnalysis.h"
+#include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "PhysRegTracker.h"
 #include "VirtRegMap.h"
 #include "llvm/Function.h"

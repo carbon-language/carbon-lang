@@ -16,7 +16,7 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "liveintervals"
-#include "LiveIntervalAnalysis.h"
+#include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "VirtRegMap.h"
 #include "llvm/Value.h"
 #include "llvm/Analysis/LoopInfo.h"
