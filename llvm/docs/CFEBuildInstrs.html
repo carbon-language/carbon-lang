@@ -103,7 +103,8 @@ invalid code.  Instead, use the system assembler and linker.
 <li><p>Configure and build the LLVM libraries and tools. There are two ways to
 do this: either with <i>objdir</i> == <i>srcdir</i> or
 <i>objdir</i> != <i>srcdir</i>. It is recommended 
-that <i>srcdir</i> not be the same as <i>objdir</i>:</p>
+that <i>srcdir</i> be the same as <i>objdir</i> for your LLVM tree (but note
+that you should always use <i>srcdir</i> != <i>objdir</i> for llvm-gcc):</p>
 <ul>
   <li>With <i>objdir</i> != <i>srcdir</i>:<pre>
  % cd <i>objdir</i>
