@@ -994,13 +994,13 @@ void DAGISelEmitter::EmitMatchForPattern(TreePatternNode *N,
   assert(!N->isLeaf() && "Cannot match against a leaf!");
   // Emit code to load the child nodes and match their contents recursively.
   for (unsigned i = 0, e = N->getNumChildren(); i != e; ++i) {
-    OS << "      SDNode *" << RootName << i <<" = " << RootName
-       << "->getOperand(" << i << ").Val;\n";
+    OS << "      SDOperand " << RootName << i <<" = " << RootName
+       << ".getOperand(" << i << ");\n";
     TreePatternNode *Child = N->getChild(i);
     if (!Child->isLeaf()) {
       // If it's not a leaf, recursively match.
       const SDNodeInfo &CInfo = getSDNodeInfo(Child->getOperator());
-      OS << "      if (" << RootName << i << "->getOpcode() != "
+      OS << "      if (" << RootName << i << ".getOpcode() != "
          << CInfo.getEnumName() << ") goto P" << PatternNo << "Fail;\n";
       EmitMatchForPattern(Child, RootName + utostr(i), PatternNo, OS);
     } else {
@@ -1022,14 +1022,14 @@ void DAGISelEmitter::EmitMatchForPattern(TreePatternNode *N,
     
     // If this child has a name associated with it, capture it as a variable.
     if (!Child->getName().empty())
-      OS << "      SDOperand op" << Child->getName() << "(" << RootName
-         << i << ", 0 /*FIXME*/);\n";
+      OS << "      SDOperand op" << Child->getName() << " = " << RootName
+         << i << ";\n";
   }
   
   // If there is a node predicate for this, emit the call.
   if (!N->getPredicateFn().empty())
     OS << "      if (!" << N->getPredicateFn() << "(" << RootName
-       << ")) goto P" << PatternNo << "Fail;\n";
+       << ".Val)) goto P" << PatternNo << "Fail;\n";
 }
 
 /// EmitCodeForPattern - Given a pattern to match, emit code to the specified
@@ -1090,18 +1090,17 @@ struct PatternSortingPredicate {
 void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
   // Emit boilerplate.
   OS << "// The main instruction selector code.\n"
-     << "SDOperand SelectCode(SDOperand Op) {\n"
-     << "  SDNode *N = Op.Val;\n"
-     << "  if (N->getOpcode() >= ISD::BUILTIN_OP_END &&\n"
-     << "      N->getOpcode() < PPCISD::FIRST_NUMBER)\n"
-     << "    return Op;   // Already selected.\n\n"
-     << "  switch (N->getOpcode()) {\n"
+     << "SDOperand SelectCode(SDOperand N) {\n"
+     << "  if (N.getOpcode() >= ISD::BUILTIN_OP_END &&\n"
+     << "      N.getOpcode() < PPCISD::FIRST_NUMBER)\n"
+     << "    return N;   // Already selected.\n\n"
+     << "  switch (N.getOpcode()) {\n"
      << "  default: break;\n"
      << "  case ISD::EntryToken:       // These leaves remain the same.\n"
-     << "    return Op;\n"
+     << "    return N;\n"
      << "  case ISD::AssertSext:\n"
      << "  case ISD::AssertZext:\n"
-     << "    return Select(N->getOperand(0));\n";
+     << "    return Select(N.getOperand(0));\n";
     
   // Group the patterns by their top-level opcodes.
   std::map<Record*, std::vector<PatternToMatch*> > PatternsByOpcode;
@@ -1132,7 +1131,7 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
 
   OS << "  } // end of big switch.\n\n"
      << "  std::cerr << \"Cannot yet select: \";\n"
-     << "  N->dump();\n"
+     << "  N.Val->dump();\n"
      << "  std::cerr << '\\n';\n"
      << "  abort();\n"
      << "}\n";
