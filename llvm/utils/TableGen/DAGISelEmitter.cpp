@@ -985,14 +985,71 @@ void DAGISelEmitter::ParsePatterns() {
         });
 }
 
+/// EmitMatchForPattern - Emit a matcher for N, going to the label for PatternNo
+/// if the match fails.  At this point, we already know that the opcode for N
+/// matches, and the SDNode for the result has the RootName specified name.
+void DAGISelEmitter::EmitMatchForPattern(TreePatternNode *N,
+                                         const std::string &RootName, 
+                                         unsigned PatternNo, std::ostream &OS) {
+  assert(!N->isLeaf() && "Cannot match against a leaf!");
+  // Emit code to load the child nodes and match their contents recursively.
+  for (unsigned i = 0, e = N->getNumChildren(); i != e; ++i) {
+    OS << "      SDNode *" << RootName << i <<" = " << RootName
+       << "->getOperand(" << i << ").Val;\n";
+    TreePatternNode *Child = N->getChild(i);
+    if (!Child->isLeaf()) {
+      // If it's not a leaf, recursively match.
+      const SDNodeInfo &CInfo = getSDNodeInfo(Child->getOperator());
+      OS << "      if (" << RootName << i << "->getOpcode() != "
+         << CInfo.getEnumName() << ") goto P" << PatternNo << "Fail;\n";
+      EmitMatchForPattern(Child, RootName + utostr(i), PatternNo, OS);
+    } else {
+      // Handle leaves of various types.
+      Init *LeafVal = Child->getLeafValue();
+      Record *LeafRec = dynamic_cast<DefInit*>(LeafVal)->getDef();
+      if (LeafRec->isSubClassOf("RegisterClass")) {
+        // Handle register references.  Nothing to do here.
+      } else if (LeafRec->isSubClassOf("ValueType")) {
+        // Make sure this is the specified value type.
+        OS << "      if (cast<VTSDNode>(" << RootName << i << ")->getVT() != "
+           << "MVT::" << LeafRec->getName() << ") goto P" << PatternNo
+           << "Fail;\n";
+      } else {
+        Child->dump();
+        assert(0 && "Unknown leaf type!");
+      }
+    }
+    
+    // If this child has a name associated with it, capture it as a variable.
+    if (!Child->getName().empty())
+      OS << "      SDOperand op" << Child->getName() << "(" << RootName
+         << i << ", 0 /*FIXME*/);\n";
+  }
+  
+  // If there is a node predicate for this, emit the call.
+  if (!N->getPredicateFn().empty())
+    OS << "      if (!" << N->getPredicateFn() << "(" << RootName
+       << ")) goto P" << PatternNo << "Fail;\n";
+}
+
+/// EmitCodeForPattern - Given a pattern to match, emit code to the specified
+/// stream to match the pattern, and generate the code for the match if it
+/// succeeds.
 void DAGISelEmitter::EmitCodeForPattern(PatternToMatch &Pattern,
                                         std::ostream &OS) {
-  OS << "    // ";
+  static unsigned PatternCount = 0;
+  unsigned PatternNo = PatternCount++;
+  OS << "    { // Pattern #" << PatternNo << ": ";
   Pattern.first->print(OS);
   OS << "\n";
+
+  EmitMatchForPattern(Pattern.first, "N", PatternNo, OS);
   
+  OS << "      // Emit: ";
+  Pattern.second->print(OS);
+  OS << "\n";
   
-  
+  OS << "    }\n  P" << PatternNo << "Fail:\n";
 }
 
 /// getPatternSize - Return the 'size' of this pattern.  We want to match large
@@ -1064,11 +1121,12 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
     // We want to emit all of the matching code now.  However, we want to emit
     // the matches in order of minimal cost.  Sort the patterns so the least
     // cost one is at the start.
-    std::sort(Patterns.begin(), Patterns.end(), PatternSortingPredicate());
+    std::stable_sort(Patterns.begin(), Patterns.end(),
+                     PatternSortingPredicate());
     
     for (unsigned i = 0, e = Patterns.size(); i != e; ++i)
       EmitCodeForPattern(*Patterns[i], OS);
-    OS << "    break;\n";
+    OS << "    break;\n\n";
   }
   
 

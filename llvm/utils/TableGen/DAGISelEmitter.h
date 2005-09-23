@@ -365,6 +365,8 @@ private:
                                    std::map<std::string,
                                             TreePatternNode*> &InstInputs,
                                    std::map<std::string, Record*> &InstResults);
+  void EmitMatchForPattern(TreePatternNode *N, const std::string &RootName,
+                           unsigned PatternNo, std::ostream &OS);
   void EmitCodeForPattern(PatternToMatch &Pattern, std::ostream &OS);
   void EmitInstructionSelector(std::ostream &OS);
 };
