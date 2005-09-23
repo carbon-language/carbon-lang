@@ -116,15 +116,13 @@ static void RemoveEnv(const char * name, char ** const envp) {
     else
       *p = '=';
   }
-
-  return;
 }
 
 static void dumpArgs(const char **args) {
-  std::cout << *args++;
+  std::cerr << *args++;
   while (*args)
-    std::cout << ' ' << *args++;
-  std::cout << '\n';
+    std::cerr << ' ' << *args++;
+  std::cerr << '\n' << std::flush;
 }
 
 static inline void addPass(PassManager &PM, Pass *P) {
@@ -159,13 +157,10 @@ static bool isBytecodeLPath(const std::string &LibPath) {
     return isBytecodeLPath;
 
   // Make sure its a directory
-  try
-  {
+  try {
     if (!LPath.isDirectory())
       return isBytecodeLPath;
-  }
-  catch (std::string& xcptn)
-  {
+  } catch (std::string& xcptn) {
     return isBytecodeLPath;
   }
 
@@ -399,15 +394,23 @@ int llvm::GenerateNative(const std::string &OutputFilename,
   args.push_back(OutputFilename.c_str());
   args.push_back(InputFilename.c_str());
 
+  // StringsToDelete - We don't want to call c_str() on temporary strings.
+  // If we need a temporary string, copy it here so that the memory is not
+  // reclaimed until after the exec call.  All of these strings are allocated
+  // with strdup.
+  std::vector<char*> StringsToDelete;
+
   if (Shared) args.push_back("-shared");
   if (ExportAllAsDynamic) args.push_back("-export-dynamic");
   if (!RPath.empty()) {
     std::string rp = "-Wl,-rpath," + RPath;
-    args.push_back(rp.c_str());
+    StringsToDelete.push_back(strdup(rp.c_str()));
+    args.push_back(StringsToDelete.back());
   }
   if (!SOName.empty()) {
     std::string so = "-Wl,-soname," + SOName;
-    args.push_back(so.c_str());
+    StringsToDelete.push_back(strdup(so.c_str()));
+    args.push_back(StringsToDelete.back());
   }
 
   // Add in the libpaths to find the libraries.
@@ -419,24 +422,30 @@ int llvm::GenerateNative(const std::string &OutputFilename,
   //  Further, we don't want any -L paths that contain bytecode shared
   //  libraries or true bytecode archive files.  We omit them in all such
   //  cases.
-  for (unsigned index = 0; index < LibPaths.size(); index++) {
-    if (!isBytecodeLPath( LibPaths[index]) ) {
-      args.push_back("-L");
-      args.push_back(LibPaths[index].c_str());
+  for (unsigned index = 0; index < LibPaths.size(); index++)
+    if (!isBytecodeLPath(LibPaths[index])) {
+      std::string Tmp = "-L"+LibPaths[index];
+      StringsToDelete.push_back(strdup(Tmp.c_str()));
+      args.push_back(StringsToDelete.back());
     }
-  }
 
   // Add in the libraries to link.
-  for (unsigned index = 0; index < Libraries.size(); index++) {
+  for (unsigned index = 0; index < Libraries.size(); index++)
     if (Libraries[index] != "crtend") {
-      args.push_back("-l");
-      args.push_back(Libraries[index].c_str());
+      std::string Tmp = "-l"+Libraries[index];
+      StringsToDelete.push_back(strdup(Tmp.c_str()));
+      args.push_back(StringsToDelete.back());
     }
-  }
-  args.push_back(0);
+  args.push_back(0); // Null terminate.
 
   // Run the compiler to assembly and link together the program.
   if (Verbose) dumpArgs(&args[0]);
-  return sys::Program::ExecuteAndWait(gcc, &args[0], (const char**)clean_env);
+  int Res = sys::Program::ExecuteAndWait(gcc, &args[0], (const char**)clean_env);
+
+  while (!StringsToDelete.empty()) {
+    free(StringsToDelete.back());
+    StringsToDelete.pop_back();
+  }
+  return Res;
 }
 
