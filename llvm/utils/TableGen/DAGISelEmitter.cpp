@@ -989,7 +989,8 @@ void DAGISelEmitter::ParsePatterns() {
 /// if the match fails.  At this point, we already know that the opcode for N
 /// matches, and the SDNode for the result has the RootName specified name.
 void DAGISelEmitter::EmitMatchForPattern(TreePatternNode *N,
-                                         const std::string &RootName, 
+                                         const std::string &RootName,
+                                     std::map<std::string,std::string> &VarMap,
                                          unsigned PatternNo, std::ostream &OS) {
   assert(!N->isLeaf() && "Cannot match against a leaf!");
   // Emit code to load the child nodes and match their contents recursively.
@@ -997,12 +998,30 @@ void DAGISelEmitter::EmitMatchForPattern(TreePatternNode *N,
     OS << "      SDOperand " << RootName << i <<" = " << RootName
        << ".getOperand(" << i << ");\n";
     TreePatternNode *Child = N->getChild(i);
+    
+    // If this child has a name associated with it, capture it in VarMap.  If
+    // we already saw this in the pattern, emit code to verify dagness.
+    if (!Child->getName().empty()) {
+      std::string &VarMapEntry = VarMap[Child->getName()];
+      if (VarMapEntry.empty()) {
+        VarMapEntry = RootName + utostr(i);
+      } else {
+        // If we get here, this is a second reference to a specific name.  Since
+        // we already have checked that the first reference is valid, we don't
+        // have to recursively match it, just check that it's the same as the
+        // previously named thing.
+        OS << "      if (" << VarMapEntry << " != " << RootName << i
+           << ") goto P" << PatternNo << "Fail;\n";
+        continue;
+      }
+    }
+    
     if (!Child->isLeaf()) {
       // If it's not a leaf, recursively match.
       const SDNodeInfo &CInfo = getSDNodeInfo(Child->getOperator());
       OS << "      if (" << RootName << i << ".getOpcode() != "
          << CInfo.getEnumName() << ") goto P" << PatternNo << "Fail;\n";
-      EmitMatchForPattern(Child, RootName + utostr(i), PatternNo, OS);
+      EmitMatchForPattern(Child, RootName + utostr(i), VarMap, PatternNo, OS);
     } else {
       // Handle leaves of various types.
       Init *LeafVal = Child->getLeafValue();
@@ -1019,11 +1038,6 @@ void DAGISelEmitter::EmitMatchForPattern(TreePatternNode *N,
         assert(0 && "Unknown leaf type!");
       }
     }
-    
-    // If this child has a name associated with it, capture it as a variable.
-    if (!Child->getName().empty())
-      OS << "      SDOperand op" << Child->getName() << " = " << RootName
-         << i << ";\n";
   }
   
   // If there is a node predicate for this, emit the call.
@@ -1043,7 +1057,9 @@ void DAGISelEmitter::EmitCodeForPattern(PatternToMatch &Pattern,
   Pattern.first->print(OS);
   OS << "\n";
 
-  EmitMatchForPattern(Pattern.first, "N", PatternNo, OS);
+  // Emit the matcher, capturing named arguments in VariableMap.
+  std::map<std::string,std::string> VariableMap;
+  EmitMatchForPattern(Pattern.first, "N", VariableMap, PatternNo, OS);
   
   OS << "      // Emit: ";
   Pattern.second->print(OS);
