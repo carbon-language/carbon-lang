@@ -580,6 +580,80 @@ SDOperand SelectionDAG::getRegister(unsigned RegNo, MVT::ValueType VT) {
   return SDOperand(Reg, 0);
 }
 
+/// MaskedValueIsZero - Return true if 'V & Mask' is known to be zero.  We use
+/// this predicate to simplify operations downstream.  V and Mask are known to
+/// be the same type.
+static bool MaskedValueIsZero(const SDOperand &Op, uint64_t Mask,
+                              const TargetLowering &TLI) {
+  unsigned SrcBits;
+  if (Mask == 0) return true;
+  
+  // If we know the result of a setcc has the top bits zero, use this info.
+  switch (Op.getOpcode()) {
+    case ISD::Constant:
+      return (cast<ConstantSDNode>(Op)->getValue() & Mask) == 0;
+      
+    case ISD::SETCC:
+      return ((Mask & 1) == 0) &&
+      TLI.getSetCCResultContents() == TargetLowering::ZeroOrOneSetCCResult;
+      
+    case ISD::ZEXTLOAD:
+      SrcBits = MVT::getSizeInBits(cast<VTSDNode>(Op.getOperand(3))->getVT());
+      return (Mask & ((1ULL << SrcBits)-1)) == 0; // Returning only the zext bits.
+    case ISD::ZERO_EXTEND:
+      SrcBits = MVT::getSizeInBits(Op.getOperand(0).getValueType());
+      return MaskedValueIsZero(Op.getOperand(0),Mask & ((1ULL << SrcBits)-1),TLI);
+    case ISD::AssertZext:
+      SrcBits = MVT::getSizeInBits(cast<VTSDNode>(Op.getOperand(1))->getVT());
+      return (Mask & ((1ULL << SrcBits)-1)) == 0; // Returning only the zext bits.
+    case ISD::AND:
+      // (X & C1) & C2 == 0   iff   C1 & C2 == 0.
+      if (ConstantSDNode *AndRHS = dyn_cast<ConstantSDNode>(Op.getOperand(1)))
+        return MaskedValueIsZero(Op.getOperand(0),AndRHS->getValue() & Mask, TLI);
+      
+      // FALL THROUGH
+    case ISD::OR:
+    case ISD::XOR:
+      return MaskedValueIsZero(Op.getOperand(0), Mask, TLI) &&
+      MaskedValueIsZero(Op.getOperand(1), Mask, TLI);
+    case ISD::SELECT:
+      return MaskedValueIsZero(Op.getOperand(1), Mask, TLI) &&
+      MaskedValueIsZero(Op.getOperand(2), Mask, TLI);
+    case ISD::SELECT_CC:
+      return MaskedValueIsZero(Op.getOperand(2), Mask, TLI) &&
+      MaskedValueIsZero(Op.getOperand(3), Mask, TLI);
+    case ISD::SRL:
+      // (ushr X, C1) & C2 == 0   iff  X & (C2 << C1) == 0
+      if (ConstantSDNode *ShAmt = dyn_cast<ConstantSDNode>(Op.getOperand(1))) {
+        uint64_t NewVal = Mask << ShAmt->getValue();
+        SrcBits = MVT::getSizeInBits(Op.getValueType());
+        if (SrcBits != 64) NewVal &= (1ULL << SrcBits)-1;
+        return MaskedValueIsZero(Op.getOperand(0), NewVal, TLI);
+      }
+      return false;
+    case ISD::SHL:
+      // (ushl X, C1) & C2 == 0   iff  X & (C2 >> C1) == 0
+      if (ConstantSDNode *ShAmt = dyn_cast<ConstantSDNode>(Op.getOperand(1))) {
+        uint64_t NewVal = Mask >> ShAmt->getValue();
+        return MaskedValueIsZero(Op.getOperand(0), NewVal, TLI);
+      }
+      return false;
+    case ISD::CTTZ:
+    case ISD::CTLZ:
+    case ISD::CTPOP:
+      // Bit counting instructions can not set the high bits of the result
+      // register.  The max number of bits sets depends on the input.
+      return (Mask & (MVT::getSizeInBits(Op.getValueType())*2-1)) == 0;
+      
+      // TODO we could handle some SRA cases here.
+    default: break;
+  }
+  
+  return false;
+}
+
+
+
 SDOperand SelectionDAG::SimplifySetCC(MVT::ValueType VT, SDOperand N1,
                                       SDOperand N2, ISD::CondCode Cond) {
   // These setcc operations always fold.
@@ -816,6 +890,18 @@ SDOperand SelectionDAG::SimplifySetCC(MVT::ValueType VT, SDOperand N1,
 
       // FIXME: move this stuff to the DAG Combiner when it exists!
 
+      // Turn (X^C1) == C2 into X == C1^C2 iff X&~C1 = 0.  Common for condcodes.
+      if (N1.getOpcode() == ISD::XOR)
+        if (ConstantSDNode *XORC = dyn_cast<ConstantSDNode>(N1.getOperand(1)))
+          if (ConstantSDNode *RHSC = dyn_cast<ConstantSDNode>(N2)) {
+            // If we know that all of the inverted bits are zero, don't bother
+            // performing the inversion.
+            if (MaskedValueIsZero(N1.getOperand(0), ~XORC->getValue(), TLI))
+              return getSetCC(VT, N1.getOperand(0),
+                              getConstant(XORC->getValue()^RHSC->getValue(),
+                                          N1.getValueType()), Cond);
+          }
+      
       // Simplify (X+Z) == X -->  Z == 0
       if (N1.getOperand(0) == N2)
         return getSetCC(VT, N1.getOperand(1),
@@ -1124,78 +1210,6 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
   N->setValueTypes(VT);
   AllNodes.push_back(N);
   return SDOperand(N, 0);
-}
-
-/// MaskedValueIsZero - Return true if 'V & Mask' is known to be zero.  We use
-/// this predicate to simplify operations downstream.  V and Mask are known to
-/// be the same type.
-static bool MaskedValueIsZero(const SDOperand &Op, uint64_t Mask,
-                              const TargetLowering &TLI) {
-  unsigned SrcBits;
-  if (Mask == 0) return true;
-
-  // If we know the result of a setcc has the top bits zero, use this info.
-  switch (Op.getOpcode()) {
-  case ISD::Constant:
-    return (cast<ConstantSDNode>(Op)->getValue() & Mask) == 0;
-
-  case ISD::SETCC:
-    return ((Mask & 1) == 0) &&
-           TLI.getSetCCResultContents() == TargetLowering::ZeroOrOneSetCCResult;
-
-  case ISD::ZEXTLOAD:
-    SrcBits = MVT::getSizeInBits(cast<VTSDNode>(Op.getOperand(3))->getVT());
-    return (Mask & ((1ULL << SrcBits)-1)) == 0; // Returning only the zext bits.
-  case ISD::ZERO_EXTEND:
-    SrcBits = MVT::getSizeInBits(Op.getOperand(0).getValueType());
-    return MaskedValueIsZero(Op.getOperand(0),Mask & ((1ULL << SrcBits)-1),TLI);
-  case ISD::AssertZext:
-    SrcBits = MVT::getSizeInBits(cast<VTSDNode>(Op.getOperand(1))->getVT());
-    return (Mask & ((1ULL << SrcBits)-1)) == 0; // Returning only the zext bits.
-  case ISD::AND:
-    // (X & C1) & C2 == 0   iff   C1 & C2 == 0.
-    if (ConstantSDNode *AndRHS = dyn_cast<ConstantSDNode>(Op.getOperand(1)))
-      return MaskedValueIsZero(Op.getOperand(0),AndRHS->getValue() & Mask, TLI);
-
-    // FALL THROUGH
-  case ISD::OR:
-  case ISD::XOR:
-    return MaskedValueIsZero(Op.getOperand(0), Mask, TLI) &&
-           MaskedValueIsZero(Op.getOperand(1), Mask, TLI);
-  case ISD::SELECT:
-    return MaskedValueIsZero(Op.getOperand(1), Mask, TLI) &&
-           MaskedValueIsZero(Op.getOperand(2), Mask, TLI);
-  case ISD::SELECT_CC:
-    return MaskedValueIsZero(Op.getOperand(2), Mask, TLI) &&
-           MaskedValueIsZero(Op.getOperand(3), Mask, TLI);
-  case ISD::SRL:
-    // (ushr X, C1) & C2 == 0   iff  X & (C2 << C1) == 0
-    if (ConstantSDNode *ShAmt = dyn_cast<ConstantSDNode>(Op.getOperand(1))) {
-      uint64_t NewVal = Mask << ShAmt->getValue();
-      SrcBits = MVT::getSizeInBits(Op.getValueType());
-      if (SrcBits != 64) NewVal &= (1ULL << SrcBits)-1;
-      return MaskedValueIsZero(Op.getOperand(0), NewVal, TLI);
-    }
-    return false;
-  case ISD::SHL:
-    // (ushl X, C1) & C2 == 0   iff  X & (C2 >> C1) == 0
-    if (ConstantSDNode *ShAmt = dyn_cast<ConstantSDNode>(Op.getOperand(1))) {
-      uint64_t NewVal = Mask >> ShAmt->getValue();
-      return MaskedValueIsZero(Op.getOperand(0), NewVal, TLI);
-    }
-    return false;
-  case ISD::CTTZ:
-  case ISD::CTLZ:
-  case ISD::CTPOP:
-    // Bit counting instructions can not set the high bits of the result
-    // register.  The max number of bits sets depends on the input.
-    return (Mask & (MVT::getSizeInBits(Op.getValueType())*2-1)) == 0;
-    
-    // TODO we could handle some SRA cases here.
-  default: break;
-  }
-
-  return false;
 }
 
 
