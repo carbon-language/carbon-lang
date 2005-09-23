@@ -1018,6 +1018,116 @@ static bool FoldCondBranchOnPHI(BranchInst *BI) {
   return false;
 }
 
+/// FoldTwoEntryPHINode - Given a BB that starts with the specified two-entry
+/// PHI node, see if we can eliminate it.
+static bool FoldTwoEntryPHINode(PHINode *PN) {
+  // Ok, this is a two entry PHI node.  Check to see if this is a simple "if
+  // statement", which has a very simple dominance structure.  Basically, we
+  // are trying to find the condition that is being branched on, which
+  // subsequently causes this merge to happen.  We really want control
+  // dependence information for this check, but simplifycfg can't keep it up
+  // to date, and this catches most of the cases we care about anyway.
+  //
+  BasicBlock *BB = PN->getParent();
+  BasicBlock *IfTrue, *IfFalse;
+  Value *IfCond = GetIfCondition(BB, IfTrue, IfFalse);
+  if (!IfCond) return false;
+  
+  DEBUG(std::cerr << "FOUND IF CONDITION!  " << *IfCond << "  T: "
+        << IfTrue->getName() << "  F: " << IfFalse->getName() << "\n");
+  
+  // Loop over the PHI's seeing if we can promote them all to select
+  // instructions.  While we are at it, keep track of the instructions
+  // that need to be moved to the dominating block.
+  std::set<Instruction*> AggressiveInsts;
+  
+  bool CanPromote = true;
+  BasicBlock::iterator AfterPHIIt = BB->begin();
+  while (isa<PHINode>(AfterPHIIt)) {
+    PHINode *PN = cast<PHINode>(AfterPHIIt++);
+    if (PN->getIncomingValue(0) == PN->getIncomingValue(1)) {
+      if (PN->getIncomingValue(0) != PN)
+        PN->replaceAllUsesWith(PN->getIncomingValue(0));
+      else
+        PN->replaceAllUsesWith(UndefValue::get(PN->getType()));
+    } else if (!DominatesMergePoint(PN->getIncomingValue(0), BB,
+                                    &AggressiveInsts) ||
+               !DominatesMergePoint(PN->getIncomingValue(1), BB,
+                                    &AggressiveInsts)) {
+      CanPromote = false;
+    }
+  }
+  
+  // Did we eliminate all PHI's?
+  if (!CanPromote && AfterPHIIt != BB->begin())
+    return false;
+  
+  // If we all PHI nodes are promotable, check to make sure that all
+  // instructions in the predecessor blocks can be promoted as well.  If
+  // not, we won't be able to get rid of the control flow, so it's not
+  // worth promoting to select instructions.
+  BasicBlock *DomBlock = 0, *IfBlock1 = 0, *IfBlock2 = 0;
+  PN = cast<PHINode>(BB->begin());
+  BasicBlock *Pred = PN->getIncomingBlock(0);
+  if (cast<BranchInst>(Pred->getTerminator())->isUnconditional()) {
+    IfBlock1 = Pred;
+    DomBlock = *pred_begin(Pred);
+    for (BasicBlock::iterator I = Pred->begin();
+         !isa<TerminatorInst>(I); ++I)
+      if (!AggressiveInsts.count(I)) {
+        // This is not an aggressive instruction that we can promote.
+        // Because of this, we won't be able to get rid of the control
+        // flow, so the xform is not worth it.
+        return false;
+      }
+  }
+    
+  Pred = PN->getIncomingBlock(1);
+  if (cast<BranchInst>(Pred->getTerminator())->isUnconditional()) {
+    IfBlock2 = Pred;
+    DomBlock = *pred_begin(Pred);
+    for (BasicBlock::iterator I = Pred->begin();
+         !isa<TerminatorInst>(I); ++I)
+      if (!AggressiveInsts.count(I)) {
+        // This is not an aggressive instruction that we can promote.
+        // Because of this, we won't be able to get rid of the control
+        // flow, so the xform is not worth it.
+        return false;
+      }
+  }
+      
+  // If we can still promote the PHI nodes after this gauntlet of tests,
+  // do all of the PHI's now.
+
+  // Move all 'aggressive' instructions, which are defined in the
+  // conditional parts of the if's up to the dominating block.
+  if (IfBlock1) {
+    DomBlock->getInstList().splice(DomBlock->getTerminator(),
+                                   IfBlock1->getInstList(),
+                                   IfBlock1->begin(),
+                                   IfBlock1->getTerminator());
+  }
+  if (IfBlock2) {
+    DomBlock->getInstList().splice(DomBlock->getTerminator(),
+                                   IfBlock2->getInstList(),
+                                   IfBlock2->begin(),
+                                   IfBlock2->getTerminator());
+  }
+  
+  while (PHINode *PN = dyn_cast<PHINode>(BB->begin())) {
+    // Change the PHI node into a select instruction.
+    Value *TrueVal =
+      PN->getIncomingValue(PN->getIncomingBlock(0) == IfFalse);
+    Value *FalseVal =
+      PN->getIncomingValue(PN->getIncomingBlock(0) == IfTrue);
+    
+    std::string Name = PN->getName(); PN->setName("");
+    PN->replaceAllUsesWith(new SelectInst(IfCond, TrueVal, FalseVal,
+                                          Name, AfterPHIIt));
+    BB->getInstList().erase(PN);
+  }
+  return true;
+}
 
 namespace {
   /// ConstantIntOrdering - This class implements a stable ordering of constant
@@ -1620,118 +1730,8 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
   // If there is a trivial two-entry PHI node in this basic block, and we can
   // eliminate it, do so now.
   if (PHINode *PN = dyn_cast<PHINode>(BB->begin()))
-    if (PN->getNumIncomingValues() == 2) {
-      // Ok, this is a two entry PHI node.  Check to see if this is a simple "if
-      // statement", which has a very simple dominance structure.  Basically, we
-      // are trying to find the condition that is being branched on, which
-      // subsequently causes this merge to happen.  We really want control
-      // dependence information for this check, but simplifycfg can't keep it up
-      // to date, and this catches most of the cases we care about anyway.
-      //
-      BasicBlock *IfTrue, *IfFalse;
-      if (Value *IfCond = GetIfCondition(BB, IfTrue, IfFalse)) {
-        DEBUG(std::cerr << "FOUND IF CONDITION!  " << *IfCond << "  T: "
-              << IfTrue->getName() << "  F: " << IfFalse->getName() << "\n");
-
-        // Loop over the PHI's seeing if we can promote them all to select
-        // instructions.  While we are at it, keep track of the instructions
-        // that need to be moved to the dominating block.
-        std::set<Instruction*> AggressiveInsts;
-        bool CanPromote = true;
-
-        BasicBlock::iterator AfterPHIIt = BB->begin();
-        while (isa<PHINode>(AfterPHIIt)) {
-          PHINode *PN = cast<PHINode>(AfterPHIIt++);
-          if (PN->getIncomingValue(0) == PN->getIncomingValue(1)) {
-            if (PN->getIncomingValue(0) != PN)
-              PN->replaceAllUsesWith(PN->getIncomingValue(0));
-            else
-              PN->replaceAllUsesWith(UndefValue::get(PN->getType()));
-          } else if (!DominatesMergePoint(PN->getIncomingValue(0), BB,
-                                          &AggressiveInsts) ||
-                     !DominatesMergePoint(PN->getIncomingValue(1), BB,
-                                          &AggressiveInsts)) {
-            CanPromote = false;
-            break;
-          }
-        }
-
-        // Did we eliminate all PHI's?
-        CanPromote |= AfterPHIIt == BB->begin();
-
-        // If we all PHI nodes are promotable, check to make sure that all
-        // instructions in the predecessor blocks can be promoted as well.  If
-        // not, we won't be able to get rid of the control flow, so it's not
-        // worth promoting to select instructions.
-        BasicBlock *DomBlock = 0, *IfBlock1 = 0, *IfBlock2 = 0;
-        if (CanPromote) {
-          PN = cast<PHINode>(BB->begin());
-          BasicBlock *Pred = PN->getIncomingBlock(0);
-          if (cast<BranchInst>(Pred->getTerminator())->isUnconditional()) {
-            IfBlock1 = Pred;
-            DomBlock = *pred_begin(Pred);
-            for (BasicBlock::iterator I = Pred->begin();
-                 !isa<TerminatorInst>(I); ++I)
-              if (!AggressiveInsts.count(I)) {
-                // This is not an aggressive instruction that we can promote.
-                // Because of this, we won't be able to get rid of the control
-                // flow, so the xform is not worth it.
-                CanPromote = false;
-                break;
-              }
-          }
-
-          Pred = PN->getIncomingBlock(1);
-          if (CanPromote &&
-              cast<BranchInst>(Pred->getTerminator())->isUnconditional()) {
-            IfBlock2 = Pred;
-            DomBlock = *pred_begin(Pred);
-            for (BasicBlock::iterator I = Pred->begin();
-                 !isa<TerminatorInst>(I); ++I)
-              if (!AggressiveInsts.count(I)) {
-                // This is not an aggressive instruction that we can promote.
-                // Because of this, we won't be able to get rid of the control
-                // flow, so the xform is not worth it.
-                CanPromote = false;
-                break;
-              }
-          }
-        }
-
-        // If we can still promote the PHI nodes after this gauntlet of tests,
-        // do all of the PHI's now.
-        if (CanPromote) {
-          // Move all 'aggressive' instructions, which are defined in the
-          // conditional parts of the if's up to the dominating block.
-          if (IfBlock1) {
-            DomBlock->getInstList().splice(DomBlock->getTerminator(),
-                                           IfBlock1->getInstList(),
-                                           IfBlock1->begin(),
-                                           IfBlock1->getTerminator());
-          }
-          if (IfBlock2) {
-            DomBlock->getInstList().splice(DomBlock->getTerminator(),
-                                           IfBlock2->getInstList(),
-                                           IfBlock2->begin(),
-                                           IfBlock2->getTerminator());
-          }
-
-          while (PHINode *PN = dyn_cast<PHINode>(BB->begin())) {
-            // Change the PHI node into a select instruction.
-            Value *TrueVal =
-              PN->getIncomingValue(PN->getIncomingBlock(0) == IfFalse);
-            Value *FalseVal =
-              PN->getIncomingValue(PN->getIncomingBlock(0) == IfTrue);
-
-            std::string Name = PN->getName(); PN->setName("");
-            PN->replaceAllUsesWith(new SelectInst(IfCond, TrueVal, FalseVal,
-                                                  Name, AfterPHIIt));
-            BB->getInstList().erase(PN);
-          }
-          Changed = true;
-        }
-      }
-    }
+    if (PN->getNumIncomingValues() == 2)
+      Changed |= FoldTwoEntryPHINode(PN); 
 
   return Changed;
 }
