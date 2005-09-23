@@ -325,7 +325,8 @@ class DAGISelEmitter : public TableGenBackend {
   /// PatternsToMatch - All of the things we are matching on the DAG.  The first
   /// value is the pattern to match, the second pattern is the result to
   /// emit.
-  std::vector<std::pair<TreePatternNode*, TreePatternNode*> > PatternsToMatch;
+  typedef std::pair<TreePatternNode*, TreePatternNode*> PatternToMatch;
+  std::vector<PatternToMatch> PatternsToMatch;
 public:
   DAGISelEmitter(RecordKeeper &R) : Records(R) {}
 

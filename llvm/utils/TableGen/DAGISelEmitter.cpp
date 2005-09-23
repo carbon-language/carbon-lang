@@ -1001,8 +1001,24 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
      << "  case ISD::AssertZext:\n"
      << "    return Select(N->getOperand(0));\n";
     
-
+  // Group the patterns by their top-level opcodes.
+  std::map<Record*, std::vector<PatternToMatch*> > PatternsByOpcode;
+  for (unsigned i = 0, e = PatternsToMatch.size(); i != e; ++i)
+    PatternsByOpcode[PatternsToMatch[i].first->getOperator()]
+      .push_back(&PatternsToMatch[i]);
   
+  for (std::map<Record*, std::vector<PatternToMatch*> >::iterator
+       PBOI = PatternsByOpcode.begin(), E = PatternsByOpcode.end(); PBOI != E;
+       ++PBOI) {
+    const SDNodeInfo &OpcodeInfo = getSDNodeInfo(PBOI->first);
+    std::vector<PatternToMatch*> &Patterns = PBOI->second;
+    
+    OS << "  case " << OpcodeInfo.getEnumName() << ":\n";
+    
+    OS << "    break;\n";
+  }
+  
+
   OS << "  } // end of big switch.\n\n"
      << "  std::cerr << \"Cannot yet select: \";\n"
      << "  N->dump();\n"
