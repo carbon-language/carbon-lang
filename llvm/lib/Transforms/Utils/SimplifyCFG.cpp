@@ -1041,7 +1041,6 @@ static bool FoldTwoEntryPHINode(PHINode *PN) {
   // that need to be moved to the dominating block.
   std::set<Instruction*> AggressiveInsts;
   
-  bool CanPromote = true;
   BasicBlock::iterator AfterPHIIt = BB->begin();
   while (isa<PHINode>(AfterPHIIt)) {
     PHINode *PN = cast<PHINode>(AfterPHIIt++);
@@ -1054,13 +1053,9 @@ static bool FoldTwoEntryPHINode(PHINode *PN) {
                                     &AggressiveInsts) ||
                !DominatesMergePoint(PN->getIncomingValue(1), BB,
                                     &AggressiveInsts)) {
-      CanPromote = false;
+      return false;
     }
   }
-  
-  // Did we eliminate all PHI's?
-  if (!CanPromote && AfterPHIIt != BB->begin())
-    return false;
   
   // If we all PHI nodes are promotable, check to make sure that all
   // instructions in the predecessor blocks can be promoted as well.  If
