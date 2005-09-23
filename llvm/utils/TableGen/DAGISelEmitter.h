@@ -314,6 +314,9 @@ namespace llvm {
 /// and emission of the instruction selector.
 ///
 class DAGISelEmitter : public TableGenBackend {
+public:
+  typedef std::pair<TreePatternNode*, TreePatternNode*> PatternToMatch;
+private:
   RecordKeeper &Records;
   CodeGenTarget Target;
 
@@ -325,7 +328,6 @@ class DAGISelEmitter : public TableGenBackend {
   /// PatternsToMatch - All of the things we are matching on the DAG.  The first
   /// value is the pattern to match, the second pattern is the result to
   /// emit.
-  typedef std::pair<TreePatternNode*, TreePatternNode*> PatternToMatch;
   std::vector<PatternToMatch> PatternsToMatch;
 public:
   DAGISelEmitter(RecordKeeper &R) : Records(R) {}
@@ -363,6 +365,7 @@ private:
                                    std::map<std::string,
                                             TreePatternNode*> &InstInputs,
                                    std::map<std::string, Record*> &InstResults);
+  void EmitCodeForPattern(PatternToMatch &Pattern, std::ostream &OS);
   void EmitInstructionSelector(std::ostream &OS);
 };
 

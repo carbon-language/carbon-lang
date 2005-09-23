@@ -985,6 +985,51 @@ void DAGISelEmitter::ParsePatterns() {
         });
 }
 
+void DAGISelEmitter::EmitCodeForPattern(PatternToMatch &Pattern,
+                                        std::ostream &OS) {
+  OS << "    // ";
+  Pattern.first->print(OS);
+  OS << "\n";
+  
+  
+  
+}
+
+/// getPatternSize - Return the 'size' of this pattern.  We want to match large
+/// patterns before small ones.  This is used to determine the size of a
+/// pattern.
+static unsigned getPatternSize(TreePatternNode *P) {
+  assert(MVT::isInteger(P->getType()) || MVT::isFloatingPoint(P->getType()) &&
+         "Not a valid pattern node to size!");
+  unsigned Size = 1;  // The node itself.
+  
+  // Count children in the count if they are also nodes.
+  for (unsigned i = 0, e = P->getNumChildren(); i != e; ++i) {
+    TreePatternNode *Child = P->getChild(i);
+    if (!Child->isLeaf() && Child->getType() != MVT::Other)
+      Size += getPatternSize(Child);
+  }
+  
+  return Size;
+}
+
+// PatternSortingPredicate - return true if we prefer to match LHS before RHS.
+// In particular, we want to match maximal patterns first and lowest cost within
+// a particular complexity first.
+struct PatternSortingPredicate {
+  bool operator()(DAGISelEmitter::PatternToMatch *LHS,
+                  DAGISelEmitter::PatternToMatch *RHS) {
+    unsigned LHSSize = getPatternSize(LHS->first);
+    unsigned RHSSize = getPatternSize(RHS->first);
+    if (LHSSize > RHSSize) return true;   // LHS -> bigger -> less cost
+    if (LHSSize < RHSSize) return false;
+    
+    // If they are equal, compare cost.
+    // FIXME: Compute cost!
+    return false;
+  }
+};
+
 void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
   // Emit boilerplate.
   OS << "// The main instruction selector code.\n"
@@ -1007,6 +1052,7 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
     PatternsByOpcode[PatternsToMatch[i].first->getOperator()]
       .push_back(&PatternsToMatch[i]);
   
+  // Loop over all of the case statements.
   for (std::map<Record*, std::vector<PatternToMatch*> >::iterator
        PBOI = PatternsByOpcode.begin(), E = PatternsByOpcode.end(); PBOI != E;
        ++PBOI) {
@@ -1014,7 +1060,14 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
     std::vector<PatternToMatch*> &Patterns = PBOI->second;
     
     OS << "  case " << OpcodeInfo.getEnumName() << ":\n";
+
+    // We want to emit all of the matching code now.  However, we want to emit
+    // the matches in order of minimal cost.  Sort the patterns so the least
+    // cost one is at the start.
+    std::sort(Patterns.begin(), Patterns.end(), PatternSortingPredicate());
     
+    for (unsigned i = 0, e = Patterns.size(); i != e; ++i)
+      EmitCodeForPattern(*Patterns[i], OS);
     OS << "    break;\n";
   }
   
@@ -1040,6 +1093,9 @@ void DAGISelEmitter::run(std::ostream &OS) {
   ParsePatternFragments(OS);
   ParseInstructions();
   ParsePatterns();
+  
+  // FIXME: Generate variants.  For example, commutative patterns can match
+  // multiple ways.  Add them to PatternsToMatch as well.
 
   // At this point, we have full information about the 'Patterns' we need to
   // parse, both implicitly from instructions as well as from explicit pattern
