@@ -148,49 +148,43 @@ static bool isBytecodeLibrary(const sys::Path &FullPath) {
 }
 
 static bool isBytecodeLPath(const std::string &LibPath) {
-  bool isBytecodeLPath = false;
-
   sys::Path LPath(LibPath);
 
-  // Make sure it exists
-  if (!LPath.exists())
-    return isBytecodeLPath;
-
-  // Make sure its a directory
+  // Make sure it exists and is a directory
   try {
-    if (!LPath.isDirectory())
-      return isBytecodeLPath;
+    if (!LPath.exists() || !LPath.isDirectory())
+      return false;
   } catch (std::string& xcptn) {
-    return isBytecodeLPath;
+    return false;
   }
-
+  
   // Grab the contents of the -L path
   std::set<sys::Path> Files;
   LPath.getDirectoryContents(Files);
-
+  
   // Iterate over the contents one by one to determine
   // if this -L path has any bytecode shared libraries
   // or archives
   std::set<sys::Path>::iterator File = Files.begin();
+  std::string dllsuffix = sys::Path::GetDLLSuffix();
   for (; File != Files.end(); ++File) {
 
     if ( File->isDirectory() )
       continue;
 
     std::string path = File->toString();
-    std::string dllsuffix = sys::Path::GetDLLSuffix();
 
     // Check for an ending '.dll,.so' or '.a' suffix as all
     // other files are not of interest to us here
-    if ( path.find(dllsuffix, path.size()-dllsuffix.size()) == std::string::npos
-        && path.find(".a", path.size()-2) == std::string::npos )
+    if (path.find(dllsuffix, path.size()-dllsuffix.size()) == std::string::npos
+        && path.find(".a", path.size()-2) == std::string::npos)
       continue;
 
     // Finally, check to see if the file is a true bytecode file
     if (isBytecodeLibrary(*File))
-      isBytecodeLPath = true;
+      return true;
   }
-  return isBytecodeLPath;
+  return false;
 }
 
 /// GenerateBytecode - generates a bytecode file from the specified module.
