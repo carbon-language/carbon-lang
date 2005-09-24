@@ -368,6 +368,9 @@ private:
   void EmitMatchForPattern(TreePatternNode *N, const std::string &RootName,
                            std::map<std::string,std::string> &VarMap,
                            unsigned PatternNo, std::ostream &OS);
+  unsigned CodeGenPatternResult(TreePatternNode *N, unsigned &Ctr,
+                                std::map<std::string,std::string> &VariableMap, 
+                                std::ostream &OS);      
   void EmitCodeForPattern(PatternToMatch &Pattern, std::ostream &OS);
   void EmitInstructionSelector(std::ostream &OS);
 };

@@ -405,7 +405,7 @@ MVT::ValueType TreePattern::getIntrinsicType(Record *R) const {
     return MVT::LAST_VALUETYPE;
   }
   
-  error("Unknown value used: " + R->getName());
+  error("Unknown node flavor used in pattern: " + R->getName());
   return MVT::Other;
 }
 
@@ -421,6 +421,15 @@ TreePatternNode *TreePattern::ParseTreePattern(DagInit *Dag) {
     Init *Arg = Dag->getArg(0);
     TreePatternNode *New;
     if (DefInit *DI = dynamic_cast<DefInit*>(Arg)) {
+      Record *R = DI->getDef();
+      if (R->isSubClassOf("SDNode") || R->isSubClassOf("PatFrag")) {
+        Dag->setArg(0, new DagInit(R,
+                                std::vector<std::pair<Init*, std::string> >()));
+        TreePatternNode *TPN = ParseTreePattern(Dag);
+        TPN->setName(Dag->getArgName(0));
+        return TPN;
+      }   
+      
       New = new TreePatternNode(DI);
       // If it's a regclass or something else known, set the type.
       New->setType(getIntrinsicType(DI->getDef()));
@@ -993,28 +1002,29 @@ void DAGISelEmitter::EmitMatchForPattern(TreePatternNode *N,
                                      std::map<std::string,std::string> &VarMap,
                                          unsigned PatternNo, std::ostream &OS) {
   assert(!N->isLeaf() && "Cannot match against a leaf!");
+  
+  // If this node has a name associated with it, capture it in VarMap.  If
+  // we already saw this in the pattern, emit code to verify dagness.
+  if (!N->getName().empty()) {
+    std::string &VarMapEntry = VarMap[N->getName()];
+    if (VarMapEntry.empty()) {
+      VarMapEntry = RootName;
+    } else {
+      // If we get here, this is a second reference to a specific name.  Since
+      // we already have checked that the first reference is valid, we don't
+      // have to recursively match it, just check that it's the same as the
+      // previously named thing.
+      OS << "      if (" << VarMapEntry << " != " << RootName
+         << ") goto P" << PatternNo << "Fail;\n";
+      return;
+    }
+  }
+  
   // Emit code to load the child nodes and match their contents recursively.
   for (unsigned i = 0, e = N->getNumChildren(); i != e; ++i) {
     OS << "      SDOperand " << RootName << i <<" = " << RootName
        << ".getOperand(" << i << ");\n";
     TreePatternNode *Child = N->getChild(i);
-    
-    // If this child has a name associated with it, capture it in VarMap.  If
-    // we already saw this in the pattern, emit code to verify dagness.
-    if (!Child->getName().empty()) {
-      std::string &VarMapEntry = VarMap[Child->getName()];
-      if (VarMapEntry.empty()) {
-        VarMapEntry = RootName + utostr(i);
-      } else {
-        // If we get here, this is a second reference to a specific name.  Since
-        // we already have checked that the first reference is valid, we don't
-        // have to recursively match it, just check that it's the same as the
-        // previously named thing.
-        OS << "      if (" << VarMapEntry << " != " << RootName << i
-           << ") goto P" << PatternNo << "Fail;\n";
-        continue;
-      }
-    }
     
     if (!Child->isLeaf()) {
       // If it's not a leaf, recursively match.
@@ -1023,6 +1033,23 @@ void DAGISelEmitter::EmitMatchForPattern(TreePatternNode *N,
          << CInfo.getEnumName() << ") goto P" << PatternNo << "Fail;\n";
       EmitMatchForPattern(Child, RootName + utostr(i), VarMap, PatternNo, OS);
     } else {
+      // If this child has a name associated with it, capture it in VarMap.  If
+      // we already saw this in the pattern, emit code to verify dagness.
+      if (!Child->getName().empty()) {
+        std::string &VarMapEntry = VarMap[Child->getName()];
+        if (VarMapEntry.empty()) {
+          VarMapEntry = RootName + utostr(i);
+        } else {
+          // If we get here, this is a second reference to a specific name.  Since
+          // we already have checked that the first reference is valid, we don't
+          // have to recursively match it, just check that it's the same as the
+          // previously named thing.
+          OS << "      if (" << VarMapEntry << " != " << RootName << i
+          << ") goto P" << PatternNo << "Fail;\n";
+          continue;
+        }
+      }
+      
       // Handle leaves of various types.
       Init *LeafVal = Child->getLeafValue();
       Record *LeafRec = dynamic_cast<DefInit*>(LeafVal)->getDef();
@@ -1046,6 +1073,65 @@ void DAGISelEmitter::EmitMatchForPattern(TreePatternNode *N,
        << ".Val)) goto P" << PatternNo << "Fail;\n";
 }
 
+
+unsigned DAGISelEmitter::
+CodeGenPatternResult(TreePatternNode *N, unsigned &Ctr,
+                     std::map<std::string,std::string> &VariableMap, 
+                     std::ostream &OS){
+  // This is something selected from the pattern we matched.
+  if (!N->getName().empty()) {
+    const std::string &Val = VariableMap[N->getName()];
+    assert(!Val.empty() &&
+           "Variable referenced but not defined and not caught earlier!");
+    if (Val[0] == 'T' && Val[1] == 'm' && Val[2] == 'p') {
+      // Already selected this operand, just return the tmpval.
+      // FIXME: DO THIS.
+    } else {
+      unsigned ResNo = Ctr++;
+      OS << "      SDOperand Tmp" << ResNo << " = Select(" << Val << ");\n";
+      // FIXME: Add Tmp<ResNo> to VariableMap.
+      return ResNo;
+    }
+  }
+  
+  if (N->isLeaf()) {
+    N->dump();
+    assert(0 && "Unknown leaf type!");
+    return ~0U;
+  }
+
+  Record *Op = N->getOperator();
+  if (Op->isSubClassOf("Instruction")) {
+    // Emit all of the operands.
+    std::vector<unsigned> Ops;
+    for (unsigned i = 0, e = N->getNumChildren(); i != e; ++i)
+      Ops.push_back(CodeGenPatternResult(N->getChild(i), Ctr, VariableMap, OS));
+
+    CodeGenInstruction &II = Target.getInstruction(Op->getName());
+    unsigned ResNo = Ctr++;
+    
+    OS << "      SDOperand Tmp" << ResNo << " = CurDAG->getTargetNode("
+       << II.Namespace << "::" << II.TheDef->getName() << ", MVT::"
+       << getEnumName(N->getType());
+    for (unsigned i = 0, e = Ops.size(); i != e; ++i)
+      OS << ", Tmp" << Ops[i];
+    OS << ");\n";
+    return ResNo;
+  } else if (Op->isSubClassOf("SDNodeXForm")) {
+    assert(N->getNumChildren() == 1 && "node xform should have one child!");
+    unsigned OpVal = CodeGenPatternResult(N->getChild(0), Ctr, VariableMap, OS);
+    
+    unsigned ResNo = Ctr++;
+    OS << "      SDOperand Tmp" << ResNo << " = Transform_" << Op->getName()
+       << "(Tmp" << OpVal << ".Val);\n";
+    return ResNo;
+  } else {
+    N->dump();
+    assert(0 && "Unknown node in result pattern!");
+  }
+}
+
+
 /// EmitCodeForPattern - Given a pattern to match, emit code to the specified
 /// stream to match the pattern, and generate the code for the match if it
 /// succeeds.
@@ -1065,6 +1151,9 @@ void DAGISelEmitter::EmitCodeForPattern(PatternToMatch &Pattern,
   Pattern.second->print(OS);
   OS << "\n";
   
+  unsigned TmpNo = 0;
+  unsigned Res = CodeGenPatternResult(Pattern.second, TmpNo, VariableMap, OS);
+  OS << "      return Tmp" << Res << ";\n";
   OS << "    }\n  P" << PatternNo << "Fail:\n";
 }
 
