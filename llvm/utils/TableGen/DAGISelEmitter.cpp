@@ -1153,6 +1153,9 @@ void DAGISelEmitter::EmitCodeForPattern(PatternToMatch &Pattern,
   
   unsigned TmpNo = 0;
   unsigned Res = CodeGenPatternResult(Pattern.second, TmpNo, VariableMap, OS);
+  
+  // Add the result to the map if it has multiple uses.
+  OS << "      if (!N.Val->hasOneUse()) CodeGenMap[N] = Tmp" << Res << ";\n";
   OS << "      return Tmp" << Res << ";\n";
   OS << "    }\n  P" << PatternNo << "Fail:\n";
 }
@@ -1199,6 +1202,10 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
      << "  if (N.getOpcode() >= ISD::BUILTIN_OP_END &&\n"
      << "      N.getOpcode() < PPCISD::FIRST_NUMBER)\n"
      << "    return N;   // Already selected.\n\n"
+     << "  if (!N.Val->hasOneUse()) {\n"
+  << "    std::map<SDOperand, SDOperand>::iterator CGMI = CodeGenMap.find(N);\n"
+     << "    if (CGMI != CodeGenMap.end()) return CGMI->second;\n"
+     << "  }\n"
      << "  switch (N.getOpcode()) {\n"
      << "  default: break;\n"
      << "  case ISD::EntryToken:       // These leaves remain the same.\n"
@@ -1249,6 +1256,10 @@ void DAGISelEmitter::run(std::ostream &OS) {
   OS << "// *** NOTE: This file is #included into the middle of the target\n"
      << "// *** instruction selector class.  These functions are really "
      << "methods.\n\n";
+  
+  OS << "// Instance var to keep track of multiply used nodes that have \n"
+     << "// already been selected.\n"
+     << "std::map<SDOperand, SDOperand> CodeGenMap;\n";
   
   ParseNodeInfo();
   ParseNodeTransforms(OS);
