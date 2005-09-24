@@ -385,6 +385,82 @@ static ConstantInt *SubOne(ConstantInt *C) {
                                          ConstantInt::get(C->getType(), 1)));
 }
 
+/// MaskedValueIsZero - Return true if 'V & Mask' is known to be zero.  We use
+/// this predicate to simplify operations downstream.  V and Mask are known to
+/// be the same type.
+static bool MaskedValueIsZero(Value *V, ConstantIntegral *Mask) {
+  // Note, we cannot consider 'undef' to be "IsZero" here.  The problem is that
+  // we cannot optimize based on the assumption that it is zero without changing
+  // to to an explicit zero.  If we don't change it to zero, other code could
+  // optimized based on the contradictory assumption that it is non-zero.
+  // Because instcombine aggressively folds operations with undef args anyway,
+  // this won't lose us code quality.
+  if (Mask->isNullValue())
+    return true;
+  if (ConstantIntegral *CI = dyn_cast<ConstantIntegral>(V))
+    return ConstantExpr::getAnd(CI, Mask)->isNullValue();
+  
+  if (Instruction *I = dyn_cast<Instruction>(V)) {
+    switch (I->getOpcode()) {
+      case Instruction::And:
+        // (X & C1) & C2 == 0   iff   C1 & C2 == 0.
+        if (ConstantIntegral *CI = dyn_cast<ConstantIntegral>(I->getOperand(1)))
+          if (ConstantExpr::getAnd(CI, Mask)->isNullValue())
+            return true;
+        break;
+      case Instruction::Or:
+        // If the LHS and the RHS are MaskedValueIsZero, the result is also zero.
+        return MaskedValueIsZero(I->getOperand(1), Mask) &&
+        MaskedValueIsZero(I->getOperand(0), Mask);
+      case Instruction::Select:
+        // If the T and F values are MaskedValueIsZero, the result is also zero.
+        return MaskedValueIsZero(I->getOperand(2), Mask) &&
+        MaskedValueIsZero(I->getOperand(1), Mask);
+      case Instruction::Cast: {
+        const Type *SrcTy = I->getOperand(0)->getType();
+        if (SrcTy == Type::BoolTy)
+          return (Mask->getRawValue() & 1) == 0;
+        
+        if (SrcTy->isInteger()) {
+          // (cast <ty> X to int) & C2 == 0  iff <ty> could not have contained C2.
+          if (SrcTy->isUnsigned() &&                      // Only handle zero ext.
+              ConstantExpr::getCast(Mask, SrcTy)->isNullValue())
+            return true;
+          
+          // If this is a noop cast, recurse.
+          if ((SrcTy->isSigned() && SrcTy->getUnsignedVersion() == I->getType())||
+              SrcTy->getSignedVersion() == I->getType()) {
+            Constant *NewMask =
+            ConstantExpr::getCast(Mask, I->getOperand(0)->getType());
+            return MaskedValueIsZero(I->getOperand(0),
+                                     cast<ConstantIntegral>(NewMask));
+          }
+        }
+        break;
+      }
+      case Instruction::Shl:
+        // (shl X, C1) & C2 == 0   iff   (X & C2 >>u C1) == 0
+        if (ConstantUInt *SA = dyn_cast<ConstantUInt>(I->getOperand(1)))
+          return MaskedValueIsZero(I->getOperand(0),
+                                   cast<ConstantIntegral>(ConstantExpr::getUShr(Mask, SA)));
+        break;
+      case Instruction::Shr:
+        // (ushr X, C1) & C2 == 0   iff  (-1 >> C1) & C2 == 0
+        if (ConstantUInt *SA = dyn_cast<ConstantUInt>(I->getOperand(1)))
+          if (I->getType()->isUnsigned()) {
+            Constant *C1 = ConstantIntegral::getAllOnesValue(I->getType());
+            C1 = ConstantExpr::getShr(C1, SA);
+            C1 = ConstantExpr::getAnd(C1, Mask);
+            if (C1->isNullValue())
+              return true;
+          }
+            break;
+    }
+  }
+  
+  return false;
+}
+
 // isTrueWhenEqual - Return true if the specified setcondinst instruction is
 // true when both operands are equal...
 //
@@ -627,6 +703,58 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
     if (isa<PHINode>(LHS))
       if (Instruction *NV = FoldOpIntoPhi(I))
         return NV;
+    
+    ConstantInt *XorRHS;
+    Value *XorLHS;
+    if (match(LHS, m_Xor(m_Value(XorLHS), m_ConstantInt(XorRHS)))) {
+      unsigned TySizeBits = I.getType()->getPrimitiveSizeInBits();
+      int64_t  RHSSExt = cast<ConstantInt>(RHSC)->getSExtValue();
+      uint64_t RHSZExt = cast<ConstantInt>(RHSC)->getZExtValue();
+      
+      uint64_t C0080Val = 1ULL << 31;
+      int64_t CFF80Val = -C0080Val;
+      unsigned Size = 32;
+      do {
+        if (TySizeBits > Size) {
+          bool Found = false;
+          // If we have ADD(XOR(AND(X, 0xFF), 0x80), 0xF..F80), it's a sext.
+          // If we have ADD(XOR(AND(X, 0xFF), 0xF..F80), 0x80), it's a sext.
+          if (RHSSExt == CFF80Val) {
+            if (XorRHS->getZExtValue() == C0080Val)
+              Found = true;
+          } else if (RHSZExt == C0080Val) {
+            if (XorRHS->getSExtValue() == CFF80Val)
+              Found = true;
+          }
+          if (Found) {
+            // This is a sign extend if the top bits are known zero.
+            Constant *Mask = ConstantInt::getAllOnesValue(XorLHS->getType());
+            Mask = ConstantExpr::getShl(Mask, 
+                           ConstantInt::get(Type::UByteTy, 64-TySizeBits-Size));
+            if (!MaskedValueIsZero(XorLHS, cast<ConstantInt>(Mask)))
+              Size = 0;  // Not a sign ext, but can't be any others either.
+            goto FoundSExt;
+          }
+        }
+        Size >>= 1;
+        C0080Val >>= Size;
+        CFF80Val >>= Size;
+      } while (Size >= 8);
+      
+FoundSExt:
+      const Type *MiddleType = 0;
+      switch (Size) {
+      default: break;
+      case 32: MiddleType = Type::IntTy; break;
+      case 16: MiddleType = Type::ShortTy; break;
+      case 8:  MiddleType = Type::SByteTy; break;
+      }
+      if (MiddleType) {
+        Instruction *NewTrunc = new CastInst(XorLHS, MiddleType, "sext");
+        InsertNewInstBefore(NewTrunc, I);
+        return new CastInst(NewTrunc, I.getType());
+      }
+    }
   }
 
   // X + X --> X << 1
@@ -1316,83 +1444,6 @@ struct FoldSetCCLogical {
     return IC.ReplaceInstUsesWith(Log, RV);
   }
 };
-
-
-/// MaskedValueIsZero - Return true if 'V & Mask' is known to be zero.  We use
-/// this predicate to simplify operations downstream.  V and Mask are known to
-/// be the same type.
-static bool MaskedValueIsZero(Value *V, ConstantIntegral *Mask) {
-  // Note, we cannot consider 'undef' to be "IsZero" here.  The problem is that
-  // we cannot optimize based on the assumption that it is zero without changing
-  // to to an explicit zero.  If we don't change it to zero, other code could
-  // optimized based on the contradictory assumption that it is non-zero.
-  // Because instcombine aggressively folds operations with undef args anyway,
-  // this won't lose us code quality.
-  if (Mask->isNullValue())
-    return true;
-  if (ConstantIntegral *CI = dyn_cast<ConstantIntegral>(V))
-    return ConstantExpr::getAnd(CI, Mask)->isNullValue();
-
-  if (Instruction *I = dyn_cast<Instruction>(V)) {
-    switch (I->getOpcode()) {
-    case Instruction::And:
-      // (X & C1) & C2 == 0   iff   C1 & C2 == 0.
-      if (ConstantIntegral *CI = dyn_cast<ConstantIntegral>(I->getOperand(1)))
-        if (ConstantExpr::getAnd(CI, Mask)->isNullValue())
-          return true;
-      break;
-    case Instruction::Or:
-      // If the LHS and the RHS are MaskedValueIsZero, the result is also zero.
-      return MaskedValueIsZero(I->getOperand(1), Mask) &&
-             MaskedValueIsZero(I->getOperand(0), Mask);
-    case Instruction::Select:
-      // If the T and F values are MaskedValueIsZero, the result is also zero.
-      return MaskedValueIsZero(I->getOperand(2), Mask) &&
-             MaskedValueIsZero(I->getOperand(1), Mask);
-    case Instruction::Cast: {
-      const Type *SrcTy = I->getOperand(0)->getType();
-      if (SrcTy == Type::BoolTy)
-        return (Mask->getRawValue() & 1) == 0;
-
-      if (SrcTy->isInteger()) {
-        // (cast <ty> X to int) & C2 == 0  iff <ty> could not have contained C2.
-        if (SrcTy->isUnsigned() &&                      // Only handle zero ext.
-            ConstantExpr::getCast(Mask, SrcTy)->isNullValue())
-          return true;
-
-        // If this is a noop cast, recurse.
-        if ((SrcTy->isSigned() && SrcTy->getUnsignedVersion() == I->getType())||
-            SrcTy->getSignedVersion() == I->getType()) {
-          Constant *NewMask =
-            ConstantExpr::getCast(Mask, I->getOperand(0)->getType());
-          return MaskedValueIsZero(I->getOperand(0),
-                                   cast<ConstantIntegral>(NewMask));
-        }
-      }
-      break;
-    }
-    case Instruction::Shl:
-      // (shl X, C1) & C2 == 0   iff   (X & C2 >>u C1) == 0
-      if (ConstantUInt *SA = dyn_cast<ConstantUInt>(I->getOperand(1)))
-        return MaskedValueIsZero(I->getOperand(0),
-                      cast<ConstantIntegral>(ConstantExpr::getUShr(Mask, SA)));
-      break;
-    case Instruction::Shr:
-      // (ushr X, C1) & C2 == 0   iff  (-1 >> C1) & C2 == 0
-      if (ConstantUInt *SA = dyn_cast<ConstantUInt>(I->getOperand(1)))
-        if (I->getType()->isUnsigned()) {
-          Constant *C1 = ConstantIntegral::getAllOnesValue(I->getType());
-          C1 = ConstantExpr::getShr(C1, SA);
-          C1 = ConstantExpr::getAnd(C1, Mask);
-          if (C1->isNullValue())
-            return true;
-        }
-      break;
-    }
-  }
-
-  return false;
-}
 
 // OptAndOp - This handles expressions of the form ((val OP C1) & C2).  Where
 // the Op parameter is 'OP', OpRHS is 'C1', and AndRHS is 'C2'.  Op is
@@ -3565,6 +3616,24 @@ Instruction *InstCombiner::visitShiftInst(ShiftInst &I) {
           } else {
             return new ShiftInst(Op0SI->getOpcode(), Mask,
                          ConstantUInt::get(Type::UByteTy, ShiftAmt1-ShiftAmt2));
+          }
+        } else {
+          // We can handle signed (X << C1) >> C2 if it's a sign extend.  In
+          // this case, C1 == C2 and C1 is 8, 16, or 32.
+          if (ShiftAmt1 == ShiftAmt2) {
+            const Type *SExtType = 0;
+            switch (ShiftAmt1) {
+            case 8 : SExtType = Type::SByteTy; break;
+            case 16: SExtType = Type::ShortTy; break;
+            case 32: SExtType = Type::IntTy; break;
+            }
+            
+            if (SExtType) {
+              Instruction *NewTrunc = new CastInst(Op0SI->getOperand(0),
+                                                   SExtType, "sext");
+              InsertNewInstBefore(NewTrunc, I);
+              return new CastInst(NewTrunc, I.getType());
+            }
           }
         }
       }
