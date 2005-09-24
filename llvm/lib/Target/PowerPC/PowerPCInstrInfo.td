@@ -774,7 +774,12 @@ def : Pat<(or GPRC:$in, imm:$imm),
 def : Pat<(xor GPRC:$in, imm:$imm),
           (XORIS (XORI GPRC:$in, (LO16 imm:$imm)), (HI16 imm:$imm))>;
 
-// Same as above, but using a temporary.
+// Arbitrary immediate support.
+def : Pat<(i32 imm:$imm),
+          (ORI (LIS (HI16 imm:$imm)), (LO16 imm:$imm))>;
+
+
+// Same as above, but using a temporary. FIXME: implement temporaries :)
 /*
 def : Pattern<(xor GPRC:$in, imm:$imm),
               [(set GPRC:$tmp, (XORI GPRC:$in, (LO16 imm:$imm))),
