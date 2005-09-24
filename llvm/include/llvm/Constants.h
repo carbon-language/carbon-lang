@@ -54,7 +54,21 @@ public:
   /// unsigned integer value.
   ///
   inline uint64_t getRawValue() const { return Val.Unsigned; }
+  
+  /// getZExtValue - Return the constant zero extended as appropriate for this
+  /// type.
+  inline uint64_t getZExtValue() const {
+    unsigned Size = getType()->getPrimitiveSizeInBits();
+    return Val.Unsigned & (~0ULL >> (64-Size));
+  }
 
+  /// getSExtValue - Return the constant sign extended as appropriate for this
+  /// type.
+  inline int64_t getSExtValue() const {
+    unsigned Size = getType()->getPrimitiveSizeInBits();
+    return (Val.Signed << (64-Size)) >> (64-Size);
+  }
+  
   /// isNullValue - Return true if this is the value that would be returned by
   /// getNullValue.
   ///
