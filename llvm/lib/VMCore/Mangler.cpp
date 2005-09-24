@@ -28,16 +28,21 @@ static std::string MangleLetter(unsigned char C) {
 /// makeNameProper - We don't want identifier names non-C-identifier characters
 /// in them, so mangle them as appropriate.
 ///
-std::string Mangler::makeNameProper(const std::string &X) {
+std::string Mangler::makeNameProper(const std::string &X, const char *Prefix) {
   std::string Result;
 
-  // Mangle the first letter specially, don't allow numbers...
-  if ((X[0] < 'a' || X[0] > 'z') && (X[0] < 'A' || X[0] > 'Z') && X[0] != '_')
-    Result += MangleLetter(X[0]);
+  // If X does not start with (char)1, add the prefix.
+  std::string::const_iterator I = X.begin();
+  if (*I != 1)
+    Result = Prefix;
   else
-    Result += X[0];
+    ++I;  // Skip over the marker.
+  
+  // Mangle the first letter specially, don't allow numbers...
+  if (*I >= '0' && *I <= '9')
+    Result += MangleLetter(*I++);
 
-  for (std::string::const_iterator I = X.begin()+1, E = X.end(); I != E; ++I)
+  for (std::string::const_iterator E = X.end(); I != E; ++I)
     if ((*I < 'a' || *I > 'z') && (*I < 'A' || *I > 'Z') &&
         (*I < '0' || *I > '9') && *I != '_')
       Result += MangleLetter(*I);
@@ -75,7 +80,7 @@ std::string Mangler::getValueName(const Value *V) {
     if (gv && isa<Function>(gv) && cast<Function>(gv)->getIntrinsicID()) {
       name = gv->getName(); // Is an intrinsic function
     } else if (gv && !gv->hasInternalLinkage() && !MangledGlobals.count(gv)) {
-      name = Prefix + makeNameProper(gv->getName());
+      name = makeNameProper(gv->getName(), Prefix);
     } else {
       // Non-global, or global with internal linkage / colliding name
       // -> mangle.
