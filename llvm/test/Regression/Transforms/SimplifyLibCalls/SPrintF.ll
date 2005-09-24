@@ -1,4 +1,5 @@
 ; Test that the SPrintFOptimizer works correctly
+; RUN: llvm-as < %s | opt -simplify-libcalls -disable-output &&
 ; RUN: llvm-as < %s | opt -simplify-libcalls | llvm-dis | not grep 'call.*sprintf'
 
 declare int %sprintf(sbyte*,sbyte*,...)
@@ -11,7 +12,7 @@ declare int %puts(sbyte*)
 
 implementation   ; Functions:
 
-int %main () {
+int %foo (sbyte* %p) {
   %target = alloca [1024 x sbyte]
   %target_p = getelementptr [1024 x sbyte]* %target, int 0, int 0
   %hello_p = getelementptr [6 x sbyte]* %hello, int 0, int 0
@@ -24,9 +25,12 @@ int %main () {
   %r2 = call int (sbyte*,sbyte*,...)* %sprintf(sbyte* %target_p, sbyte* %null_p)
   %r3 = call int (sbyte*,sbyte*,...)* %sprintf(sbyte* %target_p, sbyte* %nh_p)
   %r4 = call int (sbyte*,sbyte*,...)* %sprintf(sbyte* %target_p, sbyte* %fmt1_p, sbyte* %hello_p)
+  %r4.1 = call int (sbyte*,sbyte*,...)* %sprintf(sbyte* %target_p, sbyte* %fmt1_p, sbyte* %p)
   %r5 = call int (sbyte*,sbyte*,...)* %sprintf(sbyte* %target_p, sbyte* %fmt2_p, int 82)
   %r6 = add int %r1, %r2
   %r7 = add int %r3, %r6
   %r8 = add int %r5, %r7
-  ret int %r8
+  %r9 = add int %r8, %r4
+  %r10 = add int %r9, %r4.1
+  ret int %r10
 }
