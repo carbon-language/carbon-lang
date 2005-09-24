@@ -1282,7 +1282,7 @@ public:
 
     // If the result of the fprintf call is used, none of these optimizations
     // can be made.
-    if (!ci->hasNUses(0))
+    if (!ci->use_empty())
       return false;
 
     // All the optimizations depend on the length of the second argument and the
@@ -1477,57 +1477,49 @@ public:
 
     // Get the second character and switch on its value
     ConstantInt* CI = dyn_cast<ConstantInt>(CA->getOperand(1));
-    switch (CI->getRawValue())
-    {
-      case 's':
-      {
-        uint64_t len = 0;
-        if (ci->hasNUses(0))
-        {
-          // sprintf(dest,"%s",str) -> strcpy(dest,str)
-          Function* strcpy_func = SLC.get_strcpy();
-          if (!strcpy_func)
-            return false;
-          std::vector<Value*> args;
-          args.push_back(CastToCStr(ci->getOperand(1), *ci));
-          args.push_back(CastToCStr(ci->getOperand(3), *ci));
-          new CallInst(strcpy_func,args,"",ci);
-        }
-        else if (getConstantStringLength(ci->getOperand(3),len))
-        {
-          // sprintf(dest,"%s",cstr) -> llvm.memcpy(dest,str,strlen(str),1)
-          len++; // get the null-terminator
-          Function* memcpy_func = SLC.get_memcpy();
-          if (!memcpy_func)
-            return false;
-          std::vector<Value*> args;
-          args.push_back(CastToCStr(ci->getOperand(1), *ci));
-          args.push_back(CastToCStr(ci->getOperand(3), *ci));
-          args.push_back(ConstantUInt::get(Type::UIntTy,len));
-          args.push_back(ConstantUInt::get(Type::UIntTy,1));
-          new CallInst(memcpy_func,args,"",ci);
-          ci->replaceAllUsesWith(ConstantSInt::get(Type::IntTy,len));
-        }
-        break;
-      }
-      case 'c':
-      {
-        // sprintf(dest,"%c",chr) -> store chr, dest
-        CastInst* cast =
-          new CastInst(ci->getOperand(3),Type::SByteTy,"char",ci);
-        new StoreInst(cast, ci->getOperand(1), ci);
-        GetElementPtrInst* gep = new GetElementPtrInst(ci->getOperand(1),
-          ConstantUInt::get(Type::UIntTy,1),ci->getOperand(1)->getName()+".end",
-          ci);
-        new StoreInst(ConstantInt::get(Type::SByteTy,0),gep,ci);
-        ci->replaceAllUsesWith(ConstantSInt::get(Type::IntTy,1));
-        break;
-      }
-      default:
+    switch (CI->getRawValue()) {
+    case 's': {
+      // sprintf(dest,"%s",str) -> llvm.memcpy(dest, str, strlen(str)+1, 1)
+      Function* strlen_func = SLC.get_strlen();
+      Function* memcpy_func = SLC.get_memcpy();
+      if (!strlen_func || !memcpy_func)
         return false;
+      
+      Value *Len = new CallInst(strlen_func, CastToCStr(ci->getOperand(3), *ci),
+                                ci->getOperand(3)->getName()+".len", ci);
+      Value *Len1 = BinaryOperator::createAdd(Len,
+                                            ConstantInt::get(Len->getType(), 1),
+                                              Len->getName()+"1", ci);
+      if (Len1->getType() != Type::UIntTy)
+        Len1 = new CastInst(Len1, Type::UIntTy, Len1->getName(), ci);
+      std::vector<Value*> args;
+      args.push_back(CastToCStr(ci->getOperand(1), *ci));
+      args.push_back(CastToCStr(ci->getOperand(3), *ci));
+      args.push_back(Len1);
+      args.push_back(ConstantUInt::get(Type::UIntTy,1));
+      new CallInst(memcpy_func, args, "", ci);
+      
+      // The strlen result is the unincremented number of bytes in the string.
+      if (!ci->use_empty() && Len->getType() != ci->getType())
+        Len = new CastInst(Len, ci->getType(), Len->getName(), ci);
+      ci->replaceAllUsesWith(Len);
+      ci->eraseFromParent();
+      return true;
     }
-    ci->eraseFromParent();
-    return true;
+    case 'c': {
+      // sprintf(dest,"%c",chr) -> store chr, dest
+      CastInst* cast = new CastInst(ci->getOperand(3),Type::SByteTy,"char",ci);
+      new StoreInst(cast, ci->getOperand(1), ci);
+      GetElementPtrInst* gep = new GetElementPtrInst(ci->getOperand(1),
+        ConstantUInt::get(Type::UIntTy,1),ci->getOperand(1)->getName()+".end",
+        ci);
+      new StoreInst(ConstantInt::get(Type::SByteTy,0),gep,ci);
+      ci->replaceAllUsesWith(ConstantSInt::get(Type::IntTy,1));
+      ci->eraseFromParent();
+      return true;
+    }
+    }
+    return false;
   }
 } SPrintFOptimizer;
 
@@ -1556,7 +1548,7 @@ public:
   virtual bool OptimizeCall(CallInst* ci, SimplifyLibCalls& SLC)
   {
     // If the result is used, none of these optimizations work
-    if (!ci->hasNUses(0))
+    if (!ci->use_empty())
       return false;
 
     // All the optimizations depend on the length of the first argument and the
