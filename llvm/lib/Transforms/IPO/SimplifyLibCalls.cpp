@@ -1500,9 +1500,11 @@ public:
       new CallInst(memcpy_func, args, "", ci);
       
       // The strlen result is the unincremented number of bytes in the string.
-      if (!ci->use_empty() && Len->getType() != ci->getType())
-        Len = new CastInst(Len, ci->getType(), Len->getName(), ci);
-      ci->replaceAllUsesWith(Len);
+      if (!ci->use_empty()) {
+        if (Len->getType() != ci->getType())
+          Len = new CastInst(Len, ci->getType(), Len->getName(), ci);
+        ci->replaceAllUsesWith(Len);
+      }
       ci->eraseFromParent();
       return true;
     }
