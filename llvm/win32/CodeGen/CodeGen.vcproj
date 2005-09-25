@@ -212,10 +212,10 @@
 				RelativePath="..\..\include\llvm\CodeGen\IntrinsicLowering.h">
 			</File>
 			<File
-				RelativePath="..\..\lib\CodeGen\LiveInterval.h">
+				RelativePath="..\..\include\llvm\CodeGen\LiveInterval.h">
 			</File>
 			<File
-				RelativePath="..\..\lib\CodeGen\LiveIntervalAnalysis.h">
+				RelativePath="..\..\include\llvm\CodeGen\LiveIntervalAnalysis.h">
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\CodeGen\LiveVariables.h">

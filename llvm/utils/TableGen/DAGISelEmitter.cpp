@@ -15,6 +15,7 @@
 #include "Record.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Debug.h"
+#include <algorithm>
 #include <set>
 using namespace llvm;
 
@@ -1128,6 +1129,7 @@ CodeGenPatternResult(TreePatternNode *N, unsigned &Ctr,
   } else {
     N->dump();
     assert(0 && "Unknown node in result pattern!");
+    return ~0U;
   }
 }
 
