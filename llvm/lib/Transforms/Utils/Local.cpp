@@ -12,11 +12,13 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Support/MathExtras.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Constants.h"
+#include "llvm/DerivedTypes.h"
 #include "llvm/Instructions.h"
 #include "llvm/Intrinsics.h"
+#include "llvm/Support/GetElementPtrTypeIterator.h"
+#include "llvm/Support/MathExtras.h"
 #include <cerrno>
 #include <cmath>
 using namespace llvm;
@@ -366,6 +368,48 @@ Constant *llvm::ConstantFoldCall(Function *F,
 }
 
 
+/// ConstantFoldLoadThroughGEPConstantExpr - Given a constant and a
+/// getelementptr constantexpr, return the constant value being addressed by the
+/// constant expression, or null if something is funny and we can't decide.
+Constant *llvm::ConstantFoldLoadThroughGEPConstantExpr(Constant *C, 
+                                                       ConstantExpr *CE) {
+  if (CE->getOperand(1) != Constant::getNullValue(CE->getOperand(1)->getType()))
+    return 0;  // Do not allow stepping over the value!
+  
+  // Loop over all of the operands, tracking down which value we are
+  // addressing...
+  gep_type_iterator I = gep_type_begin(CE), E = gep_type_end(CE);
+  for (++I; I != E; ++I)
+    if (const StructType *STy = dyn_cast<StructType>(*I)) {
+      ConstantUInt *CU = cast<ConstantUInt>(I.getOperand());
+      assert(CU->getValue() < STy->getNumElements() &&
+             "Struct index out of range!");
+      unsigned El = (unsigned)CU->getValue();
+      if (ConstantStruct *CS = dyn_cast<ConstantStruct>(C)) {
+        C = CS->getOperand(El);
+      } else if (isa<ConstantAggregateZero>(C)) {
+        C = Constant::getNullValue(STy->getElementType(El));
+      } else if (isa<UndefValue>(C)) {
+        C = UndefValue::get(STy->getElementType(El));
+      } else {
+        return 0;
+      }
+    } else if (ConstantInt *CI = dyn_cast<ConstantInt>(I.getOperand())) {
+      const ArrayType *ATy = cast<ArrayType>(*I);
+      if ((uint64_t)CI->getRawValue() >= ATy->getNumElements()) return 0;
+      if (ConstantArray *CA = dyn_cast<ConstantArray>(C))
+        C = CA->getOperand((unsigned)CI->getRawValue());
+      else if (isa<ConstantAggregateZero>(C))
+        C = Constant::getNullValue(ATy->getElementType());
+      else if (isa<UndefValue>(C))
+        C = UndefValue::get(ATy->getElementType());
+      else
+        return 0;
+    } else {
+      return 0;
+    }
+  return C;
+}
 
 
 //===----------------------------------------------------------------------===//
