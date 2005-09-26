@@ -1,13 +1,14 @@
 ; RUN: llvm-as < %s | opt -globalopt -disable-output &&
 ; RUN: llvm-as < %s | opt -globalopt | llvm-dis | not grep CTOR
 
-%llvm.global_ctors = appending global [7 x { int, void ()* }] [ 
+%llvm.global_ctors = appending global [8 x { int, void ()* }] [ 
   { int, void ()* } { int 65535, void ()* %CTOR1 },
   { int, void ()* } { int 65535, void ()* %CTOR1 },
   { int, void ()* } { int 65535, void ()* %CTOR2 },
   { int, void ()* } { int 65535, void ()* %CTOR3 },
   { int, void ()* } { int 65535, void ()* %CTOR4 },
   { int, void ()* } { int 65535, void ()* %CTOR5 },
+  { int, void ()* } { int 65535, void ()* %CTOR6 },
   { int, void ()* } { int 2147483647, void ()* null }
 ]
 
@@ -16,6 +17,8 @@
 %G3 = global int -123
 
 %X = global {int, [2 x int]} { int 0, [2 x int] [ int 17, int 21] }
+
+%Y = global int -1
 
 %CTORGV = internal global bool false    ;; Should become constant after eval
 
@@ -57,6 +60,16 @@ internal void %CTOR5() {
 	%X.1p = getelementptr {int,[2 x int]}* %X, int 0, uint 0
 	store int %X.2, int* %X.1p
 	store int 42, int* %X.2p
+	ret void
+}
+
+internal void %CTOR6() {
+	%A = alloca int
+	%y = load int* %Y
+	store int %y, int* %A
+	%Av = load int* %A
+	%Av1 = add int %Av, 1
+	store int %Av1, int* %Y
 	ret void
 }
 
