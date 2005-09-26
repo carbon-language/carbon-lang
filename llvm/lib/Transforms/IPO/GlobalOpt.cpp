@@ -1263,6 +1263,9 @@ static void CommitValueTo(Constant *Val, Constant *Addr) {
   GV->setInitializer(Val);
 }
 
+/// ComputeLoadResult - Return the value that would be computed by a load from
+/// P after the stores reflected by 'memory' have been performed.  If we can't
+/// decide, return null.
 static Constant *ComputeLoadResult(Constant *P,
                                 const std::map<Constant*, Constant*> &Memory) {
   // If this memory location has been recently stored, use the stored value: it
