@@ -1200,6 +1200,20 @@ struct PatternSortingPredicate {
   }
 };
 
+
+namespace {
+  /// CompareByRecordName - An ordering predicate that implements less-than by
+  /// comparing the names records.
+  struct CompareByRecordName {
+    bool operator()(const Record *LHS, const Record *RHS) const {
+      // Sort by name first.
+      if (LHS->getName() < RHS->getName()) return true;
+      // If both names are equal, sort by pointer.
+      return LHS->getName() == RHS->getName() && LHS < RHS;
+    }
+  };
+}
+
 void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
   // Emit boilerplate.
   OS << "// The main instruction selector code.\n"
@@ -1220,15 +1234,16 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
      << "    return Select(N.getOperand(0));\n";
     
   // Group the patterns by their top-level opcodes.
-  std::map<Record*, std::vector<PatternToMatch*> > PatternsByOpcode;
+  std::map<Record*, std::vector<PatternToMatch*>,
+           CompareByRecordName> PatternsByOpcode;
   for (unsigned i = 0, e = PatternsToMatch.size(); i != e; ++i)
     PatternsByOpcode[PatternsToMatch[i].first->getOperator()]
       .push_back(&PatternsToMatch[i]);
   
   // Loop over all of the case statements.
-  for (std::map<Record*, std::vector<PatternToMatch*> >::iterator
-       PBOI = PatternsByOpcode.begin(), E = PatternsByOpcode.end(); PBOI != E;
-       ++PBOI) {
+  for (std::map<Record*, std::vector<PatternToMatch*>,
+                CompareByRecordName>::iterator PBOI = PatternsByOpcode.begin(),
+       E = PatternsByOpcode.end(); PBOI != E; ++PBOI) {
     const SDNodeInfo &OpcodeInfo = getSDNodeInfo(PBOI->first);
     std::vector<PatternToMatch*> &Patterns = PBOI->second;
     
