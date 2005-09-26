@@ -1274,8 +1274,14 @@ static bool EvaluateStaticConstructor(Function *F) {
   /// this state is committed to the process.
   std::map<Constant*, Constant*> MutatedMemory;
   
+  /// ExecutedBlocks - We only handle non-looping, non-recursive code.  As such,
+  /// we can only evaluate any one basic block at most once.  This set keeps
+  /// track of what we have executed so we can detect recursive cases etc.
+  std::set<BasicBlock*> ExecutedBlocks;
+
   // CurInst - The current instruction we're evaluating.
   BasicBlock::iterator CurInst = F->begin()->begin();
+  ExecutedBlocks.insert(F->begin());
   
   // This is the main evaluation loop.
   while (1) {
@@ -1303,9 +1309,47 @@ static bool EvaluateStaticConstructor(Function *F) {
       InstResult = ConstantExpr::getSelect(getVal(Values, SI->getOperand(0)),
                                            getVal(Values, SI->getOperand(1)),
                                            getVal(Values, SI->getOperand(2)));
-    } else if (ReturnInst *RI = dyn_cast<ReturnInst>(CurInst)) {
-      assert(RI->getNumOperands() == 0);
-      break;  // We succeeded at evaluating this ctor!
+    } else if (TerminatorInst *TI = dyn_cast<TerminatorInst>(CurInst)) {
+      BasicBlock *NewBB = 0;
+      if (BranchInst *BI = dyn_cast<BranchInst>(CurInst)) {
+        if (BI->isUnconditional()) {
+          NewBB = BI->getSuccessor(0);
+        } else {
+          ConstantBool *Cond =
+            dyn_cast<ConstantBool>(getVal(Values, BI->getCondition()));
+          if (!Cond) return false;  // Cannot determine.
+          NewBB = BI->getSuccessor(!Cond->getValue());          
+        }
+      } else if (SwitchInst *SI = dyn_cast<SwitchInst>(CurInst)) {
+        ConstantInt *Val =
+          dyn_cast<ConstantInt>(getVal(Values, SI->getCondition()));
+        if (!Val) return false;  // Cannot determine.
+        NewBB = SI->getSuccessor(SI->findCaseValue(Val));
+      } else if (ReturnInst *RI = dyn_cast<ReturnInst>(CurInst)) {
+        assert(RI->getNumOperands() == 0);
+        break;  // We succeeded at evaluating this ctor!
+      } else {
+        // unwind, unreachable.
+        return false;  // Cannot handle this terminator.
+      }
+      
+      // Okay, we succeeded in evaluating this control flow.  See if we have
+      // executed the new block before.  If so, we have a looping or recursive
+      // function, which we cannot evaluate in reasonable time.
+      if (!ExecutedBlocks.insert(NewBB).second)
+        return false;  // Recursed!
+      
+      // Okay, we have never been in this block before.  Check to see if there
+      // are any PHI nodes.  If so, evaluate them with information about where
+      // we came from.
+      BasicBlock *OldBB = CurInst->getParent();
+      CurInst = NewBB->begin();
+      PHINode *PN;
+      for (; (PN = dyn_cast<PHINode>(CurInst)); ++CurInst)
+        Values[PN] = getVal(Values, PN->getIncomingValueForBlock(OldBB));
+
+      // Do NOT increment CurInst.  We know that the terminator had no value.
+      continue;
     } else {
       // TODO: use ConstantFoldCall for function calls.
       
