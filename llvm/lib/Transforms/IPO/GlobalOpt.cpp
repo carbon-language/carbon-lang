@@ -1380,21 +1380,28 @@ static bool EvaluateStaticConstructor(Function *F) {
   /// we can only evaluate any one basic block at most once.  This set keeps
   /// track of what we have executed so we can detect recursive cases etc.
   std::set<BasicBlock*> ExecutedBlocks;
+  
+  /// AllocaTmps - To 'execute' an alloca, we create a temporary global variable
+  /// to represent its body.  This allows us to delete the temporary globals
+  /// when we are done.
+  std::vector<GlobalVariable*> AllocaTmps;
 
   // CurInst - The current instruction we're evaluating.
   BasicBlock::iterator CurInst = F->begin()->begin();
   ExecutedBlocks.insert(F->begin());
+  
+  bool EvaluationSuccessful = false;
   
   // This is the main evaluation loop.
   while (1) {
     Constant *InstResult = 0;
     
     if (StoreInst *SI = dyn_cast<StoreInst>(CurInst)) {
-      if (SI->isVolatile()) return false;  // no volatile accesses.
+      if (SI->isVolatile()) break;  // no volatile accesses.
       Constant *Ptr = getVal(Values, SI->getOperand(1));
       if (!isSimpleEnoughPointerToCommit(Ptr))
         // If this is too complex for us to commit, reject it.
-        return false;
+        break;
       Constant *Val = getVal(Values, SI->getOperand(0));
       MutatedMemory[Ptr] = Val;
     } else if (BinaryOperator *BO = dyn_cast<BinaryOperator>(CurInst)) {
@@ -1419,10 +1426,18 @@ static bool EvaluateStaticConstructor(Function *F) {
         GEPOps.push_back(getVal(Values, GEP->getOperand(i)));
       InstResult = ConstantExpr::getGetElementPtr(P, GEPOps);
     } else if (LoadInst *LI = dyn_cast<LoadInst>(CurInst)) {
-      if (LI->isVolatile()) return false;  // no volatile accesses.
+      if (LI->isVolatile()) break;  // no volatile accesses.
       InstResult = ComputeLoadResult(getVal(Values, LI->getOperand(0)),
                                      MutatedMemory);
-      if (InstResult == 0) return false; // Could not evaluate load.
+      if (InstResult == 0) break; // Could not evaluate load.
+    } else if (AllocaInst *AI = dyn_cast<AllocaInst>(CurInst)) {
+      if (AI->isArrayAllocation()) break;  // Cannot handle array allocs.
+      const Type *Ty = AI->getType()->getElementType();
+      AllocaTmps.push_back(new GlobalVariable(Ty, false,
+                                              GlobalValue::InternalLinkage,
+                                              UndefValue::get(Ty),
+                                              AI->getName()));
+      InstResult = AllocaTmps.back();      
     } else if (TerminatorInst *TI = dyn_cast<TerminatorInst>(CurInst)) {
       BasicBlock *NewBB = 0;
       if (BranchInst *BI = dyn_cast<BranchInst>(CurInst)) {
@@ -1431,27 +1446,28 @@ static bool EvaluateStaticConstructor(Function *F) {
         } else {
           ConstantBool *Cond =
             dyn_cast<ConstantBool>(getVal(Values, BI->getCondition()));
-          if (!Cond) return false;  // Cannot determine.
+          if (!Cond) break;  // Cannot determine.
           NewBB = BI->getSuccessor(!Cond->getValue());          
         }
       } else if (SwitchInst *SI = dyn_cast<SwitchInst>(CurInst)) {
         ConstantInt *Val =
           dyn_cast<ConstantInt>(getVal(Values, SI->getCondition()));
-        if (!Val) return false;  // Cannot determine.
+        if (!Val) break;  // Cannot determine.
         NewBB = SI->getSuccessor(SI->findCaseValue(Val));
       } else if (ReturnInst *RI = dyn_cast<ReturnInst>(CurInst)) {
         assert(RI->getNumOperands() == 0);
+        EvaluationSuccessful = true;
         break;  // We succeeded at evaluating this ctor!
       } else {
         // unwind, unreachable.
-        return false;  // Cannot handle this terminator.
+        break;  // Cannot handle this terminator.
       }
       
       // Okay, we succeeded in evaluating this control flow.  See if we have
       // executed the new block before.  If so, we have a looping or recursive
       // function, which we cannot evaluate in reasonable time.
       if (!ExecutedBlocks.insert(NewBB).second)
-        return false;  // Recursed!
+        break;  // Recursed/looped!
       
       // Okay, we have never been in this block before.  Check to see if there
       // are any PHI nodes.  If so, evaluate them with information about where
@@ -1468,7 +1484,7 @@ static bool EvaluateStaticConstructor(Function *F) {
       // TODO: use ConstantFoldCall for function calls.
       
       // Did not know how to evaluate this!
-      return false;
+      break;
     }
     
     if (!CurInst->use_empty())
@@ -1477,16 +1493,31 @@ static bool EvaluateStaticConstructor(Function *F) {
     // Advance program counter.
     ++CurInst;
   }
+
+  if (EvaluationSuccessful) {
+    // We succeeded at evaluation: commit the result.
+    DEBUG(std::cerr << "FULLY EVALUATED GLOBAL CTOR FUNCTION '" <<
+          F->getName() << "'\n");
+    for (std::map<Constant*, Constant*>::iterator I = MutatedMemory.begin(),
+         E = MutatedMemory.end(); I != E; ++I)
+      CommitValueTo(I->second, I->first);
+  }
   
-  // If we get here, we know that we succeeded at evaluation: commit the result.
-  //
-  for (std::map<Constant*, Constant*>::iterator I = MutatedMemory.begin(),
-       E = MutatedMemory.end(); I != E; ++I)
-    CommitValueTo(I->second, I->first);
+  // At this point, we are done interpreting.  If we created any 'alloca'
+  // temporaries, release them now.
+  while (!AllocaTmps.empty()) {
+    GlobalVariable *Tmp = AllocaTmps.back();
+    AllocaTmps.pop_back();
+
+    // If there are still users of the alloca, the program is doing something
+    // silly, e.g. storing the address of the alloca somewhere and using it
+    // later.  Since this is undefined, we'll just make it be null.
+    if (!Tmp->use_empty())
+      Tmp->replaceAllUsesWith(Constant::getNullValue(Tmp->getType()));
+    delete Tmp;
+  }
   
-  DEBUG(std::cerr << "FULLY EVALUATED GLOBAL CTOR FUNCTION '" <<
-        F->getName() << "'\n");
-  return true;
+  return EvaluationSuccessful;
 }
 
 
