@@ -22,6 +22,7 @@ namespace llvm {
 class Pass;
 class PHINode;
 class AllocaInst;
+class ConstantExpr;
 
 //===----------------------------------------------------------------------===//
 //  Local constant propagation...
@@ -55,6 +56,10 @@ bool canConstantFoldCallTo(Function *F);
 /// with the specified arguments, returning null if unsuccessful.
 Constant *ConstantFoldCall(Function *F, const std::vector<Constant*> &Operands);
 
+/// ConstantFoldLoadThroughGEPConstantExpr - Given a constant and a
+/// getelementptr constantexpr, return the constant value being addressed by the
+/// constant expression, or null if something is funny and we can't decide.
+Constant *ConstantFoldLoadThroughGEPConstantExpr(Constant *C, ConstantExpr *CE);
 
 //===----------------------------------------------------------------------===//
 //  Local dead code elimination...
