@@ -45,6 +45,7 @@ namespace {
                               "Number of global vars shrunk to booleans");
   Statistic<> NumFastCallFns("globalopt",
                              "Number of functions converted to fastcc");
+  Statistic<> NumEmptyCtor  ("globalopt", "Number of empty ctors removed");
 
   struct GlobalOpt : public ModulePass {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
@@ -54,6 +55,10 @@ namespace {
     bool runOnModule(Module &M);
 
   private:
+    GlobalVariable *FindGlobalCtors(Module &M);
+    bool OptimizeFunctions(Module &M);
+    bool OptimizeGlobalVars(Module &M);
+    bool OptimizeGlobalCtorsList(GlobalVariable *&GCL);
     bool ProcessInternalGlobal(GlobalVariable *GV, Module::global_iterator &GVI);
   };
 
@@ -1077,47 +1082,199 @@ static void ChangeCalleesToFastCall(Function *F) {
   }
 }
 
+bool GlobalOpt::OptimizeFunctions(Module &M) {
+  bool Changed = false;
+  // Optimize functions.
+  for (Module::iterator FI = M.begin(), E = M.end(); FI != E; ) {
+    Function *F = FI++;
+    F->removeDeadConstantUsers();
+    if (F->use_empty() && (F->hasInternalLinkage() ||
+                           F->hasLinkOnceLinkage())) {
+      M.getFunctionList().erase(F);
+      Changed = true;
+      ++NumFnDeleted;
+    } else if (F->hasInternalLinkage() &&
+               F->getCallingConv() == CallingConv::C &&  !F->isVarArg() &&
+               OnlyCalledDirectly(F)) {
+      // If this function has C calling conventions, is not a varargs
+      // function, and is only called directly, promote it to use the Fast
+      // calling convention.
+      F->setCallingConv(CallingConv::Fast);
+      ChangeCalleesToFastCall(F);
+      ++NumFastCallFns;
+      Changed = true;
+    }
+  }
+  return Changed;
+}
+
+bool GlobalOpt::OptimizeGlobalVars(Module &M) {
+  bool Changed = false;
+  for (Module::global_iterator GVI = M.global_begin(), E = M.global_end();
+       GVI != E; ) {
+    GlobalVariable *GV = GVI++;
+    if (!GV->isConstant() && GV->hasInternalLinkage() &&
+        GV->hasInitializer())
+      Changed |= ProcessInternalGlobal(GV, GVI);
+  }
+  return Changed;
+}
+
+/// FindGlobalCtors - Find the llvm.globalctors list, verifying that all
+/// initializers have an init priority of 65535.
+GlobalVariable *GlobalOpt::FindGlobalCtors(Module &M) {
+  for (Module::giterator I = M.global_begin(), E = M.global_end(); I != E; ++I)
+    if (I->getName() == "llvm.global_ctors") {
+      // Found it, verify it's an array of { int, void()* }.
+      const ArrayType *ATy =dyn_cast<ArrayType>(I->getType()->getElementType());
+      if (!ATy) return 0;
+      const StructType *STy = dyn_cast<StructType>(ATy->getElementType());
+      if (!STy || STy->getNumElements() != 2 ||
+          STy->getElementType(0) != Type::IntTy) return 0;
+      const PointerType *PFTy = dyn_cast<PointerType>(STy->getElementType(1));
+      if (!PFTy) return 0;
+      const FunctionType *FTy = dyn_cast<FunctionType>(PFTy->getElementType());
+      if (!FTy || FTy->getReturnType() != Type::VoidTy || FTy->isVarArg() ||
+          FTy->getNumParams() != 0)
+        return 0;
+      
+      // Verify that the initializer is simple enough for us to handle.
+      if (!I->hasInitializer()) return 0;
+      ConstantArray *CA = dyn_cast<ConstantArray>(I->getInitializer());
+      if (!CA) return 0;
+      for (unsigned i = 0, e = CA->getNumOperands(); i != e; ++i)
+        if (ConstantStruct *CS = dyn_cast<ConstantStruct>(CA->getOperand(i))) {
+          // Init priority must be standard.
+          ConstantInt *CI = dyn_cast<ConstantInt>(CS->getOperand(0));
+          if (!CI || CI->getRawValue() != 65535)
+            return 0;
+          
+          // Must have a function or null ptr.
+          if (!isa<Function>(CS->getOperand(1)) &&
+              !isa<ConstantPointerNull>(CS->getOperand(1)))
+            return 0;
+        } else {
+          return 0;
+        }
+      
+      return I;
+    }
+  return 0;
+}
+
+static std::vector<Function*> ParseGlobalCtors(GlobalVariable *GV) {
+  ConstantArray *CA = cast<ConstantArray>(GV->getInitializer());
+  std::vector<Function*> Result;
+  Result.reserve(CA->getNumOperands());
+  for (unsigned i = 0, e = CA->getNumOperands(); i != e; ++i) {
+    ConstantStruct *CS = cast<ConstantStruct>(CA->getOperand(i));
+    Result.push_back(dyn_cast<Function>(CS->getOperand(1)));
+  }
+  return Result;
+}
+
+/// OptimizeGlobalCtorsList - Simplify and evaluation global ctors if possible.
+/// Return true if anything changed.
+bool GlobalOpt::OptimizeGlobalCtorsList(GlobalVariable *&GCL) {
+  std::vector<Function*> Ctors = ParseGlobalCtors(GCL);
+  bool MadeChange = false;
+  if (Ctors.empty()) return false;
+  
+  // Loop over global ctors, optimizing them when we can.
+  for (unsigned i = 0; i != Ctors.size(); ++i) {
+    Function *F = Ctors[i];
+    // Found a null terminator in the middle of the list, prune off the rest of
+    // the list.
+    if (F == 0 && i != Ctors.size()-1) {
+      Ctors.resize(i+1);
+      MadeChange = true;
+      break;
+    }
+    
+    // If the function is empty, just remove it from the ctor list.
+    if (!F->empty() && isa<ReturnInst>(F->begin()->getTerminator()) &&
+        &F->begin()->front() == F->begin()->getTerminator()) {
+      Ctors.erase(Ctors.begin()+i);
+      MadeChange = true;
+      --i;
+      ++NumEmptyCtor;
+    }
+  }
+  
+  if (!MadeChange) return false;
+  
+  std::vector<Constant*> CSVals;
+  CSVals.push_back(ConstantSInt::get(Type::IntTy, 65535));
+  CSVals.push_back(0);
+  
+  // Create the new init list.
+  std::vector<Constant*> CAList;
+  for (unsigned i = 0, e = Ctors.size(); i != e; ++i) {
+    if (Ctors[i])
+      CSVals[1] = Ctors[i];
+    else {
+      const Type *FTy = FunctionType::get(Type::VoidTy,
+                                          std::vector<const Type*>(), false);
+      const PointerType *PFTy = PointerType::get(FTy);
+      CSVals[1] = Constant::getNullValue(PFTy);
+    }
+    CAList.push_back(ConstantStruct::get(CSVals));
+  }
+
+  // Create the array initializer.
+  const Type *StructTy =
+    cast<ArrayType>(GCL->getType()->getElementType())->getElementType();
+  Constant *CA = ConstantArray::get(ArrayType::get(StructTy, CAList.size()),
+                                    CAList);
+  
+  // Create the new global and insert it next to the existing list.
+  GlobalVariable *NGV = new GlobalVariable(CA->getType(), GCL->isConstant(),
+                                           GCL->getLinkage(), CA,
+                                           GCL->getName());
+  GCL->setName("");
+  GCL->getParent()->getGlobalList().insert(GCL, NGV);
+  
+  // Nuke the old list, replacing any uses with the new one.
+  if (!GCL->use_empty()) {
+    Constant *V = NGV;
+    if (V->getType() != GCL->getType())
+      V = ConstantExpr::getCast(V, GCL->getType());
+    GCL->replaceAllUsesWith(V);
+  }
+  GCL->eraseFromParent();
+  
+  if (Ctors.size())
+    GCL = NGV;
+  else
+    GCL = 0;
+  return true;
+}
+
+
 bool GlobalOpt::runOnModule(Module &M) {
   bool Changed = false;
+  
+  // Try to find the llvm.globalctors list.
+  GlobalVariable *GlobalCtors = FindGlobalCtors(M);
 
-  // As a prepass, delete functions that are trivially dead.
   bool LocalChange = true;
   while (LocalChange) {
     LocalChange = false;
-    for (Module::iterator FI = M.begin(), E = M.end(); FI != E; ) {
-      Function *F = FI++;
-      F->removeDeadConstantUsers();
-      if (F->use_empty() && (F->hasInternalLinkage() ||
-                             F->hasLinkOnceLinkage())) {
-        M.getFunctionList().erase(F);
-        LocalChange = true;
-        ++NumFnDeleted;
-      } else if (F->hasInternalLinkage() &&
-                 F->getCallingConv() == CallingConv::C &&  !F->isVarArg() &&
-                 OnlyCalledDirectly(F)) {
-        // If this function has C calling conventions, is not a varargs
-        // function, and is only called directly, promote it to use the Fast
-        // calling convention.
-        F->setCallingConv(CallingConv::Fast);
-        ChangeCalleesToFastCall(F);
-        ++NumFastCallFns;
-        LocalChange = true;
-      }
-    }
+    
+    // Delete functions that are trivially dead, ccc -> fastcc
+    LocalChange |= OptimizeFunctions(M);
+    
+    // Optimize global_ctors list.
+    if (GlobalCtors)
+      LocalChange |= OptimizeGlobalCtorsList(GlobalCtors);
+    
+    // Optimize non-address-taken globals.
+    LocalChange |= OptimizeGlobalVars(M);
     Changed |= LocalChange;
   }
-
-  LocalChange = true;
-  while (LocalChange) {
-    LocalChange = false;
-    for (Module::global_iterator GVI = M.global_begin(), E = M.global_end();
-         GVI != E; ) {
-      GlobalVariable *GV = GVI++;
-      if (!GV->isConstant() && GV->hasInternalLinkage() &&
-          GV->hasInitializer())
-        LocalChange |= ProcessInternalGlobal(GV, GVI);
-    }
-    Changed |= LocalChange;
-  }
+  
+  // TODO: Move all global ctors functions to the end of the module for code
+  // layout.
+  
   return Changed;
 }
