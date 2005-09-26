@@ -1230,8 +1230,11 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
      << "  case ISD::EntryToken:       // These leaves remain the same.\n"
      << "    return N;\n"
      << "  case ISD::AssertSext:\n"
-     << "  case ISD::AssertZext:\n"
-     << "    return Select(N.getOperand(0));\n";
+     << "  case ISD::AssertZext: {\n"
+     << "    SDOperand Tmp0 = Select(N.getOperand(0));\n"
+     << "    if (!N.Val->hasOneUse()) CodeGenMap[N] = Tmp0;\n"
+     << "    return Tmp0;\n"
+     << "  }\n";
     
   // Group the patterns by their top-level opcodes.
   std::map<Record*, std::vector<PatternToMatch*>,
