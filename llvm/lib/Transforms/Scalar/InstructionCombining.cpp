@@ -5149,49 +5149,6 @@ Instruction *InstCombiner::visitFreeInst(FreeInst &FI) {
 }
 
 
-/// GetGEPGlobalInitializer - Given a constant, and a getelementptr
-/// constantexpr, return the constant value being addressed by the constant
-/// expression, or null if something is funny.
-///
-static Constant *GetGEPGlobalInitializer(Constant *C, ConstantExpr *CE) {
-  if (CE->getOperand(1) != Constant::getNullValue(CE->getOperand(1)->getType()))
-    return 0;  // Do not allow stepping over the value!
-
-  // Loop over all of the operands, tracking down which value we are
-  // addressing...
-  gep_type_iterator I = gep_type_begin(CE), E = gep_type_end(CE);
-  for (++I; I != E; ++I)
-    if (const StructType *STy = dyn_cast<StructType>(*I)) {
-      ConstantUInt *CU = cast<ConstantUInt>(I.getOperand());
-      assert(CU->getValue() < STy->getNumElements() &&
-             "Struct index out of range!");
-      unsigned El = (unsigned)CU->getValue();
-      if (ConstantStruct *CS = dyn_cast<ConstantStruct>(C)) {
-        C = CS->getOperand(El);
-      } else if (isa<ConstantAggregateZero>(C)) {
-        C = Constant::getNullValue(STy->getElementType(El));
-      } else if (isa<UndefValue>(C)) {
-        C = UndefValue::get(STy->getElementType(El));
-      } else {
-        return 0;
-      }
-    } else if (ConstantInt *CI = dyn_cast<ConstantInt>(I.getOperand())) {
-      const ArrayType *ATy = cast<ArrayType>(*I);
-      if ((uint64_t)CI->getRawValue() >= ATy->getNumElements()) return 0;
-      if (ConstantArray *CA = dyn_cast<ConstantArray>(C))
-        C = CA->getOperand((unsigned)CI->getRawValue());
-      else if (isa<ConstantAggregateZero>(C))
-        C = Constant::getNullValue(ATy->getElementType());
-      else if (isa<UndefValue>(C))
-        C = UndefValue::get(ATy->getElementType());
-      else
-        return 0;
-    } else {
-      return 0;
-    }
-  return C;
-}
-
 /// InstCombineLoadCast - Fold 'load (cast P)' -> cast (load P)' when possible.
 static Instruction *InstCombineLoadCast(InstCombiner &IC, LoadInst &LI) {
   User *CI = cast<User>(LI.getOperand(0));
@@ -5318,7 +5275,8 @@ Instruction *InstCombiner::visitLoadInst(LoadInst &LI) {
       if (CE->getOpcode() == Instruction::GetElementPtr) {
         if (GlobalVariable *GV = dyn_cast<GlobalVariable>(CE->getOperand(0)))
           if (GV->isConstant() && !GV->isExternal())
-            if (Constant *V = GetGEPGlobalInitializer(GV->getInitializer(), CE))
+            if (Constant *V = 
+               ConstantFoldLoadThroughGEPConstantExpr(GV->getInitializer(), CE))
               return ReplaceInstUsesWith(LI, V);
         if (CE->getOperand(0)->isNullValue()) {
           // Insert a new store to null instruction before the load to indicate
