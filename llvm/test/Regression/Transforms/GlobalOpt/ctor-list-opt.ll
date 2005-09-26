@@ -1,18 +1,21 @@
 ; RUN: llvm-as < %s | opt -globalopt -disable-output &&
 ; RUN: llvm-as < %s | opt -globalopt | llvm-dis | not grep CTOR
 
-%llvm.global_ctors = appending global [6 x { int, void ()* }] [ 
+%llvm.global_ctors = appending global [7 x { int, void ()* }] [ 
   { int, void ()* } { int 65535, void ()* %CTOR1 },
   { int, void ()* } { int 65535, void ()* %CTOR1 },
   { int, void ()* } { int 65535, void ()* %CTOR2 },
   { int, void ()* } { int 65535, void ()* %CTOR3 },
   { int, void ()* } { int 65535, void ()* %CTOR4 },
+  { int, void ()* } { int 65535, void ()* %CTOR5 },
   { int, void ()* } { int 2147483647, void ()* null }
 ]
 
 %G = global int 0
 %G2 = global int 0
 %G3 = global int -123
+
+%X = global {int, [2 x int]} { int 0, [2 x int] [ int 17, int 21] }
 
 %CTORGV = internal global bool false    ;; Should become constant after eval
 
@@ -45,6 +48,15 @@ internal void %CTOR4() {
 	%X = load int* %G3
 	%Y = add int %X, 123
 	store int %Y, int* %G3
+	ret void
+}
+
+internal void %CTOR5() {
+	%X.2p = getelementptr {int,[2 x int]}* %X, int 0, uint 1, int 0
+	%X.2 = load int* %X.2p
+	%X.1p = getelementptr {int,[2 x int]}* %X, int 0, uint 0
+	store int %X.2, int* %X.1p
+	store int 42, int* %X.2p
 	ret void
 }
 
