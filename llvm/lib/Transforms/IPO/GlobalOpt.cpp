@@ -334,7 +334,8 @@ static bool CleanupConstantGlobalUsers(Value *V, Constant *Init) {
       }
     } else if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(U)) {
       Constant *SubInit = 0;
-      ConstantExpr *CE = dyn_cast<ConstantExpr>(ConstantFoldInstruction(GEP));
+      ConstantExpr *CE = 
+        dyn_cast_or_null<ConstantExpr>(ConstantFoldInstruction(GEP));
       if (CE && CE->getOpcode() == Instruction::GetElementPtr)
         SubInit = ConstantFoldLoadThroughGEPConstantExpr(Init, CE);
       Changed |= CleanupConstantGlobalUsers(GEP, SubInit);
@@ -1240,15 +1241,97 @@ static Constant *getVal(std::map<Value*, Constant*> &ComputedValues,
 static bool isSimpleEnoughPointerToCommit(Constant *C) {
   if (GlobalVariable *GV = dyn_cast<GlobalVariable>(C))
     return !GV->isExternal();  // reject external globals.
+  if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C))
+    // Handle a constantexpr gep.
+    if (CE->getOpcode() == Instruction::GetElementPtr &&
+        isa<GlobalVariable>(CE->getOperand(0))) {
+      GlobalVariable *GV = cast<GlobalVariable>(CE->getOperand(0));
+      return GV->hasInitializer() &&
+             ConstantFoldLoadThroughGEPConstantExpr(GV->getInitializer(), CE);
+    }
   return false;
+}
+
+/// EvaluateStoreInto - Evaluate a piece of a constantexpr store into a global
+/// initializer.  This returns 'Init' modified to reflect 'Val' stored into it.
+/// At this point, the GEP operands of Addr [0, OpNo) have been stepped into.
+static Constant *EvaluateStoreInto(Constant *Init, Constant *Val,
+                                   ConstantExpr *Addr, unsigned OpNo) {
+  // Base case of the recursion.
+  if (OpNo == Addr->getNumOperands()) {
+    assert(Val->getType() == Init->getType() && "Type mismatch!");
+    return Val;
+  }
+  
+  if (const StructType *STy = dyn_cast<StructType>(Init->getType())) {
+    std::vector<Constant*> Elts;
+
+    // Break up the constant into its elements.
+    if (ConstantStruct *CS = dyn_cast<ConstantStruct>(Init)) {
+      for (unsigned i = 0, e = CS->getNumOperands(); i != e; ++i)
+        Elts.push_back(CS->getOperand(i));
+    } else if (isa<ConstantAggregateZero>(Init)) {
+      for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i)
+        Elts.push_back(Constant::getNullValue(STy->getElementType(i)));
+    } else if (isa<UndefValue>(Init)) {
+      for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i)
+        Elts.push_back(UndefValue::get(STy->getElementType(i)));
+    } else {
+      assert(0 && "This code is out of sync with "
+             " ConstantFoldLoadThroughGEPConstantExpr");
+    }
+    
+    // Replace the element that we are supposed to.
+    ConstantUInt *CU = cast<ConstantUInt>(Addr->getOperand(OpNo));
+    assert(CU->getValue() < STy->getNumElements() &&
+           "Struct index out of range!");
+    unsigned Idx = (unsigned)CU->getValue();
+    Elts[Idx] = EvaluateStoreInto(Elts[Idx], Val, Addr, OpNo+1);
+    
+    // Return the modified struct.
+    return ConstantStruct::get(Elts);
+  } else {
+    ConstantInt *CI = cast<ConstantInt>(Addr->getOperand(OpNo));
+    const ArrayType *ATy = cast<ArrayType>(Init->getType());
+
+    // Break up the array into elements.
+    std::vector<Constant*> Elts;
+    if (ConstantArray *CA = dyn_cast<ConstantArray>(Init)) {
+      for (unsigned i = 0, e = CA->getNumOperands(); i != e; ++i)
+        Elts.push_back(CA->getOperand(i));
+    } else if (isa<ConstantAggregateZero>(Init)) {
+      Constant *Elt = Constant::getNullValue(ATy->getElementType());
+      Elts.assign(ATy->getNumElements(), Elt);
+    } else if (isa<UndefValue>(Init)) {
+      Constant *Elt = UndefValue::get(ATy->getElementType());
+      Elts.assign(ATy->getNumElements(), Elt);
+    } else {
+      assert(0 && "This code is out of sync with "
+             " ConstantFoldLoadThroughGEPConstantExpr");
+    }
+    
+    assert((uint64_t)CI->getRawValue() < ATy->getNumElements());
+    Elts[(uint64_t)CI->getRawValue()] =
+      EvaluateStoreInto(Elts[(uint64_t)CI->getRawValue()], Val, Addr, OpNo+1);
+    return ConstantArray::get(ATy, Elts);
+  }    
 }
 
 /// CommitValueTo - We have decided that Addr (which satisfies the predicate
 /// isSimpleEnoughPointerToCommit) should get Val as its value.  Make it happen.
 static void CommitValueTo(Constant *Val, Constant *Addr) {
-  GlobalVariable *GV = cast<GlobalVariable>(Addr);
-  assert(GV->hasInitializer());
-  GV->setInitializer(Val);
+  if (GlobalVariable *GV = dyn_cast<GlobalVariable>(Addr)) {
+    assert(GV->hasInitializer());
+    GV->setInitializer(Val);
+    return;
+  }
+  
+  ConstantExpr *CE = cast<ConstantExpr>(Addr);
+  GlobalVariable *GV = cast<GlobalVariable>(CE->getOperand(0));
+  
+  Constant *Init = GV->getInitializer();
+  Init = EvaluateStoreInto(Init, Val, CE, 2);
+  GV->setInitializer(Init);
 }
 
 /// ComputeLoadResult - Return the value that would be computed by a load from
@@ -1266,9 +1349,18 @@ static Constant *ComputeLoadResult(Constant *P,
     if (GV->hasInitializer())
       return GV->getInitializer();
     return 0;
-  } else {
-    return 0;  // don't know how to evaluate.
   }
+  
+  // Handle a constantexpr getelementptr.
+  if (ConstantExpr *CE = dyn_cast<ConstantExpr>(P))
+    if (CE->getOpcode() == Instruction::GetElementPtr &&
+        isa<GlobalVariable>(CE->getOperand(0))) {
+      GlobalVariable *GV = cast<GlobalVariable>(CE->getOperand(0));
+      if (GV->hasInitializer())
+        return ConstantFoldLoadThroughGEPConstantExpr(GV->getInitializer(), CE);
+    }
+
+  return 0;  // don't know how to evaluate.
 }
 
 /// EvaluateStaticConstructor - Evaluate static constructors in the function, if
