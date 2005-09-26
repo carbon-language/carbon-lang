@@ -1164,6 +1164,8 @@ GlobalVariable *GlobalOpt::FindGlobalCtors(Module &M) {
   return 0;
 }
 
+/// ParseGlobalCtors - Given a llvm.global_ctors list that we can understand,
+/// return a list of the functions and null terminator as a vector.
 static std::vector<Function*> ParseGlobalCtors(GlobalVariable *GV) {
   ConstantArray *CA = cast<ConstantArray>(GV->getInitializer());
   std::vector<Function*> Result;
@@ -1174,6 +1176,65 @@ static std::vector<Function*> ParseGlobalCtors(GlobalVariable *GV) {
   }
   return Result;
 }
+
+/// InstallGlobalCtors - Given a specified llvm.global_ctors list, install the
+/// specified array, returning the new global to use.
+static GlobalVariable *InstallGlobalCtors(GlobalVariable *GCL, 
+                                          const std::vector<Function*> &Ctors) {
+  // If we made a change, reassemble the initializer list.
+  std::vector<Constant*> CSVals;
+  CSVals.push_back(ConstantSInt::get(Type::IntTy, 65535));
+  CSVals.push_back(0);
+  
+  // Create the new init list.
+  std::vector<Constant*> CAList;
+  for (unsigned i = 0, e = Ctors.size(); i != e; ++i) {
+    if (Ctors[i])
+      CSVals[1] = Ctors[i];
+    else {
+      const Type *FTy = FunctionType::get(Type::VoidTy,
+                                          std::vector<const Type*>(), false);
+      const PointerType *PFTy = PointerType::get(FTy);
+      CSVals[1] = Constant::getNullValue(PFTy);
+      CSVals[0] = ConstantSInt::get(Type::IntTy, 2147483647);
+    }
+    CAList.push_back(ConstantStruct::get(CSVals));
+  }
+  
+  // Create the array initializer.
+  const Type *StructTy =
+    cast<ArrayType>(GCL->getType()->getElementType())->getElementType();
+  Constant *CA = ConstantArray::get(ArrayType::get(StructTy, CAList.size()),
+                                    CAList);
+  
+  // If we didn't change the number of elements, don't create a new GV.
+  if (CA->getType() == GCL->getInitializer()->getType()) {
+    GCL->setInitializer(CA);
+    return GCL;
+  }
+  
+  // Create the new global and insert it next to the existing list.
+  GlobalVariable *NGV = new GlobalVariable(CA->getType(), GCL->isConstant(),
+                                           GCL->getLinkage(), CA,
+                                           GCL->getName());
+  GCL->setName("");
+  GCL->getParent()->getGlobalList().insert(GCL, NGV);
+  
+  // Nuke the old list, replacing any uses with the new one.
+  if (!GCL->use_empty()) {
+    Constant *V = NGV;
+    if (V->getType() != GCL->getType())
+      V = ConstantExpr::getCast(V, GCL->getType());
+    GCL->replaceAllUsesWith(V);
+  }
+  GCL->eraseFromParent();
+  
+  if (Ctors.size())
+    return NGV;
+  else
+    return 0;
+}
+                                          
 
 /// OptimizeGlobalCtorsList - Simplify and evaluation global ctors if possible.
 /// Return true if anything changed.
@@ -1207,51 +1268,7 @@ bool GlobalOpt::OptimizeGlobalCtorsList(GlobalVariable *&GCL) {
   
   if (!MadeChange) return false;
   
-  std::vector<Constant*> CSVals;
-  CSVals.push_back(ConstantSInt::get(Type::IntTy, 65535));
-  CSVals.push_back(0);
-  
-  // Create the new init list.
-  std::vector<Constant*> CAList;
-  for (unsigned i = 0, e = Ctors.size(); i != e; ++i) {
-    if (Ctors[i])
-      CSVals[1] = Ctors[i];
-    else {
-      const Type *FTy = FunctionType::get(Type::VoidTy,
-                                          std::vector<const Type*>(), false);
-      const PointerType *PFTy = PointerType::get(FTy);
-      CSVals[1] = Constant::getNullValue(PFTy);
-      CSVals[0] = ConstantSInt::get(Type::IntTy, 2147483647);
-    }
-    CAList.push_back(ConstantStruct::get(CSVals));
-  }
-
-  // Create the array initializer.
-  const Type *StructTy =
-    cast<ArrayType>(GCL->getType()->getElementType())->getElementType();
-  Constant *CA = ConstantArray::get(ArrayType::get(StructTy, CAList.size()),
-                                    CAList);
-  
-  // Create the new global and insert it next to the existing list.
-  GlobalVariable *NGV = new GlobalVariable(CA->getType(), GCL->isConstant(),
-                                           GCL->getLinkage(), CA,
-                                           GCL->getName());
-  GCL->setName("");
-  GCL->getParent()->getGlobalList().insert(GCL, NGV);
-  
-  // Nuke the old list, replacing any uses with the new one.
-  if (!GCL->use_empty()) {
-    Constant *V = NGV;
-    if (V->getType() != GCL->getType())
-      V = ConstantExpr::getCast(V, GCL->getType());
-    GCL->replaceAllUsesWith(V);
-  }
-  GCL->eraseFromParent();
-  
-  if (Ctors.size())
-    GCL = NGV;
-  else
-    GCL = 0;
+  GCL = InstallGlobalCtors(GCL, Ctors);
   return true;
 }
 
