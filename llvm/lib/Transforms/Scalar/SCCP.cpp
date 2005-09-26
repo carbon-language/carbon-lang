@@ -756,32 +756,6 @@ void SCCPSolver::visitGetElementPtrInst(GetElementPtrInst &I) {
   markConstant(IV, &I, ConstantExpr::getGetElementPtr(Ptr, Operands));
 }
 
-/// GetGEPGlobalInitializer - Given a constant and a getelementptr constantexpr,
-/// return the constant value being addressed by the constant expression, or
-/// null if something is funny.
-///
-static Constant *GetGEPGlobalInitializer(Constant *C, ConstantExpr *CE) {
-  if (CE->getOperand(1) != Constant::getNullValue(CE->getOperand(1)->getType()))
-    return 0;  // Do not allow stepping over the value!
-
-  // Loop over all of the operands, tracking down which value we are
-  // addressing...
-  for (unsigned i = 2, e = CE->getNumOperands(); i != e; ++i)
-    if (ConstantUInt *CU = dyn_cast<ConstantUInt>(CE->getOperand(i))) {
-      ConstantStruct *CS = dyn_cast<ConstantStruct>(C);
-      if (CS == 0) return 0;
-      if (CU->getValue() >= CS->getNumOperands()) return 0;
-      C = CS->getOperand((unsigned)CU->getValue());
-    } else if (ConstantSInt *CS = dyn_cast<ConstantSInt>(CE->getOperand(i))) {
-      ConstantArray *CA = dyn_cast<ConstantArray>(C);
-      if (CA == 0) return 0;
-      if ((uint64_t)CS->getValue() >= CA->getNumOperands()) return 0;
-      C = CA->getOperand((unsigned)CS->getValue());
-    } else
-      return 0;
-  return C;
-}
-
 void SCCPSolver::visitStoreInst(Instruction &SI) {
   if (TrackedGlobals.empty() || !isa<GlobalVariable>(SI.getOperand(1)))
     return;
@@ -838,7 +812,7 @@ void SCCPSolver::visitLoadInst(LoadInst &I) {
     if (GlobalVariable *GV = dyn_cast<GlobalVariable>(CE->getOperand(0)))
       if (GV->isConstant() && !GV->isExternal())
         if (Constant *V =
-        GetGEPGlobalInitializer(GV->getInitializer(), CE)) {
+             ConstantFoldLoadThroughGEPConstantExpr(GV->getInitializer(), CE)) {
           markConstant(IV, &I, V);
           return;
         }
