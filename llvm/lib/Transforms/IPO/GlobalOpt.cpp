@@ -297,21 +297,6 @@ static Constant *getAggregateConstantElement(Constant *Agg, Constant *Idx) {
   return 0;
 }
 
-static Constant *TraverseGEPInitializer(User *GEP, Constant *Init) {
-  if (Init == 0) return 0;
-  if (GEP->getNumOperands() == 1 ||
-      !isa<Constant>(GEP->getOperand(1)) ||
-      !cast<Constant>(GEP->getOperand(1))->isNullValue())
-    return 0;
-
-  for (unsigned i = 2, e = GEP->getNumOperands(); i != e; ++i) {
-    ConstantInt *Idx = dyn_cast<ConstantInt>(GEP->getOperand(i));
-    if (!Idx) return 0;
-    Init = getAggregateConstantElement(Init, Idx);
-    if (Init == 0) return 0;
-  }
-  return Init;
-}
 
 /// CleanupConstantGlobalUsers - We just marked GV constant.  Loop over all
 /// users of the global, cleaning up the obvious ones.  This is largely just a
@@ -335,7 +320,7 @@ static bool CleanupConstantGlobalUsers(Value *V, Constant *Init) {
       Changed = true;
     } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(U)) {
       if (CE->getOpcode() == Instruction::GetElementPtr) {
-        Constant *SubInit = TraverseGEPInitializer(CE, Init);
+        Constant *SubInit = ConstantFoldLoadThroughGEPConstantExpr(Init, CE);
         Changed |= CleanupConstantGlobalUsers(CE, SubInit);
       } else if (CE->getOpcode() == Instruction::Cast &&
                  isa<PointerType>(CE->getType())) {
@@ -348,7 +333,10 @@ static bool CleanupConstantGlobalUsers(Value *V, Constant *Init) {
         Changed = true;
       }
     } else if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(U)) {
-      Constant *SubInit = TraverseGEPInitializer(GEP, Init);
+      Constant *SubInit = 0;
+      ConstantExpr *CE = dyn_cast<ConstantExpr>(ConstantFoldInstruction(GEP));
+      if (CE && CE->getOpcode() == Instruction::GetElementPtr)
+        SubInit = ConstantFoldLoadThroughGEPConstantExpr(Init, CE);
       Changed |= CleanupConstantGlobalUsers(GEP, SubInit);
 
       if (GEP->use_empty()) {
