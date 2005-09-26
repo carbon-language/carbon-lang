@@ -1,16 +1,18 @@
 ; RUN: llvm-as < %s | opt -globalopt -disable-output &&
 ; RUN: llvm-as < %s | opt -globalopt | llvm-dis | not grep CTOR
 
-%llvm.global_ctors = appending global [5 x { int, void ()* }] [ 
+%llvm.global_ctors = appending global [6 x { int, void ()* }] [ 
   { int, void ()* } { int 65535, void ()* %CTOR1 },
   { int, void ()* } { int 65535, void ()* %CTOR1 },
   { int, void ()* } { int 65535, void ()* %CTOR2 },
   { int, void ()* } { int 65535, void ()* %CTOR3 },
+  { int, void ()* } { int 65535, void ()* %CTOR4 },
   { int, void ()* } { int 2147483647, void ()* null }
 ]
 
 %G = global int 0
 %G2 = global int 0
+%G3 = global int -123
 
 %CTORGV = internal global bool false    ;; Should become constant after eval
 
@@ -36,6 +38,13 @@ S:
 	store int 24, int* %G2
 	ret void
 T:
+	ret void
+}
+
+internal void %CTOR4() {
+	%X = load int* %G3
+	%Y = add int %X, 123
+	store int %Y, int* %G3
 	ret void
 }
 
