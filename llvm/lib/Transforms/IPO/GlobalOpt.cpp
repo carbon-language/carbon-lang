@@ -46,6 +46,7 @@ namespace {
   Statistic<> NumFastCallFns("globalopt",
                              "Number of functions converted to fastcc");
   Statistic<> NumEmptyCtor  ("globalopt", "Number of empty ctors removed");
+  Statistic<> NumCtorsEvaluated("globalopt","Number of static ctors evaluated");
 
   struct GlobalOpt : public ModulePass {
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
@@ -1189,9 +1190,9 @@ static GlobalVariable *InstallGlobalCtors(GlobalVariable *GCL,
   // Create the new init list.
   std::vector<Constant*> CAList;
   for (unsigned i = 0, e = Ctors.size(); i != e; ++i) {
-    if (Ctors[i])
+    if (Ctors[i]) {
       CSVals[1] = Ctors[i];
-    else {
+    } else {
       const Type *FTy = FunctionType::get(Type::VoidTy,
                                           std::vector<const Type*>(), false);
       const PointerType *PFTy = PointerType::get(FTy);
@@ -1234,7 +1235,99 @@ static GlobalVariable *InstallGlobalCtors(GlobalVariable *GCL,
   else
     return 0;
 }
-                                          
+
+
+static Constant *getVal(std::map<Value*, Constant*> &ComputedValues,
+                        Value *V) {
+  if (Constant *CV = dyn_cast<Constant>(V)) return CV;
+  Constant *R = ComputedValues[V];
+  assert(R && "Reference to an uncomputed value!");
+  return R;
+}
+
+/// isSimpleEnoughPointerToCommit - Return true if this constant is simple
+/// enough for us to understand.  In particular, if it is a cast of something,
+/// we punt.  We basically just support direct accesses to globals and GEP's of
+/// globals.  This should be kept up to date with CommitValueTo.
+static bool isSimpleEnoughPointerToCommit(Constant *C) {
+  if (GlobalVariable *GV = dyn_cast<GlobalVariable>(C))
+    return !GV->isExternal();  // reject external globals.
+  return false;
+}
+
+/// CommitValueTo - We have decided that Addr (which satisfies the predicate
+/// isSimpleEnoughPointerToCommit) should get Val as its value.  Make it happen.
+static void CommitValueTo(Constant *Val, Constant *Addr) {
+  GlobalVariable *GV = cast<GlobalVariable>(Addr);
+  assert(GV->hasInitializer());
+  GV->setInitializer(Val);
+}
+
+/// EvaluateStaticConstructor - Evaluate static constructors in the function, if
+/// we can.  Return true if we can, false otherwise.
+static bool EvaluateStaticConstructor(Function *F) {
+  /// Values - As we compute SSA register values, we store their contents here.
+  std::map<Value*, Constant*> Values;
+  
+  /// MutatedMemory - For each store we execute, we update this map.  Loads
+  /// check this to get the most up-to-date value.  If evaluation is successful,
+  /// this state is committed to the process.
+  std::map<Constant*, Constant*> MutatedMemory;
+  
+  // CurInst - The current instruction we're evaluating.
+  BasicBlock::iterator CurInst = F->begin()->begin();
+  
+  // This is the main evaluation loop.
+  while (1) {
+    Constant *InstResult = 0;
+    
+    if (StoreInst *SI = dyn_cast<StoreInst>(CurInst)) {
+      Constant *Ptr = getVal(Values, SI->getOperand(1));
+      if (!isSimpleEnoughPointerToCommit(Ptr))
+        // If this is too complex for us to commit, reject it.
+        return false;
+      Constant *Val = getVal(Values, SI->getOperand(0));
+      MutatedMemory[Ptr] = Val;
+    } else if (BinaryOperator *BO = dyn_cast<BinaryOperator>(CurInst)) {
+      InstResult = ConstantExpr::get(BO->getOpcode(),
+                                     getVal(Values, BO->getOperand(0)),
+                                     getVal(Values, BO->getOperand(1)));
+    } else if (ShiftInst *SI = dyn_cast<ShiftInst>(CurInst)) {
+      InstResult = ConstantExpr::get(SI->getOpcode(),
+                                     getVal(Values, SI->getOperand(0)),
+                                     getVal(Values, SI->getOperand(1)));
+    } else if (CastInst *CI = dyn_cast<CastInst>(CurInst)) {
+      InstResult = ConstantExpr::getCast(getVal(Values, CI->getOperand(0)),
+                                         CI->getType());
+    } else if (SelectInst *SI = dyn_cast<SelectInst>(CurInst)) {
+      InstResult = ConstantExpr::getSelect(getVal(Values, SI->getOperand(0)),
+                                           getVal(Values, SI->getOperand(1)),
+                                           getVal(Values, SI->getOperand(2)));
+    } else if (ReturnInst *RI = dyn_cast<ReturnInst>(CurInst)) {
+      assert(RI->getNumOperands() == 0);
+      break;  // We succeeded at evaluating this ctor!
+    } else {
+      // TODO: use ConstantFoldCall for function calls.
+      
+      // Did not know how to evaluate this!
+      return false;
+    }
+    
+    if (!CurInst->use_empty())
+      Values[CurInst] = InstResult;
+    
+    // Advance program counter.
+    ++CurInst;
+  }
+  
+  // If we get here, we know that we succeeded at evaluation: commit the result.
+  //
+  for (std::map<Constant*, Constant*>::iterator I = MutatedMemory.begin(),
+       E = MutatedMemory.end(); I != E; ++I)
+    CommitValueTo(I->second, I->first);
+  return true;
+}
+
 
 /// OptimizeGlobalCtorsList - Simplify and evaluation global ctors if possible.
 /// Return true if anything changed.
@@ -1256,13 +1349,26 @@ bool GlobalOpt::OptimizeGlobalCtorsList(GlobalVariable *&GCL) {
       break;
     }
     
+    // We cannot simplify external ctor functions.
+    if (F->empty()) continue;
+    
+    // If we can evaluate the ctor at compile time, do.
+    if (EvaluateStaticConstructor(F)) {
+      Ctors.erase(Ctors.begin()+i);
+      MadeChange = true;
+      --i;
+      ++NumCtorsEvaluated;
+      continue;
+    }
+    
     // If the function is empty, just remove it from the ctor list.
-    if (!F->empty() && isa<ReturnInst>(F->begin()->getTerminator()) &&
+    if (isa<ReturnInst>(F->begin()->getTerminator()) &&
         &F->begin()->front() == F->begin()->getTerminator()) {
       Ctors.erase(Ctors.begin()+i);
       MadeChange = true;
       --i;
       ++NumEmptyCtor;
+      continue;
     }
   }
   
