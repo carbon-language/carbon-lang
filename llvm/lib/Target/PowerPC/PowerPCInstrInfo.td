@@ -182,7 +182,6 @@ class Pattern<dag patternToMatch, list<dag> resultInstrs> {
 // not needing a full list.
 class Pat<dag pattern, dag result> : Pattern<pattern, [result]>;
 
-
 //===----------------------------------------------------------------------===//
 // PowerPC specific transformation functions and pattern fragments.
 //
@@ -763,9 +762,9 @@ def RLDICR : MDForm_1<30, 1,
 // PowerPC Instruction Patterns
 //
 
-// REDUNDANT WITH INSTRUCTION DEFINITION, ONLY FOR TESTING.
-def : Pat<(sext_inreg GPRC:$in, i8),
-          (EXTSB GPRC:$in)>;
+// Arbitrary immediate support.  Implement in terms of LIS/ORI.
+def : Pat<(i32 imm:$imm),
+          (ORI (LIS (HI16 imm:$imm)), (LO16 imm:$imm))>;
           
 // or by an arbitrary immediate.
 def : Pat<(or GPRC:$in, imm:$imm),
@@ -773,10 +772,6 @@ def : Pat<(or GPRC:$in, imm:$imm),
 // xor by an arbitrary immediate.
 def : Pat<(xor GPRC:$in, imm:$imm),
           (XORIS (XORI GPRC:$in, (LO16 imm:$imm)), (HI16 imm:$imm))>;
-
-// Arbitrary immediate support.
-def : Pat<(i32 imm:$imm),
-          (ORI (LIS (HI16 imm:$imm)), (LO16 imm:$imm))>;
 
 
 // Same as above, but using a temporary. FIXME: implement temporaries :)
