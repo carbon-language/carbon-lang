@@ -1144,14 +1144,16 @@ GlobalVariable *GlobalOpt::FindGlobalCtors(Module &M) {
       if (!CA) return 0;
       for (unsigned i = 0, e = CA->getNumOperands(); i != e; ++i)
         if (ConstantStruct *CS = dyn_cast<ConstantStruct>(CA->getOperand(i))) {
+          if (isa<ConstantPointerNull>(CS->getOperand(1)))
+            continue;
+
+          // Must have a function or null ptr.
+          if (!isa<Function>(CS->getOperand(1)))
+            return 0;
+          
           // Init priority must be standard.
           ConstantInt *CI = dyn_cast<ConstantInt>(CS->getOperand(0));
           if (!CI || CI->getRawValue() != 65535)
-            return 0;
-          
-          // Must have a function or null ptr.
-          if (!isa<Function>(CS->getOperand(1)) &&
-              !isa<ConstantPointerNull>(CS->getOperand(1)))
             return 0;
         } else {
           return 0;
@@ -1185,9 +1187,11 @@ bool GlobalOpt::OptimizeGlobalCtorsList(GlobalVariable *&GCL) {
     Function *F = Ctors[i];
     // Found a null terminator in the middle of the list, prune off the rest of
     // the list.
-    if (F == 0 && i != Ctors.size()-1) {
-      Ctors.resize(i+1);
-      MadeChange = true;
+    if (F == 0) {
+      if (i != Ctors.size()-1) {
+        Ctors.resize(i+1);
+        MadeChange = true;
+      }
       break;
     }
     
@@ -1217,6 +1221,7 @@ bool GlobalOpt::OptimizeGlobalCtorsList(GlobalVariable *&GCL) {
                                           std::vector<const Type*>(), false);
       const PointerType *PFTy = PointerType::get(FTy);
       CSVals[1] = Constant::getNullValue(PFTy);
+      CSVals[0] = ConstantSInt::get(Type::IntTy, 2147483647);
     }
     CAList.push_back(ConstantStruct::get(CSVals));
   }
