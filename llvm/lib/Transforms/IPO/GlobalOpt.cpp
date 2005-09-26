@@ -320,7 +320,9 @@ static bool CleanupConstantGlobalUsers(Value *V, Constant *Init) {
       Changed = true;
     } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(U)) {
       if (CE->getOpcode() == Instruction::GetElementPtr) {
-        Constant *SubInit = ConstantFoldLoadThroughGEPConstantExpr(Init, CE);
+        Constant *SubInit = 0;
+        if (Init)
+          SubInit = ConstantFoldLoadThroughGEPConstantExpr(Init, CE);
         Changed |= CleanupConstantGlobalUsers(CE, SubInit);
       } else if (CE->getOpcode() == Instruction::Cast &&
                  isa<PointerType>(CE->getType())) {
@@ -1481,6 +1483,9 @@ static bool EvaluateStaticConstructor(Function *F) {
   for (std::map<Constant*, Constant*>::iterator I = MutatedMemory.begin(),
        E = MutatedMemory.end(); I != E; ++I)
     CommitValueTo(I->second, I->first);
+  
+  DEBUG(std::cerr << "FULLY EVALUATED GLOBAL CTOR FUNCTION '" <<
+        F->getName() << "'\n");
   return true;
 }
 
