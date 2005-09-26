@@ -1074,23 +1074,26 @@ void DAGISelEmitter::EmitMatchForPattern(TreePatternNode *N,
        << ".Val)) goto P" << PatternNo << "Fail;\n";
 }
 
-
+/// CodeGenPatternResult - Emit the action for a pattern.  Now that it has
+/// matched, we actually have to build a DAG!
 unsigned DAGISelEmitter::
 CodeGenPatternResult(TreePatternNode *N, unsigned &Ctr,
                      std::map<std::string,std::string> &VariableMap, 
-                     std::ostream &OS){
+                     std::ostream &OS) {
   // This is something selected from the pattern we matched.
   if (!N->getName().empty()) {
-    const std::string &Val = VariableMap[N->getName()];
+    std::string &Val = VariableMap[N->getName()];
     assert(!Val.empty() &&
            "Variable referenced but not defined and not caught earlier!");
     if (Val[0] == 'T' && Val[1] == 'm' && Val[2] == 'p') {
       // Already selected this operand, just return the tmpval.
-      // FIXME: DO THIS.
+      return atoi(Val.c_str()+3);
     } else {
       unsigned ResNo = Ctr++;
       OS << "      SDOperand Tmp" << ResNo << " = Select(" << Val << ");\n";
-      // FIXME: Add Tmp<ResNo> to VariableMap.
+      // Add Tmp<ResNo> to VariableMap, so that we don't multiply select this
+      // value if used multiple times by this pattern result.
+      Val = "Tmp"+utostr(ResNo);
       return ResNo;
     }
   }
