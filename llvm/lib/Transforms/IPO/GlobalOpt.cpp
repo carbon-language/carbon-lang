@@ -1263,6 +1263,23 @@ static void CommitValueTo(Constant *Val, Constant *Addr) {
   GV->setInitializer(Val);
 }
 
+static Constant *ComputeLoadResult(Constant *P,
+                                const std::map<Constant*, Constant*> &Memory) {
+  // If this memory location has been recently stored, use the stored value: it
+  // is the most up-to-date.
+  std::map<Constant*, Constant*>::const_iterator I = Memory.find(P);
+  if (I != Memory.end()) return I->second;
+ 
+  // Access it.
+  if (GlobalVariable *GV = dyn_cast<GlobalVariable>(P)) {
+    if (GV->hasInitializer())
+      return GV->getInitializer();
+    return 0;
+  } else {
+    return 0;  // don't know how to evaluate.
+  }
+}
+
 /// EvaluateStaticConstructor - Evaluate static constructors in the function, if
 /// we can.  Return true if we can, false otherwise.
 static bool EvaluateStaticConstructor(Function *F) {
@@ -1288,6 +1305,7 @@ static bool EvaluateStaticConstructor(Function *F) {
     Constant *InstResult = 0;
     
     if (StoreInst *SI = dyn_cast<StoreInst>(CurInst)) {
+      if (SI->isVolatile()) return false;  // no volatile accesses.
       Constant *Ptr = getVal(Values, SI->getOperand(1));
       if (!isSimpleEnoughPointerToCommit(Ptr))
         // If this is too complex for us to commit, reject it.
@@ -1309,6 +1327,17 @@ static bool EvaluateStaticConstructor(Function *F) {
       InstResult = ConstantExpr::getSelect(getVal(Values, SI->getOperand(0)),
                                            getVal(Values, SI->getOperand(1)),
                                            getVal(Values, SI->getOperand(2)));
+    } else if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(CurInst)) {
+      Constant *P = getVal(Values, GEP->getOperand(0));
+      std::vector<Constant*> GEPOps;
+      for (unsigned i = 1, e = GEP->getNumOperands(); i != e; ++i)
+        GEPOps.push_back(getVal(Values, GEP->getOperand(i)));
+      InstResult = ConstantExpr::getGetElementPtr(P, GEPOps);
+    } else if (LoadInst *LI = dyn_cast<LoadInst>(CurInst)) {
+      if (LI->isVolatile()) return false;  // no volatile accesses.
+      InstResult = ComputeLoadResult(getVal(Values, LI->getOperand(0)),
+                                     MutatedMemory);
+      if (InstResult == 0) return false; // Could not evaluate load.
     } else if (TerminatorInst *TI = dyn_cast<TerminatorInst>(CurInst)) {
       BasicBlock *NewBB = 0;
       if (BranchInst *BI = dyn_cast<BranchInst>(CurInst)) {
