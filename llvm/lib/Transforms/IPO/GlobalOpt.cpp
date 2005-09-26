@@ -45,7 +45,6 @@ namespace {
                               "Number of global vars shrunk to booleans");
   Statistic<> NumFastCallFns("globalopt",
                              "Number of functions converted to fastcc");
-  Statistic<> NumEmptyCtor  ("globalopt", "Number of empty ctors removed");
   Statistic<> NumCtorsEvaluated("globalopt","Number of static ctors evaluated");
 
   struct GlobalOpt : public ModulePass {
@@ -926,7 +925,6 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
                                       Module::global_iterator &GVI) {
   std::set<PHINode*> PHIUsers;
   GlobalStatus GS;
-  PHIUsers.clear();
   GV->removeDeadConstantUsers();
 
   if (GV->use_empty()) {
@@ -1550,16 +1548,6 @@ bool GlobalOpt::OptimizeGlobalCtorsList(GlobalVariable *&GCL) {
       MadeChange = true;
       --i;
       ++NumCtorsEvaluated;
-      continue;
-    }
-    
-    // If the function is empty, just remove it from the ctor list.
-    if (isa<ReturnInst>(F->begin()->getTerminator()) &&
-        &F->begin()->front() == F->begin()->getTerminator()) {
-      Ctors.erase(Ctors.begin()+i);
-      MadeChange = true;
-      --i;
-      ++NumEmptyCtor;
       continue;
     }
   }
