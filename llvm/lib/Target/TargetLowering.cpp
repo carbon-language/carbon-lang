@@ -29,6 +29,7 @@ TargetLowering::TargetLowering(TargetMachine &tm)
   memset(RegClassForVT, 0,MVT::LAST_VALUETYPE*sizeof(TargetRegisterClass*));
   maxStoresPerMemSet = maxStoresPerMemCpy = maxStoresPerMemMove = 8;
   allowUnalignedMemoryAccesses = false;
+  UseUnderscoreSetJmpLongJmp = false;
 }
 
 TargetLowering::~TargetLowering() {}
