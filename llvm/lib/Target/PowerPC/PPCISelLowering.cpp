@@ -28,6 +28,9 @@ PPC32TargetLowering::PPC32TargetLowering(TargetMachine &TM)
   // Fold away setcc operations if possible.
   setSetCCIsExpensive();
   
+  // Use _setjmp/_longjmp instead of setjmp/longjmp.
+  setUseUnderscoreSetJmpLongJmp(true);
+    
   // Set up the register classes.
   addRegisterClass(MVT::i32, PPC32::GPRCRegisterClass);
   addRegisterClass(MVT::f32, PPC32::FPRCRegisterClass);
