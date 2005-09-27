@@ -1,7 +1,7 @@
 ; RUN: llvm-as < %s | opt -globalopt -disable-output &&
 ; RUN: llvm-as < %s | opt -globalopt | llvm-dis | not grep CTOR
 
-%llvm.global_ctors = appending global [9 x { int, void ()* }] [ 
+%llvm.global_ctors = appending global [10 x { int, void ()* }] [ 
   { int, void ()* } { int 65535, void ()* %CTOR1 },
   { int, void ()* } { int 65535, void ()* %CTOR1 },
   { int, void ()* } { int 65535, void ()* %CTOR2 },
@@ -10,18 +10,17 @@
   { int, void ()* } { int 65535, void ()* %CTOR5 },
   { int, void ()* } { int 65535, void ()* %CTOR6 },
   { int, void ()* } { int 65535, void ()* %CTOR7 },
+  { int, void ()* } { int 65535, void ()* %CTOR8 },
   { int, void ()* } { int 2147483647, void ()* null }
 ]
 
 %G = global int 0
 %G2 = global int 0
 %G3 = global int -123
-
 %X = global {int, [2 x int]} { int 0, [2 x int] [ int 17, int 21] }
-
 %Y = global int -1
-
 %Z = global int 123
+%D = global double 0.0
 
 %CTORGV = internal global bool false    ;; Should become constant after eval
 
@@ -86,6 +85,13 @@ void %setto(int* %P, int %V) {
 	ret void
 }
 
+declare double %cos(double)
+
+internal void %CTOR8() {
+	%X = call double %cos(double 1.0)
+	store double %X, double* %D
+	ret void
+}
 bool %accessor() {
 	%V = load bool* %CTORGV   ;; constant true
 	ret bool %V
