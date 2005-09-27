@@ -71,13 +71,15 @@ bool PowerPCTargetMachine::addPassesToEmitFile(PassManager &PM,
 
   // Run loop strength reduction before anything else.
   PM.add(createLoopStrengthReducePass());
-  PM.add(createCFGSimplificationPass());
 
   // FIXME: Implement efficient support for garbage collection intrinsics.
   PM.add(createLowerGCPass());
 
   // FIXME: Implement the invoke/unwind instructions!
   PM.add(createLowerInvokePass());
+  
+  // Clean up after other passes, e.g. merging critical edges.
+  PM.add(createCFGSimplificationPass());
 
   // FIXME: Implement the switch instruction in the instruction selector!
   PM.add(createLowerSwitchPass());
@@ -126,13 +128,15 @@ void PowerPCJITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
 
   // Run loop strength reduction before anything else.
   PM.add(createLoopStrengthReducePass());
-  PM.add(createCFGSimplificationPass());
 
   // FIXME: Implement efficient support for garbage collection intrinsics.
   PM.add(createLowerGCPass());
 
   // FIXME: Implement the invoke/unwind instructions!
   PM.add(createLowerInvokePass());
+
+  // Clean up after other passes, e.g. merging critical edges.
+  PM.add(createCFGSimplificationPass());
 
   // FIXME: Implement the switch instruction in the instruction selector!
   PM.add(createLowerSwitchPass());
