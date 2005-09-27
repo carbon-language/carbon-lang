@@ -209,38 +209,42 @@ bool ConstantUInt::isAllOnesValue() const {
 //===----------------------------------------------------------------------===//
 //                             Normal Constructors
 
-ConstantIntegral::ConstantIntegral(const Type *Ty, uint64_t V)
-  : Constant(Ty, SimpleConstantVal, 0, 0) {
+ConstantIntegral::ConstantIntegral(const Type *Ty, ValueTy VT, uint64_t V)
+  : Constant(Ty, VT, 0, 0) {
     Val.Unsigned = V;
 }
 
-ConstantBool::ConstantBool(bool V) : ConstantIntegral(Type::BoolTy, V) {
+ConstantBool::ConstantBool(bool V) 
+  : ConstantIntegral(Type::BoolTy, ConstantBoolVal, V) {
 }
 
-ConstantInt::ConstantInt(const Type *Ty, uint64_t V) : ConstantIntegral(Ty, V) {
+ConstantInt::ConstantInt(const Type *Ty, ValueTy VT, uint64_t V)
+  : ConstantIntegral(Ty, VT, V) {
 }
 
-ConstantSInt::ConstantSInt(const Type *Ty, int64_t V) : ConstantInt(Ty, V) {
+ConstantSInt::ConstantSInt(const Type *Ty, int64_t V)
+  : ConstantInt(Ty, ConstantSIntVal, V) {
   assert(Ty->isInteger() && Ty->isSigned() &&
          "Illegal type for signed integer constant!");
   assert(isValueValidForType(Ty, V) && "Value too large for type!");
 }
 
-ConstantUInt::ConstantUInt(const Type *Ty, uint64_t V) : ConstantInt(Ty, V) {
+ConstantUInt::ConstantUInt(const Type *Ty, uint64_t V)
+  : ConstantInt(Ty, ConstantUIntVal, V) {
   assert(Ty->isInteger() && Ty->isUnsigned() &&
          "Illegal type for unsigned integer constant!");
   assert(isValueValidForType(Ty, V) && "Value too large for type!");
 }
 
 ConstantFP::ConstantFP(const Type *Ty, double V)
-  : Constant(Ty, SimpleConstantVal, 0, 0) {
+  : Constant(Ty, ConstantFPVal, 0, 0) {
   assert(isValueValidForType(Ty, V) && "Value too large for type!");
   Val = V;
 }
 
 ConstantArray::ConstantArray(const ArrayType *T,
                              const std::vector<Constant*> &V)
-  : Constant(T, SimpleConstantVal, new Use[V.size()], V.size()) {
+  : Constant(T, ConstantArrayVal, new Use[V.size()], V.size()) {
   assert(V.size() == T->getNumElements() &&
          "Invalid initializer vector for constant array");
   Use *OL = OperandList;
@@ -259,7 +263,7 @@ ConstantArray::~ConstantArray() {
 
 ConstantStruct::ConstantStruct(const StructType *T,
                                const std::vector<Constant*> &V)
-  : Constant(T, SimpleConstantVal, new Use[V.size()], V.size()) {
+  : Constant(T, ConstantStructVal, new Use[V.size()], V.size()) {
   assert(V.size() == T->getNumElements() &&
          "Invalid initializer vector for constant structure");
   Use *OL = OperandList;
@@ -280,7 +284,7 @@ ConstantStruct::~ConstantStruct() {
 
 ConstantPacked::ConstantPacked(const PackedType *T,
                                const std::vector<Constant*> &V)
-  : Constant(T, SimpleConstantVal, new Use[V.size()], V.size()) {
+  : Constant(T, ConstantPackedVal, new Use[V.size()], V.size()) {
   Use *OL = OperandList;
   for (unsigned i = 0, e = V.size(); i != e; ++i) {
     assert((V[i]->getType() == T->getElementType() ||
