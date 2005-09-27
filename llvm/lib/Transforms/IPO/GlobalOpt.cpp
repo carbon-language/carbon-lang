@@ -337,7 +337,7 @@ static bool CleanupConstantGlobalUsers(Value *V, Constant *Init) {
       Constant *SubInit = 0;
       ConstantExpr *CE = 
         dyn_cast_or_null<ConstantExpr>(ConstantFoldInstruction(GEP));
-      if (CE && CE->getOpcode() == Instruction::GetElementPtr)
+      if (Init && CE && CE->getOpcode() == Instruction::GetElementPtr)
         SubInit = ConstantFoldLoadThroughGEPConstantExpr(Init, CE);
       Changed |= CleanupConstantGlobalUsers(GEP, SubInit);
 
