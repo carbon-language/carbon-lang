@@ -412,6 +412,14 @@ bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
 
   NumInvokes += Invokes.size();
   NumUnwinds += Unwinds.size();
+  
+  // TODO: This is not an optimal way to do this.  In particular, this always
+  // inserts setjmp calls into the entries of functions with invoke instructions
+  // even though there are possibly paths through the function that do not
+  // execute any invokes.  In particular, for functions with early exits, e.g.
+  // the 'addMove' method in hexxagon, it would be nice to not have to do the
+  // setjmp stuff on the early exit path.  This requires a bit of dataflow, but
+  // would not be too hard to do.
 
   // If we have an invoke instruction, insert a setjmp that dominates all
   // invokes.  After the setjmp, use a cond branch that goes to the original
