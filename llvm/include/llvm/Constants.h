@@ -47,7 +47,7 @@ protected:
     int64_t  Signed;
     uint64_t Unsigned;
   } Val;
-  ConstantIntegral(const Type *Ty, uint64_t V);
+  ConstantIntegral(const Type *Ty, ValueTy VT, uint64_t V);
 public:
 
   /// getRawValue - return the underlying value of this constant as a 64-bit
@@ -98,8 +98,9 @@ public:
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ConstantIntegral *) { return true; }
   static bool classof(const Value *V) {
-    return V->getValueType() == SimpleConstantVal &&
-           V->getType()->isIntegral();
+    return V->getValueType() == ConstantBoolVal ||
+           V->getValueType() == ConstantSIntVal ||
+           V->getValueType() == ConstantUIntVal;
   }
 };
 
@@ -134,7 +135,7 @@ public:
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ConstantBool *) { return true; }
   static bool classof(const Value *V) {
-    return (V == True) | (V == False);
+    return V->getValueType() == ConstantBoolVal;
   }
 };
 
@@ -146,7 +147,7 @@ public:
 class ConstantInt : public ConstantIntegral {
 protected:
   ConstantInt(const ConstantInt &);      // DO NOT IMPLEMENT
-  ConstantInt(const Type *Ty, uint64_t V);
+  ConstantInt(const Type *Ty, ValueTy VT, uint64_t V);
 public:
   /// equalsInt - Provide a helper method that can be used to determine if the
   /// constant contained within is equal to a constant.  This only works for
@@ -173,8 +174,8 @@ public:
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ConstantInt *) { return true; }
   static bool classof(const Value *V) {
-    return V->getValueType() == SimpleConstantVal &&
-           V->getType()->isInteger();
+    return V->getValueType() == ConstantSIntVal ||
+           V->getValueType() == ConstantUIntVal;
   }
 };
 
@@ -227,8 +228,7 @@ public:
   ///
   static inline bool classof(const ConstantSInt *) { return true; }
   static bool classof(const Value *V) {
-    return V->getValueType() == SimpleConstantVal &&
-           V->getType()->isSigned();
+    return V->getValueType() == ConstantSIntVal;
   }
 };
 
@@ -263,8 +263,7 @@ public:
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ConstantUInt *) { return true; }
   static bool classof(const Value *V) {
-    return V->getValueType() == SimpleConstantVal &&
-           V->getType()->isUnsigned();
+    return V->getValueType() == ConstantUIntVal;
   }
 };
 
@@ -301,8 +300,7 @@ public:
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ConstantFP *) { return true; }
   static bool classof(const Value *V) {
-    return V->getValueType() == SimpleConstantVal &&
-           V->getType()->isFloatingPoint();
+    return V->getValueType() == ConstantFPVal;
   }
 };
 
@@ -380,8 +378,7 @@ public:
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ConstantArray *) { return true; }
   static bool classof(const Value *V) {
-    return V->getValueType() == SimpleConstantVal &&
-           V->getType()->getTypeID() == Type::ArrayTyID;
+    return V->getValueType() == ConstantArrayVal;
   }
 };
 
@@ -422,8 +419,7 @@ public:
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ConstantStruct *) { return true; }
   static bool classof(const Value *V) {
-    return V->getValueType() == SimpleConstantVal &&
-           V->getType()->getTypeID() == Type::StructTyID;
+    return V->getValueType() == ConstantStructVal;
   }
 };
 
@@ -461,8 +457,7 @@ public:
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ConstantPacked *) { return true; }
   static bool classof(const Value *V) {
-    return V->getValueType() == SimpleConstantVal &&
-           V->getType()->getTypeID() == Type::PackedTyID;
+    return V->getValueType() == ConstantPackedVal;
   }
 };
 
@@ -475,7 +470,7 @@ class ConstantPointerNull : public Constant {
 protected:
   ConstantPointerNull(const PointerType *T)
     : Constant(reinterpret_cast<const Type*>(T),
-               Value::SimpleConstantVal, 0, 0) {}
+               Value::ConstantPointerNullVal, 0, 0) {}
 
 public:
 
@@ -498,8 +493,7 @@ public:
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ConstantPointerNull *) { return true; }
   static bool classof(const Value *V) {
-    return V->getValueType() == SimpleConstantVal &&
-           isa<PointerType>(V->getType());
+    return V->getValueType() == ConstantPointerNullVal;
   }
 };
 

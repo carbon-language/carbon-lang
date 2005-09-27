@@ -146,8 +146,19 @@ public:
     UndefValueVal,            // This is an instance of UndefValue
     ConstantExprVal,          // This is an instance of ConstantExpr
     ConstantAggregateZeroVal, // This is an instance of ConstantAggregateNull
-    SimpleConstantVal,        // This is some other type of Constant
+    ConstantBoolVal,          // This is an instance of ConstantBool
+    ConstantSIntVal,          // This is an instance of ConstantSInt
+    ConstantUIntVal,          // This is an instance of ConstantUInt
+    ConstantFPVal,            // This is an instance of ConstantFP
+    ConstantArrayVal,         // This is an instance of ConstantArray
+    ConstantStructVal,        // This is an instance of ConstantStruct
+    ConstantPackedVal,        // This is an instance of ConstantPacked
+    ConstantPointerNullVal,   // This is an instance of ConstantPointerNull
     InstructionVal,           // This is an instance of Instruction
+    
+    // Markers:
+    ConstantFirstVal = FunctionVal,
+    ConstantLastVal  = ConstantPointerNullVal,
   };
   unsigned getValueType() const {
     return SubclassID;
@@ -194,12 +205,8 @@ void Use::set(Value *V) {
 // the subtype header files to test to see if the value is a subclass...
 //
 template <> inline bool isa_impl<Constant, Value>(const Value &Val) {
-  return Val.getValueType() == Value::SimpleConstantVal ||
-         Val.getValueType() == Value::FunctionVal ||
-         Val.getValueType() == Value::GlobalVariableVal ||
-         Val.getValueType() == Value::ConstantExprVal ||
-         Val.getValueType() == Value::ConstantAggregateZeroVal ||
-         Val.getValueType() == Value::UndefValueVal;
+  return Val.getValueType() >= Value::ConstantFirstVal &&
+         Val.getValueType() <= Value::ConstantLastVal;
 }
 template <> inline bool isa_impl<Argument, Value>(const Value &Val) {
   return Val.getValueType() == Value::ArgumentVal;

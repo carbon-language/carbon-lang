@@ -61,12 +61,8 @@ public:
   static inline bool classof(const Constant *) { return true; }
   static inline bool classof(const GlobalValue *) { return true; }
   static inline bool classof(const Value *V) {
-    return V->getValueType() == Value::SimpleConstantVal ||
-           V->getValueType() == Value::ConstantExprVal ||
-           V->getValueType() == Value::ConstantAggregateZeroVal ||
-           V->getValueType() == Value::FunctionVal ||
-           V->getValueType() == Value::GlobalVariableVal ||
-           V->getValueType() == Value::UndefValueVal;
+    return V->getValueType() >= ConstantFirstVal &&
+           V->getValueType() <= ConstantLastVal;
   }
 
   /// replaceUsesOfWithOnConstant - This method is a special form of
