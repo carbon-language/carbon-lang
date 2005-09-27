@@ -87,6 +87,7 @@ namespace {
       DEBUG(BB->dump());
       // Select target instructions for the DAG.
       DAG.setRoot(Select(DAG.getRoot()));
+      CodeGenMap.clear();
       DAG.RemoveDeadNodes();
       
       // Emit machine code to BB. 
