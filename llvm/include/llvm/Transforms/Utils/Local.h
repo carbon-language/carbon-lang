@@ -98,7 +98,7 @@ bool SimplifyCFG(BasicBlock *BB);
 /// invalidating the SSA information for the value.  It returns the pointer to
 /// the alloca inserted to create a stack slot for X.
 ///
-AllocaInst *DemoteRegToStack(Instruction &X);
+AllocaInst *DemoteRegToStack(Instruction &X, bool VolatileLoads = false);
 
 } // End llvm namespace
 
