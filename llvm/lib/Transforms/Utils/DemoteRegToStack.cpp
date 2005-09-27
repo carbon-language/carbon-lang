@@ -29,7 +29,7 @@ using namespace llvm;
 /// invalidating the SSA information for the value.  It returns the pointer to
 /// the alloca inserted to create a stack slot for I.
 ///
-AllocaInst* llvm::DemoteRegToStack(Instruction &I) {
+AllocaInst* llvm::DemoteRegToStack(Instruction &I, bool VolatileLoads) {
   if (I.use_empty()) return 0;                // nothing to do!
 
   // Create a stack slot to hold the value.
@@ -57,7 +57,7 @@ AllocaInst* llvm::DemoteRegToStack(Instruction &I) {
           Value *&V = Loads[PN->getIncomingBlock(i)];
           if (V == 0) {
             // Insert the load into the predecessor block
-            V = new LoadInst(Slot, I.getName()+".reload",
+            V = new LoadInst(Slot, I.getName()+".reload", VolatileLoads, 
                              PN->getIncomingBlock(i)->getTerminator());
           }
           PN->setIncomingValue(i, V);
@@ -65,7 +65,7 @@ AllocaInst* llvm::DemoteRegToStack(Instruction &I) {
 
     } else {
       // If this is a normal instruction, just insert a load.
-      Value *V = new LoadInst(Slot, I.getName()+".reload", U);
+      Value *V = new LoadInst(Slot, I.getName()+".reload", VolatileLoads, U);
       U->replaceUsesOfWith(&I, V);
     }
   }
@@ -74,18 +74,21 @@ AllocaInst* llvm::DemoteRegToStack(Instruction &I) {
   // Insert stores of the computed value into the stack slot.  We have to be
   // careful is I is an invoke instruction though, because we can't insert the
   // store AFTER the terminator instruction.
+  BasicBlock::iterator InsertPt;
   if (!isa<TerminatorInst>(I)) {
-    BasicBlock::iterator InsertPt = &I;
-    for (++InsertPt; isa<PHINode>(InsertPt); ++InsertPt)
-      /* empty */;   // Don't insert before any PHI nodes.
-    new StoreInst(&I, Slot, InsertPt);
+    InsertPt = &I;
   } else {
-    // FIXME: We cannot yet demote invoke instructions to the stack, because
-    // doing so would require breaking critical edges.  This should be fixed
-    // eventually.
-    assert(0 &&
-           "Cannot demote the value computed by an invoke instruction yet!");
+    // We cannot demote invoke instructions to the stack if their normal edge
+    // is critical.
+    InvokeInst &II = cast<InvokeInst>(I);
+    assert(II.getNormalDest()->getSinglePredecessor() &&
+           "Cannot demote invoke with a critical successor!");
+    InsertPt = II.getNormalDest()->begin();
   }
+
+  for (++InsertPt; isa<PHINode>(InsertPt); ++InsertPt)
+  /* empty */;   // Don't insert before any PHI nodes.
+  new StoreInst(&I, Slot, InsertPt);
 
   return Slot;
 }
