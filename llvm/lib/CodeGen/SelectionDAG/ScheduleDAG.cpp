@@ -197,7 +197,6 @@ struct ScheduleInfo {
   SDOperand     Op;                     // Operand information
   unsigned      Latency;                // Cycles to complete instruction
   unsigned      ResourceSet;            // Bit vector of usable resources
-  bool          IsBoundary;             // Do not shift passed this instruction.
   unsigned      Slot;                   // Operand's time slot
   
   // Ctor.
@@ -205,7 +204,6 @@ struct ScheduleInfo {
   : Op(op)
   , Latency(0)
   , ResourceSet(0)
-  , IsBoundary(false)
   , Slot(0)
   {}
 };
@@ -452,10 +450,10 @@ void SimpleSched::GatherOperandInfo() {
       MachineOpCode TOpc = Op.getTargetOpcode();
       // FIXME SI->Latency = std::max(1, TII.maxLatency(TOpc));
       // FIXME SI->ResourceSet = TII.resources(TOpc);
-      // There is a cost for keeping values across a call.
-      SI->IsBoundary = TII.isCall(TOpc);
-      
-      if (TII.isLoad(TOpc)) {
+      if (TII.isCall(TOpc)) {
+        SI->ResourceSet = RSInteger;
+        SI->Latency = 40;
+      } else if (TII.isLoad(TOpc)) {
         SI->ResourceSet = RSLoadStore;
         SI->Latency = 5;
       } else if (TII.isStore(TOpc)) {
@@ -526,7 +524,11 @@ bool SimpleSched::isStrongDependency(SDNode *A, SDNode *B) {
 /// conflict with operands of B.
 bool SimpleSched::isWeakDependency(SDNode *A, SDNode *B) {
   // TODO check for conflicting real registers and aliases
+#if 0 // Since we are in SSA form and not checking register aliasing
   return A->getOpcode() == ISD::EntryToken || isStrongDependency(B, A);
+#else
+  return A->getOpcode() == ISD::EntryToken;
+#endif
 }
 
 /// ScheduleBackward - Schedule instructions so that any long latency
@@ -554,8 +556,7 @@ void SimpleSched::ScheduleBackward() {
       if (isStrongDependency(SI->Op, Other->Op)) {
         Slot = Other->Slot + Other->Latency;
         break;
-      } else if (SI->IsBoundary || Other->IsBoundary ||
-                 isWeakDependency(SI->Op, Other->Op)) {
+      } else if (isWeakDependency(SI->Op, Other->Op)) {
         Slot = Other->Slot;
         break;
       }
@@ -609,8 +610,7 @@ void SimpleSched::ScheduleForward() {
       if (isStrongDependency(Other->Op, SI->Op)) {
         Slot = Other->Slot + Other->Latency;
         break;
-      } else if (SI->IsBoundary || Other->IsBoundary ||
-                 isWeakDependency(Other->Op, SI->Op)) {
+      } else if (isWeakDependency(Other->Op, SI->Op)) {
         Slot = Other->Slot;
         break;
       }
