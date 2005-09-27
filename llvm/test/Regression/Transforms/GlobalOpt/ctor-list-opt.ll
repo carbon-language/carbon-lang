@@ -1,7 +1,7 @@
 ; RUN: llvm-as < %s | opt -globalopt -disable-output &&
 ; RUN: llvm-as < %s | opt -globalopt | llvm-dis | not grep CTOR
 
-%llvm.global_ctors = appending global [8 x { int, void ()* }] [ 
+%llvm.global_ctors = appending global [9 x { int, void ()* }] [ 
   { int, void ()* } { int 65535, void ()* %CTOR1 },
   { int, void ()* } { int 65535, void ()* %CTOR1 },
   { int, void ()* } { int 65535, void ()* %CTOR2 },
@@ -9,6 +9,7 @@
   { int, void ()* } { int 65535, void ()* %CTOR4 },
   { int, void ()* } { int 65535, void ()* %CTOR5 },
   { int, void ()* } { int 65535, void ()* %CTOR6 },
+  { int, void ()* } { int 65535, void ()* %CTOR7 },
   { int, void ()* } { int 2147483647, void ()* null }
 ]
 
@@ -19,6 +20,8 @@
 %X = global {int, [2 x int]} { int 0, [2 x int] [ int 17, int 21] }
 
 %Y = global int -1
+
+%Z = global int 123
 
 %CTORGV = internal global bool false    ;; Should become constant after eval
 
@@ -70,6 +73,16 @@ internal void %CTOR6() {
 	%Av = load int* %A
 	%Av1 = add int %Av, 1
 	store int %Av1, int* %Y
+	ret void
+}
+
+internal void %CTOR7() {
+	call void %setto(int* %Z, int 0)
+	ret void
+}
+
+void %setto(int* %P, int %V) {
+	store int %V, int* %P
 	ret void
 }
 
