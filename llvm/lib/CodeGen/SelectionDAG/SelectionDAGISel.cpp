@@ -736,8 +736,12 @@ void SelectionDAGLowering::visitCall(CallInst &I) {
       case Intrinsic::returnaddress: visitFrameReturnAddress(I, false); return;
       case Intrinsic::frameaddress:  visitFrameReturnAddress(I, true); return;
 
-      case Intrinsic::setjmp:  RenameFn = "setjmp"; break;
-      case Intrinsic::longjmp: RenameFn = "longjmp"; break;
+      case Intrinsic::setjmp:
+        RenameFn = "_setjmp"+!TLI.usesUnderscoreSetJmpLongJmp();
+        break;
+      case Intrinsic::longjmp:
+        RenameFn = "_longjmp"+!TLI.usesUnderscoreSetJmpLongJmp();
+        break;
       case Intrinsic::memcpy:  visitMemIntrinsic(I, ISD::MEMCPY); return;
       case Intrinsic::memset:  visitMemIntrinsic(I, ISD::MEMSET); return;
       case Intrinsic::memmove: visitMemIntrinsic(I, ISD::MEMMOVE); return;
