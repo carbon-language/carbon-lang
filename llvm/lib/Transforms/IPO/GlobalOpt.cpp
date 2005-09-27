@@ -1363,32 +1363,25 @@ static Constant *ComputeLoadResult(Constant *P,
   return 0;  // don't know how to evaluate.
 }
 
-/// EvaluateStaticConstructor - Evaluate static constructors in the function, if
-/// we can.  Return true if we can, false otherwise.
-static bool EvaluateStaticConstructor(Function *F) {
+/// EvaluateFunction - Evaluate a call to function F, returning true if
+/// successful, false if we can't evaluate it.  ActualArgs contains the formal
+/// arguments for the function.
+static bool EvaluateFunction(Function *F, 
+                             const std::vector<Constant*> &ActualArgs,
+                             std::vector<Function*> &CallStack,
+                             std::map<Constant*, Constant*> &MutatedMemory,
+                             std::vector<GlobalVariable*> &AllocaTmps) {
   /// Values - As we compute SSA register values, we store their contents here.
   std::map<Value*, Constant*> Values;
-  
-  /// MutatedMemory - For each store we execute, we update this map.  Loads
-  /// check this to get the most up-to-date value.  If evaluation is successful,
-  /// this state is committed to the process.
-  std::map<Constant*, Constant*> MutatedMemory;
-  
+
   /// ExecutedBlocks - We only handle non-looping, non-recursive code.  As such,
   /// we can only evaluate any one basic block at most once.  This set keeps
   /// track of what we have executed so we can detect recursive cases etc.
   std::set<BasicBlock*> ExecutedBlocks;
   
-  /// AllocaTmps - To 'execute' an alloca, we create a temporary global variable
-  /// to represent its body.  This allows us to delete the temporary globals
-  /// when we are done.
-  std::vector<GlobalVariable*> AllocaTmps;
-
   // CurInst - The current instruction we're evaluating.
   BasicBlock::iterator CurInst = F->begin()->begin();
   ExecutedBlocks.insert(F->begin());
-  
-  bool EvaluationSuccessful = false;
   
   // This is the main evaluation loop.
   while (1) {
@@ -1454,8 +1447,7 @@ static bool EvaluateStaticConstructor(Function *F) {
         NewBB = SI->getSuccessor(SI->findCaseValue(Val));
       } else if (ReturnInst *RI = dyn_cast<ReturnInst>(CurInst)) {
         assert(RI->getNumOperands() == 0);
-        EvaluationSuccessful = true;
-        break;  // We succeeded at evaluating this ctor!
+        return true;  // We succeeded at evaluating this ctor!
       } else {
         // unwind, unreachable.
         break;  // Cannot handle this terminator.
@@ -1492,10 +1484,34 @@ static bool EvaluateStaticConstructor(Function *F) {
     ++CurInst;
   }
 
-  if (EvaluationSuccessful) {
+  return false;
+}
+
+/// EvaluateStaticConstructor - Evaluate static constructors in the function, if
+/// we can.  Return true if we can, false otherwise.
+static bool EvaluateStaticConstructor(Function *F) {
+  /// MutatedMemory - For each store we execute, we update this map.  Loads
+  /// check this to get the most up-to-date value.  If evaluation is successful,
+  /// this state is committed to the process.
+  std::map<Constant*, Constant*> MutatedMemory;
+
+  /// AllocaTmps - To 'execute' an alloca, we create a temporary global variable
+  /// to represent its body.  This vector is needed so we can delete the
+  /// temporary globals when we are done.
+  std::vector<GlobalVariable*> AllocaTmps;
+  
+  /// CallStack - This is used to detect recursion.  In pathological situations
+  /// we could hit exponential behavior, but at least there is nothing
+  /// unbounded.
+  std::vector<Function*> CallStack;
+
+  // Call the function.
+  bool EvalSuccess = EvaluateFunction(F, std::vector<Constant*>(), CallStack, 
+                                      MutatedMemory, AllocaTmps);
+  if (EvalSuccess) {
     // We succeeded at evaluation: commit the result.
     DEBUG(std::cerr << "FULLY EVALUATED GLOBAL CTOR FUNCTION '" <<
-          F->getName() << "'\n");
+          F->getName() << "' to " << MutatedMemory.size() << " stores.\n");
     for (std::map<Constant*, Constant*>::iterator I = MutatedMemory.begin(),
          E = MutatedMemory.end(); I != E; ++I)
       CommitValueTo(I->second, I->first);
@@ -1506,7 +1522,7 @@ static bool EvaluateStaticConstructor(Function *F) {
   while (!AllocaTmps.empty()) {
     GlobalVariable *Tmp = AllocaTmps.back();
     AllocaTmps.pop_back();
-
+    
     // If there are still users of the alloca, the program is doing something
     // silly, e.g. storing the address of the alloca somewhere and using it
     // later.  Since this is undefined, we'll just make it be null.
@@ -1515,8 +1531,10 @@ static bool EvaluateStaticConstructor(Function *F) {
     delete Tmp;
   }
   
-  return EvaluationSuccessful;
+  return EvalSuccess;
 }
+
+
 
 
 /// OptimizeGlobalCtorsList - Simplify and evaluation global ctors if possible.
