@@ -1450,21 +1450,30 @@ static bool EvaluateFunction(Function *F, Constant *&RetVal,
       // Resolve function pointers.
       Function *Callee = dyn_cast<Function>(getVal(Values, CI->getOperand(0)));
       if (!Callee) return false;  // Cannot resolve.
-      
-      if (Callee->isExternal() || Callee->getFunctionType()->isVarArg()) {
-        return false;  // TODO: Constant fold calls.
-      }
-      
+
       std::vector<Constant*> Formals;
       for (unsigned i = 1, e = CI->getNumOperands(); i != e; ++i)
         Formals.push_back(getVal(Values, CI->getOperand(i)));
-      Constant *RetVal;
       
-      // Execute the call, if successful, use the return value.
-      if (!EvaluateFunction(Callee, RetVal, Formals, CallStack,
-                            MutatedMemory, AllocaTmps))
-        return false;
-      InstResult = RetVal;
+      if (Callee->isExternal()) {
+        // If this is a function we can constant fold, do it.
+        if (Constant *C = ConstantFoldCall(Callee, Formals)) {
+          InstResult = C;
+        } else {
+          return false;
+        }
+      } else {
+        if (Callee->getFunctionType()->isVarArg())
+          return false;
+        
+        Constant *RetVal;
+        
+        // Execute the call, if successful, use the return value.
+        if (!EvaluateFunction(Callee, RetVal, Formals, CallStack,
+                              MutatedMemory, AllocaTmps))
+          return false;
+        InstResult = RetVal;
+      }
     } else if (TerminatorInst *TI = dyn_cast<TerminatorInst>(CurInst)) {
       BasicBlock *NewBB = 0;
       if (BranchInst *BI = dyn_cast<BranchInst>(CurInst)) {
