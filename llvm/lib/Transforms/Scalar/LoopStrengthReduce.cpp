@@ -152,7 +152,7 @@ private:
     void DeleteTriviallyDeadInstructions(std::set<Instruction*> &Insts);
   };
   RegisterOpt<LoopStrengthReduce> X("loop-reduce",
-                                    "Strength Reduce GEP Uses of Ind. Vars");
+                                    "Loop Strength Reduction");
 }
 
 FunctionPass *llvm::createLoopStrengthReducePass(unsigned MaxTargetAMSize) {
