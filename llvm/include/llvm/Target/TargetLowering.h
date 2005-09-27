@@ -100,7 +100,7 @@ public:
     assert(RC && "This value type is not natively supported!");
     return RC;
   }
-
+  
   /// isTypeLegal - Return true if the target has native support for the
   /// specified value type.  This means that it has a register that directly
   /// holds it without promotions or expansions.
@@ -218,6 +218,12 @@ public:
   /// @brief Determine if the target supports unaligned memory accesses.
   bool allowsUnalignedMemoryAccesses() const 
     { return allowUnalignedMemoryAccesses; }
+  
+  /// usesUnderscoreSetJmpLongJmp - Determine if we should use _setjmp or setjmp
+  /// to implement llvm.setjmp.
+  bool usesUnderscoreSetJmpLongJmp() const {
+    return UseUnderscoreSetJmpLongJmp;
+  }
 
   //===--------------------------------------------------------------------===//
   // TargetLowering Configuration Methods - These methods should be invoked by
@@ -244,6 +250,13 @@ protected:
     ShiftAmtHandling = OORSA;
   }
 
+  /// setUseUnderscoreSetJmpLongJmp - Indicate whether this target prefers to
+  /// use _setjmp and _longjmp to or implement llvm.setjmp/llvm.longjmp or
+  /// the non _ versions.  Defaults to false.
+  void setUseUnderscoreSetJmpLongJmp(bool Val) {
+    UseUnderscoreSetJmpLongJmp = Val;
+  }
+  
   /// setSetCCIxExpensive - This is a short term hack for targets that codegen
   /// setcc as a conditional branch.  This encourages the code generator to fold
   /// setcc operations into other operations if possible.
@@ -379,6 +392,10 @@ private:
   /// SetCCResultContents - Information about the contents of the high-bits in
   /// the result of a setcc comparison operation.
   SetCCResultValue SetCCResultContents;
+  
+  /// UseUnderscoreSetJmpLongJmp - This target prefers to use _setjmp and
+  /// _longjmp to implement llvm.setjmp/llvm.longjmp.  Defaults to false.
+  bool UseUnderscoreSetJmpLongJmp;
 
   /// RegClassForVT - This indicates the default register class to use for
   /// each ValueType the target supports natively.
