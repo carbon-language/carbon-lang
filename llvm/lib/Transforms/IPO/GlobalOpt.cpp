@@ -1366,13 +1366,26 @@ static Constant *ComputeLoadResult(Constant *P,
 /// EvaluateFunction - Evaluate a call to function F, returning true if
 /// successful, false if we can't evaluate it.  ActualArgs contains the formal
 /// arguments for the function.
-static bool EvaluateFunction(Function *F, 
+static bool EvaluateFunction(Function *F, Constant *&RetVal,
                              const std::vector<Constant*> &ActualArgs,
                              std::vector<Function*> &CallStack,
                              std::map<Constant*, Constant*> &MutatedMemory,
                              std::vector<GlobalVariable*> &AllocaTmps) {
+  // Check to see if this function is already executing (recursion).  If so,
+  // bail out.  TODO: we might want to accept limited recursion.
+  if (std::find(CallStack.begin(), CallStack.end(), F) != CallStack.end())
+    return false;
+  
+  CallStack.push_back(F);
+  
   /// Values - As we compute SSA register values, we store their contents here.
   std::map<Value*, Constant*> Values;
+  
+  // Initialize arguments to the incoming values specified.
+  unsigned ArgNo = 0;
+  for (Function::arg_iterator AI = F->arg_begin(), E = F->arg_end(); AI != E;
+       ++AI, ++ArgNo)
+    Values[AI] = ActualArgs[ArgNo];
 
   /// ExecutedBlocks - We only handle non-looping, non-recursive code.  As such,
   /// we can only evaluate any one basic block at most once.  This set keeps
@@ -1381,18 +1394,17 @@ static bool EvaluateFunction(Function *F,
   
   // CurInst - The current instruction we're evaluating.
   BasicBlock::iterator CurInst = F->begin()->begin();
-  ExecutedBlocks.insert(F->begin());
   
   // This is the main evaluation loop.
   while (1) {
     Constant *InstResult = 0;
     
     if (StoreInst *SI = dyn_cast<StoreInst>(CurInst)) {
-      if (SI->isVolatile()) break;  // no volatile accesses.
+      if (SI->isVolatile()) return false;  // no volatile accesses.
       Constant *Ptr = getVal(Values, SI->getOperand(1));
       if (!isSimpleEnoughPointerToCommit(Ptr))
         // If this is too complex for us to commit, reject it.
-        break;
+        return false;
       Constant *Val = getVal(Values, SI->getOperand(0));
       MutatedMemory[Ptr] = Val;
     } else if (BinaryOperator *BO = dyn_cast<BinaryOperator>(CurInst)) {
@@ -1417,18 +1429,37 @@ static bool EvaluateFunction(Function *F,
         GEPOps.push_back(getVal(Values, GEP->getOperand(i)));
       InstResult = ConstantExpr::getGetElementPtr(P, GEPOps);
     } else if (LoadInst *LI = dyn_cast<LoadInst>(CurInst)) {
-      if (LI->isVolatile()) break;  // no volatile accesses.
+      if (LI->isVolatile()) return false;  // no volatile accesses.
       InstResult = ComputeLoadResult(getVal(Values, LI->getOperand(0)),
                                      MutatedMemory);
-      if (InstResult == 0) break; // Could not evaluate load.
+      if (InstResult == 0) return false; // Could not evaluate load.
     } else if (AllocaInst *AI = dyn_cast<AllocaInst>(CurInst)) {
-      if (AI->isArrayAllocation()) break;  // Cannot handle array allocs.
+      if (AI->isArrayAllocation()) return false;  // Cannot handle array allocs.
       const Type *Ty = AI->getType()->getElementType();
       AllocaTmps.push_back(new GlobalVariable(Ty, false,
                                               GlobalValue::InternalLinkage,
                                               UndefValue::get(Ty),
                                               AI->getName()));
-      InstResult = AllocaTmps.back();      
+      InstResult = AllocaTmps.back();     
+    } else if (CallInst *CI = dyn_cast<CallInst>(CurInst)) {
+      // Resolve function pointers.
+      Function *Callee = dyn_cast<Function>(getVal(Values, CI->getOperand(0)));
+      if (!Callee) return false;  // Cannot resolve.
+      
+      if (Callee->isExternal() || Callee->getFunctionType()->isVarArg()) {
+        return false;  // TODO: Constant fold calls.
+      }
+      
+      std::vector<Constant*> Formals;
+      for (unsigned i = 1, e = CI->getNumOperands(); i != e; ++i)
+        Formals.push_back(getVal(Values, CI->getOperand(i)));
+      Constant *RetVal;
+      
+      // Execute the call, if successful, use the return value.
+      if (!EvaluateFunction(Callee, RetVal, Formals, CallStack,
+                            MutatedMemory, AllocaTmps))
+        return false;
+      InstResult = RetVal;
     } else if (TerminatorInst *TI = dyn_cast<TerminatorInst>(CurInst)) {
       BasicBlock *NewBB = 0;
       if (BranchInst *BI = dyn_cast<BranchInst>(CurInst)) {
@@ -1437,27 +1468,30 @@ static bool EvaluateFunction(Function *F,
         } else {
           ConstantBool *Cond =
             dyn_cast<ConstantBool>(getVal(Values, BI->getCondition()));
-          if (!Cond) break;  // Cannot determine.
+          if (!Cond) return false;  // Cannot determine.
           NewBB = BI->getSuccessor(!Cond->getValue());          
         }
       } else if (SwitchInst *SI = dyn_cast<SwitchInst>(CurInst)) {
         ConstantInt *Val =
           dyn_cast<ConstantInt>(getVal(Values, SI->getCondition()));
-        if (!Val) break;  // Cannot determine.
+        if (!Val) return false;  // Cannot determine.
         NewBB = SI->getSuccessor(SI->findCaseValue(Val));
       } else if (ReturnInst *RI = dyn_cast<ReturnInst>(CurInst)) {
-        assert(RI->getNumOperands() == 0);
+        if (RI->getNumOperands())
+          RetVal = getVal(Values, RI->getOperand(0));
+        
+        CallStack.pop_back();  // return from fn.
         return true;  // We succeeded at evaluating this ctor!
       } else {
-        // unwind, unreachable.
-        break;  // Cannot handle this terminator.
+        // invoke, unwind, unreachable.
+        return false;  // Cannot handle this terminator.
       }
       
       // Okay, we succeeded in evaluating this control flow.  See if we have
-      // executed the new block before.  If so, we have a looping or recursive
-      // function, which we cannot evaluate in reasonable time.
+      // executed the new block before.  If so, we have a looping function,
+      // which we cannot evaluate in reasonable time.
       if (!ExecutedBlocks.insert(NewBB).second)
-        break;  // Recursed/looped!
+        return false;  // looped!
       
       // Okay, we have never been in this block before.  Check to see if there
       // are any PHI nodes.  If so, evaluate them with information about where
@@ -1471,10 +1505,8 @@ static bool EvaluateFunction(Function *F,
       // Do NOT increment CurInst.  We know that the terminator had no value.
       continue;
     } else {
-      // TODO: use ConstantFoldCall for function calls.
-      
       // Did not know how to evaluate this!
-      break;
+      return false;
     }
     
     if (!CurInst->use_empty())
@@ -1483,8 +1515,6 @@ static bool EvaluateFunction(Function *F,
     // Advance program counter.
     ++CurInst;
   }
-
-  return false;
 }
 
 /// EvaluateStaticConstructor - Evaluate static constructors in the function, if
@@ -1506,8 +1536,9 @@ static bool EvaluateStaticConstructor(Function *F) {
   std::vector<Function*> CallStack;
 
   // Call the function.
-  bool EvalSuccess = EvaluateFunction(F, std::vector<Constant*>(), CallStack, 
-                                      MutatedMemory, AllocaTmps);
+  Constant *RetValDummy;
+  bool EvalSuccess = EvaluateFunction(F, RetValDummy, std::vector<Constant*>(),
+                                       CallStack, MutatedMemory, AllocaTmps);
   if (EvalSuccess) {
     // We succeeded at evaluation: commit the result.
     DEBUG(std::cerr << "FULLY EVALUATED GLOBAL CTOR FUNCTION '" <<
