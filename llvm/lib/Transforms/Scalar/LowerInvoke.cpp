@@ -334,6 +334,12 @@ splitLiveRangesLiveAcrossInvokes(std::vector<InvokeInst*> &Invokes) {
           cast<Instruction>(Inst->use_back())->getParent() == BB &&
           !isa<PHINode>(Inst->use_back())) continue;
       
+      // If this is an alloca in the entry block, it's not a real register
+      // value.
+      if (AllocaInst *AI = dyn_cast<AllocaInst>(Inst))
+        if (isa<ConstantInt>(AI->getArraySize()) && BB == F->begin())
+          continue;
+      
       // Avoid iterator invalidation by copying users to a temporary vector.
       std::vector<Instruction*> Users;
       for (Value::use_iterator UI = Inst->use_begin(), E = Inst->use_end();
