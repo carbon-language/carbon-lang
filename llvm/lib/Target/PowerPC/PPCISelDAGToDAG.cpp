@@ -1012,12 +1012,16 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
       N = I;
       return SDOperand(N, 0);
     }
-    // Finally, check for the case where we are being asked to select
+    // Check for the case where we are being asked to select
     // xor (not(a), b) which is equivalent to not(xor a, b), which is eqv
     if (isOprNot(N->getOperand(0).Val))
       CurDAG->SelectNodeTo(N, PPC::EQV, MVT::i32, 
                            Select(N->getOperand(0).getOperand(0)),
                            Select(N->getOperand(1)));
+    else if (isOprNot(N->getOperand(1).Val))
+      CurDAG->SelectNodeTo(N, PPC::EQV, MVT::i32, 
+                           Select(N->getOperand(1).getOperand(0)),
+                           Select(N->getOperand(0)));
     else
       CurDAG->SelectNodeTo(N, PPC::XOR, MVT::i32, Select(N->getOperand(0)),
                            Select(N->getOperand(1)));
