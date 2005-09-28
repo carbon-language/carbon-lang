@@ -765,7 +765,11 @@ def RLDICR : MDForm_1<30, 1,
 // Arbitrary immediate support.  Implement in terms of LIS/ORI.
 def : Pat<(i32 imm:$imm),
           (ORI (LIS (HI16 imm:$imm)), (LO16 imm:$imm))>;
-          
+
+// Implement the 'not' operation with the NOR instruction.
+def NOT : Pat<(not GPRC:$in),
+              (NOR GPRC:$in, GPRC:$in)>;
+
 // or by an arbitrary immediate.
 def : Pat<(or GPRC:$in, imm:$imm),
           (ORIS (ORI GPRC:$in, (LO16 imm:$imm)), (HI16 imm:$imm))>;
