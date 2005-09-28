@@ -69,6 +69,7 @@ namespace llvm {
     Record *Def;
     std::string EnumName;
     std::string SDClassName;
+    unsigned Properties;
     unsigned NumResults;
     int NumOperands;
     std::vector<SDTypeConstraint> TypeConstraints;
@@ -84,6 +85,13 @@ namespace llvm {
     const std::vector<SDTypeConstraint> &getTypeConstraints() const {
       return TypeConstraints;
     }
+    
+    // SelectionDAG node properties.
+    enum SDNP { SDNPCommutative };
+
+    /// hasProperty - Return true if this node has the specified property.
+    ///
+    bool hasProperty(enum SDNP Prop) const { return Properties & (1 << Prop); }
 
     /// ApplyTypeConstraints - Given a node in a pattern, apply the type
     /// constraints for this node to the operands of the node.  This returns

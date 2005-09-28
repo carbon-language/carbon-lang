@@ -137,6 +137,22 @@ SDNodeInfo::SDNodeInfo(Record *R) : Def(R) {
   NumResults = TypeProfile->getValueAsInt("NumResults");
   NumOperands = TypeProfile->getValueAsInt("NumOperands");
   
+  // Parse the properties.
+  Properties = 0;
+  ListInit *LI = R->getValueAsListInit("Properties");
+  for (unsigned i = 0, e = LI->getSize(); i != e; ++i) {
+    DefInit *DI = dynamic_cast<DefInit*>(LI->getElement(i));
+    assert(DI && "Properties list must be list of defs!");
+    if (DI->getDef()->getName() == "SDNPCommutative") {
+      Properties |= 1 << SDNPCommutative;
+    } else {
+      std::cerr << "Unknown SD Node property '" << DI->getDef()->getName()
+                << "' on node '" << R->getName() << "'!\n";
+      exit(1);
+    }
+  }
+  
+  
   // Parse the type constraints.
   ListInit *Constraints = TypeProfile->getValueAsListInit("Constraints");
   for (unsigned i = 0, e = Constraints->getSize(); i != e; ++i) {
