@@ -87,7 +87,7 @@ namespace llvm {
     }
     
     // SelectionDAG node properties.
-    enum SDNP { SDNPCommutative };
+    enum SDNP { SDNPCommutative, SDNPAssociative };
 
     /// hasProperty - Return true if this node has the specified property.
     ///
@@ -205,8 +205,8 @@ namespace llvm {
       return false;
     }
     
-    /// canPatternMatch - Return false if it is impossible for this pattern to
-    /// match on this target.
+    /// canPatternMatch - If it is impossible for this pattern to match on this
+    /// target, fill in Reason and return false.  Otherwise, return true.
     bool canPatternMatch(std::string &Reason, DAGISelEmitter &ISE);
   };
   

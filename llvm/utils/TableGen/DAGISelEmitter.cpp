@@ -145,6 +145,8 @@ SDNodeInfo::SDNodeInfo(Record *R) : Def(R) {
     assert(DI && "Properties list must be list of defs!");
     if (DI->getDef()->getName() == "SDNPCommutative") {
       Properties |= 1 << SDNPCommutative;
+    } else if (DI->getDef()->getName() == "SDNPAssociative") {
+      Properties |= 1 << SDNPAssociative;
     } else {
       std::cerr << "Unknown SD Node property '" << DI->getDef()->getName()
                 << "' on node '" << R->getName() << "'!\n";
@@ -377,7 +379,7 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP) {
 /// used as a santity check for .td files (to prevent people from writing stuff
 /// that can never possibly work), and to prevent the pattern permuter from
 /// generating stuff that is useless.
-bool TreePatternNode::canPatternMatch(std::string &Reason, DAGISelEmitter &ISE) {
+bool TreePatternNode::canPatternMatch(std::string &Reason, DAGISelEmitter &ISE){
   if (isLeaf()) return true;
 
   for (unsigned i = 0, e = getNumChildren(); i != e; ++i)
@@ -1052,8 +1054,8 @@ void DAGISelEmitter::ParsePatterns() {
 // GenerateVariants - Generate variants.  For example, commutative patterns can
 // match multiple ways.  Add them to PatternsToMatch as well.
 void DAGISelEmitter::GenerateVariants() {
-  
 }
+
 
 /// getPatternSize - Return the 'size' of this pattern.  We want to match large
 /// patterns before small ones.  This is used to determine the size of a
