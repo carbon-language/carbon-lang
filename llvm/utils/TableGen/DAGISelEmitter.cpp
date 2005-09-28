@@ -372,6 +372,34 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP) {
   }
 }
 
+/// canPatternMatch - If it is impossible for this pattern to match on this
+/// target, fill in Reason and return false.  Otherwise, return true.  This is
+/// used as a santity check for .td files (to prevent people from writing stuff
+/// that can never possibly work), and to prevent the pattern permuter from
+/// generating stuff that is useless.
+bool TreePatternNode::canPatternMatch(std::string &Reason, DAGISelEmitter &ISE) {
+  if (isLeaf()) return true;
+
+  for (unsigned i = 0, e = getNumChildren(); i != e; ++i)
+    if (!getChild(i)->canPatternMatch(Reason, ISE))
+      return false;
+  
+  // If this node is a commutative operator, check that the LHS isn't an
+  // immediate.
+  const SDNodeInfo &NodeInfo = ISE.getSDNodeInfo(getOperator());
+  if (NodeInfo.hasProperty(SDNodeInfo::SDNPCommutative)) {
+    // Scan all of the operands of the node and make sure that only the last one
+    // is a constant node.
+    for (unsigned i = 0, e = getNumChildren()-1; i != e; ++i)
+      if (!getChild(i)->isLeaf() && 
+          getChild(i)->getOperator()->getName() == "imm") {
+        Reason = "Immediate value must be on the RHS of commutative operators!";
+        return false;
+      }
+  }
+  
+  return true;
+}
 
 //===----------------------------------------------------------------------===//
 // TreePattern implementation
@@ -962,6 +990,11 @@ void DAGISelEmitter::ParseInstructions() {
       continue;  // Not a set of a single value (not handled so far)
     
     TreePatternNode *SrcPattern = Pattern->getChild(1)->clone();
+    
+    std::string Reason;
+    if (!SrcPattern->canPatternMatch(Reason, *this))
+      I->error("Instruction can never match: " + Reason);
+    
     TreePatternNode *DstPattern = II->second.getResultPattern();
     PatternsToMatch.push_back(std::make_pair(SrcPattern, DstPattern));
   }
@@ -999,6 +1032,11 @@ void DAGISelEmitter::ParsePatterns() {
     if (Result->getNumTrees() != 1)
       Result->error("Cannot handle instructions producing instructions "
                     "with temporaries yet!");
+
+    std::string Reason;
+    if (!Pattern->getOnlyTree()->canPatternMatch(Reason, *this))
+      Pattern->error("Pattern can never match: " + Reason);
+    
     PatternsToMatch.push_back(std::make_pair(Pattern->getOnlyTree(),
                                              Result->getOnlyTree()));
   }
@@ -1009,6 +1047,12 @@ void DAGISelEmitter::ParsePatterns() {
           std::cerr << "\nRESULT:  ";PatternsToMatch[i].second->dump();
           std::cerr << "\n";
         });
+}
+
+// GenerateVariants - Generate variants.  For example, commutative patterns can
+// match multiple ways.  Add them to PatternsToMatch as well.
+void DAGISelEmitter::GenerateVariants() {
+  
 }
 
 /// getPatternSize - Return the 'size' of this pattern.  We want to match large
@@ -1331,13 +1375,13 @@ void DAGISelEmitter::run(std::ostream &OS) {
   ParseInstructions();
   ParsePatterns();
   
-  // FIXME: Generate variants.  For example, commutative patterns can match
+  // Generate variants.  For example, commutative patterns can match
   // multiple ways.  Add them to PatternsToMatch as well.
+  GenerateVariants();
 
   // At this point, we have full information about the 'Patterns' we need to
   // parse, both implicitly from instructions as well as from explicit pattern
-  // definitions.
-  
+  // definitions.  Emit the resultant instruction selector.
   EmitInstructionSelector(OS);  
   
   for (std::map<Record*, TreePattern*>::iterator I = PatternFragments.begin(),

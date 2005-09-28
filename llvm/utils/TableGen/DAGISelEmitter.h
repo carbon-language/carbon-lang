@@ -204,6 +204,10 @@ namespace llvm {
         if (getChild(i)->ContainsUnresolvedType()) return true;
       return false;
     }
+    
+    /// canPatternMatch - Return false if it is impossible for this pattern to
+    /// match on this target.
+    bool canPatternMatch(std::string &Reason, DAGISelEmitter &ISE);
   };
   
   
@@ -369,6 +373,7 @@ private:
   void ParsePatternFragments(std::ostream &OS);
   void ParseInstructions();
   void ParsePatterns();
+  void GenerateVariants();
   void FindPatternInputsAndOutputs(TreePattern *I, TreePatternNode *Pat,
                                    std::map<std::string,
                                             TreePatternNode*> &InstInputs,
