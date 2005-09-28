@@ -1088,14 +1088,28 @@ CodeGenPatternResult(TreePatternNode *N, unsigned &Ctr,
     if (Val[0] == 'T' && Val[1] == 'm' && Val[2] == 'p') {
       // Already selected this operand, just return the tmpval.
       return atoi(Val.c_str()+3);
-    } else {
-      unsigned ResNo = Ctr++;
-      OS << "      SDOperand Tmp" << ResNo << " = Select(" << Val << ");\n";
-      // Add Tmp<ResNo> to VariableMap, so that we don't multiply select this
-      // value if used multiple times by this pattern result.
-      Val = "Tmp"+utostr(ResNo);
-      return ResNo;
     }
+    
+    unsigned ResNo = Ctr++;
+    if (!N->isLeaf() && N->getOperator()->getName() == "imm") {
+      switch (N->getType()) {
+      default: assert(0 && "Unknown type for constant node!");
+      case MVT::i1:  OS << "      bool Tmp"; break;
+      case MVT::i8:  OS << "      unsigned char Tmp"; break;
+      case MVT::i16: OS << "      unsigned short Tmp"; break;
+      case MVT::i32: OS << "      unsigned Tmp"; break;
+      case MVT::i64: OS << "      uint64_t Tmp"; break;
+      }
+      OS << ResNo << "C = cast<ConstantSDNode>(" << Val << ")->getValue();\n";
+      OS << "      SDOperand Tmp" << ResNo << " = CurDAG->getTargetConstant(Tmp"
+         << ResNo << "C, MVT::" << getEnumName(N->getType()) << ");\n";
+    } else {
+      OS << "      SDOperand Tmp" << ResNo << " = Select(" << Val << ");\n";
+    }
+    // Add Tmp<ResNo> to VariableMap, so that we don't multiply select this
+    // value if used multiple times by this pattern result.
+    Val = "Tmp"+utostr(ResNo);
+    return ResNo;
   }
   
   if (N->isLeaf()) {
