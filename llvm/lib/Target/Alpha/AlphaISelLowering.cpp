@@ -68,8 +68,8 @@ AlphaTargetLowering::AlphaTargetLowering(TargetMachine &TM) : TargetLowering(TM)
   setOperationAction(ISD::SEXTLOAD, MVT::i8,  Expand);
   setOperationAction(ISD::SEXTLOAD, MVT::i16, Expand);
   
-  setOperationAction(ISD::SREM, MVT::f32, Expand);
-  setOperationAction(ISD::SREM, MVT::f64, Expand);
+  setOperationAction(ISD::FREM, MVT::f32, Expand);
+  setOperationAction(ISD::FREM, MVT::f64, Expand);
   
   setOperationAction(ISD::UINT_TO_FP, MVT::i64, Expand);
   

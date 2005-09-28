@@ -1275,10 +1275,7 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
       case ISD::SHL: Opc = Alpha::SL; break;
       case ISD::SRL: Opc = Alpha::SRL; break;
       case ISD::SRA: Opc = Alpha::SRA; break;
-      case ISD::MUL:
-        Opc = isFP ? (DestType == MVT::f64 ? Alpha::MULT : Alpha::MULS)
-          : Alpha::MULQ;
-        break;
+      case ISD::MUL: Opc = Alpha::MULQ; break;
       };
       Tmp1 = SelectExpr(N.getOperand(0));
       Tmp2 = SelectExpr(N.getOperand(1));
@@ -1288,25 +1285,7 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
 
   case ISD::ADD:
   case ISD::SUB:
-    if (isFP) {
-      ConstantFPSDNode *CN;
-      if (opcode == ISD::ADD)
-        Opc = DestType == MVT::f64 ? Alpha::ADDT : Alpha::ADDS;
-      else
-        Opc = DestType == MVT::f64 ? Alpha::SUBT : Alpha::SUBS;
-      if (opcode == ISD::SUB
-          && (CN = dyn_cast<ConstantFPSDNode>(N.getOperand(0)))
-          && (CN->isExactlyValue(+0.0) || CN->isExactlyValue(-0.0)))
-      {
-        Tmp2 = SelectExpr(N.getOperand(1));
-        BuildMI(BB, Alpha::CPYSN, 2, Result).addReg(Tmp2).addReg(Tmp2);
-      } else {
-        Tmp1 = SelectExpr(N.getOperand(0));
-        Tmp2 = SelectExpr(N.getOperand(1));
-        BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
-      }
-      return Result;
-    } else {
+    {
       bool isAdd = opcode == ISD::ADD;
 
       //first check for Scaled Adds and Subs!
@@ -1369,15 +1348,25 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
       }
       return Result;
     }
-
+  case ISD::FADD:
+  case ISD::FSUB:
+  case ISD::FMUL:
+  case ISD::FDIV: {
+    if (opcode == ISD::FADD)
+      Opc = DestType == MVT::f64 ? Alpha::ADDT : Alpha::ADDS;
+    else if (opcode == ISD::FSUB)
+      Opc = DestType == MVT::f64 ? Alpha::SUBT : Alpha::SUBS;
+    else if (opcode == ISD::FMUL)
+      Opc = DestType == MVT::f64 ? Alpha::MULT : Alpha::MULS;
+    else
+      Opc = DestType == MVT::f64 ? Alpha::DIVT : Alpha::DIVS;
+    Tmp1 = SelectExpr(N.getOperand(0));
+    Tmp2 = SelectExpr(N.getOperand(1));
+    BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
+    return Result;
+  }
   case ISD::SDIV:
-    if (isFP) {
-      Tmp1 = SelectExpr(N.getOperand(0));
-      Tmp2 = SelectExpr(N.getOperand(1));
-      BuildMI(BB, DestType == MVT::f64 ? Alpha::DIVT : Alpha::DIVS, 2, Result)
-        .addReg(Tmp1).addReg(Tmp2);
-      return Result;
-    } else {
+    {
       //check if we can convert into a shift!
       if (isSIntImmediate(N.getOperand(1), SImm) &&
           SImm != 0 && isPowerOf2_64(llabs(SImm))) {

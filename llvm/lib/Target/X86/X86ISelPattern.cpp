@@ -158,7 +158,7 @@ namespace {
       setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1   , Expand);
       setOperationAction(ISD::FP_ROUND_INREG   , MVT::f32  , Expand);
       setOperationAction(ISD::SEXTLOAD         , MVT::i1   , Expand);
-      setOperationAction(ISD::SREM             , MVT::f64  , Expand);
+      setOperationAction(ISD::FREM             , MVT::f64  , Expand);
       setOperationAction(ISD::CTPOP            , MVT::i8   , Expand);
       setOperationAction(ISD::CTTZ             , MVT::i8   , Expand);
       setOperationAction(ISD::CTLZ             , MVT::i8   , Expand);
@@ -205,12 +205,12 @@ namespace {
         setOperationAction(ISD::FCOS , MVT::f64, Expand);
         setOperationAction(ISD::FABS , MVT::f64, Expand);
         setOperationAction(ISD::FNEG , MVT::f64, Expand);
-        setOperationAction(ISD::SREM , MVT::f64, Expand);
+        setOperationAction(ISD::FREM , MVT::f64, Expand);
         setOperationAction(ISD::FSIN , MVT::f32, Expand);
         setOperationAction(ISD::FCOS , MVT::f32, Expand);
         setOperationAction(ISD::FABS , MVT::f32, Expand);
         setOperationAction(ISD::FNEG , MVT::f32, Expand);
-        setOperationAction(ISD::SREM , MVT::f32, Expand);
+        setOperationAction(ISD::FREM , MVT::f32, Expand);
 
         addLegalFPImmediate(+0.0); // xorps / xorpd
       } else {
@@ -2513,6 +2513,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
     }
     return Result;
 
+  case ISD::FADD:
   case ISD::ADD:
     Op0 = N.getOperand(0);
     Op1 = N.getOperand(1);
@@ -2703,6 +2704,8 @@ unsigned ISel::SelectExpr(SDOperand N) {
     return Result;
   }
 
+  case ISD::FSUB:
+  case ISD::FMUL:
   case ISD::SUB:
   case ISD::MUL:
   case ISD::AND:
@@ -2810,7 +2813,9 @@ unsigned ISel::SelectExpr(SDOperand N) {
       }
       switch (Node->getOpcode()) {
       default: assert(0 && "Unreachable!");
+      case ISD::FSUB:
       case ISD::SUB: Opc = X86ScalarSSE ? SSE_SUBTab[Opc] : SUBTab[Opc]; break;
+      case ISD::FMUL:
       case ISD::MUL: Opc = X86ScalarSSE ? SSE_MULTab[Opc] : MULTab[Opc]; break;
       case ISD::AND: Opc = ANDTab[Opc]; break;
       case ISD::OR:  Opc =  ORTab[Opc]; break;
@@ -2824,7 +2829,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
     }
 
     if (isFoldableLoad(Op0, Op1, true))
-      if (Node->getOpcode() != ISD::SUB) {
+      if (Node->getOpcode() != ISD::SUB && Node->getOpcode() != ISD::FSUB) {
         std::swap(Op0, Op1);
         goto FoldOps;
       } else {
@@ -2860,7 +2865,9 @@ unsigned ISel::SelectExpr(SDOperand N) {
       }
       switch (Node->getOpcode()) {
       default: assert(0 && "Unreachable!");
+      case ISD::FSUB:
       case ISD::SUB: Opc = X86ScalarSSE ? SSE_SUBTab[Opc] : SUBTab[Opc]; break;
+      case ISD::FMUL:
       case ISD::MUL: Opc = X86ScalarSSE ? SSE_MULTab[Opc] : MULTab[Opc]; break;
       case ISD::AND: Opc = ANDTab[Opc]; break;
       case ISD::OR:  Opc =  ORTab[Opc]; break;
@@ -2902,7 +2909,9 @@ unsigned ISel::SelectExpr(SDOperand N) {
     }
     switch (Node->getOpcode()) {
     default: assert(0 && "Unreachable!");
+    case ISD::FSUB:
     case ISD::SUB: Opc = X86ScalarSSE ? SSE_SUBTab[Opc] : SUBTab[Opc]; break;
+    case ISD::FMUL:
     case ISD::MUL: Opc = X86ScalarSSE ? SSE_MULTab[Opc] : MULTab[Opc]; break;
     case ISD::AND: Opc = ANDTab[Opc]; break;
     case ISD::OR:  Opc =  ORTab[Opc]; break;
@@ -3006,6 +3015,8 @@ unsigned ISel::SelectExpr(SDOperand N) {
                  N.getValueType(), Result);
     return Result;
 
+  case ISD::FDIV:
+  case ISD::FREM:
   case ISD::SDIV:
   case ISD::UDIV:
   case ISD::SREM:
@@ -3013,7 +3024,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
     assert((N.getOpcode() != ISD::SREM || MVT::isInteger(N.getValueType())) &&
            "We don't support this operator!");
 
-    if (N.getOpcode() == ISD::SDIV) {
+    if (N.getOpcode() == ISD::SDIV || N.getOpcode() == ISD::FDIV) {
       // We can fold loads into FpDIVs, but not really into any others.
       if (N.getValueType() == MVT::f64 && !X86ScalarSSE) {
         // Check for reversed and unreversed DIV.
@@ -3756,9 +3767,12 @@ bool ISel::TryToFoldLoadOpStore(SDNode *Node) {
   default:
     std::cerr << "CANNOT [mem] op= val: ";
     StVal.Val->dump(); std::cerr << "\n";
+  case ISD::FMUL:
   case ISD::MUL:
+  case ISD::FDIV:
   case ISD::SDIV:
   case ISD::UDIV:
+  case ISD::FREM:
   case ISD::SREM:
   case ISD::UREM: return false;
 
@@ -3837,7 +3851,8 @@ bool ISel::TryToFoldLoadOpStore(SDNode *Node) {
 
   // If we have [mem] = V op [mem], try to turn it into:
   // [mem] = [mem] op V.
-  if (Op1 == TheLoad && StVal.getOpcode() != ISD::SUB &&
+  if (Op1 == TheLoad && 
+      StVal.getOpcode() != ISD::SUB && StVal.getOpcode() != ISD::FSUB &&
       StVal.getOpcode() != ISD::SHL && StVal.getOpcode() != ISD::SRA &&
       StVal.getOpcode() != ISD::SRL)
     std::swap(Op0, Op1);

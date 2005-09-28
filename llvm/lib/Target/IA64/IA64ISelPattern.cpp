@@ -72,8 +72,8 @@ namespace {
       setOperationAction(ISD::SEXTLOAD         , MVT::i16  , Expand);
       setOperationAction(ISD::SEXTLOAD         , MVT::i32  , Expand);
 
-      setOperationAction(ISD::SREM             , MVT::f32  , Expand);
-      setOperationAction(ISD::SREM             , MVT::f64  , Expand);
+      setOperationAction(ISD::FREM             , MVT::f32  , Expand);
+      setOperationAction(ISD::FREM             , MVT::f64  , Expand);
 
       setOperationAction(ISD::UREM             , MVT::f32  , Expand);
       setOperationAction(ISD::UREM             , MVT::f64  , Expand);
@@ -1240,20 +1240,28 @@ unsigned ISel::SelectExpr(SDOperand N) {
     BuildMI(BB, IA64::GETFSIG, 1, Result).addReg(Tmp2);
     return Result;
   }
-
-  case ISD::ADD: {
-    if(DestType == MVT::f64 && N.getOperand(0).getOpcode() == ISD::MUL &&
-       N.getOperand(0).Val->hasOneUse()) { // if we can fold this add
-                                           // into an fma, do so:
-      // ++FusedFP; // Statistic
+    
+  case ISD::FADD: {
+    if (N.getOperand(0).getOpcode() == ISD::FMUL &&
+        N.getOperand(0).Val->hasOneUse()) { // if we can fold this add
+                                            // into an fma, do so:
+                                            // ++FusedFP; // Statistic
       Tmp1 = SelectExpr(N.getOperand(0).getOperand(0));
       Tmp2 = SelectExpr(N.getOperand(0).getOperand(1));
       Tmp3 = SelectExpr(N.getOperand(1));
       BuildMI(BB, IA64::FMA, 3, Result).addReg(Tmp1).addReg(Tmp2).addReg(Tmp3);
       return Result; // early exit
     }
+    
+    //else, fallthrough:
+    Tmp1 = SelectExpr(N.getOperand(0));
+    Tmp2 = SelectExpr(N.getOperand(1));
+    BuildMI(BB, IA64::FADD, 2, Result).addReg(Tmp1).addReg(Tmp2);
+    return Result;
+  }
 
-    if(DestType != MVT::f64 && N.getOperand(0).getOpcode() == ISD::SHL &&
+  case ISD::ADD: {
+    if (N.getOperand(0).getOpcode() == ISD::SHL &&
         N.getOperand(0).Val->hasOneUse()) { // if we might be able to fold
                                             // this add into a shladd, try:
       ConstantSDNode *CSD = NULL;
@@ -1273,75 +1281,71 @@ unsigned ISel::SelectExpr(SDOperand N) {
 
     //else, fallthrough:
     Tmp1 = SelectExpr(N.getOperand(0));
-    if(DestType != MVT::f64) { // integer addition:
-        switch (ponderIntegerAdditionWith(N.getOperand(1), Tmp3)) {
-          case 1: // adding a constant that's 14 bits
-            BuildMI(BB, IA64::ADDIMM14, 2, Result).addReg(Tmp1).addSImm(Tmp3);
-            return Result; // early exit
-        } // fallthrough and emit a reg+reg ADD:
-        Tmp2 = SelectExpr(N.getOperand(1));
-        BuildMI(BB, IA64::ADD, 2, Result).addReg(Tmp1).addReg(Tmp2);
-    } else { // this is a floating point addition
-      Tmp2 = SelectExpr(N.getOperand(1));
-      BuildMI(BB, IA64::FADD, 2, Result).addReg(Tmp1).addReg(Tmp2);
-    }
+    switch (ponderIntegerAdditionWith(N.getOperand(1), Tmp3)) {
+      case 1: // adding a constant that's 14 bits
+        BuildMI(BB, IA64::ADDIMM14, 2, Result).addReg(Tmp1).addSImm(Tmp3);
+        return Result; // early exit
+    } // fallthrough and emit a reg+reg ADD:
+    Tmp2 = SelectExpr(N.getOperand(1));
+    BuildMI(BB, IA64::ADD, 2, Result).addReg(Tmp1).addReg(Tmp2);
     return Result;
   }
 
+  case ISD::FMUL: 
+    Tmp1 = SelectExpr(N.getOperand(0));
+    Tmp2 = SelectExpr(N.getOperand(1));
+    BuildMI(BB, IA64::FMPY, 2, Result).addReg(Tmp1).addReg(Tmp2);
+    return Result;
+    
   case ISD::MUL: {
 
-    if(DestType != MVT::f64) { // TODO: speed!
+    // TODO: speed!
 /* FIXME if(N.getOperand(1).getOpcode() != ISD::Constant) { // if not a const mul
  */
-        // boring old integer multiply with xma
-        Tmp1 = SelectExpr(N.getOperand(0));
-        Tmp2 = SelectExpr(N.getOperand(1));
-
-        unsigned TempFR1=MakeReg(MVT::f64);
-        unsigned TempFR2=MakeReg(MVT::f64);
-        unsigned TempFR3=MakeReg(MVT::f64);
-        BuildMI(BB, IA64::SETFSIG, 1, TempFR1).addReg(Tmp1);
-        BuildMI(BB, IA64::SETFSIG, 1, TempFR2).addReg(Tmp2);
-        BuildMI(BB, IA64::XMAL, 1, TempFR3).addReg(TempFR1).addReg(TempFR2)
-          .addReg(IA64::F0);
-        BuildMI(BB, IA64::GETFSIG, 1, Result).addReg(TempFR3);
-        return Result; // early exit
-     /* FIXME } else { // we are multiplying by an integer constant! yay
-        return Reg = SelectExpr(BuildConstmulSequence(N)); // avert your eyes!
-      } */
-    }
-    else { // floating point multiply
+      // boring old integer multiply with xma
       Tmp1 = SelectExpr(N.getOperand(0));
       Tmp2 = SelectExpr(N.getOperand(1));
-      BuildMI(BB, IA64::FMPY, 2, Result).addReg(Tmp1).addReg(Tmp2);
-      return Result;
-    }
+
+      unsigned TempFR1=MakeReg(MVT::f64);
+      unsigned TempFR2=MakeReg(MVT::f64);
+      unsigned TempFR3=MakeReg(MVT::f64);
+      BuildMI(BB, IA64::SETFSIG, 1, TempFR1).addReg(Tmp1);
+      BuildMI(BB, IA64::SETFSIG, 1, TempFR2).addReg(Tmp2);
+      BuildMI(BB, IA64::XMAL, 1, TempFR3).addReg(TempFR1).addReg(TempFR2)
+        .addReg(IA64::F0);
+      BuildMI(BB, IA64::GETFSIG, 1, Result).addReg(TempFR3);
+      return Result; // early exit
+   /* FIXME } else { // we are multiplying by an integer constant! yay
+      return Reg = SelectExpr(BuildConstmulSequence(N)); // avert your eyes!
+    } */
   }
 
-  case ISD::SUB: {
-    if(DestType == MVT::f64 && N.getOperand(0).getOpcode() == ISD::MUL &&
+  case ISD::FSUB:
+    if(N.getOperand(0).getOpcode() == ISD::FMUL &&
        N.getOperand(0).Val->hasOneUse()) { // if we can fold this sub
                                            // into an fms, do so:
-      // ++FusedFP; // Statistic
+                                           // ++FusedFP; // Statistic
       Tmp1 = SelectExpr(N.getOperand(0).getOperand(0));
       Tmp2 = SelectExpr(N.getOperand(0).getOperand(1));
       Tmp3 = SelectExpr(N.getOperand(1));
       BuildMI(BB, IA64::FMS, 3, Result).addReg(Tmp1).addReg(Tmp2).addReg(Tmp3);
       return Result; // early exit
     }
+
     Tmp2 = SelectExpr(N.getOperand(1));
-    if(DestType != MVT::f64) { // integer subtraction:
-        switch (ponderIntegerSubtractionFrom(N.getOperand(0), Tmp3)) {
-          case 1: // subtracting *from* an 8 bit constant:
-            BuildMI(BB, IA64::SUBIMM8, 2, Result).addSImm(Tmp3).addReg(Tmp2);
-            return Result; // early exit
-        } // fallthrough and emit a reg+reg SUB:
-        Tmp1 = SelectExpr(N.getOperand(0));
-        BuildMI(BB, IA64::SUB, 2, Result).addReg(Tmp1).addReg(Tmp2);
-    } else { // this is a floating point subtraction
-      Tmp1 = SelectExpr(N.getOperand(0));
-      BuildMI(BB, IA64::FSUB, 2, Result).addReg(Tmp1).addReg(Tmp2);
-    }
+    Tmp1 = SelectExpr(N.getOperand(0));
+    BuildMI(BB, IA64::FSUB, 2, Result).addReg(Tmp1).addReg(Tmp2);
+    return Result;
+    
+  case ISD::SUB: {
+    Tmp2 = SelectExpr(N.getOperand(1));
+    switch (ponderIntegerSubtractionFrom(N.getOperand(0), Tmp3)) {
+      case 1: // subtracting *from* an 8 bit constant:
+        BuildMI(BB, IA64::SUBIMM8, 2, Result).addSImm(Tmp3).addReg(Tmp2);
+        return Result; // early exit
+    } // fallthrough and emit a reg+reg SUB:
+    Tmp1 = SelectExpr(N.getOperand(0));
+    BuildMI(BB, IA64::SUB, 2, Result).addReg(Tmp1).addReg(Tmp2);
     return Result;
   }
 
@@ -1584,6 +1588,7 @@ pC = pA OR pB
     return Result;
   }
 
+  case ISD::FDIV:
   case ISD::SDIV:
   case ISD::UDIV:
   case ISD::SREM:
@@ -1601,8 +1606,10 @@ pC = pA OR pB
     bool isSigned=false;
 
     switch(N.getOpcode()) {
+      case ISD::FDIV:
       case ISD::SDIV:  isModulus=false; isSigned=true;  break;
       case ISD::UDIV:  isModulus=false; isSigned=false; break;
+      case ISD::FREM:
       case ISD::SREM:  isModulus=true;  isSigned=true;  break;
       case ISD::UREM:  isModulus=true;  isSigned=false; break;
     }
