@@ -218,6 +218,13 @@ def HI16 : SDNodeXForm<imm, [{
   return getI32Imm((unsigned)N->getValue() >> 16);
 }]>;
 
+def HA16 : SDNodeXForm<imm, [{
+  // Transformation function: shift the immediate value down into the low bits.
+  signed int Val = N->getValue();
+  return getI32Imm((Val - (signed short)Val) >> 16);
+}]>;
+
+
 def immSExt16  : PatLeaf<(imm), [{
   // immSExt16 predicate - True if the immediate fits in a 16-bit sign extended
   // field.  Used by instructions like 'addi'.
@@ -801,10 +808,13 @@ def EQV1 : Pat<(xor (not GPRC:$in1), GPRC:$in2),
 def EQV2 : Pat<(xor GPRC:$in1, (not GPRC:$in2)),
                (EQV GPRC:$in1, GPRC:$in2)>;
 
-// or by an arbitrary immediate.
+// ADD an arbitrary immediate.
+def : Pat<(add GPRC:$in, imm:$imm),
+          (ADDIS (ADDI GPRC:$in, (LO16 imm:$imm)), (HA16 imm:$imm))>;
+// OR an arbitrary immediate.
 def : Pat<(or GPRC:$in, imm:$imm),
           (ORIS (ORI GPRC:$in, (LO16 imm:$imm)), (HI16 imm:$imm))>;
-// xor by an arbitrary immediate.
+// XOR an arbitrary immediate.
 def : Pat<(xor GPRC:$in, imm:$imm),
           (XORIS (XORI GPRC:$in, (LO16 imm:$imm)), (HI16 imm:$imm))>;
 
