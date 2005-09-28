@@ -820,7 +820,6 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
                          Select(N->getOperand(1)));
     return SDOperand(N, 0);
   }
-  case ISD::FMUL:
   case ISD::MUL: {
     unsigned Imm, Opc;
     if (isIntImmediate(N->getOperand(1), Imm) && isInt16(Imm)) {
@@ -828,18 +827,17 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
                            Select(N->getOperand(0)), getI32Imm(Lo16(Imm)));
       return SDOperand(N, 0);
     } 
-    switch (N->getValueType(0)) {
-      default: assert(0 && "Unhandled multiply type!");
-      case MVT::i32: Opc = PPC::MULLW; break;
-      case MVT::f32: Opc = PPC::FMULS; break;
-      case MVT::f64: Opc = PPC::FMUL;  break;
-    }
-    CurDAG->SelectNodeTo(N, Opc, N->getValueType(0), Select(N->getOperand(0)), 
+    CurDAG->SelectNodeTo(N, PPC::MULLW, MVT::i32, Select(N->getOperand(0)), 
                          Select(N->getOperand(1)));
     return SDOperand(N, 0);
   }
-  case ISD::SDIV:
-  case ISD::FDIV: {
+  case ISD::FMUL: {
+    unsigned Opc = N->getValueType(0) == MVT::f32 ? PPC::FMULS : PPC::FMUL;
+    CurDAG->SelectNodeTo(N, Opc, N->getValueType(0), Select(N->getOperand(0)), 
+                         Select(N->getOperand(1)));
+    return SDOperand(N, 0);
+  } 
+  case ISD::SDIV: {
     unsigned Imm;
     if (isIntImmediate(N->getOperand(1), Imm)) {
       if ((signed)Imm > 0 && isPowerOf2_32(Imm)) {
@@ -869,17 +867,17 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
       }
     }
     
-    unsigned Opc;
-    switch (N->getValueType(0)) {
-    default: assert(0 && "Unknown type to ISD::SDIV");
-    case MVT::i32: Opc = PPC::DIVW; break;
-    case MVT::f32: Opc = PPC::FDIVS; break;
-    case MVT::f64: Opc = PPC::FDIV; break;
-    }
-    CurDAG->SelectNodeTo(N, Opc, N->getValueType(0), Select(N->getOperand(0)),
+    CurDAG->SelectNodeTo(N, PPC::DIVW, MVT::i32, Select(N->getOperand(0)),
                          Select(N->getOperand(1)));
     return SDOperand(N, 0);
   }
+  case ISD::FDIV: {
+    unsigned Opc = N->getValueType(0) == MVT::f32 ? PPC::FDIVS : PPC::FDIV;
+    CurDAG->SelectNodeTo(N, Opc, N->getValueType(0), Select(N->getOperand(0)), 
+                         Select(N->getOperand(1)));
+    return SDOperand(N, 0);
+  } 
+    
   case ISD::UDIV: {
     // If this is a divide by constant, we can emit code using some magic
     // constants to implement it as a multiply instead.
