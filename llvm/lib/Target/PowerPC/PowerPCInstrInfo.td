@@ -87,7 +87,8 @@ def SDTExtInreg : SDTypeProfile<1, 2, [   // sext_inreg
 // Note: These are hard coded into tblgen.
 //
 class SDNodeProperty;
-def SDNPCommutative : SDNodeProperty;
+def SDNPCommutative : SDNodeProperty;   // X op Y == Y op X
+def SDNPAssociative : SDNodeProperty;   // (X op Y) op Z == X op (Y op Z)
 
 //===----------------------------------------------------------------------===//
 // Selection DAG Node definitions.
@@ -105,12 +106,17 @@ def node;
 
 def imm        : SDNode<"ISD::Constant"  , SDTImm     , [], "ConstantSDNode">;
 def vt         : SDNode<"ISD::VALUETYPE" , SDTVT      , [], "VTSDNode">;
-def and        : SDNode<"ISD::AND"       , SDTIntBinOp, [SDNPCommutative]>;
-def or         : SDNode<"ISD::OR"        , SDTIntBinOp, [SDNPCommutative]>;
-def xor        : SDNode<"ISD::XOR"       , SDTIntBinOp, [SDNPCommutative]>;
-def add        : SDNode<"ISD::ADD"       , SDTBinOp   , [SDNPCommutative]>;
+def and        : SDNode<"ISD::AND"       , SDTIntBinOp,
+                        [SDNPCommutative, SDNPAssociative]>;
+def or         : SDNode<"ISD::OR"        , SDTIntBinOp,
+                        [SDNPCommutative, SDNPAssociative]>;
+def xor        : SDNode<"ISD::XOR"       , SDTIntBinOp,
+                        [SDNPCommutative, SDNPAssociative]>;
+def add        : SDNode<"ISD::ADD"       , SDTBinOp   ,
+                        [SDNPCommutative, SDNPAssociative]>;
 def sub        : SDNode<"ISD::SUB"       , SDTBinOp>;
-def mul        : SDNode<"ISD::MUL"       , SDTBinOp   , [SDNPCommutative]>;
+def mul        : SDNode<"ISD::MUL"       , SDTBinOp   ,
+                        [SDNPCommutative, SDNPAssociative]>;
 def sdiv       : SDNode<"ISD::SDIV"      , SDTBinOp>;
 def udiv       : SDNode<"ISD::UDIV"      , SDTIntBinOp>;
 def mulhs      : SDNode<"ISD::MULHS"     , SDTIntBinOp, [SDNPCommutative]>;
