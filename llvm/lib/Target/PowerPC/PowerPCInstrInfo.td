@@ -65,13 +65,13 @@ class SDTypeProfile<int numresults, int numoperands,
 }
 
 // Builtin profiles.
-def SDTImm   : SDTypeProfile<1, 0, [SDTCisInt<0>]>;      // for 'imm'.
-def SDTVT    : SDTypeProfile<1, 0, [SDTCisVT<0, OtherVT>]>; // for 'vt'
-def SDTBinOp : SDTypeProfile<1, 2, [      // add, mul, etc.
-  SDTCisSameAs<0, 1>, SDTCisSameAs<0, 2>
-]>;
-def SDTIntBinOp : SDTypeProfile<1, 2, [   // and, or, xor, udiv, etc.
+def SDTImm    : SDTypeProfile<1, 0, [SDTCisInt<0>]>;      // for 'imm'.
+def SDTVT     : SDTypeProfile<1, 0, [SDTCisVT<0, OtherVT>]>; // for 'vt'
+def SDTIntBinOp : SDTypeProfile<1, 2, [   // add, and, or, xor, udiv, etc.
   SDTCisSameAs<0, 1>, SDTCisSameAs<0, 2>, SDTCisInt<0>
+]>;
+def SDTFPBinOp : SDTypeProfile<1, 2, [      // fadd, fmul, etc.
+  SDTCisSameAs<0, 1>, SDTCisSameAs<0, 2>, SDTCisFP<0>
 ]>;
 def SDTIntUnaryOp : SDTypeProfile<1, 1, [   // ctlz
   SDTCisSameAs<0, 1>, SDTCisInt<0>
@@ -106,21 +106,29 @@ def node;
 
 def imm        : SDNode<"ISD::Constant"  , SDTImm     , [], "ConstantSDNode">;
 def vt         : SDNode<"ISD::VALUETYPE" , SDTVT      , [], "VTSDNode">;
+def add        : SDNode<"ISD::ADD"       , SDTIntBinOp   ,
+                        [SDNPCommutative, SDNPAssociative]>;
+def sub        : SDNode<"ISD::SUB"       , SDTIntBinOp>;
+def mul        : SDNode<"ISD::MUL"       , SDTIntBinOp,
+                        [SDNPCommutative, SDNPAssociative]>;
+def mulhs      : SDNode<"ISD::MULHS"     , SDTIntBinOp, [SDNPCommutative]>;
+def mulhu      : SDNode<"ISD::MULHU"     , SDTIntBinOp, [SDNPCommutative]>;
+def sdiv       : SDNode<"ISD::SDIV"      , SDTIntBinOp>;
+def udiv       : SDNode<"ISD::UDIV"      , SDTIntBinOp>;
+def srem       : SDNode<"ISD::SREM"      , SDTIntBinOp>;
+def urem       : SDNode<"ISD::UREM"      , SDTIntBinOp>;
 def and        : SDNode<"ISD::AND"       , SDTIntBinOp,
                         [SDNPCommutative, SDNPAssociative]>;
 def or         : SDNode<"ISD::OR"        , SDTIntBinOp,
                         [SDNPCommutative, SDNPAssociative]>;
 def xor        : SDNode<"ISD::XOR"       , SDTIntBinOp,
                         [SDNPCommutative, SDNPAssociative]>;
-def add        : SDNode<"ISD::ADD"       , SDTBinOp   ,
-                        [SDNPCommutative, SDNPAssociative]>;
-def sub        : SDNode<"ISD::SUB"       , SDTBinOp>;
-def mul        : SDNode<"ISD::MUL"       , SDTBinOp   ,
-                        [SDNPCommutative, SDNPAssociative]>;
-def sdiv       : SDNode<"ISD::SDIV"      , SDTBinOp>;
-def udiv       : SDNode<"ISD::UDIV"      , SDTIntBinOp>;
-def mulhs      : SDNode<"ISD::MULHS"     , SDTIntBinOp, [SDNPCommutative]>;
-def mulhu      : SDNode<"ISD::MULHU"     , SDTIntBinOp, [SDNPCommutative]>;
+def fadd       : SDNode<"ISD::FADD"       , SDTFPBinOp, [SDNPCommutative]>;
+def fsub       : SDNode<"ISD::FSUB"       , SDTFPBinOp>;
+def fmul       : SDNode<"ISD::FMUL"       , SDTFPBinOp, [SDNPCommutative]>;
+def fdiv       : SDNode<"ISD::FDIV"       , SDTFPBinOp>;
+def frem       : SDNode<"ISD::FREM"       , SDTFPBinOp>;
+
 def sext_inreg : SDNode<"ISD::SIGN_EXTEND_INREG", SDTExtInreg>;
 def ctlz       : SDNode<"ISD::CTLZ"      , SDTIntUnaryOp>;
 
