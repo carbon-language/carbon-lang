@@ -1,7 +1,8 @@
 ; RUN: llvm-as < %s | llc -march=ppc32 | grep eqv | wc -l  | grep 3 &&
 ; RUN: llvm-as < %s | llc -march=ppc32 | grep andc | wc -l | grep 2 &&
 ; RUN: llvm-as < %s | llc -march=ppc32 | grep orc | wc -l  | grep 2 &&
-; RUN: llvm-as < %s | llc -march=ppc32 | grep nor | wc -l  | grep 2
+; RUN: llvm-as < %s | llc -march=ppc32 | grep nor | wc -l  | grep 2 &&
+; RUN: llvm-as < %s | llc -march=ppc32 | grep nand | wc -l  | grep 1
 
 int %EQV1(int %X, int %Y) {
 	%A = xor int %X, %Y
@@ -56,3 +57,8 @@ int %NOR2(int %X, int %Y) {
         ret int %R
 }
 
+int %NAND1(int %X, int %Y) {
+	%Z = and int %X, %Y
+	%W = xor int %Z, -1
+	ret int %W
+}
