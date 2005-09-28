@@ -767,16 +767,6 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
     CurDAG->SelectNodeTo(N, PPC::FCTIWZ, N->getValueType(0),
                          Select(N->getOperand(0)));
     return SDOperand(N, 0);
-  case ISD::ADD:
-    if (SDNode *I = SelectIntImmediateExpr(N->getOperand(0), N->getOperand(1),
-                                           PPC::ADDIS, PPC::ADDI, true)) {
-      CurDAG->ReplaceAllUsesWith(Op, SDOperand(I, 0));
-      N = I;
-    } else {
-      CurDAG->SelectNodeTo(N, PPC::ADD, MVT::i32, Select(N->getOperand(0)),
-                           Select(N->getOperand(1)));
-    }
-    return SDOperand(N, 0);
   case ISD::FADD: {
     MVT::ValueType Ty = N->getValueType(0);
     if (!NoExcessFPPrecision) {  // Match FMA ops
@@ -803,26 +793,6 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
                          Select(N->getOperand(0)), Select(N->getOperand(1)));
     return SDOperand(N, 0);
   }
-  case ISD::SUB: {
-    unsigned Imm;
-    if (isIntImmediate(N->getOperand(0), Imm) && isInt16(Imm)) {
-      if (0 == Imm)
-        CurDAG->SelectNodeTo(N, PPC::NEG, MVT::i32, Select(N->getOperand(1)));
-      else
-        CurDAG->SelectNodeTo(N, PPC::SUBFIC, MVT::i32, Select(N->getOperand(1)),
-                             getI32Imm(Lo16(Imm)));
-      return SDOperand(N, 0);
-    }
-    if (SDNode *I = SelectIntImmediateExpr(N->getOperand(0), N->getOperand(1),
-                                           PPC::ADDIS, PPC::ADDI, true, true)) {
-      CurDAG->ReplaceAllUsesWith(Op, SDOperand(I, 0));
-      N = I;
-    } else {
-      CurDAG->SelectNodeTo(N, PPC::SUBF, MVT::i32, Select(N->getOperand(1)),
-                           Select(N->getOperand(0)));
-    }
-    return SDOperand(N, 0);
-  }    
   case ISD::FSUB: {
     MVT::ValueType Ty = N->getValueType(0);
     
