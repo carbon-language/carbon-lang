@@ -678,25 +678,6 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
     }
     return SDOperand(N, 0);    
   }
-  case ISD::Constant: {
-    assert(N->getValueType(0) == MVT::i32);
-    unsigned v = (unsigned)cast<ConstantSDNode>(N)->getValue();
-
-    // NOTE: This doesn't use SelectNodeTo, because doing that will prevent 
-    // folding shared immediates into other the second instruction that 
-    // uses it.
-    if (isInt16(v))
-      return CurDAG->getTargetNode(PPC::LI, MVT::i32, getI32Imm(v));
-
-    unsigned Hi = Hi16(v);
-    unsigned Lo = Lo16(v);
-
-    if (!Lo)
-      return CurDAG->getTargetNode(PPC::LIS, MVT::i32, getI32Imm(Hi));
-      
-    SDOperand Top = CurDAG->getTargetNode(PPC::LIS, MVT::i32, getI32Imm(Hi));
-    return CurDAG->getTargetNode(PPC::ORI, MVT::i32, Top, getI32Imm(Lo));
-  }
   case ISD::UNDEF:
     if (N->getValueType(0) == MVT::i32)
       CurDAG->SelectNodeTo(N, PPC::IMPLICIT_DEF_GPR, MVT::i32);
@@ -768,21 +749,6 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
     CurDAG->ReplaceAllUsesWith(N, Result.Val);
     return SDOperand(Result.Val, Op.ResNo);
   }      
-  case ISD::SIGN_EXTEND_INREG:
-    switch(cast<VTSDNode>(N->getOperand(1))->getVT()) {
-    default: assert(0 && "Illegal type in SIGN_EXTEND_INREG"); break;
-    case MVT::i16:
-      CurDAG->SelectNodeTo(N, PPC::EXTSH, MVT::i32, Select(N->getOperand(0)));
-      break;
-    case MVT::i8:
-      CurDAG->SelectNodeTo(N, PPC::EXTSB, MVT::i32, Select(N->getOperand(0)));
-      break;
-    }
-    return SDOperand(N, 0);
-  case ISD::CTLZ:
-    assert(N->getValueType(0) == MVT::i32);
-    CurDAG->SelectNodeTo(N, PPC::CNTLZW, MVT::i32, Select(N->getOperand(0)));
-    return SDOperand(N, 0);
   case PPCISD::FSEL:
     CurDAG->SelectNodeTo(N, PPC::FSEL, N->getValueType(0),
                          Select(N->getOperand(0)),
@@ -960,16 +926,6 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
                          Select(N->getOperand(1)));
     return SDOperand(N, 0);
   }
-  case ISD::MULHS:
-    assert(N->getValueType(0) == MVT::i32);
-    CurDAG->SelectNodeTo(N, PPC::MULHW, MVT::i32, Select(N->getOperand(0)), 
-                         Select(N->getOperand(1)));
-    return SDOperand(N, 0);
-  case ISD::MULHU:
-    assert(N->getValueType(0) == MVT::i32);
-    CurDAG->SelectNodeTo(N, PPC::MULHWU, MVT::i32, Select(N->getOperand(0)),
-                         Select(N->getOperand(1)));
-    return SDOperand(N, 0);
   case ISD::AND: {
     unsigned Imm;
     // If this is an and of a value rotated between 0 and 31 bits and then and'd
