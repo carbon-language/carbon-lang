@@ -995,6 +995,52 @@ void DAGISelEmitter::ParsePatterns() {
         });
 }
 
+/// getPatternSize - Return the 'size' of this pattern.  We want to match large
+/// patterns before small ones.  This is used to determine the size of a
+/// pattern.
+static unsigned getPatternSize(TreePatternNode *P) {
+  assert(MVT::isInteger(P->getType()) || MVT::isFloatingPoint(P->getType()) &&
+         "Not a valid pattern node to size!");
+  unsigned Size = 1;  // The node itself.
+  
+  // Count children in the count if they are also nodes.
+  for (unsigned i = 0, e = P->getNumChildren(); i != e; ++i) {
+    TreePatternNode *Child = P->getChild(i);
+    if (!Child->isLeaf() && Child->getType() != MVT::Other)
+      Size += getPatternSize(Child);
+  }
+  
+  return Size;
+}
+
+/// getResultPatternCost - Compute the number of instructions for this pattern.
+/// This is a temporary hack.  We should really include the instruction
+/// latencies in this calculation.
+static unsigned getResultPatternCost(TreePatternNode *P) {
+  if (P->isLeaf()) return 0;
+  
+  unsigned Cost = P->getOperator()->isSubClassOf("Instruction");
+  for (unsigned i = 0, e = P->getNumChildren(); i != e; ++i)
+    Cost += getResultPatternCost(P->getChild(i));
+  return Cost;
+}
+
+// PatternSortingPredicate - return true if we prefer to match LHS before RHS.
+// In particular, we want to match maximal patterns first and lowest cost within
+// a particular complexity first.
+struct PatternSortingPredicate {
+  bool operator()(DAGISelEmitter::PatternToMatch *LHS,
+                  DAGISelEmitter::PatternToMatch *RHS) {
+    unsigned LHSSize = getPatternSize(LHS->first);
+    unsigned RHSSize = getPatternSize(RHS->first);
+    if (LHSSize > RHSSize) return true;   // LHS -> bigger -> less cost
+    if (LHSSize < RHSSize) return false;
+    
+    // If the patterns have equal complexity, compare generated instruction cost
+    return getResultPatternCost(LHS->second) <getResultPatternCost(RHS->second);
+  }
+};
+
 /// EmitMatchForPattern - Emit a matcher for N, going to the label for PatternNo
 /// if the match fails.  At this point, we already know that the opcode for N
 /// matches, and the SDNode for the result has the RootName specified name.
@@ -1160,15 +1206,15 @@ void DAGISelEmitter::EmitCodeForPattern(PatternToMatch &Pattern,
   unsigned PatternNo = PatternCount++;
   OS << "    { // Pattern #" << PatternNo << ": ";
   Pattern.first->print(OS);
+  OS << "\n      // Emits: ";
+  Pattern.second->print(OS);
   OS << "\n";
+  OS << "      // Pattern complexity = " << getPatternSize(Pattern.first)
+     << "  cost = " << getResultPatternCost(Pattern.second) << "\n";
 
   // Emit the matcher, capturing named arguments in VariableMap.
   std::map<std::string,std::string> VariableMap;
   EmitMatchForPattern(Pattern.first, "N", VariableMap, PatternNo, OS);
-  
-  OS << "      // Emit: ";
-  Pattern.second->print(OS);
-  OS << "\n";
   
   unsigned TmpNo = 0;
   unsigned Res = CodeGenPatternResult(Pattern.second, TmpNo, VariableMap, OS);
@@ -1178,41 +1224,6 @@ void DAGISelEmitter::EmitCodeForPattern(PatternToMatch &Pattern,
   OS << "      return Tmp" << Res << ";\n";
   OS << "    }\n  P" << PatternNo << "Fail:\n";
 }
-
-/// getPatternSize - Return the 'size' of this pattern.  We want to match large
-/// patterns before small ones.  This is used to determine the size of a
-/// pattern.
-static unsigned getPatternSize(TreePatternNode *P) {
-  assert(MVT::isInteger(P->getType()) || MVT::isFloatingPoint(P->getType()) &&
-         "Not a valid pattern node to size!");
-  unsigned Size = 1;  // The node itself.
-  
-  // Count children in the count if they are also nodes.
-  for (unsigned i = 0, e = P->getNumChildren(); i != e; ++i) {
-    TreePatternNode *Child = P->getChild(i);
-    if (!Child->isLeaf() && Child->getType() != MVT::Other)
-      Size += getPatternSize(Child);
-  }
-  
-  return Size;
-}
-
-// PatternSortingPredicate - return true if we prefer to match LHS before RHS.
-// In particular, we want to match maximal patterns first and lowest cost within
-// a particular complexity first.
-struct PatternSortingPredicate {
-  bool operator()(DAGISelEmitter::PatternToMatch *LHS,
-                  DAGISelEmitter::PatternToMatch *RHS) {
-    unsigned LHSSize = getPatternSize(LHS->first);
-    unsigned RHSSize = getPatternSize(RHS->first);
-    if (LHSSize > RHSSize) return true;   // LHS -> bigger -> less cost
-    if (LHSSize < RHSSize) return false;
-    
-    // If they are equal, compare cost.
-    // FIXME: Compute cost!
-    return false;
-  }
-};
 
 
 namespace {
