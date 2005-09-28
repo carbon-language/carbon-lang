@@ -396,7 +396,7 @@ def MULLI  : DForm_2< 7, (ops GPRC:$rD, GPRC:$rA, s16imm:$imm),
                      [(set GPRC:$rD, (mul GPRC:$rA, immSExt16:$imm))]>;
 def SUBFIC : DForm_2< 8, (ops GPRC:$rD, GPRC:$rA, s16imm:$imm),
                      "subfic $rD, $rA, $imm",
-                     []>;
+                     [(set GPRC:$rD, (sub immSExt16:$imm, GPRC:$rA))]>;
 def LI  : DForm_2_r0<14, (ops GPRC:$rD, s16imm:$imm),
                      "li $rD, $imm",
                      [(set GPRC:$rD, immSExt16:$imm)]>;
