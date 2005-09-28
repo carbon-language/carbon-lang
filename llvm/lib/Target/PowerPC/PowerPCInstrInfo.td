@@ -113,8 +113,8 @@ def sub        : SDNode<"ISD::SUB"       , SDTBinOp>;
 def mul        : SDNode<"ISD::MUL"       , SDTBinOp   , [SDNPCommutative]>;
 def sdiv       : SDNode<"ISD::SDIV"      , SDTBinOp>;
 def udiv       : SDNode<"ISD::UDIV"      , SDTIntBinOp>;
-def mulhs      : SDNode<"ISD::MULHS"     , SDTIntBinOp>;
-def mulhu      : SDNode<"ISD::MULHU"     , SDTIntBinOp>;
+def mulhs      : SDNode<"ISD::MULHS"     , SDTIntBinOp, [SDNPCommutative]>;
+def mulhu      : SDNode<"ISD::MULHU"     , SDTIntBinOp, [SDNPCommutative]>;
 def sext_inreg : SDNode<"ISD::SIGN_EXTEND_INREG", SDTExtInreg>;
 def ctlz       : SDNode<"ISD::CTLZ"      , SDTIntUnaryOp>;
 
