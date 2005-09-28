@@ -767,22 +767,20 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
     CurDAG->SelectNodeTo(N, PPC::FCTIWZ, N->getValueType(0),
                          Select(N->getOperand(0)));
     return SDOperand(N, 0);
-  case ISD::ADD: {
-    MVT::ValueType Ty = N->getValueType(0);
-    if (Ty == MVT::i32) {
-      if (SDNode *I = SelectIntImmediateExpr(N->getOperand(0), N->getOperand(1),
-                                             PPC::ADDIS, PPC::ADDI, true)) {
-        CurDAG->ReplaceAllUsesWith(Op, SDOperand(I, 0));
-        N = I;
-      } else {
-        CurDAG->SelectNodeTo(N, PPC::ADD, MVT::i32, Select(N->getOperand(0)),
-                             Select(N->getOperand(1)));
-      }
-      return SDOperand(N, 0);
+  case ISD::ADD:
+    if (SDNode *I = SelectIntImmediateExpr(N->getOperand(0), N->getOperand(1),
+                                           PPC::ADDIS, PPC::ADDI, true)) {
+      CurDAG->ReplaceAllUsesWith(Op, SDOperand(I, 0));
+      N = I;
+    } else {
+      CurDAG->SelectNodeTo(N, PPC::ADD, MVT::i32, Select(N->getOperand(0)),
+                           Select(N->getOperand(1)));
     }
-    
+    return SDOperand(N, 0);
+  case ISD::FADD: {
+    MVT::ValueType Ty = N->getValueType(0);
     if (!NoExcessFPPrecision) {  // Match FMA ops
-      if (N->getOperand(0).getOpcode() == ISD::MUL &&
+      if (N->getOperand(0).getOpcode() == ISD::FMUL &&
           N->getOperand(0).Val->hasOneUse()) {
         ++FusedFP; // Statistic
         CurDAG->SelectNodeTo(N, Ty == MVT::f64 ? PPC::FMADD : PPC::FMADDS, Ty,
@@ -790,7 +788,7 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
                              Select(N->getOperand(0).getOperand(1)),
                              Select(N->getOperand(1)));
         return SDOperand(N, 0);
-      } else if (N->getOperand(1).getOpcode() == ISD::MUL &&
+      } else if (N->getOperand(1).getOpcode() == ISD::FMUL &&
                  N->getOperand(1).hasOneUse()) {
         ++FusedFP; // Statistic
         CurDAG->SelectNodeTo(N, Ty == MVT::f64 ? PPC::FMADD : PPC::FMADDS, Ty,
@@ -806,30 +804,30 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
     return SDOperand(N, 0);
   }
   case ISD::SUB: {
-    MVT::ValueType Ty = N->getValueType(0);
-    if (Ty == MVT::i32) {
-      unsigned Imm;
-      if (isIntImmediate(N->getOperand(0), Imm) && isInt16(Imm)) {
-        if (0 == Imm)
-          CurDAG->SelectNodeTo(N, PPC::NEG, Ty, Select(N->getOperand(1)));
-        else
-          CurDAG->SelectNodeTo(N, PPC::SUBFIC, Ty, Select(N->getOperand(1)),
-                               getI32Imm(Lo16(Imm)));
-        return SDOperand(N, 0);
-      }
-      if (SDNode *I = SelectIntImmediateExpr(N->getOperand(0), N->getOperand(1),
-                                          PPC::ADDIS, PPC::ADDI, true, true)) {
-        CurDAG->ReplaceAllUsesWith(Op, SDOperand(I, 0));
-        N = I;
-      } else {
-        CurDAG->SelectNodeTo(N, PPC::SUBF, Ty, Select(N->getOperand(1)),
-                             Select(N->getOperand(0)));
-      }
+    unsigned Imm;
+    if (isIntImmediate(N->getOperand(0), Imm) && isInt16(Imm)) {
+      if (0 == Imm)
+        CurDAG->SelectNodeTo(N, PPC::NEG, MVT::i32, Select(N->getOperand(1)));
+      else
+        CurDAG->SelectNodeTo(N, PPC::SUBFIC, MVT::i32, Select(N->getOperand(1)),
+                             getI32Imm(Lo16(Imm)));
       return SDOperand(N, 0);
     }
+    if (SDNode *I = SelectIntImmediateExpr(N->getOperand(0), N->getOperand(1),
+                                           PPC::ADDIS, PPC::ADDI, true, true)) {
+      CurDAG->ReplaceAllUsesWith(Op, SDOperand(I, 0));
+      N = I;
+    } else {
+      CurDAG->SelectNodeTo(N, PPC::SUBF, MVT::i32, Select(N->getOperand(1)),
+                           Select(N->getOperand(0)));
+    }
+    return SDOperand(N, 0);
+  }    
+  case ISD::FSUB: {
+    MVT::ValueType Ty = N->getValueType(0);
     
     if (!NoExcessFPPrecision) {  // Match FMA ops
-      if (N->getOperand(0).getOpcode() == ISD::MUL &&
+      if (N->getOperand(0).getOpcode() == ISD::FMUL &&
           N->getOperand(0).Val->hasOneUse()) {
         ++FusedFP; // Statistic
         CurDAG->SelectNodeTo(N, Ty == MVT::f64 ? PPC::FMSUB : PPC::FMSUBS, Ty,
@@ -837,7 +835,7 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
                              Select(N->getOperand(0).getOperand(1)),
                              Select(N->getOperand(1)));
         return SDOperand(N, 0);
-      } else if (N->getOperand(1).getOpcode() == ISD::MUL &&
+      } else if (N->getOperand(1).getOpcode() == ISD::FMUL &&
                  N->getOperand(1).Val->hasOneUse()) {
         ++FusedFP; // Statistic
         CurDAG->SelectNodeTo(N, Ty == MVT::f64 ? PPC::FNMSUB : PPC::FNMSUBS, Ty,
@@ -852,6 +850,7 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
                          Select(N->getOperand(1)));
     return SDOperand(N, 0);
   }
+  case ISD::FMUL:
   case ISD::MUL: {
     unsigned Imm, Opc;
     if (isIntImmediate(N->getOperand(1), Imm) && isInt16(Imm)) {
@@ -869,7 +868,8 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
                          Select(N->getOperand(1)));
     return SDOperand(N, 0);
   }
-  case ISD::SDIV: {
+  case ISD::SDIV:
+  case ISD::FDIV: {
     unsigned Imm;
     if (isIntImmediate(N->getOperand(1), Imm)) {
       if ((signed)Imm > 0 && isPowerOf2_32(Imm)) {

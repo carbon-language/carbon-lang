@@ -105,8 +105,11 @@ namespace ISD {
     BUILD_PAIR,
 
 
-    // Simple binary arithmetic operators.
+    // Simple integer binary arithmetic operators.
     ADD, SUB, MUL, SDIV, UDIV, SREM, UREM,
+    
+    // Simple binary floating point operators.
+    FADD, FSUB, FMUL, FDIV, FREM,
 
     // MULHU/MULHS - Multiply high - Multiply two integers of type iN, producing
     // an unsigned/signed value of type i[2*n], then return the top part.

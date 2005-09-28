@@ -52,10 +52,10 @@ PPC32TargetLowering::PPC32TargetLowering(TargetMachine &TM)
   // We don't support sin/cos/sqrt/fmod
   setOperationAction(ISD::FSIN , MVT::f64, Expand);
   setOperationAction(ISD::FCOS , MVT::f64, Expand);
-  setOperationAction(ISD::SREM , MVT::f64, Expand);
+  setOperationAction(ISD::FREM , MVT::f64, Expand);
   setOperationAction(ISD::FSIN , MVT::f32, Expand);
   setOperationAction(ISD::FCOS , MVT::f32, Expand);
-  setOperationAction(ISD::SREM , MVT::f32, Expand);
+  setOperationAction(ISD::FREM , MVT::f32, Expand);
   
   // If we're enabling GP optimizations, use hardware square root
   if (!TM.getSubtarget<PPCSubtarget>().hasFSQRT()) {
@@ -208,19 +208,19 @@ SDOperand PPC32TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     case ISD::SETULT:
     case ISD::SETLT:
       return DAG.getNode(PPCISD::FSEL, ResVT,
-                         DAG.getNode(ISD::SUB, CmpVT, LHS, RHS), FV, TV);
+                         DAG.getNode(ISD::FSUB, CmpVT, LHS, RHS), FV, TV);
     case ISD::SETUGE:
     case ISD::SETGE:
       return DAG.getNode(PPCISD::FSEL, ResVT,
-                         DAG.getNode(ISD::SUB, CmpVT, LHS, RHS), TV, FV);
+                         DAG.getNode(ISD::FSUB, CmpVT, LHS, RHS), TV, FV);
     case ISD::SETUGT:
     case ISD::SETGT:
       return DAG.getNode(PPCISD::FSEL, ResVT,
-                         DAG.getNode(ISD::SUB, CmpVT, RHS, LHS), FV, TV);
+                         DAG.getNode(ISD::FSUB, CmpVT, RHS, LHS), FV, TV);
     case ISD::SETULE:
     case ISD::SETLE:
       return DAG.getNode(PPCISD::FSEL, ResVT,
-                         DAG.getNode(ISD::SUB, CmpVT, RHS, LHS), TV, FV);
+                         DAG.getNode(ISD::FSUB, CmpVT, RHS, LHS), TV, FV);
     }
     break;
   }

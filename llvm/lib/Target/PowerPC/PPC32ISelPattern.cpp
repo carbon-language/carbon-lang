@@ -1133,40 +1133,40 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
     return Result;
 
   case ISD::ADD:
-    if (!MVT::isInteger(DestType)) {
-      if (!NoExcessFPPrecision && N.getOperand(0).getOpcode() == ISD::MUL &&
-          N.getOperand(0).Val->hasOneUse()) {
-        ++FusedFP; // Statistic
-        Tmp1 = SelectExpr(N.getOperand(0).getOperand(0));
-        Tmp2 = SelectExpr(N.getOperand(0).getOperand(1));
-        Tmp3 = SelectExpr(N.getOperand(1));
-        Opc = DestType == MVT::f64 ? PPC::FMADD : PPC::FMADDS;
-        BuildMI(BB, Opc, 3, Result).addReg(Tmp1).addReg(Tmp2).addReg(Tmp3);
-        return Result;
-      }
-      if (!NoExcessFPPrecision && N.getOperand(1).getOpcode() == ISD::MUL &&
-          N.getOperand(1).Val->hasOneUse()) {
-        ++FusedFP; // Statistic
-        Tmp1 = SelectExpr(N.getOperand(1).getOperand(0));
-        Tmp2 = SelectExpr(N.getOperand(1).getOperand(1));
-        Tmp3 = SelectExpr(N.getOperand(0));
-        Opc = DestType == MVT::f64 ? PPC::FMADD : PPC::FMADDS;
-        BuildMI(BB, Opc, 3, Result).addReg(Tmp1).addReg(Tmp2).addReg(Tmp3);
-        return Result;
-      }
-      Opc = DestType == MVT::f64 ? PPC::FADD : PPC::FADDS;
-      Tmp1 = SelectExpr(N.getOperand(0));
-      Tmp2 = SelectExpr(N.getOperand(1));
-      BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
-      return Result;
-    }
     if (SelectIntImmediateExpr(N, Result, PPC::ADDIS, PPC::ADDI, true))
       return Result;
     Tmp1 = SelectExpr(N.getOperand(0));
     Tmp2 = SelectExpr(N.getOperand(1));
     BuildMI(BB, PPC::ADD, 2, Result).addReg(Tmp1).addReg(Tmp2);
     return Result;
-
+    
+  case ISD::FADD:
+    if (!NoExcessFPPrecision && N.getOperand(0).getOpcode() == ISD::FMUL &&
+        N.getOperand(0).Val->hasOneUse()) {
+      ++FusedFP; // Statistic
+      Tmp1 = SelectExpr(N.getOperand(0).getOperand(0));
+      Tmp2 = SelectExpr(N.getOperand(0).getOperand(1));
+      Tmp3 = SelectExpr(N.getOperand(1));
+      Opc = DestType == MVT::f64 ? PPC::FMADD : PPC::FMADDS;
+      BuildMI(BB, Opc, 3, Result).addReg(Tmp1).addReg(Tmp2).addReg(Tmp3);
+      return Result;
+    }
+    if (!NoExcessFPPrecision && N.getOperand(1).getOpcode() == ISD::FMUL &&
+        N.getOperand(1).Val->hasOneUse()) {
+      ++FusedFP; // Statistic
+      Tmp1 = SelectExpr(N.getOperand(1).getOperand(0));
+      Tmp2 = SelectExpr(N.getOperand(1).getOperand(1));
+      Tmp3 = SelectExpr(N.getOperand(0));
+      Opc = DestType == MVT::f64 ? PPC::FMADD : PPC::FMADDS;
+      BuildMI(BB, Opc, 3, Result).addReg(Tmp1).addReg(Tmp2).addReg(Tmp3);
+      return Result;
+    }
+    Opc = DestType == MVT::f64 ? PPC::FADD : PPC::FADDS;
+    Tmp1 = SelectExpr(N.getOperand(0));
+    Tmp2 = SelectExpr(N.getOperand(1));
+    BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
+    return Result;
+ 
   case ISD::AND:
     if (isIntImmediate(N.getOperand(1), Tmp2)) {
       if (isShiftedMask_32(Tmp2) || isShiftedMask_32(~Tmp2)) {
@@ -1290,34 +1290,33 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
     return Result;
   }
 
-   case ISD::SUB:
-    if (!MVT::isInteger(DestType)) {
-      if (!NoExcessFPPrecision && N.getOperand(0).getOpcode() == ISD::MUL &&
-          N.getOperand(0).Val->hasOneUse()) {
-        ++FusedFP; // Statistic
-        Tmp1 = SelectExpr(N.getOperand(0).getOperand(0));
-        Tmp2 = SelectExpr(N.getOperand(0).getOperand(1));
-        Tmp3 = SelectExpr(N.getOperand(1));
-        Opc = DestType == MVT::f64 ? PPC::FMSUB : PPC::FMSUBS;
-        BuildMI(BB, Opc, 3, Result).addReg(Tmp1).addReg(Tmp2).addReg(Tmp3);
-        return Result;
-      }
-      if (!NoExcessFPPrecision && N.getOperand(1).getOpcode() == ISD::MUL &&
-          N.getOperand(1).Val->hasOneUse()) {
-        ++FusedFP; // Statistic
-        Tmp1 = SelectExpr(N.getOperand(1).getOperand(0));
-        Tmp2 = SelectExpr(N.getOperand(1).getOperand(1));
-        Tmp3 = SelectExpr(N.getOperand(0));
-        Opc = DestType == MVT::f64 ? PPC::FNMSUB : PPC::FNMSUBS;
-        BuildMI(BB, Opc, 3, Result).addReg(Tmp1).addReg(Tmp2).addReg(Tmp3);
-        return Result;
-      }
-      Opc = DestType == MVT::f64 ? PPC::FSUB : PPC::FSUBS;
-      Tmp1 = SelectExpr(N.getOperand(0));
-      Tmp2 = SelectExpr(N.getOperand(1));
-      BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
+  case ISD::FSUB:
+    if (!NoExcessFPPrecision && N.getOperand(0).getOpcode() == ISD::FMUL &&
+        N.getOperand(0).Val->hasOneUse()) {
+      ++FusedFP; // Statistic
+      Tmp1 = SelectExpr(N.getOperand(0).getOperand(0));
+      Tmp2 = SelectExpr(N.getOperand(0).getOperand(1));
+      Tmp3 = SelectExpr(N.getOperand(1));
+      Opc = DestType == MVT::f64 ? PPC::FMSUB : PPC::FMSUBS;
+      BuildMI(BB, Opc, 3, Result).addReg(Tmp1).addReg(Tmp2).addReg(Tmp3);
       return Result;
     }
+    if (!NoExcessFPPrecision && N.getOperand(1).getOpcode() == ISD::FMUL &&
+        N.getOperand(1).Val->hasOneUse()) {
+      ++FusedFP; // Statistic
+      Tmp1 = SelectExpr(N.getOperand(1).getOperand(0));
+      Tmp2 = SelectExpr(N.getOperand(1).getOperand(1));
+      Tmp3 = SelectExpr(N.getOperand(0));
+      Opc = DestType == MVT::f64 ? PPC::FNMSUB : PPC::FNMSUBS;
+      BuildMI(BB, Opc, 3, Result).addReg(Tmp1).addReg(Tmp2).addReg(Tmp3);
+      return Result;
+    }
+    Opc = DestType == MVT::f64 ? PPC::FSUB : PPC::FSUBS;
+    Tmp1 = SelectExpr(N.getOperand(0));
+    Tmp2 = SelectExpr(N.getOperand(1));
+    BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
+    return Result;
+  case ISD::SUB:
     if (isIntImmediate(N.getOperand(0), Tmp1) && isInt16(Tmp1)) {
       Tmp1 = Lo16(Tmp1);
       Tmp2 = SelectExpr(N.getOperand(1));
@@ -1334,6 +1333,13 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
     BuildMI(BB, PPC::SUBF, 2, Result).addReg(Tmp2).addReg(Tmp1);
     return Result;
 
+  case ISD::FMUL:
+    Tmp1 = SelectExpr(N.getOperand(0));
+    Tmp2 = SelectExpr(N.getOperand(1));
+    BuildMI(BB, DestType == MVT::f32 ? PPC::FMULS : PPC::FMUL, 2, 
+            Result).addReg(Tmp1).addReg(Tmp2);
+    return Result;
+  
   case ISD::MUL:
     Tmp1 = SelectExpr(N.getOperand(0));
     if (isIntImmediate(N.getOperand(1), Tmp2) && isInt16(Tmp2)) {
@@ -1341,13 +1347,7 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
       BuildMI(BB, PPC::MULLI, 2, Result).addReg(Tmp1).addSImm(Tmp2);
     } else {
       Tmp2 = SelectExpr(N.getOperand(1));
-      switch (DestType) {
-      default: assert(0 && "Unknown type to ISD::MUL"); break;
-      case MVT::i32: Opc = PPC::MULLW; break;
-      case MVT::f32: Opc = PPC::FMULS; break;
-      case MVT::f64: Opc = PPC::FMUL; break;
-      }
-      BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
+      BuildMI(BB, PPC::MULLW, 2, Result).addReg(Tmp1).addReg(Tmp2);
     }
     return Result;
 
@@ -1359,6 +1359,17 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
     BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
     return Result;
 
+  case ISD::FDIV:
+    Tmp1 = SelectExpr(N.getOperand(0));
+    Tmp2 = SelectExpr(N.getOperand(1));
+    switch (DestType) {
+    default: assert(0 && "Unknown type to ISD::FDIV"); break;
+    case MVT::f32: Opc = PPC::FDIVS; break;
+    case MVT::f64: Opc = PPC::FDIV; break;
+    }
+    BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
+    return Result;
+    
   case ISD::SDIV:
     if (isIntImmediate(N.getOperand(1), Tmp3)) {
       if ((signed)Tmp3 > 0 && isPowerOf2_32(Tmp3)) {
@@ -1392,12 +1403,7 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
     }
     Tmp1 = SelectExpr(N.getOperand(0));
     Tmp2 = SelectExpr(N.getOperand(1));
-    switch (DestType) {
-    default: assert(0 && "Unknown type to ISD::DIV"); break;
-    case MVT::i32: Opc = (ISD::UDIV == opcode) ? PPC::DIVWU : PPC::DIVW; break;
-    case MVT::f32: Opc = PPC::FDIVS; break;
-    case MVT::f64: Opc = PPC::FDIV; break;
-    }
+    Opc = (ISD::UDIV == opcode) ? PPC::DIVWU : PPC::DIVW; break;
     BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
     return Result;
 
@@ -1624,9 +1630,9 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
 
   case ISD::FNEG:
     if (!NoExcessFPPrecision &&
-        ISD::ADD == N.getOperand(0).getOpcode() &&
+        ISD::FADD == N.getOperand(0).getOpcode() &&
         N.getOperand(0).Val->hasOneUse() &&
-        ISD::MUL == N.getOperand(0).getOperand(0).getOpcode() &&
+        ISD::FMUL == N.getOperand(0).getOperand(0).getOpcode() &&
         N.getOperand(0).getOperand(0).Val->hasOneUse()) {
       ++FusedFP; // Statistic
       Tmp1 = SelectExpr(N.getOperand(0).getOperand(0).getOperand(0));
@@ -1635,9 +1641,9 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
       Opc = DestType == MVT::f64 ? PPC::FNMADD : PPC::FNMADDS;
       BuildMI(BB, Opc, 3, Result).addReg(Tmp1).addReg(Tmp2).addReg(Tmp3);
     } else if (!NoExcessFPPrecision &&
-        ISD::ADD == N.getOperand(0).getOpcode() &&
+        ISD::FADD == N.getOperand(0).getOpcode() &&
         N.getOperand(0).Val->hasOneUse() &&
-        ISD::MUL == N.getOperand(0).getOperand(1).getOpcode() &&
+        ISD::FMUL == N.getOperand(0).getOperand(1).getOpcode() &&
         N.getOperand(0).getOperand(1).Val->hasOneUse()) {
       ++FusedFP; // Statistic
       Tmp1 = SelectExpr(N.getOperand(0).getOperand(1).getOperand(0));
