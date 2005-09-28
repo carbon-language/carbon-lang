@@ -240,7 +240,9 @@ bool llvm::canConstantFoldCallTo(Function *F) {
   const std::string &Name = F->getName();
 
   switch (F->getIntrinsicID()) {
-  case Intrinsic::isunordered: return true;
+  case Intrinsic::isunordered:
+  case Intrinsic::sqrt:
+    return true;
   default: break;
   }
 
@@ -321,6 +323,12 @@ Constant *llvm::ConstantFoldCall(Function *F,
             return ConstantFP::get(Ty, log(V));
           else if (Name == "log10" && V > 0)
             return ConstantFoldFP(log10, V, Ty);
+          else if (Name == "llvm.sqrt") {
+            if (V >= -0.0)
+              return ConstantFP::get(Ty, sqrt(V));
+            else // Undefined
+              return ConstantFP::get(Ty, 0.0);
+          }
           break;
         case 's':
           if (Name == "sin")
