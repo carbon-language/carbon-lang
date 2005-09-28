@@ -209,7 +209,7 @@ SDOperand SelectionDAGLegalize::ExpandLegalINT_TO_FP(bool isSigned,
                                           : BitsToDouble(0x4330000000000000ULL),
                                      MVT::f64);
     // subtract the bias
-    SDOperand Sub = DAG.getNode(ISD::SUB, MVT::f64, Load, Bias);
+    SDOperand Sub = DAG.getNode(ISD::FSUB, MVT::f64, Load, Bias);
     // final result
     SDOperand Result;
     // handle final rounding
@@ -1531,6 +1531,10 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
   case ISD::SHL:
   case ISD::SRL:
   case ISD::SRA:
+  case ISD::FADD:
+  case ISD::FSUB:
+  case ISD::FMUL:
+  case ISD::FDIV:
     Tmp1 = LegalizeOp(Node->getOperand(0));   // LHS
     switch (getTypeAction(Node->getOperand(1).getValueType())) {
     case Expand: assert(0 && "Not possible");
@@ -1548,6 +1552,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
 
   case ISD::UREM:
   case ISD::SREM:
+  case ISD::FREM:
     Tmp1 = LegalizeOp(Node->getOperand(0));   // LHS
     Tmp2 = LegalizeOp(Node->getOperand(1));   // RHS
     switch (TLI.getOperationAction(Node->getOpcode(), Node->getValueType(0))) {
@@ -1715,7 +1720,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       case ISD::FNEG: {
         // Expand Y = FNEG(X) ->  Y = SUB -0.0, X
         Tmp2 = DAG.getConstantFP(-0.0, Node->getValueType(0));
-        Result = LegalizeOp(DAG.getNode(ISD::SUB, Node->getValueType(0),
+        Result = LegalizeOp(DAG.getNode(ISD::FSUB, Node->getValueType(0),
                                         Tmp2, Tmp1));
         break;
       }
@@ -1840,7 +1845,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
                             Node->getOperand(0), Tmp2, ISD::SETLT);
           True = DAG.getNode(ISD::FP_TO_SINT, NVT, Node->getOperand(0));
           False = DAG.getNode(ISD::FP_TO_SINT, NVT,
-                              DAG.getNode(ISD::SUB, VT, Node->getOperand(0),
+                              DAG.getNode(ISD::FSUB, VT, Node->getOperand(0),
                                           Tmp2));
           False = DAG.getNode(ISD::XOR, NVT, False, 
                               DAG.getConstant(1ULL << ShiftAmt, NVT));
@@ -2193,19 +2198,29 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
   case ISD::SUB:
   case ISD::MUL:
     // The input may have strange things in the top bits of the registers, but
-    // these operations don't care.  They may have wierd bits going out, but
+    // these operations don't care.  They may have weird bits going out, but
     // that too is okay if they are integer operations.
     Tmp1 = PromoteOp(Node->getOperand(0));
     Tmp2 = PromoteOp(Node->getOperand(1));
     assert(Tmp1.getValueType() == NVT && Tmp2.getValueType() == NVT);
     Result = DAG.getNode(Node->getOpcode(), NVT, Tmp1, Tmp2);
-
-    // However, if this is a floating point operation, they will give excess
-    // precision that we may not be able to tolerate.  If we DO allow excess
-    // precision, just leave it, otherwise excise it.
+    break;
+  case ISD::FADD:
+  case ISD::FSUB:
+  case ISD::FMUL:
+    // The input may have strange things in the top bits of the registers, but
+    // these operations don't care.
+    Tmp1 = PromoteOp(Node->getOperand(0));
+    Tmp2 = PromoteOp(Node->getOperand(1));
+    assert(Tmp1.getValueType() == NVT && Tmp2.getValueType() == NVT);
+    Result = DAG.getNode(Node->getOpcode(), NVT, Tmp1, Tmp2);
+    
+    // Floating point operations will give excess precision that we may not be
+    // able to tolerate.  If we DO allow excess precision, just leave it,
+    // otherwise excise it.
     // FIXME: Why would we need to round FP ops more than integer ones?
     //     Is Round(Add(Add(A,B),C)) != Round(Add(Round(Add(A,B)), C))
-    if (MVT::isFloatingPoint(NVT) && NoExcessFPPrecision)
+    if (NoExcessFPPrecision)
       Result = DAG.getNode(ISD::FP_ROUND_INREG, NVT, Result,
                            DAG.getValueType(VT));
     break;
@@ -2225,6 +2240,18 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
 
     // Perform FP_ROUND: this is probably overly pessimistic.
     if (MVT::isFloatingPoint(NVT) && NoExcessFPPrecision)
+      Result = DAG.getNode(ISD::FP_ROUND_INREG, NVT, Result,
+                           DAG.getValueType(VT));
+    break;
+  case ISD::FDIV:
+  case ISD::FREM:
+    // These operators require that their input be fp extended.
+    Tmp1 = PromoteOp(Node->getOperand(0));
+    Tmp2 = PromoteOp(Node->getOperand(1));
+    Result = DAG.getNode(Node->getOpcode(), NVT, Tmp1, Tmp2);
+    
+    // Perform FP_ROUND: this is probably overly pessimistic.
+    if (NoExcessFPPrecision)
       Result = DAG.getNode(ISD::FP_ROUND_INREG, NVT, Result,
                            DAG.getValueType(VT));
     break;

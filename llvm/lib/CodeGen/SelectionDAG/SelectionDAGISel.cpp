@@ -353,14 +353,34 @@ public:
 
   //
   void visitBinary(User &I, unsigned Opcode, bool isShift = false);
-  void visitAdd(User &I) { visitBinary(I, ISD::ADD); }
+  void visitAdd(User &I) {
+    visitBinary(I, I.getType()->isFloatingPoint() ? ISD::FADD : ISD::ADD);
+  }
   void visitSub(User &I);
-  void visitMul(User &I) { visitBinary(I, ISD::MUL); }
+  void visitMul(User &I) {
+    visitBinary(I, I.getType()->isFloatingPoint() ? ISD::FMUL : ISD::MUL);
+  }
   void visitDiv(User &I) {
-    visitBinary(I, I.getType()->isUnsigned() ? ISD::UDIV : ISD::SDIV);
+    unsigned Opc;
+    const Type *Ty = I.getType();
+    if (Ty->isFloatingPoint())
+      Opc = ISD::FDIV;
+    else if (Ty->isUnsigned())
+      Opc = ISD::UDIV;
+    else
+      Opc = ISD::SDIV;
+    visitBinary(I, Opc);
   }
   void visitRem(User &I) {
-    visitBinary(I, I.getType()->isUnsigned() ? ISD::UREM : ISD::SREM);
+    unsigned Opc;
+    const Type *Ty = I.getType();
+    if (Ty->isFloatingPoint())
+      Opc = ISD::FREM;
+    else if (Ty->isUnsigned())
+      Opc = ISD::UREM;
+    else
+      Opc = ISD::SREM;
+    visitBinary(I, Opc);
   }
   void visitAnd(User &I) { visitBinary(I, ISD::AND); }
   void visitOr (User &I) { visitBinary(I, ISD::OR); }
@@ -491,14 +511,17 @@ void SelectionDAGLowering::visitBr(BranchInst &I) {
 
 void SelectionDAGLowering::visitSub(User &I) {
   // -0.0 - X --> fneg
-  if (ConstantFP *CFP = dyn_cast<ConstantFP>(I.getOperand(0)))
-    if (CFP->isExactlyValue(-0.0)) {
-      SDOperand Op2 = getValue(I.getOperand(1));
-      setValue(&I, DAG.getNode(ISD::FNEG, Op2.getValueType(), Op2));
-      return;
-    }
-
-  visitBinary(I, ISD::SUB);
+  if (I.getType()->isFloatingPoint()) {
+    if (ConstantFP *CFP = dyn_cast<ConstantFP>(I.getOperand(0)))
+      if (CFP->isExactlyValue(-0.0)) {
+        SDOperand Op2 = getValue(I.getOperand(1));
+        setValue(&I, DAG.getNode(ISD::FNEG, Op2.getValueType(), Op2));
+        return;
+      }
+    visitBinary(I, ISD::FSUB);
+  } else {
+    visitBinary(I, ISD::SUB);
+  }
 }
 
 void SelectionDAGLowering::visitBinary(User &I, unsigned Opcode, bool isShift) {

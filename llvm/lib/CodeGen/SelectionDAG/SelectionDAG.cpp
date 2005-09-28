@@ -36,6 +36,8 @@ static bool isCommutativeBinOp(unsigned Opcode) {
   switch (Opcode) {
   case ISD::ADD:
   case ISD::MUL:
+  case ISD::FADD:
+  case ISD::FMUL:
   case ISD::AND:
   case ISD::OR:
   case ISD::XOR: return true;
@@ -869,8 +871,7 @@ SDOperand SelectionDAG::SimplifySetCC(MVT::ValueType VT, SDOperand N1,
       return getSetCC(VT, N1, N2, NewCond);
   }
 
-  if ((Cond == ISD::SETEQ || Cond == ISD::SETNE) &&
-      MVT::isInteger(N1.getValueType())) {
+  if (Cond == ISD::SETEQ || Cond == ISD::SETNE) {
     if (N1.getOpcode() == ISD::ADD || N1.getOpcode() == ISD::SUB ||
         N1.getOpcode() == ISD::XOR) {
       // Simplify (X+Y) == (X+Z) -->  Y == Z
@@ -1187,8 +1188,8 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     }
     break;
   case ISD::FNEG:
-    if (OpOpcode == ISD::SUB)   // -(X-Y) -> (Y-X)
-      return getNode(ISD::SUB, VT, Operand.Val->getOperand(1),
+    if (OpOpcode == ISD::FSUB)   // -(X-Y) -> (Y-X)
+      return getNode(ISD::FSUB, VT, Operand.Val->getOperand(1),
                      Operand.Val->getOperand(0));
     if (OpOpcode == ISD::FNEG)  // --X -> X
       return Operand.Val->getOperand(0);
@@ -1236,6 +1237,13 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
   case ISD::MUL:
   case ISD::SDIV:
   case ISD::SREM:
+    assert(MVT::isInteger(N1.getValueType()) && "Should use F* for FP ops");
+    // fall through.
+  case ISD::FADD:
+  case ISD::FSUB:
+  case ISD::FMUL:
+  case ISD::FDIV:
+  case ISD::FREM:
     assert(N1.getValueType() == N2.getValueType() &&
            N1.getValueType() == VT && "Binary operator types must match!");
     break;
@@ -1513,13 +1521,13 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     if (N2CFP) {
       double C1 = N1CFP->getValue(), C2 = N2CFP->getValue();
       switch (Opcode) {
-      case ISD::ADD: return getConstantFP(C1 + C2, VT);
-      case ISD::SUB: return getConstantFP(C1 - C2, VT);
-      case ISD::MUL: return getConstantFP(C1 * C2, VT);
-      case ISD::SDIV:
+      case ISD::FADD: return getConstantFP(C1 + C2, VT);
+      case ISD::FSUB: return getConstantFP(C1 - C2, VT);
+      case ISD::FMUL: return getConstantFP(C1 * C2, VT);
+      case ISD::FDIV:
         if (C2) return getConstantFP(C1 / C2, VT);
         break;
-      case ISD::SREM :
+      case ISD::FREM :
         if (C2) return getConstantFP(fmod(C1, C2), VT);
         break;
       default: break;
@@ -1623,33 +1631,39 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     break;
   case ISD::ADD:
     if (!CombinerEnabled) {
-    if (N2.getOpcode() == ISD::FNEG)          // (A+ (-B) -> A-B
-      return getNode(ISD::SUB, VT, N1, N2.getOperand(0));
-    if (N1.getOpcode() == ISD::FNEG)          // ((-A)+B) -> B-A
-      return getNode(ISD::SUB, VT, N2, N1.getOperand(0));
     if (N1.getOpcode() == ISD::SUB && isa<ConstantSDNode>(N1.getOperand(0)) &&
         cast<ConstantSDNode>(N1.getOperand(0))->getValue() == 0)
       return getNode(ISD::SUB, VT, N2, N1.getOperand(1)); // (0-A)+B -> B-A
     if (N2.getOpcode() == ISD::SUB && isa<ConstantSDNode>(N2.getOperand(0)) &&
         cast<ConstantSDNode>(N2.getOperand(0))->getValue() == 0)
       return getNode(ISD::SUB, VT, N1, N2.getOperand(1)); // A+(0-B) -> A-B
-    if (N2.getOpcode() == ISD::SUB && N1 == N2.Val->getOperand(1) &&
-        !MVT::isFloatingPoint(N2.getValueType()))
+    if (N2.getOpcode() == ISD::SUB && N1 == N2.Val->getOperand(1))
       return N2.Val->getOperand(0); // A+(B-A) -> B
     }
     break;
+  case ISD::FADD:
+    if (!CombinerEnabled) {
+    if (N2.getOpcode() == ISD::FNEG)          // (A+ (-B) -> A-B
+      return getNode(ISD::FSUB, VT, N1, N2.getOperand(0));
+    if (N1.getOpcode() == ISD::FNEG)          // ((-A)+B) -> B-A
+      return getNode(ISD::FSUB, VT, N2, N1.getOperand(0));
+    }
+    break;
+    
   case ISD::SUB:
     if (!CombinerEnabled) {
     if (N1.getOpcode() == ISD::ADD) {
-      if (N1.Val->getOperand(0) == N2 &&
-          !MVT::isFloatingPoint(N2.getValueType()))
+      if (N1.Val->getOperand(0) == N2)
         return N1.Val->getOperand(1);         // (A+B)-A == B
-      if (N1.Val->getOperand(1) == N2 &&
-          !MVT::isFloatingPoint(N2.getValueType()))
+      if (N1.Val->getOperand(1) == N2)
         return N1.Val->getOperand(0);         // (A+B)-B == A
     }
+    }
+    break;
+  case ISD::FSUB:
+    if (!CombinerEnabled) {
     if (N2.getOpcode() == ISD::FNEG)          // (A- (-B) -> A+B
-      return getNode(ISD::ADD, VT, N1, N2.getOperand(0));
+      return getNode(ISD::FADD, VT, N1, N2.getOperand(0));
     }
     break;
   case ISD::FP_ROUND_INREG:
@@ -2333,7 +2347,12 @@ const char *SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::SHL:    return "shl";
   case ISD::SRA:    return "sra";
   case ISD::SRL:    return "srl";
-
+  case ISD::FADD:   return "fadd";
+  case ISD::FSUB:   return "fsub";
+  case ISD::FMUL:   return "fmul";
+  case ISD::FDIV:   return "fdiv";
+  case ISD::FREM:   return "frem";
+    
   case ISD::SETCC:       return "setcc";
   case ISD::SELECT:      return "select";
   case ISD::SELECT_CC:   return "select_cc";
