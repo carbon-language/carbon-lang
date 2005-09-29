@@ -145,7 +145,10 @@ void PowerPCJITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
   PM.add(createUnreachableBlockEliminationPass());
 
   // Install an instruction selector.
-  PM.add(createPPC32ISelPattern(TM));
+  if (!DisablePPCDAGDAG)
+    PM.add(createPPC32ISelDag(TM));
+  else
+    PM.add(createPPC32ISelPattern(TM));
 
   PM.add(createRegisterAllocator());
   PM.add(createPrologEpilogCodeInserter());
