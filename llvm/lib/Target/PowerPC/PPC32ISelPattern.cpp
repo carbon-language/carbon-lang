@@ -1058,6 +1058,8 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
     DestType = N.getValue(0).getValueType();
     if (Result == 1)
       Result = ExprMap[N.getValue(0)] = MakeReg(DestType);
+    else 
+      ExprMap[N.getValue(1)] = 1;
     Tmp1 = dyn_cast<RegisterSDNode>(Node->getOperand(1))->getReg();
     if (MVT::isInteger(DestType))
       BuildMI(BB, PPC::OR, 2, Result).addReg(Tmp1).addReg(Tmp1);
