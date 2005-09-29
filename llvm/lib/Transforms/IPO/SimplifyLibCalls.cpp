@@ -1745,6 +1745,32 @@ public:
   }
 } isdigitOptimizer;
 
+struct isasciiOptimization : public LibCallOptimization {
+public:
+  isasciiOptimization()
+    : LibCallOptimization("isascii", "Number of 'isascii' calls simplified") {}
+  
+  virtual bool ValidateCalledFunction(const Function *F, SimplifyLibCalls &SLC){
+    return F->arg_size() == 1 && F->arg_begin()->getType()->isInteger() && 
+           F->getReturnType()->isInteger();
+  }
+  
+  /// @brief Perform the isascii optimization.
+  virtual bool OptimizeCall(CallInst *CI, SimplifyLibCalls &SLC) {
+    // isascii(c)   -> (unsigned)c < 128
+    Value *V = CI->getOperand(1);
+    if (V->getType()->isSigned())
+      V = new CastInst(V, V->getType()->getUnsignedVersion(), V->getName(), CI);
+    Value *Cmp = BinaryOperator::createSetLT(V, ConstantUInt::get(V->getType(),
+                                                                  128),
+                                             V->getName()+".isascii", CI);
+    if (Cmp->getType() != CI->getType())
+      Cmp = new CastInst(Cmp, CI->getType(), Cmp->getName(), CI);
+    CI->replaceAllUsesWith(Cmp);
+    CI->eraseFromParent();
+    return true;
+  }
+} isasciiOptimizer;
 
 
 /// This LibCallOptimization will simplify calls to the "toascii" library
