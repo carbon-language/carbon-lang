@@ -19,6 +19,7 @@
 #include "llvm/PassManager.h"
 #include "AlphaInstrInfo.h"
 #include "AlphaJITInfo.h"
+#include "AlphaSubtarget.h"
 
 namespace llvm {
 
@@ -29,6 +30,7 @@ class AlphaTargetMachine : public TargetMachine {
   AlphaInstrInfo InstrInfo;
   TargetFrameInfo FrameInfo;
   AlphaJITInfo JITInfo;
+  AlphaSubtarget Subtarget;
 
 public:
   AlphaTargetMachine(const Module &M, IntrinsicLowering *IL,
@@ -36,6 +38,7 @@ public:
 
   virtual const AlphaInstrInfo *getInstrInfo() const { return &InstrInfo; }
   virtual const TargetFrameInfo  *getFrameInfo() const { return &FrameInfo; }
+  virtual const TargetSubtarget  *getSubtargetImpl() const{ return &Subtarget; }
   virtual const MRegisterInfo *getRegisterInfo() const {
     return &InstrInfo.getRegisterInfo();
   }

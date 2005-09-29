@@ -13,6 +13,7 @@
 
 #include "Alpha.h"
 #include "AlphaRegisterInfo.h"
+#include "AlphaTargetMachine.h"
 #include "AlphaISelLowering.h"
 #include "llvm/Constants.h"                   // FIXME: REMOVE
 #include "llvm/Function.h"
@@ -38,12 +39,6 @@ namespace llvm {
   cl::opt<bool> EnableAlphaIDIV("enable-alpha-intfpdiv",
     cl::desc("Use the FP div instruction for integer div when possible"),
                              cl::Hidden);
-  cl::opt<bool> EnableAlphaFTOI("enable-alpha-FTOI",
-    cl::desc("Enable use of ftoi* and itof* instructions (ev6 and higher)"),
-                             cl::Hidden);
-  cl::opt<bool> EnableAlphaCT("enable-alpha-CT",
-    cl::desc("Enable use of the ctpop, ctlz, and cttz instructions"),
-                              cl::Hidden);
   cl::opt<bool> EnableAlphaCount("enable-alpha-count",
     cl::desc("Print estimates on live ins and outs"),
     cl::Hidden);
@@ -428,7 +423,7 @@ static unsigned GetRelVersion(unsigned opcode)
 void AlphaISel::MoveFP2Int(unsigned src, unsigned dst, bool isDouble)
 {
   unsigned Opc;
-  if (EnableAlphaFTOI) {
+  if (TLI.getTargetMachine().getSubtarget<AlphaSubtarget>().hasF2I()) {
     Opc = isDouble ? Alpha::FTOIT : Alpha::FTOIS;
     BuildMI(BB, Opc, 1, dst).addReg(src).addReg(Alpha::F31);
   } else {
@@ -455,7 +450,7 @@ void AlphaISel::MoveFP2Int(unsigned src, unsigned dst, bool isDouble)
 void AlphaISel::MoveInt2FP(unsigned src, unsigned dst, bool isDouble)
 {
   unsigned Opc;
-  if (EnableAlphaFTOI) {
+  if (TLI.getTargetMachine().getSubtarget<AlphaSubtarget>().hasF2I()) {
     Opc = isDouble?Alpha::ITOFT:Alpha::ITOFS;
     BuildMI(BB, Opc, 1, dst).addReg(src).addReg(Alpha::R31);
   } else {

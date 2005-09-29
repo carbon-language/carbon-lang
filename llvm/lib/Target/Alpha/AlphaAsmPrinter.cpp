@@ -14,6 +14,7 @@
 
 #include "Alpha.h"
 #include "AlphaInstrInfo.h"
+#include "AlphaTargetMachine.h"
 #include "llvm/Module.h"
 #include "llvm/Type.h"
 #include "llvm/Assembly/Writer.h"
@@ -28,11 +29,6 @@
 #include "llvm/Support/CommandLine.h"
 
 using namespace llvm;
-
-namespace llvm {
-  extern cl::opt<bool> EnableAlphaFTOI;
-  extern cl::opt<bool> EnableAlphaCT;
-}
 
 namespace {
   Statistic<> EmittedInsts("asm-printer", "Number of machine instrs printed");
@@ -235,7 +231,8 @@ void AlphaAsmPrinter::printConstantPool(MachineConstantPool *MCP) {
 bool AlphaAsmPrinter::doInitialization(Module &M)
 {
   AsmPrinter::doInitialization(M);
-  if(EnableAlphaFTOI || EnableAlphaCT)
+  if(TM.getSubtarget<AlphaSubtarget>().hasF2I() 
+     || TM.getSubtarget<AlphaSubtarget>().hasCT())
     O << "\t.arch ev6\n";
   else
     O << "\t.arch ev56\n";

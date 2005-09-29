@@ -27,8 +27,6 @@ using namespace llvm;
 
 namespace llvm {
   extern cl::opt<bool> EnableAlphaIDIV;
-  extern cl::opt<bool> EnableAlphaFTOI;
-  extern cl::opt<bool> EnableAlphaCT;
   extern cl::opt<bool> EnableAlphaCount;
   extern cl::opt<bool> EnableAlphaLSMark;
 }
@@ -73,7 +71,7 @@ AlphaTargetLowering::AlphaTargetLowering(TargetMachine &TM) : TargetLowering(TM)
   
   setOperationAction(ISD::UINT_TO_FP, MVT::i64, Expand);
   
-  if (!EnableAlphaCT) {
+  if (!TM.getSubtarget<AlphaSubtarget>().hasCT()) {
     setOperationAction(ISD::CTPOP    , MVT::i64  , Expand);
     setOperationAction(ISD::CTTZ     , MVT::i64  , Expand);
     setOperationAction(ISD::CTLZ     , MVT::i64  , Expand);

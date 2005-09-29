@@ -18,6 +18,7 @@
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetMachineRegistry.h"
 #include "llvm/Transforms/Scalar.h"
+#include "llvm/Support/Debug.h"
 #include <iostream>
 
 using namespace llvm;
@@ -62,8 +63,11 @@ AlphaTargetMachine::AlphaTargetMachine(const Module &M, IntrinsicLowering *IL,
                                        const std::string &FS)
   : TargetMachine("alpha", IL, true),
     FrameInfo(TargetFrameInfo::StackGrowsDown, 16, 0),
-    JITInfo(*this)
-{}
+    JITInfo(*this),
+    Subtarget(M, FS)
+{
+  DEBUG(std::cerr << "FS is " << FS << "\n");
+}
 
 /// addPassesToEmitFile - Add passes to the specified pass manager to implement
 /// a static compiler for this target.
