@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file declares the X86 specific subclass of TargetSubtarget.
+// This file declares the PowerPC specific subclass of TargetSubtarget.
 //
 //===----------------------------------------------------------------------===//
 
