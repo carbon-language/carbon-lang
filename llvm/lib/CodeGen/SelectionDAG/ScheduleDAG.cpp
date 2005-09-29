@@ -548,7 +548,8 @@ void SimpleSched::ScheduleBackward() {
     unsigned Slot = NotFound;
     
     // Compare against those previously scheduled operands
-    for (unsigned j = i + 1; j < N; j++) {
+    unsigned j = i + 1;
+    for (; j < N; j++) {
       // Get following instruction
       ScheduleInfo *Other = Ordering[j];
       
@@ -573,7 +574,7 @@ void SimpleSched::ScheduleBackward() {
     SI->Slot = Slot;
     
     // Insert sort based on slot
-    unsigned j = i + 1;
+    j = i + 1;
     for (; j < N; j++) {
       // Get following instruction
       ScheduleInfo *Other = Ordering[j];
@@ -602,7 +603,8 @@ void SimpleSched::ScheduleForward() {
     unsigned Slot = NotFound;
     
     // Compare against those previously scheduled operands
-    for (unsigned j = i; 0 < j--;) {
+    unsigned j = i;
+    for (; 0 < j--;) {
       // Get following instruction
       ScheduleInfo *Other = Ordering[j];
       
@@ -627,7 +629,7 @@ void SimpleSched::ScheduleForward() {
     SI->Slot = Slot;
     
     // Insert sort based on slot
-    unsigned j = i;
+    j = i;
     for (; 0 < j--;) {
       // Get following instruction
       ScheduleInfo *Other = Ordering[j];
