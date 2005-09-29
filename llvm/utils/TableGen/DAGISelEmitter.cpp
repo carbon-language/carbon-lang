@@ -1073,9 +1073,14 @@ void DAGISelEmitter::ParsePatterns() {
 /// CombineChildVariants - Given a bunch of permutations of each child of the
 /// 'operator' node, put them together in all possible ways.
 static void CombineChildVariants(TreePatternNode *Orig, 
-                  std::vector<std::vector<TreePatternNode*> > &ChildVariants,
+               const std::vector<std::vector<TreePatternNode*> > &ChildVariants,
                                  std::vector<TreePatternNode*> &OutVariants,
                                  DAGISelEmitter &ISE) {
+  // Make sure that each operand has at least one variant to choose from.
+  for (unsigned i = 0, e = ChildVariants.size(); i != e; ++i)
+    if (ChildVariants[i].empty())
+      return;
+        
   // The end result is an all-pairs construction of the resultant pattern.
   std::vector<unsigned> Idxs;
   Idxs.resize(ChildVariants.size());
@@ -1129,6 +1134,43 @@ static void CombineChildVariants(TreePatternNode *Orig,
   }
 }
 
+/// CombineChildVariants - A helper function for binary operators.
+///
+static void CombineChildVariants(TreePatternNode *Orig, 
+                                 const std::vector<TreePatternNode*> &LHS,
+                                 const std::vector<TreePatternNode*> &RHS,
+                                 std::vector<TreePatternNode*> &OutVariants,
+                                 DAGISelEmitter &ISE) {
+  std::vector<std::vector<TreePatternNode*> > ChildVariants;
+  ChildVariants.push_back(LHS);
+  ChildVariants.push_back(RHS);
+  CombineChildVariants(Orig, ChildVariants, OutVariants, ISE);
+}  
+
+
+static void GatherChildrenOfAssociativeOpcode(TreePatternNode *N,
+                                     std::vector<TreePatternNode *> &Children) {
+  assert(N->getNumChildren()==2 &&"Associative but doesn't have 2 children!");
+  Record *Operator = N->getOperator();
+  
+  // Only permit raw nodes.
+  if (!N->getName().empty() || !N->getPredicateFn().empty() ||
+      N->getTransformFn()) {
+    Children.push_back(N);
+    return;
+  }
+
+  if (N->getChild(0)->isLeaf() || N->getChild(0)->getOperator() != Operator)
+    Children.push_back(N->getChild(0));
+  else
+    GatherChildrenOfAssociativeOpcode(N->getChild(0), Children);
+
+  if (N->getChild(1)->isLeaf() || N->getChild(1)->getOperator() != Operator)
+    Children.push_back(N->getChild(1));
+  else
+    GatherChildrenOfAssociativeOpcode(N->getChild(1), Children);
+}
+
 /// GenerateVariantsOf - Given a pattern N, generate all permutations we can of
 /// the (potentially recursive) pattern by using algebraic laws.
 ///
@@ -1145,7 +1187,56 @@ static void GenerateVariantsOf(TreePatternNode *N,
   const SDNodeInfo &NodeInfo = ISE.getSDNodeInfo(N->getOperator());
 
   // If this node is associative, reassociate.
-  // TODO!
+  if (NodeInfo.hasProperty(SDNodeInfo::SDNPAssociative)) {
+    // Reassociate by pulling together all of the linked operators 
+    std::vector<TreePatternNode*> MaximalChildren;
+    GatherChildrenOfAssociativeOpcode(N, MaximalChildren);
+
+    // Only handle child sizes of 3.  Otherwise we'll end up trying too many
+    // permutations.
+    if (MaximalChildren.size() == 3) {
+      // Find the variants of all of our maximal children.
+      std::vector<TreePatternNode*> AVariants, BVariants, CVariants;
+      GenerateVariantsOf(MaximalChildren[0], AVariants, ISE);
+      GenerateVariantsOf(MaximalChildren[1], BVariants, ISE);
+      GenerateVariantsOf(MaximalChildren[2], CVariants, ISE);
+      
+      // There are only two ways we can permute the tree:
+      //   (A op B) op C    and    A op (B op C)
+      // Within these forms, we can also permute A/B/C.
+      
+      // Generate legal pair permutations of A/B/C.
+      std::vector<TreePatternNode*> ABVariants;
+      std::vector<TreePatternNode*> BAVariants;
+      std::vector<TreePatternNode*> ACVariants;
+      std::vector<TreePatternNode*> CAVariants;
+      std::vector<TreePatternNode*> BCVariants;
+      std::vector<TreePatternNode*> CBVariants;
+      CombineChildVariants(N, AVariants, BVariants, ABVariants, ISE);
+      CombineChildVariants(N, BVariants, AVariants, BAVariants, ISE);
+      CombineChildVariants(N, AVariants, CVariants, ACVariants, ISE);
+      CombineChildVariants(N, CVariants, AVariants, CAVariants, ISE);
+      CombineChildVariants(N, BVariants, CVariants, BCVariants, ISE);
+      CombineChildVariants(N, CVariants, BVariants, CBVariants, ISE);
+
+      // Combine those into the result: (x op x) op x
+      CombineChildVariants(N, ABVariants, CVariants, OutVariants, ISE);
+      CombineChildVariants(N, BAVariants, CVariants, OutVariants, ISE);
+      CombineChildVariants(N, ACVariants, BVariants, OutVariants, ISE);
+      CombineChildVariants(N, CAVariants, BVariants, OutVariants, ISE);
+      CombineChildVariants(N, BCVariants, AVariants, OutVariants, ISE);
+      CombineChildVariants(N, CBVariants, AVariants, OutVariants, ISE);
+
+      // Combine those into the result: x op (x op x)
+      CombineChildVariants(N, CVariants, ABVariants, OutVariants, ISE);
+      CombineChildVariants(N, CVariants, BAVariants, OutVariants, ISE);
+      CombineChildVariants(N, BVariants, ACVariants, OutVariants, ISE);
+      CombineChildVariants(N, BVariants, CAVariants, OutVariants, ISE);
+      CombineChildVariants(N, AVariants, BCVariants, OutVariants, ISE);
+      CombineChildVariants(N, AVariants, CBVariants, OutVariants, ISE);
+      return;
+    }
+  }
   
   // Compute permutations of all children.
   std::vector<std::vector<TreePatternNode*> > ChildVariants;
@@ -1159,12 +1250,9 @@ static void GenerateVariantsOf(TreePatternNode *N,
   // If this node is commutative, consider the commuted order.
   if (NodeInfo.hasProperty(SDNodeInfo::SDNPCommutative)) {
     assert(N->getNumChildren()==2 &&"Commutative but doesn't have 2 children!");
-    std::vector<std::vector<TreePatternNode*> > CommChildVariants;
-    CommChildVariants.push_back(ChildVariants[1]);
-    CommChildVariants.push_back(ChildVariants[0]);
-
-    // Consider all commuted orders.
-    CombineChildVariants(N, CommChildVariants, OutVariants, ISE);
+    // Consider the commuted order.
+    CombineChildVariants(N, ChildVariants[1], ChildVariants[0],
+                         OutVariants, ISE);
   }
 }
 
@@ -1189,8 +1277,6 @@ void DAGISelEmitter::GenerateVariants() {
     GenerateVariantsOf(PatternsToMatch[i].first, Variants, *this);
 
     assert(!Variants.empty() && "Must create at least original variant!");
-    assert(Variants[0]->isIsomorphicTo(PatternsToMatch[i].first) &&
-           "Input pattern should be first variant!");
     Variants.erase(Variants.begin());  // Remove the original pattern.
 
     if (Variants.empty())  // No variants for this pattern.
