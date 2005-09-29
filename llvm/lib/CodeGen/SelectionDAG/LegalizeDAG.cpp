@@ -261,7 +261,7 @@ SDOperand SelectionDAGLegalize::ExpandLegalINT_TO_FP(bool isSigned,
   }
 
   NeedsAnotherIteration = true;
-  return DAG.getNode(ISD::ADD, DestVT, Tmp1, FudgeInReg);
+  return DAG.getNode(ISD::FADD, DestVT, Tmp1, FudgeInReg);
 }
 
 /// PromoteLegalINT_TO_FP - This function is responsible for legalizing a
@@ -2810,7 +2810,7 @@ ExpandIntToFP(bool isSigned, MVT::ValueType DestTy, SDOperand Source) {
       FudgeInReg = DAG.getExtLoad(ISD::EXTLOAD, MVT::f64, DAG.getEntryNode(),
                                   CPIdx, DAG.getSrcValue(NULL), MVT::f32);
     }
-    return DAG.getNode(ISD::ADD, DestTy, SignedConv, FudgeInReg);
+    return DAG.getNode(ISD::FADD, DestTy, SignedConv, FudgeInReg);
   }
 
   // Check to see if the target has a custom way to lower this.  If so, use it.
