@@ -76,6 +76,9 @@ def SDTFPBinOp : SDTypeProfile<1, 2, [      // fadd, fmul, etc.
 def SDTIntUnaryOp : SDTypeProfile<1, 1, [   // ctlz
   SDTCisSameAs<0, 1>, SDTCisInt<0>
 ]>;
+def SDTFPUnaryOp  : SDTypeProfile<1, 1, [   // fneg, fsqrt, etc
+  SDTCisSameAs<0, 1>, SDTCisFP<0>
+]>;
 def SDTExtInreg : SDTypeProfile<1, 2, [   // sext_inreg
   SDTCisSameAs<0, 1>, SDTCisInt<0>, SDTCisVT<2, OtherVT>,
   SDTCisVTSmallerThanOp<2, 1>
@@ -117,6 +120,9 @@ def sdiv       : SDNode<"ISD::SDIV"      , SDTIntBinOp>;
 def udiv       : SDNode<"ISD::UDIV"      , SDTIntBinOp>;
 def srem       : SDNode<"ISD::SREM"      , SDTIntBinOp>;
 def urem       : SDNode<"ISD::UREM"      , SDTIntBinOp>;
+def srl        : SDNode<"ISD::SRL"       , SDTIntBinOp>;
+def sra        : SDNode<"ISD::SRA"       , SDTIntBinOp>;
+def shl        : SDNode<"ISD::SHL"       , SDTIntBinOp>;
 def and        : SDNode<"ISD::AND"       , SDTIntBinOp,
                         [SDNPCommutative, SDNPAssociative]>;
 def or         : SDNode<"ISD::OR"        , SDTIntBinOp,
@@ -128,6 +134,9 @@ def fsub       : SDNode<"ISD::FSUB"       , SDTFPBinOp>;
 def fmul       : SDNode<"ISD::FMUL"       , SDTFPBinOp, [SDNPCommutative]>;
 def fdiv       : SDNode<"ISD::FDIV"       , SDTFPBinOp>;
 def frem       : SDNode<"ISD::FREM"       , SDTFPBinOp>;
+def fabs       : SDNode<"ISD::FABS"       , SDTFPUnaryOp>;
+def fneg       : SDNode<"ISD::FNEG"       , SDTFPUnaryOp>;
+def fsqrt      : SDNode<"ISD::FSQRT"      , SDTFPUnaryOp>;
 
 def sext_inreg : SDNode<"ISD::SIGN_EXTEND_INREG", SDTExtInreg>;
 def ctlz       : SDNode<"ISD::CTLZ"      , SDTIntUnaryOp>;
@@ -533,19 +542,19 @@ def SLD  : XForm_6<31,  27, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    []>, isPPC64;
 def SLW  : XForm_6<31,  24, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    "slw $rA, $rS, $rB",
-                   []>;
+                   [(set GPRC:$rA, (shl GPRC:$rS, GPRC:$rB))]>;
 def SRD  : XForm_6<31, 539, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    "srd $rA, $rS, $rB",
                    []>, isPPC64;
 def SRW  : XForm_6<31, 536, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    "srw $rA, $rS, $rB",
-                   []>;
+                   [(set GPRC:$rA, (srl GPRC:$rS, GPRC:$rB))]>;
 def SRAD : XForm_6<31, 794, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    "srad $rA, $rS, $rB",
                    []>, isPPC64;
 def SRAW : XForm_6<31, 792, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    "sraw $rA, $rS, $rB",
-                   []>;
+                   [(set GPRC:$rA, (sra GPRC:$rS, GPRC:$rB))]>;
 let isStore = 1 in {
 def STBX  : XForm_8<31, 215, (ops GPRC:$rS, GPRC:$rA, GPRC:$rB),
                    "stbx $rS, $rA, $rB">;
@@ -561,7 +570,8 @@ def STDUX : XForm_8<31, 181, (ops GPRC:$rS, GPRC:$rA, GPRC:$rB),
                    "stdux $rS, $rA, $rB">, isPPC64;
 }
 def SRAWI : XForm_10<31, 824, (ops GPRC:$rA, GPRC:$rS, u5imm:$SH), 
-                     "srawi $rA, $rS, $SH">;
+                     "srawi $rA, $rS, $SH",
+                     [(set GPRC:$rA, (sra GPRC:$rS, imm:$SH))]>;
 def CNTLZW : XForm_11<31,  26, (ops GPRC:$rA, GPRC:$rS),
                       "cntlzw $rA, $rS",
                       [(set GPRC:$rA, (ctlz GPRC:$rS))]>;
@@ -597,25 +607,35 @@ def LFDX   : XForm_25<31, 599, (ops FPRC:$dst, GPRC:$base, GPRC:$index),
                       "lfdx $dst, $base, $index">;
 }
 def FCFID  : XForm_26<63, 846, (ops FPRC:$frD, FPRC:$frB),
-                      "fcfid $frD, $frB">, isPPC64;
+                      "fcfid $frD, $frB",
+                      []>, isPPC64;
 def FCTIDZ : XForm_26<63, 815, (ops FPRC:$frD, FPRC:$frB),
-                      "fctidz $frD, $frB">, isPPC64;
+                      "fctidz $frD, $frB",
+                      []>, isPPC64;
 def FCTIWZ : XForm_26<63, 15, (ops FPRC:$frD, FPRC:$frB),
-                      "fctiwz $frD, $frB">;
+                      "fctiwz $frD, $frB",
+                      []>;
 def FABS   : XForm_26<63, 264, (ops FPRC:$frD, FPRC:$frB),
-                      "fabs $frD, $frB">;
+                      "fabs $frD, $frB",
+                      [(set FPRC:$frD, (fabs FPRC:$frB))]>;
 def FMR    : XForm_26<63, 72, (ops FPRC:$frD, FPRC:$frB),
-                      "fmr $frD, $frB">;
+                      "fmr $frD, $frB",
+                      []>;  // (set FPRC:$frD, FPRC:$frB)
 def FNABS  : XForm_26<63, 136, (ops FPRC:$frD, FPRC:$frB),
-                      "fnabs $frD, $frB">;
+                      "fnabs $frD, $frB",
+                      [(set FPRC:$frD, (fneg (fabs FPRC:$frB)))]>;
 def FNEG   : XForm_26<63, 40, (ops FPRC:$frD, FPRC:$frB),
-                      "fneg $frD, $frB">;
+                      "fneg $frD, $frB",
+                      [(set FPRC:$frD, (fneg FPRC:$frB))]>;
 def FRSP   : XForm_26<63, 12, (ops FPRC:$frD, FPRC:$frB),
-                      "frsp $frD, $frB">;
+                      "frsp $frD, $frB",
+                      []>;
 def FSQRT  : XForm_26<63, 22, (ops FPRC:$frD, FPRC:$frB),
-                      "fsqrt $frD, $frB">;
+                      "fsqrt $frD, $frB",
+                      [(set FPRC:$frD, (fsqrt FPRC:$frB))]>;
 def FSQRTS : XForm_26<59, 22, (ops FPRC:$frD, FPRC:$frB),
-                      "fsqrts $frD, $frB">;
+                      "fsqrts $frD, $frB",
+                      []>;
                       
 let isStore = 1 in {
 def STFSX : XForm_28<31, 663, (ops FPRC:$frS, GPRC:$rA, GPRC:$rB),
@@ -711,55 +731,76 @@ def SUBFZE : XOForm_3<31, 200, 0, (ops GPRC:$rT, GPRC:$rA),
 //
 def FMADD : AForm_1<63, 29, 
                     (ops FPRC:$FRT, FPRC:$FRA, FPRC:$FRC, FPRC:$FRB),
-                    "fmadd $FRT, $FRA, $FRC, $FRB">;
+                    "fmadd $FRT, $FRA, $FRC, $FRB",
+                    [(set FPRC:$FRT, (fadd (fmul FPRC:$FRA, FPRC:$FRC),
+                                           FPRC:$FRB))]>;
 def FMADDS : AForm_1<59, 29,
                     (ops FPRC:$FRT, FPRC:$FRA, FPRC:$FRC, FPRC:$FRB),
-                    "fmadds $FRT, $FRA, $FRC, $FRB">;
+                    "fmadds $FRT, $FRA, $FRC, $FRB",
+                    []>;
 def FMSUB : AForm_1<63, 28,
                     (ops FPRC:$FRT, FPRC:$FRA, FPRC:$FRC, FPRC:$FRB),
-                    "fmsub $FRT, $FRA, $FRC, $FRB">;
+                    "fmsub $FRT, $FRA, $FRC, $FRB",
+                    [(set FPRC:$FRT, (fsub (fmul FPRC:$FRA, FPRC:$FRC),
+                                           FPRC:$FRB))]>;
 def FMSUBS : AForm_1<59, 28,
                     (ops FPRC:$FRT, FPRC:$FRA, FPRC:$FRC, FPRC:$FRB),
-                    "fmsubs $FRT, $FRA, $FRC, $FRB">;
+                    "fmsubs $FRT, $FRA, $FRC, $FRB",
+                    []>;
 def FNMADD : AForm_1<63, 31,
                     (ops FPRC:$FRT, FPRC:$FRA, FPRC:$FRC, FPRC:$FRB),
-                    "fnmadd $FRT, $FRA, $FRC, $FRB">;
+                    "fnmadd $FRT, $FRA, $FRC, $FRB",
+                    [(set FPRC:$FRT, (fneg (fadd (fmul FPRC:$FRA, FPRC:$FRC),
+                                                 FPRC:$FRB)))]>;
 def FNMADDS : AForm_1<59, 31,
                     (ops FPRC:$FRT, FPRC:$FRA, FPRC:$FRC, FPRC:$FRB),
-                    "fnmadds $FRT, $FRA, $FRC, $FRB">;
+                    "fnmadds $FRT, $FRA, $FRC, $FRB",
+                    []>;
 def FNMSUB : AForm_1<63, 30,
                     (ops FPRC:$FRT, FPRC:$FRA, FPRC:$FRC, FPRC:$FRB),
-                    "fnmsub $FRT, $FRA, $FRC, $FRB">;
+                    "fnmsub $FRT, $FRA, $FRC, $FRB",
+                    [(set FPRC:$FRT, (fneg (fsub (fmul FPRC:$FRA, FPRC:$FRC),
+                                                 FPRC:$FRB)))]>;
 def FNMSUBS : AForm_1<59, 30,
                     (ops FPRC:$FRT, FPRC:$FRA, FPRC:$FRC, FPRC:$FRB),
-                    "fnmsubs $FRT, $FRA, $FRC, $FRB">;
+                    "fnmsubs $FRT, $FRA, $FRC, $FRB",
+                    []>;
 def FSEL  : AForm_1<63, 23,
                     (ops FPRC:$FRT, FPRC:$FRA, FPRC:$FRC, FPRC:$FRB),
-                    "fsel $FRT, $FRA, $FRC, $FRB">;
+                    "fsel $FRT, $FRA, $FRC, $FRB",
+                    []>;
 def FADD  : AForm_2<63, 21,
                     (ops FPRC:$FRT, FPRC:$FRA, FPRC:$FRB),
-                    "fadd $FRT, $FRA, $FRB">;
+                    "fadd $FRT, $FRA, $FRB",
+                    [(set FPRC:$FRT, (fadd FPRC:$FRA, FPRC:$FRB))]>;
 def FADDS : AForm_2<59, 21,
                     (ops FPRC:$FRT, FPRC:$FRA, FPRC:$FRB),
-                    "fadds $FRT, $FRA, $FRB">;
+                    "fadds $FRT, $FRA, $FRB",
+                    []>;
 def FDIV  : AForm_2<63, 18,
                     (ops FPRC:$FRT, FPRC:$FRA, FPRC:$FRB),
-                    "fdiv $FRT, $FRA, $FRB">;
+                    "fdiv $FRT, $FRA, $FRB",
+                    [(set FPRC:$FRT, (fdiv FPRC:$FRA, FPRC:$FRB))]>;
 def FDIVS : AForm_2<59, 18,
                     (ops FPRC:$FRT, FPRC:$FRA, FPRC:$FRB),
-                    "fdivs $FRT, $FRA, $FRB">;
+                    "fdivs $FRT, $FRA, $FRB",
+                    []>;
 def FMUL  : AForm_3<63, 25,
                     (ops FPRC:$FRT, FPRC:$FRA, FPRC:$FRB),
-                    "fmul $FRT, $FRA, $FRB">;
+                    "fmul $FRT, $FRA, $FRB",
+                    [(set FPRC:$FRT, (fmul FPRC:$FRA, FPRC:$FRB))]>;
 def FMULS : AForm_3<59, 25,
                     (ops FPRC:$FRT, FPRC:$FRA, FPRC:$FRB),
-                    "fmuls $FRT, $FRA, $FRB">;
+                    "fmuls $FRT, $FRA, $FRB",
+                    []>;
 def FSUB  : AForm_2<63, 20,
                     (ops FPRC:$FRT, FPRC:$FRA, FPRC:$FRB),
-                    "fsub $FRT, $FRA, $FRB">;
+                    "fsub $FRT, $FRA, $FRB",
+                    [(set FPRC:$FRT, (fsub FPRC:$FRA, FPRC:$FRB))]>;
 def FSUBS : AForm_2<59, 20,
                     (ops FPRC:$FRT, FPRC:$FRA, FPRC:$FRB),
-                    "fsubs $FRT, $FRA, $FRB">;
+                    "fsubs $FRT, $FRA, $FRB",
+                    []>;
 
 // M-Form instructions.  rotate and mask instructions.
 //

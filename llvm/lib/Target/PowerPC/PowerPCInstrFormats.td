@@ -240,8 +240,9 @@ class XForm_6<bits<6> opcode, bits<10> xo, dag OL, string asmstr,
 class XForm_8<bits<6> opcode, bits<10> xo, dag OL, string asmstr> 
   : XForm_base_r3xo<opcode, xo, OL, asmstr>;
 
-class XForm_10<bits<6> opcode, bits<10> xo, dag OL, string asmstr> 
+class XForm_10<bits<6> opcode, bits<10> xo, dag OL, string asmstr, list<dag> pt> 
   : XForm_base_r3xo_swapped<opcode, xo, OL, asmstr> {
+    let Pattern = pt;
 }
 
 class XForm_11<bits<6> opcode, bits<10> xo, dag OL, string asmstr,
@@ -290,9 +291,10 @@ class XForm_25<bits<6> opcode, bits<10> xo, dag OL, string asmstr>
   : XForm_base_r3xo<opcode, xo, OL, asmstr> {
 }
 
-class XForm_26<bits<6> opcode, bits<10> xo, dag OL, string asmstr> 
+class XForm_26<bits<6> opcode, bits<10> xo, dag OL, string asmstr, list<dag> pt>
   : XForm_base_r3xo<opcode, xo, OL, asmstr> {
   let A = 0;
+  let Pattern = pt;
 }
 
 class XForm_28<bits<6> opcode, bits<10> xo, dag OL, string asmstr> 
@@ -463,12 +465,15 @@ class XOForm_3<bits<6> opcode, bits<9> xo, bit oe,
 }
 
 // 1.7.12 A-Form
-class AForm_1<bits<6> opcode, bits<5> xo, dag OL, string asmstr>
+class AForm_1<bits<6> opcode, bits<5> xo, dag OL, string asmstr, 
+              list<dag> pattern>
          : I<opcode, OL, asmstr> {
   bits<5> FRT;
   bits<5> FRA;
   bits<5> FRC;
   bits<5> FRB;
+
+  let Pattern = pattern;
 
   bit RC = 0;    // set by isDOT
 
@@ -480,13 +485,13 @@ class AForm_1<bits<6> opcode, bits<5> xo, dag OL, string asmstr>
   let Inst{31}    = RC;
 }
 
-class AForm_2<bits<6> opcode, bits<5> xo, dag OL, string asmstr> 
-  : AForm_1<opcode, xo, OL, asmstr> {
+class AForm_2<bits<6> opcode, bits<5> xo, dag OL, string asmstr, list<dag> pat>
+  : AForm_1<opcode, xo, OL, asmstr, pat> {
   let FRC = 0;
 }
 
-class AForm_3<bits<6> opcode, bits<5> xo, dag OL, string asmstr> 
-  : AForm_1<opcode, xo, OL, asmstr> {
+class AForm_3<bits<6> opcode, bits<5> xo, dag OL, string asmstr, list<dag> pat> 
+  : AForm_1<opcode, xo, OL, asmstr, pat> {
   let FRB = 0;
 }
 
