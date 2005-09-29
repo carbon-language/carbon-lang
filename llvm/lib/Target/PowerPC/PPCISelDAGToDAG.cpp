@@ -637,6 +637,10 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
   if (N->getOpcode() >= ISD::BUILTIN_OP_END &&
       N->getOpcode() < PPCISD::FIRST_NUMBER)
     return Op;   // Already selected.
+
+  // If this has already been converted, use it.
+  std::map<SDOperand, SDOperand>::iterator CGMI = CodeGenMap.find(Op);
+  if (CGMI != CodeGenMap.end()) return CGMI->second;
   
   switch (N->getOpcode()) {
   default: break;
@@ -653,11 +657,8 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
       New = CurDAG->getNode(ISD::TokenFactor, MVT::Other, Ops);
     }
     
-    if (New.Val != N) {
-      CurDAG->ReplaceAllUsesWith(Op, New);
-      N = New.Val;
-    }
-    return SDOperand(N, 0);
+    if (!N->hasOneUse()) CodeGenMap[Op] = New;
+    return New;
   }
   case ISD::CopyFromReg: {
     SDOperand Chain = Select(N->getOperand(0));
@@ -670,13 +671,10 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
     SDOperand Chain = Select(N->getOperand(0));
     SDOperand Reg = N->getOperand(1);
     SDOperand Val = Select(N->getOperand(2));
-    if (Chain != N->getOperand(0) || Val != N->getOperand(2)) {
-      SDOperand New = CurDAG->getNode(ISD::CopyToReg, MVT::Other,
-                                      Chain, Reg, Val);
-      CurDAG->ReplaceAllUsesWith(Op, New);
-      N = New.Val;
-    }
-    return SDOperand(N, 0);    
+    SDOperand New = CurDAG->getNode(ISD::CopyToReg, MVT::Other,
+                                    Chain, Reg, Val);
+    if (!N->hasOneUse()) CodeGenMap[Op] = New;
+    return New;
   }
   case ISD::UNDEF:
     if (N->getValueType(0) == MVT::i32)
@@ -746,7 +744,8 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
     Result = CurDAG->getCopyFromReg(Chain, PPC::R1, MVT::i32);
     
     // Finally, replace the DYNAMIC_STACKALLOC with the copyfromreg.
-    CurDAG->ReplaceAllUsesWith(N, Result.Val);
+    CodeGenMap[Op.getValue(0)] = Result;
+    CodeGenMap[Op.getValue(1)] = Result.getValue(1);
     return SDOperand(Result.Val, Op.ResNo);
   }      
   case PPCISD::FSEL:
@@ -843,10 +842,8 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
         return SDOperand(N, 0);
       } else if (Imm) {
         SDOperand Result = Select(BuildSDIVSequence(N));
-        assert(Result.ResNo == 0);
-        CurDAG->ReplaceAllUsesWith(Op, Result);
-        N = Result.Val;
-        return SDOperand(N, 0);
+        CodeGenMap[Op] = Result;
+        return Result;
       }
     }
     
@@ -860,10 +857,8 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
     unsigned Imm;
     if (isIntImmediate(N->getOperand(1), Imm) && Imm) {
       SDOperand Result = Select(BuildUDIVSequence(N));
-      assert(Result.ResNo == 0);
-      CurDAG->ReplaceAllUsesWith(Op, Result);
-      N = Result.Val;
-      return SDOperand(N, 0);
+      CodeGenMap[Op] = Result;
+      return Result;
     }
     
     CurDAG->SelectNodeTo(N, PPC::DIVWU, MVT::i32, Select(N->getOperand(0)),
@@ -903,18 +898,14 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
     return SDOperand(N, 0);
   }
   case ISD::OR:
-    if (SDNode *I = SelectBitfieldInsert(N)) {
-      CurDAG->ReplaceAllUsesWith(Op, SDOperand(I, 0));
-      N = I;
-      return SDOperand(N, 0);
-    }
+    if (SDNode *I = SelectBitfieldInsert(N))
+      return CodeGenMap[Op] = SDOperand(I, 0);
+    
     if (SDNode *I = SelectIntImmediateExpr(N->getOperand(0), 
                                            N->getOperand(1),
-                                           PPC::ORIS, PPC::ORI)) {
-      CurDAG->ReplaceAllUsesWith(Op, SDOperand(I, 0));
-      N = I;
-      return SDOperand(N, 0);
-    }
+                                           PPC::ORIS, PPC::ORI))
+      return CodeGenMap[Op] = SDOperand(I, 0);
+      
     // Finally, check for the case where we are being asked to select
     // 'or (not(a), b)' or 'or (a, not(b))' which can be selected as orc.
     if (isOprNot(N->getOperand(0).Val))
@@ -1073,7 +1064,9 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
                                        Select(N->getOperand(3)), CarryFromLo);
     Result.push_back(CarryFromLo.getValue(0));
     Result.push_back(ResultHi);
-    CurDAG->ReplaceAllUsesWith(N, Result);
+    
+    CodeGenMap[Op.getValue(0)] = Result[0];
+    CodeGenMap[Op.getValue(1)] = Result[1];
     return Result[Op.ResNo];
   }
   case ISD::SUB_PARTS: {
@@ -1087,7 +1080,8 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
                                            RHSL, LHSL));
     Result.push_back(CurDAG->getTargetNode(PPC::SUBFE, MVT::i32, RHSH, LHSH,
                                            Result[0].getValue(1)));
-    CurDAG->ReplaceAllUsesWith(N, Result);
+    CodeGenMap[Op.getValue(0)] = Result[0];
+    CodeGenMap[Op.getValue(1)] = Result[1];
     return Result[Op.ResNo];
   }
     
@@ -1395,7 +1389,8 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
     }
     
     CallResults.push_back(Chain);
-    CurDAG->ReplaceAllUsesWith(N, CallResults);
+    for (unsigned i = 0, e = CallResults.size(); i != e; ++i)
+      CodeGenMap[Op.getValue(i)] = CallResults[i];
     return CallResults[Op.ResNo];
   }
   case ISD::RET: {
