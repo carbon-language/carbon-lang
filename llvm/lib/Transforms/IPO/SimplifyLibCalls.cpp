@@ -383,7 +383,6 @@ struct ExitInMainOptimization : public LibCallOptimization
 {
   ExitInMainOptimization() : LibCallOptimization("exit",
       "Number of 'exit' calls simplified") {}
-  virtual ~ExitInMainOptimization() {}
 
   // Make sure the called function looks like exit (int argument, int return
   // type, external linkage, not varargs).
@@ -451,8 +450,6 @@ public:
       "Number of 'strcat' calls simplified") {}
 
 public:
-  /// @breif  Destructor
-  virtual ~StrCatOptimization() {}
 
   /// @brief Make sure that the "strcat" function has the right prototype
   virtual bool ValidateCalledFunction(const Function* f, SimplifyLibCalls& SLC)
@@ -540,7 +537,6 @@ struct StrChrOptimization : public LibCallOptimization
 public:
   StrChrOptimization() : LibCallOptimization("strchr",
       "Number of 'strchr' calls simplified") {}
-  virtual ~StrChrOptimization() {}
 
   /// @brief Make sure that the "strchr" function has the right prototype
   virtual bool ValidateCalledFunction(const Function* f, SimplifyLibCalls& SLC)
@@ -632,7 +628,6 @@ struct StrCmpOptimization : public LibCallOptimization
 public:
   StrCmpOptimization() : LibCallOptimization("strcmp",
       "Number of 'strcmp' calls simplified") {}
-  virtual ~StrCmpOptimization() {}
 
   /// @brief Make sure that the "strcmp" function has the right prototype
   virtual bool ValidateCalledFunction(const Function* f, SimplifyLibCalls& SLC)
@@ -719,7 +714,6 @@ struct StrNCmpOptimization : public LibCallOptimization
 public:
   StrNCmpOptimization() : LibCallOptimization("strncmp",
       "Number of 'strncmp' calls simplified") {}
-  virtual ~StrNCmpOptimization() {}
 
   /// @brief Make sure that the "strncmp" function has the right prototype
   virtual bool ValidateCalledFunction(const Function* f, SimplifyLibCalls& SLC)
@@ -822,7 +816,6 @@ struct StrCpyOptimization : public LibCallOptimization
 public:
   StrCpyOptimization() : LibCallOptimization("strcpy",
       "Number of 'strcpy' calls simplified") {}
-  virtual ~StrCpyOptimization() {}
 
   /// @brief Make sure that the "strcpy" function has the right prototype
   virtual bool ValidateCalledFunction(const Function* f, SimplifyLibCalls& SLC)
@@ -910,7 +903,6 @@ struct StrLenOptimization : public LibCallOptimization
 {
   StrLenOptimization() : LibCallOptimization("strlen",
       "Number of 'strlen' calls simplified") {}
-  virtual ~StrLenOptimization() {}
 
   /// @brief Make sure that the "strlen" function has the right prototype
   virtual bool ValidateCalledFunction(const Function* f, SimplifyLibCalls& SLC)
@@ -1113,8 +1105,6 @@ protected:
   LLVMMemCpyOptimization(const char* fname, const char* desc)
     : LibCallOptimization(fname, desc) {}
 public:
-  /// @brief Destructor
-  virtual ~LLVMMemCpyOptimization() {}
 
   /// @brief Make sure that the "memcpy" function has the right prototype
   virtual bool ValidateCalledFunction(const Function* f, SimplifyLibCalls& TD)
@@ -1199,8 +1189,6 @@ struct LLVMMemSetOptimization : public LibCallOptimization
       "Number of 'llvm.memset' calls simplified") {}
 
 public:
-  /// @brief Destructor
-  virtual ~LLVMMemSetOptimization() {}
 
   /// @brief Make sure that the "memset" function has the right prototype
   virtual bool ValidateCalledFunction(const Function* f, SimplifyLibCalls& TD)
@@ -1307,9 +1295,6 @@ public:
   PowOptimization() : LibCallOptimization("pow",
       "Number of 'pow' calls simplified") {}
 
-  /// @brief Destructor
-  virtual ~PowOptimization() {}
-
   /// @brief Make sure that the "pow" function has the right prototype
   virtual bool ValidateCalledFunction(const Function* f, SimplifyLibCalls& SLC)
   {
@@ -1383,9 +1368,6 @@ public:
   /// @brief Default Constructor
   FPrintFOptimization() : LibCallOptimization("fprintf",
       "Number of 'fprintf' calls simplified") {}
-
-  /// @brief Destructor
-  virtual ~FPrintFOptimization() {}
 
   /// @brief Make sure that the "fprintf" function has the right prototype
   virtual bool ValidateCalledFunction(const Function* f, SimplifyLibCalls& SLC)
@@ -1519,9 +1501,6 @@ public:
   /// @brief Default Constructor
   SPrintFOptimization() : LibCallOptimization("sprintf",
       "Number of 'sprintf' calls simplified") {}
-
-  /// @brief Destructor
-  virtual ~SPrintFOptimization() {}
 
   /// @brief Make sure that the "fprintf" function has the right prototype
   virtual bool ValidateCalledFunction(const Function* f, SimplifyLibCalls& SLC)
@@ -1657,9 +1636,6 @@ public:
   PutsOptimization() : LibCallOptimization("fputs",
       "Number of 'fputs' calls simplified") {}
 
-  /// @brief Destructor
-  virtual ~PutsOptimization() {}
-
   /// @brief Make sure that the "fputs" function has the right prototype
   virtual bool ValidateCalledFunction(const Function* f, SimplifyLibCalls& SLC)
   {
@@ -1723,17 +1699,12 @@ public:
 /// This LibCallOptimization will simplify calls to the "isdigit" library
 /// function. It simply does range checks the parameter explicitly.
 /// @brief Simplify the isdigit library function.
-struct IsDigitOptimization : public LibCallOptimization
-{
+struct isdigitOptimization : public LibCallOptimization {
 public:
-  /// @brief Default Constructor
-  IsDigitOptimization() : LibCallOptimization("isdigit",
+  isdigitOptimization() : LibCallOptimization("isdigit",
       "Number of 'isdigit' calls simplified") {}
 
-  /// @brief Destructor
-  virtual ~IsDigitOptimization() {}
-
-  /// @brief Make sure that the "fputs" function has the right prototype
+  /// @brief Make sure that the "isdigit" function has the right prototype
   virtual bool ValidateCalledFunction(const Function* f, SimplifyLibCalls& SLC)
   {
     // Just make sure this has 1 argument
@@ -1772,7 +1743,9 @@ public:
     ci->eraseFromParent();
     return true;
   }
-} IsDigitOptimizer;
+} isdigitOptimizer;
+
+
 
 /// This LibCallOptimization will simplify calls to the "toascii" library
 /// function. It simply does the corresponding and operation to restrict the
@@ -1784,9 +1757,6 @@ public:
   /// @brief Default Constructor
   ToAsciiOptimization() : LibCallOptimization("toascii",
       "Number of 'toascii' calls simplified") {}
-
-  /// @brief Destructor
-  virtual ~ToAsciiOptimization() {}
 
   /// @brief Make sure that the "fputs" function has the right prototype
   virtual bool ValidateCalledFunction(const Function* f, SimplifyLibCalls& SLC)
@@ -1825,9 +1795,6 @@ public:
   /// @brief Default Constructor
   FFSOptimization() : LibCallOptimization("ffs",
       "Number of 'ffs' calls simplified") {}
-
-  /// @brief Destructor
-  virtual ~FFSOptimization() {}
 
   /// @brief Make sure that the "fputs" function has the right prototype
   virtual bool ValidateCalledFunction(const Function* f, SimplifyLibCalls& SLC)
@@ -2069,12 +2036,6 @@ Value *CastToCStr(Value *V, Instruction &IP) {
 //
 // exp, expf, expl:
 //   * exp(log(x))  -> x
-//
-// isascii:
-//   * isascii(c)    -> ((c & ~0x7f) == 0)
-//
-// isdigit:
-//   * isdigit(c)    -> (unsigned)(c) - '0' <= 9
 //
 // log, logf, logl:
 //   * log(exp(x))   -> x
