@@ -1,7 +1,8 @@
 ; Test that the IsDigitOptimizer works correctly
-; RUN: llvm-as < %s | opt -simplify-libcalls | llvm-dis | not grep 'call.*isdigit' 
+; RUN: llvm-as < %s | opt -simplify-libcalls | llvm-dis | not grep 'call' 
 
 declare int %isdigit(int)
+declare int %isascii(int)
 
 implementation   ; Functions:
 
@@ -14,5 +15,6 @@ int %main () {
   %rslt2 = add int %val3, %val4
   %sum = add int %rslt1, %rslt2
   %rslt = call int %isdigit(int %sum)
-  ret int %rslt
+  %tmp = call int %isascii(int %rslt)
+  ret int %tmp
 }
