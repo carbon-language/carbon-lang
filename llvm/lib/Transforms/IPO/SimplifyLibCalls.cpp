@@ -976,6 +976,127 @@ struct StrLenOptimization : public LibCallOptimization
   }
 } StrLenOptimizer;
 
+/// IsOnlyUsedInEqualsComparison - Return true if it only matters that the value
+/// is equal or not-equal to zero. 
+static bool IsOnlyUsedInEqualsZeroComparison(Instruction *I) {
+  for (Value::use_iterator UI = I->use_begin(), E = I->use_end();
+       UI != E; ++UI) {
+    Instruction *User = cast<Instruction>(*UI);
+    if (User->getOpcode() == Instruction::SetNE ||
+        User->getOpcode() == Instruction::SetEQ) {
+      if (isa<Constant>(User->getOperand(1)) && 
+          cast<Constant>(User->getOperand(1))->isNullValue())
+        continue;
+    } else if (CastInst *CI = dyn_cast<CastInst>(User))
+      if (CI->getType() == Type::BoolTy)
+        continue;
+    // Unknown instruction.
+    return false;
+  }
+  return true;
+}
+
+/// This memcmpOptimization will simplify a call to the memcmp library
+/// function.
+struct memcmpOptimization : public LibCallOptimization {
+  /// @brief Default Constructor
+  memcmpOptimization()
+    : LibCallOptimization("memcmp", "Number of 'memcmp' calls simplified") {}
+  
+  /// @brief Make sure that the "memcmp" function has the right prototype
+  virtual bool ValidateCalledFunction(const Function *F, SimplifyLibCalls &TD) {
+    Function::const_arg_iterator AI = F->arg_begin();
+    if (F->arg_size() != 3 || !isa<PointerType>(AI->getType())) return false;
+    if (!isa<PointerType>((++AI)->getType())) return false;
+    if (!(++AI)->getType()->isInteger()) return false;
+    if (!F->getReturnType()->isInteger()) return false;
+    return true;
+  }
+  
+  /// Because of alignment and instruction information that we don't have, we
+  /// leave the bulk of this to the code generators.
+  ///
+  /// Note that we could do much more if we could force alignment on otherwise
+  /// small aligned allocas, or if we could indicate that loads have a small
+  /// alignment.
+  virtual bool OptimizeCall(CallInst *CI, SimplifyLibCalls &TD) {
+    Value *LHS = CI->getOperand(1), *RHS = CI->getOperand(2);
+
+    // If the two operands are the same, return zero.
+    if (LHS == RHS) {
+      // memcmp(s,s,x) -> 0
+      CI->replaceAllUsesWith(Constant::getNullValue(CI->getType()));
+      CI->eraseFromParent();
+      return true;
+    }
+    
+    // Make sure we have a constant length.
+    ConstantInt *LenC = dyn_cast<ConstantInt>(CI->getOperand(3));
+    if (!LenC) return false;
+    uint64_t Len = LenC->getRawValue();
+      
+    // If the length is zero, this returns 0.
+    switch (Len) {
+    case 0:
+      // memcmp(s1,s2,0) -> 0
+      CI->replaceAllUsesWith(Constant::getNullValue(CI->getType()));
+      CI->eraseFromParent();
+      return true;
+    case 1: {
+      // memcmp(S1,S2,1) -> *(ubyte*)S1 - *(ubyte*)S2
+      const Type *UCharPtr = PointerType::get(Type::UByteTy);
+      CastInst *Op1Cast = new CastInst(LHS, UCharPtr, LHS->getName(), CI);
+      CastInst *Op2Cast = new CastInst(RHS, UCharPtr, RHS->getName(), CI);
+      Value *S1V = new LoadInst(Op1Cast, LHS->getName()+".val", CI);
+      Value *S2V = new LoadInst(Op2Cast, RHS->getName()+".val", CI);
+      Value *RV = BinaryOperator::createSub(S1V, S2V, CI->getName()+".diff",CI);
+      if (RV->getType() != CI->getType())
+        RV = new CastInst(RV, CI->getType(), RV->getName(), CI);
+      CI->replaceAllUsesWith(RV);
+      CI->eraseFromParent();
+      return true;
+    }
+    case 2:
+      if (IsOnlyUsedInEqualsZeroComparison(CI)) {
+        // TODO: IF both are aligned, use a short load/compare.
+      
+        // memcmp(S1,S2,2) -> S1[0]-S2[0] | S1[1]-S2[1] iff only ==/!= 0 matters
+        const Type *UCharPtr = PointerType::get(Type::UByteTy);
+        CastInst *Op1Cast = new CastInst(LHS, UCharPtr, LHS->getName(), CI);
+        CastInst *Op2Cast = new CastInst(RHS, UCharPtr, RHS->getName(), CI);
+        Value *S1V1 = new LoadInst(Op1Cast, LHS->getName()+".val1", CI);
+        Value *S2V1 = new LoadInst(Op2Cast, RHS->getName()+".val1", CI);
+        Value *D1 = BinaryOperator::createSub(S1V1, S2V1,
+                                              CI->getName()+".d1", CI);
+        Constant *One = ConstantInt::get(Type::IntTy, 1);
+        Value *G1 = new GetElementPtrInst(Op1Cast, One, "next1v", CI);
+        Value *G2 = new GetElementPtrInst(Op2Cast, One, "next2v", CI);
+        Value *S1V2 = new LoadInst(G1, LHS->getName()+".val2", CI);
+        Value *S2V2 = new LoadInst(G1, RHS->getName()+".val2", CI);
+        Value *D2 = BinaryOperator::createSub(S1V2, S2V2,
+                                              CI->getName()+".d1", CI);
+        Value *Or = BinaryOperator::createOr(D1, D2, CI->getName()+".res", CI);
+        if (Or->getType() != CI->getType())
+          Or = new CastInst(Or, CI->getType(), Or->getName(), CI);
+        CI->replaceAllUsesWith(Or);
+        CI->eraseFromParent();
+        return true;
+      }
+      break;
+    default:
+      break;
+    }
+    
+    
+    
+    return false;
+  }
+} memcmpOptimizer;
+
+
+
+
+
 /// This LibCallOptimization will simplify a call to the memcpy library
 /// function by expanding it out to a single store of size 0, 1, 2, 4, or 8
 /// bytes depending on the length of the string and the alignment. Additional
@@ -1968,11 +2089,8 @@ Value *CastToCStr(Value *V, Instruction &IP) {
 //   * lround(cnst) -> cnst'
 //
 // memcmp:
-//   * memcmp(s1,s2,0) -> 0
-//   * memcmp(x,x,l)   -> 0
 //   * memcmp(x,y,l)   -> cnst
 //      (if all arguments are constant and strlen(x) <= l and strlen(y) <= l)
-//   * memcmp(x,y,1)   -> *x - *y
 //
 // memmove:
 //   * memmove(d,s,l,a) -> memcpy(d,s,l,a)
