@@ -174,6 +174,12 @@ namespace llvm {
     ///
     TreePatternNode *clone() const;
     
+    /// isIsomorphicTo - Return true if this node is recursively isomorphic to
+    /// the specified node.  For this comparison, all of the state of the node
+    /// is considered, except for the assigned name.  Nodes with differing names
+    /// that are otherwise identical are considered isomorphic.
+    bool isIsomorphicTo(const TreePatternNode *N) const;
+    
     /// SubstituteFormalArguments - Replace the formal arguments in this tree
     /// with actual values specified by ArgMap.
     void SubstituteFormalArguments(std::map<std::string,

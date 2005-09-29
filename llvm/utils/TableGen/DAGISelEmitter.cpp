@@ -232,6 +232,32 @@ void TreePatternNode::dump() const {
   print(std::cerr);
 }
 
+/// isIsomorphicTo - Return true if this node is recursively isomorphic to
+/// the specified node.  For this comparison, all of the state of the node
+/// is considered, except for the assigned name.  Nodes with differing names
+/// that are otherwise identical are considered isomorphic.
+bool TreePatternNode::isIsomorphicTo(const TreePatternNode *N) const {
+  if (N == this) return true;
+  if (N->isLeaf() != isLeaf() || getType() != N->getType() ||
+      getPredicateFn() != N->getPredicateFn() ||
+      getTransformFn() != N->getTransformFn())
+    return false;
+
+  if (isLeaf()) {
+    if (DefInit *DI = dynamic_cast<DefInit*>(getLeafValue()))
+      if (DefInit *NDI = dynamic_cast<DefInit*>(N->getLeafValue()))
+        return DI->getDef() == NDI->getDef();
+    return getLeafValue() == N->getLeafValue();
+  }
+  
+  if (N->getOperator() != getOperator() ||
+      N->getNumChildren() != getNumChildren()) return false;
+  for (unsigned i = 0, e = getNumChildren(); i != e; ++i)
+    if (!getChild(i)->isIsomorphicTo(N->getChild(i)))
+      return false;
+  return true;
+}
+
 /// clone - Make a copy of this tree and all of its children.
 ///
 TreePatternNode *TreePatternNode::clone() const {
@@ -1042,18 +1068,165 @@ void DAGISelEmitter::ParsePatterns() {
     PatternsToMatch.push_back(std::make_pair(Pattern->getOnlyTree(),
                                              Result->getOnlyTree()));
   }
-
-  DEBUG(std::cerr << "\n\nPARSED PATTERNS TO MATCH:\n\n";
-        for (unsigned i = 0, e = PatternsToMatch.size(); i != e; ++i) {
-          std::cerr << "PATTERN: ";  PatternsToMatch[i].first->dump();
-          std::cerr << "\nRESULT:  ";PatternsToMatch[i].second->dump();
-          std::cerr << "\n";
-        });
 }
+
+/// CombineChildVariants - Given a bunch of permutations of each child of the
+/// 'operator' node, put them together in all possible ways.
+static void CombineChildVariants(TreePatternNode *Orig, 
+                  std::vector<std::vector<TreePatternNode*> > &ChildVariants,
+                                 std::vector<TreePatternNode*> &OutVariants,
+                                 DAGISelEmitter &ISE) {
+  // The end result is an all-pairs construction of the resultant pattern.
+  std::vector<unsigned> Idxs;
+  Idxs.resize(ChildVariants.size());
+  bool NotDone = true;
+  while (NotDone) {
+    // Create the variant and add it to the output list.
+    std::vector<TreePatternNode*> NewChildren;
+    for (unsigned i = 0, e = ChildVariants.size(); i != e; ++i)
+      NewChildren.push_back(ChildVariants[i][Idxs[i]]);
+    TreePatternNode *R = new TreePatternNode(Orig->getOperator(), NewChildren);
+    
+    // Copy over properties.
+    R->setName(Orig->getName());
+    R->setPredicateFn(Orig->getPredicateFn());
+    R->setTransformFn(Orig->getTransformFn());
+    R->setType(Orig->getType());
+    
+    // If this pattern cannot every match, do not include it as a variant.
+    std::string ErrString;
+    if (!R->canPatternMatch(ErrString, ISE)) {
+      delete R;
+    } else {
+      bool AlreadyExists = false;
+      
+      // Scan to see if this pattern has already been emitted.  We can get
+      // duplication due to things like commuting:
+      //   (and GPRC:$a, GPRC:$b) -> (and GPRC:$b, GPRC:$a)
+      // which are the same pattern.  Ignore the dups.
+      for (unsigned i = 0, e = OutVariants.size(); i != e; ++i)
+        if (R->isIsomorphicTo(OutVariants[i])) {
+          AlreadyExists = true;
+          break;
+        }
+      
+      if (AlreadyExists)
+        delete R;
+      else
+        OutVariants.push_back(R);
+    }
+    
+    // Increment indices to the next permutation.
+    NotDone = false;
+    // Look for something we can increment without causing a wrap-around.
+    for (unsigned IdxsIdx = 0; IdxsIdx != Idxs.size(); ++IdxsIdx) {
+      if (++Idxs[IdxsIdx] < ChildVariants[IdxsIdx].size()) {
+        NotDone = true;   // Found something to increment.
+        break;
+      }
+      Idxs[IdxsIdx] = 0;
+    }
+  }
+}
+
+/// GenerateVariantsOf - Given a pattern N, generate all permutations we can of
+/// the (potentially recursive) pattern by using algebraic laws.
+///
+static void GenerateVariantsOf(TreePatternNode *N,
+                               std::vector<TreePatternNode*> &OutVariants,
+                               DAGISelEmitter &ISE) {
+  // We cannot permute leaves.
+  if (N->isLeaf()) {
+    OutVariants.push_back(N);
+    return;
+  }
+
+  // Look up interesting info about the node.
+  const SDNodeInfo &NodeInfo = ISE.getSDNodeInfo(N->getOperator());
+
+  // If this node is associative, reassociate.
+  // TODO!
+  
+  // Compute permutations of all children.
+  std::vector<std::vector<TreePatternNode*> > ChildVariants;
+  ChildVariants.resize(N->getNumChildren());
+  for (unsigned i = 0, e = N->getNumChildren(); i != e; ++i)
+    GenerateVariantsOf(N->getChild(i), ChildVariants[i], ISE);
+
+  // Build all permutations based on how the children were formed.
+  CombineChildVariants(N, ChildVariants, OutVariants, ISE);
+
+  // If this node is commutative, consider the commuted order.
+  if (NodeInfo.hasProperty(SDNodeInfo::SDNPCommutative)) {
+    assert(N->getNumChildren()==2 &&"Commutative but doesn't have 2 children!");
+    std::vector<std::vector<TreePatternNode*> > CommChildVariants;
+    CommChildVariants.push_back(ChildVariants[1]);
+    CommChildVariants.push_back(ChildVariants[0]);
+
+    // Consider all commuted orders.
+    CombineChildVariants(N, CommChildVariants, OutVariants, ISE);
+  }
+}
+
 
 // GenerateVariants - Generate variants.  For example, commutative patterns can
 // match multiple ways.  Add them to PatternsToMatch as well.
 void DAGISelEmitter::GenerateVariants() {
+  
+  DEBUG(std::cerr << "Generating instruction variants.\n");
+  
+  // Loop over all of the patterns we've collected, checking to see if we can
+  // generate variants of the instruction, through the exploitation of
+  // identities.  This permits the target to provide agressive matching without
+  // the .td file having to contain tons of variants of instructions.
+  //
+  // Note that this loop adds new patterns to the PatternsToMatch list, but we
+  // intentionally do not reconsider these.  Any variants of added patterns have
+  // already been added.
+  //
+  for (unsigned i = 0, e = PatternsToMatch.size(); i != e; ++i) {
+    std::vector<TreePatternNode*> Variants;
+    GenerateVariantsOf(PatternsToMatch[i].first, Variants, *this);
+
+    assert(!Variants.empty() && "Must create at least original variant!");
+    assert(Variants[0]->isIsomorphicTo(PatternsToMatch[i].first) &&
+           "Input pattern should be first variant!");
+    Variants.erase(Variants.begin());  // Remove the original pattern.
+
+    if (Variants.empty())  // No variants for this pattern.
+      continue;
+
+    DEBUG(std::cerr << "FOUND VARIANTS OF: ";
+          PatternsToMatch[i].first->dump();
+          std::cerr << "\n");
+
+    for (unsigned v = 0, e = Variants.size(); v != e; ++v) {
+      TreePatternNode *Variant = Variants[v];
+
+      DEBUG(std::cerr << "  VAR#" << v <<  ": ";
+            Variant->dump();
+            std::cerr << "\n");
+      
+      // Scan to see if an instruction or explicit pattern already matches this.
+      bool AlreadyExists = false;
+      for (unsigned p = 0, e = PatternsToMatch.size(); p != e; ++p) {
+        // Check to see if this variant already exists.
+        if (Variant->isIsomorphicTo(PatternsToMatch[p].first)) {
+          DEBUG(std::cerr << "  *** ALREADY EXISTS, ignoring variant.\n");
+          AlreadyExists = true;
+          break;
+        }
+      }
+      // If we already have it, ignore the variant.
+      if (AlreadyExists) continue;
+
+      // Otherwise, add it to the list of patterns we have.
+      PatternsToMatch.push_back(std::make_pair(Variant, 
+                                               PatternsToMatch[i].second));
+    }
+
+    DEBUG(std::cerr << "\n");
+  }
 }
 
 
@@ -1381,6 +1554,14 @@ void DAGISelEmitter::run(std::ostream &OS) {
   // multiple ways.  Add them to PatternsToMatch as well.
   GenerateVariants();
 
+  
+  DEBUG(std::cerr << "\n\nALL PATTERNS TO MATCH:\n\n";
+        for (unsigned i = 0, e = PatternsToMatch.size(); i != e; ++i) {
+          std::cerr << "PATTERN: ";  PatternsToMatch[i].first->dump();
+          std::cerr << "\nRESULT:  ";PatternsToMatch[i].second->dump();
+          std::cerr << "\n";
+        });
+  
   // At this point, we have full information about the 'Patterns' we need to
   // parse, both implicitly from instructions as well as from explicit pattern
   // definitions.  Emit the resultant instruction selector.
