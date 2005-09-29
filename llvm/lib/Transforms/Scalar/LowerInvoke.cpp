@@ -259,8 +259,11 @@ void LowerInvoke::rewriteExpensiveInvoke(InvokeInst *II, unsigned InvokeNo,
   // Insert a store of the invoke num before the invoke and store zero into the
   // location afterward.
   new StoreInst(InvokeNoC, InvokeNum, true, II);  // volatile
-  new StoreInst(Constant::getNullValue(Type::UIntTy), InvokeNum, false,
-                II->getNormalDest()->begin());  // nonvolatile.
+  
+  BasicBlock::iterator NI = II->getNormalDest()->begin();
+  while (isa<PHINode>(NI)) ++NI;
+  // nonvolatile.
+  new StoreInst(Constant::getNullValue(Type::UIntTy), InvokeNum, false, NI);
   
   // Add a switch case to our unwind block.
   CatchSwitch->addCase(InvokeNoC, II->getUnwindDest());
