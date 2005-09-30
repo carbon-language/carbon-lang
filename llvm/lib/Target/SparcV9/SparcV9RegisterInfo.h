@@ -23,6 +23,10 @@ namespace llvm {
 struct SparcV9RegisterInfo : public MRegisterInfo {
   SparcV9RegisterInfo ();
   const unsigned *getCalleeSaveRegs() const;
+  const TargetRegisterClass* const *getCalleeSaveRegClasses() const {
+    return 0;
+  }
+    
 
   // The rest of these are stubs... for now.
   void storeRegToStackSlot(MachineBasicBlock &MBB,
