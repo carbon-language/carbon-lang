@@ -44,28 +44,25 @@ namespace {
 X86RegisterInfo::X86RegisterInfo()
   : X86GenRegisterInfo(X86::ADJCALLSTACKDOWN, X86::ADJCALLSTACKUP) {}
 
-static unsigned getIdx(unsigned SpillSize) {
-  switch (SpillSize) {
-  default: assert(0 && "Invalid data size!");
-  case 8:  return 0;
-  case 16: return 1;
-  case 32: return 2;
-  case 64: return 3;   // FP in 64-bit spill mode.
-  case 80: return 4;   // FP in 80-bit spill mode.
-  case 128: return 5;  // XMM reg in 128 bit mode.
-  }
-}
-
 void X86RegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                           MachineBasicBlock::iterator MI,
                                           unsigned SrcReg, int FrameIdx,
                                           const TargetRegisterClass *RC) const {
-  static const unsigned Opcode[] =
-    { X86::MOV8mr, X86::MOV16mr, X86::MOV32mr, X86::FST64m, X86::FSTP80m,
-      X86::MOVAPDmr };
-  unsigned Idx = getIdx(getSpillSize(SrcReg));
-  unsigned Opc = Opcode[Idx];
-  if (X86ScalarSSE && Opc == X86::FST64m) Opc = X86::MOVSDmr;
+  unsigned Opc;
+  if (RC == &X86::R32RegClass) {
+    Opc = X86::MOV32mr;
+  } else if (RC == &X86::R8RegClass) {
+    Opc = X86::MOV8mr;
+  } else if (RC == &X86::R16RegClass) {
+    Opc = X86::MOV16mr;
+  } else if (RC == &X86::RFPRegClass || RC == &X86::RSTRegClass) {
+    Opc = X86::FST64m;
+  } else if (RC == &X86::RXMMRegClass) {
+    Opc = X86::MOVSDmr;
+  } else {
+    assert(0 && "Unknown regclass");
+    abort();
+  }
   addFrameReference(BuildMI(MBB, MI, Opc, 5), FrameIdx).addReg(SrcReg);
 }
 
@@ -73,12 +70,21 @@ void X86RegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
                                            MachineBasicBlock::iterator MI,
                                            unsigned DestReg, int FrameIdx,
                                            const TargetRegisterClass *RC) const{
-  static const unsigned Opcode[] =
-    { X86::MOV8rm, X86::MOV16rm, X86::MOV32rm, X86::FLD64m, X86::FLD80m,
-      X86::MOVAPDrm };
-  unsigned Idx = getIdx(getSpillSize(DestReg));
-  unsigned Opc = Opcode[Idx];
-  if (X86ScalarSSE && Opc == X86::FLD64m) Opc = X86::MOVSDrm;
+  unsigned Opc;
+  if (RC == &X86::R32RegClass) {
+    Opc = X86::MOV32rm;
+  } else if (RC == &X86::R8RegClass) {
+    Opc = X86::MOV8rm;
+  } else if (RC == &X86::R16RegClass) {
+    Opc = X86::MOV16rm;
+  } else if (RC == &X86::RFPRegClass || RC == &X86::RSTRegClass) {
+    Opc = X86::FLD64m;
+  } else if (RC == &X86::RXMMRegClass) {
+    Opc = X86::MOVSDrm;
+  } else {
+    assert(0 && "Unknown regclass");
+    abort();
+  }
   addFrameReference(BuildMI(MBB, MI, Opc, 4, DestReg), FrameIdx);
 }
 
@@ -86,11 +92,21 @@ void X86RegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
                                    MachineBasicBlock::iterator MI,
                                    unsigned DestReg, unsigned SrcReg,
                                    const TargetRegisterClass *RC) const {
-  static const unsigned Opcode[] =
-    { X86::MOV8rr, X86::MOV16rr, X86::MOV32rr, X86::FpMOV, X86::FpMOV,
-      X86::MOVAPDrr };
-  unsigned Opc = Opcode[getIdx(RC->getSize()*8)];
-  if (X86ScalarSSE && Opc == X86::FpMOV) Opc = X86::MOVAPDrr;
+  unsigned Opc;
+  if (RC == &X86::R32RegClass) {
+    Opc = X86::MOV32rr;
+  } else if (RC == &X86::R8RegClass) {
+    Opc = X86::MOV8rr;
+  } else if (RC == &X86::R16RegClass) {
+    Opc = X86::MOV16rr;
+  } else if (RC == &X86::RFPRegClass || RC == &X86::RSTRegClass) {
+    Opc = X86::FpMOV;
+  } else if (RC == &X86::RXMMRegClass) {
+    Opc = X86::MOVAPDrr;
+  } else {
+    assert(0 && "Unknown regclass");
+    abort();
+  }
   BuildMI(MBB, MI, Opc, 1, DestReg).addReg(SrcReg);
 }
 
