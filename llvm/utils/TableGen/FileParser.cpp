@@ -1518,7 +1518,7 @@ case 69:
 #line 543 "/Users/sabre/llvm/utils/TableGen/FileParser.y"
 {
   // If a class of this name already exists, it must be a forward ref.
-  if (CurRec = Records.getClass(*yyvsp[0].StrVal)) {
+  if ((CurRec = Records.getClass(*yyvsp[0].StrVal))) {
     // If the body was previously defined, this is an error.
     if (!CurRec->getValues().empty() ||
         !CurRec->getSuperClasses().empty() ||
