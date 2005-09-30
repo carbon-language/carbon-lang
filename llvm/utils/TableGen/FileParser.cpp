@@ -230,11 +230,11 @@ typedef union {
 
 
 
-#define	YYFINAL		158
+#define	YYFINAL		160
 #define	YYFLAG		-32768
 #define	YYNTBASE	38
 
-#define YYTRANSLATE(x) ((unsigned)(x) <= 276 ? yytranslate[x] : 76)
+#define YYTRANSLATE(x) ((unsigned)(x) <= 276 ? yytranslate[x] : 78)
 
 static const char yytranslate[] = {     0,
      2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
@@ -276,8 +276,8 @@ static const short yyprhs[] = {     0,
    133,   135,   136,   140,   141,   143,   145,   149,   154,   157,
    164,   165,   168,   170,   174,   176,   181,   183,   187,   188,
    191,   193,   197,   201,   202,   204,   206,   207,   209,   211,
-   213,   214,   218,   223,   227,   229,   231,   236,   238,   242,
-   243,   248,   253,   256,   258,   261
+   213,   214,   218,   219,   220,   227,   231,   233,   235,   240,
+   242,   246,   247,   252,   257,   260,   262,   265
 };
 
 static const short yyrhs[] = {    19,
@@ -302,12 +302,12 @@ static const short yyrhs[] = {    19,
     55,     0,    56,    34,    55,     0,     0,    35,    56,     0,
     51,     0,    58,    34,    51,     0,    23,    58,    24,     0,
      0,    59,     0,    19,     0,     0,    61,     0,    62,     0,
-    62,     0,     0,    57,    66,    54,     0,    10,    63,    60,
-    65,     0,    11,    64,    65,     0,    67,     0,    68,     0,
-    19,    48,    25,    42,     0,    70,     0,    71,    34,    70,
-     0,     0,    13,    73,    71,    14,     0,    72,    27,    74,
-    28,     0,    72,    69,     0,    69,     0,    74,    69,     0,
-    74,     0
+    62,     0,     0,    57,    66,    54,     0,     0,     0,    10,
+    63,    68,    60,    69,    65,     0,    11,    64,    65,     0,
+    67,     0,    70,     0,    19,    48,    25,    42,     0,    72,
+     0,    73,    34,    72,     0,     0,    13,    75,    73,    14,
+     0,    74,    27,    76,    28,     0,    74,    71,     0,    71,
+     0,    76,    71,     0,    76,     0
 };
 
 #endif
@@ -320,9 +320,9 @@ static const short yyrline[] = { 0,
    382,   387,   393,   396,   399,   402,   415,   429,   431,   444,
    460,   462,   462,   466,   468,   472,   475,   479,   489,   491,
    497,   497,   498,   498,   500,   502,   506,   511,   516,   519,
-   523,   526,   531,   532,   532,   534,   534,   536,   545,   553,
-   562,   577,   582,   586,   595,   595,   597,   602,   602,   605,
-   605,   608,   611,   615,   615,   617
+   523,   526,   531,   532,   532,   534,   534,   536,   543,   561,
+   573,   587,   592,   594,   596,   600,   609,   609,   611,   616,
+   616,   619,   619,   622,   625,   629,   629,   631
 };
 #endif
 
@@ -337,8 +337,8 @@ static const char * const yytname[] = {   "$","error","$undefined.","INT","BIT",
 "DagArgList","RBitList","BitList","OptBitList","ValueList","ValueListNE","Declaration",
 "BodyItem","BodyList","Body","SubClassRef","ClassListNE","ClassList","DeclListNE",
 "TemplateArgList","OptTemplateArgList","OptID","ObjectName","ClassName","DefName",
-"ObjectBody","@1","ClassInst","DefInst","Object","LETItem","LETList","LETCommand",
-"@2","ObjectList","File", NULL
+"ObjectBody","@1","ClassInst","@2","@3","DefInst","Object","LETItem","LETList",
+"LETCommand","@4","ObjectList","File", NULL
 };
 #endif
 
@@ -350,8 +350,8 @@ static const short yyr1[] = {     0,
     47,    48,    48,    49,    49,    50,    50,    51,    52,    52,
     53,    53,    54,    54,    55,    55,    56,    56,    57,    57,
     58,    58,    59,    60,    60,    61,    61,    62,    63,    64,
-    66,    65,    67,    68,    69,    69,    70,    71,    71,    73,
-    72,    69,    69,    74,    74,    75
+    66,    65,    68,    69,    67,    70,    71,    71,    72,    73,
+    73,    75,    74,    71,    71,    76,    76,    77
 };
 
 static const short yyr2[] = {     0,
@@ -362,102 +362,104 @@ static const short yyr2[] = {     0,
      1,     0,     3,     0,     1,     1,     3,     4,     2,     6,
      0,     2,     1,     3,     1,     4,     1,     3,     0,     2,
      1,     3,     3,     0,     1,     1,     0,     1,     1,     1,
-     0,     3,     4,     3,     1,     1,     4,     1,     3,     0,
-     4,     4,     2,     1,     2,     1
+     0,     3,     0,     0,     6,     3,     1,     1,     4,     1,
+     3,     0,     4,     4,     2,     1,     2,     1
 };
 
 static const short yydefact[] = {     0,
-    67,    67,    80,    75,    76,    84,     0,    86,    66,    68,
-    69,    64,    70,    59,     0,     0,    83,    85,    10,    65,
-    59,     0,    71,    74,    42,    78,     0,     0,    11,     0,
-    61,     0,    73,     1,    55,    57,    60,     0,     0,     0,
-    81,     0,    82,     5,     3,     2,     0,     0,     7,     8,
-     9,     0,    63,    10,     0,     0,    51,    53,    72,    35,
-    41,     0,     0,    79,     0,     0,    12,    62,     0,     0,
-     0,    14,    20,    15,    16,    17,    44,    44,     0,    46,
-     0,    58,    10,    37,     0,     0,    43,    77,     0,     0,
-     0,    48,     0,     0,     0,     0,     0,    45,     0,    33,
-     0,     0,     0,    56,     0,     0,    54,     0,    52,    36,
-    38,     4,     6,    13,     0,     0,     0,     0,    18,    22,
-    29,    34,     0,     0,     0,    23,    47,    42,    49,    40,
-     0,     0,     0,     0,    19,     0,    31,     0,    24,    21,
-    25,     0,    39,     0,     0,     0,    30,    29,     0,    26,
-    27,    28,    32,     0,    50,     0,     0,     0
+    67,    67,    82,    77,    78,    86,     0,    88,    66,    68,
+    69,    73,    70,    59,     0,     0,    85,    87,    64,     0,
+    71,    76,    42,    80,     0,     0,    10,    65,    74,     1,
+    55,    57,    60,     0,     0,     0,    83,     0,    84,    11,
+     0,    61,     0,    59,     0,     0,    51,    53,    72,    35,
+    41,     0,     0,    81,     5,     3,     2,     0,     0,     7,
+     8,     9,     0,    63,    10,    75,     0,     0,     0,    14,
+    20,    15,    16,    17,    44,    44,     0,    46,     0,    58,
+    10,    37,     0,     0,    43,    79,     0,     0,    12,    62,
+     0,     0,     0,     0,     0,    45,     0,    33,     0,     0,
+     0,    56,     0,     0,    54,     0,    52,    36,    38,     0,
+     0,     0,    48,     0,     0,     0,     0,    18,    22,    29,
+    34,     0,     0,     0,    23,    47,    42,    49,    40,     0,
+     4,     6,    13,     0,     0,     0,    19,     0,    31,     0,
+    24,    21,    25,     0,    39,     0,     0,     0,    30,    29,
+     0,    26,    27,    28,    32,     0,    50,     0,     0,     0
 };
 
-static const short yydefgoto[] = {    35,
-    52,    30,    92,    80,   137,   122,   123,    61,    62,    40,
-    97,    98,    31,   109,    83,    59,    36,    37,    23,    32,
-    20,    21,    10,    11,    12,    14,    24,    38,     4,     5,
-     6,    26,    27,     7,    15,     8,   156
+static const short yydefgoto[] = {    31,
+    63,    41,   113,    78,   139,   121,   122,    51,    52,    36,
+    95,    96,    42,   107,    81,    49,    32,    33,    21,    43,
+    28,    29,    10,    11,    12,    14,    22,    34,     4,    19,
+    44,     5,     6,    24,    25,     7,    15,     8,   158
 };
 
-static const short yypact[] = {     2,
-     0,     0,-32768,-32768,-32768,-32768,     7,     2,-32768,-32768,
--32768,    17,-32768,   -19,    33,     2,-32768,-32768,    41,-32768,
-   -19,    35,-32768,-32768,    14,-32768,   -13,    -3,-32768,    59,
--32768,   -10,-32768,-32768,    34,-32768,    26,    22,    62,    54,
--32768,    33,-32768,-32768,-32768,-32768,    58,    66,-32768,-32768,
--32768,    65,-32768,    41,    29,    35,-32768,-32768,-32768,    -9,
-    51,    72,    29,-32768,    84,    59,    69,-32768,    74,    94,
-    95,-32768,   102,-32768,-32768,-32768,    29,    29,    89,    93,
-    49,-32768,    10,-32768,   110,   111,-32768,    93,   106,   107,
-    29,-32768,    29,    29,    29,    29,   104,    99,   105,    29,
-    62,    62,   115,-32768,    29,   117,-32768,   100,-32768,-32768,
-    -7,-32768,-32768,    93,    64,    70,    76,    53,-32768,-32768,
-    61,   108,   112,   113,   109,-32768,    93,    14,-32768,-32768,
-   120,    29,    29,    29,-32768,   123,-32768,    29,-32768,-32768,
--32768,   119,-32768,    82,    85,    90,-32768,    61,    29,-32768,
--32768,-32768,-32768,    45,-32768,   140,   146,-32768
+static const short yypact[] = {    56,
+    -4,    -4,-32768,-32768,-32768,-32768,     1,    56,-32768,-32768,
+-32768,-32768,-32768,     8,     2,    56,-32768,-32768,    23,    30,
+-32768,-32768,    50,-32768,   -11,    -3,    66,-32768,-32768,-32768,
+    62,-32768,    55,    34,    61,    68,-32768,     2,-32768,-32768,
+    49,-32768,    -8,     8,    15,    30,-32768,-32768,-32768,   -14,
+    82,    67,    15,-32768,-32768,-32768,-32768,    95,    97,-32768,
+-32768,-32768,    77,-32768,    66,-32768,    89,    90,    91,-32768,
+   101,-32768,-32768,-32768,    15,    15,   106,    73,    39,-32768,
+     7,-32768,   108,   109,-32768,    73,   110,    49,   104,-32768,
+    15,    15,    15,    15,   102,    98,   103,    15,    61,    61,
+   112,-32768,    15,   115,-32768,    99,-32768,-32768,    -9,   111,
+   113,    15,-32768,    57,    63,    72,    41,-32768,-32768,    45,
+   105,   107,   114,   116,-32768,    73,    50,-32768,-32768,   120,
+-32768,-32768,    73,    15,    15,    15,-32768,   121,-32768,    15,
+-32768,-32768,-32768,   118,-32768,    78,    81,    86,-32768,    45,
+    15,-32768,-32768,-32768,-32768,    33,-32768,   144,   145,-32768
 };
 
-static const short yypgoto[] = {   -27,
-    81,-32768,-32768,   -63,     1,-32768,-32768,-32768,   -66,    20,
-    73,   -53,   -50,-32768,-32768,-32768,    96,-32768,-32768,-32768,
--32768,-32768,-32768,   148,-32768,-32768,   132,-32768,-32768,-32768,
-    -2,   114,-32768,-32768,-32768,   138,-32768
+static const short yypgoto[] = {   -40,
+    59,-32768,-32768,   -53,    -1,-32768,-32768,-32768,   -82,    21,
+    74,   -43,   -52,-32768,-32768,-32768,   117,-32768,-32768,-32768,
+-32768,-32768,-32768,   149,-32768,-32768,   122,-32768,-32768,-32768,
+-32768,-32768,    -2,   119,-32768,-32768,-32768,   136,-32768
 };
 
 
-#define	YYLAST		156
+#define	YYLAST		166
 
 
-static const short yytable[] = {    88,
-    41,    81,    51,    68,    17,    18,     1,     2,    84,     3,
-   130,     1,     2,    53,     3,    22,     1,     2,     9,     3,
-    42,    29,   106,    54,    43,    18,    85,   114,   131,   115,
-   116,   117,   108,    16,   124,   125,   121,   107,    51,    19,
-    39,   127,   118,    69,    70,    71,    72,    73,    57,    74,
-    75,    25,    29,    34,    76,    77,    55,    78,    58,    56,
-    79,    44,    45,    46,    47,    48,    49,    50,   144,   145,
-   146,   101,   104,   102,   148,   103,   135,    34,    63,    60,
-    65,   155,   105,    67,    86,   154,   105,   101,    66,   102,
-   101,   103,   102,    91,   103,   136,   101,   132,   102,    87,
-   103,    89,   101,   133,   102,    93,   103,   100,   101,   134,
-   102,   101,   103,   102,   150,   103,   101,   151,   102,   101,
-   103,   102,   152,   103,    96,    94,    95,   110,   111,   112,
-   113,   119,   105,   126,   120,   128,   129,   143,   141,   157,
-   140,   138,   147,   149,   139,   158,    90,   142,   153,    13,
-    99,    82,    33,    28,     0,    64
+static const short yytable[] = {    86,
+    62,    79,    37,    82,    17,    18,     1,     2,   129,     3,
+     1,     2,    90,     3,     9,    64,   123,   124,    40,   104,
+    23,    83,    38,    18,    39,    65,   130,    16,   106,    67,
+    68,    69,    70,    71,   105,    72,    73,   114,   115,   116,
+    74,    75,    20,    76,   120,    27,    77,    62,    30,   126,
+   117,    55,    56,    57,    58,    59,    60,    61,   133,    99,
+    47,   100,   102,   101,   137,     1,     2,    30,     3,   157,
+    48,    99,   103,   100,   103,   101,    35,    40,    50,   138,
+   146,   147,   148,    99,    45,   100,   150,   101,    46,    99,
+   134,   100,    53,   101,    85,    89,   135,   156,    99,    99,
+   100,   100,   101,   101,    99,   136,   100,    99,   101,   100,
+   152,   101,    99,   153,   100,    84,   101,    87,   154,    88,
+    91,    92,    93,    94,    98,   108,   109,   110,   112,   118,
+   125,   103,   119,   127,   131,   128,   132,   145,   140,   141,
+   149,   142,   151,   159,   160,   143,   111,   144,   155,    97,
+    13,    26,     0,     0,     0,     0,    54,     0,     0,     0,
+     0,     0,    80,     0,     0,    66
 };
 
-static const short yycheck[] = {    63,
-    14,    55,    30,    54,     7,     8,    10,    11,    18,    13,
-    18,    10,    11,    24,    13,    35,    10,    11,    19,    13,
-    34,    12,    13,    34,    28,    28,    36,    91,    36,    93,
-    94,    95,    83,    27,   101,   102,   100,    28,    66,    23,
-    27,   105,    96,    15,    16,    17,    18,    19,    27,    21,
-    22,    19,    12,    19,    26,    27,    23,    29,    37,    34,
-    32,     3,     4,     5,     6,     7,     8,     9,   132,   133,
-   134,    27,    24,    29,   138,    31,    24,    19,    25,    18,
-    23,    37,    34,    19,    34,   149,    34,    27,    23,    29,
-    27,    31,    29,    25,    31,    35,    27,    34,    29,    28,
-    31,    18,    27,    34,    29,    32,    31,    19,    27,    34,
-    29,    27,    31,    29,    33,    31,    27,    33,    29,    27,
-    31,    29,    33,    31,    23,    32,    32,    18,    18,    24,
-    24,    28,    34,    19,    30,    19,    37,    18,    30,     0,
-    28,    34,    20,    25,    33,     0,    66,   128,   148,     2,
-    78,    56,    21,    16,    -1,    42
+static const short yycheck[] = {    53,
+    41,    45,    14,    18,     7,     8,    10,    11,    18,    13,
+    10,    11,    65,    13,    19,    24,    99,   100,    12,    13,
+    19,    36,    34,    26,    28,    34,    36,    27,    81,    15,
+    16,    17,    18,    19,    28,    21,    22,    91,    92,    93,
+    26,    27,    35,    29,    98,    23,    32,    88,    19,   103,
+    94,     3,     4,     5,     6,     7,     8,     9,   112,    27,
+    27,    29,    24,    31,    24,    10,    11,    19,    13,    37,
+    37,    27,    34,    29,    34,    31,    27,    12,    18,    35,
+   134,   135,   136,    27,    23,    29,   140,    31,    34,    27,
+    34,    29,    25,    31,    28,    19,    34,   151,    27,    27,
+    29,    29,    31,    31,    27,    34,    29,    27,    31,    29,
+    33,    31,    27,    33,    29,    34,    31,    23,    33,    23,
+    32,    32,    32,    23,    19,    18,    18,    18,    25,    28,
+    19,    34,    30,    19,    24,    37,    24,    18,    34,    33,
+    20,    28,    25,     0,     0,    30,    88,   127,   150,    76,
+     2,    16,    -1,    -1,    -1,    -1,    38,    -1,    -1,    -1,
+    -1,    -1,    46,    -1,    -1,    44
 };
 /* -*-C-*-  Note some compilers choke on comments on `#line' lines.  */
 #line 3 "/usr/share/bison.simple"
@@ -1509,24 +1511,35 @@ case 68:
   static unsigned AnonCounter = 0;
   if (yyvsp[0].StrVal->empty())
     *yyvsp[0].StrVal = "anonymous."+utostr(AnonCounter++);
-  CurRec = new Record(*yyvsp[0].StrVal);
-  delete yyvsp[0].StrVal;
-  ParsingTemplateArgs = true;
+  yyval.StrVal = yyvsp[0].StrVal;
 ;
     break;}
 case 69:
-#line 545 "/Users/sabre/llvm/utils/TableGen/FileParser.y"
+#line 543 "/Users/sabre/llvm/utils/TableGen/FileParser.y"
 {
-  if (Records.getClass(CurRec->getName())) {
-    err() << "Class '" << CurRec->getName() << "' already defined!\n";
-    exit(1);
+  // If a class of this name already exists, it must be a forward ref.
+  if (CurRec = Records.getClass(*yyvsp[0].StrVal)) {
+    // If the body was previously defined, this is an error.
+    if (!CurRec->getValues().empty() ||
+        !CurRec->getSuperClasses().empty() ||
+        !CurRec->getTemplateArgs().empty()) {
+      err() << "Class '" << CurRec->getName() << "' already defined!\n";
+      exit(1);
+    }
+  } else {
+    // If this is the first reference to this class, create and add it.
+    CurRec = new Record(*yyvsp[0].StrVal);
+    Records.addClass(CurRec);
   }
-  Records.addClass(CurRec);
+  delete yyvsp[0].StrVal;
 ;
     break;}
 case 70:
-#line 553 "/Users/sabre/llvm/utils/TableGen/FileParser.y"
+#line 561 "/Users/sabre/llvm/utils/TableGen/FileParser.y"
 {
+  CurRec = new Record(*yyvsp[0].StrVal);
+  delete yyvsp[0].StrVal;
+  
   // Ensure redefinition doesn't happen.
   if (Records.getDef(CurRec->getName())) {
     err() << "Def '" << CurRec->getName() << "' already defined!\n";
@@ -1536,9 +1549,8 @@ case 70:
 ;
     break;}
 case 71:
-#line 562 "/Users/sabre/llvm/utils/TableGen/FileParser.y"
+#line 573 "/Users/sabre/llvm/utils/TableGen/FileParser.y"
 {
-           ParsingTemplateArgs = false;
            for (unsigned i = 0, e = yyvsp[0].SubClassList->size(); i != e; ++i) {
              addSubClass((*yyvsp[0].SubClassList)[i].first, *(*yyvsp[0].SubClassList)[i].second);
              // Delete the template arg values for the class
@@ -1555,20 +1567,32 @@ case 71:
          ;
     break;}
 case 72:
-#line 577 "/Users/sabre/llvm/utils/TableGen/FileParser.y"
+#line 587 "/Users/sabre/llvm/utils/TableGen/FileParser.y"
 {
            yyval.Rec = CurRec;
            CurRec = 0;
          ;
     break;}
 case 73:
-#line 582 "/Users/sabre/llvm/utils/TableGen/FileParser.y"
+#line 592 "/Users/sabre/llvm/utils/TableGen/FileParser.y"
+{
+                ParsingTemplateArgs = true;
+            ;
+    break;}
+case 74:
+#line 594 "/Users/sabre/llvm/utils/TableGen/FileParser.y"
+{
+                ParsingTemplateArgs = false;
+            ;
+    break;}
+case 75:
+#line 596 "/Users/sabre/llvm/utils/TableGen/FileParser.y"
 {
         yyval.Rec = yyvsp[0].Rec;
      ;
     break;}
-case 74:
-#line 586 "/Users/sabre/llvm/utils/TableGen/FileParser.y"
+case 76:
+#line 600 "/Users/sabre/llvm/utils/TableGen/FileParser.y"
 {
   yyvsp[0].Rec->resolveReferences();
 
@@ -1577,39 +1601,39 @@ case 74:
   yyval.Rec = yyvsp[0].Rec;
 ;
     break;}
-case 77:
-#line 597 "/Users/sabre/llvm/utils/TableGen/FileParser.y"
+case 79:
+#line 611 "/Users/sabre/llvm/utils/TableGen/FileParser.y"
 {
   LetStack.back().push_back(LetRecord(*yyvsp[-3].StrVal, yyvsp[-2].BitList, yyvsp[0].Initializer));
   delete yyvsp[-3].StrVal; delete yyvsp[-2].BitList;
 ;
     break;}
-case 80:
-#line 605 "/Users/sabre/llvm/utils/TableGen/FileParser.y"
+case 82:
+#line 619 "/Users/sabre/llvm/utils/TableGen/FileParser.y"
 { LetStack.push_back(std::vector<LetRecord>()); ;
     break;}
-case 82:
-#line 608 "/Users/sabre/llvm/utils/TableGen/FileParser.y"
-{
-    LetStack.pop_back();
-  ;
-    break;}
-case 83:
-#line 611 "/Users/sabre/llvm/utils/TableGen/FileParser.y"
-{
-    LetStack.pop_back();
-  ;
-    break;}
 case 84:
-#line 615 "/Users/sabre/llvm/utils/TableGen/FileParser.y"
-{;
+#line 622 "/Users/sabre/llvm/utils/TableGen/FileParser.y"
+{
+    LetStack.pop_back();
+  ;
     break;}
 case 85:
-#line 615 "/Users/sabre/llvm/utils/TableGen/FileParser.y"
-{;
+#line 625 "/Users/sabre/llvm/utils/TableGen/FileParser.y"
+{
+    LetStack.pop_back();
+  ;
     break;}
 case 86:
-#line 617 "/Users/sabre/llvm/utils/TableGen/FileParser.y"
+#line 629 "/Users/sabre/llvm/utils/TableGen/FileParser.y"
+{;
+    break;}
+case 87:
+#line 629 "/Users/sabre/llvm/utils/TableGen/FileParser.y"
+{;
+    break;}
+case 88:
+#line 631 "/Users/sabre/llvm/utils/TableGen/FileParser.y"
 {;
     break;}
 }
@@ -1834,7 +1858,7 @@ yyerrhandle:
     }
   return 1;
 }
-#line 619 "/Users/sabre/llvm/utils/TableGen/FileParser.y"
+#line 633 "/Users/sabre/llvm/utils/TableGen/FileParser.y"
 
 
 int yyerror(const char *ErrorMsg) {
