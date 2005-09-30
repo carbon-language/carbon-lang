@@ -36,8 +36,6 @@ class TargetRegisterClass;
 struct MRegisterDesc {
   const char     *Name;         // Assembly language name for the register
   const unsigned *AliasSet;     // Register Alias Set, described above
-  unsigned char SpillSize;      // Size of this register in bytes
-  unsigned char SpillAlignment; // Alignment of stack slot for this reg
 };
 
 class TargetRegisterClass {
@@ -187,18 +185,6 @@ public:
   /// physical register.
   const char *getName(unsigned RegNo) const {
     return get(RegNo).Name;
-  }
-
-  /// getSpillSize - Return the size in bits required of a stack slot used to
-  /// spill register into.
-  unsigned getSpillSize(unsigned RegNo) const {
-    return get(RegNo).SpillSize;
-  }
-
-  /// getSpillAlignment - Return the alignment required by a stack slot used to
-  /// spill register into.
-  unsigned getSpillAlignment(unsigned RegNo) const {
-    return get(RegNo).SpillAlignment;
   }
 
   /// getNumRegs - Return the number of registers this target has

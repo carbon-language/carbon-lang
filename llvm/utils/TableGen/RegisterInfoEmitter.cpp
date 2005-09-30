@@ -214,24 +214,9 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
       OS << Reg.getName();
     OS << "\",\t";
     if (RegisterAliases.count(Reg.TheDef))
-      OS << Reg.getName() << "_AliasSet,\t";
+      OS << Reg.getName() << "_AliasSet },\n";
     else
-      OS << "Empty_AliasSet,\t";
-
-    // Figure out what the size and alignment of the spill slots are for this
-    // reg.  This may be explicitly declared in the register, or it may be
-    // inferred from the register classes it is part of.
-    std::multimap<Record*, const CodeGenRegisterClass*>::iterator I, E;
-    tie(I, E) = RegClassesBelongedTo.equal_range(Reg.TheDef);
-    unsigned SpillSize = Reg.DeclaredSpillSize;
-    unsigned SpillAlign = Reg.DeclaredSpillAlignment;
-    for (; I != E; ++I) {   // For each reg class this belongs to.
-      const CodeGenRegisterClass *RC = I->second;
-      SpillSize = std::max(SpillSize, RC->SpillSize);
-      SpillAlign = std::max(SpillAlign, RC->SpillAlignment);
-    }
-
-    OS << SpillSize << ", " << SpillAlign << " },\n";
+      OS << "Empty_AliasSet },\n";
   }
   OS << "  };\n";      // End of register descriptors...
   OS << "}\n\n";       // End of anonymous namespace...
