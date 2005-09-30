@@ -165,6 +165,7 @@ void PEI::calculateCallerSavedRegisters(MachineFunction &Fn) {
   // stack slots for them.
   for (unsigned i = 0, e = RegsToSave.size(); i != e; ++i) {
     unsigned Reg = RegsToSave[i].first;
+    const TargetRegisterClass *RC = RegsToSave[i].second;
 
     // Check to see if this physreg must be spilled to a particular stack slot
     // on this target.
@@ -176,12 +177,10 @@ void PEI::calculateCallerSavedRegisters(MachineFunction &Fn) {
     int FrameIdx;
     if (FixedSlot == FixedSpillSlots+NumFixedSpillSlots) {
       // Nope, just spill it anywhere convenient.
-      FrameIdx = FFI->CreateStackObject(RegInfo->getSpillSize(Reg)/8,
-                                        RegInfo->getSpillAlignment(Reg)/8);
+      FrameIdx = FFI->CreateStackObject(RC->getSize(), RC->getAlignment());
     } else {
       // Spill it to the stack where we must.
-      FrameIdx = FFI->CreateFixedObject(RegInfo->getSpillSize(Reg)/8,
-                                        FixedSlot->second);
+      FrameIdx = FFI->CreateFixedObject(RC->getSize(), FixedSlot->second);
     }
     StackSlots.push_back(FrameIdx);
   }
