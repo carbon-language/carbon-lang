@@ -559,15 +559,15 @@ DefName : ObjectName {
   Records.addDef(CurRec);
 };
 
-ObjectBody : OptTemplateArgList ClassList {
+ObjectBody : ClassList {
            ParsingTemplateArgs = false;
-           for (unsigned i = 0, e = $2->size(); i != e; ++i) {
-             addSubClass((*$2)[i].first, *(*$2)[i].second);
+           for (unsigned i = 0, e = $1->size(); i != e; ++i) {
+             addSubClass((*$1)[i].first, *(*$1)[i].second);
              // Delete the template arg values for the class
-             delete (*$2)[i].second;
+             delete (*$1)[i].second;
            }
-           delete $2;   // Delete the class list...
-
+           delete $1;   // Delete the class list...
+  
            // Process any variables on the set stack...
            for (unsigned i = 0, e = LetStack.size(); i != e; ++i)
              for (unsigned j = 0, e = LetStack[i].size(); j != e; ++j)
@@ -579,19 +579,15 @@ ObjectBody : OptTemplateArgList ClassList {
            CurRec = 0;
          };
 
-ClassInst : CLASS ClassName ObjectBody {
-  $$ = $3;
-};
+ClassInst : CLASS ClassName OptTemplateArgList ObjectBody {
+        $$ = $4;
+     };
 
 DefInst : DEF DefName ObjectBody {
   $3->resolveReferences();
 
   // If ObjectBody has template arguments, it's an error.
-  if (!$3->getTemplateArgs().empty()) {
-    err() << "Def '" << $3->getName()
-          << "' is not permitted to have template arguments!\n";
-    exit(1);
-  }
+  assert($3->getTemplateArgs().empty() && "How'd this get template args?");
   $$ = $3;
 };
 
