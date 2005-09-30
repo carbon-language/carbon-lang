@@ -16,13 +16,46 @@
 #include "llvm/Module.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Target/SubtargetFeature.h"
+#include "llvm/Support/Debug.h"
 
 using namespace llvm;
 
-//"alphaev67-unknown-linux-gnu"
+enum AlphaFeature {
+  AlphaFeatureCIX   = 1 << 0,
+  AlphaFeatureFIX = 1 << 1,
+};
+
+/// Sorted (by key) array of values for CPU subtype.
+static const SubtargetFeatureKV AlphaSubTypeKV[] = {
+  { "ev56"    , "Select the Alpha EV56 processor", 0 },
+  { "ev6"    , "Select the Alpha EV6 processor", AlphaFeatureFIX },
+  { "ev67"    , "Select the Alpha EV67 processor", AlphaFeatureFIX | AlphaFeatureCIX },
+  { "pca56"    , "Select the Alpha PCA56 processor", 0 },
+  { "generic", "Select instructions for a generic Alpha processor (EV56)", 0 }
+};
+
+/// Length of AlphaSubTypeKV.
+static const unsigned AlphaSubTypeKVSize = sizeof(AlphaSubTypeKV)
+                                             / sizeof(SubtargetFeatureKV);
+
+/// Sorted (by key) array of values for CPU features.
+static SubtargetFeatureKV AlphaFeatureKV[] = {
+  { "FIX"  , "Should FIX extentions be used"  , AlphaFeatureFIX },
+  { "CIX", "Should CIX extentions be used" , AlphaFeatureCIX }
+ };
+/// Length of AlphaFeatureKV.
+static const unsigned AlphaFeatureKVSize = sizeof(AlphaFeatureKV)
+                                          / sizeof(SubtargetFeatureKV);
 
 AlphaSubtarget::AlphaSubtarget(const Module &M, const std::string &FS)
   :HasF2I(false), HasCT(false)
 {
-//TODO: figure out host
+  std::string CPU = "generic";
+  uint32_t Bits =
+  SubtargetFeatures::Parse(FS, CPU,
+                           AlphaSubTypeKV, AlphaSubTypeKVSize,
+                           AlphaFeatureKV, AlphaFeatureKVSize);
+  HasF2I = (Bits & AlphaFeatureFIX) != 0;
+  HasCT  = (Bits & AlphaFeatureCIX) != 0;
+
 }
