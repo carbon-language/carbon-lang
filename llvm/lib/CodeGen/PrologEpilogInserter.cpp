@@ -70,7 +70,7 @@ namespace {
     }
 
   private:
-    std::vector<unsigned> RegsToSave;
+    std::vector<std::pair<unsigned, const TargetRegisterClass*> > RegsToSave;
     std::vector<int> StackSlots;
 
     void calculateCallerSavedRegisters(MachineFunction &Fn);
@@ -136,15 +136,18 @@ void PEI::calculateCallerSavedRegisters(MachineFunction &Fn) {
   // function, thus needing to be saved and restored in the prolog/epilog.
   //
   const bool *PhysRegsUsed = Fn.getUsedPhysregs();
+  const TargetRegisterClass* const *CSRegClasses =
+    RegInfo->getCalleeSaveRegClasses();
   for (unsigned i = 0; CSRegs[i]; ++i) {
     unsigned Reg = CSRegs[i];
     if (PhysRegsUsed[Reg]) {
-      RegsToSave.push_back(Reg);  // If the reg is modified, save it!
+        // If the reg is modified, save it!
+      RegsToSave.push_back(std::make_pair(Reg, CSRegClasses[i]));
     } else {
       for (const unsigned *AliasSet = RegInfo->getAliasSet(Reg);
            *AliasSet; ++AliasSet) {  // Check alias registers too.
         if (PhysRegsUsed[*AliasSet]) {
-          RegsToSave.push_back(Reg);
+          RegsToSave.push_back(std::make_pair(Reg, CSRegClasses[i]));
           break;
         }
       }
@@ -161,7 +164,7 @@ void PEI::calculateCallerSavedRegisters(MachineFunction &Fn) {
   // Now that we know which registers need to be saved and restored, allocate
   // stack slots for them.
   for (unsigned i = 0, e = RegsToSave.size(); i != e; ++i) {
-    unsigned Reg = RegsToSave[i];
+    unsigned Reg = RegsToSave[i].first;
 
     // Check to see if this physreg must be spilled to a particular stack slot
     // on this target.
@@ -200,8 +203,8 @@ void PEI::saveCallerSavedRegisters(MachineFunction &Fn) {
   MachineBasicBlock::iterator I = MBB->begin();
   for (unsigned i = 0, e = RegsToSave.size(); i != e; ++i) {
     // Insert the spill to the stack frame.
-    RegInfo->storeRegToStackSlot(*MBB, I, RegsToSave[i], StackSlots[i],
-                                 0 /*FIXME*/);
+    RegInfo->storeRegToStackSlot(*MBB, I, RegsToSave[i].first, StackSlots[i],
+                                 RegsToSave[i].second);
   }
 
   // Add code to restore the callee-save registers in each exiting block.
@@ -226,8 +229,8 @@ void PEI::saveCallerSavedRegisters(MachineFunction &Fn) {
       // Restore all registers immediately before the return and any terminators
       // that preceed it.
       for (unsigned i = 0, e = RegsToSave.size(); i != e; ++i) {
-        RegInfo->loadRegFromStackSlot(*MBB, I, RegsToSave[i], StackSlots[i],
-                                      0 /*FIXME*/);
+        RegInfo->loadRegFromStackSlot(*MBB, I, RegsToSave[i].first,
+                                      StackSlots[i], RegsToSave[i].second);
         assert(I != MBB->begin() &&
                "loadRegFromStackSlot didn't insert any code!");
         // Insert in reverse order.  loadRegFromStackSlot can insert multiple
