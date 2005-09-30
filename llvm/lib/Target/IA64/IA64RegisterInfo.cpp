@@ -49,8 +49,9 @@ static const TargetRegisterClass *getClass(unsigned SrcReg) {
 }
 
 void IA64RegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
-                                          MachineBasicBlock::iterator MI,
-                                          unsigned SrcReg, int FrameIdx) const {
+                                           MachineBasicBlock::iterator MI,
+                                           unsigned SrcReg, int FrameIdx,
+                                           const TargetRegisterClass *RC) const{
 
   if (getClass(SrcReg) == IA64::FPRegisterClass) {
     BuildMI(MBB, MI, IA64::STF8, 2).addFrameIndex(FrameIdx).addReg(SrcReg);
@@ -72,8 +73,9 @@ void IA64RegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
 }
 
 void IA64RegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
-                                           MachineBasicBlock::iterator MI,
-                                           unsigned DestReg, int FrameIdx)const{
+                                            MachineBasicBlock::iterator MI,
+                                            unsigned DestReg, int FrameIdx,
+                                            const TargetRegisterClass *RC)const{
 
   if (getClass(DestReg) == IA64::FPRegisterClass) {
     BuildMI(MBB, MI, IA64::LDF8, 1, DestReg).addFrameIndex(FrameIdx);
