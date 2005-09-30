@@ -18,7 +18,7 @@ include "../Target.td"
 // Register File Description
 //===----------------------------------------------------------------------===//
 
-include "PPC64RegisterInfo.td"
+include "PPC32RegisterInfo.td"
 include "PowerPCInstrInfo.td"
 
 def PowerPC : Target {
