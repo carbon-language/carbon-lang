@@ -25,6 +25,7 @@ namespace llvm {
 class Type;
 class MachineFunction;
 class MachineInstr;
+class TargetRegisterClass;
 
 /// MRegisterDesc - This record contains all of the information known about a
 /// particular register.  The AliasSet field (if not null) contains a pointer to
@@ -214,8 +215,14 @@ public:
     return false;
   }
 
+  /// getCalleeSaveRegs - Return a null-terminated list of all of the
+  /// callee-save registers on this target.
   virtual const unsigned* getCalleeSaveRegs() const = 0;
 
+  /// getCalleeSaveRegClasses - Return a null-terminated list of the preferred
+  /// register classes to spill each callee-saved register with.  The order and
+  /// length of this list match the getCalleeSaveRegs() list.
+  virtual const TargetRegisterClass* const *getCalleeSaveRegClasses() const = 0;
 
   //===--------------------------------------------------------------------===//
   // Register Class Information
