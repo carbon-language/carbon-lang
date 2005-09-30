@@ -79,7 +79,8 @@ static unsigned getIdx(const TargetRegisterClass *RC) {
 void
 PPC32RegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                        MachineBasicBlock::iterator MI,
-                                       unsigned SrcReg, int FrameIdx) const {
+                                       unsigned SrcReg, int FrameIdx,
+                                       const TargetRegisterClass *RC) const {
   static const unsigned Opcode[] = {
     PPC::STB, PPC::STH, PPC::STW, PPC::STFS, PPC::STFD
   };
@@ -99,7 +100,8 @@ PPC32RegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
 void
 PPC32RegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
                                         MachineBasicBlock::iterator MI,
-                                        unsigned DestReg, int FrameIdx) const {
+                                        unsigned DestReg, int FrameIdx,
+                                        const TargetRegisterClass *RC) const {
   static const unsigned Opcode[] = {
     PPC::LBZ, PPC::LHZ, PPC::LWZ, PPC::LFS, PPC::LFD
   };
