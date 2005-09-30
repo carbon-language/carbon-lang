@@ -101,8 +101,6 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
   const std::vector<CodeGenRegisterClass> &RegisterClasses =
     Target.getRegisterClasses();
 
-  std::set<Record*> RegistersFound;
-
   // Loop over all of the register classes... emitting each one.
   OS << "namespace {     // Register classes...\n";
 
@@ -121,10 +119,6 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
        << "[] = {\n    ";
     for (unsigned i = 0, e = RC.Elements.size(); i != e; ++i) {
       Record *Reg = RC.Elements[i];
-      if (RegistersFound.count(Reg))
-        throw "Register '" + Reg->getName() +
-              "' included in multiple register classes!";
-      RegistersFound.insert(Reg);
       OS << getQualifiedName(Reg) << ", ";
 
       // Keep track of which regclasses this register is in.
@@ -232,18 +226,8 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
     unsigned SpillAlign = Reg.DeclaredSpillAlignment;
     for (; I != E; ++I) {   // For each reg class this belongs to.
       const CodeGenRegisterClass *RC = I->second;
-      if (SpillSize == 0)
-        SpillSize = RC->SpillSize;
-      else if (SpillSize != RC->SpillSize)
-        throw "Spill size for regclass '" + RC->getName() +
-              "' doesn't match spill sized already inferred for register '" +
-              Reg.getName() + "'!";
-      if (SpillAlign == 0)
-        SpillAlign = RC->SpillAlignment;
-      else if (SpillAlign != RC->SpillAlignment)
-        throw "Spill alignment for regclass '" + RC->getName() +
-              "' doesn't match spill sized already inferred for register '" +
-              Reg.getName() + "'!";
+      SpillSize = std::max(SpillSize, RC->SpillSize);
+      SpillAlign = std::max(SpillAlign, RC->SpillAlignment);
     }
 
     OS << SpillSize << ", " << SpillAlign << " },\n";
