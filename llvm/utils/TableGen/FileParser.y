@@ -533,21 +533,40 @@ OptTemplateArgList : /*empty*/ | TemplateArgList;
 
 OptID : ID { $$ = $1; } | /*empty*/ { $$ = new std::string(); };
 
-ObjectBody : OptID {
-           static unsigned AnonCounter = 0;
-           if ($1->empty())
-             *$1 = "anonymous."+utostr(AnonCounter++);
-           CurRec = new Record(*$1);
-           delete $1;
-           ParsingTemplateArgs = true;
-         } OptTemplateArgList ClassList {
+ObjectName : OptID {
+  static unsigned AnonCounter = 0;
+  if ($1->empty())
+    *$1 = "anonymous."+utostr(AnonCounter++);
+  CurRec = new Record(*$1);
+  delete $1;
+  ParsingTemplateArgs = true;
+};
+
+ClassName : ObjectName {
+  if (Records.getClass(CurRec->getName())) {
+    err() << "Class '" << CurRec->getName() << "' already defined!\n";
+    exit(1);
+  }
+  Records.addClass(CurRec);
+};
+
+DefName : ObjectName {
+  // Ensure redefinition doesn't happen.
+  if (Records.getDef(CurRec->getName())) {
+    err() << "Def '" << CurRec->getName() << "' already defined!\n";
+    exit(1);
+  }
+  Records.addDef(CurRec);
+};
+
+ObjectBody : OptTemplateArgList ClassList {
            ParsingTemplateArgs = false;
-           for (unsigned i = 0, e = $4->size(); i != e; ++i) {
-             addSubClass((*$4)[i].first, *(*$4)[i].second);
+           for (unsigned i = 0, e = $2->size(); i != e; ++i) {
+             addSubClass((*$2)[i].first, *(*$2)[i].second);
              // Delete the template arg values for the class
-             delete (*$4)[i].second;
+             delete (*$2)[i].second;
            }
-           delete $4;   // Delete the class list...
+           delete $2;   // Delete the class list...
 
            // Process any variables on the set stack...
            for (unsigned i = 0, e = LetStack.size(); i != e; ++i)
@@ -560,29 +579,20 @@ ObjectBody : OptID {
            CurRec = 0;
          };
 
-ClassInst : CLASS ObjectBody {
-  if (Records.getClass($2->getName())) {
-    err() << "Class '" << $2->getName() << "' already defined!\n";
-    exit(1);
-  }
-  Records.addClass($$ = $2);
+ClassInst : CLASS ClassName ObjectBody {
+  $$ = $3;
 };
 
-DefInst : DEF ObjectBody {
-  $2->resolveReferences();
+DefInst : DEF DefName ObjectBody {
+  $3->resolveReferences();
 
   // If ObjectBody has template arguments, it's an error.
-  if (!$2->getTemplateArgs().empty()) {
-    err() << "Def '" << $2->getName()
+  if (!$3->getTemplateArgs().empty()) {
+    err() << "Def '" << $3->getName()
           << "' is not permitted to have template arguments!\n";
     exit(1);
   }
-  // Ensure redefinition doesn't happen.
-  if (Records.getDef($2->getName())) {
-    err() << "Def '" << $2->getName() << "' already defined!\n";
-    exit(1);
-  }
-  Records.addDef($$ = $2);
+  $$ = $3;
 };
 
 
