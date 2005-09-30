@@ -66,6 +66,7 @@ public:
   typedef std::vector<SDNode*>::const_iterator allnodes_iterator;
   allnodes_iterator allnodes_begin() const { return AllNodes.begin(); }
   allnodes_iterator allnodes_end() const { return AllNodes.end(); }
+  unsigned allnodes_size() const { return AllNodes.size(); }
 
   /// getRoot - Return the root tag of the SelectionDAG.
   ///
