@@ -135,7 +135,7 @@ unsigned RegAllocSimple::reloadVirtReg(MachineBasicBlock &MBB,
 
   // Add move instruction(s)
   ++NumLoads;
-  RegInfo->loadRegFromStackSlot(MBB, I, PhysReg, FrameIdx);
+  RegInfo->loadRegFromStackSlot(MBB, I, PhysReg, FrameIdx, RC);
   return PhysReg;
 }
 
@@ -147,7 +147,7 @@ void RegAllocSimple::spillVirtReg(MachineBasicBlock &MBB,
 
   // Add move instruction(s)
   ++NumStores;
-  RegInfo->storeRegToStackSlot(MBB, I, PhysReg, FrameIdx);
+  RegInfo->storeRegToStackSlot(MBB, I, PhysReg, FrameIdx, RC);
 }
 
 

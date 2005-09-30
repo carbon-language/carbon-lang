@@ -200,7 +200,8 @@ void PEI::saveCallerSavedRegisters(MachineFunction &Fn) {
   MachineBasicBlock::iterator I = MBB->begin();
   for (unsigned i = 0, e = RegsToSave.size(); i != e; ++i) {
     // Insert the spill to the stack frame.
-    RegInfo->storeRegToStackSlot(*MBB, I, RegsToSave[i], StackSlots[i]);
+    RegInfo->storeRegToStackSlot(*MBB, I, RegsToSave[i], StackSlots[i],
+                                 0 /*FIXME*/);
   }
 
   // Add code to restore the callee-save registers in each exiting block.
@@ -225,7 +226,8 @@ void PEI::saveCallerSavedRegisters(MachineFunction &Fn) {
       // Restore all registers immediately before the return and any terminators
       // that preceed it.
       for (unsigned i = 0, e = RegsToSave.size(); i != e; ++i) {
-        RegInfo->loadRegFromStackSlot(*MBB, I, RegsToSave[i], StackSlots[i]);
+        RegInfo->loadRegFromStackSlot(*MBB, I, RegsToSave[i], StackSlots[i],
+                                      0 /*FIXME*/);
         assert(I != MBB->begin() &&
                "loadRegFromStackSlot didn't insert any code!");
         // Insert in reverse order.  loadRegFromStackSlot can insert multiple

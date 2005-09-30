@@ -163,18 +163,20 @@ bool SimpleSpiller::runOnMachineFunction(MachineFunction &MF,
             unsigned PhysReg = VRM.getPhys(VirtReg);
             if (VRM.hasStackSlot(VirtReg)) {
               int StackSlot = VRM.getStackSlot(VirtReg);
+              const TargetRegisterClass* RC =
+                MF.getSSARegMap()->getRegClass(VirtReg);
 
               if (MO.isUse() &&
                   std::find(LoadedRegs.begin(), LoadedRegs.end(), VirtReg)
                   == LoadedRegs.end()) {
-                MRI.loadRegFromStackSlot(MBB, &MI, PhysReg, StackSlot);
+                MRI.loadRegFromStackSlot(MBB, &MI, PhysReg, StackSlot, RC);
                 LoadedRegs.push_back(VirtReg);
                 ++NumLoads;
                 DEBUG(std::cerr << '\t' << *prior(MII));
               }
 
               if (MO.isDef()) {
-                MRI.storeRegToStackSlot(MBB, next(MII), PhysReg, StackSlot);
+                MRI.storeRegToStackSlot(MBB, next(MII), PhysReg, StackSlot, RC);
                 ++NumStores;
               }
             }
@@ -386,6 +388,8 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, const VirtRegMap &VRM) {
       
       // Otherwise, reload it and remember that we have it.
       PhysReg = VRM.getPhys(VirtReg);
+      const TargetRegisterClass* RC =
+        MBB.getParent()->getSSARegMap()->getRegClass(VirtReg);
 
     RecheckRegister:
       // Note that, if we reused a register for a previous operand, the
@@ -406,7 +410,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, const VirtRegMap &VRM) {
               // was used.  This isn't good because it means we have
               // to undo a previous reuse.
               MRI->loadRegFromStackSlot(MBB, &MI, Op.AssignedPhysReg,
-                                        Op.StackSlot);
+                                        Op.StackSlot, RC);
               ClobberPhysReg(Op.AssignedPhysReg, SpillSlotsAvailable,
                              PhysRegsAvailable);
 
@@ -431,7 +435,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, const VirtRegMap &VRM) {
           }
     ContinueReload:
       PhysRegsUsed[PhysReg] = true;
-      MRI->loadRegFromStackSlot(MBB, &MI, PhysReg, StackSlot);
+      MRI->loadRegFromStackSlot(MBB, &MI, PhysReg, StackSlot, RC);
       // This invalidates PhysReg.
       ClobberPhysReg(PhysReg, SpillSlotsAvailable, PhysRegsAvailable);
 
@@ -553,6 +557,8 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, const VirtRegMap &VRM) {
         if (!TakenCareOf) {
           // The only vregs left are stack slot definitions.
           int StackSlot    = VRM.getStackSlot(VirtReg);
+          const TargetRegisterClass *RC =
+            MBB.getParent()->getSSARegMap()->getRegClass(VirtReg);
           unsigned PhysReg;
 
           // If this is a def&use operand, and we used a different physreg for
@@ -564,7 +570,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, const VirtRegMap &VRM) {
             PhysReg = MO.getReg();
 
           PhysRegsUsed[PhysReg] = true;
-          MRI->storeRegToStackSlot(MBB, next(MII), PhysReg, StackSlot);
+          MRI->storeRegToStackSlot(MBB, next(MII), PhysReg, StackSlot, RC);
           DEBUG(std::cerr << "Store:\t" << *next(MII));
           MI.SetMachineOperandReg(i, PhysReg);
 
