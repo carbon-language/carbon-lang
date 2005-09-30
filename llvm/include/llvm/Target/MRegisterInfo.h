@@ -27,13 +27,13 @@ class MachineFunction;
 class MachineInstr;
 class TargetRegisterClass;
 
-/// MRegisterDesc - This record contains all of the information known about a
-/// particular register.  The AliasSet field (if not null) contains a pointer to
-/// a Zero terminated array of registers that this register aliases.  This is
+/// TargetRegisterDesc - This record contains all of the information known about
+/// a particular register.  The AliasSet field (if not null) contains a pointer
+/// to a Zero terminated array of registers that this register aliases.  This is
 /// needed for architectures like X86 which have AL alias AX alias EAX.
 /// Registers that this does not apply to simply should set this to null.
 ///
-struct MRegisterDesc {
+struct TargetRegisterDesc {
   const char     *Name;         // Assembly language name for the register
   const unsigned *AliasSet;     // Register Alias Set, described above
 };
@@ -105,22 +105,22 @@ public:
 
 
 /// MRegisterInfo base class - We assume that the target defines a static array
-/// of MRegisterDesc objects that represent all of the machine registers that
-/// the target has.  As such, we simply have to track a pointer to this array so
-/// that we can turn register number into a register descriptor.
+/// of TargetRegisterDesc objects that represent all of the machine registers
+/// that the target has.  As such, we simply have to track a pointer to this
+/// array so that we can turn register number into a register descriptor.
 ///
 class MRegisterInfo {
 public:
   typedef const TargetRegisterClass * const * regclass_iterator;
 private:
-  const MRegisterDesc *Desc;                  // Pointer to the descriptor array
+  const TargetRegisterDesc *Desc;             // Pointer to the descriptor array
   unsigned NumRegs;                           // Number of entries in the array
 
   regclass_iterator RegClassBegin, RegClassEnd;   // List of regclasses
 
   int CallFrameSetupOpcode, CallFrameDestroyOpcode;
 protected:
-  MRegisterInfo(const MRegisterDesc *D, unsigned NR,
+  MRegisterInfo(const TargetRegisterDesc *D, unsigned NR,
                 regclass_iterator RegClassBegin, regclass_iterator RegClassEnd,
                 int CallFrameSetupOpcode = -1, int CallFrameDestroyOpcode = -1);
   virtual ~MRegisterInfo();
@@ -162,7 +162,7 @@ public:
   /// indicating if a register is allocatable or not.
   std::vector<bool> getAllocatableSet(MachineFunction &MF) const;
 
-  const MRegisterDesc &operator[](unsigned RegNo) const {
+  const TargetRegisterDesc &operator[](unsigned RegNo) const {
     assert(RegNo < NumRegs &&
            "Attempting to access record for invalid register number!");
     return Desc[RegNo];
@@ -171,7 +171,9 @@ public:
   /// Provide a get method, equivalent to [], but more useful if we have a
   /// pointer to this object.
   ///
-  const MRegisterDesc &get(unsigned RegNo) const { return operator[](RegNo); }
+  const TargetRegisterDesc &get(unsigned RegNo) const {
+    return operator[](RegNo);
+  }
 
   /// getAliasSet - Return the set of registers aliased by the specified
   /// register, or a null list of there are none.  The list returned is zero

@@ -128,7 +128,7 @@ namespace {
   const unsigned icc_AliasSet[] = { SparcV9::ccr, 0 };
   const unsigned ccr_AliasSet[] = { SparcV9::xcc, SparcV9::icc, 0 };
 
-const MRegisterDesc RegisterDescriptors[] = { // Descriptors
+const TargetRegisterDesc RegisterDescriptors[] = { // Descriptors
   { "o0", Empty_AliasSet },
   { "o1", Empty_AliasSet },
   { "o2", Empty_AliasSet },

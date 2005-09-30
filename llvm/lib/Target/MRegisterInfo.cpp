@@ -15,7 +15,7 @@
 
 namespace llvm {
 
-MRegisterInfo::MRegisterInfo(const MRegisterDesc *D, unsigned NR,
+MRegisterInfo::MRegisterInfo(const TargetRegisterDesc *D, unsigned NR,
                              regclass_iterator RCB, regclass_iterator RCE,
                              int CFSO, int CFDO)
   : Desc(D), NumRegs(NR), RegClassBegin(RCB), RegClassEnd(RCE) {

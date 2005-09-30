@@ -198,7 +198,7 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
     OS << "0 };\n";
   }
 
-  OS << "\n  const MRegisterDesc RegisterDescriptors[] = { // Descriptors\n";
+  OS<<"\n  const TargetRegisterDesc RegisterDescriptors[] = { // Descriptors\n";
   OS << "    { \"NOREG\",\t0 },\n";
 
 
