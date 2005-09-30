@@ -75,13 +75,6 @@ def F26 : FPR<26, "F26">;  def F27 : FPR<27, "F27">;
 def F28 : FPR<28, "F28">;  def F29 : FPR<29, "F29">;
 def F30 : FPR<30, "F30">;  def F31 : FPR<31, "F31">;
 
-
-// Condition registers
-def CR0 : CR<0, "CR0">; def CR1 : CR<1, "CR1">;
-def CR2 : CR<2, "CR2">; def CR3 : CR<3, "CR3">;
-def CR4 : CR<4, "CR4">; def CR5 : CR<5, "CR5">;
-def CR6 : CR<6, "CR6">; def CR7 : CR<7, "CR7">;
-
 // Floating-point status and control register
 def FPSCR : SPR<0, "FPSCR">;
 // fiXed-point Exception Register? :-)
