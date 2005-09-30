@@ -214,7 +214,7 @@ using namespace llvm;
 %type <DagValueList> DagArgList DagArgListNE
 %type <FieldList>    ValueList ValueListNE
 %type <BitList>      BitList OptBitList RBitList
-%type <StrVal>       Declaration OptID OptVarName
+%type <StrVal>       Declaration OptID OptVarName ObjectName
 
 %start File
 
@@ -537,20 +537,31 @@ ObjectName : OptID {
   static unsigned AnonCounter = 0;
   if ($1->empty())
     *$1 = "anonymous."+utostr(AnonCounter++);
-  CurRec = new Record(*$1);
-  delete $1;
-  ParsingTemplateArgs = true;
+  $$ = $1;
 };
 
 ClassName : ObjectName {
-  if (Records.getClass(CurRec->getName())) {
-    err() << "Class '" << CurRec->getName() << "' already defined!\n";
-    exit(1);
+  // If a class of this name already exists, it must be a forward ref.
+  if ((CurRec = Records.getClass(*$1))) {
+    // If the body was previously defined, this is an error.
+    if (!CurRec->getValues().empty() ||
+        !CurRec->getSuperClasses().empty() ||
+        !CurRec->getTemplateArgs().empty()) {
+      err() << "Class '" << CurRec->getName() << "' already defined!\n";
+      exit(1);
+    }
+  } else {
+    // If this is the first reference to this class, create and add it.
+    CurRec = new Record(*$1);
+    Records.addClass(CurRec);
   }
-  Records.addClass(CurRec);
+  delete $1;
 };
 
 DefName : ObjectName {
+  CurRec = new Record(*$1);
+  delete $1;
+  
   // Ensure redefinition doesn't happen.
   if (Records.getDef(CurRec->getName())) {
     err() << "Def '" << CurRec->getName() << "' already defined!\n";
@@ -560,7 +571,6 @@ DefName : ObjectName {
 };
 
 ObjectBody : ClassList {
-           ParsingTemplateArgs = false;
            for (unsigned i = 0, e = $1->size(); i != e; ++i) {
              addSubClass((*$1)[i].first, *(*$1)[i].second);
              // Delete the template arg values for the class
@@ -579,8 +589,12 @@ ObjectBody : ClassList {
            CurRec = 0;
          };
 
-ClassInst : CLASS ClassName OptTemplateArgList ObjectBody {
-        $$ = $4;
+ClassInst : CLASS ClassName {
+                ParsingTemplateArgs = true;
+            } OptTemplateArgList {
+                ParsingTemplateArgs = false;
+            } ObjectBody {
+        $$ = $6;
      };
 
 DefInst : DEF DefName ObjectBody {
