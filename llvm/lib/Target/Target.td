@@ -46,7 +46,7 @@ def isVoid : ValueType<0  , 12>;   // Produces no value
 
 // Register - You should define one instance of this class for each register
 // in the target machine.  String n will become the "name" of the register.
-class RegisterBase<string n> {
+class Register<string n> {
   string Namespace = "";
   string Name = n;
 
@@ -60,10 +60,12 @@ class RegisterBase<string n> {
   // spilling the register.  Like SpillSize, this should only be explicitly
   // specified if the register is not in a register class.
   int SpillAlignment = 0;
-}
 
-class Register<string n> : RegisterBase<n> {
-  list<RegisterBase> Aliases = [];
+  // Aliases - A list of registers that this register overlaps with.  A read or
+  // modification of this register can potentially read or modifie the aliased
+  // registers.
+  //
+  list<Register> Aliases = [];
 }
 
 // RegisterGroup - This can be used to define instances of Register which
