@@ -38,7 +38,10 @@ def IA64 : Target {
   
   //'preserved' GRs:
   
-  [r4, r5, r6, r7,
+  [
+    // We never generate references to these regs, so we don't need to declare
+    // that they are saved.  In fact, we could just remove them entirely.
+    //r4, r5, r6, r7,
   
   //'special' GRs:
 
@@ -67,19 +70,26 @@ def IA64 : Target {
 */
   //'preserved' FP regs:
 
-  F2,F3,F4,F5,
-  F16,F17,F18,F19,F20,F21,F22,F23,
-  F24,F25,F26,F27,F28,F29,F30,F31,
+  /* We never generate references to these regs, so we don't need to declare
+   * that they are saved.  In fact, we could just remove them entirely.
+   * F2,F3,F4, F5,
+   * F16,F17,F18,F19,F20,F21,F22,F23,
+   * F24,F25,F26,F27,F28,F29,F30,F31,
+   */
   
   //'preserved' predicate regs:
 
-  p1, p2, p3, p4, p5,
-  p16, p17, p18, p19, p20, p21, p22, p23,
-  p24, p25, p26, p27, p28, p29, p30, p31,
-  p32, p33, p34, p35, p36, p37, p38, p39,
-  p40, p41, p42, p43, p44, p45, p46, p47,
-  p48, p49, p50, p51, p52, p53, p54, p55,
-  p56, p57, p58, p59, p60, p61, p62, p63];
+  /* We never generate references to these regs, so we don't need to declare
+    that they are saved.  In fact, we could just remove them entirely.
+    p1, p2, p3, p4, p5,
+    p16, p17, p18, p19, p20, p21, p22, p23,
+    p24, p25, p26, p27, p28, p29, p30, p31,
+    p32, p33, p34, p35, p36, p37, p38, p39,
+    p40, p41, p42, p43, p44, p45, p46, p47,
+    p48, p49, p50, p51, p52, p53, p54, p55,
+    p56, p57, p58, p59, p60, p61, p62, p63
+   */
+  ];
 
   // We don't go anywhere near the LP32 variant of IA64 as 
   // sometimes seen in (for example) HP-UX
