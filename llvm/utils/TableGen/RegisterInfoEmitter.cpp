@@ -199,7 +199,7 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
   }
 
   OS << "\n  const MRegisterDesc RegisterDescriptors[] = { // Descriptors\n";
-  OS << "    { \"NOREG\",\t0,\t\t0,\t0 },\n";
+  OS << "    { \"NOREG\",\t0 },\n";
 
 
   // Now that register alias sets have been emitted, emit the register
