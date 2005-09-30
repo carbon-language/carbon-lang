@@ -358,9 +358,9 @@ description) are unique small numbers, and virtual registers are generally
 large.</p>
 
 <p>Each register in the processor description has an associated
-<tt>MRegisterDesc</tt> entry, which provides a textual name for the register
-(used for assembly output and debugging dumps), a set of aliases (used to
-indicate that one register overlaps with another), and some flag bits.
+<tt>TargetRegisterDesc</tt> entry, which provides a textual name for the register
+(used for assembly output and debugging dumps) and a set of aliases (used to
+indicate that one register overlaps with another).
 </p>
 
 <p>In addition to the per-register description, the <tt>MRegisterInfo</tt> class
