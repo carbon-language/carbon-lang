@@ -278,13 +278,15 @@ SparcV9RegisterInfo::SparcV9RegisterInfo ()
 
 void SparcV9RegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                          MachineBasicBlock::iterator MI,
-                                         unsigned SrcReg, int FrameIndex) const{
+                                         unsigned SrcReg, int FrameIndex,
+                                         const TargetRegisterClass *RC) const {
   abort ();
 }
 
 void SparcV9RegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
                                           MachineBasicBlock::iterator MI,
-                                          unsigned DestReg, int FrameIndex) const {
+                                          unsigned DestReg, int FrameIndex,
+                                          const TargetRegisterClass *RC) const {
   abort ();
 }
 

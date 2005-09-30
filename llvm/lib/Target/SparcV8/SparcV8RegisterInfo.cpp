@@ -40,7 +40,8 @@ static const TargetRegisterClass *getClass(unsigned SrcReg) {
 
 void SparcV8RegisterInfo::
 storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
-                    unsigned SrcReg, int FrameIdx) const {
+                    unsigned SrcReg, int FrameIdx,
+                    const TargetRegisterClass *rc) const {
   const TargetRegisterClass *RC = getClass(SrcReg);
 
   // On the order of operands here: think "[FrameIdx + 0] = SrcReg".
@@ -59,7 +60,8 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
 
 void SparcV8RegisterInfo::
 loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
-                     unsigned DestReg, int FrameIdx) const {
+                     unsigned DestReg, int FrameIdx,
+                     const TargetRegisterClass *rc) const {
   const TargetRegisterClass *RC = getClass(DestReg);
   if (RC == V8::IntRegsRegisterClass)
     BuildMI (MBB, I, V8::LD, 2, DestReg).addFrameIndex (FrameIdx).addSImm (0);

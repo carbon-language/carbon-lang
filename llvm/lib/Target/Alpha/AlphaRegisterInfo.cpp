@@ -75,7 +75,8 @@ static const TargetRegisterClass *getClass(unsigned SrcReg) {
 void
 AlphaRegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                        MachineBasicBlock::iterator MI,
-                                       unsigned SrcReg, int FrameIdx) const {
+                                       unsigned SrcReg, int FrameIdx,
+                                       const TargetRegisterClass *RC) const {
   //std::cerr << "Trying to store " << getPrettyName(SrcReg) << " to " << FrameIdx << "\n";
   //BuildMI(MBB, MI, Alpha::WTF, 0).addReg(SrcReg);
   if (EnableAlphaLSMark)
@@ -92,7 +93,8 @@ AlphaRegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
 void
 AlphaRegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
                                         MachineBasicBlock::iterator MI,
-                                        unsigned DestReg, int FrameIdx) const{
+                                        unsigned DestReg, int FrameIdx,
+                                        const TargetRegisterClass *RC) const {
   //std::cerr << "Trying to load " << getPrettyName(DestReg) << " to " << FrameIdx << "\n";
   if (EnableAlphaLSMark)
     BuildMI(MBB, MI, Alpha::MEMLABEL, 4).addImm(4).addImm(0).addImm(2)

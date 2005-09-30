@@ -28,11 +28,13 @@ struct SparcV8RegisterInfo : public SparcV8GenRegisterInfo {
   /// Code Generation virtual methods...
   void storeRegToStackSlot(MachineBasicBlock &MBB,
                            MachineBasicBlock::iterator MBBI,
-                           unsigned SrcReg, int FrameIndex) const;
+                           unsigned SrcReg, int FrameIndex,
+                           const TargetRegisterClass *RC) const;
 
   void loadRegFromStackSlot(MachineBasicBlock &MBB,
                             MachineBasicBlock::iterator MBBI,
-                            unsigned DestReg, int FrameIndex) const;
+                            unsigned DestReg, int FrameIndex,
+                            const TargetRegisterClass *RC) const;
 
   void copyRegToReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator MBBI,
                     unsigned DestReg, unsigned SrcReg,

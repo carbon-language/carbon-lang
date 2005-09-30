@@ -58,7 +58,8 @@ static unsigned getIdx(unsigned SpillSize) {
 
 void X86RegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                           MachineBasicBlock::iterator MI,
-                                          unsigned SrcReg, int FrameIdx) const {
+                                          unsigned SrcReg, int FrameIdx,
+                                          const TargetRegisterClass *RC) const {
   static const unsigned Opcode[] =
     { X86::MOV8mr, X86::MOV16mr, X86::MOV32mr, X86::FST64m, X86::FSTP80m,
       X86::MOVAPDmr };
@@ -70,7 +71,8 @@ void X86RegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
 
 void X86RegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
                                            MachineBasicBlock::iterator MI,
-                                           unsigned DestReg, int FrameIdx)const{
+                                           unsigned DestReg, int FrameIdx,
+                                           const TargetRegisterClass *RC) const{
   static const unsigned Opcode[] =
     { X86::MOV8rm, X86::MOV16rm, X86::MOV32rm, X86::FLD64m, X86::FLD80m,
       X86::MOVAPDrm };

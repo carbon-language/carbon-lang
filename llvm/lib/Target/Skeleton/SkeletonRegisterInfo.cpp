@@ -22,13 +22,15 @@ SkeletonRegisterInfo::SkeletonRegisterInfo()
 
 void SkeletonRegisterInfo::
 storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator MBBI,
-                    unsigned SrcReg, int FrameIdx) const {
+                    unsigned SrcReg, int FrameIdx,
+                    const TargetRegisterClass *RC) const {
   abort();
 }
 
 void SkeletonRegisterInfo::
 loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator MBBI,
-                     unsigned DestReg, int FrameIdx) const {
+                     unsigned DestReg, int FrameIdx,
+                     const TargetRegisterClass *RC) const {
   abort();
 }
 

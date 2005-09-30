@@ -1,4 +1,4 @@
-//===- SkeletonRegisterInfo.h - Skeleton Register Information Impl -*- C++ -*-==//
+//===- SkeletonRegisterInfo.h - Skeleton Register Info Impl ------*- C++ -*-==//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -24,11 +24,13 @@ namespace llvm {
 
     void storeRegToStackSlot(MachineBasicBlock &MBB,
                              MachineBasicBlock::iterator MBBI,
-                             unsigned SrcReg, int FrameIndex) const;
+                             unsigned SrcReg, int FrameIndex,
+                             const TargetRegisterClass *RC) const;
 
     void loadRegFromStackSlot(MachineBasicBlock &MBB,
                               MachineBasicBlock::iterator MBBI,
-                              unsigned DestReg, int FrameIndex) const;
+                              unsigned DestReg, int FrameIndex,
+                              const TargetRegisterClass *RC) const;
 
     void copyRegToReg(MachineBasicBlock &MBB, MachineBasicBlock::iterator MBBI,
                       unsigned DestReg, unsigned SrcReg,
