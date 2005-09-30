@@ -134,7 +134,7 @@ public:
     if (DOTTraits::renderGraphFromBottomUp())
       O << DOT::EscapeString(DOTTraits::getNodeLabel(Node, G));
 
-    O << "|\\N}\"];\n";   // Finish printing the "node" line
+    O << "}\"];\n";   // Finish printing the "node" line
 
     // Output all of the edges now
     EI = GTraits::child_begin(Node);
