@@ -1351,7 +1351,7 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
                                        Chain.getValue(1)).getValue(1);
         CallResults.push_back(Chain.getValue(0));
         Chain = CurDAG->getCopyFromReg(Chain, PPC::R3, MVT::i32,
-                                       Chain.getValue(1)).getValue(1);
+                                       Chain.getValue(2)).getValue(1);
         CallResults.push_back(Chain.getValue(0));
       } else {
         Chain = CurDAG->getCopyFromReg(Chain, PPC::R3, MVT::i32,
