@@ -51,6 +51,12 @@ struct DefaultDOTGraphTraits {
   static std::string getNodeLabel(const void *Node, const void *Graph) {
     return "";
   }
+  
+  /// hasNodeAddressLabel - If this method returns true, the address of the node
+  /// is added to the label of the node.
+  static bool hasNodeAddressLabel(const void *Node, const void *Graph) {
+    return false;
+  }
 
   /// If you want to specify custom node attributes, this is the place to do so
   ///

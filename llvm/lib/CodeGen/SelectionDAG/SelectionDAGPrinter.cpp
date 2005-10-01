@@ -33,6 +33,11 @@ namespace llvm {
     static bool renderGraphFromBottomUp() {
       return true;
     }
+    
+    static bool hasNodeAddressLabel(const SDNode *Node,
+                                    const SelectionDAG *Graph) {
+      return true;
+    }
 
     static std::string getNodeLabel(const SDNode *Node,
                                     const SelectionDAG *Graph);
