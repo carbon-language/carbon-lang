@@ -713,7 +713,7 @@ void SimpleSched::GatherNodeInfo() {
       SDOperand Op = Node->getOperand(N);
       // No more flags to walk
       if (Op.getValueType() != MVT::Flag) break;
-      // Add do node group
+      // Add to node group
       NodeGroup::Add(getNI(Op.Val), NI);
     }
   }
