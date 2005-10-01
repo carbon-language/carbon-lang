@@ -114,9 +114,7 @@ unsigned PPC32RegisterInfo::isLoadFromStackSlot(MachineInstr *MI,
   switch (MI->getOpcode()) {
   default: break;
   case PPC::LWZ:
-    //
-  // case PPC::LFS: // ENABLE!!
-    //
+  case PPC::LFS:
   case PPC::LFD:
     if (MI->getOperand(1).isImmediate() && !MI->getOperand(1).getImmedValue() &&
         MI->getOperand(2).isFrameIndex()) {
