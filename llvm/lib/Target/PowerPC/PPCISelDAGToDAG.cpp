@@ -443,8 +443,10 @@ SDOperand PPC32DAGToDAGISel::SelectCC(SDOperand LHS, SDOperand RHS,
                                    LHS, getI32Imm(Lo16(Imm)));
     return CurDAG->getTargetNode(U ? PPC::CMPLW : PPC::CMPW, MVT::i32,
                                  LHS, Select(RHS));
+  } else if (LHS.getValueType() == MVT::f32) {
+    return CurDAG->getTargetNode(PPC::FCMPUS, MVT::i32, LHS, Select(RHS));
   } else {
-    return CurDAG->getTargetNode(PPC::FCMPU, MVT::i32, LHS, Select(RHS));
+    return CurDAG->getTargetNode(PPC::FCMPUD, MVT::i32, LHS, Select(RHS));
   }
 }
 
@@ -679,8 +681,10 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
   case ISD::UNDEF:
     if (N->getValueType(0) == MVT::i32)
       CurDAG->SelectNodeTo(N, PPC::IMPLICIT_DEF_GPR, MVT::i32);
-    else
-      CurDAG->SelectNodeTo(N, PPC::IMPLICIT_DEF_FP, N->getValueType(0));
+    else if (N->getValueType(0) == MVT::f32)
+      CurDAG->SelectNodeTo(N, PPC::IMPLICIT_DEF_F4, MVT::f32);
+    else 
+      CurDAG->SelectNodeTo(N, PPC::IMPLICIT_DEF_F8, MVT::f64);
     return SDOperand(N, 0);
   case ISD::FrameIndex: {
     int FI = cast<FrameIndexSDNode>(N)->getIndex();
@@ -749,10 +753,16 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
     return SDOperand(Result.Val, Op.ResNo);
   }      
   case PPCISD::FSEL:
-    CurDAG->SelectNodeTo(N, PPC::FSEL, N->getValueType(0),
-                         Select(N->getOperand(0)),
-                         Select(N->getOperand(1)),
-                         Select(N->getOperand(2)));
+    if (N->getValueType(0) == MVT::f32)
+      CurDAG->SelectNodeTo(N, PPC::FSELS, MVT::f32,
+                           Select(N->getOperand(0)),
+                           Select(N->getOperand(1)),
+                           Select(N->getOperand(2)));
+    else
+      CurDAG->SelectNodeTo(N, PPC::FSELD, MVT::f64,
+                           Select(N->getOperand(0)),
+                           Select(N->getOperand(1)),
+                           Select(N->getOperand(2)));
     return SDOperand(N, 0);
   case PPCISD::FCFID:
     CurDAG->SelectNodeTo(N, PPC::FCFID, N->getValueType(0),
@@ -956,15 +966,17 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
     return SDOperand(N, 0);
   } 
   case ISD::FABS:
-    CurDAG->SelectNodeTo(N, PPC::FABS, N->getValueType(0), 
-                         Select(N->getOperand(0)));
+    if (N->getValueType(0) == MVT::f32)
+      CurDAG->SelectNodeTo(N, PPC::FABSS, MVT::f32, Select(N->getOperand(0)));
+    else
+      CurDAG->SelectNodeTo(N, PPC::FABSD, MVT::f64, Select(N->getOperand(0)));
     return SDOperand(N, 0);
   case ISD::FP_EXTEND:
     assert(MVT::f64 == N->getValueType(0) && 
            MVT::f32 == N->getOperand(0).getValueType() && "Illegal FP_EXTEND");
     // We need to emit an FMR to make sure that the result has the right value
     // type.
-    CurDAG->SelectNodeTo(N, PPC::FMR, MVT::f64, Select(N->getOperand(0)));
+    CurDAG->SelectNodeTo(N, PPC::FMRSD, MVT::f64, Select(N->getOperand(0)));
     return SDOperand(N, 0);
   case ISD::FP_ROUND:
     assert(MVT::f32 == N->getValueType(0) && 
@@ -978,7 +990,8 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
       unsigned Opc;
       switch (Val.isTargetOpcode() ? Val.getTargetOpcode() : 0) {
       default:          Opc = 0;            break;
-      case PPC::FABS:   Opc = PPC::FNABS;   break;
+      case PPC::FABSS:  Opc = PPC::FNABSS;  break;
+      case PPC::FABSD:  Opc = PPC::FNABSD;  break;
       case PPC::FMADD:  Opc = PPC::FNMADD;  break;
       case PPC::FMADDS: Opc = PPC::FNMADDS; break;
       case PPC::FMSUB:  Opc = PPC::FNMSUB;  break;
@@ -988,7 +1001,7 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
       // inverted opcode and the original instruction's operands.  Otherwise, 
       // fall through and generate a fneg instruction.
       if (Opc) {
-        if (PPC::FNABS == Opc)
+        if (Opc == PPC::FNABSS || Opc == PPC::FNABSD)
           CurDAG->SelectNodeTo(N, Opc, Ty, Val.getOperand(0));
         else
           CurDAG->SelectNodeTo(N, Opc, Ty, Val.getOperand(0),
@@ -996,7 +1009,10 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
         return SDOperand(N, 0);
       }
     }
-    CurDAG->SelectNodeTo(N, PPC::FNEG, Ty, Val);
+    if (Ty == MVT::f32)
+      CurDAG->SelectNodeTo(N, PPC::FNEGS, MVT::f32, Val);
+    else
+      CurDAG->SelectNodeTo(N, PPC::FNEGS, MVT::f64, Val);
     return SDOperand(N, 0);
   }
   case ISD::FSQRT: {
@@ -1090,9 +1106,26 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
     case MVT::f64: Opc = isIdx ? PPC::LFDX : PPC::LFD; break;
     }
 
-    CurDAG->SelectNodeTo(N, Opc, N->getValueType(0), MVT::Other,
-                         Op1, Op2, Select(N->getOperand(0)));
-    return SDOperand(N, Op.ResNo);
+    // If this is an f32 -> f64 load, emit the f32 load, then use an 'extending
+    // copy'.
+    if (TypeBeingLoaded != MVT::f32 || N->getOpcode() == ISD::LOAD) {
+        CurDAG->SelectNodeTo(N, Opc, N->getValueType(0), MVT::Other,
+                             Op1, Op2, Select(N->getOperand(0)));
+      return SDOperand(N, Op.ResNo);
+    } else {
+      std::vector<SDOperand> Ops;
+      Ops.push_back(Op1);
+      Ops.push_back(Op2);
+      Ops.push_back(Select(N->getOperand(0)));
+      SDOperand Res = CurDAG->getTargetNode(Opc, MVT::f32, MVT::Other, Ops);
+      SDOperand Ext = CurDAG->getTargetNode(PPC::FMRSD, MVT::f64, Res);
+      CodeGenMap[Op.getValue(0)] = Ext;
+      CodeGenMap[Op.getValue(1)] = Res.getValue(1);
+      if (Op.ResNo)
+        return Res.getValue(1);
+      else
+        return Ext;
+    }
   }
 
   case ISD::TRUNCSTORE:
@@ -1250,7 +1283,13 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
     unsigned BROpc = getBCCForSetCC(CC);
 
     bool isFP = MVT::isFloatingPoint(N->getValueType(0));
-    unsigned SelectCCOp = isFP ? PPC::SELECT_CC_FP : PPC::SELECT_CC_Int;
+    unsigned SelectCCOp;
+    if (MVT::isInteger(N->getValueType(0)))
+      SelectCCOp = PPC::SELECT_CC_Int;
+    else if (N->getValueType(0) == MVT::f32)
+      SelectCCOp = PPC::SELECT_CC_F4;
+    else
+      SelectCCOp = PPC::SELECT_CC_F8;
     CurDAG->SelectNodeTo(N, SelectCCOp, N->getValueType(0), CCReg,
                          Select(N->getOperand(2)), Select(N->getOperand(3)),
                          getI32Imm(BROpc));

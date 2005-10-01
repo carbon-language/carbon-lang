@@ -33,8 +33,8 @@ PPC32TargetLowering::PPC32TargetLowering(TargetMachine &TM)
     
   // Set up the register classes.
   addRegisterClass(MVT::i32, PPC32::GPRCRegisterClass);
-  addRegisterClass(MVT::f32, PPC32::FPRCRegisterClass);
-  addRegisterClass(MVT::f64, PPC32::FPRCRegisterClass);
+  addRegisterClass(MVT::f32, PPC32::F4RCRegisterClass);
+  addRegisterClass(MVT::f64, PPC32::F8RCRegisterClass);
   
   // PowerPC has no intrinsics for these particular operations
   setOperationAction(ISD::MEMMOVE, MVT::Other, Expand);
@@ -396,7 +396,11 @@ PPC32TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
       ObjSize = (ObjectVT == MVT::f64) ? 8 : 4;
       if (!ArgLive) break;
       if (FPR_remaining > 0) {
-        unsigned VReg = RegMap->createVirtualRegister(&PPC32::FPRCRegClass);
+        unsigned VReg;
+        if (ObjectVT == MVT::f32)
+          VReg = RegMap->createVirtualRegister(&PPC32::F4RCRegClass);
+        else
+          VReg = RegMap->createVirtualRegister(&PPC32::F8RCRegClass);
         MF.addLiveIn(FPR[FPR_idx], VReg);
         argt = newroot = DAG.getCopyFromReg(DAG.getRoot(), VReg, ObjectVT);
         --FPR_remaining;
@@ -724,7 +728,8 @@ MachineBasicBlock *
 PPC32TargetLowering::InsertAtEndOfBasicBlock(MachineInstr *MI,
                                              MachineBasicBlock *BB) {
   assert((MI->getOpcode() == PPC::SELECT_CC_Int ||
-          MI->getOpcode() == PPC::SELECT_CC_FP) &&
+          MI->getOpcode() == PPC::SELECT_CC_F4 ||
+          MI->getOpcode() == PPC::SELECT_CC_F8) &&
          "Unexpected instr type to insert");
   
   // To "insert" a SELECT_CC instruction, we actually have to insert the diamond

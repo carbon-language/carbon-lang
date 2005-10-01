@@ -43,47 +43,26 @@ PPC32RegisterInfo::PPC32RegisterInfo()
   ImmToIdxMap[PPC::ADDI] = PPC::ADD;
 }
 
-static unsigned getIdx(const TargetRegisterClass *RC) {
-  if (RC == PPC32::GPRCRegisterClass) {
-    switch (RC->getSize()) {
-      default: assert(0 && "Invalid data size!");
-      case 1:  return 0;
-      case 2:  return 1;
-      case 4:  return 2;
-    }
-  } else if (RC == PPC32::FPRCRegisterClass) {
-    switch (RC->getSize()) {
-      default: assert(0 && "Invalid data size!");
-      case 4:  return 3;
-      case 8:  return 4;
-    }
-  } else if (RC == PPC32::CRRCRegisterClass) {
-    switch (RC->getSize()) {
-      default: assert(0 && "Invalid data size!");
-      case 4:  return 2;
-    }
-  }
-  std::cerr << "Invalid register class to getIdx()!\n";
-  abort();
-}
-
 void
 PPC32RegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                        MachineBasicBlock::iterator MI,
                                        unsigned SrcReg, int FrameIdx,
                                        const TargetRegisterClass *RC) const {
-  static const unsigned Opcode[] = {
-    PPC::STB, PPC::STH, PPC::STW, PPC::STFS, PPC::STFD
-  };
-  unsigned OC = Opcode[getIdx(RC)];
   if (SrcReg == PPC::LR) {
     BuildMI(MBB, MI, PPC::MFLR, 1, PPC::R11);
-    addFrameReference(BuildMI(MBB, MI, OC, 3).addReg(PPC::R11),FrameIdx);
+    addFrameReference(BuildMI(MBB, MI, PPC::STW, 3).addReg(PPC::R11), FrameIdx);
   } else if (RC == PPC32::CRRCRegisterClass) {
     BuildMI(MBB, MI, PPC::MFCR, 0, PPC::R11);
-    addFrameReference(BuildMI(MBB, MI, OC, 3).addReg(PPC::R11),FrameIdx);
+    addFrameReference(BuildMI(MBB, MI, PPC::STW, 3).addReg(PPC::R11), FrameIdx);
+  } else if (RC == PPC32::GPRCRegisterClass) {
+    addFrameReference(BuildMI(MBB, MI, PPC::STW, 3).addReg(SrcReg),FrameIdx);
+  } else if (RC == PPC32::F8RCRegisterClass) {
+    addFrameReference(BuildMI(MBB, MI, PPC::STFD, 3).addReg(SrcReg),FrameIdx);
+  } else if (RC == PPC32::F4RCRegisterClass) {
+    addFrameReference(BuildMI(MBB, MI, PPC::STFS, 3).addReg(SrcReg),FrameIdx);
   } else {
-    addFrameReference(BuildMI(MBB, MI, OC, 3).addReg(SrcReg),FrameIdx);
+    assert(0 && "Unknown regclass!");
+    abort();
   }
 }
 
@@ -92,18 +71,21 @@ PPC32RegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
                                         MachineBasicBlock::iterator MI,
                                         unsigned DestReg, int FrameIdx,
                                         const TargetRegisterClass *RC) const {
-  static const unsigned Opcode[] = {
-    PPC::LBZ, PPC::LHZ, PPC::LWZ, PPC::LFS, PPC::LFD
-  };
-  unsigned OC = Opcode[getIdx(RC)];
   if (DestReg == PPC::LR) {
-    addFrameReference(BuildMI(MBB, MI, OC, 2, PPC::R11), FrameIdx);
+    addFrameReference(BuildMI(MBB, MI, PPC::LWZ, 2, PPC::R11), FrameIdx);
     BuildMI(MBB, MI, PPC::MTLR, 1).addReg(PPC::R11);
   } else if (RC == PPC32::CRRCRegisterClass) {
-    addFrameReference(BuildMI(MBB, MI, OC, 2, PPC::R11), FrameIdx);
+    addFrameReference(BuildMI(MBB, MI, PPC::LWZ, 2, PPC::R11), FrameIdx);
     BuildMI(MBB, MI, PPC::MTCRF, 1, DestReg).addReg(PPC::R11);
+  } else if (RC == PPC32::GPRCRegisterClass) {
+    addFrameReference(BuildMI(MBB, MI, PPC::LWZ, 2, DestReg), FrameIdx);
+  } else if (RC == PPC32::F8RCRegisterClass) {
+    addFrameReference(BuildMI(MBB, MI, PPC::LFD, 2, DestReg), FrameIdx);
+  } else if (RC == PPC32::F4RCRegisterClass) {
+    addFrameReference(BuildMI(MBB, MI, PPC::LFS, 2, DestReg), FrameIdx);
   } else {
-    addFrameReference(BuildMI(MBB, MI, OC, 2, DestReg), FrameIdx);
+    assert(0 && "Unknown regclass!");
+    abort();
   }
 }
 
@@ -115,8 +97,10 @@ void PPC32RegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
 
   if (RC == PPC32::GPRCRegisterClass) {
     BuildMI(MBB, MI, PPC::OR, 2, DestReg).addReg(SrcReg).addReg(SrcReg);
-  } else if (RC == PPC32::FPRCRegisterClass) {
-    BuildMI(MBB, MI, PPC::FMR, 1, DestReg).addReg(SrcReg);
+  } else if (RC == PPC32::F4RCRegisterClass) {
+    BuildMI(MBB, MI, PPC::FMRS, 1, DestReg).addReg(SrcReg);
+  } else if (RC == PPC32::F8RCRegisterClass) {
+    BuildMI(MBB, MI, PPC::FMRD, 1, DestReg).addReg(SrcReg);
   } else if (RC == PPC32::CRRCRegisterClass) {
     BuildMI(MBB, MI, PPC::MCRF, 1, DestReg).addReg(SrcReg);
   } else {
@@ -130,6 +114,9 @@ unsigned PPC32RegisterInfo::isLoadFromStackSlot(MachineInstr *MI,
   switch (MI->getOpcode()) {
   default: break;
   case PPC::LWZ:
+    //
+  // case PPC::LFS: // ENABLE!!
+    //
   case PPC::LFD:
     if (MI->getOperand(1).isImmediate() && !MI->getOperand(1).getImmedValue() &&
         MI->getOperand(2).isFrameIndex()) {
@@ -161,8 +148,7 @@ MachineInstr *PPC32RegisterInfo::foldMemoryOperand(MachineInstr *MI,
       return addFrameReference(BuildMI(PPC::LWZ, 2, OutReg), FrameIndex);
     }
     
-  } else if (Opc == PPC::FMR) {
-    // We currently always spill FP values as doubles.  :(
+  } else if (Opc == PPC::FMRD) {
     if (OpNum == 0) {  // move -> store
       unsigned InReg = MI->getOperand(1).getReg();
       return addFrameReference(BuildMI(PPC::STFD,
@@ -170,6 +156,15 @@ MachineInstr *PPC32RegisterInfo::foldMemoryOperand(MachineInstr *MI,
     } else {           // move -> load
       unsigned OutReg = MI->getOperand(0).getReg();
       return addFrameReference(BuildMI(PPC::LFD, 2, OutReg), FrameIndex);
+    }
+  } else if (Opc == PPC::FMRS) {
+    if (OpNum == 0) {  // move -> store
+      unsigned InReg = MI->getOperand(1).getReg();
+      return addFrameReference(BuildMI(PPC::STFS,
+                                       3).addReg(InReg), FrameIndex);
+    } else {           // move -> load
+      unsigned OutReg = MI->getOperand(0).getReg();
+      return addFrameReference(BuildMI(PPC::LFS, 2, OutReg), FrameIndex);
     }
   }
   return 0;
@@ -262,7 +257,8 @@ PPC32RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const {
     MI.SetMachineOperandReg(1, MI.getOperand(i).getReg());
     MI.SetMachineOperandReg(2, PPC::R0);
   } else {
-    MI.SetMachineOperandConst(OffIdx,MachineOperand::MO_SignExtendedImmed,Offset);
+    MI.SetMachineOperandConst(OffIdx, MachineOperand::MO_SignExtendedImmed,
+                              Offset);
   }
 }
 

@@ -317,14 +317,17 @@ def ADJCALLSTACKDOWN : Pseudo<(ops u16imm:$amt), "; ADJCALLSTACKDOWN">;
 def ADJCALLSTACKUP : Pseudo<(ops u16imm:$amt), "; ADJCALLSTACKUP">;
 }
 def IMPLICIT_DEF_GPR : Pseudo<(ops GPRC:$rD), "; $rD = IMPLICIT_DEF_GPRC">;
-def IMPLICIT_DEF_FP  : Pseudo<(ops FPRC:$rD), "; %rD = IMPLICIT_DEF_FP">;
+def IMPLICIT_DEF_F8  : Pseudo<(ops F8RC:$rD), "; %rD = IMPLICIT_DEF_F8">;
+def IMPLICIT_DEF_F4  : Pseudo<(ops F4RC:$rD), "; %rD = IMPLICIT_DEF_F4">;
 
 // SELECT_CC_* - Used to implement the SELECT_CC DAG operation.  Expanded by the
 // scheduler into a branch sequence.
 let usesCustomDAGSchedInserter = 1 in {  // Expanded by the scheduler.
   def SELECT_CC_Int : Pseudo<(ops GPRC:$dst, CRRC:$cond, GPRC:$T, GPRC:$F,
                               i32imm:$BROPC), "; SELECT_CC PSEUDO!">;
-  def SELECT_CC_FP  : Pseudo<(ops FPRC:$dst, CRRC:$cond, FPRC:$T, FPRC:$F,
+  def SELECT_CC_F4  : Pseudo<(ops F4RC:$dst, CRRC:$cond, F4RC:$T, F4RC:$F,
+                              i32imm:$BROPC), "; SELECT_CC PSEUDO!">;
+  def SELECT_CC_F8  : Pseudo<(ops F8RC:$dst, CRRC:$cond, F8RC:$T, F8RC:$F,
                               i32imm:$BROPC), "; SELECT_CC PSEUDO!">;
 }
 
@@ -463,15 +466,15 @@ def CMPLWI : DForm_6_ext<10, (ops CRRC:$dst, GPRC:$src1, u16imm:$src2),
 def CMPLDI : DForm_6_ext<10, (ops CRRC:$dst, GPRC:$src1, u16imm:$src2),
                          "cmpldi $dst, $src1, $src2">, isPPC64;
 let isLoad = 1 in {
-def LFS : DForm_8<48, (ops FPRC:$rD, symbolLo:$disp, GPRC:$rA),
+def LFS : DForm_8<48, (ops F4RC:$rD, symbolLo:$disp, GPRC:$rA),
                   "lfs $rD, $disp($rA)">;
-def LFD : DForm_8<50, (ops FPRC:$rD, symbolLo:$disp, GPRC:$rA),
+def LFD : DForm_8<50, (ops F8RC:$rD, symbolLo:$disp, GPRC:$rA),
                   "lfd $rD, $disp($rA)">;
 }
 let isStore = 1 in {
-def STFS : DForm_9<52, (ops FPRC:$rS, symbolLo:$disp, GPRC:$rA),
+def STFS : DForm_9<52, (ops F4RC:$rS, symbolLo:$disp, GPRC:$rA),
                    "stfs $rS, $disp($rA)">;
-def STFD : DForm_9<54, (ops FPRC:$rS, symbolLo:$disp, GPRC:$rA),
+def STFD : DForm_9<54, (ops F8RC:$rS, symbolLo:$disp, GPRC:$rA),
                    "stfd $rS, $disp($rA)">;
 }
 
@@ -596,51 +599,74 @@ def CMPLW  : XForm_16_ext<31, 32, (ops CRRC:$crD, GPRC:$rA, GPRC:$rB),
                           "cmplw $crD, $rA, $rB">;
 def CMPLD  : XForm_16_ext<31, 32, (ops CRRC:$crD, GPRC:$rA, GPRC:$rB),
                           "cmpld $crD, $rA, $rB">, isPPC64;
-def FCMPO  : XForm_17<63, 32, (ops CRRC:$crD, FPRC:$fA, FPRC:$fB),
-                      "fcmpo $crD, $fA, $fB">;
-def FCMPU  : XForm_17<63, 0, (ops CRRC:$crD, FPRC:$fA, FPRC:$fB),
+//def FCMPO  : XForm_17<63, 32, (ops CRRC:$crD, FPRC:$fA, FPRC:$fB),
+//                      "fcmpo $crD, $fA, $fB">;
+def FCMPUS : XForm_17<63, 0, (ops CRRC:$crD, F4RC:$fA, F4RC:$fB),
                       "fcmpu $crD, $fA, $fB">;
+def FCMPUD : XForm_17<63, 0, (ops CRRC:$crD, F8RC:$fA, F8RC:$fB),
+                      "fcmpu $crD, $fA, $fB">;
+
 let isLoad = 1 in {
-def LFSX   : XForm_25<31, 535, (ops FPRC:$dst, GPRC:$base, GPRC:$index),
+def LFSX   : XForm_25<31, 535, (ops F4RC:$dst, GPRC:$base, GPRC:$index),
                       "lfsx $dst, $base, $index">;
-def LFDX   : XForm_25<31, 599, (ops FPRC:$dst, GPRC:$base, GPRC:$index),
+def LFDX   : XForm_25<31, 599, (ops F8RC:$dst, GPRC:$base, GPRC:$index),
                       "lfdx $dst, $base, $index">;
 }
-def FCFID  : XForm_26<63, 846, (ops FPRC:$frD, FPRC:$frB),
+def FCFID  : XForm_26<63, 846, (ops F8RC:$frD, F8RC:$frB),
                       "fcfid $frD, $frB",
                       []>, isPPC64;
-def FCTIDZ : XForm_26<63, 815, (ops FPRC:$frD, FPRC:$frB),
+def FCTIDZ : XForm_26<63, 815, (ops F8RC:$frD, F8RC:$frB),
                       "fctidz $frD, $frB",
                       []>, isPPC64;
-def FCTIWZ : XForm_26<63, 15, (ops FPRC:$frD, FPRC:$frB),
+def FCTIWZ : XForm_26<63, 15, (ops F8RC:$frD, F8RC:$frB),
                       "fctiwz $frD, $frB",
                       []>;
-def FABS   : XForm_26<63, 264, (ops FPRC:$frD, FPRC:$frB),
-                      "fabs $frD, $frB",
-                      [(set FPRC:$frD, (fabs FPRC:$frB))]>;
-def FMR    : XForm_26<63, 72, (ops FPRC:$frD, FPRC:$frB),
-                      "fmr $frD, $frB",
-                      []>;  // (set FPRC:$frD, FPRC:$frB)
-def FNABS  : XForm_26<63, 136, (ops FPRC:$frD, FPRC:$frB),
-                      "fnabs $frD, $frB",
-                      [(set FPRC:$frD, (fneg (fabs FPRC:$frB)))]>;
-def FNEG   : XForm_26<63, 40, (ops FPRC:$frD, FPRC:$frB),
-                      "fneg $frD, $frB",
-                      [(set FPRC:$frD, (fneg FPRC:$frB))]>;
-def FRSP   : XForm_26<63, 12, (ops FPRC:$frD, FPRC:$frB),
+def FRSP   : XForm_26<63, 12, (ops F4RC:$frD, F8RC:$frB),
                       "frsp $frD, $frB",
                       []>;
-def FSQRT  : XForm_26<63, 22, (ops FPRC:$frD, FPRC:$frB),
+def FSQRT  : XForm_26<63, 22, (ops F8RC:$frD, F8RC:$frB),
                       "fsqrt $frD, $frB",
-                      [(set FPRC:$frD, (fsqrt FPRC:$frB))]>;
-def FSQRTS : XForm_26<59, 22, (ops FPRC:$frD, FPRC:$frB),
+                      [(set F8RC:$frD, (fsqrt F8RC:$frB))]>;
+def FSQRTS : XForm_26<59, 22, (ops F4RC:$frD, F4RC:$frB),
                       "fsqrts $frD, $frB",
                       []>;
+
+/// FMR is split into 3 versions, one for 4/8 byte FP, and one for extending.
+def FMRS   : XForm_26<63, 72, (ops F4RC:$frD, F4RC:$frB),
+                      "fmr $frD, $frB",
+                      []>;  // (set F4RC:$frD, F4RC:$frB)
+def FMRD   : XForm_26<63, 72, (ops F8RC:$frD, F8RC:$frB),
+                      "fmr $frD, $frB",
+                      []>;  // (set F8RC:$frD, F8RC:$frB)
+def FMRSD  : XForm_26<63, 72, (ops F8RC:$frD, F4RC:$frB),
+                      "fmr $frD, $frB",
+                      []>;  // (set F8RC:$frD, (fpextend F4RC:$frB))
+
+// These are artificially split into two different forms, for 4/8 byte FP.
+def FABSS  : XForm_26<63, 264, (ops F4RC:$frD, F4RC:$frB),
+                      "fabs $frD, $frB",
+                      [(set F4RC:$frD, (fabs F4RC:$frB))]>;
+def FABSD  : XForm_26<63, 264, (ops F8RC:$frD, F8RC:$frB),
+                      "fabs $frD, $frB",
+                      [(set F8RC:$frD, (fabs F8RC:$frB))]>;
+def FNABSS : XForm_26<63, 136, (ops F4RC:$frD, F4RC:$frB),
+                      "fnabs $frD, $frB",
+                      [(set F4RC:$frD, (fneg (fabs F4RC:$frB)))]>;
+def FNABSD : XForm_26<63, 136, (ops F8RC:$frD, F8RC:$frB),
+                      "fnabs $frD, $frB",
+                      [(set F8RC:$frD, (fneg (fabs F8RC:$frB)))]>;
+def FNEGS  : XForm_26<63, 40, (ops F4RC:$frD, F4RC:$frB),
+                      "fneg $frD, $frB",
+                      [(set F4RC:$frD, (fneg F4RC:$frB))]>;
+def FNEGD  : XForm_26<63, 40, (ops F8RC:$frD, F8RC:$frB),
+                      "fneg $frD, $frB",
+                      [(set F8RC:$frD, (fneg F8RC:$frB))]>;
+                      
                       
 let isStore = 1 in {
-def STFSX : XForm_28<31, 663, (ops FPRC:$frS, GPRC:$rA, GPRC:$rB),
+def STFSX : XForm_28<31, 663, (ops F4RC:$frS, GPRC:$rA, GPRC:$rB),
                      "stfsx $frS, $rA, $rB">;
-def STFDX : XForm_28<31, 727, (ops FPRC:$frS, GPRC:$rA, GPRC:$rB),
+def STFDX : XForm_28<31, 727, (ops F8RC:$frS, GPRC:$rA, GPRC:$rB),
                      "stfdx $frS, $rA, $rB">;
 }
 
@@ -730,75 +756,80 @@ def SUBFZE : XOForm_3<31, 200, 0, (ops GPRC:$rT, GPRC:$rA),
 // this type.
 //
 def FMADD : AForm_1<63, 29, 
-                    (ops FPRC:$FRT, FPRC:$FRA, FPRC:$FRC, FPRC:$FRB),
+                    (ops F8RC:$FRT, F8RC:$FRA, F8RC:$FRC, F8RC:$FRB),
                     "fmadd $FRT, $FRA, $FRC, $FRB",
-                    [(set FPRC:$FRT, (fadd (fmul FPRC:$FRA, FPRC:$FRC),
-                                           FPRC:$FRB))]>;
+                    [(set F8RC:$FRT, (fadd (fmul F8RC:$FRA, F8RC:$FRC),
+                                           F8RC:$FRB))]>;
 def FMADDS : AForm_1<59, 29,
-                    (ops FPRC:$FRT, FPRC:$FRA, FPRC:$FRC, FPRC:$FRB),
+                    (ops F4RC:$FRT, F4RC:$FRA, F4RC:$FRC, F4RC:$FRB),
                     "fmadds $FRT, $FRA, $FRC, $FRB",
                     []>;
 def FMSUB : AForm_1<63, 28,
-                    (ops FPRC:$FRT, FPRC:$FRA, FPRC:$FRC, FPRC:$FRB),
+                    (ops F8RC:$FRT, F8RC:$FRA, F8RC:$FRC, F8RC:$FRB),
                     "fmsub $FRT, $FRA, $FRC, $FRB",
-                    [(set FPRC:$FRT, (fsub (fmul FPRC:$FRA, FPRC:$FRC),
-                                           FPRC:$FRB))]>;
+                    [(set F8RC:$FRT, (fsub (fmul F8RC:$FRA, F8RC:$FRC),
+                                           F8RC:$FRB))]>;
 def FMSUBS : AForm_1<59, 28,
-                    (ops FPRC:$FRT, FPRC:$FRA, FPRC:$FRC, FPRC:$FRB),
+                    (ops F4RC:$FRT, F4RC:$FRA, F4RC:$FRC, F4RC:$FRB),
                     "fmsubs $FRT, $FRA, $FRC, $FRB",
                     []>;
 def FNMADD : AForm_1<63, 31,
-                    (ops FPRC:$FRT, FPRC:$FRA, FPRC:$FRC, FPRC:$FRB),
+                    (ops F8RC:$FRT, F8RC:$FRA, F8RC:$FRC, F8RC:$FRB),
                     "fnmadd $FRT, $FRA, $FRC, $FRB",
-                    [(set FPRC:$FRT, (fneg (fadd (fmul FPRC:$FRA, FPRC:$FRC),
-                                                 FPRC:$FRB)))]>;
+                    [(set F8RC:$FRT, (fneg (fadd (fmul F8RC:$FRA, F8RC:$FRC),
+                                                 F8RC:$FRB)))]>;
 def FNMADDS : AForm_1<59, 31,
-                    (ops FPRC:$FRT, FPRC:$FRA, FPRC:$FRC, FPRC:$FRB),
+                    (ops F4RC:$FRT, F4RC:$FRA, F4RC:$FRC, F4RC:$FRB),
                     "fnmadds $FRT, $FRA, $FRC, $FRB",
                     []>;
 def FNMSUB : AForm_1<63, 30,
-                    (ops FPRC:$FRT, FPRC:$FRA, FPRC:$FRC, FPRC:$FRB),
+                    (ops F8RC:$FRT, F8RC:$FRA, F8RC:$FRC, F8RC:$FRB),
                     "fnmsub $FRT, $FRA, $FRC, $FRB",
-                    [(set FPRC:$FRT, (fneg (fsub (fmul FPRC:$FRA, FPRC:$FRC),
-                                                 FPRC:$FRB)))]>;
+                    [(set F8RC:$FRT, (fneg (fsub (fmul F8RC:$FRA, F8RC:$FRC),
+                                                 F8RC:$FRB)))]>;
 def FNMSUBS : AForm_1<59, 30,
-                    (ops FPRC:$FRT, FPRC:$FRA, FPRC:$FRC, FPRC:$FRB),
+                    (ops F4RC:$FRT, F4RC:$FRA, F4RC:$FRC, F4RC:$FRB),
                     "fnmsubs $FRT, $FRA, $FRC, $FRB",
                     []>;
-def FSEL  : AForm_1<63, 23,
-                    (ops FPRC:$FRT, FPRC:$FRA, FPRC:$FRC, FPRC:$FRB),
+// FSEL is artificially split into 4 and 8-byte forms.
+def FSELD : AForm_1<63, 23,
+                    (ops F8RC:$FRT, F8RC:$FRA, F8RC:$FRC, F8RC:$FRB),
+                    "fsel $FRT, $FRA, $FRC, $FRB",
+                    []>;
+def FSELS : AForm_1<63, 23,
+                    (ops F4RC:$FRT, F4RC:$FRA, F4RC:$FRC, F4RC:$FRB),
                     "fsel $FRT, $FRA, $FRC, $FRB",
                     []>;
 def FADD  : AForm_2<63, 21,
-                    (ops FPRC:$FRT, FPRC:$FRA, FPRC:$FRB),
+                    (ops F8RC:$FRT, F8RC:$FRA, F8RC:$FRB),
                     "fadd $FRT, $FRA, $FRB",
-                    [(set FPRC:$FRT, (fadd FPRC:$FRA, FPRC:$FRB))]>;
+                    [(set F8RC:$FRT, (fadd F8RC:$FRA, F8RC:$FRB))]>;
 def FADDS : AForm_2<59, 21,
-                    (ops FPRC:$FRT, FPRC:$FRA, FPRC:$FRB),
+                    (ops F4RC:$FRT, F4RC:$FRA, F4RC:$FRB),
                     "fadds $FRT, $FRA, $FRB",
                     []>;
 def FDIV  : AForm_2<63, 18,
-                    (ops FPRC:$FRT, FPRC:$FRA, FPRC:$FRB),
+                    (ops F8RC:$FRT, F8RC:$FRA, F8RC:$FRB),
                     "fdiv $FRT, $FRA, $FRB",
-                    [(set FPRC:$FRT, (fdiv FPRC:$FRA, FPRC:$FRB))]>;
+                    [(set F8RC:$FRT, (fdiv F8RC:$FRA, F8RC:$FRB))]>;
 def FDIVS : AForm_2<59, 18,
-                    (ops FPRC:$FRT, FPRC:$FRA, FPRC:$FRB),
+                    (ops F4RC:$FRT, F4RC:$FRA, F4RC:$FRB),
                     "fdivs $FRT, $FRA, $FRB",
                     []>;
 def FMUL  : AForm_3<63, 25,
-                    (ops FPRC:$FRT, FPRC:$FRA, FPRC:$FRB),
+                    (ops F8RC:$FRT, F8RC:$FRA, F8RC:$FRB),
                     "fmul $FRT, $FRA, $FRB",
-                    [(set FPRC:$FRT, (fmul FPRC:$FRA, FPRC:$FRB))]>;
+                    [(set F8RC:$FRT, (fmul F8RC:$FRA, F8RC:$FRB))]>;
 def FMULS : AForm_3<59, 25,
-                    (ops FPRC:$FRT, FPRC:$FRA, FPRC:$FRB),
+                    (ops F4RC:$FRT, F4RC:$FRA, F4RC:$FRB),
                     "fmuls $FRT, $FRA, $FRB",
                     []>;
 def FSUB  : AForm_2<63, 20,
-                    (ops FPRC:$FRT, FPRC:$FRA, FPRC:$FRB),
+                    (ops F8RC:$FRT, F8RC:$FRA, F8RC:$FRB),
                     "fsub $FRT, $FRA, $FRB",
-                    [(set FPRC:$FRT, (fsub FPRC:$FRA, FPRC:$FRB))]>;
+                    [(set F8RC:$FRT, (fsub F8RC:$FRA, F8RC:$FRB))]>;
 def FSUBS : AForm_2<59, 20,
-                    (ops FPRC:$FRT, FPRC:$FRA, FPRC:$FRB),
+                    (ops F4RC:$FRT, F4RC:$FRA, F4RC:$FRB),
                     "fsubs $FRT, $FRA, $FRB",
                     []>;
 

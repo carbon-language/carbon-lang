@@ -41,7 +41,8 @@ namespace {
         // keeping the offsets up to date later when we emit long branch glue.
         return 12;
       case PPC::IMPLICIT_DEF_GPR: // no asm emitted
-      case PPC::IMPLICIT_DEF_FP: // no asm emitted
+      case PPC::IMPLICIT_DEF_F4: // no asm emitted
+      case PPC::IMPLICIT_DEF_F8: // no asm emitted
         return 0;
       default:
         break;
