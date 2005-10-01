@@ -909,7 +909,7 @@ unsigned SimpleSched::CreateVirtualRegisters(MachineInstr *MI,
   MI->addRegOperand(ResultReg, MachineOperand::Def);
   for (unsigned i = 1; i != NumResults; ++i) {
     assert(OpInfo[i].RegClass && "Isn't a register operand!");
-    MI->addRegOperand(RegMap->createVirtualRegister(OpInfo[0].RegClass),
+    MI->addRegOperand(RegMap->createVirtualRegister(OpInfo[i].RegClass),
                       MachineOperand::Def);
   }
   return ResultReg;
@@ -951,8 +951,17 @@ void SimpleSched::EmitNode(NodeInfo *NI) {
         assert(Node->getOperand(i).getValueType() != MVT::Other &&
                Node->getOperand(i).getValueType() != MVT::Flag &&
                "Chain and flag operands should occur at end of operand list!");
+
+        // Get/emit the operand.
+        unsigned VReg = getVR(Node->getOperand(i));
+        MI->addRegOperand(VReg, MachineOperand::Use);
         
-        MI->addRegOperand(getVR(Node->getOperand(i)), MachineOperand::Use);
+        // Verify that it is right.
+        assert(MRegisterInfo::isVirtualRegister(VReg) && "Not a vreg?");
+        assert(II.OpInfo[i+NumResults].RegClass &&
+               "Don't have operand info for this instruction!");
+        assert(RegMap->getRegClass(VReg) == II.OpInfo[i+NumResults].RegClass &&
+               "Register class of operand and regclass of use don't agree!");
       } else if (ConstantSDNode *C =
                  dyn_cast<ConstantSDNode>(Node->getOperand(i))) {
         MI->addZeroExtImm64Operand(C->getValue());
@@ -979,7 +988,15 @@ void SimpleSched::EmitNode(NodeInfo *NI) {
         assert(Node->getOperand(i).getValueType() != MVT::Other &&
                Node->getOperand(i).getValueType() != MVT::Flag &&
                "Chain and flag operands should occur at end of operand list!");
-        MI->addRegOperand(getVR(Node->getOperand(i)), MachineOperand::Use);
+        unsigned VReg = getVR(Node->getOperand(i));
+        MI->addRegOperand(VReg, MachineOperand::Use);
+        
+        // Verify that it is right.
+        assert(MRegisterInfo::isVirtualRegister(VReg) && "Not a vreg?");
+        assert(II.OpInfo[i+NumResults].RegClass &&
+               "Don't have operand info for this instruction!");
+        assert(RegMap->getRegClass(VReg) == II.OpInfo[i+NumResults].RegClass &&
+               "Register class of operand and regclass of use don't agree!");
       }
     }
     
