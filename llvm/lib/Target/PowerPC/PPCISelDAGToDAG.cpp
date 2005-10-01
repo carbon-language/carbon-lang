@@ -1012,7 +1012,7 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
     if (Ty == MVT::f32)
       CurDAG->SelectNodeTo(N, PPC::FNEGS, MVT::f32, Val);
     else
-      CurDAG->SelectNodeTo(N, PPC::FNEGS, MVT::f64, Val);
+      CurDAG->SelectNodeTo(N, PPC::FNEGD, MVT::f64, Val);
     return SDOperand(N, 0);
   }
   case ISD::FSQRT: {
