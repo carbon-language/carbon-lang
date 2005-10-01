@@ -448,56 +448,8 @@ private:
 };
 //===----------------------------------------------------------------------===//
 
-
-//===----------------------------------------------------------------------===//
-class FlagUserIterator {
-private:
-  SDNode               *Definer;        // Node defining flag
-  SDNode::use_iterator UI;              // User node iterator
-  SDNode::use_iterator E;               // End of user nodes
-  unsigned             MinRes;          // Minimum flag result
-
-public:
-  // Ctor.
-  FlagUserIterator(SDNode *D)
-  : Definer(D)
-  , UI(D->use_begin())
-  , E(D->use_end())
-  , MinRes(D->getNumValues()) {
-    // Find minimum flag result.
-    while (MinRes && D->getValueType(MinRes - 1) == MVT::Flag) --MinRes;
-  }
-  
-  /// isFlagUser - Return true if  node uses definer's flag.
-  bool isFlagUser(SDNode *U) {
-    // For each operand (in reverse to only look at flags)
-    for (unsigned N = U->getNumOperands(); 0 < N--;) {
-      // Get operand
-      SDOperand Op = U->getOperand(N);
-      // Not user if there are no flags
-      if (Op.getValueType() != MVT::Flag) return false;
-      // Return true if it is one of the flag results 
-      if (Op.Val == Definer && Op.ResNo >= MinRes) return true;
-    }
-    // Not a flag user
-    return false;
-  }
-  
-  SDNode *next() {
-    // Continue to next user
-    while (UI != E) {
-      // Next user node
-      SDNode *User = *UI++;
-      // Return true if is a flag user
-      if (isFlagUser(User)) return User;
-    }
-    
-    // No more user nodes
-    return NULL;
-  }
-};
-
 } // namespace
+
 //===----------------------------------------------------------------------===//
 
 
@@ -749,14 +701,20 @@ void SimpleSched::GatherNodeInfo() {
     // Sum up all the latencies for max tally size
     NSlots += NI->Latency;
   }
-  
+
   // Put flagged nodes into groups
   for (unsigned i = 0, N = NodeCount; i < N; i++) {
     NodeInfo* NI = &Info[i];
     SDNode *Node = NI->Node;
-    if (isFlagDefiner(Node)) {
-      FlagUserIterator FI(Node);
-      while (SDNode *User = FI.next()) NodeGroup::Add(NI, getNI(User));
+
+    // For each operand (in reverse to only look at flags)
+    for (unsigned N = Node->getNumOperands(); 0 < N--;) {
+      // Get operand
+      SDOperand Op = Node->getOperand(N);
+      // No more flags to walk
+      if (Op.getValueType() != MVT::Flag) break;
+      // Add do node group
+      NodeGroup::Add(getNI(Op.Val), NI);
     }
   }
 }
@@ -1293,8 +1251,18 @@ void SimpleSched::print(std::ostream &O) const {
   using namespace std;
   O << "Ordering\n";
   for (unsigned i = 0, N = Ordering.size(); i < N; i++) {
-    printSI(O, Ordering[i]);
+    NodeInfo *NI = Ordering[i];
+    printSI(O, NI);
     O << "\n";
+    if (NI->isGroupLeader()) {
+      NodeGroup *Group = NI->Group;
+      for (NIIterator NII = Group->begin(), E = Group->end();
+           NII != E; NII++) {
+        O << "    ";
+        printSI(O, *NII);
+        O << "\n";
+      }
+    }
   }
 #endif
 }
