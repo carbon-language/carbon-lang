@@ -365,7 +365,6 @@ splitLiveRangesLiveAcrossInvokes(std::vector<InvokeInst*> &Invokes) {
         Instruction *U = Users.back();
         Users.pop_back();
         
-        BasicBlock *UseBlock;
         if (!isa<PHINode>(U)) {
           MarkBlocksLiveIn(U->getParent(), LiveBBs);
         } else {

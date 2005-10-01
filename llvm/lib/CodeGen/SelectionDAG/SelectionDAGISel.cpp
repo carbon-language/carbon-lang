@@ -148,7 +148,7 @@ FunctionLoweringInfo::FunctionLoweringInfo(TargetLowering &tli,
        AI != E; ++AI)
     InitializeRegForValue(AI);
 
-  Function::iterator BB = Fn.begin(), E = Fn.end();
+  Function::iterator BB = Fn.begin(), EB = Fn.end();
   for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I)
     if (AllocaInst *AI = dyn_cast<AllocaInst>(I))
       if (ConstantUInt *CUI = dyn_cast<ConstantUInt>(AI->getArraySize())) {
@@ -170,8 +170,8 @@ FunctionLoweringInfo::FunctionLoweringInfo(TargetLowering &tli,
           MF.getFrameInfo()->CreateStackObject((unsigned)TySize, Align);
       }
 
-  for (; BB != E; ++BB)
-    for (BasicBlock::iterator I = BB->begin(), e = BB->end(); I != e; ++I)
+  for (; BB != EB; ++BB)
+    for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I)
       if (!I->use_empty() && isUsedOutsideOfDefiningBlock(I))
         if (!isa<AllocaInst>(I) ||
             !StaticAllocaMap.count(cast<AllocaInst>(I)))
@@ -180,7 +180,7 @@ FunctionLoweringInfo::FunctionLoweringInfo(TargetLowering &tli,
   // Create an initial MachineBasicBlock for each LLVM BasicBlock in F.  This
   // also creates the initial PHI MachineInstrs, though none of the input
   // operands are populated.
-  for (Function::iterator BB = Fn.begin(), E = Fn.end(); BB != E; ++BB) {
+  for (BB = Fn.begin(), EB = Fn.end(); BB != EB; ++BB) {
     MachineBasicBlock *MBB = new MachineBasicBlock(BB);
     MBBMap[BB] = MBB;
     MF.getBasicBlockList().push_back(MBB);
