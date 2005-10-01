@@ -111,8 +111,13 @@ public:
     if (!NodeAttributes.empty()) O << NodeAttributes << ",";
     O << "label=\"{";
 
-    if (!DOTTraits::renderGraphFromBottomUp())
+    if (!DOTTraits::renderGraphFromBottomUp()) {
       O << DOT::EscapeString(DOTTraits::getNodeLabel(Node, G));
+
+      // If we should include the address of the node in the label, do so now.
+      if (DOTTraits::hasNodeAddressLabel(Node, G))
+        O << "|" << (void*)Node;
+    }
 
     // Print out the fields of the current node...
     child_iterator EI = GTraits::child_begin(Node);
@@ -131,8 +136,14 @@ public:
       O << "}";
       if (DOTTraits::renderGraphFromBottomUp()) O << "|";
     }
-    if (DOTTraits::renderGraphFromBottomUp())
+
+    if (DOTTraits::renderGraphFromBottomUp()) {
       O << DOT::EscapeString(DOTTraits::getNodeLabel(Node, G));
+
+      // If we should include the address of the node in the label, do so now.
+      if (DOTTraits::hasNodeAddressLabel(Node, G))
+        O << "|" << (void*)Node;
+    }
 
     O << "}\"];\n";   // Finish printing the "node" line
 
