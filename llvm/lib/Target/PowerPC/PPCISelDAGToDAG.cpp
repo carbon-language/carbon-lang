@@ -1445,20 +1445,31 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
       cast<BasicBlockSDNode>(N->getOperand(4))->getBasicBlock();
     ISD::CondCode CC = cast<CondCodeSDNode>(N->getOperand(1))->get();
     SDOperand CondCode = SelectCC(N->getOperand(2), N->getOperand(3), CC);
-    unsigned Opc = getBCCForSetCC(CC);
 
     // If this is a two way branch, then grab the fallthrough basic block
     // argument and build a PowerPC branch pseudo-op, suitable for long branch
     // conversion if necessary by the branch selection pass.  Otherwise, emit a
     // standard conditional branch.
     if (N->getOpcode() == ISD::BRTWOWAY_CC) {
-      MachineBasicBlock *Fallthrough =
-        cast<BasicBlockSDNode>(N->getOperand(5))->getBasicBlock();
+      SDOperand CondTrueBlock = N->getOperand(4);
+      SDOperand CondFalseBlock = N->getOperand(5);
+      
+      // If the false case is the current basic block, then this is a self loop.
+      // We do not want to emit "Loop: ... brcond Out; br Loop", as it adds an
+      // extra dispatch group to the loop.  Instead, invert the condition and
+      // emit "Loop: ... br!cond Loop; br Out
+      if (cast<BasicBlockSDNode>(CondFalseBlock)->getBasicBlock() == BB) {
+        std::swap(CondTrueBlock, CondFalseBlock);
+        CC = getSetCCInverse(CC,
+                             MVT::isInteger(N->getOperand(2).getValueType()));
+      }
+      
+      unsigned Opc = getBCCForSetCC(CC);
       SDOperand CB = CurDAG->getTargetNode(PPC::COND_BRANCH, MVT::Other,
                                            CondCode, getI32Imm(Opc),
-                                           N->getOperand(4), N->getOperand(5),
+                                           CondTrueBlock, CondFalseBlock,
                                            Chain);
-      CurDAG->SelectNodeTo(N, PPC::B, MVT::Other, N->getOperand(5), CB);
+      CurDAG->SelectNodeTo(N, PPC::B, MVT::Other, CondFalseBlock, CB);
     } else {
       // Iterate to the next basic block
       ilist<MachineBasicBlock>::iterator It = BB;
@@ -1470,7 +1481,7 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
       // the PowerPC Branch Selection pass to crash.
       if (It == BB->getParent()->end()) It = Dest;
       CurDAG->SelectNodeTo(N, PPC::COND_BRANCH, MVT::Other, CondCode,
-                           getI32Imm(Opc), N->getOperand(4),
+                           getI32Imm(getBCCForSetCC(CC)), N->getOperand(4),
                            CurDAG->getBasicBlock(It), Chain);
     }
     return SDOperand(N, 0);
