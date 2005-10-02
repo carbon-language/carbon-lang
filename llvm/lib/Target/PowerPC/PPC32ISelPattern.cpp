@@ -816,9 +816,12 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
     Tmp2 = SelectExpr(N.getOperand(1));
     Tmp3 = SelectExpr(N.getOperand(2));
     if (N.getOperand(0).getValueType() == MVT::f32)
-      BuildMI(BB, PPC::FSELS, 3, Result).addReg(Tmp1).addReg(Tmp2).addReg(Tmp3);
+      Opc = N.getOperand(0).getValueType() == MVT::f32 ?
+        PPC::FSELSS : PPC::FSELSD;
     else
-      BuildMI(BB, PPC::FSELD, 3, Result).addReg(Tmp1).addReg(Tmp2).addReg(Tmp3);
+      Opc = N.getOperand(0).getValueType() == MVT::f64 ?
+        PPC::FSELDD : PPC::FSELDS;
+    BuildMI(BB, Opc, 3, Result).addReg(Tmp1).addReg(Tmp2).addReg(Tmp3);
     return Result;
   case PPCISD::FCFID:
     Tmp1 = SelectExpr(N.getOperand(0));

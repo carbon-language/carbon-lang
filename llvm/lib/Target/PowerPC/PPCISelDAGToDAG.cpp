@@ -752,18 +752,21 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
     CodeGenMap[Op.getValue(1)] = Result.getValue(1);
     return SDOperand(Result.Val, Op.ResNo);
   }      
-  case PPCISD::FSEL:
-    if (N->getValueType(0) == MVT::f32)
-      CurDAG->SelectNodeTo(N, PPC::FSELS, MVT::f32,
-                           Select(N->getOperand(0)),
-                           Select(N->getOperand(1)),
-                           Select(N->getOperand(2)));
-    else
-      CurDAG->SelectNodeTo(N, PPC::FSELD, MVT::f64,
-                           Select(N->getOperand(0)),
-                           Select(N->getOperand(1)),
-                           Select(N->getOperand(2)));
+  case PPCISD::FSEL: {
+    unsigned Opc;
+    if (N->getValueType(0) == MVT::f32) {
+      Opc = N->getOperand(0).getValueType() == MVT::f32 ?
+              PPC::FSELSS : PPC::FSELSD;
+    } else {
+      Opc = N->getOperand(0).getValueType() == MVT::f64 ?
+              PPC::FSELDD : PPC::FSELDS;
+    }
+    CurDAG->SelectNodeTo(N, Opc, N->getValueType(0),
+                         Select(N->getOperand(0)),
+                         Select(N->getOperand(1)),
+                         Select(N->getOperand(2)));
     return SDOperand(N, 0);
+  }
   case PPCISD::FCFID:
     CurDAG->SelectNodeTo(N, PPC::FCFID, N->getValueType(0),
                          Select(N->getOperand(0)));
