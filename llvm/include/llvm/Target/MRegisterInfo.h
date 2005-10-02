@@ -17,6 +17,7 @@
 #define LLVM_TARGET_MREGISTERINFO_H
 
 #include "llvm/CodeGen/MachineBasicBlock.h"
+#include "llvm/Codegen/ValueTypes.h"
 #include <cassert>
 #include <functional>
 
@@ -44,13 +45,18 @@ public:
   typedef const unsigned* const_iterator;
 
 private:
+  MVT::ValueType VT;
   const unsigned RegSize, Alignment;    // Size & Alignment of register in bytes
   const iterator RegsBegin, RegsEnd;
 public:
-  TargetRegisterClass(unsigned RS, unsigned Al, iterator RB, iterator RE)
-    : RegSize(RS), Alignment(Al), RegsBegin(RB), RegsEnd(RE) {}
+  TargetRegisterClass(MVT::ValueType vt, unsigned RS, unsigned Al, iterator RB, iterator RE)
+    : VT(vt), RegSize(RS), Alignment(Al), RegsBegin(RB), RegsEnd(RE) {}
   virtual ~TargetRegisterClass() {}     // Allow subclasses
 
+  /// getType - Return the declared value type for this register class.
+  ///
+  MVT::ValueType getType() const { return VT; }
+  
   // begin/end - Return all of the registers in this class.
   iterator       begin() const { return RegsBegin; }
   iterator         end() const { return RegsEnd; }
