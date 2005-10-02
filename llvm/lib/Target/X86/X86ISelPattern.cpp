@@ -2219,8 +2219,7 @@ bool ISel::EmitOrOpOp(SDOperand Op1, SDOperand Op2, unsigned DestReg) {
 
 unsigned ISel::SelectExpr(SDOperand N) {
   unsigned Result;
-  unsigned Tmp1, Tmp2, Tmp3;
-  unsigned Opc = 0;
+  unsigned Tmp1 = 0, Tmp2 = 0, Tmp3 = 0, Opc = 0;
   SDNode *Node = N.Val;
   SDOperand Op0, Op1;
 
@@ -4148,7 +4147,7 @@ void ISel::EmitFastCCToFastCCTailCall(SDNode *TailCallNode) {
 
 
 void ISel::Select(SDOperand N) {
-  unsigned Tmp1, Tmp2, Opc;
+  unsigned Tmp1 = 0, Tmp2 = 0, Opc = 0;
 
   if (!ExprMap.insert(std::make_pair(N, 1)).second)
     return;  // Already selected.
