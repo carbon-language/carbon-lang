@@ -30,8 +30,8 @@ static const SubtargetFeatureKV AlphaSubTypeKV[] = {
   { "ev56"    , "Select the Alpha EV56 processor", 0 },
   { "ev6"    , "Select the Alpha EV6 processor", AlphaFeatureFIX },
   { "ev67"    , "Select the Alpha EV67 processor", AlphaFeatureFIX | AlphaFeatureCIX },
+  { "generic", "Select instructions for a generic Alpha processor (EV56)", 0 },
   { "pca56"    , "Select the Alpha PCA56 processor", 0 },
-  { "generic", "Select instructions for a generic Alpha processor (EV56)", 0 }
 };
 
 /// Length of AlphaSubTypeKV.
@@ -40,8 +40,8 @@ static const unsigned AlphaSubTypeKVSize = sizeof(AlphaSubTypeKV)
 
 /// Sorted (by key) array of values for CPU features.
 static SubtargetFeatureKV AlphaFeatureKV[] = {
+  { "CIX", "Should CIX extentions be used" , AlphaFeatureCIX },
   { "FIX"  , "Should FIX extentions be used"  , AlphaFeatureFIX },
-  { "CIX", "Should CIX extentions be used" , AlphaFeatureCIX }
  };
 /// Length of AlphaFeatureKV.
 static const unsigned AlphaFeatureKVSize = sizeof(AlphaFeatureKV)
