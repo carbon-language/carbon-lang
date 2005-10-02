@@ -1102,6 +1102,20 @@ unsigned SimpleSched::EmitDAG(SDOperand Op) {
         
         unsigned VReg = EmitDAG(Op.getOperand(i));
         MI->addRegOperand(VReg, MachineOperand::Use);
+        
+        // Verify that it is right.
+        assert(MRegisterInfo::isVirtualRegister(VReg) && "Not a vreg?");
+        assert(II.OpInfo[i+NumResults].RegClass &&
+               "Don't have operand info for this instruction!");
+#ifndef NDEBUG
+        if (RegMap->getRegClass(VReg) != II.OpInfo[i+NumResults].RegClass) {
+          std::cerr << "OP:  ";
+          Op.getOperand(i).Val->dump(&DAG); std::cerr << "\nUSE: ";
+          Op.Val->dump(&DAG); std::cerr << "\n";
+        }
+#endif
+        assert(RegMap->getRegClass(VReg) == II.OpInfo[i+NumResults].RegClass &&
+               "Register class of operand and regclass of use don't agree!");
       } else if (ConstantSDNode *C =
                                    dyn_cast<ConstantSDNode>(Op.getOperand(i))) {
         MI->addZeroExtImm64Operand(C->getValue());
@@ -1129,6 +1143,13 @@ unsigned SimpleSched::EmitDAG(SDOperand Op) {
                "Chain and flag operands should occur at end of operand list!");
         unsigned VReg = EmitDAG(Op.getOperand(i));
         MI->addRegOperand(VReg, MachineOperand::Use);
+        
+        // Verify that it is right.
+        assert(MRegisterInfo::isVirtualRegister(VReg) && "Not a vreg?");
+        assert(II.OpInfo[i+NumResults].RegClass &&
+               "Don't have operand info for this instruction!");
+        assert(RegMap->getRegClass(VReg) == II.OpInfo[i+NumResults].RegClass &&
+               "Register class of operand and regclass of use don't agree!");
       }
     }
 
