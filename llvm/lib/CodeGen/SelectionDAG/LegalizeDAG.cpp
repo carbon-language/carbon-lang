@@ -380,8 +380,43 @@ SDOperand SelectionDAGLegalize::PromoteLegalFP_TO_INT(SDOperand LegalOp,
 
 
 void SelectionDAGLegalize::LegalizeDAG() {
+  // The legalize process is inherently a bottom-up recursive process (users
+  // legalize their uses before themselves).  Given infinite stack space, we
+  // could just start legalizing on the root and traverse the whole graph.  In
+  // practice however, this causes us to run out of stack space on large basic
+  // blocks.  To avoid this problem, legalize the entry node, then all its uses
+  // iteratively instead of recursively.
+  std::vector<SDOperand> Worklist;
+  Worklist.push_back(DAG.getEntryNode());
+  
+  while (!Worklist.empty()) {
+    SDOperand Node = Worklist.back();
+    Worklist.pop_back();
+   
+    if (LegalizedNodes.count(Node)) continue;
+      
+    for (SDNode::use_iterator UI = Node.Val->use_begin(),
+         E = Node.Val->use_end(); UI != E; ++UI) {
+      // Scan the values.  If this use has a value that is a token chain, add it
+      // to the worklist.
+      SDNode *User = *UI;
+      for (unsigned i = 0, e = User->getNumValues(); i != e; ++i)
+        if (User->getValueType(i) == MVT::Other) {
+          Worklist.push_back(SDOperand(User, i));
+          break; 
+        }
+    }
+    
+    // Finally, legalize this node.
+    LegalizeOp(Node);
+  }
+  
+  
+  // Finally, legalize from the root up, to make sure we have legalized
+  // everything possible.
   SDOperand OldRoot = DAG.getRoot();
   SDOperand NewRoot = LegalizeOp(OldRoot);
+  
   DAG.setRoot(NewRoot);
 
   ExpandedNodes.clear();
@@ -588,17 +623,9 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
     // Do not try to legalize the target-specific arguments (#1+)
     Tmp2 = Node->getOperand(0);
-    if (Tmp1 != Tmp2) {
+    if (Tmp1 != Tmp2)
       Node->setAdjCallChain(Tmp1);
 
-      // If moving the operand from pointing to Tmp2 dropped its use count to 1,
-      // this will cause the maps used to memoize results to get confused.
-      // Create and add a dummy use, just to increase its use count.  This will
-      // be removed at the end of legalize when dead nodes are removed.
-      if (Tmp2.Val->hasOneUse())
-        DAG.getNode(ISD::PCMARKER, MVT::Other, Tmp2,
-                    DAG.getConstant(0, MVT::i32));
-    }
     // Note that we do not create new CALLSEQ_DOWN/UP nodes here.  These
     // nodes are treated specially and are mutated in place.  This makes the dag
     // legalization process more efficient and also makes libcall insertion
