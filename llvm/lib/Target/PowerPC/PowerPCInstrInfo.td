@@ -763,7 +763,8 @@ def FMADD : AForm_1<63, 29,
 def FMADDS : AForm_1<59, 29,
                     (ops F4RC:$FRT, F4RC:$FRA, F4RC:$FRC, F4RC:$FRB),
                     "fmadds $FRT, $FRA, $FRC, $FRB",
-                    []>;
+                    [(set F4RC:$FRT, (fadd (fmul F4RC:$FRA, F4RC:$FRC),
+                                           F4RC:$FRB))]>;
 def FMSUB : AForm_1<63, 28,
                     (ops F8RC:$FRT, F8RC:$FRA, F8RC:$FRC, F8RC:$FRB),
                     "fmsub $FRT, $FRA, $FRC, $FRB",
@@ -772,7 +773,8 @@ def FMSUB : AForm_1<63, 28,
 def FMSUBS : AForm_1<59, 28,
                     (ops F4RC:$FRT, F4RC:$FRA, F4RC:$FRC, F4RC:$FRB),
                     "fmsubs $FRT, $FRA, $FRC, $FRB",
-                    []>;
+                    [(set F4RC:$FRT, (fsub (fmul F4RC:$FRA, F4RC:$FRC),
+                                           F4RC:$FRB))]>;
 def FNMADD : AForm_1<63, 31,
                     (ops F8RC:$FRT, F8RC:$FRA, F8RC:$FRC, F8RC:$FRB),
                     "fnmadd $FRT, $FRA, $FRC, $FRB",
@@ -781,7 +783,8 @@ def FNMADD : AForm_1<63, 31,
 def FNMADDS : AForm_1<59, 31,
                     (ops F4RC:$FRT, F4RC:$FRA, F4RC:$FRC, F4RC:$FRB),
                     "fnmadds $FRT, $FRA, $FRC, $FRB",
-                    []>;
+                    [(set F4RC:$FRT, (fneg (fadd (fmul F4RC:$FRA, F4RC:$FRC),
+                                                 F4RC:$FRB)))]>;
 def FNMSUB : AForm_1<63, 30,
                     (ops F8RC:$FRT, F8RC:$FRA, F8RC:$FRC, F8RC:$FRB),
                     "fnmsub $FRT, $FRA, $FRC, $FRB",
@@ -790,7 +793,8 @@ def FNMSUB : AForm_1<63, 30,
 def FNMSUBS : AForm_1<59, 30,
                     (ops F4RC:$FRT, F4RC:$FRA, F4RC:$FRC, F4RC:$FRB),
                     "fnmsubs $FRT, $FRA, $FRC, $FRB",
-                    []>;
+                    [(set F4RC:$FRT, (fneg (fsub (fmul F4RC:$FRA, F4RC:$FRC),
+                                                 F4RC:$FRB)))]>;
 // FSEL is artificially split into 4 and 8-byte forms for the result.  To avoid
 // having 4 of these, force the comparison to always be an 8-byte double (code
 // should use an FMRSD if the input comparison value really wants to be a float)
@@ -810,7 +814,7 @@ def FADD  : AForm_2<63, 21,
 def FADDS : AForm_2<59, 21,
                     (ops F4RC:$FRT, F4RC:$FRA, F4RC:$FRB),
                     "fadds $FRT, $FRA, $FRB",
-                    []>;
+                    [(set F4RC:$FRT, (fadd F4RC:$FRA, F4RC:$FRB))]>;
 def FDIV  : AForm_2<63, 18,
                     (ops F8RC:$FRT, F8RC:$FRA, F8RC:$FRB),
                     "fdiv $FRT, $FRA, $FRB",
@@ -818,7 +822,7 @@ def FDIV  : AForm_2<63, 18,
 def FDIVS : AForm_2<59, 18,
                     (ops F4RC:$FRT, F4RC:$FRA, F4RC:$FRB),
                     "fdivs $FRT, $FRA, $FRB",
-                    []>;
+                    [(set F4RC:$FRT, (fdiv F4RC:$FRA, F4RC:$FRB))]>;
 def FMUL  : AForm_3<63, 25,
                     (ops F8RC:$FRT, F8RC:$FRA, F8RC:$FRB),
                     "fmul $FRT, $FRA, $FRB",
@@ -826,7 +830,7 @@ def FMUL  : AForm_3<63, 25,
 def FMULS : AForm_3<59, 25,
                     (ops F4RC:$FRT, F4RC:$FRA, F4RC:$FRB),
                     "fmuls $FRT, $FRA, $FRB",
-                    []>;
+                    [(set F4RC:$FRT, (fmul F4RC:$FRA, F4RC:$FRB))]>;
 def FSUB  : AForm_2<63, 20,
                     (ops F8RC:$FRT, F8RC:$FRA, F8RC:$FRB),
                     "fsub $FRT, $FRA, $FRB",
@@ -834,7 +838,7 @@ def FSUB  : AForm_2<63, 20,
 def FSUBS : AForm_2<59, 20,
                     (ops F4RC:$FRT, F4RC:$FRA, F4RC:$FRB),
                     "fsubs $FRT, $FRA, $FRB",
-                    []>;
+                    [(set F4RC:$FRT, (fsub F4RC:$FRA, F4RC:$FRB))]>;
 
 // M-Form instructions.  rotate and mask instructions.
 //
