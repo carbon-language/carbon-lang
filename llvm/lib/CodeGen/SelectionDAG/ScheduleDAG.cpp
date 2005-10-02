@@ -1031,11 +1031,11 @@ void SimpleSched::EmitNode(NodeInfo *NI) {
       if (MRegisterInfo::isVirtualRegister(SrcReg)) {
         TRC = RegMap->getRegClass(SrcReg);
       } else {
-        // FIXME: we don't know what register class to generate this for.  Do
-        // a brute force search and pick the first match. :(
+        // Pick the register class of the right type that contains this physreg.
         for (MRegisterInfo::regclass_iterator I = MRI.regclass_begin(),
-               E = MRI.regclass_end(); I != E; ++I)
-          if ((*I)->contains(SrcReg)) {
+             E = MRI.regclass_end(); I != E; ++I)
+          if ((*I)->getType() == Node->getValueType(0) &&
+              (*I)->contains(SrcReg)) {
             TRC = *I;
             break;
           }
@@ -1100,7 +1100,8 @@ unsigned SimpleSched::EmitDAG(SDOperand Op) {
                Op.getOperand(i).getValueType() != MVT::Flag &&
                "Chain and flag operands should occur at end of operand list!");
         
-        MI->addRegOperand(EmitDAG(Op.getOperand(i)), MachineOperand::Use);
+        unsigned VReg = EmitDAG(Op.getOperand(i));
+        MI->addRegOperand(VReg, MachineOperand::Use);
       } else if (ConstantSDNode *C =
                                    dyn_cast<ConstantSDNode>(Op.getOperand(i))) {
         MI->addZeroExtImm64Operand(C->getValue());
@@ -1126,7 +1127,8 @@ unsigned SimpleSched::EmitDAG(SDOperand Op) {
         assert(Op.getOperand(i).getValueType() != MVT::Other &&
                Op.getOperand(i).getValueType() != MVT::Flag &&
                "Chain and flag operands should occur at end of operand list!");
-        MI->addRegOperand(EmitDAG(Op.getOperand(i)), MachineOperand::Use);
+        unsigned VReg = EmitDAG(Op.getOperand(i));
+        MI->addRegOperand(VReg, MachineOperand::Use);
       }
     }
 
@@ -1188,11 +1190,11 @@ unsigned SimpleSched::EmitDAG(SDOperand Op) {
       if (MRegisterInfo::isVirtualRegister(SrcReg)) {
         TRC = RegMap->getRegClass(SrcReg);
       } else {
-        // FIXME: we don't know what register class to generate this for.  Do
-        // a brute force search and pick the first match. :(
+        // Pick the register class of the right type that contains this physreg.
         for (MRegisterInfo::regclass_iterator I = MRI.regclass_begin(),
                E = MRI.regclass_end(); I != E; ++I)
-          if ((*I)->contains(SrcReg)) {
+          if ((*I)->getType() == Op.Val->getValueType(0) &&
+              (*I)->contains(SrcReg)) {
             TRC = *I;
             break;
           }
