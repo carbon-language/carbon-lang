@@ -141,9 +141,10 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
       const CodeGenRegisterClass &RC = RegisterClasses[i];
       OS << RC.MethodBodies << "\n";
       OS << RC.getName() << "Class::" << RC.getName()
-        << "Class()  : TargetRegisterClass(" << RC.SpillSize/8 << ", "
-        << RC.SpillAlignment/8 << ", " << RC.getName() << ", "
-        << RC.getName() << " + " << RC.Elements.size() << ") {}\n";
+         << "Class()  : TargetRegisterClass(MVT::" << getEnumName(RC.VT) << ","
+         << RC.SpillSize/8 << ", "
+         << RC.SpillAlignment/8 << ", " << RC.getName() << ", "
+         << RC.getName() << " + " << RC.Elements.size() << ") {}\n";
     }
   
     OS << "}\n";
