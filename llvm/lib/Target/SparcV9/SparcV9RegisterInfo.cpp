@@ -43,7 +43,7 @@ namespace {
     SparcV9::g7, SparcV9::o6
   };
   struct IRClass : public TargetRegisterClass {
-    IRClass() : TargetRegisterClass(8, 8, IR, IR + 32) {}
+    IRClass() : TargetRegisterClass(MVT::i64, 8, 8, IR, IR + 32) {}
   } IRInstance;
 
 
@@ -71,7 +71,7 @@ namespace {
   // one (32, 34, ...), and they must contain double-fp or quad-fp
   // values... see below about the aliasing problems.
   struct FRClass : public TargetRegisterClass {
-    FRClass() : TargetRegisterClass(4, 8, FR, FR + 64) {}
+    FRClass() : TargetRegisterClass(MVT::f32, 4, 8, FR, FR + 64) {}
   } FRInstance;
 
 
@@ -80,7 +80,7 @@ namespace {
     SparcV9::xcc, SparcV9::icc, SparcV9::ccr
   };
   struct ICCRClass : public TargetRegisterClass {
-    ICCRClass() : TargetRegisterClass(1, 8, ICCR, ICCR + 3) {}
+    ICCRClass() : TargetRegisterClass(MVT::i1, 1, 8, ICCR, ICCR + 3) {}
   } ICCRInstance;
 
 
@@ -89,7 +89,7 @@ namespace {
     SparcV9::fcc0, SparcV9::fcc1, SparcV9::fcc2, SparcV9::fcc3
   };
   struct FCCRClass : public TargetRegisterClass {
-    FCCRClass() : TargetRegisterClass(1, 8, FCCR, FCCR + 4) {}
+    FCCRClass() : TargetRegisterClass(MVT::i1, 1, 8, FCCR, FCCR + 4) {}
   } FCCRInstance;
 
 
@@ -98,7 +98,7 @@ namespace {
     SparcV9::fsr
   };
   struct SRClass : public TargetRegisterClass {
-    SRClass() : TargetRegisterClass(8, 8, SR, SR + 1) {}
+    SRClass() : TargetRegisterClass(MVT::i64, 8, 8, SR, SR + 1) {}
   } SRInstance;
 
 
