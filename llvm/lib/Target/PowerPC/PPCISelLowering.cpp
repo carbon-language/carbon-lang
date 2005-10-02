@@ -130,13 +130,17 @@ SDOperand PPC32TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   default: assert(0 && "Wasn't expecting to be able to lower this!"); 
   case ISD::FP_TO_SINT: {
     assert(MVT::isFloatingPoint(Op.getOperand(0).getValueType()));
+    SDOperand Src = Op.getOperand(0);
+    if (Src.getValueType() == MVT::f32)
+      Src = DAG.getNode(ISD::FP_EXTEND, MVT::f64, Src);
+    
     switch (Op.getValueType()) {
     default: assert(0 && "Unhandled FP_TO_SINT type in custom expander!");
     case MVT::i32:
-      Op = DAG.getNode(PPCISD::FCTIWZ, MVT::f64, Op.getOperand(0));
+      Op = DAG.getNode(PPCISD::FCTIWZ, MVT::f64, Src);
       break;
     case MVT::i64:
-      Op = DAG.getNode(PPCISD::FCTIDZ, MVT::f64, Op.getOperand(0));
+      Op = DAG.getNode(PPCISD::FCTIDZ, MVT::f64, Src);
       break;
     }
    
