@@ -503,7 +503,7 @@ void SchedGraph::findDefUseInfoAtInstr(const TargetMachine& target,
       // (only if the node is not already on the callDepVec!)
       if (callDepNodeVec.size() == 0 || callDepNodeVec.back() != node)
         {
-          unsigned rcid;
+          unsigned rcid = 0;
           int regInClass = target.getRegInfo()->getClassRegNum(regNum, rcid);
           if (target.getRegInfo()->getMachineRegClass(rcid)
               ->isRegVolatile(regInClass))
