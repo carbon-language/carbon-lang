@@ -1186,7 +1186,7 @@ unsigned SimpleSched::EmitDAG(SDOperand Op) {
       }
       break;
     case ISD::CopyToReg: {
-      SDOperand FlagOp;
+      SDOperand FlagOp;  FlagOp.ResNo = 0;
       if (Op.getNumOperands() == 4) {
         FlagOp = Op.getOperand(3);
       }
