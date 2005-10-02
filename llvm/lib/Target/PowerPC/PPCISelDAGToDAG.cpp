@@ -753,18 +753,14 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
     return SDOperand(Result.Val, Op.ResNo);
   }      
   case PPCISD::FSEL: {
-    unsigned Opc;
-    if (N->getValueType(0) == MVT::f32) {
-      Opc = N->getOperand(0).getValueType() == MVT::f32 ?
-              PPC::FSELSS : PPC::FSELSD;
-    } else {
-      Opc = N->getOperand(0).getValueType() == MVT::f64 ?
-              PPC::FSELDD : PPC::FSELDS;
-    }
-    CurDAG->SelectNodeTo(N, Opc, N->getValueType(0),
-                         Select(N->getOperand(0)),
-                         Select(N->getOperand(1)),
-                         Select(N->getOperand(2)));
+    SDOperand Comparison = Select(N->getOperand(0));
+    // Extend the comparison to 64-bits.
+    if (Comparison.getValueType() == MVT::f32)
+      Comparison = CurDAG->getTargetNode(PPC::FMRSD, MVT::f64, Comparison);
+    
+    unsigned Opc = N->getValueType(0) == MVT::f32 ? PPC::FSELS : PPC::FSELD;
+    CurDAG->SelectNodeTo(N, Opc, N->getValueType(0), Comparison,
+                         Select(N->getOperand(1)), Select(N->getOperand(2)));
     return SDOperand(N, 0);
   }
   case PPCISD::FCFID:

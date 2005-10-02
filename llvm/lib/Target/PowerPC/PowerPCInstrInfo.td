@@ -791,21 +791,15 @@ def FNMSUBS : AForm_1<59, 30,
                     (ops F4RC:$FRT, F4RC:$FRA, F4RC:$FRC, F4RC:$FRB),
                     "fnmsubs $FRT, $FRA, $FRC, $FRB",
                     []>;
-// FSEL is artificially split into 4 and 8-byte forms for the comparison type
+// FSEL is artificially split into 4 and 8-byte forms for the result.  To avoid
+// having 4 of these, force the comparison to always be an 8-byte double (code
+// should use an FMRSD if the input comparison value really wants to be a float)
 // and 4/8 byte forms for the result and operand type..
-def FSELDD : AForm_1<63, 23,
-                     (ops F8RC:$FRT, F8RC:$FRA, F8RC:$FRC, F8RC:$FRB),
-                     "fsel $FRT, $FRA, $FRC, $FRB",
-                     []>;
-def FSELSS : AForm_1<63, 23,
-                     (ops F4RC:$FRT, F4RC:$FRA, F4RC:$FRC, F4RC:$FRB),
-                     "fsel $FRT, $FRA, $FRC, $FRB",
-                     []>;
-def FSELDS : AForm_1<63, 23,  // result Double, comparison Single
-                     (ops F8RC:$FRT, F4RC:$FRA, F8RC:$FRC, F8RC:$FRB),
-                     "fsel $FRT, $FRA, $FRC, $FRB",
-                     []>;
-def FSELSD : AForm_1<63, 23,  // result Single, comparison Double
+def FSELD : AForm_1<63, 23,
+                    (ops F8RC:$FRT, F8RC:$FRA, F8RC:$FRC, F8RC:$FRB),
+                    "fsel $FRT, $FRA, $FRC, $FRB",
+                    []>;
+def FSELS : AForm_1<63, 23,
                      (ops F4RC:$FRT, F8RC:$FRA, F4RC:$FRC, F4RC:$FRB),
                      "fsel $FRT, $FRA, $FRC, $FRB",
                      []>;
