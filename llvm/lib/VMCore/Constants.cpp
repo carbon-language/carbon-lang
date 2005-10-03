@@ -488,136 +488,6 @@ bool ConstantFP::isValueValidForType(const Type *Ty, double Val) {
 };
 
 //===----------------------------------------------------------------------===//
-//                replaceUsesOfWithOnConstant implementations
-
-void ConstantArray::replaceUsesOfWithOnConstant(Value *From, Value *To,
-                                                bool DisableChecking) {
-  assert(isa<Constant>(To) && "Cannot make Constant refer to non-constant!");
-
-  std::vector<Constant*> Values;
-  Values.reserve(getNumOperands());  // Build replacement array...
-  for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
-    Constant *Val = getOperand(i);
-    if (Val == From) Val = cast<Constant>(To);
-    Values.push_back(Val);
-  }
-
-  Constant *Replacement = ConstantArray::get(getType(), Values);
-  assert(Replacement != this && "I didn't contain From!");
-
-  // Everyone using this now uses the replacement...
-  if (DisableChecking)
-    uncheckedReplaceAllUsesWith(Replacement);
-  else
-    replaceAllUsesWith(Replacement);
-
-  // Delete the old constant!
-  destroyConstant();
-}
-
-void ConstantStruct::replaceUsesOfWithOnConstant(Value *From, Value *To,
-                                                 bool DisableChecking) {
-  assert(isa<Constant>(To) && "Cannot make Constant refer to non-constant!");
-
-  std::vector<Constant*> Values;
-  Values.reserve(getNumOperands());  // Build replacement array...
-  for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
-    Constant *Val = getOperand(i);
-    if (Val == From) Val = cast<Constant>(To);
-    Values.push_back(Val);
-  }
-
-  Constant *Replacement = ConstantStruct::get(getType(), Values);
-  assert(Replacement != this && "I didn't contain From!");
-
-  // Everyone using this now uses the replacement...
-  if (DisableChecking)
-    uncheckedReplaceAllUsesWith(Replacement);
-  else
-    replaceAllUsesWith(Replacement);
-
-  // Delete the old constant!
-  destroyConstant();
-}
-
-void ConstantPacked::replaceUsesOfWithOnConstant(Value *From, Value *To,
-                                                 bool DisableChecking) {
-  assert(isa<Constant>(To) && "Cannot make Constant refer to non-constant!");
-
-  std::vector<Constant*> Values;
-  Values.reserve(getNumOperands());  // Build replacement array...
-  for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
-    Constant *Val = getOperand(i);
-    if (Val == From) Val = cast<Constant>(To);
-    Values.push_back(Val);
-  }
-
-  Constant *Replacement = ConstantPacked::get(getType(), Values);
-  assert(Replacement != this && "I didn't contain From!");
-
-  // Everyone using this now uses the replacement...
-  if (DisableChecking)
-    uncheckedReplaceAllUsesWith(Replacement);
-  else
-    replaceAllUsesWith(Replacement);
-
-  // Delete the old constant!
-  destroyConstant();
-}
-
-void ConstantExpr::replaceUsesOfWithOnConstant(Value *From, Value *ToV,
-                                               bool DisableChecking) {
-  assert(isa<Constant>(ToV) && "Cannot make Constant refer to non-constant!");
-  Constant *To = cast<Constant>(ToV);
-
-  Constant *Replacement = 0;
-  if (getOpcode() == Instruction::GetElementPtr) {
-    std::vector<Constant*> Indices;
-    Constant *Pointer = getOperand(0);
-    Indices.reserve(getNumOperands()-1);
-    if (Pointer == From) Pointer = To;
-
-    for (unsigned i = 1, e = getNumOperands(); i != e; ++i) {
-      Constant *Val = getOperand(i);
-      if (Val == From) Val = To;
-      Indices.push_back(Val);
-    }
-    Replacement = ConstantExpr::getGetElementPtr(Pointer, Indices);
-  } else if (getOpcode() == Instruction::Cast) {
-    assert(getOperand(0) == From && "Cast only has one use!");
-    Replacement = ConstantExpr::getCast(To, getType());
-  } else if (getOpcode() == Instruction::Select) {
-    Constant *C1 = getOperand(0);
-    Constant *C2 = getOperand(1);
-    Constant *C3 = getOperand(2);
-    if (C1 == From) C1 = To;
-    if (C2 == From) C2 = To;
-    if (C3 == From) C3 = To;
-    Replacement = ConstantExpr::getSelect(C1, C2, C3);
-  } else if (getNumOperands() == 2) {
-    Constant *C1 = getOperand(0);
-    Constant *C2 = getOperand(1);
-    if (C1 == From) C1 = To;
-    if (C2 == From) C2 = To;
-    Replacement = ConstantExpr::get(getOpcode(), C1, C2);
-  } else {
-    assert(0 && "Unknown ConstantExpr type!");
-    return;
-  }
-
-  assert(Replacement != this && "I didn't contain From!");
-
-  // Everyone using this now uses the replacement...
-  if (DisableChecking)
-    uncheckedReplaceAllUsesWith(Replacement);
-  else
-    replaceAllUsesWith(Replacement);
-
-  // Delete the old constant!
-  destroyConstant();
-}
-
-//===----------------------------------------------------------------------===//
 //                      Factory Function Implementation
 
 // ConstantCreator - A class that is used to create constants by
@@ -1453,6 +1323,138 @@ void ConstantExpr::destroyConstant() {
 const char *ConstantExpr::getOpcodeName() const {
   return Instruction::getOpcodeName(getOpcode());
 }
+
+//===----------------------------------------------------------------------===//
+//                replaceUsesOfWithOnConstant implementations
+
+void ConstantArray::replaceUsesOfWithOnConstant(Value *From, Value *To,
+                                                bool DisableChecking) {
+  assert(isa<Constant>(To) && "Cannot make Constant refer to non-constant!");
+  
+  std::vector<Constant*> Values;
+  Values.reserve(getNumOperands());  // Build replacement array...
+  for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
+    Constant *Val = getOperand(i);
+    if (Val == From) Val = cast<Constant>(To);
+    Values.push_back(Val);
+  }
+  
+  Constant *Replacement = ConstantArray::get(getType(), Values);
+  assert(Replacement != this && "I didn't contain From!");
+  
+  // Everyone using this now uses the replacement...
+  if (DisableChecking)
+    uncheckedReplaceAllUsesWith(Replacement);
+  else
+    replaceAllUsesWith(Replacement);
+  
+  // Delete the old constant!
+  destroyConstant();
+}
+
+void ConstantStruct::replaceUsesOfWithOnConstant(Value *From, Value *To,
+                                                 bool DisableChecking) {
+  assert(isa<Constant>(To) && "Cannot make Constant refer to non-constant!");
+  
+  std::vector<Constant*> Values;
+  Values.reserve(getNumOperands());  // Build replacement array...
+  for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
+    Constant *Val = getOperand(i);
+    if (Val == From) Val = cast<Constant>(To);
+    Values.push_back(Val);
+  }
+  
+  Constant *Replacement = ConstantStruct::get(getType(), Values);
+  assert(Replacement != this && "I didn't contain From!");
+  
+  // Everyone using this now uses the replacement...
+  if (DisableChecking)
+    uncheckedReplaceAllUsesWith(Replacement);
+  else
+    replaceAllUsesWith(Replacement);
+  
+  // Delete the old constant!
+  destroyConstant();
+}
+
+void ConstantPacked::replaceUsesOfWithOnConstant(Value *From, Value *To,
+                                                 bool DisableChecking) {
+  assert(isa<Constant>(To) && "Cannot make Constant refer to non-constant!");
+  
+  std::vector<Constant*> Values;
+  Values.reserve(getNumOperands());  // Build replacement array...
+  for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
+    Constant *Val = getOperand(i);
+    if (Val == From) Val = cast<Constant>(To);
+    Values.push_back(Val);
+  }
+  
+  Constant *Replacement = ConstantPacked::get(getType(), Values);
+  assert(Replacement != this && "I didn't contain From!");
+  
+  // Everyone using this now uses the replacement...
+  if (DisableChecking)
+    uncheckedReplaceAllUsesWith(Replacement);
+  else
+    replaceAllUsesWith(Replacement);
+  
+  // Delete the old constant!
+  destroyConstant();
+}
+
+void ConstantExpr::replaceUsesOfWithOnConstant(Value *From, Value *ToV,
+                                               bool DisableChecking) {
+  assert(isa<Constant>(ToV) && "Cannot make Constant refer to non-constant!");
+  Constant *To = cast<Constant>(ToV);
+  
+  Constant *Replacement = 0;
+  if (getOpcode() == Instruction::GetElementPtr) {
+    std::vector<Constant*> Indices;
+    Constant *Pointer = getOperand(0);
+    Indices.reserve(getNumOperands()-1);
+    if (Pointer == From) Pointer = To;
+    
+    for (unsigned i = 1, e = getNumOperands(); i != e; ++i) {
+      Constant *Val = getOperand(i);
+      if (Val == From) Val = To;
+      Indices.push_back(Val);
+    }
+    Replacement = ConstantExpr::getGetElementPtr(Pointer, Indices);
+  } else if (getOpcode() == Instruction::Cast) {
+    assert(getOperand(0) == From && "Cast only has one use!");
+    Replacement = ConstantExpr::getCast(To, getType());
+  } else if (getOpcode() == Instruction::Select) {
+    Constant *C1 = getOperand(0);
+    Constant *C2 = getOperand(1);
+    Constant *C3 = getOperand(2);
+    if (C1 == From) C1 = To;
+    if (C2 == From) C2 = To;
+    if (C3 == From) C3 = To;
+    Replacement = ConstantExpr::getSelect(C1, C2, C3);
+  } else if (getNumOperands() == 2) {
+    Constant *C1 = getOperand(0);
+    Constant *C2 = getOperand(1);
+    if (C1 == From) C1 = To;
+    if (C2 == From) C2 = To;
+    Replacement = ConstantExpr::get(getOpcode(), C1, C2);
+  } else {
+    assert(0 && "Unknown ConstantExpr type!");
+    return;
+  }
+  
+  assert(Replacement != this && "I didn't contain From!");
+  
+  // Everyone using this now uses the replacement...
+  if (DisableChecking)
+    uncheckedReplaceAllUsesWith(Replacement);
+  else
+    replaceAllUsesWith(Replacement);
+  
+  // Delete the old constant!
+  destroyConstant();
+}
+
+
 
 /// clearAllValueMaps - This method frees all internal memory used by the
 /// constant subsystem, which can be used in environments where this memory
