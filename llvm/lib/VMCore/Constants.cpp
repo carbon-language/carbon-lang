@@ -515,9 +515,11 @@ namespace llvm {
 namespace {
   template<class ValType, class TypeClass, class ConstantClass>
   class ValueMap : public AbstractTypeUser {
+  public:
     typedef std::pair<const TypeClass*, ValType> MapKey;
     typedef std::map<MapKey, ConstantClass *> MapTy;
     typedef typename MapTy::iterator MapIterator;
+  private:
     MapTy Map;
 
     typedef std::map<const TypeClass*, MapIterator> AbstractTypeMapTy;
@@ -533,8 +535,22 @@ namespace {
     }
 
   public:
-    // getOrCreate - Return the specified constant from the map, creating it if
-    // necessary.
+    MapIterator map_end() { return Map.end(); }
+    
+    /// InsertOrGetItem - Return an iterator for the specified element.
+    /// If the element exists in the map, the returned iterator points to the
+    /// entry and Exists=true.  If not, the iterator points to the newly
+    /// inserted entry and returns Exists=false.  Newly inserted entries have
+    /// I->second == 0, and should be filled in.
+    MapIterator InsertOrGetItem(std::pair<MapKey, ConstantClass *> &InsertVal,
+                                   bool &Exists) {
+      std::pair<MapIterator, bool> IP = Map.insert(InsertVal);
+      Exists = !IP.second;
+      return IP.first;
+    }
+      
+    /// getOrCreate - Return the specified constant from the map, creating it if
+    /// necessary.
     ConstantClass *getOrCreate(const TypeClass *Ty, const ValType &V) {
       MapKey Lookup(Ty, V);
       MapIterator I = Map.lower_bound(Lookup);
@@ -544,7 +560,6 @@ namespace {
       // If no preexisting value, create one now...
       ConstantClass *Result =
         ConstantCreator<ConstantClass,TypeClass,ValType>::create(Ty, V);
-
 
       /// FIXME: why does this assert fail when loading 176.gcc?
       //assert(Result->getType() == Ty && "Type specified is not correct!");
@@ -784,8 +799,9 @@ static std::vector<Constant*> getValType(ConstantArray *CA) {
   return Elements;
 }
 
-static ValueMap<std::vector<Constant*>, ArrayType,
-                ConstantArray> ArrayConstants;
+typedef ValueMap<std::vector<Constant*>, ArrayType, 
+                 ConstantArray> ArrayConstantsTy;
+static ArrayConstantsTy ArrayConstants;
 
 Constant *ConstantArray::get(const ArrayType *Ty,
                              const std::vector<Constant*> &V) {
@@ -1331,15 +1347,49 @@ void ConstantArray::replaceUsesOfWithOnConstant(Value *From, Value *To,
                                                 bool DisableChecking) {
   assert(isa<Constant>(To) && "Cannot make Constant refer to non-constant!");
   
-  std::vector<Constant*> Values;
-  Values.reserve(getNumOperands());  // Build replacement array...
+  std::pair<ArrayConstantsTy::MapKey, ConstantArray*> Lookup;
+  Lookup.first.first = getType();
+  Lookup.second = this;
+  std::vector<Constant*> &Values = Lookup.first.second;
+  Values.reserve(getNumOperands());  // Build replacement array.
+  
+  bool isAllZeros = false;   // Does this turn into an all-zeros array?
   for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
     Constant *Val = getOperand(i);
     if (Val == From) Val = cast<Constant>(To);
     Values.push_back(Val);
+    if (isAllZeros) isAllZeros = Val->isNullValue();
   }
   
-  Constant *Replacement = ConstantArray::get(getType(), Values);
+  Constant *Replacement = 0;
+  if (isAllZeros) {
+    Replacement = ConstantAggregateZero::get(getType());
+  } else {
+    // Check to see if we have this array type already.
+    bool Exists;
+    ArrayConstantsTy::MapIterator I =
+      ArrayConstants.InsertOrGetItem(Lookup, Exists);
+    
+    if (Exists) {
+      Replacement = I->second;
+    } else {
+      // Okay, the new shape doesn't exist in the system yet.  Instead of
+      // creating a new constant array, inserting it, replaceallusesof'ing the
+      // old with the new, then deleting the old... just update the current one
+      // in place!
+      if (I != ArrayConstants.map_end() && I->second == this)
+        ++I;    // Do not invalidate iterator!
+      ArrayConstants.remove(this);   // Remove old shape from the map.
+      
+      // Update to the new values.
+      for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
+        if (getOperand(i) == From)
+          setOperand(i, cast<Constant>(To));
+      return;
+    }
+  }
+ 
+  // Otherwise, I do need to replace this with an existing value.
   assert(Replacement != this && "I didn't contain From!");
   
   // Everyone using this now uses the replacement...
