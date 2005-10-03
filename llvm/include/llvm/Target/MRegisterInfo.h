@@ -17,7 +17,7 @@
 #define LLVM_TARGET_MREGISTERINFO_H
 
 #include "llvm/CodeGen/MachineBasicBlock.h"
-#include "llvm/Codegen/ValueTypes.h"
+#include "llvm/CodeGen/ValueTypes.h"
 #include <cassert>
 #include <functional>
 
