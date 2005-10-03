@@ -386,7 +386,6 @@ private:
   std::vector<NodeInfo*> Ordering;      // Emit ordering of nodes
   ResourceTally<unsigned> Tally;        // Resource usage tally
   unsigned NSlots;                      // Total latency
-  std::map<SDNode *, unsigned> VRMap;   // Node to VR map
   static const unsigned NotFound = ~0U; // Search marker
   
 public:
@@ -427,7 +426,9 @@ private:
   void IncludeNode(NodeInfo *NI);
   void VisitAll();
   void Schedule();
-  void GatherNodeInfo();
+  void IdentifyGroups();
+  void GatherSchedulingInfo();
+  void PrepareNodeInfo();
   bool isStrongDependency(NodeInfo *A, NodeInfo *B);
   bool isWeakDependency(NodeInfo *A, NodeInfo *B);
   void ScheduleBackward();
@@ -635,28 +636,34 @@ void SimpleSched::VisitAll() {
   }
 }
 
-/// GatherNodeInfo - Get latency and resource information about each node.
-/// 
-void SimpleSched::GatherNodeInfo() {
-  // Allocate node information
-  Info = new NodeInfo[NodeCount];
-  // Get base of all nodes table
-  SelectionDAG::allnodes_iterator AllNodes = DAG.allnodes_begin();
-  
-  // For each node being scheduled
+/// IdentifyGroups - Put flagged nodes into groups.
+///
+void SimpleSched::IdentifyGroups() {
   for (unsigned i = 0, N = NodeCount; i < N; i++) {
-    // Get next node from DAG all nodes table
-    SDNode *Node = AllNodes[i];
-    // Fast reference to node schedule info
     NodeInfo* NI = &Info[i];
-    // Set up map
-    Map[Node] = NI;
-    // Set node
-    NI->Node = Node;
-    // Set pending visit count
-    NI->setPending(Node->use_size());    
-    
+    SDNode *Node = NI->Node;
+
+    // For each operand (in reverse to only look at flags)
+    for (unsigned N = Node->getNumOperands(); 0 < N--;) {
+      // Get operand
+      SDOperand Op = Node->getOperand(N);
+      // No more flags to walk
+      if (Op.getValueType() != MVT::Flag) break;
+      // Add to node group
+      NodeGroup::Add(getNI(Op.Val), NI);
+    }
+  }
+}
+
+/// GatherSchedulingInfo - Get latency and resource information about each node.
+///
+void SimpleSched::GatherSchedulingInfo() {
+  for (unsigned i = 0, N = NodeCount; i < N; i++) {
+    NodeInfo* NI = &Info[i];
+    SDNode *Node = NI->Node;
+
     MVT::ValueType VT = Node->getValueType(0);
+    
     if (Node->isTargetOpcode()) {
       MachineOpCode TOpc = Node->getTargetOpcode();
       // FIXME: This is an ugly (but temporary!) hack to test the scheduler
@@ -701,21 +708,28 @@ void SimpleSched::GatherNodeInfo() {
     // Sum up all the latencies for max tally size
     NSlots += NI->Latency;
   }
+}
 
-  // Put flagged nodes into groups
+/// PrepareNodeInfo - Set up the basic minimum node info for scheduling.
+/// 
+void SimpleSched::PrepareNodeInfo() {
+  // Allocate node information
+  Info = new NodeInfo[NodeCount];
+  // Get base of all nodes table
+  SelectionDAG::allnodes_iterator AllNodes = DAG.allnodes_begin();
+  
+  // For each node being scheduled
   for (unsigned i = 0, N = NodeCount; i < N; i++) {
+    // Get next node from DAG all nodes table
+    SDNode *Node = AllNodes[i];
+    // Fast reference to node schedule info
     NodeInfo* NI = &Info[i];
-    SDNode *Node = NI->Node;
-
-    // For each operand (in reverse to only look at flags)
-    for (unsigned N = Node->getNumOperands(); 0 < N--;) {
-      // Get operand
-      SDOperand Op = Node->getOperand(N);
-      // No more flags to walk
-      if (Op.getValueType() != MVT::Flag) break;
-      // Add to node group
-      NodeGroup::Add(getNI(Op.Val), NI);
-    }
+    // Set up map
+    Map[Node] = NI;
+    // Set node
+    NI->Node = Node;
+    // Set pending visit count
+    NI->setPending(Node->use_size());    
   }
 }
 
@@ -1054,215 +1068,33 @@ void SimpleSched::EmitNode(NodeInfo *NI) {
   NI->VRBase = VRBase;
 }
 
-/// EmitDag - Generate machine code for an operand and needed dependencies.
-///
-unsigned SimpleSched::EmitDAG(SDOperand Op) {
-  std::map<SDNode *, unsigned>::iterator OpI = VRMap.lower_bound(Op.Val);
-  if (OpI != VRMap.end() && OpI->first == Op.Val)
-    return OpI->second + Op.ResNo;
-  unsigned &OpSlot = VRMap.insert(OpI, std::make_pair(Op.Val, 0))->second;
-  
-  unsigned ResultReg = 0;
-  if (Op.isTargetOpcode()) {
-    unsigned Opc = Op.getTargetOpcode();
-    const TargetInstrDescriptor &II = TII.get(Opc);
-
-    unsigned NumResults = CountResults(Op.Val);
-    unsigned NodeOperands = CountOperands(Op.Val);
-    unsigned NumMIOperands = NodeOperands + NumResults;
-#ifndef NDEBUG
-    assert((unsigned(II.numOperands) == NumMIOperands || II.numOperands == -1)&&
-           "#operands for dag node doesn't match .td file!"); 
-#endif
-
-    // Create the new machine instruction.
-    MachineInstr *MI = new MachineInstr(Opc, NumMIOperands, true, true);
-    
-    // Add result register values for things that are defined by this
-    // instruction.
-    if (NumResults) ResultReg = CreateVirtualRegisters(MI, NumResults, II);
-    
-    // If there is a token chain operand, emit it first, as a hack to get avoid
-    // really bad cases.
-    if (Op.getNumOperands() > NodeOperands &&
-        Op.getOperand(NodeOperands).getValueType() == MVT::Other) {
-      EmitDAG(Op.getOperand(NodeOperands));
-    }
-    
-    // Emit all of the actual operands of this instruction, adding them to the
-    // instruction as appropriate.
-    for (unsigned i = 0; i != NodeOperands; ++i) {
-      if (Op.getOperand(i).isTargetOpcode()) {
-        // Note that this case is redundant with the final else block, but we
-        // include it because it is the most common and it makes the logic
-        // simpler here.
-        assert(Op.getOperand(i).getValueType() != MVT::Other &&
-               Op.getOperand(i).getValueType() != MVT::Flag &&
-               "Chain and flag operands should occur at end of operand list!");
-        
-        unsigned VReg = EmitDAG(Op.getOperand(i));
-        MI->addRegOperand(VReg, MachineOperand::Use);
-        
-        // Verify that it is right.
-        assert(MRegisterInfo::isVirtualRegister(VReg) && "Not a vreg?");
-        assert(II.OpInfo[i+NumResults].RegClass &&
-               "Don't have operand info for this instruction!");
-#ifndef NDEBUG
-        if (RegMap->getRegClass(VReg) != II.OpInfo[i+NumResults].RegClass) {
-          std::cerr << "OP:  ";
-          Op.getOperand(i).Val->dump(&DAG); std::cerr << "\nUSE: ";
-          Op.Val->dump(&DAG); std::cerr << "\n";
-        }
-#endif
-        assert(RegMap->getRegClass(VReg) == II.OpInfo[i+NumResults].RegClass &&
-               "Register class of operand and regclass of use don't agree!");
-      } else if (ConstantSDNode *C =
-                                   dyn_cast<ConstantSDNode>(Op.getOperand(i))) {
-        MI->addZeroExtImm64Operand(C->getValue());
-      } else if (RegisterSDNode*R =dyn_cast<RegisterSDNode>(Op.getOperand(i))) {
-        MI->addRegOperand(R->getReg(), MachineOperand::Use);
-      } else if (GlobalAddressSDNode *TGA =
-                       dyn_cast<GlobalAddressSDNode>(Op.getOperand(i))) {
-        MI->addGlobalAddressOperand(TGA->getGlobal(), false, 0);
-      } else if (BasicBlockSDNode *BB =
-                       dyn_cast<BasicBlockSDNode>(Op.getOperand(i))) {
-        MI->addMachineBasicBlockOperand(BB->getBasicBlock());
-      } else if (FrameIndexSDNode *FI =
-                       dyn_cast<FrameIndexSDNode>(Op.getOperand(i))) {
-        MI->addFrameIndexOperand(FI->getIndex());
-      } else if (ConstantPoolSDNode *CP = 
-                    dyn_cast<ConstantPoolSDNode>(Op.getOperand(i))) {
-        unsigned Idx = ConstPool->getConstantPoolIndex(CP->get());
-        MI->addConstantPoolIndexOperand(Idx);
-      } else if (ExternalSymbolSDNode *ES = 
-                 dyn_cast<ExternalSymbolSDNode>(Op.getOperand(i))) {
-        MI->addExternalSymbolOperand(ES->getSymbol(), false);
-      } else {
-        assert(Op.getOperand(i).getValueType() != MVT::Other &&
-               Op.getOperand(i).getValueType() != MVT::Flag &&
-               "Chain and flag operands should occur at end of operand list!");
-        unsigned VReg = EmitDAG(Op.getOperand(i));
-        MI->addRegOperand(VReg, MachineOperand::Use);
-        
-        // Verify that it is right.
-        assert(MRegisterInfo::isVirtualRegister(VReg) && "Not a vreg?");
-        assert(II.OpInfo[i+NumResults].RegClass &&
-               "Don't have operand info for this instruction!");
-        assert(RegMap->getRegClass(VReg) == II.OpInfo[i+NumResults].RegClass &&
-               "Register class of operand and regclass of use don't agree!");
-      }
-    }
-
-    // Finally, if this node has any flag operands, we *must* emit them last, to
-    // avoid emitting operations that might clobber the flags.
-    if (Op.getNumOperands() > NodeOperands) {
-      unsigned i = NodeOperands;
-      if (Op.getOperand(i).getValueType() == MVT::Other)
-        ++i;  // the chain is already selected.
-      for (unsigned N = Op.getNumOperands(); i < N; i++) {
-        assert(Op.getOperand(i).getValueType() == MVT::Flag &&
-               "Must be flag operands!");
-        EmitDAG(Op.getOperand(i));
-      }
-    }
-    
-    // Now that we have emitted all operands, emit this instruction itself.
-    if ((II.Flags & M_USES_CUSTOM_DAG_SCHED_INSERTION) == 0) {
-      BB->insert(BB->end(), MI);
-    } else {
-      // Insert this instruction into the end of the basic block, potentially
-      // taking some custom action.
-      BB = DAG.getTargetLoweringInfo().InsertAtEndOfBasicBlock(MI, BB);
-    }
-  } else {
-    switch (Op.getOpcode()) {
-    default:
-      Op.Val->dump(); 
-      assert(0 && "This target-independent node should have been selected!");
-    case ISD::EntryToken: break;
-    case ISD::TokenFactor:
-      for (unsigned i = 0, N = Op.getNumOperands(); i < N; i++) {
-        EmitDAG(Op.getOperand(i));
-      }
-      break;
-    case ISD::CopyToReg: {
-      SDOperand FlagOp;  FlagOp.ResNo = 0;
-      if (Op.getNumOperands() == 4) {
-        FlagOp = Op.getOperand(3);
-      }
-      if (Op.getOperand(0).Val != FlagOp.Val) {
-        EmitDAG(Op.getOperand(0));   // Emit the chain.
-      }
-      unsigned Val = EmitDAG(Op.getOperand(2));
-      if (FlagOp.Val) {
-        EmitDAG(FlagOp);
-      }
-      MRI.copyRegToReg(*BB, BB->end(),
-                       cast<RegisterSDNode>(Op.getOperand(1))->getReg(), Val,
-                       RegMap->getRegClass(Val));
-      break;
-    }
-    case ISD::CopyFromReg: {
-      EmitDAG(Op.getOperand(0));   // Emit the chain.
-      unsigned SrcReg = cast<RegisterSDNode>(Op.getOperand(1))->getReg();
-      
-      // Figure out the register class to create for the destreg.
-      const TargetRegisterClass *TRC = 0;
-      if (MRegisterInfo::isVirtualRegister(SrcReg)) {
-        TRC = RegMap->getRegClass(SrcReg);
-      } else {
-        // Pick the register class of the right type that contains this physreg.
-        for (MRegisterInfo::regclass_iterator I = MRI.regclass_begin(),
-               E = MRI.regclass_end(); I != E; ++I)
-          if ((*I)->getType() == Op.Val->getValueType(0) &&
-              (*I)->contains(SrcReg)) {
-            TRC = *I;
-            break;
-          }
-        assert(TRC && "Couldn't find register class for reg copy!");
-      }
-      
-      // Create the reg, emit the copy.
-      ResultReg = RegMap->createVirtualRegister(TRC);
-      MRI.copyRegToReg(*BB, BB->end(), ResultReg, SrcReg, TRC);
-      break;
-    }
-    }
-  }
-
-  OpSlot = ResultReg;
-  return ResultReg+Op.ResNo;
-}
-
 /// Schedule - Order nodes according to selected style.
 ///
 void SimpleSched::Schedule() {
-  switch (ScheduleStyle) {
-  case simpleScheduling:
-    // Number the nodes
-    NodeCount = DAG.allnodes_size();
-    // Don't waste time if is only entry and return
-    if (NodeCount > 3) {
-      // Get latency and resource requirements
-      GatherNodeInfo();
-      // Breadth first walk of DAG
-      VisitAll();
-      DEBUG(dump("Pre-"));
-      // Push back long instructions and critical path
-      ScheduleBackward();
-      DEBUG(dump("Mid-"));
-      // Pack instructions to maximize resource utilization
-      ScheduleForward();
-      DEBUG(dump("Post-"));
-      // Emit in scheduled order
-      EmitAll();
-      break;
-    } // fall thru
-  case noScheduling:
-    // Emit instructions in using a DFS from the exit root
-    EmitDAG(DAG.getRoot());
-    break;
+  // Number the nodes
+  NodeCount = DAG.allnodes_size();
+  // Set up minimum info for scheduling.
+  PrepareNodeInfo();
+  // Construct node groups for flagged nodes
+  IdentifyGroups();
+  // Breadth first walk of DAG
+  VisitAll();
+
+  // Don't waste time if is only entry and return
+  if (ScheduleStyle != noScheduling && NodeCount > 3) {
+    // Get latency and resource requirements
+    GatherSchedulingInfo();
+    DEBUG(dump("Pre-"));
+    // Push back long instructions and critical path
+    ScheduleBackward();
+    DEBUG(dump("Mid-"));
+    // Pack instructions to maximize resource utilization
+    ScheduleForward();
   }
+  
+  DEBUG(dump("Post-"));
+  // Emit in scheduled order
+  EmitAll();
 }
 
 /// printSI - Print schedule info.
