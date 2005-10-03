@@ -319,13 +319,45 @@ static bool getSCEVStartAndStride(const SCEVHandle &SH, Loop *L,
 /// the loop, resulting in reg-reg copies (if we use the pre-inc value when we
 /// should use the post-inc value).
 static bool IVUseShouldUsePostIncValue(Instruction *User, Instruction *IV,
-                                       Loop *L, DominatorSet *DS) {
+                                       Loop *L, DominatorSet *DS, Pass *P) {
   // If the user is in the loop, use the preinc value.
   if (L->contains(User->getParent())) return false;
   
-  // Ok, the user is outside of the loop.  If it is not dominated by the latch
-  // block, we have to use the preincremented value.
-  return DS->dominates(L->getLoopLatch(), User->getParent());
+  BasicBlock *LatchBlock = L->getLoopLatch();
+  
+  // Ok, the user is outside of the loop.  If it is dominated by the latch
+  // block, use the post-inc value.
+  if (DS->dominates(LatchBlock, User->getParent()))
+    return true;
+
+  // There is one case we have to be careful of: PHI nodes.  These little guys
+  // can live in blocks that do not dominate the latch block, but (since their
+  // uses occur in the predecessor block, not the block the PHI lives in) should
+  // still use the post-inc value.  Check for this case now.
+  PHINode *PN = dyn_cast<PHINode>(User);
+  if (!PN) return false;  // not a phi, not dominated by latch block.
+  
+  // Look at all of the uses of IV by the PHI node.  If any use corresponds to
+  // a block that is not dominated by the latch block, give up and use the
+  // preincremented value.
+  unsigned NumUses = 0;
+  for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
+    if (PN->getIncomingValue(i) == IV) {
+      ++NumUses;
+      if (!DS->dominates(LatchBlock, PN->getIncomingBlock(i)))
+        return false;
+    }
+
+  // Okay, all uses of IV by PN are in predecessor blocks that really are
+  // dominated by the latch block.  Split the critical edges and use the
+  // post-incremented value.
+  for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
+    if (PN->getIncomingValue(i) == IV) {
+      SplitCriticalEdge(PN->getIncomingBlock(i), PN->getParent(), P);
+      if (--NumUses == 0) break;
+    }
+  
+  return true;
 }
 
   
@@ -373,12 +405,13 @@ bool LoopStrengthReduce::AddUsersIfInteresting(Instruction *I, Loop *L,
       // Okay, we found a user that we cannot reduce.  Analyze the instruction
       // and decide what to do with it.  If we are a use inside of the loop, use
       // the value before incrementation, otherwise use it after incrementation.
-      if (IVUseShouldUsePostIncValue(User, I, L, DS)) {
+      if (IVUseShouldUsePostIncValue(User, I, L, DS, this)) {
         // The value used will be incremented by the stride more than we are
         // expecting, so subtract this off.
         SCEVHandle NewStart = SCEV::getMinusSCEV(Start, Stride);
         IVUsesByStride[Stride].addUser(NewStart, User, I);
         IVUsesByStride[Stride].Users.back().isUseOfPostIncrementedValue = true;
+        DEBUG(std::cerr << "   USING POSTINC SCEV, START=" << *NewStart<< "\n");
       } else {        
         IVUsesByStride[Stride].addUser(Start, User, I);
       }
@@ -481,7 +514,6 @@ void BasedUser::RewriteInstructionToUseNewBase(const SCEVHandle &NewBase,
       BasicBlock *PHIPred = PN->getIncomingBlock(i);
       if (e != 1 && PHIPred->getTerminator()->getNumSuccessors() > 1 &&
           (PN->getParent() != L->getHeader() || !L->contains(PHIPred))) {
-
         
         // First step, split the critical edge.
         SplitCriticalEdge(PHIPred, PN->getParent(), P);
