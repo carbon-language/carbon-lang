@@ -347,11 +347,25 @@ unsigned BytecodeReader::getTypeSlot(const Type *Ty) {
     return Type::FirstDerivedTyID + ModuleTypes.size() +
            (&*I - &FunctionTypes[0]);
 
-  // Check the module level types now...
-  I = std::find(ModuleTypes.begin(), ModuleTypes.end(), Ty);
-  if (I == ModuleTypes.end())
+  // If we don't have our cache yet, build it now.
+  if (ModuleTypeIDCache.empty()) {
+    unsigned N = 0;
+    ModuleTypeIDCache.reserve(ModuleTypes.size());
+    for (TypeListTy::iterator I = ModuleTypes.begin(), E = ModuleTypes.end();
+         I != E; ++I, ++N)
+      ModuleTypeIDCache.push_back(std::make_pair(*I, N));
+    
+    std::sort(ModuleTypeIDCache.begin(), ModuleTypeIDCache.end());
+  }
+  
+  // Binary search the cache for the entry.
+  std::vector<std::pair<const Type*, unsigned> >::iterator IT =
+    std::lower_bound(ModuleTypeIDCache.begin(), ModuleTypeIDCache.end(),
+                     std::make_pair(Ty, 0U));
+  if (IT == ModuleTypeIDCache.end() || IT->first != Ty)
     error("Didn't find type in ModuleTypes.");
-  return Type::FirstDerivedTyID + (&*I - &ModuleTypes[0]);
+    
+  return Type::FirstDerivedTyID + IT->second;
 }
 
 /// This is just like getType, but when a compaction table is in use, it is
@@ -375,11 +389,26 @@ const Type *BytecodeReader::getGlobalTableType(unsigned Slot) {
 unsigned BytecodeReader::getGlobalTableTypeSlot(const Type *Ty) {
   if (Ty->isPrimitiveType())
     return Ty->getTypeID();
-  TypeListTy::iterator I = std::find(ModuleTypes.begin(),
-                                      ModuleTypes.end(), Ty);
-  if (I == ModuleTypes.end())
+  
+  // If we don't have our cache yet, build it now.
+  if (ModuleTypeIDCache.empty()) {
+    unsigned N = 0;
+    ModuleTypeIDCache.reserve(ModuleTypes.size());
+    for (TypeListTy::iterator I = ModuleTypes.begin(), E = ModuleTypes.end();
+         I != E; ++I, ++N)
+      ModuleTypeIDCache.push_back(std::make_pair(*I, N));
+    
+    std::sort(ModuleTypeIDCache.begin(), ModuleTypeIDCache.end());
+  }
+  
+  // Binary search the cache for the entry.
+  std::vector<std::pair<const Type*, unsigned> >::iterator IT =
+    std::lower_bound(ModuleTypeIDCache.begin(), ModuleTypeIDCache.end(),
+                     std::make_pair(Ty, 0U));
+  if (IT == ModuleTypeIDCache.end() || IT->first != Ty)
     error("Didn't find type in ModuleTypes.");
-  return Type::FirstDerivedTyID + (&*I - &ModuleTypes[0]);
+  
+  return Type::FirstDerivedTyID + IT->second;
 }
 
 /// Retrieve a value of a given type and slot number, possibly creating
@@ -1309,6 +1338,10 @@ void BytecodeReader::ParseTypes(TypeListTy &Tab, unsigned NumEntries){
   if (Handler)
     Handler->handleTypeList(NumEntries);
 
+  // If we are about to resolve types, make sure the type cache is clear.
+  if (NumEntries)
+    ModuleTypeIDCache.clear();
+  
   // Loop through reading all of the types.  Forward types will make use of the
   // opaque types just inserted.
   //

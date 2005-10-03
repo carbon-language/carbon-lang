@@ -333,6 +333,12 @@ private:
   /// @brief This vector is used to deal with forward references to types in
   /// a module.
   TypeListTy ModuleTypes;
+  
+  /// @brief This is an inverse mapping of ModuleTypes from the type to an
+  /// index.  Because refining types causes the index of this map to be
+  /// invalidated, any time we refine a type, we clear this cache and recompute
+  /// it next time we need it.  These entries are ordered by the pointer value.
+  std::vector<std::pair<const Type*, unsigned> > ModuleTypeIDCache;
 
   /// @brief This vector is used to deal with forward references to types in
   /// a function.
