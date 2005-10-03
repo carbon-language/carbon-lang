@@ -478,7 +478,6 @@ void BasedUser::RewriteInstructionToUseNewBase(const SCEVHandle &NewBase,
           BasicBlock *NewBB = PN->getIncomingBlock(i);
           NewBB->moveBefore(PN->getParent());
         }
-        break;
       }
 
       Value *&Code = InsertedCode[PN->getIncomingBlock(i)];
