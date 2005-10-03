@@ -45,7 +45,7 @@ public:
   typedef const unsigned* const_iterator;
 
 private:
-  MVT::ValueType VT;
+  const MVT::ValueType VT;
   const unsigned RegSize, Alignment;    // Size & Alignment of register in bytes
   const iterator RegsBegin, RegsEnd;
 public:
