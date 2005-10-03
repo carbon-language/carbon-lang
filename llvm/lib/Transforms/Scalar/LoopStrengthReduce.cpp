@@ -462,20 +462,19 @@ void BasedUser::RewriteInstructionToUseNewBase(const SCEVHandle &NewBase,
       // code on all predecessor/successor paths.  We do this unless this is the
       // canonical backedge for this loop, as this can make some inserted code
       // be in an illegal position.
-      if (e != 1 &&
-          PN->getIncomingBlock(i)->getTerminator()->getNumSuccessors() > 1 &&
-          (PN->getParent() != L->getHeader() ||
-           !L->contains(PN->getIncomingBlock(i)))) {
+      BasicBlock *PHIPred = PN->getIncomingBlock(i);
+      if (e != 1 && PHIPred->getTerminator()->getNumSuccessors() > 1 &&
+          (PN->getParent() != L->getHeader() || !L->contains(PHIPred))) {
 
+        
         // First step, split the critical edge.
-        SplitCriticalEdge(PN->getIncomingBlock(i), PN->getParent(), P);
+        SplitCriticalEdge(PHIPred, PN->getParent(), P);
             
         // Next step: move the basic block.  In particular, if the PHI node
         // is outside of the loop, and PredTI is in the loop, we want to
         // move the block to be immediately before the PHI block, not
         // immediately after PredTI.
-        if (L->contains(PN->getIncomingBlock(i)) &&
-            !L->contains(PN->getParent())) {
+        if (L->contains(PHIPred) && !L->contains(PN->getParent())) {
           BasicBlock *NewBB = PN->getIncomingBlock(i);
           NewBB->moveBefore(PN->getParent());
         }
