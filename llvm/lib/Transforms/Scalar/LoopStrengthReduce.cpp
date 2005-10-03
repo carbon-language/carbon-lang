@@ -310,6 +310,26 @@ static bool getSCEVStartAndStride(const SCEVHandle &SH, Loop *L,
   return true;
 }
 
+/// IVUseShouldUsePostIncValue - We have discovered a "User" of an IV expression
+/// and now we need to decide whether the user should use the preinc or post-inc
+/// value.  If this user should use the post-inc version of the IV, return true.
+///
+/// Choosing wrong here can break dominance properties (if we choose to use the
+/// post-inc value when we cannot) or it can end up adding extra live-ranges to
+/// the loop, resulting in reg-reg copies (if we use the pre-inc value when we
+/// should use the post-inc value).
+static bool IVUseShouldUsePostIncValue(Instruction *User, Instruction *IV,
+                                       Loop *L, DominatorSet *DS) {
+  // If the user is in the loop, use the preinc value.
+  if (L->contains(User->getParent())) return false;
+  
+  // Ok, the user is outside of the loop.  If it is not dominated by the latch
+  // block, we have to use the preincremented value.
+  return DS->dominates(L->getLoopLatch(), User->getParent());
+}
+
+  
+
 /// AddUsersIfInteresting - Inspect the specified instruction.  If it is a
 /// reducible SCEV, recursively add its users to the IVUsesByStride set and
 /// return true.  Otherwise, return false.
@@ -353,18 +373,14 @@ bool LoopStrengthReduce::AddUsersIfInteresting(Instruction *I, Loop *L,
       // Okay, we found a user that we cannot reduce.  Analyze the instruction
       // and decide what to do with it.  If we are a use inside of the loop, use
       // the value before incrementation, otherwise use it after incrementation.
-      if (L->contains(User->getParent()) ||
-          // Alternatively, if we are a use outside of the loop, but is not
-          // dominated by the latch block, we have to use the preincremented
-          // value.
-          !DS->dominates(L->getLoopLatch(), User->getParent())) {
-        IVUsesByStride[Stride].addUser(Start, User, I);
-      } else {
+      if (IVUseShouldUsePostIncValue(User, I, L, DS)) {
         // The value used will be incremented by the stride more than we are
         // expecting, so subtract this off.
         SCEVHandle NewStart = SCEV::getMinusSCEV(Start, Stride);
         IVUsesByStride[Stride].addUser(NewStart, User, I);
         IVUsesByStride[Stride].Users.back().isUseOfPostIncrementedValue = true;
+      } else {        
+        IVUsesByStride[Stride].addUser(Start, User, I);
       }
     }
   }
