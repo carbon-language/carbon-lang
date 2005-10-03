@@ -465,9 +465,7 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
           O << ".lcomm " << name << "," << Size << "," << Align;
         else
           O << ".comm " << name << "," << Size;
-        O << "\t\t; ";
-        WriteAsOperand(O, I, true, true, &M);
-        O << '\n';
+        O << "\t\t; '" << I->getName() << "'\n";
       } else {
         switch (I->getLinkage()) {
         case GlobalValue::LinkOnceLinkage:
@@ -497,11 +495,7 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
         }
 
         emitAlignment(Align);
-        O << name << ":\t\t\t\t; ";
-        WriteAsOperand(O, I, true, true, &M);
-        O << " = ";
-        WriteAsOperand(O, C, false, false, &M);
-        O << "\n";
+        O << name << ":\t\t\t\t; '" << I->getName() << "'\n";
         emitGlobalConstant(C);
       }
     }
@@ -704,7 +698,7 @@ bool AIXAsmPrinter::doFinalization(Module &M) {
         << "," << Log2_32((unsigned)TD.getTypeAlignment(I->getType()));
     }
     O << "\t\t# ";
-    WriteAsOperand(O, I, true, true, &M);
+    WriteAsOperand(O, I, false, true, &M);
     O << "\n";
   }
 
