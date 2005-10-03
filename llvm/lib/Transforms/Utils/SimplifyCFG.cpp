@@ -1284,12 +1284,16 @@ bool llvm::SimplifyCFG(BasicBlock *BB) {
                                          FalseValue, "retval", BI);
             else
               NewRetVal = TrueValue;
+            
+            DEBUG(std::cerr << "\nCHANGING BRANCH TO TWO RETURNS INTO SELECT:"
+                  << "\n  " << *BI << "Select = " << *NewRetVal
+                  << "TRUEBLOCK: " << *TrueSucc << "FALSEBLOCK: "<< *FalseSucc);
 
             new ReturnInst(NewRetVal, BI);
-            BI->getParent()->getInstList().erase(BI);
-            if (BrCond->use_empty())
-              if (Instruction *BrCondI = dyn_cast<Instruction>(BrCond))
-                BrCondI->getParent()->getInstList().erase(BrCondI);
+            BI->eraseFromParent();
+            if (Instruction *BrCondI = dyn_cast<Instruction>(BrCond))
+              if (isInstructionTriviallyDead(BrCondI))
+                BrCondI->eraseFromParent();
             return true;
           }
         }
