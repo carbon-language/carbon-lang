@@ -248,12 +248,14 @@ ConstantArray::ConstantArray(const ArrayType *T,
   assert(V.size() == T->getNumElements() &&
          "Invalid initializer vector for constant array");
   Use *OL = OperandList;
-  for (unsigned i = 0, e = V.size(); i != e; ++i) {
-    assert((V[i]->getType() == T->getElementType() ||
+  for (std::vector<Constant*>::const_iterator I = V.begin(), E = V.end();
+       I != E; ++I, ++OL) {
+    Constant *E = *I;
+    assert((E->getType() == T->getElementType() ||
             (T->isAbstract() &&
-             V[i]->getType()->getTypeID()==T->getElementType()->getTypeID())) &&
+             E->getType()->getTypeID() == T->getElementType()->getTypeID())) &&
            "Initializer for array element doesn't match array element type!");
-    OL[i].init(V[i], this);
+    OL->init(E, this);
   }
 }
 
@@ -267,13 +269,16 @@ ConstantStruct::ConstantStruct(const StructType *T,
   assert(V.size() == T->getNumElements() &&
          "Invalid initializer vector for constant structure");
   Use *OL = OperandList;
-  for (unsigned i = 0, e = V.size(); i != e; ++i) {
-    assert((V[i]->getType() == T->getElementType(i) ||
-            ((T->getElementType(i)->isAbstract() ||
-              V[i]->getType()->isAbstract()) &&
-             T->getElementType(i)->getTypeID()==V[i]->getType()->getTypeID()))&&
+  for (std::vector<Constant*>::const_iterator I = V.begin(), E = V.end();
+       I != E; ++I, ++OL) {
+    Constant *E = *I;
+    assert((E->getType() == T->getElementType(I-V.begin()) ||
+            ((T->getElementType(I-V.begin())->isAbstract() ||
+              E->getType()->isAbstract()) &&
+             T->getElementType(I-V.begin())->getTypeID() == 
+                   E->getType()->getTypeID())) &&
            "Initializer for struct element doesn't match struct element type!");
-    OL[i].init(V[i], this);
+    OL->init(E, this);
   }
 }
 
@@ -286,12 +291,14 @@ ConstantPacked::ConstantPacked(const PackedType *T,
                                const std::vector<Constant*> &V)
   : Constant(T, ConstantPackedVal, new Use[V.size()], V.size()) {
   Use *OL = OperandList;
-  for (unsigned i = 0, e = V.size(); i != e; ++i) {
-    assert((V[i]->getType() == T->getElementType() ||
+    for (std::vector<Constant*>::const_iterator I = V.begin(), E = V.end();
+         I != E; ++I, ++OL) {
+      Constant *E = *I;
+      assert((E->getType() == T->getElementType() ||
             (T->isAbstract() &&
-             V[i]->getType()->getTypeID()==T->getElementType()->getTypeID())) &&
+             E->getType()->getTypeID() == T->getElementType()->getTypeID())) &&
            "Initializer for packed element doesn't match packed element type!");
-    OL[i].init(V[i], this);
+    OL->init(E, this);
   }
 }
 
