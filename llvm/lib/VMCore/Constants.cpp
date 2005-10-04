@@ -520,6 +520,9 @@ namespace {
     typedef std::map<MapKey, ConstantClass *> MapTy;
     typedef typename MapTy::iterator MapIterator;
   private:
+    /// Map - This is the main map from the element descriptor to the Constants.
+    /// This is the primary way we avoid creating two of the same shape
+    /// constant.
     MapTy Map;
 
     typedef std::map<const TypeClass*, MapIterator> AbstractTypeMapTy;
@@ -547,6 +550,24 @@ namespace {
       std::pair<MapIterator, bool> IP = Map.insert(InsertVal);
       Exists = !IP.second;
       return IP.first;
+    }
+    
+    /// SimpleRemove - This method removes the specified constant from the map,
+    /// without updating type information.  This should only be used when we're
+    /// changing an element in the map, making this the second half of a 'move'
+    /// operation.
+    void SimpleRemove(ConstantClass *CP) {
+      MapIterator I = Map.find(MapKey((TypeClass*)CP->getRawType(),
+                                      getValType(CP)));
+      if (I == Map.end() || I->second != CP) {
+        // FIXME: This should not use a linear scan.  If this gets to be a
+        // performance problem, someone should look at this.
+        for (I = Map.begin(); I != Map.end() && I->second != CP; ++I)
+          /* empty */;
+      }
+      assert(I != Map.end() && "Constant not found in constant table!");
+      assert(I->second == CP && "Didn't find correct element?");
+      Map.erase(I);
     }
       
     /// getOrCreate - Return the specified constant from the map, creating it if
@@ -1383,7 +1404,7 @@ void ConstantArray::replaceUsesOfWithOnConstant(Value *From, Value *To,
       // in place!
       if (I != ArrayConstants.map_end() && I->second == this)
         ++I;    // Do not invalidate iterator!
-      ArrayConstants.remove(this);   // Remove old shape from the map.
+      ArrayConstants.SimpleRemove(this);   // Remove old shape from the map.
       
       // Update to the new values.
       for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
@@ -1445,7 +1466,7 @@ void ConstantStruct::replaceUsesOfWithOnConstant(Value *From, Value *To,
       // in place!
       if (I != StructConstants.map_end() && I->second == this)
         ++I;    // Do not invalidate iterator!
-      StructConstants.remove(this);   // Remove old shape from the map.
+      StructConstants.SimpleRemove(this);   // Remove old shape from the map.
       
       // Update to the new values.
       for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
