@@ -623,19 +623,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
     // Do not try to legalize the target-specific arguments (#1+)
     Tmp2 = Node->getOperand(0);
-    if (Tmp1 != Tmp2) {
+    if (Tmp1 != Tmp2)
       Node->setAdjCallChain(Tmp1);
-      
-      // If moving the operand from pointing to Tmp2 dropped its use count to 1,
-      // this will cause the maps used to memoize results to get confused.
-      // Create and add a dummy use, just to increase its use count.  This will
-      // be removed at the end of legalize when dead nodes are removed.
-      if (Tmp2.Val->hasOneUse()) {
-        // FIXME: find out why this code is necessary
-        DAG.getNode(ISD::PCMARKER, MVT::Other, Tmp2, 
-                    DAG.getConstant(0, MVT::i32));
-      }
-    }
       
     // Note that we do not create new CALLSEQ_DOWN/UP nodes here.  These
     // nodes are treated specially and are mutated in place.  This makes the dag
@@ -2630,8 +2619,11 @@ static void FindLatestCallSeqStart(SDNode *Node, SDNode *&Found) {
   // Otherwise, scan the operands of Node to see if any of them is a call.
   assert(Node->getNumOperands() != 0 &&
          "All leaves should have depth equal to the entry node!");
-  for (unsigned i = 0, e = Node->getNumOperands()-1; i != e; ++i)
+  for (unsigned i = 0, e = Node->getNumOperands()-1; i != e; ++i) {
     FindLatestCallSeqStart(Node->getOperand(i).Val, Found);
+    if (Found->getOpcode() == ISD::CALLSEQ_START)
+      return;
+  }
 
   // Tail recurse for the last iteration.
   FindLatestCallSeqStart(Node->getOperand(Node->getNumOperands()-1).Val,
@@ -2672,13 +2664,11 @@ static SDNode *FindCallSeqEnd(SDNode *Node) {
   if (Node->use_empty())
     return 0;   // No CallSeqEnd
 
-  if (Node->hasOneUse())  // Simple case, only has one user to check.
-    return FindCallSeqEnd(*Node->use_begin());
-
   SDOperand TheChain(Node, Node->getNumValues()-1);
   if (TheChain.getValueType() != MVT::Other)
     TheChain = SDOperand(Node, 0);
-  assert(TheChain.getValueType() == MVT::Other && "Is not a token chain!");
+  if (TheChain.getValueType() != MVT::Other)
+    return 0;
 
   for (SDNode::use_iterator UI = Node->use_begin(),
          E = Node->use_end(); UI != E; ++UI) {
@@ -2722,10 +2712,12 @@ static SDOperand FindInputOutputChains(SDNode *OpNode, SDNode *&OutChain,
   // previous call in the function.  LatestCallStackDown may in that case be
   // the entry node itself.  Do not attempt to find a matching CALLSEQ_END
   // unless LatestCallStackDown is an CALLSEQ_START.
-  if (LatestCallSeqStart->getOpcode() == ISD::CALLSEQ_START)
+  if (LatestCallSeqStart->getOpcode() == ISD::CALLSEQ_START) {
     LatestCallSeqEnd = FindCallSeqEnd(LatestCallSeqStart);
-  else
+    //std::cerr<<"Found end node: "; LatestCallSeqEnd->dump(); std::cerr <<"\n";
+  } else {
     LatestCallSeqEnd = Entry.Val;
+  }
   assert(LatestCallSeqEnd && "NULL return from FindCallSeqEnd");
 
   // Finally, find the first call that this must come before, first we find the
