@@ -513,7 +513,8 @@ namespace llvm {
 }
 
 namespace {
-  template<class ValType, class TypeClass, class ConstantClass>
+  template<class ValType, class TypeClass, class ConstantClass,
+           bool HasLargeKey = false  /*true for arrays and structs*/ >
   class ValueMap : public AbstractTypeUser {
   public:
     typedef std::pair<const TypeClass*, ValType> MapKey;
@@ -524,6 +525,12 @@ namespace {
     /// This is the primary way we avoid creating two of the same shape
     /// constant.
     MapTy Map;
+    
+    /// InverseMap - If "HasLargeKey" is true, this contains an inverse mapping
+    /// from the constants to their element in Map.  This is important for
+    /// removal of constants from the array, which would otherwise have to scan
+    /// through the map with very large keys.
+    std::map<ConstantClass*, MapIterator> InverseMap;
 
     typedef std::map<const TypeClass*, MapIterator> AbstractTypeMapTy;
     AbstractTypeMapTy AbstractTypeMap;
@@ -535,10 +542,18 @@ namespace {
         Constants.push_back(I->second);
       Map.clear();
       AbstractTypeMap.clear();
+      InverseMap.clear();
     }
 
   public:
     MapIterator map_end() { return Map.end(); }
+    
+    void UpdateInverseMap(ConstantClass *C, MapIterator I) {
+      if (HasLargeKey) {
+        assert(I->second == C && "Bad inversemap entry!");
+        InverseMap[C] = I;
+      }
+    }
     
     /// InsertOrGetItem - Return an iterator for the specified element.
     /// If the element exists in the map, the returned iterator points to the
@@ -552,19 +567,35 @@ namespace {
       return IP.first;
     }
     
-    /// SimpleRemove - This method removes the specified constant from the map,
-    /// without updating type information.  This should only be used when we're
-    /// changing an element in the map, making this the second half of a 'move'
-    /// operation.
-    void SimpleRemove(ConstantClass *CP) {
-      MapIterator I = Map.find(MapKey((TypeClass*)CP->getRawType(),
-                                      getValType(CP)));
+private:
+    MapIterator FindExistingElement(ConstantClass *CP) {
+      if (HasLargeKey) {
+        typename std::map<ConstantClass*, MapIterator>::iterator
+            IMI = InverseMap.find(CP);
+        assert(IMI != InverseMap.end() && IMI->second != Map.end() &&
+               IMI->second->second == CP &&
+               "InverseMap corrupt!");
+        return IMI->second;
+      }
+      
+      MapIterator I =
+        Map.find(MapKey((TypeClass*)CP->getRawType(), getValType(CP)));
       if (I == Map.end() || I->second != CP) {
         // FIXME: This should not use a linear scan.  If this gets to be a
         // performance problem, someone should look at this.
         for (I = Map.begin(); I != Map.end() && I->second != CP; ++I)
           /* empty */;
       }
+      return I;
+    }
+public:
+    
+    /// SimpleRemove - This method removes the specified constant from the map,
+    /// without updating type information.  This should only be used when we're
+    /// changing an element in the map, making this the second half of a 'move'
+    /// operation.
+    void SimpleRemove(ConstantClass *CP) {
+      MapIterator I = FindExistingElement(CP);
       assert(I != Map.end() && "Constant not found in constant table!");
       assert(I->second == CP && "Didn't find correct element?");
       Map.erase(I);
@@ -586,6 +617,9 @@ namespace {
       //assert(Result->getType() == Ty && "Type specified is not correct!");
       I = Map.insert(I, std::make_pair(MapKey(Ty, V), Result));
 
+      if (HasLargeKey)  // Remember the reverse mapping if needed.
+        InverseMap.insert(std::make_pair(Result, I));
+      
       // If the type of the constant is abstract, make sure that an entry exists
       // for it in the AbstractTypeMap.
       if (Ty->isAbstract()) {
@@ -603,18 +637,13 @@ namespace {
     }
 
     void remove(ConstantClass *CP) {
-      MapIterator I = Map.find(MapKey((TypeClass*)CP->getRawType(),
-                                      getValType(CP)));
-      if (I == Map.end() || I->second != CP) {
-        // FIXME: This should not use a linear scan.  If this gets to be a
-        // performance problem, someone should look at this.
-        for (I = Map.begin(); I != Map.end() && I->second != CP; ++I)
-          /* empty */;
-      }
-
+      MapIterator I = FindExistingElement(CP);
       assert(I != Map.end() && "Constant not found in constant table!");
       assert(I->second == CP && "Didn't find correct element?");
 
+      if (HasLargeKey)  // Remember the reverse mapping if needed.
+        InverseMap.erase(CP);
+      
       // Now that we found the entry, make sure this isn't the entry that
       // the AbstractTypeMap points to.
       const TypeClass *Ty = I->first.first;
@@ -821,7 +850,7 @@ static std::vector<Constant*> getValType(ConstantArray *CA) {
 }
 
 typedef ValueMap<std::vector<Constant*>, ArrayType, 
-                 ConstantArray> ArrayConstantsTy;
+                 ConstantArray, true /*largekey*/> ArrayConstantsTy;
 static ArrayConstantsTy ArrayConstants;
 
 Constant *ConstantArray::get(const ArrayType *Ty,
@@ -911,7 +940,7 @@ namespace llvm {
 }
 
 typedef ValueMap<std::vector<Constant*>, StructType,
-                 ConstantStruct> StructConstantsTy;
+                 ConstantStruct, true /*largekey*/> StructConstantsTy;
 static StructConstantsTy StructConstants;
 
 static std::vector<Constant*> getValType(ConstantStruct *CS) {
@@ -1402,9 +1431,11 @@ void ConstantArray::replaceUsesOfWithOnConstant(Value *From, Value *To,
       // creating a new constant array, inserting it, replaceallusesof'ing the
       // old with the new, then deleting the old... just update the current one
       // in place!
-      if (I != ArrayConstants.map_end() && I->second == this)
-        ++I;    // Do not invalidate iterator!
       ArrayConstants.SimpleRemove(this);   // Remove old shape from the map.
+
+      // Update the inverse map so that we know that this constant is now
+      // located at descriptor I.
+      ArrayConstants.UpdateInverseMap(this, I);
       
       // Update to the new values.
       for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
@@ -1464,9 +1495,11 @@ void ConstantStruct::replaceUsesOfWithOnConstant(Value *From, Value *To,
       // creating a new constant struct, inserting it, replaceallusesof'ing the
       // old with the new, then deleting the old... just update the current one
       // in place!
-      if (I != StructConstants.map_end() && I->second == this)
-        ++I;    // Do not invalidate iterator!
       StructConstants.SimpleRemove(this);   // Remove old shape from the map.
+
+      // Update the inverse map so that we know that this constant is now
+      // located at descriptor I.
+      StructConstants.UpdateInverseMap(this, I);
       
       // Update to the new values.
       for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
