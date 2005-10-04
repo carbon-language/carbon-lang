@@ -815,14 +815,6 @@ void ConstantAggregateZero::destroyConstant() {
   destroyConstantImpl();
 }
 
-void ConstantAggregateZero::replaceUsesOfWithOnConstant(Value *From, Value *To,
-                                                        bool DisableChecking) {
-  assert(0 && "No uses!");
-  abort();
-}
-
-
-
 //---- ConstantArray::get() implementation...
 //
 namespace llvm {
@@ -1395,7 +1387,7 @@ const char *ConstantExpr::getOpcodeName() const {
 //                replaceUsesOfWithOnConstant implementations
 
 void ConstantArray::replaceUsesOfWithOnConstant(Value *From, Value *To,
-                                                bool DisableChecking) {
+                                                Use *U) {
   assert(isa<Constant>(To) && "Cannot make Constant refer to non-constant!");
   Constant *ToC = cast<Constant>(To);
   
@@ -1448,18 +1440,15 @@ void ConstantArray::replaceUsesOfWithOnConstant(Value *From, Value *To,
   // Otherwise, I do need to replace this with an existing value.
   assert(Replacement != this && "I didn't contain From!");
   
-  // Everyone using this now uses the replacement...
-  if (DisableChecking)
-    uncheckedReplaceAllUsesWith(Replacement);
-  else
-    replaceAllUsesWith(Replacement);
+  // Everyone using this now uses the replacement.
+  uncheckedReplaceAllUsesWith(Replacement);
   
   // Delete the old constant!
   destroyConstant();
 }
 
 void ConstantStruct::replaceUsesOfWithOnConstant(Value *From, Value *To,
-                                                 bool DisableChecking) {
+                                                 Use *U) {
   assert(isa<Constant>(To) && "Cannot make Constant refer to non-constant!");
   Constant *ToC = cast<Constant>(To);
 
@@ -1511,18 +1500,15 @@ void ConstantStruct::replaceUsesOfWithOnConstant(Value *From, Value *To,
   
   assert(Replacement != this && "I didn't contain From!");
   
-  // Everyone using this now uses the replacement...
-  if (DisableChecking)
-    uncheckedReplaceAllUsesWith(Replacement);
-  else
-    replaceAllUsesWith(Replacement);
+  // Everyone using this now uses the replacement.
+  uncheckedReplaceAllUsesWith(Replacement);
   
   // Delete the old constant!
   destroyConstant();
 }
 
 void ConstantPacked::replaceUsesOfWithOnConstant(Value *From, Value *To,
-                                                 bool DisableChecking) {
+                                                 Use *U) {
   assert(isa<Constant>(To) && "Cannot make Constant refer to non-constant!");
   
   std::vector<Constant*> Values;
@@ -1536,18 +1522,15 @@ void ConstantPacked::replaceUsesOfWithOnConstant(Value *From, Value *To,
   Constant *Replacement = ConstantPacked::get(getType(), Values);
   assert(Replacement != this && "I didn't contain From!");
   
-  // Everyone using this now uses the replacement...
-  if (DisableChecking)
-    uncheckedReplaceAllUsesWith(Replacement);
-  else
-    replaceAllUsesWith(Replacement);
+  // Everyone using this now uses the replacement.
+  uncheckedReplaceAllUsesWith(Replacement);
   
   // Delete the old constant!
   destroyConstant();
 }
 
 void ConstantExpr::replaceUsesOfWithOnConstant(Value *From, Value *ToV,
-                                               bool DisableChecking) {
+                                               Use *U) {
   assert(isa<Constant>(ToV) && "Cannot make Constant refer to non-constant!");
   Constant *To = cast<Constant>(ToV);
   
@@ -1588,11 +1571,8 @@ void ConstantExpr::replaceUsesOfWithOnConstant(Value *From, Value *ToV,
   
   assert(Replacement != this && "I didn't contain From!");
   
-  // Everyone using this now uses the replacement...
-  if (DisableChecking)
-    uncheckedReplaceAllUsesWith(Replacement);
-  else
-    replaceAllUsesWith(Replacement);
+  // Everyone using this now uses the replacement.
+  uncheckedReplaceAllUsesWith(Replacement);
   
   // Delete the old constant!
   destroyConstant();

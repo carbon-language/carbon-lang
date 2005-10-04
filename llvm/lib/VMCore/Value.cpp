@@ -141,7 +141,7 @@ void Value::uncheckedReplaceAllUsesWith(Value *New) {
     // constant!
     if (Constant *C = dyn_cast<Constant>(U.getUser())) {
       if (!isa<GlobalValue>(C))
-        C->replaceUsesOfWithOnConstant(this, New, true);
+        C->replaceUsesOfWithOnConstant(this, New, &U);
       else
         U.set(New);
     } else {

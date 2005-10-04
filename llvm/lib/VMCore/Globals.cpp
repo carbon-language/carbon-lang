@@ -108,7 +108,7 @@ void GlobalVariable::eraseFromParent() {
 }
 
 void GlobalVariable::replaceUsesOfWithOnConstant(Value *From, Value *To,
-                                                 bool DisableChecking) {
+                                                 Use *U) {
   // If you call this, then you better know this GVar has a constant
   // initializer worth replacing. Enforce that here.
   assert(getNumOperands() == 1 &&
@@ -126,6 +126,3 @@ void GlobalVariable::replaceUsesOfWithOnConstant(Value *From, Value *To,
   // Okay, preconditions out of the way, replace the constant initializer.
   this->setOperand(0, cast<Constant>(To));
 }
-
-// vim: sw=2 ai
-
