@@ -41,8 +41,9 @@ def isVoid : ValueType<0  , 12>;   // Produces no value
 
 //===----------------------------------------------------------------------===//
 // Register file description - These classes are used to fill in the target
-// description classes in llvm/Target/MRegisterInfo.h
+// description classes.
 
+class RegisterClass; // Forward def
 
 // Register - You should define one instance of this class for each register
 // in the target machine.  String n will become the "name" of the register.
