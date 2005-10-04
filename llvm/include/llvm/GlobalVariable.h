@@ -113,8 +113,7 @@ public:
 
   /// Override Constant's implementation of this method so we can
   /// replace constant initializers.
-  virtual void replaceUsesOfWithOnConstant(Value *From, Value *To,
-                                           bool DisableChecking = false);
+  virtual void replaceUsesOfWithOnConstant(Value *From, Value *To, Use *U);
 
   virtual void print(std::ostream &OS) const;
 

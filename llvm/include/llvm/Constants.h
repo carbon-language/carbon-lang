@@ -323,8 +323,6 @@ public:
   virtual bool isNullValue() const { return true; }
 
   virtual void destroyConstant();
-  virtual void replaceUsesOfWithOnConstant(Value *From, Value *To,
-                                           bool DisableChecking = false);
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   ///
@@ -372,8 +370,7 @@ public:
   virtual bool isNullValue() const { return false; }
 
   virtual void destroyConstant();
-  virtual void replaceUsesOfWithOnConstant(Value *From, Value *To,
-                                           bool DisableChecking = false);
+  virtual void replaceUsesOfWithOnConstant(Value *From, Value *To, Use *U);
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ConstantArray *) { return true; }
@@ -413,8 +410,7 @@ public:
   }
 
   virtual void destroyConstant();
-  virtual void replaceUsesOfWithOnConstant(Value *From, Value *To,
-                                           bool DisableChecking = false);
+  virtual void replaceUsesOfWithOnConstant(Value *From, Value *To, Use *U);
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ConstantStruct *) { return true; }
@@ -451,8 +447,7 @@ public:
   virtual bool isNullValue() const { return false; }
 
   virtual void destroyConstant();
-  virtual void replaceUsesOfWithOnConstant(Value *From, Value *To,
-                                           bool DisableChecking = false);
+  virtual void replaceUsesOfWithOnConstant(Value *From, Value *To, Use *U);
 
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const ConstantPacked *) { return true; }
@@ -604,8 +599,7 @@ public:
   const char *getOpcodeName() const;
 
   virtual void destroyConstant();
-  virtual void replaceUsesOfWithOnConstant(Value *From, Value *To,
-                                           bool DisableChecking = false);
+  virtual void replaceUsesOfWithOnConstant(Value *From, Value *To, Use *U);
 
   /// Override methods to provide more type information...
   inline Constant *getOperand(unsigned i) {

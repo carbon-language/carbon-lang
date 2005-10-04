@@ -75,8 +75,7 @@ public:
   /// use Value::replaceAllUsesWith, which automatically dispatches to this
   /// method as needed.
   ///
-  virtual void replaceUsesOfWithOnConstant(Value *From, Value *To,
-                                           bool DisableChecking = false) {
+  virtual void replaceUsesOfWithOnConstant(Value *From, Value *To, Use *U) {
     // Provide a default implementation for constants (like integers) that
     // cannot use any other values.  This cannot be called at runtime, but needs
     // to be here to avoid link errors.
