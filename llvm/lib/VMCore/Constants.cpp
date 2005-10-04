@@ -548,13 +548,6 @@ namespace {
   public:
     MapIterator map_end() { return Map.end(); }
     
-    void UpdateInverseMap(ConstantClass *C, MapIterator I) {
-      if (HasLargeKey) {
-        assert(I->second == C && "Bad inversemap entry!");
-        InverseMap[C] = I;
-      }
-    }
-    
     /// InsertOrGetItem - Return an iterator for the specified element.
     /// If the element exists in the map, the returned iterator points to the
     /// entry and Exists=true.  If not, the iterator points to the newly
@@ -590,17 +583,6 @@ private:
     }
 public:
     
-    /// SimpleRemove - This method removes the specified constant from the map,
-    /// without updating type information.  This should only be used when we're
-    /// changing an element in the map, making this the second half of a 'move'
-    /// operation.
-    void SimpleRemove(ConstantClass *CP) {
-      MapIterator I = FindExistingElement(CP);
-      assert(I != Map.end() && "Constant not found in constant table!");
-      assert(I->second == CP && "Didn't find correct element?");
-      Map.erase(I);
-    }
-      
     /// getOrCreate - Return the specified constant from the map, creating it if
     /// necessary.
     ConstantClass *getOrCreate(const TypeClass *Ty, const ValType &V) {
@@ -686,6 +668,38 @@ public:
       Map.erase(I);
     }
 
+    
+    /// MoveConstantToNewSlot - If we are about to change C to be the element
+    /// specified by I, update our internal data structures to reflect this
+    /// fact.
+    void MoveConstantToNewSlot(ConstantClass *C, MapIterator I) {
+      // First, remove the old location of the specified constant in the map.
+      MapIterator OldI = FindExistingElement(C);
+      assert(OldI != Map.end() && "Constant not found in constant table!");
+      assert(OldI->second == C && "Didn't find correct element?");
+      
+      // If this constant is the representative element for its abstract type,
+      // update the AbstractTypeMap so that the representative element is I.
+      if (C->getType()->isAbstract()) {
+        typename AbstractTypeMapTy::iterator ATI =
+            AbstractTypeMap.find(C->getType());
+        assert(ATI != AbstractTypeMap.end() &&
+               "Abstract type not in AbstractTypeMap?");
+        if (ATI->second == OldI)
+          ATI->second = I;
+      }
+      
+      // Remove the old entry from the map.
+      Map.erase(OldI);
+      
+      // Update the inverse map so that we know that this constant is now
+      // located at descriptor I.
+      if (HasLargeKey) {
+        assert(I->second == C && "Bad inversemap entry!");
+        InverseMap[C] = I;
+      }
+    }
+    
     void refineAbstractType(const DerivedType *OldTy, const Type *NewTy) {
       typename AbstractTypeMapTy::iterator I =
         AbstractTypeMap.find(cast<TypeClass>(OldTy));
@@ -1433,11 +1447,7 @@ void ConstantArray::replaceUsesOfWithOnConstant(Value *From, Value *To,
       // creating a new constant array, inserting it, replaceallusesof'ing the
       // old with the new, then deleting the old... just update the current one
       // in place!
-      ArrayConstants.SimpleRemove(this);   // Remove old shape from the map.
-
-      // Update the inverse map so that we know that this constant is now
-      // located at descriptor I.
-      ArrayConstants.UpdateInverseMap(this, I);
+      ArrayConstants.MoveConstantToNewSlot(this, I);
       
       // Update to the new value.
       setOperand(OperandToUpdate, ToC);
@@ -1493,7 +1503,7 @@ void ConstantStruct::replaceUsesOfWithOnConstant(Value *From, Value *To,
     // Check to see if we have this array type already.
     bool Exists;
     StructConstantsTy::MapIterator I =
-    StructConstants.InsertOrGetItem(Lookup, Exists);
+      StructConstants.InsertOrGetItem(Lookup, Exists);
     
     if (Exists) {
       Replacement = I->second;
@@ -1502,11 +1512,7 @@ void ConstantStruct::replaceUsesOfWithOnConstant(Value *From, Value *To,
       // creating a new constant struct, inserting it, replaceallusesof'ing the
       // old with the new, then deleting the old... just update the current one
       // in place!
-      StructConstants.SimpleRemove(this);   // Remove old shape from the map.
-
-      // Update the inverse map so that we know that this constant is now
-      // located at descriptor I.
-      StructConstants.UpdateInverseMap(this, I);
+      StructConstants.MoveConstantToNewSlot(this, I);
       
       // Update to the new value.
       setOperand(OperandToUpdate, ToC);
