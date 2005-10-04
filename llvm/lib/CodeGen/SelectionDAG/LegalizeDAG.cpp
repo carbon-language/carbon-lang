@@ -623,9 +623,20 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
     // Do not try to legalize the target-specific arguments (#1+)
     Tmp2 = Node->getOperand(0);
-    if (Tmp1 != Tmp2)
+    if (Tmp1 != Tmp2) {
       Node->setAdjCallChain(Tmp1);
-
+      
+      // If moving the operand from pointing to Tmp2 dropped its use count to 1,
+      // this will cause the maps used to memoize results to get confused.
+      // Create and add a dummy use, just to increase its use count.  This will
+      // be removed at the end of legalize when dead nodes are removed.
+      if (Tmp2.Val->hasOneUse()) {
+        // FIXME: find out why this code is necessary
+        DAG.getNode(ISD::PCMARKER, MVT::Other, Tmp2, 
+                    DAG.getConstant(0, MVT::i32));
+      }
+    }
+      
     // Note that we do not create new CALLSEQ_DOWN/UP nodes here.  These
     // nodes are treated specially and are mutated in place.  This makes the dag
     // legalization process more efficient and also makes libcall insertion
