@@ -889,8 +889,9 @@ namespace llvm {
   };
 }
 
-static ValueMap<std::vector<Constant*>, StructType,
-                ConstantStruct> StructConstants;
+typedef ValueMap<std::vector<Constant*>, StructType,
+                 ConstantStruct> StructConstantsTy;
+static StructConstantsTy StructConstants;
 
 static std::vector<Constant*> getValType(ConstantStruct *CS) {
   std::vector<Constant*> Elements;
@@ -1346,6 +1347,7 @@ const char *ConstantExpr::getOpcodeName() const {
 void ConstantArray::replaceUsesOfWithOnConstant(Value *From, Value *To,
                                                 bool DisableChecking) {
   assert(isa<Constant>(To) && "Cannot make Constant refer to non-constant!");
+  Constant *ToC = cast<Constant>(To);
   
   std::pair<ArrayConstantsTy::MapKey, ConstantArray*> Lookup;
   Lookup.first.first = getType();
@@ -1353,10 +1355,12 @@ void ConstantArray::replaceUsesOfWithOnConstant(Value *From, Value *To,
   std::vector<Constant*> &Values = Lookup.first.second;
   Values.reserve(getNumOperands());  // Build replacement array.
   
-  bool isAllZeros = false;   // Does this turn into an all-zeros array?
+  // Fill values with the modified operands of the constant array.  Also, 
+  // compute whether this turns into an all-zeros array.
+  bool isAllZeros = ToC->isNullValue();
   for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
     Constant *Val = getOperand(i);
-    if (Val == From) Val = cast<Constant>(To);
+    if (Val == From) Val = ToC;
     Values.push_back(Val);
     if (isAllZeros) isAllZeros = Val->isNullValue();
   }
@@ -1384,7 +1388,7 @@ void ConstantArray::replaceUsesOfWithOnConstant(Value *From, Value *To,
       // Update to the new values.
       for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
         if (getOperand(i) == From)
-          setOperand(i, cast<Constant>(To));
+          setOperand(i, ToC);
       return;
     }
   }
@@ -1405,16 +1409,52 @@ void ConstantArray::replaceUsesOfWithOnConstant(Value *From, Value *To,
 void ConstantStruct::replaceUsesOfWithOnConstant(Value *From, Value *To,
                                                  bool DisableChecking) {
   assert(isa<Constant>(To) && "Cannot make Constant refer to non-constant!");
+  Constant *ToC = cast<Constant>(To);
+
+  std::pair<StructConstantsTy::MapKey, ConstantStruct*> Lookup;
+  Lookup.first.first = getType();
+  Lookup.second = this;
+  std::vector<Constant*> &Values = Lookup.first.second;
+  Values.reserve(getNumOperands());  // Build replacement struct.
   
-  std::vector<Constant*> Values;
-  Values.reserve(getNumOperands());  // Build replacement array...
+  // Fill values with the modified operands of the constant struct.  Also, 
+  // compute whether this turns into an all-zeros struct.
+  bool isAllZeros = ToC->isNullValue();
   for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
     Constant *Val = getOperand(i);
-    if (Val == From) Val = cast<Constant>(To);
+    if (Val == From) Val = ToC;
     Values.push_back(Val);
+    if (isAllZeros) isAllZeros = Val->isNullValue();
+  }
+    
+  Constant *Replacement = 0;
+  if (isAllZeros) {
+    Replacement = ConstantAggregateZero::get(getType());
+  } else {
+    // Check to see if we have this array type already.
+    bool Exists;
+    StructConstantsTy::MapIterator I =
+    StructConstants.InsertOrGetItem(Lookup, Exists);
+    
+    if (Exists) {
+      Replacement = I->second;
+    } else {
+      // Okay, the new shape doesn't exist in the system yet.  Instead of
+      // creating a new constant struct, inserting it, replaceallusesof'ing the
+      // old with the new, then deleting the old... just update the current one
+      // in place!
+      if (I != StructConstants.map_end() && I->second == this)
+        ++I;    // Do not invalidate iterator!
+      StructConstants.remove(this);   // Remove old shape from the map.
+      
+      // Update to the new values.
+      for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
+        if (getOperand(i) == From)
+          setOperand(i, ToC);
+      return;
+    }
   }
   
-  Constant *Replacement = ConstantStruct::get(getType(), Values);
   assert(Replacement != this && "I didn't contain From!");
   
   // Everyone using this now uses the replacement...
