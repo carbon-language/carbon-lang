@@ -1390,22 +1390,32 @@ void ConstantArray::replaceUsesOfWithOnConstant(Value *From, Value *To,
                                                 Use *U) {
   assert(isa<Constant>(To) && "Cannot make Constant refer to non-constant!");
   Constant *ToC = cast<Constant>(To);
-  
+
+  unsigned OperandToUpdate = U-OperandList;
+  assert(getOperand(OperandToUpdate) == From && "ReplaceAllUsesWith broken!");
+
   std::pair<ArrayConstantsTy::MapKey, ConstantArray*> Lookup;
   Lookup.first.first = getType();
   Lookup.second = this;
+
   std::vector<Constant*> &Values = Lookup.first.second;
   Values.reserve(getNumOperands());  // Build replacement array.
-  
+
   // Fill values with the modified operands of the constant array.  Also, 
   // compute whether this turns into an all-zeros array.
-  bool isAllZeros = ToC->isNullValue();
-  for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
-    Constant *Val = getOperand(i);
-    if (Val == From) Val = ToC;
-    Values.push_back(Val);
-    if (isAllZeros) isAllZeros = Val->isNullValue();
+  bool isAllZeros = false;
+  if (!ToC->isNullValue()) {
+    for (Use *O = OperandList, *E = OperandList+getNumOperands(); O != E; ++O)
+      Values.push_back(cast<Constant>(O->get()));
+  } else {
+    isAllZeros = true;
+    for (Use *O = OperandList, *E = OperandList+getNumOperands(); O != E; ++O) {
+      Constant *Val = cast<Constant>(O->get());
+      Values.push_back(Val);
+      if (isAllZeros) isAllZeros = Val->isNullValue();
+    }
   }
+  Values[OperandToUpdate] = ToC;
   
   Constant *Replacement = 0;
   if (isAllZeros) {
@@ -1429,10 +1439,8 @@ void ConstantArray::replaceUsesOfWithOnConstant(Value *From, Value *To,
       // located at descriptor I.
       ArrayConstants.UpdateInverseMap(this, I);
       
-      // Update to the new values.
-      for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
-        if (getOperand(i) == From)
-          setOperand(i, ToC);
+      // Update to the new value.
+      setOperand(OperandToUpdate, ToC);
       return;
     }
   }
@@ -1452,22 +1460,32 @@ void ConstantStruct::replaceUsesOfWithOnConstant(Value *From, Value *To,
   assert(isa<Constant>(To) && "Cannot make Constant refer to non-constant!");
   Constant *ToC = cast<Constant>(To);
 
+  unsigned OperandToUpdate = U-OperandList;
+  assert(getOperand(OperandToUpdate) == From && "ReplaceAllUsesWith broken!");
+
   std::pair<StructConstantsTy::MapKey, ConstantStruct*> Lookup;
   Lookup.first.first = getType();
   Lookup.second = this;
   std::vector<Constant*> &Values = Lookup.first.second;
   Values.reserve(getNumOperands());  // Build replacement struct.
   
+  
   // Fill values with the modified operands of the constant struct.  Also, 
   // compute whether this turns into an all-zeros struct.
-  bool isAllZeros = ToC->isNullValue();
-  for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
-    Constant *Val = getOperand(i);
-    if (Val == From) Val = ToC;
-    Values.push_back(Val);
-    if (isAllZeros) isAllZeros = Val->isNullValue();
+  bool isAllZeros = false;
+  if (!ToC->isNullValue()) {
+    for (Use *O = OperandList, *E = OperandList+getNumOperands(); O != E; ++O)
+      Values.push_back(cast<Constant>(O->get()));
+  } else {
+    isAllZeros = true;
+    for (Use *O = OperandList, *E = OperandList+getNumOperands(); O != E; ++O) {
+      Constant *Val = cast<Constant>(O->get());
+      Values.push_back(Val);
+      if (isAllZeros) isAllZeros = Val->isNullValue();
+    }
   }
-    
+  Values[OperandToUpdate] = ToC;
+  
   Constant *Replacement = 0;
   if (isAllZeros) {
     Replacement = ConstantAggregateZero::get(getType());
@@ -1490,10 +1508,8 @@ void ConstantStruct::replaceUsesOfWithOnConstant(Value *From, Value *To,
       // located at descriptor I.
       StructConstants.UpdateInverseMap(this, I);
       
-      // Update to the new values.
-      for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
-        if (getOperand(i) == From)
-          setOperand(i, ToC);
+      // Update to the new value.
+      setOperand(OperandToUpdate, ToC);
       return;
     }
   }
