@@ -77,6 +77,7 @@ AllocaInst* llvm::DemoteRegToStack(Instruction &I, bool VolatileLoads) {
   BasicBlock::iterator InsertPt;
   if (!isa<TerminatorInst>(I)) {
     InsertPt = &I;
+    ++InsertPt;
   } else {
     // We cannot demote invoke instructions to the stack if their normal edge
     // is critical.
@@ -86,7 +87,7 @@ AllocaInst* llvm::DemoteRegToStack(Instruction &I, bool VolatileLoads) {
     InsertPt = II.getNormalDest()->begin();
   }
 
-  for (++InsertPt; isa<PHINode>(InsertPt); ++InsertPt)
+  for (; isa<PHINode>(InsertPt); ++InsertPt)
   /* empty */;   // Don't insert before any PHI nodes.
   new StoreInst(&I, Slot, InsertPt);
 
