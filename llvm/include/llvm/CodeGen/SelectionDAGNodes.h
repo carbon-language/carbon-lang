@@ -309,6 +309,9 @@ namespace ISD {
     // other operands match the intrinsic.  These produce a token chain in
     // addition to a value (if any).
     READPORT, WRITEPORT, READIO, WRITEIO,
+    
+    // HANDLENODE node - Used as a handle for various purposes.
+    HANDLENODE,
 
     // BUILTIN_OP_END - This must be the last enum value in this list.
     BUILTIN_OP_END,
@@ -750,6 +753,20 @@ inline unsigned SDOperand::getTargetOpcode() const {
 inline bool SDOperand::hasOneUse() const {
   return Val->hasNUsesOfValue(1, ResNo);
 }
+
+/// HandleSDNode - This class is used to form a handle around another node that
+/// is persistant and is updated across invocations of replaceAllUsesWith on its
+/// operand.  This node should be directly created by end-users and not added to
+/// the AllNodes list.
+class HandleSDNode : public SDNode {
+public:
+  HandleSDNode(SDOperand X) : SDNode(ISD::HANDLENODE, X) {}
+  ~HandleSDNode() {
+    MorphNodeTo(ISD::HANDLENODE);  // Drops operand uses.
+  }
+  
+  SDOperand getValue() const { return getOperand(0); }
+};
 
 
 class ConstantSDNode : public SDNode {
