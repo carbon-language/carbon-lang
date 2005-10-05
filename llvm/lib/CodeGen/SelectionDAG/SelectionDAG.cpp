@@ -1963,6 +1963,9 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     assert(Ops.size() == 5 && "BR_CC takes 5 operands!");
     assert(Ops[2].getValueType() == Ops[3].getValueType() &&
            "LHS/RHS of comparison should match types!");
+    
+    if (CombinerEnabled) break;  // xforms moved to dag combine.
+    
     // Use SimplifySetCC  to simplify SETCC's.
     SDOperand Simp = SimplifySetCC(MVT::i1, Ops[2], Ops[3],
                                    cast<CondCodeSDNode>(Ops[1])->get());

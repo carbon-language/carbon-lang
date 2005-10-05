@@ -1425,9 +1425,29 @@ SDOperand DAGCombiner::visitBRCONDTWOWAY(SDNode *N) {
   return SDOperand();
 }
 
+// Operand List for BR_CC: Chain, CondCC, CondLHS, CondRHS, DestBB.
+//
 SDOperand DAGCombiner::visitBR_CC(SDNode *N) {
-  // FIXME: come up with a common way between br_cc, brtwoway_cc, and select_cc
-  // to canonicalize the condition without calling getnode a bazillion times.
+  CondCodeSDNode *CC = cast<CondCodeSDNode>(N->getOperand(1));
+  SDOperand CondLHS = N->getOperand(2), CondRHS = N->getOperand(3);
+  
+  // Use SimplifySetCC  to simplify SETCC's.
+  SDOperand Simp = SimplifySetCC(MVT::i1, CondLHS, CondRHS, CC->get());
+  if (Simp.Val) {
+    if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Simp)) {
+      if (C->getValue() & 1) // Unconditional branch
+        return DAG.getNode(ISD::BR, MVT::Other, N->getOperand(0),
+                           N->getOperand(4));
+      else
+        return N->getOperand(0);          // Unconditional Fall through
+    } else if (Simp.Val->getOpcode() == ISD::SETCC) {
+      // Folded to a simpler setcc
+      return DAG.getNode(ISD::BR_CC, MVT::Other, N->getOperand(0), 
+                         Simp.getOperand(2), Simp.getOperand(0),
+                         Simp.getOperand(1), N->getOperand(4));
+    }
+  }
+  
   return SDOperand();
 }
 
