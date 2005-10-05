@@ -854,6 +854,7 @@ SDOperand SelectionDAG::SimplifySetCC(MVT::ValueType VT, SDOperand N1,
       return getSetCC(VT, N2, N1, ISD::getSetCCSwappedOperands(Cond));
     }
 
+  if (!CombinerEnabled) {
   if (N1 == N2) {
     // We can always fold X == Y for integer setcc's.
     if (MVT::isInteger(N1.getValueType()))
@@ -979,7 +980,7 @@ SDOperand SelectionDAG::SimplifySetCC(MVT::ValueType VT, SDOperand N1,
       N1 = getNode(ISD::ZERO_EXTEND, VT, N1);
     return N1;
   }
-
+  }
   // Could not fold it.
   return SDOperand();
 }
@@ -1807,6 +1808,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
 
     if (N2 == N3) return N2;   // select C, X, X -> X
 
+    if (!CombinerEnabled) {
     if (VT == MVT::i1) {  // Boolean SELECT
       if (N2C) {
         if (N2C->getValue())   // select C, 1, X -> C | X
@@ -1833,6 +1835,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
       SDOperand Simp = SimplifySelectCC(N1.getOperand(0), N1.getOperand(1), N2, 
                              N3, cast<CondCodeSDNode>(N1.getOperand(2))->get());
       if (Simp.Val) return Simp;
+    }
     }
     break;
   case ISD::BRCOND:
