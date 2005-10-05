@@ -313,6 +313,9 @@ void DAGCombiner::Run(bool RunningAfterLegalize) {
         // Nodes can end up on the worklist more than once.  Make sure we do
         // not process a node that has been replaced.
         removeFromWorkList(N);
+        
+        // Finally, since the node is now dead, remove it from the graph.
+        DAG.DeleteNode(N);
       }
     }
   }
@@ -1546,7 +1549,7 @@ SDOperand DAGCombiner::SimplifySetCC(MVT::ValueType VT, SDOperand N0,
                                             ExtDstTy),
                             Cond);
       }
-
+      
       uint64_t MinVal, MaxVal;
       unsigned OperandBitSize = MVT::getSizeInBits(N1C->getValueType(0));
       if (ISD::isSignedIntSetCC(Cond)) {
@@ -1682,6 +1685,18 @@ SDOperand DAGCombiner::SimplifySetCC(MVT::ValueType VT, SDOperand N0,
         }
       }
 
+      // Turn (X^C1) == C2 into X == C1^C2 iff X&~C1 = 0.  Common for condcodes.
+      if (N0.getOpcode() == ISD::XOR)
+        if (ConstantSDNode *XORC = dyn_cast<ConstantSDNode>(N0.getOperand(1)))
+          if (ConstantSDNode *RHSC = dyn_cast<ConstantSDNode>(N1)) {
+            // If we know that all of the inverted bits are zero, don't bother
+            // performing the inversion.
+            if (MaskedValueIsZero(N0.getOperand(0), ~XORC->getValue(), TLI))
+              return DAG.getSetCC(VT, N0.getOperand(0),
+                              DAG.getConstant(XORC->getValue()^RHSC->getValue(),
+                                              N0.getValueType()), Cond);
+          }
+      
       // Simplify (X+Z) == X -->  Z == 0
       if (N0.getOperand(0) == N1)
         return DAG.getSetCC(VT, N0.getOperand(1),
