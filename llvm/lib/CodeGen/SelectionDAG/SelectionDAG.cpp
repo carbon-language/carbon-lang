@@ -176,7 +176,7 @@ void SelectionDAG::RemoveDeadNodes(SDNode *N) {
 
   // Create a dummy node (which is not added to allnodes), that adds a reference
   // to the root node, preventing it from being deleted.
-  SDNode *DummyNode = new SDNode(ISD::EntryToken, getRoot());
+  HandleSDNode Dummy(getRoot());
 
   // If we have a hint to start from, use it.
   if (N) DeleteNodeIfDead(N, &AllNodeSet);
@@ -199,11 +199,7 @@ void SelectionDAG::RemoveDeadNodes(SDNode *N) {
     AllNodes.assign(AllNodeSet.begin(), AllNodeSet.end());
 
   // If the root changed (e.g. it was a dead load, update the root).
-  setRoot(DummyNode->getOperand(0));
-
-  // Now that we are done with the dummy node, delete it.
-  DummyNode->getOperand(0).Val->removeUser(DummyNode);
-  delete DummyNode;
+  setRoot(Dummy.getValue());
 }
 
 
@@ -276,6 +272,7 @@ void SelectionDAG::DeleteNodeNotInCSEMaps(SDNode *N) {
 void SelectionDAG::RemoveNodeFromCSEMaps(SDNode *N) {
   bool Erased = false;
   switch (N->getOpcode()) {
+  case ISD::HANDLENODE: return;  // noop.
   case ISD::Constant:
     Erased = Constants.erase(std::make_pair(cast<ConstantSDNode>(N)->getValue(),
                                             N->getValueType(0)));
@@ -397,6 +394,8 @@ SDNode *SelectionDAG::AddNonLeafNodeToCSEMaps(SDNode *N) {
                                                      N->getValueType(0)))];
     if (L) return L;
     L = N;
+  } else if (N->getOpcode() == ISD::HANDLENODE) {
+    return 0;  // never add it.
   } else if (N->getNumOperands() == 1) {
     SDNode *&U = UnaryOps[std::make_pair(N->getOpcode(),
                                          std::make_pair(N->getOperand(0),

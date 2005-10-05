@@ -274,6 +274,11 @@ void DAGCombiner::Run(bool RunningAfterLegalize) {
   // Add all the dag nodes to the worklist.
   WorkList.insert(WorkList.end(), DAG.allnodes_begin(), DAG.allnodes_end());
   
+  // Create a dummy node (which is not added to allnodes), that adds a reference
+  // to the root node, preventing it from being deleted, and tracking any
+  // changes of the root.
+  HandleSDNode Dummy(DAG.getRoot());
+  
   // while the worklist isn't empty, inspect the node on the end of it and
   // try and combine it.
   while (!WorkList.empty()) {
@@ -281,15 +286,14 @@ void DAGCombiner::Run(bool RunningAfterLegalize) {
     WorkList.pop_back();
     
     // If N has no uses, it is dead.  Make sure to revisit all N's operands once
-    // N is deleted from the DAG, since they too may now be dead.
-    // FIXME: is there a better way to keep from deleting the dag root because
-    // we think it has no uses?  This works for now...
-    if (N->use_empty() && N != DAG.getRoot().Val) {
+    // N is deleted from the DAG, since they too may now be dead or may have a
+    // reduced number of uses, allowing other xforms.
+    if (N->use_empty() && N != &Dummy) {
       for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
         WorkList.push_back(N->getOperand(i).Val);
       
-      DAG.DeleteNode(N);
       removeFromWorkList(N);
+      DAG.DeleteNode(N);
       continue;
     }
     
@@ -319,6 +323,9 @@ void DAGCombiner::Run(bool RunningAfterLegalize) {
       }
     }
   }
+  
+  // If the root changed (e.g. it was a dead load, update the root).
+  DAG.setRoot(Dummy.getValue());
 }
 
 SDOperand DAGCombiner::visit(SDNode *N) {
