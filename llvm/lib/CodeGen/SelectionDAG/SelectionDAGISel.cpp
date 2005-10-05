@@ -1302,10 +1302,10 @@ void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB, MachineFunction &MF,
   DEBUG(std::cerr << "Legalized selection DAG:\n");
   DEBUG(DAG.dump());
 
-  if (ViewDAGs) DAG.viewGraph();
-
   // Run the DAG combiner in post-legalize mode, if we are told to do so
   if (CombinerEnabled) DAG.Combine(true);
+  
+  if (ViewDAGs) DAG.viewGraph();
   
   // Third, instruction select all of the operations to machine code, adding the
   // code to the MachineBasicBlock.
