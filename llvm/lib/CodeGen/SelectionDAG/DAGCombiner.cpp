@@ -1069,18 +1069,16 @@ SDOperand DAGCombiner::visitSELECT_CC(SDNode *N) {
   
   // Determine if the condition we're dealing with is constant
   SDOperand SCC = SimplifySetCC(TLI.getSetCCResultTy(), N0, N1, CC);
-  ConstantSDNode *SCCC = dyn_cast<ConstantSDNode>(SCC);
-  bool constTrue = SCCC && SCCC->getValue() == 1;
-  bool constFalse = SCCC && SCCC->isNullValue();
-    
+  ConstantSDNode *SCCC = dyn_cast_or_null<ConstantSDNode>(SCC.Val);
+  
   // fold select_cc lhs, rhs, x, x, cc -> x
   if (N2 == N3)
     return N2;
   // fold select_cc true, x, y -> x
-  if (constTrue)
+  if (SCCC && SCCC->getValue())
     return N2;
   // fold select_cc false, x, y -> y
-  if (constFalse)
+  if (SCCC && SCCC->getValue() == 0)
     return N3;
   // fold select_cc into other things, such as min/max/abs
   return SimplifySelectCC(N0, N1, N2, N3, CC);
