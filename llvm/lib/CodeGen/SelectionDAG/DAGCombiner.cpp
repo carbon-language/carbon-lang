@@ -139,7 +139,7 @@ namespace {
     SDOperand SimplifySelectCC(SDOperand N0, SDOperand N1, SDOperand N2, 
                                SDOperand N3, ISD::CondCode CC);
     SDOperand SimplifySetCC(MVT::ValueType VT, SDOperand N0, SDOperand N1,
-                            ISD::CondCode Cond);
+                            ISD::CondCode Cond, bool foldBooleans = true);
 public:
     DAGCombiner(SelectionDAG &D)
       : DAG(D), TLI(D.getTargetLoweringInfo()), AfterLegalize(false) {}
@@ -1078,7 +1078,7 @@ SDOperand DAGCombiner::visitSELECT_CC(SDNode *N) {
   ISD::CondCode CC = cast<CondCodeSDNode>(N4)->get();
   
   // Determine if the condition we're dealing with is constant
-  SDOperand SCC = SimplifySetCC(TLI.getSetCCResultTy(), N0, N1, CC);
+  SDOperand SCC = SimplifySetCC(TLI.getSetCCResultTy(), N0, N1, CC, false);
   ConstantSDNode *SCCC = dyn_cast_or_null<ConstantSDNode>(SCC.Val);
   
   // fold select_cc lhs, rhs, x, x, cc -> x
@@ -1404,7 +1404,7 @@ SDOperand DAGCombiner::visitBRCOND(SDNode *N) {
   if (N1C && N1C->isNullValue())
     return Chain;
   // unconditional branch
-  if (N1C && !N1C->isNullValue())
+  if (N1C && N1C->getValue() == 1)
     return DAG.getNode(ISD::BR, MVT::Other, Chain, N2);
   return SDOperand();
 }
@@ -1432,28 +1432,49 @@ SDOperand DAGCombiner::visitBR_CC(SDNode *N) {
   SDOperand CondLHS = N->getOperand(2), CondRHS = N->getOperand(3);
   
   // Use SimplifySetCC  to simplify SETCC's.
-  SDOperand Simp = SimplifySetCC(MVT::i1, CondLHS, CondRHS, CC->get());
-  if (Simp.Val) {
-    if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Simp)) {
-      if (C->getValue() & 1) // Unconditional branch
-        return DAG.getNode(ISD::BR, MVT::Other, N->getOperand(0),
-                           N->getOperand(4));
-      else
-        return N->getOperand(0);          // Unconditional Fall through
-    } else if (Simp.Val->getOpcode() == ISD::SETCC) {
-      // Folded to a simpler setcc
-      return DAG.getNode(ISD::BR_CC, MVT::Other, N->getOperand(0), 
-                         Simp.getOperand(2), Simp.getOperand(0),
-                         Simp.getOperand(1), N->getOperand(4));
-    }
-  }
-  
+  SDOperand Simp = SimplifySetCC(MVT::i1, CondLHS, CondRHS, CC->get(), false);
+  ConstantSDNode *SCCC = dyn_cast_or_null<ConstantSDNode>(Simp.Val);
+
+  // fold br_cc true, dest -> br dest (unconditional branch)
+  if (SCCC && SCCC->getValue())
+    return DAG.getNode(ISD::BR, MVT::Other, N->getOperand(0),
+                       N->getOperand(4));
+  // fold br_cc false, dest -> unconditional fall through
+  if (SCCC && SCCC->isNullValue())
+    return N->getOperand(0);
+  // fold to a simpler setcc
+  if (Simp.Val && Simp.getOpcode() == ISD::SETCC)
+    return DAG.getNode(ISD::BR_CC, MVT::Other, N->getOperand(0), 
+                       Simp.getOperand(2), Simp.getOperand(0),
+                       Simp.getOperand(1), N->getOperand(4));
   return SDOperand();
 }
 
 SDOperand DAGCombiner::visitBRTWOWAY_CC(SDNode *N) {
-  // FIXME: come up with a common way between br_cc, brtwoway_cc, and select_cc
-  // to canonicalize the condition without calling getnode a bazillion times.
+  SDOperand Chain = N->getOperand(0);
+  SDOperand CCN = N->getOperand(1);
+  SDOperand LHS = N->getOperand(2);
+  SDOperand RHS = N->getOperand(3);
+  SDOperand N4 = N->getOperand(4);
+  SDOperand N5 = N->getOperand(5);
+  
+  SDOperand SCC = SimplifySetCC(TLI.getSetCCResultTy(), LHS, RHS,
+                                cast<CondCodeSDNode>(CCN)->get(), false);
+  ConstantSDNode *SCCC = dyn_cast_or_null<ConstantSDNode>(SCC.Val);
+  
+  // fold select_cc lhs, rhs, x, x, cc -> x
+  if (N4 == N5)
+    return DAG.getNode(ISD::BR, MVT::Other, Chain, N4);
+  // fold select_cc true, x, y -> x
+  if (SCCC && SCCC->getValue())
+    return DAG.getNode(ISD::BR, MVT::Other, Chain, N4);
+  // fold select_cc false, x, y -> y
+  if (SCCC && SCCC->isNullValue())
+    return DAG.getNode(ISD::BR, MVT::Other, Chain, N5);
+  // fold to a simpler setcc
+  if (SCC.Val && SCC.getOpcode() == ISD::SETCC)
+    return DAG.getBR2Way_CC(Chain, SCC.getOperand(2), SCC.getOperand(0), 
+                            SCC.getOperand(1), N4, N5);
   return SDOperand();
 }
 
@@ -1468,7 +1489,8 @@ SDOperand DAGCombiner::SimplifySelectCC(SDOperand N0, SDOperand N1,
 }
 
 SDOperand DAGCombiner::SimplifySetCC(MVT::ValueType VT, SDOperand N0,
-                                     SDOperand N1, ISD::CondCode Cond) {
+                                     SDOperand N1, ISD::CondCode Cond,
+                                     bool foldBooleans) {
   // These setcc operations always fold.
   switch (Cond) {
   default: break;
@@ -1768,7 +1790,7 @@ SDOperand DAGCombiner::SimplifySetCC(MVT::ValueType VT, SDOperand N0,
 
   // Fold away ALL boolean setcc's.
   SDOperand Temp;
-  if (N0.getValueType() == MVT::i1) {
+  if (N0.getValueType() == MVT::i1 && foldBooleans) {
     switch (Cond) {
     default: assert(0 && "Unknown integer setcc!");
     case ISD::SETEQ:  // X == Y  -> (X^Y)^1
