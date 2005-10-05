@@ -490,11 +490,11 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, const VirtRegMap &VRM) {
             if (DestReg != It->second) {
               MRI->copyRegToReg(MBB, &MI, DestReg, It->second,
                                 MF.getSSARegMap()->getRegClass(VirtReg));
-              // Revisit the copy if the destination is a vreg.
-              if (MRegisterInfo::isVirtualRegister(DestReg)) {
-                NextMII = &MI;
-                --NextMII;  // backtrack to the copy.
-              }
+              // Revisit the copy so we make sure to notice the effects of the
+              // operation on the destreg (either needing to RA it if it's 
+              // virtual or needing to clobber any values if it's physical).
+              NextMII = &MI;
+              --NextMII;  // backtrack to the copy.
             }
             MBB.erase(&MI);
             goto ProcessNextInst;
