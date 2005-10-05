@@ -2619,11 +2619,8 @@ static void FindLatestCallSeqStart(SDNode *Node, SDNode *&Found) {
   // Otherwise, scan the operands of Node to see if any of them is a call.
   assert(Node->getNumOperands() != 0 &&
          "All leaves should have depth equal to the entry node!");
-  for (unsigned i = 0, e = Node->getNumOperands()-1; i != e; ++i) {
+  for (unsigned i = 0, e = Node->getNumOperands()-1; i != e; ++i)
     FindLatestCallSeqStart(Node->getOperand(i).Val, Found);
-    if (Found->getOpcode() == ISD::CALLSEQ_START)
-      return;
-  }
 
   // Tail recurse for the last iteration.
   FindLatestCallSeqStart(Node->getOperand(Node->getNumOperands()-1).Val,
