@@ -1947,7 +1947,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     break;
   }
   case ISD::SELECT_CC: {
-    assert(Ops.size() == 5 && "TRUNCSTORE takes 5 operands!");
+    assert(Ops.size() == 5 && "SELECT_CC takes 5 operands!");
     assert(Ops[0].getValueType() == Ops[1].getValueType() &&
            "LHS and RHS of condition must have same type!");
     assert(Ops[2].getValueType() == Ops[3].getValueType() &&
@@ -1960,7 +1960,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     break;
   }
   case ISD::BR_CC: {
-    assert(Ops.size() == 5 && "TRUNCSTORE takes 5 operands!");
+    assert(Ops.size() == 5 && "BR_CC takes 5 operands!");
     assert(Ops[2].getValueType() == Ops[3].getValueType() &&
            "LHS/RHS of comparison should match types!");
     // Use SimplifySetCC  to simplify SETCC's.
