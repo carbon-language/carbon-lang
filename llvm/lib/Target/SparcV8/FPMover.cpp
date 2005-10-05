@@ -82,7 +82,7 @@ bool FPMover::runOnMachineBasicBlock (MachineBasicBlock &MBB) {
   bool Changed = false;
   for (MachineBasicBlock::iterator I = MBB.begin (); I != MBB.end (); ++I)
     if (V8::FpMOVD == I->getOpcode ()) {
-      unsigned NewSrcReg0, NewSrcReg1, NewDestReg0, NewDestReg1;
+      unsigned NewSrcReg0 = 0, NewSrcReg1 = 0, NewDestReg0 = 0, NewDestReg1 = 0;
       doubleToSingleRegPair (I->getOperand (0).getReg (), NewDestReg0,
                              NewDestReg1);
       doubleToSingleRegPair (I->getOperand (1).getReg (), NewSrcReg0,
