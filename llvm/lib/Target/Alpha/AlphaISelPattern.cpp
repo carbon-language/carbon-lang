@@ -1822,7 +1822,6 @@ void AlphaISel::Select(SDOperand N) {
       } else { //ISD::TRUNCSTORE
         switch(cast<VTSDNode>(Node->getOperand(4))->getVT()) {
         default: assert(0 && "unknown Type in store");
-        case MVT::i1: //FIXME: DAG does not promote this load
         case MVT::i8: Opc = Alpha::STB; break;
         case MVT::i16: Opc = Alpha::STW; break;
         case MVT::i32: Opc = Alpha::STL; break;
