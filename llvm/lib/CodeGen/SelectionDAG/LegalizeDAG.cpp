@@ -378,46 +378,74 @@ SDOperand SelectionDAGLegalize::PromoteLegalFP_TO_INT(SDOperand LegalOp,
                      DAG.getNode(OpToUse, NewOutTy, LegalOp));
 }
 
+/// ComputeTopDownOrdering - Add the specified node to the Order list if it has
+/// not been visited yet and if all of its operands have already been visited.
+static void ComputeTopDownOrdering(SDNode *N, std::vector<SDNode*> &Order,
+                                   std::map<SDNode*, unsigned> &Visited) {
+  if (++Visited[N] != N->getNumOperands())
+    return;  // Haven't visited all operands yet
+  
+  Order.push_back(N);
+  
+  if (N->hasOneUse()) { // Tail recurse in common case.
+    ComputeTopDownOrdering(*N->use_begin(), Order, Visited);
+    return;
+  }
+  
+  // Now that we have N in, add anything that uses it if all of their operands
+  // are now done.
+  
+  for (SDNode::use_iterator UI = N->use_begin(), E = N->use_end(); UI != E;++UI)
+    ComputeTopDownOrdering(*UI, Order, Visited);
+}
+
 
 void SelectionDAGLegalize::LegalizeDAG() {
   // The legalize process is inherently a bottom-up recursive process (users
   // legalize their uses before themselves).  Given infinite stack space, we
   // could just start legalizing on the root and traverse the whole graph.  In
   // practice however, this causes us to run out of stack space on large basic
-  // blocks.  To avoid this problem, legalize the entry node, then all its uses
-  // iteratively instead of recursively.
-  std::vector<SDOperand> Worklist;
-  Worklist.push_back(DAG.getEntryNode());
+  // blocks.  To avoid this problem, compute an ordering of the nodes where each
+  // node is only legalized after all of its operands are legalized.
+  std::map<SDNode*, unsigned> Visited;
+  std::vector<SDNode*> Order;
   
-  while (!Worklist.empty()) {
-    SDOperand Node = Worklist.back();
-    Worklist.pop_back();
-   
-    if (LegalizedNodes.count(Node)) continue;
-      
-    for (SDNode::use_iterator UI = Node.Val->use_begin(),
-         E = Node.Val->use_end(); UI != E; ++UI) {
-      // Scan the values.  If this use has a value that is a token chain, add it
-      // to the worklist.
-      SDNode *User = *UI;
-      for (unsigned i = 0, e = User->getNumValues(); i != e; ++i)
-        if (User->getValueType(i) == MVT::Other) {
-          Worklist.push_back(SDOperand(User, i));
-          break; 
-        }
+  // Compute ordering from all of the leaves in the graphs, those (like the
+  // entry node) that have no operands.
+  for (SelectionDAG::allnodes_iterator I = DAG.allnodes_begin(),
+       E = DAG.allnodes_end(); I != E; ++I) {
+    if ((*I)->getNumOperands() == 0) {
+      Visited[*I] = 0 - 1U;
+      ComputeTopDownOrdering(*I, Order, Visited);
     }
-    
-    // Finally, legalize this node.
-    LegalizeOp(Node);
   }
   
+  assert(Order.size() == Visited.size() && Order.size() == DAG.allnodes_size()&&
+         "Error: DAG is cyclic!");
+  Visited.clear();
   
-  // Finally, legalize from the root up, to make sure we have legalized
-  // everything possible.
+  for (unsigned i = 0, e = Order.size(); i != e; ++i) {
+    SDNode *N = Order[i];
+    switch (getTypeAction(N->getValueType(0))) {
+    default: assert(0 && "Bad type action!");
+    case Legal:
+      LegalizeOp(SDOperand(N, 0));
+      break;
+    case Promote:
+      PromoteOp(SDOperand(N, 0));
+      break;
+    case Expand: {
+      SDOperand X, Y;
+      ExpandOp(SDOperand(N, 0), X, Y);
+      break;
+    }
+    }
+  }
+
+  // Finally, it's possible the root changed.  Get the new root.
   SDOperand OldRoot = DAG.getRoot();
-  SDOperand NewRoot = LegalizeOp(OldRoot);
-  
-  DAG.setRoot(NewRoot);
+  assert(LegalizedNodes.count(OldRoot) && "Root didn't get legalized?");
+  DAG.setRoot(LegalizedNodes[OldRoot]);
 
   ExpandedNodes.clear();
   LegalizedNodes.clear();
@@ -492,9 +520,16 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     abort();
   case ISD::EntryToken:
   case ISD::FrameIndex:
+  case ISD::TargetFrameIndex:
+  case ISD::Register:
+  case ISD::TargetConstant:
   case ISD::GlobalAddress:
   case ISD::ExternalSymbol:
   case ISD::ConstantPool:           // Nothing to do.
+  case ISD::BasicBlock:
+  case ISD::CONDCODE:
+  case ISD::VALUETYPE:
+  case ISD::SRCVALUE:
     assert(isTypeLegal(Node->getValueType(0)) && "This must be legal!");
     break;
   case ISD::AssertSext:
