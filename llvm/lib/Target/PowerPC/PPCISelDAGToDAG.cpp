@@ -94,6 +94,8 @@ namespace {
     
 private:
     SDOperand SelectDYNAMIC_STACKALLOC(SDOperand N);
+    SDOperand SelectADD_PARTS(SDOperand N);
+    SDOperand SelectSUB_PARTS(SDOperand N);
   };
 }
 
@@ -713,6 +715,67 @@ SDOperand PPC32DAGToDAGISel::SelectDYNAMIC_STACKALLOC(SDOperand Op) {
   return SDOperand(Result.Val, Op.ResNo);
 }
 
+SDOperand PPC32DAGToDAGISel::SelectADD_PARTS(SDOperand Op) {
+  SDNode *N = Op.Val;
+  SDOperand LHSL = Select(N->getOperand(0));
+  SDOperand LHSH = Select(N->getOperand(1));
+  
+  unsigned Imm;
+  bool ME = false, ZE = false;
+  if (isIntImmediate(N->getOperand(3), Imm)) {
+    ME = (signed)Imm == -1;
+    ZE = Imm == 0;
+  }
+  
+  std::vector<SDOperand> Result;
+  SDOperand CarryFromLo;
+  if (isIntImmediate(N->getOperand(2), Imm) &&
+      ((signed)Imm >= -32768 || (signed)Imm < 32768)) {
+    // Codegen the low 32 bits of the add.  Interestingly, there is no
+    // shifted form of add immediate carrying.
+    CarryFromLo = CurDAG->getTargetNode(PPC::ADDIC, MVT::i32, MVT::Flag,
+                                        LHSL, getI32Imm(Imm));
+  } else {
+    CarryFromLo = CurDAG->getTargetNode(PPC::ADDC, MVT::i32, MVT::Flag,
+                                        LHSL, Select(N->getOperand(2)));
+  }
+  CarryFromLo = CarryFromLo.getValue(1);
+  
+  // Codegen the high 32 bits, adding zero, minus one, or the full value
+  // along with the carry flag produced by addc/addic.
+  SDOperand ResultHi;
+  if (ZE)
+    ResultHi = CurDAG->getTargetNode(PPC::ADDZE, MVT::i32, LHSH, CarryFromLo);
+  else if (ME)
+    ResultHi = CurDAG->getTargetNode(PPC::ADDME, MVT::i32, LHSH, CarryFromLo);
+  else
+    ResultHi = CurDAG->getTargetNode(PPC::ADDE, MVT::i32, LHSH,
+                                     Select(N->getOperand(3)), CarryFromLo);
+  Result.push_back(CarryFromLo.getValue(0));
+  Result.push_back(ResultHi);
+  
+  CodeGenMap[Op.getValue(0)] = Result[0];
+  CodeGenMap[Op.getValue(1)] = Result[1];
+  return Result[Op.ResNo];
+}
+SDOperand PPC32DAGToDAGISel::SelectSUB_PARTS(SDOperand Op) {
+  SDNode *N = Op.Val;
+  SDOperand LHSL = Select(N->getOperand(0));
+  SDOperand LHSH = Select(N->getOperand(1));
+  SDOperand RHSL = Select(N->getOperand(2));
+  SDOperand RHSH = Select(N->getOperand(3));
+  
+  std::vector<SDOperand> Result;
+  Result.push_back(CurDAG->getTargetNode(PPC::SUBFC, MVT::i32, MVT::Flag,
+                                         RHSL, LHSL));
+  Result.push_back(CurDAG->getTargetNode(PPC::SUBFE, MVT::i32, RHSH, LHSH,
+                                         Result[0].getValue(1)));
+  CodeGenMap[Op.getValue(0)] = Result[0];
+  CodeGenMap[Op.getValue(1)] = Result[1];
+  return Result[Op.ResNo];
+}
+
+
 // Select - Convert the specified operand from a target-independent to a
 // target-specific node if it hasn't already been changed.
 SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
@@ -1069,64 +1132,8 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
                          Select(N->getOperand(0)));
     return SDOperand(N, 0);
   }
-    
-  case ISD::ADD_PARTS: {
-    SDOperand LHSL = Select(N->getOperand(0));
-    SDOperand LHSH = Select(N->getOperand(1));
-   
-    unsigned Imm;
-    bool ME = false, ZE = false;
-    if (isIntImmediate(N->getOperand(3), Imm)) {
-      ME = (signed)Imm == -1;
-      ZE = Imm == 0;
-    }
-
-    std::vector<SDOperand> Result;
-    SDOperand CarryFromLo;
-    if (isIntImmediate(N->getOperand(2), Imm) &&
-        ((signed)Imm >= -32768 || (signed)Imm < 32768)) {
-      // Codegen the low 32 bits of the add.  Interestingly, there is no
-      // shifted form of add immediate carrying.
-      CarryFromLo = CurDAG->getTargetNode(PPC::ADDIC, MVT::i32, MVT::Flag,
-                                          LHSL, getI32Imm(Imm));
-    } else {
-      CarryFromLo = CurDAG->getTargetNode(PPC::ADDC, MVT::i32, MVT::Flag,
-                                          LHSL, Select(N->getOperand(2)));
-    }
-    CarryFromLo = CarryFromLo.getValue(1);
-    
-    // Codegen the high 32 bits, adding zero, minus one, or the full value
-    // along with the carry flag produced by addc/addic.
-    SDOperand ResultHi;
-    if (ZE)
-      ResultHi = CurDAG->getTargetNode(PPC::ADDZE, MVT::i32, LHSH, CarryFromLo);
-    else if (ME)
-      ResultHi = CurDAG->getTargetNode(PPC::ADDME, MVT::i32, LHSH, CarryFromLo);
-    else
-      ResultHi = CurDAG->getTargetNode(PPC::ADDE, MVT::i32, LHSH,
-                                       Select(N->getOperand(3)), CarryFromLo);
-    Result.push_back(CarryFromLo.getValue(0));
-    Result.push_back(ResultHi);
-    
-    CodeGenMap[Op.getValue(0)] = Result[0];
-    CodeGenMap[Op.getValue(1)] = Result[1];
-    return Result[Op.ResNo];
-  }
-  case ISD::SUB_PARTS: {
-    SDOperand LHSL = Select(N->getOperand(0));
-    SDOperand LHSH = Select(N->getOperand(1));
-    SDOperand RHSL = Select(N->getOperand(2));
-    SDOperand RHSH = Select(N->getOperand(3));
-
-    std::vector<SDOperand> Result;
-    Result.push_back(CurDAG->getTargetNode(PPC::SUBFC, MVT::i32, MVT::Flag,
-                                           RHSL, LHSL));
-    Result.push_back(CurDAG->getTargetNode(PPC::SUBFE, MVT::i32, RHSH, LHSH,
-                                           Result[0].getValue(1)));
-    CodeGenMap[Op.getValue(0)] = Result[0];
-    CodeGenMap[Op.getValue(1)] = Result[1];
-    return Result[Op.ResNo];
-  }
+  case ISD::ADD_PARTS: return SelectADD_PARTS(Op);
+  case ISD::SUB_PARTS: return SelectSUB_PARTS(Op);
     
   case ISD::LOAD:
   case ISD::EXTLOAD:
