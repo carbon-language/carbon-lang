@@ -93,9 +93,10 @@ namespace {
 #include "PPC32GenDAGISel.inc"
     
 private:
-    SDOperand SelectDYNAMIC_STACKALLOC(SDOperand N);
-    SDOperand SelectADD_PARTS(SDOperand N);
-    SDOperand SelectSUB_PARTS(SDOperand N);
+    SDOperand SelectDYNAMIC_STACKALLOC(SDOperand Op);
+    SDOperand SelectADD_PARTS(SDOperand Op);
+    SDOperand SelectSUB_PARTS(SDOperand Op);
+    SDOperand SelectSETCC(SDOperand Op);
   };
 }
 
@@ -775,6 +776,113 @@ SDOperand PPC32DAGToDAGISel::SelectSUB_PARTS(SDOperand Op) {
   return Result[Op.ResNo];
 }
 
+SDOperand PPC32DAGToDAGISel::SelectSETCC(SDOperand Op) {
+  SDNode *N = Op.Val;
+  unsigned Imm;
+  ISD::CondCode CC = cast<CondCodeSDNode>(N->getOperand(2))->get();
+  if (isIntImmediate(N->getOperand(1), Imm)) {
+    // We can codegen setcc op, imm very efficiently compared to a brcond.
+    // Check for those cases here.
+    // setcc op, 0
+    if (Imm == 0) {
+      SDOperand Op = Select(N->getOperand(0));
+      switch (CC) {
+        default: assert(0 && "Unhandled SetCC condition"); abort();
+        case ISD::SETEQ:
+          Op = CurDAG->getTargetNode(PPC::CNTLZW, MVT::i32, Op);
+          CurDAG->SelectNodeTo(N, PPC::RLWINM, MVT::i32, Op, getI32Imm(27),
+                               getI32Imm(5), getI32Imm(31));
+          break;
+        case ISD::SETNE: {
+          SDOperand AD = CurDAG->getTargetNode(PPC::ADDIC, MVT::i32, MVT::Flag,
+                                               Op, getI32Imm(~0U));
+          CurDAG->SelectNodeTo(N, PPC::SUBFE, MVT::i32, AD, Op, AD.getValue(1));
+          break;
+        }
+        case ISD::SETLT:
+          CurDAG->SelectNodeTo(N, PPC::RLWINM, MVT::i32, Op, getI32Imm(1),
+                               getI32Imm(31), getI32Imm(31));
+          break;
+        case ISD::SETGT: {
+          SDOperand T = CurDAG->getTargetNode(PPC::NEG, MVT::i32, Op);
+          T = CurDAG->getTargetNode(PPC::ANDC, MVT::i32, T, Op);;
+          CurDAG->SelectNodeTo(N, PPC::RLWINM, MVT::i32, T, getI32Imm(1),
+                               getI32Imm(31), getI32Imm(31));
+          break;
+        }
+      }
+      return SDOperand(N, 0);
+    } else if (Imm == ~0U) {        // setcc op, -1
+      SDOperand Op = Select(N->getOperand(0));
+      switch (CC) {
+        default: assert(0 && "Unhandled SetCC condition"); abort();
+        case ISD::SETEQ:
+          Op = CurDAG->getTargetNode(PPC::ADDIC, MVT::i32, MVT::Flag,
+                                     Op, getI32Imm(1));
+          CurDAG->SelectNodeTo(N, PPC::ADDZE, MVT::i32, 
+                               CurDAG->getTargetNode(PPC::LI, MVT::i32,
+                                                     getI32Imm(0)),
+                               Op.getValue(1));
+          break;
+        case ISD::SETNE: {
+          Op = CurDAG->getTargetNode(PPC::NOR, MVT::i32, Op, Op);
+          SDOperand AD = CurDAG->getTargetNode(PPC::ADDIC, MVT::i32, MVT::Flag,
+                                               Op, getI32Imm(~0U));
+          CurDAG->SelectNodeTo(N, PPC::SUBFE, MVT::i32, AD, Op, AD.getValue(1));
+          break;
+        }
+        case ISD::SETLT: {
+          SDOperand AD = CurDAG->getTargetNode(PPC::ADDI, MVT::i32, Op,
+                                               getI32Imm(1));
+          SDOperand AN = CurDAG->getTargetNode(PPC::AND, MVT::i32, AD, Op);
+          CurDAG->SelectNodeTo(N, PPC::RLWINM, MVT::i32, AN, getI32Imm(1),
+                               getI32Imm(31), getI32Imm(31));
+          break;
+        }
+        case ISD::SETGT:
+          Op = CurDAG->getTargetNode(PPC::RLWINM, MVT::i32, Op, getI32Imm(1),
+                                     getI32Imm(31), getI32Imm(31));
+          CurDAG->SelectNodeTo(N, PPC::XORI, MVT::i32, Op, getI32Imm(1));
+          break;
+      }
+      return SDOperand(N, 0);
+    }
+  }
+  
+  bool Inv;
+  unsigned Idx = getCRIdxForSetCC(CC, Inv);
+  SDOperand CCReg = SelectCC(N->getOperand(0), N->getOperand(1), CC);
+  SDOperand IntCR;
+  
+  // Force the ccreg into CR7.
+  SDOperand CR7Reg = CurDAG->getRegister(PPC::CR7, MVT::i32);
+  
+  std::vector<MVT::ValueType> VTs;
+  VTs.push_back(MVT::Other);
+  VTs.push_back(MVT::Flag);    // NONSTANDARD CopyToReg node: defines a flag
+  std::vector<SDOperand> Ops;
+  Ops.push_back(CurDAG->getEntryNode());
+  Ops.push_back(CR7Reg);
+  Ops.push_back(CCReg);
+  CCReg = CurDAG->getNode(ISD::CopyToReg, VTs, Ops).getValue(1);
+  
+  if (TLI.getTargetMachine().getSubtarget<PPCSubtarget>().isGigaProcessor())
+    IntCR = CurDAG->getTargetNode(PPC::MFOCRF, MVT::i32, CR7Reg, CCReg);
+  else
+    IntCR = CurDAG->getTargetNode(PPC::MFCR, MVT::i32, CCReg);
+  
+  if (!Inv) {
+    CurDAG->SelectNodeTo(N, PPC::RLWINM, MVT::i32, IntCR,
+                         getI32Imm(32-(3-Idx)), getI32Imm(31), getI32Imm(31));
+  } else {
+    SDOperand Tmp =
+    CurDAG->getTargetNode(PPC::RLWINM, MVT::i32, IntCR,
+                          getI32Imm(32-(3-Idx)), getI32Imm(31),getI32Imm(31));
+    CurDAG->SelectNodeTo(N, PPC::XORI, MVT::i32, Tmp, getI32Imm(1));
+  }
+  
+  return SDOperand(N, 0);
+}
 
 // Select - Convert the specified operand from a target-independent to a
 // target-specific node if it hasn't already been changed.
@@ -790,6 +898,10 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
   
   switch (N->getOpcode()) {
   default: break;
+  case ISD::DYNAMIC_STACKALLOC: return SelectDYNAMIC_STACKALLOC(Op);
+  case ISD::ADD_PARTS:          return SelectADD_PARTS(Op);
+  case ISD::SUB_PARTS:          return SelectSUB_PARTS(Op);
+  case ISD::SETCC:              return SelectSETCC(Op);
   case ISD::TokenFactor: {
     SDOperand New;
     if (N->getNumOperands() == 2) {
@@ -862,8 +974,7 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
       CurDAG->SelectNodeTo(N, PPC::LA, MVT::i32, Tmp, GA);
     return SDOperand(N, 0);
   }
-  case ISD::DYNAMIC_STACKALLOC:
-    return SelectDYNAMIC_STACKALLOC(Op);
+    
   case PPCISD::FSEL: {
     SDOperand Comparison = Select(N->getOperand(0));
     // Extend the comparison to 64-bits.
@@ -1132,9 +1243,7 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
                          Select(N->getOperand(0)));
     return SDOperand(N, 0);
   }
-  case ISD::ADD_PARTS: return SelectADD_PARTS(Op);
-  case ISD::SUB_PARTS: return SelectSUB_PARTS(Op);
-    
+
   case ISD::LOAD:
   case ISD::EXTLOAD:
   case ISD::ZEXTLOAD:
@@ -1209,113 +1318,6 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
     return SDOperand(N, 0);
   }
     
-  case ISD::SETCC: {
-    unsigned Imm;
-    ISD::CondCode CC = cast<CondCodeSDNode>(N->getOperand(2))->get();
-    if (isIntImmediate(N->getOperand(1), Imm)) {
-      // We can codegen setcc op, imm very efficiently compared to a brcond.
-      // Check for those cases here.
-      // setcc op, 0
-      if (Imm == 0) {
-        SDOperand Op = Select(N->getOperand(0));
-        switch (CC) {
-        default: assert(0 && "Unhandled SetCC condition"); abort();
-        case ISD::SETEQ:
-          Op = CurDAG->getTargetNode(PPC::CNTLZW, MVT::i32, Op);
-          CurDAG->SelectNodeTo(N, PPC::RLWINM, MVT::i32, Op, getI32Imm(27),
-                               getI32Imm(5), getI32Imm(31));
-          break;
-        case ISD::SETNE: {
-          SDOperand AD = CurDAG->getTargetNode(PPC::ADDIC, MVT::i32, MVT::Flag,
-                                               Op, getI32Imm(~0U));
-          CurDAG->SelectNodeTo(N, PPC::SUBFE, MVT::i32, AD, Op, AD.getValue(1));
-          break;
-        }
-        case ISD::SETLT:
-          CurDAG->SelectNodeTo(N, PPC::RLWINM, MVT::i32, Op, getI32Imm(1),
-                               getI32Imm(31), getI32Imm(31));
-          break;
-        case ISD::SETGT: {
-          SDOperand T = CurDAG->getTargetNode(PPC::NEG, MVT::i32, Op);
-          T = CurDAG->getTargetNode(PPC::ANDC, MVT::i32, T, Op);;
-          CurDAG->SelectNodeTo(N, PPC::RLWINM, MVT::i32, T, getI32Imm(1),
-                               getI32Imm(31), getI32Imm(31));
-          break;
-        }
-        }
-        return SDOperand(N, 0);
-      } else if (Imm == ~0U) {        // setcc op, -1
-        SDOperand Op = Select(N->getOperand(0));
-        switch (CC) {
-        default: assert(0 && "Unhandled SetCC condition"); abort();
-        case ISD::SETEQ:
-          Op = CurDAG->getTargetNode(PPC::ADDIC, MVT::i32, MVT::Flag,
-                                     Op, getI32Imm(1));
-          CurDAG->SelectNodeTo(N, PPC::ADDZE, MVT::i32, 
-                               CurDAG->getTargetNode(PPC::LI, MVT::i32,
-                                                     getI32Imm(0)),
-                               Op.getValue(1));
-          break;
-        case ISD::SETNE: {
-          Op = CurDAG->getTargetNode(PPC::NOR, MVT::i32, Op, Op);
-          SDOperand AD = CurDAG->getTargetNode(PPC::ADDIC, MVT::i32, MVT::Flag,
-                                                Op, getI32Imm(~0U));
-          CurDAG->SelectNodeTo(N, PPC::SUBFE, MVT::i32, AD, Op, AD.getValue(1));
-          break;
-        }
-        case ISD::SETLT: {
-          SDOperand AD = CurDAG->getTargetNode(PPC::ADDI, MVT::i32, Op,
-                                               getI32Imm(1));
-          SDOperand AN = CurDAG->getTargetNode(PPC::AND, MVT::i32, AD, Op);
-          CurDAG->SelectNodeTo(N, PPC::RLWINM, MVT::i32, AN, getI32Imm(1),
-                               getI32Imm(31), getI32Imm(31));
-          break;
-        }
-        case ISD::SETGT:
-          Op = CurDAG->getTargetNode(PPC::RLWINM, MVT::i32, Op, getI32Imm(1),
-                                     getI32Imm(31), getI32Imm(31));
-          CurDAG->SelectNodeTo(N, PPC::XORI, MVT::i32, Op, getI32Imm(1));
-          break;
-        }
-        return SDOperand(N, 0);
-      }
-    }
-    
-    bool Inv;
-    unsigned Idx = getCRIdxForSetCC(CC, Inv);
-    SDOperand CCReg = SelectCC(N->getOperand(0), N->getOperand(1), CC);
-    SDOperand IntCR;
-
-    // Force the ccreg into CR7.
-    SDOperand CR7Reg = CurDAG->getRegister(PPC::CR7, MVT::i32);
-    
-    std::vector<MVT::ValueType> VTs;
-    VTs.push_back(MVT::Other);
-    VTs.push_back(MVT::Flag);    // NONSTANDARD CopyToReg node: defines a flag
-    std::vector<SDOperand> Ops;
-    Ops.push_back(CurDAG->getEntryNode());
-    Ops.push_back(CR7Reg);
-    Ops.push_back(CCReg);
-    CCReg = CurDAG->getNode(ISD::CopyToReg, VTs, Ops).getValue(1);
-    
-    if (TLI.getTargetMachine().getSubtarget<PPCSubtarget>().isGigaProcessor())
-      IntCR = CurDAG->getTargetNode(PPC::MFOCRF, MVT::i32, CR7Reg, CCReg);
-    else
-      IntCR = CurDAG->getTargetNode(PPC::MFCR, MVT::i32, CCReg);
-    
-    if (!Inv) {
-      CurDAG->SelectNodeTo(N, PPC::RLWINM, MVT::i32, IntCR,
-                           getI32Imm(32-(3-Idx)), getI32Imm(31), getI32Imm(31));
-    } else {
-      SDOperand Tmp =
-      CurDAG->getTargetNode(PPC::RLWINM, MVT::i32, IntCR,
-                            getI32Imm(32-(3-Idx)), getI32Imm(31),getI32Imm(31));
-      CurDAG->SelectNodeTo(N, PPC::XORI, MVT::i32, Tmp, getI32Imm(1));
-    }
-      
-    return SDOperand(N, 0);
-  }
-
   case ISD::SELECT_CC: {
     ISD::CondCode CC = cast<CondCodeSDNode>(N->getOperand(4))->get();
     
