@@ -2455,7 +2455,7 @@ ExpandByParts(unsigned NodeOp, SDOperand LHS, SDOperand RHS,
   // FIXME: this should be moved to the dag combiner someday.
   assert(NodeOp == ISD::ADD_PARTS || NodeOp == ISD::SUB_PARTS);
   if (LHSL.getValueType() == MVT::i32) {
-    SDOperand LowEl;
+    SDOperand LowEl = SDOperand(0,0);
     if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(LHSL))
       if (C->getValue() == 0)
         LowEl = RHSL;
