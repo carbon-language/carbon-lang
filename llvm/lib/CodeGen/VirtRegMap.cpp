@@ -266,9 +266,14 @@ namespace {
 
     // AssignedPhysReg - The physreg that was assigned for use by the reload.
     unsigned AssignedPhysReg;
+    
+    // VirtReg - The virtual register itself.
+    unsigned VirtReg;
 
-    ReusedOp(unsigned o, unsigned ss, unsigned prr, unsigned apr)
-      : Operand(o), StackSlot(ss), PhysRegReused(prr), AssignedPhysReg(apr) {}
+    ReusedOp(unsigned o, unsigned ss, unsigned prr, unsigned apr,
+             unsigned vreg)
+      : Operand(o), StackSlot(ss), PhysRegReused(prr), AssignedPhysReg(apr),
+      VirtReg(vreg) {}
   };
 }
 
@@ -381,7 +386,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, const VirtRegMap &VRM) {
         // case, we actually insert a reload for V1 in R1, ensuring that
         // we can get at R0 or its alias.
         ReusedOperands.push_back(ReusedOp(i, StackSlot, PhysReg,
-                                          VRM.getPhys(VirtReg)));
+                                          VRM.getPhys(VirtReg), VirtReg));
         ++NumReused;
         continue;
       }
@@ -409,8 +414,10 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, const VirtRegMap &VRM) {
               // Okay, we found out that an alias of a reused register
               // was used.  This isn't good because it means we have
               // to undo a previous reuse.
+              const TargetRegisterClass *AliasRC =
+                MBB.getParent()->getSSARegMap()->getRegClass(Op.VirtReg);
               MRI->loadRegFromStackSlot(MBB, &MI, Op.AssignedPhysReg,
-                                        Op.StackSlot, RC);
+                                        Op.StackSlot, AliasRC);
               ClobberPhysReg(Op.AssignedPhysReg, SpillSlotsAvailable,
                              PhysRegsAvailable);
 
