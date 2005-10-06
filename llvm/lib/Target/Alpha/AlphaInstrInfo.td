@@ -397,9 +397,7 @@ def CVTTS : FPForm<0x16, 0x5AC, "cvtts/su $RB,$RC">; //Convert T_floating to S_f
 //LDQ_L Mem 2B Load quadword locked
 //LDQ_U Mem 0B Load unaligned quadword
 //MB Mfc 18.4000 Memory barrier
-//RC Mfc 18.E000 Read and clear
 //RPCC Mfc 18.C000 Read process cycle counter
-//RS Mfc 18.F000 Read and set
 
 //STL_C Mem 2E Store longword conditional
 //STQ_C Mem 2F Store quadword conditional
