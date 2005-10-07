@@ -184,7 +184,8 @@ inline unsigned CountPopulation_32(unsigned Value) {
 // CountPopulation_64 - this function counts the number of set bits in a value,
 // (64 bit edition.)
 inline unsigned CountPopulation_64(uint64_t Value) {
-  return CountPopulation_32(Value >> 32) + CountPopulation_32(Value);
+  return CountPopulation_32(unsigned(Value >> 32)) +
+         CountPopulation_32(unsigned(Value));
 }
 
 // Log2_32 - This function returns the floor log base 2 of the specified value, 
