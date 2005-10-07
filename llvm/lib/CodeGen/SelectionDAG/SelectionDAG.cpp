@@ -1581,12 +1581,8 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     // udiv instead.  Handles (X&15) /s 4 -> X&15 >> 2
     uint64_t SignBit = 1ULL << (MVT::getSizeInBits(VT)-1);
     if (MaskedValueIsZero(N2, SignBit, TLI) &&
-        MaskedValueIsZero(N1, SignBit, TLI)) {
-      std::cerr << "SDIV [[";
-      N1.Val->dump(); std::cerr << "]]  [[";
-      N2.Val->dump(); std::cerr << "]] -> udiv\n";
+        MaskedValueIsZero(N1, SignBit, TLI))
       return getNode(ISD::UDIV, VT, N1, N2);
-    }
     break;
   }   
 
