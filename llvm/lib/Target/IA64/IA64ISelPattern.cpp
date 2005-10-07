@@ -81,6 +81,9 @@ namespace {
       setOperationAction(ISD::MEMMOVE          , MVT::Other, Expand);
       setOperationAction(ISD::MEMSET           , MVT::Other, Expand);
       setOperationAction(ISD::MEMCPY           , MVT::Other, Expand);
+      
+      setOperationAction(ISD::SINT_TO_FP       , MVT::i1   , Promote);
+      setOperationAction(ISD::UINT_TO_FP       , MVT::i1   , Promote);
 
       // We don't support sin/cos/sqrt
       setOperationAction(ISD::FSIN , MVT::f64, Expand);
