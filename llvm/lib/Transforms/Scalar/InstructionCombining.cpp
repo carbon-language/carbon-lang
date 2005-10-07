@@ -3444,7 +3444,7 @@ Instruction *InstCombiner::visitShiftInst(ShiftInst &I) {
 
       if (BinaryOperator *Op0BO = dyn_cast<BinaryOperator>(Op0)) {
         // Turn ((X >> C) + Y) << C  ->  (X + (Y << C)) & (~0 << C)
-        Value *V1, *V2, *V3;
+        Value *V1, *V2;
         ConstantInt *CC;
         switch (Op0BO->getOpcode()) {
         default: break;
