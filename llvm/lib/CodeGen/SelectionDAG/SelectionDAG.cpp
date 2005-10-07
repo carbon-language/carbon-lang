@@ -1556,6 +1556,17 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
       return N1;
     }
     break;
+  case ISD::SDIV: {
+    if (CombinerEnabled) break;
+    
+    // If we know the sign bits of both operands are zero, strength reduce to a
+    // udiv instead.  Handles (X&15) /s 4 -> X&15 >> 2
+    uint64_t SignBit = 1ULL << (MVT::getSizeInBits(VT)-1);
+    if (MaskedValueIsZero(N2, SignBit, TLI) &&
+        MaskedValueIsZero(N1, SignBit, TLI))
+      return getNode(ISD::UDIV, VT, N1, N2);
+    break;
+  }   
 
   case ISD::AND:
   case ISD::OR:

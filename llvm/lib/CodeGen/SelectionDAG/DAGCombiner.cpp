@@ -501,6 +501,7 @@ SDOperand DAGCombiner::visitMUL(SDNode *N) {
 SDOperand DAGCombiner::visitSDIV(SDNode *N) {
   SDOperand N0 = N->getOperand(0);
   SDOperand N1 = N->getOperand(1);
+  MVT::ValueType VT = N->getValueType(0);
   ConstantSDNode *N0C = dyn_cast<ConstantSDNode>(N0.Val);
   ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1.Val);
 
@@ -508,6 +509,15 @@ SDOperand DAGCombiner::visitSDIV(SDNode *N) {
   if (N0C && N1C && !N1C->isNullValue())
     return DAG.getConstant(N0C->getSignExtended() / N1C->getSignExtended(),
                            N->getValueType(0));
+
+  // If we know the sign bits of both operands are zero, strength reduce to a
+  // udiv instead.  Handles (X&15) /s 4 -> X&15 >> 2
+  uint64_t SignBit = 1ULL << (MVT::getSizeInBits(VT)-1);
+  if (MaskedValueIsZero(N1, SignBit, TLI) &&
+      MaskedValueIsZero(N0, SignBit, TLI))
+    return DAG.getNode(ISD::UDIV, N1.getValueType(), N0, N1);
+  
+  
   return SDOperand();
 }
 
