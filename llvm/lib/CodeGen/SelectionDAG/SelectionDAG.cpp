@@ -639,6 +639,24 @@ static bool MaskedValueIsZero(const SDOperand &Op, uint64_t Mask,
       return MaskedValueIsZero(Op.getOperand(0), NewVal, TLI);
     }
     return false;
+  case ISD::SUB:
+    if (ConstantSDNode *CLHS = dyn_cast<ConstantSDNode>(Op.getOperand(0))) {
+      // We know that the top bits of C-X are clear if X contains less bits
+      // than C (i.e. no wrap-around can happen).  For example, 20-X is
+      // positive if we can prove that X is >= 0 and < 16.
+      unsigned Bits = MVT::getSizeInBits(CLHS->getValueType(0));
+      if ((CLHS->getValue() & (1 << (Bits-1))) == 0) {  // sign bit clear
+        unsigned NLZ = CountLeadingZeros_64(CLHS->getValue()+1);
+        uint64_t MaskV = (1ULL << (63-NLZ))-1;
+        if (MaskedValueIsZero(Op.getOperand(1), ~MaskV, TLI)) {
+          // High bits are clear this value is known to be >= C.
+          unsigned NLZ2 = CountLeadingZeros_64(CLHS->getValue());
+          if ((Mask & ((1ULL << (64-NLZ2))-1)) == 0)
+            return true;
+        }
+      }
+    }
+    break;
   case ISD::CTTZ:
   case ISD::CTLZ:
   case ISD::CTPOP:
@@ -1563,8 +1581,12 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     // udiv instead.  Handles (X&15) /s 4 -> X&15 >> 2
     uint64_t SignBit = 1ULL << (MVT::getSizeInBits(VT)-1);
     if (MaskedValueIsZero(N2, SignBit, TLI) &&
-        MaskedValueIsZero(N1, SignBit, TLI))
+        MaskedValueIsZero(N1, SignBit, TLI)) {
+      std::cerr << "SDIV [[";
+      N1.Val->dump(); std::cerr << "]]  [[";
+      N2.Val->dump(); std::cerr << "]] -> udiv\n";
       return getNode(ISD::UDIV, VT, N1, N2);
+    }
     break;
   }   
 
