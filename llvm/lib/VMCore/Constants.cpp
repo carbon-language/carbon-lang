@@ -250,12 +250,12 @@ ConstantArray::ConstantArray(const ArrayType *T,
   Use *OL = OperandList;
   for (std::vector<Constant*>::const_iterator I = V.begin(), E = V.end();
        I != E; ++I, ++OL) {
-    Constant *E = *I;
-    assert((E->getType() == T->getElementType() ||
+    Constant *C = *I;
+    assert((C->getType() == T->getElementType() ||
             (T->isAbstract() &&
-             E->getType()->getTypeID() == T->getElementType()->getTypeID())) &&
+             C->getType()->getTypeID() == T->getElementType()->getTypeID())) &&
            "Initializer for array element doesn't match array element type!");
-    OL->init(E, this);
+    OL->init(C, this);
   }
 }
 
@@ -271,14 +271,14 @@ ConstantStruct::ConstantStruct(const StructType *T,
   Use *OL = OperandList;
   for (std::vector<Constant*>::const_iterator I = V.begin(), E = V.end();
        I != E; ++I, ++OL) {
-    Constant *E = *I;
-    assert((E->getType() == T->getElementType(I-V.begin()) ||
+    Constant *C = *I;
+    assert((C->getType() == T->getElementType(I-V.begin()) ||
             ((T->getElementType(I-V.begin())->isAbstract() ||
-              E->getType()->isAbstract()) &&
+              C->getType()->isAbstract()) &&
              T->getElementType(I-V.begin())->getTypeID() == 
-                   E->getType()->getTypeID())) &&
+                   C->getType()->getTypeID())) &&
            "Initializer for struct element doesn't match struct element type!");
-    OL->init(E, this);
+    OL->init(C, this);
   }
 }
 
@@ -293,12 +293,12 @@ ConstantPacked::ConstantPacked(const PackedType *T,
   Use *OL = OperandList;
     for (std::vector<Constant*>::const_iterator I = V.begin(), E = V.end();
          I != E; ++I, ++OL) {
-      Constant *E = *I;
-      assert((E->getType() == T->getElementType() ||
+      Constant *C = *I;
+      assert((C->getType() == T->getElementType() ||
             (T->isAbstract() &&
-             E->getType()->getTypeID() == T->getElementType()->getTypeID())) &&
+             C->getType()->getTypeID() == T->getElementType()->getTypeID())) &&
            "Initializer for packed element doesn't match packed element type!");
-    OL->init(E, this);
+    OL->init(C, this);
   }
 }
 
