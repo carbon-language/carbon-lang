@@ -123,6 +123,11 @@ void PPC32DAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
     SDOperand Node = Worklist.back();
     Worklist.pop_back();
     
+    // Chose from the least deep of the top two nodes.
+    if (!Worklist.empty() &&
+        Worklist.back().Val->getNodeDepth() < Node.Val->getNodeDepth())
+      std::swap(Worklist.back(), Node);
+    
     if ((Node.Val->getOpcode() >= ISD::BUILTIN_OP_END &&
          Node.Val->getOpcode() < PPCISD::FIRST_NUMBER) ||
         CodeGenMap.count(Node)) continue;
@@ -142,7 +147,7 @@ void PPC32DAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
     // Finally, legalize this node.
     Select(Node);
   }
-  
+    
   // Select target instructions for the DAG.
   DAG.setRoot(Select(DAG.getRoot()));
   CodeGenMap.clear();
@@ -1026,7 +1031,7 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
       New = CurDAG->getNode(ISD::TokenFactor, MVT::Other, Ops);
     }
     
-    if (!N->hasOneUse()) CodeGenMap[Op] = New;
+    CodeGenMap[Op] = New;
     return New;
   }
   case ISD::CopyFromReg: {
@@ -1042,7 +1047,7 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
     SDOperand Val = Select(N->getOperand(2));
     SDOperand New = CurDAG->getNode(ISD::CopyToReg, MVT::Other,
                                     Chain, Reg, Val);
-    if (!N->hasOneUse()) CodeGenMap[Op] = New;
+    CodeGenMap[Op] = New;
     return New;
   }
   case ISD::UNDEF:
@@ -1354,7 +1359,6 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
                          Select(N->getOperand(0)));
     return SDOperand(N, 0);
   }
-
   case ISD::LOAD:
   case ISD::EXTLOAD:
   case ISD::ZEXTLOAD:
@@ -1402,7 +1406,6 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
         return Ext;
     }
   }
-
   case ISD::TRUNCSTORE:
   case ISD::STORE: {
     SDOperand AddrOp1, AddrOp2;
