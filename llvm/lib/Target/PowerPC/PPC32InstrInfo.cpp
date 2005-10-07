@@ -57,7 +57,8 @@ bool PPC32InstrInfo::isMoveInstr(const MachineInstr& MI,
       destReg = MI.getOperand(0).getReg();
       return true;
     }
-  } else if (oc == PPC::FMRS || oc == PPC::FMRD) {      // fmr r1, r2
+  } else if (oc == PPC::FMRS || oc == PPC::FMRD ||
+             oc == PPC::FMRSD) {      // fmr r1, r2
     assert(MI.getNumOperands() == 2 &&
            MI.getOperand(0).isRegister() &&
            MI.getOperand(1).isRegister() &&
