@@ -158,7 +158,7 @@ public:
     
     // Markers:
     ConstantFirstVal = FunctionVal,
-    ConstantLastVal  = ConstantPointerNullVal,
+    ConstantLastVal  = ConstantPointerNullVal
   };
   unsigned getValueType() const {
     return SubclassID;
