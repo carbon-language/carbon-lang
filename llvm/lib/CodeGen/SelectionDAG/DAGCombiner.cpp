@@ -39,6 +39,7 @@
 //        is >= to that of the extend.
 // FIXME: divide by zero is currently left unfolded.  do we want to turn this
 //        into an undef?
+// FIXME: select ne (select cc, 1, 0), 0, true, false -> select cc, true, false
 // 
 //===----------------------------------------------------------------------===//
 
@@ -1112,12 +1113,6 @@ SDOperand DAGCombiner::visitSELECT_CC(SDNode *N) {
   // fold select_cc lhs, rhs, x, x, cc -> x
   if (N2 == N3)
     return N2;
-  // fold select_cc true, x, y -> x
-  if (SCCC && SCCC->getValue())
-    return N2;
-  // fold select_cc false, x, y -> y
-  if (SCCC && SCCC->getValue() == 0)
-    return N3;
   // fold select_cc into other things, such as min/max/abs
   return SimplifySelectCC(N0, N1, N2, N3, CC);
 }
@@ -1507,12 +1502,161 @@ SDOperand DAGCombiner::visitBRTWOWAY_CC(SDNode *N) {
 }
 
 SDOperand DAGCombiner::SimplifySelect(SDOperand N0, SDOperand N1, SDOperand N2){
+  assert(N0.getOpcode() ==ISD::SETCC && "First argument must be a SetCC node!");
+  
+  SDOperand SCC = SimplifySelectCC(N0.getOperand(0), N0.getOperand(1), N1, N2,
+                                 cast<CondCodeSDNode>(N0.getOperand(2))->get());
+  // If we got a simplified select_cc node back from SimplifySelectCC, then
+  // break it down into a new SETCC node, and a new SELECT node, and then return
+  // the SELECT node, since we were called with a SELECT node.
+  if (SCC.Val) {
+    // Check to see if we got a select_cc back (to turn into setcc/select).
+    // Otherwise, just return whatever node we got back, like fabs.
+    if (SCC.getOpcode() == ISD::SELECT_CC) {
+      SDOperand SETCC = DAG.getNode(ISD::SETCC, N0.getValueType(),
+                                    SCC.getOperand(0), SCC.getOperand(1), 
+                                    SCC.getOperand(4));
+      WorkList.push_back(SETCC.Val);
+      return DAG.getNode(ISD::SELECT, SCC.getValueType(), SCC.getOperand(2),
+                         SCC.getOperand(3), SETCC);
+    }
+    return SCC;
+  }
   return SDOperand();
 }
 
 SDOperand DAGCombiner::SimplifySelectCC(SDOperand N0, SDOperand N1, 
                                         SDOperand N2, SDOperand N3,
                                         ISD::CondCode CC) {
+  
+  MVT::ValueType VT = N2.getValueType();
+  ConstantSDNode *N0C = dyn_cast<ConstantSDNode>(N0.Val);
+  ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1.Val);
+  ConstantSDNode *N2C = dyn_cast<ConstantSDNode>(N2.Val);
+  ConstantSDNode *N3C = dyn_cast<ConstantSDNode>(N3.Val);
+
+  // Determine if the condition we're dealing with is constant
+  SDOperand SCC = SimplifySetCC(TLI.getSetCCResultTy(), N0, N1, CC, false);
+  ConstantSDNode *SCCC = dyn_cast_or_null<ConstantSDNode>(SCC.Val);
+
+  // fold select_cc true, x, y -> x
+  if (SCCC && SCCC->getValue())
+    return N2;
+  // fold select_cc false, x, y -> y
+  if (SCCC && SCCC->getValue() == 0)
+    return N3;
+  
+  // Check to see if we can simplify the select into an fabs node
+  if (ConstantFPSDNode *CFP = dyn_cast<ConstantFPSDNode>(N1)) {
+    // Allow either -0.0 or 0.0
+    if (CFP->getValue() == 0.0) {
+      // select (setg[te] X, +/-0.0), X, fneg(X) -> fabs
+      if ((CC == ISD::SETGE || CC == ISD::SETGT) &&
+          N0 == N2 && N3.getOpcode() == ISD::FNEG &&
+          N2 == N3.getOperand(0))
+        return DAG.getNode(ISD::FABS, VT, N0);
+      
+      // select (setl[te] X, +/-0.0), fneg(X), X -> fabs
+      if ((CC == ISD::SETLT || CC == ISD::SETLE) &&
+          N0 == N3 && N2.getOpcode() == ISD::FNEG &&
+          N2.getOperand(0) == N3)
+        return DAG.getNode(ISD::FABS, VT, N3);
+    }
+  }
+  
+  // Check to see if we can perform the "gzip trick", transforming
+  // select_cc setlt X, 0, A, 0 -> and (sra X, size(X)-1), A
+  if (N1C && N1C->isNullValue() && N3C && N3C->isNullValue() &&
+      MVT::isInteger(N0.getValueType()) && 
+      MVT::isInteger(N2.getValueType()) && CC == ISD::SETLT) {
+    MVT::ValueType XType = N0.getValueType();
+    MVT::ValueType AType = N2.getValueType();
+    if (XType >= AType) {
+      // and (sra X, size(X)-1, A) -> "and (srl X, C2), A" iff A is a
+      // single-bit constant.  FIXME: remove once the dag combiner
+      // exists.
+      if (N2C && ((N2C->getValue() & (N2C->getValue()-1)) == 0)) {
+        unsigned ShCtV = Log2_64(N2C->getValue());
+        ShCtV = MVT::getSizeInBits(XType)-ShCtV-1;
+        SDOperand ShCt = DAG.getConstant(ShCtV, TLI.getShiftAmountTy());
+        SDOperand Shift = DAG.getNode(ISD::SRL, XType, N0, ShCt);
+        WorkList.push_back(Shift.Val);
+        if (XType > AType) {
+          Shift = DAG.getNode(ISD::TRUNCATE, AType, Shift);
+          WorkList.push_back(Shift.Val);
+        }
+        return DAG.getNode(ISD::AND, AType, Shift, N2);
+      }
+      SDOperand Shift = DAG.getNode(ISD::SRA, XType, N0,
+                                    DAG.getConstant(MVT::getSizeInBits(XType)-1,
+                                                    TLI.getShiftAmountTy()));
+      WorkList.push_back(Shift.Val);
+      if (XType > AType) {
+        Shift = DAG.getNode(ISD::TRUNCATE, AType, Shift);
+        WorkList.push_back(Shift.Val);
+      }
+      return DAG.getNode(ISD::AND, AType, Shift, N2);
+    }
+  }
+
+  // Check to see if this is the equivalent of setcc
+  // FIXME: Turn all of these into setcc if setcc if setcc is legal
+  // otherwise, go ahead with the folds.
+  if (0 && N3C && N3C->isNullValue() && N2C && (N2C->getValue() == 1ULL)) {
+    MVT::ValueType XType = N0.getValueType();
+    if (TLI.isOperationLegal(ISD::SETCC, TLI.getSetCCResultTy())) {
+      SDOperand Res = DAG.getSetCC(TLI.getSetCCResultTy(), N0, N1, CC);
+      if (Res.getValueType() != VT)
+        Res = DAG.getNode(ISD::ZERO_EXTEND, VT, Res);
+      return Res;
+    }
+    
+    // seteq X, 0 -> srl (ctlz X, log2(size(X)))
+    if (N1C && N1C->isNullValue() && CC == ISD::SETEQ && 
+        TLI.isOperationLegal(ISD::CTLZ, XType)) {
+      SDOperand Ctlz = DAG.getNode(ISD::CTLZ, XType, N0);
+      return DAG.getNode(ISD::SRL, XType, Ctlz, 
+                         DAG.getConstant(Log2_32(MVT::getSizeInBits(XType)),
+                                         TLI.getShiftAmountTy()));
+    }
+    // setgt X, 0 -> srl (and (-X, ~X), size(X)-1)
+    if (N1C && N1C->isNullValue() && CC == ISD::SETGT) { 
+      SDOperand NegN0 = DAG.getNode(ISD::SUB, XType, DAG.getConstant(0, XType),
+                                    N0);
+      SDOperand NotN0 = DAG.getNode(ISD::XOR, XType, N0, 
+                                    DAG.getConstant(~0ULL, XType));
+      return DAG.getNode(ISD::SRL, XType, 
+                         DAG.getNode(ISD::AND, XType, NegN0, NotN0),
+                         DAG.getConstant(MVT::getSizeInBits(XType)-1,
+                                         TLI.getShiftAmountTy()));
+    }
+    // setgt X, -1 -> xor (srl (X, size(X)-1), 1)
+    if (N1C && N1C->isAllOnesValue() && CC == ISD::SETGT) {
+      SDOperand Sign = DAG.getNode(ISD::SRL, XType, N0,
+                                   DAG.getConstant(MVT::getSizeInBits(XType)-1,
+                                                   TLI.getShiftAmountTy()));
+      return DAG.getNode(ISD::XOR, XType, Sign, DAG.getConstant(1, XType));
+    }
+  }
+  
+  // Check to see if this is an integer abs. select_cc setl[te] X, 0, -X, X ->
+  // Y = sra (X, size(X)-1); xor (add (X, Y), Y)
+  if (N1C && N1C->isNullValue() && (CC == ISD::SETLT || CC == ISD::SETLE) &&
+      N0 == N3 && N2.getOpcode() == ISD::SUB && N0 == N2.getOperand(1)) {
+    if (ConstantSDNode *SubC = dyn_cast<ConstantSDNode>(N2.getOperand(0))) {
+      MVT::ValueType XType = N0.getValueType();
+      if (SubC->isNullValue() && MVT::isInteger(XType)) {
+        SDOperand Shift = DAG.getNode(ISD::SRA, XType, N0,
+                                    DAG.getConstant(MVT::getSizeInBits(XType)-1,
+                                                    TLI.getShiftAmountTy()));
+        SDOperand Add = DAG.getNode(ISD::ADD, XType, N0, Shift);
+        WorkList.push_back(Shift.Val);
+        WorkList.push_back(Add.Val);
+        return DAG.getNode(ISD::XOR, XType, Add, Shift);
+      }
+    }
+  }
+
   return SDOperand();
 }
 
