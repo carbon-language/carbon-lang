@@ -404,11 +404,17 @@ static bool MaskedValueIsZero(Value *V, ConstantIntegral *Mask) {
     switch (I->getOpcode()) {
     case Instruction::And:
       // (X & C1) & C2 == 0   iff   C1 & C2 == 0.
-      if (ConstantIntegral *CI = dyn_cast<ConstantIntegral>(I->getOperand(1)))
-        if (ConstantExpr::getAnd(CI, Mask)->isNullValue())
+      if (ConstantIntegral *CI = dyn_cast<ConstantIntegral>(I->getOperand(1))) {
+        ConstantIntegral *C1C2 = 
+          cast<ConstantIntegral>(ConstantExpr::getAnd(CI, Mask));
+        if (MaskedValueIsZero(I->getOperand(0), C1C2))
           return true;
-      break;
+      }
+      // If either the LHS or the RHS are MaskedValueIsZero, the result is zero.
+      return MaskedValueIsZero(I->getOperand(1), Mask) ||
+             MaskedValueIsZero(I->getOperand(0), Mask);
     case Instruction::Or:
+    case Instruction::Xor:
       // If the LHS and the RHS are MaskedValueIsZero, the result is also zero.
       return MaskedValueIsZero(I->getOperand(1), Mask) &&
              MaskedValueIsZero(I->getOperand(0), Mask);
