@@ -402,59 +402,59 @@ static bool MaskedValueIsZero(Value *V, ConstantIntegral *Mask) {
   
   if (Instruction *I = dyn_cast<Instruction>(V)) {
     switch (I->getOpcode()) {
-      case Instruction::And:
-        // (X & C1) & C2 == 0   iff   C1 & C2 == 0.
-        if (ConstantIntegral *CI = dyn_cast<ConstantIntegral>(I->getOperand(1)))
-          if (ConstantExpr::getAnd(CI, Mask)->isNullValue())
-            return true;
-        break;
-      case Instruction::Or:
-        // If the LHS and the RHS are MaskedValueIsZero, the result is also zero.
-        return MaskedValueIsZero(I->getOperand(1), Mask) &&
-        MaskedValueIsZero(I->getOperand(0), Mask);
-      case Instruction::Select:
-        // If the T and F values are MaskedValueIsZero, the result is also zero.
-        return MaskedValueIsZero(I->getOperand(2), Mask) &&
-        MaskedValueIsZero(I->getOperand(1), Mask);
-      case Instruction::Cast: {
-        const Type *SrcTy = I->getOperand(0)->getType();
-        if (SrcTy == Type::BoolTy)
-          return (Mask->getRawValue() & 1) == 0;
+    case Instruction::And:
+      // (X & C1) & C2 == 0   iff   C1 & C2 == 0.
+      if (ConstantIntegral *CI = dyn_cast<ConstantIntegral>(I->getOperand(1)))
+        if (ConstantExpr::getAnd(CI, Mask)->isNullValue())
+          return true;
+      break;
+    case Instruction::Or:
+      // If the LHS and the RHS are MaskedValueIsZero, the result is also zero.
+      return MaskedValueIsZero(I->getOperand(1), Mask) &&
+             MaskedValueIsZero(I->getOperand(0), Mask);
+    case Instruction::Select:
+      // If the T and F values are MaskedValueIsZero, the result is also zero.
+      return MaskedValueIsZero(I->getOperand(2), Mask) &&
+             MaskedValueIsZero(I->getOperand(1), Mask);
+    case Instruction::Cast: {
+      const Type *SrcTy = I->getOperand(0)->getType();
+      if (SrcTy == Type::BoolTy)
+        return (Mask->getRawValue() & 1) == 0;
+      
+      if (SrcTy->isInteger()) {
+        // (cast <ty> X to int) & C2 == 0  iff <ty> could not have contained C2.
+        if (SrcTy->isUnsigned() &&                      // Only handle zero ext.
+            ConstantExpr::getCast(Mask, SrcTy)->isNullValue())
+          return true;
         
-        if (SrcTy->isInteger()) {
-          // (cast <ty> X to int) & C2 == 0  iff <ty> could not have contained C2.
-          if (SrcTy->isUnsigned() &&                      // Only handle zero ext.
-              ConstantExpr::getCast(Mask, SrcTy)->isNullValue())
-            return true;
-          
-          // If this is a noop cast, recurse.
-          if ((SrcTy->isSigned() && SrcTy->getUnsignedVersion() == I->getType())||
-              SrcTy->getSignedVersion() == I->getType()) {
-            Constant *NewMask =
-            ConstantExpr::getCast(Mask, I->getOperand(0)->getType());
-            return MaskedValueIsZero(I->getOperand(0),
-                                     cast<ConstantIntegral>(NewMask));
-          }
-        }
-        break;
-      }
-      case Instruction::Shl:
-        // (shl X, C1) & C2 == 0   iff   (X & C2 >>u C1) == 0
-        if (ConstantUInt *SA = dyn_cast<ConstantUInt>(I->getOperand(1)))
+        // If this is a noop cast, recurse.
+        if ((SrcTy->isSigned() && SrcTy->getUnsignedVersion() == I->getType())||
+            SrcTy->getSignedVersion() == I->getType()) {
+          Constant *NewMask =
+          ConstantExpr::getCast(Mask, I->getOperand(0)->getType());
           return MaskedValueIsZero(I->getOperand(0),
-                                   cast<ConstantIntegral>(ConstantExpr::getUShr(Mask, SA)));
-        break;
-      case Instruction::Shr:
-        // (ushr X, C1) & C2 == 0   iff  (-1 >> C1) & C2 == 0
-        if (ConstantUInt *SA = dyn_cast<ConstantUInt>(I->getOperand(1)))
-          if (I->getType()->isUnsigned()) {
-            Constant *C1 = ConstantIntegral::getAllOnesValue(I->getType());
-            C1 = ConstantExpr::getShr(C1, SA);
-            C1 = ConstantExpr::getAnd(C1, Mask);
-            if (C1->isNullValue())
-              return true;
-          }
-            break;
+                                   cast<ConstantIntegral>(NewMask));
+        }
+      }
+      break;
+    }
+    case Instruction::Shl:
+      // (shl X, C1) & C2 == 0   iff   (X & C2 >>u C1) == 0
+      if (ConstantUInt *SA = dyn_cast<ConstantUInt>(I->getOperand(1)))
+        return MaskedValueIsZero(I->getOperand(0),
+                    cast<ConstantIntegral>(ConstantExpr::getUShr(Mask, SA)));
+      break;
+    case Instruction::Shr:
+      // (ushr X, C1) & C2 == 0   iff  (-1 >> C1) & C2 == 0
+      if (ConstantUInt *SA = dyn_cast<ConstantUInt>(I->getOperand(1)))
+        if (I->getType()->isUnsigned()) {
+          Constant *C1 = ConstantIntegral::getAllOnesValue(I->getType());
+          C1 = ConstantExpr::getShr(C1, SA);
+          C1 = ConstantExpr::getAnd(C1, Mask);
+          if (C1->isNullValue())
+            return true;
+        }
+      break;
     }
   }
   
