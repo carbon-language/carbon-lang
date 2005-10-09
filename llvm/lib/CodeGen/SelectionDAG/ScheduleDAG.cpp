@@ -1025,22 +1025,23 @@ void SimpleSched::EmitNode(NodeInfo *NI) {
     }
     case ISD::CopyFromReg: {
       unsigned SrcReg = cast<RegisterSDNode>(Node->getOperand(1))->getReg();
-      
+      if (MRegisterInfo::isVirtualRegister(SrcReg)) {
+        VRBase = SrcReg;  // Just use the input register directly!
+        break;
+      }
+
       // Figure out the register class to create for the destreg.
       const TargetRegisterClass *TRC = 0;
-      if (MRegisterInfo::isVirtualRegister(SrcReg)) {
-        TRC = RegMap->getRegClass(SrcReg);
-      } else {
-        // Pick the register class of the right type that contains this physreg.
-        for (MRegisterInfo::regclass_iterator I = MRI.regclass_begin(),
-             E = MRI.regclass_end(); I != E; ++I)
-          if ((*I)->getType() == Node->getValueType(0) &&
-              (*I)->contains(SrcReg)) {
-            TRC = *I;
-            break;
-          }
-        assert(TRC && "Couldn't find register class for reg copy!");
-      }
+
+      // Pick the register class of the right type that contains this physreg.
+      for (MRegisterInfo::regclass_iterator I = MRI.regclass_begin(),
+           E = MRI.regclass_end(); I != E; ++I)
+        if ((*I)->getType() == Node->getValueType(0) &&
+            (*I)->contains(SrcReg)) {
+          TRC = *I;
+          break;
+        }
+      assert(TRC && "Couldn't find register class for reg copy!");
       
       // Create the reg, emit the copy.
       VRBase = RegMap->createVirtualRegister(TRC);
@@ -1206,21 +1207,24 @@ unsigned SimpleSched::EmitDAG(SDOperand Op) {
       EmitDAG(Op.getOperand(0));   // Emit the chain.
       unsigned SrcReg = cast<RegisterSDNode>(Op.getOperand(1))->getReg();
       
+      // If the input is already a virtual register, just use it.
+      if (MRegisterInfo::isVirtualRegister(SrcReg)) {
+        ResultReg = SrcReg;
+        break;
+      }        
+
       // Figure out the register class to create for the destreg.
       const TargetRegisterClass *TRC = 0;
-      if (MRegisterInfo::isVirtualRegister(SrcReg)) {
-        TRC = RegMap->getRegClass(SrcReg);
-      } else {
-        // Pick the register class of the right type that contains this physreg.
-        for (MRegisterInfo::regclass_iterator I = MRI.regclass_begin(),
-               E = MRI.regclass_end(); I != E; ++I)
-          if ((*I)->getType() == Op.Val->getValueType(0) &&
-              (*I)->contains(SrcReg)) {
-            TRC = *I;
-            break;
-          }
-        assert(TRC && "Couldn't find register class for reg copy!");
-      }
+
+      // Pick the register class of the right type that contains this physreg.
+      for (MRegisterInfo::regclass_iterator I = MRI.regclass_begin(),
+             E = MRI.regclass_end(); I != E; ++I)
+        if ((*I)->getType() == Op.Val->getValueType(0) &&
+            (*I)->contains(SrcReg)) {
+          TRC = *I;
+          break;
+        }
+      assert(TRC && "Couldn't find register class for reg copy!");
       
       // Create the reg, emit the copy.
       ResultReg = RegMap->createVirtualRegister(TRC);
