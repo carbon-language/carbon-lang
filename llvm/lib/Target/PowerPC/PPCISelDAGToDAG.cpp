@@ -217,7 +217,7 @@ static bool isRunOfOnes(unsigned Val, unsigned &MB, unsigned &ME) {
   return false;
 }
 
-// isRotateAndMask - Returns true if Mask and Shift can be folded in to a rotate
+// isRotateAndMask - Returns true if Mask and Shift can be folded into a rotate
 // and mask opcode and mask operation.
 static bool isRotateAndMask(SDNode *N, unsigned Mask, bool IsShiftMask,
                             unsigned &SH, unsigned &MB, unsigned &ME) {
@@ -1278,7 +1278,7 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
   }
   case ISD::SRA: {
     unsigned Imm, SH, MB, ME;
-    if (isOpcWithIntImmediate(N->getOperand(0).Val, ISD::AND, Imm) &&
+    if (0 &&isOpcWithIntImmediate(N->getOperand(0).Val, ISD::AND, Imm) &&
         isRotateAndMask(N, Imm, true, SH, MB, ME))
       CurDAG->SelectNodeTo(N, PPC::RLWINM, MVT::i32, 
                            Select(N->getOperand(0).getOperand(0)),
