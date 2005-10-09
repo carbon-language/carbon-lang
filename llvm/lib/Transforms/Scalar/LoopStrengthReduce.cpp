@@ -91,6 +91,11 @@ namespace {
     /// are interested in.  The key of the map is the stride of the access.
     std::map<SCEVHandle, IVUsersOfOneStride> IVUsesByStride;
 
+    /// StrideOrder - An ordering of the keys in IVUsesByStride that is stable:
+    /// We use this to iterate over the IVUsesByStride collection without being
+    /// dependent on random ordering of pointers in the process.
+    std::vector<SCEVHandle> StrideOrder;
+
     /// CastedValues - As we need to cast values to uintptr_t, this keeps track
     /// of the casted version of each value.  This is accessed by
     /// getCastedVersionOf.
@@ -402,6 +407,10 @@ bool LoopStrengthReduce::AddUsersIfInteresting(Instruction *I, Loop *L,
     }
 
     if (AddUserToIVUsers) {
+      IVUsersOfOneStride &StrideUses = IVUsesByStride[Stride];
+      if (StrideUses.Users.empty())     // First occurance of this stride?
+        StrideOrder.push_back(Stride);
+      
       // Okay, we found a user that we cannot reduce.  Analyze the instruction
       // and decide what to do with it.  If we are a use inside of the loop, use
       // the value before incrementation, otherwise use it after incrementation.
@@ -409,11 +418,11 @@ bool LoopStrengthReduce::AddUsersIfInteresting(Instruction *I, Loop *L,
         // The value used will be incremented by the stride more than we are
         // expecting, so subtract this off.
         SCEVHandle NewStart = SCEV::getMinusSCEV(Start, Stride);
-        IVUsesByStride[Stride].addUser(NewStart, User, I);
-        IVUsesByStride[Stride].Users.back().isUseOfPostIncrementedValue = true;
+        StrideUses.addUser(NewStart, User, I);
+        StrideUses.Users.back().isUseOfPostIncrementedValue = true;
         DEBUG(std::cerr << "   USING POSTINC SCEV, START=" << *NewStart<< "\n");
       } else {        
-        IVUsesByStride[Stride].addUser(Start, User, I);
+        StrideUses.addUser(Start, User, I);
       }
     }
   }
@@ -1039,12 +1048,21 @@ void LoopStrengthReduce::runOnLoop(Loop *L) {
 
   // If we only have one stride, we can more aggressively eliminate some things.
   bool HasOneStride = IVUsesByStride.size() == 1;
+  
+  if (IVUsesByStride.size() == 123)
+    std::cerr << "FOO!\n";
 
   // Note: this processes each stride/type pair individually.  All users passed
-  // into StrengthReduceStridedIVUsers have the same type AND stride.
-  for (std::map<SCEVHandle, IVUsersOfOneStride>::iterator SI
-        = IVUsesByStride.begin(), E = IVUsesByStride.end(); SI != E; ++SI)
+  // into StrengthReduceStridedIVUsers have the same type AND stride.  Also,
+  // node that we iterate over IVUsesByStride indirectly by using StrideOrder.
+  // This extra layer of indirection makes the ordering of strides deterministic
+  // - not dependent on map order.
+  for (unsigned Stride = 0, e = StrideOrder.size(); Stride != e; ++Stride) {
+    std::map<SCEVHandle, IVUsersOfOneStride>::iterator SI = 
+      IVUsesByStride.find(StrideOrder[Stride]);
+    assert(SI != IVUsesByStride.end() && "Stride doesn't exist!");
     StrengthReduceStridedIVUsers(SI->first, SI->second, L, HasOneStride);
+  }
 
   // Clean up after ourselves
   if (!DeadInsts.empty()) {
@@ -1085,5 +1103,6 @@ void LoopStrengthReduce::runOnLoop(Loop *L) {
 
   CastedPointers.clear();
   IVUsesByStride.clear();
+  StrideOrder.clear();
   return;
 }
