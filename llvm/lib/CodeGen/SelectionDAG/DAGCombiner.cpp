@@ -40,6 +40,10 @@
 // FIXME: divide by zero is currently left unfolded.  do we want to turn this
 //        into an undef?
 // FIXME: select ne (select cc, 1, 0), 0, true, false -> select cc, true, false
+// FIXME: sext_inreg(SRL) -> SRA:
+// int %simple(uint %X) { %tmp.4 = shr uint %X, ubyte 16
+//    %tmp.5 = cast uint %tmp.4 to short     %tmp.6 = cast short %tmp.5 to int
+//    ret int %tmp.6 }
 // 
 //===----------------------------------------------------------------------===//
 
