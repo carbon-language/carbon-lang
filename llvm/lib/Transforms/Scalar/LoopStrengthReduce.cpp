@@ -1049,9 +1049,6 @@ void LoopStrengthReduce::runOnLoop(Loop *L) {
   // If we only have one stride, we can more aggressively eliminate some things.
   bool HasOneStride = IVUsesByStride.size() == 1;
   
-  if (IVUsesByStride.size() == 123)
-    std::cerr << "FOO!\n";
-
   // Note: this processes each stride/type pair individually.  All users passed
   // into StrengthReduceStridedIVUsers have the same type AND stride.  Also,
   // node that we iterate over IVUsesByStride indirectly by using StrideOrder.
