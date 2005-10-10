@@ -77,6 +77,7 @@ namespace {
     }
     
     SDOperand CombineTo(SDNode *N, const std::vector<SDOperand> &To) {
+      ++NodesCombined;
       DEBUG(std::cerr << "\nReplacing "; N->dump();
             std::cerr << "\nWith: "; To[0].Val->dump();
             std::cerr << " and " << To.size()-1 << " other values\n");
@@ -98,6 +99,12 @@ namespace {
       // Finally, since the node is now dead, remove it from the graph.
       DAG.DeleteNode(N);
       return SDOperand(N, 0);
+    }
+
+    SDOperand CombineTo(SDNode *N, SDOperand Res) {
+      std::vector<SDOperand> To;
+      To.push_back(Res);
+      return CombineTo(N, To);
     }
     
     SDOperand CombineTo(SDNode *N, SDOperand Res0, SDOperand Res1) {
@@ -165,6 +172,7 @@ namespace {
     SDOperand visitBRTWOWAY_CC(SDNode *N);
 
     SDOperand visitLOAD(SDNode *N);
+    SDOperand visitSTORE(SDNode *N);
 
     SDOperand SimplifySelect(SDOperand N0, SDOperand N1, SDOperand N2);
     SDOperand SimplifySelectCC(SDOperand N0, SDOperand N1, SDOperand N2, 
@@ -439,6 +447,7 @@ SDOperand DAGCombiner::visit(SDNode *N) {
   case ISD::BR_CC:              return visitBR_CC(N);
   case ISD::BRTWOWAY_CC:        return visitBRTWOWAY_CC(N);
   case ISD::LOAD:               return visitLOAD(N);
+  case ISD::STORE:              return visitSTORE(N);
   }
   return SDOperand();
 }
@@ -1563,6 +1572,26 @@ SDOperand DAGCombiner::visitLOAD(SDNode *N) {
   if (Chain.getOpcode() == ISD::STORE && Chain.getOperand(2) == Ptr &&
       Chain.getOperand(1).getValueType() == N->getValueType(0))
     return CombineTo(N, Chain.getOperand(1), Chain);
+  
+  return SDOperand();
+}
+
+SDOperand DAGCombiner::visitSTORE(SDNode *N) {
+  SDOperand Chain    = N->getOperand(0);
+  SDOperand Value    = N->getOperand(1);
+  SDOperand Ptr      = N->getOperand(2);
+  SDOperand SrcValue = N->getOperand(3);
+ 
+  // If this is a store that kills a previous store, remove the previous store.
+  if (Chain.getOpcode() == ISD::STORE && Chain.getOperand(2) == Ptr) {
+    // Create a new store of Value that replaces both stores.
+    SDNode *PrevStore = Chain.Val;
+    SDOperand NewStore = DAG.getNode(ISD::STORE, MVT::Other,
+                                     PrevStore->getOperand(0), Value, Ptr,
+                                     SrcValue);
+    CombineTo(PrevStore, NewStore);  // Nuke the previous store.
+    return NewStore;  // Replace this store with NewStore.
+  }
   
   return SDOperand();
 }
