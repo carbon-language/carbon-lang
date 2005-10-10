@@ -27,11 +27,6 @@
 #include <algorithm>
 using namespace llvm;
 
-// Temporary boolean for testing the dag combiner
-namespace llvm {
-  extern bool CombinerEnabled;
-}
-
 static bool isCommutativeBinOp(unsigned Opcode) {
   switch (Opcode) {
   case ISD::ADD:
@@ -643,6 +638,20 @@ static bool MaskedValueIsZero(const SDOperand &Op, uint64_t Mask,
       return MaskedValueIsZero(Op.getOperand(0), NewVal, TLI);
     }
     return false;
+  case ISD::ADD:
+    // (add X, Y) & C == 0 iff (X&C)|(Y&C) == 0 and all bits are low bits.
+    if ((Mask&(Mask+1)) == 0) {  // All low bits
+      if (MaskedValueIsZero(Op.getOperand(0), Mask, TLI) &&
+          MaskedValueIsZero(Op.getOperand(1), Mask, TLI)) {
+        std::cerr << "MASK: ";
+        Op.getOperand(0).Val->dump();
+        std::cerr << " - ";
+        Op.getOperand(1).Val->dump();
+        std::cerr << "\n";
+        return true;
+      }
+    }
+    break;    
   case ISD::SUB:
     if (ConstantSDNode *CLHS = dyn_cast<ConstantSDNode>(Op.getOperand(0))) {
       // We know that the top bits of C-X are clear if X contains less bits
@@ -876,133 +885,6 @@ SDOperand SelectionDAG::SimplifySetCC(MVT::ValueType VT, SDOperand N1,
       return getSetCC(VT, N2, N1, ISD::getSetCCSwappedOperands(Cond));
     }
 
-  if (!CombinerEnabled) {
-  if (N1 == N2) {
-    // We can always fold X == Y for integer setcc's.
-    if (MVT::isInteger(N1.getValueType()))
-      return getConstant(ISD::isTrueWhenEqual(Cond), VT);
-    unsigned UOF = ISD::getUnorderedFlavor(Cond);
-    if (UOF == 2)   // FP operators that are undefined on NaNs.
-      return getConstant(ISD::isTrueWhenEqual(Cond), VT);
-    if (UOF == unsigned(ISD::isTrueWhenEqual(Cond)))
-      return getConstant(UOF, VT);
-    // Otherwise, we can't fold it.  However, we can simplify it to SETUO/SETO
-    // if it is not already.
-    ISD::CondCode NewCond = UOF == 0 ? ISD::SETUO : ISD::SETO;
-    if (NewCond != Cond)
-      return getSetCC(VT, N1, N2, NewCond);
-  }
-
-  if (Cond == ISD::SETEQ || Cond == ISD::SETNE) {
-    if (N1.getOpcode() == ISD::ADD || N1.getOpcode() == ISD::SUB ||
-        N1.getOpcode() == ISD::XOR) {
-      // Simplify (X+Y) == (X+Z) -->  Y == Z
-      if (N1.getOpcode() == N2.getOpcode()) {
-        if (N1.getOperand(0) == N2.getOperand(0))
-          return getSetCC(VT, N1.getOperand(1), N2.getOperand(1), Cond);
-        if (N1.getOperand(1) == N2.getOperand(1))
-          return getSetCC(VT, N1.getOperand(0), N2.getOperand(0), Cond);
-        if (isCommutativeBinOp(N1.getOpcode())) {
-          // If X op Y == Y op X, try other combinations.
-          if (N1.getOperand(0) == N2.getOperand(1))
-            return getSetCC(VT, N1.getOperand(1), N2.getOperand(0), Cond);
-          if (N1.getOperand(1) == N2.getOperand(0))
-            return getSetCC(VT, N1.getOperand(1), N2.getOperand(1), Cond);
-        }
-      }
-
-      // FIXME: move this stuff to the DAG Combiner when it exists!
-
-      // Turn (X^C1) == C2 into X == C1^C2 iff X&~C1 = 0.  Common for condcodes.
-      if (N1.getOpcode() == ISD::XOR)
-        if (ConstantSDNode *XORC = dyn_cast<ConstantSDNode>(N1.getOperand(1)))
-          if (ConstantSDNode *RHSC = dyn_cast<ConstantSDNode>(N2)) {
-            // If we know that all of the inverted bits are zero, don't bother
-            // performing the inversion.
-            if (MaskedValueIsZero(N1.getOperand(0), ~XORC->getValue(), TLI))
-              return getSetCC(VT, N1.getOperand(0),
-                              getConstant(XORC->getValue()^RHSC->getValue(),
-                                          N1.getValueType()), Cond);
-          }
-      
-      // Simplify (X+Z) == X -->  Z == 0
-      if (N1.getOperand(0) == N2)
-        return getSetCC(VT, N1.getOperand(1),
-                        getConstant(0, N1.getValueType()), Cond);
-      if (N1.getOperand(1) == N2) {
-        if (isCommutativeBinOp(N1.getOpcode()))
-          return getSetCC(VT, N1.getOperand(0),
-                          getConstant(0, N1.getValueType()), Cond);
-        else {
-          assert(N1.getOpcode() == ISD::SUB && "Unexpected operation!");
-          // (Z-X) == X  --> Z == X<<1
-          return getSetCC(VT, N1.getOperand(0),
-                          getNode(ISD::SHL, N2.getValueType(),
-                                  N2, getConstant(1, TLI.getShiftAmountTy())),
-                          Cond);
-        }
-      }
-    }
-
-    if (N2.getOpcode() == ISD::ADD || N2.getOpcode() == ISD::SUB ||
-        N2.getOpcode() == ISD::XOR) {
-      // Simplify  X == (X+Z) -->  Z == 0
-      if (N2.getOperand(0) == N1) {
-        return getSetCC(VT, N2.getOperand(1),
-                        getConstant(0, N2.getValueType()), Cond);
-      } else if (N2.getOperand(1) == N1) {
-        if (isCommutativeBinOp(N2.getOpcode())) {
-          return getSetCC(VT, N2.getOperand(0),
-                          getConstant(0, N2.getValueType()), Cond);
-        } else {
-          assert(N2.getOpcode() == ISD::SUB && "Unexpected operation!");
-          // X == (Z-X)  --> X<<1 == Z
-          return getSetCC(VT, getNode(ISD::SHL, N2.getValueType(), N1, 
-                                      getConstant(1, TLI.getShiftAmountTy())),
-                          N2.getOperand(0), Cond);
-        }
-      }
-    }
-  }
-
-  // Fold away ALL boolean setcc's.
-  if (N1.getValueType() == MVT::i1) {
-    switch (Cond) {
-    default: assert(0 && "Unknown integer setcc!");
-    case ISD::SETEQ:  // X == Y  -> (X^Y)^1
-      N1 = getNode(ISD::XOR, MVT::i1,
-                   getNode(ISD::XOR, MVT::i1, N1, N2),
-                   getConstant(1, MVT::i1));
-      break;
-    case ISD::SETNE:  // X != Y   -->  (X^Y)
-      N1 = getNode(ISD::XOR, MVT::i1, N1, N2);
-      break;
-    case ISD::SETGT:  // X >s Y   -->  X == 0 & Y == 1  -->  X^1 & Y
-    case ISD::SETULT: // X <u Y   -->  X == 0 & Y == 1  -->  X^1 & Y
-      N1 = getNode(ISD::AND, MVT::i1, N2,
-                   getNode(ISD::XOR, MVT::i1, N1, getConstant(1, MVT::i1)));
-      break;
-    case ISD::SETLT:  // X <s Y   --> X == 1 & Y == 0  -->  Y^1 & X
-    case ISD::SETUGT: // X >u Y   --> X == 1 & Y == 0  -->  Y^1 & X
-      N1 = getNode(ISD::AND, MVT::i1, N1,
-                   getNode(ISD::XOR, MVT::i1, N2, getConstant(1, MVT::i1)));
-      break;
-    case ISD::SETULE: // X <=u Y  --> X == 0 | Y == 1  -->  X^1 | Y
-    case ISD::SETGE:  // X >=s Y  --> X == 0 | Y == 1  -->  X^1 | Y
-      N1 = getNode(ISD::OR, MVT::i1, N2,
-                   getNode(ISD::XOR, MVT::i1, N1, getConstant(1, MVT::i1)));
-      break;
-    case ISD::SETUGE: // X >=u Y  --> X == 1 | Y == 0  -->  Y^1 | X
-    case ISD::SETLE:  // X <=s Y  --> X == 1 | Y == 0  -->  Y^1 | X
-      N1 = getNode(ISD::OR, MVT::i1, N1,
-                   getNode(ISD::XOR, MVT::i1, N2, getConstant(1, MVT::i1)));
-      break;
-    }
-    if (VT != MVT::i1)
-      N1 = getNode(ISD::ZERO_EXTEND, VT, N1);
-    return N1;
-  }
-  }
   // Could not fold it.
   return SDOperand();
 }
@@ -1337,204 +1219,6 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
         std::swap(N1, N2);
       }
     }
-
-    if (!CombinerEnabled) {
-    switch (Opcode) {
-    default: break;
-    case ISD::SHL:    // shl  0, X -> 0
-      if (N1C->isNullValue()) return N1;
-      break;
-    case ISD::SRL:    // srl  0, X -> 0
-      if (N1C->isNullValue()) return N1;
-      break;
-    case ISD::SRA:    // sra -1, X -> -1
-      if (N1C->isAllOnesValue()) return N1;
-      break;
-    case ISD::SIGN_EXTEND_INREG:  // SIGN_EXTEND_INREG N1C, EVT
-      // Extending a constant?  Just return the extended constant.
-      SDOperand Tmp = getNode(ISD::TRUNCATE, cast<VTSDNode>(N2)->getVT(), N1);
-      return getNode(ISD::SIGN_EXTEND, VT, Tmp);
-    }
-    }
-  }
-
-  if (!CombinerEnabled) {
-  if (N2C) {
-    uint64_t C2 = N2C->getValue();
-
-    switch (Opcode) {
-    case ISD::ADD:
-      if (!C2) return N1;         // add X, 0 -> X
-      break;
-    case ISD::SUB:
-      if (!C2) return N1;         // sub X, 0 -> X
-      return getNode(ISD::ADD, VT, N1, getConstant(-C2, VT));
-    case ISD::MUL:
-      if (!C2) return N2;         // mul X, 0 -> 0
-      if (N2C->isAllOnesValue()) // mul X, -1 -> 0-X
-        return getNode(ISD::SUB, VT, getConstant(0, VT), N1);
-
-      // FIXME: Move this to the DAG combiner when it exists.
-      if ((C2 & C2-1) == 0) {
-        SDOperand ShAmt = getConstant(Log2_64(C2), TLI.getShiftAmountTy());
-        return getNode(ISD::SHL, VT, N1, ShAmt);
-      }
-      break;
-
-    case ISD::MULHU:
-    case ISD::MULHS:
-      if (!C2) return N2;         // mul X, 0 -> 0
-
-      if (C2 == 1)                // 0X*01 -> 0X  hi(0X) == 0
-        return getConstant(0, VT);
-
-      // Many others could be handled here, including -1, powers of 2, etc.
-      break;
-
-    case ISD::UDIV:
-      // FIXME: Move this to the DAG combiner when it exists.
-      if ((C2 & C2-1) == 0 && C2) {
-        SDOperand ShAmt = getConstant(Log2_64(C2), TLI.getShiftAmountTy());
-        return getNode(ISD::SRL, VT, N1, ShAmt);
-      }
-      break;
-
-    case ISD::SHL:
-    case ISD::SRL:
-    case ISD::SRA:
-      // If the shift amount is bigger than the size of the data, then all the
-      // bits are shifted out.  Simplify to undef.
-      if (C2 >= MVT::getSizeInBits(N1.getValueType())) {
-        return getNode(ISD::UNDEF, N1.getValueType());
-      }
-      if (C2 == 0) return N1;
-      
-      if (Opcode == ISD::SRA) {
-        // If the sign bit is known to be zero, switch this to a SRL.
-        if (MaskedValueIsZero(N1,
-                              1ULL << (MVT::getSizeInBits(N1.getValueType())-1),
-                              TLI))
-          return getNode(ISD::SRL, N1.getValueType(), N1, N2);
-      } else {
-        // If the part left over is known to be zero, the whole thing is zero.
-        uint64_t TypeMask = ~0ULL >> (64-MVT::getSizeInBits(N1.getValueType()));
-        if (Opcode == ISD::SRL) {
-          if (MaskedValueIsZero(N1, TypeMask << C2, TLI))
-            return getConstant(0, N1.getValueType());
-        } else if (Opcode == ISD::SHL) {
-          if (MaskedValueIsZero(N1, TypeMask >> C2, TLI))
-            return getConstant(0, N1.getValueType());
-        }
-      }
-
-      if (Opcode == ISD::SHL && N1.getNumOperands() == 2)
-        if (ConstantSDNode *OpSA = dyn_cast<ConstantSDNode>(N1.getOperand(1))) {
-          unsigned OpSAC = OpSA->getValue();
-          if (N1.getOpcode() == ISD::SHL) {
-            if (C2+OpSAC >= MVT::getSizeInBits(N1.getValueType()))
-              return getConstant(0, N1.getValueType());
-            return getNode(ISD::SHL, N1.getValueType(), N1.getOperand(0),
-                           getConstant(C2+OpSAC, N2.getValueType()));
-          } else if (N1.getOpcode() == ISD::SRL) {
-            // (X >> C1) << C2:  if C2 > C1, ((X & ~0<<C1) << C2-C1)
-            SDOperand Mask = getNode(ISD::AND, VT, N1.getOperand(0),
-                                     getConstant(~0ULL << OpSAC, VT));
-            if (C2 > OpSAC) {
-              return getNode(ISD::SHL, VT, Mask,
-                             getConstant(C2-OpSAC, N2.getValueType()));
-            } else {
-              // (X >> C1) << C2:  if C2 <= C1, ((X & ~0<<C1) >> C1-C2)
-              return getNode(ISD::SRL, VT, Mask,
-                             getConstant(OpSAC-C2, N2.getValueType()));
-            }
-          } else if (N1.getOpcode() == ISD::SRA) {
-            // if C1 == C2, just mask out low bits.
-            if (C2 == OpSAC)
-              return getNode(ISD::AND, VT, N1.getOperand(0),
-                             getConstant(~0ULL << C2, VT));
-          }
-        }
-      break;
-
-    case ISD::AND:
-      if (!C2) return N2;         // X and 0 -> 0
-      if (N2C->isAllOnesValue())
-        return N1;                // X and -1 -> X
-
-      if (MaskedValueIsZero(N1, C2, TLI))  // X and 0 -> 0
-        return getConstant(0, VT);
-
-      {
-        uint64_t NotC2 = ~C2;
-        if (VT != MVT::i64)
-          NotC2 &= (1ULL << MVT::getSizeInBits(VT))-1;
-
-        if (MaskedValueIsZero(N1, NotC2, TLI))
-          return N1;                // if (X & ~C2) -> 0, the and is redundant
-      }
-
-      // FIXME: Should add a corresponding version of this for
-      // ZERO_EXTEND/SIGN_EXTEND by converting them to an ANY_EXTEND node which
-      // we don't have yet.
-      // FIXME: NOW WE DO, add this.
-
-      // and (sign_extend_inreg x:16:32), 1 -> and x, 1
-      if (N1.getOpcode() == ISD::SIGN_EXTEND_INREG) {
-        // If we are masking out the part of our input that was extended, just
-        // mask the input to the extension directly.
-        unsigned ExtendBits =
-          MVT::getSizeInBits(cast<VTSDNode>(N1.getOperand(1))->getVT());
-        if ((C2 & (~0ULL << ExtendBits)) == 0)
-          return getNode(ISD::AND, VT, N1.getOperand(0), N2);
-      } else if (N1.getOpcode() == ISD::OR) {
-        if (ConstantSDNode *ORI = dyn_cast<ConstantSDNode>(N1.getOperand(1)))
-          if ((ORI->getValue() & C2) == C2) {
-            // If the 'or' is setting all of the bits that we are masking for,
-            // we know the result of the AND will be the AND mask itself.
-            return N2;
-          }
-      }
-      break;
-    case ISD::OR:
-      if (!C2)return N1;          // X or 0 -> X
-      if (N2C->isAllOnesValue())
-        return N2;                // X or -1 -> -1
-      break;
-    case ISD::XOR:
-      if (!C2) return N1;        // X xor 0 -> X
-      if (N2C->getValue() == 1 && N1.Val->getOpcode() == ISD::SETCC) {
-          SDNode *SetCC = N1.Val;
-          // !(X op Y) -> (X !op Y)
-          bool isInteger = MVT::isInteger(SetCC->getOperand(0).getValueType());
-          ISD::CondCode CC = cast<CondCodeSDNode>(SetCC->getOperand(2))->get();
-          return getSetCC(SetCC->getValueType(0),
-                          SetCC->getOperand(0), SetCC->getOperand(1),
-                          ISD::getSetCCInverse(CC, isInteger));
-      } else if (N2C->isAllOnesValue()) {
-        if (N1.getOpcode() == ISD::AND || N1.getOpcode() == ISD::OR) {
-          SDNode *Op = N1.Val;
-          // !(X or Y) -> (!X and !Y) iff X or Y are freely invertible
-          // !(X and Y) -> (!X or !Y) iff X or Y are freely invertible
-          SDOperand LHS = Op->getOperand(0), RHS = Op->getOperand(1);
-          if (isInvertibleForFree(RHS) || isInvertibleForFree(LHS)) {
-            LHS = getNode(ISD::XOR, VT, LHS, N2);  // RHS = ~LHS
-            RHS = getNode(ISD::XOR, VT, RHS, N2);  // RHS = ~RHS
-            if (Op->getOpcode() == ISD::AND)
-              return getNode(ISD::OR, VT, LHS, RHS);
-            return getNode(ISD::AND, VT, LHS, RHS);
-          }
-        }
-        // X xor -1 -> not(x)  ?
-      }
-      break;
-    }
-
-    // Reassociate ((X op C1) op C2) if possible.
-    if (N1.getOpcode() == Opcode && isAssociativeBinOp(Opcode))
-      if (ConstantSDNode *N3C = dyn_cast<ConstantSDNode>(N1.Val->getOperand(1)))
-        return getNode(Opcode, VT, N1.Val->getOperand(0),
-                       getNode(Opcode, VT, N2, N1.Val->getOperand(1)));
-  }
   }
 
   ConstantFPSDNode *N1CFP = dyn_cast<ConstantFPSDNode>(N1.Val);
@@ -1560,180 +1244,16 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
         std::swap(N1, N2);
       }
     }
-
-    if (!CombinerEnabled) {
-    if (Opcode == ISD::FP_ROUND_INREG)
-      return getNode(ISD::FP_EXTEND, VT,
-                     getNode(ISD::FP_ROUND, cast<VTSDNode>(N2)->getVT(), N1));
-    }
   }
 
   // Finally, fold operations that do not require constants.
   switch (Opcode) {
-  case ISD::TokenFactor:
-    if (!CombinerEnabled) {
-    if (N1.getOpcode() == ISD::EntryToken)
-      return N2;
-    if (N2.getOpcode() == ISD::EntryToken)
-      return N1;
-    }
-    break;
-  case ISD::SDIV: {
-    if (CombinerEnabled) break;
-    
-    // If we know the sign bits of both operands are zero, strength reduce to a
-    // udiv instead.  Handles (X&15) /s 4 -> X&15 >> 2
-    uint64_t SignBit = 1ULL << (MVT::getSizeInBits(VT)-1);
-    if (MaskedValueIsZero(N2, SignBit, TLI) &&
-        MaskedValueIsZero(N1, SignBit, TLI))
-      return getNode(ISD::UDIV, VT, N1, N2);
-    break;
-  }   
-
-  case ISD::AND:
-  case ISD::OR:
-    if (!CombinerEnabled) {
-    if (N1.Val->getOpcode() == ISD::SETCC && N2.Val->getOpcode() == ISD::SETCC){
-      SDNode *LHS = N1.Val, *RHS = N2.Val;
-      SDOperand LL = LHS->getOperand(0), RL = RHS->getOperand(0);
-      SDOperand LR = LHS->getOperand(1), RR = RHS->getOperand(1);
-      ISD::CondCode Op1 = cast<CondCodeSDNode>(LHS->getOperand(2))->get();
-      ISD::CondCode Op2 = cast<CondCodeSDNode>(RHS->getOperand(2))->get();
-
-      if (LR == RR && isa<ConstantSDNode>(LR) &&
-          Op2 == Op1 && MVT::isInteger(LL.getValueType())) {
-        // (X != 0) | (Y != 0) -> (X|Y != 0)
-        // (X == 0) & (Y == 0) -> (X|Y == 0)
-        // (X <  0) | (Y <  0) -> (X|Y < 0)
-        if (cast<ConstantSDNode>(LR)->getValue() == 0 &&
-            ((Op2 == ISD::SETEQ && Opcode == ISD::AND) ||
-             (Op2 == ISD::SETNE && Opcode == ISD::OR) ||
-             (Op2 == ISD::SETLT && Opcode == ISD::OR)))
-          return getSetCC(VT, getNode(ISD::OR, LR.getValueType(), LL, RL), LR,
-                          Op2);
-
-        if (cast<ConstantSDNode>(LR)->isAllOnesValue()) {
-          // (X == -1) & (Y == -1) -> (X&Y == -1)
-          // (X != -1) | (Y != -1) -> (X&Y != -1)
-          // (X >  -1) | (Y >  -1) -> (X&Y >  -1)
-          if ((Opcode == ISD::AND && Op2 == ISD::SETEQ) ||
-              (Opcode == ISD::OR  && Op2 == ISD::SETNE) ||
-              (Opcode == ISD::OR  && Op2 == ISD::SETGT))
-            return getSetCC(VT, getNode(ISD::AND, LR.getValueType(), LL, RL),
-                            LR, Op2);
-          // (X >  -1) & (Y >  -1) -> (X|Y > -1)
-          if (Opcode == ISD::AND && Op2 == ISD::SETGT)
-            return getSetCC(VT, getNode(ISD::OR, LR.getValueType(), LL, RL),
-                            LR, Op2);
-        }
-      }
-
-      // (X op1 Y) | (Y op2 X) -> (X op1 Y) | (X swapop2 Y)
-      if (LL == RR && LR == RL) {
-        Op2 = ISD::getSetCCSwappedOperands(Op2);
-        goto MatchedBackwards;
-      }
-
-      if (LL == RL && LR == RR) {
-      MatchedBackwards:
-        ISD::CondCode Result;
-        bool isInteger = MVT::isInteger(LL.getValueType());
-        if (Opcode == ISD::OR)
-          Result = ISD::getSetCCOrOperation(Op1, Op2, isInteger);
-        else
-          Result = ISD::getSetCCAndOperation(Op1, Op2, isInteger);
-
-        if (Result != ISD::SETCC_INVALID)
-          return getSetCC(LHS->getValueType(0), LL, LR, Result);
-      }
-    }
-
-    // and/or zext(a), zext(b) -> zext(and/or a, b)
-    if (N1.getOpcode() == ISD::ZERO_EXTEND &&
-        N2.getOpcode() == ISD::ZERO_EXTEND &&
-        N1.getOperand(0).getValueType() == N2.getOperand(0).getValueType())
-      return getNode(ISD::ZERO_EXTEND, VT,
-                     getNode(Opcode, N1.getOperand(0).getValueType(),
-                             N1.getOperand(0), N2.getOperand(0)));
-    }
-    break;
-  case ISD::XOR:
-    if (!CombinerEnabled) {
-    if (N1 == N2) return getConstant(0, VT);  // xor X, Y -> 0
-    }
-    break;
-  case ISD::ADD:
-    if (!CombinerEnabled) {
-    if (N1.getOpcode() == ISD::SUB && isa<ConstantSDNode>(N1.getOperand(0)) &&
-        cast<ConstantSDNode>(N1.getOperand(0))->getValue() == 0)
-      return getNode(ISD::SUB, VT, N2, N1.getOperand(1)); // (0-A)+B -> B-A
-    if (N2.getOpcode() == ISD::SUB && isa<ConstantSDNode>(N2.getOperand(0)) &&
-        cast<ConstantSDNode>(N2.getOperand(0))->getValue() == 0)
-      return getNode(ISD::SUB, VT, N1, N2.getOperand(1)); // A+(0-B) -> A-B
-    if (N2.getOpcode() == ISD::SUB && N1 == N2.Val->getOperand(1))
-      return N2.Val->getOperand(0); // A+(B-A) -> B
-    }
-    break;
-  case ISD::FADD:
-    if (!CombinerEnabled) {
-    if (N2.getOpcode() == ISD::FNEG)          // (A+ (-B) -> A-B
-      return getNode(ISD::FSUB, VT, N1, N2.getOperand(0));
-    if (N1.getOpcode() == ISD::FNEG)          // ((-A)+B) -> B-A
-      return getNode(ISD::FSUB, VT, N2, N1.getOperand(0));
-    }
-    break;
-    
-  case ISD::SUB:
-    if (!CombinerEnabled) {
-    if (N1.getOpcode() == ISD::ADD) {
-      if (N1.Val->getOperand(0) == N2)
-        return N1.Val->getOperand(1);         // (A+B)-A == B
-      if (N1.Val->getOperand(1) == N2)
-        return N1.Val->getOperand(0);         // (A+B)-B == A
-    }
-    }
-    break;
-  case ISD::FSUB:
-    if (!CombinerEnabled) {
-    if (N2.getOpcode() == ISD::FNEG)          // (A- (-B) -> A+B
-      return getNode(ISD::FADD, VT, N1, N2.getOperand(0));
-    }
-    break;
   case ISD::FP_ROUND_INREG:
     if (cast<VTSDNode>(N2)->getVT() == VT) return N1;  // Not actually rounding.
     break;
   case ISD::SIGN_EXTEND_INREG: {
     MVT::ValueType EVT = cast<VTSDNode>(N2)->getVT();
     if (EVT == VT) return N1;  // Not actually extending
-    if (!CombinerEnabled) {
-    // If we are sign extending an extension, use the original source.
-    if (N1.getOpcode() == ISD::SIGN_EXTEND_INREG ||
-        N1.getOpcode() == ISD::AssertSext)
-      if (cast<VTSDNode>(N1.getOperand(1))->getVT() <= EVT)
-        return N1;
-
-    // If we are sign extending a sextload, return just the load.
-    if (N1.getOpcode() == ISD::SEXTLOAD)
-      if (cast<VTSDNode>(N1.getOperand(3))->getVT() <= EVT)
-        return N1;    
-
-    // If we are extending the result of a setcc, and we already know the
-    // contents of the top bits, eliminate the extension.
-    if (N1.getOpcode() == ISD::SETCC &&
-        TLI.getSetCCResultContents() ==
-                        TargetLowering::ZeroOrNegativeOneSetCCResult)
-      return N1;
-    
-    // If we are sign extending the result of an (and X, C) operation, and we
-    // know the extended bits are zeros already, don't do the extend.
-    if (N1.getOpcode() == ISD::AND)
-      if (ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1.getOperand(1))) {
-        uint64_t Mask = N1C->getValue();
-        unsigned NumBits = MVT::getSizeInBits(EVT);
-        if ((Mask & (~0ULL << (NumBits-1))) == 0)
-          return N1;
-      }
-    }
     break;
   }
 
@@ -1840,36 +1360,6 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
         return N3;             // select false, X, Y -> Y
 
     if (N2 == N3) return N2;   // select C, X, X -> X
-
-    if (!CombinerEnabled) {
-    if (VT == MVT::i1) {  // Boolean SELECT
-      if (N2C) {
-        if (N2C->getValue())   // select C, 1, X -> C | X
-          return getNode(ISD::OR, VT, N1, N3);
-        else                   // select C, 0, X -> ~C & X
-          return getNode(ISD::AND, VT,
-                         getNode(ISD::XOR, N1.getValueType(), N1,
-                                 getConstant(1, N1.getValueType())), N3);
-      } else if (N3C) {
-        if (N3C->getValue())   // select C, X, 1 -> ~C | X
-          return getNode(ISD::OR, VT,
-                         getNode(ISD::XOR, N1.getValueType(), N1,
-                                 getConstant(1, N1.getValueType())), N2);
-        else                   // select C, X, 0 -> C & X
-          return getNode(ISD::AND, VT, N1, N2);
-      }
-
-      if (N1 == N2)   // X ? X : Y --> X ? 1 : Y --> X | Y
-        return getNode(ISD::OR, VT, N1, N3);
-      if (N1 == N3)   // X ? Y : X --> X ? Y : 0 --> X & Y
-        return getNode(ISD::AND, VT, N1, N2);
-    }
-    if (N1.getOpcode() == ISD::SETCC) {
-      SDOperand Simp = SimplifySelectCC(N1.getOperand(0), N1.getOperand(1), N2, 
-                             N3, cast<CondCodeSDNode>(N1.getOperand(2))->get());
-      if (Simp.Val) return Simp;
-    }
-    }
     break;
   case ISD::BRCOND:
     if (N2C)
@@ -1999,24 +1489,6 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     assert(Ops.size() == 5 && "BR_CC takes 5 operands!");
     assert(Ops[2].getValueType() == Ops[3].getValueType() &&
            "LHS/RHS of comparison should match types!");
-    
-    if (CombinerEnabled) break;  // xforms moved to dag combine.
-    
-    // Use SimplifySetCC  to simplify SETCC's.
-    SDOperand Simp = SimplifySetCC(MVT::i1, Ops[2], Ops[3],
-                                   cast<CondCodeSDNode>(Ops[1])->get());
-    if (Simp.Val) {
-      if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Simp)) {
-        if (C->getValue() & 1) // Unconditional branch
-          return getNode(ISD::BR, MVT::Other, Ops[0], Ops[4]);
-        else
-          return Ops[0];          // Unconditional Fall through
-      } else if (Simp.Val->getOpcode() == ISD::SETCC) {
-        Ops[2] = Simp.getOperand(0);
-        Ops[3] = Simp.getOperand(1);
-        Ops[1] = Simp.getOperand(2);
-      }
-    }
     break;
   }
   }
