@@ -20,7 +20,6 @@
 // ZERO_EXTEND/SIGN_EXTEND by converting them to an ANY_EXTEND node which
 // we don't have yet.
 //
-// FIXME: select C, 16, 0 -> shr C, 4 
 // FIXME: select C, pow2, pow2 -> something smart
 // FIXME: trunc(select X, Y, Z) -> select X, trunc(Y), trunc(Z)
 // FIXME: (select C, load A, load B) -> load (select C, A, B)
@@ -30,20 +29,13 @@
 // FIXME: TRUNC (LOAD)   -> EXT_LOAD/LOAD(smaller)
 // FIXME: mul (x, const) -> shifts + adds
 // FIXME: undef values
-// FIXME: zero extend when top bits are 0 -> drop it ?
 // FIXME: make truncate see through SIGN_EXTEND and AND
-// FIXME: sext_in_reg(setcc) on targets that return zero or one, and where 
-//        EVT != MVT::i1 can drop the sext.
 // FIXME: (sra (sra x, c1), c2) -> (sra x, c1+c2)
 // FIXME: verify that getNode can't return extends with an operand whose type
 //        is >= to that of the extend.
 // FIXME: divide by zero is currently left unfolded.  do we want to turn this
 //        into an undef?
 // FIXME: select ne (select cc, 1, 0), 0, true, false -> select cc, true, false
-// FIXME: sext_inreg(SRL) -> SRA:
-// int %simple(uint %X) { %tmp.4 = shr uint %X, ubyte 16
-//    %tmp.5 = cast uint %tmp.4 to short     %tmp.6 = cast short %tmp.5 to int
-//    ret int %tmp.6 }
 // 
 //===----------------------------------------------------------------------===//
 
@@ -154,8 +146,8 @@ public:
   };
 }
 
-/// MaskedValueIsZero - Return true if 'V & Mask' is known to be zero.  We use
-/// this predicate to simplify operations downstream.  V and Mask are known to
+/// MaskedValueIsZero - Return true if 'Op & Mask' is known to be zero.  We use
+/// this predicate to simplify operations downstream.  Op and Mask are known to
 /// be the same type.
 static bool MaskedValueIsZero(const SDOperand &Op, uint64_t Mask,
                               const TargetLowering &TLI) {
@@ -167,7 +159,6 @@ static bool MaskedValueIsZero(const SDOperand &Op, uint64_t Mask,
   case ISD::Constant:
     return (cast<ConstantSDNode>(Op)->getValue() & Mask) == 0;
   case ISD::SETCC:
-    // FIXME: teach this about non ZeroOrOne values, such as 0 or -1
     return ((Mask & 1) == 0) &&
     TLI.getSetCCResultContents() == TargetLowering::ZeroOrOneSetCCResult;
   case ISD::ZEXTLOAD:
@@ -184,7 +175,6 @@ static bool MaskedValueIsZero(const SDOperand &Op, uint64_t Mask,
     if (MaskedValueIsZero(Op.getOperand(1), Mask, TLI) ||
         MaskedValueIsZero(Op.getOperand(0), Mask, TLI))
       return true;
-    
     // (X & C1) & C2 == 0   iff   C1 & C2 == 0.
     if (ConstantSDNode *AndRHS = dyn_cast<ConstantSDNode>(Op.getOperand(1)))
       return MaskedValueIsZero(Op.getOperand(0),AndRHS->getValue() & Mask, TLI);
@@ -545,15 +535,12 @@ SDOperand DAGCombiner::visitSDIV(SDNode *N) {
   if (N0C && N1C && !N1C->isNullValue())
     return DAG.getConstant(N0C->getSignExtended() / N1C->getSignExtended(),
                            N->getValueType(0));
-
   // If we know the sign bits of both operands are zero, strength reduce to a
   // udiv instead.  Handles (X&15) /s 4 -> X&15 >> 2
   uint64_t SignBit = 1ULL << (MVT::getSizeInBits(VT)-1);
   if (MaskedValueIsZero(N1, SignBit, TLI) &&
       MaskedValueIsZero(N0, SignBit, TLI))
     return DAG.getNode(ISD::UDIV, N1.getValueType(), N0, N1);
-  
-  
   return SDOperand();
 }
 
@@ -578,6 +565,7 @@ SDOperand DAGCombiner::visitUDIV(SDNode *N) {
 SDOperand DAGCombiner::visitSREM(SDNode *N) {
   SDOperand N0 = N->getOperand(0);
   SDOperand N1 = N->getOperand(1);
+  MVT::ValueType VT = N->getValueType(0);
   ConstantSDNode *N0C = dyn_cast<ConstantSDNode>(N0);
   ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1);
   
@@ -585,6 +573,12 @@ SDOperand DAGCombiner::visitSREM(SDNode *N) {
   if (N0C && N1C && !N1C->isNullValue())
     return DAG.getConstant(N0C->getSignExtended() % N1C->getSignExtended(),
                            N->getValueType(0));
+  // If we know the sign bits of both operands are zero, strength reduce to a
+  // urem instead.  Handles (X & 0x0FFFFFFF) %s 16 -> X&15
+  uint64_t SignBit = 1ULL << (MVT::getSizeInBits(VT)-1);
+  if (MaskedValueIsZero(N1, SignBit, TLI) &&
+      MaskedValueIsZero(N0, SignBit, TLI))
+    return DAG.getNode(ISD::UREM, N1.getValueType(), N0, N1);
   return SDOperand();
 }
 
@@ -598,7 +592,10 @@ SDOperand DAGCombiner::visitUREM(SDNode *N) {
   if (N0C && N1C && !N1C->isNullValue())
     return DAG.getConstant(N0C->getValue() % N1C->getValue(),
                            N->getValueType(0));
-  // FIXME: c2 power of 2 -> mask?
+  // fold (urem x, pow2) -> (and x, pow2-1)
+  if (N1C && !N1C->isNullValue() && isPowerOf2_64(N1C->getValue()))
+    return DAG.getNode(ISD::AND, N0.getValueType(), N0, 
+                       DAG.getConstant(N1C->getValue()-1, N1.getValueType()));
   return SDOperand();
 }
 
@@ -1173,6 +1170,7 @@ SDOperand DAGCombiner::visitSIGN_EXTEND_INREG(SDNode *N) {
   ConstantSDNode *N0C = dyn_cast<ConstantSDNode>(N0);
   MVT::ValueType VT = N->getValueType(0);
   MVT::ValueType EVT = cast<VTSDNode>(N1)->getVT();
+  unsigned EVTBits = MVT::getSizeInBits(EVT);
   
   // fold (sext_in_reg c1) -> c1
   if (N0C) {
@@ -1200,23 +1198,20 @@ SDOperand DAGCombiner::visitSIGN_EXTEND_INREG(SDNode *N) {
     return N0;
   }
   // fold (sext_in_reg (setcc x)) -> setcc x iff (setcc x) == 0 or -1
-  // FIXME: teach isSetCCEquivalent about 0, -1 and then use it here
   if (N0.getOpcode() == ISD::SETCC &&
       TLI.getSetCCResultContents() == 
         TargetLowering::ZeroOrNegativeOneSetCCResult)
     return N0;
-  // FIXME: this code is currently just ported over from SelectionDAG.cpp
-  // we probably actually want to handle this in two pieces.  Rather than
-  // checking all the top bits for zero, just check the sign bit here and turn
-  // it into a zero extend inreg (AND with constant).
-  // then, let the code for AND figure out if the mask is superfluous rather
-  // than doing so here.
-  if (N0.getOpcode() == ISD::AND && 
-      N0.getOperand(1).getOpcode() == ISD::Constant) {
-    uint64_t Mask = cast<ConstantSDNode>(N0.getOperand(1))->getValue();
-    unsigned NumBits = MVT::getSizeInBits(EVT);
-    if ((Mask & (~0ULL << (NumBits-1))) == 0)
-      return N0;
+  // fold (sext_in_reg x) -> (zext_in_reg x) if the sign bit is zero
+  if (MaskedValueIsZero(N0, 1ULL << (EVTBits-1), TLI))
+    return DAG.getNode(ISD::AND, N0.getValueType(), N0,
+                       DAG.getConstant(~0ULL >> (64-EVTBits), VT));
+  // fold (sext_in_reg (srl x)) -> sra x
+  if (N0.getOpcode() == ISD::SRL && 
+      N0.getOperand(1).getOpcode() == ISD::Constant &&
+      cast<ConstantSDNode>(N0.getOperand(1))->getValue() == EVTBits) {
+    return DAG.getNode(ISD::SRA, N0.getValueType(), N0.getOperand(0), 
+                       N0.getOperand(1));
   }
   return SDOperand();
 }
@@ -1590,8 +1585,7 @@ SDOperand DAGCombiner::SimplifySelectCC(SDOperand N0, SDOperand N1,
     MVT::ValueType AType = N2.getValueType();
     if (XType >= AType) {
       // and (sra X, size(X)-1, A) -> "and (srl X, C2), A" iff A is a
-      // single-bit constant.  FIXME: remove once the dag combiner
-      // exists.
+      // single-bit constant.
       if (N2C && ((N2C->getValue() & (N2C->getValue()-1)) == 0)) {
         unsigned ShCtV = Log2_64(N2C->getValue());
         ShCtV = MVT::getSizeInBits(XType)-ShCtV-1;
@@ -1615,7 +1609,27 @@ SDOperand DAGCombiner::SimplifySelectCC(SDOperand N0, SDOperand N1,
       return DAG.getNode(ISD::AND, AType, Shift, N2);
     }
   }
-
+  
+  // fold select C, 16, 0 -> shl C, 4
+  if (N2C && N3C && N3C->isNullValue() && isPowerOf2_64(N2C->getValue()) &&
+      TLI.getSetCCResultContents() == TargetLowering::ZeroOrOneSetCCResult) {
+    // Get a SetCC of the condition
+    // FIXME: Should probably make sure that setcc is legal if we ever have a
+    // target where it isn't.
+    SDOperand Temp, SCC = DAG.getSetCC(TLI.getSetCCResultTy(), N0, N1, CC);
+    WorkList.push_back(SCC.Val);
+    // cast from setcc result type to select result type
+    if (AfterLegalize)
+      Temp = DAG.getZeroExtendInReg(SCC, N2.getValueType());
+    else
+      Temp = DAG.getNode(ISD::ZERO_EXTEND, N2.getValueType(), SCC);
+    WorkList.push_back(Temp.Val);
+    // shl setcc result by log2 n2c
+    return DAG.getNode(ISD::SHL, N2.getValueType(), Temp,
+                       DAG.getConstant(Log2_64(N2C->getValue()),
+                                       TLI.getShiftAmountTy()));
+  }
+    
   // Check to see if this is the equivalent of setcc
   // FIXME: Turn all of these into setcc if setcc if setcc is legal
   // otherwise, go ahead with the folds.
