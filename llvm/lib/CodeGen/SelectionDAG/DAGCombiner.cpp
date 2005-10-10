@@ -216,7 +216,7 @@ static bool MaskedValueIsZero(const SDOperand &Op, uint64_t Mask,
     }
     return false;
   case ISD::ADD:
-    // (add X, Y) & C == 0 iff (X&C)&(Y&C) == 0 and all bits are low bits.
+    // (add X, Y) & C == 0 iff (X&C)|(Y&C) == 0 and all bits are low bits.
     if ((Mask&(Mask+1)) == 0) {  // All low bits
       if (MaskedValueIsZero(Op.getOperand(0), Mask, TLI) &&
           MaskedValueIsZero(Op.getOperand(1), Mask, TLI))
