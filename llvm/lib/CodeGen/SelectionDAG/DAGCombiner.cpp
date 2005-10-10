@@ -215,6 +215,14 @@ static bool MaskedValueIsZero(const SDOperand &Op, uint64_t Mask,
       return MaskedValueIsZero(Op.getOperand(0), NewVal, TLI);
     }
     return false;
+  case ISD::ADD:
+    // (add X, Y) & C == 0 iff (X&C)&(Y&C) == 0 and all bits are low bits.
+    if ((Mask&(Mask+1)) == 0) {  // All low bits
+      if (MaskedValueIsZero(Op.getOperand(0), Mask, TLI) &&
+          MaskedValueIsZero(Op.getOperand(1), Mask, TLI))
+        return true;
+    }
+    break;
   case ISD::SUB:
     if (ConstantSDNode *CLHS = dyn_cast<ConstantSDNode>(Op.getOperand(0))) {
       // We know that the top bits of C-X are clear if X contains less bits
