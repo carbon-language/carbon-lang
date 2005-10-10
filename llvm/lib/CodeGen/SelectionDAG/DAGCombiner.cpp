@@ -23,7 +23,6 @@
 // FIXME: select C, pow2, pow2 -> something smart
 // FIXME: trunc(select X, Y, Z) -> select X, trunc(Y), trunc(Z)
 // FIXME: (select C, load A, load B) -> load (select C, A, B)
-// FIXME: store -> load -> forward substitute
 // FIXME: Dead stores -> nuke
 // FIXME: shr X, (and Y,31) -> shr X, Y
 // FIXME: TRUNC (LOAD)   -> EXT_LOAD/LOAD(smaller)
@@ -36,6 +35,7 @@
 // FIXME: divide by zero is currently left unfolded.  do we want to turn this
 //        into an undef?
 // FIXME: select ne (select cc, 1, 0), 0, true, false -> select cc, true, false
+// FIXME: reassociate (X+C)+Y  into (X+Y)+C  if the inner expression has one use
 // 
 //===----------------------------------------------------------------------===//
 
@@ -76,6 +76,37 @@ namespace {
                      WorkList.end());
     }
     
+    SDOperand CombineTo(SDNode *N, const std::vector<SDOperand> &To) {
+      DEBUG(std::cerr << "\nReplacing "; N->dump();
+            std::cerr << "\nWith: "; To[0].Val->dump();
+            std::cerr << " and " << To.size()-1 << " other values\n");
+      std::vector<SDNode*> NowDead;
+      DAG.ReplaceAllUsesWith(N, To, &NowDead);
+      
+      // Push the new nodes and any users onto the worklist
+      for (unsigned i = 0, e = To.size(); i != e; ++i) {
+        WorkList.push_back(To[i].Val);
+        AddUsersToWorkList(To[i].Val);
+      }
+      
+      // Nodes can end up on the worklist more than once.  Make sure we do
+      // not process a node that has been replaced.
+      removeFromWorkList(N);
+      for (unsigned i = 0, e = NowDead.size(); i != e; ++i)
+        removeFromWorkList(NowDead[i]);
+      
+      // Finally, since the node is now dead, remove it from the graph.
+      DAG.DeleteNode(N);
+      return SDOperand(N, 0);
+    }
+    
+    SDOperand CombineTo(SDNode *N, SDOperand Res0, SDOperand Res1) {
+      std::vector<SDOperand> To;
+      To.push_back(Res0);
+      To.push_back(Res1);
+      return CombineTo(N, To);
+    }
+    
     /// visit - call the node-specific routine that knows how to fold each
     /// particular type of node.
     SDOperand visit(SDNode *N);
@@ -84,6 +115,7 @@ namespace {
     // node types.  The semantics are as follows:
     // Return Value:
     //   SDOperand.Val == 0   - No change was made
+    //   SDOperand.Val == N   - N was replaced, is dead, and is already handled.
     //   otherwise            - N should be replaced by the returned Operand.
     //
     SDOperand visitTokenFactor(SDNode *N);
@@ -131,6 +163,8 @@ namespace {
     SDOperand visitBRCONDTWOWAY(SDNode *N);
     SDOperand visitBR_CC(SDNode *N);
     SDOperand visitBRTWOWAY_CC(SDNode *N);
+
+    SDOperand visitLOAD(SDNode *N);
 
     SDOperand SimplifySelect(SDOperand N0, SDOperand N1, SDOperand N2);
     SDOperand SimplifySelectCC(SDOperand N0, SDOperand N1, SDOperand N2, 
@@ -334,7 +368,8 @@ void DAGCombiner::Run(bool RunningAfterLegalize) {
         DEBUG(std::cerr << "\nReplacing "; N->dump();
               std::cerr << "\nWith: "; RV.Val->dump();
               std::cerr << '\n');
-        DAG.ReplaceAllUsesWith(N, std::vector<SDOperand>(1, RV));
+        std::vector<SDNode*> NowDead;
+        DAG.ReplaceAllUsesWith(N, std::vector<SDOperand>(1, RV), &NowDead);
           
         // Push the new node and any users onto the worklist
         WorkList.push_back(RV.Val);
@@ -343,6 +378,8 @@ void DAGCombiner::Run(bool RunningAfterLegalize) {
         // Nodes can end up on the worklist more than once.  Make sure we do
         // not process a node that has been replaced.
         removeFromWorkList(N);
+        for (unsigned i = 0, e = NowDead.size(); i != e; ++i)
+          removeFromWorkList(NowDead[i]);
         
         // Finally, since the node is now dead, remove it from the graph.
         DAG.DeleteNode(N);
@@ -401,6 +438,7 @@ SDOperand DAGCombiner::visit(SDNode *N) {
   case ISD::BRCONDTWOWAY:       return visitBRCONDTWOWAY(N);
   case ISD::BR_CC:              return visitBR_CC(N);
   case ISD::BRTWOWAY_CC:        return visitBRTWOWAY_CC(N);
+  case ISD::LOAD:               return visitLOAD(N);
   }
   return SDOperand();
 }
@@ -1510,6 +1548,22 @@ SDOperand DAGCombiner::visitBRTWOWAY_CC(SDNode *N) {
   if (SCC.Val && SCC.getOpcode() == ISD::SETCC)
     return DAG.getBR2Way_CC(Chain, SCC.getOperand(2), SCC.getOperand(0), 
                             SCC.getOperand(1), N4, N5);
+  return SDOperand();
+}
+
+SDOperand DAGCombiner::visitLOAD(SDNode *N) {
+  SDOperand Chain    = N->getOperand(0);
+  SDOperand Ptr      = N->getOperand(1);
+  SDOperand SrcValue = N->getOperand(2);
+  
+  // If this load is directly stored, replace the load value with the stored
+  // value.
+  // TODO: Handle store large -> read small portion.
+  // TODO: Handle TRUNCSTORE/EXTLOAD
+  if (Chain.getOpcode() == ISD::STORE && Chain.getOperand(2) == Ptr &&
+      Chain.getOperand(1).getValueType() == N->getValueType(0))
+    return CombineTo(N, Chain.getOperand(1), Chain);
+  
   return SDOperand();
 }
 
