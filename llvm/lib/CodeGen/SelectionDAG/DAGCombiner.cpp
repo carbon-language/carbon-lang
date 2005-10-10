@@ -1583,14 +1583,18 @@ SDOperand DAGCombiner::visitSTORE(SDNode *N) {
   SDOperand SrcValue = N->getOperand(3);
  
   // If this is a store that kills a previous store, remove the previous store.
-  if (Chain.getOpcode() == ISD::STORE && Chain.getOperand(2) == Ptr) {
+  if (Chain.getOpcode() == ISD::STORE && Chain.getOperand(2) == Ptr &&
+      Chain.Val->hasOneUse() /* Avoid introducing DAG cycles */) {
     // Create a new store of Value that replaces both stores.
     SDNode *PrevStore = Chain.Val;
+    if (PrevStore->getOperand(1) == Value) // Same value multiply stored.
+      return Chain;
     SDOperand NewStore = DAG.getNode(ISD::STORE, MVT::Other,
                                      PrevStore->getOperand(0), Value, Ptr,
                                      SrcValue);
+    CombineTo(N, NewStore);                 // Nuke this store.
     CombineTo(PrevStore, NewStore);  // Nuke the previous store.
-    return NewStore;  // Replace this store with NewStore.
+    return SDOperand(N, 0);
   }
   
   return SDOperand();
