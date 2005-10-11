@@ -715,6 +715,10 @@ RemoveCommonExpressionsFromUseBases(std::vector<BasedUser> &Uses) {
   // If any subexpressions are used Uses.size() times, they are common.
   std::map<SCEVHandle, unsigned> SubExpressionUseCounts;
   
+  // UniqueSubExprs - Keep track of all of the subexpressions we see in the
+  // order we see them.
+  std::vector<SCEVHandle> UniqueSubExprs;
+
   std::vector<SCEVHandle> SubExprs;
   for (unsigned i = 0; i != NumUses; ++i) {
     // If the base is zero (which is common), return zero now, there are no
@@ -725,22 +729,24 @@ RemoveCommonExpressionsFromUseBases(std::vector<BasedUser> &Uses) {
     SeparateSubExprs(SubExprs, Uses[i].Base);
     // Add one to SubExpressionUseCounts for each subexpr present.
     for (unsigned j = 0, e = SubExprs.size(); j != e; ++j)
-      SubExpressionUseCounts[SubExprs[j]]++;
+      if (++SubExpressionUseCounts[SubExprs[j]] == 1)
+        UniqueSubExprs.push_back(SubExprs[j]);
     SubExprs.clear();
   }
 
-
-  // Now that we know how many times each is used, build Result.
-  for (std::map<SCEVHandle, unsigned>::iterator I =
-       SubExpressionUseCounts.begin(), E = SubExpressionUseCounts.end();
-       I != E; )
+  // Now that we know how many times each is used, build Result.  Iterate over
+  // UniqueSubexprs so that we have a stable ordering.
+  for (unsigned i = 0, e = UniqueSubExprs.size(); i != e; ++i) {
+    std::map<SCEVHandle, unsigned>::iterator I = 
+       SubExpressionUseCounts.find(UniqueSubExprs[i]);
+    assert(I != SubExpressionUseCounts.end() && "Entry not found?");
     if (I->second == NumUses) {  // Found CSE!
       Result = SCEVAddExpr::get(Result, I->first);
-      ++I;
     } else {
       // Remove non-cse's from SubExpressionUseCounts.
-      SubExpressionUseCounts.erase(I++);
+      SubExpressionUseCounts.erase(I);
     }
+  }
   
   // If we found no CSE's, return now.
   if (Result == Zero) return Result;
