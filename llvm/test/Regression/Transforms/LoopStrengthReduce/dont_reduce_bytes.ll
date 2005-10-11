@@ -3,8 +3,6 @@
 
 ; RUN: llvm-as < %s | opt -loop-reduce -disable-output
 
-; XFAIL: *
-
 declare bool %pred(int)
 
 void %test(sbyte* %PTR) {
