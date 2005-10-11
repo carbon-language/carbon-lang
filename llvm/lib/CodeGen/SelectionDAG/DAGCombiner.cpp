@@ -724,7 +724,7 @@ SDOperand DAGCombiner::visitAND(SDNode *N) {
       return DAG.getNode(ISD::AND, VT, N0.getOperand(0), N1);
   }
   // fold (and (or x, 0xFFFF), 0xFF) -> 0xFF
-  if (N0.getOpcode() == ISD::OR)
+  if (N0.getOpcode() == ISD::OR && N1C)
     if (ConstantSDNode *ORI = dyn_cast<ConstantSDNode>(N0.getOperand(1)))
       if ((ORI->getValue() & N1C->getValue()) == N1C->getValue())
         return N1;
