@@ -970,19 +970,23 @@ void LoopStrengthReduce::OptimizeIndvars(Loop *L) {
   IVStrideUse *CondUse = 0;
   const SCEVHandle *CondStride = 0;
 
-  for (std::map<SCEVHandle, IVUsersOfOneStride>::iterator 
-         I = IVUsesByStride.begin(), E = IVUsesByStride.end();
-       I != E && !CondUse; ++I)
-    for (std::vector<IVStrideUse>::iterator UI = I->second.Users.begin(),
-           E = I->second.Users.end(); UI != E; ++UI)
+  for (unsigned Stride = 0, e = StrideOrder.size(); Stride != e && !CondUse;
+       ++Stride) {
+    std::map<SCEVHandle, IVUsersOfOneStride>::iterator SI = 
+      IVUsesByStride.find(StrideOrder[Stride]);
+    assert(SI != IVUsesByStride.end() && "Stride doesn't exist!");
+    
+    for (std::vector<IVStrideUse>::iterator UI = SI->second.Users.begin(),
+           E = SI->second.Users.end(); UI != E; ++UI)
       if (UI->User == Cond) {
         CondUse = &*UI;
-        CondStride = &I->first;
+        CondStride = &SI->first;
         // NOTE: we could handle setcc instructions with multiple uses here, but
         // InstCombine does it as well for simple uses, it's not clear that it
         // occurs enough in real life to handle.
         break;
       }
+  }
   if (!CondUse) return;  // setcc doesn't use the IV.
 
   // setcc stride is complex, don't mess with users.
