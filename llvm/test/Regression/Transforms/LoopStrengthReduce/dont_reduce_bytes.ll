@@ -1,7 +1,7 @@
 ; Don't reduce the byte access to P[i], at least not on targets that 
 ; support an efficient 'mem[r1+r2]' addressing mode.
 
-; RUN: llvm-as < %s | opt -loop-reduce | llvm-dis | grep 'getelementptr.*PTR.*INDVAR'
+; RUN: llvm-as < %s | opt -loop-reduce -disable-output
 
 ; XFAIL: *
 
