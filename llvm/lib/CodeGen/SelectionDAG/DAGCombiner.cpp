@@ -517,9 +517,11 @@ SDOperand DAGCombiner::visitSUB(SDNode *N) {
   if (N0C && N1C)
     return DAG.getConstant(N0C->getValue() - N1C->getValue(),
                            N->getValueType(0));
-  // fold (sub x, 0) -> x
-  if (N1C && N1C->isNullValue())
-    return N0;
+  // fold (sub x, c) -> (add x, -c)
+  if (N1C)
+    return DAG.getNode(ISD::ADD, N0.getValueType(), N0,
+                       DAG.getConstant(-N1C->getValue(), N0.getValueType()));
+
   // fold (A+B)-A -> B
   if (N0.getOpcode() == ISD::ADD && N0.getOperand(0) == N1)
     return N0.getOperand(1);
