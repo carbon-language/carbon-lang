@@ -474,10 +474,6 @@ namespace {
     void RewriteInstructionToUseNewBase(const SCEVHandle &NewBase,
                                         SCEVExpander &Rewriter, Loop *L,
                                         Pass *P);
-
-    // Sort by the Base field.
-    bool operator<(const BasedUser &BU) const { return Base < BU.Base; }
-
     void dump() const;
   };
 }
@@ -878,9 +874,8 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
 
   // Sort by the base value, so that all IVs with identical bases are next to
   // each other.
-  std::sort(UsersToProcess.begin(), UsersToProcess.end());
   while (!UsersToProcess.empty()) {
-    SCEVHandle Base = UsersToProcess.front().Base;
+    SCEVHandle Base = UsersToProcess.back().Base;
 
     DEBUG(std::cerr << "  INSERTING code for BASE = " << *Base << ":\n");
    
@@ -901,8 +896,9 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
     
     // Emit the code to add the immediate offset to the Phi value, just before
     // the instructions that we identified as using this stride and base.
-    while (!UsersToProcess.empty() && UsersToProcess.front().Base == Base) {
-      BasedUser &User = UsersToProcess.front();
+    unsigned ScanPos = 0;
+    do {
+      BasedUser &User = UsersToProcess.back();
 
       // If this instruction wants to use the post-incremented value, move it
       // after the post-inc and use its value instead of the PHI.
@@ -933,9 +929,19 @@ void LoopStrengthReduce::StrengthReduceStridedIVUsers(const SCEVHandle &Stride,
       // if we just replaced the last use of that value.
       DeadInsts.insert(cast<Instruction>(User.OperandValToReplace));
 
-      UsersToProcess.erase(UsersToProcess.begin());
+      UsersToProcess.pop_back();
       ++NumReduced;
-    }
+
+      // If there are any more users to process with the same base, move one of
+      // them to the end of the list so that we will process it.
+      if (!UsersToProcess.empty()) {
+        for (unsigned e = UsersToProcess.size(); ScanPos != e; ++ScanPos)
+          if (UsersToProcess[ScanPos].Base == Base) {
+            std::swap(UsersToProcess[ScanPos], UsersToProcess.back());
+            break;
+          }
+      }
+    } while (!UsersToProcess.empty() && UsersToProcess.back().Base == Base);
     // TODO: Next, find out which base index is the most common, pull it out.
   }
 
