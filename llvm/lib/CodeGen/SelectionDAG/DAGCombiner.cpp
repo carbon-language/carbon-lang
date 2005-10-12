@@ -279,8 +279,6 @@ static bool MaskedValueIsZero(const SDOperand &Op, uint64_t Mask,
     // Bit counting instructions can not set the high bits of the result
     // register.  The max number of bits sets depends on the input.
     return (Mask & (MVT::getSizeInBits(Op.getValueType())*2-1)) == 0;
-
-    // TODO we could handle some SRA cases here.
   default: break;
   }
   return false;
@@ -1034,7 +1032,7 @@ SDOperand DAGCombiner::visitSRA(SDNode *N) {
   if (N1C && N1C->isNullValue())
     return N0;
   // If the sign bit is known to be zero, switch this to a SRL.
-  if (N1C && MaskedValueIsZero(N0, (1ULL << (OpSizeInBits-1)), TLI))
+  if (MaskedValueIsZero(N0, (1ULL << (OpSizeInBits-1)), TLI))
     return DAG.getNode(ISD::SRL, VT, N0, N1);
   return SDOperand();
 }
@@ -1196,6 +1194,14 @@ SDOperand DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
   // fold (sext (sext x)) -> (sext x)
   if (N0.getOpcode() == ISD::SIGN_EXTEND)
     return DAG.getNode(ISD::SIGN_EXTEND, VT, N0.getOperand(0));
+  // fold (sext (load x)) -> (sextload x)
+  if (N0.getOpcode() == ISD::LOAD && N0.Val->hasNUsesOfValue(1, 0)) {
+    SDOperand ExtLoad = DAG.getExtLoad(ISD::SEXTLOAD, VT, N0.getOperand(0),
+                                       N0.getOperand(1), N0.getOperand(2),
+                                       N0.getValueType());
+    CombineTo(N0.Val, ExtLoad, ExtLoad.getOperand(0));
+    return CombineTo(N, ExtLoad);
+  }
   return SDOperand();
 }
 
@@ -1291,6 +1297,19 @@ SDOperand DAGCombiner::visitTRUNCATE(SDNode *N) {
       // if the source and dest are the same type, we can drop both the extend
       // and the truncate
       return N0.getOperand(0);
+  }
+  // fold (truncate (load x)) -> (smaller load x)
+  if (N0.getOpcode() == ISD::LOAD && N0.Val->hasNUsesOfValue(1, 0)) {
+    assert(MVT::getSizeInBits(N0.getValueType()) > MVT::getSizeInBits(VT) &&
+           "Cannot truncate to larger type!");
+    MVT::ValueType PtrType = N0.getOperand(1).getValueType();
+    uint64_t PtrOff = 
+      (MVT::getSizeInBits(N0.getValueType()) - MVT::getSizeInBits(VT)) / 8;
+    SDOperand NewPtr = DAG.getNode(ISD::ADD, PtrType, N0.getOperand(1),
+                                   DAG.getConstant(PtrOff, PtrType));
+    SDOperand Load = DAG.getLoad(VT, N0.getOperand(0), NewPtr,N0.getOperand(2));
+    CombineTo(N0.Val, Load, Load.getOperand(0));
+    return CombineTo(N, Load);
   }
   return SDOperand();
 }
