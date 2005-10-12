@@ -1194,13 +1194,17 @@ SDOperand DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
   // fold (sext (sext x)) -> (sext x)
   if (N0.getOpcode() == ISD::SIGN_EXTEND)
     return DAG.getNode(ISD::SIGN_EXTEND, VT, N0.getOperand(0));
+  // fold (sext (sextload x)) -> (sextload x)
+  if (N0.getOpcode() == ISD::SEXTLOAD && VT == N0.getValueType())
+    return N0;
   // fold (sext (load x)) -> (sextload x)
   if (N0.getOpcode() == ISD::LOAD && N0.Val->hasNUsesOfValue(1, 0)) {
     SDOperand ExtLoad = DAG.getExtLoad(ISD::SEXTLOAD, VT, N0.getOperand(0),
                                        N0.getOperand(1), N0.getOperand(2),
                                        N0.getValueType());
     CombineTo(N0.Val, ExtLoad, ExtLoad.getOperand(0));
-    return CombineTo(N, ExtLoad);
+    WorkList.push_back(N);
+    return SDOperand();
   }
   return SDOperand();
 }
@@ -1303,13 +1307,19 @@ SDOperand DAGCombiner::visitTRUNCATE(SDNode *N) {
     assert(MVT::getSizeInBits(N0.getValueType()) > MVT::getSizeInBits(VT) &&
            "Cannot truncate to larger type!");
     MVT::ValueType PtrType = N0.getOperand(1).getValueType();
+    // For big endian targets, we need to add an offset to the pointer to load
+    // the correct bytes.  For little endian systems, we merely need to read
+    // fewer bytes from the same pointer.
     uint64_t PtrOff = 
       (MVT::getSizeInBits(N0.getValueType()) - MVT::getSizeInBits(VT)) / 8;
-    SDOperand NewPtr = DAG.getNode(ISD::ADD, PtrType, N0.getOperand(1),
-                                   DAG.getConstant(PtrOff, PtrType));
+    SDOperand NewPtr = TLI.isLittleEndian() ? N0.getOperand(1) : 
+      DAG.getNode(ISD::ADD, PtrType, N0.getOperand(1),
+                  DAG.getConstant(PtrOff, PtrType));
+    WorkList.push_back(NewPtr.Val);
     SDOperand Load = DAG.getLoad(VT, N0.getOperand(0), NewPtr,N0.getOperand(2));
     CombineTo(N0.Val, Load, Load.getOperand(0));
-    return CombineTo(N, Load);
+    WorkList.push_back(N);
+    return SDOperand();
   }
   return SDOperand();
 }
