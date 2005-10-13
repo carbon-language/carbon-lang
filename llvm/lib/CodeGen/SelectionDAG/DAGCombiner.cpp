@@ -1248,8 +1248,9 @@ SDOperand DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
     SDOperand ExtLoad = DAG.getExtLoad(ISD::SEXTLOAD, VT, N0.getOperand(0),
                                        N0.getOperand(1), N0.getOperand(2),
                                        N0.getValueType());
-    CombineTo(N0.Val, ExtLoad, ExtLoad.getOperand(0));
     WorkList.push_back(N);
+    CombineTo(N0.Val, DAG.getNode(ISD::TRUNCATE, N0.getValueType(), ExtLoad),
+              ExtLoad.getValue(1));
     return SDOperand();
   }
   return SDOperand();
