@@ -1,6 +1,8 @@
 #! /usr/bin/python
 
 #changelog: 
+#10/13/2005b: replaced the # in tmp(.#*)* with alphanumeric and _, this will then remove
+#nodes such as %tmp.1.i and %tmp._i.3
 #10/13/2005: exntended to remove variables of the form %tmp(.#)* rather than just 
 #%tmp.#, i.e. it now will remove %tmp.12.3.15 etc, additionally fixed a spelling error in
 #the comments
@@ -18,7 +20,7 @@ output = open(sys.argv[2], 'w')
 #it would kill old computers
 buffer = input.readline()
 while buffer != '':
-	if re.compile("label(\s*)=(\s*)\"\s%tmp(.\d*)*(\s*)\"").search(buffer):
+	if re.compile("label(\s*)=(\s*)\"\s%tmp(.\w*)*(\s*)\"").search(buffer):
 		#skip next line, write neither this line nor the next
 		buffer = input.readline()
 	else:
