@@ -2350,6 +2350,16 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
     // Remember that we legalized the chain.
     AddLegalizedOperand(Op.getValue(1), Result.getValue(1));
     break;
+  case ISD::SEXTLOAD:
+  case ISD::ZEXTLOAD:
+  case ISD::EXTLOAD:
+    Tmp1 = LegalizeOp(Node->getOperand(0));   // Legalize the chain.
+    Tmp2 = LegalizeOp(Node->getOperand(1));   // Legalize the pointer.
+    Result = DAG.getNode(Node->getOpcode(), NVT, Tmp1, Tmp2,
+                         Node->getOperand(2), Node->getOperand(3));
+    // Remember that we legalized the chain.
+    AddLegalizedOperand(Op.getValue(1), Result.getValue(1));
+    break;
   case ISD::SELECT:
     switch (getTypeAction(Node->getOperand(0).getValueType())) {
     case Expand: assert(0 && "It's impossible to expand bools");
