@@ -3101,6 +3101,41 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     Hi = LegalizeOp(Hi);
     break;
   }
+  case ISD::SEXTLOAD: {
+    SDOperand Chain = LegalizeOp(Node->getOperand(0));
+    SDOperand Ptr   = LegalizeOp(Node->getOperand(1));
+    MVT::ValueType EVT = cast<VTSDNode>(Node->getOperand(3))->getVT();
+    
+    if (EVT == NVT)
+      Lo = DAG.getLoad(NVT, Chain, Ptr, Node->getOperand(2));
+    else
+      Lo = DAG.getExtLoad(ISD::SEXTLOAD, NVT, Chain, Ptr, Node->getOperand(2),
+                          EVT);
+    // The high part is obtained by SRA'ing all but one of the bits of the lo
+    // part.
+    unsigned LoSize = MVT::getSizeInBits(Lo.getValueType());
+    Hi = DAG.getNode(ISD::SRA, NVT, Lo, DAG.getConstant(LoSize-1,
+                                                       TLI.getShiftAmountTy()));
+    Lo = LegalizeOp(Lo);
+    Hi = LegalizeOp(Hi);
+    break;
+  }
+  case ISD::ZEXTLOAD: {
+    SDOperand Chain = LegalizeOp(Node->getOperand(0));
+    SDOperand Ptr   = LegalizeOp(Node->getOperand(1));
+    MVT::ValueType EVT = cast<VTSDNode>(Node->getOperand(3))->getVT();
+    
+    if (EVT == NVT)
+      Lo = DAG.getLoad(NVT, Chain, Ptr, Node->getOperand(2));
+    else
+      Lo = DAG.getExtLoad(ISD::ZEXTLOAD, NVT, Chain, Ptr, Node->getOperand(2),
+                          EVT);
+    // The high part is just a zero.
+    Hi = DAG.getConstant(0, NVT);
+    Lo = LegalizeOp(Lo);
+    Hi = LegalizeOp(Hi);
+    break;
+  }
   case ISD::ANY_EXTEND: {
     SDOperand In;
     switch (getTypeAction(Node->getOperand(0).getValueType())) {
