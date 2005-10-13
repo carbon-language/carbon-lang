@@ -66,7 +66,7 @@ my $LLIPath = `which lli`;
 $LLIPath = `dirname $LLIPath`;
 chomp $LLIPath;
 
-my $LibProfPath = $LLIPath . "/../../Debug/lib/libprofile_rt.so";
+my $LibProfPath = $LLIPath . "/../../Debug/lib/profile_rt.so";
 
 system "opt -q -f $ProfilePass $BytecodeFile -o $BytecodeFile.inst";
 system "lli -fake-argv0 '$BytecodeFile' -load $LibProfPath " .
