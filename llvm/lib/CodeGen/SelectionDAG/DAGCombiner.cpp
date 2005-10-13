@@ -462,6 +462,7 @@ SDOperand DAGCombiner::visitTokenFactor(SDNode *N) {
     if (N->getOperand(1).getOpcode() == ISD::EntryToken)
       return N->getOperand(0);
   }
+  
   // fold (tokenfactor (tokenfactor)) -> tokenfactor
   for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
     SDOperand Op = N->getOperand(i);
@@ -1386,8 +1387,8 @@ SDOperand DAGCombiner::visitTRUNCATE(SDNode *N) {
                   DAG.getConstant(PtrOff, PtrType));
     WorkList.push_back(NewPtr.Val);
     SDOperand Load = DAG.getLoad(VT, N0.getOperand(0), NewPtr,N0.getOperand(2));
-    CombineTo(N0.Val, Load, Load.getOperand(0));
     WorkList.push_back(N);
+    CombineTo(N0.Val, Load, Load.getValue(1));
     return SDOperand();
   }
   return SDOperand();
