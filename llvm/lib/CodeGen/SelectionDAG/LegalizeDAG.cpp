@@ -3121,6 +3121,10 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     else
       Lo = DAG.getExtLoad(ISD::SEXTLOAD, NVT, Chain, Ptr, Node->getOperand(2),
                           EVT);
+    
+    // Remember that we legalized the chain.
+    AddLegalizedOperand(SDOperand(Node, 1), Lo.getValue(1));
+    
     // The high part is obtained by SRA'ing all but one of the bits of the lo
     // part.
     unsigned LoSize = MVT::getSizeInBits(Lo.getValueType());
@@ -3140,10 +3144,32 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     else
       Lo = DAG.getExtLoad(ISD::ZEXTLOAD, NVT, Chain, Ptr, Node->getOperand(2),
                           EVT);
+    
+    // Remember that we legalized the chain.
+    AddLegalizedOperand(SDOperand(Node, 1), Lo.getValue(1));
+
     // The high part is just a zero.
-    Hi = DAG.getConstant(0, NVT);
+    Hi = LegalizeOp(DAG.getConstant(0, NVT));
     Lo = LegalizeOp(Lo);
-    Hi = LegalizeOp(Hi);
+    break;
+  }
+  case ISD::EXTLOAD: {
+    SDOperand Chain = LegalizeOp(Node->getOperand(0));
+    SDOperand Ptr   = LegalizeOp(Node->getOperand(1));
+    MVT::ValueType EVT = cast<VTSDNode>(Node->getOperand(3))->getVT();
+    
+    if (EVT == NVT)
+      Lo = DAG.getLoad(NVT, Chain, Ptr, Node->getOperand(2));
+    else
+      Lo = DAG.getExtLoad(ISD::EXTLOAD, NVT, Chain, Ptr, Node->getOperand(2),
+                          EVT);
+    
+    // Remember that we legalized the chain.
+    AddLegalizedOperand(SDOperand(Node, 1), Lo.getValue(1));
+    
+    // The high part is undefined.
+    Hi = LegalizeOp(DAG.getNode(ISD::UNDEF, NVT));
+    Lo = LegalizeOp(Lo);
     break;
   }
   case ISD::ANY_EXTEND: {
