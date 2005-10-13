@@ -635,18 +635,11 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
   case ISD::TokenFactor: {
     std::vector<SDOperand> Ops;
     bool Changed = false;
+    // Legalize the operands
     for (unsigned i = 0, e = Node->getNumOperands(); i != e; ++i) {
       SDOperand Op = Node->getOperand(i);
-      // Fold single-use TokenFactor nodes into this token factor as we go.
-      // FIXME: This is something that the DAGCombiner should do!!
-      if (Op.getOpcode() == ISD::TokenFactor && Op.hasOneUse()) {
-        Changed = true;
-        for (unsigned j = 0, e = Op.getNumOperands(); j != e; ++j)
-          Ops.push_back(LegalizeOp(Op.getOperand(j)));
-      } else {
-        Ops.push_back(LegalizeOp(Op));  // Legalize the operands
-        Changed |= Ops[i] != Op;
-      }
+      Ops.push_back(LegalizeOp(Op));
+      Changed |= Ops[i] != Op;
     }
     if (Changed)
       Result = DAG.getNode(ISD::TokenFactor, MVT::Other, Ops);
@@ -2352,14 +2345,8 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
   case ISD::LOAD:
     Tmp1 = LegalizeOp(Node->getOperand(0));   // Legalize the chain.
     Tmp2 = LegalizeOp(Node->getOperand(1));   // Legalize the pointer.
-    // FIXME: When the DAG combiner exists, change this to use EXTLOAD!
-    if (MVT::isInteger(NVT))
-      Result = DAG.getExtLoad(ISD::ZEXTLOAD, NVT, Tmp1, Tmp2,
-                              Node->getOperand(2), VT);
-    else
-      Result = DAG.getExtLoad(ISD::EXTLOAD, NVT, Tmp1, Tmp2,
-                              Node->getOperand(2), VT);
-
+    Result = DAG.getExtLoad(ISD::EXTLOAD, NVT, Tmp1, Tmp2,
+                            Node->getOperand(2), VT);
     // Remember that we legalized the chain.
     AddLegalizedOperand(Op.getValue(1), Result.getValue(1));
     break;

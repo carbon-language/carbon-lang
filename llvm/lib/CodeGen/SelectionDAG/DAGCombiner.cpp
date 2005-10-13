@@ -451,6 +451,9 @@ SDOperand DAGCombiner::visit(SDNode *N) {
 }
 
 SDOperand DAGCombiner::visitTokenFactor(SDNode *N) {
+  std::vector<SDOperand> Ops;
+  bool Changed = false;
+
   // If the token factor has two operands and one is the entry token, replace
   // the token factor with the other operand.
   if (N->getNumOperands() == 2) {
@@ -459,6 +462,19 @@ SDOperand DAGCombiner::visitTokenFactor(SDNode *N) {
     if (N->getOperand(1).getOpcode() == ISD::EntryToken)
       return N->getOperand(0);
   }
+  // fold (tokenfactor (tokenfactor)) -> tokenfactor
+  for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i) {
+    SDOperand Op = N->getOperand(i);
+    if (Op.getOpcode() == ISD::TokenFactor && Op.hasOneUse()) {
+      Changed = true;
+      for (unsigned j = 0, e = Op.getNumOperands(); j != e; ++j)
+        Ops.push_back(Op.getOperand(j));
+    } else {
+      Ops.push_back(Op);
+    }
+  }
+  if (Changed)
+    return DAG.getNode(ISD::TokenFactor, MVT::Other, Ops);
   return SDOperand();
 }
 
@@ -781,6 +797,40 @@ SDOperand DAGCombiner::visitAND(SDNode *N) {
                                     N0.getOperand(0), N1.getOperand(0));
     WorkList.push_back(ANDNode.Val);
     return DAG.getNode(N0.getOpcode(), VT, ANDNode, N0.getOperand(1));
+  }
+  // fold (zext_inreg (extload x)) -> (zextload x)
+  if (N1C && N0.getOpcode() == ISD::EXTLOAD) {
+    MVT::ValueType EVT = cast<VTSDNode>(N0.getOperand(3))->getVT();
+    // If the type of the zext_inreg and the extload match, and we're running
+    // before Legalize, or the resulting zextload is legal on the target, then
+    // go ahead and do the fold.
+    if ((N1C->getValue() == (1ULL << MVT::getSizeInBits(EVT))-1) &&
+        (!AfterLegalize || 
+         TargetLowering::Legal == TLI.getOperationAction(ISD::ZEXTLOAD, EVT))) {
+      SDOperand ExtLoad = DAG.getExtLoad(ISD::ZEXTLOAD, VT, N0.getOperand(0),
+                                         N0.getOperand(1), N0.getOperand(2),
+                                         EVT);
+      CombineTo(N0.Val, ExtLoad, ExtLoad.getOperand(0));
+      WorkList.push_back(N);
+      return SDOperand();
+    }
+  }
+  // fold (zext_inreg (sextload x)) -> (zextload x) iff load has one use
+  if (N1C && N0.getOpcode() == ISD::SEXTLOAD && N0.Val->hasNUsesOfValue(1, 0)) {
+    MVT::ValueType EVT = cast<VTSDNode>(N0.getOperand(3))->getVT();
+    // If the type of the zext_inreg and the extload match, and we're running
+    // before Legalize, or the resulting zextload is legal on the target, then
+    // go ahead and do the fold.
+    if ((N1C->getValue() == (1ULL << MVT::getSizeInBits(EVT))-1) &&
+        (!AfterLegalize || 
+         TargetLowering::Legal == TLI.getOperationAction(ISD::ZEXTLOAD, EVT))) {
+      SDOperand ExtLoad = DAG.getExtLoad(ISD::ZEXTLOAD, VT, N0.getOperand(0),
+                                         N0.getOperand(1), N0.getOperand(2),
+                                         EVT);
+      CombineTo(N0.Val, ExtLoad, ExtLoad.getOperand(0));
+      WorkList.push_back(N);
+      return SDOperand();
+    }
   }
   return SDOperand();
 }
@@ -1271,6 +1321,30 @@ SDOperand DAGCombiner::visitSIGN_EXTEND_INREG(SDNode *N) {
       cast<ConstantSDNode>(N0.getOperand(1))->getValue() == EVTBits) {
     return DAG.getNode(ISD::SRA, N0.getValueType(), N0.getOperand(0), 
                        N0.getOperand(1));
+  }
+  // fold (sext_inreg (extload x)) -> (sextload x)
+  if (N0.getOpcode() == ISD::EXTLOAD && 
+      EVT == cast<VTSDNode>(N0.getOperand(3))->getVT() &&
+      (!AfterLegalize || 
+       (TargetLowering::Legal == TLI.getOperationAction(ISD::SEXTLOAD, EVT)))) {
+    SDOperand ExtLoad = DAG.getExtLoad(ISD::SEXTLOAD, VT, N0.getOperand(0),
+                                       N0.getOperand(1), N0.getOperand(2),
+                                       EVT);
+    CombineTo(N0.Val, ExtLoad, ExtLoad.getOperand(0));
+    WorkList.push_back(N);
+    return SDOperand();
+  }
+  // fold (sext_inreg (zextload x)) -> (sextload x) iff load has one use
+  if (N0.getOpcode() == ISD::ZEXTLOAD && N0.Val->hasNUsesOfValue(1, 0) &&
+      EVT == cast<VTSDNode>(N0.getOperand(3))->getVT() &&
+      (!AfterLegalize || 
+       (TargetLowering::Legal == TLI.getOperationAction(ISD::SEXTLOAD, EVT)))) {
+    SDOperand ExtLoad = DAG.getExtLoad(ISD::SEXTLOAD, VT, N0.getOperand(0),
+                                       N0.getOperand(1), N0.getOperand(2),
+                                       EVT);
+    CombineTo(N0.Val, ExtLoad, ExtLoad.getOperand(0));
+    WorkList.push_back(N);
+    return SDOperand();
   }
   return SDOperand();
 }
