@@ -232,6 +232,7 @@ public:
   SDNode        *Node;                  // DAG node
   unsigned      Latency;                // Cycles to complete instruction
   unsigned      ResourceSet;            // Bit vector of usable resources
+  bool          IsCall;                 // Is function call
   unsigned      Slot;                   // Node's time slot
   NodeGroup     *Group;                 // Grouping information
   unsigned      VRBase;                 // Virtual register base
@@ -245,9 +246,13 @@ public:
   , Node(N)
   , Latency(0)
   , ResourceSet(0)
+  , IsCall(false)
   , Slot(0)
   , Group(NULL)
   , VRBase(0)
+#ifndef NDEBUG
+  , Preorder(0)
+#endif
   {}
   
   // Accessors
@@ -375,6 +380,7 @@ private:
     RSInteger = 0x3,                    // Two integer units
     RSFloat = 0xC,                      // Two float units
     RSLoadStore = 0x30,                 // Two load store units
+    RSBranch = 0x400,                   // One branch unit
     RSOther = 0                         // Processing unit independent
   };
   
@@ -663,12 +669,22 @@ void SimpleSched::IdentifyGroups() {
 /// GatherSchedulingInfo - Get latency and resource information about each node.
 ///
 void SimpleSched::GatherSchedulingInfo() {
+  // Track if groups are present
+  bool AreGroups = false;
+  
+  // For each node
   for (unsigned i = 0, N = NodeCount; i < N; i++) {
+    // Get node info
     NodeInfo* NI = &Info[i];
     SDNode *Node = NI->Node;
+    
+    // Test for groups
+    if (NI->isInGroup()) AreGroups = true;
 
+    // FIXME: Pretend by using value type to choose metrics
     MVT::ValueType VT = Node->getValueType(0);
     
+    // If machine opcode
     if (Node->isTargetOpcode()) {
       MachineOpCode TOpc = Node->getTargetOpcode();
       // FIXME: This is an ugly (but temporary!) hack to test the scheduler
@@ -676,8 +692,9 @@ void SimpleSched::GatherSchedulingInfo() {
       // FIXME NI->Latency = std::max(1, TII.maxLatency(TOpc));
       // FIXME NI->ResourceSet = TII.resources(TOpc);
       if (TII.isCall(TOpc)) {
-        NI->ResourceSet = RSInteger;
+        NI->ResourceSet = RSBranch;
         NI->Latency = 40;
+        NI->IsCall = true;
       } else if (TII.isLoad(TOpc)) {
         NI->ResourceSet = RSLoadStore;
         NI->Latency = 5;
@@ -712,6 +729,41 @@ void SimpleSched::GatherSchedulingInfo() {
     
     // Sum up all the latencies for max tally size
     NSlots += NI->Latency;
+  }
+  
+  // Unify metrics if in a group
+  if (AreGroups) {
+    for (unsigned i = 0, N = NodeCount; i < N; i++) {
+      NodeInfo* NI = &Info[i];
+      
+      if (NI->isGroupLeader()) {
+        NodeGroup *Group = NI->Group;
+        unsigned Latency = 0;
+        unsigned MaxLat = 0;
+        unsigned ResourceSet = 0;
+        bool IsCall = false;
+        
+        for (NIIterator NGI = Group->begin(), NGE = Group->end();
+             NGI != NGE; NGI++) {
+          NodeInfo* NGNI = *NGI;
+          Latency += NGNI->Latency;
+          IsCall = IsCall || NGNI->IsCall;
+          
+          if (MaxLat < NGNI->Latency) {
+            MaxLat = NGNI->Latency;
+            ResourceSet = NGNI->ResourceSet;
+          }
+          
+          NGNI->Latency = 0;
+          NGNI->ResourceSet = 0;
+          NGNI->IsCall = false;
+        }
+        
+        NI->Latency = Latency;
+        NI->ResourceSet = ResourceSet;
+        NI->IsCall = IsCall;
+      }
+    }
   }
 }
 
@@ -837,7 +889,7 @@ void SimpleSched::ScheduleForward() {
       if (isStrongDependency(Other, NI)) {
         Slot = Other->Slot + Other->Latency;
         break;
-      } else if (isWeakDependency(Other, NI)) {
+      } else if (Other->IsCall || isWeakDependency(Other, NI)) {
         Slot = Other->Slot;
         break;
       }
@@ -1134,7 +1186,7 @@ void SimpleSched::printChanges(unsigned Index) {
         NodeGroup *Group = NI->Group;
         for (NIIterator NII = Group->begin(), E = Group->end();
              NII != E; NII++) {
-          std::cerr << "      ";
+          std::cerr << "          ";
           printSI(std::cerr, *NII);
           std::cerr << "\n";
         }
