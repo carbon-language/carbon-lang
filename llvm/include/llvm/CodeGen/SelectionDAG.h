@@ -358,12 +358,6 @@ private:
   SDOperand SimplifySetCC(MVT::ValueType VT, SDOperand N1,
                           SDOperand N2, ISD::CondCode Cond);
 
-  /// SimplifySelectCC - Try to simplify a select_cc built with the specified
-  /// operands and cc.  This can be used to simplify both the select_cc node,
-  /// and a select node whose first operand is a setcc.
-  SDOperand SimplifySelectCC(SDOperand N1, SDOperand N2, SDOperand N3,
-                             SDOperand N4, ISD::CondCode CC);
-    
   // Maps to auto-CSE operations.
   std::map<std::pair<unsigned, MVT::ValueType>, SDNode *> NullaryOps;
   std::map<std::pair<unsigned, std::pair<SDOperand, MVT::ValueType> >,
