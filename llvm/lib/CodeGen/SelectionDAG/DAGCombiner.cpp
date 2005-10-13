@@ -805,13 +805,12 @@ SDOperand DAGCombiner::visitAND(SDNode *N) {
     // before Legalize, or the resulting zextload is legal on the target, then
     // go ahead and do the fold.
     if ((N1C->getValue() == (1ULL << MVT::getSizeInBits(EVT))-1) &&
-        (!AfterLegalize || 
-         TargetLowering::Legal == TLI.getOperationAction(ISD::ZEXTLOAD, EVT))) {
+        (!AfterLegalize || TLI.isOperationLegal(ISD::ZEXTLOAD, EVT))) {
       SDOperand ExtLoad = DAG.getExtLoad(ISD::ZEXTLOAD, VT, N0.getOperand(0),
                                          N0.getOperand(1), N0.getOperand(2),
                                          EVT);
-      CombineTo(N0.Val, ExtLoad, ExtLoad.getOperand(0));
       WorkList.push_back(N);
+      CombineTo(N0.Val, ExtLoad, ExtLoad.getValue(1));
       return SDOperand();
     }
   }
@@ -827,8 +826,8 @@ SDOperand DAGCombiner::visitAND(SDNode *N) {
       SDOperand ExtLoad = DAG.getExtLoad(ISD::ZEXTLOAD, VT, N0.getOperand(0),
                                          N0.getOperand(1), N0.getOperand(2),
                                          EVT);
-      CombineTo(N0.Val, ExtLoad, ExtLoad.getOperand(0));
       WorkList.push_back(N);
+      CombineTo(N0.Val, ExtLoad, ExtLoad.getValue(1));
       return SDOperand();
     }
   }
