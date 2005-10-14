@@ -1330,7 +1330,7 @@ SDOperand DAGCombiner::visitSIGN_EXTEND_INREG(SDNode *N) {
   }
   // fold (sext_in_reg (sext_in_reg x, VT2), VT1) -> (sext_in_reg x, minVT) pt1
   if (N0.getOpcode() == ISD::SIGN_EXTEND_INREG && 
-      cast<VTSDNode>(N0.getOperand(1))->getVT() < EVT) {
+      cast<VTSDNode>(N0.getOperand(1))->getVT() <= EVT) {
     return N0;
   }
   // fold (sext_in_reg (sext_in_reg x, VT2), VT1) -> (sext_in_reg x, minVT) pt2
