@@ -34,7 +34,8 @@ namespace llvm {
     
     unsigned OperandNo;   // The operand # this constraint applies to.
     enum { 
-      SDTCisVT, SDTCisInt, SDTCisFP, SDTCisSameAs, SDTCisVTSmallerThanOp
+      SDTCisVT, SDTCisInt, SDTCisFP, SDTCisSameAs, SDTCisVTSmallerThanOp,
+      SDTCisOpSmallerThanOp
     } ConstraintType;
     
     union {   // The discriminated union.
@@ -47,6 +48,9 @@ namespace llvm {
       struct {
         unsigned OtherOperandNum;
       } SDTCisVTSmallerThanOp_Info;
+      struct {
+        unsigned BigOperandNum;
+      } SDTCisOpSmallerThanOp_Info;
     } x;
 
     /// ApplyTypeConstraint - Given a node in a pattern, apply this type

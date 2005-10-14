@@ -40,6 +40,10 @@ SDTypeConstraint::SDTypeConstraint(Record *R) {
     ConstraintType = SDTCisVTSmallerThanOp;
     x.SDTCisVTSmallerThanOp_Info.OtherOperandNum = 
       R->getValueAsInt("OtherOperandNum");
+  } else if (R->isSubClassOf("SDTCisOpSmallerThanOp")) {
+    ConstraintType = SDTCisOpSmallerThanOp;
+    x.SDTCisOpSmallerThanOp_Info.BigOperandNum = 
+      R->getValueAsInt("BigOperandNum");
   } else {
     std::cerr << "Unrecognized SDTypeConstraint '" << R->getName() << "'!\n";
     exit(1);
@@ -155,6 +159,10 @@ bool SDTypeConstraint::ApplyTypeConstraint(TreePatternNode *N,
         (!MVT::isInteger(OtherNode->getType()) ||
          OtherNode->getType() <= VT))
       OtherNode->UpdateNodeType(MVT::Other, TP);  // Throw an error.
+    return false;
+  }
+  case SDTCisOpSmallerThanOp: {
+    // TODO
     return false;
   }
   }  
