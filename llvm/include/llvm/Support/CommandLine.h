@@ -66,21 +66,21 @@ enum NumOccurrences {          // Flags for the number of occurrences allowed
   //
   ConsumeAfter    = 0x05,
 
-  OccurrencesMask  = 0x07,
+  OccurrencesMask  = 0x07
 };
 
 enum ValueExpected {           // Is a value required for the option?
   ValueOptional   = 0x08,      // The value can appear... or not
   ValueRequired   = 0x10,      // The value is required to appear!
   ValueDisallowed = 0x18,      // A value may not be specified (for flags)
-  ValueMask       = 0x18,
+  ValueMask       = 0x18
 };
 
 enum OptionHidden {            // Control whether -help shows this option
   NotHidden       = 0x20,      // Option included in --help & --help-hidden
   Hidden          = 0x40,      // -help doesn't, but --help-hidden does
   ReallyHidden    = 0x60,      // Neither --help nor --help-hidden show this arg
-  HiddenMask      = 0x60,
+  HiddenMask      = 0x60
 };
 
 // Formatting flags - This controls special features that the option might have
@@ -103,13 +103,13 @@ enum FormattingFlags {
   Positional       = 0x080,     // Is a positional argument, no '-' required
   Prefix           = 0x100,     // Can this option directly prefix its value?
   Grouping         = 0x180,     // Can this option group with other options?
-  FormattingMask   = 0x180,     // Union of the above flags.
+  FormattingMask   = 0x180      // Union of the above flags.
 };
 
 enum MiscFlags {               // Miscellaneous flags to adjust argument
   CommaSeparated     = 0x200,  // Should this cl::list split between commas?
   PositionalEatsArgs = 0x400,  // Should this positional cl::list eat -args?
-  MiscMask           = 0x600,  // Union of the above flags.
+  MiscMask           = 0x600   // Union of the above flags.
 };
 
 
