@@ -2449,33 +2449,11 @@ ExpandByParts(unsigned NodeOp, SDOperand LHS, SDOperand RHS,
   ExpandOp(LHS, LHSL, LHSH);
   ExpandOp(RHS, RHSL, RHSH);
 
-  // FIXME: this should be moved to the dag combiner someday.
-  assert(NodeOp == ISD::ADD_PARTS || NodeOp == ISD::SUB_PARTS);
-  if (LHSL.getValueType() == MVT::i32) {
-    SDOperand LowEl = SDOperand(0,0);
-    if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(LHSL))
-      if (C->getValue() == 0)
-        LowEl = RHSL;
-    if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(RHSL))
-      if (C->getValue() == 0)
-        LowEl = LHSL;
-    if (LowEl.Val) {
-      // Turn this into an add/sub of the high part only.
-      SDOperand HiEl =
-        DAG.getNode(NodeOp == ISD::ADD_PARTS ? ISD::ADD : ISD::SUB,
-                    LowEl.getValueType(), LHSH, RHSH);
-      Lo = LowEl;
-      Hi = HiEl;
-      return;
-    }
-  }
-
   std::vector<SDOperand> Ops;
   Ops.push_back(LHSL);
   Ops.push_back(LHSH);
   Ops.push_back(RHSL);
   Ops.push_back(RHSH);
-
   std::vector<MVT::ValueType> VTs(2, LHSL.getValueType());
   Lo = DAG.getNode(NodeOp, VTs, Ops);
   Hi = Lo.getValue(1);

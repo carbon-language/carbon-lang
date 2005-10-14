@@ -147,11 +147,13 @@ namespace {
     SDOperand visitSELECT(SDNode *N);
     SDOperand visitSELECT_CC(SDNode *N);
     SDOperand visitSETCC(SDNode *N);
+    SDOperand visitADD_PARTS(SDNode *N);
+    SDOperand visitSUB_PARTS(SDNode *N);
     SDOperand visitSIGN_EXTEND(SDNode *N);
     SDOperand visitZERO_EXTEND(SDNode *N);
     SDOperand visitSIGN_EXTEND_INREG(SDNode *N);
     SDOperand visitTRUNCATE(SDNode *N);
-
+    
     SDOperand visitFADD(SDNode *N);
     SDOperand visitFSUB(SDNode *N);
     SDOperand visitFMUL(SDNode *N);
@@ -422,6 +424,8 @@ SDOperand DAGCombiner::visit(SDNode *N) {
   case ISD::SELECT:             return visitSELECT(N);
   case ISD::SELECT_CC:          return visitSELECT_CC(N);
   case ISD::SETCC:              return visitSETCC(N);
+  case ISD::ADD_PARTS:          return visitADD_PARTS(N);
+  case ISD::SUB_PARTS:          return visitSUB_PARTS(N);
   case ISD::SIGN_EXTEND:        return visitSIGN_EXTEND(N);
   case ISD::ZERO_EXTEND:        return visitZERO_EXTEND(N);
   case ISD::SIGN_EXTEND_INREG:  return visitSIGN_EXTEND_INREG(N);
@@ -800,11 +804,11 @@ SDOperand DAGCombiner::visitAND(SDNode *N) {
     return DAG.getNode(N0.getOpcode(), VT, ANDNode, N0.getOperand(1));
   }
   // fold (zext_inreg (extload x)) -> (zextload x)
-  if (N1C && N0.getOpcode() == ISD::EXTLOAD) {
+  if (N0.getOpcode() == ISD::EXTLOAD) {
     MVT::ValueType EVT = cast<VTSDNode>(N0.getOperand(3))->getVT();
     // If we zero all the possible extended bits, then we can turn this into
     // a zextload if we are running before legalize or the operation is legal.
-    if (MaskedValueIsZero(SDOperand(N,0), ~0ULL<<MVT::getSizeInBits(EVT),TLI) &&
+    if (MaskedValueIsZero(N1, ~0ULL << MVT::getSizeInBits(EVT), TLI) &&
         (!AfterLegalize || TLI.isOperationLegal(ISD::ZEXTLOAD, EVT))) {
       SDOperand ExtLoad = DAG.getExtLoad(ISD::ZEXTLOAD, VT, N0.getOperand(0),
                                          N0.getOperand(1), N0.getOperand(2),
@@ -815,11 +819,11 @@ SDOperand DAGCombiner::visitAND(SDNode *N) {
     }
   }
   // fold (zext_inreg (sextload x)) -> (zextload x) iff load has one use
-  if (N1C && N0.getOpcode() == ISD::SEXTLOAD && N0.Val->hasNUsesOfValue(1, 0)) {
+  if (N0.getOpcode() == ISD::SEXTLOAD && N0.Val->hasNUsesOfValue(1, 0)) {
     MVT::ValueType EVT = cast<VTSDNode>(N0.getOperand(3))->getVT();
     // If we zero all the possible extended bits, then we can turn this into
     // a zextload if we are running before legalize or the operation is legal.
-    if (MaskedValueIsZero(SDOperand(N,0), ~0ULL<<MVT::getSizeInBits(EVT),TLI) &&
+    if (MaskedValueIsZero(N1, ~0ULL << MVT::getSizeInBits(EVT), TLI) &&
         (!AfterLegalize || TLI.isOperationLegal(ISD::ZEXTLOAD, EVT))) {
       SDOperand ExtLoad = DAG.getExtLoad(ISD::ZEXTLOAD, VT, N0.getOperand(0),
                                          N0.getOperand(1), N0.getOperand(2),
@@ -1228,6 +1232,46 @@ SDOperand DAGCombiner::visitSELECT_CC(SDNode *N) {
 SDOperand DAGCombiner::visitSETCC(SDNode *N) {
   return SimplifySetCC(N->getValueType(0), N->getOperand(0), N->getOperand(1),
                        cast<CondCodeSDNode>(N->getOperand(2))->get());
+}
+
+SDOperand DAGCombiner::visitADD_PARTS(SDNode *N) {
+  SDOperand LHSLo = N->getOperand(0);
+  SDOperand RHSLo = N->getOperand(2);
+  MVT::ValueType VT = LHSLo.getValueType();
+  
+  // fold (a_Hi, 0) + (b_Hi, b_Lo) -> (b_Hi + a_Hi, b_Lo)
+  if (MaskedValueIsZero(LHSLo, (1ULL << MVT::getSizeInBits(VT))-1, TLI)) {
+    SDOperand Hi = DAG.getNode(ISD::ADD, VT, N->getOperand(1),
+                               N->getOperand(3));
+    WorkList.push_back(Hi.Val);
+    CombineTo(N, RHSLo, Hi);
+    return SDOperand();
+  }
+  // fold (a_Hi, a_Lo) + (b_Hi, 0) -> (a_Hi + b_Hi, a_Lo)
+  if (MaskedValueIsZero(RHSLo, (1ULL << MVT::getSizeInBits(VT))-1, TLI)) {
+    SDOperand Hi = DAG.getNode(ISD::ADD, VT, N->getOperand(1),
+                               N->getOperand(3));
+    WorkList.push_back(Hi.Val);
+    CombineTo(N, LHSLo, Hi);
+    return SDOperand();
+  }
+  return SDOperand();
+}
+
+SDOperand DAGCombiner::visitSUB_PARTS(SDNode *N) {
+  SDOperand LHSLo = N->getOperand(0);
+  SDOperand RHSLo = N->getOperand(2);
+  MVT::ValueType VT = LHSLo.getValueType();
+  
+  // fold (a_Hi, a_Lo) - (b_Hi, 0) -> (a_Hi - b_Hi, a_Lo)
+  if (MaskedValueIsZero(RHSLo, (1ULL << MVT::getSizeInBits(VT))-1, TLI)) {
+    SDOperand Hi = DAG.getNode(ISD::SUB, VT, N->getOperand(1),
+                               N->getOperand(3));
+    WorkList.push_back(Hi.Val);
+    CombineTo(N, LHSLo, Hi);
+    return SDOperand();
+  }
+  return SDOperand();
 }
 
 SDOperand DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
