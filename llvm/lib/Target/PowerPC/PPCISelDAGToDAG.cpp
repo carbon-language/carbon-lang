@@ -1309,18 +1309,6 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
     else
       CurDAG->SelectNodeTo(N, PPC::FABSD, MVT::f64, Select(N->getOperand(0)));
     return SDOperand(N, 0);
-  case ISD::FP_EXTEND:
-    assert(MVT::f64 == N->getValueType(0) && 
-           MVT::f32 == N->getOperand(0).getValueType() && "Illegal FP_EXTEND");
-    // We need to emit an FMR to make sure that the result has the right value
-    // type.
-    CurDAG->SelectNodeTo(N, PPC::FMRSD, MVT::f64, Select(N->getOperand(0)));
-    return SDOperand(N, 0);
-  case ISD::FP_ROUND:
-    assert(MVT::f32 == N->getValueType(0) && 
-           MVT::f64 == N->getOperand(0).getValueType() && "Illegal FP_ROUND");
-    CurDAG->SelectNodeTo(N, PPC::FRSP, MVT::f32, Select(N->getOperand(0)));
-    return SDOperand(N, 0);
   case ISD::FNEG: {
     SDOperand Val = Select(N->getOperand(0));
     MVT::ValueType Ty = N->getValueType(0);
