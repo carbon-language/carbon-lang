@@ -63,6 +63,16 @@ TreePatternNode *SDTypeConstraint::getOperandNum(unsigned OpNo,
     return N->getChild(OpNo-NumResults);
 }
 
+template<typename T>
+static std::vector<MVT::ValueType> 
+FilterVTs(const std::vector<MVT::ValueType> &InVTs, T Filter) {
+  std::vector<MVT::ValueType> Result;
+  for (unsigned i = 0, e = InVTs.size(); i != e; ++i)
+    if (Filter(InVTs[i]))
+      Result.push_back(InVTs[i]);
+  return Result;
+}
+
 /// ApplyTypeConstraint - Given a node in a pattern, apply this type
 /// constraint to the nodes operands.  This returns true if it makes a
 /// change, false otherwise.  If a type contradiction is found, throw an
@@ -94,21 +104,12 @@ bool SDTypeConstraint::ApplyTypeConstraint(TreePatternNode *N,
       NodeToApply->UpdateNodeType(MVT::i1, TP);  // throw an error.
 
     // If there is only one integer type supported, this must be it.
-    const std::vector<MVT::ValueType> &VTs = CGT.getLegalValueTypes();
-    MVT::ValueType VT = MVT::LAST_VALUETYPE;
-    for (unsigned i = 0, e = VTs.size(); i != e; ++i)
-      if (MVT::isInteger(VTs[i])) {
-        if (VT == MVT::LAST_VALUETYPE)
-          VT = VTs[i];  // First integer type we've found.
-        else {
-          VT = MVT::LAST_VALUETYPE;
-          break;
-        }
-      }
+    std::vector<MVT::ValueType> IntVTs =
+      FilterVTs(CGT.getLegalValueTypes(), MVT::isInteger);
 
     // If we found exactly one supported integer type, apply it.
-    if (VT != MVT::LAST_VALUETYPE)
-      return NodeToApply->UpdateNodeType(VT, TP);
+    if (IntVTs.size() == 1)
+      return NodeToApply->UpdateNodeType(IntVTs[0], TP);
     return false;
   }
   case SDTCisFP: {
@@ -117,21 +118,12 @@ bool SDTypeConstraint::ApplyTypeConstraint(TreePatternNode *N,
       NodeToApply->UpdateNodeType(MVT::f32, TP);  // throw an error.
 
     // If there is only one FP type supported, this must be it.
-    const std::vector<MVT::ValueType> &VTs = CGT.getLegalValueTypes();
-    MVT::ValueType VT = MVT::LAST_VALUETYPE;
-    for (unsigned i = 0, e = VTs.size(); i != e; ++i)
-      if (MVT::isFloatingPoint(VTs[i])) {
-        if (VT == MVT::LAST_VALUETYPE)
-          VT = VTs[i];  // First integer type we've found.
-        else {
-          VT = MVT::LAST_VALUETYPE;
-          break;
-        }
-      }
+    std::vector<MVT::ValueType> FPVTs =
+      FilterVTs(CGT.getLegalValueTypes(), MVT::isFloatingPoint);
         
     // If we found exactly one supported FP type, apply it.
-    if (VT != MVT::LAST_VALUETYPE)
-      return NodeToApply->UpdateNodeType(VT, TP);
+    if (FPVTs.size() == 1)
+      return NodeToApply->UpdateNodeType(FPVTs[0], TP);
     return false;
   }
   case SDTCisSameAs: {
