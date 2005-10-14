@@ -14,7 +14,7 @@
 #define DEBUG_TYPE "reginfo"
 #include "PPC.h"
 #include "PPCInstrBuilder.h"
-#include "PPC32RegisterInfo.h"
+#include "PPCRegisterInfo.h"
 #include "llvm/Constants.h"
 #include "llvm/Type.h"
 #include "llvm/CodeGen/ValueTypes.h"

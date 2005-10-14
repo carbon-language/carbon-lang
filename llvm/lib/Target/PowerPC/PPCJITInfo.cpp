@@ -13,7 +13,7 @@
 
 #define DEBUG_TYPE "jit"
 #include "PPCJITInfo.h"
-#include "PPC32Relocations.h"
+#include "PPCRelocations.h"
 #include "llvm/CodeGen/MachineCodeEmitter.h"
 #include "llvm/Config/alloca.h"
 #include <set>

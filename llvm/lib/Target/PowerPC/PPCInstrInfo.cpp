@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "PPC32InstrInfo.h"
+#include "PPCInstrInfo.h"
 #include "PPCGenInstrInfo.inc"
 #include "PPC.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"

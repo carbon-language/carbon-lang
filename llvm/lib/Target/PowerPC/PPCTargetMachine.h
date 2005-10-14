@@ -17,7 +17,7 @@
 #include "PPCFrameInfo.h"
 #include "PPCSubtarget.h"
 #include "PPCJITInfo.h"
-#include "PPC32InstrInfo.h"
+#include "PPCInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/PassManager.h"

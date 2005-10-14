@@ -15,9 +15,8 @@
 
 #include "PPC.h"
 #include "PPCInstrBuilder.h"
-#include "PPC32InstrInfo.h"
-#include "PPC32TargetMachine.h"
-#include "PPC32ISelLowering.h"
+#include "PPCTargetMachine.h"
+#include "PPCISelLowering.h"
 #include "llvm/Constants.h"
 #include "llvm/Function.h"
 #include "llvm/CodeGen/MachineConstantPool.h"

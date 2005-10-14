@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "PPC32TargetMachine.h"
-#include "PPC32Relocations.h"
+#include "PPCTargetMachine.h"
+#include "PPCRelocations.h"
 #include "PPC.h"
 #include "llvm/Module.h"
 #include "llvm/CodeGen/MachineCodeEmitter.h"

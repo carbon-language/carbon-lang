@@ -18,7 +18,7 @@
 #define DEBUG_TYPE "bsel"
 #include "PPC.h"
 #include "PPCInstrBuilder.h"
-#include "PPC32InstrInfo.h"
+#include "PPCInstrInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/Support/Debug.h"
 #include <map>

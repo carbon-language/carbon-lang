@@ -13,7 +13,7 @@
 
 #include "PPC.h"
 #include "PPCFrameInfo.h"
-#include "PPC32TargetMachine.h"
+#include "PPCTargetMachine.h"
 #include "PPCJITInfo.h"
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"

@@ -13,8 +13,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "PPC.h"
-#include "PPC32TargetMachine.h"
-#include "PPC32ISelLowering.h"
+#include "PPCTargetMachine.h"
+#include "PPCISelLowering.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/SSARegMap.h"

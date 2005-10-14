@@ -18,7 +18,7 @@
 
 #define DEBUG_TYPE "asmprinter"
 #include "PPC.h"
-#include "PPC32TargetMachine.h"
+#include "PPCTargetMachine.h"
 #include "PPCSubtarget.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"

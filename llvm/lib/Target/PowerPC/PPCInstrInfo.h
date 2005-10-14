@@ -16,7 +16,7 @@
 
 #include "PPC.h"
 #include "llvm/Target/TargetInstrInfo.h"
-#include "PPC32RegisterInfo.h"
+#include "PPCRegisterInfo.h"
 
 namespace llvm {
   
