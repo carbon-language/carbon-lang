@@ -1100,7 +1100,7 @@ $(ObjDir)/%.bc: %.ll $(ObjDir)/.dir $(LLVMAS)
 
 ifdef TARGET
 
-TDFiles := $(strip $(wildcard $(PROJ_SRC_DIR)/*.td) $(LLVM_SRC_ROOT)/lib/Target/Target.td)
+TDFiles := $(strip $(wildcard $(PROJ_SRC_DIR)/*.td) $(LLVM_SRC_ROOT)/lib/Target/Target.td $(LLVM_SRC_ROOT)/lib/Target/TargetSelectionDAG.td)
 INCFiles := $(filter %.inc,$(BUILT_SOURCES))
 INCTMPFiles := $(INCFiles:%=$(ObjDir)/%.tmp)
 .PRECIOUS: $(INCTMPFiles) $(INCFiles)
