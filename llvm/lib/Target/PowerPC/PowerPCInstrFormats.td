@@ -10,34 +10,6 @@
 //
 //===----------------------------------------------------------------------===//
 
-class Format<bits<5> val> {
-  bits<5> Value = val;
-}
-
-def Pseudo: Format<0>;
-def Gpr : Format<1>;
-def Gpr0 : Format<2>;
-def Simm16 : Format<3>;
-def PCRelimm24 : Format<5>;
-def Imm24 : Format<6>;
-def Imm5 : Format<7>;
-def PCRelimm14 : Format<8>;
-def Imm14 : Format<9>;
-def Imm2 : Format<10>;
-def Crf : Format<11>;
-def Imm3 : Format<12>;
-def Imm1 : Format<13>;
-def Fpr : Format<14>;
-def Imm4 : Format<15>;
-def Imm8 : Format<16>;
-def Disimm16 : Format<17>;
-def Disimm14 : Format<18>;
-def Spr : Format<19>;
-def Sgr : Format<20>;
-def Imm15 : Format<21>;
-def Vpr : Format<22>;
-def Imm6 : Format<23>;
-
 //===----------------------------------------------------------------------===//
 //
 // PowerPC instruction formats

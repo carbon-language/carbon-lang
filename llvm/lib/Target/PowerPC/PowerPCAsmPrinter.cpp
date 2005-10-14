@@ -342,6 +342,13 @@ void PowerPCAsmPrinter::printOp(const MachineOperand &MO, bool IsCallOp) {
 ///
 void PowerPCAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
   ++EmittedInsts;
+
+/// NOTE: THIS SHOULD NEVER BE CHECKED IN.  STAY LOCAL IN CHRIS'S TREE.
+  if (0 && MI->getOpcode() == PPC::OR)
+    assert((MI->getOperand(0).getReg() != MI->getOperand(1).getReg() ||
+           MI->getOperand(2).getReg() != MI->getOperand(1).getReg()) &&
+  "noop copy emitted!");
+
   // Check for slwi/srwi mnemonics.
   if (MI->getOpcode() == PPC::RLWINM) {
     bool FoundMnemonic = false;

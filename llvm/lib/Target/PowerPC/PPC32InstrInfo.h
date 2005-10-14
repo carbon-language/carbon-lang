@@ -14,11 +14,12 @@
 #ifndef POWERPC32_INSTRUCTIONINFO_H
 #define POWERPC32_INSTRUCTIONINFO_H
 
-#include "PowerPCInstrInfo.h"
+#include "PowerPC.h"
+#include "llvm/Target/TargetInstrInfo.h"
 #include "PPC32RegisterInfo.h"
 
 namespace llvm {
-
+  
 class PPC32InstrInfo : public TargetInstrInfo {
   const PPC32RegisterInfo RI;
 public:
