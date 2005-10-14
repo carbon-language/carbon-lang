@@ -44,7 +44,7 @@ std::string Mangler::makeNameProper(const std::string &X, const char *Prefix) {
 
   for (std::string::const_iterator E = X.end(); I != E; ++I)
     if ((*I < 'a' || *I > 'z') && (*I < 'A' || *I > 'Z') &&
-        (*I < '0' || *I > '9') && *I != '_')
+        (*I < '0' || *I > '9') && *I != '_' && *I != '$')
       Result += MangleLetter(*I);
     else
       Result += *I;
