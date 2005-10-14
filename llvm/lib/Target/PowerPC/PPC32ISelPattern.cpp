@@ -14,7 +14,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "PowerPC.h"
-#include "PowerPCInstrBuilder.h"
+#include "PPCInstrBuilder.h"
 #include "PPC32InstrInfo.h"
 #include "PPC32TargetMachine.h"
 #include "PPC32ISelLowering.h"

@@ -17,7 +17,7 @@
 
 #define DEBUG_TYPE "bsel"
 #include "PowerPC.h"
-#include "PowerPCInstrBuilder.h"
+#include "PPCInstrBuilder.h"
 #include "PPC32InstrInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/Support/Debug.h"
