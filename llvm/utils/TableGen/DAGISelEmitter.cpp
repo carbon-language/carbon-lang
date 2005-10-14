@@ -169,8 +169,47 @@ bool SDTypeConstraint::ApplyTypeConstraint(TreePatternNode *N,
     return false;
   }
   case SDTCisOpSmallerThanOp: {
-    // TODO
-    return false;
+    TreePatternNode *BigOperand =
+      getOperandNum(x.SDTCisOpSmallerThanOp_Info.BigOperandNum, N, NumResults);
+
+    // Both operands must be integer or FP, but we don't care which.
+    bool MadeChange = false;
+    
+    if (isExtIntegerVT(NodeToApply->getExtType()))
+      MadeChange |= BigOperand->UpdateNodeType(MVT::isInt, TP);
+    else if (isExtFloatingPointVT(NodeToApply->getExtType()))
+      MadeChange |= BigOperand->UpdateNodeType(MVT::isFP, TP);
+    if (isExtIntegerVT(BigOperand->getExtType()))
+      MadeChange |= NodeToApply->UpdateNodeType(MVT::isInt, TP);
+    else if (isExtFloatingPointVT(BigOperand->getExtType()))
+      MadeChange |= NodeToApply->UpdateNodeType(MVT::isFP, TP);
+
+    std::vector<MVT::ValueType> VTs = CGT.getLegalValueTypes();
+    
+    if (isExtIntegerVT(NodeToApply->getExtType())) {
+      VTs = FilterVTs(VTs, MVT::isInteger);
+    } else if (isExtFloatingPointVT(NodeToApply->getExtType())) {
+      VTs = FilterVTs(VTs, MVT::isFloatingPoint);
+    } else {
+      VTs.clear();
+    }
+
+    switch (VTs.size()) {
+    default:         // Too many VT's to pick from.
+    case 0: break;   // No info yet.
+    case 1: 
+      // Only one VT of this flavor.  Cannot ever satisify the constraints.
+      return NodeToApply->UpdateNodeType(MVT::Other, TP);  // throw
+    case 2:
+      // If we have exactly two possible types, the little operand must be the
+      // small one, the big operand should be the big one.  Common with 
+      // float/double for example.
+      assert(VTs[0] < VTs[1] && "Should be sorted!");
+      MadeChange |= NodeToApply->UpdateNodeType(VTs[0], TP);
+      MadeChange |= BigOperand->UpdateNodeType(VTs[1], TP);
+      break;
+    }    
+    return MadeChange;
   }
   }  
   return false;
