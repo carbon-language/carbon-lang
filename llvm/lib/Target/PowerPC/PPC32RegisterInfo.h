@@ -15,14 +15,14 @@
 #define POWERPC32_REGISTERINFO_H
 
 #include "PowerPC.h"
-#include "PPC32GenRegisterInfo.h.inc"
+#include "PPCGenRegisterInfo.h.inc"
 #include <map>
 
 namespace llvm {
 
 class Type;
 
-class PPC32RegisterInfo : public PPC32GenRegisterInfo {
+class PPC32RegisterInfo : public PPCGenRegisterInfo {
   std::map<unsigned, unsigned> ImmToIdxMap;
 public:
   PPC32RegisterInfo();

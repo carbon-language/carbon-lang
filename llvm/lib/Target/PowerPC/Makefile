@@ -8,12 +8,12 @@
 ##===----------------------------------------------------------------------===##
 LEVEL = ../../..
 LIBRARYNAME = LLVMPowerPC
-TARGET = PowerPC PPC32
+TARGET = PPC
 
 # Make sure that tblgen is run, first thing.
-BUILT_SOURCES = PowerPCGenInstrNames.inc PowerPCGenRegisterNames.inc \
-                PowerPCGenAsmWriter.inc  PPC32GenCodeEmitter.inc \
-                PPC32GenRegisterInfo.h.inc PPC32GenRegisterInfo.inc \
-                PPC32GenInstrInfo.inc PPC32GenDAGISel.inc
+BUILT_SOURCES = PPCGenInstrNames.inc PPCGenRegisterNames.inc \
+                PPCGenAsmWriter.inc  PPCGenCodeEmitter.inc \
+                PPCGenRegisterInfo.h.inc PPCGenRegisterInfo.inc \
+                PPCGenInstrInfo.inc PPCGenDAGISel.inc
 
 include $(LEVEL)/Makefile.common

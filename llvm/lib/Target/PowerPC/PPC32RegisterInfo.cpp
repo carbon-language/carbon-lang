@@ -32,7 +32,7 @@
 using namespace llvm;
 
 PPC32RegisterInfo::PPC32RegisterInfo()
-  : PPC32GenRegisterInfo(PPC::ADJCALLSTACKDOWN, PPC::ADJCALLSTACKUP) {
+  : PPCGenRegisterInfo(PPC::ADJCALLSTACKDOWN, PPC::ADJCALLSTACKUP) {
   ImmToIdxMap[PPC::LD]   = PPC::LDX;    ImmToIdxMap[PPC::STD]  = PPC::STDX;
   ImmToIdxMap[PPC::LBZ]  = PPC::LBZX;   ImmToIdxMap[PPC::STB]  = PPC::STBX;
   ImmToIdxMap[PPC::LHZ]  = PPC::LHZX;   ImmToIdxMap[PPC::LHA]  = PPC::LHAX;
@@ -342,5 +342,5 @@ void PPC32RegisterInfo::emitEpilogue(MachineFunction &MF,
   }
 }
 
-#include "PPC32GenRegisterInfo.inc"
+#include "PPCGenRegisterInfo.inc"
 

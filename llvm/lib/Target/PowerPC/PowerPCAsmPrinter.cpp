@@ -1,4 +1,4 @@
-//===-- PowerPCAsmPrinter.cpp - Print machine instrs to PowerPC assembly --===//
+//===-- PPCAsmPrinter.cpp - Print machine instrs to PowerPC assembly --===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -43,10 +43,10 @@ using namespace llvm;
 namespace {
   Statistic<> EmittedInsts("asm-printer", "Number of machine instrs printed");
 
-  struct PowerPCAsmPrinter : public AsmPrinter {
+  struct PPCAsmPrinter : public AsmPrinter {
     std::set<std::string> FnStubs, GVStubs, LinkOnceStubs;
 
-    PowerPCAsmPrinter(std::ostream &O, TargetMachine &TM)
+    PPCAsmPrinter(std::ostream &O, TargetMachine &TM)
       : AsmPrinter(O, TM), LabelNumber(0) {}
 
     /// Unique incrementer for label values for referencing Global values.
@@ -175,10 +175,10 @@ namespace {
   /// DarwinAsmPrinter - PowerPC assembly printer, customized for Darwin/Mac OS
   /// X
   ///
-  struct DarwinAsmPrinter : public PowerPCAsmPrinter {
+  struct DarwinAsmPrinter : public PPCAsmPrinter {
 
     DarwinAsmPrinter(std::ostream &O, TargetMachine &TM)
-      : PowerPCAsmPrinter(O, TM) {
+      : PPCAsmPrinter(O, TM) {
       CommentString = ";";
       GlobalPrefix = "_";
       ZeroDirective = "\t.space\t";  // ".space N" emits N zeros.
@@ -198,13 +198,13 @@ namespace {
 
   /// AIXAsmPrinter - PowerPC assembly printer, customized for AIX
   ///
-  struct AIXAsmPrinter : public PowerPCAsmPrinter {
+  struct AIXAsmPrinter : public PPCAsmPrinter {
     /// Map for labels corresponding to global variables
     ///
     std::map<const GlobalVariable*,std::string> GVToLabelMap;
 
     AIXAsmPrinter(std::ostream &O, TargetMachine &TM)
-      : PowerPCAsmPrinter(O, TM) {
+      : PPCAsmPrinter(O, TM) {
       CommentString = "#";
       GlobalPrefix = "_";
       ZeroDirective = "\t.space\t";  // ".space N" emits N zeros.
@@ -252,9 +252,9 @@ FunctionPass *llvm::createAIXAsmPrinter(std::ostream &o, TargetMachine &tm) {
 }
 
 // Include the auto-generated portion of the assembly writer
-#include "PowerPCGenAsmWriter.inc"
+#include "PPCGenAsmWriter.inc"
 
-void PowerPCAsmPrinter::printOp(const MachineOperand &MO, bool IsCallOp) {
+void PPCAsmPrinter::printOp(const MachineOperand &MO, bool IsCallOp) {
   const MRegisterInfo &RI = *TM.getRegisterInfo();
   int new_symbol;
 
@@ -340,7 +340,7 @@ void PowerPCAsmPrinter::printOp(const MachineOperand &MO, bool IsCallOp) {
 /// printMachineInstruction -- Print out a single PowerPC MI in Darwin syntax to
 /// the current output stream.
 ///
-void PowerPCAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
+void PPCAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
   ++EmittedInsts;
 
   // Check for slwi/srwi mnemonics.

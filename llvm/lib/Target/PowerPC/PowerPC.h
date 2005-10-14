@@ -42,10 +42,10 @@ extern PPCTargetEnum PPCTarget;
 // Defines symbolic names for PowerPC registers.  This defines a mapping from
 // register name to register number.
 //
-#include "PowerPCGenRegisterNames.inc"
+#include "PPCGenRegisterNames.inc"
 
 // Defines symbolic names for the PowerPC instructions.
 //
-#include "PowerPCGenInstrNames.inc"
+#include "PPCGenInstrNames.inc"
 
 #endif

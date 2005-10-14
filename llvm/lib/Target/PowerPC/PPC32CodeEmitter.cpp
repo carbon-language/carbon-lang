@@ -1,4 +1,4 @@
-//===-- PPC32CodeEmitter.cpp - JIT Code Emitter for PowerPC32 -----*- C++ -*-=//
+//===-- PPCCodeEmitter.cpp - JIT Code Emitter for PowerPC32 -----*- C++ -*-=//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -24,7 +24,7 @@
 using namespace llvm;
 
 namespace {
-  class PPC32CodeEmitter : public MachineFunctionPass {
+  class PPCCodeEmitter : public MachineFunctionPass {
     TargetMachine &TM;
     MachineCodeEmitter &MCE;
 
@@ -38,7 +38,7 @@ namespace {
     int getMachineOpValue(MachineInstr &MI, MachineOperand &MO);
 
   public:
-    PPC32CodeEmitter(TargetMachine &T, MachineCodeEmitter &M)
+    PPCCodeEmitter(TargetMachine &T, MachineCodeEmitter &M)
       : TM(T), MCE(M) {}
 
     const char *getPassName() const { return "PowerPC Machine Code Emitter"; }
@@ -76,13 +76,13 @@ namespace {
 bool PPC32TargetMachine::addPassesToEmitMachineCode(FunctionPassManager &PM,
                                                     MachineCodeEmitter &MCE) {
   // Machine code emitter pass for PowerPC
-  PM.add(new PPC32CodeEmitter(*this, MCE));
+  PM.add(new PPCCodeEmitter(*this, MCE));
   // Delete machine code for this function after emitting it
   PM.add(createMachineCodeDeleter());
   return false;
 }
 
-bool PPC32CodeEmitter::runOnMachineFunction(MachineFunction &MF) {
+bool PPCCodeEmitter::runOnMachineFunction(MachineFunction &MF) {
   MCE.startFunction(MF);
   MCE.emitConstantPool(MF.getConstantPool());
   for (MachineFunction::iterator BB = MF.begin(), E = MF.end(); BB != E; ++BB)
@@ -114,7 +114,7 @@ bool PPC32CodeEmitter::runOnMachineFunction(MachineFunction &MF) {
   return false;
 }
 
-void PPC32CodeEmitter::emitBasicBlock(MachineBasicBlock &MBB) {
+void PPCCodeEmitter::emitBasicBlock(MachineBasicBlock &MBB) {
   assert(!PICEnabled && "CodeEmitter does not support PIC!");
   BBLocations[&MBB] = MCE.getCurrentPCValue();
   for (MachineBasicBlock::iterator I = MBB.begin(), E = MBB.end(); I != E; ++I){
@@ -175,7 +175,7 @@ static unsigned enumRegToMachineReg(unsigned enumReg) {
   }
 }
 
-int PPC32CodeEmitter::getMachineOpValue(MachineInstr &MI, MachineOperand &MO) {
+int PPCCodeEmitter::getMachineOpValue(MachineInstr &MI, MachineOperand &MO) {
 
   int rv = 0; // Return value; defaults to 0 for unhandled cases
                   // or things that get fixed up later by the JIT.
@@ -260,5 +260,5 @@ int PPC32CodeEmitter::getMachineOpValue(MachineInstr &MI, MachineOperand &MO) {
   return rv;
 }
 
-#include "PPC32GenCodeEmitter.inc"
+#include "PPCGenCodeEmitter.inc"
 

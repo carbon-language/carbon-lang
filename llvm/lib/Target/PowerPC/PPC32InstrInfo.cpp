@@ -12,14 +12,14 @@
 //===----------------------------------------------------------------------===//
 
 #include "PPC32InstrInfo.h"
-#include "PPC32GenInstrInfo.inc"
+#include "PPCGenInstrInfo.inc"
 #include "PowerPC.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include <iostream>
 using namespace llvm;
 
 PPC32InstrInfo::PPC32InstrInfo()
-  : TargetInstrInfo(PPC32Insts, sizeof(PPC32Insts)/sizeof(PPC32Insts[0])) {}
+  : TargetInstrInfo(PPCInsts, sizeof(PPCInsts)/sizeof(PPCInsts[0])) {}
 
 bool PPC32InstrInfo::isMoveInstr(const MachineInstr& MI,
                                  unsigned& sourceReg,
