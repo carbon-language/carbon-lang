@@ -14,7 +14,7 @@
 #include "PPC.h"
 #include "PPCFrameInfo.h"
 #include "PPC32TargetMachine.h"
-#include "PPC32JITInfo.h"
+#include "PPCJITInfo.h"
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
 #include "llvm/Analysis/Verifier.h"

@@ -16,7 +16,7 @@
 
 #include "PPCFrameInfo.h"
 #include "PPCSubtarget.h"
-#include "PPC32JITInfo.h"
+#include "PPCJITInfo.h"
 #include "PPC32InstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetFrameInfo.h"

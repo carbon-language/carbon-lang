@@ -1,4 +1,4 @@
-//===- PowerPCJITInfo.h - PowerPC impl. of the JIT interface ----*- C++ -*-===//
+//===- PPCJITInfo.h - PowerPC impl. of the JIT interface --------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -19,6 +19,7 @@
 namespace llvm {
   class TargetMachine;
 
+  // FIXME: Merge into one PPCJITInfo class.
   class PowerPCJITInfo : public TargetJITInfo {
   protected:
     TargetMachine &TM;
@@ -30,6 +31,23 @@ namespace llvm {
     /// is not supported for this target.
     ///
     virtual void addPassesToJITCompile(FunctionPassManager &PM);
+  };
+  
+  class PPC32JITInfo : public PowerPCJITInfo {
+  public:
+    PPC32JITInfo(TargetMachine &tm) : PowerPCJITInfo(tm) {}
+    
+    virtual void *emitFunctionStub(void *Fn, MachineCodeEmitter &MCE);
+    virtual LazyResolverFn getLazyResolverFunction(JITCompilerFn);
+    virtual void relocate(void *Function, MachineRelocation *MR,
+                          unsigned NumRelocs, unsigned char* GOTBase);
+    
+    /// replaceMachineCodeForFunction - Make it so that calling the function
+    /// whose machine code is at OLD turns into a call to NEW, perhaps by
+    /// overwriting OLD with a branch to NEW.  This is used for self-modifying
+    /// code.
+    ///
+    virtual void replaceMachineCodeForFunction(void *Old, void *New);
   };
 }
 
