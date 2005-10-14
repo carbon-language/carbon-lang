@@ -45,6 +45,10 @@ class SDTCisVTSmallerThanOp<int OpNum, int OtherOp> : SDTypeConstraint<OpNum> {
   int OtherOperandNum = OtherOp;
 }
 
+class SDTCisOpSmallerThanOp<int SmallOp, int BigOp> : SDTypeConstraint<SmallOp>{
+  int BigOperandNum = BigOp;
+}
+
 //===----------------------------------------------------------------------===//
 // Selection DAG Type Profile definitions.
 //
@@ -76,6 +80,12 @@ def SDTIntUnaryOp : SDTypeProfile<1, 1, [   // ctlz
 ]>;
 def SDTFPUnaryOp  : SDTypeProfile<1, 1, [   // fneg, fsqrt, etc
   SDTCisSameAs<0, 1>, SDTCisFP<0>
+]>;
+def SDTFPRoundOp  : SDTypeProfile<1, 1, [   // fround
+  SDTCisFP<0>, SDTCisFP<1>, SDTCisOpSmallerThanOp<0, 1>
+]>;
+def SDTFPExtendOp  : SDTypeProfile<1, 1, [   // fextend
+  SDTCisFP<0>, SDTCisFP<1>, SDTCisOpSmallerThanOp<1, 0>
 ]>;
 def SDTExtInreg : SDTypeProfile<1, 2, [   // sext_inreg
   SDTCisSameAs<0, 1>, SDTCisInt<0>, SDTCisVT<2, OtherVT>,
@@ -135,6 +145,9 @@ def frem       : SDNode<"ISD::FREM"       , SDTFPBinOp>;
 def fabs       : SDNode<"ISD::FABS"       , SDTFPUnaryOp>;
 def fneg       : SDNode<"ISD::FNEG"       , SDTFPUnaryOp>;
 def fsqrt      : SDNode<"ISD::FSQRT"      , SDTFPUnaryOp>;
+
+def fround     : SDNode<"ISD::FP_ROUND"   , SDTFPRoundOp>;
+def fextend    : SDNode<"ISD::FP_EXTEND"  , SDTFPExtendOp>;
 
 def sext_inreg : SDNode<"ISD::SIGN_EXTEND_INREG", SDTExtInreg>;
 def ctlz       : SDNode<"ISD::CTLZ"      , SDTIntUnaryOp>;
