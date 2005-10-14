@@ -19,6 +19,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/CommandLine.h"
 #include <set>
+#include <algorithm>
 using namespace llvm;
 
 static cl::opt<unsigned>
@@ -179,6 +180,12 @@ void CodeGenTarget::ReadLegalValueTypes() const {
   const std::vector<CodeGenRegisterClass> &RCs = getRegisterClasses();
   for (unsigned i = 0, e = RCs.size(); i != e; ++i)
     LegalValueTypes.push_back(RCs[i].VT);
+  
+  // Remove duplicates.
+  std::sort(LegalValueTypes.begin(), LegalValueTypes.end());
+  LegalValueTypes.erase(std::unique(LegalValueTypes.begin(),
+                                    LegalValueTypes.end()),
+                        LegalValueTypes.end());
 }
 
 
