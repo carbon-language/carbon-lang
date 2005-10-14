@@ -1,4 +1,4 @@
-//===- PowerPCInstrInfo.td - The PowerPC Instruction Set -----*- tablegen -*-=//
+//===- PPCInstrInfo.td - The PowerPC Instruction Set -------*- tablegen -*-===//
 // 
 //                     The LLVM Compiler Infrastructure
 //
@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-include "PowerPCInstrFormats.td"
+include "PPCInstrFormats.td"
 
 
 //===----------------------------------------------------------------------===//

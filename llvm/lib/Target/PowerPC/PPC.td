@@ -19,8 +19,8 @@ include "../Target.td"
 // Register File Description
 //===----------------------------------------------------------------------===//
 
-include "PowerPCRegisterInfo.td"
-include "PowerPCInstrInfo.td"
+include "PPCRegisterInfo.td"
+include "PPCInstrInfo.td"
 
 def PPC : Target {
   // Pointers on PPC are 32-bits in size.
