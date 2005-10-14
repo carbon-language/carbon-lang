@@ -27,6 +27,16 @@ namespace llvm {
   class TreePatternNode;
   class DAGISelEmitter;
   
+  /// MVT::DAGISelGenValueType - These are some extended forms of MVT::ValueType
+  /// that we use as lattice values during type inferrence.
+  namespace MVT {
+    enum DAGISelGenValueType {
+      isFP  = MVT::LAST_VALUETYPE,
+      isInt,
+      isUnknown
+    };
+  }
+  
   /// SDTypeConstraint - This is a discriminated union of constraints,
   /// corresponding to the SDTypeConstraint tablegen class in Target.td.
   struct SDTypeConstraint {
@@ -115,8 +125,8 @@ namespace llvm {
   class TreePatternNode {
     /// The inferred type for this node, or MVT::LAST_VALUETYPE if it hasn't
     /// been determined yet.
-    MVT::ValueType Ty;
-
+    unsigned char Ty;
+    
     /// Operator - The Record for the operator if this is an interior node (not
     /// a leaf).
     Record *Operator;
@@ -140,19 +150,26 @@ namespace llvm {
     std::vector<TreePatternNode*> Children;
   public:
     TreePatternNode(Record *Op, const std::vector<TreePatternNode*> &Ch) 
-      : Ty(MVT::LAST_VALUETYPE), Operator(Op), Val(0), TransformFn(0),
+      : Ty(MVT::isUnknown), Operator(Op), Val(0), TransformFn(0),
         Children(Ch) {}
     TreePatternNode(Init *val)    // leaf ctor
-      : Ty(MVT::LAST_VALUETYPE), Operator(0), Val(val), TransformFn(0) {}
+      : Ty(MVT::isUnknown), Operator(0), Val(val), TransformFn(0) {}
     ~TreePatternNode();
     
     const std::string &getName() const { return Name; }
     void setName(const std::string &N) { Name = N; }
     
     bool isLeaf() const { return Val != 0; }
-    bool hasTypeSet() const { return Ty != MVT::LAST_VALUETYPE; }
-    MVT::ValueType getType() const { return Ty; }
-    void setType(MVT::ValueType VT) { Ty = VT; }
+    bool hasTypeSet() const { return Ty < MVT::LAST_VALUETYPE; }
+    bool isTypeCompletelyUnknown() const {
+      return Ty == MVT::isUnknown;
+    }
+    MVT::ValueType getType() const {
+      assert(hasTypeSet() && "Doesn't have a type yet!");
+      return (MVT::ValueType)Ty;
+    }
+    unsigned char getExtType() const { return Ty; }
+    void setType(unsigned char VT) { Ty = VT; }
     
     Init *getLeafValue() const { assert(isLeaf()); return Val; }
     Record *getOperator() const { assert(!isLeaf()); return Operator; }
@@ -204,7 +221,7 @@ namespace llvm {
     /// information.  If N already contains a conflicting type, then throw an
     /// exception.  This returns true if any information was updated.
     ///
-    bool UpdateNodeType(MVT::ValueType VT, TreePattern &TP);
+    bool UpdateNodeType(unsigned char EVT, TreePattern &TP);
     
     /// ContainsUnresolvedType - Return true if this tree contains any
     /// unresolved types.
