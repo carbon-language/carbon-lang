@@ -184,8 +184,8 @@ namespace {
 
       if (X86ScalarSSE) {
         // Set up the FP register classes.
-        addRegisterClass(MVT::f32, X86::RXMMRegisterClass);
-        addRegisterClass(MVT::f64, X86::RXMMRegisterClass);
+        addRegisterClass(MVT::f32, X86::V4F4RegisterClass);
+        addRegisterClass(MVT::f64, X86::V2F8RegisterClass);
 
         // SSE has no load+extend ops
         setOperationAction(ISD::EXTLOAD,  MVT::f32, Expand);
@@ -4192,10 +4192,10 @@ void ISel::Select(SDOperand N) {
       case MVT::i8:  Opc = X86::MOV8rr; break;
       case MVT::i16: Opc = X86::MOV16rr; break;
       case MVT::i32: Opc = X86::MOV32rr; break;
-      case MVT::f32: Opc = X86::MOVAPSrr; break;
+      case MVT::f32: Opc = X86::MOVSSrr; break;
       case MVT::f64:
         if (X86ScalarSSE) {
-          Opc = X86::MOVAPDrr;
+          Opc = X86::MOVSDrr;
         } else {
           Opc = X86::FpMOV;
           ContainsFPCode = true;

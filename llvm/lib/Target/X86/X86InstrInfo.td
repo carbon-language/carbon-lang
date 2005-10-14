@@ -1408,142 +1408,134 @@ def MOVZX32rm16: I<0xB7, MRMSrcMem, (ops R32:$dst, i16mem:$src),
 // XMM Floating point support (requires SSE2)
 //===----------------------------------------------------------------------===//
 
-def MOVSSrm : I<0x10, MRMSrcMem, (ops RXMM:$dst, f32mem:$src),
+def MOVSSrr : I<0x10, MRMSrcReg, (ops V4F4:$dst, V4F4:$src),
                 "movss {$src, $dst|$dst, $src}">, XS;
-def MOVSSmr : I<0x11, MRMDestMem, (ops f32mem:$dst, RXMM:$src),
+def MOVSSrm : I<0x10, MRMSrcMem, (ops V4F4:$dst, f32mem:$src),
                 "movss {$src, $dst|$dst, $src}">, XS;
-def MOVSDrm : I<0x10, MRMSrcMem, (ops RXMM:$dst, f64mem:$src),
+def MOVSSmr : I<0x11, MRMDestMem, (ops f32mem:$dst, V4F4:$src),
+                "movss {$src, $dst|$dst, $src}">, XS;
+def MOVSDrr : I<0x10, MRMSrcReg, (ops V2F8:$dst, V2F8:$src),
                 "movsd {$src, $dst|$dst, $src}">, XD;
-def MOVSDmr : I<0x11, MRMDestMem, (ops f64mem:$dst, RXMM:$src),
+def MOVSDrm : I<0x10, MRMSrcMem, (ops V2F8:$dst, f64mem:$src),
                 "movsd {$src, $dst|$dst, $src}">, XD;
-def MOVAPSrr: I<0x28, MRMSrcReg, (ops RXMM:$dst, RXMM:$src),
-                "movaps {$src, $dst|$dst, $src}">, TB;
-def MOVAPSrm: I<0x28, MRMSrcMem, (ops RXMM:$dst, f32mem:$src),
-                "movaps {$src, $dst|$dst, $src}">, TB;
-def MOVAPSmr: I<0x29, MRMDestMem, (ops f32mem:$dst, RXMM:$src),
-                "movaps {$src, $dst|$dst, $src}">, TB;
-def MOVAPDrr: I<0x28, MRMSrcReg, (ops RXMM:$dst, RXMM:$src),
-                "movapd {$src, $dst|$dst, $src}">, TB, OpSize;
-def MOVAPDrm: I<0x28, MRMSrcMem, (ops RXMM:$dst, f64mem:$src),
-                "movapd {$src, $dst|$dst, $src}">, TB, OpSize;
-def MOVAPDmr: I<0x29, MRMDestMem, (ops f64mem:$dst, RXMM:$src),
-                "movapd {$src, $dst|$dst, $src}">, TB, OpSize;
+def MOVSDmr : I<0x11, MRMDestMem, (ops f64mem:$dst, V2F8:$src),
+                "movsd {$src, $dst|$dst, $src}">, XD;
 
-def CVTTSD2SIrr: I<0x2C, MRMSrcReg, (ops R32:$dst, RXMM:$src),
+def CVTTSD2SIrr: I<0x2C, MRMSrcReg, (ops R32:$dst, V2F8:$src),
                 "cvttsd2si {$src, $dst|$dst, $src}">, XD;
 def CVTTSD2SIrm: I<0x2C, MRMSrcMem, (ops R32:$dst, f64mem:$src),
                 "cvttsd2si {$src, $dst|$dst, $src}">, XD;
-def CVTTSS2SIrr: I<0x2C, MRMSrcReg, (ops R32:$dst, RXMM:$src),
+def CVTTSS2SIrr: I<0x2C, MRMSrcReg, (ops R32:$dst, V4F4:$src),
                 "cvttss2si {$src, $dst|$dst, $src}">, XS;
 def CVTTSS2SIrm: I<0x2C, MRMSrcMem, (ops R32:$dst, f32mem:$src),
                 "cvttss2si {$src, $dst|$dst, $src}">, XS;
-def CVTSD2SSrr: I<0x5A, MRMSrcReg, (ops RXMM:$dst, RXMM:$src),
+def CVTSD2SSrr: I<0x5A, MRMSrcReg, (ops V4F4:$dst, V2F8:$src),
                 "cvtsd2ss {$src, $dst|$dst, $src}">, XS;
-def CVTSD2SSrm: I<0x5A, MRMSrcMem, (ops RXMM:$dst, f64mem:$src), 
+def CVTSD2SSrm: I<0x5A, MRMSrcMem, (ops V4F4:$dst, f64mem:$src), 
                 "cvtsd2ss {$src, $dst|$dst, $src}">, XS;
-def CVTSS2SDrr: I<0x5A, MRMSrcReg, (ops RXMM:$dst, RXMM:$src),
+def CVTSS2SDrr: I<0x5A, MRMSrcReg, (ops V2F8:$dst, V4F4:$src),
                 "cvtss2sd {$src, $dst|$dst, $src}">, XD;
-def CVTSS2SDrm: I<0x5A, MRMSrcMem, (ops RXMM:$dst, f32mem:$src),
+def CVTSS2SDrm: I<0x5A, MRMSrcMem, (ops V2F8:$dst, f32mem:$src),
                 "cvtss2sd {$src, $dst|$dst, $src}">, XD;
-def CVTSI2SSrr: I<0x2A, MRMSrcReg, (ops R32:$dst, RXMM:$src),
+def CVTSI2SSrr: I<0x2A, MRMSrcReg, (ops V4F4:$dst, R32:$src),
                 "cvtsi2ss {$src, $dst|$dst, $src}">, XS;
-def CVTSI2SSrm: I<0x2A, MRMSrcMem, (ops R32:$dst, f32mem:$src),
+def CVTSI2SSrm: I<0x2A, MRMSrcMem, (ops V4F4:$dst, i32mem:$src),
                 "cvtsi2ss {$src, $dst|$dst, $src}">, XS;
-def CVTSI2SDrr: I<0x2A, MRMSrcReg, (ops R32:$dst, RXMM:$src),
+def CVTSI2SDrr: I<0x2A, MRMSrcReg, (ops V2F8:$dst, R32:$src),
                 "cvtsi2sd {$src, $dst|$dst, $src}">, XD;
-def CVTSI2SDrm: I<0x2A, MRMSrcMem, (ops R32:$dst, f64mem:$src),
+def CVTSI2SDrm: I<0x2A, MRMSrcMem, (ops V2F8:$dst, i32mem:$src),
                 "cvtsi2sd {$src, $dst|$dst, $src}">, XD;
 
-def SQRTSSrm : I<0x51, MRMSrcMem, (ops RXMM:$dst, f32mem:$src),
+def SQRTSSrm : I<0x51, MRMSrcMem, (ops V4F4:$dst, f32mem:$src),
                 "subss {$src, $dst|$dst, $src}">, XS;
-def SQRTSSrr : I<0x51, MRMSrcReg, (ops RXMM:$dst, RXMM:$src),
+def SQRTSSrr : I<0x51, MRMSrcReg, (ops V4F4:$dst, V4F4:$src),
                 "subss {$src, $dst|$dst, $src}">, XS;
-def SQRTSDrm : I<0x51, MRMSrcMem, (ops RXMM:$dst, f64mem:$src),
+def SQRTSDrm : I<0x51, MRMSrcMem, (ops V2F8:$dst, f64mem:$src),
                 "subsd {$src, $dst|$dst, $src}">, XD;
-def SQRTSDrr : I<0x51, MRMSrcReg, (ops RXMM:$dst, RXMM:$src),
+def SQRTSDrr : I<0x51, MRMSrcReg, (ops V2F8:$dst, V2F8:$src),
                 "subsd {$src, $dst|$dst, $src}">, XD;
 
-def UCOMISDrr: I<0x2E, MRMSrcReg, (ops RXMM:$dst, RXMM:$src),
+def UCOMISDrr: I<0x2E, MRMSrcReg, (ops V2F8:$dst, V2F8:$src),
                 "ucomisd {$src, $dst|$dst, $src}">, TB, OpSize;
-def UCOMISDrm: I<0x2E, MRMSrcMem, (ops RXMM:$dst, f64mem:$src),
+def UCOMISDrm: I<0x2E, MRMSrcMem, (ops V2F8:$dst, f64mem:$src),
                 "ucomisd {$src, $dst|$dst, $src}">, TB, OpSize;
-def UCOMISSrr: I<0x2E, MRMSrcReg, (ops RXMM:$dst, RXMM:$src),
+def UCOMISSrr: I<0x2E, MRMSrcReg, (ops V4F4:$dst, V4F4:$src),
                 "ucomiss {$src, $dst|$dst, $src}">, TB;
-def UCOMISSrm: I<0x2E, MRMSrcMem, (ops RXMM:$dst, f32mem:$src),
+def UCOMISSrm: I<0x2E, MRMSrcMem, (ops V4F4:$dst, f32mem:$src),
                 "ucomiss {$src, $dst|$dst, $src}">, TB;
 
 // Pseudo-instructions that map to fld0 to xorps/xorpd for sse.
 // FIXME: remove when we can teach regalloc that xor reg, reg is ok.
-def FLD0SS : I<0x57, MRMSrcReg, (ops RXMM:$dst),
+def FLD0SS : I<0x57, MRMSrcReg, (ops V4F4:$dst),
                 "xorps $dst, $dst">, TB;
-def FLD0SD : I<0x57, MRMSrcReg, (ops RXMM:$dst),
+def FLD0SD : I<0x57, MRMSrcReg, (ops V2F8:$dst),
                 "xorpd $dst, $dst">, TB, OpSize;
 
 let isTwoAddress = 1 in {
 let isCommutable = 1 in {
-def ADDSSrr : I<0x58, MRMSrcReg, (ops RXMM:$dst, RXMM:$src1, RXMM:$src),
+def ADDSSrr : I<0x58, MRMSrcReg, (ops V4F4:$dst, V4F4:$src1, V4F4:$src),
                 "addss {$src, $dst|$dst, $src}">, XS;
-def ADDSDrr : I<0x58, MRMSrcReg, (ops RXMM:$dst, RXMM:$src1, RXMM:$src),
+def ADDSDrr : I<0x58, MRMSrcReg, (ops V2F8:$dst, V2F8:$src1, V2F8:$src),
                 "addsd {$src, $dst|$dst, $src}">, XD;
-def ANDPSrr : I<0x54, MRMSrcReg, (ops RXMM:$dst, RXMM:$src1, RXMM:$src),
+def ANDPSrr : I<0x54, MRMSrcReg, (ops V4F4:$dst, V4F4:$src1, V4F4:$src),
                 "andps {$src, $dst|$dst, $src}">, TB;
-def ANDPDrr : I<0x54, MRMSrcReg, (ops RXMM:$dst, RXMM:$src1, RXMM:$src),
+def ANDPDrr : I<0x54, MRMSrcReg, (ops V2F8:$dst, V2F8:$src1, V2F8:$src),
                 "andpd {$src, $dst|$dst, $src}">, TB, OpSize;
-def MULSSrr : I<0x59, MRMSrcReg, (ops RXMM:$dst, RXMM:$src1, RXMM:$src),
+def MULSSrr : I<0x59, MRMSrcReg, (ops V4F4:$dst, V4F4:$src1, V4F4:$src),
                 "mulss {$src, $dst|$dst, $src}">, XS;
-def MULSDrr : I<0x59, MRMSrcReg, (ops RXMM:$dst, RXMM:$src1, RXMM:$src),
+def MULSDrr : I<0x59, MRMSrcReg, (ops V2F8:$dst, V2F8:$src1, V2F8:$src),
                 "mulsd {$src, $dst|$dst, $src}">, XD;
-def ORPSrr : I<0x56, MRMSrcReg, (ops RXMM:$dst, RXMM:$src1, RXMM:$src),
+def ORPSrr : I<0x56, MRMSrcReg, (ops V4F4:$dst, V4F4:$src1, V4F4:$src),
                 "orps {$src, $dst|$dst, $src}">, TB;
-def ORPDrr : I<0x56, MRMSrcReg, (ops RXMM:$dst, RXMM:$src1, RXMM:$src),
+def ORPDrr : I<0x56, MRMSrcReg, (ops V2F8:$dst, V2F8:$src1, V2F8:$src),
                 "orpd {$src, $dst|$dst, $src}">, TB, OpSize;
-def XORPSrr : I<0x57, MRMSrcReg, (ops RXMM:$dst, RXMM:$src1, RXMM:$src),
+def XORPSrr : I<0x57, MRMSrcReg, (ops V4F4:$dst, V4F4:$src1, V4F4:$src),
                 "xorps {$src, $dst|$dst, $src}">, TB;
-def XORPDrr : I<0x57, MRMSrcReg, (ops RXMM:$dst, RXMM:$src1, RXMM:$src),
+def XORPDrr : I<0x57, MRMSrcReg, (ops V2F8:$dst, V2F8:$src1, V2F8:$src),
                 "xorpd {$src, $dst|$dst, $src}">, TB, OpSize;
 }
-def ANDNPSrr : I<0x55, MRMSrcReg, (ops RXMM:$dst, RXMM:$src1, RXMM:$src),
+def ANDNPSrr : I<0x55, MRMSrcReg, (ops V4F4:$dst, V4F4:$src1, V4F4:$src),
                 "andnps {$src, $dst|$dst, $src}">, TB;
-def ANDNPDrr : I<0x55, MRMSrcReg, (ops RXMM:$dst, RXMM:$src1, RXMM:$src),
+def ANDNPDrr : I<0x55, MRMSrcReg, (ops V2F8:$dst, V2F8:$src1, V2F8:$src),
                 "andnpd {$src, $dst|$dst, $src}">, TB, OpSize;
-def ADDSSrm : I<0x58, MRMSrcMem, (ops RXMM:$dst, RXMM:$src1, f32mem:$src),
+def ADDSSrm : I<0x58, MRMSrcMem, (ops V4F4:$dst, V4F4:$src1, f32mem:$src),
                 "addss {$src, $dst|$dst, $src}">, XS;
-def ADDSDrm : I<0x58, MRMSrcMem, (ops RXMM:$dst, RXMM:$src1, f64mem:$src),
+def ADDSDrm : I<0x58, MRMSrcMem, (ops V2F8:$dst, V2F8:$src1, f64mem:$src),
                 "addsd {$src, $dst|$dst, $src}">, XD;
-def MULSSrm : I<0x59, MRMSrcMem, (ops RXMM:$dst, RXMM:$src1, f32mem:$src),
+def MULSSrm : I<0x59, MRMSrcMem, (ops V4F4:$dst, V4F4:$src1, f32mem:$src),
                 "mulss {$src, $dst|$dst, $src}">, XS;
-def MULSDrm : I<0x59, MRMSrcMem, (ops RXMM:$dst, RXMM:$src1, f64mem:$src),
+def MULSDrm : I<0x59, MRMSrcMem, (ops V2F8:$dst, V2F8:$src1, f64mem:$src),
                 "mulsd {$src, $dst|$dst, $src}">, XD;
 
-def DIVSSrm : I<0x5E, MRMSrcMem, (ops RXMM:$dst, RXMM:$src1, f32mem:$src),
+def DIVSSrm : I<0x5E, MRMSrcMem, (ops V4F4:$dst, V4F4:$src1, f32mem:$src),
                 "divss {$src, $dst|$dst, $src}">, XS;
-def DIVSSrr : I<0x5E, MRMSrcReg, (ops RXMM:$dst, RXMM:$src1, RXMM:$src),
+def DIVSSrr : I<0x5E, MRMSrcReg, (ops V4F4:$dst, V4F4:$src1, V4F4:$src),
                 "divss {$src, $dst|$dst, $src}">, XS;
-def DIVSDrm : I<0x5E, MRMSrcMem, (ops RXMM:$dst, RXMM:$src1, f64mem:$src),
+def DIVSDrm : I<0x5E, MRMSrcMem, (ops V2F8:$dst, V2F8:$src1, f64mem:$src),
                 "divsd {$src, $dst|$dst, $src}">, XD;
-def DIVSDrr : I<0x5E, MRMSrcReg, (ops RXMM:$dst, RXMM:$src1, RXMM:$src),
+def DIVSDrr : I<0x5E, MRMSrcReg, (ops V2F8:$dst, V2F8:$src1, V2F8:$src),
                 "divsd {$src, $dst|$dst, $src}">, XD;
 
-def SUBSSrm : I<0x5C, MRMSrcMem, (ops RXMM:$dst, RXMM:$src1, f32mem:$src),
+def SUBSSrm : I<0x5C, MRMSrcMem, (ops V4F4:$dst, V4F4:$src1, f32mem:$src),
                 "subss {$src, $dst|$dst, $src}">, XS;
-def SUBSSrr : I<0x5C, MRMSrcReg, (ops RXMM:$dst, RXMM:$src1, RXMM:$src),
+def SUBSSrr : I<0x5C, MRMSrcReg, (ops V4F4:$dst, V4F4:$src1, V4F4:$src),
                 "subss {$src, $dst|$dst, $src}">, XS;
-def SUBSDrm : I<0x5C, MRMSrcMem, (ops RXMM:$dst, RXMM:$src1, f64mem:$src),
+def SUBSDrm : I<0x5C, MRMSrcMem, (ops V2F8:$dst, V2F8:$src1, f64mem:$src),
                 "subsd {$src, $dst|$dst, $src}">, XD;
-def SUBSDrr : I<0x5C, MRMSrcReg, (ops RXMM:$dst, RXMM:$src1, RXMM:$src),
+def SUBSDrr : I<0x5C, MRMSrcReg, (ops V2F8:$dst, V2F8:$src1, V2F8:$src),
                 "subsd {$src, $dst|$dst, $src}">, XD;
 
 def CMPSSrr : I<0xC2, MRMSrcReg, 
-                (ops RXMM:$dst, RXMM:$src1, RXMM:$src, SSECC:$cc),
+                (ops V4F4:$dst, V4F4:$src1, V4F4:$src, SSECC:$cc),
                 "cmp${cc}ss {$src, $dst|$dst, $src}">, XS;
 def CMPSSrm : I<0xC2, MRMSrcMem, 
-                (ops RXMM:$dst, RXMM:$src1, f32mem:$src, SSECC:$cc),
+                (ops V4F4:$dst, V4F4:$src1, f32mem:$src, SSECC:$cc),
                 "cmp${cc}ss {$src, $dst|$dst, $src}">, XS;
 def CMPSDrr : I<0xC2, MRMSrcReg, 
-                (ops RXMM:$dst, RXMM:$src1, RXMM:$src, SSECC:$cc),
+                (ops V2F8:$dst, V2F8:$src1, V2F8:$src, SSECC:$cc),
                 "cmp${cc}sd {$src, $dst|$dst, $src}">, XD;
 def CMPSDrm : I<0xC2, MRMSrcMem, 
-                (ops RXMM:$dst, RXMM:$src1, f64mem:$src, SSECC:$cc),
+                (ops V2F8:$dst, V2F8:$src1, f64mem:$src, SSECC:$cc),
                 "cmp${cc}sd {$src, $dst|$dst, $src}">, XD;
 }
 

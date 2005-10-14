@@ -104,10 +104,11 @@ def R32 : RegisterClass<"X86", i32, 32, [EAX, ECX, EDX, ESI, EDI, EBX, EBP, ESP]
   }];
 }
 
-// FIXME: These registers can contain both integer and fp values.  We should
-// figure out the right way to deal with that.  For now, since they'll be used
-// for scalar FP, they are being declared f64
-def RXMM : RegisterClass<"X86", f64, 32,
+// V4F4, the 4 x f32 class, and V2F8, the 2 x f64 class, which we will use for
+// Scalar SSE2 floating point support.
+def V4F4 : RegisterClass<"X86", f32, 32,
+                         [XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7]>;
+def V2F8 : RegisterClass<"X86", f64, 64,
                          [XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7]>;
 
 // FIXME: This sets up the floating point register files as though they are f64

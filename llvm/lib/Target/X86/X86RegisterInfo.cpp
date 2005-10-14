@@ -57,7 +57,9 @@ void X86RegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
     Opc = X86::MOV16mr;
   } else if (RC == &X86::RFPRegClass || RC == &X86::RSTRegClass) {
     Opc = X86::FST64m;
-  } else if (RC == &X86::RXMMRegClass) {
+  } else if (RC == &X86::V4F4RegClass) {
+    Opc = X86::MOVSSmr;
+  } else if (RC == &X86::V2F8RegClass) {
     Opc = X86::MOVSDmr;
   } else {
     assert(0 && "Unknown regclass");
@@ -79,7 +81,9 @@ void X86RegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
     Opc = X86::MOV16rm;
   } else if (RC == &X86::RFPRegClass || RC == &X86::RSTRegClass) {
     Opc = X86::FLD64m;
-  } else if (RC == &X86::RXMMRegClass) {
+  } else if (RC == &X86::V4F4RegClass) {
+    Opc = X86::MOVSSrm;
+  } else if (RC == &X86::V2F8RegClass) {
     Opc = X86::MOVSDrm;
   } else {
     assert(0 && "Unknown regclass");
@@ -101,8 +105,10 @@ void X86RegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
     Opc = X86::MOV16rr;
   } else if (RC == &X86::RFPRegClass || RC == &X86::RSTRegClass) {
     Opc = X86::FpMOV;
-  } else if (RC == &X86::RXMMRegClass) {
-    Opc = X86::MOVAPDrr;
+  } else if (RC == &X86::V4F4RegClass) {
+    Opc = X86::MOVSSrr;
+  } else if (RC == &X86::V2F8RegClass) {
+    Opc = X86::MOVSDrr;
   } else {
     assert(0 && "Unknown regclass");
     abort();
@@ -119,7 +125,7 @@ unsigned X86RegisterInfo::isLoadFromStackSlot(MachineInstr *MI,
   case X86::MOV32rm:
   case X86::FLD64m:
   case X86::FLD80m:
-  case X86::MOVAPDrm:
+  case X86::MOVSSrm:
   case X86::MOVSDrm:
     if (MI->getOperand(1).isFrameIndex() && MI->getOperand(2).isImmediate() &&
         MI->getOperand(3).isRegister() && MI->getOperand(4).isImmediate() &&
