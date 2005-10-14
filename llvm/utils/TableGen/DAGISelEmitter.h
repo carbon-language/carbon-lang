@@ -194,7 +194,7 @@ namespace llvm {
     /// this node and its children in the tree.  This returns true if it makes a
     /// change, false otherwise.  If a type contradiction is found, throw an
     /// exception.
-    bool ApplyTypeConstraints(TreePattern &TP);
+    bool ApplyTypeConstraints(TreePattern &TP, bool NotRegisters);
     
     /// UpdateNodeType - Set the node type of N to VT if VT contains
     /// information.  If N already contains a conflicting type, then throw an
@@ -290,7 +290,6 @@ namespace llvm {
     void dump() const;
     
   private:
-    MVT::ValueType getIntrinsicType(Record *R) const;
     TreePatternNode *ParseTreePattern(DagInit *DI);
   };
 
@@ -352,6 +351,8 @@ public:
 
   // run - Output the isel, returning true on failure.
   void run(std::ostream &OS);
+  
+  const CodeGenTarget &getTargetInfo() const { return Target; }
   
   const SDNodeInfo &getSDNodeInfo(Record *R) const {
     assert(SDNodes.count(R) && "Unknown node!");

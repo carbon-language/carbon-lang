@@ -75,6 +75,8 @@ bool SDTypeConstraint::ApplyTypeConstraint(TreePatternNode *N,
       TP.error(N->getOperator()->getName() + " node requires exactly " +
                itostr(NodeInfo.getNumOperands()) + " operands!");
   }
+
+  const CodeGenTarget &CGT = TP.getDAGISelEmitter().getTargetInfo();
   
   TreePatternNode *NodeToApply = getOperandNum(OperandNo, N, NumResults);
   
@@ -83,18 +85,51 @@ bool SDTypeConstraint::ApplyTypeConstraint(TreePatternNode *N,
   case SDTCisVT:
     // Operand must be a particular type.
     return NodeToApply->UpdateNodeType(x.SDTCisVT_Info.VT, TP);
-  case SDTCisInt:
+  case SDTCisInt: {
     if (NodeToApply->hasTypeSet() && !MVT::isInteger(NodeToApply->getType()))
       NodeToApply->UpdateNodeType(MVT::i1, TP);  // throw an error.
 
-    // FIXME: can tell from the target if there is only one Int type supported.
+    // If there is only one integer type supported, this must be it.
+    const std::vector<MVT::ValueType> &VTs = CGT.getLegalValueTypes();
+    MVT::ValueType VT = MVT::LAST_VALUETYPE;
+    for (unsigned i = 0, e = VTs.size(); i != e; ++i)
+      if (MVT::isInteger(VTs[i])) {
+        if (VT == MVT::LAST_VALUETYPE)
+          VT = VTs[i];  // First integer type we've found.
+        else {
+          VT = MVT::LAST_VALUETYPE;
+          break;
+        }
+      }
+
+    // If we found exactly one supported integer type, apply it.
+    if (VT != MVT::LAST_VALUETYPE)
+      return NodeToApply->UpdateNodeType(VT, TP);
     return false;
-  case SDTCisFP:
+  }
+  case SDTCisFP: {
     if (NodeToApply->hasTypeSet() &&
         !MVT::isFloatingPoint(NodeToApply->getType()))
       NodeToApply->UpdateNodeType(MVT::f32, TP);  // throw an error.
-    // FIXME: can tell from the target if there is only one FP type supported.
+
+    // If there is only one FP type supported, this must be it.
+    const std::vector<MVT::ValueType> &VTs = CGT.getLegalValueTypes();
+    MVT::ValueType VT = MVT::LAST_VALUETYPE;
+    for (unsigned i = 0, e = VTs.size(); i != e; ++i)
+      if (MVT::isFloatingPoint(VTs[i])) {
+        if (VT == MVT::LAST_VALUETYPE)
+          VT = VTs[i];  // First integer type we've found.
+        else {
+          VT = MVT::LAST_VALUETYPE;
+          break;
+        }
+      }
+        
+    // If we found exactly one supported FP type, apply it.
+    if (VT != MVT::LAST_VALUETYPE)
+      return NodeToApply->UpdateNodeType(VT, TP);
     return false;
+  }
   case SDTCisSameAs: {
     TreePatternNode *OtherNode =
       getOperandNum(x.SDTCisSameAs_Info.OtherOperandNum, N, NumResults);
@@ -344,18 +379,51 @@ TreePatternNode *TreePatternNode::InlinePatternFragments(TreePattern &TP) {
   return FragTree;
 }
 
+/// getIntrinsicType - Check to see if the specified record has an intrinsic
+/// type which should be applied to it.  This infer the type of register
+/// references from the register file information, for example.
+///
+static MVT::ValueType getIntrinsicType(Record *R, bool NotRegisters, TreePattern &TP) {
+  // Check to see if this is a register or a register class...
+  if (R->isSubClassOf("RegisterClass")) {
+    if (NotRegisters) return MVT::LAST_VALUETYPE;
+    return getValueType(R->getValueAsDef("RegType"));
+  } else if (R->isSubClassOf("PatFrag")) {
+    // Pattern fragment types will be resolved when they are inlined.
+    return MVT::LAST_VALUETYPE;
+  } else if (R->isSubClassOf("Register")) {
+    assert(0 && "Explicit registers not handled here yet!\n");
+    return MVT::LAST_VALUETYPE;
+  } else if (R->isSubClassOf("ValueType")) {
+    // Using a VTSDNode.
+    return MVT::Other;
+  } else if (R->getName() == "node") {
+    // Placeholder.
+    return MVT::LAST_VALUETYPE;
+  }
+  
+  TP.error("Unknown node flavor used in pattern: " + R->getName());
+  return MVT::Other;
+}
+
 /// ApplyTypeConstraints - Apply all of the type constraints relevent to
 /// this node and its children in the tree.  This returns true if it makes a
 /// change, false otherwise.  If a type contradiction is found, throw an
 /// exception.
-bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP) {
-  if (isLeaf()) return false;
+bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
+  if (isLeaf()) {
+    if (DefInit *DI = dynamic_cast<DefInit*>(getLeafValue()))
+      // If it's a regclass or something else known, include the type.
+      return UpdateNodeType(getIntrinsicType(DI->getDef(), NotRegisters, TP),
+                            TP);
+    return false;
+  }
   
   // special handling for set, which isn't really an SDNode.
   if (getOperator()->getName() == "set") {
     assert (getNumChildren() == 2 && "Only handle 2 operand set's for now!");
-    bool MadeChange = getChild(0)->ApplyTypeConstraints(TP);
-    MadeChange |= getChild(1)->ApplyTypeConstraints(TP);
+    bool MadeChange = getChild(0)->ApplyTypeConstraints(TP, NotRegisters);
+    MadeChange |= getChild(1)->ApplyTypeConstraints(TP, NotRegisters);
     
     // Types of operands must match.
     MadeChange |= getChild(0)->UpdateNodeType(getChild(1)->getType(), TP);
@@ -367,7 +435,7 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP) {
     
     bool MadeChange = NI.ApplyTypeConstraints(this, TP);
     for (unsigned i = 0, e = getNumChildren(); i != e; ++i)
-      MadeChange |= getChild(i)->ApplyTypeConstraints(TP);
+      MadeChange |= getChild(i)->ApplyTypeConstraints(TP, NotRegisters);
     return MadeChange;  
   } else if (getOperator()->isSubClassOf("Instruction")) {
     const DAGInstruction &Inst =
@@ -383,7 +451,7 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP) {
                utostr(getNumChildren()) + " operands!");
     for (unsigned i = 0, e = getNumChildren(); i != e; ++i) {
       MadeChange |= getChild(i)->UpdateNodeType(Inst.getOperandType(i), TP);
-      MadeChange |= getChild(i)->ApplyTypeConstraints(TP);
+      MadeChange |= getChild(i)->ApplyTypeConstraints(TP, NotRegisters);
     }
     return MadeChange;
   } else {
@@ -456,32 +524,6 @@ void TreePattern::error(const std::string &Msg) const {
   throw "In " + TheRecord->getName() + ": " + Msg;
 }
 
-/// getIntrinsicType - Check to see if the specified record has an intrinsic
-/// type which should be applied to it.  This infer the type of register
-/// references from the register file information, for example.
-///
-MVT::ValueType TreePattern::getIntrinsicType(Record *R) const {
-  // Check to see if this is a register or a register class...
-  if (R->isSubClassOf("RegisterClass"))
-    return getValueType(R->getValueAsDef("RegType"));
-  else if (R->isSubClassOf("PatFrag")) {
-    // Pattern fragment types will be resolved when they are inlined.
-    return MVT::LAST_VALUETYPE;
-  } else if (R->isSubClassOf("Register")) {
-    assert(0 && "Explicit registers not handled here yet!\n");
-    return MVT::LAST_VALUETYPE;
-  } else if (R->isSubClassOf("ValueType")) {
-    // Using a VTSDNode.
-    return MVT::Other;
-  } else if (R->getName() == "node") {
-    // Placeholder.
-    return MVT::LAST_VALUETYPE;
-  }
-  
-  error("Unknown node flavor used in pattern: " + R->getName());
-  return MVT::Other;
-}
-
 TreePatternNode *TreePattern::ParseTreePattern(DagInit *Dag) {
   Record *Operator = Dag->getNodeType();
   
@@ -489,7 +531,7 @@ TreePatternNode *TreePattern::ParseTreePattern(DagInit *Dag) {
     // If the operator is a ValueType, then this must be "type cast" of a leaf
     // node.
     if (Dag->getNumArgs() != 1)
-      error("Type cast only valid for a leaf node!");
+      error("Type cast only takes one operand!");
     
     Init *Arg = Dag->getArg(0);
     TreePatternNode *New;
@@ -504,8 +546,6 @@ TreePatternNode *TreePattern::ParseTreePattern(DagInit *Dag) {
       }   
       
       New = new TreePatternNode(DI);
-      // If it's a regclass or something else known, set the type.
-      New->setType(getIntrinsicType(DI->getDef()));
     } else if (DagInit *DI = dynamic_cast<DagInit*>(Arg)) {
       New = ParseTreePattern(DI);
     } else {
@@ -546,9 +586,6 @@ TreePatternNode *TreePattern::ParseTreePattern(DagInit *Dag) {
         Node->setName(Dag->getArgName(i));
         Children.push_back(Node);
         
-        // If it's a regclass or something else known, set the type.
-        Node->setType(getIntrinsicType(R));
-        
         // Input argument?
         if (R->getName() == "node") {
           if (Dag->getArgName(i).empty())
@@ -573,7 +610,7 @@ bool TreePattern::InferAllTypes() {
   while (MadeChange) {
     MadeChange = false;
     for (unsigned i = 0, e = Trees.size(); i != e; ++i)
-      MadeChange |= Trees[i]->ApplyTypeConstraints(*this);
+      MadeChange |= Trees[i]->ApplyTypeConstraints(*this, false);
   }
   
   bool HasUnresolvedTypes = false;
@@ -1517,6 +1554,14 @@ CodeGenPatternResult(TreePatternNode *N, unsigned &Ctr,
   }
 }
 
+/// RemoveAllTypes - A quick recursive walk over a pattern which removes all
+/// type information from it.
+static void RemoveAllTypes(TreePatternNode *N) {
+  N->setType(MVT::LAST_VALUETYPE);
+  if (!N->isLeaf())
+    for (unsigned i = 0, e = N->getNumChildren(); i != e; ++i)
+      RemoveAllTypes(N->getChild(i));
+}
 
 /// EmitCodeForPattern - Given a pattern to match, emit code to the specified
 /// stream to match the pattern, and generate the code for the match if it
@@ -1537,12 +1582,44 @@ void DAGISelEmitter::EmitCodeForPattern(PatternToMatch &Pattern,
   std::map<std::string,std::string> VariableMap;
   EmitMatchForPattern(Pattern.first, "N", VariableMap, PatternNo, OS);
   
-  unsigned TmpNo = 0;
-  unsigned Res = CodeGenPatternResult(Pattern.second, TmpNo, VariableMap, OS);
+  // TP - Get *SOME* tree pattern, we don't care which.
+  TreePattern &TP = *PatternFragments.begin()->second;
   
-  // Add the result to the map if it has multiple uses.
-  OS << "      if (!N.Val->hasOneUse()) CodeGenMap[N] = Tmp" << Res << ";\n";
-  OS << "      return Tmp" << Res << ";\n";
+  // At this point, we know that we structurally match the pattern, but the
+  // types of the nodes may not match.  Figure out the fewest number of type 
+  // comparisons we need to emit.  For example, if there is only one integer
+  // type supported by a target, there should be no type comparisons at all for
+  // integer patterns!
+  //
+  // To figure out the fewest number of type checks needed, clone the pattern,
+  // remove the types, then perform type inference on the pattern as a whole.
+  // If there are unresolved types, emit an explicit check for those types,
+  // apply the type to the tree, then rerun type inference.  Iterate until all
+  // types are resolved.
+  //
+  TreePatternNode *Pat = Pattern.first->clone();
+  RemoveAllTypes(Pat);
+  bool MadeChange = true;
+  try {
+    while (MadeChange)
+      MadeChange = Pat->ApplyTypeConstraints(TP,true/*Ignore reg constraints*/);
+  } catch (...) {
+    assert(0 && "Error: could not find consistent types for something we"
+           " already decided was ok!");
+    abort();
+  }
+
+  if (!Pat->ContainsUnresolvedType()) {
+    unsigned TmpNo = 0;
+    unsigned Res = CodeGenPatternResult(Pattern.second, TmpNo, VariableMap, OS);
+  
+    // Add the result to the map if it has multiple uses.
+    OS << "      if (!N.Val->hasOneUse()) CodeGenMap[N] = Tmp" << Res << ";\n";
+    OS << "      return Tmp" << Res << ";\n";
+  }
+  
+  delete Pat;
+  
   OS << "    }\n  P" << PatternNo << "Fail:\n";
 }
 
