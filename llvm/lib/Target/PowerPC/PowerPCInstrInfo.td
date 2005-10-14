@@ -424,7 +424,7 @@ def FCTIWZ : XForm_26<63, 15, (ops F8RC:$frD, F8RC:$frB),
                       []>;
 def FRSP   : XForm_26<63, 12, (ops F4RC:$frD, F8RC:$frB),
                       "frsp $frD, $frB",
-                      []>;
+                      [(set F4RC:$frD, (fround F8RC:$frB))]>;
 def FSQRT  : XForm_26<63, 22, (ops F8RC:$frD, F8RC:$frB),
                       "fsqrt $frD, $frB",
                       [(set F8RC:$frD, (fsqrt F8RC:$frB))]>;
@@ -441,7 +441,7 @@ def FMRD   : XForm_26<63, 72, (ops F8RC:$frD, F8RC:$frB),
                       []>;  // (set F8RC:$frD, F8RC:$frB)
 def FMRSD  : XForm_26<63, 72, (ops F8RC:$frD, F4RC:$frB),
                       "fmr $frD, $frB",
-                      []>;  // (set F8RC:$frD, (fpextend F4RC:$frB))
+                      [(set F8RC:$frD, (fextend F4RC:$frB))]>;
 
 // These are artificially split into two different forms, for 4/8 byte FP.
 def FABSS  : XForm_26<63, 264, (ops F4RC:$frD, F4RC:$frB),
