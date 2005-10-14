@@ -78,6 +78,12 @@ def SDTFPBinOp : SDTypeProfile<1, 2, [      // fadd, fmul, etc.
 def SDTIntUnaryOp : SDTypeProfile<1, 1, [   // ctlz
   SDTCisSameAs<0, 1>, SDTCisInt<0>
 ]>;
+def SDTIntExtendOp : SDTypeProfile<1, 1, [  // sext, zext, anyext
+  SDTCisInt<0>, SDTCisInt<1>, SDTCisOpSmallerThanOp<1, 0>
+]>;
+def SDTIntTruncOp  : SDTypeProfile<1, 1, [  // trunc
+  SDTCisInt<0>, SDTCisInt<1>, SDTCisOpSmallerThanOp<0, 1>
+]>;
 def SDTFPUnaryOp  : SDTypeProfile<1, 1, [   // fneg, fsqrt, etc
   SDTCisSameAs<0, 1>, SDTCisFP<0>
 ]>;
@@ -137,6 +143,14 @@ def or         : SDNode<"ISD::OR"        , SDTIntBinOp,
                         [SDNPCommutative, SDNPAssociative]>;
 def xor        : SDNode<"ISD::XOR"       , SDTIntBinOp,
                         [SDNPCommutative, SDNPAssociative]>;
+                        
+def sext_inreg : SDNode<"ISD::SIGN_EXTEND_INREG", SDTExtInreg>;
+def ctlz       : SDNode<"ISD::CTLZ"       , SDTIntUnaryOp>;
+def sext       : SDNode<"ISD::SIGN_EXTEND", SDTIntExtendOp>;
+def zext       : SDNode<"ISD::ZERO_EXTEND", SDTIntExtendOp>;
+def anyext     : SDNode<"ISD::ANY_EXTEND" , SDTIntExtendOp>;
+def trunc      : SDNode<"ISD::TRUNCATE"   , SDTIntTruncOp>;
+                        
 def fadd       : SDNode<"ISD::FADD"       , SDTFPBinOp, [SDNPCommutative]>;
 def fsub       : SDNode<"ISD::FSUB"       , SDTFPBinOp>;
 def fmul       : SDNode<"ISD::FMUL"       , SDTFPBinOp, [SDNPCommutative]>;
@@ -148,9 +162,6 @@ def fsqrt      : SDNode<"ISD::FSQRT"      , SDTFPUnaryOp>;
 
 def fround     : SDNode<"ISD::FP_ROUND"   , SDTFPRoundOp>;
 def fextend    : SDNode<"ISD::FP_EXTEND"  , SDTFPExtendOp>;
-
-def sext_inreg : SDNode<"ISD::SIGN_EXTEND_INREG", SDTExtInreg>;
-def ctlz       : SDNode<"ISD::CTLZ"      , SDTIntUnaryOp>;
 
 //===----------------------------------------------------------------------===//
 // Selection DAG Node Transformation Functions.
