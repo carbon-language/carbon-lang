@@ -14,15 +14,37 @@
 #ifndef POWERPC32_TARGETMACHINE_H
 #define POWERPC32_TARGETMACHINE_H
 
-#include "PowerPCTargetMachine.h"
+#include "PowerPCFrameInfo.h"
+#include "PowerPCSubtarget.h"
 #include "PPC32JITInfo.h"
 #include "PPC32InstrInfo.h"
+#include "llvm/Target/TargetMachine.h"
+#include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/PassManager.h"
 
 namespace llvm {
 
 class IntrinsicLowering;
+class GlobalValue;
+class IntrinsicLowering;
 
+// FIXME: Merge into only subclass.
+class PowerPCTargetMachine : public TargetMachine {
+  PowerPCFrameInfo  FrameInfo;
+  PPCSubtarget      Subtarget;
+protected:
+  PowerPCTargetMachine(const std::string &name, IntrinsicLowering *IL,
+                       const Module &M, const std::string &FS,
+                       const TargetData &TD, 
+                       const PowerPCFrameInfo &TFI);
+public:
+  virtual const TargetFrameInfo  *getFrameInfo() const { return &FrameInfo; }
+  virtual const TargetSubtarget  *getSubtargetImpl() const{ return &Subtarget; }
+  
+  virtual bool addPassesToEmitFile(PassManager &PM, std::ostream &Out,
+                                   CodeGenFileType FileType);
+};
+  
 class PPC32TargetMachine : public PowerPCTargetMachine {
   PPC32InstrInfo InstrInfo;
   PPC32JITInfo JITInfo;

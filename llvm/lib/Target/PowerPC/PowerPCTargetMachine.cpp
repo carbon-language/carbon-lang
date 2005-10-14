@@ -12,7 +12,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "PowerPC.h"
-#include "PowerPCTargetMachine.h"
 #include "PowerPCFrameInfo.h"
 #include "PPC32TargetMachine.h"
 #include "PPC32JITInfo.h"
