@@ -13,7 +13,7 @@
 
 #include "PPC32InstrInfo.h"
 #include "PPCGenInstrInfo.inc"
-#include "PowerPC.h"
+#include "PPC.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include <iostream>
 using namespace llvm;

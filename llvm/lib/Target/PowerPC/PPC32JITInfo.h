@@ -14,7 +14,7 @@
 #ifndef POWERPC_DARWIN_JITINFO_H
 #define POWERPC_DARWIN_JITINFO_H
 
-#include "PowerPCJITInfo.h"
+#include "PPCJITInfo.h"
 
 namespace llvm {
   class TargetMachine;

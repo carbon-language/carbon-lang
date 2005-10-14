@@ -14,7 +14,7 @@
 #ifndef POWERPC32_INSTRUCTIONINFO_H
 #define POWERPC32_INSTRUCTIONINFO_H
 
-#include "PowerPC.h"
+#include "PPC.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "PPC32RegisterInfo.h"
 

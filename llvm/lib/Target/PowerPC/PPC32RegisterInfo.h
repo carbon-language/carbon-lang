@@ -14,7 +14,7 @@
 #ifndef POWERPC32_REGISTERINFO_H
 #define POWERPC32_REGISTERINFO_H
 
-#include "PowerPC.h"
+#include "PPC.h"
 #include "PPCGenRegisterInfo.h.inc"
 #include <map>
 

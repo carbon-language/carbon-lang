@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "PowerPC.h"
+#include "PPC.h"
 #include "PPC32TargetMachine.h"
 #include "PPC32ISelLowering.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"

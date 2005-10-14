@@ -14,7 +14,7 @@
 
 #include "PPC32TargetMachine.h"
 #include "PPC32Relocations.h"
-#include "PowerPC.h"
+#include "PPC.h"
 #include "llvm/Module.h"
 #include "llvm/CodeGen/MachineCodeEmitter.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"

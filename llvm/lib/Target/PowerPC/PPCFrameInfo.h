@@ -13,7 +13,7 @@
 #ifndef POWERPC_FRAMEINFO_H
 #define POWERPC_FRAMEINFO_H
 
-#include "PowerPC.h"
+#include "PPC.h"
 #include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/Target/TargetMachine.h"
 

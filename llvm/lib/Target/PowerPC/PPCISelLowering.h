@@ -17,7 +17,7 @@
 
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/CodeGen/SelectionDAG.h"
-#include "PowerPC.h"
+#include "PPC.h"
 
 namespace llvm {
   namespace PPCISD {

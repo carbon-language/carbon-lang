@@ -14,8 +14,8 @@
 #ifndef POWERPC32_TARGETMACHINE_H
 #define POWERPC32_TARGETMACHINE_H
 
-#include "PowerPCFrameInfo.h"
-#include "PowerPCSubtarget.h"
+#include "PPCFrameInfo.h"
+#include "PPCSubtarget.h"
 #include "PPC32JITInfo.h"
 #include "PPC32InstrInfo.h"
 #include "llvm/Target/TargetMachine.h"

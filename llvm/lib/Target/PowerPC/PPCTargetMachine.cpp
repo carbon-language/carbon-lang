@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "PowerPC.h"
-#include "PowerPCFrameInfo.h"
+#include "PPC.h"
+#include "PPCFrameInfo.h"
 #include "PPC32TargetMachine.h"
 #include "PPC32JITInfo.h"
 #include "llvm/Module.h"

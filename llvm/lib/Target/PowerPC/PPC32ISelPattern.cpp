@@ -13,7 +13,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "PowerPC.h"
+#include "PPC.h"
 #include "PPCInstrBuilder.h"
 #include "PPC32InstrInfo.h"
 #include "PPC32TargetMachine.h"

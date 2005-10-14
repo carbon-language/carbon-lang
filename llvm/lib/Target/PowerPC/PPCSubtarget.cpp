@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "PowerPCSubtarget.h"
-#include "PowerPC.h"
+#include "PPCSubtarget.h"
+#include "PPC.h"
 #include "llvm/Module.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Target/SubtargetFeature.h"

@@ -12,7 +12,7 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "reginfo"
-#include "PowerPC.h"
+#include "PPC.h"
 #include "PPCInstrBuilder.h"
 #include "PPC32RegisterInfo.h"
 #include "llvm/Constants.h"
