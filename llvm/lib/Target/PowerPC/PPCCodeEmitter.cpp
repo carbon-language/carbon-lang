@@ -16,6 +16,7 @@
 #include "PPCRelocations.h"
 #include "PPC.h"
 #include "llvm/Module.h"
+#include "llvm/PassManager.h"
 #include "llvm/CodeGen/MachineCodeEmitter.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"

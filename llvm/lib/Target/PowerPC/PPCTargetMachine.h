@@ -19,11 +19,9 @@
 #include "PPCJITInfo.h"
 #include "PPCInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
-#include "llvm/Target/TargetFrameInfo.h"
-#include "llvm/PassManager.h"
 
 namespace llvm {
-
+class PassManager;
 class IntrinsicLowering;
 class GlobalValue;
 class IntrinsicLowering;
