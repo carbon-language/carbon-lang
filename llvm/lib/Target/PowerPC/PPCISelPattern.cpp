@@ -145,7 +145,7 @@ static bool isRotateAndMask(unsigned Opcode, unsigned Shift, unsigned Mask,
     if (IsShiftMask) Mask = Mask << Shift;
     // determine which bits are made indeterminant by shift
     Indeterminant = ~(0xFFFFFFFFu << Shift);
-  } else if (Opcode == ISD::SRA || Opcode == ISD::SRL) { // shift rights
+  } else if (Opcode == ISD::SRL) { // shift rights
     // apply shift to mask if it comes first
     if (IsShiftMask) Mask = Mask >> Shift;
     // determine which bits are made indeterminant by shift
@@ -1125,17 +1125,8 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
 
   case ISD::SRA:
     if (isIntImmediate(N.getOperand(1), Tmp2)) {
-      unsigned SH, MB, ME;
-      if (isOpcWithIntImmediate(N.getOperand(0), ISD::AND, Tmp3) &&
-          isRotateAndMask(ISD::SRA, Tmp2, Tmp3, true, SH, MB, ME)) {
-        Tmp1 = SelectExpr(N.getOperand(0).getOperand(0));
-        BuildMI(BB, PPC::RLWINM, 4, Result).addReg(Tmp1).addImm(SH)
-          .addImm(MB).addImm(ME);
-        return Result;
-      }
       Tmp1 = SelectExpr(N.getOperand(0));
-      Tmp2 &= 0x1F;
-      BuildMI(BB, PPC::SRAWI, 2, Result).addReg(Tmp1).addImm(Tmp2);
+      BuildMI(BB, PPC::SRAWI, 2, Result).addReg(Tmp1).addImm(Tmp2 & 0x1F);
     } else {
       Tmp1 = SelectExpr(N.getOperand(0));
       Tmp2 = FoldIfWideZeroExtend(N.getOperand(1));
