@@ -233,7 +233,7 @@ static bool isRotateAndMask(SDNode *N, unsigned Mask, bool IsShiftMask,
     if (IsShiftMask) Mask = Mask << Shift;
     // determine which bits are made indeterminant by shift
     Indeterminant = ~(0xFFFFFFFFu << Shift);
-  } else if (Opcode == ISD::SRA || Opcode == ISD::SRL) { 
+  } else if (Opcode == ISD::SRL) { 
     // apply shift right to mask if it comes first
     if (IsShiftMask) Mask = Mask >> Shift;
     // determine which bits are made indeterminant by shift
@@ -1277,13 +1277,8 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
     return SDOperand(N, 0);
   }
   case ISD::SRA: {
-    unsigned Imm, SH, MB, ME;
-    if (0 &&isOpcWithIntImmediate(N->getOperand(0).Val, ISD::AND, Imm) &&
-        isRotateAndMask(N, Imm, true, SH, MB, ME))
-      CurDAG->SelectNodeTo(N, PPC::RLWINM, MVT::i32, 
-                           Select(N->getOperand(0).getOperand(0)),
-                           getI32Imm(SH), getI32Imm(MB), getI32Imm(ME));
-    else if (isIntImmediate(N->getOperand(1), Imm))
+    unsigned Imm;
+    if (isIntImmediate(N->getOperand(1), Imm))
       CurDAG->SelectNodeTo(N, PPC::SRAWI, MVT::i32, Select(N->getOperand(0)), 
                            getI32Imm(Imm));
     else
