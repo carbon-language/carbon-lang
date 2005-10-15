@@ -1634,6 +1634,31 @@ static void RemoveAllTypes(TreePatternNode *N) {
       RemoveAllTypes(N->getChild(i));
 }
 
+/// InsertOneTypeCheck - Insert a type-check for an unresolved type in 'Pat' and
+/// add it to the tree.  'Pat' and 'Other' are isomorphic trees except that 
+/// 'Pat' may be missing types.  If we find an unresolved type to add a check
+/// for, this returns true otherwise false if Pat has all types.
+static bool InsertOneTypeCheck(TreePatternNode *Pat, TreePatternNode *Other,
+                               const std::string &Prefix, unsigned PatternNo,
+                               std::ostream &OS) {
+  // Did we find one?
+  if (!Pat->hasTypeSet()) {
+    // Move a type over from 'other' to 'pat'.
+    Pat->setType(Other->getType());
+    OS << "      if (" << Prefix << ".getValueType() != MVT::"
+       << getName(Pat->getType()) << ") goto P" << PatternNo << "Fail;\n";
+    return true;
+  } else if (Pat->isLeaf()) {
+    return false;
+  }
+  
+  for (unsigned i = 0, e = Pat->getNumChildren(); i != e; ++i)
+    if (InsertOneTypeCheck(Pat->getChild(i), Other->getChild(i),
+                           Prefix + utostr(i), PatternNo, OS))
+      return true;
+  return false;
+}
+
 /// EmitCodeForPattern - Given a pattern to match, emit code to the specified
 /// stream to match the pattern, and generate the code for the match if it
 /// succeeds.
@@ -1670,25 +1695,30 @@ void DAGISelEmitter::EmitCodeForPattern(PatternToMatch &Pattern,
   //
   TreePatternNode *Pat = Pattern.first->clone();
   RemoveAllTypes(Pat);
-  bool MadeChange = true;
-  try {
-    while (MadeChange)
-      MadeChange = Pat->ApplyTypeConstraints(TP,true/*Ignore reg constraints*/);
-  } catch (...) {
-    assert(0 && "Error: could not find consistent types for something we"
-           " already decided was ok!");
-    abort();
-  }
+  
+  do {
+    // Resolve/propagate as many types as possible.
+    try {
+      bool MadeChange = true;
+      while (MadeChange)
+        MadeChange = Pat->ApplyTypeConstraints(TP,true/*Ignore reg constraints*/);
+    } catch (...) {
+      assert(0 && "Error: could not find consistent types for something we"
+             " already decided was ok!");
+      abort();
+    }
 
-  if (!Pat->ContainsUnresolvedType()) {
-    unsigned TmpNo = 0;
-    unsigned Res = CodeGenPatternResult(Pattern.second, TmpNo, VariableMap, OS);
+    // Insert a check for an unresolved type and add it to the tree.  If we find
+    // an unresolved type to add a check for, this returns true and we iterate,
+    // otherwise we are done.
+  } while (InsertOneTypeCheck(Pat, Pattern.first, "N", PatternNo, OS));
+    
+  unsigned TmpNo = 0;
+  unsigned Res = CodeGenPatternResult(Pattern.second, TmpNo, VariableMap, OS);
   
-    // Add the result to the map if it has multiple uses.
-    OS << "      if (!N.Val->hasOneUse()) CodeGenMap[N] = Tmp" << Res << ";\n";
-    OS << "      return Tmp" << Res << ";\n";
-  }
-  
+  // Add the result to the map if it has multiple uses.
+  OS << "      if (!N.Val->hasOneUse()) CodeGenMap[N] = Tmp" << Res << ";\n";
+  OS << "      return Tmp" << Res << ";\n";
   delete Pat;
   
   OS << "    }\n  P" << PatternNo << "Fail:\n";
