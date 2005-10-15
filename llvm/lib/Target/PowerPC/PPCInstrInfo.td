@@ -430,7 +430,7 @@ def FSQRT  : XForm_26<63, 22, (ops F8RC:$frD, F8RC:$frB),
                       [(set F8RC:$frD, (fsqrt F8RC:$frB))]>;
 def FSQRTS : XForm_26<59, 22, (ops F4RC:$frD, F4RC:$frB),
                       "fsqrts $frD, $frB",
-                      []>;
+                      [(set F4RC:$frD, (fsqrt F4RC:$frB))]>;
 
 /// FMR is split into 3 versions, one for 4/8 byte FP, and one for extending.
 def FMRS   : XForm_26<63, 72, (ops F4RC:$frD, F4RC:$frB),
