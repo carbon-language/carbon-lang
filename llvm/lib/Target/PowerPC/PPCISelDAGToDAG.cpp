@@ -1276,34 +1276,6 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
                            Select(N->getOperand(1)));
     return SDOperand(N, 0);
   }
-  case ISD::SRA: {
-    unsigned Imm;
-    if (isIntImmediate(N->getOperand(1), Imm))
-      CurDAG->SelectNodeTo(N, PPC::SRAWI, MVT::i32, Select(N->getOperand(0)), 
-                           getI32Imm(Imm));
-    else
-      CurDAG->SelectNodeTo(N, PPC::SRAW, MVT::i32, Select(N->getOperand(0)),
-                           Select(N->getOperand(1)));
-    return SDOperand(N, 0);
-  }
-  case ISD::FMUL: {
-    unsigned Opc = N->getValueType(0) == MVT::f32 ? PPC::FMULS : PPC::FMUL;
-    CurDAG->SelectNodeTo(N, Opc, N->getValueType(0), Select(N->getOperand(0)), 
-                         Select(N->getOperand(1)));
-    return SDOperand(N, 0);
-  } 
-  case ISD::FDIV: {
-    unsigned Opc = N->getValueType(0) == MVT::f32 ? PPC::FDIVS : PPC::FDIV;
-    CurDAG->SelectNodeTo(N, Opc, N->getValueType(0), Select(N->getOperand(0)), 
-                         Select(N->getOperand(1)));
-    return SDOperand(N, 0);
-  } 
-  case ISD::FABS:
-    if (N->getValueType(0) == MVT::f32)
-      CurDAG->SelectNodeTo(N, PPC::FABSS, MVT::f32, Select(N->getOperand(0)));
-    else
-      CurDAG->SelectNodeTo(N, PPC::FABSD, MVT::f64, Select(N->getOperand(0)));
-    return SDOperand(N, 0);
   case ISD::FNEG: {
     SDOperand Val = Select(N->getOperand(0));
     MVT::ValueType Ty = N->getValueType(0);
@@ -1334,12 +1306,6 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
       CurDAG->SelectNodeTo(N, PPC::FNEGS, MVT::f32, Val);
     else
       CurDAG->SelectNodeTo(N, PPC::FNEGD, MVT::f64, Val);
-    return SDOperand(N, 0);
-  }
-  case ISD::FSQRT: {
-    MVT::ValueType Ty = N->getValueType(0);
-    CurDAG->SelectNodeTo(N, Ty == MVT::f64 ? PPC::FSQRT : PPC::FSQRTS, Ty,
-                         Select(N->getOperand(0)));
     return SDOperand(N, 0);
   }
   case ISD::LOAD:
