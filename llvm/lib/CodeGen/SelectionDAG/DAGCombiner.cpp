@@ -803,6 +803,20 @@ SDOperand DAGCombiner::visitAND(SDNode *N) {
     WorkList.push_back(ANDNode.Val);
     return DAG.getNode(N0.getOpcode(), VT, ANDNode, N0.getOperand(1));
   }
+  // fold (and (sra)) -> (and (srl)) when possible.
+  if (N0.getOpcode() == ISD::SRA && N0.Val->hasOneUse())
+    if (ConstantSDNode *N01C = dyn_cast<ConstantSDNode>(N0.getOperand(1))) {
+      // If the RHS of the AND has zeros where the sign bits of the SRA will
+      // land, turn the SRA into an SRL.
+      if (MaskedValueIsZero(N1, (~0ULL << N01C->getValue()) &
+                            (~0ULL>>(64-OpSizeInBits)), TLI)) {
+        WorkList.push_back(N);
+        CombineTo(N0.Val, DAG.getNode(ISD::SRL, VT, N0.getOperand(0),
+                                      N0.getOperand(1)));
+        return SDOperand();
+      }
+    }
+      
   // fold (zext_inreg (extload x)) -> (zextload x)
   if (N0.getOpcode() == ISD::EXTLOAD) {
     MVT::ValueType EVT = cast<VTSDNode>(N0.getOperand(3))->getVT();
