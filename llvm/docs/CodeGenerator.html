@@ -35,6 +35,9 @@
   <li><a href="#codegendesc">Machine code description classes</a>
     <ul>
     <li><a href="#machineinstr">The <tt>MachineInstr</tt> class</a></li>
+    <li><a href="#machinebasicblock">The <tt>MachineBasicBlock</tt>
+                                     class</a></li>
+    <li><a href="#machinefunction">The <tt>MachineFunction</tt> class</a></li>
     </ul>
   </li>
   <li><a href="#codegenalgs">Target-independent code generation algorithms</a>
@@ -50,14 +53,19 @@
       <li><a href="#selectiondag_optimize">SelectionDAG Optimization
                                            Phase: the DAG Combiner</a></li>
       <li><a href="#selectiondag_select">SelectionDAG Select Phase</a></li>
-      <li><a href="#selectiondag_sched">SelectionDAG Scheduling and Emission
+      <li><a href="#selectiondag_sched">SelectionDAG Scheduling and Formation
                                         Phase</a></li>
       <li><a href="#selectiondag_future">Future directions for the
                                          SelectionDAG</a></li>
       </ul></li>
+    <li><a href="#codeemit">Code Emission</a>
+        <ul>
+        <li><a href="#codeemit_asm">Generating Assembly Code</a></li>
+        <li><a href="#codeemit_bin">Generating Binary Machine Code</a></li>
+        </ul></li>
     </ul>
   </li>
-  <li><a href="#targetimpls">Target description implementations</a>
+  <li><a href="#targetimpls">Target-specific Implementation Notes</a>
     <ul>
     <li><a href="#x86">The X86 backend</a></li>
     </ul>
@@ -163,7 +171,7 @@ LLVM machine description model: programmable FPGAs for example.</p>
 <p><b>Important Note:</b> For historical reasons, the LLVM SparcV9 code
 generator uses almost entirely different code paths than described in this
 document.  For this reason, there are some deprecated interfaces (such as
-<tt>TargetRegInfo</tt> and <tt>TargetSchedInfo</tt>), which are only used by the
+<tt>TargetSchedInfo</tt>), which are only used by the
 V9 backend and should not be used by any other targets.  Also, all code in the
 <tt>lib/Target/SparcV9</tt> directory and subdirectories should be considered
 deprecated, and should not be used as the basis for future code generator work.
@@ -185,36 +193,44 @@ quality code generation for standard register-based microprocessors.  Code
 generation in this model is divided into the following stages:</p>
 
 <ol>
-<li><b><a href="#instselect">Instruction Selection</a></b> - Determining an
-efficient implementation of the input LLVM code in the target instruction set.
+<li><b><a href="#instselect">Instruction Selection</a></b> - This phase
+determines an efficient way to express the input LLVM code in the target
+instruction set.
 This stage produces the initial code for the program in the target instruction
 set, then makes use of virtual registers in SSA form and physical registers that
 represent any required register assignments due to target constraints or calling
-conventions.</li>
+conventions.  This step turns the LLVM code into a DAG of target
+instructions.</li>
+
+<li><b><a href="#selectiondag_sched">Scheduling and Formation</a></b> - This
+phase takes the DAG of target instructions produced by the instruction selection
+phase, determines an ordering of the instructions, then emits the instructions
+as <tt><a href="#machineinstr">MachineInstr</a></tt>s with that ordering.
+</li>
 
 <li><b><a href="#ssamco">SSA-based Machine Code Optimizations</a></b> - This 
 optional stage consists of a series of machine-code optimizations that 
 operate on the SSA-form produced by the instruction selector.  Optimizations 
-like modulo-scheduling, normal scheduling, or peephole optimization work here.
+like modulo-scheduling or peephole optimization work here.
 </li>
 
-<li><b><a name="#regalloc">Register Allocation</a></b> - The
+<li><b><a href="#regalloc">Register Allocation</a></b> - The
 target code is transformed from an infinite virtual register file in SSA form 
 to the concrete register file used by the target.  This phase introduces spill 
 code and eliminates all virtual register references from the program.</li>
 
-<li><b><a name="#proepicode">Prolog/Epilog Code Insertion</a></b> - Once the 
+<li><b><a href="#proepicode">Prolog/Epilog Code Insertion</a></b> - Once the 
 machine code has been generated for the function and the amount of stack space 
 required is known (used for LLVM alloca's and spill slots), the prolog and 
 epilog code for the function can be inserted and "abstract stack location 
 references" can be eliminated.  This stage is responsible for implementing 
 optimizations like frame-pointer elimination and stack packing.</li>
 
-<li><b><a name="latemco">Late Machine Code Optimizations</a></b> - Optimizations
+<li><b><a href="#latemco">Late Machine Code Optimizations</a></b> - Optimizations
 that operate on "final" machine code can go here, such as spill code scheduling
 and peephole optimizations.</li>
 
-<li><b><a name="codemission">Code Emission</a></b> - The final stage actually 
+<li><b><a href="#codeemit">Code Emission</a></b> - The final stage actually 
 puts out the code for the current function, either in the target assembler 
 format or in machine code.</li>
 
@@ -259,6 +275,16 @@ domain-specific and target-specific abstractions to reduce the amount of
 repetition.
 </p>
 
+<p>As LLVM continues to be developed and refined, we plan to move more and more
+of the target description to be in <tt>.td</tt> form.  Doing so gives us a
+number of advantages.  The most important is that it makes it easier to port
+LLVM, because it reduces the amount of C++ code that has to be written and the
+surface area of the code generator that needs to be understood before someone
+can get in an get something working.  Second, it is also important to us because
+it makes it easier to change things: in particular, if tables and other things
+are all emitted by tblgen, we only need to change one place (tblgen) to update
+all of the targets to a new interface.</p>
+
 </div>
 
 <!-- *********************************************************************** -->
@@ -274,8 +300,7 @@ repetition.
 target machine; independent of any particular client.  These classes are
 designed to capture the <i>abstract</i> properties of the target (such as the
 instructions and registers it has), and do not incorporate any particular pieces
-of code generation algorithms. These interfaces do not take interference graphs
-as inputs or other algorithm-specific data structures.</p>
+of code generation algorithms.</p>
 
 <p>All of the target description classes (except the <tt><a
 href="#targetdata">TargetData</a></tt> class) are designed to be subclassed by
@@ -315,8 +340,8 @@ implemented as well.</p>
 <div class="doc_text">
 
 <p>The <tt>TargetData</tt> class is the only required target description class,
-and it is the only class that is not extensible. You cannot derived  a new 
-class from it.  <tt>TargetData</tt> specifies information about how the target 
+and it is the only class that is not extensible (you cannot derived  a new 
+class from it).  <tt>TargetData</tt> specifies information about how the target 
 lays out memory for structures, the alignment requirements for various data 
 types, the size of pointers in the target, and whether the target is 
 little-endian or big-endian.</p>
@@ -333,17 +358,15 @@ little-endian or big-endian.</p>
 <p>The <tt>TargetLowering</tt> class is used by SelectionDAG based instruction
 selectors primarily to describe how LLVM code should be lowered to SelectionDAG
 operations.  Among other things, this class indicates:
-<ul><li>an initial register class to use for various ValueTypes,</li>
-  <li>which operations are natively supported by the target machine,</li>
-  <li>the return type of setcc operations, and</li>
-  <li>the type to use for shift amounts, etc</li>.
+<ul><li>an initial register class to use for various ValueTypes</li>
+  <li>which operations are natively supported by the target machine</li>
+  <li>the return type of setcc operations</li>
+  <li>the type to use for shift amounts</li>
+  <li>various high-level characteristics, like whether it is profitable to turn
+      division by a constant into a multiplication sequence</li>
 </ol></p>
 
 </div>
-
-
-    
-
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
@@ -359,7 +382,7 @@ target and any interactions between the registers.</p>
 <p>Registers in the code generator are represented in the code generator by
 unsigned numbers.  Physical registers (those that actually exist in the target
 description) are unique small numbers, and virtual registers are generally
-large.</p>
+large.  Note that register #0 is reserved as a flag value.</p>
 
 <p>Each register in the processor description has an associated
 <tt>TargetRegisterDesc</tt> entry, which provides a textual name for the register
@@ -438,7 +461,8 @@ href="TableGenFundamentals.html">TableGen</a> description of the register file.
 
 <p>
 At the high-level, LLVM code is translated to a machine specific representation
-formed out of MachineFunction, MachineBasicBlock, and <a 
+formed out of <a href="#machinefunction">MachineFunction</a>,
+<a href="#machinebasicblock">MachineBasicBlock</a>, and <a 
 href="#machineinstr"><tt>MachineInstr</tt></a> instances
 (defined in include/llvm/CodeGen).  This representation is completely target
 agnostic, representing instructions in their most abstract form: an opcode and a
@@ -624,6 +648,43 @@ are no virtual registers left in the code.</p>
 
 </div>
 
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="machinebasicblock">The <tt>MachineBasicBlock</tt> class</a>
+</div>
+
+<div class="doc_text">
+
+<p>The <tt>MachineBasicBlock</tt> class contains a list of machine instructions
+(<a href="#machineinstr">MachineInstr</a> instances).  It roughly corresponds to
+the LLVM code input to the instruction selector, but there can be a one-to-many
+mapping (i.e. one LLVM basic block can map to multiple machine basic blocks).
+The MachineBasicBlock class has a "<tt>getBasicBlock</tt>" method, which returns
+the LLVM basic block that it comes from.
+</p>
+
+</div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="machinefunction">The <tt>MachineFunction</tt> class</a>
+</div>
+
+<div class="doc_text">
+
+<p>The <tt>MachineFunction</tt> class contains a list of machine basic blocks
+(<a href="#machinebasicblock">MachineBasicBlock</a> instances).  It corresponds
+one-to-one with the LLVM function input to the instruction selector.  In
+addition to a list of basic blocks, the <tt>MachineFunction</tt> contains a
+the MachineConstantPool, MachineFrameInfo, MachineFunctionInfo,
+SSARegMap, and a set of live in and live out registers for the function.  See
+<tt>MachineFunction.h</tt> for more information.
+</p>
+
+</div>
+
+
+
 <!-- *********************************************************************** -->
 <div class="doc_section">
   <a name="codegenalgs">Target-independent code generation algorithms</a>
@@ -633,7 +694,7 @@ are no virtual registers left in the code.</p>
 <div class="doc_text">
 
 <p>This section documents the phases described in the <a
-href="high-level-design">high-level design of the code generator</a>.  It
+href="#high-level-design">high-level design of the code generator</a>.  It
 explains how they work and some of the rationale behind their design.</p>
 
 </div>
@@ -755,7 +816,7 @@ SelectionDAG-based instruction selection consists of the following steps:
     the target instruction selector matches the DAG operations to target
     instructions.  This process translates the target-independent input DAG into
     another DAG of target instructions.</li>
-<li><a href="#selectiondag_sched">SelectionDAG Scheduling and Emission</a>
+<li><a href="#selectiondag_sched">SelectionDAG Scheduling and Formation</a>
     - The last phase assigns a linear order to the instructions in the 
     target-instruction DAG and emits them into the MachineFunction being
     compiled.  This step uses traditional prepass scheduling techniques.</li>
@@ -892,7 +953,7 @@ want to make the Select phase as simple and mechanical as possible.</p>
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
-  <a name="selectiondag_sched">SelectionDAG Scheduling and Emission Phase</a>
+  <a name="selectiondag_sched">SelectionDAG Scheduling and Formation Phase</a>
 </div>
 
 <div class="doc_text">
@@ -944,12 +1005,33 @@ Selection DAG is destroyed.
 <div class="doc_text"><p>To Be Written</p></div>
 <!-- ======================================================================= -->
 <div class="doc_subsection">
-  <a name="codemission">Code Emission</a>
+  <a name="codeemit">Code Emission</a>
 </div>
+
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="codeemit_asm">Generating Assembly Code</a>
+</div>
+
+<div class="doc_text">
+
+</div>
+
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="codeemit_bin">Generating Binary Machine Code</a>
+</div>
+
+<div class="doc_text">
+   <p>For the JIT or .o file writer</p>
+</div>
+
 
 <!-- *********************************************************************** -->
 <div class="doc_section">
-  <a name="targetimpls">Target description implementations</a>
+  <a name="targetimpls">Target-specific Implementation Notes</a>
 </div>
 <!-- *********************************************************************** -->
 
@@ -995,7 +1077,7 @@ that people test.
 <li><b>i386-unknown-freebsd5.3</b> - FreeBSD 5.3</li>
 <li><b>i686-pc-cygwin</b> - Cygwin on Win32</li>
 <li><b>i686-pc-mingw32</b> - MingW on Win32</li>
-<li><b>i686-apple-darwin*</b> - Apple Darwin</li>
+<li><b>i686-apple-darwin*</b> - Apple Darwin on X86</li>
 </ul>
 
 </div>
