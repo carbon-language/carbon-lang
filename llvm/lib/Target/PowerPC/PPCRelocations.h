@@ -1,4 +1,4 @@
-//===- PPC32Relocations.h - PPC32 Code Relocations --------------*- C++ -*-===//
+//===- PPCRelocations.h - PPC32 Code Relocations ----------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

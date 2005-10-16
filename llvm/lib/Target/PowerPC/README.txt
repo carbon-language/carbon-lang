@@ -105,3 +105,16 @@ mode.
 Implement Newton-Rhapson method for improving estimate instructions to the
 correct accuracy, and implementing divide as multiply by reciprocal when it has
 more than one use.  Itanium will want this too.
+
+===-------------------------------------------------------------------------===
+
+int foo(int a, int b) { return a == b ? 16 : 0; }
+_foo:
+        cmpw cr7, r3, r4
+        mfcr r2
+        rlwinm r2, r2, 31, 31, 31
+        slwi r3, r2, 4
+        blr
+
+If we exposed the srl & mask ops after the MFCR that we are doing to select
+the correct CR bit, then we could fold the slwi into the rlwinm before it.

@@ -1,4 +1,4 @@
-//===-- PPC32TargetMachine.h - Define TargetMachine for PowerPC -*- C++ -*-=//
+//===-- PPCTargetMachine.h - Define TargetMachine for PowerPC -----*- C++ -*-=//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef POWERPC32_TARGETMACHINE_H
-#define POWERPC32_TARGETMACHINE_H
+#ifndef PPC_TARGETMACHINE_H
+#define PPC_TARGETMACHINE_H
 
 #include "PPCFrameInfo.h"
 #include "PPCSubtarget.h"
@@ -26,47 +26,34 @@ class IntrinsicLowering;
 class GlobalValue;
 class IntrinsicLowering;
 
-// FIXME: Merge into only subclass.
-class PowerPCTargetMachine : public TargetMachine {
-  PowerPCFrameInfo  FrameInfo;
-  PPCSubtarget      Subtarget;
-protected:
-  PowerPCTargetMachine(const std::string &name, IntrinsicLowering *IL,
-                       const Module &M, const std::string &FS,
-                       const TargetData &TD, 
-                       const PowerPCFrameInfo &TFI);
+class PPCTargetMachine : public TargetMachine {
+  PPCInstrInfo    InstrInfo;
+  PPCSubtarget    Subtarget;
+  PPCFrameInfo    FrameInfo;
+  PPCJITInfo      JITInfo;
 public:
+  PPCTargetMachine(const Module &M, IntrinsicLowering *IL,
+                   const std::string &FS);
+
+  virtual const PPCInstrInfo     *getInstrInfo() const { return &InstrInfo; }
   virtual const TargetFrameInfo  *getFrameInfo() const { return &FrameInfo; }
+  virtual       TargetJITInfo    *getJITInfo()         { return &JITInfo; }
   virtual const TargetSubtarget  *getSubtargetImpl() const{ return &Subtarget; }
-  
-  virtual bool addPassesToEmitFile(PassManager &PM, std::ostream &Out,
-                                   CodeGenFileType FileType);
-};
-  
-class PPC32TargetMachine : public PowerPCTargetMachine {
-  PPC32InstrInfo InstrInfo;
-  PPC32JITInfo JITInfo;
-
-public:
-  PPC32TargetMachine(const Module &M, IntrinsicLowering *IL,
-                     const std::string &FS);
-  virtual const PPC32InstrInfo   *getInstrInfo() const { return &InstrInfo; }
-  virtual const MRegisterInfo *getRegisterInfo() const {
+  virtual const MRegisterInfo    *getRegisterInfo() const {
     return &InstrInfo.getRegisterInfo();
-  }
-
-  virtual TargetJITInfo *getJITInfo() {
-    return &JITInfo;
   }
 
   static unsigned getJITMatchQuality();
 
   static unsigned getModuleMatchQuality(const Module &M);
-
+  
+  virtual bool addPassesToEmitFile(PassManager &PM, std::ostream &Out,
+                                   CodeGenFileType FileType);
+  
   bool addPassesToEmitMachineCode(FunctionPassManager &PM,
                                   MachineCodeEmitter &MCE);
 };
-
+  
 } // end namespace llvm
 
 #endif

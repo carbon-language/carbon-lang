@@ -1,4 +1,4 @@
-//===- PPC32RegisterInfo.cpp - PowerPC32 Register Information ---*- C++ -*-===//
+//===- PPCRegisterInfo.cpp - PowerPC Register Information -------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains the PowerPC32 implementation of the MRegisterInfo class.
+// This file contains the PowerPC implementation of the MRegisterInfo class.
 //
 //===----------------------------------------------------------------------===//
 
@@ -31,7 +31,7 @@
 #include <iostream>
 using namespace llvm;
 
-PPC32RegisterInfo::PPC32RegisterInfo()
+PPCRegisterInfo::PPCRegisterInfo()
   : PPCGenRegisterInfo(PPC::ADJCALLSTACKDOWN, PPC::ADJCALLSTACKUP) {
   ImmToIdxMap[PPC::LD]   = PPC::LDX;    ImmToIdxMap[PPC::STD]  = PPC::STDX;
   ImmToIdxMap[PPC::LBZ]  = PPC::LBZX;   ImmToIdxMap[PPC::STB]  = PPC::STBX;
@@ -44,10 +44,10 @@ PPC32RegisterInfo::PPC32RegisterInfo()
 }
 
 void
-PPC32RegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
-                                       MachineBasicBlock::iterator MI,
-                                       unsigned SrcReg, int FrameIdx,
-                                       const TargetRegisterClass *RC) const {
+PPCRegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
+                                     MachineBasicBlock::iterator MI,
+                                     unsigned SrcReg, int FrameIdx,
+                                     const TargetRegisterClass *RC) const {
   if (SrcReg == PPC::LR) {
     BuildMI(MBB, MI, PPC::MFLR, 1, PPC::R11);
     addFrameReference(BuildMI(MBB, MI, PPC::STW, 3).addReg(PPC::R11), FrameIdx);
@@ -67,7 +67,7 @@ PPC32RegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
 }
 
 void
-PPC32RegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
+PPCRegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
                                         MachineBasicBlock::iterator MI,
                                         unsigned DestReg, int FrameIdx,
                                         const TargetRegisterClass *RC) const {
@@ -89,10 +89,10 @@ PPC32RegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
   }
 }
 
-void PPC32RegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
-                                     MachineBasicBlock::iterator MI,
-                                     unsigned DestReg, unsigned SrcReg,
-                                     const TargetRegisterClass *RC) const {
+void PPCRegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
+                                   MachineBasicBlock::iterator MI,
+                                   unsigned DestReg, unsigned SrcReg,
+                                   const TargetRegisterClass *RC) const {
   MachineInstr *I;
 
   if (RC == PPC32::GPRCRegisterClass) {
@@ -109,8 +109,8 @@ void PPC32RegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
   }
 }
 
-unsigned PPC32RegisterInfo::isLoadFromStackSlot(MachineInstr *MI, 
-                                                int &FrameIndex) const {
+unsigned PPCRegisterInfo::isLoadFromStackSlot(MachineInstr *MI, 
+                                              int &FrameIndex) const {
   switch (MI->getOpcode()) {
   default: break;
   case PPC::LWZ:
@@ -128,9 +128,9 @@ unsigned PPC32RegisterInfo::isLoadFromStackSlot(MachineInstr *MI,
 
 /// foldMemoryOperand - PowerPC (like most RISC's) can only fold spills into
 /// copy instructions, turning them into load/store instructions.
-MachineInstr *PPC32RegisterInfo::foldMemoryOperand(MachineInstr *MI,
-                                                   unsigned OpNum,
-                                                   int FrameIndex) const {
+MachineInstr *PPCRegisterInfo::foldMemoryOperand(MachineInstr *MI,
+                                                 unsigned OpNum,
+                                                 int FrameIndex) const {
   // Make sure this is a reg-reg copy.  Note that we can't handle MCRF, because
   // it takes more than one instruction to store it.
   unsigned Opc = MI->getOpcode();
@@ -180,7 +180,7 @@ static bool hasFP(MachineFunction &MF) {
   return NoFramePointerElim || MF.getFrameInfo()->hasVarSizedObjects();
 }
 
-void PPC32RegisterInfo::
+void PPCRegisterInfo::
 eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
                               MachineBasicBlock::iterator I) const {
   if (hasFP(MF)) {
@@ -211,7 +211,7 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
 }
 
 void
-PPC32RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const {
+PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const {
   unsigned i = 0;
   MachineInstr &MI = *II;
   MachineBasicBlock &MBB = *MI.getParent();
@@ -261,7 +261,7 @@ PPC32RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const {
 }
 
 
-void PPC32RegisterInfo::emitPrologue(MachineFunction &MF) const {
+void PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
   MachineBasicBlock &MBB = MF.front();   // Prolog goes in entry BB
   MachineBasicBlock::iterator MBBI = MBB.begin();
   MachineFrameInfo *MFI = MF.getFrameInfo();
@@ -320,8 +320,8 @@ void PPC32RegisterInfo::emitPrologue(MachineFunction &MF) const {
   }
 }
 
-void PPC32RegisterInfo::emitEpilogue(MachineFunction &MF,
-                                     MachineBasicBlock &MBB) const {
+void PPCRegisterInfo::emitEpilogue(MachineFunction &MF,
+                                   MachineBasicBlock &MBB) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
   MachineBasicBlock::iterator MBBI = prior(MBB.end());
   MachineInstr *MI;

@@ -1,4 +1,4 @@
-//===-- PPCCodeEmitter.cpp - JIT Code Emitter for PowerPC32 -----*- C++ -*-=//
+//===-- PPCCodeEmitter.cpp - JIT Code Emitter for PowerPC32 -------*- C++ -*-=//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -74,8 +74,8 @@ namespace {
 /// of functions.  This method should returns true if machine code emission is
 /// not supported.
 ///
-bool PPC32TargetMachine::addPassesToEmitMachineCode(FunctionPassManager &PM,
-                                                    MachineCodeEmitter &MCE) {
+bool PPCTargetMachine::addPassesToEmitMachineCode(FunctionPassManager &PM,
+                                                  MachineCodeEmitter &MCE) {
   // Machine code emitter pass for PowerPC
   PM.add(new PPCCodeEmitter(*this, MCE));
   // Delete machine code for this function after emitting it

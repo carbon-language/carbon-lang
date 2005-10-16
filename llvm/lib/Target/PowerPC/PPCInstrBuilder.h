@@ -1,4 +1,4 @@
-//===-- PowerPCInstrBuilder.h - Aides for building PPC insts ----*- C++ -*-===//
+//===-- PPCInstrBuilder.h - Aides for building PPC insts --------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

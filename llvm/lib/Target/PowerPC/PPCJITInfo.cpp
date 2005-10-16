@@ -1,4 +1,4 @@
-//===-- PPC32JITInfo.cpp - Implement the JIT interfaces for the PowerPC ---===//
+//===-- PPCJITInfo.cpp - Implement the JIT interfaces for the PowerPC -----===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -154,12 +154,12 @@ extern "C" void PPC32CompilationCallbackC(unsigned *IntRegs, double *FPRegs) {
 
 
 TargetJITInfo::LazyResolverFn
-PPC32JITInfo::getLazyResolverFunction(JITCompilerFn Fn) {
+PPCJITInfo::getLazyResolverFunction(JITCompilerFn Fn) {
   JITCompilerFunction = Fn;
   return PPC32CompilationCallback;
 }
 
-void *PPC32JITInfo::emitFunctionStub(void *Fn, MachineCodeEmitter &MCE) {
+void *PPCJITInfo::emitFunctionStub(void *Fn, MachineCodeEmitter &MCE) {
   // If this is just a call to an external function, emit a branch instead of a
   // call.  The code is the same except for one bit of the last instruction.
   if (Fn != PPC32CompilationCallback) {
@@ -187,8 +187,8 @@ void *PPC32JITInfo::emitFunctionStub(void *Fn, MachineCodeEmitter &MCE) {
 }
 
 
-void PPC32JITInfo::relocate(void *Function, MachineRelocation *MR,
-                            unsigned NumRelocs, unsigned char* GOTBase) {
+void PPCJITInfo::relocate(void *Function, MachineRelocation *MR,
+                          unsigned NumRelocs, unsigned char* GOTBase) {
   for (unsigned i = 0; i != NumRelocs; ++i, ++MR) {
     unsigned *RelocPos = (unsigned*)Function + MR->getMachineCodeOffset()/4;
     intptr_t ResultPtr = (intptr_t)MR->getResultPointer();
@@ -238,6 +238,6 @@ void PPC32JITInfo::relocate(void *Function, MachineRelocation *MR,
   }
 }
 
-void PPC32JITInfo::replaceMachineCodeForFunction(void *Old, void *New) {
+void PPCJITInfo::replaceMachineCodeForFunction(void *Old, void *New) {
   EmitBranchToAt(Old, New, false);
 }

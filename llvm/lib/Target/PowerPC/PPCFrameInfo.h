@@ -1,4 +1,4 @@
-//===-- PowerPCFrameInfo.h - Define TargetFrameInfo for PowerPC -*- C++ -*-===//
+//===-- PPCFrameInfo.h - Define TargetFrameInfo for PowerPC -----*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -8,7 +8,7 @@
 //===----------------------------------------------------------------------===//
 //
 //
-//----------------------------------------------------------------------------
+//===----------------------------------------------------------------------===//
 
 #ifndef POWERPC_FRAMEINFO_H
 #define POWERPC_FRAMEINFO_H
@@ -19,12 +19,12 @@
 
 namespace llvm {
 
-class PowerPCFrameInfo: public TargetFrameInfo {
+class PPCFrameInfo: public TargetFrameInfo {
   const TargetMachine &TM;
   std::pair<unsigned, int> LR[1];
 
 public:
-  PowerPCFrameInfo(const TargetMachine &tm, bool LP64)
+  PPCFrameInfo(const TargetMachine &tm, bool LP64)
     : TargetFrameInfo(TargetFrameInfo::StackGrowsDown, 16, 0), TM(tm) {
     LR[0].first = PPC::LR;
     LR[0].second = LP64 ? 16 : 8;

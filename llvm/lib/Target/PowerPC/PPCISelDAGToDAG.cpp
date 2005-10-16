@@ -1,4 +1,4 @@
-//===-- PPC32ISelDAGToDAG.cpp - PPC32 pattern matching inst selector ------===//
+//===-- PPCISelDAGToDAG.cpp - PPC --pattern matching inst selector --------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file defines a pattern matching instruction selector for 32 bit PowerPC,
+// This file defines a pattern matching instruction selector for PowerPC,
 // converting from a legalized dag to a PPC dag.
 //
 //===----------------------------------------------------------------------===//
@@ -37,11 +37,11 @@ namespace {
   /// instructions for SelectionDAG operations.
   ///
   class PPC32DAGToDAGISel : public SelectionDAGISel {
-    PPC32TargetLowering PPC32Lowering;
+    PPCTargetLowering PPCLowering;
     unsigned GlobalBaseReg;
   public:
     PPC32DAGToDAGISel(TargetMachine &TM)
-      : SelectionDAGISel(PPC32Lowering), PPC32Lowering(TM) {}
+      : SelectionDAGISel(PPCLowering), PPCLowering(TM) {}
     
     virtual bool runOnFunction(Function &Fn) {
       // Make sure we re-emit a set of the global base reg if necessary

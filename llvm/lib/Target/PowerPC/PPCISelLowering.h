@@ -1,4 +1,4 @@
-//===-- PPC32ISelLowering.h - PPC32 DAG Lowering Interface ------*- C++ -*-===//
+//===-- PPCISelLowering.h - PPC32 DAG Lowering Interface --------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -41,11 +41,11 @@ namespace llvm {
     };
   }  
   
-  class PPC32TargetLowering : public TargetLowering {
+  class PPCTargetLowering : public TargetLowering {
     int VarArgsFrameIndex;            // FrameIndex for start of varargs area.
     int ReturnAddrIndex;              // FrameIndex for return slot.
   public:
-    PPC32TargetLowering(TargetMachine &TM);
+    PPCTargetLowering(TargetMachine &TM);
     
     /// LowerOperation - Provide custom lowering hooks for some operations.
     ///

@@ -44,7 +44,7 @@ Statistic<> FrameOff("ppc-codegen", "Number of frame idx offsets collapsed");
 //===--------------------------------------------------------------------===//
 
 class ISel : public SelectionDAGISel {
-  PPC32TargetLowering PPC32Lowering;
+  PPCTargetLowering PPCLowering;
   SelectionDAG *ISelDAG;  // Hack to support us having a dag->dag transform
                           // for sdiv and udiv until it is put into the future
                           // dag combiner.
@@ -58,7 +58,7 @@ class ISel : public SelectionDAGISel {
   bool GlobalBaseInitialized;
   bool RecordSuccess;
 public:
-  ISel(TargetMachine &TM) : SelectionDAGISel(PPC32Lowering), PPC32Lowering(TM),
+  ISel(TargetMachine &TM) : SelectionDAGISel(PPCLowering), PPCLowering(TM),
                             ISelDAG(0) {}
 
   /// runOnFunction - Override this function in order to reset our per-function

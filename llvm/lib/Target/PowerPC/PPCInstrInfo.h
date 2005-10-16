@@ -1,4 +1,4 @@
-//===- PPC32InstrInfo.h - PowerPC32 Instruction Information -----*- C++ -*-===//
+//===- PPCInstrInfo.h - PowerPC32 Instruction Information -------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -20,10 +20,10 @@
 
 namespace llvm {
   
-class PPC32InstrInfo : public TargetInstrInfo {
-  const PPC32RegisterInfo RI;
+class PPCInstrInfo : public TargetInstrInfo {
+  const PPCRegisterInfo RI;
 public:
-  PPC32InstrInfo();
+  PPCInstrInfo();
 
   /// getRegisterInfo - TargetInstrInfo is a superset of MRegister info.  As
   /// such, whenever a client has an instance of instruction info, it should

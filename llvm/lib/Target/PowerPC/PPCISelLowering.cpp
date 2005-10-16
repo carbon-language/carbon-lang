@@ -1,4 +1,4 @@
-//===-- PPC32ISelLowering.cpp - PPC32 DAG Lowering Implementation ---------===//
+//===-- PPCISelLowering.cpp - PPC32 DAG Lowering Implementation -----------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements the PPC32ISelLowering class.
+// This file implements the PPCISelLowering class.
 //
 //===----------------------------------------------------------------------===//
 
@@ -22,7 +22,7 @@
 #include "llvm/Function.h"
 using namespace llvm;
 
-PPC32TargetLowering::PPC32TargetLowering(TargetMachine &TM)
+PPCTargetLowering::PPCTargetLowering(TargetMachine &TM)
   : TargetLowering(TM) {
     
   // Fold away setcc operations if possible.
@@ -125,7 +125,7 @@ static bool isFloatingPointZero(SDOperand Op) {
 
 /// LowerOperation - Provide custom lowering hooks for some operations.
 ///
-SDOperand PPC32TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
+SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   switch (Op.getOpcode()) {
   default: assert(0 && "Wasn't expecting to be able to lower this!"); 
   case ISD::FP_TO_SINT: {
@@ -311,7 +311,7 @@ SDOperand PPC32TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
 }
 
 std::vector<SDOperand>
-PPC32TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
+PPCTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
   //
   // add beautiful description of PPC stack frame format, or at least some docs
   //
@@ -490,11 +490,11 @@ PPC32TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
 }
 
 std::pair<SDOperand, SDOperand>
-PPC32TargetLowering::LowerCallTo(SDOperand Chain,
-                                 const Type *RetTy, bool isVarArg,
-                                 unsigned CallingConv, bool isTailCall,
-                                 SDOperand Callee, ArgListTy &Args,
-                                 SelectionDAG &DAG) {
+PPCTargetLowering::LowerCallTo(SDOperand Chain,
+                               const Type *RetTy, bool isVarArg,
+                               unsigned CallingConv, bool isTailCall,
+                               SDOperand Callee, ArgListTy &Args,
+                               SelectionDAG &DAG) {
   // args_to_use will accumulate outgoing args for the ISD::CALL case in
   // SelectExpr to use to put the arguments in the appropriate registers.
   std::vector<SDOperand> args_to_use;
@@ -687,8 +687,8 @@ PPC32TargetLowering::LowerCallTo(SDOperand Chain,
   return std::make_pair(RetVal, Chain);
 }
 
-SDOperand PPC32TargetLowering::LowerVAStart(SDOperand Chain, SDOperand VAListP,
-                                            Value *VAListV, SelectionDAG &DAG) {
+SDOperand PPCTargetLowering::LowerVAStart(SDOperand Chain, SDOperand VAListP,
+                                          Value *VAListV, SelectionDAG &DAG) {
   // vastart just stores the address of the VarArgsFrameIndex slot into the
   // memory location argument.
   SDOperand FR = DAG.getFrameIndex(VarArgsFrameIndex, MVT::i32);
@@ -697,9 +697,9 @@ SDOperand PPC32TargetLowering::LowerVAStart(SDOperand Chain, SDOperand VAListP,
 }
 
 std::pair<SDOperand,SDOperand>
-PPC32TargetLowering::LowerVAArg(SDOperand Chain,
-                                SDOperand VAListP, Value *VAListV,
-                                const Type *ArgTy, SelectionDAG &DAG) {
+PPCTargetLowering::LowerVAArg(SDOperand Chain,
+                              SDOperand VAListP, Value *VAListV,
+                              const Type *ArgTy, SelectionDAG &DAG) {
   MVT::ValueType ArgVT = getValueType(ArgTy);
   
   SDOperand VAList =
@@ -721,7 +721,7 @@ PPC32TargetLowering::LowerVAArg(SDOperand Chain,
 }
 
 
-std::pair<SDOperand, SDOperand> PPC32TargetLowering::
+std::pair<SDOperand, SDOperand> PPCTargetLowering::
 LowerFrameReturnAddress(bool isFrameAddress, SDOperand Chain, unsigned Depth,
                         SelectionDAG &DAG) {
   assert(0 && "LowerFrameReturnAddress unimplemented");
@@ -729,8 +729,8 @@ LowerFrameReturnAddress(bool isFrameAddress, SDOperand Chain, unsigned Depth,
 }
 
 MachineBasicBlock *
-PPC32TargetLowering::InsertAtEndOfBasicBlock(MachineInstr *MI,
-                                             MachineBasicBlock *BB) {
+PPCTargetLowering::InsertAtEndOfBasicBlock(MachineInstr *MI,
+                                           MachineBasicBlock *BB) {
   assert((MI->getOpcode() == PPC::SELECT_CC_Int ||
           MI->getOpcode() == PPC::SELECT_CC_F4 ||
           MI->getOpcode() == PPC::SELECT_CC_F8) &&

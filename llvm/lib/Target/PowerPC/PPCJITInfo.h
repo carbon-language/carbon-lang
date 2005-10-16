@@ -19,24 +19,18 @@
 namespace llvm {
   class TargetMachine;
 
-  // FIXME: Merge into one PPCJITInfo class.
-  class PowerPCJITInfo : public TargetJITInfo {
+  class PPCJITInfo : public TargetJITInfo {
   protected:
     TargetMachine &TM;
   public:
-    PowerPCJITInfo(TargetMachine &tm) : TM(tm) {useGOT = 0;}
+    PPCJITInfo(TargetMachine &tm) : TM(tm) {useGOT = 0;}
 
     /// addPassesToJITCompile - Add passes to the specified pass manager to
     /// implement a fast dynamic compiler for this target.  Return true if this
     /// is not supported for this target.
     ///
     virtual void addPassesToJITCompile(FunctionPassManager &PM);
-  };
-  
-  class PPC32JITInfo : public PowerPCJITInfo {
-  public:
-    PPC32JITInfo(TargetMachine &tm) : PowerPCJITInfo(tm) {}
-    
+
     virtual void *emitFunctionStub(void *Fn, MachineCodeEmitter &MCE);
     virtual LazyResolverFn getLazyResolverFunction(JITCompilerFn);
     virtual void relocate(void *Function, MachineRelocation *MR,

@@ -1,4 +1,4 @@
-//===- PPC32InstrInfo.cpp - PowerPC32 Instruction Information ---*- C++ -*-===//
+//===- PPCInstrInfo.cpp - PowerPC32 Instruction Information -----*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -18,12 +18,12 @@
 #include <iostream>
 using namespace llvm;
 
-PPC32InstrInfo::PPC32InstrInfo()
+PPCInstrInfo::PPCInstrInfo()
   : TargetInstrInfo(PPCInsts, sizeof(PPCInsts)/sizeof(PPCInsts[0])) {}
 
-bool PPC32InstrInfo::isMoveInstr(const MachineInstr& MI,
-                                 unsigned& sourceReg,
-                                 unsigned& destReg) const {
+bool PPCInstrInfo::isMoveInstr(const MachineInstr& MI,
+                               unsigned& sourceReg,
+                               unsigned& destReg) const {
   MachineOpCode oc = MI.getOpcode();
   if (oc == PPC::OR) {                      // or r1, r2, r2
     assert(MI.getNumOperands() == 3 &&
@@ -80,7 +80,7 @@ bool PPC32InstrInfo::isMoveInstr(const MachineInstr& MI,
 
 // commuteInstruction - We can commute rlwimi instructions, but only if the
 // rotate amt is zero.  We also have to munge the immediates a bit.
-MachineInstr *PPC32InstrInfo::commuteInstruction(MachineInstr *MI) const {
+MachineInstr *PPCInstrInfo::commuteInstruction(MachineInstr *MI) const {
   // Normal instructions can be commuted the obvious way.
   if (MI->getOpcode() != PPC::RLWIMI)
     return TargetInstrInfo::commuteInstruction(MI);

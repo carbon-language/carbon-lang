@@ -1,4 +1,4 @@
-//===-- PPCAsmPrinter.cpp - Print machine instrs to PowerPC assembly --===//
+//===-- PPCAsmPrinter.cpp - Print machine instrs to PowerPC assembly --------=//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -57,8 +57,8 @@ namespace {
       return "PowerPC Assembly Printer";
     }
 
-    PowerPCTargetMachine &getTM() {
-      return static_cast<PowerPCTargetMachine&>(TM);
+    PPCTargetMachine &getTM() {
+      return static_cast<PPCTargetMachine&>(TM);
     }
 
     unsigned enumRegToMachineReg(unsigned enumReg) {

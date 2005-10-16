@@ -1,4 +1,4 @@
-//===-- PowerPCTargetMachine.cpp - Define TargetMachine for PowerPC -------===//
+//===-- PPCTargetMachine.cpp - Define TargetMachine for PowerPC -----------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -29,30 +29,15 @@
 using namespace llvm;
 
 namespace {
-  const char *PPC32ID = "PowerPC/32bit";
-
   static cl::opt<bool> DisablePPCDAGDAG("disable-ppc-dag-isel", cl::Hidden,
                              cl::desc("Disable DAG-to-DAG isel for PPC"));
   
   // Register the targets
-  RegisterTarget<PPC32TargetMachine>
-  X("ppc32", "  PowerPC 32-bit");
+  RegisterTarget<PPCTargetMachine>
+  X("ppc32", "  PowerPC");
 }
 
-PowerPCTargetMachine::PowerPCTargetMachine(const std::string &name,
-                                           IntrinsicLowering *IL,
-                                           const Module &M,
-                                           const std::string &FS,
-                                           const TargetData &TD,
-                                           const PowerPCFrameInfo &TFI)
-: TargetMachine(name, IL, TD), FrameInfo(TFI), Subtarget(M, FS) {
-  if (TargetDefault == PPCTarget) {
-    if (Subtarget.isAIX()) PPCTarget = TargetAIX;
-    if (Subtarget.isDarwin()) PPCTarget = TargetDarwin;
-  }
-}
-
-unsigned PPC32TargetMachine::getJITMatchQuality() {
+unsigned PPCTargetMachine::getJITMatchQuality() {
 #if defined(__POWERPC__) || defined (__ppc__) || defined(_POWER)
   return 10;
 #else
@@ -60,12 +45,38 @@ unsigned PPC32TargetMachine::getJITMatchQuality() {
 #endif
 }
 
+unsigned PPCTargetMachine::getModuleMatchQuality(const Module &M) {
+  // We strongly match "powerpc-*".
+  std::string TT = M.getTargetTriple();
+  if (TT.size() >= 8 && std::string(TT.begin(), TT.begin()+8) == "powerpc-")
+    return 20;
+  
+  if (M.getEndianness()  == Module::BigEndian &&
+      M.getPointerSize() == Module::Pointer32)
+    return 10;                                   // Weak match
+  else if (M.getEndianness() != Module::AnyEndianness ||
+           M.getPointerSize() != Module::AnyPointerSize)
+    return 0;                                    // Match for some other target
+  
+  return getJITMatchQuality()/2;
+}
+
+PPCTargetMachine::PPCTargetMachine(const Module &M, IntrinsicLowering *IL,
+                                   const std::string &FS)
+: TargetMachine("PowerPC", IL, false, 4, 4, 4, 4, 4, 4, 2, 1, 1),
+  Subtarget(M, FS), FrameInfo(*this, false), JITInfo(*this) {
+  if (TargetDefault == PPCTarget) {
+    if (Subtarget.isAIX()) PPCTarget = TargetAIX;
+    if (Subtarget.isDarwin()) PPCTarget = TargetDarwin;
+  }
+}
+
 /// addPassesToEmitFile - Add passes to the specified pass manager to implement
 /// a static compiler for this target.
 ///
-bool PowerPCTargetMachine::addPassesToEmitFile(PassManager &PM,
-                                               std::ostream &Out,
-                                                CodeGenFileType FileType) {
+bool PPCTargetMachine::addPassesToEmitFile(PassManager &PM,
+                                           std::ostream &Out,
+                                           CodeGenFileType FileType) {
   if (FileType != TargetMachine::AssemblyFile) return true;
 
   // Run loop strength reduction before anything else.
@@ -121,7 +132,7 @@ bool PowerPCTargetMachine::addPassesToEmitFile(PassManager &PM,
   return false;
 }
 
-void PowerPCJITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
+void PPCJITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
   // The JIT does not support or need PIC.
   PICEnabled = false;
 
@@ -159,26 +170,3 @@ void PowerPCJITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
     PM.add(createMachineFunctionPrinterPass(&std::cerr));
 }
 
-/// PowerPCTargetMachine ctor - Create an ILP32 architecture model
-///
-PPC32TargetMachine::PPC32TargetMachine(const Module &M, IntrinsicLowering *IL,
-                                       const std::string &FS)
-  : PowerPCTargetMachine(PPC32ID, IL, M, FS,
-                         TargetData(PPC32ID,false,4,4,4,4,4,4,2,1,1),
-                         PowerPCFrameInfo(*this, false)), JITInfo(*this) {}
-
-unsigned PPC32TargetMachine::getModuleMatchQuality(const Module &M) {
-  // We strongly match "powerpc-*".
-  std::string TT = M.getTargetTriple();
-  if (TT.size() >= 8 && std::string(TT.begin(), TT.begin()+8) == "powerpc-")
-    return 20;
-
-  if (M.getEndianness()  == Module::BigEndian &&
-      M.getPointerSize() == Module::Pointer32)
-    return 10;                                   // Weak match
-  else if (M.getEndianness() != Module::AnyEndianness ||
-           M.getPointerSize() != Module::AnyPointerSize)
-    return 0;                                    // Match for some other target
-
-  return getJITMatchQuality()/2;
-}

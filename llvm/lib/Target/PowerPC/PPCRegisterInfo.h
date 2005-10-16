@@ -1,4 +1,4 @@
-//===- PPC32RegisterInfo.h - PowerPC32 Register Information Impl -*- C++ -*-==//
+//===- PPCRegisterInfo.h - PowerPC Register Information Impl -----*- C++ -*-==//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -22,10 +22,10 @@ namespace llvm {
 
 class Type;
 
-class PPC32RegisterInfo : public PPCGenRegisterInfo {
+class PPCRegisterInfo : public PPCGenRegisterInfo {
   std::map<unsigned, unsigned> ImmToIdxMap;
 public:
-  PPC32RegisterInfo();
+  PPCRegisterInfo();
 
   /// Code Generation virtual methods...
   void storeRegToStackSlot(MachineBasicBlock &MBB,
