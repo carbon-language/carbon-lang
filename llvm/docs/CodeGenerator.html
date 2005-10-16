@@ -731,8 +731,10 @@ instruction selector to be generated from these <tt>.td</tt> files.</p>
 The SelectionDAG provides an abstraction for code representation in a way that 
 is amenable to instruction selection using automatic techniques
 (e.g. dynamic-programming based optimal pattern matching selectors), It is also
-well suited to other phases of code generation; in particular, instruction scheduling.  Additionally, the SelectionDAG provides a host representation where a 
-large variety of very-low-level (but target-independent) 
+well suited to other phases of code generation; in particular,
+instruction scheduling (SelectionDAG's are very close to scheduling DAGs
+post-selection).  Additionally, the SelectionDAG provides a host representation
+where a large variety of very-low-level (but target-independent) 
 <a href="#selectiondag_optimize">optimizations</a> may be
 performed: ones which require extensive information about the instructions
 efficiently supported by the target.
@@ -741,11 +743,10 @@ efficiently supported by the target.
 <p>
 The SelectionDAG is a Directed-Acyclic-Graph whose nodes are instances of the
 <tt>SDNode</tt> class.  The primary payload of the <tt>SDNode</tt> is its 
-operation code (Opcode) that indicates what operation the node performs.  
+operation code (Opcode) that indicates what operation the node performs and
+the operands to the operation.
 The various operation node types are described at the top of the
-<tt>include/llvm/CodeGen/SelectionDAGNodes.h</tt> file.  Depending on the 
-operation, nodes may contain additional information (e.g. the condition code
-for a SETCC node) contained in a derived class.</p>
+<tt>include/llvm/CodeGen/SelectionDAGNodes.h</tt> file.</p>
 
 <p>Although most operations define a single value, each node in the graph may 
 define multiple values.  For example, a combined div/rem operation will define
@@ -779,8 +780,10 @@ block function, this would be the return node.
 <p>
 One important concept for SelectionDAGs is the notion of a "legal" vs. "illegal"
 DAG.  A legal DAG for a target is one that only uses supported operations and
-supported types.  On PowerPC, for example, a DAG with any values of i1, i8, i16,
-or i64 type would be illegal.  The <a href="#selectiondag_legalize">legalize</a>
+supported types.  On a 32-bit PowerPC, for example, a DAG with any values of i1,
+i8, i16,
+or i64 type would be illegal, as would a DAG that uses a SREM or UREM operation.
+The <a href="#selectiondag_legalize">legalize</a>
 phase is responsible for turning an illegal DAG into a legal DAG.
 </p>
 </div>
@@ -841,7 +844,8 @@ intent of  this pass is to expose as much low-level, target-specific details
 to the SelectionDAG as possible.  This pass is mostly hard-coded (e.g. an LLVM 
 add turns into an SDNode add while a geteelementptr is expanded into the obvious
 arithmetic). This pass requires target-specific hooks to lower calls and
-returns, varargs, etc.  For these features, the TargetLowering interface is
+returns, varargs, etc.  For these features, the <a 
+href="#targetlowering">TargetLowering</a> interface is
 used.
 </p>
 
@@ -860,34 +864,41 @@ tasks:</p>
 
 <ol>
 <li><p>Convert values of unsupported types to values of supported types.</p>
-    <p>There are two main ways of doing this: promoting a small type to a larger
-       type (e.g. f32 -&gt; f64, or i16 -&gt; i32), and breaking up large 
-       integer types
-       to smaller ones (e.g. implementing i64 with i32 operations where
-       possible).  Type conversions can insert sign and zero extensions as 
+    <p>There are two main ways of doing this: converting small types to 
+       larger types ("promoting"), and breaking up large integer types
+       into smaller ones ("expanding").  For example, a target might require
+       that all f32 values are promoted to f64 and that all i1/i8/i16 values
+       are promoted to i32.  The same target might require that all i64 values
+       be expanded into i32 values.  These changes can insert sign and zero
+       extensions as 
        needed to make sure that the final code has the same behavior as the 
        input.</p>
+    <p>A target implementation tells the legalizer which types are supported
+       (and which register class to use for them) by calling the
+       "addRegisterClass" method in its TargetLowering constructor.</p>
 </li>
 
-<li><p>Eliminate operations that are not supported by the target in a supported
-       type.</p>
-    <p>Targets often have wierd constraints, such as not supporting every
+<li><p>Eliminate operations that are not supported by the target.</p>
+    <p>Targets often have weird constraints, such as not supporting every
        operation on every supported datatype (e.g. X86 does not support byte
-       conditional moves).  Legalize takes care of either open-coding another 
-       sequence of operations to emulate the operation (this is known as
-       expansion), promoting to a larger type that supports the operation
+       conditional moves and PowerPC does not support sign-extending loads from
+       a 16-bit memory location).  Legalize takes care by open-coding
+       another sequence of operations to emulate the operation ("expansion"), by
+       promoting to a larger type that supports the operation
        (promotion), or using a target-specific hook to implement the
-       legalization.</p>
+       legalization (custom).</p>
+    <p>A target implementation tells the legalizer which operations are not
+       supported (and which of the above three actions to take) by calling the
+       "setOperationAction" method in its TargetLowering constructor.</p>
 </li>
 </ol>
 
 <p>
-Instead of using a Legalize pass, we could require that every target-specific 
-<a href="#selectiondag_optimize">selector</a> supports and expands every 
-operator and type even if they are not supported and may require many 
-instructions to implement (in fact, this is the approach taken by the 
-"simple" selectors).  However, using a Legalize pass allows all of the 
-cannonicalization patterns to be shared across targets which makes it very 
+Prior to the existance of the Legalize pass, we required that every
+target <a href="#selectiondag_optimize">selector</a> supported and handled every
+operator and type even if they are not natively supported.  The introduction of
+the Legalize phase allows all of the 
+cannonicalization patterns to be shared across targets, and makes it very 
 easy to optimize the cannonicalized code because it is still in the form of 
 a DAG.
 </p>
@@ -908,8 +919,8 @@ immediately after the DAG is built and once after legalization.  The first run
 of the pass allows the initial code to be cleaned up (e.g. performing 
 optimizations that depend on knowing that the operators have restricted type 
 inputs).  The second run of the pass cleans up the messy code generated by the 
-Legalize pass, allowing Legalize to be very simple since it can ignore many 
-special cases. 
+Legalize pass, which allows Legalize to be very simple (it can focus on making
+code legal instead of focusing on generating <i>good</i> and legal code).
 </p>
 
 <p>
@@ -944,10 +955,134 @@ International Conference on Compiler Construction (CC) 2004
 <div class="doc_text">
 
 <p>The Select phase is the bulk of the target-specific code for instruction
-selection.  This phase takes a legal SelectionDAG as input, and does simple
-pattern matching on the DAG to generate code.  In time, the Select phase will
-be automatically generated from the target's InstrInfo.td file, which is why we
-want to make the Select phase as simple and mechanical as possible.</p>
+selection.  This phase takes a legal SelectionDAG as input,
+pattern matches the instructions supported by the target to this DAG, and
+produces a new DAG of target code.  For example, consider the following LLVM
+fragment:</p>
+
+<pre>
+   %t1 = add float %W, %X
+   %t2 = mul float %t1, %Y
+   %t3 = add float %t2, %Z
+</pre>
+
+<p>This LLVM code corresponds to a SelectionDAG that looks basically like this:
+</p>
+
+<pre>
+  (fadd:f32 (fmul:f32 (fadd:f32 W, X), Y), Z)
+</pre>
+
+<p>If a target supports floating pointer multiple-and-add (FMA) operations, one
+of the adds can be merged with the multiply.  On the PowerPC, for example, the
+output of the instruction selector might look like this DAG:</p>
+
+<pre>
+  (FMADDS (FADDS W, X), Y, Z)
+</pre>
+
+<p>
+The FMADDS instruction is a ternary instruction that multiplies its first two
+operands and adds the third (as single-precision floating-point numbers).  The
+FADDS instruction is a simple binary single-precision add instruction.  To
+perform this pattern match, the PowerPC backend includes the following
+instruction definitions:
+</p>
+
+<pre>
+def FMADDS : AForm_1&lt;59, 29,
+                    (ops F4RC:$FRT, F4RC:$FRA, F4RC:$FRC, F4RC:$FRB),
+                    "fmadds $FRT, $FRA, $FRC, $FRB",
+                    [<b>(set F4RC:$FRT, (fadd (fmul F4RC:$FRA, F4RC:$FRC),
+                                           F4RC:$FRB))</b>]&gt;;
+def FADDS : AForm_2&lt;59, 21,
+                    (ops F4RC:$FRT, F4RC:$FRA, F4RC:$FRB),
+                    "fadds $FRT, $FRA, $FRB",
+                    [<b>(set F4RC:$FRT, (fadd F4RC:$FRA, F4RC:$FRB))</b>]&gt;;
+</pre>
+
+<p>The portion of the instruction definition in bold indicates the pattern used
+to match the instruction.  The DAG operators (like <tt>fmul</tt>/<tt>fadd</tt>)
+are defined in the <tt>lib/Target/TargetSelectionDAG.td</tt> file.  
+"<tt>F4RC</tt>" is the register class of the input and result values.<p>
+
+<p>The TableGen DAG instruction selector generator reads the instruction 
+patterns in the .td and automatically builds parts of the pattern matching code
+for your target.  It has the following strengths:</p>
+
+<ul>
+<li>At compiler-compiler time, it analyzes your instruction patterns and tells
+    you if things are legal or not.</li>
+<li>It can handle arbitrary constraints on operands for the pattern match.  In
+    particular, it is straight forward to say things like "match any immediate
+    that is a 13-bit sign-extended value".  For examples, see the 
+    <tt>immSExt16</tt> and related tblgen classes in the PowerPC backend.</li>
+<li>It knows several important identities for the patterns defined.  For
+    example, it knows that addition is commutative, so it allows the 
+    <tt>FMADDS</tt> pattern above to match "<tt>(fadd X, (fmul Y, Z))</tt>" as
+    well as "<tt>(fadd (fmul X, Y), Z)</tt>", without the target author having
+    to specially handle this case.</li>
+<li>It has a full strength type-inferencing system.  In particular, you should
+    rarely have to explicitly tell the system what type parts of your patterns
+    are.  In the FMADDS case above, we didn't have to tell tblgen that all of
+    the nodes in the pattern are of type 'f32'.  It was able to infer and
+    propagate this knowledge from the fact that F4RC has type 'f32'.</li>
+<li>Targets can define their own (and rely on built-in) "pattern fragments".
+    Pattern fragments are chunks of reusable patterns that get inlined into your
+    patterns during compiler-compiler time.  For example, the integer "(not x)"
+    operation is actually defined as a pattern fragment that expands as
+    "(xor x, -1)", since the SelectionDAG does not have a native 'not'
+    operation.  Targets can define their own short-hand fragments as they see
+    fit.  See the definition of 'not' and 'ineg' for examples.</li>
+<li>In addition to instructions, targets can specify arbitrary patterns that
+    map to one or more instructions, using the 'Pat' definition.  For example,
+    the PowerPC has no way of loading an arbitrary integer immediate into a
+    register in one instruction. To tell tblgen how to do this, it defines:
+    
+    <pre>
+    // Arbitrary immediate support.  Implement in terms of LIS/ORI.
+    def : Pat&lt;(i32 imm:$imm),
+              (ORI (LIS (HI16 imm:$imm)), (LO16 imm:$imm))&gt;;
+    </pre>
+    
+    If none of the single-instruction patterns for loading an immediate into a
+    register match, this will be used.  This rule says "match an arbitrary i32
+    immediate, turning it into an ORI ('or a 16-bit immediate') and an LIS
+    ('load 16-bit immediate, where the immediate is shifted to the left 16
+    bits') instruction".  To make this work, the LO16/HI16 node transformations
+    are used to manipulate the input immediate (in this case, take the high or
+    low 16-bits of the immediate).
+    </li>
+<li>While the system does automate a lot, it still allows you to write custom
+    C++ code to match special cases, in case there is something that is hard
+    to express.</li>
+</ul>
+
+<p>
+While it has many strengths, the system currently has some limitations,
+primarily because it is a work in progress and is not yet finished:
+</p>
+
+<ul>
+<li>Overall, there is no way to define or match SelectionDAG nodes that define
+    multiple values (e.g. ADD_PARTS, LOAD, CALL, etc).  This is the biggest
+    reason that you currently still <i>have to</i> write custom C++ code for
+    your instruction selector.</li>
+<li>There is no great way to support match complex addressing modes yet.  In the
+    future, we will extend pattern fragments to allow them to define multiple
+    values (e.g. the four operands of the <a href="#x86_memory">X86 addressing
+    mode</a>).  In addition, we'll extend fragments so that a fragment can match
+    multiple different patterns.</li>
+<li>We don't automatically infer flags like isStore/isLoad yet.</li>
+<li>We don't automatically generate the set of supported registers and
+    operations for the <a href="#"selectiondag_legalize>Legalizer</a> yet.</li>
+<li>We don't have a way of tying in custom legalized nodes yet.</li>
+</li>
+
+<p>Despite these limitations, the instruction selector generator is still quite
+useful for most of the binary and logical operations in typical instruction
+sets.  If you run into any problems or can't figure out how to do something, 
+please let Chris know!</p>
 
 </div>
 
