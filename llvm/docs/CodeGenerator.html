@@ -15,7 +15,8 @@
   <li><a href="#introduction">Introduction</a>
     <ul>
       <li><a href="#required">Required components in the code generator</a></li>
-      <li><a href="#high-level-design">The high-level design of the code generator</a></li>
+      <li><a href="#high-level-design">The high-level design of the code
+          generator</a></li>
       <li><a href="#tablegen">Using TableGen for target description</a></li>
     </ul>
   </li>
@@ -46,8 +47,10 @@
                                         Construction</a></li>
       <li><a href="#selectiondag_legalize">SelectionDAG Legalize Phase</a></li>
       <li><a href="#selectiondag_optimize">SelectionDAG Optimization
-                                           Phase</a></li>
+                                           Phase: the DAG Combiner</a></li>
       <li><a href="#selectiondag_select">SelectionDAG Select Phase</a></li>
+      <li><a href="#selectiondag_sched">SelectionDAG Scheduling and Emission
+                                        Phase</a></li>
       <li><a href="#selectiondag_future">Future directions for the
                                          SelectionDAG</a></li>
       </ul></li>
@@ -631,23 +634,15 @@ explains how they work and some of the rationale behind their design.</p>
 Instruction Selection is the process of translating LLVM code presented to the
 code generator into target-specific machine instructions.  There are several
 well-known ways to do this in the literature.  In LLVM there are two main forms:
-the old-style 'simple' instruction selector (which effectively peephole selects
-each LLVM instruction into a series of machine instructions), and the new
-SelectionDAG based instruction selector.
+the SelectionDAG based instruction selector framework and an old-style 'simple'
+instruction selector (which effectively peephole selects each LLVM instruction
+into a series of machine instructions).  We recommend that all targets use the
+SelectionDAG infrastructure.
 </p>
 
-<p>The 'simple' instruction selectors are tedious to write, require a lot of
-boiler plate code, and are difficult to get correct.  Additionally, any
-optimizations written for a simple instruction selector cannot be used by other
-targets.  For this reason, LLVM is moving to a new SelectionDAG based
-instruction selector, which is described in this section.  If you are starting a
-new port, we recommend that you write the instruction selector using the
-SelectionDAG infrastructure.</p>
-
-<p>In time, most of the target-specific code for instruction selection will be
-auto-generated from the target description (<tt>*.td</tt>) files.  For now, 
-however, the <a href="#selectiondag_select">Select Phase</a> must still be 
-written by hand.</p>
+<p>Portions of the DAG instruction selector are generated from the target 
+description files (<tt>*.td</tt>) files.  Eventually, we aim for the entire
+instruction selector to be generated from these <tt>.td</tt> files.</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
@@ -744,8 +739,12 @@ SelectionDAG-based instruction selection consists of the following steps:
     eliminate inefficiencies introduced by legalization.</li>
 <li><a href="#selectiondag_select">Select instructions from DAG</a> - Finally,
     the target instruction selector matches the DAG operations to target
-    instructions, emitting them and building the MachineFunction being
-    compiled.</li>
+    instructions.  This process translates the target-independent input DAG into
+    another DAG of target instructions.</li>
+<li><a href="#selectiondag_sched">SelectionDAG Scheduling and Emission</a>
+    - The last phase assigns a linear order to the instructions in the 
+    target-instruction DAG and emits them into the MachineFunction being
+    compiled.  This step uses traditional prepass scheduling techniques.</li>
 </ol>
 
 <p>After all of these steps are complete, the SelectionDAG is destroyed and the
@@ -822,7 +821,8 @@ a DAG.
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
-  <a name="selectiondag_optimize">SelectionDAG Optimization Phase</a>
+  <a name="selectiondag_optimize">SelectionDAG Optimization Phase: the DAG
+  Combiner</a>
 </div>
 
 <div class="doc_text">
@@ -838,8 +838,9 @@ special cases.
 </p>
 
 <p>
-One important class of optimizations that this pass will do in the future is
-optimizing inserted sign and zero extension instructions.  Here are some good
+One important class of optimizations performed is optimizing inserted sign and
+zero extension instructions.  We currently use ad-hoc techniques, but could move
+to more rigorous techniques in the future.  Here are some good
 papers on the subject:</p>
 
 <p>
@@ -877,18 +878,31 @@ want to make the Select phase as simple and mechanical as possible.</p>
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
+  <a name="selectiondag_sched">SelectionDAG Scheduling and Emission Phase</a>
+</div>
+
+<div class="doc_text">
+
+<p>The scheduling phase takes the DAG of target instructions from the selection
+phase and assigns an order.  The scheduler can pick an order depending on
+various constraints of the machines (i.e. order for minimal register pressure or
+try to cover instruction latencies).  Once an order is established, the DAG is
+converted to a list of <a href="#machineinstr">MachineInstr</a>s and the
+Selection DAG is destroyed.
+</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
   <a name="selectiondag_future">Future directions for the SelectionDAG</a>
 </div>
 
 <div class="doc_text">
 
 <ol>
-<li>Optional whole-function selection.</li>
-<li>Select is a graph translation phase.</li>
-<li>Place the machine instructions resulting from Select according to register 
-pressure or a schedule.</li>
-<li>DAG Scheduling.</li>
-<li>Auto-generate the Select phase from the target description (*.td) files.
+<li>Optional function-at-a-time selection.</li>
+<li>Auto-generate entire selector from .td file.</li>
 </li>
 </ol>
 
