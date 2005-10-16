@@ -411,7 +411,7 @@ private:
                            unsigned PatternNo, std::ostream &OS);
   unsigned CodeGenPatternResult(TreePatternNode *N, unsigned &Ctr,
                                 std::map<std::string,std::string> &VariableMap, 
-                                std::ostream &OS);      
+                                std::ostream &OS, bool isRoot = false);      
   void EmitCodeForPattern(PatternToMatch &Pattern, std::ostream &OS);
   void EmitInstructionSelector(std::ostream &OS);
 };

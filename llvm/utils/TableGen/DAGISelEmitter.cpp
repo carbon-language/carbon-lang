@@ -1554,9 +1554,10 @@ void DAGISelEmitter::EmitMatchForPattern(TreePatternNode *N,
 unsigned DAGISelEmitter::
 CodeGenPatternResult(TreePatternNode *N, unsigned &Ctr,
                      std::map<std::string,std::string> &VariableMap, 
-                     std::ostream &OS) {
+                     std::ostream &OS, bool isRoot) {
   // This is something selected from the pattern we matched.
   if (!N->getName().empty()) {
+    assert(!isRoot && "Root of pattern cannot be a leaf!");
     std::string &Val = VariableMap[N->getName()];
     assert(!Val.empty() &&
            "Variable referenced but not defined and not caught earlier!");
@@ -1603,12 +1604,33 @@ CodeGenPatternResult(TreePatternNode *N, unsigned &Ctr,
     CodeGenInstruction &II = Target.getInstruction(Op->getName());
     unsigned ResNo = Ctr++;
     
-    OS << "      SDOperand Tmp" << ResNo << " = CurDAG->getTargetNode("
-       << II.Namespace << "::" << II.TheDef->getName() << ", MVT::"
-       << getEnumName(N->getType());
-    for (unsigned i = 0, e = Ops.size(); i != e; ++i)
-      OS << ", Tmp" << Ops[i];
-    OS << ");\n";
+    if (!isRoot) {
+      OS << "      SDOperand Tmp" << ResNo << " = CurDAG->getTargetNode("
+         << II.Namespace << "::" << II.TheDef->getName() << ", MVT::"
+         << getEnumName(N->getType());
+      for (unsigned i = 0, e = Ops.size(); i != e; ++i)
+        OS << ", Tmp" << Ops[i];
+      OS << ");\n";
+    } else {
+      // If this instruction is the root, and if there is only one use of it,
+      // use SelectNodeTo instead of getTargetNode to avoid an allocation.
+      OS << "      if (N.Val->hasOneUse()) {\n";
+      OS << "        CurDAG->SelectNodeTo(N.Val, "
+         << II.Namespace << "::" << II.TheDef->getName() << ", MVT::"
+         << getEnumName(N->getType());
+      for (unsigned i = 0, e = Ops.size(); i != e; ++i)
+        OS << ", Tmp" << Ops[i];
+      OS << ");\n";
+      OS << "        return N;\n";
+      OS << "      } else {\n";
+      OS << "        return CodeGenMap[N] = CurDAG->getTargetNode("
+      << II.Namespace << "::" << II.TheDef->getName() << ", MVT::"
+      << getEnumName(N->getType());
+      for (unsigned i = 0, e = Ops.size(); i != e; ++i)
+        OS << ", Tmp" << Ops[i];
+      OS << ");\n";
+      OS << "      }\n";
+    }
     return ResNo;
   } else if (Op->isSubClassOf("SDNodeXForm")) {
     assert(N->getNumChildren() == 1 && "node xform should have one child!");
@@ -1617,6 +1639,10 @@ CodeGenPatternResult(TreePatternNode *N, unsigned &Ctr,
     unsigned ResNo = Ctr++;
     OS << "      SDOperand Tmp" << ResNo << " = Transform_" << Op->getName()
        << "(Tmp" << OpVal << ".Val);\n";
+    if (isRoot) {
+      OS << "      CodeGenMap[N] = Tmp" << ResNo << ";\n";
+      OS << "      return Tmp" << ResNo << ";\n";
+    }
     return ResNo;
   } else {
     N->dump();
@@ -1712,13 +1738,10 @@ void DAGISelEmitter::EmitCodeForPattern(PatternToMatch &Pattern,
     // an unresolved type to add a check for, this returns true and we iterate,
     // otherwise we are done.
   } while (InsertOneTypeCheck(Pat, Pattern.first, "N", PatternNo, OS));
-    
-  unsigned TmpNo = 0;
-  unsigned Res = CodeGenPatternResult(Pattern.second, TmpNo, VariableMap, OS);
   
-  // Add the result to the map if it has multiple uses.
-  OS << "      if (!N.Val->hasOneUse()) CodeGenMap[N] = Tmp" << Res << ";\n";
-  OS << "      return Tmp" << Res << ";\n";
+  unsigned TmpNo = 0;
+  CodeGenPatternResult(Pattern.second, TmpNo,
+                       VariableMap, OS, true /*the root*/);
   delete Pat;
   
   OS << "    }\n  P" << PatternNo << "Fail:\n";
