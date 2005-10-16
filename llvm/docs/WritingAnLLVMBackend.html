@@ -68,21 +68,21 @@ convert the LLVM representation to machine assembly code or other languages.</p>
 implement the following:</p>
 
 <ul>
-<li>Describe the register set
+<li>Describe the register set.
   <ul>
   <li>Create a <a href="TableGenFundamentals.html">TableGen</a> description of
       the register set and register classes</li>
   <li>Implement a subclass of <tt><a
       href="CodeGenerator.html#mregisterinfo">MRegisterInfo</a></tt></li>
   </ul></li>
-<li>Describe the instruction set
+<li>Describe the instruction set.
   <ul>
   <li>Create a <a href="TableGenFundamentals.html">TableGen</a> description of
       the instruction set</li>
   <li>Implement a subclass of <tt><a
       href="CodeGenerator.html#targetinstrinfo">TargetInstrInfo</a></tt></li>
   </ul></li>
-<li>Describe the target machine
+<li>Describe the target machine.
   <ul>
   <li>Create a <a href="TableGenFundamentals.html">TableGen</a> description of
       the target that describes the pointer size and references the instruction
@@ -104,38 +104,37 @@ RegisterTarget&lt;<em>MyTargetMachine</em>&gt; M("short_name", "  Target name");
       is the description of your target to appear in <tt>-help</tt>
       listing.</li>
   </ul></li>
-<li>Implement the assembly printer for the architecture.  Usually, if you have
-described the instruction set with the assembly printer generator in mind, that
-step can be almost automated.</li>
-</ul>
-
-<p>You also need to write an instruction selector for your platform.  The
-recommended method is the <a
-href="CodeGenerator.html#instselect">pattern-matching instruction selector</a>,
-examples of which you can see in other targets:
-<tt>lib/Target/*/*ISelPattern.cpp</tt>.  The former method for writing
-instruction selectors (<b>not</b> recommended for new targets) is evident in
-<tt>lib/Target/*/*ISelSimple.cpp</tt>, which are <tt>InstVisitor</tt>-based
-translators, generating code for an LLVM instruction at a time.  Creating an
-instruction selector is perhaps the most time-consuming part of creating a
-back-end.</p>
-
-<p>To create a JIT for your platform:</p>
-
+<li>Implement the assembly printer for the architecture.
+  <ul>
+  <li>Define all of the assembly strings for your target, adding them to the
+      instructions in your *InstrInfo.td file.</li>
+  <li>Implement the <tt>llvm::AsmPrinter</tt> interface.</li>
+  </ul>
+</li>
+<li>Implement an instruction selector for the architecture.
+  <ul>
+  <li>The recommended method is the <a href="CodeGenerator.html#instselect">
+      pattern-matching DAG-to-DAG instruction selector</a> (for example, see
+      the PowerPC backend in PPCISelDAGtoDAG.cpp).  Parts of instruction
+      selector creation can be performed by adding patterns to the instructions
+      in your <tt>.td</tt> file.</li>
+  </ul>
+</li>
+<li>Optionally, add subtarget support.
 <ul>
-<li>Create a subclass of <tt><a
-    href="CodeGenerator.html#targetjitinfo">TargetJITInfo</a></tt></li>
-<li>Create a machine code emitter that will be used to emit binary code
-    directly into memory, given <tt>MachineInstr</tt>s</li>
+  <li>If your target has multiple subtargets (e.g. variants with different
+      capabilities), implement the <tt>llvm::TargetSubtarget</tt> interface
+      for your architecture.  This allows you to add <tt>-mcpu=</tt> and 
+      <tt>-mattr=</tt> options.</li>
 </ul>
-
-<p>Note that <tt>lib/target/Skeleton</tt> is a clean skeleton for a new target,
-so you might want to start with that and adapt it for your target, and if you
-are wondering how things are done, peek in the X86 or PowerPC target.</p>
-
-<p>The Skeleton target is non-functional but provides the basic building blocks
-you will need for your endeavor.</p>
-
+<li>Optionally, add JIT support.
+  <ul>
+  <li>Create a subclass of <tt><a
+      href="CodeGenerator.html#targetjitinfo">TargetJITInfo</a></tt></li>
+  <li>Create a machine code emitter that will be used to emit binary code
+      directly into memory, given <tt>MachineInstr</tt>s</li>
+  </ul>
+</ul>
 </div>
 
 <!-- _______________________________________________________________________ -->
