@@ -985,7 +985,7 @@ fragment:</p>
   (fadd:f32 (fmul:f32 (fadd:f32 W, X), Y), Z)
 </pre>
 
-<p>If a target supports floating pointer multiple-and-add (FMA) operations, one
+<p>If a target supports floating pointer multiply-and-add (FMA) operations, one
 of the adds can be merged with the multiply.  On the PowerPC, for example, the
 output of the instruction selector might look like this DAG:</p>
 
@@ -1024,9 +1024,9 @@ for your target.  It has the following strengths:</p>
 
 <ul>
 <li>At compiler-compiler time, it analyzes your instruction patterns and tells
-    you if things are legal or not.</li>
+    you if your patterns make sense or not.</li>
 <li>It can handle arbitrary constraints on operands for the pattern match.  In
-    particular, it is straight forward to say things like "match any immediate
+    particular, it is straight-forward to say things like "match any immediate
     that is a 13-bit sign-extended value".  For examples, see the 
     <tt>immSExt16</tt> and related tblgen classes in the PowerPC backend.</li>
 <li>It knows several important identities for the patterns defined.  For
@@ -1034,7 +1034,7 @@ for your target.  It has the following strengths:</p>
     <tt>FMADDS</tt> pattern above to match "<tt>(fadd X, (fmul Y, Z))</tt>" as
     well as "<tt>(fadd (fmul X, Y), Z)</tt>", without the target author having
     to specially handle this case.</li>
-<li>It has a full strength type-inferencing system.  In particular, you should
+<li>It has a full-featured type-inferencing system.  In particular, you should
     rarely have to explicitly tell the system what type parts of your patterns
     are.  In the FMADDS case above, we didn't have to tell tblgen that all of
     the nodes in the pattern are of type 'f32'.  It was able to infer and
@@ -1047,8 +1047,8 @@ for your target.  It has the following strengths:</p>
     operation.  Targets can define their own short-hand fragments as they see
     fit.  See the definition of 'not' and 'ineg' for examples.</li>
 <li>In addition to instructions, targets can specify arbitrary patterns that
-    map to one or more instructions, using the 'Pat' definition.  For example,
-    the PowerPC has no way of loading an arbitrary integer immediate into a
+    map to one or more instructions, using the 'Pat' class.  For example,
+    the PowerPC has no way to load an arbitrary integer immediate into a
     register in one instruction. To tell tblgen how to do this, it defines:
     
     <pre>
@@ -1089,7 +1089,7 @@ primarily because it is a work in progress and is not yet finished:
 <li>We don't automatically generate the set of supported registers and
     operations for the <a href="#"selectiondag_legalize>Legalizer</a> yet.</li>
 <li>We don't have a way of tying in custom legalized nodes yet.</li>
-</li>
+</ul>
 
 <p>Despite these limitations, the instruction selector generator is still quite
 useful for most of the binary and logical operations in typical instruction
