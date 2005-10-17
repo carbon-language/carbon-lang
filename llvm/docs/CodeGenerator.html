@@ -828,6 +828,15 @@ SelectionDAG-based instruction selection consists of the following steps:
 <p>After all of these steps are complete, the SelectionDAG is destroyed and the
 rest of the code generation passes are run.</p>
 
+<p>One great way to visualize what is going on here is to take advantage of a 
+few LLC command line options.  In particular, the <tt>-view-isel-dags</tt>
+option pops up a window with the SelectionDAG input to the Select phase for all
+of the code compiled (if you only get errors printed to the console while using
+this, you probably <a href="ProgrammersManual.html#ViewGraph">need to configure
+your system</a> to add support for it).  The <tt>-view-sched-dags</tt> option
+views the SelectionDAG output from the Select phase and input to the Scheduler
+phase.
+</p>
 </div>
 
 <!-- _______________________________________________________________________ -->
