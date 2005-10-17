@@ -41,6 +41,7 @@ option</a></li>
       <li>The <tt>InstVisitor</tt> template
       <li>The general graph API
 --> 
+      <li><a href="#ViewGraph">Viewing graphs while debugging code</a></li>
     </ul>
   </li>
   <li><a href="#common">Helpful Hints for Common Operations</a>
@@ -490,6 +491,44 @@ stuff is very nice.  Making your pass fit well into the framework makes it more
 maintainable and useful.</p>
 
 </div>
+
+<!-- ======================================================================= -->
+<div class="doc_subsection">
+  <a name="ViewGraph">Viewing graphs while debugging code</a>
+</div>
+
+<div class="doc_text">
+
+<p>Several of the important data structures in LLVM are graphs: for example
+CFGs made out of LLVM <a href="#BasicBlock">BasicBlock</a>s, CFGs made out of
+LLVM <a href="CodeGenerator.html#machinebasicblock">MachineBasicBlock</a>s, and
+<a href="CodeGenerator.html#selectiondag_intro">Instruction Selection
+DAGs</a>.  In many cases, while debugging various parts of the compiler, it is
+nice to instantly visualize these graphs.</p>
+
+<p>LLVM provides several callbacks that are available in a debug build to do
+exactly that.  If you call the <tt>Function::viewCFG()</tt> method, for example,
+the current LLVM tool will pop up a window containing the CFG for the function
+where each basic block is a node in the graph, and each node contains the
+instructions in the block.  Similarly, there also exists 
+<tt>Function::viewCFGOnly()</tt> (does not include the instructions), the
+<tt>MachineFunction::viewCFG()</tt> and <tt>MachineFunction::viewCFGOnly()</tt>,
+and the <tt>SelectionDAG::viewGraph()</tt> methods.  Within GDB, for example,
+you can usually use something like "<tt>call DAG.viewGraph()</tt>" to pop
+up a window.  Alternatively, you can sprinkle calls to these functions in your
+code in places you want to debug.</p>
+
+<p>Getting this to work requires a small amount of configuration.  On Unix
+systems with X11, install the <a href="http://www.graphviz.org">graphviz</a>
+toolkit, and make sure 'dot' and 'gv' are in your path.  If you are running on
+Mac OS/X, download and install the Mac OS/X <a 
+href="http://www.pixelglow.com/graphviz/">Graphviz program</a>, and add
+<tt>/Applications/Graphviz.app/Contents/MacOS/</tt> (or whereever you install
+it) to your path.  Once in your system and path are set up, rerun the LLVM
+configure script and rebuild LLVM to enable this functionality.</p>
+
+</div>
+
 
 <!-- *********************************************************************** -->
 <div class="doc_section">
