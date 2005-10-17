@@ -205,7 +205,10 @@ instructions.</li>
 <li><b><a href="#selectiondag_sched">Scheduling and Formation</a></b> - This
 phase takes the DAG of target instructions produced by the instruction selection
 phase, determines an ordering of the instructions, then emits the instructions
-as <tt><a href="#machineinstr">MachineInstr</a></tt>s with that ordering.
+as <tt><a href="#machineinstr">MachineInstr</a></tt>s with that ordering.  Note
+that we describe this in the <a href="#instselect">instruction selection
+section</a> because it operates on a <a
+href="#selectiondag_intro">SelectionDAG</a>.
 </li>
 
 <li><b><a href="#ssamco">SSA-based Machine Code Optimizations</a></b> - This 
@@ -1109,6 +1112,10 @@ try to cover instruction latencies).  Once an order is established, the DAG is
 converted to a list of <a href="#machineinstr">MachineInstr</a>s and the
 Selection DAG is destroyed.
 </p>
+
+<p>Note that this phase is logically seperate from the instruction selection
+phase, but is tied to it closely in the code because it operates on
+SelectionDAGs.</p>
 
 </div>
 
