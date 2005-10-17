@@ -1464,8 +1464,7 @@ SDOperand DAGCombiner::visitFADD(SDNode *N) {
   if (ConstantFPSDNode *N0CFP = dyn_cast<ConstantFPSDNode>(N0))
     if (ConstantFPSDNode *N1CFP = dyn_cast<ConstantFPSDNode>(N1)) {
       // fold floating point (fadd c1, c2)
-      return DAG.getConstantFP(N0CFP->getValue() + N1CFP->getValue(),
-                               N->getValueType(0));
+      return DAG.getConstantFP(N0CFP->getValue() + N1CFP->getValue(), VT);
     }
   // fold (A + (-B)) -> A-B
   if (N1.getOpcode() == ISD::FNEG)
@@ -1486,8 +1485,7 @@ SDOperand DAGCombiner::visitFSUB(SDNode *N) {
   if (ConstantFPSDNode *N0CFP = dyn_cast<ConstantFPSDNode>(N0))
     if (ConstantFPSDNode *N1CFP = dyn_cast<ConstantFPSDNode>(N1)) {
       // fold floating point (fsub c1, c2)
-      return DAG.getConstantFP(N0CFP->getValue() - N1CFP->getValue(),
-                               N->getValueType(0));
+      return DAG.getConstantFP(N0CFP->getValue() - N1CFP->getValue(), VT);
     }
   // fold (A-(-B)) -> A+B
   if (N1.getOpcode() == ISD::FNEG)
@@ -1499,14 +1497,21 @@ SDOperand DAGCombiner::visitFSUB(SDNode *N) {
 SDOperand DAGCombiner::visitFMUL(SDNode *N) {
   SDOperand N0 = N->getOperand(0);
   SDOperand N1 = N->getOperand(1);
+  ConstantFPSDNode *N0CFP = dyn_cast<ConstantFPSDNode>(N0);
+  ConstantFPSDNode *N1CFP = dyn_cast<ConstantFPSDNode>(N1);
   MVT::ValueType VT = N->getValueType(0);
 
-  if (ConstantFPSDNode *N0CFP = dyn_cast<ConstantFPSDNode>(N0))
-    if (ConstantFPSDNode *N1CFP = dyn_cast<ConstantFPSDNode>(N1)) {
-      // fold floating point (fmul c1, c2)
-      return DAG.getConstantFP(N0CFP->getValue() * N1CFP->getValue(),
-                               N->getValueType(0));
-    }
+  // fold (fmul c1, c2) -> c1*c2
+  if (N0CFP && N1CFP)
+    return DAG.getConstantFP(N0CFP->getValue() * N1CFP->getValue(), VT);
+  // canonicalize constant to RHS
+  if (N0CFP && !N1CFP) {
+    std::swap(N0, N1);
+    std::swap(N0CFP, N1CFP);
+  }
+  // fold (fmul X, 2.0) -> (fadd X, X)
+  if (N1CFP && N1CFP->isExactlyValue(+2.0))
+    return DAG.getNode(ISD::FADD, VT, N0, N0);
   return SDOperand();
 }
 
@@ -1518,8 +1523,7 @@ SDOperand DAGCombiner::visitFDIV(SDNode *N) {
   if (ConstantFPSDNode *N0CFP = dyn_cast<ConstantFPSDNode>(N0))
     if (ConstantFPSDNode *N1CFP = dyn_cast<ConstantFPSDNode>(N1)) {
       // fold floating point (fdiv c1, c2)
-      return DAG.getConstantFP(N0CFP->getValue() / N1CFP->getValue(),
-                               N->getValueType(0));
+      return DAG.getConstantFP(N0CFP->getValue() / N1CFP->getValue(), VT);
     }
   return SDOperand();
 }
@@ -1532,8 +1536,7 @@ SDOperand DAGCombiner::visitFREM(SDNode *N) {
   if (ConstantFPSDNode *N0CFP = dyn_cast<ConstantFPSDNode>(N0))
     if (ConstantFPSDNode *N1CFP = dyn_cast<ConstantFPSDNode>(N1)) {
       // fold floating point (frem c1, c2) -> fmod(c1, c2)
-      return DAG.getConstantFP(fmod(N0CFP->getValue(),N1CFP->getValue()),
-                               N->getValueType(0));
+      return DAG.getConstantFP(fmod(N0CFP->getValue(),N1CFP->getValue()), VT);
     }
   return SDOperand();
 }
