@@ -1,7 +1,7 @@
 ; All of these routines should be perform optimal load of constants.
-; RUN: llvm-as < constants.ll | llc -march=ppc32 | grep lis   | wc -l | grep 5 &&
-; RUN: llvm-as < constants.ll | llc -march=ppc32 | grep ori   | wc -l | grep 3 &&
-; RUN: llvm-as < constants.ll | llc -march=ppc32 | grep 'li ' | wc -l | grep 4
+; RUN: llvm-as < %s | llc -march=ppc32 | grep lis   | wc -l | grep 5 &&
+; RUN: llvm-as < %s | llc -march=ppc32 | grep ori   | wc -l | grep 3 &&
+; RUN: llvm-as < %s | llc -march=ppc32 | grep 'li ' | wc -l | grep 4
 
 implementation   ; Functions:
 
