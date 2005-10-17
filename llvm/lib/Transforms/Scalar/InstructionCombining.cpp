@@ -697,8 +697,9 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
     if (!I.getType()->isFloatingPoint()) { // NOTE: -0 + +0 = +0.
       if (RHSC->isNullValue())
         return ReplaceInstUsesWith(I, LHS);
-    } else if (cast<ConstantFP>(RHSC)->isExactlyValue(-0.0)) {
-      return ReplaceInstUsesWith(I, LHS);
+    } else if (ConstantFP *CFP = dyn_cast<ConstantFP>(RHSC)) {
+      if (CFP->isExactlyValue(-0.0))
+        return ReplaceInstUsesWith(I, LHS);
     }
 
     // X + (signbit) --> X ^ signbit
