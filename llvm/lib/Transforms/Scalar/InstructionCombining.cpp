@@ -694,8 +694,10 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
       return ReplaceInstUsesWith(I, RHS);
 
     // X + 0 --> X
-    if (!I.getType()->isFloatingPoint() && // -0 + +0 = +0, so it's not a noop
-        RHSC->isNullValue())
+    // NOTE: -0 + +0 = +0 in non-default rounding modes.  When we support them
+    // we must disable this.  Note that 0.0-0.0 = -0.0, so this doesn't hold
+    // for SUB.
+    if (RHSC->isNullValue())
       return ReplaceInstUsesWith(I, LHS);
 
     // X + (signbit) --> X ^ signbit
