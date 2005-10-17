@@ -532,6 +532,10 @@ SDOperand DAGCombiner::visitSUB(SDNode *N) {
   ConstantSDNode *N0C = dyn_cast<ConstantSDNode>(N0.Val);
   ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1.Val);
   
+  // fold (sub x, x) -> 0
+  if (N0 == N1)
+    return DAG.getConstant(0, N->getValueType(0));
+  
   // fold (sub c1, c2) -> c1-c2
   if (N0C && N1C)
     return DAG.getConstant(N0C->getValue() - N1C->getValue(),
