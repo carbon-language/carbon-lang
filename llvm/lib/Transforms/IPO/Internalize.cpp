@@ -41,12 +41,16 @@ namespace {
 
   class InternalizePass : public ModulePass {
     std::set<std::string> ExternalNames;
+    bool DontInternalize;
   public:
-    InternalizePass() {
+    InternalizePass(bool InternalizeEverything = true) : DontInternalize(false){
       if (!APIFile.empty())           // If a filename is specified, use it
         LoadFile(APIFile.c_str());
-      else                            // Else, if a list is specified, use it.
+      else if (!APIList.empty())      // Else, if a list is specified, use it.
         ExternalNames.insert(APIList.begin(), APIList.end());
+      else if (!InternalizeEverything)
+        // Finally, if we're allowed to, internalize all but main.
+        DontInternalize = true;
     }
 
     void LoadFile(const char *Filename) {
@@ -66,6 +70,8 @@ namespace {
     }
 
     virtual bool runOnModule(Module &M) {
+      if (DontInternalize) return false;
+      
       // If no list or file of symbols was specified, check to see if there is a
       // "main" symbol defined in the module.  If so, use it, otherwise do not
       // internalize the module, it must be a library or something.
@@ -117,6 +123,6 @@ namespace {
   RegisterOpt<InternalizePass> X("internalize", "Internalize Global Symbols");
 } // end anonymous namespace
 
-ModulePass *llvm::createInternalizePass() {
-  return new InternalizePass();
+ModulePass *llvm::createInternalizePass(bool InternalizeEverything) {
+  return new InternalizePass(InternalizeEverything);
 }
