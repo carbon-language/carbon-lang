@@ -111,12 +111,10 @@ void Optimize(Module* M) {
   addPass(Passes, createFunctionResolvingPass());
 
   if (!DisableOptimizations) {
-    if (!DisableInternalize) {
-      // Now that composite has been compiled, scan through the module, looking
-      // for a main function.  If main is defined, mark all other functions
-      // internal.
-      addPass(Passes, createInternalizePass());
-    }
+    // Now that composite has been compiled, scan through the module, looking
+    // for a main function.  If main is defined, mark all other functions
+    // internal.
+    addPass(Passes, createInternalizePass(!DisableInternalize));
 
     // Now that we internalized some globals, see if we can hack on them!
     addPass(Passes, createGlobalOptimizerPass());
