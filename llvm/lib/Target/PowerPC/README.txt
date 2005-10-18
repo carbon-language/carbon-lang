@@ -24,6 +24,9 @@ _foo:
         rlwinm r3, r2, 0, 16, 31
         blr
 
+and:
+  extern int X, Y; int* test(int C) { return C? &X : &Y; }
+as one load when using --enable-pic.
 
 * Support 'update' load/store instructions.  These are cracked on the G5, but
   are still a codesize win.
