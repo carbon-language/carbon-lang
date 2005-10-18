@@ -494,10 +494,8 @@ SDOperand DAGCombiner::visitADD(SDNode *N) {
   if (N0C && N1C)
     return DAG.getConstant(N0C->getValue() + N1C->getValue(), VT);
   // canonicalize constant to RHS
-  if (N0C && !N1C) {
-    std::swap(N0, N1);
-    std::swap(N0C, N1C);
-  }
+  if (N0C && !N1C)
+    return DAG.getNode(ISD::ADD, VT, N1, N0);
   // fold (add x, 0) -> x
   if (N1C && N1C->isNullValue())
     return N0;
@@ -566,10 +564,8 @@ SDOperand DAGCombiner::visitMUL(SDNode *N) {
     return DAG.getConstant(N0C->getValue() * N1C->getValue(),
                            N->getValueType(0));
   // canonicalize constant to RHS
-  if (N0C && !N1C) {
-    std::swap(N0, N1);
-    std::swap(N0C, N1C);
-  }
+  if (N0C && !N1C)
+    return DAG.getNode(ISD::MUL, VT, N1, N0);
   // fold (mul x, 0) -> 0
   if (N1C && N1C->isNullValue())
     return N1;
@@ -714,10 +710,8 @@ SDOperand DAGCombiner::visitAND(SDNode *N) {
   if (N0C && N1C)
     return DAG.getConstant(N0C->getValue() & N1C->getValue(), VT);
   // canonicalize constant to RHS
-  if (N0C && !N1C) {
-    std::swap(N0, N1);
-    std::swap(N0C, N1C);
-  }
+  if (N0C && !N1C)
+    return DAG.getNode(ISD::AND, VT, N1, N0);
   // fold (and x, -1) -> x
   if (N1C && N1C->isAllOnesValue())
     return N0;
@@ -868,10 +862,8 @@ SDOperand DAGCombiner::visitOR(SDNode *N) {
     return DAG.getConstant(N0C->getValue() | N1C->getValue(),
                            N->getValueType(0));
   // canonicalize constant to RHS
-  if (N0C && !N1C) {
-    std::swap(N0, N1);
-    std::swap(N0C, N1C);
-  }
+  if (N0C && !N1C)
+    return DAG.getNode(ISD::OR, VT, N1, N0);
   // fold (or x, 0) -> x
   if (N1C && N1C->isNullValue())
     return N0;
@@ -953,10 +945,8 @@ SDOperand DAGCombiner::visitXOR(SDNode *N) {
   if (N0C && N1C)
     return DAG.getConstant(N0C->getValue() ^ N1C->getValue(), VT);
   // canonicalize constant to RHS
-  if (N0C && !N1C) {
-    std::swap(N0, N1);
-    std::swap(N0C, N1C);
-  }
+  if (N0C && !N1C)
+    return DAG.getNode(ISD::XOR, VT, N1, N0);
   // fold (xor x, 0) -> x
   if (N1C && N1C->isNullValue())
     return N0;
@@ -1459,38 +1449,38 @@ SDOperand DAGCombiner::visitTRUNCATE(SDNode *N) {
 SDOperand DAGCombiner::visitFADD(SDNode *N) {
   SDOperand N0 = N->getOperand(0);
   SDOperand N1 = N->getOperand(1);
+  ConstantFPSDNode *N0CFP = dyn_cast<ConstantFPSDNode>(N0);
+  ConstantFPSDNode *N1CFP = dyn_cast<ConstantFPSDNode>(N1);
   MVT::ValueType VT = N->getValueType(0);
-
-  if (ConstantFPSDNode *N0CFP = dyn_cast<ConstantFPSDNode>(N0))
-    if (ConstantFPSDNode *N1CFP = dyn_cast<ConstantFPSDNode>(N1)) {
-      // fold floating point (fadd c1, c2)
-      return DAG.getConstantFP(N0CFP->getValue() + N1CFP->getValue(), VT);
-    }
+  
+  // fold (fadd c1, c2) -> c1+c2
+  if (N0CFP && N1CFP)
+    return DAG.getConstantFP(N0CFP->getValue() + N1CFP->getValue(), VT);
+  // canonicalize constant to RHS
+  if (N0CFP && !N1CFP)
+    return DAG.getNode(ISD::FADD, VT, N1, N0);
   // fold (A + (-B)) -> A-B
   if (N1.getOpcode() == ISD::FNEG)
     return DAG.getNode(ISD::FSUB, VT, N0, N1.getOperand(0));
-  
   // fold ((-A) + B) -> B-A
   if (N0.getOpcode() == ISD::FNEG)
     return DAG.getNode(ISD::FSUB, VT, N1, N0.getOperand(0));
-  
   return SDOperand();
 }
 
 SDOperand DAGCombiner::visitFSUB(SDNode *N) {
   SDOperand N0 = N->getOperand(0);
   SDOperand N1 = N->getOperand(1);
+  ConstantFPSDNode *N0CFP = dyn_cast<ConstantFPSDNode>(N0);
+  ConstantFPSDNode *N1CFP = dyn_cast<ConstantFPSDNode>(N1);
   MVT::ValueType VT = N->getValueType(0);
-
-  if (ConstantFPSDNode *N0CFP = dyn_cast<ConstantFPSDNode>(N0))
-    if (ConstantFPSDNode *N1CFP = dyn_cast<ConstantFPSDNode>(N1)) {
-      // fold floating point (fsub c1, c2)
-      return DAG.getConstantFP(N0CFP->getValue() - N1CFP->getValue(), VT);
-    }
+  
+  // fold (fsub c1, c2) -> c1-c2
+  if (N0CFP && N1CFP)
+    return DAG.getConstantFP(N0CFP->getValue() - N1CFP->getValue(), VT);
   // fold (A-(-B)) -> A+B
   if (N1.getOpcode() == ISD::FNEG)
     return DAG.getNode(ISD::FADD, N0.getValueType(), N0, N1.getOperand(0));
-  
   return SDOperand();
 }
 
@@ -1505,10 +1495,8 @@ SDOperand DAGCombiner::visitFMUL(SDNode *N) {
   if (N0CFP && N1CFP)
     return DAG.getConstantFP(N0CFP->getValue() * N1CFP->getValue(), VT);
   // canonicalize constant to RHS
-  if (N0CFP && !N1CFP) {
-    std::swap(N0, N1);
-    std::swap(N0CFP, N1CFP);
-  }
+  if (N0CFP && !N1CFP)
+    return DAG.getNode(ISD::FMUL, VT, N1, N0);
   // fold (fmul X, 2.0) -> (fadd X, X)
   if (N1CFP && N1CFP->isExactlyValue(+2.0))
     return DAG.getNode(ISD::FADD, VT, N0, N0);
