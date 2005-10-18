@@ -1762,11 +1762,15 @@ namespace {
 }
 
 void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
+  std::string InstNS = Target.inst_begin()->second.Namespace;
+  if (!InstNS.empty()) InstNS += "::";
+  
   // Emit boilerplate.
   OS << "// The main instruction selector code.\n"
      << "SDOperand SelectCode(SDOperand N) {\n"
      << "  if (N.getOpcode() >= ISD::BUILTIN_OP_END &&\n"
-     << "      N.getOpcode() < PPCISD::FIRST_NUMBER)\n"
+     << "      N.getOpcode() < (ISD::BUILTIN_OP_END+" << InstNS
+     << "INSTRUCTION_LIST_END))\n"
      << "    return N;   // Already selected.\n\n"
      << "  if (!N.Val->hasOneUse()) {\n"
   << "    std::map<SDOperand, SDOperand>::iterator CGMI = CodeGenMap.find(N);\n"
