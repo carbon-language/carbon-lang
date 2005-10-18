@@ -36,6 +36,7 @@ enum PowerPCFeature {
   PowerPCFeatureAltivec = 1 << 1,
   PowerPCFeatureFSqrt   = 1 << 2,
   PowerPCFeatureGPUL    = 1 << 3,
+  PowerPCFeature64BRegs = 1 << 4
 };
 
 /// Sorted (by key) array of values for CPU subtype.
@@ -73,6 +74,7 @@ static const unsigned PowerPCSubTypeKVSize = sizeof(PowerPCSubTypeKV)
 /// Sorted (by key) array of values for CPU features.
 static SubtargetFeatureKV PowerPCFeatureKV[] = {
   { "64bit"  , "Should 64 bit instructions be used"  , PowerPCFeature64Bit   },
+  { "64bitregs", "Should 64 bit registers be used"   , PowerPCFeature64BRegs },
   { "altivec", "Should Altivec instructions be used" , PowerPCFeatureAltivec },
   { "fsqrt"  , "Should the fsqrt instruction be used", PowerPCFeatureFSqrt   },
   { "gpul"   , "Should GPUL instructions be used"    , PowerPCFeatureGPUL    }
@@ -134,6 +136,7 @@ PPCSubtarget::PPCSubtarget(const Module &M, const std::string &FS)
   IsGigaProcessor = (Bits & PowerPCFeatureGPUL ) != 0;
   Is64Bit         = (Bits & PowerPCFeature64Bit) != 0;
   HasFSQRT        = (Bits & PowerPCFeatureFSqrt) != 0;
+  Has64BitRegs    = (Bits & PowerPCFeature64BRegs) != 0;
 
   // Set the boolean corresponding to the current target triple, or the default
   // if one cannot be determined, to true.

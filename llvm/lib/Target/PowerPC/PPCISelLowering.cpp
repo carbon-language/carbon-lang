@@ -94,19 +94,16 @@ PPCTargetLowering::PPCTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::TRUNCSTORE, MVT::i1, Promote);
   
   if (TM.getSubtarget<PPCSubtarget>().is64Bit()) {
-    // 64 bit PowerPC implementations can support i64 types directly
-    // FIXME: enable this once it works.
-    //addRegisterClass(MVT::i64, PPC::G8RCRegisterClass);
     // They also have instructions for converting between i64 and fp.
     setOperationAction(ISD::FP_TO_SINT, MVT::i64, Custom);
     setOperationAction(ISD::SINT_TO_FP, MVT::i64, Custom);
+  }
+
+  if (TM.getSubtarget<PPCSubtarget>().has64BitRegs()) {
+    // 64 bit PowerPC implementations can support i64 types directly
+    addRegisterClass(MVT::i64, PPC::G8RCRegisterClass);
     // BUILD_PAIR can't be handled natively, and should be expanded to shl/or
     setOperationAction(ISD::BUILD_PAIR, MVT::i64, Expand);
-    // 32 bit PowerPC wants to expand i64 shifts itself.
-    // FIXME: remove these once we natively handle i64 shifts.
-    setOperationAction(ISD::SHL, MVT::i64, Custom);
-    setOperationAction(ISD::SRL, MVT::i64, Custom);
-    setOperationAction(ISD::SRA, MVT::i64, Custom);
   } else {
     // 32 bit PowerPC wants to expand i64 shifts itself.
     setOperationAction(ISD::SHL, MVT::i64, Custom);

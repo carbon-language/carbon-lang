@@ -30,6 +30,7 @@ protected:
   /// Used by the ISel to turn in optimizations for POWER4-derived architectures
   bool IsGigaProcessor;
   bool Is64Bit;
+  bool Has64BitRegs;
   bool HasFSQRT;
   bool IsAIX;
   bool IsDarwin;
@@ -49,6 +50,7 @@ public:
   bool isAIX() const { return IsAIX; }
   bool isDarwin() const { return IsDarwin; }
   bool is64Bit() const { return Is64Bit; }
+  bool has64BitRegs() const { return Has64BitRegs; }
   bool isGigaProcessor() const { return IsGigaProcessor; }
 };
 } // End llvm namespace
