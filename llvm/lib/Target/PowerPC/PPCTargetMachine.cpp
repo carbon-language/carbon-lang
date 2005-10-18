@@ -99,9 +99,9 @@ bool PPCTargetMachine::addPassesToEmitFile(PassManager &PM,
 
   // Install an instruction selector.
   if (!DisablePPCDAGDAG)
-    PM.add(createPPC32ISelDag(*this));
+    PM.add(createPPCISelDag(*this));
   else
-    PM.add(createPPC32ISelPattern(*this));
+    PM.add(createPPCISelPattern(*this));
 
   if (PrintMachineCode)
     PM.add(createMachineFunctionPrinterPass(&std::cerr));
@@ -156,9 +156,9 @@ void PPCJITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
 
   // Install an instruction selector.
   if (!DisablePPCDAGDAG)
-    PM.add(createPPC32ISelDag(TM));
+    PM.add(createPPCISelDag(TM));
   else
-    PM.add(createPPC32ISelPattern(TM));
+    PM.add(createPPCISelPattern(TM));
 
   PM.add(createRegisterAllocator());
   PM.add(createPrologEpilogCodeInserter());

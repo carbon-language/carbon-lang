@@ -1,4 +1,4 @@
-//===-- PPCISelLowering.cpp - PPC32 DAG Lowering Implementation -----------===//
+//===-- PPCISelLowering.cpp - PPC DAG Lowering Implementation -------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -32,9 +32,9 @@ PPCTargetLowering::PPCTargetLowering(TargetMachine &TM)
   setUseUnderscoreSetJmpLongJmp(true);
     
   // Set up the register classes.
-  addRegisterClass(MVT::i32, PPC32::GPRCRegisterClass);
-  addRegisterClass(MVT::f32, PPC32::F4RCRegisterClass);
-  addRegisterClass(MVT::f64, PPC32::F8RCRegisterClass);
+  addRegisterClass(MVT::i32, PPC::GPRCRegisterClass);
+  addRegisterClass(MVT::f32, PPC::F4RCRegisterClass);
+  addRegisterClass(MVT::f64, PPC::F8RCRegisterClass);
   
   // PowerPC has no intrinsics for these particular operations
   setOperationAction(ISD::MEMMOVE, MVT::Other, Expand);
@@ -76,11 +76,6 @@ PPCTargetLowering::PPCTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::SELECT_CC, MVT::f32, Custom);
   setOperationAction(ISD::SELECT_CC, MVT::f64, Custom);
   
-  // PowerPC wants to expand i64 shifts itself.
-  setOperationAction(ISD::SHL, MVT::i64, Custom);
-  setOperationAction(ISD::SRL, MVT::i64, Custom);
-  setOperationAction(ISD::SRA, MVT::i64, Custom);
-
   // PowerPC does not have BRCOND* which requires SetCC
   setOperationAction(ISD::BRCOND,       MVT::Other, Expand);
   setOperationAction(ISD::BRCONDTWOWAY, MVT::Other, Expand);
@@ -98,11 +93,25 @@ PPCTargetLowering::PPCTargetLowering(TargetMachine &TM)
   // PowerPC does not have truncstore for i1.
   setOperationAction(ISD::TRUNCSTORE, MVT::i1, Promote);
   
-  // 64 bit PowerPC implementations have instructions to facilitate conversion
-  // between i64 and fp.
   if (TM.getSubtarget<PPCSubtarget>().is64Bit()) {
+    // 64 bit PowerPC implementations can support i64 types directly
+    // FIXME: enable this once it works.
+    //addRegisterClass(MVT::i64, PPC::G8RCRegisterClass);
+    // They also have instructions for converting between i64 and fp.
     setOperationAction(ISD::FP_TO_SINT, MVT::i64, Custom);
     setOperationAction(ISD::SINT_TO_FP, MVT::i64, Custom);
+    // BUILD_PAIR can't be handled natively, and should be expanded to shl/or
+    setOperationAction(ISD::BUILD_PAIR, MVT::i64, Expand);
+    // 32 bit PowerPC wants to expand i64 shifts itself.
+    // FIXME: remove these once we natively handle i64 shifts.
+    setOperationAction(ISD::SHL, MVT::i64, Custom);
+    setOperationAction(ISD::SRL, MVT::i64, Custom);
+    setOperationAction(ISD::SRA, MVT::i64, Custom);
+  } else {
+    // 32 bit PowerPC wants to expand i64 shifts itself.
+    setOperationAction(ISD::SHL, MVT::i64, Custom);
+    setOperationAction(ISD::SRL, MVT::i64, Custom);
+    setOperationAction(ISD::SRA, MVT::i64, Custom);
   }
   
   setSetCCResultContents(ZeroOrOneSetCCResult);
@@ -353,7 +362,7 @@ PPCTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
       ObjSize = 4;
       if (!ArgLive) break;
       if (GPR_remaining > 0) {
-        unsigned VReg = RegMap->createVirtualRegister(&PPC32::GPRCRegClass);
+        unsigned VReg = RegMap->createVirtualRegister(&PPC::GPRCRegClass);
         MF.addLiveIn(GPR[GPR_idx], VReg);
         argt = newroot = DAG.getCopyFromReg(DAG.getRoot(), VReg, MVT::i32);
         if (ObjectVT != MVT::i32) {
@@ -371,7 +380,7 @@ PPCTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
       if (!ArgLive) break;
       if (GPR_remaining > 0) {
         SDOperand argHi, argLo;
-        unsigned VReg = RegMap->createVirtualRegister(&PPC32::GPRCRegClass);
+        unsigned VReg = RegMap->createVirtualRegister(&PPC::GPRCRegClass);
         MF.addLiveIn(GPR[GPR_idx], VReg);
         argHi = DAG.getCopyFromReg(DAG.getRoot(), VReg, MVT::i32);
         // If we have two or more remaining argument registers, then both halves
@@ -379,7 +388,7 @@ PPCTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
         // have to come off the stack.  This can happen when an i64 is preceded
         // by 28 bytes of arguments.
         if (GPR_remaining > 1) {
-          unsigned VReg = RegMap->createVirtualRegister(&PPC32::GPRCRegClass);
+          unsigned VReg = RegMap->createVirtualRegister(&PPC::GPRCRegClass);
           MF.addLiveIn(GPR[GPR_idx+1], VReg);
           argLo = DAG.getCopyFromReg(argHi, VReg, MVT::i32);
         } else {
@@ -402,9 +411,9 @@ PPCTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
       if (FPR_remaining > 0) {
         unsigned VReg;
         if (ObjectVT == MVT::f32)
-          VReg = RegMap->createVirtualRegister(&PPC32::F4RCRegClass);
+          VReg = RegMap->createVirtualRegister(&PPC::F4RCRegClass);
         else
-          VReg = RegMap->createVirtualRegister(&PPC32::F8RCRegClass);
+          VReg = RegMap->createVirtualRegister(&PPC::F8RCRegClass);
         MF.addLiveIn(FPR[FPR_idx], VReg);
         argt = newroot = DAG.getCopyFromReg(DAG.getRoot(), VReg, ObjectVT);
         --FPR_remaining;
@@ -453,7 +462,7 @@ PPCTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
     // result of va_next.
     std::vector<SDOperand> MemOps;
     for (; GPR_remaining > 0; --GPR_remaining, ++GPR_idx) {
-      unsigned VReg = RegMap->createVirtualRegister(&PPC32::GPRCRegClass);
+      unsigned VReg = RegMap->createVirtualRegister(&PPC::GPRCRegClass);
       MF.addLiveIn(GPR[GPR_idx], VReg);
       SDOperand Val = DAG.getCopyFromReg(DAG.getRoot(), VReg, MVT::i32);
       SDOperand Store = DAG.getNode(ISD::STORE, MVT::Other, Val.getValue(1),

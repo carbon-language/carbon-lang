@@ -27,8 +27,8 @@ enum PPCTargetEnum {
 };
 
 FunctionPass *createPPCBranchSelectionPass();
-FunctionPass *createPPC32ISelPattern(TargetMachine &TM);
-FunctionPass *createPPC32ISelDag(TargetMachine &TM);
+FunctionPass *createPPCISelPattern(TargetMachine &TM);
+FunctionPass *createPPCISelDag(TargetMachine &TM);
 FunctionPass *createDarwinAsmPrinter(std::ostream &OS, TargetMachine &TM);
 FunctionPass *createAIXAsmPrinter(std::ostream &OS, TargetMachine &TM);
 

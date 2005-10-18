@@ -84,7 +84,7 @@ public:
 
   // convenience functions for virtual register creation
   inline unsigned MakeIntReg() {
-    return RegMap->createVirtualRegister(PPC32::GPRCRegisterClass);
+    return RegMap->createVirtualRegister(PPC::GPRCRegisterClass);
   }
   
   // dag -> dag expanders for integer divide by constant
@@ -591,7 +591,7 @@ unsigned ISel::SelectCC(SDOperand LHS, SDOperand RHS, ISD::CondCode CC) {
   bool AlreadySelected = false;
 
   // Allocate a condition register for this expression
-  Result = RegMap->createVirtualRegister(PPC32::CRRCRegisterClass);
+  Result = RegMap->createVirtualRegister(PPC::CRRCRegisterClass);
 
   // Use U to determine whether the SETCC immediate range is signed or not.
   bool U = ISD::isUnsignedIntSetCC(CC);
@@ -866,7 +866,7 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
     // Subtract size from stack pointer, thereby allocating some space.
     BuildMI(BB, PPC::SUBF, 2, PPC::R1).addReg(Tmp1).addReg(PPC::R1);
     // Put a pointer to the space into the result register by copying the SP
-    BuildMI(BB, PPC::OR, 2, Result).addReg(PPC::R1).addReg(PPC::R1);
+    BuildMI(BB, PPC::OR4, 2, Result).addReg(PPC::R1).addReg(PPC::R1);
     return Result;
 
   case ISD::ConstantPool:
@@ -996,7 +996,7 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
     } else {
       Tmp1 = SelectExpr(N.getOperand(1));
       BuildMI(BB, PPC::MTCTR, 1).addReg(Tmp1);
-      BuildMI(BB, PPC::OR, 2, PPC::R12).addReg(Tmp1).addReg(Tmp1);
+      BuildMI(BB, PPC::OR4, 2, PPC::R12).addReg(Tmp1).addReg(Tmp1);
       CallMI = BuildMI(PPC::CALLindirect, 3).addImm(20).addImm(0)
         .addReg(PPC::R12);
     }
@@ -1013,7 +1013,7 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
       case MVT::i32:
         assert(GPR_idx < 8 && "Too many int args");
         if (N.getOperand(i+2).getOpcode() != ISD::UNDEF) {
-          BuildMI(BB, PPC::OR,2,GPR[GPR_idx]).addReg(ArgVR[i]).addReg(ArgVR[i]);
+          BuildMI(BB, PPC::OR4,2,GPR[GPR_idx]).addReg(ArgVR[i]).addReg(ArgVR[i]);
           CallMI->addRegOperand(GPR[GPR_idx], MachineOperand::Use);
         }
         ++GPR_idx;
@@ -1037,10 +1037,10 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
     case MVT::Other: return 1;
     case MVT::i32:
       if (Node->getValueType(1) == MVT::i32) {
-        BuildMI(BB, PPC::OR, 2, Result+1).addReg(PPC::R3).addReg(PPC::R3);
-        BuildMI(BB, PPC::OR, 2, Result).addReg(PPC::R4).addReg(PPC::R4);
+        BuildMI(BB, PPC::OR4, 2, Result+1).addReg(PPC::R3).addReg(PPC::R3);
+        BuildMI(BB, PPC::OR4, 2, Result).addReg(PPC::R4).addReg(PPC::R4);
       } else {
-        BuildMI(BB, PPC::OR, 2, Result).addReg(PPC::R3).addReg(PPC::R3);
+        BuildMI(BB, PPC::OR4, 2, Result).addReg(PPC::R3).addReg(PPC::R3);
       }
       break;
     case MVT::f32:
@@ -1074,7 +1074,7 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
       ExprMap[N.getValue(1)] = 1;
     Tmp1 = dyn_cast<RegisterSDNode>(Node->getOperand(1))->getReg();
     if (MVT::isInteger(DestType))
-      BuildMI(BB, PPC::OR, 2, Result).addReg(Tmp1).addReg(Tmp1);
+      BuildMI(BB, PPC::OR4, 2, Result).addReg(Tmp1).addReg(Tmp1);
     else if (DestType == MVT::f32)
       BuildMI(BB, PPC::FMRS, 1, Result).addReg(Tmp1);
     else
@@ -1144,7 +1144,7 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
       return Result;
     Tmp1 = SelectExpr(N.getOperand(0));
     Tmp2 = SelectExpr(N.getOperand(1));
-    BuildMI(BB, PPC::ADD, 2, Result).addReg(Tmp1).addReg(Tmp2);
+    BuildMI(BB, PPC::ADD4, 2, Result).addReg(Tmp1).addReg(Tmp2);
     return Result;
     
   case ISD::FADD:
@@ -1250,7 +1250,7 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
     // emit regular or
     Tmp1 = SelectExpr(N.getOperand(0));
     Tmp2 = SelectExpr(N.getOperand(1));
-    Opc = Recording ? PPC::ORo : PPC::OR;
+    Opc = Recording ? PPC::ORo : PPC::OR4;
     RecordSuccess = true;
     BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
     return Result;
@@ -1755,7 +1755,7 @@ void ISel::Select(SDOperand N) {
       else if (N.getOperand(2).getValueType() == MVT::f32)
         BuildMI(BB, PPC::FMRS, 1, Tmp2).addReg(Tmp1);
       else
-        BuildMI(BB, PPC::OR, 2, Tmp2).addReg(Tmp1).addReg(Tmp1);
+        BuildMI(BB, PPC::OR4, 2, Tmp2).addReg(Tmp1).addReg(Tmp1);
     }
     return;
   case ISD::ImplicitDef:
@@ -1779,8 +1779,8 @@ void ISel::Select(SDOperand N) {
       Select(N.getOperand(0));
       Tmp1 = SelectExpr(N.getOperand(1));
       Tmp2 = SelectExpr(N.getOperand(2));
-      BuildMI(BB, PPC::OR, 2, PPC::R3).addReg(Tmp2).addReg(Tmp2);
-      BuildMI(BB, PPC::OR, 2, PPC::R4).addReg(Tmp1).addReg(Tmp1);
+      BuildMI(BB, PPC::OR4, 2, PPC::R3).addReg(Tmp2).addReg(Tmp2);
+      BuildMI(BB, PPC::OR4, 2, PPC::R4).addReg(Tmp1).addReg(Tmp1);
       break;
     case 2:
       Select(N.getOperand(0));
@@ -1795,7 +1795,7 @@ void ISel::Select(SDOperand N) {
           BuildMI(BB, PPC::FMRS, 1, PPC::F1).addReg(Tmp1);
           break;
         case MVT::i32:
-          BuildMI(BB, PPC::OR, 2, PPC::R3).addReg(Tmp1).addReg(Tmp1);
+          BuildMI(BB, PPC::OR4, 2, PPC::R3).addReg(Tmp1).addReg(Tmp1);
           break;
       }
     case 1:
@@ -1870,11 +1870,11 @@ void ISel::Select(SDOperand N) {
 }
 
 
-/// createPPC32PatternInstructionSelector - This pass converts an LLVM function
+/// createPPCPatternInstructionSelector - This pass converts an LLVM function
 /// into a machine code representation using pattern matching and a machine
 /// description file.
 ///
-FunctionPass *llvm::createPPC32ISelPattern(TargetMachine &TM) {
+FunctionPass *llvm::createPPCISelPattern(TargetMachine &TM) {
   return new ISel(TM);
 }
 

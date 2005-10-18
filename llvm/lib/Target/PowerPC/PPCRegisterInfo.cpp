@@ -40,7 +40,7 @@ PPCRegisterInfo::PPCRegisterInfo()
   ImmToIdxMap[PPC::LFS]  = PPC::LFSX;   ImmToIdxMap[PPC::LFD]  = PPC::LFDX;
   ImmToIdxMap[PPC::STH]  = PPC::STHX;   ImmToIdxMap[PPC::STW]  = PPC::STWX;
   ImmToIdxMap[PPC::STFS] = PPC::STFSX;  ImmToIdxMap[PPC::STFD] = PPC::STFDX;
-  ImmToIdxMap[PPC::ADDI] = PPC::ADD;
+  ImmToIdxMap[PPC::ADDI] = PPC::ADD4;
 }
 
 void
@@ -51,14 +51,16 @@ PPCRegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
   if (SrcReg == PPC::LR) {
     BuildMI(MBB, MI, PPC::MFLR, 1, PPC::R11);
     addFrameReference(BuildMI(MBB, MI, PPC::STW, 3).addReg(PPC::R11), FrameIdx);
-  } else if (RC == PPC32::CRRCRegisterClass) {
+  } else if (RC == PPC::CRRCRegisterClass) {
     BuildMI(MBB, MI, PPC::MFCR, 0, PPC::R11);
     addFrameReference(BuildMI(MBB, MI, PPC::STW, 3).addReg(PPC::R11), FrameIdx);
-  } else if (RC == PPC32::GPRCRegisterClass) {
+  } else if (RC == PPC::GPRCRegisterClass) {
     addFrameReference(BuildMI(MBB, MI, PPC::STW, 3).addReg(SrcReg),FrameIdx);
-  } else if (RC == PPC32::F8RCRegisterClass) {
+  } else if (RC == PPC::G8RCRegisterClass) {
+    addFrameReference(BuildMI(MBB, MI, PPC::STD, 3).addReg(SrcReg),FrameIdx);
+  } else if (RC == PPC::F8RCRegisterClass) {
     addFrameReference(BuildMI(MBB, MI, PPC::STFD, 3).addReg(SrcReg),FrameIdx);
-  } else if (RC == PPC32::F4RCRegisterClass) {
+  } else if (RC == PPC::F4RCRegisterClass) {
     addFrameReference(BuildMI(MBB, MI, PPC::STFS, 3).addReg(SrcReg),FrameIdx);
   } else {
     assert(0 && "Unknown regclass!");
@@ -74,14 +76,16 @@ PPCRegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
   if (DestReg == PPC::LR) {
     addFrameReference(BuildMI(MBB, MI, PPC::LWZ, 2, PPC::R11), FrameIdx);
     BuildMI(MBB, MI, PPC::MTLR, 1).addReg(PPC::R11);
-  } else if (RC == PPC32::CRRCRegisterClass) {
+  } else if (RC == PPC::CRRCRegisterClass) {
     addFrameReference(BuildMI(MBB, MI, PPC::LWZ, 2, PPC::R11), FrameIdx);
     BuildMI(MBB, MI, PPC::MTCRF, 1, DestReg).addReg(PPC::R11);
-  } else if (RC == PPC32::GPRCRegisterClass) {
+  } else if (RC == PPC::GPRCRegisterClass) {
     addFrameReference(BuildMI(MBB, MI, PPC::LWZ, 2, DestReg), FrameIdx);
-  } else if (RC == PPC32::F8RCRegisterClass) {
+  } else if (RC == PPC::G8RCRegisterClass) {
+    addFrameReference(BuildMI(MBB, MI, PPC::LD, 2, DestReg), FrameIdx);
+  } else if (RC == PPC::F8RCRegisterClass) {
     addFrameReference(BuildMI(MBB, MI, PPC::LFD, 2, DestReg), FrameIdx);
-  } else if (RC == PPC32::F4RCRegisterClass) {
+  } else if (RC == PPC::F4RCRegisterClass) {
     addFrameReference(BuildMI(MBB, MI, PPC::LFS, 2, DestReg), FrameIdx);
   } else {
     assert(0 && "Unknown regclass!");
@@ -95,13 +99,15 @@ void PPCRegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
                                    const TargetRegisterClass *RC) const {
   MachineInstr *I;
 
-  if (RC == PPC32::GPRCRegisterClass) {
-    BuildMI(MBB, MI, PPC::OR, 2, DestReg).addReg(SrcReg).addReg(SrcReg);
-  } else if (RC == PPC32::F4RCRegisterClass) {
+  if (RC == PPC::GPRCRegisterClass) {
+    BuildMI(MBB, MI, PPC::OR4, 2, DestReg).addReg(SrcReg).addReg(SrcReg);
+  } else if (RC == PPC::G8RCRegisterClass) {
+    BuildMI(MBB, MI, PPC::OR8, 2, DestReg).addReg(SrcReg).addReg(SrcReg);
+  } else if (RC == PPC::F4RCRegisterClass) {
     BuildMI(MBB, MI, PPC::FMRS, 1, DestReg).addReg(SrcReg);
-  } else if (RC == PPC32::F8RCRegisterClass) {
+  } else if (RC == PPC::F8RCRegisterClass) {
     BuildMI(MBB, MI, PPC::FMRD, 1, DestReg).addReg(SrcReg);
-  } else if (RC == PPC32::CRRCRegisterClass) {
+  } else if (RC == PPC::CRRCRegisterClass) {
     BuildMI(MBB, MI, PPC::MCRF, 1, DestReg).addReg(SrcReg);
   } else {
     std::cerr << "Attempt to copy register that is not GPR or FPR";
@@ -113,6 +119,7 @@ unsigned PPCRegisterInfo::isLoadFromStackSlot(MachineInstr *MI,
                                               int &FrameIndex) const {
   switch (MI->getOpcode()) {
   default: break;
+  case PPC::LD:
   case PPC::LWZ:
   case PPC::LFS:
   case PPC::LFD:
@@ -135,7 +142,7 @@ MachineInstr *PPCRegisterInfo::foldMemoryOperand(MachineInstr *MI,
   // it takes more than one instruction to store it.
   unsigned Opc = MI->getOpcode();
   
-  if ((Opc == PPC::OR &&
+  if ((Opc == PPC::OR4 &&
        MI->getOperand(1).getReg() == MI->getOperand(2).getReg())) {
     if (OpNum == 0) {  // move -> store
       unsigned InReg = MI->getOperand(1).getReg();
@@ -145,7 +152,16 @@ MachineInstr *PPCRegisterInfo::foldMemoryOperand(MachineInstr *MI,
       unsigned OutReg = MI->getOperand(0).getReg();
       return addFrameReference(BuildMI(PPC::LWZ, 2, OutReg), FrameIndex);
     }
-    
+  } else if ((Opc == PPC::OR8 &&
+              MI->getOperand(1).getReg() == MI->getOperand(2).getReg())) {
+    if (OpNum == 0) {  // move -> store
+      unsigned InReg = MI->getOperand(1).getReg();
+      return addFrameReference(BuildMI(PPC::STD,
+                                       3).addReg(InReg), FrameIndex);
+    } else {           // move -> load
+      unsigned OutReg = MI->getOperand(0).getReg();
+      return addFrameReference(BuildMI(PPC::LD, 2, OutReg), FrameIndex);
+    }
   } else if (Opc == PPC::FMRD) {
     if (OpNum == 0) {  // move -> store
       unsigned InReg = MI->getOperand(1).getReg();
@@ -315,7 +331,7 @@ void PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
   if (hasFP(MF)) {
     MI = BuildMI(PPC::STW, 3).addReg(PPC::R31).addSImm(GPRSize).addReg(PPC::R1);
     MBB.insert(MBBI, MI);
-    MI = BuildMI(PPC::OR, 2, PPC::R31).addReg(PPC::R1).addReg(PPC::R1);
+    MI = BuildMI(PPC::OR4, 2, PPC::R31).addReg(PPC::R1).addReg(PPC::R1);
     MBB.insert(MBBI, MI);
   }
 }

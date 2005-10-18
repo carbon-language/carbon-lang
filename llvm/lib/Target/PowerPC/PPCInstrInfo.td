@@ -323,9 +323,12 @@ def ANDo : XForm_6<31,  28, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
 def ANDC : XForm_6<31,  60, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    "andc $rA, $rS, $rB",
                    [(set GPRC:$rA, (and GPRC:$rS, (not GPRC:$rB)))]>;
-def OR   : XForm_6<31, 444, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
+def OR4  : XForm_6<31, 444, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    "or $rA, $rS, $rB",
                    [(set GPRC:$rA, (or GPRC:$rS, GPRC:$rB))]>;
+def OR8  : XForm_6<31, 444, (ops G8RC:$rA, G8RC:$rS, G8RC:$rB),
+                   "or $rA, $rS, $rB",
+                   [(set G8RC:$rA, (or G8RC:$rS, G8RC:$rB))]>;
 def NOR  : XForm_6<31, 124, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    "nor $rA, $rS, $rB",
                    [(set GPRC:$rA, (not (or GPRC:$rS, GPRC:$rB)))]>;
@@ -498,9 +501,12 @@ def SRADI  : XSForm_1<31, 413, (ops GPRC:$rA, GPRC:$rS, u6imm:$SH),
 
 // XO-Form instructions.  Arithmetic instructions that can set overflow bit
 //
-def ADD   : XOForm_1<31, 266, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
+def ADD4  : XOForm_1<31, 266, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
                      "add $rT, $rA, $rB",
                      [(set GPRC:$rT, (add GPRC:$rA, GPRC:$rB))]>;
+def ADD8  : XOForm_1<31, 266, 0, (ops G8RC:$rT, G8RC:$rA, G8RC:$rB),
+                     "add $rT, $rA, $rB",
+                     [(set G8RC:$rT, (add G8RC:$rA, G8RC:$rB))]>;
 def ADDC  : XOForm_1<31, 10, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
                      "addc $rT, $rA, $rB",
                      []>;
@@ -648,6 +654,9 @@ let isTwoAddress = 1, isCommutable = 1 in {
 def RLWIMI : MForm_2<20,
                      (ops GPRC:$rA, GPRC:$rSi, GPRC:$rS, u5imm:$SH, u5imm:$MB, 
                       u5imm:$ME), "rlwimi $rA, $rS, $SH, $MB, $ME">;
+def RLDIMI : MDForm_1<30, 3,
+                      (ops G8RC:$rA, G8RC:$rSi, G8RC:$rS, u6imm:$SH, u6imm:$MB),
+                      "rldimi $rA, $rS, $SH, $MB">, isPPC64;
 }
 def RLWINM : MForm_2<21,
                      (ops GPRC:$rA, GPRC:$rS, u5imm:$SH, u5imm:$MB, u5imm:$ME),
@@ -662,10 +671,10 @@ def RLWNM  : MForm_2<23,
 // MD-Form instructions.  64 bit rotate instructions.
 //
 def RLDICL : MDForm_1<30, 0,
-                      (ops GPRC:$rA, GPRC:$rS, u6imm:$SH, u6imm:$MB),
+                      (ops G8RC:$rA, G8RC:$rS, u6imm:$SH, u6imm:$MB),
                       "rldicl $rA, $rS, $SH, $MB">, isPPC64;
 def RLDICR : MDForm_1<30, 1,
-                      (ops GPRC:$rA, GPRC:$rS, u6imm:$SH, u6imm:$ME),
+                      (ops G8RC:$rA, G8RC:$rS, u6imm:$SH, u6imm:$ME),
                       "rldicr $rA, $rS, $SH, $ME">, isPPC64;
 
 //===----------------------------------------------------------------------===//

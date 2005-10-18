@@ -33,14 +33,14 @@ namespace {
   Statistic<> FrameOff("ppc-codegen", "Number of frame idx offsets collapsed");
     
   //===--------------------------------------------------------------------===//
-  /// PPC32DAGToDAGISel - PPC32 specific code to select PPC32 machine
+  /// PPCDAGToDAGISel - PPC specific code to select PPC machine
   /// instructions for SelectionDAG operations.
   ///
-  class PPC32DAGToDAGISel : public SelectionDAGISel {
+  class PPCDAGToDAGISel : public SelectionDAGISel {
     PPCTargetLowering PPCLowering;
     unsigned GlobalBaseReg;
   public:
-    PPC32DAGToDAGISel(TargetMachine &TM)
+    PPCDAGToDAGISel(TargetMachine &TM)
       : SelectionDAGISel(PPCLowering), PPCLowering(TM) {}
     
     virtual bool runOnFunction(Function &Fn) {
@@ -99,7 +99,7 @@ private:
 
 /// InstructionSelectBasicBlock - This callback is invoked by
 /// SelectionDAGISel when it has created a SelectionDAG for us to codegen.
-void PPC32DAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
+void PPCDAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
   DEBUG(BB->dump());
   
   // The selection process is inherently a bottom-up recursive process (users
@@ -156,13 +156,15 @@ void PPC32DAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
 /// getGlobalBaseReg - Output the instructions required to put the
 /// base address to use for accessing globals into a register.
 ///
-SDOperand PPC32DAGToDAGISel::getGlobalBaseReg() {
+SDOperand PPCDAGToDAGISel::getGlobalBaseReg() {
   if (!GlobalBaseReg) {
     // Insert the set of GlobalBaseReg into the first MBB of the function
     MachineBasicBlock &FirstMBB = BB->getParent()->front();
     MachineBasicBlock::iterator MBBI = FirstMBB.begin();
     SSARegMap *RegMap = BB->getParent()->getSSARegMap();
-    GlobalBaseReg = RegMap->createVirtualRegister(PPC32::GPRCRegisterClass);
+    // FIXME: when we get to LP64, we will need to create the appropriate
+    // type of register here.
+    GlobalBaseReg = RegMap->createVirtualRegister(PPC::GPRCRegisterClass);
     BuildMI(FirstMBB, MBBI, PPC::MovePCtoLR, 0, PPC::LR);
     BuildMI(FirstMBB, MBBI, PPC::MFLR, 1, GlobalBaseReg);
   }
@@ -290,7 +292,7 @@ static bool isIntImmediate(SDOperand N, unsigned& Imm) {
 /// 2. or and, shl   6. or shl, shr
 /// 3. or shr, and   7. or shr, shl
 /// 4. or and, shr
-SDNode *PPC32DAGToDAGISel::SelectBitfieldInsert(SDNode *N) {
+SDNode *PPCDAGToDAGISel::SelectBitfieldInsert(SDNode *N) {
   bool IsRotate = false;
   unsigned TgtMask = 0xFFFFFFFF, InsMask = 0xFFFFFFFF, SH = 0;
   unsigned Value;
@@ -392,8 +394,8 @@ SDNode *PPC32DAGToDAGISel::SelectBitfieldInsert(SDNode *N) {
 /// SelectAddr - Given the specified address, return the two operands for a
 /// load/store instruction, and return true if it should be an indexed [r+r]
 /// operation.
-bool PPC32DAGToDAGISel::SelectAddr(SDOperand Addr, SDOperand &Op1,
-                                   SDOperand &Op2) {
+bool PPCDAGToDAGISel::SelectAddr(SDOperand Addr, SDOperand &Op1, 
+                                 SDOperand &Op2) {
   unsigned imm = 0;
   if (Addr.getOpcode() == ISD::ADD) {
     if (isIntImmediate(Addr.getOperand(1), imm) && isInt16(imm)) {
@@ -445,8 +447,8 @@ bool PPC32DAGToDAGISel::SelectAddr(SDOperand Addr, SDOperand &Op1,
 
 /// SelectCC - Select a comparison of the specified values with the specified
 /// condition code, returning the CR# of the expression.
-SDOperand PPC32DAGToDAGISel::SelectCC(SDOperand LHS, SDOperand RHS,
-                                      ISD::CondCode CC) {
+SDOperand PPCDAGToDAGISel::SelectCC(SDOperand LHS, SDOperand RHS,
+                                    ISD::CondCode CC) {
   // Always select the LHS.
   LHS = Select(LHS);
 
@@ -604,7 +606,7 @@ static struct mu magicu(unsigned d)
 /// return a DAG expression to select that will generate the same value by
 /// multiplying by a magic number.  See:
 /// <http://the.wall.riscom.net/books/proc/ppc/cwg/code2.html>
-SDOperand PPC32DAGToDAGISel::BuildSDIVSequence(SDNode *N) {
+SDOperand PPCDAGToDAGISel::BuildSDIVSequence(SDNode *N) {
   int d = (int)cast<ConstantSDNode>(N->getOperand(1))->getValue();
   ms magics = magic(d);
   // Multiply the numerator (operand 0) by the magic value
@@ -630,7 +632,7 @@ SDOperand PPC32DAGToDAGISel::BuildSDIVSequence(SDNode *N) {
 /// return a DAG expression to select that will generate the same value by
 /// multiplying by a magic number.  See:
 /// <http://the.wall.riscom.net/books/proc/ppc/cwg/code2.html>
-SDOperand PPC32DAGToDAGISel::BuildUDIVSequence(SDNode *N) {
+SDOperand PPCDAGToDAGISel::BuildUDIVSequence(SDNode *N) {
   unsigned d = (unsigned)cast<ConstantSDNode>(N->getOperand(1))->getValue();
   mu magics = magicu(d);
   // Multiply the numerator (operand 0) by the magic value
@@ -649,7 +651,7 @@ SDOperand PPC32DAGToDAGISel::BuildUDIVSequence(SDNode *N) {
   }
 }
 
-SDOperand PPC32DAGToDAGISel::SelectDYNAMIC_STACKALLOC(SDOperand Op) {
+SDOperand PPCDAGToDAGISel::SelectDYNAMIC_STACKALLOC(SDOperand Op) {
   SDNode *N = Op.Val;
 
   // FIXME: We are currently ignoring the requested alignment for handling
@@ -686,7 +688,7 @@ SDOperand PPC32DAGToDAGISel::SelectDYNAMIC_STACKALLOC(SDOperand Op) {
   return SDOperand(Result.Val, Op.ResNo);
 }
 
-SDOperand PPC32DAGToDAGISel::SelectADD_PARTS(SDOperand Op) {
+SDOperand PPCDAGToDAGISel::SelectADD_PARTS(SDOperand Op) {
   SDNode *N = Op.Val;
   SDOperand LHSL = Select(N->getOperand(0));
   SDOperand LHSH = Select(N->getOperand(1));
@@ -729,7 +731,7 @@ SDOperand PPC32DAGToDAGISel::SelectADD_PARTS(SDOperand Op) {
   CodeGenMap[Op.getValue(1)] = Result[1];
   return Result[Op.ResNo];
 }
-SDOperand PPC32DAGToDAGISel::SelectSUB_PARTS(SDOperand Op) {
+SDOperand PPCDAGToDAGISel::SelectSUB_PARTS(SDOperand Op) {
   SDNode *N = Op.Val;
   SDOperand LHSL = Select(N->getOperand(0));
   SDOperand LHSH = Select(N->getOperand(1));
@@ -746,7 +748,7 @@ SDOperand PPC32DAGToDAGISel::SelectSUB_PARTS(SDOperand Op) {
   return Result[Op.ResNo];
 }
 
-SDOperand PPC32DAGToDAGISel::SelectSETCC(SDOperand Op) {
+SDOperand PPCDAGToDAGISel::SelectSETCC(SDOperand Op) {
   SDNode *N = Op.Val;
   unsigned Imm;
   ISD::CondCode CC = cast<CondCodeSDNode>(N->getOperand(2))->get();
@@ -854,7 +856,7 @@ SDOperand PPC32DAGToDAGISel::SelectSETCC(SDOperand Op) {
   return SDOperand(N, 0);
 }
 
-SDOperand PPC32DAGToDAGISel::SelectCALL(SDOperand Op) {
+SDOperand PPCDAGToDAGISel::SelectCALL(SDOperand Op) {
   SDNode *N = Op.Val;
   SDOperand Chain = Select(N->getOperand(0));
   
@@ -963,7 +965,7 @@ SDOperand PPC32DAGToDAGISel::SelectCALL(SDOperand Op) {
 
 // Select - Convert the specified operand from a target-independent to a
 // target-specific node if it hasn't already been changed.
-SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
+SDOperand PPCDAGToDAGISel::Select(SDOperand Op) {
   SDNode *N = Op.Val;
   if (N->getOpcode() >= ISD::BUILTIN_OP_END &&
       N->getOpcode() < PPCISD::FIRST_NUMBER)
@@ -1391,6 +1393,11 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
       SDOperand Val = Select(N->getOperand(1));
       if (N->getOperand(1).getValueType() == MVT::i32) {
         Chain = CurDAG->getCopyToReg(Chain, PPC::R3, Val);
+      } else if (N->getOperand(1).getValueType() == MVT::i64) {
+        SDOperand Srl = CurDAG->getTargetNode(PPC::RLDICL, MVT::i64, Val,
+                                              getI32Imm(32), getI32Imm(32));
+        Chain = CurDAG->getCopyToReg(Chain, PPC::R4, Val);
+        Chain = CurDAG->getCopyToReg(Chain, PPC::R3, Srl);
       } else {
         assert(MVT::isFloatingPoint(N->getOperand(1).getValueType()));
         Chain = CurDAG->getCopyToReg(Chain, PPC::F1, Val);
@@ -1465,10 +1472,10 @@ SDOperand PPC32DAGToDAGISel::Select(SDOperand Op) {
 }
 
 
-/// createPPC32ISelDag - This pass converts a legalized DAG into a 
+/// createPPCISelDag - This pass converts a legalized DAG into a 
 /// PowerPC-specific DAG, ready for instruction scheduling.
 ///
-FunctionPass *llvm::createPPC32ISelDag(TargetMachine &TM) {
-  return new PPC32DAGToDAGISel(TM);
+FunctionPass *llvm::createPPCISelDag(TargetMachine &TM) {
+  return new PPCDAGToDAGISel(TM);
 }
 

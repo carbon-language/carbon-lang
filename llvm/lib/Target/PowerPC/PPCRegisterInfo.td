@@ -87,7 +87,7 @@ def CTR : SPR<3, "ctr">;
 /// Register classes
 // Allocate volatiles first
 // then nonvolatiles in reverse order since stmw/lmw save from rN to r31
-def GPRC : RegisterClass<"PPC32", i32, 32,
+def GPRC : RegisterClass<"PPC", i32, 32,
      [R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12,
       R30, R29, R28, R27, R26, R25, R24, R23, R22, R21, R20, R19, R18, R17,
       R16, R15, R14, R13, R31, R0, R1, LR]>
@@ -110,13 +110,38 @@ def GPRC : RegisterClass<"PPC32", i32, 32,
     }
   }];
 }
+def G8RC : RegisterClass<"PPC", i64, 64,
+     [R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12,
+      R30, R29, R28, R27, R26, R25, R24, R23, R22, R21, R20, R19, R18, R17,
+      R16, R15, R14, R13, R31, R0, R1, LR]>
+{
+  let MethodProtos = [{
+    iterator allocation_order_begin(MachineFunction &MF) const;
+    iterator allocation_order_end(MachineFunction &MF) const;
+  }];
+  let MethodBodies = [{
+    G8RCClass::iterator
+    G8RCClass::allocation_order_begin(MachineFunction &MF) const {
+      return begin() + ((TargetAIX == PPCTarget) ? 1 : 0);
+    }
+    G8RCClass::iterator
+    G8RCClass::allocation_order_end(MachineFunction &MF) const {
+      if (hasFP(MF))
+        return end()-4;
+      else
+        return end()-3;
+    }
+  }];
+}
 
-def F8RC : RegisterClass<"PPC32", f64, 64, [F0, F1, F2, F3, F4, F5, F6, F7,
+
+
+def F8RC : RegisterClass<"PPC", f64, 64, [F0, F1, F2, F3, F4, F5, F6, F7,
   F8, F9, F10, F11, F12, F13, F14, F15, F16, F17, F18, F19, F20, F21,
   F22, F23, F24, F25, F26, F27, F28, F29, F30, F31]>;
-def F4RC : RegisterClass<"PPC32", f32, 32, [F0, F1, F2, F3, F4, F5, F6, F7,
+def F4RC : RegisterClass<"PPC", f32, 32, [F0, F1, F2, F3, F4, F5, F6, F7,
   F8, F9, F10, F11, F12, F13, F14, F15, F16, F17, F18, F19, F20, F21,
   F22, F23, F24, F25, F26, F27, F28, F29, F30, F31]>;
 
 
-def CRRC : RegisterClass<"PPC32", i32, 32, [CR0, CR1, CR5, CR6, CR7, CR2, CR3, CR4]>;
+def CRRC : RegisterClass<"PPC", i32, 32, [CR0, CR1, CR5, CR6, CR7, CR2, CR3, CR4]>;
