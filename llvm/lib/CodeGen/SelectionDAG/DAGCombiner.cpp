@@ -22,10 +22,8 @@
 //
 // FIXME: select C, pow2, pow2 -> something smart
 // FIXME: trunc(select X, Y, Z) -> select X, trunc(Y), trunc(Z)
-// FIXME: (select C, load A, load B) -> load (select C, A, B)
 // FIXME: Dead stores -> nuke
-// FIXME: shr X, (and Y,31) -> shr X, Y
-// FIXME: TRUNC (LOAD)   -> EXT_LOAD/LOAD(smaller)
+// FIXME: shr X, (and Y,31) -> shr X, Y   (TRICKY!)
 // FIXME: mul (x, const) -> shifts + adds
 // FIXME: undef values
 // FIXME: make truncate see through SIGN_EXTEND and AND
@@ -176,6 +174,7 @@ namespace {
     SDOperand visitLOAD(SDNode *N);
     SDOperand visitSTORE(SDNode *N);
 
+    bool SimplifySelectOps(SDNode *SELECT, SDOperand LHS, SDOperand RHS);
     SDOperand SimplifySelect(SDOperand N0, SDOperand N1, SDOperand N2);
     SDOperand SimplifySelectCC(SDOperand N0, SDOperand N1, SDOperand N2, 
                                SDOperand N3, ISD::CondCode CC);
@@ -831,7 +830,7 @@ SDOperand DAGCombiner::visitAND(SDNode *N) {
     }
   }
   // fold (zext_inreg (sextload x)) -> (zextload x) iff load has one use
-  if (N0.getOpcode() == ISD::SEXTLOAD && N0.Val->hasNUsesOfValue(1, 0)) {
+  if (N0.getOpcode() == ISD::SEXTLOAD && N0.hasOneUse()) {
     MVT::ValueType EVT = cast<VTSDNode>(N0.getOperand(3))->getVT();
     // If we zero all the possible extended bits, then we can turn this into
     // a zextload if we are running before legalize or the operation is legal.
@@ -1209,6 +1208,11 @@ SDOperand DAGCombiner::visitSELECT(SDNode *N) {
   // fold X ? Y : X --> X ? Y : 0 --> X & Y
   if (MVT::i1 == VT && N0 == N2)
     return DAG.getNode(ISD::AND, VT, N0, N1);
+  
+  // If we can fold this based on the true/false value, do so.
+  if (SimplifySelectOps(N, N1, N2))
+    return SDOperand();
+  
   // fold selects based on a setcc into other things, such as min/max/abs
   if (N0.getOpcode() == ISD::SETCC)
     return SimplifySelect(N0, N1, N2);
@@ -1233,6 +1237,11 @@ SDOperand DAGCombiner::visitSELECT_CC(SDNode *N) {
   // fold select_cc lhs, rhs, x, x, cc -> x
   if (N2 == N3)
     return N2;
+  
+  // If we can fold this based on the true/false value, do so.
+  if (SimplifySelectOps(N, N2, N3))
+    return SDOperand();
+  
   // fold select_cc into other things, such as min/max/abs
   return SimplifySelectCC(N0, N1, N2, N3, CC);
 }
@@ -1297,7 +1306,7 @@ SDOperand DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
   if (N0.getOpcode() == ISD::SEXTLOAD && VT == N0.getValueType())
     return N0;
   // fold (sext (load x)) -> (sextload x)
-  if (N0.getOpcode() == ISD::LOAD && N0.Val->hasNUsesOfValue(1, 0)) {
+  if (N0.getOpcode() == ISD::LOAD && N0.hasOneUse()) {
     SDOperand ExtLoad = DAG.getExtLoad(ISD::SEXTLOAD, VT, N0.getOperand(0),
                                        N0.getOperand(1), N0.getOperand(2),
                                        N0.getValueType());
@@ -1384,7 +1393,7 @@ SDOperand DAGCombiner::visitSIGN_EXTEND_INREG(SDNode *N) {
     return SDOperand();
   }
   // fold (sext_inreg (zextload x)) -> (sextload x) iff load has one use
-  if (N0.getOpcode() == ISD::ZEXTLOAD && N0.Val->hasNUsesOfValue(1, 0) &&
+  if (N0.getOpcode() == ISD::ZEXTLOAD && N0.hasOneUse() &&
       EVT == cast<VTSDNode>(N0.getOperand(3))->getVT() &&
       (!AfterLegalize || TLI.isOperationLegal(ISD::SEXTLOAD, EVT))) {
     SDOperand ExtLoad = DAG.getExtLoad(ISD::SEXTLOAD, VT, N0.getOperand(0),
@@ -1425,7 +1434,7 @@ SDOperand DAGCombiner::visitTRUNCATE(SDNode *N) {
       return N0.getOperand(0);
   }
   // fold (truncate (load x)) -> (smaller load x)
-  if (N0.getOpcode() == ISD::LOAD && N0.Val->hasNUsesOfValue(1, 0)) {
+  if (N0.getOpcode() == ISD::LOAD && N0.hasOneUse()) {
     assert(MVT::getSizeInBits(N0.getValueType()) > MVT::getSizeInBits(VT) &&
            "Cannot truncate to larger type!");
     MVT::ValueType PtrType = N0.getOperand(1).getValueType();
@@ -1776,6 +1785,72 @@ SDOperand DAGCombiner::SimplifySelect(SDOperand N0, SDOperand N1, SDOperand N2){
     return SCC;
   }
   return SDOperand();
+}
+
+/// SimplifySelectOps - Given a SELECT or a SELECT_CC node, where LHS and RHS
+/// are the two values being selected between, see if we can simplify the
+/// select.
+///
+bool DAGCombiner::SimplifySelectOps(SDNode *TheSelect, SDOperand LHS, 
+                                    SDOperand RHS) {
+  
+  // If this is a select from two identical things, try to pull the operation
+  // through the select.
+  if (LHS.getOpcode() == RHS.getOpcode() && LHS.hasOneUse() && RHS.hasOneUse()){
+#if 0
+    std::cerr << "SELECT: ["; LHS.Val->dump();
+    std::cerr << "] ["; RHS.Val->dump();
+    std::cerr << "]\n";
+#endif
+    
+    // If this is a load and the token chain is identical, replace the select
+    // of two loads with a load through a select of the address to load from.
+    // This triggers in things like "select bool X, 10.0, 123.0" after the FP
+    // constants have been dropped into the constant pool.
+    if ((LHS.getOpcode() == ISD::LOAD ||
+         LHS.getOpcode() == ISD::EXTLOAD ||
+         LHS.getOpcode() == ISD::ZEXTLOAD ||
+         LHS.getOpcode() == ISD::SEXTLOAD) &&
+        // Token chains must be identical.
+        LHS.getOperand(0) == RHS.getOperand(0) &&
+        // If this is an EXTLOAD, the VT's must match.
+        (LHS.getOpcode() == ISD::LOAD ||
+         LHS.getOperand(3) == RHS.getOperand(3))) {
+      // FIXME: this conflates two src values, discarding one.  This is not
+      // the right thing to do, but nothing uses srcvalues now.  When they do,
+      // turn SrcValue into a list of locations.
+      SDOperand Addr;
+      if (TheSelect->getOpcode() == ISD::SELECT)
+        Addr = DAG.getNode(ISD::SELECT, LHS.getOperand(1).getValueType(),
+                           TheSelect->getOperand(0), LHS.getOperand(1),
+                           RHS.getOperand(1));
+      else
+        Addr = DAG.getNode(ISD::SELECT_CC, LHS.getOperand(1).getValueType(),
+                           TheSelect->getOperand(0),
+                           TheSelect->getOperand(1), 
+                           LHS.getOperand(1), RHS.getOperand(1),
+                           TheSelect->getOperand(4));
+      
+      SDOperand Load;
+      if (LHS.getOpcode() == ISD::LOAD)
+        Load = DAG.getLoad(TheSelect->getValueType(0), LHS.getOperand(0),
+                           Addr, LHS.getOperand(2));
+      else
+        Load = DAG.getExtLoad(LHS.getOpcode(), TheSelect->getValueType(0),
+                              LHS.getOperand(0), Addr, LHS.getOperand(2),
+                              cast<VTSDNode>(LHS.getOperand(3))->getVT());
+      // Users of the select now use the result of the load.
+      CombineTo(TheSelect, Load);
+      
+      // Users of the old loads now use the new load's chain.  We know the
+      // old-load value is dead now.
+      CombineTo(LHS.Val, Load.getValue(0), Load.getValue(1));
+      CombineTo(RHS.Val, Load.getValue(0), Load.getValue(1));
+      return true;
+    }
+  }
+  
+  return false;
 }
 
 SDOperand DAGCombiner::SimplifySelectCC(SDOperand N0, SDOperand N1, 
