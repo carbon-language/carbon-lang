@@ -117,6 +117,10 @@ namespace {
                             MVT::ValueType VT) {
       O << (unsigned short)MI->getOperand(OpNo).getImmedValue();
     }
+    void printS16X4ImmOperand(const MachineInstr *MI, unsigned OpNo,
+                              MVT::ValueType VT) {
+      O << (short)MI->getOperand(OpNo).getImmedValue()*4;
+    }
     void printBranchOperand(const MachineInstr *MI, unsigned OpNo,
                             MVT::ValueType VT) {
       // Branches can take an immediate operand.  This is used by the branch

@@ -89,6 +89,9 @@ def s16imm  : Operand<i32> {
 def u16imm  : Operand<i32> {
   let PrintMethod = "printU16ImmOperand";
 }
+def s16immX4  : Operand<i32> {   // Multiply imm by 4 before printing.
+  let PrintMethod = "printS16X4ImmOperand";
+}
 def target : Operand<i32> {
   let PrintMethod = "printBranchOperand";
 }
@@ -282,15 +285,15 @@ def STFD : DForm_9<54, (ops F8RC:$rS, symbolLo:$disp, GPRC:$rA),
 // DS-Form instructions.  Load/Store instructions available in PPC-64
 //
 let isLoad = 1 in {
-def LWA  : DSForm_1<58, 2, (ops GPRC:$rT, s16imm:$DS, GPRC:$rA),
+def LWA  : DSForm_1<58, 2, (ops GPRC:$rT, s16immX4:$DS, GPRC:$rA),
                     "lwa $rT, $DS($rA)">, isPPC64;
-def LD   : DSForm_2<58, 0, (ops GPRC:$rT, s16imm:$DS, GPRC:$rA),
+def LD   : DSForm_2<58, 0, (ops GPRC:$rT, s16immX4:$DS, GPRC:$rA),
                     "ld $rT, $DS($rA)">, isPPC64;
 }
 let isStore = 1 in {
-def STD  : DSForm_2<62, 0, (ops GPRC:$rT, s16imm:$DS, GPRC:$rA),
+def STD  : DSForm_2<62, 0, (ops GPRC:$rT, s16immX4:$DS, GPRC:$rA),
                     "std $rT, $DS($rA)">, isPPC64;
-def STDU : DSForm_2<62, 1, (ops GPRC:$rT, s16imm:$DS, GPRC:$rA),
+def STDU : DSForm_2<62, 1, (ops GPRC:$rT, s16immX4:$DS, GPRC:$rA),
                     "stdu $rT, $DS($rA)">, isPPC64;
 }
 

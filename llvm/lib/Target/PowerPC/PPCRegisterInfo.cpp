@@ -271,6 +271,15 @@ PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const {
     MI.SetMachineOperandReg(1, MI.getOperand(i).getReg());
     MI.SetMachineOperandReg(2, PPC::R0);
   } else {
+    switch (MI.getOpcode()) {
+    case PPC::LWA:
+    case PPC::LD:
+    case PPC::STD:
+    case PPC::STDU:
+      assert((Offset & 3) == 0 && "Invalid frame offset!");
+      Offset >>= 2;    // The actual encoded value has the low two bits zero.
+      break;
+    }
     MI.SetMachineOperandConst(OffIdx, MachineOperand::MO_SignExtendedImmed,
                               Offset);
   }
