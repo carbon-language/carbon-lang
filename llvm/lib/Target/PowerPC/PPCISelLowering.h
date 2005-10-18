@@ -63,6 +63,9 @@ namespace llvm {
                   unsigned CC,
                   bool isTailCall, SDOperand Callee, ArgListTy &Args,
                   SelectionDAG &DAG);
+
+    virtual SDOperand LowerReturnTo(SDOperand Chain, SDOperand Op,
+                                    SelectionDAG &DAG);
     
     virtual SDOperand LowerVAStart(SDOperand Chain, SDOperand VAListP,
                                    Value *VAListV, SelectionDAG &DAG);

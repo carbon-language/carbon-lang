@@ -693,6 +693,19 @@ PPCTargetLowering::LowerCallTo(SDOperand Chain,
   return std::make_pair(RetVal, Chain);
 }
 
+SDOperand PPCTargetLowering::LowerReturnTo(SDOperand Chain, SDOperand Op,
+                                           SelectionDAG &DAG) {
+  if (Op.getValueType() == MVT::i64) {
+    SDOperand Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, Op, 
+                               DAG.getConstant(1, MVT::i32));
+    SDOperand Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, Op,
+                               DAG.getConstant(0, MVT::i32));
+    return DAG.getNode(ISD::RET, MVT::Other, Chain, Lo, Hi);
+  } else {
+    return DAG.getNode(ISD::RET, MVT::Other, Chain, Op);
+  }
+}
+
 SDOperand PPCTargetLowering::LowerVAStart(SDOperand Chain, SDOperand VAListP,
                                           Value *VAListV, SelectionDAG &DAG) {
   // vastart just stores the address of the VarArgsFrameIndex slot into the

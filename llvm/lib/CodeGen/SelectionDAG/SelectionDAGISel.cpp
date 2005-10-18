@@ -450,8 +450,8 @@ void SelectionDAGLowering::visitRet(ReturnInst &I) {
   case MVT::f64:
     break; // No extension needed!
   }
-
-  DAG.setRoot(DAG.getNode(ISD::RET, MVT::Other, getRoot(), Op1));
+  // Allow targets to lower this further to meet ABI requirements
+  DAG.setRoot(TLI.LowerReturnTo(getRoot(), Op1, DAG));
 }
 
 void SelectionDAGLowering::visitBr(BranchInst &I) {
@@ -896,6 +896,11 @@ MachineBasicBlock *TargetLowering::InsertAtEndOfBasicBlock(MachineInstr *MI,
                "TargetLowering::InsertAtEndOfBasicBlock!\n";
   abort();
   return 0;  
+}
+
+SDOperand TargetLowering::LowerReturnTo(SDOperand Chain, SDOperand Op,
+                                        SelectionDAG &DAG) {
+  return DAG.getNode(ISD::RET, MVT::Other, Chain, Op);
 }
 
 SDOperand TargetLowering::LowerVAStart(SDOperand Chain,

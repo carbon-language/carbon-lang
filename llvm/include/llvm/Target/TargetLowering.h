@@ -311,6 +311,12 @@ public:
               unsigned CallingConv, bool isTailCall, SDOperand Callee,
               ArgListTy &Args, SelectionDAG &DAG) = 0;
 
+  /// LowerReturnTo - This hook lowers a return instruction into the appropriate
+  /// legal ISD::RET node for the target's current ABI.  This method is optional
+  /// and is intended for targets that need non-standard behavior.
+  virtual SDOperand LowerReturnTo(SDOperand Chain, SDOperand Op, 
+                                  SelectionDAG &DAG);
+  
   /// LowerVAStart - This lowers the llvm.va_start intrinsic.  If not
   /// implemented, this method prints a message and aborts.  This method should
   /// return the modified chain value.  Note that VAListPtr* correspond to the
