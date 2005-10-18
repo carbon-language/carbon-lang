@@ -111,10 +111,12 @@ ModulePass *createPruneEHPass();
 
 //===----------------------------------------------------------------------===//
 /// createInternalizePass - This pass loops over all of the functions in the
-/// input module, looking for a main function.  If a main function is found, all
-/// other functions are marked as internal.
+/// input module, looking for a main function.  If a list of symbols is
+/// specified with the -internalize-public-api-* command line options, those
+/// symbols are internalized.  Otherwise if InternalizeEverything is set and
+/// the main function is found, all other globals are marked as internal.
 ///
-ModulePass *createInternalizePass();
+ModulePass *createInternalizePass(bool InternalizeEverything);
 
 //===----------------------------------------------------------------------===//
 /// createDeadArgEliminationPass - This pass removes arguments from functions
