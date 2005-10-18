@@ -1605,6 +1605,31 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       Result = DAG.getNode(Node->getOpcode(), Node->getValueType(0), Tmp1,Tmp2);
     break;
 
+  case ISD::BUILD_PAIR: {
+    MVT::ValueType PairTy = Node->getValueType(0);
+    // TODO: handle the case where the Lo and Hi operands are not of legal type
+    Tmp1 = LegalizeOp(Node->getOperand(0));   // Lo
+    Tmp2 = LegalizeOp(Node->getOperand(1));   // Hi
+    switch (TLI.getOperationAction(ISD::BUILD_PAIR, PairTy)) {
+    case TargetLowering::Legal:
+      if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(1))
+        Result = DAG.getNode(ISD::BUILD_PAIR, PairTy, Tmp1, Tmp2);
+      break;
+    case TargetLowering::Promote:
+    case TargetLowering::Custom:
+      assert(0 && "Cannot promote/custom this yet!");
+    case TargetLowering::Expand:
+      Tmp1 = DAG.getNode(ISD::ZERO_EXTEND, PairTy, Tmp1);
+      Tmp2 = DAG.getNode(ISD::ANY_EXTEND, PairTy, Tmp2);
+      Tmp2 = DAG.getNode(ISD::SHL, PairTy, Tmp2,
+                         DAG.getConstant(MVT::getSizeInBits(PairTy)/2, 
+                                         TLI.getShiftAmountTy()));
+      Result = LegalizeOp(DAG.getNode(ISD::OR, PairTy, Tmp1, Tmp2));
+      break;
+    }
+    break;
+  }
+
   case ISD::UREM:
   case ISD::SREM:
   case ISD::FREM:
