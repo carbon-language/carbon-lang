@@ -665,8 +665,15 @@ TreePatternNode *TreePattern::ParseTreePattern(DagInit *Dag) {
           Args.push_back(Dag->getArgName(i));
         }
       }
+    } else if (IntInit *II = dynamic_cast<IntInit*>(Arg)) {
+      TreePatternNode *Node = new TreePatternNode(II);
+      if (!Dag->getArgName(i).empty())
+        error("Constant int argument should not have a name!");
+      Children.push_back(Node);
     } else {
+      std::cerr << '"';
       Arg->dump();
+      std::cerr << "\": ";
       error("Unknown leaf value for tree pattern!");
     }
   }
@@ -1627,6 +1634,13 @@ CodeGenPatternResult(TreePatternNode *N, unsigned &Ctr,
            << ");\n";
         return ResNo;
       }
+    } else if (IntInit *II = dynamic_cast<IntInit*>(N->getLeafValue())) {
+      unsigned ResNo = Ctr++;
+      OS << "      SDOperand Tmp" << ResNo << " = CurDAG->getTargetConstant("
+         << II->getValue() << ", MVT::"
+        << getEnumName(N->getType())
+        << ");\n";
+      return ResNo;
     }
     
     N->dump();
