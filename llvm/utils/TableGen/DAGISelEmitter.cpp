@@ -462,7 +462,9 @@ static unsigned char getIntrinsicType(Record *R, bool NotRegisters,
     // Pattern fragment types will be resolved when they are inlined.
     return MVT::isUnknown;
   } else if (R->isSubClassOf("Register")) {
-    assert(0 && "Explicit registers not handled here yet!\n");
+    //const CodeGenTarget &T = TP.getDAGISelEmitter().getTargetInfo();
+    // TODO: if a register appears in exactly one regclass, we could use that
+    // type info.
     return MVT::isUnknown;
   } else if (R->isSubClassOf("ValueType")) {
     // Using a VTSDNode.
