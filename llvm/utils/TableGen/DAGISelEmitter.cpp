@@ -1472,6 +1472,9 @@ static unsigned getPatternSize(TreePatternNode *P) {
     TreePatternNode *Child = P->getChild(i);
     if (!Child->isLeaf() && Child->getExtType() != MVT::Other)
       Size += getPatternSize(Child);
+    else if (Child->isLeaf() && dynamic_cast<IntInit*>(Child->getLeafValue())) {
+      ++Size;  // Matches a ConstantSDNode.
+    }
   }
   
   return Size;
@@ -1562,15 +1565,24 @@ void DAGISelEmitter::EmitMatchForPattern(TreePatternNode *N,
       }
       
       // Handle leaves of various types.
-      Init *LeafVal = Child->getLeafValue();
-      Record *LeafRec = dynamic_cast<DefInit*>(LeafVal)->getDef();
-      if (LeafRec->isSubClassOf("RegisterClass")) {
-        // Handle register references.  Nothing to do here.
-      } else if (LeafRec->isSubClassOf("ValueType")) {
-        // Make sure this is the specified value type.
-        OS << "      if (cast<VTSDNode>(" << RootName << i << ")->getVT() != "
-           << "MVT::" << LeafRec->getName() << ") goto P" << PatternNo
-           << "Fail;\n";
+      if (DefInit *DI = dynamic_cast<DefInit*>(Child->getLeafValue())) {
+        Record *LeafRec = DI->getDef();
+        if (LeafRec->isSubClassOf("RegisterClass")) {
+          // Handle register references.  Nothing to do here.
+        } else if (LeafRec->isSubClassOf("ValueType")) {
+          // Make sure this is the specified value type.
+          OS << "      if (cast<VTSDNode>(" << RootName << i << ")->getVT() != "
+          << "MVT::" << LeafRec->getName() << ") goto P" << PatternNo
+          << "Fail;\n";
+        } else {
+          Child->dump();
+          assert(0 && "Unknown leaf type!");
+        }
+      } else if (IntInit *II = dynamic_cast<IntInit*>(Child->getLeafValue())) {
+        OS << "      if (!isa<ConstantSDNode>(" << RootName << i << ") ||\n"
+           << "          cast<ConstantSDNode>(" << RootName << i
+           << ")->getValue() != " << II->getValue() << ")\n"
+           << "        goto P" << PatternNo << "Fail;\n";
       } else {
         Child->dump();
         assert(0 && "Unknown leaf type!");
