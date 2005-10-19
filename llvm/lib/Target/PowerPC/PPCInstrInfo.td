@@ -703,7 +703,6 @@ def : Pat<(xor GPRC:$in, imm:$imm),
           (XORIS (XORI GPRC:$in, (LO16 imm:$imm)), (HI16 imm:$imm))>;
 
 
-
 // Same as above, but using a temporary. FIXME: implement temporaries :)
 /*
 def : Pattern<(xor GPRC:$in, imm:$imm),
