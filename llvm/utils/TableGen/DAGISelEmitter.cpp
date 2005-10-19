@@ -1617,6 +1617,18 @@ CodeGenPatternResult(TreePatternNode *N, unsigned &Ctr,
   }
   
   if (N->isLeaf()) {
+    // If this is an explicit register reference, handle it.
+    if (DefInit *DI = dynamic_cast<DefInit*>(N->getLeafValue())) {
+      unsigned ResNo = Ctr++;
+      if (DI->getDef()->isSubClassOf("Register")) {
+        OS << "      SDOperand Tmp" << ResNo << " = CurDAG->getRegister("
+           << getQualifiedName(DI->getDef()) << ", MVT::"
+           << getEnumName(N->getType())
+           << ");\n";
+        return ResNo;
+      }
+    }
+    
     N->dump();
     assert(0 && "Unknown leaf type!");
     return ~0U;
