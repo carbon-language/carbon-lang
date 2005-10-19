@@ -468,12 +468,15 @@ class AForm_3<bits<6> opcode, bits<5> xo, dag OL, string asmstr, list<dag> pat>
 }
 
 // 1.7.13 M-Form
-class MForm_1<bits<6> opcode, dag OL, string asmstr> : I<opcode, OL, asmstr> {
+class MForm_1<bits<6> opcode, dag OL, string asmstr, list<dag> pattern> 
+  : I<opcode, OL, asmstr> {
   bits<5> RA;
   bits<5> RS;
   bits<5> RB;
   bits<5> MB;
   bits<5> ME;
+
+  let Pattern = pattern;
 
   bit RC = 0;    // set by isDOT
 
@@ -485,17 +488,20 @@ class MForm_1<bits<6> opcode, dag OL, string asmstr> : I<opcode, OL, asmstr> {
   let Inst{31}    = RC;
 }
 
-class MForm_2<bits<6> opcode, dag OL, string asmstr>
-  : MForm_1<opcode, OL, asmstr> {
+class MForm_2<bits<6> opcode, dag OL, string asmstr, list<dag> pattern>
+  : MForm_1<opcode, OL, asmstr, pattern> {
 }
 
 // 1.7.14 MD-Form
-class MDForm_1<bits<6> opcode, bits<3> xo, dag OL, string asmstr>
+class MDForm_1<bits<6> opcode, bits<3> xo, dag OL, string asmstr, 
+               list<dag> pattern>
          : I<opcode, OL, asmstr> {
   bits<5> RS;
   bits<5> RA;
   bits<6> SH;
   bits<6> MBE;
+
+  let Pattern = pattern;
 
   bit RC = 0;    // set by isDOT
 

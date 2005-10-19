@@ -19,6 +19,26 @@ include "PPCInstrFormats.td"
 // PowerPC specific transformation functions and pattern fragments.
 //
 
+def SHL32 : SDNodeXForm<imm, [{
+  // Transformation function: 31 - imm
+  return getI32Imm(31 - N->getValue());
+}]>;
+
+def SHL64 : SDNodeXForm<imm, [{
+  // Transformation function: 63 - imm
+  return getI32Imm(63 - N->getValue());
+}]>;
+
+def SRL32 : SDNodeXForm<imm, [{
+  // Transformation function: 32 - imm
+  return N->getValue() ? getI32Imm(32 - N->getValue()) : getI32Imm(0);
+}]>;
+
+def SRL64 : SDNodeXForm<imm, [{
+  // Transformation function: 64 - imm
+  return N->getValue() ? getI32Imm(64 - N->getValue()) : getI32Imm(0);
+}]>;
+
 def LO16 : SDNodeXForm<imm, [{
   // Transformation function: get the low 16 bits.
   return getI32Imm((unsigned short)N->getValue());
@@ -354,21 +374,21 @@ def EQV  : XForm_6<31, 284, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
 def XOR  : XForm_6<31, 316, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    "xor $rA, $rS, $rB",
                    [(set GPRC:$rA, (xor GPRC:$rS, GPRC:$rB))]>;                   
-def SLD  : XForm_6<31,  27, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
+def SLD  : XForm_6<31,  27, (ops G8RC:$rA, G8RC:$rS, G8RC:$rB),
                    "sld $rA, $rS, $rB",
-                   []>, isPPC64;
+                   [(set G8RC:$rA, (shl G8RC:$rS, G8RC:$rB))]>, isPPC64;
 def SLW  : XForm_6<31,  24, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    "slw $rA, $rS, $rB",
                    [(set GPRC:$rA, (shl GPRC:$rS, GPRC:$rB))]>;
-def SRD  : XForm_6<31, 539, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
+def SRD  : XForm_6<31, 539, (ops G8RC:$rA, G8RC:$rS, G8RC:$rB),
                    "srd $rA, $rS, $rB",
-                   []>, isPPC64;
+                   [(set G8RC:$rA, (srl G8RC:$rS, G8RC:$rB))]>, isPPC64;
 def SRW  : XForm_6<31, 536, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    "srw $rA, $rS, $rB",
                    [(set GPRC:$rA, (srl GPRC:$rS, GPRC:$rB))]>;
-def SRAD : XForm_6<31, 794, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
+def SRAD : XForm_6<31, 794, (ops G8RC:$rA, G8RC:$rS, G8RC:$rB),
                    "srad $rA, $rS, $rB",
-                   []>, isPPC64;
+                   [(set G8RC:$rA, (sra G8RC:$rS, G8RC:$rB))]>, isPPC64;
 def SRAW : XForm_6<31, 792, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    "sraw $rA, $rS, $rB",
                    [(set GPRC:$rA, (sra GPRC:$rS, GPRC:$rB))]>;
@@ -663,29 +683,36 @@ let isTwoAddress = 1, isCommutable = 1 in {
 // RLWIMI can be commuted if the rotate amount is zero.
 def RLWIMI : MForm_2<20,
                      (ops GPRC:$rA, GPRC:$rSi, GPRC:$rS, u5imm:$SH, u5imm:$MB, 
-                      u5imm:$ME), "rlwimi $rA, $rS, $SH, $MB, $ME">;
+                      u5imm:$ME), "rlwimi $rA, $rS, $SH, $MB, $ME",
+                      []>;
 def RLDIMI : MDForm_1<30, 3,
                       (ops G8RC:$rA, G8RC:$rSi, G8RC:$rS, u6imm:$SH, u6imm:$MB),
-                      "rldimi $rA, $rS, $SH, $MB">, isPPC64;
+                      "rldimi $rA, $rS, $SH, $MB",
+                      []>, isPPC64;
 }
 def RLWINM : MForm_2<21,
                      (ops GPRC:$rA, GPRC:$rS, u5imm:$SH, u5imm:$MB, u5imm:$ME),
-                     "rlwinm $rA, $rS, $SH, $MB, $ME">;
+                     "rlwinm $rA, $rS, $SH, $MB, $ME",
+                     []>;
 def RLWINMo : MForm_2<21,
                      (ops GPRC:$rA, GPRC:$rS, u5imm:$SH, u5imm:$MB, u5imm:$ME),
-                     "rlwinm. $rA, $rS, $SH, $MB, $ME">, isDOT;
+                     "rlwinm. $rA, $rS, $SH, $MB, $ME",
+                     []>, isDOT;
 def RLWNM  : MForm_2<23,
                      (ops GPRC:$rA, GPRC:$rS, GPRC:$rB, u5imm:$MB, u5imm:$ME),
-                     "rlwnm $rA, $rS, $rB, $MB, $ME">;
+                     "rlwnm $rA, $rS, $rB, $MB, $ME",
+                     []>;
 
 // MD-Form instructions.  64 bit rotate instructions.
 //
 def RLDICL : MDForm_1<30, 0,
                       (ops G8RC:$rA, G8RC:$rS, u6imm:$SH, u6imm:$MB),
-                      "rldicl $rA, $rS, $SH, $MB">, isPPC64;
+                      "rldicl $rA, $rS, $SH, $MB",
+                      []>, isPPC64;
 def RLDICR : MDForm_1<30, 1,
                       (ops G8RC:$rA, G8RC:$rS, u6imm:$SH, u6imm:$ME),
-                      "rldicr $rA, $rS, $SH, $ME">, isPPC64;
+                      "rldicr $rA, $rS, $SH, $ME",
+                      []>, isPPC64;
 
 //===----------------------------------------------------------------------===//
 // PowerPC Instruction Patterns
@@ -715,6 +742,17 @@ def : Pat<(anyext GPRC:$in),
           (OR4To8 GPRC:$in, GPRC:$in)>;
 def : Pat<(trunc G8RC:$in),
           (OR8To4 G8RC:$in, G8RC:$in)>;
+
+// SHL
+def : Pat<(shl GPRC:$in, imm:$imm),
+          (RLWINM GPRC:$in, imm:$imm, 0, (SHL32 imm:$imm))>;
+def : Pat<(shl G8RC:$in, imm:$imm),
+          (RLDICR G8RC:$in, imm:$imm, (SHL64 imm:$imm))>;
+// SRL
+def : Pat<(srl GPRC:$in, imm:$imm),
+          (RLWINM GPRC:$in, (SRL32 imm:$imm), imm:$imm, 31)>;
+def : Pat<(srl G8RC:$in, imm:$imm),
+          (RLDICL G8RC:$in, (SRL64 imm:$imm), imm:$imm)>;
 
 // Same as above, but using a temporary. FIXME: implement temporaries :)
 /*
