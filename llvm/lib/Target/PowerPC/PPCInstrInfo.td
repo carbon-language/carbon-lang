@@ -18,6 +18,15 @@ include "PPCInstrFormats.td"
 //===----------------------------------------------------------------------===//
 // PowerPC specific transformation functions and pattern fragments.
 //
+def GET_ZERO : SDNodeXForm<imm, [{
+  // Transformation function: get the low 16 bits.
+  return getI32Imm(0);
+}]>;
+def GET_32 : SDNodeXForm<imm, [{
+  // Transformation function: get the low 16 bits.
+  return getI32Imm(32);
+}]>;
+
 def LO16 : SDNodeXForm<imm, [{
   // Transformation function: get the low 16 bits.
   return getI32Imm((unsigned short)N->getValue());
@@ -332,6 +341,12 @@ def OR4  : XForm_6<31, 444, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
 def OR8  : XForm_6<31, 444, (ops G8RC:$rA, G8RC:$rS, G8RC:$rB),
                    "or $rA, $rS, $rB",
                    [(set G8RC:$rA, (or G8RC:$rS, G8RC:$rB))]>;
+def OR4To8  : XForm_6<31, 444, (ops G8RC:$rA, GPRC:$rS, GPRC:$rB),
+                   "or $rA, $rS, $rB",
+                   []>;
+def OR8To4  : XForm_6<31, 444, (ops GPRC:$rA, G8RC:$rS, G8RC:$rB),
+                   "or $rA, $rS, $rB",
+                   []>;
 def NOR  : XForm_6<31, 124, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    "nor $rA, $rS, $rB",
                    [(set GPRC:$rA, (not (or GPRC:$rS, GPRC:$rB)))]>;
@@ -701,8 +716,7 @@ def : Pat<(or GPRC:$in, imm:$imm),
 // XOR an arbitrary immediate.
 def : Pat<(xor GPRC:$in, imm:$imm),
           (XORIS (XORI GPRC:$in, (LO16 imm:$imm)), (HI16 imm:$imm))>;
-
-
+          
 // Same as above, but using a temporary. FIXME: implement temporaries :)
 /*
 def : Pattern<(xor GPRC:$in, imm:$imm),

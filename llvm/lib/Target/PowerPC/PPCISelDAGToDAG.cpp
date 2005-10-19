@@ -1215,31 +1215,30 @@ SDOperand PPCDAGToDAGISel::Select(SDOperand Op) {
     assert(N->getValueType(0) == MVT::i32 && 
            N->getOperand(0).getValueType() == MVT::i64 &&
            "TRUNCATE only supported for i64 -> i32");
-    // FIXME: this code breaks ScheduleDAG since Op0 is an i64 and OR4
-    // takes i32s.
     SDOperand Op0 = Select(N->getOperand(0));
-    CurDAG->SelectNodeTo(N, PPC::OR4, MVT::i32, Op0, Op0);
+    CurDAG->SelectNodeTo(N, PPC::OR8To4, MVT::i32, Op0, Op0);
     break;
   }
   case ISD::ANY_EXTEND:
     switch(N->getValueType(0)) {
     default: assert(0 && "Unhandled type in ANY_EXTEND");
     case MVT::i64: {
-      // FIXME: this code breaks ScheduleDAG since Op0 is an i32 and OR8
-      // takes i64s.
       SDOperand Op0 = Select(N->getOperand(0));
-      CurDAG->SelectNodeTo(N, PPC::OR8, MVT::i64, Op0, Op0);
+      CurDAG->SelectNodeTo(N, PPC::OR4To8, MVT::i64, Op0, Op0);
       break;
     }
     }
     return SDOperand(N, 0);
-  case ISD::ZERO_EXTEND:
+  case ISD::ZERO_EXTEND: {
     assert(N->getValueType(0) == MVT::i64 && 
            N->getOperand(0).getValueType() == MVT::i32 &&
            "ZERO_EXTEND only supported for i32 -> i64");
-    CurDAG->SelectNodeTo(N, PPC::RLDICL, MVT::i64, Select(N->getOperand(0)),
+    SDOperand Op0 = Select(N->getOperand(0));
+    Op0 = CurDAG->getTargetNode(PPC::OR4To8, MVT::i64, Op0, Op0);
+    CurDAG->SelectNodeTo(N, PPC::RLDICL, MVT::i64, Op0, getI32Imm(0),
                          getI32Imm(32));
     return SDOperand(N, 0);
+  }
   case ISD::SHL: {
     unsigned Imm, SH, MB, ME;
     if (isOpcWithIntImmediate(N->getOperand(0).Val, ISD::AND, Imm) &&
@@ -1247,12 +1246,21 @@ SDOperand PPCDAGToDAGISel::Select(SDOperand Op) {
       CurDAG->SelectNodeTo(N, PPC::RLWINM, MVT::i32, 
                            Select(N->getOperand(0).getOperand(0)),
                            getI32Imm(SH), getI32Imm(MB), getI32Imm(ME));
-    else if (isIntImmediate(N->getOperand(1), Imm))
-      CurDAG->SelectNodeTo(N, PPC::RLWINM, MVT::i32, Select(N->getOperand(0)),
-                           getI32Imm(Imm), getI32Imm(0), getI32Imm(31-Imm));
-    else
-      CurDAG->SelectNodeTo(N, PPC::SLW, MVT::i32, Select(N->getOperand(0)),
-                           Select(N->getOperand(1)));
+    else if (isIntImmediate(N->getOperand(1), Imm)) {
+      if (N->getValueType(0) == MVT::i64)
+        CurDAG->SelectNodeTo(N, PPC::RLDICR, MVT::i64, Select(N->getOperand(0)),
+                             getI32Imm(Imm), getI32Imm(63-Imm));
+      else
+        CurDAG->SelectNodeTo(N, PPC::RLWINM, MVT::i32, Select(N->getOperand(0)),
+                             getI32Imm(Imm), getI32Imm(0), getI32Imm(31-Imm));
+    } else {
+      if (N->getValueType(0) == MVT::i64)
+        CurDAG->SelectNodeTo(N, PPC::SLD, MVT::i64, Select(N->getOperand(0)),
+                             Select(N->getOperand(1)));
+      else
+        CurDAG->SelectNodeTo(N, PPC::SLW, MVT::i32, Select(N->getOperand(0)),
+                             Select(N->getOperand(1)));
+    }
     return SDOperand(N, 0);
   }
   case ISD::SRL: {
@@ -1262,13 +1270,22 @@ SDOperand PPCDAGToDAGISel::Select(SDOperand Op) {
       CurDAG->SelectNodeTo(N, PPC::RLWINM, MVT::i32, 
                            Select(N->getOperand(0).getOperand(0)),
                            getI32Imm(SH & 0x1F), getI32Imm(MB), getI32Imm(ME));
-    else if (isIntImmediate(N->getOperand(1), Imm))
-      CurDAG->SelectNodeTo(N, PPC::RLWINM, MVT::i32, Select(N->getOperand(0)),
-                           getI32Imm((32-Imm) & 0x1F), getI32Imm(Imm),
-                           getI32Imm(31));
-    else
-      CurDAG->SelectNodeTo(N, PPC::SRW, MVT::i32, Select(N->getOperand(0)),
-                           Select(N->getOperand(1)));
+    else if (isIntImmediate(N->getOperand(1), Imm)) {
+      if (N->getValueType(0) == MVT::i64)
+        CurDAG->SelectNodeTo(N, PPC::RLDICL, MVT::i64, Select(N->getOperand(0)),
+                             getI32Imm(64-Imm), getI32Imm(Imm));
+      else
+        CurDAG->SelectNodeTo(N, PPC::RLWINM, MVT::i32, Select(N->getOperand(0)),
+                             getI32Imm((32-Imm) & 0x1F), getI32Imm(Imm),
+                             getI32Imm(31));
+    } else {
+      if (N->getValueType(0) == MVT::i64)
+        CurDAG->SelectNodeTo(N, PPC::SRD, MVT::i64, Select(N->getOperand(0)),
+                             Select(N->getOperand(1)));
+      else
+        CurDAG->SelectNodeTo(N, PPC::SRW, MVT::i32, Select(N->getOperand(0)),
+                             Select(N->getOperand(1)));
+    }
     return SDOperand(N, 0);
   }
   case ISD::FNEG: {
