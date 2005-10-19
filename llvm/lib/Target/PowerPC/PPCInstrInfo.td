@@ -18,14 +18,8 @@ include "PPCInstrFormats.td"
 //===----------------------------------------------------------------------===//
 // PowerPC specific transformation functions and pattern fragments.
 //
-def GET_ZERO : SDNodeXForm<imm, [{
-  // Transformation function: get the low 16 bits.
-  return getI32Imm(0);
-}]>;
-def GET_32 : SDNodeXForm<imm, [{
-  // Transformation function: get the low 16 bits.
-  return getI32Imm(32);
-}]>;
+def GET_ZERO : SDNodeXForm<add, [{return getI32Imm(0);}]>;  // HACK
+def GET_32 : SDNodeXForm<add, [{ return getI32Imm(32);}]>;  // HACK
 
 def LO16 : SDNodeXForm<imm, [{
   // Transformation function: get the low 16 bits.
@@ -716,7 +710,15 @@ def : Pat<(or GPRC:$in, imm:$imm),
 // XOR an arbitrary immediate.
 def : Pat<(xor GPRC:$in, imm:$imm),
           (XORIS (XORI GPRC:$in, (LO16 imm:$imm)), (HI16 imm:$imm))>;
-          
+
+def : Pat<(zext GPRC:$in),
+          (RLDICL (OR4To8 GPRC:$in, GPRC:$in), (GET_ZERO imm:$in),
+           (GET_32 imm:$in))>;
+def : Pat<(anyext GPRC:$in),
+          (OR4To8 GPRC:$in, GPRC:$in)>;
+def : Pat<(trunc G8RC:$in),
+          (OR8To4 G8RC:$in, G8RC:$in)>;
+
 // Same as above, but using a temporary. FIXME: implement temporaries :)
 /*
 def : Pattern<(xor GPRC:$in, imm:$imm),
