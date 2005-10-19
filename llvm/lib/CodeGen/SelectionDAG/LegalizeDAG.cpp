@@ -955,14 +955,37 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     }
     assert(0 && "Unreachable");
   }
-  case ISD::EXTRACT_ELEMENT:
-    // Get both the low and high parts.
-    ExpandOp(Node->getOperand(0), Tmp1, Tmp2);
-    if (cast<ConstantSDNode>(Node->getOperand(1))->getValue())
-      Result = Tmp2;  // 1 -> Hi
-    else
-      Result = Tmp1;  // 0 -> Lo
+  case ISD::EXTRACT_ELEMENT: {
+    MVT::ValueType OpTy = Node->getOperand(0).getValueType();
+    switch (getTypeAction(OpTy)) {
+    default:
+      assert(0 && "EXTRACT_ELEMENT action for type unimplemented!");
+      break;
+    case Legal:
+      if (cast<ConstantSDNode>(Node->getOperand(1))->getValue()) {
+        // 1 -> Hi
+        Result = DAG.getNode(ISD::SRL, OpTy, Node->getOperand(0),
+                             DAG.getConstant(MVT::getSizeInBits(OpTy)/2, 
+                                             TLI.getShiftAmountTy()));
+        Result = DAG.getNode(ISD::TRUNCATE, Node->getValueType(0), Result);
+      } else {
+        // 0 -> Lo
+        Result = DAG.getNode(ISD::TRUNCATE, Node->getValueType(0), 
+                             Node->getOperand(0));
+      }
+      Result = LegalizeOp(Result);
+      break;
+    case Expand:
+      // Get both the low and high parts.
+      ExpandOp(Node->getOperand(0), Tmp1, Tmp2);
+      if (cast<ConstantSDNode>(Node->getOperand(1))->getValue())
+        Result = Tmp2;  // 1 -> Hi
+      else
+        Result = Tmp1;  // 0 -> Lo
+      break;
+    }
     break;
+  }
 
   case ISD::CopyToReg:
     Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
