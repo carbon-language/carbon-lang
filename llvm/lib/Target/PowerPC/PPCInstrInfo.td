@@ -18,8 +18,6 @@ include "PPCInstrFormats.td"
 //===----------------------------------------------------------------------===//
 // PowerPC specific transformation functions and pattern fragments.
 //
-def GET_ZERO : SDNodeXForm<add, [{return getI32Imm(0);}]>;  // HACK
-def GET_32 : SDNodeXForm<add, [{ return getI32Imm(32);}]>;  // HACK
 
 def LO16 : SDNodeXForm<imm, [{
   // Transformation function: get the low 16 bits.
@@ -712,8 +710,7 @@ def : Pat<(xor GPRC:$in, imm:$imm),
           (XORIS (XORI GPRC:$in, (LO16 imm:$imm)), (HI16 imm:$imm))>;
 
 def : Pat<(zext GPRC:$in),
-          (RLDICL (OR4To8 GPRC:$in, GPRC:$in), (GET_ZERO imm:$in),
-           (GET_32 imm:$in))>;
+          (RLDICL (OR4To8 GPRC:$in, GPRC:$in), 0, 32)>;
 def : Pat<(anyext GPRC:$in),
           (OR4To8 GPRC:$in, GPRC:$in)>;
 def : Pat<(trunc G8RC:$in),
