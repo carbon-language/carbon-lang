@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-def G4PlusItineraries : ProcessorItineraries<G4Plus, [
+def G4PlusItineraries : ProcessorItineraries<[
   InstrItinData<IntGeneral  , [InstrStage<1, [IU1, IU2, IU3, IU4]>]>,
   InstrItinData<IntCompare  , [InstrStage<1, [IU1, IU2, IU3, IU4]>]>,
   InstrItinData<IntDivW     , [InstrStage<23, [IU2]>]>,

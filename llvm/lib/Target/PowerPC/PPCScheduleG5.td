@@ -11,7 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-def G5Itineraries : ProcessorItineraries<G5, [
+def G5Itineraries : ProcessorItineraries<[
   InstrItinData<IntGeneral  , [InstrStage<2, [IU1, IU2]>]>,
   InstrItinData<IntCompare  , [InstrStage<3, [IU1, IU2]>]>,
   InstrItinData<IntDivD     , [InstrStage<68, [IU1]>]>,

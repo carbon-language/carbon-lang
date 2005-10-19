@@ -242,6 +242,45 @@ class Target {
 }
 
 //===----------------------------------------------------------------------===//
+// Pull in the common support for scheduling
+//
+include "../TargetSchedule.td"
+
+//===----------------------------------------------------------------------===//
+// SubtargetFeature - A characteristic of the chip set.
+//
+class SubtargetFeature<string n, string d> {
+  // Name - Feature name.  Used by command line (-mattr=) to determine the
+  // appropriate target chip.
+  //
+  string Name = n;
+  
+  // Desc - Feature description.  Used by command line (-mattr=) to display help
+  // information.
+  //
+  string Desc = d;
+}
+
+//===----------------------------------------------------------------------===//
+// Processor chip sets - These values represent each of the chip sets supported
+// by the scheduler.  Each Processor definition requires corresponding
+// instruction itineraries.
+//
+class Processor<string n, ProcessorItineraries pi, list<SubtargetFeature> f> {
+  // Name - Chip set name.  Used by command line (-mcpu=) to determine the
+  // appropriate target chip.
+  //
+  string Name = n;
+  
+  // ProcItin - The scheduling information for the target processor.
+  //
+  ProcessorItineraries ProcItin = pi;
+  
+  // Features - list of 
+  list<SubtargetFeature> Features;
+}
+
+//===----------------------------------------------------------------------===//
 // Pull in the common support for DAG isel generation
 //
 include "../TargetSelectionDAG.td"
