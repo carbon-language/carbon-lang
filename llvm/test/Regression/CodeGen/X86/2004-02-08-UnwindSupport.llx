@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -enable-correct-eh-support
+; RUN: llvm-as < %s | llc -march=x86 -enable-correct-eh-support
 
 int %test() {
   unwind
