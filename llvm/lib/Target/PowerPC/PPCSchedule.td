@@ -7,8 +7,6 @@
 // 
 //===----------------------------------------------------------------------===//
 
-#include "../Target.td"
-
 //===----------------------------------------------------------------------===//
 // Functional units across PowerPC chips sets
 //
@@ -55,17 +53,17 @@ def BrMCRX       : InstrItinClass;
 def LdStDCBA     : InstrItinClass;
 def LdStDCBF     : InstrItinClass;
 def LdStDCBI     : InstrItinClass;
-def LdStDCBT     : InstrItinClass;
+def LdStGeneral  : InstrItinClass;
 def LdStDSS      : InstrItinClass;
 def LdStICBI     : InstrItinClass;
-def LdStLBZUX    : InstrItinClass;
+def LdStUX       : InstrItinClass;
 def LdStLD       : InstrItinClass;
 def LdStLDARX    : InstrItinClass;
 def LdStLFD      : InstrItinClass;
 def LdStLFDU     : InstrItinClass;
 def LdStLHA      : InstrItinClass;
 def LdStLMW      : InstrItinClass;
-def LdStLVEBX    : InstrItinClass;
+def LdStLVecX    : InstrItinClass;
 def LdStLWA      : InstrItinClass;
 def LdStLWARX    : InstrItinClass;
 def LdStSLBIA    : InstrItinClass;
@@ -107,10 +105,10 @@ def VecVSR       : InstrItinClass;
 //===----------------------------------------------------------------------===//
 // Processor instruction itineraries.
 
-#include "PPCScheduleG3.td"
-#include "PPCScheduleG4.td"
-#include "PPCScheduleG4Plus.td"
-#include "PPCScheduleG5.td"
+include "PPCScheduleG3.td"
+include "PPCScheduleG4.td"
+include "PPCScheduleG4Plus.td"
+include "PPCScheduleG5.td"
 
 //===----------------------------------------------------------------------===//
 // Instruction to itinerary class map - When add new opcodes to the supported
@@ -154,8 +152,8 @@ def VecVSR       : InstrItinClass;
 //    dcbf       LdStDCBF
 //    dcbi       LdStDCBI
 //    dcbst      LdStDCBF
-//    dcbt       LdStDCBT
-//    dcbtst     LdStDCBT
+//    dcbt       LdStGeneral
+//    dcbtst     LdStGeneral
 //    dcbz       LdStDCBF
 //    divd       IntDivD
 //    divdu      IntDivD
@@ -164,9 +162,9 @@ def VecVSR       : InstrItinClass;
 //    dss        LdStDSS
 //    dst        LdStDSS
 //    dstst      LdStDSS
-//    eciwx      LdStDCBT
-//    ecowx      LdStDCBT
-//    eieio      LdStDCBT
+//    eciwx      LdStGeneral
+//    ecowx      LdStGeneral
+//    eieio      LdStGeneral
 //    eqv        IntGeneral
 //    extsb      IntGeneral
 //    extsh      IntGeneral
@@ -206,10 +204,10 @@ def VecVSR       : InstrItinClass;
 //    fsubs      FPGeneral
 //    icbi       LdStICBI
 //    isync      SprISYNC
-//    lbz        LdStDCBT
-//    lbzu       LdStDCBT
-//    lbzux      LdStLBZUX
-//    lbzx       LdStDCBT
+//    lbz        LdStGeneral
+//    lbzu       LdStGeneral
+//    lbzux      LdStUX
+//    lbzx       LdStGeneral
 //    ld         LdStLD
 //    ldarx      LdStLDARX
 //    ldu        LdStLD
@@ -227,30 +225,30 @@ def VecVSR       : InstrItinClass;
 //    lhau       LdStLHA
 //    lhaux      LdStLHA
 //    lhax       LdStLHA
-//    lhbrx      LdStDCBT
-//    lhz        LdStDCBT
-//    lhzu       LdStDCBT
-//    lhzux      LdStLBZUX
-//    lhzx       LdStDCBT
+//    lhbrx      LdStGeneral
+//    lhz        LdStGeneral
+//    lhzu       LdStGeneral
+//    lhzux      LdStUX
+//    lhzx       LdStGeneral
 //    lmw        LdStLMW
 //    lswi       LdStLMW
 //    lswx       LdStLMW
-//    lvebx      LdStLVEBX
-//    lvehx      LdStLVEBX
-//    lvewx      LdStLVEBX
-//    lvsl       LdStLVEBX
-//    lvsr       LdStLVEBX
-//    lvx        LdStLVEBX
-//    lvxl       LdStLVEBX
+//    lvebx      LdStLVecX
+//    lvehx      LdStLVecX
+//    lvewx      LdStLVecX
+//    lvsl       LdStLVecX
+//    lvsr       LdStLVecX
+//    lvx        LdStLVecX
+//    lvxl       LdStLVecX
 //    lwa        LdStLWA
 //    lwarx      LdStLWARX
 //    lwaux      LdStLHA
 //    lwax       LdStLHA
-//    lwbrx      LdStDCBT
-//    lwz        LdStDCBT
-//    lwzu       LdStDCBT
-//    lwzux      LdStLBZUX
-//    lwzx       LdStDCBT
+//    lwbrx      LdStGeneral
+//    lwz        LdStGeneral
+//    lwzu       LdStGeneral
+//    lwzux      LdStUX
+//    lwzx       LdStGeneral
 //    mcrf       BrMCR
 //    mcrfs      FPGeneral
 //    mcrxr      BrMCRX
@@ -311,29 +309,29 @@ def VecVSR       : InstrItinClass;
 //    srawi      IntShift
 //    srd        IntRotateD
 //    srw        IntGeneral
-//    stb        LdStDCBT
-//    stbu       LdStDCBT
-//    stbux      LdStDCBT
-//    stbx       LdStDCBT
+//    stb        LdStGeneral
+//    stbu       LdStGeneral
+//    stbux      LdStGeneral
+//    stbx       LdStGeneral
 //    std        LdStSTD
 //    stdcx.     LdStSTDCX
 //    stdu       LdStSTD
 //    stdux      LdStSTD
 //    stdx       LdStSTD
-//    stfd       LdStLBZUX
-//    stfdu      LdStLBZUX
-//    stfdux     LdStLBZUX
-//    stfdx      LdStLBZUX
-//    stfiwx     LdStLBZUX
-//    stfs       LdStLBZUX
-//    stfsu      LdStLBZUX
-//    stfsux     LdStLBZUX
-//    stfsx      LdStLBZUX
-//    sth        LdStDCBT
-//    sthbrx     LdStDCBT
-//    sthu       LdStDCBT
-//    sthux      LdStDCBT
-//    sthx       LdStDCBT
+//    stfd       LdStUX
+//    stfdu      LdStUX
+//    stfdux     LdStUX
+//    stfdx      LdStUX
+//    stfiwx     LdStUX
+//    stfs       LdStUX
+//    stfsu      LdStUX
+//    stfsux     LdStUX
+//    stfsx      LdStUX
+//    sth        LdStGeneral
+//    sthbrx     LdStGeneral
+//    sthu       LdStGeneral
+//    sthux      LdStGeneral
+//    sthx       LdStGeneral
 //    stmw       LdStLMW
 //    stswi      LdStLMW
 //    stswx      LdStLMW
@@ -342,12 +340,12 @@ def VecVSR       : InstrItinClass;
 //    stvewx     LdStSTVEBX
 //    stvx       LdStSTVEBX
 //    stvxl      LdStSTVEBX
-//    stw        LdStDCBT
-//    stwbrx     LdStDCBT
+//    stw        LdStGeneral
+//    stwbrx     LdStGeneral
 //    stwcx.     LdStSTWCX
-//    stwu       LdStDCBT
-//    stwux      LdStDCBT
-//    stwx       LdStDCBT
+//    stwu       LdStGeneral
+//    stwux      LdStGeneral
+//    stwx       LdStGeneral
 //    subf       IntGeneral
 //    subfc      IntGeneral
 //    subfe      IntGeneral
@@ -508,39 +506,3 @@ def VecVSR       : InstrItinClass;
 //    xori       IntGeneral
 //    xoris      IntGeneral
 //
-
-
-//===----------------------------------------------------------------------===//
-// PowerPC Subtarget features.
-//
- 
-def F64Bit     : SubtargetFeature<"64bit",
-                  "Should 64 bit instructions be used">;
-def F64BitRegs : SubtargetFeature<"64bitregs",
-                  "Should 64 bit registers be used">;
-def FAltivec   : SubtargetFeature<"altivec",
-                  "Should Altivec instructions be used">;
-def FGPUL      : SubtargetFeature<"gpul",
-                  "Should GPUL instructions be used">;
-def FFSQRT     : SubtargetFeature<"fsqrt",
-                  "Should the fsqrt instruction be used">; 
-
-//===----------------------------------------------------------------------===//
-// PowerPC chips sets supported
-//
-
-def : Processor<"601", G3Itineraries, []>;
-def : Processor<"602", G3Itineraries, []>;
-def : Processor<"603", G3Itineraries, []>;
-def : Processor<"604", G3Itineraries, []>;
-def : Processor<"750", G3Itineraries, []>;
-def : Processor<"7400", G4Itineraries, [FAltivec]>;
-def : Processor<"g4", G4Itineraries, [FAltivec]>;
-def : Processor<"7450", G4PlusItineraries, [FAltivec]>;
-def : Processor<"g4+", G4PlusItineraries, [FAltivec]>;
-def : Processor<"970", G5Itineraries,
-                  [FAltivec, FGPUL, FFSQRT, F64Bit, F64BitRegs]>;
-def : Processor<"g5", G5Itineraries,
-                  [FAltivec, FGPUL, FFSQRT, F64Bit, F64BitRegs]>;
-
-

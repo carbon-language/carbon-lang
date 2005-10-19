@@ -20,7 +20,44 @@ include "../Target.td"
 //===----------------------------------------------------------------------===//
 
 include "PPCRegisterInfo.td"
+include "PPCSchedule.td"
 include "PPCInstrInfo.td"
+
+
+
+//===----------------------------------------------------------------------===//
+// PowerPC Subtarget features.
+//
+ 
+def F64Bit     : SubtargetFeature<"64bit",
+                  "Should 64 bit instructions be used">;
+def F64BitRegs : SubtargetFeature<"64bitregs",
+                  "Should 64 bit registers be used">;
+def FAltivec   : SubtargetFeature<"altivec",
+                  "Should Altivec instructions be used">;
+def FGPUL      : SubtargetFeature<"gpul",
+                  "Should GPUL instructions be used">;
+def FFSQRT     : SubtargetFeature<"fsqrt",
+                  "Should the fsqrt instruction be used">; 
+
+//===----------------------------------------------------------------------===//
+// PowerPC chips sets supported
+//
+
+def : Processor<"601", G3Itineraries, []>;
+def : Processor<"602", G3Itineraries, []>;
+def : Processor<"603", G3Itineraries, []>;
+def : Processor<"604", G3Itineraries, []>;
+def : Processor<"750", G3Itineraries, []>;
+def : Processor<"7400", G4Itineraries, [FAltivec]>;
+def : Processor<"g4", G4Itineraries, [FAltivec]>;
+def : Processor<"7450", G4PlusItineraries, [FAltivec]>;
+def : Processor<"g4+", G4PlusItineraries, [FAltivec]>;
+def : Processor<"970", G5Itineraries,
+                  [FAltivec, FGPUL, FFSQRT, F64Bit, F64BitRegs]>;
+def : Processor<"g5", G5Itineraries,
+                  [FAltivec, FGPUL, FFSQRT, F64Bit, F64BitRegs]>;
+
 
 def PPC : Target {
   // Pointers on PPC are 32-bits in size.

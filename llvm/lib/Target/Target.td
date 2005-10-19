@@ -113,6 +113,12 @@ class RegisterClass<string namespace, ValueType regType, int alignment,
 
 
 //===----------------------------------------------------------------------===//
+// Pull in the common support for scheduling
+//
+include "../TargetSchedule.td"
+
+
+//===----------------------------------------------------------------------===//
 // Instruction set description - These classes correspond to the C++ classes in
 // the Target/TargetInstrInfo.h file.
 //
@@ -147,6 +153,8 @@ class Instruction {
   bit isTerminator = 0;     // Is this part of the terminator for a basic block?
   bit hasDelaySlot = 0;     // Does this instruction have an delay slot?
   bit usesCustomDAGSchedInserter = 0; // Pseudo instr needing special help.
+  
+  InstrItinClass Itinerary; // Execution steps used for scheduling. 
 }
 
 
@@ -240,11 +248,6 @@ class Target {
   // AssemblyWriters - The AsmWriter instances available for this target.
   list<AsmWriter> AssemblyWriters = [DefaultAsmWriter];
 }
-
-//===----------------------------------------------------------------------===//
-// Pull in the common support for scheduling
-//
-include "../TargetSchedule.td"
 
 //===----------------------------------------------------------------------===//
 // SubtargetFeature - A characteristic of the chip set.
