@@ -975,11 +975,36 @@ void DAGISelEmitter::ParseInstructions() {
   std::vector<Record*> Instrs = Records.getAllDerivedDefinitions("Instruction");
   
   for (unsigned i = 0, e = Instrs.size(); i != e; ++i) {
-    if (!dynamic_cast<ListInit*>(Instrs[i]->getValueInit("Pattern")))
-      continue; // no pattern yet, ignore it.
+    ListInit *LI = 0;
     
-    ListInit *LI = Instrs[i]->getValueAsListInit("Pattern");
-    if (LI->getSize() == 0) continue;  // no pattern.
+    if (dynamic_cast<ListInit*>(Instrs[i]->getValueInit("Pattern")))
+      LI = Instrs[i]->getValueAsListInit("Pattern");
+    
+    // If there is no pattern, only collect minimal information about the
+    // instruction for its operand list.  We have to assume that there is one
+    // result, as we have no detailed info.
+    if (!LI || LI->getSize() == 0) {
+      std::vector<MVT::ValueType> ResultTypes;
+      std::vector<MVT::ValueType> OperandTypes;
+      
+      CodeGenInstruction &InstInfo =Target.getInstruction(Instrs[i]->getName());
+      
+      // Doesn't even define a result?
+      if (InstInfo.OperandList.size() == 0)
+        continue;
+      
+      // Assume the first operand is the result.
+      ResultTypes.push_back(InstInfo.OperandList[0].Ty);
+      
+      // The rest are inputs.
+      for (unsigned j = 1, e = InstInfo.OperandList.size(); j != e; ++j)
+        OperandTypes.push_back(InstInfo.OperandList[j].Ty);
+      
+      // Create and insert the instruction.
+      Instructions.insert(std::make_pair(Instrs[i], 
+                            DAGInstruction(0, ResultTypes, OperandTypes)));
+      continue;  // no pattern.
+    }
     
     // Parse the instruction.
     TreePattern *I = new TreePattern(Instrs[i], LI, *this);
@@ -1112,6 +1137,7 @@ void DAGISelEmitter::ParseInstructions() {
   for (std::map<Record*, DAGInstruction>::iterator II = Instructions.begin(),
        E = Instructions.end(); II != E; ++II) {
     TreePattern *I = II->second.getPattern();
+    if (I == 0) continue;  // No pattern.
     
     if (I->getNumTrees() != 1) {
       std::cerr << "CANNOT HANDLE: " << I->getRecord()->getName() << " yet!";
