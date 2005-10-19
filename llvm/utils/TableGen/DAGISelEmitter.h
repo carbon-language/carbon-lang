@@ -226,7 +226,7 @@ namespace llvm {
     /// ContainsUnresolvedType - Return true if this tree contains any
     /// unresolved types.
     bool ContainsUnresolvedType() const {
-      if (Ty == MVT::LAST_VALUETYPE) return true;
+      if (!hasTypeSet()) return true;
       for (unsigned i = 0, e = getNumChildren(); i != e; ++i)
         if (getChild(i)->ContainsUnresolvedType()) return true;
       return false;
