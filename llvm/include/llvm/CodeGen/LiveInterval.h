@@ -143,6 +143,11 @@ namespace llvm {
     /// only overlaps with one value in the source interval.
     bool joinable(const LiveInterval& other, unsigned CopyIdx) const;
 
+    /// getOverlapingRanges - Given another live interval which is defined as a
+    /// copy from this one, return a list of all of the live ranges where the
+    /// two overlap and have different value numbers.
+    void getOverlapingRanges(const LiveInterval &Other, unsigned CopyIdx,
+                             std::vector<LiveRange*> &Ranges);
 
     /// overlaps - Return true if the intersection of the two live intervals is
     /// not empty.
