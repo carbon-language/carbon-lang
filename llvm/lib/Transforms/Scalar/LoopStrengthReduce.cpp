@@ -372,7 +372,7 @@ static bool IVUseShouldUsePostIncValue(Instruction *User, Instruction *IV,
 /// return true.  Otherwise, return false.
 bool LoopStrengthReduce::AddUsersIfInteresting(Instruction *I, Loop *L,
                                             std::set<Instruction*> &Processed) {
-  if (I->getType() == Type::VoidTy) return false;
+  if (!I->getType()->isInteger()) return false;
   if (!Processed.insert(I).second)
     return true;    // Instruction already handled.
   
