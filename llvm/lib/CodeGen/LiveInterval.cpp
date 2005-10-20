@@ -111,12 +111,11 @@ static inline bool NontrivialOverlap(const LiveRange &I, const LiveRange &J,
     if (I.ValId != iIdx || J.ValId != jIdx)
       return true;
   } else if (I.start < J.start) {
-    if (I.end > J.start && I.ValId != iIdx || J.ValId != jIdx) {
+    if (I.end > J.start && (I.ValId != iIdx || J.ValId != jIdx)) {
       return true;
     }
   } else {
-    if (J.end > I.start &&
-        I.ValId != iIdx || J.ValId != jIdx)
+    if (J.end > I.start && (I.ValId != iIdx || J.ValId != jIdx))
       return true;
   }
   
