@@ -20,14 +20,6 @@ def immUExt8  : PatLeaf<(imm), [{
   // field.  Used by instructions like 'addi'.
   return (unsigned long)N->getValue() == (unsigned char)N->getValue();
 }]>;
-def imm2  : PatLeaf<(imm), [{
-  // imm2 predicate - True if the immediate is a 2
-  return N->getValue() == 2;
-}]>;
-def imm3  : PatLeaf<(imm), [{
-  // imm3 predicate - True if the immediate is a 3
-  return N->getValue() == 3;
-}]>;
 
 
   // //#define FP    $15
@@ -217,37 +209,37 @@ def ORNOT    : OForm< 0x11, 0x28, "ornot $RA,$RB,$RC",
 def ORNOTi   : OFormL<0x11, 0x28, "ornot $RA,$L,$RC", []>;
 //                      [(set GPRC:$RC, (or GPRC:$RA, (not immUExt8:$L)))]>;
 def S4ADDL   : OForm< 0x10, 0x02, "s4addl $RA,$RB,$RC", 
-                      [(set GPRC:$RC, (sext_inreg (add (shl GPRC:$RA, imm2), GPRC:$RB), i32))]>;
+                      [(set GPRC:$RC, (sext_inreg (add (shl GPRC:$RA, 2), GPRC:$RB), i32))]>;
 def S4ADDLi  : OFormL<0x10, 0x02, "s4addl $RA,$L,$RC", 
-                      [(set GPRC:$RC, (sext_inreg (add (shl GPRC:$RA, imm2), immUExt8:$L), i32))]>;
+                      [(set GPRC:$RC, (sext_inreg (add (shl GPRC:$RA, 2), immUExt8:$L), i32))]>;
 def S4ADDQ   : OForm< 0x10, 0x22, "s4addq $RA,$RB,$RC", 
-                      [(set GPRC:$RC, (add (shl GPRC:$RA, imm2), GPRC:$RB))]>;
+                      [(set GPRC:$RC, (add (shl GPRC:$RA, 2), GPRC:$RB))]>;
 def S4ADDQi  : OFormL<0x10, 0x22, "s4addq $RA,$L,$RC", 
-                      [(set GPRC:$RC, (add (shl GPRC:$RA, imm2), immUExt8:$L))]>;
+                      [(set GPRC:$RC, (add (shl GPRC:$RA, 2), immUExt8:$L))]>;
 def S4SUBL   : OForm< 0x10, 0x0B, "s4subl $RA,$RB,$RC",
-                      [(set GPRC:$RC, (sext_inreg (sub (shl GPRC:$RA, imm2), GPRC:$RB), i32))]>;
+                      [(set GPRC:$RC, (sext_inreg (sub (shl GPRC:$RA, 2), GPRC:$RB), i32))]>;
 def S4SUBLi  : OFormL<0x10, 0x0B, "s4subl $RA,$L,$RC",
-                      [(set GPRC:$RC, (sext_inreg (sub (shl GPRC:$RA, imm2), immUExt8:$L), i32))]>;
+                      [(set GPRC:$RC, (sext_inreg (sub (shl GPRC:$RA, 2), immUExt8:$L), i32))]>;
 def S4SUBQ   : OForm< 0x10, 0x2B, "s4subq $RA,$RB,$RC", 
-                      [(set GPRC:$RC, (sub (shl GPRC:$RA, imm2), GPRC:$RB))]>;
+                      [(set GPRC:$RC, (sub (shl GPRC:$RA, 2), GPRC:$RB))]>;
 def S4SUBQi  : OFormL<0x10, 0x2B, "s4subq $RA,$L,$RC", 
-                      [(set GPRC:$RC, (sub (shl GPRC:$RA, imm2), immUExt8:$L))]>;
+                      [(set GPRC:$RC, (sub (shl GPRC:$RA, 2), immUExt8:$L))]>;
 def S8ADDL   : OForm< 0x10, 0x12, "s8addl $RA,$RB,$RC", 
-                      [(set GPRC:$RC, (sext_inreg (add (shl GPRC:$RA, imm3), GPRC:$RB), i32))]>;
+                      [(set GPRC:$RC, (sext_inreg (add (shl GPRC:$RA, 3), GPRC:$RB), i32))]>;
 def S8ADDLi  : OFormL<0x10, 0x12, "s8addl $RA,$L,$RC", 
-                      [(set GPRC:$RC, (sext_inreg (add (shl GPRC:$RA, imm3), immUExt8:$L), i32))]>;
+                      [(set GPRC:$RC, (sext_inreg (add (shl GPRC:$RA, 3), immUExt8:$L), i32))]>;
 def S8ADDQ   : OForm< 0x10, 0x32, "s8addq $RA,$RB,$RC", 
-                      [(set GPRC:$RC, (add (shl GPRC:$RA, imm3), GPRC:$RB))]>;
+                      [(set GPRC:$RC, (add (shl GPRC:$RA, 3), GPRC:$RB))]>;
 def S8ADDQi  : OFormL<0x10, 0x32, "s8addq $RA,$L,$RC", 
-                      [(set GPRC:$RC, (add (shl GPRC:$RA, imm3), immUExt8:$L))]>;
+                      [(set GPRC:$RC, (add (shl GPRC:$RA, 3), immUExt8:$L))]>;
 def S8SUBL   : OForm< 0x10, 0x1B, "s8subl $RA,$RB,$RC", 
-                      [(set GPRC:$RC, (sext_inreg (sub (shl GPRC:$RA, imm3), GPRC:$RB), i32))]>;
+                      [(set GPRC:$RC, (sext_inreg (sub (shl GPRC:$RA, 3), GPRC:$RB), i32))]>;
 def S8SUBLi  : OFormL<0x10, 0x1B, "s8subl $RA,$L,$RC", 
-                      [(set GPRC:$RC, (sext_inreg (sub (shl GPRC:$RA, imm3), immUExt8:$L), i32))]>;
+                      [(set GPRC:$RC, (sext_inreg (sub (shl GPRC:$RA, 3), immUExt8:$L), i32))]>;
 def S8SUBQ   : OForm< 0x10, 0x3B, "s8subq $RA,$RB,$RC", 
-                      [(set GPRC:$RC, (sub (shl GPRC:$RA, imm3), GPRC:$RB))]>;
+                      [(set GPRC:$RC, (sub (shl GPRC:$RA, 3), GPRC:$RB))]>;
 def S8SUBQi  : OFormL<0x10, 0x3B, "s8subq $RA,$L,$RC", 
-                      [(set GPRC:$RC, (sub (shl GPRC:$RA, imm3), immUExt8:$L))]>;
+                      [(set GPRC:$RC, (sub (shl GPRC:$RA, 3), immUExt8:$L))]>;
 
 def SEXTB    : OForm< 0x1C, 0x00, "sextb $RB,$RC", []>; //Sign extend byte
 def SEXTW    : OForm< 0x1C, 0x01, "sextw $RB,$RC", []>; //Sign extend word
