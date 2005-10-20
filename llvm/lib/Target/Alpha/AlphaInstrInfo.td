@@ -73,41 +73,25 @@ let isTwoAddress = 1 in {
 
 //Operation Form:
 
-let isTwoAddress = 1 in {
 //conditional moves, int
- def CMOVEQ   : OcmForm<  0x11, 0x24, (ops GPRC:$RDEST, GPRC:$RSRC2, GPRC:$RSRC, GPRC:$RCOND),
-        "cmoveq $RCOND,$RSRC,$RDEST">; //CMOVE if RCOND =  zero
- def CMOVEQi  : OcmFormL< 0x11, 0x24, (ops GPRC:$RDEST, GPRC:$RSRC2, u8imm:$L, GPRC:$RCOND),
-        "cmoveq $RCOND,$L,$RDEST">; //CMOVE if RCOND =  zero
- def CMOVGE   : OcmForm<  0x11, 0x46, (ops GPRC:$RDEST, GPRC:$RSRC2, GPRC:$RSRC, GPRC:$RCOND),
-        "cmovge $RCOND,$RSRC,$RDEST">; //CMOVE if RCOND >= zero
- def CMOVGEi  : OcmFormL< 0x11, 0x46, (ops GPRC:$RDEST, GPRC:$RSRC2, u8imm:$L, GPRC:$RCOND),
-        "cmovge $RCOND,$L,$RDEST">; //CMOVE if RCOND >= zero
- def CMOVGT   : OcmForm<  0x11, 0x66, (ops GPRC:$RDEST, GPRC:$RSRC2, GPRC:$RSRC, GPRC:$RCOND),
-        "cmovgt $RCOND,$RSRC,$RDEST">; //CMOVE if RCOND > zero
- def CMOVGTi  : OcmFormL< 0x11, 0x66, (ops GPRC:$RDEST, GPRC:$RSRC2, u8imm:$L, GPRC:$RCOND),
-        "cmovgt $RCOND,$L,$RDEST">; //CMOVE if RCOND > zero
- def CMOVLBC  : OcmForm<  0x11, 0x16, (ops GPRC:$RDEST, GPRC:$RSRC2, GPRC:$RSRC, GPRC:$RCOND),
-        "cmovlbc $RCOND,$RSRC,$RDEST">; //CMOVE if RCOND low bit clear
- def CMOVLBCi : OcmFormL< 0x11, 0x16, (ops GPRC:$RDEST, GPRC:$RSRC2, u8imm:$L, GPRC:$RCOND),
-        "cmovlbc $RCOND,$L,$RDEST">; //CMOVE if RCOND low bit clear
- def CMOVLBS  : OcmForm<  0x11, 0x14, (ops GPRC:$RDEST, GPRC:$RSRC2, GPRC:$RSRC, GPRC:$RCOND),
-        "cmovlbs $RCOND,$RSRC,$RDEST">; //CMOVE if RCOND low bit set
- def CMOVLBSi : OcmFormL< 0x11, 0x14, (ops GPRC:$RDEST, GPRC:$RSRC2, u8imm:$L, GPRC:$RCOND),
-        "cmovlbs $RCOND,$L,$RDEST">; //CMOVE if RCOND low bit set
- def CMOVLE   : OcmForm<  0x11, 0x64, (ops GPRC:$RDEST, GPRC:$RSRC2, GPRC:$RSRC, GPRC:$RCOND),
-        "cmovle $RCOND,$RSRC,$RDEST">; //CMOVE if RCOND <= zero
- def CMOVLEi  : OcmFormL< 0x11, 0x64, (ops GPRC:$RDEST, GPRC:$RSRC2, u8imm:$L, GPRC:$RCOND),
-        "cmovle $RCOND,$L,$RDEST">; //CMOVE if RCOND <= zero
- def CMOVLT   : OcmForm<  0x11, 0x44, (ops GPRC:$RDEST, GPRC:$RSRC2, GPRC:$RSRC, GPRC:$RCOND),
-        "cmovlt $RCOND,$RSRC,$RDEST">; //CMOVE if RCOND < zero
- def CMOVLTi  : OcmFormL< 0x11, 0x44, (ops GPRC:$RDEST, GPRC:$RSRC2, u8imm:$L, GPRC:$RCOND),
-        "cmovlt $RCOND,$L,$RDEST">; //CMOVE if RCOND < zero
- def CMOVNE   : OcmForm<  0x11, 0x26, (ops GPRC:$RDEST, GPRC:$RSRC2, GPRC:$RSRC, GPRC:$RCOND),
-        "cmovne $RCOND,$RSRC,$RDEST">; //CMOVE if RCOND != zero
- def CMOVNEi  : OcmFormL< 0x11, 0x26, (ops GPRC:$RDEST, GPRC:$RSRC2, u8imm:$L, GPRC:$RCOND),
-        "cmovne $RCOND,$L,$RDEST">; //CMOVE if RCOND != zero
+def CMOVEQ   : OForm4<  0x11, 0x24, "cmoveq $RCOND,$RSRC,$RDEST">; //CMOVE if RCOND =  zero
+def CMOVEQi  : OForm4L< 0x11, 0x24, "cmoveq $RCOND,$L,$RDEST">; //CMOVE if RCOND =  zero
+def CMOVGE   : OForm4<  0x11, 0x46, "cmovge $RCOND,$RSRC,$RDEST">; //CMOVE if RCOND >= zero
+def CMOVGEi  : OForm4L< 0x11, 0x46, "cmovge $RCOND,$L,$RDEST">; //CMOVE if RCOND >= zero
+def CMOVGT   : OForm4<  0x11, 0x66, "cmovgt $RCOND,$RSRC,$RDEST">; //CMOVE if RCOND > zero
+def CMOVGTi  : OForm4L< 0x11, 0x66, "cmovgt $RCOND,$L,$RDEST">; //CMOVE if RCOND > zero
+def CMOVLBC  : OForm4<  0x11, 0x16, "cmovlbc $RCOND,$RSRC,$RDEST">; //CMOVE if RCOND low bit clear
+def CMOVLBCi : OForm4L< 0x11, 0x16, "cmovlbc $RCOND,$L,$RDEST">; //CMOVE if RCOND low bit clear
+def CMOVLBS  : OForm4<  0x11, 0x14, "cmovlbs $RCOND,$RSRC,$RDEST">; //CMOVE if RCOND low bit set
+def CMOVLBSi : OForm4L< 0x11, 0x14, "cmovlbs $RCOND,$L,$RDEST">; //CMOVE if RCOND low bit set
+def CMOVLE   : OForm4<  0x11, 0x64, "cmovle $RCOND,$RSRC,$RDEST">; //CMOVE if RCOND <= zero
+def CMOVLEi  : OForm4L< 0x11, 0x64, "cmovle $RCOND,$L,$RDEST">; //CMOVE if RCOND <= zero
+def CMOVLT   : OForm4<  0x11, 0x44, "cmovlt $RCOND,$RSRC,$RDEST">; //CMOVE if RCOND < zero
+def CMOVLTi  : OForm4L< 0x11, 0x44, "cmovlt $RCOND,$L,$RDEST">; //CMOVE if RCOND < zero
+def CMOVNE   : OForm4<  0x11, 0x26, "cmovne $RCOND,$RSRC,$RDEST">; //CMOVE if RCOND != zero
+def CMOVNEi  : OForm4L< 0x11, 0x26, "cmovne $RCOND,$L,$RDEST">; //CMOVE if RCOND != zero
 
+let isTwoAddress = 1 in {
 //conditional moves, fp
  def FCMOVEQ : FPFormCM<0x17, 0x02A, (ops FPRC:$RDEST, FPRC:$RSRC2, FPRC:$RSRC, FPRC:$RCOND),
         "fcmoveq $RCOND,$RSRC,$RDEST">; //FCMOVE if = zero
@@ -145,11 +129,11 @@ def BIS      : OForm< 0x11, 0x20, "bis $RA,$RB,$RC",
                       [(set GPRC:$RC, (or GPRC:$RA, GPRC:$RB))]>;
 def BISi     : OFormL<0x11, 0x20, "bis $RA,$L,$RC",
                       [(set GPRC:$RC, (or GPRC:$RA, immUExt8:$L))]>;
-def CTLZ     : OFormT<0x1C, 0x32, "CTLZ $RB,$RC", 
+def CTLZ     : OForm2<0x1C, 0x32, "CTLZ $RB,$RC", 
                       [(set GPRC:$RC, (ctlz GPRC:$RB))]>;
-def CTPOP    : OFormT<0x1C, 0x30, "CTPOP $RB,$RC", 
+def CTPOP    : OForm2<0x1C, 0x30, "CTPOP $RB,$RC", 
                       [(set GPRC:$RC, (ctpop GPRC:$RB))]>;
-def CTTZ     : OFormT<0x1C, 0x33, "CTTZ $RB,$RC", 
+def CTTZ     : OForm2<0x1C, 0x33, "CTTZ $RB,$RC", 
                       [(set GPRC:$RC, (cttz GPRC:$RB))]>;
 def EQV      : OForm< 0x11, 0x48, "eqv $RA,$RB,$RC",
                       [(set GPRC:$RC, (xor GPRC:$RA, (not GPRC:$RB)))]>;
@@ -254,9 +238,9 @@ def S8SUBQ   : OForm< 0x10, 0x3B, "s8subq $RA,$RB,$RC",
                       [(set GPRC:$RC, (sub8 GPRC:$RA, GPRC:$RB))]>;
 def S8SUBQi  : OFormL<0x10, 0x3B, "s8subq $RA,$L,$RC", 
                       [(set GPRC:$RC, (sub8 GPRC:$RA, immUExt8:$L))]>;
-def SEXTB    : OFormT<0x1C, 0x00, "sextb $RB,$RC", 
+def SEXTB    : OForm2<0x1C, 0x00, "sextb $RB,$RC", 
                       [(set GPRC:$RC, (sext_inreg GPRC:$RB, i8))]>;
-def SEXTW    : OFormT<0x1C, 0x01, "sextw $RB,$RC", 
+def SEXTW    : OForm2<0x1C, 0x01, "sextw $RB,$RC", 
                       [(set GPRC:$RC, (sext_inreg GPRC:$RB, i16))]>;
 def SL       : OForm< 0x12, 0x39, "sll $RA,$RB,$RC",
                       [(set GPRC:$RC, (shl GPRC:$RA, GPRC:$RB))]>;

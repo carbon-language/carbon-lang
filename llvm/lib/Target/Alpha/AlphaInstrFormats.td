@@ -110,7 +110,7 @@ class OForm<bits<6> opcode, bits<7> fun, string asmstr, list<dag> pattern>
   let Inst{4-0} = Rc;
 }
 
-class OFormT<bits<6> opcode, bits<7> fun, string asmstr, list<dag> pattern> 
+class OForm2<bits<6> opcode, bits<7> fun, string asmstr, list<dag> pattern> 
         : InstAlpha<opcode, (ops GPRC:$RC, GPRC:$RB), asmstr> {
   let Pattern = pattern;
 
@@ -126,13 +126,14 @@ class OFormT<bits<6> opcode, bits<7> fun, string asmstr, list<dag> pattern>
   let Inst{4-0} = Rc;
 }
 
-class OcmForm<bits<6> opcode, bits<7> fun, dag OL, string asmstr> 
-        : InstAlpha<opcode, OL, asmstr> {
-  bits<5> Ra;
-  bits<5> Rb;
-  bits<7> Function = fun;
+class OForm4<bits<6> opcode, bits<7> fun, string asmstr> 
+        : InstAlpha<opcode, (ops GPRC:$RDEST, GPRC:$RSRC2, GPRC:$RSRC, GPRC:$RCOND), asmstr> {
   bits<5> Rc;
+  bits<5> Rb;
+  bits<5> Ra;
+  bits<7> Function = fun;
 
+  let isTwoAddress = 1;
   let Inst{25-21} = Ra;
   let Inst{20-16} = Rb;
   let Inst{15-13} = 0;
@@ -158,13 +159,14 @@ class OFormL<bits<6> opcode, bits<7> fun, string asmstr, list<dag> pattern>
   let Inst{4-0} = Rc;
 }
 
-class OcmFormL<bits<6> opcode, bits<7> fun, dag OL, string asmstr> 
-        : InstAlpha<opcode, OL, asmstr> {
-  bits<5> Ra;
-  bits<8> LIT;
-  bits<7> Function = fun;
+class OForm4L<bits<6> opcode, bits<7> fun, string asmstr> 
+        : InstAlpha<opcode, (ops GPRC:$RDEST, GPRC:$RSRC2, u8imm:$L, GPRC:$RCOND), asmstr> {
   bits<5> Rc;
+  bits<8> LIT;
+  bits<5> Ra;
+  bits<7> Function = fun;
 
+  let isTwoAddress = 1;
   let Inst{25-21} = Ra;
   let Inst{20-13} = LIT;
   let Inst{12} = 1;
