@@ -32,6 +32,9 @@ namespace llvm {
   cl::opt<bool> EnableAlphaLSR("enable-lsr-for-alpha",
                              cl::desc("Enable LSR for Alpha (beta option!)"),
                              cl::Hidden);
+  cl::opt<bool> EnableAlphaDAG("enable-dag-isel-for-alpha",
+                             cl::desc("Enable DAG ISEL for Alpha (beta option!)"),
+                             cl::Hidden);
 }
 
 unsigned AlphaTargetMachine::getModuleMatchQuality(const Module &M) {
@@ -94,7 +97,10 @@ bool AlphaTargetMachine::addPassesToEmitFile(PassManager &PM,
   // Make sure that no unreachable blocks are instruction selected.
   PM.add(createUnreachableBlockEliminationPass());
 
-  PM.add(createAlphaPatternInstructionSelector(*this));
+  if (EnableAlphaDAG)
+    PM.add(createAlphaISelDag(*this));
+  else
+    PM.add(createAlphaPatternInstructionSelector(*this));
 
   if (PrintMachineCode)
     PM.add(createMachineFunctionPrinterPass(&std::cerr));

@@ -17,10 +17,10 @@
 //Floating-point
 //PALcode
 
-def u8imm   : Operand<i8>;
-def s14imm  : Operand<i16>;
-def s16imm  : Operand<i16>;
-def s21imm  : Operand<i32>;
+def u8imm   : Operand<i64>;
+def s14imm  : Operand<i64>;
+def s16imm  : Operand<i64>;
+def s21imm  : Operand<i64>;
 def s64imm  : Operand<i64>;
 
 //===----------------------------------------------------------------------===//
@@ -93,8 +93,10 @@ class FBForm<bits<6> opcode, string asmstr>
 }
 
 //3.3.3
-class OForm<bits<6> opcode, bits<7> fun, string asmstr> 
+class OForm<bits<6> opcode, bits<7> fun, string asmstr, list<dag> pattern> 
         : InstAlpha<opcode, (ops GPRC:$RC, GPRC:$RA, GPRC:$RB), asmstr> {
+  let Pattern = pattern;
+
   bits<5> Rc;
   bits<5> Ra;
   bits<5> Rb;
@@ -124,8 +126,10 @@ class OcmForm<bits<6> opcode, bits<7> fun, dag OL, string asmstr>
 }
 
 
-class OFormL<bits<6> opcode, bits<7> fun, string asmstr> 
+class OFormL<bits<6> opcode, bits<7> fun, string asmstr, list<dag> pattern> 
         : InstAlpha<opcode, (ops GPRC:$RC, GPRC:$RA, u8imm:$L), asmstr> {
+  let Pattern = pattern;
+
   bits<5> Rc;
   bits<5> Ra;
   bits<8> LIT;

@@ -21,6 +21,13 @@
 
 namespace llvm {
 
+  namespace AlphaISD {
+    enum NodeType {
+      // Start the numbering where the builting ops and target ops leave off.
+      FIRST_NUMBER = ISD::BUILTIN_OP_END+Alpha::INSTRUCTION_LIST_END,
+    };
+  }
+
   class AlphaTargetLowering : public TargetLowering {
     int VarArgsOffset;  // What is the offset to the first vaarg
     int VarArgsBase;    // What is the base FrameIndex

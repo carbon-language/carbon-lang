@@ -14,6 +14,6 @@ TARGET = Alpha
 BUILT_SOURCES = AlphaGenRegisterInfo.h.inc AlphaGenRegisterNames.inc \
                 AlphaGenRegisterInfo.inc AlphaGenInstrNames.inc \
                 AlphaGenInstrInfo.inc AlphaGenCodeEmitter.inc \
-                AlphaGenAsmWriter.inc
+                AlphaGenAsmWriter.inc AlphaGenDAGISel.inc
 
 include $(LEVEL)/Makefile.common
