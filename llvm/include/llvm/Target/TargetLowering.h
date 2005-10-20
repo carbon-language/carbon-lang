@@ -83,6 +83,10 @@ public:
   /// isSetCCExpensive - Return true if the setcc operation is expensive for
   /// this target.
   bool isSetCCExpensive() const { return SetCCIsExpensive; }
+  
+  /// isIntDivExpensive() - Return true if integer divide is more expensive than
+  /// a sequence of several shifts, adds, and multiplies for this target.
+  bool isIntDivExpensive() const { return IntDivIsExpensive; }
 
   /// getSetCCResultTy - Return the ValueType of the result of setcc operations.
   ///
@@ -262,6 +266,11 @@ protected:
   /// setcc operations into other operations if possible.
   void setSetCCIsExpensive() { SetCCIsExpensive = true; }
 
+  /// setIntDivIsExpensive - Tells the code generator that integer divide is
+  /// expensive, and if possible, should be replaced by an alternate sequence
+  /// of instructions not containing an integer divide.
+  void setIntDivIsExpensive() { IntDivIsExpensive = true; }
+  
   /// addRegisterClass - Add the specified register class as an available
   /// regclass for the specified value type.  This indicates the selector can
   /// handle values of that class natively.
@@ -391,6 +400,13 @@ private:
   /// setcc operations into other operations if possible.
   bool SetCCIsExpensive;
 
+  /// IntDivIsExpensive - This is a hack until a real costs model is in place
+  /// that tells the code generator whether integer divide will always be more
+  /// expensive than a sequence of multiplies, shifts, and adds that performs
+  /// the same operation.  If we ever optimize for size, this will be set to
+  /// false unconditionally.
+  bool IntDivIsExpensive;
+  
   /// SetCCResultTy - The type that SetCC operations use.  This defaults to the
   /// PointerTy.
   MVT::ValueType SetCCResultTy;
