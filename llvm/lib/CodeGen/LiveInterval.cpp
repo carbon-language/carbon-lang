@@ -218,12 +218,10 @@ void LiveInterval::extendIntervalEndTo(Ranges::iterator I, unsigned NewEnd) {
   
   // If the newly formed range now touches the range after it and if they have
   // the same value number, merge the two ranges into one range.
-  if (I != ranges.end()) {
-    Ranges::iterator Next = next(I);
-    if (Next->start == I->end && Next->ValId == ValId) {
-      I->end = Next->end;
-      ranges.erase(Next);
-    }
+  Ranges::iterator Next = next(I);
+  if (Next != ranges.end() && Next->start == I->end && Next->ValId == ValId) {
+    I->end = Next->end;
+    ranges.erase(Next);
   }
 }
 
