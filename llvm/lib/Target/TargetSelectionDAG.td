@@ -146,6 +146,8 @@ def xor        : SDNode<"ISD::XOR"       , SDTIntBinOp,
                         
 def sext_inreg : SDNode<"ISD::SIGN_EXTEND_INREG", SDTExtInreg>;
 def ctlz       : SDNode<"ISD::CTLZ"       , SDTIntUnaryOp>;
+def cttz       : SDNode<"ISD::CTTZ"       , SDTIntUnaryOp>;
+def ctpop      : SDNode<"ISD::CTPOP"      , SDTIntUnaryOp>;
 def sext       : SDNode<"ISD::SIGN_EXTEND", SDTIntExtendOp>;
 def zext       : SDNode<"ISD::ZERO_EXTEND", SDTIntExtendOp>;
 def anyext     : SDNode<"ISD::ANY_EXTEND" , SDTIntExtendOp>;
