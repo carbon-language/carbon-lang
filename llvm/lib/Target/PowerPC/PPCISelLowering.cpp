@@ -27,6 +27,8 @@ PPCTargetLowering::PPCTargetLowering(TargetMachine &TM)
     
   // Fold away setcc operations if possible.
   setSetCCIsExpensive();
+  // Fold constant integer div/rem into an alternate sequence of instructions  
+  setIntDivIsExpensive();
   
   // Use _setjmp/_longjmp instead of setjmp/longjmp.
   setUseUnderscoreSetJmpLongJmp(true);
