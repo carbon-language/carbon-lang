@@ -101,6 +101,29 @@ bool LiveInterval::overlapsFrom(const LiveInterval& other,
   return false;
 }
 
+/// NontrivialOverlap - Check to see if the two live ranges specified by i and j
+/// overlap.  If so, check to see if they have value numbers that are not 
+/// iIdx/jIdx respectively.  If both conditions are true, return true.
+static inline bool NontrivialOverlap(LiveInterval::Ranges::const_iterator i,
+                                     LiveInterval::Ranges::const_iterator j,
+                                     unsigned iIdx, unsigned jIdx) {
+  if (i->start == j->start) {
+    // If this is not the allowed value merge, we cannot join.
+    if (i->ValId != iIdx || j->ValId != jIdx)
+      return true;
+  } else if (i->start < j->start) {
+    if (i->end > j->start && i->ValId != iIdx || j->ValId != jIdx) {
+      return true;
+    }
+  } else {
+    if (j->end > i->start &&
+        i->ValId != iIdx || j->ValId != jIdx)
+      return true;
+  }
+  
+  return false;
+}
+
 /// joinable - Two intervals are joinable if the either don't overlap at all
 /// or if the destination of the copy is a single assignment value, and it
 /// only overlaps with one value in the source interval.
@@ -125,21 +148,9 @@ bool LiveInterval::joinable(const LiveInterval &other, unsigned CopyIdx) const {
   }
 
   while (i != ie && j != je) {
-    if (i->start == j->start) {
-      // If this is not the allowed value merge, we cannot join.
-      if (i->ValId != ThisValIdx || j->ValId != OtherValIdx)
-        return false;
-    } else if (i->start < j->start) {
-      if (i->end > j->start) {
-        if (i->ValId != ThisValIdx || j->ValId != OtherValIdx)
-          return false;
-      }
-    } else {
-      if (j->end > i->start) {
-        if (i->ValId != ThisValIdx || j->ValId != OtherValIdx)
-          return false;
-      }
-    }
+    if (NontrivialOverlap(i, j, ThisValIdx, OtherValIdx))
+      return false;
+    
     if (i->end < j->end)
       ++i;
     else
