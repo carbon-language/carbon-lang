@@ -544,27 +544,33 @@ def ADDC  : XOForm_1<31, 10, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
 def ADDE  : XOForm_1<31, 138, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
                      "adde $rT, $rA, $rB", IntGeneral,
                      []>;
-def DIVD  : XOForm_1<31, 489, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
+def DIVD  : XOForm_1<31, 489, 0, (ops G8RC:$rT, G8RC:$rA, G8RC:$rB),
                      "divd $rT, $rA, $rB", IntDivD,
-                     []>, isPPC64;
-def DIVDU : XOForm_1<31, 457, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
+                     [(set G8RC:$rT, (sdiv G8RC:$rA, G8RC:$rB))]>, isPPC64;
+def DIVDU : XOForm_1<31, 457, 0, (ops G8RC:$rT, G8RC:$rA, G8RC:$rB),
                      "divdu $rT, $rA, $rB", IntDivD,
-                     []>, isPPC64;
+                     [(set G8RC:$rT, (udiv G8RC:$rA, G8RC:$rB))]>, isPPC64;
 def DIVW  : XOForm_1<31, 491, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
                      "divw $rT, $rA, $rB", IntDivW,
                      [(set GPRC:$rT, (sdiv GPRC:$rA, GPRC:$rB))]>;
 def DIVWU : XOForm_1<31, 459, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
                      "divwu $rT, $rA, $rB", IntDivW,
                      [(set GPRC:$rT, (udiv GPRC:$rA, GPRC:$rB))]>;
+def MULHD : XOForm_1<31, 73, 0, (ops G8RC:$rT, G8RC:$rA, G8RC:$rB),
+                     "mulhd $rT, $rA, $rB", IntMulHW,
+                     [(set G8RC:$rT, (mulhs G8RC:$rA, G8RC:$rB))]>;
+def MULHDU : XOForm_1<31, 9, 0, (ops G8RC:$rT, G8RC:$rA, G8RC:$rB),
+                     "mulhdu $rT, $rA, $rB", IntMulHWU,
+                     [(set G8RC:$rT, (mulhu G8RC:$rA, G8RC:$rB))]>;
 def MULHW : XOForm_1<31, 75, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
                      "mulhw $rT, $rA, $rB", IntMulHW,
                      [(set GPRC:$rT, (mulhs GPRC:$rA, GPRC:$rB))]>;
 def MULHWU : XOForm_1<31, 11, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
                      "mulhwu $rT, $rA, $rB", IntMulHWU,
                      [(set GPRC:$rT, (mulhu GPRC:$rA, GPRC:$rB))]>;
-def MULLD : XOForm_1<31, 233, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
+def MULLD : XOForm_1<31, 233, 0, (ops G8RC:$rT, G8RC:$rA, G8RC:$rB),
                      "mulld $rT, $rA, $rB", IntMulHD,
-                     []>, isPPC64;
+                     [(set G8RC:$rT, (mul G8RC:$rA, G8RC:$rB))]>, isPPC64;
 def MULLW : XOForm_1<31, 235, 0, (ops GPRC:$rT, GPRC:$rA, GPRC:$rB),
                      "mullw $rT, $rA, $rB", IntMulHW,
                      [(set GPRC:$rT, (mul GPRC:$rA, GPRC:$rB))]>;
