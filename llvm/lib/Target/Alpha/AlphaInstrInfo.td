@@ -145,10 +145,12 @@ def BIS      : OForm< 0x11, 0x20, "bis $RA,$RB,$RC",
                       [(set GPRC:$RC, (or GPRC:$RA, GPRC:$RB))]>;
 def BISi     : OFormL<0x11, 0x20, "bis $RA,$L,$RC",
                       [(set GPRC:$RC, (or GPRC:$RA, immUExt8:$L))]>;
-def CTLZ     : OForm< 0x1C, 0x32, "CTLZ $RB,$RC", []>;
-//                      [(set GPRC:$RC, (ctlz GPRC:$RB))]>;
-def CTPOP    : OForm< 0x1C, 0x30, "CTPOP $RB,$RC", []>; //Count population
-def CTTZ     : OForm< 0x1C, 0x33, "CTTZ $RB,$RC", []>; //Count trailing zero
+def CTLZ     : OFormT<0x1C, 0x32, "CTLZ $RB,$RC", 
+                      [(set GPRC:$RC, (ctlz GPRC:$RB))]>;
+def CTPOP    : OFormT<0x1C, 0x30, "CTPOP $RB,$RC", 
+                      [(set GPRC:$RC, (ctpop GPRC:$RB))]>;
+def CTTZ     : OFormT<0x1C, 0x33, "CTTZ $RB,$RC", 
+                      [(set GPRC:$RC, (cttz GPRC:$RB))]>;
 def EQV      : OForm< 0x11, 0x48, "eqv $RA,$RB,$RC",
                       [(set GPRC:$RC, (xor GPRC:$RA, (not GPRC:$RB)))]>;
 def EQVi     : OFormL<0x11, 0x48, "eqv $RA,$L,$RC", []>;
@@ -252,10 +254,10 @@ def S8SUBQ   : OForm< 0x10, 0x3B, "s8subq $RA,$RB,$RC",
                       [(set GPRC:$RC, (sub8 GPRC:$RA, GPRC:$RB))]>;
 def S8SUBQi  : OFormL<0x10, 0x3B, "s8subq $RA,$L,$RC", 
                       [(set GPRC:$RC, (sub8 GPRC:$RA, immUExt8:$L))]>;
-
-def SEXTB    : OForm< 0x1C, 0x00, "sextb $RB,$RC", []>; //Sign extend byte
-def SEXTW    : OForm< 0x1C, 0x01, "sextw $RB,$RC", []>; //Sign extend word
-
+def SEXTB    : OFormT<0x1C, 0x00, "sextb $RB,$RC", 
+                      [(set GPRC:$RC, (sext_inreg GPRC:$RB, i8))]>;
+def SEXTW    : OFormT<0x1C, 0x01, "sextw $RB,$RC", 
+                      [(set GPRC:$RC, (sext_inreg GPRC:$RB, i16))]>;
 def SL       : OForm< 0x12, 0x39, "sll $RA,$RB,$RC",
                       [(set GPRC:$RC, (shl GPRC:$RA, GPRC:$RB))]>;
 def SLi      : OFormL<0x12, 0x39, "sll $RA,$L,$RC",
@@ -276,8 +278,10 @@ def SUBQ     : OForm< 0x10, 0x29, "subq $RA,$RB,$RC",
                       [(set GPRC:$RC, (sub GPRC:$RA, GPRC:$RB))]>;
 def SUBQi    : OFormL<0x10, 0x29, "subq $RA,$L,$RC",
                       [(set GPRC:$RC, (sub GPRC:$RA, immUExt8:$L))]>;
-def UMULH    : OForm< 0x13, 0x30, "umulh $RA,$RB,$RC", []>; //Unsigned multiply quadword high
-def UMULHi   : OFormL<0x13, 0x30, "umulh $RA,$L,$RC", []>; //Unsigned multiply quadword high
+def UMULH    : OForm< 0x13, 0x30, "umulh $RA,$RB,$RC",
+                      [(set GPRC:$RC, (mulhu GPRC:$RA, GPRC:$RB))]>;                     
+def UMULHi   : OFormL<0x13, 0x30, "umulh $RA,$L,$RC", 
+                      [(set GPRC:$RC, (mulhu GPRC:$RA, immUExt8:$L))]>;
 def XOR      : OForm< 0x11, 0x40, "xor $RA,$RB,$RC",
                       [(set GPRC:$RC, (xor GPRC:$RA, GPRC:$RB))]>;
 def XORi     : OFormL<0x11, 0x40, "xor $RA,$L,$RC",

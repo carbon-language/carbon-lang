@@ -110,6 +110,22 @@ class OForm<bits<6> opcode, bits<7> fun, string asmstr, list<dag> pattern>
   let Inst{4-0} = Rc;
 }
 
+class OFormT<bits<6> opcode, bits<7> fun, string asmstr, list<dag> pattern> 
+        : InstAlpha<opcode, (ops GPRC:$RC, GPRC:$RB), asmstr> {
+  let Pattern = pattern;
+
+  bits<5> Rc;
+  bits<5> Rb;
+  bits<7> Function = fun;
+
+  let Inst{25-21} = 0;
+  let Inst{20-16} = Rb;
+  let Inst{15-13} = 0;
+  let Inst{12} = 0;
+  let Inst{11-5} = Function;
+  let Inst{4-0} = Rc;
+}
+
 class OcmForm<bits<6> opcode, bits<7> fun, dag OL, string asmstr> 
         : InstAlpha<opcode, OL, asmstr> {
   bits<5> Ra;

@@ -697,7 +697,7 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
     Opc = opcode == ISD::CTPOP ? Alpha::CTPOP :
     (opcode == ISD::CTTZ ? Alpha::CTTZ : Alpha::CTLZ);
     Tmp1 = SelectExpr(N.getOperand(0));
-    BuildMI(BB, Opc, 1, Result).addReg(Alpha::R31).addReg(Tmp1);
+    BuildMI(BB, Opc, 1, Result).addReg(Tmp1);
     return Result;
 
   case ISD::MULHU:
@@ -1084,10 +1084,10 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
           break;
         }
       case MVT::i16:
-        BuildMI(BB, Alpha::SEXTW, 1, Result).addReg(Alpha::R31).addReg(Tmp1);
+        BuildMI(BB, Alpha::SEXTW, 1, Result).addReg(Tmp1);
         break;
       case MVT::i8:
-        BuildMI(BB, Alpha::SEXTB, 1, Result).addReg(Alpha::R31).addReg(Tmp1);
+        BuildMI(BB, Alpha::SEXTB, 1, Result).addReg(Tmp1);
         break;
       case MVT::i1:
         Tmp2 = MakeReg(MVT::i64);
