@@ -790,7 +790,8 @@ SDOperand DAGCombiner::visitSDIV(SDNode *N) {
   // detect that too.
   if (N1C && !isPowerOf2_64(N1C->getSignExtended()) && 
       (N1C->getSignExtended() < -1 || N1C->getSignExtended() > 1) &&
-      TLI.isOperationLegal(ISD::MULHS, VT) && TLI.isIntDivExpensive()) {
+      TLI.isOperationLegal(ISD::MULHS, VT) && TLI.isTypeLegal(VT) &&
+      TLI.isIntDivExpensive()) {
     return BuildSDIV(N);
   }
   return SDOperand();
@@ -814,7 +815,7 @@ SDOperand DAGCombiner::visitUDIV(SDNode *N) {
                                        TLI.getShiftAmountTy()));
   // fold (udiv x, c) -> alternate
   if (N1C && N1C->getValue() && TLI.isOperationLegal(ISD::MULHU, VT) &&
-      TLI.isIntDivExpensive())
+      TLI.isTypeLegal(VT) && TLI.isIntDivExpensive())
     return BuildUDIV(N);
   return SDOperand();
 }
@@ -2555,7 +2556,7 @@ SDOperand DAGCombiner::BuildSDIV(SDNode *N) {
   assert((VT == MVT::i32 || VT == MVT::i64) && 
          "BuildSDIV only operates on i32 or i64!");
   
-  int64_t d = cast<ConstantSDNode>(N->getOperand(1))->getValue();
+  int64_t d = cast<ConstantSDNode>(N->getOperand(1))->getSignExtended();
   ms magics = (VT == MVT::i32) ? magic32(d) : magic64(d);
   
   // Multiply the numerator (operand 0) by the magic value
