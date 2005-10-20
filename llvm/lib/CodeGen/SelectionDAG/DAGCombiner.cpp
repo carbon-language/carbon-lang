@@ -292,7 +292,7 @@ static ms magic64(int64_t d) {
   const uint64_t two63 = 9223372036854775808ULL; // 2^63
   struct ms mag;
   
-  ad = llabs(d);
+  ad = d >= 0 ? d : -d;
   t = two63 + ((uint64_t)d >> 63);
   anc = t - 1 - t%ad;   // absolute value of nc
   p = 63;               // initialize p
