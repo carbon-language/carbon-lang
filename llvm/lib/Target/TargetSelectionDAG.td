@@ -208,7 +208,6 @@ class PatLeaf<dag frag, code pred = [{}], SDNodeXForm xform = NOOP_SDNodeXForm>
 // Leaf fragments.
 
 def immAllOnes : PatLeaf<(imm), [{ return N->isAllOnesValue(); }]>;
-def immZero    : PatLeaf<(imm), [{ return N->isNullValue();    }]>;
 
 def vtInt      : PatLeaf<(vt),  [{ return MVT::isInteger(N->getVT()); }]>;
 def vtFP       : PatLeaf<(vt),  [{ return MVT::isFloatingPoint(N->getVT()); }]>;
@@ -216,7 +215,7 @@ def vtFP       : PatLeaf<(vt),  [{ return MVT::isFloatingPoint(N->getVT()); }]>;
 // Other helper fragments.
 
 def not  : PatFrag<(ops node:$in), (xor node:$in, immAllOnes)>;
-def ineg : PatFrag<(ops node:$in), (sub immZero, node:$in)>;
+def ineg : PatFrag<(ops node:$in), (sub 0, node:$in)>;
 
 //===----------------------------------------------------------------------===//
 // Selection DAG Pattern Support.
