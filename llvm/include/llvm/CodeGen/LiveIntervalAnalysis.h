@@ -171,6 +171,10 @@ namespace llvm {
     /// register classes.  The registers may be either phys or virt regs.
     bool differingRegisterClasses(unsigned RegA, unsigned RegB) const;
 
+    bool AdjustIfAllOverlappingRangesAreCopiesFrom(LiveInterval &IntA,
+                                                   LiveInterval &IntB,
+                                                   unsigned CopyIdx);
+
     bool overlapsAliases(const LiveInterval *lhs,
                          const LiveInterval *rhs) const;
 
