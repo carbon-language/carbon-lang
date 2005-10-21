@@ -2607,9 +2607,8 @@ SDOperand DAGCombiner::BuildSDIV(SDNode *N) {
   }
   // Extract the sign bit and add it to the quotient
   SDOperand T =
-    DAG.getNode(ISD::SRL, MVT::i32, Q,
-                DAG.getConstant(MVT::getSizeInBits(VT)-1,
-                                TLI.getShiftAmountTy()));
+    DAG.getNode(ISD::SRL, VT, Q, DAG.getConstant(MVT::getSizeInBits(VT)-1,
+                                                 TLI.getShiftAmountTy()));
   WorkList.push_back(T.Val);
   return DAG.getNode(ISD::ADD, VT, Q, T);
 }
