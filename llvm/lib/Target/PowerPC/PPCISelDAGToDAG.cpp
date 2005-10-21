@@ -996,6 +996,11 @@ SDOperand PPCDAGToDAGISel::Select(SDOperand Op) {
     return SDOperand(N, 0);
   }
   case ISD::SDIV: {
+    // FIXME: since this depends on the setting of the carry flag from the srawi
+    //        we should really be making notes about that for the scheduler.
+    // FIXME: It sure would be nice if we could cheaply recognize the 
+    //        srl/add/sra pattern the dag combiner will generate for this as
+    //        sra/addze rather than having to handle sdiv ourselves.  oh well.
     unsigned Imm;
     if (isIntImmediate(N->getOperand(1), Imm)) {
       if ((signed)Imm > 0 && isPowerOf2_32(Imm)) {

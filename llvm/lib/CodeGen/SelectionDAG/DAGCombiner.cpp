@@ -745,8 +745,7 @@ SDOperand DAGCombiner::visitMUL(SDNode *N) {
     return N1;
   // fold (mul x, -1) -> 0-x
   if (N1C && N1C->isAllOnesValue())
-    return DAG.getNode(ISD::SUB, N->getValueType(0), 
-                       DAG.getConstant(0, N->getValueType(0)), N0);
+    return DAG.getNode(ISD::SUB, VT, DAG.getConstant(0, VT), N0);
   // fold (mul x, (1 << c)) -> x << c
   if (N1C && isPowerOf2_64(N1C->getValue()))
     return DAG.getNode(ISD::SHL, N->getValueType(0), N0,
@@ -777,21 +776,49 @@ SDOperand DAGCombiner::visitSDIV(SDNode *N) {
   if (N0C && N1C && !N1C->isNullValue())
     return DAG.getConstant(N0C->getSignExtended() / N1C->getSignExtended(),
                            N->getValueType(0));
+  // fold (sdiv X, 1) -> X
+  if (N1C && N1C->getSignExtended() == 1LL)
+    return N0;
+  // fold (sdiv X, -1) -> 0-X
+  if (N1C && N1C->isAllOnesValue())
+    return DAG.getNode(ISD::SUB, VT, DAG.getConstant(0, VT), N0);
   // If we know the sign bits of both operands are zero, strength reduce to a
   // udiv instead.  Handles (X&15) /s 4 -> X&15 >> 2
   uint64_t SignBit = 1ULL << (MVT::getSizeInBits(VT)-1);
   if (MaskedValueIsZero(N1, SignBit, TLI) &&
       MaskedValueIsZero(N0, SignBit, TLI))
     return DAG.getNode(ISD::UDIV, N1.getValueType(), N0, N1);
+  // fold (sdiv X, pow2) -> (add (sra X, log(pow2)), (srl X, sizeof(X)-1))
+  if (N1C && N1C->getValue() && !TLI.isIntDivCheap() && 
+      (isPowerOf2_64(N1C->getSignExtended()) || 
+       isPowerOf2_64(-N1C->getSignExtended()))) {
+    // If dividing by powers of two is cheap, then don't perform the following
+    // fold.
+    if (TLI.isPow2DivCheap())
+      return SDOperand();
+    int64_t pow2 = N1C->getSignExtended();
+    int64_t abs2 = pow2 > 0 ? pow2 : -pow2;
+    SDOperand SRL = DAG.getNode(ISD::SRL, VT, N0,
+                                DAG.getConstant(MVT::getSizeInBits(VT)-1,
+                                                TLI.getShiftAmountTy()));
+    WorkList.push_back(SRL.Val);
+    SDOperand SGN = DAG.getNode(ISD::ADD, VT, N0, SRL);
+    WorkList.push_back(SGN.Val);
+    SDOperand SRA = DAG.getNode(ISD::SRA, VT, SGN, 
+                                DAG.getConstant(Log2_64(abs2),
+                                                TLI.getShiftAmountTy()));
+    // If we're dividing by a positive value, we're done.  Otherwise, we must
+    // negate the result.
+    if (pow2 > 0)
+      return SRA;
+    WorkList.push_back(SRA.Val);
+    return DAG.getNode(ISD::SUB, VT, DAG.getConstant(0, VT), SRA);
+  }
   // if integer divide is expensive and we satisfy the requirements, emit an
   // alternate sequence.
-  // FIXME: This currently opts out powers of two, since targets can often be
-  // more clever in those cases.  In an idea world, we would have some way to
-  // detect that too.
-  if (N1C && !isPowerOf2_64(N1C->getSignExtended()) && 
-      (N1C->getSignExtended() < -1 || N1C->getSignExtended() > 1) &&
-      TLI.isOperationLegal(ISD::MULHS, VT) && TLI.isTypeLegal(VT) &&
-      TLI.isIntDivExpensive()) {
+  if (N1C && (N1C->getSignExtended() < -1 || N1C->getSignExtended() > 1) && 
+      !TLI.isIntDivCheap() &&
+      TLI.isOperationLegal(ISD::MULHS, VT) && TLI.isTypeLegal(VT)) {
     return BuildSDIV(N);
   }
   return SDOperand();
@@ -815,7 +842,7 @@ SDOperand DAGCombiner::visitUDIV(SDNode *N) {
                                        TLI.getShiftAmountTy()));
   // fold (udiv x, c) -> alternate
   if (N1C && N1C->getValue() && TLI.isOperationLegal(ISD::MULHU, VT) &&
-      TLI.isTypeLegal(VT) && TLI.isIntDivExpensive())
+      TLI.isTypeLegal(VT) && !TLI.isIntDivCheap())
     return BuildUDIV(N);
   return SDOperand();
 }

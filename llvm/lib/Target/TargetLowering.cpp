@@ -30,6 +30,8 @@ TargetLowering::TargetLowering(TargetMachine &tm)
   maxStoresPerMemSet = maxStoresPerMemCpy = maxStoresPerMemMove = 8;
   allowUnalignedMemoryAccesses = false;
   UseUnderscoreSetJmpLongJmp = false;
+  IntDivIsCheap = false;
+  Pow2DivIsCheap = false;
 }
 
 TargetLowering::~TargetLowering() {}

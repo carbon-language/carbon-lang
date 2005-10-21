@@ -84,10 +84,14 @@ public:
   /// this target.
   bool isSetCCExpensive() const { return SetCCIsExpensive; }
   
-  /// isIntDivExpensive() - Return true if integer divide is more expensive than
+  /// isIntDivCheap() - Return true if integer divide is usually cheaper than
   /// a sequence of several shifts, adds, and multiplies for this target.
-  bool isIntDivExpensive() const { return IntDivIsExpensive; }
+  bool isIntDivCheap() const { return IntDivIsCheap; }
 
+  /// isPow2DivCheap() - Return true if pow2 div is cheaper than a chain of
+  /// srl/add/sra.
+  bool isPow2DivCheap() const { return Pow2DivIsCheap; }
+  
   /// getSetCCResultTy - Return the ValueType of the result of setcc operations.
   ///
   MVT::ValueType getSetCCResultTy() const { return SetCCResultTy; }
@@ -266,10 +270,15 @@ protected:
   /// setcc operations into other operations if possible.
   void setSetCCIsExpensive() { SetCCIsExpensive = true; }
 
-  /// setIntDivIsExpensive - Tells the code generator that integer divide is
+  /// setIntDivIsCheap - Tells the code generator that integer divide is
   /// expensive, and if possible, should be replaced by an alternate sequence
   /// of instructions not containing an integer divide.
-  void setIntDivIsExpensive() { IntDivIsExpensive = true; }
+  void setIntDivIsCheap(bool isCheap = true) { IntDivIsCheap = isCheap; }
+  
+  /// setPow2DivIsCheap - Tells the code generator that it shouldn't generate
+  /// srl/add/sra for a signed divide by power of two, and let the target handle
+  /// it.
+  void setPow2DivIsCheap(bool isCheap = true) { Pow2DivIsCheap = isCheap; }
   
   /// addRegisterClass - Add the specified register class as an available
   /// regclass for the specified value type.  This indicates the selector can
@@ -400,12 +409,16 @@ private:
   /// setcc operations into other operations if possible.
   bool SetCCIsExpensive;
 
-  /// IntDivIsExpensive - This is a hack until a real costs model is in place
-  /// that tells the code generator whether integer divide will always be more
-  /// expensive than a sequence of multiplies, shifts, and adds that performs
-  /// the same operation.  If we ever optimize for size, this will be set to
-  /// false unconditionally.
-  bool IntDivIsExpensive;
+  /// IntDivIsCheap - Tells the code generator not to expand integer divides by
+  /// constants into a sequence of muls, adds, and shifts.  This is a hack until
+  /// a real cost model is in place.  If we ever optimize for size, this will be
+  /// set to true unconditionally.
+  bool IntDivIsCheap;
+  
+  /// Pow2DivIsCheap - Tells the code generator that it shouldn't generate
+  /// srl/add/sra for a signed divide by power of two, and let the target handle
+  /// it.
+  bool Pow2DivIsCheap;
   
   /// SetCCResultTy - The type that SetCC operations use.  This defaults to the
   /// PointerTy.

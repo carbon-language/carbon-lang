@@ -3035,60 +3035,6 @@ unsigned ISel::SelectExpr(SDOperand N) {
           return Result;
         }
       }
-
-      if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
-        // FIXME: These special cases should be handled by the lowering impl!
-        unsigned RHS = CN->getValue();
-        bool isNeg = false;
-        if ((int)RHS < 0) {
-          isNeg = true;
-          RHS = -RHS;
-        }
-        if (RHS && (RHS & (RHS-1)) == 0) {   // Signed division by power of 2?
-          unsigned Log = Log2_32(RHS);
-          unsigned SAROpc, SHROpc, ADDOpc, NEGOpc;
-          switch (N.getValueType()) {
-          default: assert("Unknown type to signed divide!");
-          case MVT::i8:
-            SAROpc = X86::SAR8ri;
-            SHROpc = X86::SHR8ri;
-            ADDOpc = X86::ADD8rr;
-            NEGOpc = X86::NEG8r;
-            break;
-          case MVT::i16:
-            SAROpc = X86::SAR16ri;
-            SHROpc = X86::SHR16ri;
-            ADDOpc = X86::ADD16rr;
-            NEGOpc = X86::NEG16r;
-            break;
-          case MVT::i32:
-            SAROpc = X86::SAR32ri;
-            SHROpc = X86::SHR32ri;
-            ADDOpc = X86::ADD32rr;
-            NEGOpc = X86::NEG32r;
-            break;
-          }
-          unsigned RegSize = MVT::getSizeInBits(N.getValueType());
-          Tmp1 = SelectExpr(N.getOperand(0));
-          unsigned TmpReg;
-          if (Log != 1) {
-            TmpReg = MakeReg(N.getValueType());
-            BuildMI(BB, SAROpc, 2, TmpReg).addReg(Tmp1).addImm(Log-1);
-          } else {
-            TmpReg = Tmp1;
-          }
-          unsigned TmpReg2 = MakeReg(N.getValueType());
-          BuildMI(BB, SHROpc, 2, TmpReg2).addReg(TmpReg).addImm(RegSize-Log);
-          unsigned TmpReg3 = MakeReg(N.getValueType());
-          BuildMI(BB, ADDOpc, 2, TmpReg3).addReg(Tmp1).addReg(TmpReg2);
-
-          unsigned TmpReg4 = isNeg ? MakeReg(N.getValueType()) : Result;
-          BuildMI(BB, SAROpc, 2, TmpReg4).addReg(TmpReg3).addImm(Log);
-          if (isNeg)
-            BuildMI(BB, NEGOpc, 1, Result).addReg(TmpReg4);
-          return Result;
-        }
-      }
     }
 
     if (getRegPressure(N.getOperand(0)) > getRegPressure(N.getOperand(1))) {
