@@ -573,19 +573,22 @@ bool TreePatternNode::canPatternMatch(std::string &Reason, DAGISelEmitter &ISE){
 // TreePattern implementation
 //
 
-TreePattern::TreePattern(Record *TheRec, ListInit *RawPat,
+TreePattern::TreePattern(Record *TheRec, ListInit *RawPat, bool isInput,
                          DAGISelEmitter &ise) : TheRecord(TheRec), ISE(ise) {
+   isInputPattern = isInput;
    for (unsigned i = 0, e = RawPat->getSize(); i != e; ++i)
      Trees.push_back(ParseTreePattern((DagInit*)RawPat->getElement(i)));
 }
 
-TreePattern::TreePattern(Record *TheRec, DagInit *Pat,
+TreePattern::TreePattern(Record *TheRec, DagInit *Pat, bool isInput,
                          DAGISelEmitter &ise) : TheRecord(TheRec), ISE(ise) {
+  isInputPattern = isInput;
   Trees.push_back(ParseTreePattern(Pat));
 }
 
-TreePattern::TreePattern(Record *TheRec, TreePatternNode *Pat, 
+TreePattern::TreePattern(Record *TheRec, TreePatternNode *Pat, bool isInput,
                          DAGISelEmitter &ise) : TheRecord(TheRec), ISE(ise) {
+  isInputPattern = isInput;
   Trees.push_back(Pat);
 }
 
@@ -637,6 +640,11 @@ TreePatternNode *TreePattern::ParseTreePattern(DagInit *Dag) {
       !Operator->isSubClassOf("SDNodeXForm") &&
       Operator->getName() != "set")
     error("Unrecognized node '" + Operator->getName() + "'!");
+  
+  //  Check to see if this is something that is illegal in an input pattern.
+  if (isInputPattern && (Operator->isSubClassOf("Instruction") ||
+      Operator->isSubClassOf("SDNodeXForm")))
+    error("Cannot use '" + Operator->getName() + "' in an input pattern!");
   
   std::vector<TreePatternNode*> Children;
   
@@ -780,7 +788,7 @@ void DAGISelEmitter::ParsePatternFragments(std::ostream &OS) {
   OS << "\n// Predicate functions.\n";
   for (unsigned i = 0, e = Fragments.size(); i != e; ++i) {
     DagInit *Tree = Fragments[i]->getValueAsDag("Fragment");
-    TreePattern *P = new TreePattern(Fragments[i], Tree, *this);
+    TreePattern *P = new TreePattern(Fragments[i], Tree, true, *this);
     PatternFragments[Fragments[i]] = P;
     
     // Validate the argument list, converting it to map, to discard duplicates.
@@ -1016,7 +1024,7 @@ void DAGISelEmitter::ParseInstructions() {
     }
     
     // Parse the instruction.
-    TreePattern *I = new TreePattern(Instrs[i], LI, *this);
+    TreePattern *I = new TreePattern(Instrs[i], LI, true, *this);
     // Inline pattern fragments into it.
     I->InlinePatternFragments();
     
@@ -1133,7 +1141,7 @@ void DAGISelEmitter::ParseInstructions() {
     // Use a temporary tree pattern to infer all types and make sure that the
     // constructed result is correct.  This depends on the instruction already
     // being inserted into the Instructions map.
-    TreePattern Temp(I->getRecord(), ResultPattern, *this);
+    TreePattern Temp(I->getRecord(), ResultPattern, false, *this);
     Temp.InferAllTypes();
 
     DAGInstruction &TheInsertedInst = Instructions.find(I->getRecord())->second;
@@ -1175,7 +1183,7 @@ void DAGISelEmitter::ParsePatterns() {
 
   for (unsigned i = 0, e = Patterns.size(); i != e; ++i) {
     DagInit *Tree = Patterns[i]->getValueAsDag("PatternToMatch");
-    TreePattern *Pattern = new TreePattern(Patterns[i], Tree, *this);
+    TreePattern *Pattern = new TreePattern(Patterns[i], Tree, true, *this);
 
     // Inline pattern fragments into it.
     Pattern->InlinePatternFragments();
@@ -1189,7 +1197,7 @@ void DAGISelEmitter::ParsePatterns() {
     if (LI->getSize() == 0) continue;  // no pattern.
     
     // Parse the instruction.
-    TreePattern *Result = new TreePattern(Patterns[i], LI, *this);
+    TreePattern *Result = new TreePattern(Patterns[i], LI, false, *this);
     
     // Inline pattern fragments into it.
     Result->InlinePatternFragments();

@@ -258,13 +258,20 @@ namespace llvm {
     /// ISE - the DAG isel emitter coordinating this madness.
     ///
     DAGISelEmitter &ISE;
+
+    /// isInputPattern - True if this is an input pattern, something to match.
+    /// False if this is an output pattern, something to emit.
+    bool isInputPattern;
   public:
       
     /// TreePattern constructor - Parse the specified DagInits into the
     /// current record.
-    TreePattern(Record *TheRec, ListInit *RawPat, DAGISelEmitter &ise);
-    TreePattern(Record *TheRec, DagInit *Pat, DAGISelEmitter &ise);
-    TreePattern(Record *TheRec, TreePatternNode *Pat, DAGISelEmitter &ise);
+    TreePattern(Record *TheRec, ListInit *RawPat, bool isInput,
+                DAGISelEmitter &ise);
+    TreePattern(Record *TheRec, DagInit *Pat, bool isInput,
+                DAGISelEmitter &ise);
+    TreePattern(Record *TheRec, TreePatternNode *Pat, bool isInput,
+                DAGISelEmitter &ise);
         
     /// getTrees - Return the tree patterns which corresponds to this pattern.
     ///
