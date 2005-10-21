@@ -771,7 +771,6 @@ def : Pattern<(xor GPRC:$in, imm:$imm),
                (XORIS GPRC:$tmp, (HI16 imm:$imm))]>;
 */
 
-
 //===----------------------------------------------------------------------===//
 // PowerPCInstrInfo Definition
 //

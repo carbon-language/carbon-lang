@@ -621,65 +621,63 @@ SDOperand PPCDAGToDAGISel::SelectSETCC(SDOperand Op) {
     if (Imm == 0) {
       SDOperand Op = Select(N->getOperand(0));
       switch (CC) {
-        default: assert(0 && "Unhandled SetCC condition"); abort();
-        case ISD::SETEQ:
-          Op = CurDAG->getTargetNode(PPC::CNTLZW, MVT::i32, Op);
-          CurDAG->SelectNodeTo(N, PPC::RLWINM, MVT::i32, Op, getI32Imm(27),
-                               getI32Imm(5), getI32Imm(31));
-          break;
-        case ISD::SETNE: {
-          SDOperand AD = CurDAG->getTargetNode(PPC::ADDIC, MVT::i32, MVT::Flag,
-                                               Op, getI32Imm(~0U));
-          CurDAG->SelectNodeTo(N, PPC::SUBFE, MVT::i32, AD, Op, AD.getValue(1));
-          break;
-        }
-        case ISD::SETLT:
-          CurDAG->SelectNodeTo(N, PPC::RLWINM, MVT::i32, Op, getI32Imm(1),
-                               getI32Imm(31), getI32Imm(31));
-          break;
-        case ISD::SETGT: {
-          SDOperand T = CurDAG->getTargetNode(PPC::NEG, MVT::i32, Op);
-          T = CurDAG->getTargetNode(PPC::ANDC, MVT::i32, T, Op);;
-          CurDAG->SelectNodeTo(N, PPC::RLWINM, MVT::i32, T, getI32Imm(1),
-                               getI32Imm(31), getI32Imm(31));
-          break;
-        }
+      default: break;
+      case ISD::SETEQ:
+        Op = CurDAG->getTargetNode(PPC::CNTLZW, MVT::i32, Op);
+        CurDAG->SelectNodeTo(N, PPC::RLWINM, MVT::i32, Op, getI32Imm(27),
+                             getI32Imm(5), getI32Imm(31));
+        return SDOperand(N, 0);
+      case ISD::SETNE: {
+        SDOperand AD = CurDAG->getTargetNode(PPC::ADDIC, MVT::i32, MVT::Flag,
+                                             Op, getI32Imm(~0U));
+        CurDAG->SelectNodeTo(N, PPC::SUBFE, MVT::i32, AD, Op, AD.getValue(1));
+        return SDOperand(N, 0);
       }
-      return SDOperand(N, 0);
+      case ISD::SETLT:
+        CurDAG->SelectNodeTo(N, PPC::RLWINM, MVT::i32, Op, getI32Imm(1),
+                             getI32Imm(31), getI32Imm(31));
+        return SDOperand(N, 0);
+      case ISD::SETGT: {
+        SDOperand T = CurDAG->getTargetNode(PPC::NEG, MVT::i32, Op);
+        T = CurDAG->getTargetNode(PPC::ANDC, MVT::i32, T, Op);;
+        CurDAG->SelectNodeTo(N, PPC::RLWINM, MVT::i32, T, getI32Imm(1),
+                             getI32Imm(31), getI32Imm(31));
+        return SDOperand(N, 0);
+      }
+      }
     } else if (Imm == ~0U) {        // setcc op, -1
       SDOperand Op = Select(N->getOperand(0));
       switch (CC) {
-        default: assert(0 && "Unhandled SetCC condition"); abort();
-        case ISD::SETEQ:
-          Op = CurDAG->getTargetNode(PPC::ADDIC, MVT::i32, MVT::Flag,
-                                     Op, getI32Imm(1));
-          CurDAG->SelectNodeTo(N, PPC::ADDZE, MVT::i32, 
-                               CurDAG->getTargetNode(PPC::LI, MVT::i32,
-                                                     getI32Imm(0)),
-                               Op.getValue(1));
-          break;
-        case ISD::SETNE: {
-          Op = CurDAG->getTargetNode(PPC::NOR, MVT::i32, Op, Op);
-          SDOperand AD = CurDAG->getTargetNode(PPC::ADDIC, MVT::i32, MVT::Flag,
-                                               Op, getI32Imm(~0U));
-          CurDAG->SelectNodeTo(N, PPC::SUBFE, MVT::i32, AD, Op, AD.getValue(1));
-          break;
-        }
-        case ISD::SETLT: {
-          SDOperand AD = CurDAG->getTargetNode(PPC::ADDI, MVT::i32, Op,
-                                               getI32Imm(1));
-          SDOperand AN = CurDAG->getTargetNode(PPC::AND, MVT::i32, AD, Op);
-          CurDAG->SelectNodeTo(N, PPC::RLWINM, MVT::i32, AN, getI32Imm(1),
-                               getI32Imm(31), getI32Imm(31));
-          break;
-        }
-        case ISD::SETGT:
-          Op = CurDAG->getTargetNode(PPC::RLWINM, MVT::i32, Op, getI32Imm(1),
-                                     getI32Imm(31), getI32Imm(31));
-          CurDAG->SelectNodeTo(N, PPC::XORI, MVT::i32, Op, getI32Imm(1));
-          break;
+      default: break;
+      case ISD::SETEQ:
+        Op = CurDAG->getTargetNode(PPC::ADDIC, MVT::i32, MVT::Flag,
+                                   Op, getI32Imm(1));
+        CurDAG->SelectNodeTo(N, PPC::ADDZE, MVT::i32, 
+                             CurDAG->getTargetNode(PPC::LI, MVT::i32,
+                                                   getI32Imm(0)),
+                             Op.getValue(1));
+        return SDOperand(N, 0);
+      case ISD::SETNE: {
+        Op = CurDAG->getTargetNode(PPC::NOR, MVT::i32, Op, Op);
+        SDOperand AD = CurDAG->getTargetNode(PPC::ADDIC, MVT::i32, MVT::Flag,
+                                             Op, getI32Imm(~0U));
+        CurDAG->SelectNodeTo(N, PPC::SUBFE, MVT::i32, AD, Op, AD.getValue(1));
+        return SDOperand(N, 0);
       }
-      return SDOperand(N, 0);
+      case ISD::SETLT: {
+        SDOperand AD = CurDAG->getTargetNode(PPC::ADDI, MVT::i32, Op,
+                                             getI32Imm(1));
+        SDOperand AN = CurDAG->getTargetNode(PPC::AND, MVT::i32, AD, Op);
+        CurDAG->SelectNodeTo(N, PPC::RLWINM, MVT::i32, AN, getI32Imm(1),
+                             getI32Imm(31), getI32Imm(31));
+        return SDOperand(N, 0);
+      }
+      case ISD::SETGT:
+        Op = CurDAG->getTargetNode(PPC::RLWINM, MVT::i32, Op, getI32Imm(1),
+                                   getI32Imm(31), getI32Imm(31));
+        CurDAG->SelectNodeTo(N, PPC::XORI, MVT::i32, Op, getI32Imm(1));
+        return SDOperand(N, 0);
+      }
     }
   }
   
