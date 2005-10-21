@@ -57,12 +57,12 @@ def : Processor<"7450", G4PlusItineraries, [FeatureAltivec]>;
 def : Processor<"750", G3Itineraries, []>;
 def : Processor<"970", G5Itineraries,
                   [FeatureAltivec, FeatureGPUL, FeatureFSqrt,
-                   Feature64Bit, Feature64BitRegs]>;
+                   Feature64Bit /*, Feature64BitRegs*/]>;
 def : Processor<"g4", G4Itineraries, [FeatureAltivec]>;
 def : Processor<"g4+", G4PlusItineraries, [FeatureAltivec]>;
 def : Processor<"g5", G5Itineraries,
                   [FeatureAltivec, FeatureGPUL, FeatureFSqrt,
-                   Feature64Bit, Feature64BitRegs]>;
+                   Feature64Bit /*, Feature64BitRegs*/]>;
 def : Processor<"generic", G3Itineraries, []>;
 
 
