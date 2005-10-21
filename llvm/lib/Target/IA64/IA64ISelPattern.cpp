@@ -84,7 +84,7 @@ namespace {
       
       setOperationAction(ISD::SINT_TO_FP       , MVT::i1   , Promote);
       setOperationAction(ISD::UINT_TO_FP       , MVT::i1   , Promote);
-
+      
       // We don't support sin/cos/sqrt
       setOperationAction(ISD::FSIN , MVT::f64, Expand);
       setOperationAction(ISD::FCOS , MVT::f64, Expand);
@@ -96,6 +96,9 @@ namespace {
       //IA64 has these, but they are not implemented
       setOperationAction(ISD::CTTZ , MVT::i64  , Expand);
       setOperationAction(ISD::CTLZ , MVT::i64  , Expand);
+      // FIXME: implement mulhs (xma.h) and mulhu (xma.hu)
+      setOperationAction(ISD::MULHS , MVT::i64  , Expand);
+      setOperationAction(ISD::MULHU , MVT::i64  , Expand);
 
       computeRegisterProperties();
 
