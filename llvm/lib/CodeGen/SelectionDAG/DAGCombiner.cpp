@@ -2370,6 +2370,9 @@ SDOperand DAGCombiner::SimplifySetCC(MVT::ValueType VT, SDOperand N0,
       // Canonicalize setgt X, Min --> setne X, Min
       if ((Cond == ISD::SETGT || Cond == ISD::SETUGT) && C1 == MinVal)
         return DAG.getSetCC(VT, N0, N1, ISD::SETNE);
+      // Canonicalize setlt X, Max --> setne X, Max
+      if ((Cond == ISD::SETLT || Cond == ISD::SETULT) && C1 == MaxVal)
+        return DAG.getSetCC(VT, N0, N1, ISD::SETNE);
 
       // If we have setult X, 1, turn it into seteq X, 0
       if ((Cond == ISD::SETLT || Cond == ISD::SETULT) && C1 == MinVal+1)
