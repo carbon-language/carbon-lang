@@ -28,8 +28,8 @@ class FuncUnit;
 // need to complete the stage.  Units represent the choice of functional units
 // that can be used to complete the stage.  Eg. IntUnit1, IntUnit2.
 //
-class InstrStage<int latency, list<FuncUnit> units> {
-  int Latency          = latency;     // length of stage in machine cycles
+class InstrStage<int cycles, list<FuncUnit> units> {
+  int Cycles          = cycles;       // length of stage in machine cycles
   list<FuncUnit> Units = units;       // choice of functional units
 }
 

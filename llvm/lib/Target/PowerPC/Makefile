@@ -14,6 +14,6 @@ TARGET = PPC
 BUILT_SOURCES = PPCGenInstrNames.inc PPCGenRegisterNames.inc \
                 PPCGenAsmWriter.inc  PPCGenCodeEmitter.inc \
                 PPCGenRegisterInfo.h.inc PPCGenRegisterInfo.inc \
-                PPCGenInstrInfo.inc PPCGenDAGISel.inc
+                PPCGenInstrInfo.inc PPCGenDAGISel.inc PPCGenSubtarget.inc
 
 include $(LEVEL)/Makefile.common

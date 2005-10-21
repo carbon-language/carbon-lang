@@ -26,37 +26,44 @@ include "PPCInstrInfo.td"
 
 
 //===----------------------------------------------------------------------===//
-// PowerPC Subtarget features.
+// PowerPC Subtarget features (sorted by name).
 //
  
-def F64Bit     : SubtargetFeature<"64bit",
-                  "Should 64 bit instructions be used">;
-def F64BitRegs : SubtargetFeature<"64bitregs",
-                  "Should 64 bit registers be used">;
-def FAltivec   : SubtargetFeature<"altivec",
-                  "Should Altivec instructions be used">;
-def FGPUL      : SubtargetFeature<"gpul",
-                  "Should GPUL instructions be used">;
-def FFSQRT     : SubtargetFeature<"fsqrt",
-                  "Should the fsqrt instruction be used">; 
+def Feature64Bit     : SubtargetFeature<"64bit",
+                                "Should 64 bit instructions be used">;
+def Feature64BitRegs : SubtargetFeature<"64bitregs",
+                                "Should 64 bit registers be used">;
+def FeatureAltivec   : SubtargetFeature<"altivec",
+                                "Should Altivec instructions be used">;
+def FeatureFSqrt     : SubtargetFeature<"fsqrt",
+                                "Should the fsqrt instruction be used">; 
+def FeatureGPUL      : SubtargetFeature<"gpul",
+                                "Should GPUL instructions be used">;
 
 //===----------------------------------------------------------------------===//
-// PowerPC chips sets supported
+// PowerPC chips sets supported (sorted by name)
 //
 
 def : Processor<"601", G3Itineraries, []>;
 def : Processor<"602", G3Itineraries, []>;
 def : Processor<"603", G3Itineraries, []>;
+def : Processor<"603e", G3Itineraries, []>;
+def : Processor<"603ev", G3Itineraries, []>;
 def : Processor<"604", G3Itineraries, []>;
+def : Processor<"604e", G3Itineraries, []>;
+def : Processor<"620", G3Itineraries, []>;
+def : Processor<"7400", G4Itineraries, [FeatureAltivec]>;
+def : Processor<"7450", G4PlusItineraries, [FeatureAltivec]>;
 def : Processor<"750", G3Itineraries, []>;
-def : Processor<"7400", G4Itineraries, [FAltivec]>;
-def : Processor<"g4", G4Itineraries, [FAltivec]>;
-def : Processor<"7450", G4PlusItineraries, [FAltivec]>;
-def : Processor<"g4+", G4PlusItineraries, [FAltivec]>;
 def : Processor<"970", G5Itineraries,
-                  [FAltivec, FGPUL, FFSQRT, F64Bit, F64BitRegs]>;
+                  [FeatureAltivec, FeatureGPUL, FeatureFSqrt,
+                   Feature64Bit, Feature64BitRegs]>;
+def : Processor<"g4", G4Itineraries, [FeatureAltivec]>;
+def : Processor<"g4+", G4PlusItineraries, [FeatureAltivec]>;
 def : Processor<"g5", G5Itineraries,
-                  [FAltivec, FGPUL, FFSQRT, F64Bit, F64BitRegs]>;
+                  [FeatureAltivec, FeatureGPUL, FeatureFSqrt,
+                   Feature64Bit, Feature64BitRegs]>;
+def : Processor<"generic", G3Itineraries, []>;
 
 
 def PPC : Target {

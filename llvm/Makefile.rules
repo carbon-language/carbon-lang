@@ -1162,6 +1162,10 @@ $(ObjDir)/%GenDAGISel.inc.tmp : %.td $(ObjDir)/.dir
 	$(Echo) "Building $(<F) instruction selector implementation with tblgen"
 	$(Verb) $(TableGen) -gen-dag-isel -o $@ $<
 
+$(TARGET:%=$(ObjDir)/%GenSubtarget.inc.tmp): \
+$(ObjDir)/%GenSubtarget.inc.tmp : %.td $(ObjDir)/.dir
+	$(Echo) "Building $(<F) subtarget information with tblgen"
+	$(Verb) $(TableGen) -gen-subtarget -o $@ $<
 
 clean-local::
 	-$(Verb) $(RM) -f $(INCFiles)

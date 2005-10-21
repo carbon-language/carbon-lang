@@ -280,7 +280,7 @@ class Processor<string n, ProcessorItineraries pi, list<SubtargetFeature> f> {
   ProcessorItineraries ProcItin = pi;
   
   // Features - list of 
-  list<SubtargetFeature> Features;
+  list<SubtargetFeature> Features = f;
 }
 
 //===----------------------------------------------------------------------===//
