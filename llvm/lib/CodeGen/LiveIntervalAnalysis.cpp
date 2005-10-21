@@ -633,6 +633,49 @@ void LiveIntervals::computeIntervals()
   }
 }
 
+/// IntA is defined as a copy from IntB and we know it only has one value
+/// number.  If all of the places that IntA and IntB overlap are defined by
+/// copies from IntA to IntB, we know that these two ranges can really be
+/// merged if we adjust the value numbers.  If it is safe, adjust the value
+/// numbers and return true, allowing coallescing to occur.
+bool LiveIntervals::
+AdjustIfAllOverlappingRangesAreCopiesFrom(LiveInterval &IntA,
+                                          LiveInterval &IntB,
+                                          unsigned CopyIdx) {
+  std::vector<LiveRange*> Ranges;
+  IntA.getOverlapingRanges(IntB, CopyIdx, Ranges);
+  
+  assert(!Ranges.empty() && "Why didn't we do a simple join of this?");
+  
+  unsigned IntBRep = rep(IntB.reg);
+  
+  // Check to see if all of the overlaps (entries in Ranges) are defined by a
+  // copy from IntA.  If not, exit.
+  for (unsigned i = 0, e = Ranges.size(); i != e; ++i) {
+    unsigned Idx = Ranges[i]->start;
+    MachineInstr *MI = getInstructionFromIndex(Idx);
+    unsigned SrcReg, DestReg;
+    if (!tii_->isMoveInstr(*MI, SrcReg, DestReg)) return false;
+    
+    // If this copy isn't actually defining this range, it must be a live
+    // range spanning basic blocks or something.
+    if (rep(DestReg) != rep(IntA.reg)) return false;
+    
+    // Check to see if this is coming from IntB.  If not, bail out.
+    if (rep(SrcReg) != IntBRep) return false;
+  }
+
+  // Okay, we can change this one.  Get the IntB value number that IntA is
+  // copied from.
+  unsigned ActualValNo = IntA.getLiveRangeContaining(CopyIdx-1)->ValId;
+  
+  // Change all of the value numbers to the same as what we IntA is copied from.
+  for (unsigned i = 0, e = Ranges.size(); i != e; ++i)
+    Ranges[i]->ValId = ActualValNo;
+  
+  return true;
+}
+
 void LiveIntervals::joinIntervalsInMachineBB(MachineBasicBlock *MBB) {
   DEBUG(std::cerr << ((Value*)MBB->getBasicBlock())->getName() << ":\n");
 
@@ -643,60 +686,72 @@ void LiveIntervals::joinIntervalsInMachineBB(MachineBasicBlock *MBB) {
     // we only join virtual registers with allocatable
     // physical registers since we do not have liveness information
     // on not allocatable physical registers
-    unsigned regA, regB;
-    if (tii_->isMoveInstr(*mi, regA, regB) &&
-        (MRegisterInfo::isVirtualRegister(regA) || allocatableRegs_[regA]) &&
-        (MRegisterInfo::isVirtualRegister(regB) || allocatableRegs_[regB])) {
+    unsigned SrcReg, DestReg;
+    if (tii_->isMoveInstr(*mi, SrcReg, DestReg) &&
+        (MRegisterInfo::isVirtualRegister(SrcReg) || allocatableRegs_[SrcReg])&&
+        (MRegisterInfo::isVirtualRegister(DestReg)||allocatableRegs_[DestReg])){
 
       // Get representative registers.
-      regA = rep(regA);
-      regB = rep(regB);
+      SrcReg = rep(SrcReg);
+      DestReg = rep(DestReg);
 
       // If they are already joined we continue.
-      if (regA == regB)
+      if (SrcReg == DestReg)
         continue;
 
       // If they are both physical registers, we cannot join them.
-      if (MRegisterInfo::isPhysicalRegister(regA) &&
-          MRegisterInfo::isPhysicalRegister(regB))
+      if (MRegisterInfo::isPhysicalRegister(SrcReg) &&
+          MRegisterInfo::isPhysicalRegister(DestReg))
         continue;
 
       // If they are not of the same register class, we cannot join them.
-      if (differingRegisterClasses(regA, regB))
+      if (differingRegisterClasses(SrcReg, DestReg))
         continue;
 
-      LiveInterval &IntA = getInterval(regA);
-      LiveInterval &IntB = getInterval(regB);
-      assert(IntA.reg == regA && IntB.reg == regB &&
+      LiveInterval &SrcInt = getInterval(SrcReg);
+      LiveInterval &DestInt = getInterval(DestReg);
+      assert(SrcInt.reg == SrcReg && DestInt.reg == DestReg &&
              "Register mapping is horribly broken!");
 
-      DEBUG(std::cerr << "\t\tInspecting " << IntA << " and " << IntB << ": ");
+      DEBUG(std::cerr << "\t\tInspecting " << SrcInt << " and " << DestInt
+                      << ": ");
 
       // If two intervals contain a single value and are joined by a copy, it
       // does not matter if the intervals overlap, they can always be joined.
-      bool TriviallyJoinable =
-        IntA.containsOneValue() && IntB.containsOneValue();
+      bool Joinable = SrcInt.containsOneValue() && DestInt.containsOneValue();
 
       unsigned MIDefIdx = getDefIndex(getInstructionIndex(mi));
-      if ((TriviallyJoinable || IntB.joinable(IntA, MIDefIdx)) &&
-          !overlapsAliases(&IntA, &IntB)) {
-        IntB.join(IntA, MIDefIdx);
-        DEBUG(std::cerr << "Joined.  Result = " << IntB << "\n");
+      
+      // If the intervals think that this is joinable, do so now.
+      if (!Joinable && DestInt.joinable(SrcInt, MIDefIdx))
+        Joinable = true;
 
-        if (!MRegisterInfo::isPhysicalRegister(regA)) {
-          r2iMap_.erase(regA);
-          r2rMap_[regA] = regB;
+      // If DestInt is actually a copy from SrcInt (which we know) that is used
+      // to define another value of SrcInt, we can change the other range of
+      // SrcInt to be the value of the range that defines DestInt, allowing a
+      // coallesce.
+      if (!Joinable && DestInt.containsOneValue() &&
+          AdjustIfAllOverlappingRangesAreCopiesFrom(SrcInt, DestInt, MIDefIdx))
+        Joinable = true;
+      
+      if (!Joinable || overlapsAliases(&SrcInt, &DestInt)) {
+        DEBUG(std::cerr << "Interference!\n");
+      } else {
+        DestInt.join(SrcInt, MIDefIdx);
+        DEBUG(std::cerr << "Joined.  Result = " << DestInt << "\n");
+
+        if (!MRegisterInfo::isPhysicalRegister(SrcReg)) {
+          r2iMap_.erase(SrcReg);
+          r2rMap_[SrcReg] = DestReg;
         } else {
           // Otherwise merge the data structures the other way so we don't lose
           // the physreg information.
-          r2rMap_[regB] = regA;
-          IntB.reg = regA;
-          IntA.swap(IntB);
-          r2iMap_.erase(regB);
+          r2rMap_[DestReg] = SrcReg;
+          DestInt.reg = SrcReg;
+          SrcInt.swap(DestInt);
+          r2iMap_.erase(DestReg);
         }
         ++numJoins;
-      } else {
-        DEBUG(std::cerr << "Interference!\n");
       }
     }
   }
