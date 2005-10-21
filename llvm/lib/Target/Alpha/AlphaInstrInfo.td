@@ -15,13 +15,54 @@ include "AlphaInstrFormats.td"
 //********************
 //Paterns for matching
 //********************
+
+def iZAPX : SDNodeXForm<imm, [{
+  // Transformation function: get the imm to ZAPi
+  uint64_t UImm = (uint64_t)N->getValue();
+  unsigned int build = 0;
+  for(int i = 0; i < 8; ++i)
+  {
+    if ((UImm & 0x00FF) == 0x00FF)
+      build |= 1 << i;
+    else if ((UImm & 0x00FF) != 0)
+    { build = 0; break; }
+    UImm >>= 8;
+  }
+  return getI64Imm(build);
+}]>;
+
 def immUExt8  : PatLeaf<(imm), [{
   // immUExt8 predicate - True if the immediate fits in a 8-bit zero extended
   // field.  Used by instructions like 'addi'.
   return (unsigned long)N->getValue() == (unsigned char)N->getValue();
 }]>;
-def intop : PatFrag<(ops node:$op), (sext_inreg node:$op, i32)>;
 
+def immZAP  : PatLeaf<(imm), [{
+  // immZAP predicate - True if the immediate fits is suitable for use in a
+  // ZAP instruction
+  uint64_t UImm = (uint64_t)N->getValue();
+  unsigned int build = 0;
+  for(int i = 0; i < 8; ++i)
+  {
+    if ((UImm & 0x00FF) == 0x00FF)
+      build |= 1 << i;
+    else if ((UImm & 0x00FF) != 0)
+    { build = 0; break; }
+    UImm >>= 8;
+  }
+  return build != 0;
+}]>;
+
+
+def intop : PatFrag<(ops node:$op), (sext_inreg node:$op, i32)>;
+def add4  : PatFrag<(ops node:$op1, node:$op2),
+                    (add (shl node:$op1, 2), node:$op2)>;
+def sub4  : PatFrag<(ops node:$op1, node:$op2),
+                    (sub (shl node:$op1, 2), node:$op2)>;
+def add8  : PatFrag<(ops node:$op1, node:$op2),
+                    (add (shl node:$op1, 3), node:$op2)>;
+def sub8  : PatFrag<(ops node:$op1, node:$op2),
+                    (sub (shl node:$op1, 3), node:$op2)>;
 
   // //#define FP    $15
   // //#define RA    $26
@@ -184,16 +225,6 @@ def EQVi     : OFormL<0x11, 0x48, "eqv $RA,$L,$RC", []>;
 //def MSKWL    : OForm< 0x12, 0x12, "MSKWL $RA,$RB,$RC", []>; //Mask word low
 //def MSKWLi   : OFormL<0x12, 0x12, "MSKWL $RA,$L,$RC", []>; //Mask word low
 
-// Some Alpha pattern fragments to make things more terse and easier to read.
-def add4  : PatFrag<(ops node:$op1, node:$op2),
-                    (add (shl node:$op1, 2), node:$op2)>;
-def sub4  : PatFrag<(ops node:$op1, node:$op2),
-                    (sub (shl node:$op1, 2), node:$op2)>;
-def add8  : PatFrag<(ops node:$op1, node:$op2),
-                    (add (shl node:$op1, 3), node:$op2)>;
-def sub8  : PatFrag<(ops node:$op1, node:$op2),
-                    (sub (shl node:$op1, 3), node:$op2)>;
-                        
 def MULL     : OForm< 0x13, 0x00, "mull $RA,$RB,$RC",
                       [(set GPRC:$RC, (intop (mul GPRC:$RA, GPRC:$RB)))]>;
 def MULLi    : OFormL<0x13, 0x00, "mull $RA,$L,$RC",
@@ -270,10 +301,14 @@ def XOR      : OForm< 0x11, 0x40, "xor $RA,$RB,$RC",
                       [(set GPRC:$RC, (xor GPRC:$RA, GPRC:$RB))]>;
 def XORi     : OFormL<0x11, 0x40, "xor $RA,$L,$RC",
                       [(set GPRC:$RC, (xor GPRC:$RA, immUExt8:$L))]>;
+//FIXME: what to do about zap? the cases it catches are very complex
 def ZAP      : OForm< 0x12, 0x30, "zap $RA,$RB,$RC", []>; //Zero bytes
+//ZAPi is useless give ZAPNOTi
 def ZAPi     : OFormL<0x12, 0x30, "zap $RA,$L,$RC", []>; //Zero bytes
+//FIXME: what to do about zapnot? see ZAP :)
 def ZAPNOT   : OForm< 0x12, 0x31, "zapnot $RA,$RB,$RC", []>; //Zero bytes not
-def ZAPNOTi  : OFormL<0x12, 0x31, "zapnot $RA,$L,$RC", []>; //Zero bytes not
+def ZAPNOTi  : OFormL<0x12, 0x31, "zapnot $RA,$L,$RC", []>; 
+def : Pat<(and GPRC:$OP1, immZAP:$OP2), (ZAPNOTi GPRC:$OP1, (iZAPX immZAP:$OP2))>;
 
 //Comparison, int
 def CMPBGE   : OForm< 0x10, 0x0F, "cmpbge $RA,$RB,$RC", []>; //Compare byte
