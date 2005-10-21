@@ -506,7 +506,7 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
   unsigned Tmp1, Tmp2 = 0, Tmp3;
   unsigned Opc = 0;
   unsigned opcode = N.getOpcode();
-  int64_t SImm;
+  int64_t SImm = 0;
   uint64_t UImm;
 
   SDNode *Node = N.Val;
