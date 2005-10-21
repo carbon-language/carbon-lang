@@ -742,6 +742,9 @@ def : Pat<(or GPRC:$in, imm:$imm),
 // XOR an arbitrary immediate.
 def : Pat<(xor GPRC:$in, imm:$imm),
           (XORIS (XORI GPRC:$in, (LO16 imm:$imm)), (HI16 imm:$imm))>;
+def : Pat<(or (shl GPRC:$rS, GPRC:$rB),
+              (srl GPRC:$rS, (sub 32, GPRC:$rB))),
+          (RLWNM GPRC:$rS, GPRC:$rB, 0, 31)>;
 
 def : Pat<(zext GPRC:$in),
           (RLDICL (OR4To8 GPRC:$in, GPRC:$in), 0, 32)>;
