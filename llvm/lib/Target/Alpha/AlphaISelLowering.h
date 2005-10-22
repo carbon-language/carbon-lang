@@ -59,6 +59,8 @@ namespace llvm {
 
     void restoreGP(MachineBasicBlock* BB);
     void restoreRA(MachineBasicBlock* BB);
+    unsigned getVRegGP() { return GP; }
+    unsigned getVRegRA() { return RA; }
   };
 }
 

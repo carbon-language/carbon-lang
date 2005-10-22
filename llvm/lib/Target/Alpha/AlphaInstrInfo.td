@@ -16,6 +16,17 @@ include "AlphaInstrFormats.td"
 //Paterns for matching
 //********************
 
+def immUExt8  : PatLeaf<(imm), [{
+  // immUExt8 predicate - True if the immediate fits in a 8-bit zero extended
+  // field.  Used by instructions like 'addi'.
+  return (unsigned long)N->getValue() == (unsigned char)N->getValue();
+}]>;
+def immSExt16  : PatLeaf<(imm), [{
+  // immSExt16 predicate - True if the immediate fits in a 16-bit sign extended
+  // field.  Used by instructions like 'lda'.
+  return (int)N->getValue() == (short)N->getValue();
+}]>;
+
 def iZAPX : SDNodeXForm<imm, [{
   // Transformation function: get the imm to ZAPi
   uint64_t UImm = (uint64_t)N->getValue();
@@ -30,13 +41,6 @@ def iZAPX : SDNodeXForm<imm, [{
   }
   return getI64Imm(build);
 }]>;
-
-def immUExt8  : PatLeaf<(imm), [{
-  // immUExt8 predicate - True if the immediate fits in a 8-bit zero extended
-  // field.  Used by instructions like 'addi'.
-  return (unsigned long)N->getValue() == (unsigned char)N->getValue();
-}]>;
-
 def immZAP  : PatLeaf<(imm), [{
   // immZAP predicate - True if the immediate fits is suitable for use in a
   // ZAP instruction
@@ -369,6 +373,8 @@ let isCall = 1, Defs = [R24, R25, R27, R28], Uses = [R24, R25] in
 def JSR_COROUTINE : MbrForm< 0x1A, 0x03, (ops GPRC:$RD, GPRC:$RS, s14imm:$DISP), "jsr_coroutine $RD,($RS),$DISP">; //Jump to subroutine return
 def BR : BForm<0x30, "br $RA,$DISP">; //Branch
 
+def BR_DAG : BFormD<0x30, "br $$31,$DISP">; //Branch
+
 //Stores, int
 def STB : MForm<0x0E, "stb $RA,$DISP($RB)">; // Store byte
 def STW : MForm<0x0D, "stw $RA,$DISP($RB)">; // Store word
@@ -506,3 +512,6 @@ def CVTTS : FPForm<0x16, 0x5AC, "cvtts/su $RB,$RC">; //Convert T_floating to S_f
 
 //MF_FPCR F-P 17.025 Move from FPCR
 //MT_FPCR F-P 17.024 Move to FPCR
+
+def : Pat<(i64 immSExt16:$imm),
+          (LDA immSExt16:$imm, R31)>;

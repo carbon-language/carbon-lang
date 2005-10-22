@@ -81,6 +81,14 @@ class BForm<bits<6> opcode, string asmstr>
   let Inst{25-21} = Ra;
   let Inst{20-0} = disp;
 }
+class BFormD<bits<6> opcode, string asmstr> 
+    : InstAlpha<opcode, (ops s21imm:$DISP), asmstr> {
+  bits<5> Ra = 31;
+  bits<21> disp;
+
+  let Inst{25-21} = Ra;
+  let Inst{20-0} = disp;
+}
 
 let isBranch = 1, isTerminator = 1 in
 class FBForm<bits<6> opcode, string asmstr> 
@@ -118,7 +126,7 @@ class OForm2<bits<6> opcode, bits<7> fun, string asmstr, list<dag> pattern>
   bits<5> Rb;
   bits<7> Function = fun;
 
-  let Inst{25-21} = 0;
+  let Inst{25-21} = 31;
   let Inst{20-16} = Rb;
   let Inst{15-13} = 0;
   let Inst{12} = 0;

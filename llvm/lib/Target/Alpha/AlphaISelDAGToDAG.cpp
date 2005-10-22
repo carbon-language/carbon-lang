@@ -26,6 +26,7 @@
 #include "llvm/GlobalValue.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/MathExtras.h"
+#include <algorithm>
 using namespace llvm;
 
 namespace {
@@ -43,14 +44,10 @@ namespace {
 
     /// getI64Imm - Return a target constant with the specified value, of type
     /// i64.
-    inline SDOperand getI64Imm(unsigned Imm) {
+    inline SDOperand getI64Imm(int64_t Imm) {
       return CurDAG->getTargetConstant(Imm, MVT::i64);
     }
 
-    virtual bool runOnFunction(Function &Fn) {
-      return SelectionDAGISel::runOnFunction(Fn);
-    }
-   
     // Select - Convert the specified operand from a target-independent to a
     // target-specific node if it hasn't already been changed.
     SDOperand Select(SDOperand Op);
@@ -67,7 +64,17 @@ namespace {
 #include "AlphaGenDAGISel.inc"
     
 private:
+    SDOperand getGlobalBaseReg();
+    SDOperand SelectCALL(SDOperand Op);
+
   };
+}
+
+/// getGlobalBaseReg - Output the instructions required to put the
+/// GOT address into a register.
+///
+SDOperand AlphaDAGToDAGISel::getGlobalBaseReg() {
+  return CurDAG->getRegister(AlphaLowering.getVRegGP(), MVT::i64);
 }
 
 /// InstructionSelectBasicBlock - This callback is invoked by
@@ -75,48 +82,6 @@ private:
 void AlphaDAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
   DEBUG(BB->dump());
   
-  // The selection process is inherently a bottom-up recursive process (users
-  // select their uses before themselves).  Given infinite stack space, we
-  // could just start selecting on the root and traverse the whole graph.  In
-  // practice however, this causes us to run out of stack space on large basic
-  // blocks.  To avoid this problem, select the entry node, then all its uses,
-  // iteratively instead of recursively.
-  std::vector<SDOperand> Worklist;
-  Worklist.push_back(DAG.getEntryNode());
-  
-  // Note that we can do this in the Alpha target (scanning forward across token
-  // chain edges) because no nodes ever get folded across these edges.  On a
-  // target like X86 which supports load/modify/store operations, this would
-  // have to be more careful.
-  while (!Worklist.empty()) {
-    SDOperand Node = Worklist.back();
-    Worklist.pop_back();
-    
-    // Chose from the least deep of the top two nodes.
-    if (!Worklist.empty() &&
-        Worklist.back().Val->getNodeDepth() < Node.Val->getNodeDepth())
-      std::swap(Worklist.back(), Node);
-    
-    if ((Node.Val->getOpcode() >= ISD::BUILTIN_OP_END &&
-         Node.Val->getOpcode() < AlphaISD::FIRST_NUMBER) ||
-        CodeGenMap.count(Node)) continue;
-    
-    for (SDNode::use_iterator UI = Node.Val->use_begin(),
-         E = Node.Val->use_end(); UI != E; ++UI) {
-      // Scan the values.  If this use has a value that is a token chain, add it
-      // to the worklist.
-      SDNode *User = *UI;
-      for (unsigned i = 0, e = User->getNumValues(); i != e; ++i)
-        if (User->getValueType(i) == MVT::Other) {
-          Worklist.push_back(SDOperand(User, i));
-          break; 
-        }
-    }
-
-    // Finally, legalize this node.
-    Select(Node);
-  }
-    
   // Select target instructions for the DAG.
   DAG.setRoot(Select(DAG.getRoot()));
   CodeGenMap.clear();
@@ -140,13 +105,20 @@ SDOperand AlphaDAGToDAGISel::Select(SDOperand Op) {
   
   switch (N->getOpcode()) {
   default: break;
+  case ISD::TAILCALL:
+  case ISD::CALL: return SelectCALL(Op);
+
   case ISD::DYNAMIC_STACKALLOC:
   case ISD::ADD_PARTS:
   case ISD::SUB_PARTS:
   case ISD::SETCC:
-  case ISD::CALL:
-  case ISD::TAILCALL:
     assert(0 && "You want these too?");
+
+  case ISD::BR: {
+    CurDAG->SelectNodeTo(N, Alpha::BR_DAG, MVT::Other, N->getOperand(1),
+                         Select(N->getOperand(0)));
+    return SDOperand(N, 0);
+  }
 
   case ISD::TokenFactor: {
     SDOperand New;
@@ -208,20 +180,10 @@ SDOperand AlphaDAGToDAGISel::Select(SDOperand Op) {
     assert(0 && "Constants are overrated");
   }
   case ISD::GlobalAddress: {
-//     GlobalValue *GV = cast<GlobalAddressSDNode>(N)->getGlobal();
-//     SDOperand Tmp;
-//     SDOperand GA = CurDAG->getTargetGlobalAddress(GV, MVT::i32);
-//     if (PICEnabled)
-//       Tmp = CurDAG->getTargetNode(PPC::ADDIS, MVT::i32, getGlobalBaseReg(), GA);
-//     else
-//       Tmp = CurDAG->getTargetNode(PPC::LIS, MVT::i32, GA);
-
-//     if (GV->hasWeakLinkage() || GV->isExternal())
-//       CurDAG->SelectNodeTo(N, PPC::LWZ, MVT::i32, GA, Tmp);
-//     else
-//       CurDAG->SelectNodeTo(N, PPC::LA, MVT::i32, Tmp, GA);
-//     return SDOperand(N, 0);
-    assert(0 && "GlobalAddresses are for wimps");
+    GlobalValue *GV = cast<GlobalAddressSDNode>(N)->getGlobal();
+    SDOperand GA = CurDAG->getTargetGlobalAddress(GV, MVT::i64);
+    CurDAG->SelectNodeTo(N, Alpha::LDQl, MVT::i64, GA, getGlobalBaseReg());
+    return SDOperand(N, 0);
   }
 
   case ISD::CALLSEQ_START:
@@ -256,6 +218,67 @@ SDOperand AlphaDAGToDAGISel::Select(SDOperand Op) {
   
   return SelectCode(Op);
 }
+
+SDOperand AlphaDAGToDAGISel::SelectCALL(SDOperand Op) {
+  SDNode *N = Op.Val;
+  SDOperand Chain = Select(N->getOperand(0));
+  SDOperand InFlag;  // Null incoming flag value.
+  SDOperand Addr = Select(N->getOperand(1));
+
+//   unsigned CallOpcode;
+   std::vector<SDOperand> CallOperands;
+   std::vector<MVT::ValueType> TypeOperands;
+  
+   CallOperands.push_back(CurDAG->getCopyToReg(Chain, Alpha::R27, Addr));
+   CallOperands.push_back(getI64Imm(0));
+
+   //grab the arguments
+   for(int i = 2, e = N->getNumOperands(); i < e; ++i) {
+     CallOperands.push_back(Select(N->getOperand(i)));
+     TypeOperands.push_back(N->getOperand(i).getValueType());
+   }
+   static const unsigned args_int[] = {Alpha::R16, Alpha::R17, Alpha::R18,
+                                       Alpha::R19, Alpha::R20, Alpha::R21};
+   static const unsigned args_float[] = {Alpha::F16, Alpha::F17, Alpha::F18,
+                                         Alpha::F19, Alpha::F20, Alpha::F21};
+   
+   for (unsigned i = 0; i < std::min((size_t)6, CallOperands.size()); ++i) {
+     if (MVT::isInteger(TypeOperands[i])) {
+       Chain = CurDAG->getCopyToReg(Chain, args_int[i], CallOperands[i], InFlag);
+       InFlag = Chain.getValue(1);
+       CallOperands.push_back(CurDAG->getRegister(args_int[i], TypeOperands[i]));
+     } else {
+       assert(0 && "No FP support yet");
+     }
+   }
+   assert(CallOperands.size() <= 6 && "Too big a call");
+
+   // Finally, once everything is in registers to pass to the call, emit the
+   // call itself.
+   if (InFlag.Val)
+     CallOperands.push_back(InFlag);   // Strong dep on register copies.
+   else
+     CallOperands.push_back(Chain);    // Weak dep on whatever occurs before
+   Chain = CurDAG->getTargetNode(Alpha::JSR, MVT::Other, MVT::Flag, CallOperands);
+  
+   std::vector<SDOperand> CallResults;
+  
+   switch (N->getValueType(0)) {
+   default: assert(0 && "Unexpected ret value!");
+     case MVT::Other: break;
+   case MVT::i64:
+     Chain = CurDAG->getCopyFromReg(Chain, Alpha::R0, MVT::i64,
+                                    Chain.getValue(1)).getValue(1);
+     CallResults.push_back(Chain.getValue(0));
+     break;
+   }
+
+   CallResults.push_back(Chain);
+   for (unsigned i = 0, e = CallResults.size(); i != e; ++i)
+     CodeGenMap[Op.getValue(i)] = CallResults[i];
+   return CallResults[Op.ResNo];
+}
+
 
 /// createAlphaISelDag - This pass converts a legalized DAG into a 
 /// Alpha-specific DAG, ready for instruction scheduling.
