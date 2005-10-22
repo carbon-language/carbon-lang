@@ -20,17 +20,42 @@
 #include <set>
 using namespace llvm;
 
-// Convenience types
+//
+// Convenience types.
+//
 typedef std::vector<Record*> RecordList;
 typedef std::vector<Record*>::iterator RecordListIter;
 
+//
+// Record sort by name function.
+//
+struct LessRecord {
+  bool operator()(const Record *Rec1, const Record *Rec2) const {
+    return Rec1->getName() < Rec2->getName();
+  }
+};
 
+//
+// Record sort by field "Name" function.
+//
+struct LessRecordFieldName {
+  bool operator()(const Record *Rec1, const Record *Rec2) const {
+    return Rec1->getValueAsString("Name") < Rec2->getValueAsString("Name");
+  }
+};
+
+
+// 
 // SubtargetEmitter::run - Main subtarget enumeration emitter.
 //
 void SubtargetEmitter::run(std::ostream &OS) {
   EmitSourceFileHeader("Subtarget Enumeration Source Fragment", OS);
+  
   RecordList Features = Records.getAllDerivedDefinitions("SubtargetFeature");
+  sort(Features.begin(), Features.end(), LessRecord());
+  
   RecordList Processors = Records.getAllDerivedDefinitions("Processor");
+  sort(Processors.begin(), Processors.end(), LessRecordFieldName());
 
   OS << "namespace llvm {\n\n";
   
@@ -70,7 +95,7 @@ void SubtargetEmitter::run(std::ostream &OS) {
     OS << "};\n";
   }
   
-  { // Feature key values
+  { // CPU key values
     OS << "\n\n"
        << "/// Sorted (by key) array of values for CPU subtype.\n"
        << "static const SubtargetFeatureKV SubTypeKV[] = {\n";
