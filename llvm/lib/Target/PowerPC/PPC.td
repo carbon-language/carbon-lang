@@ -26,7 +26,7 @@ include "PPCInstrInfo.td"
 
 
 //===----------------------------------------------------------------------===//
-// PowerPC Subtarget features (sorted by name).
+// PowerPC Subtarget features.
 //
  
 def Feature64Bit     : SubtargetFeature<"64bit",
@@ -35,15 +35,16 @@ def Feature64BitRegs : SubtargetFeature<"64bitregs",
                                 "Should 64 bit registers be used">;
 def FeatureAltivec   : SubtargetFeature<"altivec",
                                 "Should Altivec instructions be used">;
-def FeatureFSqrt     : SubtargetFeature<"fsqrt",
-                                "Should the fsqrt instruction be used">; 
 def FeatureGPUL      : SubtargetFeature<"gpul",
                                 "Should GPUL instructions be used">;
+def FeatureFSqrt     : SubtargetFeature<"fsqrt",
+                                "Should the fsqrt instruction be used">; 
 
 //===----------------------------------------------------------------------===//
-// PowerPC chips sets supported (sorted by name)
+// PowerPC chips sets supported.
 //
 
+def : Processor<"generic", G3Itineraries, []>;
 def : Processor<"601", G3Itineraries, []>;
 def : Processor<"602", G3Itineraries, []>;
 def : Processor<"603", G3Itineraries, []>;
@@ -52,18 +53,18 @@ def : Processor<"603ev", G3Itineraries, []>;
 def : Processor<"604", G3Itineraries, []>;
 def : Processor<"604e", G3Itineraries, []>;
 def : Processor<"620", G3Itineraries, []>;
+def : Processor<"g3", G3Itineraries, []>;
 def : Processor<"7400", G4Itineraries, [FeatureAltivec]>;
+def : Processor<"g4", G4Itineraries, [FeatureAltivec]>;
 def : Processor<"7450", G4PlusItineraries, [FeatureAltivec]>;
+def : Processor<"g4+", G4PlusItineraries, [FeatureAltivec]>;
 def : Processor<"750", G3Itineraries, []>;
 def : Processor<"970", G5Itineraries,
                   [FeatureAltivec, FeatureGPUL, FeatureFSqrt,
-                   Feature64Bit /*, Feature64BitRegs*/]>;
-def : Processor<"g4", G4Itineraries, [FeatureAltivec]>;
-def : Processor<"g4+", G4PlusItineraries, [FeatureAltivec]>;
+                   Feature64Bit /*, Feature64BitRegs */]>;
 def : Processor<"g5", G5Itineraries,
                   [FeatureAltivec, FeatureGPUL, FeatureFSqrt,
-                   Feature64Bit /*, Feature64BitRegs*/]>;
-def : Processor<"generic", G3Itineraries, []>;
+                   Feature64Bit /*, Feature64BitRegs */]>;
 
 
 def PPC : Target {
