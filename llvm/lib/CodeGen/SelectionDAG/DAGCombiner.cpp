@@ -817,9 +817,9 @@ SDOperand DAGCombiner::visitSDIV(SDNode *N) {
   // if integer divide is expensive and we satisfy the requirements, emit an
   // alternate sequence.
   if (N1C && (N1C->getSignExtended() < -1 || N1C->getSignExtended() > 1) && 
-      !TLI.isIntDivCheap() &&
-      TLI.isOperationLegal(ISD::MULHS, VT) && TLI.isTypeLegal(VT)) {
-    return BuildSDIV(N);
+      !TLI.isIntDivCheap()) {
+    SDOperand Op = BuildSDIV(N);
+    if (Op.Val) return Op;
   }
   return SDOperand();
 }
@@ -841,9 +841,11 @@ SDOperand DAGCombiner::visitUDIV(SDNode *N) {
                        DAG.getConstant(Log2_64(N1C->getValue()),
                                        TLI.getShiftAmountTy()));
   // fold (udiv x, c) -> alternate
-  if (N1C && N1C->getValue() && TLI.isOperationLegal(ISD::MULHU, VT) &&
-      TLI.isTypeLegal(VT) && !TLI.isIntDivCheap())
-    return BuildUDIV(N);
+  if (N1C && N1C->getValue() && !TLI.isIntDivCheap()) {
+    SDOperand Op = BuildUDIV(N);
+    if (Op.Val) return Op;
+  }
+      
   return SDOperand();
 }
 
@@ -2583,8 +2585,12 @@ SDOperand DAGCombiner::SimplifySetCC(MVT::ValueType VT, SDOperand N0,
 /// <http://the.wall.riscom.net/books/proc/ppc/cwg/code2.html>
 SDOperand DAGCombiner::BuildSDIV(SDNode *N) {
   MVT::ValueType VT = N->getValueType(0);
-  assert((VT == MVT::i32 || VT == MVT::i64) && 
-         "BuildSDIV only operates on i32 or i64!");
+  
+  // Check to see if we can do this.
+  if (!TLI.isTypeLegal(VT) || (VT != MVT::i32 && VT != MVT::i64))
+    return SDOperand();       // BuildSDIV only operates on i32 or i64
+  if (!TLI.isOperationLegal(ISD::MULHS, VT))
+    return SDOperand();       // Make sure the target supports MULHS.
   
   int64_t d = cast<ConstantSDNode>(N->getOperand(1))->getSignExtended();
   ms magics = (VT == MVT::i32) ? magic32(d) : magic64(d);
@@ -2622,8 +2628,12 @@ SDOperand DAGCombiner::BuildSDIV(SDNode *N) {
 /// <http://the.wall.riscom.net/books/proc/ppc/cwg/code2.html>
 SDOperand DAGCombiner::BuildUDIV(SDNode *N) {
   MVT::ValueType VT = N->getValueType(0);
-  assert((VT == MVT::i32 || VT == MVT::i64) && 
-         "BuildUDIV only operates on i32 or i64!");
+  
+  // Check to see if we can do this.
+  if (!TLI.isTypeLegal(VT) || (VT != MVT::i32 && VT != MVT::i64))
+    return SDOperand();       // BuildUDIV only operates on i32 or i64
+  if (!TLI.isOperationLegal(ISD::MULHU, VT))
+    return SDOperand();       // Make sure the target supports MULHU.
   
   uint64_t d = cast<ConstantSDNode>(N->getOperand(1))->getValue();
   mu magics = (VT == MVT::i32) ? magicu32(d) : magicu64(d);
