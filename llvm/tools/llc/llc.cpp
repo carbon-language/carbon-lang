@@ -67,7 +67,7 @@ FileType("filetype", cl::init(TargetMachine::AssemblyFile),
        clEnumValN(TargetMachine::AssemblyFile,    "asm",
                   "  Emit an assembly ('.s') file"),
        clEnumValN(TargetMachine::ObjectFile,    "obj",
-                  "  Emit a native object ('.o') file"),
+                  "  Emit a native object ('.o') file [experimental]"),
        clEnumValN(TargetMachine::DynamicLibrary, "dynlib",
                   "  Emit a native dynamic library ('.so') file"),
        clEnumValEnd));
