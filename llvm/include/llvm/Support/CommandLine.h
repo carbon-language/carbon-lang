@@ -334,9 +334,14 @@ public:
   }
 };
 
+// Silly GCC doesn't allow attributes on a function definition.
 template<class DataType>
 ValuesClass<DataType> values(const char *Arg, DataType Val, const char *Desc,
-                             ...) END_WITH_NULL {
+                             ...) END_WITH_NULL;
+
+template<class DataType>
+ValuesClass<DataType> values(const char *Arg, DataType Val, const char *Desc,
+                             ...) {
     va_list ValueArgs;
     va_start(ValueArgs, Desc);
     ValuesClass<DataType> Vals(Arg, Val, Desc, ValueArgs);
