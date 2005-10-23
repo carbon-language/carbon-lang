@@ -13,17 +13,8 @@
 
 #include "AlphaSubtarget.h"
 #include "Alpha.h"
-#include "llvm/Module.h"
-#include "llvm/Support/CommandLine.h"
-#include "llvm/Target/SubtargetFeature.h"
 #include "AlphaGenSubtarget.inc"
 using namespace llvm;
-
-
-enum {
-  FeatureKVSize = sizeof(FeatureKV) / sizeof(SubtargetFeatureKV),
-  SubTypeKVSize = sizeof(SubTypeKV) / sizeof(SubtargetFeatureKV)
-};
 
 AlphaSubtarget::AlphaSubtarget(const Module &M, const std::string &FS)
   : HasF2I(false), HasCT(false) {
