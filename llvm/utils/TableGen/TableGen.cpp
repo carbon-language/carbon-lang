@@ -23,7 +23,6 @@
 #include "RegisterInfoEmitter.h"
 #include "InstrInfoEmitter.h"
 #include "AsmWriterEmitter.h"
-#include "InstrSelectorEmitter.h"
 #include "DAGISelEmitter.h"
 #include "SubtargetEmitter.h"
 #include <algorithm>
@@ -35,7 +34,7 @@ enum ActionType {
   PrintRecords,
   GenEmitter,
   GenRegisterEnums, GenRegister, GenRegisterHeader,
-  GenInstrEnums, GenInstrs, GenAsmWriter, GenInstrSelector,
+  GenInstrEnums, GenInstrs, GenAsmWriter, 
   GenDAGISel,
   GenSubtarget,
   PrintEnums,
@@ -61,8 +60,6 @@ namespace {
                                "Generate instruction descriptions"),
                     clEnumValN(GenAsmWriter, "gen-asm-writer",
                                "Generate assembly writer"),
-                    clEnumValN(GenInstrSelector, "gen-instr-selector",
-                               "Generate an instruction selector"),
                     clEnumValN(GenDAGISel, "gen-dag-isel",
                                "Generate a DAG instruction selector"),
                     clEnumValN(GenSubtarget, "gen-subtarget",
@@ -470,9 +467,6 @@ int main(int argc, char **argv) {
       AsmWriterEmitter(Records).run(*Out);
       break;
 
-    case GenInstrSelector:
-      InstrSelectorEmitter(Records).run(*Out);
-      break;
     case GenDAGISel:
       DAGISelEmitter(Records).run(*Out);
       break;
