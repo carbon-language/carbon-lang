@@ -18,11 +18,9 @@
 #ifndef LLVM_TARGET_SUBTARGETFEATURE_H
 #define LLVM_TARGET_SUBTARGETFEATURE_H
 
-
 #include <string>
 #include <vector>
-#include <iostream>
-#include <cassert>
+#include <iosfwd>
 #include "llvm/Support/DataTypes.h"
 
 namespace llvm {
@@ -57,80 +55,21 @@ struct SubtargetFeatureKV {
 ///
 
 class SubtargetFeatures {
-private:
   std::vector<std::string> Features;    // Subtarget features as a vector
-
-  // Determine if a feature has a flag; '+' or '-'
-  static inline bool hasFlag(const std::string &Feature) {
-    assert(!Feature.empty() && "Empty string");
-    // Get first character
-    char Ch = Feature[0];
-    // Check if first character is '+' or '-' flag
-    return Ch == '+' || Ch =='-';
-  }
-  
-  // Return true if enable flag; '+'.
-  static inline bool isEnabled(const std::string &Feature) {
-    assert(!Feature.empty() && "Empty string");
-    // Get first character
-    char Ch = Feature[0];
-    // Check if first character is '+' for enabled
-    return Ch == '+';
-  }
-  
-  // Return a string with a prepended flag; '+' or '-'.
-  static inline std::string PrependFlag(const std::string &Feature,
-                                        bool IsEnabled) {
-    assert(!Feature.empty() && "Empty string");
-    if (hasFlag(Feature)) return Feature;
-    return std::string(IsEnabled ? "+" : "-") + Feature;
-  }
-  
-  // Return string stripped of flag.
-  static inline std::string StripFlag(const std::string &Feature) {
-    return hasFlag(Feature) ? Feature.substr(1) : Feature;
-  }
-
-  /// Splits a string of comma separated items in to a vector of strings.
-  static void Split(std::vector<std::string> &V, const std::string &S);
-  
-  /// Join a vector of strings into a string with a comma separating each
-  /// item.
-  static std::string Join(const std::vector<std::string> &V);
-  
-  /// Convert a string to lowercase.
-  static std::string toLower(const std::string &S);
-  
-  /// Find item in array using binary search.
-  static const SubtargetFeatureKV *Find(const std::string &S,
-                                        const SubtargetFeatureKV *A, size_t L);
-
 public:
-  /// Ctor.
-  SubtargetFeatures(const std::string Initial = std::string()) {
-    // Break up string into separate features
-    Split(Features, Initial);
-  }
+  SubtargetFeatures(const std::string &Initial = std::string());
 
   /// Features string accessors.
-  inline std::string getString() const { return Join(Features); }
-  void setString(const std::string &Initial) {
-    // Throw out old features
-    Features.clear();
-    // Break up string into separate features
-    Split(Features, toLower(Initial));
-  }
+  std::string getString() const;
+  void setString(const std::string &Initial);
 
   /// Setting CPU string.  Replaces previous setting.  Setting to "" clears CPU.
-  void setCPU(std::string String) { Features[0] = toLower(String); }
+  ///
+  void setCPU(const std::string &String);
   
   /// Adding Features.
   void AddFeature(const std::string &String, bool IsEnabled = true);
-
-  /// Display help for feature choices.
-  static void Help(const char *Heading,
-                   const SubtargetFeatureKV *Table, size_t TableSize);
-            
+           
   /// Parse feature string for quick usage.
   static uint32_t Parse(const std::string &String,
                         const std::string &DefaultCPU,
