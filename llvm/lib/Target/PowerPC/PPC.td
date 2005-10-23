@@ -22,7 +22,7 @@ include "../Target.td"
 def Feature64Bit     : SubtargetFeature<"64bit",
                                         "Enable 64-bit instructions">;
 def Feature64BitRegs : SubtargetFeature<"64bitregs",
-                                        "Enable 64-bit registers">;
+                                        "Enable 64-bit registers [beta]">;
 def FeatureAltivec   : SubtargetFeature<"altivec",
                                         "Enable Altivec instructions">;
 def FeatureGPUL      : SubtargetFeature<"gpul",
