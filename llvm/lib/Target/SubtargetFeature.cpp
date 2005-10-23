@@ -125,25 +125,29 @@ static const SubtargetFeatureKV *Find(const std::string &S,
 
 /// Display help for feature choices.
 ///
-static void Help(const char *Heading, const SubtargetFeatureKV *Table,
+static void Help(bool isFeature, const SubtargetFeatureKV *Table,
                  size_t TableSize) {
-  // Determine the length of the longest key
+  // Determine the length of the longest key.
   size_t MaxLen = 0;
   for (size_t i = 0; i < TableSize; i++)
     MaxLen = std::max(MaxLen, std::strlen(Table[i].Key));
-  // Print heading
-  std::cerr << "Help for " << Heading << " choices:\n\n";
-  // For each feature
+  
+  std::cerr << "Available " << (isFeature ? "features" : "CPUs")
+            << " for this target:\n\n";
+
   for (size_t i = 0; i < TableSize; i++) {
     // Compute required padding
     size_t Pad = MaxLen - std::strlen(Table[i].Key);
-    // Print details
     std::cerr << Table[i].Key << std::string(Pad, ' ') << " - "
-              << Table[i].Desc << "\n";
+              << Table[i].Desc << ".\n";
   }
-  // Wrap it up
-  std::cerr << "\n\n";
-  // Leave tool
+
+  std::cerr << "\n";
+  if (isFeature) {
+    std::cerr
+      << "Use +feature to enable a feature, or -feature to disable it.\n"
+      << "For example, llc -mcpu=mycpu -mattr=+feature1,-feature2\n";
+  }
   exit(1);
 }
 
@@ -202,7 +206,7 @@ uint32_t SubtargetFeatures::Parse(const std::string &String,
   // Check if default is needed
   if (Features[0].empty()) Features[0] = DefaultCPU;
   // Check for help
-  if (Features[0] == "help") Help("CPU", CPUTable, CPUTableSize);
+  if (Features[0] == "help") Help(false, CPUTable, CPUTableSize);
   // Find CPU entry
   const SubtargetFeatureKV *CPUEntry =
                             Find(Features[0], CPUTable, CPUTableSize);
@@ -221,7 +225,7 @@ uint32_t SubtargetFeatures::Parse(const std::string &String,
     // Get next feature
     const std::string &Feature = Features[i];
     // Check for help
-    if (Feature == "+help") Help("feature", FeatureTable, FeatureTableSize);
+    if (Feature == "+help") Help(true, FeatureTable, FeatureTableSize);
     // Find feature in table.
     const SubtargetFeatureKV *FeatureEntry =
                        Find(StripFlag(Feature), FeatureTable, FeatureTableSize);
