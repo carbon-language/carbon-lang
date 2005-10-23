@@ -111,6 +111,7 @@ public:
   SDOperand getTargetConstantPool(Constant *C, MVT::ValueType VT);
   SDOperand getBasicBlock(MachineBasicBlock *MBB);
   SDOperand getExternalSymbol(const char *Sym, MVT::ValueType VT);
+  SDOperand getTargetExternalSymbol(const char *Sym, MVT::ValueType VT);
   SDOperand getValueType(MVT::ValueType);
   SDOperand getRegister(unsigned Reg, MVT::ValueType VT);
 
@@ -382,6 +383,7 @@ private:
   std::map<MachineBasicBlock *, SDNode*> BBNodes;
   std::vector<SDNode*> ValueTypeNodes;
   std::map<std::string, SDNode*> ExternalSymbols;
+  std::map<std::string, SDNode*> TargetExternalSymbols;
   std::map<std::pair<unsigned,
                      std::pair<MVT::ValueType, std::vector<SDOperand> > >,
            SDNode*> OneResultNodes;

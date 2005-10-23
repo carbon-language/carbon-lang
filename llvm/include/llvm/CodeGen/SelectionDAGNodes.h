@@ -74,6 +74,7 @@ namespace ISD {
     TargetGlobalAddress,
     TargetFrameIndex,
     TargetConstantPool,
+    TargetExternalSymbol,
 
     // CopyToReg - This node has three operands: a chain, a register number to
     // set to this value, and a value.  
@@ -932,8 +933,9 @@ class ExternalSymbolSDNode : public SDNode {
   const char *Symbol;
 protected:
   friend class SelectionDAG;
-  ExternalSymbolSDNode(const char *Sym, MVT::ValueType VT)
-    : SDNode(ISD::ExternalSymbol, VT), Symbol(Sym) {
+  ExternalSymbolSDNode(bool isTarget, const char *Sym, MVT::ValueType VT)
+    : SDNode(isTarget ? ISD::TargetExternalSymbol : ISD::ExternalSymbol, VT),
+      Symbol(Sym) {
     }
 public:
 
@@ -941,7 +943,8 @@ public:
 
   static bool classof(const ExternalSymbolSDNode *) { return true; }
   static bool classof(const SDNode *N) {
-    return N->getOpcode() == ISD::ExternalSymbol;
+    return N->getOpcode() == ISD::ExternalSymbol ||
+           N->getOpcode() == ISD::TargetExternalSymbol;
   }
 };
 

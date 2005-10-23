@@ -312,6 +312,9 @@ void SelectionDAG::RemoveNodeFromCSEMaps(SDNode *N) {
   case ISD::ExternalSymbol:
     Erased = ExternalSymbols.erase(cast<ExternalSymbolSDNode>(N)->getSymbol());
     break;
+  case ISD::TargetExternalSymbol:
+    Erased = TargetExternalSymbols.erase(cast<ExternalSymbolSDNode>(N)->getSymbol());
+    break;
   case ISD::VALUETYPE:
     Erased = ValueTypeNodes[cast<VTSDNode>(N)->getVT()] != 0;
     ValueTypeNodes[cast<VTSDNode>(N)->getVT()] = 0;
@@ -551,7 +554,15 @@ SDOperand SelectionDAG::getValueType(MVT::ValueType VT) {
 SDOperand SelectionDAG::getExternalSymbol(const char *Sym, MVT::ValueType VT) {
   SDNode *&N = ExternalSymbols[Sym];
   if (N) return SDOperand(N, 0);
-  N = new ExternalSymbolSDNode(Sym, VT);
+  N = new ExternalSymbolSDNode(false, Sym, VT);
+  AllNodes.push_back(N);
+  return SDOperand(N, 0);
+}
+
+SDOperand SelectionDAG::getTargetExternalSymbol(const char *Sym, MVT::ValueType VT) {
+  SDNode *&N = TargetExternalSymbols[Sym];
+  if (N) return SDOperand(N, 0);
+  N = new ExternalSymbolSDNode(true, Sym, VT);
   AllNodes.push_back(N);
   return SDOperand(N, 0);
 }
@@ -1586,6 +1597,7 @@ const char *SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::BasicBlock:    return "BasicBlock";
   case ISD::Register:      return "Register";
   case ISD::ExternalSymbol: return "ExternalSymbol";
+  case ISD::TargetExternalSymbol: return "TargetExternalSymbol";
   case ISD::ConstantPool:  return "ConstantPool";
   case ISD::TargetConstantPool:  return "TargetConstantPool";
   case ISD::CopyToReg:     return "CopyToReg";
