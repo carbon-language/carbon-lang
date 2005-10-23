@@ -123,31 +123,42 @@ static const SubtargetFeatureKV *Find(const std::string &S,
   return F;
 }
 
+/// getLongestEntryLength - Return the length of the longest entry in the table.
+///
+static size_t getLongestEntryLength(const SubtargetFeatureKV *Table,
+                                    size_t Size) {
+  size_t MaxLen = 0;
+  for (size_t i = 0; i < Size; i++)
+    MaxLen = std::max(MaxLen, std::strlen(Table[i].Key));
+  return MaxLen;
+}
+
 /// Display help for feature choices.
 ///
-static void Help(bool isFeature, const SubtargetFeatureKV *Table,
-                 size_t TableSize) {
-  // Determine the length of the longest key.
-  size_t MaxLen = 0;
-  for (size_t i = 0; i < TableSize; i++)
-    MaxLen = std::max(MaxLen, std::strlen(Table[i].Key));
-  
-  std::cerr << "Available " << (isFeature ? "features" : "CPUs")
-            << " for this target:\n\n";
+static void Help(const SubtargetFeatureKV *CPUTable, size_t CPUTableSize,
+                 const SubtargetFeatureKV *FeatTable, size_t FeatTableSize) {
+  // Determine the length of the longest CPU and Feature entries.
+  unsigned MaxCPULen  = getLongestEntryLength(CPUTable, CPUTableSize);
+  unsigned MaxFeatLen = getLongestEntryLength(FeatTable, FeatTableSize);
 
-  for (size_t i = 0; i < TableSize; i++) {
-    // Compute required padding
-    size_t Pad = MaxLen - std::strlen(Table[i].Key);
-    std::cerr << Table[i].Key << std::string(Pad, ' ') << " - "
-              << Table[i].Desc << ".\n";
-  }
-
+  // Print the CPU table.
+  std::cerr << "Available CPUs for this target:\n\n";
+  for (size_t i = 0; i != CPUTableSize; i++)
+    std::cerr << "  " << CPUTable[i].Key
+              << std::string(MaxCPULen - std::strlen(CPUTable[i].Key), ' ')
+              << " - " << CPUTable[i].Desc << ".\n";
   std::cerr << "\n";
-  if (isFeature) {
-    std::cerr
-      << "Use +feature to enable a feature, or -feature to disable it.\n"
-      << "For example, llc -mcpu=mycpu -mattr=+feature1,-feature2\n";
-  }
+  
+  // Print the Feature table.
+  std::cerr << "Available features for this target:\n\n";
+  for (size_t i = 0; i != FeatTableSize; i++)
+    std::cerr << "  " << FeatTable[i].Key
+      << std::string(MaxFeatLen - std::strlen(FeatTable[i].Key), ' ')
+      << " - " << FeatTable[i].Desc << ".\n";
+  std::cerr << "\n";
+  
+  std::cerr << "Use +feature to enable a feature, or -feature to disable it.\n"
+            << "For example, llc -mcpu=mycpu -mattr=+feature1,-feature2\n";
   exit(1);
 }
 
@@ -203,10 +214,13 @@ uint32_t SubtargetFeatures::Parse(const std::string &String,
   uint32_t Bits = 0;                    // Resulting bits
   // Split up features
   Split(Features, String);
+
   // Check if default is needed
-  if (Features[0].empty()) Features[0] = DefaultCPU;
-  // Check for help
-  if (Features[0] == "help") Help(false, CPUTable, CPUTableSize);
+  if (Features[0].empty())
+    Features[0] = DefaultCPU;
+  else if (Features[0] == "help")
+    Help(CPUTable, CPUTableSize, FeatureTable, FeatureTableSize);
+  
   // Find CPU entry
   const SubtargetFeatureKV *CPUEntry =
                             Find(Features[0], CPUTable, CPUTableSize);
@@ -222,10 +236,12 @@ uint32_t SubtargetFeatures::Parse(const std::string &String,
   }
   // Iterate through each feature
   for (size_t i = 1; i < Features.size(); i++) {
-    // Get next feature
     const std::string &Feature = Features[i];
+    
     // Check for help
-    if (Feature == "+help") Help(true, FeatureTable, FeatureTableSize);
+    if (Feature == "+help")
+      Help(CPUTable, CPUTableSize, FeatureTable, FeatureTableSize);
+    
     // Find feature in table.
     const SubtargetFeatureKV *FeatureEntry =
                        Find(StripFlag(Feature), FeatureTable, FeatureTableSize);
