@@ -15,7 +15,6 @@
 #include "PPC.h"
 #include "llvm/Module.h"
 #include "llvm/Support/CommandLine.h"
-#include "llvm/Target/SubtargetFeature.h"
 #include "PPCGenSubtarget.inc"
 
 using namespace llvm;
@@ -32,14 +31,6 @@ namespace llvm {
                cl::location(PPCTarget), cl::init(TargetDefault));
 } 
  
-/// Length of FeatureKV.
-static const unsigned FeatureKVSize = sizeof(FeatureKV)
-                                          / sizeof(SubtargetFeatureKV);
-/// Length of SubTypeKV.
-static const unsigned SubTypeKVSize = sizeof(SubTypeKV)
-                                             / sizeof(SubtargetFeatureKV);
-
-
 #if defined(__APPLE__)
 #include <mach/mach.h>
 #include <mach/mach_host.h>
