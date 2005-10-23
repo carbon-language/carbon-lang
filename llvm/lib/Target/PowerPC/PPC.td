@@ -30,15 +30,15 @@ include "PPCInstrInfo.td"
 //
  
 def Feature64Bit     : SubtargetFeature<"64bit",
-                                "Should 64 bit instructions be used">;
+                                        "Enable 64-bit instructions">;
 def Feature64BitRegs : SubtargetFeature<"64bitregs",
-                                "Should 64 bit registers be used">;
+                                        "Enable 64-bit registers">;
 def FeatureAltivec   : SubtargetFeature<"altivec",
-                                "Should Altivec instructions be used">;
+                                        "Enable Altivec instructions">;
 def FeatureGPUL      : SubtargetFeature<"gpul",
-                                "Should GPUL instructions be used">;
+                                        "Enable GPUL instructions">;
 def FeatureFSqrt     : SubtargetFeature<"fsqrt",
-                                "Should the fsqrt instruction be used">; 
+                                        "Enable the fsqrt instruction">; 
 
 //===----------------------------------------------------------------------===//
 // PowerPC chips sets supported.
