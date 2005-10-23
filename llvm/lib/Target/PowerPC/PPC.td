@@ -16,16 +16,6 @@
 include "../Target.td"
 
 //===----------------------------------------------------------------------===//
-// Register File Description
-//===----------------------------------------------------------------------===//
-
-include "PPCRegisterInfo.td"
-include "PPCSchedule.td"
-include "PPCInstrInfo.td"
-
-
-
-//===----------------------------------------------------------------------===//
 // PowerPC Subtarget features.
 //
  
@@ -41,7 +31,15 @@ def FeatureFSqrt     : SubtargetFeature<"fsqrt",
                                         "Enable the fsqrt instruction">; 
 
 //===----------------------------------------------------------------------===//
-// PowerPC chips sets supported.
+// Register File Description
+//===----------------------------------------------------------------------===//
+
+include "PPCRegisterInfo.td"
+include "PPCSchedule.td"
+include "PPCInstrInfo.td"
+
+//===----------------------------------------------------------------------===//
+// PowerPC processors supported.
 //
 
 def : Processor<"generic", G3Itineraries, []>;
