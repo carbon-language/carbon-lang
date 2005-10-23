@@ -58,7 +58,7 @@ static cl::list<std::string>
 MAttrs("mattr", 
   cl::CommaSeparated,
   cl::desc("Target specific attributes (-mattr=help for details)"),
-  cl::value_desc("attr1,+attr2, ..., -attrN"));
+  cl::value_desc("a1,+a2,-a3,..."));
 
 cl::opt<TargetMachine::CodeGenFileType>
 FileType("filetype", cl::init(TargetMachine::AssemblyFile),
