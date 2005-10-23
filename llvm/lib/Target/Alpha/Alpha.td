@@ -17,6 +17,13 @@ include "../Target.td"
 //Alpha is little endian
 
 //===----------------------------------------------------------------------===//
+// Subtarget Features
+//===----------------------------------------------------------------------===//
+
+def FeatureCIX : SubtargetFeature<"CIX", "Enable CIX extentions">;
+def FeatureFIX : SubtargetFeature<"FIX", "Enable FIX extentions">;
+
+//===----------------------------------------------------------------------===//
 // Register File Description
 //===----------------------------------------------------------------------===//
 
@@ -35,6 +42,21 @@ def AlphaInstrInfo : InstrInfo {
  // let TSFlagsFields = [];
  // let TSFlagsShifts = [];
 }
+
+//===----------------------------------------------------------------------===//
+// Alpha Processor Definitions
+//===----------------------------------------------------------------------===//
+
+def : Processor<"generic", NoItineraries, []>;
+def : Processor<"pca56"  , NoItineraries, []>;
+def : Processor<"ev56"   , NoItineraries, []>;
+def : Processor<"ev6"    , NoItineraries, [FeatureFIX]>;
+def : Processor<"ev67"   , NoItineraries, [FeatureFIX, FeatureCIX]>;
+
+//===----------------------------------------------------------------------===//
+// The Alpha Target
+//===----------------------------------------------------------------------===//
+
 
 def Alpha : Target {
   // Pointers on Alpha are 64-bits in size.
