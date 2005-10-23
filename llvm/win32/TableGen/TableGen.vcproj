@@ -192,6 +192,9 @@ move $(InputDir)$(InputName).hpp $(InputDir)$(InputName).h
 				RelativePath="..\..\utils\TableGen\RegisterInfoEmitter.cpp">
 			</File>
 			<File
+				RelativePath="..\..\utils\TableGen\SubtargetEmitter.cpp">
+			</File>
+			<File
 				RelativePath="..\..\utils\TableGen\TableGen.cpp">
 			</File>
 			<File
@@ -231,6 +234,9 @@ move $(InputDir)$(InputName).hpp $(InputDir)$(InputName).h
 			</File>
 			<File
 				RelativePath="..\..\utils\TableGen\RegisterInfoEmitter.h">
+			</File>
+			<File
+				RelativePath="..\..\utils\TableGen\SubtargetEmitter.h">
 			</File>
 			<File
 				RelativePath="..\..\utils\TableGen\TableGenBackend.h">
