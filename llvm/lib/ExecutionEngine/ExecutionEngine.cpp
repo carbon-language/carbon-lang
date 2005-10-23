@@ -189,7 +189,10 @@ GenericValue ExecutionEngine::getConstantValue(const Constant *C) {
       uint64_t Offset =
         TD->getIndexedOffset(CE->getOperand(0)->getType(), Indexes);
 
-      Result.LongVal += Offset;
+      if (getTargetData().getPointerSize() == 4)
+        Result.IntVal += Offset;
+      else
+        Result.LongVal += Offset;
       return Result;
     }
     case Instruction::Cast: {
