@@ -68,3 +68,8 @@ http://gcc.gnu.org/ml/gcc-patches/2004-09/msg01136.html
 
 Another useful one would be  ~0ULL >> X and ~0ULL << X.
 
+//===---------------------------------------------------------------------===//
+
+Should support emission of the bswap instruction, probably by adding a new
+DAG node for byte swapping.  Also useful on PPC which has byte-swapping loads.
+
