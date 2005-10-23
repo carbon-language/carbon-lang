@@ -50,14 +50,14 @@ MArch("march", cl::desc("Architecture to generate code for:"));
 
 static cl::opt<std::string>
 MCPU("mcpu", 
-  cl::desc("Target a specific cpu type (-mcpu=help for list of choices)"),
+  cl::desc("Target a specific cpu type (-mcpu=help for details)"),
   cl::value_desc("cpu-name"),
   cl::init(""));
 
 static cl::list<std::string>
 MAttrs("mattr", 
   cl::CommaSeparated,
-  cl::desc("Target specific attributes (-mattr=help for list of choices)"),
+  cl::desc("Target specific attributes (-mattr=help for details)"),
   cl::value_desc("attr1,+attr2, ..., -attrN"));
 
 cl::opt<TargetMachine::CodeGenFileType>
