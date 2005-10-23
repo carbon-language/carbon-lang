@@ -64,3 +64,8 @@ class InstrItinData<InstrItinClass Class, list<InstrStage> stages> {
 class ProcessorItineraries<list<InstrItinData> iid> {
   list<InstrItinData> IID = iid;
 }
+
+// NoItineraries - A marker that can be used by processors without schedule
+// info.
+def NoItineraries : ProcessorItineraries<[]>;
+
