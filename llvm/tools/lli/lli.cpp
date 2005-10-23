@@ -96,7 +96,8 @@ int main(int argc, char **argv, char * const *envp) {
     // If the program didn't explicitly call exit, call exit now, for the program.
     // This ensures that any atexit handlers get called correctly.
     Function *Exit = MP->getModule()->getOrInsertFunction("exit", Type::VoidTy,
-                                                          Type::IntTy, 0);
+                                                          Type::IntTy,
+                                                          (Type *)0);
 
     std::vector<GenericValue> Args;
     GenericValue ResultGV;

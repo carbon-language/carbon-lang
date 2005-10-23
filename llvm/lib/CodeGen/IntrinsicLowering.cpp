@@ -110,7 +110,8 @@ void DefaultIntrinsicLowering::AddPrototypes(Module &M) {
       case Intrinsic::memset:
         M.getOrInsertFunction("memset", PointerType::get(Type::SByteTy),
                               PointerType::get(Type::SByteTy),
-                              Type::IntTy, (--(--I->arg_end()))->getType(), 0);
+                              Type::IntTy, (--(--I->arg_end()))->getType(),
+                              (Type *)0);
         break;
       case Intrinsic::isunordered:
         EnsureFunctionExists(M, "isunordered", I->arg_begin(), I->arg_end(),

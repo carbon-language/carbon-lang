@@ -21,6 +21,7 @@
 #define LLVM_SUPPORT_COMMANDLINE_H
 
 #include "llvm/Support/type_traits.h"
+#include "llvm/Support/DataTypes.h"
 #include <string>
 #include <vector>
 #include <utility>
@@ -335,7 +336,7 @@ public:
 
 template<class DataType>
 ValuesClass<DataType> values(const char *Arg, DataType Val, const char *Desc,
-                             ...) {
+                             ...) END_WITH_NULL {
     va_list ValueArgs;
     va_start(ValueArgs, Desc);
     ValuesClass<DataType> Vals(Arg, Val, Desc, ValueArgs);

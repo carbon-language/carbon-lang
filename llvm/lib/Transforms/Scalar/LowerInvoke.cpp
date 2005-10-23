@@ -124,14 +124,14 @@ bool LowerInvoke::doInitialization(Module &M) {
                                       Constant::getNullValue(PtrJBList),
                                       "llvm.sjljeh.jblist", &M);
     SetJmpFn = M.getOrInsertFunction("llvm.setjmp", Type::IntTy,
-                                     PointerType::get(JmpBufTy), NULL);
+                                     PointerType::get(JmpBufTy), (Type *)0);
     LongJmpFn = M.getOrInsertFunction("llvm.longjmp", Type::VoidTy,
                                       PointerType::get(JmpBufTy),
-                                      Type::IntTy, NULL);
+                                      Type::IntTy, (Type *)0);
   }
 
   // We need the 'write' and 'abort' functions for both models.
-  AbortFn = M.getOrInsertFunction("abort", Type::VoidTy, NULL);
+  AbortFn = M.getOrInsertFunction("abort", Type::VoidTy, (Type *)0);
 
   // Unfortunately, 'write' can end up being prototyped in several different
   // ways.  If the user defines a three (or more) operand function named 'write'
@@ -148,7 +148,7 @@ bool LowerInvoke::doInitialization(Module &M) {
       WriteFn = 0;
   } else {
     WriteFn = M.getOrInsertFunction("write", Type::VoidTy, Type::IntTy,
-                                    VoidPtrTy, Type::IntTy, NULL);
+                                    VoidPtrTy, Type::IntTy, (Type *)0);
   }
   return true;
 }

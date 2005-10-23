@@ -33,7 +33,8 @@ static Function* createAdd1(Module* M)
   // Create the add1 function entry and insert this entry into module M.  The
   // function will have a return type of "int" and take an argument of "int".
   // The '0' terminates the list of argument types.
-  Function *Add1F = M->getOrInsertFunction("add1", Type::IntTy, Type::IntTy, 0);
+  Function *Add1F = M->getOrInsertFunction("add1", Type::IntTy, Type::IntTy,
+                                           (Type *)0);
 
   // Add a basic block to the function. As before, it automatically inserts
   // because of the last argument.
@@ -61,7 +62,8 @@ static Function *CreateFibFunction(Module *M)
 {
   // Create the fib function and insert it into module M.  This function is said
   // to return an int and take an int parameter.
-  Function *FibF = M->getOrInsertFunction("fib", Type::IntTy, Type::IntTy, 0);
+  Function *FibF = M->getOrInsertFunction("fib", Type::IntTy, Type::IntTy,
+                                          (Type *)0);
 
   // Add a basic block to the function.
   BasicBlock *BB = new BasicBlock("EntryBlock", FibF);

@@ -189,7 +189,8 @@ bool ProfilePaths::runOnFunction(Function &F){
     // IN THEIR INITIALIZE METHOD!!
     Function *initialize =
       F.getParent()->getOrInsertFunction("reoptimizerInitialize", Type::VoidTy,
-                                         PointerType::get(Type::IntTy), 0);
+                                         PointerType::get(Type::IntTy),
+                                         (Type *)0);
 
     std::vector<Value *> trargs;
     trargs.push_back(threshold);

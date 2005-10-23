@@ -22,6 +22,7 @@
 #include "llvm/Function.h"
 #include "llvm/GlobalVariable.h"
 #include "llvm/ADT/SetVector.h"
+#include "llvm/Support/DataTypes.h"
 
 namespace llvm {
 
@@ -111,7 +112,8 @@ public:
   /// table.  If it does not exist, add a prototype for the function and return
   /// it.  This version of the method takes a null terminated list of function
   /// arguments, which makes it easier for clients to use.
-  Function *getOrInsertFunction(const std::string &Name, const Type *RetTy,...);
+  Function *getOrInsertFunction(const std::string &Name, const Type *RetTy,...)
+    END_WITH_NULL;
 
   /// getFunction - Look up the specified function in the module symbol table.
   /// If it does not exist, return null.

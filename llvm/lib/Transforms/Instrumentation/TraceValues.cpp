@@ -130,17 +130,18 @@ void ExternalFuncs::doInitialization(Module &M) {
 
   // uint (sbyte*)
   HashPtrFunc = M.getOrInsertFunction("HashPointerToSeqNum", Type::UIntTy, SBP,
-                                      0);
+                                      (Type *)0);
 
   // void (sbyte*)
   ReleasePtrFunc = M.getOrInsertFunction("ReleasePointerSeqNum",
-                                         Type::VoidTy, SBP, 0);
+                                         Type::VoidTy, SBP, (Type *)0);
   RecordPtrFunc  = M.getOrInsertFunction("RecordPointer",
-                                         Type::VoidTy, SBP, 0);
+                                         Type::VoidTy, SBP, (Type *)0);
 
-  PushOnEntryFunc = M.getOrInsertFunction("PushPointerSet", Type::VoidTy, 0);
+  PushOnEntryFunc = M.getOrInsertFunction("PushPointerSet", Type::VoidTy,
+                                          (Type *)0);
   ReleaseOnReturnFunc = M.getOrInsertFunction("ReleasePointersPopSet",
-                                              Type::VoidTy, 0);
+                                              Type::VoidTy, (Type *)0);
 }
 
 

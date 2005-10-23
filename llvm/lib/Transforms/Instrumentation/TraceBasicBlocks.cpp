@@ -46,7 +46,7 @@ static void InsertInstrumentationCall (BasicBlock *BB,
                    << "\", \"" << FnName << "\", " << BBNumber << ")\n");
   Module &M = *BB->getParent ()->getParent ();
   Function *InstrFn = M.getOrInsertFunction (FnName, Type::VoidTy,
-                                             Type::UIntTy, 0);
+                                             Type::UIntTy, (Type *)0);
   std::vector<Value*> Args (1);
   Args[0] = ConstantUInt::get (Type::UIntTy, BBNumber);
 

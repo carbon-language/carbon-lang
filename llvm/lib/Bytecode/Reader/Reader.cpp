@@ -680,7 +680,8 @@ void BytecodeReader::ParseInstruction(std::vector<unsigned> &Oprnds,
     break;
   case 32: { //VANext_old
     const Type* ArgTy = getValue(iType, Oprnds[0])->getType();
-    Function* NF = TheModule->getOrInsertFunction("llvm.va_copy", ArgTy, ArgTy, 0);
+    Function* NF = TheModule->getOrInsertFunction("llvm.va_copy", ArgTy, ArgTy,
+                                                  (Type *)0);
 
     //b = vanext a, t ->
     //foo = alloca 1 of t
@@ -700,7 +701,8 @@ void BytecodeReader::ParseInstruction(std::vector<unsigned> &Oprnds,
   }
   case 33: { //VAArg_old
     const Type* ArgTy = getValue(iType, Oprnds[0])->getType();
-    Function* NF = TheModule->getOrInsertFunction("llvm.va_copy", ArgTy, ArgTy, 0);
+    Function* NF = TheModule->getOrInsertFunction("llvm.va_copy", ArgTy, ArgTy,
+                                                  (Type *)0);
 
     //b = vaarg a, t ->
     //foo = alloca 1 of t

@@ -924,7 +924,8 @@ static void runChild(Module *M, const std::vector<std::string> &Arguments,
 
   // If the program didn't explicitly call exit, call exit now, for the program.
   // This ensures that any atexit handlers get called correctly.
-  Function *Exit = M->getOrInsertFunction("exit", Type::VoidTy, Type::IntTy, 0);
+  Function *Exit = M->getOrInsertFunction("exit", Type::VoidTy, Type::IntTy,
+                                          (Type *)0);
 
   std::vector<GenericValue> Args;
   GenericValue ResultGV;

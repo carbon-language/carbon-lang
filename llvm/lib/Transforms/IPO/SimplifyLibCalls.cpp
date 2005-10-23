@@ -311,7 +311,8 @@ public:
     if (!memcpy_func) {
       const Type *SBP = PointerType::get(Type::SByteTy);
       memcpy_func = M->getOrInsertFunction("llvm.memcpy", Type::VoidTy,SBP, SBP,
-                                           Type::UIntTy, Type::UIntTy, 0);
+                                           Type::UIntTy, Type::UIntTy,
+                                           (Type *)0);
     }
     return memcpy_func;
   }
@@ -319,7 +320,7 @@ public:
   Function* get_floorf() {
     if (!floorf_func)
       floorf_func = M->getOrInsertFunction("floorf", Type::FloatTy,
-                                           Type::FloatTy, 0);
+                                           Type::FloatTy, (Type *)0);
     return floorf_func;
   }
   

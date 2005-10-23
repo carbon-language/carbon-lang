@@ -204,32 +204,33 @@ bool LowerSetJmp::doInitialization(Module& M)
 
   // void __llvm_sjljeh_init_setjmpmap(void**)
   InitSJMap = M.getOrInsertFunction("__llvm_sjljeh_init_setjmpmap",
-                                    Type::VoidTy, SBPPTy, NULL);
+                                    Type::VoidTy, SBPPTy, (Type *)0);
   // void __llvm_sjljeh_destroy_setjmpmap(void**)
   DestroySJMap = M.getOrInsertFunction("__llvm_sjljeh_destroy_setjmpmap",
-                                       Type::VoidTy, SBPPTy, NULL);
+                                       Type::VoidTy, SBPPTy, (Type *)0);
 
   // void __llvm_sjljeh_add_setjmp_to_map(void**, void*, unsigned)
   AddSJToMap = M.getOrInsertFunction("__llvm_sjljeh_add_setjmp_to_map",
                                      Type::VoidTy, SBPPTy, SBPTy,
-                                     Type::UIntTy, NULL);
+                                     Type::UIntTy, (Type *)0);
 
   // void __llvm_sjljeh_throw_longjmp(int*, int)
   ThrowLongJmp = M.getOrInsertFunction("__llvm_sjljeh_throw_longjmp",
-                                       Type::VoidTy, SBPTy, Type::IntTy, NULL);
+                                       Type::VoidTy, SBPTy, Type::IntTy,
+                                       (Type *)0);
 
   // unsigned __llvm_sjljeh_try_catching_longjmp_exception(void **)
   TryCatchLJ =
     M.getOrInsertFunction("__llvm_sjljeh_try_catching_longjmp_exception",
-                          Type::UIntTy, SBPPTy, NULL);
+                          Type::UIntTy, SBPPTy, (Type *)0);
 
   // bool __llvm_sjljeh_is_longjmp_exception()
   IsLJException = M.getOrInsertFunction("__llvm_sjljeh_is_longjmp_exception",
-                                        Type::BoolTy, NULL);
+                                        Type::BoolTy, (Type *)0);
 
   // int __llvm_sjljeh_get_longjmp_value()
   GetLJValue = M.getOrInsertFunction("__llvm_sjljeh_get_longjmp_value",
-                                     Type::IntTy, NULL);
+                                     Type::IntTy, (Type *)0);
   return true;
 }
 

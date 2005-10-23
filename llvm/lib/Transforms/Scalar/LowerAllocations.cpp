@@ -83,7 +83,7 @@ bool LowerAllocations::doInitialization(Module &M) {
     MallocFunc = M.getOrInsertFunction("malloc", FT);
   }
   if (FreeFunc == 0)
-    FreeFunc = M.getOrInsertFunction("free"  , Type::VoidTy, SBPTy, 0);
+    FreeFunc = M.getOrInsertFunction("free"  , Type::VoidTy, SBPTy, (Type *)0);
 
   return true;
 }

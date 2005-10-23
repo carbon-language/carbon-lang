@@ -40,7 +40,7 @@ static void getTriggerCode(Module *M, BasicBlock *BB, int MethNo, Value *pathNo,
   const Type *PIntTy = PointerType::get(Type::IntTy);
   Function *trigMeth = M->getOrInsertFunction("trigger", Type::VoidTy,
                                               Type::IntTy, Type::IntTy,
-                                              PIntTy, PIntTy, 0);
+                                              PIntTy, PIntTy, (Type *)0);
   assert(trigMeth && "trigger method could not be inserted!");
 
   vector<Value *> trargs;

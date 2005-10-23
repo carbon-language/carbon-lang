@@ -109,10 +109,11 @@ bool LowerGC::doInitialization(Module &M) {
   // If the program is using read/write barriers, find the implementations of
   // them from the GC runtime library.
   if (GCReadInt)        // Make:  sbyte* %llvm_gc_read(sbyte**)
-    GCRead = M.getOrInsertFunction("llvm_gc_read", VoidPtr, VoidPtr, VoidPtrPtr, 0);
+    GCRead = M.getOrInsertFunction("llvm_gc_read", VoidPtr, VoidPtr, VoidPtrPtr,
+                                   (Type *)0);
   if (GCWriteInt)       // Make:  void %llvm_gc_write(sbyte*, sbyte**)
     GCWrite = M.getOrInsertFunction("llvm_gc_write", Type::VoidTy,
-                                    VoidPtr, VoidPtr, VoidPtrPtr, 0);
+                                    VoidPtr, VoidPtr, VoidPtrPtr, (Type *)0);
 
   // If the program has GC roots, get or create the global root list.
   if (GCRootInt) {

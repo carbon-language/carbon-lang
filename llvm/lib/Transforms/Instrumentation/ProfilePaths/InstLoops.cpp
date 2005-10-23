@@ -156,7 +156,8 @@ void InstLoops::findAndInstrumentBackEdges(Function &F){
 }
 
 bool InstLoops::doInitialization (Module &M) {
-  inCountMth = M.getOrInsertFunction("llvm_first_trigger", Type::VoidTy, 0);
+  inCountMth = M.getOrInsertFunction("llvm_first_trigger", Type::VoidTy,
+                                     (Type *)0);
   return true;  // Module was modified.
 }
 

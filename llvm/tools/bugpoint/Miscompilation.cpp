@@ -666,7 +666,7 @@ static void CleanupAndPrepareModules(BugDriver &BD, Module *&Test,
   Function *resolverFunc =
     Safe->getOrInsertFunction("getPointerToNamedFunction",
                               PointerType::get(Type::SByteTy),
-                              PointerType::get(Type::SByteTy), 0);
+                              PointerType::get(Type::SByteTy), (Type *)0);
 
   // Use the function we just added to get addresses of functions we need.
   for (Module::iterator F = Safe->begin(), E = Safe->end(); F != E; ++F) {

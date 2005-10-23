@@ -37,7 +37,8 @@ using namespace llvm;
 static Function *CreateFibFunction(Module *M) {
   // Create the fib function and insert it into module M.  This function is said
   // to return an int and take an int parameter.
-  Function *FibF = M->getOrInsertFunction("fib", Type::IntTy, Type::IntTy, 0);
+  Function *FibF = M->getOrInsertFunction("fib", Type::IntTy, Type::IntTy,
+                                          (Type *)0);
 
   // Add a basic block to the function.
   BasicBlock *BB = new BasicBlock("EntryBlock", FibF);

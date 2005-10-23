@@ -181,7 +181,7 @@ static ModuleProvider* CheckVarargs(ModuleProvider* MP) {
     const Type* ArgTy = F->getFunctionType()->getReturnType();
     const Type* ArgTyPtr = PointerType::get(ArgTy);
     Function* NF = M->getOrInsertFunction("llvm.va_start",
-                                               RetTy, ArgTyPtr, 0);
+                                          RetTy, ArgTyPtr, (Type *)0);
 
     for(Value::use_iterator I = F->use_begin(), E = F->use_end(); I != E;)
       if (CallInst* CI = dyn_cast<CallInst>(*I++)) {
@@ -204,7 +204,7 @@ static ModuleProvider* CheckVarargs(ModuleProvider* MP) {
     const Type* ArgTy = F->getFunctionType()->getParamType(0);
     const Type* ArgTyPtr = PointerType::get(ArgTy);
     Function* NF = M->getOrInsertFunction("llvm.va_end",
-                                                 RetTy, ArgTyPtr, 0);
+                                          RetTy, ArgTyPtr, (Type *)0);
 
     for(Value::use_iterator I = F->use_begin(), E = F->use_end(); I != E;)
       if (CallInst* CI = dyn_cast<CallInst>(*I++)) {
@@ -230,7 +230,7 @@ static ModuleProvider* CheckVarargs(ModuleProvider* MP) {
     const Type* ArgTy = F->getFunctionType()->getReturnType();
     const Type* ArgTyPtr = PointerType::get(ArgTy);
     Function* NF = M->getOrInsertFunction("llvm.va_copy",
-                                          RetTy, ArgTyPtr, ArgTyPtr, 0);
+                                          RetTy, ArgTyPtr, ArgTyPtr, (Type *)0);
 
     for(Value::use_iterator I = F->use_begin(), E = F->use_end(); I != E;)
       if (CallInst* CI = dyn_cast<CallInst>(*I++)) {

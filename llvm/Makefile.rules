@@ -221,7 +221,7 @@ else
   endif
 endif
 
-CXX.Flags += $(CXXFLAGS)
+CXX.Flags += $(CXXFLAGS) -Wformat
 C.Flags   += $(CFLAGS)
 CPP.Flags += $(CPPFLAGS)
 LD.Flags  += $(LDFLAGS)

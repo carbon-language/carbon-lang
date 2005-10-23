@@ -766,7 +766,7 @@ static PATypeHolder HandleUpRefs(const Type *ty) {
       const Type* ArgTy = F->getFunctionType()->getReturnType();
       const Type* ArgTyPtr = PointerType::get(ArgTy);
       Function* NF = Result->getOrInsertFunction("llvm.va_start", 
-                                                 RetTy, ArgTyPtr, 0);
+                                                 RetTy, ArgTyPtr, (Type *)0);
 
       while (!F->use_empty()) {
         CallInst* CI = cast<CallInst>(F->use_back());
@@ -791,7 +791,7 @@ static PATypeHolder HandleUpRefs(const Type *ty) {
       const Type* ArgTy = F->getFunctionType()->getParamType(0);
       const Type* ArgTyPtr = PointerType::get(ArgTy);
       Function* NF = Result->getOrInsertFunction("llvm.va_end", 
-                                                 RetTy, ArgTyPtr, 0);
+                                                 RetTy, ArgTyPtr, (Type *)0);
 
       while (!F->use_empty()) {
         CallInst* CI = cast<CallInst>(F->use_back());
@@ -818,7 +818,8 @@ static PATypeHolder HandleUpRefs(const Type *ty) {
       const Type* ArgTy = F->getFunctionType()->getReturnType();
       const Type* ArgTyPtr = PointerType::get(ArgTy);
       Function* NF = Result->getOrInsertFunction("llvm.va_copy", 
-                                                 RetTy, ArgTyPtr, ArgTyPtr, 0);
+                                                 RetTy, ArgTyPtr, ArgTyPtr,
+                                                 (Type *)0);
 
       while (!F->use_empty()) {
         CallInst* CI = cast<CallInst>(F->use_back());
@@ -2074,7 +2075,7 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     ObsoleteVarArgs = true;
     const Type* ArgTy = $2->getType();
     Function* NF = CurModule.CurrentModule->
-      getOrInsertFunction("llvm.va_copy", ArgTy, ArgTy, 0);
+      getOrInsertFunction("llvm.va_copy", ArgTy, ArgTy, (Type *)0);
 
     //b = vaarg a, t -> 
     //foo = alloca 1 of t
@@ -2093,7 +2094,7 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     ObsoleteVarArgs = true;
     const Type* ArgTy = $2->getType();
     Function* NF = CurModule.CurrentModule->
-      getOrInsertFunction("llvm.va_copy", ArgTy, ArgTy, 0);
+      getOrInsertFunction("llvm.va_copy", ArgTy, ArgTy, (Type *)0);
 
     //b = vanext a, t ->
     //foo = alloca 1 of t
