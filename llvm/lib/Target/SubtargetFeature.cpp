@@ -12,18 +12,55 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Target/SubtargetFeature.h"
-
-#include <string>
+#include "llvm/ADT/StringExtras.h"
 #include <algorithm>
-#include <vector>
 #include <cassert>
 #include <cctype>
-
+#include <iostream>
 using namespace llvm;
 
-/// Splits a string of comma separated items in to a vector of strings.
-void SubtargetFeatures::Split(std::vector<std::string> &V,
-                              const std::string &S) {
+//===----------------------------------------------------------------------===//
+//                          Static Helper Functions
+//===----------------------------------------------------------------------===//
+
+/// hasFlag - Determine if a feature has a flag; '+' or '-'
+///
+static inline bool hasFlag(const std::string &Feature) {
+  assert(!Feature.empty() && "Empty string");
+  // Get first character
+  char Ch = Feature[0];
+  // Check if first character is '+' or '-' flag
+  return Ch == '+' || Ch =='-';
+}
+
+/// StripFlag - Return string stripped of flag.
+///
+static inline std::string StripFlag(const std::string &Feature) {
+  return hasFlag(Feature) ? Feature.substr(1) : Feature;
+}
+
+/// isEnabled - Return true if enable flag; '+'.
+///
+static inline bool isEnabled(const std::string &Feature) {
+  assert(!Feature.empty() && "Empty string");
+  // Get first character
+  char Ch = Feature[0];
+  // Check if first character is '+' for enabled
+  return Ch == '+';
+}
+
+/// PrependFlag - Return a string with a prepended flag; '+' or '-'.
+///
+static inline std::string PrependFlag(const std::string &Feature,
+                                      bool IsEnabled) {
+  assert(!Feature.empty() && "Empty string");
+  if (hasFlag(Feature)) return Feature;
+  return std::string(IsEnabled ? "+" : "-") + Feature;
+}
+
+/// Split - Splits a string of comma separated items in to a vector of strings.
+///
+static void Split(std::vector<std::string> &V, const std::string &S) {
   // Start at beginning of string.
   size_t Pos = 0;
   while (true) {
@@ -43,7 +80,8 @@ void SubtargetFeatures::Split(std::vector<std::string> &V,
 }
 
 /// Join a vector of strings to a string with a comma separating each element.
-std::string SubtargetFeatures::Join(const std::vector<std::string> &V) {
+///
+static std::string Join(const std::vector<std::string> &V) {
   // Start with empty string.
   std::string Result;
   // If the vector is not empty 
@@ -62,33 +100,19 @@ std::string SubtargetFeatures::Join(const std::vector<std::string> &V) {
   return Result;
 }
 
-/// Convert a string to lowercase.
-std::string SubtargetFeatures::toLower(const std::string &S) {
-  // Copy the string
-  std::string Result = S;
-  // For each character in string
-  for (size_t i = 0; i < Result.size(); i++) {
-    // Convert character to lowercase
-    Result[i] = std::tolower(Result[i]);
-  }
-  // Return the lowercased string
-  return Result;
-}
-
 /// Adding features.
 void SubtargetFeatures::AddFeature(const std::string &String,
                                    bool IsEnabled) {
   // Don't add empty features
   if (!String.empty()) {
     // Convert to lowercase, prepend flag and add to vector
-    Features.push_back(PrependFlag(toLower(String), IsEnabled));
+    Features.push_back(PrependFlag(LowercaseString(String), IsEnabled));
   }
 }
 
 /// Find item in array using binary search.
-const SubtargetFeatureKV *
-SubtargetFeatures::Find(const std::string &S,
-                        const SubtargetFeatureKV *A, size_t L) {
+static const SubtargetFeatureKV *Find(const std::string &S,
+                                      const SubtargetFeatureKV *A, size_t L) {
   // Determine the end of the array
   const SubtargetFeatureKV *Hi = A + L;
   // Binary search the array
@@ -100,29 +124,59 @@ SubtargetFeatures::Find(const std::string &S,
 }
 
 /// Display help for feature choices.
-void SubtargetFeatures::Help(const char *Heading,
-          const SubtargetFeatureKV *Table, size_t TableSize) {
-    // Determine the length of the longest key
-    size_t MaxLen = 0;
-    for (size_t i = 0; i < TableSize; i++)
-      MaxLen = std::max(MaxLen, std::strlen(Table[i].Key));
-    // Print heading
-    std::cerr << "Help for " << Heading << " choices\n\n";
-    // For each feature
-    for (size_t i = 0; i < TableSize; i++) {
-      // Compute required padding
-      size_t Pad = MaxLen - std::strlen(Table[i].Key) + 1;
-      // Print details
-      std::cerr << Table[i].Key << std::string(Pad, ' ') << " - "
-                << Table[i].Desc << "\n";
-    }
-    // Wrap it up
-    std::cerr << "\n\n";
-    // Leave tool
-    exit(1);
+///
+static void Help(const char *Heading, const SubtargetFeatureKV *Table,
+                 size_t TableSize) {
+  // Determine the length of the longest key
+  size_t MaxLen = 0;
+  for (size_t i = 0; i < TableSize; i++)
+    MaxLen = std::max(MaxLen, std::strlen(Table[i].Key));
+  // Print heading
+  std::cerr << "Help for " << Heading << " choices:\n\n";
+  // For each feature
+  for (size_t i = 0; i < TableSize; i++) {
+    // Compute required padding
+    size_t Pad = MaxLen - std::strlen(Table[i].Key);
+    // Print details
+    std::cerr << Table[i].Key << std::string(Pad, ' ') << " - "
+              << Table[i].Desc << "\n";
+  }
+  // Wrap it up
+  std::cerr << "\n\n";
+  // Leave tool
+  exit(1);
 }
 
+//===----------------------------------------------------------------------===//
+//                    SubtargetFeatures Implementation
+//===----------------------------------------------------------------------===//
+
+SubtargetFeatures::SubtargetFeatures(const std::string &Initial) {
+  // Break up string into separate features
+  Split(Features, Initial);
+}
+
+
+std::string SubtargetFeatures::getString() const {
+  return Join(Features);
+}
+void SubtargetFeatures::setString(const std::string &Initial) {
+  // Throw out old features
+  Features.clear();
+  // Break up string into separate features
+  Split(Features, LowercaseString(Initial));
+}
+
+/// setCPU - Set the CPU string.  Replaces previous setting.  Setting to "" 
+/// clears CPU.
+void SubtargetFeatures::setCPU(const std::string &String) {
+  Features[0] = LowercaseString(String);
+}
+
+
+
 /// Parse feature string for quick usage.
+///
 uint32_t SubtargetFeatures::Parse(const std::string &String,
                                   const std::string &DefaultCPU,
                                   const SubtargetFeatureKV *CPUTable,
