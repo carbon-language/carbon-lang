@@ -57,7 +57,7 @@ void SubtargetEmitter::run(std::ostream &OS) {
   RecordList Processors = Records.getAllDerivedDefinitions("Processor");
   sort(Processors.begin(), Processors.end(), LessRecordFieldName());
 
-  OS << "namespace llvm {\n\n";
+  OS << "#include \"llvm/Target/SubtargetFeature.h\"\n\n";
   
   { // Feature enumeration
     int i = 0;
@@ -78,9 +78,9 @@ void SubtargetEmitter::run(std::ostream &OS) {
   }
   
   { // Feature key values
-    OS << "\n\n"
-       << "/// Sorted (by key) array of values for CPU features.\n"
-       << "static SubtargetFeatureKV FeatureKV[] = {\n";
+    OS << "\n"
+       << "// Sorted (by key) array of values for CPU features.\n"
+       << "static llvm::SubtargetFeatureKV FeatureKV[] = {\n";
     for (RecordListIter RI = Features.begin(), E = Features.end(); RI != E;) {
       Record *R = *RI++;
       std::string Instance = R->getName();
@@ -96,9 +96,9 @@ void SubtargetEmitter::run(std::ostream &OS) {
   }
   
   { // CPU key values
-    OS << "\n\n"
-       << "/// Sorted (by key) array of values for CPU subtype.\n"
-       << "static const SubtargetFeatureKV SubTypeKV[] = {\n";
+    OS << "\n"
+       << "// Sorted (by key) array of values for CPU subtype.\n"
+       << "static const llvm::SubtargetFeatureKV SubTypeKV[] = {\n";
     for (RecordListIter RI = Processors.begin(), E = Processors.end();
          RI != E;) {
       Record *R = *RI++;
@@ -131,6 +131,9 @@ void SubtargetEmitter::run(std::ostream &OS) {
     }
     OS << "};\n";
   }
-
-  OS << "\n} // End llvm namespace \n";
+  
+  OS<<"\nenum {\n";
+  OS<<"  FeatureKVSize = sizeof(FeatureKV)/sizeof(llvm::SubtargetFeatureKV),\n";
+  OS<<"  SubTypeKVSize = sizeof(SubTypeKV)/sizeof(llvm::SubtargetFeatureKV)\n";
+  OS<<"};\n";
 }
