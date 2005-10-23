@@ -109,10 +109,73 @@ SDOperand AlphaDAGToDAGISel::Select(SDOperand Op) {
   case ISD::CALL: return SelectCALL(Op);
 
   case ISD::DYNAMIC_STACKALLOC:
-  case ISD::ADD_PARTS:
-  case ISD::SUB_PARTS:
-  case ISD::SETCC:
     assert(0 && "You want these too?");
+
+  case ISD::SETCC: {
+    ISD::CondCode CC = cast<CondCodeSDNode>(N->getOperand(2))->get();
+    assert(MVT::isInteger(N->getOperand(0).getValueType()) && "FP numbers are unnecessary");
+    SDOperand Op1 = Select(N->getOperand(0));
+    SDOperand Op2 = Select(N->getOperand(1));
+    unsigned Opc = Alpha::WTF;
+    int dir;
+    switch (CC) {
+    default: N->dump(); assert(0 && "Unknown integer comparison!");
+    case ISD::SETEQ:  Opc = Alpha::CMPEQ; dir=1; break;
+    case ISD::SETLT:  Opc = Alpha::CMPLT; dir = 1; break;
+    case ISD::SETLE:  Opc = Alpha::CMPLE; dir = 1; break;
+    case ISD::SETGT:  Opc = Alpha::CMPLT; dir = 0; break;
+    case ISD::SETGE:  Opc = Alpha::CMPLE; dir = 0; break;
+    case ISD::SETULT: Opc = Alpha::CMPULT; dir = 1; break;
+    case ISD::SETUGT: Opc = Alpha::CMPULT; dir = 0; break;
+    case ISD::SETULE: Opc = Alpha::CMPULE; dir = 1; break;
+    case ISD::SETUGE: Opc = Alpha::CMPULE; dir = 0; break;
+    case ISD::SETNE: {//Handle this one special
+      SDOperand Tmp  = CurDAG->getTargetNode(Alpha::CMPEQ, MVT::i64, Op1, Op2);
+      CurDAG->SelectNodeTo(N, Alpha::CMPEQ, MVT::i64, CurDAG->getRegister(Alpha::R31, MVT::i64), Tmp);
+      return SDOperand(N, 0);
+    }
+    }
+    CurDAG->SelectNodeTo(N, Opc, MVT::i64, dir ? Op1 : Op2, dir ? Op2 : Op1);
+    return SDOperand(N, 0);
+  }
+
+  case ISD::BRCOND: {
+    SDOperand Chain = Select(N->getOperand(0));
+    SDOperand CC = Select(N->getOperand(1));
+    CurDAG->SelectNodeTo(N, Alpha::BNE, MVT::Other,  CC, Chain);
+    return SDOperand(N, 0);
+  }
+  case ISD::LOAD:
+  case ISD::EXTLOAD:
+  case ISD::ZEXTLOAD:
+  case ISD::SEXTLOAD: {
+    SDOperand Chain = Select(N->getOperand(0));
+    SDOperand Address = Select(N->getOperand(1));
+    unsigned opcode = N->getOpcode();
+    unsigned Opc = Alpha::WTF;
+    if (opcode == ISD::LOAD)
+      switch (N->getValueType(0)) {
+      default: N->dump(); assert(0 && "Bad load!");
+      case MVT::i64: Opc = Alpha::LDQ; break;
+      case MVT::f64: Opc = Alpha::LDT; break;
+      case MVT::f32: Opc = Alpha::LDS; break;
+      }
+    else
+      switch (cast<VTSDNode>(N->getOperand(3))->getVT()) {
+      default: N->dump(); assert(0 && "Bad sign extend!");
+      case MVT::i32: Opc = Alpha::LDL;
+        assert(opcode != ISD::ZEXTLOAD && "Not sext"); break;
+      case MVT::i16: Opc = Alpha::LDWU;
+        assert(opcode != ISD::SEXTLOAD && "Not zext"); break;
+      case MVT::i1: //FIXME: Treat i1 as i8 since there are problems otherwise
+      case MVT::i8: Opc = Alpha::LDBU;
+          assert(opcode != ISD::SEXTLOAD && "Not zext"); break;
+      }
+
+    CurDAG->SelectNodeTo(N, Opc, N->getValueType(0), MVT::Other,
+                         getI64Imm(0), Address, Chain);
+    return SDOperand(N, Op.ResNo);
+  }
 
   case ISD::BR: {
     CurDAG->SelectNodeTo(N, Alpha::BR_DAG, MVT::Other, N->getOperand(1),
@@ -185,6 +248,11 @@ SDOperand AlphaDAGToDAGISel::Select(SDOperand Op) {
     CurDAG->SelectNodeTo(N, Alpha::LDQl, MVT::i64, GA, getGlobalBaseReg());
     return SDOperand(N, 0);
   }
+  case ISD::ExternalSymbol:
+    CurDAG->SelectNodeTo(N, Alpha::LDQl, MVT::i64, 
+                         CurDAG->getTargetExternalSymbol(cast<ExternalSymbolSDNode>(N)->getSymbol(), MVT::i64),
+                         CurDAG->getRegister(AlphaLowering.getVRegGP(), MVT::i64));
+    return SDOperand(N, 0);
 
   case ISD::CALLSEQ_START:
   case ISD::CALLSEQ_END: {
@@ -222,44 +290,37 @@ SDOperand AlphaDAGToDAGISel::Select(SDOperand Op) {
 SDOperand AlphaDAGToDAGISel::SelectCALL(SDOperand Op) {
   SDNode *N = Op.Val;
   SDOperand Chain = Select(N->getOperand(0));
-  SDOperand InFlag;  // Null incoming flag value.
   SDOperand Addr = Select(N->getOperand(1));
 
 //   unsigned CallOpcode;
    std::vector<SDOperand> CallOperands;
    std::vector<MVT::ValueType> TypeOperands;
   
-   CallOperands.push_back(CurDAG->getCopyToReg(Chain, Alpha::R27, Addr));
-   CallOperands.push_back(getI64Imm(0));
-
    //grab the arguments
    for(int i = 2, e = N->getNumOperands(); i < e; ++i) {
-     CallOperands.push_back(Select(N->getOperand(i)));
      TypeOperands.push_back(N->getOperand(i).getValueType());
+     CallOperands.push_back(Select(N->getOperand(i)));
    }
+   int count = N->getNumOperands() - 2;
+
    static const unsigned args_int[] = {Alpha::R16, Alpha::R17, Alpha::R18,
                                        Alpha::R19, Alpha::R20, Alpha::R21};
    static const unsigned args_float[] = {Alpha::F16, Alpha::F17, Alpha::F18,
                                          Alpha::F19, Alpha::F20, Alpha::F21};
    
-   for (unsigned i = 0; i < std::min((size_t)6, CallOperands.size()); ++i) {
+   for (int i = 0; i < std::min(6, count); ++i) {
      if (MVT::isInteger(TypeOperands[i])) {
-       Chain = CurDAG->getCopyToReg(Chain, args_int[i], CallOperands[i], InFlag);
-       InFlag = Chain.getValue(1);
-       CallOperands.push_back(CurDAG->getRegister(args_int[i], TypeOperands[i]));
+       Chain = CurDAG->getCopyToReg(Chain, args_int[i], CallOperands[i]);
      } else {
-       assert(0 && "No FP support yet");
+       assert(0 && "No FP support yet"); 
      }
    }
    assert(CallOperands.size() <= 6 && "Too big a call");
 
+   Chain = CurDAG->getCopyToReg(Chain, Alpha::R27, Addr);
    // Finally, once everything is in registers to pass to the call, emit the
    // call itself.
-   if (InFlag.Val)
-     CallOperands.push_back(InFlag);   // Strong dep on register copies.
-   else
-     CallOperands.push_back(Chain);    // Weak dep on whatever occurs before
-   Chain = CurDAG->getTargetNode(Alpha::JSR, MVT::Other, MVT::Flag, CallOperands);
+   Chain = CurDAG->getTargetNode(Alpha::JSRDAG, MVT::Other, Chain );
   
    std::vector<SDOperand> CallResults;
   
@@ -267,8 +328,7 @@ SDOperand AlphaDAGToDAGISel::SelectCALL(SDOperand Op) {
    default: assert(0 && "Unexpected ret value!");
      case MVT::Other: break;
    case MVT::i64:
-     Chain = CurDAG->getCopyFromReg(Chain, Alpha::R0, MVT::i64,
-                                    Chain.getValue(1)).getValue(1);
+     Chain = CurDAG->getCopyFromReg(Chain, Alpha::R0, MVT::i64).getValue(1);
      CallResults.push_back(Chain.getValue(0));
      break;
    }
