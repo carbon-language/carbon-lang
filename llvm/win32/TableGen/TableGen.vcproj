@@ -183,9 +183,6 @@ move $(InputDir)$(InputName).hpp $(InputDir)$(InputName).h
 				RelativePath="..\..\utils\TableGen\InstrInfoEmitter.cpp">
 			</File>
 			<File
-				RelativePath="..\..\utils\TableGen\InstrSelectorEmitter.cpp">
-			</File>
-			<File
 				RelativePath="..\..\utils\TableGen\Record.cpp">
 			</File>
 			<File
@@ -225,9 +222,6 @@ move $(InputDir)$(InputName).hpp $(InputDir)$(InputName).h
 			</File>
 			<File
 				RelativePath="..\..\utils\TableGen\InstrInfoEmitter.h">
-			</File>
-			<File
-				RelativePath="..\..\utils\TableGen\InstrSelectorEmitter.h">
 			</File>
 			<File
 				RelativePath="..\..\utils\TableGen\Record.h">
