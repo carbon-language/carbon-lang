@@ -3795,10 +3795,14 @@ Instruction *InstCombiner::PromoteCastOfAllocation(CastInst &CI,
   const Type *AllocElTy = AI.getAllocatedType();
   const Type *CastElTy = PTy->getElementType();
   if (!AllocElTy->isSized() || !CastElTy->isSized()) return 0;
-  
+
+  unsigned AllocElTyAlign = TD->getTypeSize(AllocElTy);
+  unsigned CastElTyAlign = TD->getTypeSize(CastElTy);
+  if (CastElTyAlign < AllocElTyAlign) return 0;
+
   uint64_t AllocElTySize = TD->getTypeSize(AllocElTy);
   uint64_t CastElTySize = TD->getTypeSize(CastElTy);
-  
+
   // If the allocation is for an even multiple of the cast type size
   if (CastElTySize == 0 || AllocElTySize % CastElTySize != 0)
     return 0;
