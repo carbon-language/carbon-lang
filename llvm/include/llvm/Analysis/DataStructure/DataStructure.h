@@ -31,6 +31,10 @@ class DSCallSite;
 class DSNode;
 class DSNodeHandle;
 
+FunctionPass *createDataStructureStatsPass();
+FunctionPass *createDataStructureGraphCheckerPass();
+
+
 // FIXME: move this stuff to a private header
 namespace DataStructureAnalysis {
   /// isPointerType - Return true if this first class type is big enough to hold
