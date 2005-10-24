@@ -10,7 +10,7 @@ LEVEL = ../..
 
 TOOLNAME = bugpoint
 
-OPTLIBS  = LLVMTransforms.a LLVMInstrumentation.a LLVMProfilePaths
+OPTLIBS  = LLVMTransforms.a LLVMInstrumentation.a
 ANALIBS  = LLVMDataStructure LLVMipa.a LLVMTarget.a 
 
 USEDLIBS = LLVMipo.a LLVMScalarOpts.a $(OPTLIBS) $(ANALIBS) LLVMAnalysis.a \

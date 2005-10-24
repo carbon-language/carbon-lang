@@ -9,7 +9,7 @@
 LEVEL = ../..
 TOOLNAME = opt
 
-USEDLIBS = LLVMBCReader LLVMBCWriter LLVMInstrumentation.a LLVMProfilePaths \
+USEDLIBS = LLVMBCReader LLVMBCWriter LLVMInstrumentation.a \
 	   LLVMScalarOpts.a LLVMipo.a LLVMipa.a LLVMDataStructure LLVMTransforms.a \
 	   LLVMTarget.a LLVMAnalysis.a LLVMTransformUtils.a LLVMCore LLVMSupport.a \
 	   LLVMbzip2 LLVMSystem.a 
