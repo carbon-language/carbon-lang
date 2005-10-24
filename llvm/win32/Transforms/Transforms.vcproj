@@ -142,34 +142,6 @@
 				<File
 					RelativePath="..\..\lib\Transforms\Instrumentation\TraceValues.cpp">
 				</File>
-				<Filter
-					Name="ProfilePaths"
-					Filter="">
-					<File
-						RelativePath="..\..\lib\Transforms\Instrumentation\ProfilePaths\CombineBranch.cpp">
-					</File>
-					<File
-						RelativePath="..\..\lib\Transforms\Instrumentation\ProfilePaths\EdgeCode.cpp">
-					</File>
-					<File
-						RelativePath="..\..\lib\Transforms\Instrumentation\ProfilePaths\Graph.cpp">
-					</File>
-					<File
-						RelativePath="..\..\lib\Transforms\Instrumentation\ProfilePaths\Graph.h">
-					</File>
-					<File
-						RelativePath="..\..\lib\Transforms\Instrumentation\ProfilePaths\GraphAuxiliary.cpp">
-					</File>
-					<File
-						RelativePath="..\..\lib\Transforms\Instrumentation\ProfilePaths\InstLoops.cpp">
-					</File>
-					<File
-						RelativePath="..\..\lib\Transforms\Instrumentation\ProfilePaths\ProfilePaths.cpp">
-					</File>
-					<File
-						RelativePath="..\..\lib\Transforms\Instrumentation\ProfilePaths\RetracePath.cpp">
-					</File>
-				</Filter>
 			</Filter>
 			<Filter
 				Name="IPO"

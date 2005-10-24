@@ -36,7 +36,6 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="..\Analysis\$(IntDir)\AliasSetTracker.obj ..\Analysis\$(IntDir)\BottomUpClosure.obj ..\Analysis\$(IntDir)\CFGPrinter.obj ..\Analysis\$(IntDir)\CallGraph.obj ..\Analysis\$(IntDir)\CompleteBottomUp.obj ..\Analysis\$(IntDir)\DataStructureStats.obj ..\Analysis\$(IntDir)\FindUnsafePointerTypes.obj ..\Analysis\$(IntDir)\FindUsedTypes.obj ..\Analysis\$(IntDir)\GraphChecker.obj ..\Analysis\$(IntDir)\InstCount.obj ..\Analysis\$(IntDir)\IntervalPartition.obj ..\Analysis\$(IntDir)\Local.obj ..\Analysis\$(IntDir)\LoopInfo.obj ..\Analysis\$(IntDir)\PostDominators.obj ..\Analysis\$(IntDir)\PrintSCC.obj ..\Analysis\$(IntDir)\ProfileInfoLoaderPass.obj ..\Analysis\$(IntDir)\ScalarEvolution.obj ..\Analysis\$(IntDir)\TopDownClosure.obj"
 				OutputFile="$(OutDir)/analyze.exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="TRUE"
@@ -87,7 +86,6 @@
 				Name="VCCustomBuildTool"/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="..\Analysis\$(IntDir)\AliasSetTracker.obj ..\Analysis\$(IntDir)\BottomUpClosure.obj ..\Analysis\$(IntDir)\CFGPrinter.obj ..\Analysis\$(IntDir)\CallGraph.obj ..\Analysis\$(IntDir)\CompleteBottomUp.obj ..\Analysis\$(IntDir)\DataStructureStats.obj ..\Analysis\$(IntDir)\FindUnsafePointerTypes.obj ..\Analysis\$(IntDir)\FindUsedTypes.obj ..\Analysis\$(IntDir)\GraphChecker.obj ..\Analysis\$(IntDir)\InstCount.obj ..\Analysis\$(IntDir)\IntervalPartition.obj ..\Analysis\$(IntDir)\Local.obj ..\Analysis\$(IntDir)\LoopInfo.obj ..\Analysis\$(IntDir)\PostDominators.obj ..\Analysis\$(IntDir)\PrintSCC.obj ..\Analysis\$(IntDir)\ProfileInfoLoaderPass.obj ..\Analysis\$(IntDir)\ScalarEvolution.obj ..\Analysis\$(IntDir)\TopDownClosure.obj"
 				OutputFile="$(OutDir)/analyze.exe"
 				LinkIncremental="1"
 				GenerateDebugInformation="TRUE"

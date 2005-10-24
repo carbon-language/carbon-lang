@@ -179,16 +179,10 @@
 					RelativePath="..\..\lib\Analysis\Ipa\CallGraphSCCPass.cpp">
 				</File>
 				<File
-					RelativePath="..\..\lib\Analysis\Ipa\FindUnsafePointerTypes.cpp">
-				</File>
-				<File
 					RelativePath="..\..\lib\Analysis\Ipa\FindUsedTypes.cpp">
 				</File>
 				<File
 					RelativePath="..\..\lib\Analysis\Ipa\GlobalsModRef.cpp">
-				</File>
-				<File
-					RelativePath="..\..\lib\Analysis\Ipa\PrintSCC.cpp">
 				</File>
 			</Filter>
 			<Filter
@@ -259,9 +253,6 @@
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\Analysis\Expressions.h">
-			</File>
-			<File
-				RelativePath="..\..\include\llvm\Analysis\FindUnsafePointerTypes.h">
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\Analysis\FindUsedTypes.h">
