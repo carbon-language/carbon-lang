@@ -21,6 +21,7 @@
 #include "llvm/Bytecode/Reader.h"
 #include "llvm/Assembly/Parser.h"
 #include "llvm/Analysis/Verifier.h"
+#include "llvm/Analysis/LinkAllAnalyses.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Support/PassNameParser.h"
 #include "llvm/System/Signals.h"
