@@ -63,6 +63,11 @@ namespace {
   static RegisterAnalysis<DSGraphStats> Z("dsstats", "DS Graph Statistics");
 }
 
+FunctionPass *llvm::createDataStructureStatsPass() { 
+  return new DSGraphStats();
+}
+
+
 static bool isIndirectCallee(Value *V) {
   if (isa<Function>(V)) return false;
 

@@ -77,6 +77,11 @@ namespace {
   RegisterAnalysis<DSGC> X("datastructure-gc", "DSA Graph Checking Pass");
 }
 
+FunctionPass *llvm::createDataStructureGraphCheckerPass() {
+  return new DSGC();
+}
+
+
 DSGC::DSGC() {
   if (!AbortIfAnyCollapsed && AbortIfCollapsed.empty() &&
       CheckFlags.empty() && AbortIfMerged.empty()) {
