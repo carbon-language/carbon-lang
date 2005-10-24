@@ -149,9 +149,6 @@
 				RelativePath="..\..\lib\CodeGen\PrologEpilogInserter.cpp">
 			</File>
 			<File
-				RelativePath="..\..\lib\CodeGen\RegAllocIterativeScan.cpp">
-			</File>
-			<File
 				RelativePath="..\..\lib\CodeGen\RegAllocLinearScan.cpp">
 			</File>
 			<File
