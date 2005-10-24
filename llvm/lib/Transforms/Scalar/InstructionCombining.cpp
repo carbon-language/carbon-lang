@@ -3788,9 +3788,6 @@ Instruction *InstCombiner::PromoteCastOfAllocation(CastInst &CI,
     }
   }
   
-  // Finally, if the instruction now has one use, delete it.
-  if (!AI.hasOneUse()) return 0;
-  
   // Get the type really allocated and the type casted to.
   const Type *AllocElTy = AI.getAllocatedType();
   const Type *CastElTy = PTy->getElementType();
@@ -3799,6 +3796,11 @@ Instruction *InstCombiner::PromoteCastOfAllocation(CastInst &CI,
   unsigned AllocElTyAlign = TD->getTypeSize(AllocElTy);
   unsigned CastElTyAlign = TD->getTypeSize(CastElTy);
   if (CastElTyAlign < AllocElTyAlign) return 0;
+
+  // If the allocation has multiple uses, only promote it if we are strictly
+  // increasing the alignment of the resultant allocation.  If we keep it the
+  // same, we open the door to infinite loops of various kinds.
+  if (!AI.hasOneUse() && CastElTyAlign == AllocElTyAlign) return 0;
 
   uint64_t AllocElTySize = TD->getTypeSize(AllocElTy);
   uint64_t CastElTySize = TD->getTypeSize(CastElTy);
@@ -3815,6 +3817,16 @@ Instruction *InstCombiner::PromoteCastOfAllocation(CastInst &CI,
   else
     New = new AllocaInst(CastElTy, Amt, Name);
   InsertNewInstBefore(New, AI);
+  
+  // If the allocation has multiple uses, insert a cast and change all things
+  // that used it to use the new cast.  This will also hack on CI, but it will
+  // die soon.
+  if (!AI.hasOneUse()) {
+    AddUsesToWorkList(AI);
+    CastInst *NewCast = new CastInst(New, AI.getType(), "tmpcast");
+    InsertNewInstBefore(NewCast, AI);
+    AI.replaceAllUsesWith(NewCast);
+  }
   return ReplaceInstUsesWith(CI, New);
 }
 
