@@ -102,6 +102,10 @@ namespace llvm {
   // simple context insensitive alias analysis.
   //
   ModulePass *createSteensgaardPass();
+  
+  // Minor pass prototypes, allowing us to expose them through bugpoint and
+  // analyze.
+  FunctionPass *createInstCountPass();
 }
 
 #endif
