@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/Analysis/Passes.h"
 #include "llvm/Pass.h"
 #include "llvm/Function.h"
 #include "llvm/Support/InstVisitor.h"
@@ -56,6 +57,8 @@ namespace {
   RegisterAnalysis<InstCount> X("instcount",
                                 "Counts the various types of Instructions");
 }
+
+FunctionPass *llvm::createInstCountPass() { return new InstCount(); }
 
 // InstCount::run - This is the main Analysis entry point for a
 // function.
