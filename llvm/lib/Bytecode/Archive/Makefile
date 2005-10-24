@@ -13,6 +13,5 @@ LIBRARYNAME = LLVMArchive
 # We only want an archive so only those modules actually used by a tool are 
 # included.
 BUILD_ARCHIVE = 1
-DONT_BUILD_RELINKED = 1
 
 include $(LEVEL)/Makefile.common

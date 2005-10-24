@@ -6,10 +6,10 @@
 # the University of Illinois Open Source License. See LICENSE.TXT for details.
 # 
 ##===----------------------------------------------------------------------===##
+
 LEVEL = ../..
 PARALLEL_DIRS=bzip2
 LIBRARYNAME = LLVMSupport
 BUILD_ARCHIVE = 1
-DONT_BUILD_RELINKED := 1
 
 include $(LEVEL)/Makefile.common
