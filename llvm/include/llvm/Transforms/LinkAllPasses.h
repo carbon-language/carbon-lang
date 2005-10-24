@@ -45,7 +45,6 @@ namespace {
       (void) llvm::createBlockProfilerPass();
       (void) llvm::createBreakCriticalEdgesPass();
       (void) llvm::createCFGSimplificationPass();
-      (void) llvm::createCombineBranchesPass();
       (void) llvm::createConstantMergePass();
       (void) llvm::createConstantPropagationPass();
       (void) llvm::createCorrelatedExpressionEliminationPass();
@@ -73,7 +72,6 @@ namespace {
       (void) llvm::createLICMPass();
       (void) llvm::createLoadValueNumberingPass();
       (void) llvm::createLoopExtractorPass();
-      (void) llvm::createLoopInstrumentationPass();
       (void) llvm::createLoopSimplifyPass();
       (void) llvm::createLoopStrengthReducePass();
       (void) llvm::createLoopUnrollPass();
@@ -90,7 +88,6 @@ namespace {
       (void) llvm::createNoProfileInfoPass();
       (void) llvm::createPREPass();
       (void) llvm::createProfileLoaderPass();
-      (void) llvm::createProfilePathsPass();
       (void) llvm::createPromoteMemoryToRegisterPass();
       (void) llvm::createPruneEHPass();
       (void) llvm::createRaiseAllocationsPass();
