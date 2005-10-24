@@ -17,7 +17,6 @@
 
 #include "llvm/Analysis/AliasSetTracker.h"
 #include "llvm/Analysis/CallGraph.h"
-#include "llvm/Analysis/FindUnsafePointerTypes.h"
 #include "llvm/Analysis/FindUsedTypes.h"
 #include "llvm/Analysis/IntervalPartition.h"
 #include "llvm/Analysis/PostDominators.h"
@@ -52,7 +51,6 @@ namespace {
       (void)new llvm::PostDominatorSet();
       (void)new llvm::CallGraph();
       (void)new llvm::FindUsedTypes();
-      (void)new llvm::FindUnsafePointerTypes();
       (void)new llvm::ScalarEvolution();
       ((llvm::Function*)0)->viewCFGOnly();
       llvm::AliasSetTracker X(*(llvm::AliasAnalysis*)0);
