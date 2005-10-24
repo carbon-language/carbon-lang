@@ -110,7 +110,7 @@ namespace {
       (void) llvm::createUnifyFunctionExitNodesPass();
       (void) llvm::createCondPropagationPass();
     }
-  } _ForcePassLinking;
+  } ForcePassLinking;
 };
 
 #endif
