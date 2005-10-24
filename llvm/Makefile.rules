@@ -617,7 +617,7 @@ ifdef ENABLE_ALPHA_JIT
   JIT_LIBS += LLVMAlpha LLVMSelectionDAG
 endif
 
-LLVMLIBS := $(JIT_LIBS) LLVMScalarOpts LLVMAnalysis.a LLVMTransformUtils.a \
+LLVMLIBS := $(JIT_LIBS) LLVMScalarOpts.a LLVMAnalysis.a LLVMTransformUtils.a \
             LLVMBCReader LLVMCore LLVMSupport.a LLVMTarget.a LLVMbzip2 \
             LLVMSystem.a $(PLATFORMLIBDL)
 endif
