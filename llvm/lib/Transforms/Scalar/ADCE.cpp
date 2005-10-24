@@ -29,6 +29,8 @@
 #include <algorithm>
 using namespace llvm;
 
+static IncludeFile X((void*)createUnifyFunctionExitNodesPass);
+
 namespace {
   Statistic<> NumBlockRemoved("adce", "Number of basic blocks removed");
   Statistic<> NumInstRemoved ("adce", "Number of instructions removed");
