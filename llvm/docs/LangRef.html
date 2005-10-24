@@ -495,11 +495,11 @@ convention.</p>
 
 <p>Global variables define regions of memory allocated at compilation time
 instead of run-time.  Global variables may optionally be initialized.  A
-variable may be defined as a global "constant", which indicates that the
+variable may be defined as a global "constant," which indicates that the
 contents of the variable will <b>never</b> be modified (enabling better
 optimization, allowing the global data to be placed in the read-only section of
 an executable, etc).  Note that variables that need runtime initialization
-cannot be marked "constant", as there is a store to the variable.</p>
+cannot be marked "constant" as there is a store to the variable.</p>
 
 <p>
 LLVM explicitly allows <em>declarations</em> of global variables to be marked
@@ -720,8 +720,8 @@ be any type with a size.</p>
   </tr>
 </table>
 
-<p>Note that 'variable sized arrays' can be implemented in LLVM With a zero 
-length array.  Normally accesses past the end of an array are undefined in
+<p>Note that 'variable sized arrays' can be implemented in LLVM with a zero 
+length array.  Normally, accesses past the end of an array are undefined in
 LLVM (e.g. it is illegal to access the 5th element of a 3 element array).
 As a special case, however, zero length arrays are recognized to be variable
 length.  This allows implementation of 'pascal style arrays' with the  LLVM
@@ -743,7 +743,7 @@ The return type of a function type cannot be an aggregate type.
 </p>
 <h5>Syntax:</h5>
 <pre>  &lt;returntype&gt; (&lt;parameter list&gt;)<br></pre>
-<p>Where '<tt>&lt;parameter list&gt;</tt>' is a comma-separated list of type
+<p>...where '<tt>&lt;parameter list&gt;</tt>' is a comma-separated list of type
 specifiers.  Optionally, the parameter list may include a type <tt>...</tt>,
 which indicates that the function takes a variable number of arguments.
 Variable argument functions can access their arguments with the <a
@@ -997,7 +997,7 @@ and smaller aggregate constants.</p>
   <dd>The string '<tt>zeroinitializer</tt>' can be used to zero initialize a
   value to zero of <em>any</em> type, including scalar and aggregate types.
   This is often used to avoid having to print large zero initializers (e.g. for
-  large arrays), and is always exactly equivalent to using explicit zero
+  large arrays) and is always exactly equivalent to using explicit zero
   initializers.
   </dd>
 </dl>
@@ -1486,7 +1486,7 @@ Both arguments must have identical types.</p>
 <p>This returns the <i>remainder</i> of a division (where the result
 has the same sign as the divisor), not the <i>modulus</i> (where the
 result has the same sign as the dividend) of a value.  For more
-information about the difference, see: <a
+information about the difference, see <a
  href="http://mathforum.org/dr.math/problems/anne.4.28.99.html">The
 Math Forum</a>.</p>
 <h5>Example:</h5>
@@ -1863,9 +1863,9 @@ Instruction</a> </div>
 <p>The '<tt>load</tt>' instruction is used to read from memory.</p>
 <h5>Arguments:</h5>
 <p>The argument to the '<tt>load</tt>' instruction specifies the memory
-address to load from.  The pointer must point to a <a
+address from which to load.  The pointer must point to a <a
  href="#t_firstclass">first class</a> type.  If the <tt>load</tt> is
-marked as <tt>volatile</tt> then the optimizer is not allowed to modify
+marked as <tt>volatile</tt>, then the optimizer is not allowed to modify
 the number or order of execution of this <tt>load</tt> with other
 volatile <tt>load</tt> and <tt><a href="#i_store">store</a></tt>
 instructions. </p>
@@ -1889,7 +1889,7 @@ Instruction</a> </div>
 <p>The '<tt>store</tt>' instruction is used to write to memory.</p>
 <h5>Arguments:</h5>
 <p>There are two arguments to the '<tt>store</tt>' instruction: a value
-to store and an address to store it into.  The type of the '<tt>&lt;pointer&gt;</tt>'
+to store and an address in which to store it.  The type of the '<tt>&lt;pointer&gt;</tt>'
 operand must be a pointer to the type of the '<tt>&lt;value&gt;</tt>'
 operand. If the <tt>store</tt> is marked as <tt>volatile</tt>, then the
 optimizer is not allowed to modify the number or order of execution of
