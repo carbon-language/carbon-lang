@@ -3769,6 +3769,26 @@ Instruction *InstCombiner::PromoteCastOfAllocation(CastInst &CI,
   const PointerType *PTy = dyn_cast<PointerType>(CI.getType());
   if (AI.isArrayAllocation() || !PTy) return 0;
   
+  // Remove any uses of AI that are dead.
+  assert(!CI.use_empty() && "Dead instructions should be removed earlier!");
+  std::vector<Instruction*> DeadUsers;
+  for (Value::use_iterator UI = AI.use_begin(), E = AI.use_end(); UI != E; ) {
+    Instruction *User = cast<Instruction>(*UI++);
+    if (isInstructionTriviallyDead(User)) {
+      while (UI != E && *UI == User)
+        ++UI; // If this instruction uses AI more than once, don't break UI.
+      
+      // Add operands to the worklist.
+      AddUsesToWorkList(*User);
+      ++NumDeadInst;
+      DEBUG(std::cerr << "IC: DCE: " << *User);
+      
+      User->eraseFromParent();
+      removeFromWorkList(User);
+    }
+  }
+  
+  // Finally, if the instruction now has one use, delete it.
   if (!AI.hasOneUse()) return 0;
   
   // Get the type really allocated and the type casted to.
