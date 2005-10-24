@@ -10,6 +10,5 @@
 LEVEL = ../../../..
 DIRS  = 
 LIBRARYNAME = LLVMSparcV9RegAlloc
-BUILD_ARCHIVE = 1
 
 include $(LEVEL)/Makefile.common
