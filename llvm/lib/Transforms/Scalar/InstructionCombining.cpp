@@ -227,6 +227,7 @@ namespace {
                               bool isSub, Instruction &I);
     Instruction *InsertRangeTest(Value *V, Constant *Lo, Constant *Hi,
                                  bool Inside, Instruction &IB);
+    Instruction *PromoteCastOfAllocation(CastInst &CI, AllocationInst &AI);
   };
 
   RegisterOpt<InstCombiner> X("instcombine", "Combine redundant instructions");
@@ -3761,6 +3762,39 @@ Value *InstCombiner::InsertOperandCastBefore(Value *V, const Type *DestTy,
   return CI;
 }
 
+/// PromoteCastOfAllocation - If we find a cast of an allocation instruction,
+/// try to eliminate the cast by moving the type information into the alloc.
+Instruction *InstCombiner::PromoteCastOfAllocation(CastInst &CI,
+                                                   AllocationInst &AI) {
+  const PointerType *PTy = dyn_cast<PointerType>(CI.getType());
+  if (AI.isArrayAllocation() || !PTy) return 0;
+  
+  if (!AI.hasOneUse()) return 0;
+  
+  // Get the type really allocated and the type casted to.
+  const Type *AllocElTy = AI.getAllocatedType();
+  const Type *CastElTy = PTy->getElementType();
+  if (!AllocElTy->isSized() || !CastElTy->isSized()) return 0;
+  
+  uint64_t AllocElTySize = TD->getTypeSize(AllocElTy);
+  uint64_t CastElTySize = TD->getTypeSize(CastElTy);
+  
+  // If the allocation is for an even multiple of the cast type size
+  if (CastElTySize == 0 || AllocElTySize % CastElTySize != 0)
+    return 0;
+  Value *Amt = ConstantUInt::get(Type::UIntTy,
+                                 AllocElTySize/CastElTySize);
+  std::string Name = AI.getName(); AI.setName("");
+  AllocationInst *New;
+  if (isa<MallocInst>(AI))
+    New = new MallocInst(CastElTy, Amt, Name);
+  else
+    New = new AllocaInst(CastElTy, Amt, Name);
+  InsertNewInstBefore(New, AI);
+  return ReplaceInstUsesWith(CI, New);
+}
+
+
 // CastInst simplification
 //
 Instruction *InstCombiner::visitCastInst(CastInst &CI) {
@@ -3839,30 +3873,8 @@ Instruction *InstCombiner::visitCastInst(CastInst &CI) {
   // size, rewrite the allocation instruction to allocate the "right" type.
   //
   if (AllocationInst *AI = dyn_cast<AllocationInst>(Src))
-    if (AI->hasOneUse() && !AI->isArrayAllocation())
-      if (const PointerType *PTy = dyn_cast<PointerType>(CI.getType())) {
-        // Get the type really allocated and the type casted to...
-        const Type *AllocElTy = AI->getAllocatedType();
-        const Type *CastElTy = PTy->getElementType();
-        if (AllocElTy->isSized() && CastElTy->isSized()) {
-          uint64_t AllocElTySize = TD->getTypeSize(AllocElTy);
-          uint64_t CastElTySize = TD->getTypeSize(CastElTy);
-
-          // If the allocation is for an even multiple of the cast type size
-          if (CastElTySize && (AllocElTySize % CastElTySize == 0)) {
-            Value *Amt = ConstantUInt::get(Type::UIntTy,
-                                         AllocElTySize/CastElTySize);
-            std::string Name = AI->getName(); AI->setName("");
-            AllocationInst *New;
-            if (isa<MallocInst>(AI))
-              New = new MallocInst(CastElTy, Amt, Name);
-            else
-              New = new AllocaInst(CastElTy, Amt, Name);
-            InsertNewInstBefore(New, *AI);
-            return ReplaceInstUsesWith(CI, New);
-          }
-        }
-      }
+    if (Instruction *V = PromoteCastOfAllocation(CI, *AI))
+      return V;
 
   if (SelectInst *SI = dyn_cast<SelectInst>(Src))
     if (Instruction *NV = FoldOpIntoSelect(CI, SI, this))
@@ -5595,7 +5607,6 @@ Instruction *InstCombiner::visitSwitchInst(SwitchInst &SI) {
   }
   return 0;
 }
-
 
 void InstCombiner::removeFromWorkList(Instruction *I) {
   WorkList.erase(std::remove(WorkList.begin(), WorkList.end(), I),
