@@ -87,6 +87,12 @@ provide enough information on how to write your own Makefiles.</p>
 choosing.  You can place it anywhere you like.  Rename the directory to match
 the name of your project.</li>
 
+<li>
+If you downloaded LLVM using CVS, remove all the directories named CVS (and all
+the files therein) from your project's new source tree.  This will keep CVS
+from thinking that your project is inside <tt>llvm/projects/sample</tt>.
+</li>
+
 <li>Add your source code and Makefiles to your source tree.</li>
 
 <li>If you want your project to be configured with the <tt>configure</tt> script
