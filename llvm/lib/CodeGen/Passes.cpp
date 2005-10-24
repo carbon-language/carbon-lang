@@ -18,7 +18,7 @@
 using namespace llvm;
 
 namespace {
-  enum RegAllocName { simple, local, linearscan, iterativescan };
+  enum RegAllocName { simple, local, linearscan };
 
   cl::opt<RegAllocName>
   RegAlloc(
@@ -29,7 +29,6 @@ namespace {
        clEnumVal(simple,        "  simple register allocator"),
        clEnumVal(local,         "  local register allocator"),
        clEnumVal(linearscan,    "  linear scan register allocator"),
-       clEnumVal(iterativescan, "  iterative scan register allocator"),
        clEnumValEnd),
     cl::init(linearscan));
 }
@@ -45,8 +44,6 @@ FunctionPass *llvm::createRegisterAllocator() {
     return createLocalRegisterAllocator();
   case linearscan:
     return createLinearScanRegisterAllocator();
-  case iterativescan:
-    return createIterativeScanRegisterAllocator();
   }
 }
 
