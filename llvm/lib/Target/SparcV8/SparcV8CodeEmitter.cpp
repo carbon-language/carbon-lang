@@ -181,6 +181,6 @@ void SparcV8JITInfo::replaceMachineCodeForFunction(void *Old, void *New) {
   abort();
 }
 
-#include "SparcV8GenCodeEmitter.inc"
-
 } // end llvm namespace
+
+#include "SparcV8GenCodeEmitter.inc"
