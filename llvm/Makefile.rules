@@ -824,10 +824,18 @@ endif
 
 #---------------------------------------------------------
 # ReLinked Library Targets:
-#   If the user didn't explicitly forbid building a 
-#   relinked then we provide targets for building them.
+#   If the user explicitly requests a relinked library with
+#   BUILD_RELINKED, provide it.  Otherwise, if they specify
+#   neither of BUILD_ARCHIVE or DONT_BUILD_RELINKED, give
+#   them one.
 #---------------------------------------------------------
+ifndef BUILD_ARCHIVE
 ifndef DONT_BUILD_RELINKED
+BUILD_RELINKED = 1
+endif
+endif
+
+ifdef BUILD_RELINKED
 
 all-local:: $(LibName.O)
 
