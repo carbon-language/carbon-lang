@@ -81,9 +81,6 @@ PPCTargetLowering::PPCTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::BRCOND,       MVT::Other, Expand);
   setOperationAction(ISD::BRCONDTWOWAY, MVT::Other, Expand);
   
-  // PowerPC does not have FP_TO_UINT
-  setOperationAction(ISD::FP_TO_UINT, MVT::i32, Expand);
-  
   // PowerPC turns FP_TO_SINT into FCTIWZ and some load/stores.
   setOperationAction(ISD::FP_TO_SINT, MVT::i32, Custom);
 
@@ -98,6 +95,11 @@ PPCTargetLowering::PPCTargetLowering(TargetMachine &TM)
     // They also have instructions for converting between i64 and fp.
     setOperationAction(ISD::FP_TO_SINT, MVT::i64, Custom);
     setOperationAction(ISD::SINT_TO_FP, MVT::i64, Custom);
+    // To take advantage of the above i64 FP_TO_SINT, promote i32 FP_TO_UINT
+    setOperationAction(ISD::FP_TO_UINT, MVT::i32, Promote);
+  } else {
+    // PowerPC does not have FP_TO_UINT on 32 bit implementations.
+    setOperationAction(ISD::FP_TO_UINT, MVT::i32, Expand);
   }
 
   if (TM.getSubtarget<PPCSubtarget>().has64BitRegs()) {
