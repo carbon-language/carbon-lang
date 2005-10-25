@@ -886,10 +886,15 @@ SDOperand PPCDAGToDAGISel::Select(SDOperand Op) {
     return SDOperand(N, 0);
   case ISD::FrameIndex: {
     int FI = cast<FrameIndexSDNode>(N)->getIndex();
-    CurDAG->SelectNodeTo(N, PPC::ADDI, MVT::i32,
-                         CurDAG->getTargetFrameIndex(FI, MVT::i32),
-                         getI32Imm(0));
-    return SDOperand(N, 0);
+    if (N->hasOneUse()) {
+      CurDAG->SelectNodeTo(N, PPC::ADDI, MVT::i32,
+                           CurDAG->getTargetFrameIndex(FI, MVT::i32),
+                           getI32Imm(0));
+      return SDOperand(N, 0);
+    }
+    return CurDAG->getTargetNode(PPC::ADDI, MVT::i32,
+                                 CurDAG->getTargetFrameIndex(FI, MVT::i32),
+                                 getI32Imm(0));
   }
   case ISD::ConstantPool: {
     Constant *C = cast<ConstantPoolSDNode>(N)->get();
@@ -914,10 +919,9 @@ SDOperand PPCDAGToDAGISel::Select(SDOperand Op) {
       Tmp = CurDAG->getTargetNode(PPC::LIS, MVT::i32, GA);
 
     if (GV->hasWeakLinkage() || GV->isExternal())
-      CurDAG->SelectNodeTo(N, PPC::LWZ, MVT::i32, GA, Tmp);
+      return CurDAG->getTargetNode(PPC::LWZ, MVT::i32, GA, Tmp);
     else
-      CurDAG->SelectNodeTo(N, PPC::LA, MVT::i32, Tmp, GA);
-    return SDOperand(N, 0);
+      return CurDAG->getTargetNode(PPC::LA, MVT::i32, Tmp, GA);
   }
     
   case PPCISD::FSEL: {
