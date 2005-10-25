@@ -204,34 +204,47 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
         std::swap(TV, FV);  // fsel is natively setge, swap operands for setlt
       case ISD::SETUGE:
       case ISD::SETGE:
+        if (LHS.getValueType() == MVT::f32)   // Comparison is always 64-bits
+          LHS = DAG.getNode(ISD::FP_EXTEND, MVT::f64, LHS);
         return DAG.getNode(PPCISD::FSEL, ResVT, LHS, TV, FV);
       case ISD::SETUGT:
       case ISD::SETGT:
         std::swap(TV, FV);  // fsel is natively setge, swap operands for setlt
       case ISD::SETULE:
       case ISD::SETLE:
+        if (LHS.getValueType() == MVT::f32)   // Comparison is always 64-bits
+          LHS = DAG.getNode(ISD::FP_EXTEND, MVT::f64, LHS);
         return DAG.getNode(PPCISD::FSEL, ResVT,
                            DAG.getNode(ISD::FNEG, ResVT, LHS), TV, FV);
       }
     
+    SDOperand Cmp;
     switch (CC) {
     default: assert(0 && "Invalid FSEL condition"); abort();
     case ISD::SETULT:
     case ISD::SETLT:
-      return DAG.getNode(PPCISD::FSEL, ResVT,
-                         DAG.getNode(ISD::FSUB, CmpVT, LHS, RHS), FV, TV);
+      Cmp = DAG.getNode(ISD::FSUB, CmpVT, LHS, RHS);
+      if (Cmp.getValueType() == MVT::f32)   // Comparison is always 64-bits
+        Cmp = DAG.getNode(ISD::FP_EXTEND, MVT::f64, Cmp);
+      return DAG.getNode(PPCISD::FSEL, ResVT, Cmp, FV, TV);
     case ISD::SETUGE:
     case ISD::SETGE:
-      return DAG.getNode(PPCISD::FSEL, ResVT,
-                         DAG.getNode(ISD::FSUB, CmpVT, LHS, RHS), TV, FV);
+      Cmp = DAG.getNode(ISD::FSUB, CmpVT, LHS, RHS);
+      if (Cmp.getValueType() == MVT::f32)   // Comparison is always 64-bits
+        Cmp = DAG.getNode(ISD::FP_EXTEND, MVT::f64, Cmp);
+      return DAG.getNode(PPCISD::FSEL, ResVT, Cmp, TV, FV);
     case ISD::SETUGT:
     case ISD::SETGT:
-      return DAG.getNode(PPCISD::FSEL, ResVT,
-                         DAG.getNode(ISD::FSUB, CmpVT, RHS, LHS), FV, TV);
+      Cmp = DAG.getNode(ISD::FSUB, CmpVT, RHS, LHS);
+      if (Cmp.getValueType() == MVT::f32)   // Comparison is always 64-bits
+        Cmp = DAG.getNode(ISD::FP_EXTEND, MVT::f64, Cmp);
+      return DAG.getNode(PPCISD::FSEL, ResVT, Cmp, FV, TV);
     case ISD::SETULE:
     case ISD::SETLE:
-      return DAG.getNode(PPCISD::FSEL, ResVT,
-                         DAG.getNode(ISD::FSUB, CmpVT, RHS, LHS), TV, FV);
+      Cmp = DAG.getNode(ISD::FSUB, CmpVT, RHS, LHS);
+      if (Cmp.getValueType() == MVT::f32)   // Comparison is always 64-bits
+        Cmp = DAG.getNode(ISD::FP_EXTEND, MVT::f64, Cmp);
+      return DAG.getNode(PPCISD::FSEL, ResVT, Cmp, TV, FV);
     }
     break;
   }
