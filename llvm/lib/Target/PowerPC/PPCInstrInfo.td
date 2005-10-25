@@ -22,6 +22,10 @@ def PPCfcfid  : SDNode<"PPCISD::FCFID" , SDTFPUnaryOp, []>;
 def PPCfctidz : SDNode<"PPCISD::FCTIDZ", SDTFPUnaryOp, []>;
 def PPCfctiwz : SDNode<"PPCISD::FCTIWZ", SDTFPUnaryOp, []>;
 
+def PPCfsel   : SDNode<"PPCISD::FSEL",  
+   // Type constraint for fsel.
+   SDTypeProfile<1, 3, [SDTCisSameAs<0, 2>, SDTCisSameAs<0, 3>, 
+                        SDTCisFP<0>, SDTCisVT<1, f64>]>, []>;
 
 //===----------------------------------------------------------------------===//
 // PowerPC specific transformation functions and pattern fragments.
@@ -654,11 +658,11 @@ def FNMSUBS : AForm_1<59, 30,
 def FSELD : AForm_1<63, 23,
                     (ops F8RC:$FRT, F8RC:$FRA, F8RC:$FRC, F8RC:$FRB),
                     "fsel $FRT, $FRA, $FRC, $FRB", FPGeneral,
-                    []>;
+                    [(set F8RC:$FRT, (PPCfsel F8RC:$FRA,F8RC:$FRC,F8RC:$FRB))]>;
 def FSELS : AForm_1<63, 23,
                      (ops F4RC:$FRT, F8RC:$FRA, F4RC:$FRC, F4RC:$FRB),
                      "fsel $FRT, $FRA, $FRC, $FRB", FPGeneral,
-                     []>;
+                    [(set F4RC:$FRT, (PPCfsel F8RC:$FRA,F4RC:$FRC,F4RC:$FRB))]>;
 def FADD  : AForm_2<63, 21,
                     (ops F8RC:$FRT, F8RC:$FRA, F8RC:$FRB),
                     "fadd $FRT, $FRA, $FRB", FPGeneral,

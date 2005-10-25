@@ -891,18 +891,6 @@ SDOperand PPCDAGToDAGISel::Select(SDOperand Op) {
     else
       return CurDAG->getTargetNode(PPC::LA, MVT::i32, Tmp, GA);
   }
-    
-  case PPCISD::FSEL: {
-    SDOperand Comparison = Select(N->getOperand(0));
-    // Extend the comparison to 64-bits.
-    if (Comparison.getValueType() == MVT::f32)
-      Comparison = CurDAG->getTargetNode(PPC::FMRSD, MVT::f64, Comparison);
-    
-    unsigned Opc = N->getValueType(0) == MVT::f32 ? PPC::FSELS : PPC::FSELD;
-    CurDAG->SelectNodeTo(N, Opc, N->getValueType(0), Comparison,
-                         Select(N->getOperand(1)), Select(N->getOperand(2)));
-    return SDOperand(N, 0);
-  }
   case ISD::FADD: {
     MVT::ValueType Ty = N->getValueType(0);
     if (!NoExcessFPPrecision) {  // Match FMA ops
