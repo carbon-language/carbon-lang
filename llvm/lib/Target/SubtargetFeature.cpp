@@ -110,13 +110,12 @@ void SubtargetFeatures::AddFeature(const std::string &String,
   }
 }
 
-/// Find item in array using binary search.
-static const SubtargetFeatureKV *Find(const std::string &S,
-                                      const SubtargetFeatureKV *A, size_t L) {
+/// Find KV in array using binary search.
+template<typename T> const T *Find(const std::string &S, const T *A, size_t L) {
   // Determine the end of the array
-  const SubtargetFeatureKV *Hi = A + L;
+  const T *Hi = A + L;
   // Binary search the array
-  const SubtargetFeatureKV *F = std::lower_bound(A, Hi, S);
+  const T *F = std::lower_bound(A, Hi, S);
   // If not found then return NULL
   if (F == Hi || std::string(F->Key) != S) return NULL;
   // Return the found array item
@@ -182,6 +181,7 @@ void SubtargetFeatures::setString(const std::string &Initial) {
   Split(Features, LowercaseString(Initial));
 }
 
+
 /// setCPU - Set the CPU string.  Replaces previous setting.  Setting to "" 
 /// clears CPU.
 void SubtargetFeatures::setCPU(const std::string &String) {
@@ -189,15 +189,19 @@ void SubtargetFeatures::setCPU(const std::string &String) {
 }
 
 
-
-/// Parse feature string for quick usage.
+/// setCPUIfNone - Setting CPU string only if no string is set.
 ///
-uint32_t SubtargetFeatures::Parse(const std::string &String,
-                                  const std::string &DefaultCPU,
-                                  const SubtargetFeatureKV *CPUTable,
-                                  size_t CPUTableSize,
-                                  const SubtargetFeatureKV *FeatureTable,
-                                  size_t FeatureTableSize) {
+void SubtargetFeatures::setCPUIfNone(const std::string &String) {
+  if (Features[0].empty()) setCPU(String);
+}
+
+
+/// getBits - Get feature bits.
+///
+uint32_t SubtargetFeatures::getBits(const SubtargetFeatureKV *CPUTable,
+                                          size_t CPUTableSize,
+                                    const SubtargetFeatureKV *FeatureTable,
+                                          size_t FeatureTableSize) {
   assert(CPUTable && "missing CPU table");
   assert(FeatureTable && "missing features table");
 #ifndef NDEBUG
@@ -210,15 +214,10 @@ uint32_t SubtargetFeatures::Parse(const std::string &String,
           "CPU features table is not sorted");
   }
 #endif
-  std::vector<std::string> Features;    // Subtarget features as a vector
   uint32_t Bits = 0;                    // Resulting bits
-  // Split up features
-  Split(Features, String);
 
-  // Check if default is needed
-  if (Features[0].empty())
-    Features[0] = DefaultCPU;
-  else if (Features[0] == "help")
+  // Check if help is needed
+  if (Features[0] == "help")
     Help(CPUTable, CPUTableSize, FeatureTable, FeatureTableSize);
   
   // Find CPU entry
@@ -260,7 +259,32 @@ uint32_t SubtargetFeatures::Parse(const std::string &String,
   return Bits;
 }
 
-/// Print feature string.
+/// Get info pointer
+void *SubtargetFeatures::getInfo(const SubtargetInfoKV *Table,
+                                       size_t TableSize) {
+  assert(Table && "missing table");
+#ifndef NDEBUG
+  for (size_t i = 1; i < TableSize; i++) {
+    assert(strcmp(Table[i - 1].Key, Table[i].Key) < 0 && "Table is not sorted");
+  }
+#endif
+
+  // Find entry
+  const SubtargetInfoKV *Entry = Find(Features[0], Table, TableSize);
+  
+  if (Entry) {
+    return Entry->Value;
+  } else {
+    std::cerr << "'" << Features[0]
+              << "' is not a recognized processor for this target"
+              << " (ignoring processor)"
+              << "\n";
+    return NULL;
+  }
+}
+
+/// print - Print feature string.
+///
 void SubtargetFeatures::print(std::ostream &OS) const {
   for (size_t i = 0; i < Features.size(); i++) {
     OS << Features[i] << "  ";
@@ -268,7 +292,8 @@ void SubtargetFeatures::print(std::ostream &OS) const {
   OS << "\n";
 }
 
-/// Dump feature info.
+/// dump - Dump feature info.
+///
 void SubtargetFeatures::dump() const {
   print(std::cerr);
 }

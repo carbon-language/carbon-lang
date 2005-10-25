@@ -43,6 +43,21 @@ struct SubtargetFeatureKV {
   
 //===----------------------------------------------------------------------===//
 ///
+/// SubtargetInfoKV - Used to provide key value pairs for CPU and arbitrary
+/// pointers.
+//
+struct SubtargetInfoKV {
+  const char *Key;                      // K-V key string
+  void *Value;                          // K-V pointer value
+  
+  // Compare routine for std binary search
+  bool operator<(const std::string &S) const {
+    return strcmp(Key, S.c_str()) < 0;
+  }
+};
+  
+//===----------------------------------------------------------------------===//
+///
 /// SubtargetFeatures - Manages the enabling and disabling of subtarget 
 /// specific features.  Features are encoded as a string of the form
 ///   "cpu,+attr1,+attr2,-attr3,...,+attrN"
@@ -63,20 +78,23 @@ public:
   std::string getString() const;
   void setString(const std::string &Initial);
 
-  /// Setting CPU string.  Replaces previous setting.  Setting to "" clears CPU.
-  ///
+  /// Set the CPU string.  Replaces previous setting.  Setting to "" clears CPU.
   void setCPU(const std::string &String);
+  
+  /// Setting CPU string only if no string is set.
+  void setCPUIfNone(const std::string &String);
   
   /// Adding Features.
   void AddFeature(const std::string &String, bool IsEnabled = true);
            
-  /// Parse feature string for quick usage.
-  static uint32_t Parse(const std::string &String,
-                        const std::string &DefaultCPU,
-                        const SubtargetFeatureKV *CPUTable,
-                        size_t CPUTableSize,
-                        const SubtargetFeatureKV *FeatureTable,
-                        size_t FeatureTableSize);
+  /// Get feature bits.
+  uint32_t getBits(const SubtargetFeatureKV *CPUTable,
+                         size_t CPUTableSize,
+                   const SubtargetFeatureKV *FeatureTable,
+                         size_t FeatureTableSize);
+                         
+  /// Get info pointer
+  void *getInfo(const SubtargetInfoKV *Table, size_t TableSize);
   
   /// Print feature string.
   void print(std::ostream &OS) const;

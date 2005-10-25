@@ -76,9 +76,10 @@ PPCSubtarget::PPCSubtarget(const Module &M, const std::string &FS)
 #if defined(__APPLE__)
   CPU = GetCurrentPowerPCCPU();
 #endif
-  uint32_t Bits =
-  SubtargetFeatures::Parse(FS, CPU,
-                           SubTypeKV, SubTypeKVSize, FeatureKV, FeatureKVSize);
+  SubtargetFeatures Features(FS);
+  Features.setCPUIfNone(CPU);
+  uint32_t Bits =  Features.getBits(SubTypeKV, SubTypeKVSize,
+                                    FeatureKV, FeatureKVSize);
   IsGigaProcessor = (Bits & FeatureGPUL ) != 0;
   Is64Bit         = (Bits & Feature64Bit) != 0;
   HasFSQRT        = (Bits & FeatureFSqrt) != 0;
