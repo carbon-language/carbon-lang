@@ -14,6 +14,14 @@
 
 include "PPCInstrFormats.td"
 
+//===----------------------------------------------------------------------===//
+// PowerPC specific DAG Nodes.
+//
+
+def PPCfcfid  : SDNode<"PPCISD::FCFID" , SDTFPUnaryOp, []>;
+def PPCfctidz : SDNode<"PPCISD::FCTIDZ", SDTFPUnaryOp, []>;
+def PPCfctiwz : SDNode<"PPCISD::FCTIWZ", SDTFPUnaryOp, []>;
+
 
 //===----------------------------------------------------------------------===//
 // PowerPC specific transformation functions and pattern fragments.
@@ -449,13 +457,13 @@ def LFDX   : XForm_25<31, 599, (ops F8RC:$dst, GPRC:$base, GPRC:$index),
 }
 def FCFID  : XForm_26<63, 846, (ops F8RC:$frD, F8RC:$frB),
                       "fcfid $frD, $frB", FPGeneral,
-                      []>, isPPC64;
+                      [(set F8RC:$frD, (PPCfcfid F8RC:$frB))]>, isPPC64;
 def FCTIDZ : XForm_26<63, 815, (ops F8RC:$frD, F8RC:$frB),
                       "fctidz $frD, $frB", FPGeneral,
-                      []>, isPPC64;
+                      [(set F8RC:$frD, (PPCfctidz F8RC:$frB))]>, isPPC64;
 def FCTIWZ : XForm_26<63, 15, (ops F8RC:$frD, F8RC:$frB),
                       "fctiwz $frD, $frB", FPGeneral,
-                      []>;
+                      [(set F8RC:$frD, (PPCfctiwz F8RC:$frB))]>;
 def FRSP   : XForm_26<63, 12, (ops F4RC:$frD, F8RC:$frB),
                       "frsp $frD, $frB", FPGeneral,
                       [(set F4RC:$frD, (fround F8RC:$frB))]>;

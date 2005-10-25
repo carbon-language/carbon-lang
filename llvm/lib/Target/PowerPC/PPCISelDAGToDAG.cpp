@@ -903,18 +903,6 @@ SDOperand PPCDAGToDAGISel::Select(SDOperand Op) {
                          Select(N->getOperand(1)), Select(N->getOperand(2)));
     return SDOperand(N, 0);
   }
-  case PPCISD::FCFID:
-    CurDAG->SelectNodeTo(N, PPC::FCFID, N->getValueType(0),
-                         Select(N->getOperand(0)));
-    return SDOperand(N, 0);
-  case PPCISD::FCTIDZ:
-    CurDAG->SelectNodeTo(N, PPC::FCTIDZ, N->getValueType(0),
-                         Select(N->getOperand(0)));
-    return SDOperand(N, 0);
-  case PPCISD::FCTIWZ:
-    CurDAG->SelectNodeTo(N, PPC::FCTIWZ, N->getValueType(0),
-                         Select(N->getOperand(0)));
-    return SDOperand(N, 0);
   case ISD::FADD: {
     MVT::ValueType Ty = N->getValueType(0);
     if (!NoExcessFPPrecision) {  // Match FMA ops
