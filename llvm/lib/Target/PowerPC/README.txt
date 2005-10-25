@@ -121,3 +121,67 @@ _foo:
 
 If we exposed the srl & mask ops after the MFCR that we are doing to select
 the correct CR bit, then we could fold the slwi into the rlwinm before it.
+
+===-------------------------------------------------------------------------===
+
+#define  ARRAY_LENGTH  16
+
+union bitfield {
+	struct {
+#ifndef	__ppc__
+		unsigned int                       field0 : 6;
+		unsigned int                       field1 : 6;
+		unsigned int                       field2 : 6;
+		unsigned int                       field3 : 6;
+		unsigned int                       field4 : 3;
+		unsigned int                       field5 : 4;
+		unsigned int                       field6 : 1;
+#else
+		unsigned int                       field6 : 1;
+		unsigned int                       field5 : 4;
+		unsigned int                       field4 : 3;
+		unsigned int                       field3 : 6;
+		unsigned int                       field2 : 6;
+		unsigned int                       field1 : 6;
+		unsigned int                       field0 : 6;
+#endif
+	} bitfields, bits;
+	unsigned int	u32All;
+	signed int	i32All;
+	float	f32All;
+};
+
+
+typedef struct program_t {
+	union bitfield    array[ARRAY_LENGTH];
+    int               size;
+    int               loaded;
+} program;
+
+
+void AdjustBitfields(program* prog, unsigned int fmt1)
+{
+	unsigned int shift = 0;
+	unsigned int texCount = 0;
+	unsigned int i;
+	
+	for (i = 0; i < 8; i++)
+	{
+		prog->array[i].bitfields.field0 = texCount;
+		prog->array[i].bitfields.field1 = texCount + 1;
+		prog->array[i].bitfields.field2 = texCount + 2;
+		prog->array[i].bitfields.field3 = texCount + 3;
+
+		texCount += (fmt1 >> shift) & 0x7;
+		shift    += 3;
+	}
+}
+
+In the loop above, the bitfield adds get generated as 
+(add (shl bitfield, C1), (shl C2, C1)) where C2 is 1, 2 or 3.
+
+Since the input to the (or and, and) is an (add) rather than a (shl), the shift
+doesn't get folded into the rlwimi instruction.  We should ideally see through
+things like this, rather than forcing llvm to generate the equivalent
+
+(shl (add bitfield, C2), C1) with some kind of mask.
