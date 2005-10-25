@@ -147,25 +147,25 @@ def crbitm: Operand<i8> {
 // PowerPC Instruction Definitions.
 
 // Pseudo-instructions:
-def PHI : Pseudo<(ops variable_ops), "; PHI">;
+def PHI : Pseudo<(ops variable_ops), "; PHI", []>;
 
 let isLoad = 1 in {
-def ADJCALLSTACKDOWN : Pseudo<(ops u16imm:$amt), "; ADJCALLSTACKDOWN">;
-def ADJCALLSTACKUP : Pseudo<(ops u16imm:$amt), "; ADJCALLSTACKUP">;
+def ADJCALLSTACKDOWN : Pseudo<(ops u16imm:$amt), "; ADJCALLSTACKDOWN", []>;
+def ADJCALLSTACKUP : Pseudo<(ops u16imm:$amt), "; ADJCALLSTACKUP", []>;
 }
-def IMPLICIT_DEF_GPR : Pseudo<(ops GPRC:$rD), "; $rD = IMPLICIT_DEF_GPRC">;
-def IMPLICIT_DEF_F8  : Pseudo<(ops F8RC:$rD), "; %rD = IMPLICIT_DEF_F8">;
-def IMPLICIT_DEF_F4  : Pseudo<(ops F4RC:$rD), "; %rD = IMPLICIT_DEF_F4">;
+def IMPLICIT_DEF_GPR : Pseudo<(ops GPRC:$rD), "; $rD = IMPLICIT_DEF_GPRC", []>;
+def IMPLICIT_DEF_F8  : Pseudo<(ops F8RC:$rD), "; %rD = IMPLICIT_DEF_F8", []>;
+def IMPLICIT_DEF_F4  : Pseudo<(ops F4RC:$rD), "; %rD = IMPLICIT_DEF_F4", []>;
 
 // SELECT_CC_* - Used to implement the SELECT_CC DAG operation.  Expanded by the
 // scheduler into a branch sequence.
 let usesCustomDAGSchedInserter = 1 in {  // Expanded by the scheduler.
   def SELECT_CC_Int : Pseudo<(ops GPRC:$dst, CRRC:$cond, GPRC:$T, GPRC:$F,
-                              i32imm:$BROPC), "; SELECT_CC PSEUDO!">;
+                              i32imm:$BROPC), "; SELECT_CC PSEUDO!", []>;
   def SELECT_CC_F4  : Pseudo<(ops F4RC:$dst, CRRC:$cond, F4RC:$T, F4RC:$F,
-                              i32imm:$BROPC), "; SELECT_CC PSEUDO!">;
+                              i32imm:$BROPC), "; SELECT_CC PSEUDO!", []>;
   def SELECT_CC_F8  : Pseudo<(ops F8RC:$dst, CRRC:$cond, F8RC:$T, F8RC:$F,
-                              i32imm:$BROPC), "; SELECT_CC PSEUDO!">;
+                              i32imm:$BROPC), "; SELECT_CC PSEUDO!", []>;
 }
 
 
@@ -176,12 +176,12 @@ let isTerminator = 1 in {
 }
 
 let Defs = [LR] in
-  def MovePCtoLR : Pseudo<(ops piclabel:$label), "bl $label">;
+  def MovePCtoLR : Pseudo<(ops piclabel:$label), "bl $label", []>;
 
 let isBranch = 1, isTerminator = 1 in {
   def COND_BRANCH : Pseudo<(ops CRRC:$crS, u16imm:$opc,
                                 target:$true, target:$false),
-                           "; COND_BRANCH">;
+                           "; COND_BRANCH", []>;
   def B   : IForm<18, 0, 0, (ops target:$func), "b $func", BrB>;
 //def BA  : IForm<18, 1, 0, (ops target:$func), "ba $func", BrB>;
   def BL  : IForm<18, 0, 1, (ops target:$func), "bl $func", BrB>;

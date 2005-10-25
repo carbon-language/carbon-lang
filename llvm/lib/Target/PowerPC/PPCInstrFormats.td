@@ -550,10 +550,10 @@ class MDForm_1<bits<6> opcode, bits<3> xo, dag OL, string asmstr,
 
 //===----------------------------------------------------------------------===//
 def NoItin : InstrItinClass;
-class Pseudo<dag OL, string asmstr>
+class Pseudo<dag OL, string asmstr, list<dag> pattern>
     : I<0, OL, asmstr, NoItin> {
   let PPC64 = 0;
   let VMX = 0;
-
+  let Pattern = pattern;
   let Inst{31-0} = 0;
 }
