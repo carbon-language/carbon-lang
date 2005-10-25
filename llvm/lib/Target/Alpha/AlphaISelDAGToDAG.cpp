@@ -183,38 +183,6 @@ SDOperand AlphaDAGToDAGISel::Select(SDOperand Op) {
     return SDOperand(N, 0);
   }
 
-  case ISD::TokenFactor: {
-    SDOperand New;
-    if (N->getNumOperands() == 2) {
-      SDOperand Op0 = Select(N->getOperand(0));
-      SDOperand Op1 = Select(N->getOperand(1));
-      New = CurDAG->getNode(ISD::TokenFactor, MVT::Other, Op0, Op1);
-    } else {
-      std::vector<SDOperand> Ops;
-      for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
-        Ops.push_back(Select(N->getOperand(i)));
-      New = CurDAG->getNode(ISD::TokenFactor, MVT::Other, Ops);
-    }
-    
-    CodeGenMap[Op] = New;
-    return New;
-  }
-  case ISD::CopyFromReg: {
-    SDOperand Chain = Select(N->getOperand(0));
-    if (Chain == N->getOperand(0)) return Op; // No change
-    SDOperand New = CurDAG->getCopyFromReg(Chain,
-         cast<RegisterSDNode>(N->getOperand(1))->getReg(), N->getValueType(0));
-    return New.getValue(Op.ResNo);
-  }
-  case ISD::CopyToReg: {
-    SDOperand Chain = Select(N->getOperand(0));
-    SDOperand Reg = N->getOperand(1);
-    SDOperand Val = Select(N->getOperand(2));
-    SDOperand New = CurDAG->getNode(ISD::CopyToReg, MVT::Other,
-                                    Chain, Reg, Val);
-    CodeGenMap[Op] = New;
-    return New;
-  }
   case ISD::UNDEF:
     if (N->getValueType(0) == MVT::i64)
       CurDAG->SelectNodeTo(N, Alpha::IDEF, MVT::i64);
