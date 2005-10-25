@@ -68,7 +68,8 @@ class SDTypeProfile<int numresults, int numoperands,
 
 // Builtin profiles.
 def SDTImm    : SDTypeProfile<1, 0, [SDTCisInt<0>]>;      // for 'imm'.
-def SDTVT     : SDTypeProfile<1, 0, [SDTCisVT<0, OtherVT>]>; // for 'vt'
+def SDTVT     : SDTypeProfile<1, 0, [SDTCisVT<0, OtherVT>]>; // for 'vt'.
+def SDTUNDEF  : SDTypeProfile<1, 0, []>; // for 'undef'.
 def SDTIntBinOp : SDTypeProfile<1, 2, [   // add, and, or, xor, udiv, etc.
   SDTCisSameAs<0, 1>, SDTCisSameAs<0, 2>, SDTCisInt<0>
 ]>;
@@ -123,6 +124,7 @@ def node;
 
 def imm        : SDNode<"ISD::Constant"  , SDTImm     , [], "ConstantSDNode">;
 def vt         : SDNode<"ISD::VALUETYPE" , SDTVT      , [], "VTSDNode">;
+def undef      : SDNode<"ISD::UNDEF"     , SDTUNDEF   , []>;
 def add        : SDNode<"ISD::ADD"       , SDTIntBinOp   ,
                         [SDNPCommutative, SDNPAssociative]>;
 def sub        : SDNode<"ISD::SUB"       , SDTIntBinOp>;
