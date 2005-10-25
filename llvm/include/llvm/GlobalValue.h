@@ -101,7 +101,7 @@ public:
   void removeDeadConstantUsers();
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const GlobalValue *T) { return true; }
+  static inline bool classof(const GlobalValue *) { return true; }
   static inline bool classof(const Value *V) {
     return V->getValueType() == Value::FunctionVal ||
            V->getValueType() == Value::GlobalVariableVal;
