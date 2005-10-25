@@ -52,17 +52,15 @@ public:
   typedef iplist<Function> FunctionListType;
   typedef SetVector<std::string> LibraryListType;
 
-  // Global Variable iterators...
-  typedef GlobalListType::iterator                                   global_iterator;
-  typedef GlobalListType::const_iterator                       const_global_iterator;
-  typedef global_iterator giterator; // these are legacy, deprecated
-  typedef const_global_iterator const_giterator;
+  // Global Variable iterators.
+  typedef GlobalListType::iterator                     global_iterator;
+  typedef GlobalListType::const_iterator         const_global_iterator;
 
-  // Function iterators...
+  // Function iterators.
   typedef FunctionListType::iterator                          iterator;
   typedef FunctionListType::const_iterator              const_iterator;
 
-  // Library list iterators
+  // Library list iterators.
   typedef LibraryListType::const_iterator lib_iterator;
 
   enum Endianness  { AnyEndianness, LittleEndian, BigEndian };
@@ -87,9 +85,11 @@ public:
   Module(const std::string &ModuleID);
   ~Module();
 
-  const std::string& getModuleIdentifier() const { return ModuleID; }
-  const std::string& getTargetTriple() const { return TargetTriple; }
-  void setTargetTriple(const std::string& T) { TargetTriple = T; }
+  const std::string &getModuleIdentifier() const { return ModuleID; }
+  void setModuleIdentifier(const std::string &ID) { ModuleID = ID; }
+
+  const std::string &getTargetTriple() const { return TargetTriple; }
+  void setTargetTriple(const std::string &T) { TargetTriple = T; }
 
   /// Target endian information...
   Endianness getEndianness() const { return Endian; }

@@ -57,8 +57,6 @@ public:
 
   typedef ArgumentListType::iterator arg_iterator;
   typedef ArgumentListType::const_iterator const_arg_iterator;
-  typedef arg_iterator aiterator; // legacy, deprecated
-  typedef const_arg_iterator const_aiterator; // legacy, deprecated
 
 private:
   // Important things that make up a function!
