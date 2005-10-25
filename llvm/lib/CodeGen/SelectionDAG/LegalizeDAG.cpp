@@ -2266,7 +2266,8 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
     // legal, such as PowerPC.
     if (Node->getOpcode() == ISD::FP_TO_UINT && 
         !TLI.isOperationLegal(ISD::FP_TO_UINT, NVT) &&
-        TLI.isOperationLegal(ISD::FP_TO_SINT, NVT)) {
+        (TLI.isOperationLegal(ISD::FP_TO_SINT, NVT) ||
+         TLI.getOperationAction(ISD::FP_TO_SINT, NVT)==TargetLowering::Custom)){
       Result = DAG.getNode(ISD::FP_TO_SINT, NVT, Tmp1);
     } else {
       Result = DAG.getNode(Node->getOpcode(), NVT, Tmp1);
