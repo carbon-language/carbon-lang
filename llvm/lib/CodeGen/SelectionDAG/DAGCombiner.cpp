@@ -2472,7 +2472,7 @@ SDOperand DAGCombiner::SimplifySetCC(MVT::ValueType VT, SDOperand N0,
           if (N0.getOperand(0) == N1.getOperand(1))
             return DAG.getSetCC(VT, N0.getOperand(1), N1.getOperand(0), Cond);
           if (N0.getOperand(1) == N1.getOperand(0))
-            return DAG.getSetCC(VT, N0.getOperand(1), N1.getOperand(1), Cond);
+            return DAG.getSetCC(VT, N0.getOperand(0), N1.getOperand(1), Cond);
         }
       }
 
