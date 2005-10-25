@@ -844,14 +844,6 @@ SDOperand PPCDAGToDAGISel::Select(SDOperand Op) {
   case ISD::CALL:               return SelectCALL(Op);
   case ISD::TAILCALL:           return SelectCALL(Op);
 
-  case ISD::UNDEF:
-    if (N->getValueType(0) == MVT::i32)
-      CurDAG->SelectNodeTo(N, PPC::IMPLICIT_DEF_GPR, MVT::i32);
-    else if (N->getValueType(0) == MVT::f32)
-      CurDAG->SelectNodeTo(N, PPC::IMPLICIT_DEF_F4, MVT::f32);
-    else 
-      CurDAG->SelectNodeTo(N, PPC::IMPLICIT_DEF_F8, MVT::f64);
-    return SDOperand(N, 0);
   case ISD::FrameIndex: {
     int FI = cast<FrameIndexSDNode>(N)->getIndex();
     if (N->hasOneUse()) {
