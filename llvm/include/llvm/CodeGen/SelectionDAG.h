@@ -280,7 +280,10 @@ public:
   void SelectNodeTo(SDNode *N, unsigned TargetOpc, MVT::ValueType VT1,
                     MVT::ValueType VT2, SDOperand Op1, SDOperand Op2,
                     SDOperand Op3);
-  
+
+  SDOperand getTargetNode(unsigned Opcode, MVT::ValueType VT) {
+    return getNode(ISD::BUILTIN_OP_END+Opcode, VT);
+  }
   SDOperand getTargetNode(unsigned Opcode, MVT::ValueType VT,
                           SDOperand Op1) {
     return getNode(ISD::BUILTIN_OP_END+Opcode, VT, Op1);
