@@ -898,8 +898,11 @@ SDOperand PPCDAGToDAGISel::Select(SDOperand Op) {
       Tmp = CurDAG->getTargetNode(PPC::ADDIS, MVT::i32, getGlobalBaseReg(),CPI);
     else
       Tmp = CurDAG->getTargetNode(PPC::LIS, MVT::i32, CPI);
-    CurDAG->SelectNodeTo(N, PPC::LA, MVT::i32, Tmp, CPI);
-    return SDOperand(N, 0);
+    if (N->hasOneUse()) {
+      CurDAG->SelectNodeTo(N, PPC::LA, MVT::i32, Tmp, CPI);
+      return SDOperand(N, 0);
+    }
+    return CurDAG->getTargetNode(PPC::LA, MVT::i32, Tmp, CPI);
   }
   case ISD::GlobalAddress: {
     GlobalValue *GV = cast<GlobalAddressSDNode>(N)->getGlobal();
@@ -1035,7 +1038,10 @@ SDOperand PPCDAGToDAGISel::Select(SDOperand Op) {
       unsigned SH, MB, ME;
       if (isRotateAndMask(N->getOperand(0).Val, Imm, false, SH, MB, ME)) {
         Val = Select(N->getOperand(0).getOperand(0));
-      } else {
+      } else if (Imm == 0) {
+        // AND X, 0 -> 0, not "rlwinm 32".
+        return Select(N->getOperand(1));
+      } else {        
         Val = Select(N->getOperand(0));
         isRunOfOnes(Imm, MB, ME);
         SH = 0;
