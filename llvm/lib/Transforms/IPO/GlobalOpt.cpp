@@ -1113,7 +1113,8 @@ bool GlobalOpt::OptimizeGlobalVars(Module &M) {
 /// FindGlobalCtors - Find the llvm.globalctors list, verifying that all
 /// initializers have an init priority of 65535.
 GlobalVariable *GlobalOpt::FindGlobalCtors(Module &M) {
-  for (Module::giterator I = M.global_begin(), E = M.global_end(); I != E; ++I)
+  for (Module::global_iterator I = M.global_begin(), E = M.global_end();
+       I != E; ++I)
     if (I->getName() == "llvm.global_ctors") {
       // Found it, verify it's an array of { int, void()* }.
       const ArrayType *ATy =dyn_cast<ArrayType>(I->getType()->getElementType());
