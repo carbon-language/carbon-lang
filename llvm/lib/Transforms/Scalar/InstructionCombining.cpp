@@ -1725,6 +1725,15 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
     // and X, -1 == X
     if (AndRHS->isAllOnesValue())
       return ReplaceInstUsesWith(I, Op0);
+    
+    // and (and X, c1), c2 -> and (x, c1&c2).  Handle this case here, before
+    // calling MaskedValueIsZero, to avoid inefficient cases where we traipse
+    // through many levels of ands.
+    {
+      Value *X; ConstantInt *C1;
+      if (match(Op0, m_And(m_Value(X), m_ConstantInt(C1))))
+        return BinaryOperator::createAnd(X, ConstantExpr::getAnd(C1, AndRHS));
+    }
 
     if (MaskedValueIsZero(Op0, AndRHS))        // LHS & RHS == 0
       return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
