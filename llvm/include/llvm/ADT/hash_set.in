@@ -25,7 +25,7 @@
 //  3.0.4       std      ext/hash_set
 //  3.1      __gnu_cxx   ext/hash_set
 //  HP aCC6     std      stdex/rw/hashset.h
-//
+//  MS VC++    stdext      hash_map
 
 #undef HAVE_GNU_EXT_HASH_SET
 #undef HAVE_STD_EXT_HASH_SET
@@ -64,6 +64,13 @@
 #  define HASH_NAMESPACE std
 # endif
 
+// Support Microsoft VC++.
+#elif defined(_MSC_VER)
+# include <hash_set>
+# ifndef HASH_NAMESPACE
+#  define HASH_NAMESPACE stdext
+# endif
+
 // Give a warning if we couldn't find it, instead of (or in addition to)
 // randomly doing something dumb.
 #else
@@ -94,7 +101,6 @@ class hash_set :
 #endif
 
 using HASH_NAMESPACE::hash_set;
-using HASH_NAMESPACE::hash;
 
 // Include vector because ext/hash_set includes stl_vector.h and leaves
 // out specializations like stl_bvector.h, causing link conflicts.

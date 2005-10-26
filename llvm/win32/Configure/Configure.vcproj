@@ -74,8 +74,24 @@
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Generating $(SolutionDir)llvm\Config\config.h"
-						CommandLine="..\tools\sed &lt;$(InputPath) &gt;$(ProjectDir)..\llvm\Config\config.h &quot;s/#undef PACKAGE_NAME/#define PACKAGE_NAME \&quot;LLVM (win32 vc7.1)\&quot;/;s/#undef PACKAGE_VERSION/#define PACKAGE_VERSION 1.4/;s/#undef HAVE_WINDOWS_H/#define HAVE_WINDOWS_H 1/;s/#undef HAVE_LIMITS_H/#define HAVE_LIMITS_H 1/;s/#undef HAVE_SYS_STAT_H/#define HAVE_SYS_STAT_H 1/;s/#undef HAVE_STDLIB_H/#define HAVE_STDLIB_H 1/;s/#undef HAVE_STDIO_H/#define HAVE_STDIO_H 1/;s/#undef HAVE_STRING_H/#define HAVE_STRING_H 1/;s/#undef SHLIBEXT/#define SHLIBEXT \&quot;.lib\&quot;/;s/#undef error_t/#define error_t int/;s/#undef HAVE_ERRNO_H/#define HAVE_ERRNO_H 1/;s/#undef LTDL_DLOPEN_DEPLIBS/#define LTDL_DLOPEN_DEPLIBS 1/;s/#undef LTDL_OBJDIR/#define LTDL_OBJDIR \&quot;_libs\&quot;/;s/#undef LTDL_SHLIBPATH_VAR/#define LTDL_SHLIBPATH_VAR \&quot;PATH\&quot;/;s/#undef LTDL_SHLIB_EXT/#define LTDL_SHLIB_EXT \&quot;.dll\&quot;/;s/#undef LTDL_SYSSEARCHPATH/#define LTDL_SYSSEARCHPATH \&quot;\&quot;/;s/#undef LLVM_ON_WIN32/#define LLVM_ON_WIN32 1/;&quot;
-"
+						CommandLine="copy $(InputPath) $(ProjectDir)..\llvm\Config\config.h
+echo #define PACKAGE_NAME &quot;LLVM (win32 vc7.1)&quot; &gt;&gt;$(ProjectDir)..\llvm\Config\config.h
+echo #define PACKAGE_VERSION 1.4 &gt;&gt;$(ProjectDir)..\llvm\Config\config.h
+echo #define HAVE_WINDOWS_H 1 &gt;&gt;$(ProjectDir)..\llvm\Config\config.h
+echo #define HAVE_LIMITS_H 1 &gt;&gt;$(ProjectDir)..\llvm\Config\config.h
+echo #define HAVE_SYS_STAT_H 1 &gt;&gt;$(ProjectDir)..\llvm\Config\config.h
+echo #define HAVE_STDLIB_H 1 &gt;&gt;$(ProjectDir)..\llvm\Config\config.h
+echo #define HAVE_STDIO_H 1 &gt;&gt;$(ProjectDir)..\llvm\Config\config.h
+echo #define HAVE_STRING_H 1 &gt;&gt;$(ProjectDir)..\llvm\Config\config.h
+echo #define SHLIBEXT &quot;.lib&quot; &gt;&gt;$(ProjectDir)..\llvm\Config\config.h
+echo #define error_t int &gt;&gt;$(ProjectDir)..\llvm\Config\config.h
+echo #define HAVE_ERRNO_H 1 &gt;&gt;$(ProjectDir)..\llvm\Config\config.h
+echo #define LTDL_DLOPEN_DEPLIBS 1 &gt;&gt;$(ProjectDir)..\llvm\Config\config.h
+echo #define LTDL_OBJDIR &quot;_libs&quot; &gt;&gt;$(ProjectDir)..\llvm\Config\config.h
+echo #define LTDL_SHLIBPATH_VAR &quot;PATH&quot; &gt;&gt;$(ProjectDir)..\llvm\Config\config.h
+echo #define LTDL_SHLIB_EXT &quot;.dll&quot; &gt;&gt;$(ProjectDir)..\llvm\Config\config.h
+echo #define LTDL_SYSSEARCHPATH &quot;&quot; &gt;&gt;$(ProjectDir)..\llvm\Config\config.h
+echo #define LLVM_ON_WIN32 1 &gt;&gt;$(ProjectDir)..\llvm\Config\config.h"
 						Outputs="$(ProjectDir)..\llvm\Config\config.h"/>
 				</FileConfiguration>
 			</File>
@@ -86,8 +102,7 @@
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Generating $(SolutionDir)llvm\Support\DataTypes.h"
-						CommandLine="..\tools\sed &lt;$(InputPath) &gt;$(ProjectDir)..\llvm\Support\DataTypes.h &quot;s/#undef HAVE_SYS_TYPES_H/#define HAVE_SYS_TYPES_H 1/;s/#undef HAVE_INTTYPES_H/#define HAVE_INTTYPES_H 1/;s/#undef HAVE_STDINT_H/#define HAVE_STD_INT_H 1/&quot;
-"
+            CommandLine="copy $(InputPath) $(ProjectDir)..\llvm\Support\DataTypes.h"
 						Outputs="$(ProjectDir)..\llvm\Support\DataTypes.h"/>
 				</FileConfiguration>
 			</File>
@@ -98,8 +113,7 @@
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Generating $(SolutionDir)llvm\ADT\hash_map"
-						CommandLine="..\tools\sed &lt;$(InputPath) &gt;$(ProjectDir)..\llvm\ADT\hash_map &quot;s/#undef HAVE_GLOBAL_HASH_MAP/#define HAVE_GLOBAL_HASH_MAP 1/;/using HASH_NAMESPACE\:\:hash;.*$/{D};s/define HASH_NAMESPACE std/define HASH_NAMESPACE stdext\nusing std::_Distance;/&quot;
-"
+            CommandLine="copy $(InputPath) $(ProjectDir)..\llvm\ADT\hash_map"
 						Outputs="$(ProjectDir)..\llvm\ADT\hash_map"/>
 				</FileConfiguration>
 			</File>
@@ -110,8 +124,7 @@
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Generating $(SolutionDir)llvm\ADT\hash_set"
-						CommandLine="..\tools\sed &lt;$(InputPath) &gt;$(ProjectDir)..\llvm\ADT\hash_set &quot;s/#undef HAVE_GLOBAL_HASH_SET/#define HAVE_GLOBAL_HASH_SET 1/;/using HASH_NAMESPACE\:\:hash;.*$/{D};/#include.*HashExtras.*$/{D};s/define HASH_NAMESPACE std/define HASH_NAMESPACE stdext/&quot;
-"
+            CommandLine="copy $(InputPath) $(ProjectDir)..\llvm\ADT\hash_set"
 						Outputs="$(ProjectDir)..\llvm\ADT\hash_set"/>
 				</FileConfiguration>
 			</File>
@@ -122,8 +135,7 @@
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Generating $(SolutionDir)llvm\ADT\iterator"
-						CommandLine="..\tools\sed &lt;$(InputPath) &gt;$(ProjectDir)..\llvm\ADT\iterator &quot;s/#undef HAVE_BI_ITERATOR/#define HAVE_BI_ITERATOR 0/;s/#undef HAVE_STD_ITERATOR/#define HAVE_STD_ITERATOR 1/;s/#undef HAVE_FWD_ITERATOR/#define HAVE_FWD_ITERATOR 0/&quot;
-"
+            CommandLine="copy $(InputPath) $(ProjectDir)..\llvm\ADT\iterator"
 						Outputs="$(ProjectDir)..\llvm\ADT\iterator"/>
 				</FileConfiguration>
 			</File>

@@ -24,7 +24,7 @@
 //  3.0.4       std      ext/hash_map
 //  3.1      __gnu_cxx   ext/hash_map
 //  HP aCC6     std      stdex/rw/hashm*ap.h
-//
+//  MS VC++    stdext      hash_map
 
 #undef HAVE_GNU_EXT_HASH_MAP
 #undef HAVE_STD_EXT_HASH_MAP
@@ -61,6 +61,14 @@
 # include <rw/stdex/hashmmap.h>
 # ifndef HASH_NAMESPACE
 #  define HASH_NAMESPACE std
+# endif
+
+// Support Microsoft VC++.
+#elif defined(_MSC_VER)
+# include <hash_map>
+# ifndef HASH_NAMESPACE
+#  define HASH_NAMESPACE stdext
+   using std::_Distance;
 # endif
 
 // Give a warning if we couldn't find it, instead of (or in addition to)
@@ -100,10 +108,6 @@ class hash_multimap : public rw_hashmultimap<KeyType, ValueType, class _HashFcn,
 } // end HASH_NAMESPACE;
 #endif
 
-using HASH_NAMESPACE::hash_map;
-using HASH_NAMESPACE::hash_multimap;
-using HASH_NAMESPACE::hash;
-
 // Include vector because ext/hash_map includes stl_vector.h and leaves
 // out specializations like stl_bvector.h, causing link conflicts.
 #include <vector>
@@ -136,6 +140,10 @@ namespace stdext {
 }
 
 #endif
+
+using HASH_NAMESPACE::hash_map;
+using HASH_NAMESPACE::hash_multimap;
+using HASH_NAMESPACE::hash;
 
 #include "llvm/ADT/HashExtras.h"
 

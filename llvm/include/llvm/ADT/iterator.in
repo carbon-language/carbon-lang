@@ -34,6 +34,12 @@
 #undef HAVE_STD_ITERATOR
 #undef HAVE_FWD_ITERATOR
 
+#ifdef _MSC_VER
+#  define HAVE_BI_ITERATOR 0
+#  define HAVE_STD_ITERATOR 1
+#  define HAVE_FWD_ITERATOR 0
+#endif
+
 #if !HAVE_BI_ITERATOR
 # if HAVE_STD_ITERATOR
 /// If the bidirectional iterator is not defined, we attempt to define it in
