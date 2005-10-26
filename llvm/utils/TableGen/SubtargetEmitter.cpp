@@ -45,24 +45,28 @@ struct LessRecordFieldName {
 };
 
 //
-// FeatureEnumeration - Emit an enumeration of all the subtarget features.
+// Enumeration - Emit the specified class as an enumeration.
 //
-void SubtargetEmitter::FeatureEnumeration(std::ostream &OS) {
-  RecordList Features = Records.getAllDerivedDefinitions("SubtargetFeature");
-  sort(Features.begin(), Features.end(), LessRecord());
+void SubtargetEmitter::Enumeration(std::ostream &OS,
+                                   const char *ClassName,
+                                   bool isBits) {
+  RecordList Defs = Records.getAllDerivedDefinitions(ClassName);
+  sort(Defs.begin(), Defs.end(), LessRecord());
 
   int i = 0;
   
   OS << "enum {\n";
   
-  for (RecordListIter RI = Features.begin(), E = Features.end(); RI != E;){
+  for (RecordListIter RI = Defs.begin(), E = Defs.end(); RI != E;) {
     Record *R = *RI++;
     std::string Instance = R->getName();
     OS << "  "
-       << Instance
-       << " = "
-       << " 1 << " << i++
-       << ((RI != E) ? ",\n" : "\n");
+       << Instance;
+    if (isBits) {
+      OS << " = "
+         << " 1 << " << i++;
+    }
+    OS << ((RI != E) ? ",\n" : "\n");
   }
   
   OS << "};\n";
@@ -76,8 +80,7 @@ void SubtargetEmitter::FeatureKeyValues(std::ostream &OS) {
   RecordList Features = Records.getAllDerivedDefinitions("SubtargetFeature");
   sort(Features.begin(), Features.end(), LessRecord());
 
-  OS << "\n"
-     << "// Sorted (by key) array of values for CPU features.\n"
+  OS << "// Sorted (by key) array of values for CPU features.\n"
      << "static llvm::SubtargetFeatureKV FeatureKV[] = {\n";
   for (RecordListIter RI = Features.begin(), E = Features.end(); RI != E;) {
     Record *R = *RI++;
@@ -105,8 +108,7 @@ void SubtargetEmitter::CPUKeyValues(std::ostream &OS) {
   RecordList Processors = Records.getAllDerivedDefinitions("Processor");
   sort(Processors.begin(), Processors.end(), LessRecordFieldName());
 
-  OS << "\n"
-     << "// Sorted (by key) array of values for CPU subtype.\n"
+  OS << "// Sorted (by key) array of values for CPU subtype.\n"
      << "static const llvm::SubtargetFeatureKV SubTypeKV[] = {\n";
   for (RecordListIter RI = Processors.begin(), E = Processors.end();
        RI != E;) {
@@ -145,15 +147,61 @@ void SubtargetEmitter::CPUKeyValues(std::ostream &OS) {
   OS<<"};\n";
 }
 
+//
+// ParseFeaturesFunction - Produces a subtarget specific function for parsing
+// the subtarget features string.
+//
+void SubtargetEmitter::ParseFeaturesFunction(std::ostream &OS) {
+  RecordList Features = Records.getAllDerivedDefinitions("SubtargetFeature");
+  sort(Features.begin(), Features.end(), LessRecord());
+
+  OS << "// ParseSubtargetFeatures - Parses features string setting specified\n" 
+        "// subtarget options.\n" 
+        "void llvm::";
+  OS << Target;
+  OS << "Subtarget::ParseSubtargetFeatures(const std::string &FS,\n"
+        "                                  const std::string &CPU) {\n"
+        "  SubtargetFeatures Features(FS);\n"
+        "  Features.setCPUIfNone(CPU);\n"
+        "  uint32_t Bits =  Features.getBits(SubTypeKV, SubTypeKVSize,\n"
+        "                                    FeatureKV, FeatureKVSize);\n";
+        
+  for (RecordListIter RI = Features.begin(), E = Features.end(); RI != E;) {
+    Record *R = *RI++;
+    std::string Instance = R->getName();
+    std::string Name = R->getValueAsString("Name");
+    std::string Type = R->getValueAsString("Type");
+    std::string Attribute = R->getValueAsString("Attribute");
+    
+    OS << "  " << Attribute << " = (Bits & " << Instance << ") != 0;\n";
+  }
+  OS << "}\n";
+}
+
 // 
 // SubtargetEmitter::run - Main subtarget enumeration emitter.
 //
 void SubtargetEmitter::run(std::ostream &OS) {
+  std::vector<Record*> Targets = Records.getAllDerivedDefinitions("Target");
+  if (Targets.size() == 0)
+    throw std::string("ERROR: No 'Target' subclasses defined!");
+  if (Targets.size() != 1)
+    throw std::string("ERROR: Multiple subclasses of Target defined!");
+  Target = Targets[0]->getName();
+
   EmitSourceFileHeader("Subtarget Enumeration Source Fragment", OS);
 
   OS << "#include \"llvm/Target/SubtargetFeature.h\"\n\n";
   
-  FeatureEnumeration(OS);
+  Enumeration(OS, "FuncUnit", true);
+  OS<<"\n";
+  Enumeration(OS, "InstrItinClass", false);
+  OS<<"\n";
+  Enumeration(OS, "SubtargetFeature", true);
+  OS<<"\n";
   FeatureKeyValues(OS);
+  OS<<"\n";
   CPUKeyValues(OS);
+  OS<<"\n";
+  ParseFeaturesFunction(OS);
 }

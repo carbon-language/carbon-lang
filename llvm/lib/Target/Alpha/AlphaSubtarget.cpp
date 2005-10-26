@@ -19,10 +19,7 @@ using namespace llvm;
 AlphaSubtarget::AlphaSubtarget(const Module &M, const std::string &FS)
   : HasF2I(false), HasCT(false) {
   std::string CPU = "generic";
-  SubtargetFeatures Features(FS);
-  Features.setCPUIfNone(CPU);
-  uint32_t Bits =Features.getBits(SubTypeKV, SubTypeKVSize,
-                                  FeatureKV, FeatureKVSize);
-  HasF2I = (Bits & FeatureFIX) != 0;
-  HasCT  = (Bits & FeatureCIX) != 0;
+
+  // Parse features string.
+  ParseSubtargetFeatures(FS, CPU);
 }

@@ -20,10 +20,12 @@ namespace llvm {
 
 class SubtargetEmitter : public TableGenBackend {
   RecordKeeper &Records;
+  std::string Target;
   
-  void FeatureEnumeration(std::ostream &OS);
+  void Enumeration(std::ostream &OS, const char *ClassName, bool isBits);
   void FeatureKeyValues(std::ostream &OS);
   void CPUKeyValues(std::ostream &OS);
+  void SubtargetEmitter::ParseFeaturesFunction(std::ostream &OS);
   
 public:
   SubtargetEmitter(RecordKeeper &R) : Records(R) {}

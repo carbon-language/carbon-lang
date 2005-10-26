@@ -68,22 +68,25 @@ static const char *GetCurrentPowerPCCPU() {
 }
 #endif
 
+
 PPCSubtarget::PPCSubtarget(const Module &M, const std::string &FS)
-  : StackAlignment(16), IsGigaProcessor(false), IsAIX(false), IsDarwin(false) {
+  : StackAlignment(16)
+  , IsGigaProcessor(false)
+  , Is64Bit(false)
+  , Has64BitRegs(false)
+  , HasAltivec(false)
+  , HasFSQRT(false)
+  , IsAIX(false)
+  , IsDarwin(false) {
 
   // Determine default and user specified characteristics
   std::string CPU = "generic";
 #if defined(__APPLE__)
   CPU = GetCurrentPowerPCCPU();
 #endif
-  SubtargetFeatures Features(FS);
-  Features.setCPUIfNone(CPU);
-  uint32_t Bits =  Features.getBits(SubTypeKV, SubTypeKVSize,
-                                    FeatureKV, FeatureKVSize);
-  IsGigaProcessor = (Bits & FeatureGPUL ) != 0;
-  Is64Bit         = (Bits & Feature64Bit) != 0;
-  HasFSQRT        = (Bits & FeatureFSqrt) != 0;
-  Has64BitRegs    = (Bits & Feature64BitRegs) != 0;
+
+  // Parse features string.
+  ParseSubtargetFeatures(FS, CPU);
 
   // Set the boolean corresponding to the current target triple, or the default
   // if one cannot be determined, to true.
