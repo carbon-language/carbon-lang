@@ -46,7 +46,7 @@ namespace {
   Statistic<> NumTwoAddressInstrs("twoaddressinstruction",
                                   "Number of two-address instructions");
   Statistic<> NumCommuted("twoaddressinstruction",
-                          "Number of instructions commuted to coallesce");
+                          "Number of instructions commuted to coalesce");
   Statistic<> NumConvertedTo3Addr("twoaddressinstruction",
                                 "Number of instructions promoted to 3-address");
 
@@ -127,7 +127,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
 
         // If this instruction is not the killing user of B, see if we can
         // rearrange the code to make it so.  Making it the killing user will
-        // allow us to coallesce A and B together, eliminating the copy we are
+        // allow us to coalesce A and B together, eliminating the copy we are
         // about to insert.
         if (!LV.KillsRegister(mi, regB)) {
           const TargetInstrDescriptor &TID = TII.get(opcode);

@@ -637,7 +637,7 @@ void LiveIntervals::computeIntervals()
 /// number.  If all of the places that IntA and IntB overlap are defined by
 /// copies from IntA to IntB, we know that these two ranges can really be
 /// merged if we adjust the value numbers.  If it is safe, adjust the value
-/// numbers and return true, allowing coallescing to occur.
+/// numbers and return true, allowing coalescing to occur.
 bool LiveIntervals::
 AdjustIfAllOverlappingRangesAreCopiesFrom(LiveInterval &IntA,
                                           LiveInterval &IntB,
@@ -729,7 +729,7 @@ void LiveIntervals::joinIntervalsInMachineBB(MachineBasicBlock *MBB) {
       // If DestInt is actually a copy from SrcInt (which we know) that is used
       // to define another value of SrcInt, we can change the other range of
       // SrcInt to be the value of the range that defines DestInt, allowing a
-      // coallesce.
+      // coalesce.
       if (!Joinable && DestInt.containsOneValue() &&
           AdjustIfAllOverlappingRangesAreCopiesFrom(SrcInt, DestInt, MIDefIdx))
         Joinable = true;
