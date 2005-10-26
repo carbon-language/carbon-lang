@@ -241,9 +241,6 @@
 					RelativePath="..\..\lib\Transforms\Scalar\LICM.cpp">
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Scalar\LoopSimplify.cpp">
-				</File>
-				<File
 					RelativePath="..\..\lib\Transforms\Scalar\LoopStrengthReduce.cpp">
 				</File>
 				<File
@@ -331,6 +328,9 @@
 				</File>
 				<File
 					RelativePath="..\..\lib\Transforms\Utils\Local.cpp">
+				</File>
+				<File
+					RelativePath="..\..\lib\Transforms\Utils\LoopSimplify.cpp">
 				</File>
 				<File
 					RelativePath="..\..\lib\Transforms\Utils\PromoteMemoryToRegister.cpp">
