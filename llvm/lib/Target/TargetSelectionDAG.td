@@ -99,6 +99,10 @@ def SDTExtInreg : SDTypeProfile<1, 2, [   // sext_inreg
   SDTCisVTSmallerThanOp<2, 1>
 ]>;
 
+def SDTSetCC : SDTypeProfile<1, 3, [ // setcc
+  SDTCisInt<0>, SDTCisSameAs<1, 2>, SDTCisVT<3, OtherVT>
+]>;
+
 //===----------------------------------------------------------------------===//
 // Selection DAG Node Properties.
 //
@@ -124,6 +128,7 @@ def node;
 
 def imm        : SDNode<"ISD::Constant"  , SDTImm     , [], "ConstantSDNode">;
 def vt         : SDNode<"ISD::VALUETYPE" , SDTVT      , [], "VTSDNode">;
+def cond       : SDNode<"ISD::CONDCODE"  , SDTVT      , [], "CondCodeSDNode">;
 def undef      : SDNode<"ISD::UNDEF"     , SDTUNDEF   , []>;
 def add        : SDNode<"ISD::ADD"       , SDTIntBinOp   ,
                         [SDNPCommutative, SDNPAssociative]>;
@@ -166,6 +171,22 @@ def fsqrt      : SDNode<"ISD::FSQRT"      , SDTFPUnaryOp>;
 
 def fround     : SDNode<"ISD::FP_ROUND"   , SDTFPRoundOp>;
 def fextend    : SDNode<"ISD::FP_EXTEND"  , SDTFPExtendOp>;
+
+def setcc      : SDNode<"ISD::SETCC"      , SDTSetCC>;
+
+//===----------------------------------------------------------------------===//
+// Selection DAG Condition Codes
+
+class CondCode; // ISD::CondCode enums
+def SETOEQ : CondCode; def SETOGT : CondCode;
+def SETOGE : CondCode; def SETOLT : CondCode; def SETOLE : CondCode;
+def SETONE : CondCode; def SETO   : CondCode; def SETUO  : CondCode;
+def SETUEQ : CondCode; def SETUGT : CondCode; def SETUGE : CondCode;
+def SETULT : CondCode; def SETULE : CondCode; def SETUNE : CondCode;
+
+def SETEQ : CondCode; def SETGT : CondCode; def SETGE : CondCode;
+def SETLT : CondCode; def SETLE : CondCode; def SETNE : CondCode;
+
 
 //===----------------------------------------------------------------------===//
 // Selection DAG Node Transformation Functions.
@@ -218,6 +239,49 @@ def vtFP       : PatLeaf<(vt),  [{ return MVT::isFloatingPoint(N->getVT()); }]>;
 
 def not  : PatFrag<(ops node:$in), (xor node:$in, immAllOnes)>;
 def ineg : PatFrag<(ops node:$in), (sub 0, node:$in)>;
+
+
+// setcc convenience fragments.
+def setoeq : PatFrag<(ops node:$lhs, node:$rhs),
+                     (setcc node:$lhs, node:$rhs, SETOEQ)>;
+def setogt : PatFrag<(ops node:$lhs, node:$rhs),
+                     (setcc node:$lhs, node:$rhs, SETOGT)>;
+def setoge : PatFrag<(ops node:$lhs, node:$rhs),
+                     (setcc node:$lhs, node:$rhs, SETOGE)>;
+def setolt : PatFrag<(ops node:$lhs, node:$rhs),
+                     (setcc node:$lhs, node:$rhs, SETOLT)>;
+def setole : PatFrag<(ops node:$lhs, node:$rhs),
+                     (setcc node:$lhs, node:$rhs, SETOLE)>;
+def setone : PatFrag<(ops node:$lhs, node:$rhs),
+                     (setcc node:$lhs, node:$rhs, SETONE)>;
+def seto   : PatFrag<(ops node:$lhs, node:$rhs),
+                     (setcc node:$lhs, node:$rhs, SETO)>;
+def setuo  : PatFrag<(ops node:$lhs, node:$rhs),
+                     (setcc node:$lhs, node:$rhs, SETUO)>;
+def setueq : PatFrag<(ops node:$lhs, node:$rhs),
+                     (setcc node:$lhs, node:$rhs, SETUEQ)>;
+def setugt : PatFrag<(ops node:$lhs, node:$rhs),
+                     (setcc node:$lhs, node:$rhs, SETUGT)>;
+def setuge : PatFrag<(ops node:$lhs, node:$rhs),
+                     (setcc node:$lhs, node:$rhs, SETUGE)>;
+def setult : PatFrag<(ops node:$lhs, node:$rhs),
+                     (setcc node:$lhs, node:$rhs, SETULT)>;
+def setule : PatFrag<(ops node:$lhs, node:$rhs),
+                     (setcc node:$lhs, node:$rhs, SETULE)>;
+def setune : PatFrag<(ops node:$lhs, node:$rhs),
+                     (setcc node:$lhs, node:$rhs, SETUNE)>;
+def seteq  : PatFrag<(ops node:$lhs, node:$rhs),
+                     (setcc node:$lhs, node:$rhs, SETEQ)>;
+def setgt  : PatFrag<(ops node:$lhs, node:$rhs),
+                     (setcc node:$lhs, node:$rhs, SETGT)>;
+def setge  : PatFrag<(ops node:$lhs, node:$rhs),
+                     (setcc node:$lhs, node:$rhs, SETGE)>;
+def setlt  : PatFrag<(ops node:$lhs, node:$rhs),
+                     (setcc node:$lhs, node:$rhs, SETLT)>;
+def setle  : PatFrag<(ops node:$lhs, node:$rhs),
+                     (setcc node:$lhs, node:$rhs, SETLE)>;
+def setne  : PatFrag<(ops node:$lhs, node:$rhs),
+                     (setcc node:$lhs, node:$rhs, SETNE)>;
 
 //===----------------------------------------------------------------------===//
 // Selection DAG Pattern Support.
