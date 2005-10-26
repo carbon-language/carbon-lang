@@ -20,8 +20,10 @@ include "../Target.td"
 // Subtarget Features
 //===----------------------------------------------------------------------===//
 
-def FeatureCIX : SubtargetFeature<"CIX", "Enable CIX extentions">;
-def FeatureFIX : SubtargetFeature<"FIX", "Enable FIX extentions">;
+def FeatureCIX : SubtargetFeature<"CIX", "bool", "HasCT",
+                                  "Enable CIX extentions">;
+def FeatureFIX : SubtargetFeature<"FIX", "bool", "HasF2I",
+                                  "Enable FIX extentions">;
 
 //===----------------------------------------------------------------------===//
 // Register File Description

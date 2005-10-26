@@ -252,11 +252,19 @@ class Target {
 //===----------------------------------------------------------------------===//
 // SubtargetFeature - A characteristic of the chip set.
 //
-class SubtargetFeature<string n, string d> {
+class SubtargetFeature<string n, string t, string a, string d> {
   // Name - Feature name.  Used by command line (-mattr=) to determine the
   // appropriate target chip.
   //
   string Name = n;
+  
+  // Type - Type of attribute to be set by feature.
+  //
+  string Type = t;
+  
+  // Attribute - Attribute to be set by feature.
+  //
+  string Attribute = a;
   
   // Desc - Feature description.  Used by command line (-mattr=) to display help
   // information.
