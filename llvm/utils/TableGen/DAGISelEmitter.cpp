@@ -291,8 +291,13 @@ bool TreePatternNode::UpdateNodeType(unsigned char VT, TreePattern &TP) {
     return true;
   }      
 
-  TP.error("Type inference contradiction found in node " + 
-           getOperator()->getName() + "!");
+  if (isLeaf()) {
+    dump();
+    TP.error("Type inference contradiction found in node!");
+  } else {
+    TP.error("Type inference contradiction found in node " + 
+             getOperator()->getName() + "!");
+  }
   return true; // unreachable
 }
 
@@ -466,8 +471,8 @@ static unsigned char getIntrinsicType(Record *R, bool NotRegisters,
     // TODO: if a register appears in exactly one regclass, we could use that
     // type info.
     return MVT::isUnknown;
-  } else if (R->isSubClassOf("ValueType")) {
-    // Using a VTSDNode.
+  } else if (R->isSubClassOf("ValueType") || R->isSubClassOf("CondCode")) {
+    // Using a VTSDNode or CondCodeSDNode.
     return MVT::Other;
   } else if (R->getName() == "node") {
     // Placeholder.
@@ -1582,6 +1587,11 @@ void DAGISelEmitter::EmitMatchForPattern(TreePatternNode *N,
           OS << "      if (cast<VTSDNode>(" << RootName << i << ")->getVT() != "
           << "MVT::" << LeafRec->getName() << ") goto P" << PatternNo
           << "Fail;\n";
+        } else if (LeafRec->isSubClassOf("CondCode")) {
+          // Make sure this is the specified cond code.
+          OS << "      if (cast<CondCodeSDNode>(" << RootName << i
+             << ")->get() != " << "MVT::" << LeafRec->getName()
+             << ") goto P" << PatternNo << "Fail;\n";
         } else {
           Child->dump();
           assert(0 && "Unknown leaf type!");
