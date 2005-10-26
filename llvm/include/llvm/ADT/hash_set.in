@@ -25,7 +25,7 @@
 //  3.0.4       std      ext/hash_set
 //  3.1      __gnu_cxx   ext/hash_set
 //  HP aCC6     std      stdex/rw/hashset.h
-//  MS VC++    stdext      hash_map
+//  MS VC++    stdext      hash_set
 
 #undef HAVE_GNU_EXT_HASH_SET
 #undef HAVE_STD_EXT_HASH_SET
