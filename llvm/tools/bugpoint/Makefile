@@ -14,7 +14,7 @@ OPTLIBS  = LLVMTransforms.a LLVMInstrumentation.a
 ANALIBS  = LLVMDataStructure LLVMipa.a LLVMTarget.a 
 
 USEDLIBS = LLVMipo.a LLVMScalarOpts.a $(OPTLIBS) $(ANALIBS) LLVMAnalysis.a \
-	   LLVMTransformUtils.a \
+	   LLVMTransformUtils \
 	   LLVMAsmParser LLVMLinker.a LLVMBCReader LLVMBCWriter \
 	   LLVMCore LLVMSupport.a LLVMbzip2 LLVMSystem.a
 

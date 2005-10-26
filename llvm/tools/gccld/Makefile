@@ -11,7 +11,7 @@ LEVEL = ../..
 
 TOOLNAME = gccld
 USEDLIBS = LLVMipo.a LLVMTransforms.a LLVMScalarOpts.a LLVMAnalysis.a \
-           LLVMipa.a LLVMTransformUtils.a LLVMTarget.a LLVMLinker.a \
+           LLVMipa.a LLVMTransformUtils LLVMTarget.a LLVMLinker.a \
            LLVMArchive.a LLVMBCReader LLVMBCWriter \
            LLVMCore LLVMSupport.a LLVMbzip2 LLVMSystem.a
 

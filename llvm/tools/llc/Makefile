@@ -70,7 +70,7 @@ USEDLIBS += \
 	LLVMipa.a \
 	LLVMTransforms.a \
 	LLVMScalarOpts.a \
-	LLVMTransformUtils.a \
+	LLVMTransformUtils \
 	LLVMAnalysis.a \
 	LLVMBCReader \
 	LLVMBCWriter \

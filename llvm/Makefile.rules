@@ -588,9 +588,9 @@ endif
 # What the Sparc JIT requires
 ifdef ENABLE_SPARCV9_JIT
   JIT_LIBS += LLVMSparcV9 LLVMSparcV9ModuloSched LLVMSparcV9InstrSched \
-              LLVMSparcV9LiveVar LLVMInstrumentation.a LLVMProfilePaths \
+              LLVMSparcV9LiveVar LLVMInstrumentation.a \
               LLVMBCWriter LLVMTransforms.a LLVMipo.a LLVMipa.a \
-              LLVMDataStructure.a LLVMSparcV9RegAlloc
+              LLVMDataStructure LLVMSparcV9RegAlloc
 endif
 
 # You can enable the PowerPC JIT on a non-PowerPC host by setting the flag
@@ -617,7 +617,7 @@ ifdef ENABLE_ALPHA_JIT
   JIT_LIBS += LLVMAlpha LLVMSelectionDAG
 endif
 
-LLVMLIBS := $(JIT_LIBS) LLVMScalarOpts.a LLVMTransformUtils.a LLVMAnalysis.a \
+LLVMLIBS := $(JIT_LIBS) LLVMScalarOpts.a LLVMTransformUtils LLVMAnalysis.a \
             LLVMBCReader LLVMCore LLVMSupport.a LLVMTarget.a LLVMbzip2 \
             LLVMSystem.a $(PLATFORMLIBDL)
 endif
