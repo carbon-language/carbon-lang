@@ -1590,7 +1590,7 @@ void DAGISelEmitter::EmitMatchForPattern(TreePatternNode *N,
         } else if (LeafRec->isSubClassOf("CondCode")) {
           // Make sure this is the specified cond code.
           OS << "      if (cast<CondCodeSDNode>(" << RootName << i
-             << ")->get() != " << "MVT::" << LeafRec->getName()
+             << ")->get() != " << "ISD::" << LeafRec->getName()
              << ") goto P" << PatternNo << "Fail;\n";
         } else {
           Child->dump();
