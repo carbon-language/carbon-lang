@@ -136,21 +136,14 @@ def CMOVLTi  : OForm4L< 0x11, 0x44, "cmovlt $RCOND,$L,$RDEST">; //CMOVE if RCOND
 def CMOVNE   : OForm4<  0x11, 0x26, "cmovne $RCOND,$RSRC,$RDEST">; //CMOVE if RCOND != zero
 def CMOVNEi  : OForm4L< 0x11, 0x26, "cmovne $RCOND,$L,$RDEST">; //CMOVE if RCOND != zero
 
-let isTwoAddress = 1 in {
 //conditional moves, fp
- def FCMOVEQ : FPFormCM<0x17, 0x02A, (ops FPRC:$RDEST, FPRC:$RSRC2, FPRC:$RSRC, FPRC:$RCOND),
-        "fcmoveq $RCOND,$RSRC,$RDEST">; //FCMOVE if = zero
- def FCMOVGE : FPFormCM<0x17, 0x02D, (ops FPRC:$RDEST, FPRC:$RSRC2, FPRC:$RSRC, FPRC:$RCOND),
-        "fcmovge $RCOND,$RSRC,$RDEST">; //FCMOVE if >= zero
- def FCMOVGT : FPFormCM<0x17, 0x02F, (ops FPRC:$RDEST, FPRC:$RSRC2, FPRC:$RSRC, FPRC:$RCOND),
-        "fcmovgt $RCOND,$RSRC,$RDEST">; //FCMOVE if > zero
- def FCMOVLE : FPFormCM<0x17, 0x02E, (ops FPRC:$RDEST, FPRC:$RSRC2, FPRC:$RSRC, FPRC:$RCOND),
-        "fcmovle $RCOND,$RSRC,$RDEST">; //FCMOVE if <= zero
- def FCMOVLT : FPFormCM<0x17, 0x02, (ops FPRC:$RDEST, FPRC:$RSRC2, FPRC:$RSRC, FPRC:$RCOND),
-        "fcmovlt $RCOND,$RSRC,$RDEST">; // FCMOVE if < zero
- def FCMOVNE : FPFormCM<0x17, 0x02B, (ops FPRC:$RDEST, FPRC:$RSRC2, FPRC:$RSRC, FPRC:$RCOND),
-        "fcmovne $RCOND,$RSRC,$RDEST">; //FCMOVE if != zero
-}
+def FCMOVEQ : FPFormCM<0x17, 0x02A, "fcmoveq $RCOND,$RSRC,$RDEST">; //FCMOVE if = zero
+def FCMOVGE : FPFormCM<0x17, 0x02D, "fcmovge $RCOND,$RSRC,$RDEST">; //FCMOVE if >= zero
+def FCMOVGT : FPFormCM<0x17, 0x02F, "fcmovgt $RCOND,$RSRC,$RDEST">; //FCMOVE if > zero
+def FCMOVLE : FPFormCM<0x17, 0x02E, "fcmovle $RCOND,$RSRC,$RDEST">; //FCMOVE if <= zero
+def FCMOVLT : FPFormCM<0x17, 0x02C, "fcmovlt $RCOND,$RSRC,$RDEST">; // FCMOVE if < zero
+def FCMOVNE : FPFormCM<0x17, 0x02B, "fcmovne $RCOND,$RSRC,$RDEST">; //FCMOVE if != zero
+
 
 def ADDL     : OForm< 0x10, 0x00, "addl $RA,$RB,$RC",
                       [(set GPRC:$RC, (intop (add GPRC:$RA, GPRC:$RB)))]>;
@@ -329,10 +322,10 @@ def CMPULT   : OForm< 0x10, 0x1D, "cmpult $RA,$RB,$RC", []>; //Compare unsigned 
 def CMPULTi  : OFormL<0x10, 0x1D, "cmpult $RA,$L,$RC", []>; //Compare unsigned quadword less than
 
 //Comparison, FP
-def CMPTEQ : FPForm<0x16, 0x0A5, "cmpteq/su $RA,$RB,$RC">;  //Compare T_floating equal
-def CMPTLE : FPForm<0x16, 0x0A7, "cmptle/su $RA,$RB,$RC">;  //Compare T_floating less than or equal
-def CMPTLT : FPForm<0x16, 0x0A6, "cmptlt/su $RA,$RB,$RC">;  //Compare T_floating less than
-def CMPTUN : FPForm<0x16, 0x0A4, "cmptun/su $RA,$RB,$RC">;  //Compare T_floating unordered
+def CMPTEQ : FPForm<0x16, 0x5A5, "cmpteq/su $RA,$RB,$RC">;  //Compare T_floating equal
+def CMPTLE : FPForm<0x16, 0x5A7, "cmptle/su $RA,$RB,$RC">;  //Compare T_floating less than or equal
+def CMPTLT : FPForm<0x16, 0x5A6, "cmptlt/su $RA,$RB,$RC">;  //Compare T_floating less than
+def CMPTUN : FPForm<0x16, 0x5A4, "cmptun/su $RA,$RB,$RC">;  //Compare T_floating unordered
 
 //There are in the Multimedia extentions, so let's not use them yet
 //def MAXSB8  : OForm<0x1C, 0x3E, "MAXSB8 $RA,$RB,$RC">; //Vector signed byte maximum
@@ -486,11 +479,11 @@ def ITOFT : FPForm<0x14, 0x024, "itoft $RA,$RC">; //Integer to floating move, T_
 //CVTLQ F-P 17.010 Convert longword to quadword
 //CVTQL F-P 17.030 Convert quadword to longword
 //These use SW completion, may not have function code for that set right (matters for JIT)
-def CVTQS : FPForm<0x16, 0x0BC, "cvtqs $RB,$RC">; //Convert quadword to S_floating
-def CVTQT : FPForm<0x16, 0x0BE, "cvtqt $RB,$RC">; //Convert quadword to T_floating
-def CVTST : FPForm<0x16, 0x2AC, "cvtsts $RB,$RC">; //Convert S_floating to T_floating
+def CVTQS : FPForm<0x16, 0x7BC, "cvtqs/sui $RB,$RC">; //Convert quadword to S_floating
+def CVTQT : FPForm<0x16, 0x7BE, "cvtqt/sui $RB,$RC">; //Convert quadword to T_floating
+def CVTST : FPForm<0x16, 0x6AC, "cvtst/s $RB,$RC">; //Convert S_floating to T_floating
 def CVTTQ : FPForm<0x16, 0x52F, "cvttq/svc $RB,$RC">; //Convert T_floating to quadword
-def CVTTS : FPForm<0x16, 0x5AC, "cvtts/su $RB,$RC">; //Convert T_floating to S_floating
+def CVTTS : FPForm<0x16, 0x7AC, "cvtts/sui $RB,$RC">; //Convert T_floating to S_floating
 
 //S_floating : IEEE Single
 //T_floating : IEEE Double

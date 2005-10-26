@@ -196,13 +196,14 @@ class FPForm<bits<6> opcode, bits<11> fun, string asmstr>
   let Inst{4-0} = Fc;
 }
 
-class FPFormCM<bits<6> opcode, bits<11> fun, dag OL, string asmstr> 
-        : InstAlpha<opcode, OL, asmstr> {
+class FPFormCM<bits<6> opcode, bits<11> fun, string asmstr> 
+        : InstAlpha<opcode, (ops FPRC:$RDEST, FPRC:$RSRC2, FPRC:$RSRC, FPRC:$RCOND), asmstr> {
   bits<5> Fc;
   bits<5> Fa;
   bits<5> Fb;
   bits<11> Function = fun;
 
+  let isTwoAddress = 1;
   let Inst{25-21} = Fa;
   let Inst{20-16} = Fb;
   let Inst{15-5} = Function;
