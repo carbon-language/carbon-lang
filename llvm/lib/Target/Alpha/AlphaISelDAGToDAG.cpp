@@ -111,34 +111,6 @@ SDOperand AlphaDAGToDAGISel::Select(SDOperand Op) {
   case ISD::DYNAMIC_STACKALLOC:
     assert(0 && "You want these too?");
 
-  case ISD::SETCC: {
-    ISD::CondCode CC = cast<CondCodeSDNode>(N->getOperand(2))->get();
-    assert(MVT::isInteger(N->getOperand(0).getValueType()) && "FP numbers are unnecessary");
-    SDOperand Op1 = Select(N->getOperand(0));
-    SDOperand Op2 = Select(N->getOperand(1));
-    unsigned Opc = Alpha::WTF;
-    int dir;
-    switch (CC) {
-    default: N->dump(); assert(0 && "Unknown integer comparison!");
-    case ISD::SETEQ:  Opc = Alpha::CMPEQ; dir=1; break;
-    case ISD::SETLT:  Opc = Alpha::CMPLT; dir = 1; break;
-    case ISD::SETLE:  Opc = Alpha::CMPLE; dir = 1; break;
-    case ISD::SETGT:  Opc = Alpha::CMPLT; dir = 0; break;
-    case ISD::SETGE:  Opc = Alpha::CMPLE; dir = 0; break;
-    case ISD::SETULT: Opc = Alpha::CMPULT; dir = 1; break;
-    case ISD::SETUGT: Opc = Alpha::CMPULT; dir = 0; break;
-    case ISD::SETULE: Opc = Alpha::CMPULE; dir = 1; break;
-    case ISD::SETUGE: Opc = Alpha::CMPULE; dir = 0; break;
-    case ISD::SETNE: {//Handle this one special
-      SDOperand Tmp  = CurDAG->getTargetNode(Alpha::CMPEQ, MVT::i64, Op1, Op2);
-      CurDAG->SelectNodeTo(N, Alpha::CMPEQ, MVT::i64, CurDAG->getRegister(Alpha::R31, MVT::i64), Tmp);
-      return SDOperand(N, 0);
-    }
-    }
-    CurDAG->SelectNodeTo(N, Opc, MVT::i64, dir ? Op1 : Op2, dir ? Op2 : Op1);
-    return SDOperand(N, 0);
-  }
-
   case ISD::BRCOND: {
     SDOperand Chain = Select(N->getOperand(0));
     SDOperand CC = Select(N->getOperand(1));

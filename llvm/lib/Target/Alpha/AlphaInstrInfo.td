@@ -308,18 +308,54 @@ def ZAPNOTi  : OFormL<0x12, 0x31, "zapnot $RA,$L,$RC",
                       [(set GPRC:$RC, (and GPRC:$RA, immZAP:$L))]>; 
 
 //Comparison, int
-def CMPBGE   : OForm< 0x10, 0x0F, "cmpbge $RA,$RB,$RC", []>; //Compare byte
-def CMPBGEi  : OFormL<0x10, 0x0F, "cmpbge $RA,$L,$RC", []>; //Compare byte
-def CMPEQ    : OForm< 0x10, 0x2D, "cmpeq $RA,$RB,$RC", []>; //Compare signed quadword equal
-def CMPEQi   : OFormL<0x10, 0x2D, "cmpeq $RA,$L,$RC", []>; //Compare signed quadword equal
-def CMPLE    : OForm< 0x10, 0x6D, "cmple $RA,$RB,$RC", []>; //Compare signed quadword less than or equal
-def CMPLEi   : OFormL<0x10, 0x6D, "cmple $RA,$L,$RC", []>; //Compare signed quadword less than or equal
-def CMPLT    : OForm< 0x10, 0x4D, "cmplt $RA,$RB,$RC", []>; //Compare signed quadword less than
-def CMPLTi   : OFormL<0x10, 0x4D, "cmplt $RA,$L,$RC", []>; //Compare signed quadword less than
-def CMPULE   : OForm< 0x10, 0x3D, "cmpule $RA,$RB,$RC", []>; //Compare unsigned quadword less than or equal
-def CMPULEi  : OFormL<0x10, 0x3D, "cmpule $RA,$L,$RC", []>; //Compare unsigned quadword less than or equal
-def CMPULT   : OForm< 0x10, 0x1D, "cmpult $RA,$RB,$RC", []>; //Compare unsigned quadword less than
-def CMPULTi  : OFormL<0x10, 0x1D, "cmpult $RA,$L,$RC", []>; //Compare unsigned quadword less than
+//So this is a waste of what this instruction can do, but it still saves something
+def CMPBGE  : OForm< 0x10, 0x0F, "cmpbge $RA,$RB,$RC", 
+                     [(set GPRC:$RC, (setuge (and GPRC:$RA, 255), (and GPRC:$RB, 255)))]>;
+def CMPBGEi : OFormL<0x10, 0x0F, "cmpbge $RA,$L,$RC",
+                     [(set GPRC:$RC, (setuge (and GPRC:$RA, 255), immUExt8:$L))]>;
+def CMPEQ   : OForm< 0x10, 0x2D, "cmpeq $RA,$RB,$RC", 
+                     [(set GPRC:$RC, (seteq GPRC:$RA, GPRC:$RB))]>;
+def CMPEQi  : OFormL<0x10, 0x2D, "cmpeq $RA,$L,$RC", 
+                     [(set GPRC:$RC, (seteq GPRC:$RA, immUExt8:$L))]>;
+def CMPLE   : OForm< 0x10, 0x6D, "cmple $RA,$RB,$RC", 
+                     [(set GPRC:$RC, (setle GPRC:$RA, GPRC:$RB))]>;
+def CMPLEi  : OFormL<0x10, 0x6D, "cmple $RA,$L,$RC",
+                     [(set GPRC:$RC, (setle GPRC:$RA, immUExt8:$L))]>;
+def CMPLT   : OForm< 0x10, 0x4D, "cmplt $RA,$RB,$RC",
+                     [(set GPRC:$RC, (setlt GPRC:$RA, GPRC:$RB))]>;
+def CMPLTi  : OFormL<0x10, 0x4D, "cmplt $RA,$L,$RC",
+                     [(set GPRC:$RC, (setlt GPRC:$RA, immUExt8:$L))]>;
+def CMPULE  : OForm< 0x10, 0x3D, "cmpule $RA,$RB,$RC",
+                     [(set GPRC:$RC, (setule GPRC:$RA, GPRC:$RB))]>;
+def CMPULEi : OFormL<0x10, 0x3D, "cmpule $RA,$L,$RC",
+                     [(set GPRC:$RC, (setule GPRC:$RA, immUExt8:$L))]>;
+def CMPULT  : OForm< 0x10, 0x1D, "cmpult $RA,$RB,$RC",
+                     [(set GPRC:$RC, (setlt GPRC:$RA, GPRC:$RB))]>;
+def CMPULTi : OFormL<0x10, 0x1D, "cmpult $RA,$L,$RC", 
+                      [(set GPRC:$RC, (setlt GPRC:$RA, immUExt8:$L))]>;
+
+//Patterns for unsupported int comparisons
+def : Pat<(setueq GPRC:$X, GPRC:$Y), (CMPEQ GPRC:$X, GPRC:$Y)>;
+def : Pat<(setueq GPRC:$X, immUExt8:$Y), (CMPEQi GPRC:$X, immUExt8:$Y)>;
+
+def : Pat<(setugt GPRC:$X, GPRC:$Y), (CMPULT GPRC:$Y, GPRC:$X)>;
+def : Pat<(setugt immUExt8:$X, GPRC:$Y), (CMPULTi GPRC:$Y, immUExt8:$X)>;
+
+def : Pat<(setuge GPRC:$X, GPRC:$Y), (CMPULE GPRC:$Y, GPRC:$X)>;
+def : Pat<(setuge immUExt8:$X, GPRC:$Y), (CMPULEi GPRC:$Y, immUExt8:$X)>;
+
+def : Pat<(setgt GPRC:$X, GPRC:$Y), (CMPLT GPRC:$Y, GPRC:$X)>;
+def : Pat<(setgt immUExt8:$X, GPRC:$Y), (CMPLTi GPRC:$Y, immUExt8:$X)>;
+
+def : Pat<(setge GPRC:$X, GPRC:$Y), (CMPLE GPRC:$Y, GPRC:$X)>;
+def : Pat<(setge immUExt8:$X, GPRC:$Y), (CMPLEi GPRC:$Y, immUExt8:$X)>;
+
+def : Pat<(setne GPRC:$X, GPRC:$Y), (CMPEQi (CMPEQ GPRC:$X, GPRC:$Y), 0)>;
+def : Pat<(setne GPRC:$X, immUExt8:$Y), (CMPEQi (CMPEQi GPRC:$X, immUExt8:$Y), 0)>;
+
+def : Pat<(setune GPRC:$X, GPRC:$Y), (CMPEQi (CMPEQ GPRC:$X, GPRC:$Y), 0)>;
+def : Pat<(setune GPRC:$X, immUExt8:$Y), (CMPEQi (CMPEQ GPRC:$X, immUExt8:$Y), 0)>;
+
 
 //Comparison, FP
 def CMPTEQ : FPForm<0x16, 0x5A5, "cmpteq/su $RA,$RB,$RC">;  //Compare T_floating equal
