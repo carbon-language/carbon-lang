@@ -217,7 +217,7 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
         if (LHS.getValueType() == MVT::f32)   // Comparison is always 64-bits
           LHS = DAG.getNode(ISD::FP_EXTEND, MVT::f64, LHS);
         return DAG.getNode(PPCISD::FSEL, ResVT,
-                           DAG.getNode(ISD::FNEG, ResVT, LHS), TV, FV);
+                           DAG.getNode(ISD::FNEG, MVT::f64, LHS), TV, FV);
       }
     
     SDOperand Cmp;
