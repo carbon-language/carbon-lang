@@ -182,12 +182,7 @@ void SubtargetEmitter::ParseFeaturesFunction(std::ostream &OS) {
 // SubtargetEmitter::run - Main subtarget enumeration emitter.
 //
 void SubtargetEmitter::run(std::ostream &OS) {
-  std::vector<Record*> Targets = Records.getAllDerivedDefinitions("Target");
-  if (Targets.size() == 0)
-    throw std::string("ERROR: No 'Target' subclasses defined!");
-  if (Targets.size() != 1)
-    throw std::string("ERROR: Multiple subclasses of Target defined!");
-  Target = Targets[0]->getName();
+  Target = CodeGenTarget().getName();
 
   EmitSourceFileHeader("Subtarget Enumeration Source Fragment", OS);
 
