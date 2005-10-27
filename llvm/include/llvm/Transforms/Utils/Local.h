@@ -16,6 +16,7 @@
 #define LLVM_TRANSFORMS_UTILS_LOCAL_H
 
 #include "llvm/Function.h"
+#include "llvm/Analysis/ConstantFolding.h"
 
 namespace llvm {
 
@@ -47,14 +48,6 @@ bool ConstantFoldTerminator(BasicBlock *BB);
 ///
 Constant *ConstantFoldInstruction(Instruction *I);
 
-
-/// canConstantFoldCallTo - Return true if its even possible to fold a call to
-/// the specified function.
-bool canConstantFoldCallTo(Function *F);
-
-/// ConstantFoldCall - Attempt to constant fold a call to the specified function
-/// with the specified arguments, returning null if unsuccessful.
-Constant *ConstantFoldCall(Function *F, const std::vector<Constant*> &Operands);
 
 /// ConstantFoldLoadThroughGEPConstantExpr - Given a constant and a
 /// getelementptr constantexpr, return the constant value being addressed by the
