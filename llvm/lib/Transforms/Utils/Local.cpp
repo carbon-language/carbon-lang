@@ -12,12 +12,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Instructions.h"
 #include "llvm/Intrinsics.h"
+#include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Support/MathExtras.h"
 #include <cerrno>
