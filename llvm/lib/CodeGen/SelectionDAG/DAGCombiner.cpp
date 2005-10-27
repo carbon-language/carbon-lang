@@ -1103,7 +1103,16 @@ SDOperand DAGCombiner::visitOR(SDNode *N) {
     if (N01C)
       return DAG.getNode(ISD::OR, VT, N0.getOperand(0),
                          DAG.getConstant(N1C->getValue()|N01C->getValue(), VT));
+  } else if (N1C && N0.getOpcode() == ISD::AND && N0.Val->hasOneUse() &&
+             isa<ConstantSDNode>(N0.getOperand(1))) {
+    // Canonicalize (or (and X, c1), c2) -> (and (or X, c2), c1|c2)
+    ConstantSDNode *C1 = cast<ConstantSDNode>(N0.getOperand(1));
+    return DAG.getNode(ISD::AND, VT, DAG.getNode(ISD::OR, VT, N0.getOperand(0),
+                                                 N1),
+                       DAG.getConstant(N1C->getValue() | C1->getValue(), VT));
   }
+  
+  
   // fold (or (setcc x), (setcc y)) -> (setcc (or x, y))
   if (isSetCCEquivalent(N0, LL, LR, CC0) && isSetCCEquivalent(N1, RL, RR, CC1)){
     ISD::CondCode Op0 = cast<CondCodeSDNode>(CC0)->get();
