@@ -3844,7 +3844,7 @@ Instruction *InstCombiner::PromoteCastOfAllocation(CastInst &CI,
     } else if (isa<Instruction>(NumElements) &&
                cast<Instruction>(NumElements)->getOpcode() == Instruction::Mul){
       BinaryOperator *BO = cast<BinaryOperator>(NumElements);
-      if (ConstantUInt *Scale = cast<ConstantUInt>(BO->getOperand(1))) {
+      if (ConstantUInt *Scale = dyn_cast<ConstantUInt>(BO->getOperand(1))) {
         // This value is scaled by 'Scale'.
         NumElements = BO->getOperand(0);
         ArraySizeScale = Scale->getValue();
