@@ -1709,7 +1709,6 @@ Value *InstCombiner::FoldLogicalPlusAnd(Value *LHS, Value *RHS,
   return InsertNewInstBefore(New, I);
 }
 
-
 Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
   bool Changed = SimplifyCommutative(I);
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
@@ -3776,7 +3775,7 @@ Value *InstCombiner::InsertOperandCastBefore(Value *V, const Type *DestTy,
 Instruction *InstCombiner::PromoteCastOfAllocation(CastInst &CI,
                                                    AllocationInst &AI) {
   const PointerType *PTy = dyn_cast<PointerType>(CI.getType());
-  if (AI.isArrayAllocation() || !PTy) return 0;
+  if (!PTy) return 0;   // Not casting the allocation to a pointer type.
   
   // Remove any uses of AI that are dead.
   assert(!CI.use_empty() && "Dead instructions should be removed earlier!");
@@ -3813,12 +3812,23 @@ Instruction *InstCombiner::PromoteCastOfAllocation(CastInst &CI,
 
   uint64_t AllocElTySize = TD->getTypeSize(AllocElTy);
   uint64_t CastElTySize = TD->getTypeSize(CastElTy);
+  if (CastElTySize == 0 || AllocElTySize == 0) return 0;
 
   // If the allocation is for an even multiple of the cast type size
-  if (CastElTySize == 0 || AllocElTySize % CastElTySize != 0)
+  Value *Amt = 0;
+  if (AllocElTySize % CastElTySize == 0) {
+    Amt = ConstantUInt::get(Type::UIntTy, AllocElTySize/CastElTySize);
+    if (ConstantUInt *CI = dyn_cast<ConstantUInt>(AI.getOperand(0)))
+      Amt = ConstantExpr::getMul(CI, cast<ConstantUInt>(Amt));
+    else {
+      // Perform an explicit scale.
+      Instruction *Tmp = BinaryOperator::createMul(Amt, AI.getOperand(0),"tmp");
+      Amt = InsertNewInstBefore(Tmp, AI);
+    }
+  } else {
     return 0;
-  Value *Amt = ConstantUInt::get(Type::UIntTy,
-                                 AllocElTySize/CastElTySize);
+  }
+  
   std::string Name = AI.getName(); AI.setName("");
   AllocationInst *New;
   if (isa<MallocInst>(AI))
@@ -4061,6 +4071,7 @@ Instruction *InstCombiner::visitCastInst(CastInst &CI) {
         break;
       }
     }
+      
   return 0;
 }
 
