@@ -5717,8 +5717,8 @@ void InstCombiner::removeFromWorkList(Instruction *I) {
 static bool TryToSinkInstruction(Instruction *I, BasicBlock *DestBlock) {
   assert(I->hasOneUse() && "Invariants didn't hold!");
 
-  // Cannot move control-flow-involving instructions.
-  if (isa<PHINode>(I) || isa<InvokeInst>(I) || isa<CallInst>(I)) return false;
+  // Cannot move control-flow-involving, volatile loads, vaarg, etc.
+  if (isa<PHINode>(I) || I->mayWriteToMemory()) return false;
 
   // Do not sink alloca instructions out of the entry block.
   if (isa<AllocaInst>(I) && I->getParent() == &DestBlock->getParent()->front())
@@ -5727,8 +5727,6 @@ static bool TryToSinkInstruction(Instruction *I, BasicBlock *DestBlock) {
   // We can only sink load instructions if there is nothing between the load and
   // the end of block that could change the value.
   if (LoadInst *LI = dyn_cast<LoadInst>(I)) {
-    if (LI->isVolatile()) return false;  // Don't sink volatile loads.
-
     for (BasicBlock::iterator Scan = LI, E = LI->getParent()->end();
          Scan != E; ++Scan)
       if (Scan->mayWriteToMemory())
