@@ -7,16 +7,16 @@ rem   source - input to bison
 
 if "%2"=="debug" (set flags=-tvdo) else (set flags=-vdo)
 
-rem Try and run bison.  If it is present, great.
-bison -p%1 %flags%%3.cpp %4
-if errorlevel 1 goto error
-move %3.hpp %3.h
-goto done
+rem Test for presence of bison.
+bison --help >NUL
+if errorlevel 1 goto nobison
 
-:error
-echo Bison could not run.  Using pre-generated files.
+rem Run bison.
+bison -p%1 %flags%%3.cpp %4 && move %3.hpp %3.h
+exit
+
+:nobison
+echo Bison not found.  Using pre-generated files.
 copy %~pn4.cpp %3.cpp
 copy %~pn4.h %3.h
-
-:done
-exit 0
+exit

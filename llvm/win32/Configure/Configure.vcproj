@@ -102,7 +102,7 @@ echo #define LLVM_ON_WIN32 1 &gt;&gt;$(ProjectDir)..\llvm\Config\config.h"
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Generating $(SolutionDir)llvm\Support\DataTypes.h"
-            CommandLine="copy $(InputPath) $(ProjectDir)..\llvm\Support\DataTypes.h"
+						CommandLine="copy $(InputPath) $(ProjectDir)..\llvm\Support\DataTypes.h"
 						Outputs="$(ProjectDir)..\llvm\Support\DataTypes.h"/>
 				</FileConfiguration>
 			</File>
@@ -113,7 +113,7 @@ echo #define LLVM_ON_WIN32 1 &gt;&gt;$(ProjectDir)..\llvm\Config\config.h"
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Generating $(SolutionDir)llvm\ADT\hash_map"
-            CommandLine="copy $(InputPath) $(ProjectDir)..\llvm\ADT\hash_map"
+						CommandLine="copy $(InputPath) $(ProjectDir)..\llvm\ADT\hash_map"
 						Outputs="$(ProjectDir)..\llvm\ADT\hash_map"/>
 				</FileConfiguration>
 			</File>
@@ -124,7 +124,7 @@ echo #define LLVM_ON_WIN32 1 &gt;&gt;$(ProjectDir)..\llvm\Config\config.h"
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Generating $(SolutionDir)llvm\ADT\hash_set"
-            CommandLine="copy $(InputPath) $(ProjectDir)..\llvm\ADT\hash_set"
+						CommandLine="copy $(InputPath) $(ProjectDir)..\llvm\ADT\hash_set"
 						Outputs="$(ProjectDir)..\llvm\ADT\hash_set"/>
 				</FileConfiguration>
 			</File>
@@ -135,7 +135,7 @@ echo #define LLVM_ON_WIN32 1 &gt;&gt;$(ProjectDir)..\llvm\Config\config.h"
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Generating $(SolutionDir)llvm\ADT\iterator"
-            CommandLine="copy $(InputPath) $(ProjectDir)..\llvm\ADT\iterator"
+						CommandLine="copy $(InputPath) $(ProjectDir)..\llvm\ADT\iterator"
 						Outputs="$(ProjectDir)..\llvm\ADT\iterator"/>
 				</FileConfiguration>
 			</File>

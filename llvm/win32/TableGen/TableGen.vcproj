@@ -161,18 +161,16 @@
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Bisoning $(InputFileName)"
-						CommandLine="..\dobison.cmd File debug $(InputName) $(InputPath)
-"
-						Outputs="$(InputName).cpp;$(InputName).h"/>
+						CommandLine="..\dobison.cmd File debug $(InputName) $(InputPath)"
+						Outputs="$(InputName).cpp;$(InputName).h;$(InputName).output"/>
 				</FileConfiguration>
 				<FileConfiguration
 					Name="Release|Win32">
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Bisoning $(InputFileName)"
-						CommandLine="..\dobison.cmd File release $(InputName) $(InputPath)
-"
-						Outputs="$(InputName).cpp;$(InputName).h"/>
+						CommandLine="..\dobison.cmd File release $(InputName) $(InputPath)"
+						Outputs="$(InputName).cpp;$(InputName).h;$(InputName).output"/>
 				</FileConfiguration>
 			</File>
 			<File
