@@ -3826,7 +3826,28 @@ Instruction *InstCombiner::PromoteCastOfAllocation(CastInst &CI,
       Amt = InsertNewInstBefore(Tmp, AI);
     }
   } else {
-    return 0;
+    // See if we can satisfy the modulus by pulling a scale out of the array
+    // size argument.
+    unsigned ArraySizeScale = 1;
+    Value *NumElements = AI.getOperand(0);
+    
+    if (ConstantUInt *CI = dyn_cast<ConstantUInt>(NumElements)) {
+      ArraySizeScale = CI->getValue();
+      NumElements = ConstantUInt::get(Type::UIntTy, 1);
+    }
+    
+    // If we can now satisfy the modulus, by using a non-1 scale, we really can
+    // do the xform.
+    if ((AllocElTySize*ArraySizeScale) % CastElTySize != 0) return 0;
+
+    Amt = ConstantUInt::get(Type::UIntTy, 
+                            (AllocElTySize*ArraySizeScale)/CastElTySize);
+    if (ConstantUInt *CI = dyn_cast<ConstantUInt>(NumElements))
+      Amt = ConstantExpr::getMul(CI, cast<ConstantUInt>(Amt));
+    else {
+      Instruction *Tmp = BinaryOperator::createMul(Amt, NumElements, "tmp");
+      Amt = InsertNewInstBefore(Tmp, AI);
+    }
   }
   
   std::string Name = AI.getName(); AI.setName("");
