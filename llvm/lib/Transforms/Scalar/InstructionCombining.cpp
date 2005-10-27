@@ -3834,19 +3834,38 @@ Instruction *InstCombiner::PromoteCastOfAllocation(CastInst &CI,
     if (ConstantUInt *CI = dyn_cast<ConstantUInt>(NumElements)) {
       ArraySizeScale = CI->getValue();
       NumElements = ConstantUInt::get(Type::UIntTy, 1);
+    } else if (ShiftInst *SI = dyn_cast<ShiftInst>(NumElements)) {
+      if (SI->getOpcode() == Instruction::Shl)
+        if (ConstantUInt *CUI = dyn_cast<ConstantUInt>(SI->getOperand(1))) {
+          // This is a value scaled by '1 << the shift amt'.
+          NumElements = SI->getOperand(0);
+          ArraySizeScale = 1U << CUI->getValue();
+        }
+    } else if (isa<Instruction>(NumElements) &&
+               cast<Instruction>(NumElements)->getOpcode() == Instruction::Mul){
+      BinaryOperator *BO = cast<BinaryOperator>(NumElements);
+      if (ConstantUInt *Scale = cast<ConstantUInt>(BO->getOperand(1))) {
+        // This value is scaled by 'Scale'.
+        NumElements = BO->getOperand(0);
+        ArraySizeScale = Scale->getValue();
+      }
     }
     
     // If we can now satisfy the modulus, by using a non-1 scale, we really can
     // do the xform.
     if ((AllocElTySize*ArraySizeScale) % CastElTySize != 0) return 0;
 
-    Amt = ConstantUInt::get(Type::UIntTy, 
-                            (AllocElTySize*ArraySizeScale)/CastElTySize);
-    if (ConstantUInt *CI = dyn_cast<ConstantUInt>(NumElements))
-      Amt = ConstantExpr::getMul(CI, cast<ConstantUInt>(Amt));
-    else {
-      Instruction *Tmp = BinaryOperator::createMul(Amt, NumElements, "tmp");
-      Amt = InsertNewInstBefore(Tmp, AI);
+    unsigned Scale = (AllocElTySize*ArraySizeScale)/CastElTySize;
+    if (Scale == 1) {
+      Amt = NumElements;
+    } else {
+      Amt = ConstantUInt::get(Type::UIntTy, Scale);
+      if (ConstantUInt *CI = dyn_cast<ConstantUInt>(NumElements))
+        Amt = ConstantExpr::getMul(CI, cast<ConstantUInt>(Amt));
+      else if (cast<ConstantUInt>(Amt)->getValue() == 1) {
+        Instruction *Tmp = BinaryOperator::createMul(Amt, NumElements, "tmp");
+        Amt = InsertNewInstBefore(Tmp, AI);
+      }
     }
   }
   
