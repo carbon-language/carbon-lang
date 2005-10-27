@@ -1976,7 +1976,10 @@ SDOperand DAGCombiner::visitSTORE(SDNode *N) {
  
   // If this is a store that kills a previous store, remove the previous store.
   if (Chain.getOpcode() == ISD::STORE && Chain.getOperand(2) == Ptr &&
-      Chain.Val->hasOneUse() /* Avoid introducing DAG cycles */) {
+      Chain.Val->hasOneUse() /* Avoid introducing DAG cycles */ &&
+      // Make sure that these stores are the same value type:
+      // FIXME: we really care that the second store is >= size of the first.
+      Value.getValueType() == Chain.getOperand(1).getValueType()) {
     // Create a new store of Value that replaces both stores.
     SDNode *PrevStore = Chain.Val;
     if (PrevStore->getOperand(1) == Value) // Same value multiply stored.
