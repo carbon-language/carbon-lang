@@ -9,8 +9,8 @@ LEVEL=../..
 # Give the name of a library.  This will build a dynamic version.
 #
 TOOLNAME = stkrc
-LLVMLIBS = LLVMAsmParser LLVMBCWriter LLVMTransforms.a LLVMipo.a LLVMipa.a \
-	   LLVMScalarOpts.a LLVMAnalysis.a LLVMTarget.a LLVMTransformUtils.a \
+LLVMLIBS = LLVMAsmParser LLVMBCWriter LLVMipo.a \
+	   LLVMScalarOpts.a LLVMTransforms.a LLVMTransformUtils LLVMipa.a LLVMAnalysis.a LLVMTarget.a \
 	   LLVMCore LLVMSupport.a LLVMbzip2 LLVMSystem.a 
 CONFIG_FILES = st
 EXTRA_DIST = st
