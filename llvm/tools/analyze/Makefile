@@ -11,6 +11,6 @@ TOOLNAME = analyze
 USEDLIBS = LLVMAsmParser LLVMBCReader LLVMAnalysis.a LLVMipa.a \
            LLVMDataStructure \
 	   LLVMScalarOpts.a LLVMTransforms.a LLVMTarget.a LLVMScalarOpts.a \
-	   LLVMTransformUtils LLVMCore LLVMSupport.a LLVMbzip2 LLVMSystem.a
+	   LLVMTransformUtils.a LLVMCore LLVMSupport.a LLVMbzip2 LLVMSystem.a
 
 include $(LEVEL)/Makefile.common
