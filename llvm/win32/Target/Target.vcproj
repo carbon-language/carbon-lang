@@ -157,6 +157,9 @@
 				RelativePath="..\..\include\llvm\Target\TargetInstrInfo.h">
 			</File>
 			<File
+				RelativePath="..\..\include\llvm\Target\TargetInstrItineraries.h">
+			</File>
+			<File
 				RelativePath="..\..\include\llvm\Target\TargetJITInfo.h">
 			</File>
 			<File

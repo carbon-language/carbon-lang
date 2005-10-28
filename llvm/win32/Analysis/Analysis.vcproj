@@ -125,6 +125,9 @@
 				RelativePath="..\..\lib\Analysis\CFGPrinter.cpp">
 			</File>
 			<File
+				RelativePath="..\..\lib\Analysis\ConstantFolding.cpp">
+			</File>
+			<File
 				RelativePath="..\..\lib\Analysis\Expressions.cpp">
 			</File>
 			<File
@@ -244,6 +247,9 @@
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\Analysis\CFGPrinter.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\Analysis\ConstantFolding.h">
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\Analysis\ConstantsScanner.h">
