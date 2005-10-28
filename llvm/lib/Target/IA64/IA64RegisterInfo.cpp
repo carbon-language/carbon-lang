@@ -28,25 +28,11 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/ADT/STLExtras.h"
 #include <iostream>
-
 using namespace llvm;
 
-namespace {
-}
 
 IA64RegisterInfo::IA64RegisterInfo()
   : IA64GenRegisterInfo(IA64::ADJUSTCALLSTACKDOWN, IA64::ADJUSTCALLSTACKUP) {}
-
-static const TargetRegisterClass *getClass(unsigned SrcReg) {
-  if (IA64::FPRegisterClass->contains(SrcReg))
-    return IA64::FPRegisterClass;
-  if (IA64::PRRegisterClass->contains(SrcReg))
-    return IA64::PRRegisterClass;
-
-  assert(IA64::GRRegisterClass->contains(SrcReg) &&
-         "PROBLEM: Reg is not FP, predicate or GR!");
-  return IA64::GRRegisterClass;
-}
 
 void IA64RegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                            MachineBasicBlock::iterator MI,
