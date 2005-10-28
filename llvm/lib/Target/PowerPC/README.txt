@@ -185,3 +185,37 @@ doesn't get folded into the rlwimi instruction.  We should ideally see through
 things like this, rather than forcing llvm to generate the equivalent
 
 (shl (add bitfield, C2), C1) with some kind of mask.
+
+===-------------------------------------------------------------------------===
+
+Compile this (standard bitfield insert of a constant):
+void %test(uint* %tmp1) {
+        %tmp2 = load uint* %tmp1                ; <uint> [#uses=1]
+        %tmp5 = or uint %tmp2, 257949696                ; <uint> [#uses=1]
+        %tmp6 = and uint %tmp5, 4018143231              ; <uint> [#uses=1]
+        store uint %tmp6, uint* %tmp1
+        ret void
+}
+
+to:
+
+_test:
+        lwz r0,0(r3)
+        li r2,123
+        rlwimi r0,r2,21,3,10
+        stw r0,0(r3)
+        blr
+
+instead of:
+
+_test:
+        lis r2, -4225
+        lwz r4, 0(r3)
+        ori r2, r2, 65535
+        oris r4, r4, 3936
+        and r2, r4, r2
+        stw r2, 0(r3)
+        blr
+
+
+
