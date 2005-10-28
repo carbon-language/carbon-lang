@@ -163,23 +163,22 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
 
   for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
     Record *R = Regs[i].TheDef;
-    ListInit *LI = Regs[i].TheDef->getValueAsListInit("Aliases");
+    std::vector<Record*> LI = Regs[i].TheDef->getValueAsListOfDefs("Aliases");
     // Add information that R aliases all of the elements in the list... and
     // that everything in the list aliases R.
-    for (unsigned j = 0, e = LI->getSize(); j != e; ++j) {
-      DefInit *Reg = dynamic_cast<DefInit*>(LI->getElement(j));
-      if (!Reg) throw "ERROR: Alias list element is not a def!";
-      if (RegisterAliases[R].count(Reg->getDef()))
+    for (unsigned j = 0, e = LI.size(); j != e; ++j) {
+      Record *Reg = LI[j];
+      if (RegisterAliases[R].count(Reg))
         std::cerr << "Warning: register alias between " << getQualifiedName(R)
-                  << " and " << getQualifiedName(Reg->getDef())
+                  << " and " << getQualifiedName(Reg)
                   << " specified multiple times!\n";
-      RegisterAliases[R].insert(Reg->getDef());
+      RegisterAliases[R].insert(Reg);
 
-      if (RegisterAliases[Reg->getDef()].count(R))
+      if (RegisterAliases[Reg].count(R))
         std::cerr << "Warning: register alias between " << getQualifiedName(R)
-                  << " and " << getQualifiedName(Reg->getDef())
+                  << " and " << getQualifiedName(Reg)
                   << " specified multiple times!\n";
-      RegisterAliases[Reg->getDef()].insert(R);
+      RegisterAliases[Reg].insert(R);
     }
   }
 
