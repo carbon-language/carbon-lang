@@ -722,11 +722,13 @@ SDOperand PPCDAGToDAGISel::SelectSETCC(SDOperand Op) {
   
   if (!Inv) {
     CurDAG->SelectNodeTo(N, PPC::RLWINM, MVT::i32, IntCR,
-                         getI32Imm(32-(3-Idx)), getI32Imm(31), getI32Imm(31));
+                         getI32Imm((32-(3-Idx)) & 31),
+                                   getI32Imm(31), getI32Imm(31));
   } else {
     SDOperand Tmp =
     CurDAG->getTargetNode(PPC::RLWINM, MVT::i32, IntCR,
-                          getI32Imm(32-(3-Idx)), getI32Imm(31),getI32Imm(31));
+                          getI32Imm((32-(3-Idx)) & 31),
+                          getI32Imm(31),getI32Imm(31));
     CurDAG->SelectNodeTo(N, PPC::XORI, MVT::i32, Tmp, getI32Imm(1));
   }
   
