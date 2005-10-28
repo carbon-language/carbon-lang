@@ -24,30 +24,57 @@ using namespace llvm;
 //
 typedef std::vector<Record*> RecordList;
 
-struct RecordListIter {
-  std::vector<Record*>::iterator RI;
-  std::vector<Record*>::iterator E;
+//
+// RecordListIter - Simplify iterating through a std::vector of records.
+// 
+class RecordListIter {
+  std::vector<Record*>::iterator RI;  // Currect cursor
+  std::vector<Record*>::iterator E;   // End point
+
+public:
   
+  //
+  // Ctor.
+  //
   RecordListIter(RecordList &RL)
       : RI(RL.begin()), E(RL.end())
   {}
   
+  
+  //
+  // isMore - Return true if more records are available.
+  //
   bool isMore() const { return RI != E; }
   
+  //
+  // next - Return the next record or NULL if none.
+  //
   Record *next() { return isMore() ? *RI++ : NULL; }
 };
 
+//
+// DefListIter - Simplify iterating through a field which is a list of records.
+// 
 struct DefListIter {
-  ListInit *List;
-  unsigned N;
-  unsigned i;
+  ListInit *List;  // List of DefInit
+  unsigned N;      // Number of elements in list
+  unsigned i;      // Current index in list
 
+  //
+  // Ctor - Lookup field and get list and length.
+  //
   DefListIter(Record *R, const std::string &Name)
       : List(R->getValueAsListInit(Name)), N(List->getSize()), i(0)
   {}
   
+  //
+  // isMore - Return true if more records are available.
+  //
   bool isMore() const { return i < N; }
   
+  //
+  // next - Return the next record or NULL if none.
+  //
   Record *next() {
     if (isMore()) {
       if (DefInit *DI = dynamic_cast<DefInit*>(List->getElement(i++))) {
@@ -82,25 +109,31 @@ struct LessRecordFieldName {
 void SubtargetEmitter::Enumeration(std::ostream &OS,
                                    const char *ClassName,
                                    bool isBits) {
+  // Get all records of class and sort
   RecordList Defs = Records.getAllDerivedDefinitions(ClassName);
   sort(Defs.begin(), Defs.end(), LessRecord());
 
+  // Track position if isBits
   int i = 0;
   
+  // Open enumeration
   OS << "enum {\n";
   
+  // For each record
   RecordListIter DI(Defs);
   while (Record *R = DI.next()) {
-    std::string Instance = R->getName();
-    OS << "  "
-       << Instance;
-    if (isBits) {
-      OS << " = "
-         << " 1 << " << i++;
-    }
+    // Get and emit name
+    std::string Name = R->getName();
+    OS << "  " << Name;
+    
+    // If bit flags then emit expression (1 << i)
+    if (isBits)  OS << " = " << " 1 << " << i++;
+
+    // Depending on if more in the list, emit comma and new line
     OS << (DI.isMore() ? ",\n" : "\n");
   }
   
+  // Close enumeration
   OS << "};\n";
 }
 
@@ -109,24 +142,33 @@ void SubtargetEmitter::Enumeration(std::ostream &OS,
 // line.
 //
 void SubtargetEmitter::FeatureKeyValues(std::ostream &OS) {
+  // Gather and sort all the features
   RecordList Features = Records.getAllDerivedDefinitions("SubtargetFeature");
   sort(Features.begin(), Features.end(), LessRecord());
 
+  // Begin feature table
   OS << "// Sorted (by key) array of values for CPU features.\n"
      << "static llvm::SubtargetFeatureKV FeatureKV[] = {\n";
+  
+  // For each feature
   RecordListIter FI(Features);
   while (Record *R = FI.next()) {
     std::string Instance = R->getName();
     std::string Name = R->getValueAsString("Name");
     std::string Desc = R->getValueAsString("Desc");
+    
+    // Emit as { "feature", "decription", feactureEnum }
     OS << "  { "
        << "\"" << Name << "\", "
        << "\"" << Desc << "\", "
        << Instance
        << (FI.isMore() ? " },\n" : " }\n");
   }
+  
+  // End feature table
   OS << "};\n";
 
+  // Emit size of table
   OS<<"\nenum {\n";
   OS<<"  FeatureKVSize = sizeof(FeatureKV)/sizeof(llvm::SubtargetFeatureKV)\n";
   OS<<"};\n";
@@ -137,16 +179,21 @@ void SubtargetEmitter::FeatureKeyValues(std::ostream &OS) {
 // line.
 //
 void SubtargetEmitter::CPUKeyValues(std::ostream &OS) {
+  // Gather and sort processor information
   RecordList Processors = Records.getAllDerivedDefinitions("Processor");
   sort(Processors.begin(), Processors.end(), LessRecordFieldName());
 
+  // Begin processor table
   OS << "// Sorted (by key) array of values for CPU subtype.\n"
      << "static const llvm::SubtargetFeatureKV SubTypeKV[] = {\n";
+     
+  // For each processor
   RecordListIter PI(Processors);
   while (Record *R = PI.next()) {
     std::string Name = R->getValueAsString("Name");
     DefListIter FI(R, "Features");
     
+    // Emit as { "cpu", "description", f1 | f2 | ... fn },
     OS << "  { "
        << "\"" << Name << "\", "
        << "\"Select the " << Name << " processor\", ";
@@ -163,8 +210,11 @@ void SubtargetEmitter::CPUKeyValues(std::ostream &OS) {
     
     OS << (PI.isMore() ? " },\n" : " }\n");
   }
+  
+  // End processor table
   OS << "};\n";
 
+  // Emit size of table
   OS<<"\nenum {\n";
   OS<<"  SubTypeKVSize = sizeof(SubTypeKV)/sizeof(llvm::SubtargetFeatureKV)\n";
   OS<<"};\n";
@@ -172,18 +222,26 @@ void SubtargetEmitter::CPUKeyValues(std::ostream &OS) {
 
 //
 // CollectAllItinClasses - Gathers and enumerates all the itinerary classes.
+// Returns itinerary class count.
 //
 unsigned SubtargetEmitter::CollectAllItinClasses(IntMap &ItinClassesMap) {
+  // Gather and sort all itinerary classes
   RecordList ICL = Records.getAllDerivedDefinitions("InstrItinClass");
   sort(ICL.begin(), ICL.end(), LessRecord());
-  
-  RecordListIter ICI(ICL);
+
+  // Track enumeration
   unsigned Index = 0;
+  
+  // For each class
+  RecordListIter ICI(ICL);
   while (Record *ItinClass = ICI.next()) {
+    // Get name of itinerary class
     std::string Name = ItinClass->getName();
+    // Assign itinerary class a unique number
     ItinClassesMap[Name] = Index++;
   }
   
+  // Return itinerary class count
   return Index;
 }
 
@@ -194,21 +252,28 @@ unsigned SubtargetEmitter::CollectAllItinClasses(IntMap &ItinClassesMap) {
 void SubtargetEmitter::FormItineraryString(Record *ItinData,
                                            std::string &ItinString,
                                            unsigned &N) {
+  // Set up stages iterator
   DefListIter SLI(ItinData, "Stages");
+  // Get stage count
   N = SLI.N;
+
+  // For each stage
   while (Record *Stage = SLI.next()) {
+    // Form string as ,{ cycles, u1 | u2 | ... | un }
     int Cycles = Stage->getValueAsInt("Cycles");
     ItinString += "  ,{ " + itostr(Cycles) + ", ";
     
+    // For each unit
     DefListIter ULI(Stage, "Units");
     while (Record *Unit = ULI.next()) {
       std::string Name = Unit->getName();
       ItinString += Name;
       if (ULI.isMore())ItinString += " | ";
     }
+    
+    // Close off stage
+    ItinString += " }";
   }
-  
-  ItinString += " }";
 }
 
 //
@@ -219,43 +284,64 @@ void SubtargetEmitter::EmitStageData(std::ostream &OS,
                                      unsigned N,
                                      IntMap &ItinClassesMap, 
                                      ProcessorList &ProcList) {
+  // Gather processor iteraries
+  RecordList Itins = Records.getAllDerivedDefinitions("ProcessorItineraries");
+  
+  // If just no itinerary then don't bother
+  if (Itins.size() < 2) return;
+
+  // Begin stages table
   OS << "static llvm::InstrStage Stages[] = {\n"
         "  { 0, 0 } // No itinerary\n";
         
   IntMap ItinMap;
   unsigned Index  = 1;
-  RecordList Itins = Records.getAllDerivedDefinitions("ProcessorItineraries");
   RecordListIter II(Itins);
   while (Record *Itin = II.next()) {
+    // Get processor itinerary name
     std::string Name = Itin->getName();
+    
+    // Skip default
     if (Name == "NoItineraries") continue;
     
+    // Create and expand processor itinerary to cover all itinerary classes
     IntineraryList IL;
     IL.resize(N);
     
+    // For each itinerary
     DefListIter IDLI(Itin, "IID");
     while (Record *ItinData = IDLI.next()) {
+      // Get string and stage count
       std::string ItinString;
       unsigned M;
       FormItineraryString(ItinData, ItinString, M);
 
+      // Check to see if it already exists
       unsigned Find = ItinMap[ItinString];
       
+      // If new itinerary
       if (Find == 0) {
+        // Emit as ,{ cycles, u1 | u2 | ... | un } // index
         OS << ItinString << " // " << Index << "\n";
         ItinMap[ItinString] = Find = Index++;
       }
       
+      // Set up itinerary as location and location + stage count
       InstrItinerary Intinerary = { Find, Find + M };
 
+      // Locate where to inject into processor itinerary table
       std::string Name = ItinData->getValueAsDef("TheClass")->getName();
       Find = ItinClassesMap[Name];
+      
+      // Inject - empty slots will be 0, 0
       IL[Find] = Intinerary;
     }
     
+    // Add process itinerary to list
     ProcList.push_back(IL);
   }
   
+  // End stages table
   OS << "};\n";
 }
 
@@ -264,21 +350,30 @@ void SubtargetEmitter::EmitStageData(std::ostream &OS,
 //
 void SubtargetEmitter::EmitProcessData(std::ostream &OS,
                                        ProcessorList &ProcList) {
+  // Get an iterator for processor itinerary stages
   ProcessorList::iterator PLI = ProcList.begin();
+  
+  // For each processor itinerary
   RecordList Itins = Records.getAllDerivedDefinitions("ProcessorItineraries");
   RecordListIter II(Itins);
   while (Record *Itin = II.next()) {
+    // Get processor itinerary name
     std::string Name = Itin->getName();
+    
+    // Skip default
     if (Name == "NoItineraries") continue;
 
+    // Begin processor itinerary table
     OS << "\n";
     OS << "static llvm::InstrItinerary " << Name << "[] = {\n";
     
+    // For each itinerary class
     IntineraryList &IL = *PLI++;
     unsigned Index = 0;
     for (IntineraryList::iterator ILI = IL.begin(), E = IL.end(); ILI != E;) {
       InstrItinerary &Intinerary = *ILI++;
       
+      // Emit in the form of { first, last } // index
       if (Intinerary.First == 0) {
         OS << "  { 0, 0 }";
       } else {
@@ -288,6 +383,8 @@ void SubtargetEmitter::EmitProcessData(std::ostream &OS,
       if (ILI != E) OS << ",";
       OS << " // " << Index++ << "\n";
     }
+    
+    // End processor itinerary table
     OS << "};\n";
   }
 }
@@ -299,8 +396,11 @@ void SubtargetEmitter::EmitData(std::ostream &OS) {
   IntMap ItinClassesMap;
   ProcessorList ProcList;
   
+  // Enumerate all the itinerary classes
   unsigned N = CollectAllItinClasses(ItinClassesMap);
+  // Emit the stage data
   EmitStageData(OS, N, ItinClassesMap, ProcList);
+  // Emit the processor itinerary data
   EmitProcessData(OS, ProcList);
 }
 
@@ -348,8 +448,8 @@ void SubtargetEmitter::run(std::ostream &OS) {
   
   Enumeration(OS, "FuncUnit", true);
   OS<<"\n";
-  Enumeration(OS, "InstrItinClass", false);
-  OS<<"\n";
+//  Enumeration(OS, "InstrItinClass", false);
+//  OS<<"\n";
   Enumeration(OS, "SubtargetFeature", true);
   OS<<"\n";
   FeatureKeyValues(OS);
