@@ -228,16 +228,14 @@ SDNodeInfo::SDNodeInfo(Record *R) : Def(R) {
   
   // Parse the properties.
   Properties = 0;
-  ListInit *LI = R->getValueAsListInit("Properties");
-  for (unsigned i = 0, e = LI->getSize(); i != e; ++i) {
-    DefInit *DI = dynamic_cast<DefInit*>(LI->getElement(i));
-    assert(DI && "Properties list must be list of defs!");
-    if (DI->getDef()->getName() == "SDNPCommutative") {
+  std::vector<Record*> PropList = R->getValueAsListDef("Properties");
+  for (unsigned i = 0, e = PropList.size(); i != e; ++i) {
+    if (PropList[i]->getName() == "SDNPCommutative") {
       Properties |= 1 << SDNPCommutative;
-    } else if (DI->getDef()->getName() == "SDNPAssociative") {
+    } else if (PropList[i]->getName() == "SDNPAssociative") {
       Properties |= 1 << SDNPAssociative;
     } else {
-      std::cerr << "Unknown SD Node property '" << DI->getDef()->getName()
+      std::cerr << "Unknown SD Node property '" << PropList[i]->getName()
                 << "' on node '" << R->getName() << "'!\n";
       exit(1);
     }
@@ -245,14 +243,8 @@ SDNodeInfo::SDNodeInfo(Record *R) : Def(R) {
   
   
   // Parse the type constraints.
-  ListInit *Constraints = TypeProfile->getValueAsListInit("Constraints");
-  for (unsigned i = 0, e = Constraints->getSize(); i != e; ++i) {
-    assert(dynamic_cast<DefInit*>(Constraints->getElement(i)) &&
-           "Constraints list should contain constraint definitions!");
-    Record *Constraint = 
-      static_cast<DefInit*>(Constraints->getElement(i))->getDef();
-    TypeConstraints.push_back(Constraint);
-  }
+  std::vector<Record*> ConstList =TypeProfile->getValueAsListDef("Constraints");
+  TypeConstraints.assign(ConstList.begin(), ConstList.end());
 }
 
 //===----------------------------------------------------------------------===//
