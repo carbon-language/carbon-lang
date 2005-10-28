@@ -37,6 +37,9 @@ namespace {
                               cl::desc("Disable the IA64 asm printer, for use "
                                        "when profiling the code generator."));
 
+  cl::opt<bool> EnableDAGIsel("enable-ia64-dag-isel", cl::Hidden,
+		              cl::desc("Enable the IA64 DAG->DAG isel"));
+
   // Register the target.
   RegisterTarget<IA64TargetMachine> X("ia64", "  IA-64 (Itanium)");
 }
@@ -97,8 +100,12 @@ bool IA64TargetMachine::addPassesToEmitFile(PassManager &PM,
   // Make sure that no unreachable blocks are instruction selected.
   PM.add(createUnreachableBlockEliminationPass());
 
-  PM.add(createIA64PatternInstructionSelector(*this));
-
+  // Add an instruction selector
+  if(EnableDAGIsel)
+    PM.add(createIA64DAGToDAGInstructionSelector(*this));
+  else
+    PM.add(createIA64PatternInstructionSelector(*this));
+  
 /* XXX not yet. ;)
   // Run optional SSA-based machine code optimizations next...
   if (!NoSSAPeephole)

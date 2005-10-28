@@ -22,6 +22,11 @@ class TargetMachine;
 class FunctionPass;
 class IntrinsicLowering;
 
+/// createIA64DAGToDAGInstructionSelector - This pass converts an LLVM
+/// function into IA64 machine code in a sane, DAG->DAG transform.
+///
+FunctionPass *createIA64DAGToDAGInstructionSelector(TargetMachine &TM);
+
 /// createIA64PatternInstructionSelector - This pass converts an LLVM function
 /// into a machine code representation in a more aggressive way.
 ///

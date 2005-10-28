@@ -19,7 +19,7 @@ def u6imm : Operand<i8>;
 def s8imm : Operand<i8> {
   let PrintMethod = "printS8ImmOperand";
 }
-def s14imm  : Operand<i16> {
+def s14imm  : Operand<i64> {
   let PrintMethod = "printS14ImmOperand";
 }
 def s22imm  : Operand<i32> {
@@ -32,10 +32,212 @@ def s64imm  : Operand<i64> {
   let PrintMethod = "printS64ImmOperand";
 }
 
+let PrintMethod = "printGlobalOperand" in
+  def globaladdress : Operand<i64>;
+
 // the asmprinter needs to know about calls
 let PrintMethod = "printCallOperand" in
   def calltarget : Operand<i64>;
   
+/* new daggy action!!! */
+
+def immSExt14  : PatLeaf<(i64 imm), [{
+  // immSExt14 predicate - True if the immediate fits in a 14-bit sign extended
+  // field.  Used by instructions like 'adds'.
+  int64_t v = (int64_t)N->getValue();
+  return (v <= 8191 && v >= -8192);
+}]>;
+
+def imm64  : PatLeaf<(i64 imm), [{
+  // imm64 predicate - True if the immediate fits in a 64-bit 
+  // field - i.e., true. used to keep movl happy
+  return true;
+}]>;
+
+def ADD  : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
+           "add $dst = $src1, $src2;;",
+	   [(set GR:$dst, (add GR:$src1, GR:$src2))]>;
+
+def ADD1 : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
+           "add $dst = $src1, $src2, 1;;",
+	   [(set GR:$dst, (add (add GR:$src1, GR:$src2), 1))]>;
+
+def ADDS : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, s14imm:$imm),
+           "adds $dst = $imm, $src1;;",
+	   [(set GR:$dst, (add GR:$src1, immSExt14:$imm))]>;
+ 
+def MOVL : AForm_DAG<0x03, 0x0b, (ops GR:$dst, s64imm:$imm),
+           "movl $dst = $imm;;",
+	   [(set GR:$dst, imm64:$imm)]>;
+
+def ADDL_GA : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, globaladdress:$imm),
+           "addl $dst = $imm, $src1;;",
+	   []>;
+  
+def SUB  : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
+           "sub $dst = $src1, $src2;;",
+	   [(set GR:$dst, (sub GR:$src1, GR:$src2))]>;
+
+def SUB1 : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
+           "sub $dst = $src1, $src2, 1;;",
+	   [(set GR:$dst, (add (sub GR: $src1, GR:$src2), -1))]>;
+
+def GETFSIGD : AForm_DAG<0x03, 0x0b, (ops GR:$dst, FP:$src),
+  "getf.sig $dst = $src;;",
+  []>;
+
+def SETFSIGD : AForm_DAG<0x03, 0x0b, (ops FP:$dst, GR:$src),
+  "setf.sig $dst = $src;;",
+  []>;
+
+def XMALD : AForm_DAG<0x03, 0x0b, (ops FP:$dst, FP:$src1, FP:$src2, FP:$src3),
+  "xma.l $dst = $src1, $src2, $src3;;",
+  []>;
+
+// pseudocode for integer multiplication 
+def : Pat<(mul GR:$src1, GR:$src2),
+           (GETFSIGD (XMALD (SETFSIGD GR:$src1), (SETFSIGD GR:$src2), F0))>;
+
+// TODO: addp4 (addp4 dst = src, r0 is a 32-bit add)
+// has imm form, too
+
+// def ADDS : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, s14imm:$imm),
+//   "adds $dst = $imm, $src1;;">;
+
+// load constants of various sizes // FIXME: prettyprint -ve constants
+def : Pat<(i64 immSExt14:$imm), (ADDS r0, immSExt14:$imm)>;
+def : Pat<(i64 imm64:$imm), (MOVL imm64:$imm)>;
+
+def AND   : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
+          "and $dst = $src1, $src2;;",
+	  [(set GR:$dst, (and GR:$src1, GR:$src2))]>;
+def ANDCM : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
+          "andcm $dst = $src1, $src2;;",
+	  [(set GR:$dst, (and GR:$src1, (not GR:$src2)))]>;
+// TODO: and/andcm/or/xor/add/sub/shift immediate forms
+def OR    : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
+          "or $dst = $src1, $src2;;",
+	  [(set GR:$dst, (or GR:$src1, GR:$src2))]>;
+
+def pOR   : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2, PR:$qp),
+          "($qp) or $dst = $src1, $src2;;">;
+
+def PCMPEQUNCR0R0 : AForm<0x03, 0x0b, (ops PR:$dst, PR:$qp),
+    "($qp) cmp.eq.unc $dst, p0 = r0, r0;;">;
+
+let isTwoAddress=1 in
+def TPCMPEQR0R0 : AForm<0x03, 0x0b, (ops PR:$dst, PR:$bogus, PR:$qp),
+  "($qp) cmp.eq $dst, p0 = r0, r0;;">;
+  
+/* our pseudocode for OR on predicates is:
+ *
+
+pC = pA OR pB
+-------------
+
+(pA) cmp.eq.unc pC,p0 = r0,r0  // pC = pA
+ ;;
+(pB) cmp.eq pC,p0 = r0,r0 // if (pB) pC = 1
+
+*/
+/*
+let isTwoAddress = 1 in {
+  def TPCMPEQ : AForm<0x03, 0x0b,
+  (ops PR:$dst, PR:$src2, GR:$src3, GR:$src4, PR:$qp),
+    "($qp) cmp.eq $dst, p0 = $src3, $src4;;">;
+}
+*/
+
+// FIXME: these are bogus
+def bOR   : Pat<(or PR:$src1, PR:$src2),
+          (PCMPEQUNCR0R0 PR:$src1)>;
+
+def bXOR  : Pat<(xor PR:$src1, PR:$src2),
+          (PCMPEQUNCR0R0 PR:$src1)>;
+
+def XOR   : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
+          "xor $dst = $src1, $src2;;",
+	  [(set GR:$dst, (xor GR:$src1, GR:$src2))]>;
+
+def SHL   : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
+          "shl $dst = $src1, $src2;;",
+	  [(set GR:$dst, (shl GR:$src1, GR:$src2))]>;
+
+/*
+def CMPEQ : AForm<0x03, 0x0b, (ops PR:$dst, GR:$src1, GR:$src2),
+  "cmp.eq $dst, p0 = $src1, $src2;;">;
+def CMPGT : AForm<0x03, 0x0b, (ops PR:$dst, GR:$src1, GR:$src2),
+  "cmp.gt $dst, p0 = $src1, $src2;;">;
+def CMPGE : AForm<0x03, 0x0b, (ops PR:$dst, GR:$src1, GR:$src2),
+  "cmp.ge $dst, p0 = $src1, $src2;;">;
+def CMPLT : AForm<0x03, 0x0b, (ops PR:$dst, GR:$src1, GR:$src2),
+  "cmp.lt $dst, p0 = $src1, $src2;;">;
+def CMPLE : AForm<0x03, 0x0b, (ops PR:$dst, GR:$src1, GR:$src2),
+  "cmp.le $dst, p0 = $src1, $src2;;">;
+def CMPNE : AForm<0x03, 0x0b, (ops PR:$dst, GR:$src1, GR:$src2),
+  "cmp.ne $dst, p0 = $src1, $src2;;">;
+def CMPLTU : AForm<0x03, 0x0b, (ops PR:$dst, GR:$src1, GR:$src2),
+  "cmp.ltu $dst, p0 = $src1, $src2;;">;
+def CMPGTU : AForm<0x03, 0x0b, (ops PR:$dst, GR:$src1, GR:$src2),
+  "cmp.gtu $dst, p0 = $src1, $src2;;">;
+def CMPLEU : AForm<0x03, 0x0b, (ops PR:$dst, GR:$src1, GR:$src2),
+  "cmp.leu $dst, p0 = $src1, $src2;;">;
+def CMPGEU : AForm<0x03, 0x0b, (ops PR:$dst, GR:$src1, GR:$src2),
+  "cmp.geu $dst, p0 = $src1, $src2;;">;
+*/
+
+// the following are all a bit unfortunate: we throw away the complement
+// of the compare!
+def CMPEQ : AForm_DAG<0x03, 0x0b, (ops PR:$dst, GR:$src1, GR:$src2),
+          "cmp.eq $dst, p0 = $src1, $src2;;",
+	  [(set PR:$dst, (seteq GR:$src1, GR:$src2))]>;
+def CMPGT : AForm_DAG<0x03, 0x0b, (ops PR:$dst, GR:$src1, GR:$src2),
+          "cmp.gt $dst, p0 = $src1, $src2;;",
+	  [(set PR:$dst, (setgt GR:$src1, GR:$src2))]>;
+def CMPGE : AForm_DAG<0x03, 0x0b, (ops PR:$dst, GR:$src1, GR:$src2),
+          "cmp.ge $dst, p0 = $src1, $src2;;",
+	  [(set PR:$dst, (setge GR:$src1, GR:$src2))]>;
+def CMPLT : AForm_DAG<0x03, 0x0b, (ops PR:$dst, GR:$src1, GR:$src2),
+          "cmp.lt $dst, p0 = $src1, $src2;;",
+	  [(set PR:$dst, (setlt GR:$src1, GR:$src2))]>;
+def CMPLE : AForm_DAG<0x03, 0x0b, (ops PR:$dst, GR:$src1, GR:$src2),
+          "cmp.le $dst, p0 = $src1, $src2;;",
+	  [(set PR:$dst, (setle GR:$src1, GR:$src2))]>;
+def CMPNE : AForm_DAG<0x03, 0x0b, (ops PR:$dst, GR:$src1, GR:$src2),
+          "cmp.ne $dst, p0 = $src1, $src2;;",
+	  [(set PR:$dst, (setne GR:$src1, GR:$src2))]>;
+def CMPLTU: AForm_DAG<0x03, 0x0b, (ops PR:$dst, GR:$src1, GR:$src2),
+          "cmp.eq $dst, p0 = $src1, $src2;;",
+	  [(set PR:$dst, (setult GR:$src1, GR:$src2))]>;
+def CMPGTU: AForm_DAG<0x03, 0x0b, (ops PR:$dst, GR:$src1, GR:$src2),
+          "cmp.eq $dst, p0 = $src1, $src2;;",
+	  [(set PR:$dst, (setugt GR:$src1, GR:$src2))]>;
+def CMPLEU: AForm_DAG<0x03, 0x0b, (ops PR:$dst, GR:$src1, GR:$src2),
+          "cmp.eq $dst, p0 = $src1, $src2;;",
+	  [(set PR:$dst, (setule GR:$src1, GR:$src2))]>;
+def CMPGEU: AForm_DAG<0x03, 0x0b, (ops PR:$dst, GR:$src1, GR:$src2),
+          "cmp.eq $dst, p0 = $src1, $src2;;",
+	  [(set PR:$dst, (setuge GR:$src1, GR:$src2))]>;
+
+// FIXME: tabelgen doesn't know that zxt1 is cheaper on ia64 than "andi", 
+// need to fix this one day 
+
+def SXT1 : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src), "sxt1 $dst = $src;;",
+           [(set GR:$dst, (sext_inreg GR:$src, i8))]>;
+def ZXT1 : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src), "zxt1 $dst = $src;;",
+           [(set GR:$dst, (and GR:$src, 255))]>;
+def SXT2 : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src), "sxt2 $dst = $src;;",
+           [(set GR:$dst, (sext_inreg GR:$src, i16))]>;
+def ZXT2 : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src), "zxt2 $dst = $src;;",
+           [(set GR:$dst, (and GR:$src, 65535))]>;
+def SXT4 : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src), "sxt4 $dst = $src;;",
+           [(set GR:$dst, (sext_inreg GR:$src, i32))]>;
+def ZXT4 : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src), "zxt4 $dst = $src;;",
+           [(set GR:$dst, (and GR:$src, 1341835918))]>; // hehhehe NO - FIXME
+
+// TODO: support postincrement (reg, imm9) loads+stores - this needs more
+// tablegen support
+
 def PHI : PseudoInstIA64<(ops variable_ops), "PHI">;
 def IDEF : PseudoInstIA64<(ops variable_ops), "// IDEF">;
 def IUSE : PseudoInstIA64<(ops variable_ops), "// IUSE">;
@@ -96,6 +298,7 @@ def MOVSIMM22 : AForm<0x03, 0x0b, (ops GR:$dst, s22imm:$imm),
 def MOVLIMM64 : AForm<0x03, 0x0b, (ops GR:$dst, s64imm:$imm),
   "movl $dst = $imm;;">;
 
+/*
 def AND : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
   "and $dst = $src1, $src2;;">;
 def OR : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
@@ -104,6 +307,7 @@ def XOR : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
   "xor $dst = $src1, $src2;;">;
 def SHL : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
   "shl $dst = $src1, $src2;;">;
+*/
 def SHLI : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, u6imm:$imm), 
   "shl $dst = $src1, $imm;;">;
 def SHRU : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
@@ -123,35 +327,14 @@ def EXTRU : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, u6imm:$imm1, u6imm:$imm2),
 
 def DEPZ : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, u6imm:$imm1, u6imm:$imm2),	  "dep.z $dst = $src1, $imm1, $imm2;;">;
 
+/*
 def SXT1 : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src), "sxt1 $dst = $src;;">;
 def ZXT1 : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src), "zxt1 $dst = $src;;">;
 def SXT2 : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src), "sxt2 $dst = $src;;">;
 def ZXT2 : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src), "zxt2 $dst = $src;;">;
 def SXT4 : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src), "sxt4 $dst = $src;;">;
 def ZXT4 : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src), "zxt4 $dst = $src;;">;
-
-// the following are all a bit unfortunate: we throw away the complement
-// of the compare!
-def CMPEQ : AForm<0x03, 0x0b, (ops PR:$dst, GR:$src1, GR:$src2),
-  "cmp.eq $dst, p0 = $src1, $src2;;">;
-def CMPGT : AForm<0x03, 0x0b, (ops PR:$dst, GR:$src1, GR:$src2),
-  "cmp.gt $dst, p0 = $src1, $src2;;">;
-def CMPGE : AForm<0x03, 0x0b, (ops PR:$dst, GR:$src1, GR:$src2),
-  "cmp.ge $dst, p0 = $src1, $src2;;">;
-def CMPLT : AForm<0x03, 0x0b, (ops PR:$dst, GR:$src1, GR:$src2),
-  "cmp.lt $dst, p0 = $src1, $src2;;">;
-def CMPLE : AForm<0x03, 0x0b, (ops PR:$dst, GR:$src1, GR:$src2),
-  "cmp.le $dst, p0 = $src1, $src2;;">;
-def CMPNE : AForm<0x03, 0x0b, (ops PR:$dst, GR:$src1, GR:$src2),
-  "cmp.ne $dst, p0 = $src1, $src2;;">;
-def CMPLTU : AForm<0x03, 0x0b, (ops PR:$dst, GR:$src1, GR:$src2),
-  "cmp.ltu $dst, p0 = $src1, $src2;;">;
-def CMPGTU : AForm<0x03, 0x0b, (ops PR:$dst, GR:$src1, GR:$src2),
-  "cmp.gtu $dst, p0 = $src1, $src2;;">;
-def CMPLEU : AForm<0x03, 0x0b, (ops PR:$dst, GR:$src1, GR:$src2),
-  "cmp.leu $dst, p0 = $src1, $src2;;">;
-def CMPGEU : AForm<0x03, 0x0b, (ops PR:$dst, GR:$src1, GR:$src2),
-  "cmp.geu $dst, p0 = $src1, $src2;;">;
+*/
 
 // and we do the whole thing again for FP compares!
 def FCMPEQ : AForm<0x03, 0x0b, (ops PR:$dst, FP:$src1, FP:$src2),
@@ -186,8 +369,6 @@ def PCMPNE : AForm<0x03, 0x0b, (ops PR:$dst, GR:$src1, GR:$src2, PR:$qp),
 def BCMPEQ : AForm<0x03, 0x0b, (ops PR:$dst1, PR:$dst2, GR:$src1, GR:$src2),
   "cmp.eq $dst1, dst2 = $src1, $src2;;">;
 
-def ADD : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
-  "add $dst = $src1, $src2;;">;
 def ADDIMM14 : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, s14imm:$imm),
   "adds $dst = $imm, $src1;;">;
 
@@ -205,8 +386,6 @@ def TPCMPIMM8NE : AForm<0x03, 0x0b,
     "($qp) cmp.ne $dst , p0 = $imm, $src2;;">;
 }
 
-def SUB : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
-  "sub $dst = $src1, $src2;;">;
 def SUBIMM8 : AForm<0x03, 0x0b, (ops GR:$dst, s8imm:$imm, GR:$src2),
   "sub $dst = $imm, $src2;;">;
 
@@ -312,6 +491,8 @@ def STF8 : AForm<0x03, 0x0b, (ops GR:$dstPtr, FP:$value),
   "stfd [$dstPtr] = $value;;">;
 
 let isTerminator = 1, isBranch = 1 in {
+  def BRL_NOTCALL : RawForm<0x03, 0xb0, (ops i64imm:$dst),
+    "(p0) brl.cond.sptk $dst;;">;
   def BRLCOND_NOTCALL : RawForm<0x03, 0xb0, (ops PR:$qp, i64imm:$dst),
     "($qp) brl.cond.sptk $dst;;">;
   def BRCOND_NOTCALL : RawForm<0x03, 0xb0, (ops PR:$qp, GR:$dst),
@@ -334,8 +515,14 @@ let isCall = 1, isTerminator = 1, isBranch = 1,
   F106,F107,F108,F109,F110,F111,F112,F113,F114,F115,F116,F117,F118,F119,
   F120,F121,F122,F123,F124,F125,F126,F127,
   out0,out1,out2,out3,out4,out5,out6,out7] in {
-  def BRCALL : RawForm<0x03, 0xb0, (ops calltarget:$dst),
+// old pattern call
+  def BRCALL: RawForm<0x03, 0xb0, (ops calltarget:$dst),
   "br.call.sptk rp = $dst;;">;       // FIXME: teach llvm about branch regs?
+// new daggy stuff!  
+  def BRCALL_IPREL : RawForm<0x03, 0xb0, (ops calltarget:$dst, variable_ops),
+  "br.call.sptk rp = $dst;;">;       // FIXME: teach llvm about branch regs?
+  def BRCALL_INDIRECT : RawForm<0x03, 0xb0, (ops GR:$branchreg, variable_ops),
+  "br.call.sptk rp = $branchreg;;">; // FIXME: teach llvm about branch regs?
   def BRLCOND_CALL : RawForm<0x03, 0xb0, (ops PR:$qp, i64imm:$dst),
     "($qp) brl.cond.call.sptk $dst;;">;
   def BRCOND_CALL : RawForm<0x03, 0xb0, (ops PR:$qp, GR:$dst),

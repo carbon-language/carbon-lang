@@ -1466,7 +1466,7 @@ pC = pA OR pB
 */
       BuildMI(BB, IA64::PCMPEQUNC, 3, pTemp1)
         .addReg(IA64::r0).addReg(IA64::r0).addReg(pA);
-      BuildMI(BB, IA64::TPCMPEQ, 3, Result)
+      BuildMI(BB, IA64::TPCMPEQ, 4, Result)
         .addReg(pTemp1).addReg(IA64::r0).addReg(IA64::r0).addReg(pB);
       break;
     }
@@ -1957,8 +1957,13 @@ pC = pA OR pB
       Select(Chain);
       IA64Lowering.restoreGP(BB);
       unsigned dummy = MakeReg(MVT::i64);
-      BuildMI(BB, IA64::ADD, 2, dummy).addConstantPoolIndex(CPIdx)
-        .addReg(IA64::r1); // CPI+GP
+      unsigned dummy2 = MakeReg(MVT::i64);
+      BuildMI(BB, IA64::MOVLIMM64, 1, dummy2).addConstantPoolIndex(CPIdx);
+      BuildMI(BB, IA64::ADD, 2, dummy).addReg(dummy2).addReg(IA64::r1); //CPI+GP
+
+
+ // OLD     BuildMI(BB, IA64::ADD, 2, dummy).addConstantPoolIndex(CPIdx)
+ // (FIXME!)      .addReg(IA64::r1); // CPI+GP
       if(!isBool)
         BuildMI(BB, Opc, 1, Result).addReg(dummy);
       else { // emit a little pseudocode to load a bool (stored in one byte)

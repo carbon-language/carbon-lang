@@ -11,7 +11,7 @@
 // of machine-dependent LLVM code to assembly accepted by the GNU binutils 'gas'
 // assembler. The Intel 'ias' and HP-UX 'as' assemblers *may* choke on this
 // output, but if so that's a bug I'd like to hear about: please file a bug
-// report in bugzilla. FYI, the excellent 'ias' assembler is bundled with
+// report in bugzilla. FYI, the not too bad 'ias' assembler is bundled with
 // the Intel C/C++ compiler for Itanium Linux.
 //
 //===----------------------------------------------------------------------===//
@@ -249,7 +249,25 @@ namespace {
     }
     void printS64ImmOperand(const MachineInstr *MI, unsigned OpNo,
                             MVT::ValueType VT) {
-      O << (int64_t)MI->getOperand(OpNo).getImmedValue();
+// XXX : nasty hack to avoid GPREL22 "relocation truncated to fit" linker
+// errors - instead of add rX = @gprel(CPI<whatever>), r1;; we now
+// emit movl rX = @gprel(CPI<whatever);;
+//      add  rX = rX, r1; 
+// this gives us 64 bits instead of 22 (for the add long imm) to play
+// with, which shuts up the linker. The problem is that the constant
+// pool entries aren't immediates at this stage, so we check here. 
+// If it's an immediate, print it the old fashioned way. If it's
+// not, we print it as a constant pool index. 
+      if(MI->getOperand(OpNo).isImmediate()) {
+        O << (int64_t)MI->getOperand(OpNo).getImmedValue();
+      } else { // this is a constant pool reference: FIXME: assert this
+        printOp(MI->getOperand(OpNo));
+      }
+    }
+
+    void printGlobalOperand(const MachineInstr *MI, unsigned OpNo,
+                          MVT::ValueType VT) {
+      printOp(MI->getOperand(OpNo), false); // this is NOT a br.call instruction
     }
 
     void printCallOperand(const MachineInstr *MI, unsigned OpNo,

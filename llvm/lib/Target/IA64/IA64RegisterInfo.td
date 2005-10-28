@@ -211,7 +211,7 @@ def out6 : GR<6, "out6">;  def out7 : GR<7, "out7">;
 
 // application (special) registers:
 
-// " previous function state" application register
+// "previous function state" application register
 def AR_PFS : GR<0, "ar.pfs">;
 
 // "return pointer" (this is really branch register b0)
@@ -255,7 +255,7 @@ def GR : RegisterClass<"IA64", i64, 64,
         r104, r105, r106, r107, r108, r109, r110, r111,
         r112, r113, r114, r115, r116, r117, r118, r119,
         r120, r121, r122, r123, r124, r125, r126, r127,
-	r0, r1, r2, r12, r13, r15, r22]> // the last 15 are special (look down)
+	r0, r1, r2, r12, r13, r15, r22, rp]> // the last 16 are special (look down)
   {
     let MethodProtos = [{
     iterator allocation_order_begin(MachineFunction &MF) const;
@@ -264,13 +264,13 @@ def GR : RegisterClass<"IA64", i64, 64,
   let MethodBodies = [{
     GRClass::iterator
     GRClass::allocation_order_begin(MachineFunction &MF) const {
-	// hide registers appropriately:
+	// hide the 8 out? registers appropriately:
 	return begin()+(8-(MF.getInfo<IA64FunctionInfo>()->outRegsUsed));
       }
 
       GRClass::iterator
       GRClass::allocation_order_end(MachineFunction &MF) const {
-	int numReservedRegs=7; // the 7 special registers r0,r1,r2,r12,r13 etc
+	int numReservedRegs=8; // the 8 special registers r0,r1,r2,r12,r13 etc
 
 	// we also can't allocate registers for use as locals if they're
 	// already required as 'out' registers
