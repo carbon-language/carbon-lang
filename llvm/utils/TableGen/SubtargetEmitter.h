@@ -23,13 +23,6 @@
 
 namespace llvm {
 
-//
-// Convenience types.
-//
-typedef std::map<std::string, unsigned> IntMap;
-typedef std::vector<InstrItinerary> IntineraryList;
-typedef std::vector<IntineraryList> ProcessorList;
-
 class SubtargetEmitter : public TableGenBackend {
   
   RecordKeeper &Records;
@@ -38,12 +31,15 @@ class SubtargetEmitter : public TableGenBackend {
   void Enumeration(std::ostream &OS, const char *ClassName, bool isBits);
   void FeatureKeyValues(std::ostream &OS);
   void CPUKeyValues(std::ostream &OS);
-  unsigned CollectAllItinClasses(IntMap &ItinClassesMap);
+  unsigned CollectAllItinClasses(std::map<std::string, unsigned>
+                                                               &ItinClassesMap);
   void FormItineraryString(Record *ItinData, std::string &ItinString,
-                           unsigned &N);
-  void EmitStageData(std::ostream &OS, unsigned N,
-                     IntMap &ItinClassesMap, ProcessorList &ProcList);
-  void EmitProcessData(std::ostream &OS, ProcessorList &ProcList);
+                           unsigned &NStages);
+  void EmitStageData(std::ostream &OS, unsigned NItinClasses,
+                     std::map<std::string, unsigned> &ItinClassesMap,
+                     std::vector<std::vector<InstrItinerary> > &ProcList);
+  void EmitProcessData(std::ostream &OS,
+                       std::vector<std::vector<InstrItinerary> > &ProcList);
   void EmitData(std::ostream &OS);
   void ParseFeaturesFunction(std::ostream &OS);
   
