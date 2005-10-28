@@ -3862,7 +3862,7 @@ Instruction *InstCombiner::PromoteCastOfAllocation(CastInst &CI,
       Amt = ConstantUInt::get(Type::UIntTy, Scale);
       if (ConstantUInt *CI = dyn_cast<ConstantUInt>(NumElements))
         Amt = ConstantExpr::getMul(CI, cast<ConstantUInt>(Amt));
-      else if (cast<ConstantUInt>(Amt)->getValue() == 1) {
+      else if (Scale != 1) {
         Instruction *Tmp = BinaryOperator::createMul(Amt, NumElements, "tmp");
         Amt = InsertNewInstBefore(Tmp, AI);
       }
