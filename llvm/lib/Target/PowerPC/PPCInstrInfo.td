@@ -204,6 +204,10 @@ let isBranch = 1, isTerminator = 1 in {
                   "bgt $crS, $block", BrB>;
   def BNE : BForm<16, 0, 0, 4,  2, (ops CRRC:$crS, target:$block),
                   "bne $crS, $block", BrB>;
+  def BUN : BForm<16, 0, 0, 12, 3, (ops CRRC:$crS, target:$block),
+                  "bun $crS, $block", BrB>;
+  def BNU : BForm<16, 0, 0, 4,  3, (ops CRRC:$crS, target:$block),
+                  "bnu $crS, $block", BrB>;
 }
 
 let isCall = 1, 

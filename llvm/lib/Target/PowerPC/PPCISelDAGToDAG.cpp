@@ -489,6 +489,15 @@ static unsigned getBCCForSetCC(ISD::CondCode CC) {
   case ISD::SETGT:  return PPC::BGT;
   case ISD::SETUGE:
   case ISD::SETGE:  return PPC::BGE;
+    
+  case ISD::SETO:   return PPC::BUN;
+  case ISD::SETUO:  return PPC::BNU;
+  case ISD::SETOEQ:
+  case ISD::SETOGT:
+  case ISD::SETOGE:
+  case ISD::SETOLT:
+  case ISD::SETOLE:
+  case ISD::SETONE: assert(0 && "Unknown condition!"); abort();
   }
   return 0;
 }
@@ -509,6 +518,14 @@ static unsigned getCRIdxForSetCC(ISD::CondCode CC, bool& Inv) {
   case ISD::SETLE:  Inv = true;   return 1;
   case ISD::SETEQ:  Inv = false;  return 2;
   case ISD::SETNE:  Inv = true;   return 2;
+  case ISD::SETO:   Inv = true;   return 3;
+  case ISD::SETUO:  Inv = false;  return 3;
+  case ISD::SETOEQ:
+  case ISD::SETOGT:
+  case ISD::SETOGE:
+  case ISD::SETOLT:
+  case ISD::SETOLE:
+  case ISD::SETONE: assert(0 && "Unknown condition!"); abort();
   }
   return 0;
 }
