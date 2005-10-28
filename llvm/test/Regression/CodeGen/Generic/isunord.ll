@@ -1,4 +1,6 @@
 ; RUN: llvm-as < %s | llc
+; XFAIL: alpha|ia64|sparcv8
+
 
 declare bool %llvm.isunordered(double, double)
 
