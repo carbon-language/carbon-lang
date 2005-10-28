@@ -390,7 +390,8 @@ bool DarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   // Print out labels for the function.
   O << "\t.text\n";
   emitAlignment(4);
-  O << "\t.globl\t" << CurrentFnName << "\n";
+  if (!MF.getFunction()->hasInternalLinkage())
+    O << "\t.globl\t" << CurrentFnName << "\n";
   O << CurrentFnName << ":\n";
 
   // Print out code for the function.
