@@ -479,25 +479,25 @@ SDOperand PPCDAGToDAGISel::SelectCC(SDOperand LHS, SDOperand RHS,
 static unsigned getBCCForSetCC(ISD::CondCode CC) {
   switch (CC) {
   default: assert(0 && "Unknown condition!"); abort();
+  case ISD::SETOEQ:    // FIXME: This is incorrect see PR642.
   case ISD::SETEQ:  return PPC::BEQ;
+  case ISD::SETONE:    // FIXME: This is incorrect see PR642.
   case ISD::SETNE:  return PPC::BNE;
+  case ISD::SETOLT:    // FIXME: This is incorrect see PR642.
   case ISD::SETULT:
   case ISD::SETLT:  return PPC::BLT;
+  case ISD::SETOLE:    // FIXME: This is incorrect see PR642.
   case ISD::SETULE:
   case ISD::SETLE:  return PPC::BLE;
+  case ISD::SETOGT:    // FIXME: This is incorrect see PR642.
   case ISD::SETUGT:
   case ISD::SETGT:  return PPC::BGT;
+  case ISD::SETOGE:    // FIXME: This is incorrect see PR642.
   case ISD::SETUGE:
   case ISD::SETGE:  return PPC::BGE;
     
   case ISD::SETO:   return PPC::BUN;
   case ISD::SETUO:  return PPC::BNU;
-  case ISD::SETOEQ:
-  case ISD::SETOGT:
-  case ISD::SETOGE:
-  case ISD::SETOLT:
-  case ISD::SETOLE:
-  case ISD::SETONE: assert(0 && "Unknown condition!"); abort();
   }
   return 0;
 }
@@ -508,24 +508,24 @@ static unsigned getBCCForSetCC(ISD::CondCode CC) {
 static unsigned getCRIdxForSetCC(ISD::CondCode CC, bool& Inv) {
   switch (CC) {
   default: assert(0 && "Unknown condition!"); abort();
+  case ISD::SETOLT:  // FIXME: This is incorrect see PR642.
   case ISD::SETULT:
   case ISD::SETLT:  Inv = false;  return 0;
+  case ISD::SETOGE:  // FIXME: This is incorrect see PR642.
   case ISD::SETUGE:
   case ISD::SETGE:  Inv = true;   return 0;
+  case ISD::SETOGT:  // FIXME: This is incorrect see PR642.
   case ISD::SETUGT:
   case ISD::SETGT:  Inv = false;  return 1;
+  case ISD::SETOLE:  // FIXME: This is incorrect see PR642.
   case ISD::SETULE:
   case ISD::SETLE:  Inv = true;   return 1;
+  case ISD::SETOEQ:  // FIXME: This is incorrect see PR642.
   case ISD::SETEQ:  Inv = false;  return 2;
+  case ISD::SETONE:  // FIXME: This is incorrect see PR642.
   case ISD::SETNE:  Inv = true;   return 2;
   case ISD::SETO:   Inv = true;   return 3;
   case ISD::SETUO:  Inv = false;  return 3;
-  case ISD::SETOEQ:
-  case ISD::SETOGT:
-  case ISD::SETOGE:
-  case ISD::SETOLT:
-  case ISD::SETOLE:
-  case ISD::SETONE: assert(0 && "Unknown condition!"); abort();
   }
   return 0;
 }
