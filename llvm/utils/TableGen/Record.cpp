@@ -709,6 +709,25 @@ ListInit *Record::getValueAsListInit(const std::string &FieldName) const {
         "' does not have a list initializer!";
 }
 
+/// getValueAsListDef - This method looks up the specified field and returns
+/// its value as a vector of records, throwing an exception if the field does
+/// not exist or if the value is not the right type.
+///
+std::vector<Record*>  Record::getValueAsListDef(const std::string &FieldName)
+                                                                         const {
+  ListInit *List = getValueAsListInit(FieldName);
+  std::vector<Record*> Defs;
+  for (unsigned i = 0; i < List->getSize(); i++) {
+    if (DefInit *DI = dynamic_cast<DefInit*>(List->getElement(i))) {
+      Defs.push_back(DI->getDef());
+    } else {
+      throw "Record `" + getName() + "', field `" + FieldName +
+            "' list is not entirely DefInit!";
+    }
+  }
+  return Defs;
+}
+
 /// getValueAsInt - This method looks up the specified field and returns its
 /// value as an int, throwing an exception if the field does not exist or if
 /// the value is not the right type.
