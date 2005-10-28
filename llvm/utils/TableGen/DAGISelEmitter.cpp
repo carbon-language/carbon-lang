@@ -228,7 +228,7 @@ SDNodeInfo::SDNodeInfo(Record *R) : Def(R) {
   
   // Parse the properties.
   Properties = 0;
-  std::vector<Record*> PropList = R->getValueAsListDef("Properties");
+  std::vector<Record*> PropList = R->getValueAsListOfDefs("Properties");
   for (unsigned i = 0, e = PropList.size(); i != e; ++i) {
     if (PropList[i]->getName() == "SDNPCommutative") {
       Properties |= 1 << SDNPCommutative;
@@ -243,8 +243,9 @@ SDNodeInfo::SDNodeInfo(Record *R) : Def(R) {
   
   
   // Parse the type constraints.
-  std::vector<Record*> ConstList =TypeProfile->getValueAsListDef("Constraints");
-  TypeConstraints.assign(ConstList.begin(), ConstList.end());
+  std::vector<Record*> ConstraintList =
+    TypeProfile->getValueAsListOfDefs("Constraints");
+  TypeConstraints.assign(ConstraintList.begin(), ConstraintList.end());
 }
 
 //===----------------------------------------------------------------------===//

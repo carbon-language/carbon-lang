@@ -84,15 +84,8 @@ CodeGenTarget::CodeGenTarget() : PointerType(MVT::Other) {
     throw std::string("ERROR: Multiple subclasses of Target defined!");
   TargetRec = Targets[0];
 
-  // Read in all of the CalleeSavedRegisters...
-  ListInit *LI = TargetRec->getValueAsListInit("CalleeSavedRegisters");
-  for (unsigned i = 0, e = LI->getSize(); i != e; ++i)
-    if (DefInit *DI = dynamic_cast<DefInit*>(LI->getElement(i)))
-      CalleeSavedRegisters.push_back(DI->getDef());
-    else
-      throw "Target: " + TargetRec->getName() +
-            " expected register definition in CalleeSavedRegisters list!";
-
+  // Read in all of the CalleeSavedRegisters.
+  CalleeSavedRegisters =TargetRec->getValueAsListOfDefs("CalleeSavedRegisters");
   PointerType = getValueType(TargetRec->getValueAsDef("PointerType"));
 }
 
@@ -108,12 +101,10 @@ Record *CodeGenTarget::getInstructionSet() const {
 /// getAsmWriter - Return the AssemblyWriter definition for this target.
 ///
 Record *CodeGenTarget::getAsmWriter() const {
-  ListInit *LI = TargetRec->getValueAsListInit("AssemblyWriters");
-  if (AsmWriterNum >= LI->getSize())
+  std::vector<Record*> LI = TargetRec->getValueAsListOfDefs("AssemblyWriters");
+  if (AsmWriterNum >= LI.size())
     throw "Target does not have an AsmWriter #" + utostr(AsmWriterNum) + "!";
-  DefInit *DI = dynamic_cast<DefInit*>(LI->getElement(AsmWriterNum));
-  if (!DI) throw std::string("AssemblyWriter list should be a list of defs!");
-  return DI->getDef();
+  return LI[AsmWriterNum];
 }
 
 void CodeGenTarget::ReadRegisters() const {
@@ -159,12 +150,9 @@ CodeGenRegisterClass::CodeGenRegisterClass(Record *R) : TheDef(R) {
   MethodBodies = R->getValueAsCode("MethodBodies");
   MethodProtos = R->getValueAsCode("MethodProtos");
   
-  ListInit *RegList = R->getValueAsListInit("MemberList");
-  for (unsigned i = 0, e = RegList->getSize(); i != e; ++i) {
-    DefInit *RegDef = dynamic_cast<DefInit*>(RegList->getElement(i));
-    if (!RegDef) throw "Register class member is not a record!";
-    Record *Reg = RegDef->getDef();
-
+  std::vector<Record*> RegList = R->getValueAsListOfDefs("MemberList");
+  for (unsigned i = 0, e = RegList.size(); i != e; ++i) {
+    Record *Reg = RegList[i];
     if (!Reg->isSubClassOf("Register"))
       throw "Register Class member '" + Reg->getName() +
             "' does not derive from the Register class!";

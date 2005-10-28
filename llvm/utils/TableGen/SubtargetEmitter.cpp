@@ -137,7 +137,8 @@ void SubtargetEmitter::CPUKeyValues(std::ostream &OS) {
     Record *Processor = ProcessorList[i];
 
     std::string Name = Processor->getValueAsString("Name");
-    std::vector<Record*> FeatureList = Processor->getValueAsListDef("Features");
+    std::vector<Record*> FeatureList = 
+      Processor->getValueAsListOfDefs("Features");
     
     // Emit as { "cpu", "description", f1 | f2 | ... fn },
     OS << "  { "
@@ -206,7 +207,7 @@ void SubtargetEmitter::FormItineraryString(Record *ItinData,
                                            std::string &ItinString,
                                            unsigned &NStages) {
   // Get states list
-  std::vector<Record*> StageList = ItinData->getValueAsListDef("Stages");
+  std::vector<Record*> StageList = ItinData->getValueAsListOfDefs("Stages");
 
   // For each stage
   unsigned N = NStages = StageList.size();
@@ -219,7 +220,7 @@ void SubtargetEmitter::FormItineraryString(Record *ItinData,
     ItinString += "  ,{ " + itostr(Cycles) + ", ";
     
     // Get unit list
-    std::vector<Record*> UnitList = Stage->getValueAsListDef("Units");
+    std::vector<Record*> UnitList = Stage->getValueAsListOfDefs("Units");
     
     // For each unit
     for (unsigned j = 0, M = UnitList.size(); j < M;) {
@@ -272,7 +273,7 @@ void SubtargetEmitter::EmitStageData(std::ostream &OS,
     ItinList.resize(NItinClasses);
     
     // Get itinerary data list
-    std::vector<Record*> ItinDataList = Proc->getValueAsListDef("IID");
+    std::vector<Record*> ItinDataList = Proc->getValueAsListOfDefs("IID");
     
     // For each itinerary data
     for (unsigned j = 0, M = ItinDataList.size(); j < M; j++) {
