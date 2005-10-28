@@ -410,7 +410,8 @@ $LOC = `utils/countloc.sh`;
 #
 if (!$NOCHECKOUT) {
   if ( $VERBOSE ) { print "CONFIGURE STAGE\n"; }
-  system "(time -p $NICE ./configure $CONFIGUREARGS --enable-spec --with-objroot=.) > $BuildLog 2>&1";
+  my $EXTRAFLAGS = "--enable-spec2000=/Volumes/ProjectsDisk/cvs/benchmarks/speccpu2000-llvm/benchspec/ --enable-povray=/Volumes/ProjectsDisk/cvs/benchmarks/povray31 --enable-namd=/Volumes/ProjectsDisk/cvs/benchmarks/namd";
+  system "(time -p $NICE ./configure $CONFIGUREARGS $EXTRAFLAGS) > $BuildLog 2>&1";
 
   if ( $VERBOSE ) { print "BUILD STAGE\n"; }
   # Build the entire tree, capturing the output into $BuildLog
@@ -720,7 +721,6 @@ if (!$BuildError) {
     my $rJITTime = GetRegex 'TEST-RESULT-jit-time: program\s*([.0-9m]+)', $Rec;
     my $rOptTime = GetRegex "TEST-RESULT-compile: .*$WallTimeRE", $Rec;
     my $rBytecodeSize = GetRegex 'TEST-RESULT-compile: *([0-9]+)', $Rec;
-    my $rMachCodeSize = GetRegex 'TEST-RESULT-jit-machcode: *([0-9]+).*bytes of machine code', $Rec;
 
     $NATTime .= " " . FormatTime($rNATTime);
     $CBETime .= " " . FormatTime($rCBETime);
@@ -728,7 +728,6 @@ if (!$BuildError) {
     $JITTime .= " " . FormatTime($rJITTime);
     $OptTime .= " $rOptTime";
     $BytecodeSize .= " $rBytecodeSize";
-    $MachCodeSize .= " $rMachCodeSize";
   }
 
   # Now that we have all of the numbers we want, add them to the running totals
@@ -739,7 +738,6 @@ if (!$BuildError) {
   AddRecord($JITTime, "running_Olden_jit_time.txt");
   AddRecord($OptTime, "running_Olden_opt_time.txt");
   AddRecord($BytecodeSize, "running_Olden_bytecode.txt");
-  AddRecord($MachCodeSize, "running_Olden_machcode.txt");
 
   system "gzip -f $OldenTestsLog";
 }
@@ -765,7 +763,7 @@ ChangeDir( $WebDir, "Web Directory" );
 # Make sure we don't get errors running the nightly tester the first time
 # because of files that don't exist.
 Touch ('running_build_time.txt', 'running_Olden_llc_time.txt',
-       'running_loc.txt', 'running_Olden_machcode.txt',
+       'running_loc.txt', 
        'running_Olden_bytecode.txt', 'running_Olden_nat_time.txt',
        'running_Olden_cbe_time.txt', 'running_Olden_opt_time.txt',
        'running_Olden_jit_time.txt');
