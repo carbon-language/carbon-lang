@@ -15,6 +15,7 @@
 
 include "IA64InstrFormats.td"
 
+def u2imm : Operand<i8>;
 def u6imm : Operand<i8>;
 def s8imm : Operand<i8> {
   let PrintMethod = "printS8ImmOperand";
@@ -41,6 +42,21 @@ let PrintMethod = "printCallOperand" in
   
 /* new daggy action!!! */
 
+def is32ones : PatLeaf<(i64 imm), [{
+  // is32ones predicate - True if the immediate is 0x00000000FFFFFFFF 
+  // Used to create ZXT4s appropriately 
+  int64_t v = (int64_t)N->getValue();
+  return (v == 0x00000000FFFFFFFFLL);
+}]>;
+
+def isSHLADDimm: PatLeaf<(i64 imm), [{
+  // isSHLADDimm predicate - True if the immediate is exactly 1, 2, 3 or 4
+  // - 0 is *not* okay.
+  // Used to create shladd instructions appropriately
+  int64_t v = (int64_t)N->getValue();
+  return (v >= 1 && v <= 4);
+}]>;
+
 def immSExt14  : PatLeaf<(i64 imm), [{
   // immSExt14 predicate - True if the immediate fits in a 14-bit sign extended
   // field.  Used by instructions like 'adds'.
@@ -53,6 +69,19 @@ def imm64  : PatLeaf<(i64 imm), [{
   // field - i.e., true. used to keep movl happy
   return true;
 }]>;
+
+def SXT1 : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src), "sxt1 $dst = $src;;",
+           [(set GR:$dst, (sext_inreg GR:$src, i8))]>;
+def ZXT1 : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src), "zxt1 $dst = $src;;",
+           [(set GR:$dst, (and GR:$src, 255))]>;
+def SXT2 : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src), "sxt2 $dst = $src;;",
+           [(set GR:$dst, (sext_inreg GR:$src, i16))]>;
+def ZXT2 : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src), "zxt2 $dst = $src;;",
+           [(set GR:$dst, (and GR:$src, 65535))]>;
+def SXT4 : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src), "sxt4 $dst = $src;;",
+           [(set GR:$dst, (sext_inreg GR:$src, i32))]>;
+def ZXT4 : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src), "zxt4 $dst = $src;;",
+           [(set GR:$dst, (and GR:$src, is32ones))]>;
 
 def ADD  : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
            "add $dst = $src1, $src2;;",
@@ -107,6 +136,7 @@ def : Pat<(mul GR:$src1, GR:$src2),
 // load constants of various sizes // FIXME: prettyprint -ve constants
 def : Pat<(i64 immSExt14:$imm), (ADDS r0, immSExt14:$imm)>;
 def : Pat<(i64 imm64:$imm), (MOVL imm64:$imm)>;
+// TODO: def : Pat<(i1 1), (MOV p0)>;
 
 def AND   : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
           "and $dst = $src1, $src2;;",
@@ -159,9 +189,21 @@ def XOR   : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
           "xor $dst = $src1, $src2;;",
 	  [(set GR:$dst, (xor GR:$src1, GR:$src2))]>;
 
+def SHLADD: AForm_DAG<0x03, 0x0b, (ops GR:$dst,GR:$src1,s64imm:$imm,GR:$src2),
+          "shladd $dst = $src1, $imm, $src2;;",
+          [(set GR:$dst, (add GR:$src2, (shl GR:$src1, isSHLADDimm:$imm)))]>;
+
 def SHL   : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
           "shl $dst = $src1, $src2;;",
 	  [(set GR:$dst, (shl GR:$src1, GR:$src2))]>;
+
+def SHRU  : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
+          "shr.u $dst = $src1, $src2;;",
+	  [(set GR:$dst, (srl GR:$src1, GR:$src2))]>;
+
+def SHRS  : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
+          "shr $dst = $src1, $src2;;",
+	  [(set GR:$dst, (sra GR:$src1, GR:$src2))]>;
 
 /*
 def CMPEQ : AForm<0x03, 0x0b, (ops PR:$dst, GR:$src1, GR:$src2),
@@ -218,22 +260,6 @@ def CMPLEU: AForm_DAG<0x03, 0x0b, (ops PR:$dst, GR:$src1, GR:$src2),
 def CMPGEU: AForm_DAG<0x03, 0x0b, (ops PR:$dst, GR:$src1, GR:$src2),
           "cmp.eq $dst, p0 = $src1, $src2;;",
 	  [(set PR:$dst, (setuge GR:$src1, GR:$src2))]>;
-
-// FIXME: tabelgen doesn't know that zxt1 is cheaper on ia64 than "andi", 
-// need to fix this one day 
-
-def SXT1 : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src), "sxt1 $dst = $src;;",
-           [(set GR:$dst, (sext_inreg GR:$src, i8))]>;
-def ZXT1 : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src), "zxt1 $dst = $src;;",
-           [(set GR:$dst, (and GR:$src, 255))]>;
-def SXT2 : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src), "sxt2 $dst = $src;;",
-           [(set GR:$dst, (sext_inreg GR:$src, i16))]>;
-def ZXT2 : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src), "zxt2 $dst = $src;;",
-           [(set GR:$dst, (and GR:$src, 65535))]>;
-def SXT4 : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src), "sxt4 $dst = $src;;",
-           [(set GR:$dst, (sext_inreg GR:$src, i32))]>;
-def ZXT4 : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src), "zxt4 $dst = $src;;",
-           [(set GR:$dst, (and GR:$src, 1341835918))]>; // hehhehe NO - FIXME
 
 // TODO: support postincrement (reg, imm9) loads+stores - this needs more
 // tablegen support
@@ -298,43 +324,17 @@ def MOVSIMM22 : AForm<0x03, 0x0b, (ops GR:$dst, s22imm:$imm),
 def MOVLIMM64 : AForm<0x03, 0x0b, (ops GR:$dst, s64imm:$imm),
   "movl $dst = $imm;;">;
 
-/*
-def AND : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
-  "and $dst = $src1, $src2;;">;
-def OR : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
-  "or $dst = $src1, $src2;;">;
-def XOR : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
-  "xor $dst = $src1, $src2;;">;
-def SHL : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
-  "shl $dst = $src1, $src2;;">;
-*/
 def SHLI : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, u6imm:$imm), 
   "shl $dst = $src1, $imm;;">;
-def SHRU : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
-  "shr.u $dst = $src1, $src2;;">;
 def SHRUI : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, u6imm:$imm),
   "shr.u $dst = $src1, $imm;;">;
-def SHRS : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
-  "shr $dst = $src1, $src2;;">;
 def SHRSI : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, u6imm:$imm),
   "shr $dst = $src1, $imm;;">;
-
-def SHLADD : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, u6imm:$imm, GR:$src2), 
-  "shladd $dst = $src1, $imm, $src2;;">;
 
 def EXTRU : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, u6imm:$imm1, u6imm:$imm2),
   "extr.u $dst = $src1, $imm1, $imm2;;">;
 
 def DEPZ : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, u6imm:$imm1, u6imm:$imm2),	  "dep.z $dst = $src1, $imm1, $imm2;;">;
-
-/*
-def SXT1 : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src), "sxt1 $dst = $src;;">;
-def ZXT1 : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src), "zxt1 $dst = $src;;">;
-def SXT2 : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src), "sxt2 $dst = $src;;">;
-def ZXT2 : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src), "zxt2 $dst = $src;;">;
-def SXT4 : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src), "sxt4 $dst = $src;;">;
-def ZXT4 : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src), "zxt4 $dst = $src;;">;
-*/
 
 // and we do the whole thing again for FP compares!
 def FCMPEQ : AForm<0x03, 0x0b, (ops PR:$dst, FP:$src1, FP:$src2),
