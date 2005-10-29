@@ -3770,6 +3770,53 @@ Value *InstCombiner::InsertOperandCastBefore(Value *V, const Type *DestTy,
   return CI;
 }
 
+/// DecomposeSimpleLinearExpr - Analyze 'Val', seeing if it is a simple linear
+/// expression.  If so, decompose it, returning some value X, such that Val is
+/// X*Scale+Offset.
+///
+static Value *DecomposeSimpleLinearExpr(Value *Val, unsigned &Scale,
+                                        unsigned &Offset) {
+  assert(Val->getType() == Type::UIntTy && "Unexpected allocation size type!");
+  if (ConstantUInt *CI = dyn_cast<ConstantUInt>(Val)) {
+    Offset = CI->getValue();
+    Scale  = 1;
+    return ConstantUInt::get(Type::UIntTy, 0);
+  } else if (Instruction *I = dyn_cast<Instruction>(Val)) {
+    if (I->getNumOperands() == 2) {
+      if (ConstantUInt *CUI = dyn_cast<ConstantUInt>(I->getOperand(1))) {
+        if (I->getOpcode() == Instruction::Shl) {
+          // This is a value scaled by '1 << the shift amt'.
+          Scale = 1U << CUI->getValue();
+          Offset = 0;
+          return I->getOperand(0);
+        } else if (I->getOpcode() == Instruction::Mul) {
+          // This value is scaled by 'CUI'.
+          Scale = CUI->getValue();
+          Offset = 0;
+          return I->getOperand(0);
+        } else if (I->getOpcode() == Instruction::Add) {
+          // We have X+C.  Check to see if we really have (X*C2)+C1, where C1 is
+          // divisible by C2.
+          unsigned SubScale;
+          Value *SubVal = DecomposeSimpleLinearExpr(I->getOperand(0), SubScale,
+                                                    Offset);
+          Offset += CUI->getValue();
+          if (SubScale > 1 && (Offset % SubScale == 0)) {
+            Scale = SubScale;
+            return SubVal;
+          }
+        }
+      }
+    }
+  }
+
+  // Otherwise, we can't look past this.
+  Scale = 1;
+  Offset = 0;
+  return Val;
+}
+
+
 /// PromoteCastOfAllocation - If we find a cast of an allocation instruction,
 /// try to eliminate the cast by moving the type information into the alloc.
 Instruction *InstCombiner::PromoteCastOfAllocation(CastInst &CI,
@@ -3816,32 +3863,14 @@ Instruction *InstCombiner::PromoteCastOfAllocation(CastInst &CI,
 
   // See if we can satisfy the modulus by pulling a scale out of the array
   // size argument.
-  unsigned ArraySizeScale = 1;
-  Value *NumElements = AI.getOperand(0);
-  
-  if (ConstantUInt *CI = dyn_cast<ConstantUInt>(NumElements)) {
-    ArraySizeScale = CI->getValue();
-    NumElements = ConstantUInt::get(Type::UIntTy, 1);
-  } else if (ShiftInst *SI = dyn_cast<ShiftInst>(NumElements)) {
-    if (SI->getOpcode() == Instruction::Shl)
-      if (ConstantUInt *CUI = dyn_cast<ConstantUInt>(SI->getOperand(1))) {
-        // This is a value scaled by '1 << the shift amt'.
-        NumElements = SI->getOperand(0);
-        ArraySizeScale = 1U << CUI->getValue();
-      }
-  } else if (isa<Instruction>(NumElements) &&
-             cast<Instruction>(NumElements)->getOpcode() == Instruction::Mul){
-    BinaryOperator *BO = cast<BinaryOperator>(NumElements);
-    if (ConstantUInt *Scale = dyn_cast<ConstantUInt>(BO->getOperand(1))) {
-      // This value is scaled by 'Scale'.
-      NumElements = BO->getOperand(0);
-      ArraySizeScale = Scale->getValue();
-    }
-  }
-  
+  unsigned ArraySizeScale, ArrayOffset;
+  Value *NumElements = // See if the array size is a decomposable linear expr.
+    DecomposeSimpleLinearExpr(AI.getOperand(0), ArraySizeScale, ArrayOffset);
+ 
   // If we can now satisfy the modulus, by using a non-1 scale, we really can
   // do the xform.
-  if ((AllocElTySize*ArraySizeScale) % CastElTySize != 0) return 0;
+  if ((AllocElTySize*ArraySizeScale) % CastElTySize != 0 ||
+      (AllocElTySize*ArrayOffset   ) % CastElTySize != 0) return 0;
 
   unsigned Scale = (AllocElTySize*ArraySizeScale)/CastElTySize;
   Value *Amt = 0;
@@ -3855,6 +3884,12 @@ Instruction *InstCombiner::PromoteCastOfAllocation(CastInst &CI,
       Instruction *Tmp = BinaryOperator::createMul(Amt, NumElements, "tmp");
       Amt = InsertNewInstBefore(Tmp, AI);
     }
+  }
+  
+  if (unsigned Offset = (AllocElTySize*ArrayOffset)/CastElTySize) {
+    Value *Off = ConstantUInt::get(Type::UIntTy, Offset);
+    Instruction *Tmp = BinaryOperator::createAdd(Amt, Off, "tmp");
+    Amt = InsertNewInstBefore(Tmp, AI);
   }
   
   std::string Name = AI.getName(); AI.setName("");
