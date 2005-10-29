@@ -45,8 +45,31 @@ let PrintMethod = "printCallOperand" in
 def is32ones : PatLeaf<(i64 imm), [{
   // is32ones predicate - True if the immediate is 0x00000000FFFFFFFF 
   // Used to create ZXT4s appropriately 
-  int64_t v = (int64_t)N->getValue();
+  uint64_t v = (uint64_t)N->getValue();
   return (v == 0x00000000FFFFFFFFLL);
+}]>;
+
+// isMIXable predicates - True if the immediate is
+// 0xFF00FF00FF00FF00, 0x00FF00FF00FF00FF
+// etc, through 0x00000000FFFFFFFF
+// Used to test for the suitability of mix* 
+def isMIX1Lable: PatLeaf<(i64 imm), [{
+  return((uint64_t)N->getValue()==0xFF00FF00FF00FF00LL);
+}]>;
+def isMIX1Rable: PatLeaf<(i64 imm), [{
+  return((uint64_t)N->getValue()==0x00FF00FF00FF00FFLL);
+}]>;
+def isMIX2Lable: PatLeaf<(i64 imm), [{
+  return((uint64_t)N->getValue()==0xFFFF0000FFFF0000LL);
+}]>;
+def isMIX2Rable: PatLeaf<(i64 imm), [{
+  return((uint64_t)N->getValue()==0x0000FFFF0000FFFFLL);
+}]>;
+def isMIX4Lable: PatLeaf<(i64 imm), [{
+  return((uint64_t)N->getValue()==0xFFFFFFFF00000000LL);
+}]>;
+def isMIX4Rable: PatLeaf<(i64 imm), [{
+  return((uint64_t)N->getValue()==0x00000000FFFFFFFFLL);
 }]>;
 
 def isSHLADDimm: PatLeaf<(i64 imm), [{
@@ -82,6 +105,37 @@ def SXT4 : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src), "sxt4 $dst = $src;;",
            [(set GR:$dst, (sext_inreg GR:$src, i32))]>;
 def ZXT4 : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src), "zxt4 $dst = $src;;",
            [(set GR:$dst, (and GR:$src, is32ones))]>;
+
+// fixme: shrs vs shru?
+def MIX1L : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
+          "mix1.l $dst = $src1, $src2;;",
+	  [(set GR:$dst, (or (and GR:$src1, isMIX1Lable),
+	                     (and (srl GR:$src2, 8), isMIX1Lable)))]>;
+
+def MIX2L : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
+          "mix2.l $dst = $src1, $src2;;",
+	  [(set GR:$dst, (or (and GR:$src1, isMIX2Lable),
+	                     (and (srl GR:$src2, 16), isMIX2Lable)))]>;
+
+def MIX4L : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
+          "mix4.l $dst = $src1, $src2;;",
+	  [(set GR:$dst, (or (and GR:$src1, isMIX4Lable),
+	                     (and (srl GR:$src2, 32), isMIX4Lable)))]>;
+
+def MIX1R : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
+          "mix1.r $dst = $src1, $src2;;",
+	  [(set GR:$dst, (or (and (shl GR:$src1, 8), isMIX1Rable),
+	                     (and GR:$src2, isMIX1Rable)))]>;
+
+def MIX2R : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
+          "mix2.r $dst = $src1, $src2;;",
+	  [(set GR:$dst, (or (and (shl GR:$src1, 16), isMIX2Rable),
+	                     (and GR:$src2, isMIX2Rable)))]>;
+
+def MIX4R : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
+          "mix4.r $dst = $src1, $src2;;",
+	  [(set GR:$dst, (or (and (shl GR:$src1, 32), isMIX4Rable),
+	                     (and GR:$src2, isMIX4Rable)))]>;
 
 def ADD  : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
            "add $dst = $src1, $src2;;",
@@ -122,10 +176,20 @@ def SETFSIGD : AForm_DAG<0x03, 0x0b, (ops FP:$dst, GR:$src),
 def XMALD : AForm_DAG<0x03, 0x0b, (ops FP:$dst, FP:$src1, FP:$src2, FP:$src3),
   "xma.l $dst = $src1, $src2, $src3;;",
   []>;
+def XMAHD : AForm_DAG<0x03, 0x0b, (ops FP:$dst, FP:$src1, FP:$src2, FP:$src3),
+  "xma.h $dst = $src1, $src2, $src3;;",
+  []>;
+def XMAHUD : AForm_DAG<0x03, 0x0b, (ops FP:$dst, FP:$src1, FP:$src2, FP:$src3),
+  "xma.hu $dst = $src1, $src2, $src3;;",
+  []>;
 
 // pseudocode for integer multiplication 
 def : Pat<(mul GR:$src1, GR:$src2),
            (GETFSIGD (XMALD (SETFSIGD GR:$src1), (SETFSIGD GR:$src2), F0))>;
+def : Pat<(mulhs GR:$src1, GR:$src2),
+           (GETFSIGD (XMAHD (SETFSIGD GR:$src1), (SETFSIGD GR:$src2), F0))>;
+def : Pat<(mulhu GR:$src1, GR:$src2),
+           (GETFSIGD (XMAHUD (SETFSIGD GR:$src1), (SETFSIGD GR:$src2), F0))>;
 
 // TODO: addp4 (addp4 dst = src, r0 is a 32-bit add)
 // has imm form, too
@@ -160,28 +224,16 @@ def TPCMPEQR0R0 : AForm<0x03, 0x0b, (ops PR:$dst, PR:$bogus, PR:$qp),
   "($qp) cmp.eq $dst, p0 = r0, r0;;">;
   
 /* our pseudocode for OR on predicates is:
- *
-
 pC = pA OR pB
 -------------
-
 (pA) cmp.eq.unc pC,p0 = r0,r0  // pC = pA
  ;;
-(pB) cmp.eq pC,p0 = r0,r0 // if (pB) pC = 1
+(pB) cmp.eq pC,p0 = r0,r0 // if (pB) pC = 1 */
 
-*/
-/*
-let isTwoAddress = 1 in {
-  def TPCMPEQ : AForm<0x03, 0x0b,
-  (ops PR:$dst, PR:$src2, GR:$src3, GR:$src4, PR:$qp),
-    "($qp) cmp.eq $dst, p0 = $src3, $src4;;">;
-}
-*/
+def bOR   : Pat<(or PR:$src1, PR:$src2),
+          (TPCMPEQR0R0 (PCMPEQUNCR0R0 PR:$src1), PR:$src2)>;
 
 // FIXME: these are bogus
-def bOR   : Pat<(or PR:$src1, PR:$src2),
-          (PCMPEQUNCR0R0 PR:$src1)>;
-
 def bXOR  : Pat<(xor PR:$src1, PR:$src2),
           (PCMPEQUNCR0R0 PR:$src1)>;
 
@@ -389,47 +441,68 @@ def TPCMPIMM8NE : AForm<0x03, 0x0b,
 def SUBIMM8 : AForm<0x03, 0x0b, (ops GR:$dst, s8imm:$imm, GR:$src2),
   "sub $dst = $imm, $src2;;">;
 
-def ST1 : AForm<0x03, 0x0b, (ops GR:$dstPtr, GR:$value),
-  "st1 [$dstPtr] = $value;;">;
-def ST2 : AForm<0x03, 0x0b, (ops GR:$dstPtr, GR:$value),
-  "st2 [$dstPtr] = $value;;">;
-def ST4 : AForm<0x03, 0x0b, (ops GR:$dstPtr, GR:$value),
-  "st4 [$dstPtr] = $value;;">;
-def ST8 : AForm<0x03, 0x0b, (ops GR:$dstPtr, GR:$value),
-  "st8 [$dstPtr] = $value;;">;
+let isStore = 1 in {
+  def ST1 : AForm<0x03, 0x0b, (ops GR:$dstPtr, GR:$value),
+    "st1 [$dstPtr] = $value;;">;
+  def ST2 : AForm<0x03, 0x0b, (ops GR:$dstPtr, GR:$value),
+    "st2 [$dstPtr] = $value;;">;
+  def ST4 : AForm<0x03, 0x0b, (ops GR:$dstPtr, GR:$value),
+    "st4 [$dstPtr] = $value;;">;
+  def ST8 : AForm<0x03, 0x0b, (ops GR:$dstPtr, GR:$value),
+    "st8 [$dstPtr] = $value;;">;
+  def STF4 : AForm<0x03, 0x0b, (ops GR:$dstPtr, FP:$value),
+    "stfs [$dstPtr] = $value;;">;
+  def STF8 : AForm<0x03, 0x0b, (ops GR:$dstPtr, FP:$value),
+    "stfd [$dstPtr] = $value;;">;
+}
 
-def LD1 : AForm<0x03, 0x0b, (ops GR:$dst, GR:$srcPtr),
-  "ld1 $dst = [$srcPtr];;">;
-def LD2 : AForm<0x03, 0x0b, (ops GR:$dst, GR:$srcPtr),
-  "ld2 $dst = [$srcPtr];;">;
-def LD4 : AForm<0x03, 0x0b, (ops GR:$dst, GR:$srcPtr),
-  "ld4 $dst = [$srcPtr];;">;
-def LD8 : AForm<0x03, 0x0b, (ops GR:$dst, GR:$srcPtr),
-  "ld8 $dst = [$srcPtr];;">;
+let isLoad = 1 in {
+  def LD1 : AForm<0x03, 0x0b, (ops GR:$dst, GR:$srcPtr),
+    "ld1 $dst = [$srcPtr];;">;
+  def LD2 : AForm<0x03, 0x0b, (ops GR:$dst, GR:$srcPtr),
+    "ld2 $dst = [$srcPtr];;">;
+  def LD4 : AForm<0x03, 0x0b, (ops GR:$dst, GR:$srcPtr),
+    "ld4 $dst = [$srcPtr];;">;
+  def LD8 : AForm<0x03, 0x0b, (ops GR:$dst, GR:$srcPtr),
+    "ld8 $dst = [$srcPtr];;">;
+  def LDF4 : AForm<0x03, 0x0b, (ops FP:$dst, GR:$srcPtr),
+    "ldfs $dst = [$srcPtr];;">;
+  def LDF8 : AForm<0x03, 0x0b, (ops FP:$dst, GR:$srcPtr),
+    "ldfd $dst = [$srcPtr];;">;
+}
 
-def POPCNT : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src), "popcnt $dst = $src;;">;
+def POPCNT : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src),
+  "popcnt $dst = $src;;",
+  [(set GR:$dst, (ctpop GR:$src))]>;
 
-// some FP stuff:
-def FADD : AForm<0x03, 0x0b, (ops FP:$dst, FP:$src1, FP:$src2),
-  "fadd $dst = $src1, $src2;;">;
+// some FP stuff:  // TODO: single-precision stuff?
+def FADD : AForm_DAG<0x03, 0x0b, (ops FP:$dst, FP:$src1, FP:$src2),
+  "fadd $dst = $src1, $src2;;",
+  [(set FP:$dst, (fadd FP:$src1, FP:$src2))]>;
 def FADDS: AForm<0x03, 0x0b, (ops FP:$dst, FP:$src1, FP:$src2),
   "fadd.s $dst = $src1, $src2;;">;
-def FSUB : AForm<0x03, 0x0b, (ops FP:$dst, FP:$src1, FP:$src2),
-  "fsub $dst = $src1, $src2;;">;
-def FMPY : AForm<0x03, 0x0b, (ops FP:$dst, FP:$src1, FP:$src2),
-  "fmpy $dst = $src1, $src2;;">;
+def FSUB : AForm_DAG<0x03, 0x0b, (ops FP:$dst, FP:$src1, FP:$src2),
+  "fsub $dst = $src1, $src2;;",
+  [(set FP:$dst, (fsub FP:$src1, FP:$src2))]>;
+def FMPY : AForm_DAG<0x03, 0x0b, (ops FP:$dst, FP:$src1, FP:$src2),
+  "fmpy $dst = $src1, $src2;;",
+  [(set FP:$dst, (fmul FP:$src1, FP:$src2))]>;
 def FMOV : AForm<0x03, 0x0b, (ops FP:$dst, FP:$src),
   "mov $dst = $src;;">; // XXX: there _is_ no fmov
-def FMA : AForm<0x03, 0x0b, (ops FP:$dst, FP:$src1, FP:$src2, FP:$src3),
-  "fma $dst = $src1, $src2, $src3;;">;
-def FMS : AForm<0x03, 0x0b, (ops FP:$dst, FP:$src1, FP:$src2, FP:$src3),
-  "fms $dst = $src1, $src2, $src3;;">;
-def FNMA : AForm<0x03, 0x0b, (ops FP:$dst, FP:$src1, FP:$src2, FP:$src3),
-  "fnma $dst = $src1, $src2, $src3;;">;
+def FMA : AForm_DAG<0x03, 0x0b, (ops FP:$dst, FP:$src1, FP:$src2, FP:$src3),
+  "fma $dst = $src1, $src2, $src3;;",
+  [(set FP:$dst, (fadd (fmul FP:$src1, FP:$src2), FP:$src3))]>;
+def FMS : AForm_DAG<0x03, 0x0b, (ops FP:$dst, FP:$src1, FP:$src2, FP:$src3),
+  "fms $dst = $src1, $src2, $src3;;",
+  [(set FP:$dst, (fsub (fmul FP:$src1, FP:$src2), FP:$src3))]>;
+def FNMA : AForm_DAG<0x03, 0x0b, (ops FP:$dst, FP:$src1, FP:$src2, FP:$src3),
+  "fnma $dst = $src1, $src2, $src3;;",
+  [(set FP:$dst, (fneg (fadd (fmul FP:$src1, FP:$src2), FP:$src3)))]>;
 def FABS : AForm<0x03, 0x0b, (ops FP:$dst, FP:$src),
   "fabs $dst = $src;;">;
-def FNEG : AForm<0x03, 0x0b, (ops FP:$dst, FP:$src),
-  "fneg $dst = $src;;">;
+def FNEG : AForm_DAG<0x03, 0x0b, (ops FP:$dst, FP:$src),
+  "fneg $dst = $src;;",
+  [(set FP:$dst, (fneg FP:$src))]>;
 def FNEGABS : AForm<0x03, 0x0b, (ops FP:$dst, FP:$src),
   "fnegabs $dst = $src;;">;
 
@@ -479,16 +552,6 @@ def GETFSIG : AForm<0x03, 0x0b, (ops GR:$dst, FP:$src),
   "getf.sig $dst = $src;;">;
 def SETFSIG : AForm<0x03, 0x0b, (ops FP:$dst, GR:$src),
   "setf.sig $dst = $src;;">;
-
-def LDF4 : AForm<0x03, 0x0b, (ops FP:$dst, GR:$srcPtr),
-  "ldfs $dst = [$srcPtr];;">;
-def LDF8 : AForm<0x03, 0x0b, (ops FP:$dst, GR:$srcPtr),
-  "ldfd $dst = [$srcPtr];;">;
-
-def STF4 : AForm<0x03, 0x0b, (ops GR:$dstPtr, FP:$value),
-  "stfs [$dstPtr] = $value;;">;
-def STF8 : AForm<0x03, 0x0b, (ops GR:$dstPtr, FP:$value),
-  "stfd [$dstPtr] = $value;;">;
 
 let isTerminator = 1, isBranch = 1 in {
   def BRL_NOTCALL : RawForm<0x03, 0xb0, (ops i64imm:$dst),

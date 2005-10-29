@@ -313,6 +313,13 @@ SDOperand IA64DAGToDAGISel::Select(SDOperand Op) {
                                 CurDAG->getTargetFrameIndex(FI, MVT::i64));
   }
 
+  case ISD::ConstantPool: {
+    Constant *C = cast<ConstantPoolSDNode>(N)->get();
+    SDOperand CPI = CurDAG->getTargetConstantPool(C, MVT::i64);
+    return CurDAG->getTargetNode(IA64::ADDL_GA, MVT::i64, // ?
+	                      CurDAG->getRegister(IA64::r1, MVT::i64), CPI);
+  }
+
   case ISD::GlobalAddress: {
     GlobalValue *GV = cast<GlobalAddressSDNode>(N)->getGlobal();
     SDOperand GA = CurDAG->getTargetGlobalAddress(GV, MVT::i64);
