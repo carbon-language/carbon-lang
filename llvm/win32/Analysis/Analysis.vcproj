@@ -128,9 +128,6 @@
 				RelativePath="..\..\lib\Analysis\ConstantFolding.cpp">
 			</File>
 			<File
-				RelativePath="..\..\lib\Analysis\Expressions.cpp">
-			</File>
-			<File
 				RelativePath="..\..\lib\Analysis\InstCount.cpp">
 			</File>
 			<File
@@ -256,9 +253,6 @@
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\Analysis\Dominators.h">
-			</File>
-			<File
-				RelativePath="..\..\include\llvm\Analysis\Expressions.h">
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\Analysis\FindUsedTypes.h">

@@ -253,9 +253,6 @@
 					RelativePath="..\..\lib\Transforms\Scalar\LowerAllocations.cpp">
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Scalar\LowerConstantExprs.cpp">
-				</File>
-				<File
 					RelativePath="..\..\lib\Transforms\Scalar\LowerGC.cpp">
 				</File>
 				<File
