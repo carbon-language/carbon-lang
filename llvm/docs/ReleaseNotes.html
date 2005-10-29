@@ -74,9 +74,6 @@ a large number of new features and enhancements, described below.</p>
 </div>
 
 <div class="doc_text">
-<h1>
- See <a href="/releases/1.5/docs/ReleaseNotes.html">LLVM 1.5 Release Notes</a>
-</h1>
 <ol>
   <li>The JIT now uses mutexes to protect its internal data structures. This
   allows multi-threaded programs to be run from the JIT or interpreter without
@@ -124,7 +121,7 @@ a large number of new features and enhancements, described below.</p>
 <li>Sun UltraSPARC workstations running Solaris 8.</li>
 <li>Intel and AMD machines running on Win32 with the Cygwin libraries (limited
     support is available for native builds with Visual C++).</li>
-<li>PowerPC-based Mac OS X systems, running 10.2 and above.</li>
+<li>PowerPC and X86-based Mac OS X systems, running 10.2 and above.</li>
 <li>Alpha-based machines running Debian GNU/Linux.</li>
 <li>Itanium-based machines running Linux and HP-UX.</li>
 </ul>
@@ -186,10 +183,6 @@ components, please contact us on the llvmdev list.</p>
 <ul>
   <li>In the JIT, <tt>dlsym()</tt> on a symbol compiled by the JIT will not
   work.</li>
-  <li><a href="http://llvm.cs.uiuc.edu/PR240">The lower-invoke pass does not 
-    mark values live across a setjmp as volatile</a>. This missing feature 
-  only affects targets whose setjmp/longjmp libraries do not save and restore 
-  the entire register file.</li>
 </ul>
 </div>
 
@@ -498,8 +491,6 @@ several programs in the LLVM test suite</a></li>
 <li>On 21164s, some rare FP arithmetic sequences which may trap do not have the
 appropriate nops inserted to ensure restartability.</li>
 
-<li>Defining vararg functions is not supported (but calling them is ok).</li>
-
 <li>Due to the vararg problems, C++ exceptions do not work.  Small changes are required to the CFE (which break correctness in the exception handler) to compile the exception handling library (and thus the C++ standard library).</li>
 
 </ul>
@@ -545,12 +536,8 @@ programs.</li>
 
 <ul>
 <li>Many features are still missing (e.g. support for 64-bit integer
-arithmetic).</li>
-
-<li>This backend needs to be updated to use the SelectionDAG instruction
-selection framework.</li>
+arithmetic).  This back-end is in pre-beta state.</li>
 </ul>
-
 </div>
 
 <!-- *********************************************************************** -->
