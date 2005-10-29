@@ -16,7 +16,6 @@
 #include "TransformInternals.h"
 #include "llvm/Constants.h"
 #include "llvm/Instructions.h"
-#include "llvm/Analysis/Expressions.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/Debug.h"
 #include <algorithm>
@@ -28,115 +27,6 @@ static bool OperandConvertibleToType(User *U, Value *V, const Type *Ty,
 
 static void ConvertOperandToType(User *U, Value *OldVal, Value *NewVal,
                                  ValueMapCache &VMC, const TargetData &TD);
-
-// Peephole Malloc instructions: we take a look at the use chain of the
-// malloc instruction, and try to find out if the following conditions hold:
-//   1. The malloc is of the form: 'malloc [sbyte], uint <constant>'
-//   2. The only users of the malloc are cast & add instructions
-//   3. Of the cast instructions, there is only one destination pointer type
-//      [RTy] where the size of the pointed to object is equal to the number
-//      of bytes allocated.
-//
-// If these conditions hold, we convert the malloc to allocate an [RTy]
-// element.  TODO: This comment is out of date WRT arrays
-//
-static bool MallocConvertibleToType(MallocInst *MI, const Type *Ty,
-                                    ValueTypeCache &CTMap,
-                                    const TargetData &TD) {
-  if (!isa<PointerType>(Ty)) return false;   // Malloc always returns pointers
-
-  // Deal with the type to allocate, not the pointer type...
-  Ty = cast<PointerType>(Ty)->getElementType();
-  if (!Ty->isSized() || !MI->getType()->getElementType()->isSized())
-    return false;      // Can only alloc something with a size
-
-  // Analyze the number of bytes allocated...
-  ExprType Expr = ClassifyExpr(MI->getArraySize());
-
-  // Get information about the base datatype being allocated, before & after
-  uint64_t ReqTypeSize = TD.getTypeSize(Ty);
-  if (ReqTypeSize == 0) return false;
-  uint64_t OldTypeSize = TD.getTypeSize(MI->getType()->getElementType());
-
-  // Must have a scale or offset to analyze it...
-  if (!Expr.Offset && !Expr.Scale && OldTypeSize == 1) return false;
-
-  // Get the offset and scale of the allocation...
-  int64_t OffsetVal = Expr.Offset ? getConstantValue(Expr.Offset) : 0;
-  int64_t ScaleVal = Expr.Scale ? getConstantValue(Expr.Scale) :(Expr.Var != 0);
-
-  // The old type might not be of unit size, take old size into consideration
-  // here...
-  uint64_t Offset = OffsetVal * OldTypeSize;
-  uint64_t Scale  = ScaleVal  * OldTypeSize;
-
-  // In order to be successful, both the scale and the offset must be a multiple
-  // of the requested data type's size.
-  //
-  if (Offset/ReqTypeSize*ReqTypeSize != Offset ||
-      Scale/ReqTypeSize*ReqTypeSize != Scale)
-    return false;   // Nope.
-
-  return true;
-}
-
-static Instruction *ConvertMallocToType(MallocInst *MI, const Type *Ty,
-                                        const std::string &Name,
-                                        ValueMapCache &VMC,
-                                        const TargetData &TD){
-  BasicBlock *BB = MI->getParent();
-  BasicBlock::iterator It = BB->end();
-
-  // Analyze the number of bytes allocated...
-  ExprType Expr = ClassifyExpr(MI->getArraySize());
-
-  const PointerType *AllocTy = cast<PointerType>(Ty);
-  const Type *ElType = AllocTy->getElementType();
-
-  uint64_t DataSize = TD.getTypeSize(ElType);
-  uint64_t OldTypeSize = TD.getTypeSize(MI->getType()->getElementType());
-
-  // Get the offset and scale coefficients that we are allocating...
-  int64_t OffsetVal = (Expr.Offset ? getConstantValue(Expr.Offset) : 0);
-  int64_t ScaleVal = Expr.Scale ? getConstantValue(Expr.Scale) : (Expr.Var !=0);
-
-  // The old type might not be of unit size, take old size into consideration
-  // here...
-  unsigned Offset = OffsetVal * OldTypeSize / DataSize;
-  unsigned Scale  = ScaleVal  * OldTypeSize / DataSize;
-
-  // Locate the malloc instruction, because we may be inserting instructions
-  It = MI;
-
-  // If we have a scale, apply it first...
-  if (Expr.Var) {
-    // Expr.Var is not necessarily unsigned right now, insert a cast now.
-    if (Expr.Var->getType() != Type::UIntTy)
-      Expr.Var = new CastInst(Expr.Var, Type::UIntTy,
-                              Expr.Var->getName()+"-uint", It);
-
-    if (Scale != 1)
-      Expr.Var = BinaryOperator::create(Instruction::Mul, Expr.Var,
-                                        ConstantUInt::get(Type::UIntTy, Scale),
-                                        Expr.Var->getName()+"-scl", It);
-
-  } else {
-    // If we are not scaling anything, just make the offset be the "var"...
-    Expr.Var = ConstantUInt::get(Type::UIntTy, Offset);
-    Offset = 0; Scale = 1;
-  }
-
-  // If we have an offset now, add it in...
-  if (Offset != 0) {
-    assert(Expr.Var && "Var must be nonnull by now!");
-    Expr.Var = BinaryOperator::create(Instruction::Add, Expr.Var,
-                                      ConstantUInt::get(Type::UIntTy, Offset),
-                                      Expr.Var->getName()+"-off", It);
-  }
-
-  assert(AllocTy == Ty);
-  return new MallocInst(AllocTy->getElementType(), Expr.Var, Name);
-}
 
 
 // ExpressionConvertibleToType - Return true if it is possible
@@ -212,11 +102,6 @@ bool llvm::ExpressionConvertibleToType(Value *V, const Type *Ty,
         return false;
     break;
   }
-
-  case Instruction::Malloc:
-    if (!MallocConvertibleToType(cast<MallocInst>(I), Ty, CTMap, TD))
-      return false;
-    break;
 
   case Instruction::GetElementPtr: {
     // GetElementPtr's are directly convertible to a pointer type if they have
@@ -393,11 +278,6 @@ Value *llvm::ConvertExpressionToType(Value *V, const Type *Ty,
       NewPN->addIncoming(V, BB);
     }
     Res = NewPN;
-    break;
-  }
-
-  case Instruction::Malloc: {
-    Res = ConvertMallocToType(cast<MallocInst>(I), Ty, Name, VMC, TD);
     break;
   }
 
