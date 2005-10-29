@@ -173,7 +173,6 @@
 		DE66ECE908ABEC0700323D32 /* Printer.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = Printer.cpp; sourceTree = "<group>"; };
 		DE66ECEA08ABEC0700323D32 /* Steensgaard.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = Steensgaard.cpp; sourceTree = "<group>"; };
 		DE66ECEB08ABEC0700323D32 /* TopDownClosure.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = TopDownClosure.cpp; sourceTree = "<group>"; };
-		DE66ED1608ABEC0800323D32 /* Expressions.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = Expressions.cpp; sourceTree = "<group>"; };
 		DE66ED1708ABEC0800323D32 /* InstCount.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = InstCount.cpp; sourceTree = "<group>"; };
 		DE66ED1808ABEC0800323D32 /* Interval.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = Interval.cpp; sourceTree = "<group>"; };
 		DE66ED1908ABEC0800323D32 /* IntervalPartition.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = IntervalPartition.cpp; sourceTree = "<group>"; };
@@ -602,7 +601,6 @@
 		DE66F20D08ABF03100323D32 /* DSNode.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = DSNode.h; sourceTree = "<group>"; };
 		DE66F20E08ABF03100323D32 /* DSSupport.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = DSSupport.h; sourceTree = "<group>"; };
 		DE66F20F08ABF03100323D32 /* Dominators.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = Dominators.h; sourceTree = "<group>"; };
-		DE66F21008ABF03100323D32 /* Expressions.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = Expressions.h; sourceTree = "<group>"; };
 		DE66F21208ABF03100323D32 /* FindUsedTypes.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = FindUsedTypes.h; sourceTree = "<group>"; };
 		DE66F21308ABF03100323D32 /* Interval.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = Interval.h; sourceTree = "<group>"; };
 		DE66F21408ABF03100323D32 /* IntervalIterator.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = IntervalIterator.h; sourceTree = "<group>"; };
@@ -1027,7 +1025,6 @@
 				DE66ECC108ABEC0700323D32 /* AliasSetTracker.cpp */,
 				DE66ECC208ABEC0700323D32 /* BasicAliasAnalysis.cpp */,
 				DE66ECC308ABEC0700323D32 /* CFGPrinter.cpp */,
-				DE66ED1608ABEC0800323D32 /* Expressions.cpp */,
 				DE66ED1708ABEC0800323D32 /* InstCount.cpp */,
 				DE66ED1808ABEC0800323D32 /* Interval.cpp */,
 				DE66ED1908ABEC0800323D32 /* IntervalPartition.cpp */,
@@ -1823,7 +1820,6 @@
 				DE66F20808ABF03100323D32 /* ConstantsScanner.h */,
 				DE66F20908ABF03100323D32 /* DataStructure */,
 				DE66F20F08ABF03100323D32 /* Dominators.h */,
-				DE66F21008ABF03100323D32 /* Expressions.h */,
 				DE66F21208ABF03100323D32 /* FindUsedTypes.h */,
 				DE66F21308ABF03100323D32 /* Interval.h */,
 				DE66F21408ABF03100323D32 /* IntervalIterator.h */,
