@@ -14,7 +14,6 @@
 
 #include "TransformInternals.h"
 #include "llvm/Type.h"
-#include "llvm/Analysis/Expressions.h"
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
 using namespace llvm;
