@@ -1592,7 +1592,7 @@ void DAGISelEmitter::EmitMatchForPattern(TreePatternNode *N,
       } else if (IntInit *II = dynamic_cast<IntInit*>(Child->getLeafValue())) {
         OS << "      if (!isa<ConstantSDNode>(" << RootName << i << ") ||\n"
            << "          cast<ConstantSDNode>(" << RootName << i
-           << ")->getValue() != " << II->getValue() << ")\n"
+           << ")->getSignExtended() != " << II->getValue() << ")\n"
            << "        goto P" << PatternNo << "Fail;\n";
       } else {
         Child->dump();
