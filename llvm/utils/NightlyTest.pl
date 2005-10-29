@@ -410,7 +410,7 @@ $LOC = `utils/countloc.sh`;
 #
 if (!$NOCHECKOUT) {
   if ( $VERBOSE ) { print "CONFIGURE STAGE\n"; }
-  my $EXTRAFLAGS = "--enable-spec2000=/Volumes/ProjectsDisk/cvs/benchmarks/speccpu2000-llvm/benchspec/ --enable-povray=/Volumes/ProjectsDisk/cvs/benchmarks/povray31 --enable-namd=/Volumes/ProjectsDisk/cvs/benchmarks/namd";
+  my $EXTRAFLAGS = "--enable-spec --with-objroot=.";
   system "(time -p $NICE ./configure $CONFIGUREARGS $EXTRAFLAGS) > $BuildLog 2>&1";
 
   if ( $VERBOSE ) { print "BUILD STAGE\n"; }
