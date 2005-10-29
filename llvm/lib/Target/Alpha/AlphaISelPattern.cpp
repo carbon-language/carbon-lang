@@ -82,6 +82,10 @@ public:
     AlphaLowering(TM)
   {}
 
+    virtual const char *getPassName() const {
+      return "Alpha Pattern Instruction Selection";
+    } 
+
   /// InstructionSelectBasicBlock - This callback is invoked by
   /// SelectionDAGISel when it has created a SelectionDAG for us to codegen.
   virtual void InstructionSelectBasicBlock(SelectionDAG &DAG) {
