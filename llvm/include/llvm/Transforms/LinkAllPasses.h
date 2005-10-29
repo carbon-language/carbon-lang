@@ -77,7 +77,6 @@ namespace {
       (void) llvm::createLoopUnrollPass();
       (void) llvm::createLoopUnswitchPass();
       (void) llvm::createLowerAllocationsPass();
-      (void) llvm::createLowerConstantExpressionsPass();
       (void) llvm::createLowerGCPass();
       (void) llvm::createLowerInvokePass();
       (void) llvm::createLowerPackedPass();

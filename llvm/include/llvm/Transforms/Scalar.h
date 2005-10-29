@@ -282,11 +282,6 @@ extern const PassInfo *LowerInvokePassID;
 FunctionPass *createLowerGCPass();
 
 //===----------------------------------------------------------------------===//
-// Returns a pass which converts all instances of ConstantExpression
-// into regular LLVM instructions.
-FunctionPass* createLowerConstantExpressionsPass();
-
-//===----------------------------------------------------------------------===//
 // This pass reorders basic blocks in order to increase the number of fall-
 // through conditional branches.
 FunctionPass *createBlockPlacementPass();
