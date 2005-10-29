@@ -540,7 +540,6 @@
 		DE66F1A908ABEFB400323D32 /* LoopUnroll.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = LoopUnroll.cpp; sourceTree = "<group>"; };
 		DE66F1AA08ABEFB400323D32 /* LoopUnswitch.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = LoopUnswitch.cpp; sourceTree = "<group>"; };
 		DE66F1AB08ABEFB400323D32 /* LowerAllocations.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = LowerAllocations.cpp; sourceTree = "<group>"; };
-		DE66F1AC08ABEFB400323D32 /* LowerConstantExprs.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = LowerConstantExprs.cpp; sourceTree = "<group>"; };
 		DE66F1AD08ABEFB400323D32 /* LowerGC.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = LowerGC.cpp; sourceTree = "<group>"; };
 		DE66F1AE08ABEFB400323D32 /* LowerInvoke.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = LowerInvoke.cpp; sourceTree = "<group>"; };
 		DE66F1AF08ABEFB400323D32 /* LowerPacked.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = LowerPacked.cpp; sourceTree = "<group>"; };
@@ -1694,7 +1693,6 @@
 				DE66F1A908ABEFB400323D32 /* LoopUnroll.cpp */,
 				DE66F1AA08ABEFB400323D32 /* LoopUnswitch.cpp */,
 				DE66F1AB08ABEFB400323D32 /* LowerAllocations.cpp */,
-				DE66F1AC08ABEFB400323D32 /* LowerConstantExprs.cpp */,
 				DE66F1AD08ABEFB400323D32 /* LowerGC.cpp */,
 				DE66F1AE08ABEFB400323D32 /* LowerInvoke.cpp */,
 				DE66F1AF08ABEFB400323D32 /* LowerPacked.cpp */,
