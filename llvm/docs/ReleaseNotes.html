@@ -111,8 +111,8 @@ definition.  The first line specifies what to match (a xor with an arbitrary
 immediate) the second line specifies what to produce:</p>
 
 <div class="doc_code"><p>
-<pre>def : Pat<(xor GPRC:$in, imm:$imm),
-          (XORIS (XORI GPRC:$in, (LO16 imm:$imm)), (HI16 imm:$imm))>;
+<pre>def : Pat&lt;(xor GPRC:$in, imm:$imm),
+          (XORIS (XORI GPRC:$in, (LO16 imm:$imm)), (HI16 imm:$imm))&gt;;
 </pre>
 </p></div>
 
