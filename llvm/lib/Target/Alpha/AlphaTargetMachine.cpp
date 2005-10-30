@@ -51,7 +51,7 @@ unsigned AlphaTargetMachine::getModuleMatchQuality(const Module &M) {
            M.getPointerSize() != Module::AnyPointerSize)
     return 0;                                    // Match for some other target
 
-  return 0;
+  return getJITMatchQuality()/2;
 }
 
 unsigned AlphaTargetMachine::getJITMatchQuality() {
