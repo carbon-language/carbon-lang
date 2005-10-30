@@ -735,8 +735,7 @@ SDOperand DAGCombiner::visitMUL(SDNode *N) {
   
   // fold (mul c1, c2) -> c1*c2
   if (N0C && N1C)
-    return DAG.getConstant(N0C->getValue() * N1C->getValue(),
-                           N->getValueType(0));
+    return DAG.getConstant(N0C->getValue() * N1C->getValue(), VT);
   // canonicalize constant to RHS
   if (N0C && !N1C)
     return DAG.getNode(ISD::MUL, VT, N1, N0);
@@ -748,9 +747,20 @@ SDOperand DAGCombiner::visitMUL(SDNode *N) {
     return DAG.getNode(ISD::SUB, VT, DAG.getConstant(0, VT), N0);
   // fold (mul x, (1 << c)) -> x << c
   if (N1C && isPowerOf2_64(N1C->getValue()))
-    return DAG.getNode(ISD::SHL, N->getValueType(0), N0,
+    return DAG.getNode(ISD::SHL, VT, N0,
                        DAG.getConstant(Log2_64(N1C->getValue()),
                                        TLI.getShiftAmountTy()));
+  // fold (mul x, -(1 << c)) -> -(x << c) or (-x) << c
+  if (N1C && isPowerOf2_64(-N1C->getSignExtended())) {
+    // FIXME: If the input is something that is easily negated (e.g. a 
+    // single-use add), we should put the negate there.
+    return DAG.getNode(ISD::SUB, VT, DAG.getConstant(0, VT),
+                       DAG.getNode(ISD::SHL, VT, N0,
+                            DAG.getConstant(Log2_64(-N1C->getSignExtended()),
+                                            TLI.getShiftAmountTy())));
+  }
+  
+  
   // fold (mul (mul x, c1), c2) -> (mul x, c1*c2)
   if (N1C && N0.getOpcode() == ISD::MUL) {
     ConstantSDNode *N00C = dyn_cast<ConstantSDNode>(N0.getOperand(0));
