@@ -257,29 +257,6 @@ def SHRS  : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
           "shr $dst = $src1, $src2;;",
 	  [(set GR:$dst, (sra GR:$src1, GR:$src2))]>;
 
-/*
-def CMPEQ : AForm<0x03, 0x0b, (ops PR:$dst, GR:$src1, GR:$src2),
-  "cmp.eq $dst, p0 = $src1, $src2;;">;
-def CMPGT : AForm<0x03, 0x0b, (ops PR:$dst, GR:$src1, GR:$src2),
-  "cmp.gt $dst, p0 = $src1, $src2;;">;
-def CMPGE : AForm<0x03, 0x0b, (ops PR:$dst, GR:$src1, GR:$src2),
-  "cmp.ge $dst, p0 = $src1, $src2;;">;
-def CMPLT : AForm<0x03, 0x0b, (ops PR:$dst, GR:$src1, GR:$src2),
-  "cmp.lt $dst, p0 = $src1, $src2;;">;
-def CMPLE : AForm<0x03, 0x0b, (ops PR:$dst, GR:$src1, GR:$src2),
-  "cmp.le $dst, p0 = $src1, $src2;;">;
-def CMPNE : AForm<0x03, 0x0b, (ops PR:$dst, GR:$src1, GR:$src2),
-  "cmp.ne $dst, p0 = $src1, $src2;;">;
-def CMPLTU : AForm<0x03, 0x0b, (ops PR:$dst, GR:$src1, GR:$src2),
-  "cmp.ltu $dst, p0 = $src1, $src2;;">;
-def CMPGTU : AForm<0x03, 0x0b, (ops PR:$dst, GR:$src1, GR:$src2),
-  "cmp.gtu $dst, p0 = $src1, $src2;;">;
-def CMPLEU : AForm<0x03, 0x0b, (ops PR:$dst, GR:$src1, GR:$src2),
-  "cmp.leu $dst, p0 = $src1, $src2;;">;
-def CMPGEU : AForm<0x03, 0x0b, (ops PR:$dst, GR:$src1, GR:$src2),
-  "cmp.geu $dst, p0 = $src1, $src2;;">;
-*/
-
 // the following are all a bit unfortunate: we throw away the complement
 // of the compare!
 def CMPEQ : AForm_DAG<0x03, 0x0b, (ops PR:$dst, GR:$src1, GR:$src2),
@@ -301,16 +278,16 @@ def CMPNE : AForm_DAG<0x03, 0x0b, (ops PR:$dst, GR:$src1, GR:$src2),
           "cmp.ne $dst, p0 = $src1, $src2;;",
 	  [(set PR:$dst, (setne GR:$src1, GR:$src2))]>;
 def CMPLTU: AForm_DAG<0x03, 0x0b, (ops PR:$dst, GR:$src1, GR:$src2),
-          "cmp.eq $dst, p0 = $src1, $src2;;",
+          "cmp.ltu $dst, p0 = $src1, $src2;;",
 	  [(set PR:$dst, (setult GR:$src1, GR:$src2))]>;
 def CMPGTU: AForm_DAG<0x03, 0x0b, (ops PR:$dst, GR:$src1, GR:$src2),
-          "cmp.eq $dst, p0 = $src1, $src2;;",
+          "cmp.gtu $dst, p0 = $src1, $src2;;",
 	  [(set PR:$dst, (setugt GR:$src1, GR:$src2))]>;
 def CMPLEU: AForm_DAG<0x03, 0x0b, (ops PR:$dst, GR:$src1, GR:$src2),
-          "cmp.eq $dst, p0 = $src1, $src2;;",
+          "cmp.leu $dst, p0 = $src1, $src2;;",
 	  [(set PR:$dst, (setule GR:$src1, GR:$src2))]>;
 def CMPGEU: AForm_DAG<0x03, 0x0b, (ops PR:$dst, GR:$src1, GR:$src2),
-          "cmp.eq $dst, p0 = $src1, $src2;;",
+          "cmp.geu $dst, p0 = $src1, $src2;;",
 	  [(set PR:$dst, (setuge GR:$src1, GR:$src2))]>;
 
 // TODO: support postincrement (reg, imm9) loads+stores - this needs more
