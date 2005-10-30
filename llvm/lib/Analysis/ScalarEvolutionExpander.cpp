@@ -87,9 +87,34 @@ Value *SCEVExpander::visitAddRecExpr(SCEVAddRecExpr *S) {
   // Get the canonical induction variable I for this loop.
   Value *I = getOrInsertCanonicalInductionVariable(L, Ty);
 
+  // If this is a simple linear addrec, emit it now as a special case.
   if (S->getNumOperands() == 2) {   // {0,+,F} --> i*F
     Value *F = expandInTy(S->getOperand(1), Ty);
-    return BinaryOperator::createMul(I, F, "tmp.", InsertPt);
+    
+    // IF the step is by one, just return the inserted IV.
+    if (ConstantIntegral *CI = dyn_cast<ConstantIntegral>(F))
+      if (CI->getRawValue() == 1)
+        return I;
+    
+    // If the insert point is directly inside of the loop, emit the multiply at
+    // the insert point.  Otherwise, L is a loop that is a parent of the insert
+    // point loop.  If we can, move the multiply to the outer most loop that it
+    // is safe to be in.
+    Instruction *MulInsertPt = InsertPt;
+    Loop *InsertPtLoop = LI.getLoopFor(MulInsertPt->getParent());
+    if (InsertPtLoop != L && InsertPtLoop &&
+        L->contains(InsertPtLoop->getHeader())) {
+      while (InsertPtLoop != L) {
+        // If we cannot hoist the multiply out of this loop, don't.
+        if (!InsertPtLoop->isLoopInvariant(F)) break;
+
+        // Otherwise, move the insert point to the preheader of the loop.
+        MulInsertPt = InsertPtLoop->getLoopPreheader()->getTerminator();
+        InsertPtLoop = InsertPtLoop->getParentLoop();
+      }
+    }
+    
+    return BinaryOperator::createMul(I, F, "tmp.", MulInsertPt);
   }
 
   // If this is a chain of recurrences, turn it into a closed form, using the
