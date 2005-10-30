@@ -72,14 +72,6 @@ namespace llvm {
     /// anywhere in the function.
     std::map<const AllocaInst*, int> StaticAllocaMap;
 
-    /// BlockLocalArguments - If any arguments are only used in a single basic
-    /// block, and if the target can access the arguments without side-effects,
-    /// avoid emitting CopyToReg nodes for those arguments.  This map keeps
-    /// track of which arguments are local to each BB.
-    std::multimap<BasicBlock*, std::pair<Argument*,
-                                         unsigned> > BlockLocalArguments;
-
-
     unsigned MakeReg(MVT::ValueType VT) {
       return RegMap->createVirtualRegister(TLI.getRegClassFor(VT));
     }
@@ -125,17 +117,30 @@ static bool isUsedOutsideOfDefiningBlock(Instruction *I) {
   return false;
 }
 
+/// isOnlyUsedInEntryBlock - If the specified argument is only used in the
+/// entry block, return true.
+static bool isOnlyUsedInEntryBlock(Argument *A) {
+  BasicBlock *Entry = A->getParent()->begin();
+  for (Value::use_iterator UI = A->use_begin(), E = A->use_end(); UI != E; ++UI)
+    if (cast<Instruction>(*UI)->getParent() != Entry)
+      return false;  // Use not in entry block.
+  return true;
+}
+
 FunctionLoweringInfo::FunctionLoweringInfo(TargetLowering &tli,
                                            Function &fn, MachineFunction &mf)
     : TLI(tli), Fn(fn), MF(mf), RegMap(MF.getSSARegMap()) {
 
+  // Create a vreg for each argument register that is not dead and is used
+  // outside of the entry block for the function.
+  for (Function::arg_iterator AI = Fn.arg_begin(), E = Fn.arg_end();
+       AI != E; ++AI)
+    if (!isOnlyUsedInEntryBlock(AI))
+      InitializeRegForValue(AI);
+
   // Initialize the mapping of values to registers.  This is only set up for
   // instruction values that are used outside of the block that defines
   // them.
-  for (Function::arg_iterator AI = Fn.arg_begin(), E = Fn.arg_end();
-       AI != E; ++AI)
-    InitializeRegForValue(AI);
-
   Function::iterator BB = Fn.begin(), EB = Fn.end();
   for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ++I)
     if (AllocaInst *AI = dyn_cast<AllocaInst>(I))
@@ -1072,104 +1077,45 @@ CopyValueToVirtualRegister(SelectionDAGLowering &SDL, Value *V, unsigned Reg) {
   }
 }
 
-/// IsOnlyUsedInOneBasicBlock - If the specified argument is only used in a
-/// single basic block, return that block.  Otherwise, return a null pointer.
-static BasicBlock *IsOnlyUsedInOneBasicBlock(Argument *A) {
-  if (A->use_empty()) return 0;
-  BasicBlock *BB = cast<Instruction>(A->use_back())->getParent();
-  for (Argument::use_iterator UI = A->use_begin(), E = A->use_end(); UI != E;
-       ++UI)
-    if (isa<PHINode>(*UI) || cast<Instruction>(*UI)->getParent() != BB)
-      return 0;  // Disagreement among the users?
-
-  // Okay, there is a single BB user.  Only permit this optimization if this is
-  // the entry block, otherwise, we might sink argument loads into loops and
-  // stuff.  Later, when we have global instruction selection, this won't be an
-  // issue clearly.
-  if (BB == BB->getParent()->begin())
-    return BB;
-  return 0;
-}
-
 void SelectionDAGISel::
 LowerArguments(BasicBlock *BB, SelectionDAGLowering &SDL,
                std::vector<SDOperand> &UnorderedChains) {
   // If this is the entry block, emit arguments.
   Function &F = *BB->getParent();
   FunctionLoweringInfo &FuncInfo = SDL.FuncInfo;
+  SDOperand OldRoot = SDL.DAG.getRoot();
+  std::vector<SDOperand> Args = TLI.LowerArguments(F, SDL.DAG);
 
-  if (BB == &F.front()) {
-    SDOperand OldRoot = SDL.DAG.getRoot();
-
-    std::vector<SDOperand> Args = TLI.LowerArguments(F, SDL.DAG);
-
-    // If there were side effects accessing the argument list, do not do
-    // anything special.
-    if (OldRoot != SDL.DAG.getRoot()) {
-      unsigned a = 0;
-      for (Function::arg_iterator AI = F.arg_begin(), E = F.arg_end();
-           AI != E; ++AI,++a)
-        if (!AI->use_empty()) {
-          SDL.setValue(AI, Args[a]);
-          
-          SDOperand Copy =
-            CopyValueToVirtualRegister(SDL, AI, FuncInfo.ValueMap[AI]);
-          UnorderedChains.push_back(Copy);
-        }
-    } else {
-      // Otherwise, if any argument is only accessed in a single basic block,
-      // emit that argument only to that basic block.
-      unsigned a = 0;
-      for (Function::arg_iterator AI = F.arg_begin(), E = F.arg_end();
-           AI != E; ++AI,++a)
-        if (!AI->use_empty()) {
-          if (BasicBlock *BBU = IsOnlyUsedInOneBasicBlock(AI)) {
-            FuncInfo.BlockLocalArguments.insert(std::make_pair(BBU,
-                                                      std::make_pair(AI, a)));
-          } else {
-            SDL.setValue(AI, Args[a]);
-            SDOperand Copy =
-              CopyValueToVirtualRegister(SDL, AI, FuncInfo.ValueMap[AI]);
-            UnorderedChains.push_back(Copy);
-          }
-        }
-    }
-
-    // Next, if the function has live ins that need to be copied into vregs,
-    // emit the copies now, into the top of the block.
-    MachineFunction &MF = SDL.DAG.getMachineFunction();
-    if (MF.livein_begin() != MF.livein_end()) {
-      SSARegMap *RegMap = MF.getSSARegMap();
-      const MRegisterInfo &MRI = *MF.getTarget().getRegisterInfo();
-      for (MachineFunction::livein_iterator LI = MF.livein_begin(),
-           E = MF.livein_end(); LI != E; ++LI)
-        if (LI->second)
-          MRI.copyRegToReg(*MF.begin(), MF.begin()->end(), LI->second,
-                           LI->first, RegMap->getRegClass(LI->second));
-    }
+  unsigned a = 0;
+  for (Function::arg_iterator AI = F.arg_begin(), E = F.arg_end();
+       AI != E; ++AI, ++a)
+    if (!AI->use_empty()) {
+      SDL.setValue(AI, Args[a]);
       
-    // Finally, if the target has anything special to do, allow it to do so.
-    EmitFunctionEntryCode(F, SDL.DAG.getMachineFunction());
-  }
-
-  // See if there are any block-local arguments that need to be emitted in this
-  // block.
-
-  if (!FuncInfo.BlockLocalArguments.empty()) {
-    std::multimap<BasicBlock*, std::pair<Argument*, unsigned> >::iterator BLAI =
-      FuncInfo.BlockLocalArguments.lower_bound(BB);
-    if (BLAI != FuncInfo.BlockLocalArguments.end() && BLAI->first == BB) {
-      // Lower the arguments into this block.
-      std::vector<SDOperand> Args = TLI.LowerArguments(F, SDL.DAG);
-
-      // Set up the value mapping for the local arguments.
-      for (; BLAI != FuncInfo.BlockLocalArguments.end() && BLAI->first == BB;
-           ++BLAI)
-        SDL.setValue(BLAI->second.first, Args[BLAI->second.second]);
-
-      // Any dead arguments will just be ignored here.
+      // If this argument is live outside of the entry block, insert a copy from
+      // whereever we got it to the vreg that other BB's will reference it as.
+      if (FuncInfo.ValueMap.count(AI)) {
+        SDOperand Copy =
+          CopyValueToVirtualRegister(SDL, AI, FuncInfo.ValueMap[AI]);
+        UnorderedChains.push_back(Copy);
+      }
     }
+
+  // Next, if the function has live ins that need to be copied into vregs,
+  // emit the copies now, into the top of the block.
+  MachineFunction &MF = SDL.DAG.getMachineFunction();
+  if (MF.livein_begin() != MF.livein_end()) {
+    SSARegMap *RegMap = MF.getSSARegMap();
+    const MRegisterInfo &MRI = *MF.getTarget().getRegisterInfo();
+    for (MachineFunction::livein_iterator LI = MF.livein_begin(),
+         E = MF.livein_end(); LI != E; ++LI)
+      if (LI->second)
+        MRI.copyRegToReg(*MF.begin(), MF.begin()->end(), LI->second,
+                         LI->first, RegMap->getRegClass(LI->second));
   }
+    
+  // Finally, if the target has anything special to do, allow it to do so.
+  EmitFunctionEntryCode(F, SDL.DAG.getMachineFunction());
 }
 
 
@@ -1180,8 +1126,9 @@ void SelectionDAGISel::BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
 
   std::vector<SDOperand> UnorderedChains;
 
-  // Lower any arguments needed in this block.
-  LowerArguments(LLVMBB, SDL, UnorderedChains);
+  // Lower any arguments needed in this block if this is the entry block.
+  if (LLVMBB == &LLVMBB->getParent()->front())
+    LowerArguments(LLVMBB, SDL, UnorderedChains);
 
   BB = FuncInfo.MBBMap[LLVMBB];
   SDL.setCurrentBasicBlock(BB);
