@@ -1006,7 +1006,28 @@ void SimpleSched::EmitNode(NodeInfo *NI) {
     
     // Add result register values for things that are defined by this
     // instruction.
-    if (NumResults) VRBase = CreateVirtualRegisters(MI, NumResults, II);
+    
+    // If the node is only used by a CopyToReg and the dest reg is a vreg, use
+    // the CopyToReg'd destination register instead of creating a new vreg.
+    if (NumResults == 1) {
+      for (SDNode::use_iterator UI = Node->use_begin(), E = Node->use_end();
+           UI != E; ++UI) {
+        SDNode *Use = *UI;
+        if (Use->getOpcode() == ISD::CopyToReg && 
+            Use->getOperand(2).Val == Node) {
+          unsigned Reg = cast<RegisterSDNode>(Use->getOperand(1))->getReg();
+          if (MRegisterInfo::isVirtualRegister(Reg)) {
+            VRBase = Reg;
+            MI->addRegOperand(Reg, MachineOperand::Def);
+            break;
+          }
+        }
+      }
+    }
+    
+    // Otherwise, create new virtual registers.
+    if (NumResults && VRBase == 0)
+      VRBase = CreateVirtualRegisters(MI, NumResults, II);
     
     // Emit all of the actual operands of this instruction, adding them to the
     // instruction as appropriate.
@@ -1084,10 +1105,11 @@ void SimpleSched::EmitNode(NodeInfo *NI) {
     case ISD::TokenFactor:
       break;
     case ISD::CopyToReg: {
-      unsigned Val = getVR(Node->getOperand(2));
-      MRI.copyRegToReg(*BB, BB->end(),
-                       cast<RegisterSDNode>(Node->getOperand(1))->getReg(), Val,
-                       RegMap->getRegClass(Val));
+      unsigned InReg = getVR(Node->getOperand(2));
+      unsigned DestReg = cast<RegisterSDNode>(Node->getOperand(1))->getReg();
+      if (InReg != DestReg)   // Coallesced away the copy?
+        MRI.copyRegToReg(*BB, BB->end(), DestReg, InReg,
+                         RegMap->getRegClass(InReg));
       break;
     }
     case ISD::CopyFromReg: {
@@ -1097,21 +1119,40 @@ void SimpleSched::EmitNode(NodeInfo *NI) {
         break;
       }
 
+      // If the node is only used by a CopyToReg and the dest reg is a vreg, use
+      // the CopyToReg'd destination register instead of creating a new vreg.
+      for (SDNode::use_iterator UI = Node->use_begin(), E = Node->use_end();
+           UI != E; ++UI) {
+        SDNode *Use = *UI;
+        if (Use->getOpcode() == ISD::CopyToReg && 
+            Use->getOperand(2).Val == Node) {
+          unsigned DestReg = cast<RegisterSDNode>(Use->getOperand(1))->getReg();
+          if (MRegisterInfo::isVirtualRegister(DestReg)) {
+            VRBase = DestReg;
+            break;
+          }
+        }
+      }
+
       // Figure out the register class to create for the destreg.
       const TargetRegisterClass *TRC = 0;
+      if (VRBase) {
+        TRC = RegMap->getRegClass(VRBase);
+      } else {
 
-      // Pick the register class of the right type that contains this physreg.
-      for (MRegisterInfo::regclass_iterator I = MRI.regclass_begin(),
-           E = MRI.regclass_end(); I != E; ++I)
-        if ((*I)->getType() == Node->getValueType(0) &&
-            (*I)->contains(SrcReg)) {
-          TRC = *I;
-          break;
-        }
-      assert(TRC && "Couldn't find register class for reg copy!");
+        // Pick the register class of the right type that contains this physreg.
+        for (MRegisterInfo::regclass_iterator I = MRI.regclass_begin(),
+             E = MRI.regclass_end(); I != E; ++I)
+          if ((*I)->getType() == Node->getValueType(0) &&
+              (*I)->contains(SrcReg)) {
+            TRC = *I;
+            break;
+          }
+        assert(TRC && "Couldn't find register class for reg copy!");
       
-      // Create the reg, emit the copy.
-      VRBase = RegMap->createVirtualRegister(TRC);
+        // Create the reg, emit the copy.
+        VRBase = RegMap->createVirtualRegister(TRC);
+      }
       MRI.copyRegToReg(*BB, BB->end(), VRBase, SrcReg, TRC);
       break;
     }
