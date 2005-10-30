@@ -170,15 +170,10 @@ progress has been made since the 1.4 release.</p>
   beta, there are no guarantees and there is no support for it at this time.
   It has been reported that VC++ Express also works.</p>
 
-  <p>You will also need several open source packages:  bison, flex, and sed.
-  These must be installed in <tt>llvm/win32/tools</tt>.  These can be found at
-  <a href="http://gnuwin32.sourceforge.net">http://gnuwin32.sourceforge.net</a>
-  or
-  <a href="http://unxutils.sourceforge.net">http://unxutils.sourceforge.net</a>.
-  Bison prefers that m4 be in the path.  You must add it to the Visual Studio
-  configuration under the menu Options -&gt; Projects -&gt; VC++ Directories.
-  Alternatively, you can set the environment variable <tt>M4</tt> to point to
-  <tt>m4</tt> executable.</p>
+  <p>If you plan to modify any .y or .l files, you will need to have bison
+  and/or flex installed where Visual Studio can find them.  Otherwise, you do
+  not need them and the pre-generated files that come with the source tree
+  will be used.</p>
 
 </div>
 
@@ -279,28 +274,26 @@ All these paths are absolute:</p>
       <p><b>Note: while you cannot do this step on Windows, you can do it on a
         Unix system and transfer <tt>hello.bc</tt> to Windows.</b></p></li>
 
-  <li><p>Run the program. To make sure the program ran, execute the
-      following command:</p>
+  <li><p>Run the program using the just-in-time compiler:</p>
       
       <p><tt>% lli hello.bc</tt></p></li>
 
   <li><p>Use the <tt>llvm-dis</tt> utility to take a look at the LLVM assembly
       code:</p>
 
-      <p><tt>% llvm-dis &lt; hello.bc | less</tt><p></li>
+      <p><tt>% llvm-dis &lt; hello.bc | more</tt><p></li>
 
-  <li><p>Compile the program to native assembly using the LLC code
-      generator:</p>
+  <li><p>Compile the program to C using the LLC code generator:</p>
 
-      <p><tt>% llc hello.bc -o hello.s</tt></p>
+      <p><tt>% llc -march=c hello.bc</tt></p></li>
 
-  <li><p>Assemble the native assembly language file into a program:</p>
+  <li><p>Compile to binary using Microsoft C:</p>
 
-  <p><b>Not currently possible, but eventually will use <tt>NASMW</tt>.</b></p>
+      <p><tt>% cl hello.cbe.c</tt></p></li>
 
   <li><p>Execute the native code program:</p>
 
-      <p><tt>% ./hello.native</tt></p></li>
+      <p><tt>% hello.cbe.exe</tt></p></li>
 
 </ol>
 
