@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | opt -lowerconstantexprs -disable-output
+; RUN: llvm-as < %s | llc
 
 %.str_1 = internal constant [16 x sbyte] c"%d %d %d %d %d\0A\00"
 
