@@ -217,22 +217,3 @@ _test:
         stw r2, 0(r3)
         blr
 
-===-------------------------------------------------------------------------===
-
-Compile
-int foo(int a) { return a * -2 + 63; }
-
-to
-
-_foo:
-        slwi r0,r3,1
-        subfic r3,r0,63
-        blr
-
-instead of:
-
-_foo:
-        mulli r2,r3,-2
-        addi r3,r2,63
-        blr
-
