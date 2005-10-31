@@ -294,7 +294,7 @@ void PPCAsmPrinter::printOp(const MachineOperand &MO, bool IsCallOp) {
   }
 
   case MachineOperand::MO_ConstantPoolIndex:
-    O << ".CPI" << CurrentFnName << "_" << MO.getConstantPoolIndex();
+    O << "LCPI" << CurrentFnName << "_" << MO.getConstantPoolIndex();
     return;
 
   case MachineOperand::MO_ExternalSymbol:
@@ -436,7 +436,7 @@ void DarwinAsmPrinter::printConstantPool(MachineConstantPool *MCP) {
       emitAlignment(3);
     else
       emitAlignment(TD.getTypeAlignmentShift(CP[i]->getType()));
-    O << ".CPI" << CurrentFnName << "_" << i << ":\t\t\t\t\t" << CommentString
+    O << "LCPI" << CurrentFnName << "_" << i << ":\t\t\t\t\t" << CommentString
       << *CP[i] << "\n";
     emitGlobalConstant(CP[i]);
   }
@@ -633,7 +633,7 @@ void AIXAsmPrinter::printConstantPool(MachineConstantPool *MCP) {
     O << "\t.const\n";
     O << "\t.align " << (unsigned)TD.getTypeAlignment(CP[i]->getType())
       << "\n";
-    O << ".CPI" << CurrentFnName << "_" << i << ":\t\t\t\t\t;"
+    O << "LCPI" << CurrentFnName << "_" << i << ":\t\t\t\t\t;"
       << *CP[i] << "\n";
     emitGlobalConstant(CP[i]);
   }
