@@ -389,7 +389,8 @@ static ConstantInt *SubOne(ConstantInt *C) {
 /// MaskedValueIsZero - Return true if 'V & Mask' is known to be zero.  We use
 /// this predicate to simplify operations downstream.  V and Mask are known to
 /// be the same type.
-static bool MaskedValueIsZero(Value *V, ConstantIntegral *Mask) {
+static bool MaskedValueIsZero(Value *V, ConstantIntegral *Mask, 
+                              unsigned Depth = 0) {
   // Note, we cannot consider 'undef' to be "IsZero" here.  The problem is that
   // we cannot optimize based on the assumption that it is zero without changing
   // to to an explicit zero.  If we don't change it to zero, other code could
@@ -400,6 +401,8 @@ static bool MaskedValueIsZero(Value *V, ConstantIntegral *Mask) {
     return true;
   if (ConstantIntegral *CI = dyn_cast<ConstantIntegral>(V))
     return ConstantExpr::getAnd(CI, Mask)->isNullValue();
+
+  if (Depth == 6) return false;  // Limit search depth.
   
   if (Instruction *I = dyn_cast<Instruction>(V)) {
     switch (I->getOpcode()) {
@@ -408,21 +411,21 @@ static bool MaskedValueIsZero(Value *V, ConstantIntegral *Mask) {
       if (ConstantIntegral *CI = dyn_cast<ConstantIntegral>(I->getOperand(1))) {
         ConstantIntegral *C1C2 = 
           cast<ConstantIntegral>(ConstantExpr::getAnd(CI, Mask));
-        if (MaskedValueIsZero(I->getOperand(0), C1C2))
+        if (MaskedValueIsZero(I->getOperand(0), C1C2, Depth+1))
           return true;
       }
       // If either the LHS or the RHS are MaskedValueIsZero, the result is zero.
-      return MaskedValueIsZero(I->getOperand(1), Mask) ||
-             MaskedValueIsZero(I->getOperand(0), Mask);
+      return MaskedValueIsZero(I->getOperand(1), Mask, Depth+1) ||
+             MaskedValueIsZero(I->getOperand(0), Mask, Depth+1);
     case Instruction::Or:
     case Instruction::Xor:
       // If the LHS and the RHS are MaskedValueIsZero, the result is also zero.
-      return MaskedValueIsZero(I->getOperand(1), Mask) &&
-             MaskedValueIsZero(I->getOperand(0), Mask);
+      return MaskedValueIsZero(I->getOperand(1), Mask, Depth+1) &&
+             MaskedValueIsZero(I->getOperand(0), Mask, Depth+1);
     case Instruction::Select:
       // If the T and F values are MaskedValueIsZero, the result is also zero.
-      return MaskedValueIsZero(I->getOperand(2), Mask) &&
-             MaskedValueIsZero(I->getOperand(1), Mask);
+      return MaskedValueIsZero(I->getOperand(2), Mask, Depth+1) &&
+             MaskedValueIsZero(I->getOperand(1), Mask, Depth+1);
     case Instruction::Cast: {
       const Type *SrcTy = I->getOperand(0)->getType();
       if (SrcTy == Type::BoolTy)
@@ -440,7 +443,7 @@ static bool MaskedValueIsZero(Value *V, ConstantIntegral *Mask) {
           Constant *NewMask =
           ConstantExpr::getCast(Mask, I->getOperand(0)->getType());
           return MaskedValueIsZero(I->getOperand(0),
-                                   cast<ConstantIntegral>(NewMask));
+                                   cast<ConstantIntegral>(NewMask), Depth+1);
         }
       }
       break;
@@ -449,7 +452,8 @@ static bool MaskedValueIsZero(Value *V, ConstantIntegral *Mask) {
       // (shl X, C1) & C2 == 0   iff   (X & C2 >>u C1) == 0
       if (ConstantUInt *SA = dyn_cast<ConstantUInt>(I->getOperand(1)))
         return MaskedValueIsZero(I->getOperand(0),
-                    cast<ConstantIntegral>(ConstantExpr::getUShr(Mask, SA)));
+                    cast<ConstantIntegral>(ConstantExpr::getUShr(Mask, SA)), 
+                                 Depth+1);
       break;
     case Instruction::Shr:
       // (ushr X, C1) & C2 == 0   iff  (-1 >> C1) & C2 == 0
