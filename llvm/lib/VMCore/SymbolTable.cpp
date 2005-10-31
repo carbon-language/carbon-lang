@@ -269,12 +269,12 @@ bool SymbolTable::strip() {
     value_iterator B = Plane.begin(), Bend = Plane.end();
     while (B != Bend) {   // Found nonempty type plane!
       Value *V = B->second;
+      ++B;
       if (!isa<GlobalValue>(V) || cast<GlobalValue>(V)->hasInternalLinkage()) {
         // Set name to "", removing from symbol table!
         V->setName("");
         RemovedSymbol = true;
       }
-      ++B;
     }
   }
 
