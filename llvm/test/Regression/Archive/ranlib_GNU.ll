@@ -6,4 +6,3 @@
 ;RUN: llvm-ar t %t.GNU.a > %t1
 ;RUN: diff %t1 %p/GNU.toc
 
-; XFAIL: alpha

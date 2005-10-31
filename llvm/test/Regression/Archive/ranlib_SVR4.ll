@@ -6,4 +6,3 @@
 ;RUN: llvm-ar t %t.SVR4.a > %t1
 ;RUN: diff %t1 %p/SVR4.toc
 
-; XFAIL: alpha
