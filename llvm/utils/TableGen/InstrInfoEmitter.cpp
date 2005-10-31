@@ -76,6 +76,8 @@ static std::vector<Record*> GetOperandInfo(const CodeGenInstruction &Inst) {
 
 // run - Emit the main instruction description records for the target...
 void InstrInfoEmitter::run(std::ostream &OS) {
+  GatherItinClasses();
+
   EmitSourceFileHeader("Target Instruction Descriptors", OS);
   OS << "namespace llvm {\n\n";
 
@@ -168,7 +170,13 @@ void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,
     OS << Inst.TheDef->getName();
   else
     OS << Inst.Name;
-  OS << "\",\t" << NumOperands << ", -1, 0, false, 0, 0, 0, 0";
+  
+  unsigned ItinClass = !IsItineraries ? 0 :
+            ItinClassNumber(Inst.TheDef->getValueAsDef("Itinerary")->getName());
+  
+  OS << "\",\t" << NumOperands << ", -1, 0, false, 0, 0, "
+     << ItinClass
+     << ", 0";
 
   // Emit all of the target indepedent flags...
   if (Inst.isReturn)     OS << "|M_RET_FLAG";
@@ -220,6 +228,30 @@ void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,
     OS << "OperandInfo" << OpInfo[OperandInfo];
   
   OS << " },  // Inst #" << Num << " = " << Inst.TheDef->getName() << "\n";
+}
+
+struct LessRecord {
+  bool operator()(const Record *Rec1, const Record *Rec2) const {
+    return Rec1->getName() < Rec2->getName();
+  }
+};
+void InstrInfoEmitter::GatherItinClasses() {
+  std::vector<Record*> DefList =
+                          Records.getAllDerivedDefinitions("InstrItinClass");
+  IsItineraries = !DefList.empty();
+  
+  if (!IsItineraries) return;
+  
+  sort(DefList.begin(), DefList.end(), LessRecord());
+
+  for (unsigned i = 0, N = DefList.size(); i < N; i++) {
+    Record *Def = DefList[i];
+    ItinClassMap[Def->getName()] = i + 1;
+  }
+}  
+  
+unsigned InstrInfoEmitter::ItinClassNumber(std::string ItinName) {
+  return ItinClassMap[ItinName];
 }
 
 void InstrInfoEmitter::emitShiftedValue(Record *R, StringInit *Val,

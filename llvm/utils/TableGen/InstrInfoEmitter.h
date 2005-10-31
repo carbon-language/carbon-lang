@@ -28,8 +28,11 @@ struct CodeGenInstruction;
 
 class InstrInfoEmitter : public TableGenBackend {
   RecordKeeper &Records;
+  bool IsItineraries;
+  std::map<std::string, unsigned> ItinClassMap;
+  
 public:
-  InstrInfoEmitter(RecordKeeper &R) : Records(R) {}
+  InstrInfoEmitter(RecordKeeper &R) : Records(R), IsItineraries(false) {}
 
   // run - Output the instruction set description, returning true on failure.
   void run(std::ostream &OS);
@@ -44,6 +47,8 @@ private:
                   std::map<std::vector<Record*>, unsigned> &EL,
                   std::map<std::vector<Record*>, unsigned> &OpInfo,
                   std::ostream &OS);
+  void GatherItinClasses();
+  unsigned ItinClassNumber(std::string ItinName);
   void emitShiftedValue(Record *R, StringInit *Val, IntInit *Shift,
                         std::ostream &OS);
 };
