@@ -7,7 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This tablegen backend emits subtarget enumerations.
+// This tablegen backend emits subtarget enumerations.  The format is in a state
+// flux and will be tightened up when integration to scheduling is complete.
 //
 //===----------------------------------------------------------------------===//
 
@@ -62,7 +63,7 @@ void SubtargetEmitter::Enumeration(std::ostream &OS,
     // If bit flags then emit expression (1 << i)
     if (isBits)  OS << " = " << " 1 << " << i;
 
-    // Depending on if more in the list emit comma
+    // Depending on 'if more in the list' emit comma
     if (++i < N) OS << ",";
     
     OS << "\n";
@@ -102,7 +103,7 @@ void SubtargetEmitter::FeatureKeyValues(std::ostream &OS) {
        << Name
        << " }";
     
-    // Depending on if more in the list emit comma
+    // Depending on 'if more in the list' emit comma
     if (++i < N) OS << ",";
     
     OS << "\n";
@@ -158,7 +159,7 @@ void SubtargetEmitter::CPUKeyValues(std::ostream &OS) {
     
     OS << " }";
     
-    // Depending on if more in the list emit comma
+    // Depending on 'if more in the list' emit comma
     if (++i < N) OS << ",";
     
     OS << "\n";
@@ -315,9 +316,9 @@ void SubtargetEmitter::EmitStageData(std::ostream &OS,
 }
 
 //
-// EmitProcessData - Generate data for processor itineraries.
+// EmitProcessorData - Generate data for processor itineraries.
 //
-void SubtargetEmitter::EmitProcessData(std::ostream &OS,
+void SubtargetEmitter::EmitProcessorData(std::ostream &OS,
       std::vector<std::vector<InstrItinerary> > &ProcList) {
   // Get an iterator for processor itinerary stages
   std::vector<std::vector<InstrItinerary> >::iterator
@@ -362,6 +363,54 @@ void SubtargetEmitter::EmitProcessData(std::ostream &OS,
     // End processor itinerary table
     OS << "};\n";
   }
+  
+    OS << "\n";
+    OS << "static llvm::InstrItinerary NoItineraries[] = {};\n";
+}
+
+//
+// EmitProcessorLookup - generate cpu name to itinerary lookup table.
+//
+void SubtargetEmitter::EmitProcessorLookup(std::ostream &OS) {
+  // Gather and sort processor information
+  std::vector<Record*> ProcessorList =
+                          Records.getAllDerivedDefinitions("Processor");
+  sort(ProcessorList.begin(), ProcessorList.end(), LessRecordFieldName());
+
+  // Begin processor table
+  OS << "\n";
+  OS << "// Sorted (by key) array of itineraries for CPU subtype.\n"
+     << "static const llvm::SubtargetInfoKV SubTypeInfoKV[] = {\n";
+     
+  // For each processor
+  for (unsigned i = 0, N = ProcessorList.size(); i < N;) {
+    // Next processor
+    Record *Processor = ProcessorList[i];
+
+    std::string Name = Processor->getValueAsString("Name");
+    std::string ProcItin = Processor->getValueAsDef("ProcItin")->getName();
+    
+    // Emit as { "cpu", procinit },
+    OS << "  { "
+       << "\"" << Name << "\", "
+       << "(void *)&" << ProcItin;
+        
+    OS << " }";
+    
+    // Depending on ''if more in the list'' emit comma
+    if (++i < N) OS << ",";
+    
+    OS << "\n";
+  }
+  
+  // End processor table
+  OS << "};\n";
+
+  // Emit size of table
+  OS<<"\nenum {\n";
+  OS<<"  SubTypeInfoKVSize = sizeof(SubTypeInfoKV)/"
+                            "sizeof(llvm::SubtargetInfoKV)\n";
+  OS<<"};\n";
 }
 
 //
@@ -376,7 +425,9 @@ void SubtargetEmitter::EmitData(std::ostream &OS) {
   // Emit the stage data
   EmitStageData(OS, NItinClasses, ItinClassesMap, ProcList);
   // Emit the processor itinerary data
-  EmitProcessData(OS, ProcList);
+  EmitProcessorData(OS, ProcList);
+  // Emit the processor lookup data
+  EmitProcessorLookup(OS);
 }
 
 //
@@ -409,6 +460,9 @@ void SubtargetEmitter::ParseFeaturesFunction(std::ostream &OS) {
     
     OS << "  " << Attribute << " = (Bits & " << Instance << ") != 0;\n";
   }
+  OS << "\n"
+     << "  InstrItinerary *Itin = (InstrItinerary *)"
+                        "Features.getInfo(SubTypeInfoKV, SubTypeInfoKVSize);\n";
   OS << "}\n";
 }
 
