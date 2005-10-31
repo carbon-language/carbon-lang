@@ -2,7 +2,7 @@
 //
 //                     The LLVM Compiler Infrastructure
 //
-// This file was developed by Chris Lattner and is distributed under the
+// This file was developed by James M. Laskey and is distributed under the
 // University of Illinois Open Source License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
@@ -192,15 +192,17 @@ public:
 
 // Forward
 class NodeInfo;
-typedef std::vector<NodeInfo *>           NIVector;
-typedef std::vector<NodeInfo *>::iterator NIIterator;
+typedef NodeInfo *NodeInfoPtr;
+typedef std::vector<NodeInfoPtr>           NIVector;
+typedef std::vector<NodeInfoPtr>::iterator NIIterator;
 
 //===----------------------------------------------------------------------===//
 ///
 /// Node group -  This struct is used to manage flagged node groups.
 ///
-class NodeGroup : public NIVector {
+class NodeGroup {
 private:
+  NIVector      Members;                // Group member nodes
   int           Pending;                // Number of visits pending before
                                         //    adding to order  
 
@@ -209,10 +211,24 @@ public:
   NodeGroup() : Pending(0) {}
   
   // Accessors
-  inline NodeInfo *getLeader() { return empty() ? NULL : front(); }
+  inline NodeInfo *getLeader() {
+    return Members.empty() ? NULL : Members.front();
+  }
   inline int getPending() const { return Pending; }
   inline void setPending(int P)  { Pending = P; }
   inline int addPending(int I)  { return Pending += I; }
+  
+  // Pass thru
+  inline bool group_empty() { return Members.empty(); }
+  inline NIIterator group_begin() { return Members.begin(); }
+  inline NIIterator group_end() { return Members.end(); }
+  inline void group_push_back(const NodeInfoPtr &NI) { Members.push_back(NI); }
+  inline NIIterator group_insert(NIIterator Pos, const NodeInfoPtr &NI) {
+    return Members.insert(Pos, NI);
+  }
+  inline void group_insert(NIIterator Pos, NIIterator First, NIIterator Last) {
+    Members.insert(Pos, First, Last);
+  }
 
   static void Add(NodeInfo *D, NodeInfo *U);
   static unsigned CountInternalUses(NodeInfo *D, NodeInfo *U);
@@ -257,7 +273,7 @@ public:
   
   // Accessors
   inline bool isInGroup() const {
-    assert(!Group || !Group->empty() && "Group with no members");
+    assert(!Group || !Group->group_empty() && "Group with no members");
     return Group != NULL;
   }
   inline bool isGroupLeader() const {
@@ -298,8 +314,8 @@ public:
     if (N->isInGroup()) {
       // get Group
       NodeGroup *Group = NI->Group;
-      NGI = Group->begin();
-      NGE = Group->end();
+      NGI = Group->group_begin();
+      NGE = Group->group_end();
       // Prevent this node from being used (will be in members list
       NI = NULL;
     }
@@ -491,7 +507,8 @@ void NodeGroup::Add(NodeInfo *D, NodeInfo *U) {
       }
     }
     // Merge the two lists
-    DGroup->insert(DGroup->end(), UGroup->begin(), UGroup->end());
+    DGroup->group_insert(DGroup->group_end(),
+                         UGroup->group_begin(), UGroup->group_end());
   } else if (DGroup) {
     // Make user member of definers group
     U->Group = DGroup;
@@ -503,7 +520,7 @@ void NodeGroup::Add(NodeInfo *D, NodeInfo *U) {
       // Remove internal edges
       DGroup->addPending(-CountInternalUses(DNI, U));
     }
-    DGroup->push_back(U);
+    DGroup->group_push_back(U);
   } else if (UGroup) {
     // Make definer member of users group
     D->Group = UGroup;
@@ -515,13 +532,13 @@ void NodeGroup::Add(NodeInfo *D, NodeInfo *U) {
       // Remove internal edges
       UGroup->addPending(-CountInternalUses(D, UNI));
     }
-    UGroup->insert(UGroup->begin(), D);
+    UGroup->group_insert(UGroup->group_begin(), D);
   } else {
     D->Group = U->Group = DGroup = new NodeGroup();
     DGroup->addPending(D->Node->use_size() + U->Node->use_size() -
                        CountInternalUses(D, U));
-    DGroup->push_back(D);
-    DGroup->push_back(U);
+    DGroup->group_push_back(D);
+    DGroup->group_push_back(U);
   }
 }
 
@@ -529,10 +546,11 @@ void NodeGroup::Add(NodeInfo *D, NodeInfo *U) {
 ///
 unsigned NodeGroup::CountInternalUses(NodeInfo *D, NodeInfo *U) {
   unsigned N = 0;
-  for (SDNode:: use_iterator UI = D->Node->use_begin(),
-                             E = D->Node->use_end(); UI != E; UI++) {
-    if (*UI == U->Node) N++;
+  for (unsigned M = U->Node->getNumOperands(); 0 < M--;) {
+    SDOperand Op = U->Node->getOperand(M);
+    if (Op.Val == D->Node) N++;
   }
+
   return N;
 }
 //===----------------------------------------------------------------------===//
@@ -743,7 +761,7 @@ void SimpleSched::GatherSchedulingInfo() {
         unsigned ResourceSet = 0;
         bool IsCall = false;
         
-        for (NIIterator NGI = Group->begin(), NGE = Group->end();
+        for (NIIterator NGI = Group->group_begin(), NGE = Group->group_end();
              NGI != NGE; NGI++) {
           NodeInfo* NGNI = *NGI;
           Latency += NGNI->Latency;
@@ -798,7 +816,8 @@ bool SimpleSched::isStrongDependency(NodeInfo *A, NodeInfo *B) {
 }
 
 /// isWeakDependency Return true if node A produces a result that will
-/// conflict with operands of B.
+/// conflict with operands of B.  It is assumed that we have called
+/// isStrongDependency prior.
 bool SimpleSched::isWeakDependency(NodeInfo *A, NodeInfo *B) {
   // TODO check for conflicting real registers and aliases
 #if 0 // FIXME - Since we are in SSA form and not checking register aliasing
@@ -1225,7 +1244,7 @@ void SimpleSched::printChanges(unsigned Index) {
       std::cerr << "\n";
       if (NI->isGroupLeader()) {
         NodeGroup *Group = NI->Group;
-        for (NIIterator NII = Group->begin(), E = Group->end();
+        for (NIIterator NII = Group->group_begin(), E = Group->group_end();
              NII != E; NII++) {
           std::cerr << "          ";
           printSI(std::cerr, *NII);
@@ -1269,7 +1288,7 @@ void SimpleSched::print(std::ostream &O) const {
     O << "\n";
     if (NI->isGroupLeader()) {
       NodeGroup *Group = NI->Group;
-      for (NIIterator NII = Group->begin(), E = Group->end();
+      for (NIIterator NII = Group->group_begin(), E = Group->group_end();
            NII != E; NII++) {
         O << "    ";
         printSI(O, *NII);
