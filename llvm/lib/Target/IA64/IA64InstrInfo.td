@@ -200,7 +200,7 @@ def : Pat<(mulhu GR:$src1, GR:$src2),
 // load constants of various sizes // FIXME: prettyprint -ve constants
 def : Pat<(i64 immSExt14:$imm), (ADDS r0, immSExt14:$imm)>;
 def : Pat<(i64 imm64:$imm), (MOVL imm64:$imm)>;
-// TODO: def : Pat<(i1 1), (MOV p0)>;
+// TODO: def : Pat<(i1 1), (<stuff>)>;
 
 def AND   : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
           "and $dst = $src1, $src2;;",
@@ -290,11 +290,51 @@ def CMPGEU: AForm_DAG<0x03, 0x0b, (ops PR:$dst, GR:$src1, GR:$src2),
           "cmp.geu $dst, p0 = $src1, $src2;;",
 	  [(set PR:$dst, (setuge GR:$src1, GR:$src2))]>;
 
+// and we do the whole thing again for FP compares!
+def FCMPEQ : AForm_DAG<0x03, 0x0b, (ops PR:$dst, FP:$src1, FP:$src2),
+          "fcmp.eq $dst, p0 = $src1, $src2;;",
+          [(set PR:$dst, (seteq FP:$src1, FP:$src2))]>;
+def FCMPGT : AForm_DAG<0x03, 0x0b, (ops PR:$dst, FP:$src1, FP:$src2),
+          "fcmp.gt $dst, p0 = $src1, $src2;;",
+	  [(set PR:$dst, (setgt FP:$src1, FP:$src2))]>;
+def FCMPGE : AForm_DAG<0x03, 0x0b, (ops PR:$dst, FP:$src1, FP:$src2),
+          "fcmp.ge $dst, p0 = $src1, $src2;;",
+	  [(set PR:$dst, (setge FP:$src1, FP:$src2))]>;
+def FCMPLT : AForm_DAG<0x03, 0x0b, (ops PR:$dst, FP:$src1, FP:$src2),
+          "fcmp.lt $dst, p0 = $src1, $src2;;",
+	  [(set PR:$dst, (setlt FP:$src1, FP:$src2))]>;
+def FCMPLE : AForm_DAG<0x03, 0x0b, (ops PR:$dst, FP:$src1, FP:$src2),
+          "fcmp.le $dst, p0 = $src1, $src2;;",
+	  [(set PR:$dst, (setle FP:$src1, FP:$src2))]>;
+def FCMPNE : AForm_DAG<0x03, 0x0b, (ops PR:$dst, FP:$src1, FP:$src2),
+          "fcmp.neq $dst, p0 = $src1, $src2;;",
+	  [(set PR:$dst, (setne FP:$src1, FP:$src2))]>;
+def FCMPLTU: AForm_DAG<0x03, 0x0b, (ops PR:$dst, FP:$src1, FP:$src2),
+          "fcmp.ltu $dst, p0 = $src1, $src2;;",
+	  [(set PR:$dst, (setult FP:$src1, FP:$src2))]>;
+def FCMPGTU: AForm_DAG<0x03, 0x0b, (ops PR:$dst, FP:$src1, FP:$src2),
+          "fcmp.gtu $dst, p0 = $src1, $src2;;",
+	  [(set PR:$dst, (setugt FP:$src1, FP:$src2))]>;
+def FCMPLEU: AForm_DAG<0x03, 0x0b, (ops PR:$dst, FP:$src1, FP:$src2),
+          "fcmp.leu $dst, p0 = $src1, $src2;;",
+	  [(set PR:$dst, (setule FP:$src1, FP:$src2))]>;
+def FCMPGEU: AForm_DAG<0x03, 0x0b, (ops PR:$dst, FP:$src1, FP:$src2),
+          "fcmp.geu $dst, p0 = $src1, $src2;;",
+	  [(set PR:$dst, (setuge FP:$src1, FP:$src2))]>;
+
 // TODO: support postincrement (reg, imm9) loads+stores - this needs more
 // tablegen support
 
 def PHI : PseudoInstIA64<(ops variable_ops), "PHI">;
 def IDEF : PseudoInstIA64<(ops variable_ops), "// IDEF">;
+
+def IDEF_GR_D : PseudoInstIA64_DAG<(ops GR:$reg), "// $reg = IDEF",
+    [(set GR:$reg, (undef))]>;
+def IDEF_FP_D : PseudoInstIA64_DAG<(ops FP:$reg), "// $reg = IDEF",
+    [(set FP:$reg, (undef))]>;
+def IDEF_PR_D : PseudoInstIA64_DAG<(ops PR:$reg), "// $reg = IDEF",
+    [(set PR:$reg, (undef))]>;
+
 def IUSE : PseudoInstIA64<(ops variable_ops), "// IUSE">;
 def ADJUSTCALLSTACKUP : PseudoInstIA64<(ops variable_ops),
                                         "// ADJUSTCALLSTACKUP">;
@@ -364,28 +404,6 @@ def EXTRU : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, u6imm:$imm1, u6imm:$imm2),
   "extr.u $dst = $src1, $imm1, $imm2;;">;
 
 def DEPZ : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, u6imm:$imm1, u6imm:$imm2),	  "dep.z $dst = $src1, $imm1, $imm2;;">;
-
-// and we do the whole thing again for FP compares!
-def FCMPEQ : AForm<0x03, 0x0b, (ops PR:$dst, FP:$src1, FP:$src2),
-  "fcmp.eq $dst, p0 = $src1, $src2;;">;
-def FCMPGT : AForm<0x03, 0x0b, (ops PR:$dst, FP:$src1, FP:$src2),
-  "fcmp.gt $dst, p0 = $src1, $src2;;">;
-def FCMPGE : AForm<0x03, 0x0b, (ops PR:$dst, FP:$src1, FP:$src2),
-  "fcmp.ge $dst, p0 = $src1, $src2;;">;
-def FCMPLT : AForm<0x03, 0x0b, (ops PR:$dst, FP:$src1, FP:$src2),
-  "fcmp.lt $dst, p0 = $src1, $src2;;">;
-def FCMPLE : AForm<0x03, 0x0b, (ops PR:$dst, FP:$src1, FP:$src2),
-  "fcmp.le $dst, p0 = $src1, $src2;;">;
-def FCMPNE : AForm<0x03, 0x0b, (ops PR:$dst, FP:$src1, FP:$src2),
-  "fcmp.neq $dst, p0 = $src1, $src2;;">;
-def FCMPLTU : AForm<0x03, 0x0b, (ops PR:$dst, FP:$src1, FP:$src2),
-  "fcmp.ltu $dst, p0 = $src1, $src2;;">;
-def FCMPGTU : AForm<0x03, 0x0b, (ops PR:$dst, FP:$src1, FP:$src2),
-  "fcmp.gtu $dst, p0 = $src1, $src2;;">;
-def FCMPLEU : AForm<0x03, 0x0b, (ops PR:$dst, FP:$src1, FP:$src2),
-  "fcmp.leu $dst, p0 = $src1, $src2;;">;
-def FCMPGEU : AForm<0x03, 0x0b, (ops PR:$dst, FP:$src1, FP:$src2),
-  "fcmp.geu $dst, p0 = $src1, $src2;;">;
 
 def PCMPEQOR : AForm<0x03, 0x0b, (ops PR:$dst, GR:$src1, GR:$src2, PR:$qp),
   "($qp) cmp.eq.or $dst, p0 = $src1, $src2;;">;
