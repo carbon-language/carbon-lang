@@ -14,6 +14,7 @@
 #ifndef POWERPCSUBTARGET_H
 #define POWERPCSUBTARGET_H
 
+#include "llvm/Target/TargetInstrItineraries.h"
 #include "llvm/Target/TargetSubtarget.h"
 
 #include <string>
@@ -26,6 +27,9 @@ protected:
   /// stackAlignment - The minimum alignment known to hold of the stack frame on
   /// entry to the function and which must be maintained by every function.
   unsigned StackAlignment;
+  
+  /// Selected instruction itineraries (one entry per itinerary class.)
+  InstrItineraryData InstrItins;
 
   /// Used by the ISel to turn in optimizations for POWER4-derived architectures
   bool IsGigaProcessor;
@@ -49,6 +53,11 @@ public:
   /// stack frame on entry to the function and which must be maintained by every
   /// function for this subtarget.
   unsigned getStackAlignment() const { return StackAlignment; }
+  
+  /// getInstrItins - Return the instruction itineraies based on subtarget 
+  /// selection.
+  const InstrItineraryData getInstrItineraryData() const { return InstrItins; }
+  
 
   bool hasFSQRT() const { return HasFSQRT; }
   bool has64BitRegs() const { return Has64BitRegs; }

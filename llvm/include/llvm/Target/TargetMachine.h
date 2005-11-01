@@ -15,6 +15,7 @@
 #define LLVM_TARGET_TARGETMACHINE_H
 
 #include "llvm/Target/TargetData.h"
+#include "llvm/Target/TargetInstrItineraries.h"
 #include <cassert>
 
 namespace llvm {
@@ -122,6 +123,13 @@ public:
   /// otherwise return null.
   ///
   virtual TargetJITInfo *getJITInfo() { return 0; }
+  
+  /// getInstrItineraryData - Returns instruction itinerary data for the target
+  /// or specific subtarget.
+  ///
+  virtual const InstrItineraryData getInstrItineraryData() const {  
+    return InstrItineraryData();
+  }
 
   // These are deprecated interfaces.
   virtual const TargetSchedInfo        *getSchedInfo() const { return 0; }

@@ -247,7 +247,7 @@ void InstrInfoEmitter::GatherItinClasses() {
 
   for (unsigned i = 0, N = DefList.size(); i < N; i++) {
     Record *Def = DefList[i];
-    ItinClassMap[Def->getName()] = i + 1;
+    ItinClassMap[Def->getName()] = i;
   }
 }  
   

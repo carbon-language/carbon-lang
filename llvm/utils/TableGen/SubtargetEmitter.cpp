@@ -178,8 +178,8 @@ void SubtargetEmitter::CPUKeyValues(std::ostream &OS) {
 // CollectAllItinClasses - Gathers and enumerates all the itinerary classes.
 // Returns itinerary class count.
 //
-unsigned SubtargetEmitter::CollectAllItinClasses(std::map<std::string, unsigned>
-                                                              &ItinClassesMap) {
+unsigned SubtargetEmitter::CollectAllItinClasses(std::ostream &OS,
+                              std::map<std::string, unsigned> &ItinClassesMap) {
   // Gather and sort all itinerary classes
   std::vector<Record*> ItinClassList =
                             Records.getAllDerivedDefinitions("InstrItinClass");
@@ -196,6 +196,11 @@ unsigned SubtargetEmitter::CollectAllItinClasses(std::map<std::string, unsigned>
     ItinClassesMap[Name] = i;
   }
   
+  // Emit size of table
+  OS<<"\nenum {\n";
+  OS<<"  ItinClassesSize = " << N << "\n";
+  OS<<"};\n";
+
   // Return itinerary class count
   return N;
 }
@@ -313,6 +318,11 @@ void SubtargetEmitter::EmitStageData(std::ostream &OS,
   
   // End stages table
   OS << "};\n";
+  
+  // Emit size of table
+  OS<<"\nenum {\n";
+  OS<<"  StagesSize = sizeof(Stages)/sizeof(llvm::InstrStage)\n";
+  OS<<"};\n";
 }
 
 //
@@ -421,13 +431,18 @@ void SubtargetEmitter::EmitData(std::ostream &OS) {
   std::vector<std::vector<InstrItinerary> > ProcList;
   
   // Enumerate all the itinerary classes
-  unsigned NItinClasses = CollectAllItinClasses(ItinClassesMap);
-  // Emit the stage data
-  EmitStageData(OS, NItinClasses, ItinClassesMap, ProcList);
-  // Emit the processor itinerary data
-  EmitProcessorData(OS, ProcList);
-  // Emit the processor lookup data
-  EmitProcessorLookup(OS);
+  unsigned NItinClasses = CollectAllItinClasses(OS, ItinClassesMap);
+  // Make sure the rest is worth the effort
+  HasItineraries = NItinClasses != 0;
+  
+  if (HasItineraries) {
+    // Emit the stage data
+    EmitStageData(OS, NItinClasses, ItinClassesMap, ProcList);
+    // Emit the processor itinerary data
+    EmitProcessorData(OS, ProcList);
+    // Emit the processor lookup data
+    EmitProcessorLookup(OS);
+  }
 }
 
 //
@@ -460,9 +475,15 @@ void SubtargetEmitter::ParseFeaturesFunction(std::ostream &OS) {
     
     OS << "  " << Attribute << " = (Bits & " << Instance << ") != 0;\n";
   }
-  OS << "\n"
-     << "  InstrItinerary *Itin = (InstrItinerary *)"
-                        "Features.getInfo(SubTypeInfoKV, SubTypeInfoKVSize);\n";
+  
+  if (HasItineraries) {
+    OS << "\n"
+       << "  InstrItinerary *Itinerary = (InstrItinerary *)"
+                        "Features.getInfo(SubTypeInfoKV, SubTypeInfoKVSize);\n"
+          "  InstrItins = InstrItineraryData(Stages, StagesSize, "
+                                             "Itinerary, ItinClassesSize);\n";
+  }
+  
   OS << "}\n";
 }
 

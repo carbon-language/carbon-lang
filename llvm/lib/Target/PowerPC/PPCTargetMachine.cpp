@@ -64,7 +64,8 @@ unsigned PPCTargetMachine::getModuleMatchQuality(const Module &M) {
 PPCTargetMachine::PPCTargetMachine(const Module &M, IntrinsicLowering *IL,
                                    const std::string &FS)
 : TargetMachine("PowerPC", IL, false, 4, 4, 4, 4, 4, 4, 2, 1, 1),
-  Subtarget(M, FS), FrameInfo(*this, false), JITInfo(*this) {
+  Subtarget(M, FS), FrameInfo(*this, false), JITInfo(*this),
+  InstrItins(Subtarget.getInstrItineraryData()) {
   if (TargetDefault == PPCTarget) {
     if (Subtarget.isAIX()) PPCTarget = TargetAIX;
     if (Subtarget.isDarwin()) PPCTarget = TargetDarwin;
