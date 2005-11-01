@@ -5169,7 +5169,7 @@ else
 echo "${ECHO_T}no" >&6
 fi
 
-if test "$GRAPHVIZ" != "echo gv" ; then
+if test "$GV" != "echo gv" ; then
 
 cat >>confdefs.h <<\_ACEOF
 #define HAVE_GV 1
