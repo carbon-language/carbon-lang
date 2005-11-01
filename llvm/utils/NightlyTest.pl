@@ -38,6 +38,12 @@
 #                   testing release branches)
 #  -target          Specify the target triplet
 #
+#  ---------------- Options to configure llvm-test ----------------------------
+#  -spec2000path    Path to the benchspec directory in the SPEC 2000 distro
+#  -spec95path      Path to the benchspec directory in the SPEC 95 distro.
+#  -povraypath      Path to the povray sources
+#  -namdpath        Path to the namd sources
+#
 # CVSROOT is the CVS repository from which the tree will be checked out,
 #  specified either in the full :method:user@host:/dir syntax, or
 #  just /dir if using a local repo.
@@ -85,6 +91,8 @@ my $CONFIGUREARGS = "";
 my $CVSCOOPT = "-APR";
 my $NICE = "";
 my $NODEJAGNU = 0;
+
+my $LLVMTESTCONFIGARGS = "";
 
 sub ReadFile {
   if (open (FILE, $_[0])) {
@@ -298,7 +306,18 @@ while (scalar(@ARGV) and ($_ = $ARGV[0], /^[-+]/)) {
   }
   if (/^-noexternals$/)    { $NOEXTERNALS = 1; next; }
   if (/^-nodejagnu$/)      { $NODEJAGNU = 1; next; }
-
+  if (/^-spec2000path$/)   {
+    $LLVMTESTCONFIGARGS .= " --enable-spec2000=$ARGV[0]"; shift; next;
+  }
+  if (/^-spec95path$/)     {
+    $LLVMTESTCONFIGARGS .= " --enable-spec95=$ARGV[0]"; shift; next;
+  }
+  if (/^-povraypath$/)     {
+    $LLVMTESTCONFIGARGS .= " --enable-povray=$ARGV[0]"; shift; next;
+  }
+  if (/^-namdpath$/)       {
+    $LLVMTESTCONFIGARGS .= " --enable-namd=$ARGV[0]"; shift; next;
+  }
   print "Unknown option: $_ : ignoring!\n";
 }
 
@@ -410,7 +429,7 @@ $LOC = `utils/countloc.sh`;
 #
 if (!$NOCHECKOUT) {
   if ( $VERBOSE ) { print "CONFIGURE STAGE\n"; }
-  my $EXTRAFLAGS = "--enable-spec --with-objroot=.";
+  my $EXTRAFLAGS = "--enable-spec --with-objroot=.$LLVMTESTCONFIGARGS";
   system "(time -p $NICE ./configure $CONFIGUREARGS $EXTRAFLAGS) > $BuildLog 2>&1";
 
   if ( $VERBOSE ) { print "BUILD STAGE\n"; }
