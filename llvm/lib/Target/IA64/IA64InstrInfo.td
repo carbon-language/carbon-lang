@@ -553,6 +553,18 @@ def GETFSIG : AForm<0x03, 0x0b, (ops GR:$dst, FP:$src),
 def SETFSIG : AForm<0x03, 0x0b, (ops FP:$dst, GR:$src),
   "setf.sig $dst = $src;;">;
 
+// these four FP<->int conversion patterns need checking/cleaning
+def SINT_TO_FP : Pat<(sint_to_fp GR:$src),
+  (FNORMD (FCVTXF (SETFSIG GR:$src)))>;
+def UINT_TO_FP : Pat<(uint_to_fp GR:$src),
+  (FNORMD (FCVTXUF (SETFSIG GR:$src)))>;
+/* FIXME: tablegen coughs on these
+def FP_TO_SINT : Pat<(fp_to_sint FP:$src),
+  (GETFSIG (FCVTFXTRUNC FP:$src))>;
+def FP_TO_UINT : Pat<(fp_to_uint FP:$src),
+  (GETFSIG (FCVTFXUTRUNC FP:$src))>;
+*/
+
 let isTerminator = 1, isBranch = 1 in {
   def BRL_NOTCALL : RawForm<0x03, 0xb0, (ops i64imm:$dst),
     "(p0) brl.cond.sptk $dst;;">;

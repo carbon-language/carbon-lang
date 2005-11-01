@@ -94,6 +94,12 @@ def SDTFPRoundOp  : SDTypeProfile<1, 1, [   // fround
 def SDTFPExtendOp  : SDTypeProfile<1, 1, [   // fextend
   SDTCisFP<0>, SDTCisFP<1>, SDTCisOpSmallerThanOp<1, 0>
 ]>;
+def SDTIntToFPOp : SDTypeProfile<1, 1, [   // [su]int_to_fp 
+  SDTCisFP<0>, SDTCisInt<1>
+]>;
+def SDTFPToIntOp : SDTypeProfile<1, 1, [   // fp_to_[su]int 
+  SDTCisInt<0>, SDTCisFP<1>
+]>;
 def SDTExtInreg : SDTypeProfile<1, 2, [   // sext_inreg
   SDTCisSameAs<0, 1>, SDTCisInt<0>, SDTCisVT<2, OtherVT>,
   SDTCisVTSmallerThanOp<2, 1>
@@ -171,6 +177,11 @@ def fsqrt      : SDNode<"ISD::FSQRT"      , SDTFPUnaryOp>;
 
 def fround     : SDNode<"ISD::FP_ROUND"   , SDTFPRoundOp>;
 def fextend    : SDNode<"ISD::FP_EXTEND"  , SDTFPExtendOp>;
+
+def sint_to_fp : SDNode<"ISD::SINT_TO_FP" , SDTIntToFPOp>;
+def uint_to_fp : SDNode<"ISD::UINT_TO_FP" , SDTIntToFPOp>;
+def fp_to_sint : SDNode<"ISD::FP_TO_SINT" , SDTFPToIntOp>;
+def fp_to_uint : SDNode<"ISD::FP_TO_UINT" , SDTFPToIntOp>;
 
 def setcc      : SDNode<"ISD::SETCC"      , SDTSetCC>;
 
