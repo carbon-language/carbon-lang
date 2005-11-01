@@ -93,6 +93,48 @@ def imm64  : PatLeaf<(i64 imm), [{
   return true;
 }]>;
 
+def ADD  : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
+           "add $dst = $src1, $src2;;",
+	   [(set GR:$dst, (add GR:$src1, GR:$src2))]>;
+
+def ADD1 : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
+           "add $dst = $src1, $src2, 1;;",
+	   [(set GR:$dst, (add (add GR:$src1, GR:$src2), 1))]>;
+
+def ADDS : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, s14imm:$imm),
+           "adds $dst = $imm, $src1;;",
+	   [(set GR:$dst, (add GR:$src1, immSExt14:$imm))]>;
+ 
+def MOVL : AForm_DAG<0x03, 0x0b, (ops GR:$dst, s64imm:$imm),
+           "movl $dst = $imm;;",
+	   [(set GR:$dst, imm64:$imm)]>;
+
+def ADDL_GA : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, globaladdress:$imm),
+           "addl $dst = $imm, $src1;;",
+	   []>;
+  
+def SUB  : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
+           "sub $dst = $src1, $src2;;",
+	   [(set GR:$dst, (sub GR:$src1, GR:$src2))]>;
+
+def SUB1 : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
+           "sub $dst = $src1, $src2, 1;;",
+	   [(set GR:$dst, (add (sub GR: $src1, GR:$src2), -1))]>;
+
+let isTwoAddress = 1 in {
+def TPCADDIMM22 : AForm<0x03, 0x0b,
+  (ops GR:$dst, GR:$src1, s22imm:$imm, PR:$qp),
+    "($qp) add $dst = $imm, $dst;;">;
+def TPCMPIMM8NE : AForm<0x03, 0x0b,
+  (ops PR:$dst, PR:$src1, s22imm:$imm, GR:$src2, PR:$qp),
+    "($qp) cmp.ne $dst , p0 = $imm, $src2;;">;
+}
+
+// zero extend a bool (predicate reg) into an integer reg
+def ZXTb : Pat<(zext PR:$src),
+          (TPCADDIMM22 (ADDS r0, 0), 1, PR:$src)>;
+
+// normal sign/zero-extends
 def SXT1 : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src), "sxt1 $dst = $src;;",
            [(set GR:$dst, (sext_inreg GR:$src, i8))]>;
 def ZXT1 : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src), "zxt1 $dst = $src;;",
@@ -136,34 +178,6 @@ def MIX4R : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
           "mix4.r $dst = $src1, $src2;;",
 	  [(set GR:$dst, (or (and (shl GR:$src1, 32), isMIX4Rable),
 	                     (and GR:$src2, isMIX4Rable)))]>;
-
-def ADD  : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
-           "add $dst = $src1, $src2;;",
-	   [(set GR:$dst, (add GR:$src1, GR:$src2))]>;
-
-def ADD1 : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
-           "add $dst = $src1, $src2, 1;;",
-	   [(set GR:$dst, (add (add GR:$src1, GR:$src2), 1))]>;
-
-def ADDS : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, s14imm:$imm),
-           "adds $dst = $imm, $src1;;",
-	   [(set GR:$dst, (add GR:$src1, immSExt14:$imm))]>;
- 
-def MOVL : AForm_DAG<0x03, 0x0b, (ops GR:$dst, s64imm:$imm),
-           "movl $dst = $imm;;",
-	   [(set GR:$dst, imm64:$imm)]>;
-
-def ADDL_GA : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, globaladdress:$imm),
-           "addl $dst = $imm, $src1;;",
-	   []>;
-  
-def SUB  : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
-           "sub $dst = $src1, $src2;;",
-	   [(set GR:$dst, (sub GR:$src1, GR:$src2))]>;
-
-def SUB1 : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
-           "sub $dst = $src1, $src2, 1;;",
-	   [(set GR:$dst, (add (sub GR: $src1, GR:$src2), -1))]>;
 
 def GETFSIGD : AForm_DAG<0x03, 0x0b, (ops GR:$dst, FP:$src),
   "getf.sig $dst = $src;;",
@@ -423,15 +437,6 @@ def ADDIMM22 : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, s22imm:$imm),
   "add $dst = $imm, $src1;;">;
 def CADDIMM22 : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, s22imm:$imm, PR:$qp),
   "($qp) add $dst = $imm, $src1;;">;
-
-let isTwoAddress = 1 in {
-def TPCADDIMM22 : AForm<0x03, 0x0b,
-  (ops GR:$dst, GR:$src1, s22imm:$imm, PR:$qp),
-    "($qp) add $dst = $imm, $dst;;">;
-def TPCMPIMM8NE : AForm<0x03, 0x0b,
-  (ops PR:$dst, PR:$src1, s22imm:$imm, GR:$src2, PR:$qp),
-    "($qp) cmp.ne $dst , p0 = $imm, $src2;;">;
-}
 
 def SUBIMM8 : AForm<0x03, 0x0b, (ops GR:$dst, s8imm:$imm, GR:$src2),
   "sub $dst = $imm, $src2;;">;
