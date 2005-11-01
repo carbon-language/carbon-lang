@@ -28,7 +28,7 @@
     <ul>
       <li><a href="#isa">The <tt>isa&lt;&gt;</tt>, <tt>cast&lt;&gt;</tt>
 and <tt>dyn_cast&lt;&gt;</tt> templates</a> </li>
-      <li><a href="#DEBUG">The <tt>DEBUG()</tt> macro &amp; <tt>-debug</tt>
+      <li><a href="#DEBUG">The <tt>DEBUG()</tt> macro and <tt>-debug</tt>
 option</a>
         <ul>
           <li><a href="#DEBUG_TYPE">Fine grained debug info with <tt>DEBUG_TYPE</tt>
@@ -264,7 +264,8 @@ know about when writing transformations.</p>
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
-  <a name="isa">The isa&lt;&gt;, cast&lt;&gt; and dyn_cast&lt;&gt; templates</a>
+  <a name="isa">The <tt>isa&lt;&gt;</tt>, <tt>cast&lt;&gt;</tt> and
+  <tt>dyn_cast&lt;&gt;</tt> templates</a>
 </div>
 
 <div class="doc_text">
@@ -317,44 +318,45 @@ file (note that you very rarely have to include this file directly).</p>
   checks to see if the operand is of the specified type, and if so, returns a
   pointer to it (this operator does not work with references). If the operand is
   not of the correct type, a null pointer is returned.  Thus, this works very
-  much like the <tt>dynamic_cast</tt> operator in C++, and should be used in the
-  same circumstances.  Typically, the <tt>dyn_cast&lt;&gt;</tt> operator is used
-  in an <tt>if</tt> statement or some other flow control statement like this:
+  much like the <tt>dynamic_cast&lt;&gt;</tt> operator in C++, and should be
+  used in the same circumstances.  Typically, the <tt>dyn_cast&lt;&gt;</tt>
+  operator is used in an <tt>if</tt> statement or some other flow control
+  statement like this:
 
-   <pre>
+  <pre>
      if (<a href="#AllocationInst">AllocationInst</a> *AI = dyn_cast&lt;<a href="#AllocationInst">AllocationInst</a>&gt;(Val)) {
        ...
      }
-   </pre>
+  </pre>
    
-   <p> This form of the <tt>if</tt> statement effectively combines together a
-   call to <tt>isa&lt;&gt;</tt> and a call to <tt>cast&lt;&gt;</tt> into one
-   statement, which is very convenient.</p>
+  <p>This form of the <tt>if</tt> statement effectively combines together a call
+  to <tt>isa&lt;&gt;</tt> and a call to <tt>cast&lt;&gt;</tt> into one
+  statement, which is very convenient.</p>
 
-   <p>Note that the <tt>dyn_cast&lt;&gt;</tt> operator, like C++'s
-   <tt>dynamic_cast</tt> or Java's <tt>instanceof</tt> operator, can be abused.
-   In particular you should not use big chained <tt>if/then/else</tt> blocks to
-   check for lots of different variants of classes.  If you find yourself
-   wanting to do this, it is much cleaner and more efficient to use the
-   <tt>InstVisitor</tt> class to dispatch over the instruction type directly.</p>
+  <p>Note that the <tt>dyn_cast&lt;&gt;</tt> operator, like C++'s
+  <tt>dynamic_cast&lt;&gt;</tt> or Java's <tt>instanceof</tt> operator, can be
+  abused.  In particular, you should not use big chained <tt>if/then/else</tt>
+  blocks to check for lots of different variants of classes.  If you find
+  yourself wanting to do this, it is much cleaner and more efficient to use the
+  <tt>InstVisitor</tt> class to dispatch over the instruction type directly.</p>
 
-    </dd>
+  </dd>
 
-    <dt><tt>cast_or_null&lt;&gt;</tt>: </dt>
-   
-    <dd>The <tt>cast_or_null&lt;&gt;</tt> operator works just like the
-    <tt>cast&lt;&gt;</tt> operator, except that it allows for a null pointer as
-    an argument (which it then propagates).  This can sometimes be useful,
-    allowing you to combine several null checks into one.</dd>
+  <dt><tt>cast_or_null&lt;&gt;</tt>: </dt>
+  
+  <dd>The <tt>cast_or_null&lt;&gt;</tt> operator works just like the
+  <tt>cast&lt;&gt;</tt> operator, except that it allows for a null pointer as an
+  argument (which it then propagates).  This can sometimes be useful, allowing
+  you to combine several null checks into one.</dd>
 
-    <dt><tt>dyn_cast_or_null&lt;&gt;</tt>: </dt>
+  <dt><tt>dyn_cast_or_null&lt;&gt;</tt>: </dt>
 
-    <dd>The <tt>dyn_cast_or_null&lt;&gt;</tt> operator works just like the
-    <tt>dyn_cast&lt;&gt;</tt> operator, except that it allows for a null pointer
-    as an argument (which it then propagates).  This can sometimes be useful,
-    allowing you to combine several null checks into one.</dd>
+  <dd>The <tt>dyn_cast_or_null&lt;&gt;</tt> operator works just like the
+  <tt>dyn_cast&lt;&gt;</tt> operator, except that it allows for a null pointer
+  as an argument (which it then propagates).  This can sometimes be useful,
+  allowing you to combine several null checks into one.</dd>
 
-  </dl>
+</dl>
 
 <p>These five templates can be used with any classes, whether they have a
 v-table or not.  To add support for these templates, you simply need to add
@@ -366,7 +368,7 @@ are lots of examples in the LLVM source base.</p>
 
 <!-- ======================================================================= -->
 <div class="doc_subsection">
-  <a name="DEBUG">The <tt>DEBUG()</tt> macro &amp; <tt>-debug</tt> option</a>
+  <a name="DEBUG">The <tt>DEBUG()</tt> macro and <tt>-debug</tt> option</a>
 </div>
 
 <div class="doc_text">
