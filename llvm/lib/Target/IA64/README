@@ -54,6 +54,8 @@ I guarantee it.
 
 TODO:
 
+  - stop passing FP args in both FP *and* integer regs when not required
+  - allocate low (nonstacked) registers more aggressively
   - clean up and thoroughly test the isel patterns.
   - fix stacked register allocation order: (for readability) we don't want
     the out? registers being the first ones used
@@ -62,7 +64,7 @@ TODO:
   - bundling!
     (we will avoid the mess that is:
      http://gcc.gnu.org/ml/gcc/2003-12/msg00832.html )
-  - instruction scheduling (yep)
+  - instruction scheduling (hmmmm! ;)
   - write truly inspirational documentation
   - if-conversion (predicate database/knowledge? etc etc)
   - counted loop support
