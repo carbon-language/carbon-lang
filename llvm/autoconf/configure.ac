@@ -323,7 +323,7 @@ if test "$GRAPHVIZ" != "echo Graphviz" ; then
    [Define to path to Graphviz program if found or 'echo Graphviz' otherwise])
 fi
 AC_PATH_PROG(GV, [gv], [echo gv])
-if test "$GRAPHVIZ" != "echo gv" ; then
+if test "$GV" != "echo gv" ; then
   AC_DEFINE([HAVE_GV],[1],[Define if the gv program is available])
   AC_DEFINE_UNQUOTED([LLVM_PATH_GV],"$GV",
    [Define to path to gv program if found or 'echo gv' otherwise])
