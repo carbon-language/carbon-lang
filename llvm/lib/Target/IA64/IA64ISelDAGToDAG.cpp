@@ -208,7 +208,13 @@ SDOperand IA64DAGToDAGISel::SelectCALL(SDOperand Op) {
     CallOpcode = IA64::BRCALL_INDIRECT;
   }
  
+  // see section 8.5.8 of "Itanium Software Conventions and
+  // Runtime Architecture Guide to see some examples of what's going
+  // on here. (in short: int args get mapped 1:1 'slot-wise' to out0->out7,
+  // while FP args get mapped to F8->F15 as needed)
+  
   // TODO: support in-memory arguments
+ 
   unsigned used_FPArgs=0; // how many FP args have been used so far?
 
   unsigned intArgs[] = {IA64::out0, IA64::out1, IA64::out2, IA64::out3,
@@ -236,6 +242,20 @@ SDOperand IA64DAGToDAGISel::SelectCALL(SDOperand Op) {
       Chain = CurDAG->getCopyToReg(Chain, DestReg, Val, InFlag);
       InFlag = Chain.getValue(1);
       CallOperands.push_back(CurDAG->getRegister(DestReg, RegTy));
+      // some functions (e.g. printf) want floating point arguments
+      // *also* passed as in-memory representations in integer registers
+      // this is FORTRAN legacy junk which we don't _always_ need
+      // to do, but to be on the safe side, we do. 
+      if(MVT::isFloatingPoint(N->getOperand(i).getValueType())) {
+        assert((i-2) < 8 && "FP args alone would fit, but no int regs left");
+	DestReg = intArgs[i-2]; // this FP arg goes in an int reg
+        // GETFD takes an FP reg and writes a GP reg	
+	Chain = CurDAG->getTargetNode(IA64::GETFD, MVT::i64, Val, InFlag);
+        // FIXME: this next line is a bit unfortunate 
+	Chain = CurDAG->getCopyToReg(Chain, DestReg, Chain, InFlag); 
+        InFlag = Chain.getValue(1);
+        CallOperands.push_back(CurDAG->getRegister(DestReg, MVT::i64));
+      }
     }
   }
   
