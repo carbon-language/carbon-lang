@@ -558,12 +558,11 @@ def SINT_TO_FP : Pat<(sint_to_fp GR:$src),
   (FNORMD (FCVTXF (SETFSIG GR:$src)))>;
 def UINT_TO_FP : Pat<(uint_to_fp GR:$src),
   (FNORMD (FCVTXUF (SETFSIG GR:$src)))>;
-/* FIXME: tablegen coughs on these
-def FP_TO_SINT : Pat<(fp_to_sint FP:$src),
+def FP_TO_SINT : Pat<(i64 (fp_to_sint FP:$src)),
   (GETFSIG (FCVTFXTRUNC FP:$src))>;
-def FP_TO_UINT : Pat<(fp_to_uint FP:$src),
+def FP_TO_UINT : Pat<(i64 (fp_to_uint FP:$src)),
   (GETFSIG (FCVTFXUTRUNC FP:$src))>;
-*/
+
 
 let isTerminator = 1, isBranch = 1 in {
   def BRL_NOTCALL : RawForm<0x03, 0xb0, (ops i64imm:$dst),
