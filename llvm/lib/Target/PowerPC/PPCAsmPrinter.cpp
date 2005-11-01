@@ -567,6 +567,13 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
       << "\t.long\t" << *i << '\n';
   }
 
+  // Funny Darwin hack: This flag tells the linker that no global symbols
+  // contain code that falls through to other global symbols (e.g. the obvious
+  // implementation of multiple entry points).  If this doesn't occur, the
+  // linker can safely perform dead code stripping.  Since LLVM never generates
+  // code that does this, it is always safe to set.
+  O << "\t.subsections_via_symbols\n";
+
   AsmPrinter::doFinalization(M);
   return false; // success
 }
@@ -711,7 +718,6 @@ bool AIXAsmPrinter::doFinalization(Module &M) {
   O << "_section_.text:\n"
     << "\t.csect .data[RW],3\n"
     << "\t.llong _section_.text\n";
-
   delete Mang;
   return false; // success
 }
