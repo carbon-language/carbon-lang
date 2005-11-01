@@ -15,6 +15,7 @@
 #include "InstrInfoEmitter.h"
 #include "CodeGenTarget.h"
 #include "Record.h"
+#include <algorithm>
 using namespace llvm;
 
 // runEnums - Print out enum values for all of the instructions.
