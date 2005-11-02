@@ -226,7 +226,6 @@ def B6 : GR<0, "b6">;
 //
 
 // these are the scratch (+stacked) general registers
-// ZERO (r0), GP (r1), SP (r12), ThreadP (r13) are not here... 
 // FIXME/XXX  we also reserve a frame pointer (r15)
 // FIXME/XXX  we also reserve r2 for spilling/filling predicates
 // in IA64RegisterInfo.cpp
@@ -283,7 +282,6 @@ def GR : RegisterClass<"IA64", i64, 64,
 
 
 // these are the scratch (+stacked) FP registers
-// ZERO (F0) and ONE (F1) are not here
 def FP : RegisterClass<"IA64", f64, 64, 
        [F6, F7, 
 	F8, F9, F10, F11, F12, F13, F14, F15, 
@@ -298,7 +296,25 @@ def FP : RegisterClass<"IA64", f64, 64,
 	F96, F97, F98, F99, F100, F101, F102, F103, 
 	F104, F105, F106, F107, F108, F109, F110, F111, 
 	F112, F113, F114, F115, F116, F117, F118, F119, 
-	F120, F121, F122, F123, F124, F125, F126, F127]>;
+	F120, F121, F122, F123, F124, F125, F126, F127,
+	F0, F1]> // these last two are hidden
+  {
+    let MethodProtos = [{
+    iterator allocation_order_begin(MachineFunction &MF) const;
+    iterator allocation_order_end(MachineFunction &MF) const;
+  }];
+  let MethodBodies = [{
+    FPClass::iterator
+    FPClass::allocation_order_begin(MachineFunction &MF) const {
+	return begin(); // we don't hide any FP regs from the start
+      }
+
+      FPClass::iterator
+      FPClass::allocation_order_end(MachineFunction &MF) const {
+	return end()-2; // we hide regs F0, F1 from the end 
+      }
+  }];
+}
 
 // these are the predicate registers, p0 (1/TRUE) is not here
 def PR : RegisterClass<"IA64", i1, 64, 
