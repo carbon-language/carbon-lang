@@ -1731,6 +1731,7 @@ bool CTargetMachine::addPassesToEmitFile(PassManager &PM, std::ostream &o,
   PM.add(createLowerGCPass());
   PM.add(createLowerAllocationsPass(true));
   PM.add(createLowerInvokePass());
+  PM.add(createCFGSimplificationPass());   // clean up after lower invoke.
   PM.add(new CBackendNameAllUsedStructs());
   PM.add(new CWriter(o, getIntrinsicLowering()));
   return false;
