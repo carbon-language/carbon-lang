@@ -206,3 +206,10 @@ uint %test29(uint %X, uint %x) {
         %tmp.10 = or uint %tmp.7, %tmp.9                ; <uint> [#uses=1]
 	ret uint %tmp.10
 }
+
+long %test30(long %x) {
+        %tmp.2 = xor long %x, -9223372036854775808
+        ;; Add of sign bit -> xor of sign bit.
+        %tmp.4 = add long %tmp.2, -9223372036854775808
+        ret long %tmp.4
+}
