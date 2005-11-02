@@ -80,9 +80,6 @@ IA64TargetLowering::IA64TargetLowering(TargetMachine &TM)
 
       addLegalFPImmediate(+0.0);
       addLegalFPImmediate(+1.0);
-      addLegalFPImmediate(-0.0);
-      addLegalFPImmediate(-1.0);
-    
 }
 
 /// isFloatingPointZero - Return true if this is 0.0 or -0.0.

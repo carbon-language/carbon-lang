@@ -321,6 +321,14 @@ SDOperand IA64DAGToDAGISel::Select(SDOperand Op) {
 /* todo:
  * case ISD::DYNAMIC_STACKALLOC:
 */
+  case ISD::ConstantFP: {
+    if (cast<ConstantFPSDNode>(N)->isExactlyValue(+0.0))
+      return CurDAG->getRegister(IA64::F0, MVT::f64); // load 0.0
+    else if (cast<ConstantFPSDNode>(N)->isExactlyValue(+1.0))
+      return CurDAG->getRegister(IA64::F1, MVT::f64); // load 1.0
+    else
+      assert(0 && "Unexpected FP constant!");
+  }
 
   case ISD::FrameIndex: { // TODO: reduce creepyness
     int FI = cast<FrameIndexSDNode>(N)->getIndex();
