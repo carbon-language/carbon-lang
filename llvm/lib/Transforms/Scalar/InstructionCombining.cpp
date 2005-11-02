@@ -710,7 +710,7 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
     // X + (signbit) --> X ^ signbit
     if (ConstantInt *CI = dyn_cast<ConstantInt>(RHSC)) {
       unsigned NumBits = CI->getType()->getPrimitiveSizeInBits();
-      uint64_t Val = CI->getRawValue() & (1ULL << NumBits)-1;
+      uint64_t Val = CI->getRawValue() & (~0ULL >> (64- NumBits));
       if (Val == (1ULL << (NumBits-1)))
         return BinaryOperator::createXor(LHS, RHS);
     }
