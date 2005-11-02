@@ -384,7 +384,7 @@ static bool MaskedValueIsZero(const SDOperand &Op, uint64_t Mask,
     return (Mask & ((1ULL << SrcBits)-1)) == 0; // Returning only the zext bits.
   case ISD::ZERO_EXTEND:
     SrcBits = MVT::getSizeInBits(Op.getOperand(0).getValueType());
-    return MaskedValueIsZero(Op.getOperand(0),Mask & ((1ULL << SrcBits)-1),TLI);
+    return MaskedValueIsZero(Op.getOperand(0),Mask & (~0ULL >> (64-SrcBits)),TLI);
   case ISD::AssertZext:
     SrcBits = MVT::getSizeInBits(cast<VTSDNode>(Op.getOperand(1))->getVT());
     return (Mask & ((1ULL << SrcBits)-1)) == 0; // Returning only the zext bits.
