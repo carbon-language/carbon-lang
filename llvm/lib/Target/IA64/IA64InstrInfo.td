@@ -211,11 +211,6 @@ def : Pat<(mulhu GR:$src1, GR:$src2),
 // def ADDS : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, s14imm:$imm),
 //   "adds $dst = $imm, $src1;;">;
 
-// load constants of various sizes // FIXME: prettyprint -ve constants
-def : Pat<(i64 immSExt14:$imm), (ADDS r0, immSExt14:$imm)>;
-def : Pat<(i64 imm64:$imm), (MOVL imm64:$imm)>;
-// TODO: def : Pat<(i1 1), (<stuff>)>;
-
 def AND   : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
           "and $dst = $src1, $src2;;",
 	  [(set GR:$dst, (and GR:$src1, GR:$src2))]>;
@@ -336,6 +331,38 @@ def FCMPGEU: AForm_DAG<0x03, 0x0b, (ops PR:$dst, FP:$src1, FP:$src2),
           "fcmp.geu $dst, p0 = $src1, $src2;;",
 	  [(set PR:$dst, (setuge FP:$src1, FP:$src2))]>;
 
+def MOV : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src), "mov $dst = $src;;">;
+def PMOV : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src, PR:$qp),
+  "($qp) mov $dst = $src;;">;
+
+def SPILL_ALL_PREDICATES_TO_GR : AForm<0x03, 0x0b, (ops GR:$dst),
+  "mov $dst = pr;;">;
+def FILL_ALL_PREDICATES_FROM_GR : AForm<0x03, 0x0b, (ops GR:$src),
+  "mov pr = $src;;">;
+
+let isTwoAddress = 1 in {
+  def CMOV : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src2, GR:$src, PR:$qp),
+    "($qp) mov $dst = $src;;">;
+}
+
+def PFMOV : AForm<0x03, 0x0b, (ops FP:$dst, FP:$src, PR:$qp),
+  "($qp) mov $dst = $src;;">;
+
+let isTwoAddress = 1 in {
+  def CFMOV : AForm<0x03, 0x0b, (ops FP:$dst, FP:$src2, FP:$src, PR:$qp),
+    "($qp) mov $dst = $src;;">;
+}
+
+// TODO: select FPs, bools
+def SELECTINT : Pat<(select PR:$which, GR:$src1, GR:$src2),
+          (CMOV (MOV GR:$src2), GR:$src1, PR:$which)>; // note order!
+
+// load constants of various sizes // FIXME: prettyprint -ve constants
+def : Pat<(i64 immSExt14:$imm), (ADDS r0, immSExt14:$imm)>;
+def : Pat<(i64 imm64:$imm), (MOVL imm64:$imm)>;
+//FIXME: tablegen coughs on this next one:
+//def : Pat<(i1 1), (CMPEQ r0, r0)>; // TODO: this should just be a ref to p0
+
 // TODO: support postincrement (reg, imm9) loads+stores - this needs more
 // tablegen support
 
@@ -359,28 +386,6 @@ def PSEUDO_ALLOC : PseudoInstIA64<(ops GR:$foo), "// PSEUDO_ALLOC">;
 def ALLOC : AForm<0x03, 0x0b,
   (ops GR:$dst, i8imm:$inputs, i8imm:$locals, i8imm:$outputs, i8imm:$rotating),
     "alloc $dst = ar.pfs,$inputs,$locals,$outputs,$rotating;;">;
-
-def MOV : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src), "mov $dst = $src;;">;
-def PMOV : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src, PR:$qp),
-  "($qp) mov $dst = $src;;">;
-
-def SPILL_ALL_PREDICATES_TO_GR : AForm<0x03, 0x0b, (ops GR:$dst),
-  "mov $dst = pr;;">;
-def FILL_ALL_PREDICATES_FROM_GR : AForm<0x03, 0x0b, (ops GR:$src),
-  "mov pr = $src;;">;
-
-let isTwoAddress = 1 in {
-  def CMOV : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src2, GR:$src, PR:$qp),
-    "($qp) mov $dst = $src;;">;
-}
-
-def PFMOV : AForm<0x03, 0x0b, (ops FP:$dst, FP:$src, PR:$qp),
-  "($qp) mov $dst = $src;;">;
-
-let isTwoAddress = 1 in {
-  def CFMOV : AForm<0x03, 0x0b, (ops FP:$dst, FP:$src2, FP:$src, PR:$qp),
-    "($qp) mov $dst = $src;;">;
-}
 
 let isTwoAddress = 1 in {
   def TCMPNE : AForm<0x03, 0x0b,
@@ -498,13 +503,15 @@ def FMS : AForm_DAG<0x03, 0x0b, (ops FP:$dst, FP:$src1, FP:$src2, FP:$src3),
 def FNMA : AForm_DAG<0x03, 0x0b, (ops FP:$dst, FP:$src1, FP:$src2, FP:$src3),
   "fnma $dst = $src1, $src2, $src3;;",
   [(set FP:$dst, (fneg (fadd (fmul FP:$src1, FP:$src2), FP:$src3)))]>;
-def FABS : AForm<0x03, 0x0b, (ops FP:$dst, FP:$src),
-  "fabs $dst = $src;;">;
+def FABS : AForm_DAG<0x03, 0x0b, (ops FP:$dst, FP:$src),
+  "fabs $dst = $src;;",
+  [(set FP:$dst, (fabs FP:$src))]>;
 def FNEG : AForm_DAG<0x03, 0x0b, (ops FP:$dst, FP:$src),
   "fneg $dst = $src;;",
   [(set FP:$dst, (fneg FP:$src))]>;
-def FNEGABS : AForm<0x03, 0x0b, (ops FP:$dst, FP:$src),
-  "fnegabs $dst = $src;;">;
+def FNEGABS : AForm_DAG<0x03, 0x0b, (ops FP:$dst, FP:$src),
+  "fnegabs $dst = $src;;",
+  [(set FP:$dst, (fneg (fabs FP:$src)))]>;
 
 def CFMAS1 : AForm<0x03, 0x0b,
   (ops FP:$dst, FP:$src1, FP:$src2, FP:$src3, PR:$qp),

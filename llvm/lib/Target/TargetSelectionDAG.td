@@ -109,6 +109,10 @@ def SDTSetCC : SDTypeProfile<1, 3, [ // setcc
   SDTCisInt<0>, SDTCisSameAs<1, 2>, SDTCisVT<3, OtherVT>
 ]>;
 
+def SDTSelect : SDTypeProfile<1, 3, [ // select 
+  SDTCisInt<1>, SDTCisSameAs<0, 2>, SDTCisSameAs<2, 3>
+]>;
+
 //===----------------------------------------------------------------------===//
 // Selection DAG Node Properties.
 //
@@ -184,6 +188,7 @@ def fp_to_sint : SDNode<"ISD::FP_TO_SINT" , SDTFPToIntOp>;
 def fp_to_uint : SDNode<"ISD::FP_TO_UINT" , SDTFPToIntOp>;
 
 def setcc      : SDNode<"ISD::SETCC"      , SDTSetCC>;
+def select     : SDNode<"ISD::SELECT"     , SDTSelect>;
 
 //===----------------------------------------------------------------------===//
 // Selection DAG Condition Codes
