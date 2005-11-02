@@ -322,10 +322,12 @@ SDOperand IA64DAGToDAGISel::Select(SDOperand Op) {
  * case ISD::DYNAMIC_STACKALLOC:
 */
   case ISD::ConstantFP: {
+    SDOperand Chain = CurDAG->getEntryNode(); // this is a constant, so..
+
     if (cast<ConstantFPSDNode>(N)->isExactlyValue(+0.0))
-      return CurDAG->getRegister(IA64::F0, MVT::f64); // load 0.0
+      return CurDAG->getCopyFromReg(Chain, IA64::F0, MVT::f64);
     else if (cast<ConstantFPSDNode>(N)->isExactlyValue(+1.0))
-      return CurDAG->getRegister(IA64::F1, MVT::f64); // load 1.0
+      return CurDAG->getCopyFromReg(Chain, IA64::F1, MVT::f64);
     else
       assert(0 && "Unexpected FP constant!");
   }
