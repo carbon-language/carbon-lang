@@ -382,6 +382,8 @@ public:
   
   const CodeGenTarget &getTargetInfo() const { return Target; }
   
+  Record *getSDNodeNamed(const std::string &Name) const;
+  
   const SDNodeInfo &getSDNodeInfo(Record *R) const {
     assert(SDNodes.count(R) && "Unknown node!");
     return SDNodes.find(R)->second;
