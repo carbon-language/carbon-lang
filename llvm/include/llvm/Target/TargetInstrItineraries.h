@@ -17,6 +17,7 @@
 #define LLVM_TARGET_TARGETINSTRITINERARIES_H
 
 #include "llvm/Support/Debug.h"
+#include <cassert>
 
 namespace llvm {
 
