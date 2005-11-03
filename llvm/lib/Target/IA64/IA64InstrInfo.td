@@ -360,7 +360,7 @@ def SELECTINT : Pat<(select PR:$which, GR:$src1, GR:$src2),
 // load constants of various sizes // FIXME: prettyprint -ve constants
 def : Pat<(i64 immSExt14:$imm), (ADDS r0, immSExt14:$imm)>;
 def : Pat<(i64 imm64:$imm), (MOVL imm64:$imm)>;
-def : Pat<(i1 1), (CMPEQ r0, r0)>; // TODO: this should just be a ref to p0
+def : Pat<(i1 -1), (CMPEQ r0, r0)>; // TODO: this should just be a ref to p0
 
 // TODO: support postincrement (reg, imm9) loads+stores - this needs more
 // tablegen support
