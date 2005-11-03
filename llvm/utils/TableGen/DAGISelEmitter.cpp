@@ -482,10 +482,28 @@ static unsigned char getIntrinsicType(Record *R, bool NotRegisters,
 /// exception.
 bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
   if (isLeaf()) {
-    if (DefInit *DI = dynamic_cast<DefInit*>(getLeafValue()))
+    if (DefInit *DI = dynamic_cast<DefInit*>(getLeafValue())) {
       // If it's a regclass or something else known, include the type.
       return UpdateNodeType(getIntrinsicType(DI->getDef(), NotRegisters, TP),
                             TP);
+    } else if (IntInit *II = dynamic_cast<IntInit*>(getLeafValue())) {
+      // Int inits are always integers. :)
+      bool MadeChange = UpdateNodeType(MVT::isInt, TP);
+      
+      if (hasTypeSet()) {
+        unsigned Size = MVT::getSizeInBits(getType());
+        // Make sure that the value is representable for this type.
+        if (Size < 32) {
+          int Val = (II->getValue() << (32-Size)) >> (32-Size);
+          if (Val != II->getValue())
+            TP.error("Sign-extended integer value '" + itostr(II->getValue()) +
+                     "' is out of range for type 'MVT::" + 
+                     getEnumName(getType()) + "'!");
+        }
+      }
+      
+      return MadeChange;
+    }
     return false;
   }
   
