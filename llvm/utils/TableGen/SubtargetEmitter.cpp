@@ -223,7 +223,7 @@ void SubtargetEmitter::FormItineraryString(Record *ItinData,
   
     // Form string as ,{ cycles, u1 | u2 | ... | un }
     int Cycles = Stage->getValueAsInt("Cycles");
-    ItinString += "  ,{ " + itostr(Cycles) + ", ";
+    ItinString += "  { " + itostr(Cycles) + ", ";
     
     // Get unit list
     std::vector<Record*> UnitList = Stage->getValueAsListOfDefs("Units");
@@ -260,7 +260,7 @@ void SubtargetEmitter::EmitStageData(std::ostream &OS,
 
   // Begin stages table
   OS << "static llvm::InstrStage Stages[] = {\n"
-        "  { 0, 0 } // No itinerary\n";
+        "  { 0, 0 }, // No itinerary\n";
         
   unsigned ItinEnum = 1;
   std::map<std::string, unsigned> ItinMap;
@@ -296,8 +296,9 @@ void SubtargetEmitter::EmitStageData(std::ostream &OS,
       
       // If new itinerary
       if (Find == 0) {
-        // Emit as ,{ cycles, u1 | u2 | ... | un } // index
-        OS << ItinString << " // " << ItinEnum << "\n";
+        // Emit as { cycles, u1 | u2 | ... | un }, // index
+        OS << ItinString << ", // " << ItinEnum << "\n";
+        // Record Itin class number
         ItinMap[ItinString] = Find = ItinEnum++;
       }
       
@@ -316,6 +317,8 @@ void SubtargetEmitter::EmitStageData(std::ostream &OS,
     ProcList.push_back(ItinList);
   }
   
+  // Closing stage
+  OS << "  { 0, 0 } // End itinerary\n";
   // End stages table
   OS << "};\n";
   
@@ -390,7 +393,7 @@ void SubtargetEmitter::EmitProcessorLookup(std::ostream &OS) {
   // Begin processor table
   OS << "\n";
   OS << "// Sorted (by key) array of itineraries for CPU subtype.\n"
-     << "static const llvm::SubtargetInfoKV SubTypeInfoKV[] = {\n";
+     << "static const llvm::SubtargetInfoKV ProcItinKV[] = {\n";
      
   // For each processor
   for (unsigned i = 0, N = ProcessorList.size(); i < N;) {
@@ -418,7 +421,7 @@ void SubtargetEmitter::EmitProcessorLookup(std::ostream &OS) {
 
   // Emit size of table
   OS<<"\nenum {\n";
-  OS<<"  SubTypeInfoKVSize = sizeof(SubTypeInfoKV)/"
+  OS<<"  ProcItinKVSize = sizeof(ProcItinKV)/"
                             "sizeof(llvm::SubtargetInfoKV)\n";
   OS<<"};\n";
 }
@@ -479,9 +482,8 @@ void SubtargetEmitter::ParseFeaturesFunction(std::ostream &OS) {
   if (HasItineraries) {
     OS << "\n"
        << "  InstrItinerary *Itinerary = (InstrItinerary *)"
-                        "Features.getInfo(SubTypeInfoKV, SubTypeInfoKVSize);\n"
-          "  InstrItins = InstrItineraryData(Stages, StagesSize, "
-                                             "Itinerary, ItinClassesSize);\n";
+                        "Features.getInfo(ProcItinKV, ProcItinKVSize);\n"
+          "  InstrItins = InstrItineraryData(Stages, Itinerary);\n";
   }
   
   OS << "}\n";

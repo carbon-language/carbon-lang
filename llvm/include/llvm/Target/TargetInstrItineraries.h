@@ -16,7 +16,6 @@
 #ifndef LLVM_TARGET_TARGETINSTRITINERARIES_H
 #define LLVM_TARGET_TARGETINSTRITINERARIES_H
 
-#include "llvm/Support/Debug.h"
 #include <cassert>
 
 namespace llvm {
@@ -49,36 +48,26 @@ struct InstrItinerary {
 // Instruction itinerary Data - Itinerary data supplied by a subtarget to be
 // used by a target.
 //
-class InstrItineraryData {
+struct InstrItineraryData {
   InstrStage     *Stages;         // Array of stages selected
-  unsigned        NStages;        // Number of stages
   InstrItinerary *Itineratries;   // Array of itineraries selected
-  unsigned        NItineraries;   // Number of itineraries (actually classes)
 
-public:
-
-  //
-  // Ctors.
-  //
-  InstrItineraryData()
-  : Stages(NULL), NStages(0), Itineratries(NULL), NItineraries(0)
-  {}
-  InstrItineraryData(InstrStage *S, unsigned NS, InstrItinerary *I, unsigned NI)
-  : Stages(S), NStages(NS), Itineratries(I), NItineraries(NI)
-  {}
+//
+// Ctors.
+//
+  InstrItineraryData() : Stages(NULL), Itineratries(NULL) {}
+  InstrItineraryData(InstrStage *S, InstrItinerary *I) : Stages(S), Itineratries(I) {}
   
   //
   // isEmpty - Returns true if there are no itineraries.
   //
-  inline bool isEmpty() const { return NItineraries == 0; }
+  inline bool isEmpty() const { return Itineratries == NULL; }
   
   //
   // begin - Return the first stage of the itinerary.
   // 
   inline InstrStage *begin(unsigned ItinClassIndx) const {
-    assert(ItinClassIndx < NItineraries && "Itinerary index out of range");
     unsigned StageIdx = Itineratries[ItinClassIndx].First;
-    assert(StageIdx < NStages && "Stage index out of range");
     return Stages + StageIdx;
   }
 
@@ -86,9 +75,7 @@ public:
   // end - Return the last+1 stage of the itinerary.
   // 
   inline InstrStage *end(unsigned ItinClassIndx) const {
-    assert(ItinClassIndx < NItineraries && "Itinerary index out of range");
     unsigned StageIdx = Itineratries[ItinClassIndx].Last;
-    assert(StageIdx < NStages && "Stage index out of range");
     return Stages + StageIdx;
   }
 };
