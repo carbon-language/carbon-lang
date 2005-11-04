@@ -105,6 +105,10 @@ def ADDS : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, s14imm:$imm),
            "adds $dst = $imm, $src1;;",
 	   [(set GR:$dst, (add GR:$src1, immSExt14:$imm))]>;
  
+def PADDS: AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, s14imm:$imm, PR:$qp),
+           "($qp) adds $dst = $imm, $src1;;",
+	   []>;
+
 def MOVL : AForm_DAG<0x03, 0x0b, (ops GR:$dst, s64imm:$imm),
            "movl $dst = $imm;;",
 	   [(set GR:$dst, imm64:$imm)]>;
@@ -225,47 +229,6 @@ def OR    : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
 def pOR   : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2, PR:$qp),
           "($qp) or $dst = $src1, $src2;;">;
 
-def PCMPEQUNCR0R0 : AForm<0x03, 0x0b, (ops PR:$dst, PR:$qp),
-    "($qp) cmp.eq.unc $dst, p0 = r0, r0;;">;
-
-let isTwoAddress=1 in
-def TPCMPEQR0R0 : AForm<0x03, 0x0b, (ops PR:$dst, PR:$bogus, PR:$qp),
-  "($qp) cmp.eq $dst, p0 = r0, r0;;">;
-  
-/* our pseudocode for OR on predicates is:
-pC = pA OR pB
--------------
-(pA) cmp.eq.unc pC,p0 = r0,r0  // pC = pA
- ;;
-(pB) cmp.eq pC,p0 = r0,r0 // if (pB) pC = 1 */
-
-def bOR   : Pat<(or PR:$src1, PR:$src2),
-          (TPCMPEQR0R0 (PCMPEQUNCR0R0 PR:$src1), PR:$src2)>;
-
-// FIXME: these are bogus
-def bXOR  : Pat<(xor PR:$src1, PR:$src2),
-          (PCMPEQUNCR0R0 PR:$src1)>;
-
-def XOR   : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
-          "xor $dst = $src1, $src2;;",
-	  [(set GR:$dst, (xor GR:$src1, GR:$src2))]>;
-
-def SHLADD: AForm_DAG<0x03, 0x0b, (ops GR:$dst,GR:$src1,s64imm:$imm,GR:$src2),
-          "shladd $dst = $src1, $imm, $src2;;",
-          [(set GR:$dst, (add GR:$src2, (shl GR:$src1, isSHLADDimm:$imm)))]>;
-
-def SHL   : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
-          "shl $dst = $src1, $src2;;",
-	  [(set GR:$dst, (shl GR:$src1, GR:$src2))]>;
-
-def SHRU  : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
-          "shr.u $dst = $src1, $src2;;",
-	  [(set GR:$dst, (srl GR:$src1, GR:$src2))]>;
-
-def SHRS  : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
-          "shr $dst = $src1, $src2;;",
-	  [(set GR:$dst, (sra GR:$src1, GR:$src2))]>;
-
 // the following are all a bit unfortunate: we throw away the complement
 // of the compare!
 def CMPEQ : AForm_DAG<0x03, 0x0b, (ops PR:$dst, GR:$src1, GR:$src2),
@@ -330,6 +293,99 @@ def FCMPLEU: AForm_DAG<0x03, 0x0b, (ops PR:$dst, FP:$src1, FP:$src2),
 def FCMPGEU: AForm_DAG<0x03, 0x0b, (ops PR:$dst, FP:$src1, FP:$src2),
           "fcmp.geu $dst, p0 = $src1, $src2;;",
 	  [(set PR:$dst, (setuge FP:$src1, FP:$src2))]>;
+
+def PCMPEQUNCR0R0 : AForm<0x03, 0x0b, (ops PR:$dst, PR:$qp),
+    "($qp) cmp.eq.unc $dst, p0 = r0, r0;;">;
+
+def : Pat<(trunc GR:$src),  // truncate i64 to i1
+          (CMPNE GR:$src, r0)>; // $src!=0? If so, PR:$dst=true
+	  
+let isTwoAddress=1 in {
+  def TPCMPEQR0R0 : AForm<0x03, 0x0b, (ops PR:$dst, PR:$bogus, PR:$qp),
+    "($qp) cmp.eq $dst, p0 = r0, r0;;">;
+  def TPCMPNER0R0 : AForm<0x03, 0x0b, (ops PR:$dst, PR:$bogus, PR:$qp),
+    "($qp) cmp.ne $dst, p0 = r0, r0;;">;
+}
+
+/* our pseudocode for OR on predicates is:
+pC = pA OR pB
+-------------
+(pA) cmp.eq.unc pC,p0 = r0,r0  // pC = pA
+ ;;
+(pB) cmp.eq pC,p0 = r0,r0 // if (pB) pC = 1 */
+
+def bOR   : Pat<(or PR:$src1, PR:$src2),
+          (TPCMPEQR0R0 (PCMPEQUNCR0R0 PR:$src1), PR:$src2)>;
+
+/* our pseudocode for AND on predicates is:
+ *
+(pA) cmp.eq.unc pC,p0 = r0,r0   // pC = pA
+     cmp.eq pTemp,p0 = r0,r0    // pTemp = NOT pB
+     ;;
+(pB) cmp.ne pTemp,p0 = r0,r0
+     ;;
+(pTemp)cmp.ne pC,p0 = r0,r0    // if (NOT pB) pC = 0  */
+
+def bAND  : Pat<(and PR:$src1, PR:$src2),
+          ( TPCMPNER0R0 (PCMPEQUNCR0R0 PR:$src1),
+	    (TPCMPNER0R0 (CMPEQ r0, r0), PR:$src2) )>;
+
+/* one possible routine for XOR on predicates is:
+
+      // Compute px = py ^ pz
+        // using sum of products: px = (py & !pz) | (pz & !py)
+        // Uses 5 instructions in 3 cycles.
+        // cycle 1
+(pz)    cmp.eq.unc      px = r0, r0     // px = pz
+(py)    cmp.eq.unc      pt = r0, r0     // pt = py
+        ;;
+        // cycle 2
+(pt)    cmp.ne.and      px = r0, r0     // px = px & !pt (px = pz & !pt)
+(pz)    cmp.ne.and      pt = r0, r0     // pt = pt & !pz
+        ;;
+        } { .mmi
+        // cycle 3
+(pt)    cmp.eq.or       px = r0, r0     // px = px | pt
+
+*** Another, which we use here, requires one scratch GR. it is:
+
+        mov             rt = 0          // initialize rt off critical path
+        ;;
+
+        // cycle 1
+(pz)    cmp.eq.unc      px = r0, r0     // px = pz
+(pz)    mov             rt = 1          // rt = pz
+        ;;
+        // cycle 2
+(py)    cmp.ne          px = 1, rt      // if (py) px = !pz
+
+.. these routines kindly provided by Jim Hull
+*/
+  
+def bXOR  : Pat<(xor PR:$src1, PR:$src2),
+          (TPCMPIMM8NE (PCMPEQUNCR0R0 PR:$src2), 1,
+	               (PADDS r0, 1, PR:$src2),
+                        PR:$src1)>;
+
+def XOR   : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
+          "xor $dst = $src1, $src2;;",
+	  [(set GR:$dst, (xor GR:$src1, GR:$src2))]>;
+
+def SHLADD: AForm_DAG<0x03, 0x0b, (ops GR:$dst,GR:$src1,s64imm:$imm,GR:$src2),
+          "shladd $dst = $src1, $imm, $src2;;",
+          [(set GR:$dst, (add GR:$src2, (shl GR:$src1, isSHLADDimm:$imm)))]>;
+
+def SHL   : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
+          "shl $dst = $src1, $src2;;",
+	  [(set GR:$dst, (shl GR:$src1, GR:$src2))]>;
+
+def SHRU  : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
+          "shr.u $dst = $src1, $src2;;",
+	  [(set GR:$dst, (srl GR:$src1, GR:$src2))]>;
+
+def SHRS  : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
+          "shr $dst = $src1, $src2;;",
+	  [(set GR:$dst, (sra GR:$src1, GR:$src2))]>;
 
 def MOV : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src), "mov $dst = $src;;">;
 def PMOV : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src, PR:$qp),
