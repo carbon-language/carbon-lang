@@ -185,23 +185,40 @@ SDOperand IA64DAGToDAGISel::SelectCALL(SDOperand Op) {
   } else {
     // otherwise we need to load the function descriptor,
     // load the branch target (function)'s entry point and GP,
-    //  branch (call) then restore the
-    // GP
+    // branch (call) then restore the GP
     
     SDOperand FnDescriptor = Select(N->getOperand(1));
    
     // load the branch target's entry point [mem] and 
     // GP value [mem+8]
+    SDOperand targetEntryPoint=CurDAG->getTargetNode(IA64::LD8, MVT::i64,
+		    FnDescriptor);
+    Chain = targetEntryPoint.getValue(1);
+    SDOperand targetGPAddr=CurDAG->getTargetNode(IA64::ADDS, MVT::i64, 
+		    FnDescriptor, CurDAG->getConstant(8, MVT::i64));
+    Chain = targetGPAddr.getValue(1);
+    SDOperand targetGP=CurDAG->getTargetNode(IA64::LD8, MVT::i64,
+		    targetGPAddr);
+    Chain = targetGP.getValue(1);
+
+/* FIXME! (methcall still fails)
     SDOperand targetEntryPoint=CurDAG->getLoad(MVT::i64, Chain, FnDescriptor,
 	                                CurDAG->getSrcValue(0));
     SDOperand targetGPAddr=CurDAG->getNode(ISD::ADD, MVT::i64, FnDescriptor, 
 	                    CurDAG->getConstant(8, MVT::i64));
     SDOperand targetGP=CurDAG->getLoad(MVT::i64, Chain, targetGPAddr,
-	                                CurDAG->getSrcValue(0));
+	                               CurDAG->getSrcValue(0));
+    */
+ 
+    // Copy the callee GP into r1
+    SDOperand r1 = CurDAG->getRegister(IA64::r1, MVT::i64);
+    Chain = CurDAG->getNode(ISD::CopyToReg, MVT::i64, Chain, r1,
+	             targetGP);
     
+
     // Copy the callee address into the b6 branch register
     SDOperand B6 = CurDAG->getRegister(IA64::B6, MVT::i64);
-    Chain = CurDAG->getNode(ISD::CopyToReg, MVT::Other, Chain, B6,
+    Chain = CurDAG->getNode(ISD::CopyToReg, MVT::i64, Chain, B6,
 	             targetEntryPoint);
     
     CallOperands.push_back(B6);
