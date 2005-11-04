@@ -16,8 +16,6 @@
 #ifndef LLVM_TARGET_TARGETINSTRITINERARIES_H
 #define LLVM_TARGET_TARGETINSTRITINERARIES_H
 
-#include <cassert>
-
 namespace llvm {
 
 //===----------------------------------------------------------------------===//
