@@ -369,7 +369,13 @@ SDOperand IA64DAGToDAGISel::Select(SDOperand Op) {
     unsigned Opc;
     switch (TypeBeingLoaded) {
     default: N->dump(); assert(0 && "Cannot load this type!");
-    // FIXME: bools? case MVT::i1:
+    case MVT::i1: { // this is a bool
+      Opc = IA64::LD1; // first we load a byte, then compare for != 0
+      CurDAG->SelectNodeTo(N, IA64::CMPNE, MVT::i1, MVT::Other, 
+	CurDAG->getTargetNode(Opc, MVT::i64, Address),
+	CurDAG->getRegister(IA64::r0, MVT::i64), Chain);
+      return SDOperand(N, Op.ResNo); // XXX: early exit
+      }
     case MVT::i8:  Opc = IA64::LD1; break;
     case MVT::i16: Opc = IA64::LD2; break;
     case MVT::i32: Opc = IA64::LD4; break;
