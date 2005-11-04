@@ -55,13 +55,13 @@ struct InstrItineraryData {
 //
 // Ctors.
 //
-  InstrItineraryData() : Stages(NULL), Itineratries(NULL) {}
+  InstrItineraryData() : Stages(0), Itineratries(0) {}
   InstrItineraryData(InstrStage *S, InstrItinerary *I) : Stages(S), Itineratries(I) {}
   
   //
   // isEmpty - Returns true if there are no itineraries.
   //
-  inline bool isEmpty() const { return Itineratries == NULL; }
+  inline bool isEmpty() const { return Itineratries == 0; }
   
   //
   // begin - Return the first stage of the itinerary.
