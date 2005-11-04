@@ -132,6 +132,7 @@ private:
     }
     
     // No luck
+    Resource = 0;
     return Better;
   }
   
