@@ -68,6 +68,10 @@ public:
   /// by the instruction.
   ///
   unsigned getAlignment() const { return Alignment; }
+  void setAlignment(unsigned Align) {
+    assert((Align & (Align-1)) == 0 && "Alignment is not a power of 2!");
+    Alignment = Align;
+  }
   
   virtual Instruction *clone() const = 0;
 
