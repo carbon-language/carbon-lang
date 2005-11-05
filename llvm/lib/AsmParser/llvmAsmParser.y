@@ -2209,6 +2209,9 @@ MemoryInst : MALLOC Types {
     delete $2;
   }
   | MALLOC Types ',' ALIGN EUINT64VAL {
+    if ($5 & ($5-1))
+      ThrowException("Alignment amount '" + utostr($5) +
+                     "' is not a power of 2!");
     $$ = new MallocInst(*$2, 0, $5);
     delete $2;
   }
@@ -2217,6 +2220,9 @@ MemoryInst : MALLOC Types {
     delete $2;
   }
   | MALLOC Types ',' UINT ValueRef ',' ALIGN EUINT64VAL {
+    if ($8 & ($8-1))
+      ThrowException("Alignment amount '" + utostr($8) +
+                     "' is not a power of 2!");
     $$ = new MallocInst(*$2, getVal($4, $5), $8);
     delete $2;
   }
@@ -2225,6 +2231,9 @@ MemoryInst : MALLOC Types {
     delete $2;
   }
   | ALLOCA Types ',' ALIGN EUINT64VAL {
+    if ($5 & ($5-1))
+      ThrowException("Alignment amount '" + utostr($5) +
+                     "' is not a power of 2!");
     $$ = new AllocaInst(*$2, 0, $5);
     delete $2;
   }
@@ -2233,6 +2242,9 @@ MemoryInst : MALLOC Types {
     delete $2;
   }
   | ALLOCA Types ',' UINT ValueRef ',' ALIGN EUINT64VAL {
+    if ($8 & ($8-1))
+      ThrowException("Alignment amount '" + utostr($8) +
+                     "' is not a power of 2!");
     $$ = new AllocaInst(*$2, getVal($4, $5), $8);
     delete $2;
   }
