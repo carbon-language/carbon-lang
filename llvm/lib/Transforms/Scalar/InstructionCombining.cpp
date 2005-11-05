@@ -1240,6 +1240,25 @@ Instruction *InstCombiner::visitDiv(BinaryOperator &I) {
     if (LHS->equalsInt(0))
       return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
 
+  if (I.getType()->isSigned()) {
+    // If the top bits of both operands are zero (i.e. we can prove they are
+    // unsigned inputs), turn this into a udiv.
+    ConstantIntegral *MaskV = ConstantSInt::getMinValue(I.getType());
+    if (MaskedValueIsZero(Op1, MaskV) && MaskedValueIsZero(Op0, MaskV)) {
+      const Type *NTy = Op0->getType()->getUnsignedVersion();
+      Instruction *LHS = new CastInst(Op0, NTy, Op0->getName());
+      InsertNewInstBefore(LHS, I);
+      Value *RHS;
+      if (Constant *R = dyn_cast<Constant>(Op1))
+        RHS = ConstantExpr::getCast(R, NTy);
+      else
+        RHS = InsertNewInstBefore(new CastInst(Op1, NTy, Op1->getName()), I);
+      Instruction *Div = BinaryOperator::createDiv(LHS, RHS, I.getName());
+      InsertNewInstBefore(Div, I);
+      return new CastInst(Div, I.getType());
+    }      
+  }
+  
   return 0;
 }
 
