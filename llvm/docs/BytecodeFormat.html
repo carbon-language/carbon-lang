@@ -1371,8 +1371,8 @@ of formats. See <a href="#instruction">Instructions</a> for details.</td>
 <p>Instructions are written out one at a time as distinct units.  Each
 instruction
 record contains at least an <a href="#opcodes">opcode</a> and a type field, 
-and may contain a list of operands (whose interpretation depends on the opcode).
-Based on the number of operands, the
+and may contain a <a href="#instoperands">list of operands</a> (whose
+interpretation depends on the opcode). Based on the number of operands, the
 <a href="#instencode">instruction is encoded</a> in a
 dense format that tries to encoded each instruction into 32-bits if 
 possible. </p>
@@ -1477,6 +1477,36 @@ opcode (Invoke, Call, Store) plus some set of modifiers, as follows:</p>
 </dl>
 </div>
 
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection"><a name="instoperands">Instruction
+Operands</a></div>
+
+<div class="doc_text">
+<p>
+Based on the instruction opcode and type, the bytecode format implicitly (to 
+save space) specifies the interpretation of the operand list.  For most
+instructions, the type of each operand is implicit from the type of the 
+instruction itself (e.g. the type of operands of a binary operator must match
+the type of the instruction).  As such, the bytecode format generally only 
+encodes the value number of the operand, not the type.</p>
+
+<p>In some cases, however, this is not sufficient.  This section enumerates
+those cases:</p>
+
+<ul>
+<li>getelementptr: the slot numbers for sequential type indexes are shifted up
+two bits.  This allows the low order bits will encode the type of index used,
+as follows: 0=uint, 1=int, 2=ulong, 3=long.</li>
+<li>cast: the result type number is encoded as the second operand.</li>
+<li>alloca/malloc: If the allocation has an explicit alignment, the log2 of the
+    alignment is encoded as the second operand.</li>
+<li>call: If the tail marker and calling convention cannot be <a 
+    href="#pi_note">encoded into the opcode</a> of the call, it is passed as an
+    additional operand.  The low bit of the operand is a flag indicating whether
+    the call is a tail call.  The rest of the bits contain the calling 
+    convention number (shifted left by one bit).</li>
+</ul>
+</div>
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection"><a name="instencode">Instruction 
@@ -1518,17 +1548,11 @@ format.</td>
     <tr>
       <td><a href="#uint32_vbr">uint32_vbr</a>+</td>
       <td class="td_left">The slot number of the value(s) for the operand(s).
-        <sup>1</sup></td>
+      </td>
     </tr>
   </tbody>
 </table>
-Notes:
-<ol>
-  <li>Note that if the instruction is a getelementptr and the type of
-the operand is a sequential type (array or pointer) then the slot
-number is shifted up two bits and the low order bits will encode the
-type of index used, as follows: 0=uint, 1=int, 2=ulong, 3=long.</li>
-</ol>
+
 <p><b>Instruction Format 1</b></p>
 <p>This format encodes the opcode, type and a single operand into a
 single <a href="#uint32_vbr">uint32_vbr</a> as follows:</p>
