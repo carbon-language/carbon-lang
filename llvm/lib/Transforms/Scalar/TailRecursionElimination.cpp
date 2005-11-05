@@ -342,6 +342,7 @@ bool TailCallElim::ProcessReturningBlock(ReturnInst *Ret, BasicBlock *&OldEntry,
   // constant, return the value returned by the tail call, or that are being
   // accumulator recursion variable eliminated.
   if (Ret->getNumOperands() != 0 && Ret->getReturnValue() != CI &&
+      !isa<UndefValue>(Ret->getReturnValue()) &&
       AccumulatorRecursionEliminationInitVal == 0 &&
       !getCommonReturnValue(Ret, CI))
     return false;
