@@ -1172,6 +1172,9 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
       Out << ',';
       writeOperand(AI->getArraySize(), true);
     }
+    if (AI->getAlignment()) {
+      Out << ", " << AI->getAlignment();
+    }
   } else if (isa<CastInst>(I)) {
     if (Operand) writeOperand(Operand, true);   // Work with broken code
     Out << " to ";

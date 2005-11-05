@@ -678,7 +678,7 @@ static GlobalVariable *OptimizeGlobalAddressOfMalloc(GlobalVariable *GV,
                                  (unsigned)NElements->getRawValue());
     MallocInst *NewMI =
       new MallocInst(NewTy, Constant::getNullValue(Type::UIntTy),
-                     MI->getName(), MI);
+                     MI->getAlignment(), MI->getName(), MI);
     std::vector<Value*> Indices;
     Indices.push_back(Constant::getNullValue(Type::IntTy));
     Indices.push_back(Indices[0]);
@@ -950,6 +950,7 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
       DEBUG(std::cerr << "LOCALIZING GLOBAL: " << *GV);
       Instruction* FirstI = GS.AccessingFunction->getEntryBlock().begin();
       const Type* ElemTy = GV->getType()->getElementType();
+      // FIXME: Pass Global's alignment when globals have alignment
       AllocaInst* Alloca = new AllocaInst(ElemTy, NULL, GV->getName(), FirstI);
       if (!isa<UndefValue>(GV->getInitializer()))
         new StoreInst(GV->getInitializer(), Alloca, FirstI);

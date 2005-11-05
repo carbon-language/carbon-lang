@@ -3936,9 +3936,9 @@ Instruction *InstCombiner::PromoteCastOfAllocation(CastInst &CI,
   std::string Name = AI.getName(); AI.setName("");
   AllocationInst *New;
   if (isa<MallocInst>(AI))
-    New = new MallocInst(CastElTy, Amt, Name);
+    New = new MallocInst(CastElTy, Amt, AI.getAlignment(), Name);
   else
-    New = new AllocaInst(CastElTy, Amt, Name);
+    New = new AllocaInst(CastElTy, Amt, AI.getAlignment(), Name);
   InsertNewInstBefore(New, AI);
   
   // If the allocation has multiple uses, insert a cast and change all things
@@ -5266,10 +5266,10 @@ Instruction *InstCombiner::visitAllocationInst(AllocationInst &AI) {
 
       // Create and insert the replacement instruction...
       if (isa<MallocInst>(AI))
-        New = new MallocInst(NewTy, 0, AI.getName());
+        New = new MallocInst(NewTy, 0, AI.getAlignment(), AI.getName());
       else {
         assert(isa<AllocaInst>(AI) && "Unknown type of allocation inst!");
-        New = new AllocaInst(NewTy, 0, AI.getName());
+        New = new AllocaInst(NewTy, 0, AI.getAlignment(), AI.getName());
       }
 
       InsertNewInstBefore(New, AI);

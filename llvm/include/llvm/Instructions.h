@@ -33,10 +33,11 @@ class PointerType;
 /// AllocaInst.
 ///
 class AllocationInst : public UnaryInstruction {
+  unsigned Alignment;
 protected:
-  AllocationInst(const Type *Ty, Value *ArraySize, unsigned iTy,
+  AllocationInst(const Type *Ty, Value *ArraySize, unsigned iTy, unsigned Align,
                  const std::string &Name = "", Instruction *InsertBefore = 0);
-  AllocationInst(const Type *Ty, Value *ArraySize, unsigned iTy,
+  AllocationInst(const Type *Ty, Value *ArraySize, unsigned iTy, unsigned Align,
                  const std::string &Name, BasicBlock *InsertAtEnd);
 
 public:
@@ -63,6 +64,11 @@ public:
   ///
   const Type *getAllocatedType() const;
 
+  /// getAlignment - Return the alignment of the memory that is being allocated
+  /// by the instruction.
+  ///
+  unsigned getAlignment() const { return Alignment; }
+  
   virtual Instruction *clone() const = 0;
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
@@ -89,11 +95,18 @@ public:
   explicit MallocInst(const Type *Ty, Value *ArraySize = 0,
                       const std::string &Name = "",
                       Instruction *InsertBefore = 0)
-    : AllocationInst(Ty, ArraySize, Malloc, Name, InsertBefore) {}
+    : AllocationInst(Ty, ArraySize, Malloc, 0, Name, InsertBefore) {}
   MallocInst(const Type *Ty, Value *ArraySize, const std::string &Name,
              BasicBlock *InsertAtEnd)
-    : AllocationInst(Ty, ArraySize, Malloc, Name, InsertAtEnd) {}
-
+    : AllocationInst(Ty, ArraySize, Malloc, 0, Name, InsertAtEnd) {}
+  MallocInst(const Type *Ty, Value *ArraySize, unsigned Align, 
+             const std::string &Name, BasicBlock *InsertAtEnd)
+  : AllocationInst(Ty, ArraySize, Malloc, Align, Name, InsertAtEnd) {}
+  explicit MallocInst(const Type *Ty, Value *ArraySize, unsigned Align,
+                      const std::string &Name = "",
+                      Instruction *InsertBefore = 0)
+  : AllocationInst(Ty, ArraySize, Malloc, Align, Name, InsertBefore) {}
+  
   virtual MallocInst *clone() const;
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:
@@ -119,11 +132,18 @@ public:
   explicit AllocaInst(const Type *Ty, Value *ArraySize = 0,
                       const std::string &Name = "",
                       Instruction *InsertBefore = 0)
-    : AllocationInst(Ty, ArraySize, Alloca, Name, InsertBefore) {}
+    : AllocationInst(Ty, ArraySize, Alloca, 0, Name, InsertBefore) {}
   AllocaInst(const Type *Ty, Value *ArraySize, const std::string &Name,
              BasicBlock *InsertAtEnd)
-    : AllocationInst(Ty, ArraySize, Alloca, Name, InsertAtEnd) {}
-
+    : AllocationInst(Ty, ArraySize, Alloca, 0, Name, InsertAtEnd) {}
+  AllocaInst(const Type *Ty, Value *ArraySize, unsigned Align,
+             const std::string &Name, BasicBlock *InsertAtEnd)
+  : AllocationInst(Ty, ArraySize, Alloca, Align, Name, InsertAtEnd) {}
+  explicit AllocaInst(const Type *Ty, Value *ArraySize, unsigned Align,
+                      const std::string &Name = "",
+                      Instruction *InsertBefore = 0)
+  : AllocationInst(Ty, ArraySize, Alloca, Align, Name, InsertBefore) {}
+  
   virtual AllocaInst *clone() const;
 
   // Methods for support type inquiry through isa, cast, and dyn_cast:

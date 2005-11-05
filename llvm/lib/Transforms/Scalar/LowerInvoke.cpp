@@ -67,6 +67,8 @@ namespace {
     GlobalVariable *JBListHead;
     Function *SetJmpFn, *LongJmpFn;
   public:
+    LowerInvoke(unsigned Size = 200, unsigned Align = 0) : JumpBufSize(Size),
+      JumpBufAlign(Align) {}
     bool doInitialization(Module &M);
     bool runOnFunction(Function &F);
     
@@ -78,6 +80,9 @@ namespace {
     void rewriteExpensiveInvoke(InvokeInst *II, unsigned InvokeNo,
                                 AllocaInst *InvokeNum, SwitchInst *CatchSwitch);
     bool insertExpensiveEHSupport(Function &F);
+    
+    unsigned JumpBufSize;
+    unsigned JumpBufAlign;
   };
 
   RegisterOpt<LowerInvoke>
@@ -87,7 +92,10 @@ namespace {
 const PassInfo *llvm::LowerInvokePassID = X.getPassInfo();
 
 // Public Interface To the LowerInvoke pass.
-FunctionPass *llvm::createLowerInvokePass() { return new LowerInvoke(); }
+FunctionPass *llvm::createLowerInvokePass(unsigned JumpBufSize, 
+                                          unsigned JumpBufAlign) { 
+  return new LowerInvoke(JumpBufSize, JumpBufAlign); 
+}
 
 // doInitialization - Make sure that there is a prototype for abort in the
 // current module.
@@ -95,13 +103,8 @@ bool LowerInvoke::doInitialization(Module &M) {
   const Type *VoidPtrTy = PointerType::get(Type::SByteTy);
   AbortMessage = 0;
   if (ExpensiveEHSupport) {
-    // Insert a type for the linked list of jump buffers.  Unfortunately, we
-    // don't know the size of the target's setjmp buffer, so we make a guess.
-    // If this guess turns out to be too small, bad stuff could happen.
-    unsigned JmpBufSize = 200;  // PPC has 192 words
-    assert(sizeof(jmp_buf) <= JmpBufSize*sizeof(void*) &&
-       "LowerInvoke doesn't know about targets with jmp_buf size > 200 words!");
-    const Type *JmpBufTy = ArrayType::get(VoidPtrTy, JmpBufSize);
+    // Insert a type for the linked list of jump buffers.
+    const Type *JmpBufTy = ArrayType::get(VoidPtrTy, JumpBufSize);
 
     { // The type is recursive, so use a type holder.
       std::vector<const Type*> Elements;
@@ -441,7 +444,7 @@ bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
     // that needs to be restored on all exits from the function.  This is an
     // alloca because the value needs to be live across invokes.
     AllocaInst *JmpBuf = 
-      new AllocaInst(JBLinkTy, 0, "jblink", F.begin()->begin());
+      new AllocaInst(JBLinkTy, 0, JumpBufAlign, "jblink", F.begin()->begin());
     
     std::vector<Value*> Idx;
     Idx.push_back(Constant::getNullValue(Type::IntTy));

@@ -231,6 +231,7 @@ double          { llvmAsmlval.PrimType = Type::DoubleTy; return DOUBLE; }
 label           { llvmAsmlval.PrimType = Type::LabelTy ; return LABEL;  }
 type            { return TYPE;   }
 opaque          { return OPAQUE; }
+align           { return ALIGN;  }
 
 add             { RET_TOK(BinaryOpVal, Add, ADD); }
 sub             { RET_TOK(BinaryOpVal, Sub, SUB); }

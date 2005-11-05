@@ -953,7 +953,7 @@ Module *llvm::RunVMAsmParser(const char * AsmString, Module * M) {
 %token IMPLEMENTATION ZEROINITIALIZER TRUETOK FALSETOK BEGINTOK ENDTOK
 %token DECLARE GLOBAL CONSTANT VOLATILE
 %token TO DOTDOTDOT NULL_TOK UNDEF CONST INTERNAL LINKONCE WEAK  APPENDING
-%token OPAQUE NOT EXTERNAL TARGET TRIPLE ENDIAN POINTERSIZE LITTLE BIG
+%token OPAQUE NOT EXTERNAL TARGET TRIPLE ENDIAN POINTERSIZE LITTLE BIG ALIGN
 %token DEPLIBS CALL TAIL
 %token CC_TOK CCC_TOK FASTCC_TOK COLDCC_TOK
 %type <UIntVal> OptCallingConv
@@ -2208,16 +2208,32 @@ MemoryInst : MALLOC Types {
     $$ = new MallocInst(*$2);
     delete $2;
   }
+  | MALLOC Types ',' ALIGN EUINT64VAL {
+    $$ = new MallocInst(*$2, 0, $5);
+    delete $2;
+  }
   | MALLOC Types ',' UINT ValueRef {
     $$ = new MallocInst(*$2, getVal($4, $5));
+    delete $2;
+  }
+  | MALLOC Types ',' UINT ValueRef ',' ALIGN EUINT64VAL {
+    $$ = new MallocInst(*$2, getVal($4, $5), $8);
     delete $2;
   }
   | ALLOCA Types {
     $$ = new AllocaInst(*$2);
     delete $2;
   }
+  | ALLOCA Types ',' ALIGN EUINT64VAL {
+    $$ = new AllocaInst(*$2, 0, $5);
+    delete $2;
+  }
   | ALLOCA Types ',' UINT ValueRef {
     $$ = new AllocaInst(*$2, getVal($4, $5));
+    delete $2;
+  }
+  | ALLOCA Types ',' UINT ValueRef ',' ALIGN EUINT64VAL {
+    $$ = new AllocaInst(*$2, getVal($4, $5), $8);
     delete $2;
   }
   | FREE ResolvedVal {
