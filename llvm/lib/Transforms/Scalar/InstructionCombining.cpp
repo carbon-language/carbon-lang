@@ -1246,7 +1246,7 @@ Instruction *InstCombiner::visitDiv(BinaryOperator &I) {
 
 Instruction *InstCombiner::visitRem(BinaryOperator &I) {
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
-  if (I.getType()->isSigned())
+  if (I.getType()->isSigned()) {
     if (Value *RHSNeg = dyn_castNegVal(Op1))
       if (!isa<ConstantSInt>(RHSNeg) ||
           cast<ConstantSInt>(RHSNeg)->getValue() > 0) {
@@ -1255,6 +1255,24 @@ Instruction *InstCombiner::visitRem(BinaryOperator &I) {
         I.setOperand(1, RHSNeg);
         return &I;
       }
+   
+    // If the top bits of both operands are zero (i.e. we can prove they are
+    // unsigned inputs), turn this into a urem.
+    ConstantIntegral *MaskV = ConstantSInt::getMinValue(I.getType());
+    if (MaskedValueIsZero(Op1, MaskV) && MaskedValueIsZero(Op0, MaskV)) {
+      const Type *NTy = Op0->getType()->getUnsignedVersion();
+      Instruction *LHS = new CastInst(Op0, NTy, Op0->getName());
+      InsertNewInstBefore(LHS, I);
+      Value *RHS;
+      if (Constant *R = dyn_cast<Constant>(Op1))
+        RHS = ConstantExpr::getCast(R, NTy);
+      else
+        RHS = InsertNewInstBefore(new CastInst(Op1, NTy, Op1->getName()), I);
+      Instruction *Rem = BinaryOperator::createRem(LHS, RHS, I.getName());
+      InsertNewInstBefore(Rem, I);
+      return new CastInst(Rem, I.getType());
+    }
+  }
 
   if (isa<UndefValue>(Op0))              // undef % X -> 0
     return ReplaceInstUsesWith(I, Constant::getNullValue(I.getType()));
