@@ -693,6 +693,13 @@ void BytecodeWriter::outputInstruction(const Instruction &I) {
       assert(Slots[1] != ~0U && "Cast return type unknown?");
       if (Slots[1] > MaxOpSlot) MaxOpSlot = Slots[1];
       NumOperands++;
+    } else if (const AllocationInst *AI = dyn_cast<AllocationInst>(&I)) {
+      assert(NumOperands == 1 && "Bogus allocation!");
+      if (AI->getAlignment()) {
+        Slots[1] = Log2_32(AI->getAlignment())+1;
+        if (Slots[1] > MaxOpSlot) MaxOpSlot = Slots[1];
+        NumOperands = 2;
+      }
     } else if (const GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(&I)) {
       // We need to encode the type of sequential type indices into their slot #
       unsigned Idx = 1;

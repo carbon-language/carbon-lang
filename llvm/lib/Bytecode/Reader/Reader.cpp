@@ -902,27 +902,33 @@ void BytecodeReader::ParseInstruction(std::vector<unsigned> &Oprnds,
     if (CallingConv) cast<InvokeInst>(Result)->setCallingConv(CallingConv);
     break;
   }
-  case Instruction::Malloc:
-    if (Oprnds.size() > 2)
+  case Instruction::Malloc: {
+    unsigned Align = 0;
+    if (Oprnds.size() == 2)
+      Align = (1 << Oprnds[1]) >> 1;
+    else if (Oprnds.size() > 2)
       error("Invalid malloc instruction!");
     if (!isa<PointerType>(InstTy))
       error("Invalid malloc instruction!");
 
     Result = new MallocInst(cast<PointerType>(InstTy)->getElementType(),
-                            Oprnds.size() ? getValue(Type::UIntTyID,
-                                                   Oprnds[0]) : 0);
+                            getValue(Type::UIntTyID, Oprnds[0]), Align);
     break;
+  }
 
-  case Instruction::Alloca:
-    if (Oprnds.size() > 2)
+  case Instruction::Alloca: {
+    unsigned Align = 0;
+    if (Oprnds.size() == 2)
+      Align = (1 << Oprnds[1]) >> 1;
+    else if (Oprnds.size() > 2)
       error("Invalid alloca instruction!");
     if (!isa<PointerType>(InstTy))
       error("Invalid alloca instruction!");
 
     Result = new AllocaInst(cast<PointerType>(InstTy)->getElementType(),
-                            Oprnds.size() ? getValue(Type::UIntTyID,
-                            Oprnds[0]) :0);
+                            getValue(Type::UIntTyID, Oprnds[0]), Align);
     break;
+  }
   case Instruction::Free:
     if (!isa<PointerType>(InstTy))
       error("Invalid free instruction!");
