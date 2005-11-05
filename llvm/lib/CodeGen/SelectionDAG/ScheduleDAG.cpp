@@ -101,15 +101,13 @@ private:
   typedef typename std::vector<T>::iterator Iter;
                                         // Tally iterator 
   
-  /// SlotsAvailable - Returns the an iterator equal to Begin if all units
-  /// are available.  Otherwise return an iterator to a better Begin.
-  Iter SlotsAvailable(Iter Begin, unsigned N, unsigned ResourceSet,
+  /// SlotsAvailable - Returns true if all units are available.
+	///
+  bool SlotsAvailable(Iter Begin, unsigned N, unsigned ResourceSet,
                                               unsigned &Resource) {
     assert(N && "Must check availability with N != 0");
     // Determine end of interval
     Iter End = Begin + N;
-    // Alternate result
-    Iter Better = End;
     assert(End <= Tally.end() && "Tally is not large enough for schedule");
     
     // Iterate thru each resource
@@ -126,15 +124,31 @@ private:
       if (Interval == Begin) {
         // Success
         Resource = Res;
-        return Begin;
+        return true;
       }
-      if (Better > Interval) Better = Interval;
     }
     
     // No luck
     Resource = 0;
-    return Better;
+    return false;
   }
+	
+	/// RetrySlot - Finds a good candidate slot to retry search.
+  Iter RetrySlot(Iter Begin, unsigned N, unsigned ResourceSet) {
+    assert(N && "Must check availability with N != 0");
+    // Determine end of interval
+    Iter End = Begin + N;
+    assert(End <= Tally.end() && "Tally is not large enough for schedule");
+		
+		while (Begin != End--) {
+			// Clear units in use
+			ResourceSet &= ~*End;
+			// If no units left then we should go no further 
+			if (!ResourceSet) return End + 1;
+		}
+		// Made it all the way through
+		return Begin;
+	}
   
   /// FindAndReserveStages - Return true if the stages can be completed. If
   /// so mark as busy.
@@ -146,7 +160,7 @@ private:
     unsigned N = Stage->Cycles;
     // Check to see if N slots are available, if not fail
     unsigned Resource;
-    if (SlotsAvailable(Begin, N, Stage->Units, Resource) != Begin) return false;
+    if (!SlotsAvailable(Begin, N, Stage->Units, Resource)) return false;
     // Check to see if remaining stages are available, if not fail
     if (!FindAndReserveStages(Begin + N, Stage + 1, StageEnd)) return false;
     // Reserve resource
@@ -177,9 +191,7 @@ private:
       // Try at cursor, if successful return position.
       if (FindAndReserveStages(Cursor, StageBegin, StageEnd)) return Cursor;
       // Locate a better position
-      unsigned Resource;
-      Cursor = SlotsAvailable(Cursor + 1, StageBegin->Cycles, StageBegin->Units,
-                                                              Resource);
+			Cursor = RetrySlot(Cursor + 1, StageBegin->Cycles, StageBegin->Units);
     }
   }
   
@@ -194,7 +206,13 @@ public:
   // as busy.
   unsigned FindAndReserve(unsigned Slot, InstrStage *StageBegin,
                                          InstrStage *StageEnd) {
-    return FindSlots(Tally.begin() + Slot, StageBegin, StageEnd)-Tally.begin();
+		// Where to begin 
+		Iter Begin = Tally.begin() + Slot;
+		// Find a free slot
+		Iter Where = FindSlots(Begin, StageBegin, StageEnd);
+		// Distance is slot number
+		unsigned Final = Where - Tally.begin();
+    return Final;
   }
 
 };
@@ -718,7 +736,7 @@ void SimpleSched::IdentifyGroups() {
 /// GatherSchedulingInfo - Get latency and resource information about each node.
 ///
 void SimpleSched::GatherSchedulingInfo() {
-
+  // Get instruction itineraries for the target
   const InstrItineraryData InstrItins = TM.getInstrItineraryData();
   
   // For each node
@@ -781,7 +799,7 @@ void SimpleSched::GatherSchedulingInfo() {
         if (!Group->getDominator()) {
           NIIterator NGI = Group->group_begin(), NGE = Group->group_end();
           NodeInfo *Dominator = *NGI;
-          unsigned Latency = Dominator->Latency;
+          unsigned Latency = 0;
           
           for (NGI++; NGI != NGE; NGI++) {
             NodeInfo* NGNI = *NGI;
