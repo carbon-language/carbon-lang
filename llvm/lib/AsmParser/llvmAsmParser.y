@@ -948,7 +948,7 @@ Module *llvm::RunVMAsmParser(const char * AsmString, Module * M) {
 
 %token <StrVal> VAR_ID LABELSTR STRINGCONSTANT
 %type  <StrVal> Name OptName OptAssign
-
+%type  <UIntVal> OptCAlign
 
 %token IMPLEMENTATION ZEROINITIALIZER TRUETOK FALSETOK BEGINTOK ENDTOK
 %token DECLARE GLOBAL CONSTANT VOLATILE
@@ -1034,6 +1034,11 @@ OptCallingConv : /*empty*/      { $$ = CallingConv::C; } |
                      ThrowException("Calling conv too large!");
                    $$ = $2;
                  };
+
+// OptAlign/OptCAlign - An optional alignment, and an optional alignment with
+// a comma before it.
+OptCAlign : /*empty*/            { $$ = 0; } |
+            ',' ALIGN EUINT64VAL { $$ = $3; };
 
 //===----------------------------------------------------------------------===//
 // Types includes all predefined types... except void, because it can only be
@@ -2204,48 +2209,32 @@ OptVolatile : VOLATILE {
 
 
 
-MemoryInst : MALLOC Types {
-    $$ = new MallocInst(*$2);
+MemoryInst : MALLOC Types OptCAlign {
+  if ($3 & ($3-1))
+    ThrowException("Alignment amount '" + utostr($3) +
+                   "' is not a power of 2!");
+    $$ = new MallocInst(*$2, 0, $3);
     delete $2;
   }
-  | MALLOC Types ',' ALIGN EUINT64VAL {
-    if ($5 & ($5-1))
-      ThrowException("Alignment amount '" + utostr($5) +
+  | MALLOC Types ',' UINT ValueRef OptCAlign {
+    if ($6 & ($6-1))
+      ThrowException("Alignment amount '" + utostr($6) +
                      "' is not a power of 2!");
-    $$ = new MallocInst(*$2, 0, $5);
+    $$ = new MallocInst(*$2, getVal($4, $5), $6);
     delete $2;
   }
-  | MALLOC Types ',' UINT ValueRef {
-    $$ = new MallocInst(*$2, getVal($4, $5));
-    delete $2;
-  }
-  | MALLOC Types ',' UINT ValueRef ',' ALIGN EUINT64VAL {
-    if ($8 & ($8-1))
-      ThrowException("Alignment amount '" + utostr($8) +
+  | ALLOCA Types OptCAlign {
+    if ($3 & ($3-1))
+      ThrowException("Alignment amount '" + utostr($3) +
                      "' is not a power of 2!");
-    $$ = new MallocInst(*$2, getVal($4, $5), $8);
+    $$ = new AllocaInst(*$2, 0, $3);
     delete $2;
   }
-  | ALLOCA Types {
-    $$ = new AllocaInst(*$2);
-    delete $2;
-  }
-  | ALLOCA Types ',' ALIGN EUINT64VAL {
-    if ($5 & ($5-1))
-      ThrowException("Alignment amount '" + utostr($5) +
+  | ALLOCA Types ',' UINT ValueRef OptCAlign {
+    if ($6 & ($6-1))
+      ThrowException("Alignment amount '" + utostr($6) +
                      "' is not a power of 2!");
-    $$ = new AllocaInst(*$2, 0, $5);
-    delete $2;
-  }
-  | ALLOCA Types ',' UINT ValueRef {
-    $$ = new AllocaInst(*$2, getVal($4, $5));
-    delete $2;
-  }
-  | ALLOCA Types ',' UINT ValueRef ',' ALIGN EUINT64VAL {
-    if ($8 & ($8-1))
-      ThrowException("Alignment amount '" + utostr($8) +
-                     "' is not a power of 2!");
-    $$ = new AllocaInst(*$2, getVal($4, $5), $8);
+    $$ = new AllocaInst(*$2, getVal($4, $5), $6);
     delete $2;
   }
   | FREE ResolvedVal {
