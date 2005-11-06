@@ -19,6 +19,7 @@
 #include "llvm/SymbolTable.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/Support/MathExtras.h"
 #include <algorithm>
 #include <iostream>
 #include <list>
@@ -516,7 +517,10 @@ static void setValueName(Value *V, char *NameStr) {
 /// this is a declaration, otherwise it is a definition.
 static void ParseGlobalVariable(char *NameStr,GlobalValue::LinkageTypes Linkage,
                                 bool isConstantGlobal, const Type *Ty,
-                                Constant *Initializer) {
+                                Constant *Initializer, unsigned Align) {
+  if (Align != 0 && !isPowerOf2_32(Align))
+    ThrowException("Global alignment must be a power of two!");
+  
   if (isa<FunctionType>(Ty))
     ThrowException("Cannot declare global vars of function type!");
 
@@ -546,6 +550,7 @@ static void ParseGlobalVariable(char *NameStr,GlobalValue::LinkageTypes Linkage,
     GV->setInitializer(Initializer);
     GV->setLinkage(Linkage);
     GV->setConstant(isConstantGlobal);
+    GV->setAlignment(Align);
     InsertValue(GV, CurModule.Values);
     return;
   }
@@ -572,6 +577,7 @@ static void ParseGlobalVariable(char *NameStr,GlobalValue::LinkageTypes Linkage,
         if (isConstantGlobal)
           EGV->setConstant(true);
         EGV->setLinkage(Linkage);
+        EGV->setAlignment(Align);
         return;
       }
 
@@ -584,6 +590,7 @@ static void ParseGlobalVariable(char *NameStr,GlobalValue::LinkageTypes Linkage,
   GlobalVariable *GV =
     new GlobalVariable(Ty, isConstantGlobal, Linkage, Initializer, Name,
                        CurModule.CurrentModule);
+  GV->setAlignment(Align);
   InsertValue(GV, CurModule.Values);
 }
 
@@ -948,7 +955,7 @@ Module *llvm::RunVMAsmParser(const char * AsmString, Module * M) {
 
 %token <StrVal> VAR_ID LABELSTR STRINGCONSTANT
 %type  <StrVal> Name OptName OptAssign
-%type  <UIntVal> OptCAlign
+%type  <UIntVal> OptAlign OptCAlign
 
 %token IMPLEMENTATION ZEROINITIALIZER TRUETOK FALSETOK BEGINTOK ENDTOK
 %token DECLARE GLOBAL CONSTANT VOLATILE
@@ -1037,6 +1044,8 @@ OptCallingConv : /*empty*/      { $$ = CallingConv::C; } |
 
 // OptAlign/OptCAlign - An optional alignment, and an optional alignment with
 // a comma before it.
+OptAlign : /*empty*/        { $$ = 0; } |
+           ALIGN EUINT64VAL { $$ = $2; };
 OptCAlign : /*empty*/            { $$ = 0; } |
             ',' ALIGN EUINT64VAL { $$ = $3; };
 
@@ -1548,12 +1557,12 @@ ConstPool : ConstPool OptAssign TYPE TypesV {
   }
   | ConstPool FunctionProto {       // Function prototypes can be in const pool
   }
-  | ConstPool OptAssign OptLinkage GlobalType ConstVal {
+  | ConstPool OptAssign OptLinkage GlobalType ConstVal OptCAlign {
     if ($5 == 0) ThrowException("Global value initializer is not a constant!");
-    ParseGlobalVariable($2, $3, $4, $5->getType(), $5);
+    ParseGlobalVariable($2, $3, $4, $5->getType(), $5, $6);
   }
-  | ConstPool OptAssign EXTERNAL GlobalType Types {
-    ParseGlobalVariable($2, GlobalValue::ExternalLinkage, $4, *$5, 0);
+  | ConstPool OptAssign EXTERNAL GlobalType Types OptCAlign {
+    ParseGlobalVariable($2, GlobalValue::ExternalLinkage, $4, *$5, 0, $6);
     delete $5;
   }
   | ConstPool TARGET TargetDefinition { 
@@ -1638,13 +1647,15 @@ ArgList : ArgListH {
     $$ = 0;
   };
 
-FunctionHeaderH : OptCallingConv TypesV Name '(' ArgList ')' {
+FunctionHeaderH : OptCallingConv TypesV Name '(' ArgList ')' OptAlign {
   UnEscapeLexed($3);
   std::string FunctionName($3);
   free($3);  // Free strdup'd memory!
   
   if (!(*$2)->isFirstClassType() && *$2 != Type::VoidTy)
     ThrowException("LLVM functions cannot return aggregate types!");
+  if ($7 != 0 && !isPowerOf2_32($7))
+    ThrowException("Function alignment must be a power of two!");
 
   std::vector<const Type*> ParamTypeList;
   if ($5) {   // If there are arguments...
@@ -1696,6 +1707,7 @@ FunctionHeaderH : OptCallingConv TypesV Name '(' ArgList ')' {
 
   CurFun.FunctionStart(Fn);
   Fn->setCallingConv($1);
+  Fn->setAlignment($7);
 
   // Add all of the arguments we parsed to the function...
   if ($5) {                     // Is null if empty...
@@ -2210,28 +2222,28 @@ OptVolatile : VOLATILE {
 
 
 MemoryInst : MALLOC Types OptCAlign {
-  if ($3 & ($3-1))
-    ThrowException("Alignment amount '" + utostr($3) +
-                   "' is not a power of 2!");
+    if ($3 != 0 && !isPowerOf2_32($3))
+      ThrowException("Alignment amount '" + utostr($3) +
+                     "' is not a power of 2!");
     $$ = new MallocInst(*$2, 0, $3);
     delete $2;
   }
   | MALLOC Types ',' UINT ValueRef OptCAlign {
-    if ($6 & ($6-1))
+    if ($6 != 0 && !isPowerOf2_32($6))
       ThrowException("Alignment amount '" + utostr($6) +
                      "' is not a power of 2!");
     $$ = new MallocInst(*$2, getVal($4, $5), $6);
     delete $2;
   }
   | ALLOCA Types OptCAlign {
-    if ($3 & ($3-1))
+    if ($3 != 0 && !isPowerOf2_32($3))
       ThrowException("Alignment amount '" + utostr($3) +
                      "' is not a power of 2!");
     $$ = new AllocaInst(*$2, 0, $3);
     delete $2;
   }
   | ALLOCA Types ',' UINT ValueRef OptCAlign {
-    if ($6 & ($6-1))
+    if ($6 != 0 && !isPowerOf2_32($6))
       ThrowException("Alignment amount '" + utostr($6) +
                      "' is not a power of 2!");
     $$ = new AllocaInst(*$2, getVal($4, $5), $6);
