@@ -258,7 +258,7 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
   MachineFrameInfo *FFI = Fn.getFrameInfo();
 
   unsigned StackAlignment = TFI.getStackAlignment();
-  unsigned MaxAlign = StackAlignment;
+  unsigned MaxAlign = 0;
 
   // Start at the beginning of the local area.
   // The Offset is the distance from the stack top in the direction
@@ -318,11 +318,10 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
 
   // Set the final value of the stack pointer...
   FFI->setStackSize(Offset+TFI.getOffsetOfLocalArea());
-  // If we have a new stack alignment, set the preferred stack alignment so that
-  // the targets can do the appropriate thing to properly align the stack above
-  // the default alignment.
-  if (MaxAlign > StackAlignment)
-    FFI->setMaxAlignment(MaxAlign);
+
+  // Remember the required stack alignment in case targets need it to perform
+  // dynamic stack alignment.
+  FFI->setMaxAlignment(MaxAlign);
 }
 
 
