@@ -2,7 +2,9 @@
 ; RUN: llvm-as %t1.ll -o - | llvm-dis > %t2.ll
 ; RUN: diff %t1.ll %t2.ll
 
-int *%test() {
+%X = global int 4, align 16
+
+int *%test() align 32 {
 	%X = alloca int, align 4
 	%Y = alloca int, uint 42, align 16
 	%Z = alloca int, align 0
