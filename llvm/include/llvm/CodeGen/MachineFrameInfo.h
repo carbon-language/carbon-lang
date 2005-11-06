@@ -88,8 +88,10 @@ class MachineFrameInfo {
   
   /// MaxAlignment - The prolog/epilog code inserter may process objects 
   /// that require greater alignment than the default alignment the target
-  /// provides. In these cases, MaxAlignment is set to the new alignment 
-  /// necessary to easily calculate fixed offsets for each stack object.
+  /// provides. To handle this, MaxAlignment is set to the maximum alignment 
+  /// needed by the objects on the current frame.  If this is greater than the
+  /// native alignment maintained by the compiler, dynamic alignment code will
+  /// be needed.
   ///
   unsigned MaxAlignment;
 
