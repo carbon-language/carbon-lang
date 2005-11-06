@@ -1999,7 +1999,7 @@ void BytecodeReader::ParseModuleGlobalInfo() {
       CC |= ((ExtWord >> 5) & 15) << 4;
     }
     
-    Func->setCallingConv(CC);
+    Func->setCallingConv(CC-1);
     Func->setAlignment(Alignment);
 
     if (Handler) Handler->handleFunctionDeclaration(Func);
