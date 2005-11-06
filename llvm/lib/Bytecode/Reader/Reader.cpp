@@ -1903,6 +1903,17 @@ void BytecodeReader::ParseModuleGlobalInfo() {
     bool isConstant = VarType & 1;
     bool hasInitializer = VarType & 2;
     GlobalValue::LinkageTypes Linkage;
+    unsigned Alignment = 0;
+    
+    // An extension word is present when linkage = 3 (internal) and hasinit = 0.
+    if (LinkageID == 3 && !hasInitializer) {
+      unsigned ExtWord = read_vbr_uint();
+      // The extension word has this format: bit 0 = has initializer, bit 1-3 =
+      // linkage, bit 4-8 = alignment (log2), bits 10+ = future use.
+      hasInitializer = ExtWord & 1;
+      LinkageID = (ExtWord >> 1) & 7;
+      Alignment = (1 << ((ExtWord >> 4) & 31)) >> 1;
+    }
 
     switch (LinkageID) {
     case 0: Linkage = GlobalValue::ExternalLinkage;  break;
@@ -1930,6 +1941,7 @@ void BytecodeReader::ParseModuleGlobalInfo() {
     // Create the global variable...
     GlobalVariable *GV = new GlobalVariable(ElTy, isConstant, Linkage,
                                             0, "", TheModule);
+    GV->setAlignment(Alignment);
     insertValue(GV, SlotNo, ModuleValues);
 
     unsigned initSlot = 0;

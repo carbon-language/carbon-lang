@@ -416,7 +416,6 @@ void BytecodeWriter::outputConstantStrings() {
 //===----------------------------------------------------------------------===//
 //===                           Instruction Output                         ===//
 //===----------------------------------------------------------------------===//
-typedef unsigned char uchar;
 
 // outputInstructionFormat0 - Output those weird instructions that have a large
 // number of operands or have large operands themselves.
@@ -925,15 +924,35 @@ void BytecodeWriter::outputModuleInfoBlock(const Module *M) {
 
   // Output the types for the global variables in the module...
   for (Module::const_global_iterator I = M->global_begin(),
-         End = M->global_end(); I != End;++I) {
+         End = M->global_end(); I != End; ++I) {
     int Slot = Table.getSlot(I->getType());
     assert(Slot != -1 && "Module global vars is broken!");
 
+    assert((I->hasInitializer() || !I->hasInternalLinkage()) &&
+           "Global must have an initializer or have external linkage!");
+    
     // Fields: bit0 = isConstant, bit1 = hasInitializer, bit2-4=Linkage,
-    // bit5+ = Slot # for type
-    unsigned oSlot = ((unsigned)Slot << 5) | (getEncodedLinkage(I) << 2) |
-                     (I->hasInitializer() << 1) | (unsigned)I->isConstant();
-    output_vbr(oSlot);
+    // bit5+ = Slot # for type.
+    bool HasExtensionWord = I->getAlignment() != 0;
+    
+    // If we need to use the extension byte, set linkage=3(internal) and
+    // initializer = 0 (impossible!).
+    if (!HasExtensionWord) {
+      unsigned oSlot = ((unsigned)Slot << 5) | (getEncodedLinkage(I) << 2) |
+                        (I->hasInitializer() << 1) | (unsigned)I->isConstant();
+      output_vbr(oSlot);
+    } else {
+      unsigned oSlot = ((unsigned)Slot << 5) | (3 << 2) |
+                        (0 << 1) | (unsigned)I->isConstant();
+      output_vbr(oSlot);
+      
+      // The extension word has this format: bit 0 = has initializer, bit 1-3 =
+      // linkage, bit 4-8 = alignment (log2), bits 10+ = future use.
+      unsigned ExtWord = I->hasInitializer() | (getEncodedLinkage(I) << 1) |
+                         (Log2_32(I->getAlignment())+1) << 4;
+      output_vbr(ExtWord);
+      
+    }
 
     // If we have an initializer, output it now.
     if (I->hasInitializer()) {
