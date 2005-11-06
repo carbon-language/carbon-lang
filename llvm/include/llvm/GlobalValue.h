@@ -38,7 +38,8 @@ public:
 protected:
   GlobalValue(const Type *Ty, ValueTy vty, Use *Ops, unsigned NumOps,
               LinkageTypes linkage, const std::string &name = "")
-    : Constant(Ty, vty, Ops, NumOps, name), Linkage(linkage), Parent(0) { }
+    : Constant(Ty, vty, Ops, NumOps, name), Linkage(linkage), 
+      Parent(0), Alignment(0) { }
 
   LinkageTypes Linkage;   // The linkage of this global
   Module *Parent;
