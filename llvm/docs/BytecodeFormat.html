@@ -992,12 +992,16 @@ platform independent module).<br>
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection"><a name="globalvar">Global Variable Field</a>
 </div>
+
 <div class="doc_text">
+
 <p>Global variables are written using an <a href="#uint32_vbr">uint32_vbr</a>
-that encodes information about the global variable and a list of the
-constant initializers for the global var, if any.</p>
+that encodes information about the global variable, an optional extension vbr,
+and a an optional initializers for the global var.</p>
+
 <p>The table below provides the bit layout of the first <a
  href="#uint32_vbr">uint32_vbr</a> that describes the global variable.</p>
+ 
 <table>
   <tbody>
     <tr>
@@ -1025,8 +1029,43 @@ follows. </td>
     </tr>
   </tbody>
 </table>
+
+<p>When the Linkage type is set to 3 (internal) and the initializer field is set
+to 0 (an invalid combination), an extension word follows the first <a
+href="#uint32_vbr">uint32_vbr</a> which encodes the real linkage and init flag,
+and can includes more information:</p>
+
+<table>
+  <tbody>
+    <tr>
+      <th><b>Type</b></th>
+      <th class="td_left"><b>Description</b></th>
+    </tr>
+    <tr>
+      <td><a href="#bit">bit(0)</a></td>
+      <td class="td_left">Has initializer?  Indicates the real value of the "Has
+        initializer" field for the global. </td>
+    </tr>
+    <tr>
+      <td><a href="#bit">bit(2-4)</a></td>
+      <td class="td_left">Linkage type: Indicates the real value of the "linkage
+        type" field for the global.</td>
+    </tr>
+    <tr>
+      <td><a href="#bit">bit(4-8)</a></td>
+      <td class="td_left">The log-base-2 of the alignment for the global.</td>
+    </tr>
+    <tr>
+      <td><a href="#bit">bit(9-31)</a></td>
+      <td class="td_left">Currently unassigned.</td>
+    </tr>
+  </tbody>
+</table>
+
 <p>The table below provides the format of the constant initializers for
-the global variable field, if it has one.</p>
+the global variable field, if it has one (indicated by the "Has initializer"
+field).</p>
+
 <table>
   <tbody>
     <tr>
@@ -1048,7 +1087,8 @@ numbers of the global variable's constant initializer.</td>
 </div>
 <div class="doc_text">
 <p>Functions are written using an <a href="#uint32_vbr">uint32_vbr</a>
-that encodes information about the function and a set of flags.</p>
+that encodes information about the function and a set of flags.  If needed,
+an extension word may follow this first field.</p>
 
 <p>The table below provides the bit layout of the <a
 href="#uint32_vbr">uint32_vbr</a> that describes the function.</p>
@@ -1074,8 +1114,32 @@ href="#uint32_vbr">uint32_vbr</a> that describes the function.</p>
       Block</a> in the bytecode file for the function.</td>
     </tr>
     <tr>
-      <td><a href="#bit">bit(5-)</a></td>
+      <td><a href="#bit">bit(5-30)</a></td>
       <td class="td_left">Type slot number of type for the function.</td>
+    </tr>
+    <tr>
+      <td><a href="#bit">bit(31)</a></td>
+      <td class="td_left">Indicates whether an extension word follows.</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>If bit(31) is set, an additional <a href="#uint32_vbr">uint32_vbr</a> word
+follows with the following fields:</p>
+
+<table>
+  <tbody>
+    <tr>
+      <th><b>Type</b></th>
+      <th class="td_left"><b>Description</b></th>
+    </tr>
+    <tr>
+      <td><a href="#bit">bit(0-4)</a></td>
+      <td class="td_left">The log-base-2 of the alignment for the function.</td>
+    </tr>
+    <tr>
+      <td><a href="#bit">bit(5-31)</a></td>
+      <td class="td_left">Currently unassigned.</td>
     </tr>
   </tbody>
 </table>
