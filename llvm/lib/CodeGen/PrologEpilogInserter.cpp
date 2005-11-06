@@ -258,6 +258,7 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
   MachineFrameInfo *FFI = Fn.getFrameInfo();
 
   unsigned StackAlignment = TFI.getStackAlignment();
+  unsigned MaxAlign = StackAlignment;
 
   // Start at the beginning of the local area.
   // The Offset is the distance from the stack top in the direction
@@ -295,9 +296,11 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
       Offset += FFI->getObjectSize(i);
 
     unsigned Align = FFI->getObjectAlignment(i);
-    assert(Align <= StackAlignment && "Cannot align stack object to higher "
-           "alignment boundary than the stack itself!");
-    Offset = (Offset+Align-1)/Align*Align;   // Adjust to Alignment boundary...
+    // If the alignment of this object is greater than that of the stack, then
+    // increase the stack alignment to match.
+    MaxAlign = std::max(MaxAlign, Align);
+    // Adjust to alignment boundary
+    Offset = (Offset+Align-1)/Align*Align;
 
     if (StackGrowsDown) {
       FFI->setObjectOffset(i, -Offset);        // Set the computed offset
@@ -315,6 +318,11 @@ void PEI::calculateFrameObjectOffsets(MachineFunction &Fn) {
 
   // Set the final value of the stack pointer...
   FFI->setStackSize(Offset+TFI.getOffsetOfLocalArea());
+  // If we have a new stack alignment, set the preferred stack alignment so that
+  // the targets can do the appropriate thing to properly align the stack above
+  // the default alignment.
+  if (MaxAlign > StackAlignment)
+    FFI->setMaxAlignment(MaxAlign);
 }
 
 

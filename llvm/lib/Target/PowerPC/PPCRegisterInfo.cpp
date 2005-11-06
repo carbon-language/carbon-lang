@@ -26,6 +26,7 @@
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/MathExtras.h"
 #include "llvm/ADT/STLExtras.h"
 #include <cstdlib>
 #include <iostream>
@@ -294,6 +295,11 @@ void PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
 
   // Get the number of bytes to allocate from the FrameInfo
   unsigned NumBytes = MFI->getStackSize();
+  
+  // Get the alignments provided by the target, and the maximum alignment
+  // (if any) of the fixed frame objects.
+  unsigned TargetAlign = MF.getTarget().getFrameInfo()->getStackAlignment();
+  unsigned MaxAlign = MFI->getMaxAlignment();
 
   // If we have calls, we cannot use the red zone to store callee save registers
   // and we must set up a stack frame, so calculate the necessary size here.
@@ -307,14 +313,15 @@ void PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
   // If we are a leaf function, and use up to 224 bytes of stack space,
   // and don't have a frame pointer, then we do not need to adjust the stack
   // pointer (we fit in the Red Zone).
-  if ((NumBytes == 0) || (NumBytes <= 224 && !hasFP(MF) && !MFI->hasCalls())) {
+  if ((NumBytes == 0) || (NumBytes <= 224 && !hasFP(MF) && !MFI->hasCalls() &&
+                          MaxAlign <= TargetAlign)) {
     MFI->setStackSize(0);
     return;
   }
 
   // Add the size of R1 to  NumBytes size for the store of R1 to the bottom
   // of the stack and round the size to a multiple of the alignment.
-  unsigned Align = MF.getTarget().getFrameInfo()->getStackAlignment();
+  unsigned Align = std::max(TargetAlign, MaxAlign);
   unsigned GPRSize = 4;
   unsigned Size = hasFP(MF) ? GPRSize + GPRSize : GPRSize;
   NumBytes = (NumBytes+Size+Align-1)/Align*Align;
@@ -336,7 +343,23 @@ void PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
     MI = BuildMI(PPC::STWUX, 3).addReg(PPC::R1).addReg(PPC::R1).addReg(PPC::R0);
     MBB.insert(MBBI, MI);
   }
-
+  
+  // If there is a preferred stack alignment, align R1 now
+  // FIXME: If this ever matters, this could be made more efficient by folding
+  // this into the code above, so that we don't issue two store+update
+  // instructions.
+  if (MaxAlign > TargetAlign) {
+    assert(isPowerOf2_32(MaxAlign) && MaxAlign < 32767 && "Invalid alignment!");
+    MI = BuildMI(PPC::RLWINM, 4, PPC::R0).addReg(PPC::R1).addImm(0)
+      .addImm(32-Log2_32(MaxAlign)).addImm(31);
+    MBB.insert(MBBI, MI);
+    MI = BuildMI(PPC::SUBFIC, 2, PPC::R0).addReg(PPC::R0).addImm(MaxAlign);
+    MBB.insert(MBBI, MI);
+    MI = BuildMI(PPC::STWUX, 3).addReg(PPC::R1).addReg(PPC::R1).addReg(PPC::R0);
+    MBB.insert(MBBI, MI);
+  }
+  
+  // If there is a frame pointer, copy R1 (SP) into R31 (FP)
   if (hasFP(MF)) {
     MI = BuildMI(PPC::STW, 3).addReg(PPC::R31).addSImm(GPRSize).addReg(PPC::R1);
     MBB.insert(MBBI, MI);
