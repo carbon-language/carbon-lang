@@ -92,7 +92,8 @@ bool IA64TargetMachine::addPassesToEmitFile(PassManager &PM,
   PM.add(createLowerGCPass());
 
   // FIXME: Implement the invoke/unwind instructions!
-  PM.add(createLowerInvokePass());
+  PM.add(createLowerInvokePass(704, 16)); // on ia64 linux, jmpbufs are 704
+                                          // bytes and must be 16byte aligned
 
   // FIXME: Implement the switch instruction in the instruction selector!
   PM.add(createLowerSwitchPass());
