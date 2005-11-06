@@ -1102,8 +1102,7 @@ href="#uint32_vbr">uint32_vbr</a> that describes the function.</p>
     <tr>
       <td><a href="#bit">bit(0-3)</a></td>
       <td class="td_left">
-      Encodes the calling convention number of the function.  If this number is
-      zero, this field is followed by a vbr indicating the CC#.  Otherwise, the
+      Encodes the calling convention number of the function. The
       CC number of the function is the value of this field minus one.
       </td>
     </tr>
@@ -1138,7 +1137,11 @@ follows with the following fields:</p>
       <td class="td_left">The log-base-2 of the alignment for the function.</td>
     </tr>
     <tr>
-      <td><a href="#bit">bit(5-31)</a></td>
+      <td><a href="#bit">bit(5-9)</a></td>
+      <td class="td_left">The top nibble of the calling convention.</td>
+    </tr>
+    <tr>
+      <td><a href="#bit">bit(10-31)</a></td>
       <td class="td_left">Currently unassigned.</td>
     </tr>
   </tbody>
