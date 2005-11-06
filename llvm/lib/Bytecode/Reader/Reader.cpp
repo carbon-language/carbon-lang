@@ -1901,8 +1901,7 @@ void BytecodeReader::ParseModuleGlobalInfo() {
       error("Invalid type (type type) for global var!");
     unsigned LinkageID = (VarType >> 2) & 7;
     bool isConstant = VarType & 1;
-    bool hasInitializer = VarType & 2;
-    GlobalValue::LinkageTypes Linkage;
+    bool hasInitializer = (VarType & 2) != 0;
     unsigned Alignment = 0;
     
     // An extension word is present when linkage = 3 (internal) and hasinit = 0.
@@ -1915,6 +1914,7 @@ void BytecodeReader::ParseModuleGlobalInfo() {
       Alignment = (1 << ((ExtWord >> 4) & 31)) >> 1;
     }
 
+    GlobalValue::LinkageTypes Linkage;
     switch (LinkageID) {
     case 0: Linkage = GlobalValue::ExternalLinkage;  break;
     case 1: Linkage = GlobalValue::WeakLinkage;      break;
