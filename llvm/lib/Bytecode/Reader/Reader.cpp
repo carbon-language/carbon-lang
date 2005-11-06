@@ -1928,13 +1928,11 @@ void BytecodeReader::ParseModuleGlobalInfo() {
     }
 
     const Type *Ty = getType(SlotNo);
-    if (!Ty) {
+    if (!Ty)
       error("Global has no type! SlotNo=" + utostr(SlotNo));
-    }
 
-    if (!isa<PointerType>(Ty)) {
+    if (!isa<PointerType>(Ty))
       error("Global not a pointer type! Ty= " + Ty->getDescription());
-    }
 
     const Type *ElTy = cast<PointerType>(Ty)->getElementType();
 
@@ -1965,8 +1963,8 @@ void BytecodeReader::ParseModuleGlobalInfo() {
     FnSignature = (FnSignature << 5) + 1;
 
   // List is terminated by VoidTy.
-  while ((FnSignature >> 5) != Type::VoidTyID) {
-    const Type *Ty = getType(FnSignature >> 5);
+  while (((FnSignature & (~0U >> 1)) >> 5) != Type::VoidTyID) {
+    const Type *Ty = getType((FnSignature & (~0U >> 1)) >> 5);
     if (!isa<PointerType>(Ty) ||
         !isa<FunctionType>(cast<PointerType>(Ty)->getElementType())) {
       error("Function not a pointer to function type! Ty = " +
@@ -1981,7 +1979,7 @@ void BytecodeReader::ParseModuleGlobalInfo() {
     // Insert the place holder.
     Function* Func = new Function(FTy, GlobalValue::ExternalLinkage,
                                   "", TheModule);
-    insertValue(Func, FnSignature >> 5, ModuleValues);
+    insertValue(Func, (FnSignature & (~0U >> 1)) >> 5, ModuleValues);
 
     // Flags are not used yet.
     unsigned Flags = FnSignature & 31;
@@ -1992,13 +1990,17 @@ void BytecodeReader::ParseModuleGlobalInfo() {
     if ((Flags & (1 << 4)) == 0)
       FunctionSignatureList.push_back(Func);
 
-    // Look at the low bits.  If there is a calling conv here, apply it,
-    // read it as a vbr.
-    Flags &= 15;
-    if (Flags)
-      Func->setCallingConv(Flags-1);
-    else
-      Func->setCallingConv(read_vbr_uint());
+    // Get the calling convention from the low bits.
+    unsigned CC = Flags & 15;
+    unsigned Alignment = 0;
+    if (FnSignature & (1 << 31)) {  // Has extension word?
+      unsigned ExtWord = read_vbr_uint();
+      Alignment = (1 << (ExtWord & 31)) >> 1;
+      CC |= ((ExtWord >> 5) & 15) << 4;
+    }
+    
+    Func->setCallingConv(CC);
+    Func->setAlignment(Alignment);
 
     if (Handler) Handler->handleFunctionDeclaration(Func);
 

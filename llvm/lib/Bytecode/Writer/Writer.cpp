@@ -949,9 +949,8 @@ void BytecodeWriter::outputModuleInfoBlock(const Module *M) {
       // The extension word has this format: bit 0 = has initializer, bit 1-3 =
       // linkage, bit 4-8 = alignment (log2), bits 10+ = future use.
       unsigned ExtWord = I->hasInitializer() | (getEncodedLinkage(I) << 1) |
-                         (Log2_32(I->getAlignment())+1) << 4;
+                         ((Log2_32(I->getAlignment())+1) << 4);
       output_vbr(ExtWord);
-      
     }
 
     // If we have an initializer, output it now.
@@ -968,18 +967,23 @@ void BytecodeWriter::outputModuleInfoBlock(const Module *M) {
     int Slot = Table.getSlot(I->getType());
     assert(Slot != -1 && "Module slot calculator is broken!");
     assert(Slot >= Type::FirstDerivedTyID && "Derived type not in range!");
-    assert(((Slot << 5) >> 5) == Slot && "Slot # too big!");
-    unsigned ID = (Slot << 5);
-
-    if (I->getCallingConv() < 15)
-      ID += I->getCallingConv()+1;
+    assert(((Slot << 6) >> 6) == Slot && "Slot # too big!");
+    unsigned ID = (Slot << 5) | (I->getCallingConv() & 15);
 
     if (I->isExternal())   // If external, we don't have an FunctionInfo block.
       ID |= 1 << 4;
+    
+    if (I->getAlignment() || I->getCallingConv() & ~15)
+      ID |= 1 << 31;       // Do we need an extension word?
+    
     output_vbr(ID);
-
-    if (I->getCallingConv() >= 15)
-      output_vbr(I->getCallingConv());
+    
+    if (ID & (1 << 31)) {
+      // Extension byte: bits 0-4 = alignment, bits 5-9 = top nibble of calling
+      // convention.
+      ID = (Log2_32(I->getAlignment())+1) | ((I->getCallingConv() >> 4) << 5);
+      output_vbr(ID);
+    }
   }
   output_vbr((unsigned)Table.getSlot(Type::VoidTy) << 5);
 
