@@ -832,6 +832,10 @@ void AssemblyWriter::printGlobal(const GlobalVariable *GV) {
     assert(C &&  "GlobalVar initializer isn't constant?");
     writeOperand(GV->getInitializer(), false, isa<GlobalValue>(C));
   }
+  
+  if (GV->getAlignment()) {
+    Out << ", align " << GV->getAlignment();
+  }
 
   printInfoComment(*GV);
   Out << "\n";
@@ -940,6 +944,9 @@ void AssemblyWriter::printFunction(const Function *F) {
   }
   Out << ')';
 
+  if (F->getAlignment())
+    Out << " align " << F->getAlignment();
+  
   if (F->isExternal()) {
     Out << "\n";
   } else {
