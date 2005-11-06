@@ -201,7 +201,7 @@ SDOperand IA64DAGToDAGISel::SelectCALL(SDOperand Op) {
 		    targetGPAddr);
     Chain = targetGP.getValue(1);
 
-/* FIXME! (methcall still fails)
+/* FIXME? (methcall still fails)
     SDOperand targetEntryPoint=CurDAG->getLoad(MVT::i64, Chain, FnDescriptor,
 	                                CurDAG->getSrcValue(0));
     SDOperand targetGPAddr=CurDAG->getNode(ISD::ADD, MVT::i64, FnDescriptor, 
@@ -209,7 +209,8 @@ SDOperand IA64DAGToDAGISel::SelectCALL(SDOperand Op) {
     SDOperand targetGP=CurDAG->getLoad(MVT::i64, Chain, targetGPAddr,
 	                               CurDAG->getSrcValue(0));
     */
- 
+
+    /* this is just the long way of writing the two lines below?
     // Copy the callee GP into r1
     SDOperand r1 = CurDAG->getRegister(IA64::r1, MVT::i64);
     Chain = CurDAG->getNode(ISD::CopyToReg, MVT::i64, Chain, r1,
@@ -220,8 +221,12 @@ SDOperand IA64DAGToDAGISel::SelectCALL(SDOperand Op) {
     SDOperand B6 = CurDAG->getRegister(IA64::B6, MVT::i64);
     Chain = CurDAG->getNode(ISD::CopyToReg, MVT::i64, Chain, B6,
 	             targetEntryPoint);
+    */
+
+    Chain = CurDAG->getCopyToReg(Chain, IA64::r1, targetGP);
+    Chain = CurDAG->getCopyToReg(Chain, IA64::B6, targetEntryPoint);
     
-    CallOperands.push_back(B6);
+    CallOperands.push_back(CurDAG->getRegister(IA64::B6, MVT::i64));
     CallOpcode = IA64::BRCALL_INDIRECT;
   }
  
@@ -256,18 +261,23 @@ SDOperand IA64DAGToDAGISel::SelectCALL(SDOperand Op) {
     
     if (N->getOperand(i).getOpcode() != ISD::UNDEF) {
       SDOperand Val = Select(N->getOperand(i));
-      Chain = CurDAG->getCopyToReg(Chain, DestReg, Val, InFlag);
-      InFlag = Chain.getValue(1);
-      CallOperands.push_back(CurDAG->getRegister(DestReg, RegTy));
+      if(MVT::isInteger(N->getOperand(i).getValueType())) {
+        Chain = CurDAG->getCopyToReg(Chain, DestReg, Val, InFlag);
+        InFlag = Chain.getValue(1);
+        CallOperands.push_back(CurDAG->getRegister(DestReg, RegTy));
+      }
       // some functions (e.g. printf) want floating point arguments
       // *also* passed as in-memory representations in integer registers
       // this is FORTRAN legacy junk which we don't _always_ need
       // to do, but to be on the safe side, we do. 
-      if(MVT::isFloatingPoint(N->getOperand(i).getValueType())) {
+      else if(MVT::isFloatingPoint(N->getOperand(i).getValueType())) {
         assert((i-2) < 8 && "FP args alone would fit, but no int regs left");
-	DestReg = intArgs[i-2]; // this FP arg goes in an int reg
+	// first copy into the appropriate FP reg
+        Chain = CurDAG->getCopyToReg(Chain, DestReg, Val);	
+	// then copy into the appropriate integer reg
+	DestReg = intArgs[i-2];
         // GETFD takes an FP reg and writes a GP reg	
-	Chain = CurDAG->getTargetNode(IA64::GETFD, MVT::i64, Val, InFlag);
+	Chain = CurDAG->getTargetNode(IA64::GETFD, MVT::i64, Val);
         // FIXME: this next line is a bit unfortunate 
 	Chain = CurDAG->getCopyToReg(Chain, DestReg, Chain, InFlag); 
         InFlag = Chain.getValue(1);
@@ -285,8 +295,6 @@ SDOperand IA64DAGToDAGISel::SelectCALL(SDOperand Op) {
   Chain = CurDAG->getTargetNode(CallOpcode, MVT::Other, MVT::Flag,
                                 CallOperands);
  
-//  return Chain; // HACK: err, this means that functions never return anything. need to intergrate this with the code immediately below FIXME XXX
-
   std::vector<SDOperand> CallResults;
   
   // If the call has results, copy the values out of the ret val registers.
@@ -304,12 +312,15 @@ SDOperand IA64DAGToDAGISel::SelectCALL(SDOperand Op) {
       CallResults.push_back(Chain.getValue(0));
       break;
   }
-   // restore GP, SP and RP
+   
+  // restore GP, SP and RP - FIXME: this doesn't quite work (e.g.
+  // methcall / objinst both segfault on exit) and it *really*
+  // doesn't work unless you have -sched=none
   Chain = CurDAG->getCopyToReg(Chain, IA64::r1, GPBeforeCall);
   Chain = CurDAG->getCopyToReg(Chain, IA64::r12, SPBeforeCall);
   Chain = CurDAG->getCopyToReg(Chain, IA64::rp, RPBeforeCall);
- 
-  CallResults.push_back(Chain);
+  CallResults.push_back(Chain); // llc segfaults w/o this,
+                      // ary3(e.g.) SIGILLs with 3
 
   for (unsigned i = 0, e = CallResults.size(); i != e; ++i)
     CodeGenMap[Op.getValue(i)] = CallResults[i];
