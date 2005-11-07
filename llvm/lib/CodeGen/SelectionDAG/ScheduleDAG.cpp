@@ -908,9 +908,11 @@ void SimpleSched::ScheduleBackward() {
     // If independent of others (or first entry)
     if (Slot == NotFound) Slot = 0;
     
+#if 0 // FIXME - measure later
     // Find a slot where the needed resources are available
     if (NI->StageBegin != NI->StageEnd)
       Slot = Tally.FindAndReserve(Slot, NI->StageBegin, NI->StageEnd);
+#endif
       
     // Set node slot
     NI->Slot = Slot;
