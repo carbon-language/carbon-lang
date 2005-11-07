@@ -301,6 +301,16 @@ SDOperand IA64DAGToDAGISel::SelectCALL(SDOperand Op) {
   switch (N->getValueType(0)) {
     default: assert(0 && "Unexpected ret value!");
     case MVT::Other: break;
+    case MVT::i1: {
+        // bools are returned as bytes 0/1 in r8
+	SDOperand byteval = CurDAG->getCopyFromReg(Chain, IA64::r8, MVT::i64,
+	                               Chain.getValue(1));
+        Chain = byteval.getValue(1);
+	Chain = CurDAG->getTargetNode(IA64::CMPNE, MVT::i1, MVT::Other,
+	    byteval, CurDAG->getRegister(IA64::r0, MVT::i64)).getValue(1);
+	CallResults.push_back(Chain.getValue(0));
+	break;
+	}
     case MVT::i64:
         Chain = CurDAG->getCopyFromReg(Chain, IA64::r8, MVT::i64,
                                        Chain.getValue(1)).getValue(1);
@@ -422,17 +432,28 @@ SDOperand IA64DAGToDAGISel::Select(SDOperand Op) {
   case ISD::TRUNCSTORE:
   case ISD::STORE: {
     SDOperand Address = Select(N->getOperand(2));
-
+    SDOperand Chain = Select(N->getOperand(0));
+   
     unsigned Opc;
     if (N->getOpcode() == ISD::STORE) {
       switch (N->getOperand(1).getValueType()) {
-      default: assert(0 && "unknown Type in store");
+      default: assert(0 && "unknown type in store");
+      case MVT::i1: { // this is a bool
+        Opc = IA64::ST1; // we store either 0 or 1 as a byte 
+        CurDAG->SelectNodeTo(N, Opc, MVT::Other, Address,
+	    CurDAG->getTargetNode(IA64::PADDS, MVT::i64,
+	      CurDAG->getRegister(IA64::r0, MVT::i64),
+	      CurDAG->getConstant(1, MVT::i64),
+	      Select(N->getOperand(1))),
+	    Chain);
+        return SDOperand(N, 0); // XXX: early exit
+        }
       case MVT::i64: Opc = IA64::ST8;  break;
       case MVT::f64: Opc = IA64::STF8; break;
-     }
+      }
     } else { //ISD::TRUNCSTORE
       switch(cast<VTSDNode>(N->getOperand(4))->getVT()) {
-      default: assert(0 && "unknown Type in store");
+      default: assert(0 && "unknown type in truncstore");
       case MVT::i8:  Opc = IA64::ST1;  break;
       case MVT::i16: Opc = IA64::ST2;  break;
       case MVT::i32: Opc = IA64::ST4;  break;
@@ -441,7 +462,7 @@ SDOperand IA64DAGToDAGISel::Select(SDOperand Op) {
     }
     
     CurDAG->SelectNodeTo(N, Opc, MVT::Other, Select(N->getOperand(2)),
-                         Select(N->getOperand(1)), Select(N->getOperand(0)));
+                         Select(N->getOperand(1)), Chain);
     return SDOperand(N, 0);
   }
 
