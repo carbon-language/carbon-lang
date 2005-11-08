@@ -409,6 +409,7 @@ void SelectionDAGLegalize::LegalizeDAG() {
   // node is only legalized after all of its operands are legalized.
   std::map<SDNode*, unsigned> Visited;
   std::vector<SDNode*> Order;
+  Order.reserve(DAG.allnodes_end()-DAG.allnodes_begin());
   
   // Compute ordering from all of the leaves in the graphs, those (like the
   // entry node) that have no operands.
