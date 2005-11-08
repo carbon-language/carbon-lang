@@ -4,11 +4,11 @@
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
   <link rel="stylesheet" href="llvm.css" type="text/css">
-  <title>LLVM 1.6 Release Notes</title>
+  <title>LLVM 1.7cvs Release Notes</title>
 </head>
 <body>
 
-<div class="doc_title">LLVM 1.6 Release Notes</div>
+<div class="doc_title">LLVM 1.7 Release Notes</div>
  
 <ol>
   <li><a href="#intro">Introduction</a></li>
@@ -32,10 +32,10 @@
 <div class="doc_text">
 
 <p>This document contains the release notes for the LLVM compiler
-infrastructure, release 1.6.  Here we describe the status of LLVM, including any
+infrastructure, release 1.7.  Here we describe the status of LLVM, including any
 known problems and major improvements from the previous release.  The most
 up-to-date version of this document can be found on the <a
-href="http://llvm.org/releases/1.6/">LLVM 1.6 web site</a>.  If you are
+href="http://llvm.org/releases/">LLVM releases web site</a>.  If you are
 not reading this on the LLVM web pages, you should probably go there because
 this document may be updated after the release.</p>
 
@@ -71,181 +71,9 @@ out and it is now as well supported as Linux on X86.</p>
 
 <!--=========================================================================-->
 <div class="doc_subsection">
-<a name="newfeatures">New Features in LLVM 1.6</a>
+<a name="newfeatures">New Features in LLVM 1.7cvs</a>
 </div>
 
-<!--_________________________________________________________________________-->
-<div class="doc_subsubsection"><a name="iselgen">Instruction Selector
-Generation from Target Description</a></div>
-
-<div class="doc_text">
-<p>LLVM now includes support for auto-generating large portions of the
-instruction selectors from target descriptions.  This allows us to
-write patterns in the target .td file, instead of writing lots of
-nasty C++ code.  Most of the PowerPC instruction selector is now
-generated from the PowerPC target description files and other targets
-are adding support that will be live for LLVM 1.7.</p>
-
-<p>For example, here are some patterns used by the PowerPC backend.  A 
-floating-point multiply then subtract instruction (FMSUBS):</p>
-
-<div class="doc_code"><p>
-<tt>(set F4RC:$FRT, (fsub (fmul F4RC:$FRA, F4RC:$FRC), F4RC:$FRB))</tt>
-</p></div>
-
-<p>Exclusive-or by 16-bit immediate (XORI):</p>
-
-<div class="doc_code"><p>
-<tt>(set GPRC:$dst, (xor GPRC:$src1, immZExt16:$src2))</tt>
-</p></div>
-
-<p>Exclusive-or by 16-bit immediate shifted right 16-bits (XORIS):</p>
-
-<div class="doc_code"><p>
-<tt>(set GPRC:$dst, (xor GPRC:$src1, imm16Shifted:$src2))</tt>
-</p></div>
-
-<p>With these definitions, we teach the code generator how to combine these two
-instructions to xor an abitrary 32-bit immediate with the following
-definition.  The first line specifies what to match (a xor with an arbitrary
-immediate) the second line specifies what to produce:</p>
-
-<div class="doc_code"><p>
-<pre>def : Pat&lt;(xor GPRC:$in, imm:$imm),
-          (XORIS (XORI GPRC:$in, (LO16 imm:$imm)), (HI16 imm:$imm))&gt;;
-</pre>
-</p></div>
-
-</div>
-
-<!--_________________________________________________________________________-->
-<div class="doc_subsubsection"><a name="sched">Instruction Scheduling
-Support</a></div>
-
-<div class="doc_text">
-
-<p>Instruction selectors using the refined <a 
-href="CodeGenerator.html#instselect">instruction selection framework</a> can now
-use a simple pre-pass scheduler included with LLVM 1.6.  This scheduler is 
-currently simple (cannot be configured much by the targets), but will be
-extended in the future.</p>
-</div>
-
-<!--_________________________________________________________________________-->
-<div class="doc_subsubsection"><a name="subtarget">Code Generator Subtarget
-Support</a></div>
-
-<div class="doc_text">
-<p>It is now straight-forward to parameterize a target implementation, and
-provide a mapping from CPU names to sets of target parameters.  LLC now supports
-a <tt>-mcpu=cpu</tt> option that lets you choose a subtarget by CPU name: use 
-"<tt>llvm-as &lt; /dev/null | llc -march=XXX -mcpu=help</tt>" to get a list of 
-supported CPUs for target "XXX".  It also provides a 
-<tt>-mattr=+attr1,-attr2</tt> option that can be used to control individual 
-features of a target (the previous command will list available features as
-well).</p>
-
-<p>This functionality is nice when you want tell LLC something like "compile to
-code that is specialized for the PowerPC G5, but doesn't use altivec code.  In
-this case, using "<tt>llc -march=ppc32 -mcpu=g5 -mattr=-altivec</tt>".</p>
-
-</div>
-
-<!--_________________________________________________________________________-->
-<div class="doc_subsubsection"><a name="jitlock">Other New Features</a></div>
-
-<div class="doc_text">
-<ol>
-  <li>The JIT now uses mutexes to protect its internal data structures. This
-  allows multi-threaded programs to be run from the JIT or interpreter without
-  corruption of the internal data structures. See 
-  <a href="http://llvm.org/PR418">PR418</a> and
-  <a href="http://llvm.org/PR540">PR540</a> for the details.
-  </li>
-  <li>LLVM on Win32 <a href="http://llvm.org/PR614">no longer requires sed,
-      flex, or bison when compiling with Visual C++</a>.</li>
-  <li>The llvm-test suite can now use the NAG Fortran to C compiler to compile
-    SPEC FP programs if available (allowing us to test all of SPEC'95 &amp; 
-    2000).</li>
-  <li>When bugpoint is grinding away and the user hits ctrl-C, it now
-    gracefully stops and gives what it has reduced so far, instead of
-    giving up completely.  In addition, <a href="http://llvm.org/PR576">the JIT
-    debugging mode of bugpoint is much faster</a>.</li>
-  <li>LLVM now includes Xcode project files in the llvm/Xcode directory.</li>
-  <li>LLVM now supports Mac OS X on Intel.</li>
-  <li>LLVM now builds cleanly with GCC 4.1.</li>
-</ol>
-</div>
-
-<!--=========================================================================-->
-<div class="doc_subsection">
-<a name="codequality">Code Quality Improvements in LLVM 1.6</a>
-</div>
-
-<div class="doc_text">
-<ol>
-  <li>The <tt>-globalopt</tt> pass can now statically evaluate C++ static
-      constructors when they are simple enough.  For example, it can
-    now statically initialize "<tt>struct X { int a; X() : a(4) {} } g;</tt>".
-  </li>
-  <li>The Loop Strength Reduction pass has been completely rewritten, is far
-      more aggressive, and is turned on by default in the RISC targets.  On PPC,
-      we find that it often speeds up programs from 10-40% depending on the
-      program.</li>
-  <li>The code produced when exception handling is enabled is far more
-      efficient in some cases, particularly on Mac OS X.</li>
-</ol>
-</div>
-
-
-<!--=========================================================================-->
-<div class="doc_subsection">
-<a name="codequality">Code Generator Improvements in LLVM 1.6</a>
-</div>
-
-<div class="doc_text">
-<ol>
-<li>The Alpha backend is substantially more stable and robust than in LLVM 1.5.
-    For example, it now fully supports varargs functions.  The Alpha backend
-    also now features beta JIT support.</li>
-<li>The code generator contains a new component, the DAG Combiner.  This allows
-    us to optimize lowered code (e.g. after 64-bit operations have been lowered
-    to use 32-bit registers on 32-bit targets) and do fine-grained bit-twiddling
-    optimizations for the backend.</li>
-<li>The SelectionDAG infrastructure is far more capable and mature, able to
-    handle many new target peculiarities in a target-independent way.</li>
-<li>The default <a href="http://llvm.org/PR547">register allocator is now far
-    faster on some testcases</a>,
-    particularly on targets with a large number of registers (e.g. IA64
-    and PPC).</li>
-</ol>
-</div>
-
-<!--=========================================================================-->
-<div class="doc_subsection">
-<a name="bugfix">Significant Bugs Fixed in LLVM 1.6</a>
-</div>
-
-<div class="doc_text">
-<ol>
-  <li>A vast number of bugs have been fixed in the PowerPC backend and in
-      llvm-gcc when configured for Mac OS X (particularly relating to ABI
-      issues).  For example:
-      <a href="http://llvm.org/PR603">PR449</a>,
-      <a href="http://llvm.org/PR594">PR594</a>, 
-      <a href="http://llvm.org/PR603">PR603</a>,
-      <a href="http://llvm.org/PR609">PR609</a>, 
-      <a href="http://llvm.org/PR630">PR630</a>, 
-      <a href="http://llvm.org/PR643">PR643</a>, 
-      and several others without bugzilla bugs.</li>
-  <li>Several bugs in tail call support have been fixed.</li>
-  <li><a href="http://llvm.org/PR608">configure does not correctly detect gcc 
-      version on cygwin</a>.</li>
-  <li>Many many other random bugs have been fixed.  Query <a 
-      href="http://llvm.org/bugs">our bugzilla</a> with a target of 1.6 for more
-      information.</li>
-</ol>
-</div>
 
 <!-- *********************************************************************** -->
 <div class="doc_section">
