@@ -214,15 +214,17 @@ void SelectionDAG::DestroyDeadNode(SDNode *N) {
   
   // Next, brutally remove the operand list.  This is safe to do, as there are
   // no cycles in the graph.
-  while (!N->Operands.empty()) {
-    SDNode *O = N->Operands.back().Val;
-    N->Operands.pop_back();
+  for (SDNode::op_iterator I = N->op_begin(), E = N->op_end(); I != E; ++I) {
+    SDNode *O = I->Val;
     O->removeUser(N);
     
     // Now that we removed this operand, see if there are no uses of it left.
     if (O->use_empty())
       DestroyDeadNode(O);
   }
+  delete[] N->OperandList;
+  N->OperandList = 0;
+  N->NumOperands = 0;
 
   // Mark the node as dead.
   N->MorphNodeTo(65535);
@@ -253,11 +255,11 @@ void SelectionDAG::DeleteNodeNotInCSEMaps(SDNode *N) {
   }
     
   // Drop all of the operands and decrement used nodes use counts.
-  while (!N->Operands.empty()) {
-    SDNode *O = N->Operands.back().Val;
-    N->Operands.pop_back();
-    O->removeUser(N);
-  }
+  for (SDNode::op_iterator I = N->op_begin(), E = N->op_end(); I != E; ++I)
+    I->Val->removeUser(N);
+  delete[] N->OperandList;
+  N->OperandList = 0;
+  N->NumOperands = 0;
   
   delete N;
 }
@@ -430,8 +432,13 @@ SDNode *SelectionDAG::AddNonLeafNodeToCSEMaps(SDNode *N) {
 
 
 SelectionDAG::~SelectionDAG() {
-  for (unsigned i = 0, e = AllNodes.size(); i != e; ++i)
-    delete AllNodes[i];
+  for (unsigned i = 0, e = AllNodes.size(); i != e; ++i) {
+    SDNode *N = AllNodes[i];
+    delete [] N->OperandList;
+    N->OperandList = 0;
+    N->NumOperands = 0;
+    delete N;
+  }
 }
 
 SDOperand SelectionDAG::getZeroExtendInReg(SDOperand Op, MVT::ValueType VT) {
@@ -1078,9 +1085,9 @@ void SDNode::setAdjCallChain(SDOperand N) {
   assert((getOpcode() == ISD::CALLSEQ_START ||
           getOpcode() == ISD::CALLSEQ_END) && "Cannot adjust this node!");
 
-  Operands[0].Val->removeUser(this);
-  Operands[0] = N;
-  N.Val->Uses.push_back(this);
+  OperandList[0].Val->removeUser(this);
+  OperandList[0] = N;
+  OperandList[0].Val->Uses.push_back(this);
 }
 
 
@@ -1430,10 +1437,11 @@ void SelectionDAG::ReplaceAllUsesWith(SDOperand FromN, SDOperand ToN,
     // This node is about to morph, remove its old self from the CSE maps.
     RemoveNodeFromCSEMaps(U);
     
-    for (unsigned i = 0, e = U->getNumOperands(); i != e; ++i)
-      if (U->getOperand(i).Val == From) {
+    for (SDOperand *I = U->OperandList, *E = U->OperandList+U->NumOperands;
+         I != E; ++I)
+      if (I->Val == From) {
         From->removeUser(U);
-        U->Operands[i].Val = To;
+        I->Val = To;
         To->addUser(U);
       }
 
@@ -1471,10 +1479,11 @@ void SelectionDAG::ReplaceAllUsesWith(SDNode *From, SDNode *To,
     // This node is about to morph, remove its old self from the CSE maps.
     RemoveNodeFromCSEMaps(U);
     
-    for (unsigned i = 0, e = U->getNumOperands(); i != e; ++i)
-      if (U->getOperand(i).Val == From) {
+    for (SDOperand *I = U->OperandList, *E = U->OperandList+U->NumOperands;
+         I != E; ++I)
+      if (I->Val == From) {
         From->removeUser(U);
-        U->Operands[i].Val = To;
+        I->Val = To;
         To->addUser(U);
       }
         
@@ -1512,11 +1521,12 @@ void SelectionDAG::ReplaceAllUsesWith(SDNode *From,
     // This node is about to morph, remove its old self from the CSE maps.
     RemoveNodeFromCSEMaps(U);
     
-    for (unsigned i = 0, e = U->getNumOperands(); i != e; ++i)
-      if (U->getOperand(i).Val == From) {
-        const SDOperand &ToOp = To[U->getOperand(i).ResNo];
+    for (SDOperand *I = U->OperandList, *E = U->OperandList+U->NumOperands;
+         I != E; ++I)
+      if (I->Val == From) {
+        const SDOperand &ToOp = To[I->ResNo];
         From->removeUser(U);
-        U->Operands[i] = ToOp;
+        *I = ToOp;
         ToOp.Val->addUser(U);
       }
         
