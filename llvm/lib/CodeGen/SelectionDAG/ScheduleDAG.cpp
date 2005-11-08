@@ -402,7 +402,8 @@ private:
   
 public:
   // Ctor.
-  NodeGroupOpIterator(NodeInfo *N) : NI(N), GI(N) {}
+  NodeGroupOpIterator(NodeInfo *N)
+    : NI(N), GI(N), OI(SDNode::op_iterator()), OE(SDNode::op_iterator()) {}
   
   /// isEnd - Returns true when not more operands are available.
   ///
@@ -652,9 +653,9 @@ bool SimpleSched::isPassiveNode(SDNode *Node) {
 /// IncludeNode - Add node to NodeInfo vector.
 ///
 void SimpleSched::IncludeNode(NodeInfo *NI) {
-  // Get node
-  SDNode *Node = NI->Node;
-  // Ignore entry node
+// Get node
+SDNode *Node = NI->Node;
+// Ignore entry node
 if (Node->getOpcode() == ISD::EntryToken) return;
   // Check current count for node
   int Count = NI->getPending();
