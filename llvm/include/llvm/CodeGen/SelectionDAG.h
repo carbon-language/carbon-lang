@@ -17,6 +17,7 @@
 
 #include "llvm/CodeGen/SelectionDAGNodes.h"
 #include <map>
+#include <list>
 #include <string> // FIXME remove eventually, turning map into const char* map.
 
 namespace llvm {
@@ -172,7 +173,7 @@ public:
                   SDOperand Callee, bool isTailCall = false) {
     SDNode *NN = new SDNode(isTailCall ? ISD::TAILCALL : ISD::CALL, Chain,
                             Callee);
-    NN->setValueTypes(RetVals);
+    setNodeValueTypes(NN, RetVals);
     AllNodes.push_back(NN);
     return NN;
   }
@@ -186,7 +187,7 @@ public:
     ArgsInRegs.insert(ArgsInRegs.begin(), Callee);
     ArgsInRegs.insert(ArgsInRegs.begin(), Chain);
     SDNode *NN = new SDNode(isTailCall ? ISD::TAILCALL : ISD::CALL, ArgsInRegs);
-    NN->setValueTypes(RetVals);
+    setNodeValueTypes(NN, RetVals);
     AllNodes.push_back(NN);
     return NN;
   }
@@ -356,12 +357,18 @@ private:
   SDNode *AddNonLeafNodeToCSEMaps(SDNode *N);
   void DestroyDeadNode(SDNode *N);
   void DeleteNodeNotInCSEMaps(SDNode *N);
+  void setNodeValueTypes(SDNode *N, std::vector<MVT::ValueType> &RetVals);
+  void setNodeValueTypes(SDNode *N, MVT::ValueType VT1, MVT::ValueType VT2);
+  
   
   /// SimplifySetCC - Try to simplify a setcc built with the specified operands 
   /// and cc.  If unable to simplify it, return a null SDOperand.
   SDOperand SimplifySetCC(MVT::ValueType VT, SDOperand N1,
                           SDOperand N2, ISD::CondCode Cond);
-
+  
+  // List of non-single value types.
+  std::list<std::vector<MVT::ValueType> > VTList;
+  
   // Maps to auto-CSE operations.
   std::map<std::pair<unsigned, MVT::ValueType>, SDNode *> NullaryOps;
   std::map<std::pair<unsigned, std::pair<SDOperand, MVT::ValueType> >,

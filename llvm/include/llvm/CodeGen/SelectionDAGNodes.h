@@ -577,11 +577,14 @@ public:
 
 protected:
   friend class SelectionDAG;
+  
+  /// getValueTypeList - Return a pointer to the specified value type.
+  ///
+  static MVT::ValueType *getValueTypeList(MVT::ValueType VT);
 
   SDNode(unsigned NT, MVT::ValueType VT) : NodeType(NT), NodeDepth(1) {
     OperandList = 0; NumOperands = 0;
-    ValueList = new MVT::ValueType[1];
-    ValueList[0] = VT;
+    ValueList = getValueTypeList(VT);
     NumValues = 1;
   }
   SDNode(unsigned NT, SDOperand Op)
@@ -668,7 +671,6 @@ protected:
 
   virtual ~SDNode() {
     assert(NumOperands == 0 && "Operand list not cleared before deletion");
-    delete [] ValueList;
   }
 
   /// MorphNodeTo - This clears the return value and operands list, and sets the
@@ -676,7 +678,6 @@ protected:
   /// the SelectionDAG class.
   void MorphNodeTo(unsigned Opc) {
     NodeType = Opc;
-    delete [] ValueList;
     ValueList = 0;
     NumValues = 0;
     
@@ -691,24 +692,13 @@ protected:
   
   void setValueTypes(MVT::ValueType VT) {
     assert(NumValues == 0 && "Should not have values yet!");
-    ValueList = new MVT::ValueType[1];
-    ValueList[0] = VT;
+    ValueList = getValueTypeList(VT);
     NumValues = 1;
   }
-  void setValueTypes(MVT::ValueType VT1, MVT::ValueType VT2) {
+  void setValueTypes(MVT::ValueType *List, unsigned NumVal) {
     assert(NumValues == 0 && "Should not have values yet!");
-    ValueList = new MVT::ValueType[2];
-    ValueList[0] = VT1;
-    ValueList[1] = VT2;
-    NumValues = 2;
-  }
-  void setValueTypes(const std::vector<MVT::ValueType> &VTs) {
-    assert(NumValues == 0 && "Should not have values yet!");
-    if (VTs.size() == 0) return;  // don't alloc memory.
-    ValueList = new MVT::ValueType[VTs.size()];
-    for (unsigned i = 0, e = VTs.size(); i != e; ++i)
-      ValueList[i] = VTs[i];
-    NumValues = VTs.size();
+    ValueList = List;
+    NumValues = NumVal;
   }
   
   void setOperands(SDOperand Op0) {
