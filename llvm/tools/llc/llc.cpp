@@ -45,6 +45,10 @@ OutputFilename("o", cl::desc("Output filename"), cl::value_desc("filename"));
 
 static cl::opt<bool> Force("f", cl::desc("Overwrite output files"));
 
+static cl::opt<bool> Fast("fast", 
+      cl::desc("Generate code quickly, potentially sacrificing code quality"));
+
+
 static cl::opt<const TargetMachineRegistry::Entry*, false, TargetNameParser>
 MArch("march", cl::desc("Architecture to generate code for:"));
 
@@ -228,7 +232,7 @@ int main(int argc, char **argv) {
     }
 
     // Ask the target to add backend passes as necessary.
-    if (Target.addPassesToEmitFile(Passes, *Out, FileType)) {
+    if (Target.addPassesToEmitFile(Passes, *Out, FileType, Fast)) {
       std::cerr << argv[0] << ": target '" << Target.getName()
                 << "' does not support generation of this file type!\n";
       if (Out != &std::cout) delete Out;
