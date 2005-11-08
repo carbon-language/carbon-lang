@@ -77,11 +77,12 @@ PPCTargetMachine::PPCTargetMachine(const Module &M, IntrinsicLowering *IL,
 ///
 bool PPCTargetMachine::addPassesToEmitFile(PassManager &PM,
                                            std::ostream &Out,
-                                           CodeGenFileType FileType) {
+                                           CodeGenFileType FileType,
+                                           bool Fast) {
   if (FileType != TargetMachine::AssemblyFile) return true;
 
   // Run loop strength reduction before anything else.
-  PM.add(createLoopStrengthReducePass());
+  if (!Fast) PM.add(createLoopStrengthReducePass());
 
   // FIXME: Implement efficient support for garbage collection intrinsics.
   PM.add(createLowerGCPass());
@@ -90,7 +91,7 @@ bool PPCTargetMachine::addPassesToEmitFile(PassManager &PM,
   PM.add(createLowerInvokePass());
   
   // Clean up after other passes, e.g. merging critical edges.
-  PM.add(createCFGSimplificationPass());
+  if (!Fast) PM.add(createCFGSimplificationPass());
 
   // FIXME: Implement the switch instruction in the instruction selector!
   PM.add(createLowerSwitchPass());

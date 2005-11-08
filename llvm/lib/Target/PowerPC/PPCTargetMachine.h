@@ -53,7 +53,7 @@ public:
   static unsigned getModuleMatchQuality(const Module &M);
   
   virtual bool addPassesToEmitFile(PassManager &PM, std::ostream &Out,
-                                   CodeGenFileType FileType);
+                                   CodeGenFileType FileType, bool Fast);
   
   bool addPassesToEmitMachineCode(FunctionPassManager &PM,
                                   MachineCodeEmitter &MCE);
