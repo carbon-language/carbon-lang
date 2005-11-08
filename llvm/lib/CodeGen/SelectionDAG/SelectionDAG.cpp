@@ -426,7 +426,6 @@ SDNode *SelectionDAG::AddNonLeafNodeToCSEMaps(SDNode *N) {
     AN = N;
   }
   return 0;
-  
 }
 
 
@@ -1100,7 +1099,7 @@ SDOperand SelectionDAG::getLoad(MVT::ValueType VT,
   N = new SDNode(ISD::LOAD, Chain, Ptr, SV);
 
   // Loads have a token chain.
-  N->setValueTypes(VT, MVT::Other);
+  setNodeValueTypes(N, VT, MVT::Other);
   AllNodes.push_back(N);
   return SDOperand(N, 0);
 }
@@ -1344,9 +1343,44 @@ SDOperand SelectionDAG::getNode(unsigned Opcode,
   } else {
     N = new SDNode(Opcode, Ops);
   }
-  N->setValueTypes(ResultTys);
+  setNodeValueTypes(N, ResultTys);
   AllNodes.push_back(N);
   return SDOperand(N, 0);
+}
+
+void SelectionDAG::setNodeValueTypes(SDNode *N, 
+                                     std::vector<MVT::ValueType> &RetVals) {
+  switch (RetVals.size()) {
+  case 0: return;
+  case 1: N->setValueTypes(RetVals[0]); return;
+  case 2: setNodeValueTypes(N, RetVals[0], RetVals[1]); return;
+  default: break;
+  }
+  
+  std::list<std::vector<MVT::ValueType> >::iterator I =
+    std::find(VTList.begin(), VTList.end(), RetVals);
+  if (I == VTList.end()) {
+    VTList.push_front(RetVals);
+    I = VTList.begin();
+  }
+
+  N->setValueTypes(&(*I)[0], I->size());
+}
+
+void SelectionDAG::setNodeValueTypes(SDNode *N, MVT::ValueType VT1, 
+                                     MVT::ValueType VT2) {
+  for (std::list<std::vector<MVT::ValueType> >::iterator I = VTList.begin(),
+       E = VTList.end(); I != E; ++I) {
+    if (I->size() == 2 && (*I)[0] == VT1 && (*I)[1] == VT2) {
+      N->setValueTypes(&(*I)[0], 2);
+      return;
+    }
+  }
+  std::vector<MVT::ValueType> V;
+  V.push_back(VT1);
+  V.push_back(VT2);
+  VTList.push_front(V);
+  N->setValueTypes(&(*VTList.begin())[0], 2);
 }
 
 
@@ -1380,7 +1414,7 @@ void SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
                                 SDOperand Op1, SDOperand Op2) {
   RemoveNodeFromCSEMaps(N);
   N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc);
-  N->setValueTypes(VT1, VT2);
+  setNodeValueTypes(N, VT1, VT2);
   N->setOperands(Op1, Op2);
 }
 void SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
@@ -1396,7 +1430,7 @@ void SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
                                 SDOperand Op1, SDOperand Op2, SDOperand Op3) {
   RemoveNodeFromCSEMaps(N);
   N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc);
-  N->setValueTypes(VT1, VT2);
+  setNodeValueTypes(N, VT1, VT2);
   N->setOperands(Op1, Op2, Op3);
 }
 
@@ -1545,6 +1579,15 @@ void SelectionDAG::ReplaceAllUsesWith(SDNode *From,
 //===----------------------------------------------------------------------===//
 //                              SDNode Class
 //===----------------------------------------------------------------------===//
+
+
+/// getValueTypeList - Return a pointer to the specified value type.
+///
+MVT::ValueType *SDNode::getValueTypeList(MVT::ValueType VT) {
+  static MVT::ValueType VTs[MVT::LAST_VALUETYPE];
+  VTs[VT] = VT;
+  return &VTs[VT];
+}
 
 /// hasNUsesOfValue - Return true if there are exactly NUSES uses of the
 /// indicated value.  This method ignores uses of other values defined by this
