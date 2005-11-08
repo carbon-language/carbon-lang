@@ -354,7 +354,7 @@ public:
 private:
   void RemoveNodeFromCSEMaps(SDNode *N);
   SDNode *AddNonLeafNodeToCSEMaps(SDNode *N);
-  void DeleteNodeIfDead(SDNode *N, void *NodeSet);
+  void DestroyDeadNode(SDNode *N);
   void DeleteNodeNotInCSEMaps(SDNode *N);
   
   /// SimplifySetCC - Try to simplify a setcc built with the specified operands 
