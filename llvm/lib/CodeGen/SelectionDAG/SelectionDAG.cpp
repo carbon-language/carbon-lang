@@ -167,41 +167,47 @@ const TargetMachine &SelectionDAG::getTarget() const {
 /// chain but no other uses and no side effect.  If a node is passed in as an
 /// argument, it is used as the seed for node deletion.
 void SelectionDAG::RemoveDeadNodes(SDNode *N) {
-  std::set<SDNode*> AllNodeSet(AllNodes.begin(), AllNodes.end());
-
   // Create a dummy node (which is not added to allnodes), that adds a reference
   // to the root node, preventing it from being deleted.
   HandleSDNode Dummy(getRoot());
 
+  bool MadeChange = false;
+  
   // If we have a hint to start from, use it.
-  if (N) DeleteNodeIfDead(N, &AllNodeSet);
-
- Restart:
-  unsigned NumNodes = AllNodeSet.size();
-  for (std::set<SDNode*>::iterator I = AllNodeSet.begin(), E = AllNodeSet.end();
-       I != E; ++I) {
-    // Try to delete this node.
-    DeleteNodeIfDead(*I, &AllNodeSet);
-
-    // If we actually deleted any nodes, do not use invalid iterators in
-    // AllNodeSet.
-    if (AllNodeSet.size() != NumNodes)
-      goto Restart;
+  if (N && N->use_empty()) {
+    DestroyDeadNode(N);
+    MadeChange = true;
   }
 
-  // Restore AllNodes.
-  if (AllNodes.size() != NumNodes)
-    AllNodes.assign(AllNodeSet.begin(), AllNodeSet.end());
-
+  for (unsigned i = 0, e = AllNodes.size(); i != e; ++i) {
+    // Try to delete this node.
+    SDNode *N = AllNodes[i];
+    if (N->use_empty() && N->getOpcode() != 65535) {
+      DestroyDeadNode(N);
+      MadeChange = true;
+    }
+  }
+  
+  // Walk the nodes list, removing the nodes we've marked as dead.
+  if (MadeChange) {
+    for (unsigned i = 0, e = AllNodes.size(); i != e; ++i)
+      if (AllNodes[i]->use_empty()) {
+        delete AllNodes[i];
+        AllNodes[i] = AllNodes.back();
+        AllNodes.pop_back();
+        --i; --e;
+      }
+  }
+  
   // If the root changed (e.g. it was a dead load, update the root).
   setRoot(Dummy.getValue());
 }
 
-
-void SelectionDAG::DeleteNodeIfDead(SDNode *N, void *NodeSet) {
-  if (!N->use_empty())
-    return;
-
+/// DestroyDeadNode - We know that N is dead.  Nuke it from the CSE maps for the
+/// graph.  If it is the last user of any of its operands, recursively process
+/// them the same way.
+/// 
+void SelectionDAG::DestroyDeadNode(SDNode *N) {
   // Okay, we really are going to delete this node.  First take this out of the
   // appropriate CSE map.
   RemoveNodeFromCSEMaps(N);
@@ -214,16 +220,12 @@ void SelectionDAG::DeleteNodeIfDead(SDNode *N, void *NodeSet) {
     O->removeUser(N);
     
     // Now that we removed this operand, see if there are no uses of it left.
-    DeleteNodeIfDead(O, NodeSet);
+    if (O->use_empty())
+      DestroyDeadNode(O);
   }
-  
-  // Remove the node from the nodes set and delete it.
-  std::set<SDNode*> &AllNodeSet = *(std::set<SDNode*>*)NodeSet;
-  AllNodeSet.erase(N);
-  
-  // Now that the node is gone, check to see if any of the operands of this node
-  // are dead now.
-  delete N;  
+
+  // Mark the node as dead.
+  N->MorphNodeTo(65535);
 }
 
 void SelectionDAG::DeleteNode(SDNode *N) {
