@@ -45,7 +45,7 @@ public:
   }
 
   virtual bool addPassesToEmitFile(PassManager &PM, std::ostream &Out,
-                                   CodeGenFileType FileType);
+                                   CodeGenFileType FileType, bool Fast);
   virtual bool addPassesToEmitMachineCode(FunctionPassManager &PM,
                                           MachineCodeEmitter &MCE);
 

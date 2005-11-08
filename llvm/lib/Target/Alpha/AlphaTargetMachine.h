@@ -48,17 +48,11 @@ public:
 
   static unsigned getJITMatchQuality();
 
-  /// addPassesToEmitMachineCode - Add passes to the specified pass manager to
-  /// get machine code emitted.  This uses a MachineCodeEmitter object to handle
-  /// actually outputting the machine code and resolving things like the address
-  /// of functions.  This method should returns true if machine code emission is
-  /// not supported.
-  ///
   virtual bool addPassesToEmitMachineCode(FunctionPassManager &PM,
                                           MachineCodeEmitter &MCE);
 
   virtual bool addPassesToEmitFile(PassManager &PM, std::ostream &Out,
-                                   CodeGenFileType FileType);
+                                   CodeGenFileType FileType, bool Fast);
 
   static unsigned getModuleMatchQuality(const Module &M);
 };

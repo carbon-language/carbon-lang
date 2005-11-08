@@ -1725,7 +1725,7 @@ void CWriter::visitVAArgInst(VAArgInst &I) {
 //===----------------------------------------------------------------------===//
 
 bool CTargetMachine::addPassesToEmitFile(PassManager &PM, std::ostream &o,
-                                         CodeGenFileType FileType) {
+                                         CodeGenFileType FileType, bool Fast) {
   if (FileType != TargetMachine::AssemblyFile) return true;
 
   PM.add(createLowerGCPass());

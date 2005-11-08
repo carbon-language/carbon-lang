@@ -106,7 +106,8 @@ X86TargetMachine::X86TargetMachine(const Module &M,
 // addPassesToEmitFile - We currently use all of the same passes as the JIT
 // does to emit statically compiled machine code.
 bool X86TargetMachine::addPassesToEmitFile(PassManager &PM, std::ostream &Out,
-                                           CodeGenFileType FileType) {
+                                           CodeGenFileType FileType,
+                                           bool Fast) {
   if (FileType != TargetMachine::AssemblyFile &&
       FileType != TargetMachine::ObjectFile) return true;
 

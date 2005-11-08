@@ -162,7 +162,8 @@ SparcV9TargetMachine::SparcV9TargetMachine(const Module &M,
 ///
 bool
 SparcV9TargetMachine::addPassesToEmitFile(PassManager &PM, std::ostream &Out,
-                                                CodeGenFileType FileType) {
+                                          CodeGenFileType FileType,
+                                          bool Fast) {
   if (FileType != TargetMachine::AssemblyFile) return true;
 
   // FIXME: Implement efficient support for garbage collection intrinsics.

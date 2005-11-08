@@ -77,7 +77,8 @@ AlphaTargetMachine::AlphaTargetMachine(const Module &M, IntrinsicLowering *IL,
 ///
 bool AlphaTargetMachine::addPassesToEmitFile(PassManager &PM,
                                              std::ostream &Out,
-                                             CodeGenFileType FileType) {
+                                             CodeGenFileType FileType,
+                                             bool Fast) {
   if (FileType != TargetMachine::AssemblyFile) return true;
 
   if (EnableAlphaLSR) {

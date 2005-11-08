@@ -85,7 +85,8 @@ IA64TargetMachine::IA64TargetMachine(const Module &M, IntrinsicLowering *IL,
 // does to emit statically compiled machine code.
 bool IA64TargetMachine::addPassesToEmitFile(PassManager &PM,
                                             std::ostream &Out,
-                                                CodeGenFileType FileType) {
+                                            CodeGenFileType FileType,
+                                            bool Fast) {
   if (FileType != TargetMachine::AssemblyFile) return true;
 
   // FIXME: Implement efficient support for garbage collection intrinsics.
