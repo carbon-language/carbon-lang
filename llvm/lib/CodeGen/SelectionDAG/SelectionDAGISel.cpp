@@ -32,6 +32,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/MathExtras.h"
 #include "llvm/Support/Debug.h"
 #include <map>
 #include <iostream>
@@ -607,24 +608,47 @@ void SelectionDAGLowering::visitGetElementPtr(User &I) {
       Ty = StTy->getElementType(Field);
     } else {
       Ty = cast<SequentialType>(Ty)->getElementType();
-      if (!isa<Constant>(Idx) || !cast<Constant>(Idx)->isNullValue()) {
-        // N = N + Idx * ElementSize;
-        uint64_t ElementSize = TD.getTypeSize(Ty);
-        SDOperand IdxN = getValue(Idx), Scale = getIntPtrConstant(ElementSize);
 
-        // If the index is smaller or larger than intptr_t, truncate or extend
-        // it.
-        if (IdxN.getValueType() < Scale.getValueType()) {
-          if (Idx->getType()->isSigned())
-            IdxN = DAG.getNode(ISD::SIGN_EXTEND, Scale.getValueType(), IdxN);
-          else
-            IdxN = DAG.getNode(ISD::ZERO_EXTEND, Scale.getValueType(), IdxN);
-        } else if (IdxN.getValueType() > Scale.getValueType())
-          IdxN = DAG.getNode(ISD::TRUNCATE, Scale.getValueType(), IdxN);
+      // If this is a constant subscript, handle it quickly.
+      if (ConstantInt *CI = dyn_cast<ConstantInt>(Idx)) {
+        if (CI->getRawValue() == 0) continue;
 
-        IdxN = DAG.getNode(ISD::MUL, N.getValueType(), IdxN, Scale);
-        N = DAG.getNode(ISD::ADD, N.getValueType(), N, IdxN);
+        uint64_t Offs;
+        if (ConstantSInt *CSI = dyn_cast<ConstantSInt>(CI))
+          Offs = (int64_t)TD.getTypeSize(Ty)*CSI->getValue();
+        else
+          Offs = TD.getTypeSize(Ty)*cast<ConstantUInt>(CI)->getValue();
+        N = DAG.getNode(ISD::ADD, N.getValueType(), N, getIntPtrConstant(Offs));
+        continue;
       }
+      
+      // N = N + Idx * ElementSize;
+      uint64_t ElementSize = TD.getTypeSize(Ty);
+      SDOperand IdxN = getValue(Idx);
+
+      // If the index is smaller or larger than intptr_t, truncate or extend
+      // it.
+      if (IdxN.getValueType() < N.getValueType()) {
+        if (Idx->getType()->isSigned())
+          IdxN = DAG.getNode(ISD::SIGN_EXTEND, N.getValueType(), IdxN);
+        else
+          IdxN = DAG.getNode(ISD::ZERO_EXTEND, N.getValueType(), IdxN);
+      } else if (IdxN.getValueType() > N.getValueType())
+        IdxN = DAG.getNode(ISD::TRUNCATE, N.getValueType(), IdxN);
+
+      // If this is a multiply by a power of two, turn it into a shl
+      // immediately.  This is a very common case.
+      if (isPowerOf2_64(ElementSize)) {
+        unsigned Amt = Log2_64(ElementSize);
+        IdxN = DAG.getNode(ISD::SHL, N.getValueType(), IdxN,
+                           getIntPtrConstant(Amt));
+        N = DAG.getNode(ISD::ADD, N.getValueType(), N, IdxN);
+        continue;
+      }
+      
+      SDOperand Scale = getIntPtrConstant(ElementSize);
+      IdxN = DAG.getNode(ISD::MUL, N.getValueType(), IdxN, Scale);
+      N = DAG.getNode(ISD::ADD, N.getValueType(), N, IdxN);
     }
   }
   setValue(&I, N);
