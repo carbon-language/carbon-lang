@@ -633,7 +633,8 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
       else
         removePhysReg(i);
 
-#ifndef NDEBUG
+#if 0
+  // This checking code is very expensive.
   bool AllOk = true;
   for (unsigned i = MRegisterInfo::FirstVirtualRegister,
            e = MF->getSSARegMap()->getLastVirtReg(); i <= e; ++i)
