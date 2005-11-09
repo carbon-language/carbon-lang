@@ -837,21 +837,18 @@ void SimpleSched::FakeGroupDominators() {
 void SimpleSched::PrepareNodeInfo() {
   // Allocate node information
   Info = new NodeInfo[NodeCount];
-  // Get base of all nodes table
-  SelectionDAG::allnodes_iterator AllNodes = DAG.allnodes_begin();
-  
-  // For each node being scheduled
-  for (unsigned i = 0, N = NodeCount; i < N; i++) {
-    // Get next node from DAG all nodes table
-    SDNode *Node = AllNodes[i];
+
+  unsigned i = 0;
+  for (SelectionDAG::allnodes_iterator I = DAG.allnodes_begin(),
+       E = DAG.allnodes_end(); I != E; ++I, ++i) {
     // Fast reference to node schedule info
     NodeInfo* NI = &Info[i];
     // Set up map
-    Map[Node] = NI;
+    Map[I] = NI;
     // Set node
-    NI->Node = Node;
+    NI->Node = I;
     // Set pending visit count
-    NI->setPending(Node->use_size());    
+    NI->setPending(I->use_size());
   }
 }
 
@@ -1235,7 +1232,7 @@ void SimpleSched::EmitNode(NodeInfo *NI) {
 ///
 void SimpleSched::Schedule() {
   // Number the nodes
-  NodeCount = DAG.allnodes_size();
+  NodeCount = std::distance(DAG.allnodes_begin(), DAG.allnodes_end());
   // Test to see if scheduling should occur
   bool ShouldSchedule = NodeCount > 3 && ScheduleStyle != noScheduling;
   // Set up minimum info for scheduling

@@ -394,7 +394,6 @@ static void ComputeTopDownOrdering(SDNode *N, std::vector<SDNode*> &Order,
   
   // Now that we have N in, add anything that uses it if all of their operands
   // are now done.
-  
   for (SDNode::use_iterator UI = N->use_begin(), E = N->use_end(); UI != E;++UI)
     ComputeTopDownOrdering(*UI, Order, Visited);
 }
@@ -409,19 +408,20 @@ void SelectionDAGLegalize::LegalizeDAG() {
   // node is only legalized after all of its operands are legalized.
   std::map<SDNode*, unsigned> Visited;
   std::vector<SDNode*> Order;
-  Order.reserve(DAG.allnodes_end()-DAG.allnodes_begin());
   
   // Compute ordering from all of the leaves in the graphs, those (like the
   // entry node) that have no operands.
   for (SelectionDAG::allnodes_iterator I = DAG.allnodes_begin(),
        E = DAG.allnodes_end(); I != E; ++I) {
-    if ((*I)->getNumOperands() == 0) {
-      Visited[*I] = 0 - 1U;
-      ComputeTopDownOrdering(*I, Order, Visited);
+    if (I->getNumOperands() == 0) {
+      Visited[I] = 0 - 1U;
+      ComputeTopDownOrdering(I, Order, Visited);
     }
   }
   
-  assert(Order.size() == Visited.size() && Order.size() == DAG.allnodes_size()&&
+  assert(Order.size() == Visited.size() &&
+         Order.size() == 
+            (unsigned)std::distance(DAG.allnodes_begin(), DAG.allnodes_end()) &&
          "Error: DAG is cyclic!");
   Visited.clear();
   

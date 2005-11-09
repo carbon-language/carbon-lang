@@ -514,7 +514,9 @@ void DAGCombiner::Run(bool RunningAfterLegalize) {
   AfterLegalize = RunningAfterLegalize;
 
   // Add all the dag nodes to the worklist.
-  WorkList.insert(WorkList.end(), DAG.allnodes_begin(), DAG.allnodes_end());
+  for (SelectionDAG::allnodes_iterator I = DAG.allnodes_begin(),
+       E = DAG.allnodes_end(); I != E; ++I)
+    WorkList.push_back(I);
   
   // Create a dummy node (which is not added to allnodes), that adds a reference
   // to the root node, preventing it from being deleted, and tracking any
