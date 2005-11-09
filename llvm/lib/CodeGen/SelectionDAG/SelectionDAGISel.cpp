@@ -46,7 +46,6 @@ ViewDAGs("view-isel-dags", cl::Hidden,
 static const bool ViewDAGs = 0;
 #endif
 
-
 namespace llvm {
   //===--------------------------------------------------------------------===//
   /// FunctionLoweringInfo - This contains information that is global to a
@@ -405,6 +404,7 @@ public:
   void visitStore(StoreInst &I);
   void visitPHI(PHINode &I) { } // PHI nodes are handled specially.
   void visitCall(CallInst &I);
+  const char *visitIntrinsicCall(CallInst &I, unsigned Intrinsic);
 
   void visitVAStart(CallInst &I);
   void visitVAArg(VAArgInst &I);
@@ -737,123 +737,133 @@ void SelectionDAGLowering::visitStore(StoreInst &I) {
                           DAG.getSrcValue(I.getOperand(1))));
 }
 
+/// visitIntrinsicCall - Lower the call to the specified intrinsic function.  If
+/// we want to emit this as a call to a named external function, return the name
+/// otherwise lower it and return null.
+const char *
+SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
+  switch (Intrinsic) {
+  case Intrinsic::vastart:  visitVAStart(I); return 0;
+  case Intrinsic::vaend:    visitVAEnd(I); return 0;
+  case Intrinsic::vacopy:   visitVACopy(I); return 0;
+  case Intrinsic::returnaddress: visitFrameReturnAddress(I, false); return 0;
+  case Intrinsic::frameaddress:  visitFrameReturnAddress(I, true); return 0;
+  case Intrinsic::setjmp:
+    return "_setjmp"+!TLI.usesUnderscoreSetJmpLongJmp();
+    break;
+  case Intrinsic::longjmp:
+    return "_longjmp"+!TLI.usesUnderscoreSetJmpLongJmp();
+    break;
+  case Intrinsic::memcpy:  visitMemIntrinsic(I, ISD::MEMCPY); return 0;
+  case Intrinsic::memset:  visitMemIntrinsic(I, ISD::MEMSET); return 0;
+  case Intrinsic::memmove: visitMemIntrinsic(I, ISD::MEMMOVE); return 0;
+    
+  case Intrinsic::readport:
+  case Intrinsic::readio: {
+    std::vector<MVT::ValueType> VTs;
+    VTs.push_back(TLI.getValueType(I.getType()));
+    VTs.push_back(MVT::Other);
+    std::vector<SDOperand> Ops;
+    Ops.push_back(getRoot());
+    Ops.push_back(getValue(I.getOperand(1)));
+    SDOperand Tmp = DAG.getNode(Intrinsic == Intrinsic::readport ?
+                                ISD::READPORT : ISD::READIO, VTs, Ops);
+    
+    setValue(&I, Tmp);
+    DAG.setRoot(Tmp.getValue(1));
+    return 0;
+  }
+  case Intrinsic::writeport:
+  case Intrinsic::writeio:
+    DAG.setRoot(DAG.getNode(Intrinsic == Intrinsic::writeport ?
+                            ISD::WRITEPORT : ISD::WRITEIO, MVT::Other,
+                            getRoot(), getValue(I.getOperand(1)),
+                            getValue(I.getOperand(2))));
+    return 0;
+  case Intrinsic::dbg_stoppoint:
+  case Intrinsic::dbg_region_start:
+  case Intrinsic::dbg_region_end:
+  case Intrinsic::dbg_func_start:
+  case Intrinsic::dbg_declare:
+    if (I.getType() != Type::VoidTy)
+      setValue(&I, DAG.getNode(ISD::UNDEF, TLI.getValueType(I.getType())));
+    return 0;
+    
+  case Intrinsic::isunordered:
+    setValue(&I, DAG.getSetCC(MVT::i1,getValue(I.getOperand(1)),
+                              getValue(I.getOperand(2)), ISD::SETUO));
+    return 0;
+    
+  case Intrinsic::sqrt:
+    setValue(&I, DAG.getNode(ISD::FSQRT,
+                             getValue(I.getOperand(1)).getValueType(),
+                             getValue(I.getOperand(1))));
+    return 0;
+  case Intrinsic::pcmarker: {
+    SDOperand Tmp = getValue(I.getOperand(1));
+    DAG.setRoot(DAG.getNode(ISD::PCMARKER, MVT::Other, getRoot(), Tmp));
+    return 0;
+  }
+  case Intrinsic::cttz:
+    setValue(&I, DAG.getNode(ISD::CTTZ,
+                             getValue(I.getOperand(1)).getValueType(),
+                             getValue(I.getOperand(1))));
+    return 0;
+  case Intrinsic::ctlz:
+    setValue(&I, DAG.getNode(ISD::CTLZ,
+                             getValue(I.getOperand(1)).getValueType(),
+                             getValue(I.getOperand(1))));
+    return 0;
+  case Intrinsic::ctpop:
+    setValue(&I, DAG.getNode(ISD::CTPOP,
+                             getValue(I.getOperand(1)).getValueType(),
+                             getValue(I.getOperand(1))));
+    return 0;
+  default:
+    std::cerr << I;
+    assert(0 && "This intrinsic is not implemented yet!");
+    return 0;
+  }
+}
+
+
 void SelectionDAGLowering::visitCall(CallInst &I) {
   const char *RenameFn = 0;
-  SDOperand Tmp;
-  if (Function *F = I.getCalledFunction())
+  if (Function *F = I.getCalledFunction()) {
     if (F->isExternal())
-      switch (F->getIntrinsicID()) {
-      case 0:     // Not an LLVM intrinsic.
-        if (F->getName() == "fabs" || F->getName() == "fabsf") {
+      if (unsigned IID = F->getIntrinsicID()) {
+        RenameFn = visitIntrinsicCall(I, IID);
+        if (!RenameFn)
+          return;
+      } else {    // Not an LLVM intrinsic.
+        const std::string &Name = F->getName();
+        if (Name[0] == 'f' && (Name == "fabs" || Name == "fabsf")) {
           if (I.getNumOperands() == 2 &&   // Basic sanity checks.
               I.getOperand(1)->getType()->isFloatingPoint() &&
               I.getType() == I.getOperand(1)->getType()) {
-            Tmp = getValue(I.getOperand(1));
+            SDOperand Tmp = getValue(I.getOperand(1));
             setValue(&I, DAG.getNode(ISD::FABS, Tmp.getValueType(), Tmp));
             return;
           }
-        }
-        else if (F->getName() == "sin" || F->getName() == "sinf") {
+        } else if (Name[0] == 's' && (Name == "sin" || Name == "sinf")) {
           if (I.getNumOperands() == 2 &&   // Basic sanity checks.
               I.getOperand(1)->getType()->isFloatingPoint() &&
               I.getType() == I.getOperand(1)->getType()) {
-            Tmp = getValue(I.getOperand(1));
+            SDOperand Tmp = getValue(I.getOperand(1));
             setValue(&I, DAG.getNode(ISD::FSIN, Tmp.getValueType(), Tmp));
             return;
           }
-        }
-        else if (F->getName() == "cos" || F->getName() == "cosf") {
+        } else if (Name[0] == 'c' && (Name == "cos" || Name == "cosf")) {
           if (I.getNumOperands() == 2 &&   // Basic sanity checks.
               I.getOperand(1)->getType()->isFloatingPoint() &&
               I.getType() == I.getOperand(1)->getType()) {
-            Tmp = getValue(I.getOperand(1));
+            SDOperand Tmp = getValue(I.getOperand(1));
             setValue(&I, DAG.getNode(ISD::FCOS, Tmp.getValueType(), Tmp));
             return;
           }
         }
-        break;
-      case Intrinsic::vastart:  visitVAStart(I); return;
-      case Intrinsic::vaend:    visitVAEnd(I); return;
-      case Intrinsic::vacopy:   visitVACopy(I); return;
-      case Intrinsic::returnaddress: visitFrameReturnAddress(I, false); return;
-      case Intrinsic::frameaddress:  visitFrameReturnAddress(I, true); return;
-
-      case Intrinsic::setjmp:
-        RenameFn = "_setjmp"+!TLI.usesUnderscoreSetJmpLongJmp();
-        break;
-      case Intrinsic::longjmp:
-        RenameFn = "_longjmp"+!TLI.usesUnderscoreSetJmpLongJmp();
-        break;
-      case Intrinsic::memcpy:  visitMemIntrinsic(I, ISD::MEMCPY); return;
-      case Intrinsic::memset:  visitMemIntrinsic(I, ISD::MEMSET); return;
-      case Intrinsic::memmove: visitMemIntrinsic(I, ISD::MEMMOVE); return;
-
-      case Intrinsic::readport:
-      case Intrinsic::readio: {
-        std::vector<MVT::ValueType> VTs;
-        VTs.push_back(TLI.getValueType(I.getType()));
-        VTs.push_back(MVT::Other);
-        std::vector<SDOperand> Ops;
-        Ops.push_back(getRoot());
-        Ops.push_back(getValue(I.getOperand(1)));
-        Tmp = DAG.getNode(F->getIntrinsicID() == Intrinsic::readport ?
-                          ISD::READPORT : ISD::READIO, VTs, Ops);
-
-        setValue(&I, Tmp);
-        DAG.setRoot(Tmp.getValue(1));
-        return;
       }
-      case Intrinsic::writeport:
-      case Intrinsic::writeio:
-        DAG.setRoot(DAG.getNode(F->getIntrinsicID() == Intrinsic::writeport ?
-                                ISD::WRITEPORT : ISD::WRITEIO, MVT::Other,
-                                getRoot(), getValue(I.getOperand(1)),
-                                getValue(I.getOperand(2))));
-        return;
-      case Intrinsic::dbg_stoppoint:
-      case Intrinsic::dbg_region_start:
-      case Intrinsic::dbg_region_end:
-      case Intrinsic::dbg_func_start:
-      case Intrinsic::dbg_declare:
-        if (I.getType() != Type::VoidTy)
-          setValue(&I, DAG.getNode(ISD::UNDEF, TLI.getValueType(I.getType())));
-        return;
-
-      case Intrinsic::isunordered:
-        setValue(&I, DAG.getSetCC(MVT::i1,getValue(I.getOperand(1)),
-                                  getValue(I.getOperand(2)), ISD::SETUO));
-        return;
-
-      case Intrinsic::sqrt:
-        setValue(&I, DAG.getNode(ISD::FSQRT,
-                                 getValue(I.getOperand(1)).getValueType(),
-                                 getValue(I.getOperand(1))));
-        return;
-
-      case Intrinsic::pcmarker:
-        Tmp = getValue(I.getOperand(1));
-        DAG.setRoot(DAG.getNode(ISD::PCMARKER, MVT::Other, getRoot(), Tmp));
-        return;
-      case Intrinsic::cttz:
-        setValue(&I, DAG.getNode(ISD::CTTZ,
-                                 getValue(I.getOperand(1)).getValueType(),
-                                 getValue(I.getOperand(1))));
-        return;
-      case Intrinsic::ctlz:
-        setValue(&I, DAG.getNode(ISD::CTLZ,
-                                 getValue(I.getOperand(1)).getValueType(),
-                                 getValue(I.getOperand(1))));
-        return;
-      case Intrinsic::ctpop:
-        setValue(&I, DAG.getNode(ISD::CTPOP,
-                                 getValue(I.getOperand(1)).getValueType(),
-                                 getValue(I.getOperand(1))));
-        return;
-      default:
-        std::cerr << I;
-        assert(0 && "This intrinsic is not implemented yet!");
-        return;
-      }
+  }
 
   SDOperand Callee;
   if (!RenameFn)
@@ -861,7 +871,7 @@ void SelectionDAGLowering::visitCall(CallInst &I) {
   else
     Callee = DAG.getExternalSymbol(RenameFn, TLI.getPointerTy());
   std::vector<std::pair<SDOperand, const Type*> > Args;
-
+  Args.reserve(I.getNumOperands());
   for (unsigned i = 1, e = I.getNumOperands(); i != e; ++i) {
     Value *Arg = I.getOperand(i);
     SDOperand ArgNode = getValue(Arg);
@@ -1045,7 +1055,6 @@ void SelectionDAGISel::getAnalysisUsage(AnalysisUsage &AU) const {
   // updates dom and loop info.
 }
 
-
 bool SelectionDAGISel::runOnFunction(Function &Fn) {
   MachineFunction &MF = MachineFunction::construct(&Fn, TLI.getTargetMachine());
   RegMap = MF.getSSARegMap();
@@ -1062,7 +1071,7 @@ bool SelectionDAGISel::runOnFunction(Function &Fn) {
         if (isa<Constant>(PN->getIncomingValue(i)))
           SplitCriticalEdge(PN->getIncomingBlock(i), BB);
   }
-
+  
   FunctionLoweringInfo FuncInfo(TLI, Fn, MF);
 
   for (Function::iterator I = Fn.begin(), E = Fn.end(); I != E; ++I)
