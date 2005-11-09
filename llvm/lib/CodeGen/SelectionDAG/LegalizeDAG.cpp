@@ -633,19 +633,26 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     }
     break;
   }
-  case ISD::TokenFactor: {
-    std::vector<SDOperand> Ops;
-    bool Changed = false;
-    // Legalize the operands
-    for (unsigned i = 0, e = Node->getNumOperands(); i != e; ++i) {
-      SDOperand Op = Node->getOperand(i);
-      Ops.push_back(LegalizeOp(Op));
-      Changed |= Ops[i] != Op;
+  case ISD::TokenFactor:
+    if (Node->getNumOperands() == 2) {
+      bool Changed = false;
+      SDOperand Op0 = LegalizeOp(Node->getOperand(0));
+      SDOperand Op1 = LegalizeOp(Node->getOperand(1));
+      if (Op0 != Node->getOperand(0) || Op1 != Node->getOperand(1))
+        Result = DAG.getNode(ISD::TokenFactor, MVT::Other, Op0, Op1);
+    } else {
+      std::vector<SDOperand> Ops;
+      bool Changed = false;
+      // Legalize the operands.
+      for (unsigned i = 0, e = Node->getNumOperands(); i != e; ++i) {
+        SDOperand Op = Node->getOperand(i);
+        Ops.push_back(LegalizeOp(Op));
+        Changed |= Ops[i] != Op;
+      }
+      if (Changed)
+        Result = DAG.getNode(ISD::TokenFactor, MVT::Other, Ops);
     }
-    if (Changed)
-      Result = DAG.getNode(ISD::TokenFactor, MVT::Other, Ops);
     break;
-  }
 
   case ISD::CALLSEQ_START:
   case ISD::CALLSEQ_END:
