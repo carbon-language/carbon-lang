@@ -641,7 +641,7 @@ void SelectionDAGLowering::visitGetElementPtr(User &I) {
       if (isPowerOf2_64(ElementSize)) {
         unsigned Amt = Log2_64(ElementSize);
         IdxN = DAG.getNode(ISD::SHL, N.getValueType(), IdxN,
-                           getIntPtrConstant(Amt));
+                           DAG.getConstant(Amt, TLI.getShiftAmountTy()));
         N = DAG.getNode(ISD::ADD, N.getValueType(), N, IdxN);
         continue;
       }
