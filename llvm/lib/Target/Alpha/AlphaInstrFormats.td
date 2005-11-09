@@ -26,15 +26,17 @@ def s64imm  : Operand<i64>;
 //===----------------------------------------------------------------------===//
 // Instruction format superclass
 //===----------------------------------------------------------------------===//
-
-class InstAlpha<bits<6> op, dag OL, string asmstr> : Instruction {          // Alpha instruction baseline
+// Alpha instruction baseline
+class InstAlphaAlt<bits<6> op, string asmstr> : Instruction {
   field bits<32> Inst;
   let Namespace = "Alpha";
-  let OperandList = OL;
   let AsmString = asmstr;
-
- 
   let Inst{31-26} = op;
+}
+
+class InstAlpha<bits<6> op, dag OL, string asmstr> 
+: InstAlphaAlt<op, asmstr> { // Alpha instruction baseline
+  let OperandList = OL;
 }
 
 //3.3.1
@@ -92,7 +94,7 @@ class BFormD<bits<6> opcode, string asmstr>
 
 let isBranch = 1, isTerminator = 1 in
 class FBForm<bits<6> opcode, string asmstr> 
-    : InstAlpha<opcode, (ops FPRC:$RA, s21imm:$DISP), asmstr> {
+    : InstAlpha<opcode, (ops F8RC:$RA, s21imm:$DISP), asmstr> {
   bits<5> Ra;
   bits<21> disp;
 
@@ -183,27 +185,15 @@ class OForm4L<bits<6> opcode, bits<7> fun, string asmstr>
 }
 
 //3.3.4
-class FPForm<bits<6> opcode, bits<11> fun, string asmstr> 
-        : InstAlpha<opcode, (ops FPRC:$RC, FPRC:$RA, FPRC:$RB), asmstr> {
+class FPForm<bits<6> opcode, bits<11> fun, string asmstr, list<dag> pattern> 
+        : InstAlphaAlt<opcode, asmstr> {
+  let Pattern = pattern;
+
   bits<5> Fc;
   bits<5> Fa;
   bits<5> Fb;
   bits<11> Function = fun;
 
-  let Inst{25-21} = Fa;
-  let Inst{20-16} = Fb;
-  let Inst{15-5} = Function;
-  let Inst{4-0} = Fc;
-}
-
-class FPFormCM<bits<6> opcode, bits<11> fun, string asmstr> 
-        : InstAlpha<opcode, (ops FPRC:$RDEST, FPRC:$RSRC2, FPRC:$RSRC, FPRC:$RCOND), asmstr> {
-  bits<5> Fc;
-  bits<5> Fa;
-  bits<5> Fb;
-  bits<11> Function = fun;
-
-  let isTwoAddress = 1;
   let Inst{25-21} = Fa;
   let Inst{20-16} = Fb;
   let Inst{15-5} = Function;

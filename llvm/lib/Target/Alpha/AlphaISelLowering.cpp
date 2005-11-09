@@ -50,8 +50,8 @@ AlphaTargetLowering::AlphaTargetLowering(TargetMachine &TM) : TargetLowering(TM)
   setSetCCResultContents(ZeroOrOneSetCCResult);
   
   addRegisterClass(MVT::i64, Alpha::GPRCRegisterClass);
-  addRegisterClass(MVT::f64, Alpha::FPRCRegisterClass);
-  addRegisterClass(MVT::f32, Alpha::FPRCRegisterClass);
+  addRegisterClass(MVT::f64, Alpha::F8RCRegisterClass);
+  addRegisterClass(MVT::f32, Alpha::F4RCRegisterClass);
   
   setOperationAction(ISD::BRCONDTWOWAY, MVT::Other, Expand);
   setOperationAction(ISD::BRTWOWAY_CC,  MVT::Other, Expand);

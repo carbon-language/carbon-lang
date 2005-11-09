@@ -82,20 +82,59 @@ def F30 : FPR<30, "$f30">;  def F31 : FPR<31, "$f31">;
 def GPRC : RegisterClass<"Alpha", i64, 64,
      // Volatile
      [R0, R1, R2, R3, R4, R5, R6, R7, R8, R16, R17, R18, R19, R20, R21, R22,
-      R23, R24, R25, 
+      R23, R24, R25, R28, 
      //Special meaning, but volatile
      R27, //procedure address
      R26, //return address
      R29, //global offset table address
      // Non-volatile
-     R9, R10, R11, R12, R13, R14 ]>;
-     // Note: R28 is reserved for the assembler
+     R9, R10, R11, R12, R13, R14,
+     R31 ]> //zero
+{
+  let MethodProtos = [{
+    iterator allocation_order_end(MachineFunction &MF) const;
+  }];
+  let MethodBodies = [{
+    GPRCClass::iterator
+    GPRCClass::allocation_order_end(MachineFunction &MF) const {
+        return end()-1;
+    }
+  }];
+}
 
-// Don't allocate 15, 29, 30, 31
-// Allocation volatiles only for now
-def FPRC : RegisterClass<"Alpha", f64, 64, [F0, F1, 
+def F4RC : RegisterClass<"Alpha", f32, 64, [F0, F1, 
         F10, F11, F12, F13, F14, F15, F16, F17, F18, F19,
         F20, F21, F22, F23, F24, F25, F26, F27, F28, F29, F30,
         // Saved:
-        F2, F3, F4, F5, F6, F7, F8, F9
-        ]>;
+        F2, F3, F4, F5, F6, F7, F8, F9,
+        F31 ]> //zero
+{
+  let MethodProtos = [{
+    iterator allocation_order_end(MachineFunction &MF) const;
+  }];
+  let MethodBodies = [{
+    F4RCClass::iterator
+    F4RCClass::allocation_order_end(MachineFunction &MF) const {
+        return end()-1;
+    }
+  }];
+}
+
+def F8RC : RegisterClass<"Alpha", f64, 64, [F0, F1, 
+        F10, F11, F12, F13, F14, F15, F16, F17, F18, F19,
+        F20, F21, F22, F23, F24, F25, F26, F27, F28, F29, F30,
+        // Saved:
+        F2, F3, F4, F5, F6, F7, F8, F9,
+        F31 ]> //zero
+{
+  let MethodProtos = [{
+    iterator allocation_order_end(MachineFunction &MF) const;
+  }];
+  let MethodBodies = [{
+    F8RCClass::iterator
+    F8RCClass::allocation_order_end(MachineFunction &MF) const {
+        return end()-1;
+    }
+  }];
+}
+

@@ -96,19 +96,19 @@ def MEMLABEL : PseudoInstAlpha<(ops s64imm:$i, s64imm:$j, s64imm:$k, s64imm:$m),
 //really the ISel should emit multiple MBB
 let isTwoAddress = 1 in {
 //Conditional move of an int based on a FP CC
-  def CMOVEQ_FP : PseudoInstAlpha<(ops GPRC:$RDEST, GPRC:$RSRC_F, GPRC:$RSRC_T, FPRC:$RCOND),
+  def CMOVEQ_FP : PseudoInstAlpha<(ops GPRC:$RDEST, GPRC:$RSRC_F, GPRC:$RSRC_T, F8RC:$RCOND),
                                   "fbne $RCOND, 42f\n\tbis $RSRC_T,$RSRC_T,$RDEST\n42:\n">;
-  def CMOVEQi_FP : PseudoInstAlpha<(ops GPRC:$RDEST, GPRC:$RSRC_F, u8imm:$L, FPRC:$RCOND),
+  def CMOVEQi_FP : PseudoInstAlpha<(ops GPRC:$RDEST, GPRC:$RSRC_F, u8imm:$L, F8RC:$RCOND),
                                   "fbne $RCOND, 42f\n\taddq $$31,$L,$RDEST\n42:\n">;
 
-  def CMOVNE_FP : PseudoInstAlpha<(ops GPRC:$RDEST, GPRC:$RSRC_F, GPRC:$RSRC_T, FPRC:$RCOND),
+  def CMOVNE_FP : PseudoInstAlpha<(ops GPRC:$RDEST, GPRC:$RSRC_F, GPRC:$RSRC_T, F8RC:$RCOND),
                                   "fbeq $RCOND, 42f\n\tbis $RSRC_T,$RSRC_T,$RDEST\n42:\n">;
-  def CMOVNEi_FP : PseudoInstAlpha<(ops GPRC:$RDEST, GPRC:$RSRC_F, u8imm:$L, FPRC:$RCOND),
+  def CMOVNEi_FP : PseudoInstAlpha<(ops GPRC:$RDEST, GPRC:$RSRC_F, u8imm:$L, F8RC:$RCOND),
                                   "fbeq $RCOND, 42f\n\taddq $$31,$L,$RDEST\n42:\n">;
 //Conditional move of an FP based on a Int CC
-  def FCMOVEQ_INT : PseudoInstAlpha<(ops GPRC:$RDEST, GPRC:$RSRC_F, GPRC:$RSRC_T, FPRC:$RCOND),
+  def FCMOVEQ_INT : PseudoInstAlpha<(ops GPRC:$RDEST, GPRC:$RSRC_F, GPRC:$RSRC_T, F8RC:$RCOND),
                                   "bne $RCOND, 42f\n\tcpys $RSRC_T,$RSRC_T,$RDEST\n42:\n">;
-  def FCMOVNE_INT : PseudoInstAlpha<(ops GPRC:$RDEST, GPRC:$RSRC_F, GPRC:$RSRC_T, FPRC:$RCOND),
+  def FCMOVNE_INT : PseudoInstAlpha<(ops GPRC:$RDEST, GPRC:$RSRC_F, GPRC:$RSRC_T, F8RC:$RCOND),
                                   "beq $RCOND, 42f\n\tcpys $RSRC_T,$RSRC_T,$RDEST\n42:\n">;
 }
 
@@ -137,13 +137,15 @@ def CMOVNE   : OForm4<  0x11, 0x26, "cmovne $RCOND,$RSRC,$RDEST">; //CMOVE if RC
 def CMOVNEi  : OForm4L< 0x11, 0x26, "cmovne $RCOND,$L,$RDEST">; //CMOVE if RCOND != zero
 
 //conditional moves, fp
-def FCMOVEQ : FPFormCM<0x17, 0x02A, "fcmoveq $RCOND,$RSRC,$RDEST">; //FCMOVE if = zero
-def FCMOVGE : FPFormCM<0x17, 0x02D, "fcmovge $RCOND,$RSRC,$RDEST">; //FCMOVE if >= zero
-def FCMOVGT : FPFormCM<0x17, 0x02F, "fcmovgt $RCOND,$RSRC,$RDEST">; //FCMOVE if > zero
-def FCMOVLE : FPFormCM<0x17, 0x02E, "fcmovle $RCOND,$RSRC,$RDEST">; //FCMOVE if <= zero
-def FCMOVLT : FPFormCM<0x17, 0x02C, "fcmovlt $RCOND,$RSRC,$RDEST">; // FCMOVE if < zero
-def FCMOVNE : FPFormCM<0x17, 0x02B, "fcmovne $RCOND,$RSRC,$RDEST">; //FCMOVE if != zero
-
+let OperandList = (ops F8RC:$RDEST, F8RC:$RSRC2, F8RC:$RSRC, F8RC:$RCOND),
+    isTwoAddress = 1 in {
+def FCMOVEQ : FPForm<0x17, 0x02A, "fcmoveq $RCOND,$RSRC,$RDEST",[]>; //FCMOVE if = zero
+def FCMOVGE : FPForm<0x17, 0x02D, "fcmovge $RCOND,$RSRC,$RDEST",[]>; //FCMOVE if >= zero
+def FCMOVGT : FPForm<0x17, 0x02F, "fcmovgt $RCOND,$RSRC,$RDEST",[]>; //FCMOVE if > zero
+def FCMOVLE : FPForm<0x17, 0x02E, "fcmovle $RCOND,$RSRC,$RDEST",[]>; //FCMOVE if <= zero
+def FCMOVLT : FPForm<0x17, 0x02C, "fcmovlt $RCOND,$RSRC,$RDEST",[]>; // FCMOVE if < zero
+def FCMOVNE : FPForm<0x17, 0x02B, "fcmovne $RCOND,$RSRC,$RDEST",[]>; //FCMOVE if != zero
+}
 
 def ADDL     : OForm< 0x10, 0x00, "addl $RA,$RB,$RC",
                       [(set GPRC:$RC, (intop (add GPRC:$RA, GPRC:$RB)))]>;
@@ -153,8 +155,6 @@ def ADDQ     : OForm< 0x10, 0x20, "addq $RA,$RB,$RC",
                       [(set GPRC:$RC, (add GPRC:$RA, GPRC:$RB))]>;
 def ADDQi    : OFormL<0x10, 0x20, "addq $RA,$L,$RC",
                       [(set GPRC:$RC, (add GPRC:$RA, immUExt8:$L))]>;
-//def AMASK    : OForm< 0x11, 0x61, "AMASK $RA,$RB,$RC", []>; //Architecture mask
-//def AMASKi   : OFormL<0x11, 0x61, "AMASK $RA,$L,$RC", []>; //Architecture mask
 def AND      : OForm< 0x11, 0x00, "and $RA,$RB,$RC",
                       [(set GPRC:$RC, (and GPRC:$RA, GPRC:$RB))]>;
 def ANDi     : OFormL<0x11, 0x00, "and $RA,$L,$RC",
@@ -357,29 +357,6 @@ def : Pat<(setune GPRC:$X, GPRC:$Y), (CMPEQi (CMPEQ GPRC:$X, GPRC:$Y), 0)>;
 def : Pat<(setune GPRC:$X, immUExt8:$Y), (CMPEQi (CMPEQ GPRC:$X, immUExt8:$Y), 0)>;
 
 
-//Comparison, FP
-def CMPTEQ : FPForm<0x16, 0x5A5, "cmpteq/su $RA,$RB,$RC">;  //Compare T_floating equal
-def CMPTLE : FPForm<0x16, 0x5A7, "cmptle/su $RA,$RB,$RC">;  //Compare T_floating less than or equal
-def CMPTLT : FPForm<0x16, 0x5A6, "cmptlt/su $RA,$RB,$RC">;  //Compare T_floating less than
-def CMPTUN : FPForm<0x16, 0x5A4, "cmptun/su $RA,$RB,$RC">;  //Compare T_floating unordered
-
-//There are in the Multimedia extentions, so let's not use them yet
-//def MAXSB8  : OForm<0x1C, 0x3E, "MAXSB8 $RA,$RB,$RC">; //Vector signed byte maximum
-//def MAXSW4 : OForm< 0x1C, 0x3F, "MAXSW4 $RA,$RB,$RC">; //Vector signed word maximum
-//def MAXUB8  : OForm<0x1C, 0x3C, "MAXUB8 $RA,$RB,$RC">; //Vector unsigned byte maximum
-//def MAXUW4 : OForm< 0x1C, 0x3D, "MAXUW4 $RA,$RB,$RC">; //Vector unsigned word maximum
-//def MINSB8 : OForm< 0x1C, 0x38, "MINSB8 $RA,$RB,$RC">; //Vector signed byte minimum
-//def MINSW4 : OForm< 0x1C, 0x39, "MINSW4 $RA,$RB,$RC">; //Vector signed word minimum
-//def MINUB8 : OForm< 0x1C, 0x3A, "MINUB8 $RA,$RB,$RC">; //Vector unsigned byte minimum
-//def MINUW4 : OForm< 0x1C, 0x3B, "MINUW4 $RA,$RB,$RC">; //Vector unsigned word minimum
-//def PERR : OForm< 0x1C, 0x31, "PERR $RA,$RB,$RC">; //Pixel error
-//def PKLB : OForm< 0x1C, 0x37, "PKLB $RA,$RB,$RC">; //Pack longwords to bytes
-//def PKWB  : OForm<0x1C, 0x36, "PKWB $RA,$RB,$RC">; //Pack words to bytes
-//def UNPKBL : OForm< 0x1C, 0x35, "UNPKBL $RA,$RB,$RC">; //Unpack bytes to longwords
-//def UNPKBW : OForm< 0x1C, 0x34, "UNPKBW $RA,$RB,$RC">; //Unpack bytes to words
-
-//End operate
-
 let isReturn = 1, isTerminator = 1 in 
   def RET : MbrForm< 0x1A, 0x02, (ops GPRC:$RD, GPRC:$RS, s64imm:$DISP), "ret $RD,($RS),$DISP">; //Return from subroutine
 //DAG Version:
@@ -488,67 +465,129 @@ def FBLE : FBForm<0x33, "fble $RA,$DISP">; //Floating branch if <= zero
 def FBLT : FBForm<0x32, "fblt $RA,$DISP">; //Floating branch if < zero
 def FBNE : FBForm<0x35, "fbne $RA,$DISP">; //Floating branch if != zero
 
-//Funky Floating point ops
-def CPYS  : FPForm<0x17, 0x020, "cpys $RA,$RB,$RC">;  //Copy sign
-def CPYSE : FPForm<0x17, 0x022, "cpyse $RA,$RB,$RC">; //Copy sign and exponent
-def CPYSN : FPForm<0x17, 0x021, "cpysn $RA,$RB,$RC">; //Copy sign negate
-
 //Basic Floating point ops
-def ADDS  : FPForm<0x16, 0x580, "adds/su $RA,$RB,$RC">;  //Add S_floating
-def ADDT  : FPForm<0x16, 0x5A0, "addt/su $RA,$RB,$RC">;  //Add T_floating
-def SUBS  : FPForm<0x16, 0x581, "subs/su $RA,$RB,$RC">;  //Subtract S_floating
-def SUBT  : FPForm<0x16, 0x5A1, "subt/su $RA,$RB,$RC">;  //Subtract T_floating
-def DIVS  : FPForm<0x16, 0x583, "divs/su $RA,$RB,$RC">;  //Divide S_floating
-def DIVT  : FPForm<0x16, 0x5A3, "divt/su $RA,$RB,$RC">;  //Divide T_floating
-def MULS  : FPForm<0x16, 0x582, "muls/su $RA,$RB,$RC">;  //Multiply S_floating
-def MULT  : FPForm<0x16, 0x5A2, "mult/su $RA,$RB,$RC">;  //Multiply T_floating
-def SQRTS : FPForm<0x14, 0x58B, "sqrts/su $RA,$RB,$RC">;  //Square root S_floating
-def SQRTT : FPForm<0x14, 0x5AB, "sqrtt/su $RA,$RB,$RC">;  //Square root T_floating
 
-//INT reg to FP reg and back again
-//not supported on 21164
-def FTOIS : FPForm<0x1C, 0x078, "ftois $RA,$RC">; //Floating to integer move, S_floating
-def FTOIT : FPForm<0x1C, 0x070, "ftoit $RA,$RC">; //Floating to integer move, T_floating
-def ITOFS : FPForm<0x14, 0x004, "itofs $RA,$RC">; //Integer to floating move, S_floating
-def ITOFT : FPForm<0x14, 0x024, "itoft $RA,$RC">; //Integer to floating move, T_floating
+//Floats
 
-//CVTLQ F-P 17.010 Convert longword to quadword
-//CVTQL F-P 17.030 Convert quadword to longword
-//These use SW completion, may not have function code for that set right (matters for JIT)
-def CVTQS : FPForm<0x16, 0x7BC, "cvtqs/sui $RB,$RC">; //Convert quadword to S_floating
-def CVTQT : FPForm<0x16, 0x7BE, "cvtqt/sui $RB,$RC">; //Convert quadword to T_floating
-def CVTST : FPForm<0x16, 0x6AC, "cvtst/s $RB,$RC">; //Convert S_floating to T_floating
-def CVTTQ : FPForm<0x16, 0x52F, "cvttq/svc $RB,$RC">; //Convert T_floating to quadword
-def CVTTS : FPForm<0x16, 0x7AC, "cvtts/sui $RB,$RC">; //Convert T_floating to S_floating
+let OperandList = (ops F4RC:$RC, F4RC:$RB), Fa = 31 in 
+def SQRTS : FPForm<0x14, 0x58B, "sqrts/su $RB,$RC",
+                   [(set F4RC:$RC, (fsqrt F4RC:$RB))]>;
+
+let OperandList = (ops F4RC:$RC, F4RC:$RA, F4RC:$RB) in {
+def ADDS  : FPForm<0x16, 0x580, "adds/su $RA,$RB,$RC",
+                   [(set F4RC:$RC, (fadd F4RC:$RA, F4RC:$RB))]>;
+def SUBS  : FPForm<0x16, 0x581, "subs/su $RA,$RB,$RC",
+                   [(set F4RC:$RC, (fsub F4RC:$RA, F4RC:$RB))]>;
+def DIVS  : FPForm<0x16, 0x583, "divs/su $RA,$RB,$RC",
+                   [(set F4RC:$RC, (fdiv F4RC:$RA, F4RC:$RB))]>;
+def MULS  : FPForm<0x16, 0x582, "muls/su $RA,$RB,$RC",
+                   [(set F4RC:$RC, (fmul F4RC:$RA, F4RC:$RB))]>;
+
+def CPYSS  : FPForm<0x17, 0x020, "cpys $RA,$RB,$RC",[]>;  //Copy sign
+def CPYSES : FPForm<0x17, 0x022, "cpyse $RA,$RB,$RC",[]>; //Copy sign and exponent
+def CPYSNS : FPForm<0x17, 0x021, "cpysn $RA,$RB,$RC",[]>; //Copy sign negate
+}
+
+//Doubles
+
+let OperandList = (ops F8RC:$RC, F8RC:$RB), Fa = 31 in 
+def SQRTT : FPForm<0x14, 0x5AB, "sqrtt/su $RB,$RC",
+                   [(set F8RC:$RC, (fsqrt F8RC:$RB))]>;
+
+let OperandList = (ops F8RC:$RC, F8RC:$RA, F8RC:$RB) in {
+def ADDT  : FPForm<0x16, 0x5A0, "addt/su $RA,$RB,$RC",
+                   [(set F8RC:$RC, (fadd F8RC:$RA, F8RC:$RB))]>;
+def SUBT  : FPForm<0x16, 0x5A1, "subt/su $RA,$RB,$RC",
+                   [(set F8RC:$RC, (fsub F8RC:$RA, F8RC:$RB))]>;
+def DIVT  : FPForm<0x16, 0x5A3, "divt/su $RA,$RB,$RC",
+                   [(set F8RC:$RC, (fdiv F8RC:$RA, F8RC:$RB))]>;
+def MULT  : FPForm<0x16, 0x5A2, "mult/su $RA,$RB,$RC",
+                   [(set F8RC:$RC, (fmul F8RC:$RA, F8RC:$RB))]>;
+
+def CPYST  : FPForm<0x17, 0x020, "cpys $RA,$RB,$RC",[]>;  //Copy sign
+def CPYSET : FPForm<0x17, 0x022, "cpyse $RA,$RB,$RC",[]>; //Copy sign and exponent
+def CPYSNT : FPForm<0x17, 0x021, "cpysn $RA,$RB,$RC",[]>; //Copy sign negate
+
+def CMPTEQ : FPForm<0x16, 0x5A5, "cmpteq/su $RA,$RB,$RC", []>;
+//                    [(set F8RC:$RC, (seteq F8RC:$RA, F8RC:$RB))]>;
+def CMPTLE : FPForm<0x16, 0x5A7, "cmptle/su $RA,$RB,$RC", []>;
+//                    [(set F8RC:$RC, (setle F8RC:$RA, F8RC:$RB))]>;
+def CMPTLT : FPForm<0x16, 0x5A6, "cmptlt/su $RA,$RB,$RC", []>;
+//                    [(set F8RC:$RC, (setlt F8RC:$RA, F8RC:$RB))]>;
+def CMPTUN : FPForm<0x16, 0x5A4, "cmptun/su $RA,$RB,$RC", []>;
+//                    [(set F8RC:$RC, (setuo F8RC:$RA, F8RC:$RB))]>;
+}
+//TODO: Add lots more FP patterns
+
+
+
+let OperandList = (ops GPRC:$RC, F4RC:$RA), Fb = 31 in 
+def FTOIS : FPForm<0x1C, 0x078, "ftois $RA,$RC",[]>; //Floating to integer move, S_floating
+let OperandList = (ops GPRC:$RC, F8RC:$RA), Fb = 31 in 
+def FTOIT : FPForm<0x1C, 0x070, "ftoit $RA,$RC",[]>; //Floating to integer move, T_floating
+let OperandList = (ops F4RC:$RC, GPRC:$RA), Fb = 31 in 
+def ITOFS : FPForm<0x14, 0x004, "itofs $RA,$RC",[]>; //Integer to floating move, S_floating
+let OperandList = (ops F8RC:$RC, GPRC:$RA), Fb = 31 in 
+def ITOFT : FPForm<0x14, 0x024, "itoft $RA,$RC",[]>; //Integer to floating move, T_floating
+
+
+let OperandList = (ops F4RC:$RC, F8RC:$RB), Fa = 31 in 
+def CVTQS : FPForm<0x16, 0x7BC, "cvtqs/sui $RB,$RC",[]>; //Convert quadword to S_floating
+let OperandList = (ops F8RC:$RC, F8RC:$RB), Fa = 31 in 
+def CVTQT : FPForm<0x16, 0x7BE, "cvtqt/sui $RB,$RC",[]>; //Convert quadword to T_floating
+let OperandList = (ops F8RC:$RC, F8RC:$RB), Fa = 31 in 
+def CVTTQ : FPForm<0x16, 0x52F, "cvttq/svc $RB,$RC",[]>; //Convert T_floating to quadword
+let OperandList = (ops F8RC:$RC, F4RC:$RB), Fa = 31 in 
+def CVTST : FPForm<0x16, 0x6AC, "cvtst/s $RB,$RC",
+                   [(set F8RC:$RC, (fextend F4RC:$RB))]>;
+let OperandList = (ops F4RC:$RC, F8RC:$RB), Fa = 31 in 
+def CVTTS : FPForm<0x16, 0x7AC, "cvtts/sui $RB,$RC",
+                   [(set F4RC:$RC, (fround F8RC:$RB))]>;
 
 //S_floating : IEEE Single
 //T_floating : IEEE Double
 
+//Unused instructions
 //Mnemonic Format Opcode Description
-
 //CALL_PAL Pcd 00 Trap to PALcode
 //ECB Mfc 18.E800 Evict cache block
 //EXCB Mfc 18.0400 Exception barrier
 //FETCH Mfc 18.8000 Prefetch data
 //FETCH_M Mfc 18.A000 Prefetch data, modify intent
-
 //LDL_L Mem 2A Load sign-extended longword locked
 //LDQ_L Mem 2B Load quadword locked
 //LDQ_U Mem 0B Load unaligned quadword
 //MB Mfc 18.4000 Memory barrier
 //RPCC Mfc 18.C000 Read process cycle counter
-
 //STL_C Mem 2E Store longword conditional
 //STQ_C Mem 2F Store quadword conditional
 //STQ_U Mem 0F Store unaligned quadword
-
 //TRAPB Mfc 18.0000 Trap barrier
 //WH64 Mfc 18.F800 Write hint  64 bytes
 //WMB Mfc 18.4400 Write memory barrier
-
-
 //MF_FPCR F-P 17.025 Move from FPCR
 //MT_FPCR F-P 17.024 Move to FPCR
+//There are in the Multimedia extentions, so let's not use them yet
+//def MAXSB8  : OForm<0x1C, 0x3E, "MAXSB8 $RA,$RB,$RC">; //Vector signed byte maximum
+//def MAXSW4 : OForm< 0x1C, 0x3F, "MAXSW4 $RA,$RB,$RC">; //Vector signed word maximum
+//def MAXUB8  : OForm<0x1C, 0x3C, "MAXUB8 $RA,$RB,$RC">; //Vector unsigned byte maximum
+//def MAXUW4 : OForm< 0x1C, 0x3D, "MAXUW4 $RA,$RB,$RC">; //Vector unsigned word maximum
+//def MINSB8 : OForm< 0x1C, 0x38, "MINSB8 $RA,$RB,$RC">; //Vector signed byte minimum
+//def MINSW4 : OForm< 0x1C, 0x39, "MINSW4 $RA,$RB,$RC">; //Vector signed word minimum
+//def MINUB8 : OForm< 0x1C, 0x3A, "MINUB8 $RA,$RB,$RC">; //Vector unsigned byte minimum
+//def MINUW4 : OForm< 0x1C, 0x3B, "MINUW4 $RA,$RB,$RC">; //Vector unsigned word minimum
+//def PERR : OForm< 0x1C, 0x31, "PERR $RA,$RB,$RC">; //Pixel error
+//def PKLB : OForm< 0x1C, 0x37, "PKLB $RA,$RB,$RC">; //Pack longwords to bytes
+//def PKWB  : OForm<0x1C, 0x36, "PKWB $RA,$RB,$RC">; //Pack words to bytes
+//def UNPKBL : OForm< 0x1C, 0x35, "UNPKBL $RA,$RB,$RC">; //Unpack bytes to longwords
+//def UNPKBW : OForm< 0x1C, 0x34, "UNPKBW $RA,$RB,$RC">; //Unpack bytes to words
+//CVTLQ F-P 17.010 Convert longword to quadword
+//CVTQL F-P 17.030 Convert quadword to longword
+//def AMASK    : OForm< 0x11, 0x61, "AMASK $RA,$RB,$RC", []>; //Architecture mask
+//def AMASKi   : OFormL<0x11, 0x61, "AMASK $RA,$L,$RC", []>; //Architecture mask
+
+
+
 
 def : Pat<(i64 immSExt16:$imm),
           (LDA immSExt16:$imm, R31)>;

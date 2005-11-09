@@ -786,8 +786,11 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
             .addReg(argvregs[i]);
           break;
         case MVT::f32:
+          BuildMI(BB, Alpha::CPYSS, 2, args_float[i]).addReg(argvregs[i])
+            .addReg(argvregs[i]);
+          break;
         case MVT::f64:
-          BuildMI(BB, Alpha::CPYS, 2, args_float[i]).addReg(argvregs[i])
+          BuildMI(BB, Alpha::CPYST, 2, args_float[i]).addReg(argvregs[i])
             .addReg(argvregs[i]);
           break;
         }
@@ -843,8 +846,10 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
         BuildMI(BB, Alpha::BIS, 2, Result).addReg(Alpha::R0).addReg(Alpha::R0);
         break;
       case MVT::f32:
-      case MVT::f64:
-        BuildMI(BB, Alpha::CPYS, 2, Result).addReg(Alpha::F0).addReg(Alpha::F0);
+        BuildMI(BB, Alpha::CPYSS, 2, Result).addReg(Alpha::F0).addReg(Alpha::F0);
+        break;
+       case MVT::f64:
+        BuildMI(BB, Alpha::CPYST, 2, Result).addReg(Alpha::F0).addReg(Alpha::F0);
         break;
       }
       return Result+N.ResNo;
@@ -1039,10 +1044,17 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
       Select(Chain);
       unsigned r = cast<RegisterSDNode>(Node->getOperand(1))->getReg();
       //std::cerr << "CopyFromReg " << Result << " = " << r << "\n";
-      if (MVT::isFloatingPoint(N.getValue(0).getValueType()))
-        BuildMI(BB, Alpha::CPYS, 2, Result).addReg(r).addReg(r);
-      else
+      switch(N.getValue(0).getValueType()) {
+      case MVT::f32:
+        BuildMI(BB, Alpha::CPYSS, 2, Result).addReg(r).addReg(r);
+        break;
+      case MVT::f64:
+        BuildMI(BB, Alpha::CPYST, 2, Result).addReg(r).addReg(r);
+        break;
+      default:
         BuildMI(BB, Alpha::BIS, 2, Result).addReg(r).addReg(r);
+        break;
+      }
       return Result;
     }
 
@@ -1488,16 +1500,19 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
     if(ISD::FABS == N.getOperand(0).getOpcode())
       {
         Tmp1 = SelectExpr(N.getOperand(0).getOperand(0));
-        BuildMI(BB, Alpha::CPYSN, 2, Result).addReg(Alpha::F31).addReg(Tmp1);
+        BuildMI(BB, DestType == MVT::f64 ? Alpha::CPYSNT : Alpha::CPYSNS, 
+                2, Result).addReg(Alpha::F31).addReg(Tmp1);
       } else {
         Tmp1 = SelectExpr(N.getOperand(0));
-        BuildMI(BB, Alpha::CPYSN, 2, Result).addReg(Tmp1).addReg(Tmp1);
+        BuildMI(BB, DestType == MVT::f64 ? Alpha::CPYSNT : Alpha::CPYSNS
+                , 2, Result).addReg(Tmp1).addReg(Tmp1);
       }
     return Result;
 
   case ISD::FABS:
     Tmp1 = SelectExpr(N.getOperand(0));
-    BuildMI(BB, Alpha::CPYS, 2, Result).addReg(Alpha::F31).addReg(Tmp1);
+    BuildMI(BB, DestType == MVT::f64 ? Alpha::CPYST : Alpha::CPYSS, 2, Result)
+      .addReg(Alpha::F31).addReg(Tmp1);
     return Result;
 
   case ISD::FP_ROUND:
@@ -1519,10 +1534,12 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
   case ISD::ConstantFP:
     if (ConstantFPSDNode *CN = dyn_cast<ConstantFPSDNode>(N)) {
       if (CN->isExactlyValue(+0.0)) {
-        BuildMI(BB, Alpha::CPYS, 2, Result).addReg(Alpha::F31)
+        BuildMI(BB, DestType == MVT::f64 ? Alpha::CPYST : Alpha::CPYSS
+                , 2, Result).addReg(Alpha::F31)
           .addReg(Alpha::F31);
       } else if ( CN->isExactlyValue(-0.0)) {
-        BuildMI(BB, Alpha::CPYSN, 2, Result).addReg(Alpha::F31)
+        BuildMI(BB, DestType == MVT::f64 ? Alpha::CPYSNT : Alpha::CPYSNS,
+                2, Result).addReg(Alpha::F31)
           .addReg(Alpha::F31);
       } else {
         abort();
@@ -1538,7 +1555,7 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
       Tmp2 = MakeReg(MVT::f64);
       MoveInt2FP(Tmp1, Tmp2, true);
       Opc = DestType == MVT::f64 ? Alpha::CVTQT : Alpha::CVTQS;
-      BuildMI(BB, Opc, 1, Result).addReg(Alpha::F31).addReg(Tmp2);
+      BuildMI(BB, Opc, 1, Result).addReg(Tmp2);
       return Result;
     }
 
@@ -1605,11 +1622,17 @@ void AlphaISel::Select(SDOperand N) {
     Tmp2 = cast<RegisterSDNode>(N.getOperand(1))->getReg();
 
     if (Tmp1 != Tmp2) {
-      if (N.getOperand(2).getValueType() == MVT::f64 ||
-          N.getOperand(2).getValueType() == MVT::f32)
-        BuildMI(BB, Alpha::CPYS, 2, Tmp2).addReg(Tmp1).addReg(Tmp1);
-      else
+      switch(N.getOperand(2).getValueType()) {
+      case MVT::f64:
+        BuildMI(BB, Alpha::CPYST, 2, Tmp2).addReg(Tmp1).addReg(Tmp1);
+        break;
+      case MVT::f32:
+        BuildMI(BB, Alpha::CPYSS, 2, Tmp2).addReg(Tmp1).addReg(Tmp1);
+        break;
+      default:
         BuildMI(BB, Alpha::BIS, 2, Tmp2).addReg(Tmp1).addReg(Tmp1);
+        break;
+      }
     }
     return;
 
@@ -1629,8 +1652,10 @@ void AlphaISel::Select(SDOperand N) {
       default: Node->dump();
         assert(0 && "All other types should have been promoted!!");
       case MVT::f64:
+        BuildMI(BB, Alpha::CPYST, 2, Alpha::F0).addReg(Tmp1).addReg(Tmp1);
+        break;
       case MVT::f32:
-        BuildMI(BB, Alpha::CPYS, 2, Alpha::F0).addReg(Tmp1).addReg(Tmp1);
+        BuildMI(BB, Alpha::CPYSS, 2, Alpha::F0).addReg(Tmp1).addReg(Tmp1);
         break;
       case MVT::i32:
       case MVT::i64:

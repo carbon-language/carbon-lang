@@ -65,13 +65,6 @@ AlphaRegisterInfo::AlphaRegisterInfo()
 {
 }
 
-static const TargetRegisterClass *getClass(unsigned SrcReg) {
-  if (Alpha::FPRCRegisterClass->contains(SrcReg))
-    return Alpha::FPRCRegisterClass;
-  assert(Alpha::GPRCRegisterClass->contains(SrcReg) && "Reg not FPR or GPR");
-  return Alpha::GPRCRegisterClass;
-}
-
 void
 AlphaRegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                        MachineBasicBlock::iterator MI,
@@ -82,9 +75,11 @@ AlphaRegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
   if (EnableAlphaLSMark)
     BuildMI(MBB, MI, Alpha::MEMLABEL, 4).addImm(4).addImm(0).addImm(1)
       .addImm(getUID());
-  if (getClass(SrcReg) == Alpha::FPRCRegisterClass)
+  if (RC == Alpha::F4RCRegisterClass)
+    BuildMI(MBB, MI, Alpha::STS, 3).addReg(SrcReg).addFrameIndex(FrameIdx).addReg(Alpha::F31);
+  else if (RC == Alpha::F8RCRegisterClass)
     BuildMI(MBB, MI, Alpha::STT, 3).addReg(SrcReg).addFrameIndex(FrameIdx).addReg(Alpha::F31);
-  else if (getClass(SrcReg) == Alpha::GPRCRegisterClass)
+  else if (RC == Alpha::GPRCRegisterClass)
     BuildMI(MBB, MI, Alpha::STQ, 3).addReg(SrcReg).addFrameIndex(FrameIdx).addReg(Alpha::F31);
   else
     abort();
@@ -99,9 +94,11 @@ AlphaRegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
   if (EnableAlphaLSMark)
     BuildMI(MBB, MI, Alpha::MEMLABEL, 4).addImm(4).addImm(0).addImm(2)
       .addImm(getUID());
-  if (getClass(DestReg) == Alpha::FPRCRegisterClass)
+  if (RC == Alpha::F4RCRegisterClass)
+    BuildMI(MBB, MI, Alpha::LDS, 2, DestReg).addFrameIndex(FrameIdx).addReg(Alpha::F31);
+  else if (RC == Alpha::F8RCRegisterClass)
     BuildMI(MBB, MI, Alpha::LDT, 2, DestReg).addFrameIndex(FrameIdx).addReg(Alpha::F31);
-  else if (getClass(DestReg) == Alpha::GPRCRegisterClass)
+  else if (RC == Alpha::GPRCRegisterClass)
     BuildMI(MBB, MI, Alpha::LDQ, 2, DestReg).addFrameIndex(FrameIdx).addReg(Alpha::F31);
   else
     abort();
@@ -126,6 +123,50 @@ AlphaRegisterInfo::isLoadFromStackSlot(MachineInstr *MI, int &FrameIndex) const
   return 0;
 }
 
+MachineInstr *AlphaRegisterInfo::foldMemoryOperand(MachineInstr *MI,
+                                                 unsigned OpNum,
+                                                 int FrameIndex) const {
+  // Make sure this is a reg-reg copy.
+  unsigned Opc = MI->getOpcode();
+  
+  if ((Opc == Alpha::BIS &&
+       MI->getOperand(1).getReg() == MI->getOperand(2).getReg())) {
+    if (OpNum == 0) {  // move -> store
+      unsigned InReg = MI->getOperand(1).getReg();
+      return BuildMI(Alpha::STQ, 3).addReg(InReg).addFrameIndex(FrameIndex)
+        .addReg(Alpha::F31);
+    } else {           // load -> move
+      unsigned OutReg = MI->getOperand(0).getReg();
+      return BuildMI(Alpha::LDQ, 2, OutReg).addFrameIndex(FrameIndex)
+        .addReg(Alpha::F31);
+    }
+  } else if ((Opc == Alpha::CPYSS &&
+              MI->getOperand(1).getReg() == MI->getOperand(2).getReg())) {
+    if (OpNum == 0) {  // move -> store
+      unsigned InReg = MI->getOperand(1).getReg();
+      return BuildMI(Alpha::STS, 3).addReg(InReg).addFrameIndex(FrameIndex)
+        .addReg(Alpha::F31);
+    } else {           // load -> move
+      unsigned OutReg = MI->getOperand(0).getReg();
+      return BuildMI(Alpha::LDS, 2, OutReg).addFrameIndex(FrameIndex)
+        .addReg(Alpha::F31);
+    }
+  } else if ((Opc == Alpha::CPYST &&
+              MI->getOperand(1).getReg() == MI->getOperand(2).getReg())) {
+    if (OpNum == 0) {  // move -> store
+      unsigned InReg = MI->getOperand(1).getReg();
+      return BuildMI(Alpha::STT, 3).addReg(InReg).addFrameIndex(FrameIndex)
+        .addReg(Alpha::F31);
+    } else {           // load -> move
+      unsigned OutReg = MI->getOperand(0).getReg();
+      return BuildMI(Alpha::LDT, 2, OutReg).addFrameIndex(FrameIndex)
+        .addReg(Alpha::F31);
+    }
+  }
+  return 0;
+}
+
+
 void AlphaRegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
                                      MachineBasicBlock::iterator MI,
                                      unsigned DestReg, unsigned SrcReg,
@@ -133,8 +174,10 @@ void AlphaRegisterInfo::copyRegToReg(MachineBasicBlock &MBB,
   //  std::cerr << "copyRegToReg " << DestReg << " <- " << SrcReg << "\n";
   if (RC == Alpha::GPRCRegisterClass) {
     BuildMI(MBB, MI, Alpha::BIS, 2, DestReg).addReg(SrcReg).addReg(SrcReg);
-  } else if (RC == Alpha::FPRCRegisterClass) {
-    BuildMI(MBB, MI, Alpha::CPYS, 2, DestReg).addReg(SrcReg).addReg(SrcReg);
+  } else if (RC == Alpha::F4RCRegisterClass) {
+    BuildMI(MBB, MI, Alpha::CPYSS, 2, DestReg).addReg(SrcReg).addReg(SrcReg);
+  } else if (RC == Alpha::F8RCRegisterClass) {
+    BuildMI(MBB, MI, Alpha::CPYST, 2, DestReg).addReg(SrcReg).addReg(SrcReg);
   } else {
     std::cerr << "Attempt to copy register that is not GPR or FPR";
      abort();
