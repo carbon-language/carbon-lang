@@ -488,9 +488,11 @@ MachineInstr *RA::reloadVirtReg(MachineBasicBlock &MBB, MachineInstr *MI,
 
 void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
   // loop over each instruction
-  MachineBasicBlock::iterator MI = MBB.begin();
-  for (; MI != MBB.end(); ++MI) {
-    const TargetInstrDescriptor &TID = TM->getInstrInfo()->get(MI->getOpcode());
+  MachineBasicBlock::iterator MII = MBB.begin();
+  const TargetInstrInfo &TII = *TM->getInstrInfo();
+  while (MII != MBB.end()) {
+    MachineInstr *MI = MII++;
+    const TargetInstrDescriptor &TID = TII.get(MI->getOpcode());
     DEBUG(std::cerr << "\nStarting RegAlloc of: " << *MI;
           std::cerr << "  Regs have values: ";
           for (unsigned i = 0; i != RegInfo->getNumRegs(); ++i)
@@ -621,9 +623,14 @@ void RA::AllocateBasicBlock(MachineBasicBlock &MBB) {
         removePhysReg(PhysReg);
       }
     }
+    
+    // Finally, if this is a noop copy instruction, zap it.
+    unsigned SrcReg, DstReg;
+    if (TII.isMoveInstr(*MI, SrcReg, DstReg) && SrcReg == DstReg)
+      MBB.erase(MI);
   }
 
-  MI = MBB.getFirstTerminator();
+  MachineBasicBlock::iterator MI = MBB.getFirstTerminator();
 
   // Spill all physical registers holding virtual registers now.
   for (unsigned i = 0, e = RegInfo->getNumRegs(); i != e; ++i)
