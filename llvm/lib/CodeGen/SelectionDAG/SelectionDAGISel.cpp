@@ -1234,7 +1234,18 @@ void SelectionDAGISel::BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
 
   // Turn all of the unordered chains into one factored node.
   if (!UnorderedChains.empty()) {
-    UnorderedChains.push_back(SDL.getRoot());
+    SDOperand Root = SDL.getRoot();
+    if (Root.getOpcode() != ISD::EntryToken) {
+      unsigned i = 0, e = UnorderedChains.size();
+      for (; i != e; ++i) {
+        assert(UnorderedChains[i].Val->getNumOperands() > 1);
+        if (UnorderedChains[i].Val->getOperand(0) == Root)
+          break;  // Don't add the root if we already indirectly depend on it.
+      }
+        
+      if (i == e)
+        UnorderedChains.push_back(Root);
+    }
     DAG.setRoot(DAG.getNode(ISD::TokenFactor, MVT::Other, UnorderedChains));
   }
 
