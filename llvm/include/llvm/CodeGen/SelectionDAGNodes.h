@@ -22,7 +22,6 @@
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/Value.h"
 #include "llvm/ADT/GraphTraits.h"
-#include "llvm/ADT/GraphTraits.h"
 #include "llvm/ADT/iterator"
 #include "llvm/Support/DataTypes.h"
 #include <cassert>
@@ -35,6 +34,9 @@ class GlobalValue;
 class MachineBasicBlock;
 class SDNode;
 template <typename T> struct simplify_type;
+template <typename T> struct ilist_traits;
+template<typename NodeTy, typename Traits> class iplist;
+template<typename NodeTy> class ilist_iterator;
 
 /// ISD namespace - This namespace contains an enum which represents all of the
 /// SelectionDAG node types and value types.
@@ -501,12 +503,20 @@ class SDNode {
 
   /// NumOperands/NumValues - The number of entries in the Operand/Value list.
   unsigned short NumOperands, NumValues;
+  
+  /// Prev/Next pointers - These pointers form the linked list of of the
+  /// AllNodes list in the current DAG.
+  SDNode *Prev, *Next;
+  friend struct ilist_traits<SDNode>;
 
   /// Uses - These are all of the SDNode's that use a value produced by this
   /// node.
   std::vector<SDNode*> Uses;
 public:
-
+  virtual ~SDNode() {
+    assert(NumOperands == 0 && "Operand list not cleared before deletion");
+  }
+  
   //===--------------------------------------------------------------------===//
   //  Accessors
   //
@@ -586,6 +596,7 @@ protected:
     OperandList = 0; NumOperands = 0;
     ValueList = getValueTypeList(VT);
     NumValues = 1;
+    Prev = 0; Next = 0;
   }
   SDNode(unsigned NT, SDOperand Op)
     : NodeType(NT), NodeDepth(Op.Val->getNodeDepth()+1) {
@@ -595,6 +606,7 @@ protected:
     Op.Val->Uses.push_back(this);
     ValueList = 0;
     NumValues = 0;
+    Prev = 0; Next = 0;
   }
   SDNode(unsigned NT, SDOperand N1, SDOperand N2)
     : NodeType(NT) {
@@ -609,6 +621,7 @@ protected:
     N1.Val->Uses.push_back(this); N2.Val->Uses.push_back(this);
     ValueList = 0;
     NumValues = 0;
+    Prev = 0; Next = 0;
   }
   SDNode(unsigned NT, SDOperand N1, SDOperand N2, SDOperand N3)
     : NodeType(NT) {
@@ -629,6 +642,7 @@ protected:
     N3.Val->Uses.push_back(this);
     ValueList = 0;
     NumValues = 0;
+    Prev = 0; Next = 0;
   }
   SDNode(unsigned NT, SDOperand N1, SDOperand N2, SDOperand N3, SDOperand N4)
     : NodeType(NT) {
@@ -652,6 +666,7 @@ protected:
     N3.Val->Uses.push_back(this); N4.Val->Uses.push_back(this);
     ValueList = 0;
     NumValues = 0;
+    Prev = 0; Next = 0;
   }
   SDNode(unsigned Opc, const std::vector<SDOperand> &Nodes) : NodeType(Opc) {
     NumOperands = Nodes.size();
@@ -667,10 +682,7 @@ protected:
     NodeDepth = ND+1;
     ValueList = 0;
     NumValues = 0;
-  }
-
-  virtual ~SDNode() {
-    assert(NumOperands == 0 && "Operand list not cleared before deletion");
+    Prev = 0; Next = 0;
   }
 
   /// MorphNodeTo - This clears the return value and operands list, and sets the
@@ -1073,6 +1085,28 @@ template <> struct GraphTraits<SDNode*> {
   static inline ChildIteratorType child_end(NodeType *N) {
     return SDNodeIterator::end(N);
   }
+};
+
+template<>
+struct ilist_traits<SDNode> {
+  static SDNode *getPrev(const SDNode *N) { return N->Prev; }
+  static SDNode *getNext(const SDNode *N) { return N->Next; }
+  
+  static void setPrev(SDNode *N, SDNode *Prev) { N->Prev = Prev; }
+  static void setNext(SDNode *N, SDNode *Next) { N->Next = Next; }
+  
+  static SDNode *createSentinel() {
+    return new SDNode(ISD::EntryToken, MVT::Other);
+  }
+  static void destroySentinel(SDNode *N) { delete N; }
+  //static SDNode *createNode(const SDNode &V) { return new SDNode(V); }
+  
+  
+  void addNodeToList(SDNode *NTy) {}
+  void removeNodeFromList(SDNode *NTy) {}
+  void transferNodesFromList(iplist<SDNode, ilist_traits> &L2,
+                             const ilist_iterator<SDNode> &X,
+                             const ilist_iterator<SDNode> &Y) {}
 };
 
 } // end llvm namespace

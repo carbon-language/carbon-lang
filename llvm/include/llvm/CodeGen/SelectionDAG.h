@@ -16,6 +16,8 @@
 #define LLVM_CODEGEN_SELECTIONDAG_H
 
 #include "llvm/CodeGen/SelectionDAGNodes.h"
+#include "llvm/ADT/ilist"
+
 #include <map>
 #include <list>
 #include <string> // FIXME remove eventually, turning map into const char* map.
@@ -43,8 +45,8 @@ class SelectionDAG {
   // Root - The root of the entire DAG.  EntryNode - The starting token.
   SDOperand Root, EntryNode;
 
-  // AllNodes - All of the nodes in the DAG
-  std::vector<SDNode*> AllNodes;
+  // AllNodes - A linked list of nodes in the current DAG.
+  ilist<SDNode> AllNodes;
 
   // ValueNodes - track SrcValue nodes
   std::map<std::pair<const Value*, int>, SDNode*> ValueNodes;
@@ -64,11 +66,13 @@ public:
   void viewGraph();
 
 
-  typedef std::vector<SDNode*>::const_iterator allnodes_iterator;
-  allnodes_iterator allnodes_begin() const { return AllNodes.begin(); }
-  allnodes_iterator allnodes_end() const { return AllNodes.end(); }
-  unsigned allnodes_size() const { return AllNodes.size(); }
-
+  typedef ilist<SDNode>::const_iterator allnodes_const_iterator;
+  allnodes_const_iterator allnodes_begin() const { return AllNodes.begin(); }
+  allnodes_const_iterator allnodes_end() const { return AllNodes.end(); }
+  typedef ilist<SDNode>::iterator allnodes_iterator;
+  allnodes_iterator allnodes_begin() { return AllNodes.begin(); }
+  allnodes_iterator allnodes_end() { return AllNodes.end(); }
+  
   /// getRoot - Return the root tag of the SelectionDAG.
   ///
   const SDOperand &getRoot() const { return Root; }
@@ -413,6 +417,6 @@ template <> struct GraphTraits<SelectionDAG*> : public GraphTraits<SDNode*> {
   }
 };
 
-}
+}  // end namespace llvm
 
 #endif
