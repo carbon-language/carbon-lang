@@ -54,13 +54,10 @@ std::string Mangler::makeNameProper(const std::string &X, const char *Prefix) {
   } else {
     bool NeedsQuotes = false;
     
-    // If X does not start with (char)1, add the prefix.
     std::string::const_iterator I = X.begin();
-    if (*I != 1)
-      Result = Prefix;
-    else
+    if (*I == 1)
       ++I;  // Skip over the marker.
-    
+
     // If the first character is a number, we need quotes.
     if (*I >= '0' && *I <= '9')
       NeedsQuotes = true;
@@ -75,12 +72,22 @@ std::string Mangler::makeNameProper(const std::string &X, const char *Prefix) {
         }
     
     // In the common case, we don't need quotes.  Handle this quickly.
-    if (!NeedsQuotes)
-      return Result + X;
+    if (!NeedsQuotes) {
+      if (*X.begin() != 1)
+        return Prefix+X;
+      else
+        return X.substr(1);
+    }
     
     // Otherwise, construct the string the expensive way.
     I = X.begin();
-    if (*I == 1) ++I;   // Skip the marker if present.
+    
+    // If X does not start with (char)1, add the prefix.
+    if (*I != 1)
+      Result = Prefix;
+    else
+      ++I;   // Skip the marker if present.
+      
     for (std::string::const_iterator E = X.end(); I != E; ++I) {
       if (*I == '"')
         Result += "_QQ_";
