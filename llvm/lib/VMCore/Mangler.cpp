@@ -22,7 +22,8 @@ static char HexDigit(int V) {
 }
 
 static std::string MangleLetter(unsigned char C) {
-  return std::string("_")+HexDigit(C >> 4) + HexDigit(C & 15) + "_";
+  char Result[] = { '_', HexDigit(C >> 4), HexDigit(C & 15), '_', 0 };
+  return Result;
 }
 
 /// makeNameProper - We don't want identifier names non-C-identifier characters
@@ -30,6 +31,7 @@ static std::string MangleLetter(unsigned char C) {
 ///
 std::string Mangler::makeNameProper(const std::string &X, const char *Prefix) {
   std::string Result;
+  if (X.empty()) return X;  // Empty names are uniqued by the caller.
   
   if (!UseQuotes) {
     // If X does not start with (char)1, add the prefix.
@@ -39,16 +41,16 @@ std::string Mangler::makeNameProper(const std::string &X, const char *Prefix) {
     else
       ++I;  // Skip over the marker.
     
-    // Mangle the first letter specially, don't allow numbers...
+    // Mangle the first letter specially, don't allow numbers.
     if (*I >= '0' && *I <= '9')
       Result += MangleLetter(*I++);
 
-    for (std::string::const_iterator E = X.end(); I != E; ++I)
-      if ((*I < 'a' || *I > 'z') && (*I < 'A' || *I > 'Z') &&
-          (*I < '0' || *I > '9') && *I != '_' && *I != '$')
+    for (std::string::const_iterator E = X.end(); I != E; ++I) {
+      if (!isCharAcceptable(*I))
         Result += MangleLetter(*I);
       else
         Result += *I;
+    }
   } else {
     bool NeedsQuotes = false;
     
@@ -67,8 +69,7 @@ std::string Mangler::makeNameProper(const std::string &X, const char *Prefix) {
       if (*I == '"')
         Result += "_QQ_";
       else {
-        if ((*I < 'a' || *I > 'z') && (*I < 'A' || *I > 'Z') &&
-            (*I < '0' || *I > '9') && *I != '_' && *I != '$' && *I != '.')
+        if (!isCharAcceptable(*I))
           NeedsQuotes = true;
         Result += *I;
       }
@@ -147,6 +148,23 @@ void Mangler::InsertName(GlobalValue *GV,
 
 Mangler::Mangler(Module &M, const char *prefix)
   : Prefix(prefix), UseQuotes(false), Count(0), TypeCounter(0) {
+  std::fill(AcceptableChars, 
+          AcceptableChars+sizeof(AcceptableChars)/sizeof(AcceptableChars[0]),
+            0);
+
+  // Letters and numbers are acceptable.
+  for (unsigned char X = 'a'; X <= 'z'; ++X)
+    markCharAcceptable(X);
+  for (unsigned char X = 'A'; X <= 'Z'; ++X)
+    markCharAcceptable(X);
+  for (unsigned char X = '0'; X <= '9'; ++X)
+    markCharAcceptable(X);
+  
+  // These chars are acceptable.
+  markCharAcceptable('_');
+  markCharAcceptable('$');
+  markCharAcceptable('.');
+    
   // Calculate which global values have names that will collide when we throw
   // away type information.
   std::map<std::string, GlobalValue*> Names;
