@@ -25,7 +25,6 @@
 //  #3. ".bss" entry  - global variables without initializers.  [ if needed ]
 //  ...
 //  #N. ".shstrtab" entry - String table for the section names.
-
 //
 // NOTE: This code should eventually be extended to support 64-bit ELF (this
 // won't be hard), but we haven't done so yet!
