@@ -65,8 +65,7 @@ public:
   /// does this for you, so there's no point calling it on the result
   /// from getValueName.
   ///
-  static std::string makeNameProper(const std::string &x,
-                                    const char *Prefix = "");
+  std::string makeNameProper(const std::string &x, const char *Prefix = "");
 };
 
 } // End llvm namespace
