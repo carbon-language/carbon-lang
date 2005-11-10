@@ -46,8 +46,9 @@ namespace {
     virtual bool runOnFunction(Function &F) {
       if (!F.isExternal()) {
         //give us a clean block
-        BasicBlock& bbhead = F.getEntryBlock();
-        bbhead.splitBasicBlock(bbhead.begin());
+	BasicBlock* bbold = &F.getEntryBlock();
+	BasicBlock* bbnew = new BasicBlock("allocablock", &F, &F.getEntryBlock());
+	new BranchInst(bbold, bbnew);
 
         //find the instructions
         std::list<Instruction*> worklist;
