@@ -19,16 +19,16 @@
 #include <string>
 
 namespace llvm {
-class Value;
 class Type;
 class Module;
+class Value;
 class GlobalValue;
 
 class Mangler {
   /// This keeps track of which global values have had their names
   /// mangled in the current module.
   ///
-  std::set<const Value *> MangledGlobals;
+  std::set<const GlobalValue*> MangledGlobals;
 
   Module &M;
   const char *Prefix;
@@ -36,7 +36,7 @@ class Mangler {
   unsigned TypeCounter;
   std::map<const Type*, unsigned> TypeMap;
 
-  typedef std::map<const Value *, std::string> ValueMap;
+  typedef std::map<const Value*, std::string> ValueMap;
   ValueMap Memo;
 
   unsigned Count;
@@ -55,6 +55,7 @@ public:
   /// getValueName - Returns the mangled name of V, an LLVM Value,
   /// in the current module.
   ///
+  std::string getValueName(const GlobalValue *V);
   std::string getValueName(const Value *V);
 
   /// makeNameProper - We don't want identifier names with ., space, or
