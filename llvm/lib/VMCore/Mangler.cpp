@@ -65,16 +65,29 @@ std::string Mangler::makeNameProper(const std::string &X, const char *Prefix) {
     if (*I >= '0' && *I <= '9')
       NeedsQuotes = true;
     
-    for (std::string::const_iterator E = X.end(); I != E; ++I)
+    // Do an initial scan of the string, checking to see if we need quotes or
+    // to escape a '"' or not.
+    if (!NeedsQuotes)
+      for (std::string::const_iterator E = X.end(); I != E; ++I)
+        if (!isCharAcceptable(*I)) {
+          NeedsQuotes = true;
+          break;
+        }
+    
+    // In the common case, we don't need quotes.  Handle this quickly.
+    if (!NeedsQuotes)
+      return Result + X;
+    
+    // Otherwise, construct the string the expensive way.
+    I = X.begin();
+    if (*I == 1) ++I;   // Skip the marker if present.
+    for (std::string::const_iterator E = X.end(); I != E; ++I) {
       if (*I == '"')
         Result += "_QQ_";
-      else {
-        if (!isCharAcceptable(*I))
-          NeedsQuotes = true;
+      else
         Result += *I;
-      }
-    if (NeedsQuotes)
-      Result = '"' + Result + '"';
+    }
+    Result = '"' + Result + '"';
   }
   return Result;
 }
