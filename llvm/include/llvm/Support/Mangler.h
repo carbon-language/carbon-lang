@@ -51,6 +51,10 @@ class Mangler {
   /// mangled in the current module.
   ///
   std::set<const GlobalValue*> MangledGlobals;
+  
+  /// AcceptableChars - This bitfield contains a one for each character that is
+  /// allowed to be part of an unmangled name.
+  unsigned AcceptableChars[256/32];
 public:
 
   // Mangler ctor - if a prefix is specified, it will be prepended onto all
@@ -60,6 +64,19 @@ public:
   /// setUseQuotes - If UseQuotes is set to true, this target accepts quoted
   /// strings for assembler labels.
   void setUseQuotes(bool Val) { UseQuotes = Val; }
+  
+  /// Acceptable Characters - This allows the target to specify which characters
+  /// are acceptable to the assembler without being mangled.  By default we
+  /// allow letters, numbers, '_', '$', and '.', which is what GAS accepts.
+  void markCharAcceptable(unsigned char X) {
+    AcceptableChars[X/32] |= 1 << (X&31);
+  }
+  void markCharUnacceptable(unsigned char X) {
+    AcceptableChars[X/32] &= ~(1 << (X&31));
+  }
+  bool isCharAcceptable(unsigned char X) const {
+    return (AcceptableChars[X/32] & (1 << (X&31))) != 0;
+  }
   
   /// getTypeID - Return a unique ID for the specified LLVM type.
   ///
