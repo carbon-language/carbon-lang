@@ -19,6 +19,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/SCCIterator.h"
 #include "llvm/ADT/STLExtras.h"
+#include "llvm/Support/MathExtras.h"
 #include <algorithm>
 #include <iostream>
 using namespace llvm;
@@ -1005,6 +1006,7 @@ static TypeMap<PackedValType, PackedType> PackedTypes;
 
 PackedType *PackedType::get(const Type *ElementType, unsigned NumElements) {
   assert(ElementType && "Can't get packed of null types!");
+  assert(isPowerOf2_32(NumElements) && "Vector length should be a power of 2!");
 
   PackedValType PVT(ElementType, NumElements);
   PackedType *PT = PackedTypes.get(PVT);
