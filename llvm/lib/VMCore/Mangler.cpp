@@ -118,8 +118,8 @@ void Mangler::InsertName(GlobalValue *GV,
 }
 
 
-Mangler::Mangler(Module &m, const char *prefix)
-  : M(m), Prefix(prefix), TypeCounter(0), Count(0) {
+Mangler::Mangler(Module &M, const char *prefix)
+  : Prefix(prefix), Count(0), TypeCounter(0) {
   // Calculate which global values have names that will collide when we throw
   // away type information.
   std::map<std::string, GlobalValue*> Names;
