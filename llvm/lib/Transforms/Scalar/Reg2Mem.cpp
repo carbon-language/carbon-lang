@@ -38,7 +38,8 @@ namespace {
       BasicBlock* bb = i->getParent();
       for(Value::use_iterator ii = i->use_begin(), ie = i->use_end();
           ii != ie; ++ii)
-        if (cast<Instruction>(*ii)->getParent() != bb)
+        if (cast<Instruction>(*ii)->getParent() != bb ||
+	    isa<PHINode>(*ii))
           return true;
       return false;
     }
