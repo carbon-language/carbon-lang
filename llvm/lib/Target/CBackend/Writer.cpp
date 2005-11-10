@@ -999,7 +999,7 @@ void CWriter::printModuleTypes(const SymbolTable &ST) {
   Out << "/* Structure forward decls */\n";
   for (; I != End; ++I)
     if (const Type *STy = dyn_cast<StructType>(I->second)) {
-      std::string Name = "struct l_" + Mangler::makeNameProper(I->first);
+      std::string Name = "struct l_" + Mang->makeNameProper(I->first);
       Out << Name << ";\n";
       TypeNames.insert(std::make_pair(STy, Name));
     }
@@ -1010,7 +1010,7 @@ void CWriter::printModuleTypes(const SymbolTable &ST) {
   Out << "/* Typedefs */\n";
   for (I = ST.type_begin(); I != End; ++I) {
     const Type *Ty = cast<Type>(I->second);
-    std::string Name = "l_" + Mangler::makeNameProper(I->first);
+    std::string Name = "l_" + Mang->makeNameProper(I->first);
     Out << "typedef ";
     printType(Out, Ty, Name);
     Out << ";\n";
