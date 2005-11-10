@@ -850,7 +850,8 @@ reference to another object, which must live in memory.</p>
 of elements.  Packed types are used when multiple primitive data 
 are operated in parallel using a single instruction (SIMD). 
 A packed type requires a size (number of
-elements) and an underlying primitive data type.  Packed types are
+elements) and an underlying primitive data type.  Vectors must have a power
+of two length (1, 2, 4, 8, 16 ...).  Packed types are
 considered <a href="#t_firstclass">first class</a>.</p>
 
 <h5>Syntax:</h5>
