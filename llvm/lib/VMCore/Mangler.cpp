@@ -12,8 +12,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Support/Mangler.h"
+#include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
-#include "llvm/Type.h"
 #include "llvm/ADT/StringExtras.h"
 using namespace llvm;
 
@@ -59,40 +59,39 @@ unsigned Mangler::getTypeID(const Type *Ty) {
   return E;
 }
 
-
 std::string Mangler::getValueName(const Value *V) {
+  if (const GlobalValue *GV = dyn_cast<GlobalValue>(V))
+    return getValueName(GV);
+  
+  std::string &Name = Memo[V];
+  if (!Name.empty())
+    return Name;       // Return the already-computed name for V.
+  
+  // Always mangle local names.
+  Name = "ltmp_" + utostr(Count++) + "_" + utostr(getTypeID(V->getType()));
+  return Name;
+}
+
+
+std::string Mangler::getValueName(const GlobalValue *GV) {
   // Check to see whether we've already named V.
-  ValueMap::iterator VI = Memo.find(V);
-  if (VI != Memo.end()) {
-    return VI->second; // Return the old name for V.
-  }
+  std::string &Name = Memo[GV];
+  if (!Name.empty())
+    return Name;       // Return the already-computed name for V.
 
-  std::string name;
-  if (V->hasName()) { // Print out the label if it exists...
-    // Name mangling occurs as follows:
-    // - If V is an intrinsic function, do not change name at all
-    // - If V is not a global, mangling always occurs.
-    // - Otherwise, mangling occurs when any of the following are true:
-    //   1) V has internal linkage
-    //   2) V's name would collide if it is not mangled.
-    //
-    const GlobalValue* gv = dyn_cast<GlobalValue>(V);
-    if (gv && isa<Function>(gv) && cast<Function>(gv)->getIntrinsicID()) {
-      name = gv->getName(); // Is an intrinsic function
-    } else if (gv && !gv->hasInternalLinkage() && !MangledGlobals.count(gv)) {
-      name = makeNameProper(gv->getName(), Prefix);
-    } else {
-      // Non-global, or global with internal linkage / colliding name
-      // -> mangle.
-      unsigned TypeUniqueID = getTypeID(V->getType());
-      name = "l" + utostr(TypeUniqueID) + "_" + makeNameProper(V->getName());
-    }
+  // Name mangling occurs as follows:
+  // - If V is an intrinsic function, do not change name at all
+  // - Otherwise, mangling occurs if global collides with existing name.
+  if (isa<Function>(GV) && cast<Function>(GV)->getIntrinsicID()) {
+    Name = GV->getName(); // Is an intrinsic function
+  } else if (!MangledGlobals.count(GV)) {
+    Name = makeNameProper(GV->getName(), Prefix);
   } else {
-    name = "ltmp_" + utostr(Count++) + "_" + utostr(getTypeID(V->getType()));
+    unsigned TypeUniqueID = getTypeID(GV->getType());
+    Name = "l" + utostr(TypeUniqueID) + "_" + makeNameProper(GV->getName());
   }
 
-  Memo[V] = name;
-  return name;
+  return Name;
 }
 
 void Mangler::InsertName(GlobalValue *GV,
