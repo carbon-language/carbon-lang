@@ -210,7 +210,7 @@ namespace {
     AIXAsmPrinter(std::ostream &O, TargetMachine &TM)
       : PPCAsmPrinter(O, TM) {
       CommentString = "#";
-      GlobalPrefix = "_";
+      GlobalPrefix = ".";
       ZeroDirective = "\t.space\t";  // ".space N" emits N zeros.
       Data64bitsDirective = 0;       // we can't emit a 64-bit unit
       AlignmentIsInBytes = false;    // Alignment is by power of 2.
@@ -691,7 +691,7 @@ bool AIXAsmPrinter::doInitialization(Module &M) {
     O << '\n';
   }
 
-  Mang = new Mangler(M, ".");
+  AsmPrinter::doInitialization(M);
   return false; // success
 }
 
@@ -718,6 +718,6 @@ bool AIXAsmPrinter::doFinalization(Module &M) {
   O << "_section_.text:\n"
     << "\t.csect .data[RW],3\n"
     << "\t.llong _section_.text\n";
-  delete Mang;
+  AsmPrinter::doFinalization(M);
   return false; // success
 }
