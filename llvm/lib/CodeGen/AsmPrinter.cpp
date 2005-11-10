@@ -13,7 +13,7 @@
 
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/Constants.h"
-#include "llvm/Instruction.h"
+#include "llvm/Module.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Target/TargetMachine.h"
@@ -31,7 +31,7 @@ bool AsmPrinter::doFinalization(Module &M) {
 
 void AsmPrinter::setupMachineFunction(MachineFunction &MF) {
   // What's my mangled name?
-  CurrentFnName = Mang->getValueName((Value*)MF.getFunction());
+  CurrentFnName = Mang->getValueName(MF.getFunction());
 }
 
 // emitAlignment - Emit an alignment directive to the specified power of two.
@@ -69,15 +69,15 @@ void AsmPrinter::emitConstantValueOnly(const Constant *CV) {
       O << (uint64_t)CI->getValue();
   else if (const ConstantUInt *CI = dyn_cast<ConstantUInt>(CV))
     O << CI->getValue();
-  else if (isa<GlobalValue>((Value*)CV)) {
+  else if (const GlobalValue *GV = dyn_cast<GlobalValue>(CV)) {
     // This is a constant address for a global variable or function. Use the
     // name of the variable or function as the address value, possibly
     // decorating it with GlobalVarAddrPrefix/Suffix or
     // FunctionAddrPrefix/Suffix (these all default to "" )
-    if (isa<Function>((Value*)CV))
-      O << FunctionAddrPrefix << Mang->getValueName(CV) << FunctionAddrSuffix;
+    if (isa<Function>(GV))
+      O << FunctionAddrPrefix << Mang->getValueName(GV) << FunctionAddrSuffix;
     else
-      O << GlobalVarAddrPrefix << Mang->getValueName(CV) << GlobalVarAddrSuffix;
+      O << GlobalVarAddrPrefix << Mang->getValueName(GV) << GlobalVarAddrSuffix;
   } else if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(CV)) {
     const TargetData &TD = TM.getTargetData();
     switch(CE->getOpcode()) {
