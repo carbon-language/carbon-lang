@@ -1107,12 +1107,12 @@ UpRTypes : '\\' EUINT64VAL {                   // Type UpReference
   }
   | '<' EUINT64VAL 'x' UpRTypes '>' {          // Packed array type?
      const llvm::Type* ElemTy = $4->get();
-     if ((unsigned)$2 != $2) {
+     if ((unsigned)$2 != $2)
         ThrowException("Unsigned result not equal to signed result");
-     }
-     if(!ElemTy->isPrimitiveType()) {
+     if (!ElemTy->isPrimitiveType())
         ThrowException("Elemental type of a PackedType must be primitive");
-     }
+     if (!isPowerOf2_32($2))
+       ThrowException("Vector length should be a power of 2!");
      $$ = new PATypeHolder(HandleUpRefs(PackedType::get(*$4, (unsigned)$2)));
      delete $4;
   }
