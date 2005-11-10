@@ -88,6 +88,7 @@ namespace {
       (void) llvm::createPREPass();
       (void) llvm::createProfileLoaderPass();
       (void) llvm::createPromoteMemoryToRegisterPass();
+      (void) llvm::createDemoteRegisterToMemoryPass();
       (void) llvm::createPruneEHPass();
       (void) llvm::createRaiseAllocationsPass();
       (void) llvm::createRaisePointerReferencesPass();
