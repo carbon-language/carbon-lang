@@ -446,6 +446,9 @@ bool DarwinAsmPrinter::doInitialization(Module &M) {
   if (TM.getSubtarget<PPCSubtarget>().isGigaProcessor())
     O << "\t.machine ppc970\n";
   AsmPrinter::doInitialization(M);
+  
+  // Darwin wants symbols to be quoted if they have complex names.
+  Mang->setUseQuotes(true);
   return false;
 }
 
