@@ -30,16 +30,22 @@ class Mangler {
   ///
   std::set<const GlobalValue*> MangledGlobals;
 
-  Module &M;
+  /// Prefix - This string is added to each symbol that is emitted, unless the
+  /// symbol is marked as not needing this prefix.
   const char *Prefix;
 
-  unsigned TypeCounter;
-  std::map<const Type*, unsigned> TypeMap;
+  /// Memo - This is used to remember the name that we assign a value.
+  ///
+  std::map<const Value*, std::string> Memo;
 
-  typedef std::map<const Value*, std::string> ValueMap;
-  ValueMap Memo;
-
+  /// Count - This simple counter is used to unique value names.
+  ///
   unsigned Count;
+  
+  /// TypeMap - If the client wants us to unique types, this keeps track of the
+  /// current assignments and TypeCounter keeps track of the next id to assign.
+  std::map<const Type*, unsigned> TypeMap;
+  unsigned TypeCounter;
 
   void InsertName(GlobalValue *GV, std::map<std::string, GlobalValue*> &Names);
 public:
