@@ -30,24 +30,51 @@ static std::string MangleLetter(unsigned char C) {
 ///
 std::string Mangler::makeNameProper(const std::string &X, const char *Prefix) {
   std::string Result;
-
-  // If X does not start with (char)1, add the prefix.
-  std::string::const_iterator I = X.begin();
-  if (*I != 1)
-    Result = Prefix;
-  else
-    ++I;  // Skip over the marker.
   
-  // Mangle the first letter specially, don't allow numbers...
-  if (*I >= '0' && *I <= '9')
-    Result += MangleLetter(*I++);
-
-  for (std::string::const_iterator E = X.end(); I != E; ++I)
-    if ((*I < 'a' || *I > 'z') && (*I < 'A' || *I > 'Z') &&
-        (*I < '0' || *I > '9') && *I != '_' && *I != '$')
-      Result += MangleLetter(*I);
+  if (!UseQuotes) {
+    // If X does not start with (char)1, add the prefix.
+    std::string::const_iterator I = X.begin();
+    if (*I != 1)
+      Result = Prefix;
     else
-      Result += *I;
+      ++I;  // Skip over the marker.
+    
+    // Mangle the first letter specially, don't allow numbers...
+    if (*I >= '0' && *I <= '9')
+      Result += MangleLetter(*I++);
+
+    for (std::string::const_iterator E = X.end(); I != E; ++I)
+      if ((*I < 'a' || *I > 'z') && (*I < 'A' || *I > 'Z') &&
+          (*I < '0' || *I > '9') && *I != '_' && *I != '$')
+        Result += MangleLetter(*I);
+      else
+        Result += *I;
+  } else {
+    bool NeedsQuotes = false;
+    
+    // If X does not start with (char)1, add the prefix.
+    std::string::const_iterator I = X.begin();
+    if (*I != 1)
+      Result = Prefix;
+    else
+      ++I;  // Skip over the marker.
+    
+    // If the first character is a number, we need quotes.
+    if (*I >= '0' && *I <= '9')
+      NeedsQuotes = true;
+    
+    for (std::string::const_iterator E = X.end(); I != E; ++I)
+      if (*I == '"')
+        Result += "_QQ_";
+      else {
+        if ((*I < 'a' || *I > 'z') && (*I < 'A' || *I > 'Z') &&
+            (*I < '0' || *I > '9') && *I != '_' && *I != '$' && *I != '.')
+          NeedsQuotes = true;
+        Result += *I;
+      }
+    if (NeedsQuotes)
+      Result = '"' + Result + '"';
+  }
   return Result;
 }
 
@@ -119,7 +146,7 @@ void Mangler::InsertName(GlobalValue *GV,
 
 
 Mangler::Mangler(Module &M, const char *prefix)
-  : Prefix(prefix), Count(0), TypeCounter(0) {
+  : Prefix(prefix), UseQuotes(false), Count(0), TypeCounter(0) {
   // Calculate which global values have names that will collide when we throw
   // away type information.
   std::map<std::string, GlobalValue*> Names;

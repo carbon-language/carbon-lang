@@ -25,15 +25,15 @@ class Value;
 class GlobalValue;
 
 class Mangler {
-  /// This keeps track of which global values have had their names
-  /// mangled in the current module.
-  ///
-  std::set<const GlobalValue*> MangledGlobals;
-
   /// Prefix - This string is added to each symbol that is emitted, unless the
   /// symbol is marked as not needing this prefix.
   const char *Prefix;
-
+  
+  /// UseQuotes - If this is set, the target accepts global names in quotes, 
+  /// e.g. "foo bar" is a legal name.  This syntax is used instead of escaping
+  /// the space character.  By default, this is false.
+  bool UseQuotes;
+  
   /// Memo - This is used to remember the name that we assign a value.
   ///
   std::map<const Value*, std::string> Memo;
@@ -47,13 +47,20 @@ class Mangler {
   std::map<const Type*, unsigned> TypeMap;
   unsigned TypeCounter;
 
-  void InsertName(GlobalValue *GV, std::map<std::string, GlobalValue*> &Names);
+  /// This keeps track of which global values have had their names
+  /// mangled in the current module.
+  ///
+  std::set<const GlobalValue*> MangledGlobals;
 public:
 
   // Mangler ctor - if a prefix is specified, it will be prepended onto all
   // symbols.
   Mangler(Module &M, const char *Prefix = "");
 
+  /// setUseQuotes - If UseQuotes is set to true, this target accepts quoted
+  /// strings for assembler labels.
+  void setUseQuotes(bool Val) { UseQuotes = Val; }
+  
   /// getTypeID - Return a unique ID for the specified LLVM type.
   ///
   unsigned getTypeID(const Type *Ty);
@@ -72,6 +79,9 @@ public:
   /// from getValueName.
   ///
   std::string makeNameProper(const std::string &x, const char *Prefix = "");
+  
+private:
+  void InsertName(GlobalValue *GV, std::map<std::string, GlobalValue*> &Names);
 };
 
 } // End llvm namespace
