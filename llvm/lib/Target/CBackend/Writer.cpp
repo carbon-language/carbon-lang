@@ -834,6 +834,7 @@ bool CWriter::doInitialization(Module &M) {
 
   // Ensure that all structure types have names...
   Mang = new Mangler(M);
+  Mang->markCharUnacceptable('.');
 
   // get declaration for alloca
   Out << "/* Provide Declarations */\n";
