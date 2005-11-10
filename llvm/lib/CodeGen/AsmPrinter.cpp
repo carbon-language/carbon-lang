@@ -141,14 +141,15 @@ static inline char toOctal(int X) {
   return (X&7)+'0';
 }
 
-/// getAsCString - Return the specified array as a C compatible string, only if
+/// printAsCString - Print the specified array as a C compatible string, only if
 /// the predicate isString is true.
 ///
-static void printAsCString(std::ostream &O, const ConstantArray *CVA) {
+static void printAsCString(std::ostream &O, const ConstantArray *CVA,
+                           unsigned LastElt) {
   assert(CVA->isString() && "Array is not string compatible!");
 
   O << "\"";
-  for (unsigned i = 0; i != CVA->getNumOperands(); ++i) {
+  for (unsigned i = 0; i != LastElt; ++i) {
     unsigned char C =
         (unsigned char)cast<ConstantInt>(CVA->getOperand(i))->getRawValue();
 
@@ -187,8 +188,15 @@ void AsmPrinter::emitGlobalConstant(const Constant *CV) {
     return;
   } else if (const ConstantArray *CVA = dyn_cast<ConstantArray>(CV)) {
     if (CVA->isString()) {
-      O << AsciiDirective;
-      printAsCString(O, CVA);
+      unsigned NumElts = CVA->getNumOperands();
+      if (AscizDirective && NumElts && 
+          cast<ConstantInt>(CVA->getOperand(NumElts-1))->getRawValue() == 0) {
+        O << AscizDirective;
+        printAsCString(O, CVA, NumElts-1);
+      } else {
+        O << AsciiDirective;
+        printAsCString(O, CVA, NumElts);
+      }
       O << "\n";
     } else { // Not a string.  Print the values in successive locations
       for (unsigned i = 0, e = CVA->getNumOperands(); i != e; ++i)
