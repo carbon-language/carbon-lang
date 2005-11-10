@@ -162,6 +162,12 @@ FunctionPass *createLoopUnrollPass();
 //
 FunctionPass *createPromoteMemoryToRegisterPass();
 
+//===----------------------------------------------------------------------===//
+//
+// This pass is used to demote registers to memory references .
+// In basically undoes the PromoteMemoryToRegister pass to
+// make cfg hacking easier.
+FunctionPass *createDemoteRegisterToMemoryPass();
 
 //===----------------------------------------------------------------------===//
 //
