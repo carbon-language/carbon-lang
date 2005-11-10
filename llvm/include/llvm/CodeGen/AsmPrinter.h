@@ -77,7 +77,12 @@ namespace llvm {
 
     /// AsciiDirective - This directive allows emission of an ascii string with
     /// the standard C escape characters embedded into it.
-    const char *AsciiDirective;
+    const char *AsciiDirective;  // Defaults to "\t.ascii\t"
+    
+    /// AscizDirective - If not null, this allows for special handling of
+    /// zero terminated strings on this target.  This is commonly supported as
+    /// ".asciz".  If a target doesn't support this, it can be set to null.
+    const char *AscizDirective;  // Defaults to "\t.asciz\t"
 
     /// DataDirectives - These directives are used to output some unit of
     /// integer data to the current section.  If a data directive is set to
@@ -108,6 +113,7 @@ namespace llvm {
         FunctionAddrSuffix(""),
         ZeroDirective("\t.zero\t"),
         AsciiDirective("\t.ascii\t"),
+        AscizDirective("\t.asciz\t"),
         Data8bitsDirective("\t.byte\t"),
         Data16bitsDirective("\t.short\t"),
         Data32bitsDirective("\t.long\t"),
