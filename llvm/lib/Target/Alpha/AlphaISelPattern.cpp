@@ -1295,11 +1295,11 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
       if (SrcType == MVT::f32)
         {
           Tmp2 = MakeReg(MVT::f64);
-          BuildMI(BB, Alpha::CVTST, 1, Tmp2).addReg(Alpha::F31).addReg(Tmp1);
+          BuildMI(BB, Alpha::CVTST, 1, Tmp2).addReg(Tmp1);
           Tmp1 = Tmp2;
         }
       Tmp2 = MakeReg(MVT::f64);
-      BuildMI(BB, Alpha::CVTTQ, 1, Tmp2).addReg(Alpha::F31).addReg(Tmp1);
+      BuildMI(BB, Alpha::CVTTQ, 1, Tmp2).addReg(Tmp1);
       MoveFP2Int(Tmp2, Result, true);
 
       return Result;
