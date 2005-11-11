@@ -308,6 +308,9 @@ namespace ISD {
     PCMARKER,
 
     // READCYCLECOUNTER - This corresponds to the readcyclecounter intrinsic.
+    // The only operand is a chain and a value and a chain are produced.  The
+    // value is the contents of the architecture specific cycle counter like 
+    // register (or other high accuracy low latency clock source)
     READCYCLECOUNTER,
 
     // READPORT, WRITEPORT, READIO, WRITEIO - These correspond to the LLVM

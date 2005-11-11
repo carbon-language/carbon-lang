@@ -804,9 +804,17 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     DAG.setRoot(DAG.getNode(ISD::PCMARKER, MVT::Other, getRoot(), Tmp));
     return 0;
   }
-  case Intrinsic::readcyclecounter: 
-    setValue(&I, DAG.getNode(ISD::READCYCLECOUNTER, MVT::i64, getRoot()));
+  case Intrinsic::readcyclecounter: {
+    std::vector<MVT::ValueType> VTs;
+    VTs.push_back(MVT::i64);
+    VTs.push_back(MVT::Other);
+    std::vector<SDOperand> Ops;
+    Ops.push_back(getRoot());
+    SDOperand Tmp = DAG.getNode(ISD::READCYCLECOUNTER, VTs, Ops);
+    setValue(&I, Tmp);
+    DAG.setRoot(Tmp.getValue(1));
     return 0;
+  }
   case Intrinsic::cttz:
     setValue(&I, DAG.getNode(ISD::CTTZ,
                              getValue(I.getOperand(1)).getValueType(),
