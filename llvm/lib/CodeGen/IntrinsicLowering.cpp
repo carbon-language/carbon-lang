@@ -262,6 +262,12 @@ void DefaultIntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
 
   case Intrinsic::pcmarker:
     break;    // Simply strip out pcmarker on unsupported architectures
+  case Intrinsic::readcyclecounter: {
+    std::cerr << "WARNING: this target does not support the llvm.readcyclecounter"
+              << " intrinsic.  It is being lowered to a constant 0\n";
+    CI->replaceAllUsesWith(ConstantUInt::get(Type::ULongTy, 0));
+    break;
+  }
 
   case Intrinsic::dbg_stoppoint:
   case Intrinsic::dbg_region_start:

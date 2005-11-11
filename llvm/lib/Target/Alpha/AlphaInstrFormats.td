@@ -50,6 +50,15 @@ class MForm<bits<6> opcode, string asmstr>
   let Inst{20-16} = Rb;
   let Inst{15-0} = disp;
 }
+class MfcForm<bits<6> opcode, bits<16> fc, string asmstr> 
+        : InstAlpha<opcode, (ops GPRC:$RA, GPRC:$RB), asmstr> {
+  bits<5> Ra;
+  bits<5> Rb;
+
+  let Inst{25-21} = Ra;
+  let Inst{20-16} = Rb;
+  let Inst{15-0} = fc;
+}
 
 class MgForm<bits<6> opcode, string asmstr> 
         : InstAlpha<opcode, (ops GPRC:$RA, s16imm:$DISP, GPRC:$RB, s16imm:$NUM), asmstr> {

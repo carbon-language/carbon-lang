@@ -1624,6 +1624,7 @@ const char *SDNode::getOperationName(const SelectionDAG *G) const {
     }
    
   case ISD::PCMARKER:      return "PCMarker";
+  case ISD::READCYCLECOUNTER: return "ReadCycleCounter";
   case ISD::SRCVALUE:      return "SrcValue";
   case ISD::VALUETYPE:     return "ValueType";
   case ISD::EntryToken:    return "EntryToken";

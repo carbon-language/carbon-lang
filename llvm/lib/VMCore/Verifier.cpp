@@ -726,6 +726,14 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
     NumArgs = 2;
     break;
 
+  case Intrinsic::readcyclecounter:
+    Assert1(FT->getNumParams() == 0,
+            "Illegal # arguments for intrinsic function!", IF);
+    Assert1(FT->getReturnType() == Type::ULongTy,
+            "Return type is not ulong!", IF);
+    NumArgs = 0;
+    break;
+
   case Intrinsic::ctpop:
   case Intrinsic::ctlz:
   case Intrinsic::cttz:

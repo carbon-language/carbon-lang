@@ -804,6 +804,9 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     DAG.setRoot(DAG.getNode(ISD::PCMARKER, MVT::Other, getRoot(), Tmp));
     return 0;
   }
+  case Intrinsic::readcyclecounter: 
+    setValue(&I, DAG.getNode(ISD::READCYCLECOUNTER, MVT::i64, getRoot()));
+    return 0;
   case Intrinsic::cttz:
     setValue(&I, DAG.getNode(ISD::CTTZ,
                              getValue(I.getOperand(1)).getValueType(),

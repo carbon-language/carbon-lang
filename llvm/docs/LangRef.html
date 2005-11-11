@@ -128,6 +128,7 @@
           <li><a href="#i_frameaddress">'<tt>llvm.frameaddress</tt>'   Intrinsic</a></li>
           <li><a href="#i_prefetch">'<tt>llvm.prefetch</tt>' Intrinsic</a></li>
           <li><a href="#i_pcmarker">'<tt>llvm.pcmarker</tt>' Intrinsic</a></li>
+          <li><a href="#i_readcyclecounter"><tt>llvm.readcyclecounter</tt>' Intrinsic</a></li>
         </ol>
       </li>
       <li><a href="#int_os">Operating System Intrinsics</a>
@@ -2807,6 +2808,39 @@ correlations of simulation runs.
 <p>
 This intrinsic does not modify the behavior of the program.  Backends that do not 
 support this intrinisic may ignore it.
+</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="i_readcyclecounter">'<tt>llvm.readcyclecounter</tt>' Intrinsic</a>
+</div>
+
+<div class="doc_text">
+
+<h5>Syntax:</h5>
+<pre>
+  declare ulong %llvm.readcyclecounter( )
+</pre>
+
+<h5>Overview:</h5>
+
+
+<p>
+The '<tt>llvm.readcyclecounter</tt>' intrinsic provides access to the cycle 
+counter register (or similar low latency, high accuracy clocks) on those targets
+that support it.  On X86, it should map to RDTSC.  On Alpha, it should map to RPCC.
+As the backing counters overflow quickly (on the order of 9 seconds on alpha), this
+should only be used for small timings.  
+</p>
+
+<h5>Semantics:</h5>
+
+<p>
+When directly supported, reading the cycle counter should not modify any memory.  
+Implementations are allowed to either return a application specific value or a
+system wide value.  On backends without support, this is lowered to a constant 0.
 </p>
 
 </div>

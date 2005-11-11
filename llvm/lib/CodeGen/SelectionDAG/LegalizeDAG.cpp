@@ -1122,6 +1122,11 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     if (Tmp1 != Node->getOperand(0))
       Result = DAG.getNode(ISD::PCMARKER, MVT::Other, Tmp1,Node->getOperand(1));
     break;
+  case ISD::READCYCLECOUNTER:
+    Tmp1 = LegalizeOp(Node->getOperand(0)); // Legalize the chain
+    if (Tmp1 != Node->getOperand(0))
+      Result = DAG.getNode(ISD::READCYCLECOUNTER, MVT::i64, Tmp1);
+    break;
   case ISD::TRUNCSTORE:
     Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
     Tmp3 = LegalizeOp(Node->getOperand(2));  // Legalize the pointer.

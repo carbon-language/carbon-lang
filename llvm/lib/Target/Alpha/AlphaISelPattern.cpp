@@ -549,6 +549,11 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
     Node->dump();
     assert(0 && "Node not handled!\n");
 
+  case ISD::READCYCLECOUNTER:
+    Select(N.getOperand(0)); //Select chain
+    BuildMI(BB, Alpha::RPCC, 1, Result).addReg(Alpha::R31);
+    return Result;
+
   case ISD::CTPOP:
   case ISD::CTTZ:
   case ISD::CTLZ:

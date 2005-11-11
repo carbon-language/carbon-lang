@@ -243,9 +243,10 @@ unsigned Function::getIntrinsicID() const {
     if (getName() == "llvm.pcmarker")  return Intrinsic::pcmarker;
     break;
   case 'r':
-    if (getName() == "llvm.returnaddress")  return Intrinsic::returnaddress;
-    if (getName() == "llvm.readport")       return Intrinsic::readport;
-    if (getName() == "llvm.readio")         return Intrinsic::readio;
+    if (getName() == "llvm.returnaddress")    return Intrinsic::returnaddress;
+    if (getName() == "llvm.readport")         return Intrinsic::readport;
+    if (getName() == "llvm.readio")           return Intrinsic::readio;
+    if (getName() == "llvm.readcyclecounter") return Intrinsic::readcyclecounter;
     break;
   case 's':
     if (getName() == "llvm.setjmp")     return Intrinsic::setjmp;

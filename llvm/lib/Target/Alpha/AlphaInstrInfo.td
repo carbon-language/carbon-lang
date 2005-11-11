@@ -465,6 +465,8 @@ def FBLE : FBForm<0x33, "fble $RA,$DISP">; //Floating branch if <= zero
 def FBLT : FBForm<0x32, "fblt $RA,$DISP">; //Floating branch if < zero
 def FBNE : FBForm<0x35, "fbne $RA,$DISP">; //Floating branch if != zero
 
+def RPCC : MfcForm<0x18, 0xC000, "rpcc $RA">; //Read process cycle counter
+
 //Basic Floating point ops
 
 //Floats
@@ -558,7 +560,6 @@ def CVTTS : FPForm<0x16, 0x7AC, "cvtts/sui $RB,$RC",
 //LDQ_L Mem 2B Load quadword locked
 //LDQ_U Mem 0B Load unaligned quadword
 //MB Mfc 18.4000 Memory barrier
-//RPCC Mfc 18.C000 Read process cycle counter
 //STL_C Mem 2E Store longword conditional
 //STQ_C Mem 2F Store quadword conditional
 //STQ_U Mem 0F Store unaligned quadword
