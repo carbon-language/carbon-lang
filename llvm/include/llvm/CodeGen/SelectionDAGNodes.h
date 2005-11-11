@@ -307,6 +307,9 @@ namespace ISD {
     // PCMARKER - This corresponds to the pcmarker intrinsic.
     PCMARKER,
 
+    // READCYCLECOUNTER - This corresponds to the readcyclecounter intrinsic.
+    READCYCLECOUNTER,
+
     // READPORT, WRITEPORT, READIO, WRITEIO - These correspond to the LLVM
     // intrinsics of the same name.  The first operand is a token chain, the
     // other operands match the intrinsic.  These produce a token chain in

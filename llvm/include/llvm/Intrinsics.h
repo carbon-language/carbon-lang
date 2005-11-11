@@ -32,10 +32,11 @@ namespace Intrinsic {
     vacopy,         // Used to implement the va_copy macro in C
 
     // Code generator intrinsics.
-    returnaddress,  // Yields the return address of a dynamic call frame
-    frameaddress,   // Yields the frame address of a dynamic call frame
-    prefetch,       // Prefetch a value into the cache
-    pcmarker,       // Export a PC from near the marker
+    returnaddress,    // Yields the return address of a dynamic call frame
+    frameaddress,     // Yields the frame address of a dynamic call frame
+    prefetch,         // Prefetch a value into the cache
+    pcmarker,         // Export a PC from near the marker
+    readcyclecounter, // Read cycle counter register
 
     // setjmp/longjmp intrinsics.
     setjmp,         // Used to represent a setjmp call in C
