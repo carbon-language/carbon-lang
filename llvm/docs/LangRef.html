@@ -2323,7 +2323,7 @@ the "variable argument" area of a function call.  It is used to implement the
 
 <p>This instruction takes a <tt>va_list*</tt> value and the type of
 the argument. It returns a value of the specified argument type and
-increments the <tt>va_list</tt> to poin to the next argument.  Again, the
+increments the <tt>va_list</tt> to point to the next argument.  Again, the
 actual type of <tt>va_list</tt> is target specific.</p>
 
 <h5>Semantics:</h5>
@@ -2790,7 +2790,7 @@ The '<tt>llvm.pcmarker</tt>' intrinsic is a method to export a Program Counter
 (PC) in a region of 
 code to simulators and other tools.  The method is target specific, but it is 
 expected that the marker will use exported symbols to transmit the PC of the marker.
-The marker makes no guaranties that it will remain with any specific instruction 
+The marker makes no guarantees that it will remain with any specific instruction 
 after optimizations.  It is possible that the presense of a marker will inhibit 
 optimizations.  The intended use is to be inserted after optmizations to allow
 correlations of simulation runs.
