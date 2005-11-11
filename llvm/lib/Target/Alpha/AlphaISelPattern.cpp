@@ -1530,7 +1530,7 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
             N.getOperand(0).getValueType() == MVT::f64 &&
             "only f64 to f32 conversion supported here");
     Tmp1 = SelectExpr(N.getOperand(0));
-    BuildMI(BB, Alpha::CVTTS, 1, Result).addReg(Alpha::F31).addReg(Tmp1);
+    BuildMI(BB, Alpha::CVTTS, 1, Result).addReg(Tmp1);
     return Result;
 
   case ISD::FP_EXTEND:
