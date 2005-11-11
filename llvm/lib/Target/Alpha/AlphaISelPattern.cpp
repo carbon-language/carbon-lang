@@ -551,6 +551,11 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
 
   case ISD::READCYCLECOUNTER:
     Select(N.getOperand(0)); //Select chain
+    if (Result != notIn)
+      ExprMap[N.getValue(1)] = notIn;   // Generate the token
+    else
+      Result = ExprMap[N.getValue(0)] = MakeReg(N.getValue(0).getValueType());
+
     BuildMI(BB, Alpha::RPCC, 1, Result).addReg(Alpha::R31);
     return Result;
 
