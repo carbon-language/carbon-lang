@@ -833,10 +833,11 @@ void AssemblyWriter::printGlobal(const GlobalVariable *GV) {
     writeOperand(GV->getInitializer(), false, isa<GlobalValue>(C));
   }
   
-  if (GV->getAlignment()) {
+  if (GV->hasSection())
+    Out << ", section \"" << GV->getSection() << '"';
+  if (GV->getAlignment())
     Out << ", align " << GV->getAlignment();
-  }
-
+  
   printInfoComment(*GV);
   Out << "\n";
 }
@@ -944,9 +945,11 @@ void AssemblyWriter::printFunction(const Function *F) {
   }
   Out << ')';
 
+  if (F->hasSection())
+    Out << " section \"" << F->getSection() << '"';
   if (F->getAlignment())
     Out << " align " << F->getAlignment();
-  
+
   if (F->isExternal()) {
     Out << "\n";
   } else {
