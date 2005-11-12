@@ -369,7 +369,7 @@ bool AlphaISel::SelectFPSetCC(SDOperand N, unsigned dst)
       //assert(0 && "Setcc On float?\n");
       std::cerr << "Setcc on float!\n";
       Tmp3 = MakeReg(MVT::f64);
-      BuildMI(BB, Alpha::CVTST, 1, Tmp3).addReg(Alpha::F31).addReg(Tmp1);
+      BuildMI(BB, Alpha::CVTST, 1, Tmp3).addReg(Tmp1);
       Tmp1 = Tmp3;
     }
   if (SetCC->getOperand(1).getValueType() == MVT::f32)
@@ -377,7 +377,7 @@ bool AlphaISel::SelectFPSetCC(SDOperand N, unsigned dst)
       //assert (0 && "Setcc On float?\n");
       std::cerr << "Setcc on float!\n";
       Tmp3 = MakeReg(MVT::f64);
-      BuildMI(BB, Alpha::CVTST, 1, Tmp3).addReg(Alpha::F31).addReg(Tmp2);
+      BuildMI(BB, Alpha::CVTST, 1, Tmp3).addReg(Tmp2);
       Tmp2 = Tmp3;
     }
 
