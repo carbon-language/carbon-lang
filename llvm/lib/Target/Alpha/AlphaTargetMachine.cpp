@@ -29,9 +29,6 @@ namespace {
 }
 
 namespace llvm {
-  cl::opt<bool> EnableAlphaLSR("enable-lsr-for-alpha",
-                             cl::desc("Enable LSR for Alpha (beta option!)"),
-                             cl::Hidden);
   cl::opt<bool> EnableAlphaDAG("enable-dag-isel-for-alpha",
                              cl::desc("Enable DAG ISEL for Alpha (beta option!)"),
                              cl::Hidden);
@@ -81,10 +78,7 @@ bool AlphaTargetMachine::addPassesToEmitFile(PassManager &PM,
                                              bool Fast) {
   if (FileType != TargetMachine::AssemblyFile) return true;
 
-  if (EnableAlphaLSR) {
-    PM.add(createLoopStrengthReducePass());
-    PM.add(createCFGSimplificationPass());
-  }
+  PM.add(createLoopStrengthReducePass());
 
   // FIXME: Implement efficient support for garbage collection intrinsics.
   PM.add(createLowerGCPass());
@@ -97,6 +91,8 @@ bool AlphaTargetMachine::addPassesToEmitFile(PassManager &PM,
 
   // Make sure that no unreachable blocks are instruction selected.
   PM.add(createUnreachableBlockEliminationPass());
+
+  PM.add(createCFGSimplificationPass());
 
   if (EnableAlphaDAG)
     PM.add(createAlphaISelDag(*this));
