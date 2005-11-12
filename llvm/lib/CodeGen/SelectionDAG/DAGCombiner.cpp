@@ -967,8 +967,8 @@ SDOperand DAGCombiner::visitAND(SDNode *N) {
   // fold (and (sign_extend_inreg x, i16 to i32), 1) -> (and x, 1)
   if (N1C && N0.getOpcode() == ISD::SIGN_EXTEND_INREG) {
     unsigned ExtendBits =
-    MVT::getSizeInBits(cast<VTSDNode>(N0.getOperand(1))->getVT());
-    if (ExtendBits == 64 || (N1C->getValue() & (~0ULL << ExtendBits) == 0))
+        MVT::getSizeInBits(cast<VTSDNode>(N0.getOperand(1))->getVT());
+    if (ExtendBits == 64 || ((N1C->getValue() & (~0ULL << ExtendBits)) == 0))
       return DAG.getNode(ISD::AND, VT, N0.getOperand(0), N1);
   }
   // fold (and (or x, 0xFFFF), 0xFF) -> 0xFF
