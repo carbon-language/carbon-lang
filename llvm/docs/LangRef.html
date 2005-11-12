@@ -495,7 +495,8 @@ convention.</p>
 <div class="doc_text">
 
 <p>Global variables define regions of memory allocated at compilation time
-instead of run-time.  Global variables may optionally be initialized, and may
+instead of run-time.  Global variables may optionally be initialized, may have
+an explicit section to be placed in, and may
 have an optional explicit alignment specified.  A
 variable may be defined as a global "constant," which indicates that the
 contents of the variable will <b>never</b> be modified (enabling better
@@ -518,6 +519,9 @@ variables always define a pointer to their "content" type because they
 describe a region of memory, and all memory objects in LLVM are
 accessed through pointers.</p>
 
+<p>LLVM allows an explicit section to be specified for globals.  If the target
+supports it, it will emit globals to the section specified.</p>
+
 <p>An explicit alignment may be specified for a global.  If not present, or if
 the alignment is set to zero, the alignment of the global is set by the target
 to whatever it feels convenient.  If an explicit alignment is specified, the 
@@ -536,8 +540,8 @@ a power of 2.</p>
 
 <p>LLVM function definitions consist of an optional <a href="#linkage">linkage
 type</a>, an optional <a href="#callingconv">calling convention</a>, a return
-type, a function name, a (possibly empty) argument list, an optional alignment,
-an opening curly brace,
+type, a function name, a (possibly empty) argument list, an optional section,
+an optional alignment, an opening curly brace,
 a list of basic blocks, and a closing curly brace.  LLVM function declarations
 are defined with the "<tt>declare</tt>" keyword, an optional <a
 href="#callingconv">calling convention</a>, a return type, a function name,
@@ -559,6 +563,9 @@ function).  Because the block can have no predecessors, it also cannot have any
 functions with the same name but different parameter lists or return values are
 considered different functions, and LLVM will resolve references to each
 appropriately.</p>
+
+<p>LLVM allows an explicit section to be specified for functions.  If the target
+supports it, it will emit functions to the section specified.</p>
 
 <p>An explicit alignment may be specified for a function.  If not present, or if
 the alignment is set to zero, the alignment of the function is set by the target
