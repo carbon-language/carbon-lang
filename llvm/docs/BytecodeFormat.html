@@ -969,20 +969,27 @@ definitions occurring in the module.</td>
 occurring in the module.</td>
     </tr>
     <tr>
-      <td style="vertical-align: top;"><a href="#llist">llist</a>(<a
- href="#string">string</a>)<br>
+      <td><a href="#llist">llist</a>(<a href="#string">string</a>)<br>
       </td>
-      <td style="vertical-align: top; text-align: left;">A length list
+      <td class="td_left">A length list
 of strings that specify the names of the libraries that this module
 depends upon.<br>
       </td>
     </tr>
     <tr>
-      <td style="vertical-align: top;"><a href="#string">string</a><br>
+      <td><a href="#string">string</a><br>
       </td>
-      <td style="vertical-align: top; text-align: left;">The target
+      <td class="td_left">The target
 triple for the module (blank means no target triple specified, i.e. a
 platform independent module).<br>
+      </td>
+    </tr>
+    <tr>
+      <td><a href="#llist">llist</a>(<a href="#string">string</a>)<br>
+      </td>
+      <td class="td_left">A length list
+of strings that defines a table of section strings for globals.  A global's
+SectionID is an index into this table.<br>
       </td>
     </tr>
   </tbody>
@@ -1056,15 +1063,17 @@ and can includes more information:</p>
       <td class="td_left">The log-base-2 of the alignment for the global.</td>
     </tr>
     <tr>
-      <td><a href="#bit">bit(9-31)</a></td>
+      <td><a href="#bit">bit(9)</a></td>
+      <td class="td_left">If this bit is set, a SectionID follows this vbr.</td>
+    </tr>
+    <tr>
+      <td><a href="#bit">bit(10-31)</a></td>
       <td class="td_left">Currently unassigned.</td>
     </tr>
   </tbody>
 </table>
 
-<p>The table below provides the format of the constant initializers for
-the global variable field, if it has one (indicated by the "Has initializer"
-field).</p>
+<p>If the SectionID bit is set above, the following field is included:</p>
 
 <table>
   <tbody>
@@ -1073,10 +1082,30 @@ field).</p>
       <th class="td_left"><b>Description</b></th>
     </tr>
     <tr>
-      <td>(<a href="#zlist">zlist</a>(<a href="#uint32_vbr">uint32_vbr</a>))?
+      <td><a href="#uint32_vbr">uint32_vbr</a>
       </td>
-      <td class="td_left">An optional zero-terminated list of value slot
-numbers of the global variable's constant initializer.</td>
+      <td class="td_left">An optional section ID number, specifying the string
+        to use for the section of the global.  This an index (+1) of an entry
+        into the SectionID llist in the <a href="#globalinfo">Module Global
+        Info</a> block.  If this value is 0 or not present, the global has an
+        empty section string.</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>If the "Has initializer" field is set, the following field is included:</p>
+
+<table>
+  <tbody>
+    <tr>
+      <th><b>Type</b></th>
+      <th class="td_left"><b>Description</b></th>
+    </tr>
+    <tr>
+      <td><a href="#uint32_vbr">uint32_vbr</a>
+      </td>
+      <td class="td_left">An optional value slot number for the global 
+          variable's constant initializer.</td>
     </tr>
   </tbody>
 </table>
@@ -1141,8 +1170,32 @@ follows with the following fields:</p>
       <td class="td_left">The top nibble of the calling convention.</td>
     </tr>
     <tr>
-      <td><a href="#bit">bit(10-31)</a></td>
+      <td><a href="#bit">bit(10)</a></td>
+      <td class="td_left">If this bit is set, a SectionID follows this vbr.</td>
+    </tr>
+    <tr>
+      <td><a href="#bit">bit(11-31)</a></td>
       <td class="td_left">Currently unassigned.</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>If the SectionID bit is set above, the following field is included:</p>
+
+<table>
+  <tbody>
+    <tr>
+      <th><b>Type</b></th>
+      <th class="td_left"><b>Description</b></th>
+    </tr>
+    <tr>
+      <td><a href="#uint32_vbr">uint32_vbr</a>
+      </td>
+      <td class="td_left">An optional section ID number, specifying the string
+        to use for the section of the function.  This an index (+1) of an entry
+        into the SectionID llist in the <a href="#globalinfo">Module Global
+        Info</a> block.  If this value is 0 or not present, the function has an
+        empty section string.</td>
     </tr>
   </tbody>
 </table>
