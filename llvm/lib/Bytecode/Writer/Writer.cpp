@@ -948,7 +948,8 @@ void BytecodeWriter::outputModuleInfoBlock(const Module *M) {
       
       // The extension word has this format: bit 0 = has initializer, bit 1-3 =
       // linkage, bit 4-8 = alignment (log2), bits 10+ = future use.
-      unsigned ExtWord = (unsigned)I->hasInitializer() | (getEncodedLinkage(I) << 1) |
+      unsigned ExtWord = (unsigned)I->hasInitializer() |
+                         (getEncodedLinkage(I) << 1) |
                          ((Log2_32(I->getAlignment())+1) << 4);
       output_vbr(ExtWord);
     }
