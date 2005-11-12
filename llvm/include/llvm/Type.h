@@ -83,7 +83,7 @@ public:
 
 private:
   TypeID   ID : 8;    // The current base type of this type.
-  bool     Abstract;  // True if type contains an OpaqueType
+  bool     Abstract : 1;  // True if type contains an OpaqueType
 
   /// RefCount - This counts the number of PATypeHolders that are pointing to
   /// this type.  When this number falls to zero, if the type is abstract and
