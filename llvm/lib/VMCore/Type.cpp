@@ -749,20 +749,25 @@ public:
 
     // The old record is now out-of-date, because one of the children has been
     // updated.  Remove the obsolete entry from the map.
-    Map.erase(ValType::get(Ty));
+    unsigned NumErased = Map.erase(ValType::get(Ty));
+    assert(NumErased && "Element not found!");
 
     // Remember the structural hash for the type before we start hacking on it,
     // in case we need it later.
     unsigned OldTypeHash = ValType::hashTypeStructure(Ty);
+    unsigned NewTypeHash;
 
     // Find the type element we are refining... and change it now!
-    for (unsigned i = 0, e = Ty->ContainedTys.size(); i != e; ++i)
-      if (Ty->ContainedTys[i] == OldType) {
-        Ty->ContainedTys[i].removeUserFromConcrete();
-        Ty->ContainedTys[i] = NewType;
-      }
-
-    unsigned TypeHash = ValType::hashTypeStructure(Ty);
+    if (OldType != NewType || !OldType->isAbstract()) {
+      for (unsigned i = 0, e = Ty->ContainedTys.size(); i != e; ++i)
+        if (Ty->ContainedTys[i] == OldType) {
+          Ty->ContainedTys[i].removeUserFromConcrete();
+          Ty->ContainedTys[i] = NewType;
+        }
+      NewTypeHash = ValType::hashTypeStructure(Ty);
+    } else {
+      NewTypeHash = OldTypeHash;
+    }
 
     // If there are no cycles going through this node, we can do a simple,
     // efficient lookup in the map, instead of an inefficient nasty linear
@@ -771,11 +776,10 @@ public:
       typename std::map<ValType, PATypeHolder>::iterator I;
       bool Inserted;
 
-      ValType V = ValType::get(Ty);
-      tie(I, Inserted) = Map.insert(std::make_pair(V, Ty));
+      tie(I, Inserted) = Map.insert(std::make_pair(ValType::get(Ty), Ty));
       if (!Inserted) {
         // Refined to a different type altogether?
-        RemoveFromTypesByHash(TypeHash, Ty);
+        RemoveFromTypesByHash(NewTypeHash, Ty);
 
         // We already have this type in the table.  Get rid of the newly refined
         // type.
@@ -783,8 +787,9 @@ public:
         Ty->refineAbstractTypeTo(NewTy);
         return;
       }
-
     } else {
+      assert(Ty->isAbstract() && "Potentially replacing a non-abstract type?");
+
       // Now we check to see if there is an existing entry in the table which is
       // structurally identical to the newly refined type.  If so, this type
       // gets refined to the pre-existing type.
@@ -793,13 +798,16 @@ public:
       tie(I, E) = TypesByHash.equal_range(OldTypeHash);
       Entry = E;
       for (; I != E; ++I) {
-        if (I->second != Ty) {
+        if (I->second == Ty) {
+          // Remember the position of the old type if we see it in our scan.
+          Entry = I;
+        } else {
           if (TypesEqual(Ty, I->second)) {
-            assert(Ty->isAbstract() && "Replacing a non-abstract type?");
             TypeClass *NewTy = cast<TypeClass>((Type*)I->second.get());
 
             if (Entry == E) {
-              // Find the location of Ty in the TypesByHash structure.
+              // Find the location of Ty in the TypesByHash structure if we
+              // haven't seen it already.
               while (I->second != Ty) {
                 ++I;
                 assert(I != E && "Structure doesn't contain type??");
@@ -811,12 +819,8 @@ public:
             Ty->refineAbstractTypeTo(NewTy);
             return;
           }
-        } else {
-          // Remember the position of
-          Entry = I;
         }
       }
-
 
       // If there is no existing type of the same structure, we reinsert an
       // updated record into the map.
@@ -824,13 +828,15 @@ public:
     }
 
     // If the hash codes differ, update TypesByHash
-    if (TypeHash != OldTypeHash) {
+    if (NewTypeHash != OldTypeHash) {
       RemoveFromTypesByHash(OldTypeHash, Ty);
-      TypesByHash.insert(std::make_pair(TypeHash, Ty));
+      TypesByHash.insert(std::make_pair(NewTypeHash, Ty));
     }
-
+    
     // If the type is currently thought to be abstract, rescan all of our
-    // subtypes to see if the type has just become concrete!
+    // subtypes to see if the type has just become concrete!  Note that this
+    // may send out notifications to AbstractTypeUsers that types become
+    // concrete.
     if (Ty->isAbstract())
       Ty->PromoteAbstractToConcrete();
   }
