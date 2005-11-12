@@ -736,7 +736,9 @@ public:
   /// The specified iterator tells us what the type USED to look like.
   void finishRefinement(TypeClass *Ty, const DerivedType *OldType,
                         const Type *NewType) {
-    assert((Ty->isAbstract() || !OldType->isAbstract()) &&
+    // Either NewTy == OldTy (in which case the specified type just became
+    // concrete) or they are different an the Ty is thought to be abstract.
+    assert((Ty->isAbstract() || OldType == NewType) &&
            "Refining a non-abstract type!");
 #ifdef DEBUG_MERGE_TYPES
     std::cerr << "refineAbstractTy(" << (void*)OldType << "[" << *OldType
@@ -755,20 +757,22 @@ public:
     // Remember the structural hash for the type before we start hacking on it,
     // in case we need it later.
     unsigned OldTypeHash = ValType::hashTypeStructure(Ty);
-    unsigned NewTypeHash;
 
     // Find the type element we are refining... and change it now!
-    if (OldType != NewType || !OldType->isAbstract()) {
+    if (!OldType->isAbstract()) {
+      // If the element just became concrete, remove 'ty' from the abstract
+      // type user list for the type.
       for (unsigned i = 0, e = Ty->ContainedTys.size(); i != e; ++i)
-        if (Ty->ContainedTys[i] == OldType) {
-          Ty->ContainedTys[i].removeUserFromConcrete();
-          Ty->ContainedTys[i] = NewType;
-        }
-      NewTypeHash = ValType::hashTypeStructure(Ty);
+        if (Ty->ContainedTys[i] == OldType)
+          OldType->removeAbstractTypeUser(Ty);
     } else {
-      NewTypeHash = OldTypeHash;
+      assert(OldType != NewType && "Unknown case!");
+      for (unsigned i = 0, e = Ty->ContainedTys.size(); i != e; ++i)
+        if (Ty->ContainedTys[i] == OldType)
+          Ty->ContainedTys[i] = NewType;
     }
-
+    unsigned NewTypeHash = ValType::hashTypeStructure(Ty);
+    
     // If there are no cycles going through this node, we can do a simple,
     // efficient lookup in the map, instead of an inefficient nasty linear
     // lookup.
