@@ -517,7 +517,8 @@ static void setValueName(Value *V, char *NameStr) {
 /// this is a declaration, otherwise it is a definition.
 static void ParseGlobalVariable(char *NameStr,GlobalValue::LinkageTypes Linkage,
                                 bool isConstantGlobal, const Type *Ty,
-                                Constant *Initializer, unsigned Align) {
+                                Constant *Initializer, char *Section,
+                                unsigned Align) {
   if (Align != 0 && !isPowerOf2_32(Align))
     ThrowException("Global alignment must be a power of two!");
   
@@ -551,6 +552,10 @@ static void ParseGlobalVariable(char *NameStr,GlobalValue::LinkageTypes Linkage,
     GV->setLinkage(Linkage);
     GV->setConstant(isConstantGlobal);
     GV->setAlignment(Align);
+    if (Section) {
+      free(Section);
+      GV->setSection(Section);
+    }
     InsertValue(GV, CurModule.Values);
     return;
   }
@@ -578,6 +583,10 @@ static void ParseGlobalVariable(char *NameStr,GlobalValue::LinkageTypes Linkage,
           EGV->setConstant(true);
         EGV->setLinkage(Linkage);
         EGV->setAlignment(Align);
+        if (Section) {
+          free(Section);
+          EGV->setSection(Section);
+        }
         return;
       }
 
@@ -591,6 +600,10 @@ static void ParseGlobalVariable(char *NameStr,GlobalValue::LinkageTypes Linkage,
     new GlobalVariable(Ty, isConstantGlobal, Linkage, Initializer, Name,
                        CurModule.CurrentModule);
   GV->setAlignment(Align);
+  if (Section) {
+    free(Section);
+    GV->setSection(Section);
+  }
   InsertValue(GV, CurModule.Values);
 }
 
@@ -956,9 +969,10 @@ Module *llvm::RunVMAsmParser(const char * AsmString, Module * M) {
 %token <StrVal> VAR_ID LABELSTR STRINGCONSTANT
 %type  <StrVal> Name OptName OptAssign
 %type  <UIntVal> OptAlign OptCAlign
+%type <StrVal> OptSection OptCSection SectionString
 
 %token IMPLEMENTATION ZEROINITIALIZER TRUETOK FALSETOK BEGINTOK ENDTOK
-%token DECLARE GLOBAL CONSTANT VOLATILE
+%token DECLARE GLOBAL CONSTANT SECTION VOLATILE
 %token TO DOTDOTDOT NULL_TOK UNDEF CONST INTERNAL LINKONCE WEAK  APPENDING
 %token OPAQUE NOT EXTERNAL TARGET TRIPLE ENDIAN POINTERSIZE LITTLE BIG ALIGN
 %token DEPLIBS CALL TAIL
@@ -1048,6 +1062,19 @@ OptAlign : /*empty*/        { $$ = 0; } |
            ALIGN EUINT64VAL { $$ = $2; };
 OptCAlign : /*empty*/            { $$ = 0; } |
             ',' ALIGN EUINT64VAL { $$ = $3; };
+
+SectionString : SECTION STRINGCONSTANT {
+  for (unsigned i = 0, e = strlen($2); i != e; ++i)
+    if ($2[i] == '"' || $2[i] == '\\')
+      ThrowException("Invalid character in section name!");
+  $$ = $2;
+};
+
+OptSection : /*empty*/ { $$ = 0; } |
+             SectionString { $$ = $1; };
+OptCSection : /*empty*/ { $$ = 0; } |
+             ',' SectionString { $$ = $2; };
+
 
 //===----------------------------------------------------------------------===//
 // Types includes all predefined types... except void, because it can only be
@@ -1557,12 +1584,12 @@ ConstPool : ConstPool OptAssign TYPE TypesV {
   }
   | ConstPool FunctionProto {       // Function prototypes can be in const pool
   }
-  | ConstPool OptAssign OptLinkage GlobalType ConstVal OptCAlign {
+  | ConstPool OptAssign OptLinkage GlobalType ConstVal OptCSection OptCAlign {
     if ($5 == 0) ThrowException("Global value initializer is not a constant!");
-    ParseGlobalVariable($2, $3, $4, $5->getType(), $5, $6);
+    ParseGlobalVariable($2, $3, $4, $5->getType(), $5, $6, $7);
   }
-  | ConstPool OptAssign EXTERNAL GlobalType Types OptCAlign {
-    ParseGlobalVariable($2, GlobalValue::ExternalLinkage, $4, *$5, 0, $6);
+  | ConstPool OptAssign EXTERNAL GlobalType Types OptCSection OptCAlign {
+    ParseGlobalVariable($2, GlobalValue::ExternalLinkage, $4, *$5, 0, $6, $7);
     delete $5;
   }
   | ConstPool TARGET TargetDefinition { 
@@ -1647,14 +1674,15 @@ ArgList : ArgListH {
     $$ = 0;
   };
 
-FunctionHeaderH : OptCallingConv TypesV Name '(' ArgList ')' OptAlign {
+FunctionHeaderH : OptCallingConv TypesV Name '(' ArgList ')' 
+                  OptSection OptAlign {
   UnEscapeLexed($3);
   std::string FunctionName($3);
   free($3);  // Free strdup'd memory!
   
   if (!(*$2)->isFirstClassType() && *$2 != Type::VoidTy)
     ThrowException("LLVM functions cannot return aggregate types!");
-  if ($7 != 0 && !isPowerOf2_32($7))
+  if ($8 != 0 && !isPowerOf2_32($8))
     ThrowException("Function alignment must be a power of two!");
 
   std::vector<const Type*> ParamTypeList;
@@ -1707,7 +1735,11 @@ FunctionHeaderH : OptCallingConv TypesV Name '(' ArgList ')' OptAlign {
 
   CurFun.FunctionStart(Fn);
   Fn->setCallingConv($1);
-  Fn->setAlignment($7);
+  Fn->setAlignment($8);
+  if ($7) {
+    Fn->setSection($7);
+    free($7);
+  }
 
   // Add all of the arguments we parsed to the function...
   if ($5) {                     // Is null if empty...
