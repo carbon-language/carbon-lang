@@ -2052,7 +2052,7 @@ void BytecodeReader::ParseModuleGlobalInfo() {
     if (Handler)
       Handler->handleTargetTriple(triple);
     
-    if (At != BlockEnd) {
+    if (At != BlockEnd && !hasAlignment) {
       // If the file has section info in it, read the section names now.
       unsigned NumSections = read_vbr_uint();
       while (NumSections--)
