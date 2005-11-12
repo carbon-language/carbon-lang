@@ -1891,6 +1891,10 @@ void BytecodeReader::ParseModuleGlobalInfo() {
 
   if (Handler) Handler->handleModuleGlobalsBegin();
 
+  // SectionID - If a global has an explicit section specified, this map
+  // remembers the ID until we can translate it into a string.
+  std::map<GlobalValue*, unsigned> SectionID;
+  
   // Read global variables...
   unsigned VarType = read_vbr_uint();
   while (VarType != Type::VoidTyID) { // List is terminated by Void
@@ -1903,6 +1907,7 @@ void BytecodeReader::ParseModuleGlobalInfo() {
     bool isConstant = VarType & 1;
     bool hasInitializer = (VarType & 2) != 0;
     unsigned Alignment = 0;
+    unsigned GlobalSectionID = 0;
     
     // An extension word is present when linkage = 3 (internal) and hasinit = 0.
     if (LinkageID == 3 && !hasInitializer) {
@@ -1912,6 +1917,9 @@ void BytecodeReader::ParseModuleGlobalInfo() {
       hasInitializer = ExtWord & 1;
       LinkageID = (ExtWord >> 1) & 7;
       Alignment = (1 << ((ExtWord >> 4) & 31)) >> 1;
+      
+      if (ExtWord & (1 << 9))  // Has a section ID.
+        GlobalSectionID = read_vbr_uint();
     }
 
     GlobalValue::LinkageTypes Linkage;
@@ -1941,6 +1949,9 @@ void BytecodeReader::ParseModuleGlobalInfo() {
                                             0, "", TheModule);
     GV->setAlignment(Alignment);
     insertValue(GV, SlotNo, ModuleValues);
+
+    if (GlobalSectionID != 0)
+      SectionID[GV] = GlobalSectionID;
 
     unsigned initSlot = 0;
     if (hasInitializer) {
@@ -1975,9 +1986,8 @@ void BytecodeReader::ParseModuleGlobalInfo() {
     const FunctionType* FTy =
       cast<FunctionType>(cast<PointerType>(Ty)->getElementType());
 
-
     // Insert the place holder.
-    Function* Func = new Function(FTy, GlobalValue::ExternalLinkage,
+    Function *Func = new Function(FTy, GlobalValue::ExternalLinkage,
                                   "", TheModule);
     insertValue(Func, (FnSignature & (~0U >> 1)) >> 5, ModuleValues);
 
@@ -1997,6 +2007,9 @@ void BytecodeReader::ParseModuleGlobalInfo() {
       unsigned ExtWord = read_vbr_uint();
       Alignment = (1 << (ExtWord & 31)) >> 1;
       CC |= ((ExtWord >> 5) & 15) << 4;
+      
+      if (ExtWord & (1 << 10))  // Has a section ID.
+        SectionID[Func] = read_vbr_uint();
     }
     
     Func->setCallingConv(CC-1);
@@ -2014,28 +2027,47 @@ void BytecodeReader::ParseModuleGlobalInfo() {
   // remove elements efficiently from the back of the vector.
   std::reverse(FunctionSignatureList.begin(), FunctionSignatureList.end());
 
-  // If this bytecode format has dependent library information in it ..
-  if (!hasNoDependentLibraries) {
-    // Read in the number of dependent library items that follow
+  /// SectionNames - This contains the list of section names encoded in the
+  /// moduleinfoblock.  Functions and globals with an explicit section index
+  /// into this to get their section name.
+  std::vector<std::string> SectionNames;
+  
+  if (hasInconsistentModuleGlobalInfo) {
+    align32();
+  } else if (!hasNoDependentLibraries) {
+    // If this bytecode format has dependent library information in it, read in
+    // the number of dependent library items that follow.
     unsigned num_dep_libs = read_vbr_uint();
     std::string dep_lib;
-    while( num_dep_libs-- ) {
+    while (num_dep_libs--) {
       dep_lib = read_str();
       TheModule->addLibrary(dep_lib);
       if (Handler)
         Handler->handleDependentLibrary(dep_lib);
     }
 
-
-    // Read target triple and place into the module
+    // Read target triple and place into the module.
     std::string triple = read_str();
     TheModule->setTargetTriple(triple);
     if (Handler)
       Handler->handleTargetTriple(triple);
+    
+    if (At != BlockEnd) {
+      // If the file has section info in it, read the section names now.
+      unsigned NumSections = read_vbr_uint();
+      while (NumSections--)
+        SectionNames.push_back(read_str());
+    }
   }
 
-  if (hasInconsistentModuleGlobalInfo)
-    align32();
+  // If any globals are in specified sections, assign them now.
+  for (std::map<GlobalValue*, unsigned>::iterator I = SectionID.begin(), E =
+       SectionID.end(); I != E; ++I)
+    if (I->second) {
+      if (I->second > SectionID.size())
+        error("SectionID out of range for global!");
+      I->first->setSection(SectionNames[I->second-1]);
+    }
 
   // This is for future proofing... in the future extra fields may be added that
   // we don't understand, so we transparently ignore them.

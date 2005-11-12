@@ -10,10 +10,6 @@
 // This header defines the interface used between components of the bytecode
 // writer.
 //
-// Note that the performance of this library is not terribly important, because
-// it shouldn't be used by JIT type applications... so it is not a huge focus
-// at least.  :)
-//
 //===----------------------------------------------------------------------===//
 
 #ifndef LLVM_LIB_BYTECODE_WRITER_WRITERINTERNALS_H
