@@ -161,8 +161,8 @@ inline void BytecodeWriter::output_double(double& DoubleVal) {
   Out.push_back( static_cast<unsigned char>( (i >> 56) & 0xFF));
 }
 
-inline BytecodeBlock::BytecodeBlock(unsigned ID, BytecodeWriter& w,
-                                    bool elideIfEmpty, bool hasLongFormat )
+inline BytecodeBlock::BytecodeBlock(unsigned ID, BytecodeWriter &w,
+                                    bool elideIfEmpty, bool hasLongFormat)
   : Id(ID), Writer(w), ElideIfEmpty(elideIfEmpty), HasLongFormat(hasLongFormat){
 
   if (HasLongFormat) {
