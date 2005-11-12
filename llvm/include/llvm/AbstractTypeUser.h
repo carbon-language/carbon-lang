@@ -117,14 +117,6 @@ public:
 
   // operator-> - Allow user to dereference handle naturally...
   inline const Type *operator->() const { return Ty; }
-
-  // removeUserFromConcrete - This function should be called when the User is
-  // notified that our type is refined... and the type is being refined to
-  // itself, which is now a concrete type.  When a type becomes concrete like
-  // this, we MUST remove ourself from the AbstractTypeUser list, even though
-  // the type is apparently concrete.
-  //
-  void removeUserFromConcrete();
 };
 
 

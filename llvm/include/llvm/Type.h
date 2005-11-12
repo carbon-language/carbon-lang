@@ -357,11 +357,6 @@ inline void PATypeHandle::removeUser() {
     Ty->removeAbstractTypeUser(User);
 }
 
-inline void PATypeHandle::removeUserFromConcrete() {
-  if (!Ty->isAbstract())
-    Ty->removeAbstractTypeUser(User);
-}
-
 // Define inline methods for PATypeHolder...
 
 inline void PATypeHolder::addRef() {
