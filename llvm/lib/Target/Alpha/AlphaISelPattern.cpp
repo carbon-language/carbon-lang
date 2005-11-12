@@ -1749,6 +1749,7 @@ void AlphaISel::Select(SDOperand N) {
   case ISD::CopyFromReg:
   case ISD::TAILCALL:
   case ISD::CALL:
+  case ISD::READCYCLECOUNTER:
   case ISD::DYNAMIC_STACKALLOC:
     ExprMap.erase(N);
     SelectExpr(N);
