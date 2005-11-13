@@ -120,10 +120,8 @@ bool AlphaTargetMachine::addPassesToEmitFile(PassManager &PM,
 
 void AlphaJITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
 
-  if (EnableAlphaLSR) {
-    PM.add(createLoopStrengthReducePass());
-    PM.add(createCFGSimplificationPass());
-  }
+  PM.add(createLoopStrengthReducePass());
+  PM.add(createCFGSimplificationPass());
 
   // FIXME: Implement efficient support for garbage collection intrinsics.
   PM.add(createLowerGCPass());
