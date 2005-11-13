@@ -213,6 +213,14 @@ const Type *Type::getForwardedTypeInternal() const {
   return ForwardType;
 }
 
+void Type::refineAbstractType(const DerivedType *OldTy, const Type *NewTy) {
+  abort();
+}
+void Type::typeBecameConcrete(const DerivedType *AbsTy) {
+  abort();
+}
+
+
 // getTypeDescription - This is a recursive function that walks a type hierarchy
 // calculating the description for a type.
 //
