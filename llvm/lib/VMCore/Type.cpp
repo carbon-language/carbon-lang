@@ -736,15 +736,35 @@ public:
   /// The specified iterator tells us what the type USED to look like.
   void finishRefinement(TypeClass *Ty, const DerivedType *OldType,
                         const Type *NewType) {
-    // Either NewTy == OldTy (in which case the specified type just became
-    // concrete) or they are different an the Ty is thought to be abstract.
-    assert((Ty->isAbstract() || OldType == NewType) &&
-           "Refining a non-abstract type!");
 #ifdef DEBUG_MERGE_TYPES
     std::cerr << "refineAbstractTy(" << (void*)OldType << "[" << *OldType
-              << "], " << (void*)NewType << " [" << *NewType << "])\n";
+    << "], " << (void*)NewType << " [" << *NewType << "])\n";
 #endif
+    // If NewTy == OldTy, then the type just became concrete.  In this case, we
+    // don't need to change the current type, we just need to drop uses of the
+    // type and potentially mark Ty as concrete now too.
+    if (OldType == NewType) {
+      // If the element just became concrete, remove 'ty' from the abstract
+      // type user list for the type.  Do this for as many times as Ty uses
+      // OldType.
+      for (unsigned i = 0, e = Ty->ContainedTys.size(); i != e; ++i)
+        if (Ty->ContainedTys[i] == OldType)
+          OldType->removeAbstractTypeUser(Ty);
 
+      // If the type is currently thought to be abstract, rescan all of our
+      // subtypes to see if the type has just become concrete!  Note that this
+      // may send out notifications to AbstractTypeUsers that types become
+      // concrete.
+      if (Ty->isAbstract())
+        Ty->PromoteAbstractToConcrete();
+      return;
+    }
+    
+    
+    // Otherwise, we are changing one subelement type into another.  Clearly the
+    // OldType must have been abstract, making us abstract.
+    assert(Ty->isAbstract() && "Refining a non-abstract type!");
+    
     // Make a temporary type holder for the type so that it doesn't disappear on
     // us when we erase the entry from the map.
     PATypeHolder TyHolder = Ty;
@@ -759,31 +779,23 @@ public:
     unsigned OldTypeHash = ValType::hashTypeStructure(Ty);
 
     // Find the type element we are refining... and change it now!
-    if (!OldType->isAbstract()) {
-      // If the element just became concrete, remove 'ty' from the abstract
-      // type user list for the type.
-      for (unsigned i = 0, e = Ty->ContainedTys.size(); i != e; ++i)
-        if (Ty->ContainedTys[i] == OldType)
-          OldType->removeAbstractTypeUser(Ty);
-    } else {
-      assert(OldType != NewType && "Unknown case!");
-      for (unsigned i = 0, e = Ty->ContainedTys.size(); i != e; ++i)
-        if (Ty->ContainedTys[i] == OldType)
-          Ty->ContainedTys[i] = NewType;
-    }
+    for (unsigned i = 0, e = Ty->ContainedTys.size(); i != e; ++i)
+      if (Ty->ContainedTys[i] == OldType)
+        Ty->ContainedTys[i] = NewType;
     unsigned NewTypeHash = ValType::hashTypeStructure(Ty);
     
     // If there are no cycles going through this node, we can do a simple,
     // efficient lookup in the map, instead of an inefficient nasty linear
     // lookup.
-    if (!Ty->isAbstract() || !TypeHasCycleThroughItself(Ty)) {
+    if (!TypeHasCycleThroughItself(Ty)) {
       typename std::map<ValType, PATypeHolder>::iterator I;
       bool Inserted;
 
       tie(I, Inserted) = Map.insert(std::make_pair(ValType::get(Ty), Ty));
       if (!Inserted) {
+        assert(OldType != NewType);
         // Refined to a different type altogether?
-        RemoveFromTypesByHash(NewTypeHash, Ty);
+        RemoveFromTypesByHash(OldTypeHash, Ty);
 
         // We already have this type in the table.  Get rid of the newly refined
         // type.
@@ -792,8 +804,6 @@ public:
         return;
       }
     } else {
-      assert(Ty->isAbstract() && "Potentially replacing a non-abstract type?");
-
       // Now we check to see if there is an existing entry in the table which is
       // structurally identical to the newly refined type.  If so, this type
       // gets refined to the pre-existing type.
