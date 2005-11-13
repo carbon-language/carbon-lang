@@ -49,6 +49,7 @@ class OpaqueType;
 class PointerType;
 class StructType;
 class PackedType;
+class TypeMapBase;
 
 class Type {
 public:
@@ -94,16 +95,15 @@ private:
 
   const Type *getForwardedTypeInternal() const;
 protected:
-  Type(const std::string& Name, TypeID id);
-  virtual ~Type() {}
+  Type(const char *Name, TypeID id);
+  Type(TypeID id) : ID(id), Abstract(false), RefCount(0), ForwardType(0) {}
+  virtual ~Type() {
+    assert(AbstractTypeUsers.empty());
+  }
 
   /// Types can become nonabstract later, if they are refined.
   ///
   inline void setAbstract(bool Val) { Abstract = Val; }
-
-  // PromoteAbstractToConcrete - This is an internal method used to calculate
-  // change "Abstract" from true to false when types are refined.
-  void PromoteAbstractToConcrete();
 
   unsigned getRefCount() const { return RefCount; }
 
@@ -121,6 +121,10 @@ protected:
   /// not contain any elements (most are derived).
   std::vector<PATypeHandle> ContainedTys;
 
+  /// AbstractTypeUsers - Implement a list of the users that need to be notified
+  /// if I am a type, and I get resolved into a more concrete type.
+  ///
+  mutable std::vector<AbstractTypeUser *> AbstractTypeUsers;
 public:
   void print(std::ostream &O) const;
 
@@ -295,15 +299,6 @@ public:
   /// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const Type *T) { return true; }
 
-  // Virtual methods used by callbacks below.  These should only be implemented
-  // in the DerivedType class.
-  virtual void addAbstractTypeUser(AbstractTypeUser *U) const {
-    abort(); // Only on derived types!
-  }
-  virtual void removeAbstractTypeUser(AbstractTypeUser *U) const {
-    abort(); // Only on derived types!
-  }
-
   void addRef() const {
     assert(isAbstract() && "Cannot add a reference to a non-abstract type!");
     ++RefCount;
@@ -315,9 +310,25 @@ public:
 
     // If this is the last PATypeHolder using this object, and there are no
     // PATypeHandles using it, the type is dead, delete it now.
-    if (--RefCount == 0)
-      RefCountIsZero();
+    if (--RefCount == 0 && AbstractTypeUsers.empty())
+      delete this;
   }
+  
+  /// addAbstractTypeUser - Notify an abstract type that there is a new user of
+  /// it.  This function is called primarily by the PATypeHandle class.
+  ///
+  void addAbstractTypeUser(AbstractTypeUser *U) const {
+    assert(isAbstract() && "addAbstractTypeUser: Current type not abstract!");
+    AbstractTypeUsers.push_back(U);
+  }
+  
+  /// removeAbstractTypeUser - Notify an abstract type that a user of the class
+  /// no longer has a handle to the type.  This function is called primarily by
+  /// the PATypeHandle class.  When there are no users of the abstract type, it
+  /// is annihilated, because there is no way to get a reference to it ever
+  /// again.
+  ///
+  void removeAbstractTypeUser(AbstractTypeUser *U) const;
 
   /// clearAllTypeMaps - This method frees all internal memory used by the
   /// type subsystem, which can be used in environments where this memory is
@@ -330,10 +341,11 @@ private:
   /// their size is relatively uncommon, move this operation out of line.
   bool isSizedDerivedType() const;
 
-  virtual void RefCountIsZero() const {
-    abort(); // only on derived types!
-  }
-
+protected:
+  // PromoteAbstractToConcrete - This is an internal method used to calculate
+  // change "Abstract" from true to false when types are refined.
+  void PromoteAbstractToConcrete();
+  friend class TypeMapBase;
 };
 
 //===----------------------------------------------------------------------===//

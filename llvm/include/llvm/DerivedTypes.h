@@ -32,17 +32,10 @@ class PointerValType;
 class PackedValType;
 
 class DerivedType : public Type, public AbstractTypeUser {
-  // AbstractTypeUsers - Implement a list of the users that need to be notified
-  // if I am a type, and I get resolved into a more concrete type.
-  //
-  mutable std::vector<AbstractTypeUser *> AbstractTypeUsers;
   friend class Type;
 
 protected:
-  DerivedType(TypeID id) : Type("", id) {}
-  ~DerivedType() {
-    assert(AbstractTypeUsers.empty());
-  }
+  DerivedType(TypeID id) : Type(id) {}
 
   /// notifyUsesThatTypeBecameConcrete - Notify AbstractTypeUsers of this type
   /// that the current type has transitioned from being abstract to being
@@ -56,34 +49,12 @@ protected:
   ///
   void dropAllTypeUses();
 
-  void RefCountIsZero() const {
-    if (AbstractTypeUsers.empty())
-      delete this;
-  }
-
-
 public:
 
   //===--------------------------------------------------------------------===//
   // Abstract Type handling methods - These types have special lifetimes, which
   // are managed by (add|remove)AbstractTypeUser. See comments in
   // AbstractTypeUser.h for more information.
-
-  /// addAbstractTypeUser - Notify an abstract type that there is a new user of
-  /// it.  This function is called primarily by the PATypeHandle class.
-  ///
-  void addAbstractTypeUser(AbstractTypeUser *U) const {
-    assert(isAbstract() && "addAbstractTypeUser: Current type not abstract!");
-    AbstractTypeUsers.push_back(U);
-  }
-
-  /// removeAbstractTypeUser - Notify an abstract type that a user of the class
-  /// no longer has a handle to the type.  This function is called primarily by
-  /// the PATypeHandle class.  When there are no users of the abstract type, it
-  /// is annihilated, because there is no way to get a reference to it ever
-  /// again.
-  ///
-  void removeAbstractTypeUser(AbstractTypeUser *U) const;
 
   /// refineAbstractTypeTo - This function is used to when it is discovered that
   /// the 'this' abstract type is actually equivalent to the NewType specified.
