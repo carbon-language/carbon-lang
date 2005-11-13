@@ -31,7 +31,7 @@ class StructValType;
 class PointerValType;
 class PackedValType;
 
-class DerivedType : public Type, public AbstractTypeUser {
+class DerivedType : public Type {
   friend class Type;
 
 protected:

@@ -51,7 +51,7 @@ class StructType;
 class PackedType;
 class TypeMapBase;
 
-class Type {
+class Type : public AbstractTypeUser {
 public:
   ///===-------------------------------------------------------------------===//
   /// Definitions of all of the base types for the Type system.  Based on this
@@ -340,6 +340,9 @@ private:
   /// iff all of the members of the type are sized as well.  Since asking for
   /// their size is relatively uncommon, move this operation out of line.
   bool isSizedDerivedType() const;
+
+  virtual void refineAbstractType(const DerivedType *OldTy, const Type *NewTy);
+  virtual void typeBecameConcrete(const DerivedType *AbsTy);
 
 protected:
   // PromoteAbstractToConcrete - This is an internal method used to calculate
