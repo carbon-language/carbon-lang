@@ -730,40 +730,38 @@ public:
     TypesByHash.erase(I);
   }
 
-  /// finishRefinement - This method is called after we have updated an existing
-  /// type with its new components.  We must now either merge the type away with
+  /// TypeBecameConcrete - When Ty gets a notification that TheType just became
+  /// concrete, drop uses and make Ty non-abstract if we should.
+  void TypeBecameConcrete(TypeClass *Ty, const DerivedType *TheType) {
+    // If the element just became concrete, remove 'ty' from the abstract
+    // type user list for the type.  Do this for as many times as Ty uses
+    // OldType.
+    for (unsigned i = 0, e = Ty->ContainedTys.size(); i != e; ++i)
+      if (Ty->ContainedTys[i] == TheType)
+        TheType->removeAbstractTypeUser(Ty);
+    
+    // If the type is currently thought to be abstract, rescan all of our
+    // subtypes to see if the type has just become concrete!  Note that this
+    // may send out notifications to AbstractTypeUsers that types become
+    // concrete.
+    if (Ty->isAbstract())
+      Ty->PromoteAbstractToConcrete();
+  }
+  
+  /// RefineAbstractType - This method is called after we have merged a type
+  /// with another one.  We must now either merge the type away with
   /// some other type or reinstall it in the map with it's new configuration.
-  /// The specified iterator tells us what the type USED to look like.
-  void finishRefinement(TypeClass *Ty, const DerivedType *OldType,
+  void RefineAbstractType(TypeClass *Ty, const DerivedType *OldType,
                         const Type *NewType) {
 #ifdef DEBUG_MERGE_TYPES
-    std::cerr << "refineAbstractTy(" << (void*)OldType << "[" << *OldType
+    std::cerr << "RefineAbstractType(" << (void*)OldType << "[" << *OldType
     << "], " << (void*)NewType << " [" << *NewType << "])\n";
 #endif
-    // If NewTy == OldTy, then the type just became concrete.  In this case, we
-    // don't need to change the current type, we just need to drop uses of the
-    // type and potentially mark Ty as concrete now too.
-    if (OldType == NewType) {
-      // If the element just became concrete, remove 'ty' from the abstract
-      // type user list for the type.  Do this for as many times as Ty uses
-      // OldType.
-      for (unsigned i = 0, e = Ty->ContainedTys.size(); i != e; ++i)
-        if (Ty->ContainedTys[i] == OldType)
-          OldType->removeAbstractTypeUser(Ty);
-
-      // If the type is currently thought to be abstract, rescan all of our
-      // subtypes to see if the type has just become concrete!  Note that this
-      // may send out notifications to AbstractTypeUsers that types become
-      // concrete.
-      if (Ty->isAbstract())
-        Ty->PromoteAbstractToConcrete();
-      return;
-    }
-    
     
     // Otherwise, we are changing one subelement type into another.  Clearly the
     // OldType must have been abstract, making us abstract.
     assert(Ty->isAbstract() && "Refining a non-abstract type!");
+    assert(OldType != NewType);
     
     // Make a temporary type holder for the type so that it doesn't disappear on
     // us when we erase the entry from the map.
@@ -1285,11 +1283,11 @@ void DerivedType::notifyUsesThatTypeBecameConcrete() {
 //
 void FunctionType::refineAbstractType(const DerivedType *OldType,
                                       const Type *NewType) {
-  FunctionTypes.finishRefinement(this, OldType, NewType);
+  FunctionTypes.RefineAbstractType(this, OldType, NewType);
 }
 
 void FunctionType::typeBecameConcrete(const DerivedType *AbsTy) {
-  refineAbstractType(AbsTy, AbsTy);
+  FunctionTypes.TypeBecameConcrete(this, AbsTy);
 }
 
 
@@ -1299,11 +1297,11 @@ void FunctionType::typeBecameConcrete(const DerivedType *AbsTy) {
 //
 void ArrayType::refineAbstractType(const DerivedType *OldType,
                                    const Type *NewType) {
-  ArrayTypes.finishRefinement(this, OldType, NewType);
+  ArrayTypes.RefineAbstractType(this, OldType, NewType);
 }
 
 void ArrayType::typeBecameConcrete(const DerivedType *AbsTy) {
-  refineAbstractType(AbsTy, AbsTy);
+  ArrayTypes.TypeBecameConcrete(this, AbsTy);
 }
 
 // refineAbstractType - Called when a contained type is found to be more
@@ -1312,11 +1310,11 @@ void ArrayType::typeBecameConcrete(const DerivedType *AbsTy) {
 //
 void PackedType::refineAbstractType(const DerivedType *OldType,
                                    const Type *NewType) {
-  PackedTypes.finishRefinement(this, OldType, NewType);
+  PackedTypes.RefineAbstractType(this, OldType, NewType);
 }
 
 void PackedType::typeBecameConcrete(const DerivedType *AbsTy) {
-  refineAbstractType(AbsTy, AbsTy);
+  PackedTypes.TypeBecameConcrete(this, AbsTy);
 }
 
 // refineAbstractType - Called when a contained type is found to be more
@@ -1325,11 +1323,11 @@ void PackedType::typeBecameConcrete(const DerivedType *AbsTy) {
 //
 void StructType::refineAbstractType(const DerivedType *OldType,
                                     const Type *NewType) {
-  StructTypes.finishRefinement(this, OldType, NewType);
+  StructTypes.RefineAbstractType(this, OldType, NewType);
 }
 
 void StructType::typeBecameConcrete(const DerivedType *AbsTy) {
-  refineAbstractType(AbsTy, AbsTy);
+  StructTypes.TypeBecameConcrete(this, AbsTy);
 }
 
 // refineAbstractType - Called when a contained type is found to be more
@@ -1338,11 +1336,11 @@ void StructType::typeBecameConcrete(const DerivedType *AbsTy) {
 //
 void PointerType::refineAbstractType(const DerivedType *OldType,
                                      const Type *NewType) {
-  PointerTypes.finishRefinement(this, OldType, NewType);
+  PointerTypes.RefineAbstractType(this, OldType, NewType);
 }
 
 void PointerType::typeBecameConcrete(const DerivedType *AbsTy) {
-  refineAbstractType(AbsTy, AbsTy);
+  PointerTypes.TypeBecameConcrete(this, AbsTy);
 }
 
 bool SequentialType::indexValid(const Value *V) const {
