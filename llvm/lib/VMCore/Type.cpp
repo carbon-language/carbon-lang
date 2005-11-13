@@ -43,13 +43,12 @@ AbstractTypeUser::~AbstractTypeUser() {}
 static std::map<const Type*, std::string> ConcreteTypeDescriptions;
 static std::map<const Type*, std::string> AbstractTypeDescriptions;
 
-Type::Type( const std::string& name, TypeID id )
-  : RefCount(0), ForwardType(0) {
-  if (!name.empty())
-    ConcreteTypeDescriptions[this] = name;
-  ID = id;
-  Abstract = false;
+Type::Type(const char *Name, TypeID id)
+  : ID(id), Abstract(false),  RefCount(0), ForwardType(0) {
+  assert(Name && Name[0] && "Should use other ctor if no name!");
+  ConcreteTypeDescriptions[this] = Name;
 }
+
 
 const Type *Type::getPrimitiveType(TypeID IDNumber) {
   switch (IDNumber) {
@@ -678,31 +677,56 @@ static bool TypeHasCycleThroughItself(const Type *Ty) {
 //                       Derived Type Factory Functions
 //===----------------------------------------------------------------------===//
 
-// TypeMap - Make sure that only one instance of a particular type may be
-// created on any given run of the compiler... note that this involves updating
-// our map if an abstract type gets refined somehow.
-//
 namespace llvm {
-template<class ValType, class TypeClass>
-class TypeMap {
-  std::map<ValType, PATypeHolder> Map;
-
+class TypeMapBase {
+protected:
   /// TypesByHash - Keep track of types by their structure hash value.  Note
   /// that we only keep track of types that have cycles through themselves in
   /// this map.
   ///
   std::multimap<unsigned, PATypeHolder> TypesByHash;
 
-  friend void Type::clearAllTypeMaps();
-
-private:
-  void clear(std::vector<Type *> &DerivedTypes) {
-    for (typename std::map<ValType, PATypeHolder>::iterator I = Map.begin(),
-         E = Map.end(); I != E; ++I)
-      DerivedTypes.push_back(I->second.get());
-    TypesByHash.clear();
-    Map.clear();
+public:
+  void RemoveFromTypesByHash(unsigned Hash, const Type *Ty) {
+    std::multimap<unsigned, PATypeHolder>::iterator I =
+    TypesByHash.lower_bound(Hash);
+    while (I->second != Ty) {
+      ++I;
+      assert(I != TypesByHash.end() && I->first == Hash);
+    }
+    TypesByHash.erase(I);
   }
+  
+  /// TypeBecameConcrete - When Ty gets a notification that TheType just became
+  /// concrete, drop uses and make Ty non-abstract if we should.
+  void TypeBecameConcrete(DerivedType *Ty, const DerivedType *TheType) {
+    // If the element just became concrete, remove 'ty' from the abstract
+    // type user list for the type.  Do this for as many times as Ty uses
+    // OldType.
+    for (Type::subtype_iterator I = Ty->subtype_begin(), E = Ty->subtype_end();
+         I != E; ++I)
+      if (I->get() == TheType)
+        TheType->removeAbstractTypeUser(Ty);
+    
+    // If the type is currently thought to be abstract, rescan all of our
+    // subtypes to see if the type has just become concrete!  Note that this
+    // may send out notifications to AbstractTypeUsers that types become
+    // concrete.
+    if (Ty->isAbstract())
+      Ty->PromoteAbstractToConcrete();
+  }
+};
+}
+
+
+// TypeMap - Make sure that only one instance of a particular type may be
+// created on any given run of the compiler... note that this involves updating
+// our map if an abstract type gets refined somehow.
+//
+namespace llvm {
+template<class ValType, class TypeClass>
+class TypeMap : public TypeMapBase {
+  std::map<ValType, PATypeHolder> Map;
 public:
   typedef typename std::map<ValType, PATypeHolder>::iterator iterator;
   ~TypeMap() { print("ON EXIT"); }
@@ -719,36 +743,16 @@ public:
     TypesByHash.insert(std::make_pair(ValType::hashTypeStructure(Ty), Ty));
     print("add");
   }
-
-  void RemoveFromTypesByHash(unsigned Hash, const Type *Ty) {
-    std::multimap<unsigned, PATypeHolder>::iterator I =
-      TypesByHash.lower_bound(Hash);
-    while (I->second != Ty) {
-      ++I;
-      assert(I != TypesByHash.end() && I->first == Hash);
-    }
-    TypesByHash.erase(I);
-  }
-
-  /// TypeBecameConcrete - When Ty gets a notification that TheType just became
-  /// concrete, drop uses and make Ty non-abstract if we should.
-  void TypeBecameConcrete(TypeClass *Ty, const DerivedType *TheType) {
-    // If the element just became concrete, remove 'ty' from the abstract
-    // type user list for the type.  Do this for as many times as Ty uses
-    // OldType.
-    for (unsigned i = 0, e = Ty->ContainedTys.size(); i != e; ++i)
-      if (Ty->ContainedTys[i] == TheType)
-        TheType->removeAbstractTypeUser(Ty);
-    
-    // If the type is currently thought to be abstract, rescan all of our
-    // subtypes to see if the type has just become concrete!  Note that this
-    // may send out notifications to AbstractTypeUsers that types become
-    // concrete.
-    if (Ty->isAbstract())
-      Ty->PromoteAbstractToConcrete();
-  }
   
-  /// RefineAbstractType - This method is called after we have merged a type
+  void clear(std::vector<Type *> &DerivedTypes) {
+    for (typename std::map<ValType, PATypeHolder>::iterator I = Map.begin(),
+         E = Map.end(); I != E; ++I)
+      DerivedTypes.push_back(I->second.get());
+    TypesByHash.clear();
+    Map.clear();
+  }
+
+ /// RefineAbstractType - This method is called after we have merged a type
   /// with another one.  We must now either merge the type away with
   /// some other type or reinstall it in the map with it's new configuration.
   void RefineAbstractType(TypeClass *Ty, const DerivedType *OldType,
@@ -762,7 +766,7 @@ public:
     // OldType must have been abstract, making us abstract.
     assert(Ty->isAbstract() && "Refining a non-abstract type!");
     assert(OldType != NewType);
-    
+
     // Make a temporary type holder for the type so that it doesn't disappear on
     // us when we erase the entry from the map.
     PATypeHolder TyHolder = Ty;
@@ -826,7 +830,6 @@ public:
               }
               Entry = I;
             }
-
             TypesByHash.erase(Entry);
             Ty->refineAbstractTypeTo(NewTy);
             return;
@@ -1148,7 +1151,6 @@ PointerType *PointerType::get(const Type *ValueType) {
   return PT;
 }
 
-
 //===----------------------------------------------------------------------===//
 //                     Derived Type Refinement Functions
 //===----------------------------------------------------------------------===//
@@ -1158,7 +1160,7 @@ PointerType *PointerType::get(const Type *ValueType) {
 // the PATypeHandle class.  When there are no users of the abstract type, it
 // is annihilated, because there is no way to get a reference to it ever again.
 //
-void DerivedType::removeAbstractTypeUser(AbstractTypeUser *U) const {
+void Type::removeAbstractTypeUser(AbstractTypeUser *U) const {
   // Search from back to front because we will notify users from back to
   // front.  Also, it is likely that there will be a stack like behavior to
   // users that register and unregister users.
