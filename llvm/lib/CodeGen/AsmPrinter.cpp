@@ -35,7 +35,9 @@ void AsmPrinter::setupMachineFunction(MachineFunction &MF) {
 }
 
 // emitAlignment - Emit an alignment directive to the specified power of two.
-void AsmPrinter::emitAlignment(unsigned NumBits) const {
+void AsmPrinter::emitAlignment(unsigned NumBits, const GlobalValue *GV) const {
+  if (GV && GV->getAlignment())
+    NumBits = Log2_32(GV->getAlignment());
   if (NumBits == 0) return;   // No need to emit alignment.
   if (AlignmentIsInBytes) NumBits = 1 << NumBits;
   O << AlignDirective << NumBits << "\n";

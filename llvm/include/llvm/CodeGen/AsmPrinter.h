@@ -137,8 +137,9 @@ namespace llvm {
 
     /// emitAlignment - Emit an alignment directive to the specified power of
     /// two boundary.  For example, if you pass in 3 here, you will get an 8
-    /// byte alignment.
-    void emitAlignment(unsigned NumBits) const;
+    /// byte alignment.  If a global value is specified, and if that global has
+    /// an explicit alignment requested, it will override the alignment request.
+    void emitAlignment(unsigned NumBits, const GlobalValue *GV = 0) const;
 
     /// emitZeros - Emit a block of zeros.
     ///
