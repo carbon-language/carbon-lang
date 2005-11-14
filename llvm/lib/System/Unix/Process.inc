@@ -51,8 +51,10 @@ size_t Process::GetMallocUsage() {
   struct mallinfo mi;
   mi = ::mallinfo();
   return mi.uordblks;
-#elif defined(HAVE_MSTATS) && defined(HAVE_MALLOC_MALLOC_H)
-  return mstats().bytes_used;   // darwin
+#elif defined(HAVE_MALLOC_ZONE_STATISTICS) && defined(HAVE_MALLOC_MALLOC_H)
+  malloc_statistics_t Stats;
+  malloc_zone_statistics(malloc_default_zone(), &Stats);
+  return Stats.size_in_use;   // darwin
 #elif defined(HAVE_SBRK)
   // Note this is only an approximation and more closely resembles
   // the value returned by mallinfo in the arena field.
@@ -74,8 +76,10 @@ Process::GetTotalMemoryUsage()
 #if defined(HAVE_MALLINFO)
   struct mallinfo mi = ::mallinfo();
   return mi.uordblks + mi.hblkhd;
-#elif defined(HAVE_MSTATS) && defined(HAVE_MALLOC_MALLOC_H)
-  return mstats().bytes_total;   // darwin
+#elif defined(HAVE_MALLOC_ZONE_STATISTICS) && defined(HAVE_MALLOC_MALLOC_H)
+  malloc_statistics_t Stats;
+  malloc_zone_statistics(malloc_default_zone(), &Stats);
+  return Stats.size_allocated;   // darwin
 #elif defined(HAVE_GETRUSAGE)
   struct rusage usage;
   ::getrusage(RUSAGE_SELF, &usage);
