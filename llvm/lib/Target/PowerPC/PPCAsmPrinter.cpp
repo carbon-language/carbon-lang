@@ -43,9 +43,11 @@ using namespace llvm;
 namespace {
   Statistic<> EmittedInsts("asm-printer", "Number of machine instrs printed");
 
-  struct PPCAsmPrinter : public AsmPrinter {
+  class PPCAsmPrinter : public AsmPrinter {
+    std::string CurSection;
+  public:
     std::set<std::string> FnStubs, GVStubs, LinkOnceStubs;
-
+    
     PPCAsmPrinter(std::ostream &O, TargetMachine &TM)
       : AsmPrinter(O, TM), FunctionNumber(0) {}
 
@@ -61,6 +63,25 @@ namespace {
       return static_cast<PPCTargetMachine&>(TM);
     }
 
+    /// SwitchSection - Switch to the specified section of the executable if we
+    /// are not already in it!
+    ///
+    void SwitchSection(const char *NewSection, const GlobalValue *GV) {
+      std::string NS;
+      
+      if (GV && GV->hasSection())
+        NS = ".section " + GV->getSection();
+      else
+        NS = NewSection;
+      
+      
+      if (CurSection != NS) {
+        CurSection = NS;
+        if (!CurSection.empty())
+          O << "\t" << CurSection << "\n";
+      }
+    }
+    
     unsigned enumRegToMachineReg(unsigned enumReg) {
       switch (enumReg) {
       default: assert(0 && "Unhandled register!"); break;
@@ -227,18 +248,6 @@ namespace {
   };
 } // end of anonymous namespace
 
-// SwitchSection - Switch to the specified section of the executable if we are
-// not already in it!
-//
-static void SwitchSection(std::ostream &OS, std::string &CurSection,
-                          const char *NewSection) {
-  if (CurSection != NewSection) {
-    CurSection = NewSection;
-    if (!CurSection.empty())
-      OS << "\t" << NewSection << "\n";
-  }
-}
-
 /// createDarwinAsmPrinterPass - Returns a pass that prints the PPC assembly
 /// code for a MachineFunction to the given output stream, in a format that the
 /// Darwin assembler can deal with.
@@ -387,9 +396,10 @@ bool DarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   printConstantPool(MF.getConstantPool());
 
   // Print out labels for the function.
-  O << "\t.text\n";
+  const Function *F = MF.getFunction();
+  SwitchSection(".text", F);
   emitAlignment(4);
-  if (!MF.getFunction()->hasInternalLinkage())
+  if (!F->hasInternalLinkage())
     O << "\t.globl\t" << CurrentFnName << "\n";
   O << CurrentFnName << ":\n";
 
@@ -444,6 +454,7 @@ void DarwinAsmPrinter::printConstantPool(MachineConstantPool *MCP) {
 bool DarwinAsmPrinter::doInitialization(Module &M) {
   if (TM.getSubtarget<PPCSubtarget>().isGigaProcessor())
     O << "\t.machine ppc970\n";
+  SwitchSection("", 0);
   AsmPrinter::doInitialization(M);
   
   // Darwin wants symbols to be quoted if they have complex names.
@@ -453,7 +464,6 @@ bool DarwinAsmPrinter::doInitialization(Module &M) {
 
 bool DarwinAsmPrinter::doFinalization(Module &M) {
   const TargetData &TD = TM.getTargetData();
-  std::string CurSection;
 
   // Print out module-level global variables here.
   for (Module::const_global_iterator I = M.global_begin(), E = M.global_end(); I != E; ++I)
@@ -467,7 +477,7 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
       if (C->isNullValue() && /* FIXME: Verify correct */
           (I->hasInternalLinkage() || I->hasWeakLinkage() ||
            I->hasLinkOnceLinkage())) {
-        SwitchSection(O, CurSection, ".data");
+        SwitchSection(".data", I);
         if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
         if (I->hasInternalLinkage())
           O << ".lcomm " << name << "," << Size << "," << Align;
@@ -495,10 +505,10 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
           O << "\t.globl " << name << "\n";
           // FALL THROUGH
         case GlobalValue::InternalLinkage:
-          SwitchSection(O, CurSection, ".data");
+          SwitchSection(".data", I);
           break;
-        case GlobalValue::GhostLinkage:
-          std::cerr << "Error: unmaterialized (GhostLinkage) function in asm!";
+        default:
+          std::cerr << "Unknown linkage type!";
           abort();
         }
 
@@ -649,8 +659,8 @@ void AIXAsmPrinter::printConstantPool(MachineConstantPool *MCP) {
 }
 
 bool AIXAsmPrinter::doInitialization(Module &M) {
+  SwitchSection("", 0);
   const TargetData &TD = TM.getTargetData();
-  std::string CurSection;
 
   O << "\t.machine \"ppc64\"\n"
     << "\t.toc\n"
