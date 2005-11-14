@@ -74,7 +74,6 @@ namespace {
       else
         NS = NewSection;
       
-      
       if (CurSection != NS) {
         CurSection = NS;
         if (!CurSection.empty())
@@ -398,7 +397,7 @@ bool DarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   // Print out labels for the function.
   const Function *F = MF.getFunction();
   SwitchSection(".text", F);
-  emitAlignment(4);
+  emitAlignment(4, F);
   if (!F->hasInternalLinkage())
     O << "\t.globl\t" << CurrentFnName << "\n";
   O << CurrentFnName << ":\n";
@@ -466,7 +465,8 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
   const TargetData &TD = TM.getTargetData();
 
   // Print out module-level global variables here.
-  for (Module::const_global_iterator I = M.global_begin(), E = M.global_end(); I != E; ++I)
+  for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
+       I != E; ++I)
     if (I->hasInitializer()) {   // External global require no code
       O << '\n';
       std::string name = Mang->getValueName(I);
@@ -512,7 +512,7 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
           abort();
         }
 
-        emitAlignment(Align);
+        emitAlignment(Align, I);
         O << name << ":\t\t\t\t; '" << I->getName() << "'\n";
         emitGlobalConstant(C);
       }
