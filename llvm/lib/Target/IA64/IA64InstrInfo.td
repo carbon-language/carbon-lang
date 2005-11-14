@@ -388,6 +388,8 @@ def SHRS  : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
 	  [(set GR:$dst, (sra GR:$src1, GR:$src2))]>;
 
 def MOV : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src), "mov $dst = $src;;">;
+def FMOV : AForm<0x03, 0x0b, (ops FP:$dst, FP:$src),
+  "mov $dst = $src;;">; // XXX: there _is_ no fmov
 def PMOV : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src, PR:$qp),
   "($qp) mov $dst = $src;;">;
 
@@ -409,9 +411,11 @@ let isTwoAddress = 1 in {
     "($qp) mov $dst = $src;;">;
 }
 
-// TODO: select FPs, bools
+// TODO: select bools
 def SELECTINT : Pat<(select PR:$which, GR:$src1, GR:$src2),
           (CMOV (MOV GR:$src2), GR:$src1, PR:$which)>; // note order!
+def SELECTFP : Pat<(select PR:$which, FP:$src1, FP:$src2),
+          (CFMOV (FMOV FP:$src2), FP:$src1, PR:$which)>; // note order!
 
 // load constants of various sizes // FIXME: prettyprint -ve constants
 def : Pat<(i64 immSExt14:$imm), (ADDS r0, immSExt14:$imm)>;
@@ -549,8 +553,6 @@ def FSUB : AForm_DAG<0x03, 0x0b, (ops FP:$dst, FP:$src1, FP:$src2),
 def FMPY : AForm_DAG<0x03, 0x0b, (ops FP:$dst, FP:$src1, FP:$src2),
   "fmpy $dst = $src1, $src2;;",
   [(set FP:$dst, (fmul FP:$src1, FP:$src2))]>;
-def FMOV : AForm<0x03, 0x0b, (ops FP:$dst, FP:$src),
-  "mov $dst = $src;;">; // XXX: there _is_ no fmov
 def FMA : AForm_DAG<0x03, 0x0b, (ops FP:$dst, FP:$src1, FP:$src2, FP:$src3),
   "fma $dst = $src1, $src2, $src3;;",
   [(set FP:$dst, (fadd (fmul FP:$src1, FP:$src2), FP:$src3))]>;
