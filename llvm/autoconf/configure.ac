@@ -486,6 +486,7 @@ AC_HEADER_TIME
 AC_CHECK_HEADERS([dlfcn.h execinfo.h fcntl.h inttypes.h limits.h link.h])
 AC_CHECK_HEADERS([malloc.h signal.h stdint.h unistd.h utime.h windows.h])
 AC_CHECK_HEADERS([sys/mman.h sys/param.h sys/resource.h sys/time.h sys/types.h])
+AC_CHECK_HEADERS([malloc/malloc.h])
 AC_CHECK_HEADERS([rw/stdex/hash_map.h rw/stdex/hash_set.h])
 if test "$ENABLE_THREADS" -eq 1 ; then
   AC_CHECK_HEADERS(pthread.h)
@@ -515,7 +516,7 @@ dnl===-----------------------------------------------------------------------===
 AC_CHECK_FUNCS([backtrace getcwd getpagesize getrusage gettimeofday ])
 AC_CHECK_FUNCS([isatty mkdtemp mkstemp mktemp ])
 AC_CHECK_FUNCS([realpath sbrk setrlimit strdup strerror strerror_r ])
-AC_CHECK_FUNCS([strtoll strtoq sysconf])
+AC_CHECK_FUNCS([strtoll strtoq sysconf mstats ])
 AC_C_PRINTF_A
 AC_FUNC_ALLOCA
 AC_FUNC_RAND48
