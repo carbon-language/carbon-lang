@@ -188,6 +188,9 @@
 /* Define to 1 if you have the <malloc/malloc.h> header file. */
 #undef HAVE_MALLOC_MALLOC_H
 
+/* Define to 1 if you have the `malloc_zone_statistics' function. */
+#undef HAVE_MALLOC_ZONE_STATISTICS
+
 /* Define to 1 if you have the `memcpy' function. */
 #undef HAVE_MEMCPY
 
@@ -215,9 +218,6 @@
 
 /* Define if mmap() can map files into memory */
 #undef HAVE_MMAP_FILE
-
-/* Define to 1 if you have the `mstats' function. */
-#undef HAVE_MSTATS
 
 /* define if the compiler implements namespaces */
 #undef HAVE_NAMESPACES

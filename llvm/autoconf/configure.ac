@@ -516,7 +516,7 @@ dnl===-----------------------------------------------------------------------===
 AC_CHECK_FUNCS([backtrace getcwd getpagesize getrusage gettimeofday ])
 AC_CHECK_FUNCS([isatty mkdtemp mkstemp mktemp ])
 AC_CHECK_FUNCS([realpath sbrk setrlimit strdup strerror strerror_r ])
-AC_CHECK_FUNCS([strtoll strtoq sysconf mstats ])
+AC_CHECK_FUNCS([strtoll strtoq sysconf malloc_zone_statistics ])
 AC_C_PRINTF_A
 AC_FUNC_ALLOCA
 AC_FUNC_RAND48
