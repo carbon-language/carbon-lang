@@ -164,6 +164,9 @@
 				RelativePath="..\..\lib\Target\X86\X86IntelAsmPrinter.cpp">
 			</File>
 			<File
+				RelativePath="..\..\lib\Target\X86\X86ISelLowering.cpp">
+			</File>
+			<File
 				RelativePath="..\..\lib\Target\X86\X86ISelPattern.cpp">
 			</File>
 			<File
@@ -206,6 +209,9 @@
 			</File>
 			<File
 				RelativePath="..\..\lib\Target\X86\X86IntelAsmPrinter.h">
+			</File>
+			<File
+				RelativePath="..\..\lib\Target\X86\X86ISelLowering.h">
 			</File>
 			<File
 				RelativePath="..\..\lib\Target\X86\X86JITInfo.h">
