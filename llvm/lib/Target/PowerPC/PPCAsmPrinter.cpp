@@ -437,7 +437,7 @@ void DarwinAsmPrinter::printConstantPool(MachineConstantPool *MCP) {
   if (CP.empty()) return;
 
   for (unsigned i = 0, e = CP.size(); i != e; ++i) {
-    O << "\t.const\n";
+    SwitchSection(".const", 0);
     // FIXME: force doubles to be naturally aligned.  We should handle this
     // more correctly in the future.
     if (Type::DoubleTy == CP[i]->getType())
@@ -487,6 +487,7 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
       } else {
         switch (I->getLinkage()) {
         case GlobalValue::LinkOnceLinkage:
+          SwitchSection("", 0);
           O << ".section __TEXT,__textcoal_nt,coalesced,no_toc\n"
             << ".weak_definition " << name << '\n'
             << ".private_extern " << name << '\n'
@@ -649,7 +650,7 @@ void AIXAsmPrinter::printConstantPool(MachineConstantPool *MCP) {
   if (CP.empty()) return;
 
   for (unsigned i = 0, e = CP.size(); i != e; ++i) {
-    O << "\t.const\n";
+    SwitchSection(".const", 0);
     O << "\t.align " << (unsigned)TD.getTypeAlignment(CP[i]->getType())
       << "\n";
     O << "LCPI" << FunctionNumber << '_' << i << ":\t\t\t\t\t;"
