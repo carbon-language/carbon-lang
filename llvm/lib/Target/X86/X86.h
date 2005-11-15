@@ -32,10 +32,16 @@ enum X86VectorEnum {
 extern X86VectorEnum X86Vector;
 extern bool X86ScalarSSE;
 
-/// createX86PatternInstructionSelector - This pass converts an LLVM function
-/// into a machine code representation in a more aggressive way.
+/// createX86ISelPattern - This pass converts an LLVM function into a 
+/// machine code representation using pattern matching and a machine
+/// description file.
 ///
-FunctionPass *createX86PatternInstructionSelector(TargetMachine &TM);
+FunctionPass *createX86ISelPattern(TargetMachine &TM);
+
+/// createX86ISelDag - This pass converts a legalized DAG into a 
+/// X86-specific DAG, ready for instruction scheduling.
+///
+FunctionPass *createX86ISelDag(TargetMachine &TM);
 
 /// createX86SSAPeepholeOptimizerPass - Create a pass to perform SSA-based X86
 /// specific peephole optimizations.
