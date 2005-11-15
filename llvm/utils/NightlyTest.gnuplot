@@ -8,15 +8,6 @@ set xdata time
 set timefmt "%Y-%m-%d-%H:%M:%S:"
 set format x "%b %d, %Y"
 
-## Various labels for the graph
-set label "Reoptimizer\n checkins" at "2003-02-18:", 114000
-set label "Modulo Sched\n   checkin" at "2003-03-28:", 119500
-set label "Reoptimizer\n checkins" at "2003-06-01:", 134000
-set label "'dummy'\nfunction" at "2003-07-20:", 150000
-set label "Reoptimizer\n removal" at "2003-08-10:", 132000
-set label "llvm-db\ncheckin" at "2004-01-04:", 145000
-set label "llvm/projects" at "2004-01-04:", 151000
-
 set size .75,.75
 set xtics rotate
 set xlabel 0,-1
