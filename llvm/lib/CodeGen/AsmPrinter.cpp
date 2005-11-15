@@ -118,9 +118,7 @@ void AsmPrinter::emitConstantValueOnly(const Constant *CV) {
               || (((TD.getTypeSize(Ty) >= TD.getTypeSize(OpTy))
                    && OpTy->isLosslesslyConvertibleTo(Ty))))
              && "FIXME: Don't yet support this kind of constant cast expr");
-      O << "(";
       emitConstantValueOnly(Op);
-      O << ")";
       break;
     }
     case Instruction::Add:
