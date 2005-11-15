@@ -132,6 +132,11 @@ std::string Mangler::getValueName(const GlobalValue *GV) {
   // - Otherwise, mangling occurs if global collides with existing name.
   if (isa<Function>(GV) && cast<Function>(GV)->getIntrinsicID()) {
     Name = GV->getName(); // Is an intrinsic function
+  } else if (!GV->hasName()) {
+    // Must mangle the global into a unique ID.
+    unsigned TypeUniqueID = getTypeID(GV->getType());
+    static unsigned GlobalID = 0;
+    Name = "__unnamed_" + utostr(TypeUniqueID) + "_" + utostr(GlobalID++);
   } else if (!MangledGlobals.count(GV)) {
     Name = makeNameProper(GV->getName(), Prefix);
   } else {
@@ -144,10 +149,8 @@ std::string Mangler::getValueName(const GlobalValue *GV) {
 
 void Mangler::InsertName(GlobalValue *GV,
                          std::map<std::string, GlobalValue*> &Names) {
-  if (!GV->hasName()) {   // We must mangle unnamed globals.
-    MangledGlobals.insert(GV);
+  if (!GV->hasName())   // We must mangle unnamed globals.
     return;
-  }
 
   // Figure out if this is already used.
   GlobalValue *&ExistingValue = Names[GV->getName()];
