@@ -19,6 +19,7 @@
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
 #include "llvm/Intrinsics.h"
+#include "llvm/CodeGen/IntrinsicLowering.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
@@ -780,10 +781,31 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
                             getRoot(), getValue(I.getOperand(1)),
                             getValue(I.getOperand(2))));
     return 0;
+    
   case Intrinsic::dbg_stoppoint:
+    if (TLI.getTargetMachine().getIntrinsicLowering().EmitDebugFunctions())
+      return "llvm_debugger_stop";
+    if (I.getType() != Type::VoidTy)
+      setValue(&I, DAG.getNode(ISD::UNDEF, TLI.getValueType(I.getType())));
+    return 0;
   case Intrinsic::dbg_region_start:
+    if (TLI.getTargetMachine().getIntrinsicLowering().EmitDebugFunctions())
+      return "llvm_dbg_region_start";
+    if (I.getType() != Type::VoidTy)
+      setValue(&I, DAG.getNode(ISD::UNDEF, TLI.getValueType(I.getType())));
+    return 0;
   case Intrinsic::dbg_region_end:
+    if (TLI.getTargetMachine().getIntrinsicLowering().EmitDebugFunctions())
+      return "llvm_dbg_region_end";
+    if (I.getType() != Type::VoidTy)
+      setValue(&I, DAG.getNode(ISD::UNDEF, TLI.getValueType(I.getType())));
+    return 0;
   case Intrinsic::dbg_func_start:
+    if (TLI.getTargetMachine().getIntrinsicLowering().EmitDebugFunctions())
+      return "llvm_dbg_subprogram";
+    if (I.getType() != Type::VoidTy)
+      setValue(&I, DAG.getNode(ISD::UNDEF, TLI.getValueType(I.getType())));
+    return 0;
   case Intrinsic::dbg_declare:
     if (I.getType() != Type::VoidTy)
       setValue(&I, DAG.getNode(ISD::UNDEF, TLI.getValueType(I.getType())));
