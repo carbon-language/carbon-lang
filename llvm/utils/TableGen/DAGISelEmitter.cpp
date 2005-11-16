@@ -631,9 +631,7 @@ TreePatternNode *TreePattern::ParseTreePattern(DagInit *Dag) {
       if (R->isSubClassOf("SDNode") || R->isSubClassOf("PatFrag")) {
         Dag->setArg(0, new DagInit(R,
                                 std::vector<std::pair<Init*, std::string> >()));
-        TreePatternNode *TPN = ParseTreePattern(Dag);
-        TPN->setName(Dag->getArgName(0));
-        return TPN;
+        return ParseTreePattern(Dag);
       }   
       
       New = new TreePatternNode(DI);
@@ -651,6 +649,7 @@ TreePatternNode *TreePattern::ParseTreePattern(DagInit *Dag) {
     
     // Apply the type cast.
     New->UpdateNodeType(getValueType(Operator), *this);
+    New->setName(Dag->getArgName(0));
     return New;
   }
   
@@ -672,7 +671,8 @@ TreePatternNode *TreePattern::ParseTreePattern(DagInit *Dag) {
     Init *Arg = Dag->getArg(i);
     if (DagInit *DI = dynamic_cast<DagInit*>(Arg)) {
       Children.push_back(ParseTreePattern(DI));
-      Children.back()->setName(Dag->getArgName(i));
+      if (Children.back()->getName().empty())
+        Children.back()->setName(Dag->getArgName(i));
     } else if (DefInit *DefI = dynamic_cast<DefInit*>(Arg)) {
       Record *R = DefI->getDef();
       // Direct reference to a leaf DagNode or PatFrag?  Turn it into a
