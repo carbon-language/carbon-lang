@@ -40,9 +40,14 @@ namespace llvm {
   class Module;
 
   class IntrinsicLowering {
+  protected:
+    bool ShouldEmitDebugFunctions;
   public:
+    IntrinsicLowering() : ShouldEmitDebugFunctions(false) {}
     virtual ~IntrinsicLowering() {}
 
+    bool EmitDebugFunctions() const { return ShouldEmitDebugFunctions; }
+    
     /// AddPrototypes - This method, if called, causes all of the prototypes
     /// that might be needed by an intrinsic lowering implementation to be
     /// inserted into the module specified.
