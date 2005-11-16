@@ -861,6 +861,7 @@ namespace {
   /// lowering class that revectors debugging intrinsics to call actual
   /// functions (defined above), instead of being turned into noops.
   struct DebuggerIntrinsicLowering : public DefaultIntrinsicLowering {
+    DebuggerIntrinsicLowering() { ShouldEmitDebugFunctions = true; }
     virtual void LowerIntrinsicCall(CallInst *CI) {
       Module *M = CI->getParent()->getParent()->getParent();
       switch (CI->getCalledFunction()->getIntrinsicID()) {
