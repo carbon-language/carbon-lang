@@ -842,18 +842,15 @@ unsigned ISel::SelectExpr(SDOperand N, bool Recording) {
     // Emit the correct call instruction based on the type of symbol called.
     if (GlobalAddressSDNode *GASD =
         dyn_cast<GlobalAddressSDNode>(N.getOperand(1))) {
-      CallMI = BuildMI(PPC::CALLpcrel, 1).addGlobalAddress(GASD->getGlobal(),
-                                                           true);
+      CallMI = BuildMI(PPC::BL, 1).addGlobalAddress(GASD->getGlobal(), true);
     } else if (ExternalSymbolSDNode *ESSDN =
                dyn_cast<ExternalSymbolSDNode>(N.getOperand(1))) {
-      CallMI = BuildMI(PPC::CALLpcrel, 1).addExternalSymbol(ESSDN->getSymbol(),
-                                                            true);
+      CallMI = BuildMI(PPC::BL, 1).addExternalSymbol(ESSDN->getSymbol(), true);
     } else {
       Tmp1 = SelectExpr(N.getOperand(1));
       BuildMI(BB, PPC::MTCTR, 1).addReg(Tmp1);
       BuildMI(BB, PPC::OR4, 2, PPC::R12).addReg(Tmp1).addReg(Tmp1);
-      CallMI = BuildMI(PPC::CALLindirect, 3).addImm(20).addImm(0)
-        .addReg(PPC::R12);
+      CallMI = BuildMI(PPC::BCTRL, 1).addReg(PPC::R12);
     }
 
     // Load the register args to virtual regs

@@ -152,6 +152,10 @@ namespace {
                 TM.getInstrInfo()->isCall(MI->getOpcode()));
       }
     }
+    void printAbsAddrOperand(const MachineInstr *MI, unsigned OpNo,
+                             MVT::ValueType VT) {
+     O << (int)MI->getOperand(OpNo).getImmedValue()*4;
+    }
     void printPICLabel(const MachineInstr *MI, unsigned OpNo,
                        MVT::ValueType VT) {
       // FIXME: should probably be converted to cout.width and cout.fill

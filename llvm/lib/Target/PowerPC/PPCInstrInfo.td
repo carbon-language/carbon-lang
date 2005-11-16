@@ -128,6 +128,9 @@ def s16immX4  : Operand<i32> {   // Multiply imm by 4 before printing.
 def target : Operand<i32> {
   let PrintMethod = "printBranchOperand";
 }
+def aaddr : Operand<i32> {
+  let PrintMethod = "printAbsAddrOperand";
+}
 def piclabel: Operand<i32> {
   let PrintMethod = "printPICLabel";
 }
@@ -186,9 +189,6 @@ let isBranch = 1, isTerminator = 1 in {
                                 target:$true, target:$false),
                            "; COND_BRANCH", []>;
   def B   : IForm<18, 0, 0, (ops target:$func), "b $func", BrB>;
-//def BA  : IForm<18, 1, 0, (ops target:$func), "ba $func", BrB>;
-  def BL  : IForm<18, 0, 1, (ops target:$func), "bl $func", BrB>;
-//def BLA : IForm<18, 1, 1, (ops target:$func), "bla $func", BrB>;
 
   // FIXME: 4*CR# needs to be added to the BI field!
   // This will only work for CR0 as it stands now
@@ -217,10 +217,9 @@ let isCall = 1,
           LR,CTR,
           CR0,CR1,CR5,CR6,CR7] in {
   // Convenient aliases for call instructions
-  def CALLpcrel : IForm<18, 0, 1, (ops target:$func, variable_ops),
-                        "bl $func", BrB>;
-  def CALLindirect : XLForm_2_ext<19, 528, 20, 0, 1,
-                                  (ops variable_ops), "bctrl", BrB>;
+  def BL  : IForm<18, 0, 1, (ops target:$func, variable_ops), "bl $func", BrB>;
+  def BLA : IForm<18, 1, 1, (ops aaddr:$func, variable_ops), "bla $func", BrB>;
+  def BCTRL : XLForm_2_ext<19, 528, 20, 0, 1, (ops variable_ops), "bctrl", BrB>;
 }
 
 // D-Form instructions.  Most instructions that perform an operation on a

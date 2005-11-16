@@ -735,6 +735,14 @@ SDOperand PPCDAGToDAGISel::SelectSETCC(SDOperand Op) {
   return SDOperand(N, 0);
 }
 
+/// isCallCompatibleAddress - Return true if the specified 32-bit value is
+/// representable in the immediate field of a Bx instruction.
+static bool isCallCompatibleAddress(ConstantSDNode *C) {
+  int Addr = C->getValue();
+  if (Addr & 3) return false;  // Low 2 bits are implicitly zero.
+  return (Addr << 6 >> 6) == Addr;  // Top 6 bits have to be sext of immediate.
+}
+
 SDOperand PPCDAGToDAGISel::SelectCALL(SDOperand Op) {
   SDNode *N = Op.Val;
   SDOperand Chain = Select(N->getOperand(0));
@@ -744,13 +752,18 @@ SDOperand PPCDAGToDAGISel::SelectCALL(SDOperand Op) {
   
   if (GlobalAddressSDNode *GASD =
       dyn_cast<GlobalAddressSDNode>(N->getOperand(1))) {
-    CallOpcode = PPC::CALLpcrel;
+    CallOpcode = PPC::BL;
     CallOperands.push_back(CurDAG->getTargetGlobalAddress(GASD->getGlobal(),
                                                           MVT::i32));
   } else if (ExternalSymbolSDNode *ESSDN =
              dyn_cast<ExternalSymbolSDNode>(N->getOperand(1))) {
-    CallOpcode = PPC::CALLpcrel;
+    CallOpcode = PPC::BL;
     CallOperands.push_back(N->getOperand(1));
+  } else if (isa<ConstantSDNode>(N->getOperand(1)) &&
+             isCallCompatibleAddress(cast<ConstantSDNode>(N->getOperand(1)))) {
+    ConstantSDNode *C = cast<ConstantSDNode>(N->getOperand(1));
+    CallOpcode = PPC::BLA;
+    CallOperands.push_back(getI32Imm((int)C->getValue() >> 2));
   } else {
     // Copy the callee address into the CTR register.
     SDOperand Callee = Select(N->getOperand(1));
@@ -759,11 +772,9 @@ SDOperand PPCDAGToDAGISel::SelectCALL(SDOperand Op) {
     // Copy the callee address into R12 on darwin.
     SDOperand R12 = CurDAG->getRegister(PPC::R12, MVT::i32);
     Chain = CurDAG->getNode(ISD::CopyToReg, MVT::Other, Chain, R12, Callee);
-    
-    CallOperands.push_back(getI32Imm(20));  // Information to encode indcall
-    CallOperands.push_back(getI32Imm(0));   // Information to encode indcall
+
     CallOperands.push_back(R12);
-    CallOpcode = PPC::CALLindirect;
+    CallOpcode = PPC::BCTRL;
   }
   
   unsigned GPR_idx = 0, FPR_idx = 0;

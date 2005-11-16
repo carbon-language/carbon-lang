@@ -196,7 +196,7 @@ int PPCCodeEmitter::getMachineOpValue(MachineInstr &MI, MachineOperand &MO) {
                       MO.getGlobal()->hasWeakLinkage() ||
                       MO.getGlobal()->isExternal();
     unsigned Reloc = 0;
-    if (MI.getOpcode() == PPC::CALLpcrel)
+    if (MI.getOpcode() == PPC::BL)
       Reloc = PPC::reloc_pcrel_bx;
     else {
       switch (MI.getOpcode()) {
