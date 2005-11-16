@@ -941,7 +941,12 @@ public:
   void operator=(bool OptionWasSpecified) {
     if (OptionWasSpecified) {
       std::cerr << "Low Level Virtual Machine (" << PACKAGE_NAME << ") "
-                << PACKAGE_VERSION << " (see http://llvm.cs.uiuc.edu/)\n";
+                << PACKAGE_VERSION << " (see http://llvm.org/)";
+#ifndef NDEBUG
+      std::cerr << " DEBUG BUILD\n";
+#else
+      std::cerr << "\n";
+#endif
       getOpts().clear();  // Don't bother making option dtors remove from map.
       exit(1);
     }
