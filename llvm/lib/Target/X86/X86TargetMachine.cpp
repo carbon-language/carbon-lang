@@ -47,6 +47,9 @@ namespace {
                 cl::location(X86ScalarSSE),
                 cl::init(false));
 
+  cl::opt<bool> EnableX86DAGDAG("enable-x86-dag-isel", cl::Hidden,
+                      cl::desc("Enable DAG-to-DAG isel for X86"));
+  
   // FIXME: This should eventually be handled with target triples and
   // subtarget support!
   cl::opt<X86VectorEnum, true>
@@ -124,7 +127,10 @@ bool X86TargetMachine::addPassesToEmitFile(PassManager &PM, std::ostream &Out,
   PM.add(createUnreachableBlockEliminationPass());
 
   // Install an instruction selector.
-  PM.add(createX86ISelPattern(*this));
+  if (EnableX86DAGDAG)
+    PM.add(createX86ISelDag(*this));
+  else
+    PM.add(createX86ISelPattern(*this));
 
   // Run optional SSA-based machine code optimizations next...
   if (!NoSSAPeephole)
@@ -192,7 +198,10 @@ void X86JITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
   PM.add(createUnreachableBlockEliminationPass());
 
   // Install an instruction selector.
-  PM.add(createX86ISelPattern(TM));
+  if (EnableX86DAGDAG)
+    PM.add(createX86ISelDag(TM));
+  else
+    PM.add(createX86ISelPattern(TM));
 
   // Run optional SSA-based machine code optimizations next...
   if (!NoSSAPeephole)
