@@ -471,14 +471,17 @@ OpaqueType::OpaqueType() : DerivedType(OpaqueTyID) {
 // types, to avoid some circular reference problems.
 void DerivedType::dropAllTypeUses() {
   if (!ContainedTys.empty()) {
-    while (ContainedTys.size() > 1)
-      ContainedTys.pop_back();
-
     // The type must stay abstract.  To do this, we insert a pointer to a type
     // that will never get resolved, thus will always be abstract.
     static Type *AlwaysOpaqueTy = OpaqueType::get();
     static PATypeHolder Holder(AlwaysOpaqueTy);
     ContainedTys[0] = AlwaysOpaqueTy;
+
+    // Change the rest of the types to be intty's.  It doesn't matter what we
+    // pick so long as it doesn't point back to this type.  We choose something
+    // concrete to avoid overhead for adding to AbstracTypeUser lists and stuff.
+    for (unsigned i = 1, e = ContainedTys.size(); i != e; ++i)
+      ContainedTys[i] = Type::IntTy;
   }
 }
 
@@ -680,6 +683,37 @@ static bool TypeHasCycleThroughItself(const Type *Ty) {
   return false;
 }
 
+/// getSubElementHash - Generate a hash value for all of the SubType's of this
+/// type.  The hash value is guaranteed to be zero if any of the subtypes are 
+/// an opaque type.  Otherwise we try to mix them in as well as possible, but do
+/// not look at the subtype's subtype's.
+static unsigned getSubElementHash(const Type *Ty) {
+  unsigned HashVal = 0;
+  for (Type::subtype_iterator I = Ty->subtype_begin(), E = Ty->subtype_end();
+       I != E; ++I) {
+    HashVal *= 32;
+    const Type *SubTy = I->get();
+    HashVal += SubTy->getTypeID();
+    switch (SubTy->getTypeID()) {
+    default: break;
+    case Type::OpaqueTyID: return 0;    // Opaque -> hash = 0 no matter what.
+    case Type::FunctionTyID:
+      HashVal ^= cast<FunctionType>(SubTy)->getNumParams()*2 + 
+                 cast<FunctionType>(SubTy)->isVarArg();
+      break;
+    case Type::ArrayTyID:
+      HashVal ^= cast<ArrayType>(SubTy)->getNumElements();
+      break;
+    case Type::PackedTyID:
+      HashVal ^= cast<PackedType>(SubTy)->getNumElements();
+      break;
+    case Type::StructTyID:
+      HashVal ^= cast<StructType>(SubTy)->getNumElements();
+      break;
+    }
+  }
+  return HashVal ? HashVal : 1;  // Do not return zero unless opaque subty.
+}
 
 //===----------------------------------------------------------------------===//
 //                       Derived Type Factory Functions
@@ -697,12 +731,18 @@ protected:
 public:
   void RemoveFromTypesByHash(unsigned Hash, const Type *Ty) {
     std::multimap<unsigned, PATypeHolder>::iterator I =
-    TypesByHash.lower_bound(Hash);
-    while (I->second != Ty) {
-      ++I;
-      assert(I != TypesByHash.end() && I->first == Hash);
+      TypesByHash.lower_bound(Hash);
+    for (; I != TypesByHash.end() && I->first == Hash; ++I) {
+      if (I->second == Ty) {
+        TypesByHash.erase(I);
+        return;
+      }
     }
-    TypesByHash.erase(I);
+    
+    // This must be do to an opaque type that was resolved.  Switch down to hash
+    // code of zero.
+    assert(Hash && "Didn't find type entry!");
+    RemoveFromTypesByHash(0, Ty);
   }
   
   /// TypeBecameConcrete - When Ty gets a notification that TheType just became
@@ -803,7 +843,6 @@ public:
 
       tie(I, Inserted) = Map.insert(std::make_pair(ValType::get(Ty), Ty));
       if (!Inserted) {
-        assert(OldType != NewType);
         // Refined to a different type altogether?
         RemoveFromTypesByHash(OldTypeHash, Ty);
 
@@ -819,7 +858,7 @@ public:
       // gets refined to the pre-existing type.
       //
       std::multimap<unsigned, PATypeHolder>::iterator I, E, Entry;
-      tie(I, E) = TypesByHash.equal_range(OldTypeHash);
+      tie(I, E) = TypesByHash.equal_range(NewTypeHash);
       Entry = E;
       for (; I != E; ++I) {
         if (I->second == Ty) {
@@ -829,16 +868,23 @@ public:
           if (TypesEqual(Ty, I->second)) {
             TypeClass *NewTy = cast<TypeClass>((Type*)I->second.get());
 
-            if (Entry == E) {
-              // Find the location of Ty in the TypesByHash structure if we
-              // haven't seen it already.
-              while (I->second != Ty) {
-                ++I;
-                assert(I != E && "Structure doesn't contain type??");
+            // Remove the old entry form TypesByHash.  If the hash values differ
+            // now, remove it from the old place.  Otherwise, continue scanning
+            // withing this hashcode to reduce work.
+            if (NewTypeHash != OldTypeHash) {
+              RemoveFromTypesByHash(OldTypeHash, Ty);
+            } else {
+              if (Entry == E) {
+                // Find the location of Ty in the TypesByHash structure if we
+                // haven't seen it already.
+                while (I->second != Ty) {
+                  ++I;
+                  assert(I != E && "Structure doesn't contain type??");
+                }
+                Entry = I;
               }
-              Entry = I;
+              TypesByHash.erase(Entry);
             }
-            TypesByHash.erase(Entry);
             Ty->refineAbstractTypeTo(NewTy);
             return;
           }
@@ -1122,7 +1168,7 @@ public:
   }
 
   static unsigned hashTypeStructure(const PointerType *PT) {
-    return 0;
+    return getSubElementHash(PT);
   }
 
   // Subclass should override this... to update self as usual
@@ -1283,9 +1329,6 @@ void DerivedType::notifyUsesThatTypeBecameConcrete() {
            "AbstractTypeUser did not remove itself from the use list!");
   }
 }
-
-
-
 
 // refineAbstractType - Called when a contained type is found to be more
 // concrete - this could potentially change us from an abstract type to a
