@@ -8,7 +8,7 @@
 ;; RUN: llvm-as -f %s -o %t.bc
 ;; RUN: llvm-db %t.bc < %t.commands | grep 'in main at funccall.c:11:2'
 
-; XFAIL: i.86|powerpc|alpha|ia64
+; XFAIL: alpha|ia64
 
 ;; Debugger type declarations
 %lldb.compile_unit = type { uint, ushort, ushort, sbyte*, sbyte*, sbyte*, {}* }
