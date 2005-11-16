@@ -193,6 +193,12 @@ int AlphaCodeEmitter::getMachineOpValue(MachineInstr &MI, MachineOperand &MO) {
     case Alpha::LDSr:
     case Alpha::LDTr:
     case Alpha::LDAr:
+    case Alpha::STQr:
+    case Alpha::STLr:
+    case Alpha::STWr:
+    case Alpha::STBr:
+    case Alpha::STSr:
+    case Alpha::STTr:
       Reloc = Alpha::reloc_gprellow;
       break;
     case Alpha::LDAHr:
