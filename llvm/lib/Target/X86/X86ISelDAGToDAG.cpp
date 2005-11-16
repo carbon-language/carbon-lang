@@ -1,4 +1,4 @@
-//===-- X86ISelPattern.cpp - A DAG pattern matching inst selector for X86 -===//
+//===- X86ISelDAGToDAG.cpp - A DAG pattern matching inst selector for X86 -===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -103,20 +103,6 @@ SDOperand X86DAGToDAGISel::Select(SDOperand Op) {
   
   switch (N->getOpcode()) {
     default: break;
-    case ISD::Constant: {
-      switch (OpVT) {
-        default: assert(0 && "Cannot use constants of this type!");
-        case MVT::i1:
-        case MVT::i8:  Opc = X86::MOV8ri;  break;
-        case MVT::i16: Opc = X86::MOV16ri; break;
-        case MVT::i32: Opc = X86::MOV32ri; break;
-      }
-      unsigned CVal = cast<ConstantSDNode>(N)->getValue();
-      SDOperand Op1 = CurDAG->getTargetConstant(CVal, OpVT);
-      CurDAG->SelectNodeTo(N, Opc, OpVT, Op1);
-      return Op;
-    }
-
     case ISD::RET: {
       SDOperand Chain = Select(N->getOperand(0));     // Token chain.
       switch (N->getNumOperands()) {
