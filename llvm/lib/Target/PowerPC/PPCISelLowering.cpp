@@ -343,7 +343,7 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     if (PICEnabled) {
       // With PIC, the first instruction is actually "GR+hi(&G)".
       Hi = DAG.getNode(ISD::ADD, MVT::i32,
-                       DAG.getTargetNode(PPCISD::GlobalBaseReg, MVT::i32), Hi);
+                       DAG.getNode(PPCISD::GlobalBaseReg, MVT::i32), Hi);
     }
     
     SDOperand Lo = DAG.getNode(PPCISD::Lo, MVT::i32, GA, Zero);
