@@ -413,6 +413,14 @@ bool PPCDAGToDAGISel::SelectAddr(SDOperand Addr, SDOperand &Op1,
         Op2 = Select(Addr.getOperand(0));
       }
       return false;
+    } else if (Addr.getOperand(1).getOpcode() == PPCISD::Lo) {
+      // Match LOAD (ADD (X, Lo(G))).
+      assert(!cast<ConstantSDNode>(Addr.getOperand(1).getOperand(1))->getValue()
+             && "Cannot handle constant offsets yet!");
+      Op1 = Addr.getOperand(1).getOperand(0);  // The global address.
+      assert(Op1.getOpcode() == ISD::TargetGlobalAddress);
+      Op2 = Select(Addr.getOperand(0));
+      return false;   // [&g+r]
     } else {
       Op1 = Select(Addr.getOperand(0));
       Op2 = Select(Addr.getOperand(1));
