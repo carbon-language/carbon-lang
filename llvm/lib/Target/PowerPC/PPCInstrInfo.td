@@ -260,7 +260,7 @@ def MULLI  : DForm_2< 7, (ops GPRC:$rD, GPRC:$rA, s16imm:$imm),
 def SUBFIC : DForm_2< 8, (ops GPRC:$rD, GPRC:$rA, s16imm:$imm),
                      "subfic $rD, $rA, $imm", IntGeneral,
                      [(set GPRC:$rD, (sub immSExt16:$imm, GPRC:$rA))]>;
-def LI  : DForm_2_r0<14, (ops GPRC:$rD, s16imm:$imm),
+def LI  : DForm_2_r0<14, (ops GPRC:$rD, symbolLo:$imm),
                      "li $rD, $imm", IntGeneral,
                      [(set GPRC:$rD, immSExt16:$imm)]>;
 def LIS : DForm_2_r0<15, (ops GPRC:$rD, symbolHi:$imm),
