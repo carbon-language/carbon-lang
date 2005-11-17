@@ -162,7 +162,7 @@ void IndVarSimplify::EliminatePointerRecurrence(PHINode *PN,
           if (CE->getOperand(NumOps-1)->isNullValue()) {
             // Check to make sure the last index really is an array index.
             gep_type_iterator GTI = gep_type_begin(GEPI);
-            for (unsigned i = 1, e = GEPI->getNumOperands()-1;
+            for (unsigned i = 1, e = CE->getNumOperands()-1;
                  i != e; ++i, ++GTI)
               /*empty*/;
             if (isa<SequentialType>(*GTI)) {
