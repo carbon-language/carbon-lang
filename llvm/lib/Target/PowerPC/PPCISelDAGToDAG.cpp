@@ -428,20 +428,7 @@ bool PPCDAGToDAGISel::SelectAddr(SDOperand Addr, SDOperand &Op1,
     }
   }
 
-  // Now check if we're dealing with a global, and whether or not we should emit
-  // an optimized load or store for statics.
-  if (GlobalAddressSDNode *GN = dyn_cast<GlobalAddressSDNode>(Addr)) {
-    GlobalValue *GV = GN->getGlobal();
-    if (!GV->hasWeakLinkage() && !GV->isExternal()) {
-      Op1 = CurDAG->getTargetGlobalAddress(GV, MVT::i32);
-      if (PICEnabled)
-        Op2 = CurDAG->getTargetNode(PPC::ADDIS, MVT::i32, getGlobalBaseReg(),
-                                    Op1);
-      else
-        Op2 = CurDAG->getTargetNode(PPC::LIS, MVT::i32, Op1);
-      return false;
-    }
-  } else if (FrameIndexSDNode *FI = dyn_cast<FrameIndexSDNode>(Addr)) {
+ if (FrameIndexSDNode *FI = dyn_cast<FrameIndexSDNode>(Addr)) {
     Op1 = getI32Imm(0);
     Op2 = CurDAG->getTargetFrameIndex(FI->getIndex(), MVT::i32);
     return false;
@@ -907,22 +894,6 @@ SDOperand PPCDAGToDAGISel::Select(SDOperand Op) {
     }
     return CurDAG->getTargetNode(PPC::LA, MVT::i32, Tmp, CPI);
   }
-#if 1
-  case ISD::GlobalAddress: {
-    GlobalValue *GV = cast<GlobalAddressSDNode>(N)->getGlobal();
-    SDOperand Tmp;
-    SDOperand GA = CurDAG->getTargetGlobalAddress(GV, MVT::i32);
-    if (PICEnabled)
-      Tmp = CurDAG->getTargetNode(PPC::ADDIS, MVT::i32, getGlobalBaseReg(), GA);
-    else
-      Tmp = CurDAG->getTargetNode(PPC::LIS, MVT::i32, GA);
-
-    if (GV->hasWeakLinkage() || GV->isExternal())
-      return CurDAG->getTargetNode(PPC::LWZ, MVT::i32, GA, Tmp);
-    else
-      return CurDAG->getTargetNode(PPC::LA, MVT::i32, Tmp, GA);
-  }
-#endif
   case ISD::FADD: {
     MVT::ValueType Ty = N->getValueType(0);
     if (!NoExcessFPPrecision) {  // Match FMA ops

@@ -93,7 +93,7 @@ PPCTargetLowering::PPCTargetLowering(TargetMachine &TM)
   
   // We want to legalize GlobalAddress into the appropriate instructions to
   // materialize the address.
-  //setOperationAction(ISD::GlobalAddress, MVT::i32, Custom);
+  setOperationAction(ISD::GlobalAddress, MVT::i32, Custom);
   
   if (TM.getSubtarget<PPCSubtarget>().is64Bit()) {
     // They also have instructions for converting between i64 and fp.
