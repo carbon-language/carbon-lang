@@ -27,6 +27,9 @@ def PPCfsel   : SDNode<"PPCISD::FSEL",
    SDTypeProfile<1, 3, [SDTCisSameAs<0, 2>, SDTCisSameAs<0, 3>, 
                         SDTCisFP<0>, SDTCisVT<1, f64>]>, []>;
 
+def PPChi     : SDNode<"PPCISD::Hi", SDTIntBinOp, []>;
+def PPClo     : SDNode<"PPCISD::Lo", SDTIntBinOp, []>;
+
 //===----------------------------------------------------------------------===//
 // PowerPC specific transformation functions and pattern fragments.
 //
@@ -781,6 +784,11 @@ def : Pat<(srl GPRC:$in, imm:$imm),
           (RLWINM GPRC:$in, (SRL32 imm:$imm), imm:$imm, 31)>;
 def : Pat<(srl G8RC:$in, imm:$imm),
           (RLDICL G8RC:$in, (SRL64 imm:$imm), imm:$imm)>;
+
+// Hi and Lo for Darwin Global Addresses.
+def : Pat<(PPChi tglobaladdr:$in, (i32 0)), (LIS node:$in)>;
+def : Pat<(PPClo tglobaladdr:$in, (i32 0)), (LI node:$in)>;
+
 
 // Same as above, but using a temporary. FIXME: implement temporaries :)
 /*

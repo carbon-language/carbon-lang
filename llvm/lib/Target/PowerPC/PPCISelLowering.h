@@ -38,6 +38,17 @@ namespace llvm {
       /// operand, producing an f64 value containing the integer representation
       /// of that FP value.
       FCTIDZ, FCTIWZ,
+      
+      /// Hi/Lo - These represent the high and low 16-bit parts of a global
+      /// address respectively.  These nodes have two operands, the first of
+      /// which must be a TargetGlobalAddress, and the second of which must be a
+      /// Constant.  Selected naively, these turn into 'lis G+C' and 'li G+C',
+      /// though these are usually folded into other nodes.
+      Hi, Lo,
+      
+      /// GlobalBaseReg - On Darwin, this node represents the result of the mflr
+      /// at function entry, used for PIC code.
+      GlobalBaseReg,
     };
   }  
   

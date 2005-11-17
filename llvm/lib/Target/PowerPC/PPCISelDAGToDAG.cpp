@@ -872,7 +872,8 @@ SDOperand PPCDAGToDAGISel::Select(SDOperand Op) {
   case ISD::SETCC:              return SelectSETCC(Op);
   case ISD::CALL:               return SelectCALL(Op);
   case ISD::TAILCALL:           return SelectCALL(Op);
-
+  case PPCISD::GlobalBaseReg:   return getGlobalBaseReg();
+    
   case ISD::FrameIndex: {
     int FI = cast<FrameIndexSDNode>(N)->getIndex();
     if (N->hasOneUse()) {
@@ -898,6 +899,7 @@ SDOperand PPCDAGToDAGISel::Select(SDOperand Op) {
     }
     return CurDAG->getTargetNode(PPC::LA, MVT::i32, Tmp, CPI);
   }
+#if 1
   case ISD::GlobalAddress: {
     GlobalValue *GV = cast<GlobalAddressSDNode>(N)->getGlobal();
     SDOperand Tmp;
@@ -912,6 +914,7 @@ SDOperand PPCDAGToDAGISel::Select(SDOperand Op) {
     else
       return CurDAG->getTargetNode(PPC::LA, MVT::i32, Tmp, GA);
   }
+#endif
   case ISD::FADD: {
     MVT::ValueType Ty = N->getValueType(0);
     if (!NoExcessFPPrecision) {  // Match FMA ops

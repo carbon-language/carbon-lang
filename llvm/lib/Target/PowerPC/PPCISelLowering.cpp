@@ -91,6 +91,10 @@ PPCTargetLowering::PPCTargetLowering(TargetMachine &TM)
   // PowerPC does not have truncstore for i1.
   setOperationAction(ISD::TRUNCSTORE, MVT::i1, Promote);
   
+  // We want to legalize GlobalAddress into the appropriate instructions to
+  // materialize the address.
+  //setOperationAction(ISD::GlobalAddress, MVT::i32, Custom);
+  
   if (TM.getSubtarget<PPCSubtarget>().is64Bit()) {
     // They also have instructions for converting between i64 and fp.
     setOperationAction(ISD::FP_TO_SINT, MVT::i64, Custom);
@@ -98,7 +102,7 @@ PPCTargetLowering::PPCTargetLowering(TargetMachine &TM)
     // To take advantage of the above i64 FP_TO_SINT, promote i32 FP_TO_UINT
     setOperationAction(ISD::FP_TO_UINT, MVT::i32, Promote);
   } else {
-    // PowerPC does not have FP_TO_UINT on 32 bit implementations.
+    // PowerPC does not have FP_TO_UINT on 32-bit implementations.
     setOperationAction(ISD::FP_TO_UINT, MVT::i32, Expand);
   }
 
@@ -327,6 +331,30 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     SDOperand OutLo = DAG.getSelectCC(Tmp5, DAG.getConstant(0, MVT::i32),
                                       Tmp4, Tmp6, ISD::SETLE);
     return DAG.getNode(ISD::BUILD_PAIR, MVT::i64, OutLo, OutHi);
+  }
+  case ISD::GlobalAddress: {
+    // Only lower GlobalAddress on Darwin.
+    if (!getTargetMachine().getSubtarget<PPCSubtarget>().isDarwin()) break;
+    GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
+    SDOperand GA = DAG.getTargetGlobalAddress(GV, MVT::i32);
+    SDOperand Zero = DAG.getConstant(0, MVT::i32);
+    
+    SDOperand Hi = DAG.getNode(PPCISD::Hi, MVT::i32, GA, Zero);
+    if (PICEnabled) {
+      // With PIC, the first instruction is actually "GR+hi(&G)".
+      Hi = DAG.getNode(ISD::ADD, MVT::i32,
+                       DAG.getTargetNode(PPCISD::GlobalBaseReg, MVT::i32), Hi);
+    }
+    
+    SDOperand Lo = DAG.getNode(PPCISD::Lo, MVT::i32, GA, Zero);
+    Lo = DAG.getNode(ISD::ADD, MVT::i32, Hi, Lo);
+                                   
+    if (!GV->hasWeakLinkage() && !GV->isExternal())
+      return Lo;
+
+    // If the global is weak or external, we have to go through the lazy
+    // resolution stub.
+    return DAG.getLoad(MVT::i32, DAG.getEntryNode(), Lo, DAG.getSrcValue(0));
   }
   }
   return SDOperand();
