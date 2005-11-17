@@ -525,6 +525,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
   case ISD::Register:
   case ISD::TargetConstant:
   case ISD::GlobalAddress:
+  case ISD::TargetGlobalAddress:
   case ISD::ExternalSymbol:
   case ISD::ConstantPool:           // Nothing to do.
   case ISD::BasicBlock:
