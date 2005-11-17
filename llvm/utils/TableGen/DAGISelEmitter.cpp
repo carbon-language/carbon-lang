@@ -1668,6 +1668,8 @@ CodeGenPatternResult(TreePatternNode *N, unsigned &Ctr,
       OS << ResNo << "C = cast<ConstantSDNode>(" << Val << ")->getValue();\n";
       OS << "      SDOperand Tmp" << ResNo << " = CurDAG->getTargetConstant(Tmp"
          << ResNo << "C, MVT::" << getEnumName(N->getType()) << ");\n";
+    } else if (!N->isLeaf() && N->getOperator()->getName() == "tglobaladdr") {
+      OS << "      SDOperand Tmp" << ResNo << " = " << Val << ";\n";
     } else {
       OS << "      SDOperand Tmp" << ResNo << " = Select(" << Val << ");\n";
     }
