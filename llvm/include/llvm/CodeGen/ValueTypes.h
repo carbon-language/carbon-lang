@@ -36,13 +36,17 @@ namespace MVT {  // MVT = Machine Value Types
     i64            =   5,   // This is a 64 bit integer value
     i128           =   6,   // This is a 128 bit integer value
 
-    f32             =  7,   // This is a 32 bit floating point value
-    f64             =  8,   // This is a 64 bit floating point value
-    f80             =  9,   // This is a 80 bit floating point value
-    f128            = 10,   // This is a 128 bit floating point value
+    f32            =   7,   // This is a 32 bit floating point value
+    f64            =   8,   // This is a 64 bit floating point value
+    f80            =   9,   // This is a 80 bit floating point value
+    f128           =  10,   // This is a 128 bit floating point value
     Flag           =  11,   // This is a condition code or machine flag.
 
-    isVoid          = 12,   // This has no value
+    isVoid         =  12,   // This has no value
+    
+    Vector         =  13,   // This is an abstract vector type, which will
+                            // be refined into a target vector type, or
+                            // scalarized.
 
     LAST_VALUETYPE,         // This always remains at the end of the list.
   };

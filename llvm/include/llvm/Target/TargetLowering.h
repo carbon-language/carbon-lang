@@ -189,6 +189,7 @@ public:
     case Type::FloatTyID:   return MVT::f32;
     case Type::DoubleTyID:  return MVT::f64;
     case Type::PointerTyID: return PointerTy;
+    case Type::PackedTyID:  return MVT::Vector;
     }
   }
 
