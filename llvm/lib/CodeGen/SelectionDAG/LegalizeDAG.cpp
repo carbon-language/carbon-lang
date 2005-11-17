@@ -532,7 +532,19 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
   case ISD::CONDCODE:
   case ISD::VALUETYPE:
   case ISD::SRCVALUE:
-    assert(isTypeLegal(Node->getValueType(0)) && "This must be legal!");
+    switch (TLI.getOperationAction(Node->getOpcode(), Node->getValueType(0))) {
+    default: assert(0 && "This action is not supported yet!");
+    case TargetLowering::Custom: {
+      SDOperand Tmp = TLI.LowerOperation(Op, DAG);
+      if (Tmp.Val) {
+        Result = LegalizeOp(Tmp);
+        break;
+      }
+    } // FALLTHROUGH if the target doesn't want to lower this op after all.
+    case TargetLowering::Legal:
+      assert(isTypeLegal(Node->getValueType(0)) && "This must be legal!");
+      break;
+    }
     break;
   case ISD::AssertSext:
   case ISD::AssertZext:
