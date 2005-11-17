@@ -33,6 +33,7 @@ FunctionPass *createDarwinAsmPrinter(std::ostream &OS, TargetMachine &TM);
 FunctionPass *createAIXAsmPrinter(std::ostream &OS, TargetMachine &TM);
 
 extern bool PICEnabled;
+extern bool PPCGenerateStaticCode;
 extern PPCTargetEnum PPCTarget;
 } // end namespace llvm;
 

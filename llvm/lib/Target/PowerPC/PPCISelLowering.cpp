@@ -333,12 +333,20 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     return DAG.getNode(ISD::BUILD_PAIR, MVT::i64, OutLo, OutHi);
   }
   case ISD::GlobalAddress: {
-    // Only lower GlobalAddress on Darwin.
-    if (!getTargetMachine().getSubtarget<PPCSubtarget>().isDarwin()) break;
     GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
     SDOperand GA = DAG.getTargetGlobalAddress(GV, MVT::i32);
     SDOperand Zero = DAG.getConstant(0, MVT::i32);
+
+    if (PPCGenerateStaticCode) {
+      // Generate non-pic code that has direct accesses to globals.  To do this
+      // the address of the global is just (hi(&g)+lo(&g)).
+      SDOperand Hi = DAG.getNode(PPCISD::Hi, MVT::i32, GA, Zero);
+      SDOperand Lo = DAG.getNode(PPCISD::Lo, MVT::i32, GA, Zero);
+      return DAG.getNode(ISD::ADD, MVT::i32, Hi, Lo);
+    }
     
+    // Only lower GlobalAddress on Darwin.
+    if (!getTargetMachine().getSubtarget<PPCSubtarget>().isDarwin()) break;
     SDOperand Hi = DAG.getNode(PPCISD::Hi, MVT::i32, GA, Zero);
     if (PICEnabled) {
       // With PIC, the first instruction is actually "GR+hi(&G)".

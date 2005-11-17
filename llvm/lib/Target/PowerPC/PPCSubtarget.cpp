@@ -19,6 +19,7 @@
 
 using namespace llvm;
 PPCTargetEnum llvm::PPCTarget = TargetDefault;
+bool llvm::PPCGenerateStaticCode = false;
 
 namespace llvm {
   cl::opt<PPCTargetEnum, true>
@@ -29,6 +30,11 @@ namespace llvm {
                                      "  Enable Darwin codegen"),
                           clEnumValEnd),
                cl::location(PPCTarget), cl::init(TargetDefault));
+  
+  cl::opt<bool, true>
+  PPCStaticCode("ppc-static",
+                cl::desc("PowerPC: generate completely non-pic code"),
+                cl::location(PPCGenerateStaticCode));
 } 
  
 #if defined(__APPLE__)
