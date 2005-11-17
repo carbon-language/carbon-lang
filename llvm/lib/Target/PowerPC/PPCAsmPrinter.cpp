@@ -148,9 +148,12 @@ namespace {
       if (MI->getOperand(OpNo).isImmediate()) {
         O << "$+" << MI->getOperand(OpNo).getImmedValue();
       } else {
-        printOp(MI->getOperand(OpNo),
-                TM.getInstrInfo()->isCall(MI->getOpcode()));
+        printOp(MI->getOperand(OpNo));
       }
+    }
+    void printCallOperand(const MachineInstr *MI, unsigned OpNo,
+                          MVT::ValueType VT) {
+      printOp(MI->getOperand(OpNo), true);
     }
     void printAbsAddrOperand(const MachineInstr *MI, unsigned OpNo,
                              MVT::ValueType VT) {

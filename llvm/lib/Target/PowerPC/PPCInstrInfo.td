@@ -131,6 +131,9 @@ def s16immX4  : Operand<i32> {   // Multiply imm by 4 before printing.
 def target : Operand<i32> {
   let PrintMethod = "printBranchOperand";
 }
+def calltarget : Operand<i32> {
+  let PrintMethod = "printCallOperand";
+}
 def aaddr : Operand<i32> {
   let PrintMethod = "printAbsAddrOperand";
 }
@@ -220,7 +223,7 @@ let isCall = 1,
           LR,CTR,
           CR0,CR1,CR5,CR6,CR7] in {
   // Convenient aliases for call instructions
-  def BL  : IForm<18, 0, 1, (ops target:$func, variable_ops), "bl $func", BrB>;
+  def BL  : IForm<18, 0, 1, (ops calltarget:$func, variable_ops), "bl $func", BrB>;
   def BLA : IForm<18, 1, 1, (ops aaddr:$func, variable_ops), "bla $func", BrB>;
   def BCTRL : XLForm_2_ext<19, 528, 20, 0, 1, (ops variable_ops), "bctrl", BrB>;
 }
