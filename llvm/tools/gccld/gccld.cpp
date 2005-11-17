@@ -78,10 +78,10 @@ namespace {
          cl::aliasopt(LinkAsLibrary));
 
   cl::opt<bool>
-  Native("native",
+  Native("native", cl::ZeroOrMore,
          cl::desc("Generate a native binary instead of a shell script"));
   cl::opt<bool>
-  NativeCBE("native-cbe",
+  NativeCBE("native-cbe", cl::ZeroOrMore,
             cl::desc("Generate a native binary with the C backend and GCC"));
 
   cl::opt<bool>
