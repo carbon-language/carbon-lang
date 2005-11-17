@@ -154,20 +154,24 @@ namespace {
     void printCallOperand(const MachineInstr *MI, unsigned OpNo,
                           MVT::ValueType VT) {
       const MachineOperand &MO = MI->getOperand(OpNo);
-      if (MO.getType() == MachineOperand::MO_ExternalSymbol) {
-        std::string Name(GlobalPrefix); Name += MO.getSymbolName();
-        FnStubs.insert(Name);
-        O << "L" << Name << "$stub";
-      } else if (MO.getType() == MachineOperand::MO_GlobalAddress &&
-                 isa<Function>(MO.getGlobal()) && 
-                 cast<Function>(MO.getGlobal())->isExternal()) {
-        // Dynamically-resolved functions need a stub for the function.
-        std::string Name = Mang->getValueName(MO.getGlobal());
-        FnStubs.insert(Name);
-        O << "L" << Name << "$stub";
-      } else {
-        printOp(MI->getOperand(OpNo));
+      if (!PPCGenerateStaticCode) {
+        if (MO.getType() == MachineOperand::MO_ExternalSymbol) {
+          std::string Name(GlobalPrefix); Name += MO.getSymbolName();
+          FnStubs.insert(Name);
+          O << "L" << Name << "$stub";
+          return;
+        } else if (MO.getType() == MachineOperand::MO_GlobalAddress &&
+                   isa<Function>(MO.getGlobal()) && 
+                   cast<Function>(MO.getGlobal())->isExternal()) {
+          // Dynamically-resolved functions need a stub for the function.
+          std::string Name = Mang->getValueName(MO.getGlobal());
+          FnStubs.insert(Name);
+          O << "L" << Name << "$stub";
+          return;
+        }
       }
+      
+      printOp(MI->getOperand(OpNo));
     }
     void printAbsAddrOperand(const MachineInstr *MI, unsigned OpNo,
                              MVT::ValueType VT) {
@@ -334,7 +338,9 @@ void PPCAsmPrinter::printOp(const MachineOperand &MO) {
     std::string Name = Mang->getValueName(GV);
 
     // External or weakly linked global variables need non-lazily-resolved stubs
-    if ((GV->isExternal() || GV->hasWeakLinkage() || GV->hasLinkOnceLinkage())){
+    if (!PPCGenerateStaticCode &&
+        ((GV->isExternal() || GV->hasWeakLinkage() ||
+          GV->hasLinkOnceLinkage()))) {
       if (GV->hasLinkOnceLinkage())
         LinkOnceStubs.insert(Name);
       else
@@ -343,7 +349,7 @@ void PPCAsmPrinter::printOp(const MachineOperand &MO) {
       return;
     }
 
-    O << Mang->getValueName(GV);
+    O << Name;
     return;
   }
 
