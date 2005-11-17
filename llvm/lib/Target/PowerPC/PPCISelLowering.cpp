@@ -670,7 +670,7 @@ PPCTargetLowering::LowerCallTo(SDOperand Chain,
             if (GPR_remaining > 0) {
               SDOperand Load = DAG.getLoad(MVT::i32, Store, PtrOff,
                                            DAG.getSrcValue(NULL));
-              MemOps.push_back(Load);
+              MemOps.push_back(Load.getValue(1));
               args_to_use.push_back(Load);
               --GPR_remaining;
             }
@@ -679,7 +679,7 @@ PPCTargetLowering::LowerCallTo(SDOperand Chain,
               PtrOff = DAG.getNode(ISD::ADD, MVT::i32, PtrOff, ConstFour);
               SDOperand Load = DAG.getLoad(MVT::i32, Store, PtrOff,
                                            DAG.getSrcValue(NULL));
-              MemOps.push_back(Load);
+              MemOps.push_back(Load.getValue(1));
               args_to_use.push_back(Load);
               --GPR_remaining;
             }
