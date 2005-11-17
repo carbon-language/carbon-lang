@@ -1212,6 +1212,14 @@ void DAGISelEmitter::ParsePatterns() {
     // never do anything with this pattern: report it to the user.
     if (!Pattern->InferAllTypes())
       Pattern->error("Could not infer all types in pattern!");
+
+    // Validate that the input pattern is correct.
+    {
+      std::map<std::string, TreePatternNode*> InstInputs;
+      std::map<std::string, Record*> InstResults;
+      FindPatternInputsAndOutputs(Pattern, Pattern->getOnlyTree(),
+                                  InstInputs, InstResults);
+    }
     
     ListInit *LI = Patterns[i]->getValueAsListInit("ResultInstrs");
     if (LI->getSize() == 0) continue;  // no pattern.
