@@ -256,7 +256,8 @@ def ADDIS  : DForm_2<15, (ops GPRC:$rD, GPRC:$rA, symbolHi:$imm),
                      [(set GPRC:$rD, (add GPRC:$rA, imm16Shifted:$imm))]>;
 def LA     : DForm_2<14, (ops GPRC:$rD, GPRC:$rA, symbolLo:$sym),
                      "la $rD, $sym($rA)", IntGeneral,
-                     []>;
+                     [(set GPRC:$rD, (add GPRC:$rA,
+                                          (PPClo tglobaladdr:$sym, 0)))]>;
 def MULLI  : DForm_2< 7, (ops GPRC:$rD, GPRC:$rA, s16imm:$imm),
                      "mulli $rD, $rA, $imm", IntMulLI,
                      [(set GPRC:$rD, (mul GPRC:$rA, immSExt16:$imm))]>;
@@ -786,9 +787,10 @@ def : Pat<(srl G8RC:$in, imm:$imm),
           (RLDICL G8RC:$in, (SRL64 imm:$imm), imm:$imm)>;
 
 // Hi and Lo for Darwin Global Addresses.
-def : Pat<(PPChi tglobaladdr:$in, (i32 0)), (LIS node:$in)>;
-def : Pat<(PPClo tglobaladdr:$in, (i32 0)), (LI node:$in)>;
-
+def : Pat<(PPChi tglobaladdr:$in, (i32 0)), (LIS tglobaladdr:$in)>;
+def : Pat<(PPClo tglobaladdr:$in, (i32 0)), (LI tglobaladdr:$in)>;
+def : Pat<(add GPRC:$in, (PPChi tglobaladdr:$g, 0)),
+          (ADDIS GPRC:$in, tglobaladdr:$g)>;
 
 // Same as above, but using a temporary. FIXME: implement temporaries :)
 /*
