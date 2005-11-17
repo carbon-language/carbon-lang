@@ -103,7 +103,7 @@ namespace {
     bool printInstruction(const MachineInstr *MI);
 
     void printMachineInstruction(const MachineInstr *MI);
-    void printOp(const MachineOperand &MO, bool IsCallOp = false);
+    void printOp(const MachineOperand &MO);
 
     void printOperand(const MachineInstr *MI, unsigned OpNo, MVT::ValueType VT){
       const MachineOperand &MO = MI->getOperand(OpNo);
@@ -153,7 +153,21 @@ namespace {
     }
     void printCallOperand(const MachineInstr *MI, unsigned OpNo,
                           MVT::ValueType VT) {
-      printOp(MI->getOperand(OpNo), true);
+      const MachineOperand &MO = MI->getOperand(OpNo);
+      if (MO.getType() == MachineOperand::MO_ExternalSymbol) {
+        std::string Name(GlobalPrefix); Name += MO.getSymbolName();
+        FnStubs.insert(Name);
+        O << "L" << Name << "$stub";
+      } else if (MO.getType() == MachineOperand::MO_GlobalAddress &&
+                 isa<Function>(MO.getGlobal()) && 
+                 cast<Function>(MO.getGlobal())->isExternal()) {
+        // Dynamically-resolved functions need a stub for the function.
+        std::string Name = Mang->getValueName(MO.getGlobal());
+        FnStubs.insert(Name);
+        O << "L" << Name << "$stub";
+      } else {
+        printOp(MI->getOperand(OpNo));
+      }
     }
     void printAbsAddrOperand(const MachineInstr *MI, unsigned OpNo,
                              MVT::ValueType VT) {
@@ -273,7 +287,7 @@ FunctionPass *llvm::createAIXAsmPrinter(std::ostream &o, TargetMachine &tm) {
 // Include the auto-generated portion of the assembly writer
 #include "PPCGenAsmWriter.inc"
 
-void PPCAsmPrinter::printOp(const MachineOperand &MO, bool IsCallOp) {
+void PPCAsmPrinter::printOp(const MachineOperand &MO) {
   const MRegisterInfo &RI = *TM.getRegisterInfo();
   int new_symbol;
 
@@ -312,28 +326,12 @@ void PPCAsmPrinter::printOp(const MachineOperand &MO, bool IsCallOp) {
     return;
 
   case MachineOperand::MO_ExternalSymbol:
-    if (IsCallOp) {
-      std::string Name(GlobalPrefix); Name += MO.getSymbolName();
-      FnStubs.insert(Name);
-      O << "L" << Name << "$stub";
-      return;
-    }
     O << GlobalPrefix << MO.getSymbolName();
     return;
 
   case MachineOperand::MO_GlobalAddress: {
     GlobalValue *GV = MO.getGlobal();
     std::string Name = Mang->getValueName(GV);
-
-    // Dynamically-resolved functions need a stub for the function.  Be
-    // wary however not to output $stub for external functions whose addresses
-    // are taken.  Those should be emitted as $non_lazy_ptr below.
-    Function *F = dyn_cast<Function>(GV);
-    if (F && IsCallOp && F->isExternal()) {
-      FnStubs.insert(Name);
-      O << "L" << Name << "$stub";
-      return;
-    }
 
     // External or weakly linked global variables need non-lazily-resolved stubs
     if ((GV->isExternal() || GV->hasWeakLinkage() || GV->hasLinkOnceLinkage())){
