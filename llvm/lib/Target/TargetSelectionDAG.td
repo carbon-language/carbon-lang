@@ -140,6 +140,10 @@ def imm        : SDNode<"ISD::Constant"  , SDTImm     , [], "ConstantSDNode">;
 def vt         : SDNode<"ISD::VALUETYPE" , SDTVT      , [], "VTSDNode">;
 def cond       : SDNode<"ISD::CONDCODE"  , SDTVT      , [], "CondCodeSDNode">;
 def undef      : SDNode<"ISD::UNDEF"     , SDTUNDEF   , []>;
+def globaladdr : SDNode<"ISD::GlobalAddress", SDTImm, [],
+                        "GlobalAddressSDNode">;
+def tglobaladdr : SDNode<"ISD::TargetGlobalAddress", SDTImm, [],
+                        "GlobalAddressSDNode">;
 def add        : SDNode<"ISD::ADD"       , SDTIntBinOp   ,
                         [SDNPCommutative, SDNPAssociative]>;
 def sub        : SDNode<"ISD::SUB"       , SDTIntBinOp>;
