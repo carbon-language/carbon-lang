@@ -691,6 +691,11 @@ PPCTargetLowering::LowerCallTo(SDOperand Chain,
     RetVals.push_back(ActualRetTyVT);
   RetVals.push_back(MVT::Other);
   
+  // If the callee is a GlobalAddress node (quite common, every direct call is)
+  // turn it into a TargetGlobalAddress node so that legalize doesn't hack it.
+  if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee))
+    Callee = DAG.getTargetGlobalAddress(G->getGlobal(), MVT::i32);
+  
   SDOperand TheCall = SDOperand(DAG.getCall(RetVals,
                                             Chain, Callee, args_to_use), 0);
   Chain = TheCall.getValue(RetTyVT != MVT::isVoid);

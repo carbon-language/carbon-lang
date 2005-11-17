@@ -753,8 +753,7 @@ SDOperand PPCDAGToDAGISel::SelectCALL(SDOperand Op) {
   if (GlobalAddressSDNode *GASD =
       dyn_cast<GlobalAddressSDNode>(N->getOperand(1))) {
     CallOpcode = PPC::BL;
-    CallOperands.push_back(CurDAG->getTargetGlobalAddress(GASD->getGlobal(),
-                                                          MVT::i32));
+    CallOperands.push_back(N->getOperand(1));
   } else if (ExternalSymbolSDNode *ESSDN =
              dyn_cast<ExternalSymbolSDNode>(N->getOperand(1))) {
     CallOpcode = PPC::BL;
