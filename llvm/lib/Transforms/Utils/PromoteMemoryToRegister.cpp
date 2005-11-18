@@ -96,12 +96,18 @@ namespace {
 
     void run();
 
-    /// dominates - Return true if I1 dominates I2 using the DominatorTree.
+    /// properlyDominates - Return true if I1 properly dominates I2.
     ///
-    bool dominates(Instruction *I1, Instruction *I2) const {
+    bool properlyDominates(Instruction *I1, Instruction *I2) const {
       if (InvokeInst *II = dyn_cast<InvokeInst>(I1))
         I1 = II->getNormalDest()->begin();
-      return DT[I1->getParent()]->dominates(DT[I2->getParent()]);
+      return DT[I1->getParent()]->properlyDominates(DT[I2->getParent()]);
+    }
+    
+    /// dominates - Return true if BB1 dominates BB2 using the DominatorTree.
+    ///
+    bool dominates(BasicBlock *BB1, BasicBlock *BB2) const {
+      return DT[BB1]->dominates(DT[BB2]);
     }
 
   private:
@@ -168,7 +174,8 @@ void PromoteMem2Reg::run() {
         // Remember the basic blocks which define new values for the alloca
         DefiningBlocks.push_back(SI->getParent());
         AllocaPointerVal = SI->getOperand(0);
-      } else if (LoadInst *LI = dyn_cast<LoadInst>(User)) {
+      } else {
+        LoadInst *LI = cast<LoadInst>(User);
         // Otherwise it must be a load instruction, keep track of variable reads
         UsingBlocks.push_back(LI->getParent());
         AllocaPointerVal = LI;
@@ -194,6 +201,7 @@ void PromoteMem2Reg::run() {
       continue;
     }
 
+    
     if (AST)
       PointerAllocaValues[AllocaNum] = AllocaPointerVal;
 
@@ -348,7 +356,8 @@ void PromoteMem2Reg::run() {
     for (unsigned i = 0, e = PNs.size(); i != e; ++i)
       if (PNs[i]) {
         if (Value *V = PNs[i]->hasConstantValue(true)) {
-          if (!isa<Instruction>(V) || dominates(cast<Instruction>(V), PNs[i])) {
+          if (!isa<Instruction>(V) ||
+              properlyDominates(cast<Instruction>(V), PNs[i])) {
             if (AST && isa<PointerType>(PNs[i]->getType()))
               AST->deleteValue(PNs[i]);
             PNs[i]->replaceAllUsesWith(V);
