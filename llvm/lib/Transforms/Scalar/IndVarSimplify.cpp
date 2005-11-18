@@ -161,7 +161,7 @@ void IndVarSimplify::EliminatePointerRecurrence(PHINode *PN,
           assert(NumOps > 1 && "CE folding didn't work!");
           if (CE->getOperand(NumOps-1)->isNullValue()) {
             // Check to make sure the last index really is an array index.
-            gep_type_iterator GTI = gep_type_begin(GEPI);
+            gep_type_iterator GTI = gep_type_begin(CE);
             for (unsigned i = 1, e = CE->getNumOperands()-1;
                  i != e; ++i, ++GTI)
               /*empty*/;
