@@ -38,6 +38,7 @@ def f80    : ValueType<80 ,  9>;   // 80-bit floating point value
 def f128   : ValueType<128, 10>;   // 128-bit floating point value
 def FlagVT : ValueType<0  , 11>;   // Condition code or machine flag
 def isVoid : ValueType<0  , 12>;   // Produces no value
+def Vector : ValueType<0  , 13>;   // Abstract vector type
 
 //===----------------------------------------------------------------------===//
 // Register file description - These classes are used to fill in the target
