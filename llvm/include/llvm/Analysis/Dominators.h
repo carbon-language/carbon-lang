@@ -306,16 +306,24 @@ public:
     inline Node *getIDom() const { return IDom; }
     inline const std::vector<Node*> &getChildren() const { return Children; }
 
+    /// properlyDominates - Returns true iff this dominates N and this != N.
+    /// Note that this is not a constant time operation!
+    ///
+    bool properlyDominates(const Node *N) const {
+      const Node *IDom;
+      while ((IDom = N->getIDom()) != 0 && IDom != this)
+        N = IDom;   // Walk up the tree
+      return IDom != 0;
+    }
+
     /// dominates - Returns true iff this dominates N.  Note that this is not a
     /// constant time operation!
     ///
     inline bool dominates(const Node *N) const {
-      const Node *IDom;
-      while ((IDom = N->getIDom()) != 0 && IDom != this)
-      N = IDom;   // Walk up the tree
-      return IDom != 0;
+      if (N == this) return true;  // A node trivially dominates itself.
+      return properlyDominates(N);
     }
-
+    
   private:
     inline Node(BasicBlock *BB, Node *iDom) : TheBB(BB), IDom(iDom) {}
     inline Node *addChild(Node *C) { Children.push_back(C); return C; }
