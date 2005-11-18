@@ -161,6 +161,7 @@ void PromoteMem2Reg::run() {
     std::vector<BasicBlock*> DefiningBlocks;
     std::vector<BasicBlock*> UsingBlocks;
 
+    StoreInst  *OnlyStore = 0;
     BasicBlock *OnlyBlock = 0;
     bool OnlyUsedInOneBlock = true;
 
@@ -174,6 +175,7 @@ void PromoteMem2Reg::run() {
         // Remember the basic blocks which define new values for the alloca
         DefiningBlocks.push_back(SI->getParent());
         AllocaPointerVal = SI->getOperand(0);
+        OnlyStore = SI;
       } else {
         LoadInst *LI = cast<LoadInst>(User);
         // Otherwise it must be a load instruction, keep track of variable reads
@@ -201,6 +203,59 @@ void PromoteMem2Reg::run() {
       continue;
     }
 
+    // If there is only a single store to this value, replace any loads of
+    // it that are directly dominated by the definition with the value stored.
+    if (DefiningBlocks.size() == 1) {
+      // Be aware of loads before the store.
+      std::set<BasicBlock*> ProcessedBlocks;
+      for (unsigned i = 0, e = UsingBlocks.size(); i != e; ++i)
+        // If the store dominates the block and if we haven't processed it yet,
+        // do so now.
+        if (dominates(OnlyStore->getParent(), UsingBlocks[i]))
+          if (ProcessedBlocks.insert(UsingBlocks[i]).second) {
+            BasicBlock *UseBlock = UsingBlocks[i];
+            
+            // If the use and store are in the same block, do a quick scan to
+            // verify that there are no uses before the store.
+            if (UseBlock == OnlyStore->getParent()) {
+              BasicBlock::iterator I = UseBlock->begin();
+              for (; &*I != OnlyStore; ++I) { // scan block for store.
+                if (isa<LoadInst>(I) && I->getOperand(0) == AI)
+                  break;
+              }
+              if (&*I != OnlyStore) break;  // Do not handle this case.
+            }
+        
+            // Otherwise, if this is a different block or if all uses happen
+            // after the store, do a simple linear scan to replace loads with
+            // the stored value.
+            for (BasicBlock::iterator I = UseBlock->begin(),E = UseBlock->end();
+                 I != E; ) {
+              if (LoadInst *LI = dyn_cast<LoadInst>(I++)) {
+                if (LI->getOperand(0) == AI) {
+                  LI->replaceAllUsesWith(OnlyStore->getOperand(0));
+                  if (AST && isa<PointerType>(LI->getType()))
+                    AST->deleteValue(LI);
+                  LI->eraseFromParent();
+                }
+              }
+            }
+            
+            // Finally, remove this block from the UsingBlock set.
+            UsingBlocks[i] = UsingBlocks.back();
+            --i; --e;
+          }
+
+      // Finally, after the scan, check to see if the store is all that is left.
+      if (UsingBlocks.empty()) {
+        // The alloca has been processed, move on.
+        Allocas[AllocaNum] = Allocas.back();
+        Allocas.pop_back();
+        --AllocaNum;
+        continue;
+      }
+    }
+    
     
     if (AST)
       PointerAllocaValues[AllocaNum] = AllocaPointerVal;
