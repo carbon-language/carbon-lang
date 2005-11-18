@@ -239,7 +239,7 @@ PostDominanceFrontier::calculate(const PostDominatorTree &DT,
 
     DomSetType::const_iterator CDFI = ChildDF.begin(), CDFE = ChildDF.end();
     for (; CDFI != CDFE; ++CDFI) {
-      if (!Node->dominates(DT[*CDFI]))
+      if (!Node->properlyDominates(DT[*CDFI]))
         S.insert(*CDFI);
     }
   }
