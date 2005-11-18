@@ -79,7 +79,9 @@ bool AlphaTargetMachine::addPassesToEmitFile(PassManager &PM,
   if (FileType != TargetMachine::AssemblyFile) return true;
 
   PM.add(createLoopStrengthReducePass());
+  PM.add(createCFGSimplificationPass());
 
+ 
   // FIXME: Implement efficient support for garbage collection intrinsics.
   PM.add(createLowerGCPass());
 
@@ -91,8 +93,6 @@ bool AlphaTargetMachine::addPassesToEmitFile(PassManager &PM,
 
   // Make sure that no unreachable blocks are instruction selected.
   PM.add(createUnreachableBlockEliminationPass());
-
-  PM.add(createCFGSimplificationPass());
 
   if (EnableAlphaDAG)
     PM.add(createAlphaISelDag(*this));
