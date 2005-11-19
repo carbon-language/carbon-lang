@@ -511,7 +511,7 @@ void SelectionDAGLowering::visitBinary(User &I, unsigned IntOp, unsigned FPOp,
   SDOperand Op1 = getValue(I.getOperand(0));
   SDOperand Op2 = getValue(I.getOperand(1));
 
-  if (Ty->isInteger()) {
+  if (Ty->isIntegral()) {
     setValue(&I, DAG.getNode(IntOp, Op1.getValueType(), Op1, Op2));
   } else if (Ty->isFloatingPoint()) {
     setValue(&I, DAG.getNode(FPOp, Op1.getValueType(), Op1, Op2));
