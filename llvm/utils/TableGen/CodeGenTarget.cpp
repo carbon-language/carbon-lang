@@ -267,7 +267,7 @@ CodeGenInstruction::CodeGenInstruction(Record *R, const std::string &AsmStr)
     MVT::ValueType Ty;
     std::string PrintMethod = "printOperand";
     unsigned NumOps = 1;
-    DagInit *MIOpInfo;
+    DagInit *MIOpInfo = 0;
     if (Rec->isSubClassOf("RegisterClass")) {
       Ty = getValueType(Rec->getValueAsDef("RegType"));
     } else if (Rec->isSubClassOf("Operand")) {
