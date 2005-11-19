@@ -18,6 +18,7 @@
 #include "llvm/Target/MRegisterInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/GraphWriter.h"
+#include "llvm/System/Path.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Config/config.h"
 #include <fstream>
@@ -108,7 +109,8 @@ std::string DOTGraphTraits<SelectionDAG*>::getNodeLabel(const SDNode *Node,
 void SelectionDAG::viewGraph() {
 // This code is only for debugging!
 #ifndef NDEBUG
-  std::string Filename = "/tmp/dag." +
+  std::string TempDir = sys::Path::GetTemporaryDirectory().toString();
+  std::string Filename = TempDir + "dag." +
     getMachineFunction().getFunction()->getName() + ".dot";
   std::cerr << "Writing '" << Filename << "'... ";
   std::ofstream F(Filename.c_str());
@@ -135,13 +137,13 @@ void SelectionDAG::viewGraph() {
 #ifdef HAVE_GV
   std::cerr << "Running 'dot' program... " << std::flush;
   if (system(("dot -Tps -Nfontname=Courier -Gsize=7.5,10 " + Filename
-              + " > /tmp/dag.tempgraph.ps").c_str())) {
+              + " > " + TempDir +"dag.tempgraph.ps").c_str())) {
     std::cerr << "Error viewing graph: 'dot' not in path?\n";
   } else {
     std::cerr << "\n";
-    system(LLVM_PATH_GV " /tmp/dag.tempgraph.ps");
+    system(LLVM_PATH_GV " " + TempDir + "dag.tempgraph.ps");
   }
-  system(("rm " + Filename + " /tmp/dag.tempgraph.ps").c_str());
+  system(("rm " + Filename + " "+ TempDir + "dag.tempgraph.ps").c_str());
   return;
 #endif  // HAVE_GV
 #endif  // NDEBUG
