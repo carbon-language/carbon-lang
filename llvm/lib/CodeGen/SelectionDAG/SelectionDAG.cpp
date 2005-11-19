@@ -1092,6 +1092,23 @@ SDOperand SelectionDAG::getLoad(MVT::ValueType VT,
   return SDOperand(N, 0);
 }
 
+SDOperand SelectionDAG::getVecLoad(unsigned Count, MVT::ValueType EVT,
+                                   SDOperand Chain, SDOperand Ptr,
+                                   SDOperand SV) {
+  SDNode *&N = Loads[std::make_pair(Ptr, std::make_pair(Chain, EVT))];
+  if (N) return SDOperand(N, 0);
+  std::vector<SDOperand> Ops;
+  Ops.reserve(5);
+  Ops.push_back(Chain);
+  Ops.push_back(Ptr);
+  Ops.push_back(getConstant(Count, MVT::i32));
+  Ops.push_back(getValueType(EVT));
+  Ops.push_back(SV);
+  std::vector<MVT::ValueType> VTs;
+  VTs.reserve(2);
+  VTs.push_back(EVT); VTs.push_back(MVT::Other);  // Add token chain.
+  return getNode(ISD::VLOAD, VTs, Ops);
+}
 
 SDOperand SelectionDAG::getExtLoad(unsigned Opcode, MVT::ValueType VT,
                                    SDOperand Chain, SDOperand Ptr, SDOperand SV,
@@ -1677,6 +1694,9 @@ const char *SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::FMUL:   return "fmul";
   case ISD::FDIV:   return "fdiv";
   case ISD::FREM:   return "frem";
+  case ISD::VADD:   return "vadd";
+  case ISD::VSUB:   return "vsub";
+  case ISD::VMUL:   return "vmul";
     
   case ISD::SETCC:       return "setcc";
   case ISD::SELECT:      return "select";
@@ -1717,6 +1737,7 @@ const char *SDNode::getOperationName(const SelectionDAG *G) const {
     // Other operators
   case ISD::LOAD:    return "load";
   case ISD::STORE:   return "store";
+  case ISD::VLOAD:   return "vload";
   case ISD::EXTLOAD:    return "extload";
   case ISD::SEXTLOAD:   return "sextload";
   case ISD::ZEXTLOAD:   return "zextload";

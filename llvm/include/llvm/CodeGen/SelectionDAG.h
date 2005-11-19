@@ -257,6 +257,8 @@ public:
   ///
   SDOperand getLoad(MVT::ValueType VT, SDOperand Chain, SDOperand Ptr,
                     SDOperand SV);
+  SDOperand getVecLoad(unsigned Count, MVT::ValueType VT, SDOperand Chain, 
+                       SDOperand Ptr, SDOperand SV);
   SDOperand getExtLoad(unsigned Opcode, MVT::ValueType VT, SDOperand Chain,
                        SDOperand Ptr, SDOperand SV, MVT::ValueType EVT);
 

@@ -347,40 +347,26 @@ public:
   void visitUnwind(UnwindInst &I) { assert(0 && "TODO"); }
 
   //
-  void visitBinary(User &I, unsigned Opcode);
+  void visitBinary(User &I, unsigned IntOp, unsigned FPOp, unsigned VecOp);
   void visitShift(User &I, unsigned Opcode);
-  void visitAdd(User &I) {
-    visitBinary(I, I.getType()->isFloatingPoint() ? ISD::FADD : ISD::ADD);
+  void visitAdd(User &I) { 
+    visitBinary(I, ISD::ADD, ISD::FADD, ISD::VADD); 
   }
   void visitSub(User &I);
-  void visitMul(User &I) {
-    visitBinary(I, I.getType()->isFloatingPoint() ? ISD::FMUL : ISD::MUL);
+  void visitMul(User &I) { 
+    visitBinary(I, ISD::MUL, ISD::FMUL, ISD::VMUL); 
   }
   void visitDiv(User &I) {
-    unsigned Opc;
     const Type *Ty = I.getType();
-    if (Ty->isFloatingPoint())
-      Opc = ISD::FDIV;
-    else if (Ty->isUnsigned())
-      Opc = ISD::UDIV;
-    else
-      Opc = ISD::SDIV;
-    visitBinary(I, Opc);
+    visitBinary(I, Ty->isSigned() ? ISD::SDIV : ISD::UDIV, ISD::FDIV, 0);
   }
   void visitRem(User &I) {
-    unsigned Opc;
     const Type *Ty = I.getType();
-    if (Ty->isFloatingPoint())
-      Opc = ISD::FREM;
-    else if (Ty->isUnsigned())
-      Opc = ISD::UREM;
-    else
-      Opc = ISD::SREM;
-    visitBinary(I, Opc);
+    visitBinary(I, Ty->isSigned() ? ISD::SREM : ISD::UREM, ISD::FREM, 0);
   }
-  void visitAnd(User &I) { visitBinary(I, ISD::AND); }
-  void visitOr (User &I) { visitBinary(I, ISD::OR); }
-  void visitXor(User &I) { visitBinary(I, ISD::XOR); }
+  void visitAnd(User &I) { visitBinary(I, ISD::AND, 0, 0); }
+  void visitOr (User &I) { visitBinary(I, ISD::OR,  0, 0); }
+  void visitXor(User &I) { visitBinary(I, ISD::XOR, 0, 0); }
   void visitShl(User &I) { visitShift(I, ISD::SHL); }
   void visitShr(User &I) { 
     visitShift(I, I.getType()->isUnsigned() ? ISD::SRL : ISD::SRA);
@@ -515,17 +501,26 @@ void SelectionDAGLowering::visitSub(User &I) {
         setValue(&I, DAG.getNode(ISD::FNEG, Op2.getValueType(), Op2));
         return;
       }
-    visitBinary(I, ISD::FSUB);
-  } else {
-    visitBinary(I, ISD::SUB);
   }
+  visitBinary(I, ISD::SUB, ISD::FSUB, ISD::VSUB);
 }
 
-void SelectionDAGLowering::visitBinary(User &I, unsigned Opcode) {
+void SelectionDAGLowering::visitBinary(User &I, unsigned IntOp, unsigned FPOp, 
+                                       unsigned VecOp) {
+  const Type *Ty = I.getType();
   SDOperand Op1 = getValue(I.getOperand(0));
   SDOperand Op2 = getValue(I.getOperand(1));
 
-  setValue(&I, DAG.getNode(Opcode, Op1.getValueType(), Op1, Op2));
+  if (Ty->isInteger()) {
+    setValue(&I, DAG.getNode(IntOp, Op1.getValueType(), Op1, Op2));
+  } else if (Ty->isFloatingPoint()) {
+    setValue(&I, DAG.getNode(FPOp, Op1.getValueType(), Op1, Op2));
+  } else {
+    const PackedType *PTy = cast<PackedType>(Ty);
+    SDOperand Num = DAG.getConstant(PTy->getNumElements(), MVT::i32);
+    SDOperand Typ = DAG.getValueType(TLI.getValueType(PTy->getElementType()));
+    setValue(&I, DAG.getNode(VecOp, Op1.getValueType(), Num, Typ, Op1, Op2));
+  }
 }
 
 void SelectionDAGLowering::visitShift(User &I, unsigned Opcode) {
@@ -725,9 +720,19 @@ void SelectionDAGLowering::visitLoad(LoadInst &I) {
     // Do not serialize non-volatile loads against each other.
     Root = DAG.getRoot();
   }
-
-  SDOperand L = DAG.getLoad(TLI.getValueType(I.getType()), Root, Ptr,
-                            DAG.getSrcValue(I.getOperand(0)));
+  
+  const Type *Ty = I.getType();
+  SDOperand L;
+  
+  if (Type::PackedTyID == Ty->getTypeID()) {
+    const PackedType *PTy = cast<PackedType>(Ty);
+    L = DAG.getVecLoad(PTy->getNumElements(), 
+                       TLI.getValueType(PTy->getElementType()), Root, Ptr, 
+                       DAG.getSrcValue(I.getOperand(0)));
+  } else {
+    L = DAG.getLoad(TLI.getValueType(Ty), Root, Ptr, 
+                    DAG.getSrcValue(I.getOperand(0)));
+  }
   setValue(&I, L);
 
   if (I.isVolatile())

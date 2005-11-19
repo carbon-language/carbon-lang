@@ -107,12 +107,17 @@ namespace ISD {
     // big.  Like EXTRACT_ELEMENT, this can only be used before legalization.
     BUILD_PAIR,
 
-
     // Simple integer binary arithmetic operators.
     ADD, SUB, MUL, SDIV, UDIV, SREM, UREM,
     
     // Simple binary floating point operators.
     FADD, FSUB, FMUL, FDIV, FREM,
+    
+    // Simple abstract vector operators.  Unlike the integer and floating point
+    // binary operators, these nodes also take two additional operands:
+    // a constant element count, and a value type node indicating the type of
+    // the elements.  The order is count, type, op0, op1.
+    VADD, VSUB, VMUL,
 
     // MULHU/MULHS - Multiply high - Multiply two integers of type iN, producing
     // an unsigned/signed value of type i[2*n], then return the top part.
@@ -209,6 +214,11 @@ namespace ISD {
     // operand, then the same operands as an LLVM load/store instruction, then a
     // SRCVALUE node that provides alias analysis information.
     LOAD, STORE,
+    
+    // Abstract vector version of LOAD.  VLOAD has a token chain as the first
+    // operand, followed by a pointer operand, a constant element count, a value
+    // type node indicating the type of the elements, and a SRCVALUE node.
+    VLOAD,
 
     // EXTLOAD, SEXTLOAD, ZEXTLOAD - These three operators all load a value from
     // memory and extend them to a larger value (e.g. load a byte into a word
