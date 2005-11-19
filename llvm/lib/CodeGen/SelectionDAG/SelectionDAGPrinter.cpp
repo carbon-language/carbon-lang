@@ -82,7 +82,7 @@ std::string DOTGraphTraits<SelectionDAG*>::getNodeLabel(const SDNode *Node,
       Op += LBB->getName();
     //Op += " " + (const void*)BBDN->getBasicBlock();
   } else if (const RegisterSDNode *R = dyn_cast<RegisterSDNode>(Node)) {
-    if (G && MRegisterInfo::isPhysicalRegister(R->getReg())) {
+    if (G && R->getReg() != 0 && MRegisterInfo::isPhysicalRegister(R->getReg())) {
       Op = Op + " " + G->getTarget().getRegisterInfo()->getName(R->getReg());
     } else {
       Op += " #" + utostr(R->getReg());
