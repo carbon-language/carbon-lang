@@ -17,8 +17,9 @@
 //
 
 class X86MemOperand<ValueType Ty> : Operand<Ty> {
-  let NumMIOperands = 4;
   let PrintMethod = "printMemoryOperand";
+  let NumMIOperands = 4;
+  let MIOperandInfo = (ops R32, i8imm, R32, i32imm);
 }
 def SSECC : Operand<i8> {
   let PrintMethod = "printSSECC";
