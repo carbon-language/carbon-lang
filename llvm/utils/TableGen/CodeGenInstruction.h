@@ -21,6 +21,7 @@
 
 namespace llvm {
   class Record;
+  class DagInit;
 
   struct CodeGenInstruction {
     Record *TheDef;            // The actual record defining this instruction.
@@ -59,10 +60,16 @@ namespace llvm {
       unsigned MIOperandNo;
       unsigned MINumOperands;   // The number of operands.
 
+      /// MIOperandInfo - Default MI operand type. Note an operand may be made up
+      /// of multiple MI operands.
+      DagInit *MIOperandInfo;
+
       OperandInfo(Record *R, MVT::ValueType T, const std::string &N,
-                  const std::string &PMN, unsigned MION, unsigned MINO)
+                  const std::string &PMN, unsigned MION, unsigned MINO,
+                  DagInit *MIOI)
+
         : Rec(R), Ty(T), Name(N), PrinterMethodName(PMN), MIOperandNo(MION),
-          MINumOperands(MINO) {}
+          MINumOperands(MINO), MIOperandInfo(MIOI) {}
     };
 
     /// OperandList - The list of declared operands, along with their declared

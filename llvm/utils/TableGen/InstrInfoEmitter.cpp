@@ -62,13 +62,21 @@ static std::vector<Record*> GetOperandInfo(const CodeGenInstruction &Inst) {
     return Result;  // No info for variable operand instrs.
 
   for (unsigned i = 0, e = Inst.OperandList.size(); i != e; ++i) {
-    if (Inst.OperandList[i].Rec->isSubClassOf("RegisterClass"))
+    if (Inst.OperandList[i].Rec->isSubClassOf("RegisterClass")) {
       Result.push_back(Inst.OperandList[i].Rec);
-    else {
+    } else {
       // This might be a multiple operand thing.
-      // FIXME: Targets like X86 have registers in their multi-operand operands.
-      for (unsigned j = 0, e = Inst.OperandList[i].MINumOperands; j != e; ++j)
-        Result.push_back(0);
+      // Targets like X86 have registers in their multi-operand operands.
+      DagInit *MIOI = Inst.OperandList[i].MIOperandInfo;
+      unsigned NumDefs = MIOI->getNumArgs();
+      for (unsigned j = 0, e = Inst.OperandList[i].MINumOperands; j != e; ++j) {
+        if (NumDefs <= j) {
+          Result.push_back(0);
+        } else {
+          DefInit *Def = dynamic_cast<DefInit*>(MIOI->getArg(j));
+          Result.push_back(Def ? Def->getDef() : 0);
+        }
+      }
     }
   }
   return Result;
@@ -124,7 +132,9 @@ void InstrInfoEmitter::run(std::ostream &OS) {
       N = ++OperandListNum;
       OS << "static const TargetOperandInfo OperandInfo" << N << "[] = { ";
       for (unsigned i = 0, e = OperandInfo.size(); i != e; ++i) {
-        if (Record *RC = OperandInfo[i]) {
+        Record *RC = OperandInfo[i];
+        // FIXME: We only care about register operands for now.
+        if (RC && RC->isSubClassOf("RegisterClass")) {
           OS << "{ &" << getQualifiedName(RC) << "RegClass }, ";
         } else {
           OS << "{ 0 }, ";
