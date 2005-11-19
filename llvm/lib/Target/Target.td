@@ -172,9 +172,10 @@ def variable_ops;
 /// by a target.  Targets can optionally provide their own operand types as
 /// needed, though this should not be needed for RISC targets.
 class Operand<ValueType ty> {
-  int NumMIOperands = 1;
   ValueType Type = ty;
   string PrintMethod = "printOperand";
+  int NumMIOperands = 1;
+  dag MIOperandInfo = (ops);
 }
 
 def i1imm  : Operand<i1>;
