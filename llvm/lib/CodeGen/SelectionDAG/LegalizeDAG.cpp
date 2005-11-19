@@ -149,10 +149,9 @@ private:
 };
 }
 
-static unsigned scalarizedOpcode(unsigned VecOp, MVT::ValueType VT) {
+static unsigned getScalarizedOpcode(unsigned VecOp, MVT::ValueType VT) {
   switch (VecOp) {
   default: assert(0 && "Don't know how to scalarize this opcode!");
-    break;
   case ISD::VADD: return MVT::isInteger(VT) ? ISD::ADD : ISD::FADD;
   case ISD::VSUB: return MVT::isInteger(VT) ? ISD::SUB : ISD::FSUB;
   case ISD::VMUL: return MVT::isInteger(VT) ? ISD::MUL : ISD::FMUL;
@@ -1696,7 +1695,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     if (1 == cast<ConstantSDNode>(Tmp1)->getValue()) {
       MVT::ValueType SVT = cast<VTSDNode>(Tmp2)->getVT();
   
-      Result = DAG.getNode(scalarizedOpcode(Node->getOpcode(), SVT), SVT,
+      Result = DAG.getNode(getScalarizedOpcode(Node->getOpcode(), SVT), SVT,
                            LegalizeOp(Node->getOperand(2)),
                            LegalizeOp(Node->getOperand(3)));
     } else {
