@@ -1399,6 +1399,7 @@ void SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
   N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc);
   N->setValueTypes(VT);
 }
+
 void SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
                                 MVT::ValueType VT, SDOperand Op1) {
   RemoveNodeFromCSEMaps(N);
@@ -1406,6 +1407,7 @@ void SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
   N->setValueTypes(VT);
   N->setOperands(Op1);
 }
+
 void SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
                                 MVT::ValueType VT, SDOperand Op1,
                                 SDOperand Op2) {
@@ -1414,28 +1416,13 @@ void SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
   N->setValueTypes(VT);
   N->setOperands(Op1, Op2);
 }
-void SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc, 
-                                MVT::ValueType VT1, MVT::ValueType VT2,
-                                SDOperand Op1, SDOperand Op2) {
-  RemoveNodeFromCSEMaps(N);
-  N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc);
-  setNodeValueTypes(N, VT1, VT2);
-  N->setOperands(Op1, Op2);
-}
+
 void SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
                                 MVT::ValueType VT, SDOperand Op1,
                                 SDOperand Op2, SDOperand Op3) {
   RemoveNodeFromCSEMaps(N);
   N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc);
   N->setValueTypes(VT);
-  N->setOperands(Op1, Op2, Op3);
-}
-void SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
-                                MVT::ValueType VT1, MVT::ValueType VT2,
-                                SDOperand Op1, SDOperand Op2, SDOperand Op3) {
-  RemoveNodeFromCSEMaps(N);
-  N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc);
-  setNodeValueTypes(N, VT1, VT2);
   N->setOperands(Op1, Op2, Op3);
 }
 
@@ -1447,6 +1434,7 @@ void SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
   N->setValueTypes(VT);
   N->setOperands(Op1, Op2, Op3, Op4);
 }
+
 void SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
                                 MVT::ValueType VT, SDOperand Op1,
                                 SDOperand Op2, SDOperand Op3, SDOperand Op4,
@@ -1457,7 +1445,45 @@ void SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
   N->setOperands(Op1, Op2, Op3, Op4, Op5);
 }
 
-/// ReplaceAllUsesWith - Modify anything using 'From' to use 'To' instead.
+void SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc, 
+                                MVT::ValueType VT1, MVT::ValueType VT2,
+                                SDOperand Op1, SDOperand Op2) {
+  RemoveNodeFromCSEMaps(N);
+  N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc);
+  setNodeValueTypes(N, VT1, VT2);
+  N->setOperands(Op1, Op2);
+}
+
+void SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
+                                MVT::ValueType VT1, MVT::ValueType VT2,
+                                SDOperand Op1, SDOperand Op2, SDOperand Op3) {
+  RemoveNodeFromCSEMaps(N);
+  N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc);
+  setNodeValueTypes(N, VT1, VT2);
+  N->setOperands(Op1, Op2, Op3);
+}
+
+void SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
+                                MVT::ValueType VT1, MVT::ValueType VT2,
+                                SDOperand Op1, SDOperand Op2,
+                                SDOperand Op3, SDOperand Op4) {
+  RemoveNodeFromCSEMaps(N);
+  N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc);
+  setNodeValueTypes(N, VT1, VT2);
+  N->setOperands(Op1, Op2, Op3, Op4);
+}
+
+void SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
+                                MVT::ValueType VT1, MVT::ValueType VT2,
+                                SDOperand Op1, SDOperand Op2,
+                                SDOperand Op3, SDOperand Op4, SDOperand Op5) {
+  RemoveNodeFromCSEMaps(N);
+  N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc);
+  setNodeValueTypes(N, VT1, VT2);
+  N->setOperands(Op1, Op2, Op3, Op4, Op5);
+}
+
+// ReplaceAllUsesWith - Modify anything using 'From' to use 'To' instead.
 /// This can cause recursive merging of nodes in the DAG.
 ///
 /// This version assumes From/To have a single result value.
