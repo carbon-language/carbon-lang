@@ -920,10 +920,14 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     std::vector<SDOperand> Ops;
     Ops.push_back(Op.getOperand(0));
     SDOperand rd = DAG.getNode(X86ISD::RDTSC_DAG, Tys, Ops);
-    SDOperand Lo = DAG.getCopyFromReg(rd, X86::EAX, MVT::i32, rd.getValue(1));
-    SDOperand Hi = DAG.getCopyFromReg(Lo.getValue(1), X86::EDX, 
-                                      MVT::i32, Lo.getValue(2));
-    return DAG.getNode(ISD::BUILD_PAIR, MVT::i64, Lo, Hi);
+    Ops.clear();
+    Ops.push_back(DAG.getCopyFromReg(rd, X86::EAX, MVT::i32, rd.getValue(1)));
+    Ops.push_back(DAG.getCopyFromReg(Ops[0].getValue(1), X86::EDX, 
+                                     MVT::i32, Ops[0].getValue(2)));
+    Ops.push_back(Ops[1].getValue(1));
+    Tys[0] = Tys[1] = MVT::i32;
+    Tys.push_back(MVT::Other);
+    return DAG.getNode(ISD::MERGE_VALUES, Tys, Ops);
   }
   }
 }
