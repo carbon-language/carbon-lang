@@ -106,6 +106,13 @@ namespace ISD {
     // two values of the same integer value type, this produces a value twice as
     // big.  Like EXTRACT_ELEMENT, this can only be used before legalization.
     BUILD_PAIR,
+    
+    // MERGE_VALUES - This node takes multiple discrete operands and returns
+    // them all as its individual results.  This nodes has exactly the same
+    // number of inputs and outputs, and is only valid before legalization.
+    // This node is useful for some pieces of the code generator that want to
+    // think about a single node with multiple results, not multiple nodes.
+    MERGE_VALUES,
 
     // Simple integer binary arithmetic operators.
     ADD, SUB, MUL, SDIV, UDIV, SREM, UREM,
