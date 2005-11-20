@@ -167,10 +167,6 @@ class Ii32<bits<8> o, Format f, dag ops, string asm, list<dag> pattern>
 def PHI : I<0, Pseudo, (ops variable_ops), "PHINODE">;        // PHI node.
 def NOOP : I<0x90, RawFrm, (ops), "nop">; // nop
 
-//FIXME: encode this correctly
-let Defs = [EAX, EDX] in
-  def RDTSC : I<0, Pseudo, (ops ), "rdtsc">; //in binary, this inst is 0x0f 0x31
-
 def ADJCALLSTACKDOWN : I<0, Pseudo, (ops i32imm:$amt), "#ADJCALLSTACKDOWN">;
 def ADJCALLSTACKUP   : I<0, Pseudo, (ops i32imm:$amt1, i32imm:$amt2),
                          "#ADJCALLSTACKUP">;
@@ -1608,6 +1604,13 @@ def CMPSDrm : I<0xC2, MRMSrcMem,
                 (ops V2F8:$dst, V2F8:$src1, f64mem:$src, SSECC:$cc),
                 "cmp${cc}sd {$src, $dst|$dst, $src}">, XD;
 }
+
+//===----------------------------------------------------------------------===//
+// Miscellaneous Instructions
+//===----------------------------------------------------------------------===//
+
+def RDTSC : I<0x31, RawFrm, (ops), "rdtsc">, TB, Imp<[],[EAX,EDX]>;
+
 
 //===----------------------------------------------------------------------===//
 // Stack-based Floating point support
