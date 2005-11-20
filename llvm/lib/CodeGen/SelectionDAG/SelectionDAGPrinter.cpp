@@ -109,11 +109,11 @@ std::string DOTGraphTraits<SelectionDAG*>::getNodeLabel(const SDNode *Node,
 void SelectionDAG::viewGraph() {
 // This code is only for debugging!
 #ifndef NDEBUG
-  std::string TempDir = sys::Path::GetTemporaryDirectory().toString();
-  std::string Filename = TempDir + "dag." +
-    getMachineFunction().getFunction()->getName() + ".dot";
-  std::cerr << "Writing '" << Filename << "'... ";
-  std::ofstream F(Filename.c_str());
+  sys::Path TempDir = sys::Path::GetTemporaryDirectory();
+  sys::Path Filename = TempDir;
+  Filename.appendComponent("dag." + getMachineFunction().getFunction()->getName() + ".dot");
+  std::cerr << "Writing '" << Filename.toString() << "'... ";
+  std::ofstream F(Filename.toString().c_str());
 
   if (!F) {
     std::cerr << "  error opening file for writing!\n";
@@ -126,24 +126,28 @@ void SelectionDAG::viewGraph() {
 
 #ifdef HAVE_GRAPHVIZ
   std::cerr << "Running 'Graphviz' program... " << std::flush;
-  if (system((LLVM_PATH_GRAPHVIZ " " + Filename).c_str())) {
+  if (system((LLVM_PATH_GRAPHVIZ " " + Filename.toString()).c_str())) {
     std::cerr << "Error viewing graph: 'Graphviz' not in path?\n";
   } else {
-    system(("rm " + Filename).c_str());
+	Filename.eraseFromDisk();
     return;
   }
 #endif  // HAVE_GRAPHVIZ
 
 #ifdef HAVE_GV
   std::cerr << "Running 'dot' program... " << std::flush;
-  if (system(("dot -Tps -Nfontname=Courier -Gsize=7.5,10 " + Filename
-              + " > " + TempDir +"dag.tempgraph.ps").c_str())) {
+  sys::Path PSFilename = TempDir;
+  PSFilename.appendComponent("dag.tempgraph.ps");
+  if (system(("dot -Tps -Nfontname=Courier -Gsize=7.5,10 " + Filename.toString()
+              + " > " + PSFilename.toString()).c_str())) {
     std::cerr << "Error viewing graph: 'dot' not in path?\n";
   } else {
     std::cerr << "\n";
-    system(LLVM_PATH_GV " " + TempDir + "dag.tempgraph.ps");
+    system((LLVM_PATH_GV " " + PSFilename.toString()).c_str());
+    system((LLVM_PATH_GV " "+TempDir.toString()+ "dag.tempgraph.ps").c_str());
   }
-  system(("rm " + Filename + " "+ TempDir + "dag.tempgraph.ps").c_str());
+  Filename.eraseFromDisk();
+  PSFilename.eraseFromDisk();
   return;
 #endif  // HAVE_GV
 #endif  // NDEBUG
@@ -151,6 +155,7 @@ void SelectionDAG::viewGraph() {
             << "systems with Graphviz or gv!\n";
 
 #ifndef NDEBUG
-  system(("rm " + Filename).c_str());
+  Filename.eraseFromDisk();
+  TempDir.eraseFromDisk(true);
 #endif
 }
