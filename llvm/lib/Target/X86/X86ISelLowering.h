@@ -62,6 +62,10 @@ namespace llvm {
       /// LLVM.
       CALL,
       TAILCALL,
+      
+      /// RDTSC_DAG - This operation implements the lowering for 
+      /// readcyclecounter
+      RDTSC_DAG,
     };
   }
 

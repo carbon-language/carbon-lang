@@ -167,6 +167,10 @@ class Ii32<bits<8> o, Format f, dag ops, string asm, list<dag> pattern>
 def PHI : I<0, Pseudo, (ops variable_ops), "PHINODE">;        // PHI node.
 def NOOP : I<0x90, RawFrm, (ops), "nop">; // nop
 
+//FIXME: encode this correctly
+let Defs = [EAX, EDX] in
+  def RDTSC : I<0, Pseudo, (ops ), "rdtsc">; //in binary, this inst is 0x0f 0x31
+
 def ADJCALLSTACKDOWN : I<0, Pseudo, (ops i32imm:$amt), "#ADJCALLSTACKDOWN">;
 def ADJCALLSTACKUP   : I<0, Pseudo, (ops i32imm:$amt1, i32imm:$amt2),
                          "#ADJCALLSTACKUP">;

@@ -3090,6 +3090,11 @@ void ISel::Select(SDOperand N) {
   default:
     Node->dump(); std::cerr << "\n";
     assert(0 && "Node not handled yet!");
+  case X86ISD::RDTSC_DAG:
+    Select(Node->getOperand(0)); //Chain
+    BuildMI(BB, X86::RDTSC, 0);
+    return;
+
   case ISD::EntryToken: return;  // Noop
   case ISD::TokenFactor:
     if (Node->getNumOperands() == 2) {

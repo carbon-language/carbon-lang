@@ -101,6 +101,7 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   setOperationAction(ISD::CTPOP            , MVT::i32  , Expand);
   setOperationAction(ISD::CTTZ             , MVT::i32  , Expand);
   setOperationAction(ISD::CTLZ             , MVT::i32  , Expand);
+  setOperationAction(ISD::READCYCLECOUNTER , MVT::i64  , Custom);
 
   setOperationAction(ISD::READIO           , MVT::i1   , Expand);
   setOperationAction(ISD::READIO           , MVT::i8   , Expand);
@@ -911,6 +912,12 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     // Load the result.
     return DAG.getLoad(Op.getValueType(), FIST, StackSlot,
                        DAG.getSrcValue(NULL));
+  }
+  case ISD::READCYCLECOUNTER: {
+    SDOperand rd = DAG.getNode(X86ISD::RDTSC_DAG, MVT::Other, Op.getOperand(0));
+    SDOperand Lo = DAG.getCopyFromReg(rd, X86::EAX, MVT::i32);
+    SDOperand Hi = DAG.getCopyFromReg(rd, X86::EDX, MVT::i32);
+    return DAG.getNode(ISD::BUILD_PAIR, MVT::i64, Lo, Hi);
   }
   }
 }
