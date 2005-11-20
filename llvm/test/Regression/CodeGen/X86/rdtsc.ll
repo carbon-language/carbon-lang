@@ -2,9 +2,8 @@
 
 declare ulong %llvm.readcyclecounter()
 
-void %foo() {
-entry:
+ulong %foo() {
 %tmp.1 = call ulong %llvm.readcyclecounter ()
-ret void
+ret ulong %tmp.1
 }
 
