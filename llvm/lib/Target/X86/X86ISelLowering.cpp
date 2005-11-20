@@ -914,9 +914,15 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
                        DAG.getSrcValue(NULL));
   }
   case ISD::READCYCLECOUNTER: {
-    SDOperand rd = DAG.getNode(X86ISD::RDTSC_DAG, MVT::Other, Op.getOperand(0));
-    SDOperand Lo = DAG.getCopyFromReg(rd, X86::EAX, MVT::i32);
-    SDOperand Hi = DAG.getCopyFromReg(rd, X86::EDX, MVT::i32);
+    std::vector<MVT::ValueType> Tys;
+    Tys.push_back(MVT::Other);
+    Tys.push_back(MVT::Flag);
+    std::vector<SDOperand> Ops;
+    Ops.push_back(Op.getOperand(0));
+    SDOperand rd = DAG.getNode(X86ISD::RDTSC_DAG, Tys, Ops);
+    SDOperand Lo = DAG.getCopyFromReg(rd, X86::EAX, MVT::i32, rd.getValue(1));
+    SDOperand Hi = DAG.getCopyFromReg(Lo.getValue(1), X86::EDX, 
+                                      MVT::i32, Lo.getValue(2));
     return DAG.getNode(ISD::BUILD_PAIR, MVT::i64, Lo, Hi);
   }
   }
