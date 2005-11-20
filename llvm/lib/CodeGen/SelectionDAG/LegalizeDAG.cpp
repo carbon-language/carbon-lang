@@ -1168,6 +1168,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     if (Tmp1 != Node->getOperand(0))
       Result = DAG.getNode(ISD::READCYCLECOUNTER, MVT::i64, Tmp1);
     break;
+
   case ISD::TRUNCSTORE:
     Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
     Tmp3 = LegalizeOp(Node->getOperand(2));  // Legalize the pointer.
@@ -3336,6 +3337,17 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     Hi = DAG.getConstant(0, NVT);
     break;
   }
+
+  case ISD::READCYCLECOUNTER:
+    if (TLI.getOperationAction(ISD::READCYCLECOUNTER, VT) == TargetLowering::Custom) {
+      SDOperand Chain = LegalizeOp(Node->getOperand(0));
+      AddLegalizedOperand(SDOperand(Node, 1), Chain);
+      SDOperand t = TLI.LowerOperation(Op, DAG);
+      ExpandOp(t, Lo, Hi);
+    } else
+      assert(0 && "Must custom expand ReadCycleCounter");
+    break;
+
     // These operators cannot be expanded directly, emit them as calls to
     // library functions.
   case ISD::FP_TO_SINT:
