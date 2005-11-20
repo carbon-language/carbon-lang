@@ -561,6 +561,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       Result = DAG.getNode(Node->getOpcode(), Node->getValueType(0), Tmp1,
                            Node->getOperand(1));
     break;
+  case ISD::MERGE_VALUES:
+    return LegalizeOp(Node->getOperand(Op.ResNo));
   case ISD::CopyFromReg:
     Tmp1 = LegalizeOp(Node->getOperand(0));
     if (Tmp1 != Node->getOperand(0))
@@ -3338,15 +3340,18 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     break;
   }
 
-  case ISD::READCYCLECOUNTER:
-    if (TLI.getOperationAction(ISD::READCYCLECOUNTER, VT) == TargetLowering::Custom) {
-      SDOperand Chain = LegalizeOp(Node->getOperand(0));
-      AddLegalizedOperand(SDOperand(Node, 1), Chain);
-      SDOperand t = TLI.LowerOperation(Op, DAG);
-      ExpandOp(t, Lo, Hi);
-    } else
-      assert(0 && "Must custom expand ReadCycleCounter");
+  case ISD::READCYCLECOUNTER: {
+    assert(TLI.getOperationAction(ISD::READCYCLECOUNTER, VT) == 
+                 TargetLowering::Custom &&
+           "Must custom expand ReadCycleCounter");
+    SDOperand T = TLI.LowerOperation(Op, DAG);
+    assert(T.Val && "Node must be custom expanded!");
+    Lo = LegalizeOp(T.getValue(0));
+    Hi = LegalizeOp(T.getValue(1));
+    AddLegalizedOperand(SDOperand(Node, 1), // Remember we legalized the chain.
+                        LegalizeOp(T.getValue(2)));
     break;
+  }
 
     // These operators cannot be expanded directly, emit them as calls to
     // library functions.
