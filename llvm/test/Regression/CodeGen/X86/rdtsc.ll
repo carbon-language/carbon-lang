@@ -1,4 +1,4 @@
-; RUN: llvm-as < %s | llc -march=x86 | grep rptsc
+; RUN: llvm-as < %s | llc -march=x86 | grep rdtsc
 
 declare ulong %llvm.readcyclecounter()
 
