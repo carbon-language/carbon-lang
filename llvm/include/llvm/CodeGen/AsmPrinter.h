@@ -134,6 +134,20 @@ namespace llvm {
     /// before emitting the constant pool for a function.
     const char *ConstantPoolSection;     // Defaults to "\t.section .rodata\n"
 
+    //===--- Global Variable Emission Directives --------------------------===//
+    
+    /// LCOMMDirective - This is the name of a directive (if supported) that can
+    /// be used to efficiently declare a local (internal) block of zero
+    /// initialized data in the .bss/.data section.  The syntax expected is:
+    ///    <LCOMMDirective> SYMBOLNAME LENGTHINBYTES, ALIGNMENT
+    const char *LCOMMDirective;          // Defaults to null.
+    
+    const char *COMMDirective;           // Defaults to "\t.comm\t".
+    
+    /// COMMDirectiveTakesAlignment - True if COMMDirective take a third
+    /// argument that specifies the alignment of the declaration.
+    bool COMMDirectiveTakesAlignment;    // Defaults to true.
+
     AsmPrinter(std::ostream &o, TargetMachine &tm)
       : FunctionNumber(0), O(o), TM(tm),
         CommentString("#"),
@@ -153,7 +167,10 @@ namespace llvm {
         AlignDirective("\t.align\t"),
         AlignmentIsInBytes(true),
         SwitchToSectionDirective("\t.section\t"),
-        ConstantPoolSection("\t.section .rodata\n") {
+        ConstantPoolSection("\t.section .rodata\n"),
+        LCOMMDirective(0),
+        COMMDirective("\t.comm\t"),
+        COMMDirectiveTakesAlignment(true) {
     }
 
     /// SwitchSection - Switch to the specified section of the executable if we
