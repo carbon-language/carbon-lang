@@ -14,6 +14,7 @@
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/Constants.h"
 #include "llvm/Module.h"
+#include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Target/TargetMachine.h"
@@ -26,7 +27,7 @@ void AsmPrinter::SwitchSection(const char *NewSection, const GlobalValue *GV) {
   std::string NS;
   
   if (GV && GV->hasSection())
-    NS = ".section " + GV->getSection();
+    NS = SwitchToSectionDirective + GV->getSection();
   else
     NS = NewSection;
   
@@ -53,6 +54,32 @@ void AsmPrinter::SetupMachineFunction(MachineFunction &MF) {
   CurrentFnName = Mang->getValueName(MF.getFunction());
   IncrementFunctionNumber();
 }
+
+/// EmitConstantPool - Print to the current output stream assembly
+/// representations of the constants in the constant pool MCP. This is
+/// used to print out constants which have been "spilled to memory" by
+/// the code generator.
+///
+void AsmPrinter::EmitConstantPool(MachineConstantPool *MCP) {
+  const std::vector<Constant*> &CP = MCP->getConstants();
+  if (CP.empty()) return;
+  const TargetData &TD = TM.getTargetData();
+  
+  SwitchSection(ConstantPoolSection, 0);
+  for (unsigned i = 0, e = CP.size(); i != e; ++i) {
+    // FIXME: force doubles to be naturally aligned.  We should handle this
+    // more correctly in the future.
+    unsigned Alignment = TD.getTypeAlignmentShift(CP[i]->getType());
+    if (CP[i]->getType() == Type::DoubleTy && Alignment < 3) Alignment = 3;
+    
+    EmitAlignment(Alignment);
+    O << PrivateGlobalPrefix << "CPI" << getFunctionNumber() << '_' << i
+      << ":\t\t\t\t\t" << CommentString << *CP[i] << '\n';
+    EmitGlobalConstant(CP[i]);
+  }
+}
+
+
 
 // EmitAlignment - Emit an alignment directive to the specified power of two.
 void AsmPrinter::EmitAlignment(unsigned NumBits, const GlobalValue *GV) const {
