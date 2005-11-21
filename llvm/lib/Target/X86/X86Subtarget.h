@@ -30,13 +30,6 @@ protected:
   /// Used by instruction selector
   bool indirectExternAndWeakGlobals;
 
-  /// Used by the asm printer
-  bool asmDarwinLinkerStubs;
-  bool asmLeadingUnderscore;
-  bool asmAlignmentIsInBytes;
-  bool asmPrintDotLocalConstants;
-  bool asmPrintDotLCommConstants;
-  bool asmPrintConstantAlignment;
 public:
   enum {
     isELF, isCygwin, isDarwin, isWindows

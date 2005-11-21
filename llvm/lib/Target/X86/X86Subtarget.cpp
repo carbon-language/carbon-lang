@@ -16,11 +16,7 @@
 using namespace llvm;
 
 X86Subtarget::X86Subtarget(const Module &M, const std::string &FS)
-  : TargetSubtarget(), stackAlignment(8),
-    indirectExternAndWeakGlobals(false), asmDarwinLinkerStubs(false),
-    asmLeadingUnderscore(false), asmAlignmentIsInBytes(false),
-    asmPrintDotLocalConstants(false), asmPrintDotLCommConstants(false),
-    asmPrintConstantAlignment(false) {
+  : stackAlignment(8), indirectExternAndWeakGlobals(false) {
       
   // Default to ELF unless otherwise specified.
   TargetType = isELF;
@@ -46,17 +42,8 @@ X86Subtarget::X86Subtarget(const Module &M, const std::string &FS)
 #endif
   }
 
-  switch (TargetType) {
-  case isCygwin:
-    asmLeadingUnderscore = true;
-    break;
-  case isDarwin:
+  if (TargetType == isDarwin) {
     stackAlignment = 16;
     indirectExternAndWeakGlobals = true;
-    asmDarwinLinkerStubs = true;
-    asmLeadingUnderscore = true;
-    asmPrintDotLCommConstants = true;
-    break;
-  default: break;
   }
 }
