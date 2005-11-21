@@ -25,7 +25,6 @@
 #include "llvm/Module.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/CodeGen/AsmPrinter.h"
-#include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/CodeGen/ValueTypes.h"
@@ -57,8 +56,6 @@ public:
     PPCTargetMachine &getTM() {
       return static_cast<PPCTargetMachine&>(TM);
     }
-
-    void printConstantPool(MachineConstantPool *MCP);
 
     unsigned enumRegToMachineReg(unsigned enumReg) {
       switch (enumReg) {
@@ -212,6 +209,7 @@ public:
       ZeroDirective = "\t.space\t";  // ".space N" emits N zeros.
       Data64bitsDirective = 0;       // we can't emit a 64-bit unit
       AlignmentIsInBytes = false;    // Alignment is by power of 2.
+      ConstantPoolSection = "\t.const\t";
     }
 
     virtual const char *getPassName() const {
@@ -237,6 +235,7 @@ public:
       ZeroDirective = "\t.space\t";  // ".space N" emits N zeros.
       Data64bitsDirective = 0;       // we can't emit a 64-bit unit
       AlignmentIsInBytes = false;    // Alignment is by power of 2.
+      ConstantPoolSection = "\t.const\t";
     }
 
     virtual const char *getPassName() const {
@@ -373,31 +372,6 @@ void PPCAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
   return;
 }
 
-/// printConstantPool - Print to the current output stream assembly
-/// representations of the constants in the constant pool MCP. This is
-/// used to print out constants which have been "spilled to memory" by
-/// the code generator.
-///
-void PPCAsmPrinter::printConstantPool(MachineConstantPool *MCP) {
-  const std::vector<Constant*> &CP = MCP->getConstants();
-  const TargetData &TD = TM.getTargetData();
-  
-  if (CP.empty()) return;
-  
-  SwitchSection(".const", 0);
-  for (unsigned i = 0, e = CP.size(); i != e; ++i) {
-    // FIXME: force doubles to be naturally aligned.  We should handle this
-    // more correctly in the future.
-    unsigned Alignment = TD.getTypeAlignmentShift(CP[i]->getType());
-    if (CP[i]->getType() == Type::DoubleTy && Alignment < 3) Alignment = 3;
-    
-    EmitAlignment(Alignment);
-    O << PrivateGlobalPrefix << "CPI" << getFunctionNumber() << '_' << i
-      << ":\t\t\t\t\t" << CommentString << *CP[i] << '\n';
-    EmitGlobalConstant(CP[i]);
-  }
-}
-
 
 /// runOnMachineFunction - This uses the printMachineInstruction()
 /// method to print assembly for each instruction.
@@ -407,7 +381,7 @@ bool DarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   O << "\n\n";
 
   // Print out constants referenced by the function
-  printConstantPool(MF.getConstantPool());
+  EmitConstantPool(MF.getConstantPool());
 
   // Print out labels for the function.
   const Function *F = MF.getFunction();
@@ -588,7 +562,7 @@ bool AIXAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   SetupMachineFunction(MF);
 
   // Print out constants referenced by the function
-  printConstantPool(MF.getConstantPool());
+  EmitConstantPool(MF.getConstantPool());
 
   // Print out header for the function.
   O << "\t.csect .text[PR]\n"
