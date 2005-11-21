@@ -85,6 +85,8 @@ namespace llvm {
     const char *FunctionAddrPrefix;       // Defaults to ""
     const char *FunctionAddrSuffix;       // Defaults to ""
 
+    //===--- Data Emission Directives -------------------------------------===//
+
     /// ZeroDirective - this should be set to the directive used to get some
     /// number of zero bytes emitted to the current section.  Common cases are
     /// "\t.zero\t" and "\t.space\t".  If this is set to null, the
@@ -108,6 +110,8 @@ namespace llvm {
     const char *Data32bitsDirective;  // Defaults to "\t.long\t"
     const char *Data64bitsDirective;  // Defaults to "\t.quad\t"
 
+    //===--- Alignment Information ----------------------------------------===//
+
     /// AlignDirective - The directive used to emit round up to an alignment
     /// boundary.
     ///
@@ -118,6 +122,17 @@ namespace llvm {
     /// Otherwise, it emits ".align log2(N)", e.g. 3 to align to an 8 byte
     /// boundary.
     bool AlignmentIsInBytes;          // Defaults to true
+    
+    //===--- Section Switching Directives ---------------------------------===//
+    
+    /// SwitchToSectionDirective - This is the directive used when we want to
+    /// emit a global to an arbitrary section.  The section name is emited after
+    /// this.
+    const char *SwitchToSectionDirective;  // Defaults to "\t.section\t"
+    
+    /// ConstantPoolSection - This is the section that we SwitchToSection right
+    /// before emitting the constant pool for a function.
+    const char *ConstantPoolSection;     // Defaults to "\t.section .rodata\n"
 
     AsmPrinter(std::ostream &o, TargetMachine &tm)
       : FunctionNumber(0), O(o), TM(tm),
@@ -136,7 +151,9 @@ namespace llvm {
         Data32bitsDirective("\t.long\t"),
         Data64bitsDirective("\t.quad\t"),
         AlignDirective("\t.align\t"),
-        AlignmentIsInBytes(true) {
+        AlignmentIsInBytes(true),
+        SwitchToSectionDirective("\t.section\t"),
+        ConstantPoolSection("\t.section .rodata\n") {
     }
 
     /// SwitchSection - Switch to the specified section of the executable if we
@@ -170,6 +187,8 @@ namespace llvm {
     /// SetupMachineFunction - This should be called when a new MachineFunction
     /// is being processed from runOnMachineFunction.
     void SetupMachineFunction(MachineFunction &MF);
+    
+    void EmitConstantPool(MachineConstantPool *MCP);
 
     /// EmitAlignment - Emit an alignment directive to the specified power of
     /// two boundary.  For example, if you pass in 3 here, you will get an 8
