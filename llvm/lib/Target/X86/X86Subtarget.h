@@ -38,6 +38,10 @@ protected:
   bool asmPrintDotLCommConstants;
   bool asmPrintConstantAlignment;
 public:
+  enum {
+    isELF, isCygwin, isDarwin, isWindows
+  } TargetType;
+    
   /// This constructor initializes the data members to match that
   /// of the specified module.
   ///

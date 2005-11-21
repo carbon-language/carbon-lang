@@ -21,37 +21,42 @@ X86Subtarget::X86Subtarget(const Module &M, const std::string &FS)
     asmLeadingUnderscore(false), asmAlignmentIsInBytes(false),
     asmPrintDotLocalConstants(false), asmPrintDotLCommConstants(false),
     asmPrintConstantAlignment(false) {
-  // Declare a boolean for each major platform.
-  bool forCygwin = false;
-  bool forDarwin = false;
-  bool forWindows = false;
-
+      
+  // Default to ELF unless otherwise specified.
+  TargetType = isELF;
+      
   // Set the boolean corresponding to the current target triple, or the default
   // if one cannot be determined, to true.
   const std::string& TT = M.getTargetTriple();
   if (TT.length() > 5) {
-    forCygwin = TT.find("cygwin") != std::string::npos ||
-                TT.find("mingw")  != std::string::npos;
-    forDarwin = TT.find("darwin") != std::string::npos;
-    forWindows = TT.find("win32") != std::string::npos;
+    if (TT.find("cygwin") != std::string::npos ||
+        TT.find("mingw")  != std::string::npos)
+      TargetType = isCygwin;
+    else if (TT.find("darwin") != std::string::npos)
+      TargetType = isDarwin;
+    else if (TT.find("win32") != std::string::npos)
+      TargetType = isWindows;
   } else if (TT.empty()) {
 #if defined(__CYGWIN__) || defined(__MINGW32__)
-    forCygwin = true;
+    TargetType = isCygwin;
 #elif defined(__APPLE__)
-    forDarwin = true;
+    TargetType = isDarwin;
 #elif defined(_WIN32)
-    forWindows = true;
+    TargetType = isWindows;
 #endif
   }
 
-  if (forCygwin) {
+  switch (TargetType) {
+  case isCygwin:
     asmLeadingUnderscore = true;
-  } else if (forDarwin) {
+    break;
+  case isDarwin:
     stackAlignment = 16;
     indirectExternAndWeakGlobals = true;
     asmDarwinLinkerStubs = true;
     asmLeadingUnderscore = true;
     asmPrintDotLCommConstants = true;
-  } else if (forWindows) {
+    break;
+  default: break;
   }
 }
