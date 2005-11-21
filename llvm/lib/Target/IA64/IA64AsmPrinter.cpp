@@ -88,8 +88,8 @@ void IA64SharedAsmPrinter::printConstantPool(MachineConstantPool *MCP) {
       // FIXME: would be nice to have rodata (no 'w') when appropriate?
   for (unsigned i = 0, e = CP.size(); i != e; ++i) {
     emitAlignment(TD.getTypeAlignmentShift(CP[i]->getType()));
-    O << ".CPI" << CurrentFnName << "_" << i << ":\t\t\t\t\t" << CommentString
-      << *CP[i] << "\n";
+    O << PrivateGlobalPrefix << "CPI" << CurrentFnName << "_" << i
+      << ":\t\t\t\t\t" << CommentString << *CP[i] << "\n";
     emitGlobalConstant(CP[i]);
   }
 }
@@ -357,7 +357,7 @@ void IA64AsmPrinter::printOp(const MachineOperand &MO,
     return;
 
   case MachineOperand::MO_ConstantPoolIndex: {
-    O << "@gprel(.CPI" << CurrentFnName << "_"
+    O << "@gprel(" << PrivateGlobalPrefix << "CPI" << CurrentFnName << "_"
       << MO.getConstantPoolIndex() << ")";
     return;
   }
