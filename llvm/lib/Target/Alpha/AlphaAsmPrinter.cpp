@@ -18,7 +18,6 @@
 #include "llvm/Module.h"
 #include "llvm/Type.h"
 #include "llvm/Assembly/Writer.h"
-#include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/Target/TargetMachine.h"
@@ -55,7 +54,6 @@ namespace {
     }
     bool printInstruction(const MachineInstr *MI);
     void printOp(const MachineOperand &MO, bool IsCallOp = false);
-    void printConstantPool(MachineConstantPool *MCP);
     void printOperand(const MachineInstr *MI, int opNum, MVT::ValueType VT);
     void printBaseOffsetPair (const MachineInstr *MI, int i, bool brackets=true);
     void printMachineInstruction(const MachineInstr *MI);
@@ -128,7 +126,7 @@ void AlphaAsmPrinter::printOp(const MachineOperand &MO, bool IsCallOp) {
   }
 
   case MachineOperand::MO_ConstantPoolIndex:
-    O << PrivateGlobalPrefix << "CPI" << CurrentFnName << "_"
+    O << PrivateGlobalPrefix << "CPI" << getFunctionNumber() << "_"
       << MO.getConstantPoolIndex();
     return;
 
@@ -173,7 +171,7 @@ bool AlphaAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   O << "\n\n";
 
   // Print out constants referenced by the function
-  printConstantPool(MF.getConstantPool());
+  EmitConstantPool(MF.getConstantPool());
 
   // Print out labels for the function.
   SwitchSection("\t.section .text", MF.getFunction());
@@ -202,27 +200,6 @@ bool AlphaAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   // We didn't modify anything.
   return false;
-}
-
-
-/// printConstantPool - Print to the current output stream assembly
-/// representations of the constants in the constant pool MCP. This is
-/// used to print out constants which have been "spilled to memory" by
-/// the code generator.
-///
-void AlphaAsmPrinter::printConstantPool(MachineConstantPool *MCP) {
-  const std::vector<Constant*> &CP = MCP->getConstants();
-  const TargetData &TD = TM.getTargetData();
-
-  if (CP.empty()) return;
-
-  SwitchSection("\t.section .rodata", 0);
-  for (unsigned i = 0, e = CP.size(); i != e; ++i) {
-    EmitAlignment(TD.getTypeAlignmentShift(CP[i]->getType()));
-    O << PrivateGlobalPrefix << "CPI" << CurrentFnName << "_" << i 
-      << ":\t\t\t\t\t" << CommentString << *CP[i] << "\n";
-    EmitGlobalConstant(CP[i]);
-  }
 }
 
 bool AlphaAsmPrinter::doInitialization(Module &M)
