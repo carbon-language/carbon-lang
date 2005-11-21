@@ -93,6 +93,7 @@ namespace {
 #include "IA64GenDAGISel.inc"
     
 private:
+    SDOperand SelectDIV(SDOperand Op);
     SDOperand SelectCALL(SDOperand Op);
   };
 }
@@ -151,6 +152,179 @@ void IA64DAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
   
   // Emit machine code to BB. 
   ScheduleAndEmitDAG(DAG);
+}
+
+SDOperand IA64DAGToDAGISel::SelectDIV(SDOperand Op) {
+  SDNode *N = Op.Val;
+  SDOperand Chain = Select(N->getOperand(0));
+
+  SDOperand Tmp1 = Select(N->getOperand(0));
+  SDOperand Tmp2 = Select(N->getOperand(1));
+
+  bool isFP=false;
+
+  if(MVT::isFloatingPoint(Tmp1.getValueType()))
+    isFP=true;
+    
+  bool isModulus=false; // is it a division or a modulus?
+  bool isSigned=false;
+
+  switch(N->getOpcode()) {
+    case ISD::FDIV:
+    case ISD::SDIV:  isModulus=false; isSigned=true;  break;
+    case ISD::UDIV:  isModulus=false; isSigned=false; break;
+    case ISD::FREM:
+    case ISD::SREM:  isModulus=true;  isSigned=true;  break;
+    case ISD::UREM:  isModulus=true;  isSigned=false; break;
+  }
+
+  // TODO: check for integer divides by powers of 2 (or other simple patterns?)
+
+    SDOperand TmpPR, TmpPR2;
+    SDOperand TmpF1, TmpF2, TmpF3, TmpF4, TmpF5, TmpF6, TmpF7, TmpF8;
+    SDOperand TmpF9, TmpF10,TmpF11,TmpF12,TmpF13,TmpF14,TmpF15;
+    SDOperand Result;
+    
+    // OK, emit some code:
+
+    if(!isFP) {
+      // first, load the inputs into FP regs.
+      TmpF1 = CurDAG->getTargetNode(IA64::SETFSIG, MVT::f64, Tmp1);
+      Chain = TmpF1.getValue(1);
+      TmpF2 = CurDAG->getTargetNode(IA64::SETFSIG, MVT::f64, Tmp2);
+      Chain = TmpF2.getValue(1);
+      
+      // next, convert the inputs to FP
+      if(isSigned) {
+        TmpF3 = CurDAG->getTargetNode(IA64::FCVTXF, MVT::f64, TmpF1);
+        Chain = TmpF3.getValue(1);
+        TmpF4 = CurDAG->getTargetNode(IA64::FCVTXF, MVT::f64, TmpF2);
+        Chain = TmpF4.getValue(1);
+      } else {
+        TmpF3 = CurDAG->getTargetNode(IA64::FCVTXUFS1, MVT::f64, TmpF1);
+        Chain = TmpF3.getValue(1);
+        TmpF4 = CurDAG->getTargetNode(IA64::FCVTXUFS1, MVT::f64, TmpF2);
+        Chain = TmpF4.getValue(1);
+      }
+
+    } else { // this is an FP divide/remainder, so we 'leak' some temp
+             // regs and assign TmpF3=Tmp1, TmpF4=Tmp2
+      TmpF3=Tmp1;
+      TmpF4=Tmp2;
+    }
+
+    // we start by computing an approximate reciprocal (good to 9 bits?)
+    // note, this instruction writes _both_ TmpF5 (answer) and TmpPR (predicate)
+    TmpF5 = CurDAG->getTargetNode(IA64::FRCPAS1, MVT::f64, MVT::i1,
+	                          TmpF3, TmpF4);
+    TmpPR = TmpF5.getValue(1);
+    Chain = TmpF5.getValue(2);
+
+    if(!isModulus) { // if this is a divide, we worry about div-by-zero
+        SDOperand bogusPR = CurDAG->getTargetNode(IA64::CMPEQ, MVT::i1, 
+          CurDAG->getRegister(IA64::r0, MVT::i64),
+          CurDAG->getRegister(IA64::r0, MVT::i64));
+        Chain = bogusPR.getValue(1);
+        TmpPR2 = CurDAG->getTargetNode(IA64::TPCMPNE, MVT::i1, bogusPR,
+          CurDAG->getRegister(IA64::r0, MVT::i64),
+          CurDAG->getRegister(IA64::r0, MVT::i64), TmpPR); 
+        Chain = TmpPR2.getValue(1);
+    }
+
+    SDOperand F0 = CurDAG->getRegister(IA64::F0, MVT::f64);
+    SDOperand F1 = CurDAG->getRegister(IA64::F1, MVT::f64);
+
+    // now we apply newton's method, thrice! (FIXME: this is ~72 bits of
+    // precision, don't need this much for f32/i32)
+    TmpF6 = CurDAG->getTargetNode(IA64::CFNMAS1, MVT::f64,
+      TmpF4, TmpF5, F1, TmpPR);
+    Chain = TmpF6.getValue(1);
+    TmpF7 = CurDAG->getTargetNode(IA64::CFMAS1, MVT::f64,
+      TmpF3, TmpF5, F0, TmpPR);
+    Chain = TmpF7.getValue(1);
+    TmpF8 = CurDAG->getTargetNode(IA64::CFMAS1, MVT::f64,
+      TmpF6, TmpF6, F0, TmpPR);
+    Chain = TmpF8.getValue(1);
+    TmpF9 = CurDAG->getTargetNode(IA64::CFMAS1, MVT::f64,
+      TmpF6, TmpF7, TmpF7, TmpPR);
+    Chain = TmpF9.getValue(1);
+    TmpF10 = CurDAG->getTargetNode(IA64::CFMAS1, MVT::f64,
+      TmpF6, TmpF5, TmpF5, TmpPR);
+    Chain = TmpF10.getValue(1);
+    TmpF11 = CurDAG->getTargetNode(IA64::CFMAS1, MVT::f64,
+      TmpF8, TmpF9, TmpF9, TmpPR);
+    Chain = TmpF11.getValue(1);
+    TmpF12 = CurDAG->getTargetNode(IA64::CFMAS1, MVT::f64,
+      TmpF8, TmpF10, TmpF10, TmpPR);
+    Chain = TmpF12.getValue(1);
+    TmpF13 = CurDAG->getTargetNode(IA64::CFNMAS1, MVT::f64,
+      TmpF4, TmpF11, TmpF3, TmpPR);
+    Chain = TmpF13.getValue(1);
+    
+       // FIXME: this is unfortunate :(
+       // the story is that the dest reg of the fnma above and the fma below
+       // (and therefore possibly the src of the fcvt.fx[u] as well) cannot
+       // be the same register, or this code breaks if the first argument is
+       // zero. (e.g. without this hack, 0%8 yields -64, not 0.)
+    TmpF14 = CurDAG->getTargetNode(IA64::CFMAS1, MVT::f64,
+      TmpF13, TmpF12, TmpF11, TmpPR);
+    Chain = TmpF14.getValue(1);
+    
+    if(isModulus) { // XXX: fragile! fixes _only_ mod, *breaks* div! !
+      SDOperand bogus = CurDAG->getTargetNode(IA64::IUSE, MVT::Other, TmpF13); // hack :(
+      Chain = bogus.getValue(0); // hmmm
+    }
+
+    if(!isFP) {
+      // round to an integer
+      if(isSigned) {
+        TmpF15 = CurDAG->getTargetNode(IA64::FCVTFXTRUNCS1, MVT::i64, TmpF14);
+        Chain = TmpF15.getValue(1);
+      }
+      else {
+        TmpF15 = CurDAG->getTargetNode(IA64::FCVTFXUTRUNCS1, MVT::i64, TmpF14);
+        Chain = TmpF15.getValue(1);
+      }
+    } else {
+      TmpF15 = TmpF14;
+     // EXERCISE: can you see why TmpF15=TmpF14 does not work here, and
+     // we really do need the above FMOV? ;)
+    }
+
+    if(!isModulus) {
+      if(isFP) { // extra worrying about div-by-zero
+      // we do a 'conditional fmov' (of the correct result, depending
+      // on how the frcpa predicate turned out)
+      SDOperand bogoResult = CurDAG->getTargetNode(IA64::PFMOV, MVT::f64,
+                                                   TmpF12, TmpPR2);
+      Chain = bogoResult.getValue(1);
+      Result = CurDAG->getTargetNode(IA64::CFMOV, MVT::f64, bogoResult,
+        TmpF15, TmpPR);
+      Chain = Result.getValue(1);
+      }
+      else {
+        Result = CurDAG->getTargetNode(IA64::GETFSIG, MVT::i64, TmpF15);
+        Chain = Result.getValue(1);
+      }
+    } else { // this is a modulus
+      if(!isFP) {
+        // answer = q * (-b) + a
+        SDOperand TmpI = CurDAG->getTargetNode(IA64::SUB, MVT::i64,
+          CurDAG->getRegister(IA64::r0, MVT::i64), Tmp2);
+        Chain = TmpI.getValue(1);
+        SDOperand TmpF = CurDAG->getTargetNode(IA64::SETFSIG, MVT::f64, TmpI);
+        Chain = TmpF.getValue(1);
+        SDOperand ModulusResult = CurDAG->getTargetNode(IA64::XMAL, MVT::f64,
+          TmpF15, TmpF, TmpF1);
+        Chain = ModulusResult.getValue(1);
+        Result = CurDAG->getTargetNode(IA64::GETFSIG, MVT::i64, ModulusResult);
+        Chain = Result.getValue(1);
+      } else { // FP modulus! The horror... the horror....
+        assert(0 && "sorry, no FP modulus just yet!\n!\n");
+      }
+    }
+
+  return Result;
 }
 
 
@@ -355,6 +529,12 @@ SDOperand IA64DAGToDAGISel::Select(SDOperand Op) {
 
   case ISD::CALL:
   case ISD::TAILCALL: return SelectCALL(Op);
+
+  case ISD::FDIV:
+  case ISD::SDIV:
+  case ISD::UDIV:
+  case ISD::SREM:
+  case ISD::UREM: return SelectDIV(Op);
  
 /* todo:
  * case ISD::DYNAMIC_STACKALLOC:
