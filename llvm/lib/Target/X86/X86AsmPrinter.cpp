@@ -80,18 +80,41 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
   // Print out module-level global variables here.
   for (Module::const_global_iterator I = M.global_begin(),
        E = M.global_end(); I != E; ++I) {
-    if (I->hasInitializer()) {   // External global require no code
-      O << "\n\n";
-      std::string name = Mang->getValueName(I);
-      Constant *C = I->getInitializer();
-      unsigned Size = TD.getTypeSize(C->getType());
-      unsigned Align = TD.getTypeAlignmentShift(C->getType());
+    if (!I->hasInitializer()) continue;   // External global require no code
+    
+    O << "\n\n";
+    std::string name = Mang->getValueName(I);
+    Constant *C = I->getInitializer();
+    unsigned Size = TD.getTypeSize(C->getType());
+    unsigned Align = TD.getTypeAlignmentShift(C->getType());
 
-      switch (I->getLinkage()) {
-      default: assert(0 && "Unknown linkage type!");
-      case GlobalValue::LinkOnceLinkage:
-      case GlobalValue::WeakLinkage:   // FIXME: Verify correct for weak.
-        if (C->isNullValue()) {
+    switch (I->getLinkage()) {
+    default: assert(0 && "Unknown linkage type!");
+    case GlobalValue::LinkOnceLinkage:
+    case GlobalValue::WeakLinkage:   // FIXME: Verify correct for weak.
+      if (C->isNullValue()) {
+        O << COMMDirective << name << "," << Size;
+        if (COMMDirectiveTakesAlignment)
+          O << "," << (1 << Align);
+        O << "\t\t# ";
+        WriteAsOperand(O, I, true, true, &M);
+        O << "\n";
+        continue;
+      }
+      
+      // Nonnull linkonce -> weak
+      O << "\t.weak " << name << "\n";
+      O << "\t.section\t.llvm.linkonce.d." << name << ",\"aw\",@progbits\n";
+      SwitchSection("", I);
+      break;
+    case GlobalValue::InternalLinkage:
+      if (C->isNullValue()) {
+        if (LCOMMDirective) {
+          O << LCOMMDirective << name << "," << Size << "," << Align;
+          continue;
+        } else {
+          SwitchSection(".bss", I);
+          O << "\t.local " << name << "\n";
           O << COMMDirective << name << "," << Size;
           if (COMMDirectiveTakesAlignment)
             O << "," << (1 << Align);
@@ -100,53 +123,30 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
           O << "\n";
           continue;
         }
-        
-        // Nonnull linkonce -> weak
-        O << "\t.weak " << name << "\n";
-        O << "\t.section\t.llvm.linkonce.d." << name << ",\"aw\",@progbits\n";
-        SwitchSection("", I);
-        break;
-      case GlobalValue::InternalLinkage:
-        if (C->isNullValue()) {
-          if (LCOMMDirective) {
-            O << LCOMMDirective << name << "," << Size << "," << Align;
-            continue;
-          } else {
-            SwitchSection(".bss", I);
-            O << "\t.local " << name << "\n";
-            O << COMMDirective << name << "," << Size;
-            if (COMMDirectiveTakesAlignment)
-              O << "," << (1 << Align);
-            O << "\t\t# ";
-            WriteAsOperand(O, I, true, true, &M);
-            O << "\n";
-            continue;
-          }
-        }
-        SwitchSection(C->isNullValue() ? ".bss" : ".data", I);
-        break;
-      case GlobalValue::AppendingLinkage:
-        // FIXME: appending linkage variables should go into a section of
-        // their name or something.  For now, just emit them as external.
-      case GlobalValue::ExternalLinkage:
-        SwitchSection(C->isNullValue() ? ".bss" : ".data", I);
-        // If external or appending, declare as a global symbol
-        O << "\t.globl " << name << "\n";
-        break;
       }
-
-      EmitAlignment(Align);
-      if (forELF) {
-        O << "\t.type " << name << ",@object\n";
-        O << "\t.size " << name << "," << Size << "\n";
-      }
-      O << name << ":\t\t\t\t# ";
-      WriteAsOperand(O, I, true, true, &M);
-      O << " = ";
-      WriteAsOperand(O, C, false, false, &M);
-      O << "\n";
-      EmitGlobalConstant(C);
+      SwitchSection(".data", I);
+      break;
+    case GlobalValue::AppendingLinkage:
+      // FIXME: appending linkage variables should go into a section of
+      // their name or something.  For now, just emit them as external.
+    case GlobalValue::ExternalLinkage:
+      SwitchSection(C->isNullValue() ? ".bss" : ".data", I);
+      // If external or appending, declare as a global symbol
+      O << "\t.globl " << name << "\n";
+      break;
     }
+
+    EmitAlignment(Align);
+    if (forELF) {
+      O << "\t.type " << name << ",@object\n";
+      O << "\t.size " << name << "," << Size << "\n";
+    }
+    O << name << ":\t\t\t\t# ";
+    WriteAsOperand(O, I, true, true, &M);
+    O << " = ";
+    WriteAsOperand(O, C, false, false, &M);
+    O << "\n";
+    EmitGlobalConstant(C);
   }
   
   if (forDarwin) {
