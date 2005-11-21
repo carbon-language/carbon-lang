@@ -48,13 +48,13 @@ bool AsmPrinter::doFinalization(Module &M) {
   return false;
 }
 
-void AsmPrinter::setupMachineFunction(MachineFunction &MF) {
+void AsmPrinter::SetupMachineFunction(MachineFunction &MF) {
   // What's my mangled name?
   CurrentFnName = Mang->getValueName(MF.getFunction());
 }
 
-// emitAlignment - Emit an alignment directive to the specified power of two.
-void AsmPrinter::emitAlignment(unsigned NumBits, const GlobalValue *GV) const {
+// EmitAlignment - Emit an alignment directive to the specified power of two.
+void AsmPrinter::EmitAlignment(unsigned NumBits, const GlobalValue *GV) const {
   if (GV && GV->getAlignment())
     NumBits = Log2_32(GV->getAlignment());
   if (NumBits == 0) return;   // No need to emit alignment.
@@ -62,9 +62,9 @@ void AsmPrinter::emitAlignment(unsigned NumBits, const GlobalValue *GV) const {
   O << AlignDirective << NumBits << "\n";
 }
 
-/// emitZeros - Emit a block of zeros.
+/// EmitZeros - Emit a block of zeros.
 ///
-void AsmPrinter::emitZeros(uint64_t NumZeros) const {
+void AsmPrinter::EmitZeros(uint64_t NumZeros) const {
   if (NumZeros) {
     if (ZeroDirective)
       O << ZeroDirective << NumZeros << "\n";
@@ -77,7 +77,7 @@ void AsmPrinter::emitZeros(uint64_t NumZeros) const {
 
 // Print out the specified constant, without a storage class.  Only the
 // constants valid in constant expressions can occur here.
-void AsmPrinter::emitConstantValueOnly(const Constant *CV) {
+void AsmPrinter::EmitConstantValueOnly(const Constant *CV) {
   if (CV->isNullValue() || isa<UndefValue>(CV))
     O << "0";
   else if (const ConstantBool *CB = dyn_cast<ConstantBool>(CV)) {
@@ -109,13 +109,13 @@ void AsmPrinter::emitConstantValueOnly(const Constant *CV) {
       if (int64_t Offset = TD.getIndexedOffset(ptrVal->getType(), idxVec)) {
         if (Offset)
           O << "(";
-        emitConstantValueOnly(ptrVal);
+        EmitConstantValueOnly(ptrVal);
         if (Offset > 0)
           O << ") + " << Offset;
         else if (Offset < 0)
           O << ") - " << -Offset;
       } else {
-        emitConstantValueOnly(ptrVal);
+        EmitConstantValueOnly(ptrVal);
       }
       break;
     }
@@ -137,14 +137,14 @@ void AsmPrinter::emitConstantValueOnly(const Constant *CV) {
               || (((TD.getTypeSize(Ty) >= TD.getTypeSize(OpTy))
                    && OpTy->isLosslesslyConvertibleTo(Ty))))
              && "FIXME: Don't yet support this kind of constant cast expr");
-      emitConstantValueOnly(Op);
+      EmitConstantValueOnly(Op);
       break;
     }
     case Instruction::Add:
       O << "(";
-      emitConstantValueOnly(CE->getOperand(0));
+      EmitConstantValueOnly(CE->getOperand(0));
       O << ") + (";
-      emitConstantValueOnly(CE->getOperand(1));
+      EmitConstantValueOnly(CE->getOperand(1));
       O << ")";
       break;
     default:
@@ -198,13 +198,13 @@ static void printAsCString(std::ostream &O, const ConstantArray *CVA,
   O << "\"";
 }
 
-/// emitGlobalConstant - Print a general LLVM constant to the .s file.
+/// EmitGlobalConstant - Print a general LLVM constant to the .s file.
 ///
-void AsmPrinter::emitGlobalConstant(const Constant *CV) {
+void AsmPrinter::EmitGlobalConstant(const Constant *CV) {
   const TargetData &TD = TM.getTargetData();
 
   if (CV->isNullValue() || isa<UndefValue>(CV)) {
-    emitZeros(TD.getTypeSize(CV->getType()));
+    EmitZeros(TD.getTypeSize(CV->getType()));
     return;
   } else if (const ConstantArray *CVA = dyn_cast<ConstantArray>(CV)) {
     if (CVA->isString()) {
@@ -220,7 +220,7 @@ void AsmPrinter::emitGlobalConstant(const Constant *CV) {
       O << "\n";
     } else { // Not a string.  Print the values in successive locations
       for (unsigned i = 0, e = CVA->getNumOperands(); i != e; ++i)
-        emitGlobalConstant(CVA->getOperand(i));
+        EmitGlobalConstant(CVA->getOperand(i));
     }
     return;
   } else if (const ConstantStruct *CVS = dyn_cast<ConstantStruct>(CV)) {
@@ -238,10 +238,10 @@ void AsmPrinter::emitGlobalConstant(const Constant *CV) {
       sizeSoFar += fieldSize + padSize;
 
       // Now print the actual field value
-      emitGlobalConstant(field);
+      EmitGlobalConstant(field);
 
       // Insert the field padding unless it's zero bytes...
-      emitZeros(padSize);
+      EmitZeros(padSize);
     }
     assert(sizeSoFar == cvsLayout->StructSize &&
            "Layout of constant struct may be incorrect!");
@@ -328,6 +328,6 @@ void AsmPrinter::emitGlobalConstant(const Constant *CV) {
     assert (0 && "Can't handle printing this type of thing");
     break;
   }
-  emitConstantValueOnly(CV);
+  EmitConstantValueOnly(CV);
   O << "\n";
 }
