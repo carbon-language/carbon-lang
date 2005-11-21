@@ -44,8 +44,9 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
        I != E; ++I) {
     // Print a label for the basic block.
     if (I->pred_begin() != I->pred_end())
-      O << ".LBB" << CurrentFnName << "_" << I->getNumber() << ":\t"
-        << CommentString << " " << I->getBasicBlock()->getName() << "\n";
+      O << PrivateGlobalPrefix << "BB" << CurrentFnName << "_" << I->getNumber()
+        << ":\t" << CommentString << " " << I->getBasicBlock()->getName()
+        << "\n";
     for (MachineBasicBlock::const_iterator II = I->begin(), E = I->end();
          II != E; ++II) {
       // Print the assembly for the instruction.
@@ -78,7 +79,8 @@ void X86ATTAsmPrinter::printOp(const MachineOperand &MO, bool isCallOp) {
     return;
   case MachineOperand::MO_MachineBasicBlock: {
     MachineBasicBlock *MBBOp = MO.getMachineBasicBlock();
-    O << ".LBB" << Mang->getValueName(MBBOp->getParent()->getFunction())
+    O << PrivateGlobalPrefix << "BB"
+      << Mang->getValueName(MBBOp->getParent()->getFunction())
       << "_" << MBBOp->getNumber () << "\t# "
       << MBBOp->getBasicBlock ()->getName ();
     return;

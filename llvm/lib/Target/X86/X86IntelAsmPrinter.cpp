@@ -44,7 +44,8 @@ bool X86IntelAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
        I != E; ++I) {
     // Print a label for the basic block if there are any predecessors.
     if (I->pred_begin() != I->pred_end())
-      O << ".LBB" << CurrentFnName << "_" << I->getNumber() << ":\t"
+      O << PrivateGlobalPrefix << "BB" << CurrentFnName << "_" << I->getNumber()
+        << ":\t"
         << CommentString << " " << I->getBasicBlock()->getName() << "\n";
     for (MachineBasicBlock::const_iterator II = I->begin(), E = I->end();
          II != E; ++II) {
@@ -98,7 +99,8 @@ void X86IntelAsmPrinter::printOp(const MachineOperand &MO,
     return;
   case MachineOperand::MO_MachineBasicBlock: {
     MachineBasicBlock *MBBOp = MO.getMachineBasicBlock();
-    O << ".LBB" << Mang->getValueName(MBBOp->getParent()->getFunction())
+    O << PrivateGlobalPrefix << "BB"
+      << Mang->getValueName(MBBOp->getParent()->getFunction())
       << "_" << MBBOp->getNumber () << "\t# "
       << MBBOp->getBasicBlock ()->getName ();
     return;
