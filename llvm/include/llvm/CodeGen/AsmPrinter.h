@@ -147,6 +147,10 @@ namespace llvm {
     /// COMMDirectiveTakesAlignment - True if COMMDirective take a third
     /// argument that specifies the alignment of the declaration.
     bool COMMDirectiveTakesAlignment;    // Defaults to true.
+    
+    /// HasDotTypeDotSizeDirective - True if the target has .type and .size
+    /// directives, this is true for most ELF targets.
+    bool HasDotTypeDotSizeDirective;     // Defaults to true.
 
     AsmPrinter(std::ostream &o, TargetMachine &tm)
       : FunctionNumber(0), O(o), TM(tm),
@@ -170,7 +174,8 @@ namespace llvm {
         ConstantPoolSection("\t.section .rodata\n"),
         LCOMMDirective(0),
         COMMDirective("\t.comm\t"),
-        COMMDirectiveTakesAlignment(true) {
+        COMMDirectiveTakesAlignment(true),
+        HasDotTypeDotSizeDirective(true) {
     }
 
     /// SwitchSection - Switch to the specified section of the executable if we
