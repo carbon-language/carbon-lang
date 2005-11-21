@@ -230,6 +230,7 @@ namespace {
       : PPCAsmPrinter(O, TM) {
       CommentString = ";";
       GlobalPrefix = "_";
+      PrivateGlobalPrefix = "L";     // Marker for constant pool idxs
       ZeroDirective = "\t.space\t";  // ".space N" emits N zeros.
       Data64bitsDirective = 0;       // we can't emit a 64-bit unit
       AlignmentIsInBytes = false;    // Alignment is by power of 2.
@@ -326,7 +327,8 @@ void PPCAsmPrinter::printOp(const MachineOperand &MO) {
   }
 
   case MachineOperand::MO_ConstantPoolIndex:
-    O << "LCPI" << FunctionNumber << '_' << MO.getConstantPoolIndex();
+    O << PrivateGlobalPrefix << "CPI" << FunctionNumber
+      << '_' << MO.getConstantPoolIndex();
     return;
 
   case MachineOperand::MO_ExternalSymbol:
@@ -447,16 +449,16 @@ void DarwinAsmPrinter::printConstantPool(MachineConstantPool *MCP) {
 
   if (CP.empty()) return;
 
+  SwitchSection(".const", 0);
   for (unsigned i = 0, e = CP.size(); i != e; ++i) {
-    SwitchSection(".const", 0);
     // FIXME: force doubles to be naturally aligned.  We should handle this
     // more correctly in the future.
-    if (Type::DoubleTy == CP[i]->getType())
+    if (CP[i]->getType() == Type::DoubleTy)
       emitAlignment(3);
     else
       emitAlignment(TD.getTypeAlignmentShift(CP[i]->getType()));
-    O << "LCPI" << FunctionNumber << '_' << i << ":\t\t\t\t\t" << CommentString
-      << *CP[i] << '\n';
+    O << PrivateGlobalPrefix << "CPI" << FunctionNumber << '_' << i
+      << ":\t\t\t\t\t" << CommentString << *CP[i] << '\n';
     emitGlobalConstant(CP[i]);
   }
 }
@@ -664,8 +666,8 @@ void AIXAsmPrinter::printConstantPool(MachineConstantPool *MCP) {
     SwitchSection(".const", 0);
     O << "\t.align " << (unsigned)TD.getTypeAlignment(CP[i]->getType())
       << "\n";
-    O << "LCPI" << FunctionNumber << '_' << i << ":\t\t\t\t\t;"
-      << *CP[i] << '\n';
+    O << PrivateGlobalPrefix << "CPI" << FunctionNumber << '_' << i
+      << ":\t\t\t\t\t;" << *CP[i] << '\n';
     emitGlobalConstant(CP[i]);
   }
 }
