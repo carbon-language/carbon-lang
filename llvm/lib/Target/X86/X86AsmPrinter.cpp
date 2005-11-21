@@ -39,15 +39,18 @@ AsmWriterFlavor("x86-asm-syntax",
                 cl::init(att));
 
 /// doInitialization
-bool X86SharedAsmPrinter::doInitialization(Module& M) {
-  forCygwin = false;
+bool X86SharedAsmPrinter::doInitialization(Module &M) {
+  bool forCygwin = false;
   forDarwin = false;
+  forELF    = false;
   bool forWin32 = false;
   const std::string& TT = M.getTargetTriple();
   if (TT.length() > 5) {
     forCygwin = TT.find("cygwin") != std::string::npos ||
                 TT.find("mingw")  != std::string::npos;
     forDarwin = TT.find("darwin") != std::string::npos;
+    if (!forDarwin && !forCygwin)
+      forELF = true;
   } else if (TT.empty()) {
 #if defined(__CYGWIN__) || defined(__MINGW32__)
     forCygwin = true;
@@ -55,6 +58,8 @@ bool X86SharedAsmPrinter::doInitialization(Module& M) {
     forDarwin = true;
 #elif defined(_WIN32)
     forWin32 = true;
+#else
+    forELF = true;
 #endif
   }
 
@@ -139,7 +144,7 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
       }
 
       EmitAlignment(Align);
-      if (!forCygwin && !forDarwin) {
+      if (forELF) {
         O << "\t.type " << name << ",@object\n";
         O << "\t.size " << name << "," << Size << "\n";
       }

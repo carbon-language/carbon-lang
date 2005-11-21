@@ -35,7 +35,7 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   SwitchSection("\t.text\n", MF.getFunction());
   EmitAlignment(4);     // FIXME: This should be parameterized somewhere.
   O << "\t.globl\t" << CurrentFnName << "\n";
-  if (!forCygwin && !forDarwin)
+  if (forELF)
     O << "\t.type\t" << CurrentFnName << ", @function\n";
   O << CurrentFnName << ":\n";
 
