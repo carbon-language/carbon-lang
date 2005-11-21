@@ -29,7 +29,7 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   O << "\n\n";
 
   // Print out constants referenced by the function
-  printConstantPool(MF.getConstantPool());
+  EmitConstantPool(MF.getConstantPool());
 
   // Print out labels for the function.
   SwitchSection("\t.text\n", MF.getFunction());
@@ -176,7 +176,7 @@ void X86ATTAsmPrinter::printMemReference(const MachineInstr *MI, unsigned Op){
     O << "]";
     return;
   } else if (BaseReg.isConstantPoolIndex()) {
-    O << PrivateGlobalPrefix << "CPI" << CurrentFnName << "_"
+    O << PrivateGlobalPrefix << "CPI" << getFunctionNumber() << "_"
       << BaseReg.getConstantPoolIndex();
     if (DispSpec.getImmedValue())
       O << "+" << DispSpec.getImmedValue();

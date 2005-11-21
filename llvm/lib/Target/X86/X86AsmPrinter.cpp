@@ -68,35 +68,10 @@ bool X86SharedAsmPrinter::doInitialization(Module& M) {
     Data64bitsDirective = 0;       // we can't emit a 64-bit unit
     ZeroDirective = "\t.space\t";  // ".space N" emits N zeros.
     PrivateGlobalPrefix = "L";     // Marker for constant pool idxs
+    ConstantPoolSection = "\t.const\n";
   }
 
   return AsmPrinter::doInitialization(M);
-}
-
-/// printConstantPool - Print to the current output stream assembly
-/// representations of the constants in the constant pool MCP. This is
-/// used to print out constants which have been "spilled to memory" by
-/// the code generator.
-///
-void X86SharedAsmPrinter::printConstantPool(MachineConstantPool *MCP) {
-  const std::vector<Constant*> &CP = MCP->getConstants();
-  const TargetData &TD = TM.getTargetData();
-
-  if (CP.empty()) return;
-
-  SwitchSection(forDarwin ? "\t.const\n" : "\t.section .rodata\n", 0);
-  
-  for (unsigned i = 0, e = CP.size(); i != e; ++i) {
-    // FIXME: force doubles to be naturally aligned.  We should handle this
-    // more correctly in the future.
-    if (CP[i]->getType() == Type::DoubleTy)
-      EmitAlignment(3);
-    else
-      EmitAlignment(TD.getTypeAlignmentShift(CP[i]->getType()));
-    O << PrivateGlobalPrefix << "CPI" << CurrentFnName << "_" << i
-      << ":\t\t\t\t\t" << CommentString << *CP[i] << "\n";
-    EmitGlobalConstant(CP[i]);
-  }
 }
 
 bool X86SharedAsmPrinter::doFinalization(Module &M) {

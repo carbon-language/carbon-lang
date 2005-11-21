@@ -32,7 +32,6 @@ struct X86SharedAsmPrinter : public AsmPrinter {
     : AsmPrinter(O, TM), forCygwin(false), forDarwin(false) { }
 
   bool doInitialization(Module &M);
-  void printConstantPool(MachineConstantPool *MCP);
   bool doFinalization(Module &M);
 
   bool forCygwin;
