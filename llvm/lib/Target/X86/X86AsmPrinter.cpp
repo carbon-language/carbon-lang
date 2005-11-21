@@ -105,7 +105,6 @@ void X86SharedAsmPrinter::printConstantPool(MachineConstantPool *MCP) {
 
 bool X86SharedAsmPrinter::doFinalization(Module &M) {
   const TargetData &TD = TM.getTargetData();
-  std::string CurSection;
 
   // Print out module-level global variables here.
   for (Module::const_global_iterator I = M.global_begin(),
@@ -120,7 +119,7 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
       if (C->isNullValue() &&
           (I->hasLinkOnceLinkage() || I->hasInternalLinkage() ||
            I->hasWeakLinkage() /* FIXME: Verify correct */)) {
-        switchSection(O, CurSection, ".data");
+        SwitchSection(".data", I);
         if (!forCygwin && !forDarwin && I->hasInternalLinkage())
           O << "\t.local " << name << "\n";
         if (forDarwin && I->hasInternalLinkage())
@@ -139,8 +138,8 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
         case GlobalValue::WeakLinkage:   // FIXME: Verify correct for weak.
           // Nonnull linkonce -> weak
           O << "\t.weak " << name << "\n";
-          switchSection(O, CurSection, "");
           O << "\t.section\t.llvm.linkonce.d." << name << ",\"aw\",@progbits\n";
+          SwitchSection("", I);
           break;
         case GlobalValue::AppendingLinkage:
           // FIXME: appending linkage variables should go into a section of
@@ -150,10 +149,7 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
           O << "\t.globl " << name << "\n";
           // FALL THROUGH
         case GlobalValue::InternalLinkage:
-          if (C->isNullValue())
-            switchSection(O, CurSection, ".bss");
-          else
-            switchSection(O, CurSection, ".data");
+          SwitchSection(C->isNullValue() ? ".bss" : ".data", I);
           break;
         }
 

@@ -55,17 +55,6 @@ struct X86SharedAsmPrinter : public AsmPrinter {
       MI->getOperand(Op+2).isRegister() && (MI->getOperand(Op+3).isImmediate()||
       MI->getOperand(Op+3).isGlobalAddress());
   }
-
-  // switchSection - Switch to the specified section of the executable if we are
-  // not already in it!
-  inline static void switchSection(std::ostream &OS, std::string &CurSection,
-                                   const char *NewSection) {
-    if (CurSection != NewSection) {
-      CurSection = NewSection;
-      if (!CurSection.empty())
-        OS << "\t" << NewSection << "\n";
-    }
-  }
 };
 
 } // end namespace x86
