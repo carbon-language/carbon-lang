@@ -21,12 +21,9 @@
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/CodeGen/AsmPrinter.h"
-
 #include "llvm/Target/TargetMachine.h"
-
 #include "llvm/Support/Mangler.h"
 #include "llvm/ADT/Statistic.h"
-#include "llvm/Support/CommandLine.h"
 
 using namespace llvm;
 
@@ -66,7 +63,6 @@ namespace {
     bool runOnMachineFunction(MachineFunction &F);
     bool doInitialization(Module &M);
     bool doFinalization(Module &M);
-    void switchSection(std::ostream &OS, const char *NewSection);
   };
 } // end of anonymous namespace
 
@@ -180,7 +176,7 @@ bool AlphaAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   printConstantPool(MF.getConstantPool());
 
   // Print out labels for the function.
-  switchSection(O, "text");
+  SwitchSection("\t.section .text", MF.getFunction());
   emitAlignment(4);
   O << "\t.globl " << CurrentFnName << "\n";
   O << "\t.ent " << CurrentFnName << "\n";
@@ -220,9 +216,8 @@ void AlphaAsmPrinter::printConstantPool(MachineConstantPool *MCP) {
 
   if (CP.empty()) return;
 
-  switchSection(O, "rodata");
+  SwitchSection("\t.section .rodata", 0);
   for (unsigned i = 0, e = CP.size(); i != e; ++i) {
-    //    switchSection(O, "section .rodata, \"dr\"");
     emitAlignment(TD.getTypeAlignmentShift(CP[i]->getType()));
     O << PrivateGlobalPrefix << "CPI" << CurrentFnName << "_" << i 
       << ":\t\t\t\t\t" << CommentString << *CP[i] << "\n";
@@ -242,19 +237,6 @@ bool AlphaAsmPrinter::doInitialization(Module &M)
   return false;
 }
 
-
-// switchSection - Switch to the specified section of the executable if we are
-// not already in it!
-//
-void AlphaAsmPrinter::switchSection(std::ostream &OS, const char *NewSection)
-{
-  if (CurSection != NewSection) {
-    CurSection = NewSection;
-    if (!CurSection.empty())
-      OS << "\t.section ." << NewSection << "\n";
-  }
-}
-
 bool AlphaAsmPrinter::doFinalization(Module &M) {
   const TargetData &TD = TM.getTargetData();
 
@@ -269,7 +251,7 @@ bool AlphaAsmPrinter::doFinalization(Module &M) {
       if (C->isNullValue() &&
           (I->hasLinkOnceLinkage() || I->hasInternalLinkage() ||
            I->hasWeakLinkage() /* FIXME: Verify correct */)) {
-        switchSection(O, "data");
+        SwitchSection("\t.section .data", I);
         if (I->hasInternalLinkage())
           O << "\t.local " << name << "\n";
 
@@ -284,8 +266,8 @@ bool AlphaAsmPrinter::doFinalization(Module &M) {
         case GlobalValue::WeakLinkage:   // FIXME: Verify correct for weak.
           // Nonnull linkonce -> weak
           O << "\t.weak " << name << "\n";
-          switchSection(O, "");
           O << "\t.section\t.llvm.linkonce.d." << name << ",\"aw\",@progbits\n";
+          SwitchSection("", I);
           break;
         case GlobalValue::AppendingLinkage:
           // FIXME: appending linkage variables should go into a section of
@@ -295,10 +277,8 @@ bool AlphaAsmPrinter::doFinalization(Module &M) {
           O << "\t.globl " << name << "\n";
           // FALL THROUGH
         case GlobalValue::InternalLinkage:
-          if (C->isNullValue())
-            switchSection(O, "bss");
-          else
-            switchSection(O, "data");
+          SwitchSection(C->isNullValue() ? "\t.section .bss" : 
+                        "\t.section .data", I);
           break;
         case GlobalValue::GhostLinkage:
           std::cerr << "GhostLinkage cannot appear in AlphaAsmPrinter!\n";
