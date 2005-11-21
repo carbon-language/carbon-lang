@@ -44,7 +44,6 @@ namespace {
   Statistic<> EmittedInsts("asm-printer", "Number of machine instrs printed");
 
   class PPCAsmPrinter : public AsmPrinter {
-    std::string CurSection;
   public:
     std::set<std::string> FnStubs, GVStubs, LinkOnceStubs;
     
@@ -63,24 +62,6 @@ namespace {
       return static_cast<PPCTargetMachine&>(TM);
     }
 
-    /// SwitchSection - Switch to the specified section of the executable if we
-    /// are not already in it!
-    ///
-    void SwitchSection(const char *NewSection, const GlobalValue *GV) {
-      std::string NS;
-      
-      if (GV && GV->hasSection())
-        NS = ".section " + GV->getSection();
-      else
-        NS = NewSection;
-      
-      if (CurSection != NS) {
-        CurSection = NS;
-        if (!CurSection.empty())
-          O << "\t" << CurSection << "\n";
-      }
-    }
-    
     unsigned enumRegToMachineReg(unsigned enumReg) {
       switch (enumReg) {
       default: assert(0 && "Unhandled register!"); break;
@@ -466,7 +447,6 @@ void DarwinAsmPrinter::printConstantPool(MachineConstantPool *MCP) {
 bool DarwinAsmPrinter::doInitialization(Module &M) {
   if (TM.getSubtarget<PPCSubtarget>().isGigaProcessor())
     O << "\t.machine ppc970\n";
-  SwitchSection("", 0);
   AsmPrinter::doInitialization(M);
   
   // Darwin wants symbols to be quoted if they have complex names.
