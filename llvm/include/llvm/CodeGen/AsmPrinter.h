@@ -24,6 +24,9 @@ namespace llvm {
   class Mangler;
 
   class AsmPrinter : public MachineFunctionPass {
+    /// CurrentSection - The current section we are emitting to.  This is
+    /// controlled and used by the SwitchSection method.
+    std::string CurrentSection;
   protected:
     /// Output stream on which we're printing assembly code.
     ///
@@ -128,6 +131,16 @@ namespace llvm {
         AlignmentIsInBytes(true) {
     }
 
+    /// SwitchSection - Switch to the specified section of the executable if we
+    /// are not already in it!  If GV is non-null and if the global has an
+    /// explicitly requested section, we switch to the section indicated for the
+    /// global instead of NewSection.
+    ///
+    /// If the new section is an empty string, this method forgets what the
+    /// current section is, but does not emit a .section directive.
+    ///
+    void SwitchSection(const char *NewSection, const GlobalValue *GV);
+      
     /// doInitialization - Set up the AsmPrinter when we are working on a new
     /// module.  If your pass overrides this, it must make sure to explicitly
     /// call this implementation.
