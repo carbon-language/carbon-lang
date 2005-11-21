@@ -32,7 +32,7 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   printConstantPool(MF.getConstantPool());
 
   // Print out labels for the function.
-  O << "\t.text\n";
+  SwitchSection("\t.text\n", MF.getFunction());
   emitAlignment(4);     // FIXME: This should be parameterized somewhere.
   O << "\t.globl\t" << CurrentFnName << "\n";
   if (!forCygwin && !forDarwin)

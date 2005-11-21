@@ -84,11 +84,7 @@ void X86SharedAsmPrinter::printConstantPool(MachineConstantPool *MCP) {
 
   if (CP.empty()) return;
 
-  if (forDarwin) {
-    O << "\t.const\n";
-  } else {
-    O << "\t.section .rodata\n";
-  }
+  SwitchSection(forDarwin ? "\t.const\n" : "\t.section .rodata\n", 0);
   
   for (unsigned i = 0, e = CP.size(); i != e; ++i) {
     // FIXME: force doubles to be naturally aligned.  We should handle this
@@ -168,6 +164,7 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
     }
 
   if (forDarwin) {
+    SwitchSection("", 0);
     // Output stubs for external global variables
     if (GVStubs.begin() != GVStubs.end())
       O << "\t.non_lazy_symbol_pointer\n";
