@@ -16,6 +16,7 @@
 
 #include "X86ATTAsmPrinter.h"
 #include "X86IntelAsmPrinter.h"
+#include "X86Subtarget.h"
 #include "X86.h"
 #include "llvm/Module.h"
 #include "llvm/Type.h"
@@ -40,30 +41,16 @@ AsmWriterFlavor("x86-asm-syntax",
 
 /// doInitialization
 bool X86SharedAsmPrinter::doInitialization(Module &M) {
-  bool forCygwin = false;
+  const X86Subtarget *Subtarget = &TM.getSubtarget<X86Subtarget>();
+  
+  forELF = false;
   forDarwin = false;
-  forELF    = false;
-  bool forWin32 = false;
-  const std::string& TT = M.getTargetTriple();
-  if (TT.length() > 5) {
-    forCygwin = TT.find("cygwin") != std::string::npos ||
-                TT.find("mingw")  != std::string::npos;
-    forDarwin = TT.find("darwin") != std::string::npos;
-    if (!forDarwin && !forCygwin)
-      forELF = true;
-  } else if (TT.empty()) {
-#if defined(__CYGWIN__) || defined(__MINGW32__)
-    forCygwin = true;
-#elif defined(__APPLE__)
-    forDarwin = true;
-#elif defined(_WIN32)
-    forWin32 = true;
-#else
+  
+  switch (Subtarget->TargetType) {
+  case X86Subtarget::isELF:
     forELF = true;
-#endif
-  }
-
-  if (forDarwin) {
+    break;
+  case X86Subtarget::isDarwin:
     AlignmentIsInBytes = false;
     GlobalPrefix = "_";
     Data64bitsDirective = 0;       // we can't emit a 64-bit unit
@@ -72,12 +59,17 @@ bool X86SharedAsmPrinter::doInitialization(Module &M) {
     ConstantPoolSection = "\t.const\n";
     LCOMMDirective = "\t.lcomm\t";
     COMMDirectiveTakesAlignment = false;
-  } else if (forCygwin) {
+    forDarwin = true;
+    break;
+  case X86Subtarget::isCygwin:
     GlobalPrefix = "_";
     COMMDirectiveTakesAlignment = false;
-  } else if (forWin32) {
+    break;
+  case X86Subtarget::isWindows:
     GlobalPrefix = "_";
-  }  
+    break;
+  default: break;
+  }
   
   return AsmPrinter::doInitialization(M);
 }
@@ -87,7 +79,7 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
 
   // Print out module-level global variables here.
   for (Module::const_global_iterator I = M.global_begin(),
-         E = M.global_end(); I != E; ++I)
+       E = M.global_end(); I != E; ++I) {
     if (I->hasInitializer()) {   // External global require no code
       O << "\n\n";
       std::string name = Mang->getValueName(I);
@@ -155,7 +147,8 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
       O << "\n";
       EmitGlobalConstant(C);
     }
-
+  }
+  
   if (forDarwin) {
     SwitchSection("", 0);
     // Output stubs for external global variables

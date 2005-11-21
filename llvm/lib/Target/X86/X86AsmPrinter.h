@@ -35,7 +35,7 @@ struct X86SharedAsmPrinter : public AsmPrinter {
   bool doFinalization(Module &M);
 
   bool forELF;
-  bool forDarwin;
+  bool forDarwin;  // FIXME: eliminate.
 
   // Necessary for Darwin to print out the apprioriate types of linker stubs
   std::set<std::string> FnStubs, GVStubs, LinkOnceStubs;
