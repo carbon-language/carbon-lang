@@ -44,15 +44,11 @@ namespace {
   Statistic<> EmittedInsts("asm-printer", "Number of machine instrs printed");
 
   class PPCAsmPrinter : public AsmPrinter {
-  public:
+public:
     std::set<std::string> FnStubs, GVStubs, LinkOnceStubs;
     
     PPCAsmPrinter(std::ostream &O, TargetMachine &TM)
-      : AsmPrinter(O, TM), FunctionNumber(0) {}
-
-    /// Unique incrementer for label values for referencing Global values.
-    ///
-    unsigned FunctionNumber;
+      : AsmPrinter(O, TM) {}
 
     virtual const char *getPassName() const {
       return "PowerPC Assembly Printer";
@@ -163,8 +159,8 @@ namespace {
     void printPICLabel(const MachineInstr *MI, unsigned OpNo,
                        MVT::ValueType VT) {
       // FIXME: should probably be converted to cout.width and cout.fill
-      O << "\"L0000" << FunctionNumber << "$pb\"\n";
-      O << "\"L0000" << FunctionNumber << "$pb\":";
+      O << "\"L0000" << getFunctionNumber() << "$pb\"\n";
+      O << "\"L0000" << getFunctionNumber() << "$pb\":";
     }
     void printSymbolHi(const MachineInstr *MI, unsigned OpNo,
                        MVT::ValueType VT) {
@@ -174,7 +170,7 @@ namespace {
         O << "ha16(";
         printOp(MI->getOperand(OpNo));
         if (PICEnabled)
-          O << "-\"L0000" << FunctionNumber << "$pb\")";
+          O << "-\"L0000" << getFunctionNumber() << "$pb\")";
         else
           O << ')';
       }
@@ -187,7 +183,7 @@ namespace {
         O << "lo16(";
         printOp(MI->getOperand(OpNo));
         if (PICEnabled)
-          O << "-\"L0000" << FunctionNumber << "$pb\")";
+          O << "-\"L0000" << getFunctionNumber() << "$pb\")";
         else
           O << ')';
       }
@@ -301,13 +297,13 @@ void PPCAsmPrinter::printOp(const MachineOperand &MO) {
 
   case MachineOperand::MO_MachineBasicBlock: {
     MachineBasicBlock *MBBOp = MO.getMachineBasicBlock();
-    O << PrivateGlobalPrefix << "BB" << FunctionNumber << "_"
+    O << PrivateGlobalPrefix << "BB" << getFunctionNumber() << "_"
       << MBBOp->getNumber() << "\t; " << MBBOp->getBasicBlock()->getName();
     return;
   }
 
   case MachineOperand::MO_ConstantPoolIndex:
-    O << PrivateGlobalPrefix << "CPI" << FunctionNumber
+    O << PrivateGlobalPrefix << "CPI" << getFunctionNumber()
       << '_' << MO.getConstantPoolIndex();
     return;
 
@@ -396,7 +392,7 @@ void PPCAsmPrinter::printConstantPool(MachineConstantPool *MCP) {
     if (CP[i]->getType() == Type::DoubleTy && Alignment < 3) Alignment = 3;
     
     EmitAlignment(Alignment);
-    O << PrivateGlobalPrefix << "CPI" << FunctionNumber << '_' << i
+    O << PrivateGlobalPrefix << "CPI" << getFunctionNumber() << '_' << i
       << ":\t\t\t\t\t" << CommentString << *CP[i] << '\n';
     EmitGlobalConstant(CP[i]);
   }
@@ -426,7 +422,7 @@ bool DarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
        I != E; ++I) {
     // Print a label for the basic block.
     if (I != MF.begin()) {
-      O << PrivateGlobalPrefix << "BB" << FunctionNumber << '_'
+      O << PrivateGlobalPrefix << "BB" << getFunctionNumber() << '_'
         << I->getNumber() << ":\t";
       if (!I->getBasicBlock()->getName().empty())
         O << CommentString << " " << I->getBasicBlock()->getName();
@@ -439,7 +435,6 @@ bool DarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
       printMachineInstruction(II);
     }
   }
-  ++FunctionNumber;
 
   // We didn't modify anything.
   return false;
@@ -610,7 +605,8 @@ bool AIXAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   for (MachineFunction::const_iterator I = MF.begin(), E = MF.end();
        I != E; ++I) {
     // Print a label for the basic block.
-    O << PrivateGlobalPrefix << "BB" << FunctionNumber << '_' << I->getNumber()
+    O << PrivateGlobalPrefix << "BB" << getFunctionNumber() << '_'
+      << I->getNumber()
       << ":\t" << CommentString << I->getBasicBlock()->getName() << '\n';
     for (MachineBasicBlock::const_iterator II = I->begin(), E = I->end();
       II != E; ++II) {
@@ -619,7 +615,6 @@ bool AIXAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
       printMachineInstruction(II);
     }
   }
-  ++FunctionNumber;
 
   O << "LT.." << CurrentFnName << ":\n"
     << "\t.long 0\n"
@@ -669,14 +664,15 @@ bool AIXAsmPrinter::doInitialization(Module &M) {
     if (GV->isExternal() && GV->use_begin() == GV->use_end())
       continue;
 
+    IncrementFunctionNumber();
     std::string Name = GV->getName();
-    std::string Label = "LC.." + utostr(FunctionNumber++);
+    std::string Label = "LC.." + utostr(getFunctionNumber());
     GVToLabelMap[GV] = Label;
     O << Label << ":\n"
       << "\t.tc " << Name << "[TC]," << Name;
     if (GV->isExternal()) O << "[RW]";
     O << '\n';
-  }
+   }
 
   AsmPrinter::doInitialization(M);
   return false; // success
