@@ -22,7 +22,6 @@
 #include "llvm/Type.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/CodeGen/AsmPrinter.h"
-#include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/Target/TargetMachine.h"
@@ -41,30 +40,8 @@ namespace {
     IA64SharedAsmPrinter(std::ostream &O, TargetMachine &TM)
       : AsmPrinter(O, TM) { }
 
-    void printConstantPool(MachineConstantPool *MCP);
     bool doFinalization(Module &M);
   };
-}
-
-/// printConstantPool - Print to the current output stream assembly
-/// representations of the constants in the constant pool MCP. This is
-/// used to print out constants which have been "spilled to memory" by
-/// the code generator.
-///
-void IA64SharedAsmPrinter::printConstantPool(MachineConstantPool *MCP) {
-  const std::vector<Constant*> &CP = MCP->getConstants();
-  const TargetData &TD = TM.getTargetData();
-
-  if (CP.empty()) return;
-
-  // FIXME: would be nice to have rodata (no 'w') when appropriate?
-  SwitchSection("\n\t.section .data, \"aw\", \"progbits\"\n", 0);
-  for (unsigned i = 0, e = CP.size(); i != e; ++i) {
-    EmitAlignment(TD.getTypeAlignmentShift(CP[i]->getType()));
-    O << PrivateGlobalPrefix << "CPI" << CurrentFnName << "_" << i
-      << ":\t\t\t\t\t" << CommentString << *CP[i] << "\n";
-    EmitGlobalConstant(CP[i]);
-  }
 }
 
 bool IA64SharedAsmPrinter::doFinalization(Module &M) {
@@ -169,7 +146,9 @@ namespace {
       GlobalVarAddrSuffix="";
       FunctionAddrPrefix="@fptr(";
       FunctionAddrSuffix=")";
-
+      
+      // FIXME: would be nice to have rodata (no 'w') when appropriate?
+      ConstantPoolSection = "\n\t.section .data, \"aw\", \"progbits\"\n";
     }
 
     virtual const char *getPassName() const {
@@ -264,7 +243,7 @@ bool IA64AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   O << "\n\n";
 
   // Print out constants referenced by the function
-  printConstantPool(MF.getConstantPool());
+  EmitConstantPool(MF.getConstantPool());
 
   // Print out labels for the function.
   SwitchSection("\n\t.section .text, \"ax\", \"progbits\"\n", MF.getFunction());
@@ -328,7 +307,7 @@ void IA64AsmPrinter::printOp(const MachineOperand &MO,
     return;
 
   case MachineOperand::MO_ConstantPoolIndex: {
-    O << "@gprel(" << PrivateGlobalPrefix << "CPI" << CurrentFnName << "_"
+    O << "@gprel(" << PrivateGlobalPrefix << "CPI" << getFunctionNumber() << "_"
       << MO.getConstantPoolIndex() << ")";
     return;
   }
