@@ -20,7 +20,6 @@
 #include "llvm/Module.h"
 #include "llvm/Type.h"
 #include "llvm/Assembly/Writer.h"
-#include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/Support/CommandLine.h"
 using namespace llvm;
