@@ -590,7 +590,7 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
 /// method to print assembly for each instruction.
 ///
 bool AIXAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
-  CurrentFnName = MF.getFunction()->getName();
+  SetupMachineFunction(MF);
 
   // Print out constants referenced by the function
   printConstantPool(MF.getConstantPool());
@@ -610,8 +610,8 @@ bool AIXAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   for (MachineFunction::const_iterator I = MF.begin(), E = MF.end();
        I != E; ++I) {
     // Print a label for the basic block.
-    O << PrivateGlobalPrefix << "BB" << CurrentFnName << '_' << I->getNumber()
-      << ":\t# " << I->getBasicBlock()->getName() << '\n';
+    O << PrivateGlobalPrefix << "BB" << FunctionNumber << '_' << I->getNumber()
+      << ":\t" << CommentString << I->getBasicBlock()->getName() << '\n';
     for (MachineBasicBlock::const_iterator II = I->begin(), E = I->end();
       II != E; ++II) {
       // Print the assembly for the instruction.
@@ -697,7 +697,7 @@ bool AIXAsmPrinter::doFinalization(Module &M) {
       O << "\t.comm " << Name << "," << TD.getTypeSize(I->getType())
         << "," << Log2_32((unsigned)TD.getTypeAlignment(I->getType()));
     }
-    O << "\t\t# ";
+    O << "\t\t" << CommentString << " ";
     WriteAsOperand(O, I, false, true, &M);
     O << "\n";
   }
