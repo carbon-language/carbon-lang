@@ -51,6 +51,7 @@ bool AsmPrinter::doFinalization(Module &M) {
 void AsmPrinter::SetupMachineFunction(MachineFunction &MF) {
   // What's my mangled name?
   CurrentFnName = Mang->getValueName(MF.getFunction());
+  IncrementFunctionNumber();
 }
 
 // EmitAlignment - Emit an alignment directive to the specified power of two.
