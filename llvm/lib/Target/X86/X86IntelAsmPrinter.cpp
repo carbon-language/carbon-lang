@@ -35,7 +35,7 @@ bool X86IntelAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   SwitchSection("\t.text\n", MF.getFunction());
   EmitAlignment(4);
   O << "\t.globl\t" << CurrentFnName << "\n";
-  if (forELF)
+  if (HasDotTypeDotSizeDirective)
     O << "\t.type\t" << CurrentFnName << ", @function\n";
   O << CurrentFnName << ":\n";
 

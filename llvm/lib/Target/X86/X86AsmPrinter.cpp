@@ -43,13 +43,9 @@ AsmWriterFlavor("x86-asm-syntax",
 bool X86SharedAsmPrinter::doInitialization(Module &M) {
   const X86Subtarget *Subtarget = &TM.getSubtarget<X86Subtarget>();
   
-  forELF = false;
   forDarwin = false;
   
   switch (Subtarget->TargetType) {
-  case X86Subtarget::isELF:
-    forELF = true;
-    break;
   case X86Subtarget::isDarwin:
     AlignmentIsInBytes = false;
     GlobalPrefix = "_";
@@ -59,14 +55,17 @@ bool X86SharedAsmPrinter::doInitialization(Module &M) {
     ConstantPoolSection = "\t.const\n";
     LCOMMDirective = "\t.lcomm\t";
     COMMDirectiveTakesAlignment = false;
+    HasDotTypeDotSizeDirective = false;
     forDarwin = true;
     break;
   case X86Subtarget::isCygwin:
     GlobalPrefix = "_";
     COMMDirectiveTakesAlignment = false;
+    HasDotTypeDotSizeDirective = false;
     break;
   case X86Subtarget::isWindows:
     GlobalPrefix = "_";
+    HasDotTypeDotSizeDirective = false;
     break;
   default: break;
   }
@@ -96,9 +95,7 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
         O << COMMDirective << name << "," << Size;
         if (COMMDirectiveTakesAlignment)
           O << "," << (1 << Align);
-        O << "\t\t# ";
-        WriteAsOperand(O, I, true, true, &M);
-        O << "\n";
+        O << "\t\t" << CommentString << " " << I->getName() << "\n";
         continue;
       }
       
@@ -137,15 +134,11 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
     }
 
     EmitAlignment(Align);
-    if (forELF) {
+    if (HasDotTypeDotSizeDirective) {
       O << "\t.type " << name << ",@object\n";
       O << "\t.size " << name << "," << Size << "\n";
     }
-    O << name << ":\t\t\t\t# ";
-    WriteAsOperand(O, I, true, true, &M);
-    O << " = ";
-    WriteAsOperand(O, C, false, false, &M);
-    O << "\n";
+    O << name << ":\t\t\t" << CommentString << ' ' << I->getName() << '\n';
     EmitGlobalConstant(C);
   }
   

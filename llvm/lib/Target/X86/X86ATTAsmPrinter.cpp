@@ -35,7 +35,7 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   SwitchSection("\t.text\n", MF.getFunction());
   EmitAlignment(4);     // FIXME: This should be parameterized somewhere.
   O << "\t.globl\t" << CurrentFnName << "\n";
-  if (forELF)
+  if (HasDotTypeDotSizeDirective)
     O << "\t.type\t" << CurrentFnName << ", @function\n";
   O << CurrentFnName << ":\n";
 
@@ -54,7 +54,7 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
       printMachineInstruction(II);
     }
   }
-  if (forELF)
+  if (HasDotTypeDotSizeDirective)
     O << "\t.size " << CurrentFnName << ", .-" << CurrentFnName << "\n";
 
   // We didn't modify anything.

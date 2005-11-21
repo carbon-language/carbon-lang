@@ -29,12 +29,11 @@ extern Statistic<> EmittedInsts;
 
 struct X86SharedAsmPrinter : public AsmPrinter {
   X86SharedAsmPrinter(std::ostream &O, TargetMachine &TM)
-    : AsmPrinter(O, TM), forELF(false), forDarwin(false) { }
+    : AsmPrinter(O, TM), forDarwin(false) { }
 
   bool doInitialization(Module &M);
   bool doFinalization(Module &M);
 
-  bool forELF;
   bool forDarwin;  // FIXME: eliminate.
 
   // Necessary for Darwin to print out the apprioriate types of linker stubs
