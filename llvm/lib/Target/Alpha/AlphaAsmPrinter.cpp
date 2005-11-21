@@ -37,8 +37,7 @@ namespace {
     unsigned LabelNumber;
 
      AlphaAsmPrinter(std::ostream &o, TargetMachine &tm)
-       : AsmPrinter(o, tm), LabelNumber(0)
-    {
+       : AsmPrinter(o, tm), LabelNumber(0) {
       AlignmentIsInBytes = false;
       PrivateGlobalPrefix = "$";
     }
@@ -121,7 +120,8 @@ void AlphaAsmPrinter::printOp(const MachineOperand &MO, bool IsCallOp) {
 
   case MachineOperand::MO_MachineBasicBlock: {
     MachineBasicBlock *MBBOp = MO.getMachineBasicBlock();
-    O << "$LBB" << Mang->getValueName(MBBOp->getParent()->getFunction())
+    O << PrivateGlobalPrefix << "LBB"
+      << Mang->getValueName(MBBOp->getParent()->getFunction())
       << "_" << MBBOp->getNumber() << "\t" << CommentString << " "
       << MBBOp->getBasicBlock()->getName();
     return;
@@ -140,7 +140,7 @@ void AlphaAsmPrinter::printOp(const MachineOperand &MO, bool IsCallOp) {
     //Abuse PCrel to specify pcrel calls
     //calls are the only thing that use this flag
     if (MO.isPCRelative())
-      O << "$" << Mang->getValueName(MO.getGlobal()) << "..ng";
+      O << PrivateGlobalPrefix << Mang->getValueName(MO.getGlobal()) << "..ng";
     else
       O << Mang->getValueName(MO.getGlobal());
     return;
@@ -187,8 +187,8 @@ bool AlphaAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   for (MachineFunction::const_iterator I = MF.begin(), E = MF.end();
        I != E; ++I) {
     // Print a label for the basic block.
-    O << "$LBB" << CurrentFnName << "_" << I->getNumber() << ":\t"
-      << CommentString << " " << I->getBasicBlock()->getName() << "\n";
+    O << PrivateGlobalPrefix << "LBB" << CurrentFnName << "_" << I->getNumber()
+      << ":\t" << CommentString << " " << I->getBasicBlock()->getName() << "\n";
     for (MachineBasicBlock::const_iterator II = I->begin(), E = I->end();
          II != E; ++II) {
       // Print the assembly for the instruction.
