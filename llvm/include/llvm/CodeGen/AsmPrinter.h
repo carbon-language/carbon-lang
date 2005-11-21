@@ -27,6 +27,14 @@ namespace llvm {
     /// CurrentSection - The current section we are emitting to.  This is
     /// controlled and used by the SwitchSection method.
     std::string CurrentSection;
+    
+    /// FunctionNumber - This provides a unique ID for each function emitted in
+    /// this translation unit.  It is autoincremented by SetupMachineFunction,
+    /// and can be accessed with getFunctionNumber() and 
+    /// IncrementFunctionNumber().
+    ///
+    unsigned FunctionNumber;
+    
   protected:
     /// Output stream on which we're printing assembly code.
     ///
@@ -112,7 +120,7 @@ namespace llvm {
     bool AlignmentIsInBytes;          // Defaults to true
 
     AsmPrinter(std::ostream &o, TargetMachine &tm)
-      : O(o), TM(tm),
+      : FunctionNumber(0), O(o), TM(tm),
         CommentString("#"),
         GlobalPrefix(""),
         PrivateGlobalPrefix("."),
@@ -140,7 +148,16 @@ namespace llvm {
     /// current section is, but does not emit a .section directive.
     ///
     void SwitchSection(const char *NewSection, const GlobalValue *GV);
-      
+
+    /// getFunctionNumber - Return a unique ID for the current function.
+    ///
+    unsigned getFunctionNumber() const { return FunctionNumber; }
+    
+    /// IncrementFunctionNumber - Increase Function Number.  AsmPrinters should
+    /// not normally call this, as the counter is automatically bumped by
+    /// SetupMachineFunction.
+    void IncrementFunctionNumber() { FunctionNumber++; }
+    
     /// doInitialization - Set up the AsmPrinter when we are working on a new
     /// module.  If your pass overrides this, it must make sure to explicitly
     /// call this implementation.
