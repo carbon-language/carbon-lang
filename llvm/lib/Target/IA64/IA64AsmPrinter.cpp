@@ -61,10 +61,10 @@ static bool isMem(const MachineInstr *MI, unsigned Op) {
         MI->getOperand(Op+3).isGlobalAddress());
 }
 
-// SwitchSection - Switch to the specified section of the executable if we are
+// switchSection - Switch to the specified section of the executable if we are
 // not already in it!
 //
-static void SwitchSection(std::ostream &OS, std::string &CurSection,
+static void switchSection(std::ostream &OS, std::string &CurSection,
                           const char *NewSection) {
   if (CurSection != NewSection) {
     CurSection = NewSection;
@@ -111,7 +111,7 @@ bool IA64SharedAsmPrinter::doFinalization(Module &M) {
       if (C->isNullValue() &&
           (I->hasLinkOnceLinkage() || I->hasInternalLinkage() ||
            I->hasWeakLinkage() /* FIXME: Verify correct */)) {
-        SwitchSection(O, CurSection, ".data");
+        switchSection(O, CurSection, ".data");
         if (I->hasInternalLinkage()) {
           O << "\t.lcomm " << name << "," << TD.getTypeSize(C->getType())
             << "," << (1 << Align);
@@ -129,7 +129,7 @@ bool IA64SharedAsmPrinter::doFinalization(Module &M) {
         case GlobalValue::WeakLinkage:   // FIXME: Verify correct for weak.
           // Nonnull linkonce -> weak
           O << "\t.weak " << name << "\n";
-          SwitchSection(O, CurSection, "");
+          switchSection(O, CurSection, "");
           O << "\t.section\t.llvm.linkonce.d." << name
             << ", \"aw\", \"progbits\"\n";
           break;
@@ -142,9 +142,9 @@ bool IA64SharedAsmPrinter::doFinalization(Module &M) {
           // FALL THROUGH
         case GlobalValue::InternalLinkage:
           if (C->isNullValue())
-            SwitchSection(O, CurSection, ".bss");
+            switchSection(O, CurSection, ".bss");
           else
-            SwitchSection(O, CurSection, ".data");
+            switchSection(O, CurSection, ".data");
           break;
         case GlobalValue::GhostLinkage:
           std::cerr << "GhostLinkage cannot appear in IA64AsmPrinter!\n";

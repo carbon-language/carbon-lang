@@ -56,9 +56,9 @@ struct X86SharedAsmPrinter : public AsmPrinter {
       MI->getOperand(Op+3).isGlobalAddress());
   }
 
-  // SwitchSection - Switch to the specified section of the executable if we are
+  // switchSection - Switch to the specified section of the executable if we are
   // not already in it!
-  inline static void SwitchSection(std::ostream &OS, std::string &CurSection,
+  inline static void switchSection(std::ostream &OS, std::string &CurSection,
                                    const char *NewSection) {
     if (CurSection != NewSection) {
       CurSection = NewSection;

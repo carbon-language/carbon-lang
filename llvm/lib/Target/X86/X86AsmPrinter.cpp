@@ -120,7 +120,7 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
       if (C->isNullValue() &&
           (I->hasLinkOnceLinkage() || I->hasInternalLinkage() ||
            I->hasWeakLinkage() /* FIXME: Verify correct */)) {
-        SwitchSection(O, CurSection, ".data");
+        switchSection(O, CurSection, ".data");
         if (!forCygwin && !forDarwin && I->hasInternalLinkage())
           O << "\t.local " << name << "\n";
         if (forDarwin && I->hasInternalLinkage())
@@ -139,7 +139,7 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
         case GlobalValue::WeakLinkage:   // FIXME: Verify correct for weak.
           // Nonnull linkonce -> weak
           O << "\t.weak " << name << "\n";
-          SwitchSection(O, CurSection, "");
+          switchSection(O, CurSection, "");
           O << "\t.section\t.llvm.linkonce.d." << name << ",\"aw\",@progbits\n";
           break;
         case GlobalValue::AppendingLinkage:
@@ -151,9 +151,9 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
           // FALL THROUGH
         case GlobalValue::InternalLinkage:
           if (C->isNullValue())
-            SwitchSection(O, CurSection, ".bss");
+            switchSection(O, CurSection, ".bss");
           else
-            SwitchSection(O, CurSection, ".data");
+            switchSection(O, CurSection, ".data");
           break;
         }
 
