@@ -382,7 +382,7 @@ void PPCAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
 /// method to print assembly for each instruction.
 ///
 bool DarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
-  setupMachineFunction(MF);
+  SetupMachineFunction(MF);
   O << "\n\n";
 
   // Print out constants referenced by the function
@@ -391,7 +391,7 @@ bool DarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   // Print out labels for the function.
   const Function *F = MF.getFunction();
   SwitchSection(".text", F);
-  emitAlignment(4, F);
+  EmitAlignment(4, F);
   if (!F->hasInternalLinkage())
     O << "\t.globl\t" << CurrentFnName << "\n";
   O << CurrentFnName << ":\n";
@@ -436,12 +436,12 @@ void DarwinAsmPrinter::printConstantPool(MachineConstantPool *MCP) {
     // FIXME: force doubles to be naturally aligned.  We should handle this
     // more correctly in the future.
     if (CP[i]->getType() == Type::DoubleTy)
-      emitAlignment(3);
+      EmitAlignment(3);
     else
-      emitAlignment(TD.getTypeAlignmentShift(CP[i]->getType()));
+      EmitAlignment(TD.getTypeAlignmentShift(CP[i]->getType()));
     O << PrivateGlobalPrefix << "CPI" << FunctionNumber << '_' << i
       << ":\t\t\t\t\t" << CommentString << *CP[i] << '\n';
-    emitGlobalConstant(CP[i]);
+    EmitGlobalConstant(CP[i]);
   }
 }
 
@@ -507,9 +507,9 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
           abort();
         }
 
-        emitAlignment(Align, I);
+        EmitAlignment(Align, I);
         O << name << ":\t\t\t\t; '" << I->getName() << "'\n";
-        emitGlobalConstant(C);
+        EmitGlobalConstant(C);
       }
     }
 
@@ -520,7 +520,7 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
     if (PICEnabled) {
     O << ".data\n";
     O << ".section __TEXT,__picsymbolstub1,symbol_stubs,pure_instructions,32\n";
-    emitAlignment(2);
+    EmitAlignment(2);
     O << "L" << *i << "$stub:\n";
     O << "\t.indirect_symbol " << *i << "\n";
     O << "\tmflr r0\n";
@@ -539,7 +539,7 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
     O << "\t.long dyld_stub_binding_helper\n";
     } else {
     O << "\t.section __TEXT,__symbol_stub1,symbol_stubs,pure_instructions,16\n";
-    emitAlignment(4);
+    EmitAlignment(4);
     O << "L" << *i << "$stub:\n";
     O << "\t.indirect_symbol " << *i << "\n";
     O << "\tlis r11,ha16(L" << *i << "$lazy_ptr)\n";
@@ -649,7 +649,7 @@ void AIXAsmPrinter::printConstantPool(MachineConstantPool *MCP) {
       << "\n";
     O << PrivateGlobalPrefix << "CPI" << FunctionNumber << '_' << i
       << ":\t\t\t\t\t;" << *CP[i] << '\n';
-    emitGlobalConstant(CP[i]);
+    EmitGlobalConstant(CP[i]);
   }
 }
 
@@ -677,7 +677,7 @@ bool AIXAsmPrinter::doInitialization(Module &M) {
       O << "\t.csect _global.rw_c[RW],3\n";
     }
     O << Name << ":\n";
-    emitGlobalConstant(C);
+    EmitGlobalConstant(C);
   }
 
   // Output labels for globals

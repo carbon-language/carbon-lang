@@ -60,10 +60,10 @@ void IA64SharedAsmPrinter::printConstantPool(MachineConstantPool *MCP) {
   // FIXME: would be nice to have rodata (no 'w') when appropriate?
   SwitchSection("\n\t.section .data, \"aw\", \"progbits\"\n", 0);
   for (unsigned i = 0, e = CP.size(); i != e; ++i) {
-    emitAlignment(TD.getTypeAlignmentShift(CP[i]->getType()));
+    EmitAlignment(TD.getTypeAlignmentShift(CP[i]->getType()));
     O << PrivateGlobalPrefix << "CPI" << CurrentFnName << "_" << i
       << ":\t\t\t\t\t" << CommentString << *CP[i] << "\n";
-    emitGlobalConstant(CP[i]);
+    EmitGlobalConstant(CP[i]);
   }
 }
 
@@ -120,7 +120,7 @@ bool IA64SharedAsmPrinter::doFinalization(Module &M) {
           abort();
         }
 
-        emitAlignment(Align);
+        EmitAlignment(Align);
         O << "\t.type " << name << ",@object\n";
         O << "\t.size " << name << "," << Size << "\n";
         O << name << ":\t\t\t\t// ";
@@ -128,7 +128,7 @@ bool IA64SharedAsmPrinter::doFinalization(Module &M) {
         O << " = ";
         WriteAsOperand(O, C, false, false, &M);
         O << "\n";
-        emitGlobalConstant(C);
+        EmitGlobalConstant(C);
       }
     }
 
@@ -260,7 +260,7 @@ namespace {
 /// method to print assembly for each instruction.
 ///
 bool IA64AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
-  setupMachineFunction(MF);
+  SetupMachineFunction(MF);
   O << "\n\n";
 
   // Print out constants referenced by the function
@@ -269,7 +269,7 @@ bool IA64AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   // Print out labels for the function.
   SwitchSection("\n\t.section .text, \"ax\", \"progbits\"\n", MF.getFunction());
   // ^^  means "Allocated instruXions in mem, initialized"
-  emitAlignment(5);
+  EmitAlignment(5);
   O << "\t.global\t" << CurrentFnName << "\n";
   O << "\t.type\t" << CurrentFnName << ", @function\n";
   O << CurrentFnName << ":\n";

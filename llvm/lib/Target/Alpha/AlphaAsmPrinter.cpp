@@ -169,7 +169,7 @@ void AlphaAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
 /// method to print assembly for each instruction.
 ///
 bool AlphaAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
-  setupMachineFunction(MF);
+  SetupMachineFunction(MF);
   O << "\n\n";
 
   // Print out constants referenced by the function
@@ -177,7 +177,7 @@ bool AlphaAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   // Print out labels for the function.
   SwitchSection("\t.section .text", MF.getFunction());
-  emitAlignment(4);
+  EmitAlignment(4);
   O << "\t.globl " << CurrentFnName << "\n";
   O << "\t.ent " << CurrentFnName << "\n";
 
@@ -218,10 +218,10 @@ void AlphaAsmPrinter::printConstantPool(MachineConstantPool *MCP) {
 
   SwitchSection("\t.section .rodata", 0);
   for (unsigned i = 0, e = CP.size(); i != e; ++i) {
-    emitAlignment(TD.getTypeAlignmentShift(CP[i]->getType()));
+    EmitAlignment(TD.getTypeAlignmentShift(CP[i]->getType()));
     O << PrivateGlobalPrefix << "CPI" << CurrentFnName << "_" << i 
       << ":\t\t\t\t\t" << CommentString << *CP[i] << "\n";
-    emitGlobalConstant(CP[i]);
+    EmitGlobalConstant(CP[i]);
   }
 }
 
@@ -285,7 +285,7 @@ bool AlphaAsmPrinter::doFinalization(Module &M) {
           abort();
         }
 
-        emitAlignment(Align);
+        EmitAlignment(Align);
         O << "\t.type " << name << ",@object\n";
         O << "\t.size " << name << "," << Size << "\n";
         O << name << ":\t\t\t\t# ";
@@ -293,7 +293,7 @@ bool AlphaAsmPrinter::doFinalization(Module &M) {
         O << " = ";
         WriteAsOperand(O, C, false, false, &M);
         O << "\n";
-        emitGlobalConstant(C);
+        EmitGlobalConstant(C);
       }
     }
 

@@ -25,7 +25,7 @@ using namespace x86;
 /// method to print assembly for each instruction.
 ///
 bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
-  setupMachineFunction(MF);
+  SetupMachineFunction(MF);
   O << "\n\n";
 
   // Print out constants referenced by the function
@@ -33,7 +33,7 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   // Print out labels for the function.
   SwitchSection("\t.text\n", MF.getFunction());
-  emitAlignment(4);     // FIXME: This should be parameterized somewhere.
+  EmitAlignment(4);     // FIXME: This should be parameterized somewhere.
   O << "\t.globl\t" << CurrentFnName << "\n";
   if (!forCygwin && !forDarwin)
     O << "\t.type\t" << CurrentFnName << ", @function\n";

@@ -90,12 +90,12 @@ void X86SharedAsmPrinter::printConstantPool(MachineConstantPool *MCP) {
     // FIXME: force doubles to be naturally aligned.  We should handle this
     // more correctly in the future.
     if (CP[i]->getType() == Type::DoubleTy)
-      emitAlignment(3);
+      EmitAlignment(3);
     else
-      emitAlignment(TD.getTypeAlignmentShift(CP[i]->getType()));
+      EmitAlignment(TD.getTypeAlignmentShift(CP[i]->getType()));
     O << PrivateGlobalPrefix << "CPI" << CurrentFnName << "_" << i
       << ":\t\t\t\t\t" << CommentString << *CP[i] << "\n";
-    emitGlobalConstant(CP[i]);
+    EmitGlobalConstant(CP[i]);
   }
 }
 
@@ -149,7 +149,7 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
           break;
         }
 
-        emitAlignment(Align);
+        EmitAlignment(Align);
         if (!forCygwin && !forDarwin) {
           O << "\t.type " << name << ",@object\n";
           O << "\t.size " << name << "," << Size << "\n";
@@ -159,7 +159,7 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
         O << " = ";
         WriteAsOperand(O, C, false, false, &M);
         O << "\n";
-        emitGlobalConstant(C);
+        EmitGlobalConstant(C);
       }
     }
 
