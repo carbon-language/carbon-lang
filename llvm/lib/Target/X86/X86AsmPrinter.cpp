@@ -40,8 +40,9 @@ AsmWriterFlavor("x86-asm-syntax",
 
 /// doInitialization
 bool X86SharedAsmPrinter::doInitialization(Module& M) {
-  bool leadingUnderscore = false;
   forCygwin = false;
+  forDarwin = false;
+  bool forWin32 = false;
   const std::string& TT = M.getTargetTriple();
   if (TT.length() > 5) {
     forCygwin = TT.find("cygwin") != std::string::npos ||
@@ -53,23 +54,26 @@ bool X86SharedAsmPrinter::doInitialization(Module& M) {
 #elif defined(__APPLE__)
     forDarwin = true;
 #elif defined(_WIN32)
-    leadingUnderscore = true;
-#else
-    leadingUnderscore = false;
+    forWin32 = true;
 #endif
   }
 
-  if (leadingUnderscore || forCygwin || forDarwin)
-    GlobalPrefix = "_";
-
   if (forDarwin) {
     AlignmentIsInBytes = false;
+    GlobalPrefix = "_";
     Data64bitsDirective = 0;       // we can't emit a 64-bit unit
     ZeroDirective = "\t.space\t";  // ".space N" emits N zeros.
     PrivateGlobalPrefix = "L";     // Marker for constant pool idxs
     ConstantPoolSection = "\t.const\n";
-  }
-
+    LCOMMDirective = "\t.lcomm\t";
+    COMMDirectiveTakesAlignment = false;
+  } else if (forCygwin) {
+    GlobalPrefix = "_";
+    COMMDirectiveTakesAlignment = false;
+  } else if (forWin32) {
+    GlobalPrefix = "_";
+  }  
+  
   return AsmPrinter::doInitialization(M);
 }
 
@@ -86,55 +90,65 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
       unsigned Size = TD.getTypeSize(C->getType());
       unsigned Align = TD.getTypeAlignmentShift(C->getType());
 
-      if (C->isNullValue() &&
-          (I->hasLinkOnceLinkage() || I->hasInternalLinkage() ||
-           I->hasWeakLinkage() /* FIXME: Verify correct */)) {
-        SwitchSection(".data", I);
-        if (!forCygwin && !forDarwin && I->hasInternalLinkage())
-          O << "\t.local " << name << "\n";
-        if (forDarwin && I->hasInternalLinkage())
-          O << "\t.lcomm " << name << "," << Size << "," << Align;
-        else
-          O << "\t.comm " << name << "," << Size;
-        if (!forCygwin && !forDarwin)
-          O << "," << (1 << Align);
-        O << "\t\t# ";
-        WriteAsOperand(O, I, true, true, &M);
-        O << "\n";
-      } else {
-        switch (I->getLinkage()) {
-        default: assert(0 && "Unknown linkage type!");
-        case GlobalValue::LinkOnceLinkage:
-        case GlobalValue::WeakLinkage:   // FIXME: Verify correct for weak.
-          // Nonnull linkonce -> weak
-          O << "\t.weak " << name << "\n";
-          O << "\t.section\t.llvm.linkonce.d." << name << ",\"aw\",@progbits\n";
-          SwitchSection("", I);
-          break;
-        case GlobalValue::AppendingLinkage:
-          // FIXME: appending linkage variables should go into a section of
-          // their name or something.  For now, just emit them as external.
-        case GlobalValue::ExternalLinkage:
-          // If external or appending, declare as a global symbol
-          O << "\t.globl " << name << "\n";
-          // FALL THROUGH
-        case GlobalValue::InternalLinkage:
-          SwitchSection(C->isNullValue() ? ".bss" : ".data", I);
-          break;
+      switch (I->getLinkage()) {
+      default: assert(0 && "Unknown linkage type!");
+      case GlobalValue::LinkOnceLinkage:
+      case GlobalValue::WeakLinkage:   // FIXME: Verify correct for weak.
+        if (C->isNullValue()) {
+          O << COMMDirective << name << "," << Size;
+          if (COMMDirectiveTakesAlignment)
+            O << "," << (1 << Align);
+          O << "\t\t# ";
+          WriteAsOperand(O, I, true, true, &M);
+          O << "\n";
+          continue;
         }
-
-        EmitAlignment(Align);
-        if (!forCygwin && !forDarwin) {
-          O << "\t.type " << name << ",@object\n";
-          O << "\t.size " << name << "," << Size << "\n";
+        
+        // Nonnull linkonce -> weak
+        O << "\t.weak " << name << "\n";
+        O << "\t.section\t.llvm.linkonce.d." << name << ",\"aw\",@progbits\n";
+        SwitchSection("", I);
+        break;
+      case GlobalValue::InternalLinkage:
+        if (C->isNullValue()) {
+          if (LCOMMDirective) {
+            O << LCOMMDirective << name << "," << Size << "," << Align;
+            continue;
+          } else {
+            SwitchSection(".bss", I);
+            O << "\t.local " << name << "\n";
+            O << COMMDirective << name << "," << Size;
+            if (COMMDirectiveTakesAlignment)
+              O << "," << (1 << Align);
+            O << "\t\t# ";
+            WriteAsOperand(O, I, true, true, &M);
+            O << "\n";
+            continue;
+          }
         }
-        O << name << ":\t\t\t\t# ";
-        WriteAsOperand(O, I, true, true, &M);
-        O << " = ";
-        WriteAsOperand(O, C, false, false, &M);
-        O << "\n";
-        EmitGlobalConstant(C);
+        SwitchSection(C->isNullValue() ? ".bss" : ".data", I);
+        break;
+      case GlobalValue::AppendingLinkage:
+        // FIXME: appending linkage variables should go into a section of
+        // their name or something.  For now, just emit them as external.
+      case GlobalValue::ExternalLinkage:
+        SwitchSection(C->isNullValue() ? ".bss" : ".data", I);
+        // If external or appending, declare as a global symbol
+        O << "\t.globl " << name << "\n";
+        break;
       }
+
+      EmitAlignment(Align);
+      if (!forCygwin && !forDarwin) {
+        O << "\t.type " << name << ",@object\n";
+        O << "\t.size " << name << "," << Size << "\n";
+      }
+      O << name << ":\t\t\t\t# ";
+      WriteAsOperand(O, I, true, true, &M);
+      O << " = ";
+      WriteAsOperand(O, C, false, false, &M);
+      O << "\n";
+      EmitGlobalConstant(C);
     }
 
   if (forDarwin) {
