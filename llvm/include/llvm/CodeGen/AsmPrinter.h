@@ -150,27 +150,27 @@ namespace llvm {
     /// pass, you must make sure to call it explicitly.
     bool doFinalization(Module &M);
 
-    /// setupMachineFunction - This should be called when a new MachineFunction
+    /// SetupMachineFunction - This should be called when a new MachineFunction
     /// is being processed from runOnMachineFunction.
-    void setupMachineFunction(MachineFunction &MF);
+    void SetupMachineFunction(MachineFunction &MF);
 
-    /// emitAlignment - Emit an alignment directive to the specified power of
+    /// EmitAlignment - Emit an alignment directive to the specified power of
     /// two boundary.  For example, if you pass in 3 here, you will get an 8
     /// byte alignment.  If a global value is specified, and if that global has
     /// an explicit alignment requested, it will override the alignment request.
-    void emitAlignment(unsigned NumBits, const GlobalValue *GV = 0) const;
+    void EmitAlignment(unsigned NumBits, const GlobalValue *GV = 0) const;
 
-    /// emitZeros - Emit a block of zeros.
+    /// EmitZeros - Emit a block of zeros.
     ///
-    void emitZeros(uint64_t NumZeros) const;
+    void EmitZeros(uint64_t NumZeros) const;
 
-    /// emitConstantValueOnly - Print out the specified constant, without a
+    /// EmitConstantValueOnly - Print out the specified constant, without a
     /// storage class.  Only constants of first-class type are allowed here.
-    void emitConstantValueOnly(const Constant *CV);
+    void EmitConstantValueOnly(const Constant *CV);
 
-    /// emitGlobalConstant - Print a general LLVM constant to the .s file.
+    /// EmitGlobalConstant - Print a general LLVM constant to the .s file.
     ///
-    void emitGlobalConstant(const Constant* CV);
+    void EmitGlobalConstant(const Constant* CV);
   };
 }
 
