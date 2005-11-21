@@ -62,6 +62,8 @@ namespace {
       return static_cast<PPCTargetMachine&>(TM);
     }
 
+    void printConstantPool(MachineConstantPool *MCP);
+
     unsigned enumRegToMachineReg(unsigned enumReg) {
       switch (enumReg) {
       default: assert(0 && "Unhandled register!"); break;
@@ -197,7 +199,6 @@ namespace {
       O << (0x80 >> RegNo);
     }
 
-    virtual void printConstantPool(MachineConstantPool *MCP) = 0;
     virtual bool runOnMachineFunction(MachineFunction &F) = 0;
     virtual bool doFinalization(Module &M) = 0;
   };
@@ -221,7 +222,6 @@ namespace {
       return "Darwin PPC Assembly Printer";
     }
 
-    void printConstantPool(MachineConstantPool *MCP);
     bool runOnMachineFunction(MachineFunction &F);
     bool doInitialization(Module &M);
     bool doFinalization(Module &M);
@@ -247,7 +247,6 @@ namespace {
       return "AIX PPC Assembly Printer";
     }
 
-    void printConstantPool(MachineConstantPool *MCP);
     bool runOnMachineFunction(MachineFunction &F);
     bool doInitialization(Module &M);
     bool doFinalization(Module &M);
@@ -378,6 +377,32 @@ void PPCAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
   return;
 }
 
+/// printConstantPool - Print to the current output stream assembly
+/// representations of the constants in the constant pool MCP. This is
+/// used to print out constants which have been "spilled to memory" by
+/// the code generator.
+///
+void PPCAsmPrinter::printConstantPool(MachineConstantPool *MCP) {
+  const std::vector<Constant*> &CP = MCP->getConstants();
+  const TargetData &TD = TM.getTargetData();
+  
+  if (CP.empty()) return;
+  
+  SwitchSection(".const", 0);
+  for (unsigned i = 0, e = CP.size(); i != e; ++i) {
+    // FIXME: force doubles to be naturally aligned.  We should handle this
+    // more correctly in the future.
+    unsigned Alignment = TD.getTypeAlignmentShift(CP[i]->getType());
+    if (CP[i]->getType() == Type::DoubleTy && Alignment < 3) Alignment = 3;
+    
+    EmitAlignment(Alignment);
+    O << PrivateGlobalPrefix << "CPI" << FunctionNumber << '_' << i
+      << ":\t\t\t\t\t" << CommentString << *CP[i] << '\n';
+    EmitGlobalConstant(CP[i]);
+  }
+}
+
+
 /// runOnMachineFunction - This uses the printMachineInstruction()
 /// method to print assembly for each instruction.
 ///
@@ -420,30 +445,6 @@ bool DarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   return false;
 }
 
-/// printConstantPool - Print to the current output stream assembly
-/// representations of the constants in the constant pool MCP. This is
-/// used to print out constants which have been "spilled to memory" by
-/// the code generator.
-///
-void DarwinAsmPrinter::printConstantPool(MachineConstantPool *MCP) {
-  const std::vector<Constant*> &CP = MCP->getConstants();
-  const TargetData &TD = TM.getTargetData();
-
-  if (CP.empty()) return;
-
-  SwitchSection(".const", 0);
-  for (unsigned i = 0, e = CP.size(); i != e; ++i) {
-    // FIXME: force doubles to be naturally aligned.  We should handle this
-    // more correctly in the future.
-    if (CP[i]->getType() == Type::DoubleTy)
-      EmitAlignment(3);
-    else
-      EmitAlignment(TD.getTypeAlignmentShift(CP[i]->getType()));
-    O << PrivateGlobalPrefix << "CPI" << FunctionNumber << '_' << i
-      << ":\t\t\t\t\t" << CommentString << *CP[i] << '\n';
-    EmitGlobalConstant(CP[i]);
-  }
-}
 
 bool DarwinAsmPrinter::doInitialization(Module &M) {
   if (TM.getSubtarget<PPCSubtarget>().isGigaProcessor())
@@ -630,27 +631,6 @@ bool AIXAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   // We didn't modify anything.
   return false;
-}
-
-/// printConstantPool - Print to the current output stream assembly
-/// representations of the constants in the constant pool MCP. This is
-/// used to print out constants which have been "spilled to memory" by
-/// the code generator.
-///
-void AIXAsmPrinter::printConstantPool(MachineConstantPool *MCP) {
-  const std::vector<Constant*> &CP = MCP->getConstants();
-  const TargetData &TD = TM.getTargetData();
-
-  if (CP.empty()) return;
-
-  for (unsigned i = 0, e = CP.size(); i != e; ++i) {
-    SwitchSection(".const", 0);
-    O << "\t.align " << (unsigned)TD.getTypeAlignment(CP[i]->getType())
-      << "\n";
-    O << PrivateGlobalPrefix << "CPI" << FunctionNumber << '_' << i
-      << ":\t\t\t\t\t;" << *CP[i] << '\n';
-    EmitGlobalConstant(CP[i]);
-  }
 }
 
 bool AIXAsmPrinter::doInitialization(Module &M) {
