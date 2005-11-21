@@ -141,7 +141,7 @@ void X86IntelAsmPrinter::printMemReference(const MachineInstr *MI, unsigned Op){
     O << "]";
     return;
   } else if (BaseReg.isConstantPoolIndex()) {
-    O << "[.CPI" << CurrentFnName << "_"
+    O << "[" << PrivateGlobalPrefix << "CPI" << CurrentFnName << "_"
       << BaseReg.getConstantPoolIndex();
 
     if (IndexReg.getReg()) {

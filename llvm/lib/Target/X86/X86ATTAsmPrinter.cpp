@@ -174,7 +174,7 @@ void X86ATTAsmPrinter::printMemReference(const MachineInstr *MI, unsigned Op){
     O << "]";
     return;
   } else if (BaseReg.isConstantPoolIndex()) {
-    O << ".CPI" << CurrentFnName << "_"
+    O << PrivateGlobalPrefix << "CPI" << CurrentFnName << "_"
       << BaseReg.getConstantPoolIndex();
     if (DispSpec.getImmedValue())
       O << "+" << DispSpec.getImmedValue();

@@ -18,6 +18,7 @@
 #include "X86IntelAsmPrinter.h"
 #include "X86.h"
 #include "llvm/Module.h"
+#include "llvm/Type.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/Support/Mangler.h"
@@ -66,6 +67,7 @@ bool X86SharedAsmPrinter::doInitialization(Module& M) {
     AlignmentIsInBytes = false;
     Data64bitsDirective = 0;       // we can't emit a 64-bit unit
     ZeroDirective = "\t.space\t";  // ".space N" emits N zeros.
+    PrivateGlobalPrefix = "L";     // Marker for constant pool idxs
   }
 
   return AsmPrinter::doInitialization(M);
@@ -82,14 +84,21 @@ void X86SharedAsmPrinter::printConstantPool(MachineConstantPool *MCP) {
 
   if (CP.empty()) return;
 
+  if (forDarwin) {
+    O << "\t.const\n";
+  } else {
+    O << "\t.section .rodata\n";
+  }
+  
   for (unsigned i = 0, e = CP.size(); i != e; ++i) {
-    if (forDarwin)
-      O << "\t.data\n";
+    // FIXME: force doubles to be naturally aligned.  We should handle this
+    // more correctly in the future.
+    if (CP[i]->getType() == Type::DoubleTy)
+      emitAlignment(3);
     else
-      O << "\t.section .rodata\n";
-    emitAlignment(TD.getTypeAlignmentShift(CP[i]->getType()));
-    O << ".CPI" << CurrentFnName << "_" << i << ":\t\t\t\t\t" << CommentString
-      << *CP[i] << "\n";
+      emitAlignment(TD.getTypeAlignmentShift(CP[i]->getType()));
+    O << PrivateGlobalPrefix << "CPI" << CurrentFnName << "_" << i
+      << ":\t\t\t\t\t" << CommentString << *CP[i] << "\n";
     emitGlobalConstant(CP[i]);
   }
 }
