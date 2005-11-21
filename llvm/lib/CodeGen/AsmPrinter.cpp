@@ -19,8 +19,27 @@
 #include "llvm/Target/TargetMachine.h"
 using namespace llvm;
 
+/// SwitchSection - Switch to the specified section of the executable if we
+/// are not already in it!
+///
+void AsmPrinter::SwitchSection(const char *NewSection, const GlobalValue *GV) {
+  std::string NS;
+  
+  if (GV && GV->hasSection())
+    NS = ".section " + GV->getSection();
+  else
+    NS = NewSection;
+  
+  if (CurrentSection != NS) {
+    CurrentSection = NS;
+    if (!CurrentSection.empty())
+      O << "\t" << CurrentSection << "\n";
+  }
+}
+
 bool AsmPrinter::doInitialization(Module &M) {
   Mang = new Mangler(M, GlobalPrefix);
+  SwitchSection("", 0);   // Reset back to no section.
   return false;
 }
 
