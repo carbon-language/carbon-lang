@@ -302,8 +302,8 @@ void PPCAsmPrinter::printOp(const MachineOperand &MO) {
 
   case MachineOperand::MO_MachineBasicBlock: {
     MachineBasicBlock *MBBOp = MO.getMachineBasicBlock();
-    O << "LBB" << FunctionNumber << "_" << MBBOp->getNumber() << "\t; "
-      << MBBOp->getBasicBlock()->getName();
+    O << PrivateGlobalPrefix << "BB" << FunctionNumber << "_"
+      << MBBOp->getNumber() << "\t; " << MBBOp->getBasicBlock()->getName();
     return;
   }
 
@@ -401,7 +401,8 @@ bool DarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
        I != E; ++I) {
     // Print a label for the basic block.
     if (I != MF.begin()) {
-      O << "LBB" << FunctionNumber << '_' << I->getNumber() << ":\t";
+      O << PrivateGlobalPrefix << "BB" << FunctionNumber << '_'
+        << I->getNumber() << ":\t";
       if (!I->getBasicBlock()->getName().empty())
         O << CommentString << " " << I->getBasicBlock()->getName();
       O << "\n";
@@ -608,8 +609,8 @@ bool AIXAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   for (MachineFunction::const_iterator I = MF.begin(), E = MF.end();
        I != E; ++I) {
     // Print a label for the basic block.
-    O << "LBB" << CurrentFnName << '_' << I->getNumber() << ":\t# "
-      << I->getBasicBlock()->getName() << '\n';
+    O << PrivateGlobalPrefix << "BB" << CurrentFnName << '_' << I->getNumber()
+      << ":\t# " << I->getBasicBlock()->getName() << '\n';
     for (MachineBasicBlock::const_iterator II = I->begin(), E = I->end();
       II != E; ++II) {
       // Print the assembly for the instruction.
