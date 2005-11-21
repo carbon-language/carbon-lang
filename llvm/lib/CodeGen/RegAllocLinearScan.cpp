@@ -547,7 +547,7 @@ void RA::assignRegOrStackSlotAtInterval(LiveInterval* cur)
       minReg = reg;
     }
   }
-  assert(minReg && "Didn't find any reg!");
+// FIXME:  assert(minReg && "Didn't find any reg!");
   DEBUG(std::cerr << "\t\tregister with min weight: "
         << mri_->getName(minReg) << " (" << minWeight << ")\n");
 
