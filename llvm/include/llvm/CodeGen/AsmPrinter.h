@@ -54,6 +54,11 @@ namespace llvm {
     /// onto all global symbols.  This is often used for "_" or ".".
     const char *GlobalPrefix;    // Defaults to ""
 
+    /// PrivateGlobalPrefix - This prefix is used for globals like constant
+    /// pool entries that are completely private to the .o file and should not
+    /// have names in the .o file.  This is often "." or "L".
+    const char *PrivateGlobalPrefix;   // Defaults to "."
+    
     /// GlobalVarAddrPrefix/Suffix - If these are nonempty, these strings
     /// will enclose any GlobalVariable (that isn't a function)
     ///
@@ -107,6 +112,7 @@ namespace llvm {
       : O(o), TM(tm),
         CommentString("#"),
         GlobalPrefix(""),
+        PrivateGlobalPrefix("."),
         GlobalVarAddrPrefix(""),
         GlobalVarAddrSuffix(""),
         FunctionAddrPrefix(""),
