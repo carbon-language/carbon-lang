@@ -528,7 +528,7 @@ void SelectionDAGLowering::visitBinary(User &I, unsigned IntOp, unsigned FPOp,
     } else {
       SDOperand Num = DAG.getConstant(NumElements, MVT::i32);
       SDOperand Typ = DAG.getValueType(PVT);
-      setValue(&I, DAG.getNode(VecOp, Op1.getValueType(), Num, Typ, Op1, Op2));
+      setValue(&I, DAG.getNode(VecOp, MVT::Vector, Op1, Op2, Num, Typ));
     }
   }
 }

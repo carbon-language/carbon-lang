@@ -1106,7 +1106,7 @@ SDOperand SelectionDAG::getVecLoad(unsigned Count, MVT::ValueType EVT,
   Ops.push_back(SV);
   std::vector<MVT::ValueType> VTs;
   VTs.reserve(2);
-  VTs.push_back(EVT); VTs.push_back(MVT::Other);  // Add token chain.
+  VTs.push_back(MVT::Vector); VTs.push_back(MVT::Other);  // Add token chain.
   return getNode(ISD::VLOAD, VTs, Ops);
 }
 
