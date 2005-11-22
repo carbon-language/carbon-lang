@@ -280,7 +280,7 @@ static unsigned GetRelVersion(unsigned opcode)
 
 void AlphaISel::MoveFP2Int(unsigned src, unsigned dst, bool isDouble)
 {
-  unsigned Opc;
+  unsigned Opc = Alpha::WTF;
   if (TLI.getTargetMachine().getSubtarget<AlphaSubtarget>().hasF2I()) {
     Opc = isDouble ? Alpha::FTOIT : Alpha::FTOIS;
     BuildMI(BB, Opc, 1, dst).addReg(src).addReg(Alpha::F31);
@@ -307,7 +307,7 @@ void AlphaISel::MoveFP2Int(unsigned src, unsigned dst, bool isDouble)
 
 void AlphaISel::MoveInt2FP(unsigned src, unsigned dst, bool isDouble)
 {
-  unsigned Opc;
+  unsigned Opc = Alpha::WTF;
   if (TLI.getTargetMachine().getSubtarget<AlphaSubtarget>().hasF2I()) {
     Opc = isDouble?Alpha::ITOFT:Alpha::ITOFS;
     BuildMI(BB, Opc, 1, dst).addReg(src).addReg(Alpha::R31);
@@ -335,7 +335,7 @@ void AlphaISel::MoveInt2FP(unsigned src, unsigned dst, bool isDouble)
 bool AlphaISel::SelectFPSetCC(SDOperand N, unsigned dst)
 {
   SDNode *SetCC = N.Val;
-  unsigned Opc, Tmp1, Tmp2, Tmp3;
+  unsigned Tmp1, Tmp2, Tmp3, Opc = Alpha::WTF;
   ISD::CondCode CC = cast<CondCodeSDNode>(SetCC->getOperand(2))->get();
   bool rev = false;
   bool inv = false;
@@ -1581,7 +1581,7 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
 }
 
 void AlphaISel::Select(SDOperand N) {
-  unsigned Tmp1, Tmp2, Opc;
+  unsigned Tmp1, Tmp2, Opc = Alpha::WTF;
   unsigned opcode = N.getOpcode();
 
   if (!ExprMap.insert(std::make_pair(N, notIn)).second)
@@ -1616,7 +1616,7 @@ void AlphaISel::Select(SDOperand N) {
     case MVT::f32: Opc = Alpha::IDEF_F32; break;
     case MVT::f64: Opc = Alpha::IDEF_F64; break;
     case MVT::i64: Opc = Alpha::IDEF_I; break;
-    default: Opc = 0; assert(0 && "should have been legalized");
+    default: assert(0 && "should have been legalized");
     };
     BuildMI(BB, Opc, 0,
             cast<RegisterSDNode>(N.getOperand(1))->getReg());
@@ -1702,14 +1702,14 @@ void AlphaISel::Select(SDOperand N) {
 
       if (opcode == ISD::STORE) {
         switch(Value.getValueType()) {
-        default: Opc = 0; assert(0 && "unknown Type in store");
+        default: assert(0 && "unknown Type in store");
         case MVT::i64: Opc = Alpha::STQ; break;
         case MVT::f64: Opc = Alpha::STT; break;
         case MVT::f32: Opc = Alpha::STS; break;
         }
       } else { //ISD::TRUNCSTORE
         switch(cast<VTSDNode>(Node->getOperand(4))->getVT()) {
-        default: Opc = 0; assert(0 && "unknown Type in store");
+        default: assert(0 && "unknown Type in store");
         case MVT::i8: Opc = Alpha::STB; break;
         case MVT::i16: Opc = Alpha::STW; break;
         case MVT::i32: Opc = Alpha::STL; break;
