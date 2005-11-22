@@ -168,6 +168,7 @@ FunctionPass *createPromoteMemoryToRegisterPass();
 // In basically undoes the PromoteMemoryToRegister pass to
 // make cfg hacking easier.
 FunctionPass *createDemoteRegisterToMemoryPass();
+extern const PassInfo *DemoteRegisterToMemoryID;
 
 //===----------------------------------------------------------------------===//
 //

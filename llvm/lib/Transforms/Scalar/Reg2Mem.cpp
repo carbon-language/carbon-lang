@@ -80,6 +80,7 @@ namespace {
 
 // createDemoteRegisterToMemory - Provide an entry point to create this pass.
 //
+const PassInfo *llvm::DemoteRegisterToMemoryID = X.getPassInfo();
 FunctionPass *llvm::createDemoteRegisterToMemoryPass() {
   return new RegToMem();
 }
