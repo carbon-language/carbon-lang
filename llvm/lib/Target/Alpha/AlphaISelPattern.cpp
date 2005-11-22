@@ -1616,7 +1616,7 @@ void AlphaISel::Select(SDOperand N) {
     case MVT::f32: Opc = Alpha::IDEF_F32; break;
     case MVT::f64: Opc = Alpha::IDEF_F64; break;
     case MVT::i64: Opc = Alpha::IDEF_I; break;
-    default: assert(0 && "should have been legalized");
+    default: Opc = 0; assert(0 && "should have been legalized");
     };
     BuildMI(BB, Opc, 0,
             cast<RegisterSDNode>(N.getOperand(1))->getReg());
@@ -1702,14 +1702,14 @@ void AlphaISel::Select(SDOperand N) {
 
       if (opcode == ISD::STORE) {
         switch(Value.getValueType()) {
-        default: assert(0 && "unknown Type in store");
+        default: Opc = 0; assert(0 && "unknown Type in store");
         case MVT::i64: Opc = Alpha::STQ; break;
         case MVT::f64: Opc = Alpha::STT; break;
         case MVT::f32: Opc = Alpha::STS; break;
         }
       } else { //ISD::TRUNCSTORE
         switch(cast<VTSDNode>(Node->getOperand(4))->getVT()) {
-        default: assert(0 && "unknown Type in store");
+        default: Opc = 0; assert(0 && "unknown Type in store");
         case MVT::i8: Opc = Alpha::STB; break;
         case MVT::i16: Opc = Alpha::STW; break;
         case MVT::i32: Opc = Alpha::STL; break;
