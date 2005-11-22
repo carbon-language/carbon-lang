@@ -925,26 +925,6 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     AddLegalizedOperand(SDOperand(Node, 1), Result.getValue(1));
     return Result.getValue(Op.ResNo);
     
-  case ISD::VLOAD:
-    Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
-    Tmp2 = LegalizeOp(Node->getOperand(1));  // Legalize the pointer.
- 
-    // If we just have one element, scalarize the result.  Otherwise, check to
-    // see if we support this operation on this type at this width.  If not,
-    // split the vector in half and try again.
-    if (1 == cast<ConstantSDNode>(Node->getOperand(2))->getValue()) {
-      MVT::ValueType SVT = cast<VTSDNode>(Node->getOperand(3))->getVT();
-      Result = LegalizeOp(DAG.getLoad(SVT, Tmp1, Tmp2, Node->getOperand(4)));
-    } else {
-      assert(0 && "Expand case for vectors unimplemented");
-    }
-    
-    // Since loads produce two values, make sure to remember that we legalized
-    // both of them.
-    AddLegalizedOperand(SDOperand(Node, 0), Result);
-    AddLegalizedOperand(SDOperand(Node, 1), Result.getValue(1));
-    return Result.getValue(Op.ResNo);
-    
   case ISD::EXTLOAD:
   case ISD::SEXTLOAD:
   case ISD::ZEXTLOAD: {
@@ -1685,28 +1665,6 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       Result = DAG.getNode(Node->getOpcode(), Node->getValueType(0), Tmp1,Tmp2);
     break;
 
-    // Vector binary operators
-  case ISD::VADD:
-  case ISD::VSUB:
-  case ISD::VMUL: {
-    Tmp1 = Node->getOperand(0); // Element Count
-    Tmp2 = Node->getOperand(1); // Element Type
-
-    // If we just have one element, scalarize the result.  Otherwise, check to
-    // see if we support this operation on this type at this width.  If not,
-    // split the vector in half and try again.
-    if (1 == cast<ConstantSDNode>(Tmp1)->getValue()) {
-      MVT::ValueType SVT = cast<VTSDNode>(Tmp2)->getVT();
-  
-      Result = DAG.getNode(getScalarizedOpcode(Node->getOpcode(), SVT), SVT,
-                           LegalizeOp(Node->getOperand(2)),
-                           LegalizeOp(Node->getOperand(3)));
-    } else {
-      assert(0 && "Expand case for vectors unimplemented");
-    }
-    break;
-  }
-    
   case ISD::BUILD_PAIR: {
     MVT::ValueType PairTy = Node->getValueType(0);
     // TODO: handle the case where the Lo and Hi operands are not of legal type

@@ -517,9 +517,19 @@ void SelectionDAGLowering::visitBinary(User &I, unsigned IntOp, unsigned FPOp,
     setValue(&I, DAG.getNode(FPOp, Op1.getValueType(), Op1, Op2));
   } else {
     const PackedType *PTy = cast<PackedType>(Ty);
-    SDOperand Num = DAG.getConstant(PTy->getNumElements(), MVT::i32);
-    SDOperand Typ = DAG.getValueType(TLI.getValueType(PTy->getElementType()));
-    setValue(&I, DAG.getNode(VecOp, Op1.getValueType(), Num, Typ, Op1, Op2));
+    unsigned NumElements = PTy->getNumElements();
+    MVT::ValueType PVT = TLI.getValueType(PTy->getElementType());
+    
+    // Immediately scalarize packed types containing only one element, so that
+    // the Legalize pass does not have to deal with them.
+    if (NumElements == 1) {
+      unsigned Opc = MVT::isFloatingPoint(PVT) ? FPOp : IntOp;
+      setValue(&I, DAG.getNode(Opc, PVT, Op1, Op2));
+    } else {
+      SDOperand Num = DAG.getConstant(NumElements, MVT::i32);
+      SDOperand Typ = DAG.getValueType(PVT);
+      setValue(&I, DAG.getNode(VecOp, Op1.getValueType(), Num, Typ, Op1, Op2));
+    }
   }
 }
 
@@ -726,9 +736,17 @@ void SelectionDAGLowering::visitLoad(LoadInst &I) {
   
   if (Type::PackedTyID == Ty->getTypeID()) {
     const PackedType *PTy = cast<PackedType>(Ty);
-    L = DAG.getVecLoad(PTy->getNumElements(), 
-                       TLI.getValueType(PTy->getElementType()), Root, Ptr, 
-                       DAG.getSrcValue(I.getOperand(0)));
+    unsigned NumElements = PTy->getNumElements();
+    MVT::ValueType PVT = TLI.getValueType(PTy->getElementType());
+    
+    // Immediately scalarize packed types containing only one element, so that
+    // the Legalize pass does not have to deal with them.
+    if (NumElements == 1) {
+      L = DAG.getLoad(PVT, Root, Ptr, DAG.getSrcValue(I.getOperand(0)));
+    } else {
+      L = DAG.getVecLoad(NumElements, PVT, Root, Ptr, 
+                         DAG.getSrcValue(I.getOperand(0)));
+    }
   } else {
     L = DAG.getLoad(TLI.getValueType(Ty), Root, Ptr, 
                     DAG.getSrcValue(I.getOperand(0)));

@@ -64,7 +64,7 @@ static void SetValueTypeAction(MVT::ValueType VT,
     assert(VT < PromoteTo && "Must promote to a larger type!");
     TransformToType[VT] = PromoteTo;
   } else if (Action == TargetLowering::Expand) {
-    assert(MVT::isInteger(VT) && VT > MVT::i8 &&
+    assert((VT == MVT::Vector || MVT::isInteger(VT)) && VT > MVT::i8 &&
            "Cannot expand this type: target must support SOME integer reg!");
     // Expand to the next smaller integer type!
     TransformToType[VT] = (MVT::ValueType)(VT-1);
@@ -113,6 +113,10 @@ void TargetLowering::computeRegisterProperties() {
                        TransformToType, ValueTypeActions);
   else
     TransformToType[MVT::f32] = MVT::f32;
+  
+  // Set MVT::Vector to always be Expanded
+  SetValueTypeAction(MVT::Vector, Expand, *this, TransformToType, 
+                     ValueTypeActions);
 
   assert(isTypeLegal(MVT::f64) && "Target does not support FP?");
   TransformToType[MVT::f64] = MVT::f64;
