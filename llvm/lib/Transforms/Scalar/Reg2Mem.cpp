@@ -34,6 +34,10 @@ namespace {
   
   struct RegToMem : public FunctionPass {
 
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.addRequiredID(BreakCriticalEdgesID);
+    }
+
    bool valueEscapes(Instruction* i) {
       BasicBlock* bb = i->getParent();
       for(Value::use_iterator ii = i->use_begin(), ie = i->use_end();
