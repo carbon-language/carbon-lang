@@ -74,15 +74,22 @@ def sub8  : PatFrag<(ops node:$op1, node:$op2),
   // //#define GP    $29
   // //#define SP    $30
 
-def PHI : PseudoInstAlpha<(ops variable_ops), "#phi">;
-def IDEF : PseudoInstAlpha<(ops GPRC:$RA), "#idef $RA">;
-def WTF : PseudoInstAlpha<(ops variable_ops), "#wtf">;
-def ADJUSTSTACKUP : PseudoInstAlpha<(ops variable_ops), "ADJUP">;
-def ADJUSTSTACKDOWN : PseudoInstAlpha<(ops variable_ops), "ADJDOWN">;
-def ALTENT : PseudoInstAlpha<(ops s64imm:$TARGET), "$TARGET:\n">;
-def PCLABEL : PseudoInstAlpha<(ops s64imm:$num), "PCMARKER_$num:\n">;
+def PHI : PseudoInstAlpha<(ops variable_ops), "#phi", []>;
+
+def IDEF_I : PseudoInstAlpha<(ops GPRC:$RA), "#idef $RA",
+             [(set GPRC:$RA, (undef))]>;
+def IDEF_F32 : PseudoInstAlpha<(ops F4RC:$RA), "#idef $RA",
+             [(set F4RC:$RA, (undef))]>;
+def IDEF_F64 : PseudoInstAlpha<(ops F8RC:$RA), "#idef $RA",
+             [(set F8RC:$RA, (undef))]>;
+
+def WTF : PseudoInstAlpha<(ops variable_ops), "#wtf", []>;
+def ADJUSTSTACKUP : PseudoInstAlpha<(ops variable_ops), "ADJUP", []>;
+def ADJUSTSTACKDOWN : PseudoInstAlpha<(ops variable_ops), "ADJDOWN", []>;
+def ALTENT : PseudoInstAlpha<(ops s64imm:$TARGET), "$TARGET:\n", []>;
+def PCLABEL : PseudoInstAlpha<(ops s64imm:$num), "PCMARKER_$num:\n",[]>;
 def MEMLABEL : PseudoInstAlpha<(ops s64imm:$i, s64imm:$j, s64imm:$k, s64imm:$m),
-         "LSMARKER$$$i$$$j$$$k$$$m:\n">;
+         "LSMARKER$$$i$$$j$$$k$$$m:\n",[]>;
 
 //*****************
 //These are shortcuts, the assembler expands them
@@ -97,19 +104,19 @@ def MEMLABEL : PseudoInstAlpha<(ops s64imm:$i, s64imm:$j, s64imm:$k, s64imm:$m),
 let isTwoAddress = 1 in {
 //Conditional move of an int based on a FP CC
   def CMOVEQ_FP : PseudoInstAlpha<(ops GPRC:$RDEST, GPRC:$RSRC_F, GPRC:$RSRC_T, F8RC:$RCOND),
-                                  "fbne $RCOND, 42f\n\tbis $RSRC_T,$RSRC_T,$RDEST\n42:\n">;
+                                  "fbne $RCOND, 42f\n\tbis $RSRC_T,$RSRC_T,$RDEST\n42:\n", []>;
   def CMOVEQi_FP : PseudoInstAlpha<(ops GPRC:$RDEST, GPRC:$RSRC_F, u8imm:$L, F8RC:$RCOND),
-                                  "fbne $RCOND, 42f\n\taddq $$31,$L,$RDEST\n42:\n">;
+                                  "fbne $RCOND, 42f\n\taddq $$31,$L,$RDEST\n42:\n", []>;
 
   def CMOVNE_FP : PseudoInstAlpha<(ops GPRC:$RDEST, GPRC:$RSRC_F, GPRC:$RSRC_T, F8RC:$RCOND),
-                                  "fbeq $RCOND, 42f\n\tbis $RSRC_T,$RSRC_T,$RDEST\n42:\n">;
+                                  "fbeq $RCOND, 42f\n\tbis $RSRC_T,$RSRC_T,$RDEST\n42:\n", []>;
   def CMOVNEi_FP : PseudoInstAlpha<(ops GPRC:$RDEST, GPRC:$RSRC_F, u8imm:$L, F8RC:$RCOND),
-                                  "fbeq $RCOND, 42f\n\taddq $$31,$L,$RDEST\n42:\n">;
+                                  "fbeq $RCOND, 42f\n\taddq $$31,$L,$RDEST\n42:\n", []>;
 //Conditional move of an FP based on a Int CC
   def FCMOVEQ_INT : PseudoInstAlpha<(ops GPRC:$RDEST, GPRC:$RSRC_F, GPRC:$RSRC_T, F8RC:$RCOND),
-                                  "bne $RCOND, 42f\n\tcpys $RSRC_T,$RSRC_T,$RDEST\n42:\n">;
+                                  "bne $RCOND, 42f\n\tcpys $RSRC_T,$RSRC_T,$RDEST\n42:\n", []>;
   def FCMOVNE_INT : PseudoInstAlpha<(ops GPRC:$RDEST, GPRC:$RSRC_F, GPRC:$RSRC_T, F8RC:$RCOND),
-                                  "beq $RCOND, 42f\n\tcpys $RSRC_T,$RSRC_T,$RDEST\n42:\n">;
+                                  "beq $RCOND, 42f\n\tcpys $RSRC_T,$RSRC_T,$RDEST\n42:\n", []>;
 }
 
 //***********************
@@ -330,9 +337,9 @@ def CMPULE  : OForm< 0x10, 0x3D, "cmpule $RA,$RB,$RC",
 def CMPULEi : OFormL<0x10, 0x3D, "cmpule $RA,$L,$RC",
                      [(set GPRC:$RC, (setule GPRC:$RA, immUExt8:$L))]>;
 def CMPULT  : OForm< 0x10, 0x1D, "cmpult $RA,$RB,$RC",
-                     [(set GPRC:$RC, (setlt GPRC:$RA, GPRC:$RB))]>;
+                     [(set GPRC:$RC, (setult GPRC:$RA, GPRC:$RB))]>;
 def CMPULTi : OFormL<0x10, 0x1D, "cmpult $RA,$L,$RC", 
-                      [(set GPRC:$RC, (setlt GPRC:$RA, immUExt8:$L))]>;
+                      [(set GPRC:$RC, (setult GPRC:$RA, immUExt8:$L))]>;
 
 //Patterns for unsupported int comparisons
 def : Pat<(setueq GPRC:$X, GPRC:$Y), (CMPEQ GPRC:$X, GPRC:$Y)>;
@@ -588,7 +595,56 @@ def CVTTS : FPForm<0x16, 0x7AC, "cvtts/sui $RB,$RC",
 //def AMASKi   : OFormL<0x11, 0x61, "AMASK $RA,$L,$RC", []>; //Architecture mask
 
 
+//Constant handling
 
+def immConst2Part  : PatLeaf<(imm), [{
+  // immZAP predicate - True if the immediate fits is suitable for use in a
+  // ZAP instruction
+  int64_t val = (int64_t)N->getValue();
+  return (val <= (int64_t)IMM_HIGH +(int64_t)IMM_HIGH* (int64_t)IMM_MULT &
+               val >= (int64_t)IMM_LOW + (int64_t)IMM_LOW * (int64_t)IMM_MULT);
+}]>;
+
+//TODO: factor this out
+def LL16 : SDNodeXForm<imm, [{
+int64_t l = N->getValue();
+  int64_t y = l / IMM_MULT;
+  if (l % IMM_MULT > IMM_HIGH)
+    ++y;
+  return getI64Imm(l - y * IMM_MULT);
+}]>;
+//TODO: factor this out
+def LH16 : SDNodeXForm<imm, [{
+int64_t l = N->getValue();
+  int64_t y = l / IMM_MULT;
+  if (l % IMM_MULT > IMM_HIGH)
+    ++y;
+  return getI64Imm(y);
+}]>;
+
+def : Pat<(i64 immConst2Part:$imm),
+          (LDA (LL16 immConst2Part:$imm), (LDAH (LH16 immConst2Part:$imm), R31))>;
 
 def : Pat<(i64 immSExt16:$imm),
           (LDA immSExt16:$imm, R31)>;
+
+//TODO: I want to just define these like this!
+//def : Pat<(i64 0),
+//          (R31)>;
+//def : Pat<(f64 0.0),
+//          (F31)>;
+//def : Pat<(f64 -0.0),
+//          (CPYSNT F31, F31)>;
+//def : Pat<(f32 0.0),
+//          (F31)>;
+//def : Pat<(f32 -0.0),
+//          (CPYSNS F31, F31)>;
+
+//Misc Patterns:
+
+def : Pat<(sext_inreg GPRC:$RB, i32),
+          (ADDLi GPRC:$RB, 0)>;
+
+def : Pat<(select GPRC:$which, GPRC:$src1, GPRC:$src2),
+          (CMOVEQ GPRC:$src1, GPRC:$src2, GPRC:$which)>; //may be CMOVNE
+

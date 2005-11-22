@@ -218,5 +218,7 @@ class PALForm<bits<6> opcode, dag OL, string asmstr> : InstAlpha<opcode, OL, asm
 
 
 // Pseudo instructions.
-class PseudoInstAlpha<dag OL, string nm> : InstAlpha<0, OL, nm>  {
+class PseudoInstAlpha<dag OL, string nm, list<dag> pattern> : InstAlpha<0, OL, nm>  {
+  let Pattern = pattern;
+
 }
