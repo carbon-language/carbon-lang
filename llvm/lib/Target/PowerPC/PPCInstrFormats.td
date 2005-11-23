@@ -548,6 +548,51 @@ class MDForm_1<bits<6> opcode, bits<3> xo, dag OL, string asmstr,
   let Inst{31}    = RC;
 }
 
+// E-1 VA-Form
+class VAForm_1<bits<6> xo, dag OL, string asmstr,
+               InstrItinClass itin, list<dag> pattern>
+    : I<4, OL, asmstr, itin> {
+  bits<5> VD;
+  bits<5> VA;
+  bits<5> VB;
+  bits<5> VC;
+  
+  let Inst{6-10}  = VD;
+  let Inst{11-15} = VA;
+  let Inst{16-20} = VB;
+  let Inst{21-25} = VC;
+  let Inst{26-31} = xo;
+}
+
+// E-2 VX-Form
+class VXForm_1<bits<11> xo, dag OL, string asmstr,
+               InstrItinClass itin, list<dag> pattern>
+    : I<4, OL, asmstr, itin> {
+  bits<5> VD;
+  bits<5> VA;
+  bits<5> VB;
+  
+  let Inst{6-10}  = VD;
+  let Inst{11-15} = VA;
+  let Inst{16-20} = VB;
+  let Inst{21-31} = xo;
+}
+
+// E-4 VXR-Form
+class VXRForm_1<bits<10> xo, bit rc, dag OL, string asmstr,
+               InstrItinClass itin, list<dag> pattern>
+    : I<4, OL, asmstr, itin> {
+  bits<5> VD;
+  bits<5> VA;
+  bits<5> VB;
+  
+  let Inst{6-10}  = VD;
+  let Inst{11-15} = VA;
+  let Inst{16-20} = VB;
+  let Inst{21}    = rc;
+  let Inst{22-31} = xo;
+}
+
 //===----------------------------------------------------------------------===//
 def NoItin : InstrItinClass;
 class Pseudo<dag OL, string asmstr, list<dag> pattern>

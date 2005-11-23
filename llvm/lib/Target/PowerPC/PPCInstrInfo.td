@@ -360,6 +360,18 @@ def LWZX : XForm_1<31,  23, (ops GPRC:$dst, GPRC:$base, GPRC:$index),
                    "lwzx $dst, $base, $index", LdStGeneral>;
 def LDX  : XForm_1<31,  21, (ops GPRC:$dst, GPRC:$base, GPRC:$index),
                    "ldx $dst, $base, $index", LdStLD>, isPPC64;
+def LVEBX: XForm_1<31,   7, (ops VRRC:$vD,  GPRC:$base, GPRC:$rA),
+                   "lvebx $vD, $base, $rA", LdStGeneral>;
+def LVEHX: XForm_1<31,  39, (ops VRRC:$vD,  GPRC:$base, GPRC:$rA),
+                   "lvehx $vD, $base, $rA", LdStGeneral>;
+def LVEWX: XForm_1<31,  71, (ops VRRC:$vD,  GPRC:$base, GPRC:$rA),
+                   "lvewx $vD, $base, $rA", LdStGeneral>;
+def LVX  : XForm_1<31, 103, (ops VRRC:$vD,  GPRC:$base, GPRC:$rA),
+                   "lvx $vD, $base, $rA", LdStGeneral>;
+def LVSL : XForm_1<31,   6, (ops VRRC:$vD,  GPRC:$base, GPRC:$rA),
+                   "lvsl $vD, $base, $rA", LdStGeneral>;
+def LVSR : XForm_1<31,  38, (ops VRRC:$vD,  GPRC:$base, GPRC:$rA),
+                   "lvsl $vD, $base, $rA", LdStGeneral>;
 }
 def NAND : XForm_6<31, 476, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    "nand $rA, $rS, $rB", IntGeneral,
@@ -431,6 +443,14 @@ def STDX  : XForm_8<31, 149, (ops GPRC:$rS, GPRC:$rA, GPRC:$rB),
                    "stdx $rS, $rA, $rB", LdStSTD>, isPPC64;
 def STDUX : XForm_8<31, 181, (ops GPRC:$rS, GPRC:$rA, GPRC:$rB),
                    "stdux $rS, $rA, $rB", LdStSTD>, isPPC64;
+def STVEBX: XForm_8<31, 135, (ops VRRC:$rS, GPRC:$rA, GPRC:$rB),
+                   "stvebx $rS, $rA, $rB", LdStGeneral>;
+def STVEHX: XForm_8<31, 167, (ops VRRC:$rS, GPRC:$rA, GPRC:$rB),
+                   "stvehx $rS, $rA, $rB", LdStGeneral>;
+def STVEWX: XForm_8<31, 199, (ops VRRC:$rS, GPRC:$rA, GPRC:$rB),
+                   "stvewx $rS, $rA, $rB", LdStGeneral>;
+def STVX  : XForm_8<31, 231, (ops VRRC:$rS, GPRC:$rA, GPRC:$rB),
+                   "stvx $rS, $rA, $rB", LdStGeneral>;
 }
 def SRAWI : XForm_10<31, 824, (ops GPRC:$rA, GPRC:$rS, u5imm:$SH), 
                      "srawi $rA, $rS, $SH", IntShift,
@@ -745,6 +765,35 @@ def RLDICR : MDForm_1<30, 1,
                       (ops G8RC:$rA, G8RC:$rS, u6imm:$SH, u6imm:$ME),
                       "rldicr $rA, $rS, $SH, $ME", IntRotateD,
                       []>, isPPC64;
+
+// VA-Form instructions.  3-input AltiVec ops.
+def VMADDFP: VAForm_1<46, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB, VRRC:$vC),
+                      "vmaddfp $vD, $vA, $vB, $vC", VecFP,
+                      []>;
+
+// VX-Form instructions.  AltiVec arithmetic ops.
+def VADDFP : VXForm_1<10, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                      "vaddfp $vD, $vA, $vB", VecFP,
+                      []>;
+def VADDUWM: VXForm_1<128, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                      "vadduwm $vD, $vA, $vB", VecGeneral,
+                      []>;
+def VAND   : VXForm_1<1028, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                      "vand $vD, $vA, $vB", VecGeneral,
+                      []>;
+def VCFSX  : VXForm_1<842, (ops VRRC:$vD, u5imm:$UIMM, VRRC:$vB),
+                      "vcfsx $vD, $vB, $UIMM", VecFP,
+                      []>;
+def VCFUX  : VXForm_1<778, (ops VRRC:$vD, u5imm:$UIMM, VRRC:$vB),
+                      "vcfux $vD, $vB, $UIMM", VecFP,
+                      []>;
+def VOR    : VXForm_1<1156, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                      "vor $vD, $vA, $vB", VecGeneral,
+                      []>;
+def VXOR   : VXForm_1<1220, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                      "vxor $vD, $vA, $vB", VecGeneral,
+                      []>;
+
 
 //===----------------------------------------------------------------------===//
 // PowerPC Instruction Patterns

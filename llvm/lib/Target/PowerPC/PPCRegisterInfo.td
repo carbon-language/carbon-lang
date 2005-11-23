@@ -37,6 +37,11 @@ class FPR<bits<5> num, string n> : PPCReg<n> {
   field bits<5> Num = num;
 }
 
+// VR - One of the 32 128-bit vector registers
+class VR<bits<5> num, string n> : PPCReg<n> {
+  field bits<5> Num = num;
+}
+
 // CR - One of the 8 4-bit condition registers
 class CR<bits<5> num, string n> : PPCReg<n> {
   field bits<5> Num = num;
@@ -96,6 +101,23 @@ def F26 : FPR<26, "f26">;  def F27 : FPR<27, "f27">;
 def F28 : FPR<28, "f28">;  def F29 : FPR<29, "f29">;
 def F30 : FPR<30, "f30">;  def F31 : FPR<31, "f31">;
 
+// Floating-point registers
+def V0  : VR< 0,  "v0">;  def V1  : VR< 1,  "v1">;
+def V2  : VR< 2,  "v2">;  def V3  : VR< 3,  "v3">;
+def V4  : VR< 4,  "v4">;  def V5  : VR< 5,  "v5">;
+def V6  : VR< 6,  "v6">;  def V7  : VR< 7,  "v7">;
+def V8  : VR< 8,  "v8">;  def V9  : VR< 9,  "v9">;
+def V10 : VR<10, "v10">;  def V11 : VR<11, "v11">;
+def V12 : VR<12, "v12">;  def V13 : VR<13, "v13">;
+def V14 : VR<14, "v14">;  def V15 : VR<15, "v15">;
+def V16 : VR<16, "v16">;  def V17 : VR<17, "v17">;
+def V18 : VR<18, "v18">;  def V19 : VR<19, "v19">;
+def V20 : VR<20, "v20">;  def V21 : VR<21, "v21">;
+def V22 : VR<22, "v22">;  def V23 : VR<23, "v23">;
+def V24 : VR<24, "v24">;  def V25 : VR<25, "v25">;
+def V26 : VR<26, "v26">;  def V27 : VR<27, "v27">;
+def V28 : VR<28, "v28">;  def V29 : VR<29, "v29">;
+def V30 : VR<30, "v30">;  def V31 : VR<31, "v31">;
 
 // Condition registers
 def CR0 : CR<0, "cr0">; def CR1 : CR<1, "cr1">;
@@ -104,9 +126,12 @@ def CR4 : CR<4, "cr4">; def CR5 : CR<5, "cr5">;
 def CR6 : CR<6, "cr6">; def CR7 : CR<7, "cr7">;
 
 // Link register
-def LR : SPR<2,   "lr">;
+// FIXME: encode actual spr numbers here
+def LR  : SPR<2,   "lr">;
 // Count register
 def CTR : SPR<3, "ctr">;
+// VRsave register
+def VRSAVE: SPR<4, "VRsave">;
 
 /// Register classes
 // Allocate volatiles first
@@ -167,5 +192,8 @@ def F4RC : RegisterClass<"PPC", f32, 32, [F0, F1, F2, F3, F4, F5, F6, F7,
   F8, F9, F10, F11, F12, F13, F14, F15, F16, F17, F18, F19, F20, F21,
   F22, F23, F24, F25, F26, F27, F28, F29, F30, F31]>;
 
+def VRRC : RegisterClass<"PPC", i128, 128, [V0, V1, V2, V3, V4, V5, V6, V7, V8,
+  V9, V10, V11, V12, V13, V14, V15, V16, V17, V18, V19, V20, V21, V22, V23,
+  V24, V25, V26, V27, V28, V29, V30, V31]>;
 
 def CRRC : RegisterClass<"PPC", i32, 32, [CR0, CR1, CR5, CR6, CR7, CR2, CR3, CR4]>;
