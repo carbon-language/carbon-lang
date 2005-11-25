@@ -36,6 +36,7 @@ namespace {
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequiredID(BreakCriticalEdgesID);
+      AU.addPreservedID(BreakCriticalEdgesID);
     }
 
    bool valueEscapes(Instruction* i) {
