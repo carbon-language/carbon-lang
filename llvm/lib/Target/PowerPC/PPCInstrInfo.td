@@ -464,9 +464,9 @@ def EXTSB  : XForm_11<31, 954, (ops GPRC:$rA, GPRC:$rS),
 def EXTSH  : XForm_11<31, 922, (ops GPRC:$rA, GPRC:$rS),
                       "extsh $rA, $rS", IntGeneral,
                       [(set GPRC:$rA, (sext_inreg GPRC:$rS, i16))]>;
-def EXTSW  : XForm_11<31, 986, (ops GPRC:$rA, GPRC:$rS),
-                      "extsw $rA, $rS", IntRotateD,
-                      []>, isPPC64;
+def EXTSW  : XForm_11<31, 986, (ops G8RC:$rA, G8RC:$rS),
+                      "extsw $rA, $rS", IntGeneral,
+                      [(set G8RC:$rA, (sext_inreg G8RC:$rS, i32))]>, isPPC64;
 def CMP    : XForm_16<31, 0, (ops CRRC:$crD, i1imm:$long, GPRC:$rA, GPRC:$rB),
                       "cmp $crD, $long, $rA, $rB", IntCompare>;
 def CMPL   : XForm_16<31, 32, (ops CRRC:$crD, i1imm:$long, GPRC:$rA, GPRC:$rB),
@@ -793,7 +793,6 @@ def VOR    : VXForm_1<1156, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
 def VXOR   : VXForm_1<1220, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
                       "vxor $vD, $vA, $vB", VecGeneral,
                       []>;
-
 
 //===----------------------------------------------------------------------===//
 // PowerPC Instruction Patterns

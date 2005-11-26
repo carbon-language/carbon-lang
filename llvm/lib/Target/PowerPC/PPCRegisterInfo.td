@@ -101,7 +101,7 @@ def F26 : FPR<26, "f26">;  def F27 : FPR<27, "f27">;
 def F28 : FPR<28, "f28">;  def F29 : FPR<29, "f29">;
 def F30 : FPR<30, "f30">;  def F31 : FPR<31, "f31">;
 
-// Floating-point registers
+// Vector registers
 def V0  : VR< 0,  "v0">;  def V1  : VR< 1,  "v1">;
 def V2  : VR< 2,  "v2">;  def V3  : VR< 3,  "v3">;
 def V4  : VR< 4,  "v4">;  def V5  : VR< 5,  "v5">;
