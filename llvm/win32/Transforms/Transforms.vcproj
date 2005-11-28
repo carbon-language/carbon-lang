@@ -137,6 +137,12 @@
 					RelativePath="..\..\lib\Transforms\Instrumentation\ProfilingUtils.h">
 				</File>
 				<File
+					RelativePath="..\..\lib\Transforms\Instrumentation\RSProfiling.cpp">
+				</File>
+				<File
+					RelativePath="..\..\lib\Transforms\Instrumentation\RSProfiling.h">
+				</File>
+				<File
 					RelativePath="..\..\lib\Transforms\Instrumentation\TraceBasicBlocks.cpp">
 				</File>
 				<File
