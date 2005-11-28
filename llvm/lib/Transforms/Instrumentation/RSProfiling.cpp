@@ -445,6 +445,7 @@ Value* ProfilerRS::Translate(Value* v) {
     return v;
   }
   assert(0 && "Value not handled");
+  return 0;
 }
 
 void ProfilerRS::Duplicate(Function& F, RSProfilers& LI)
