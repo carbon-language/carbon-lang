@@ -73,3 +73,12 @@ Another useful one would be  ~0ULL >> X and ~0ULL << X.
 Should support emission of the bswap instruction, probably by adding a new
 DAG node for byte swapping.  Also useful on PPC which has byte-swapping loads.
 
+//===---------------------------------------------------------------------===//
+
+Compile this:
+_Bool f(_Bool a) { return a!=1; }
+
+into:
+        movzbl  %dil, %eax
+        xorl    $1, %eax
+        ret
