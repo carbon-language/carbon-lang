@@ -43,6 +43,13 @@ ModulePass *createTraceBasicBlockPass();
 // Reoptimizer support pass: insert counting of execute paths instrumentation
 FunctionPass *createProfilePathsPass();
 
+// Random Sampling Profiling Framework
+ModulePass* createBlockProfilerRSPass();
+ModulePass* createFunctionProfilerRSPass();
+ModulePass* createNullProfilerRSPass();
+FunctionPass* createRSProfilingPass();
+
+
 //===----------------------------------------------------------------------===//
 // Support for inserting LLVM code to print values at basic block and function
 // exits.
