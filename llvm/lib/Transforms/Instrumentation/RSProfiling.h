@@ -1,4 +1,4 @@
-//===- RSProfiling.cpp - Various profiling using random sampling ----------===//
+//===- RSProfiling.h - Various profiling using random sampling ----------===//
 //
 //                      The LLVM Compiler Infrastructure
 //
@@ -10,18 +10,19 @@
 // See notes in RSProfiling.cpp
 //
 //===----------------------------------------------------------------------===//
+#include "llvm/Transforms/RSProfiling.h"
 
 namespace llvm {
-  // By default, we provide some convienence stuff to clients, so they 
-  // can just store the instructions they create to do profiling.
-  // also, handle all chaining issues.
-  // a client is free to overwrite these, as long as it implements the
-  // chaining itself.
-  struct RSProfilers : public ModulePass {
+  /// RSProfilers_std - a simple support class for profilers that handles most
+  /// of the work of chaining and tracking inserted code.
+  struct RSProfilers_std : public RSProfilers {
     std::set<Value*> profcode;
+    // Lookup up values in profcode
     virtual bool isProfiling(Value* v);
-    virtual ~RSProfilers() {}
+    // handles required chaining
     virtual void getAnalysisUsage(AnalysisUsage &AU) const;
+    // places counter updates in basic blocks and recordes added instructions in
+    // profcode
     void IncrementCounterInBlock(BasicBlock *BB, unsigned CounterNum,
                                  GlobalValue *CounterArray);
   };

@@ -44,8 +44,6 @@ ModulePass *createTraceBasicBlockPass();
 FunctionPass *createProfilePathsPass();
 
 // Random Sampling Profiling Framework
-ModulePass* createBlockProfilerRSPass();
-ModulePass* createFunctionProfilerRSPass();
 ModulePass* createNullProfilerRSPass();
 FunctionPass* createRSProfilingPass();
 

@@ -24,18 +24,21 @@
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/Transforms/Instrumentation.h"
+#include "RSProfiling.h"
 #include "ProfilingUtils.h"
 #include <iostream>
 
 using namespace llvm;
 
 namespace {
-  class FunctionProfiler : public ModulePass {
+  class FunctionProfiler : public RSProfilers_std {
     bool runOnModule(Module &M);
   };
 
   RegisterOpt<FunctionProfiler> X("insert-function-profiling",
                                "Insert instrumentation for function profiling");
+  RegisterAnalysisGroup<RSProfilers, FunctionProfiler> XG;
+
 }
 
 ModulePass *llvm::createFunctionProfilerPass() {
@@ -74,12 +77,13 @@ bool FunctionProfiler::runOnModule(Module &M) {
 
 
 namespace {
-  class BlockProfiler : public ModulePass {
+  class BlockProfiler : public RSProfilers_std {
     bool runOnModule(Module &M);
   };
 
   RegisterOpt<BlockProfiler> Y("insert-block-profiling",
                                "Insert instrumentation for block profiling");
+  RegisterAnalysisGroup<RSProfilers, BlockProfiler> YG;
 }
 
 ModulePass *llvm::createBlockProfilerPass() { return new BlockProfiler(); }

@@ -106,8 +106,6 @@ namespace {
       (void) llvm::createTraceValuesPassForFunction();
       (void) llvm::createUnifyFunctionExitNodesPass();
       (void) llvm::createCondPropagationPass();
-      (void) llvm::createBlockProfilerRSPass();
-      (void) llvm::createFunctionProfilerRSPass();
       (void) llvm::createNullProfilerRSPass();
       (void) llvm::createRSProfilingPass();
 
