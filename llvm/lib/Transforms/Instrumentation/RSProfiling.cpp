@@ -70,6 +70,9 @@ namespace {
                  clEnumValN(HOSTCC, "rdcc", "cycle counter"),
                  clEnumValEnd));
   
+  /// NullProfilerRS - The basic profiler that does nothing.  It is the default
+  /// profiler and thus terminates RSProfiler chains.  It is useful for 
+  /// measuring framework overhead
   class NullProfilerRS : public RSProfilers {
   public:
     bool isProfiling(Value* v) {
@@ -88,15 +91,21 @@ namespace {
 					"Measure profiling framework overhead");
   static RegisterAnalysisGroup<RSProfilers, NullProfilerRS, true> NPT;
 
-  //Something that chooses how to sample
+  /// Chooser - Something that chooses when to make a sample of the profiled code
   class Chooser {
   public:
+    /// ProcessChoicePoint - is called for each basic block inserted to choose 
+    /// between normal and sample code
     virtual void ProcessChoicePoint(BasicBlock*) = 0;
+    /// PrepFunction - is called once per function before other work is done.
+    /// This gives the opertunity to insert new allocas and such.
     virtual void PrepFunction(Function*) = 0;
     virtual ~Chooser() {}
   };
 
   //Things that implement sampling policies
+  //A global value that is read-mod-stored to choose when to sample.
+  //A sample is taken when the global counter hits 0
   class GlobalRandomCounter : public Chooser {
     GlobalVariable* Counter;
     Value* ResetValue;
@@ -108,6 +117,7 @@ namespace {
     virtual void ProcessChoicePoint(BasicBlock* bb);
   };
 
+  //Same is GRC, but allow register allocation of the global counter
   class GlobalRandomCounterOpt : public Chooser {
     GlobalVariable* Counter;
     Value* ResetValue;
@@ -120,6 +130,8 @@ namespace {
     virtual void ProcessChoicePoint(BasicBlock* bb);
   };
 
+  //Use the cycle counter intrinsic as a source of pseudo randomness when
+  //deciding when to sample.
   class CycleCounter : public Chooser {
     uint64_t rm;
     Function* F;
@@ -130,14 +142,18 @@ namespace {
     virtual void ProcessChoicePoint(BasicBlock* bb);
   };
 
-
+  /// ProfilerRS - Insert the random sampling framework
   struct ProfilerRS : public FunctionPass {
     std::map<Value*, Value*> TransCache;
     std::set<BasicBlock*> ChoicePoints;
     Chooser* c;
 
+    //Translate and duplicate values for the new profile free version of stuff
     Value* Translate(Value* v);
+    //Duplicate an entire function (with out profiling)
     void Duplicate(Function& F, RSProfilers& LI);
+    //Called once for each backedge, handle the insertion of choice points and
+    //the interconection of the two versions of the code
     void ProcessBackEdge(BasicBlock* src, BasicBlock* dst, Function& F);
     bool runOnFunction(Function& F);
     bool doInitialization(Module &M);
@@ -224,7 +240,8 @@ void GlobalRandomCounterOpt::PrepFunction(Function* F) {
   LoadInst* l = new LoadInst(Counter, "counterload", AI->getNext());
   new StoreInst(l, AI, l->getNext());
   
-  //modify all functions and return values
+  //modify all functions and return values to restore the local variable to/from
+  //the global variable
   for(Function::iterator fib = F->begin(), fie = F->end();
       fib != fie; ++fib)
     for(BasicBlock::iterator bib = fib->begin(), bie = fib->end();
