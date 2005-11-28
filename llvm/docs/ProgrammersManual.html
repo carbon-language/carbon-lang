@@ -590,7 +590,7 @@ the <tt>BasicBlock</tt>s that constitute the <tt>Function</tt>. The following is
 an example that prints the name of a <tt>BasicBlock</tt> and the number of
 <tt>Instruction</tt>s it contains:</p>
 
-  <pre>  // func is a pointer to a Function instance<br>  for (Function::iterator i = func-&gt;begin(), e = func-&gt;end(); i != e; ++i) {<br><br>      // print out the name of the basic block if it has one, and then the<br>      // number of instructions that it contains<br><br>      cerr &lt;&lt; "Basic block (name=" &lt;&lt; i-&gt;getName() &lt;&lt; ") has " <br>           &lt;&lt; i-&gt;size() &lt;&lt; " instructions.\n";<br>  }<br></pre>
+  <pre>  // func is a pointer to a Function instance<br>  for (Function::iterator i = func-&gt;begin(), e = func-&gt;end(); i != e; ++i) {<br><br>      // print out the name of the basic block if it has one, and then the<br>      // number of instructions that it contains<br><br>      std::cerr &lt;&lt; "Basic block (name=" &lt;&lt; i-&gt;getName() &lt;&lt; ") has " <br>           &lt;&lt; i-&gt;size() &lt;&lt; " instructions.\n";<br>  }<br></pre>
 
 <p>Note that i can be used as if it were a pointer for the purposes of
 invoking member functions of the <tt>Instruction</tt> class.  This is
@@ -645,7 +645,7 @@ href="/doxygen/InstIterator_8h-source.html"><tt>llvm/Support/InstIterator.h</tt>
 and then instantiate <tt>InstIterator</tt>s explicitly in your code.  Here's a
 small example that shows how to dump all instructions in a function to the standard error stream:<p>
 
-  <pre>#include "<a href="/doxygen/InstIterator_8h-source.html">llvm/Support/InstIterator.h</a>"<br>...<br>// Suppose F is a ptr to a function<br>for (inst_iterator i = inst_begin(F), e = inst_end(F); i != e; ++i)<br>  cerr &lt;&lt; *i &lt;&lt; "\n";<br></pre>
+  <pre>#include "<a href="/doxygen/InstIterator_8h-source.html">llvm/Support/InstIterator.h</a>"<br>...<br>// Suppose F is a ptr to a function<br>for (inst_iterator i = inst_begin(F), e = inst_end(F); i != e; ++i)<br>  std::cerr &lt;&lt; *i &lt;&lt; "\n";<br></pre>
 Easy, isn't it?  You can also use <tt>InstIterator</tt>s to fill a
 worklist with its initial contents.  For example, if you wanted to
 initialize a worklist to contain all instructions in a <tt>Function</tt>
@@ -693,7 +693,7 @@ snippet illustrates use of the conversion constructors provided by LLVM
 iterators.  By using these, you can explicitly grab the iterator of something
 without actually obtaining it via iteration over some structure:</p>
 
-  <pre>void printNextInstruction(Instruction* inst) {<br>    BasicBlock::iterator it(inst);<br>    ++it; // after this line, it refers to the instruction after *inst.<br>    if (it != inst-&gt;getParent()-&gt;end()) cerr &lt;&lt; *it &lt;&lt; "\n";<br>}<br></pre>
+  <pre>void printNextInstruction(Instruction* inst) {<br>    BasicBlock::iterator it(inst);<br>    ++it; // after this line, it refers to the instruction after *inst.<br>    if (it != inst-&gt;getParent()-&gt;end()) std::cerr &lt;&lt; *it &lt;&lt; "\n";<br>}<br></pre>
 
 </div>
 
@@ -768,7 +768,7 @@ particular function <tt>foo</tt>. Finding all of the instructions that
 <i>use</i> <tt>foo</tt> is as simple as iterating over the <i>def-use</i> chain
 of <tt>F</tt>:</p>
 
-  <pre>Function* F = ...;<br><br>for (Value::use_iterator i = F-&gt;use_begin(), e = F-&gt;use_end(); i != e; ++i) {<br>    if (Instruction *Inst = dyn_cast&lt;Instruction&gt;(*i)) {<br>        cerr &lt;&lt; "F is used in instruction:\n";<br>        cerr &lt;&lt; *Inst &lt;&lt; "\n";<br>    }<br>}<br></pre>
+  <pre>Function* F = ...;<br><br>for (Value::use_iterator i = F-&gt;use_begin(), e = F-&gt;use_end(); i != e; ++i) {<br>    if (Instruction *Inst = dyn_cast&lt;Instruction&gt;(*i)) {<br>        std::cerr &lt;&lt; "F is used in instruction:\n";<br>        std::cerr &lt;&lt; *Inst &lt;&lt; "\n";<br>    }<br>}<br></pre>
 
 <p>Alternately, it's common to have an instance of the <a
 href="/doxygen/classllvm_1_1User.html">User Class</a> and need to know what
