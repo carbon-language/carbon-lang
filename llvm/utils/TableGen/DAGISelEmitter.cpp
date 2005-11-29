@@ -1952,7 +1952,12 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
              dynamic_cast<IntInit*>(PatternsToMatch[i].first->getLeafValue())) {
         PatternsByOpcode[getSDNodeNamed("imm")].push_back(&PatternsToMatch[i]);
       } else {
-        assert(0 && "Unknown leaf value");
+        std::cerr << "Unrecognized opcode '";
+        PatternsToMatch[i].first->dump();
+        std::cerr << "' on tree pattern '";
+        std::cerr << PatternsToMatch[i].second->getOperator()->getName();
+        std::cerr << "'!\n";
+        exit(1);
       }
     }
   
