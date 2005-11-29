@@ -311,6 +311,7 @@ public:
     ///
     bool properlyDominates(const Node *N) const {
       const Node *IDom;
+      if (this == 0 || N == 0) return false;
       while ((IDom = N->getIDom()) != 0 && IDom != this)
         N = IDom;   // Walk up the tree
       return IDom != 0;
