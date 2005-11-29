@@ -63,7 +63,8 @@ namespace ISD {
     AssertSext, AssertZext,
 
     // Various leaf nodes.
-    Constant, ConstantFP, GlobalAddress, FrameIndex, ConstantPool,
+    Constant, ConstantFP, STRING,
+    GlobalAddress, FrameIndex, ConstantPool,
     BasicBlock, ExternalSymbol, VALUETYPE, CONDCODE, Register,
     
     // TargetConstant - Like Constant, but the DAG does not do any folding or
@@ -341,6 +342,12 @@ namespace ISD {
     // HANDLENODE node - Used as a handle for various purposes.
     HANDLENODE,
 
+    // LOCATION - This node is used to represent a source location for debug
+    // info.  It takes token chain as input, then a line number, then a column
+    // number, then a filename, then a working dir.  It produces a token chain
+    // as output.
+    LOCATION,
+    
     // BUILTIN_OP_END - This must be the last enum value in this list.
     BUILTIN_OP_END,
   };
@@ -846,6 +853,20 @@ public:
   SDOperand getValue() const { return getOperand(0); }
 };
 
+class StringSDNode : public SDNode {
+  std::string Value;
+protected:
+  friend class SelectionDAG;
+  StringSDNode(const std::string &val)
+    : SDNode(ISD::STRING, MVT::Other), Value(val) {
+  }
+public:
+  const std::string &getValue() const { return Value; }
+  static bool classof(const StringSDNode *) { return true; }
+  static bool classof(const SDNode *N) {
+    return N->getOpcode() == ISD::STRING;
+  }
+};  
 
 class ConstantSDNode : public SDNode {
   uint64_t Value;

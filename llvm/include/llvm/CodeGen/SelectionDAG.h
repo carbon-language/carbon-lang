@@ -105,6 +105,7 @@ public:
   /// argument, it is used as the seed for node deletion.
   void RemoveDeadNodes(SDNode *N = 0);
 
+  SDOperand getString(const std::string &Val);
   SDOperand getConstant(uint64_t Val, MVT::ValueType VT);
   SDOperand getTargetConstant(uint64_t Val, MVT::ValueType VT);
   SDOperand getConstantFP(double Val, MVT::ValueType VT);
@@ -406,6 +407,7 @@ private:
   std::vector<SDNode*> ValueTypeNodes;
   std::map<std::string, SDNode*> ExternalSymbols;
   std::map<std::string, SDNode*> TargetExternalSymbols;
+  std::map<std::string, StringSDNode*> StringNodes;
   std::map<std::pair<unsigned,
                      std::pair<MVT::ValueType, std::vector<SDOperand> > >,
            SDNode*> OneResultNodes;
