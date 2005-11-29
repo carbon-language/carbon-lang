@@ -767,32 +767,65 @@ def RLDICR : MDForm_1<30, 1,
                       []>, isPPC64;
 
 // VA-Form instructions.  3-input AltiVec ops.
-def VMADDFP: VAForm_1<46, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB, VRRC:$vC),
-                      "vmaddfp $vD, $vA, $vB, $vC", VecFP,
-                      []>;
+def VMADDFP : VAForm_1<46, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB, VRRC:$vC),
+                       "vmaddfp $vD, $vA, $vC, $vB", VecFP,
+                       [(set VRRC:$vD, (fadd (fmul VRRC:$vA, VRRC:$vC),
+                                             VRRC:$vB))]>;
+def VNMSUBFP: VAForm_1<47, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB, VRRC:$vC),
+                      "vnmsubfp $vD, $vA, $vC, $vB", VecFP,
+                      [(set VRRC:$vD, (fneg (fsub (fmul VRRC:$vA, 
+                                                        VRRC:$vC),
+                                                  VRRC:$vB)))]>;
 
 // VX-Form instructions.  AltiVec arithmetic ops.
 def VADDFP : VXForm_1<10, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
                       "vaddfp $vD, $vA, $vB", VecFP,
-                      []>;
-def VADDUWM: VXForm_1<128, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
-                      "vadduwm $vD, $vA, $vB", VecGeneral,
-                      []>;
-def VAND   : VXForm_1<1028, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
-                      "vand $vD, $vA, $vB", VecGeneral,
-                      []>;
+                      [(set VRRC:$vD, (fadd VRRC:$vA, VRRC:$vB))]>;
 def VCFSX  : VXForm_1<842, (ops VRRC:$vD, u5imm:$UIMM, VRRC:$vB),
                       "vcfsx $vD, $vB, $UIMM", VecFP,
                       []>;
 def VCFUX  : VXForm_1<778, (ops VRRC:$vD, u5imm:$UIMM, VRRC:$vB),
                       "vcfux $vD, $vB, $UIMM", VecFP,
                       []>;
-def VOR    : VXForm_1<1156, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
-                      "vor $vD, $vA, $vB", VecGeneral,
+def VCTSXS : VXForm_1<970, (ops VRRC:$vD, u5imm:$UIMM, VRRC:$vB),
+                      "vctsxs $vD, $vB, $UIMM", VecFP,
                       []>;
-def VXOR   : VXForm_1<1220, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
-                      "vxor $vD, $vA, $vB", VecGeneral,
+def VCTUXS : VXForm_1<906, (ops VRRC:$vD, u5imm:$UIMM, VRRC:$vB),
+                      "vctuxs $vD, $vB, $UIMM", VecFP,
                       []>;
+def VEXPTEFP : VXForm_2<394, (ops VRRC:$vD, VRRC:$vB),
+                        "vexptefp $vD, $vB", VecFP,
+                        []>;
+def VLOGEFP  : VXForm_2<458, (ops VRRC:$vD, VRRC:$vB),
+                        "vlogefp $vD, $vB", VecFP,
+                        []>;
+def VMAXFP : VXForm_1<1034, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                      "vmaxfp $vD, $vA, $vB", VecFP,
+                      []>;
+def VMINFP : VXForm_1<1098, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                      "vminfp $vD, $vA, $vB", VecFP,
+                      []>;
+def VREFP  : VXForm_2<266, (ops VRRC:$vD, VRRC:$vB),
+                      "vrefp $vD, $vB", VecFP,
+                      []>;
+def VRFIM  : VXForm_2<714, (ops VRRC:$vD, VRRC:$vB),
+                      "vrfim $vD, $vB", VecFP,
+                      []>;
+def VRFIN  : VXForm_2<522, (ops VRRC:$vD, VRRC:$vB),
+                      "vrfin $vD, $vB", VecFP,
+                      []>;
+def VRFIP  : VXForm_2<650, (ops VRRC:$vD, VRRC:$vB),
+                      "vrfip $vD, $vB", VecFP,
+                      []>;
+def VRFIZ  : VXForm_2<586, (ops VRRC:$vD, VRRC:$vB),
+                      "vrfiz $vD, $vB", VecFP,
+                      []>;
+def VRSQRTEFP : VXForm_2<330, (ops VRRC:$vD, VRRC:$vB),
+                         "vrsqrtefp $vD, $vB", VecFP,
+                         []>;
+def VSUBFP : VXForm_1<74, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                      "vsubfp $vD, $vA, $vB", VecFP,
+                      [(set VRRC:$vD, (fsub VRRC:$vA, VRRC:$vB))]>;
 
 //===----------------------------------------------------------------------===//
 // PowerPC Instruction Patterns
