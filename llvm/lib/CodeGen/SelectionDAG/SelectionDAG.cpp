@@ -274,6 +274,9 @@ void SelectionDAG::RemoveNodeFromCSEMaps(SDNode *N) {
     Erased = ConstantFPs.erase(std::make_pair(V, N->getValueType(0)));
     break;
   }
+  case ISD::STRING:
+    Erased = StringNodes.erase(cast<StringSDNode>(N)->getValue());
+    break;
   case ISD::CONDCODE:
     assert(CondCodeNodes[cast<CondCodeSDNode>(N)->get()] &&
            "Cond code doesn't exist!");
@@ -445,6 +448,15 @@ SDOperand SelectionDAG::getConstant(uint64_t Val, MVT::ValueType VT) {
   if (N) return SDOperand(N, 0);
   N = new ConstantSDNode(false, Val, VT);
   AllNodes.push_back(N);
+  return SDOperand(N, 0);
+}
+
+SDOperand SelectionDAG::getString(const std::string &Val) {
+  StringSDNode *&N = StringNodes[Val];
+  if (!N) {
+    N = new StringSDNode(Val);
+    AllNodes.push_back(N);
+  }
   return SDOperand(N, 0);
 }
 
@@ -1670,6 +1682,7 @@ const char *SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::READCYCLECOUNTER: return "ReadCycleCounter";
   case ISD::SRCVALUE:      return "SrcValue";
   case ISD::VALUETYPE:     return "ValueType";
+  case ISD::STRING:        return "String";
   case ISD::EntryToken:    return "EntryToken";
   case ISD::TokenFactor:   return "TokenFactor";
   case ISD::AssertSext:    return "AssertSext";
@@ -1786,6 +1799,9 @@ const char *SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::WRITEPORT: return "writeport";
   case ISD::READIO: return "readio";
   case ISD::WRITEIO: return "writeio";
+
+  // Debug info
+  case ISD::LOCATION: return "location";
 
   case ISD::CONDCODE:
     switch (cast<CondCodeSDNode>(this)->get()) {

@@ -17,6 +17,7 @@
 #include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
+#include "llvm/GlobalVariable.h"
 #include "llvm/Instructions.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/CodeGen/IntrinsicLowering.h"
@@ -719,6 +720,44 @@ void SelectionDAGLowering::visitAlloca(AllocaInst &I) {
   CurMBB->getParent()->getFrameInfo()->CreateVariableSizedObject();
 }
 
+/// getStringValue - Turn an LLVM constant pointer that eventually points to a
+/// global into a string value.  Return an empty string if we can't do it.
+///
+static std::string getStringValue(Value *V, unsigned Offset = 0) {
+  if (GlobalVariable *GV = dyn_cast<GlobalVariable>(V)) {
+    if (GV->hasInitializer() && isa<ConstantArray>(GV->getInitializer())) {
+      ConstantArray *Init = cast<ConstantArray>(GV->getInitializer());
+      if (Init->isString()) {
+        std::string Result = Init->getAsString();
+        if (Offset < Result.size()) {
+          // If we are pointing INTO The string, erase the beginning...
+          Result.erase(Result.begin(), Result.begin()+Offset);
+
+          // Take off the null terminator, and any string fragments after it.
+          std::string::size_type NullPos = Result.find_first_of((char)0);
+          if (NullPos != std::string::npos)
+            Result.erase(Result.begin()+NullPos, Result.end());
+          return Result;
+        }
+      }
+    }
+  } else if (Constant *C = dyn_cast<Constant>(V)) {
+    if (GlobalValue *GV = dyn_cast<GlobalValue>(C))
+      return getStringValue(GV, Offset);
+    else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C)) {
+      if (CE->getOpcode() == Instruction::GetElementPtr) {
+        // Turn a gep into the specified offset.
+        if (CE->getNumOperands() == 3 &&
+            cast<Constant>(CE->getOperand(1))->isNullValue() &&
+            isa<ConstantInt>(CE->getOperand(2))) {
+          return getStringValue(CE->getOperand(0),
+                   Offset+cast<ConstantInt>(CE->getOperand(2))->getRawValue());
+        }
+      }
+    }
+  }
+  return "";
+}
 
 void SelectionDAGLowering::visitLoad(LoadInst &I) {
   SDOperand Ptr = getValue(I.getOperand(0));
@@ -813,11 +852,37 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     return 0;
     
   case Intrinsic::dbg_stoppoint:
+    {
     if (TLI.getTargetMachine().getIntrinsicLowering().EmitDebugFunctions())
       return "llvm_debugger_stop";
-    if (I.getType() != Type::VoidTy)
-      setValue(&I, DAG.getNode(ISD::UNDEF, TLI.getValueType(I.getType())));
+    
+    std::string fname = "<unknown>";
+    std::vector<SDOperand> Ops;
+
+    // Pull the filename out of the the compilation unit.
+    const GlobalVariable *cunit = dyn_cast<GlobalVariable>(I.getOperand(4));
+    if (cunit && cunit->hasInitializer()) {
+      ConstantStruct *CS = dyn_cast<ConstantStruct>(cunit->getInitializer());
+      if (CS->getNumOperands() > 0) {
+          std::string dirname = getStringValue(CS->getOperand(4));
+          fname = dirname + "/" + getStringValue(CS->getOperand(3));
+        }
+      }
+    // Input Chain
+    Ops.push_back(getRoot());
+    
+    // line number
+    Ops.push_back(getValue(I.getOperand(2)));
+   
+    // column
+    Ops.push_back(getValue(I.getOperand(3)));
+
+    // filename
+    Ops.push_back(DAG.getString(fname));
+    Ops.push_back(DAG.getString(""));
+    DAG.setRoot(DAG.getNode(ISD::LOCATION, MVT::Other, Ops));
     return 0;
+  }
   case Intrinsic::dbg_region_start:
     if (TLI.getTargetMachine().getIntrinsicLowering().EmitDebugFunctions())
       return "llvm_dbg_region_start";

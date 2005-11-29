@@ -540,6 +540,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
   case ISD::CONDCODE:
   case ISD::VALUETYPE:
   case ISD::SRCVALUE:
+  case ISD::STRING:
     switch (TLI.getOperationAction(Node->getOpcode(), Node->getValueType(0))) {
     default: assert(0 && "This action is not supported yet!");
     case TargetLowering::Custom: {
@@ -601,6 +602,32 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     }
     break;
   }
+
+  case ISD::LOCATION:
+    assert(Node->getNumOperands() == 5 && "Invalid LOCATION node!");
+    Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the input chain.
+    
+    switch (TLI.getOperationAction(ISD::LOCATION, MVT::Other)) {
+    case TargetLowering::Promote:
+    default: assert(0 && "This action is not supported yet!");
+    case TargetLowering::Expand:
+      // If the target doesn't support line numbers, ignore this node.
+      Result = Tmp1;
+      break;
+    case TargetLowering::Legal:
+      if (Tmp1 != Node->getOperand(0)) {
+        std::vector<SDOperand> Ops;
+        Ops.push_back(Tmp1);
+        Ops.push_back(Node->getOperand(1));  // line # must be legal.
+        Ops.push_back(Node->getOperand(2));  // col # must be legal.
+        Ops.push_back(Node->getOperand(3));  // filename must be legal.
+        Ops.push_back(Node->getOperand(4));  // working dir # must be legal.
+        Result = DAG.getNode(ISD::LOCATION, MVT::Other, Ops);
+      }
+      break;
+    }
+    break;
+
   case ISD::Constant:
     // We know we don't need to expand constants here, constants only have one
     // value and we check that it is fine above.
