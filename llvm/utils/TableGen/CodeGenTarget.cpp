@@ -46,6 +46,12 @@ std::string llvm::getName(MVT::ValueType T) {
   case MVT::f80:   return "f80";
   case MVT::f128:  return "f128";
   case MVT::isVoid:return "void";
+  case MVT::v16i8: return "v16i8";
+  case MVT::v8i16: return "v8i16";
+  case MVT::v4i32: return "v4i32";
+  case MVT::v2i64: return "v2i64";
+  case MVT::v4f32: return "v4f32";
+  case MVT::v2f64: return "v2f64";
   default: assert(0 && "ILLEGAL VALUE TYPE!"); return "";
   }
 }
@@ -64,6 +70,12 @@ std::string llvm::getEnumName(MVT::ValueType T) {
   case MVT::f80:   return "f80";
   case MVT::f128:  return "f128";
   case MVT::isVoid:return "isVoid";
+  case MVT::v16i8: return "v16i8";
+  case MVT::v8i16: return "v8i16";
+  case MVT::v4i32: return "v4i32";
+  case MVT::v2i64: return "v2i64";
+  case MVT::v4f32: return "v4f32";
+  case MVT::v2f64: return "v2f64";
   default: assert(0 && "ILLEGAL VALUE TYPE!"); return "";
   }
 }
