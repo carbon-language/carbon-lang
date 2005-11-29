@@ -560,15 +560,17 @@ def MCRF   : XLForm_3<19, 0, (ops CRRC:$BF, CRRC:$BFA),
 // Note that although LR should be listed as `8' and CTR as `9' in the SPR
 // field, the manual lists the groups of bits as [5-9] = 0, [0-4] = 8 or 9
 // which means the SPR value needs to be multiplied by a factor of 32.
-def MFCTR : XFXForm_1_ext<31, 339, 288, (ops GPRC:$rT), "mfctr $rT", SprMFSPR>;
-def MFLR  : XFXForm_1_ext<31, 339, 256, (ops GPRC:$rT), "mflr $rT", SprMFSPR>;
+def MFCTR : XFXForm_1_ext<31, 339, 9, (ops GPRC:$rT), "mfctr $rT", SprMFSPR>;
+def MFLR  : XFXForm_1_ext<31, 339, 8, (ops GPRC:$rT), "mflr $rT",  SprMFSPR>;
 def MFCR  : XFXForm_3<31, 19, (ops GPRC:$rT), "mfcr $rT", SprMFCR>;
 def MTCRF : XFXForm_5<31, 144, (ops crbitm:$FXM, GPRC:$rS),
                       "mtcrf $FXM, $rS", BrMCRX>;
-def MFOCRF : XFXForm_5a<31, 19, (ops GPRC:$rT, crbitm:$FXM),
-                        "mfcr $rT, $FXM", SprMFCR>;
-def MTCTR : XFXForm_7_ext<31, 467, 288, (ops GPRC:$rS), "mtctr $rS", SprMTSPR>;
-def MTLR  : XFXForm_7_ext<31, 467, 256, (ops GPRC:$rS), "mtlr $rS", SprMTSPR>;
+def MFOCRF: XFXForm_5a<31, 19, (ops GPRC:$rT, crbitm:$FXM),
+                       "mfcr $rT, $FXM", SprMFCR>;
+def MTCTR : XFXForm_7_ext<31, 467, 9, (ops GPRC:$rS), "mtctr $rS", SprMTSPR>;
+def MTLR  : XFXForm_7_ext<31, 467, 8, (ops GPRC:$rS), "mtlr $rS", SprMTSPR>;
+def MTSPR : XFXForm_7<31, 467, (ops GPRC:$rS, u16imm:$UIMM), "mtspr $UIMM, $rS",
+                      SprMTSPR>;
 
 // XS-Form instructions.  Just 'sradi'
 //

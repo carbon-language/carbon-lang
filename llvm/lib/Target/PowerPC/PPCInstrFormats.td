@@ -361,7 +361,16 @@ class XFXForm_1<bits<6> opcode, bits<10> xo, dag OL, string asmstr,
   bits<10> SPR;
 
   let Inst{6-10}  = RT;
-  let Inst{11-20} = SPR;
+  let Inst{11}    = SPR{4};
+  let Inst{12}    = SPR{3};
+  let Inst{13}    = SPR{2};
+  let Inst{14}    = SPR{1};
+  let Inst{15}    = SPR{0};
+  let Inst{16}    = SPR{9};
+  let Inst{17}    = SPR{8};
+  let Inst{18}    = SPR{7};
+  let Inst{19}    = SPR{6};
+  let Inst{20}    = SPR{5};
   let Inst{21-30} = xo;
   let Inst{31}    = 0;
 }
@@ -410,7 +419,6 @@ class XFXForm_5a<bits<6> opcode, bits<10> xo, dag OL, string asmstr,
   let Inst{21-30} = xo;
   let Inst{31}    = 0;
 }
-
 
 class XFXForm_7<bits<6> opcode, bits<10> xo, dag OL, string asmstr,
                 InstrItinClass itin>
