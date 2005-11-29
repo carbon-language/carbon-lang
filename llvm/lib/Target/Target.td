@@ -38,7 +38,13 @@ def f80    : ValueType<80 ,  9>;   // 80-bit floating point value
 def f128   : ValueType<128, 10>;   // 128-bit floating point value
 def FlagVT : ValueType<0  , 11>;   // Condition code or machine flag
 def isVoid : ValueType<0  , 12>;   // Produces no value
-def Vector : ValueType<0  , 13>;   // Abstract vector type
+def Vector : ValueType<0  , 13>;   // Abstract vector value
+def v16i8  : ValueType<128, 14>;   // 16 x i8  vector value
+def v8i16  : ValueType<128, 15>;   //  8 x i16 vector value
+def v4i32  : ValueType<128, 16>;   //  4 x i32 vector value
+def v2i64  : ValueType<128, 17>;   //  2 x i64 vector value
+def v4f32  : ValueType<128, 18>;   //  4 x f32 vector value
+def v2f64  : ValueType<128, 19>;   //  2 x f64 vector value
 
 //===----------------------------------------------------------------------===//
 // Register file description - These classes are used to fill in the target

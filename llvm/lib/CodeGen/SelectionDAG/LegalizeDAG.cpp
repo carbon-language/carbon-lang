@@ -52,7 +52,7 @@ class SelectionDAGLegalize {
   /// ValueTypeActions - This is a bitvector that contains two bits for each
   /// value type, where the two bits correspond to the LegalizeAction enum.
   /// This can be queried with "getTypeAction(VT)".
-  unsigned ValueTypeActions;
+  unsigned long long ValueTypeActions;
 
   /// NeedsAnotherIteration - This is set when we expand a large integer
   /// operation into smaller integer operations, but the smaller operations are
@@ -161,7 +161,7 @@ static unsigned getScalarizedOpcode(unsigned VecOp, MVT::ValueType VT) {
 SelectionDAGLegalize::SelectionDAGLegalize(SelectionDAG &dag)
   : TLI(dag.getTargetLoweringInfo()), DAG(dag),
     ValueTypeActions(TLI.getValueTypeActions()) {
-  assert(MVT::LAST_VALUETYPE <= 16 &&
+  assert(MVT::LAST_VALUETYPE <= 32 &&
          "Too many value types for ValueTypeActions to hold!");
 }
 

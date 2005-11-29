@@ -42,8 +42,8 @@ static void SetValueTypeAction(MVT::ValueType VT,
                                TargetLowering::LegalizeAction Action,
                                TargetLowering &TLI,
                                MVT::ValueType *TransformToType,
-                               unsigned &ValueTypeActions) {
-  ValueTypeActions |= Action << (VT*2);
+                               unsigned long long &ValueTypeActions) {
+  ValueTypeActions |= (unsigned long long)Action << (VT*2);
   if (Action == TargetLowering::Promote) {
     MVT::ValueType PromoteTo;
     if (VT == MVT::f32)
@@ -75,7 +75,7 @@ static void SetValueTypeAction(MVT::ValueType VT,
 /// computeRegisterProperties - Once all of the register classes are added,
 /// this allows us to compute derived properties we expose.
 void TargetLowering::computeRegisterProperties() {
-  assert(MVT::LAST_VALUETYPE <= 16 &&
+  assert(MVT::LAST_VALUETYPE <= 32 &&
          "Too many value types for ValueTypeActions to hold!");
 
   // Everything defaults to one.

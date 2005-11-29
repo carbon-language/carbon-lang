@@ -123,7 +123,7 @@ public:
   LegalizeAction getTypeAction(MVT::ValueType VT) const {
     return (LegalizeAction)((ValueTypeActions >> (2*VT)) & 3);
   }
-  unsigned getValueTypeActions() const { return ValueTypeActions; }
+  unsigned long long getValueTypeActions() const { return ValueTypeActions; }
 
   /// getTypeToTransformTo - For types supported by the target, this is an
   /// identity function.  For types that must be promoted to larger types, this
@@ -441,7 +441,7 @@ private:
   /// ValueTypeActions - This is a bitvector that contains two bits for each
   /// value type, where the two bits correspond to the LegalizeAction enum.
   /// This can be queried with "getTypeAction(VT)".
-  unsigned ValueTypeActions;
+  unsigned long long ValueTypeActions;
 
   /// TransformToType - For any value types we are promoting or expanding, this
   /// contains the value type that we are changing to.  For Expanded types, this

@@ -48,14 +48,26 @@ namespace MVT {  // MVT = Machine Value Types
                             // be refined into a target vector type, or
                             // scalarized.
 
+                            // These are 128 bit vectors of varying packed types
+    v16i8          =  14,   // 16 x i8
+    v8i16          =  15,   //  8 x i16
+    v4i32          =  16,   //  4 x i32
+    v2i64          =  17,   //  2 x i64
+
+    v4f32          =  18,   //  4 x f32
+    v2f64          =  19,   //  2 x f64
+
     LAST_VALUETYPE,         // This always remains at the end of the list.
   };
 
   static inline bool isInteger(ValueType VT) {
-    return VT >= i1 && VT <= i128;
+    return (VT >= i1 && VT <= i128) || (VT >= v16i8 && VT <= v2i64);
   }
   static inline bool isFloatingPoint(ValueType VT) {
-    return VT >= f32 && VT <= f128;
+    return (VT >= f32 && VT <= f128) || (VT >= v4f32 && VT <= v2f64);
+  }
+  static inline bool isVector(ValueType VT) {
+    return (VT >= v16i8 && VT <= v2f64);
   }
 
   static inline unsigned getSizeInBits(ValueType VT) {
@@ -70,7 +82,13 @@ namespace MVT {  // MVT = Machine Value Types
     case MVT::i64 : return 64;
     case MVT::f80 : return 80;
     case MVT::f128:
-    case MVT::i128: return 128;
+    case MVT::i128: 
+    case MVT::v16i8:
+    case MVT::v8i16:
+    case MVT::v4i32:
+    case MVT::v2i64:
+    case MVT::v4f32:
+    case MVT::v2f64: return 128;
     }
   }
 
