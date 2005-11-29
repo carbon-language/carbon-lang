@@ -34,6 +34,10 @@ N: Casey Carter
 E: ccarter@uiuc.edu
 D: Fixes to the Reassociation pass, various improvement patches
 
+N: Evan Cheng
+E: evan.cheng@apple.com
+D: X86 backend improvements
+
 N: Jeff Cohen
 E: jeffc@jolt-lang.org
 W: http://jolt-lang.org
@@ -68,6 +72,10 @@ D: Support for packed types
 N: Sumant Kowshik
 E: kowshik@uiuc.edu
 D: Author of the original C backend
+
+N: Jim Laskey
+E: jlaskey@apple.com
+D: Improvements to the PPC backend, instruction scheduling
 
 N: Chris Lattner
 E: sabre@nondot.org
