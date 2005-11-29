@@ -121,6 +121,12 @@ PPCTargetLowering::PPCTargetLowering(TargetMachine &TM)
     setOperationAction(ISD::SRA, MVT::i64, Custom);
   }
   
+  if (TM.getSubtarget<PPCSubtarget>().hasAltivec()) {
+    // FIXME: AltiVec supports a wide variety of packed types.  For now, we're
+    // bringing up support with just v4f32.
+    addRegisterClass(MVT::v4f32, PPC::VRRCRegisterClass);
+  }
+  
   setSetCCResultContents(ZeroOrOneSetCCResult);
   
   computeRegisterProperties();
