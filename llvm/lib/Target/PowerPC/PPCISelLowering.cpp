@@ -90,6 +90,9 @@ PPCTargetLowering::PPCTargetLowering(TargetMachine &TM)
 
   // PowerPC does not have truncstore for i1.
   setOperationAction(ISD::TRUNCSTORE, MVT::i1, Promote);
+
+  // PowerPC doesn't have line number support yet.
+  setOperationAction(ISD::LOCATION, MVT::Other, Expand);
   
   // We want to legalize GlobalAddress into the appropriate instructions to
   // materialize the address.

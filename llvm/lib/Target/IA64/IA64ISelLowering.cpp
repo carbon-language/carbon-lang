@@ -72,6 +72,9 @@ IA64TargetLowering::IA64TargetLowering(TargetMachine &TM)
       setOperationAction(ISD::FCOS , MVT::f32, Expand);
       setOperationAction(ISD::FSQRT, MVT::f32, Expand);
 
+      // We don't have line number support yet.
+      setOperationAction(ISD::LOCATION, MVT::Other, Expand);
+
       //IA64 has these, but they are not implemented
       setOperationAction(ISD::CTTZ , MVT::i64  , Expand);
       setOperationAction(ISD::CTLZ , MVT::i64  , Expand);

@@ -116,6 +116,9 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   setOperationAction(ISD::SELECT           , MVT::i1   , Promote);
   setOperationAction(ISD::SELECT           , MVT::i8   , Promote);
 
+  // We don't have line number support yet.
+  setOperationAction(ISD::LOCATION, MVT::Other, Expand);
+
   if (X86ScalarSSE) {
     // Set up the FP register classes.
     addRegisterClass(MVT::f32, X86::V4F4RegisterClass);

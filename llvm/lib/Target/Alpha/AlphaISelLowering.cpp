@@ -97,6 +97,9 @@ AlphaTargetLowering::AlphaTargetLowering(TargetMachine &TM) : TargetLowering(TM)
 
   //Doesn't work yet
   setOperationAction(ISD::SETCC, MVT::f32,   Promote);
+
+  // We don't have line number support yet.
+  setOperationAction(ISD::LOCATION, MVT::Other, Expand);
   
   computeRegisterProperties();
   
