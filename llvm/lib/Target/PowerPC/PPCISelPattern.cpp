@@ -1713,7 +1713,7 @@ void ISel::Select(SDOperand N) {
 }
 
 
-/// createPPCPatternInstructionSelector - This pass converts an LLVM function
+/// createPPCISelPattern - This pass converts an LLVM function
 /// into a machine code representation using pattern matching and a machine
 /// description file.
 ///
