@@ -60,8 +60,8 @@ namespace llvm {
       unsigned MIOperandNo;
       unsigned MINumOperands;   // The number of operands.
 
-      /// MIOperandInfo - Default MI operand type. Note an operand may be made up
-      /// of multiple MI operands.
+      /// MIOperandInfo - Default MI operand type. Note an operand may be made
+      /// up of multiple MI operands.
       DagInit *MIOperandInfo;
 
       OperandInfo(Record *R, MVT::ValueType T, const std::string &N,
