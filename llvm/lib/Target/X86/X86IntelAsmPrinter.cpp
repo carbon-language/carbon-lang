@@ -117,7 +117,7 @@ void X86IntelAsmPrinter::printOp(const MachineOperand &MO,
     if (Offset > 0)
       O << " + " << Offset;
     else if (Offset < 0)
-      O << " - " << -Offset;
+      O << Offset;
     return;
   }
   case MachineOperand::MO_ExternalSymbol:
