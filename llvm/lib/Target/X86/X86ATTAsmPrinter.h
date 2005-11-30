@@ -35,23 +35,37 @@ struct X86ATTAsmPrinter : public X86SharedAsmPrinter {
   bool printInstruction(const MachineInstr *MI);
 
   // This method is used by the tablegen'erated instruction printer.
-  void printOperand(const MachineInstr *MI, unsigned OpNo, MVT::ValueType VT){
+  void printOperand(const MachineInstr *MI, unsigned OpNo){
     printOp(MI->getOperand(OpNo));
   }
-
-  void printCallOperand(const MachineInstr *MI, unsigned OpNo,
-                        MVT::ValueType VT) {
+  void printCallOperand(const MachineInstr *MI, unsigned OpNo) {
     printOp(MI->getOperand(OpNo), true); // Don't print '$' prefix.
   }
-
-  void printMemoryOperand(const MachineInstr *MI, unsigned OpNo,
-                          MVT::ValueType VT) {
+  void printi8mem(const MachineInstr *MI, unsigned OpNo) {
     printMemReference(MI, OpNo);
   }
-
+  void printi16mem(const MachineInstr *MI, unsigned OpNo) {
+    printMemReference(MI, OpNo);
+  }
+  void printi32mem(const MachineInstr *MI, unsigned OpNo) {
+    printMemReference(MI, OpNo);
+  }
+  void printi64mem(const MachineInstr *MI, unsigned OpNo) {
+    printMemReference(MI, OpNo);
+  }
+  void printf32mem(const MachineInstr *MI, unsigned OpNo) {
+    printMemReference(MI, OpNo);
+  }
+  void printf64mem(const MachineInstr *MI, unsigned OpNo) {
+    printMemReference(MI, OpNo);
+  }
+  void printf80mem(const MachineInstr *MI, unsigned OpNo) {
+    printMemReference(MI, OpNo);
+  }
+  
   void printMachineInstruction(const MachineInstr *MI);
   void printOp(const MachineOperand &MO, bool isCallOperand = false);
-  void printSSECC(const MachineInstr *MI, unsigned Op, MVT::ValueType VT);
+  void printSSECC(const MachineInstr *MI, unsigned Op);
   void printMemReference(const MachineInstr *MI, unsigned Op);
   bool runOnMachineFunction(MachineFunction &F);
 };

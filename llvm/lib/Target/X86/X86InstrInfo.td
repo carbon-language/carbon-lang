@@ -15,23 +15,23 @@
 
 // *mem - Operand definitions for the funky X86 addressing mode operands.
 //
-
-class X86MemOperand<ValueType Ty> : Operand<Ty> {
-  let PrintMethod = "printMemoryOperand";
+class X86MemOperand<ValueType Ty, string printMethod> : Operand<Ty> {
+  let PrintMethod = printMethod;
   let NumMIOperands = 4;
   let MIOperandInfo = (ops R32, i8imm, R32, i32imm);
 }
+
+def i8mem   : X86MemOperand<i8,  "printi8mem">;
+def i16mem  : X86MemOperand<i16, "printi16mem">;
+def i32mem  : X86MemOperand<i32, "printi32mem">;
+def i64mem  : X86MemOperand<i64, "printi64mem">;
+def f32mem  : X86MemOperand<f32, "printf32mem">;
+def f64mem  : X86MemOperand<f64, "printf64mem">;
+def f80mem  : X86MemOperand<f80, "printf80mem">;
+
 def SSECC : Operand<i8> {
   let PrintMethod = "printSSECC";
 }
-
-def i8mem  : X86MemOperand<i8>;
-def i16mem : X86MemOperand<i16>;
-def i32mem : X86MemOperand<i32>;
-def i64mem : X86MemOperand<i64>;
-def f32mem : X86MemOperand<f32>;
-def f64mem : X86MemOperand<f64>;
-def f80mem : X86MemOperand<f80>;
 
 // A couple of more descriptive operand definitions.
 // 16-bits but only 8 bits are significant.

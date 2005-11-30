@@ -37,7 +37,7 @@ struct X86IntelAsmPrinter : public X86SharedAsmPrinter {
   bool printInstruction(const MachineInstr *MI);
 
   // This method is used by the tablegen'erated instruction printer.
-  void printOperand(const MachineInstr *MI, unsigned OpNo, MVT::ValueType VT){
+  void printOperand(const MachineInstr *MI, unsigned OpNo){
     const MachineOperand &MO = MI->getOperand(OpNo);
     if (MO.getType() == MachineOperand::MO_MachineRegister) {
       assert(MRegisterInfo::isPhysicalRegister(MO.getReg())&&"Not physref??");
@@ -48,29 +48,42 @@ struct X86IntelAsmPrinter : public X86SharedAsmPrinter {
     }
   }
 
-  void printCallOperand(const MachineInstr *MI, unsigned OpNo,
-                        MVT::ValueType VT) {
+  void printCallOperand(const MachineInstr *MI, unsigned OpNo) {
     printOp(MI->getOperand(OpNo), true); // Don't print "OFFSET".
   }
 
-  void printMemoryOperand(const MachineInstr *MI, unsigned OpNo,
-                          MVT::ValueType VT) {
-    switch (VT) {
-    default: assert(0 && "Unknown arg size!");
-    case MVT::i8:   O << "BYTE PTR "; break;
-    case MVT::i16:  O << "WORD PTR "; break;
-    case MVT::i32:
-    case MVT::f32:  O << "DWORD PTR "; break;
-    case MVT::i64:
-    case MVT::f64:  O << "QWORD PTR "; break;
-    case MVT::f80:  O << "XWORD PTR "; break;
-    }
+  void printi8mem(const MachineInstr *MI, unsigned OpNo) {
+    O << "BYTE PTR ";
+    printMemReference(MI, OpNo);
+  }
+  void printi16mem(const MachineInstr *MI, unsigned OpNo) {
+    O << "WORD PTR ";
+    printMemReference(MI, OpNo);
+  }
+  void printi32mem(const MachineInstr *MI, unsigned OpNo) {
+    O << "WORD PTR ";
+    printMemReference(MI, OpNo);
+  }
+  void printi64mem(const MachineInstr *MI, unsigned OpNo) {
+    O << "DWORD PTR ";
+    printMemReference(MI, OpNo);
+  }
+  void printf32mem(const MachineInstr *MI, unsigned OpNo) {
+    O << "DWORD PTR ";
+    printMemReference(MI, OpNo);
+  }
+  void printf64mem(const MachineInstr *MI, unsigned OpNo) {
+    O << "QWORD PTR ";
+    printMemReference(MI, OpNo);
+  }
+  void printf80mem(const MachineInstr *MI, unsigned OpNo) {
+    O << "XWORD PTR ";
     printMemReference(MI, OpNo);
   }
 
   void printMachineInstruction(const MachineInstr *MI);
   void printOp(const MachineOperand &MO, bool elideOffsetKeyword = false);
-  void printSSECC(const MachineInstr *MI, unsigned Op, MVT::ValueType VT);
+  void printSSECC(const MachineInstr *MI, unsigned Op);
   void printMemReference(const MachineInstr *MI, unsigned Op);
   bool runOnMachineFunction(MachineFunction &F);
   bool doInitialization(Module &M);

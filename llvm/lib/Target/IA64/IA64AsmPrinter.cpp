@@ -23,7 +23,6 @@
 #include "llvm/Assembly/Writer.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
-#include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/ADT/Statistic.h"
@@ -65,7 +64,7 @@ namespace {
     bool printInstruction(const MachineInstr *MI);
 
     // This method is used by the tablegen'erated instruction printer.
-    void printOperand(const MachineInstr *MI, unsigned OpNo, MVT::ValueType VT){
+    void printOperand(const MachineInstr *MI, unsigned OpNo){
       const MachineOperand &MO = MI->getOperand(OpNo);
       if (MO.getType() == MachineOperand::MO_MachineRegister) {
         assert(MRegisterInfo::isPhysicalRegister(MO.getReg())&&"Not physref??");
@@ -76,30 +75,25 @@ namespace {
       }
     }
 
-    void printS8ImmOperand(const MachineInstr *MI, unsigned OpNo,
-                            MVT::ValueType VT) {
+    void printS8ImmOperand(const MachineInstr *MI, unsigned OpNo) {
       int val=(unsigned int)MI->getOperand(OpNo).getImmedValue();
       if(val>=128) val=val-256; // if negative, flip sign
       O << val;
     }
-    void printS14ImmOperand(const MachineInstr *MI, unsigned OpNo,
-                            MVT::ValueType VT) {
+    void printS14ImmOperand(const MachineInstr *MI, unsigned OpNo) {
       int val=(unsigned int)MI->getOperand(OpNo).getImmedValue();
       if(val>=8192) val=val-16384; // if negative, flip sign
       O << val;
     }
-    void printS22ImmOperand(const MachineInstr *MI, unsigned OpNo,
-                            MVT::ValueType VT) {
+    void printS22ImmOperand(const MachineInstr *MI, unsigned OpNo) {
       int val=(unsigned int)MI->getOperand(OpNo).getImmedValue();
       if(val>=2097152) val=val-4194304; // if negative, flip sign
       O << val;
     }
-    void printU64ImmOperand(const MachineInstr *MI, unsigned OpNo,
-                            MVT::ValueType VT) {
+    void printU64ImmOperand(const MachineInstr *MI, unsigned OpNo) {
       O << (uint64_t)MI->getOperand(OpNo).getImmedValue();
     }
-    void printS64ImmOperand(const MachineInstr *MI, unsigned OpNo,
-                            MVT::ValueType VT) {
+    void printS64ImmOperand(const MachineInstr *MI, unsigned OpNo) {
 // XXX : nasty hack to avoid GPREL22 "relocation truncated to fit" linker
 // errors - instead of add rX = @gprel(CPI<whatever>), r1;; we now
 // emit movl rX = @gprel(CPI<whatever);;
@@ -116,13 +110,11 @@ namespace {
       }
     }
 
-    void printGlobalOperand(const MachineInstr *MI, unsigned OpNo,
-                          MVT::ValueType VT) {
+    void printGlobalOperand(const MachineInstr *MI, unsigned OpNo) {
       printOp(MI->getOperand(OpNo), false); // this is NOT a br.call instruction
     }
 
-    void printCallOperand(const MachineInstr *MI, unsigned OpNo,
-                          MVT::ValueType VT) {
+    void printCallOperand(const MachineInstr *MI, unsigned OpNo) {
       printOp(MI->getOperand(OpNo), true); // this is a br.call instruction
     }
 

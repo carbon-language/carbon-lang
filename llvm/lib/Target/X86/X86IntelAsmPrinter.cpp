@@ -59,8 +59,7 @@ bool X86IntelAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   return false;
 }
 
-void X86IntelAsmPrinter::printSSECC(const MachineInstr *MI, unsigned Op,
-                                  MVT::ValueType VT) {
+void X86IntelAsmPrinter::printSSECC(const MachineInstr *MI, unsigned Op) {
   unsigned char value = MI->getOperand(Op).getImmedValue();
   assert(value <= 7 && "Invalid ssecc argument!");
   switch (value) {

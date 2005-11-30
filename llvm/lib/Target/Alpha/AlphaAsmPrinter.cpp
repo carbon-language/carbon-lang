@@ -18,7 +18,6 @@
 #include "llvm/Module.h"
 #include "llvm/Type.h"
 #include "llvm/Assembly/Writer.h"
-#include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/Mangler.h"
@@ -54,7 +53,7 @@ namespace {
     }
     bool printInstruction(const MachineInstr *MI);
     void printOp(const MachineOperand &MO, bool IsCallOp = false);
-    void printOperand(const MachineInstr *MI, int opNum, MVT::ValueType VT);
+    void printOperand(const MachineInstr *MI, int opNum);
     void printBaseOffsetPair (const MachineInstr *MI, int i, bool brackets=true);
     void printMachineInstruction(const MachineInstr *MI);
     bool runOnMachineFunction(MachineFunction &F);
@@ -75,7 +74,7 @@ FunctionPass *llvm::createAlphaCodePrinterPass (std::ostream &o,
 
 #include "AlphaGenAsmWriter.inc"
 
-void AlphaAsmPrinter::printOperand(const MachineInstr *MI, int opNum, MVT::ValueType VT)
+void AlphaAsmPrinter::printOperand(const MachineInstr *MI, int opNum)
 {
   const MachineOperand &MO = MI->getOperand(opNum);
   if (MO.getType() == MachineOperand::MO_MachineRegister) {

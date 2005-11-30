@@ -145,8 +145,7 @@ void X86ATTAsmPrinter::printOp(const MachineOperand &MO, bool isCallOp) {
   }
 }
 
-void X86ATTAsmPrinter::printSSECC(const MachineInstr *MI, unsigned Op,
-                                  MVT::ValueType VT) {
+void X86ATTAsmPrinter::printSSECC(const MachineInstr *MI, unsigned Op) {
   unsigned char value = MI->getOperand(Op).getImmedValue();
   assert(value <= 7 && "Invalid ssecc argument!");
   switch (value) {

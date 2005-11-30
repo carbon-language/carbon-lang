@@ -38,21 +38,16 @@ namespace {
     /// machine instruction.
     unsigned MIOpNo;
 
-    /// OpVT - For isMachineInstrOperand, this is the value type for the
-    /// operand.
-    MVT::ValueType OpVT;
-
     AsmWriterOperand(const std::string &LitStr)
-      : OperandType(isLiteralTextOperand),  Str(LitStr) {}
+      : OperandType(isLiteralTextOperand), Str(LitStr) {}
 
-    AsmWriterOperand(const std::string &Printer, unsigned OpNo,
-                     MVT::ValueType VT) : OperandType(isMachineInstrOperand),
-                                          Str(Printer), MIOpNo(OpNo), OpVT(VT){}
+    AsmWriterOperand(const std::string &Printer, unsigned OpNo) 
+      : OperandType(isMachineInstrOperand), Str(Printer), MIOpNo(OpNo) {}
 
     bool operator!=(const AsmWriterOperand &Other) const {
       if (OperandType != Other.OperandType || Str != Other.Str) return true;
       if (OperandType == isMachineInstrOperand)
-        return MIOpNo != Other.MIOpNo || OpVT != Other.OpVT;
+        return MIOpNo != Other.MIOpNo;
       return false;
     }
     bool operator==(const AsmWriterOperand &Other) const {
@@ -90,7 +85,7 @@ void AsmWriterOperand::EmitCode(std::ostream &OS) const {
   if (OperandType == isLiteralTextOperand)
     OS << "O << \"" << Str << "\"; ";
   else
-    OS << Str << "(MI, " << MIOpNo << ", MVT::" << getEnumName(OpVT) << "); ";
+    OS << Str << "(MI, " << MIOpNo << "); ";
 }
 
 
@@ -204,8 +199,7 @@ AsmWriterInst::AsmWriterInst(const CodeGenInstruction &CGI, unsigned Variant) {
         --MIOp;
       }
 
-      Operands.push_back(AsmWriterOperand(OpInfo.PrinterMethodName,
-                                          MIOp, OpInfo.Ty));
+      Operands.push_back(AsmWriterOperand(OpInfo.PrinterMethodName, MIOp));
       LastEmitted = VarEnd;
     }
   }

@@ -27,7 +27,6 @@
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
-#include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/CommandLine.h"
@@ -81,7 +80,7 @@ public:
     void printMachineInstruction(const MachineInstr *MI);
     void printOp(const MachineOperand &MO);
 
-    void printOperand(const MachineInstr *MI, unsigned OpNo, MVT::ValueType VT){
+    void printOperand(const MachineInstr *MI, unsigned OpNo){
       const MachineOperand &MO = MI->getOperand(OpNo);
       if (MO.getType() == MachineOperand::MO_MachineRegister) {
         assert(MRegisterInfo::isPhysicalRegister(MO.getReg())&&"Not physreg??");
@@ -93,32 +92,26 @@ public:
       }
     }
 
-    void printU5ImmOperand(const MachineInstr *MI, unsigned OpNo,
-                            MVT::ValueType VT) {
+    void printU5ImmOperand(const MachineInstr *MI, unsigned OpNo) {
       unsigned char value = MI->getOperand(OpNo).getImmedValue();
       assert(value <= 31 && "Invalid u5imm argument!");
       O << (unsigned int)value;
     }
-    void printU6ImmOperand(const MachineInstr *MI, unsigned OpNo,
-                            MVT::ValueType VT) {
+    void printU6ImmOperand(const MachineInstr *MI, unsigned OpNo) {
       unsigned char value = MI->getOperand(OpNo).getImmedValue();
       assert(value <= 63 && "Invalid u6imm argument!");
       O << (unsigned int)value;
     }
-    void printS16ImmOperand(const MachineInstr *MI, unsigned OpNo,
-                            MVT::ValueType VT) {
+    void printS16ImmOperand(const MachineInstr *MI, unsigned OpNo) {
       O << (short)MI->getOperand(OpNo).getImmedValue();
     }
-    void printU16ImmOperand(const MachineInstr *MI, unsigned OpNo,
-                            MVT::ValueType VT) {
+    void printU16ImmOperand(const MachineInstr *MI, unsigned OpNo) {
       O << (unsigned short)MI->getOperand(OpNo).getImmedValue();
     }
-    void printS16X4ImmOperand(const MachineInstr *MI, unsigned OpNo,
-                              MVT::ValueType VT) {
+    void printS16X4ImmOperand(const MachineInstr *MI, unsigned OpNo) {
       O << (short)MI->getOperand(OpNo).getImmedValue()*4;
     }
-    void printBranchOperand(const MachineInstr *MI, unsigned OpNo,
-                            MVT::ValueType VT) {
+    void printBranchOperand(const MachineInstr *MI, unsigned OpNo) {
       // Branches can take an immediate operand.  This is used by the branch
       // selection pass to print $+8, an eight byte displacement from the PC.
       if (MI->getOperand(OpNo).isImmediate()) {
@@ -127,8 +120,7 @@ public:
         printOp(MI->getOperand(OpNo));
       }
     }
-    void printCallOperand(const MachineInstr *MI, unsigned OpNo,
-                          MVT::ValueType VT) {
+    void printCallOperand(const MachineInstr *MI, unsigned OpNo) {
       const MachineOperand &MO = MI->getOperand(OpNo);
       if (!PPCGenerateStaticCode) {
         if (MO.getType() == MachineOperand::MO_ExternalSymbol) {
@@ -149,20 +141,17 @@ public:
       
       printOp(MI->getOperand(OpNo));
     }
-    void printAbsAddrOperand(const MachineInstr *MI, unsigned OpNo,
-                             MVT::ValueType VT) {
+    void printAbsAddrOperand(const MachineInstr *MI, unsigned OpNo) {
      O << (int)MI->getOperand(OpNo).getImmedValue()*4;
     }
-    void printPICLabel(const MachineInstr *MI, unsigned OpNo,
-                       MVT::ValueType VT) {
+    void printPICLabel(const MachineInstr *MI, unsigned OpNo) {
       // FIXME: should probably be converted to cout.width and cout.fill
       O << "\"L0000" << getFunctionNumber() << "$pb\"\n";
       O << "\"L0000" << getFunctionNumber() << "$pb\":";
     }
-    void printSymbolHi(const MachineInstr *MI, unsigned OpNo,
-                       MVT::ValueType VT) {
+    void printSymbolHi(const MachineInstr *MI, unsigned OpNo) {
       if (MI->getOperand(OpNo).isImmediate()) {
-        printS16ImmOperand(MI, OpNo, VT);
+        printS16ImmOperand(MI, OpNo);
       } else {
         O << "ha16(";
         printOp(MI->getOperand(OpNo));
@@ -172,10 +161,9 @@ public:
           O << ')';
       }
     }
-    void printSymbolLo(const MachineInstr *MI, unsigned OpNo,
-                       MVT::ValueType VT) {
+    void printSymbolLo(const MachineInstr *MI, unsigned OpNo) {
       if (MI->getOperand(OpNo).isImmediate()) {
-        printS16ImmOperand(MI, OpNo, VT);
+        printS16ImmOperand(MI, OpNo);
       } else {
         O << "lo16(";
         printOp(MI->getOperand(OpNo));
@@ -185,8 +173,7 @@ public:
           O << ')';
       }
     }
-    void printcrbitm(const MachineInstr *MI, unsigned OpNo,
-                       MVT::ValueType VT) {
+    void printcrbitm(const MachineInstr *MI, unsigned OpNo) {
       unsigned CCReg = MI->getOperand(OpNo).getReg();
       unsigned RegNo = enumRegToMachineReg(CCReg);
       O << (0x80 >> RegNo);
@@ -356,9 +343,9 @@ void PPCAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
       SH = 32-SH;
     }
     if (FoundMnemonic) {
-      printOperand(MI, 0, MVT::i64);
+      printOperand(MI, 0);
       O << ", ";
-      printOperand(MI, 1, MVT::i64);
+      printOperand(MI, 1);
       O << ", " << (unsigned int)SH << "\n";
       return;
     }
