@@ -741,7 +741,7 @@ int Record::getValueAsInt(const std::string &FieldName) const {
   if (IntInit *II = dynamic_cast<IntInit*>(R->getValue()))
     return II->getValue();
   throw "Record `" + getName() + "', field `" + FieldName +
-        "' does not have a list initializer!";
+        "' does not have an int initializer!";
 }
 
 /// getValueAsDef - This method looks up the specified field and returns its
@@ -757,7 +757,7 @@ Record *Record::getValueAsDef(const std::string &FieldName) const {
   if (DefInit *DI = dynamic_cast<DefInit*>(R->getValue()))
     return DI->getDef();
   throw "Record `" + getName() + "', field `" + FieldName +
-        "' does not have a list initializer!";
+        "' does not have a def initializer!";
 }
 
 /// getValueAsBit - This method looks up the specified field and returns its
