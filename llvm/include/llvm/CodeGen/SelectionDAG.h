@@ -20,7 +20,7 @@
 
 #include <map>
 #include <list>
-#include <string> // FIXME remove eventually, turning map into const char* map.
+#include <string>
 
 namespace llvm {
   class TargetLowering;
@@ -272,33 +272,35 @@ public:
   /// SelectNodeTo - These are used for target selectors to *mutate* the
   /// specified node to have the specified return type, Target opcode, and
   /// operands.  Note that target opcodes are stored as
-  /// ISD::BUILTIN_OP_END+TargetOpcode in the node opcode field.
-  void SelectNodeTo(SDNode *N, unsigned TargetOpc, MVT::ValueType VT);
-  void SelectNodeTo(SDNode *N, unsigned TargetOpc, MVT::ValueType VT, 
-                    SDOperand Op1);
-  void SelectNodeTo(SDNode *N, unsigned TargetOpc, MVT::ValueType VT, 
-                    SDOperand Op1, SDOperand Op2);
-  void SelectNodeTo(SDNode *N, unsigned TargetOpc, MVT::ValueType VT, 
-                    SDOperand Op1, SDOperand Op2, SDOperand Op3);
-  void SelectNodeTo(SDNode *N, unsigned TargetOpc, MVT::ValueType VT, 
-                    SDOperand Op1, SDOperand Op2, SDOperand Op3, SDOperand Op4);
-  void SelectNodeTo(SDNode *N, unsigned TargetOpc, MVT::ValueType VT, 
-                    SDOperand Op1, SDOperand Op2, SDOperand Op3, SDOperand Op4,
-                    SDOperand Op5);
-  void SelectNodeTo(SDNode *N, unsigned TargetOpc, MVT::ValueType VT, 
-                    SDOperand Op1, SDOperand Op2, SDOperand Op3, SDOperand Op4,
-                    SDOperand Op5, SDOperand Op6);
-  void SelectNodeTo(SDNode *N, unsigned TargetOpc, MVT::ValueType VT1, 
-                    MVT::ValueType VT2, SDOperand Op1, SDOperand Op2);
-  void SelectNodeTo(SDNode *N, unsigned TargetOpc, MVT::ValueType VT1,
-                    MVT::ValueType VT2, SDOperand Op1, SDOperand Op2,
-                    SDOperand Op3);
-  void SelectNodeTo(SDNode *N, unsigned TargetOpc, MVT::ValueType VT1,
-                    MVT::ValueType VT2, SDOperand Op1, SDOperand Op2,
-                    SDOperand Op3, SDOperand Op4);
-  void SelectNodeTo(SDNode *N, unsigned TargetOpc, MVT::ValueType VT1,
-                    MVT::ValueType VT2, SDOperand Op1, SDOperand Op2,
-                    SDOperand Op3, SDOperand Op4, SDOperand Op5);
+  /// ISD::BUILTIN_OP_END+TargetOpcode in the node opcode field.  The 0th value
+  /// of the resultant node is returned.
+  SDOperand SelectNodeTo(SDNode *N, unsigned TargetOpc, MVT::ValueType VT);
+  SDOperand SelectNodeTo(SDNode *N, unsigned TargetOpc, MVT::ValueType VT, 
+                         SDOperand Op1);
+  SDOperand SelectNodeTo(SDNode *N, unsigned TargetOpc, MVT::ValueType VT, 
+                         SDOperand Op1, SDOperand Op2);
+  SDOperand SelectNodeTo(SDNode *N, unsigned TargetOpc, MVT::ValueType VT, 
+                         SDOperand Op1, SDOperand Op2, SDOperand Op3);
+  SDOperand SelectNodeTo(SDNode *N, unsigned TargetOpc, MVT::ValueType VT, 
+                         SDOperand Op1, SDOperand Op2, SDOperand Op3, 
+                         SDOperand Op4);
+  SDOperand SelectNodeTo(SDNode *N, unsigned TargetOpc, MVT::ValueType VT, 
+                         SDOperand Op1, SDOperand Op2, SDOperand Op3,
+                         SDOperand Op4, SDOperand Op5);
+  SDOperand SelectNodeTo(SDNode *N, unsigned TargetOpc, MVT::ValueType VT, 
+                         SDOperand Op1, SDOperand Op2, SDOperand Op3, 
+                         SDOperand Op4, SDOperand Op5, SDOperand Op6);
+  SDOperand SelectNodeTo(SDNode *N, unsigned TargetOpc, MVT::ValueType VT1, 
+                         MVT::ValueType VT2, SDOperand Op1, SDOperand Op2);
+  SDOperand SelectNodeTo(SDNode *N, unsigned TargetOpc, MVT::ValueType VT1,
+                         MVT::ValueType VT2, SDOperand Op1, SDOperand Op2,
+                         SDOperand Op3);
+  SDOperand SelectNodeTo(SDNode *N, unsigned TargetOpc, MVT::ValueType VT1,
+                         MVT::ValueType VT2, SDOperand Op1, SDOperand Op2,
+                         SDOperand Op3, SDOperand Op4);
+  SDOperand SelectNodeTo(SDNode *N, unsigned TargetOpc, MVT::ValueType VT1,
+                         MVT::ValueType VT2, SDOperand Op1, SDOperand Op2,
+                         SDOperand Op3, SDOperand Op4, SDOperand Op5);
 
   SDOperand getTargetNode(unsigned Opcode, MVT::ValueType VT) {
     return getNode(ISD::BUILTIN_OP_END+Opcode, VT);
