@@ -434,7 +434,8 @@ PPCTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
         needsLoad = true;
       }
       break;
-    case MVT::i64: ObjSize = 8;
+    case MVT::i64:
+      ObjSize = 8;
       if (!ArgLive) break;
       if (GPR_remaining > 0) {
         SDOperand argHi, argLo;
@@ -530,7 +531,10 @@ PPCTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
       SDOperand PtrOff = DAG.getConstant(4, getPointerTy());
       FIN = DAG.getNode(ISD::ADD, MVT::i32, FIN, PtrOff);
     }
-    DAG.setRoot(DAG.getNode(ISD::TokenFactor, MVT::Other, MemOps));
+    if (!MemOps.empty()) {
+      MemOps.push_back(DAG.getRoot());
+      DAG.setRoot(DAG.getNode(ISD::TokenFactor, MVT::Other, MemOps));
+    }
   }
   
   // Finally, inform the code generator which regs we return values in.
