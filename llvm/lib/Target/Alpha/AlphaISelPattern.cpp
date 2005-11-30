@@ -365,21 +365,9 @@ bool AlphaISel::SelectFPSetCC(SDOperand N, unsigned dst)
 
   //Can only compare doubles, and dag won't promote for me
   if (SetCC->getOperand(0).getValueType() == MVT::f32)
-    {
-      //assert(0 && "Setcc On float?\n");
-      std::cerr << "Setcc on float!\n";
-      Tmp3 = MakeReg(MVT::f64);
-      BuildMI(BB, Alpha::CVTST, 1, Tmp3).addReg(Tmp1);
-      Tmp1 = Tmp3;
-    }
+      assert(0 && "Setcc On float?\n");
   if (SetCC->getOperand(1).getValueType() == MVT::f32)
-    {
-      //assert (0 && "Setcc On float?\n");
-      std::cerr << "Setcc on float!\n";
-      Tmp3 = MakeReg(MVT::f64);
-      BuildMI(BB, Alpha::CVTST, 1, Tmp3).addReg(Tmp2);
-      Tmp2 = Tmp3;
-    }
+    assert (0 && "Setcc On float?\n");
 
   if (rev) std::swap(Tmp1, Tmp2);
   //do the comparison
