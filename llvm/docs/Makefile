@@ -63,6 +63,7 @@ $(PROJ_OBJ_DIR)/doxygen.tar.gz: $(DOXYFILES) $(PROJ_OBJ_DIR)/doxygen.cfg
 	$(Verb) $(RM) -rf $@ $(PROJ_OBJ_DIR)/doxygen.tar
 	$(Verb) $(TAR) cf $(PROJ_OBJ_DIR)/doxygen.tar doxygen
 	$(Verb) $(GZIP) $(PROJ_OBJ_DIR)/doxygen.tar
+	$(Verb) $(CP) $(PROJ_OBJ_DIR)/doxygen.tar.gz $(PROJ_OBJ_DIR)/doxygen/html/
 
 userloc: $(LLVM_SRC_ROOT)/docs/userloc.html
 
