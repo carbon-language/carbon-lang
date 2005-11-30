@@ -61,11 +61,11 @@ struct X86IntelAsmPrinter : public X86SharedAsmPrinter {
     printMemReference(MI, OpNo);
   }
   void printi32mem(const MachineInstr *MI, unsigned OpNo) {
-    O << "WORD PTR ";
+    O << "DWORD PTR ";
     printMemReference(MI, OpNo);
   }
   void printi64mem(const MachineInstr *MI, unsigned OpNo) {
-    O << "DWORD PTR ";
+    O << "QWORD PTR ";
     printMemReference(MI, OpNo);
   }
   void printf32mem(const MachineInstr *MI, unsigned OpNo) {
