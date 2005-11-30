@@ -1438,10 +1438,37 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     default: 
       assert(0 && "Cannot handle this action for SETCC yet!");
       break;
-    case TargetLowering::Promote:
+    case TargetLowering::Promote: {
+      // First step, figure out the appropriate operation to use.
+      // Allow SETCC to not be supported for all legal data types
+      // Mostly this targets FP
+      MVT::ValueType NewInTy = Node->getOperand(0).getValueType();
+      MVT::ValueType OldVT = NewInTy;
+
+      // Scan for the appropriate larger type to use.
+      while (1) {
+        NewInTy = (MVT::ValueType)(NewInTy+1);
+
+        assert(MVT::isInteger(NewInTy) == MVT::isInteger(OldVT) &&
+               "Fell off of the edge of the integer world");
+        assert(MVT::isFloatingPoint(NewInTy) == MVT::isFloatingPoint(OldVT) &&
+               "Fell off of the edge of the floating point world");
+          
+        // If the target supports SETCC of this type, use it.
+        if (TLI.getOperationAction(ISD::SETCC, NewInTy) == TargetLowering::Legal)
+          break;
+      }
+      if (MVT::isInteger(NewInTy))
+        assert(0 && "Cannot promote Legal Integer SETCC yet");
+      else {
+        Tmp1 = DAG.getNode(ISD::FP_EXTEND, NewInTy, Tmp1);
+        Tmp2 = DAG.getNode(ISD::FP_EXTEND, NewInTy, Tmp2);
+      }
+      
       Result = DAG.getNode(ISD::SETCC, Node->getValueType(0), Tmp1, Tmp2,
                            Node->getOperand(2));
       break;
+    }
     case TargetLowering::Legal:
       if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(1))
         Result = DAG.getNode(ISD::SETCC, Node->getValueType(0), Tmp1, Tmp2,
