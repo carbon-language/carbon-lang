@@ -918,11 +918,11 @@ let isTwoAddress = 0 in {
   def SHL32mCL : I<0xD3, MRM4m, (ops i32mem:$dst),
                    "shl{l} {%cl, $dst|$dst, %CL}", []>, Imp<[CL],[]>;
   def SHL8mi   : Ii8<0xC0, MRM4m, (ops i8mem :$dst, i8imm:$src),
-                     "shl{b} {$src, $dst|$dst, $src}, []", []>;
+                     "shl{b} {$src, $dst|$dst, $src}", []>;
   def SHL16mi  : Ii8<0xC1, MRM4m, (ops i16mem:$dst, i8imm:$src),
-                     "shl{w} {$src, $dst|$dst, $src}, []", []>, OpSize;
+                     "shl{w} {$src, $dst|$dst, $src}", []>, OpSize;
   def SHL32mi  : Ii8<0xC1, MRM4m, (ops i32mem:$dst, i8imm:$src),
-                     "shl{l} {$src, $dst|$dst, $src}, []", []>;
+                     "shl{l} {$src, $dst|$dst, $src}", []>;
 }
 
 def SHR8rCL  : I<0xD2, MRM5r, (ops R8 :$dst, R8 :$src),
