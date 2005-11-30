@@ -387,6 +387,10 @@ void SelectionDAG::RemoveNodeFromCSEMaps(SDNode *N) {
 ///
 SDNode *SelectionDAG::AddNonLeafNodeToCSEMaps(SDNode *N) {
   assert(N->getNumOperands() && "This is a leaf node!");
+  if (N->getOpcode() == ISD::CALLSEQ_START || 
+      N->getOpcode() == ISD::CALLSEQ_END)
+    return 0;
+  
   if (N->getOpcode() == ISD::LOAD) {
     SDNode *&L = Loads[std::make_pair(N->getOperand(1),
                                       std::make_pair(N->getOperand(0),
