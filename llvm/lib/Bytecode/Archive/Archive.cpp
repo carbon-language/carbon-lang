@@ -140,18 +140,38 @@ Archive::Archive(const sys::Path& filename, bool map )
   }
 }
 
-// Archive destructor - just clean up memory
-Archive::~Archive() {
+void Archive::cleanUpMemory() {
   // Shutdown the file mapping
   if (mapfile) {
     mapfile->close();
     delete mapfile;
+    
+    mapfile = 0;
+    base = 0;
   }
+  
+  // Forget the entire symbol table
+  symTab.clear();
+  symTabSize = 0;
+  
+  firstFileOffset = 0;
+  
+  // Free the foreign symbol table member
+  if (foreignST) {
+    delete foreignST;
+    foreignST = 0;
+  }
+  
   // Delete any ModuleProviders and ArchiveMember's we've allocated as a result
   // of symbol table searches.
   for (ModuleMap::iterator I=modules.begin(), E=modules.end(); I != E; ++I ) {
     delete I->second.first;
     delete I->second.second;
   }
+}
+
+// Archive destructor - just clean up memory
+Archive::~Archive() {
+  cleanUpMemory();
 }
 

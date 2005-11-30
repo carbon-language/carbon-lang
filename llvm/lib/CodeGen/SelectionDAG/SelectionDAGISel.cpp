@@ -1161,6 +1161,36 @@ void SelectionDAGLowering::visitFrameReturnAddress(CallInst &I, bool isFrame) {
 }
 
 void SelectionDAGLowering::visitMemIntrinsic(CallInst &I, unsigned Op) {
+#if 0
+  // If the size of the cpy/move/set is constant (known)
+  if (ConstantUInt* op3 = dyn_cast<ConstantUInt>(I.getOperand(3))) {
+    uint64_t size = op3->getValue();
+    switch (Op) {
+      case ISD::MEMSET: 
+        if (size <= TLI.getMaxStoresPerMemSet()) {
+          if (ConstantUInt* op4 = dyn_cast<ConstantUInt>(I.getOperand(4))) {
+        uint64_t TySize = TLI.getTargetData().getTypeSize(Ty);
+            uint64_t align = op4.getValue();
+            while (size > align) {
+              size -=align;
+            }
+  Value *SrcV = I.getOperand(0);
+  SDOperand Src = getValue(SrcV);
+  SDOperand Ptr = getValue(I.getOperand(1));
+  DAG.setRoot(DAG.getNode(ISD::STORE, MVT::Other, getRoot(), Src, Ptr,
+                          DAG.getSrcValue(I.getOperand(1))));
+          }
+          break;
+        }
+        break; // don't do this optimization, use a normal memset
+      case ISD::MEMMOVE: 
+      case ISD::MEMCPY:
+        break; // FIXME: not implemented yet
+    }
+  }
+#endif
+
+  // Non-optimized version
   std::vector<SDOperand> Ops;
   Ops.push_back(getRoot());
   Ops.push_back(getValue(I.getOperand(1)));

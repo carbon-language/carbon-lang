@@ -489,6 +489,9 @@ class Archive {
     bool fillHeader(const ArchiveMember&mbr,
                     ArchiveMemberHeader& hdr,int sz, bool TruncateNames) const;
 
+    /// @brief Frees all the members and unmaps the archive file.
+    void Archive::cleanUpMemory();
+
     /// This type is used to keep track of bytecode modules loaded from the
     /// symbol table. It maps the file offset to a pair that consists of the
     /// associated ArchiveMember and the ModuleProvider.

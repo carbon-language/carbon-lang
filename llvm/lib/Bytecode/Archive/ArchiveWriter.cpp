@@ -421,42 +421,58 @@ Archive::writeToDisk(bool CreateSymbolTable, bool TruncateNames, bool Compress){
       sys::MappedFile arch(TmpArchive);
       const char* base = (const char*) arch.map();
 
-      // Open the final file to write and check it.
-      std::ofstream FinalFile(archPath.c_str(), io_mode);
-      if ( !FinalFile.is_open() || FinalFile.bad() ) {
-        throw std::string("Error opening archive file: ") + archPath.toString();
+      // Open another temporary file in order to avoid invalidating the mmapped data
+      sys::Path FinalFilePath = archPath;
+      FinalFilePath.createTemporaryFileOnDisk();
+      sys::RemoveFileOnSignal(FinalFilePath);
+      try {
+          
+  
+        std::ofstream FinalFile(FinalFilePath.c_str(), io_mode);
+        if ( !FinalFile.is_open() || FinalFile.bad() ) {
+          throw std::string("Error opening archive file: ") + FinalFilePath.toString();
+        }
+  
+        // Write the file magic number
+        FinalFile << ARFILE_MAGIC;
+  
+        // If there is a foreign symbol table, put it into the file now. Most
+        // ar(1) implementations require the symbol table to be first but llvm-ar
+        // can deal with it being after a foreign symbol table. This ensures
+        // compatibility with other ar(1) implementations as well as allowing the
+        // archive to store both native .o and LLVM .bc files, both indexed.
+        if (foreignST) {
+          writeMember(*foreignST, FinalFile, false, false, false);
+        }
+  
+        // Put out the LLVM symbol table now.
+        writeSymbolTable(FinalFile);
+  
+        // Copy the temporary file contents being sure to skip the file's magic
+        // number.
+        FinalFile.write(base + sizeof(ARFILE_MAGIC)-1,
+          arch.size()-sizeof(ARFILE_MAGIC)+1);
+  
+        // Close up shop
+        FinalFile.close();
+        arch.close();
+        
+        // Move the final file over top of TmpArchive
+        FinalFilePath.renamePathOnDisk(TmpArchive);
+      } catch (...) {
+        // Make sure we clean up.
+        if (FinalFilePath.exists())
+          FinalFilePath.eraseFromDisk();
+        throw;
       }
-
-      // Write the file magic number
-      FinalFile << ARFILE_MAGIC;
-
-      // If there is a foreign symbol table, put it into the file now. Most
-      // ar(1) implementations require the symbol table to be first but llvm-ar
-      // can deal with it being after a foreign symbol table. This ensures
-      // compatibility with other ar(1) implementations as well as allowing the
-      // archive to store both native .o and LLVM .bc files, both indexed.
-      if (foreignST) {
-        writeMember(*foreignST, FinalFile, false, false, false);
-      }
-
-      // Put out the LLVM symbol table now.
-      writeSymbolTable(FinalFile);
-
-      // Copy the temporary file contents being sure to skip the file's magic
-      // number.
-      FinalFile.write(base + sizeof(ARFILE_MAGIC)-1,
-        arch.size()-sizeof(ARFILE_MAGIC)+1);
-
-      // Close up shop
-      FinalFile.close();
-      arch.close();
-      TmpArchive.eraseFromDisk();
-
-    } else {
-      // We don't have to insert the symbol table, so just renaming the temp
-      // file to the correct name will suffice.
-      TmpArchive.renamePathOnDisk(archPath);
     }
+    
+    // Before we replace the actual archive, we need to forget all the
+    // members, since they point to data in that old archive. We need to do
+    // we cannot replace an open file on Windows.
+    cleanUpMemory();
+    
+    TmpArchive.renamePathOnDisk(archPath);
   } catch (...) {
     // Make sure we clean up.
     if (TmpArchive.exists())
