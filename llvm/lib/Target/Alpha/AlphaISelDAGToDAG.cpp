@@ -335,6 +335,7 @@ SDOperand AlphaDAGToDAGISel::Select(SDOperand Op) {
       unsigned Opc = Alpha::WTF;
       ISD::CondCode CC = cast<CondCodeSDNode>(N->getOperand(2))->get();
       bool rev = false;
+      bool isNE = false;
       switch(CC) {
       default: N->dump(); assert(0 && "Unknown FP comparison!");
       case ISD::SETEQ: Opc = Alpha::CMPTEQ; break;
@@ -342,13 +343,17 @@ SDOperand AlphaDAGToDAGISel::Select(SDOperand Op) {
       case ISD::SETLE: Opc = Alpha::CMPTLE; break;
       case ISD::SETGT: Opc = Alpha::CMPTLT; rev = true; break;
       case ISD::SETGE: Opc = Alpha::CMPTLE; rev = true; break;
-        //case ISD::SETNE: Opc = Alpha::CMPTEQ; inv = true; break;
+      case ISD::SETNE: Opc = Alpha::CMPTEQ; isNE = true; break;
       };
       SDOperand tmp1 = Select(N->getOperand(0)),
         tmp2 = Select(N->getOperand(1));
       SDOperand cmp = CurDAG->getTargetNode(Opc, MVT::f64, 
                                             rev?tmp2:tmp1,
                                             rev?tmp1:tmp2);
+      if (isNE) 
+        cmp = CurDAG->getTargetNode(Alpha::CMPTEQ, MVT::f64, cmp, 
+                                    CurDAG->getRegister(Alpha::F31, MVT::f64));
+      
       SDOperand LD;
       if (AlphaLowering.hasITOF()) {
         LD = CurDAG->getNode(AlphaISD::FTOIT_, MVT::i64, cmp);
@@ -372,6 +377,7 @@ SDOperand AlphaDAGToDAGISel::Select(SDOperand Op) {
   case ISD::SELECT:
     if (MVT::isFloatingPoint(N->getValueType(0))) {
       //move int to fp
+      bool isDouble = N->getValueType(0) == MVT::f64;
       SDOperand LD,
         cond = Select(N->getOperand(0)),
         TV = Select(N->getOperand(1)),
@@ -389,11 +395,11 @@ SDOperand AlphaDAGToDAGISel::Select(SDOperand Op) {
                                    CurDAG->getRegister(Alpha::R31, MVT::i64),
                                    ST);
       }
-      SDOperand FP = CurDAG->getTargetNode(Alpha::FCMOVEQ, MVT::f64, TV, FV, LD);
+      SDOperand FP = CurDAG->getTargetNode(isDouble?Alpha::FCMOVEQT:Alpha::FCMOVEQS,
+                                           MVT::f64, TV, FV, LD);
       return FP;
     }
     break;
-
 
   }
 

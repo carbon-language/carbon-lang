@@ -1317,7 +1317,7 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
 
         bool invTest = false;
         unsigned Tmp3;
-
+        bool isD = CC.getOperand(0).getValueType() == MVT::f64;
         ConstantFPSDNode *CN;
         if ((CN = dyn_cast<ConstantFPSDNode>(CC.getOperand(1)))
             && (CN->isExactlyValue(+0.0) || CN->isExactlyValue(-0.0)))
@@ -1332,21 +1332,31 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
         {
           unsigned Tmp1 = SelectExpr(CC.getOperand(0));
           unsigned Tmp2 = SelectExpr(CC.getOperand(1));
-          bool isD = CC.getOperand(0).getValueType() == MVT::f64;
           Tmp3 = MakeReg(isD ? MVT::f64 : MVT::f32);
           BuildMI(BB, isD ? Alpha::SUBT : Alpha::SUBS, 2, Tmp3)
             .addReg(Tmp1).addReg(Tmp2);
         }
 
-        switch (cast<CondCodeSDNode>(CC.getOperand(2))->get()) {
-        default: CC.Val->dump(); assert(0 && "Unknown FP comparison!");
-        case ISD::SETEQ: Opc = invTest ? Alpha::FCMOVNE : Alpha::FCMOVEQ; break;
-        case ISD::SETLT: Opc = invTest ? Alpha::FCMOVGT : Alpha::FCMOVLT; break;
-        case ISD::SETLE: Opc = invTest ? Alpha::FCMOVGE : Alpha::FCMOVLE; break;
-        case ISD::SETGT: Opc = invTest ? Alpha::FCMOVLT : Alpha::FCMOVGT; break;
-        case ISD::SETGE: Opc = invTest ? Alpha::FCMOVLE : Alpha::FCMOVGE; break;
-        case ISD::SETNE: Opc = invTest ? Alpha::FCMOVEQ : Alpha::FCMOVNE; break;
-        }
+        if(isD)
+          switch (cast<CondCodeSDNode>(CC.getOperand(2))->get()) {
+          default: CC.Val->dump(); assert(0 && "Unknown FP comparison!");
+          case ISD::SETEQ: Opc = invTest ? Alpha::FCMOVNET : Alpha::FCMOVEQT; break;
+          case ISD::SETLT: Opc = invTest ? Alpha::FCMOVGTT : Alpha::FCMOVLTT; break;
+          case ISD::SETLE: Opc = invTest ? Alpha::FCMOVGET : Alpha::FCMOVLET; break;
+          case ISD::SETGT: Opc = invTest ? Alpha::FCMOVLTT : Alpha::FCMOVGTT; break;
+          case ISD::SETGE: Opc = invTest ? Alpha::FCMOVLET : Alpha::FCMOVGET; break;
+          case ISD::SETNE: Opc = invTest ? Alpha::FCMOVEQT : Alpha::FCMOVNET; break;
+          }
+        else
+          switch (cast<CondCodeSDNode>(CC.getOperand(2))->get()) {
+          default: CC.Val->dump(); assert(0 && "Unknown FP comparison!");
+          case ISD::SETEQ: Opc = invTest ? Alpha::FCMOVNES : Alpha::FCMOVEQS; break;
+          case ISD::SETLT: Opc = invTest ? Alpha::FCMOVGTS : Alpha::FCMOVLTS; break;
+          case ISD::SETLE: Opc = invTest ? Alpha::FCMOVGES : Alpha::FCMOVLES; break;
+          case ISD::SETGT: Opc = invTest ? Alpha::FCMOVLTS : Alpha::FCMOVGTS; break;
+          case ISD::SETGE: Opc = invTest ? Alpha::FCMOVLES : Alpha::FCMOVGES; break;
+          case ISD::SETNE: Opc = invTest ? Alpha::FCMOVEQS : Alpha::FCMOVNES; break;
+          }
         BuildMI(BB, Opc, 3, Result).addReg(FV).addReg(TV).addReg(Tmp3);
         return Result;
       }

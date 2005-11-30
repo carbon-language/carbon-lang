@@ -162,16 +162,6 @@ def CMOVNEi  : OForm4L< 0x11, 0x26, "cmovne $RCOND,$L,$RDEST">; //CMOVE if RCOND
 def : Pat<(select GPRC:$which, GPRC:$src1, GPRC:$src2),
       (CMOVEQ GPRC:$src1, GPRC:$src2, GPRC:$which)>;
 
-//conditional moves, fp
-let OperandList = (ops F8RC:$RDEST, F8RC:$RSRC2, F8RC:$RSRC, F8RC:$RCOND),
-    isTwoAddress = 1 in {
-def FCMOVEQ : FPForm<0x17, 0x02A, "fcmoveq $RCOND,$RSRC,$RDEST",[]>; //FCMOVE if = zero
-def FCMOVGE : FPForm<0x17, 0x02D, "fcmovge $RCOND,$RSRC,$RDEST",[]>; //FCMOVE if >= zero
-def FCMOVGT : FPForm<0x17, 0x02F, "fcmovgt $RCOND,$RSRC,$RDEST",[]>; //FCMOVE if > zero
-def FCMOVLE : FPForm<0x17, 0x02E, "fcmovle $RCOND,$RSRC,$RDEST",[]>; //FCMOVE if <= zero
-def FCMOVLT : FPForm<0x17, 0x02C, "fcmovlt $RCOND,$RSRC,$RDEST",[]>; // FCMOVE if < zero
-def FCMOVNE : FPForm<0x17, 0x02B, "fcmovne $RCOND,$RSRC,$RDEST",[]>; //FCMOVE if != zero
-}
 
 def ADDL     : OForm< 0x10, 0x00, "addl $RA,$RB,$RC",
                       [(set GPRC:$RC, (intop (add GPRC:$RA, GPRC:$RB)))]>;
@@ -554,6 +544,27 @@ def CMPTUN : FPForm<0x16, 0x5A4, "cmptun/su $RA,$RB,$RC", []>;
 //                    [(set F8RC:$RC, (setuo F8RC:$RA, F8RC:$RB))]>;
 }
 //TODO: Add lots more FP patterns
+
+//conditional moves, floats
+let OperandList = (ops F4RC:$RDEST, F4RC:$RSRC2, F4RC:$RSRC, F8RC:$RCOND),
+    isTwoAddress = 1 in {
+def FCMOVEQS : FPForm<0x17, 0x02A, "fcmoveq $RCOND,$RSRC,$RDEST",[]>; //FCMOVE if = zero
+def FCMOVGES : FPForm<0x17, 0x02D, "fcmovge $RCOND,$RSRC,$RDEST",[]>; //FCMOVE if >= zero
+def FCMOVGTS : FPForm<0x17, 0x02F, "fcmovgt $RCOND,$RSRC,$RDEST",[]>; //FCMOVE if > zero
+def FCMOVLES : FPForm<0x17, 0x02E, "fcmovle $RCOND,$RSRC,$RDEST",[]>; //FCMOVE if <= zero
+def FCMOVLTS : FPForm<0x17, 0x02C, "fcmovlt $RCOND,$RSRC,$RDEST",[]>; // FCMOVE if < zero
+def FCMOVNES : FPForm<0x17, 0x02B, "fcmovne $RCOND,$RSRC,$RDEST",[]>; //FCMOVE if != zero
+}
+//conditional moves, doubles
+let OperandList = (ops F8RC:$RDEST, F8RC:$RSRC2, F8RC:$RSRC, F8RC:$RCOND),
+    isTwoAddress = 1 in {
+def FCMOVEQT : FPForm<0x17, 0x02A, "fcmoveq $RCOND,$RSRC,$RDEST",[]>; //FCMOVE if = zero
+def FCMOVGET : FPForm<0x17, 0x02D, "fcmovge $RCOND,$RSRC,$RDEST",[]>; //FCMOVE if >= zero
+def FCMOVGTT : FPForm<0x17, 0x02F, "fcmovgt $RCOND,$RSRC,$RDEST",[]>; //FCMOVE if > zero
+def FCMOVLET : FPForm<0x17, 0x02E, "fcmovle $RCOND,$RSRC,$RDEST",[]>; //FCMOVE if <= zero
+def FCMOVLTT : FPForm<0x17, 0x02C, "fcmovlt $RCOND,$RSRC,$RDEST",[]>; // FCMOVE if < zero
+def FCMOVNET : FPForm<0x17, 0x02B, "fcmovne $RCOND,$RSRC,$RDEST",[]>; //FCMOVE if != zero
+}
 
 
 
