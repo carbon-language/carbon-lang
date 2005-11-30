@@ -520,12 +520,19 @@ void SelectionDAGLowering::visitBinary(User &I, unsigned IntOp, unsigned FPOp,
     const PackedType *PTy = cast<PackedType>(Ty);
     unsigned NumElements = PTy->getNumElements();
     MVT::ValueType PVT = TLI.getValueType(PTy->getElementType());
+    MVT::ValueType TVT = MVT::getVectorType(PVT, NumElements);
     
     // Immediately scalarize packed types containing only one element, so that
-    // the Legalize pass does not have to deal with them.
+    // the Legalize pass does not have to deal with them.  Similarly, if the
+    // abstract vector is going to turn into one that the target natively
+    // supports, generate that type now so that Legalize doesn't have to deal
+    // with that either.  These steps ensure that Legalize only has to handle
+    // vector types in its Expand case.
+    unsigned Opc = MVT::isFloatingPoint(PVT) ? FPOp : IntOp;
     if (NumElements == 1) {
-      unsigned Opc = MVT::isFloatingPoint(PVT) ? FPOp : IntOp;
       setValue(&I, DAG.getNode(Opc, PVT, Op1, Op2));
+    } else if (TVT != MVT::Other && TLI.isTypeLegal(TVT)) {
+      setValue(&I, DAG.getNode(Opc, TVT, Op1, Op2));
     } else {
       SDOperand Num = DAG.getConstant(NumElements, MVT::i32);
       SDOperand Typ = DAG.getValueType(PVT);
@@ -777,11 +784,14 @@ void SelectionDAGLowering::visitLoad(LoadInst &I) {
     const PackedType *PTy = cast<PackedType>(Ty);
     unsigned NumElements = PTy->getNumElements();
     MVT::ValueType PVT = TLI.getValueType(PTy->getElementType());
+    MVT::ValueType TVT = MVT::getVectorType(PVT, NumElements);
     
     // Immediately scalarize packed types containing only one element, so that
     // the Legalize pass does not have to deal with them.
     if (NumElements == 1) {
       L = DAG.getLoad(PVT, Root, Ptr, DAG.getSrcValue(I.getOperand(0)));
+    } else if (TVT != MVT::Other && TLI.isTypeLegal(TVT)) {
+      L = DAG.getLoad(TVT, Root, Ptr, DAG.getSrcValue(I.getOperand(0)));
     } else {
       L = DAG.getVecLoad(NumElements, PVT, Root, Ptr, 
                          DAG.getSrcValue(I.getOperand(0)));

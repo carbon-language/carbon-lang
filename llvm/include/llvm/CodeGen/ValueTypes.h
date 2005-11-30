@@ -45,10 +45,8 @@ namespace MVT {  // MVT = Machine Value Types
     isVoid         =  12,   // This has no value
     
     Vector         =  13,   // This is an abstract vector type, which will
-                            // be refined into a target vector type, or
-                            // scalarized.
-
-                            // These are 128 bit vectors of varying packed types
+                            // be expanded into a target vector type, or scalars
+                            // if no matching vector type is available.
     v16i8          =  14,   // 16 x i8
     v8i16          =  15,   //  8 x i16
     v4i32          =  16,   //  4 x i32
@@ -70,6 +68,21 @@ namespace MVT {  // MVT = Machine Value Types
     return (VT >= v16i8 && VT <= v2f64);
   }
 
+  /// getVectorType - Returns the ValueType that represents a vector NumElements
+  /// in length, where each element is of type VT.  If there is no ValueType
+  /// that represents this vector, a ValueType of Other is returned.
+  ///
+  static inline ValueType getVectorType(ValueType VT, unsigned NumElements) {
+    switch (VT) {
+    default: 
+      break;
+    case MVT::f32:
+      if (NumElements == 4) return MVT::v4f32;
+      break;
+    }
+    return MVT::Other;
+  }
+  
   static inline unsigned getSizeInBits(ValueType VT) {
     switch (VT) {
     default: assert(0 && "ValueType has no known size!");
