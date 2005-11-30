@@ -1733,13 +1733,12 @@ CodeGenPatternResult(TreePatternNode *N, unsigned &Ctr,
       // If this instruction is the root, and if there is only one use of it,
       // use SelectNodeTo instead of getTargetNode to avoid an allocation.
       OS << "      if (N.Val->hasOneUse()) {\n";
-      OS << "        CurDAG->SelectNodeTo(N.Val, "
+      OS << "        return CurDAG->SelectNodeTo(N.Val, "
          << II.Namespace << "::" << II.TheDef->getName() << ", MVT::"
          << getEnumName(N->getType());
       for (unsigned i = 0, e = Ops.size(); i != e; ++i)
         OS << ", Tmp" << Ops[i];
       OS << ");\n";
-      OS << "        return N;\n";
       OS << "      } else {\n";
       OS << "        return CodeGenMap[N] = CurDAG->getTargetNode("
       << II.Namespace << "::" << II.TheDef->getName() << ", MVT::"
