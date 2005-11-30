@@ -290,6 +290,11 @@ public:
   bool remove(InvokeInst *II) { return remove(CallSite(II)); }
   bool remove(Instruction *I);
   void remove(AliasSet &AS);
+  
+  void clear() {
+    PointerMap.clear();
+    AliasSets.clear();
+  }
 
   /// getAliasSets - Return the alias sets that are active.
   ///
