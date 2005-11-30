@@ -1297,26 +1297,6 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
     return Result;
   }
 
-  case ISD::FP_TO_UINT:
-  case ISD::FP_TO_SINT:
-    {
-      assert (DestType == MVT::i64 && "only quads can be loaded to");
-      MVT::ValueType SrcType = N.getOperand(0).getValueType();
-      assert (SrcType == MVT::f32 || SrcType == MVT::f64);
-      Tmp1 = SelectExpr(N.getOperand(0));  // Get the operand register
-      if (SrcType == MVT::f32)
-        {
-          Tmp2 = MakeReg(MVT::f64);
-          BuildMI(BB, Alpha::CVTST, 1, Tmp2).addReg(Tmp1);
-          Tmp1 = Tmp2;
-        }
-      Tmp2 = MakeReg(MVT::f64);
-      BuildMI(BB, Alpha::CVTTQ, 1, Tmp2).addReg(Tmp1);
-      MoveFP2Int(Tmp2, Result, true);
-
-      return Result;
-    }
-
   case ISD::SELECT:
     if (isFP) {
       //Tmp1 = SelectExpr(N.getOperand(0)); //Cond
@@ -1567,8 +1547,16 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
     BuildMI(BB, Alpha::CVTQS, 1, Result).addReg(SelectExpr(N.getOperand(0)));
     return Result;
 
+  case AlphaISD::CVTTQ_:
+    BuildMI(BB, Alpha::CVTTQ, 1, Result).addReg(SelectExpr(N.getOperand(0)));
+    return Result;
+
   case AlphaISD::ITOFT_:
     BuildMI(BB, Alpha::ITOFT, 1, Result).addReg(SelectExpr(N.getOperand(0)));
+    return Result;
+
+  case AlphaISD::FTOIT_:
+    BuildMI(BB, Alpha::FTOIT, 1, Result).addReg(SelectExpr(N.getOperand(0)));
     return Result;
 
   case ISD::AssertSext:

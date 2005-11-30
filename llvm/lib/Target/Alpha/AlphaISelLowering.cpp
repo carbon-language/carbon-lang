@@ -73,7 +73,9 @@ AlphaTargetLowering::AlphaTargetLowering(TargetMachine &TM) : TargetLowering(TM)
   
   setOperationAction(ISD::UINT_TO_FP, MVT::i64, Expand);
   setOperationAction(ISD::SINT_TO_FP, MVT::i64, Custom);
-  
+  setOperationAction(ISD::FP_TO_UINT, MVT::i64, Expand);
+  setOperationAction(ISD::FP_TO_SINT, MVT::i64, Custom);
+
   if (!TM.getSubtarget<AlphaSubtarget>().hasCT()) {
     setOperationAction(ISD::CTPOP    , MVT::i64  , Expand);
     setOperationAction(ISD::CTTZ     , MVT::i64  , Expand);
@@ -412,7 +414,28 @@ SDOperand AlphaTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
                                isDouble?MVT::f64:MVT::f32, LD);
     return FP;
   }
+  case ISD::FP_TO_SINT: {
+    bool isDouble = MVT::f64 == Op.getOperand(0).getValueType();
+    SDOperand src = Op.getOperand(0);
+
+    if (!isDouble) //Promote
+      src = DAG.getNode(ISD::FP_EXTEND, MVT::f64, src);
+    
+    src = DAG.getNode(AlphaISD::CVTTQ_, MVT::f64, src);
+
+    if (useITOF) {
+      return DAG.getNode(AlphaISD::FTOIT_, MVT::i64, src);
+    } else {
+      int FrameIdx =
+        DAG.getMachineFunction().getFrameInfo()->CreateStackObject(8, 8);
+      SDOperand FI = DAG.getFrameIndex(FrameIdx, MVT::i64);
+      SDOperand ST = DAG.getNode(ISD::STORE, MVT::Other, DAG.getEntryNode(),
+                                 src, FI, DAG.getSrcValue(0));
+      return DAG.getLoad(MVT::i64, ST, FI, DAG.getSrcValue(0));
+      }
   }
+
+  }
+
   return SDOperand();
 }
-

@@ -26,7 +26,7 @@ namespace llvm {
       // Start the numbering where the builting ops and target ops leave off.
       FIRST_NUMBER = ISD::BUILTIN_OP_END+Alpha::INSTRUCTION_LIST_END,
       //These corrospond to the identical Instruction
-      ITOFT_, FTOIT_, CVTQT_, CVTQS_,
+      ITOFT_, FTOIT_, CVTQT_, CVTQS_, CVTTQ_,
     };
   }
 

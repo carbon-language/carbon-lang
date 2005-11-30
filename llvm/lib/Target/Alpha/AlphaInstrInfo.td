@@ -24,6 +24,7 @@ def Alpha_itoft : SDNode<"AlphaISD::ITOFT_", SDTIntToFPOp, []>;
 def Alpha_ftoit : SDNode<"AlphaISD::FTOIT_", SDTFPToIntOp, []>;
 def Alpha_cvtqt : SDNode<"AlphaISD::CVTQT_", SDTFPUnaryOpUnC, []>;
 def Alpha_cvtqs : SDNode<"AlphaISD::CVTQS_", SDTFPUnaryOpUnC, []>;
+def Alpha_cvttq : SDNode<"AlphaISD::CVTTQ_", SDTFPUnaryOp, []>;
 
 
 //********************
@@ -575,7 +576,8 @@ let OperandList = (ops F8RC:$RC, F8RC:$RB), Fa = 31 in
 def CVTQT : FPForm<0x16, 0x7BE, "cvtqt/sui $RB,$RC",
         [(set F8RC:$RC, (Alpha_cvtqt F8RC:$RB))]>;
 let OperandList = (ops F8RC:$RC, F8RC:$RB), Fa = 31 in 
-def CVTTQ : FPForm<0x16, 0x52F, "cvttq/svc $RB,$RC",[]>; //Convert T_floating to quadword
+def CVTTQ : FPForm<0x16, 0x52F, "cvttq/svc $RB,$RC",
+        [(set F8RC:$RC, (Alpha_cvttq F8RC:$RB))]>;
 let OperandList = (ops F8RC:$RC, F4RC:$RB), Fa = 31 in 
 def CVTST : FPForm<0x16, 0x6AC, "cvtst/s $RB,$RC",
                    [(set F8RC:$RC, (fextend F4RC:$RB))]>;
@@ -686,3 +688,7 @@ def : Pat<(fneg F8RC:$RB),
           (CPYSNT F8RC:$RB, F8RC:$RB)>;
 def : Pat<(fneg F4RC:$RB),
           (CPYSNS F4RC:$RB, F4RC:$RB)>;
+//Yes, signed multiply high is ugly
+def : Pat<(mulhs GPRC:$RA, GPRC:$RB),
+          (SUBQ (UMULH GPRC:$RA, GPRC:$RB), (ADDQ (CMOVGE GPRC:$RB, R31, GPRC:$RA), 
+                                                 (CMOVGE GPRC:$RA, R31, GPRC:$RB)))>;
