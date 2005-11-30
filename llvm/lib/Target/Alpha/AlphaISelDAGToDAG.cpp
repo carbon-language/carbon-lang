@@ -148,8 +148,8 @@ SDOperand AlphaDAGToDAGISel::Select(SDOperand Op) {
     SDOperand CC = Select(N->getOperand(1));
     MachineBasicBlock *Dest =
       cast<BasicBlockSDNode>(N->getOperand(2))->getBasicBlock();
-    CurDAG->SelectNodeTo(N, Alpha::BNE, MVT::Other, CC, CurDAG->getBasicBlock(Dest), Chain);
-    return SDOperand(N, 0);
+    return CurDAG->SelectNodeTo(N, Alpha::BNE, MVT::Other, CC, 
+                                CurDAG->getBasicBlock(Dest), Chain);
   }
   case ISD::LOAD:
   case ISD::EXTLOAD:
@@ -178,9 +178,9 @@ SDOperand AlphaDAGToDAGISel::Select(SDOperand Op) {
           assert(opcode != ISD::SEXTLOAD && "Not zext"); break;
       }
 
-    CurDAG->SelectNodeTo(N, Opc, N->getValueType(0), MVT::Other,
-                         getI64Imm(0), Address, Chain);
-    return SDOperand(N, Op.ResNo);
+    return CurDAG->SelectNodeTo(N, Opc, N->getValueType(0), MVT::Other,
+                                getI64Imm(0), Address, 
+                                Chain).getValue(Op.ResNo);
   }
   case ISD::STORE:
   case ISD::TRUNCSTORE: {
@@ -205,51 +205,44 @@ SDOperand AlphaDAGToDAGISel::Select(SDOperand Op) {
       default: assert(0 && "Bad truncstore!");
       };
     }
-    CurDAG->SelectNodeTo(N, Opc, MVT::Other, Value, getI64Imm(0), Address, 
-                         Chain);
-    return SDOperand(N, 0);
+    return CurDAG->SelectNodeTo(N, Opc, MVT::Other, Value, getI64Imm(0),
+                                Address, Chain);
   }
 
-  case ISD::BR: {
-    CurDAG->SelectNodeTo(N, Alpha::BR_DAG, MVT::Other, N->getOperand(1),
-                         Select(N->getOperand(0)));
-    return SDOperand(N, 0);
-  }
+  case ISD::BR:
+    return CurDAG->SelectNodeTo(N, Alpha::BR_DAG, MVT::Other, N->getOperand(1),
+                                Select(N->getOperand(0)));
 
   case ISD::FrameIndex: {
     int FI = cast<FrameIndexSDNode>(N)->getIndex();
-    CurDAG->SelectNodeTo(N, Alpha::LDA, MVT::i64,
-                         CurDAG->getTargetFrameIndex(FI, MVT::i32),
-                         getI64Imm(0));
-    return SDOperand(N, 0);
+    return CurDAG->SelectNodeTo(N, Alpha::LDA, MVT::i64,
+                                CurDAG->getTargetFrameIndex(FI, MVT::i32),
+                                getI64Imm(0));
   }
   case ISD::ConstantPool: {
     Constant *C = cast<ConstantPoolSDNode>(N)->get();
     SDOperand Tmp, CPI = CurDAG->getTargetConstantPool(C, MVT::i64);
     Tmp = CurDAG->getTargetNode(Alpha::LDAHr, MVT::i64, CPI, getGlobalBaseReg());
-    CurDAG->SelectNodeTo(N, Alpha::LDAr, MVT::i64, CPI, Tmp);
-    return SDOperand(N, 0);
+    return CurDAG->SelectNodeTo(N, Alpha::LDAr, MVT::i64, CPI, Tmp);
   }
   case ISD::GlobalAddress: {
     GlobalValue *GV = cast<GlobalAddressSDNode>(N)->getGlobal();
     SDOperand GA = CurDAG->getTargetGlobalAddress(GV, MVT::i64);
-    CurDAG->SelectNodeTo(N, Alpha::LDQl, MVT::i64, GA, getGlobalBaseReg());
-    return SDOperand(N, 0);
+    return CurDAG->SelectNodeTo(N, Alpha::LDQl, MVT::i64, GA, 
+                                getGlobalBaseReg());
   }
   case ISD::ExternalSymbol:
-    CurDAG->SelectNodeTo(N, Alpha::LDQl, MVT::i64, 
-                         CurDAG->getTargetExternalSymbol(cast<ExternalSymbolSDNode>(N)->getSymbol(), MVT::i64),
-                         CurDAG->getRegister(AlphaLowering.getVRegGP(), MVT::i64));
-    return SDOperand(N, 0);
+    return CurDAG->SelectNodeTo(N, Alpha::LDQl, MVT::i64, 
+                                CurDAG->getTargetExternalSymbol(cast<ExternalSymbolSDNode>(N)->getSymbol(), MVT::i64),
+                                CurDAG->getRegister(AlphaLowering.getVRegGP(), MVT::i64));
 
   case ISD::CALLSEQ_START:
   case ISD::CALLSEQ_END: {
     unsigned Amt = cast<ConstantSDNode>(N->getOperand(1))->getValue();
     unsigned Opc = N->getOpcode() == ISD::CALLSEQ_START ?
                        Alpha::ADJUSTSTACKDOWN : Alpha::ADJUSTSTACKUP;
-    CurDAG->SelectNodeTo(N, Opc, MVT::Other,
-                         getI64Imm(Amt), Select(N->getOperand(0)));
-    return SDOperand(N, 0);
+    return CurDAG->SelectNodeTo(N, Opc, MVT::Other,
+                                getI64Imm(Amt), Select(N->getOperand(0)));
   }
   case ISD::RET: {
     SDOperand Chain = Select(N->getOperand(0));     // Token chain.
@@ -264,8 +257,7 @@ SDOperand AlphaDAGToDAGISel::Select(SDOperand Op) {
 
     // FIXME: add restoring of the RA to R26 to the chain
     // Finally, select this to a ret instruction.
-    CurDAG->SelectNodeTo(N, Alpha::RETDAG, MVT::Other, Chain);
-    return SDOperand(N, 0);
+    return CurDAG->SelectNodeTo(N, Alpha::RETDAG, MVT::Other, Chain);
   }
   case ISD::Constant: {
     int64_t val = (int64_t)cast<ConstantSDNode>(N)->getValue();
@@ -276,8 +268,7 @@ SDOperand AlphaDAGToDAGISel::Select(SDOperand Op) {
         ConstantUInt::get(Type::getPrimitiveType(Type::ULongTyID) , val);
       SDOperand Tmp, CPI = CurDAG->getTargetConstantPool(C, MVT::i64);
       Tmp = CurDAG->getTargetNode(Alpha::LDAHr, MVT::i64, CPI, getGlobalBaseReg());
-      CurDAG->SelectNodeTo(N, Alpha::LDAr, MVT::i64, CPI, Tmp);
-      return SDOperand(N, 0);
+      return CurDAG->SelectNodeTo(N, Alpha::LDAr, MVT::i64, CPI, Tmp);
     }
     break;
   }
@@ -286,15 +277,13 @@ SDOperand AlphaDAGToDAGISel::Select(SDOperand Op) {
       bool isDouble = N->getValueType(0) == MVT::f64;
       MVT::ValueType T = isDouble ? MVT::f64 : MVT::f32;
       if (CN->isExactlyValue(+0.0)) {
-        CurDAG->SelectNodeTo(N, isDouble ? Alpha::CPYST : Alpha::CPYSS, T,
-                             CurDAG->getRegister(Alpha::F31, T),
-                             CurDAG->getRegister(Alpha::F31, T));
-        return SDOperand(N, 0);
+        return CurDAG->SelectNodeTo(N, isDouble ? Alpha::CPYST : Alpha::CPYSS,
+                                    T, CurDAG->getRegister(Alpha::F31, T),
+                                    CurDAG->getRegister(Alpha::F31, T));
       } else if ( CN->isExactlyValue(-0.0)) {
-        CurDAG->SelectNodeTo(N, isDouble ? Alpha::CPYSNT : Alpha::CPYSNS, T,
-                             CurDAG->getRegister(Alpha::F31, T),
-                             CurDAG->getRegister(Alpha::F31, T));
-        return SDOperand(N, 0);
+        return CurDAG->SelectNodeTo(N, isDouble ? Alpha::CPYSNT : Alpha::CPYSNS,
+                                    T, CurDAG->getRegister(Alpha::F31, T),
+                                    CurDAG->getRegister(Alpha::F31, T));
       } else {
         abort();
       }
