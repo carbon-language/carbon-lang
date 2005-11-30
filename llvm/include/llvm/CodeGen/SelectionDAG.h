@@ -110,7 +110,8 @@ public:
   SDOperand getTargetConstant(uint64_t Val, MVT::ValueType VT);
   SDOperand getConstantFP(double Val, MVT::ValueType VT);
   SDOperand getGlobalAddress(const GlobalValue *GV, MVT::ValueType VT);
-  SDOperand getTargetGlobalAddress(const GlobalValue *GV, MVT::ValueType VT);
+  SDOperand getTargetGlobalAddress(const GlobalValue *GV, MVT::ValueType VT,
+                                   int offset=0);
   SDOperand getFrameIndex(int FI, MVT::ValueType VT);
   SDOperand getTargetFrameIndex(int FI, MVT::ValueType VT);
   SDOperand getConstantPool(Constant *C, MVT::ValueType VT);
@@ -283,6 +284,9 @@ public:
   void SelectNodeTo(SDNode *N, unsigned TargetOpc, MVT::ValueType VT, 
                     SDOperand Op1, SDOperand Op2, SDOperand Op3, SDOperand Op4,
                     SDOperand Op5);
+  void SelectNodeTo(SDNode *N, unsigned TargetOpc, MVT::ValueType VT, 
+                    SDOperand Op1, SDOperand Op2, SDOperand Op3, SDOperand Op4,
+                    SDOperand Op5, SDOperand Op6);
   void SelectNodeTo(SDNode *N, unsigned TargetOpc, MVT::ValueType VT1, 
                     MVT::ValueType VT2, SDOperand Op1, SDOperand Op2);
   void SelectNodeTo(SDNode *N, unsigned TargetOpc, MVT::ValueType VT1,

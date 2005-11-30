@@ -500,10 +500,10 @@ SDOperand SelectionDAG::getGlobalAddress(const GlobalValue *GV,
 }
 
 SDOperand SelectionDAG::getTargetGlobalAddress(const GlobalValue *GV,
-                                               MVT::ValueType VT) {
+                                               MVT::ValueType VT, int offset) {
   SDNode *&N = TargetGlobalValues[GV];
   if (N) return SDOperand(N, 0);
-  N = new GlobalAddressSDNode(true, GV, VT);
+  N = new GlobalAddressSDNode(true, GV, VT, offset);
   AllNodes.push_back(N);
   return SDOperand(N, 0);
 }
@@ -1457,6 +1457,16 @@ void SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
   N->setOperands(Op1, Op2, Op3, Op4, Op5);
 }
 
+void SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc,
+                                MVT::ValueType VT, SDOperand Op1,
+                                SDOperand Op2, SDOperand Op3, SDOperand Op4,
+                                SDOperand Op5, SDOperand Op6) {
+  RemoveNodeFromCSEMaps(N);
+  N->MorphNodeTo(ISD::BUILTIN_OP_END+TargetOpc);
+  N->setValueTypes(VT);
+  N->setOperands(Op1, Op2, Op3, Op4, Op5, Op6);
+}
+
 void SelectionDAG::SelectNodeTo(SDNode *N, unsigned TargetOpc, 
                                 MVT::ValueType VT1, MVT::ValueType VT2,
                                 SDOperand Op1, SDOperand Op2) {
@@ -1859,8 +1869,13 @@ void SDNode::dump(const SelectionDAG *G) const {
     std::cerr << "<" << CSDN->getValue() << ">";
   } else if (const GlobalAddressSDNode *GADN =
              dyn_cast<GlobalAddressSDNode>(this)) {
+    int offset = GADN->getOffset();
     std::cerr << "<";
     WriteAsOperand(std::cerr, GADN->getGlobal()) << ">";
+    if (offset > 0)
+      std::cerr << " + " << offset;
+    else
+      std::cerr << " " << offset;
   } else if (const FrameIndexSDNode *FIDN = dyn_cast<FrameIndexSDNode>(this)) {
     std::cerr << "<" << FIDN->getIndex() << ">";
   } else if (const ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(this)){

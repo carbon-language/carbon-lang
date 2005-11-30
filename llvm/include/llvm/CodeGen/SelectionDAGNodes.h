@@ -795,6 +795,21 @@ protected:
     Op2.Val->Uses.push_back(this); Op3.Val->Uses.push_back(this);
     Op4.Val->Uses.push_back(this);
   }
+  void setOperands(SDOperand Op0, SDOperand Op1, SDOperand Op2, SDOperand Op3,
+                   SDOperand Op4, SDOperand Op5) {
+    assert(NumOperands == 0 && "Should not have operands yet!");
+    OperandList = new SDOperand[6];
+    OperandList[0] = Op0;
+    OperandList[1] = Op1;
+    OperandList[2] = Op2;
+    OperandList[3] = Op3;
+    OperandList[4] = Op4;
+    OperandList[5] = Op5;
+    NumOperands = 6;
+    Op0.Val->Uses.push_back(this); Op1.Val->Uses.push_back(this);
+    Op2.Val->Uses.push_back(this); Op3.Val->Uses.push_back(this);
+    Op4.Val->Uses.push_back(this); Op5.Val->Uses.push_back(this);
+  }
   void addUser(SDNode *User) {
     Uses.push_back(User);
   }
@@ -923,15 +938,19 @@ public:
 
 class GlobalAddressSDNode : public SDNode {
   GlobalValue *TheGlobal;
+  int offset;
 protected:
   friend class SelectionDAG;
-  GlobalAddressSDNode(bool isTarget, const GlobalValue *GA, MVT::ValueType VT)
+  GlobalAddressSDNode(bool isTarget, const GlobalValue *GA, MVT::ValueType VT,
+                      int o=0)
     : SDNode(isTarget ? ISD::TargetGlobalAddress : ISD::GlobalAddress, VT) {
     TheGlobal = const_cast<GlobalValue*>(GA);
+    offset = o;
   }
 public:
 
   GlobalValue *getGlobal() const { return TheGlobal; }
+  int getOffset() const { return offset; }
 
   static bool classof(const GlobalAddressSDNode *) { return true; }
   static bool classof(const SDNode *N) {

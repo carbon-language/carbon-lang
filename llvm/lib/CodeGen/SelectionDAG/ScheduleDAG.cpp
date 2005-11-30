@@ -1123,7 +1123,7 @@ void SimpleSched::EmitNode(NodeInfo *NI) {
         MI->addRegOperand(R->getReg(), MachineOperand::Use);
       } else if (GlobalAddressSDNode *TGA =
                        dyn_cast<GlobalAddressSDNode>(Node->getOperand(i))) {
-        MI->addGlobalAddressOperand(TGA->getGlobal(), false, 0);
+        MI->addGlobalAddressOperand(TGA->getGlobal(), false, TGA->getOffset());
       } else if (BasicBlockSDNode *BB =
                        dyn_cast<BasicBlockSDNode>(Node->getOperand(i))) {
         MI->addMachineBasicBlockOperand(BB->getBasicBlock());

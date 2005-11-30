@@ -70,7 +70,12 @@ std::string DOTGraphTraits<SelectionDAG*>::getNodeLabel(const SDNode *Node,
     Op += ": " + ftostr(CSDN->getValue());
   } else if (const GlobalAddressSDNode *GADN =
              dyn_cast<GlobalAddressSDNode>(Node)) {
+    int offset = GADN->getOffset();
     Op += ": " + GADN->getGlobal()->getName();
+    if (offset > 0)
+      Op += "+" + itostr(offset);
+    else
+      Op += itostr(offset);
   } else if (const FrameIndexSDNode *FIDN = dyn_cast<FrameIndexSDNode>(Node)) {
     Op += " " + itostr(FIDN->getIndex());
   } else if (const ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(Node)){
