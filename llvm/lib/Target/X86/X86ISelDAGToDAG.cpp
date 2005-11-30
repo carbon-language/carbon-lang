@@ -289,8 +289,7 @@ SDOperand X86DAGToDAGISel::Select(SDOperand Op) {
             case MVT::i32: Opc = X86::ADD32rr; break;
           }
           SDOperand Tmp0 = Select(N->getOperand(0));
-          CurDAG->SelectNodeTo(N, Opc, MVT::i32, Tmp0, Tmp0);
-          return SDOperand(N, 0);
+          return CurDAG->SelectNodeTo(N, Opc, MVT::i32, Tmp0, Tmp0);
         }
       } else {
         static const unsigned SHLTab[] = {
@@ -319,8 +318,7 @@ SDOperand X86DAGToDAGISel::Select(SDOperand Op) {
         }
 
         SDOperand Tmp0 = Select(N->getOperand(0));
-        CurDAG->SelectNodeTo(N, Opc, MVT::i32, Tmp0);
-        return SDOperand(N, 0);
+        return CurDAG->SelectNodeTo(N, Opc, MVT::i32, Tmp0);
       }
       break;
 
@@ -350,13 +348,11 @@ SDOperand X86DAGToDAGISel::Select(SDOperand Op) {
           break;
       }
       if (X86Lowering.getBytesToPopOnReturn() == 0)
-        CurDAG->SelectNodeTo(N, X86::RET, MVT::Other, Chain);
+        return CurDAG->SelectNodeTo(N, X86::RET, MVT::Other, Chain);
       else
-        CurDAG->SelectNodeTo(N, X86::RET, MVT::Other,
-                             getI16Imm(X86Lowering.getBytesToPopOnReturn()),
-                             Chain);
-
-      return SDOperand(N, 0);
+        return CurDAG->SelectNodeTo(N, X86::RET, MVT::Other,
+                              getI16Imm(X86Lowering.getBytesToPopOnReturn()),
+                                    Chain);
     }
 
     case ISD::LOAD: {
@@ -385,15 +381,17 @@ SDOperand X86DAGToDAGISel::Select(SDOperand Op) {
           ? CurDAG->getTargetGlobalAddress(AM.GV, MVT::i32, AM.Disp)
           : getI32Imm(AM.Disp);
         if (AM.BaseType == X86ISelAddressMode::RegBase) {
-          CurDAG->SelectNodeTo(N, Opc, OpVT, MVT::Other,
-                               AM.Base.Reg, Scale, AM.IndexReg, Disp, Chain);
+          return CurDAG->SelectNodeTo(N, Opc, OpVT, MVT::Other,
+                                      AM.Base.Reg, Scale, AM.IndexReg, Disp, 
+                                      Chain)
+            .getValue(Op.ResNo);
         } else {
           SDOperand Base = CurDAG->getFrameIndex(AM.Base.FrameIndex, MVT::i32);
-          CurDAG->SelectNodeTo(N, Opc, OpVT, MVT::Other,
-                               Base, Scale, AM.IndexReg, Disp, Chain);
+          return CurDAG->SelectNodeTo(N, Opc, OpVT, MVT::Other,
+                                      Base, Scale, AM.IndexReg, Disp, Chain)
+            .getValue(Op.ResNo);
         }
       }
-      return SDOperand(N, Op.ResNo);
     }
 
     case ISD::STORE: {
@@ -430,13 +428,13 @@ SDOperand X86DAGToDAGISel::Select(SDOperand Op) {
         ? CurDAG->getTargetGlobalAddress(AM.GV, MVT::i32, AM.Disp)
         : getI32Imm(AM.Disp);
       if (AM.BaseType == X86ISelAddressMode::RegBase) {
-        CurDAG->SelectNodeTo(N, Opc, MVT::Other,
-                             AM.Base.Reg, Scale, AM.IndexReg, Disp, Tmp1,
-                             Chain);
+        return CurDAG->SelectNodeTo(N, Opc, MVT::Other,
+                                    AM.Base.Reg, Scale, AM.IndexReg, Disp, Tmp1,
+                                    Chain);
       } else {
         SDOperand Base = CurDAG->getFrameIndex(AM.Base.FrameIndex, MVT::i32);
-        CurDAG->SelectNodeTo(N, Opc, MVT::Other,
-                             Base, Scale, AM.IndexReg, Disp, Tmp1, Chain);
+        return CurDAG->SelectNodeTo(N, Opc, MVT::Other,
+                                  Base, Scale, AM.IndexReg, Disp, Tmp1, Chain);
       }
     }
   }
