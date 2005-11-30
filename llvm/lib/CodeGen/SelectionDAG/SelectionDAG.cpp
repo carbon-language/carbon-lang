@@ -283,12 +283,18 @@ void SelectionDAG::RemoveNodeFromCSEMaps(SDNode *N) {
     Erased = CondCodeNodes[cast<CondCodeSDNode>(N)->get()] != 0;
     CondCodeNodes[cast<CondCodeSDNode>(N)->get()] = 0;
     break;
-  case ISD::GlobalAddress:
-    Erased = GlobalValues.erase(cast<GlobalAddressSDNode>(N)->getGlobal());
+  case ISD::GlobalAddress: {
+    GlobalAddressSDNode *GN = cast<GlobalAddressSDNode>(N);
+    Erased = GlobalValues.erase(std::make_pair(GN->getGlobal(),
+                                               GN->getOffset()));
     break;
-  case ISD::TargetGlobalAddress:
-    Erased =TargetGlobalValues.erase(cast<GlobalAddressSDNode>(N)->getGlobal());
+  }
+  case ISD::TargetGlobalAddress: {
+    GlobalAddressSDNode *GN = cast<GlobalAddressSDNode>(N);
+    Erased =TargetGlobalValues.erase(std::make_pair(GN->getGlobal(),
+                                                    GN->getOffset()));
     break;
+  }
   case ISD::FrameIndex:
     Erased = FrameIndices.erase(cast<FrameIndexSDNode>(N)->getIndex());
     break;
@@ -491,8 +497,8 @@ SDOperand SelectionDAG::getConstantFP(double Val, MVT::ValueType VT) {
 
 
 SDOperand SelectionDAG::getGlobalAddress(const GlobalValue *GV,
-                                         MVT::ValueType VT) {
-  SDNode *&N = GlobalValues[GV];
+                                         MVT::ValueType VT, int offset) {
+  SDNode *&N = GlobalValues[std::make_pair(GV, offset)];
   if (N) return SDOperand(N, 0);
   N = new GlobalAddressSDNode(false, GV, VT);
   AllNodes.push_back(N);
@@ -501,7 +507,7 @@ SDOperand SelectionDAG::getGlobalAddress(const GlobalValue *GV,
 
 SDOperand SelectionDAG::getTargetGlobalAddress(const GlobalValue *GV,
                                                MVT::ValueType VT, int offset) {
-  SDNode *&N = TargetGlobalValues[GV];
+  SDNode *&N = TargetGlobalValues[std::make_pair(GV, offset)];
   if (N) return SDOperand(N, 0);
   N = new GlobalAddressSDNode(true, GV, VT, offset);
   AllNodes.push_back(N);
