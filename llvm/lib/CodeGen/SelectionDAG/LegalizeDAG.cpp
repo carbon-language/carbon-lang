@@ -1956,6 +1956,19 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         return Result;
       case TargetLowering::Legal:
         break;
+      case TargetLowering::Custom: {
+        Tmp1 = LegalizeOp(Node->getOperand(0));
+        SDOperand Tmp =
+          DAG.getNode(Node->getOpcode(), Node->getValueType(0), Tmp1);
+        Tmp = TLI.LowerOperation(Tmp, DAG);
+        if (Tmp.Val) {
+          AddLegalizedOperand(Op, Tmp);
+          NeedsAnotherIteration = true;
+          return Tmp;
+        } else {
+          assert(0 && "Target Must Lower this");
+        }
+      }
       }
 
       Tmp1 = LegalizeOp(Node->getOperand(0));
