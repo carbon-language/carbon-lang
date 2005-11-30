@@ -96,6 +96,13 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
     }
 
     if (!isa<StoreInst>(I) || cast<StoreInst>(I)->isVolatile()) {
+      // If this is a vaarg instruction, it reads its operand.  We don't model
+      // it correctly, so just conservatively remove all entries.
+      if (isa<VAArgInst>(I)) {
+        KillLocs.clear();
+        continue;
+      }      
+      
       // If this is a non-store instruction, it makes everything referenced no
       // longer killed.  Remove anything aliased from the alias set tracker.
       KillLocs.remove(I);
