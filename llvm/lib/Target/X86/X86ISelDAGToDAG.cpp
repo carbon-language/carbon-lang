@@ -49,7 +49,7 @@ namespace {
     GlobalValue *GV;
 
     X86ISelAddressMode()
-      : BaseType(RegBase), Scale(1), IndexReg(), Disp(), GV(0) {
+      : BaseType(RegBase), Scale(1), IndexReg(), Disp(0), GV(0) {
     }
   };
 }
@@ -267,7 +267,7 @@ bool X86DAGToDAGISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM) {
 
 SDOperand X86DAGToDAGISel::Select(SDOperand Op) {
   SDNode *N = Op.Val;
-  MVT::ValueType OpVT = Op.getValueType();
+  MVT::ValueType OpVT = N->getValueType(0);
   unsigned Opc;
 
   if (N->getOpcode() >= ISD::BUILTIN_OP_END)
@@ -275,9 +275,13 @@ SDOperand X86DAGToDAGISel::Select(SDOperand Op) {
   
   switch (N->getOpcode()) {
     default: break;
+
     case ISD::SHL:
+    case ISD::SRL:
+    case ISD::SRA:
       if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N->getOperand(1))) {
-        if (CN->getValue() == 1) {   // X = SHL Y, 1  -> X = ADD Y, Y
+        if (N->getOpcode() == ISD::SHL && CN->getValue() == 1) {
+          // X = SHL Y, 1  -> X = ADD Y, Y
           switch (OpVT) {
             default: assert(0 && "Cannot shift this type!");
             case MVT::i8:  Opc = X86::ADD8rr; break;
@@ -288,7 +292,37 @@ SDOperand X86DAGToDAGISel::Select(SDOperand Op) {
           CurDAG->SelectNodeTo(N, Opc, MVT::i32, Tmp0, Tmp0);
           return SDOperand(N, 0);
         }
+      } else {
+        static const unsigned SHLTab[] = {
+          X86::SHL8rCL, X86::SHL16rCL, X86::SHL32rCL
+        };
+        static const unsigned SRLTab[] = {
+          X86::SHR8rCL, X86::SHR16rCL, X86::SHR32rCL
+        };
+        static const unsigned SRATab[] = {
+          X86::SAR8rCL, X86::SAR16rCL, X86::SAR32rCL
+        };
+
+        switch (OpVT) {
+          default: assert(0 && "Cannot shift this type!");
+          case MVT::i1:
+          case MVT::i8:  Opc = 0; break;
+          case MVT::i16: Opc = 1; break;
+          case MVT::i32: Opc = 2; break;
+        }
+
+        switch (N->getOpcode()) {
+          default: assert(0 && "Unreachable!");
+          case ISD::SHL: Opc = SHLTab[Opc]; break;
+          case ISD::SRL: Opc = SRLTab[Opc]; break;
+          case ISD::SRA: Opc = SRATab[Opc]; break;
+        }
+
+        SDOperand Tmp0 = Select(N->getOperand(0));
+        CurDAG->SelectNodeTo(N, Opc, MVT::i32, Tmp0);
+        return SDOperand(N, 0);
       }
+      break;
 
     case ISD::RET: {
       SDOperand Chain = Select(N->getOperand(0));     // Token chain.
@@ -326,7 +360,7 @@ SDOperand X86DAGToDAGISel::Select(SDOperand Op) {
     }
 
     case ISD::LOAD: {
-      switch (N->getValueType(0)) {
+      switch (OpVT) {
         default: assert(0 && "Cannot load this type!");
         case MVT::i1:
         case MVT::i8:  Opc = X86::MOV8rm; break;
@@ -342,22 +376,68 @@ SDOperand X86DAGToDAGISel::Select(SDOperand Op) {
         // ???
         assert(0 && "Can't handle load from constant pool!");
       } else {
-        SDOperand Chain = Select(N->getOperand(0));     // Token chain.
         X86ISelAddressMode AM;
+        SDOperand Chain = Select(N->getOperand(0));     // Token chain.
+
         SelectAddress(N->getOperand(1), AM);
         SDOperand Scale = getI8Imm (AM.Scale);
-        SDOperand Disp  = AM.GV ? CurDAG->getTargetGlobalAddress(AM.GV, MVT::i32)
+        SDOperand Disp  = AM.GV
+          ? CurDAG->getTargetGlobalAddress(AM.GV, MVT::i32, AM.Disp)
           : getI32Imm(AM.Disp);
         if (AM.BaseType == X86ISelAddressMode::RegBase) {
-          CurDAG->SelectNodeTo(N, Opc, N->getValueType(0), MVT::Other,
+          CurDAG->SelectNodeTo(N, Opc, OpVT, MVT::Other,
                                AM.Base.Reg, Scale, AM.IndexReg, Disp, Chain);
         } else {
           SDOperand Base = CurDAG->getFrameIndex(AM.Base.FrameIndex, MVT::i32);
-          CurDAG->SelectNodeTo(N, Opc, N->getValueType(0), MVT::Other,
+          CurDAG->SelectNodeTo(N, Opc, OpVT, MVT::Other,
                                Base, Scale, AM.IndexReg, Disp, Chain);
         }
       }
       return SDOperand(N, Op.ResNo);
+    }
+
+    case ISD::STORE: {
+      SDOperand Chain = Select(N->getOperand(0));     // Token chain.
+      SDOperand Tmp1 = Select(N->getOperand(1));
+      X86ISelAddressMode AM;
+      SelectAddress(N->getOperand(2), AM);
+
+      Opc = 0;
+      if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N->getOperand(1))) {
+        switch (CN->getValueType(0)) {
+          default: assert(0 && "Invalid type for operation!");
+          case MVT::i1:
+          case MVT::i8:  Opc = X86::MOV8mi;  break;
+          case MVT::i16: Opc = X86::MOV16mi; break;
+          case MVT::i32: Opc = X86::MOV32mi; break;
+        }
+      }
+
+      if (!Opc) {
+        switch (N->getOperand(1).getValueType()) {
+          default: assert(0 && "Cannot store this type!");
+          case MVT::i1:
+          case MVT::i8:  Opc = X86::MOV8mr;  break;
+          case MVT::i16: Opc = X86::MOV16mr; break;
+          case MVT::i32: Opc = X86::MOV32mr; break;
+          case MVT::f32: Opc = X86::MOVSSmr; break;
+          case MVT::f64: Opc = X86::FST64m;  break;
+        }
+      }
+
+      SDOperand Scale = getI8Imm (AM.Scale);
+      SDOperand Disp  = AM.GV
+        ? CurDAG->getTargetGlobalAddress(AM.GV, MVT::i32, AM.Disp)
+        : getI32Imm(AM.Disp);
+      if (AM.BaseType == X86ISelAddressMode::RegBase) {
+        CurDAG->SelectNodeTo(N, Opc, MVT::Other,
+                             AM.Base.Reg, Scale, AM.IndexReg, Disp, Tmp1,
+                             Chain);
+      } else {
+        SDOperand Base = CurDAG->getFrameIndex(AM.Base.FrameIndex, MVT::i32);
+        CurDAG->SelectNodeTo(N, Opc, MVT::Other,
+                             Base, Scale, AM.IndexReg, Disp, Tmp1, Chain);
+      }
     }
   }
 
