@@ -72,6 +72,7 @@ AlphaTargetLowering::AlphaTargetLowering(TargetMachine &TM) : TargetLowering(TM)
   setOperationAction(ISD::FREM, MVT::f64, Expand);
   
   setOperationAction(ISD::UINT_TO_FP, MVT::i64, Expand);
+  setOperationAction(ISD::SINT_TO_FP, MVT::i64, Custom);
   
   if (!TM.getSubtarget<AlphaSubtarget>().hasCT()) {
     setOperationAction(ISD::CTPOP    , MVT::i64  , Expand);
@@ -101,10 +102,12 @@ AlphaTargetLowering::AlphaTargetLowering(TargetMachine &TM) : TargetLowering(TM)
   // We don't have line number support yet.
   setOperationAction(ISD::LOCATION, MVT::Other, Expand);
   
-  computeRegisterProperties();
-  
   addLegalFPImmediate(+0.0); //F31
   addLegalFPImmediate(-0.0); //-F31
+
+  computeRegisterProperties();
+
+  useITOF = TM.getSubtarget<AlphaSubtarget>().hasF2I();
 }
 
 
@@ -384,4 +387,32 @@ void AlphaTargetLowering::restoreRA(MachineBasicBlock* BB)
   BuildMI(BB, Alpha::BIS, 2, Alpha::R26).addReg(RA).addReg(RA);
 }
 
+
+/// LowerOperation - Provide custom lowering hooks for some operations.
+///
+SDOperand AlphaTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
+  switch (Op.getOpcode()) {
+  default: assert(0 && "Wasn't expecting to be able to lower this!"); 
+  case ISD::SINT_TO_FP: {
+    assert(MVT::i64 == Op.getOperand(0).getValueType() && 
+           "Unhandled SINT_TO_FP type in custom expander!");
+    SDOperand LD;
+    bool isDouble = MVT::f64 == Op.getValueType();
+    if (useITOF) {
+      LD = DAG.getNode(AlphaISD::ITOFT_, MVT::f64, Op.getOperand(0));
+    } else {
+      int FrameIdx =
+        DAG.getMachineFunction().getFrameInfo()->CreateStackObject(8, 8);
+      SDOperand FI = DAG.getFrameIndex(FrameIdx, MVT::i64);
+      SDOperand ST = DAG.getNode(ISD::STORE, MVT::Other, DAG.getEntryNode(),
+                                 Op.getOperand(0), FI, DAG.getSrcValue(0));
+      LD = DAG.getLoad(MVT::f64, ST, FI, DAG.getSrcValue(0));
+      }
+    SDOperand FP = DAG.getNode(isDouble?AlphaISD::CVTQT_:AlphaISD::CVTQS_,
+                               isDouble?MVT::f64:MVT::f32, LD);
+    return FP;
+  }
+  }
+  return SDOperand();
+}
 

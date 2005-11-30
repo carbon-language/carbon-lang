@@ -1559,17 +1559,17 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
     }
     return Result;
 
-  case ISD::SINT_TO_FP:
-    {
-      assert (N.getOperand(0).getValueType() == MVT::i64
-              && "only quads can be loaded from");
-      Tmp1 = SelectExpr(N.getOperand(0));  // Get the operand register
-      Tmp2 = MakeReg(MVT::f64);
-      MoveInt2FP(Tmp1, Tmp2, true);
-      Opc = DestType == MVT::f64 ? Alpha::CVTQT : Alpha::CVTQS;
-      BuildMI(BB, Opc, 1, Result).addReg(Tmp2);
-      return Result;
-    }
+  case AlphaISD::CVTQT_:
+    BuildMI(BB, Alpha::CVTQT, 1, Result).addReg(SelectExpr(N.getOperand(0)));
+    return Result;
+
+  case AlphaISD::CVTQS_:
+    BuildMI(BB, Alpha::CVTQS, 1, Result).addReg(SelectExpr(N.getOperand(0)));
+    return Result;
+
+  case AlphaISD::ITOFT_:
+    BuildMI(BB, Alpha::ITOFT, 1, Result).addReg(SelectExpr(N.getOperand(0)));
+    return Result;
 
   case ISD::AssertSext:
   case ISD::AssertZext:

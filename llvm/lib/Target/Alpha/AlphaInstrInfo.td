@@ -13,6 +13,20 @@
 include "AlphaInstrFormats.td"
 
 //********************
+//Custom DAG Nodes
+//********************
+
+def SDTFPUnaryOpUnC  : SDTypeProfile<1, 1, [
+  SDTCisFP<1>, SDTCisFP<0>
+]>;
+
+def Alpha_itoft : SDNode<"AlphaISD::ITOFT_", SDTIntToFPOp, []>;
+def Alpha_ftoit : SDNode<"AlphaISD::FTOIT_", SDTFPToIntOp, []>;
+def Alpha_cvtqt : SDNode<"AlphaISD::CVTQT_", SDTFPUnaryOpUnC, []>;
+def Alpha_cvtqs : SDNode<"AlphaISD::CVTQS_", SDTFPUnaryOpUnC, []>;
+
+
+//********************
 //Paterns for matching
 //********************
 
@@ -142,6 +156,10 @@ def CMOVLT   : OForm4<  0x11, 0x44, "cmovlt $RCOND,$RSRC,$RDEST">; //CMOVE if RC
 def CMOVLTi  : OForm4L< 0x11, 0x44, "cmovlt $RCOND,$L,$RDEST">; //CMOVE if RCOND < zero
 def CMOVNE   : OForm4<  0x11, 0x26, "cmovne $RCOND,$RSRC,$RDEST">; //CMOVE if RCOND != zero
 def CMOVNEi  : OForm4L< 0x11, 0x26, "cmovne $RCOND,$L,$RDEST">; //CMOVE if RCOND != zero
+
+//FIXME: fold setcc with select
+def : Pat<(select GPRC:$which, GPRC:$src1, GPRC:$src2),
+      (CMOVEQ GPRC:$src1, GPRC:$src2, GPRC:$which)>;
 
 //conditional moves, fp
 let OperandList = (ops F8RC:$RDEST, F8RC:$RSRC2, F8RC:$RSRC, F8RC:$RCOND),
@@ -409,12 +427,16 @@ def LDBU : MForm<0x0A, "ldbu $RA,$DISP($RB)">; //Load zero-extended byte
 def LDWU : MForm<0x0C, "ldwu $RA,$DISP($RB)">; //Load zero-extended word
 
 //Stores, float
-def STS : MForm<0x26, "sts $RA,$DISP($RB)">; //Store S_floating
-def STT : MForm<0x27, "stt $RA,$DISP($RB)">; //Store T_floating
+let OperandList = (ops F4RC:$RA, s16imm:$DISP, GPRC:$RB) in
+def STS : MFormAlt<0x26, "sts $RA,$DISP($RB)">; //Store S_floating
+let OperandList = (ops F8RC:$RA, s16imm:$DISP, GPRC:$RB) in
+def STT : MFormAlt<0x27, "stt $RA,$DISP($RB)">; //Store T_floating
 
 //Loads, float
-def LDS : MForm<0x22, "lds $RA,$DISP($RB)">; //Load S_floating
-def LDT : MForm<0x23, "ldt $RA,$DISP($RB)">; //Load T_floating
+let OperandList = (ops F4RC:$RA, s16imm:$DISP, GPRC:$RB) in
+def LDS : MFormAlt<0x22, "lds $RA,$DISP($RB)">; //Load S_floating
+let OperandList = (ops F8RC:$RA, s16imm:$DISP, GPRC:$RB) in
+def LDT : MFormAlt<0x23, "ldt $RA,$DISP($RB)">; //Load T_floating
 
 //Load address
 def LDA : MForm<0x08,  "lda $RA,$DISP($RB)">;  //Load address
@@ -428,8 +450,10 @@ def LDBUr : MForm<0x0A, "ldbu $RA,$DISP($RB)\t\t!gprellow">; //Load zero-extende
 def LDWUr : MForm<0x0C, "ldwu $RA,$DISP($RB)\t\t!gprellow">; //Load zero-extended word
 
 //Loads, float, Rellocated Low form
-def LDSr : MForm<0x22, "lds $RA,$DISP($RB)\t\t!gprellow">; //Load S_floating
-def LDTr : MForm<0x23, "ldt $RA,$DISP($RB)\t\t!gprellow">; //Load T_floating
+let OperandList = (ops F4RC:$RA, s16imm:$DISP, GPRC:$RB) in
+def LDSr : MFormAlt<0x22, "lds $RA,$DISP($RB)\t\t!gprellow">; //Load S_floating
+let OperandList = (ops F8RC:$RA, s16imm:$DISP, GPRC:$RB) in
+def LDTr : MFormAlt<0x23, "ldt $RA,$DISP($RB)\t\t!gprellow">; //Load T_floating
 
 //Load address, rellocated low and high form
 def LDAr : MForm<0x08,  "lda $RA,$DISP($RB)\t\t!gprellow">;  //Load address
@@ -450,8 +474,10 @@ def STLr : MForm<0x2C, "stl $RA,$DISP($RB)\t\t!gprellow">; // Store longword
 def STQr : MForm<0x2D, "stq $RA,$DISP($RB)\t\t!gprellow">; //Store quadword
 
 //Stores, float
-def STSr : MForm<0x26, "sts $RA,$DISP($RB)\t\t!gprellow">; //Store S_floating
-def STTr : MForm<0x27, "stt $RA,$DISP($RB)\t\t!gprellow">; //Store T_floating
+let OperandList = (ops F4RC:$RA, s16imm:$DISP, GPRC:$RB) in
+def STSr : MFormAlt<0x26, "sts $RA,$DISP($RB)\t\t!gprellow">; //Store S_floating
+let OperandList = (ops F8RC:$RA, s16imm:$DISP, GPRC:$RB) in
+def STTr : MFormAlt<0x27, "stt $RA,$DISP($RB)\t\t!gprellow">; //Store T_floating
 
 
 //Branches, int
@@ -533,17 +559,21 @@ def CMPTUN : FPForm<0x16, 0x5A4, "cmptun/su $RA,$RB,$RC", []>;
 let OperandList = (ops GPRC:$RC, F4RC:$RA), Fb = 31 in 
 def FTOIS : FPForm<0x1C, 0x078, "ftois $RA,$RC",[]>; //Floating to integer move, S_floating
 let OperandList = (ops GPRC:$RC, F8RC:$RA), Fb = 31 in 
-def FTOIT : FPForm<0x1C, 0x070, "ftoit $RA,$RC",[]>; //Floating to integer move, T_floating
+def FTOIT : FPForm<0x1C, 0x070, "ftoit $RA,$RC",
+        [(set GPRC:$RC, (Alpha_ftoit F8RC:$RA))]>; //Floating to integer move
 let OperandList = (ops F4RC:$RC, GPRC:$RA), Fb = 31 in 
 def ITOFS : FPForm<0x14, 0x004, "itofs $RA,$RC",[]>; //Integer to floating move, S_floating
 let OperandList = (ops F8RC:$RC, GPRC:$RA), Fb = 31 in 
-def ITOFT : FPForm<0x14, 0x024, "itoft $RA,$RC",[]>; //Integer to floating move, T_floating
+def ITOFT : FPForm<0x14, 0x024, "itoft $RA,$RC",
+        [(set F8RC:$RC, (Alpha_itoft GPRC:$RA))]>; //Integer to floating move
 
 
 let OperandList = (ops F4RC:$RC, F8RC:$RB), Fa = 31 in 
-def CVTQS : FPForm<0x16, 0x7BC, "cvtqs/sui $RB,$RC",[]>; //Convert quadword to S_floating
+def CVTQS : FPForm<0x16, 0x7BC, "cvtqs/sui $RB,$RC",
+        [(set F4RC:$RC, (Alpha_cvtqs F8RC:$RB))]>;
 let OperandList = (ops F8RC:$RC, F8RC:$RB), Fa = 31 in 
-def CVTQT : FPForm<0x16, 0x7BE, "cvtqt/sui $RB,$RC",[]>; //Convert quadword to T_floating
+def CVTQT : FPForm<0x16, 0x7BE, "cvtqt/sui $RB,$RC",
+        [(set F8RC:$RC, (Alpha_cvtqt F8RC:$RB))]>;
 let OperandList = (ops F8RC:$RC, F8RC:$RB), Fa = 31 in 
 def CVTTQ : FPForm<0x16, 0x52F, "cvttq/svc $RB,$RC",[]>; //Convert T_floating to quadword
 let OperandList = (ops F8RC:$RC, F4RC:$RB), Fa = 31 in 
@@ -648,3 +678,11 @@ def : Pat<(sext_inreg GPRC:$RB, i32),
 def : Pat<(select GPRC:$which, GPRC:$src1, GPRC:$src2),
           (CMOVEQ GPRC:$src1, GPRC:$src2, GPRC:$which)>; //may be CMOVNE
 
+def : Pat<(fabs F8RC:$RB),
+          (CPYST F31, F8RC:$RB)>;
+def : Pat<(fabs F4RC:$RB),
+          (CPYSS F31, F4RC:$RB)>;
+def : Pat<(fneg F8RC:$RB),
+          (CPYSNT F8RC:$RB, F8RC:$RB)>;
+def : Pat<(fneg F4RC:$RB),
+          (CPYSNS F4RC:$RB, F4RC:$RB)>;

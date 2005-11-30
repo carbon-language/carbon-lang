@@ -40,6 +40,16 @@ class InstAlpha<bits<6> op, dag OL, string asmstr>
 }
 
 //3.3.1
+class MFormAlt<bits<6> opcode, string asmstr> 
+        : InstAlphaAlt<opcode, asmstr> {
+  bits<5> Ra;
+  bits<16> disp;
+  bits<5> Rb;
+
+  let Inst{25-21} = Ra;
+  let Inst{20-16} = Rb;
+  let Inst{15-0} = disp;
+}
 class MForm<bits<6> opcode, string asmstr> 
         : InstAlpha<opcode, (ops GPRC:$RA, s16imm:$DISP, GPRC:$RB), asmstr> {
   bits<5> Ra;

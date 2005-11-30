@@ -78,7 +78,6 @@ def F30 : FPR<30, "$f30">;  def F31 : FPR<31, "$f31">;
   // $28 is undefined after any and all calls
 
 /// Register classes
-// Don't allocate 15, 28, 30, 31
 def GPRC : RegisterClass<"Alpha", i64, 64,
      // Volatile
      [R0, R1, R2, R3, R4, R5, R6, R7, R8, R16, R17, R18, R19, R20, R21, R22,
@@ -89,7 +88,8 @@ def GPRC : RegisterClass<"Alpha", i64, 64,
      R29, //global offset table address
      // Non-volatile
      R9, R10, R11, R12, R13, R14,
-     R31 ]> //zero
+// Don't allocate 15, 30, 31
+     R15, R30, R31 ]> //zero
 {
   let MethodProtos = [{
     iterator allocation_order_end(MachineFunction &MF) const;
@@ -97,7 +97,7 @@ def GPRC : RegisterClass<"Alpha", i64, 64,
   let MethodBodies = [{
     GPRCClass::iterator
     GPRCClass::allocation_order_end(MachineFunction &MF) const {
-        return end()-1;
+        return end()-3;
     }
   }];
 }

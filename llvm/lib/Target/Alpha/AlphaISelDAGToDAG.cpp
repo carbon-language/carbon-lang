@@ -16,6 +16,7 @@
 #include "AlphaTargetMachine.h"
 #include "AlphaISelLowering.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/CodeGen/SelectionDAG.h"
@@ -278,6 +279,7 @@ SDOperand AlphaDAGToDAGISel::Select(SDOperand Op) {
       CurDAG->SelectNodeTo(N, Alpha::LDAr, MVT::i64, CPI, Tmp);
       return SDOperand(N, 0);
     }
+    break;
   }
   case ISD::ConstantFP:
     if (ConstantFPSDNode *CN = dyn_cast<ConstantFPSDNode>(N)) {
@@ -296,7 +298,76 @@ SDOperand AlphaDAGToDAGISel::Select(SDOperand Op) {
       } else {
         abort();
       }
+      break;
     }
+  case ISD::SDIV:
+  case ISD::UDIV:
+  case ISD::UREM:
+  case ISD::SREM:
+    if (MVT::isInteger(N->getValueType(0))) {
+      const char* opstr = 0;
+      switch(N->getOpcode()) {
+      case ISD::UREM: opstr = "__remqu"; break;
+      case ISD::SREM: opstr = "__remq";  break;
+      case ISD::UDIV: opstr = "__divqu"; break;
+      case ISD::SDIV: opstr = "__divq";  break;
+      }
+      SDOperand Tmp1 = Select(N->getOperand(0)),
+        Tmp2 = Select(N->getOperand(1)),
+        Addr = CurDAG->getExternalSymbol(opstr, AlphaLowering.getPointerTy());
+      SDOperand Tmp3 = Select(Addr);
+      SDOperand Chain = CurDAG->getCopyToReg(CurDAG->getRoot(), Alpha::R24, 
+                                             Tmp1, SDOperand());
+      Chain = CurDAG->getCopyToReg(CurDAG->getRoot(), Alpha::R25, 
+                                   Tmp2, Chain.getValue(1));
+      Chain = CurDAG->getCopyToReg(CurDAG->getRoot(), Alpha::R27, 
+                                   Tmp3, Chain.getValue(1));
+      Chain = CurDAG->getTargetNode(Alpha::JSRs, MVT::i64, MVT::Flag,
+                                    CurDAG->getRegister(Alpha::R27, MVT::i64),
+                                    getI64Imm(0));
+      return CurDAG->getCopyFromReg(Chain.getValue(1), Alpha::R27, MVT::i64, 
+                                    Chain.getValue(1));
+    }
+    break;
+
+  case ISD::SETCC:
+    if (MVT::isFloatingPoint(N->getOperand(0).Val->getValueType(0))) {
+      unsigned Opc = Alpha::WTF;
+      ISD::CondCode CC = cast<CondCodeSDNode>(N->getOperand(2))->get();
+      bool rev = false;
+      switch(CC) {
+      default: N->dump(); assert(0 && "Unknown FP comparison!");
+      case ISD::SETEQ: Opc = Alpha::CMPTEQ; break;
+      case ISD::SETLT: Opc = Alpha::CMPTLT; break;
+      case ISD::SETLE: Opc = Alpha::CMPTLE; break;
+      case ISD::SETGT: Opc = Alpha::CMPTLT; rev = true; break;
+      case ISD::SETGE: Opc = Alpha::CMPTLE; rev = true; break;
+        //case ISD::SETNE: Opc = Alpha::CMPTEQ; inv = true; break;
+      };
+      SDOperand tmp1 = Select(N->getOperand(0)),
+        tmp2 = Select(N->getOperand(1));
+      SDOperand cmp = CurDAG->getTargetNode(Opc, MVT::f64, 
+                                            rev?tmp2:tmp1,
+                                            rev?tmp1:tmp2);
+      SDOperand LD;
+      if (AlphaLowering.hasITOF()) {
+        LD = CurDAG->getNode(AlphaISD::FTOIT_, MVT::i64, cmp);
+      } else {
+        int FrameIdx =
+          CurDAG->getMachineFunction().getFrameInfo()->CreateStackObject(8, 8);
+        SDOperand FI = CurDAG->getFrameIndex(FrameIdx, MVT::i64);
+        SDOperand ST = CurDAG->getTargetNode(Alpha::STT, MVT::Other, 
+                                             cmp, FI, CurDAG->getRegister(Alpha::R31, MVT::i64));
+        LD = CurDAG->getTargetNode(Alpha::LDQ, MVT::i64, FI, 
+                                   CurDAG->getRegister(Alpha::R31, MVT::i64),
+                                   ST);
+      }
+      SDOperand FP = CurDAG->getTargetNode(Alpha::CMPULT, MVT::i64, 
+                                           CurDAG->getRegister(Alpha::R31, MVT::i64),
+                                           LD);
+      return FP;
+    }
+    break;
   }
   
   return SelectCode(Op);
@@ -328,13 +399,26 @@ SDOperand AlphaDAGToDAGISel::SelectCALL(SDOperand Op) {
    for (int i = 0; i < std::min(6, count); ++i) {
      if (MVT::isInteger(TypeOperands[i])) {
        Chain = CurDAG->getCopyToReg(Chain, args_int[i], CallOperands[i]);
-     } else if (TypeOperands[i] == MVT::f64 || TypeOperands[i] == MVT::f64) {
+     } else if (TypeOperands[i] == MVT::f32 || TypeOperands[i] == MVT::f64) {
        Chain = CurDAG->getCopyToReg(Chain, args_float[i], CallOperands[i]);
      } else
        assert(0 && "Unknown operand"); 
    }
-
-   assert(CallOperands.size() <= 6 && "Too big a call");
+   for (int i = 6; i < count; ++i) {
+     unsigned Opc = Alpha::WTF;
+     if (MVT::isInteger(TypeOperands[i])) {
+       Opc = Alpha::STQ;
+     } else if (TypeOperands[i] == MVT::f32) {
+       Opc = Alpha::STS;
+     } else if (TypeOperands[i] == MVT::f64) {
+       Opc = Alpha::STT;
+     } else
+       assert(0 && "Unknown operand"); 
+     Chain = CurDAG->getTargetNode(Opc, MVT::Other, CallOperands[i], 
+                                   getI64Imm((i - 6) * 8), 
+                                   CurDAG->getRegister(Alpha::R30, MVT::i64),
+                                   Chain);
+   }
 
    Chain = CurDAG->getCopyToReg(Chain, Alpha::R27, Addr);
    // Finally, once everything is in registers to pass to the call, emit the

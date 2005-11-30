@@ -25,6 +25,8 @@ namespace llvm {
     enum NodeType {
       // Start the numbering where the builting ops and target ops leave off.
       FIRST_NUMBER = ISD::BUILTIN_OP_END+Alpha::INSTRUCTION_LIST_END,
+      //These corrospond to the identical Instruction
+      ITOFT_, FTOIT_, CVTQT_, CVTQS_,
     };
   }
 
@@ -33,9 +35,14 @@ namespace llvm {
     int VarArgsBase;    // What is the base FrameIndex
     unsigned GP; //GOT vreg
     unsigned RA; //Return Address
+    bool useITOF;
   public:
     AlphaTargetLowering(TargetMachine &TM);
-
+    
+    /// LowerOperation - Provide custom lowering hooks for some operations.
+    ///
+    virtual SDOperand LowerOperation(SDOperand Op, SelectionDAG &DAG);
+    
     /// LowerArguments - This hook must be implemented to indicate how we should
     /// lower the arguments for the specified function, into the specified DAG.
     virtual std::vector<SDOperand>
@@ -61,6 +68,7 @@ namespace llvm {
     void restoreRA(MachineBasicBlock* BB);
     unsigned getVRegGP() { return GP; }
     unsigned getVRegRA() { return RA; }
+    bool hasITOF() { return useITOF; }
   };
 }
 
