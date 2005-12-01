@@ -100,6 +100,9 @@ namespace {
       setOperationAction(ISD::MULHS , MVT::i64  , Expand);
       setOperationAction(ISD::MULHU , MVT::i64  , Expand);
 
+      // We don't have line number support yet.
+      setOperationAction(ISD::LOCATION, MVT::Other, Expand);
+
       computeRegisterProperties();
 
       addLegalFPImmediate(+0.0);
