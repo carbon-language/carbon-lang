@@ -615,11 +615,18 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       Result = Tmp1;
       break;
     case TargetLowering::Legal:
-      if (Tmp1 != Node->getOperand(0)) {
+      if (Tmp1 != Node->getOperand(0) ||
+          getTypeAction(Node->getOperand(1).getValueType()) == Promote) {
         std::vector<SDOperand> Ops;
         Ops.push_back(Tmp1);
-        Ops.push_back(Node->getOperand(1));  // line # must be legal.
-        Ops.push_back(Node->getOperand(2));  // col # must be legal.
+        if (getTypeAction(Node->getOperand(1).getValueType()) == Legal) {
+          Ops.push_back(Node->getOperand(1));  // line # must be legal.
+          Ops.push_back(Node->getOperand(2));  // col # must be legal.
+        } else {
+          // Otherwise promote them.
+          Ops.push_back(PromoteOp(Node->getOperand(1)));
+          Ops.push_back(PromoteOp(Node->getOperand(2)));
+        }
         Ops.push_back(Node->getOperand(3));  // filename must be legal.
         Ops.push_back(Node->getOperand(4));  // working dir # must be legal.
         Result = DAG.getNode(ISD::LOCATION, MVT::Other, Ops);
