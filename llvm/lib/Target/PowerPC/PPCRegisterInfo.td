@@ -28,8 +28,8 @@ class GP8<GPR Alias> : PPCReg<Alias.Name> {
 }
 
 // SPR - One of the 32-bit special-purpose registers
-class SPR<bits<5> num, string n> : PPCReg<n> {
-  field bits<5> Num = num;
+class SPR<bits<10> num, string n> : PPCReg<n> {
+  field bits<10> Num = num;
 }
 
 // FPR - One of the 32 64-bit floating-point registers
@@ -126,12 +126,11 @@ def CR4 : CR<4, "cr4">; def CR5 : CR<5, "cr5">;
 def CR6 : CR<6, "cr6">; def CR7 : CR<7, "cr7">;
 
 // Link register
-// FIXME: encode actual spr numbers here
-def LR  : SPR<2,   "lr">;
+def LR  : SPR<8, "lr">;
 // Count register
-def CTR : SPR<3, "ctr">;
+def CTR : SPR<9, "ctr">;
 // VRsave register
-def VRSAVE: SPR<4, "VRsave">;
+def VRSAVE: SPR<256, "VRsave">;
 
 /// Register classes
 // Allocate volatiles first
