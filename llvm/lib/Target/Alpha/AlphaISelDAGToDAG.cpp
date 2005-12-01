@@ -70,6 +70,7 @@ namespace {
     
 private:
     SDOperand getGlobalBaseReg();
+    SDOperand getRASaveReg();
     SDOperand SelectCALL(SDOperand Op);
 
   };
@@ -79,7 +80,17 @@ private:
 /// GOT address into a register.
 ///
 SDOperand AlphaDAGToDAGISel::getGlobalBaseReg() {
-  return CurDAG->getRegister(AlphaLowering.getVRegGP(), MVT::i64);
+  return CurDAG->getCopyFromReg(CurDAG->getEntryNode(), 
+                                AlphaLowering.getVRegGP(), 
+                                MVT::i64);
+}
+
+/// getRASaveReg - Grab the return address
+///
+SDOperand AlphaDAGToDAGISel::getRASaveReg() {
+  return CurDAG->getCopyFromReg(CurDAG->getEntryNode(),
+                                AlphaLowering.getVRegRA(), 
+                                MVT::i64);
 }
 
 /// InstructionSelectBasicBlock - This callback is invoked by
@@ -234,7 +245,7 @@ SDOperand AlphaDAGToDAGISel::Select(SDOperand Op) {
   case ISD::ExternalSymbol:
     return CurDAG->SelectNodeTo(N, Alpha::LDQl, MVT::i64, 
                                 CurDAG->getTargetExternalSymbol(cast<ExternalSymbolSDNode>(N)->getSymbol(), MVT::i64),
-                                CurDAG->getRegister(AlphaLowering.getVRegGP(), MVT::i64));
+                                getGlobalBaseReg());
 
   case ISD::CALLSEQ_START:
   case ISD::CALLSEQ_END: {
@@ -246,18 +257,20 @@ SDOperand AlphaDAGToDAGISel::Select(SDOperand Op) {
   }
   case ISD::RET: {
     SDOperand Chain = Select(N->getOperand(0));     // Token chain.
+    SDOperand InFlag;
 
     if (N->getNumOperands() == 2) {
       SDOperand Val = Select(N->getOperand(1));
       if (N->getOperand(1).getValueType() == MVT::i64) {
-        Chain = CurDAG->getCopyToReg(Chain, Alpha::R0, Val);
+        Chain = CurDAG->getCopyToReg(Chain, Alpha::R0, Val, InFlag);
+        InFlag = Chain.getValue(1);
       }
     }
-    //BuildMI(BB, Alpha::RET, 2, Alpha::R31).addReg(Alpha::R26).addImm(1);
-
-    // FIXME: add restoring of the RA to R26 to the chain
+    Chain = CurDAG->getCopyToReg(Chain, Alpha::R26, getRASaveReg(), InFlag);
+    InFlag = Chain.getValue(1);
+    
     // Finally, select this to a ret instruction.
-    return CurDAG->SelectNodeTo(N, Alpha::RETDAG, MVT::Other, Chain);
+    return CurDAG->SelectNodeTo(N, Alpha::RETDAG, MVT::Other, Chain, InFlag);
   }
   case ISD::Constant: {
     int64_t val = (int64_t)cast<ConstantSDNode>(N)->getValue();
@@ -401,8 +414,8 @@ SDOperand AlphaDAGToDAGISel::SelectCALL(SDOperand Op) {
   SDNode *N = Op.Val;
   SDOperand Chain = Select(N->getOperand(0));
   SDOperand Addr = Select(N->getOperand(1));
+  SDOperand InFlag;  // Null incoming flag value.
 
-//   unsigned CallOpcode;
    std::vector<SDOperand> CallOperands;
    std::vector<MVT::ValueType> TypeOperands;
   
@@ -418,14 +431,6 @@ SDOperand AlphaDAGToDAGISel::SelectCALL(SDOperand Op) {
    static const unsigned args_float[] = {Alpha::F16, Alpha::F17, Alpha::F18,
                                          Alpha::F19, Alpha::F20, Alpha::F21};
    
-   for (int i = 0; i < std::min(6, count); ++i) {
-     if (MVT::isInteger(TypeOperands[i])) {
-       Chain = CurDAG->getCopyToReg(Chain, args_int[i], CallOperands[i]);
-     } else if (TypeOperands[i] == MVT::f32 || TypeOperands[i] == MVT::f64) {
-       Chain = CurDAG->getCopyToReg(Chain, args_float[i], CallOperands[i]);
-     } else
-       assert(0 && "Unknown operand"); 
-   }
    for (int i = 6; i < count; ++i) {
      unsigned Opc = Alpha::WTF;
      if (MVT::isInteger(TypeOperands[i])) {
@@ -438,30 +443,44 @@ SDOperand AlphaDAGToDAGISel::SelectCALL(SDOperand Op) {
        assert(0 && "Unknown operand"); 
      Chain = CurDAG->getTargetNode(Opc, MVT::Other, CallOperands[i], 
                                    getI64Imm((i - 6) * 8), 
-                                   CurDAG->getRegister(Alpha::R30, MVT::i64),
+                                   CurDAG->getCopyFromReg(Chain, Alpha::R30, MVT::i64),
                                    Chain);
    }
+   for (int i = 0; i < std::min(6, count); ++i) {
+     if (MVT::isInteger(TypeOperands[i])) {
+       Chain = CurDAG->getCopyToReg(Chain, args_int[i], CallOperands[i], InFlag);
+       InFlag = Chain.getValue(1);
+     } else if (TypeOperands[i] == MVT::f32 || TypeOperands[i] == MVT::f64) {
+       Chain = CurDAG->getCopyToReg(Chain, args_float[i], CallOperands[i], InFlag);
+       InFlag = Chain.getValue(1);
+     } else
+       assert(0 && "Unknown operand"); 
+   }
 
-   Chain = CurDAG->getCopyToReg(Chain, Alpha::R27, Addr);
+
+   Chain = CurDAG->getCopyToReg(Chain, Alpha::R27, Addr, InFlag);
+   InFlag = Chain.getValue(1);
    // Finally, once everything is in registers to pass to the call, emit the
    // call itself.
-   Chain = CurDAG->getTargetNode(Alpha::JSRDAG, MVT::Other, Chain );
-  
+   Chain = CurDAG->getTargetNode(Alpha::JSRDAG, MVT::Other, MVT::Flag, 
+                                 Chain, InFlag );
+   InFlag = Chain.getValue(1);
+
    std::vector<SDOperand> CallResults;
   
    switch (N->getValueType(0)) {
    default: assert(0 && "Unexpected ret value!");
      case MVT::Other: break;
    case MVT::i64:
-     Chain = CurDAG->getCopyFromReg(Chain, Alpha::R0, MVT::i64).getValue(1);
+     Chain = CurDAG->getCopyFromReg(Chain, Alpha::R0, MVT::i64, InFlag).getValue(1);
      CallResults.push_back(Chain.getValue(0));
      break;
    case MVT::f32:
-     Chain = CurDAG->getCopyFromReg(Chain, Alpha::F0, MVT::f32).getValue(1);
+     Chain = CurDAG->getCopyFromReg(Chain, Alpha::F0, MVT::f32, InFlag).getValue(1);
      CallResults.push_back(Chain.getValue(0));
      break;
    case MVT::f64:
-     Chain = CurDAG->getCopyFromReg(Chain, Alpha::F0, MVT::f64).getValue(1);
+     Chain = CurDAG->getCopyFromReg(Chain, Alpha::F0, MVT::f64, InFlag).getValue(1);
      CallResults.push_back(Chain.getValue(0));
      break;
    }
