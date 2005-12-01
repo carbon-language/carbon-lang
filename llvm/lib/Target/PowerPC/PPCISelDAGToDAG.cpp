@@ -887,9 +887,10 @@ SDOperand PPCDAGToDAGISel::Select(SDOperand Op) {
       return CurDAG->SelectNodeTo(N, PPC::ADDI, MVT::i32,
                                   CurDAG->getTargetFrameIndex(FI, MVT::i32),
                                   getI32Imm(0));
-    return CurDAG->getTargetNode(PPC::ADDI, MVT::i32,
-                                 CurDAG->getTargetFrameIndex(FI, MVT::i32),
-                                 getI32Imm(0));
+    return CodeGenMap[Op] = 
+      CurDAG->getTargetNode(PPC::ADDI, MVT::i32,
+                            CurDAG->getTargetFrameIndex(FI, MVT::i32),
+                            getI32Imm(0));
   }
   case ISD::ConstantPool: {
     Constant *C = cast<ConstantPoolSDNode>(N)->get();
@@ -900,7 +901,7 @@ SDOperand PPCDAGToDAGISel::Select(SDOperand Op) {
       Tmp = CurDAG->getTargetNode(PPC::LIS, MVT::i32, CPI);
     if (N->hasOneUse())
       return CurDAG->SelectNodeTo(N, PPC::LA, MVT::i32, Tmp, CPI);
-    return CurDAG->getTargetNode(PPC::LA, MVT::i32, Tmp, CPI);
+    return CodeGenMap[Op] = CurDAG->getTargetNode(PPC::LA, MVT::i32, Tmp, CPI);
   }
   case ISD::FADD: {
     MVT::ValueType Ty = N->getValueType(0);
