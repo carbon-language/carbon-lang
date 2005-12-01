@@ -1538,23 +1538,28 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
     return Result;
 
   case AlphaISD::CVTQT_:
-    BuildMI(BB, Alpha::CVTQT, 1, Result).addReg(SelectExpr(N.getOperand(0)));
+    Tmp1 = SelectExpr(N.getOperand(0));
+    BuildMI(BB, Alpha::CVTQT, 1, Result).addReg(Tmp1);
     return Result;
 
   case AlphaISD::CVTQS_:
-    BuildMI(BB, Alpha::CVTQS, 1, Result).addReg(SelectExpr(N.getOperand(0)));
+    Tmp1 = SelectExpr(N.getOperand(0));
+    BuildMI(BB, Alpha::CVTQS, 1, Result).addReg(Tmp1);
     return Result;
 
   case AlphaISD::CVTTQ_:
-    BuildMI(BB, Alpha::CVTTQ, 1, Result).addReg(SelectExpr(N.getOperand(0)));
+    Tmp1 = SelectExpr(N.getOperand(0));
+    BuildMI(BB, Alpha::CVTTQ, 1, Result).addReg(Tmp1);
     return Result;
 
   case AlphaISD::ITOFT_:
-    BuildMI(BB, Alpha::ITOFT, 1, Result).addReg(SelectExpr(N.getOperand(0)));
+    Tmp1 = SelectExpr(N.getOperand(0));
+    BuildMI(BB, Alpha::ITOFT, 1, Result).addReg(Tmp1);
     return Result;
 
   case AlphaISD::FTOIT_:
-    BuildMI(BB, Alpha::FTOIT, 1, Result).addReg(SelectExpr(N.getOperand(0)));
+    Tmp1 = SelectExpr(N.getOperand(0));
+    BuildMI(BB, Alpha::FTOIT, 1, Result).addReg(Tmp1);
     return Result;
 
   case ISD::AssertSext:
