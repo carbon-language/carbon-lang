@@ -721,7 +721,8 @@ SDOperand PPCDAGToDAGISel::SelectSETCC(SDOperand Op) {
   SDOperand CR7Reg = CurDAG->getRegister(PPC::CR7, MVT::i32);
   
   SDOperand InFlag;  // Null incoming flag value.
-  CCReg = CurDAG->getCopyToReg(CurDAG->getEntryNode(), CR7Reg, CCReg, InFlag);
+  CCReg = CurDAG->getCopyToReg(CurDAG->getEntryNode(), CR7Reg, CCReg, 
+                               InFlag).getValue(1);
   
   if (TLI.getTargetMachine().getSubtarget<PPCSubtarget>().isGigaProcessor())
     IntCR = CurDAG->getTargetNode(PPC::MFOCRF, MVT::i32, CR7Reg, CCReg);
