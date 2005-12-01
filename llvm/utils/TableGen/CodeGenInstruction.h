@@ -39,10 +39,6 @@ namespace llvm {
       ///
       Record *Rec;
 
-      /// Ty - The MachineValueType of the operand.
-      ///
-      MVT::ValueType Ty;
-
       /// Name - If this operand was assigned a symbolic name, this is it,
       /// otherwise, it's empty.
       std::string Name;
@@ -64,11 +60,9 @@ namespace llvm {
       /// up of multiple MI operands.
       DagInit *MIOperandInfo;
 
-      OperandInfo(Record *R, MVT::ValueType T, const std::string &N,
-                  const std::string &PMN, unsigned MION, unsigned MINO,
-                  DagInit *MIOI)
-
-        : Rec(R), Ty(T), Name(N), PrinterMethodName(PMN), MIOperandNo(MION),
+      OperandInfo(Record *R, const std::string &N, const std::string &PMN, 
+                  unsigned MION, unsigned MINO, DagInit *MIOI)
+        : Rec(R), Name(N), PrinterMethodName(PMN), MIOperandNo(MION),
           MINumOperands(MINO), MIOperandInfo(MIOI) {}
     };
 

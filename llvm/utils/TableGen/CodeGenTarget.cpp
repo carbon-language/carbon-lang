@@ -276,21 +276,17 @@ CodeGenInstruction::CodeGenInstruction(Record *R, const std::string &AsmStr)
       throw "Illegal operand for the '" + R->getName() + "' instruction!";
 
     Record *Rec = Arg->getDef();
-    MVT::ValueType Ty;
     std::string PrintMethod = "printOperand";
     unsigned NumOps = 1;
     DagInit *MIOpInfo = 0;
-    if (Rec->isSubClassOf("RegisterClass")) {
-      Ty = getValueType(Rec->getValueAsDef("RegType"));
-    } else if (Rec->isSubClassOf("Operand")) {
-      Ty = getValueType(Rec->getValueAsDef("Type"));
+    if (Rec->isSubClassOf("Operand")) {
       PrintMethod = Rec->getValueAsString("PrintMethod");
       NumOps = Rec->getValueAsInt("NumMIOperands");
       MIOpInfo = Rec->getValueAsDag("MIOperandInfo");
     } else if (Rec->getName() == "variable_ops") {
       hasVariableNumberOfOperands = true;
       continue;
-    } else
+    } else if (!Rec->isSubClassOf("RegisterClass"))
       throw "Unknown operand class '" + Rec->getName() +
             "' in instruction '" + R->getName() + "' instruction!";
 
@@ -302,9 +298,8 @@ CodeGenInstruction::CodeGenInstruction(Record *R, const std::string &AsmStr)
       throw "In instruction '" + R->getName() + "', operand #" + utostr(i) +
         " has the same name as a previous operand!";
     
-    OperandList.push_back(OperandInfo(Rec, Ty, DI->getArgName(i),
-                                      PrintMethod, MIOperandNo, NumOps,
-                                      MIOpInfo));
+    OperandList.push_back(OperandInfo(Rec, DI->getArgName(i), PrintMethod, 
+                                      MIOperandNo, NumOps, MIOpInfo));
     MIOperandNo += NumOps;
   }
 }
