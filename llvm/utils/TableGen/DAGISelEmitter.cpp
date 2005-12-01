@@ -531,14 +531,34 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
     
     assert(Inst.getNumResults() == 1 && "Only supports one result instrs!");
     // Apply the result type to the node
-    bool MadeChange = UpdateNodeType(Inst.getResultType(0), TP);
+    Record *ResultNode = Inst.getResult(0);
+    assert(ResultNode->isSubClassOf("RegisterClass") &&
+           "Operands should be register classes!");
+
+    const CodeGenRegisterClass &RC = 
+      TP.getDAGISelEmitter().getTargetInfo().getRegisterClass(ResultNode);
+    
+    bool MadeChange = UpdateNodeType(RC.VT, TP);
 
     if (getNumChildren() != Inst.getNumOperands())
       TP.error("Instruction '" + getOperator()->getName() + " expects " +
                utostr(Inst.getNumOperands()) + " operands, not " +
                utostr(getNumChildren()) + " operands!");
     for (unsigned i = 0, e = getNumChildren(); i != e; ++i) {
-      MadeChange |= getChild(i)->UpdateNodeType(Inst.getOperandType(i), TP);
+      Record *OperandNode = Inst.getOperand(i);
+      MVT::ValueType VT;
+      if (OperandNode->isSubClassOf("RegisterClass")) {
+        const CodeGenRegisterClass &RC = 
+          TP.getDAGISelEmitter().getTargetInfo().getRegisterClass(OperandNode);
+        VT = RC.VT;
+      } else if (OperandNode->isSubClassOf("Operand")) {
+        VT = getValueType(OperandNode->getValueAsDef("Type"));
+      } else {
+        assert(0 && "Unknown operand type!");
+        abort();
+      }
+      
+      MadeChange |= getChild(i)->UpdateNodeType(VT, TP);
       MadeChange |= getChild(i)->ApplyTypeConstraints(TP, NotRegisters);
     }
     return MadeChange;
@@ -1021,8 +1041,8 @@ void DAGISelEmitter::ParseInstructions() {
     // instruction for its operand list.  We have to assume that there is one
     // result, as we have no detailed info.
     if (!LI || LI->getSize() == 0) {
-      std::vector<MVT::ValueType> ResultTypes;
-      std::vector<MVT::ValueType> OperandTypes;
+      std::vector<Record*> Results;
+      std::vector<Record*> Operands;
       
       CodeGenInstruction &InstInfo =Target.getInstruction(Instrs[i]->getName());
       
@@ -1031,15 +1051,15 @@ void DAGISelEmitter::ParseInstructions() {
         continue;
       
       // Assume the first operand is the result.
-      ResultTypes.push_back(InstInfo.OperandList[0].Ty);
+      Results.push_back(InstInfo.OperandList[0].Rec);
       
       // The rest are inputs.
       for (unsigned j = 1, e = InstInfo.OperandList.size(); j != e; ++j)
-        OperandTypes.push_back(InstInfo.OperandList[j].Ty);
+        Operands.push_back(InstInfo.OperandList[j].Rec);
       
       // Create and insert the instruction.
       Instructions.insert(std::make_pair(Instrs[i], 
-                            DAGInstruction(0, ResultTypes, OperandTypes)));
+                            DAGInstruction(0, Results, Operands)));
       continue;  // no pattern.
     }
     
@@ -1086,7 +1106,7 @@ void DAGISelEmitter::ParseInstructions() {
     CodeGenInstruction &CGI = Target.getInstruction(Instrs[i]->getName());
 
     // Check that all of the results occur first in the list.
-    std::vector<MVT::ValueType> ResultTypes;
+    std::vector<Record*> Results;
     for (unsigned i = 0; i != NumResults; ++i) {
       if (i == CGI.OperandList.size())
         I->error("'" + InstResults.begin()->first +
@@ -1103,7 +1123,7 @@ void DAGISelEmitter::ParseInstructions() {
         I->error("Operand $" + OpName + " class mismatch!");
       
       // Remember the return type.
-      ResultTypes.push_back(CGI.OperandList[i].Ty);
+      Results.push_back(CGI.OperandList[i].Rec);
       
       // Okay, this one checks out.
       InstResults.erase(OpName);
@@ -1114,7 +1134,7 @@ void DAGISelEmitter::ParseInstructions() {
     std::map<std::string, TreePatternNode*> InstInputsCheck(InstInputs);
 
     std::vector<TreePatternNode*> ResultNodeOperands;
-    std::vector<MVT::ValueType> OperandTypes;
+    std::vector<Record*> Operands;
     for (unsigned i = NumResults, e = CGI.OperandList.size(); i != e; ++i) {
       const std::string &OpName = CGI.OperandList[i].Name;
       if (OpName.empty())
@@ -1125,10 +1145,15 @@ void DAGISelEmitter::ParseInstructions() {
                  " does not appear in the instruction pattern");
       TreePatternNode *InVal = InstInputsCheck[OpName];
       InstInputsCheck.erase(OpName);   // It occurred, remove from map.
-      if (CGI.OperandList[i].Ty != InVal->getExtType())
-        I->error("Operand $" + OpName +
-                 "'s type disagrees between the operand and pattern");
-      OperandTypes.push_back(InVal->getType());
+      
+      if (InVal->isLeaf() &&
+          dynamic_cast<DefInit*>(InVal->getLeafValue())) {
+        Record *InRec = static_cast<DefInit*>(InVal->getLeafValue())->getDef();
+        if (CGI.OperandList[i].Rec != InRec)
+          I->error("Operand $" + OpName +
+                 "'s register class disagrees between the operand and pattern");
+      }
+      Operands.push_back(CGI.OperandList[i].Rec);
       
       // Construct the result for the dest-pattern operand list.
       TreePatternNode *OpNode = InVal->clone();
@@ -1155,7 +1180,7 @@ void DAGISelEmitter::ParseInstructions() {
       new TreePatternNode(I->getRecord(), ResultNodeOperands);
 
     // Create and insert the instruction.
-    DAGInstruction TheInst(I, ResultTypes, OperandTypes);
+    DAGInstruction TheInst(I, Results, Operands);
     Instructions.insert(std::make_pair(I->getRecord(), TheInst));
 
     // Use a temporary tree pattern to infer all types and make sure that the

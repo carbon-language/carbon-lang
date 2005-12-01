@@ -81,6 +81,15 @@ public:
     if (RegisterClasses.empty()) ReadRegisterClasses();
     return RegisterClasses;
   }
+  
+  const CodeGenRegisterClass &getRegisterClass(Record *R) const {
+    const std::vector<CodeGenRegisterClass> &RC = getRegisterClasses();
+    for (unsigned i = 0, e = RC.size(); i != e; ++i)
+      if (RC[i].TheDef == R)
+        return RC[i];
+    assert(0 && "Didn't find the register class");
+    abort();
+  }
 
   const std::vector<MVT::ValueType> &getLegalValueTypes() const {
     if (LegalValueTypes.empty()) ReadLegalValueTypes();

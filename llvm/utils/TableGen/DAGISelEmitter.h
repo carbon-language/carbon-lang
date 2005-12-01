@@ -326,30 +326,30 @@ namespace llvm {
     TreePattern *Pattern;
     unsigned NumResults;
     unsigned NumOperands;
-    std::vector<MVT::ValueType> ResultTypes;
-    std::vector<MVT::ValueType> OperandTypes;
+    std::vector<Record*> Results;
+    std::vector<Record*> Operands;
     TreePatternNode *ResultPattern;
   public:
     DAGInstruction(TreePattern *TP,
-                   const std::vector<MVT::ValueType> &resultTypes,
-                   const std::vector<MVT::ValueType> &operandTypes)
-      : Pattern(TP), ResultTypes(resultTypes), OperandTypes(operandTypes), 
+                   const std::vector<Record*> &results,
+                   const std::vector<Record*> &operands)
+      : Pattern(TP), Results(results), Operands(operands), 
         ResultPattern(0) {}
 
     TreePattern *getPattern() const { return Pattern; }
-    unsigned getNumResults() const { return ResultTypes.size(); }
-    unsigned getNumOperands() const { return OperandTypes.size(); }
+    unsigned getNumResults() const { return Results.size(); }
+    unsigned getNumOperands() const { return Operands.size(); }
     
     void setResultPattern(TreePatternNode *R) { ResultPattern = R; }
     
-    MVT::ValueType getResultType(unsigned RN) const {
-      assert(RN < ResultTypes.size());
-      return ResultTypes[RN];
+    Record *getResult(unsigned RN) const {
+      assert(RN < Results.size());
+      return Results[RN];
     }
     
-    MVT::ValueType getOperandType(unsigned ON) const {
-      assert(ON < OperandTypes.size());
-      return OperandTypes[ON];
+    Record *getOperand(unsigned ON) const {
+      assert(ON < Operands.size());
+      return Operands[ON];
     }
     TreePatternNode *getResultPattern() const { return ResultPattern; }
   };
