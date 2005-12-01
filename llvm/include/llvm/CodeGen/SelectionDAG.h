@@ -143,6 +143,20 @@ public:
     if (Flag.Val) Ops.push_back(Flag);
     return getNode(ISD::CopyToReg, VTs, Ops);
   }
+
+  // Similar to last getCopyToReg() except parameter Reg is a SDOperand
+  SDOperand getCopyToReg(SDOperand Chain, SDOperand Reg, SDOperand N,
+                         SDOperand Flag) {
+    std::vector<MVT::ValueType> VTs;
+    VTs.push_back(MVT::Other);
+    VTs.push_back(MVT::Flag);
+    std::vector<SDOperand> Ops;
+    Ops.push_back(Chain);
+    Ops.push_back(Reg);
+    Ops.push_back(N);
+    if (Flag.Val) Ops.push_back(Flag);
+    return getNode(ISD::CopyToReg, VTs, Ops);
+  }
   
   SDOperand getCopyFromReg(SDOperand Chain, unsigned Reg, MVT::ValueType VT) {
     std::vector<MVT::ValueType> ResultTys;
