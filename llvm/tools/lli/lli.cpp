@@ -85,7 +85,7 @@ int main(int argc, char **argv, char * const *envp) {
     // EnvVars to determine envp.
     //
     Function *Fn = MP->getModule()->getMainFunction();
-    if (!Fn) {
+    if (!Fn || Fn->isExternal()) {
       std::cerr << "'main' function not found in module.\n";
       return -1;
     }
