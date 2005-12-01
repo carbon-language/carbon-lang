@@ -72,9 +72,9 @@ let Namespace = "X86" in {
 // dependences between upper and lower parts of the register.  BL and BH are
 // last because they are call clobbered. Both Athlon and P4 chips suffer this
 // issue.
-def R8  : RegisterClass<"X86", i8,  8, [AL, CL, DL, AH, CH, DH, BL, BH]>;
+def R8  : RegisterClass<"X86", [i8],  8, [AL, CL, DL, AH, CH, DH, BL, BH]>;
 
-def R16 : RegisterClass<"X86", i16, 16, [AX, CX, DX, SI, DI, BX, BP, SP]> {
+def R16 : RegisterClass<"X86", [i16], 16, [AX, CX, DX, SI, DI, BX, BP, SP]> {
   let MethodProtos = [{
     iterator allocation_order_end(MachineFunction &MF) const;
   }];
@@ -89,7 +89,8 @@ def R16 : RegisterClass<"X86", i16, 16, [AX, CX, DX, SI, DI, BX, BP, SP]> {
   }];
 }
 
-def R32 : RegisterClass<"X86", i32, 32, [EAX, ECX, EDX, ESI, EDI, EBX, EBP, ESP]> {
+def R32 : RegisterClass<"X86", [i32], 32, 
+                        [EAX, ECX, EDX, ESI, EDI, EBX, EBP, ESP]> {
   let MethodProtos = [{
     iterator allocation_order_end(MachineFunction &MF) const;
   }];
@@ -106,9 +107,9 @@ def R32 : RegisterClass<"X86", i32, 32, [EAX, ECX, EDX, ESI, EDI, EBX, EBP, ESP]
 
 // V4F4, the 4 x f32 class, and V2F8, the 2 x f64 class, which we will use for
 // Scalar SSE2 floating point support.
-def V4F4 : RegisterClass<"X86", f32, 32,
+def V4F4 : RegisterClass<"X86", [f32], 32,
                          [XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7]>;
-def V2F8 : RegisterClass<"X86", f64, 64,
+def V2F8 : RegisterClass<"X86", [f64], 64,
                          [XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7]>;
 
 // FIXME: This sets up the floating point register files as though they are f64
@@ -117,12 +118,12 @@ def V2F8 : RegisterClass<"X86", f64, 64,
 // faster on common hardware.  In reality, this should be controlled by a
 // command line option or something.
 
-def RFP : RegisterClass<"X86", f64, 32, [FP0, FP1, FP2, FP3, FP4, FP5, FP6]>;
+def RFP : RegisterClass<"X86", [f64], 32, [FP0, FP1, FP2, FP3, FP4, FP5, FP6]>;
 
 // Floating point stack registers (these are not allocatable by the
 // register allocator - the floating point stackifier is responsible
 // for transforming FPn allocations to STn registers)
-def RST : RegisterClass<"X86", f64, 32,
+def RST : RegisterClass<"X86", [f64], 32,
                         [ST0, ST1, ST2, ST3, ST4, ST5, ST6, ST7]> {
     let MethodProtos = [{
     iterator allocation_order_end(MachineFunction &MF) const;

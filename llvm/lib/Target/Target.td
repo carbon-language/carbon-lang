@@ -90,19 +90,22 @@ class RegisterGroup<string n, list<Register> aliases> : Register<n> {
 // register classes.  This also defines the default allocation order of
 // registers by register allocators.
 //
-class RegisterClass<string namespace, ValueType regType, int alignment,
+class RegisterClass<string namespace, list<ValueType> regTypes, int alignment,
                     list<Register> regList> {
   string Namespace = namespace;
 
   // RegType - Specify the ValueType of the registers in this register class.
   // Note that all registers in a register class must have the same ValueType.
   //
-  ValueType RegType = regType;
+  list<ValueType> RegTypes = regTypes;
+
+  // Size - Specify the spill size in bits of the registers.  A default value of
+  // zero lets tablgen pick an appropriate size.
+  int Size = 0;
 
   // Alignment - Specify the alignment required of the registers when they are
   // stored or loaded to memory.
   //
-  int Size = RegType.Size;
   int Alignment = alignment;
 
   // MemberList - Specify which registers are in this class.  If the

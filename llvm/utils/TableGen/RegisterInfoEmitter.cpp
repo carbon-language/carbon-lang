@@ -109,6 +109,7 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
   // belongs to.
   std::multimap<Record*, const CodeGenRegisterClass*> RegClassesBelongedTo;
 
+  // Emit the register enum value arrays for each RegisterClass
   for (unsigned rc = 0, e = RegisterClasses.size(); rc != e; ++rc) {
     const CodeGenRegisterClass &RC = RegisterClasses[rc];
 
@@ -127,6 +128,22 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
     }
     OS << "\n  };\n\n";
   }
+  
+  // Emit the ValueType arrays for each RegisterClass
+  for (unsigned rc = 0, e = RegisterClasses.size(); rc != e; ++rc) {
+    const CodeGenRegisterClass &RC = RegisterClasses[rc];
+    
+    // Give the register class a legal C name if it's anonymous.
+    std::string Name = RC.TheDef->getName() + "VTs";
+    
+    // Emit the register list now.
+    OS << "  // " << Name 
+      << " Register Class Value Types...\n  const MVT::ValueType " << Name
+      << "[] = {\n    ";
+    for (unsigned i = 0, e = RC.VTs.size(); i != e; ++i)
+      OS << "MVT::" << RC.VTs[i] << ", ";
+    OS << "MVT::Other\n  };\n\n";
+  }
   OS << "}  // end anonymous namespace\n\n";
   
   // Now that all of the structs have been emitted, emit the instances.
@@ -140,8 +157,8 @@ void RegisterInfoEmitter::run(std::ostream &OS) {
     for (unsigned i = 0, e = RegisterClasses.size(); i != e; ++i) {
       const CodeGenRegisterClass &RC = RegisterClasses[i];
       OS << RC.MethodBodies << "\n";
-      OS << RC.getName() << "Class::" << RC.getName()
-         << "Class()  : TargetRegisterClass(MVT::" << getEnumName(RC.VT) << ","
+      OS << RC.getName() << "Class::" << RC.getName() 
+         << "Class()  : TargetRegisterClass(" << RC.getName() + "VTs" << ", "
          << RC.SpillSize/8 << ", "
          << RC.SpillAlignment/8 << ", " << RC.getName() << ", "
          << RC.getName() << " + " << RC.Elements.size() << ") {}\n";

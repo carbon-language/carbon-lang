@@ -232,7 +232,7 @@ def B6 : GR<0, "b6">;
 // FIXME/XXX  we also reserve r22 for calculating addresses
 // in IA64RegisterInfo.cpp
 
-def GR : RegisterClass<"IA64", i64, 64, 
+def GR : RegisterClass<"IA64", [i64], 64, 
        [
        
 //FIXME!: for readability, we don't want the out registers to be the first
@@ -282,7 +282,7 @@ def GR : RegisterClass<"IA64", i64, 64,
 
 
 // these are the scratch (+stacked) FP registers
-def FP : RegisterClass<"IA64", f64, 64, 
+def FP : RegisterClass<"IA64", [f64], 64, 
        [F6, F7, 
 	F8, F9, F10, F11, F12, F13, F14, F15, 
 	F32, F33, F34, F35, F36, F37, F38, F39, 
@@ -317,7 +317,7 @@ def FP : RegisterClass<"IA64", f64, 64,
 }
 
 // these are the predicate registers, p0 (1/TRUE) is not here
-def PR : RegisterClass<"IA64", i1, 64, 
+def PR : RegisterClass<"IA64", [i1], 64, 
 
 // for now, let's be wimps and only have the scratch predicate regs
  [p6, p7, p8, p9, p10, p11, p12, p13, p14, p15]> {

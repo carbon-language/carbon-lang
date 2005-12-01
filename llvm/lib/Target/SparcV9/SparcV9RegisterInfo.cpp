@@ -27,6 +27,7 @@
 
 #include "SparcV9RegisterInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/ValueTypes.h"
 using namespace llvm;
 
 namespace llvm {
@@ -42,8 +43,9 @@ namespace {
     SparcV9::g2, SparcV9::g3, SparcV9::g4, SparcV9::g5, SparcV9::g6,
     SparcV9::g7, SparcV9::o6
   };
+  const MVT::ValueType IRVTs[] = { MVT::i64, MVT::Other };
   struct IRClass : public TargetRegisterClass {
-    IRClass() : TargetRegisterClass(MVT::i64, 8, 8, IR, IR + 32) {}
+    IRClass() : TargetRegisterClass(IRVTs, 8, 8, IR, IR + 32) {}
   } IRInstance;
 
 
@@ -66,12 +68,13 @@ namespace {
     SparcV9::f58, SparcV9::f59, SparcV9::f60, SparcV9::f61,
     SparcV9::f62, SparcV9::f63
   };
+  const MVT::ValueType FRVTs[] = { MVT::f32, MVT::Other };
   // FIXME: The size is correct for the first 32 registers. The
   // latter 32 do not all really exist; you can only access every other
   // one (32, 34, ...), and they must contain double-fp or quad-fp
   // values... see below about the aliasing problems.
   struct FRClass : public TargetRegisterClass {
-    FRClass() : TargetRegisterClass(MVT::f32, 4, 8, FR, FR + 64) {}
+    FRClass() : TargetRegisterClass(FRVTs, 4, 8, FR, FR + 64) {}
   } FRInstance;
 
 
@@ -79,8 +82,9 @@ namespace {
   const unsigned ICCR[] = {
     SparcV9::xcc, SparcV9::icc, SparcV9::ccr
   };
+  const MVT::ValueType ICCRVTs[] = { MVT::i1, MVT::Other };
   struct ICCRClass : public TargetRegisterClass {
-    ICCRClass() : TargetRegisterClass(MVT::i1, 1, 8, ICCR, ICCR + 3) {}
+    ICCRClass() : TargetRegisterClass(ICCRVTs, 1, 8, ICCR, ICCR + 3) {}
   } ICCRInstance;
 
 
@@ -88,8 +92,9 @@ namespace {
   const unsigned FCCR[] = {
     SparcV9::fcc0, SparcV9::fcc1, SparcV9::fcc2, SparcV9::fcc3
   };
+  const MVT::ValueType FCCRVTs[] = { MVT::i1, MVT::Other };
   struct FCCRClass : public TargetRegisterClass {
-    FCCRClass() : TargetRegisterClass(MVT::i1, 1, 8, FCCR, FCCR + 4) {}
+    FCCRClass() : TargetRegisterClass(FCCRVTs, 1, 8, FCCR, FCCR + 4) {}
   } FCCRInstance;
 
 
@@ -97,8 +102,9 @@ namespace {
   const unsigned SR[] = {
     SparcV9::fsr
   };
+  const MVT::ValueType SRVTs[] = { MVT::i64, MVT::Other };
   struct SRClass : public TargetRegisterClass {
-    SRClass() : TargetRegisterClass(MVT::i64, 8, 8, SR, SR + 1) {}
+    SRClass() : TargetRegisterClass(SRVTs, 8, 8, SR, SR + 1) {}
   } SRInstance;
 
 

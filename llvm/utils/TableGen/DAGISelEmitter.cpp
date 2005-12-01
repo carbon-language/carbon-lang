@@ -455,7 +455,9 @@ static unsigned char getIntrinsicType(Record *R, bool NotRegisters,
   // Check to see if this is a register or a register class...
   if (R->isSubClassOf("RegisterClass")) {
     if (NotRegisters) return MVT::isUnknown;
-    return getValueType(R->getValueAsDef("RegType"));
+    const CodeGenRegisterClass &RC = 
+      TP.getDAGISelEmitter().getTargetInfo().getRegisterClass(R);
+    return RC.getValueTypeNum(0);
   } else if (R->isSubClassOf("PatFrag")) {
     // Pattern fragment types will be resolved when they are inlined.
     return MVT::isUnknown;
@@ -537,8 +539,9 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
 
     const CodeGenRegisterClass &RC = 
       TP.getDAGISelEmitter().getTargetInfo().getRegisterClass(ResultNode);
-    
-    bool MadeChange = UpdateNodeType(RC.VT, TP);
+
+    // Get the first ValueType in the RegClass, it's as good as any.
+    bool MadeChange = UpdateNodeType(RC.getValueTypeNum(0), TP);
 
     if (getNumChildren() != Inst.getNumOperands())
       TP.error("Instruction '" + getOperator()->getName() + " expects " +
@@ -550,7 +553,7 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
       if (OperandNode->isSubClassOf("RegisterClass")) {
         const CodeGenRegisterClass &RC = 
           TP.getDAGISelEmitter().getTargetInfo().getRegisterClass(OperandNode);
-        VT = RC.VT;
+        VT = RC.getValueTypeNum(0);
       } else if (OperandNode->isSubClassOf("Operand")) {
         VT = getValueType(OperandNode->getValueAsDef("Type"));
       } else {
@@ -1672,7 +1675,8 @@ void DAGISelEmitter::EmitMatchForPattern(TreePatternNode *N,
        << ".Val)) goto P" << PatternNo << "Fail;\n";
 }
 
-/// getRegisterValueType - Look up and return ValueType of specified record
+/// getRegisterValueType - Look up and return the first ValueType of specified 
+/// RegisterClass record
 static MVT::ValueType getRegisterValueType(Record *R, const CodeGenTarget &T) {
   const std::vector<CodeGenRegisterClass> &RegisterClasses =
     T.getRegisterClasses();
@@ -1681,7 +1685,7 @@ static MVT::ValueType getRegisterValueType(Record *R, const CodeGenTarget &T) {
     const CodeGenRegisterClass &RC = RegisterClasses[i];
     for (unsigned ei = 0, ee = RC.Elements.size(); ei != ee; ++ei) {
       if (R == RC.Elements[ei]) {
-        return RC.VT;
+        return RC.getValueTypeNum(0);
       }
     }
   }

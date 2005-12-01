@@ -35,12 +35,19 @@ namespace llvm {
     Record *TheDef;
     std::string Namespace;
     std::vector<Record*> Elements;
+    std::vector<MVT::ValueType> VTs;
     unsigned SpillSize;
     unsigned SpillAlignment;
-    MVT::ValueType VT;
     std::string MethodProtos, MethodBodies;
 
     const std::string &getName() const;
+
+    const MVT::ValueType getValueTypeNum(unsigned VTNum) const {
+      if (VTNum < VTs.size())
+        return VTs[VTNum];
+      assert(0 && "VTNum greater than number of ValueTypes in RegClass!");
+      abort();
+    }
 
     CodeGenRegisterClass(Record *R);
   };

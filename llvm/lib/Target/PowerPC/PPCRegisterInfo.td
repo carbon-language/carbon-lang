@@ -135,7 +135,7 @@ def VRSAVE: SPR<256, "VRsave">;
 /// Register classes
 // Allocate volatiles first
 // then nonvolatiles in reverse order since stmw/lmw save from rN to r31
-def GPRC : RegisterClass<"PPC", i32, 32,
+def GPRC : RegisterClass<"PPC", [i32], 32,
      [R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12,
       R30, R29, R28, R27, R26, R25, R24, R23, R22, R21, R20, R19, R18, R17,
       R16, R15, R14, R13, R31, R0, R1, LR]>
@@ -158,7 +158,7 @@ def GPRC : RegisterClass<"PPC", i32, 32,
     }
   }];
 }
-def G8RC : RegisterClass<"PPC", i64, 64,
+def G8RC : RegisterClass<"PPC", [i64], 64,
      [X2, X3, X4, X5, X6, X7, X8, X9, X10, X11, X12,
       X30, X29, X28, X27, X26, X25, X24, X23, X22, X21, X20, X19, X18, X17,
       X16, X15, X14, X13, X31, X0, X1]>
@@ -184,15 +184,16 @@ def G8RC : RegisterClass<"PPC", i64, 64,
 
 
 
-def F8RC : RegisterClass<"PPC", f64, 64, [F0, F1, F2, F3, F4, F5, F6, F7,
+def F8RC : RegisterClass<"PPC", [f64], 64, [F0, F1, F2, F3, F4, F5, F6, F7,
   F8, F9, F10, F11, F12, F13, F14, F15, F16, F17, F18, F19, F20, F21,
   F22, F23, F24, F25, F26, F27, F28, F29, F30, F31]>;
-def F4RC : RegisterClass<"PPC", f32, 32, [F0, F1, F2, F3, F4, F5, F6, F7,
+def F4RC : RegisterClass<"PPC", [f32], 32, [F0, F1, F2, F3, F4, F5, F6, F7,
   F8, F9, F10, F11, F12, F13, F14, F15, F16, F17, F18, F19, F20, F21,
   F22, F23, F24, F25, F26, F27, F28, F29, F30, F31]>;
 
-def VRRC : RegisterClass<"PPC", v4f32, 128, [V0, V1, V2, V3, V4, V5, V6, V7, V8,
-  V9, V10, V11, V12, V13, V14, V15, V16, V17, V18, V19, V20, V21, V22, V23,
+def VRRC : RegisterClass<"PPC", [v4f32], 128, [V0, V1, V2, V3, V4, V5, V6, V7, 
+  V8, V9, V10, V11, V12, V13, V14, V15, V16, V17, V18, V19, V20, V21, V22, V23,
   V24, V25, V26, V27, V28, V29, V30, V31]>;
 
-def CRRC : RegisterClass<"PPC", i32, 32, [CR0, CR1, CR5, CR6, CR7, CR2, CR3, CR4]>;
+def CRRC : RegisterClass<"PPC", [i32], 32, [CR0, CR1, CR5, CR6, CR7, CR2, 
+  CR3, CR4]>;

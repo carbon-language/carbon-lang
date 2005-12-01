@@ -45,18 +45,15 @@ public:
   typedef const unsigned* const_iterator;
 
 private:
-  const MVT::ValueType VT;
+  const MVT::ValueType* VTs;
   const unsigned RegSize, Alignment;    // Size & Alignment of register in bytes
   const iterator RegsBegin, RegsEnd;
 public:
-  TargetRegisterClass(MVT::ValueType vt, unsigned RS, unsigned Al, iterator RB, iterator RE)
-    : VT(vt), RegSize(RS), Alignment(Al), RegsBegin(RB), RegsEnd(RE) {}
+  TargetRegisterClass(const MVT::ValueType *vts, unsigned RS, unsigned Al,
+                      iterator RB, iterator RE)
+    : VTs(vts), RegSize(RS), Alignment(Al), RegsBegin(RB), RegsEnd(RE) {}
   virtual ~TargetRegisterClass() {}     // Allow subclasses
 
-  /// getType - Return the declared value type for this register class.
-  ///
-  MVT::ValueType getType() const { return VT; }
-  
   // begin/end - Return all of the registers in this class.
   iterator       begin() const { return RegsBegin; }
   iterator         end() const { return RegsEnd; }
@@ -78,6 +75,15 @@ public:
     return false;
   }
 
+  /// hasType - return true if this TargetRegisterClass has the ValueType vt.
+  ///
+  bool hasType(MVT::ValueType vt) const {
+    for(int i = 0; VTs[i] != MVT::Other; ++i)
+      if (VTs[i] == vt)
+        return true;
+    return false;
+  }
+  
   /// allocation_order_begin/end - These methods define a range of registers
   /// which specify the registers in this class that are valid to register
   /// allocate, and the preferred order to allocate them in.  For example,

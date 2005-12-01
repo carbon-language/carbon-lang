@@ -1208,7 +1208,7 @@ void SimpleSched::EmitNode(NodeInfo *NI) {
         // Pick the register class of the right type that contains this physreg.
         for (MRegisterInfo::regclass_iterator I = MRI.regclass_begin(),
              E = MRI.regclass_end(); I != E; ++I)
-          if ((*I)->getType() == Node->getValueType(0) &&
+          if ((*I)->hasType(Node->getValueType(0)) &&
               (*I)->contains(SrcReg)) {
             TRC = *I;
             break;

@@ -154,13 +154,15 @@ CodeGenRegisterClass::CodeGenRegisterClass(Record *R) : TheDef(R) {
     R->setName("AnonRegClass_"+utostr(AnonCounter++));
   } 
   
-  Namespace = R->getValueAsString("Namespace");
-  SpillSize = R->getValueAsInt("Size");
-  SpillAlignment = R->getValueAsInt("Alignment");
-  VT = getValueType(R->getValueAsDef("RegType"));
-
-  MethodBodies = R->getValueAsCode("MethodBodies");
-  MethodProtos = R->getValueAsCode("MethodProtos");
+  std::vector<Record*> TypeList = R->getValueAsListOfDefs("RegTypes");
+  for (unsigned i = 0, e = TypeList.size(); i != e; ++i) {
+    Record *Type = TypeList[i];
+    if (!Type->isSubClassOf("ValueType"))
+      throw "RegTypes list member '" + Type->getName() +
+        "' does not derive from the ValueType class!";
+    VTs.push_back(getValueType(Type));
+  }
+  assert(!VTs.empty() && "RegisterClass must contain at least one ValueType!");
   
   std::vector<Record*> RegList = R->getValueAsListOfDefs("MemberList");
   for (unsigned i = 0, e = RegList.size(); i != e; ++i) {
@@ -170,6 +172,15 @@ CodeGenRegisterClass::CodeGenRegisterClass(Record *R) : TheDef(R) {
             "' does not derive from the Register class!";
     Elements.push_back(Reg);
   }
+  
+  // Allow targets to override the size in bits of the RegisterClass.
+  unsigned Size = R->getValueAsInt("Size");
+
+  Namespace = R->getValueAsString("Namespace");
+  SpillSize = Size ? Size : MVT::getSizeInBits(VTs[0]);
+  SpillAlignment = R->getValueAsInt("Alignment");
+  MethodBodies = R->getValueAsCode("MethodBodies");
+  MethodProtos = R->getValueAsCode("MethodProtos");
 }
 
 const std::string &CodeGenRegisterClass::getName() const {
@@ -179,7 +190,8 @@ const std::string &CodeGenRegisterClass::getName() const {
 void CodeGenTarget::ReadLegalValueTypes() const {
   const std::vector<CodeGenRegisterClass> &RCs = getRegisterClasses();
   for (unsigned i = 0, e = RCs.size(); i != e; ++i)
-    LegalValueTypes.push_back(RCs[i].VT);
+    for (unsigned ri = 0, re = RCs[i].VTs.size(); ri != re; ++ri)
+      LegalValueTypes.push_back(RCs[i].VTs[ri]);
   
   // Remove duplicates.
   std::sort(LegalValueTypes.begin(), LegalValueTypes.end());
