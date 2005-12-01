@@ -134,10 +134,11 @@ void X86DAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
 void X86DAGToDAGISel::SelectAddress(SDOperand N, X86ISelAddressMode &AM) {
   MatchAddress(N, AM);
 
-  if (AM.BaseType == X86ISelAddressMode::RegBase && !AM.Base.Reg.Val) {
-    AM.Base.Reg = CurDAG->getRegister(0, MVT::i32);
-  } else {
-    AM.Base.Reg = Select(AM.Base.Reg);
+  if (AM.BaseType == X86ISelAddressMode::RegBase) {
+    if (AM.Base.Reg.Val)
+      AM.Base.Reg = Select(AM.Base.Reg);
+    else
+      AM.Base.Reg = CurDAG->getRegister(0, MVT::i32);
   }
   if (!AM.IndexReg.Val) {
     AM.IndexReg = CurDAG->getRegister(0, MVT::i32);
@@ -277,10 +278,8 @@ SDOperand X86DAGToDAGISel::Select(SDOperand Op) {
     default: break;
 
     case ISD::SHL:
-    case ISD::SRL:
-    case ISD::SRA:
       if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N->getOperand(1))) {
-        if (N->getOpcode() == ISD::SHL && CN->getValue() == 1) {
+        if (CN->getValue() == 1) {
           // X = SHL Y, 1  -> X = ADD Y, Y
           switch (OpVT) {
             default: assert(0 && "Cannot shift this type!");
@@ -291,34 +290,6 @@ SDOperand X86DAGToDAGISel::Select(SDOperand Op) {
           SDOperand Tmp0 = Select(N->getOperand(0));
           return CurDAG->SelectNodeTo(N, Opc, MVT::i32, Tmp0, Tmp0);
         }
-      } else {
-        static const unsigned SHLTab[] = {
-          X86::SHL8rCL, X86::SHL16rCL, X86::SHL32rCL
-        };
-        static const unsigned SRLTab[] = {
-          X86::SHR8rCL, X86::SHR16rCL, X86::SHR32rCL
-        };
-        static const unsigned SRATab[] = {
-          X86::SAR8rCL, X86::SAR16rCL, X86::SAR32rCL
-        };
-
-        switch (OpVT) {
-          default: assert(0 && "Cannot shift this type!");
-          case MVT::i1:
-          case MVT::i8:  Opc = 0; break;
-          case MVT::i16: Opc = 1; break;
-          case MVT::i32: Opc = 2; break;
-        }
-
-        switch (N->getOpcode()) {
-          default: assert(0 && "Unreachable!");
-          case ISD::SHL: Opc = SHLTab[Opc]; break;
-          case ISD::SRL: Opc = SRLTab[Opc]; break;
-          case ISD::SRA: Opc = SRATab[Opc]; break;
-        }
-
-        SDOperand Tmp0 = Select(N->getOperand(0));
-        return CurDAG->SelectNodeTo(N, Opc, MVT::i32, Tmp0);
       }
       break;
 

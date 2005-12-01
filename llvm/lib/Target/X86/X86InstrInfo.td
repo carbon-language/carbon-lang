@@ -892,11 +892,14 @@ let isTwoAddress = 0 in {
 // Shift instructions
 // FIXME: provide shorter instructions when imm8 == 1
 def SHL8rCL  : I<0xD2, MRM4r, (ops R8 :$dst, R8 :$src),
-                 "shl{b} {%cl, $dst|$dst, %CL}", []>, Imp<[CL],[]>;
+                 "shl{b} {%cl, $dst|$dst, %CL}",
+                 [(set R8:$dst, (shl R8:$src, CL))]>, Imp<[CL],[]>;
 def SHL16rCL : I<0xD3, MRM4r, (ops R16:$dst, R16:$src),
-                 "shl{w} {%cl, $dst|$dst, %CL}", []>, Imp<[CL],[]>, OpSize;
+                 "shl{w} {%cl, $dst|$dst, %CL}",
+                 [(set R16:$dst, (shl R16:$src, CL))]>, Imp<[CL],[]>, OpSize;
 def SHL32rCL : I<0xD3, MRM4r, (ops R32:$dst, R32:$src),
-                 "shl{l} {%cl, $dst|$dst, %CL}", []>, Imp<[CL],[]>;
+                 "shl{l} {%cl, $dst|$dst, %CL}",
+                 [(set R32:$dst, (shl R32:$src, CL))]>, Imp<[CL],[]>;
 
 def SHL8ri   : Ii8<0xC0, MRM4r, (ops R8 :$dst, R8 :$src1, i8imm:$src2),
                    "shl{b} {$src2, $dst|$dst, $src2}",
@@ -926,11 +929,14 @@ let isTwoAddress = 0 in {
 }
 
 def SHR8rCL  : I<0xD2, MRM5r, (ops R8 :$dst, R8 :$src),
-                 "shr{b} {%cl, $dst|$dst, %CL}", []>, Imp<[CL],[]>;
+                 "shr{b} {%cl, $dst|$dst, %CL}",
+                 [(set R8:$dst, (srl R8:$src, CL))]>, Imp<[CL],[]>;
 def SHR16rCL : I<0xD3, MRM5r, (ops R16:$dst, R16:$src),
-                 "shr{w} {%cl, $dst|$dst, %CL}", []>, Imp<[CL],[]>, OpSize;
+                 "shr{w} {%cl, $dst|$dst, %CL}",
+                 [(set R16:$dst, (srl R16:$src, CL))]>, Imp<[CL],[]>, OpSize;
 def SHR32rCL : I<0xD3, MRM5r, (ops R32:$dst, R32:$src),
-                 "shr{l} {%cl, $dst|$dst, %CL}", []>, Imp<[CL],[]>;
+                 "shr{l} {%cl, $dst|$dst, %CL}",
+                 [(set R32:$dst, (srl R32:$src, CL))]>, Imp<[CL],[]>;
 
 def SHR8ri   : Ii8<0xC0, MRM5r, (ops R8:$dst, R8:$src1, i8imm:$src2),
                    "shr{b} {$src2, $dst|$dst, $src2}",
@@ -958,11 +964,14 @@ let isTwoAddress = 0 in {
 }
 
 def SAR8rCL  : I<0xD2, MRM7r, (ops R8 :$dst, R8 :$src),
-                 "sar{b} {%cl, $dst|$dst, %CL}", []>, Imp<[CL],[]>;
+                 "sar{b} {%cl, $dst|$dst, %CL}",
+                 [(set R8:$dst, (sra R8:$src, CL))]>, Imp<[CL],[]>;
 def SAR16rCL : I<0xD3, MRM7r, (ops R16:$dst, R16:$src),
-                 "sar{w} {%cl, $dst|$dst, %CL}", []>, Imp<[CL],[]>, OpSize;
+                 "sar{w} {%cl, $dst|$dst, %CL}",
+                 [(set R16:$dst, (sra R16:$src, CL))]>, Imp<[CL],[]>, OpSize;
 def SAR32rCL : I<0xD3, MRM7r, (ops R32:$dst, R32:$src),
-                 "sar{l} {%cl, $dst|$dst, %CL}", []>, Imp<[CL],[]>;
+                 "sar{l} {%cl, $dst|$dst, %CL}",
+                 [(set R32:$dst, (sra R32:$src, CL))]>, Imp<[CL],[]>;
 
 def SAR8ri   : Ii8<0xC0, MRM7r, (ops R8 :$dst, R8 :$src1, i8imm:$src2),
                    "sar{b} {$src2, $dst|$dst, $src2}",
