@@ -388,43 +388,46 @@ void SelectionDAG::RemoveNodeFromCSEMaps(SDNode *N) {
 SDNode *SelectionDAG::AddNonLeafNodeToCSEMaps(SDNode *N) {
   assert(N->getNumOperands() && "This is a leaf node!");
   if (N->getOpcode() == ISD::CALLSEQ_START || 
-      N->getOpcode() == ISD::CALLSEQ_END)
-    return 0;
+      N->getOpcode() == ISD::CALLSEQ_END ||
+      N->getOpcode() == ISD::HANDLENODE)
+    return 0;    // Never add these nodes.
   
-  if (N->getOpcode() == ISD::LOAD) {
-    SDNode *&L = Loads[std::make_pair(N->getOperand(1),
-                                      std::make_pair(N->getOperand(0),
-                                                     N->getValueType(0)))];
-    if (L) return L;
-    L = N;
-  } else if (N->getOpcode() == ISD::HANDLENODE) {
-    return 0;  // never add it.
-  } else if (N->getNumOperands() == 1) {
-    SDNode *&U = UnaryOps[std::make_pair(N->getOpcode(),
-                                         std::make_pair(N->getOperand(0),
-                                                        N->getValueType(0)))];
-    if (U) return U;
-    U = N;
-  } else if (N->getNumOperands() == 2) {
-    SDNode *&B = BinaryOps[std::make_pair(N->getOpcode(),
-                                          std::make_pair(N->getOperand(0),
-                                                         N->getOperand(1)))];
-    if (B) return B;
-    B = N;
-  } else if (N->getNumValues() == 1) {
-    std::vector<SDOperand> Ops(N->op_begin(), N->op_end());
-    SDNode *&ORN = OneResultNodes[std::make_pair(N->getOpcode(),
-                                  std::make_pair(N->getValueType(0), Ops))];
-    if (ORN) return ORN;
-    ORN = N;
-  } else {
-    // Remove the node from the ArbitraryNodes map.
-    std::vector<MVT::ValueType> RV(N->value_begin(), N->value_end());
-    std::vector<SDOperand>     Ops(N->op_begin(), N->op_end());
-    SDNode *&AN = ArbitraryNodes[std::make_pair(N->getOpcode(),
-                                                std::make_pair(RV, Ops))];
-    if (AN) return AN;
-    AN = N;
+  if (N->getNumValues() == 1) {
+    if (N->getNumOperands() == 1) {
+      SDNode *&U = UnaryOps[std::make_pair(N->getOpcode(),
+                                           std::make_pair(N->getOperand(0),
+                                                          N->getValueType(0)))];
+      if (U) return U;
+      U = N;
+    } else if (N->getNumOperands() == 2) {
+      SDNode *&B = BinaryOps[std::make_pair(N->getOpcode(),
+                                            std::make_pair(N->getOperand(0),
+                                                           N->getOperand(1)))];
+      if (B) return B;
+      B = N;
+    } else {
+      std::vector<SDOperand> Ops(N->op_begin(), N->op_end());
+      SDNode *&ORN = OneResultNodes[std::make_pair(N->getOpcode(),
+                                                   std::make_pair(N->getValueType(0), Ops))];
+      if (ORN) return ORN;
+      ORN = N;
+    }
+  } else {  
+    if (N->getOpcode() == ISD::LOAD) {
+      SDNode *&L = Loads[std::make_pair(N->getOperand(1),
+                                        std::make_pair(N->getOperand(0),
+                                                       N->getValueType(0)))];
+      if (L) return L;
+      L = N;
+    } else {
+      // Remove the node from the ArbitraryNodes map.
+      std::vector<MVT::ValueType> RV(N->value_begin(), N->value_end());
+      std::vector<SDOperand>     Ops(N->op_begin(), N->op_end());
+      SDNode *&AN = ArbitraryNodes[std::make_pair(N->getOpcode(),
+                                                  std::make_pair(RV, Ops))];
+      if (AN) return AN;
+      AN = N;
+    }
   }
   return 0;
 }
