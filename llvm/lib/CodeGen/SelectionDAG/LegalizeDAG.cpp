@@ -1193,6 +1193,12 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     Tmp1 = LegalizeOp(Node->getOperand(0)); // Legalize the chain
     if (Tmp1 != Node->getOperand(0))
       Result = DAG.getNode(ISD::READCYCLECOUNTER, MVT::i64, Tmp1);
+
+    // Since rdcc produce two values, make sure to remember that we legalized
+    // both of them.
+    AddLegalizedOperand(SDOperand(Node, 0), Result);
+    AddLegalizedOperand(SDOperand(Node, 1), Result.getValue(1));
+    return Result.getValue(Op.ResNo);
     break;
 
   case ISD::TRUNCSTORE:
