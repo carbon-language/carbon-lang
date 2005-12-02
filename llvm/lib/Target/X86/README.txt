@@ -12,6 +12,12 @@ long long test(long long X, long long Y) { return X*Y; }
 by using the EAX result from the mul.  We should add a similar node for
 DIVREM.
 
+another case is:
+
+long long test(int X, int Y) { return (long long)X*Y; }
+
+... which should only be one imul instruction.
+
 //===---------------------------------------------------------------------===//
 
 This should be one DIV/IDIV instruction, not a libcall:
