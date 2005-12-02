@@ -1191,8 +1191,14 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     break;
   case ISD::READCYCLECOUNTER:
     Tmp1 = LegalizeOp(Node->getOperand(0)); // Legalize the chain
-    if (Tmp1 != Node->getOperand(0))
-      Result = DAG.getNode(ISD::READCYCLECOUNTER, MVT::i64, Tmp1);
+    if (Tmp1 != Node->getOperand(0)) {
+      std::vector<MVT::ValueType> rtypes;
+      std::vector<SDOperand> rvals;
+      rtypes.push_back(MVT::i64);
+      rtypes.push_back(MVT::Other);
+      rvals.push_back(Tmp1);
+      Result = DAG.getNode(ISD::READCYCLECOUNTER, rtypes, rvals);
+    }
 
     // Since rdcc produce two values, make sure to remember that we legalized
     // both of them.
