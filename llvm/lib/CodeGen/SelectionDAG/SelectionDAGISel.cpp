@@ -891,6 +891,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     Ops.push_back(DAG.getString(fname));
     Ops.push_back(DAG.getString(""));
     DAG.setRoot(DAG.getNode(ISD::LOCATION, MVT::Other, Ops));
+    setValue(&I, DAG.getNode(ISD::UNDEF, TLI.getValueType(I.getType())));
     return 0;
   }
   case Intrinsic::dbg_region_start:
