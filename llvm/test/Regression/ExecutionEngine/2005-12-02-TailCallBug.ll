@@ -1,4 +1,4 @@
-; RUN: llvm-as %s | lli
+; RUN: llvm-as < %s | lli
 
 ; PR672
 
