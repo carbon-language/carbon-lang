@@ -82,7 +82,7 @@ static bool CanPropagatePredecessorsForPHIs(BasicBlock *BB, BasicBlock *Succ) {
   //
   if (isa<PHINode>(Succ->front())) {
     std::set<BasicBlock*> BBPreds(pred_begin(BB), pred_end(BB));
-    for (pred_iterator PI = pred_begin(Succ), PE = pred_end(Succ);\
+    for (pred_iterator PI = pred_begin(Succ), PE = pred_end(Succ);
          PI != PE; ++PI)
       if (std::find(BBPreds.begin(), BBPreds.end(), *PI) != BBPreds.end()) {
         // Loop over all of the PHI nodes checking to see if there are
@@ -115,19 +115,25 @@ static bool CanPropagatePredecessorsForPHIs(BasicBlock *BB, BasicBlock *Succ) {
     }
   if (IsSafe) return true;
   
-  // If the PHI nodes in BB are only used by instructions in Succ, we are ok.
-  IsSafe = true;
+  // If the PHI nodes in BB are only used by instructions in Succ, we are ok if
+  // BB and Succ have no common predecessors.
   for (BasicBlock::iterator I = BB->begin(); isa<PHINode>(I) && IsSafe; ++I) {
     PHINode *PN = cast<PHINode>(I);
     for (Value::use_iterator UI = PN->use_begin(), E = PN->use_end(); UI != E;
          ++UI)
-      if (cast<Instruction>(*UI)->getParent() != Succ) {
-        IsSafe = false;
-        break;
-      }
+      if (cast<Instruction>(*UI)->getParent() != Succ)
+        return false;
   }
   
-  return IsSafe;
+  // Scan the predecessor sets of BB and Succ, making sure there are no common
+  // predecessors.  Common predecessors would cause us to build a phi node with
+  // differing incoming values, which is not legal.
+  std::set<BasicBlock*> BBPreds(pred_begin(BB), pred_end(BB));
+  for (pred_iterator PI = pred_begin(Succ), E = pred_end(Succ); PI != E; ++PI)
+    if (BBPreds.count(*PI))
+      return false;
+    
+  return true;
 }
 
 /// TryToSimplifyUncondBranchFromEmptyBlock - BB contains an unconditional
