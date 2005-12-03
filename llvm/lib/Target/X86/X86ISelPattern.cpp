@@ -3067,6 +3067,20 @@ void ISel::EmitFastCCToFastCCTailCall(SDNode *TailCallNode) {
 
   // TODO: handle jmp [mem]
   if (!isDirect) {
+    // We do not want the register allocator to allocate CalleeReg to a callee 
+    // saved register, as these will be restored before the JMP.  To prevent
+    // this, emit explicit clobbers of callee saved regs here.  A better way to
+    // solve this would be to specify that the register constraints of TAILJMPr
+    // only allow registers that are not callee saved, but we currently can't
+    // express that.  This forces all four of these regs to be saved and 
+    // reloaded for all functions with an indirect tail call.
+    // TODO: Improve this!
+    BuildMI(BB, X86::IMPLICIT_DEF, 4)
+       .addReg(X86::ESI, MachineOperand::Def)
+       .addReg(X86::EDI, MachineOperand::Def)
+       .addReg(X86::EBX, MachineOperand::Def)
+       .addReg(X86::EBP, MachineOperand::Def);
+    
     BuildMI(BB, X86::TAILJMPr, 1).addReg(CalleeReg);
   } else if (GlobalAddressSDNode *GASD = dyn_cast<GlobalAddressSDNode>(Callee)){
     BuildMI(BB, X86::TAILJMPd, 1).addGlobalAddress(GASD->getGlobal(), true);
