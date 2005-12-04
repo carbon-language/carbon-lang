@@ -190,7 +190,7 @@ let isTerminator = 1 in {
 let Defs = [LR] in
   def MovePCtoLR : Pseudo<(ops piclabel:$label), "bl $label", []>;
 
-let isBranch = 1, isTerminator = 1 in {
+let isBranch = 1, isTerminator = 1, hasCtrlDep = 1 in {
   def COND_BRANCH : Pseudo<(ops CRRC:$crS, u16imm:$opc,
                                 target:$true, target:$false),
                            "; COND_BRANCH", []>;

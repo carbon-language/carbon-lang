@@ -873,6 +873,7 @@ SDOperand PPCDAGToDAGISel::Select(SDOperand Op) {
   
   switch (N->getOpcode()) {
   default: break;
+  case ISD::BasicBlock:         return CodeGenMap[Op] = Op;
   case ISD::DYNAMIC_STACKALLOC: return SelectDYNAMIC_STACKALLOC(Op);
   case ISD::ADD_PARTS:          return SelectADD_PARTS(Op);
   case ISD::SUB_PARTS:          return SelectSUB_PARTS(Op);
@@ -1219,9 +1220,6 @@ SDOperand PPCDAGToDAGISel::Select(SDOperand Op) {
     // Finally, select this to a blr (return) instruction.
     return CurDAG->SelectNodeTo(N, PPC::BLR, MVT::Other, Chain);
   }
-  case ISD::BR:
-    return CurDAG->SelectNodeTo(N, PPC::B, MVT::Other, N->getOperand(1),
-                                Select(N->getOperand(0)));
   case ISD::BR_CC:
   case ISD::BRTWOWAY_CC: {
     SDOperand Chain = Select(N->getOperand(0));
