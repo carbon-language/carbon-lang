@@ -101,7 +101,7 @@ namespace llvm {
     }
     
     // SelectionDAG node properties.
-    enum SDNP { SDNPCommutative, SDNPAssociative };
+    enum SDNP { SDNPCommutative, SDNPAssociative, SDNPHasChain };
 
     /// hasProperty - Return true if this node has the specified property.
     ///
@@ -324,8 +324,6 @@ namespace llvm {
 
   class DAGInstruction {
     TreePattern *Pattern;
-    unsigned NumResults;
-    unsigned NumOperands;
     std::vector<Record*> Results;
     std::vector<Record*> Operands;
     TreePatternNode *ResultPattern;
@@ -418,11 +416,13 @@ private:
   void EmitMatchForPattern(TreePatternNode *N, const std::string &RootName,
                            std::map<std::string,std::string> &VarMap,
                            unsigned PatternNo, std::ostream &OS);
+  void EmitLeadChainForPattern(TreePatternNode *N, const std::string &RootName,
+                               std::ostream &OS, bool &HasChain);
   void EmitCopyToRegsForPattern(TreePatternNode *N, const std::string &RootName,
-                                std::ostream &OS, bool &InFlag);
+                                std::ostream &OS, bool &HasChain, bool &InFlag);
   unsigned CodeGenPatternResult(TreePatternNode *N, unsigned &Ctr,
                                 std::map<std::string,std::string> &VariableMap, 
-                                std::ostream &OS, bool InFlag,
+                                std::ostream &OS, bool &HasChain, bool InFlag,
                                 bool isRoot = false);
   void EmitCodeForPattern(PatternToMatch &Pattern, std::ostream &OS);
   void EmitInstructionSelector(std::ostream &OS);

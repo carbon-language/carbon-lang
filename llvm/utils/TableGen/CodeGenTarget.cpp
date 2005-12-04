@@ -268,6 +268,7 @@ CodeGenInstruction::CodeGenInstruction(Record *R, const std::string &AsmStr)
   isTerminator = R->getValueAsBit("isTerminator");
   hasDelaySlot = R->getValueAsBit("hasDelaySlot");
   usesCustomDAGSchedInserter = R->getValueAsBit("usesCustomDAGSchedInserter");
+  hasCtrlDep   = R->getValueAsBit("hasCtrlDep");
   hasVariableNumberOfOperands = false;
   
   DagInit *DI;

@@ -84,7 +84,8 @@ SDTypeConstraint::SDTypeConstraint(Record *R) {
 TreePatternNode *SDTypeConstraint::getOperandNum(unsigned OpNo,
                                                  TreePatternNode *N,
                                                  unsigned NumResults) const {
-  assert(NumResults == 1 && "We only work with single result nodes so far!");
+  assert(NumResults <= 1 &&
+         "We only work with nodes with zero or one result so far!");
   
   if (OpNo < NumResults)
     return N;  // FIXME: need value #
@@ -100,7 +101,8 @@ bool SDTypeConstraint::ApplyTypeConstraint(TreePatternNode *N,
                                            const SDNodeInfo &NodeInfo,
                                            TreePattern &TP) const {
   unsigned NumResults = NodeInfo.getNumResults();
-  assert(NumResults == 1 && "We only work with single result nodes so far!");
+  assert(NumResults <= 1 &&
+         "We only work with nodes with zero or one result so far!");
   
   // Check that the number of operands is sane.
   if (NodeInfo.getNumOperands() >= 0) {
@@ -234,6 +236,8 @@ SDNodeInfo::SDNodeInfo(Record *R) : Def(R) {
       Properties |= 1 << SDNPCommutative;
     } else if (PropList[i]->getName() == "SDNPAssociative") {
       Properties |= 1 << SDNPAssociative;
+    } else if (PropList[i]->getName() == "SDNPHasChain") {
+      Properties |= 1 << SDNPHasChain;
     } else {
       std::cerr << "Unknown SD Node property '" << PropList[i]->getName()
                 << "' on node '" << R->getName() << "'!\n";
@@ -440,6 +444,7 @@ TreePatternNode *TreePatternNode::InlinePatternFragments(TreePattern &TP) {
   }
   
   FragTree->setName(getName());
+  FragTree->UpdateNodeType(getExtType(), TP);
   
   // Get a new copy of this fragment to stitch into here.
   //delete this;    // FIXME: implement refcounting!
@@ -526,22 +531,33 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
     bool MadeChange = NI.ApplyTypeConstraints(this, TP);
     for (unsigned i = 0, e = getNumChildren(); i != e; ++i)
       MadeChange |= getChild(i)->ApplyTypeConstraints(TP, NotRegisters);
+    // Branch, etc. do not produce results and top-level forms in instr pattern
+    // must have void types.
+    if (NI.getNumResults() == 0)
+      MadeChange |= UpdateNodeType(MVT::isVoid, TP);
     return MadeChange;  
   } else if (getOperator()->isSubClassOf("Instruction")) {
     const DAGInstruction &Inst =
       TP.getDAGISelEmitter().getInstruction(getOperator());
+    bool MadeChange = false;
+    unsigned NumResults = Inst.getNumResults();
     
-    assert(Inst.getNumResults() == 1 && "Only supports one result instrs!");
+    assert(NumResults <= 1 &&
+           "Only supports zero or one result instrs!");
     // Apply the result type to the node
-    Record *ResultNode = Inst.getResult(0);
-    assert(ResultNode->isSubClassOf("RegisterClass") &&
-           "Operands should be register classes!");
+    if (NumResults == 0) {
+      MadeChange = UpdateNodeType(MVT::isVoid, TP);
+    } else {
+      Record *ResultNode = Inst.getResult(0);
+      assert(ResultNode->isSubClassOf("RegisterClass") &&
+             "Operands should be register classes!");
 
-    const CodeGenRegisterClass &RC = 
-      TP.getDAGISelEmitter().getTargetInfo().getRegisterClass(ResultNode);
+      const CodeGenRegisterClass &RC = 
+        TP.getDAGISelEmitter().getTargetInfo().getRegisterClass(ResultNode);
 
-    // Get the first ValueType in the RegClass, it's as good as any.
-    bool MadeChange = UpdateNodeType(RC.getValueTypeNum(0), TP);
+      // Get the first ValueType in the RegClass, it's as good as any.
+      MadeChange = UpdateNodeType(RC.getValueTypeNum(0), TP);
+    }
 
     if (getNumChildren() != Inst.getNumOperands())
       TP.error("Instruction '" + getOperator()->getName() + " expects " +
@@ -655,8 +671,7 @@ TreePatternNode *TreePattern::ParseTreePattern(DagInit *Dag) {
         Dag->setArg(0, new DagInit(R,
                                 std::vector<std::pair<Init*, std::string> >()));
         return ParseTreePattern(Dag);
-      }   
-      
+      }
       New = new TreePatternNode(DI);
     } else if (DagInit *DI = dynamic_cast<DagInit*>(Arg)) {
       New = ParseTreePattern(DI);
@@ -1052,13 +1067,21 @@ void DAGISelEmitter::ParseInstructions() {
       // Doesn't even define a result?
       if (InstInfo.OperandList.size() == 0)
         continue;
+
+      // FIXME: temporary hack...
+      if (InstInfo.isReturn || InstInfo.isBranch || InstInfo.isCall ||
+          InstInfo.isStore) {
+        // These produce no results
+        for (unsigned j = 0, e = InstInfo.OperandList.size(); j != e; ++j)
+          Operands.push_back(InstInfo.OperandList[j].Rec);
+      } else {
+        // Assume the first operand is the result.
+        Results.push_back(InstInfo.OperandList[0].Rec);
       
-      // Assume the first operand is the result.
-      Results.push_back(InstInfo.OperandList[0].Rec);
-      
-      // The rest are inputs.
-      for (unsigned j = 1, e = InstInfo.OperandList.size(); j != e; ++j)
-        Operands.push_back(InstInfo.OperandList[j].Rec);
+        // The rest are inputs.
+        for (unsigned j = 1, e = InstInfo.OperandList.size(); j != e; ++j)
+          Operands.push_back(InstInfo.OperandList[j].Rec);
+      }
       
       // Create and insert the instruction.
       Instructions.insert(std::make_pair(Instrs[i], 
@@ -1088,11 +1111,9 @@ void DAGISelEmitter::ParseInstructions() {
     // fill in the InstResults map.
     for (unsigned j = 0, e = I->getNumTrees(); j != e; ++j) {
       TreePatternNode *Pat = I->getTree(j);
-      if (Pat->getExtType() != MVT::isVoid) {
-        I->dump();
+      if (Pat->getExtType() != MVT::isVoid)
         I->error("Top-level forms in instruction pattern should have"
                  " void types");
-      }
 
       // Find inputs and outputs, and verify the structure of the uses/defs.
       FindPatternInputsAndOutputs(I, Pat, InstInputs, InstResults);
@@ -1201,7 +1222,8 @@ void DAGISelEmitter::ParseInstructions() {
   // If we can, convert the instructions to be patterns that are matched!
   for (std::map<Record*, DAGInstruction>::iterator II = Instructions.begin(),
        E = Instructions.end(); II != E; ++II) {
-    TreePattern *I = II->second.getPattern();
+    DAGInstruction &TheInst = II->second;
+    TreePattern *I = TheInst.getPattern();
     if (I == 0) continue;  // No pattern.
     
     if (I->getNumTrees() != 1) {
@@ -1209,19 +1231,24 @@ void DAGISelEmitter::ParseInstructions() {
       continue;
     }
     TreePatternNode *Pattern = I->getTree(0);
-    if (Pattern->getOperator()->getName() != "set")
-      continue;  // Not a set (store or something?)
+    TreePatternNode *SrcPattern;
+    if (TheInst.getNumResults() == 0) {
+      SrcPattern = Pattern;
+    } else {
+      if (Pattern->getOperator()->getName() != "set")
+        continue;  // Not a set (store or something?)
     
-    if (Pattern->getNumChildren() != 2)
-      continue;  // Not a set of a single value (not handled so far)
-    
-    TreePatternNode *SrcPattern = Pattern->getChild(1)->clone();
+      if (Pattern->getNumChildren() != 2)
+        continue;  // Not a set of a single value (not handled so far)
+
+      SrcPattern = Pattern->getChild(1)->clone();    
+    }
     
     std::string Reason;
     if (!SrcPattern->canPatternMatch(Reason, *this))
       I->error("Instruction can never match: " + Reason);
     
-    TreePatternNode *DstPattern = II->second.getResultPattern();
+    TreePatternNode *DstPattern = TheInst.getResultPattern();
     PatternsToMatch.push_back(std::make_pair(SrcPattern, DstPattern));
   }
 }
@@ -1527,8 +1554,8 @@ void DAGISelEmitter::GenerateVariants() {
 /// pattern.
 static unsigned getPatternSize(TreePatternNode *P) {
   assert(isExtIntegerVT(P->getExtType()) || 
-         isExtFloatingPointVT(P->getExtType()) &&
-         "Not a valid pattern node to size!");
+         isExtFloatingPointVT(P->getExtType()) ||
+         P->getExtType() == MVT::isVoid && "Not a valid pattern node to size!");
   unsigned Size = 1;  // The node itself.
   
   // Count children in the count if they are also nodes.
@@ -1572,13 +1599,24 @@ struct PatternSortingPredicate {
   }
 };
 
+/// nodeHasChain - return true if TreePatternNode has the property
+/// 'hasChain', meaning it reads a ctrl-flow chain operand and writes
+/// a chain result.
+static bool nodeHasChain(TreePatternNode *N, DAGISelEmitter &ISE)
+{
+  if (N->isLeaf()) return false;
+
+  const SDNodeInfo &NodeInfo = ISE.getSDNodeInfo(N->getOperator());
+  return NodeInfo.hasProperty(SDNodeInfo::SDNPHasChain);
+}
+
 /// EmitMatchForPattern - Emit a matcher for N, going to the label for PatternNo
 /// if the match fails.  At this point, we already know that the opcode for N
 /// matches, and the SDNode for the result has the RootName specified name.
 void DAGISelEmitter::EmitMatchForPattern(TreePatternNode *N,
                                          const std::string &RootName,
                                          std::map<std::string,std::string> &VarMap,
-                                         unsigned PatternNo, std::ostream &OS) {
+                                         unsigned PatternNo,std::ostream &OS) {
   if (N->isLeaf()) {
     if (IntInit *II = dynamic_cast<IntInit*>(N->getLeafValue())) {
       OS << "      if (cast<ConstantSDNode>(" << RootName
@@ -1606,32 +1644,35 @@ void DAGISelEmitter::EmitMatchForPattern(TreePatternNode *N,
       return;
     }
   }
-  
+
+
   // Emit code to load the child nodes and match their contents recursively.
-  for (unsigned i = 0, e = N->getNumChildren(); i != e; ++i) {
-    OS << "      SDOperand " << RootName << i <<" = " << RootName
-       << ".getOperand(" << i << ");\n";
+  unsigned OpNo = (unsigned) nodeHasChain(N, *this);
+  for (unsigned i = 0, e = N->getNumChildren(); i != e; ++i, ++OpNo) {
+    OS << "      SDOperand " << RootName << OpNo <<" = " << RootName
+       << ".getOperand(" << OpNo << ");\n";
     TreePatternNode *Child = N->getChild(i);
     
     if (!Child->isLeaf()) {
       // If it's not a leaf, recursively match.
       const SDNodeInfo &CInfo = getSDNodeInfo(Child->getOperator());
-      OS << "      if (" << RootName << i << ".getOpcode() != "
+      OS << "      if (" << RootName << OpNo << ".getOpcode() != "
          << CInfo.getEnumName() << ") goto P" << PatternNo << "Fail;\n";
-      EmitMatchForPattern(Child, RootName + utostr(i), VarMap, PatternNo, OS);
+      EmitMatchForPattern(Child, RootName + utostr(OpNo), VarMap, PatternNo,
+                          OS);
     } else {
       // If this child has a name associated with it, capture it in VarMap.  If
       // we already saw this in the pattern, emit code to verify dagness.
       if (!Child->getName().empty()) {
         std::string &VarMapEntry = VarMap[Child->getName()];
         if (VarMapEntry.empty()) {
-          VarMapEntry = RootName + utostr(i);
+          VarMapEntry = RootName + utostr(OpNo);
         } else {
           // If we get here, this is a second reference to a specific name.  Since
           // we already have checked that the first reference is valid, we don't
           // have to recursively match it, just check that it's the same as the
           // previously named thing.
-          OS << "      if (" << VarMapEntry << " != " << RootName << i
+          OS << "      if (" << VarMapEntry << " != " << RootName << OpNo
           << ") goto P" << PatternNo << "Fail;\n";
           continue;
         }
@@ -1645,12 +1686,12 @@ void DAGISelEmitter::EmitMatchForPattern(TreePatternNode *N,
           // Handle register references.  Nothing to do here.
         } else if (LeafRec->isSubClassOf("ValueType")) {
           // Make sure this is the specified value type.
-          OS << "      if (cast<VTSDNode>(" << RootName << i << ")->getVT() != "
+          OS << "      if (cast<VTSDNode>(" << RootName << OpNo << ")->getVT() != "
           << "MVT::" << LeafRec->getName() << ") goto P" << PatternNo
           << "Fail;\n";
         } else if (LeafRec->isSubClassOf("CondCode")) {
           // Make sure this is the specified cond code.
-          OS << "      if (cast<CondCodeSDNode>(" << RootName << i
+          OS << "      if (cast<CondCodeSDNode>(" << RootName << OpNo
              << ")->get() != " << "ISD::" << LeafRec->getName()
              << ") goto P" << PatternNo << "Fail;\n";
         } else {
@@ -1658,8 +1699,8 @@ void DAGISelEmitter::EmitMatchForPattern(TreePatternNode *N,
           assert(0 && "Unknown leaf type!");
         }
       } else if (IntInit *II = dynamic_cast<IntInit*>(Child->getLeafValue())) {
-        OS << "      if (!isa<ConstantSDNode>(" << RootName << i << ") ||\n"
-           << "          cast<ConstantSDNode>(" << RootName << i
+        OS << "      if (!isa<ConstantSDNode>(" << RootName << OpNo << ") ||\n"
+           << "          cast<ConstantSDNode>(" << RootName << OpNo
            << ")->getSignExtended() != " << II->getValue() << ")\n"
            << "        goto P" << PatternNo << "Fail;\n";
       } else {
@@ -1668,7 +1709,7 @@ void DAGISelEmitter::EmitMatchForPattern(TreePatternNode *N,
       }
     }
   }
-  
+
   // If there is a node predicate for this, emit the call.
   if (!N->getPredicateFn().empty())
     OS << "      if (!" << N->getPredicateFn() << "(" << RootName
@@ -1694,30 +1735,69 @@ static MVT::ValueType getRegisterValueType(Record *R, const CodeGenTarget &T) {
 }
 
 
+/// EmitLeadChainForPattern - Emit the flag operands for the DAG that will be
+/// built in CodeGenPatternResult.
+void DAGISelEmitter::EmitLeadChainForPattern(TreePatternNode *N,
+                                             const std::string &RootName,
+                                             std::ostream &OS,
+                                             bool &HasChain) {
+  if (!N->isLeaf()) {
+    Record *Op = N->getOperator();
+    if (Op->isSubClassOf("Instruction")) {
+      bool HasCtrlDep = Op->getValueAsBit("hasCtrlDep");
+      unsigned OpNo = (unsigned) HasCtrlDep;
+      for (unsigned i = 0, e = N->getNumChildren(); i != e; ++i)
+        EmitLeadChainForPattern(N->getChild(i), RootName + utostr(OpNo),
+                                 OS, HasChain);
+
+      if (!HasChain && HasCtrlDep) {
+        OS << "      SDOperand Chain = Select("
+           << RootName << ".getOperand(0));\n";
+        HasChain = true;
+      }
+    }
+  }
+}
+
 /// EmitCopyToRegsForPattern - Emit the flag operands for the DAG that will be
 /// built in CodeGenPatternResult.
 void DAGISelEmitter::EmitCopyToRegsForPattern(TreePatternNode *N,
                                               const std::string &RootName,
-                                              std::ostream &OS, bool &InFlag) {
+                                              std::ostream &OS,
+                                              bool &HasChain, bool &InFlag) {
   const CodeGenTarget &T = getTargetInfo();
-  for (unsigned i = 0, e = N->getNumChildren(); i != e; ++i) {
+  unsigned OpNo = (unsigned) nodeHasChain(N, *this);
+  for (unsigned i = 0, e = N->getNumChildren(); i != e; ++i, ++OpNo) {
     TreePatternNode *Child = N->getChild(i);
     if (!Child->isLeaf()) {
-      EmitCopyToRegsForPattern(Child, RootName + utostr(i), OS, InFlag);
+      EmitCopyToRegsForPattern(Child, RootName + utostr(OpNo), OS, HasChain,
+                               InFlag);
     } else {
       if (DefInit *DI = dynamic_cast<DefInit*>(Child->getLeafValue())) {
         Record *RR = DI->getDef();
         if (RR->isSubClassOf("Register")) {
           MVT::ValueType RVT = getRegisterValueType(RR, T);
           if (!InFlag) {
-            OS << "      SDOperand InFlag;  // Null incoming flag value.\n";
+            OS << "      SDOperand InFlag;\n";
             InFlag = true;
           }
-          OS << "      InFlag = CurDAG->getCopyToReg(CurDAG->getEntryNode()"
-             << ", CurDAG->getRegister(" << getQualifiedName(RR)
-             << ", MVT::" << getEnumName(RVT) << ")"
-             << ", " << RootName << i << ", InFlag).getValue(1);\n";
-
+          if (HasChain) {
+            OS << "      SDOperand " << RootName << "CR" << i << ";\n";
+            OS << "      " << RootName << "CR" << i
+               << "  = CurDAG->getCopyToReg(Chain, CurDAG->getRegister("
+               << getQualifiedName(RR) << ", MVT::" << getEnumName(RVT) << ")"
+               << ", Select(" << RootName << OpNo << "), InFlag);\n";
+            OS << "      Chain  = " << RootName << "CR" << i
+               << ".getValue(0);\n";
+            OS << "      InFlag = " << RootName << "CR" << i
+               << ".getValue(1);\n";
+          } else {
+            OS << "      InFlag = CurDAG->getCopyToReg(CurDAG->getEntryNode()"
+               << ", CurDAG->getRegister(" << getQualifiedName(RR)
+               << ", MVT::" << getEnumName(RVT) << ")"
+               << ", Select(" << RootName << OpNo
+               << "), InFlag).getValue(1);\n";
+          }
         }
       }
     }
@@ -1729,7 +1809,8 @@ void DAGISelEmitter::EmitCopyToRegsForPattern(TreePatternNode *N,
 unsigned DAGISelEmitter::
 CodeGenPatternResult(TreePatternNode *N, unsigned &Ctr,
                      std::map<std::string,std::string> &VariableMap, 
-                     std::ostream &OS, bool InFlag, bool isRoot) {
+                     std::ostream &OS, bool &HasChain, bool InFlag,
+                     bool isRoot) {
   // This is something selected from the pattern we matched.
   if (!N->getName().empty()) {
     assert(!isRoot && "Root of pattern cannot be a leaf!");
@@ -1792,22 +1873,61 @@ CodeGenPatternResult(TreePatternNode *N, unsigned &Ctr,
 
   Record *Op = N->getOperator();
   if (Op->isSubClassOf("Instruction")) {
+    bool HasCtrlDep = Op->getValueAsBit("hasCtrlDep");
+
     // Emit all of the operands.
     std::vector<unsigned> Ops;
     for (unsigned i = 0, e = N->getNumChildren(); i != e; ++i)
-      Ops.push_back(CodeGenPatternResult(N->getChild(i),
-                                         Ctr, VariableMap, OS, InFlag));
+      Ops.push_back(CodeGenPatternResult(N->getChild(i), Ctr,
+                                         VariableMap, OS, HasChain, InFlag));
 
     CodeGenInstruction &II = Target.getInstruction(Op->getName());
     unsigned ResNo = Ctr++;
+
+    const DAGInstruction &Inst = getInstruction(Op);
+    unsigned NumResults = Inst.getNumResults();
     
     if (!isRoot) {
       OS << "      SDOperand Tmp" << ResNo << " = CurDAG->getTargetNode("
          << II.Namespace << "::" << II.TheDef->getName() << ", MVT::"
          << getEnumName(N->getType());
+      unsigned LastOp = 0;
+      for (unsigned i = 0, e = Ops.size(); i != e; ++i) {
+        LastOp = Ops[i];
+        OS << ", Tmp" << LastOp;
+      }
+      OS << ");\n";
+      if (HasCtrlDep) {
+        // Must have at least one result
+        OS << "      Chain = Tmp" << LastOp << ".getValue("
+           << NumResults << ");\n";
+      }
+    } else if (HasCtrlDep) {
+      if (NumResults > 0) 
+        OS << "      SDOperand Result = ";
+      else
+        OS << "      Chain = CodeGenMap[N] = ";
+      OS << "CurDAG->getTargetNode("
+         << II.Namespace << "::" << II.TheDef->getName();
+      if (NumResults > 0) 
+        OS << ", MVT::" << getEnumName(N->getType()); // TODO: multiple results?
+      OS << ", MVT::Other";
       for (unsigned i = 0, e = Ops.size(); i != e; ++i)
         OS << ", Tmp" << Ops[i];
+      OS << ", Chain";
+      if (InFlag)
+        OS << ", InFlag";
       OS << ");\n";
+      if (NumResults > 0) {
+        OS << "      CodeGenMap[N.getValue(0)] = Result;\n";
+        OS << "      CodeGenMap[N.getValue(" << NumResults
+           << ")] = Result.getValue(" << NumResults << ");\n";
+        OS << "      Chain = CodeGenMap[N].getValue(" << NumResults << ");\n";
+      }
+      if (NumResults == 0)
+        OS << "      return Chain;\n";
+      else
+        OS << "      return (N.ResNo) ? Chain : CodeGenMap[N];\n";
     } else {
       // If this instruction is the root, and if there is only one use of it,
       // use SelectNodeTo instead of getTargetNode to avoid an allocation.
@@ -1822,8 +1942,8 @@ CodeGenPatternResult(TreePatternNode *N, unsigned &Ctr,
       OS << ");\n";
       OS << "      } else {\n";
       OS << "        return CodeGenMap[N] = CurDAG->getTargetNode("
-      << II.Namespace << "::" << II.TheDef->getName() << ", MVT::"
-      << getEnumName(N->getType());
+         << II.Namespace << "::" << II.TheDef->getName() << ", MVT::"
+         << getEnumName(N->getType());
       for (unsigned i = 0, e = Ops.size(); i != e; ++i)
         OS << ", Tmp" << Ops[i];
       if (InFlag)
@@ -1834,8 +1954,8 @@ CodeGenPatternResult(TreePatternNode *N, unsigned &Ctr,
     return ResNo;
   } else if (Op->isSubClassOf("SDNodeXForm")) {
     assert(N->getNumChildren() == 1 && "node xform should have one child!");
-    unsigned OpVal = CodeGenPatternResult(N->getChild(0),
-                                          Ctr, VariableMap, OS, InFlag);
+    unsigned OpVal = CodeGenPatternResult(N->getChild(0), Ctr,
+                                          VariableMap, OS, HasChain, InFlag);
     
     unsigned ResNo = Ctr++;
     OS << "      SDOperand Tmp" << ResNo << " = Transform_" << Op->getName()
@@ -1866,6 +1986,7 @@ static void RemoveAllTypes(TreePatternNode *N) {
 /// 'Pat' may be missing types.  If we find an unresolved type to add a check
 /// for, this returns true otherwise false if Pat has all types.
 static bool InsertOneTypeCheck(TreePatternNode *Pat, TreePatternNode *Other,
+                               DAGISelEmitter &ISE,
                                const std::string &Prefix, unsigned PatternNo,
                                std::ostream &OS) {
   // Did we find one?
@@ -1879,9 +2000,10 @@ static bool InsertOneTypeCheck(TreePatternNode *Pat, TreePatternNode *Other,
     return false;
   }
   
-  for (unsigned i = 0, e = Pat->getNumChildren(); i != e; ++i)
+  unsigned OpNo = (unsigned) nodeHasChain(Pat, ISE);
+  for (unsigned i = 0, e = Pat->getNumChildren(); i != e; ++i, ++OpNo)
     if (InsertOneTypeCheck(Pat->getChild(i), Other->getChild(i),
-                           Prefix + utostr(i), PatternNo, OS))
+                           ISE, Prefix + utostr(OpNo), PatternNo, OS))
       return true;
   return false;
 }
@@ -1944,14 +2066,17 @@ void DAGISelEmitter::EmitCodeForPattern(PatternToMatch &Pattern,
     // Insert a check for an unresolved type and add it to the tree.  If we find
     // an unresolved type to add a check for, this returns true and we iterate,
     // otherwise we are done.
-  } while (InsertOneTypeCheck(Pat, Pattern.first, "N", PatternNo, OS));
+  } while (InsertOneTypeCheck(Pat, Pattern.first, *this, "N", PatternNo, OS));
+
+  bool HasChain = false;
+  EmitLeadChainForPattern(Pattern.second, "N", OS, HasChain);
 
   bool InFlag = false;
-  EmitCopyToRegsForPattern(Pattern.first, "N", OS, InFlag);
+  EmitCopyToRegsForPattern(Pattern.first, "N", OS, HasChain, InFlag);
   
   unsigned TmpNo = 0;
   CodeGenPatternResult(Pattern.second,
-                       TmpNo, VariableMap, OS, InFlag, true /*the root*/);
+                       TmpNo, VariableMap, OS, HasChain, InFlag, true /*the root*/);
   delete Pat;
   
   OS << "    }\n  P" << PatternNo << "Fail:\n";

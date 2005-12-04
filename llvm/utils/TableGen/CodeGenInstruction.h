@@ -84,6 +84,7 @@ namespace llvm {
     bool hasDelaySlot;
     bool usesCustomDAGSchedInserter;
     bool hasVariableNumberOfOperands;
+    bool hasCtrlDep;
 
     CodeGenInstruction(Record *R, const std::string &AsmStr);
 
