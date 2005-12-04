@@ -43,6 +43,9 @@ def i32i8imm  : Operand<i32>;
 let PrintMethod = "printCallOperand" in
   def calltarget : Operand<i32>;
 
+// Branch targets have OtherVT type.
+def brtarget : Operand<OtherVT>;
+
 // Format specifies the encoding used by the instruction.  This is part of the
 // ad-hoc solution used to emit machine instruction encodings by our machine
 // code emitter.
@@ -183,33 +186,33 @@ let isTerminator = 1 in
 //
 
 // Return instructions.
-let isTerminator = 1, isReturn = 1, isBarrier = 1 in
-  def RET : I<0xC3, RawFrm, (ops), "ret", []>;
-let isTerminator = 1, isReturn = 1, isBarrier = 1 in
+let isTerminator = 1, isReturn = 1, isBarrier = 1, hasCtrlDep=1 in
+  def RET : I<0xC3, RawFrm, (ops), "ret", [(ret)]>;
+let isTerminator = 1, isReturn = 1, isBarrier = 1, hasCtrlDep=1 in
   def RETI : Ii16<0xC2, RawFrm, (ops i16imm:$amt), "ret $amt", []>;
 
 // All branches are RawFrm, Void, Branch, and Terminators
-let isBranch = 1, isTerminator = 1 in
-  class IBr<bits<8> opcode, dag ops, string asm> :
-        I<opcode, RawFrm, ops, asm, []>;
+let isBranch = 1, isTerminator = 1, hasCtrlDep = 1 in
+  class IBr<bits<8> opcode, dag ops, string asm, list<dag> pattern> :
+        I<opcode, RawFrm, ops, asm, pattern>;
 
 let isBarrier = 1 in
-  def JMP : IBr<0xE9, (ops i32imm:$dst), "jmp $dst">;
-def JB  : IBr<0x82, (ops i32imm:$dst), "jb $dst">, TB;
-def JAE : IBr<0x83, (ops i32imm:$dst), "jae $dst">, TB;
-def JE  : IBr<0x84, (ops i32imm:$dst), "je $dst">, TB;
-def JNE : IBr<0x85, (ops i32imm:$dst), "jne $dst">, TB;
-def JBE : IBr<0x86, (ops i32imm:$dst), "jbe $dst">, TB;
-def JA  : IBr<0x87, (ops i32imm:$dst), "ja $dst">, TB;
-def JS  : IBr<0x88, (ops i32imm:$dst), "js $dst">, TB;
-def JNS : IBr<0x89, (ops i32imm:$dst), "jns $dst">, TB;
-def JP  : IBr<0x8A, (ops i32imm:$dst), "jp $dst">, TB;
-def JNP : IBr<0x8B, (ops i32imm:$dst), "jnp $dst">, TB;
-def JL  : IBr<0x8C, (ops i32imm:$dst), "jl $dst">, TB;
-def JGE : IBr<0x8D, (ops i32imm:$dst), "jge $dst">, TB;
-def JLE : IBr<0x8E, (ops i32imm:$dst), "jle $dst">, TB;
-def JG  : IBr<0x8F, (ops i32imm:$dst), "jg $dst">, TB;
-
+  def JMP : IBr<0xE9, (ops brtarget:$dst), "jmp $dst", [(br bb:$dst)]>;
+def JB  : IBr<0x82, (ops brtarget:$dst), "jb $dst",
+              []>, TB;
+def JAE : IBr<0x83, (ops brtarget:$dst), "jae $dst", []>, TB;
+def JE  : IBr<0x84, (ops brtarget:$dst), "je $dst", []>, TB;
+def JNE : IBr<0x85, (ops brtarget:$dst), "jne $dst", []>, TB;
+def JBE : IBr<0x86, (ops brtarget:$dst), "jbe $dst", []>, TB;
+def JA  : IBr<0x87, (ops brtarget:$dst), "ja $dst", []>, TB;
+def JS  : IBr<0x88, (ops brtarget:$dst), "js $dst", []>, TB;
+def JNS : IBr<0x89, (ops brtarget:$dst), "jns $dst", []>, TB;
+def JP  : IBr<0x8A, (ops brtarget:$dst), "jp $dst", []>, TB;
+def JNP : IBr<0x8B, (ops brtarget:$dst), "jnp $dst", []>, TB;
+def JL  : IBr<0x8C, (ops brtarget:$dst), "jl $dst", []>, TB;
+def JGE : IBr<0x8D, (ops brtarget:$dst), "jge $dst", []>, TB;
+def JLE : IBr<0x8E, (ops brtarget:$dst), "jle $dst", []>, TB;
+def JG  : IBr<0x8F, (ops brtarget:$dst), "jg $dst", []>, TB;
 
 //===----------------------------------------------------------------------===//
 //  Call Instructions...
@@ -225,7 +228,7 @@ let isCall = 1 in
 
 // Tail call stuff.
 let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in
-  def TAILJMPd : IBr<0xE9, (ops calltarget:$dst), "jmp $dst  # TAIL CALL">;
+  def TAILJMPd : IBr<0xE9, (ops calltarget:$dst), "jmp $dst  # TAIL CALL", []>;
 let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in
   def TAILJMPr : I<0xFF, MRM4r, (ops R32:$dst), "jmp {*}$dst  # TAIL CALL", []>;
 let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in
@@ -315,26 +318,37 @@ def IN16rr : I<0xED, RawFrm, (ops),
 def IN32rr : I<0xED, RawFrm, (ops),
                "in{l} {%dx, %eax|%EAX, %DX}", []>, Imp<[DX],[EAX]>;
 
-def IN8ri  : Ii16<0xE4, RawFrm, (ops i16imm:$port),
+def IN8ri  : Ii8<0xE4, RawFrm, (ops i8imm:$port),
                   "in{b} {$port, %al|%AL, $port}", []>,  Imp<[], [AL]>;
-def IN16ri : Ii16<0xE5, RawFrm, (ops i16imm:$port),
+def IN16ri : Ii8<0xE5, RawFrm, (ops i8imm:$port),
                   "in{w} {$port, %ax|%AX, $port}", []>,  Imp<[], [AX]>, OpSize;
-def IN32ri : Ii16<0xE5, RawFrm, (ops i16imm:$port),
+def IN32ri : Ii8<0xE5, RawFrm, (ops i8imm:$port),
                   "in{l} {$port, %eax|%EAX, $port}", []>, Imp<[],[EAX]>;
 
-def OUT8rr  : I<0xEE, RawFrm, (ops),
-                "out{b} {%al, %dx|%DX, %AL}", []>,  Imp<[DX,  AL], []>;
-def OUT16rr : I<0xEF, RawFrm, (ops),
-                "out{w} {%ax, %dx|%DX, %AX}", []>,  Imp<[DX,  AX], []>, OpSize;
-def OUT32rr : I<0xEF, RawFrm, (ops),
-                "out{l} {%eax, %dx|%DX, %EAX}", []>, Imp<[DX, EAX], []>;
+let hasCtrlDep=1 in {
+  def OUT8rr  : I<0xEE, RawFrm, (ops),
+                  "out{b} {%al, %dx|%DX, %AL}",
+                  [(writeport (i8 AL), (i16 DX))]>,  Imp<[DX,  AL], []>;
+  def OUT16rr : I<0xEF, RawFrm, (ops),
+                  "out{w} {%ax, %dx|%DX, %AX}",
+                  [(writeport (i16 AX), (i16 DX))]>,  Imp<[DX,  AX], []>, OpSize;
+  def OUT32rr : I<0xEF, RawFrm, (ops),
+                  "out{l} {%eax, %dx|%DX, %EAX}",
+                  [(writeport (i32 EAX), (i16 DX))]>, Imp<[DX, EAX], []>;
 
-def OUT8ir  : Ii16<0xE6, RawFrm, (ops i16imm:$port),
-                   "out{b} {%al, $port|$port, %AL}", []>, Imp<[AL], []>;
-def OUT16ir : Ii16<0xE7, RawFrm, (ops i16imm:$port),
-                   "out{w} {%ax, $port|$port, %AX}", []>, Imp<[AX], []>, OpSize;
-def OUT32ir : Ii16<0xE7, RawFrm, (ops i16imm:$port),
-                   "out{l} {%eax, $port|$port, %EAX}", []>, Imp<[EAX], []>;
+  def OUT8ir  : Ii8<0xE6, RawFrm, (ops i8imm:$port),
+                     "out{b} {%al, $port|$port, %AL}",
+                     [(writeport (i8 AL), (i8 imm:$port))]>,
+                     Imp<[AL], []>;
+  def OUT16ir : Ii8<0xE7, RawFrm, (ops i8imm:$port),
+                     "out{w} {%ax, $port|$port, %AX}",
+                     [(writeport (i16 AX), (i8 imm:$port))]>,
+                     Imp<[AX], []>, OpSize;
+  def OUT32ir : Ii8<0xE7, RawFrm, (ops i8imm:$port),
+                     "out{l} {%eax, $port|$port, %EAX}",
+                     [(writeport (i32 EAX), (i8 imm:$port))]>,
+                     Imp<[EAX], []>;
+}
 
 //===----------------------------------------------------------------------===//
 //  Move Instructions...
