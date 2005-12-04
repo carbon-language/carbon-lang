@@ -163,6 +163,7 @@ class Instruction {
   bit isTerminator = 0;     // Is this part of the terminator for a basic block?
   bit hasDelaySlot = 0;     // Does this instruction have an delay slot?
   bit usesCustomDAGSchedInserter = 0; // Pseudo instr needing special help.
+  bit hasCtrlDep   = 0;     // Does this instruction r/w ctrl-flow chains?
   
   InstrItinClass Itinerary; // Execution steps used for scheduling. 
 }

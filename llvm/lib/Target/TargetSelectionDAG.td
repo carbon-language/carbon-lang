@@ -68,7 +68,7 @@ class SDTypeProfile<int numresults, int numoperands,
 
 // Builtin profiles.
 def SDTImm    : SDTypeProfile<1, 0, [SDTCisInt<0>]>;      // for 'imm'.
-def SDTVT     : SDTypeProfile<1, 0, [SDTCisVT<0, OtherVT>]>; // for 'vt'.
+def SDTOther  : SDTypeProfile<1, 0, [SDTCisVT<0, OtherVT>]>; // for 'vt'.
 def SDTUNDEF  : SDTypeProfile<1, 0, []>; // for 'undef'.
 def SDTIntBinOp : SDTypeProfile<1, 2, [   // add, and, or, xor, udiv, etc.
   SDTCisSameAs<0, 1>, SDTCisSameAs<0, 2>, SDTCisInt<0>
@@ -113,6 +113,21 @@ def SDTSelect : SDTypeProfile<1, 3, [ // select
   SDTCisInt<1>, SDTCisSameAs<0, 2>, SDTCisSameAs<2, 3>
 ]>;
 
+def SDTBr : SDTypeProfile<0, 1, [ // br
+  SDTCisVT<0, OtherVT>
+]>;
+
+def SDTBrCond : SDTypeProfile<0, 2, [ // brcond
+  SDTCisInt<0>, SDTCisVT<1, OtherVT>
+]>;
+
+def SDTRet : SDTypeProfile<0, 0, [ // ret
+]>;
+
+def SDTWritePort : SDTypeProfile<0, 2, [ // writeport
+  SDTCisInt<0>, SDTCisInt<1>
+]>;
+
 //===----------------------------------------------------------------------===//
 // Selection DAG Node Properties.
 //
@@ -121,6 +136,7 @@ def SDTSelect : SDTypeProfile<1, 3, [ // select
 class SDNodeProperty;
 def SDNPCommutative : SDNodeProperty;   // X op Y == Y op X
 def SDNPAssociative : SDNodeProperty;   // (X op Y) op Z == X op (Y op Z)
+def SDNPHasChain    : SDNodeProperty;   // R/W chain operand and result
 
 //===----------------------------------------------------------------------===//
 // Selection DAG Node definitions.
@@ -137,8 +153,9 @@ def set;
 def node;
 
 def imm        : SDNode<"ISD::Constant"  , SDTImm     , [], "ConstantSDNode">;
-def vt         : SDNode<"ISD::VALUETYPE" , SDTVT      , [], "VTSDNode">;
-def cond       : SDNode<"ISD::CONDCODE"  , SDTVT      , [], "CondCodeSDNode">;
+def vt         : SDNode<"ISD::VALUETYPE" , SDTOther   , [], "VTSDNode">;
+def bb         : SDNode<"ISD::BasicBlock", SDTOther   , [], "BasicBlockSDNode">;
+def cond       : SDNode<"ISD::CONDCODE"  , SDTOther   , [], "CondCodeSDNode">;
 def undef      : SDNode<"ISD::UNDEF"     , SDTUNDEF   , []>;
 def globaladdr : SDNode<"ISD::GlobalAddress", SDTImm, [],
                         "GlobalAddressSDNode">;
@@ -193,6 +210,12 @@ def fp_to_uint : SDNode<"ISD::FP_TO_UINT" , SDTFPToIntOp>;
 
 def setcc      : SDNode<"ISD::SETCC"      , SDTSetCC>;
 def select     : SDNode<"ISD::SELECT"     , SDTSelect>;
+
+def br         : SDNode<"ISD::BR"         , SDTBr,     [SDNPHasChain]>;
+def brcond     : SDNode<"ISD::BRCOND"     , SDTBrCond, [SDNPHasChain]>;
+def ret        : SDNode<"ISD::RET"        , SDTRet,    [SDNPHasChain]>;
+
+def writeport  : SDNode<"ISD::WRITEPORT"  , SDTWritePort, [SDNPHasChain]>;
 
 //===----------------------------------------------------------------------===//
 // Selection DAG Condition Codes
