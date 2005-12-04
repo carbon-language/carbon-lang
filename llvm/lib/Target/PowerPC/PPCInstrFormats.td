@@ -31,8 +31,9 @@ class I<bits<6> opcode, dag OL, string asmstr, InstrItinClass itin>
 
 // 1.7.1 I-Form
 class IForm<bits<6> opcode, bit aa, bit lk, dag OL, string asmstr,
-            InstrItinClass itin>
+            InstrItinClass itin, list<dag> pattern>
          : I<opcode, OL, asmstr, itin> {
+  let Pattern = pattern;
   bits<24> LI;
 
   let Inst{6-29}  = LI;

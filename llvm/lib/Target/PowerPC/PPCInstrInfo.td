@@ -128,7 +128,7 @@ def u16imm  : Operand<i32> {
 def s16immX4  : Operand<i32> {   // Multiply imm by 4 before printing.
   let PrintMethod = "printS16X4ImmOperand";
 }
-def target : Operand<i32> {
+def target : Operand<OtherVT> {
   let PrintMethod = "printBranchOperand";
 }
 def calltarget : Operand<i32> {
@@ -194,7 +194,9 @@ let isBranch = 1, isTerminator = 1 in {
   def COND_BRANCH : Pseudo<(ops CRRC:$crS, u16imm:$opc,
                                 target:$true, target:$false),
                            "; COND_BRANCH", []>;
-  def B   : IForm<18, 0, 0, (ops target:$func), "b $func", BrB>;
+  def B   : IForm<18, 0, 0, (ops target:$dst),
+                  "b $dst", BrB,
+                  [(br bb:$dst)]>;
 
   // FIXME: 4*CR# needs to be added to the BI field!
   // This will only work for CR0 as it stands now
@@ -223,8 +225,10 @@ let isCall = 1,
           LR,CTR,
           CR0,CR1,CR5,CR6,CR7] in {
   // Convenient aliases for call instructions
-  def BL  : IForm<18, 0, 1, (ops calltarget:$func, variable_ops), "bl $func", BrB>;
-  def BLA : IForm<18, 1, 1, (ops aaddr:$func, variable_ops), "bla $func", BrB>;
+  def BL  : IForm<18, 0, 1, (ops calltarget:$func, variable_ops), 
+                            "bl $func", BrB, []>;
+  def BLA : IForm<18, 1, 1, (ops aaddr:$func, variable_ops),
+                            "bla $func", BrB, []>;
   def BCTRL : XLForm_2_ext<19, 528, 20, 0, 1, (ops variable_ops), "bctrl", BrB>;
 }
 
