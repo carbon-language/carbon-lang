@@ -3014,7 +3014,10 @@ void ISel::EmitFastCCToFastCCTailCall(SDNode *TailCallNode) {
   bool isDirect = isa<GlobalAddressSDNode>(Callee) ||
                   isa<ExternalSymbolSDNode>(Callee);
   unsigned CalleeReg = 0;
-  if (!isDirect) CalleeReg = SelectExpr(Callee);
+  if (!isDirect) {
+    // If this is not a direct tail call, evaluate the callee's address.
+    CalleeReg = SelectExpr(Callee);
+  }
 
   unsigned RegOp1 = 0;
   unsigned RegOp2 = 0;
@@ -3059,6 +3062,15 @@ void ISel::EmitFastCCToFastCCTailCall(SDNode *TailCallNode) {
         break;
       }
   }
+  
+  // If this is not a direct tail call, put the callee's address into ECX.
+  // The address has to be evaluated into a non-callee save register that is
+  // not used for arguments.  This means either ECX, as EAX and EDX may be
+  // used for argument passing.  We do this here to make sure that the
+  // expressions for arguments and callee are all evaluated before the copies
+  // into physical registers.
+  if (!isDirect)
+    BuildMI(BB, X86::MOV32rr, 1, X86::ECX).addReg(CalleeReg);
 
   // Adjust ESP.
   if (ESPOffset)
@@ -3067,21 +3079,7 @@ void ISel::EmitFastCCToFastCCTailCall(SDNode *TailCallNode) {
 
   // TODO: handle jmp [mem]
   if (!isDirect) {
-    // We do not want the register allocator to allocate CalleeReg to a callee 
-    // saved register, as these will be restored before the JMP.  To prevent
-    // this, emit explicit clobbers of callee saved regs here.  A better way to
-    // solve this would be to specify that the register constraints of TAILJMPr
-    // only allow registers that are not callee saved, but we currently can't
-    // express that.  This forces all four of these regs to be saved and 
-    // reloaded for all functions with an indirect tail call.
-    // TODO: Improve this!
-    BuildMI(BB, X86::IMPLICIT_DEF, 4)
-       .addReg(X86::ESI, MachineOperand::Def)
-       .addReg(X86::EDI, MachineOperand::Def)
-       .addReg(X86::EBX, MachineOperand::Def)
-       .addReg(X86::EBP, MachineOperand::Def);
-    
-    BuildMI(BB, X86::TAILJMPr, 1).addReg(CalleeReg);
+    BuildMI(BB, X86::TAILJMPr, 1).addReg(X86::ECX);
   } else if (GlobalAddressSDNode *GASD = dyn_cast<GlobalAddressSDNode>(Callee)){
     BuildMI(BB, X86::TAILJMPd, 1).addGlobalAddress(GASD->getGlobal(), true);
   } else {
