@@ -30,6 +30,11 @@ def PPCfsel   : SDNode<"PPCISD::FSEL",
 def PPChi     : SDNode<"PPCISD::Hi", SDTIntBinOp, []>;
 def PPClo     : SDNode<"PPCISD::Lo", SDTIntBinOp, []>;
 
+// These are target-independent nodes, but have target-specific formats.
+def SDT_PPCCallSeq : SDTypeProfile<0, 1, [ SDTCisVT<0, i32> ]>;
+def callseq_start : SDNode<"ISD::CALLSEQ_START", SDT_PPCCallSeq,[SDNPHasChain]>;
+def callseq_end   : SDNode<"ISD::CALLSEQ_END",   SDT_PPCCallSeq,[SDNPHasChain]>;
+
 //===----------------------------------------------------------------------===//
 // PowerPC specific transformation functions and pattern fragments.
 //
@@ -158,9 +163,13 @@ def crbitm: Operand<i8> {
 // Pseudo-instructions:
 def PHI : Pseudo<(ops variable_ops), "; PHI", []>;
 
-let isLoad = 1 in {
-def ADJCALLSTACKDOWN : Pseudo<(ops u16imm:$amt), "; ADJCALLSTACKDOWN", []>;
-def ADJCALLSTACKUP : Pseudo<(ops u16imm:$amt), "; ADJCALLSTACKUP", []>;
+let isLoad = 1, hasCtrlDep = 1 in {
+def ADJCALLSTACKDOWN : Pseudo<(ops u16imm:$amt),
+                              "; ADJCALLSTACKDOWN",
+                              [(callseq_start imm:$amt)]>;
+def ADJCALLSTACKUP   : Pseudo<(ops u16imm:$amt),
+                              "; ADJCALLSTACKUP",
+                              [(callseq_end imm:$amt)]>;
 }
 def IMPLICIT_DEF_GPR : Pseudo<(ops GPRC:$rD), "; $rD = IMPLICIT_DEF_GPRC",
                               [(set GPRC:$rD, (undef))]>;

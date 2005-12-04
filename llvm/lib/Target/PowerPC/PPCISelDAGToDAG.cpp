@@ -1190,14 +1190,6 @@ SDOperand PPCDAGToDAGISel::Select(SDOperand Op) {
                                 getI32Imm(BROpc));
   }
     
-  case ISD::CALLSEQ_START:
-  case ISD::CALLSEQ_END: {
-    unsigned Amt = cast<ConstantSDNode>(N->getOperand(1))->getValue();
-    unsigned Opc = N->getOpcode() == ISD::CALLSEQ_START ?
-                       PPC::ADJCALLSTACKDOWN : PPC::ADJCALLSTACKUP;
-    return CurDAG->SelectNodeTo(N, Opc, MVT::Other,
-                                getI32Imm(Amt), Select(N->getOperand(0)));
-  }
   case ISD::RET: {
     SDOperand Chain = Select(N->getOperand(0));     // Token chain.
 
