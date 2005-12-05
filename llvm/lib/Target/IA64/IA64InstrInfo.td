@@ -156,31 +156,31 @@ def ZXT4 : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src), "zxt4 $dst = $src;;",
 def MIX1L : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
           "mix1.l $dst = $src1, $src2;;",
 	  [(set GR:$dst, (or (and GR:$src1, isMIX1Lable),
-	                     (and (srl GR:$src2, 8), isMIX1Lable)))]>;
+	                     (and (srl GR:$src2, (i64 8)), isMIX1Lable)))]>;
 
 def MIX2L : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
           "mix2.l $dst = $src1, $src2;;",
 	  [(set GR:$dst, (or (and GR:$src1, isMIX2Lable),
-	                     (and (srl GR:$src2, 16), isMIX2Lable)))]>;
+	                     (and (srl GR:$src2, (i64 16)), isMIX2Lable)))]>;
 
 def MIX4L : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
           "mix4.l $dst = $src1, $src2;;",
 	  [(set GR:$dst, (or (and GR:$src1, isMIX4Lable),
-	                     (and (srl GR:$src2, 32), isMIX4Lable)))]>;
+	                     (and (srl GR:$src2, (i64 32)), isMIX4Lable)))]>;
 
 def MIX1R : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
           "mix1.r $dst = $src1, $src2;;",
-	  [(set GR:$dst, (or (and (shl GR:$src1, 8), isMIX1Rable),
+	  [(set GR:$dst, (or (and (shl GR:$src1, (i64 8)), isMIX1Rable),
 	                     (and GR:$src2, isMIX1Rable)))]>;
 
 def MIX2R : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
           "mix2.r $dst = $src1, $src2;;",
-	  [(set GR:$dst, (or (and (shl GR:$src1, 16), isMIX2Rable),
+	  [(set GR:$dst, (or (and (shl GR:$src1, (i64 16)), isMIX2Rable),
 	                     (and GR:$src2, isMIX2Rable)))]>;
 
 def MIX4R : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
           "mix4.r $dst = $src1, $src2;;",
-	  [(set GR:$dst, (or (and (shl GR:$src1, 32), isMIX4Rable),
+	  [(set GR:$dst, (or (and (shl GR:$src1, (i64 32)), isMIX4Rable),
 	                     (and GR:$src2, isMIX4Rable)))]>;
 
 def GETFSIGD : AForm_DAG<0x03, 0x0b, (ops GR:$dst, FP:$src),
