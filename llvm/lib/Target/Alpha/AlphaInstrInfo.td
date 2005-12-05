@@ -104,10 +104,12 @@ def IDEF_F64 : PseudoInstAlpha<(ops F8RC:$RA), "#idef $RA",
              [(set F8RC:$RA, (undef))]>;
 
 def WTF : PseudoInstAlpha<(ops variable_ops), "#wtf", []>;
-def ADJUSTSTACKUP : PseudoInstAlpha<(ops s64imm:$amt), "ADJUP", 
+let isLoad = 1, hasCtrlDep = 1 in {
+def ADJUSTSTACKUP : PseudoInstAlpha<(ops s64imm:$amt), "; ADJUP $amt", 
                 [(callseq_start imm:$amt)]>;
-def ADJUSTSTACKDOWN : PseudoInstAlpha<(ops s64imm:$amt), "ADJDOWN", 
+def ADJUSTSTACKDOWN : PseudoInstAlpha<(ops s64imm:$amt), "; ADJDOWN $amt", 
                 [(callseq_end imm:$amt)]>;
+}
 def ALTENT : PseudoInstAlpha<(ops s64imm:$TARGET), "$TARGET:\n", []>;
 def PCLABEL : PseudoInstAlpha<(ops s64imm:$num), "PCMARKER_$num:\n",[]>;
 def MEMLABEL : PseudoInstAlpha<(ops s64imm:$i, s64imm:$j, s64imm:$k, s64imm:$m),
