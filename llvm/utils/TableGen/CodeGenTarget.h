@@ -90,7 +90,26 @@ public:
     assert(0 && "Didn't find the register class");
     abort();
   }
-
+  
+  /// getRegisterClassForRegister - Find the register class that contains the
+  /// specified physical register.  If there register exists in multiple
+  /// register classes or is not in a register class, return null.
+  const CodeGenRegisterClass *getRegisterClassForRegister(Record *R) const {
+    const std::vector<CodeGenRegisterClass> &RCs = getRegisterClasses();
+    const CodeGenRegisterClass *FoundRC = 0;
+    for (unsigned i = 0, e = RCs.size(); i != e; ++i) {
+      const CodeGenRegisterClass &RC = RegisterClasses[i];
+      for (unsigned ei = 0, ee = RC.Elements.size(); ei != ee; ++ei) {
+        if (R == RC.Elements[ei]) {
+          if (FoundRC) return 0;  // In multiple RC's
+          FoundRC = &RC;
+          break;
+        }
+      }
+    }
+    return FoundRC;
+  }
+  
   const std::vector<MVT::ValueType> &getLegalValueTypes() const {
     if (LegalValueTypes.empty()) ReadLegalValueTypes();
     return LegalValueTypes;

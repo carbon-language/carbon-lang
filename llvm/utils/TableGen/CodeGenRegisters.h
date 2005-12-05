@@ -42,6 +42,8 @@ namespace llvm {
 
     const std::string &getName() const;
 
+    unsigned getNumValueTypes() const { return VTs.size(); }
+    
     const MVT::ValueType getValueTypeNum(unsigned VTNum) const {
       if (VTNum < VTs.size())
         return VTs[VTNum];
