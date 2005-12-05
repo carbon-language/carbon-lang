@@ -137,13 +137,14 @@ public:
   //
 
   /// getGlobalVariable - Look up the specified global variable in the module
-  /// symbol table.  If it does not exist, return null.  Note that this only
-  /// returns a global variable if it does not have internal linkage.  The type
-  /// argument should be the underlying type of the global, i.e., it should not
-  /// have the top-level PointerType, which represents the address of the
-  /// global.
+  /// symbol table.  If it does not exist, return null.  The type argument
+  /// should be the underlying type of the global, i.e., it should not have
+  /// the top-level PointerType, which represents the address of the global.
+  /// If AllowInternal is set to true, this function will return types that
+  /// have InternalLinkage. By default, these types are not returned.
   ///
-  GlobalVariable *getGlobalVariable(const std::string &Name, const Type *Ty);
+  GlobalVariable *getGlobalVariable(const std::string &Name, const Type *Ty,
+                                    bool AllowInternal = false);
 
 
   //===--------------------------------------------------------------------===//
