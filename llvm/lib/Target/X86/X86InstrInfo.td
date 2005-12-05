@@ -145,6 +145,13 @@ def immSExt8  : PatLeaf<(imm), [{
   return (int)N->getValue() == (signed char)N->getValue();
 }]>;
 
+def immZExt8  : PatLeaf<(imm), [{
+  // immZExt8 predicate - True if the immediate fits in a 8-bit zero extended
+  // field.
+  return (unsigned)N->getValue() == (unsigned char)N->getValue();
+}]>;
+
+
 //===----------------------------------------------------------------------===//
 // Instruction templates...
 
@@ -328,25 +335,25 @@ def IN32ri : Ii8<0xE5, RawFrm, (ops i8imm:$port),
 let hasCtrlDep=1 in {
   def OUT8rr  : I<0xEE, RawFrm, (ops),
                   "out{b} {%al, %dx|%DX, %AL}",
-                  [(writeport (i8 AL), (i16 DX))]>,  Imp<[DX,  AL], []>;
+                  [(writeport AL, DX)]>,  Imp<[DX,  AL], []>;
   def OUT16rr : I<0xEF, RawFrm, (ops),
                   "out{w} {%ax, %dx|%DX, %AX}",
-                  [(writeport (i16 AX), (i16 DX))]>,  Imp<[DX,  AX], []>, OpSize;
+                  [(writeport AX, DX)]>,  Imp<[DX,  AX], []>, OpSize;
   def OUT32rr : I<0xEF, RawFrm, (ops),
                   "out{l} {%eax, %dx|%DX, %EAX}",
-                  [(writeport (i32 EAX), (i16 DX))]>, Imp<[DX, EAX], []>;
+                  [(writeport EAX, DX)]>, Imp<[DX, EAX], []>;
 
-  def OUT8ir  : Ii8<0xE6, RawFrm, (ops i8imm:$port),
+  def OUT8ir  : Ii8<0xE6, RawFrm, (ops i16i8imm:$port),
                      "out{b} {%al, $port|$port, %AL}",
-                     [(writeport (i8 AL), (i8 imm:$port))]>,
+                     [(writeport AL, (i16 immZExt8:$port))]>,
                      Imp<[AL], []>;
-  def OUT16ir : Ii8<0xE7, RawFrm, (ops i8imm:$port),
+  def OUT16ir : Ii8<0xE7, RawFrm, (ops i16i8imm:$port),
                      "out{w} {%ax, $port|$port, %AX}",
-                     [(writeport (i16 AX), (i8 imm:$port))]>,
+                     [(writeport AX, (i16 immZExt8:$port))]>,
                      Imp<[AX], []>, OpSize;
-  def OUT32ir : Ii8<0xE7, RawFrm, (ops i8imm:$port),
+  def OUT32ir : Ii8<0xE7, RawFrm, (ops i16i8imm:$port),
                      "out{l} {%eax, $port|$port, %EAX}",
-                     [(writeport (i32 EAX), (i8 imm:$port))]>,
+                     [(writeport EAX, (i16 immZExt8:$port))]>,
                      Imp<[EAX], []>;
 }
 
@@ -917,14 +924,14 @@ def SHL32rCL : I<0xD3, MRM4r, (ops R32:$dst, R32:$src),
 
 def SHL8ri   : Ii8<0xC0, MRM4r, (ops R8 :$dst, R8 :$src1, i8imm:$src2),
                    "shl{b} {$src2, $dst|$dst, $src2}",
-                   [(set R8:$dst, (shl R8:$src1, imm:$src2))]>;
+                   [(set R8:$dst, (shl R8:$src1, (i8 imm:$src2)))]>;
 let isConvertibleToThreeAddress = 1 in {   // Can transform into LEA.
-def SHL16ri  : Ii8<0xC1, MRM4r, (ops R16:$dst, R16:$src1, i16i8imm:$src2),
+def SHL16ri  : Ii8<0xC1, MRM4r, (ops R16:$dst, R16:$src1, i8imm:$src2),
                    "shl{w} {$src2, $dst|$dst, $src2}",
-                   [(set R16:$dst, (shl R16:$src1, immSExt8:$src2))]>, OpSize;
-def SHL32ri  : Ii8<0xC1, MRM4r, (ops R32:$dst, R32:$src1, i32i8imm:$src2),
+                   [(set R16:$dst, (shl R16:$src1, (i8 imm:$src2)))]>, OpSize;
+def SHL32ri  : Ii8<0xC1, MRM4r, (ops R32:$dst, R32:$src1, i8imm:$src2),
                    "shl{l} {$src2, $dst|$dst, $src2}",
-                   [(set R32:$dst, (shl R32:$src1, immSExt8:$src2))]>;
+                   [(set R32:$dst, (shl R32:$src1, (i8 imm:$src2)))]>;
 }
 
 let isTwoAddress = 0 in {
@@ -954,13 +961,13 @@ def SHR32rCL : I<0xD3, MRM5r, (ops R32:$dst, R32:$src),
 
 def SHR8ri   : Ii8<0xC0, MRM5r, (ops R8:$dst, R8:$src1, i8imm:$src2),
                    "shr{b} {$src2, $dst|$dst, $src2}",
-                   [(set R8:$dst, (srl R8:$src1, imm:$src2))]>;
-def SHR16ri  : Ii8<0xC1, MRM5r, (ops R16:$dst, R16:$src1, i16i8imm:$src2),
+                   [(set R8:$dst, (srl R8:$src1, (i8 imm:$src2)))]>;
+def SHR16ri  : Ii8<0xC1, MRM5r, (ops R16:$dst, R16:$src1, i8imm:$src2),
                    "shr{w} {$src2, $dst|$dst, $src2}",
-                   [(set R16:$dst, (srl R16:$src1, immSExt8:$src2))]>, OpSize;
-def SHR32ri  : Ii8<0xC1, MRM5r, (ops R32:$dst, R32:$src1, i32i8imm:$src2),
+                   [(set R16:$dst, (srl R16:$src1, (i8 imm:$src2)))]>, OpSize;
+def SHR32ri  : Ii8<0xC1, MRM5r, (ops R32:$dst, R32:$src1, i8imm:$src2),
                    "shr{l} {$src2, $dst|$dst, $src2}",
-                   [(set R32:$dst, (srl R32:$src1, immSExt8:$src2))]>;
+                   [(set R32:$dst, (srl R32:$src1, (i8 imm:$src2)))]>;
 
 let isTwoAddress = 0 in {
   def SHR8mCL  : I<0xD2, MRM5m, (ops i8mem :$dst),
@@ -989,13 +996,14 @@ def SAR32rCL : I<0xD3, MRM7r, (ops R32:$dst, R32:$src),
 
 def SAR8ri   : Ii8<0xC0, MRM7r, (ops R8 :$dst, R8 :$src1, i8imm:$src2),
                    "sar{b} {$src2, $dst|$dst, $src2}",
-                   [(set R8:$dst, (sra R8:$src1, imm:$src2))]>;
-def SAR16ri  : Ii8<0xC1, MRM7r, (ops R16:$dst, R16:$src1, i16i8imm:$src2),
+                   [(set R8:$dst, (sra R8:$src1, (i8 imm:$src2)))]>;
+def SAR16ri  : Ii8<0xC1, MRM7r, (ops R16:$dst, R16:$src1, i8imm:$src2),
                    "sar{w} {$src2, $dst|$dst, $src2}",
-                   [(set R16:$dst, (sra R16:$src1, immSExt8:$src2))]>, OpSize;
-def SAR32ri  : Ii8<0xC1, MRM7r, (ops R32:$dst, R32:$src1, i32i8imm:$src2),
+                   [(set R16:$dst, (sra R16:$src1, (i8 imm:$src2)))]>,
+                   OpSize;
+def SAR32ri  : Ii8<0xC1, MRM7r, (ops R32:$dst, R32:$src1, i8imm:$src2),
                    "sar{l} {$src2, $dst|$dst, $src2}",
-                   [(set R32:$dst, (sra R32:$src1, immSExt8:$src2))]>;
+                   [(set R32:$dst, (sra R32:$src1, (i8 imm:$src2)))]>;
 let isTwoAddress = 0 in {
   def SAR8mCL  : I<0xD2, MRM7m, (ops i8mem :$dst),
                    "sar{b} {%cl, $dst|$dst, %CL}", []>, Imp<[CL],[]>;
