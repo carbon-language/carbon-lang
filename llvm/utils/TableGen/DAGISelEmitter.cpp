@@ -467,9 +467,12 @@ static unsigned char getIntrinsicType(Record *R, bool NotRegisters,
     // Pattern fragment types will be resolved when they are inlined.
     return MVT::isUnknown;
   } else if (R->isSubClassOf("Register")) {
-    //const CodeGenTarget &T = TP.getDAGISelEmitter().getTargetInfo();
-    // TODO: if a register appears in exactly one regclass, we could use that
-    // type info.
+    // If the register appears in exactly one regclass, and the regclass has one
+    // value type, use it as the known type.
+    const CodeGenTarget &T = TP.getDAGISelEmitter().getTargetInfo();
+    if (const CodeGenRegisterClass *RC = T.getRegisterClassForRegister(R))
+      if (RC->getNumValueTypes() == 1)
+        return RC->getValueTypeNum(0);
     return MVT::isUnknown;
   } else if (R->isSubClassOf("ValueType") || R->isSubClassOf("CondCode")) {
     // Using a VTSDNode or CondCodeSDNode.
@@ -1719,18 +1722,8 @@ void DAGISelEmitter::EmitMatchForPattern(TreePatternNode *N,
 /// getRegisterValueType - Look up and return the first ValueType of specified 
 /// RegisterClass record
 static MVT::ValueType getRegisterValueType(Record *R, const CodeGenTarget &T) {
-  const std::vector<CodeGenRegisterClass> &RegisterClasses =
-    T.getRegisterClasses();
-
-  for (unsigned i = 0, e = RegisterClasses.size(); i != e; ++i) {
-    const CodeGenRegisterClass &RC = RegisterClasses[i];
-    for (unsigned ei = 0, ee = RC.Elements.size(); ei != ee; ++ei) {
-      if (R == RC.Elements[ei]) {
-        return RC.getValueTypeNum(0);
-      }
-    }
-  }
-
+  if (const CodeGenRegisterClass *RC = T.getRegisterClassForRegister(R))
+    return RC->getValueTypeNum(0);
   return MVT::Other;
 }
 
