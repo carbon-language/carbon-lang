@@ -171,6 +171,24 @@ class OForm4<bits<6> opcode, bits<7> fun, string asmstr>
   let Inst{4-0} = Rc;
 }
 
+class OForm4A<bits<6> opcode, bits<7> fun, string asmstr, list<dag> pattern> 
+        : InstAlphaAlt<opcode, asmstr> {
+  let Pattern = pattern;
+
+  bits<5> Rc;
+  bits<5> Rb;
+  bits<5> Ra;
+  bits<7> Function = fun;
+
+  let isTwoAddress = 1;
+  let Inst{25-21} = Ra;
+  let Inst{20-16} = Rb;
+  let Inst{15-13} = 0;
+  let Inst{12} = 0;
+  let Inst{11-5} = Function;
+  let Inst{4-0} = Rc;
+}
+
 
 class OFormL<bits<6> opcode, bits<7> fun, string asmstr, list<dag> pattern> 
         : InstAlpha<opcode, (ops GPRC:$RC, GPRC:$RA, u8imm:$L), asmstr> {

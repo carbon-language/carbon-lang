@@ -148,24 +148,37 @@ let isTwoAddress = 1 in {
 //Operation Form:
 
 //conditional moves, int
-def CMOVEQ   : OForm4<  0x11, 0x24, "cmoveq $RCOND,$RSRC,$RDEST">; //CMOVE if RCOND =  zero
 def CMOVEQi  : OForm4L< 0x11, 0x24, "cmoveq $RCOND,$L,$RDEST">; //CMOVE if RCOND =  zero
-def CMOVGE   : OForm4<  0x11, 0x46, "cmovge $RCOND,$RSRC,$RDEST">; //CMOVE if RCOND >= zero
 def CMOVGEi  : OForm4L< 0x11, 0x46, "cmovge $RCOND,$L,$RDEST">; //CMOVE if RCOND >= zero
-def CMOVGT   : OForm4<  0x11, 0x66, "cmovgt $RCOND,$RSRC,$RDEST">; //CMOVE if RCOND > zero
 def CMOVGTi  : OForm4L< 0x11, 0x66, "cmovgt $RCOND,$L,$RDEST">; //CMOVE if RCOND > zero
-def CMOVLBC  : OForm4<  0x11, 0x16, "cmovlbc $RCOND,$RSRC,$RDEST">; //CMOVE if RCOND low bit clear
 def CMOVLBCi : OForm4L< 0x11, 0x16, "cmovlbc $RCOND,$L,$RDEST">; //CMOVE if RCOND low bit clear
-def CMOVLBS  : OForm4<  0x11, 0x14, "cmovlbs $RCOND,$RSRC,$RDEST">; //CMOVE if RCOND low bit set
 def CMOVLBSi : OForm4L< 0x11, 0x14, "cmovlbs $RCOND,$L,$RDEST">; //CMOVE if RCOND low bit set
-def CMOVLE   : OForm4<  0x11, 0x64, "cmovle $RCOND,$RSRC,$RDEST">; //CMOVE if RCOND <= zero
 def CMOVLEi  : OForm4L< 0x11, 0x64, "cmovle $RCOND,$L,$RDEST">; //CMOVE if RCOND <= zero
-def CMOVLT   : OForm4<  0x11, 0x44, "cmovlt $RCOND,$RSRC,$RDEST">; //CMOVE if RCOND < zero
 def CMOVLTi  : OForm4L< 0x11, 0x44, "cmovlt $RCOND,$L,$RDEST">; //CMOVE if RCOND < zero
-def CMOVNE   : OForm4<  0x11, 0x26, "cmovne $RCOND,$RSRC,$RDEST">; //CMOVE if RCOND != zero
 def CMOVNEi  : OForm4L< 0x11, 0x26, "cmovne $RCOND,$L,$RDEST">; //CMOVE if RCOND != zero
 
-//FIXME: fold setcc with select
+let OperandList = (ops GPRC:$RDEST, GPRC:$RTRUE, GPRC:$RFALSE, GPRC:$RCOND) in {
+def CMOVLBC  : OForm4A<  0x11, 0x16, "cmovlbc $RCOND,$RFALSE,$RDEST",
+                [(set GPRC:$RDEST, (select (xor GPRC:$RCOND, 1), GPRC:$RTRUE, GPRC:$RFALSE))]>;
+def CMOVLBS  : OForm4A<  0x11, 0x14, "cmovlbs $RCOND,$RFALSE,$RDEST",
+                [(set GPRC:$RDEST, (select (and GPRC:$RCOND, 1), GPRC:$RTRUE, GPRC:$RFALSE))]>;
+def CMOVEQ   : OForm4A<  0x11, 0x24, "cmoveq $RCOND,$RFALSE,$RDEST",
+                [(set GPRC:$RDEST, (select (seteq GPRC:$RCOND, 0), GPRC:$RTRUE, GPRC:$RFALSE))]>;
+def CMOVGE   : OForm4A<  0x11, 0x46, "cmovge $RCOND,$RFALSE,$RDEST",
+                [(set GPRC:$RDEST, (select (setge GPRC:$RCOND, 0), GPRC:$RTRUE, GPRC:$RFALSE))]>;
+def CMOVGT   : OForm4A<  0x11, 0x66, "cmovgt $RCOND,$RFALSE,$RDEST",
+                [(set GPRC:$RDEST, (select (setgt GPRC:$RCOND, 0), GPRC:$RTRUE, GPRC:$RFALSE))]>;
+def CMOVLE   : OForm4A<  0x11, 0x64, "cmovle $RCOND,$RFALSE,$RDEST",
+                [(set GPRC:$RDEST, (select (setlt GPRC:$RCOND, 0), GPRC:$RTRUE, GPRC:$RFALSE))]>;
+def CMOVLT   : OForm4A<  0x11, 0x44, "cmovlt $RCOND,$RFALSE,$RDEST",
+                [(set GPRC:$RDEST, (select (setlt GPRC:$RCOND, 0), GPRC:$RTRUE, GPRC:$RFALSE))]>;
+def CMOVNE   : OForm4A<  0x11, 0x26, "cmovne $RCOND,$RFALSE,$RDEST",
+                [(set GPRC:$RDEST, (select (setne GPRC:$RCOND, 0), GPRC:$RTRUE, GPRC:$RFALSE))]>;
+}
+
+//FIXME: fold setcc with select for all cases.  clearly I need patterns for inverted conditions
+//       and constants (which require inverted conditions as legalize puts the constant in the
+//       wrong field for the instruction definition
 def : Pat<(select GPRC:$which, GPRC:$src1, GPRC:$src2),
       (CMOVEQ GPRC:$src1, GPRC:$src2, GPRC:$which)>;
 
