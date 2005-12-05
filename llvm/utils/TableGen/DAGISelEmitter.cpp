@@ -1045,6 +1045,34 @@ FindPatternInputsAndOutputs(TreePattern *I, TreePatternNode *Pat,
   }
 }
 
+/// NodeHasChain - return true if TreePatternNode has the property
+/// 'hasChain', meaning it reads a ctrl-flow chain operand and writes
+/// a chain result.
+static bool NodeHasChain(TreePatternNode *N, DAGISelEmitter &ISE)
+{
+  if (N->isLeaf()) return false;
+  Record *Operator = N->getOperator();
+  if (!Operator->isSubClassOf("SDNode")) return false;
+
+  const SDNodeInfo &NodeInfo = ISE.getSDNodeInfo(Operator);
+  return NodeInfo.hasProperty(SDNodeInfo::SDNPHasChain);
+}
+
+static bool PatternHasCtrlDep(TreePatternNode *N, DAGISelEmitter &ISE)
+{
+  if (NodeHasChain(N, ISE))
+    return true;
+  else {
+    for (unsigned i = 0, e = N->getNumChildren(); i != e; ++i) {
+      TreePatternNode *Child = N->getChild(i);
+      if (PatternHasCtrlDep(Child, ISE))
+        return true;
+    }
+  }
+
+  return false;
+}
+
 
 /// ParseInstructions - Parse all of the instructions, inlining and resolving
 /// any fragments involved.  This populates the Instructions list with fully
@@ -1228,7 +1256,7 @@ void DAGISelEmitter::ParseInstructions() {
     DAGInstruction &TheInst = II->second;
     TreePattern *I = TheInst.getPattern();
     if (I == 0) continue;  // No pattern.
-    
+
     if (I->getNumTrees() != 1) {
       std::cerr << "CANNOT HANDLE: " << I->getRecord()->getName() << " yet!";
       continue;
@@ -1253,6 +1281,12 @@ void DAGISelEmitter::ParseInstructions() {
     
     TreePatternNode *DstPattern = TheInst.getResultPattern();
     PatternsToMatch.push_back(std::make_pair(SrcPattern, DstPattern));
+
+    if (PatternHasCtrlDep(Pattern, *this)) {
+      Record *Instr = II->first;
+      CodeGenInstruction &InstInfo = Target.getInstruction(Instr->getName());
+      InstInfo.hasCtrlDep = true;
+    }
   }
 }
 
@@ -1602,17 +1636,6 @@ struct PatternSortingPredicate {
   }
 };
 
-/// nodeHasChain - return true if TreePatternNode has the property
-/// 'hasChain', meaning it reads a ctrl-flow chain operand and writes
-/// a chain result.
-static bool nodeHasChain(TreePatternNode *N, DAGISelEmitter &ISE)
-{
-  if (N->isLeaf()) return false;
-
-  const SDNodeInfo &NodeInfo = ISE.getSDNodeInfo(N->getOperator());
-  return NodeInfo.hasProperty(SDNodeInfo::SDNPHasChain);
-}
-
 /// EmitMatchForPattern - Emit a matcher for N, going to the label for PatternNo
 /// if the match fails.  At this point, we already know that the opcode for N
 /// matches, and the SDNode for the result has the RootName specified name.
@@ -1650,7 +1673,7 @@ void DAGISelEmitter::EmitMatchForPattern(TreePatternNode *N,
 
 
   // Emit code to load the child nodes and match their contents recursively.
-  unsigned OpNo = (unsigned) nodeHasChain(N, *this);
+  unsigned OpNo = (unsigned) NodeHasChain(N, *this);
   for (unsigned i = 0, e = N->getNumChildren(); i != e; ++i, ++OpNo) {
     OS << "      SDOperand " << RootName << OpNo <<" = " << RootName
        << ".getOperand(" << OpNo << ");\n";
@@ -1735,19 +1758,16 @@ void DAGISelEmitter::EmitLeadChainForPattern(TreePatternNode *N,
                                              std::ostream &OS,
                                              bool &HasChain) {
   if (!N->isLeaf()) {
-    Record *Op = N->getOperator();
-    if (Op->isSubClassOf("Instruction")) {
-      bool HasCtrlDep = Op->getValueAsBit("hasCtrlDep");
-      unsigned OpNo = (unsigned) HasCtrlDep;
-      for (unsigned i = 0, e = N->getNumChildren(); i != e; ++i)
-        EmitLeadChainForPattern(N->getChild(i), RootName + utostr(OpNo),
-                                 OS, HasChain);
+    bool hc = NodeHasChain(N, *this);
+    unsigned OpNo = (unsigned) hc;
+    for (unsigned i = 0, e = N->getNumChildren(); i != e; ++i)
+      EmitLeadChainForPattern(N->getChild(i), RootName + utostr(OpNo),
+                              OS, HasChain);
 
-      if (!HasChain && HasCtrlDep) {
-        OS << "      SDOperand Chain = Select("
-           << RootName << ".getOperand(0));\n";
-        HasChain = true;
-      }
+    if (!HasChain && hc) {
+      OS << "      SDOperand Chain = Select("
+         << RootName << ".getOperand(0));\n";
+      HasChain = true;
     }
   }
 }
@@ -1759,7 +1779,7 @@ void DAGISelEmitter::EmitCopyToRegsForPattern(TreePatternNode *N,
                                               std::ostream &OS,
                                               bool &HasChain, bool &InFlag) {
   const CodeGenTarget &T = getTargetInfo();
-  unsigned OpNo = (unsigned) nodeHasChain(N, *this);
+  unsigned OpNo = (unsigned) NodeHasChain(N, *this);
   for (unsigned i = 0, e = N->getNumChildren(); i != e; ++i, ++OpNo) {
     TreePatternNode *Child = N->getChild(i);
     if (!Child->isLeaf()) {
@@ -1866,8 +1886,6 @@ CodeGenPatternResult(TreePatternNode *N, unsigned &Ctr,
 
   Record *Op = N->getOperator();
   if (Op->isSubClassOf("Instruction")) {
-    bool HasCtrlDep = Op->getValueAsBit("hasCtrlDep");
-
     // Emit all of the operands.
     std::vector<unsigned> Ops;
     for (unsigned i = 0, e = N->getNumChildren(); i != e; ++i)
@@ -1875,6 +1893,7 @@ CodeGenPatternResult(TreePatternNode *N, unsigned &Ctr,
                                          VariableMap, OS, HasChain, InFlag));
 
     CodeGenInstruction &II = Target.getInstruction(Op->getName());
+    bool HasCtrlDep = II.hasCtrlDep;
     unsigned ResNo = Ctr++;
 
     const DAGInstruction &Inst = getInstruction(Op);
@@ -1993,7 +2012,7 @@ static bool InsertOneTypeCheck(TreePatternNode *Pat, TreePatternNode *Other,
     return false;
   }
   
-  unsigned OpNo = (unsigned) nodeHasChain(Pat, ISE);
+  unsigned OpNo = (unsigned) NodeHasChain(Pat, ISE);
   for (unsigned i = 0, e = Pat->getNumChildren(); i != e; ++i, ++OpNo)
     if (InsertOneTypeCheck(Pat->getChild(i), Other->getChild(i),
                            ISE, Prefix + utostr(OpNo), PatternNo, OS))
@@ -2062,7 +2081,7 @@ void DAGISelEmitter::EmitCodeForPattern(PatternToMatch &Pattern,
   } while (InsertOneTypeCheck(Pat, Pattern.first, *this, "N", PatternNo, OS));
 
   bool HasChain = false;
-  EmitLeadChainForPattern(Pattern.second, "N", OS, HasChain);
+  EmitLeadChainForPattern(Pattern.first, "N", OS, HasChain);
 
   bool InFlag = false;
   EmitCopyToRegsForPattern(Pattern.first, "N", OS, HasChain, InFlag);
