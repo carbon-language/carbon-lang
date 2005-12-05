@@ -193,13 +193,13 @@ let isTerminator = 1 in
 //
 
 // Return instructions.
-let isTerminator = 1, isReturn = 1, isBarrier = 1, hasCtrlDep=1 in
+let isTerminator = 1, isReturn = 1, isBarrier = 1 in
   def RET : I<0xC3, RawFrm, (ops), "ret", [(ret)]>;
-let isTerminator = 1, isReturn = 1, isBarrier = 1, hasCtrlDep=1 in
+let isTerminator = 1, isReturn = 1, isBarrier = 1 in
   def RETI : Ii16<0xC2, RawFrm, (ops i16imm:$amt), "ret $amt", []>;
 
 // All branches are RawFrm, Void, Branch, and Terminators
-let isBranch = 1, isTerminator = 1, hasCtrlDep = 1 in
+let isBranch = 1, isTerminator = 1 in
   class IBr<bits<8> opcode, dag ops, string asm, list<dag> pattern> :
         I<opcode, RawFrm, ops, asm, pattern>;
 
@@ -332,30 +332,28 @@ def IN16ri : Ii8<0xE5, RawFrm, (ops i8imm:$port),
 def IN32ri : Ii8<0xE5, RawFrm, (ops i8imm:$port),
                   "in{l} {$port, %eax|%EAX, $port}", []>, Imp<[],[EAX]>;
 
-let hasCtrlDep=1 in {
-  def OUT8rr  : I<0xEE, RawFrm, (ops),
-                  "out{b} {%al, %dx|%DX, %AL}",
-                  [(writeport AL, DX)]>,  Imp<[DX,  AL], []>;
-  def OUT16rr : I<0xEF, RawFrm, (ops),
-                  "out{w} {%ax, %dx|%DX, %AX}",
-                  [(writeport AX, DX)]>,  Imp<[DX,  AX], []>, OpSize;
-  def OUT32rr : I<0xEF, RawFrm, (ops),
-                  "out{l} {%eax, %dx|%DX, %EAX}",
-                  [(writeport EAX, DX)]>, Imp<[DX, EAX], []>;
+def OUT8rr  : I<0xEE, RawFrm, (ops),
+                "out{b} {%al, %dx|%DX, %AL}",
+                [(writeport AL, DX)]>,  Imp<[DX,  AL], []>;
+def OUT16rr : I<0xEF, RawFrm, (ops),
+                "out{w} {%ax, %dx|%DX, %AX}",
+                [(writeport AX, DX)]>,  Imp<[DX,  AX], []>, OpSize;
+def OUT32rr : I<0xEF, RawFrm, (ops),
+                "out{l} {%eax, %dx|%DX, %EAX}",
+                [(writeport EAX, DX)]>, Imp<[DX, EAX], []>;
 
-  def OUT8ir  : Ii8<0xE6, RawFrm, (ops i16i8imm:$port),
-                     "out{b} {%al, $port|$port, %AL}",
-                     [(writeport AL, (i16 immZExt8:$port))]>,
-                     Imp<[AL], []>;
-  def OUT16ir : Ii8<0xE7, RawFrm, (ops i16i8imm:$port),
-                     "out{w} {%ax, $port|$port, %AX}",
-                     [(writeport AX, (i16 immZExt8:$port))]>,
-                     Imp<[AX], []>, OpSize;
-  def OUT32ir : Ii8<0xE7, RawFrm, (ops i16i8imm:$port),
-                     "out{l} {%eax, $port|$port, %EAX}",
-                     [(writeport EAX, (i16 immZExt8:$port))]>,
-                     Imp<[EAX], []>;
-}
+def OUT8ir  : Ii8<0xE6, RawFrm, (ops i16i8imm:$port),
+                   "out{b} {%al, $port|$port, %AL}",
+                   [(writeport AL, (i16 immZExt8:$port))]>,
+                   Imp<[AL], []>;
+def OUT16ir : Ii8<0xE7, RawFrm, (ops i16i8imm:$port),
+                   "out{w} {%ax, $port|$port, %AX}",
+                   [(writeport AX, (i16 immZExt8:$port))]>,
+                   Imp<[AX], []>, OpSize;
+def OUT32ir : Ii8<0xE7, RawFrm, (ops i16i8imm:$port),
+                   "out{l} {%eax, $port|$port, %EAX}",
+                   [(writeport EAX, (i16 immZExt8:$port))]>,
+                   Imp<[EAX], []>;
 
 //===----------------------------------------------------------------------===//
 //  Move Instructions...
