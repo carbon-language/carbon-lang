@@ -560,9 +560,9 @@ static bool isTargetConstant(const SCEVHandle &V) {
   // FIXME: Look at the target to decide if &GV is a legal constant immediate.
   if (SCEVConstant *SC = dyn_cast<SCEVConstant>(V)) {
     // PPC allows a sign-extended 16-bit immediate field.
-    if ((int64_t)SC->getValue()->getRawValue() > -(1 << 16) &&
-        (int64_t)SC->getValue()->getRawValue() < (1 << 16)-1)
-      return true;
+    int64_t V = SC->getValue()->getSExtValue();
+    if (V > -(1 << 16) && V < (1 << 16)-1)
+        return true;
     return false;
   }
 
