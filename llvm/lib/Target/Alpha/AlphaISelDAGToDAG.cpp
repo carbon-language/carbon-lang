@@ -281,7 +281,7 @@ SDOperand AlphaDAGToDAGISel::Select(SDOperand Op) {
         ConstantUInt::get(Type::getPrimitiveType(Type::ULongTyID) , val);
       SDOperand Tmp, CPI = CurDAG->getTargetConstantPool(C, MVT::i64);
       Tmp = CurDAG->getTargetNode(Alpha::LDAHr, MVT::i64, CPI, getGlobalBaseReg());
-      return CurDAG->SelectNodeTo(N, Alpha::LDAr, MVT::i64, CPI, Tmp);
+      return CurDAG->SelectNodeTo(N, Alpha::LDQr, MVT::i64, CPI, Tmp);
     }
     break;
   }
