@@ -40,6 +40,10 @@
 #include <iostream>
 using namespace llvm;
 
+static cl::opt<bool>
+GEPISelTest("enable-gep-isel-opt", cl::Hidden,
+            cl::desc("temporary for testing"));
+
 #ifndef NDEBUG
 static cl::opt<bool>
 ViewDAGs("view-isel-dags", cl::Hidden,
@@ -618,7 +622,7 @@ void SelectionDAGLowering::visitGetElementPtr(User &I) {
   for (GetElementPtrInst::op_iterator OI = I.op_begin()+1, E = I.op_end();
        OI != E; ++OI) {
     Value *Idx = *OI;
-    if (const StructType *StTy = dyn_cast<StructType> (Ty)) {
+    if (const StructType *StTy = dyn_cast<StructType>(Ty)) {
       unsigned Field = cast<ConstantUInt>(Idx)->getValue();
       if (Field) {
         // N = N + Offset
@@ -1224,21 +1228,173 @@ void SelectionDAGISel::getAnalysisUsage(AnalysisUsage &AU) const {
   // updates dom and loop info.
 }
 
+
+/// InsertGEPComputeCode - Insert code into BB to compute Ptr+PtrOffset,
+/// casting to the type of GEPI.
+static Value *InsertGEPComputeCode(Value *&V, BasicBlock *BB, Instruction *GEPI,
+                                   Value *Ptr, Value *PtrOffset) {
+  if (V) return V;   // Already computed.
+  
+  BasicBlock::iterator InsertPt;
+  if (BB == GEPI->getParent()) {
+    // If insert into the GEP's block, insert right after the GEP.
+    InsertPt = GEPI;
+    ++InsertPt;
+  } else {
+    // Otherwise, insert at the top of BB, after any PHI nodes
+    InsertPt = BB->begin();
+    while (isa<PHINode>(InsertPt)) ++InsertPt;
+  }
+  
+  // Add the offset, cast it to the right type.
+  Ptr = BinaryOperator::createAdd(Ptr, PtrOffset, "", InsertPt);
+  Ptr = new CastInst(Ptr, GEPI->getType(), "", InsertPt);
+  return V = Ptr;
+}
+
+
+/// OptimizeGEPExpression - Since we are doing basic-block-at-a-time instruction
+/// selection, we want to be a bit careful about some things.  In particular, if
+/// we have a GEP instruction that is used in a different block than it is
+/// defined, the addressing expression of the GEP cannot be folded into loads or
+/// stores that use it.  In this case, decompose the GEP and move constant
+/// indices into blocks that use it.
+static void OptimizeGEPExpression(GetElementPtrInst *GEPI,
+                                  const TargetData &TD) {
+  if (!GEPISelTest) return;
+  
+  // If this GEP is only used inside the block it is defined in, there is no
+  // need to rewrite it.
+  bool isUsedOutsideDefBB = false;
+  BasicBlock *DefBB = GEPI->getParent();
+  for (Value::use_iterator UI = GEPI->use_begin(), E = GEPI->use_end(); 
+       UI != E; ++UI) {
+    if (cast<Instruction>(*UI)->getParent() != DefBB) {
+      isUsedOutsideDefBB = true;
+      break;
+    }
+  }
+  if (!isUsedOutsideDefBB) return;
+
+  // If this GEP has no non-zero constant indices, there is nothing we can do,
+  // ignore it.
+  bool hasConstantIndex = false;
+  for (GetElementPtrInst::op_iterator OI = GEPI->op_begin()+1,
+       E = GEPI->op_end(); OI != E; ++OI) {
+    if (ConstantInt *CI = dyn_cast<ConstantInt>(*OI))
+      if (CI->getRawValue()) {
+        hasConstantIndex = true;
+        break;
+      }
+  }
+  if (!hasConstantIndex) return;
+  
+  // Otherwise, decompose the GEP instruction into multiplies and adds.  Sum the
+  // constant offset (which we now know is non-zero) and deal with it later.
+  uint64_t ConstantOffset = 0;
+  const Type *UIntPtrTy = TD.getIntPtrType();
+  Value *Ptr = new CastInst(GEPI->getOperand(0), UIntPtrTy, "", GEPI);
+  const Type *Ty = GEPI->getOperand(0)->getType();
+
+  for (GetElementPtrInst::op_iterator OI = GEPI->op_begin()+1,
+       E = GEPI->op_end(); OI != E; ++OI) {
+    Value *Idx = *OI;
+    if (const StructType *StTy = dyn_cast<StructType>(Ty)) {
+      unsigned Field = cast<ConstantUInt>(Idx)->getValue();
+      if (Field)
+        ConstantOffset += TD.getStructLayout(StTy)->MemberOffsets[Field];
+      Ty = StTy->getElementType(Field);
+    } else {
+      Ty = cast<SequentialType>(Ty)->getElementType();
+
+      // Handle constant subscripts.
+      if (ConstantInt *CI = dyn_cast<ConstantInt>(Idx)) {
+        if (CI->getRawValue() == 0) continue;
+        
+        if (ConstantSInt *CSI = dyn_cast<ConstantSInt>(CI))
+          ConstantOffset += (int64_t)TD.getTypeSize(Ty)*CSI->getValue();
+        else
+          ConstantOffset+=TD.getTypeSize(Ty)*cast<ConstantUInt>(CI)->getValue();
+        continue;
+      }
+      
+      // Ptr = Ptr + Idx * ElementSize;
+      
+      // Cast Idx to UIntPtrTy if needed.
+      Idx = new CastInst(Idx, UIntPtrTy, "", GEPI);
+      
+      uint64_t ElementSize = TD.getTypeSize(Ty);
+      // Mask off bits that should not be set.
+      ElementSize &= ~0ULL >> (64-UIntPtrTy->getPrimitiveSizeInBits());
+      Constant *SizeCst = ConstantUInt::get(UIntPtrTy, ElementSize);
+
+      // Multiply by the element size and add to the base.
+      Idx = BinaryOperator::createMul(Idx, SizeCst, "", GEPI);
+      Ptr = BinaryOperator::createAdd(Ptr, Idx, "", GEPI);
+    }
+  }
+  
+  // Make sure that the offset fits in uintptr_t.
+  ConstantOffset &= ~0ULL >> (64-UIntPtrTy->getPrimitiveSizeInBits());
+  Constant *PtrOffset = ConstantUInt::get(UIntPtrTy, ConstantOffset);
+  
+  // Okay, we have now emitted all of the variable index parts to the BB that
+  // the GEP is defined in.  Loop over all of the using instructions, inserting
+  // an "add Ptr, ConstantOffset" into each block that uses it and update the
+  // instruction to use the newly computed value, making GEPI dead.
+  std::map<BasicBlock*,Value*> InsertedExprs;
+  while (!GEPI->use_empty()) {
+    Instruction *User = cast<Instruction>(GEPI->use_back());
+    
+    // Handle PHI's specially, as we need to insert code in the predecessor
+    // blocks for uses, not in the PHI block.
+    if (PHINode *PN = dyn_cast<PHINode>(User)) {
+      for (PHINode::op_iterator OI = PN->op_begin(), E = PN->op_end();
+           OI != E; OI += 2) {
+        if (*OI == GEPI) {
+          BasicBlock *Pred = cast<BasicBlock>(OI[1]);
+          *OI = InsertGEPComputeCode(InsertedExprs[Pred], Pred, GEPI, 
+                                     Ptr, PtrOffset);
+        }
+      }
+      continue;
+    }
+    
+    // Otherwise, insert the code in the User's block so it can be folded into
+    // any users in that block.
+    Value *V = InsertGEPComputeCode(InsertedExprs[User->getParent()], 
+                                    User->getParent(), GEPI, 
+                                    Ptr, PtrOffset);
+    User->replaceUsesOfWith(GEPI, V);
+    }
+  
+  // Finally, the GEP is dead, remove it.
+  GEPI->eraseFromParent();
+}
+
 bool SelectionDAGISel::runOnFunction(Function &Fn) {
   MachineFunction &MF = MachineFunction::construct(&Fn, TLI.getTargetMachine());
   RegMap = MF.getSSARegMap();
   DEBUG(std::cerr << "\n\n\n=== " << Fn.getName() << "\n");
 
-  // First pass, split all critical edges for PHI nodes with incoming values
-  // that are constants, this way the load of the constant into a vreg will not
-  // be placed into MBBs that are used some other way.
+  // First, split all critical edges for PHI nodes with incoming values that are
+  // constants, this way the load of the constant into a vreg will not be placed
+  // into MBBs that are used some other way.
+  //
+  // In this pass we also look for GEP instructions that are used across basic
+  // blocks and rewrites them to improve basic-block-at-a-time selection.
+  // 
   for (Function::iterator BB = Fn.begin(), E = Fn.end(); BB != E; ++BB) {
     PHINode *PN;
-    for (BasicBlock::iterator BBI = BB->begin();
-         (PN = dyn_cast<PHINode>(BBI)); ++BBI)
+    BasicBlock::iterator BBI;
+    for (BBI = BB->begin(); (PN = dyn_cast<PHINode>(BBI)); ++BBI)
       for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
         if (isa<Constant>(PN->getIncomingValue(i)))
           SplitCriticalEdge(PN->getIncomingBlock(i), BB);
+    
+    for (BasicBlock::iterator E = BB->end(); BBI != E; )
+      if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(BBI++))
+        OptimizeGEPExpression(GEPI, TLI.getTargetData());
   }
   
   FunctionLoweringInfo FuncInfo(TLI, Fn, MF);
