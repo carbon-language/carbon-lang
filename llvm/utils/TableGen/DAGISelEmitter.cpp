@@ -1778,7 +1778,7 @@ void DAGISelEmitter::EmitCopyToRegsForPattern(TreePatternNode *N,
         if (RR->isSubClassOf("Register")) {
           MVT::ValueType RVT = getRegisterValueType(RR, T);
           if (!InFlag) {
-            OS << "      SDOperand InFlag;\n";
+            OS << "      SDOperand InFlag = SDOperand(0,0);\n";
             InFlag = true;
           }
           if (HasChain) {
