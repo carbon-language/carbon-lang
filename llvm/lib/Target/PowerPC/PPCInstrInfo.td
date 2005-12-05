@@ -467,7 +467,7 @@ def STVX  : XForm_8<31, 231, (ops VRRC:$rS, GPRC:$rA, GPRC:$rB),
 }
 def SRAWI : XForm_10<31, 824, (ops GPRC:$rA, GPRC:$rS, u5imm:$SH), 
                      "srawi $rA, $rS, $SH", IntShift,
-                     [(set GPRC:$rA, (sra GPRC:$rS, imm:$SH))]>;
+                     [(set GPRC:$rA, (sra GPRC:$rS, (i32 imm:$SH)))]>;
 def CNTLZW : XForm_11<31,  26, (ops GPRC:$rA, GPRC:$rS),
                       "cntlzw $rA, $rS", IntGeneral,
                       [(set GPRC:$rA, (ctlz GPRC:$rS))]>;
@@ -875,14 +875,14 @@ def : Pat<(trunc G8RC:$in),
           (OR8To4 G8RC:$in, G8RC:$in)>;
 
 // SHL
-def : Pat<(shl GPRC:$in, imm:$imm),
+def : Pat<(shl GPRC:$in, (i32 imm:$imm)),
           (RLWINM GPRC:$in, imm:$imm, 0, (SHL32 imm:$imm))>;
-def : Pat<(shl G8RC:$in, imm:$imm),
+def : Pat<(shl G8RC:$in, (i64 imm:$imm)),
           (RLDICR G8RC:$in, imm:$imm, (SHL64 imm:$imm))>;
 // SRL
-def : Pat<(srl GPRC:$in, imm:$imm),
+def : Pat<(srl GPRC:$in, (i32 imm:$imm)),
           (RLWINM GPRC:$in, (SRL32 imm:$imm), imm:$imm, 31)>;
-def : Pat<(srl G8RC:$in, imm:$imm),
+def : Pat<(srl G8RC:$in, (i64 imm:$imm)),
           (RLDICL G8RC:$in, (SRL64 imm:$imm), imm:$imm)>;
 
 // Hi and Lo for Darwin Global Addresses.
