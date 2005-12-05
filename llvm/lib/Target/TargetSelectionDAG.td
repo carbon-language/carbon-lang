@@ -73,6 +73,9 @@ def SDTUNDEF  : SDTypeProfile<1, 0, []>; // for 'undef'.
 def SDTIntBinOp : SDTypeProfile<1, 2, [   // add, and, or, xor, udiv, etc.
   SDTCisSameAs<0, 1>, SDTCisSameAs<0, 2>, SDTCisInt<0>
 ]>;
+def SDTIntShiftOp : SDTypeProfile<1, 2, [   // shl, sra, srl
+  SDTCisSameAs<0, 1>, SDTCisInt<0>, SDTCisInt<2>
+]>;
 def SDTFPBinOp : SDTypeProfile<1, 2, [      // fadd, fmul, etc.
   SDTCisSameAs<0, 1>, SDTCisSameAs<0, 2>, SDTCisFP<0>
 ]>;
@@ -172,9 +175,9 @@ def sdiv       : SDNode<"ISD::SDIV"      , SDTIntBinOp>;
 def udiv       : SDNode<"ISD::UDIV"      , SDTIntBinOp>;
 def srem       : SDNode<"ISD::SREM"      , SDTIntBinOp>;
 def urem       : SDNode<"ISD::UREM"      , SDTIntBinOp>;
-def srl        : SDNode<"ISD::SRL"       , SDTIntBinOp>;
-def sra        : SDNode<"ISD::SRA"       , SDTIntBinOp>;
-def shl        : SDNode<"ISD::SHL"       , SDTIntBinOp>;
+def srl        : SDNode<"ISD::SRL"       , SDTIntShiftOp>;
+def sra        : SDNode<"ISD::SRA"       , SDTIntShiftOp>;
+def shl        : SDNode<"ISD::SHL"       , SDTIntShiftOp>;
 def and        : SDNode<"ISD::AND"       , SDTIntBinOp,
                         [SDNPCommutative, SDNPAssociative]>;
 def or         : SDNode<"ISD::OR"        , SDTIntBinOp,
