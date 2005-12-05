@@ -99,9 +99,13 @@ namespace {
         }
 
       // Mark all global variables with initializers as internal as well...
-      for (Module::global_iterator I = M.global_begin(), E = M.global_end(); I != E; ++I)
+      for (Module::global_iterator I = M.global_begin(), E = M.global_end();
+           I != E; ++I)
         if (!I->isExternal() && !I->hasInternalLinkage() &&
-            !ExternalNames.count(I->getName())) {
+            !ExternalNames.count(I->getName()) &&
+            // *never* internalize the llvm.used symbol, used to implement
+            // attribute((used)).
+            I->getName() != "llvm.used") {
           // Special case handling of the global ctor and dtor list.  When we
           // internalize it, we mark it constant, which allows elimination of
           // the list if it's empty.
