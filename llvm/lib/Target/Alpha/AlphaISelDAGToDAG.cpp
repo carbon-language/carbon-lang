@@ -247,14 +247,6 @@ SDOperand AlphaDAGToDAGISel::Select(SDOperand Op) {
                                 CurDAG->getTargetExternalSymbol(cast<ExternalSymbolSDNode>(N)->getSymbol(), MVT::i64),
                                 getGlobalBaseReg());
 
-  case ISD::CALLSEQ_START:
-  case ISD::CALLSEQ_END: {
-    unsigned Amt = cast<ConstantSDNode>(N->getOperand(1))->getValue();
-    unsigned Opc = N->getOpcode() == ISD::CALLSEQ_START ?
-                       Alpha::ADJUSTSTACKDOWN : Alpha::ADJUSTSTACKUP;
-    return CurDAG->SelectNodeTo(N, Opc, MVT::Other,
-                                getI64Imm(Amt), Select(N->getOperand(0)));
-  }
   case ISD::RET: {
     SDOperand Chain = Select(N->getOperand(0));     // Token chain.
     SDOperand InFlag;

@@ -26,6 +26,11 @@ def Alpha_cvtqt : SDNode<"AlphaISD::CVTQT_", SDTFPUnaryOpUnC, []>;
 def Alpha_cvtqs : SDNode<"AlphaISD::CVTQS_", SDTFPUnaryOpUnC, []>;
 def Alpha_cvttq : SDNode<"AlphaISD::CVTTQ_", SDTFPUnaryOp, []>;
 
+// These are target-independent nodes, but have target-specific formats.
+def SDT_AlphaCallSeq : SDTypeProfile<0, 1, [ SDTCisVT<0, i64> ]>;
+def callseq_start : SDNode<"ISD::CALLSEQ_START", SDT_AlphaCallSeq,[SDNPHasChain]>;
+def callseq_end   : SDNode<"ISD::CALLSEQ_END",   SDT_AlphaCallSeq,[SDNPHasChain]>;
+
 
 //********************
 //Paterns for matching
@@ -99,8 +104,10 @@ def IDEF_F64 : PseudoInstAlpha<(ops F8RC:$RA), "#idef $RA",
              [(set F8RC:$RA, (undef))]>;
 
 def WTF : PseudoInstAlpha<(ops variable_ops), "#wtf", []>;
-def ADJUSTSTACKUP : PseudoInstAlpha<(ops variable_ops), "ADJUP", []>;
-def ADJUSTSTACKDOWN : PseudoInstAlpha<(ops variable_ops), "ADJDOWN", []>;
+def ADJUSTSTACKUP : PseudoInstAlpha<(ops s64imm:$amt), "ADJUP", 
+                [(callseq_start imm:$amt)]>;
+def ADJUSTSTACKDOWN : PseudoInstAlpha<(ops s64imm:$amt), "ADJDOWN", 
+                [(callseq_end imm:$amt)]>;
 def ALTENT : PseudoInstAlpha<(ops s64imm:$TARGET), "$TARGET:\n", []>;
 def PCLABEL : PseudoInstAlpha<(ops s64imm:$num), "PCMARKER_$num:\n",[]>;
 def MEMLABEL : PseudoInstAlpha<(ops s64imm:$i, s64imm:$j, s64imm:$k, s64imm:$m),
