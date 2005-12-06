@@ -720,7 +720,7 @@ SDOperand PPCDAGToDAGISel::SelectSETCC(SDOperand Op) {
   // Force the ccreg into CR7.
   SDOperand CR7Reg = CurDAG->getRegister(PPC::CR7, MVT::i32);
   
-  SDOperand InFlag;  // Null incoming flag value.
+  SDOperand InFlag(0, 0);  // Null incoming flag value.
   CCReg = CurDAG->getCopyToReg(CurDAG->getEntryNode(), CR7Reg, CCReg, 
                                InFlag).getValue(1);
   
