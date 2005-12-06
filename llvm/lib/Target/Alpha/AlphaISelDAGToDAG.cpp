@@ -155,6 +155,38 @@ SDOperand AlphaDAGToDAGISel::Select(SDOperand Op) {
     return SDOperand(Result.Val, Op.ResNo);
   }
   case ISD::BRCOND: {
+    if (N->getOperand(1).getOpcode() == ISD::SETCC &&
+	MVT::isFloatingPoint(N->getOperand(1).getOperand(0).getValueType())) {
+      SDOperand Chain = Select(N->getOperand(0));
+      SDOperand CC1 = Select(N->getOperand(1).getOperand(0));
+      SDOperand CC2 = Select(N->getOperand(1).getOperand(1));
+      ISD::CondCode cCode= cast<CondCodeSDNode>(N->getOperand(1).getOperand(2))->get();
+
+      bool rev = false;
+      bool isNE = false;
+      unsigned Opc = Alpha::WTF;
+      switch(cCode) {
+      default: N->dump(); assert(0 && "Unknown FP comparison!");
+      case ISD::SETEQ: Opc = Alpha::CMPTEQ; break;
+      case ISD::SETLT: Opc = Alpha::CMPTLT; break;
+      case ISD::SETLE: Opc = Alpha::CMPTLE; break;
+      case ISD::SETGT: Opc = Alpha::CMPTLT; rev = true; break;
+      case ISD::SETGE: Opc = Alpha::CMPTLE; rev = true; break;
+      case ISD::SETNE: Opc = Alpha::CMPTEQ; isNE = true; break;
+      };
+      SDOperand cmp = CurDAG->getTargetNode(Opc, MVT::f64, 
+                                            rev?CC2:CC1,
+                                            rev?CC1:CC2);
+
+      MachineBasicBlock *Dest =
+	cast<BasicBlockSDNode>(N->getOperand(2))->getBasicBlock();
+      if(isNE)
+	return CurDAG->SelectNodeTo(N, Alpha::FBEQ, MVT::Other, cmp, 
+				    CurDAG->getBasicBlock(Dest), Chain);
+      else
+	return CurDAG->SelectNodeTo(N, Alpha::FBNE, MVT::Other, cmp, 
+				    CurDAG->getBasicBlock(Dest), Chain);
+    }
     SDOperand Chain = Select(N->getOperand(0));
     SDOperand CC = Select(N->getOperand(1));
     MachineBasicBlock *Dest =
@@ -220,10 +252,9 @@ SDOperand AlphaDAGToDAGISel::Select(SDOperand Op) {
                                 Address, Chain);
   }
 
-  case ISD::BR:
+  case ISD::BR: 
     return CurDAG->SelectNodeTo(N, Alpha::BR_DAG, MVT::Other, N->getOperand(1),
                                 Select(N->getOperand(0)));
-
   case ISD::FrameIndex: {
     int FI = cast<FrameIndexSDNode>(N)->getIndex();
     return CurDAG->SelectNodeTo(N, Alpha::LDA, MVT::i64,
