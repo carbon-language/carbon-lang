@@ -429,6 +429,9 @@ let isCall = 1,
 let isCall = 1, Defs = [R24, R25, R27, R28], Uses = [R24, R25] in
   def JSRs : MbrForm< 0x1A, 0x01, (ops GPRC:$RD, GPRC:$RS, s14imm:$DISP), "jsr $RD,($RS),$DISP">; //Jump to div or rem
 
+let isCall = 1, Defs = [R23, R24, R25, R27, R28], Uses = [R24, R25, R27] in
+  def JSRsDAG : MbrForm< 0x1A, 0x01, (ops ), "jsr $$23,($$27),0">; //Jump to div or rem
+
 def JSR_COROUTINE : MbrForm< 0x1A, 0x03, (ops GPRC:$RD, GPRC:$RS, s14imm:$DISP), "jsr_coroutine $RD,($RS),$DISP">; //Jump to subroutine return
 def BR : BForm<0x30, "br $RA,$DISP">; //Branch
 

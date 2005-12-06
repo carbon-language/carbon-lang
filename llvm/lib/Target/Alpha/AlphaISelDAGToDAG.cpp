@@ -339,19 +339,17 @@ SDOperand AlphaDAGToDAGISel::Select(SDOperand Op) {
       }
       SDOperand Tmp1 = Select(N->getOperand(0)),
         Tmp2 = Select(N->getOperand(1)),
-        Addr = CurDAG->getExternalSymbol(opstr, AlphaLowering.getPointerTy());
-      SDOperand Tmp3 = Select(Addr);
-      SDOperand Chain = CurDAG->getCopyToReg(CurDAG->getRoot(), Alpha::R24, 
-                                             Tmp1, SDOperand());
-      Chain = CurDAG->getCopyToReg(CurDAG->getRoot(), Alpha::R25, 
-                                   Tmp2, Chain.getValue(1));
-      Chain = CurDAG->getCopyToReg(CurDAG->getRoot(), Alpha::R27, 
-                                   Tmp3, Chain.getValue(1));
-      Chain = CurDAG->getTargetNode(Alpha::JSRs, MVT::i64, MVT::Flag,
-                                    CurDAG->getRegister(Alpha::R27, MVT::i64),
-                                    getI64Imm(0));
-      return CurDAG->getCopyFromReg(Chain.getValue(1), Alpha::R27, MVT::i64, 
-                                    Chain.getValue(1));
+        Addr = Select(CurDAG->getExternalSymbol(opstr, 
+						AlphaLowering.getPointerTy()));
+      SDOperand Chain;
+      Chain = CurDAG->getCopyToReg(CurDAG->getEntryNode(), Alpha::R24, Tmp1,
+				   SDOperand(0,0));
+      Chain = CurDAG->getCopyToReg(Chain, Alpha::R25, Tmp2, Chain.getValue(1));
+      Chain = CurDAG->getCopyToReg(Chain, Alpha::R27, Addr, Chain.getValue(1));
+      Chain = CurDAG->getTargetNode(Alpha::JSRsDAG, MVT::Other, MVT::Flag, 
+				    Chain, Chain.getValue(1));
+      return CurDAG->getCopyFromReg(Chain, Alpha::R27, MVT::i64, 
+				    Chain.getValue(1));
     }
     break;
 
