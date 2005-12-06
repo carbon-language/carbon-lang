@@ -424,6 +424,9 @@ inline DSNode *DSNodeHandle::getNode() const {
   // Disabling this assertion because it is failing on a "magic" struct
   // in named (from bind).  The fourth field is an array of length 0,
   // presumably used to create struct instances of different sizes.
+  // In a variable length struct, Offset could exceed Size when getNode()
+  // is called before such a node is folded. In this case, the DS Analysis now 
+  // correctly folds this node after calling getNode.
   /*  assert((!N ||
           N->isNodeCompletelyFolded() ||
           (N->Size == 0 && Offset == 0) ||
