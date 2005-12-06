@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/DerivedTypes.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/Constants.h"
 #include "llvm/Module.h"
@@ -326,6 +327,13 @@ void AsmPrinter::EmitGlobalConstant(const Constant *CV) {
       }
       return;
     }
+  } else if (const ConstantPacked *CP = dyn_cast<ConstantPacked>(CV)) {
+    const PackedType *PTy = CP->getType();
+    
+    for (unsigned I = 0, E = PTy->getNumElements(); I < E; ++I)
+      EmitGlobalConstant(CP->getOperand(I));
+    
+    return;
   }
 
   const Type *type = CV->getType();

@@ -690,6 +690,32 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     }
     break;
   }
+  case ISD::ConstantVec: {
+    // We assume that vector constants are not legal, and will be immediately
+    // spilled to the constant pool.
+    //
+    // FIXME: revisit this when we have some kind of mechanism by which targets
+    // can decided legality of vector constants, of which there may be very
+    // many.
+    //
+    // Create a ConstantPacked, and put it in the constant pool.
+    std::vector<Constant*> CV;
+    MVT::ValueType VT = Node->getValueType(0);
+    for (unsigned I = 0, E = Node->getNumOperands(); I < E; ++I) {
+      SDOperand OpN = Node->getOperand(I);
+      const Type* OpNTy = MVT::getTypeForValueType(OpN.getValueType());
+      if (MVT::isFloatingPoint(VT))
+        CV.push_back(ConstantFP::get(OpNTy, 
+                                     cast<ConstantFPSDNode>(OpN)->getValue()));
+      else
+        CV.push_back(ConstantUInt::get(OpNTy,
+                                       cast<ConstantSDNode>(OpN)->getValue()));
+    }
+    Constant *CP = ConstantPacked::get(CV);
+    SDOperand CPIdx = DAG.getConstantPool(CP, Node->getValueType(0));
+    Result = DAG.getLoad(VT, DAG.getEntryNode(), CPIdx, DAG.getSrcValue(NULL));
+    break;
+  }
   case ISD::TokenFactor:
     if (Node->getNumOperands() == 2) {
       bool Changed = false;

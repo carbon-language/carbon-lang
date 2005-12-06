@@ -501,8 +501,6 @@ SDOperand SelectionDAG::getConstantFP(double Val, MVT::ValueType VT) {
   return SDOperand(N, 0);
 }
 
-
-
 SDOperand SelectionDAG::getGlobalAddress(const GlobalValue *GV,
                                          MVT::ValueType VT, int offset) {
   SDNode *&N = GlobalValues[std::make_pair(GV, offset)];
@@ -1837,6 +1835,7 @@ const char *SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::Constant:      return "Constant";
   case ISD::TargetConstant: return "TargetConstant";
   case ISD::ConstantFP:    return "ConstantFP";
+  case ISD::ConstantVec:   return "ConstantVec";
   case ISD::GlobalAddress: return "GlobalAddress";
   case ISD::TargetGlobalAddress: return "TargetGlobalAddress";
   case ISD::FrameIndex:    return "FrameIndex";

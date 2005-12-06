@@ -282,7 +282,8 @@ public:
     SDOperand &N = NodeMap[V];
     if (N.Val) return N;
 
-    MVT::ValueType VT = TLI.getValueType(V->getType());
+    const Type *VTy = V->getType();
+    MVT::ValueType VT = TLI.getValueType(VTy);
     if (Constant *C = const_cast<Constant*>(dyn_cast<Constant>(V)))
       if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C)) {
         visit(CE->getOpcode(), *CE);
@@ -296,6 +297,30 @@ public:
         return N = DAG.getNode(ISD::UNDEF, VT);
       } else if (ConstantFP *CFP = dyn_cast<ConstantFP>(C)) {
         return N = DAG.getConstantFP(CFP->getValue(), VT);
+      } else if (const PackedType *PTy = dyn_cast<PackedType>(VTy)) {
+        unsigned NumElements = PTy->getNumElements();
+        MVT::ValueType PVT = TLI.getValueType(PTy->getElementType());
+        MVT::ValueType TVT = MVT::getVectorType(PVT, NumElements);
+        
+        // Now that we know the number and type of the elements, push a
+        // Constant or ConstantFP node onto the ops list for each element of
+        // the packed constant.
+        std::vector<SDOperand> Ops;
+        for (unsigned i = 0; i < NumElements; ++i) {
+          const Constant *CEl = C->getOperand(i);
+          if (MVT::isFloatingPoint(PVT))
+            Ops.push_back(DAG.getConstantFP(cast<ConstantFP>(CEl)->getValue(), 
+                          PVT));
+          else
+            Ops.push_back(
+                    DAG.getConstant(cast<ConstantIntegral>(CEl)->getRawValue(),
+                          PVT));
+        }
+        // Handle the case where we have a 1-element vector, in which
+        // case we want to immediately turn it into a scalar constant.
+        if (Ops.size() == 1)
+          return N = Ops[0];
+        return N = DAG.getNode(ISD::ConstantVec, TVT, Ops);
       } else {
         // Canonicalize all constant ints to be unsigned.
         return N = DAG.getConstant(cast<ConstantIntegral>(C)->getRawValue(),VT);
@@ -784,8 +809,7 @@ void SelectionDAGLowering::visitLoad(LoadInst &I) {
   const Type *Ty = I.getType();
   SDOperand L;
   
-  if (Type::PackedTyID == Ty->getTypeID()) {
-    const PackedType *PTy = cast<PackedType>(Ty);
+  if (const PackedType *PTy = dyn_cast<PackedType>(Ty)) {
     unsigned NumElements = PTy->getNumElements();
     MVT::ValueType PVT = TLI.getValueType(PTy->getElementType());
     MVT::ValueType TVT = MVT::getVectorType(PVT, NumElements);

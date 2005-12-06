@@ -67,6 +67,10 @@ namespace ISD {
     GlobalAddress, FrameIndex, ConstantPool,
     BasicBlock, ExternalSymbol, VALUETYPE, CONDCODE, Register,
     
+    // ConstantVec works like Constant or ConstantFP, except that it is not a
+    // leaf node.  All operands are either Constant or ConstantFP nodes.
+    ConstantVec,
+    
     // TargetConstant - Like Constant, but the DAG does not do any folding or
     // simplification of the constant.  This is used by the DAG->DAG selector.
     TargetConstant,
