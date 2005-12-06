@@ -748,6 +748,8 @@ static bool LinkAppendingVars(Module *M,
       unsigned NewSize = T1->getNumElements() + T2->getNumElements();
       ArrayType *NewType = ArrayType::get(T1->getElementType(), NewSize);
 
+      G1->setName("");   // Clear G1's name in case of a conflict!
+      
       // Create the new global variable...
       GlobalVariable *NG =
         new GlobalVariable(NewType, G1->isConstant(), G1->getLinkage(),
