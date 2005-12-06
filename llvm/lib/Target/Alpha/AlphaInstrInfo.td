@@ -35,12 +35,19 @@ def callseq_end   : SDNode<"ISD::CALLSEQ_END",   SDT_AlphaCallSeq,[SDNPHasChain]
 //********************
 //Paterns for matching
 //********************
-
+def invX : SDNodeXForm<imm, [{
+  return getI64Imm(~N->getValue());
+}]>;
 def immUExt8  : PatLeaf<(imm), [{
   // immUExt8 predicate - True if the immediate fits in a 8-bit zero extended
   // field.  Used by instructions like 'addi'.
   return (unsigned long)N->getValue() == (unsigned char)N->getValue();
 }]>;
+def immUExt8inv  : PatLeaf<(imm), [{
+  // immUExt8inv predicate - True if the inverted immediate fits in a 8-bit zero extended
+  // field.  Used by instructions like 'ornoti'.
+  return (unsigned long)~N->getValue() == (unsigned char)~N->getValue();
+}], invX>;
 def immSExt16  : PatLeaf<(imm), [{
   // immSExt16 predicate - True if the immediate fits in a 16-bit sign extended
   // field.  Used by instructions like 'lda'.
@@ -160,21 +167,21 @@ def CMOVLTi  : OForm4L< 0x11, 0x44, "cmovlt $RCOND,$L,$RDEST">; //CMOVE if RCOND
 def CMOVNEi  : OForm4L< 0x11, 0x26, "cmovne $RCOND,$L,$RDEST">; //CMOVE if RCOND != zero
 
 let OperandList = (ops GPRC:$RDEST, GPRC:$RTRUE, GPRC:$RFALSE, GPRC:$RCOND) in {
-def CMOVLBC  : OForm4A<  0x11, 0x16, "cmovlbc $RCOND,$RFALSE,$RDEST",
+def CMOVLBC  : OForm4<  0x11, 0x16, "cmovlbc $RCOND,$RFALSE,$RDEST",
                 [(set GPRC:$RDEST, (select (xor GPRC:$RCOND, 1), GPRC:$RTRUE, GPRC:$RFALSE))]>;
-def CMOVLBS  : OForm4A<  0x11, 0x14, "cmovlbs $RCOND,$RFALSE,$RDEST",
+def CMOVLBS  : OForm4<  0x11, 0x14, "cmovlbs $RCOND,$RFALSE,$RDEST",
                 [(set GPRC:$RDEST, (select (and GPRC:$RCOND, 1), GPRC:$RTRUE, GPRC:$RFALSE))]>;
-def CMOVEQ   : OForm4A<  0x11, 0x24, "cmoveq $RCOND,$RFALSE,$RDEST",
+def CMOVEQ   : OForm4<  0x11, 0x24, "cmoveq $RCOND,$RFALSE,$RDEST",
                 [(set GPRC:$RDEST, (select (seteq GPRC:$RCOND, 0), GPRC:$RTRUE, GPRC:$RFALSE))]>;
-def CMOVGE   : OForm4A<  0x11, 0x46, "cmovge $RCOND,$RFALSE,$RDEST",
+def CMOVGE   : OForm4<  0x11, 0x46, "cmovge $RCOND,$RFALSE,$RDEST",
                 [(set GPRC:$RDEST, (select (setge GPRC:$RCOND, 0), GPRC:$RTRUE, GPRC:$RFALSE))]>;
-def CMOVGT   : OForm4A<  0x11, 0x66, "cmovgt $RCOND,$RFALSE,$RDEST",
+def CMOVGT   : OForm4<  0x11, 0x66, "cmovgt $RCOND,$RFALSE,$RDEST",
                 [(set GPRC:$RDEST, (select (setgt GPRC:$RCOND, 0), GPRC:$RTRUE, GPRC:$RFALSE))]>;
-def CMOVLE   : OForm4A<  0x11, 0x64, "cmovle $RCOND,$RFALSE,$RDEST",
+def CMOVLE   : OForm4<  0x11, 0x64, "cmovle $RCOND,$RFALSE,$RDEST",
                 [(set GPRC:$RDEST, (select (setlt GPRC:$RCOND, 0), GPRC:$RTRUE, GPRC:$RFALSE))]>;
-def CMOVLT   : OForm4A<  0x11, 0x44, "cmovlt $RCOND,$RFALSE,$RDEST",
+def CMOVLT   : OForm4<  0x11, 0x44, "cmovlt $RCOND,$RFALSE,$RDEST",
                 [(set GPRC:$RDEST, (select (setlt GPRC:$RCOND, 0), GPRC:$RTRUE, GPRC:$RFALSE))]>;
-def CMOVNE   : OForm4A<  0x11, 0x26, "cmovne $RCOND,$RFALSE,$RDEST",
+def CMOVNE   : OForm4<  0x11, 0x26, "cmovne $RCOND,$RFALSE,$RDEST",
                 [(set GPRC:$RDEST, (select (setne GPRC:$RCOND, 0), GPRC:$RTRUE, GPRC:$RFALSE))]>;
 }
 
@@ -199,8 +206,8 @@ def ANDi     : OFormL<0x11, 0x00, "and $RA,$L,$RC",
                       [(set GPRC:$RC, (and GPRC:$RA, immUExt8:$L))]>;
 def BIC      : OForm< 0x11, 0x08, "bic $RA,$RB,$RC",
                       [(set GPRC:$RC, (and GPRC:$RA, (not GPRC:$RB)))]>;
-def BICi     : OFormL<0x11, 0x08, "bic $RA,$L,$RC", []>;
-//                      [(set GPRC:$RC, (and GPRC:$RA, (not immUExt8:$L)))]>; //FIXME?
+def BICi     : OFormL<0x11, 0x08, "bic $RA,$L,$RC", 
+                      [(set GPRC:$RC, (and GPRC:$RA, immUExt8inv:$L))]>;
 def BIS      : OForm< 0x11, 0x20, "bis $RA,$RB,$RC",
                       [(set GPRC:$RC, (or GPRC:$RA, GPRC:$RB))]>;
 def BISi     : OFormL<0x11, 0x20, "bis $RA,$L,$RC",
@@ -213,8 +220,8 @@ def CTTZ     : OForm2<0x1C, 0x33, "CTTZ $RB,$RC",
                       [(set GPRC:$RC, (cttz GPRC:$RB))]>;
 def EQV      : OForm< 0x11, 0x48, "eqv $RA,$RB,$RC",
                       [(set GPRC:$RC, (xor GPRC:$RA, (not GPRC:$RB)))]>;
-def EQVi     : OFormL<0x11, 0x48, "eqv $RA,$L,$RC", []>;
-//                      [(set GPRC:$RC, (xor GPRC:$RA, (not immUExt8:$L)))]>;
+def EQVi     : OFormL<0x11, 0x48, "eqv $RA,$L,$RC", 
+                      [(set GPRC:$RC, (xor GPRC:$RA, immUExt8inv:$L))]>;
 //def EXTBL    : OForm< 0x12, 0x06, "EXTBL $RA,$RB,$RC", []>; //Extract byte low
 //def EXTBLi   : OFormL<0x12, 0x06, "EXTBL $RA,$L,$RC", []>; //Extract byte low
 //def EXTLH    : OForm< 0x12, 0x6A, "EXTLH $RA,$RB,$RC", []>; //Extract longword high
@@ -270,8 +277,8 @@ def MULQi    : OFormL<0x13, 0x20, "mulq $RA,$L,$RC",
                       [(set GPRC:$RC, (mul GPRC:$RA, immUExt8:$L))]>;
 def ORNOT    : OForm< 0x11, 0x28, "ornot $RA,$RB,$RC",
                       [(set GPRC:$RC, (or GPRC:$RA, (not GPRC:$RB)))]>;
-def ORNOTi   : OFormL<0x11, 0x28, "ornot $RA,$L,$RC", []>;
-//                      [(set GPRC:$RC, (or GPRC:$RA, (not immUExt8:$L)))]>;
+def ORNOTi   : OFormL<0x11, 0x28, "ornot $RA,$L,$RC", 
+                      [(set GPRC:$RC, (or GPRC:$RA, immUExt8inv:$L))]>;
 def S4ADDL   : OForm< 0x10, 0x02, "s4addl $RA,$RB,$RC", 
                       [(set GPRC:$RC, (intop (add4 GPRC:$RA, GPRC:$RB)))]>;
 def S4ADDLi  : OFormL<0x10, 0x02, "s4addl $RA,$L,$RC", 
