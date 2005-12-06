@@ -279,14 +279,14 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     
     SDOperand Tmp1 = DAG.getNode(ISD::SUB, MVT::i32,
                                  DAG.getConstant(32, MVT::i32), Amt);
-    SDOperand Tmp2 = DAG.getNode(ISD::SHL, MVT::i32, Hi, Amt);
-    SDOperand Tmp3 = DAG.getNode(ISD::SRL, MVT::i32, Lo, Tmp1);
+    SDOperand Tmp2 = DAG.getNode(PPCISD::SHL, MVT::i32, Hi, Amt);
+    SDOperand Tmp3 = DAG.getNode(PPCISD::SRL, MVT::i32, Lo, Tmp1);
     SDOperand Tmp4 = DAG.getNode(ISD::OR , MVT::i32, Tmp2, Tmp3);
     SDOperand Tmp5 = DAG.getNode(ISD::ADD, MVT::i32, Amt,
                                  DAG.getConstant(-32U, MVT::i32));
-    SDOperand Tmp6 = DAG.getNode(ISD::SHL, MVT::i32, Lo, Tmp5);
+    SDOperand Tmp6 = DAG.getNode(PPCISD::SHL, MVT::i32, Lo, Tmp5);
     SDOperand OutHi = DAG.getNode(ISD::OR, MVT::i32, Tmp4, Tmp6);
-    SDOperand OutLo = DAG.getNode(ISD::SHL, MVT::i32, Lo, Amt);
+    SDOperand OutLo = DAG.getNode(PPCISD::SHL, MVT::i32, Lo, Amt);
     return DAG.getNode(ISD::BUILD_PAIR, MVT::i64, OutLo, OutHi);
   }
   case ISD::SRL: {
@@ -305,14 +305,14 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     
     SDOperand Tmp1 = DAG.getNode(ISD::SUB, MVT::i32,
                                  DAG.getConstant(32, MVT::i32), Amt);
-    SDOperand Tmp2 = DAG.getNode(ISD::SRL, MVT::i32, Lo, Amt);
-    SDOperand Tmp3 = DAG.getNode(ISD::SHL, MVT::i32, Hi, Tmp1);
+    SDOperand Tmp2 = DAG.getNode(PPCISD::SRL, MVT::i32, Lo, Amt);
+    SDOperand Tmp3 = DAG.getNode(PPCISD::SHL, MVT::i32, Hi, Tmp1);
     SDOperand Tmp4 = DAG.getNode(ISD::OR , MVT::i32, Tmp2, Tmp3);
     SDOperand Tmp5 = DAG.getNode(ISD::ADD, MVT::i32, Amt,
                                  DAG.getConstant(-32U, MVT::i32));
-    SDOperand Tmp6 = DAG.getNode(ISD::SRL, MVT::i32, Hi, Tmp5);
+    SDOperand Tmp6 = DAG.getNode(PPCISD::SRL, MVT::i32, Hi, Tmp5);
     SDOperand OutLo = DAG.getNode(ISD::OR, MVT::i32, Tmp4, Tmp6);
-    SDOperand OutHi = DAG.getNode(ISD::SRL, MVT::i32, Hi, Amt);
+    SDOperand OutHi = DAG.getNode(PPCISD::SRL, MVT::i32, Hi, Amt);
     return DAG.getNode(ISD::BUILD_PAIR, MVT::i64, OutLo, OutHi);
   }    
   case ISD::SRA: {
@@ -330,13 +330,13 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     
     SDOperand Tmp1 = DAG.getNode(ISD::SUB, MVT::i32,
                                  DAG.getConstant(32, MVT::i32), Amt);
-    SDOperand Tmp2 = DAG.getNode(ISD::SRL, MVT::i32, Lo, Amt);
-    SDOperand Tmp3 = DAG.getNode(ISD::SHL, MVT::i32, Hi, Tmp1);
+    SDOperand Tmp2 = DAG.getNode(PPCISD::SRL, MVT::i32, Lo, Amt);
+    SDOperand Tmp3 = DAG.getNode(PPCISD::SHL, MVT::i32, Hi, Tmp1);
     SDOperand Tmp4 = DAG.getNode(ISD::OR , MVT::i32, Tmp2, Tmp3);
     SDOperand Tmp5 = DAG.getNode(ISD::ADD, MVT::i32, Amt,
                                  DAG.getConstant(-32U, MVT::i32));
-    SDOperand Tmp6 = DAG.getNode(ISD::SRA, MVT::i32, Hi, Tmp5);
-    SDOperand OutHi = DAG.getNode(ISD::SRA, MVT::i32, Hi, Amt);
+    SDOperand Tmp6 = DAG.getNode(PPCISD::SRA, MVT::i32, Hi, Tmp5);
+    SDOperand OutHi = DAG.getNode(PPCISD::SRA, MVT::i32, Hi, Amt);
     SDOperand OutLo = DAG.getSelectCC(Tmp5, DAG.getConstant(0, MVT::i32),
                                       Tmp4, Tmp6, ISD::SETLE);
     return DAG.getNode(ISD::BUILD_PAIR, MVT::i64, OutLo, OutHi);
