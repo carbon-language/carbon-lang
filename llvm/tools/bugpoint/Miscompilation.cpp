@@ -232,6 +232,8 @@ static void DisambiguateGlobalSymbols(Module *M) {
   // mangler is used by the two code generators), but having symbols with the
   // same name causes warnings to be emitted by the code generator.
   Mangler Mang(*M);
+  // Agree with the CBE on symbol naming
+  Mang.markCharUnacceptable('.');
   for (Module::global_iterator I = M->global_begin(), E = M->global_end(); I != E; ++I)
     I->setName(Mang.getValueName(I));
   for (Module::iterator  I = M->begin(),  E = M->end();  I != E; ++I)
