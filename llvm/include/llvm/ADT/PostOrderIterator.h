@@ -46,8 +46,7 @@ class po_iterator : public forward_iterator<typename GT::NodeType, ptrdiff_t>,
   typedef forward_iterator<typename GT::NodeType, ptrdiff_t> super;
   typedef typename GT::NodeType          NodeType;
   typedef typename GT::ChildIteratorType ChildItTy;
-
-  std::set<NodeType *> Visited;    // All of the blocks visited so far...
+  
   // VisitStack - Used to maintain the ordering.  Top = current block
   // First element is basic block pointer, second is the 'next child' to visit
   std::stack<std::pair<NodeType *, ChildItTy> > VisitStack;
