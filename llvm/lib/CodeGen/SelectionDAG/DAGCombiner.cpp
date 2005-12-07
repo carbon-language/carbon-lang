@@ -1546,6 +1546,10 @@ SDOperand DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
   // fold (sext (sextload x)) -> (sextload x)
   if (N0.getOpcode() == ISD::SEXTLOAD && VT == N0.getValueType())
     return N0;
+  // fold (sext (truncate x)) -> (sextinreg x) iff x size == sext size.
+  if (N0.getOpcode() == ISD::TRUNCATE && N0.getOperand(0).getValueType() == VT)
+    return DAG.getNode(ISD::SIGN_EXTEND_INREG, VT, N0.getOperand(0),
+                       DAG.getValueType(N0.getValueType()));
   // fold (sext (load x)) -> (sextload x)
   if (N0.getOpcode() == ISD::LOAD && N0.hasOneUse()) {
     SDOperand ExtLoad = DAG.getExtLoad(ISD::SEXTLOAD, VT, N0.getOperand(0),
