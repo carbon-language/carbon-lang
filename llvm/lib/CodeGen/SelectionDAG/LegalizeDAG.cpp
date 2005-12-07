@@ -3159,6 +3159,28 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     Hi = DAG.getConstant(Cst >> MVT::getSizeInBits(NVT), NVT);
     break;
   }
+  case ISD::ConstantVec: {
+    unsigned NumElements = Node->getNumOperands();
+    // If we only have two elements left in the constant vector, just break it
+    // apart into the two scalar constants it contains.  Otherwise, bisect the
+    // ConstantVec, and return each half as a new ConstantVec.
+    // FIXME: this is hard coded as big endian, it may have to change to support
+    // SSE and Alpha MVI
+    if (NumElements == 2) {
+      Hi = Node->getOperand(0);
+      Lo = Node->getOperand(1);
+    } else {
+      NumElements /= 2; 
+      std::vector<SDOperand> LoOps, HiOps;
+      for (unsigned I = 0, E = NumElements; I < E; ++I) {
+        HiOps.push_back(Node->getOperand(I));
+        LoOps.push_back(Node->getOperand(I+NumElements));
+      }
+      Lo = DAG.getNode(ISD::ConstantVec, MVT::Vector, LoOps);
+      Hi = DAG.getNode(ISD::ConstantVec, MVT::Vector, HiOps);
+    }
+    break;
+  }
 
   case ISD::BUILD_PAIR:
     // Legalize both operands.  FIXME: in the future we should handle the case

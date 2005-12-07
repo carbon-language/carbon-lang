@@ -318,9 +318,15 @@ public:
         }
         // Handle the case where we have a 1-element vector, in which
         // case we want to immediately turn it into a scalar constant.
-        if (Ops.size() == 1)
+        if (Ops.size() == 1) {
           return N = Ops[0];
-        return N = DAG.getNode(ISD::ConstantVec, TVT, Ops);
+        } else if (TVT != MVT::Other && TLI.isTypeLegal(TVT)) {
+          return N = DAG.getNode(ISD::ConstantVec, TVT, Ops);
+        } else {
+          // If the packed type isn't legal, then create a ConstantVec node with
+          // generic Vector type instead.
+          return N = DAG.getNode(ISD::ConstantVec, MVT::Vector, Ops);
+        }
       } else {
         // Canonicalize all constant ints to be unsigned.
         return N = DAG.getConstant(cast<ConstantIntegral>(C)->getRawValue(),VT);
