@@ -47,8 +47,8 @@ let PrintMethod = "printCallOperand" in
 def brtarget : Operand<OtherVT>;
 
 // Define X86 specific addressing mode.
-def addr    : ComplexPattern<4, "SelectAddr", []>;
-def leaaddr : ComplexPattern<4, "SelectLEAAddr", [add]>;
+def addr    : ComplexPattern<i32, 4, "SelectAddr", []>;
+def leaaddr : ComplexPattern<i32, 4, "SelectLEAAddr", [add]>;
 
 // Format specifies the encoding used by the instruction.  This is part of the
 // ad-hoc solution used to emit machine instruction encodings by our machine
