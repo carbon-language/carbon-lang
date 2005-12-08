@@ -335,7 +335,9 @@ unsigned CodeGenInstruction::getOperandNamed(const std::string &Name) const {
 // ComplexPattern implementation
 //
 ComplexPattern::ComplexPattern(Record *R) {
-  NumOperands   = R->getValueAsInt("NumOperands");
-  SelectFunc    = R->getValueAsString("SelectFunc");
-  MatchingNodes = R->getValueAsListOfDefs("MatchingNodes");
+  Ty          = ::getValueType(R->getValueAsDef("Ty"));
+  NumOperands = R->getValueAsInt("NumOperands");
+  SelectFunc  = R->getValueAsString("SelectFunc");
+  RootNodes   = R->getValueAsListOfDefs("RootNodes");
 }
+

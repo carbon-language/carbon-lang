@@ -478,8 +478,7 @@ static unsigned char getIntrinsicType(Record *R, bool NotRegisters,
     // Using a VTSDNode or CondCodeSDNode.
     return MVT::Other;
   } else if (R->isSubClassOf("ComplexPattern")) {
-    const CodeGenTarget &T = TP.getDAGISelEmitter().getTargetInfo();
-    return T.getPointerType();
+    return TP.getDAGISelEmitter().getComplexPattern(R).getValueType();
   } else if (R->getName() == "node") {
     // Placeholder.
     return MVT::isUnknown;
@@ -2256,7 +2255,7 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
              dynamic_cast<IntInit*>(Node->getLeafValue())) {
         PatternsByOpcode[getSDNodeNamed("imm")].push_back(&PatternsToMatch[i]);
       } else if ((CP = NodeGetComplexPattern(Node, *this))) {
-        std::vector<Record*> OpNodes = CP->getMatchingNodes();
+        std::vector<Record*> OpNodes = CP->getRootNodes();
         for (unsigned j = 0, e = OpNodes.size(); j != e; j++) {
           PatternsByOpcode[OpNodes[j]].insert(PatternsByOpcode[OpNodes[j]].begin(),
                                               &PatternsToMatch[i]);
