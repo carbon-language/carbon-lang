@@ -222,3 +222,22 @@ The two-addr pass or RA needs to learn when it is profitable to commute an
 instruction to avoid a copy AFTER the 2-addr instruction.  The 2-addr pass
 currently only commutes to avoid inserting a copy BEFORE the two addr instr.
 
+===-------------------------------------------------------------------------===
+
+Compile offsets from allocas:
+
+int *%test() {
+        %X = alloca { int, int }
+        %Y = getelementptr {int,int}* %X, int 0, uint 1
+        ret int* %Y
+}
+
+into a single add, not two:
+
+_test:
+        addi r2, r1, -8
+        addi r3, r2, 4
+        blr
+
+--> important for C++.
+
