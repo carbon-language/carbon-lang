@@ -131,6 +131,10 @@ def SDTWritePort : SDTypeProfile<0, 2, [ // writeport
   SDTCisInt<0>, SDTCisInt<1>
 ]>;
 
+def SDTLoad : SDTypeProfile<1, 1, [ // load
+  SDTCisInt<1>  
+]>;
+
 //===----------------------------------------------------------------------===//
 // Selection DAG Node Properties.
 //
@@ -219,6 +223,8 @@ def brcond     : SDNode<"ISD::BRCOND"     , SDTBrCond, [SDNPHasChain]>;
 def ret        : SDNode<"ISD::RET"        , SDTRet,    [SDNPHasChain]>;
 
 def writeport  : SDNode<"ISD::WRITEPORT"  , SDTWritePort, [SDNPHasChain]>;
+
+def load       : SDNode<"ISD::LOAD"       , SDTLoad, [SDNPHasChain]>;
 
 //===----------------------------------------------------------------------===//
 // Selection DAG Condition Codes
@@ -349,3 +355,18 @@ class Pattern<dag patternToMatch, list<dag> resultInstrs> {
 // not needing a full list.
 class Pat<dag pattern, dag result> : Pattern<pattern, [result]>;
 
+//===----------------------------------------------------------------------===//
+// Complex pattern definitions.
+//
+// Complex patterns, e.g. X86 addressing mode, requires pattern matching code
+// in C++. NumOperands is the number of operands returned by the select function;
+// SelectFunc is the name of the function used to pattern match the max. pattern;
+// RootNodes are the list of possible root nodes of the sub-dags to match.
+// e.g. X86 addressing mode - def addr : ComplexPattern<4, "SelectAddr", [add]>;
+//
+class ComplexPattern<ValueType ty, int numops, string fn, list<SDNode> roots = []> {
+  ValueType Ty = ty;
+  int NumOperands = numops;
+  string SelectFunc = fn;
+  list<SDNode> RootNodes = roots;
+}
