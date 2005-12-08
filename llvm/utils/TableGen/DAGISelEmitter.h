@@ -26,6 +26,7 @@ namespace llvm {
   class TreePattern;
   class TreePatternNode;
   class DAGISelEmitter;
+  class ComplexPattern;
   
   /// MVT::DAGISelGenValueType - These are some extended forms of MVT::ValueType
   /// that we use as lattice values during type inferrence.
@@ -365,6 +366,7 @@ private:
 
   std::map<Record*, SDNodeInfo> SDNodes;
   std::map<Record*, std::pair<Record*, std::string> > SDNodeXForms;
+  std::map<Record*, ComplexPattern> ComplexPatterns;
   std::map<Record*, TreePattern*> PatternFragments;
   std::map<Record*, DAGInstruction> Instructions;
   
@@ -387,14 +389,19 @@ public:
     return SDNodes.find(R)->second;
   }
 
-  TreePattern *getPatternFragment(Record *R) const {
-    assert(PatternFragments.count(R) && "Invalid pattern fragment request!");
-    return PatternFragments.find(R)->second;
-  }
-  
   const std::pair<Record*, std::string> &getSDNodeTransform(Record *R) const {
     assert(SDNodeXForms.count(R) && "Invalid transform!");
     return SDNodeXForms.find(R)->second;
+  }
+
+  const ComplexPattern &getComplexPattern(Record *R) const {
+    assert(ComplexPatterns.count(R) && "Unknown addressing mode!");
+    return ComplexPatterns.find(R)->second;
+  }
+  
+  TreePattern *getPatternFragment(Record *R) const {
+    assert(PatternFragments.count(R) && "Invalid pattern fragment request!");
+    return PatternFragments.find(R)->second;
   }
   
   const DAGInstruction &getInstruction(Record *R) const {
@@ -405,6 +412,7 @@ public:
 private:
   void ParseNodeInfo();
   void ParseNodeTransforms(std::ostream &OS);
+  void ParseComplexPatterns();
   void ParsePatternFragments(std::ostream &OS);
   void ParseInstructions();
   void ParsePatterns();
@@ -420,10 +428,11 @@ private:
                                std::ostream &OS, bool &HasChain);
   void EmitCopyToRegsForPattern(TreePatternNode *N, const std::string &RootName,
                                 std::ostream &OS, bool &HasChain, bool &InFlag);
-  unsigned CodeGenPatternResult(TreePatternNode *N, unsigned &Ctr,
-                                std::map<std::string,std::string> &VariableMap, 
-                                std::ostream &OS, bool &HasChain, bool InFlag,
-                                bool isRoot = false);
+  std::pair<unsigned, unsigned>
+  CodeGenPatternResult(TreePatternNode *N, unsigned &Ctr,
+                       std::map<std::string,std::string> &VariableMap, 
+                       unsigned PatternNo, std::ostream &OS, bool &HasChain,
+                       bool InFlag, bool isRoot = false);
   void EmitCodeForPattern(PatternToMatch &Pattern, std::ostream &OS);
   void EmitInstructionSelector(std::ostream &OS);
 };

@@ -330,3 +330,12 @@ unsigned CodeGenInstruction::getOperandNamed(const std::string &Name) const {
   throw "Instruction '" + TheDef->getName() +
         "' does not have an operand named '$" + Name + "'!";
 }
+
+//===----------------------------------------------------------------------===//
+// ComplexPattern implementation
+//
+ComplexPattern::ComplexPattern(Record *R) {
+  NumOperands   = R->getValueAsInt("NumOperands");
+  SelectFunc    = R->getValueAsString("SelectFunc");
+  MatchingNodes = R->getValueAsListOfDefs("MatchingNodes");
+}

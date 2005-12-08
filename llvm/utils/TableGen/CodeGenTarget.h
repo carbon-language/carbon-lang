@@ -157,6 +157,23 @@ public:
   bool isLittleEndianEncoding() const;
 };
 
+/// ComplexPattern - ComplexPattern info, corresponding to the ComplexPattern
+/// tablegen class in TargetSelectionDAG.td
+class ComplexPattern {
+  unsigned NumOperands;
+  std::string SelectFunc;
+  std::vector<Record*> MatchingNodes;
+public:
+  ComplexPattern() : NumOperands(0) {};
+  ComplexPattern(Record *R);
+
+  unsigned getNumOperands() const { return NumOperands; }
+  const std::string &getSelectFunc() const { return SelectFunc; }
+  const std::vector<Record*> &getMatchingNodes() const {
+    return MatchingNodes;
+  }
+};
+
 } // End llvm namespace
 
 #endif
