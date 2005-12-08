@@ -21,13 +21,13 @@ class X86MemOperand<ValueType Ty, string printMethod> : Operand<Ty> {
   let MIOperandInfo = (ops R32, i8imm, R32, i32imm);
 }
 
-def i8mem   : X86MemOperand<i8,  "printi8mem">;
-def i16mem  : X86MemOperand<i16, "printi16mem">;
+def i8mem   : X86MemOperand<i32, "printi8mem">;
+def i16mem  : X86MemOperand<i32, "printi16mem">;
 def i32mem  : X86MemOperand<i32, "printi32mem">;
-def i64mem  : X86MemOperand<i64, "printi64mem">;
-def f32mem  : X86MemOperand<f32, "printf32mem">;
-def f64mem  : X86MemOperand<f64, "printf64mem">;
-def f80mem  : X86MemOperand<f80, "printf80mem">;
+def i64mem  : X86MemOperand<i32, "printi64mem">;
+def f32mem  : X86MemOperand<i32, "printf32mem">;
+def f64mem  : X86MemOperand<i32, "printf64mem">;
+def f80mem  : X86MemOperand<i32, "printf80mem">;
 
 def SSECC : Operand<i8> {
   let PrintMethod = "printSSECC";
@@ -45,6 +45,10 @@ let PrintMethod = "printCallOperand" in
 
 // Branch targets have OtherVT type.
 def brtarget : Operand<OtherVT>;
+
+// Define X86 specific addressing mode.
+def addr    : ComplexPattern<4, "SelectAddr", []>;
+def leaaddr : ComplexPattern<4, "SelectLEAAddr", [add]>;
 
 // Format specifies the encoding used by the instruction.  This is part of the
 // ad-hoc solution used to emit machine instruction encodings by our machine
@@ -150,7 +154,6 @@ def immZExt8  : PatLeaf<(imm), [{
   // field.
   return (unsigned)N->getValue() == (unsigned char)N->getValue();
 }]>;
-
 
 //===----------------------------------------------------------------------===//
 // Instruction templates...
@@ -297,7 +300,8 @@ def LEA16r   : I<0x8D, MRMSrcMem,
                  "lea{w} {$src|$dst}, {$dst|$src}", []>, OpSize;
 def LEA32r   : I<0x8D, MRMSrcMem,
                  (ops R32:$dst, i32mem:$src),
-                 "lea{l} {$src|$dst}, {$dst|$src}", []>;
+                 "lea{l} {$src|$dst}, {$dst|$src}",
+                 [(set R32:$dst, leaaddr:$src)]>;
 
 
 def REP_MOVSB : I<0xA4, RawFrm, (ops), "{rep;movsb|rep movsb}", []>,
@@ -381,11 +385,14 @@ def MOV32mi : Ii32<0xC7, MRM0m, (ops i32mem:$dst, i32imm:$src),
                    "mov{l} {$src, $dst|$dst, $src}", []>;
 
 def MOV8rm  : I<0x8A, MRMSrcMem, (ops R8 :$dst, i8mem :$src),
-                "mov{b} {$src, $dst|$dst, $src}", []>;
+                "mov{b} {$src, $dst|$dst, $src}",
+                [(set R8:$dst, (load addr:$src))]>;
 def MOV16rm : I<0x8B, MRMSrcMem, (ops R16:$dst, i16mem:$src),
-                "mov{w} {$src, $dst|$dst, $src}", []>, OpSize;
+                "mov{w} {$src, $dst|$dst, $src}",
+                [(set R16:$dst, (load addr:$src))]>, OpSize;
 def MOV32rm : I<0x8B, MRMSrcMem, (ops R32:$dst, i32mem:$src),
-                "mov{l} {$src, $dst|$dst, $src}", []>;
+                "mov{l} {$src, $dst|$dst, $src}",
+                [(set R32:$dst, (load addr:$src))]>;
 
 def MOV8mr  : I<0x88, MRMDestMem, (ops i8mem :$dst, R8 :$src),
                 "mov{b} {$src, $dst|$dst, $src}", []>;

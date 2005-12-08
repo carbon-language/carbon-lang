@@ -36,6 +36,7 @@ namespace {
     enum {
       RegBase,
       FrameIndexBase,
+      ConstantPoolBase
     } BaseType;
 
     struct {            // This is really a union, discriminated by BaseType!
@@ -94,8 +95,11 @@ namespace {
   private:
     SDOperand Select(SDOperand N);
 
-    void SelectAddress(SDOperand N, X86ISelAddressMode &AM);
     bool MatchAddress(SDOperand N, X86ISelAddressMode &AM);
+    bool SelectAddr(SDOperand N, SDOperand &Base, SDOperand &Scale,
+                    SDOperand &Index, SDOperand &Disp);
+    bool SelectLEAAddr(SDOperand N, SDOperand &Base, SDOperand &Scale,
+                       SDOperand &Index, SDOperand &Disp);
 
     /// getI8Imm - Return a target constant with the specified value, of type
     /// i8.
@@ -130,23 +134,6 @@ void X86DAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
   ScheduleAndEmitDAG(DAG);
 }
 
-/// SelectAddress - Pattern match the maximal addressing mode for this node.
-void X86DAGToDAGISel::SelectAddress(SDOperand N, X86ISelAddressMode &AM) {
-  MatchAddress(N, AM);
-
-  if (AM.BaseType == X86ISelAddressMode::RegBase) {
-    if (AM.Base.Reg.Val)
-      AM.Base.Reg = Select(AM.Base.Reg);
-    else
-      AM.Base.Reg = CurDAG->getRegister(0, MVT::i32);
-  }
-  if (!AM.IndexReg.Val) {
-    AM.IndexReg = CurDAG->getRegister(0, MVT::i32);
-  } else {
-    AM.IndexReg = Select(AM.IndexReg);
-  }
-}
-
 /// FIXME: copied from X86ISelPattern.cpp
 /// MatchAddress - Add the specified node to the specified addressing mode,
 /// returning true if it cannot be done.  This just pattern matches for the
@@ -161,6 +148,17 @@ bool X86DAGToDAGISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM) {
       return false;
     }
     break;
+
+  case ISD::ConstantPool:
+    if (AM.BaseType == X86ISelAddressMode::RegBase && AM.Base.Reg.Val == 0) {
+      if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(N)) {
+        AM.BaseType = X86ISelAddressMode::ConstantPoolBase;
+        AM.Base.Reg = CurDAG->getTargetConstantPool(CP->get(), MVT::i32);
+        return false;
+      }
+    }
+    break;
+
   case ISD::GlobalAddress:
     if (AM.GV == 0) {
       GlobalValue *GV = cast<GlobalAddressSDNode>(N)->getGlobal();
@@ -177,9 +175,11 @@ bool X86DAGToDAGISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM) {
       }
     }
     break;
+
   case ISD::Constant:
     AM.Disp += cast<ConstantSDNode>(N)->getValue();
     return false;
+
   case ISD::SHL:
     if (AM.IndexReg.Val == 0 && AM.Scale == 1)
       if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.Val->getOperand(1))) {
@@ -204,6 +204,7 @@ bool X86DAGToDAGISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM) {
         }
       }
     break;
+
   case ISD::MUL:
     // X*[3,5,9] -> X+X*[2,4,8]
     if (AM.IndexReg.Val == 0 && AM.BaseType == X86ISelAddressMode::RegBase &&
@@ -266,6 +267,67 @@ bool X86DAGToDAGISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM) {
   return false;
 }
 
+/// SelectAddr - returns true if it is able pattern match an addressing mode.
+/// It returns the operands which make up the maximal addressing mode it can
+/// match by reference.
+bool X86DAGToDAGISel::SelectAddr(SDOperand N, SDOperand &Base, SDOperand &Scale,
+                                 SDOperand &Index, SDOperand &Disp) {
+  X86ISelAddressMode AM;
+  if (!MatchAddress(N, AM)) {
+    if (AM.BaseType == X86ISelAddressMode::RegBase) {
+      if (AM.Base.Reg.Val)
+        AM.Base.Reg = Select(AM.Base.Reg);
+      else
+        AM.Base.Reg = CurDAG->getRegister(0, MVT::i32);
+    }
+    if (AM.IndexReg.Val)
+      AM.IndexReg = Select(AM.IndexReg);
+    else
+      AM.IndexReg = CurDAG->getRegister(0, MVT::i32);
+
+    Base  = (AM.BaseType == X86ISelAddressMode::FrameIndexBase) ?
+      CurDAG->getTargetFrameIndex(AM.Base.FrameIndex, MVT::i32) : AM.Base.Reg;
+    Scale = getI8Imm (AM.Scale);
+    Index = AM.IndexReg;
+    Disp  = AM.GV ? CurDAG->getTargetGlobalAddress(AM.GV, MVT::i32, AM.Disp)
+                  : getI32Imm(AM.Disp);
+    return true;
+  }
+  return false;
+}
+
+static bool isRegister0(SDOperand Op)
+{
+  if (RegisterSDNode *R = dyn_cast<RegisterSDNode>(Op))
+    return (R->getReg() == 0);
+  return false;
+}
+
+/// SelectLEAAddr - it calls SelectAddr and determines if the maximal addressing
+/// mode it matches can be cost effectively emitted as an LEA instruction.
+/// For X86, it always is unless it's just a (Reg + const).
+bool X86DAGToDAGISel::SelectLEAAddr(SDOperand N, SDOperand &Base, SDOperand &Scale,
+                                    SDOperand &Index, SDOperand &Disp) {
+  if (SelectAddr(N, Base, Scale, Index, Disp)) {
+    if (!isRegister0(Base)) {
+      unsigned Complexity = 0;
+      if ((unsigned)cast<ConstantSDNode>(Scale)->getValue() > 1)
+        Complexity++;
+      if (!isRegister0(Index))
+        Complexity++;
+      if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(Disp)) {
+        if (!CN->isNullValue()) Complexity++;
+      } else {
+        Complexity++;
+      }
+      return (Complexity > 1);
+    }
+    return true;
+  } else {
+    return false;
+  }
+}
+
 SDOperand X86DAGToDAGISel::Select(SDOperand Op) {
   SDNode *N = Op.Val;
   MVT::ValueType OpVT = N->getValueType(0);
@@ -326,51 +388,9 @@ SDOperand X86DAGToDAGISel::Select(SDOperand Op) {
                                     Chain);
     }
 
-    case ISD::LOAD: {
-      switch (OpVT) {
-        default: assert(0 && "Cannot load this type!");
-        case MVT::i1:
-        case MVT::i8:  Opc = X86::MOV8rm; break;
-        case MVT::i16: Opc = X86::MOV16rm; break;
-        case MVT::i32: Opc = X86::MOV32rm; break;
-        case MVT::f32: Opc = X86::MOVSSrm; break;
-        case MVT::f64: Opc = X86::FLD64m; ContainsFPCode = true; break;
-      }
-
-      if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(N->getOperand(1))){
-        unsigned CPIdx = BB->getParent()->getConstantPool()->
-          getConstantPoolIndex(CP->get());
-        // ???
-        assert(0 && "Can't handle load from constant pool!");
-      } else {
-        X86ISelAddressMode AM;
-        SDOperand Chain = Select(N->getOperand(0));     // Token chain.
-
-        SelectAddress(N->getOperand(1), AM);
-        SDOperand Scale = getI8Imm (AM.Scale);
-        SDOperand Disp  = AM.GV
-          ? CurDAG->getTargetGlobalAddress(AM.GV, MVT::i32, AM.Disp)
-          : getI32Imm(AM.Disp);
-        if (AM.BaseType == X86ISelAddressMode::RegBase) {
-          return CurDAG->SelectNodeTo(N, Opc, OpVT, MVT::Other,
-                                      AM.Base.Reg, Scale, AM.IndexReg, Disp, 
-                                      Chain)
-            .getValue(Op.ResNo);
-        } else {
-          SDOperand Base = CurDAG->getFrameIndex(AM.Base.FrameIndex, MVT::i32);
-          return CurDAG->SelectNodeTo(N, Opc, OpVT, MVT::Other,
-                                      Base, Scale, AM.IndexReg, Disp, Chain)
-            .getValue(Op.ResNo);
-        }
-      }
-    }
-
     case ISD::STORE: {
       SDOperand Chain = Select(N->getOperand(0));     // Token chain.
       SDOperand Tmp1 = Select(N->getOperand(1));
-      X86ISelAddressMode AM;
-      SelectAddress(N->getOperand(2), AM);
-
       Opc = 0;
       if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N->getOperand(1))) {
         switch (CN->getValueType(0)) {
@@ -394,19 +414,11 @@ SDOperand X86DAGToDAGISel::Select(SDOperand Op) {
         }
       }
 
-      SDOperand Scale = getI8Imm (AM.Scale);
-      SDOperand Disp  = AM.GV
-        ? CurDAG->getTargetGlobalAddress(AM.GV, MVT::i32, AM.Disp)
-        : getI32Imm(AM.Disp);
-      if (AM.BaseType == X86ISelAddressMode::RegBase) {
-        return CurDAG->SelectNodeTo(N, Opc, MVT::Other,
-                                    AM.Base.Reg, Scale, AM.IndexReg, Disp, Tmp1,
-                                    Chain);
-      } else {
-        SDOperand Base = CurDAG->getFrameIndex(AM.Base.FrameIndex, MVT::i32);
-        return CurDAG->SelectNodeTo(N, Opc, MVT::Other,
-                                  Base, Scale, AM.IndexReg, Disp, Tmp1, Chain);
-      }
+      SDOperand Base, Scale, Index, Disp;
+      SelectAddr(N->getOperand(2), Base, Scale, Index, Disp);
+      return CurDAG->SelectNodeTo(N, Opc, MVT::Other,
+                                  Base, Scale, Index, Disp, Tmp1, Chain)
+        .getValue(Op.ResNo);
     }
   }
 
