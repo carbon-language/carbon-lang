@@ -1276,6 +1276,13 @@ static Value *InsertGEPComputeCode(Value *&V, BasicBlock *BB, Instruction *GEPI,
     while (isa<PHINode>(InsertPt)) ++InsertPt;
   }
   
+  // If Ptr is itself a cast, but in some other BB, emit a copy of the cast into
+  // BB so that there is only one value live across basic blocks (the cast 
+  // operand).
+  if (CastInst *CI = dyn_cast<CastInst>(Ptr))
+    if (CI->getParent() != BB && isa<PointerType>(CI->getOperand(0)->getType()))
+      Ptr = new CastInst(CI->getOperand(0), CI->getType(), "", InsertPt);
+  
   // Add the offset, cast it to the right type.
   Ptr = BinaryOperator::createAdd(Ptr, PtrOffset, "", InsertPt);
   Ptr = new CastInst(Ptr, GEPI->getType(), "", InsertPt);
@@ -1371,32 +1378,31 @@ static void OptimizeGEPExpression(GetElementPtrInst *GEPI,
   // Okay, we have now emitted all of the variable index parts to the BB that
   // the GEP is defined in.  Loop over all of the using instructions, inserting
   // an "add Ptr, ConstantOffset" into each block that uses it and update the
-  // instruction to use the newly computed value, making GEPI dead.
+  // instruction to use the newly computed value, making GEPI dead.  When the
+  // user is a load or store instruction address, we emit the add into the user
+  // block, otherwise we use a canonical version right next to the gep (these 
+  // won't be foldable as addresses, so we might as well share the computation).
+  
   std::map<BasicBlock*,Value*> InsertedExprs;
   while (!GEPI->use_empty()) {
     Instruction *User = cast<Instruction>(GEPI->use_back());
-    
-    // Handle PHI's specially, as we need to insert code in the predecessor
-    // blocks for uses, not in the PHI block.
-    if (PHINode *PN = dyn_cast<PHINode>(User)) {
-      for (PHINode::op_iterator OI = PN->op_begin(), E = PN->op_end();
-           OI != E; OI += 2) {
-        if (*OI == GEPI) {
-          BasicBlock *Pred = cast<BasicBlock>(OI[1]);
-          *OI = InsertGEPComputeCode(InsertedExprs[Pred], Pred, GEPI, 
-                                     Ptr, PtrOffset);
-        }
-      }
-      continue;
-    }
-    
-    // Otherwise, insert the code in the User's block so it can be folded into
-    // any users in that block.
-    Value *V = InsertGEPComputeCode(InsertedExprs[User->getParent()], 
+
+    // If this use is not foldable into the addressing mode, use a version 
+    // emitted in the GEP block.
+    Value *NewVal;
+    if (!isa<LoadInst>(User) &&
+        (!isa<StoreInst>(User) || User->getOperand(0) == GEPI)) {
+      NewVal = InsertGEPComputeCode(InsertedExprs[DefBB], DefBB, GEPI, 
+                                    Ptr, PtrOffset);
+    } else {
+      // Otherwise, insert the code in the User's block so it can be folded into
+      // any users in that block.
+      NewVal = InsertGEPComputeCode(InsertedExprs[User->getParent()], 
                                     User->getParent(), GEPI, 
                                     Ptr, PtrOffset);
-    User->replaceUsesOfWith(GEPI, V);
     }
+    User->replaceUsesOfWith(GEPI, NewVal);
+  }
   
   // Finally, the GEP is dead, remove it.
   GEPI->eraseFromParent();
