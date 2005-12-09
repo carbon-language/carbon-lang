@@ -58,23 +58,27 @@ class BForm<bits<6> opcode, bit aa, bit lk, bits<5> bo, bits<2> bicode, dag OL,
 
 // 1.7.4 D-Form
 class DForm_base<bits<6> opcode, dag OL, string asmstr, InstrItinClass itin,
-                 list<dag> pattern>
-   : I<opcode, OL, asmstr, itin> {
-  let Pattern = pattern;
+                 list<dag> pattern> 
+  : I<opcode, OL, asmstr, itin> {
   bits<5>  A;
   bits<5>  B;
   bits<16> C;
+
+  let Pattern = pattern;
   
   let Inst{6-10}  = A;
   let Inst{11-15} = B;
   let Inst{16-31} = C;
 }
 
-class DForm_1<bits<6> opcode, dag OL, string asmstr, InstrItinClass itin>
-   : I<opcode, OL, asmstr, itin> {
+class DForm_1<bits<6> opcode, dag OL, string asmstr, InstrItinClass itin,
+              list<dag> pattern>
+  : I<opcode, OL, asmstr, itin> {
   bits<5>  A;
   bits<16> C;
   bits<5>  B;
+
+  let Pattern = pattern;
   
   let Inst{6-10}  = A;
   let Inst{11-15} = B;
@@ -99,12 +103,13 @@ class DForm_2_r0<bits<6> opcode, dag OL, string asmstr, InstrItinClass itin,
 }
 
 // Currently we make the use/def reg distinction in ISel, not tablegen
-class DForm_3<bits<6> opcode, dag OL, string asmstr, InstrItinClass itin>
-  : DForm_1<opcode, OL, asmstr, itin>;
+class DForm_3<bits<6> opcode, dag OL, string asmstr, InstrItinClass itin,
+              list<dag> pattern>
+  : DForm_1<opcode, OL, asmstr, itin, pattern>;
 
 class DForm_4<bits<6> opcode, dag OL, string asmstr, InstrItinClass itin,
               list<dag> pattern>
- : I<opcode, OL, asmstr, itin> {
+  : I<opcode, OL, asmstr, itin> {
   bits<5>  B;
   bits<5>  A;
   bits<16> C;
@@ -116,8 +121,9 @@ class DForm_4<bits<6> opcode, dag OL, string asmstr, InstrItinClass itin,
   let Inst{16-31} = C;
 }
               
-class DForm_4_zero<bits<6> opcode, dag OL, string asmstr, InstrItinClass itin>
-  : DForm_1<opcode, OL, asmstr, itin> {
+class DForm_4_zero<bits<6> opcode, dag OL, string asmstr, InstrItinClass itin,
+                   list<dag> pattern>
+  : DForm_1<opcode, OL, asmstr, itin, pattern> {
   let A = 0;
   let B = 0;
   let C = 0;
@@ -150,22 +156,26 @@ class DForm_6_ext<bits<6> opcode, dag OL, string asmstr, InstrItinClass itin>
   let L = PPC64;
 }
 
-class DForm_8<bits<6> opcode, dag OL, string asmstr, InstrItinClass itin>
-  : DForm_1<opcode, OL, asmstr, itin> {
+class DForm_8<bits<6> opcode, dag OL, string asmstr, InstrItinClass itin,
+              list<dag> pattern>
+  : DForm_1<opcode, OL, asmstr, itin, pattern> {
 }
 
-class DForm_9<bits<6> opcode, dag OL, string asmstr, InstrItinClass itin>
-  : DForm_1<opcode, OL, asmstr, itin> {
+class DForm_9<bits<6> opcode, dag OL, string asmstr, InstrItinClass itin,
+              list<dag> pattern>
+  : DForm_1<opcode, OL, asmstr, itin, pattern> {
 }
 
 // 1.7.5 DS-Form
 class DSForm_1<bits<6> opcode, bits<2> xo, dag OL, string asmstr,
-               InstrItinClass itin>
+               InstrItinClass itin, list<dag> pattern>
          : I<opcode, OL, asmstr, itin> {
   bits<5>  RST;
   bits<14> DS;
   bits<5>  RA;
 
+  let Pattern = pattern;
+  
   let Inst{6-10}  = RST;
   let Inst{11-15} = RA;
   let Inst{16-29} = DS;
@@ -173,16 +183,18 @@ class DSForm_1<bits<6> opcode, bits<2> xo, dag OL, string asmstr,
 }
 
 class DSForm_2<bits<6> opcode, bits<2> xo, dag OL, string asmstr,
-               InstrItinClass itin>
-  : DSForm_1<opcode, xo, OL, asmstr, itin>;
+               InstrItinClass itin, list<dag> pattern>
+  : DSForm_1<opcode, xo, OL, asmstr, itin, pattern>;
 
 // 1.7.6 X-Form
-class XForm_base_r3xo<bits<6> opcode, bits<10> xo, 
-                      dag OL, string asmstr, InstrItinClass itin>
+class XForm_base_r3xo<bits<6> opcode, bits<10> xo, dag OL, string asmstr, 
+                      InstrItinClass itin, list<dag> pattern>
   : I<opcode, OL, asmstr, itin> {
   bits<5> RST;
   bits<5> A;
   bits<5> B;
+
+  let Pattern = pattern;
 
   bit RC = 0;    // set by isDOT
 
@@ -214,8 +226,8 @@ class XForm_base_r3xo_swapped
 
 
 class XForm_1<bits<6> opcode, bits<10> xo, dag OL, string asmstr,
-              InstrItinClass itin> 
-  : XForm_base_r3xo<opcode, xo, OL, asmstr, itin>;
+              InstrItinClass itin, list<dag> pattern> 
+  : XForm_base_r3xo<opcode, xo, OL, asmstr, itin, pattern>;
 
 class XForm_6<bits<6> opcode, bits<10> xo, dag OL, string asmstr,
               InstrItinClass itin, list<dag> pattern> 
@@ -224,8 +236,8 @@ class XForm_6<bits<6> opcode, bits<10> xo, dag OL, string asmstr,
 }
 
 class XForm_8<bits<6> opcode, bits<10> xo, dag OL, string asmstr,
-              InstrItinClass itin> 
-  : XForm_base_r3xo<opcode, xo, OL, asmstr, itin>;
+              InstrItinClass itin, list<dag> pattern> 
+  : XForm_base_r3xo<opcode, xo, OL, asmstr, itin, pattern>;
 
 class XForm_10<bits<6> opcode, bits<10> xo, dag OL, string asmstr,
                InstrItinClass itin, list<dag> pattern> 
@@ -279,20 +291,19 @@ class XForm_17<bits<6> opcode, bits<10> xo, dag OL, string asmstr,
 }
 
 class XForm_25<bits<6> opcode, bits<10> xo, dag OL, string asmstr,
-               InstrItinClass itin> 
-  : XForm_base_r3xo<opcode, xo, OL, asmstr, itin> {
+               InstrItinClass itin, list<dag> pattern> 
+  : XForm_base_r3xo<opcode, xo, OL, asmstr, itin, pattern> {
 }
 
 class XForm_26<bits<6> opcode, bits<10> xo, dag OL, string asmstr,
                InstrItinClass itin, list<dag> pattern>
-  : XForm_base_r3xo<opcode, xo, OL, asmstr, itin> {
+  : XForm_base_r3xo<opcode, xo, OL, asmstr, itin, pattern> {
   let A = 0;
-  let Pattern = pattern;
 }
 
 class XForm_28<bits<6> opcode, bits<10> xo, dag OL, string asmstr,
-               InstrItinClass itin> 
-  : XForm_base_r3xo<opcode, xo, OL, asmstr, itin> {
+               InstrItinClass itin, list<dag> pattern> 
+  : XForm_base_r3xo<opcode, xo, OL, asmstr, itin, pattern> {
 }
 
 // 1.7.7 XL-Form
