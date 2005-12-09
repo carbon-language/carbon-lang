@@ -30,12 +30,12 @@ void AsmPrinter::SwitchSection(const char *NewSection, const GlobalValue *GV) {
   if (GV && GV->hasSection())
     NS = SwitchToSectionDirective + GV->getSection();
   else
-    NS = NewSection;
+    NS = std::string("\t")+NewSection;
   
   if (CurrentSection != NS) {
     CurrentSection = NS;
     if (!CurrentSection.empty())
-      O << "\t" << CurrentSection << "\n";
+      O << CurrentSection << '\n';
   }
 }
 
