@@ -2404,6 +2404,11 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
     }
     break;
 
+  case ISD::SIGN_EXTEND_INREG:
+    Result = PromoteOp(Node->getOperand(0));
+    Result = DAG.getNode(ISD::SIGN_EXTEND_INREG, NVT, Result, 
+                         Node->getOperand(1));
+    break;
   case ISD::FP_TO_SINT:
   case ISD::FP_TO_UINT:
     switch (getTypeAction(Node->getOperand(0).getValueType())) {
