@@ -1165,11 +1165,14 @@ def ADD32rr  : I<0x01, MRMDestReg, (ops R32:$dst, R32:$src1, R32:$src2),
 } // end isConvertibleToThreeAddress
 } // end isCommutable
 def ADD8rm   : I<0x02, MRMSrcMem, (ops R8 :$dst, R8 :$src1, i8mem :$src2),
-                 "add{b} {$src2, $dst|$dst, $src2}", []>;
+                 "add{b} {$src2, $dst|$dst, $src2}",
+                 [(set R8:$dst, (add R8:$src1, (load addr:$src2)))]>;
 def ADD16rm  : I<0x03, MRMSrcMem, (ops R16:$dst, R16:$src1, i16mem:$src2),
-                 "add{w} {$src2, $dst|$dst, $src2}", []>, OpSize;
+                 "add{w} {$src2, $dst|$dst, $src2}",
+                 [(set R16:$dst, (add R16:$src1, (load addr:$src2)))]>, OpSize;
 def ADD32rm  : I<0x03, MRMSrcMem, (ops R32:$dst, R32:$src1, i32mem:$src2),
-                 "add{l} {$src2, $dst|$dst, $src2}", []>;
+                 "add{l} {$src2, $dst|$dst, $src2}",
+                 [(set R32:$dst, (add R32:$src1, (load addr:$src2)))]>;
 
 def ADD8ri   : Ii8<0x80, MRM0r, (ops R8:$dst, R8:$src1, i8imm:$src2),
                    "add{b} {$src2, $dst|$dst, $src2}",
