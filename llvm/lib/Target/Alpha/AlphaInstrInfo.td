@@ -166,22 +166,22 @@ def CMOVLEi  : OForm4L< 0x11, 0x64, "cmovle $RCOND,$L,$RDEST">; //CMOVE if RCOND
 def CMOVLTi  : OForm4L< 0x11, 0x44, "cmovlt $RCOND,$L,$RDEST">; //CMOVE if RCOND < zero
 def CMOVNEi  : OForm4L< 0x11, 0x26, "cmovne $RCOND,$L,$RDEST">; //CMOVE if RCOND != zero
 
-let OperandList = (ops GPRC:$RDEST, GPRC:$RTRUE, GPRC:$RFALSE, GPRC:$RCOND) in {
-def CMOVLBC  : OForm4<  0x11, 0x16, "cmovlbc $RCOND,$RFALSE,$RDEST",
+let OperandList = (ops GPRC:$RDEST, GPRC:$RFALSE, GPRC:$RTRUE, GPRC:$RCOND) in {
+def CMOVLBC  : OForm4<  0x11, 0x16, "cmovlbc $RCOND,$RTRUE,$RDEST",
                 [(set GPRC:$RDEST, (select (xor GPRC:$RCOND, 1), GPRC:$RTRUE, GPRC:$RFALSE))]>;
-def CMOVLBS  : OForm4<  0x11, 0x14, "cmovlbs $RCOND,$RFALSE,$RDEST",
+def CMOVLBS  : OForm4<  0x11, 0x14, "cmovlbs $RCOND,$RTRUE,$RDEST",
                 [(set GPRC:$RDEST, (select (and GPRC:$RCOND, 1), GPRC:$RTRUE, GPRC:$RFALSE))]>;
-def CMOVEQ   : OForm4<  0x11, 0x24, "cmoveq $RCOND,$RFALSE,$RDEST",
+def CMOVEQ   : OForm4<  0x11, 0x24, "cmoveq $RCOND,$RTRUE,$RDEST",
                 [(set GPRC:$RDEST, (select (seteq GPRC:$RCOND, 0), GPRC:$RTRUE, GPRC:$RFALSE))]>;
-def CMOVGE   : OForm4<  0x11, 0x46, "cmovge $RCOND,$RFALSE,$RDEST",
+def CMOVGE   : OForm4<  0x11, 0x46, "cmovge $RCOND,$RTRUE,$RDEST",
                 [(set GPRC:$RDEST, (select (setge GPRC:$RCOND, 0), GPRC:$RTRUE, GPRC:$RFALSE))]>;
-def CMOVGT   : OForm4<  0x11, 0x66, "cmovgt $RCOND,$RFALSE,$RDEST",
+def CMOVGT   : OForm4<  0x11, 0x66, "cmovgt $RCOND,$RTRUE,$RDEST",
                 [(set GPRC:$RDEST, (select (setgt GPRC:$RCOND, 0), GPRC:$RTRUE, GPRC:$RFALSE))]>;
-def CMOVLE   : OForm4<  0x11, 0x64, "cmovle $RCOND,$RFALSE,$RDEST",
+def CMOVLE   : OForm4<  0x11, 0x64, "cmovle $RCOND,$RTRUE,$RDEST",
                 [(set GPRC:$RDEST, (select (setlt GPRC:$RCOND, 0), GPRC:$RTRUE, GPRC:$RFALSE))]>;
-def CMOVLT   : OForm4<  0x11, 0x44, "cmovlt $RCOND,$RFALSE,$RDEST",
+def CMOVLT   : OForm4<  0x11, 0x44, "cmovlt $RCOND,$RTRUE,$RDEST",
                 [(set GPRC:$RDEST, (select (setlt GPRC:$RCOND, 0), GPRC:$RTRUE, GPRC:$RFALSE))]>;
-def CMOVNE   : OForm4<  0x11, 0x26, "cmovne $RCOND,$RFALSE,$RDEST",
+def CMOVNE   : OForm4<  0x11, 0x26, "cmovne $RCOND,$RTRUE,$RDEST",
                 [(set GPRC:$RDEST, (select (setne GPRC:$RCOND, 0), GPRC:$RTRUE, GPRC:$RFALSE))]>;
 }
 
