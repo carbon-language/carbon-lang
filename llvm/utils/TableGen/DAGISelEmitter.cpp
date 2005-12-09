@@ -1691,11 +1691,12 @@ struct PatternSortingPredicate {
 /// matches, and the SDNode for the result has the RootName specified name.
 void DAGISelEmitter::EmitMatchForPattern(TreePatternNode *N,
                                          const std::string &RootName,
-                                         std::map<std::string,std::string> &VarMap,
+                                      std::map<std::string,std::string> &VarMap,
                                          unsigned PatternNo, 
                                          std::ostream &OS,
                                          std::string &ChainName,
-                                         bool &HasChain, bool &InFlag) {
+                                         bool &HasChain, bool &InFlag,
+                                         bool isRoot) {
   if (N->isLeaf()) {
     if (IntInit *II = dynamic_cast<IntInit*>(N->getLeafValue())) {
       OS << "      if (cast<ConstantSDNode>(" << RootName
@@ -1731,6 +1732,10 @@ void DAGISelEmitter::EmitMatchForPattern(TreePatternNode *N,
 
   if (NodeHasChain(N, *this)) {
     OpNo = 1;
+    if (!isRoot) {
+      OS << "      if (" << RootName << ".hasOneUse()) goto P"
+         << PatternNo << "Fail;\n";
+    }
     if (!HasChain) {
       HasChain = true;
       OS << "      SDOperand " << RootName << "0 = " << RootName
@@ -2143,7 +2148,7 @@ void DAGISelEmitter::EmitCodeForPattern(PatternToMatch &Pattern,
   std::map<std::string,std::string> VariableMap;
   std::string ChainName;
   EmitMatchForPattern(Pattern.first, "N", VariableMap, PatternNo, OS,
-                      ChainName, HasChain, InFlag);
+                      ChainName, HasChain, InFlag, true /*the root*/);
   
   // TP - Get *SOME* tree pattern, we don't care which.
   TreePattern &TP = *PatternFragments.begin()->second;

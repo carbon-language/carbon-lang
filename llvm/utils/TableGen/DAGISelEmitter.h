@@ -425,7 +425,7 @@ private:
                            std::map<std::string,std::string> &VarMap,
                            unsigned PatternNo, std::ostream &OS,
                            std::string &ChainName,
-                           bool &HasChain, bool &InFlag);
+                           bool &HasChain, bool &InFlag, bool isRoot = false);
   void EmitCopyToRegsForPattern(TreePatternNode *N, const std::string &RootName,
                                 std::ostream &OS, bool HasChain);
   std::pair<unsigned, unsigned>
