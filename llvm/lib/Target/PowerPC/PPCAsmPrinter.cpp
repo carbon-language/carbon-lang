@@ -202,6 +202,8 @@ public:
     virtual const char *getPassName() const {
       return "Darwin PPC Assembly Printer";
     }
+    
+    void EmitXXStructorList(Constant *List);
 
     bool runOnMachineFunction(MachineFunction &F);
     bool doInitialization(Module &M);
@@ -412,6 +414,21 @@ bool DarwinAsmPrinter::doInitialization(Module &M) {
   return false;
 }
 
+/// EmitXXStructorList - Emit the ctor or dtor list.  On darwin, this just 
+/// prints out the function pointers.
+void DarwinAsmPrinter::EmitXXStructorList(Constant *List) {
+  // Should be an array of '{ int, void ()* }' structs.  The first value is the
+  // init priority, which we ignore.
+  if (!isa<ConstantArray>(List)) return;
+  ConstantArray *InitList = cast<ConstantArray>(List);
+  for (unsigned i = 0, e = InitList->getNumOperands(); i != e; ++i)
+    if (ConstantStruct *CS = dyn_cast<ConstantStruct>(InitList->getOperand(i))){
+      if (CS->getNumOperands() != 2) return;  // Not array of 2-element structs.
+      // Emit the function pointer.
+      EmitGlobalConstant(CS->getOperand(1));
+    }
+}
+
 bool DarwinAsmPrinter::doFinalization(Module &M) {
   const TargetData &TD = TM.getTargetData();
 
@@ -419,6 +436,23 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
   for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
        I != E; ++I)
     if (I->hasInitializer()) {   // External global require no code
+      // Check to see if this is a special global used by LLVM.
+      if (I->hasAppendingLinkage()) {
+        if (I->getName() == "llvm.used")
+          continue;  // No need to emit this at all.
+        if (I->getName() == "llvm.global_ctors") {
+          SwitchSection(".mod_init_func", 0);
+          EmitAlignment(2, 0);
+          EmitXXStructorList(I->getInitializer());
+          continue;
+        } else if (I->getName() == "llvm.global_dtors") {
+          SwitchSection(".mod_term_func", 0);
+          EmitAlignment(2, 0);
+          EmitXXStructorList(I->getInitializer());
+          continue;
+        }
+      }
+      
       O << '\n';
       std::string name = Mang->getValueName(I);
       Constant *C = I->getInitializer();
