@@ -24,15 +24,17 @@ class SDTypeConstraint<int opnum> {
 }
 
 // SDTCisVT - The specified operand has exactly this VT.
-class SDTCisVT <int OpNum, ValueType vt> : SDTypeConstraint<OpNum> {
+class SDTCisVT<int OpNum, ValueType vt> : SDTypeConstraint<OpNum> {
   ValueType VT = vt;
 }
+
+class SDTCisPtrTy<int OpNum> : SDTypeConstraint<OpNum>;
 
 // SDTCisInt - The specified operand is has integer type.
 class SDTCisInt<int OpNum> : SDTypeConstraint<OpNum>;
 
 // SDTCisFP - The specified operand is has floating point type.
-class SDTCisFP <int OpNum> : SDTypeConstraint<OpNum>;
+class SDTCisFP<int OpNum> : SDTypeConstraint<OpNum>;
 
 // SDTCisSameAs - The two specified operands have identical types.
 class SDTCisSameAs<int OpNum, int OtherOp> : SDTypeConstraint<OpNum> {
@@ -132,7 +134,7 @@ def SDTWritePort : SDTypeProfile<0, 2, [ // writeport
 ]>;
 
 def SDTLoad : SDTypeProfile<1, 1, [ // load
-  SDTCisInt<1>  
+  SDTCisPtrTy<1>  
 ]>;
 
 //===----------------------------------------------------------------------===//
