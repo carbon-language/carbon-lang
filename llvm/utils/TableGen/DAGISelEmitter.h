@@ -45,8 +45,8 @@ namespace llvm {
     
     unsigned OperandNo;   // The operand # this constraint applies to.
     enum { 
-      SDTCisVT, SDTCisInt, SDTCisFP, SDTCisSameAs, SDTCisVTSmallerThanOp,
-      SDTCisOpSmallerThanOp
+      SDTCisVT, SDTCisPtrTy, SDTCisInt, SDTCisFP, SDTCisSameAs, 
+      SDTCisVTSmallerThanOp, SDTCisOpSmallerThanOp
     } ConstraintType;
     
     union {   // The discriminated union.

@@ -58,6 +58,8 @@ SDTypeConstraint::SDTypeConstraint(Record *R) {
   if (R->isSubClassOf("SDTCisVT")) {
     ConstraintType = SDTCisVT;
     x.SDTCisVT_Info.VT = getValueType(R->getValueAsDef("VT"));
+  } else if (R->isSubClassOf("SDTCisPtrTy")) {
+    ConstraintType = SDTCisPtrTy;
   } else if (R->isSubClassOf("SDTCisInt")) {
     ConstraintType = SDTCisInt;
   } else if (R->isSubClassOf("SDTCisFP")) {
@@ -120,6 +122,10 @@ bool SDTypeConstraint::ApplyTypeConstraint(TreePatternNode *N,
   case SDTCisVT:
     // Operand must be a particular type.
     return NodeToApply->UpdateNodeType(x.SDTCisVT_Info.VT, TP);
+  case SDTCisPtrTy: {
+    // Operand must be same as target pointer type.
+    return NodeToApply->UpdateNodeType(CGT.getPointerType(), TP);
+  }
   case SDTCisInt: {
     // If there is only one integer type supported, this must be it.
     std::vector<MVT::ValueType> IntVTs =
