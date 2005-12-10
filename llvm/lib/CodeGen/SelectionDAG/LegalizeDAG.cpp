@@ -532,6 +532,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
   case ISD::TargetFrameIndex:
   case ISD::Register:
   case ISD::TargetConstant:
+  case ISD::TargetConstantPool:
   case ISD::GlobalAddress:
   case ISD::TargetGlobalAddress:
   case ISD::ExternalSymbol:
@@ -679,7 +680,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         Extend = true;
       }
 
-      SDOperand CPIdx = DAG.getConstantPool(LLVMC, TLI.getPointerTy());
+      SDOperand CPIdx = 
+        LegalizeOp(DAG.getConstantPool(LLVMC, TLI.getPointerTy()));
       if (Extend) {
         Result = DAG.getExtLoad(ISD::EXTLOAD, MVT::f64, DAG.getEntryNode(),
                                 CPIdx, DAG.getSrcValue(NULL), MVT::f32);

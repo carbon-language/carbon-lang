@@ -94,9 +94,10 @@ PPCTargetLowering::PPCTargetLowering(TargetMachine &TM)
   // PowerPC doesn't have line number support yet.
   setOperationAction(ISD::LOCATION, MVT::Other, Expand);
   
-  // We want to legalize GlobalAddress into the appropriate instructions to
-  // materialize the address.
+  // We want to legalize GlobalAddress and ConstantPool nodes into the 
+  // appropriate instructions to materialize the address.
   setOperationAction(ISD::GlobalAddress, MVT::i32, Custom);
+  setOperationAction(ISD::ConstantPool,  MVT::i32, Custom);
   
   if (TM.getSubtarget<PPCSubtarget>().is64Bit()) {
     // They also have instructions for converting between i64 and fp.
@@ -341,14 +342,40 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
                                       Tmp4, Tmp6, ISD::SETLE);
     return DAG.getNode(ISD::BUILD_PAIR, MVT::i64, OutLo, OutHi);
   }
+  case ISD::ConstantPool: {
+    Constant *C = cast<ConstantPoolSDNode>(Op)->get();
+    SDOperand CPI = DAG.getTargetConstantPool(C, MVT::i32);
+    SDOperand Zero = DAG.getConstant(0, MVT::i32);
+    
+    if (PPCGenerateStaticCode) {
+      // Generate non-pic code that has direct accesses to the constant pool.
+      // The address of the global is just (hi(&g)+lo(&g)).
+      SDOperand Hi = DAG.getNode(PPCISD::Hi, MVT::i32, CPI, Zero);
+      SDOperand Lo = DAG.getNode(PPCISD::Lo, MVT::i32, CPI, Zero);
+      return DAG.getNode(ISD::ADD, MVT::i32, Hi, Lo);
+    }
+    
+    // Only lower ConstantPool on Darwin.
+    if (!getTargetMachine().getSubtarget<PPCSubtarget>().isDarwin()) break;
+    SDOperand Hi = DAG.getNode(PPCISD::Hi, MVT::i32, CPI, Zero);
+    if (PICEnabled) {
+      // With PIC, the first instruction is actually "GR+hi(&G)".
+      Hi = DAG.getNode(ISD::ADD, MVT::i32,
+                       DAG.getNode(PPCISD::GlobalBaseReg, MVT::i32), Hi);
+    }
+
+    SDOperand Lo = DAG.getNode(PPCISD::Lo, MVT::i32, CPI, Zero);
+    Lo = DAG.getNode(ISD::ADD, MVT::i32, Hi, Lo);
+    return Lo;
+  }
   case ISD::GlobalAddress: {
     GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
     SDOperand GA = DAG.getTargetGlobalAddress(GV, MVT::i32);
     SDOperand Zero = DAG.getConstant(0, MVT::i32);
 
     if (PPCGenerateStaticCode) {
-      // Generate non-pic code that has direct accesses to globals.  To do this
-      // the address of the global is just (hi(&g)+lo(&g)).
+      // Generate non-pic code that has direct accesses to globals.
+      // The address of the global is just (hi(&g)+lo(&g)).
       SDOperand Hi = DAG.getNode(PPCISD::Hi, MVT::i32, GA, Zero);
       SDOperand Lo = DAG.getNode(PPCISD::Lo, MVT::i32, GA, Zero);
       return DAG.getNode(ISD::ADD, MVT::i32, Hi, Lo);

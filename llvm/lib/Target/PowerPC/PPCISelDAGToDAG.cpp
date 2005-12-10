@@ -423,7 +423,8 @@ bool PPCDAGToDAGISel::SelectAddr(SDOperand Addr, SDOperand &Op1,
       assert(!cast<ConstantSDNode>(Addr.getOperand(1).getOperand(1))->getValue()
              && "Cannot handle constant offsets yet!");
       Op1 = Addr.getOperand(1).getOperand(0);  // The global address.
-      assert(Op1.getOpcode() == ISD::TargetGlobalAddress);
+      assert(Op1.getOpcode() == ISD::TargetGlobalAddress ||
+             Op1.getOpcode() == ISD::TargetConstantPool);
       Op2 = Select(Addr.getOperand(0));
       return false;   // [&g+r]
     } else {
@@ -433,20 +434,11 @@ bool PPCDAGToDAGISel::SelectAddr(SDOperand Addr, SDOperand &Op1,
     }
   }
 
-  if (FrameIndexSDNode *FI = dyn_cast<FrameIndexSDNode>(Addr)) {
-    Op1 = getI32Imm(0);
+  if (FrameIndexSDNode *FI = dyn_cast<FrameIndexSDNode>(Addr))
     Op2 = CurDAG->getTargetFrameIndex(FI->getIndex(), MVT::i32);
-    return false;
-  } else if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(Addr)) {
-    Op1 = Addr;
-    if (PICEnabled)
-      Op2 = CurDAG->getTargetNode(PPC::ADDIS, MVT::i32, getGlobalBaseReg(),Op1);
-    else
-      Op2 = CurDAG->getTargetNode(PPC::LIS, MVT::i32, Op1);
-    return false;
-  }
+  else
+    Op2 = Select(Addr);
   Op1 = getI32Imm(0);
-  Op2 = Select(Addr);
   return false;
 }
 
@@ -892,17 +884,6 @@ SDOperand PPCDAGToDAGISel::Select(SDOperand Op) {
       CurDAG->getTargetNode(PPC::ADDI, MVT::i32,
                             CurDAG->getTargetFrameIndex(FI, MVT::i32),
                             getI32Imm(0));
-  }
-  case ISD::ConstantPool: {
-    Constant *C = cast<ConstantPoolSDNode>(N)->get();
-    SDOperand Tmp, CPI = CurDAG->getTargetConstantPool(C, MVT::i32);
-    if (PICEnabled)
-      Tmp = CurDAG->getTargetNode(PPC::ADDIS, MVT::i32, getGlobalBaseReg(),CPI);
-    else
-      Tmp = CurDAG->getTargetNode(PPC::LIS, MVT::i32, CPI);
-    if (N->hasOneUse())
-      return CurDAG->SelectNodeTo(N, PPC::LA, MVT::i32, Tmp, CPI);
-    return CodeGenMap[Op] = CurDAG->getTargetNode(PPC::LA, MVT::i32, Tmp, CPI);
   }
   case ISD::FADD: {
     MVT::ValueType Ty = N->getValueType(0);

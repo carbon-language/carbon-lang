@@ -1900,6 +1900,8 @@ public:
            << ResNo << "C, MVT::" << getEnumName(N->getType()) << ");\n";
       } else if (!N->isLeaf() && N->getOperator()->getName() == "tglobaladdr") {
         OS << "      SDOperand Tmp" << ResNo << " = " << Val << ";\n";
+      } else if (!N->isLeaf() && N->getOperator()->getName() == "tconstpool") {
+        OS << "      SDOperand Tmp" << ResNo << " = " << Val << ";\n";
       } else if (N->isLeaf() && (CP = NodeGetComplexPattern(N, ISE))) {
         std::string Fn = CP->getSelectFunc();
         NumRes = CP->getNumOperands();

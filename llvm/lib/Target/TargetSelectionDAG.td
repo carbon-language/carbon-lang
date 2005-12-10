@@ -174,6 +174,8 @@ def globaladdr : SDNode<"ISD::GlobalAddress", SDTImm, [],
                         "GlobalAddressSDNode">;
 def tglobaladdr : SDNode<"ISD::TargetGlobalAddress", SDTImm, [],
                         "GlobalAddressSDNode">;
+def tconstpool  : SDNode<"ISD::TargetConstantPool", SDTImm, [],
+                        "ConstantPoolSDNode">;
 def add        : SDNode<"ISD::ADD"       , SDTIntBinOp   ,
                         [SDNPCommutative, SDNPAssociative]>;
 def sub        : SDNode<"ISD::SUB"       , SDTIntBinOp>;

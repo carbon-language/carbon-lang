@@ -165,7 +165,6 @@ def crbitm: Operand<i8> {
 }
 
 
-
 //===----------------------------------------------------------------------===//
 // PowerPC Instruction Definitions.
 
@@ -943,8 +942,12 @@ def : Pat<(srl G8RC:$in, (i64 imm:$imm)),
 // Hi and Lo for Darwin Global Addresses.
 def : Pat<(PPChi tglobaladdr:$in, (i32 0)), (LIS tglobaladdr:$in)>;
 def : Pat<(PPClo tglobaladdr:$in, (i32 0)), (LI tglobaladdr:$in)>;
+def : Pat<(PPChi tconstpool:$in, (i32 0)), (LIS tconstpool:$in)>;
+def : Pat<(PPClo tconstpool:$in, (i32 0)), (LI tconstpool:$in)>;
 def : Pat<(add GPRC:$in, (PPChi tglobaladdr:$g, 0)),
           (ADDIS GPRC:$in, tglobaladdr:$g)>;
+def : Pat<(add GPRC:$in, (PPChi tconstpool:$g, 0)),
+          (ADDIS GPRC:$in, tconstpool:$g)>;
 
 // Standard shifts.  These are represented separately from the real shifts above
 // so that we can distinguish between shifts that allow 5-bit and 6-bit shift
