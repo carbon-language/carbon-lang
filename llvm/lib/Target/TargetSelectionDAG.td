@@ -138,7 +138,7 @@ def SDTLoad : SDTypeProfile<1, 1, [ // load
 ]>;
 
 def SDTStore : SDTypeProfile<0, 2, [ // store
-  SDTCisInt<1>  
+  SDTCisPtrTy<1>  
 ]>;
 
 //===----------------------------------------------------------------------===//
@@ -230,7 +230,7 @@ def ret        : SDNode<"ISD::RET"        , SDTRet,    [SDNPHasChain]>;
 
 def writeport  : SDNode<"ISD::WRITEPORT"  , SDTWritePort, [SDNPHasChain]>;
 
-def load       : SDNode<"ISD::LOAD"       , SDTLoad, [SDNPHasChain]>;
+def load       : SDNode<"ISD::LOAD"       , SDTLoad,  [SDNPHasChain]>;
 def store      : SDNode<"ISD::STORE"      , SDTStore, [SDNPHasChain]>;
 
 //===----------------------------------------------------------------------===//
