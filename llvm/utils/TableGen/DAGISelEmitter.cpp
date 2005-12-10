@@ -1779,10 +1779,11 @@ public:
     if (NodeHasChain(N, ISE)) {
       OpNo = 1;
       if (!isRoot) {
+        const SDNodeInfo &CInfo = ISE.getSDNodeInfo(N->getOperator());
         OS << "      if (!" << RootName << ".hasOneUse()) goto P"
            << PatternNo << "Fail;   // Multiple uses of actual result?\n";
         OS << "      if (CodeGenMap.count(" << RootName
-           << ".getValue(1))) goto P"
+           << ".getValue(" << CInfo.getNumResults() << "))) goto P"
            << PatternNo << "Fail;   // Already selected for a chain use?\n";
       }
       if (InnerChain.empty()) {
@@ -2024,10 +2025,11 @@ public:
         }
         OS << "      Chain ";
         if (NodeHasChain(LHS, ISE))
-          OS << "= CodeGenMap[N.getValue(1)] ";
+          OS << "= CodeGenMap[N.getValue(" << NumResults << ")] ";
         for (unsigned j = 0, e = FoldedChains.size(); j < e; j++)
-          OS << "= CodeGenMap[" << FoldedChains[j] << ".getValue(1)] ";
-        OS << "= Result.getValue(1);\n";
+          OS << "= CodeGenMap[" << FoldedChains[j] << ".getValue("
+             << NumResults << ")] ";
+        OS << "= Result.getValue(" << NumResults << ");\n";
         if (NumResults == 0)
           OS << "      return Chain;\n";
         else
