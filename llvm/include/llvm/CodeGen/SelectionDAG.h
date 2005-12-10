@@ -233,6 +233,9 @@ public:
                     SDOperand N1, SDOperand N2, SDOperand N3, SDOperand N4,
                     SDOperand N5);
   SDOperand getNode(unsigned Opcode, MVT::ValueType VT,
+                    SDOperand N1, SDOperand N2, SDOperand N3, SDOperand N4,
+                    SDOperand N5, SDOperand N6);
+  SDOperand getNode(unsigned Opcode, MVT::ValueType VT,
                     std::vector<SDOperand> &Children);
   SDOperand getNode(unsigned Opcode, std::vector<MVT::ValueType> &ResultTys,
                     std::vector<SDOperand> &Ops);
@@ -340,6 +343,11 @@ public:
                           SDOperand Op1, SDOperand Op2, SDOperand Op3,
                           SDOperand Op4, SDOperand Op5) {
     return getNode(ISD::BUILTIN_OP_END+Opcode, VT, Op1, Op2, Op3, Op4, Op5);
+  }
+  SDOperand getTargetNode(unsigned Opcode, MVT::ValueType VT,
+                          SDOperand Op1, SDOperand Op2, SDOperand Op3,
+                          SDOperand Op4, SDOperand Op5, SDOperand Op6) {
+    return getNode(ISD::BUILTIN_OP_END+Opcode, VT, Op1, Op2, Op3, Op4, Op5, Op6);
   }
   SDOperand getTargetNode(unsigned Opcode, MVT::ValueType VT,
                           std::vector<SDOperand> &Ops) {

@@ -1088,66 +1088,6 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
   return SDOperand(N, 0);
 }
 
-// setAdjCallChain - This method changes the token chain of an
-// CALLSEQ_START/END node to be the specified operand.
-void SDNode::setAdjCallChain(SDOperand N) {
-  assert(N.getValueType() == MVT::Other);
-  assert((getOpcode() == ISD::CALLSEQ_START ||
-          getOpcode() == ISD::CALLSEQ_END) && "Cannot adjust this node!");
-
-  OperandList[0].Val->removeUser(this);
-  OperandList[0] = N;
-  OperandList[0].Val->Uses.push_back(this);
-}
-
-
-
-SDOperand SelectionDAG::getLoad(MVT::ValueType VT,
-                                SDOperand Chain, SDOperand Ptr,
-                                SDOperand SV) {
-  SDNode *&N = Loads[std::make_pair(Ptr, std::make_pair(Chain, VT))];
-  if (N) return SDOperand(N, 0);
-  N = new SDNode(ISD::LOAD, Chain, Ptr, SV);
-
-  // Loads have a token chain.
-  setNodeValueTypes(N, VT, MVT::Other);
-  AllNodes.push_back(N);
-  return SDOperand(N, 0);
-}
-
-SDOperand SelectionDAG::getVecLoad(unsigned Count, MVT::ValueType EVT,
-                                   SDOperand Chain, SDOperand Ptr,
-                                   SDOperand SV) {
-  SDNode *&N = Loads[std::make_pair(Ptr, std::make_pair(Chain, EVT))];
-  if (N) return SDOperand(N, 0);
-  std::vector<SDOperand> Ops;
-  Ops.reserve(5);
-  Ops.push_back(Chain);
-  Ops.push_back(Ptr);
-  Ops.push_back(getConstant(Count, MVT::i32));
-  Ops.push_back(getValueType(EVT));
-  Ops.push_back(SV);
-  std::vector<MVT::ValueType> VTs;
-  VTs.reserve(2);
-  VTs.push_back(MVT::Vector); VTs.push_back(MVT::Other);  // Add token chain.
-  return getNode(ISD::VLOAD, VTs, Ops);
-}
-
-SDOperand SelectionDAG::getExtLoad(unsigned Opcode, MVT::ValueType VT,
-                                   SDOperand Chain, SDOperand Ptr, SDOperand SV,
-                                   MVT::ValueType EVT) {
-  std::vector<SDOperand> Ops;
-  Ops.reserve(4);
-  Ops.push_back(Chain);
-  Ops.push_back(Ptr);
-  Ops.push_back(SV);
-  Ops.push_back(getValueType(EVT));
-  std::vector<MVT::ValueType> VTs;
-  VTs.reserve(2);
-  VTs.push_back(VT); VTs.push_back(MVT::Other);  // Add token chain.
-  return getNode(Opcode, VTs, Ops);
-}
-
 SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
                                 SDOperand N1, SDOperand N2, SDOperand N3) {
   // Perform various simplifications.
@@ -1224,6 +1164,79 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
   return getNode(Opcode, VT, Ops);
 }
 
+SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
+                                SDOperand N1, SDOperand N2, SDOperand N3,
+                                SDOperand N4, SDOperand N5, SDOperand N6) {
+  std::vector<SDOperand> Ops;
+  Ops.reserve(6);
+  Ops.push_back(N1);
+  Ops.push_back(N2);
+  Ops.push_back(N3);
+  Ops.push_back(N4);
+  Ops.push_back(N5);
+  Ops.push_back(N6);
+  return getNode(Opcode, VT, Ops);
+}
+
+// setAdjCallChain - This method changes the token chain of an
+// CALLSEQ_START/END node to be the specified operand.
+void SDNode::setAdjCallChain(SDOperand N) {
+  assert(N.getValueType() == MVT::Other);
+  assert((getOpcode() == ISD::CALLSEQ_START ||
+          getOpcode() == ISD::CALLSEQ_END) && "Cannot adjust this node!");
+
+  OperandList[0].Val->removeUser(this);
+  OperandList[0] = N;
+  OperandList[0].Val->Uses.push_back(this);
+}
+
+
+
+SDOperand SelectionDAG::getLoad(MVT::ValueType VT,
+                                SDOperand Chain, SDOperand Ptr,
+                                SDOperand SV) {
+  SDNode *&N = Loads[std::make_pair(Ptr, std::make_pair(Chain, VT))];
+  if (N) return SDOperand(N, 0);
+  N = new SDNode(ISD::LOAD, Chain, Ptr, SV);
+
+  // Loads have a token chain.
+  setNodeValueTypes(N, VT, MVT::Other);
+  AllNodes.push_back(N);
+  return SDOperand(N, 0);
+}
+
+SDOperand SelectionDAG::getVecLoad(unsigned Count, MVT::ValueType EVT,
+                                   SDOperand Chain, SDOperand Ptr,
+                                   SDOperand SV) {
+  SDNode *&N = Loads[std::make_pair(Ptr, std::make_pair(Chain, EVT))];
+  if (N) return SDOperand(N, 0);
+  std::vector<SDOperand> Ops;
+  Ops.reserve(5);
+  Ops.push_back(Chain);
+  Ops.push_back(Ptr);
+  Ops.push_back(getConstant(Count, MVT::i32));
+  Ops.push_back(getValueType(EVT));
+  Ops.push_back(SV);
+  std::vector<MVT::ValueType> VTs;
+  VTs.reserve(2);
+  VTs.push_back(MVT::Vector); VTs.push_back(MVT::Other);  // Add token chain.
+  return getNode(ISD::VLOAD, VTs, Ops);
+}
+
+SDOperand SelectionDAG::getExtLoad(unsigned Opcode, MVT::ValueType VT,
+                                   SDOperand Chain, SDOperand Ptr, SDOperand SV,
+                                   MVT::ValueType EVT) {
+  std::vector<SDOperand> Ops;
+  Ops.reserve(4);
+  Ops.push_back(Chain);
+  Ops.push_back(Ptr);
+  Ops.push_back(SV);
+  Ops.push_back(getValueType(EVT));
+  std::vector<MVT::ValueType> VTs;
+  VTs.reserve(2);
+  VTs.push_back(VT); VTs.push_back(MVT::Other);  // Add token chain.
+  return getNode(Opcode, VTs, Ops);
+}
 
 SDOperand SelectionDAG::getSrcValue(const Value *V, int Offset) {
   assert((!V || isa<PointerType>(V->getType())) &&
