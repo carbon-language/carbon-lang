@@ -378,11 +378,14 @@ def MOV32ri : Ii32<0xB8, AddRegFrm, (ops R32:$dst, i32imm:$src),
                    "mov{l} {$src, $dst|$dst, $src}",
                    [(set R32:$dst, imm:$src)]>;
 def MOV8mi  : Ii8 <0xC6, MRM0m, (ops i8mem :$dst, i8imm :$src),
-                   "mov{b} {$src, $dst|$dst, $src}", []>;
+                   "mov{b} {$src, $dst|$dst, $src}",
+                   [(store (i8 imm:$src), addr:$dst)]>;
 def MOV16mi : Ii16<0xC7, MRM0m, (ops i16mem:$dst, i16imm:$src),
-                   "mov{w} {$src, $dst|$dst, $src}", []>, OpSize;
+                   "mov{w} {$src, $dst|$dst, $src}",
+                   [(store (i16 imm:$src), addr:$dst)]>, OpSize;
 def MOV32mi : Ii32<0xC7, MRM0m, (ops i32mem:$dst, i32imm:$src),
-                   "mov{l} {$src, $dst|$dst, $src}", []>;
+                   "mov{l} {$src, $dst|$dst, $src}",
+                   [(store (i32 imm:$src), addr:$dst)]>;
 
 def MOV8rm  : I<0x8A, MRMSrcMem, (ops R8 :$dst, i8mem :$src),
                 "mov{b} {$src, $dst|$dst, $src}",
@@ -395,11 +398,14 @@ def MOV32rm : I<0x8B, MRMSrcMem, (ops R32:$dst, i32mem:$src),
                 [(set R32:$dst, (load addr:$src))]>;
 
 def MOV8mr  : I<0x88, MRMDestMem, (ops i8mem :$dst, R8 :$src),
-                "mov{b} {$src, $dst|$dst, $src}", []>;
+                "mov{b} {$src, $dst|$dst, $src}",
+                [(store R8:$src, addr:$dst)]>;
 def MOV16mr : I<0x89, MRMDestMem, (ops i16mem:$dst, R16:$src),
-                "mov{w} {$src, $dst|$dst, $src}", []>, OpSize;
+                "mov{w} {$src, $dst|$dst, $src}",
+                [(store R16:$src, addr:$dst)]>, OpSize;
 def MOV32mr : I<0x89, MRMDestMem, (ops i32mem:$dst, R32:$src),
-                "mov{l} {$src, $dst|$dst, $src}", []>;
+                "mov{l} {$src, $dst|$dst, $src}",
+                [(store R32:$src, addr:$dst)]>;
                 
 //===----------------------------------------------------------------------===//
 //  Fixed-Register Multiplication and Division Instructions...
@@ -687,6 +693,7 @@ let isTwoAddress = 0 in {
   def NOT32m : I<0xF7, MRM2m, (ops i32mem:$dst), "not{l} $dst", []>;
 }
 
+// TODO: inc/dec is slow for P4, but fast for Pentium-M.
 def INC8r  : I<0xFE, MRM0r, (ops R8 :$dst, R8 :$src), "inc{b} $dst",
                [(set R8:$dst, (add R8:$src, 1))]>;
 let isConvertibleToThreeAddress = 1 in {   // Can transform into LEA.
@@ -701,11 +708,13 @@ let isTwoAddress = 0 in {
   def INC32m : I<0xFF, MRM0m, (ops i32mem:$dst), "inc{l} $dst", []>;
 }
 
-def DEC8r  : I<0xFE, MRM1r, (ops R8 :$dst, R8 :$src), "dec{b} $dst", []>;
+def DEC8r  : I<0xFE, MRM1r, (ops R8 :$dst, R8 :$src), "dec{b} $dst",
+               [(set R8:$dst, (add R8:$src, -1))]>;
 let isConvertibleToThreeAddress = 1 in {   // Can transform into LEA.
-def DEC16r : I<0xFF, MRM1r, (ops R16:$dst, R16:$src), "dec{w} $dst", []>,
-             OpSize;
-def DEC32r : I<0xFF, MRM1r, (ops R32:$dst, R32:$src), "dec{l} $dst", []>;
+def DEC16r : I<0xFF, MRM1r, (ops R16:$dst, R16:$src), "dec{w} $dst",
+               [(set R16:$dst, (add R16:$src, -1))]>, OpSize;
+def DEC32r : I<0xFF, MRM1r, (ops R32:$dst, R32:$src), "dec{l} $dst",
+               [(set R32:$dst, (add R32:$src, -1))]>;
 }
 
 let isTwoAddress = 0 in {

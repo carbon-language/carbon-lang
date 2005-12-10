@@ -387,39 +387,6 @@ SDOperand X86DAGToDAGISel::Select(SDOperand Op) {
                               getI16Imm(X86Lowering.getBytesToPopOnReturn()),
                                     Chain);
     }
-
-    case ISD::STORE: {
-      SDOperand Chain = Select(N->getOperand(0));     // Token chain.
-      SDOperand Tmp1 = Select(N->getOperand(1));
-      Opc = 0;
-      if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N->getOperand(1))) {
-        switch (CN->getValueType(0)) {
-          default: assert(0 && "Invalid type for operation!");
-          case MVT::i1:
-          case MVT::i8:  Opc = X86::MOV8mi;  break;
-          case MVT::i16: Opc = X86::MOV16mi; break;
-          case MVT::i32: Opc = X86::MOV32mi; break;
-        }
-      }
-
-      if (!Opc) {
-        switch (N->getOperand(1).getValueType()) {
-          default: assert(0 && "Cannot store this type!");
-          case MVT::i1:
-          case MVT::i8:  Opc = X86::MOV8mr;  break;
-          case MVT::i16: Opc = X86::MOV16mr; break;
-          case MVT::i32: Opc = X86::MOV32mr; break;
-          case MVT::f32: Opc = X86::MOVSSmr; break;
-          case MVT::f64: Opc = X86::FST64m;  break;
-        }
-      }
-
-      SDOperand Base, Scale, Index, Disp;
-      SelectAddr(N->getOperand(2), Base, Scale, Index, Disp);
-      return CurDAG->SelectNodeTo(N, Opc, MVT::Other,
-                                  Base, Scale, Index, Disp, Tmp1, Chain)
-        .getValue(Op.ResNo);
-    }
   }
 
   return SelectCode(Op);
