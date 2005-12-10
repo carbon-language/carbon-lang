@@ -2091,11 +2091,6 @@ public:
       OS << "      if (" << Prefix << ".Val->getValueType(0) != MVT::"
          << getName(Pat->getType()) << ") goto P" << PatternNo << "Fail;\n";
       return true;
-    } else if (Pat->isLeaf()) {
-      if (NodeIsComplexPattern(Pat))
-        OS << "      if (" << Prefix << ".Val->getValueType(0) != MVT::"
-           << getName(Pat->getType()) << ") goto P" << PatternNo << "Fail;\n";
-      return false;
     }
   
     unsigned OpNo = (unsigned) NodeHasChain(Pat, ISE);
