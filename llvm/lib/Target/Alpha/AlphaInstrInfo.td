@@ -84,7 +84,6 @@ def immZAP  : PatLeaf<(imm), [{
   return build != 0;
 }], iZAPX>;
 
-
 def intop : PatFrag<(ops node:$op), (sext_inreg node:$op, i32)>;
 def add4  : PatFrag<(ops node:$op1, node:$op2),
                     (add (shl node:$op1, 2), node:$op2)>;
@@ -578,25 +577,53 @@ def CMPTUN : FPForm<0x16, 0x5A4, "cmptun/su $RA,$RB,$RC", []>;
 //TODO: Add lots more FP patterns
 
 //conditional moves, floats
-let OperandList = (ops F4RC:$RDEST, F4RC:$RSRC2, F4RC:$RSRC, F8RC:$RCOND),
+let OperandList = (ops F4RC:$RDEST, F4RC:$RFALSE, F4RC:$RTRUE, F8RC:$RCOND),
     isTwoAddress = 1 in {
-def FCMOVEQS : FPForm<0x17, 0x02A, "fcmoveq $RCOND,$RSRC,$RDEST",[]>; //FCMOVE if = zero
-def FCMOVGES : FPForm<0x17, 0x02D, "fcmovge $RCOND,$RSRC,$RDEST",[]>; //FCMOVE if >= zero
-def FCMOVGTS : FPForm<0x17, 0x02F, "fcmovgt $RCOND,$RSRC,$RDEST",[]>; //FCMOVE if > zero
-def FCMOVLES : FPForm<0x17, 0x02E, "fcmovle $RCOND,$RSRC,$RDEST",[]>; //FCMOVE if <= zero
-def FCMOVLTS : FPForm<0x17, 0x02C, "fcmovlt $RCOND,$RSRC,$RDEST",[]>; // FCMOVE if < zero
-def FCMOVNES : FPForm<0x17, 0x02B, "fcmovne $RCOND,$RSRC,$RDEST",[]>; //FCMOVE if != zero
+def FCMOVEQS : FPForm<0x17, 0x02A, "fcmoveq $RCOND,$RTRUE,$RDEST",[]>; //FCMOVE if = zero
+def FCMOVGES : FPForm<0x17, 0x02D, "fcmovge $RCOND,$RTRUE,$RDEST",[]>; //FCMOVE if >= zero
+def FCMOVGTS : FPForm<0x17, 0x02F, "fcmovgt $RCOND,$RTRUE,$RDEST",[]>; //FCMOVE if > zero
+def FCMOVLES : FPForm<0x17, 0x02E, "fcmovle $RCOND,$RTRUE,$RDEST",[]>; //FCMOVE if <= zero
+def FCMOVLTS : FPForm<0x17, 0x02C, "fcmovlt $RCOND,$RTRUE,$RDEST",[]>; // FCMOVE if < zero
+def FCMOVNES : FPForm<0x17, 0x02B, "fcmovne $RCOND,$RTRUE,$RDEST",[]>; //FCMOVE if != zero
 }
 //conditional moves, doubles
-let OperandList = (ops F8RC:$RDEST, F8RC:$RSRC2, F8RC:$RSRC, F8RC:$RCOND),
+let OperandList = (ops F8RC:$RDEST, F8RC:$RFALSE, F8RC:$RTRUE, F8RC:$RCOND),
     isTwoAddress = 1 in {
-def FCMOVEQT : FPForm<0x17, 0x02A, "fcmoveq $RCOND,$RSRC,$RDEST",[]>; //FCMOVE if = zero
-def FCMOVGET : FPForm<0x17, 0x02D, "fcmovge $RCOND,$RSRC,$RDEST",[]>; //FCMOVE if >= zero
-def FCMOVGTT : FPForm<0x17, 0x02F, "fcmovgt $RCOND,$RSRC,$RDEST",[]>; //FCMOVE if > zero
-def FCMOVLET : FPForm<0x17, 0x02E, "fcmovle $RCOND,$RSRC,$RDEST",[]>; //FCMOVE if <= zero
-def FCMOVLTT : FPForm<0x17, 0x02C, "fcmovlt $RCOND,$RSRC,$RDEST",[]>; // FCMOVE if < zero
-def FCMOVNET : FPForm<0x17, 0x02B, "fcmovne $RCOND,$RSRC,$RDEST",[]>; //FCMOVE if != zero
+def FCMOVEQT : FPForm<0x17, 0x02A, "fcmoveq $RCOND,$RTRUE,$RDEST", []>;
+def FCMOVGET : FPForm<0x17, 0x02D, "fcmovge $RCOND,$RTRUE,$RDEST", []>;
+def FCMOVGTT : FPForm<0x17, 0x02F, "fcmovgt $RCOND,$RTRUE,$RDEST", []>;
+def FCMOVLET : FPForm<0x17, 0x02E, "fcmovle $RCOND,$RTRUE,$RDEST", []>;
+def FCMOVLTT : FPForm<0x17, 0x02C, "fcmovlt $RCOND,$RTRUE,$RDEST", []>;
+def FCMOVNET : FPForm<0x17, 0x02B, "fcmovne $RCOND,$RTRUE,$RDEST", []>;
 }
+
+//misc FP selects
+//Select double
+def : Pat<(select (seteq F8RC:$RA, F8RC:$RB), F8RC:$st, F8RC:$sf),
+      (FCMOVEQT F8RC:$sf, F8RC:$st, (CMPTEQ F8RC:$RA, F8RC:$RB))>;
+def : Pat<(select (setne F8RC:$RA, F8RC:$RB), F8RC:$st, F8RC:$sf),
+      (FCMOVNET F8RC:$sf, F8RC:$st, (CMPTEQ F8RC:$RA, F8RC:$RB))>;
+def : Pat<(select (setgt F8RC:$RA, F8RC:$RB), F8RC:$st, F8RC:$sf),
+      (FCMOVEQT F8RC:$sf, F8RC:$st, (CMPTLT F8RC:$RB, F8RC:$RA))>;
+def : Pat<(select (setge F8RC:$RA, F8RC:$RB), F8RC:$st, F8RC:$sf),
+      (FCMOVEQT F8RC:$sf, F8RC:$st, (CMPTLE F8RC:$RB, F8RC:$RA))>;
+def : Pat<(select (setlt F8RC:$RA, F8RC:$RB), F8RC:$st, F8RC:$sf),
+      (FCMOVEQT F8RC:$sf, F8RC:$st, (CMPTLT F8RC:$RA, F8RC:$RB))>;
+def : Pat<(select (setle F8RC:$RA, F8RC:$RB), F8RC:$st, F8RC:$sf),
+      (FCMOVEQT F8RC:$sf, F8RC:$st, (CMPTLE F8RC:$RA, F8RC:$RB))>;
+//Select single
+def : Pat<(select (seteq F8RC:$RA, F8RC:$RB), F4RC:$st, F4RC:$sf),
+      (FCMOVEQS F4RC:$sf, F4RC:$st, (CMPTEQ F8RC:$RA, F8RC:$RB))>;
+def : Pat<(select (setne F8RC:$RA, F8RC:$RB), F4RC:$st, F4RC:$sf),
+      (FCMOVNES F4RC:$sf, F4RC:$st, (CMPTEQ F8RC:$RA, F8RC:$RB))>;
+def : Pat<(select (setgt F8RC:$RA, F8RC:$RB), F4RC:$st, F4RC:$sf),
+      (FCMOVEQS F4RC:$sf, F4RC:$st, (CMPTLT F8RC:$RB, F8RC:$RA))>;
+def : Pat<(select (setge F8RC:$RA, F8RC:$RB), F4RC:$st, F4RC:$sf),
+      (FCMOVEQS F4RC:$sf, F4RC:$st, (CMPTLE F8RC:$RB, F8RC:$RA))>;
+def : Pat<(select (setlt F8RC:$RA, F8RC:$RB), F4RC:$st, F4RC:$sf),
+      (FCMOVEQS F4RC:$sf, F4RC:$st, (CMPTLT F8RC:$RA, F8RC:$RB))>;
+def : Pat<(select (setle F8RC:$RA, F8RC:$RB), F4RC:$st, F4RC:$sf),
+      (FCMOVEQS F4RC:$sf, F4RC:$st, (CMPTLE F8RC:$RA, F8RC:$RB))>;
 
 
 

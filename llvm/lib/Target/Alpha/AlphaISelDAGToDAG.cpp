@@ -287,6 +287,10 @@ SDOperand AlphaDAGToDAGISel::Select(SDOperand Op) {
       if (N->getOperand(1).getValueType() == MVT::i64) {
         Chain = CurDAG->getCopyToReg(Chain, Alpha::R0, Val, InFlag);
         InFlag = Chain.getValue(1);
+      } else if (N->getOperand(1).getValueType() == MVT::f64 ||
+                 N->getOperand(1).getValueType() == MVT::f32) {
+        Chain = CurDAG->getCopyToReg(Chain, Alpha::F0, Val, InFlag);
+        InFlag = Chain.getValue(1);
       }
     }
     Chain = CurDAG->getCopyToReg(Chain, Alpha::R26, getRASaveReg(), InFlag);
@@ -393,33 +397,6 @@ SDOperand AlphaDAGToDAGISel::Select(SDOperand Op) {
       SDOperand FP = CurDAG->getTargetNode(Alpha::CMPULT, MVT::i64, 
                                            CurDAG->getRegister(Alpha::R31, MVT::i64),
                                            LD);
-      return FP;
-    }
-    break;
-
-  case ISD::SELECT:
-    if (MVT::isFloatingPoint(N->getValueType(0))) {
-      //move int to fp
-      bool isDouble = N->getValueType(0) == MVT::f64;
-      SDOperand LD,
-        cond = Select(N->getOperand(0)),
-        TV = Select(N->getOperand(1)),
-        FV = Select(N->getOperand(2));
-      
-      if (AlphaLowering.hasITOF()) {
-        LD = CurDAG->getNode(AlphaISD::ITOFT_, MVT::f64, cond);
-      } else {
-        int FrameIdx =
-          CurDAG->getMachineFunction().getFrameInfo()->CreateStackObject(8, 8);
-        SDOperand FI = CurDAG->getFrameIndex(FrameIdx, MVT::i64);
-        SDOperand ST = CurDAG->getTargetNode(Alpha::STQ, MVT::Other, 
-                                             cond, FI, CurDAG->getRegister(Alpha::R31, MVT::i64));
-        LD = CurDAG->getTargetNode(Alpha::LDT, MVT::f64, FI, 
-                                   CurDAG->getRegister(Alpha::R31, MVT::i64),
-                                   ST);
-      }
-      SDOperand FP = CurDAG->getTargetNode(isDouble?Alpha::FCMOVEQT:Alpha::FCMOVEQS,
-                                           MVT::f64, TV, FV, LD);
       return FP;
     }
     break;
