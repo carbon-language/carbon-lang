@@ -242,11 +242,12 @@ int PPCCodeEmitter::getMachineOpValue(MachineInstr &MI, MachineOperand &MO) {
     unsigned index = MO.getConstantPoolIndex();
     unsigned Opcode = MI.getOpcode();
     rv = MCE.getConstantPoolEntryAddress(index);
-    if (Opcode == PPC::LIS) {
+    if (Opcode == PPC::LIS || Opcode == PPC::ADDIS) {
       // lis wants hi16(addr)
       if ((short)rv < 0) rv += 1 << 16;
       rv >>= 16;
     } else if (Opcode == PPC::LWZ || Opcode == PPC::LA ||
+               Opcode == PPC::LI ||
                Opcode == PPC::LFS || Opcode == PPC::LFD) {
       // These load opcodes want lo16(addr)
       rv &= 0xffff;
