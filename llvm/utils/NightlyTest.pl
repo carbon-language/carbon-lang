@@ -462,7 +462,7 @@ if (`grep '^gmake[^:]*: .*Error' $BuildLog | wc -l` + 0 ||
   $BuildStatus = "<h3><font color='red'>error: compilation " .
                 "<a href=\"$DATE-Build-Log.txt\">aborted</a></font></h3>";
   $BuildError = 1;
-  if ($VERBOSE) { print "BUILD ERROR\n"; }
+  print "\n***ERROR BUILDING TREE\n\n";
 }
 
 if ($BuildError) { $NODEJAGNU=1; }
