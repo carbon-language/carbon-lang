@@ -119,7 +119,7 @@ def SDTSelect : SDTypeProfile<1, 3, [ // select
   SDTCisInt<1>, SDTCisSameAs<0, 2>, SDTCisSameAs<2, 3>
 ]>;
 
-def SDTSelectCC : SDTypeProvile<1, 5, [ // select_cc
+def SDTSelectCC : SDTypeProfile<1, 5, [ // select_cc
   SDTCisSameAs<1, 2>, SDTCisSameAs<3, 4>, SDTCisSameAs<0, 3>,
   SDTCisVT<5, OtherVT>
 ]>;
