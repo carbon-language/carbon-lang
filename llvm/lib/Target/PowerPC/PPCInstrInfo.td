@@ -940,10 +940,10 @@ def : Pat<(srl G8RC:$in, (i64 imm:$imm)),
           (RLDICL G8RC:$in, (SRL64 imm:$imm), imm:$imm)>;
 
 // Hi and Lo for Darwin Global Addresses.
-def : Pat<(PPChi tglobaladdr:$in, (i32 0)), (LIS tglobaladdr:$in)>;
-def : Pat<(PPClo tglobaladdr:$in, (i32 0)), (LI tglobaladdr:$in)>;
-def : Pat<(PPChi tconstpool:$in, (i32 0)), (LIS tconstpool:$in)>;
-def : Pat<(PPClo tconstpool:$in, (i32 0)), (LI tconstpool:$in)>;
+def : Pat<(PPChi tglobaladdr:$in, 0), (LIS tglobaladdr:$in)>;
+def : Pat<(PPClo tglobaladdr:$in, 0), (LI tglobaladdr:$in)>;
+def : Pat<(PPChi tconstpool:$in, 0), (LIS tconstpool:$in)>;
+def : Pat<(PPClo tconstpool:$in, 0), (LI tconstpool:$in)>;
 def : Pat<(add GPRC:$in, (PPChi tglobaladdr:$g, 0)),
           (ADDIS GPRC:$in, tglobaladdr:$g)>;
 def : Pat<(add GPRC:$in, (PPChi tconstpool:$g, 0)),

@@ -42,7 +42,7 @@ namespace {
   Statistic<> EmittedInsts("asm-printer", "Number of machine instrs printed");
 
   class PPCAsmPrinter : public AsmPrinter {
-public:
+  public:
     std::set<std::string> FnStubs, GVStubs, LinkOnceStubs;
     
     PPCAsmPrinter(std::ostream &O, TargetMachine &TM)
@@ -197,6 +197,7 @@ public:
       Data64bitsDirective = 0;       // we can't emit a 64-bit unit
       AlignmentIsInBytes = false;    // Alignment is by power of 2.
       ConstantPoolSection = "\t.const\t";
+      LCOMMDirective = "\t.lcomm\t";
     }
 
     virtual const char *getPassName() const {
@@ -465,7 +466,7 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
         SwitchSection(".data", I);
         if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
         if (I->hasInternalLinkage())
-          O << ".lcomm " << name << "," << Size << "," << Align;
+          O << LCOMMDirective << name << "," << Size << "," << Align;
         else
           O << ".comm " << name << "," << Size;
         O << "\t\t; '" << I->getName() << "'\n";
