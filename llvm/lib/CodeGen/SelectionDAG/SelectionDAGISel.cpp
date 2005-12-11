@@ -1324,7 +1324,8 @@ static void OptimizeGEPExpression(GetElementPtrInst *GEPI,
         break;
       }
   }
-  if (!hasConstantIndex) return;
+  // If this is a GEP &Alloca, 0, 0, forward subst the frame index into uses.
+  if (!hasConstantIndex && !isa<AllocaInst>(GEPI->getOperand(0))) return;
   
   // Otherwise, decompose the GEP instruction into multiplies and adds.  Sum the
   // constant offset (which we now know is non-zero) and deal with it later.
