@@ -69,7 +69,8 @@ class SDTypeProfile<int numresults, int numoperands,
 }
 
 // Builtin profiles.
-def SDTImm    : SDTypeProfile<1, 0, [SDTCisInt<0>]>;      // for 'imm'.
+def SDTIntLeaf: SDTypeProfile<1, 0, [SDTCisInt<0>]>;      // for 'imm'.
+def SDTPtrLeaf: SDTypeProfile<1, 0, [SDTCisPtrTy<0>]>;      // for '&g'.
 def SDTOther  : SDTypeProfile<1, 0, [SDTCisVT<0, OtherVT>]>; // for 'vt'.
 def SDTUNDEF  : SDTypeProfile<1, 0, []>; // for 'undef'.
 def SDTIntBinOp : SDTypeProfile<1, 2, [   // add, and, or, xor, udiv, etc.
@@ -165,16 +166,16 @@ class SDNode<string opcode, SDTypeProfile typeprof,
 def set;
 def node;
 
-def imm        : SDNode<"ISD::Constant"  , SDTImm     , [], "ConstantSDNode">;
+def imm        : SDNode<"ISD::Constant"  , SDTIntLeaf , [], "ConstantSDNode">;
 def vt         : SDNode<"ISD::VALUETYPE" , SDTOther   , [], "VTSDNode">;
 def bb         : SDNode<"ISD::BasicBlock", SDTOther   , [], "BasicBlockSDNode">;
 def cond       : SDNode<"ISD::CONDCODE"  , SDTOther   , [], "CondCodeSDNode">;
 def undef      : SDNode<"ISD::UNDEF"     , SDTUNDEF   , []>;
-def globaladdr : SDNode<"ISD::GlobalAddress", SDTImm, [],
+def globaladdr : SDNode<"ISD::GlobalAddress", SDTPtrLeaf, [],
                         "GlobalAddressSDNode">;
-def tglobaladdr : SDNode<"ISD::TargetGlobalAddress", SDTImm, [],
+def tglobaladdr : SDNode<"ISD::TargetGlobalAddress", SDTPtrLeaf, [],
                         "GlobalAddressSDNode">;
-def tconstpool  : SDNode<"ISD::TargetConstantPool", SDTImm, [],
+def tconstpool  : SDNode<"ISD::TargetConstantPool", SDTPtrLeaf, [],
                         "ConstantPoolSDNode">;
 def add        : SDNode<"ISD::ADD"       , SDTIntBinOp   ,
                         [SDNPCommutative, SDNPAssociative]>;
