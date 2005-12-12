@@ -101,6 +101,17 @@ namespace {
     bool SelectLEAAddr(SDOperand N, SDOperand &Base, SDOperand &Scale,
                        SDOperand &Index, SDOperand &Disp);
 
+    inline void getAddressOperands(X86ISelAddressMode &AM, SDOperand &Base, 
+                                   SDOperand &Scale, SDOperand &Index,
+                                   SDOperand &Disp) {
+      Base  = (AM.BaseType == X86ISelAddressMode::FrameIndexBase) ?
+        CurDAG->getTargetFrameIndex(AM.Base.FrameIndex, MVT::i32) : AM.Base.Reg;
+      Scale = getI8Imm (AM.Scale);
+      Index = AM.IndexReg;
+      Disp  = AM.GV ? CurDAG->getTargetGlobalAddress(AM.GV, MVT::i32, AM.Disp)
+        : getI32Imm(AM.Disp);
+    }
+
     /// getI8Imm - Return a target constant with the specified value, of type
     /// i8.
     inline SDOperand getI8Imm(unsigned Imm) {
@@ -285,12 +296,7 @@ bool X86DAGToDAGISel::SelectAddr(SDOperand N, SDOperand &Base, SDOperand &Scale,
     else
       AM.IndexReg = CurDAG->getRegister(0, MVT::i32);
 
-    Base  = (AM.BaseType == X86ISelAddressMode::FrameIndexBase) ?
-      CurDAG->getTargetFrameIndex(AM.Base.FrameIndex, MVT::i32) : AM.Base.Reg;
-    Scale = getI8Imm (AM.Scale);
-    Index = AM.IndexReg;
-    Disp  = AM.GV ? CurDAG->getTargetGlobalAddress(AM.GV, MVT::i32, AM.Disp)
-                  : getI32Imm(AM.Disp);
+    getAddressOperands(AM, Base, Scale, Index, Disp);
     return true;
   }
   return false;
@@ -308,24 +314,49 @@ static bool isRegister0(SDOperand Op)
 /// For X86, it always is unless it's just a (Reg + const).
 bool X86DAGToDAGISel::SelectLEAAddr(SDOperand N, SDOperand &Base, SDOperand &Scale,
                                     SDOperand &Index, SDOperand &Disp) {
-  if (SelectAddr(N, Base, Scale, Index, Disp)) {
-    if (!isRegister0(Base)) {
-      unsigned Complexity = 0;
-      if ((unsigned)cast<ConstantSDNode>(Scale)->getValue() > 1)
-        Complexity++;
-      if (!isRegister0(Index))
-        Complexity++;
-      if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(Disp)) {
-        if (!CN->isNullValue()) Complexity++;
+  X86ISelAddressMode AM;
+  if (!MatchAddress(N, AM)) {
+    bool SelectBase  = false;
+    bool SelectIndex = false;
+    bool Check       = false;
+    if (AM.BaseType == X86ISelAddressMode::RegBase) {
+      if (AM.Base.Reg.Val) {
+        Check      = true;
+        SelectBase = true;
       } else {
-        Complexity++;
+        AM.Base.Reg = CurDAG->getRegister(0, MVT::i32);
       }
-      return (Complexity > 1);
     }
+
+    if (AM.IndexReg.Val) {
+      SelectIndex = true;
+    } else {
+      AM.IndexReg = CurDAG->getRegister(0, MVT::i32);
+    }
+
+    if (Check) {
+      unsigned Complexity = 0;
+      if (AM.Scale > 1)
+        Complexity++;
+      if (SelectIndex)
+        Complexity++;
+      if (AM.GV)
+        Complexity++;
+      else if (AM.Disp > 1)
+        Complexity++;
+      if (Complexity <= 1)
+        return false;
+    }
+
+    if (SelectBase)
+      AM.Base.Reg = Select(AM.Base.Reg);
+    if (SelectIndex)
+      AM.IndexReg = Select(AM.IndexReg);
+
+    getAddressOperands(AM, Base, Scale, Index, Disp);
     return true;
-  } else {
-    return false;
   }
+  return false;
 }
 
 SDOperand X86DAGToDAGISel::Select(SDOperand Op) {
