@@ -188,7 +188,7 @@ def CMOVNE   : OForm4<  0x11, 0x26, "cmovne $RCOND,$RTRUE,$RDEST",
 //       and constants (which require inverted conditions as legalize puts the constant in the
 //       wrong field for the instruction definition
 def : Pat<(select GPRC:$which, GPRC:$src1, GPRC:$src2),
-      (CMOVEQ GPRC:$src1, GPRC:$src2, GPRC:$which)>;
+      (CMOVNE GPRC:$src2, GPRC:$src1, GPRC:$which)>;
 
 
 def ADDL     : OForm< 0x10, 0x00, "addl $RA,$RB,$RC",
@@ -600,30 +600,30 @@ def FCMOVNET : FPForm<0x17, 0x02B, "fcmovne $RCOND,$RTRUE,$RDEST", []>;
 //misc FP selects
 //Select double
 def : Pat<(select (seteq F8RC:$RA, F8RC:$RB), F8RC:$st, F8RC:$sf),
-      (FCMOVEQT F8RC:$sf, F8RC:$st, (CMPTEQ F8RC:$RA, F8RC:$RB))>;
-def : Pat<(select (setne F8RC:$RA, F8RC:$RB), F8RC:$st, F8RC:$sf),
       (FCMOVNET F8RC:$sf, F8RC:$st, (CMPTEQ F8RC:$RA, F8RC:$RB))>;
+def : Pat<(select (setne F8RC:$RA, F8RC:$RB), F8RC:$st, F8RC:$sf),
+      (FCMOVEQT F8RC:$sf, F8RC:$st, (CMPTEQ F8RC:$RA, F8RC:$RB))>;
 def : Pat<(select (setgt F8RC:$RA, F8RC:$RB), F8RC:$st, F8RC:$sf),
-      (FCMOVEQT F8RC:$sf, F8RC:$st, (CMPTLT F8RC:$RB, F8RC:$RA))>;
+      (FCMOVNET F8RC:$sf, F8RC:$st, (CMPTLT F8RC:$RB, F8RC:$RA))>;
 def : Pat<(select (setge F8RC:$RA, F8RC:$RB), F8RC:$st, F8RC:$sf),
-      (FCMOVEQT F8RC:$sf, F8RC:$st, (CMPTLE F8RC:$RB, F8RC:$RA))>;
+      (FCMOVNET F8RC:$sf, F8RC:$st, (CMPTLE F8RC:$RB, F8RC:$RA))>;
 def : Pat<(select (setlt F8RC:$RA, F8RC:$RB), F8RC:$st, F8RC:$sf),
-      (FCMOVEQT F8RC:$sf, F8RC:$st, (CMPTLT F8RC:$RA, F8RC:$RB))>;
+      (FCMOVNET F8RC:$sf, F8RC:$st, (CMPTLT F8RC:$RA, F8RC:$RB))>;
 def : Pat<(select (setle F8RC:$RA, F8RC:$RB), F8RC:$st, F8RC:$sf),
-      (FCMOVEQT F8RC:$sf, F8RC:$st, (CMPTLE F8RC:$RA, F8RC:$RB))>;
+      (FCMOVNET F8RC:$sf, F8RC:$st, (CMPTLE F8RC:$RA, F8RC:$RB))>;
 //Select single
 def : Pat<(select (seteq F8RC:$RA, F8RC:$RB), F4RC:$st, F4RC:$sf),
-      (FCMOVEQS F4RC:$sf, F4RC:$st, (CMPTEQ F8RC:$RA, F8RC:$RB))>;
-def : Pat<(select (setne F8RC:$RA, F8RC:$RB), F4RC:$st, F4RC:$sf),
       (FCMOVNES F4RC:$sf, F4RC:$st, (CMPTEQ F8RC:$RA, F8RC:$RB))>;
+def : Pat<(select (setne F8RC:$RA, F8RC:$RB), F4RC:$st, F4RC:$sf),
+      (FCMOVEQS F4RC:$sf, F4RC:$st, (CMPTEQ F8RC:$RA, F8RC:$RB))>;
 def : Pat<(select (setgt F8RC:$RA, F8RC:$RB), F4RC:$st, F4RC:$sf),
-      (FCMOVEQS F4RC:$sf, F4RC:$st, (CMPTLT F8RC:$RB, F8RC:$RA))>;
+      (FCMOVNES F4RC:$sf, F4RC:$st, (CMPTLT F8RC:$RB, F8RC:$RA))>;
 def : Pat<(select (setge F8RC:$RA, F8RC:$RB), F4RC:$st, F4RC:$sf),
-      (FCMOVEQS F4RC:$sf, F4RC:$st, (CMPTLE F8RC:$RB, F8RC:$RA))>;
+      (FCMOVNES F4RC:$sf, F4RC:$st, (CMPTLE F8RC:$RB, F8RC:$RA))>;
 def : Pat<(select (setlt F8RC:$RA, F8RC:$RB), F4RC:$st, F4RC:$sf),
-      (FCMOVEQS F4RC:$sf, F4RC:$st, (CMPTLT F8RC:$RA, F8RC:$RB))>;
+      (FCMOVNES F4RC:$sf, F4RC:$st, (CMPTLT F8RC:$RA, F8RC:$RB))>;
 def : Pat<(select (setle F8RC:$RA, F8RC:$RB), F4RC:$st, F4RC:$sf),
-      (FCMOVEQS F4RC:$sf, F4RC:$st, (CMPTLE F8RC:$RA, F8RC:$RB))>;
+      (FCMOVNES F4RC:$sf, F4RC:$st, (CMPTLE F8RC:$RA, F8RC:$RB))>;
 
 
 

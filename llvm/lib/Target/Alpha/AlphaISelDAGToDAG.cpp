@@ -427,7 +427,7 @@ SDOperand AlphaDAGToDAGISel::Select(SDOperand Op) {
 				   CurDAG->getRegister(Alpha::R31, MVT::i64),
 				   ST);
       }
-      SDOperand FP = CurDAG->getTargetNode(isDouble?Alpha::FCMOVEQT:Alpha::FCMOVEQS,
+      SDOperand FP = CurDAG->getTargetNode(isDouble?Alpha::FCMOVNET:Alpha::FCMOVNES,
 					   MVT::f64, FV, TV, LD);
       return FP;
     }
