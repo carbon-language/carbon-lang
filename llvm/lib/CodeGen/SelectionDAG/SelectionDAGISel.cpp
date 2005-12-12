@@ -992,6 +992,9 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
                              getValue(I.getOperand(1)).getValueType(),
                              getValue(I.getOperand(1))));
     return 0;
+  case Intrinsic::prefetch:
+    // FIXME: Currently discarding prefetches.
+    return 0;
   default:
     std::cerr << I;
     assert(0 && "This intrinsic is not implemented yet!");
