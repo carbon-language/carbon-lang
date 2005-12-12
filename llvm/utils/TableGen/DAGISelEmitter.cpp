@@ -2234,10 +2234,8 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
      << "      N.getOpcode() < (ISD::BUILTIN_OP_END+" << InstNS
      << "INSTRUCTION_LIST_END))\n"
      << "    return N;   // Already selected.\n\n"
-     << "  if (!N.Val->hasOneUse()) {\n"
-  << "    std::map<SDOperand, SDOperand>::iterator CGMI = CodeGenMap.find(N);\n"
-     << "    if (CGMI != CodeGenMap.end()) return CGMI->second;\n"
-     << "  }\n"
+  << "  std::map<SDOperand, SDOperand>::iterator CGMI = CodeGenMap.find(N);\n"
+     << "  if (CGMI != CodeGenMap.end()) return CGMI->second;\n"
      << "  switch (N.getOpcode()) {\n"
      << "  default: break;\n"
      << "  case ISD::EntryToken:       // These leaves remain the same.\n"
