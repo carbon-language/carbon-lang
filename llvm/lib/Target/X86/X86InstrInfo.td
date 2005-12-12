@@ -1206,21 +1206,29 @@ def ADD32ri8 : Ii8<0x83, MRM0r, (ops R32:$dst, R32:$src1, i32i8imm:$src2),
 
 let isTwoAddress = 0 in {
   def ADD8mr   : I<0x00, MRMDestMem, (ops i8mem :$dst, R8 :$src2),
-                   "add{b} {$src2, $dst|$dst, $src2}", []>;
+                   "add{b} {$src2, $dst|$dst, $src2}",
+                   [(store (add (load addr:$dst), R8:$src2), addr:$dst)]>;
   def ADD16mr  : I<0x01, MRMDestMem, (ops i16mem:$dst, R16:$src2),
-                   "add{w} {$src2, $dst|$dst, $src2}", []>, OpSize;
+                   "add{w} {$src2, $dst|$dst, $src2}",
+                   [(store (add (load addr:$dst), R16:$src2), addr:$dst)]>, OpSize;
   def ADD32mr  : I<0x01, MRMDestMem, (ops i32mem:$dst, R32:$src2),
-                   "add{l} {$src2, $dst|$dst, $src2}", []>;
+                   "add{l} {$src2, $dst|$dst, $src2}",
+                   [(store (add (load addr:$dst), R32:$src2), addr:$dst)]>;
   def ADD8mi   : Ii8<0x80, MRM0m, (ops i8mem :$dst, i8imm :$src2),
-                     "add{b} {$src2, $dst|$dst, $src2}", []>;
+                     "add{b} {$src2, $dst|$dst, $src2}",
+                   [(store (add (load addr:$dst), (i8 imm:$src2)), addr:$dst)]>;
   def ADD16mi  : Ii16<0x81, MRM0m, (ops i16mem:$dst, i16imm:$src2),
-                      "add{w} {$src2, $dst|$dst, $src2}", []>, OpSize;
+                      "add{w} {$src2, $dst|$dst, $src2}",
+                   [(store (add (load addr:$dst), (i16 imm:$src2)), addr:$dst)]>, OpSize;
   def ADD32mi  : Ii32<0x81, MRM0m, (ops i32mem:$dst, i32imm:$src2),
-                      "add{l} {$src2, $dst|$dst, $src2}", []>;
-  def ADD16mi8 : Ii8<0x83, MRM0m, (ops i16mem:$dst, i8imm :$src2),
-                     "add{w} {$src2, $dst|$dst, $src2}", []>, OpSize;
-  def ADD32mi8 : Ii8<0x83, MRM0m, (ops i32mem:$dst, i8imm :$src2),
-                     "add{l} {$src2, $dst|$dst, $src2}", []>;
+                      "add{l} {$src2, $dst|$dst, $src2}",
+                   [(store (add (load addr:$dst), (i32 imm:$src2)), addr:$dst)]>;
+  def ADD16mi8 : Ii8<0x83, MRM0m, (ops i16mem:$dst, i16i8imm :$src2),
+                     "add{w} {$src2, $dst|$dst, $src2}",
+                   [(store (add (load addr:$dst), (i16 immSExt8:$src2)), addr:$dst)]>, OpSize;
+  def ADD32mi8 : Ii8<0x83, MRM0m, (ops i32mem:$dst, i32i8imm :$src2),
+                     "add{l} {$src2, $dst|$dst, $src2}",
+                   [(store (add (load addr:$dst), (i32 immSExt8:$src2)), addr:$dst)]>;
 }
 
 let isCommutable = 1 in {  // X = ADC Y, Z --> X = ADC Z, Y
