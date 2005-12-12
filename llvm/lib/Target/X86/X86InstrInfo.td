@@ -1261,11 +1261,14 @@ def SUB32rr  : I<0x29, MRMDestReg, (ops R32:$dst, R32:$src1, R32:$src2),
                  "sub{l} {$src2, $dst|$dst, $src2}",
                  [(set R32:$dst, (sub R32:$src1, R32:$src2))]>;
 def SUB8rm   : I<0x2A, MRMSrcMem, (ops R8 :$dst, R8 :$src1, i8mem :$src2),
-                 "sub{b} {$src2, $dst|$dst, $src2}", []>;
+                 "sub{b} {$src2, $dst|$dst, $src2}",
+                 [(set R8:$dst, (sub R8:$src1, (load addr:$src2)))]>;
 def SUB16rm  : I<0x2B, MRMSrcMem, (ops R16:$dst, R16:$src1, i16mem:$src2),
-                 "sub{w} {$src2, $dst|$dst, $src2}", []>, OpSize;
+                 "sub{w} {$src2, $dst|$dst, $src2}",
+                 [(set R16:$dst, (sub R16:$src1, (load addr:$src2)))]>, OpSize;
 def SUB32rm  : I<0x2B, MRMSrcMem, (ops R32:$dst, R32:$src1, i32mem:$src2),
-                 "sub{l} {$src2, $dst|$dst, $src2}", []>;
+                 "sub{l} {$src2, $dst|$dst, $src2}",
+                 [(set R32:$dst, (sub R32:$src1, (load addr:$src2)))]>;
 
 def SUB8ri   : Ii8 <0x80, MRM5r, (ops R8:$dst, R8:$src1, i8imm:$src2),
                     "sub{b} {$src2, $dst|$dst, $src2}",
@@ -1284,21 +1287,29 @@ def SUB32ri8 : Ii8<0x83, MRM5r, (ops R32:$dst, R32:$src1, i32i8imm:$src2),
                    [(set R32:$dst, (sub R32:$src1, immSExt8:$src2))]>;
 let isTwoAddress = 0 in {
   def SUB8mr   : I<0x28, MRMDestMem, (ops i8mem :$dst, R8 :$src2),
-                   "sub{b} {$src2, $dst|$dst, $src2}", []>;
+                   "sub{b} {$src2, $dst|$dst, $src2}",
+                   [(store (sub (load addr:$dst), R8:$src2), addr:$dst)]>;
   def SUB16mr  : I<0x29, MRMDestMem, (ops i16mem:$dst, R16:$src2),
-                   "sub{w} {$src2, $dst|$dst, $src2}", []>, OpSize;
+                   "sub{w} {$src2, $dst|$dst, $src2}",
+                   [(store (sub (load addr:$dst), R16:$src2), addr:$dst)]>, OpSize;
   def SUB32mr  : I<0x29, MRMDestMem, (ops i32mem:$dst, R32:$src2), 
-                   "sub{l} {$src2, $dst|$dst, $src2}", []>;
+                   "sub{l} {$src2, $dst|$dst, $src2}",
+                   [(store (sub (load addr:$dst), R32:$src2), addr:$dst)]>;
   def SUB8mi   : Ii8<0x80, MRM5m, (ops i8mem :$dst, i8imm:$src2), 
-                     "sub{b} {$src2, $dst|$dst, $src2}", []>;
+                     "sub{b} {$src2, $dst|$dst, $src2}",
+                   [(store (sub (load addr:$dst), (i8 imm:$src2)), addr:$dst)]>;
   def SUB16mi  : Ii16<0x81, MRM5m, (ops i16mem:$dst, i16imm:$src2), 
-                      "sub{w} {$src2, $dst|$dst, $src2}", []>, OpSize;
+                      "sub{w} {$src2, $dst|$dst, $src2}",
+                   [(store (sub (load addr:$dst), (i16 imm:$src2)), addr:$dst)]>, OpSize;
   def SUB32mi  : Ii32<0x81, MRM5m, (ops i32mem:$dst, i32imm:$src2), 
-                      "sub{l} {$src2, $dst|$dst, $src2}", []>;
-  def SUB16mi8 : Ii8<0x83, MRM5m, (ops i16mem:$dst, i8imm :$src2), 
-                     "sub{w} {$src2, $dst|$dst, $src2}", []>, OpSize;
-  def SUB32mi8 : Ii8<0x83, MRM5m, (ops i32mem:$dst, i8imm :$src2), 
-                     "sub{l} {$src2, $dst|$dst, $src2}", []>;
+                      "sub{l} {$src2, $dst|$dst, $src2}",
+                   [(store (sub (load addr:$dst), (i32 imm:$src2)), addr:$dst)]>;
+  def SUB16mi8 : Ii8<0x83, MRM5m, (ops i16mem:$dst, i16i8imm :$src2), 
+                     "sub{w} {$src2, $dst|$dst, $src2}",
+                   [(store (sub (load addr:$dst), (i16 immSExt8:$src2)), addr:$dst)]>, OpSize;
+  def SUB32mi8 : Ii8<0x83, MRM5m, (ops i32mem:$dst, i32i8imm :$src2), 
+                     "sub{l} {$src2, $dst|$dst, $src2}",
+                   [(store (sub (load addr:$dst), (i32 immSExt8:$src2)), addr:$dst)]>;
 }
 
 def SBB32rr    : I<0x19, MRMDestReg, (ops R32:$dst, R32:$src1, R32:$src2),
