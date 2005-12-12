@@ -2026,7 +2026,7 @@ public:
           OS << ", InFlag";
         OS << ");\n";
         if (NumResults != 0) {
-          OS << "      CodeGenMap[N] = Result;\n";
+          OS << "      CodeGenMap[N.getValue(0)] = Result;\n";
         }
         OS << "      Chain ";
         if (NodeHasChain(LHS, ISE))
