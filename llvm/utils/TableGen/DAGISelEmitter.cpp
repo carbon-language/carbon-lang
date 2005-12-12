@@ -1040,14 +1040,15 @@ FindPatternInputsAndOutputs(TreePattern *I, TreePatternNode *Pat,
   for (unsigned i = 0; i != NumValues; ++i) {
     TreePatternNode *Dest = Pat->getChild(i);
     if (!Dest->isLeaf())
-      I->error("set destination should be a virtual register!");
+      I->error("set destination should be a register!");
     
     DefInit *Val = dynamic_cast<DefInit*>(Dest->getLeafValue());
     if (!Val)
-      I->error("set destination should be a virtual register!");
+      I->error("set destination should be a register!");
     
-    if (!Val->getDef()->isSubClassOf("RegisterClass"))
-      I->error("set destination should be a virtual register!");
+    if (!Val->getDef()->isSubClassOf("RegisterClass") &&
+        !Val->getDef()->isSubClassOf("Register"))
+      I->error("set destination should be a register!");
     if (Dest->getName().empty())
       I->error("set destination must have a name!");
     if (InstResults.count(Dest->getName()))
@@ -1726,10 +1727,9 @@ private:
   std::ostream &OS;
   // Node to name mapping
   std::map<std::string,std::string> VariableMap;
-  // Name of the inner most node which produces a chain.
-  std::string InnerChain;
   // Names of all the folded nodes which produce chains.
   std::vector<std::string> FoldedChains;
+  bool FoundChain;
   bool InFlag;
   unsigned TmpNo;
 
@@ -1737,7 +1737,7 @@ public:
   PatternCodeEmitter(DAGISelEmitter &ise, TreePatternNode *lhs,
                      unsigned PatNum, std::ostream &os) :
     ISE(ise), LHS(lhs), PatternNo(PatNum), OS(os),
-    InFlag(false), TmpNo(0) {};
+    FoundChain(false), InFlag(false), TmpNo(0) {};
 
   /// EmitMatchCode - Emit a matcher for N, going to the label for PatternNo
   /// if the match fails. At this point, we already know that the opcode for N
@@ -1776,7 +1776,8 @@ public:
 
     // Emit code to load the child nodes and match their contents recursively.
     unsigned OpNo = 0;
-    if (NodeHasChain(N, ISE)) {
+    bool HasChain = NodeHasChain(N, ISE);
+    if (HasChain) {
       OpNo = 1;
       if (!isRoot) {
         const SDNodeInfo &CInfo = ISE.getSDNodeInfo(N->getOperator());
@@ -1785,11 +1786,6 @@ public:
         OS << "      if (CodeGenMap.count(" << RootName
            << ".getValue(" << CInfo.getNumResults() << "))) goto P"
            << PatternNo << "Fail;   // Already selected for a chain use?\n";
-      }
-      if (InnerChain.empty()) {
-        OS << "      SDOperand " << RootName << "0 = " << RootName
-           << ".getOperand(0);\n";
-        InnerChain = RootName + "0";
       }
     }
 
@@ -1859,6 +1855,13 @@ public:
           Child->dump();
           assert(0 && "Unknown leaf type!");
         }
+      }
+    }
+
+    if (HasChain) {
+      if (!FoundChain) {
+        OS << "      SDOperand Chain = " << RootName << ".getOperand(0);\n";
+        FoundChain = true;
       }
     }
 
@@ -1988,7 +1991,7 @@ public:
 
       // Emit all the chain and CopyToReg stuff.
       if (II.hasCtrlDep)
-        OS << "      SDOperand Chain = Select(" << InnerChain << ");\n";
+        OS << "      Chain = Select(Chain);\n";
       EmitCopyToRegs(LHS, "N", II.hasCtrlDep);
 
       const DAGInstruction &Inst = ISE.getInstruction(Op);
