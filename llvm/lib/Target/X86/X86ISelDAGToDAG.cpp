@@ -356,15 +356,22 @@ SDOperand X86DAGToDAGISel::Select(SDOperand Op) {
       break;
 
     case ISD::RET: {
-      SDOperand Chain = Select(N->getOperand(0));     // Token chain.
-      switch (N->getNumOperands()) {
+      SDOperand Chain = N->getOperand(0);     // Token chain.
+      unsigned NumOps = N->getNumOperands();
+
+      // Note: A bit of a hack / optimization... Try to delay chain selection
+      // as much as possible. So it's more likely it has already been selected
+      // for a  real use.
+      switch (NumOps) {
         default:
           assert(0 && "Unknown return instruction!");
         case 3:
+          Chain = Select(Chain);
           assert(0 && "Not yet handled return instruction!");
           break;
         case 2: {
           SDOperand Val = Select(N->getOperand(1));
+          Chain = Select(Chain);
           switch (N->getOperand(1).getValueType()) {
             default:
               assert(0 && "All other types should have been promoted!!");
@@ -378,6 +385,7 @@ SDOperand X86DAGToDAGISel::Select(SDOperand Op) {
           }
         }
         case 1:
+          Chain = Select(Chain);
           break;
       }
       if (X86Lowering.getBytesToPopOnReturn() == 0)
