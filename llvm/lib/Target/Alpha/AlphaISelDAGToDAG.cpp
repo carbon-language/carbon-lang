@@ -401,6 +401,38 @@ SDOperand AlphaDAGToDAGISel::Select(SDOperand Op) {
     }
     break;
 
+  case ISD::SELECT:
+    if (MVT::isFloatingPoint(N->getValueType(0)) &&
+	(N->getOperand(0).getOpcode() != ISD::SETCC ||
+	 !MVT::isFloatingPoint(N->getOperand(0).getOperand(1).getValueType()))) {
+      //This should be the condition not covered by the Patterns
+      //FIXME: Don't have SelectCode die, but rather return something testable
+      // so that things like this can be caught in fall though code
+      //move int to fp
+      bool isDouble = N->getValueType(0) == MVT::f64;
+      SDOperand LD,
+	cond = Select(N->getOperand(0)),
+	TV = Select(N->getOperand(1)),
+	FV = Select(N->getOperand(2));
+      
+      if (AlphaLowering.hasITOF()) {
+	LD = CurDAG->getNode(AlphaISD::ITOFT_, MVT::f64, cond);
+      } else {
+	int FrameIdx =
+	  CurDAG->getMachineFunction().getFrameInfo()->CreateStackObject(8, 8);
+	SDOperand FI = CurDAG->getFrameIndex(FrameIdx, MVT::i64);
+	SDOperand ST = CurDAG->getTargetNode(Alpha::STQ, MVT::Other,
+					     cond, FI, CurDAG->getRegister(Alpha::R31, MVT::i64));
+	LD = CurDAG->getTargetNode(Alpha::LDT, MVT::f64, FI,
+				   CurDAG->getRegister(Alpha::R31, MVT::i64),
+				   ST);
+      }
+      SDOperand FP = CurDAG->getTargetNode(isDouble?Alpha::FCMOVEQT:Alpha::FCMOVEQS,
+					   MVT::f64, FV, TV, LD);
+      return FP;
+    }
+    break;
+
   }
 
   return SelectCode(Op);
