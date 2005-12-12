@@ -26,9 +26,10 @@
 #include "llvm/Pass.h"
 #include "llvm/Instructions.h"
 #include "llvm/Analysis/Dominators.h"
-#include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Transforms/Utils/PromoteMemToReg.h"
+#include "llvm/Support/GetElementPtrTypeIterator.h"
+#include "llvm/Support/MathExtras.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringExtras.h"
@@ -37,6 +38,8 @@ using namespace llvm;
 namespace {
   Statistic<> NumReplaced("scalarrepl", "Number of allocas broken up");
   Statistic<> NumPromoted("scalarrepl", "Number of allocas promoted");
+  Statistic<> NumConverted("scalarrepl",
+                           "Number of aggregates converted to scalar");
 
   struct SROA : public FunctionPass {
     bool runOnFunction(Function &F);
@@ -59,6 +62,10 @@ namespace {
     int isSafeAllocaToScalarRepl(AllocationInst *AI);
     void CanonicalizeAllocaUsers(AllocationInst *AI);
     AllocaInst *AddNewAlloca(Function &F, const Type *Ty, AllocationInst *Base);
+    
+    const Type *CanConvertToScalar(Value *V, bool &IsNotTrivial);
+    void ConvertToScalar(AllocationInst *AI, const Type *Ty);
+    void ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, unsigned Offset);
   };
 
   RegisterOpt<SROA> X("scalarrepl", "Scalar Replacement of Aggregates");
@@ -112,7 +119,6 @@ bool SROA::performPromotion(Function &F) {
   return Changed;
 }
 
-
 // performScalarRepl - This algorithm is a simple worklist driven algorithm,
 // which runs on all of the malloc/alloca instructions in the function, removing
 // them if they are only used by getelementptr instructions.
@@ -131,6 +137,16 @@ bool SROA::performScalarRepl(Function &F) {
   while (!WorkList.empty()) {
     AllocationInst *AI = WorkList.back();
     WorkList.pop_back();
+    
+    // If we can turn this aggregate value (potentially with casts) into a
+    // simple scalar value that can be mem2reg'd into a register value.
+    bool IsNotTrivial = false;
+    if (const Type *ActualType = CanConvertToScalar(AI, IsNotTrivial))
+      if (IsNotTrivial) {
+        ConvertToScalar(AI, ActualType);
+        Changed = true;
+        continue;
+      }
 
     // We cannot transform the allocation instruction if it is an array
     // allocation (allocations OF arrays are ok though), and an allocation of a
@@ -375,6 +391,265 @@ void SROA::CanonicalizeAllocaUsers(AllocationInst *AI) {
           GEPI->eraseFromParent();
         }
       }
+    }
+  }
+}
+
+/// MergeInType - Add the 'In' type to the accumulated type so far.  If the
+/// types are incompatible, return true, otherwise update Accum and return
+/// false.
+static bool MergeInType(const Type *In, const Type *&Accum) {
+  if (!In->isIntegral()) return true;
+  
+  // If this is our first type, just use it.
+  if (Accum == Type::VoidTy) {
+    Accum = In;
+  } else {
+    // Otherwise pick whichever type is larger.
+    if (In->getTypeID() > Accum->getTypeID())
+      Accum = In;
+  }
+  return false;
+}
+
+/// getUIntAtLeastAsBitAs - Return an unsigned integer type that is at least
+/// as big as the specified type.  If there is no suitable type, this returns
+/// null.
+const Type *getUIntAtLeastAsBitAs(unsigned NumBits) {
+  if (NumBits > 64) return 0;
+  if (NumBits > 32) return Type::ULongTy;
+  if (NumBits > 16) return Type::UIntTy;
+  if (NumBits > 8) return Type::UShortTy;
+  return Type::UByteTy;    
+}
+
+/// CanConvertToScalar - V is a pointer.  If we can convert the pointee to a
+/// single scalar integer type, return that type.  Further, if the use is not
+/// a completely trivial use that mem2reg could promote, set IsNotTrivial.  If
+/// there are no uses of this pointer, return Type::VoidTy to differentiate from
+/// failure.
+///
+const Type *SROA::CanConvertToScalar(Value *V, bool &IsNotTrivial) {
+  const Type *UsedType = Type::VoidTy; // No uses, no forced type.
+  const TargetData &TD = getAnalysis<TargetData>();
+  const PointerType *PTy = cast<PointerType>(V->getType());
+
+  for (Value::use_iterator UI = V->use_begin(), E = V->use_end(); UI!=E; ++UI) {
+    Instruction *User = cast<Instruction>(*UI);
+    
+    if (LoadInst *LI = dyn_cast<LoadInst>(User)) {
+      if (MergeInType(LI->getType(), UsedType))
+        return 0;
+      
+    } else if (StoreInst *SI = dyn_cast<StoreInst>(User)) {
+      // Storing the pointer, not the into the value?
+      if (SI->getOperand(0) == V) return 0;
+      
+      // NOTE: We could handle storing of FP imms here!
+      
+      if (MergeInType(SI->getOperand(0)->getType(), UsedType))
+        return 0;
+    } else if (CastInst *CI = dyn_cast<CastInst>(User)) {
+      if (!isa<PointerType>(CI->getType())) return 0;
+      IsNotTrivial = true;
+      const Type *SubTy = CanConvertToScalar(CI, IsNotTrivial);
+      if (!SubTy || MergeInType(SubTy, UsedType)) return 0;
+    } else if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(User)) {
+      // Check to see if this is stepping over an element: GEP Ptr, int C
+      if (GEP->getNumOperands() == 2 && isa<ConstantInt>(GEP->getOperand(1))) {
+        unsigned Idx = cast<ConstantInt>(GEP->getOperand(1))->getRawValue();
+        unsigned ElSize = TD.getTypeSize(PTy->getElementType());
+        unsigned BitOffset = Idx*ElSize*8;
+        if (BitOffset > 64 || !isPowerOf2_32(ElSize)) return 0;
+        
+        IsNotTrivial = true;
+        const Type *SubElt = CanConvertToScalar(GEP, IsNotTrivial);
+        if (SubElt == 0) return 0;
+        if (SubElt != Type::VoidTy) {
+          const Type *NewTy = 
+            getUIntAtLeastAsBitAs(SubElt->getPrimitiveSizeInBits()+BitOffset);
+          if (NewTy == 0 || MergeInType(NewTy, UsedType)) return 0;
+          continue;
+        }
+      } else if (GEP->getNumOperands() == 3 && 
+                 isa<ConstantInt>(GEP->getOperand(1)) &&
+                 isa<ConstantInt>(GEP->getOperand(2)) &&
+                 cast<Constant>(GEP->getOperand(1))->isNullValue()) {
+        // We are stepping into an element, e.g. a structure or an array:
+        // GEP Ptr, int 0, uint C
+        const Type *AggTy = PTy->getElementType();
+        unsigned Idx = cast<ConstantInt>(GEP->getOperand(2))->getRawValue();
+        
+        if (const ArrayType *ATy = dyn_cast<ArrayType>(AggTy)) {
+          if (Idx >= ATy->getNumElements()) return 0;  // Out of range.
+        } else if (const PackedType *PTy = dyn_cast<PackedType>(AggTy)) {
+          if (Idx >= PTy->getNumElements()) return 0;  // Out of range.
+        } else if (isa<StructType>(AggTy)) {
+          // Structs are always ok.
+        } else {
+          return 0;
+        }
+        const Type *NTy = getUIntAtLeastAsBitAs(TD.getTypeSize(AggTy)*8);
+        if (NTy == 0 || MergeInType(NTy, UsedType)) return 0;
+        const Type *SubTy = CanConvertToScalar(GEP, IsNotTrivial);
+        if (SubTy == 0) return 0;
+        if (SubTy != Type::VoidTy && MergeInType(SubTy, UsedType))
+          return 0;
+        continue;    // Everything looks ok
+      }
+      return 0;
+    } else {
+      // Cannot handle this!
+      return 0;
+    }
+  }
+  
+  return UsedType;
+}
+
+/// ConvertToScalar - The specified alloca passes the CanConvertToScalar
+/// predicate and is non-trivial.  Convert it to something that can be trivially
+/// promoted into a register by mem2reg.
+void SROA::ConvertToScalar(AllocationInst *AI, const Type *ActualTy) {
+  DEBUG(std::cerr << "CONVERT TO SCALAR: " << *AI << "  TYPE = "
+                  << *ActualTy << "\n");
+  ++NumConverted;
+  
+  BasicBlock *EntryBlock = AI->getParent();
+  assert(EntryBlock == &EntryBlock->getParent()->front() &&
+         "Not in the entry block!");
+  EntryBlock->getInstList().remove(AI);  // Take the alloca out of the program.
+  
+  // Create and insert the alloca.
+  AllocaInst *NewAI = new AllocaInst(ActualTy->getUnsignedVersion(), 0,
+                                     AI->getName(), EntryBlock->begin());
+  ConvertUsesToScalar(AI, NewAI, 0);
+  delete AI;
+}
+
+
+/// ConvertUsesToScalar - Convert all of the users of Ptr to use the new alloca
+/// directly.  Offset is an offset from the original alloca, in bits that need
+/// to be shifted to the right.  By the end of this, there should be no uses of
+/// Ptr.
+void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, unsigned Offset) {
+  while (!Ptr->use_empty()) {
+    Instruction *User = cast<Instruction>(Ptr->use_back());
+    
+    if (LoadInst *LI = dyn_cast<LoadInst>(User)) {
+      // The load is a bit extract from NewAI shifted right by Offset bits.
+      Value *NV = new LoadInst(NewAI, LI->getName(), LI);
+      if (Offset)
+        NV = new ShiftInst(Instruction::Shr, NV,
+                           ConstantUInt::get(Type::UByteTy, Offset),
+                           LI->getName(), LI);
+      if (NV->getType() != LI->getType())
+        NV = new CastInst(NV, LI->getType(), LI->getName(), LI);
+      LI->replaceAllUsesWith(NV);
+      LI->eraseFromParent();
+    } else if (StoreInst *SI = dyn_cast<StoreInst>(User)) {
+      assert(SI->getOperand(0) != Ptr && "Consistency error!");
+
+      // Convert the stored type to the actual type, shift it left to insert
+      // then 'or' into place.
+      Value *SV = SI->getOperand(0);
+      if (SV->getType() == NewAI->getType()->getElementType()) {
+        assert(Offset == 0 && "Store out of bounds!");
+      } else {
+        Value *Old = new LoadInst(NewAI, NewAI->getName()+".in", SI);
+        // If SV is signed, convert it to unsigned, so that the next cast zero
+        // extends the value.
+        if (SV->getType()->isSigned())
+          SV = new CastInst(SV, SV->getType()->getUnsignedVersion(),
+                            SV->getName(), SI);
+        SV = new CastInst(SV, Old->getType(), SV->getName(), SI);
+        if (Offset)
+          SV = new ShiftInst(Instruction::Shl, SV,
+                             ConstantUInt::get(Type::UByteTy, Offset),
+                             SV->getName()+".adj", SI);
+        // Mask out the bits we are about to insert from the old value.
+        unsigned TotalBits = SV->getType()->getPrimitiveSizeInBits();
+        unsigned InsertBits =
+          SI->getOperand(0)->getType()->getPrimitiveSizeInBits();
+        if (TotalBits != InsertBits) {
+          assert(TotalBits > InsertBits);
+          uint64_t Mask = ~(((1ULL << InsertBits)-1) << Offset);
+          if (TotalBits != 64)
+            Mask = Mask & ((1ULL << TotalBits)-1);
+          Old = BinaryOperator::createAnd(Old,
+                                        ConstantUInt::get(Old->getType(), Mask),
+                                          Old->getName()+".mask", SI);
+          SV = BinaryOperator::createOr(Old, SV, SV->getName()+".ins", SI);
+        }
+      }
+      new StoreInst(SV, NewAI, SI);
+      SI->eraseFromParent();
+      
+    } else if (CastInst *CI = dyn_cast<CastInst>(User)) {
+      unsigned NewOff = Offset;
+      const TargetData &TD = getAnalysis<TargetData>();
+      if (TD.isBigEndian()) {
+        // Adjust the pointer.  For example, storing 16-bits into a 32-bit
+        // alloca with just a cast makes it modify the top 16-bits.
+        const Type *SrcTy = cast<PointerType>(Ptr->getType())->getElementType();
+        const Type *DstTy = cast<PointerType>(CI->getType())->getElementType();
+        int PtrDiffBits = TD.getTypeSize(SrcTy)*8-TD.getTypeSize(DstTy)*8;
+        NewOff += PtrDiffBits;
+      }
+      ConvertUsesToScalar(CI, NewAI, NewOff);
+      CI->eraseFromParent();
+    } else if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(User)) {
+      const PointerType *AggPtrTy = 
+        cast<PointerType>(GEP->getOperand(0)->getType());
+      const TargetData &TD = getAnalysis<TargetData>();
+      unsigned AggSizeInBits = TD.getTypeSize(AggPtrTy->getElementType())*8;
+      
+      // Check to see if this is stepping over an element: GEP Ptr, int C
+      unsigned NewOffset = Offset;
+      if (GEP->getNumOperands() == 2) {
+        unsigned Idx = cast<ConstantInt>(GEP->getOperand(1))->getRawValue();
+        unsigned BitOffset = Idx*AggSizeInBits;
+        
+        if (TD.isLittleEndian())
+          NewOffset += BitOffset;
+        else
+          NewOffset -= BitOffset;
+        
+      } else if (GEP->getNumOperands() == 3) {
+        // We know that operand #2 is zero.
+        unsigned Idx = cast<ConstantInt>(GEP->getOperand(2))->getRawValue();
+        const Type *AggTy = AggPtrTy->getElementType();
+        if (const SequentialType *SeqTy = dyn_cast<SequentialType>(AggTy)) {
+          unsigned ElSizeBits = TD.getTypeSize(SeqTy->getElementType())*8;
+
+          if (TD.isLittleEndian())
+            NewOffset += ElSizeBits*Idx;
+          else
+            NewOffset += AggSizeInBits-ElSizeBits*(Idx+1);
+        } else if (const StructType *STy = dyn_cast<StructType>(AggTy)) {
+          unsigned EltBitOffset = TD.getStructLayout(STy)->MemberOffsets[Idx]*8;
+          
+          if (TD.isLittleEndian())
+            NewOffset += EltBitOffset;
+          else {
+            const PointerType *ElPtrTy = cast<PointerType>(GEP->getType());
+            unsigned ElSizeBits = TD.getTypeSize(ElPtrTy->getElementType())*8;
+            NewOffset += AggSizeInBits-(EltBitOffset+ElSizeBits);
+          }
+          
+        } else {
+          assert(0 && "Unsupported operation!");
+          abort();
+        }
+      } else {
+        assert(0 && "Unsupported operation!");
+        abort();
+      }
+      ConvertUsesToScalar(GEP, NewAI, NewOffset);
+      GEP->eraseFromParent();
+    } else {
+      assert(0 && "Unsupported operation!");
+      abort();
     }
   }
 }
