@@ -36,9 +36,6 @@ extern "C" int X86TargetMachineModule;
 int X86TargetMachineModule = 0;
 
 namespace {
-  cl::opt<bool> NoSSAPeephole("disable-ssa-peephole", cl::init(true),
-                        cl::desc("Disable the ssa-based peephole optimizer "
-                                 "(defaults to disabled)"));
   cl::opt<bool> DisableOutput("disable-x86-llc-output", cl::Hidden,
                               cl::desc("Disable the X86 asm printer, for use "
                                        "when profiling the code generator."));
@@ -132,10 +129,6 @@ bool X86TargetMachine::addPassesToEmitFile(PassManager &PM, std::ostream &Out,
   else
     PM.add(createX86ISelPattern(*this));
 
-  // Run optional SSA-based machine code optimizations next...
-  if (!NoSSAPeephole)
-    PM.add(createX86SSAPeepholeOptimizerPass());
-
   // Print the instruction selected machine code...
   if (PrintMachineCode)
     PM.add(createMachineFunctionPrinterPass(&std::cerr));
@@ -202,10 +195,6 @@ void X86JITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
     PM.add(createX86ISelDag(TM));
   else
     PM.add(createX86ISelPattern(TM));
-
-  // Run optional SSA-based machine code optimizations next...
-  if (!NoSSAPeephole)
-    PM.add(createX86SSAPeepholeOptimizerPass());
 
   // FIXME: Add SSA based peephole optimizer here.
 
