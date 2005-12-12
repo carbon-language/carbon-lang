@@ -3196,6 +3196,16 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     Lo = LegalizeOp(Node->getOperand(0));
     Hi = LegalizeOp(Node->getOperand(1));
     break;
+    
+  case ISD::SIGN_EXTEND_INREG:
+    ExpandOp(Node->getOperand(0), Lo, Hi);
+    // Sign extend the lo-part.
+    Hi = DAG.getNode(ISD::SRA, NVT, Lo,
+                     DAG.getConstant(MVT::getSizeInBits(NVT)-1,
+                                     TLI.getShiftAmountTy()));
+    // sext_inreg the low part if needed.
+    Lo = DAG.getNode(ISD::SIGN_EXTEND_INREG, NVT, Lo, Node->getOperand(1));
+    break;
 
   case ISD::CTPOP:
     ExpandOp(Node->getOperand(0), Lo, Hi);
