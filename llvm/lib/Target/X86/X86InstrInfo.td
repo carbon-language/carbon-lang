@@ -1353,9 +1353,11 @@ def IMUL32rr : I<0xAF, MRMSrcReg, (ops R32:$dst, R32:$src1, R32:$src2),
                  [(set R32:$dst, (mul R32:$src1, R32:$src2))]>, TB;
 }
 def IMUL16rm : I<0xAF, MRMSrcMem, (ops R16:$dst, R16:$src1, i16mem:$src2),
-                 "imul{w} {$src2, $dst|$dst, $src2}", []>, TB, OpSize;
+                 "imul{w} {$src2, $dst|$dst, $src2}",
+                 [(set R16:$dst, (mul R16:$src1, (load addr:$src2)))]>, TB, OpSize;
 def IMUL32rm : I<0xAF, MRMSrcMem, (ops R32:$dst, R32:$src1, i32mem:$src2),
-                 "imul{l} {$src2, $dst|$dst, $src2}", []>, TB;
+                 "imul{l} {$src2, $dst|$dst, $src2}",
+                 [(set R32:$dst, (mul R32:$src1, (load addr:$src2)))]>, TB;
 
 } // end Two Address instructions
 
@@ -1363,8 +1365,7 @@ def IMUL32rm : I<0xAF, MRMSrcMem, (ops R32:$dst, R32:$src1, i32mem:$src2),
 def IMUL16rri  : Ii16<0x69, MRMSrcReg,                      // R16 = R16*I16
                       (ops R16:$dst, R16:$src1, i16imm:$src2),
                       "imul{w} {$src2, $src1, $dst|$dst, $src1, $src2}",
-                      [(set R16:$dst, (mul R16:$src1, imm:$src2))]>,
-                 OpSize;
+                      [(set R16:$dst, (mul R16:$src1, imm:$src2))]>, OpSize;
 def IMUL32rri  : Ii32<0x69, MRMSrcReg,                      // R32 = R32*I32
                       (ops R32:$dst, R32:$src1, i32imm:$src2),
                       "imul{l} {$src2, $src1, $dst|$dst, $src1, $src2}",
@@ -1379,17 +1380,22 @@ def IMUL32rri8 : Ii8<0x6B, MRMSrcReg,                       // R32 = R32*I8
                      [(set R32:$dst, (mul R32:$src1, immSExt8:$src2))]>;
 
 def IMUL16rmi  : Ii16<0x69, MRMSrcMem,                      // R16 = [mem16]*I16
-                      (ops R32:$dst, i16mem:$src1, i16imm:$src2),
-                     "imul{w} {$src2, $src1, $dst|$dst, $src1, $src2}", []>, OpSize;
+                      (ops R16:$dst, i16mem:$src1, i16imm:$src2),
+                      "imul{w} {$src2, $src1, $dst|$dst, $src1, $src2}",
+                      [(set R16:$dst, (mul (load addr:$src1), imm:$src2))]>,
+                      OpSize;
 def IMUL32rmi  : Ii32<0x69, MRMSrcMem,                      // R32 = [mem32]*I32
                       (ops R32:$dst, i32mem:$src1, i32imm:$src2),
-                     "imul{l} {$src2, $src1, $dst|$dst, $src1, $src2}", []>;
+                      "imul{l} {$src2, $src1, $dst|$dst, $src1, $src2}",
+                      [(set R32:$dst, (mul (load addr:$src1), imm:$src2))]>;
 def IMUL16rmi8 : Ii8<0x6B, MRMSrcMem,                       // R16 = [mem16]*I8
-                     (ops R32:$dst, i16mem:$src1, i8imm :$src2),
-                     "imul{w} {$src2, $src1, $dst|$dst, $src1, $src2}", []>, OpSize;
+                     (ops R16:$dst, i16mem:$src1, i16i8imm :$src2),
+                     "imul{w} {$src2, $src1, $dst|$dst, $src1, $src2}",
+                     [(set R16:$dst, (mul (load addr:$src1), immSExt8:$src2))]>, OpSize;
 def IMUL32rmi8 : Ii8<0x6B, MRMSrcMem,                       // R32 = [mem32]*I8
-                     (ops R32:$dst, i32mem:$src1, i8imm: $src2),
-                     "imul{l} {$src2, $src1, $dst|$dst, $src1, $src2}", []>;
+                     (ops R32:$dst, i32mem:$src1, i32i8imm: $src2),
+                     "imul{l} {$src2, $src1, $dst|$dst, $src1, $src2}",
+                     [(set R32:$dst, (mul (load addr:$src1), immSExt8:$src2))]>;
 
 //===----------------------------------------------------------------------===//
 // Test instructions are just like AND, except they don't generate a result.
