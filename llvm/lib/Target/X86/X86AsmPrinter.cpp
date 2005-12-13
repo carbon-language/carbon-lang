@@ -18,6 +18,7 @@
 #include "X86IntelAsmPrinter.h"
 #include "X86Subtarget.h"
 #include "X86.h"
+#include "llvm/Constants.h"
 #include "llvm/Module.h"
 #include "llvm/Type.h"
 #include "llvm/Assembly/Writer.h"
@@ -73,6 +74,21 @@ bool X86SharedAsmPrinter::doInitialization(Module &M) {
   return AsmPrinter::doInitialization(M);
 }
 
+/// EmitXXStructorList - Emit the ctor or dtor list.  On darwin, this just 
+/// prints out the function pointers.
+void X86SharedAsmPrinter::EmitXXStructorList(Constant *List) {
+  // Should be an array of '{ int, void ()* }' structs.  The first value is the
+  // init priority, which we ignore.
+  if (!isa<ConstantArray>(List)) return;
+  ConstantArray *InitList = cast<ConstantArray>(List);
+  for (unsigned i = 0, e = InitList->getNumOperands(); i != e; ++i)
+    if (ConstantStruct *CS = dyn_cast<ConstantStruct>(InitList->getOperand(i))){
+      if (CS->getNumOperands() != 2) return;  // Not array of 2-element structs.
+                                              // Emit the function pointer.
+      EmitGlobalConstant(CS->getOperand(1));
+    }
+}
+
 bool X86SharedAsmPrinter::doFinalization(Module &M) {
   const TargetData &TD = TM.getTargetData();
 
@@ -80,6 +96,29 @@ bool X86SharedAsmPrinter::doFinalization(Module &M) {
   for (Module::const_global_iterator I = M.global_begin(),
        E = M.global_end(); I != E; ++I) {
     if (!I->hasInitializer()) continue;   // External global require no code
+    
+    // Check to see if this is a special global used by LLVM.
+    if (I->hasAppendingLinkage()) {
+      if (I->getName() == "llvm.used")
+        continue;  // No need to emit this at all.
+      if (I->getName() == "llvm.global_ctors") {
+        if (forDarwin)
+          SwitchSection(".mod_init_func", 0);
+        else
+          SwitchSection(".ctors,\"aw\",@progbits", 0);
+        EmitAlignment(2, 0);
+        EmitXXStructorList(I->getInitializer());
+        continue;
+      } else if (I->getName() == "llvm.global_dtors") {
+        if (forDarwin)
+          SwitchSection(".mod_term_func", 0);
+        else
+          SwitchSection(".dtors,\"aw\",@progbits", 0);
+        EmitAlignment(2, 0);
+        EmitXXStructorList(I->getInitializer());
+        continue;
+      }
+    }
     
     O << "\n\n";
     std::string name = Mang->getValueName(I);

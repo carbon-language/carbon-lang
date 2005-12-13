@@ -33,6 +33,7 @@ struct X86SharedAsmPrinter : public AsmPrinter {
 
   bool doInitialization(Module &M);
   bool doFinalization(Module &M);
+  void EmitXXStructorList(Constant *List);
 
   bool forDarwin;  // FIXME: eliminate.
 
