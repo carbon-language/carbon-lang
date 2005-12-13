@@ -714,7 +714,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
                                        cast<ConstantSDNode>(OpN)->getValue()));
     }
     Constant *CP = ConstantPacked::get(CV);
-    SDOperand CPIdx = DAG.getConstantPool(CP, Node->getValueType(0));
+    SDOperand CPIdx = LegalizeOp(DAG.getConstantPool(CP, TLI.getPointerTy()));
     Result = DAG.getLoad(VT, DAG.getEntryNode(), CPIdx, DAG.getSrcValue(NULL));
     break;
   }
