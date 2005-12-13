@@ -759,13 +759,16 @@ def AND32rr  : I<0x21, MRMDestReg,
 
 def AND8rm   : I<0x22, MRMSrcMem, 
                  (ops R8 :$dst, R8 :$src1, i8mem :$src2),
-                 "and{b} {$src2, $dst|$dst, $src2}",[]>;
+                 "and{b} {$src2, $dst|$dst, $src2}",
+                [(set R8:$dst, (and R8:$src1, (load addr:$src2)))]>;
 def AND16rm  : I<0x23, MRMSrcMem, 
                  (ops R16:$dst, R16:$src1, i16mem:$src2),
-                 "and{w} {$src2, $dst|$dst, $src2}", []>, OpSize;
+                 "and{w} {$src2, $dst|$dst, $src2}",
+                [(set R16:$dst, (and R16:$src1, (load addr:$src2)))]>, OpSize;
 def AND32rm  : I<0x23, MRMSrcMem,
                  (ops R32:$dst, R32:$src1, i32mem:$src2),
-                 "and{l} {$src2, $dst|$dst, $src2}", []>;
+                 "and{l} {$src2, $dst|$dst, $src2}",
+                [(set R32:$dst, (and R32:$src1, (load addr:$src2)))]>;
 
 def AND8ri   : Ii8<0x80, MRM4r, 
                    (ops R8 :$dst, R8 :$src1, i8imm :$src2),
@@ -792,28 +795,39 @@ def AND32ri8 : Ii8<0x83, MRM4r,
 let isTwoAddress = 0 in {
   def AND8mr   : I<0x20, MRMDestMem,
                    (ops i8mem :$dst, R8 :$src),
-                   "and{b} {$src, $dst|$dst, $src}", []>;
+                   "and{b} {$src, $dst|$dst, $src}",
+                   [(store (and (load addr:$dst), R8:$src), addr:$dst)]>;
   def AND16mr  : I<0x21, MRMDestMem,
                    (ops i16mem:$dst, R16:$src),
-                   "and{w} {$src, $dst|$dst, $src}", []>, OpSize;
+                   "and{w} {$src, $dst|$dst, $src}",
+                   [(store (and (load addr:$dst), R16:$src), addr:$dst)]>,
+                   OpSize;
   def AND32mr  : I<0x21, MRMDestMem,
                    (ops i32mem:$dst, R32:$src),
-                   "and{l} {$src, $dst|$dst, $src}", []>;
+                   "and{l} {$src, $dst|$dst, $src}",
+                   [(store (and (load addr:$dst), R32:$src), addr:$dst)]>;
   def AND8mi   : Ii8<0x80, MRM4m,
                      (ops i8mem :$dst, i8imm :$src),
-                     "and{b} {$src, $dst|$dst, $src}", []>;
+                     "and{b} {$src, $dst|$dst, $src}",
+                   [(store (and (load addr:$dst), (i8 imm:$src)), addr:$dst)]>;
   def AND16mi  : Ii16<0x81, MRM4m,
                       (ops i16mem:$dst, i16imm:$src),
-                      "and{w} {$src, $dst|$dst, $src}", []>, OpSize;
+                      "and{w} {$src, $dst|$dst, $src}",
+                  [(store (and (load addr:$dst), (i16 imm:$src)), addr:$dst)]>,
+                      OpSize;
   def AND32mi  : Ii32<0x81, MRM4m,
                       (ops i32mem:$dst, i32imm:$src),
-                      "and{l} {$src, $dst|$dst, $src}", []>;
+                      "and{l} {$src, $dst|$dst, $src}",
+                  [(store (and (load addr:$dst), (i32 imm:$src)), addr:$dst)]>;
   def AND16mi8 : Ii8<0x83, MRM4m,
-                     (ops i16mem:$dst, i8imm :$src),
-                     "and{w} {$src, $dst|$dst, $src}", []>, OpSize;
+                     (ops i16mem:$dst, i16i8imm :$src),
+                     "and{w} {$src, $dst|$dst, $src}",
+                [(store (and (load addr:$dst), i16immSExt8:$src), addr:$dst)]>,
+                     OpSize;
   def AND32mi8 : Ii8<0x83, MRM4m,
-                     (ops i32mem:$dst, i8imm :$src),
-                     "and{l} {$src, $dst|$dst, $src}", []>;
+                     (ops i32mem:$dst, i32i8imm :$src),
+                     "and{l} {$src, $dst|$dst, $src}",
+                [(store (add (load addr:$dst), i32immSExt8:$src), addr:$dst)]>;
 }
 
 
@@ -829,11 +843,14 @@ def OR32rr   : I<0x09, MRMDestReg, (ops R32:$dst, R32:$src1, R32:$src2),
                  [(set R32:$dst, (or R32:$src1, R32:$src2))]>;
 }
 def OR8rm    : I<0x0A, MRMSrcMem , (ops R8 :$dst, R8 :$src1, i8mem :$src2),
-                 "or{b} {$src2, $dst|$dst, $src2}", []>;
+                 "or{b} {$src2, $dst|$dst, $src2}",
+                [(set R8:$dst, (or R8:$src1, (load addr:$src2)))]>;
 def OR16rm   : I<0x0B, MRMSrcMem , (ops R16:$dst, R16:$src1, i16mem:$src2),
-                 "or{w} {$src2, $dst|$dst, $src2}", []>, OpSize;
+                 "or{w} {$src2, $dst|$dst, $src2}",
+                [(set R16:$dst, (or R16:$src1, (load addr:$src2)))]>, OpSize;
 def OR32rm   : I<0x0B, MRMSrcMem , (ops R32:$dst, R32:$src1, i32mem:$src2),
-                 "or{l} {$src2, $dst|$dst, $src2}", []>;
+                 "or{l} {$src2, $dst|$dst, $src2}",
+                [(set R32:$dst, (or R32:$src1, (load addr:$src2)))]>;
 
 def OR8ri    : Ii8 <0x80, MRM1r, (ops R8 :$dst, R8 :$src1, i8imm:$src2),
                     "or{b} {$src2, $dst|$dst, $src2}",
@@ -853,21 +870,31 @@ def OR32ri8  : Ii8<0x83, MRM1r, (ops R32:$dst, R32:$src1, i32i8imm:$src2),
                    [(set R32:$dst, (or R32:$src1, i32immSExt8:$src2))]>;
 let isTwoAddress = 0 in {
   def OR8mr  : I<0x08, MRMDestMem, (ops i8mem:$dst, R8:$src),
-                 "or{b} {$src, $dst|$dst, $src}", []>;
+                 "or{b} {$src, $dst|$dst, $src}",
+                 [(store (or (load addr:$dst), R8:$src), addr:$dst)]>;
   def OR16mr : I<0x09, MRMDestMem, (ops i16mem:$dst, R16:$src),
-                 "or{w} {$src, $dst|$dst, $src}", []>, OpSize;
+                 "or{w} {$src, $dst|$dst, $src}",
+                 [(store (or (load addr:$dst), R16:$src), addr:$dst)]>, OpSize;
   def OR32mr : I<0x09, MRMDestMem, (ops i32mem:$dst, R32:$src),
-                 "or{l} {$src, $dst|$dst, $src}", []>;
+                 "or{l} {$src, $dst|$dst, $src}",
+                 [(store (or (load addr:$dst), R32:$src), addr:$dst)]>;
   def OR8mi    : Ii8<0x80, MRM1m, (ops i8mem :$dst, i8imm:$src),
-                 "or{b} {$src, $dst|$dst, $src}", []>;
+                 "or{b} {$src, $dst|$dst, $src}",
+                 [(store (or (load addr:$dst), (i8 imm:$src)), addr:$dst)]>;
   def OR16mi   : Ii16<0x81, MRM1m, (ops i16mem:$dst, i16imm:$src),
-                 "or{w} {$src, $dst|$dst, $src}", []>, OpSize;
+                 "or{w} {$src, $dst|$dst, $src}",
+                 [(store (or (load addr:$dst), (i16 imm:$src)), addr:$dst)]>,
+                 OpSize;
   def OR32mi   : Ii32<0x81, MRM1m, (ops i32mem:$dst, i32imm:$src),
-                 "or{l} {$src, $dst|$dst, $src}", []>;
-  def OR16mi8  : Ii8<0x83, MRM1m, (ops i16mem:$dst, i8imm:$src),
-                 "or{w} {$src, $dst|$dst, $src}", []>, OpSize;
-  def OR32mi8  : Ii8<0x83, MRM1m, (ops i32mem:$dst, i8imm:$src),
-                 "or{l} {$src, $dst|$dst, $src}", []>;
+                 "or{l} {$src, $dst|$dst, $src}",
+                 [(store (or (load addr:$dst), (i32 imm:$src)), addr:$dst)]>;
+  def OR16mi8  : Ii8<0x83, MRM1m, (ops i16mem:$dst, i16i8imm:$src),
+                 "or{w} {$src, $dst|$dst, $src}",
+                 [(store (or (load addr:$dst), i16immSExt8:$src), addr:$dst)]>,
+                     OpSize;
+  def OR32mi8  : Ii8<0x83, MRM1m, (ops i32mem:$dst, i32i8imm:$src),
+                 "or{l} {$src, $dst|$dst, $src}",
+                 [(store (or (load addr:$dst), i32immSExt8:$src), addr:$dst)]>;
 }
 
 
@@ -888,13 +915,16 @@ def XOR32rr  : I<0x31, MRMDestReg,
 
 def XOR8rm   : I<0x32, MRMSrcMem , 
                  (ops R8 :$dst, R8:$src1, i8mem :$src2), 
-                 "xor{b} {$src2, $dst|$dst, $src2}", []>;
+                 "xor{b} {$src2, $dst|$dst, $src2}",
+                 [(set R8:$dst, (xor R8:$src1, (load addr:$src2)))]>;
 def XOR16rm  : I<0x33, MRMSrcMem , 
-                 (ops R16:$dst, R8:$src1, i16mem:$src2), 
-                 "xor{w} {$src2, $dst|$dst, $src2}", []>, OpSize;
+                 (ops R16:$dst, R16:$src1, i16mem:$src2), 
+                 "xor{w} {$src2, $dst|$dst, $src2}",
+                 [(set R16:$dst, (xor R16:$src1, (load addr:$src2)))]>, OpSize;
 def XOR32rm  : I<0x33, MRMSrcMem , 
-                 (ops R32:$dst, R8:$src1, i32mem:$src2), 
-                 "xor{l} {$src2, $dst|$dst, $src2}", []>;
+                 (ops R32:$dst, R32:$src1, i32mem:$src2), 
+                 "xor{l} {$src2, $dst|$dst, $src2}",
+                 [(set R32:$dst, (xor R32:$src1, (load addr:$src2)))]>;
 
 def XOR8ri   : Ii8<0x80, MRM6r, 
                    (ops R8:$dst, R8:$src1, i8imm:$src2), 
@@ -920,28 +950,39 @@ def XOR32ri8 : Ii8<0x83, MRM6r,
 let isTwoAddress = 0 in {
   def XOR8mr   : I<0x30, MRMDestMem,
                    (ops i8mem :$dst, R8 :$src),
-                   "xor{b} {$src, $dst|$dst, $src}", []>;
+                   "xor{b} {$src, $dst|$dst, $src}",
+                   [(store (xor (load addr:$dst), R8:$src), addr:$dst)]>;
   def XOR16mr  : I<0x31, MRMDestMem,
                    (ops i16mem:$dst, R16:$src),
-                   "xor{w} {$src, $dst|$dst, $src}", []>, OpSize;
+                   "xor{w} {$src, $dst|$dst, $src}",
+                   [(store (xor (load addr:$dst), R16:$src), addr:$dst)]>,
+                   OpSize;
   def XOR32mr  : I<0x31, MRMDestMem,
                    (ops i32mem:$dst, R32:$src),
-                   "xor{l} {$src, $dst|$dst, $src}", []>;
+                   "xor{l} {$src, $dst|$dst, $src}",
+                   [(store (xor (load addr:$dst), R32:$src), addr:$dst)]>;
   def XOR8mi   : Ii8<0x80, MRM6m,
                      (ops i8mem :$dst, i8imm :$src),
-                     "xor{b} {$src, $dst|$dst, $src}", []>;
+                     "xor{b} {$src, $dst|$dst, $src}",
+                    [(store (xor (load addr:$dst), (i8 imm:$src)), addr:$dst)]>;
   def XOR16mi  : Ii16<0x81, MRM6m,
                       (ops i16mem:$dst, i16imm:$src),
-                      "xor{w} {$src, $dst|$dst, $src}", []>, OpSize;
+                      "xor{w} {$src, $dst|$dst, $src}",
+                   [(store (xor (load addr:$dst), (i16 imm:$src)), addr:$dst)]>,
+                      OpSize;
   def XOR32mi  : Ii32<0x81, MRM6m,
                       (ops i32mem:$dst, i32imm:$src),
-                      "xor{l} {$src, $dst|$dst, $src}", []>;
+                      "xor{l} {$src, $dst|$dst, $src}",
+                   [(store (xor (load addr:$dst), (i32 imm:$src)), addr:$dst)]>;
   def XOR16mi8 : Ii8<0x83, MRM6m,
-                     (ops i16mem:$dst, i8imm :$src),
-                     "xor{w} {$src, $dst|$dst, $src}", []>, OpSize;
+                     (ops i16mem:$dst, i16i8imm :$src),
+                     "xor{w} {$src, $dst|$dst, $src}",
+                 [(store (xor (load addr:$dst), i16immSExt8:$src), addr:$dst)]>,
+                     OpSize;
   def XOR32mi8 : Ii8<0x83, MRM6m,
-                     (ops i32mem:$dst, i8imm :$src),
-                     "xor{l} {$src, $dst|$dst, $src}", []>;
+                     (ops i32mem:$dst, i32i8imm :$src),
+                     "xor{l} {$src, $dst|$dst, $src}",
+                 [(store (xor (load addr:$dst), i32immSExt8:$src), addr:$dst)]>;
 }
 
 // Shift instructions
