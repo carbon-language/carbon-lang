@@ -354,15 +354,15 @@ def OUT32rr : I<0xEF, RawFrm, (ops),
 
 def OUT8ir  : Ii8<0xE6, RawFrm, (ops i16i8imm:$port),
                    "out{b} {%al, $port|$port, %AL}",
-                   [(writeport AL, (i16 i16immZExt8:$port))]>,
+                   [(writeport AL, i16immZExt8:$port)]>,
                    Imp<[AL], []>;
 def OUT16ir : Ii8<0xE7, RawFrm, (ops i16i8imm:$port),
                    "out{w} {%ax, $port|$port, %AX}",
-                   [(writeport AX, (i16 i16immZExt8:$port))]>,
+                   [(writeport AX, i16immZExt8:$port)]>,
                    Imp<[AX], []>, OpSize;
 def OUT32ir : Ii8<0xE7, RawFrm, (ops i16i8imm:$port),
                    "out{l} {%eax, $port|$port, %EAX}",
-                   [(writeport EAX, (i16 i16immZExt8:$port))]>,
+                   [(writeport EAX, i16immZExt8:$port)]>,
                    Imp<[EAX], []>;
 
 //===----------------------------------------------------------------------===//
