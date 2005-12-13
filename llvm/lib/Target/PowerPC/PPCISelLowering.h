@@ -39,6 +39,10 @@ namespace llvm {
       /// of that FP value.
       FCTIDZ, FCTIWZ,
       
+      // VMADDFP, VNMSUBFP - The VMADDFP and VNMSUBFP instructions, taking
+      // three v4f32 operands and producing a v4f32 result.
+      VMADDFP, VNMSUBFP,
+      
       /// Hi/Lo - These represent the high and low 16-bit parts of a global
       /// address respectively.  These nodes have two operands, the first of
       /// which must be a TargetGlobalAddress, and the second of which must be a
