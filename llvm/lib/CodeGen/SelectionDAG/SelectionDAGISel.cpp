@@ -895,23 +895,13 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
                             getValue(I.getOperand(2))));
     return 0;
     
-  case Intrinsic::dbg_stoppoint:
-    {
+  case Intrinsic::dbg_stoppoint: {
     if (TLI.getTargetMachine().getIntrinsicLowering().EmitDebugFunctions())
       return "llvm_debugger_stop";
     
     std::string fname = "<unknown>";
     std::vector<SDOperand> Ops;
 
-    // Pull the filename out of the the compilation unit.
-    const GlobalVariable *cunit = dyn_cast<GlobalVariable>(I.getOperand(4));
-    if (cunit && cunit->hasInitializer()) {
-      ConstantStruct *CS = dyn_cast<ConstantStruct>(cunit->getInitializer());
-      if (CS->getNumOperands() > 0) {
-          std::string dirname = getStringValue(CS->getOperand(4));
-          fname = dirname + "/" + getStringValue(CS->getOperand(3));
-        }
-      }
     // Input Chain
     Ops.push_back(getRoot());
     
@@ -921,10 +911,21 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     // column
     Ops.push_back(getValue(I.getOperand(3)));
 
-    // filename
-    Ops.push_back(DAG.getString(fname));
-    Ops.push_back(DAG.getString(""));
-    DAG.setRoot(DAG.getNode(ISD::LOCATION, MVT::Other, Ops));
+    // filename/working dir
+    // Pull the filename out of the the compilation unit.
+    const GlobalVariable *cunit = dyn_cast<GlobalVariable>(I.getOperand(4));
+    if (cunit && cunit->hasInitializer()) {
+      if (ConstantStruct *CS = 
+            dyn_cast<ConstantStruct>(cunit->getInitializer())) {
+        if (CS->getNumOperands() > 0) {
+          Ops.push_back(DAG.getString(getStringValue(CS->getOperand(4))));
+          Ops.push_back(DAG.getString(getStringValue(CS->getOperand(3))));
+        }
+      }
+    }
+    
+    if (Ops.size() == 5)  // Found filename/workingdir.
+      DAG.setRoot(DAG.getNode(ISD::LOCATION, MVT::Other, Ops));
     setValue(&I, DAG.getNode(ISD::UNDEF, TLI.getValueType(I.getType())));
     return 0;
   }
