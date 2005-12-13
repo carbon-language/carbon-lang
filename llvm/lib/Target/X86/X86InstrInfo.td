@@ -161,6 +161,11 @@ def i16immZExt8  : PatLeaf<(i16 imm), [{
   return (unsigned)N->getValue() == (unsigned char)N->getValue();
 }]>;
 
+// Helper fragments for loads.
+def loadi8   : PatFrag<(ops node:$in), (i8  (load node:$in))>;
+def loadi16  : PatFrag<(ops node:$in), (i16 (load node:$in))>;
+def loadi32  : PatFrag<(ops node:$in), (i32 (load node:$in))>;
+
 //===----------------------------------------------------------------------===//
 // Instruction templates...
 
@@ -683,11 +688,12 @@ def NEG32r : I<0xF7, MRM3r, (ops R32:$dst, R32:$src), "neg{l} $dst",
                [(set R32:$dst, (ineg R32:$src))]>;
 let isTwoAddress = 0 in {
   def NEG8m  : I<0xF6, MRM3m, (ops i8mem :$dst), "neg{b} $dst",
-                 [(store (ineg (i8 (load addr:$dst))), addr:$dst)]>;
+                 [(store (ineg (loadi8 addr:$dst)), addr:$dst)]>;
   def NEG16m : I<0xF7, MRM3m, (ops i16mem:$dst), "neg{w} $dst",
-                 [(store (ineg (i16 (load addr:$dst))), addr:$dst)]>, OpSize;
+                 [(store (ineg (loadi16 addr:$dst)), addr:$dst)]>, OpSize;
   def NEG32m : I<0xF7, MRM3m, (ops i32mem:$dst), "neg{l} $dst",
-                 [(store (ineg (i32 (load addr:$dst))), addr:$dst)]>;
+                 [(store (ineg (loadi32 addr:$dst)), addr:$dst)]>;
+
 }
 
 def NOT8r  : I<0xF6, MRM2r, (ops R8 :$dst, R8 :$src), "not{b} $dst",
@@ -698,11 +704,11 @@ def NOT32r : I<0xF7, MRM2r, (ops R32:$dst, R32:$src), "not{l} $dst",
                [(set R32:$dst, (not R32:$src))]>;
 let isTwoAddress = 0 in {
   def NOT8m  : I<0xF6, MRM2m, (ops i8mem :$dst), "not{b} $dst",
-                 [(store (not (i8 (load addr:$dst))), addr:$dst)]>;
+                 [(store (not (loadi8 addr:$dst)), addr:$dst)]>;
   def NOT16m : I<0xF7, MRM2m, (ops i16mem:$dst), "not{w} $dst",
-                 [(store (not (i16 (load addr:$dst))), addr:$dst)]>, OpSize;
+                 [(store (not (loadi16 addr:$dst)), addr:$dst)]>, OpSize;
   def NOT32m : I<0xF7, MRM2m, (ops i32mem:$dst), "not{l} $dst",
-                 [(store (not (i32 (load addr:$dst))), addr:$dst)]>;
+                 [(store (not (loadi32 addr:$dst)), addr:$dst)]>;
 }
 
 // TODO: inc/dec is slow for P4, but fast for Pentium-M.
@@ -716,11 +722,11 @@ def INC32r : I<0xFF, MRM0r, (ops R32:$dst, R32:$src), "inc{l} $dst",
 }
 let isTwoAddress = 0 in {
   def INC8m  : I<0xFE, MRM0m, (ops i8mem :$dst), "inc{b} $dst",
-               [(store (add (i8 (load addr:$dst)), 1), addr:$dst)]>;
+               [(store (add (loadi8 addr:$dst), 1), addr:$dst)]>;
   def INC16m : I<0xFF, MRM0m, (ops i16mem:$dst), "inc{w} $dst",
-               [(store (add (i16 (load addr:$dst)), 1), addr:$dst)]>, OpSize;
+               [(store (add (loadi16 addr:$dst), 1), addr:$dst)]>, OpSize;
   def INC32m : I<0xFF, MRM0m, (ops i32mem:$dst), "inc{l} $dst",
-               [(store (add (i32 (load addr:$dst)), 1), addr:$dst)]>;
+               [(store (add (loadi32 addr:$dst), 1), addr:$dst)]>;
 }
 
 def DEC8r  : I<0xFE, MRM1r, (ops R8 :$dst, R8 :$src), "dec{b} $dst",
@@ -734,11 +740,11 @@ def DEC32r : I<0xFF, MRM1r, (ops R32:$dst, R32:$src), "dec{l} $dst",
 
 let isTwoAddress = 0 in {
   def DEC8m  : I<0xFE, MRM1m, (ops i8mem :$dst), "dec{b} $dst",
-               [(store (add (i8 (load addr:$dst)), -1), addr:$dst)]>;
+               [(store (add (loadi8 addr:$dst), -1), addr:$dst)]>;
   def DEC16m : I<0xFF, MRM1m, (ops i16mem:$dst), "dec{w} $dst",
-               [(store (add (i16 (load addr:$dst)), -1), addr:$dst)]>, OpSize;
+               [(store (add (loadi16 addr:$dst), -1), addr:$dst)]>, OpSize;
   def DEC32m : I<0xFF, MRM1m, (ops i32mem:$dst), "dec{l} $dst",
-               [(store (add (i32 (load addr:$dst)), -1), addr:$dst)]>;
+               [(store (add (loadi32 addr:$dst), -1), addr:$dst)]>;
 }
 
 // Logical operators...
