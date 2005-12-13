@@ -435,113 +435,116 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
 
   // Print out module-level global variables here.
   for (Module::const_global_iterator I = M.global_begin(), E = M.global_end();
-       I != E; ++I)
-    if (I->hasInitializer()) {   // External global require no code
-      // Check to see if this is a special global used by LLVM.
-      if (I->hasAppendingLinkage()) {
-        if (I->getName() == "llvm.used")
-          continue;  // No need to emit this at all.
-        if (I->getName() == "llvm.global_ctors") {
-          SwitchSection(".mod_init_func", 0);
-          EmitAlignment(2, 0);
-          EmitXXStructorList(I->getInitializer());
-          continue;
-        } else if (I->getName() == "llvm.global_dtors") {
-          SwitchSection(".mod_term_func", 0);
-          EmitAlignment(2, 0);
-          EmitXXStructorList(I->getInitializer());
-          continue;
-        }
-      }
-      
-      O << '\n';
-      std::string name = Mang->getValueName(I);
-      Constant *C = I->getInitializer();
-      unsigned Size = TD.getTypeSize(C->getType());
-      unsigned Align = TD.getTypeAlignmentShift(C->getType());
-
-      if (C->isNullValue() && /* FIXME: Verify correct */
-          (I->hasInternalLinkage() || I->hasWeakLinkage() ||
-           I->hasLinkOnceLinkage())) {
-        SwitchSection(".data", I);
-        if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
-        if (I->hasInternalLinkage())
-          O << LCOMMDirective << name << "," << Size << "," << Align;
-        else
-          O << ".comm " << name << "," << Size;
-        O << "\t\t; '" << I->getName() << "'\n";
-      } else {
-        switch (I->getLinkage()) {
-        case GlobalValue::LinkOnceLinkage:
-          SwitchSection("", 0);
-          O << ".section __TEXT,__textcoal_nt,coalesced,no_toc\n"
-            << ".weak_definition " << name << '\n'
-            << ".private_extern " << name << '\n'
-            << ".section __DATA,__datacoal_nt,coalesced,no_toc\n";
-          LinkOnceStubs.insert(name);
-          break;
-        case GlobalValue::WeakLinkage:
-          O << ".weak_definition " << name << '\n'
-            << ".private_extern " << name << '\n';
-          break;
-        case GlobalValue::AppendingLinkage:
-          // FIXME: appending linkage variables should go into a section of
-          // their name or something.  For now, just emit them as external.
-        case GlobalValue::ExternalLinkage:
-          // If external or appending, declare as a global symbol
-          O << "\t.globl " << name << "\n";
-          // FALL THROUGH
-        case GlobalValue::InternalLinkage:
-          SwitchSection(".data", I);
-          break;
-        default:
-          std::cerr << "Unknown linkage type!";
-          abort();
-        }
-
-        EmitAlignment(Align, I);
-        O << name << ":\t\t\t\t; '" << I->getName() << "'\n";
-        EmitGlobalConstant(C);
+       I != E; ++I) {
+    if (!I->hasInitializer()) continue;   // External global require no code
+    
+    // Check to see if this is a special global used by LLVM.
+    if (I->hasAppendingLinkage()) {
+      if (I->getName() == "llvm.used")
+        continue;  // No need to emit this at all.
+      if (I->getName() == "llvm.global_ctors") {
+        SwitchSection(".mod_init_func", 0);
+        EmitAlignment(2, 0);
+        EmitXXStructorList(I->getInitializer());
+        continue;
+      } else if (I->getName() == "llvm.global_dtors") {
+        SwitchSection(".mod_term_func", 0);
+        EmitAlignment(2, 0);
+        EmitXXStructorList(I->getInitializer());
+        continue;
       }
     }
+    
+    O << '\n';
+    std::string name = Mang->getValueName(I);
+    Constant *C = I->getInitializer();
+    unsigned Size = TD.getTypeSize(C->getType());
+    unsigned Align = TD.getTypeAlignmentShift(C->getType());
+
+    if (C->isNullValue() && /* FIXME: Verify correct */
+        (I->hasInternalLinkage() || I->hasWeakLinkage() ||
+         I->hasLinkOnceLinkage())) {
+      SwitchSection(".data", I);
+      if (Size == 0) Size = 1;   // .comm Foo, 0 is undefined, avoid it.
+      if (I->hasInternalLinkage())
+        O << LCOMMDirective << name << "," << Size << "," << Align;
+      else
+        O << ".comm " << name << "," << Size;
+      O << "\t\t; '" << I->getName() << "'\n";
+    } else {
+      switch (I->getLinkage()) {
+      case GlobalValue::LinkOnceLinkage:
+        SwitchSection("", 0);
+        O << ".section __TEXT,__textcoal_nt,coalesced,no_toc\n"
+          << ".weak_definition " << name << '\n'
+          << ".private_extern " << name << '\n'
+          << ".section __DATA,__datacoal_nt,coalesced,no_toc\n";
+        LinkOnceStubs.insert(name);
+        break;
+      case GlobalValue::WeakLinkage:
+        O << ".weak_definition " << name << '\n'
+          << ".private_extern " << name << '\n';
+        break;
+      case GlobalValue::AppendingLinkage:
+        // FIXME: appending linkage variables should go into a section of
+        // their name or something.  For now, just emit them as external.
+      case GlobalValue::ExternalLinkage:
+        // If external or appending, declare as a global symbol
+        O << "\t.globl " << name << "\n";
+        // FALL THROUGH
+      case GlobalValue::InternalLinkage:
+        SwitchSection(".data", I);
+        break;
+      default:
+        std::cerr << "Unknown linkage type!";
+        abort();
+      }
+
+      EmitAlignment(Align, I);
+      O << name << ":\t\t\t\t; '" << I->getName() << "'\n";
+      EmitGlobalConstant(C);
+    }
+  }
 
   // Output stubs for dynamically-linked functions
-  for (std::set<std::string>::iterator i = FnStubs.begin(), e = FnStubs.end();
-       i != e; ++i)
-  {
-    if (PICEnabled) {
-    O << ".data\n";
-    O << ".section __TEXT,__picsymbolstub1,symbol_stubs,pure_instructions,32\n";
-    EmitAlignment(2);
-    O << "L" << *i << "$stub:\n";
-    O << "\t.indirect_symbol " << *i << "\n";
-    O << "\tmflr r0\n";
-    O << "\tbcl 20,31,L0$" << *i << "\n";
-    O << "L0$" << *i << ":\n";
-    O << "\tmflr r11\n";
-    O << "\taddis r11,r11,ha16(L" << *i << "$lazy_ptr-L0$" << *i << ")\n";
-    O << "\tmtlr r0\n";
-    O << "\tlwzu r12,lo16(L" << *i << "$lazy_ptr-L0$" << *i << ")(r11)\n";
-    O << "\tmtctr r12\n";
-    O << "\tbctr\n";
-    O << ".data\n";
-    O << ".lazy_symbol_pointer\n";
-    O << "L" << *i << "$lazy_ptr:\n";
-    O << "\t.indirect_symbol " << *i << "\n";
-    O << "\t.long dyld_stub_binding_helper\n";
-    } else {
-    O << "\t.section __TEXT,__symbol_stub1,symbol_stubs,pure_instructions,16\n";
-    EmitAlignment(4);
-    O << "L" << *i << "$stub:\n";
-    O << "\t.indirect_symbol " << *i << "\n";
-    O << "\tlis r11,ha16(L" << *i << "$lazy_ptr)\n";
-    O << "\tlwzu r12,lo16(L" << *i << "$lazy_ptr)(r11)\n";
-    O << "\tmtctr r12\n";
-    O << "\tbctr\n";
-    O << "\t.lazy_symbol_pointer\n";
-    O << "L" << *i << "$lazy_ptr:\n";
-    O << "\t.indirect_symbol " << *i << "\n";
-    O << "\t.long dyld_stub_binding_helper\n";
+  if (PICEnabled) {
+    for (std::set<std::string>::iterator i = FnStubs.begin(), e = FnStubs.end();
+         i != e; ++i) {
+      O << ".data\n";
+      O<<".section __TEXT,__picsymbolstub1,symbol_stubs,pure_instructions,32\n";
+      EmitAlignment(2);
+      O << "L" << *i << "$stub:\n";
+      O << "\t.indirect_symbol " << *i << "\n";
+      O << "\tmflr r0\n";
+      O << "\tbcl 20,31,L0$" << *i << "\n";
+      O << "L0$" << *i << ":\n";
+      O << "\tmflr r11\n";
+      O << "\taddis r11,r11,ha16(L" << *i << "$lazy_ptr-L0$" << *i << ")\n";
+      O << "\tmtlr r0\n";
+      O << "\tlwzu r12,lo16(L" << *i << "$lazy_ptr-L0$" << *i << ")(r11)\n";
+      O << "\tmtctr r12\n";
+      O << "\tbctr\n";
+      O << ".data\n";
+      O << ".lazy_symbol_pointer\n";
+      O << "L" << *i << "$lazy_ptr:\n";
+      O << "\t.indirect_symbol " << *i << "\n";
+      O << "\t.long dyld_stub_binding_helper\n";
+    }
+  } else {
+    for (std::set<std::string>::iterator i = FnStubs.begin(), e = FnStubs.end();
+         i != e; ++i) {
+      O<<"\t.section __TEXT,__symbol_stub1,symbol_stubs,pure_instructions,16\n";
+      EmitAlignment(4);
+      O << "L" << *i << "$stub:\n";
+      O << "\t.indirect_symbol " << *i << "\n";
+      O << "\tlis r11,ha16(L" << *i << "$lazy_ptr)\n";
+      O << "\tlwzu r12,lo16(L" << *i << "$lazy_ptr)(r11)\n";
+      O << "\tmtctr r12\n";
+      O << "\tbctr\n";
+      O << "\t.lazy_symbol_pointer\n";
+      O << "L" << *i << "$lazy_ptr:\n";
+      O << "\t.indirect_symbol " << *i << "\n";
+      O << "\t.long dyld_stub_binding_helper\n";
     }
   }
 
@@ -558,12 +561,13 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
   }
 
   // Output stubs for link-once variables
-  if (LinkOnceStubs.begin() != LinkOnceStubs.end())
+  if (LinkOnceStubs.begin() != LinkOnceStubs.end()) {
     O << ".data\n.align 2\n";
-  for (std::set<std::string>::iterator i = LinkOnceStubs.begin(),
+    for (std::set<std::string>::iterator i = LinkOnceStubs.begin(),
          e = LinkOnceStubs.end(); i != e; ++i) {
-    O << "L" << *i << "$non_lazy_ptr:\n"
-      << "\t.long\t" << *i << '\n';
+      O << "L" << *i << "$non_lazy_ptr:\n"
+        << "\t.long\t" << *i << '\n';
+    }
   }
 
   // Funny Darwin hack: This flag tells the linker that no global symbols
