@@ -1017,17 +1017,27 @@ def SHL32ri  : Ii8<0xC1, MRM4r, (ops R32:$dst, R32:$src1, i8imm:$src2),
 
 let isTwoAddress = 0 in {
   def SHL8mCL  : I<0xD2, MRM4m, (ops i8mem :$dst),
-                   "shl{b} {%cl, $dst|$dst, %CL}", []>, Imp<[CL],[]>;
+                   "shl{b} {%cl, $dst|$dst, %CL}",
+                   [(store (shl (loadi8 addr:$dst), CL), addr:$dst)]>,
+                   Imp<[CL],[]>;
   def SHL16mCL : I<0xD3, MRM4m, (ops i16mem:$dst),
-                   "shl{w} {%cl, $dst|$dst, %CL}", []>, Imp<[CL],[]>, OpSize;
+                   "shl{w} {%cl, $dst|$dst, %CL}",
+                   [(store (shl (loadi16 addr:$dst), CL), addr:$dst)]>,
+                   Imp<[CL],[]>, OpSize;
   def SHL32mCL : I<0xD3, MRM4m, (ops i32mem:$dst),
-                   "shl{l} {%cl, $dst|$dst, %CL}", []>, Imp<[CL],[]>;
+                   "shl{l} {%cl, $dst|$dst, %CL}",
+                   [(store (shl (loadi32 addr:$dst), CL), addr:$dst)]>,
+                   Imp<[CL],[]>;
   def SHL8mi   : Ii8<0xC0, MRM4m, (ops i8mem :$dst, i8imm:$src),
-                     "shl{b} {$src, $dst|$dst, $src}", []>;
+                     "shl{b} {$src, $dst|$dst, $src}",
+                  [(store (shl (loadi8 addr:$dst), (i8 imm:$src)), addr:$dst)]>;
   def SHL16mi  : Ii8<0xC1, MRM4m, (ops i16mem:$dst, i8imm:$src),
-                     "shl{w} {$src, $dst|$dst, $src}", []>, OpSize;
+                     "shl{w} {$src, $dst|$dst, $src}",
+                 [(store (shl (loadi16 addr:$dst), (i8 imm:$src)), addr:$dst)]>,
+                     OpSize;
   def SHL32mi  : Ii8<0xC1, MRM4m, (ops i32mem:$dst, i8imm:$src),
-                     "shl{l} {$src, $dst|$dst, $src}", []>;
+                     "shl{l} {$src, $dst|$dst, $src}",
+                 [(store (shl (loadi32 addr:$dst), (i8 imm:$src)), addr:$dst)]>;
 }
 
 def SHR8rCL  : I<0xD2, MRM5r, (ops R8 :$dst, R8 :$src),
