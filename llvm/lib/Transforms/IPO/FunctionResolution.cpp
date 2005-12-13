@@ -55,11 +55,11 @@ static bool ResolveFunctions(Module &M, std::vector<GlobalValue*> &Globals,
   for (unsigned i = 0; i != Globals.size(); ++i)
     if (Globals[i] != Concrete) {
       Function *Old = cast<Function>(Globals[i]);
-      const FunctionType *OldMT = Old->getFunctionType();
-      const FunctionType *ConcreteMT = Concrete->getFunctionType();
+      const FunctionType *OldFT = Old->getFunctionType();
+      const FunctionType *ConcreteFT = Concrete->getFunctionType();
 
-      if (OldMT->getNumParams() > ConcreteMT->getNumParams() &&
-          !ConcreteMT->isVarArg())
+      if (OldFT->getNumParams() > ConcreteFT->getNumParams() &&
+          !ConcreteFT->isVarArg())
         if (!Old->use_empty()) {
           std::cerr << "WARNING: Linking function '" << Old->getName()
                     << "' is causing arguments to be dropped.\n";
@@ -73,20 +73,22 @@ static bool ResolveFunctions(Module &M, std::vector<GlobalValue*> &Globals,
       // Check to make sure that if there are specified types, that they
       // match...
       //
-      unsigned NumArguments = std::min(OldMT->getNumParams(),
-                                       ConcreteMT->getNumParams());
+      unsigned NumArguments = std::min(OldFT->getNumParams(),
+                                       ConcreteFT->getNumParams());
 
       if (!Old->use_empty() && !Concrete->use_empty())
         for (unsigned i = 0; i < NumArguments; ++i)
-          if (OldMT->getParamType(i) != ConcreteMT->getParamType(i))
-            if (OldMT->getParamType(i)->getTypeID() !=
-                ConcreteMT->getParamType(i)->getTypeID()) {
+          if (OldFT->getParamType(i) != ConcreteFT->getParamType(i))
+            if (OldFT->getParamType(i)->getTypeID() !=
+                ConcreteFT->getParamType(i)->getTypeID()) {
               std::cerr << "WARNING: Function [" << Old->getName()
                         << "]: Parameter types conflict for: '";
-              WriteTypeSymbolic(std::cerr, OldMT, &M);
-              std::cerr << "' and '";
-              WriteTypeSymbolic(std::cerr, ConcreteMT, &M);
-              std::cerr << "'\n";
+              WriteTypeSymbolic(std::cerr, OldFT, &M);
+              std::cerr << "' (in " 
+                << Old->getParent()->getModuleIdentifier() << ") and '";
+              WriteTypeSymbolic(std::cerr, ConcreteFT, &M);
+              std::cerr << "'(in " 
+                << Concrete->getParent()->getModuleIdentifier() << ")\n";
               return Changed;
             }
 
