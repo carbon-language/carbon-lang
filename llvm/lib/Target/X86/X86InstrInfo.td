@@ -815,16 +815,16 @@ let isTwoAddress = 0 in {
   def AND8mi   : Ii8<0x80, MRM4m,
                      (ops i8mem :$dst, i8imm :$src),
                      "and{b} {$src, $dst|$dst, $src}",
-                   [(store (and (load addr:$dst), (i8 imm:$src)), addr:$dst)]>;
+                      [(store (and (loadi8 addr:$dst), imm:$src), addr:$dst)]>;
   def AND16mi  : Ii16<0x81, MRM4m,
                       (ops i16mem:$dst, i16imm:$src),
                       "and{w} {$src, $dst|$dst, $src}",
-                  [(store (and (load addr:$dst), (i16 imm:$src)), addr:$dst)]>,
+                      [(store (and (loadi16 addr:$dst), imm:$src), addr:$dst)]>,
                       OpSize;
   def AND32mi  : Ii32<0x81, MRM4m,
                       (ops i32mem:$dst, i32imm:$src),
                       "and{l} {$src, $dst|$dst, $src}",
-                  [(store (and (load addr:$dst), (i32 imm:$src)), addr:$dst)]>;
+                      [(store (and (loadi32 addr:$dst), imm:$src), addr:$dst)]>;
   def AND16mi8 : Ii8<0x83, MRM4m,
                      (ops i16mem:$dst, i16i8imm :$src),
                      "and{w} {$src, $dst|$dst, $src}",
@@ -886,14 +886,14 @@ let isTwoAddress = 0 in {
                  [(store (or (load addr:$dst), R32:$src), addr:$dst)]>;
   def OR8mi    : Ii8<0x80, MRM1m, (ops i8mem :$dst, i8imm:$src),
                  "or{b} {$src, $dst|$dst, $src}",
-                 [(store (or (load addr:$dst), (i8 imm:$src)), addr:$dst)]>;
+                 [(store (or (loadi8 addr:$dst), imm:$src), addr:$dst)]>;
   def OR16mi   : Ii16<0x81, MRM1m, (ops i16mem:$dst, i16imm:$src),
                  "or{w} {$src, $dst|$dst, $src}",
-                 [(store (or (load addr:$dst), (i16 imm:$src)), addr:$dst)]>,
+                 [(store (or (loadi16 addr:$dst), imm:$src), addr:$dst)]>,
                  OpSize;
   def OR32mi   : Ii32<0x81, MRM1m, (ops i32mem:$dst, i32imm:$src),
                  "or{l} {$src, $dst|$dst, $src}",
-                 [(store (or (load addr:$dst), (i32 imm:$src)), addr:$dst)]>;
+                 [(store (or (loadi32 addr:$dst), imm:$src), addr:$dst)]>;
   def OR16mi8  : Ii8<0x83, MRM1m, (ops i16mem:$dst, i16i8imm:$src),
                  "or{w} {$src, $dst|$dst, $src}",
                  [(store (or (load addr:$dst), i16immSExt8:$src), addr:$dst)]>,
@@ -970,16 +970,16 @@ let isTwoAddress = 0 in {
   def XOR8mi   : Ii8<0x80, MRM6m,
                      (ops i8mem :$dst, i8imm :$src),
                      "xor{b} {$src, $dst|$dst, $src}",
-                    [(store (xor (load addr:$dst), (i8 imm:$src)), addr:$dst)]>;
+                    [(store (xor (loadi8 addr:$dst), imm:$src), addr:$dst)]>;
   def XOR16mi  : Ii16<0x81, MRM6m,
                       (ops i16mem:$dst, i16imm:$src),
                       "xor{w} {$src, $dst|$dst, $src}",
-                   [(store (xor (load addr:$dst), (i16 imm:$src)), addr:$dst)]>,
+                   [(store (xor (loadi16 addr:$dst), imm:$src), addr:$dst)]>,
                       OpSize;
   def XOR32mi  : Ii32<0x81, MRM6m,
                       (ops i32mem:$dst, i32imm:$src),
                       "xor{l} {$src, $dst|$dst, $src}",
-                   [(store (xor (load addr:$dst), (i32 imm:$src)), addr:$dst)]>;
+                   [(store (xor (loadi32 addr:$dst), imm:$src), addr:$dst)]>;
   def XOR16mi8 : Ii8<0x83, MRM6m,
                      (ops i16mem:$dst, i16i8imm :$src),
                      "xor{w} {$src, $dst|$dst, $src}",
@@ -1295,14 +1295,14 @@ let isTwoAddress = 0 in {
                    [(store (add (load addr:$dst), R32:$src2), addr:$dst)]>;
   def ADD8mi   : Ii8<0x80, MRM0m, (ops i8mem :$dst, i8imm :$src2),
                      "add{b} {$src2, $dst|$dst, $src2}",
-                   [(store (add (load addr:$dst), (i8 imm:$src2)), addr:$dst)]>;
+                   [(store (add (loadi8 addr:$dst), imm:$src2), addr:$dst)]>;
   def ADD16mi  : Ii16<0x81, MRM0m, (ops i16mem:$dst, i16imm:$src2),
                       "add{w} {$src2, $dst|$dst, $src2}",
-                  [(store (add (load addr:$dst), (i16 imm:$src2)), addr:$dst)]>,
+                  [(store (add (loadi16 addr:$dst), imm:$src2), addr:$dst)]>,
                    OpSize;
   def ADD32mi  : Ii32<0x81, MRM0m, (ops i32mem:$dst, i32imm:$src2),
                       "add{l} {$src2, $dst|$dst, $src2}",
-                  [(store (add (load addr:$dst), (i32 imm:$src2)), addr:$dst)]>;
+                  [(store (add (loadi32 addr:$dst), imm:$src2), addr:$dst)]>;
   def ADD16mi8 : Ii8<0x83, MRM0m, (ops i16mem:$dst, i16i8imm :$src2),
                      "add{w} {$src2, $dst|$dst, $src2}",
                 [(store (add (load addr:$dst), i16immSExt8:$src2), addr:$dst)]>,
@@ -1380,14 +1380,14 @@ let isTwoAddress = 0 in {
                    [(store (sub (load addr:$dst), R32:$src2), addr:$dst)]>;
   def SUB8mi   : Ii8<0x80, MRM5m, (ops i8mem :$dst, i8imm:$src2), 
                      "sub{b} {$src2, $dst|$dst, $src2}",
-                   [(store (sub (load addr:$dst), (i8 imm:$src2)), addr:$dst)]>;
+                   [(store (sub (loadi8 addr:$dst), imm:$src2), addr:$dst)]>;
   def SUB16mi  : Ii16<0x81, MRM5m, (ops i16mem:$dst, i16imm:$src2), 
                       "sub{w} {$src2, $dst|$dst, $src2}",
-                  [(store (sub (load addr:$dst), (i16 imm:$src2)), addr:$dst)]>,
+                  [(store (sub (loadi16 addr:$dst), imm:$src2), addr:$dst)]>,
                    OpSize;
   def SUB32mi  : Ii32<0x81, MRM5m, (ops i32mem:$dst, i32imm:$src2), 
                       "sub{l} {$src2, $dst|$dst, $src2}",
-                  [(store (sub (load addr:$dst), (i32 imm:$src2)), addr:$dst)]>;
+                  [(store (sub (loadi32 addr:$dst), imm:$src2), addr:$dst)]>;
   def SUB16mi8 : Ii8<0x83, MRM5m, (ops i16mem:$dst, i16i8imm :$src2), 
                      "sub{w} {$src2, $dst|$dst, $src2}",
                 [(store (sub (load addr:$dst), i16immSExt8:$src2), addr:$dst)]>,
