@@ -715,9 +715,12 @@ def INC32r : I<0xFF, MRM0r, (ops R32:$dst, R32:$src), "inc{l} $dst",
                [(set R32:$dst, (add R32:$src, 1))]>;
 }
 let isTwoAddress = 0 in {
-  def INC8m  : I<0xFE, MRM0m, (ops i8mem :$dst), "inc{b} $dst", []>;
-  def INC16m : I<0xFF, MRM0m, (ops i16mem:$dst), "inc{w} $dst", []>, OpSize;
-  def INC32m : I<0xFF, MRM0m, (ops i32mem:$dst), "inc{l} $dst", []>;
+  def INC8m  : I<0xFE, MRM0m, (ops i8mem :$dst), "inc{b} $dst",
+               [(store (add (i8 (load addr:$dst)), 1), addr:$dst)]>;
+  def INC16m : I<0xFF, MRM0m, (ops i16mem:$dst), "inc{w} $dst",
+               [(store (add (i16 (load addr:$dst)), 1), addr:$dst)]>, OpSize;
+  def INC32m : I<0xFF, MRM0m, (ops i32mem:$dst), "inc{l} $dst",
+               [(store (add (i32 (load addr:$dst)), 1), addr:$dst)]>;
 }
 
 def DEC8r  : I<0xFE, MRM1r, (ops R8 :$dst, R8 :$src), "dec{b} $dst",
@@ -730,9 +733,12 @@ def DEC32r : I<0xFF, MRM1r, (ops R32:$dst, R32:$src), "dec{l} $dst",
 }
 
 let isTwoAddress = 0 in {
-  def DEC8m  : I<0xFE, MRM1m, (ops i8mem :$dst), "dec{b} $dst", []>;
-  def DEC16m : I<0xFF, MRM1m, (ops i16mem:$dst), "dec{w} $dst", []>, OpSize;
-  def DEC32m : I<0xFF, MRM1m, (ops i32mem:$dst), "dec{l} $dst", []>;
+  def DEC8m  : I<0xFE, MRM1m, (ops i8mem :$dst), "dec{b} $dst",
+               [(store (add (i8 (load addr:$dst)), -1), addr:$dst)]>;
+  def DEC16m : I<0xFF, MRM1m, (ops i16mem:$dst), "dec{w} $dst",
+               [(store (add (i16 (load addr:$dst)), -1), addr:$dst)]>, OpSize;
+  def DEC32m : I<0xFF, MRM1m, (ops i32mem:$dst), "dec{l} $dst",
+               [(store (add (i32 (load addr:$dst)), -1), addr:$dst)]>;
 }
 
 // Logical operators...
