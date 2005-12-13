@@ -682,9 +682,12 @@ def NEG16r : I<0xF7, MRM3r, (ops R16:$dst, R16:$src), "neg{w} $dst",
 def NEG32r : I<0xF7, MRM3r, (ops R32:$dst, R32:$src), "neg{l} $dst",
                [(set R32:$dst, (ineg R32:$src))]>;
 let isTwoAddress = 0 in {
-  def NEG8m  : I<0xF6, MRM3m, (ops i8mem :$dst), "neg{b} $dst", []>;
-  def NEG16m : I<0xF7, MRM3m, (ops i16mem:$dst), "neg{w} $dst", []>, OpSize;
-  def NEG32m : I<0xF7, MRM3m, (ops i32mem:$dst), "neg{l} $dst", []>;
+  def NEG8m  : I<0xF6, MRM3m, (ops i8mem :$dst), "neg{b} $dst",
+                 [(store (ineg (i8 (load addr:$dst))), addr:$dst)]>;
+  def NEG16m : I<0xF7, MRM3m, (ops i16mem:$dst), "neg{w} $dst",
+                 [(store (ineg (i16 (load addr:$dst))), addr:$dst)]>, OpSize;
+  def NEG32m : I<0xF7, MRM3m, (ops i32mem:$dst), "neg{l} $dst",
+                 [(store (ineg (i32 (load addr:$dst))), addr:$dst)]>;
 }
 
 def NOT8r  : I<0xF6, MRM2r, (ops R8 :$dst, R8 :$src), "not{b} $dst",
@@ -694,9 +697,12 @@ def NOT16r : I<0xF7, MRM2r, (ops R16:$dst, R16:$src), "not{w} $dst",
 def NOT32r : I<0xF7, MRM2r, (ops R32:$dst, R32:$src), "not{l} $dst",
                [(set R32:$dst, (not R32:$src))]>;
 let isTwoAddress = 0 in {
-  def NOT8m  : I<0xF6, MRM2m, (ops i8mem :$dst), "not{b} $dst", []>;
-  def NOT16m : I<0xF7, MRM2m, (ops i16mem:$dst), "not{w} $dst", []>, OpSize;
-  def NOT32m : I<0xF7, MRM2m, (ops i32mem:$dst), "not{l} $dst", []>;
+  def NOT8m  : I<0xF6, MRM2m, (ops i8mem :$dst), "not{b} $dst",
+                 [(store (not (i8 (load addr:$dst))), addr:$dst)]>;
+  def NOT16m : I<0xF7, MRM2m, (ops i16mem:$dst), "not{w} $dst",
+                 [(store (not (i16 (load addr:$dst))), addr:$dst)]>, OpSize;
+  def NOT32m : I<0xF7, MRM2m, (ops i32mem:$dst), "not{l} $dst",
+                 [(store (not (i32 (load addr:$dst))), addr:$dst)]>;
 }
 
 // TODO: inc/dec is slow for P4, but fast for Pentium-M.
