@@ -400,7 +400,7 @@ int main(int argc, char **argv, char **envp) {
   try {
     // Initial global variable above for convenience printing of program name.
     progname = sys::Path(argv[0]).getBasename();
-    Linker TheLinker(progname, Verbose);
+    Linker TheLinker(progname, OutputFilename, Verbose);
 
     // Set up the library paths for the Linker
     TheLinker.addPaths(LibPaths);

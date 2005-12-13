@@ -62,7 +62,11 @@ class Linker {
     /// Construct the Linker with an empty module which will be given the
     /// name \p progname. \p progname will also be used for error messages.
     /// @brief Construct with empty module
-    Linker(const std::string& progname, unsigned Flags = 0 );
+    Linker(
+        const std::string& progname, ///< name of tool running linker
+        const std::string& modulename, ///< name of linker's end-result module
+        unsigned Flags = 0  ///< ControlFlags (one or more |'d together)
+    );
 
     /// Construct the Linker with a previously defined module, \p aModule. Use
     /// \p progname for the name of the program in error messages.

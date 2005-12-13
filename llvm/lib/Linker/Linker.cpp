@@ -19,14 +19,14 @@
 
 using namespace llvm;
 
-Linker::Linker(const std::string& progname, unsigned flags)
+Linker::Linker(const std::string& progname, const std::string& modname, unsigned flags)
   : Composite(0)
   , LibPaths()
   , Flags(flags)
   , Error()
   , ProgramName(progname)
 {
-  Composite = new Module(progname);
+  Composite = new Module(modname);
 }
 
 Linker::Linker(const std::string& progname, Module* aModule, unsigned flags)
