@@ -21,6 +21,35 @@
 #include "llvm/Target/TargetMachine.h"
 using namespace llvm;
 
+AsmPrinter::AsmPrinter(std::ostream &o, TargetMachine &tm)
+: FunctionNumber(0), O(o), TM(tm),
+  CommentString("#"),
+  GlobalPrefix(""),
+  PrivateGlobalPrefix("."),
+  GlobalVarAddrPrefix(""),
+  GlobalVarAddrSuffix(""),
+  FunctionAddrPrefix(""),
+  FunctionAddrSuffix(""),
+  ZeroDirective("\t.zero\t"),
+  AsciiDirective("\t.ascii\t"),
+  AscizDirective("\t.asciz\t"),
+  Data8bitsDirective("\t.byte\t"),
+  Data16bitsDirective("\t.short\t"),
+  Data32bitsDirective("\t.long\t"),
+  Data64bitsDirective("\t.quad\t"),
+  AlignDirective("\t.align\t"),
+  AlignmentIsInBytes(true),
+  SwitchToSectionDirective("\t.section\t"),
+  ConstantPoolSection("\t.section .rodata\n"),
+  StaticCtorsSection("\t.section .ctors,\"aw\",@progbits"),
+  StaticDtorsSection("\t.section .dtors,\"aw\",@progbits"),
+  LCOMMDirective(0),
+  COMMDirective("\t.comm\t"),
+  COMMDirectiveTakesAlignment(true),
+  HasDotTypeDotSizeDirective(true) {
+}
+
+
 /// SwitchSection - Switch to the specified section of the executable if we
 /// are not already in it!
 ///
@@ -80,6 +109,47 @@ void AsmPrinter::EmitConstantPool(MachineConstantPool *MCP) {
   }
 }
 
+/// EmitSpecialLLVMGlobal - Check to see if the specified global is a
+/// special global used by LLVM.  If so, emit it and return true, otherwise
+/// do nothing and return false.
+bool AsmPrinter::EmitSpecialLLVMGlobal(const GlobalVariable *GV) {
+  assert(GV->hasInitializer() && GV->hasAppendingLinkage() &&
+         "Not a special LLVM global!");
+  
+  if (GV->getName() == "llvm.used")
+    return true;  // No need to emit this at all.
+
+  if (GV->getName() == "llvm.global_ctors") {
+    SwitchSection(StaticCtorsSection, 0);
+    EmitAlignment(2, 0);
+    EmitXXStructorList(GV->getInitializer());
+    return true;
+  } 
+  
+  if (GV->getName() == "llvm.global_dtors") {
+    SwitchSection(StaticDtorsSection, 0);
+    EmitAlignment(2, 0);
+    EmitXXStructorList(GV->getInitializer());
+    return true;
+  }
+  
+  return false;
+}
+
+/// EmitXXStructorList - Emit the ctor or dtor list.  This just prints out the 
+/// function pointers, ignoring the init priority.
+void AsmPrinter::EmitXXStructorList(Constant *List) {
+  // Should be an array of '{ int, void ()* }' structs.  The first value is the
+  // init priority, which we ignore.
+  if (!isa<ConstantArray>(List)) return;
+  ConstantArray *InitList = cast<ConstantArray>(List);
+  for (unsigned i = 0, e = InitList->getNumOperands(); i != e; ++i)
+    if (ConstantStruct *CS = dyn_cast<ConstantStruct>(InitList->getOperand(i))){
+      if (CS->getNumOperands() != 2) return;  // Not array of 2-element structs.
+                                              // Emit the function pointer.
+      EmitGlobalConstant(CS->getOperand(1));
+    }
+}
 
 
 // EmitAlignment - Emit an alignment directive to the specified power of two.

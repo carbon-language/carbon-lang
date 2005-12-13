@@ -22,6 +22,7 @@
 namespace llvm {
   class Constant;
   class Mangler;
+  class GlobalVariable;
 
   class AsmPrinter : public MachineFunctionPass {
     /// CurrentSection - The current section we are emitting to.  This is
@@ -134,6 +135,16 @@ namespace llvm {
     /// before emitting the constant pool for a function.
     const char *ConstantPoolSection;     // Defaults to "\t.section .rodata\n"
 
+    /// StaticCtorsSection - This is the directive that is emitted to switch to
+    /// a section to emit the static constructor list.
+    /// Defaults to "\t.section .ctors,\"aw\",@progbits".
+    const char *StaticCtorsSection;
+
+    /// StaticDtorsSection - This is the directive that is emitted to switch to
+    /// a section to emit the static destructor list.
+    /// Defaults to "\t.section .dtors,\"aw\",@progbits".
+    const char *StaticDtorsSection;
+    
     //===--- Global Variable Emission Directives --------------------------===//
     
     /// LCOMMDirective - This is the name of a directive (if supported) that can
@@ -152,32 +163,8 @@ namespace llvm {
     /// directives, this is true for most ELF targets.
     bool HasDotTypeDotSizeDirective;     // Defaults to true.
 
-    AsmPrinter(std::ostream &o, TargetMachine &tm)
-      : FunctionNumber(0), O(o), TM(tm),
-        CommentString("#"),
-        GlobalPrefix(""),
-        PrivateGlobalPrefix("."),
-        GlobalVarAddrPrefix(""),
-        GlobalVarAddrSuffix(""),
-        FunctionAddrPrefix(""),
-        FunctionAddrSuffix(""),
-        ZeroDirective("\t.zero\t"),
-        AsciiDirective("\t.ascii\t"),
-        AscizDirective("\t.asciz\t"),
-        Data8bitsDirective("\t.byte\t"),
-        Data16bitsDirective("\t.short\t"),
-        Data32bitsDirective("\t.long\t"),
-        Data64bitsDirective("\t.quad\t"),
-        AlignDirective("\t.align\t"),
-        AlignmentIsInBytes(true),
-        SwitchToSectionDirective("\t.section\t"),
-        ConstantPoolSection("\t.section .rodata\n"),
-        LCOMMDirective(0),
-        COMMDirective("\t.comm\t"),
-        COMMDirectiveTakesAlignment(true),
-        HasDotTypeDotSizeDirective(true) {
-    }
-
+    AsmPrinter(std::ostream &o, TargetMachine &TM);
+    
     /// SwitchSection - Switch to the specified section of the executable if we
     /// are not already in it!  If GV is non-null and if the global has an
     /// explicitly requested section, we switch to the section indicated for the
@@ -210,7 +197,17 @@ namespace llvm {
     /// is being processed from runOnMachineFunction.
     void SetupMachineFunction(MachineFunction &MF);
     
+    /// EmitConstantPool - Print to the current output stream assembly
+    /// representations of the constants in the constant pool MCP. This is
+    /// used to print out constants which have been "spilled to memory" by
+    /// the code generator.
+    ///
     void EmitConstantPool(MachineConstantPool *MCP);
+
+    /// EmitSpecialLLVMGlobal - Check to see if the specified global is a
+    /// special global used by LLVM.  If so, emit it and return true, otherwise
+    /// do nothing and return false.
+    bool EmitSpecialLLVMGlobal(const GlobalVariable *GV);
 
     /// EmitAlignment - Emit an alignment directive to the specified power of
     /// two boundary.  For example, if you pass in 3 here, you will get an 8
@@ -229,6 +226,9 @@ namespace llvm {
     /// EmitGlobalConstant - Print a general LLVM constant to the .s file.
     ///
     void EmitGlobalConstant(const Constant* CV);
+    
+  private:
+    void EmitXXStructorList(Constant *List);
   };
 }
 
