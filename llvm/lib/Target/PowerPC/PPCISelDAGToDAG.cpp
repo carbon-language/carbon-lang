@@ -29,7 +29,6 @@
 using namespace llvm;
 
 namespace {
-  Statistic<> FusedFP ("ppc-codegen", "Number of fused fp operations");
   Statistic<> FrameOff("ppc-codegen", "Number of frame idx offsets collapsed");
     
   //===--------------------------------------------------------------------===//
