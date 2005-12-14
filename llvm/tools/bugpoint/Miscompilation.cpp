@@ -862,7 +862,7 @@ bool BugDriver::debugCodeGenerator() {
     std::cout << "  gcc " << SharedObject << " " << TestModuleBC
               << ".s -o " << TestModuleBC << ".exe";
 #if defined (HAVE_LINK_R)
-    std::cout << "-Wl,-R.";
+    std::cout << " -Wl,-R.";
 #endif
     std::cout << "\n";
     std::cout << "  " << TestModuleBC << ".exe";
