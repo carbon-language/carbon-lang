@@ -151,8 +151,7 @@ def SDTStore : SDTypeProfile<0, 2, [ // store
 ]>;
 
 def SDTIntExtLoad : SDTypeProfile<1, 3, [  // sextload, zextload
-  SDTCisInt<0>, SDTCisPtrTy<1>, SDTCisVT<2, OtherVT>, SDTCisVT<3, OtherVT>,
-  SDTCisVTSmallerThanOp<3, 0>
+  SDTCisInt<0>, SDTCisPtrTy<1>, SDTCisVT<2, OtherVT>, SDTCisVT<3, OtherVT>
 ]>;
 
 
