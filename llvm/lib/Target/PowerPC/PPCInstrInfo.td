@@ -166,6 +166,9 @@ def crbitm: Operand<i8> {
   let PrintMethod = "printcrbitm";
 }
 
+//===----------------------------------------------------------------------===//
+// PowerPC Instruction Predicate Definitions.
+def FPContractions : Predicate<"!NoExcessFPPrecision">;
 
 //===----------------------------------------------------------------------===//
 // PowerPC Instruction Definitions.
@@ -719,22 +722,26 @@ def FMADD : AForm_1<63, 29,
                     (ops F8RC:$FRT, F8RC:$FRA, F8RC:$FRC, F8RC:$FRB),
                     "fmadd $FRT, $FRA, $FRC, $FRB", FPFused,
                     [(set F8RC:$FRT, (fadd (fmul F8RC:$FRA, F8RC:$FRC),
-                                           F8RC:$FRB))]>;
+                                           F8RC:$FRB))]>,
+                    Requires<[FPContractions]>;
 def FMADDS : AForm_1<59, 29,
                     (ops F4RC:$FRT, F4RC:$FRA, F4RC:$FRC, F4RC:$FRB),
                     "fmadds $FRT, $FRA, $FRC, $FRB", FPGeneral,
                     [(set F4RC:$FRT, (fadd (fmul F4RC:$FRA, F4RC:$FRC),
-                                           F4RC:$FRB))]>;
+                                           F4RC:$FRB))]>,
+                    Requires<[FPContractions]>;
 def FMSUB : AForm_1<63, 28,
                     (ops F8RC:$FRT, F8RC:$FRA, F8RC:$FRC, F8RC:$FRB),
                     "fmsub $FRT, $FRA, $FRC, $FRB", FPFused,
                     [(set F8RC:$FRT, (fsub (fmul F8RC:$FRA, F8RC:$FRC),
-                                           F8RC:$FRB))]>;
+                                           F8RC:$FRB))]>,
+                    Requires<[FPContractions]>;
 def FMSUBS : AForm_1<59, 28,
                     (ops F4RC:$FRT, F4RC:$FRA, F4RC:$FRC, F4RC:$FRB),
                     "fmsubs $FRT, $FRA, $FRC, $FRB", FPGeneral,
                     [(set F4RC:$FRT, (fsub (fmul F4RC:$FRA, F4RC:$FRC),
-                                           F4RC:$FRB))]>;
+                                           F4RC:$FRB))]>,
+                    Requires<[FPContractions]>;
 def FNMADD : AForm_1<63, 31,
                     (ops F8RC:$FRT, F8RC:$FRA, F8RC:$FRC, F8RC:$FRB),
                     "fnmadd $FRT, $FRA, $FRC, $FRB", FPFused,
