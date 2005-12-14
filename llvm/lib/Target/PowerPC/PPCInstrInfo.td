@@ -168,7 +168,7 @@ def crbitm: Operand<i8> {
 
 //===----------------------------------------------------------------------===//
 // PowerPC Instruction Predicate Definitions.
-def FPContractions : Predicate<"!NoExcessFPPrecision">;
+def FPContractions : Predicate<"NoExcessFPPrecision">;
 
 //===----------------------------------------------------------------------===//
 // PowerPC Instruction Definitions.
@@ -746,22 +746,26 @@ def FNMADD : AForm_1<63, 31,
                     (ops F8RC:$FRT, F8RC:$FRA, F8RC:$FRC, F8RC:$FRB),
                     "fnmadd $FRT, $FRA, $FRC, $FRB", FPFused,
                     [(set F8RC:$FRT, (fneg (fadd (fmul F8RC:$FRA, F8RC:$FRC),
-                                                 F8RC:$FRB)))]>;
+                                                 F8RC:$FRB)))]>,
+                    Requires<[FPContractions]>;
 def FNMADDS : AForm_1<59, 31,
                     (ops F4RC:$FRT, F4RC:$FRA, F4RC:$FRC, F4RC:$FRB),
                     "fnmadds $FRT, $FRA, $FRC, $FRB", FPGeneral,
                     [(set F4RC:$FRT, (fneg (fadd (fmul F4RC:$FRA, F4RC:$FRC),
-                                                 F4RC:$FRB)))]>;
+                                                 F4RC:$FRB)))]>,
+                    Requires<[FPContractions]>;
 def FNMSUB : AForm_1<63, 30,
                     (ops F8RC:$FRT, F8RC:$FRA, F8RC:$FRC, F8RC:$FRB),
                     "fnmsub $FRT, $FRA, $FRC, $FRB", FPFused,
                     [(set F8RC:$FRT, (fneg (fsub (fmul F8RC:$FRA, F8RC:$FRC),
-                                                 F8RC:$FRB)))]>;
+                                                 F8RC:$FRB)))]>,
+                    Requires<[FPContractions]>;
 def FNMSUBS : AForm_1<59, 30,
                     (ops F4RC:$FRT, F4RC:$FRA, F4RC:$FRC, F4RC:$FRB),
                     "fnmsubs $FRT, $FRA, $FRC, $FRB", FPGeneral,
                     [(set F4RC:$FRT, (fneg (fsub (fmul F4RC:$FRA, F4RC:$FRC),
-                                                 F4RC:$FRB)))]>;
+                                                 F4RC:$FRB)))]>,
+                    Requires<[FPContractions]>;
 // FSEL is artificially split into 4 and 8-byte forms for the result.  To avoid
 // having 4 of these, force the comparison to always be an 8-byte double (code
 // should use an FMRSD if the input comparison value really wants to be a float)
@@ -848,12 +852,14 @@ def RLDICR : MDForm_1<30, 1,
 def VMADDFP : VAForm_1<46, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB, VRRC:$vC),
                        "vmaddfp $vD, $vA, $vC, $vB", VecFP,
                        [(set VRRC:$vD, (fadd (fmul VRRC:$vA, VRRC:$vC),
-                                             VRRC:$vB))]>;
+                                             VRRC:$vB))]>,
+                       Requires<[FPContractions]>;
 def VNMSUBFP: VAForm_1<47, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB, VRRC:$vC),
-                      "vnmsubfp $vD, $vA, $vC, $vB", VecFP,
-                      [(set VRRC:$vD, (fneg (fsub (fmul VRRC:$vA, 
-                                                        VRRC:$vC),
-                                                  VRRC:$vB)))]>;
+                       "vnmsubfp $vD, $vA, $vC, $vB", VecFP,
+                       [(set VRRC:$vD, (fneg (fsub (fmul VRRC:$vA, 
+                                                         VRRC:$vC),
+                                                  VRRC:$vB)))]>,
+                       Requires<[FPContractions]>;
 
 // VX-Form instructions.  AltiVec arithmetic ops.
 def VADDFP : VXForm_1<10, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
@@ -970,6 +976,14 @@ def : Pat<(add GPRC:$in, (PPChi tconstpool:$g, 0)),
 
 def : Pat<(fmul VRRC:$vA, VRRC:$vB),
           (VMADDFP VRRC:$vA, (V_SET0), VRRC:$vB)>; 
+
+// Fused negative multiply subtract, alternate pattern
+def : Pat<(fsub F8RC:$B, (fmul F8RC:$A, F8RC:$C)),
+          (FNMSUB F8RC:$A, F8RC:$C, F8RC:$B)>,
+          Requires<[FPContractions]>;
+def : Pat<(fsub F4RC:$B, (fmul F4RC:$A, F4RC:$C)),
+          (FNMSUBS F4RC:$A, F4RC:$C, F4RC:$B)>,
+          Requires<[FPContractions]>;
 
 // Fused multiply add and multiply sub for packed float.  These are represented
 // separately from the real instructions above, for operations that must have
