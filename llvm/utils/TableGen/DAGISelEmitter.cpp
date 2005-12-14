@@ -485,7 +485,7 @@ static unsigned char getIntrinsicType(Record *R, bool NotRegisters,
     return MVT::Other;
   } else if (R->isSubClassOf("ComplexPattern")) {
     return TP.getDAGISelEmitter().getComplexPattern(R).getValueType();
-  } else if (R->getName() == "node") {
+  } else if (R->getName() == "node" || R->getName() == "srcvalue") {
     // Placeholder.
     return MVT::isUnknown;
   }
@@ -972,6 +972,10 @@ static bool HandleUse(TreePattern *I, TreePatternNode *Pat,
     assert(Pat->getNumChildren() == 0 && "can't be a use with children!");
     Rec = Pat->getOperator();
   }
+
+  // SRCVALUE nodes are ignored.
+  if (Rec->getName() == "srcvalue")
+    return false;
 
   TreePatternNode *&Slot = InstInputs[Pat->getName()];
   if (!Slot) {
@@ -1832,6 +1836,8 @@ public:
             }
           } else if (LeafRec->isSubClassOf("ComplexPattern")) {
             // Handle complex pattern. Nothing to do here.
+          } else if (LeafRec->getName() == "srcvalue") {
+            // Place holder for SRCVALUE nodes. Nothing to do here.
           } else if (LeafRec->isSubClassOf("ValueType")) {
             // Make sure this is the specified value type.
             OS << "      if (cast<VTSDNode>(" << RootName << OpNo << ")->getVT() != "
