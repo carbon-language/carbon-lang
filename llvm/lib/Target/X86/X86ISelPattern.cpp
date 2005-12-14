@@ -2332,7 +2332,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
     case MVT::i16:
       assert(cast<VTSDNode>(Node->getOperand(3))->getVT() <= MVT::i8 &&
              "Bad zero extend!");
-      addFullAddress(BuildMI(BB, X86::MOVSX16rm8, 5, Result), AM);
+      addFullAddress(BuildMI(BB, X86::MOVZX16rm8, 5, Result), AM);
       break;
     case MVT::i8:
       assert(cast<VTSDNode>(Node->getOperand(3))->getVT() == MVT::i1 &&
