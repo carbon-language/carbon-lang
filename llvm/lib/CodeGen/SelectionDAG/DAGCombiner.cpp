@@ -1554,7 +1554,7 @@ SDOperand DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
     SDOperand ExtLoad = DAG.getExtLoad(ISD::SEXTLOAD, VT, N0.getOperand(0),
                                        N0.getOperand(1), N0.getOperand(2),
                                        N0.getValueType());
-    WorkList.push_back(N);
+    CombineTo(N, ExtLoad);
     CombineTo(N0.Val, DAG.getNode(ISD::TRUNCATE, N0.getValueType(), ExtLoad),
               ExtLoad.getValue(1));
     return SDOperand();
@@ -1567,7 +1567,7 @@ SDOperand DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
     SDOperand ExtLoad = DAG.getNode(ISD::SEXTLOAD, VT, N0.getOperand(0),
                                     N0.getOperand(1), N0.getOperand(2),
                                     N0.getOperand(3));
-    WorkList.push_back(N);
+    CombineTo(N, ExtLoad);
     CombineTo(N0.Val, DAG.getNode(ISD::TRUNCATE, N0.getValueType(), ExtLoad),
               ExtLoad.getValue(1));
     return SDOperand();
@@ -1596,7 +1596,7 @@ SDOperand DAGCombiner::visitZERO_EXTEND(SDNode *N) {
     SDOperand ExtLoad = DAG.getExtLoad(ISD::ZEXTLOAD, VT, N0.getOperand(0),
                                        N0.getOperand(1), N0.getOperand(2),
                                        N0.getValueType());
-    WorkList.push_back(N);
+    CombineTo(N, ExtLoad);
     CombineTo(N0.Val, DAG.getNode(ISD::TRUNCATE, N0.getValueType(), ExtLoad),
               ExtLoad.getValue(1));
     return SDOperand();
@@ -1609,7 +1609,7 @@ SDOperand DAGCombiner::visitZERO_EXTEND(SDNode *N) {
     SDOperand ExtLoad = DAG.getNode(ISD::ZEXTLOAD, VT, N0.getOperand(0),
                                     N0.getOperand(1), N0.getOperand(2),
                                     N0.getOperand(3));
-    WorkList.push_back(N);
+    CombineTo(N, ExtLoad);
     CombineTo(N0.Val, DAG.getNode(ISD::TRUNCATE, N0.getValueType(), ExtLoad),
               ExtLoad.getValue(1));
     return SDOperand();
@@ -1673,7 +1673,7 @@ SDOperand DAGCombiner::visitSIGN_EXTEND_INREG(SDNode *N) {
     SDOperand ExtLoad = DAG.getExtLoad(ISD::SEXTLOAD, VT, N0.getOperand(0),
                                        N0.getOperand(1), N0.getOperand(2),
                                        EVT);
-    WorkList.push_back(N);
+    CombineTo(N, ExtLoad);
     CombineTo(N0.Val, ExtLoad, ExtLoad.getValue(1));
     return SDOperand();
   }
@@ -1684,7 +1684,7 @@ SDOperand DAGCombiner::visitSIGN_EXTEND_INREG(SDNode *N) {
     SDOperand ExtLoad = DAG.getExtLoad(ISD::SEXTLOAD, VT, N0.getOperand(0),
                                        N0.getOperand(1), N0.getOperand(2),
                                        EVT);
-    WorkList.push_back(N);
+    CombineTo(N, ExtLoad);
     CombineTo(N0.Val, ExtLoad, ExtLoad.getValue(1));
     return SDOperand();
   }
