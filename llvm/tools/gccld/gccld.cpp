@@ -107,11 +107,6 @@ namespace {
   CO5("eh-frame-hdr", cl::Hidden, cl::desc("Compatibility option: ignored"));
   cl::opt<std::string>
   CO6("h", cl::Hidden, cl::desc("Compatibility option: ignored"));
-  cl::opt<bool>
-  CO7("start-group", cl::Hidden, cl::desc("Compatibility option: ignored"));
-  cl::opt<bool>
-  CO8("end-group", cl::Hidden, cl::desc("Compatibility option: ignored"));
-
   cl::alias A0("s", cl::desc("Alias for --strip-all"),
                cl::aliasopt(Strip));
   cl::alias A1("S", cl::desc("Alias for --strip-debug"),
