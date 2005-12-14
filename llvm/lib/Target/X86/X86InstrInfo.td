@@ -162,9 +162,22 @@ def i16immZExt8  : PatLeaf<(i16 imm), [{
 }]>;
 
 // Helper fragments for loads.
-def loadi8   : PatFrag<(ops node:$in), (i8  (load node:$in))>;
-def loadi16  : PatFrag<(ops node:$in), (i16 (load node:$in))>;
-def loadi32  : PatFrag<(ops node:$in), (i32 (load node:$in))>;
+def loadi8  : PatFrag<(ops node:$ptr), (i8  (load node:$ptr))>;
+def loadi16 : PatFrag<(ops node:$ptr), (i16 (load node:$ptr))>;
+def loadi32 : PatFrag<(ops node:$ptr), (i32 (load node:$ptr))>;
+
+def sextloadi16i1  : PatFrag<(ops node:$ptr), (i16 (sextload node:$ptr, i1))>;
+def sextloadi32i1  : PatFrag<(ops node:$ptr), (i32 (sextload node:$ptr, i1))>;
+def sextloadi16i8  : PatFrag<(ops node:$ptr), (i16 (sextload node:$ptr, i8))>;
+def sextloadi32i8  : PatFrag<(ops node:$ptr), (i32 (sextload node:$ptr, i8))>;
+def sextloadi32i16 : PatFrag<(ops node:$ptr), (i32 (sextload node:$ptr, i16))>;
+
+def zextloadi16i1  : PatFrag<(ops node:$ptr), (i16 (zextload node:$ptr, i1))>;
+def zextloadi32i1  : PatFrag<(ops node:$ptr), (i32 (zextload node:$ptr, i1))>;
+def zextloadi16i8  : PatFrag<(ops node:$ptr), (i16 (zextload node:$ptr, i8))>;
+def zextloadi32i8  : PatFrag<(ops node:$ptr), (i32 (zextload node:$ptr, i8))>;
+def zextloadi32i16 : PatFrag<(ops node:$ptr), (i32 (zextload node:$ptr, i16))>;
+
 
 //===----------------------------------------------------------------------===//
 // Instruction templates...
@@ -1663,33 +1676,45 @@ def MOVSX16rr8 : I<0xBE, MRMSrcReg, (ops R16:$dst, R8 :$src),
                    "movs{bw|x} {$src, $dst|$dst, $src}",
                    [(set R16:$dst, (sext R8:$src))]>, TB, OpSize;
 def MOVSX16rm8 : I<0xBE, MRMSrcMem, (ops R16:$dst, i8mem :$src),
-                   "movs{bw|x} {$src, $dst|$dst, $src}", []>, TB, OpSize;
+                   "movs{bw|x} {$src, $dst|$dst, $src}",
+                   [(set R16:$dst, (sextloadi16i8 addr:$src))]>, TB, OpSize;
 def MOVSX32rr8 : I<0xBE, MRMSrcReg, (ops R32:$dst, R8 :$src),
                    "movs{bl|x} {$src, $dst|$dst, $src}",
                    [(set R32:$dst, (sext R8:$src))]>, TB;
 def MOVSX32rm8 : I<0xBE, MRMSrcMem, (ops R32:$dst, i8mem :$src),
-                   "movs{bl|x} {$src, $dst|$dst, $src}", []>, TB;
+                   "movs{bl|x} {$src, $dst|$dst, $src}",
+                   [(set R32:$dst, (sextloadi32i8 addr:$src))]>, TB;
 def MOVSX32rr16: I<0xBF, MRMSrcReg, (ops R32:$dst, R16:$src),
                    "movs{wl|x} {$src, $dst|$dst, $src}",
                    [(set R32:$dst, (sext R16:$src))]>, TB;
 def MOVSX32rm16: I<0xBF, MRMSrcMem, (ops R32:$dst, i16mem:$src),
-                   "movs{wl|x} {$src, $dst|$dst, $src}", []>, TB;
+                   "movs{wl|x} {$src, $dst|$dst, $src}",
+                   [(set R32:$dst, (sextloadi32i16 addr:$src))]>, TB;
 
 def MOVZX16rr8 : I<0xB6, MRMSrcReg, (ops R16:$dst, R8 :$src),
                    "movz{bw|x} {$src, $dst|$dst, $src}",
                    [(set R16:$dst, (zext R8:$src))]>, TB, OpSize;
 def MOVZX16rm8 : I<0xB6, MRMSrcMem, (ops R16:$dst, i8mem :$src),
-                   "movz{bw|x} {$src, $dst|$dst, $src}", []>, TB, OpSize;
+                   "movz{bw|x} {$src, $dst|$dst, $src}",
+                   [(set R16:$dst, (zextloadi16i8 addr:$src))]>, TB, OpSize;
 def MOVZX32rr8 : I<0xB6, MRMSrcReg, (ops R32:$dst, R8 :$src),
                    "movz{bl|x} {$src, $dst|$dst, $src}",
                    [(set R32:$dst, (zext R8:$src))]>, TB;
 def MOVZX32rm8 : I<0xB6, MRMSrcMem, (ops R32:$dst, i8mem :$src),
-                   "movz{bl|x} {$src, $dst|$dst, $src}", []>, TB;
+                   "movz{bl|x} {$src, $dst|$dst, $src}",
+                   [(set R32:$dst, (zextloadi32i8 addr:$src))]>, TB;
 def MOVZX32rr16: I<0xB7, MRMSrcReg, (ops R32:$dst, R16:$src),
                    "movz{wl|x} {$src, $dst|$dst, $src}",
                    [(set R32:$dst, (zext R16:$src))]>, TB;
 def MOVZX32rm16: I<0xB7, MRMSrcMem, (ops R32:$dst, i16mem:$src),
-                   "movz{wl|x} {$src, $dst|$dst, $src}", []>, TB;
+                   "movz{wl|x} {$src, $dst|$dst, $src}",
+                   [(set R32:$dst, (zextloadi32i16 addr:$src))]>, TB;
+
+// Handling 1 bit zextload and sextload
+def : Pat<(sextloadi16i1 addr:$src), (MOVSX16rm8  addr:$src)>;
+def : Pat<(sextloadi32i1 addr:$src), (MOVSX32rm8  addr:$src)>;
+def : Pat<(zextloadi16i1 addr:$src), (MOVZX16rm8  addr:$src)>;
+def : Pat<(zextloadi32i1 addr:$src), (MOVZX32rm8  addr:$src)>;
 
 //===----------------------------------------------------------------------===//
 // XMM Floating point support (requires SSE2)
