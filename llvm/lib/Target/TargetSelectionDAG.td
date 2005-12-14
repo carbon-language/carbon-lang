@@ -150,6 +150,12 @@ def SDTStore : SDTypeProfile<0, 2, [ // store
   SDTCisPtrTy<1>  
 ]>;
 
+def SDTIntExtLoad : SDTypeProfile<1, 3, [  // sextload, zextload
+  SDTCisInt<0>, SDTCisPtrTy<1>, SDTCisVT<2, OtherVT>, SDTCisVT<3, OtherVT>,
+  SDTCisVTSmallerThanOp<3, 0>
+]>;
+
+
 //===----------------------------------------------------------------------===//
 // Selection DAG Node Properties.
 //
@@ -173,6 +179,7 @@ class SDNode<string opcode, SDTypeProfile typeprof,
 
 def set;
 def node;
+def srcvalue;
 
 def imm        : SDNode<"ISD::Constant"  , SDTIntLeaf , [], "ConstantSDNode">;
 def vt         : SDNode<"ISD::VALUETYPE" , SDTOther   , [], "VTSDNode">;
@@ -245,6 +252,11 @@ def writeport  : SDNode<"ISD::WRITEPORT"  , SDTWritePort, [SDNPHasChain]>;
 def load       : SDNode<"ISD::LOAD"       , SDTLoad,  [SDNPHasChain]>;
 def store      : SDNode<"ISD::STORE"      , SDTStore, [SDNPHasChain]>;
 
+// Do not use sextld and zextld directly. Use sextload and zextload (see
+// below) which pass in a dummy srcvalue node which tblgen will skip over.
+def sextld     : SDNode<"ISD::SEXTLOAD"   , SDTIntExtLoad, [SDNPHasChain]>;
+def zextld     : SDNode<"ISD::ZEXTLOAD"   , SDTIntExtLoad, [SDNPHasChain]>;
+
 //===----------------------------------------------------------------------===//
 // Selection DAG Condition Codes
 
@@ -311,6 +323,11 @@ def vtFP       : PatLeaf<(vt),  [{ return MVT::isFloatingPoint(N->getVT()); }]>;
 def not  : PatFrag<(ops node:$in), (xor node:$in, immAllOnes)>;
 def ineg : PatFrag<(ops node:$in), (sub 0, node:$in)>;
 
+// extending load fragments.
+def sextload      : PatFrag<(ops node:$ptr, node:$vt),
+                            (sextld node:$ptr, srcvalue:$dummy, node:$vt)>;
+def zextload      : PatFrag<(ops node:$ptr, node:$vt),
+                            (zextld node:$ptr, srcvalue:$dummy, node:$vt)>;
 
 // setcc convenience fragments.
 def setoeq : PatFrag<(ops node:$lhs, node:$rhs),
