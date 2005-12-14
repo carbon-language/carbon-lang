@@ -1582,7 +1582,7 @@ SDOperand DAGCombiner::visitZERO_EXTEND(SDNode *N) {
   // fold (zext (truncate x)) -> (zextinreg x) iff x size == zext size.
   if (N0.getOpcode() == ISD::TRUNCATE && N0.getOperand(0).getValueType() == VT&&
       !AfterLegalize)
-    return DAG.getZeroExtendInReg(N0.getOperand(0), VT);
+    return DAG.getZeroExtendInReg(N0.getOperand(0), N0.getValueType());
   // fold (zext (load x)) -> (zext (truncate (zextload x)))
   if (N0.getOpcode() == ISD::LOAD && N0.hasOneUse()) {
     SDOperand ExtLoad = DAG.getExtLoad(ISD::ZEXTLOAD, VT, N0.getOperand(0),
