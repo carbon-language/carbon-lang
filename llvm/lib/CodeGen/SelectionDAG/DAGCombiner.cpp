@@ -1543,9 +1543,6 @@ SDOperand DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
   // fold (sext (sext x)) -> (sext x)
   if (N0.getOpcode() == ISD::SIGN_EXTEND)
     return DAG.getNode(ISD::SIGN_EXTEND, VT, N0.getOperand(0));
-  // fold (sext (sextload x)) -> (sextload x)
-  if (N0.getOpcode() == ISD::SEXTLOAD && VT == N0.getValueType())
-    return N0;
   // fold (sext (truncate x)) -> (sextinreg x) iff x size == sext size.
   if (N0.getOpcode() == ISD::TRUNCATE && N0.getOperand(0).getValueType() == VT&&
       (!AfterLegalize || 
@@ -1562,6 +1559,20 @@ SDOperand DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
               ExtLoad.getValue(1));
     return SDOperand();
   }
+
+  // fold (sext (sextload x)) -> (sext (truncate (sextload x)))
+  // fold (sext ( extload x)) -> (sext (truncate (sextload x)))
+  if ((N0.getOpcode() == ISD::SEXTLOAD || N0.getOpcode() == ISD::EXTLOAD) &&
+      N0.hasOneUse()) {
+    SDOperand ExtLoad = DAG.getNode(ISD::SEXTLOAD, VT, N0.getOperand(0),
+                                    N0.getOperand(1), N0.getOperand(2),
+                                    N0.getOperand(3));
+    WorkList.push_back(N);
+    CombineTo(N0.Val, DAG.getNode(ISD::TRUNCATE, N0.getValueType(), ExtLoad),
+              ExtLoad.getValue(1));
+    return SDOperand();
+  }
+  
   return SDOperand();
 }
 
@@ -1576,18 +1587,28 @@ SDOperand DAGCombiner::visitZERO_EXTEND(SDNode *N) {
   // fold (zext (zext x)) -> (zext x)
   if (N0.getOpcode() == ISD::ZERO_EXTEND)
     return DAG.getNode(ISD::ZERO_EXTEND, VT, N0.getOperand(0));
-  // fold (zext (zextload x)) -> (zextload x)
-  if (N0.getOpcode() == ISD::ZEXTLOAD && VT == N0.getValueType())
-    return N0;
   // fold (zext (truncate x)) -> (zextinreg x) iff x size == zext size.
   if (N0.getOpcode() == ISD::TRUNCATE && N0.getOperand(0).getValueType() == VT&&
-      !AfterLegalize)
+      (!AfterLegalize || TLI.isOperationLegal(ISD::AND, N0.getValueType())))
     return DAG.getZeroExtendInReg(N0.getOperand(0), N0.getValueType());
   // fold (zext (load x)) -> (zext (truncate (zextload x)))
   if (N0.getOpcode() == ISD::LOAD && N0.hasOneUse()) {
     SDOperand ExtLoad = DAG.getExtLoad(ISD::ZEXTLOAD, VT, N0.getOperand(0),
                                        N0.getOperand(1), N0.getOperand(2),
                                        N0.getValueType());
+    WorkList.push_back(N);
+    CombineTo(N0.Val, DAG.getNode(ISD::TRUNCATE, N0.getValueType(), ExtLoad),
+              ExtLoad.getValue(1));
+    return SDOperand();
+  }
+
+  // fold (zext (zextload x)) -> (zext (truncate (zextload x)))
+  // fold (zext ( extload x)) -> (zext (truncate (zextload x)))
+  if ((N0.getOpcode() == ISD::ZEXTLOAD || N0.getOpcode() == ISD::EXTLOAD) &&
+      N0.hasOneUse()) {
+    SDOperand ExtLoad = DAG.getNode(ISD::ZEXTLOAD, VT, N0.getOperand(0),
+                                    N0.getOperand(1), N0.getOperand(2),
+                                    N0.getOperand(3));
     WorkList.push_back(N);
     CombineTo(N0.Val, DAG.getNode(ISD::TRUNCATE, N0.getValueType(), ExtLoad),
               ExtLoad.getValue(1));
