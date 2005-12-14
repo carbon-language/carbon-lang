@@ -897,6 +897,16 @@ def VRSQRTEFP : VXForm_2<330, (ops VRRC:$vD, VRRC:$vB),
 def VSUBFP : VXForm_1<74, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
                       "vsubfp $vD, $vA, $vB", VecFP,
                       [(set VRRC:$vD, (fsub VRRC:$vA, VRRC:$vB))]>;
+def VXOR : VXForm_1<1220, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                      "vxor $vD, $vA, $vB", VecFP,
+                      []>;
+                      
+// VX-Form Pseudo Instructions
+
+def V_SET0 : VXForm_setzero<1220, (ops VRRC:$vD),
+                      "vxor $vD, $vD, $vD", VecFP,
+                      []>;
+
 
 //===----------------------------------------------------------------------===//
 // PowerPC Instruction Patterns
@@ -950,6 +960,9 @@ def : Pat<(add GPRC:$in, (PPChi tglobaladdr:$g, 0)),
           (ADDIS GPRC:$in, tglobaladdr:$g)>;
 def : Pat<(add GPRC:$in, (PPChi tconstpool:$g, 0)),
           (ADDIS GPRC:$in, tconstpool:$g)>;
+
+def : Pat<(fmul VRRC:$vA, VRRC:$vB),
+          (VMADDFP VRRC:$vA, (V_SET0), VRRC:$vB)>; 
 
 // Fused multiply add and multiply sub for packed float.  These are represented
 // separately from the real instructions above, for operations that must have

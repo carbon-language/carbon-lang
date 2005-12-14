@@ -602,6 +602,14 @@ class VXForm_1<bits<11> xo, dag OL, string asmstr,
   let Inst{21-31} = xo;
 }
 
+class VXForm_setzero<bits<11> xo, dag OL, string asmstr,
+               InstrItinClass itin, list<dag> pattern>
+    : VXForm_1<xo, OL, asmstr, itin, pattern> {
+  let VA = VD;
+  let VB = VD;
+}
+
+
 class VXForm_2<bits<11> xo, dag OL, string asmstr,
                InstrItinClass itin, list<dag> pattern>
     : I<4, OL, asmstr, itin> {
