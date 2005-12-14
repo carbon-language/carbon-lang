@@ -539,7 +539,7 @@ void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, unsigned Offset) {
     if (LoadInst *LI = dyn_cast<LoadInst>(User)) {
       // The load is a bit extract from NewAI shifted right by Offset bits.
       Value *NV = new LoadInst(NewAI, LI->getName(), LI);
-      if (Offset)
+      if (Offset && Offset < NV->getType()->getPrimitiveSizeInBits())
         NV = new ShiftInst(Instruction::Shr, NV,
                            ConstantUInt::get(Type::UByteTy, Offset),
                            LI->getName(), LI);
@@ -563,7 +563,7 @@ void SROA::ConvertUsesToScalar(Value *Ptr, AllocaInst *NewAI, unsigned Offset) {
           SV = new CastInst(SV, SV->getType()->getUnsignedVersion(),
                             SV->getName(), SI);
         SV = new CastInst(SV, Old->getType(), SV->getName(), SI);
-        if (Offset)
+        if (Offset && Offset < SV->getType()->getPrimitiveSizeInBits())
           SV = new ShiftInst(Instruction::Shl, SV,
                              ConstantUInt::get(Type::UByteTy, Offset),
                              SV->getName()+".adj", SI);
