@@ -382,8 +382,9 @@ def setne  : PatFrag<(ops node:$lhs, node:$rhs),
 //
 
 class Pattern<dag patternToMatch, list<dag> resultInstrs> {
-  dag       PatternToMatch = patternToMatch;
-  list<dag> ResultInstrs   = resultInstrs;
+  dag             PatternToMatch = patternToMatch;
+  list<dag>       ResultInstrs   = resultInstrs;
+  list<Predicate> Predicates     = [];  // See class Instruction in Target.td.
 }
 
 // Pat - A simple (but common) form of a pattern, which produces a simple result

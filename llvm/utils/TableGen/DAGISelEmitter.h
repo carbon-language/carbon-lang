@@ -353,13 +353,27 @@ namespace llvm {
     TreePatternNode *getResultPattern() const { return ResultPattern; }
   };
   
-  
+/// PatternToMatch - Used by DAGISelEmitter to keep tab of patterns processed
+/// to produce isel.
+struct PatternToMatch {
+  PatternToMatch(ListInit *preds, TreePatternNode *src, TreePatternNode *dst):
+    Predicates(preds), SrcPattern(src), DstPattern(dst) {};
+
+  ListInit        *Predicates;  // Top level predicate conditions to match.
+  TreePatternNode *SrcPattern;  // Source pattern to match.
+  TreePatternNode *DstPattern;  // Resulting pattern.
+
+  ListInit        *getPredicates() const { return Predicates; }
+  TreePatternNode *getSrcPattern() const { return SrcPattern; }
+  TreePatternNode *getDstPattern() const { return DstPattern; }
+};
+
 /// InstrSelectorEmitter - The top-level class which coordinates construction
 /// and emission of the instruction selector.
 ///
 class DAGISelEmitter : public TableGenBackend {
 public:
-  typedef std::pair<TreePatternNode*, TreePatternNode*> PatternToMatch;
+  //typedef std::pair<TreePatternNode*, TreePatternNode*> PatternToMatch;
 private:
   RecordKeeper &Records;
   CodeGenTarget Target;

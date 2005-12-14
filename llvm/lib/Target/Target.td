@@ -127,6 +127,7 @@ class RegisterClass<string namespace, list<ValueType> regTypes, int alignment,
 //
 include "../TargetSchedule.td"
 
+class Predicate; // Forward def
 
 //===----------------------------------------------------------------------===//
 // Instruction set description - These classes correspond to the C++ classes in
@@ -149,6 +150,10 @@ class Instruction {
   list<Register> Uses = []; // Default to using no non-operand registers
   list<Register> Defs = []; // Default to modifying no non-operand registers
 
+  // Predicates - List of predicates which will be turned into isel matching
+  // code.
+  list<Predicate> Predicates = [];
+
   // These bits capture information about the high-level semantics of the
   // instruction.
   bit isReturn     = 0;     // Is this instruction a return instruction?
@@ -168,6 +173,15 @@ class Instruction {
   InstrItinClass Itinerary; // Execution steps used for scheduling. 
 }
 
+/// Predicates - These are extra conditionals which are turned into instruction
+/// selector matching code. Currently each predicate is just a string.
+class Predicate<string cond> {
+  string CondString = cond;
+}
+
+class Requires<list<Predicate> preds> {
+  list<Predicate> Predicates = preds;
+}
 
 /// ops definition - This is just a simple marker used to identify the operands
 /// list for an instruction.  This should be used like this:
