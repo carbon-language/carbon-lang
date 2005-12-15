@@ -48,7 +48,9 @@ def brtarget : Operand<OtherVT>;
 
 // Define X86 specific addressing mode.
 def addr    : ComplexPattern<i32, 4, "SelectAddr", []>;
-def leaaddr : ComplexPattern<i32, 4, "SelectLEAAddr", [add]>;
+def leaaddr : ComplexPattern<i32, 4, "SelectLEAAddr",
+                             [add,
+                              frameindex, constpool, globaladdr, externalsym]>;
 
 // Format specifies the encoding used by the instruction.  This is part of the
 // ad-hoc solution used to emit machine instruction encodings by our machine
@@ -326,7 +328,6 @@ def LEA32r   : I<0x8D, MRMSrcMem,
                  (ops R32:$dst, i32mem:$src),
                  "lea{l} {$src|$dst}, {$dst|$src}",
                  [(set R32:$dst, leaaddr:$src)]>;
-
 
 def REP_MOVSB : I<0xA4, RawFrm, (ops), "{rep;movsb|rep movsb}", []>,
                 Imp<[ECX,EDI,ESI], [ECX,EDI,ESI]>, REP;
