@@ -1550,7 +1550,8 @@ SDOperand DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
     return DAG.getNode(ISD::SIGN_EXTEND_INREG, VT, N0.getOperand(0),
                        DAG.getValueType(N0.getValueType()));
   // fold (sext (load x)) -> (sext (truncate (sextload x)))
-  if (N0.getOpcode() == ISD::LOAD && N0.hasOneUse()) {
+  if (N0.getOpcode() == ISD::LOAD && N0.hasOneUse() &&
+      (!AfterLegalize||TLI.isOperationLegal(ISD::SEXTLOAD, N0.getValueType()))){
     SDOperand ExtLoad = DAG.getExtLoad(ISD::SEXTLOAD, VT, N0.getOperand(0),
                                        N0.getOperand(1), N0.getOperand(2),
                                        N0.getValueType());
@@ -1592,7 +1593,8 @@ SDOperand DAGCombiner::visitZERO_EXTEND(SDNode *N) {
       (!AfterLegalize || TLI.isOperationLegal(ISD::AND, N0.getValueType())))
     return DAG.getZeroExtendInReg(N0.getOperand(0), N0.getValueType());
   // fold (zext (load x)) -> (zext (truncate (zextload x)))
-  if (N0.getOpcode() == ISD::LOAD && N0.hasOneUse()) {
+  if (N0.getOpcode() == ISD::LOAD && N0.hasOneUse() &&
+      (!AfterLegalize||TLI.isOperationLegal(ISD::ZEXTLOAD, N0.getValueType()))){
     SDOperand ExtLoad = DAG.getExtLoad(ISD::ZEXTLOAD, VT, N0.getOperand(0),
                                        N0.getOperand(1), N0.getOperand(2),
                                        N0.getValueType());
