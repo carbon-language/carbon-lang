@@ -431,6 +431,9 @@ def MOV32mr : I<0x89, MRMDestMem, (ops i32mem:$dst, R32:$src),
                 "mov{l} {$src, $dst|$dst, $src}",
                 [(store R32:$src, addr:$dst)]>;
                 
+// Handling 1 bit load
+def : Pat<(i1 (load addr:$src)), (MOV8rm  addr:$src)>;
+
 //===----------------------------------------------------------------------===//
 //  Fixed-Register Multiplication and Division Instructions...
 //
