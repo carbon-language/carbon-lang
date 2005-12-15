@@ -180,6 +180,8 @@ def zextloadi16i8  : PatFrag<(ops node:$ptr), (i16 (zextload node:$ptr, i8))>;
 def zextloadi32i8  : PatFrag<(ops node:$ptr), (i32 (zextload node:$ptr, i8))>;
 def zextloadi32i16 : PatFrag<(ops node:$ptr), (i32 (zextload node:$ptr, i16))>;
 
+def extloadi8i1    : PatFrag<(ops node:$ptr), (i8 (extload node:$ptr, i1))>;
+
 
 //===----------------------------------------------------------------------===//
 // Instruction templates...
@@ -432,9 +434,6 @@ def MOV32mr : I<0x89, MRMDestMem, (ops i32mem:$dst, R32:$src),
                 "mov{l} {$src, $dst|$dst, $src}",
                 [(store R32:$src, addr:$dst)]>;
                 
-// Handling 1 bit load
-def : Pat<(i1 (load addr:$src)), (MOV8rm  addr:$src)>;
-
 //===----------------------------------------------------------------------===//
 //  Fixed-Register Multiplication and Division Instructions...
 //
@@ -1719,6 +1718,9 @@ def : Pat<(sextloadi16i1 addr:$src), (MOVSX16rm8  addr:$src)>;
 def : Pat<(sextloadi32i1 addr:$src), (MOVSX32rm8  addr:$src)>;
 def : Pat<(zextloadi16i1 addr:$src), (MOVZX16rm8  addr:$src)>;
 def : Pat<(zextloadi32i1 addr:$src), (MOVZX32rm8  addr:$src)>;
+
+// Handling 1 bit extload
+def : Pat<(extloadi8i1 addr:$src), (MOV8rm  addr:$src)>;
 
 //===----------------------------------------------------------------------===//
 // XMM Floating point support (requires SSE2)

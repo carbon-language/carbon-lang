@@ -150,7 +150,7 @@ def SDTStore : SDTypeProfile<0, 2, [ // store
   SDTCisPtrTy<1>  
 ]>;
 
-def SDTIntExtLoad : SDTypeProfile<1, 3, [  // sextload, zextload
+def SDTIntExtLoad : SDTypeProfile<1, 3, [  // sextload, zextload, extload
   SDTCisInt<0>, SDTCisPtrTy<1>, SDTCisVT<2, OtherVT>, SDTCisVT<3, OtherVT>
 ]>;
 
@@ -261,6 +261,7 @@ def store      : SDNode<"ISD::STORE"      , SDTStore, [SDNPHasChain]>;
 // below) which pass in a dummy srcvalue node which tblgen will skip over.
 def sextld     : SDNode<"ISD::SEXTLOAD"   , SDTIntExtLoad, [SDNPHasChain]>;
 def zextld     : SDNode<"ISD::ZEXTLOAD"   , SDTIntExtLoad, [SDNPHasChain]>;
+def extld      : SDNode<"ISD::EXTLOAD"    , SDTIntExtLoad, [SDNPHasChain]>;
 
 //===----------------------------------------------------------------------===//
 // Selection DAG Condition Codes
@@ -333,6 +334,8 @@ def sextload      : PatFrag<(ops node:$ptr, node:$vt),
                             (sextld node:$ptr, srcvalue:$dummy, node:$vt)>;
 def zextload      : PatFrag<(ops node:$ptr, node:$vt),
                             (zextld node:$ptr, srcvalue:$dummy, node:$vt)>;
+def extload       : PatFrag<(ops node:$ptr, node:$vt),
+                            (extld node:$ptr, srcvalue:$dummy, node:$vt)>;
 
 // setcc convenience fragments.
 def setoeq : PatFrag<(ops node:$lhs, node:$rhs),

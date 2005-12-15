@@ -41,9 +41,6 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   setShiftAmountFlavor(Mask);   // shl X, 32 == shl X, 0
 
   // Set up the register classes.
-  // FIXME: Eliminate these two classes when legalize can handle promotions
-  // well.
-  addRegisterClass(MVT::i1, X86::R8RegisterClass);
   addRegisterClass(MVT::i8, X86::R8RegisterClass);
   addRegisterClass(MVT::i16, X86::R16RegisterClass);
   addRegisterClass(MVT::i32, X86::R32RegisterClass);
