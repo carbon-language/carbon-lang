@@ -22,6 +22,7 @@
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/ADT/Statistic.h"
+#include <set>
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
@@ -95,6 +96,8 @@ namespace {
   private:
     SDOperand Select(SDOperand N);
 
+    bool isFoldableLoad(SDOperand Op, SDOperand OtherOp,
+                        bool FloatPromoteOk = false);
     bool MatchAddress(SDOperand N, X86ISelAddressMode &AM);
     bool SelectAddr(SDOperand N, SDOperand &Base, SDOperand &Scale,
                     SDOperand &Index, SDOperand &Disp);
@@ -359,36 +362,144 @@ bool X86DAGToDAGISel::SelectLEAAddr(SDOperand N, SDOperand &Base, SDOperand &Sca
   return false;
 }
 
-SDOperand X86DAGToDAGISel::Select(SDOperand Op) {
-  SDNode *N = Op.Val;
-  MVT::ValueType OpVT = N->getValueType(0);
+/// NodeTransitivelyUsesValue - Return true if N or any of its uses uses Op.
+/// The DAG cannot have cycles in it, by definition, so the visited set is not
+/// needed to prevent infinite loops.  The DAG CAN, however, have unbounded
+/// reuse, so it prevents exponential cases.
+///
+static bool NodeTransitivelyUsesValue(SDOperand N, SDOperand Op,
+                                      std::set<SDNode*> &Visited) {
+  if (N == Op) return true;                        // Found it.
+  SDNode *Node = N.Val;
+  if (Node->getNumOperands() == 0 ||      // Leaf?
+      Node->getNodeDepth() <= Op.getNodeDepth()) return false; // Can't find it?
+  if (!Visited.insert(Node).second) return false;  // Already visited?
+
+  // Recurse for the first N-1 operands.
+  for (unsigned i = 1, e = Node->getNumOperands(); i != e; ++i)
+    if (NodeTransitivelyUsesValue(Node->getOperand(i), Op, Visited))
+      return true;
+
+  // Tail recurse for the last operand.
+  return NodeTransitivelyUsesValue(Node->getOperand(0), Op, Visited);
+}
+
+/// isFoldableLoad - Return true if this is a load instruction that can safely
+/// be folded into an operation that uses it.
+bool X86DAGToDAGISel::isFoldableLoad(SDOperand Op, SDOperand OtherOp,
+                                     bool FloatPromoteOk) {
+  if (Op.getOpcode() == ISD::LOAD) {
+    // FIXME: currently can't fold constant pool indexes.
+    if (isa<ConstantPoolSDNode>(Op.getOperand(1)))
+      return false;
+  } else if (FloatPromoteOk && Op.getOpcode() == ISD::EXTLOAD &&
+             cast<VTSDNode>(Op.getOperand(3))->getVT() == MVT::f32) {
+    // FIXME: currently can't fold constant pool indexes.
+    if (isa<ConstantPoolSDNode>(Op.getOperand(1)))
+      return false;
+  } else {
+    return false;
+  }
+
+  // If this load has already been emitted, we clearly can't fold it.
+  assert(Op.ResNo == 0 && "Not a use of the value of the load?");
+  if (CodeGenMap.count(Op.getValue(1))) return false;
+  assert(!CodeGenMap.count(Op.getValue(0)) &&
+         "Value in map but not token chain?");
+  assert(!CodeGenMap.count(Op.getValue(1)) &&
+         "Token lowered but value not in map?");
+
+  // If there is not just one use of its value, we cannot fold.
+  if (!Op.Val->hasNUsesOfValue(1, 0)) return false;
+
+  // Finally, we cannot fold the load into the operation if this would induce a
+  // cycle into the resultant dag.  To check for this, see if OtherOp (the other
+  // operand of the operation we are folding the load into) can possible use the
+  // chain node defined by the load.
+  if (OtherOp.Val && !Op.Val->hasNUsesOfValue(0, 1)) { // Has uses of chain?
+    std::set<SDNode*> Visited;
+    if (NodeTransitivelyUsesValue(OtherOp, Op.getValue(1), Visited))
+      return false;
+  }
+  return true;
+}
+
+SDOperand X86DAGToDAGISel::Select(SDOperand N) {
+  SDNode *Node = N.Val;
+  MVT::ValueType NVT = Node->getValueType(0);
   unsigned Opc;
 
-  if (N->getOpcode() >= ISD::BUILTIN_OP_END)
-    return Op;   // Already selected.
+  if (Node->getOpcode() >= ISD::BUILTIN_OP_END)
+    return N;   // Already selected.
   
-  switch (N->getOpcode()) {
+  switch (Node->getOpcode()) {
     default: break;
 
     case ISD::SHL:
-      if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N->getOperand(1))) {
+      if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(Node->getOperand(1))) {
         if (CN->getValue() == 1) {
           // X = SHL Y, 1  -> X = ADD Y, Y
-          switch (OpVT) {
+          switch (NVT) {
             default: assert(0 && "Cannot shift this type!");
             case MVT::i8:  Opc = X86::ADD8rr; break;
             case MVT::i16: Opc = X86::ADD16rr; break;
             case MVT::i32: Opc = X86::ADD32rr; break;
           }
-          SDOperand Tmp0 = Select(N->getOperand(0));
-          return CurDAG->SelectNodeTo(N, Opc, MVT::i32, Tmp0, Tmp0);
+          SDOperand Tmp0 = Select(Node->getOperand(0));
+          if (Node->hasOneUse())
+            return CurDAG->SelectNodeTo(Node, Opc, NVT, Tmp0, Tmp0);
+          else
+            return CodeGenMap[N] =
+              CurDAG->getTargetNode(Opc, NVT, Tmp0, Tmp0);
         }
       }
       break;
 
+    case ISD::ANY_EXTEND:   // treat any extend like zext
+    case ISD::ZERO_EXTEND: { 
+      SDOperand N0 = N.getOperand(0);
+      if (N0.getValueType() == MVT::i1) {
+        // FIXME: This hack is here for zero extension casts from bool to i8.
+        // This would not be needed if bools were promoted by Legalize.
+        if (NVT == MVT::i8) {
+          Opc = X86::MOV8rr;
+        } else if (!isFoldableLoad(N0, SDOperand())) {
+          switch (NVT) {
+            default: assert(0 && "Cannot zero extend to this type!");
+            case MVT::i16: Opc = X86::MOVZX16rr8; break;
+            case MVT::i32: Opc = X86::MOVZX32rr8; break;
+          }
+        } else {
+          switch (NVT) {
+            default: assert(0 && "Cannot zero extend to this type!");
+            case MVT::i16: Opc = X86::MOVZX16rm8; break;
+            case MVT::i32: Opc = X86::MOVZX32rm8; break;
+          }
+
+          SDOperand Chain = Select(N0.getOperand(0));
+          SDOperand Base, Scale, Index, Disp;
+          (void) SelectAddr(N0.getOperand(1), Base, Scale, Index, Disp);
+          SDOperand Result = CurDAG->getTargetNode(Opc, NVT,
+                                                   MVT::Other, Base, Scale,
+                                                   Index, Disp, Chain);
+          CodeGenMap[N.getValue(0)] = Result;
+          Chain = CodeGenMap[N.getValue(1)] = Result.getValue(1);
+          return (N.ResNo) ? Chain : Result.getValue(0);
+        }
+
+        SDOperand Tmp0 = Select(Node->getOperand(0));
+        if (Node->hasOneUse())
+          return CurDAG->SelectNodeTo(Node, Opc, NVT, Tmp0);
+        else
+          return CodeGenMap[N] = CurDAG->getTargetNode(Opc, NVT, Tmp0);
+      }
+      // Other cases are autogenerated.
+      break;
+    }
+
     case ISD::RET: {
-      SDOperand Chain = N->getOperand(0);     // Token chain.
-      unsigned NumOps = N->getNumOperands();
+      SDOperand Chain = Node->getOperand(0);     // Token chain.
+      unsigned NumOps = Node->getNumOperands();
 
       // Note: A bit of a hack / optimization... Try to delay chain selection
       // as much as possible. So it's more likely it has already been selected
@@ -401,9 +512,9 @@ SDOperand X86DAGToDAGISel::Select(SDOperand Op) {
           assert(0 && "Not yet handled return instruction!");
           break;
         case 2: {
-          SDOperand Val = Select(N->getOperand(1));
+          SDOperand Val = Select(Node->getOperand(1));
           Chain = Select(Chain);
-          switch (N->getOperand(1).getValueType()) {
+          switch (Node->getOperand(1).getValueType()) {
             default:
               assert(0 && "All other types should have been promoted!!");
             case MVT::i32:
@@ -420,15 +531,15 @@ SDOperand X86DAGToDAGISel::Select(SDOperand Op) {
           break;
       }
       if (X86Lowering.getBytesToPopOnReturn() == 0)
-        return CurDAG->SelectNodeTo(N, X86::RET, MVT::Other, Chain);
+        return CurDAG->SelectNodeTo(Node, X86::RET, MVT::Other, Chain);
       else
-        return CurDAG->SelectNodeTo(N, X86::RET, MVT::Other,
+        return CurDAG->SelectNodeTo(Node, X86::RET, MVT::Other,
                               getI16Imm(X86Lowering.getBytesToPopOnReturn()),
                                     Chain);
     }
   }
 
-  return SelectCode(Op);
+  return SelectCode(N);
 }
 
 /// createX86ISelDag - This pass converts a legalized DAG into a 
