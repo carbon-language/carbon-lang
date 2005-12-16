@@ -46,7 +46,7 @@ Print a summary of command line options.
 Overwrite output files. By default, B<llc> will refuse to overwrite
 an output file which already exists.
 
-=item B<-triple>=I<target triple>
+=item B<-mtriple>=I<target triple>
 
 Override the target triple specified in the input bytecode file with the 
 specified string.
