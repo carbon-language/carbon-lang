@@ -40,11 +40,32 @@ the just-in-time compiler, at present.
 Record the amount of time needed for each code-generation pass and print it to
 standard error.
 
+=item B<-triple>=I<target triple>
+
+Override the target triple specified in the input bytecode file with the 
+specified string.  This may result in a crash if you pick an
+architecture which is not compatible with the current system.
+
 =item B<-march>=I<arch>
 
-Use the specified non-default architecture arch when selecting a code generator
-for the just-in-time compiler. This may result in a crash if you pick an
-architecture which is not compatible with the hardware you are running B<lli> on.
+Specify the architecture for which to generate assembly, overriding the target
+encoded in the bytecode file.  See the output of B<llc --help> for a list of
+valid architectures.  By default this is inferred from the target triple or
+autodetected to the current architecture.
+
+=item B<-mcpu>=I<cpuname>
+
+Specify a specific chip in the current architecture to generate code for.
+By default this is inferred from the target triple and autodetected to 
+the current architecture.  For a list of available CPUs, use:
+B<llvm-as E<lt> /dev/null | llc -march=xyz -mcpu=help>
+
+=item B<-mattr>=I<a1,+a2,-a3,...>
+
+Override or control specific attributes of the target, such as whether SIMD
+operations are enabled or not.  The default set of attributes is set by the
+current CPU.  For a list of available attributes, use:
+B<llvm-as E<lt> /dev/null | llc -march=xyz -mattr=help>
 
 =item B<-force-interpreter>=I<{false,true}>
 
