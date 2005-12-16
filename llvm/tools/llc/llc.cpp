@@ -48,6 +48,8 @@ static cl::opt<bool> Force("f", cl::desc("Overwrite output files"));
 static cl::opt<bool> Fast("fast", 
       cl::desc("Generate code quickly, potentially sacrificing code quality"));
 
+static cl::opt<std::string>
+TargetTriple("triple", cl::desc("Override target triple for module"));
 
 static cl::opt<const TargetMachineRegistry::Entry*, false, TargetNameParser>
 MArch("march", cl::desc("Architecture to generate code for:"));
@@ -116,6 +118,10 @@ int main(int argc, char **argv) {
     }
     Module &mod = *M.get();
 
+    // If we are supposed to override the target triple, do so now.
+    if (!TargetTriple.empty())
+      mod.setTargetTriple(TargetTriple);
+    
     // Allocate target machine.  First, check whether the user has
     // explicitly specified an architecture to compile for.
     TargetMachine* (*TargetMachineAllocator)(const Module&,
