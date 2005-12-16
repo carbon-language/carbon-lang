@@ -468,7 +468,8 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
       switch (I->getLinkage()) {
       case GlobalValue::LinkOnceLinkage:
       case GlobalValue::WeakLinkage:
-        O << ".weak_definition " << name << '\n'
+        O << ".globl " << name << '\n'
+          << ".weak_definition " << name << '\n'
           << ".private_extern " << name << '\n';
         SwitchSection(".section __DATA,__datacoal_nt,coalesced", I);
         break;
