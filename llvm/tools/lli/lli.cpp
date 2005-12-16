@@ -36,7 +36,9 @@ namespace {
   cl::opt<bool> ForceInterpreter("force-interpreter",
                                  cl::desc("Force interpretation: disable JIT"),
                                  cl::init(false));
-
+  cl::opt<std::string>
+  TargetTriple("triple", cl::desc("Override target triple for module"));
+  
   cl::opt<std::string>
   FakeArgv0("fake-argv0",
             cl::desc("Override the 'argv[0]' value passed into the executing"
@@ -62,6 +64,10 @@ int main(int argc, char **argv, char * const *envp) {
       exit(1);
     }
 
+    // If we are supposed to override the target triple, do so now.
+    if (!TargetTriple.empty())
+      MP->getModule()->setTargetTriple(TargetTriple);
+    
     ExecutionEngine *EE = ExecutionEngine::create(MP, ForceInterpreter);
     assert(EE && "Couldn't create an ExecutionEngine, not even an interpreter?");
 
