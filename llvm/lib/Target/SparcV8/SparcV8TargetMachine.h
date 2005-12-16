@@ -18,7 +18,6 @@
 #include "llvm/Target/TargetFrameInfo.h"
 #include "llvm/PassManager.h"
 #include "SparcV8InstrInfo.h"
-#include "SparcV8JITInfo.h"
 
 namespace llvm {
 
@@ -28,7 +27,6 @@ class Module;
 class SparcV8TargetMachine : public TargetMachine {
   SparcV8InstrInfo InstrInfo;
   TargetFrameInfo FrameInfo;
-  SparcV8JITInfo JITInfo;
 public:
   SparcV8TargetMachine(const Module &M, IntrinsicLowering *IL,
                        const std::string &FS);
@@ -38,15 +36,8 @@ public:
   virtual const MRegisterInfo *getRegisterInfo() const {
     return &InstrInfo.getRegisterInfo();
   }
-  virtual TargetJITInfo *getJITInfo() {
-    return &JITInfo;
-  }
 
   static unsigned getModuleMatchQuality(const Module &M);
-  static unsigned getJITMatchQuality();
-
-  virtual bool addPassesToEmitMachineCode(FunctionPassManager &PM,
-                                          MachineCodeEmitter &MCE);
 
   virtual bool addPassesToEmitFile(PassManager &PM, std::ostream &Out,
                                    CodeGenFileType FileType, bool Fast);

@@ -34,11 +34,7 @@ SparcV8TargetMachine::SparcV8TargetMachine(const Module &M,
                                            IntrinsicLowering *IL,
                                            const std::string &FS)
   : TargetMachine("SparcV8", IL, false, 4, 4),
-    FrameInfo(TargetFrameInfo::StackGrowsDown, 8, 0), JITInfo(*this) {
-}
-
-unsigned SparcV8TargetMachine::getJITMatchQuality() {
-  return 0; // No JIT yet.
+    FrameInfo(TargetFrameInfo::StackGrowsDown, 8, 0) {
 }
 
 unsigned SparcV8TargetMachine::getModuleMatchQuality(const Module &M) {
@@ -57,7 +53,7 @@ unsigned SparcV8TargetMachine::getModuleMatchQuality(const Module &M) {
            M.getPointerSize() != Module::AnyPointerSize)
     return 0;                                    // Match for some other target
 
-  return getJITMatchQuality()/2;
+  return 0;
 }
 
 /// addPassesToEmitFile - Add passes to the specified pass manager
@@ -120,50 +116,3 @@ bool SparcV8TargetMachine::addPassesToEmitFile(PassManager &PM,
   return false;
 }
 
-/// addPassesToJITCompile - Add passes to the specified pass manager to
-/// implement a fast dynamic compiler for this target.
-///
-void SparcV8JITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
-  // FIXME: Implement efficient support for garbage collection intrinsics.
-  PM.add(createLowerGCPass());
-
-  // Replace malloc and free instructions with library calls.
-  PM.add(createLowerAllocationsPass());
-
-  // FIXME: implement the switch instruction in the instruction selector.
-  PM.add(createLowerSwitchPass());
-
-  // FIXME: implement the invoke/unwind instructions!
-  PM.add(createLowerInvokePass());
-
-  // Make sure that no unreachable blocks are instruction selected.
-  PM.add(createUnreachableBlockEliminationPass());
-
-  // FIXME: implement the select instruction in the instruction selector.
-  PM.add(createLowerSelectPass());
-
-  // Print LLVM code input to instruction selector:
-  if (PrintMachineCode)
-    PM.add(new PrintFunctionPass());
-
-  PM.add(createSparcV8SimpleInstructionSelector(TM));
-
-  // Print machine instructions as they were initially generated.
-  if (PrintMachineCode)
-    PM.add(createMachineFunctionPrinterPass(&std::cerr));
-
-  PM.add(createRegisterAllocator());
-  PM.add(createPrologEpilogCodeInserter());
-
-  // Print machine instructions after register allocation and prolog/epilog
-  // insertion.
-  if (PrintMachineCode)
-    PM.add(createMachineFunctionPrinterPass(&std::cerr));
-
-  PM.add(createSparcV8FPMoverPass(TM));
-  PM.add(createSparcV8DelaySlotFillerPass(TM));
-
-  // Print machine instructions after filling delay slots.
-  if (PrintMachineCode)
-    PM.add(createMachineFunctionPrinterPass(&std::cerr));
-}
