@@ -422,40 +422,6 @@ void SparcV8AsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
   if (CloseParen) O << ")";
 }
 
-static bool isLoadInstruction (const MachineInstr *MI) {
-  switch (MI->getOpcode ()) {
-  case V8::LDSB:
-  case V8::LDSH:
-  case V8::LDUB:
-  case V8::LDUH:
-  case V8::LD:
-  case V8::LDD:
-  case V8::LDFrr:
-  case V8::LDFri:
-  case V8::LDDFrr:
-  case V8::LDDFri:
-    return true;
-  default:
-    return false;
-  }
-}
-
-static bool isStoreInstruction (const MachineInstr *MI) {
-  switch (MI->getOpcode ()) {
-  case V8::STB:
-  case V8::STH:
-  case V8::ST:
-  case V8::STD:
-  case V8::STFrr:
-  case V8::STFri:
-  case V8::STDFrr:
-  case V8::STDFri:
-    return true;
-  default:
-    return false;
-  }
-}
-
 static bool isPseudoInstruction (const MachineInstr *MI) {
   switch (MI->getOpcode ()) {
   case V8::PHI:
@@ -506,23 +472,6 @@ void SparcV8AsmPrinter::printMachineInstruction(const MachineInstr *MI) {
     O << "! ";
 
   O << Desc.Name << " ";
-
-  // Printing memory instructions is a special case.
-  // for loads:  %dest = op %base, offset --> op [%base + offset], %dest
-  // for stores: op %base, offset, %src   --> op %src, [%base + offset]
-  if (isLoadInstruction (MI)) {
-    printBaseOffsetPair (MI, 1);
-    O << ", ";
-    printOperand (MI, 0);
-    O << "\n";
-    return;
-  } else if (isStoreInstruction (MI)) {
-    printOperand (MI, 2);
-    O << ", ";
-    printBaseOffsetPair (MI, 0);
-    O << "\n";
-    return;
-  }
 
   // print non-immediate, non-register-def operands
   // then print immediate operands

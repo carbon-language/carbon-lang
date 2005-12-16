@@ -73,14 +73,14 @@ class F3_1<bits<2> opVal, bits<6> op3val, dag ops, string asmstr> : F3 {
   let Inst{4-0}  = rs2;
 }
 
-class F3_2<bits<2> opVal, bits<6> op3val, dag ops, string name> : F3 {
+class F3_2<bits<2> opVal, bits<6> op3val, dag ops, string asmstr> : F3 {
   bits<13> simm13;
 
   dag OperandList = ops;
+  let AsmString   = asmstr;
   
   let op         = opVal;
   let op3        = op3val;
-  let Name       = name;
 
   let Inst{13}   = 1;     // i field = 1
   let Inst{12-0} = simm13;
