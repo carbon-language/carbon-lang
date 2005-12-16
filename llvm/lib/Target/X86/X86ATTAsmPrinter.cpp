@@ -34,7 +34,8 @@ bool X86ATTAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   // Print out labels for the function.
   SwitchSection("\t.text\n", MF.getFunction());
   EmitAlignment(4);     // FIXME: This should be parameterized somewhere.
-  O << "\t.globl\t" << CurrentFnName << "\n";
+  if (!MF.getFunction()->hasInternalLinkage())
+    O << "\t.globl\t" << CurrentFnName << "\n";
   if (HasDotTypeDotSizeDirective)
     O << "\t.type\t" << CurrentFnName << ", @function\n";
   O << CurrentFnName << ":\n";
