@@ -918,8 +918,8 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
       if (ConstantStruct *CS = 
             dyn_cast<ConstantStruct>(cunit->getInitializer())) {
         if (CS->getNumOperands() > 0) {
-          Ops.push_back(DAG.getString(getStringValue(CS->getOperand(4))));
           Ops.push_back(DAG.getString(getStringValue(CS->getOperand(3))));
+          Ops.push_back(DAG.getString(getStringValue(CS->getOperand(4))));
         }
       }
     }

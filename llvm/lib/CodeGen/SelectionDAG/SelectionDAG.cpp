@@ -1961,6 +1961,7 @@ const char *SDNode::getOperationName(const SelectionDAG *G) const {
 
   // Debug info
   case ISD::LOCATION: return "location";
+  case ISD::DEBUG_LOC: return "debug_loc";
 
   case ISD::CONDCODE:
     switch (cast<CondCodeSDNode>(this)->get()) {

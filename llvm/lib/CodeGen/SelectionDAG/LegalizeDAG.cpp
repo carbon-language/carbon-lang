@@ -611,9 +611,18 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     switch (TLI.getOperationAction(ISD::LOCATION, MVT::Other)) {
     case TargetLowering::Promote:
     default: assert(0 && "This action is not supported yet!");
-    case TargetLowering::Expand:
-      // If the target doesn't support line numbers, ignore this node.
-      Result = Tmp1;
+    case TargetLowering::Expand: {
+        MachineDebugInfo &DebugInfo = DAG.getMachineFunction().getDebugInfo();
+        std::vector<SDOperand> Ops;
+        Ops.push_back(Tmp1);  // chain
+        Ops.push_back(Node->getOperand(1));  // line #
+        Ops.push_back(Node->getOperand(2));  // col #
+        const std::string &fname = cast<StringSDNode>(Node->getOperand(3))->getValue();
+        const std::string &dirname=cast<StringSDNode>(Node->getOperand(4))->getValue();
+        unsigned id = DebugInfo.RecordSource(fname, dirname);
+        Ops.push_back(DAG.getConstant(id, MVT::i32));  // source file id
+        Result = DAG.getNode(ISD::DEBUG_LOC, MVT::Other, Ops);
+      }
       break;
     case TargetLowering::Legal:
       if (Tmp1 != Node->getOperand(0) ||
@@ -635,6 +644,28 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       break;
     }
     break;
+    
+  case ISD::DEBUG_LOC:
+    assert(Node->getNumOperands() == 4 && "Invalid DEBUG_LOC node!");
+    switch (TLI.getOperationAction(ISD::DEBUG_LOC, MVT::Other)) {
+    case TargetLowering::Promote:
+    case TargetLowering::Expand:
+    default: assert(0 && "This action is not supported yet!");
+    case TargetLowering::Legal:
+      Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
+      Tmp2 = LegalizeOp(Node->getOperand(1));  // Legalize the line #.
+      Tmp3 = LegalizeOp(Node->getOperand(2));  // Legalize the col #.
+      Tmp4 = LegalizeOp(Node->getOperand(3));  // Legalize the source file id.
+      
+      if (Tmp1 != Node->getOperand(0) ||
+          Tmp2 != Node->getOperand(1) ||
+          Tmp3 != Node->getOperand(2) ||
+          Tmp4 != Node->getOperand(3)) {
+        Result = DAG.getNode(ISD::DEBUG_LOC,MVT::Other, Tmp1, Tmp2, Tmp3, Tmp4);
+      }
+      break;
+    }
+    break;    
 
   case ISD::Constant:
     // We know we don't need to expand constants here, constants only have one

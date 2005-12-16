@@ -18,6 +18,7 @@
 #ifndef LLVM_CODEGEN_MACHINEFUNCTION_H
 #define LLVM_CODEGEN_MACHINEFUNCTION_H
 
+#include "llvm/CodeGen/MachineDebugInfo.h"
 #include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/Support/Annotation.h"
 
@@ -112,6 +113,10 @@ class MachineFunction : private Annotation {
   /// stored in the second element.
   std::vector<std::pair<unsigned, unsigned> > LiveIns;
   std::vector<unsigned> LiveOuts;
+  
+  /// DebugInfo - Keep track of debug information for the function.
+  ///
+  MachineDebugInfo DebugInfo;
 
 public:
   MachineFunction(const Function *Fn, const TargetMachine &TM);
@@ -211,6 +216,11 @@ public:
   }
   const MachineBasicBlock *getLastBlock() const {
     return MBBNumbering.back();
+  }
+  
+  /// getDebugInfo - Returns the DebugInfo.
+  MachineDebugInfo &getDebugInfo() {
+    return DebugInfo;
   }
 
   /// print - Print out the MachineFunction in a format suitable for debugging

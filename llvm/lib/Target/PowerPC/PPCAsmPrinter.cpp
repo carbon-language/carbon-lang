@@ -25,6 +25,7 @@
 #include "llvm/Module.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/CodeGen/AsmPrinter.h"
+#include "llvm/CodeGen/MachineDebugInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
 #include "llvm/Support/Mangler.h"
@@ -375,6 +376,13 @@ void PPCAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
 bool DarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   SetupMachineFunction(MF);
   O << "\n\n";
+  
+  // Print out dwarf file info
+  MachineDebugInfo &DebugInfo = MF.getDebugInfo();
+  std::vector<std::string> Sources = DebugInfo.getSourceFiles();
+  for (unsigned i = 0, N = Sources.size(); i < N; i++) {
+    O << "\t; .file\t" << (i + 1) << "," << "\"" << Sources[i]  << "\"" << "\n";
+  }
 
   // Print out constants referenced by the function
   EmitConstantPool(MF.getConstantPool());
