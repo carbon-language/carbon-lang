@@ -149,12 +149,14 @@ def STDFQri : F3_2<3, 0b100110,
                    "std $src, [$base+$offset]">;
 
 // Section B.9 - SETHI Instruction, p. 104
-def SETHIi: F2_1<0b100, "sethi">;
+def SETHIi: F2_1<0b100,
+                 (ops IntRegs:$dst, i32imm:$src),
+                 "sethi $src, $dst">;
 
 // Section B.10 - NOP Instruction, p. 105
 // (It's a special case of SETHI)
 let rd = 0, imm22 = 0 in
-  def NOP : F2_1<0b100, "nop">;
+  def NOP : F2_1<0b100, (ops), "nop">;
 
 // Section B.11 - Logical Instructions, p. 106
 def ANDrr   : F3_1<2, 0b000001,

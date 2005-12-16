@@ -21,11 +21,13 @@ class F2 : InstV8 {                   // Format 2 instructions
 
 // Specific F2 classes: SparcV8 manual, page 44
 //
-class F2_1<bits<3> op2Val, string name> : F2 {
+class F2_1<bits<3> op2Val, dag ops, string asmstr> : F2 {
   bits<5>  rd;
 
+  dag OperandList = ops;
+  let AsmString   = asmstr;
+
   let op2         = op2Val;
-  let Name        = name;
 
   let Inst{29-25} = rd;
 }
