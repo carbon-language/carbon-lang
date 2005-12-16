@@ -35,15 +35,16 @@ include "SparcV8InstrFormats.td"
 //===----------------------------------------------------------------------===//
 
 // Pseudo instructions.
-class PseudoInstV8<string nm> : InstV8  {
+class PseudoInstV8<string nm, dag ops> : InstV8  {
   let Name = nm;
+  dag OperandList = ops;
 }
-def PHI : PseudoInstV8<"PHI">;
-def ADJCALLSTACKDOWN : PseudoInstV8<"ADJCALLSTACKDOWN">;
-def ADJCALLSTACKUP : PseudoInstV8<"ADJCALLSTACKUP">;
-def IMPLICIT_USE : PseudoInstV8<"IMPLICIT_USE">;
-def IMPLICIT_DEF : PseudoInstV8<"IMPLICIT_DEF">;
-def FpMOVD : PseudoInstV8<"FpMOVD">; // pseudo 64-bit double move
+def PHI : PseudoInstV8<"PHI", (ops variable_ops)>;
+def ADJCALLSTACKDOWN : PseudoInstV8<"ADJCALLSTACKDOWN", (ops variable_ops)>;
+def ADJCALLSTACKUP : PseudoInstV8<"ADJCALLSTACKUP", (ops variable_ops)>;
+def IMPLICIT_USE : PseudoInstV8<"IMPLICIT_USE", (ops variable_ops)>;
+def IMPLICIT_DEF : PseudoInstV8<"IMPLICIT_DEF", (ops variable_ops)>;
+def FpMOVD : PseudoInstV8<"FpMOVD", (ops)>; // pseudo 64-bit double move
 
 // Section A.3 - Synthetic Instructions, p. 85
 // special cases of JMPL:
