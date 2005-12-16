@@ -191,9 +191,9 @@ def F4RC : RegisterClass<"PPC", [f32], 32, [F0, F1, F2, F3, F4, F5, F6, F7,
   F8, F9, F10, F11, F12, F13, F14, F15, F16, F17, F18, F19, F20, F21,
   F22, F23, F24, F25, F26, F27, F28, F29, F30, F31]>;
 
-def VRRC : RegisterClass<"PPC", [v4f32], 128, [V0, V1, V2, V3, V4, V5, V6, V7, 
-  V8, V9, V10, V11, V12, V13, V14, V15, V16, V17, V18, V19, V20, V21, V22, V23,
-  V24, V25, V26, V27, V28, V29, V30, V31]>;
+def VRRC : RegisterClass<"PPC", [v4f32,v4i32], 128, [V0, V1, V2, V3, V4, V5,
+  V6, V7, V8, V9, V10, V11, V12, V13, V14, V15, V16, V17, V18, V19, V20, V21,
+  V22, V23, V24, V25, V26, V27, V28, V29, V30, V31]>;
 
 def CRRC : RegisterClass<"PPC", [i32], 32, [CR0, CR1, CR5, CR6, CR7, CR2, 
   CR3, CR4]>;

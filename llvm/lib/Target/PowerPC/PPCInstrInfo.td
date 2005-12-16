@@ -946,11 +946,11 @@ def : Pat<(or (shl GPRC:$rS, GPRC:$rB),
               (srl GPRC:$rS, (sub 32, GPRC:$rB))),
           (RLWNM GPRC:$rS, GPRC:$rB, 0, 31)>;
 
-def : Pat<(zext GPRC:$in),
+def : Pat<(i64 (zext GPRC:$in)),
           (RLDICL (OR4To8 GPRC:$in, GPRC:$in), 0, 32)>;
-def : Pat<(anyext GPRC:$in),
+def : Pat<(i64 (anyext GPRC:$in)),
           (OR4To8 GPRC:$in, GPRC:$in)>;
-def : Pat<(trunc G8RC:$in),
+def : Pat<(i32 (trunc G8RC:$in)),
           (OR8To4 G8RC:$in, G8RC:$in)>;
 
 // SHL
