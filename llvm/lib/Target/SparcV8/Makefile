@@ -13,7 +13,7 @@ TARGET = SparcV8
 # Make sure that tblgen is run, first thing.
 BUILT_SOURCES = SparcV8GenRegisterInfo.h.inc SparcV8GenRegisterNames.inc \
                 SparcV8GenRegisterInfo.inc SparcV8GenInstrNames.inc \
-                SparcV8GenInstrInfo.inc
+                SparcV8GenInstrInfo.inc SparcV8GenAsmWriter.inc
 
 include $(LEVEL)/Makefile.common
 
