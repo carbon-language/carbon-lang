@@ -58,9 +58,11 @@ class F3 : InstV8 {
 
 // Specific F3 classes: SparcV8 manual, page 44
 //
-class F3_1<bits<2> opVal, bits<6> op3val, string name> : F3 {
+class F3_1<bits<2> opVal, bits<6> op3val, dag ops, string name> : F3 {
   bits<8> asi = 0; // asi not currently used in SparcV8
   bits<5> rs2;
+
+  dag OperandList = ops;
 
   let op         = opVal;
   let op3        = op3val;
@@ -71,9 +73,11 @@ class F3_1<bits<2> opVal, bits<6> op3val, string name> : F3 {
   let Inst{4-0}  = rs2;
 }
 
-class F3_2<bits<2> opVal, bits<6> op3val, string name> : F3 {
+class F3_2<bits<2> opVal, bits<6> op3val, dag ops, string name> : F3 {
   bits<13> simm13;
 
+  dag OperandList = ops;
+  
   let op         = opVal;
   let op3        = op3val;
   let Name       = name;
