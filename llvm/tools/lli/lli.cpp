@@ -37,7 +37,7 @@ namespace {
                                  cl::desc("Force interpretation: disable JIT"),
                                  cl::init(false));
   cl::opt<std::string>
-  TargetTriple("triple", cl::desc("Override target triple for module"));
+  TargetTriple("mtriple", cl::desc("Override target triple for module"));
   
   cl::opt<std::string>
   FakeArgv0("fake-argv0",
