@@ -43,7 +43,7 @@ namespace {
 
   class PPCAsmPrinter : public AsmPrinter {
   public:
-    std::set<std::string> FnStubs, GVStubs, LinkOnceStubs;
+    std::set<std::string> FnStubs, GVStubs;
     
     PPCAsmPrinter(std::ostream &O, TargetMachine &TM)
       : AsmPrinter(O, TM) {}
@@ -123,16 +123,19 @@ namespace {
     void printCallOperand(const MachineInstr *MI, unsigned OpNo) {
       const MachineOperand &MO = MI->getOperand(OpNo);
       if (!PPCGenerateStaticCode) {
+        if (MO.getType() == MachineOperand::MO_GlobalAddress) {
+          GlobalValue *GV = MO.getGlobal();
+          if (((GV->isExternal() || GV->hasWeakLinkage() ||
+                GV->hasLinkOnceLinkage()))) {
+            // Dynamically-resolved functions need a stub for the function.
+            std::string Name = Mang->getValueName(GV);
+            FnStubs.insert(Name);
+            O << "L" << Name << "$stub";
+            return;
+          }
+        }
         if (MO.getType() == MachineOperand::MO_ExternalSymbol) {
           std::string Name(GlobalPrefix); Name += MO.getSymbolName();
-          FnStubs.insert(Name);
-          O << "L" << Name << "$stub";
-          return;
-        } else if (MO.getType() == MachineOperand::MO_GlobalAddress &&
-                   isa<Function>(MO.getGlobal()) && 
-                   cast<Function>(MO.getGlobal())->isExternal()) {
-          // Dynamically-resolved functions need a stub for the function.
-          std::string Name = Mang->getValueName(MO.getGlobal());
           FnStubs.insert(Name);
           O << "L" << Name << "$stub";
           return;
@@ -145,9 +148,8 @@ namespace {
      O << (int)MI->getOperand(OpNo).getImmedValue()*4;
     }
     void printPICLabel(const MachineInstr *MI, unsigned OpNo) {
-      // FIXME: should probably be converted to cout.width and cout.fill
-      O << "\"L0000" << getFunctionNumber() << "$pb\"\n";
-      O << "\"L0000" << getFunctionNumber() << "$pb\":";
+      O << "\"L" << getFunctionNumber() << "$pb\"\n";
+      O << "\"L" << getFunctionNumber() << "$pb\":";
     }
     void printSymbolHi(const MachineInstr *MI, unsigned OpNo) {
       if (MI->getOperand(OpNo).isImmediate()) {
@@ -156,7 +158,7 @@ namespace {
         O << "ha16(";
         printOp(MI->getOperand(OpNo));
         if (PICEnabled)
-          O << "-\"L0000" << getFunctionNumber() << "$pb\")";
+          O << "-\"L" << getFunctionNumber() << "$pb\")";
         else
           O << ')';
       }
@@ -168,7 +170,7 @@ namespace {
         O << "lo16(";
         printOp(MI->getOperand(OpNo));
         if (PICEnabled)
-          O << "-\"L0000" << getFunctionNumber() << "$pb\")";
+          O << "-\"L" << getFunctionNumber() << "$pb\")";
         else
           O << ')';
       }
@@ -295,25 +297,29 @@ void PPCAsmPrinter::printOp(const MachineOperand &MO) {
     O << PrivateGlobalPrefix << "CPI" << getFunctionNumber()
       << '_' << MO.getConstantPoolIndex();
     return;
-
   case MachineOperand::MO_ExternalSymbol:
+    // Computing the address of an external symbol, not calling it.
+    if (!PPCGenerateStaticCode) {
+      std::string Name(GlobalPrefix); Name += MO.getSymbolName();
+      GVStubs.insert(Name);
+      O << "L" << Name << "$non_lazy_ptr";
+      return;
+    }
     O << GlobalPrefix << MO.getSymbolName();
     return;
-
   case MachineOperand::MO_GlobalAddress: {
+    // Computing the address of a global symbol, not calling it.
     GlobalValue *GV = MO.getGlobal();
     std::string Name = Mang->getValueName(GV);
 
     // External or weakly linked global variables need non-lazily-resolved stubs
-    if (!PPCGenerateStaticCode &&
-        ((GV->isExternal() || GV->hasWeakLinkage() ||
-          GV->hasLinkOnceLinkage()))) {
-      if (GV->hasLinkOnceLinkage())
-        LinkOnceStubs.insert(Name);
-      else
+    if (!PPCGenerateStaticCode) {
+      if (((GV->isExternal() || GV->hasWeakLinkage() ||
+            GV->hasLinkOnceLinkage()))) {
         GVStubs.insert(Name);
-      O << "L" << Name << "$non_lazy_ptr";
-      return;
+        O << "L" << Name << "$non_lazy_ptr";
+        return;
+      }
     }
 
     O << Name;
@@ -375,10 +381,25 @@ bool DarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
 
   // Print out labels for the function.
   const Function *F = MF.getFunction();
-  SwitchSection(".text", F);
-  EmitAlignment(4, F);
-  if (!F->hasInternalLinkage())
+  switch (F->getLinkage()) {
+  default: assert(0 && "Unknown linkage type!");
+  case Function::InternalLinkage:  // Symbols default to internal.
+    SwitchSection(".text", F);
+    EmitAlignment(4, F);
+    break;
+  case Function::ExternalLinkage:
+    SwitchSection(".text", F);
+    EmitAlignment(4, F);
     O << "\t.globl\t" << CurrentFnName << "\n";
+    break;
+  case Function::WeakLinkage:
+  case Function::LinkOnceLinkage:
+    SwitchSection(".section __TEXT,__textcoal_nt,coalesced,pure_instructions",
+                  F);
+    O << "\t.globl\t" << CurrentFnName << "\n";
+    O << "\t.weak_definition\t" << CurrentFnName << "\n";
+    break;
+  }
   O << CurrentFnName << ":\n";
 
   // Print out code for the function.
@@ -446,16 +467,10 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
     } else {
       switch (I->getLinkage()) {
       case GlobalValue::LinkOnceLinkage:
-        SwitchSection("", 0);
-        O << ".section __TEXT,__textcoal_nt,coalesced,no_toc\n"
-          << ".weak_definition " << name << '\n'
-          << ".private_extern " << name << '\n'
-          << ".section __DATA,__datacoal_nt,coalesced,no_toc\n";
-        LinkOnceStubs.insert(name);
-        break;
       case GlobalValue::WeakLinkage:
         O << ".weak_definition " << name << '\n'
           << ".private_extern " << name << '\n';
+        SwitchSection(".section __DATA,__datacoal_nt,coalesced", I);
         break;
       case GlobalValue::AppendingLinkage:
         // FIXME: appending linkage variables should go into a section of
@@ -482,8 +497,8 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
   if (PICEnabled) {
     for (std::set<std::string>::iterator i = FnStubs.begin(), e = FnStubs.end();
          i != e; ++i) {
-      O << ".data\n";
-      O<<".section __TEXT,__picsymbolstub1,symbol_stubs,pure_instructions,32\n";
+      SwitchSection(".section __TEXT,__picsymbolstub1,symbol_stubs,"
+                    "pure_instructions,32", 0);
       EmitAlignment(2);
       O << "L" << *i << "$stub:\n";
       O << "\t.indirect_symbol " << *i << "\n";
@@ -496,8 +511,7 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
       O << "\tlwzu r12,lo16(L" << *i << "$lazy_ptr-L0$" << *i << ")(r11)\n";
       O << "\tmtctr r12\n";
       O << "\tbctr\n";
-      O << ".data\n";
-      O << ".lazy_symbol_pointer\n";
+      SwitchSection(".lazy_symbol_pointer", 0);
       O << "L" << *i << "$lazy_ptr:\n";
       O << "\t.indirect_symbol " << *i << "\n";
       O << "\t.long dyld_stub_binding_helper\n";
@@ -505,7 +519,8 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
   } else {
     for (std::set<std::string>::iterator i = FnStubs.begin(), e = FnStubs.end();
          i != e; ++i) {
-      O<<"\t.section __TEXT,__symbol_stub1,symbol_stubs,pure_instructions,16\n";
+      SwitchSection(".section __TEXT,__symbol_stub1,symbol_stubs,"
+                    "pure_instructions,16", 0);
       EmitAlignment(4);
       O << "L" << *i << "$stub:\n";
       O << "\t.indirect_symbol " << *i << "\n";
@@ -513,7 +528,7 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
       O << "\tlwzu r12,lo16(L" << *i << "$lazy_ptr)(r11)\n";
       O << "\tmtctr r12\n";
       O << "\tbctr\n";
-      O << "\t.lazy_symbol_pointer\n";
+      SwitchSection(".lazy_symbol_pointer", 0);
       O << "L" << *i << "$lazy_ptr:\n";
       O << "\t.indirect_symbol " << *i << "\n";
       O << "\t.long dyld_stub_binding_helper\n";
@@ -522,23 +537,14 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
 
   O << "\n";
 
-  // Output stubs for external global variables
-  if (GVStubs.begin() != GVStubs.end())
-    O << ".data\n.non_lazy_symbol_pointer\n";
-  for (std::set<std::string>::iterator i = GVStubs.begin(), e = GVStubs.end();
-       i != e; ++i) {
-    O << "L" << *i << "$non_lazy_ptr:\n";
-    O << "\t.indirect_symbol " << *i << "\n";
-    O << "\t.long\t0\n";
-  }
-
-  // Output stubs for link-once variables
-  if (LinkOnceStubs.begin() != LinkOnceStubs.end()) {
-    O << ".data\n.align 2\n";
-    for (std::set<std::string>::iterator i = LinkOnceStubs.begin(),
-         e = LinkOnceStubs.end(); i != e; ++i) {
-      O << "L" << *i << "$non_lazy_ptr:\n"
-        << "\t.long\t" << *i << '\n';
+  // Output stubs for external and common global variables.
+  if (GVStubs.begin() != GVStubs.end()) {
+    SwitchSection(".non_lazy_symbol_pointer", 0);
+    for (std::set<std::string>::iterator I = GVStubs.begin(),
+         E = GVStubs.end(); I != E; ++I) {
+      O << "L" << *I << "$non_lazy_ptr:\n";
+      O << "\t.indirect_symbol " << *I << "\n";
+      O << "\t.long\t0\n";
     }
   }
 
