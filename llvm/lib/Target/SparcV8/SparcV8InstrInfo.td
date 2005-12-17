@@ -501,10 +501,12 @@ def FDTOI : F3_3<2, 0b110100, 0b011010010,
 // Convert between Floating-point Formats Instructions, p. 143
 def FSTOD : F3_3<2, 0b110100, 0b011001001, 
                  (ops DFPRegs:$dst, FPRegs:$src),
-                 "fstod $src, $dst", []>;
+                 "fstod $src, $dst",
+                 [(set DFPRegs:$dst, (fextend FPRegs:$src))]>;
 def FDTOS : F3_3<2, 0b110100, 0b011000110,
                  (ops FPRegs:$dst, DFPRegs:$src),
-                 "fdtos $src, $dst", []>;
+                 "fdtos $src, $dst",
+                 [(set FPRegs:$dst, (fround DFPRegs:$src))]>;
 
 // Floating-point Move Instructions, p. 144
 def FMOVS : F3_3<2, 0b110100, 0b000000001,
@@ -546,11 +548,13 @@ def FMULD  : F3_3<2, 0b110100, 0b001001010,
                   [(set DFPRegs:$dst, (fmul DFPRegs:$src1, DFPRegs:$src2))]>;
 def FSMULD : F3_3<2, 0b110100, 0b001101001,
                   (ops DFPRegs:$dst, FPRegs:$src1, FPRegs:$src2),
-                  "fsmuld $src1, $src2, $dst", []>;
+                  "fsmuld $src1, $src2, $dst",
+                  [(set DFPRegs:$dst, (fmul (fextend FPRegs:$src1),
+                                            (fextend FPRegs:$src2)))]>;
 def FDIVS  : F3_3<2, 0b110100, 0b001001101,
                  (ops FPRegs:$dst, FPRegs:$src1, FPRegs:$src2),
                  "fdivs $src1, $src2, $dst",
-                 [(set DFPRegs:$dst, (fdiv FPRegs:$src1, FPRegs:$src2))]>;
+                 [(set FPRegs:$dst, (fdiv FPRegs:$src1, FPRegs:$src2))]>;
 def FDIVD  : F3_3<2, 0b110100, 0b001001110,
                  (ops DFPRegs:$dst, DFPRegs:$src1, DFPRegs:$src2),
                  "fdivd $src1, $src2, $dst",
