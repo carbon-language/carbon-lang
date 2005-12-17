@@ -34,6 +34,9 @@ template<typename ValueSubClass, typename ItemParentClass, typename SymTabClass,
 class GlobalVariable : public GlobalValue {
   friend class SymbolTableListTraits<GlobalVariable, Module, Module,
                                      ilist_traits<GlobalVariable> >;
+  void operator=(const GlobalVariable &);     // Do not implement
+  GlobalVariable(const GlobalVariable &);     // Do not implement
+
   void setParent(Module *parent);
 
   GlobalVariable *Prev, *Next;

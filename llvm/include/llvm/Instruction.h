@@ -27,6 +27,9 @@ template<typename ValueSubClass, typename ItemParentClass, typename SymTabClass,
          typename SubClass> class SymbolTableListTraits;
 
 class Instruction : public User {
+  void operator=(const Instruction &);     // Do not implement
+  Instruction(const Instruction &);        // Do not implement
+
   BasicBlock *Parent;
   Instruction *Prev, *Next; // Next and Prev links for our intrusive linked list
 
