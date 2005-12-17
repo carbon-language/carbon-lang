@@ -113,6 +113,11 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   // These should be promoted to a larger select which is supported.
   setOperationAction(ISD::SELECT           , MVT::i1   , Promote);
   setOperationAction(ISD::SELECT           , MVT::i8   , Promote);
+  // X86 wants to expand cmov itself.
+  if (X86DAGIsel) {
+    setOperationAction(ISD::SELECT         , MVT::i16  , Custom);
+    setOperationAction(ISD::SELECT         , MVT::i32  , Custom);
+  }
 
   // We don't have line number support yet.
   setOperationAction(ISD::LOCATION, MVT::Other, Expand);
@@ -929,6 +934,23 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     Tys[0] = Tys[1] = MVT::i32;
     Tys.push_back(MVT::Other);
     return DAG.getNode(ISD::MERGE_VALUES, Tys, Ops);
+  }
+  case ISD::SELECT: {
+    unsigned Opc;
+    SDOperand Cond  = Op.getOperand(0);
+    SDOperand True  = Op.getOperand(1);
+    SDOperand False = Op.getOperand(2);
+    SDOperand CC;
+    if (Cond.getOpcode() == ISD::SETCC) {
+      CC = Cond.getOperand(2);
+      Cond = DAG.getNode(X86ISD::CMP, MVT::Flag,
+                         Cond.getOperand(0), Cond.getOperand(1));
+    } else {
+      CC = DAG.getCondCode(ISD::SETEQ);
+      Cond = DAG.getNode(X86ISD::TEST, MVT::Flag, Cond, Cond);
+    }
+    return DAG.getNode(X86ISD::CMOV, Op.getValueType(),
+                       Op.getOperand(1), Op.getOperand(2), CC, Cond);
   }
   }
 }

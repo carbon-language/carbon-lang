@@ -1325,6 +1325,16 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
                                  Tmp2, Tmp3, ISD::SETNE);
       }
       break;
+    case TargetLowering::Custom: {
+      SDOperand Tmp =
+        TLI.LowerOperation(DAG.getNode(ISD::SELECT, Node->getValueType(0),
+                                       Tmp1, Tmp2, Tmp3), DAG);
+      if (Tmp.Val) {
+        Result = LegalizeOp(Tmp);
+        break;
+      }
+      // FALLTHROUGH if the target thinks it is legal.
+    }
     case TargetLowering::Legal:
       if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(1) ||
           Tmp3 != Node->getOperand(2))

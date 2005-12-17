@@ -23,7 +23,7 @@ namespace llvm {
   namespace X86ISD {
     enum NodeType {
       // Start the numbering where the builtin ops leave off.
-      FIRST_NUMBER = ISD::BUILTIN_OP_END,
+      FIRST_NUMBER = ISD::BUILTIN_OP_END+X86::INSTRUCTION_LIST_END,
 
       /// FILD64m - This instruction implements SINT_TO_FP with a
       /// 64-bit source in memory and a FP reg result.  This corresponds to
@@ -66,6 +66,12 @@ namespace llvm {
       /// RDTSC_DAG - This operation implements the lowering for 
       /// readcyclecounter
       RDTSC_DAG,
+
+      /// X86 compare and logical compare instructions.
+      CMP, TEST,
+
+      /// X86 conditional moves.
+      CMOV,
     };
   }
 
