@@ -13,6 +13,26 @@
 //
 //===----------------------------------------------------------------------===//
 
+//===----------------------------------------------------------------------===//
+// X86 specific DAG Nodes.
+//
+
+def SDTX86CmpTest : SDTypeProfile<1, 2, [SDTCisVT<0, FlagVT>, SDTCisInt<1>,
+                                         SDTCisSameAs<1, 2>]>;
+
+def SDTX86Cmov    : SDTypeProfile<1, 4,
+                                  [SDTCisSameAs<0, 1>, SDTCisSameAs<1, 2>,
+                                   SDTCisVT<3, OtherVT>, SDTCisVT<4, FlagVT>]>;
+
+def X86cmp  : SDNode<"X86ISD::CMP" , SDTX86CmpTest, []>;
+def X86test : SDNode<"X86ISD::TEST", SDTX86CmpTest, []>;
+
+def X86cmov : SDNode<"X86ISD::CMOV", SDTX86Cmov,    []>;
+
+//===----------------------------------------------------------------------===//
+// X86 Operand Definitions.
+//
+
 // *mem - Operand definitions for the funky X86 addressing mode operands.
 //
 class X86MemOperand<ValueType Ty, string printMethod> : Operand<Ty> {
@@ -46,11 +66,19 @@ let PrintMethod = "printCallOperand" in
 // Branch targets have OtherVT type.
 def brtarget : Operand<OtherVT>;
 
+//===----------------------------------------------------------------------===//
+// X86 Complex Pattern Definitions.
+//
+
 // Define X86 specific addressing mode.
 def addr    : ComplexPattern<i32, 4, "SelectAddr", []>;
 def leaaddr : ComplexPattern<i32, 4, "SelectLEAAddr",
                              [add,
                               frameindex, constpool, globaladdr, externalsym]>;
+
+//===----------------------------------------------------------------------===//
+// X86 Instruction Format Definitions.
+//
 
 // Format specifies the encoding used by the instruction.  This is part of the
 // ad-hoc solution used to emit machine instruction encodings by our machine
@@ -69,6 +97,10 @@ def MRM6r  : Format<22>; def MRM7r  : Format<23>;
 def MRM0m  : Format<24>; def MRM1m  : Format<25>; def MRM2m  : Format<26>;
 def MRM3m  : Format<27>; def MRM4m  : Format<28>; def MRM5m  : Format<29>;
 def MRM6m  : Format<30>; def MRM7m  : Format<31>;
+
+//===----------------------------------------------------------------------===//
+// X86 specific pattern fragments.
+//
 
 // ImmType - This specifies the immediate type used by an instruction. This is
 // part of the ad-hoc solution used to emit machine instruction encodings by our
@@ -513,81 +545,253 @@ let isTwoAddress = 1 in {
 // Conditional moves
 def CMOVB16rr : I<0x42, MRMSrcReg,       // if <u, R16 = R16
                   (ops R16:$dst, R16:$src1, R16:$src2),
-                  "cmovb {$src2, $dst|$dst, $src2}", []>, TB, OpSize;
+                  "cmovb {$src2, $dst|$dst, $src2}",
+                  [(set R16:$dst, (X86cmov R16:$src1, R16:$src2,
+                                   SETULT, STATUS))]>,
+                  Imp<[STATUS],[]>, TB, OpSize;
 def CMOVB16rm : I<0x42, MRMSrcMem,       // if <u, R16 = [mem16]
                   (ops R16:$dst, R16:$src1, i16mem:$src2),
-                  "cmovb {$src2, $dst|$dst, $src2}", []>, TB, OpSize;
+                  "cmovb {$src2, $dst|$dst, $src2}",
+                  [(set R16:$dst, (X86cmov R16:$src1, (loadi16 addr:$src2),
+                                   SETULT, STATUS))]>,
+                  Imp<[STATUS],[]>, TB, OpSize;
 def CMOVB32rr : I<0x42, MRMSrcReg,       // if <u, R32 = R32
                   (ops R32:$dst, R32:$src1, R32:$src2),
-                  "cmovb {$src2, $dst|$dst, $src2}", []>, TB;
+                  "cmovb {$src2, $dst|$dst, $src2}",
+                  [(set R32:$dst, (X86cmov R32:$src1, R32:$src2,
+                                   SETULT, STATUS))]>,
+                  Imp<[STATUS],[]>,  TB;
 def CMOVB32rm : I<0x42, MRMSrcMem,       // if <u, R32 = [mem32]
                   (ops R32:$dst, R32:$src1, i32mem:$src2),
-                  "cmovb {$src2, $dst|$dst, $src2}", []>, TB;
+                  "cmovb {$src2, $dst|$dst, $src2}",
+                  [(set R32:$dst, (X86cmov R32:$src1, (loadi32 addr:$src2),
+                                   SETULT, STATUS))]>,
+                  Imp<[STATUS],[]>,  TB;
 
 def CMOVAE16rr: I<0x43, MRMSrcReg,       // if >=u, R16 = R16
                   (ops R16:$dst, R16:$src1, R16:$src2),
-                  "cmovae {$src2, $dst|$dst, $src2}", []>, TB, OpSize;
+                  "cmovae {$src2, $dst|$dst, $src2}",
+                  [(set R16:$dst, (X86cmov R16:$src1, R16:$src2,
+                                   SETUGE, STATUS))]>,
+                  Imp<[STATUS],[]>,  TB, OpSize;
 def CMOVAE16rm: I<0x43, MRMSrcMem,       // if >=u, R16 = [mem16]
                   (ops R16:$dst, R16:$src1, i16mem:$src2),
-                  "cmovae {$src2, $dst|$dst, $src2}", []>, TB, OpSize;
+                  "cmovae {$src2, $dst|$dst, $src2}",
+                  [(set R16:$dst, (X86cmov R16:$src1, (loadi16 addr:$src2),
+                                   SETUGE, STATUS))]>,
+                  Imp<[STATUS],[]>,  TB, OpSize;
 def CMOVAE32rr: I<0x43, MRMSrcReg,       // if >=u, R32 = R32
                   (ops R32:$dst, R32:$src1, R32:$src2),
-                  "cmovae {$src2, $dst|$dst, $src2}", []>, TB;
+                  "cmovae {$src2, $dst|$dst, $src2}",
+                  [(set R32:$dst, (X86cmov R32:$src1, R32:$src2,
+                                   SETUGE, STATUS))]>,
+                  Imp<[STATUS],[]>,  TB;
 def CMOVAE32rm: I<0x43, MRMSrcMem,       // if >=u, R32 = [mem32]
                   (ops R32:$dst, R32:$src1, i32mem:$src2),
-                  "cmovae {$src2, $dst|$dst, $src2}", []>, TB;
+                  "cmovae {$src2, $dst|$dst, $src2}",
+                  [(set R32:$dst, (X86cmov R32:$src1, (loadi32 addr:$src2),
+                                   SETUGE, STATUS))]>,
+                  Imp<[STATUS],[]>,  TB;
 
 def CMOVE16rr : I<0x44, MRMSrcReg,       // if ==, R16 = R16
                   (ops R16:$dst, R16:$src1, R16:$src2),
-                  "cmove {$src2, $dst|$dst, $src2}", []>, TB, OpSize;
+                  "cmove {$src2, $dst|$dst, $src2}",
+                  [(set R16:$dst, (X86cmov R16:$src1, R16:$src2,
+                                   SETEQ, STATUS))]>,
+                  Imp<[STATUS],[]>,  TB, OpSize;
 def CMOVE16rm : I<0x44, MRMSrcMem,       // if ==, R16 = [mem16]
                   (ops R16:$dst, R16:$src1, i16mem:$src2),
-                  "cmove {$src2, $dst|$dst, $src2}", []>, TB, OpSize;
+                  "cmove {$src2, $dst|$dst, $src2}",
+                  [(set R16:$dst, (X86cmov R16:$src1, (loadi16 addr:$src2),
+                                   SETEQ, STATUS))]>,
+                  Imp<[STATUS],[]>,  TB, OpSize;
 def CMOVE32rr : I<0x44, MRMSrcReg,       // if ==, R32 = R32
                   (ops R32:$dst, R32:$src1, R32:$src2),
-                  "cmove {$src2, $dst|$dst, $src2}", []>, TB;
+                  "cmove {$src2, $dst|$dst, $src2}",
+                  [(set R32:$dst, (X86cmov R32:$src1, R32:$src2,
+                                   SETEQ, STATUS))]>,
+                  Imp<[STATUS],[]>,  TB;
 def CMOVE32rm : I<0x44, MRMSrcMem,       // if ==, R32 = [mem32]
                   (ops R32:$dst, R32:$src1, i32mem:$src2),
-                  "cmove {$src2, $dst|$dst, $src2}", []>, TB;
+                  "cmove {$src2, $dst|$dst, $src2}",
+                  [(set R32:$dst, (X86cmov R32:$src1, (loadi32 addr:$src2),
+                                   SETEQ, STATUS))]>,
+                  Imp<[STATUS],[]>,  TB;
 
 def CMOVNE16rr: I<0x45, MRMSrcReg,       // if !=, R16 = R16
                   (ops R16:$dst, R16:$src1, R16:$src2),
-                  "cmovne {$src2, $dst|$dst, $src2}", []>, TB, OpSize;
+                  "cmovne {$src2, $dst|$dst, $src2}",
+                  [(set R16:$dst, (X86cmov R16:$src1, R16:$src2,
+                                   SETNE, STATUS))]>,
+                  Imp<[STATUS],[]>,  TB, OpSize;
 def CMOVNE16rm: I<0x45, MRMSrcMem,       // if !=, R16 = [mem16]
                   (ops R16:$dst, R16:$src1, i16mem:$src2),
-                  "cmovne {$src2, $dst|$dst, $src2}", []>, TB, OpSize;
+                  "cmovne {$src2, $dst|$dst, $src2}",
+                  [(set R16:$dst, (X86cmov R16:$src1, (loadi16 addr:$src2),
+                                   SETNE, STATUS))]>,
+                  Imp<[STATUS],[]>,  TB, OpSize;
 def CMOVNE32rr: I<0x45, MRMSrcReg,       // if !=, R32 = R32
                   (ops R32:$dst, R32:$src1, R32:$src2),
-                  "cmovne {$src2, $dst|$dst, $src2}", []>, TB;
+                  "cmovne {$src2, $dst|$dst, $src2}",
+                  [(set R32:$dst, (X86cmov R32:$src1, R32:$src2,
+                                   SETNE, STATUS))]>,
+                  Imp<[STATUS],[]>,  TB;
 def CMOVNE32rm: I<0x45, MRMSrcMem,       // if !=, R32 = [mem32]
                   (ops R32:$dst, R32:$src1, i32mem:$src2),
-                  "cmovne {$src2, $dst|$dst, $src2}", []>, TB;
+                  "cmovne {$src2, $dst|$dst, $src2}",
+                  [(set R32:$dst, (X86cmov R32:$src1, (loadi32 addr:$src2),
+                                   SETNE, STATUS))]>,
+                  Imp<[STATUS],[]>,  TB;
 
 def CMOVBE16rr: I<0x46, MRMSrcReg,       // if <=u, R16 = R16
                   (ops R16:$dst, R16:$src1, R16:$src2),
-                  "cmovbe {$src2, $dst|$dst, $src2}", []>, TB, OpSize;
+                  "cmovbe {$src2, $dst|$dst, $src2}",
+                  [(set R16:$dst, (X86cmov R16:$src1, R16:$src2,
+                                   SETULE, STATUS))]>,
+                  Imp<[STATUS],[]>,  TB, OpSize;
 def CMOVBE16rm: I<0x46, MRMSrcMem,       // if <=u, R16 = [mem16]
                   (ops R16:$dst, R16:$src1, i16mem:$src2),
-                  "cmovbe {$src2, $dst|$dst, $src2}", []>, TB, OpSize;
+                  "cmovbe {$src2, $dst|$dst, $src2}",
+                  [(set R16:$dst, (X86cmov R16:$src1, (loadi16 addr:$src2),
+                                   SETULE, STATUS))]>,
+                  Imp<[STATUS],[]>,  TB, OpSize;
 def CMOVBE32rr: I<0x46, MRMSrcReg,       // if <=u, R32 = R32
                   (ops R32:$dst, R32:$src1, R32:$src2),
-                  "cmovbe {$src2, $dst|$dst, $src2}", []>, TB;
+                  "cmovbe {$src2, $dst|$dst, $src2}",
+                  [(set R32:$dst, (X86cmov R32:$src1, R32:$src2,
+                                   SETULE, STATUS))]>,
+                  Imp<[STATUS],[]>,  TB;
 def CMOVBE32rm: I<0x46, MRMSrcMem,       // if <=u, R32 = [mem32]
                   (ops R32:$dst, R32:$src1, i32mem:$src2),
-                  "cmovbe {$src2, $dst|$dst, $src2}", []>, TB;
+                  "cmovbe {$src2, $dst|$dst, $src2}",
+                  [(set R32:$dst, (X86cmov R32:$src1, (loadi32 addr:$src2),
+                                   SETULE, STATUS))]>,
+                  Imp<[STATUS],[]>,  TB;
 
 def CMOVA16rr : I<0x47, MRMSrcReg,       // if >u, R16 = R16
                   (ops R16:$dst, R16:$src1, R16:$src2),
-                  "cmova {$src2, $dst|$dst, $src2}", []>, TB, OpSize;
+                  "cmova {$src2, $dst|$dst, $src2}",
+                  [(set R16:$dst, (X86cmov R16:$src1, R16:$src2,
+                                   SETUGT, STATUS))]>,
+                  Imp<[STATUS],[]>,  TB, OpSize;
 def CMOVA16rm : I<0x47, MRMSrcMem,       // if >u, R16 = [mem16]
                   (ops R16:$dst, R16:$src1, i16mem:$src2),
-                  "cmova {$src2, $dst|$dst, $src2}", []>, TB, OpSize;
+                  "cmova {$src2, $dst|$dst, $src2}",
+                  [(set R16:$dst, (X86cmov R16:$src1, (loadi16 addr:$src2),
+                                   SETUGT, STATUS))]>,
+                  Imp<[STATUS],[]>,  TB, OpSize;
 def CMOVA32rr : I<0x47, MRMSrcReg,       // if >u, R32 = R32
                   (ops R32:$dst, R32:$src1, R32:$src2),
-                  "cmova {$src2, $dst|$dst, $src2}", []>, TB;
+                  "cmova {$src2, $dst|$dst, $src2}",
+                  [(set R32:$dst, (X86cmov R32:$src1, R32:$src2,
+                                   SETUGT, STATUS))]>,
+                  Imp<[STATUS],[]>,  TB;
 def CMOVA32rm : I<0x47, MRMSrcMem,       // if >u, R32 = [mem32]
                   (ops R32:$dst, R32:$src1, i32mem:$src2),
-                  "cmova {$src2, $dst|$dst, $src2}", []>, TB;
+                  "cmova {$src2, $dst|$dst, $src2}",
+                  [(set R32:$dst, (X86cmov R32:$src1, (loadi32 addr:$src2),
+                                   SETUGT, STATUS))]>,
+                  Imp<[STATUS],[]>,  TB;
+
+def CMOVL16rr : I<0x4C, MRMSrcReg,       // if <s, R16 = R16
+                  (ops R16:$dst, R16:$src1, R16:$src2),
+                  "cmovl {$src2, $dst|$dst, $src2}",
+                  [(set R16:$dst, (X86cmov R16:$src1, R16:$src2,
+                                   SETLT, STATUS))]>,
+                  Imp<[STATUS],[]>,  TB, OpSize;
+def CMOVL16rm : I<0x4C, MRMSrcMem,       // if <s, R16 = [mem16]
+                  (ops R16:$dst, R16:$src1, i16mem:$src2),
+                  "cmovl {$src2, $dst|$dst, $src2}",
+                  [(set R16:$dst, (X86cmov R16:$src1, (loadi16 addr:$src2),
+                                   SETLT, STATUS))]>,
+                  Imp<[STATUS],[]>,  TB, OpSize;
+def CMOVL32rr : I<0x4C, MRMSrcReg,       // if <s, R32 = R32
+                  (ops R32:$dst, R32:$src1, R32:$src2),
+                  "cmovl {$src2, $dst|$dst, $src2}",
+                  [(set R32:$dst, (X86cmov R32:$src1, R32:$src2,
+                                   SETLT, STATUS))]>,
+                  Imp<[STATUS],[]>,  TB;
+def CMOVL32rm : I<0x4C, MRMSrcMem,       // if <s, R32 = [mem32]
+                  (ops R32:$dst, R32:$src1, i32mem:$src2),
+                  "cmovl {$src2, $dst|$dst, $src2}",
+                  [(set R32:$dst, (X86cmov R32:$src1, (loadi32 addr:$src2),
+                                   SETLT, STATUS))]>,
+                  Imp<[STATUS],[]>,  TB;
+
+def CMOVGE16rr: I<0x4D, MRMSrcReg,       // if >=s, R16 = R16
+                  (ops R16:$dst, R16:$src1, R16:$src2),
+                  "cmovge {$src2, $dst|$dst, $src2}",
+                  [(set R16:$dst, (X86cmov R16:$src1, R16:$src2,
+                                   SETGE, STATUS))]>,
+                  Imp<[STATUS],[]>,  TB, OpSize;
+def CMOVGE16rm: I<0x4D, MRMSrcMem,       // if >=s, R16 = [mem16]
+                  (ops R16:$dst, R16:$src1, i16mem:$src2),
+                  "cmovge {$src2, $dst|$dst, $src2}",
+                  [(set R16:$dst, (X86cmov R16:$src1, (loadi16 addr:$src2),
+                                   SETGE, STATUS))]>,
+                  Imp<[STATUS],[]>,  TB, OpSize;
+def CMOVGE32rr: I<0x4D, MRMSrcReg,       // if >=s, R32 = R32
+                  (ops R32:$dst, R32:$src1, R32:$src2),
+                  "cmovge {$src2, $dst|$dst, $src2}",
+                  [(set R32:$dst, (X86cmov R32:$src1, R32:$src2,
+                                   SETGE, STATUS))]>,
+                  Imp<[STATUS],[]>,  TB;
+def CMOVGE32rm: I<0x4D, MRMSrcMem,       // if >=s, R32 = [mem32]
+                  (ops R32:$dst, R32:$src1, i32mem:$src2),
+                  "cmovge {$src2, $dst|$dst, $src2}",
+                  [(set R32:$dst, (X86cmov R32:$src1, (loadi32 addr:$src2),
+                                   SETGE, STATUS))]>,
+                  Imp<[STATUS],[]>,  TB;
+
+def CMOVLE16rr: I<0x4E, MRMSrcReg,       // if <=s, R16 = R16
+                  (ops R16:$dst, R16:$src1, R16:$src2),
+                  "cmovle {$src2, $dst|$dst, $src2}",
+                  [(set R16:$dst, (X86cmov R16:$src1, R16:$src2,
+                                   SETLE, STATUS))]>,
+                  Imp<[STATUS],[]>,  TB, OpSize;
+def CMOVLE16rm: I<0x4E, MRMSrcMem,       // if <=s, R16 = [mem16]
+                  (ops R16:$dst, R16:$src1, i16mem:$src2),
+                  "cmovle {$src2, $dst|$dst, $src2}",
+                  [(set R16:$dst, (X86cmov R16:$src1, (loadi16 addr:$src2),
+                                   SETLE, STATUS))]>,
+                  Imp<[STATUS],[]>,  TB, OpSize;
+def CMOVLE32rr: I<0x4E, MRMSrcReg,       // if <=s, R32 = R32
+                  (ops R32:$dst, R32:$src1, R32:$src2),
+                  "cmovle {$src2, $dst|$dst, $src2}",
+                  [(set R32:$dst, (X86cmov R32:$src1, R32:$src2,
+                                   SETLE, STATUS))]>,
+                  Imp<[STATUS],[]>,  TB;
+def CMOVLE32rm: I<0x4E, MRMSrcMem,       // if <=s, R32 = [mem32]
+                  (ops R32:$dst, R32:$src1, i32mem:$src2),
+                  "cmovle {$src2, $dst|$dst, $src2}",
+                  [(set R32:$dst, (X86cmov R32:$src1, (loadi32 addr:$src2),
+                                   SETLE, STATUS))]>,
+                  Imp<[STATUS],[]>,  TB;
+
+def CMOVG16rr : I<0x4F, MRMSrcReg,       // if >s, R16 = R16
+                  (ops R16:$dst, R16:$src1, R16:$src2),
+                  "cmovg {$src2, $dst|$dst, $src2}",
+                  [(set R16:$dst, (X86cmov R16:$src1, R16:$src2,
+                                   SETGT, STATUS))]>,
+                  Imp<[STATUS],[]>,  TB, OpSize;
+def CMOVG16rm : I<0x4F, MRMSrcMem,       // if >s, R16 = [mem16]
+                  (ops R16:$dst, R16:$src1, i16mem:$src2),
+                  "cmovg {$src2, $dst|$dst, $src2}",
+                  [(set R16:$dst, (X86cmov R16:$src1, (loadi16 addr:$src2),
+                                   SETGT, STATUS))]>,
+                  Imp<[STATUS],[]>,  TB, OpSize;
+def CMOVG32rr : I<0x4F, MRMSrcReg,       // if >s, R32 = R32
+                  (ops R32:$dst, R32:$src1, R32:$src2),
+                  "cmovg {$src2, $dst|$dst, $src2}",
+                  [(set R32:$dst, (X86cmov R32:$src1, R32:$src2,
+                                   SETGT, STATUS))]>,
+                  Imp<[STATUS],[]>,  TB;
+def CMOVG32rm : I<0x4F, MRMSrcMem,       // if >s, R32 = [mem32]
+                  (ops R32:$dst, R32:$src1, i32mem:$src2),
+                  "cmovg {$src2, $dst|$dst, $src2}",
+                  [(set R32:$dst, (X86cmov R32:$src1, (loadi32 addr:$src2),
+                                   SETGT, STATUS))]>,
+                  Imp<[STATUS],[]>,  TB;
 
 def CMOVS16rr : I<0x48, MRMSrcReg,       // if signed, R16 = R16
                   (ops R16:$dst, R16:$src1, R16:$src2),
@@ -628,7 +832,6 @@ def CMOVP32rm : I<0x4A, MRMSrcMem,       // if parity, R32 = [mem32]
                   (ops R32:$dst, R32:$src1, i32mem:$src2),
                   "cmovp {$src2, $dst|$dst, $src2}", []>, TB;
 
- 
 def CMOVNP16rr : I<0x4B, MRMSrcReg,       // if !parity, R16 = R16
                   (ops R16:$dst, R16:$src1, R16:$src2),
                   "cmovnp {$src2, $dst|$dst, $src2}", []>, TB, OpSize;
@@ -642,58 +845,6 @@ def CMOVNP32rm : I<0x4B, MRMSrcMem,       // if !parity, R32 = [mem32]
                   (ops R32:$dst, R32:$src1, i32mem:$src2),
                   "cmovnp {$src2, $dst|$dst, $src2}", []>, TB;
 
-
-def CMOVL16rr : I<0x4C, MRMSrcReg,       // if <s, R16 = R16
-                  (ops R16:$dst, R16:$src1, R16:$src2),
-                  "cmovl {$src2, $dst|$dst, $src2}", []>, TB, OpSize;
-def CMOVL16rm : I<0x4C, MRMSrcMem,       // if <s, R16 = [mem16]
-                  (ops R16:$dst, R16:$src1, i16mem:$src2),
-                  "cmovl {$src2, $dst|$dst, $src2}", []>, TB, OpSize;
-def CMOVL32rr : I<0x4C, MRMSrcReg,       // if <s, R32 = R32
-                  (ops R32:$dst, R32:$src1, R32:$src2),
-                  "cmovl {$src2, $dst|$dst, $src2}", []>, TB;
-def CMOVL32rm : I<0x4C, MRMSrcMem,       // if <s, R32 = [mem32]
-                  (ops R32:$dst, R32:$src1, i32mem:$src2),
-                  "cmovl {$src2, $dst|$dst, $src2}", []>, TB;
-
-def CMOVGE16rr: I<0x4D, MRMSrcReg,       // if >=s, R16 = R16
-                  (ops R16:$dst, R16:$src1, R16:$src2),
-                  "cmovge {$src2, $dst|$dst, $src2}", []>, TB, OpSize;
-def CMOVGE16rm: I<0x4D, MRMSrcMem,       // if >=s, R16 = [mem16]
-                  (ops R16:$dst, R16:$src1, i16mem:$src2),
-                  "cmovge {$src2, $dst|$dst, $src2}", []>, TB, OpSize;
-def CMOVGE32rr: I<0x4D, MRMSrcReg,       // if >=s, R32 = R32
-                  (ops R32:$dst, R32:$src1, R32:$src2),
-                  "cmovge {$src2, $dst|$dst, $src2}", []>, TB;
-def CMOVGE32rm: I<0x4D, MRMSrcMem,       // if >=s, R32 = [mem32]
-                  (ops R32:$dst, R32:$src1, i32mem:$src2),
-                  "cmovge {$src2, $dst|$dst, $src2}", []>, TB;
-
-def CMOVLE16rr: I<0x4E, MRMSrcReg,       // if <=s, R16 = R16
-                  (ops R16:$dst, R16:$src1, R16:$src2),
-                  "cmovle {$src2, $dst|$dst, $src2}", []>, TB, OpSize;
-def CMOVLE16rm: I<0x4E, MRMSrcMem,       // if <=s, R16 = [mem16]
-                  (ops R16:$dst, R16:$src1, i16mem:$src2),
-                  "cmovle {$src2, $dst|$dst, $src2}", []>, TB, OpSize;
-def CMOVLE32rr: I<0x4E, MRMSrcReg,       // if <=s, R32 = R32
-                  (ops R32:$dst, R32:$src1, R32:$src2),
-                  "cmovle {$src2, $dst|$dst, $src2}", []>, TB;
-def CMOVLE32rm: I<0x4E, MRMSrcMem,       // if <=s, R32 = [mem32]
-                  (ops R32:$dst, R32:$src1, i32mem:$src2),
-                  "cmovle {$src2, $dst|$dst, $src2}", []>, TB;
-
-def CMOVG16rr : I<0x4F, MRMSrcReg,       // if >s, R16 = R16
-                  (ops R16:$dst, R16:$src1, R16:$src2),
-                  "cmovg {$src2, $dst|$dst, $src2}", []>, TB, OpSize;
-def CMOVG16rm : I<0x4F, MRMSrcMem,       // if >s, R16 = [mem16]
-                  (ops R16:$dst, R16:$src1, i16mem:$src2),
-                  "cmovg {$src2, $dst|$dst, $src2}", []>, TB, OpSize;
-def CMOVG32rr : I<0x4F, MRMSrcReg,       // if >s, R32 = R32
-                  (ops R32:$dst, R32:$src1, R32:$src2),
-                  "cmovg {$src2, $dst|$dst, $src2}", []>, TB;
-def CMOVG32rm : I<0x4F, MRMSrcMem,       // if >s, R32 = [mem32]
-                  (ops R32:$dst, R32:$src1, i32mem:$src2),
-                  "cmovg {$src2, $dst|$dst, $src2}", []>, TB;
 
 // unary instructions
 def NEG8r  : I<0xF6, MRM3r, (ops R8 :$dst, R8 :$src), "neg{b} $dst",
@@ -1526,44 +1677,73 @@ def IMUL32rmi8 : Ii8<0x6B, MRMSrcMem,                       // R32 = [mem32]*I8
 //
 let isCommutable = 1 in {   // TEST X, Y   --> TEST Y, X
 def TEST8rr  : I<0x84, MRMDestReg, (ops R8:$src1, R8:$src2),
-                 "test{b} {$src2, $src1|$src1, $src2}", []>;
+                 "test{b} {$src2, $src1|$src1, $src2}",
+                 [(set STATUS, (X86test R8:$src1, R8:$src2))]>,
+               Imp<[],[STATUS]>;
 def TEST16rr : I<0x85, MRMDestReg, (ops R16:$src1, R16:$src2),
-                 "test{w} {$src2, $src1|$src1, $src2}", []>, OpSize;
+                 "test{w} {$src2, $src1|$src1, $src2}",
+                 [(set STATUS, (X86test R16:$src1, R16:$src2))]>,
+               Imp<[],[STATUS]>, OpSize;
 def TEST32rr : I<0x85, MRMDestReg, (ops R32:$src1, R32:$src2),
-                 "test{l} {$src2, $src1|$src1, $src2}", []>;
+                 "test{l} {$src2, $src1|$src1, $src2}",
+                 [(set STATUS, (X86test R32:$src1, R32:$src2))]>,
+               Imp<[],[STATUS]>;
 }
 def TEST8mr  : I<0x84, MRMDestMem, (ops i8mem :$src1, R8 :$src2),
-                 "test{b} {$src2, $src1|$src1, $src2}", []>;
+                 "test{b} {$src2, $src1|$src1, $src2}",
+                 [(set STATUS, (X86test (loadi8 addr:$src1), R8:$src2))]>,
+               Imp<[],[STATUS]>;
 def TEST16mr : I<0x85, MRMDestMem, (ops i16mem:$src1, R16:$src2),
-                 "test{w} {$src2, $src1|$src1, $src2}", []>, OpSize;
+                 "test{w} {$src2, $src1|$src1, $src2}",
+                 [(set STATUS, (X86test (loadi16 addr:$src1), R16:$src2))]>,
+               Imp<[],[STATUS]>, OpSize;
 def TEST32mr : I<0x85, MRMDestMem, (ops i32mem:$src1, R32:$src2),
-                 "test{l} {$src2, $src1|$src1, $src2}", []>;
+                 "test{l} {$src2, $src1|$src1, $src2}",
+                 [(set STATUS, (X86test (loadi32 addr:$src1), R32:$src2))]>,
+               Imp<[],[STATUS]>;
 def TEST8rm  : I<0x84, MRMSrcMem, (ops R8 :$src1, i8mem :$src2),
-                 "test{b} {$src2, $src1|$src1, $src2}", []>;
+                 "test{b} {$src2, $src1|$src1, $src2}",
+                 [(set STATUS, (X86test R8:$src1, (loadi8 addr:$src2)))]>,
+               Imp<[],[STATUS]>;
 def TEST16rm : I<0x85, MRMSrcMem, (ops R16:$src1, i16mem:$src2),
-                 "test{w} {$src2, $src1|$src1, $src2}", []>, OpSize;
+                 "test{w} {$src2, $src1|$src1, $src2}",
+                 [(set STATUS, (X86test R16:$src1, (loadi16 addr:$src2)))]>,
+               Imp<[],[STATUS]>, OpSize;
 def TEST32rm : I<0x85, MRMSrcMem, (ops R32:$src1, i32mem:$src2),
-                 "test{l} {$src2, $src1|$src1, $src2}", []>;
+                 "test{l} {$src2, $src1|$src1, $src2}",
+                 [(set STATUS, (X86test R32:$src1, (loadi32 addr:$src2)))]>,
+               Imp<[],[STATUS]>;
 
 def TEST8ri  : Ii8 <0xF6, MRM0r,                     // flags = R8  & imm8
                     (ops R8:$src1, i8imm:$src2),
-                    "test{b} {$src2, $src1|$src1, $src2}", []>;
+                    "test{b} {$src2, $src1|$src1, $src2}",
+                    [(set STATUS, (X86test R8:$src1, imm:$src2))]>,
+                   Imp<[],[STATUS]>;
 def TEST16ri : Ii16<0xF7, MRM0r,                     // flags = R16 & imm16
                     (ops R16:$src1, i16imm:$src2),
-                    "test{w} {$src2, $src1|$src1, $src2}", []>, OpSize;
+                    "test{w} {$src2, $src1|$src1, $src2}",
+                    [(set STATUS, (X86test R16:$src1, imm:$src2))]>,
+                   Imp<[],[STATUS]>, OpSize;
 def TEST32ri : Ii32<0xF7, MRM0r,                     // flags = R32 & imm32
                     (ops R32:$src1, i32imm:$src2),
-                    "test{l} {$src2, $src1|$src1, $src2}", []>;
+                    "test{l} {$src2, $src1|$src1, $src2}",
+                    [(set STATUS, (X86test R32:$src1, imm:$src2))]>,
+                   Imp<[],[STATUS]>;
 def TEST8mi  : Ii8 <0xF6, MRM0m,                     // flags = [mem8]  & imm8
-                    (ops i32mem:$src1, i8imm:$src2),
-                    "test{b} {$src2, $src1|$src1, $src2}", []>;
+                    (ops i8mem:$src1, i8imm:$src2),
+                    "test{b} {$src2, $src1|$src1, $src2}",
+                    [(set STATUS, (X86test (loadi8 addr:$src1), imm:$src2))]>,
+                   Imp<[],[STATUS]>;
 def TEST16mi : Ii16<0xF7, MRM0m,                     // flags = [mem16] & imm16
                     (ops i16mem:$src1, i16imm:$src2),
-                    "test{w} {$src2, $src1|$src1, $src2}", []>, OpSize;
+                    "test{w} {$src2, $src1|$src1, $src2}",
+                    [(set STATUS, (X86test (loadi16 addr:$src1), imm:$src2))]>,
+                   Imp<[],[STATUS]>, OpSize;
 def TEST32mi : Ii32<0xF7, MRM0m,                     // flags = [mem32] & imm32
                     (ops i32mem:$src1, i32imm:$src2),
-                    "test{l} {$src2, $src1|$src1, $src2}", []>;
-
+                    "test{l} {$src2, $src1|$src1, $src2}",
+                    [(set STATUS, (X86test (loadi32 addr:$src1), imm:$src2))]>,
+                   Imp<[],[STATUS]>;
 
 
 // Condition code ops, incl. set if equal/not equal/...
@@ -1630,49 +1810,79 @@ def SETGm    : I<0x9F, MRM0m,
 // Integer comparisons
 def CMP8rr  : I<0x38, MRMDestReg,
                 (ops R8 :$src1, R8 :$src2),
-                "cmp{b} {$src2, $src1|$src1, $src2}", []>;
+                "cmp{b} {$src2, $src1|$src1, $src2}",
+                [(set STATUS, (X86cmp R8:$src1, R8:$src2))]>,
+              Imp<[],[STATUS]>;
 def CMP16rr : I<0x39, MRMDestReg,
                 (ops R16:$src1, R16:$src2),
-                "cmp{w} {$src2, $src1|$src1, $src2}", []>, OpSize;
+                "cmp{w} {$src2, $src1|$src1, $src2}",
+                [(set STATUS, (X86cmp R16:$src1, R16:$src2))]>,
+              Imp<[],[STATUS]>, OpSize;
 def CMP32rr : I<0x39, MRMDestReg,
                 (ops R32:$src1, R32:$src2),
-                "cmp{l} {$src2, $src1|$src1, $src2}", []>;
+                "cmp{l} {$src2, $src1|$src1, $src2}",
+                [(set STATUS, (X86cmp R32:$src1, R32:$src2))]>,
+              Imp<[],[STATUS]>;
 def CMP8mr  : I<0x38, MRMDestMem,
                 (ops i8mem :$src1, R8 :$src2),
-                "cmp{b} {$src2, $src1|$src1, $src2}", []>;
+                "cmp{b} {$src2, $src1|$src1, $src2}",
+                [(set STATUS, (X86cmp (loadi8 addr:$src1), R8:$src2))]>,
+              Imp<[],[STATUS]>;
 def CMP16mr : I<0x39, MRMDestMem,
                 (ops i16mem:$src1, R16:$src2),
-                "cmp{w} {$src2, $src1|$src1, $src2}", []>, OpSize;
+                "cmp{w} {$src2, $src1|$src1, $src2}",
+                [(set STATUS, (X86cmp (loadi16 addr:$src1), R16:$src2))]>,
+              Imp<[],[STATUS]>, OpSize;
 def CMP32mr : I<0x39, MRMDestMem,
                 (ops i32mem:$src1, R32:$src2),
-                "cmp{l} {$src2, $src1|$src1, $src2}", []>;
+                "cmp{l} {$src2, $src1|$src1, $src2}",
+                [(set STATUS, (X86cmp (loadi32 addr:$src1), R32:$src2))]>,
+              Imp<[],[STATUS]>;
 def CMP8rm  : I<0x3A, MRMSrcMem,
                 (ops R8 :$src1, i8mem :$src2),
-                "cmp{b} {$src2, $src1|$src1, $src2}", []>;
+                "cmp{b} {$src2, $src1|$src1, $src2}",
+                [(set STATUS, (X86cmp R8:$src1, (loadi8 addr:$src2)))]>,
+              Imp<[],[STATUS]>;
 def CMP16rm : I<0x3B, MRMSrcMem,
                 (ops R16:$src1, i16mem:$src2),
-                "cmp{w} {$src2, $src1|$src1, $src2}", []>, OpSize;
+                "cmp{w} {$src2, $src1|$src1, $src2}",
+                [(set STATUS, (X86cmp R16:$src1, (loadi16 addr:$src2)))]>,
+                Imp<[],[STATUS]>, OpSize;
 def CMP32rm : I<0x3B, MRMSrcMem,
                 (ops R32:$src1, i32mem:$src2),
-                "cmp{l} {$src2, $src1|$src1, $src2}", []>;
+                "cmp{l} {$src2, $src1|$src1, $src2}",
+                [(set STATUS, (X86cmp R32:$src1, (loadi32 addr:$src2)))]>,
+              Imp<[],[STATUS]>;
 def CMP8ri  : Ii8<0x80, MRM7r,
-                  (ops R16:$src1, i8imm:$src2),
-                  "cmp{b} {$src2, $src1|$src1, $src2}", []>;
+                  (ops R8:$src1, i8imm:$src2),
+                  "cmp{b} {$src2, $src1|$src1, $src2}",
+                  [(set STATUS, (X86cmp R8:$src1, imm:$src2))]>,
+              Imp<[],[STATUS]>;
 def CMP16ri : Ii16<0x81, MRM7r,
                    (ops R16:$src1, i16imm:$src2),
-                   "cmp{w} {$src2, $src1|$src1, $src2}", []>, OpSize;
+                   "cmp{w} {$src2, $src1|$src1, $src2}",
+                   [(set STATUS, (X86cmp R16:$src1, imm:$src2))]>,
+              Imp<[],[STATUS]>, OpSize;
 def CMP32ri : Ii32<0x81, MRM7r,
                    (ops R32:$src1, i32imm:$src2),
-                   "cmp{l} {$src2, $src1|$src1, $src2}", []>;
+                   "cmp{l} {$src2, $src1|$src1, $src2}",
+                   [(set STATUS, (X86cmp R32:$src1, imm:$src2))]>,
+              Imp<[],[STATUS]>;
 def CMP8mi  : Ii8 <0x80, MRM7m,
                    (ops i8mem :$src1, i8imm :$src2),
-                   "cmp{b} {$src2, $src1|$src1, $src2}", []>;
+                   "cmp{b} {$src2, $src1|$src1, $src2}",
+                   [(set STATUS, (X86cmp (loadi8 addr:$src1), imm:$src2))]>,
+              Imp<[],[STATUS]>;
 def CMP16mi : Ii16<0x81, MRM7m,
                    (ops i16mem:$src1, i16imm:$src2),
-                   "cmp{w} {$src2, $src1|$src1, $src2}", []>, OpSize;
+                   "cmp{w} {$src2, $src1|$src1, $src2}",
+                   [(set STATUS, (X86cmp (loadi16 addr:$src1), imm:$src2))]>,
+              Imp<[],[STATUS]>, OpSize;
 def CMP32mi : Ii32<0x81, MRM7m,
                    (ops i32mem:$src1, i32imm:$src2),
-                   "cmp{l} {$src2, $src1|$src1, $src2}", []>;
+                   "cmp{l} {$src2, $src1|$src1, $src2}",
+                   [(set STATUS, (X86cmp (loadi32 addr:$src1), imm:$src2))]>,
+              Imp<[],[STATUS]>;
 
 // Sign/Zero extenders
 def MOVSX16rr8 : I<0xBE, MRMSrcReg, (ops R16:$dst, R8 :$src),

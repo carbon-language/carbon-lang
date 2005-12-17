@@ -364,7 +364,8 @@ SDOperand X86DAGToDAGISel::Select(SDOperand N) {
   MVT::ValueType NVT = Node->getValueType(0);
   unsigned Opc;
 
-  if (Node->getOpcode() >= ISD::BUILTIN_OP_END)
+  if (Node->getOpcode() >= ISD::BUILTIN_OP_END &&
+      Node->getOpcode() < X86ISD::FIRST_NUMBER)
     return N;   // Already selected.
   
   switch (Node->getOpcode()) {

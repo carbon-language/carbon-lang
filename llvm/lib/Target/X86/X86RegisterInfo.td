@@ -60,6 +60,7 @@ let Namespace = "X86" in {
   def ST6 : Register<"ST(6)">; def ST7 : Register<"ST(7)">; 
   
   // Flags, Segment registers, etc...
+  def STATUS : Register<"STATUS">;
 }
 
 //===----------------------------------------------------------------------===//
@@ -134,4 +135,8 @@ def RST : RegisterClass<"X86", [f64], 32,
       return begin();
     }
   }];
+}
+
+def FLAGS_REGS : RegisterClass<"X86", [FlagVT], 32, [STATUS]> {
+    let Size = 32;
 }
