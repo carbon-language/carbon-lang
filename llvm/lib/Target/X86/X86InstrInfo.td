@@ -1932,6 +1932,11 @@ def : Pat<(zextloadi32i1 addr:$src), (MOVZX32rm8  addr:$src)>;
 // Handling 1 bit extload
 def : Pat<(extloadi8i1 addr:$src), (MOV8rm  addr:$src)>;
 
+// Modeling anyext as zext
+def : Pat<(i16 (anyext R8 :$src)), (MOVZX16rr8  R8 :$src)>;
+def : Pat<(i32 (anyext R8 :$src)), (MOVZX32rr8  R8 :$src)>;
+def : Pat<(i32 (anyext R16:$src)), (MOVZX32rr16 R16:$src)>;
+
 //===----------------------------------------------------------------------===//
 // XMM Floating point support (requires SSE2)
 //===----------------------------------------------------------------------===//
