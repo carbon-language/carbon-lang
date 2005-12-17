@@ -65,6 +65,10 @@ SparcV8TargetLowering::SparcV8TargetLowering(TargetMachine &TM)
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i16  , Expand);
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i8   , Expand);
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1   , Expand);
+
+  // Sparc has no REM operation.
+  setOperationAction(ISD::UREM, MVT::i32, Expand);
+  setOperationAction(ISD::SREM, MVT::i32, Expand);
   
   computeRegisterProperties();
 }
@@ -278,8 +282,30 @@ SDOperand SparcV8DAGToDAGISel::Select(SDOperand Op) {
   
   switch (N->getOpcode()) {
   default: break;
+  case ISD::SDIV:
+  case ISD::UDIV: {
+    // FIXME: should use a custom expander to expose the SRA to the dag.
+    SDOperand DivLHS = Select(N->getOperand(0));
+    SDOperand DivRHS = Select(N->getOperand(1));
+    
+    // Set the Y register to the high-part.
+    SDOperand TopPart;
+    if (N->getOpcode() == ISD::SDIV) {
+      TopPart = CurDAG->getTargetNode(V8::SRAri, MVT::i32, DivLHS,
+                                      CurDAG->getTargetConstant(31, MVT::i32));
+    } else {
+      TopPart = CurDAG->getRegister(V8::G0, MVT::i32);
+    }
+    TopPart = CurDAG->getTargetNode(V8::WRYrr, MVT::Flag, TopPart,
+                                    CurDAG->getRegister(V8::G0, MVT::i32));
+
+    // FIXME: Handle div by immediate.
+    unsigned Opcode = N->getOpcode() == ISD::SDIV ? V8::SDIVrr : V8::UDIVrr;
+    return CurDAG->SelectNodeTo(N, Opcode, MVT::i32, DivLHS, DivRHS, TopPart);
+  }    
   case ISD::MULHU:
   case ISD::MULHS: {
+    // FIXME: Handle mul by immediate.
     SDOperand MulLHS = Select(N->getOperand(0));
     SDOperand MulRHS = Select(N->getOperand(1));
     unsigned Opcode = N->getOpcode() == ISD::MULHU ? V8::UMULrr : V8::SMULrr;
