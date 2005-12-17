@@ -206,29 +206,21 @@ def STDri : F3_2<3, 0b000111,
 
 // Section B.5 - Store Floating-point Instructions, p. 97
 def STFrr   : F3_1<3, 0b100100,
-                   (ops MEMrr:$addr, IntRegs:$src),
-                   "st $src, [$addr]", []>;
+                   (ops MEMrr:$addr, FPRegs:$src),
+                   "st $src, [$addr]",
+                   [(store FPRegs:$src, ADDRrr:$addr)]>;
 def STFri   : F3_2<3, 0b100100,
-                   (ops MEMri:$addr, IntRegs:$src),
-                   "st $src, [$addr]", []>;
+                   (ops MEMri:$addr, FPRegs:$src),
+                   "st $src, [$addr]",
+                   [(store FPRegs:$src, ADDRri:$addr)]>;
 def STDFrr  : F3_1<3, 0b100111,
-                   (ops MEMrr:$addr, IntRegs:$src),
-                   "std  $src, [$addr]", []>;
+                   (ops MEMrr:$addr, DFPRegs:$src),
+                   "std  $src, [$addr]",
+                   [(store DFPRegs:$src, ADDRrr:$addr)]>;
 def STDFri  : F3_2<3, 0b100111,
-                   (ops MEMri:$addr, IntRegs:$src),
-                   "std $src, [$addr]", []>;
-def STFSRrr : F3_1<3, 0b100101,
-                   (ops MEMrr:$addr, IntRegs:$src),
-                   "st $src, [$addr]", []>;
-def STFSRri : F3_2<3, 0b100101,
-                   (ops MEMri:$addr, IntRegs:$src),
-                   "st $src, [$addr]", []>;
-def STDFQrr : F3_1<3, 0b100110,
-                   (ops MEMrr:$addr, IntRegs:$src),
-                   "std $src, [$addr]", []>;
-def STDFQri : F3_2<3, 0b100110,
-                   (ops MEMri:$addr, IntRegs:$src),
-                   "std $src, [$addr]", []>;
+                   (ops MEMri:$addr, DFPRegs:$src),
+                   "std $src, [$addr]",
+                   [(store DFPRegs:$src, ADDRri:$addr)]>;
 
 // Section B.9 - SETHI Instruction, p. 104
 def SETHIi: F2_1<0b100,
