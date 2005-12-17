@@ -278,6 +278,17 @@ SDOperand SparcV8DAGToDAGISel::Select(SDOperand Op) {
   
   switch (N->getOpcode()) {
   default: break;
+  case ISD::MULHU:
+  case ISD::MULHS: {
+    SDOperand MulLHS = Select(N->getOperand(0));
+    SDOperand MulRHS = Select(N->getOperand(1));
+    unsigned Opcode = N->getOpcode() == ISD::MULHU ? V8::UMULrr : V8::SMULrr;
+    SDOperand Mul = CurDAG->getTargetNode(Opcode, MVT::i32, MVT::Flag,
+                                          MulLHS, MulRHS);
+    // The high part is in the Y register.
+    return CurDAG->SelectNodeTo(N, V8::RDY, MVT::i32, Mul.getValue(1));
+  }
+    
   case ISD::RET: {
     if (N->getNumOperands() == 2) {
       SDOperand Chain = Select(N->getOperand(0));     // Token chain.
