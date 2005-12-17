@@ -97,11 +97,12 @@ class F3_2<bits<2> opVal, bits<6> op3val, dag ops,
 
 // floating-point
 class F3_3<bits<2> opVal, bits<6> op3val, bits<9> opfval, dag ops,
-           string asmstr> : F3 {
+           string asmstr, list<dag> pattern> : F3 {
   bits<5> rs2;
 
   dag OperandList = ops;
   let AsmString   = asmstr;
+  let Pattern = pattern;
 
   let op         = opVal;
   let op3        = op3val;

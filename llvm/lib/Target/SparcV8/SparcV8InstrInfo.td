@@ -485,68 +485,68 @@ def WRYri : F3_2<2, 0b110000,
 // Convert Integer to Floating-point Instructions, p. 141
 def FITOS : F3_3<2, 0b110100, 0b011000100,
                  (ops FPRegs:$dst, FPRegs:$src),
-                 "fitos $src, $dst">;
+                 "fitos $src, $dst", []>;
 def FITOD : F3_3<2, 0b110100, 0b011001000, 
                  (ops DFPRegs:$dst, DFPRegs:$src),
-                 "fitod $src, $dst">;
+                 "fitod $src, $dst", []>;
 
 // Convert Floating-point to Integer Instructions, p. 142
 def FSTOI : F3_3<2, 0b110100, 0b011010001,
                  (ops FPRegs:$dst, FPRegs:$src),
-                 "fstoi $src, $dst">;
+                 "fstoi $src, $dst", []>;
 def FDTOI : F3_3<2, 0b110100, 0b011010010,
                  (ops DFPRegs:$dst, DFPRegs:$src),
-                 "fdtoi $src, $dst">;
+                 "fdtoi $src, $dst", []>;
 
 // Convert between Floating-point Formats Instructions, p. 143
 def FSTOD : F3_3<2, 0b110100, 0b011001001, 
                  (ops DFPRegs:$dst, FPRegs:$src),
-                 "fstod $src, $dst">;
+                 "fstod $src, $dst", []>;
 def FDTOS : F3_3<2, 0b110100, 0b011000110,
                  (ops FPRegs:$dst, DFPRegs:$src),
-                 "fdtos $src, $dst">;
+                 "fdtos $src, $dst", []>;
 
 // Floating-point Move Instructions, p. 144
 def FMOVS : F3_3<2, 0b110100, 0b000000001,
                  (ops FPRegs:$dst, FPRegs:$src),
-                 "fmovs $src, $dst">;
+                 "fmovs $src, $dst", []>;
 def FNEGS : F3_3<2, 0b110100, 0b000000101, 
                  (ops FPRegs:$dst, FPRegs:$src),
-                 "fnegs $src, $dst">;
+                 "fnegs $src, $dst", []>;
 def FABSS : F3_3<2, 0b110100, 0b000001001, 
                  (ops FPRegs:$dst, FPRegs:$src),
-                 "fabss $src, $dst">;
+                 "fabss $src, $dst", []>;
 
 // Floating-point Add and Subtract Instructions, p. 146
 def FADDS  : F3_3<2, 0b110100, 0b001000001,
                   (ops FPRegs:$dst, FPRegs:$src1, FPRegs:$src2),
-                  "fadds $src1, $src2, $dst">;
+                  "fadds $src1, $src2, $dst", []>;
 def FADDD  : F3_3<2, 0b110100, 0b001000010,
                   (ops DFPRegs:$dst, DFPRegs:$src1, DFPRegs:$src2),
-                  "faddd $src1, $src2, $dst">;
+                  "faddd $src1, $src2, $dst", []>;
 def FSUBS  : F3_3<2, 0b110100, 0b001000101,
                   (ops FPRegs:$dst, FPRegs:$src1, FPRegs:$src2),
-                  "fsubs $src1, $src2, $dst">;
+                  "fsubs $src1, $src2, $dst", []>;
 def FSUBD  : F3_3<2, 0b110100, 0b001000110,
                   (ops DFPRegs:$dst, DFPRegs:$src1, DFPRegs:$src2),
-                  "fsubd $src1, $src2, $dst">;
+                  "fsubd $src1, $src2, $dst", []>;
 
 // Floating-point Multiply and Divide Instructions, p. 147
 def FMULS  : F3_3<2, 0b110100, 0b001001001,
                   (ops FPRegs:$dst, FPRegs:$src1, FPRegs:$src2),
-                  "fmuls $src1, $src2, $dst">;
+                  "fmuls $src1, $src2, $dst", []>;
 def FMULD  : F3_3<2, 0b110100, 0b001001010,
                   (ops DFPRegs:$dst, DFPRegs:$src1, DFPRegs:$src2),
-                  "fmuld $src1, $src2, $dst">;
+                  "fmuld $src1, $src2, $dst", []>;
 def FSMULD : F3_3<2, 0b110100, 0b001101001,
                   (ops DFPRegs:$dst, FPRegs:$src1, FPRegs:$src2),
-                  "fsmuld $src1, $src2, $dst">;
+                  "fsmuld $src1, $src2, $dst", []>;
 def FDIVS  : F3_3<2, 0b110100, 0b001001101,
                  (ops FPRegs:$dst, FPRegs:$src1, FPRegs:$src2),
-                 "fdivs $src1, $src2, $dst">;
+                 "fdivs $src1, $src2, $dst", []>;
 def FDIVD  : F3_3<2, 0b110100, 0b001001110,
                  (ops DFPRegs:$dst, DFPRegs:$src1, DFPRegs:$src2),
-                 "fdivd $src1, $src2, $dst">;
+                 "fdivd $src1, $src2, $dst", []>;
 
 // Floating-point Compare Instructions, p. 148
 // Note: the 2nd template arg is different for these guys.
@@ -555,10 +555,10 @@ def FDIVD  : F3_3<2, 0b110100, 0b001001110,
 // is modelled with a forced noop after the instruction.
 def FCMPS  : F3_3<2, 0b110101, 0b001010001,
                   (ops FPRegs:$src1, FPRegs:$src2),
-                  "fcmps $src1, $src2\n\tnop">;
+                  "fcmps $src1, $src2\n\tnop", []>;
 def FCMPD  : F3_3<2, 0b110101, 0b001010010,
                   (ops DFPRegs:$src1, DFPRegs:$src2),
-                  "fcmpd $src1, $src2\n\tnop">;
+                  "fcmpd $src1, $src2\n\tnop", []>;
 
 //===----------------------------------------------------------------------===//
 // Non-Instruction Patterns
