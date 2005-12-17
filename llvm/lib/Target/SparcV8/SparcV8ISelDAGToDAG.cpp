@@ -60,6 +60,11 @@ SparcV8TargetLowering::SparcV8TargetLowering(TargetMachine &TM)
   addRegisterClass(MVT::i32, V8::IntRegsRegisterClass);
   addRegisterClass(MVT::f32, V8::FPRegsRegisterClass);
   addRegisterClass(MVT::f64, V8::DFPRegsRegisterClass);
+
+  // Sparc doesn't have sext_inreg, replace them with shl/sra
+  setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i16  , Expand);
+  setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i8   , Expand);
+  setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1   , Expand);
   
   computeRegisterProperties();
 }
