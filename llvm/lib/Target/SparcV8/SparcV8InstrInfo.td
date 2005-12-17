@@ -107,25 +107,29 @@ let rd = 0 in
                   "cmp $b, $c", []>;
 
 // Section B.1 - Load Integer Instructions, p. 90
-def LDSB: F3_2<3, 0b001001,
-               (ops IntRegs:$dst, IntRegs:$b, i32imm:$c),
-               "ldsb [$b+$c], $dst", []>;
-def LDSH: F3_2<3, 0b001010,
-               (ops IntRegs:$dst, IntRegs:$b, i32imm:$c),
-               "ldsh [$b+$c], $dst", []>;
-def LDUB: F3_2<3, 0b000001,
-               (ops IntRegs:$dst, IntRegs:$b, i32imm:$c),
-               "ldub [$b+$c], $dst", []>;
-def LDUH: F3_2<3, 0b000010,
-               (ops IntRegs:$dst, IntRegs:$b, i32imm:$c),
-               "lduh [$b+$c], $dst", []>;
-def LD  : F3_2<3, 0b000000,
-               (ops IntRegs:$dst, MEMri:$addr),
-               "ld [$addr], $dst",
-               [(set IntRegs:$dst, (load ADDRri:$addr))]>;
-def LDD : F3_2<3, 0b000011,
-               (ops IntRegs:$dst, IntRegs:$b, i32imm:$c),
-               "ldd [$b+$c], $dst", []>;
+def LDSBri : F3_2<3, 0b001001,
+                  (ops IntRegs:$dst, MEMri:$addr),
+                  "ldsb [$addr], $dst",
+                  [(set IntRegs:$dst, (sextload ADDRri:$addr, i8))]>;
+def LDSHri : F3_2<3, 0b001010,
+                  (ops IntRegs:$dst, MEMri:$addr),
+                  "ldsh [$addr], $dst",
+                  [(set IntRegs:$dst, (sextload ADDRri:$addr, i16))]>;
+def LDUBri : F3_2<3, 0b000001,
+                  (ops IntRegs:$dst, MEMri:$addr),
+                  "ldub [$addr], $dst",
+                  [(set IntRegs:$dst, (zextload ADDRri:$addr, i8))]>;
+def LDUHri : F3_2<3, 0b000010,
+                  (ops IntRegs:$dst, MEMri:$addr),
+                  "lduh [$addr], $dst",
+                  [(set IntRegs:$dst, (zextload ADDRri:$addr, i16))]>;
+def LDri   : F3_2<3, 0b000000,
+                  (ops IntRegs:$dst, MEMri:$addr),
+                  "ld [$addr], $dst",
+                  [(set IntRegs:$dst, (load ADDRri:$addr))]>;
+def LDDri  : F3_2<3, 0b000011,
+                  (ops IntRegs:$dst, MEMri:$addr),
+                  "ldd [$addr], $dst", []>;
 
 // Section B.2 - Load Floating-point Instructions, p. 92
 def LDFrr  : F3_1<3, 0b100000,
@@ -148,18 +152,18 @@ def LDFSRri: F3_2<3, 0b100001,
                   "ld [$b+$c], $dst", []>;
 
 // Section B.4 - Store Integer Instructions, p. 95
-def STB : F3_2<3, 0b000101,
-               (ops IntRegs:$base, IntRegs:$offset, i32imm:$src),
-               "stb $src, [$base+$offset]", []>;
-def STH : F3_2<3, 0b000110,
-               (ops IntRegs:$base, IntRegs:$offset, i32imm:$src),
-               "sth $src, [$base+$offset]", []>;
-def ST  : F3_2<3, 0b000100,
-               (ops IntRegs:$base, IntRegs:$offset, i32imm:$src),
-               "st $src, [$base+$offset]", []>;
-def STD : F3_2<3, 0b000111,
-               (ops IntRegs:$base, IntRegs:$offset, i32imm:$src),
-               "std $src, [$base+$offset]", []>;
+def STBri : F3_2<3, 0b000101,
+                 (ops MEMri:$addr, IntRegs:$src),
+                 "stb $src, [$addr]", []>;
+def STHri : F3_2<3, 0b000110,
+                 (ops MEMri:$addr, IntRegs:$src),
+                 "sth $src, [$addr]", []>;
+def STri  : F3_2<3, 0b000100,
+                 (ops MEMri:$addr, IntRegs:$src),
+                 "st $src, [$addr]", []>;
+def STDri : F3_2<3, 0b000111,
+                 (ops MEMri:$addr, IntRegs:$src),
+                 "std $src, [$addr]", []>;
 
 // Section B.5 - Store Floating-point Instructions, p. 97
 def STFrr   : F3_1<3, 0b100100,
