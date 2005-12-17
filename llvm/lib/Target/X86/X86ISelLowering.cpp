@@ -936,10 +936,7 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     return DAG.getNode(ISD::MERGE_VALUES, Tys, Ops);
   }
   case ISD::SELECT: {
-    unsigned Opc;
     SDOperand Cond  = Op.getOperand(0);
-    SDOperand True  = Op.getOperand(1);
-    SDOperand False = Op.getOperand(2);
     SDOperand CC;
     if (Cond.getOpcode() == ISD::SETCC) {
       CC = Cond.getOperand(2);
