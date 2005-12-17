@@ -514,10 +514,24 @@ def FMOVS : F3_3<2, 0b110100, 0b000000001,
                  "fmovs $src, $dst", []>;
 def FNEGS : F3_3<2, 0b110100, 0b000000101, 
                  (ops FPRegs:$dst, FPRegs:$src),
-                 "fnegs $src, $dst", []>;
+                 "fnegs $src, $dst",
+                 [(set FPRegs:$dst, (fneg FPRegs:$src))]>;
 def FABSS : F3_3<2, 0b110100, 0b000001001, 
                  (ops FPRegs:$dst, FPRegs:$src),
-                 "fabss $src, $dst", []>;
+                 "fabss $src, $dst",
+                 [(set FPRegs:$dst, (fabs FPRegs:$src))]>;
+
+// Floating-point Square Root Instructions, p.145
+def FSQRTS : F3_3<2, 0b110100, 0b000101001, 
+                  (ops FPRegs:$dst, FPRegs:$src),
+                  "fsqrts $src, $dst",
+                  [(set FPRegs:$dst, (fsqrt FPRegs:$src))]>;
+def FSQRTD : F3_3<2, 0b110100, 0b000101010, 
+                  (ops DFPRegs:$dst, DFPRegs:$src),
+                  "fsqrtd $src, $dst",
+                  [(set DFPRegs:$dst, (fsqrt DFPRegs:$src))]>;
+
+
 
 // Floating-point Add and Subtract Instructions, p. 146
 def FADDS  : F3_3<2, 0b110100, 0b001000001,
