@@ -139,8 +139,15 @@ SparcV8TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
 
 SDOperand SparcV8TargetLowering::LowerReturnTo(SDOperand Chain, SDOperand Op,
                                                SelectionDAG &DAG) {
-  assert(0 && "Unimp");
-  abort();
+  if (Op.getValueType() == MVT::i64) {
+    SDOperand Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, Op, 
+                               DAG.getConstant(1, MVT::i32));
+    SDOperand Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, Op,
+                               DAG.getConstant(0, MVT::i32));
+    return DAG.getNode(ISD::RET, MVT::Other, Chain, Lo, Hi);
+  } else {
+    return DAG.getNode(ISD::RET, MVT::Other, Chain, Op);
+  }
 }
 
 SDOperand SparcV8TargetLowering::LowerVAStart(SDOperand Chain, SDOperand VAListP,
@@ -219,6 +226,30 @@ SDOperand SparcV8DAGToDAGISel::Select(SDOperand Op) {
   
   switch (N->getOpcode()) {
   default: break;
+  case ISD::RET: {
+    if (N->getNumOperands() == 2) {
+      SDOperand Chain = Select(N->getOperand(0));     // Token chain.
+      SDOperand Val = Select(N->getOperand(1));
+      if (N->getOperand(1).getValueType() == MVT::i32) {
+        Chain = CurDAG->getCopyToReg(Chain, V8::I0, Val);
+      } else if (N->getOperand(1).getValueType() == MVT::f32) {
+        Chain = CurDAG->getCopyToReg(Chain, V8::F0, Val);
+      } else {
+        assert(N->getOperand(1).getValueType() == MVT::f64);
+        Chain = CurDAG->getCopyToReg(Chain, V8::D0, Val);
+      }
+      return CurDAG->SelectNodeTo(N, V8::RETL, MVT::Other, Chain);
+    } else if (N->getNumOperands() > 1) {
+      SDOperand Chain = Select(N->getOperand(0));     // Token chain.
+      assert(N->getOperand(1).getValueType() == MVT::i32 &&
+             N->getOperand(2).getValueType() == MVT::i32 &&
+             N->getNumOperands() == 3 && "Unknown two-register ret value!");
+      Chain = CurDAG->getCopyToReg(Chain, V8::I0, Select(N->getOperand(1)));
+      Chain = CurDAG->getCopyToReg(Chain, V8::I1, Select(N->getOperand(2)));
+      return CurDAG->SelectNodeTo(N, V8::RETL, MVT::Other, Chain);
+    }
+    break;  // Generated code handles the void case.
+  }
   }
   
   return SelectCode(Op);
