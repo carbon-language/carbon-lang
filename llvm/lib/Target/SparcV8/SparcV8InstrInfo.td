@@ -39,6 +39,10 @@ def simm13  : PatLeaf<(imm), [{
   return (((int)N->getValue() << (32-13)) >> (32-13)) == (int)N->getValue();
 }]>;
 
+def LO10 : SDNodeXForm<imm, [{
+  return CurDAG->getTargetConstant((unsigned)N->getValue() & 1023, MVT::i32);
+}]>;
+
 def HI22 : SDNodeXForm<imm, [{
   // Transformation function: shift the immediate value down into the low bits.
   return CurDAG->getTargetConstant((unsigned)N->getValue() >> 10, MVT::i32);
@@ -580,3 +584,6 @@ def FCMPED : F3_3<2, 0b110101, 0b001010110,
 // Small immediates.
 def : Pat<(i32 simm13:$val),
           (ORri G0, imm:$val)>;
+// Arbitrary immediates.
+def : Pat<(i32 imm:$val),
+          (ORri (SETHIi (HI22 imm:$val)), (LO10 imm:$val))>;
