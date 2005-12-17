@@ -27,6 +27,7 @@ using namespace llvm;
 
 X86VectorEnum llvm::X86Vector = NoSSE;
 bool llvm::X86ScalarSSE = false;
+bool llvm::X86DAGIsel = false;
 
 /// X86TargetMachineModule - Note that this is used on hosts that cannot link
 /// in a library unless there are references into the library.  In particular,
@@ -44,8 +45,10 @@ namespace {
                 cl::location(X86ScalarSSE),
                 cl::init(false));
 
-  cl::opt<bool> EnableX86DAGDAG("enable-x86-dag-isel", cl::Hidden,
-                      cl::desc("Enable DAG-to-DAG isel for X86"));
+  cl::opt<bool, true> EnableX86DAGDAG("enable-x86-dag-isel", cl::Hidden,
+                      cl::desc("Enable DAG-to-DAG isel for X86"),
+                      cl::location(X86DAGIsel),
+                      cl::init(false));
   
   // FIXME: This should eventually be handled with target triples and
   // subtarget support!
@@ -124,7 +127,7 @@ bool X86TargetMachine::addPassesToEmitFile(PassManager &PM, std::ostream &Out,
   PM.add(createUnreachableBlockEliminationPass());
 
   // Install an instruction selector.
-  if (EnableX86DAGDAG)
+  if (X86DAGIsel)
     PM.add(createX86ISelDag(*this));
   else
     PM.add(createX86ISelPattern(*this));
@@ -191,7 +194,7 @@ void X86JITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
   PM.add(createUnreachableBlockEliminationPass());
 
   // Install an instruction selector.
-  if (EnableX86DAGDAG)
+  if (X86DAGIsel)
     PM.add(createX86ISelDag(TM));
   else
     PM.add(createX86ISelPattern(TM));

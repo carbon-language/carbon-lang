@@ -31,6 +31,7 @@ enum X86VectorEnum {
 
 extern X86VectorEnum X86Vector;
 extern bool X86ScalarSSE;
+extern bool X86DAGIsel;
 
 /// createX86ISelPattern - This pass converts an LLVM function into a 
 /// machine code representation using pattern matching and a machine
