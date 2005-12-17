@@ -88,3 +88,17 @@ into:
         movzbl  %dil, %eax
         xorl    $1, %eax
         ret
+
+//===---------------------------------------------------------------------===//
+
+Some isel ideas:
+
+1. Dynamic programming based approach when compile time if not an
+   issue.
+2. Code duplication (addressing mode) during isel.
+3. Other ideas from "Register-Sensitive Selection, Duplication, and
+   Sequencing of Instructions".
+
+//===---------------------------------------------------------------------===//
+
+Should we promote i16 to i32 to avoid partial register update stalls?
