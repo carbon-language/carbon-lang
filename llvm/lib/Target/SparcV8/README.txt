@@ -1,9 +1,8 @@
 
 Meta TODO list:
-1. Convert asmprinter to use lib/CodeGen/AsmPrinter for global init printing
-   constant pool printing, etc.
-2. Create a new DAG -> DAG instruction selector, by adding patterns to the
+1. Create a new DAG -> DAG instruction selector, by adding patterns to the
    instructions.
+2. ???
 3. profit!
 
 
