@@ -175,13 +175,16 @@ def LDDFri : F3_2<3, 0b100011,
 // Section B.4 - Store Integer Instructions, p. 95
 def STBri : F3_2<3, 0b000101,
                  (ops MEMri:$addr, IntRegs:$src),
-                 "stb $src, [$addr]", []>;
+                 "stb $src, [$addr]",
+                 [(truncstore IntRegs:$src, ADDRri:$addr, i8)]>;
 def STHri : F3_2<3, 0b000110,
                  (ops MEMri:$addr, IntRegs:$src),
-                 "sth $src, [$addr]", []>;
+                 "sth $src, [$addr]",
+                 [(truncstore IntRegs:$src, ADDRri:$addr, i16)]>;
 def STri  : F3_2<3, 0b000100,
                  (ops MEMri:$addr, IntRegs:$src),
-                 "st $src, [$addr]", []>;
+                 "st $src, [$addr]",
+                 [(store IntRegs:$src, ADDRri:$addr)]>;
 def STDri : F3_2<3, 0b000111,
                  (ops MEMri:$addr, IntRegs:$src),
                  "std $src, [$addr]", []>;
