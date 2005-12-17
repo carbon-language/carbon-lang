@@ -235,18 +235,33 @@ void SparcV8DAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
   ScheduleAndEmitDAG(DAG);
 }
 
-bool SparcV8DAGToDAGISel::SelectADDRrr(SDOperand N, SDOperand &R1, 
+bool SparcV8DAGToDAGISel::SelectADDRrr(SDOperand Addr, SDOperand &R1, 
                                        SDOperand &R2) {
-  // FIXME: This should obviously be smarter.
-  R1 = Select(N);
+  if (Addr.getOpcode() == ISD::ADD) {
+    if (isa<ConstantSDNode>(Addr.getOperand(1)) &&
+        Predicate_simm13(Addr.getOperand(1).Val))
+      return false;  // Let the reg+imm pattern catch this!
+    R1 = Addr.getOperand(0);
+    R2 = Addr.getOperand(1);
+    return true;
+  }
+
+  R1 = Select(Addr);
   R2 = CurDAG->getRegister(V8::G0, MVT::i32);
   return true;
 }
 
-bool SparcV8DAGToDAGISel::SelectADDRri(SDOperand N, SDOperand &Base,
+bool SparcV8DAGToDAGISel::SelectADDRri(SDOperand Addr, SDOperand &Base,
                                        SDOperand &Offset) {
-  // FIXME: This should obviously be smarter.
-  Base = Select(N);
+  if (Addr.getOpcode() == ISD::ADD) {
+    if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(Addr.getOperand(1)))
+      if (Predicate_simm13(CN)) {
+        Base = Addr.getOperand(0);
+        Offset = CurDAG->getTargetConstant(CN->getValue(), MVT::i32);
+        return true;
+      }
+  }
+  Base = Select(Addr);
   Offset = CurDAG->getTargetConstant(0, MVT::i32);
   return true;
 }

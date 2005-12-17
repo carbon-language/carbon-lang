@@ -90,10 +90,6 @@ def FpMOVD : PseudoInstV8<"!FpMOVD", (ops)>; // pseudo 64-bit double move
 // Section A.3 - Synthetic Instructions, p. 85
 // special cases of JMPL:
 let isReturn = 1, isTerminator = 1, hasDelaySlot = 1 in {
-  let rd = I7.Num, rs1 = G0.Num, simm13 = 8 in
-    def RET : F3_2<2, 0b111000,
-                   (ops IntRegs:$dst, IntRegs:$b, i32imm:$c),
-                   "ret $b, $c, $dst", []>;
   let rd = O7.Num, rs1 = G0.Num, simm13 = 8 in
     def RETL: F3_2<2, 0b111000, (ops),
                    "retl", [(ret)]>;
