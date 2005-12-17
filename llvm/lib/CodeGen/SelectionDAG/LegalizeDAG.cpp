@@ -879,17 +879,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     break;
   case ISD::BR_CC:
     Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
-    
-    if (isTypeLegal(Node->getOperand(2).getValueType())) {
-      Tmp2 = LegalizeOp(Node->getOperand(2));   // LHS
-      Tmp3 = LegalizeOp(Node->getOperand(3));   // RHS
-      if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(2) ||
-          Tmp3 != Node->getOperand(3)) {
-        Result = DAG.getNode(ISD::BR_CC, MVT::Other, Tmp1, Node->getOperand(1),
-                             Tmp2, Tmp3, Node->getOperand(4));
-      }
-      break;
-    } else {
+    if (!isTypeLegal(Node->getOperand(2).getValueType())) {
       Tmp2 = LegalizeOp(DAG.getNode(ISD::SETCC, TLI.getSetCCResultTy(),
                                     Node->getOperand(2),  // LHS
                                     Node->getOperand(3),  // RHS
@@ -908,6 +898,30 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
                              Tmp2, DAG.getConstant(0, Tmp2.getValueType()), 
                              Node->getOperand(4));
       }
+      break;
+    }
+
+    Tmp2 = LegalizeOp(Node->getOperand(2));   // LHS
+    Tmp3 = LegalizeOp(Node->getOperand(3));   // RHS
+
+    switch (TLI.getOperationAction(ISD::BR_CC, Tmp3.getValueType())) {
+    default: assert(0 && "Unexpected action for BR_CC!");
+    case TargetLowering::Custom: {
+      Tmp4 = DAG.getNode(ISD::BR_CC, MVT::Other, Tmp1, Node->getOperand(1),
+                         Tmp2, Tmp3, Node->getOperand(4));
+      Tmp4 = TLI.LowerOperation(Tmp4, DAG);
+      if (Tmp4.Val) {
+        Result = LegalizeOp(Tmp4);
+        break;
+      }
+    } // FALLTHROUGH if the target doesn't want to lower this op after all.
+    case TargetLowering::Legal:
+      if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(2) ||
+          Tmp3 != Node->getOperand(3)) {
+        Result = DAG.getNode(ISD::BR_CC, MVT::Other, Tmp1, Node->getOperand(1),
+                             Tmp2, Tmp3, Node->getOperand(4));
+      }
+      break;
     }
     break;
   case ISD::BRCONDTWOWAY:
