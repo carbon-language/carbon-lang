@@ -52,6 +52,22 @@ def SETHIimm : PatLeaf<(imm), [{
   return (((unsigned)N->getValue() >> 10) << 10) == (unsigned)N->getValue();
 }], HI22>;
 
+// Addressing modes.
+def ADDRrr : ComplexPattern<i32, 2, "SelectADDRrr", []>;
+def ADDRri : ComplexPattern<i32, 2, "SelectADDRri", []>;
+
+// Address operands
+def MEMrr : Operand<i32> {
+  let PrintMethod = "printMemOperand";
+  let NumMIOperands = 2;
+  let MIOperandInfo = (ops IntRegs, IntRegs);
+}
+def MEMri : Operand<i32> {
+  let PrintMethod = "printMemOperand";
+  let NumMIOperands = 2;
+  let MIOperandInfo = (ops IntRegs, i32imm);
+}
+
 //===----------------------------------------------------------------------===//
 // Instructions
 //===----------------------------------------------------------------------===//
@@ -104,8 +120,9 @@ def LDUH: F3_2<3, 0b000010,
                (ops IntRegs:$dst, IntRegs:$b, i32imm:$c),
                "lduh [$b+$c], $dst", []>;
 def LD  : F3_2<3, 0b000000,
-               (ops IntRegs:$dst, IntRegs:$b, i32imm:$c),
-               "ld [$b+$c], $dst", []>;
+               (ops IntRegs:$dst, MEMri:$addr),
+               "ld [$addr], $dst",
+               [(set IntRegs:$dst, (load ADDRri:$addr))]>;
 def LDD : F3_2<3, 0b000011,
                (ops IntRegs:$dst, IntRegs:$b, i32imm:$c),
                "ldd [$b+$c], $dst", []>;

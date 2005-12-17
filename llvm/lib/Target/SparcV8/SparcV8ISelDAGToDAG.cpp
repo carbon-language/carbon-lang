@@ -187,6 +187,10 @@ public:
 
   SDOperand Select(SDOperand Op);
 
+  // Complex Pattern Selectors.
+  bool SelectADDRrr(SDOperand N, SDOperand &R1, SDOperand &R2);
+  bool SelectADDRri(SDOperand N, SDOperand &Base, SDOperand &Offset);
+  
   /// InstructionSelectBasicBlock - This callback is invoked by
   /// SelectionDAGISel when it has created a SelectionDAG for us to codegen.
   virtual void InstructionSelectBasicBlock(SelectionDAG &DAG);
@@ -212,6 +216,22 @@ void SparcV8DAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
   
   // Emit machine code to BB. 
   ScheduleAndEmitDAG(DAG);
+}
+
+bool SparcV8DAGToDAGISel::SelectADDRrr(SDOperand N, SDOperand &R1, 
+                                       SDOperand &R2) {
+  // FIXME: This should obviously be smarter.
+  R1 = Select(N);
+  R2 = CurDAG->getRegister(V8::G0, MVT::i32);
+  return true;
+}
+
+bool SparcV8DAGToDAGISel::SelectADDRri(SDOperand N, SDOperand &Base,
+                                       SDOperand &Offset) {
+  // FIXME: This should obviously be smarter.
+  Base = Select(N);
+  Offset = CurDAG->getTargetConstant(0, MVT::i32);
+  return true;
 }
 
 
