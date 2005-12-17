@@ -106,7 +106,7 @@ namespace {
                                    SDOperand &Disp) {
       Base  = (AM.BaseType == X86ISelAddressMode::FrameIndexBase) ?
         CurDAG->getTargetFrameIndex(AM.Base.FrameIndex, MVT::i32) : AM.Base.Reg;
-      Scale = getI8Imm (AM.Scale);
+      Scale = getI8Imm(AM.Scale);
       Index = AM.IndexReg;
       Disp  = AM.GV ? CurDAG->getTargetGlobalAddress(AM.GV, MVT::i32, AM.Disp)
         : getI32Imm(AM.Disp);
@@ -179,11 +179,16 @@ bool X86DAGToDAGISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM) {
       // not the GV offset field.
       if (Subtarget->getIndirectExternAndWeakGlobals() &&
           (GV->hasWeakLinkage() || GV->isExternal())) {
-        break;
+        AM.Base.Reg =
+          CurDAG->getTargetNode(X86::MOV32rm, MVT::i32, MVT::Other,
+                                CurDAG->getRegister(0, MVT::i32),
+                                getI8Imm(1), CurDAG->getRegister(0, MVT::i32),
+                                CurDAG->getTargetGlobalAddress(GV, MVT::i32),
+                                CurDAG->getEntryNode());
       } else {
         AM.GV = GV;
-        return false;
       }
+      return false;
     }
     break;
 
