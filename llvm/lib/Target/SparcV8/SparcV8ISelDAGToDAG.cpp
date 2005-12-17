@@ -13,8 +13,11 @@
 
 #include "SparcV8.h"
 #include "SparcV8TargetMachine.h"
+#include "llvm/Function.h"
+#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
+#include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Support/Debug.h"
 #include <iostream>
@@ -63,8 +66,66 @@ SparcV8TargetLowering::SparcV8TargetLowering(TargetMachine &TM)
 
 std::vector<SDOperand>
 SparcV8TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
-  assert(0 && "Unimp");
-  abort();
+  MachineFunction &MF = DAG.getMachineFunction();
+  SSARegMap *RegMap = MF.getSSARegMap();
+  std::vector<SDOperand> ArgValues;
+  
+  static const unsigned GPR[] = {
+    V8::I0, V8::I1, V8::I2, V8::I3, V8::I4, V8::I5
+  };
+  unsigned ArgNo = 0;
+  for (Function::arg_iterator I = F.arg_begin(), E = F.arg_end(); I != E; ++I) {
+    MVT::ValueType ObjectVT = getValueType(I->getType());
+    assert(ArgNo < 6 && "Only args in regs for now");
+    
+    switch (ObjectVT) {
+    default: assert(0 && "Unhandled argument type!");
+    // TODO: MVT::i64 & FP
+    case MVT::i1:
+    case MVT::i8:
+    case MVT::i16:
+    case MVT::i32: {
+      unsigned VReg = RegMap->createVirtualRegister(&V8::IntRegsRegClass);
+      MF.addLiveIn(GPR[ArgNo++], VReg);
+      SDOperand Arg = DAG.getCopyFromReg(DAG.getRoot(), VReg, MVT::i32);
+      DAG.setRoot(Arg.getValue(1));
+      if (ObjectVT != MVT::i32) {
+        unsigned AssertOp = I->getType()->isSigned() ? ISD::AssertSext 
+                                                     : ISD::AssertZext;
+        Arg = DAG.getNode(AssertOp, MVT::i32, Arg, 
+                          DAG.getValueType(ObjectVT));
+        Arg = DAG.getNode(ISD::TRUNCATE, ObjectVT, Arg);
+      }
+      ArgValues.push_back(Arg);
+    }
+    }
+  }
+  
+  assert(!F.isVarArg() && "Unimp");
+  
+  // Finally, inform the code generator which regs we return values in.
+  switch (getValueType(F.getReturnType())) {
+  default: assert(0 && "Unknown type!");
+  case MVT::isVoid: break;
+  case MVT::i1:
+  case MVT::i8:
+  case MVT::i16:
+  case MVT::i32:
+    MF.addLiveOut(V8::I0);
+    break;
+  case MVT::i64:
+    MF.addLiveOut(V8::I0);
+    MF.addLiveOut(V8::I1);
+    break;
+  case MVT::f32:
+    MF.addLiveOut(V8::F0);
+    break;
+  case MVT::f64:
+    MF.addLiveOut(V8::D0);
+    break;
+  }
+  
+  return ArgValues;
 }
 
 std::pair<SDOperand, SDOperand>
