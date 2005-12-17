@@ -31,6 +31,15 @@ class InstV8 : Instruction {          // SparcV8 instruction baseline
 include "SparcV8InstrFormats.td"
 
 //===----------------------------------------------------------------------===//
+// Instruction Pattern Stuff
+//===----------------------------------------------------------------------===//
+
+def simm13  : PatLeaf<(imm), [{
+  // simm13 predicate - True if the imm fits in a 13-bit sign extended field.
+  return (((int)N->getValue() << (32-13)) >> (32-13)) == (int)N->getValue();
+}]>;
+
+//===----------------------------------------------------------------------===//
 // Instructions
 //===----------------------------------------------------------------------===//
 
@@ -164,7 +173,8 @@ def ANDrr   : F3_1<2, 0b000001,
                    "and $b, $c, $dst">;
 def ANDri   : F3_2<2, 0b000001,
                    (ops IntRegs:$dst, IntRegs:$b, i32imm:$c),
-                   "and $b, $c, $dst", []>;
+                   "and $b, $c, $dst",
+                   [(set IntRegs:$dst, (and IntRegs:$b, simm13:$c))]>;
 def ANDCCrr : F3_1<2, 0b010001,
                    (ops IntRegs:$dst, IntRegs:$b, IntRegs:$c),
                    "andcc $b, $c, $dst">;
@@ -188,7 +198,8 @@ def ORrr    : F3_1<2, 0b000010,
                    "or $b, $c, $dst">;
 def ORri    : F3_2<2, 0b000010,
                    (ops IntRegs:$dst, IntRegs:$b, i32imm:$c),
-                   "or $b, $c, $dst", []>;
+                   "or $b, $c, $dst",
+                   [(set IntRegs:$dst, (or IntRegs:$b, simm13:$c))]>;
 def ORCCrr  : F3_1<2, 0b010010,
                    (ops IntRegs:$dst, IntRegs:$b, IntRegs:$c),
                    "orcc $b, $c, $dst">;
@@ -212,7 +223,8 @@ def XORrr   : F3_1<2, 0b000011,
                    "xor $b, $c, $dst">;
 def XORri   : F3_2<2, 0b000011,
                    (ops IntRegs:$dst, IntRegs:$b, i32imm:$c),
-                   "xor $b, $c, $dst", []>;
+                   "xor $b, $c, $dst",
+                   [(set IntRegs:$dst, (xor IntRegs:$b, simm13:$c))]>;
 def XORCCrr : F3_1<2, 0b010011,
                    (ops IntRegs:$dst, IntRegs:$b, IntRegs:$c),
                    "xorcc $b, $c, $dst">;
@@ -258,7 +270,8 @@ def ADDrr   : F3_1<2, 0b000000,
                   "add $b, $c, $dst">;
 def ADDri   : F3_2<2, 0b000000,
                    (ops IntRegs:$dst, IntRegs:$b, i32imm:$c),
-                   "add $b, $c, $dst", []>;
+                   "add $b, $c, $dst",
+                   [(set IntRegs:$dst, (add IntRegs:$b, simm13:$c))]>;
 def ADDCCrr : F3_1<2, 0b010000, 
                    (ops IntRegs:$dst, IntRegs:$b, IntRegs:$c),
                    "addcc $b, $c, $dst">;
@@ -284,7 +297,8 @@ def SUBrr   : F3_1<2, 0b000100,
                    "sub $b, $c, $dst">;
 def SUBri   : F3_2<2, 0b000100,
                    (ops IntRegs:$dst, IntRegs:$b, i32imm:$c),
-                   "sub $b, $c, $dst", []>;
+                   "sub $b, $c, $dst",
+                   [(set IntRegs:$dst, (sub IntRegs:$b, simm13:$c))]>;
 def SUBCCrr : F3_1<2, 0b010100, 
                    (ops IntRegs:$dst, IntRegs:$b, IntRegs:$c),
                    "subcc $b, $c, $dst">;
