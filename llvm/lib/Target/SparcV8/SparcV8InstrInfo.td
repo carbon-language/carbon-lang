@@ -520,33 +520,41 @@ def FABSS : F3_3<2, 0b110100, 0b000001001,
 // Floating-point Add and Subtract Instructions, p. 146
 def FADDS  : F3_3<2, 0b110100, 0b001000001,
                   (ops FPRegs:$dst, FPRegs:$src1, FPRegs:$src2),
-                  "fadds $src1, $src2, $dst", []>;
+                  "fadds $src1, $src2, $dst",
+                  [(set FPRegs:$dst, (fadd FPRegs:$src1, FPRegs:$src2))]>;
 def FADDD  : F3_3<2, 0b110100, 0b001000010,
                   (ops DFPRegs:$dst, DFPRegs:$src1, DFPRegs:$src2),
-                  "faddd $src1, $src2, $dst", []>;
+                  "faddd $src1, $src2, $dst",
+                  [(set DFPRegs:$dst, (fadd DFPRegs:$src1, DFPRegs:$src2))]>;
 def FSUBS  : F3_3<2, 0b110100, 0b001000101,
                   (ops FPRegs:$dst, FPRegs:$src1, FPRegs:$src2),
-                  "fsubs $src1, $src2, $dst", []>;
+                  "fsubs $src1, $src2, $dst",
+                  [(set FPRegs:$dst, (fsub FPRegs:$src1, FPRegs:$src2))]>;
 def FSUBD  : F3_3<2, 0b110100, 0b001000110,
                   (ops DFPRegs:$dst, DFPRegs:$src1, DFPRegs:$src2),
-                  "fsubd $src1, $src2, $dst", []>;
+                  "fsubd $src1, $src2, $dst",
+                  [(set DFPRegs:$dst, (fsub DFPRegs:$src1, DFPRegs:$src2))]>;
 
 // Floating-point Multiply and Divide Instructions, p. 147
 def FMULS  : F3_3<2, 0b110100, 0b001001001,
                   (ops FPRegs:$dst, FPRegs:$src1, FPRegs:$src2),
-                  "fmuls $src1, $src2, $dst", []>;
+                  "fmuls $src1, $src2, $dst",
+                  [(set FPRegs:$dst, (fmul FPRegs:$src1, FPRegs:$src2))]>;
 def FMULD  : F3_3<2, 0b110100, 0b001001010,
                   (ops DFPRegs:$dst, DFPRegs:$src1, DFPRegs:$src2),
-                  "fmuld $src1, $src2, $dst", []>;
+                  "fmuld $src1, $src2, $dst",
+                  [(set DFPRegs:$dst, (fmul DFPRegs:$src1, DFPRegs:$src2))]>;
 def FSMULD : F3_3<2, 0b110100, 0b001101001,
                   (ops DFPRegs:$dst, FPRegs:$src1, FPRegs:$src2),
                   "fsmuld $src1, $src2, $dst", []>;
 def FDIVS  : F3_3<2, 0b110100, 0b001001101,
                  (ops FPRegs:$dst, FPRegs:$src1, FPRegs:$src2),
-                 "fdivs $src1, $src2, $dst", []>;
+                 "fdivs $src1, $src2, $dst",
+                 [(set DFPRegs:$dst, (fdiv FPRegs:$src1, FPRegs:$src2))]>;
 def FDIVD  : F3_3<2, 0b110100, 0b001001110,
                  (ops DFPRegs:$dst, DFPRegs:$src1, DFPRegs:$src2),
-                 "fdivd $src1, $src2, $dst", []>;
+                 "fdivd $src1, $src2, $dst",
+                 [(set DFPRegs:$dst, (fdiv DFPRegs:$src1, DFPRegs:$src2))]>;
 
 // Floating-point Compare Instructions, p. 148
 // Note: the 2nd template arg is different for these guys.
