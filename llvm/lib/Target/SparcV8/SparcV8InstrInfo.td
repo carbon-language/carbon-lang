@@ -107,26 +107,49 @@ let rd = 0 in
                   "cmp $b, $c", []>;
 
 // Section B.1 - Load Integer Instructions, p. 90
+def LDSBrr : F3_1<3, 0b001001,
+                  (ops IntRegs:$dst, MEMrr:$addr),
+                  "ldsb [$addr], $dst",
+                  [(set IntRegs:$dst, (sextload ADDRrr:$addr, i8))]>;
 def LDSBri : F3_2<3, 0b001001,
                   (ops IntRegs:$dst, MEMri:$addr),
                   "ldsb [$addr], $dst",
                   [(set IntRegs:$dst, (sextload ADDRri:$addr, i8))]>;
+def LDSHrr : F3_1<3, 0b001010,
+                  (ops IntRegs:$dst, MEMrr:$addr),
+                  "ldsh [$addr], $dst",
+                  [(set IntRegs:$dst, (sextload ADDRrr:$addr, i16))]>;
 def LDSHri : F3_2<3, 0b001010,
                   (ops IntRegs:$dst, MEMri:$addr),
                   "ldsh [$addr], $dst",
                   [(set IntRegs:$dst, (sextload ADDRri:$addr, i16))]>;
+def LDUBrr : F3_1<3, 0b000001,
+                  (ops IntRegs:$dst, MEMrr:$addr),
+                  "ldub [$addr], $dst",
+                  [(set IntRegs:$dst, (zextload ADDRrr:$addr, i8))]>;
 def LDUBri : F3_2<3, 0b000001,
                   (ops IntRegs:$dst, MEMri:$addr),
                   "ldub [$addr], $dst",
                   [(set IntRegs:$dst, (zextload ADDRri:$addr, i8))]>;
+def LDUHrr : F3_1<3, 0b000010,
+                  (ops IntRegs:$dst, MEMrr:$addr),
+                  "lduh [$addr], $dst",
+                  [(set IntRegs:$dst, (zextload ADDRrr:$addr, i16))]>;
 def LDUHri : F3_2<3, 0b000010,
                   (ops IntRegs:$dst, MEMri:$addr),
                   "lduh [$addr], $dst",
                   [(set IntRegs:$dst, (zextload ADDRri:$addr, i16))]>;
+def LDrr   : F3_1<3, 0b000000,
+                  (ops IntRegs:$dst, MEMrr:$addr),
+                  "ld [$addr], $dst",
+                  [(set IntRegs:$dst, (load ADDRrr:$addr))]>;
 def LDri   : F3_2<3, 0b000000,
                   (ops IntRegs:$dst, MEMri:$addr),
                   "ld [$addr], $dst",
                   [(set IntRegs:$dst, (load ADDRri:$addr))]>;
+def LDDrr  : F3_1<3, 0b000011,
+                  (ops IntRegs:$dst, MEMrr:$addr),
+                  "ldd [$addr], $dst", []>;
 def LDDri  : F3_2<3, 0b000011,
                   (ops IntRegs:$dst, MEMri:$addr),
                   "ldd [$addr], $dst", []>;
