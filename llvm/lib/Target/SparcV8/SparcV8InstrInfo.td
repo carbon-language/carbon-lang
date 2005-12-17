@@ -250,7 +250,8 @@ def ANDCCri : F3_2<2, 0b010001,
                    "andcc $b, $c, $dst", []>;
 def ANDNrr  : F3_1<2, 0b000101,
                    (ops IntRegs:$dst, IntRegs:$b, IntRegs:$c),
-                   "andn $b, $c, $dst", []>;
+                   "andn $b, $c, $dst",
+                   [(set IntRegs:$dst, (and IntRegs:$b, (not IntRegs:$c)))]>;
 def ANDNri  : F3_2<2, 0b000101,
                    (ops IntRegs:$dst, IntRegs:$b, i32imm:$c),
                    "andn $b, $c, $dst", []>;
@@ -276,7 +277,8 @@ def ORCCri  : F3_2<2, 0b010010,
                    "orcc $b, $c, $dst", []>;
 def ORNrr   : F3_1<2, 0b000110,
                    (ops IntRegs:$dst, IntRegs:$b, IntRegs:$c),
-                   "orn $b, $c, $dst", []>;
+                   "orn $b, $c, $dst",
+                   [(set IntRegs:$dst, (or IntRegs:$b, (not IntRegs:$c)))]>;
 def ORNri   : F3_2<2, 0b000110,
                    (ops IntRegs:$dst, IntRegs:$b, i32imm:$c),
                    "orn $b, $c, $dst", []>;
@@ -302,7 +304,8 @@ def XORCCri : F3_2<2, 0b010011,
                    "xorcc $b, $c, $dst", []>;
 def XNORrr  : F3_1<2, 0b000111,
                    (ops IntRegs:$dst, IntRegs:$b, IntRegs:$c),
-                   "xnor $b, $c, $dst", []>;
+                   "xnor $b, $c, $dst",
+                   [(set IntRegs:$dst, (xor IntRegs:$b, (not IntRegs:$c)))]>;
 def XNORri  : F3_2<2, 0b000111,
                    (ops IntRegs:$dst, IntRegs:$b, i32imm:$c),
                    "xnor $b, $c, $dst", []>;
