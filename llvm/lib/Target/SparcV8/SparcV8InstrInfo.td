@@ -173,18 +173,33 @@ def LDDFri : F3_2<3, 0b100011,
                   [(set DFPRegs:$dst, (load ADDRri:$addr))]>;
 
 // Section B.4 - Store Integer Instructions, p. 95
+def STBrr : F3_1<3, 0b000101,
+                 (ops MEMrr:$addr, IntRegs:$src),
+                 "stb $src, [$addr]",
+                 [(truncstore IntRegs:$src, ADDRrr:$addr, i8)]>;
 def STBri : F3_2<3, 0b000101,
                  (ops MEMri:$addr, IntRegs:$src),
                  "stb $src, [$addr]",
                  [(truncstore IntRegs:$src, ADDRri:$addr, i8)]>;
+def STHrr : F3_1<3, 0b000110,
+                 (ops MEMrr:$addr, IntRegs:$src),
+                 "sth $src, [$addr]",
+                 [(truncstore IntRegs:$src, ADDRrr:$addr, i16)]>;
 def STHri : F3_2<3, 0b000110,
                  (ops MEMri:$addr, IntRegs:$src),
                  "sth $src, [$addr]",
                  [(truncstore IntRegs:$src, ADDRri:$addr, i16)]>;
+def STrr  : F3_1<3, 0b000100,
+                 (ops MEMrr:$addr, IntRegs:$src),
+                 "st $src, [$addr]",
+                 [(store IntRegs:$src, ADDRrr:$addr)]>;
 def STri  : F3_2<3, 0b000100,
                  (ops MEMri:$addr, IntRegs:$src),
                  "st $src, [$addr]",
                  [(store IntRegs:$src, ADDRri:$addr)]>;
+def STDrr : F3_1<3, 0b000111,
+                 (ops MEMrr:$addr, IntRegs:$src),
+                 "std $src, [$addr]", []>;
 def STDri : F3_2<3, 0b000111,
                  (ops MEMri:$addr, IntRegs:$src),
                  "std $src, [$addr]", []>;
