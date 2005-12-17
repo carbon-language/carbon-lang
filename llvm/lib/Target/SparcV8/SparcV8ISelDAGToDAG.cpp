@@ -109,10 +109,10 @@ SparcV8TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
       break;
     }
     case MVT::i64: {
-      unsigned VRegLo = RegMap->createVirtualRegister(&V8::IntRegsRegClass);
-      MF.addLiveIn(GPR[ArgNo++], VRegLo);
       unsigned VRegHi = RegMap->createVirtualRegister(&V8::IntRegsRegClass);
       MF.addLiveIn(GPR[ArgNo++], VRegHi);
+      unsigned VRegLo = RegMap->createVirtualRegister(&V8::IntRegsRegClass);
+      MF.addLiveIn(GPR[ArgNo++], VRegLo);
       SDOperand ArgLo = DAG.getCopyFromReg(DAG.getRoot(), VRegLo, MVT::i32);
       SDOperand ArgHi = DAG.getCopyFromReg(ArgLo.getValue(1), VRegHi, MVT::i32);
       DAG.setRoot(ArgHi.getValue(1));
@@ -282,6 +282,34 @@ SDOperand SparcV8DAGToDAGISel::Select(SDOperand Op) {
   
   switch (N->getOpcode()) {
   default: break;
+  case ISD::ADD_PARTS: {
+    SDOperand LHSL = Select(N->getOperand(0));
+    SDOperand LHSH = Select(N->getOperand(1));
+    SDOperand RHSL = Select(N->getOperand(2));
+    SDOperand RHSH = Select(N->getOperand(3));
+    // FIXME, handle immediate RHS.
+    SDOperand Low = CurDAG->getTargetNode(V8::ADDCCrr, MVT::i32, MVT::Flag,
+                                          LHSL, RHSL);
+    SDOperand Hi  = CurDAG->getTargetNode(V8::ADDXrr, MVT::i32, LHSH, RHSH, 
+                                          Low.getValue(1));
+    CodeGenMap[SDOperand(N, 0)] = Low;
+    CodeGenMap[SDOperand(N, 1)] = Hi;
+    return Op.ResNo ? Hi : Low;
+  }
+  case ISD::SUB_PARTS: {
+    SDOperand LHSL = Select(N->getOperand(0));
+    SDOperand LHSH = Select(N->getOperand(1));
+    SDOperand RHSL = Select(N->getOperand(2));
+    SDOperand RHSH = Select(N->getOperand(3));
+    // FIXME, handle immediate RHS.
+    SDOperand Low = CurDAG->getTargetNode(V8::SUBCCrr, MVT::i32, MVT::Flag,
+                                          LHSL, RHSL);
+    SDOperand Hi  = CurDAG->getTargetNode(V8::SUBXrr, MVT::i32, LHSH, RHSH, 
+                                          Low.getValue(1));
+    CodeGenMap[SDOperand(N, 0)] = Low;
+    CodeGenMap[SDOperand(N, 1)] = Hi;
+    return Op.ResNo ? Hi : Low;
+  }
   case ISD::SDIV:
   case ISD::UDIV: {
     // FIXME: should use a custom expander to expose the SRA to the dag.
@@ -333,8 +361,8 @@ SDOperand SparcV8DAGToDAGISel::Select(SDOperand Op) {
       assert(N->getOperand(1).getValueType() == MVT::i32 &&
              N->getOperand(2).getValueType() == MVT::i32 &&
              N->getNumOperands() == 3 && "Unknown two-register ret value!");
-      Chain = CurDAG->getCopyToReg(Chain, V8::I0, Select(N->getOperand(1)));
-      Chain = CurDAG->getCopyToReg(Chain, V8::I1, Select(N->getOperand(2)));
+      Chain = CurDAG->getCopyToReg(Chain, V8::I1, Select(N->getOperand(1)));
+      Chain = CurDAG->getCopyToReg(Chain, V8::I0, Select(N->getOperand(2)));
       return CurDAG->SelectNodeTo(N, V8::RETL, MVT::Other, Chain);
     }
     break;  // Generated code handles the void case.
