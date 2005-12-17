@@ -102,3 +102,8 @@ Some isel ideas:
 //===---------------------------------------------------------------------===//
 
 Should we promote i16 to i32 to avoid partial register update stalls?
+
+//===---------------------------------------------------------------------===//
+
+Leave any_extend as pseudo instruction and hint to register
+allocator. Delay codegen until post register allocation.
