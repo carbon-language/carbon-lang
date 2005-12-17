@@ -250,22 +250,28 @@ def XNORCCri: F3_2<2, 0b010111,
 // Section B.12 - Shift Instructions, p. 107
 def SLLrr : F3_1<2, 0b100101,
                  (ops IntRegs:$dst, IntRegs:$b, IntRegs:$c),
-                 "sll $b, $c, $dst", []>;
+                 "sll $b, $c, $dst",
+                 [(set IntRegs:$dst, (shl IntRegs:$b, IntRegs:$c))]>;
 def SLLri : F3_2<2, 0b100101,
                  (ops IntRegs:$dst, IntRegs:$b, i32imm:$c),
-                 "sll $b, $c, $dst", []>;
+                 "sll $b, $c, $dst",
+                 [(set IntRegs:$dst, (shl IntRegs:$b, simm13:$c))]>;
 def SRLrr : F3_1<2, 0b100110, 
                  (ops IntRegs:$dst, IntRegs:$b, IntRegs:$c),
-                  "srl $b, $c, $dst", []>;
+                  "srl $b, $c, $dst",
+                  [(set IntRegs:$dst, (srl IntRegs:$b, IntRegs:$c))]>;
 def SRLri : F3_2<2, 0b100110,
                  (ops IntRegs:$dst, IntRegs:$b, i32imm:$c),
-                 "srl $b, $c, $dst", []>;
+                 "srl $b, $c, $dst", 
+                 [(set IntRegs:$dst, (srl IntRegs:$b, simm13:$c))]>;
 def SRArr : F3_1<2, 0b100111, 
                  (ops IntRegs:$dst, IntRegs:$b, IntRegs:$c),
-                  "sra $b, $c, $dst", []>;
+                  "sra $b, $c, $dst",
+                  [(set IntRegs:$dst, (sra IntRegs:$b, IntRegs:$c))]>;
 def SRAri : F3_2<2, 0b100111,
                  (ops IntRegs:$dst, IntRegs:$b, i32imm:$c),
-                 "sla $b, $c, $dst", []>;
+                 "sra $b, $c, $dst",
+                 [(set IntRegs:$dst, (sra IntRegs:$b, simm13:$c))]>;
 
 // Section B.13 - Add Instructions, p. 108
 def ADDrr   : F3_1<2, 0b000000, 
@@ -556,3 +562,11 @@ def FCMPES : F3_3<2, 0b110101, 0b001010101,
 def FCMPED : F3_3<2, 0b110101, 0b001010110,
                   (ops DFPRegs:$src1, DFPRegs:$src2),
                   "fcmped $src1, $src2\n\tnop">;
+
+//===----------------------------------------------------------------------===//
+// Non-Instruction Patterns
+//===----------------------------------------------------------------------===//
+
+// Small immediates.
+def : Pat<(i32 simm13:$val),
+          (ORri G0, imm:$val)>;
