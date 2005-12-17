@@ -156,23 +156,21 @@ def LDDri  : F3_2<3, 0b000011,
 
 // Section B.2 - Load Floating-point Instructions, p. 92
 def LDFrr  : F3_1<3, 0b100000,
-                  (ops IntRegs:$dst, IntRegs:$b, IntRegs:$c),
-                  "ld [$b+$c], $dst", []>;
+                  (ops FPRegs:$dst, MEMrr:$addr),
+                  "ld [$addr], $dst",
+                  [(set FPRegs:$dst, (load ADDRrr:$addr))]>;
 def LDFri  : F3_2<3, 0b100000,
-                  (ops IntRegs:$dst, IntRegs:$b, i32imm:$c),
-                  "ld [$b+$c], $dst", []>;
+                  (ops FPRegs:$dst, MEMri:$addr),
+                  "ld [$addr], $dst",
+                  [(set FPRegs:$dst, (load ADDRri:$addr))]>;
 def LDDFrr : F3_1<3, 0b100011,
-                  (ops IntRegs:$dst, IntRegs:$b, IntRegs:$c),
-                  "ldd [$b+$c], $dst", []>;
+                  (ops DFPRegs:$dst, MEMrr:$addr),
+                  "ldd [$addr], $dst",
+                  [(set DFPRegs:$dst, (load ADDRrr:$addr))]>;
 def LDDFri : F3_2<3, 0b100011,
-                  (ops IntRegs:$dst, IntRegs:$b, i32imm:$c),
-                  "ldd [$b+$c], $dst", []>;
-def LDFSRrr: F3_1<3, 0b100001,
-                  (ops IntRegs:$dst, IntRegs:$b, IntRegs:$c),
-                  "ld [$b+$c], $dst", []>;
-def LDFSRri: F3_2<3, 0b100001,
-                  (ops IntRegs:$dst, IntRegs:$b, i32imm:$c),
-                  "ld [$b+$c], $dst", []>;
+                  (ops DFPRegs:$dst, MEMri:$addr),
+                  "ldd [$addr], $dst",
+                  [(set DFPRegs:$dst, (load ADDRri:$addr))]>;
 
 // Section B.4 - Store Integer Instructions, p. 95
 def STBri : F3_2<3, 0b000101,
@@ -190,29 +188,29 @@ def STDri : F3_2<3, 0b000111,
 
 // Section B.5 - Store Floating-point Instructions, p. 97
 def STFrr   : F3_1<3, 0b100100,
-                   (ops IntRegs:$base, IntRegs:$offset, IntRegs:$src),
-                   "st $src, [$base+$offset]", []>;
+                   (ops MEMrr:$addr, IntRegs:$src),
+                   "st $src, [$addr]", []>;
 def STFri   : F3_2<3, 0b100100,
-                   (ops IntRegs:$base, IntRegs:$offset, i32imm:$src),
-                   "st $src, [$base+$offset]", []>;
+                   (ops MEMri:$addr, IntRegs:$src),
+                   "st $src, [$addr]", []>;
 def STDFrr  : F3_1<3, 0b100111,
-                   (ops IntRegs:$base, IntRegs:$offset, IntRegs:$src),
-                   "std  $src, [$base+$offset]", []>;
+                   (ops MEMrr:$addr, IntRegs:$src),
+                   "std  $src, [$addr]", []>;
 def STDFri  : F3_2<3, 0b100111,
-                   (ops IntRegs:$base, IntRegs:$offset, i32imm:$src),
-                   "std $src, [$base+$offset]", []>;
+                   (ops MEMri:$addr, IntRegs:$src),
+                   "std $src, [$addr]", []>;
 def STFSRrr : F3_1<3, 0b100101,
-                   (ops IntRegs:$base, IntRegs:$offset, IntRegs:$src),
-                   "st $src, [$base+$offset]", []>;
+                   (ops MEMrr:$addr, IntRegs:$src),
+                   "st $src, [$addr]", []>;
 def STFSRri : F3_2<3, 0b100101,
-                   (ops IntRegs:$base, IntRegs:$offset, i32imm:$src),
-                   "st $src, [$base+$offset]", []>;
+                   (ops MEMri:$addr, IntRegs:$src),
+                   "st $src, [$addr]", []>;
 def STDFQrr : F3_1<3, 0b100110,
-                   (ops IntRegs:$base, IntRegs:$offset, IntRegs:$src),
-                   "std $src, [$base+$offset]", []>;
+                   (ops MEMrr:$addr, IntRegs:$src),
+                   "std $src, [$addr]", []>;
 def STDFQri : F3_2<3, 0b100110,
-                   (ops IntRegs:$base, IntRegs:$offset, i32imm:$src),
-                   "std $src, [$base+$offset]", []>;
+                   (ops MEMri:$addr, IntRegs:$src),
+                   "std $src, [$addr]", []>;
 
 // Section B.9 - SETHI Instruction, p. 104
 def SETHIi: F2_1<0b100,
