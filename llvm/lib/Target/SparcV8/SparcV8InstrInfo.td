@@ -58,7 +58,7 @@ let isReturn = 1, isTerminator = 1, hasDelaySlot = 1 in {
                    "ret $b, $c, $dst", []>;
   let rd = O7.Num, rs1 = G0.Num, simm13 = 8 in
     def RETL: F3_2<2, 0b111000, (ops),
-                   "retl", []>;
+                   "retl", [(ret)]>;
 }
 // CMP is a special case of SUBCC where destination is ignored, by setting it to
 // %g0 (hardwired zero).
