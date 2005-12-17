@@ -62,12 +62,14 @@ class F3 : InstV8 {
 
 // Specific F3 classes: SparcV8 manual, page 44
 //
-class F3_1<bits<2> opVal, bits<6> op3val, dag ops, string asmstr> : F3 {
+class F3_1<bits<2> opVal, bits<6> op3val, dag ops,
+           string asmstr, list<dag> pattern> : F3 {
   bits<8> asi = 0; // asi not currently used in SparcV8
   bits<5> rs2;
 
   dag OperandList = ops;
   let AsmString   = asmstr;
+  let Pattern = pattern;
 
   let op         = opVal;
   let op3        = op3val;
