@@ -102,6 +102,18 @@ SparcV8TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
         Arg = DAG.getNode(ISD::TRUNCATE, ObjectVT, Arg);
       }
       ArgValues.push_back(Arg);
+      break;
+    }
+    case MVT::i64: {
+      unsigned VRegLo = RegMap->createVirtualRegister(&V8::IntRegsRegClass);
+      MF.addLiveIn(GPR[ArgNo++], VRegLo);
+      unsigned VRegHi = RegMap->createVirtualRegister(&V8::IntRegsRegClass);
+      MF.addLiveIn(GPR[ArgNo++], VRegHi);
+      SDOperand ArgLo = DAG.getCopyFromReg(DAG.getRoot(), VRegLo, MVT::i32);
+      SDOperand ArgHi = DAG.getCopyFromReg(ArgLo.getValue(1), VRegHi, MVT::i32);
+      DAG.setRoot(ArgHi.getValue(1));
+      ArgValues.push_back(DAG.getNode(ISD::BUILD_PAIR, MVT::i64, ArgLo, ArgHi));
+      break;
     }
     }
   }
