@@ -170,7 +170,8 @@ let rd = 0, imm22 = 0 in
 // Section B.11 - Logical Instructions, p. 106
 def ANDrr   : F3_1<2, 0b000001,
                    (ops IntRegs:$dst, IntRegs:$b, IntRegs:$c),
-                   "and $b, $c, $dst", []>;
+                   "and $b, $c, $dst",
+                   [(set IntRegs:$dst, (and IntRegs:$b, IntRegs:$c))]>;
 def ANDri   : F3_2<2, 0b000001,
                    (ops IntRegs:$dst, IntRegs:$b, i32imm:$c),
                    "and $b, $c, $dst",
@@ -195,7 +196,8 @@ def ANDNCCri: F3_2<2, 0b010101,
                    "andncc $b, $c, $dst", []>;
 def ORrr    : F3_1<2, 0b000010,
                    (ops IntRegs:$dst, IntRegs:$b, IntRegs:$c),
-                   "or $b, $c, $dst", []>;
+                   "or $b, $c, $dst",
+                   [(set IntRegs:$dst, (or IntRegs:$b, IntRegs:$c))]>;
 def ORri    : F3_2<2, 0b000010,
                    (ops IntRegs:$dst, IntRegs:$b, i32imm:$c),
                    "or $b, $c, $dst",
@@ -220,7 +222,8 @@ def ORNCCri : F3_2<2, 0b010110,
                    "orncc $b, $c, $dst", []>;
 def XORrr   : F3_1<2, 0b000011,
                    (ops IntRegs:$dst, IntRegs:$b, IntRegs:$c),
-                   "xor $b, $c, $dst", []>;
+                   "xor $b, $c, $dst",
+                   [(set IntRegs:$dst, (xor IntRegs:$b, IntRegs:$c))]>;
 def XORri   : F3_2<2, 0b000011,
                    (ops IntRegs:$dst, IntRegs:$b, i32imm:$c),
                    "xor $b, $c, $dst",
@@ -267,7 +270,8 @@ def SRAri : F3_2<2, 0b100111,
 // Section B.13 - Add Instructions, p. 108
 def ADDrr   : F3_1<2, 0b000000, 
                   (ops IntRegs:$dst, IntRegs:$b, IntRegs:$c),
-                  "add $b, $c, $dst", []>;
+                  "add $b, $c, $dst",
+                   [(set IntRegs:$dst, (add IntRegs:$b, IntRegs:$c))]>;
 def ADDri   : F3_2<2, 0b000000,
                    (ops IntRegs:$dst, IntRegs:$b, i32imm:$c),
                    "add $b, $c, $dst",
@@ -294,7 +298,8 @@ def ADDXCCri: F3_2<2, 0b011000,
 // Section B.15 - Subtract Instructions, p. 110
 def SUBrr   : F3_1<2, 0b000100, 
                    (ops IntRegs:$dst, IntRegs:$b, IntRegs:$c),
-                   "sub $b, $c, $dst", []>;
+                   "sub $b, $c, $dst",
+                   [(set IntRegs:$dst, (sub IntRegs:$b, IntRegs:$c))]>;
 def SUBri   : F3_2<2, 0b000100,
                    (ops IntRegs:$dst, IntRegs:$b, i32imm:$c),
                    "sub $b, $c, $dst",
