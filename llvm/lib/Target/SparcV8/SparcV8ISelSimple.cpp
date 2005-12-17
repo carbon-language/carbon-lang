@@ -372,7 +372,7 @@ void V8ISel::LoadArgumentsToVirtualRegs (Function *LF) {
       int FI = F->getFrameInfo()->CreateFixedObject(4, ArgOffset);
       assert (IAR != IAREnd
               && "About to dereference past end of IncomingArgRegs");
-      BuildMI (BB, V8::ST, 3).addFrameIndex (FI).addSImm (0).addReg (*IAR++);
+      BuildMI (BB, V8::STri, 3).addFrameIndex (FI).addSImm (0).addReg (*IAR++);
       ArgOffset += 4;
     }
     // Reset the pointers now that we're done.
@@ -392,7 +392,7 @@ void V8ISel::LoadArgumentsToVirtualRegs (Function *LF) {
         BuildMI (BB, V8::ORrr, 2, ArgReg).addReg (V8::G0).addReg (*IAR++);
       } else {
         int FI = F->getFrameInfo()->CreateFixedObject(4, ArgOffset);
-        BuildMI (BB, V8::LD, 3, ArgReg).addFrameIndex (FI).addSImm (0);
+        BuildMI (BB, V8::LDri, 3, ArgReg).addFrameIndex (FI).addSImm (0);
       }
       ArgOffset += 4;
     } else if (getClassB (A.getType ()) == cFloat) {
@@ -403,7 +403,7 @@ void V8ISel::LoadArgumentsToVirtualRegs (Function *LF) {
         int FI = F->getFrameInfo()->CreateStackObject(4, FltAlign);
         assert (IAR != IAREnd
                 && "About to dereference past end of IncomingArgRegs");
-        BuildMI (BB, V8::ST, 3).addFrameIndex (FI).addSImm (0).addReg (*IAR++);
+        BuildMI (BB, V8::STri, 3).addFrameIndex (FI).addSImm (0).addReg (*IAR++);
         BuildMI (BB, V8::LDFri, 2, ArgReg).addFrameIndex (FI).addSImm (0);
       } else {
         int FI = F->getFrameInfo()->CreateFixedObject(4, ArgOffset);
@@ -418,19 +418,19 @@ void V8ISel::LoadArgumentsToVirtualRegs (Function *LF) {
       unsigned DblAlign = TM.getTargetData().getDoubleAlignment();
       int FI = F->getFrameInfo()->CreateStackObject(8, DblAlign);
       if (ArgOffset < 92 && IAR != IAREnd) {
-        BuildMI (BB, V8::ST, 3).addFrameIndex (FI).addSImm (0).addReg (*IAR++);
+        BuildMI (BB, V8::STri, 3).addFrameIndex (FI).addSImm (0).addReg (*IAR++);
       } else {
         unsigned TempReg = makeAnotherReg (Type::IntTy);
-        BuildMI (BB, V8::LD, 2, TempReg).addFrameIndex (FI).addSImm (0);
-        BuildMI (BB, V8::ST, 3).addFrameIndex (FI).addSImm (0).addReg (TempReg);
+        BuildMI (BB, V8::LDri, 2, TempReg).addFrameIndex (FI).addSImm (0);
+        BuildMI (BB, V8::STri, 3).addFrameIndex (FI).addSImm (0).addReg (TempReg);
       }
       ArgOffset += 4;
       if (ArgOffset < 92 && IAR != IAREnd) {
-        BuildMI (BB, V8::ST, 3).addFrameIndex (FI).addSImm (4).addReg (*IAR++);
+        BuildMI (BB, V8::STri, 3).addFrameIndex (FI).addSImm (4).addReg (*IAR++);
       } else {
         unsigned TempReg = makeAnotherReg (Type::IntTy);
-        BuildMI (BB, V8::LD, 2, TempReg).addFrameIndex (FI).addSImm (4);
-        BuildMI (BB, V8::ST, 3).addFrameIndex (FI).addSImm (4).addReg (TempReg);
+        BuildMI (BB, V8::LDri, 2, TempReg).addFrameIndex (FI).addSImm (4);
+        BuildMI (BB, V8::STri, 3).addFrameIndex (FI).addSImm (4).addReg (TempReg);
       }
       ArgOffset += 4;
       BuildMI (BB, V8::LDDFri, 2, ArgReg).addFrameIndex (FI).addSImm (0);
@@ -442,7 +442,7 @@ void V8ISel::LoadArgumentsToVirtualRegs (Function *LF) {
         BuildMI (BB, V8::ORrr, 2, ArgReg).addReg (V8::G0).addReg (*IAR++);
       } else {
         int FI = F->getFrameInfo()->CreateFixedObject(4, ArgOffset);
-        BuildMI (BB, V8::LD, 2, ArgReg).addFrameIndex (FI).addSImm (0);
+        BuildMI (BB, V8::LDri, 2, ArgReg).addFrameIndex (FI).addSImm (0);
       }
       ArgOffset += 4;
       // ...then do the second half
@@ -452,7 +452,7 @@ void V8ISel::LoadArgumentsToVirtualRegs (Function *LF) {
         BuildMI (BB, V8::ORrr, 2, ArgReg+1).addReg (V8::G0).addReg (*IAR++);
       } else {
         int FI = F->getFrameInfo()->CreateFixedObject(4, ArgOffset);
-        BuildMI (BB, V8::LD, 2, ArgReg+1).addFrameIndex (FI).addSImm (0);
+        BuildMI (BB, V8::LDri, 2, ArgReg+1).addFrameIndex (FI).addSImm (0);
       }
       ArgOffset += 4;
     } else {
@@ -644,7 +644,7 @@ void V8ISel::emitFPToIntegerCast (MachineBasicBlock *BB,
   BuildMI (*BB, IP, FPStoreOpcode, 3).addFrameIndex (FI).addSImm (0)
     .addReg (TempReg);
   unsigned TempReg2 = makeAnotherReg (newTy);
-  BuildMI (*BB, IP, V8::LD, 3, TempReg2).addFrameIndex (FI).addSImm (0);
+  BuildMI (*BB, IP, V8::LDri, 3, TempReg2).addFrameIndex (FI).addSImm (0);
   emitIntegerCast (BB, IP, Type::IntTy, TempReg2, newTy, DestReg);
 }
 
@@ -698,7 +698,7 @@ void V8ISel::emitCastOperation(MachineBasicBlock *BB,
         // it using ldf into a floating point register. then do fitos.
         unsigned TmpReg = makeAnotherReg (newTy);
         int FI = F->getFrameInfo()->CreateStackObject(4, FltAlign);
-        BuildMI (*BB, IP, V8::ST, 3).addFrameIndex (FI).addSImm (0)
+        BuildMI (*BB, IP, V8::STri, 3).addFrameIndex (FI).addSImm (0)
           .addReg (SrcReg);
         BuildMI (*BB, IP, V8::LDFri, 2, TmpReg).addFrameIndex (FI).addSImm (0);
         BuildMI (*BB, IP, V8::FITOS, 1, DestReg).addReg(TmpReg);
@@ -720,7 +720,7 @@ void V8ISel::emitCastOperation(MachineBasicBlock *BB,
         unsigned DoubleAlignment = TM.getTargetData().getDoubleAlignment();
         unsigned TmpReg = makeAnotherReg (newTy);
         int FI = F->getFrameInfo()->CreateStackObject(8, DoubleAlignment);
-        BuildMI (*BB, IP, V8::ST, 3).addFrameIndex (FI).addSImm (0)
+        BuildMI (*BB, IP, V8::STri, 3).addFrameIndex (FI).addSImm (0)
           .addReg (SrcReg);
         BuildMI (*BB, IP, V8::LDDFri, 2, TmpReg).addFrameIndex (FI).addSImm (0);
         BuildMI (*BB, IP, V8::FITOD, 1, DestReg).addReg(TmpReg);
@@ -774,22 +774,22 @@ void V8ISel::visitLoadInst(LoadInst &I) {
   switch (getClassB (I.getType ())) {
    case cByte:
     if (I.getType ()->isSigned ())
-      BuildMI (BB, V8::LDSB, 2, DestReg).addReg (PtrReg).addSImm(0);
+      BuildMI (BB, V8::LDSBri, 2, DestReg).addReg (PtrReg).addSImm(0);
     else
-      BuildMI (BB, V8::LDUB, 2, DestReg).addReg (PtrReg).addSImm(0);
+      BuildMI (BB, V8::LDUBri, 2, DestReg).addReg (PtrReg).addSImm(0);
     return;
    case cShort:
     if (I.getType ()->isSigned ())
-      BuildMI (BB, V8::LDSH, 2, DestReg).addReg (PtrReg).addSImm(0);
+      BuildMI (BB, V8::LDSHri, 2, DestReg).addReg (PtrReg).addSImm(0);
     else
-      BuildMI (BB, V8::LDUH, 2, DestReg).addReg (PtrReg).addSImm(0);
+      BuildMI (BB, V8::LDUHri, 2, DestReg).addReg (PtrReg).addSImm(0);
     return;
    case cInt:
-    BuildMI (BB, V8::LD, 2, DestReg).addReg (PtrReg).addSImm(0);
+    BuildMI (BB, V8::LDri, 2, DestReg).addReg (PtrReg).addSImm(0);
     return;
    case cLong:
-    BuildMI (BB, V8::LD, 2, DestReg).addReg (PtrReg).addSImm(0);
-    BuildMI (BB, V8::LD, 2, DestReg+1).addReg (PtrReg).addSImm(4);
+    BuildMI (BB, V8::LDri, 2, DestReg).addReg (PtrReg).addSImm(0);
+    BuildMI (BB, V8::LDri, 2, DestReg+1).addReg (PtrReg).addSImm(4);
     return;
    case cFloat:
     BuildMI (BB, V8::LDFri, 2, DestReg).addReg (PtrReg).addSImm(0);
@@ -810,17 +810,17 @@ void V8ISel::visitStoreInst(StoreInst &I) {
   unsigned PtrReg = getReg (I.getOperand (1));
   switch (getClassB (SrcVal->getType ())) {
    case cByte:
-    BuildMI (BB, V8::STB, 3).addReg (PtrReg).addSImm (0).addReg (SrcReg);
+    BuildMI (BB, V8::STBri, 3).addReg (PtrReg).addSImm (0).addReg (SrcReg);
     return;
    case cShort:
-    BuildMI (BB, V8::STH, 3).addReg (PtrReg).addSImm (0).addReg (SrcReg);
+    BuildMI (BB, V8::STHri, 3).addReg (PtrReg).addSImm (0).addReg (SrcReg);
     return;
    case cInt:
-    BuildMI (BB, V8::ST, 3).addReg (PtrReg).addSImm (0).addReg (SrcReg);
+    BuildMI (BB, V8::STri, 3).addReg (PtrReg).addSImm (0).addReg (SrcReg);
     return;
    case cLong:
-    BuildMI (BB, V8::ST, 3).addReg (PtrReg).addSImm (0).addReg (SrcReg);
-    BuildMI (BB, V8::ST, 3).addReg (PtrReg).addSImm (4).addReg (SrcReg+1);
+    BuildMI (BB, V8::STri, 3).addReg (PtrReg).addSImm (0).addReg (SrcReg);
+    BuildMI (BB, V8::STri, 3).addReg (PtrReg).addSImm (4).addReg (SrcReg+1);
     return;
    case cFloat:
     BuildMI (BB, V8::STFri, 3).addReg (PtrReg).addSImm (0).addReg (SrcReg);
@@ -879,7 +879,7 @@ void V8ISel::visitCallInst(CallInst &I) {
                 "About to dereference past end of OutgoingArgRegs");
         BuildMI (BB, V8::ORrr, 2, *OAR++).addReg (V8::G0).addReg (ArgReg);
       } else {
-        BuildMI (BB, V8::ST, 3).addReg (V8::SP).addSImm (ArgOffset)
+        BuildMI (BB, V8::STri, 3).addReg (V8::SP).addSImm (ArgOffset)
           .addReg (ArgReg);
       }
       ArgOffset += 4;
@@ -892,7 +892,7 @@ void V8ISel::visitCallInst(CallInst &I) {
         BuildMI (BB, V8::STFri, 3).addFrameIndex(FI).addSImm(0).addReg(ArgReg);
         assert (OAR != OAREnd &&
                 "About to dereference past end of OutgoingArgRegs");
-        BuildMI (BB, V8::LD, 2, *OAR++).addFrameIndex (FI).addSImm (0);
+        BuildMI (BB, V8::LDri, 2, *OAR++).addFrameIndex (FI).addSImm (0);
       } else {
         BuildMI (BB, V8::STFri, 3).addReg (V8::SP).addSImm (ArgOffset)
           .addReg (ArgReg);
@@ -909,22 +909,22 @@ void V8ISel::visitCallInst(CallInst &I) {
       if (ArgOffset < 92 && OAR != OAREnd) {
         assert (OAR != OAREnd &&
                 "About to dereference past end of OutgoingArgRegs");
-        BuildMI (BB, V8::LD, 2, *OAR++).addFrameIndex (FI).addSImm (0);
+        BuildMI (BB, V8::LDri, 2, *OAR++).addFrameIndex (FI).addSImm (0);
       } else {
         unsigned TempReg = makeAnotherReg (Type::IntTy);
-        BuildMI (BB, V8::LD, 2, TempReg).addFrameIndex (FI).addSImm (0);
-        BuildMI (BB, V8::ST, 3).addReg (V8::SP).addSImm (ArgOffset)
+        BuildMI (BB, V8::LDri, 2, TempReg).addFrameIndex (FI).addSImm (0);
+        BuildMI (BB, V8::STri, 3).addReg (V8::SP).addSImm (ArgOffset)
           .addReg (TempReg);
       }
       ArgOffset += 4;
       if (ArgOffset < 92 && OAR != OAREnd) {
         assert (OAR != OAREnd &&
                 "About to dereference past end of OutgoingArgRegs");
-        BuildMI (BB, V8::LD, 2, *OAR++).addFrameIndex (FI).addSImm (4);
+        BuildMI (BB, V8::LDri, 2, *OAR++).addFrameIndex (FI).addSImm (4);
       } else {
         unsigned TempReg = makeAnotherReg (Type::IntTy);
-        BuildMI (BB, V8::LD, 2, TempReg).addFrameIndex (FI).addSImm (4);
-        BuildMI (BB, V8::ST, 3).addReg (V8::SP).addSImm (ArgOffset)
+        BuildMI (BB, V8::LDri, 2, TempReg).addFrameIndex (FI).addSImm (4);
+        BuildMI (BB, V8::STri, 3).addReg (V8::SP).addSImm (ArgOffset)
           .addReg (TempReg);
       }
       ArgOffset += 4;
@@ -935,7 +935,7 @@ void V8ISel::visitCallInst(CallInst &I) {
                 "About to dereference past end of OutgoingArgRegs");
         BuildMI (BB, V8::ORrr, 2, *OAR++).addReg (V8::G0).addReg (ArgReg);
       } else {
-        BuildMI (BB, V8::ST, 3).addReg (V8::SP).addSImm (ArgOffset)
+        BuildMI (BB, V8::STri, 3).addReg (V8::SP).addSImm (ArgOffset)
           .addReg (ArgReg);
       }
       ArgOffset += 4;
@@ -945,7 +945,7 @@ void V8ISel::visitCallInst(CallInst &I) {
                 "About to dereference past end of OutgoingArgRegs");
         BuildMI (BB, V8::ORrr, 2, *OAR++).addReg (V8::G0).addReg (ArgReg+1);
       } else {
-        BuildMI (BB, V8::ST, 3).addReg (V8::SP).addSImm (ArgOffset)
+        BuildMI (BB, V8::STri, 3).addReg (V8::SP).addSImm (ArgOffset)
           .addReg (ArgReg+1);
       }
       ArgOffset += 4;
@@ -1756,7 +1756,7 @@ void V8ISel::visitIntrinsicCall(Intrinsic::ID ID, CallInst &CI) {
     unsigned DestReg = getReg (CI.getOperand(1));
     unsigned Tmp = makeAnotherReg(Type::IntTy);
     BuildMI (BB, V8::ADDri, 2, Tmp).addReg (V8::FP).addSImm (VarArgsOffset);
-    BuildMI(BB, V8::ST, 3).addReg(DestReg).addSImm(0).addReg(Tmp);
+    BuildMI(BB, V8::STri, 3).addReg(DestReg).addSImm(0).addReg(Tmp);
     return;
   }
 
@@ -1767,7 +1767,7 @@ void V8ISel::visitIntrinsicCall(Intrinsic::ID ID, CallInst &CI) {
   case Intrinsic::vacopy: {
     // Copy the va_list ptr (arg1) to the result.
     unsigned DestReg = getReg (CI.getOperand(1)), SrcReg = getReg (CI.getOperand (2));
-    BuildMI(BB, V8::ST, 3).addReg(DestReg).addSImm(0).addReg(SrcReg);
+    BuildMI(BB, V8::STri, 3).addReg(DestReg).addSImm(0).addReg(SrcReg);
     return;
   }
   }
@@ -1778,21 +1778,21 @@ void V8ISel::visitVAArgInst (VAArgInst &I) {
   unsigned DestReg = getReg (I);
   unsigned Size;
   unsigned VAList = makeAnotherReg(Type::IntTy);
-  BuildMI(BB, V8::LD, 2, VAList).addReg(VAListPtr).addSImm(0);
+  BuildMI(BB, V8::LDri, 2, VAList).addReg(VAListPtr).addSImm(0);
 
   switch (I.getType ()->getTypeID ()) {
   case Type::PointerTyID:
   case Type::UIntTyID:
   case Type::IntTyID:
     Size = 4;
-    BuildMI (BB, V8::LD, 2, DestReg).addReg (VAList).addSImm (0);
+    BuildMI (BB, V8::LDri, 2, DestReg).addReg (VAList).addSImm (0);
     break;
 
   case Type::ULongTyID:
   case Type::LongTyID:
     Size = 8;
-    BuildMI (BB, V8::LD, 2, DestReg).addReg (VAList).addSImm (0);
-    BuildMI (BB, V8::LD, 2, DestReg+1).addReg (VAList).addSImm (4);
+    BuildMI (BB, V8::LDri, 2, DestReg).addReg (VAList).addSImm (0);
+    BuildMI (BB, V8::LDri, 2, DestReg+1).addReg (VAList).addSImm (4);
     break;
 
   case Type::DoubleTyID: {
@@ -1801,10 +1801,10 @@ void V8ISel::visitVAArgInst (VAArgInst &I) {
     unsigned TempReg = makeAnotherReg (Type::IntTy);
     unsigned TempReg2 = makeAnotherReg (Type::IntTy);
     int FI = F->getFrameInfo()->CreateStackObject(8, DblAlign);
-    BuildMI (BB, V8::LD, 2, TempReg).addReg (VAList).addSImm (0);
-    BuildMI (BB, V8::LD, 2, TempReg2).addReg (VAList).addSImm (4);
-    BuildMI (BB, V8::ST, 3).addFrameIndex (FI).addSImm (0).addReg (TempReg);
-    BuildMI (BB, V8::ST, 3).addFrameIndex (FI).addSImm (4).addReg (TempReg2);
+    BuildMI (BB, V8::LDri, 2, TempReg).addReg (VAList).addSImm (0);
+    BuildMI (BB, V8::LDri, 2, TempReg2).addReg (VAList).addSImm (4);
+    BuildMI (BB, V8::STri, 3).addFrameIndex (FI).addSImm (0).addReg (TempReg);
+    BuildMI (BB, V8::STri, 3).addFrameIndex (FI).addSImm (4).addReg (TempReg2);
     BuildMI (BB, V8::LDDFri, 2, DestReg).addFrameIndex (FI).addSImm (0);
     break;
   }
@@ -1817,6 +1817,6 @@ void V8ISel::visitVAArgInst (VAArgInst &I) {
   }
   unsigned tmp = makeAnotherReg(Type::IntTy);
   BuildMI (BB, V8::ADDri, 2, tmp).addReg(VAList).addSImm(Size);
-  BuildMI(BB, V8::ST, 3).addReg(VAListPtr).addSImm(0).addReg(VAList);
+  BuildMI(BB, V8::STri, 3).addReg(VAListPtr).addSImm(0).addReg(VAList);
   return;
 }
