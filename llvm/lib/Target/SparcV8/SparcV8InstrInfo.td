@@ -65,8 +65,8 @@ let isReturn = 1, isTerminator = 1, hasDelaySlot = 1 in {
 // FIXME: should keep track of the fact that it defs the integer condition codes
 let rd = 0 in
   def CMPri: F3_2<2, 0b010100,
-                  (ops IntRegs:$dst, IntRegs:$b, i32imm:$c),
-                  "cmp $b, $c, $dst">;
+                  (ops IntRegs:$b, i32imm:$c),
+                  "cmp $b, $c">;
 
 // Section B.1 - Load Integer Instructions, p. 90
 def LDSB: F3_2<3, 0b001001,
@@ -373,51 +373,53 @@ def RESTOREri : F3_2<2, 0b111101,
 // Section B.21 - Branch on Integer Condition Codes Instructions, p. 119
 
 // conditional branch class:
-class BranchV8<bits<4> cc, string nm> : F2_2<cc, 0b010, nm> {
+class BranchV8<bits<4> cc, dag ops, string asmstr>
+ : F2_2<cc, 0b010, ops, asmstr> {
   let isBranch = 1;
   let isTerminator = 1;
   let hasDelaySlot = 1;
 }
 
 let isBarrier = 1 in
-  def BA   : BranchV8<0b1000, "ba">;
-def BN   : BranchV8<0b0000, "bn">;
-def BNE  : BranchV8<0b1001, "bne">;
-def BE   : BranchV8<0b0001, "be">;
-def BG   : BranchV8<0b1010, "bg">;
-def BLE  : BranchV8<0b0010, "ble">;
-def BGE  : BranchV8<0b1011, "bge">;
-def BL   : BranchV8<0b0011, "bl">;
-def BGU  : BranchV8<0b1100, "bgu">;
-def BLEU : BranchV8<0b0100, "bleu">;
-def BCC  : BranchV8<0b1101, "bcc">;
-def BCS  : BranchV8<0b0101, "bcs">;
+  def BA   : BranchV8<0b1000, (ops IntRegs:$dst), "ba $dst">;
+def BN   : BranchV8<0b0000, (ops IntRegs:$dst), "bn $dst">;
+def BNE  : BranchV8<0b1001, (ops IntRegs:$dst), "bne $dst">;
+def BE   : BranchV8<0b0001, (ops IntRegs:$dst), "be $dst">;
+def BG   : BranchV8<0b1010, (ops IntRegs:$dst), "bg $dst">;
+def BLE  : BranchV8<0b0010, (ops IntRegs:$dst), "ble $dst">;
+def BGE  : BranchV8<0b1011, (ops IntRegs:$dst), "bge $dst">;
+def BL   : BranchV8<0b0011, (ops IntRegs:$dst), "bl $dst">;
+def BGU  : BranchV8<0b1100, (ops IntRegs:$dst), "bgu $dst">;
+def BLEU : BranchV8<0b0100, (ops IntRegs:$dst), "bleu $dst">;
+def BCC  : BranchV8<0b1101, (ops IntRegs:$dst), "bcc $dst">;
+def BCS  : BranchV8<0b0101, (ops IntRegs:$dst), "bcs $dst">;
 
 // Section B.22 - Branch on Floating-point Condition Codes Instructions, p. 121
 
 // floating-point conditional branch class:
-class FPBranchV8<bits<4> cc, string nm> : F2_2<cc, 0b110, nm> {
+class FPBranchV8<bits<4> cc, dag ops, string asmstr>
+ : F2_2<cc, 0b110, ops, asmstr> {
   let isBranch = 1;
   let isTerminator = 1;
   let hasDelaySlot = 1;
 }
 
-def FBA  : FPBranchV8<0b1000, "fba">;
-def FBN  : FPBranchV8<0b0000, "fbn">;
-def FBU  : FPBranchV8<0b0111, "fbu">;
-def FBG  : FPBranchV8<0b0110, "fbg">;
-def FBUG : FPBranchV8<0b0101, "fbug">;
-def FBL  : FPBranchV8<0b0100, "fbl">;
-def FBUL : FPBranchV8<0b0011, "fbul">;
-def FBLG : FPBranchV8<0b0010, "fblg">;
-def FBNE : FPBranchV8<0b0001, "fbne">;
-def FBE  : FPBranchV8<0b1001, "fbe">;
-def FBUE : FPBranchV8<0b1010, "fbue">;
-def FBGE : FPBranchV8<0b1011, "fbge">;
-def FBUGE: FPBranchV8<0b1100, "fbuge">;
-def FBLE : FPBranchV8<0b1101, "fble">;
-def FBULE: FPBranchV8<0b1110, "fbule">;
-def FBO  : FPBranchV8<0b1111, "fbo">;
+def FBA  : FPBranchV8<0b1000, (ops IntRegs:$dst), "fba $dst">;
+def FBN  : FPBranchV8<0b0000, (ops IntRegs:$dst), "fbn $dst">;
+def FBU  : FPBranchV8<0b0111, (ops IntRegs:$dst), "fbu $dst">;
+def FBG  : FPBranchV8<0b0110, (ops IntRegs:$dst), "fbg $dst">;
+def FBUG : FPBranchV8<0b0101, (ops IntRegs:$dst), "fbug $dst">;
+def FBL  : FPBranchV8<0b0100, (ops IntRegs:$dst), "fbl $dst">;
+def FBUL : FPBranchV8<0b0011, (ops IntRegs:$dst), "fbul $dst">;
+def FBLG : FPBranchV8<0b0010, (ops IntRegs:$dst), "fblg $dst">;
+def FBNE : FPBranchV8<0b0001, (ops IntRegs:$dst), "fbne $dst">;
+def FBE  : FPBranchV8<0b1001, (ops IntRegs:$dst), "fbe $dst">;
+def FBUE : FPBranchV8<0b1010, (ops IntRegs:$dst), "fbue $dst">;
+def FBGE : FPBranchV8<0b1011, (ops IntRegs:$dst), "fbge $dst">;
+def FBUGE: FPBranchV8<0b1100, (ops IntRegs:$dst), "fbuge $dst">;
+def FBLE : FPBranchV8<0b1101, (ops IntRegs:$dst), "fble $dst">;
+def FBULE: FPBranchV8<0b1110, (ops IntRegs:$dst), "fbule $dst">;
+def FBO  : FPBranchV8<0b1111, (ops IntRegs:$dst), "fbo $dst">;
 
 
 
@@ -428,10 +430,11 @@ let Uses = [O0, O1, O2, O3, O4, O5], hasDelaySlot = 1, isCall = 1 in {
   let Defs = [O0, O1, O2, O3, O4, O5, O7, G1, G2, G3, G4, G5, G6, G7,
     D0, D1, D2, D3, D4, D5, D6, D7, D8, D9, D10, D11, D12, D13, D14, D15] in
   def CALL : InstV8 {
+    let OperandList = (ops IntRegs:$dst);
     bits<30> disp;
     let op = 1;
     let Inst{29-0} = disp;
-    let Name = "call";
+    let AsmString = "call $dst";
   }
 
   // indirect call (O7 is an EXPLICIT def in indirect calls, so it cannot also
@@ -524,13 +527,13 @@ def FDIVD  : F3_3<2, 0b110100, 0b001001110,
 // is modelled with a forced noop after the instruction.
 def FCMPS  : F3_3<2, 0b110101, 0b001010001,
                   (ops FPRegs:$src1, FPRegs:$src2),
-                  "fcmps $src1, $src2\n nop">;
+                  "fcmps $src1, $src2\n\tnop">;
 def FCMPD  : F3_3<2, 0b110101, 0b001010010,
                   (ops DFPRegs:$src1, DFPRegs:$src2),
-                  "fcmpd $src1, $src2\n nop">;
+                  "fcmpd $src1, $src2\n\tnop">;
 def FCMPES : F3_3<2, 0b110101, 0b001010101,
                   (ops FPRegs:$src1, FPRegs:$src2),
-                  "fcmpes $src1, $src2\n nop">;
+                  "fcmpes $src1, $src2\n\tnop">;
 def FCMPED : F3_3<2, 0b110101, 0b001010110,
                   (ops DFPRegs:$src1, DFPRegs:$src2),
-                  "fcmped $src1, $src2\n nop">;
+                  "fcmped $src1, $src2\n\tnop">;

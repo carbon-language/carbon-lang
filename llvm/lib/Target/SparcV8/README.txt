@@ -1,11 +1,10 @@
 
 Meta TODO list:
-1. Convert all instructions to use autogeneration for asm strings.
-2. Convert asmprinter to use lib/CodeGen/AsmPrinter for global init printing
+1. Convert asmprinter to use lib/CodeGen/AsmPrinter for global init printing
    constant pool printing, etc.
-3. Create a new DAG -> DAG instruction selector, by adding patterns to the
+2. Create a new DAG -> DAG instruction selector, by adding patterns to the
    instructions.
-4. profit!
+3. profit!
 
 
 SparcV8 backend skeleton
