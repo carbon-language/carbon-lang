@@ -391,6 +391,34 @@ SDOperand X86DAGToDAGISel::Select(SDOperand N) {
       }
       break;
 
+    case ISD::TRUNCATE: {
+      unsigned Reg;
+      MVT::ValueType VT;
+      switch (Node->getOperand(0).getValueType()) {
+        default: assert(0 && "Unknown truncate!");
+        case MVT::i16: Reg = X86::AX;  Opc = X86::MOV16rr; VT = MVT::i16; break;
+        case MVT::i32: Reg = X86::EAX; Opc = X86::MOV32rr; VT = MVT::i32; break;
+      }
+      SDOperand Tmp0 = Select(Node->getOperand(0));
+      SDOperand Tmp1 = CurDAG->getTargetNode(Opc, VT, Tmp0);
+      SDOperand InFlag = SDOperand(0,0);
+      SDOperand Result = CurDAG->getCopyToReg(CurDAG->getEntryNode(),
+                                              Reg, Tmp1, InFlag).getValue(1);
+      SDOperand Chain = Result.getValue(0);
+      InFlag = Result.getValue(1);
+
+      switch (NVT) {
+        default: assert(0 && "Unknown truncate!");
+        case MVT::i8:  Reg = X86::AL;  Opc = X86::MOV8rr;  VT = MVT::i8;  break;
+        case MVT::i16: Reg = X86::AX;  Opc = X86::MOV16rr; VT = MVT::i16; break;
+      }
+
+      Result = CurDAG->getCopyFromReg(Chain,
+                                      Reg, VT, InFlag);
+      return CodeGenMap[N] = CurDAG->getTargetNode(Opc, VT, Result);
+      break;
+    }
+
     case ISD::RET: {
       SDOperand Chain = Node->getOperand(0);     // Token chain.
       unsigned NumOps = Node->getNumOperands();
