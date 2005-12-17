@@ -20,12 +20,17 @@
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetMachineRegistry.h"
 #include "llvm/Transforms/Scalar.h"
+#include "llvm/Support/CommandLine.h"
 #include <iostream>
 using namespace llvm;
 
 namespace {
   // Register the target.
   RegisterTarget<SparcV8TargetMachine> X("sparcv8","  SPARC V8 (experimental)");
+
+  cl::opt<bool> DisableV8DAGDAG("disable-v8-dag-isel", cl::Hidden,
+                                cl::desc("Disable DAG-to-DAG isel for V8"),
+                                cl::init(1));
 }
 
 /// SparcV8TargetMachine ctor - Create an ILP32 architecture model
@@ -87,7 +92,10 @@ bool SparcV8TargetMachine::addPassesToEmitFile(PassManager &PM,
   if (PrintMachineCode)
     PM.add(new PrintFunctionPass());
 
-  PM.add(createSparcV8SimpleInstructionSelector(*this));
+  if (DisableV8DAGDAG)
+    PM.add(createSparcV8SimpleInstructionSelector(*this));
+  else
+    PM.add(createSparcV8ISelDag(*this));
 
   // Print machine instructions as they were initially generated.
   if (PrintMachineCode)
