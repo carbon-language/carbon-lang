@@ -18,6 +18,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Module.h"
 #include "llvm/Assembly/Writer.h"
+#include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineInstr.h"
@@ -33,21 +34,8 @@ using namespace llvm;
 namespace {
   Statistic<> EmittedInsts("asm-printer", "Number of machine instrs printed");
 
-  struct SparcV8AsmPrinter : public MachineFunctionPass {
-    /// Output stream on which we're printing assembly code.
-    ///
-    std::ostream &O;
-
-    /// Target machine description which we query for reg. names, data
-    /// layout, etc.
-    ///
-    TargetMachine &TM;
-
-    /// Name-mangler for global names.
-    ///
-    Mangler *Mang;
-
-    SparcV8AsmPrinter(std::ostream &o, TargetMachine &tm) : O(o), TM(tm) { }
+  struct SparcV8AsmPrinter : public AsmPrinter {
+    SparcV8AsmPrinter(std::ostream &O, TargetMachine &TM) : AsmPrinter(O, TM) {}
 
     /// We name each basic block in a Function with a unique number, so
     /// that we can consistently refer to them later. This is cleared
@@ -55,12 +43,6 @@ namespace {
     ///
     typedef std::map<const Value *, unsigned> ValueMapTy;
     ValueMapTy NumberForBB;
-
-    /// Cache of mangled name for current function. This is
-    /// recalculated at the beginning of each call to
-    /// runOnMachineFunction().
-    ///
-    std::string CurrentFnName;
 
     virtual const char *getPassName() const {
       return "SparcV8 Assembly Printer";
@@ -306,8 +288,8 @@ void SparcV8AsmPrinter::printConstantPool(MachineConstantPool *MCP) {
 
   if (CP.empty()) return;
 
+  SwitchSection(".section \".rodata\"\n", 0);
   for (unsigned i = 0, e = CP.size(); i != e; ++i) {
-    O << "\t.section \".rodata\"\n";
     O << "\t.align " << (unsigned)TD.getTypeAlignment(CP[i]->getType())
       << "\n";
     O << ".CPI" << CurrentFnName << "_" << i << ":\t\t\t\t\t!"
@@ -320,6 +302,8 @@ void SparcV8AsmPrinter::printConstantPool(MachineConstantPool *MCP) {
 /// method to print assembly for each instruction.
 ///
 bool SparcV8AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
+  SetupMachineFunction(MF);
+
   // BBNumber is used here so that a given Printer will never give two
   // BBs the same name. (If you have a better way, please let me know!)
   static unsigned BBNumber = 0;
@@ -358,6 +342,7 @@ bool SparcV8AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
       // Print the assembly for the instruction.
       O << "\t";
       printInstruction(II);
+      ++EmittedInsts;
     }
   }
 
@@ -426,21 +411,8 @@ bool SparcV8AsmPrinter::doInitialization(Module &M) {
   return false; // success
 }
 
-// SwitchSection - Switch to the specified section of the executable if we are
-// not already in it!
-//
-static void SwitchSection(std::ostream &OS, std::string &CurSection,
-                          const char *NewSection) {
-  if (CurSection != NewSection) {
-    CurSection = NewSection;
-    if (!CurSection.empty())
-      OS << "\t.section \"" << NewSection << "\"\n";
-  }
-}
-
 bool SparcV8AsmPrinter::doFinalization(Module &M) {
   const TargetData &TD = TM.getTargetData();
-  std::string CurSection;
 
   // Print out module-level global variables here.
   for (Module::const_global_iterator I = M.global_begin(), E = M.global_end(); I != E; ++I)
@@ -454,7 +426,7 @@ bool SparcV8AsmPrinter::doFinalization(Module &M) {
       if (C->isNullValue() &&
           (I->hasLinkOnceLinkage() || I->hasInternalLinkage() ||
            I->hasWeakLinkage() /* FIXME: Verify correct */)) {
-        SwitchSection(O, CurSection, ".data");
+        SwitchSection(".data", I);
         if (I->hasInternalLinkage())
           O << "\t.local " << name << "\n";
 
@@ -469,8 +441,9 @@ bool SparcV8AsmPrinter::doFinalization(Module &M) {
         case GlobalValue::WeakLinkage:   // FIXME: Verify correct for weak.
           // Nonnull linkonce -> weak
           O << "\t.weak " << name << "\n";
-          SwitchSection(O, CurSection, "");
-          O << "\t.section\t\".llvm.linkonce.d." << name << "\",\"aw\",@progbits\n";
+          SwitchSection("", I);
+          O << "\t.section\t\".llvm.linkonce.d." << name
+            << "\",\"aw\",@progbits\n";
           break;
 
         case GlobalValue::AppendingLinkage:
@@ -482,9 +455,9 @@ bool SparcV8AsmPrinter::doFinalization(Module &M) {
           // FALL THROUGH
         case GlobalValue::InternalLinkage:
           if (C->isNullValue())
-            SwitchSection(O, CurSection, ".bss");
+            SwitchSection(".bss", I);
           else
-            SwitchSection(O, CurSection, ".data");
+            SwitchSection(".data", I);
           break;
         case GlobalValue::GhostLinkage:
           std::cerr << "Should not have any unmaterialized functions!\n";
@@ -503,6 +476,6 @@ bool SparcV8AsmPrinter::doFinalization(Module &M) {
       }
     }
 
-  delete Mang;
+  AsmPrinter::doFinalization(M);
   return false; // success
 }
