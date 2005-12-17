@@ -30,11 +30,6 @@ class Rd<bits<5> num, string n, list<Register> aliases> : SparcReg<n> {
   let Num = num;
   let Aliases = aliases;
 }
-// Rs - Special "ancillary state registers" registers, like the Y, ASR, PSR,
-// WIM, TBR, etc registers
-class Rs<bits<5> num, string n> : SparcReg<n> {
-  let Num = num;
-}
 
 // Integer registers
 def G0 : Ri< 0, "G0">; def G1 : Ri< 1, "G1">; def G2 : Ri< 2, "G2">; 
@@ -76,8 +71,6 @@ def D10 : Rd<20, "F20", [F20, F21]>; def D11 : Rd<22, "F22", [F22, F23]>;
 def D12 : Rd<24, "F24", [F24, F25]>; def D13 : Rd<26, "F26", [F26, F27]>; 
 def D14 : Rd<28, "F28", [F28, F29]>; def D15 : Rd<30, "F30", [F30, F31]>;
 
-// The Y register.
-def Y   : Rs<0, "Y">;
 
 // Register classes.
 //

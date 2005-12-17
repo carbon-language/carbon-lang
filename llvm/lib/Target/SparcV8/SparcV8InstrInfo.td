@@ -358,10 +358,12 @@ def UMULri  : F3_2<2, 0b001010,
                    "umul $b, $c, $dst", []>;
 def SMULrr  : F3_1<2, 0b001011, 
                    (ops IntRegs:$dst, IntRegs:$b, IntRegs:$c),
-                   "smul $b, $c, $dst", []>;
+                   "smul $b, $c, $dst",
+                   [(set IntRegs:$dst, (mul IntRegs:$b, IntRegs:$c))]>;
 def SMULri  : F3_2<2, 0b001011,
                    (ops IntRegs:$dst, IntRegs:$b, i32imm:$c),
-                   "smul $b, $c, $dst", []>;
+                   "smul $b, $c, $dst",
+                   [(set IntRegs:$dst, (mul IntRegs:$b, simm13:$c))]>;
 
 // Section B.19 - Divide Instructions, p. 115
 def UDIVrr   : F3_1<2, 0b001110, 
@@ -467,13 +469,18 @@ let Uses = [O0, O1, O2, O3, O4, O5], hasDelaySlot = 1, isCall = 1 in {
                     "jmpl $b+$c, $dst", []>;
 }
 
+// Section B.28 - Read State Register Instructions
+def RDY : F3_1<2, 0b101000,
+               (ops IntRegs:$dst),
+               "rdy $dst", []>;
+
 // Section B.29 - Write State Register Instructions
-def WRrr : F3_1<2, 0b110000,
-                (ops IntRegs:$dst, IntRegs:$b, IntRegs:$c),
-                "wr $b, $c, $dst", []>;
-def WRri : F3_2<2, 0b110000,
-                (ops IntRegs:$dst, IntRegs:$b, i32imm:$c),
-                "wr $b, $c, $dst", []>;
+def WRYrr : F3_1<2, 0b110000,
+                 (ops IntRegs:$b, IntRegs:$c),
+                 "wr $b, $c, %y", []>;
+def WRYri : F3_2<2, 0b110000,
+                 (ops IntRegs:$b, i32imm:$c),
+                 "wr $b, $c, %y", []>;
 
 // Convert Integer to Floating-point Instructions, p. 141
 def FITOS : F3_3<2, 0b110100, 0b011000100,

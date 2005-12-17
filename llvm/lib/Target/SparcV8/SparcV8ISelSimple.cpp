@@ -1480,11 +1480,11 @@ void V8ISel::visitBinaryOperator (Instruction &I) {
       unsigned Tmp = makeAnotherReg (I.getType ());
       // Sign extend into the Y register
       BuildMI (BB, V8::SRAri, 2, Tmp).addReg (Op0Reg).addZImm (31);
-      BuildMI (BB, V8::WRrr, 2, V8::Y).addReg (Tmp).addReg (V8::G0);
+      BuildMI (BB, V8::WRYrr, 2).addReg (Tmp).addReg (V8::G0);
       BuildMI (BB, V8::SDIVrr, 2, Dest).addReg (Op0Reg).addReg (Op1Reg);
     } else {
       // Zero extend into the Y register, ie, just set it to zero
-      BuildMI (BB, V8::WRrr, 2, V8::Y).addReg (V8::G0).addReg (V8::G0);
+      BuildMI (BB, V8::WRYrr, 2).addReg (V8::G0).addReg (V8::G0);
       BuildMI (BB, V8::UDIVrr, 2, Dest).addReg (Op0Reg).addReg (Op1Reg);
     }
 
