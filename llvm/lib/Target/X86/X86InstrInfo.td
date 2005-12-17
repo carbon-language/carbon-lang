@@ -35,19 +35,19 @@ def X86cmov : SDNode<"X86ISD::CMOV", SDTX86Cmov,    []>;
 
 // *mem - Operand definitions for the funky X86 addressing mode operands.
 //
-class X86MemOperand<ValueType Ty, string printMethod> : Operand<Ty> {
+class X86MemOperand<string printMethod> : Operand<i32> {
   let PrintMethod = printMethod;
   let NumMIOperands = 4;
   let MIOperandInfo = (ops R32, i8imm, R32, i32imm);
 }
 
-def i8mem   : X86MemOperand<i32, "printi8mem">;
-def i16mem  : X86MemOperand<i32, "printi16mem">;
-def i32mem  : X86MemOperand<i32, "printi32mem">;
-def i64mem  : X86MemOperand<i32, "printi64mem">;
-def f32mem  : X86MemOperand<i32, "printf32mem">;
-def f64mem  : X86MemOperand<i32, "printf64mem">;
-def f80mem  : X86MemOperand<i32, "printf80mem">;
+def i8mem   : X86MemOperand<"printi8mem">;
+def i16mem  : X86MemOperand<"printi16mem">;
+def i32mem  : X86MemOperand<"printi32mem">;
+def i64mem  : X86MemOperand<"printi64mem">;
+def f32mem  : X86MemOperand<"printf32mem">;
+def f64mem  : X86MemOperand<"printf64mem">;
+def f80mem  : X86MemOperand<"printf80mem">;
 
 def SSECC : Operand<i8> {
   let PrintMethod = "printSSECC";
