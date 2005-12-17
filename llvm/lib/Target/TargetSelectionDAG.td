@@ -135,8 +135,7 @@ def SDTBrCond : SDTypeProfile<0, 2, [ // brcond
   SDTCisInt<0>, SDTCisVT<1, OtherVT>
 ]>;
 
-def SDTRet : SDTypeProfile<0, 0, [ // ret
-]>;
+def SDTRet : SDTypeProfile<0, 0, []>; // ret
 
 def SDTWritePort : SDTypeProfile<0, 2, [ // writeport
   SDTCisInt<0>, SDTCisInt<1>
@@ -151,6 +150,9 @@ def SDTStore : SDTypeProfile<0, 2, [ // store
 ]>;
 
 def SDTIntExtLoad : SDTypeProfile<1, 3, [  // sextload, zextload, extload
+  SDTCisInt<0>, SDTCisPtrTy<1>, SDTCisVT<2, OtherVT>, SDTCisVT<3, OtherVT>
+]>;
+def SDTTruncStore : SDTypeProfile<0, 4, [  // truncstore
   SDTCisInt<0>, SDTCisPtrTy<1>, SDTCisVT<2, OtherVT>, SDTCisVT<3, OtherVT>
 ]>;
 
@@ -262,6 +264,7 @@ def store      : SDNode<"ISD::STORE"      , SDTStore, [SDNPHasChain]>;
 def sextld     : SDNode<"ISD::SEXTLOAD"   , SDTIntExtLoad, [SDNPHasChain]>;
 def zextld     : SDNode<"ISD::ZEXTLOAD"   , SDTIntExtLoad, [SDNPHasChain]>;
 def extld      : SDNode<"ISD::EXTLOAD"    , SDTIntExtLoad, [SDNPHasChain]>;
+def truncst    : SDNode<"ISD::TRUNCSTORE" , SDTTruncStore, [SDNPHasChain]>;
 
 //===----------------------------------------------------------------------===//
 // Selection DAG Condition Codes
@@ -329,13 +332,16 @@ def vtFP       : PatLeaf<(vt),  [{ return MVT::isFloatingPoint(N->getVT()); }]>;
 def not  : PatFrag<(ops node:$in), (xor node:$in, immAllOnes)>;
 def ineg : PatFrag<(ops node:$in), (sub 0, node:$in)>;
 
-// extending load fragments.
+// extending load & truncstore fragments.
 def sextload      : PatFrag<(ops node:$ptr, node:$vt),
                             (sextld node:$ptr, srcvalue:$dummy, node:$vt)>;
 def zextload      : PatFrag<(ops node:$ptr, node:$vt),
                             (zextld node:$ptr, srcvalue:$dummy, node:$vt)>;
 def extload       : PatFrag<(ops node:$ptr, node:$vt),
                             (extld node:$ptr, srcvalue:$dummy, node:$vt)>;
+def truncstore    : PatFrag<(ops node:$val, node:$ptr, node:$vt),
+                            (truncst node:$val, node:$ptr, srcvalue:$dummy, 
+                            node:$vt)>;
 
 // setcc convenience fragments.
 def setoeq : PatFrag<(ops node:$lhs, node:$rhs),
