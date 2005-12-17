@@ -1062,7 +1062,7 @@ void V8ISel::visitBranchInst(BranchInst &I) {
       // CondReg=(<condition>);
       // If (CondReg==0) goto notTakenSuccMBB;
       unsigned CondReg = getReg (I.getCondition ());
-      BuildMI (BB, V8::CMPri, 2).addSImm (0).addReg (CondReg);
+      BuildMI (BB, V8::SUBCCri, 2, V8::G0).addReg(CondReg).addSImm(0);
       BuildMI (BB, V8::BE, 1).addMBB (notTakenSuccMBB);
       BuildMI (BB, V8::BA, 1).addMBB (takenSuccMBB);
       return;

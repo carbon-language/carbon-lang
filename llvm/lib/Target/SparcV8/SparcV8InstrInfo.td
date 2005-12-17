@@ -94,13 +94,6 @@ let isReturn = 1, isTerminator = 1, hasDelaySlot = 1 in {
     def RETL: F3_2<2, 0b111000, (ops),
                    "retl", [(ret)]>;
 }
-// CMP is a special case of SUBCC where destination is ignored, by setting it to
-// %g0 (hardwired zero).
-// FIXME: should keep track of the fact that it defs the integer condition codes
-let rd = 0 in
-  def CMPri: F3_2<2, 0b010100,
-                  (ops IntRegs:$b, i32imm:$c),
-                  "cmp $b, $c", []>;
 
 // Section B.1 - Load Integer Instructions, p. 90
 def LDSBrr : F3_1<3, 0b001001,
@@ -520,6 +513,8 @@ def FABSS : F3_3<2, 0b110100, 0b000001001,
                  (ops FPRegs:$dst, FPRegs:$src),
                  "fabss $src, $dst",
                  [(set FPRegs:$dst, (fabs FPRegs:$src))]>;
+// FIXME: ADD FNEGD/FABSD pseudo instructions.
+
 
 // Floating-point Square Root Instructions, p.145
 def FSQRTS : F3_3<2, 0b110100, 0b000101001, 
