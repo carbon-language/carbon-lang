@@ -568,15 +568,17 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
   case ISD::CopyFromReg:
     Tmp1 = LegalizeOp(Node->getOperand(0));
     Result = Op.getValue(0);
-    if (Node->getNumOperands() == 2) {
+    if (Node->getNumValues() == 2) {
       if (Tmp1 != Node->getOperand(0))
         Result = DAG.getCopyFromReg(Tmp1, 
                             cast<RegisterSDNode>(Node->getOperand(1))->getReg(),
                                     Node->getValueType(0));
     } else {
-      assert(Node->getNumOperands() == 3 && "Invalid copyfromreg!");
-      Tmp2 = LegalizeOp(Node->getOperand(2));
-      if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(2))
+      assert(Node->getNumValues() == 3 && "Invalid copyfromreg!");
+      if (Node->getNumOperands() == 3)
+        Tmp2 = LegalizeOp(Node->getOperand(2));
+      if (Tmp1 != Node->getOperand(0) ||
+          (Node->getNumOperands() == 3 && Tmp2 != Node->getOperand(2)))
         Result = DAG.getCopyFromReg(Tmp1, 
                             cast<RegisterSDNode>(Node->getOperand(1))->getReg(),
                                     Node->getValueType(0), Tmp2);
@@ -1140,15 +1142,16 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
            "Register type must be legal!");
     // Legalize the incoming value (must be a legal type).
     Tmp2 = LegalizeOp(Node->getOperand(2));
-    if (Node->getNumOperands() == 3) {
+    if (Node->getNumValues() == 1) {
       if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(2))
         Result = DAG.getNode(ISD::CopyToReg, MVT::Other, Tmp1,
                              Node->getOperand(1), Tmp2);
     } else {
-      assert(Node->getNumOperands() == 4 && "Unknown CopyToReg");
-      Tmp3 = LegalizeOp(Node->getOperand(3));
+      assert(Node->getNumValues() == 2 && "Unknown CopyToReg");
+      if (Node->getNumOperands() == 4)
+        Tmp3 = LegalizeOp(Node->getOperand(3));
       if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(2) ||
-          Tmp3 != Node->getOperand(3)) {
+          (Node->getNumOperands() == 4 && Tmp3 != Node->getOperand(3))) {
         unsigned Reg = cast<RegisterSDNode>(Node->getOperand(1))->getReg();
         Result = DAG.getCopyToReg(Tmp1, Reg, Tmp2, Tmp3);
       }
