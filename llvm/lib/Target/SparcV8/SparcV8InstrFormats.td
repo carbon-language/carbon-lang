@@ -7,11 +7,26 @@
 // 
 //===----------------------------------------------------------------------===//
 
+class InstV8<dag ops, string asmstr, list<dag> pattern> : Instruction {
+  field bits<32> Inst;
+
+  let Namespace = "V8";
+
+  bits<2> op;
+  let Inst{31-30} = op;               // Top two bits are the 'op' field
+  
+  dag OperandList = ops;
+  let AsmString   = asmstr;
+  let Pattern = pattern;
+}
+
 //===----------------------------------------------------------------------===//
 // Format #2 instruction classes in the SparcV8
 //===----------------------------------------------------------------------===//
 
-class F2 : InstV8 {                   // Format 2 instructions
+// Format 2 instructions
+class F2<dag ops, string asmstr, list<dag> pattern>
+   : InstV8<ops, asmstr, pattern> {
   bits<3>  op2;
   bits<22> imm22;
   let op          = 0;    // op = 0
@@ -21,12 +36,9 @@ class F2 : InstV8 {                   // Format 2 instructions
 
 // Specific F2 classes: SparcV8 manual, page 44
 //
-class F2_1<bits<3> op2Val, dag ops, string asmstr, list<dag> pattern> : F2 {
+class F2_1<bits<3> op2Val, dag ops, string asmstr, list<dag> pattern>
+   : F2<ops, asmstr, pattern> {
   bits<5>  rd;
-
-  dag OperandList = ops;
-  let AsmString   = asmstr;
-  let Pattern = pattern;
 
   let op2         = op2Val;
 
@@ -34,13 +46,9 @@ class F2_1<bits<3> op2Val, dag ops, string asmstr, list<dag> pattern> : F2 {
 }
 
 class F2_2<bits<4> condVal, bits<3> op2Val, dag ops, string asmstr, 
-           list<dag> pattern> : F2 {
+           list<dag> pattern> : F2<ops, asmstr, pattern> {
   bits<4>   cond;
   bit       annul = 0;     // currently unused
-
-  dag OperandList = ops;
-  let AsmString   = asmstr;
-  let Pattern = pattern;
 
   let cond        = condVal;
   let op2         = op2Val;
@@ -53,7 +61,8 @@ class F2_2<bits<4> condVal, bits<3> op2Val, dag ops, string asmstr,
 // Format #3 instruction classes in the SparcV8
 //===----------------------------------------------------------------------===//
 
-class F3 : InstV8 {
+class F3<dag ops, string asmstr, list<dag> pattern>
+    : InstV8<ops, asmstr, pattern> {
   bits<5> rd;
   bits<6> op3;
   bits<5> rs1;
@@ -66,13 +75,9 @@ class F3 : InstV8 {
 // Specific F3 classes: SparcV8 manual, page 44
 //
 class F3_1<bits<2> opVal, bits<6> op3val, dag ops,
-           string asmstr, list<dag> pattern> : F3 {
+           string asmstr, list<dag> pattern> : F3<ops, asmstr, pattern> {
   bits<8> asi = 0; // asi not currently used in SparcV8
   bits<5> rs2;
-
-  dag OperandList = ops;
-  let AsmString   = asmstr;
-  let Pattern = pattern;
 
   let op         = opVal;
   let op3        = op3val;
@@ -83,12 +88,8 @@ class F3_1<bits<2> opVal, bits<6> op3val, dag ops,
 }
 
 class F3_2<bits<2> opVal, bits<6> op3val, dag ops, 
-           string asmstr, list<dag> pattern> : F3 {
+           string asmstr, list<dag> pattern> : F3<ops, asmstr, pattern> {
   bits<13> simm13;
-
-  dag OperandList = ops;
-  let AsmString   = asmstr;
-  let Pattern = pattern;
 
   let op         = opVal;
   let op3        = op3val;
@@ -99,12 +100,8 @@ class F3_2<bits<2> opVal, bits<6> op3val, dag ops,
 
 // floating-point
 class F3_3<bits<2> opVal, bits<6> op3val, bits<9> opfval, dag ops,
-           string asmstr, list<dag> pattern> : F3 {
+           string asmstr, list<dag> pattern> : F3<ops, asmstr, pattern> {
   bits<5> rs2;
-
-  dag OperandList = ops;
-  let AsmString   = asmstr;
-  let Pattern = pattern;
 
   let op         = opVal;
   let op3        = op3val;

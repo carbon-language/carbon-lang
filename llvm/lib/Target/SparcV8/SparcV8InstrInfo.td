@@ -15,19 +15,6 @@
 // Instruction format superclass
 //===----------------------------------------------------------------------===//
 
-class InstV8 : Instruction {          // SparcV8 instruction baseline
-  field bits<32> Inst;
-
-  let Namespace = "V8";
-
-  bits<2> op;
-  let Inst{31-30} = op;               // Top two bits are the 'op' field
-
-  // Bit attributes specific to SparcV8 instructions
-  bit isPasi       = 0; // Does this instruction affect an alternate addr space?
-  bit isPrivileged = 0; // Is this a privileged instruction?
-}
-
 include "SparcV8InstrFormats.td"
 
 //===----------------------------------------------------------------------===//
@@ -101,11 +88,9 @@ def V8selectfcc : SDNode<"V8ISD::SELECT_FCC", SDTV8selectcc>;
 //===----------------------------------------------------------------------===//
 
 // Pseudo instructions.
-class Pseudo<dag ops, string asmstr, list<dag> pattern> : InstV8  {
-  let AsmString = asmstr;
-  dag OperandList = ops;
-  let Pattern = pattern;
-}
+class Pseudo<dag ops, string asmstr, list<dag> pattern>
+   : InstV8<ops, asmstr, pattern>;
+
 def PHI : Pseudo<(ops variable_ops), "PHI", []>;
 def ADJCALLSTACKDOWN : Pseudo<(ops i32imm:$amt), "!ADJCALLSTACKDOWN $amt",[]>;
 def ADJCALLSTACKUP : Pseudo<(ops i32imm:$amt), "!ADJCALLSTACKUP $amt", []>;
@@ -542,12 +527,10 @@ let Uses = [O0, O1, O2, O3, O4, O5], hasDelaySlot = 1, isCall = 1 in {
   // pc-relative call:
   let Defs = [O0, O1, O2, O3, O4, O5, O7, G1, G2, G3, G4, G5, G6, G7,
     D0, D1, D2, D3, D4, D5, D6, D7, D8, D9, D10, D11, D12, D13, D14, D15] in
-  def CALL : InstV8 {
-    let OperandList = (ops IntRegs:$dst);
+  def CALL : InstV8<(ops IntRegs:$dst), "call $dst", []> {
     bits<30> disp;
     let op = 1;
     let Inst{29-0} = disp;
-    let AsmString = "call $dst";
   }
 
   // indirect call (O7 is an EXPLICIT def in indirect calls, so it cannot also
