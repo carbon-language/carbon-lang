@@ -13,6 +13,7 @@
 
 #include "SparcV8.h"
 #include "SparcV8TargetMachine.h"
+#include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -129,56 +130,170 @@ SparcV8TargetLowering::SparcV8TargetLowering(TargetMachine &TM)
   computeRegisterProperties();
 }
 
+/// LowerArguments - V8 uses a very simple ABI, where all values are passed in
+/// either one or two GPRs, including FP values.  TODO: we should pass FP values
+/// in FP registers for fastcc functions.
 std::vector<SDOperand>
 SparcV8TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
   MachineFunction &MF = DAG.getMachineFunction();
   SSARegMap *RegMap = MF.getSSARegMap();
   std::vector<SDOperand> ArgValues;
   
-  static const unsigned GPR[] = {
+  static const unsigned ArgRegs[] = {
     V8::I0, V8::I1, V8::I2, V8::I3, V8::I4, V8::I5
   };
-  unsigned ArgNo = 0;
+  
+  const unsigned *CurArgReg = ArgRegs, *ArgRegEnd = ArgRegs+6;
+  unsigned ArgOffset = 68;
+  
+  SDOperand Root = DAG.getRoot();
+  std::vector<SDOperand> OutChains;
+
   for (Function::arg_iterator I = F.arg_begin(), E = F.arg_end(); I != E; ++I) {
     MVT::ValueType ObjectVT = getValueType(I->getType());
-    assert(ArgNo < 6 && "Only args in regs for now");
     
     switch (ObjectVT) {
     default: assert(0 && "Unhandled argument type!");
-    // TODO: MVT::i64 & FP
+    // TODO: FP
     case MVT::i1:
     case MVT::i8:
     case MVT::i16:
-    case MVT::i32: {
-      unsigned VReg = RegMap->createVirtualRegister(&V8::IntRegsRegClass);
-      MF.addLiveIn(GPR[ArgNo++], VReg);
-      SDOperand Arg = DAG.getCopyFromReg(DAG.getRoot(), VReg, MVT::i32);
-      DAG.setRoot(Arg.getValue(1));
-      if (ObjectVT != MVT::i32) {
-        unsigned AssertOp = I->getType()->isSigned() ? ISD::AssertSext 
-                                                     : ISD::AssertZext;
-        Arg = DAG.getNode(AssertOp, MVT::i32, Arg, 
-                          DAG.getValueType(ObjectVT));
-        Arg = DAG.getNode(ISD::TRUNCATE, ObjectVT, Arg);
+    case MVT::i32:
+      if (I->use_empty()) {                // Argument is dead.
+        if (CurArgReg < ArgRegEnd) ++CurArgReg;
+        ArgValues.push_back(DAG.getNode(ISD::UNDEF, ObjectVT));
+      } else if (CurArgReg < ArgRegEnd) {  // Lives in an incoming GPR
+        unsigned VReg = RegMap->createVirtualRegister(&V8::IntRegsRegClass);
+        MF.addLiveIn(*CurArgReg++, VReg);
+        SDOperand Arg = DAG.getCopyFromReg(Root, VReg, MVT::i32);
+        if (ObjectVT != MVT::i32) {
+          unsigned AssertOp = I->getType()->isSigned() ? ISD::AssertSext 
+                                                       : ISD::AssertZext;
+          Arg = DAG.getNode(AssertOp, MVT::i32, Arg, 
+                            DAG.getValueType(ObjectVT));
+          Arg = DAG.getNode(ISD::TRUNCATE, ObjectVT, Arg);
+        }
+        ArgValues.push_back(Arg);
+      } else {
+        int FrameIdx = MF.getFrameInfo()->CreateFixedObject(4, ArgOffset);
+        SDOperand FIPtr = DAG.getFrameIndex(FrameIdx, MVT::i32);
+        SDOperand Load;
+        if (ObjectVT == MVT::i32) {
+          Load = DAG.getLoad(MVT::i32, Root, FIPtr, DAG.getSrcValue(0));
+        } else {
+          unsigned LoadOp =
+            I->getType()->isSigned() ? ISD::SEXTLOAD : ISD::ZEXTLOAD;
+
+          Load = DAG.getExtLoad(LoadOp, MVT::i32, Root, FIPtr,
+                                DAG.getSrcValue(0), ObjectVT);
+        }
+        ArgValues.push_back(Load);
       }
-      ArgValues.push_back(Arg);
+      
+      ArgOffset += 4;
       break;
-    }
-    case MVT::i64: {
-      unsigned VRegHi = RegMap->createVirtualRegister(&V8::IntRegsRegClass);
-      MF.addLiveIn(GPR[ArgNo++], VRegHi);
-      unsigned VRegLo = RegMap->createVirtualRegister(&V8::IntRegsRegClass);
-      MF.addLiveIn(GPR[ArgNo++], VRegLo);
-      SDOperand ArgLo = DAG.getCopyFromReg(DAG.getRoot(), VRegLo, MVT::i32);
-      SDOperand ArgHi = DAG.getCopyFromReg(ArgLo.getValue(1), VRegHi, MVT::i32);
-      DAG.setRoot(ArgHi.getValue(1));
-      ArgValues.push_back(DAG.getNode(ISD::BUILD_PAIR, MVT::i64, ArgLo, ArgHi));
+    case MVT::f32:
+      if (I->use_empty()) {                // Argument is dead.
+        if (CurArgReg < ArgRegEnd) ++CurArgReg;
+        ArgValues.push_back(DAG.getNode(ISD::UNDEF, ObjectVT));
+      } else if (CurArgReg < ArgRegEnd) {  // Lives in an incoming GPR
+        // FP value is passed in an integer register.
+        unsigned VReg = RegMap->createVirtualRegister(&V8::IntRegsRegClass);
+        MF.addLiveIn(*CurArgReg++, VReg);
+        SDOperand Arg = DAG.getCopyFromReg(Root, VReg, MVT::i32);
+
+        // We use the stack space that is already reserved for this reg.
+        int FrameIdx = MF.getFrameInfo()->CreateFixedObject(4, ArgOffset);
+        SDOperand FIPtr = DAG.getFrameIndex(FrameIdx, MVT::i32);
+
+        SDOperand SV = DAG.getSrcValue(0);
+        SDOperand Store = DAG.getNode(ISD::STORE, MVT::Other, Root,
+                                      Arg, FIPtr, SV);
+        ArgValues.push_back(DAG.getLoad(MVT::f32, Store, FIPtr, SV));
+      }
+      ArgOffset += 4;
       break;
-    }
+
+    case MVT::i64:
+    case MVT::f64:
+      if (I->use_empty()) {                // Argument is dead.
+        if (CurArgReg < ArgRegEnd) ++CurArgReg;
+        if (CurArgReg < ArgRegEnd) ++CurArgReg;
+        ArgValues.push_back(DAG.getNode(ISD::UNDEF, ObjectVT));
+      } else if (CurArgReg == ArgRegEnd && ObjectVT == MVT::f64 &&
+                 ((CurArgReg-ArgRegs) & 1) == 0) {
+        // If this is a double argument and the whole thing lives on the stack,
+        // and the argument is aligned, load the double straight from the stack.
+        // We can't do a load in cases like void foo([6ints], int,double),
+        // because the double wouldn't be aligned!
+        int FrameIdx = MF.getFrameInfo()->CreateFixedObject(8, ArgOffset);
+        SDOperand FIPtr = DAG.getFrameIndex(FrameIdx, MVT::i32);
+        ArgValues.push_back(DAG.getLoad(MVT::f64, Root, FIPtr, 
+                                        DAG.getSrcValue(0)));
+      } else {
+        SDOperand HiVal;
+        if (CurArgReg < ArgRegEnd) {  // Lives in an incoming GPR
+          unsigned VRegHi = RegMap->createVirtualRegister(&V8::IntRegsRegClass);
+          MF.addLiveIn(*CurArgReg++, VRegHi);
+          HiVal = DAG.getCopyFromReg(Root, VRegHi, MVT::i32);
+        } else {
+          int FrameIdx = MF.getFrameInfo()->CreateFixedObject(4, ArgOffset);
+          SDOperand FIPtr = DAG.getFrameIndex(FrameIdx, MVT::i32);
+          HiVal = DAG.getLoad(MVT::i32, Root, FIPtr, DAG.getSrcValue(0));
+        }
+        
+        SDOperand LoVal;
+        if (CurArgReg < ArgRegEnd) {  // Lives in an incoming GPR
+          unsigned VRegLo = RegMap->createVirtualRegister(&V8::IntRegsRegClass);
+          MF.addLiveIn(*CurArgReg++, VRegLo);
+          LoVal = DAG.getCopyFromReg(Root, VRegLo, MVT::i32);
+        } else {
+          int FrameIdx = MF.getFrameInfo()->CreateFixedObject(4, ArgOffset+4);
+          SDOperand FIPtr = DAG.getFrameIndex(FrameIdx, MVT::i32);
+          LoVal = DAG.getLoad(MVT::i32, Root, FIPtr, DAG.getSrcValue(0));
+        }
+        
+        // Compose the two halves together into an i64 unit.
+        SDOperand WholeValue = 
+          DAG.getNode(ISD::BUILD_PAIR, MVT::i64, LoVal, HiVal);
+                      
+        if (ObjectVT == MVT::i64) {
+          // If we are emitting an i64, this is what we want.
+          ArgValues.push_back(WholeValue);
+        } else {
+          assert(ObjectVT == MVT::f64);
+          // Otherwise, emit a store to the stack and reload into FPR.
+          int FrameIdx = MF.getFrameInfo()->CreateStackObject(8, 8);
+          SDOperand FIPtr = DAG.getFrameIndex(FrameIdx, MVT::i32);
+          SDOperand SV = DAG.getSrcValue(0);
+          SDOperand Store = DAG.getNode(ISD::STORE, MVT::Other, Root,
+                                        WholeValue, FIPtr, SV);
+          ArgValues.push_back(DAG.getLoad(MVT::f64, Store, FIPtr, SV));
+        }
+      }
+      ArgOffset += 8;
+      break;
     }
   }
   
-  assert(!F.isVarArg() && "Unimp");
+  // Store remaining ArgRegs to the stack if this is a varargs function.
+  if (F.getFunctionType()->isVarArg()) {
+    for (; CurArgReg != ArgRegEnd; ++CurArgReg) {
+      unsigned VReg = RegMap->createVirtualRegister(&V8::IntRegsRegClass);
+      MF.addLiveIn(*CurArgReg, VReg);
+      SDOperand Arg = DAG.getCopyFromReg(DAG.getRoot(), VReg, MVT::i32);
+
+      int FrameIdx = MF.getFrameInfo()->CreateFixedObject(4, ArgOffset);
+      SDOperand FIPtr = DAG.getFrameIndex(FrameIdx, MVT::i32);
+
+      OutChains.push_back(DAG.getNode(ISD::STORE, MVT::Other, DAG.getRoot(),
+                                      Arg, FIPtr, DAG.getSrcValue(0)));
+      ArgOffset += 4;
+    }
+  }
+  
+  if (!OutChains.empty())
+    DAG.setRoot(DAG.getNode(ISD::TokenFactor, MVT::Other, OutChains));
   
   // Finally, inform the code generator which regs we return values in.
   switch (getValueType(F.getReturnType())) {

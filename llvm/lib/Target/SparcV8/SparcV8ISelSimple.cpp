@@ -367,7 +367,7 @@ void V8ISel::LoadArgumentsToVirtualRegs (Function *LF) {
   // FIXME: We could avoid storing any args onto the stack that don't
   // need to be in memory, because they come before the ellipsis in the
   // parameter list (and thus could never be accessed through va_arg).
-  if (LF->getFunctionType ()->isVarArg ()) {
+  if (LF->getFunctionType()->isVarArg()) {
     for (unsigned i = 0; i < 6; ++i) {
       int FI = F->getFrameInfo()->CreateFixedObject(4, ArgOffset);
       assert (IAR != IAREnd
