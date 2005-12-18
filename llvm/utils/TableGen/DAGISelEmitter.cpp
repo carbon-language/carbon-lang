@@ -2329,6 +2329,7 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
      << "  switch (N.getOpcode()) {\n"
      << "  default: break;\n"
      << "  case ISD::EntryToken:       // These leaves remain the same.\n"
+     << "  case ISD::BasicBlock:\n"
      << "    return N;\n"
      << "  case ISD::AssertSext:\n"
      << "  case ISD::AssertZext: {\n"
