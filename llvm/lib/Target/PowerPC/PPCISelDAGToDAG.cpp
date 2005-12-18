@@ -864,7 +864,6 @@ SDOperand PPCDAGToDAGISel::Select(SDOperand Op) {
   
   switch (N->getOpcode()) {
   default: break;
-  case ISD::BasicBlock:         return CodeGenMap[Op] = Op;
   case ISD::DYNAMIC_STACKALLOC: return SelectDYNAMIC_STACKALLOC(Op);
   case ISD::ADD_PARTS:          return SelectADD_PARTS(Op);
   case ISD::SUB_PARTS:          return SelectSUB_PARTS(Op);
