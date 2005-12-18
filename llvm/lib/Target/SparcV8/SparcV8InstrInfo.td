@@ -111,7 +111,13 @@ def ADJCALLSTACKDOWN : Pseudo<(ops i32imm:$amt),
 def ADJCALLSTACKUP : Pseudo<(ops i32imm:$amt),
                             "!ADJCALLSTACKUP $amt",
                             [(callseq_end imm:$amt)]>;
-def IMPLICIT_DEF : Pseudo<(ops IntRegs:$dst), "!IMPLICIT_DEF $dst", []>;
+def IMPLICIT_DEF_Int : Pseudo<(ops IntRegs:$dst),
+                              "!IMPLICIT_DEF $dst",
+                              [(set IntRegs:$dst, (undef))]>;
+def IMPLICIT_DEF_FP  : Pseudo<(ops FPRegs:$dst), "!IMPLICIT_DEF $dst",
+                              [(set FPRegs:$dst, (undef))]>;
+def IMPLICIT_DEF_DFP : Pseudo<(ops DFPRegs:$dst), "!IMPLICIT_DEF $dst",
+                              [(set DFPRegs:$dst, (undef))]>;
 def FpMOVD : Pseudo<(ops DFPRegs:$dst, DFPRegs:$src),
                     "!FpMOVD", []>;      // pseudo 64-bit double move
 

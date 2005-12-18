@@ -243,9 +243,9 @@ void V8ISel::copyConstantToRegister(MachineBasicBlock *MBB,
       abort();
     }
   } else if (isa<UndefValue>(C)) {
-    BuildMI(*MBB, IP, V8::IMPLICIT_DEF, 0, R);
+    BuildMI(*MBB, IP, V8::IMPLICIT_DEF_Int, 0, R);
     if (getClassB (C->getType ()) == cLong)
-      BuildMI(*MBB, IP, V8::IMPLICIT_DEF, 0, R+1);
+      BuildMI(*MBB, IP, V8::IMPLICIT_DEF_Int, 0, R+1);
     return;
   }
 
@@ -341,15 +341,15 @@ void V8ISel::LoadArgumentsToVirtualRegs (Function *LF) {
     case cShort:
     case cInt:
     case cFloat:
-      BuildMI(BB, V8::IMPLICIT_DEF, 0, IncomingArgRegs[ArgNo]);
+      BuildMI(BB, V8::IMPLICIT_DEF_Int, 0, IncomingArgRegs[ArgNo]);
       break;
     case cDouble:
     case cLong:
       // Double and Long use register pairs.
-      BuildMI(BB, V8::IMPLICIT_DEF, 0, IncomingArgRegs[ArgNo]);
+      BuildMI(BB, V8::IMPLICIT_DEF_Int, 0, IncomingArgRegs[ArgNo]);
       ++ArgNo;
       if (ArgNo < 6)
-        BuildMI(BB, V8::IMPLICIT_DEF, 0, IncomingArgRegs[ArgNo]);
+        BuildMI(BB, V8::IMPLICIT_DEF_Int, 0, IncomingArgRegs[ArgNo]);
       break;
     default:
       assert (0 && "type not handled");
