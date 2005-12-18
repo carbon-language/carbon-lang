@@ -27,11 +27,21 @@ using namespace llvm;
 // TargetLowering Implementation
 //===----------------------------------------------------------------------===//
 
+namespace V8ISD {
+  enum {
+    FIRST_NUMBER = ISD::BUILTIN_OP_END+V8::INSTRUCTION_LIST_END,
+    CMPICC,   // Compare two GPR operands, set icc.
+    CMPFCC,   // Compare two FP operands, set fcc.
+    BRICC,    // Branch to dest on icc condition
+    BRFCC,    // Branch to dest on fcc condition
+  };
+}
+
 namespace {
   class SparcV8TargetLowering : public TargetLowering {
   public:
     SparcV8TargetLowering(TargetMachine &TM);
-
+    virtual SDOperand LowerOperation(SDOperand Op, SelectionDAG &DAG);
     virtual std::vector<SDOperand>
       LowerArguments(Function &F, SelectionDAG &DAG);
     virtual std::pair<SDOperand, SDOperand>
@@ -69,6 +79,22 @@ SparcV8TargetLowering::SparcV8TargetLowering(TargetMachine &TM)
   // Sparc has no REM operation.
   setOperationAction(ISD::UREM, MVT::i32, Expand);
   setOperationAction(ISD::SREM, MVT::i32, Expand);
+  
+  // Sparc has no select or setcc: expand to SELECT_CC.
+  setOperationAction(ISD::SELECT, MVT::i32, Expand);
+  setOperationAction(ISD::SELECT, MVT::f32, Expand);
+  setOperationAction(ISD::SELECT, MVT::f64, Expand);
+  setOperationAction(ISD::SETCC, MVT::i32, Expand);
+  setOperationAction(ISD::SETCC, MVT::f32, Expand);
+  setOperationAction(ISD::SETCC, MVT::f64, Expand);
+  
+  // Sparc doesn't have BRCOND either, it has BR_CC.
+  setOperationAction(ISD::BRCOND, MVT::Other, Expand);
+  setOperationAction(ISD::BRCONDTWOWAY, MVT::Other, Expand);
+  setOperationAction(ISD::BRTWOWAY_CC, MVT::Other, Expand);
+  setOperationAction(ISD::BR_CC, MVT::i32, Custom);
+  setOperationAction(ISD::BR_CC, MVT::f32, Custom);
+  setOperationAction(ISD::BR_CC, MVT::f64, Custom);
   
   computeRegisterProperties();
 }
@@ -171,25 +197,51 @@ SDOperand SparcV8TargetLowering::LowerReturnTo(SDOperand Chain, SDOperand Op,
   }
 }
 
-SDOperand SparcV8TargetLowering::LowerVAStart(SDOperand Chain, SDOperand VAListP,
-                                              Value *VAListV, SelectionDAG &DAG) {
+SDOperand SparcV8TargetLowering::
+LowerVAStart(SDOperand Chain, SDOperand VAListP, Value *VAListV, 
+             SelectionDAG &DAG) {
+             
   assert(0 && "Unimp");
   abort();
 }
 
-std::pair<SDOperand,SDOperand>
-SparcV8TargetLowering::LowerVAArg(SDOperand Chain, SDOperand VAListP, Value *VAListV,
-                                  const Type *ArgTy, SelectionDAG &DAG) {
+std::pair<SDOperand,SDOperand> SparcV8TargetLowering::
+LowerVAArg(SDOperand Chain, SDOperand VAListP, Value *VAListV,
+           const Type *ArgTy, SelectionDAG &DAG) {
   assert(0 && "Unimp");
   abort();
 }
 
-std::pair<SDOperand, SDOperand>
-SparcV8TargetLowering::LowerFrameReturnAddress(bool isFrameAddr, SDOperand Chain, unsigned Depth,
-                                               SelectionDAG &DAG) {
+std::pair<SDOperand, SDOperand> SparcV8TargetLowering::
+LowerFrameReturnAddress(bool isFrameAddr, SDOperand Chain, unsigned Depth,
+                        SelectionDAG &DAG) {
   assert(0 && "Unimp");
   abort();
 }
+
+SDOperand SparcV8TargetLowering::
+LowerOperation(SDOperand Op, SelectionDAG &DAG) {
+  switch (Op.getOpcode()) {
+  default: assert(0 && "Should not custom lower this!");
+  case ISD::BR_CC: {
+    SDOperand Chain = Op.getOperand(0);
+    SDOperand CC = Op.getOperand(1);
+    SDOperand LHS = Op.getOperand(2);
+    SDOperand RHS = Op.getOperand(3);
+    SDOperand Dest = Op.getOperand(4);
+    
+    // Get the condition flag.
+    if (LHS.getValueType() == MVT::i32) {
+      SDOperand Cond = DAG.getNode(V8ISD::CMPICC, MVT::Flag, LHS, RHS);
+      return DAG.getNode(V8ISD::BRICC, MVT::Other, Chain, Dest, CC, Cond);
+    } else {
+      SDOperand Cond = DAG.getNode(V8ISD::CMPFCC, MVT::Flag, LHS, RHS);
+      return DAG.getNode(V8ISD::BRFCC, MVT::Other, Chain, Dest, CC, Cond);
+    }
+  }
+  }  
+}
+
 
 //===----------------------------------------------------------------------===//
 // Instruction Selector Implementation
@@ -273,8 +325,8 @@ bool SparcV8DAGToDAGISel::SelectADDRri(SDOperand Addr, SDOperand &Base,
 
 SDOperand SparcV8DAGToDAGISel::Select(SDOperand Op) {
   SDNode *N = Op.Val;
-  if (N->getOpcode() >= ISD::BUILTIN_OP_END/* &&
-      N->getOpcode() < V8ISD::FIRST_NUMBER*/)
+  if (N->getOpcode() >= ISD::BUILTIN_OP_END &&
+      N->getOpcode() < V8ISD::FIRST_NUMBER)
     return Op;   // Already selected.
                  // If this has already been converted, use it.
   std::map<SDOperand, SDOperand>::iterator CGMI = CodeGenMap.find(Op);
@@ -282,6 +334,15 @@ SDOperand SparcV8DAGToDAGISel::Select(SDOperand Op) {
   
   switch (N->getOpcode()) {
   default: break;
+  case ISD::BasicBlock:         return CodeGenMap[Op] = Op;
+  case V8ISD::CMPICC: {
+    // FIXME: Handle compare with immediate.
+    SDOperand LHS = Select(N->getOperand(0));
+    SDOperand RHS = Select(N->getOperand(1));
+    SDOperand Result = CurDAG->getTargetNode(V8::SUBCCrr, MVT::i32, MVT::Flag,
+                                             LHS, RHS);
+    return CodeGenMap[Op] = Result.getValue(1);
+  }
   case ISD::ADD_PARTS: {
     SDOperand LHSL = Select(N->getOperand(0));
     SDOperand LHSH = Select(N->getOperand(1));

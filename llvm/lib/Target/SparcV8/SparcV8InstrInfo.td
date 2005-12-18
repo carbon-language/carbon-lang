@@ -68,6 +68,19 @@ def MEMri : Operand<i32> {
   let MIOperandInfo = (ops IntRegs, i32imm);
 }
 
+def SDTV8cmpicc : 
+SDTypeProfile<1, 2, [SDTCisVT<0, FlagVT>, SDTCisInt<1>, SDTCisSameAs<1, 2>]>;
+def SDTV8cmpfcc : 
+SDTypeProfile<1, 2, [SDTCisVT<0, FlagVT>, SDTCisFP<1>, SDTCisSameAs<1, 2>]>;
+def SDTV8brcc : 
+SDTypeProfile<0, 3, [SDTCisInt<0>, SDTCisVT<1, OtherVT>, SDTCisVT<2, FlagVT>]>;
+
+def V8cmpicc : SDNode<"V8ISD::CMPICC", SDTV8cmpicc>;
+def V8cmpfcc : SDNode<"V8ISD::CMPFCC", SDTV8cmpfcc>;
+def V8bricc : SDNode<"V8ISD::BRICC", SDTV8brcc, [SDNPHasChain]>;
+def V8brfcc : SDNode<"V8ISD::BRFCC", SDTV8brcc, [SDNPHasChain]>;
+
+
 //===----------------------------------------------------------------------===//
 // Instructions
 //===----------------------------------------------------------------------===//
@@ -389,53 +402,81 @@ def RESTOREri : F3_2<2, 0b111101,
 // Section B.21 - Branch on Integer Condition Codes Instructions, p. 119
 
 // conditional branch class:
-class BranchV8<bits<4> cc, dag ops, string asmstr>
- : F2_2<cc, 0b010, ops, asmstr> {
+class BranchV8<bits<4> cc, dag ops, string asmstr, list<dag> pattern>
+ : F2_2<cc, 0b010, ops, asmstr, pattern> {
   let isBranch = 1;
   let isTerminator = 1;
   let hasDelaySlot = 1;
 }
 
 let isBarrier = 1 in
-  def BA   : BranchV8<0b1000, (ops IntRegs:$dst), "ba $dst">;
-def BN   : BranchV8<0b0000, (ops IntRegs:$dst), "bn $dst">;
-def BNE  : BranchV8<0b1001, (ops IntRegs:$dst), "bne $dst">;
-def BE   : BranchV8<0b0001, (ops IntRegs:$dst), "be $dst">;
-def BG   : BranchV8<0b1010, (ops IntRegs:$dst), "bg $dst">;
-def BLE  : BranchV8<0b0010, (ops IntRegs:$dst), "ble $dst">;
-def BGE  : BranchV8<0b1011, (ops IntRegs:$dst), "bge $dst">;
-def BL   : BranchV8<0b0011, (ops IntRegs:$dst), "bl $dst">;
-def BGU  : BranchV8<0b1100, (ops IntRegs:$dst), "bgu $dst">;
-def BLEU : BranchV8<0b0100, (ops IntRegs:$dst), "bleu $dst">;
-def BCC  : BranchV8<0b1101, (ops IntRegs:$dst), "bcc $dst">;
-def BCS  : BranchV8<0b0101, (ops IntRegs:$dst), "bcs $dst">;
+  def BA   : BranchV8<0b1000, (ops IntRegs:$dst),
+                      "ba $dst", []>;
+def BN   : BranchV8<0b0000, (ops IntRegs:$dst),
+                    "bn $dst", []>;
+def BNE  : BranchV8<0b1001, (ops IntRegs:$dst),
+                    "bne $dst",
+                    [(V8bricc IntRegs:$dst, SETNE, ICC)]>;
+def BE   : BranchV8<0b0001, (ops IntRegs:$dst),
+                    "be $dst",
+                    [(V8bricc IntRegs:$dst, SETEQ, ICC)]>;
+def BG   : BranchV8<0b1010, (ops IntRegs:$dst),
+                    "bg $dst", []>;
+def BLE  : BranchV8<0b0010, (ops IntRegs:$dst),
+                    "ble $dst", []>;
+def BGE  : BranchV8<0b1011, (ops IntRegs:$dst),
+                    "bge $dst", []>;
+def BL   : BranchV8<0b0011, (ops IntRegs:$dst),
+                    "bl $dst", []>;
+def BGU  : BranchV8<0b1100, (ops IntRegs:$dst),
+                    "bgu $dst", []>;
+def BLEU : BranchV8<0b0100, (ops IntRegs:$dst),
+                    "bleu $dst", []>;
+def BCC  : BranchV8<0b1101, (ops IntRegs:$dst),
+                    "bcc $dst", []>;
+def BCS  : BranchV8<0b0101, (ops IntRegs:$dst),
+                    "bcs $dst", []>;
 
 // Section B.22 - Branch on Floating-point Condition Codes Instructions, p. 121
 
 // floating-point conditional branch class:
-class FPBranchV8<bits<4> cc, dag ops, string asmstr>
- : F2_2<cc, 0b110, ops, asmstr> {
+class FPBranchV8<bits<4> cc, dag ops, string asmstr, list<dag> pattern>
+ : F2_2<cc, 0b110, ops, asmstr, pattern> {
   let isBranch = 1;
   let isTerminator = 1;
   let hasDelaySlot = 1;
 }
 
-def FBA  : FPBranchV8<0b1000, (ops IntRegs:$dst), "fba $dst">;
-def FBN  : FPBranchV8<0b0000, (ops IntRegs:$dst), "fbn $dst">;
-def FBU  : FPBranchV8<0b0111, (ops IntRegs:$dst), "fbu $dst">;
-def FBG  : FPBranchV8<0b0110, (ops IntRegs:$dst), "fbg $dst">;
-def FBUG : FPBranchV8<0b0101, (ops IntRegs:$dst), "fbug $dst">;
-def FBL  : FPBranchV8<0b0100, (ops IntRegs:$dst), "fbl $dst">;
-def FBUL : FPBranchV8<0b0011, (ops IntRegs:$dst), "fbul $dst">;
-def FBLG : FPBranchV8<0b0010, (ops IntRegs:$dst), "fblg $dst">;
-def FBNE : FPBranchV8<0b0001, (ops IntRegs:$dst), "fbne $dst">;
-def FBE  : FPBranchV8<0b1001, (ops IntRegs:$dst), "fbe $dst">;
-def FBUE : FPBranchV8<0b1010, (ops IntRegs:$dst), "fbue $dst">;
-def FBGE : FPBranchV8<0b1011, (ops IntRegs:$dst), "fbge $dst">;
-def FBUGE: FPBranchV8<0b1100, (ops IntRegs:$dst), "fbuge $dst">;
-def FBLE : FPBranchV8<0b1101, (ops IntRegs:$dst), "fble $dst">;
-def FBULE: FPBranchV8<0b1110, (ops IntRegs:$dst), "fbule $dst">;
-def FBO  : FPBranchV8<0b1111, (ops IntRegs:$dst), "fbo $dst">;
+def FBN  : FPBranchV8<0b0000, (ops IntRegs:$dst),
+                      "fbn $dst", []>;
+def FBU  : FPBranchV8<0b0111, (ops IntRegs:$dst),
+                      "fbu $dst", []>;
+def FBG  : FPBranchV8<0b0110, (ops IntRegs:$dst),
+                      "fbg $dst", []>;
+def FBUG : FPBranchV8<0b0101, (ops IntRegs:$dst),
+                      "fbug $dst", []>;
+def FBL  : FPBranchV8<0b0100, (ops IntRegs:$dst),
+                      "fbl $dst", []>;
+def FBUL : FPBranchV8<0b0011, (ops IntRegs:$dst),
+                      "fbul $dst", []>;
+def FBLG : FPBranchV8<0b0010, (ops IntRegs:$dst),
+                      "fblg $dst", []>;
+def FBNE : FPBranchV8<0b0001, (ops IntRegs:$dst),
+                      "fbne $dst", []>;
+def FBE  : FPBranchV8<0b1001, (ops IntRegs:$dst),
+                      "fbe $dst", []>;
+def FBUE : FPBranchV8<0b1010, (ops IntRegs:$dst),
+                      "fbue $dst", []>;
+def FBGE : FPBranchV8<0b1011, (ops IntRegs:$dst),
+                      "fbge $dst", []>;
+def FBUGE: FPBranchV8<0b1100, (ops IntRegs:$dst),
+                      "fbuge $dst", []>;
+def FBLE : FPBranchV8<0b1101, (ops IntRegs:$dst),
+                      "fble $dst", []>;
+def FBULE: FPBranchV8<0b1110, (ops IntRegs:$dst),
+                      "fbule $dst", []>;
+def FBO  : FPBranchV8<0b1111, (ops IntRegs:$dst),
+                      "fbo $dst", []>;
 
 
 
@@ -576,10 +617,12 @@ def FDIVD  : F3_3<2, 0b110100, 0b001001110,
 // is modelled with a forced noop after the instruction.
 def FCMPS  : F3_3<2, 0b110101, 0b001010001,
                   (ops FPRegs:$src1, FPRegs:$src2),
-                  "fcmps $src1, $src2\n\tnop", []>;
+                  "fcmps $src1, $src2\n\tnop",
+                  [(set FCC, (V8cmpfcc FPRegs:$src1, FPRegs:$src2))]>;
 def FCMPD  : F3_3<2, 0b110101, 0b001010010,
                   (ops DFPRegs:$src1, DFPRegs:$src2),
-                  "fcmpd $src1, $src2\n\tnop", []>;
+                  "fcmpd $src1, $src2\n\tnop",
+                  [(set FCC, (V8cmpfcc DFPRegs:$src1, DFPRegs:$src2))]>;
 
 //===----------------------------------------------------------------------===//
 // Non-Instruction Patterns
