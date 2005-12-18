@@ -75,6 +75,7 @@ SparcV8TargetLowering::SparcV8TargetLowering(TargetMachine &TM)
 
   // Custom legalize GlobalAddress nodes into LO/HI parts.
   setOperationAction(ISD::GlobalAddress, MVT::i32, Custom);
+  setOperationAction(ISD::ConstantPool , MVT::i32, Custom);
   
   // Sparc doesn't have sext_inreg, replace them with shl/sra
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i16  , Expand);
@@ -249,6 +250,13 @@ LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     SDOperand GA = DAG.getTargetGlobalAddress(GV, MVT::i32);
     SDOperand Hi = DAG.getNode(V8ISD::Hi, MVT::i32, GA);
     SDOperand Lo = DAG.getNode(V8ISD::Lo, MVT::i32, GA);
+    return DAG.getNode(ISD::ADD, MVT::i32, Lo, Hi);
+  }
+  case ISD::ConstantPool: {
+    Constant *C = cast<ConstantPoolSDNode>(Op)->get();
+    SDOperand CP = DAG.getTargetConstantPool(C, MVT::i32);
+    SDOperand Hi = DAG.getNode(V8ISD::Hi, MVT::i32, CP);
+    SDOperand Lo = DAG.getNode(V8ISD::Lo, MVT::i32, CP);
     return DAG.getNode(ISD::ADD, MVT::i32, Lo, Hi);
   }
   }  

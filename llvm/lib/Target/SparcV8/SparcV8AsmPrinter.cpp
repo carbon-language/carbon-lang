@@ -185,8 +185,20 @@ void SparcV8AsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
 
 void SparcV8AsmPrinter::printMemOperand(const MachineInstr *MI, int opNum) {
   printOperand(MI, opNum);
+  MachineOperand::MachineOperandType OpTy = MI->getOperand(opNum+1).getType();
+  
+  if ((OpTy == MachineOperand::MO_VirtualRegister ||
+       OpTy == MachineOperand::MO_MachineRegister) &&
+      MI->getOperand(opNum+1).getReg() == V8::G0)
+    return;   // don't print "+%g0"
+  if ((OpTy == MachineOperand::MO_SignExtendedImmed ||
+       OpTy == MachineOperand::MO_UnextendedImmed) &&
+      MI->getOperand(opNum+1).getImmedValue() == 0)
+    return;   // don't print "+0"
+  
   O << "+";
-  if (MI->getOperand(opNum+1).getType() == MachineOperand::MO_GlobalAddress) {
+  if (OpTy == MachineOperand::MO_GlobalAddress ||
+      OpTy == MachineOperand::MO_ConstantPoolIndex) {
     O << "%lo(";
     printOperand(MI, opNum+1);
     O << ")";

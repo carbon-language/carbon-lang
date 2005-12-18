@@ -660,6 +660,8 @@ def : Pat<(i32 simm13:$val),
 def : Pat<(i32 imm:$val),
           (ORri (SETHIi (HI22 imm:$val)), (LO10 imm:$val))>;
 
-// Global addresses
+// Global addresses, constant pool entries
 def : Pat<(V8hi tglobaladdr:$in), (SETHIi tglobaladdr:$in)>;
 def : Pat<(V8lo tglobaladdr:$in), (ORri G0, tglobaladdr:$in)>;
+def : Pat<(V8hi tconstpool:$in), (SETHIi tconstpool:$in)>;
+def : Pat<(V8lo tconstpool:$in), (ORri G0, tconstpool:$in)>;
