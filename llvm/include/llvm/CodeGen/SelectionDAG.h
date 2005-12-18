@@ -198,7 +198,17 @@ public:
     AllNodes.push_back(NN);
     return NN;
   }
-
+  /// getCall - Note that this destroys the vector of RetVals passed in.
+  ///
+  SDNode *getCall(std::vector<MVT::ValueType> &RetVals, SDOperand Chain,
+                  SDOperand Callee, SDOperand Flag, bool isTailCall = false) {
+    SDNode *NN = new SDNode(isTailCall ? ISD::TAILCALL : ISD::CALL, Chain,
+                            Callee, Flag);
+    setNodeValueTypes(NN, RetVals);
+    AllNodes.push_back(NN);
+    return NN;
+  }
+  
   /// getCall - This is identical to the one above, and should be used for calls
   /// where arguments are passed in physical registers.  This destroys the
   /// RetVals and ArgsInRegs vectors.
