@@ -350,9 +350,8 @@ void SparcV8DAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
 
 bool SparcV8DAGToDAGISel::SelectADDRri(SDOperand Addr, SDOperand &Base,
                                        SDOperand &Offset) {
-  if (Addr.getOpcode() == ISD::FrameIndex) {
-    int FI = cast<FrameIndexSDNode>(Addr)->getIndex();
-    Base = CurDAG->getTargetFrameIndex(FI, MVT::i32);
+  if (FrameIndexSDNode *FIN = dyn_cast<FrameIndexSDNode>(Addr)) {
+    Base = CurDAG->getTargetFrameIndex(FIN->getIndex(), MVT::i32);
     Offset = CurDAG->getTargetConstant(0, MVT::i32);
     return true;
   }
@@ -360,10 +359,10 @@ bool SparcV8DAGToDAGISel::SelectADDRri(SDOperand Addr, SDOperand &Base,
   if (Addr.getOpcode() == ISD::ADD) {
     if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(Addr.getOperand(1))) {
       if (Predicate_simm13(CN)) {
-        if (Addr.getOperand(0).getOpcode() == ISD::FrameIndex) {
+        if (FrameIndexSDNode *FIN = 
+                dyn_cast<FrameIndexSDNode>(Addr.getOperand(0))) {
           // Constant offset from frame ref.
-          int FI = cast<FrameIndexSDNode>(Addr)->getIndex();
-          Base = CurDAG->getTargetFrameIndex(FI, MVT::i32);
+          Base = CurDAG->getTargetFrameIndex(FIN->getIndex(), MVT::i32);
         } else {
           Base = Select(Addr.getOperand(0));
         }
