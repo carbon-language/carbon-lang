@@ -421,21 +421,29 @@ def BE   : BranchV8<0b0001, (ops IntRegs:$dst),
                     "be $dst",
                     [(V8bricc IntRegs:$dst, SETEQ, ICC)]>;
 def BG   : BranchV8<0b1010, (ops IntRegs:$dst),
-                    "bg $dst", []>;
+                    "bg $dst",
+                    [(V8bricc IntRegs:$dst, SETGT, ICC)]>;
 def BLE  : BranchV8<0b0010, (ops IntRegs:$dst),
-                    "ble $dst", []>;
+                    "ble $dst",
+                    [(V8bricc IntRegs:$dst, SETLE, ICC)]>;
 def BGE  : BranchV8<0b1011, (ops IntRegs:$dst),
-                    "bge $dst", []>;
+                    "bge $dst",
+                    [(V8bricc IntRegs:$dst, SETGE, ICC)]>;
 def BL   : BranchV8<0b0011, (ops IntRegs:$dst),
-                    "bl $dst", []>;
+                    "bl $dst",
+                    [(V8bricc IntRegs:$dst, SETLT, ICC)]>;
 def BGU  : BranchV8<0b1100, (ops IntRegs:$dst),
-                    "bgu $dst", []>;
+                    "bgu $dst",
+                    [(V8bricc IntRegs:$dst, SETUGT, ICC)]>;
 def BLEU : BranchV8<0b0100, (ops IntRegs:$dst),
-                    "bleu $dst", []>;
+                    "bleu $dst",
+                    [(V8bricc IntRegs:$dst, SETULE, ICC)]>;
 def BCC  : BranchV8<0b1101, (ops IntRegs:$dst),
-                    "bcc $dst", []>;
+                    "bcc $dst",
+                    [(V8bricc IntRegs:$dst, SETUGE, ICC)]>;
 def BCS  : BranchV8<0b0101, (ops IntRegs:$dst),
-                    "bcs $dst", []>;
+                    "bcs $dst",
+                    [(V8bricc IntRegs:$dst, SETULT, ICC)]>;
 
 // Section B.22 - Branch on Floating-point Condition Codes Instructions, p. 121
 
@@ -448,35 +456,50 @@ class FPBranchV8<bits<4> cc, dag ops, string asmstr, list<dag> pattern>
 }
 
 def FBN  : FPBranchV8<0b0000, (ops IntRegs:$dst),
-                      "fbn $dst", []>;
+                      "fbn $dst",
+                      []>;
 def FBU  : FPBranchV8<0b0111, (ops IntRegs:$dst),
-                      "fbu $dst", []>;
+                      "fbu $dst",
+                      []>;
 def FBG  : FPBranchV8<0b0110, (ops IntRegs:$dst),
-                      "fbg $dst", []>;
+                      "fbg $dst",
+                      [(V8brfcc IntRegs:$dst, SETGT, FCC)]>;
 def FBUG : FPBranchV8<0b0101, (ops IntRegs:$dst),
-                      "fbug $dst", []>;
+                      "fbug $dst",
+                      []>;
 def FBL  : FPBranchV8<0b0100, (ops IntRegs:$dst),
-                      "fbl $dst", []>;
+                      "fbl $dst",
+                      [(V8brfcc IntRegs:$dst, SETLT, FCC)]>;
 def FBUL : FPBranchV8<0b0011, (ops IntRegs:$dst),
-                      "fbul $dst", []>;
+                      "fbul $dst",
+                      []>;
 def FBLG : FPBranchV8<0b0010, (ops IntRegs:$dst),
-                      "fblg $dst", []>;
+                      "fblg $dst",
+                      []>;
 def FBNE : FPBranchV8<0b0001, (ops IntRegs:$dst),
-                      "fbne $dst", []>;
+                      "fbne $dst",
+                      [(V8brfcc IntRegs:$dst, SETNE, FCC)]>;
 def FBE  : FPBranchV8<0b1001, (ops IntRegs:$dst),
-                      "fbe $dst", []>;
+                      "fbe $dst",
+                      [(V8brfcc IntRegs:$dst, SETEQ, FCC)]>;
 def FBUE : FPBranchV8<0b1010, (ops IntRegs:$dst),
-                      "fbue $dst", []>;
+                      "fbue $dst",
+                      []>;
 def FBGE : FPBranchV8<0b1011, (ops IntRegs:$dst),
-                      "fbge $dst", []>;
+                      "fbge $dst",
+                      [(V8brfcc IntRegs:$dst, SETGE, FCC)]>;
 def FBUGE: FPBranchV8<0b1100, (ops IntRegs:$dst),
-                      "fbuge $dst", []>;
+                      "fbuge $dst",
+                      []>;
 def FBLE : FPBranchV8<0b1101, (ops IntRegs:$dst),
-                      "fble $dst", []>;
+                      "fble $dst",
+                      [(V8brfcc IntRegs:$dst, SETLE, FCC)]>;
 def FBULE: FPBranchV8<0b1110, (ops IntRegs:$dst),
-                      "fbule $dst", []>;
+                      "fbule $dst",
+                      []>;
 def FBO  : FPBranchV8<0b1111, (ops IntRegs:$dst),
-                      "fbo $dst", []>;
+                      "fbo $dst",
+                      []>;
 
 
 
