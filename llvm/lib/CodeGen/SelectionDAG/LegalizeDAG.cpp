@@ -567,13 +567,21 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     return LegalizeOp(Node->getOperand(Op.ResNo));
   case ISD::CopyFromReg:
     Tmp1 = LegalizeOp(Node->getOperand(0));
-    if (Tmp1 != Node->getOperand(0))
-      Result = DAG.getCopyFromReg(Tmp1, 
+    Result = Op.getValue(0);
+    if (Node->getNumOperands() == 2) {
+      if (Tmp1 != Node->getOperand(0))
+        Result = DAG.getCopyFromReg(Tmp1, 
                             cast<RegisterSDNode>(Node->getOperand(1))->getReg(),
-                                  Node->getValueType(0));
-    else
-      Result = Op.getValue(0);
-
+                                    Node->getValueType(0));
+    } else {
+      assert(Node->getNumOperands() == 3 && "Invalid copyfromreg!");
+      Tmp2 = LegalizeOp(Node->getOperand(2));
+      if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(2))
+        Result = DAG.getCopyFromReg(Tmp1, 
+                            cast<RegisterSDNode>(Node->getOperand(1))->getReg(),
+                                    Node->getValueType(0), Tmp2);
+      AddLegalizedOperand(Op.getValue(2), Result.getValue(2));
+    }
     // Since CopyFromReg produces two values, make sure to remember that we
     // legalized both of them.
     AddLegalizedOperand(Op.getValue(0), Result);
@@ -1130,11 +1138,27 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
 
     assert(isTypeLegal(Node->getOperand(2).getValueType()) &&
            "Register type must be legal!");
-    // Legalize the incoming value (must be legal).
+    // Legalize the incoming value (must be a legal type).
     Tmp2 = LegalizeOp(Node->getOperand(2));
-    if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(2))
-      Result = DAG.getNode(ISD::CopyToReg, MVT::Other, Tmp1,
-                           Node->getOperand(1), Tmp2);
+    if (Node->getNumOperands() == 3) {
+      if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(2))
+        Result = DAG.getNode(ISD::CopyToReg, MVT::Other, Tmp1,
+                             Node->getOperand(1), Tmp2);
+    } else {
+      assert(Node->getNumOperands() == 4 && "Unknown CopyToReg");
+      Tmp3 = LegalizeOp(Node->getOperand(3));
+      if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(2) ||
+          Tmp3 != Node->getOperand(3)) {
+        unsigned Reg = cast<RegisterSDNode>(Node->getOperand(1))->getReg();
+        Result = DAG.getCopyToReg(Tmp1, Reg, Tmp2, Tmp3);
+      }
+      
+      // Since this produces two values, make sure to remember that we legalized
+      // both of them.
+      AddLegalizedOperand(SDOperand(Node, 0), Result);
+      AddLegalizedOperand(SDOperand(Node, 1), Result.getValue(1));
+      return Result.getValue(Op.ResNo);
+    }
     break;
 
   case ISD::RET:
@@ -1278,7 +1302,6 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     AddLegalizedOperand(SDOperand(Node, 0), Result);
     AddLegalizedOperand(SDOperand(Node, 1), Result.getValue(1));
     return Result.getValue(Op.ResNo);
-    break;
 
   case ISD::TRUNCSTORE:
     Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
