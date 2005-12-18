@@ -84,6 +84,8 @@ def V8cmpfcc : SDNode<"V8ISD::CMPFCC", SDTV8cmpfcc>;
 def V8bricc : SDNode<"V8ISD::BRICC", SDTV8brcc, [SDNPHasChain]>;
 def V8brfcc : SDNode<"V8ISD::BRFCC", SDTV8brcc, [SDNPHasChain]>;
 
+def V8hi    : SDNode<"V8ISD::Hi", SDTIntUnaryOp>;
+def V8lo    : SDNode<"V8ISD::Lo", SDTIntUnaryOp>;
 
 //===----------------------------------------------------------------------===//
 // Instructions
@@ -657,3 +659,7 @@ def : Pat<(i32 simm13:$val),
 // Arbitrary immediates.
 def : Pat<(i32 imm:$val),
           (ORri (SETHIi (HI22 imm:$val)), (LO10 imm:$val))>;
+
+// Global addresses
+def : Pat<(V8hi tglobaladdr:$in), (SETHIi tglobaladdr:$in)>;
+def : Pat<(V8lo tglobaladdr:$in), (ORri G0, tglobaladdr:$in)>;

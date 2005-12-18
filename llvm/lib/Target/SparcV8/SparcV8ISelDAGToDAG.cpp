@@ -34,6 +34,8 @@ namespace V8ISD {
     CMPFCC,   // Compare two FP operands, set fcc.
     BRICC,    // Branch to dest on icc condition
     BRFCC,    // Branch to dest on fcc condition
+    
+    Hi, Lo,   // Hi/Lo operations, typically on a global address.
   };
 }
 
@@ -71,6 +73,9 @@ SparcV8TargetLowering::SparcV8TargetLowering(TargetMachine &TM)
   addRegisterClass(MVT::f32, V8::FPRegsRegisterClass);
   addRegisterClass(MVT::f64, V8::DFPRegsRegisterClass);
 
+  // Custom legalize GlobalAddress nodes into LO/HI parts.
+  setOperationAction(ISD::GlobalAddress, MVT::i32, Custom);
+  
   // Sparc doesn't have sext_inreg, replace them with shl/sra
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i16  , Expand);
   setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i8   , Expand);
@@ -239,6 +244,13 @@ LowerOperation(SDOperand Op, SelectionDAG &DAG) {
       return DAG.getNode(V8ISD::BRFCC, MVT::Other, Chain, Dest, CC, Cond);
     }
   }
+  case ISD::GlobalAddress: {
+    GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
+    SDOperand GA = DAG.getTargetGlobalAddress(GV, MVT::i32);
+    SDOperand Hi = DAG.getNode(V8ISD::Hi, MVT::i32, GA);
+    SDOperand Lo = DAG.getNode(V8ISD::Lo, MVT::i32, GA);
+    return DAG.getNode(ISD::ADD, MVT::i32, Lo, Hi);
+  }
   }  
 }
 
@@ -297,8 +309,8 @@ bool SparcV8DAGToDAGISel::SelectADDRrr(SDOperand Addr, SDOperand &R1,
     if (isa<ConstantSDNode>(Addr.getOperand(1)) &&
         Predicate_simm13(Addr.getOperand(1).Val))
       return false;  // Let the reg+imm pattern catch this!
-    R1 = Addr.getOperand(0);
-    R2 = Addr.getOperand(1);
+    R1 = Select(Addr.getOperand(0));
+    R2 = Select(Addr.getOperand(1));
     return true;
   }
 
@@ -312,7 +324,7 @@ bool SparcV8DAGToDAGISel::SelectADDRri(SDOperand Addr, SDOperand &Base,
   if (Addr.getOpcode() == ISD::ADD) {
     if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(Addr.getOperand(1)))
       if (Predicate_simm13(CN)) {
-        Base = Addr.getOperand(0);
+        Base = Select(Addr.getOperand(0));
         Offset = CurDAG->getTargetConstant(CN->getValue(), MVT::i32);
         return true;
       }
