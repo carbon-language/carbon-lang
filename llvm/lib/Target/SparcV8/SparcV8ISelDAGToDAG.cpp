@@ -108,6 +108,7 @@ SparcV8TargetLowering::SparcV8TargetLowering(TargetMachine &TM)
   setOperationAction(ISD::FP_TO_UINT, MVT::i32, Expand);
   setOperationAction(ISD::UINT_TO_FP, MVT::i32, Expand);
   
+  // Turn FP extload into load/fextend
   setOperationAction(ISD::EXTLOAD, MVT::f32, Expand);
   
   // Sparc has no select or setcc: expand to SELECT_CC.
@@ -129,6 +130,11 @@ SparcV8TargetLowering::SparcV8TargetLowering(TargetMachine &TM)
   setOperationAction(ISD::SELECT_CC, MVT::i32, Custom);
   setOperationAction(ISD::SELECT_CC, MVT::f32, Custom);
   setOperationAction(ISD::SELECT_CC, MVT::f64, Custom);
+  
+  // V8 has no intrinsics for these particular operations.
+  setOperationAction(ISD::MEMMOVE, MVT::Other, Expand);
+  setOperationAction(ISD::MEMSET, MVT::Other, Expand);
+  setOperationAction(ISD::MEMCPY, MVT::Other, Expand);
   
   computeRegisterProperties();
 }
