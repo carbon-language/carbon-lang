@@ -682,7 +682,12 @@ void SimpleSched::IncludeNode(NodeInfo *NI) {
 /// Note that the ordering in the Nodes vector is reversed.
 void SimpleSched::VisitAll() {
   // Add first element to list
-  Ordering.push_back(getNI(DAG.getRoot().Val));
+  NodeInfo *NI = getNI(DAG.getRoot().Val);
+  if (NI->isInGroup()) {
+    Ordering.push_back(NI->Group->getDominator());
+  } else {
+    Ordering.push_back(NI);
+  }
   
   // Iterate through all nodes that have been added
   for (unsigned i = 0; i < Ordering.size(); i++) { // note: size() varies
