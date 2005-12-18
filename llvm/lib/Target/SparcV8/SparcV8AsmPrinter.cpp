@@ -38,7 +38,7 @@ namespace {
     SparcV8AsmPrinter(std::ostream &O, TargetMachine &TM) : AsmPrinter(O, TM) {
       Data16bitsDirective = "\t.half\t";
       Data32bitsDirective = "\t.word\t";
-      Data64bitsDirective = "\t.xword\t";
+      Data64bitsDirective = 0;  // .xword is only supported by V9.
       ZeroDirective = 0;  // no .zero or .space!
       CommentString = "!";
       ConstantPoolSection = "\t.section \".rodata\",#alloc\n";
