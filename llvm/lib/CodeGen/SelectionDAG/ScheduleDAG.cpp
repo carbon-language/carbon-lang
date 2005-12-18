@@ -653,10 +653,10 @@ bool SimpleSched::isPassiveNode(SDNode *Node) {
 /// IncludeNode - Add node to NodeInfo vector.
 ///
 void SimpleSched::IncludeNode(NodeInfo *NI) {
-// Get node
-SDNode *Node = NI->Node;
-// Ignore entry node
-if (Node->getOpcode() == ISD::EntryToken) return;
+  // Get node
+  SDNode *Node = NI->Node;
+  // Ignore entry node
+  if (Node->getOpcode() == ISD::EntryToken) return;
   // Check current count for node
   int Count = NI->getPending();
   // If the node is already in list
@@ -987,13 +987,9 @@ void SimpleSched::EmitAll() {
   for (unsigned i = 0, N = Ordering.size(); i < N; i++) {
     // Get the scheduling info
     NodeInfo *NI = Ordering[i];
-    // Iterate through nodes
-    NodeGroupIterator NGI(Ordering[i]);
     if (NI->isInGroup()) {
-      if (NI->isGroupDominator()) {
-        NodeGroupIterator NGI(Ordering[i]);
-        while (NodeInfo *NI = NGI.next()) EmitNode(NI);
-      }
+      NodeGroupIterator NGI(Ordering[i]);
+      while (NodeInfo *NI = NGI.next()) EmitNode(NI);
     } else {
       EmitNode(NI);
     }
