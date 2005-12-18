@@ -159,12 +159,6 @@ def LDri   : F3_2<3, 0b000000,
                   (ops IntRegs:$dst, MEMri:$addr),
                   "ld [$addr], $dst",
                   [(set IntRegs:$dst, (load ADDRri:$addr))]>;
-def LDDrr  : F3_1<3, 0b000011,
-                  (ops IntRegs:$dst, MEMrr:$addr),
-                  "ldd [$addr], $dst", []>;
-def LDDri  : F3_2<3, 0b000011,
-                  (ops IntRegs:$dst, MEMri:$addr),
-                  "ldd [$addr], $dst", []>;
 
 // Section B.2 - Load Floating-point Instructions, p. 92
 def LDFrr  : F3_1<3, 0b100000,
@@ -209,12 +203,6 @@ def STri  : F3_2<3, 0b000100,
                  (ops MEMri:$addr, IntRegs:$src),
                  "st $src, [$addr]",
                  [(store IntRegs:$src, ADDRri:$addr)]>;
-def STDrr : F3_1<3, 0b000111,
-                 (ops MEMrr:$addr, IntRegs:$src),
-                 "std $src, [$addr]", []>;
-def STDri : F3_2<3, 0b000111,
-                 (ops MEMri:$addr, IntRegs:$src),
-                 "std $src, [$addr]", []>;
 
 // Section B.5 - Store Floating-point Instructions, p. 97
 def STFrr   : F3_1<3, 0b100100,
