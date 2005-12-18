@@ -93,6 +93,9 @@ def SDT_V8Call    : SDTypeProfile<1, 2, [SDTCisVT<0, FlagVT>, SDTCisVT<1, i32>,
                                          SDTCisVT<2, FlagVT>]>;
 def call          : SDNode<"ISD::CALL", SDT_V8Call, [SDNPHasChain]>;
 
+def SDT_V8RetFlag : SDTypeProfile<0, 1, [ SDTCisVT<0, FlagVT>]>;
+def retflag       : SDNode<"V8ISD::RET_FLAG", SDT_V8RetFlag, [SDNPHasChain]>;
+
 //===----------------------------------------------------------------------===//
 // Instructions
 //===----------------------------------------------------------------------===//
@@ -701,3 +704,6 @@ def : Pat<(V8hi tglobaladdr:$in), (SETHIi tglobaladdr:$in)>;
 def : Pat<(V8lo tglobaladdr:$in), (ORri G0, tglobaladdr:$in)>;
 def : Pat<(V8hi tconstpool:$in), (SETHIi tconstpool:$in)>;
 def : Pat<(V8lo tconstpool:$in), (ORri G0, tconstpool:$in)>;
+
+// Return of a value, which has an input flag.
+def : Pat<(retflag ICC/*HACK*/), (RETL)>;

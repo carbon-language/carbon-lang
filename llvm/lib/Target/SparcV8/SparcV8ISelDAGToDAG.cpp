@@ -45,6 +45,8 @@ namespace V8ISD {
     
     SELECT_ICC, // Select between two values using the current ICC flags.
     SELECT_FCC, // Select between two values using the current FCC flags.
+    
+    RET_FLAG,   // Return with a flag operand.
   };
 }
 
@@ -534,15 +536,28 @@ SparcV8TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
 
 SDOperand SparcV8TargetLowering::LowerReturnTo(SDOperand Chain, SDOperand Op,
                                                SelectionDAG &DAG) {
-  if (Op.getValueType() == MVT::i64) {
+  SDOperand Copy;
+  switch (Op.getValueType()) {
+  default: assert(0 && "Unknown type to return!");
+  case MVT::i32:
+    Copy = DAG.getCopyToReg(Chain, V8::I0, Op, SDOperand());
+    break;
+  case MVT::f32:
+    Copy = DAG.getCopyToReg(Chain, V8::F0, Op, SDOperand());
+    break;
+  case MVT::f64:
+    Copy = DAG.getCopyToReg(Chain, V8::D0, Op, SDOperand());
+    break;
+  case MVT::i64:
     SDOperand Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, Op, 
                                DAG.getConstant(1, MVT::i32));
     SDOperand Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, Op,
                                DAG.getConstant(0, MVT::i32));
-    return DAG.getNode(ISD::RET, MVT::Other, Chain, Lo, Hi);
-  } else {
-    return DAG.getNode(ISD::RET, MVT::Other, Chain, Op);
+    Copy = DAG.getCopyToReg(Chain, V8::I0, Hi, SDOperand());
+    Copy = DAG.getCopyToReg(Copy, V8::I1, Lo, Copy.getValue(1));
+    break;
   }
+  return DAG.getNode(V8ISD::RET_FLAG, MVT::Other, Copy, Copy.getValue(1));
 }
 
 SDOperand SparcV8TargetLowering::
@@ -934,32 +949,6 @@ SDOperand SparcV8DAGToDAGISel::Select(SDOperand Op) {
                                           MulLHS, MulRHS);
     // The high part is in the Y register.
     return CurDAG->SelectNodeTo(N, V8::RDY, MVT::i32, Mul.getValue(1));
-  }
-    
-  case ISD::RET: {
-    // FIXME: change this to use flag operands to allow autogen of ret.
-    if (N->getNumOperands() == 2) {
-      SDOperand Chain = Select(N->getOperand(0));     // Token chain.
-      SDOperand Val = Select(N->getOperand(1));
-      if (N->getOperand(1).getValueType() == MVT::i32) {
-        Chain = CurDAG->getCopyToReg(Chain, V8::I0, Val);
-      } else if (N->getOperand(1).getValueType() == MVT::f32) {
-        Chain = CurDAG->getCopyToReg(Chain, V8::F0, Val);
-      } else {
-        assert(N->getOperand(1).getValueType() == MVT::f64);
-        Chain = CurDAG->getCopyToReg(Chain, V8::D0, Val);
-      }
-      return CurDAG->SelectNodeTo(N, V8::RETL, MVT::Other, Chain);
-    } else if (N->getNumOperands() > 1) {
-      SDOperand Chain = Select(N->getOperand(0));     // Token chain.
-      assert(N->getOperand(1).getValueType() == MVT::i32 &&
-             N->getOperand(2).getValueType() == MVT::i32 &&
-             N->getNumOperands() == 3 && "Unknown two-register ret value!");
-      Chain = CurDAG->getCopyToReg(Chain, V8::I1, Select(N->getOperand(1)));
-      Chain = CurDAG->getCopyToReg(Chain, V8::I0, Select(N->getOperand(2)));
-      return CurDAG->SelectNodeTo(N, V8::RETL, MVT::Other, Chain);
-    }
-    break;  // Generated code handles the void case.
   }
   case ISD::CALL:
     // FIXME: This is a workaround for a bug in tblgen.
