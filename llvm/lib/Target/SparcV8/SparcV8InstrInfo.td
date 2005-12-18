@@ -77,7 +77,10 @@ def SDTV8cmpfcc :
 SDTypeProfile<1, 2, [SDTCisVT<0, FlagVT>, SDTCisFP<1>, SDTCisSameAs<1, 2>]>;
 def SDTV8brcc : 
 SDTypeProfile<0, 3, [SDTCisVT<0, OtherVT>, SDTCisVT<1, OtherVT>,
-                    SDTCisVT<2, FlagVT>]>;
+                     SDTCisVT<2, FlagVT>]>;
+def SDTV8selectcc :
+SDTypeProfile<1, 4, [SDTCisSameAs<0, 1>, SDTCisSameAs<1, 2>, 
+                     SDTCisVT<3, i32>, SDTCisVT<4, FlagVT>]>;
 
 def V8cmpicc : SDNode<"V8ISD::CMPICC", SDTV8cmpicc>;
 def V8cmpfcc : SDNode<"V8ISD::CMPFCC", SDTV8cmpfcc>;
@@ -90,25 +93,61 @@ def V8lo    : SDNode<"V8ISD::Lo", SDTIntUnaryOp>;
 def V8ftoi  : SDNode<"V8ISD::FTOI", SDTFPUnaryOp>;
 def V8itof  : SDNode<"V8ISD::ITOF", SDTFPUnaryOp>;
 
+def V8selecticc : SDNode<"V8ISD::SELECT_ICC", SDTV8selectcc>;
+def V8selectfcc : SDNode<"V8ISD::SELECT_FCC", SDTV8selectcc>;
+
 //===----------------------------------------------------------------------===//
 // Instructions
 //===----------------------------------------------------------------------===//
 
 // Pseudo instructions.
-class PseudoInstV8<string asmstr, dag ops> : InstV8  {
+class Pseudo<dag ops, string asmstr, list<dag> pattern> : InstV8  {
   let AsmString = asmstr;
   dag OperandList = ops;
+  let Pattern = pattern;
 }
-def PHI : PseudoInstV8<"PHI", (ops variable_ops)>;
-def ADJCALLSTACKDOWN : PseudoInstV8<"!ADJCALLSTACKDOWN $amt",
-                                    (ops i32imm:$amt)>;
-def ADJCALLSTACKUP : PseudoInstV8<"!ADJCALLSTACKUP $amt",
-                                  (ops i32imm:$amt)>;
-//def IMPLICIT_USE : PseudoInstV8<"!IMPLICIT_USE",(ops variable_ops)>;
-def IMPLICIT_DEF : PseudoInstV8<"!IMPLICIT_DEF $dst", 
-                                (ops IntRegs:$dst)>;
-def FpMOVD : PseudoInstV8<"!FpMOVD",       // pseudo 64-bit double move
-                          (ops DFPRegs:$dst, DFPRegs:$src)>;
+def PHI : Pseudo<(ops variable_ops), "PHI", []>;
+def ADJCALLSTACKDOWN : Pseudo<(ops i32imm:$amt), "!ADJCALLSTACKDOWN $amt",[]>;
+def ADJCALLSTACKUP : Pseudo<(ops i32imm:$amt), "!ADJCALLSTACKUP $amt", []>;
+def IMPLICIT_DEF : Pseudo<(ops IntRegs:$dst), "!IMPLICIT_DEF $dst", []>;
+def FpMOVD : Pseudo<(ops DFPRegs:$dst, DFPRegs:$src),
+                    "!FpMOVD", []>;      // pseudo 64-bit double move
+
+// SELECT_CC_* - Used to implement the SELECT_CC DAG operation.  Expanded by the
+// scheduler into a branch sequence.  This has to handle all permutations of
+// selection between i32/f32/f64 on ICC and FCC.
+let usesCustomDAGSchedInserter = 1 in {  // Expanded by the scheduler.
+  def SELECT_CC_Int_ICC
+   : Pseudo<(ops IntRegs:$dst, IntRegs:$T, IntRegs:$F, i32imm:$Cond),
+            "; SELECT_CC_Int_ICC PSEUDO!",
+            [(set IntRegs:$dst, (V8selecticc IntRegs:$T, IntRegs:$F,
+                                             imm:$Cond, ICC))]>;
+  def SELECT_CC_Int_FCC
+   : Pseudo<(ops IntRegs:$dst, IntRegs:$T, IntRegs:$F, i32imm:$Cond),
+            "; SELECT_CC_Int_FCC PSEUDO!",
+            [(set IntRegs:$dst, (V8selectfcc IntRegs:$T, IntRegs:$F,
+                                             imm:$Cond, FCC))]>;
+  def SELECT_CC_FP_ICC
+   : Pseudo<(ops FPRegs:$dst, FPRegs:$T, FPRegs:$F, i32imm:$Cond),
+            "; SELECT_CC_FP_ICC PSEUDO!",
+            [(set FPRegs:$dst, (V8selecticc FPRegs:$T, FPRegs:$F,
+                                            imm:$Cond, ICC))]>;
+  def SELECT_CC_FP_FCC
+   : Pseudo<(ops FPRegs:$dst, FPRegs:$T, FPRegs:$F, i32imm:$Cond),
+            "; SELECT_CC_FP_FCC PSEUDO!",
+            [(set FPRegs:$dst, (V8selectfcc FPRegs:$T, FPRegs:$F,
+                                            imm:$Cond, FCC))]>;
+  def SELECT_CC_DFP_ICC
+   : Pseudo<(ops DFPRegs:$dst, DFPRegs:$T, DFPRegs:$F, i32imm:$Cond),
+            "; SELECT_CC_DFP_ICC PSEUDO!",
+            [(set DFPRegs:$dst, (V8selecticc DFPRegs:$T, DFPRegs:$F,
+                                             imm:$Cond, ICC))]>;
+  def SELECT_CC_DFP_FCC
+   : Pseudo<(ops DFPRegs:$dst, DFPRegs:$T, DFPRegs:$F, i32imm:$Cond),
+            "; SELECT_CC_DFP_FCC PSEUDO!",
+            [(set DFPRegs:$dst, (V8selectfcc DFPRegs:$T, DFPRegs:$F,
+                                             imm:$Cond, FCC))]>;
+}
 
 // Section A.3 - Synthetic Instructions, p. 85
 // special cases of JMPL:

@@ -16,6 +16,7 @@
 #include "llvm/Function.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
 #include "llvm/CodeGen/SSARegMap.h"
@@ -40,6 +41,9 @@ namespace V8ISD {
     
     FTOI,     // FP to Int within a FP register.
     ITOF,     // Int to FP within a FP register.
+    
+    SELECT_ICC, // Select between two values using the current ICC flags.
+    SELECT_FCC, // Select between two values using the current FCC flags.
   };
 }
 
@@ -66,6 +70,8 @@ namespace {
     virtual std::pair<SDOperand, SDOperand>
       LowerFrameReturnAddress(bool isFrameAddr, SDOperand Chain, unsigned Depth,
                               SelectionDAG &DAG);
+    virtual MachineBasicBlock *InsertAtEndOfBasicBlock(MachineInstr *MI,
+                                                       MachineBasicBlock *MBB);
   };
 }
 
@@ -82,9 +88,9 @@ SparcV8TargetLowering::SparcV8TargetLowering(TargetMachine &TM)
   setOperationAction(ISD::ConstantPool , MVT::i32, Custom);
   
   // Sparc doesn't have sext_inreg, replace them with shl/sra
-  setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i16  , Expand);
-  setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i8   , Expand);
-  setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1   , Expand);
+  setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i16, Expand);
+  setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i8 , Expand);
+  setOperationAction(ISD::SIGN_EXTEND_INREG, MVT::i1 , Expand);
 
   // Sparc has no REM operation.
   setOperationAction(ISD::UREM, MVT::i32, Expand);
@@ -115,6 +121,10 @@ SparcV8TargetLowering::SparcV8TargetLowering(TargetMachine &TM)
   setOperationAction(ISD::BR_CC, MVT::i32, Custom);
   setOperationAction(ISD::BR_CC, MVT::f32, Custom);
   setOperationAction(ISD::BR_CC, MVT::f64, Custom);
+  
+  setOperationAction(ISD::SELECT_CC, MVT::i32, Custom);
+  setOperationAction(ISD::SELECT_CC, MVT::f32, Custom);
+  setOperationAction(ISD::SELECT_CC, MVT::f64, Custom);
   
   computeRegisterProperties();
 }
@@ -243,22 +253,6 @@ SDOperand SparcV8TargetLowering::
 LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   switch (Op.getOpcode()) {
   default: assert(0 && "Should not custom lower this!");
-  case ISD::BR_CC: {
-    SDOperand Chain = Op.getOperand(0);
-    SDOperand CC = Op.getOperand(1);
-    SDOperand LHS = Op.getOperand(2);
-    SDOperand RHS = Op.getOperand(3);
-    SDOperand Dest = Op.getOperand(4);
-    
-    // Get the condition flag.
-    if (LHS.getValueType() == MVT::i32) {
-      SDOperand Cond = DAG.getNode(V8ISD::CMPICC, MVT::Flag, LHS, RHS);
-      return DAG.getNode(V8ISD::BRICC, MVT::Other, Chain, Dest, CC, Cond);
-    } else {
-      SDOperand Cond = DAG.getNode(V8ISD::CMPFCC, MVT::Flag, LHS, RHS);
-      return DAG.getNode(V8ISD::BRFCC, MVT::Other, Chain, Dest, CC, Cond);
-    }
-  }
   case ISD::GlobalAddress: {
     GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
     SDOperand GA = DAG.getTargetGlobalAddress(GV, MVT::i32);
@@ -298,10 +292,134 @@ LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     // Convert the int value to FP in an FP register.
     return DAG.getNode(V8ISD::ITOF, Op.getValueType(), Op);
   }
+  case ISD::BR_CC: {
+    SDOperand Chain = Op.getOperand(0);
+    SDOperand CC = Op.getOperand(1);
+    SDOperand LHS = Op.getOperand(2);
+    SDOperand RHS = Op.getOperand(3);
+    SDOperand Dest = Op.getOperand(4);
+    
+    // Get the condition flag.
+    if (LHS.getValueType() == MVT::i32) {
+      SDOperand Cond = DAG.getNode(V8ISD::CMPICC, MVT::Flag, LHS, RHS);
+      return DAG.getNode(V8ISD::BRICC, MVT::Other, Chain, Dest, CC, Cond);
+    } else {
+      SDOperand Cond = DAG.getNode(V8ISD::CMPFCC, MVT::Flag, LHS, RHS);
+      return DAG.getNode(V8ISD::BRFCC, MVT::Other, Chain, Dest, CC, Cond);
+    }
+  }
+  case ISD::SELECT_CC: {
+    SDOperand LHS = Op.getOperand(0);
+    SDOperand RHS = Op.getOperand(1);
+    unsigned CC = cast<CondCodeSDNode>(Op.getOperand(4))->get();
+    SDOperand TrueVal = Op.getOperand(2);
+    SDOperand FalseVal = Op.getOperand(3);
+    
+    unsigned Opc;
+    Opc = LHS.getValueType() == MVT::i32 ? V8ISD::CMPICC : V8ISD::CMPFCC;
+    SDOperand CompareFlag = DAG.getNode(Opc, MVT::Flag, LHS, RHS);
+    
+    Opc = LHS.getValueType() == MVT::i32 ? 
+      V8ISD::SELECT_ICC : V8ISD::SELECT_FCC;
+    return DAG.getNode(Opc, TrueVal.getValueType(), TrueVal, FalseVal, 
+                       DAG.getConstant(CC, MVT::i32), CompareFlag);
+  }
   }  
 }
 
-
+MachineBasicBlock *
+SparcV8TargetLowering::InsertAtEndOfBasicBlock(MachineInstr *MI,
+                                               MachineBasicBlock *BB) {
+  unsigned BROpcode;
+  // Figure out the conditional branch opcode to use for this select_cc.
+  switch (MI->getOpcode()) {
+  default: assert(0 && "Unknown SELECT_CC!");
+  case V8::SELECT_CC_Int_ICC:
+  case V8::SELECT_CC_FP_ICC:
+  case V8::SELECT_CC_DFP_ICC:
+    // Integer compare.
+    switch ((ISD::CondCode)MI->getOperand(3).getImmedValue()) {
+    default: assert(0 && "Unknown integer condition code!");
+    case ISD::SETEQ:  BROpcode = V8::BE; break;
+    case ISD::SETNE:  BROpcode = V8::BNE; break;
+    case ISD::SETLT:  BROpcode = V8::BL; break;
+    case ISD::SETGT:  BROpcode = V8::BG; break;
+    case ISD::SETLE:  BROpcode = V8::BLE; break;
+    case ISD::SETGE:  BROpcode = V8::BGE; break;
+    case ISD::SETULT: BROpcode = V8::BCS; break;
+    case ISD::SETULE: BROpcode = V8::BLEU; break;
+    case ISD::SETUGT: BROpcode = V8::BGU; break;
+    case ISD::SETUGE: BROpcode = V8::BCC; break;
+    }
+    break;
+  case V8::SELECT_CC_Int_FCC:
+  case V8::SELECT_CC_FP_FCC:
+  case V8::SELECT_CC_DFP_FCC:
+    // FP compare.
+    switch ((ISD::CondCode)MI->getOperand(3).getImmedValue()) {
+    default: assert(0 && "Unknown fp condition code!");
+    case ISD::SETEQ:  BROpcode = V8::FBE; break;
+    case ISD::SETNE:  BROpcode = V8::FBNE; break;
+    case ISD::SETLT:  BROpcode = V8::FBL; break;
+    case ISD::SETGT:  BROpcode = V8::FBG; break;
+    case ISD::SETLE:  BROpcode = V8::FBLE; break;
+    case ISD::SETGE:  BROpcode = V8::FBGE; break;
+    case ISD::SETULT: BROpcode = V8::FBUL; break;
+    case ISD::SETULE: BROpcode = V8::FBULE; break;
+    case ISD::SETUGT: BROpcode = V8::FBUG; break;
+    case ISD::SETUGE: BROpcode = V8::FBUGE; break;
+    case ISD::SETUO:  BROpcode = V8::FBU; break;
+    case ISD::SETO:   BROpcode = V8::FBO; break;
+    case ISD::SETONE: BROpcode = V8::FBLG; break;
+    case ISD::SETUEQ: BROpcode = V8::FBUE; break;
+    }
+    break;
+  }
+  
+  // To "insert" a SELECT_CC instruction, we actually have to insert the diamond
+  // control-flow pattern.  The incoming instruction knows the destination vreg
+  // to set, the condition code register to branch on, the true/false values to
+  // select between, and a branch opcode to use.
+  const BasicBlock *LLVM_BB = BB->getBasicBlock();
+  ilist<MachineBasicBlock>::iterator It = BB;
+  ++It;
+  
+  //  thisMBB:
+  //  ...
+  //   TrueVal = ...
+  //   [f]bCC copy1MBB
+  //   fallthrough --> copy0MBB
+  MachineBasicBlock *thisMBB = BB;
+  MachineBasicBlock *copy0MBB = new MachineBasicBlock(LLVM_BB);
+  MachineBasicBlock *sinkMBB = new MachineBasicBlock(LLVM_BB);
+  BuildMI(BB, BROpcode, 1).addMBB(sinkMBB);
+  MachineFunction *F = BB->getParent();
+  F->getBasicBlockList().insert(It, copy0MBB);
+  F->getBasicBlockList().insert(It, sinkMBB);
+  // Update machine-CFG edges
+  BB->addSuccessor(copy0MBB);
+  BB->addSuccessor(sinkMBB);
+  
+  //  copy0MBB:
+  //   %FalseValue = ...
+  //   # fallthrough to sinkMBB
+  BB = copy0MBB;
+  
+  // Update machine-CFG edges
+  BB->addSuccessor(sinkMBB);
+  
+  //  sinkMBB:
+  //   %Result = phi [ %FalseValue, copy0MBB ], [ %TrueValue, thisMBB ]
+  //  ...
+  BB = sinkMBB;
+  BuildMI(BB, V8::PHI, 4, MI->getOperand(0).getReg())
+    .addReg(MI->getOperand(2).getReg()).addMBB(copy0MBB)
+    .addReg(MI->getOperand(1).getReg()).addMBB(thisMBB);
+  
+  delete MI;   // The pseudo instruction is gone now.
+  return BB;
+}
+  
 //===----------------------------------------------------------------------===//
 // Instruction Selector Implementation
 //===----------------------------------------------------------------------===//
