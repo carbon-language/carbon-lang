@@ -87,6 +87,9 @@ def V8brfcc : SDNode<"V8ISD::BRFCC", SDTV8brcc, [SDNPHasChain]>;
 def V8hi    : SDNode<"V8ISD::Hi", SDTIntUnaryOp>;
 def V8lo    : SDNode<"V8ISD::Lo", SDTIntUnaryOp>;
 
+def V8ftoi  : SDNode<"V8ISD::FTOI", SDTFPUnaryOp>;
+def V8itof  : SDNode<"V8ISD::ITOF", SDTFPUnaryOp>;
+
 //===----------------------------------------------------------------------===//
 // Instructions
 //===----------------------------------------------------------------------===//
@@ -104,7 +107,8 @@ def ADJCALLSTACKUP : PseudoInstV8<"!ADJCALLSTACKUP $amt",
 //def IMPLICIT_USE : PseudoInstV8<"!IMPLICIT_USE",(ops variable_ops)>;
 def IMPLICIT_DEF : PseudoInstV8<"!IMPLICIT_DEF $dst", 
                                 (ops IntRegs:$dst)>;
-def FpMOVD : PseudoInstV8<"!FpMOVD", (ops)>; // pseudo 64-bit double move
+def FpMOVD : PseudoInstV8<"!FpMOVD",       // pseudo 64-bit double move
+                          (ops DFPRegs:$dst, DFPRegs:$src)>;
 
 // Section A.3 - Synthetic Instructions, p. 85
 // special cases of JMPL:
@@ -544,18 +548,22 @@ def WRYri : F3_2<2, 0b110000,
 // Convert Integer to Floating-point Instructions, p. 141
 def FITOS : F3_3<2, 0b110100, 0b011000100,
                  (ops FPRegs:$dst, FPRegs:$src),
-                 "fitos $src, $dst", []>;
+                 "fitos $src, $dst",
+                 [(set FPRegs:$dst, (V8itof FPRegs:$src))]>;
 def FITOD : F3_3<2, 0b110100, 0b011001000, 
                  (ops DFPRegs:$dst, DFPRegs:$src),
-                 "fitod $src, $dst", []>;
+                 "fitod $src, $dst",
+                 [(set DFPRegs:$dst, (V8itof DFPRegs:$src))]>;
 
 // Convert Floating-point to Integer Instructions, p. 142
 def FSTOI : F3_3<2, 0b110100, 0b011010001,
                  (ops FPRegs:$dst, FPRegs:$src),
-                 "fstoi $src, $dst", []>;
+                 "fstoi $src, $dst",
+                 [(set FPRegs:$dst, (V8ftoi FPRegs:$src))]>;
 def FDTOI : F3_3<2, 0b110100, 0b011010010,
                  (ops DFPRegs:$dst, DFPRegs:$src),
-                 "fdtoi $src, $dst", []>;
+                 "fdtoi $src, $dst",
+                 [(set DFPRegs:$dst, (V8ftoi DFPRegs:$src))]>;
 
 // Convert between Floating-point Formats Instructions, p. 143
 def FSTOD : F3_3<2, 0b110100, 0b011001001, 

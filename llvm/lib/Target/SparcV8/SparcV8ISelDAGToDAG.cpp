@@ -14,6 +14,7 @@
 #include "SparcV8.h"
 #include "SparcV8TargetMachine.h"
 #include "llvm/Function.h"
+#include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
@@ -36,6 +37,9 @@ namespace V8ISD {
     BRFCC,    // Branch to dest on fcc condition
     
     Hi, Lo,   // Hi/Lo operations, typically on a global address.
+    
+    FTOI,     // FP to Int within a FP register.
+    ITOF,     // Int to FP within a FP register.
   };
 }
 
@@ -85,6 +89,14 @@ SparcV8TargetLowering::SparcV8TargetLowering(TargetMachine &TM)
   // Sparc has no REM operation.
   setOperationAction(ISD::UREM, MVT::i32, Expand);
   setOperationAction(ISD::SREM, MVT::i32, Expand);
+
+  // Custom expand fp<->sint
+  setOperationAction(ISD::FP_TO_SINT, MVT::i32, Custom);
+  setOperationAction(ISD::SINT_TO_FP, MVT::i32, Custom);
+
+  // Expand fp<->uint
+  setOperationAction(ISD::FP_TO_UINT, MVT::i32, Expand);
+  setOperationAction(ISD::UINT_TO_FP, MVT::i32, Expand);
   
   // Sparc has no select or setcc: expand to SELECT_CC.
   setOperationAction(ISD::SELECT, MVT::i32, Expand);
@@ -259,6 +271,31 @@ LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     SDOperand Lo = DAG.getNode(V8ISD::Lo, MVT::i32, CP);
     return DAG.getNode(ISD::ADD, MVT::i32, Lo, Hi);
   }
+  case ISD::FP_TO_SINT: {
+    // Convert the fp value to integer in an FP register.
+    Op = DAG.getNode(V8ISD::FTOI, Op.getOperand(0).getValueType(),
+                     Op.getOperand(0));
+    int Size = Op.getOperand(0).getValueType() == MVT::f32 ? 4 : 8;
+    int FrameIdx =
+      DAG.getMachineFunction().getFrameInfo()->CreateStackObject(Size, Size);
+    SDOperand FI = DAG.getFrameIndex(FrameIdx, MVT::i32);
+    SDOperand ST = DAG.getNode(ISD::STORE, MVT::Other, DAG.getEntryNode(),
+                               Op, FI, DAG.getSrcValue(0));
+    return DAG.getLoad(MVT::i32, ST, FI, DAG.getSrcValue(0));
+  }
+  case ISD::SINT_TO_FP: {
+    int Size = Op.getOperand(0).getValueType() == MVT::f32 ? 4 : 8;
+    int FrameIdx =
+      DAG.getMachineFunction().getFrameInfo()->CreateStackObject(Size, Size);
+    SDOperand FI = DAG.getFrameIndex(FrameIdx, MVT::i32);
+    SDOperand ST = DAG.getNode(ISD::STORE, MVT::Other, DAG.getEntryNode(),
+                               Op.getOperand(0), FI, DAG.getSrcValue(0));
+    
+    Op = DAG.getLoad(Op.getValueType(), ST, FI, DAG.getSrcValue(0));
+    
+    // Convert the int value to FP in an FP register.
+    return DAG.getNode(V8ISD::ITOF, Op.getValueType(), Op);
+  }
   }  
 }
 
@@ -311,8 +348,48 @@ void SparcV8DAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
   ScheduleAndEmitDAG(DAG);
 }
 
+bool SparcV8DAGToDAGISel::SelectADDRri(SDOperand Addr, SDOperand &Base,
+                                       SDOperand &Offset) {
+  if (Addr.getOpcode() == ISD::FrameIndex) {
+    int FI = cast<FrameIndexSDNode>(Addr)->getIndex();
+    Base = CurDAG->getTargetFrameIndex(FI, MVT::i32);
+    Offset = CurDAG->getTargetConstant(0, MVT::i32);
+    return true;
+  }
+  
+  if (Addr.getOpcode() == ISD::ADD) {
+    if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(Addr.getOperand(1))) {
+      if (Predicate_simm13(CN)) {
+        if (Addr.getOperand(0).getOpcode() == ISD::FrameIndex) {
+          // Constant offset from frame ref.
+          int FI = cast<FrameIndexSDNode>(Addr)->getIndex();
+          Base = CurDAG->getTargetFrameIndex(FI, MVT::i32);
+        } else {
+          Base = Select(Addr.getOperand(0));
+        }
+        Offset = CurDAG->getTargetConstant(CN->getValue(), MVT::i32);
+        return true;
+      }
+    }
+    if (Addr.getOperand(0).getOpcode() == V8ISD::Lo) {
+      Base = Select(Addr.getOperand(1));
+      Offset = Addr.getOperand(0).getOperand(0);
+      return true;
+    }
+    if (Addr.getOperand(1).getOpcode() == V8ISD::Lo) {
+      Base = Select(Addr.getOperand(0));
+      Offset = Addr.getOperand(1).getOperand(0);
+      return true;
+    }
+  }
+  Base = Select(Addr);
+  Offset = CurDAG->getTargetConstant(0, MVT::i32);
+  return true;
+}
+
 bool SparcV8DAGToDAGISel::SelectADDRrr(SDOperand Addr, SDOperand &R1, 
                                        SDOperand &R2) {
+  if (Addr.getOpcode() == ISD::FrameIndex) return false; 
   if (Addr.getOpcode() == ISD::ADD) {
     if (isa<ConstantSDNode>(Addr.getOperand(1)) &&
         Predicate_simm13(Addr.getOperand(1).Val))
@@ -330,32 +407,6 @@ bool SparcV8DAGToDAGISel::SelectADDRrr(SDOperand Addr, SDOperand &R1,
   return true;
 }
 
-bool SparcV8DAGToDAGISel::SelectADDRri(SDOperand Addr, SDOperand &Base,
-                                       SDOperand &Offset) {
-  if (Addr.getOpcode() == ISD::ADD) {
-    if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(Addr.getOperand(1)))
-      if (Predicate_simm13(CN)) {
-        Base = Select(Addr.getOperand(0));
-        Offset = CurDAG->getTargetConstant(CN->getValue(), MVT::i32);
-        return true;
-      }
-    if (Addr.getOperand(0).getOpcode() == V8ISD::Lo) {
-      Base = Select(Addr.getOperand(1));
-      Offset = Addr.getOperand(0).getOperand(0);
-      return true;
-    }
-    if (Addr.getOperand(1).getOpcode() == V8ISD::Lo) {
-      Base = Select(Addr.getOperand(0));
-      Offset = Addr.getOperand(1).getOperand(0);
-      return true;
-    }
-  }
-  Base = Select(Addr);
-  Offset = CurDAG->getTargetConstant(0, MVT::i32);
-  return true;
-}
-
-
 SDOperand SparcV8DAGToDAGISel::Select(SDOperand Op) {
   SDNode *N = Op.Val;
   if (N->getOpcode() >= ISD::BUILTIN_OP_END &&
@@ -368,6 +419,17 @@ SDOperand SparcV8DAGToDAGISel::Select(SDOperand Op) {
   switch (N->getOpcode()) {
   default: break;
   case ISD::BasicBlock:         return CodeGenMap[Op] = Op;
+  case ISD::FrameIndex: {
+    int FI = cast<FrameIndexSDNode>(N)->getIndex();
+    if (N->hasOneUse())
+      return CurDAG->SelectNodeTo(N, V8::ADDri, MVT::i32,
+                                  CurDAG->getTargetFrameIndex(FI, MVT::i32),
+                                  CurDAG->getTargetConstant(0, MVT::i32));
+    return CodeGenMap[Op] = 
+      CurDAG->getTargetNode(V8::ADDri, MVT::i32,
+                            CurDAG->getTargetFrameIndex(FI, MVT::i32),
+                            CurDAG->getTargetConstant(0, MVT::i32));
+  }
   case V8ISD::CMPICC: {
     // FIXME: Handle compare with immediate.
     SDOperand LHS = Select(N->getOperand(0));
