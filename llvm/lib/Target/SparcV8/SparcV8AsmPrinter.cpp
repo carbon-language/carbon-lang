@@ -40,6 +40,8 @@ namespace {
       Data32bitsDirective = "\t.word\t";
       Data64bitsDirective = "\t.xword\t";
       ZeroDirective = 0;  // no .zero or .space!
+      CommentString = "!";
+      ConstantPoolSection = "\t.section \".rodata\",#alloc\n";
     }
 
     /// We name each basic block in a Function with a unique number, so

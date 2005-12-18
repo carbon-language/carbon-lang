@@ -715,7 +715,6 @@ def : Pat<(V8lo tconstpool:$in), (ORri G0, tconstpool:$in)>;
 def : Pat<(retflag ICC/*HACK*/), (RETL)>;
 
 // Map integer extload's to zextloads.
-// Handling 1 bit extload
 def : Pat<(i32 (extload ADDRrr:$src, i1)), (LDUBrr ADDRrr:$src)>;
 def : Pat<(i32 (extload ADDRri:$src, i1)), (LDUBri ADDRri:$src)>;
 def : Pat<(i32 (extload ADDRrr:$src, i8)), (LDUBrr ADDRrr:$src)>;
