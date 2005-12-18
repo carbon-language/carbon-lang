@@ -50,6 +50,7 @@ namespace V8ISD {
 
 namespace {
   class SparcV8TargetLowering : public TargetLowering {
+    int VarArgsFrameOffset;   // Frame offset to start of varargs area.
   public:
     SparcV8TargetLowering(TargetMachine &TM);
     virtual SDOperand LowerOperation(SDOperand Op, SelectionDAG &DAG);
@@ -154,7 +155,6 @@ SparcV8TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
     
     switch (ObjectVT) {
     default: assert(0 && "Unhandled argument type!");
-    // TODO: FP
     case MVT::i1:
     case MVT::i8:
     case MVT::i16:
@@ -278,6 +278,9 @@ SparcV8TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
   
   // Store remaining ArgRegs to the stack if this is a varargs function.
   if (F.getFunctionType()->isVarArg()) {
+    // Remember the vararg offset for the va_start implementation.
+    VarArgsFrameOffset = ArgOffset;
+    
     for (; CurArgReg != ArgRegEnd; ++CurArgReg) {
       unsigned VReg = RegMap->createVirtualRegister(&V8::IntRegsRegClass);
       MF.addLiveIn(*CurArgReg, VReg);
@@ -325,8 +328,208 @@ SparcV8TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
                                    bool isVarArg, unsigned CC,
                                    bool isTailCall, SDOperand Callee, 
                                    ArgListTy &Args, SelectionDAG &DAG) {
-  assert(0 && "Unimp");
-  abort();
+  MachineFunction &MF = DAG.getMachineFunction();
+  // Count the size of the outgoing arguments.
+  unsigned ArgsSize = 0;
+  for (unsigned i = 0, e = Args.size(); i != e; ++i) {
+    switch (getValueType(Args[i].second)) {
+    default: assert(0 && "Unknown value type!");
+    case MVT::i1:
+    case MVT::i8:
+    case MVT::i16:
+    case MVT::i32:
+    case MVT::f32:
+      ArgsSize += 4;
+      break;
+    case MVT::i64:
+    case MVT::f64:
+      ArgsSize += 8;
+      break;
+    }
+  }
+  if (ArgsSize > 4*6)
+    ArgsSize -= 4*6;    // Space for first 6 arguments is prereserved.
+  else
+    ArgsSize = 0;
+
+  Chain = DAG.getNode(ISD::CALLSEQ_START, MVT::Other, Chain,
+                      DAG.getConstant(ArgsSize, getPointerTy()));
+  
+  SDOperand StackPtr, NullSV;
+  std::vector<SDOperand> Stores;
+  std::vector<SDOperand> RegValuesToPass;
+  unsigned ArgOffset = 68;
+  for (unsigned i = 0, e = Args.size(); i != e; ++i) {
+    SDOperand Val = Args[i].first;
+    MVT::ValueType ObjectVT = Val.getValueType();
+    SDOperand ValToStore;
+    unsigned ObjSize;
+    switch (ObjectVT) {
+    default: assert(0 && "Unhandled argument type!");
+    case MVT::i1:
+    case MVT::i8:
+    case MVT::i16:
+      // Promote the integer to 32-bits.  If the input type is signed, use a
+      // sign extend, otherwise use a zero extend.
+      if (Args[i].second->isSigned())
+        Val = DAG.getNode(ISD::SIGN_EXTEND, MVT::i32, Val);
+      else
+        Val = DAG.getNode(ISD::ZERO_EXTEND, MVT::i32, Val);
+      // FALL THROUGH
+    case MVT::i32:
+      ObjSize = 4;
+
+      if (RegValuesToPass.size() >= 6) {
+        ValToStore = Val;
+      } else {
+        RegValuesToPass.push_back(Val);
+      }
+      break;
+    case MVT::f32:
+      ObjSize = 4;
+      if (RegValuesToPass.size() >= 6) {
+        ValToStore = Val;
+      } else {
+        // Convert this to a FP value in an int reg.
+        int FrameIdx = MF.getFrameInfo()->CreateStackObject(4, 4);
+        SDOperand FIPtr = DAG.getFrameIndex(FrameIdx, MVT::i32);
+        SDOperand SV = DAG.getSrcValue(0);
+        SDOperand Store = DAG.getNode(ISD::STORE, MVT::Other, Chain,
+                                      Val, FIPtr, SV);
+        Val = DAG.getLoad(MVT::i32, Store, FIPtr, SV);
+        RegValuesToPass.push_back(Val);
+      }
+      break;
+    case MVT::f64: {
+      ObjSize = 8;
+      // If we can store this directly into the outgoing slot, do so.  We can
+      // do this when all ArgRegs are used and if the outgoing slot is aligned.
+      if (RegValuesToPass.size() >= 6 && ((ArgOffset-68) & 7) == 0) {
+        ValToStore = Val;
+        break;
+      }
+      
+      // Otherwise, convert this to a FP value in int regs.
+      int FrameIdx = MF.getFrameInfo()->CreateStackObject(8, 8);
+      SDOperand FIPtr = DAG.getFrameIndex(FrameIdx, MVT::i32);
+      SDOperand SV = DAG.getSrcValue(0);
+      SDOperand Store = DAG.getNode(ISD::STORE, MVT::Other, Chain,
+                                    Val, FIPtr, SV);
+      Val = DAG.getLoad(MVT::i64, Store, FIPtr, SV);
+    }
+      // FALL THROUGH
+    case MVT::i64:
+      ObjSize = 8;
+      if (RegValuesToPass.size() >= 6) {
+        ValToStore = Val;    // Whole thing is passed in memory.
+        break;
+      }
+      
+      // Split the value into top and bottom part.  Top part goes in a reg.
+      SDOperand Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, Val, 
+                                 DAG.getConstant(1, MVT::i32));
+      SDOperand Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, Val,
+                                 DAG.getConstant(0, MVT::i32));
+      RegValuesToPass.push_back(Hi);
+      
+      if (RegValuesToPass.size() >= 6) {
+        ValToStore = Lo;
+      } else {
+        RegValuesToPass.push_back(Lo);
+      }
+      break;
+    }
+    
+    if (ValToStore.Val) {
+      if (!StackPtr.Val) {
+        StackPtr = DAG.getCopyFromReg(DAG.getEntryNode(), V8::SP, MVT::i32);
+        NullSV = DAG.getSrcValue(NULL);
+      }
+      SDOperand PtrOff = DAG.getConstant(ArgOffset, getPointerTy());
+      PtrOff = DAG.getNode(ISD::ADD, MVT::i32, StackPtr, PtrOff);
+      Stores.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
+                                   ValToStore, PtrOff, NullSV));
+    }
+    ArgOffset += ObjSize;
+  }
+  
+  // Emit all stores, make sure the occur before any copies into physregs.
+  if (!Stores.empty())
+    Chain = DAG.getNode(ISD::TokenFactor, MVT::Other, Stores);
+  
+  static const unsigned ArgRegs[] = {
+    V8::O0, V8::O1, V8::O2, V8::O3, V8::O4, V8::O5
+  };
+  
+  // Build a sequence of copy-to-reg nodes chained together with token chain
+  // and flag operands which copy the outgoing args into O[0-5].
+  SDOperand InFlag;
+  for (unsigned i = 0, e = RegValuesToPass.size(); i != e; ++i) {
+    Chain = DAG.getCopyToReg(Chain, ArgRegs[i], RegValuesToPass[i], InFlag);
+    InFlag = Chain.getValue(1);
+  }
+
+  std::vector<MVT::ValueType> RetVals;
+  RetVals.push_back(MVT::Other);
+  RetVals.push_back(MVT::Flag);
+
+  // If the callee is a GlobalAddress node (quite common, every direct call is)
+  // turn it into a TargetGlobalAddress node so that legalize doesn't hack it.
+  if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee))
+    Callee = DAG.getTargetGlobalAddress(G->getGlobal(), MVT::i32);
+
+  std::vector<MVT::ValueType> NodeTys;
+  NodeTys.push_back(MVT::Other);   // Returns a chain
+  NodeTys.push_back(MVT::Flag);    // Returns a flag for retval copy to use.
+  Chain = SDOperand(DAG.getCall(NodeTys, Chain, Callee, InFlag), 0);
+  InFlag = Chain.getValue(1);
+  
+  MVT::ValueType RetTyVT = getValueType(RetTy);
+  SDOperand RetVal;
+  if (RetTyVT != MVT::isVoid) {
+    switch (RetTyVT) {
+    default: assert(0 && "Unknown value type to return!");
+    case MVT::i1:
+    case MVT::i8:
+    case MVT::i16:
+      RetVal = DAG.getCopyFromReg(Chain, V8::O0, MVT::i32, InFlag);
+      Chain = RetVal.getValue(1);
+      
+      // Add a note to keep track of whether it is sign or zero extended.
+      RetVal = DAG.getNode(RetTy->isSigned() ? ISD::AssertSext :ISD::AssertZext,
+                           MVT::i32, RetVal, DAG.getValueType(RetTyVT));
+      RetVal = DAG.getNode(ISD::TRUNCATE, RetTyVT, RetVal);
+      break;
+    case MVT::i32:
+      RetVal = DAG.getCopyFromReg(Chain, V8::O0, MVT::i32, InFlag);
+      Chain = RetVal.getValue(1);
+      break;
+    case MVT::f32:
+      RetVal = DAG.getCopyFromReg(Chain, V8::F0, MVT::f32, InFlag);
+      Chain = RetVal.getValue(1);
+      break;
+    case MVT::f64:
+      RetVal = DAG.getCopyFromReg(Chain, V8::D0, MVT::f64, InFlag);
+      Chain = RetVal.getValue(1);
+      break;
+    case MVT::i64:
+      SDOperand Lo = DAG.getCopyFromReg(Chain, V8::O0, MVT::i32, InFlag);
+      SDOperand Hi = DAG.getCopyFromReg(Lo.getValue(1), V8::O0, MVT::i32, 
+                                        Lo.getValue(2));
+      RetVal = DAG.getNode(ISD::BUILD_PAIR, MVT::i64, Lo, Hi);
+      Chain = Hi.getValue(1);
+      break;
+    }
+  }
+  
+  Chain = DAG.getNode(ISD::CALLSEQ_END, MVT::Other, Chain,
+                      DAG.getConstant(ArgsSize, getPointerTy()));
+  
+  MVT::ValueType ActualRetTyVT = RetTyVT;
+  if (RetTyVT >= MVT::i1 && RetTyVT <= MVT::i16)
+    ActualRetTyVT = MVT::i32;   // Promote result to i32.
+  
+  return std::make_pair(RetVal, Chain);
 }
 
 SDOperand SparcV8TargetLowering::LowerReturnTo(SDOperand Chain, SDOperand Op,
@@ -734,6 +937,7 @@ SDOperand SparcV8DAGToDAGISel::Select(SDOperand Op) {
   }
     
   case ISD::RET: {
+    // FIXME: change this to use flag operands to allow autogen of ret.
     if (N->getNumOperands() == 2) {
       SDOperand Chain = Select(N->getOperand(0));     // Token chain.
       SDOperand Val = Select(N->getOperand(1));
@@ -757,6 +961,26 @@ SDOperand SparcV8DAGToDAGISel::Select(SDOperand Op) {
     }
     break;  // Generated code handles the void case.
   }
+  case ISD::CALL:
+    // FIXME: This is a workaround for a bug in tblgen.
+  { // Pattern #47: (call:Flag (tglobaladdr:i32):$dst, ICC:Flag)
+    // Emits: (CALL:void (tglobaladdr:i32):$dst)
+    // Pattern complexity = 2  cost = 1
+    SDOperand N1 = N->getOperand(1);
+    if (N1.getOpcode() != ISD::TargetGlobalAddress) goto P47Fail;
+    SDOperand N2 = N->getOperand(2);
+    SDOperand InFlag = SDOperand(0,0);
+    SDOperand Chain = N->getOperand(0);
+    SDOperand Tmp0 = N1;
+    Chain = Select(Chain);
+    InFlag = Select(N2);
+    SDOperand Result = CurDAG->getTargetNode(V8::CALL, MVT::Other, MVT::Flag, Tmp0, Chain, InFlag);
+    Chain = CodeGenMap[SDOperand(N, 0)] = Result.getValue(0);
+     CodeGenMap[SDOperand(N, 1)] = Result.getValue(1);
+    return Result.getValue(Op.ResNo);
+  }
+    P47Fail:;
+    
   }
   
   return SelectCode(Op);

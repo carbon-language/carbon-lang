@@ -57,6 +57,7 @@ def MEMri : Operand<i32> {
 
 // Branch targets have OtherVT type.
 def brtarget : Operand<OtherVT>;
+def calltarget : Operand<i32>;
 
 def SDTV8cmpicc : 
 SDTypeProfile<1, 2, [SDTCisVT<0, FlagVT>, SDTCisInt<1>, SDTCisSameAs<1, 2>]>;
@@ -83,6 +84,15 @@ def V8itof  : SDNode<"V8ISD::ITOF", SDTFPUnaryOp>;
 def V8selecticc : SDNode<"V8ISD::SELECT_ICC", SDTV8selectcc>;
 def V8selectfcc : SDNode<"V8ISD::SELECT_FCC", SDTV8selectcc>;
 
+// These are target-independent nodes, but have target-specific formats.
+def SDT_V8CallSeq : SDTypeProfile<0, 1, [ SDTCisVT<0, i32> ]>;
+def callseq_start : SDNode<"ISD::CALLSEQ_START", SDT_V8CallSeq, [SDNPHasChain]>;
+def callseq_end   : SDNode<"ISD::CALLSEQ_END",   SDT_V8CallSeq, [SDNPHasChain]>;
+
+def SDT_V8Call    : SDTypeProfile<1, 2, [SDTCisVT<0, FlagVT>, SDTCisVT<1, i32>,
+                                         SDTCisVT<2, FlagVT>]>;
+def call          : SDNode<"ISD::CALL", SDT_V8Call, [SDNPHasChain]>;
+
 //===----------------------------------------------------------------------===//
 // Instructions
 //===----------------------------------------------------------------------===//
@@ -92,8 +102,12 @@ class Pseudo<dag ops, string asmstr, list<dag> pattern>
    : InstV8<ops, asmstr, pattern>;
 
 def PHI : Pseudo<(ops variable_ops), "PHI", []>;
-def ADJCALLSTACKDOWN : Pseudo<(ops i32imm:$amt), "!ADJCALLSTACKDOWN $amt",[]>;
-def ADJCALLSTACKUP : Pseudo<(ops i32imm:$amt), "!ADJCALLSTACKUP $amt", []>;
+def ADJCALLSTACKDOWN : Pseudo<(ops i32imm:$amt),
+                               "!ADJCALLSTACKDOWN $amt",
+                               [(callseq_start imm:$amt)]>;
+def ADJCALLSTACKUP : Pseudo<(ops i32imm:$amt),
+                            "!ADJCALLSTACKUP $amt",
+                            [(callseq_end imm:$amt)]>;
 def IMPLICIT_DEF : Pseudo<(ops IntRegs:$dst), "!IMPLICIT_DEF $dst", []>;
 def FpMOVD : Pseudo<(ops DFPRegs:$dst, DFPRegs:$src),
                     "!FpMOVD", []>;      // pseudo 64-bit double move
@@ -523,23 +537,27 @@ def FBO  : FPBranchV8<0b1111, (ops brtarget:$dst),
 
 // Section B.24 - Call and Link Instruction, p. 125
 // This is the only Format 1 instruction
-let Uses = [O0, O1, O2, O3, O4, O5], hasDelaySlot = 1, isCall = 1 in { 
+let Uses = [O0, O1, O2, O3, O4, O5], hasDelaySlot = 1, isCall = 1,
+    Defs = [O0, O1, O2, O3, O4, O5, O7, G1, G2, G3, G4, G5, G6, G7,
+    D0, D1, D2, D3, D4, D5, D6, D7, D8, D9, D10, D11, D12, D13, D14, D15] in { 
   // pc-relative call:
-  let Defs = [O0, O1, O2, O3, O4, O5, O7, G1, G2, G3, G4, G5, G6, G7,
-    D0, D1, D2, D3, D4, D5, D6, D7, D8, D9, D10, D11, D12, D13, D14, D15] in
-  def CALL : InstV8<(ops IntRegs:$dst), "call $dst", []> {
+  def CALL : InstV8<(ops calltarget:$dst),
+                    "call $dst",
+                  [(set ICC/*bogus*/, (call tglobaladdr:$dst, ICC/*bogus*/))]> {
     bits<30> disp;
     let op = 1;
     let Inst{29-0} = disp;
   }
 
-  // indirect call (O7 is an EXPLICIT def in indirect calls, so it cannot also
-  // be an implicit def):
-  let Defs = [O0, O1, O2, O3, O4, O5, G1, G2, G3, G4, G5, G6, G7,
-    D0, D1, D2, D3, D4, D5, D6, D7, D8, D9, D10, D11, D12, D13, D14, D15] in
+  // indirect calls
   def JMPLrr : F3_1<2, 0b111000,
-                    (ops IntRegs:$dst, IntRegs:$b, IntRegs:$c),
-                    "jmpl $b+$c, $dst", []>;
+                    (ops MEMrr:$ptr),
+                    "jmpl $ptr",
+                    [(set ICC/*bogus*/, (call  ADDRrr:$ptr, ICC/*bogus*/))]>;
+  def JMPLri : F3_2<2, 0b111000,
+                    (ops MEMri:$ptr),
+                    "jmpl $ptr",
+                    [(set ICC/*bogus*/, (call  ADDRri:$ptr, ICC/*bogus*/))]>;
 }
 
 // Section B.28 - Read State Register Instructions
