@@ -483,7 +483,10 @@ SparcV8TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
   std::vector<MVT::ValueType> NodeTys;
   NodeTys.push_back(MVT::Other);   // Returns a chain
   NodeTys.push_back(MVT::Flag);    // Returns a flag for retval copy to use.
-  Chain = SDOperand(DAG.getCall(NodeTys, Chain, Callee, InFlag), 0);
+  if (InFlag.Val)
+    Chain = SDOperand(DAG.getCall(NodeTys, Chain, Callee, InFlag), 0);
+  else
+    Chain = SDOperand(DAG.getCall(NodeTys, Chain, Callee), 0);
   InFlag = Chain.getValue(1);
   
   MVT::ValueType RetTyVT = getValueType(RetTy);
@@ -870,7 +873,6 @@ SDOperand SparcV8DAGToDAGISel::Select(SDOperand Op) {
   
   switch (N->getOpcode()) {
   default: break;
-  case ISD::BasicBlock:         return CodeGenMap[Op] = Op;
   case ISD::FrameIndex: {
     int FI = cast<FrameIndexSDNode>(N)->getIndex();
     if (N->hasOneUse())
@@ -957,13 +959,19 @@ SDOperand SparcV8DAGToDAGISel::Select(SDOperand Op) {
     // Pattern complexity = 2  cost = 1
     SDOperand N1 = N->getOperand(1);
     if (N1.getOpcode() != ISD::TargetGlobalAddress) goto P47Fail;
-    SDOperand N2 = N->getOperand(2);
-    SDOperand InFlag = SDOperand(0,0);
+    SDOperand InFlag = SDOperand(0, 0);
     SDOperand Chain = N->getOperand(0);
     SDOperand Tmp0 = N1;
     Chain = Select(Chain);
-    InFlag = Select(N2);
-    SDOperand Result = CurDAG->getTargetNode(V8::CALL, MVT::Other, MVT::Flag, Tmp0, Chain, InFlag);
+    SDOperand Result;
+    if (N->getNumOperands() == 3) {
+      InFlag = Select(N->getOperand(2));
+      Result = CurDAG->getTargetNode(V8::CALL, MVT::Other, MVT::Flag, Tmp0, 
+                                     Chain, InFlag);
+    } else {
+      Result = CurDAG->getTargetNode(V8::CALL, MVT::Other, MVT::Flag, Tmp0, 
+                                     Chain);
+    }
     Chain = CodeGenMap[SDOperand(N, 0)] = Result.getValue(0);
      CodeGenMap[SDOperand(N, 1)] = Result.getValue(1);
     return Result.getValue(Op.ResNo);
