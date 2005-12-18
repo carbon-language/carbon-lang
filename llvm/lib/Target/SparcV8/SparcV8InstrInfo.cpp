@@ -45,11 +45,7 @@ bool SparcV8InstrInfo::isMoveInstr(const MachineInstr &MI,
       return true;
     }
   } else if (MI.getOpcode() == V8::ORri || MI.getOpcode() == V8::ADDri) {
-    if (isZeroImmed (MI.getOperand (1))) {
-      DstReg = MI.getOperand(0).getReg();
-      SrcReg = MI.getOperand(2).getReg();
-      return true;
-    } else if (isZeroImmed (MI.getOperand (2))) {
+    if (isZeroImmed(MI.getOperand(2)) && MI.getOperand(1).isRegister()) {
       DstReg = MI.getOperand(0).getReg();
       SrcReg = MI.getOperand(1).getReg();
       return true;
