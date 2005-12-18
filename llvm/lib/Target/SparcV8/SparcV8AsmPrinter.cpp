@@ -186,7 +186,13 @@ void SparcV8AsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
 void SparcV8AsmPrinter::printMemOperand(const MachineInstr *MI, int opNum) {
   printOperand(MI, opNum);
   O << "+";
-  printOperand(MI, opNum+1);
+  if (MI->getOperand(opNum+1).getType() == MachineOperand::MO_GlobalAddress) {
+    O << "%lo(";
+    printOperand(MI, opNum+1);
+    O << ")";
+  } else {
+    printOperand(MI, opNum+1);
+  }
 }
 
 

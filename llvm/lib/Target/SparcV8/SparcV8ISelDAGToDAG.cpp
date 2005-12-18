@@ -309,6 +309,9 @@ bool SparcV8DAGToDAGISel::SelectADDRrr(SDOperand Addr, SDOperand &R1,
     if (isa<ConstantSDNode>(Addr.getOperand(1)) &&
         Predicate_simm13(Addr.getOperand(1).Val))
       return false;  // Let the reg+imm pattern catch this!
+    if (Addr.getOperand(0).getOpcode() == V8ISD::Lo ||
+        Addr.getOperand(1).getOpcode() == V8ISD::Lo)
+      return false;  // Let the reg+imm pattern catch this!
     R1 = Select(Addr.getOperand(0));
     R2 = Select(Addr.getOperand(1));
     return true;
@@ -328,6 +331,16 @@ bool SparcV8DAGToDAGISel::SelectADDRri(SDOperand Addr, SDOperand &Base,
         Offset = CurDAG->getTargetConstant(CN->getValue(), MVT::i32);
         return true;
       }
+    if (Addr.getOperand(0).getOpcode() == V8ISD::Lo) {
+      Base = Select(Addr.getOperand(1));
+      Offset = Addr.getOperand(0).getOperand(0);
+      return true;
+    }
+    if (Addr.getOperand(1).getOpcode() == V8ISD::Lo) {
+      Base = Select(Addr.getOperand(0));
+      Offset = Addr.getOperand(1).getOperand(0);
+      return true;
+    }
   }
   Base = Select(Addr);
   Offset = CurDAG->getTargetConstant(0, MVT::i32);
