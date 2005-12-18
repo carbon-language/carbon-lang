@@ -200,6 +200,8 @@ def tconstpool : SDNode<"ISD::TargetConstantPool",  SDTPtrLeaf, [],
                         "ConstantPoolSDNode">;
 def frameindex : SDNode<"ISD::FrameIndex",          SDTPtrLeaf, [],
                         "FrameIndexSDNode">;
+def tframeindex: SDNode<"ISD::TargetFrameIndex",    SDTPtrLeaf, [],
+                        "FrameIndexSDNode">;
 def externalsym: SDNode<"ISD::ExternalSymbol",      SDTPtrLeaf, [],
                         "ExternalSymbolSDNode">;
 def add        : SDNode<"ISD::ADD"       , SDTIntBinOp   ,
