@@ -149,7 +149,10 @@ def SDTStore : SDTypeProfile<0, 2, [ // store
   SDTCisPtrTy<1>  
 ]>;
 
-def SDTIntExtLoad : SDTypeProfile<1, 3, [  // sextload, zextload, extload
+def SDTExtLoad : SDTypeProfile<1, 3, [  // extload
+  SDTCisPtrTy<1>, SDTCisVT<2, OtherVT>, SDTCisVT<3, OtherVT>
+]>;
+def SDTIntExtLoad : SDTypeProfile<1, 3, [  // sextload, zextload
   SDTCisInt<0>, SDTCisPtrTy<1>, SDTCisVT<2, OtherVT>, SDTCisVT<3, OtherVT>
 ]>;
 def SDTTruncStore : SDTypeProfile<0, 4, [  // truncstore
@@ -263,7 +266,7 @@ def store      : SDNode<"ISD::STORE"      , SDTStore, [SDNPHasChain]>;
 // below) which pass in a dummy srcvalue node which tblgen will skip over.
 def sextld     : SDNode<"ISD::SEXTLOAD"   , SDTIntExtLoad, [SDNPHasChain]>;
 def zextld     : SDNode<"ISD::ZEXTLOAD"   , SDTIntExtLoad, [SDNPHasChain]>;
-def extld      : SDNode<"ISD::EXTLOAD"    , SDTIntExtLoad, [SDNPHasChain]>;
+def extld      : SDNode<"ISD::EXTLOAD"    , SDTExtLoad,    [SDNPHasChain]>;
 def truncst    : SDNode<"ISD::TRUNCSTORE" , SDTTruncStore, [SDNPHasChain]>;
 
 //===----------------------------------------------------------------------===//
