@@ -964,7 +964,8 @@ SDOperand SparcV8DAGToDAGISel::Select(SDOperand Op) {
     // Emits: (CALL:void (tglobaladdr:i32):$dst)
     // Pattern complexity = 2  cost = 1
     SDOperand N1 = N->getOperand(1);
-    if (N1.getOpcode() != ISD::TargetGlobalAddress) goto P47Fail;
+    if (N1.getOpcode() != ISD::TargetGlobalAddress &&
+        N1.getOpcode() != ISD::ExternalSymbol) goto P47Fail;
     SDOperand InFlag = SDOperand(0, 0);
     SDOperand Chain = N->getOperand(0);
     SDOperand Tmp0 = N1;
