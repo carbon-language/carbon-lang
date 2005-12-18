@@ -622,18 +622,21 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     case TargetLowering::Promote:
     default: assert(0 && "This action is not supported yet!");
     case TargetLowering::Expand: {
-        MachineDebugInfo &DebugInfo = DAG.getMachineFunction().getDebugInfo();
-        std::vector<SDOperand> Ops;
-        Ops.push_back(Tmp1);  // chain
-        Ops.push_back(Node->getOperand(1));  // line #
-        Ops.push_back(Node->getOperand(2));  // col #
-        const std::string &fname = cast<StringSDNode>(Node->getOperand(3))->getValue();
-        const std::string &dirname=cast<StringSDNode>(Node->getOperand(4))->getValue();
-        unsigned id = DebugInfo.RecordSource(fname, dirname);
-        Ops.push_back(DAG.getConstant(id, MVT::i32));  // source file id
-        Result = DAG.getNode(ISD::DEBUG_LOC, MVT::Other, Ops);
-      }
+      MachineDebugInfo &DebugInfo = DAG.getMachineFunction().getDebugInfo();
+      std::vector<SDOperand> Ops;
+      Ops.push_back(Tmp1);  // chain
+      Ops.push_back(Node->getOperand(1));  // line #
+      Ops.push_back(Node->getOperand(2));  // col #
+      const std::string &fname =
+        cast<StringSDNode>(Node->getOperand(3))->getValue();
+      const std::string &dirname = 
+        cast<StringSDNode>(Node->getOperand(4))->getValue();
+      unsigned id = DebugInfo.RecordSource(fname, dirname);
+      Ops.push_back(DAG.getConstant(id, MVT::i32));  // source file id
+      Result = DAG.getNode(ISD::DEBUG_LOC, MVT::Other, Ops);
+      Result = LegalizeOp(Result);  // Relegalize new nodes.
       break;
+    }
     case TargetLowering::Legal:
       if (Tmp1 != Node->getOperand(0) ||
           getTypeAction(Node->getOperand(1).getValueType()) == Promote) {
@@ -878,6 +881,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
                              DAG.getConstant(0, Tmp2.getValueType()),
                              Node->getOperand(2));
       }
+      Result = LegalizeOp(Result);  // Relegalize new nodes.
       break;
     case TargetLowering::Legal:
       // Basic block destination (Op#2) is always legal.
@@ -979,6 +983,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
                            Node->getOperand(2));
         Result = DAG.getNode(ISD::BR, MVT::Other, Result, Node->getOperand(3));
       }
+      Result = LegalizeOp(Result);  // Relegalize new nodes.
       break;
     }
     break;
@@ -1021,6 +1026,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         Result = DAG.getNode(ISD::BRCOND, MVT::Other, Tmp1, Tmp2,
                              Node->getOperand(4));
         Result = DAG.getNode(ISD::BR, MVT::Other, Result, Node->getOperand(5));
+        Result = LegalizeOp(Result);  // Relegalize new nodes.
         break;
       }
     }
@@ -1079,6 +1085,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       if (SrcVT == MVT::f32 && Node->getValueType(0) == MVT::f64) {
         SDOperand Load = DAG.getLoad(SrcVT, Tmp1, Tmp2, Node->getOperand(2));
         Result = DAG.getNode(ISD::FP_EXTEND, Node->getValueType(0), Load);
+        Result = LegalizeOp(Result);  // Relegalize new nodes.
         if (Op.ResNo)
           return Load.getValue(1);
         return Result;
@@ -1097,6 +1104,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         ValRes = DAG.getZeroExtendInReg(Result, SrcVT);
       AddLegalizedOperand(SDOperand(Node, 0), ValRes);
       AddLegalizedOperand(SDOperand(Node, 1), Result.getValue(1));
+      Result = LegalizeOp(Result);  // Relegalize new nodes.
+      ValRes = LegalizeOp(ValRes);  // Relegalize new nodes.
       if (Op.ResNo)
         return Result.getValue(1);
       return ValRes;
@@ -1364,6 +1373,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
                                  DAG.getConstant(0, Tmp1.getValueType()),
                                  Tmp2, Tmp3, ISD::SETNE);
       }
+      Result = LegalizeOp(Result);  // Relegalize new nodes.
       break;
     case TargetLowering::Custom: {
       SDOperand Tmp =
