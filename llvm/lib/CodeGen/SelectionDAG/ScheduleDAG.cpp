@@ -704,13 +704,8 @@ void SimpleSched::VisitAll() {
   if (DAG.getEntryNode().Val != DAG.getRoot().Val)
     Ordering.push_back(getNI(DAG.getEntryNode().Val));
     
-  // FIXME - Reverse the order
-  for (unsigned i = 0, N = Ordering.size(), Half = N >> 1; i < Half; i++) {
-    unsigned j = N - i - 1;
-    NodeInfo *tmp = Ordering[i];
-    Ordering[i] = Ordering[j];
-    Ordering[j] = tmp;
-  }
+  // Reverse the order
+  std::reverse(Ordering.begin(), Ordering.end());
 }
 
 /// IdentifyGroups - Put flagged nodes into groups.
