@@ -281,7 +281,9 @@ public:
   InstrStage    *StageBegin;            // First stage in itinerary
   InstrStage    *StageEnd;              // Last+1 stage in itinerary
   unsigned      Latency;                // Total cycles to complete instruction
-  bool          IsCall;                 // Is function call
+  bool          IsCall : 1;             // Is function call
+  bool          IsLoad : 1;             // Is memory load
+  bool          IsStore : 1;            // Is memory store
   unsigned      Slot;                   // Node's time slot
   NodeGroup     *Group;                 // Grouping information
   unsigned      VRBase;                 // Virtual register base
@@ -756,6 +758,8 @@ void SimpleSched::GatherSchedulingInfo() {
         // Get machine opcode
         MachineOpCode TOpc = Node->getTargetOpcode();
         NI->IsCall = TII.isCall(TOpc);
+        NI->IsLoad = TII.isLoad(TOpc);
+        NI->IsStore = TII.isStore(TOpc);
 
         if (TII.isLoad(TOpc))              NI->StageBegin = &LoadStage;
         else if (TII.isStore(TOpc))        NI->StageBegin = &StoreStage;
@@ -857,7 +861,7 @@ void SimpleSched::PrepareNodeInfo() {
 /// I.E., B must wait for latency of A.
 bool SimpleSched::isStrongDependency(NodeInfo *A, NodeInfo *B) {
   // If A defines for B then it's a strong dependency
-  return isDefiner(A, B);
+  return isDefiner(A, B) || (A->IsStore && B->IsLoad);
 }
 
 /// isWeakDependency Return true if node A produces a result that will
