@@ -45,6 +45,12 @@ AllocList("alloc-list",
           cl::desc("List of functions that allocate memory from the heap"),
           cl::CommaSeparated);
 
+static cl::list<std::string>
+FreeList("free-list",
+          cl::value_desc("list"),
+          cl::desc("List of functions that free memory from the heap"),
+          cl::CommaSeparated);
+
 namespace llvm {
 namespace DS {
   // isPointerType - Return true if this type is big enough to hold a pointer.
@@ -563,6 +569,20 @@ void GraphBuilder::visitCallSite(CallSite CS) {
           if (F->getName() == *(AllocFunc)) {
             setDestTo(*CS.getInstruction(),
                       createNode()->setHeapNodeMarker()->setModifiedMarker());
+            return;
+          }
+        }
+
+        // Determine if the called function is one of the specified heap
+        // free functions
+        for (cl::list<std::string>::iterator FreeFunc = FreeList.begin(),
+             LastFreeFunc = FreeList.end();
+             FreeFunc != LastFreeFunc;
+             ++FreeFunc) {
+          if (F->getName() == *(FreeFunc)) {
+            // Mark that the node is written to...
+            if (DSNode *N = getValueDest(*(CS.getArgument(0))).getNode())
+              N->setModifiedMarker()->setHeapNodeMarker();
             return;
           }
         }
