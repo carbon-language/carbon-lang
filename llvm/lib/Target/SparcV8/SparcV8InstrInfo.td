@@ -118,8 +118,17 @@ def IMPLICIT_DEF_FP  : Pseudo<(ops FPRegs:$dst), "!IMPLICIT_DEF $dst",
                               [(set FPRegs:$dst, (undef))]>;
 def IMPLICIT_DEF_DFP : Pseudo<(ops DFPRegs:$dst), "!IMPLICIT_DEF $dst",
                               [(set DFPRegs:$dst, (undef))]>;
+                              
+// FpMOVD/FpNEGD/FpABSD - These are lowered to single-precision ops by the 
+// fpmover pass.
 def FpMOVD : Pseudo<(ops DFPRegs:$dst, DFPRegs:$src),
-                    "!FpMOVD", []>;      // pseudo 64-bit double move
+                    "!FpMOVD $src, $dst", []>;   // pseudo 64-bit double move
+def FpNEGD : Pseudo<(ops DFPRegs:$dst, DFPRegs:$src),
+                    "!FpNEGD $src, $dst",
+                    [(set DFPRegs:$dst, (fneg DFPRegs:$src))]>;
+def FpABSD : Pseudo<(ops DFPRegs:$dst, DFPRegs:$src),
+                    "!FpABSD $src, $dst",
+                    [(set DFPRegs:$dst, (fabs DFPRegs:$src))]>;
 
 // SELECT_CC_* - Used to implement the SELECT_CC DAG operation.  Expanded by the
 // scheduler into a branch sequence.  This has to handle all permutations of
@@ -624,7 +633,6 @@ def FABSS : F3_3<2, 0b110100, 0b000001001,
                  (ops FPRegs:$dst, FPRegs:$src),
                  "fabss $src, $dst",
                  [(set FPRegs:$dst, (fabs FPRegs:$src))]>;
-// FIXME: ADD FNEGD/FABSD pseudo instructions.
 
 
 // Floating-point Square Root Instructions, p.145

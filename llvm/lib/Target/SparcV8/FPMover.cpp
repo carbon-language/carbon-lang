@@ -84,27 +84,39 @@ bool FPMover::runOnMachineBasicBlock(MachineBasicBlock &MBB) {
   bool Changed = false;
   for (MachineBasicBlock::iterator I = MBB.begin(); I != MBB.end(); ) {
     MachineInstr *MI = I++;
-    if (MI->getOpcode() == V8::FpMOVD) {
+    if (MI->getOpcode() == V8::FpMOVD || MI->getOpcode() == V8::FpABSD ||
+        MI->getOpcode() == V8::FpNEGD) {
+      Changed = true;
       unsigned DestDReg = MI->getOperand(0).getReg();
       unsigned SrcDReg  = MI->getOperand(1).getReg();
-      if (DestDReg != SrcDReg || MI->getOpcode() != V8::FpMOVD) {
-        unsigned EvenSrcReg = 0, OddSrcReg = 0, EvenDestReg = 0, OddDestReg = 0;
-        getDoubleRegPair(DestDReg, EvenDestReg, OddDestReg);
-        getDoubleRegPair(SrcDReg, EvenSrcReg, OddSrcReg);
+      if (DestDReg == SrcDReg && MI->getOpcode() == V8::FpMOVD) {
+        MBB.erase(MI);   // Eliminate the noop copy.
+        ++NoopFpDs;
+        continue;
+      }
+      
+      unsigned EvenSrcReg = 0, OddSrcReg = 0, EvenDestReg = 0, OddDestReg = 0;
+      getDoubleRegPair(DestDReg, EvenDestReg, OddDestReg);
+      getDoubleRegPair(SrcDReg, EvenSrcReg, OddSrcReg);
 
-        I->setOpcode(V8::FMOVS);
-        I->SetMachineOperandReg(0, EvenDestReg);
-        I->SetMachineOperandReg(1, EvenSrcReg);
-        DEBUG(std::cerr << "FPMover: the modified instr is: " << *I);
-        // Insert copy for the other half of the double:
+      if (MI->getOpcode() == V8::FpMOVD)
+        MI->setOpcode(V8::FMOVS);
+      else if (MI->getOpcode() == V8::FpNEGD)
+        MI->setOpcode(V8::FNEGS);
+      else if (MI->getOpcode() == V8::FpABSD)
+        MI->setOpcode(V8::FABSS);
+      else
+        assert(0 && "Unknown opcode!");
+        
+      MI->SetMachineOperandReg(0, EvenDestReg);
+      MI->SetMachineOperandReg(1, EvenSrcReg);
+      DEBUG(std::cerr << "FPMover: the modified instr is: " << *MI);
+      // Insert copy for the other half of the double.
+      if (DestDReg != SrcDReg) {
         MI = BuildMI(MBB, I, V8::FMOVS, 1, OddDestReg).addReg(OddSrcReg);
         DEBUG(std::cerr << "FPMover: the inserted instr is: " << *MI);
-        ++NumFpDs;
-      } else {
-        MBB.erase(MI);
-        ++NoopFpDs;
       }
-      Changed = true;
+      ++NumFpDs;
     }
   }
   return Changed;
