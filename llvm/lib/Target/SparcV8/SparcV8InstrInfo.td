@@ -736,6 +736,6 @@ def : Pat<(i32 (zextload ADDRri:$src, i1)), (LDUBri ADDRri:$src)>;
 
 // truncstore bool -> truncstore byte.
 def : Pat<(truncstore IntRegs:$src, ADDRrr:$addr, i1), 
-          (STBrr IntRegs:$src, ADDRrr:$addr)>;
+          (STBrr ADDRrr:$addr, IntRegs:$src)>;
 def : Pat<(truncstore IntRegs:$src, ADDRri:$addr, i1), 
-          (STBri IntRegs:$src, ADDRri:$addr)>;
+          (STBri ADDRri:$addr, IntRegs:$src)>;
