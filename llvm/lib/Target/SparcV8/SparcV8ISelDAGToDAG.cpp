@@ -456,6 +456,8 @@ SparcV8TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
       
       if (RegValuesToPass.size() >= 6) {
         ValToStore = Lo;
+        ArgOffset += 4;
+        ObjSize = 4;
       } else {
         RegValuesToPass.push_back(Lo);
       }
@@ -464,7 +466,7 @@ SparcV8TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
     
     if (ValToStore.Val) {
       if (!StackPtr.Val) {
-        StackPtr = DAG.getCopyFromReg(DAG.getEntryNode(), V8::O6, MVT::i32);
+        StackPtr = DAG.getRegister(V8::O6, MVT::i32);
         NullSV = DAG.getSrcValue(NULL);
       }
       SDOperand PtrOff = DAG.getConstant(ArgOffset, getPointerTy());
@@ -893,6 +895,7 @@ SDOperand SparcV8DAGToDAGISel::Select(SDOperand Op) {
   
   switch (N->getOpcode()) {
   default: break;
+  case ISD::Register: return Op;
   case ISD::FrameIndex: {
     int FI = cast<FrameIndexSDNode>(N)->getIndex();
     if (N->hasOneUse())
