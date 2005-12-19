@@ -721,3 +721,9 @@ def : Pat<(i32 (extload ADDRrr:$src, i8)), (LDUBrr ADDRrr:$src)>;
 def : Pat<(i32 (extload ADDRri:$src, i8)), (LDUBri ADDRri:$src)>;
 def : Pat<(i32 (extload ADDRrr:$src, i16)), (LDUHrr ADDRrr:$src)>;
 def : Pat<(i32 (extload ADDRri:$src, i16)), (LDUHri ADDRri:$src)>;
+
+// truncstore bool -> truncstore byte.
+def : Pat<(truncstore IntRegs:$src, ADDRrr:$addr, i1), 
+          (STBrr IntRegs:$src, ADDRrr:$addr)>;
+def : Pat<(truncstore IntRegs:$src, ADDRri:$addr, i1), 
+          (STBri IntRegs:$src, ADDRri:$addr)>;
