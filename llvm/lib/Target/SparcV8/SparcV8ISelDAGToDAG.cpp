@@ -360,6 +360,9 @@ SparcV8TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
   else
     ArgsSize = 0;
 
+  // Keep stack frames 8-byte aligned.
+  ArgsSize = (ArgsSize+7) & ~7;
+
   Chain = DAG.getNode(ISD::CALLSEQ_START, MVT::Other, Chain,
                       DAG.getConstant(ArgsSize, getPointerTy()));
   
