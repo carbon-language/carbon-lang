@@ -2107,21 +2107,33 @@ public:
         OS << ");\n";
 
         unsigned ValNo = 0;
-        for (unsigned i = 0; i < NumResults; i++)
-          OS << "      CodeGenMap[N.getValue(" << ValNo++ << ")] = Result;\n";
+        for (unsigned i = 0; i < NumResults; i++) {
+          OS << "      CodeGenMap[N.getValue(" << ValNo << ")] = Result"
+             << ".getValue(" << ValNo << ");\n";
+          ValNo++;
+        }
+
         if (II.hasCtrlDep) {
           OS << "      Chain ";
           if (NodeHasChain(Pattern, ISE))
-            OS << "= CodeGenMap[N.getValue(" << ValNo << ")] ";
+            OS << "= CodeGenMap[N.getValue(" << ValNo + NumImpResults << ")] ";
           for (unsigned j = 0, e = FoldedChains.size(); j < e; j++)
             OS << "= CodeGenMap[" << FoldedChains[j].first << ".getValue("
                << FoldedChains[j].second << ")] ";
-          OS << "= Result.getValue(" << ValNo++ << ");\n";
+          OS << "= Result.getValue(" << ValNo << ");\n";
+          for (unsigned i = 0; i < NumImpResults; i++) {
+            OS << "      CodeGenMap[N.getValue(" << ValNo << ")] = Result";
+            OS << ".getValue(" << ValNo+1 << ");\n";
+            ValNo++;
+          }
+        } else {
+          for (unsigned i = 0; i < NumImpResults; i++) {
+            OS << "      CodeGenMap[N.getValue(" << ValNo << ")] = Result";
+            OS << ".getValue(" << ValNo << ");\n";
+            ValNo++;
+          }
         }
-        for (unsigned i = 0; i < NumImpResults; i++) {
-          OS << "      CodeGenMap[N.getValue(" << ValNo << ")] = Result";
-          OS << ".getValue(" << ValNo++ << ");\n";
-        }
+
         OS << "      return Result.getValue(N.ResNo);\n";
       } else {
         // If this instruction is the root, and if there is only one use of it,
