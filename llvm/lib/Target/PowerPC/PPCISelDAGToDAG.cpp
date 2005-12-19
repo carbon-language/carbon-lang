@@ -68,15 +68,18 @@ namespace {
     /// specified condition code, returning the CR# of the expression.
     SDOperand SelectCC(SDOperand LHS, SDOperand RHS, ISD::CondCode CC);
 
-    /// SelectAddr - Given the specified address, return the two operands for a
-    /// load/store instruction, and return true if it should be an indexed [r+r]
-    /// operation.
-    bool SelectAddr(SDOperand Addr, SDOperand &Op1, SDOperand &Op2);
+    /// SelectAddrImm - Returns true if the address N can be represented by
+    /// a base register plus a signed 16-bit displacement [r+imm].
+    bool SelectAddrImm(SDOperand N, SDOperand &Disp, SDOperand &Base);
+      
+    /// SelectAddrIdx - Given the specified addressed, check to see if it can be
+    /// represented as an indexed [r+r] operation.  Returns false if it can
+    /// be represented by [r+imm], which are preferred.
+    bool SelectAddrIdx(SDOperand N, SDOperand &Base, SDOperand &Index);
     
-    /// SelectAddrIndexed - Given the specified addressed, force it to be
-    /// represented as an indexed [r+r] operation, rather than possibly
-    /// returning [r+imm] as SelectAddr may.
-    void SelectAddrIndexed(SDOperand Addr, SDOperand &Op1, SDOperand &Op2);
+    /// SelectAddrIdxOnly - Given the specified addressed, force it to be
+    /// represented as an indexed [r+r] operation.
+    bool SelectAddrIdxOnly(SDOperand N, SDOperand &Base, SDOperand &Index);
 
     SDOperand BuildSDIVSequence(SDNode *N);
     SDOperand BuildUDIVSequence(SDNode *N);
@@ -400,65 +403,77 @@ SDNode *PPCDAGToDAGISel::SelectBitfieldInsert(SDNode *N) {
   return 0;
 }
 
-/// SelectAddr - Given the specified address, return the two operands for a
-/// load/store instruction, and return true if it should be an indexed [r+r]
-/// operation.
-bool PPCDAGToDAGISel::SelectAddr(SDOperand Addr, SDOperand &Op1, 
-                                 SDOperand &Op2) {
-  unsigned imm = 0;
-  if (Addr.getOpcode() == ISD::ADD) {
-    if (isIntImmediate(Addr.getOperand(1), imm) && isInt16(imm)) {
-      Op1 = getI32Imm(Lo16(imm));
-      if (FrameIndexSDNode *FI =
-            dyn_cast<FrameIndexSDNode>(Addr.getOperand(0))) {
-        ++FrameOff;
-        Op2 = CurDAG->getTargetFrameIndex(FI->getIndex(), MVT::i32);
+/// SelectAddrImm - Returns true if the address N can be represented by
+/// a base register plus a signed 16-bit displacement [r+imm].
+bool PPCDAGToDAGISel::SelectAddrImm(SDOperand N, SDOperand &Disp, 
+                                    SDOperand &Base) {
+  if (N.getOpcode() == ISD::ADD) {
+    unsigned imm = 0;
+    if (isIntImmediate(N.getOperand(1), imm) && isInt16(imm)) {
+      Disp = getI32Imm(Lo16(imm));
+      if (FrameIndexSDNode *FI = dyn_cast<FrameIndexSDNode>(N.getOperand(0))) {
+        Base = CurDAG->getTargetFrameIndex(FI->getIndex(), MVT::i32);
       } else {
-        Op2 = Select(Addr.getOperand(0));
+        Base = Select(N.getOperand(0));
       }
-      return false;
-    } else if (Addr.getOperand(1).getOpcode() == PPCISD::Lo) {
+      return true; // [r+i]
+    } else if (N.getOperand(1).getOpcode() == PPCISD::Lo) {
       // Match LOAD (ADD (X, Lo(G))).
-      assert(!cast<ConstantSDNode>(Addr.getOperand(1).getOperand(1))->getValue()
+      assert(!cast<ConstantSDNode>(N.getOperand(1).getOperand(1))->getValue()
              && "Cannot handle constant offsets yet!");
-      Op1 = Addr.getOperand(1).getOperand(0);  // The global address.
-      assert(Op1.getOpcode() == ISD::TargetGlobalAddress ||
-             Op1.getOpcode() == ISD::TargetConstantPool);
-      Op2 = Select(Addr.getOperand(0));
-      return false;   // [&g+r]
-    } else {
-      Op1 = Select(Addr.getOperand(0));
-      Op2 = Select(Addr.getOperand(1));
-      return true;   // [r+r]
+      Disp = N.getOperand(1).getOperand(0);  // The global address.
+      assert(Disp.getOpcode() == ISD::TargetGlobalAddress ||
+             Disp.getOpcode() == ISD::TargetConstantPool);
+      Base = Select(N.getOperand(0));
+      return true;  // [&g+r]
     }
+    return false;   // [r+r]
   }
-
-  if (FrameIndexSDNode *FI = dyn_cast<FrameIndexSDNode>(Addr))
-    Op2 = CurDAG->getTargetFrameIndex(FI->getIndex(), MVT::i32);
+  Disp = getI32Imm(0);
+  if (FrameIndexSDNode *FI = dyn_cast<FrameIndexSDNode>(N))
+    Base = CurDAG->getTargetFrameIndex(FI->getIndex(), MVT::i32);
   else
-    Op2 = Select(Addr);
-  Op1 = getI32Imm(0);
-  return false;
+    Base = Select(N);
+  return true;      // [r+0]
 }
 
-/// SelectAddrIndexed - Given the specified addressed, force it to be
-/// represented as an indexed [r+r] operation, rather than possibly
-/// returning [r+imm] as SelectAddr may.
-void PPCDAGToDAGISel::SelectAddrIndexed(SDOperand Addr, SDOperand &Op1, 
-                                        SDOperand &Op2) {
-  if (Addr.getOpcode() == ISD::ADD) {
-    Op1 = Select(Addr.getOperand(0));
-    Op2 = Select(Addr.getOperand(1));
-    return;
+/// SelectAddrIdx - Given the specified addressed, check to see if it can be
+/// represented as an indexed [r+r] operation.  Returns false if it can
+/// be represented by [r+imm], which are preferred.
+bool PPCDAGToDAGISel::SelectAddrIdx(SDOperand N, SDOperand &Base, 
+                                    SDOperand &Index) {
+  // Check to see if we can represent this as an [r+imm] address instead, 
+  // which will fail if the address is more profitably represented as an
+  // [r+r] address.
+  if (SelectAddrImm(N, Base, Index))
+    return false;
+  
+  if (N.getOpcode() == ISD::ADD) {
+    Base = Select(N.getOperand(0));
+    Index = Select(N.getOperand(1));
+    return true;
+  }
+ 
+  // FIXME: This should be a CopyFromReg R0 rather than a load of 0.
+  Base = CurDAG->getTargetNode(PPC::LI, MVT::i32, getI32Imm(0));
+  Index = Select(N);
+  return true;
+}
+
+/// SelectAddrIdxOnly - Given the specified addressed, force it to be
+/// represented as an indexed [r+r] operation.
+bool PPCDAGToDAGISel::SelectAddrIdxOnly(SDOperand N, SDOperand &Base, 
+                                        SDOperand &Index) {
+  if (N.getOpcode() == ISD::ADD) {
+    Base = Select(N.getOperand(0));
+    Index = Select(N.getOperand(1));
+    return true;
   }
   
-  if (FrameIndexSDNode *FI = dyn_cast<FrameIndexSDNode>(Addr)) {
-    Op1 = CurDAG->getTargetNode(PPC::LI, MVT::i32, getI32Imm(0));
-    Op2 = CurDAG->getTargetFrameIndex(FI->getIndex(), MVT::i32);
-    return;
-  }
-  Op1 = CurDAG->getTargetNode(PPC::LI, MVT::i32, getI32Imm(0));
-  Op2 = Select(Addr);
+  // FIXME: This should be a CopyFromReg R0 rather than a load of 0.
+  Base = CurDAG->getTargetNode(PPC::LI, MVT::i32, getI32Imm(0));
+  Index = Select(N);
+  return true;
 }
 
 /// SelectCC - Select a comparison of the specified values with the specified
@@ -997,95 +1012,6 @@ SDOperand PPCDAGToDAGISel::Select(SDOperand Op) {
     // Other cases are autogenerated.
     break;
   }
-  case ISD::LOAD:
-  case ISD::EXTLOAD:
-  case ISD::ZEXTLOAD:
-  case ISD::SEXTLOAD: {
-    SDOperand Op1, Op2;
-    // If this is a vector load, then force this to be indexed addressing, since
-    // altivec does not have immediate offsets for loads.
-    bool isIdx = true;
-    if (N->getOpcode() == ISD::LOAD && MVT::isVector(N->getValueType(0))) { 
-      SelectAddrIndexed(N->getOperand(1), Op1, Op2);
-    } else {
-      isIdx = SelectAddr(N->getOperand(1), Op1, Op2);
-    }
-    MVT::ValueType TypeBeingLoaded = (N->getOpcode() == ISD::LOAD) ?
-      N->getValueType(0) : cast<VTSDNode>(N->getOperand(3))->getVT();
-
-    unsigned Opc;
-    switch (TypeBeingLoaded) {
-    default: N->dump(); assert(0 && "Cannot load this type!");
-    case MVT::i1:
-    case MVT::i8:  Opc = isIdx ? PPC::LBZX : PPC::LBZ; break;
-    case MVT::i16:
-      if (N->getOpcode() == ISD::SEXTLOAD) { // SEXT load?
-        Opc = isIdx ? PPC::LHAX : PPC::LHA;
-      } else {
-        Opc = isIdx ? PPC::LHZX : PPC::LHZ;
-      }
-      break;
-    case MVT::i32: Opc = isIdx ? PPC::LWZX : PPC::LWZ; break;
-    case MVT::f32: Opc = isIdx ? PPC::LFSX : PPC::LFS; break;
-    case MVT::f64: Opc = isIdx ? PPC::LFDX : PPC::LFD; break;
-    case MVT::v4f32: Opc = PPC::LVX; break;
-    }
-
-    // If this is an f32 -> f64 load, emit the f32 load, then use an 'extending
-    // copy'.
-    if (TypeBeingLoaded != MVT::f32 || N->getOpcode() == ISD::LOAD) {
-      return CurDAG->SelectNodeTo(N, Opc, N->getValueType(0), MVT::Other,
-                                  Op1, Op2, Select(N->getOperand(0))).
-                    getValue(Op.ResNo);
-    } else {
-      std::vector<SDOperand> Ops;
-      Ops.push_back(Op1);
-      Ops.push_back(Op2);
-      Ops.push_back(Select(N->getOperand(0)));
-      SDOperand Res = CurDAG->getTargetNode(Opc, MVT::f32, MVT::Other, Ops);
-      SDOperand Ext = CurDAG->getTargetNode(PPC::FMRSD, MVT::f64, Res);
-      CodeGenMap[Op.getValue(0)] = Ext;
-      CodeGenMap[Op.getValue(1)] = Res.getValue(1);
-      if (Op.ResNo)
-        return Res.getValue(1);
-      else
-        return Ext;
-    }
-  }
-  case ISD::TRUNCSTORE:
-  case ISD::STORE: {
-    SDOperand AddrOp1, AddrOp2;
-    // If this is a vector store, then force this to be indexed addressing,
-    // since altivec does not have immediate offsets for stores.
-    bool isIdx = true;
-    if (N->getOpcode() == ISD::STORE && 
-        MVT::isVector(N->getOperand(1).getValueType())) {
-      SelectAddrIndexed(N->getOperand(2), AddrOp1, AddrOp2);
-    } else {
-      isIdx = SelectAddr(N->getOperand(2), AddrOp1, AddrOp2);
-    }
-
-    unsigned Opc;
-    if (N->getOpcode() == ISD::STORE) {
-      switch (N->getOperand(1).getValueType()) {
-      default: assert(0 && "unknown Type in store");
-      case MVT::i32: Opc = isIdx ? PPC::STWX  : PPC::STW; break;
-      case MVT::f64: Opc = isIdx ? PPC::STFDX : PPC::STFD; break;
-      case MVT::f32: Opc = isIdx ? PPC::STFSX : PPC::STFS; break;
-      case MVT::v4f32: Opc = PPC::STVX;
-      }
-    } else { //ISD::TRUNCSTORE
-      switch(cast<VTSDNode>(N->getOperand(4))->getVT()) {
-      default: assert(0 && "unknown Type in store");
-      case MVT::i8:  Opc = isIdx ? PPC::STBX : PPC::STB; break;
-      case MVT::i16: Opc = isIdx ? PPC::STHX : PPC::STH; break;
-      }
-    }
-    
-    return CurDAG->SelectNodeTo(N, Opc, MVT::Other, Select(N->getOperand(1)),
-                                AddrOp1, AddrOp2, Select(N->getOperand(0)));
-  }
-    
   case ISD::SELECT_CC: {
     ISD::CondCode CC = cast<CondCodeSDNode>(N->getOperand(4))->get();
     

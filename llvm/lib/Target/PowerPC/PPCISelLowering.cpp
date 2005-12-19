@@ -126,6 +126,7 @@ PPCTargetLowering::PPCTargetLowering(TargetMachine &TM)
     // FIXME: AltiVec supports a wide variety of packed types.  For now, we're
     // bringing up support with just v4f32.
     addRegisterClass(MVT::v4f32, PPC::VRRCRegisterClass);
+    addRegisterClass(MVT::v4i32, PPC::VRRCRegisterClass);
   }
   
   setSetCCResultContents(ZeroOrOneSetCCResult);

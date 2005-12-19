@@ -181,7 +181,19 @@ namespace {
       unsigned RegNo = enumRegToMachineReg(CCReg);
       O << (0x80 >> RegNo);
     }
-
+    // The new addressing mode printers, currently empty
+    void printMemRegImm(const MachineInstr *MI, unsigned OpNo) {
+      printSymbolLo(MI, OpNo);
+      O << '(';
+      printOperand(MI, OpNo+1);
+      O << ')';
+    }
+    void printMemRegReg(const MachineInstr *MI, unsigned OpNo) {
+      printOperand(MI, OpNo);
+      O << ", ";
+      printOperand(MI, OpNo+1);
+    }
+    
     virtual bool runOnMachineFunction(MachineFunction &F) = 0;
     virtual bool doFinalization(Module &M) = 0;
   };

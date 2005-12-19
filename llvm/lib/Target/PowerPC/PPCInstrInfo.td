@@ -165,6 +165,22 @@ def symbolLo: Operand<i32> {
 def crbitm: Operand<i8> {
   let PrintMethod = "printcrbitm";
 }
+// Address operands
+def memri : Operand<i32> {
+  let PrintMethod = "printMemRegImm";
+  let NumMIOperands = 2;
+  let MIOperandInfo = (ops i32imm, GPRC);
+}
+def memrr : Operand<i32> {
+  let PrintMethod = "printMemRegReg";
+  let NumMIOperands = 2;
+  let MIOperandInfo = (ops GPRC, GPRC);
+}
+
+// Define X86 specific addressing mode.
+def iaddr  : ComplexPattern<i32, 2, "SelectAddrImm",    []>;
+def xaddr  : ComplexPattern<i32, 2, "SelectAddrIdx",    []>;
+def xoaddr : ComplexPattern<i32, 2, "SelectAddrIdxOnly",[]>;
 
 //===----------------------------------------------------------------------===//
 // PowerPC Instruction Predicate Definitions.
@@ -258,21 +274,21 @@ let isCall = 1,
 // register and an immediate are of this type.
 //
 let isLoad = 1 in {
-def LBZ : DForm_1<34, (ops GPRC:$rD, symbolLo:$disp, GPRC:$rA),
-                  "lbz $rD, $disp($rA)", LdStGeneral,
-                  []>;
-def LHA : DForm_1<42, (ops GPRC:$rD, symbolLo:$disp, GPRC:$rA),
-                  "lha $rD, $disp($rA)", LdStLHA,
-                  []>;
-def LHZ : DForm_1<40, (ops GPRC:$rD, symbolLo:$disp, GPRC:$rA),
-                  "lhz $rD, $disp($rA)", LdStGeneral,
-                  []>;
+def LBZ : DForm_1<34, (ops GPRC:$rD, memri:$src),
+                  "lbz $rD, $src", LdStGeneral,
+                  [(set GPRC:$rD, (zextload iaddr:$src, i8))]>;
+def LHA : DForm_1<42, (ops GPRC:$rD, memri:$src),
+                  "lha $rD, $src", LdStLHA,
+                  [(set GPRC:$rD, (sextload iaddr:$src, i16))]>;
+def LHZ : DForm_1<40, (ops GPRC:$rD, memri:$src),
+                  "lhz $rD, $src", LdStGeneral,
+                  [(set GPRC:$rD, (zextload iaddr:$src, i16))]>;
 def LMW : DForm_1<46, (ops GPRC:$rD, s16imm:$disp, GPRC:$rA),
                   "lmw $rD, $disp($rA)", LdStLMW,
                   []>;
-def LWZ : DForm_1<32, (ops GPRC:$rD, symbolLo:$disp, GPRC:$rA),
-                  "lwz $rD, $disp($rA)", LdStGeneral,
-                  []>;
+def LWZ : DForm_1<32, (ops GPRC:$rD, memri:$src),
+                  "lwz $rD, $src", LdStGeneral,
+                  [(set GPRC:$rD, (load iaddr:$src))]>;
 def LWZU : DForm_1<35, (ops GPRC:$rD, s16imm:$disp, GPRC:$rA),
                    "lwzu $rD, $disp($rA)", LdStGeneral,
                    []>;
@@ -309,15 +325,15 @@ let isStore = 1 in {
 def STMW : DForm_3<47, (ops GPRC:$rS, s16imm:$disp, GPRC:$rA),
                    "stmw $rS, $disp($rA)", LdStLMW,
                    []>;
-def STB  : DForm_3<38, (ops GPRC:$rS, symbolLo:$disp, GPRC:$rA),
-                   "stb $rS, $disp($rA)", LdStGeneral,
-                   []>;
-def STH  : DForm_3<44, (ops GPRC:$rS, symbolLo:$disp, GPRC:$rA),
-                   "sth $rS, $disp($rA)", LdStGeneral,
-                   []>;
-def STW  : DForm_3<36, (ops GPRC:$rS, symbolLo:$disp, GPRC:$rA),
-                   "stw $rS, $disp($rA)", LdStGeneral,
-                   []>;
+def STB  : DForm_3<38, (ops GPRC:$rS, memri:$src),
+                   "stb $rS, $src", LdStGeneral,
+                   [(truncstore GPRC:$rS, iaddr:$src, i8)]>;
+def STH  : DForm_3<44, (ops GPRC:$rS, memri:$src),
+                   "sth $rS, $src", LdStGeneral,
+                   [(truncstore GPRC:$rS, iaddr:$src, i16)]>;
+def STW  : DForm_3<36, (ops GPRC:$rS, memri:$src),
+                   "stw $rS, $src", LdStGeneral,
+                   [(store GPRC:$rS, iaddr:$src)]>;
 def STWU : DForm_3<37, (ops GPRC:$rS, s16imm:$disp, GPRC:$rA),
                    "stwu $rS, $disp($rA)", LdStGeneral,
                    []>;
@@ -355,20 +371,20 @@ def CMPLWI : DForm_6_ext<10, (ops CRRC:$dst, GPRC:$src1, u16imm:$src2),
 def CMPLDI : DForm_6_ext<10, (ops CRRC:$dst, GPRC:$src1, u16imm:$src2),
                          "cmpldi $dst, $src1, $src2", IntCompare>, isPPC64;
 let isLoad = 1 in {
-def LFS : DForm_8<48, (ops F4RC:$rD, symbolLo:$disp, GPRC:$rA),
-                  "lfs $rD, $disp($rA)", LdStLFDU,
-                  []>;
-def LFD : DForm_8<50, (ops F8RC:$rD, symbolLo:$disp, GPRC:$rA),
-                  "lfd $rD, $disp($rA)", LdStLFD,
-                  []>;
+def LFS : DForm_8<48, (ops F4RC:$rD, memri:$src),
+                  "lfs $rD, $src", LdStLFDU,
+                  [(set F4RC:$rD, (load iaddr:$src))]>;
+def LFD : DForm_8<50, (ops F8RC:$rD, memri:$src),
+                  "lfd $rD, $src", LdStLFD,
+                  [(set F8RC:$rD, (load iaddr:$src))]>;
 }
 let isStore = 1 in {
-def STFS : DForm_9<52, (ops F4RC:$rS, symbolLo:$disp, GPRC:$rA),
-                   "stfs $rS, $disp($rA)", LdStUX,
-                   []>;
-def STFD : DForm_9<54, (ops F8RC:$rS, symbolLo:$disp, GPRC:$rA),
-                   "stfd $rS, $disp($rA)", LdStUX,
-                   []>;
+def STFS : DForm_9<52, (ops F4RC:$rS, memri:$dst),
+                   "stfs $rS, $dst", LdStUX,
+                   [(store F4RC:$rS, iaddr:$dst)]>;
+def STFD : DForm_9<54, (ops F8RC:$rS, memri:$dst),
+                   "stfd $rS, $dst", LdStUX,
+                   [(store F8RC:$rS, iaddr:$dst)]>;
 }
 
 // DS-Form instructions.  Load/Store instructions available in PPC-64
@@ -394,24 +410,24 @@ def STDU : DSForm_2<62, 1, (ops GPRC:$rT, s16immX4:$DS, GPRC:$rA),
 // register and another register are of this type.
 //
 let isLoad = 1 in {
-def LBZX : XForm_1<31,  87, (ops GPRC:$dst, GPRC:$base, GPRC:$index),
-                   "lbzx $dst, $base, $index", LdStGeneral,
-                   []>;
-def LHAX : XForm_1<31, 343, (ops GPRC:$dst, GPRC:$base, GPRC:$index),
-                   "lhax $dst, $base, $index", LdStLHA,
-                   []>;
-def LHZX : XForm_1<31, 279, (ops GPRC:$dst, GPRC:$base, GPRC:$index),
-                   "lhzx $dst, $base, $index", LdStGeneral,
-                   []>;
-def LWAX : XForm_1<31, 341, (ops GPRC:$dst, GPRC:$base, GPRC:$index),
-                   "lwax $dst, $base, $index", LdStLHA,
-                   []>, isPPC64;
-def LWZX : XForm_1<31,  23, (ops GPRC:$dst, GPRC:$base, GPRC:$index),
-                   "lwzx $dst, $base, $index", LdStGeneral,
-                   []>;
-def LDX  : XForm_1<31,  21, (ops GPRC:$dst, GPRC:$base, GPRC:$index),
-                   "ldx $dst, $base, $index", LdStLD,
-                   []>, isPPC64;
+def LBZX : XForm_1<31,  87, (ops GPRC:$rD, memrr:$src),
+                   "lbzx $rD, $src", LdStGeneral,
+                   [(set GPRC:$rD, (zextload xaddr:$src, i8))]>;
+def LHAX : XForm_1<31, 343, (ops GPRC:$rD, memrr:$src),
+                   "lhax $rD, $src", LdStLHA,
+                   [(set GPRC:$rD, (sextload xaddr:$src, i16))]>;
+def LHZX : XForm_1<31, 279, (ops GPRC:$rD, memrr:$src),
+                   "lhzx $rD, $src", LdStGeneral,
+                   [(set GPRC:$rD, (zextload xaddr:$src, i16))]>;
+def LWAX : XForm_1<31, 341, (ops G8RC:$rD, memrr:$src),
+                   "lwax $rD, $src", LdStLHA,
+                   [(set G8RC:$rD, (sextload xaddr:$src, i32))]>, isPPC64;
+def LWZX : XForm_1<31,  23, (ops GPRC:$rD, memrr:$src),
+                   "lwzx $rD, $src", LdStGeneral,
+                   [(set GPRC:$rD, (load xaddr:$src))]>;
+def LDX  : XForm_1<31,  21, (ops G8RC:$rD, memrr:$src),
+                   "ldx $rD, $src", LdStLD,
+                   [(set G8RC:$rD, (load xaddr:$src))]>, isPPC64;
 def LVEBX: XForm_1<31,   7, (ops VRRC:$vD,  GPRC:$base, GPRC:$rA),
                    "lvebx $vD, $base, $rA", LdStGeneral,
                    []>;
@@ -421,9 +437,9 @@ def LVEHX: XForm_1<31,  39, (ops VRRC:$vD,  GPRC:$base, GPRC:$rA),
 def LVEWX: XForm_1<31,  71, (ops VRRC:$vD,  GPRC:$base, GPRC:$rA),
                    "lvewx $vD, $base, $rA", LdStGeneral,
                    []>;
-def LVX  : XForm_1<31, 103, (ops VRRC:$vD,  GPRC:$base, GPRC:$rA),
-                   "lvx $vD, $base, $rA", LdStGeneral,
-                   []>;
+def LVX  : XForm_1<31, 103, (ops VRRC:$vD,  memrr:$src),
+                   "lvx $vD, $src", LdStGeneral,
+                   [(set VRRC:$vD, (load xoaddr:$src))]>;
 }
 def LVSL : XForm_1<31,   6, (ops VRRC:$vD,  GPRC:$base, GPRC:$rA),
                    "lvsl $vD, $base, $rA", LdStGeneral,
@@ -489,15 +505,15 @@ def SRAW : XForm_6<31, 792, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    "sraw $rA, $rS, $rB", IntShift,
                    [(set GPRC:$rA, (PPCsra GPRC:$rS, GPRC:$rB))]>;
 let isStore = 1 in {
-def STBX  : XForm_8<31, 215, (ops GPRC:$rS, GPRC:$rA, GPRC:$rB),
-                   "stbx $rS, $rA, $rB", LdStGeneral,
-                   []>;
-def STHX  : XForm_8<31, 407, (ops GPRC:$rS, GPRC:$rA, GPRC:$rB),
-                   "sthx $rS, $rA, $rB", LdStGeneral,
-                   []>;
-def STWX  : XForm_8<31, 151, (ops GPRC:$rS, GPRC:$rA, GPRC:$rB),
-                   "stwx $rS, $rA, $rB", LdStGeneral,
-                   []>;
+def STBX  : XForm_8<31, 215, (ops GPRC:$rS, memrr:$dst),
+                   "stbx $rS, $dst", LdStGeneral,
+                   [(truncstore GPRC:$rS, xaddr:$dst, i8)]>;
+def STHX  : XForm_8<31, 407, (ops GPRC:$rS, memrr:$dst),
+                   "sthx $rS, $dst", LdStGeneral,
+                   [(truncstore GPRC:$rS, xaddr:$dst, i16)]>;
+def STWX  : XForm_8<31, 151, (ops GPRC:$rS, memrr:$dst),
+                   "stwx $rS, $dst", LdStGeneral,
+                   [(store GPRC:$rS, xaddr:$dst)]>;
 def STWUX : XForm_8<31, 183, (ops GPRC:$rS, GPRC:$rA, GPRC:$rB),
                    "stwux $rS, $rA, $rB", LdStGeneral,
                    []>;
@@ -516,9 +532,9 @@ def STVEHX: XForm_8<31, 167, (ops VRRC:$rS, GPRC:$rA, GPRC:$rB),
 def STVEWX: XForm_8<31, 199, (ops VRRC:$rS, GPRC:$rA, GPRC:$rB),
                    "stvewx $rS, $rA, $rB", LdStGeneral,
                    []>;
-def STVX  : XForm_8<31, 231, (ops VRRC:$rS, GPRC:$rA, GPRC:$rB),
-                   "stvx $rS, $rA, $rB", LdStGeneral,
-                   []>;
+def STVX  : XForm_8<31, 231, (ops VRRC:$rS, memrr:$dst),
+                   "stvx $rS, $dst", LdStGeneral,
+                   [(store VRRC:$rS, xoaddr:$dst)]>;
 }
 def SRAWI : XForm_10<31, 824, (ops GPRC:$rA, GPRC:$rS, u5imm:$SH), 
                      "srawi $rA, $rS, $SH", IntShift,
@@ -555,12 +571,12 @@ def FCMPUD : XForm_17<63, 0, (ops CRRC:$crD, F8RC:$fA, F8RC:$fB),
                       "fcmpu $crD, $fA, $fB", FPCompare>;
 
 let isLoad = 1 in {
-def LFSX   : XForm_25<31, 535, (ops F4RC:$dst, GPRC:$base, GPRC:$index),
-                      "lfsx $dst, $base, $index", LdStLFDU,
-                      []>;
-def LFDX   : XForm_25<31, 599, (ops F8RC:$dst, GPRC:$base, GPRC:$index),
-                      "lfdx $dst, $base, $index", LdStLFDU,
-                      []>;
+def LFSX   : XForm_25<31, 535, (ops F4RC:$frD, memrr:$src),
+                      "lfsx $frD, $src", LdStLFDU,
+                      [(set F4RC:$frD, (load xaddr:$src))]>;
+def LFDX   : XForm_25<31, 599, (ops F8RC:$frD, memrr:$src),
+                      "lfdx $frD, $src", LdStLFDU,
+                      [(set F8RC:$frD, (load xaddr:$src))]>;
 }
 def FCFID  : XForm_26<63, 846, (ops F8RC:$frD, F8RC:$frB),
                       "fcfid $frD, $frB", FPGeneral,
@@ -614,12 +630,15 @@ def FNEGD  : XForm_26<63, 40, (ops F8RC:$frD, F8RC:$frB),
                       
                       
 let isStore = 1 in {
-def STFSX : XForm_28<31, 663, (ops F4RC:$frS, GPRC:$rA, GPRC:$rB),
-                     "stfsx $frS, $rA, $rB", LdStUX,
+def STFIWX: XForm_28<31, 983, (ops F4RC:$frS, memrr:$dst),
+                     "stfiwx $frS, $dst", LdStUX,
                      []>;
-def STFDX : XForm_28<31, 727, (ops F8RC:$frS, GPRC:$rA, GPRC:$rB),
-                     "stfdx $frS, $rA, $rB", LdStUX,
-                     []>;
+def STFSX : XForm_28<31, 663, (ops F4RC:$frS, memrr:$dst),
+                     "stfsx $frS, $dst", LdStUX,
+                     [(store F4RC:$frS, xaddr:$dst)]>;
+def STFDX : XForm_28<31, 727, (ops F8RC:$frS, memrr:$dst),
+                     "stfdx $frS, $dst", LdStUX,
+                     [(store F8RC:$frS, xaddr:$dst)]>;
 }
 
 // XL-Form instructions.  condition register logical ops.
@@ -1011,6 +1030,27 @@ def : Pat<(srl GPRC:$rS, GPRC:$rB),
           (SRW GPRC:$rS, GPRC:$rB)>;
 def : Pat<(shl GPRC:$rS, GPRC:$rB),
           (SLW GPRC:$rS, GPRC:$rB)>;
+
+def : Pat<(i32 (zextload iaddr:$src, i1)),
+          (LBZ iaddr:$src)>;
+def : Pat<(i32 (zextload xaddr:$src, i1)),
+          (LBZX xaddr:$src)>;
+def : Pat<(i32 (extload iaddr:$src, i1)),
+          (LBZ iaddr:$src)>;
+def : Pat<(i32 (extload xaddr:$src, i1)),
+          (LBZX xaddr:$src)>;
+def : Pat<(i32 (extload iaddr:$src, i8)),
+          (LBZ iaddr:$src)>;
+def : Pat<(i32 (extload xaddr:$src, i8)),
+          (LBZX xaddr:$src)>;
+def : Pat<(i32 (extload iaddr:$src, i16)),
+          (LHZ iaddr:$src)>;
+def : Pat<(i32 (extload xaddr:$src, i16)),
+          (LHZX xaddr:$src)>;
+def : Pat<(f64 (extload iaddr:$src, f32)),
+          (FMRSD (LFS iaddr:$src))>;
+def : Pat<(f64 (extload xaddr:$src, f32)),
+          (FMRSD (LFSX xaddr:$src))>;
 
 // Same as above, but using a temporary. FIXME: implement temporaries :)
 /*
