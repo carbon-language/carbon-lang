@@ -77,11 +77,12 @@ void SparcV8RegisterInfo::
 eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
                               MachineBasicBlock::iterator I) const {
   MachineInstr &MI = *I;
-  int size = MI.getOperand (0).getImmedValue ();
-  if (MI.getOpcode () == V8::ADJCALLSTACKDOWN)
-    size = -size;
-  BuildMI (MBB, I, V8::ADDri, 2, V8::O6).addReg (V8::O6).addSImm (size);
-  MBB.erase (I);
+  int Size = MI.getOperand(0).getImmedValue();
+  if (MI.getOpcode() == V8::ADJCALLSTACKDOWN)
+    Size = -Size;
+  if (Size)
+    BuildMI(MBB, I, V8::ADDri, 2, V8::O6).addReg(V8::O6).addSImm(Size);
+  MBB.erase(I);
 }
 
 void
