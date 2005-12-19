@@ -24,10 +24,15 @@ def SDTX86Cmov    : SDTypeProfile<1, 4,
                                   [SDTCisSameAs<0, 1>, SDTCisSameAs<1, 2>,
                                    SDTCisVT<3, OtherVT>, SDTCisVT<4, FlagVT>]>;
 
-def X86cmp  : SDNode<"X86ISD::CMP" , SDTX86CmpTest, []>;
-def X86test : SDNode<"X86ISD::TEST", SDTX86CmpTest, []>;
+def SDTX86BrCond  : SDTypeProfile<0, 3,
+                                  [SDTCisVT<0, OtherVT>,
+                                   SDTCisVT<1, OtherVT>, SDTCisVT<2, FlagVT>]>;
 
-def X86cmov : SDNode<"X86ISD::CMOV", SDTX86Cmov,    []>;
+def X86cmp    : SDNode<"X86ISD::CMP" ,   SDTX86CmpTest, []>;
+def X86test   : SDNode<"X86ISD::TEST",   SDTX86CmpTest, []>;
+
+def X86cmov   : SDNode<"X86ISD::CMOV",   SDTX86Cmov,    []>;
+def X86Brcond : SDNode<"X86ISD::BRCOND", SDTX86BrCond,  [SDNPHasChain]>;
 
 //===----------------------------------------------------------------------===//
 // X86 Operand Definitions.
@@ -268,21 +273,33 @@ let isBranch = 1, isTerminator = 1 in
 
 let isBarrier = 1 in
   def JMP : IBr<0xE9, (ops brtarget:$dst), "jmp $dst", [(br bb:$dst)]>;
+
+def JE  : IBr<0x84, (ops brtarget:$dst), "je $dst",
+              [(X86Brcond bb:$dst, SETEQ, STATUS)]>, Imp<[STATUS],[]>, TB;
+def JNE : IBr<0x85, (ops brtarget:$dst), "jne $dst",
+              [(X86Brcond bb:$dst, SETNE, STATUS)]>, Imp<[STATUS],[]>, TB;
+def JL  : IBr<0x8C, (ops brtarget:$dst), "jl $dst",
+              [(X86Brcond bb:$dst, SETLT, STATUS)]>, Imp<[STATUS],[]>, TB;
+def JLE : IBr<0x8E, (ops brtarget:$dst), "jle $dst",
+              [(X86Brcond bb:$dst, SETLE, STATUS)]>, Imp<[STATUS],[]>, TB;
+def JG  : IBr<0x8F, (ops brtarget:$dst), "jg $dst",
+              [(X86Brcond bb:$dst, SETGT, STATUS)]>, Imp<[STATUS],[]>, TB;
+def JGE : IBr<0x8D, (ops brtarget:$dst), "jge $dst",
+              [(X86Brcond bb:$dst, SETGE, STATUS)]>, Imp<[STATUS],[]>, TB;
+
 def JB  : IBr<0x82, (ops brtarget:$dst), "jb $dst",
-              []>, TB;
-def JAE : IBr<0x83, (ops brtarget:$dst), "jae $dst", []>, TB;
-def JE  : IBr<0x84, (ops brtarget:$dst), "je $dst", []>, TB;
-def JNE : IBr<0x85, (ops brtarget:$dst), "jne $dst", []>, TB;
-def JBE : IBr<0x86, (ops brtarget:$dst), "jbe $dst", []>, TB;
-def JA  : IBr<0x87, (ops brtarget:$dst), "ja $dst", []>, TB;
+              [(X86Brcond bb:$dst, SETULT, STATUS)]>, Imp<[STATUS],[]>, TB;
+def JBE : IBr<0x86, (ops brtarget:$dst), "jbe $dst",
+              [(X86Brcond bb:$dst, SETULE, STATUS)]>, Imp<[STATUS],[]>, TB;
+def JA  : IBr<0x87, (ops brtarget:$dst), "ja $dst",
+              [(X86Brcond bb:$dst, SETUGT, STATUS)]>, Imp<[STATUS],[]>, TB;
+def JAE : IBr<0x83, (ops brtarget:$dst), "jae $dst",
+              [(X86Brcond bb:$dst, SETUGE, STATUS)]>, Imp<[STATUS],[]>, TB;
+
 def JS  : IBr<0x88, (ops brtarget:$dst), "js $dst", []>, TB;
 def JNS : IBr<0x89, (ops brtarget:$dst), "jns $dst", []>, TB;
 def JP  : IBr<0x8A, (ops brtarget:$dst), "jp $dst", []>, TB;
 def JNP : IBr<0x8B, (ops brtarget:$dst), "jnp $dst", []>, TB;
-def JL  : IBr<0x8C, (ops brtarget:$dst), "jl $dst", []>, TB;
-def JGE : IBr<0x8D, (ops brtarget:$dst), "jge $dst", []>, TB;
-def JLE : IBr<0x8E, (ops brtarget:$dst), "jle $dst", []>, TB;
-def JG  : IBr<0x8F, (ops brtarget:$dst), "jg $dst", []>, TB;
 
 //===----------------------------------------------------------------------===//
 //  Call Instructions...

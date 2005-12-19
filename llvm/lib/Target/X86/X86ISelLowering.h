@@ -72,6 +72,9 @@ namespace llvm {
 
       /// X86 conditional moves.
       CMOV,
+
+      /// X86 conditional branches.
+      BRCOND,
     };
   }
 

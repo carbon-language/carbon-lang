@@ -31,7 +31,6 @@ static cl::opt<bool> EnableFastCC("enable-x86-fastcc", cl::Hidden,
 
 X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   : TargetLowering(TM) {
-
   // Set up the TargetLowering object.
 
   // X86 is weird, it always uses i8 for shift amounts and setcc results.
@@ -81,6 +80,9 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   setOperationAction(ISD::FP_TO_SINT       , MVT::i8   , Promote);
   setOperationAction(ISD::FP_TO_SINT       , MVT::i16  , Promote);
 
+  if (X86DAGIsel) {
+    setOperationAction(ISD::BRCOND         , MVT::Other, Custom);
+  }
   setOperationAction(ISD::BRCONDTWOWAY     , MVT::Other, Expand);
   setOperationAction(ISD::BRTWOWAY_CC      , MVT::Other, Expand);
   setOperationAction(ISD::MEMMOVE          , MVT::Other, Expand);
@@ -948,6 +950,23 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     }
     return DAG.getNode(X86ISD::CMOV, Op.getValueType(),
                        Op.getOperand(1), Op.getOperand(2), CC, Cond);
+  }
+  case ISD::BRCOND: {
+    SDOperand Chain = Op.getOperand(0);
+    SDOperand Cond  = Op.getOperand(1);
+    SDOperand Dest  = Op.getOperand(2);
+    SDOperand CC;
+    // TODO: handle Cond == OR / AND / XOR
+    if (Cond.getOpcode() == ISD::SETCC) {
+      CC = Cond.getOperand(2);
+      Cond = DAG.getNode(X86ISD::CMP, MVT::Flag,
+                         Cond.getOperand(0), Cond.getOperand(1));
+    } else {
+      CC = DAG.getCondCode(ISD::SETNE);
+      Cond = DAG.getNode(X86ISD::TEST, MVT::Flag, Cond, Cond);
+    }
+    return DAG.getNode(X86ISD::BRCOND, Op.getValueType(),
+                       Op.getOperand(0), Op.getOperand(2), CC, Cond);
   }
   }
 }
