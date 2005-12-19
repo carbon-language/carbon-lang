@@ -389,8 +389,13 @@ SDNode *SelectionDAG::AddNonLeafNodeToCSEMaps(SDNode *N) {
   assert(N->getNumOperands() && "This is a leaf node!");
   if (N->getOpcode() == ISD::CALLSEQ_START || 
       N->getOpcode() == ISD::CALLSEQ_END ||
-      N->getOpcode() == ISD::HANDLENODE)
+      N->getOpcode() == ISD::HANDLENODE || N->getValueType(0) == MVT::Flag)
     return 0;    // Never add these nodes.
+  
+  // Check that remaining values produced are not flags.
+  for (unsigned i = 1, e = N->getNumValues(); i != e; ++i)
+    if (N->getValueType(i) == MVT::Flag)
+      return 0;   // Never CSE anything that produces a flag.
   
   if (N->getNumValues() == 1) {
     if (N->getNumOperands() == 1) {
