@@ -189,7 +189,14 @@ namespace {
       O << ')';
     }
     void printMemRegReg(const MachineInstr *MI, unsigned OpNo) {
-      printOperand(MI, OpNo);
+      // When used as the base register, r0 reads constant zero rather than
+      // the value contained in the register.  For this reason, the darwin
+      // assembler requires that we print r0 as 0 (no r) when used as the base.
+      const MachineOperand &MO = MI->getOperand(OpNo);
+      if (MO.getReg() == PPC::R0)
+        O << '0';
+      else
+        O << TM.getRegisterInfo()->get(MO.getReg()).Name;
       O << ", ";
       printOperand(MI, OpNo+1);
     }

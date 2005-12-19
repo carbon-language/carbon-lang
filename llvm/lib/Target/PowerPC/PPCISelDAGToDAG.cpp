@@ -454,8 +454,7 @@ bool PPCDAGToDAGISel::SelectAddrIdx(SDOperand N, SDOperand &Base,
     return true;
   }
  
-  // FIXME: This should be a CopyFromReg R0 rather than a load of 0.
-  Base = CurDAG->getTargetNode(PPC::LI, MVT::i32, getI32Imm(0));
+  Base = CurDAG->getRegister(PPC::R0, MVT::i32);
   Index = Select(N);
   return true;
 }
@@ -470,8 +469,7 @@ bool PPCDAGToDAGISel::SelectAddrIdxOnly(SDOperand N, SDOperand &Base,
     return true;
   }
   
-  // FIXME: This should be a CopyFromReg R0 rather than a load of 0.
-  Base = CurDAG->getTargetNode(PPC::LI, MVT::i32, getI32Imm(0));
+  Base = CurDAG->getRegister(PPC::R0, MVT::i32);
   Index = Select(N);
   return true;
 }
