@@ -45,9 +45,6 @@ def I0 : Ri<24, "I0">; def I1 : Ri<25, "I1">; def I2 : Ri<26, "I2">;
 def I3 : Ri<27, "I3">; def I4 : Ri<28, "I4">; def I5 : Ri<29, "I5">; 
 def I6 : Ri<30, "I6">; def I7 : Ri<31, "I7">;
 
-// Standard register aliases
-def SP : Ri<14, "SP">; def FP : Ri<30, "FP">;
-
 // Floating-point registers
 def F0  : Rf< 0,  "F0">; def F1  : Rf< 1,  "F1">; def F2  : Rf< 2,  "F2">; 
 def F3  : Rf< 3,  "F3">; def F4  : Rf< 4,  "F4">; def F5  : Rf< 5,  "F5">; 

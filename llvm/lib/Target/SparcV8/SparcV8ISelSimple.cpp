@@ -879,7 +879,7 @@ void V8ISel::visitCallInst(CallInst &I) {
                 "About to dereference past end of OutgoingArgRegs");
         BuildMI (BB, V8::ORrr, 2, *OAR++).addReg (V8::G0).addReg (ArgReg);
       } else {
-        BuildMI (BB, V8::STri, 3).addReg (V8::SP).addSImm (ArgOffset)
+        BuildMI (BB, V8::STri, 3).addReg (V8::O6).addSImm (ArgOffset)
           .addReg (ArgReg);
       }
       ArgOffset += 4;
@@ -894,7 +894,7 @@ void V8ISel::visitCallInst(CallInst &I) {
                 "About to dereference past end of OutgoingArgRegs");
         BuildMI (BB, V8::LDri, 2, *OAR++).addFrameIndex (FI).addSImm (0);
       } else {
-        BuildMI (BB, V8::STFri, 3).addReg (V8::SP).addSImm (ArgOffset)
+        BuildMI (BB, V8::STFri, 3).addReg (V8::O6).addSImm (ArgOffset)
           .addReg (ArgReg);
       }
       ArgOffset += 4;
@@ -913,7 +913,7 @@ void V8ISel::visitCallInst(CallInst &I) {
       } else {
         unsigned TempReg = makeAnotherReg (Type::IntTy);
         BuildMI (BB, V8::LDri, 2, TempReg).addFrameIndex (FI).addSImm (0);
-        BuildMI (BB, V8::STri, 3).addReg (V8::SP).addSImm (ArgOffset)
+        BuildMI (BB, V8::STri, 3).addReg (V8::O6).addSImm (ArgOffset)
           .addReg (TempReg);
       }
       ArgOffset += 4;
@@ -924,7 +924,7 @@ void V8ISel::visitCallInst(CallInst &I) {
       } else {
         unsigned TempReg = makeAnotherReg (Type::IntTy);
         BuildMI (BB, V8::LDri, 2, TempReg).addFrameIndex (FI).addSImm (4);
-        BuildMI (BB, V8::STri, 3).addReg (V8::SP).addSImm (ArgOffset)
+        BuildMI (BB, V8::STri, 3).addReg (V8::O6).addSImm (ArgOffset)
           .addReg (TempReg);
       }
       ArgOffset += 4;
@@ -935,7 +935,7 @@ void V8ISel::visitCallInst(CallInst &I) {
                 "About to dereference past end of OutgoingArgRegs");
         BuildMI (BB, V8::ORrr, 2, *OAR++).addReg (V8::G0).addReg (ArgReg);
       } else {
-        BuildMI (BB, V8::STri, 3).addReg (V8::SP).addSImm (ArgOffset)
+        BuildMI (BB, V8::STri, 3).addReg (V8::O6).addSImm (ArgOffset)
           .addReg (ArgReg);
       }
       ArgOffset += 4;
@@ -945,7 +945,7 @@ void V8ISel::visitCallInst(CallInst &I) {
                 "About to dereference past end of OutgoingArgRegs");
         BuildMI (BB, V8::ORrr, 2, *OAR++).addReg (V8::G0).addReg (ArgReg+1);
       } else {
-        BuildMI (BB, V8::STri, 3).addReg (V8::SP).addSImm (ArgOffset)
+        BuildMI (BB, V8::STri, 3).addReg (V8::O6).addSImm (ArgOffset)
           .addReg (ArgReg+1);
       }
       ArgOffset += 4;
@@ -1708,11 +1708,11 @@ void V8ISel::visitAllocaInst(AllocaInst &I) {
   BuildMI (BB, V8::ANDri, 2, StackAdjReg).addReg (TmpReg2).addSImm (-8);
 
   // Subtract size from stack pointer, thereby allocating some space.
-  BuildMI (BB, V8::SUBrr, 2, V8::SP).addReg (V8::SP).addReg (StackAdjReg);
+  BuildMI (BB, V8::SUBrr, 2, V8::O6).addReg (V8::O6).addReg (StackAdjReg);
 
   // Put a pointer to the space into the result register, by copying
   // the stack pointer.
-  BuildMI (BB, V8::ADDri, 2, getReg(I)).addReg (V8::SP).addSImm (96);
+  BuildMI (BB, V8::ADDri, 2, getReg(I)).addReg (V8::O6).addSImm (96);
 
   // Inform the Frame Information that we have just allocated a variable-sized
   // object.
@@ -1755,7 +1755,7 @@ void V8ISel::visitIntrinsicCall(Intrinsic::ID ID, CallInst &CI) {
     // Add the VarArgsOffset to the frame pointer, and copy it to the result.
     unsigned DestReg = getReg (CI.getOperand(1));
     unsigned Tmp = makeAnotherReg(Type::IntTy);
-    BuildMI (BB, V8::ADDri, 2, Tmp).addReg (V8::FP).addSImm (VarArgsOffset);
+    BuildMI (BB, V8::ADDri, 2, Tmp).addReg (V8::I6).addSImm (VarArgsOffset);
     BuildMI(BB, V8::STri, 3).addReg(DestReg).addSImm(0).addReg(Tmp);
     return;
   }

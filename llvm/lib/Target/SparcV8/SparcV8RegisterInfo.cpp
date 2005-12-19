@@ -25,19 +25,6 @@ SparcV8RegisterInfo::SparcV8RegisterInfo()
   : SparcV8GenRegisterInfo(V8::ADJCALLSTACKDOWN,
                            V8::ADJCALLSTACKUP) {}
 
-static const TargetRegisterClass *getClass(unsigned SrcReg) {
-  if (V8::IntRegsRegisterClass->contains(SrcReg))
-    return V8::IntRegsRegisterClass;
-  else if (V8::FPRegsRegisterClass->contains(SrcReg))
-    return V8::FPRegsRegisterClass;
-  else if (V8::DFPRegsRegisterClass->contains(SrcReg))
-    return V8::DFPRegsRegisterClass;
-  else {
-    std::cerr << "Error: register of unknown class found: " << SrcReg << "\n";
-    abort ();
-  }
-}
-
 void SparcV8RegisterInfo::
 storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
                     unsigned SrcReg, int FrameIdx,
@@ -93,7 +80,7 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
   int size = MI.getOperand (0).getImmedValue ();
   if (MI.getOpcode () == V8::ADJCALLSTACKDOWN)
     size = -size;
-  BuildMI (MBB, I, V8::ADDri, 2, V8::SP).addReg (V8::SP).addSImm (size);
+  BuildMI (MBB, I, V8::ADDri, 2, V8::O6).addReg (V8::O6).addSImm (size);
   MBB.erase (I);
 }
 
@@ -109,7 +96,7 @@ SparcV8RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const {
   int FrameIndex = MI.getOperand(i).getFrameIndex();
 
   // Replace frame index with a frame pointer reference
-  MI.SetMachineOperandReg (i, V8::FP);
+  MI.SetMachineOperandReg (i, V8::I6);
 
   // Addressable stack objects are accessed using neg. offsets from %fp
   MachineFunction &MF = *MI.getParent()->getParent();
@@ -141,7 +128,7 @@ void SparcV8RegisterInfo::emitPrologue(MachineFunction &MF) const {
   // is required by the ABI.
   NumBytes = (NumBytes + 7) & ~7;
   BuildMI(MBB, MBB.begin(), V8::SAVEri, 2,
-          V8::SP).addImm(-NumBytes).addReg(V8::SP);
+          V8::O6).addImm(-NumBytes).addReg(V8::O6);
 }
 
 void SparcV8RegisterInfo::emitEpilogue(MachineFunction &MF,

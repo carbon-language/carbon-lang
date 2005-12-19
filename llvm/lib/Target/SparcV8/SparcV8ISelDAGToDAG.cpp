@@ -450,7 +450,7 @@ SparcV8TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
     
     if (ValToStore.Val) {
       if (!StackPtr.Val) {
-        StackPtr = DAG.getCopyFromReg(DAG.getEntryNode(), V8::SP, MVT::i32);
+        StackPtr = DAG.getCopyFromReg(DAG.getEntryNode(), V8::O6, MVT::i32);
         NullSV = DAG.getSrcValue(NULL);
       }
       SDOperand PtrOff = DAG.getConstant(ArgOffset, getPointerTy());
