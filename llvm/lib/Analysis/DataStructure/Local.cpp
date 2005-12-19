@@ -39,6 +39,12 @@ static cl::opt<bool>
 TrackIntegersAsPointers("dsa-track-integers", cl::Hidden,
          cl::desc("If this is set, track integers as potential pointers"));
 
+static cl::list<std::string>
+AllocList("alloc-list",
+          cl::value_desc("list"),
+          cl::desc("List of functions that allocate memory from the heap"),
+          cl::CommaSeparated);
+
 namespace llvm {
 namespace DS {
   // isPointerType - Return true if this type is big enough to hold a pointer.
@@ -548,6 +554,19 @@ void GraphBuilder::visitCallSite(CallSite CS) {
           N->setModifiedMarker();
         return;
       default:
+        // Determine if the called function is one of the specified heap
+        // allocation functions
+        for (cl::list<std::string>::iterator AllocFunc = AllocList.begin(),
+             LastAllocFunc = AllocList.end();
+             AllocFunc != LastAllocFunc;
+             ++AllocFunc) {
+          if (F->getName() == *(AllocFunc)) {
+            setDestTo(*CS.getInstruction(),
+                      createNode()->setHeapNodeMarker()->setModifiedMarker());
+            return;
+          }
+        }
+
         if (F->getName() == "calloc" || F->getName() == "posix_memalign" ||
             F->getName() == "memalign" || F->getName() == "valloc") {
           setDestTo(*CS.getInstruction(),
