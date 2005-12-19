@@ -570,11 +570,11 @@ let Uses = [O0, O1, O2, O3, O4, O5], hasDelaySlot = 1, isCall = 1,
   // indirect calls
   def JMPLrr : F3_1<2, 0b111000,
                     (ops MEMrr:$ptr),
-                    "jmpl $ptr",
+                    "call $ptr",
                     [(set ICC/*bogus*/, (call  ADDRrr:$ptr, ICC/*bogus*/))]>;
   def JMPLri : F3_2<2, 0b111000,
                     (ops MEMri:$ptr),
-                    "jmpl $ptr",
+                    "call $ptr",
                     [(set ICC/*bogus*/, (call  ADDRri:$ptr, ICC/*bogus*/))]>;
 }
 
