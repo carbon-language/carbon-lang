@@ -581,7 +581,7 @@ let Uses = [O0, O1, O2, O3, O4, O5], hasDelaySlot = 1, isCall = 1,
 // Section B.28 - Read State Register Instructions
 def RDY : F3_1<2, 0b101000,
                (ops IntRegs:$dst),
-               "rdy $dst", []>;
+               "rd %y, $dst", []>;
 
 // Section B.29 - Write State Register Instructions
 def WRYrr : F3_1<2, 0b110000,
