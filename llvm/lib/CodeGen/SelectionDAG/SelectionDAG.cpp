@@ -21,6 +21,7 @@
 #include "llvm/Target/TargetLowering.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/ADT/StringExtras.h"
 #include <iostream>
 #include <set>
 #include <cmath>
@@ -1838,7 +1839,11 @@ const char *SDNode::getOperationName(const SelectionDAG *G) const {
         if (const TargetInstrInfo *TII = G->getTarget().getInstrInfo())
           if (getOpcode()-ISD::BUILTIN_OP_END < TII->getNumOpcodes())
             return TII->getName(getOpcode()-ISD::BUILTIN_OP_END);
-      return "<<Unknown Target Node>>";
+
+      std::string Name
+        = "<<Unknown Target Node:"
+        + itostr((int)getOpcode()-ISD::BUILTIN_OP_END) + ">>";
+      return Name.c_str();
     }
    
   case ISD::PCMARKER:      return "PCMarker";
