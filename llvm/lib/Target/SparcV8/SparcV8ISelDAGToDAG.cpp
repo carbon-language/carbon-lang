@@ -538,7 +538,7 @@ SparcV8TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
       Chain = RetVal.getValue(1);
       break;
     case MVT::i64:
-      SDOperand Lo = DAG.getCopyFromReg(Chain, V8::O0, MVT::i32, InFlag);
+      SDOperand Lo = DAG.getCopyFromReg(Chain, V8::O1, MVT::i32, InFlag);
       SDOperand Hi = DAG.getCopyFromReg(Lo.getValue(1), V8::O0, MVT::i32, 
                                         Lo.getValue(2));
       RetVal = DAG.getNode(ISD::BUILD_PAIR, MVT::i64, Lo, Hi);
