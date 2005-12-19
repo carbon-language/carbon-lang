@@ -860,7 +860,8 @@ void SimpleSched::PrepareNodeInfo() {
 /// isStrongDependency - Return true if node A has results used by node B. 
 /// I.E., B must wait for latency of A.
 bool SimpleSched::isStrongDependency(NodeInfo *A, NodeInfo *B) {
-  // If A defines for B then it's a strong dependency
+  // If A defines for B then it's a strong dependency or
+  // if a load follows a store (may be dependent but why take a chance.)
   return isDefiner(A, B) || (A->IsStore && B->IsLoad);
 }
 
