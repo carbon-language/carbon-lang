@@ -139,6 +139,7 @@ void X86DAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
 
   // Codegen the basic block.
   DAG.setRoot(Select(DAG.getRoot()));
+  CodeGenMap.clear();
   DAG.RemoveDeadNodes();
 
   // Emit machine code to BB. 
