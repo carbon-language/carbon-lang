@@ -1761,7 +1761,7 @@ private:
   // Node to name mapping
   std::map<std::string,std::string> VariableMap;
   // Names of all the folded nodes which produce chains.
-  std::vector<std::string> FoldedChains;
+  std::vector<std::pair<std::string, unsigned> > FoldedChains;
   bool FoundChain;
   bool InFlag;
   unsigned TmpNo;
@@ -1856,8 +1856,10 @@ public:
         OS << "      if (" << RootName << OpNo << ".getOpcode() != "
            << CInfo.getEnumName() << ") goto P" << PatternNo << "Fail;\n";
         EmitMatchCode(Child, RootName + utostr(OpNo));
-        if (NodeHasChain(Child, ISE))
-          FoldedChains.push_back(RootName + utostr(OpNo));
+        if (NodeHasChain(Child, ISE)) {
+          FoldedChains.push_back(std::make_pair(RootName + utostr(OpNo),
+                                                CInfo.getNumResults()));
+        }
       } else {
         // If this child has a name associated with it, capture it in VarMap.  If
         // we already saw this in the pattern, emit code to verify dagness.
@@ -2078,41 +2080,49 @@ public:
           OS << "      Chain = Tmp" << LastOp << ".getValue("
              << NumResults << ");\n";
         }
-      } else if (II.hasCtrlDep) {
-        OS << "      SDOperand Result = ";
-        OS << "CurDAG->getTargetNode("
+      } else if (II.hasCtrlDep || NumImpResults > 0) {
+        OS << "      SDOperand Result = CurDAG->getTargetNode("
            << II.Namespace << "::" << II.TheDef->getName();
+
+        // Output order: results, chain, flags
+        // Result types.
         if (NumResults > 0) { 
           // TODO: multiple results?
           if (N->getType() != MVT::isVoid)
             OS << ", MVT::" << getEnumName(N->getType());
         }
-        OS << ", MVT::Other";
+        if (II.hasCtrlDep)
+          OS << ", MVT::Other";
         for (unsigned i = 0; i < NumImpResults; i++) {
           Record *ImpResult = Inst.getImpResult(i);
           MVT::ValueType RVT = getRegisterValueType(ImpResult, CGT);
           OS << ", MVT::" << getEnumName(RVT);
         }
+
+        // Inputs.
         for (unsigned i = 0, e = Ops.size(); i != e; ++i)
           OS << ", Tmp" << Ops[i];
-        OS << ", Chain";
-        if (InFlag)
-          OS << ", InFlag";
+        if (II.hasCtrlDep) OS << ", Chain";
+        if (InFlag)        OS << ", InFlag";
         OS << ");\n";
-        if (NumResults != 0) {
-          OS << "      CodeGenMap[N.getValue(0)] = Result;\n";
+
+        unsigned ValNo = 0;
+        for (unsigned i = 0; i < NumResults; i++)
+          OS << "      CodeGenMap[N.getValue(" << ValNo++ << ")] = Result;\n";
+        if (II.hasCtrlDep) {
+          OS << "      Chain ";
+          if (NodeHasChain(Pattern, ISE))
+            OS << "= CodeGenMap[N.getValue(" << ValNo << ")] ";
+          for (unsigned j = 0, e = FoldedChains.size(); j < e; j++)
+            OS << "= CodeGenMap[" << FoldedChains[j].first << ".getValue("
+               << FoldedChains[j].second << ")] ";
+          OS << "= Result.getValue(" << ValNo++ << ");\n";
         }
-        OS << "      Chain ";
-        if (NodeHasChain(Pattern, ISE))
-          OS << "= CodeGenMap[N.getValue(" << NumResults << ")] ";
-        for (unsigned j = 0, e = FoldedChains.size(); j < e; j++)
-          OS << "= CodeGenMap[" << FoldedChains[j] << ".getValue("
-             << NumResults << ")] ";
-        OS << "= Result.getValue(" << NumResults << ");\n";
-        if (NumResults == 0 && NumImpResults == 0)
-          OS << "      return Chain;\n";
-        else
-          OS << "      return (N.ResNo) ? Chain : Result.getValue(0);\n";
+        for (unsigned i = 0; i < NumImpResults; i++) {
+          OS << "      CodeGenMap[N.getValue(" << ValNo << ")] = Result";
+          OS << ".getValue(" << ValNo++ << ");\n";
+        }
+        OS << "      return Result.getValue(N.ResNo);\n";
       } else {
         // If this instruction is the root, and if there is only one use of it,
         // use SelectNodeTo instead of getTargetNode to avoid an allocation.
