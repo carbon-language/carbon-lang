@@ -40,16 +40,16 @@ TrackIntegersAsPointers("dsa-track-integers", cl::Hidden,
          cl::desc("If this is set, track integers as potential pointers"));
 
 static cl::list<std::string>
-AllocList("alloc-list",
+AllocList("dsa-alloc-list",
           cl::value_desc("list"),
           cl::desc("List of functions that allocate memory from the heap"),
-          cl::CommaSeparated);
+          cl::CommaSeparated, cl::Hidden);
 
 static cl::list<std::string>
-FreeList("free-list",
+FreeList("dsa-free-list",
           cl::value_desc("list"),
           cl::desc("List of functions that free memory from the heap"),
-          cl::CommaSeparated);
+          cl::CommaSeparated, cl::Hidden);
 
 namespace llvm {
 namespace DS {
