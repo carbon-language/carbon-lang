@@ -1043,29 +1043,6 @@ SDOperand PPCDAGToDAGISel::Select(SDOperand Op) {
                                 Select(N->getOperand(3)),
                                 getI32Imm(BROpc));
   }
-    
-  case ISD::RET: {
-    SDOperand Chain = Select(N->getOperand(0));     // Token chain.
-
-    if (N->getNumOperands() == 2) {
-      SDOperand Val = Select(N->getOperand(1));
-      if (N->getOperand(1).getValueType() == MVT::i32) {
-        Chain = CurDAG->getCopyToReg(Chain, PPC::R3, Val);
-      } else {
-        assert(MVT::isFloatingPoint(N->getOperand(1).getValueType()));
-        Chain = CurDAG->getCopyToReg(Chain, PPC::F1, Val);
-      }
-    } else if (N->getNumOperands() > 1) {
-      assert(N->getOperand(1).getValueType() == MVT::i32 &&
-             N->getOperand(2).getValueType() == MVT::i32 &&
-             N->getNumOperands() == 3 && "Unknown two-register ret value!");
-      Chain = CurDAG->getCopyToReg(Chain, PPC::R4, Select(N->getOperand(1)));
-      Chain = CurDAG->getCopyToReg(Chain, PPC::R3, Select(N->getOperand(2)));
-    }
-
-    // Finally, select this to a blr (return) instruction.
-    return CurDAG->SelectNodeTo(N, PPC::BLR, MVT::Other, Chain);
-  }
   case ISD::BR_CC:
   case ISD::BRTWOWAY_CC: {
     SDOperand Chain = Select(N->getOperand(0));

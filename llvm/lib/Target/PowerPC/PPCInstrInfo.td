@@ -46,6 +46,9 @@ def SDT_PPCCallSeq : SDTypeProfile<0, 1, [ SDTCisVT<0, i32> ]>;
 def callseq_start : SDNode<"ISD::CALLSEQ_START", SDT_PPCCallSeq,[SDNPHasChain]>;
 def callseq_end   : SDNode<"ISD::CALLSEQ_END",   SDT_PPCCallSeq,[SDNPHasChain]>;
 
+def SDT_PPCRetFlag : SDTypeProfile<0, 1, [ SDTCisVT<0, FlagVT>]>;
+def retflag       : SDNode<"PPCISD::RET_FLAG", SDT_PPCRetFlag, [SDNPHasChain]>;
+
 //===----------------------------------------------------------------------===//
 // PowerPC specific transformation functions and pattern fragments.
 //
@@ -221,8 +224,8 @@ let usesCustomDAGSchedInserter = 1 in {  // Expanded by the scheduler.
 
 let isTerminator = 1 in {
   let isReturn = 1 in
-    def BLR : XLForm_2_ext<19, 16, 20, 0, 0, (ops), "blr", BrB>;
-  def BCTR : XLForm_2_ext<19, 528, 20, 0, 0, (ops), "bctr", BrB>;
+    def BLR : XLForm_2_ext<19, 16, 20, 0, 0, (ops), "blr", BrB, [(ret)]>;
+  def BCTR : XLForm_2_ext<19, 528, 20, 0, 0, (ops), "bctr", BrB, []>;
 }
 
 let Defs = [LR] in
@@ -267,7 +270,8 @@ let isCall = 1,
                             "bl $func", BrB, []>;
   def BLA : IForm<18, 1, 1, (ops aaddr:$func, variable_ops),
                             "bla $func", BrB, []>;
-  def BCTRL : XLForm_2_ext<19, 528, 20, 0, 1, (ops variable_ops), "bctrl", BrB>;
+  def BCTRL : XLForm_2_ext<19, 528, 20, 0, 1, (ops variable_ops), "bctrl", BrB,
+                           []>;
 }
 
 // D-Form instructions.  Most instructions that perform an operation on a
@@ -1051,6 +1055,8 @@ def : Pat<(f64 (extload iaddr:$src, f32)),
           (FMRSD (LFS iaddr:$src))>;
 def : Pat<(f64 (extload xaddr:$src, f32)),
           (FMRSD (LFSX xaddr:$src))>;
+
+def : Pat<(retflag FLAG), (BLR)>;
 
 // Same as above, but using a temporary. FIXME: implement temporaries :)
 /*

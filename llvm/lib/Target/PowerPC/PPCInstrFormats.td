@@ -328,11 +328,13 @@ class XLForm_1<bits<6> opcode, bits<10> xo, dag OL, string asmstr,
 }
 
 class XLForm_2<bits<6> opcode, bits<10> xo, bit lk, dag OL, string asmstr, 
-               InstrItinClass itin>
+               InstrItinClass itin, list<dag> pattern>
     : I<opcode, OL, asmstr, itin> {
   bits<5> BO;
   bits<5> BI;
   bits<2> BH;
+  
+  let Pattern = pattern;
   
   let Inst{6-10}  = BO;
   let Inst{11-15} = BI;
@@ -343,8 +345,8 @@ class XLForm_2<bits<6> opcode, bits<10> xo, bit lk, dag OL, string asmstr,
 }
 
 class XLForm_2_ext<bits<6> opcode, bits<10> xo, bits<5> bo,  bits<5> bi, bit lk,
-                  dag OL, string asmstr, InstrItinClass itin>
-  : XLForm_2<opcode, xo, lk, OL, asmstr, itin> {
+                  dag OL, string asmstr, InstrItinClass itin, list<dag> pattern>
+  : XLForm_2<opcode, xo, lk, OL, asmstr, itin, pattern> {
   let BO = bo;
   let BI = bi;
   let BH = 0;

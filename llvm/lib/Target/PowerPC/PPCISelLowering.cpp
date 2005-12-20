@@ -793,15 +793,26 @@ PPCTargetLowering::LowerCallTo(SDOperand Chain,
 
 SDOperand PPCTargetLowering::LowerReturnTo(SDOperand Chain, SDOperand Op,
                                            SelectionDAG &DAG) {
-  if (Op.getValueType() == MVT::i64) {
-    SDOperand Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, Op, 
-                               DAG.getConstant(1, MVT::i32));
-    SDOperand Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, Op,
-                               DAG.getConstant(0, MVT::i32));
-    return DAG.getNode(ISD::RET, MVT::Other, Chain, Lo, Hi);
-  } else {
-    return DAG.getNode(ISD::RET, MVT::Other, Chain, Op);
+  SDOperand Copy;
+  switch (Op.getValueType()) {
+    default: assert(0 && "Unknown type to return!");
+    case MVT::i32:
+      Copy = DAG.getCopyToReg(Chain, PPC::R3, Op, SDOperand());
+      break;
+    case MVT::f32:
+    case MVT::f64:
+      Copy = DAG.getCopyToReg(Chain, PPC::F1, Op, SDOperand());
+      break;
+    case MVT::i64:
+      SDOperand Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, Op, 
+                                 DAG.getConstant(1, MVT::i32));
+      SDOperand Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, Op,
+                                 DAG.getConstant(0, MVT::i32));
+      Copy = DAG.getCopyToReg(Chain, PPC::R3, Hi, SDOperand());
+      Copy = DAG.getCopyToReg(Copy, PPC::R4, Lo, Copy.getValue(1));
+      break;
   }
+  return DAG.getNode(PPCISD::RET_FLAG, MVT::Other, Copy, Copy.getValue(1));
 }
 
 SDOperand PPCTargetLowering::LowerVAStart(SDOperand Chain, SDOperand VAListP,
