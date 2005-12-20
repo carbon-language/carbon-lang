@@ -1803,7 +1803,7 @@ public:
               OS << "      if (";
             else
               OS << " && ";
-            OS << "(" << Def->getValueAsString("CondString") << ")";
+            OS << "!(" << Def->getValueAsString("CondString") << ")";
             if (i == e-1)
               OS << ") goto P" << PatternNo << "Fail;\n";
           } else {
