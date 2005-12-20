@@ -970,3 +970,20 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   }
   }
 }
+
+const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
+  switch (Opcode) {
+  default: return NULL;
+  case X86ISD::FILD64m:            return "X86ISD::FILD64m";
+  case X86ISD::FP_TO_INT16_IN_MEM: return "X86ISD::FP_TO_INT16_IN_MEM";
+  case X86ISD::FP_TO_INT32_IN_MEM: return "X86ISD::FP_TO_INT32_IN_MEM";
+  case X86ISD::FP_TO_INT64_IN_MEM: return "X86ISD::FP_TO_INT64_IN_MEM";
+  case X86ISD::CALL:               return "X86ISD::CALL";
+  case X86ISD::TAILCALL:           return "X86ISD::TAILCALL";
+  case X86ISD::RDTSC_DAG:          return "X86ISD::RDTSC_DAG";
+  case X86ISD::CMP:                return "X86ISD::CMP";
+  case X86ISD::TEST:               return "X86ISD::TEST";
+  case X86ISD::CMOV:               return "X86ISD::CMOV";
+  case X86ISD::BRCOND:             return "X86ISD::BRCOND";
+  }
+}

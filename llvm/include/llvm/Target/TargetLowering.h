@@ -375,6 +375,10 @@ public:
   /// implement this.  The default implementation of this aborts.
   virtual SDOperand LowerOperation(SDOperand Op, SelectionDAG &DAG);
 
+  // getTargetNodeName() - This method returns the name of a target specific
+  // DAG node.
+  virtual const char *getTargetNodeName(unsigned Opcode) const;
+
   //===--------------------------------------------------------------------===//
   // Scheduler hooks
   //

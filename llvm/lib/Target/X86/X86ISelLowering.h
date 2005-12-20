@@ -123,6 +123,10 @@ namespace llvm {
     LowerFrameReturnAddress(bool isFrameAddr, SDOperand Chain, unsigned Depth,
                             SelectionDAG &DAG);
 
+    /// getTargetNodeName - This method returns the name of a target specific
+    /// DAG node.
+    virtual const char *getTargetNodeName(unsigned Opcode) const;
+
     SDOperand getReturnAddressFrameIndex(SelectionDAG &DAG);
 
   private:

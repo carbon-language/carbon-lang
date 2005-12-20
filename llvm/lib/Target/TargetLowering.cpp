@@ -122,3 +122,6 @@ void TargetLowering::computeRegisterProperties() {
   TransformToType[MVT::f64] = MVT::f64;
 }
 
+const char *TargetLowering::getTargetNodeName(unsigned Opcode) const {
+  return NULL;
+}

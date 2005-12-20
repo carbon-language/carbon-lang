@@ -1835,15 +1835,18 @@ const char *SDNode::getOperationName(const SelectionDAG *G) const {
     if (getOpcode() < ISD::BUILTIN_OP_END)
       return "<<Unknown DAG Node>>";
     else {
-      if (G)
+      if (G) {
         if (const TargetInstrInfo *TII = G->getTarget().getInstrInfo())
           if (getOpcode()-ISD::BUILTIN_OP_END < TII->getNumOpcodes())
             return TII->getName(getOpcode()-ISD::BUILTIN_OP_END);
 
-      std::string Name
-        = "<<Unknown Target Node:"
-        + itostr((int)getOpcode()-ISD::BUILTIN_OP_END) + ">>";
-      return Name.c_str();
+        TargetLowering &TLI = G->getTargetLoweringInfo();
+        const char *Name =
+          TLI.getTargetNodeName(getOpcode());
+        if (Name) return Name;
+      }
+
+      return "<<Unknown Target Node>>";
     }
    
   case ISD::PCMARKER:      return "PCMarker";
