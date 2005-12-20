@@ -96,15 +96,30 @@ SparcV8RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const {
 
   int FrameIndex = MI.getOperand(i).getFrameIndex();
 
-  // Replace frame index with a frame pointer reference
-  MI.SetMachineOperandReg (i, V8::I6);
-
   // Addressable stack objects are accessed using neg. offsets from %fp
   MachineFunction &MF = *MI.getParent()->getParent();
   int Offset = MF.getFrameInfo()->getObjectOffset(FrameIndex) +
                MI.getOperand(i+1).getImmedValue();
-  // note: Offset < 0
-  MI.SetMachineOperandConst (i+1, MachineOperand::MO_SignExtendedImmed, Offset);
+
+  // Replace frame index with a frame pointer reference.
+  if (Offset >= -4096 && Offset <= 4095) {
+    // If the offset is small enough to fit in the immediate field, directly
+    // encode it.
+    MI.SetMachineOperandReg(i, V8::I6);
+    MI.SetMachineOperandConst(i+1, MachineOperand::MO_SignExtendedImmed,Offset);
+  } else {
+    // Otherwise, emit a G1 = SETHI %hi(offset).  FIXME: it would be better to 
+    // scavenge a register here instead of reserving G1 all of the time.
+    unsigned OffHi = (unsigned)Offset >> 10U;
+    BuildMI(*MI.getParent(), II, V8::SETHIi, 1, V8::G1).addImm(OffHi);
+    // Emit G1 = G1 + I6
+    BuildMI(*MI.getParent(), II, V8::ADDrr, 2, 
+            V8::G1).addReg(V8::G1).addReg(V8::I6);
+    // Insert: G1+%lo(offset) into the user.
+    MI.SetMachineOperandReg(i, V8::I1);
+    MI.SetMachineOperandConst(i+1, MachineOperand::MO_SignExtendedImmed,
+                              Offset & ((1 << 10)-1));
+  }
 }
 
 void SparcV8RegisterInfo::
@@ -128,8 +143,23 @@ void SparcV8RegisterInfo::emitPrologue(MachineFunction &MF) const {
   // Round up to next doubleword boundary -- a double-word boundary
   // is required by the ABI.
   NumBytes = (NumBytes + 7) & ~7;
-  BuildMI(MBB, MBB.begin(), V8::SAVEri, 2,
-          V8::O6).addImm(-NumBytes).addReg(V8::O6);
+  NumBytes = -NumBytes;
+  
+  if (NumBytes >= -4096) {
+    BuildMI(MBB, MBB.begin(), V8::SAVEri, 2,
+            V8::O6).addImm(NumBytes).addReg(V8::O6);
+  } else {
+    MachineBasicBlock::iterator InsertPt = MBB.begin();
+    // Emit this the hard way.  This clobbers G1 which we always know is 
+    // available here.
+    unsigned OffHi = (unsigned)NumBytes >> 10U;
+    BuildMI(MBB, InsertPt, V8::SETHIi, 1, V8::G1).addImm(OffHi);
+    // Emit G1 = G1 + I6
+    BuildMI(MBB, InsertPt, V8::ORri, 2, V8::G1)
+      .addReg(V8::G1).addImm(NumBytes & ((1 << 10)-1));
+    BuildMI(MBB, InsertPt, V8::SAVErr, 2,
+            V8::O6).addReg(V8::O6).addReg(V8::G1);
+  }
 }
 
 void SparcV8RegisterInfo::emitEpilogue(MachineFunction &MF,

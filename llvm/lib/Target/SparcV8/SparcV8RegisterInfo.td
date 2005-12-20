@@ -84,8 +84,10 @@ def FLAGS_REGS : RegisterClass<"V8", [FlagVT], 32, [ICC, FCC]> {
 //
 def IntRegs : RegisterClass<"V8", [i32], 32, [L0, L1, L2, L3, L4, L5, L6, L7,
                                      I0, I1, I2, I3, I4, I5,
-                                     G1,
                                      O0, O1, O2, O3, O4, O5, O7,
+
+   // FIXME: G1 reserved for now for large imm generation by frame code.
+                                     G1,
                                      // Non-allocatable regs:
                                      G2, G3, G4, // FIXME: OK for use only in
                                                  // applications, not libraries.
@@ -102,7 +104,8 @@ def IntRegs : RegisterClass<"V8", [i32], 32, [L0, L1, L2, L3, L4, L5, L6, L7,
     IntRegsClass::iterator
     IntRegsClass::allocation_order_end(MachineFunction &MF) const {
       // FIXME: These special regs should be taken out of the regclass!
-      return end()-10;  // Don't allocate special registers
+      return end()-10  // Don't allocate special registers
+         -1;  // FIXME: G1 reserved for large imm generation by frame code.
     }
   }];
 }
