@@ -399,18 +399,27 @@ def REP_STOSD : I<0xAB, RawFrm, (ops), "{rep;stosl|rep stosd}", []>,
 //  Input/Output Instructions...
 //
 def IN8rr  : I<0xEC, RawFrm, (ops),
-               "in{b} {%dx, %al|%AL, %DX}", []>,  Imp<[DX], [AL]>;
+               "in{b} {%dx, %al|%AL, %DX}",
+               [(set AL, (readport DX))]>,  Imp<[DX], [AL]>;
 def IN16rr : I<0xED, RawFrm, (ops),
-               "in{w} {%dx, %ax|%AX, %DX}", []>,  Imp<[DX], [AX]>, OpSize;
+               "in{w} {%dx, %ax|%AX, %DX}",
+               [(set AX, (readport DX))]>,  Imp<[DX], [AX]>, OpSize;
 def IN32rr : I<0xED, RawFrm, (ops),
-               "in{l} {%dx, %eax|%EAX, %DX}", []>, Imp<[DX],[EAX]>;
+               "in{l} {%dx, %eax|%EAX, %DX}",
+               [(set EAX, (readport DX))]>, Imp<[DX],[EAX]>;
 
-def IN8ri  : Ii8<0xE4, RawFrm, (ops i8imm:$port),
-                  "in{b} {$port, %al|%AL, $port}", []>,  Imp<[], [AL]>;
-def IN16ri : Ii8<0xE5, RawFrm, (ops i8imm:$port),
-                  "in{w} {$port, %ax|%AX, $port}", []>,  Imp<[], [AX]>, OpSize;
-def IN32ri : Ii8<0xE5, RawFrm, (ops i8imm:$port),
-                  "in{l} {$port, %eax|%EAX, $port}", []>, Imp<[],[EAX]>;
+def IN8ri  : Ii8<0xE4, RawFrm, (ops i16i8imm:$port),
+                  "in{b} {$port, %al|%AL, $port}",
+                 [(set AL, (readport i16immZExt8:$port))]>,
+             Imp<[], [AL]>;
+def IN16ri : Ii8<0xE5, RawFrm, (ops i16i8imm:$port),
+                  "in{w} {$port, %ax|%AX, $port}",
+                 [(set AX, (readport i16immZExt8:$port))]>,
+             Imp<[], [AX]>, OpSize;
+def IN32ri : Ii8<0xE5, RawFrm, (ops i16i8imm:$port),
+                  "in{l} {$port, %eax|%EAX, $port}",
+                 [(set EAX, (readport i16immZExt8:$port))]>,
+             Imp<[],[EAX]>;
 
 def OUT8rr  : I<0xEE, RawFrm, (ops),
                 "out{b} {%al, %dx|%DX, %AL}",
@@ -425,15 +434,15 @@ def OUT32rr : I<0xEF, RawFrm, (ops),
 def OUT8ir  : Ii8<0xE6, RawFrm, (ops i16i8imm:$port),
                    "out{b} {%al, $port|$port, %AL}",
                    [(writeport AL, i16immZExt8:$port)]>,
-                   Imp<[AL], []>;
+              Imp<[AL], []>;
 def OUT16ir : Ii8<0xE7, RawFrm, (ops i16i8imm:$port),
                    "out{w} {%ax, $port|$port, %AX}",
                    [(writeport AX, i16immZExt8:$port)]>,
-                   Imp<[AX], []>, OpSize;
+              Imp<[AX], []>, OpSize;
 def OUT32ir : Ii8<0xE7, RawFrm, (ops i16i8imm:$port),
                    "out{l} {%eax, $port|$port, %EAX}",
                    [(writeport EAX, i16immZExt8:$port)]>,
-                   Imp<[EAX], []>;
+              Imp<[EAX], []>;
 
 //===----------------------------------------------------------------------===//
 //  Move Instructions...
