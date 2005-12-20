@@ -77,12 +77,16 @@ class SelectionDAGLegalize {
   std::map<SDOperand, std::pair<SDOperand, SDOperand> > ExpandedNodes;
 
   void AddLegalizedOperand(SDOperand From, SDOperand To) {
-    bool isNew = LegalizedNodes.insert(std::make_pair(From, To)).second;
-    assert(isNew && "Got into the map somehow?");
+    LegalizedNodes.insert(std::make_pair(From, To));
+    // If someone requests legalization of the new node, return itself.
+    if (From != To)
+      LegalizedNodes.insert(std::make_pair(To, To));
   }
   void AddPromotedOperand(SDOperand From, SDOperand To) {
     bool isNew = PromotedNodes.insert(std::make_pair(From, To)).second;
     assert(isNew && "Got into the map somehow?");
+    // If someone requests legalization of the new node, return itself.
+    LegalizedNodes.insert(std::make_pair(To, To));
   }
 
 public:
@@ -228,8 +232,7 @@ SDOperand SelectionDAGLegalize::ExpandLegalINT_TO_FP(bool isSigned,
      // if f32 then cast to f32
       Result = DAG.getNode(ISD::FP_ROUND, MVT::f32, Sub);
     }
-    NeedsAnotherIteration = true;
-    return Result;
+    return LegalizeOp(Result);
   }
   assert(!isSigned && "Legalize cannot Expand SINT_TO_FP for i64 yet");
   SDOperand Tmp1 = DAG.getNode(ISD::SINT_TO_FP, DestVT, Op0);
@@ -268,8 +271,7 @@ SDOperand SelectionDAGLegalize::ExpandLegalINT_TO_FP(bool isSigned,
                                            DAG.getSrcValue(NULL), MVT::f32));
   }
 
-  NeedsAnotherIteration = true;
-  return DAG.getNode(ISD::FADD, DestVT, Tmp1, FudgeInReg);
+  return LegalizeOp(DAG.getNode(ISD::FADD, DestVT, Tmp1, FudgeInReg));
 }
 
 /// PromoteLegalINT_TO_FP - This function is responsible for legalizing a
@@ -320,14 +322,13 @@ SDOperand SelectionDAGLegalize::PromoteLegalINT_TO_FP(SDOperand LegalOp,
     // Otherwise, try a larger type.
   }
 
-  // Make sure to legalize any nodes we create here in the next pass.
-  NeedsAnotherIteration = true;
-
   // Okay, we found the operation and type to use.  Zero extend our input to the
   // desired type then run the operation on it.
-  return DAG.getNode(OpToUse, DestVT,
+  SDOperand N = DAG.getNode(OpToUse, DestVT,
                      DAG.getNode(isSigned ? ISD::SIGN_EXTEND : ISD::ZERO_EXTEND,
                                  NewInTy, LegalOp));
+  // Make sure to legalize any nodes we create here.
+  return LegalizeOp(N);
 }
 
 /// PromoteLegalFP_TO_INT - This function is responsible for legalizing a
@@ -377,13 +378,12 @@ SDOperand SelectionDAGLegalize::PromoteLegalFP_TO_INT(SDOperand LegalOp,
     // Otherwise, try a larger type.
   }
 
-  // Make sure to legalize any nodes we create here in the next pass.
-  NeedsAnotherIteration = true;
-
   // Okay, we found the operation and type to use.  Truncate the result of the
   // extended FP_TO_*INT operation to the desired size.
-  return DAG.getNode(ISD::TRUNCATE, DestVT,
-                     DAG.getNode(OpToUse, NewOutTy, LegalOp));
+  SDOperand N = DAG.getNode(ISD::TRUNCATE, DestVT,
+                            DAG.getNode(OpToUse, NewOutTy, LegalOp));
+  // Make sure to legalize any nodes we create here in the next pass.
+  return LegalizeOp(N);
 }
 
 /// ComputeTopDownOrdering - Add the specified node to the Order list if it has
@@ -1091,11 +1091,14 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       AddLegalizedOperand(SDOperand(Node, 1), Result.getValue(1));
       return Result.getValue(Op.ResNo);
     case TargetLowering::Expand:
-      //f64 = EXTLOAD f32 should expand to LOAD, FP_EXTEND
+      // f64 = EXTLOAD f32 should expand to LOAD, FP_EXTEND
       if (SrcVT == MVT::f32 && Node->getValueType(0) == MVT::f64) {
         SDOperand Load = DAG.getLoad(SrcVT, Tmp1, Tmp2, Node->getOperand(2));
         Result = DAG.getNode(ISD::FP_EXTEND, Node->getValueType(0), Load);
         Result = LegalizeOp(Result);  // Relegalize new nodes.
+        Load = LegalizeOp(Load);
+        AddLegalizedOperand(SDOperand(Node, 0), Result);
+        AddLegalizedOperand(SDOperand(Node, 1), Load.getValue(1));
         if (Op.ResNo)
           return Load.getValue(1);
         return Result;
@@ -1112,10 +1115,10 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
                              Result, DAG.getValueType(SrcVT));
       else
         ValRes = DAG.getZeroExtendInReg(Result, SrcVT);
-      AddLegalizedOperand(SDOperand(Node, 0), ValRes);
-      AddLegalizedOperand(SDOperand(Node, 1), Result.getValue(1));
       Result = LegalizeOp(Result);  // Relegalize new nodes.
       ValRes = LegalizeOp(ValRes);  // Relegalize new nodes.
+      AddLegalizedOperand(SDOperand(Node, 0), ValRes);
+      AddLegalizedOperand(SDOperand(Node, 1), Result.getValue(1));
       if (Op.ResNo)
         return Result.getValue(1);
       return ValRes;
@@ -1578,6 +1581,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         Result = DAG.getSetCC(Node->getValueType(0), LHSHi, RHSHi, ISD::SETEQ);
         Result = LegalizeOp(DAG.getNode(ISD::SELECT, Tmp1.getValueType(),
                                         Result, Tmp1, Tmp2));
+        AddLegalizedOperand(SDOperand(Node, 0), Result);
         return Result;
       }
     }
@@ -1732,8 +1736,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       std::pair<SDOperand,SDOperand> CallResult =
         TLI.LowerCallTo(Tmp1, Type::VoidTy, false, CallingConv::C, false,
                         DAG.getExternalSymbol(FnName, IntPtr), Args, DAG);
-      Result = CallResult.second;
-      NeedsAnotherIteration = true;
+      Result = LegalizeOp(CallResult.second);
       break;
     }
     }
@@ -2137,8 +2140,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
           DAG.getNode(Node->getOpcode(), Node->getValueType(0), Tmp1);
         Tmp = TLI.LowerOperation(Tmp, DAG);
         if (Tmp.Val) {
+          Tmp = LegalizeOp(Tmp);  // Relegalize input.
           AddLegalizedOperand(Op, Tmp);
-          NeedsAnotherIteration = true;
           return Tmp;
         } else {
           assert(0 && "Target Must Lower this");
@@ -2215,6 +2218,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
           False = DAG.getNode(ISD::XOR, NVT, False, 
                               DAG.getConstant(1ULL << ShiftAmt, NVT));
           Result = LegalizeOp(DAG.getNode(ISD::SELECT, NVT, Tmp3, True, False));
+          AddLegalizedOperand(SDOperand(Node, 0), Result);
           return Result;
         } else {
           assert(0 && "Do not know how to expand FP_TO_SINT yet!");
@@ -2230,8 +2234,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
           DAG.getNode(Node->getOpcode(), Node->getValueType(0), Tmp1);
         Tmp = TLI.LowerOperation(Tmp, DAG);
         if (Tmp.Val) {
+          Tmp = LegalizeOp(Tmp);
           AddLegalizedOperand(Op, Tmp);
-          NeedsAnotherIteration = true;
           return Tmp;
         } else {
           // The target thinks this is legal afterall.
@@ -3822,6 +3826,10 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
   bool isNew = ExpandedNodes.insert(std::make_pair(Op,
                                           std::make_pair(Lo, Hi))).second;
   assert(isNew && "Value already expanded?!?");
+  
+  // Make sure the resultant values have been legalized themselves.
+  Lo = LegalizeOp(Lo);
+  Hi = LegalizeOp(Hi);
 }
 
 
