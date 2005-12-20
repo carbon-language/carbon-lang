@@ -103,6 +103,9 @@ X86TargetMachine::X86TargetMachine(const Module &M,
     JITInfo(*this) {
   // Scalar SSE FP requires at least SSE2
   X86ScalarSSE &= X86Vector >= SSE2;
+
+  // Ignore -enable-sse-scalar-fp if -enable-x86-dag-isel.
+  X86ScalarSSE |= (X86DAGIsel && X86Vector >= SSE2);
 }
 
 
