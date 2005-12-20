@@ -2134,7 +2134,13 @@ public:
           }
         }
 
-        OS << "      return Result.getValue(N.ResNo);\n";
+        // FIXME: this only works because (for now) an instruction can either
+        // produce a single result or a single flag.
+        if (II.hasCtrlDep && NumImpResults > 0)
+          OS << "      return (N.ResNo) ? Chain : Result.getValue(1);"
+             << "   // Chain comes before flag.\n";
+        else
+          OS << "      return Result.getValue(N.ResNo);\n";
       } else {
         // If this instruction is the root, and if there is only one use of it,
         // use SelectNodeTo instead of getTargetNode to avoid an allocation.
