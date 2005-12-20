@@ -187,7 +187,7 @@ def xoaddr : ComplexPattern<i32, 2, "SelectAddrIdxOnly",[]>;
 
 //===----------------------------------------------------------------------===//
 // PowerPC Instruction Predicate Definitions.
-def FPContractions : Predicate<"NoExcessFPPrecision">;
+def FPContractions : Predicate<"!NoExcessFPPrecision">;
 
 //===----------------------------------------------------------------------===//
 // PowerPC Instruction Definitions.
