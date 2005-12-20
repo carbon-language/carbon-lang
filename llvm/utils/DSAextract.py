@@ -66,6 +66,7 @@ while buffer != '':
 			#for the node (it will be Node(hex number)) to our set of nodes
 			if regexp.search(buffer):
 				node_set |= set([re.split('\s+',buffer,2)[1]])
+				break
 	buffer = input.readline()
 
 
