@@ -73,28 +73,25 @@ bool SparcV8TargetMachine::addPassesToEmitFile(PassManager &PM,
   // FIXME: Implement efficient support for garbage collection intrinsics.
   PM.add(createLowerGCPass());
 
-  // Replace malloc and free instructions with library calls.
-  PM.add(createLowerAllocationsPass());
-
-  // FIXME: implement the switch instruction in the instruction selector.
-  PM.add(createLowerSwitchPass());
+  // Make sure that no unreachable blocks are instruction selected.
+  PM.add(createUnreachableBlockEliminationPass());
 
   // FIXME: implement the invoke/unwind instructions!
   PM.add(createLowerInvokePass());
 
-  // Make sure that no unreachable blocks are instruction selected.
-  PM.add(createUnreachableBlockEliminationPass());
-
-  // FIXME: implement the select instruction in the instruction selector.
-  PM.add(createLowerSelectPass());
+  // FIXME: implement the switch instruction in the instruction selector.
+  PM.add(createLowerSwitchPass());
 
   // Print LLVM code input to instruction selector:
   if (PrintMachineCode)
     PM.add(new PrintFunctionPass());
 
-  if (DisableV8DAGDAG)
+  if (DisableV8DAGDAG) {
+    // Replace malloc and free instructions with library calls.
+    PM.add(createLowerAllocationsPass());
+    PM.add(createLowerSelectPass());
     PM.add(createSparcV8SimpleInstructionSelector(*this));
-  else
+  } else
     PM.add(createSparcV8ISelDag(*this));
 
   // Print machine instructions as they were initially generated.
@@ -110,6 +107,7 @@ bool SparcV8TargetMachine::addPassesToEmitFile(PassManager &PM,
     PM.add(createMachineFunctionPrinterPass(&std::cerr));
 
   PM.add(createSparcV8FPMoverPass(*this));
+
   PM.add(createSparcV8DelaySlotFillerPass(*this));
 
   // Print machine instructions after filling delay slots.
