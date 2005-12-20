@@ -1763,7 +1763,6 @@ private:
   // Names of all the folded nodes which produce chains.
   std::vector<std::pair<std::string, unsigned> > FoldedChains;
   bool FoundChain;
-  bool InFlag;
   unsigned TmpNo;
 
 public:
@@ -1771,7 +1770,7 @@ public:
                      TreePatternNode *pattern, TreePatternNode *instr,
                      unsigned PatNum, std::ostream &os) :
     ISE(ise), Predicates(preds), Pattern(pattern), Instruction(instr),
-    PatternNo(PatNum), OS(os), FoundChain(false), InFlag(false), TmpNo(0) {};
+    PatternNo(PatNum), OS(os), FoundChain(false), TmpNo(0) {};
 
   /// EmitMatchCode - Emit a matcher for N, going to the label for PatternNo
   /// if the match fails. At this point, we already know that the opcode for N
@@ -1884,10 +1883,6 @@ public:
           if (LeafRec->isSubClassOf("RegisterClass")) {
             // Handle register references.  Nothing to do here.
           } else if (LeafRec->isSubClassOf("Register")) {
-            if (!InFlag) {
-              OS << "      SDOperand InFlag = SDOperand(0,0);\n";
-              InFlag = true;
-            }
           } else if (LeafRec->isSubClassOf("ComplexPattern")) {
             // Handle complex pattern. Nothing to do here.
           } else if (LeafRec->getName() == "srcvalue") {
@@ -2015,6 +2010,16 @@ public:
 
     Record *Op = N->getOperator();
     if (Op->isSubClassOf("Instruction")) {
+      const DAGInstruction &Inst = ISE.getInstruction(Op);
+      unsigned NumImpResults  = Inst.getNumImpResults();
+      unsigned NumImpOperands = Inst.getNumImpOperands();
+      bool InFlag  = NumImpOperands > 0;
+      bool OutFlag = NumImpResults > 0;
+      bool IsCopyFromReg = false;
+
+      if (InFlag || OutFlag)
+        OS << "      SDOperand InFlag = SDOperand(0,0);\n";
+
       // Determine operand emission order. Complex pattern first.
       std::vector<std::pair<unsigned, TreePatternNode*> > EmitOrder;
       std::vector<std::pair<unsigned, TreePatternNode*> >::iterator OI;
@@ -2052,10 +2057,9 @@ public:
       // Emit all the chain and CopyToReg stuff.
       if (II.hasCtrlDep)
         OS << "      Chain = Select(Chain);\n";
-      EmitCopyToRegs(Pattern, "N", II.hasCtrlDep);
+      if (InFlag)
+        EmitCopyToRegs(Pattern, "N", II.hasCtrlDep);
 
-      const DAGInstruction &Inst = ISE.getInstruction(Op);
-      unsigned NumImpResults =  Inst.getNumImpResults();
       unsigned NumResults = Inst.getNumResults();    
       unsigned ResNo = TmpNo++;
       if (!isRoot) {
@@ -2063,11 +2067,8 @@ public:
            << II.Namespace << "::" << II.TheDef->getName();
         if (N->getType() != MVT::isVoid)
           OS << ", MVT::" << getEnumName(N->getType());
-        for (unsigned i = 0; i < NumImpResults; i++) {
-          Record *ImpResult = Inst.getImpResult(i);
-          MVT::ValueType RVT = getRegisterValueType(ImpResult, CGT);
-          OS << ", MVT::" << getEnumName(RVT);
-        }
+        if (OutFlag)
+          OS << ", MVT::Flag";
 
         unsigned LastOp = 0;
         for (unsigned i = 0, e = Ops.size(); i != e; ++i) {
@@ -2080,7 +2081,7 @@ public:
           OS << "      Chain = Tmp" << LastOp << ".getValue("
              << NumResults << ");\n";
         }
-      } else if (II.hasCtrlDep || NumImpResults > 0) {
+      } else if (II.hasCtrlDep || OutFlag) {
         OS << "      SDOperand Result = CurDAG->getTargetNode("
            << II.Namespace << "::" << II.TheDef->getName();
 
@@ -2093,11 +2094,8 @@ public:
         }
         if (II.hasCtrlDep)
           OS << ", MVT::Other";
-        for (unsigned i = 0; i < NumImpResults; i++) {
-          Record *ImpResult = Inst.getImpResult(i);
-          MVT::ValueType RVT = getRegisterValueType(ImpResult, CGT);
-          OS << ", MVT::" << getEnumName(RVT);
-        }
+        if (OutFlag)
+          OS << ", MVT::Flag";
 
         // Inputs.
         for (unsigned i = 0, e = Ops.size(); i != e; ++i)
@@ -2114,33 +2112,43 @@ public:
         }
 
         if (II.hasCtrlDep) {
-          OS << "      Chain ";
-          if (NodeHasChain(Pattern, ISE))
-            OS << "= CodeGenMap[N.getValue(" << ValNo + NumImpResults << ")] ";
+          OS << "      Chain = Result.getValue(" << ValNo << ");\n";
+          if (OutFlag)
+            OS << "      InFlag = Result.getValue(" << ValNo+1 << ");\n";
+        } else if (OutFlag) 
+            OS << "      InFlag = Result.getValue(" << ValNo << ");\n";
+
+        if (OutFlag)
+          IsCopyFromReg = EmitCopyFromRegs(N, II.hasCtrlDep);
+        if (IsCopyFromReg)
+          OS << "      CodeGenMap[N.getValue(" << ValNo++ << ")] = Result;\n";
+
+        if (OutFlag)
+          OS << "      CodeGenMap[N.getValue(" << ValNo++ << ")] = InFlag;\n";
+
+        if (IsCopyFromReg || II.hasCtrlDep) {
+          OS << "      ";
+          if (IsCopyFromReg || NodeHasChain(Pattern, ISE))
+            OS << "CodeGenMap[N.getValue(" << ValNo   << ")] = ";
           for (unsigned j = 0, e = FoldedChains.size(); j < e; j++)
-            OS << "= CodeGenMap[" << FoldedChains[j].first << ".getValue("
-               << FoldedChains[j].second << ")] ";
-          OS << "= Result.getValue(" << ValNo << ");\n";
-          for (unsigned i = 0; i < NumImpResults; i++) {
-            OS << "      CodeGenMap[N.getValue(" << ValNo << ")] = Result";
-            OS << ".getValue(" << ValNo+1 << ");\n";
-            ValNo++;
-          }
-        } else {
-          for (unsigned i = 0; i < NumImpResults; i++) {
-            OS << "      CodeGenMap[N.getValue(" << ValNo << ")] = Result";
-            OS << ".getValue(" << ValNo << ");\n";
-            ValNo++;
-          }
+            OS << "CodeGenMap[" << FoldedChains[j].first << ".getValue("
+               << FoldedChains[j].second << ")] = ";
+          OS << "Chain;\n";
         }
 
         // FIXME: this only works because (for now) an instruction can either
         // produce a single result or a single flag.
-        if (II.hasCtrlDep && NumImpResults > 0)
-          OS << "      return (N.ResNo) ? Chain : Result.getValue(1);"
-             << "   // Chain comes before flag.\n";
-        else
+        if (II.hasCtrlDep && OutFlag) {
+          if (IsCopyFromReg)
+            OS << "      return (N.ResNo == 0) ? Result : "
+               << "((N.ResNo == 2) ? Chain : InFlag);"
+               << "   // Chain comes before flag.\n";
+          else
+            OS << "      return (N.ResNo) ? Chain : InFlag;"
+               << "   // Chain comes before flag.\n";
+        } else {
           OS << "      return Result.getValue(N.ResNo);\n";
+        }
       } else {
         // If this instruction is the root, and if there is only one use of it,
         // use SelectNodeTo instead of getTargetNode to avoid an allocation.
@@ -2149,11 +2157,8 @@ public:
            << II.Namespace << "::" << II.TheDef->getName();
         if (N->getType() != MVT::isVoid)
           OS << ", MVT::" << getEnumName(N->getType());
-        for (unsigned i = 0; i < NumImpResults; i++) {
-          Record *ImpResult = Inst.getImpResult(i);
-          MVT::ValueType RVT = getRegisterValueType(ImpResult, CGT);
-          OS << ", MVT::" << getEnumName(RVT);
-        }
+        if (OutFlag)
+          OS << ", MVT::Flag";
         for (unsigned i = 0, e = Ops.size(); i != e; ++i)
           OS << ", Tmp" << Ops[i];
         if (InFlag)
@@ -2164,11 +2169,8 @@ public:
            << II.Namespace << "::" << II.TheDef->getName();
         if (N->getType() != MVT::isVoid)
           OS << ", MVT::" << getEnumName(N->getType());
-        for (unsigned i = 0; i < NumImpResults; i++) {
-          Record *ImpResult = Inst.getImpResult(i);
-          MVT::ValueType RVT = getRegisterValueType(ImpResult, CGT);
-          OS << ", MVT::" << getEnumName(RVT);
-        }
+        if (OutFlag)
+          OS << ", MVT::Flag";
         for (unsigned i = 0, e = Ops.size(); i != e; ++i)
           OS << ", Tmp" << Ops[i];
         if (InFlag)
@@ -2176,6 +2178,7 @@ public:
         OS << ");\n";
         OS << "      }\n";
       }
+
       return std::make_pair(1, ResNo);
     } else if (Op->isSubClassOf("SDNodeXForm")) {
       assert(N->getNumChildren() == 1 && "node xform should have one child!");
@@ -2258,6 +2261,43 @@ private:
         }
       }
     }
+  }
+
+  /// EmitCopyFromRegs - Emit code to copy result to physical registers
+  /// as specified by the instruction.
+  bool EmitCopyFromRegs(TreePatternNode *N, bool HasCtrlDep) {
+    bool RetVal = false;
+    Record *Op = N->getOperator();
+    if (Op->isSubClassOf("Instruction")) {
+      const DAGInstruction &Inst = ISE.getInstruction(Op);
+      const CodeGenTarget &CGT = ISE.getTargetInfo();
+      CodeGenInstruction &II = CGT.getInstruction(Op->getName());
+      unsigned NumImpResults  = Inst.getNumImpResults();
+      for (unsigned i = 0; i < NumImpResults; i++) {
+        Record *RR = Inst.getImpResult(i);
+        if (RR->isSubClassOf("Register")) {
+          MVT::ValueType RVT = getRegisterValueType(RR, CGT);
+          if (RVT != MVT::Flag) {
+            if (HasCtrlDep) {
+              OS << "      Result = CurDAG->getCopyFromReg(Chain, "
+                 << ISE.getQualifiedName(RR)
+                 << ", MVT::" << getEnumName(RVT) << ", InFlag);\n";
+              OS << "      Chain  = Result.getValue(1);\n";
+              OS << "      InFlag = Result.getValue(2);\n";
+            } else {
+              OS << "      SDOperand Chain;\n";
+              OS << "      Result = CurDAG->getCopyFromReg("
+                 << "CurDAG->getEntryNode(), ISE.getQualifiedName(RR)"
+                 << ", MVT::" << getEnumName(RVT) << ", InFlag);\n";
+              OS << "      Chain  = Result.getValue(1);\n";
+              OS << "      InFlag = Result.getValue(2);\n";
+            }
+            RetVal = true;
+          }
+        }
+      }
+    }
+    return RetVal;
   }
 };
 
