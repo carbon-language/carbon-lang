@@ -197,6 +197,68 @@ X86TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
   return  LowerCCCCallTo(Chain, RetTy, isVarArg, isTailCall, Callee, Args, DAG);
 }
 
+SDOperand X86TargetLowering::LowerReturnTo(SDOperand Chain, SDOperand Op,
+                                           SelectionDAG &DAG) {
+  if (!X86DAGIsel)
+    return DAG.getNode(ISD::RET, MVT::Other, Chain, Op);
+
+  SDOperand Copy;
+  MVT::ValueType OpVT = Op.getValueType();
+  switch (OpVT) {
+    default: assert(0 && "Unknown type to return!");
+    case MVT::i32:
+      Copy = DAG.getCopyToReg(Chain, X86::EAX, Op, SDOperand());
+      break;
+    case MVT::i64: {
+      SDOperand Hi = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, Op, 
+                                 DAG.getConstant(1, MVT::i32));
+      SDOperand Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, Op,
+                                 DAG.getConstant(0, MVT::i32));
+      Copy = DAG.getCopyToReg(Chain, X86::EAX, Hi, SDOperand());
+      Copy = DAG.getCopyToReg(Copy,  X86::EDX, Lo, Copy.getValue(1));
+      break;
+    }
+    case MVT::f32:
+      assert(X86ScalarSSE && "MVT::f32 only legal with scalar sse fp");
+      // Fallthrough intended
+    case MVT::f64:
+      if (!X86ScalarSSE) {
+        std::vector<MVT::ValueType> Tys;
+        Tys.push_back(MVT::Other);
+        Tys.push_back(MVT::Flag);
+        std::vector<SDOperand> Ops;
+        Ops.push_back(Chain);
+        Ops.push_back(Op);
+        Copy = DAG.getNode(X86ISD::FP_SET_RESULT, Tys, Ops);
+      } else {
+        // Spill the value to memory and reload it into top of stack.
+        unsigned Size = MVT::getSizeInBits(OpVT)/8;
+        MachineFunction &MF = DAG.getMachineFunction();
+        int SSFI = MF.getFrameInfo()->CreateStackObject(Size, Size);
+        SDOperand StackSlot = DAG.getFrameIndex(SSFI, getPointerTy());
+        Chain = DAG.getNode(ISD::STORE, MVT::Other, Chain, Op,
+                            StackSlot, DAG.getSrcValue(NULL));
+        std::vector<MVT::ValueType> Tys;
+        Tys.push_back(MVT::f64);
+        Tys.push_back(MVT::Other);
+        std::vector<SDOperand> Ops;
+        Ops.push_back(Chain);
+        Ops.push_back(StackSlot);
+        Ops.push_back(DAG.getValueType(OpVT));
+        Copy = DAG.getNode(X86ISD::FLD, Tys, Ops);
+        Tys.clear();
+        Tys.push_back(MVT::Other);
+        Tys.push_back(MVT::Flag);
+        Ops.clear();
+        Ops.push_back(Copy.getValue(1));
+        Ops.push_back(Copy);
+        Copy = DAG.getNode(X86ISD::FP_SET_RESULT, Tys, Ops);
+      }
+      break;
+  }
+  return DAG.getNode(X86ISD::RET_FLAG, MVT::Other, Copy, Copy.getValue(1));
+}
+
 //===----------------------------------------------------------------------===//
 //                    C Calling Convention implementation
 //===----------------------------------------------------------------------===//
@@ -968,6 +1030,20 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     return DAG.getNode(X86ISD::BRCOND, Op.getValueType(),
                        Op.getOperand(0), Op.getOperand(2), CC, Cond);
   }
+  case ISD::GlobalAddress:
+    GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
+    // For Darwin, external and weak symbols are indirect, so we want to load
+    // the value at address GV, not the value of GV itself.  This means that
+    // the GlobalAddress must be in the base or index register of the address,
+    // not the GV offset field.
+    if (getTargetMachine().
+        getSubtarget<X86Subtarget>().getIndirectExternAndWeakGlobals() &&
+        (GV->hasWeakLinkage() || GV->isExternal()))
+      return DAG.getLoad(MVT::i32, DAG.getEntryNode(), Op,
+                         DAG.getSrcValue(NULL));
+    else
+      return Op;
+    break;
   }
 }
 
@@ -978,6 +1054,8 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::FP_TO_INT16_IN_MEM: return "X86ISD::FP_TO_INT16_IN_MEM";
   case X86ISD::FP_TO_INT32_IN_MEM: return "X86ISD::FP_TO_INT32_IN_MEM";
   case X86ISD::FP_TO_INT64_IN_MEM: return "X86ISD::FP_TO_INT64_IN_MEM";
+  case X86ISD::FLD:                return "X86ISD::FLD";
+  case X86ISD::FP_SET_RESULT:      return "X86ISD::FP_SET_RESULT";
   case X86ISD::CALL:               return "X86ISD::CALL";
   case X86ISD::TAILCALL:           return "X86ISD::TAILCALL";
   case X86ISD::RDTSC_DAG:          return "X86ISD::RDTSC_DAG";
@@ -985,5 +1063,6 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::TEST:               return "X86ISD::TEST";
   case X86ISD::CMOV:               return "X86ISD::CMOV";
   case X86ISD::BRCOND:             return "X86ISD::BRCOND";
+  case X86ISD::RET_FLAG:           return "X86ISD::RET_FLAG";
   }
 }

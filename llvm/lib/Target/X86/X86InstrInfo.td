@@ -28,11 +28,25 @@ def SDTX86BrCond  : SDTypeProfile<0, 3,
                                   [SDTCisVT<0, OtherVT>,
                                    SDTCisVT<1, OtherVT>, SDTCisVT<2, FlagVT>]>;
 
-def X86cmp    : SDNode<"X86ISD::CMP" ,   SDTX86CmpTest, []>;
-def X86test   : SDNode<"X86ISD::TEST",   SDTX86CmpTest, []>;
+def SDTX86RetFlag : SDTypeProfile<0, 1, [SDTCisVT<0, FlagVT>]>;
 
-def X86cmov   : SDNode<"X86ISD::CMOV",   SDTX86Cmov,    []>;
-def X86Brcond : SDNode<"X86ISD::BRCOND", SDTX86BrCond,  [SDNPHasChain]>;
+def SDTX86Fld     : SDTypeProfile<1, 2, [SDTCisFP<0>,
+                                         SDTCisPtrTy<1>, SDTCisVT<2, OtherVT>]>;
+
+def SDTX86FpSet   : SDTypeProfile<0, 1, [SDTCisFP<0>]>;
+
+def X86cmp    : SDNode<"X86ISD::CMP" ,     SDTX86CmpTest, []>;
+def X86test   : SDNode<"X86ISD::TEST",     SDTX86CmpTest, []>;
+
+def X86cmov   : SDNode<"X86ISD::CMOV",     SDTX86Cmov,    []>;
+def X86Brcond : SDNode<"X86ISD::BRCOND",   SDTX86BrCond,  [SDNPHasChain]>;
+
+def X86retflag: SDNode<"X86ISD::RET_FLAG", SDTX86RetFlag, [SDNPHasChain]>;
+
+def X86fld    : SDNode<"X86ISD::FLD",      SDTX86Fld,     [SDNPHasChain]>;
+
+def X86fpset  : SDNode<"X86ISD::FP_SET_RESULT",
+                                           SDTX86FpSet,   [SDNPHasChain]>;
 
 //===----------------------------------------------------------------------===//
 // X86 Operand Definitions.
@@ -273,6 +287,8 @@ let isTerminator = 1, isReturn = 1, isBarrier = 1 in
   def RET : I<0xC3, RawFrm, (ops), "ret", [(ret)]>;
 let isTerminator = 1, isReturn = 1, isBarrier = 1 in
   def RETI : Ii16<0xC2, RawFrm, (ops i16imm:$amt), "ret $amt", []>;
+
+def : Pat<(X86retflag FLAG), (RET)>;
 
 // All branches are RawFrm, Void, Branch, and Terminators
 let isBranch = 1, isTerminator = 1 in
@@ -2188,10 +2204,21 @@ def FpDIV : FPI<0, Pseudo, TwoArgFP ,
                 (ops RFP:$dst, RFP:$src1, RFP:$src2), "",
                 []>;    // f1 = fdiv f2, f3
 
+def FpLD32m  : FPI<0xD9, MRM0m, ZeroArgFP,
+                   (ops RFP:$dst, f32mem:$src),
+                   "fld{s} $src",
+                   [(set RFP:$dst, (X86fld addr:$src, f32))]>;
+
+def FpLD64m  : FPI<0xDD, MRM0m, ZeroArgFP,
+                   (ops RFP:$dst, f64mem:$src),
+                   "fld{l} $src",
+                   [(set RFP:$dst, (X86fld addr:$src, f64))]>;
+
 def FpGETRESULT : FPI<0, Pseudo, SpecialFP, (ops RFP:$dst), "", []>,
                   Imp<[ST0], []>;  // FPR = ST(0)
 
-def FpSETRESULT : FPI<0, Pseudo, SpecialFP, (ops RFP:$src), "", []>,
+def FpSETRESULT : FPI<0, Pseudo, SpecialFP, (ops RFP:$src), "",
+                      [(X86fpset RFP:$src)]>,
                   Imp<[], [ST0]>;  // ST(0) = FPR
 
 // FADD reg, mem: Before stackification, these are represented by:

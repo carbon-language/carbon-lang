@@ -173,22 +173,7 @@ bool X86DAGToDAGISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM) {
 
   case ISD::GlobalAddress:
     if (AM.GV == 0) {
-      GlobalValue *GV = cast<GlobalAddressSDNode>(N)->getGlobal();
-      // For Darwin, external and weak symbols are indirect, so we want to load
-      // the value at address GV, not the value of GV itself.  This means that
-      // the GlobalAddress must be in the base or index register of the address,
-      // not the GV offset field.
-      if (Subtarget->getIndirectExternAndWeakGlobals() &&
-          (GV->hasWeakLinkage() || GV->isExternal())) {
-        AM.Base.Reg =
-          CurDAG->getTargetNode(X86::MOV32rm, MVT::i32, MVT::Other,
-                                CurDAG->getRegister(0, MVT::i32),
-                                getI8Imm(1), CurDAG->getRegister(0, MVT::i32),
-                                CurDAG->getTargetGlobalAddress(GV, MVT::i32),
-                                CurDAG->getEntryNode());
-      } else {
-        AM.GV = GV;
-      }
+      AM.GV = cast<GlobalAddressSDNode>(N)->getGlobal();
       return false;
     }
     break;

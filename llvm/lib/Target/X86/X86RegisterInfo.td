@@ -142,6 +142,11 @@ def RST : RegisterClass<"X86", [f64], 32,
   }];
 }
 
-def FLAGS_REGS : RegisterClass<"X86", [FlagVT], 32, [STATUS]> {
+// FIXME:
+// HACKTROCITY: define a flags reg class for things that need to take a flag.
+// this should really be handled by tablgen.
+let Namespace = "X86" in
+  def FLAG : Register<"FLAG">;
+def FLAGS_REGS : RegisterClass<"X86", [FlagVT], 32, [STATUS, FLAG]> {
     let Size = 32;
 }

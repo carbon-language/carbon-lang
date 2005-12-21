@@ -40,6 +40,17 @@ namespace llvm {
       FP_TO_INT32_IN_MEM,
       FP_TO_INT64_IN_MEM,
 
+      /// FLD - This instruction implements an extending load to FP stack slots.
+      /// This corresponds to the X86::FLD32m / X86::FLD64m. It takes a chain
+      /// operand, ptr to load from, and a VALUETYPE node indicating the type
+      /// to load.
+      FLD,
+
+      /// FP_SET_RESULT - This corresponds to FpSETRESULT pseudo instrcuction
+      /// which copies the source operand to ST(0). It takes a chain and writes
+      /// a chain and a flag.
+      FP_SET_RESULT,
+
       /// CALL/TAILCALL - These operations represent an abstract X86 call
       /// instruction, which includes a bunch of information.  In particular the
       /// operands of these node are:
@@ -75,6 +86,9 @@ namespace llvm {
 
       /// X86 conditional branches.
       BRCOND,
+
+      // Return with a flag operand.
+      RET_FLAG,
     };
   }
 
@@ -113,6 +127,9 @@ namespace llvm {
                 bool isTailCall, SDOperand Callee, ArgListTy &Args,
                 SelectionDAG &DAG);
 
+    virtual SDOperand LowerReturnTo(SDOperand Chain, SDOperand Op,
+                                    SelectionDAG &DAG);
+    
     virtual SDOperand LowerVAStart(SDOperand Chain, SDOperand VAListP,
                                    Value *VAListV, SelectionDAG &DAG);
     virtual std::pair<SDOperand,SDOperand>
