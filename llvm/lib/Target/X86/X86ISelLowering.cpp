@@ -119,6 +119,9 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   if (X86DAGIsel) {
     setOperationAction(ISD::SELECT         , MVT::i16  , Custom);
     setOperationAction(ISD::SELECT         , MVT::i32  , Custom);
+    setOperationAction(ISD::SETCC          , MVT::i8   , Custom);
+    setOperationAction(ISD::SETCC          , MVT::i16  , Custom);
+    setOperationAction(ISD::SETCC          , MVT::i32  , Custom);
   }
 
   // We don't have line number support yet.
@@ -256,7 +259,10 @@ SDOperand X86TargetLowering::LowerReturnTo(SDOperand Chain, SDOperand Op,
       }
       break;
   }
-  return DAG.getNode(X86ISD::RET_FLAG, MVT::Other, Copy, Copy.getValue(1));
+
+  return DAG.getNode(X86ISD::RET_FLAG, MVT::Other,
+                     Copy, DAG.getConstant(getBytesToPopOnReturn(), MVT::i16),
+                     Copy.getValue(1));
 }
 
 //===----------------------------------------------------------------------===//
@@ -999,10 +1005,20 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     Tys.push_back(MVT::Other);
     return DAG.getNode(ISD::MERGE_VALUES, Tys, Ops);
   }
+  case ISD::SETCC: {
+    assert(Op.getValueType() == MVT::i8 && "SetCC type must be 8-bit integer");
+    SDOperand CC   = Op.getOperand(2);
+    SDOperand Cond = DAG.getNode(X86ISD::CMP, MVT::Flag,
+                                 Op.getOperand(0), Op.getOperand(1));
+    return DAG.getNode(X86ISD::SETCC, MVT::i8, CC, Cond);
+  }
   case ISD::SELECT: {
     SDOperand Cond  = Op.getOperand(0);
     SDOperand CC;
-    if (Cond.getOpcode() == ISD::SETCC) {
+    if (Cond.getOpcode() == X86ISD::SETCC) {
+      CC = Cond.getOperand(0);
+      Cond = Cond.getOperand(1);
+    } else if (Cond.getOpcode() == ISD::SETCC) {
       CC = Cond.getOperand(2);
       Cond = DAG.getNode(X86ISD::CMP, MVT::Flag,
                          Cond.getOperand(0), Cond.getOperand(1));
@@ -1014,12 +1030,14 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
                        Op.getOperand(1), Op.getOperand(2), CC, Cond);
   }
   case ISD::BRCOND: {
-    SDOperand Chain = Op.getOperand(0);
     SDOperand Cond  = Op.getOperand(1);
     SDOperand Dest  = Op.getOperand(2);
     SDOperand CC;
     // TODO: handle Cond == OR / AND / XOR
-    if (Cond.getOpcode() == ISD::SETCC) {
+    if (Cond.getOpcode() == X86ISD::SETCC) {
+      CC = Cond.getOperand(0);
+      Cond = Cond.getOperand(1);
+    } else if (Cond.getOpcode() == ISD::SETCC) {
       CC = Cond.getOperand(2);
       Cond = DAG.getNode(X86ISD::CMP, MVT::Flag,
                          Cond.getOperand(0), Cond.getOperand(1));
@@ -1061,6 +1079,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::RDTSC_DAG:          return "X86ISD::RDTSC_DAG";
   case X86ISD::CMP:                return "X86ISD::CMP";
   case X86ISD::TEST:               return "X86ISD::TEST";
+  case X86ISD::SETCC:              return "X86ISD::SETCC";
   case X86ISD::CMOV:               return "X86ISD::CMOV";
   case X86ISD::BRCOND:             return "X86ISD::BRCOND";
   case X86ISD::RET_FLAG:           return "X86ISD::RET_FLAG";

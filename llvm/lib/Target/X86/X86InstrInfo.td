@@ -28,25 +28,31 @@ def SDTX86BrCond  : SDTypeProfile<0, 3,
                                   [SDTCisVT<0, OtherVT>,
                                    SDTCisVT<1, OtherVT>, SDTCisVT<2, FlagVT>]>;
 
-def SDTX86RetFlag : SDTypeProfile<0, 1, [SDTCisVT<0, FlagVT>]>;
+def SDTX86SetCC   : SDTypeProfile<1, 2,
+                                  [SDTCisVT<0, i8>, SDTCisVT<1, OtherVT>,
+                                   SDTCisVT<2, FlagVT>]>;
+
+def SDTX86RetFlag : SDTypeProfile<0, 2, [SDTCisVT<0, i16>,
+                                         SDTCisVT<1, FlagVT>]>;
 
 def SDTX86Fld     : SDTypeProfile<1, 2, [SDTCisFP<0>,
                                          SDTCisPtrTy<1>, SDTCisVT<2, OtherVT>]>;
 
 def SDTX86FpSet   : SDTypeProfile<0, 1, [SDTCisFP<0>]>;
 
-def X86cmp    : SDNode<"X86ISD::CMP" ,     SDTX86CmpTest, []>;
-def X86test   : SDNode<"X86ISD::TEST",     SDTX86CmpTest, []>;
+def X86cmp     : SDNode<"X86ISD::CMP" ,     SDTX86CmpTest,  []>;
+def X86test    : SDNode<"X86ISD::TEST",     SDTX86CmpTest,  []>;
 
-def X86cmov   : SDNode<"X86ISD::CMOV",     SDTX86Cmov,    []>;
-def X86Brcond : SDNode<"X86ISD::BRCOND",   SDTX86BrCond,  [SDNPHasChain]>;
+def X86cmov    : SDNode<"X86ISD::CMOV",     SDTX86Cmov,     []>;
+def X86Brcond  : SDNode<"X86ISD::BRCOND",   SDTX86BrCond,   [SDNPHasChain]>;
+def X86SetCC   : SDNode<"X86ISD::SETCC",    SDTX86SetCC,    []>;
 
-def X86retflag: SDNode<"X86ISD::RET_FLAG", SDTX86RetFlag, [SDNPHasChain]>;
+def X86retflag : SDNode<"X86ISD::RET_FLAG", SDTX86RetFlag, [SDNPHasChain]>;
 
-def X86fld    : SDNode<"X86ISD::FLD",      SDTX86Fld,     [SDNPHasChain]>;
+def X86fld     : SDNode<"X86ISD::FLD",      SDTX86Fld,      [SDNPHasChain]>;
 
-def X86fpset  : SDNode<"X86ISD::FP_SET_RESULT",
-                                           SDTX86FpSet,   [SDNPHasChain]>;
+def X86fpset   : SDNode<"X86ISD::FP_SET_RESULT",
+                                            SDTX86FpSet,    [SDNPHasChain]>;
 
 //===----------------------------------------------------------------------===//
 // X86 Operand Definitions.
@@ -283,12 +289,13 @@ let isTerminator = 1 in
 //
 
 // Return instructions.
-let isTerminator = 1, isReturn = 1, isBarrier = 1 in
-  def RET : I<0xC3, RawFrm, (ops), "ret", [(ret)]>;
-let isTerminator = 1, isReturn = 1, isBarrier = 1 in
+let isTerminator = 1, isReturn = 1, isBarrier = 1, hasCtrlDep = 1 in
+  def RET : I<0xC3, RawFrm, (ops), "ret", []>;
+let isTerminator = 1, isReturn = 1, isBarrier = 1, hasCtrlDep = 1 in
   def RETI : Ii16<0xC2, RawFrm, (ops i16imm:$amt), "ret $amt", []>;
 
-def : Pat<(X86retflag FLAG), (RET)>;
+def : Pat<(X86retflag 0, FLAG),        (RET)>;
+def : Pat<(X86retflag imm:$amt, FLAG), (RETI imm:$amt)>;
 
 // All branches are RawFrm, Void, Branch, and Terminators
 let isBranch = 1, isTerminator = 1 in
@@ -1800,42 +1807,87 @@ def TEST32mi : Ii32<0xF7, MRM0m,                     // flags = [mem32] & imm32
 def SAHF     : I<0x9E, RawFrm, (ops), "sahf", []>, Imp<[AH],[]>;  // flags = AH
 def LAHF     : I<0x9F, RawFrm, (ops), "lahf", []>, Imp<[],[AH]>;  // AH = flags
 
-def SETBr    : I<0x92, MRM0r,
-                 (ops R8   :$dst),
-                 "setb $dst", []>, TB;    // R8 = <  unsign
-def SETBm    : I<0x92, MRM0m,
-                 (ops i8mem:$dst),
-                 "setb $dst", []>, TB;    // [mem8] = <  unsign
-def SETAEr   : I<0x93, MRM0r, 
-                 (ops R8   :$dst),
-                 "setae $dst", []>, TB;   // R8 = >= unsign
-def SETAEm   : I<0x93, MRM0m, 
-                 (ops i8mem:$dst),
-                 "setae $dst", []>, TB;   // [mem8] = >= unsign
 def SETEr    : I<0x94, MRM0r, 
                  (ops R8   :$dst),
-                 "sete $dst", []>, TB;    // R8 = ==
+                 "sete $dst", [(set R8:$dst, (X86SetCC SETEQ, STATUS))]>,
+               TB;                        // R8 = ==
 def SETEm    : I<0x94, MRM0m, 
                  (ops i8mem:$dst),
-                 "sete $dst", []>, TB;    // [mem8] = ==
+                 "sete $dst", [(store (X86SetCC SETEQ, STATUS), addr:$dst)]>,
+               TB;                        // [mem8] = ==
 def SETNEr   : I<0x95, MRM0r, 
                  (ops R8   :$dst),
-                 "setne $dst", []>, TB;   // R8 = !=
+                 "setne $dst", [(set R8:$dst, (X86SetCC SETNE, STATUS))]>,
+               TB;                        // R8 = !=
 def SETNEm   : I<0x95, MRM0m, 
                  (ops i8mem:$dst),
-                 "setne $dst", []>, TB;   // [mem8] = !=
+                 "setne $dst", [(store (X86SetCC SETNE, STATUS), addr:$dst)]>,
+               TB;                        // [mem8] = !=
+def SETLr    : I<0x9C, MRM0r, 
+                 (ops R8   :$dst),
+                 "setl $dst", [(set R8:$dst, (X86SetCC SETLT, STATUS))]>,
+               TB;                        // R8 = <  signed
+def SETLm    : I<0x9C, MRM0m, 
+                 (ops i8mem:$dst),
+                 "setl $dst", [(store (X86SetCC SETLT, STATUS), addr:$dst)]>,
+               TB;                        // [mem8] = <  signed
+def SETGEr   : I<0x9D, MRM0r, 
+                 (ops R8   :$dst),
+                 "setge $dst", [(set R8:$dst, (X86SetCC SETGE, STATUS))]>,
+               TB;                        // R8 = >= signed
+def SETGEm   : I<0x9D, MRM0m, 
+                 (ops i8mem:$dst),
+                 "setge $dst", [(store (X86SetCC SETGE, STATUS), addr:$dst)]>,
+               TB;                        // [mem8] = >= signed
+def SETLEr   : I<0x9E, MRM0r, 
+                 (ops R8   :$dst),
+                 "setle $dst", [(set R8:$dst, (X86SetCC SETLE, STATUS))]>,
+               TB;                        // R8 = <= signed
+def SETLEm   : I<0x9E, MRM0m, 
+                 (ops i8mem:$dst),
+                 "setle $dst", [(store (X86SetCC SETLE, STATUS), addr:$dst)]>,
+               TB;                        // [mem8] = <= signed
+def SETGr    : I<0x9F, MRM0r, 
+                 (ops R8   :$dst),
+                 "setg $dst", [(set R8:$dst, (X86SetCC SETGT, STATUS))]>,
+               TB;                        // R8 = >  signed
+def SETGm    : I<0x9F, MRM0m, 
+                 (ops i8mem:$dst),
+                 "setg $dst", [(store (X86SetCC SETGT, STATUS), addr:$dst)]>,
+               TB;                        // [mem8] = >  signed
+
+def SETBr    : I<0x92, MRM0r,
+                 (ops R8   :$dst),
+                 "setb $dst", [(set R8:$dst, (X86SetCC SETULT, STATUS))]>,
+               TB;                        // R8 = <  unsign
+def SETBm    : I<0x92, MRM0m,
+                 (ops i8mem:$dst),
+                 "setb $dst", [(store (X86SetCC SETULT, STATUS), addr:$dst)]>,
+               TB;                        // [mem8] = <  unsign
+def SETAEr   : I<0x93, MRM0r, 
+                 (ops R8   :$dst),
+                 "setae $dst", [(set R8:$dst, (X86SetCC SETUGE, STATUS))]>,
+               TB;                        // R8 = >= unsign
+def SETAEm   : I<0x93, MRM0m, 
+                 (ops i8mem:$dst),
+                 "setae $dst", [(store (X86SetCC SETUGE, STATUS), addr:$dst)]>,
+               TB;                        // [mem8] = >= unsign
 def SETBEr   : I<0x96, MRM0r, 
                  (ops R8   :$dst),
-                 "setbe $dst", []>, TB;   // R8 = <= unsign
+                 "setbe $dst", [(set R8:$dst, (X86SetCC SETULE, STATUS))]>,
+               TB;                        // R8 = <= unsign
 def SETBEm   : I<0x96, MRM0m, 
                  (ops i8mem:$dst),
-                 "setbe $dst", []>, TB;   // [mem8] = <= unsign
+                 "setbe $dst", [(store (X86SetCC SETULE, STATUS), addr:$dst)]>,
+               TB;                        // [mem8] = <= unsign
 def SETAr    : I<0x97, MRM0r, 
                  (ops R8   :$dst),
-                 "seta $dst", []>, TB;    // R8 = >  signed
+                 "seta $dst", [(set R8:$dst, (X86SetCC SETUGT, STATUS))]>,
+               TB;                        // R8 = >  signed
 def SETAm    : I<0x97, MRM0m, 
                  (ops i8mem:$dst),
-                 "seta $dst", []>, TB;    // [mem8] = >  signed
+                 "seta $dst", [(store (X86SetCC SETUGT, STATUS), addr:$dst)]>,
+               TB;                        // [mem8] = >  signed
 def SETSr    : I<0x98, MRM0r, 
                  (ops R8   :$dst),
                  "sets $dst", []>, TB;    // R8 = <sign bit>
@@ -1860,30 +1912,6 @@ def SETNPr   : I<0x9B, MRM0r,
 def SETNPm   : I<0x9B, MRM0m, 
                  (ops i8mem:$dst),
                  "setnp $dst", []>, TB;   // [mem8] = not parity
-def SETLr    : I<0x9C, MRM0r, 
-                 (ops R8   :$dst),
-                 "setl $dst", []>, TB;    // R8 = <  signed
-def SETLm    : I<0x9C, MRM0m, 
-                 (ops i8mem:$dst),
-                 "setl $dst", []>, TB;    // [mem8] = <  signed
-def SETGEr   : I<0x9D, MRM0r, 
-                 (ops R8   :$dst),
-                 "setge $dst", []>, TB;   // R8 = >= signed
-def SETGEm   : I<0x9D, MRM0m, 
-                 (ops i8mem:$dst),
-                 "setge $dst", []>, TB;   // [mem8] = >= signed
-def SETLEr   : I<0x9E, MRM0r, 
-                 (ops R8   :$dst),
-                 "setle $dst", []>, TB;   // R8 = <= signed
-def SETLEm   : I<0x9E, MRM0m, 
-                 (ops i8mem:$dst),
-                 "setle $dst", []>, TB;   // [mem8] = <= signed
-def SETGr    : I<0x9F, MRM0r, 
-                 (ops R8   :$dst),
-                 "setg $dst", []>, TB;    // R8 = <  signed
-def SETGm    : I<0x9F, MRM0m, 
-                 (ops i8mem:$dst),
-                 "setg $dst", []>, TB;    // [mem8] = <  signed
 
 // Integer comparisons
 def CMP8rr  : I<0x38, MRMDestReg,
