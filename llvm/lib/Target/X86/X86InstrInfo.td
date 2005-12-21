@@ -2200,7 +2200,7 @@ def RDTSC : I<0x31, RawFrm, (ops), "rdtsc", []>, TB, Imp<[],[EAX,EDX]>;
 
 
 //===----------------------------------------------------------------------===//
-// Stack-based Floating point support
+// Floating Point Stack Support
 //===----------------------------------------------------------------------===//
 
 // Floating point support.  All FP Stack operations are represented with two 
