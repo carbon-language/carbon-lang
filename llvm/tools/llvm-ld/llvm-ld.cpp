@@ -76,6 +76,10 @@ static cl::opt<bool>NativeCBE("native-cbe",
 static cl::opt<bool>DisableCompression("disable-compression",cl::init(false),
   cl::desc("Disable writing of compressed bytecode files"));
 
+static cl::list<std::string> PostLinkOpts("post-link-opts",
+  cl::value_desc("path to post-link optimization programs"),
+  cl::desc("Run one or more optimization programs after linking"));
+
 // Compatibility options that are ignored but supported by LD
 static cl::opt<std::string> CO3("soname", cl::Hidden,
   cl::desc("Compatibility option: ignored"));
@@ -450,6 +454,41 @@ int main(int argc, char **argv, char **envp) {
     // If we are not linking a library, generate either a native executable
     // or a JIT shell script, depending upon what the user wants.
     if (!LinkAsLibrary) {
+      // If the user wants to run a post-link optimization, run it now.
+      if (!PostLinkOpts.empty()) {
+        std::vector<std::string> opts = PostLinkOpts;
+        for (std::vector<std::string>::iterator I = opts.begin(),
+             E = opts.end(); I != E; ++I) {
+          sys::Path prog(*I);
+          if (!prog.canExecute()) {
+            prog = sys::Program::FindProgramByName(*I);
+            if (prog.isEmpty())
+              return PrintAndReturn(std::string("Optimization program '") + *I +
+                "' is not found or not executable.");
+          }
+          // Get the program arguments
+          sys::Path tmp_output("opt_result");
+          if (!tmp_output.createTemporaryFileOnDisk()) {
+            return PrintAndReturn(
+              "Can't create temporary file for post-link optimization");
+          }
+          const char* args[4];
+          args[0] = I->c_str();
+          args[1] = RealBytecodeOutput.c_str();
+          args[2] = tmp_output.c_str();
+          args[3] = 0;
+          if (0 == sys::Program::ExecuteAndWait(prog, args)) {
+            if (tmp_output.isBytecodeFile()) {
+              sys::Path target(RealBytecodeOutput);
+              target.eraseFromDisk();
+              tmp_output.renamePathOnDisk(target);
+            } else
+              return PrintAndReturn(
+                "Post-link optimization output is not bytecode");
+          }
+        }
+      }
+
       // If the user wants to generate a native executable, compile it from the
       // bytecode file.
       //
