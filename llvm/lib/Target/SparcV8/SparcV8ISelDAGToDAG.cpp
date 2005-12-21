@@ -552,10 +552,6 @@ SparcV8TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
   Chain = DAG.getNode(ISD::CALLSEQ_END, MVT::Other, Chain,
                       DAG.getConstant(ArgsSize, getPointerTy()));
   
-  MVT::ValueType ActualRetTyVT = RetTyVT;
-  if (RetTyVT >= MVT::i1 && RetTyVT <= MVT::i16)
-    ActualRetTyVT = MVT::i32;   // Promote result to i32.
-  
   return std::make_pair(RetVal, Chain);
 }
 
