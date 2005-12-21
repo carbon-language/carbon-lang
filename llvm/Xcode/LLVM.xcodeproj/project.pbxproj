@@ -898,6 +898,8 @@
 		DE8170AA08CFB44D0093BDEF /* TableGen.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = TableGen.cpp; sourceTree = "<group>"; };
 		DE8170AB08CFB44D0093BDEF /* TableGenBackend.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = TableGenBackend.cpp; sourceTree = "<group>"; };
 		DE8170AC08CFB44D0093BDEF /* TableGenBackend.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = TableGenBackend.h; sourceTree = "<group>"; };
+		DEFAB19C0959E97F00E0AB42 /* DwarfWriter.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = DwarfWriter.cpp; path = ../lib/CodeGen/DwarfWriter.cpp; sourceTree = SOURCE_ROOT; };
+		DEFAB19D0959E9A100E0AB42 /* DwarfWriter.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = DwarfWriter.h; path = ../include/llvm/CodeGen/DwarfWriter.h; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
@@ -1079,6 +1081,7 @@
 				DE66ED8308ABEC2B00323D32 /* SelectionDAG */,
 				DE66ED3F08ABEC2A00323D32 /* AsmPrinter.cpp */,
 				DE66ED4008ABEC2A00323D32 /* BranchFolding.cpp */,
+				DEFAB19C0959E97F00E0AB42 /* DwarfWriter.cpp */,
 				DE66ED6F08ABEC2B00323D32 /* ELFWriter.cpp */,
 				DE66ED7008ABEC2B00323D32 /* IntrinsicLowering.cpp */,
 				DE66ED7108ABEC2B00323D32 /* LiveInterval.cpp */,
@@ -1881,6 +1884,7 @@
 			isa = PBXGroup;
 			children = (
 				DE66F23608ABF03100323D32 /* AsmPrinter.h */,
+				DEFAB19D0959E9A100E0AB42 /* DwarfWriter.h */,
 				DE66F23708ABF03100323D32 /* ELFWriter.h */,
 				DE66F23808ABF03100323D32 /* InstrScheduling.h */,
 				DE66F23908ABF03100323D32 /* IntrinsicLowering.h */,
