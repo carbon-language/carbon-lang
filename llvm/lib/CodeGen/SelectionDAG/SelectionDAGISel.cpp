@@ -306,16 +306,29 @@ public:
         // Constant or ConstantFP node onto the ops list for each element of
         // the packed constant.
         std::vector<SDOperand> Ops;
-        for (unsigned i = 0; i < NumElements; ++i) {
-          const Constant *CEl = C->getOperand(i);
+        if (ConstantPacked *CP = dyn_cast<ConstantPacked>(C)) {
+          if (MVT::isFloatingPoint(PVT)) {
+            for (unsigned i = 0; i != NumElements; ++i) {
+              const ConstantFP *El = cast<ConstantFP>(CP->getOperand(i));
+              Ops.push_back(DAG.getConstantFP(El->getValue(), PVT));
+            }
+          } else {
+            for (unsigned i = 0; i != NumElements; ++i) {
+              const ConstantIntegral *El = 
+                cast<ConstantIntegral>(CP->getOperand(i));
+              Ops.push_back(DAG.getConstant(El->getRawValue(), PVT));
+            }
+          }
+        } else {
+          assert(isa<ConstantAggregateZero>(C) && "Unknown packed constant!");
+          SDOperand Op;
           if (MVT::isFloatingPoint(PVT))
-            Ops.push_back(DAG.getConstantFP(cast<ConstantFP>(CEl)->getValue(), 
-                          PVT));
+            Op = DAG.getConstantFP(0, PVT);
           else
-            Ops.push_back(
-                    DAG.getConstant(cast<ConstantIntegral>(CEl)->getRawValue(),
-                          PVT));
+            Op = DAG.getConstant(0, PVT);
+          Ops.assign(NumElements, Op);
         }
+        
         // Handle the case where we have a 1-element vector, in which
         // case we want to immediately turn it into a scalar constant.
         if (Ops.size() == 1) {
