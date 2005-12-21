@@ -303,6 +303,9 @@ static Value *getValNonImprovising(const Type *Ty, const ValID &D) {
   case ValID::ConstUndefVal:      // Is it an undef value?
     return UndefValue::get(Ty);
 
+  case ValID::ConstZeroVal:      // Is it a zero value?
+    return Constant::getNullValue(Ty);
+    
   case ValID::ConstantVal:       // Fully resolved constant?
     if (D.ConstantValue->getType() != Ty)
       ThrowException("Constant expression type different from required type!");
@@ -1815,6 +1818,9 @@ ConstValueRef : ESINT64VAL {    // A reference to a direct constant
   }
   | UNDEF {
     $$ = ValID::createUndef();
+  }
+  | ZEROINITIALIZER {     // A vector zero constant.
+    $$ = ValID::createZeroInit();
   }
   | '<' ConstVector '>' { // Nonempty unsized packed vector
     const Type *ETy = (*$2)[0]->getType();
