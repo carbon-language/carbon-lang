@@ -1175,18 +1175,18 @@ static const short yyrline[] = { 0,
   1154,  1163,  1166,  1174,  1178,  1183,  1184,  1187,  1190,  1200,
   1225,  1238,  1266,  1291,  1311,  1323,  1332,  1336,  1395,  1401,
   1409,  1414,  1419,  1422,  1425,  1432,  1442,  1473,  1480,  1501,
-  1508,  1513,  1523,  1526,  1533,  1533,  1543,  1550,  1554,  1557,
-  1560,  1573,  1593,  1595,  1598,  1601,  1605,  1608,  1610,  1612,
-  1617,  1618,  1620,  1623,  1631,  1636,  1638,  1642,  1646,  1654,
-  1654,  1655,  1655,  1657,  1663,  1668,  1674,  1677,  1682,  1686,
-  1690,  1776,  1776,  1778,  1786,  1786,  1788,  1792,  1792,  1801,
-  1804,  1807,  1810,  1813,  1816,  1819,  1822,  1825,  1849,  1856,
-  1859,  1864,  1864,  1870,  1874,  1877,  1885,  1894,  1898,  1908,
-  1919,  1922,  1925,  1928,  1931,  1945,  1949,  2002,  2005,  2011,
-  2019,  2029,  2036,  2041,  2048,  2052,  2058,  2058,  2060,  2063,
-  2069,  2081,  2089,  2099,  2111,  2118,  2125,  2132,  2137,  2156,
-  2178,  2192,  2249,  2255,  2257,  2261,  2264,  2270,  2274,  2278,
-  2282,  2286,  2293,  2303,  2316
+  1511,  1516,  1526,  1529,  1536,  1536,  1546,  1553,  1557,  1560,
+  1563,  1576,  1596,  1598,  1601,  1604,  1608,  1611,  1613,  1615,
+  1620,  1621,  1623,  1626,  1634,  1639,  1641,  1645,  1649,  1657,
+  1657,  1658,  1658,  1660,  1666,  1671,  1677,  1680,  1685,  1689,
+  1693,  1779,  1779,  1781,  1789,  1789,  1791,  1795,  1795,  1804,
+  1807,  1810,  1813,  1816,  1819,  1822,  1825,  1828,  1852,  1859,
+  1862,  1867,  1867,  1873,  1877,  1880,  1888,  1897,  1901,  1911,
+  1922,  1925,  1928,  1931,  1934,  1948,  1952,  2005,  2008,  2014,
+  2022,  2032,  2039,  2044,  2051,  2055,  2061,  2061,  2063,  2066,
+  2072,  2084,  2095,  2105,  2117,  2124,  2131,  2138,  2143,  2162,
+  2184,  2198,  2255,  2261,  2263,  2267,  2270,  2276,  2280,  2284,
+  2288,  2292,  2299,  2309,  2322
 };
 #endif
 
@@ -2821,13 +2821,16 @@ case 110:
 {
     if (yyvsp[-3].ConstVal->getType() != yyvsp[-1].ConstVal->getType())
       ThrowException("Logical operator types must match!");
-    if (!yyvsp[-3].ConstVal->getType()->isIntegral())
-      ThrowException("Logical operands must have integral types!");
+    if (!yyvsp[-3].ConstVal->getType()->isIntegral()) {
+      if (!isa<PackedType>(yyvsp[-3].ConstVal->getType()) || 
+          !cast<PackedType>(yyvsp[-3].ConstVal->getType())->getElementType()->isIntegral())
+        ThrowException("Logical operator requires integral operands!");
+    }
     yyval.ConstVal = ConstantExpr::get(yyvsp[-5].BinaryOpVal, yyvsp[-3].ConstVal, yyvsp[-1].ConstVal);
   ;
     break;}
 case 111:
-#line 1508 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1511 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {
     if (yyvsp[-3].ConstVal->getType() != yyvsp[-1].ConstVal->getType())
       ThrowException("setcc operand types must match!");
@@ -2835,7 +2838,7 @@ case 111:
   ;
     break;}
 case 112:
-#line 1513 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1516 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {
     if (yyvsp[-1].ConstVal->getType() != Type::UByteTy)
       ThrowException("Shift count for shift constant must be unsigned byte!");
@@ -2845,54 +2848,54 @@ case 112:
   ;
     break;}
 case 113:
-#line 1523 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1526 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {
     (yyval.ConstVector = yyvsp[-2].ConstVector)->push_back(yyvsp[0].ConstVal);
   ;
     break;}
 case 114:
-#line 1526 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1529 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {
     yyval.ConstVector = new std::vector<Constant*>();
     yyval.ConstVector->push_back(yyvsp[0].ConstVal);
   ;
     break;}
 case 115:
-#line 1533 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1536 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 { yyval.BoolVal = false; ;
     break;}
 case 116:
-#line 1533 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1536 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 { yyval.BoolVal = true; ;
     break;}
 case 117:
-#line 1543 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1546 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {
   yyval.ModuleVal = ParserResult = yyvsp[0].ModuleVal;
   CurModule.ModuleDone();
 ;
     break;}
 case 118:
-#line 1550 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1553 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {
     yyval.ModuleVal = yyvsp[-1].ModuleVal;
     CurFun.FunctionDone();
   ;
     break;}
 case 119:
-#line 1554 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
-{
-    yyval.ModuleVal = yyvsp[-1].ModuleVal;
-  ;
-    break;}
-case 120:
 #line 1557 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {
     yyval.ModuleVal = yyvsp[-1].ModuleVal;
   ;
     break;}
-case 121:
+case 120:
 #line 1560 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+{
+    yyval.ModuleVal = yyvsp[-1].ModuleVal;
+  ;
+    break;}
+case 121:
+#line 1563 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {
     yyval.ModuleVal = CurModule.CurrentModule;
     // Emit an error if there are any unresolved types left.
@@ -2906,7 +2909,7 @@ case 121:
   ;
     break;}
 case 122:
-#line 1573 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1576 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {
     // Eagerly resolve types.  This is not an optimization, this is a
     // requirement that is due to the fact that we could have this:
@@ -2929,25 +2932,25 @@ case 122:
   ;
     break;}
 case 123:
-#line 1593 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1596 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {       // Function prototypes can be in const pool
   ;
     break;}
 case 124:
-#line 1595 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1598 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {
     if (yyvsp[0].ConstVal == 0) ThrowException("Global value initializer is not a constant!");
     CurGV = ParseGlobalVariable(yyvsp[-3].StrVal, yyvsp[-2].Linkage, yyvsp[-1].BoolVal, yyvsp[0].ConstVal->getType(), yyvsp[0].ConstVal);
                                                        ;
     break;}
 case 125:
-#line 1598 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1601 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {
     CurGV = 0;
   ;
     break;}
 case 126:
-#line 1601 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1604 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {
     CurGV = ParseGlobalVariable(yyvsp[-3].StrVal, GlobalValue::ExternalLinkage,
                                              yyvsp[-1].BoolVal, *yyvsp[0].TypeVal, 0);
@@ -2955,42 +2958,42 @@ case 126:
                                                    ;
     break;}
 case 127:
-#line 1605 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1608 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {
     CurGV = 0;
   ;
     break;}
 case 128:
-#line 1608 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1611 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 { 
   ;
     break;}
 case 129:
-#line 1610 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1613 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {
   ;
     break;}
 case 130:
-#line 1612 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1615 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 { 
   ;
     break;}
 case 131:
-#line 1617 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1620 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 { yyval.Endianness = Module::BigEndian; ;
     break;}
 case 132:
-#line 1618 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1621 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 { yyval.Endianness = Module::LittleEndian; ;
     break;}
 case 133:
-#line 1620 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1623 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {
     CurModule.CurrentModule->setEndianness(yyvsp[0].Endianness);
   ;
     break;}
 case 134:
-#line 1623 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1626 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {
     if (yyvsp[0].UInt64Val == 32)
       CurModule.CurrentModule->setPointerSize(Module::Pointer32);
@@ -3001,37 +3004,37 @@ case 134:
   ;
     break;}
 case 135:
-#line 1631 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1634 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {
     CurModule.CurrentModule->setTargetTriple(yyvsp[0].StrVal);
     free(yyvsp[0].StrVal);
   ;
     break;}
 case 137:
-#line 1638 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1641 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {
           CurModule.CurrentModule->addLibrary(yyvsp[0].StrVal);
           free(yyvsp[0].StrVal);
         ;
     break;}
 case 138:
-#line 1642 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1645 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {
           CurModule.CurrentModule->addLibrary(yyvsp[0].StrVal);
           free(yyvsp[0].StrVal);
         ;
     break;}
 case 139:
-#line 1646 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1649 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {
         ;
     break;}
 case 143:
-#line 1655 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1658 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 { yyval.StrVal = 0; ;
     break;}
 case 144:
-#line 1657 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1660 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {
   if (*yyvsp[-1].TypeVal == Type::VoidTy)
     ThrowException("void typed arguments are invalid!");
@@ -3039,7 +3042,7 @@ case 144:
 ;
     break;}
 case 145:
-#line 1663 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1666 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {
     yyval.ArgList = yyvsp[-2].ArgList;
     yyvsp[-2].ArgList->push_back(*yyvsp[0].ArgVal);
@@ -3047,7 +3050,7 @@ case 145:
   ;
     break;}
 case 146:
-#line 1668 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1671 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {
     yyval.ArgList = new std::vector<std::pair<PATypeHolder*,char*> >();
     yyval.ArgList->push_back(*yyvsp[0].ArgVal);
@@ -3055,13 +3058,13 @@ case 146:
   ;
     break;}
 case 147:
-#line 1674 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1677 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {
     yyval.ArgList = yyvsp[0].ArgList;
   ;
     break;}
 case 148:
-#line 1677 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1680 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {
     yyval.ArgList = yyvsp[-2].ArgList;
     yyval.ArgList->push_back(std::pair<PATypeHolder*,
@@ -3069,20 +3072,20 @@ case 148:
   ;
     break;}
 case 149:
-#line 1682 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1685 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {
     yyval.ArgList = new std::vector<std::pair<PATypeHolder*,char*> >();
     yyval.ArgList->push_back(std::make_pair(new PATypeHolder(Type::VoidTy), (char*)0));
   ;
     break;}
 case 150:
-#line 1686 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1689 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {
     yyval.ArgList = 0;
   ;
     break;}
 case 151:
-#line 1691 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1694 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {
   UnEscapeLexed(yyvsp[-5].StrVal);
   std::string FunctionName(yyvsp[-5].StrVal);
@@ -3169,7 +3172,7 @@ case 151:
 ;
     break;}
 case 154:
-#line 1778 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1781 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {
   yyval.FunctionVal = CurFun.CurrentFunction;
 
@@ -3179,72 +3182,72 @@ case 154:
 ;
     break;}
 case 157:
-#line 1788 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1791 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {
   yyval.FunctionVal = yyvsp[-1].FunctionVal;
 ;
     break;}
 case 158:
-#line 1792 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1795 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 { CurFun.isDeclare = true; ;
     break;}
 case 159:
-#line 1792 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1795 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {
   yyval.FunctionVal = CurFun.CurrentFunction;
   CurFun.FunctionDone();
 ;
     break;}
 case 160:
-#line 1801 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1804 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {    // A reference to a direct constant
     yyval.ValIDVal = ValID::create(yyvsp[0].SInt64Val);
   ;
     break;}
 case 161:
-#line 1804 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1807 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {
     yyval.ValIDVal = ValID::create(yyvsp[0].UInt64Val);
   ;
     break;}
 case 162:
-#line 1807 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1810 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {                     // Perhaps it's an FP constant?
     yyval.ValIDVal = ValID::create(yyvsp[0].FPVal);
   ;
     break;}
 case 163:
-#line 1810 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1813 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {
     yyval.ValIDVal = ValID::create(ConstantBool::True);
   ;
     break;}
 case 164:
-#line 1813 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1816 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {
     yyval.ValIDVal = ValID::create(ConstantBool::False);
   ;
     break;}
 case 165:
-#line 1816 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1819 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {
     yyval.ValIDVal = ValID::createNull();
   ;
     break;}
 case 166:
-#line 1819 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1822 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {
     yyval.ValIDVal = ValID::createUndef();
   ;
     break;}
 case 167:
-#line 1822 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1825 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {     // A vector zero constant.
     yyval.ValIDVal = ValID::createZeroInit();
   ;
     break;}
 case 168:
-#line 1825 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1828 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 { // Nonempty unsized packed vector
     const Type *ETy = (*yyvsp[-1].ConstVector)[0]->getType();
     int NumElements = yyvsp[-1].ConstVector->size(); 
@@ -3271,43 +3274,43 @@ case 168:
   ;
     break;}
 case 169:
-#line 1849 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1852 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {
     yyval.ValIDVal = ValID::create(yyvsp[0].ConstVal);
   ;
     break;}
 case 170:
-#line 1856 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1859 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {  // Is it an integer reference...?
     yyval.ValIDVal = ValID::create(yyvsp[0].SIntVal);
   ;
     break;}
 case 171:
-#line 1859 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1862 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {                   // Is it a named reference...?
     yyval.ValIDVal = ValID::create(yyvsp[0].StrVal);
   ;
     break;}
 case 174:
-#line 1870 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1873 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {
     yyval.ValueVal = getVal(*yyvsp[-1].TypeVal, yyvsp[0].ValIDVal); delete yyvsp[-1].TypeVal;
   ;
     break;}
 case 175:
-#line 1874 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1877 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {
     yyval.FunctionVal = yyvsp[-1].FunctionVal;
   ;
     break;}
 case 176:
-#line 1877 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1880 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 { // Do not allow functions with 0 basic blocks   
     yyval.FunctionVal = yyvsp[-1].FunctionVal;
   ;
     break;}
 case 177:
-#line 1885 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1888 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {
     setValueName(yyvsp[0].TermInstVal, yyvsp[-1].StrVal);
     InsertValue(yyvsp[0].TermInstVal);
@@ -3318,14 +3321,14 @@ case 177:
   ;
     break;}
 case 178:
-#line 1894 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1897 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {
     yyvsp[-1].BasicBlockVal->getInstList().push_back(yyvsp[0].InstVal);
     yyval.BasicBlockVal = yyvsp[-1].BasicBlockVal;
   ;
     break;}
 case 179:
-#line 1898 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1901 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {
     yyval.BasicBlockVal = CurBB = getBBVal(ValID::create((int)CurFun.NextBBNum++), true);
 
@@ -3338,7 +3341,7 @@ case 179:
   ;
     break;}
 case 180:
-#line 1908 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1911 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {
     yyval.BasicBlockVal = CurBB = getBBVal(ValID::create(yyvsp[0].StrVal), true);
 
@@ -3351,31 +3354,31 @@ case 180:
   ;
     break;}
 case 181:
-#line 1919 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1922 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {              // Return with a result...
     yyval.TermInstVal = new ReturnInst(yyvsp[0].ValueVal);
   ;
     break;}
 case 182:
-#line 1922 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1925 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {                                       // Return with no result...
     yyval.TermInstVal = new ReturnInst();
   ;
     break;}
 case 183:
-#line 1925 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1928 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {                         // Unconditional Branch...
     yyval.TermInstVal = new BranchInst(getBBVal(yyvsp[0].ValIDVal));
   ;
     break;}
 case 184:
-#line 1928 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1931 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {  
     yyval.TermInstVal = new BranchInst(getBBVal(yyvsp[-3].ValIDVal), getBBVal(yyvsp[0].ValIDVal), getVal(Type::BoolTy, yyvsp[-6].ValIDVal));
   ;
     break;}
 case 185:
-#line 1931 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1934 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {
     SwitchInst *S = new SwitchInst(getVal(yyvsp[-7].PrimType, yyvsp[-6].ValIDVal), getBBVal(yyvsp[-3].ValIDVal), yyvsp[-1].JumpTable->size());
     yyval.TermInstVal = S;
@@ -3392,14 +3395,14 @@ case 185:
   ;
     break;}
 case 186:
-#line 1945 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1948 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {
     SwitchInst *S = new SwitchInst(getVal(yyvsp[-6].PrimType, yyvsp[-5].ValIDVal), getBBVal(yyvsp[-2].ValIDVal), 0);
     yyval.TermInstVal = S;
   ;
     break;}
 case 187:
-#line 1950 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 1953 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {
     const PointerType *PFTy;
     const FunctionType *Ty;
@@ -3454,19 +3457,19 @@ case 187:
   ;
     break;}
 case 188:
-#line 2002 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2005 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {
     yyval.TermInstVal = new UnwindInst();
   ;
     break;}
 case 189:
-#line 2005 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2008 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {
     yyval.TermInstVal = new UnreachableInst();
   ;
     break;}
 case 190:
-#line 2011 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2014 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {
     yyval.JumpTable = yyvsp[-5].JumpTable;
     Constant *V = cast<Constant>(getValNonImprovising(yyvsp[-4].PrimType, yyvsp[-3].ValIDVal));
@@ -3477,7 +3480,7 @@ case 190:
   ;
     break;}
 case 191:
-#line 2019 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2022 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {
     yyval.JumpTable = new std::vector<std::pair<Constant*, BasicBlock*> >();
     Constant *V = cast<Constant>(getValNonImprovising(yyvsp[-4].PrimType, yyvsp[-3].ValIDVal));
@@ -3489,7 +3492,7 @@ case 191:
   ;
     break;}
 case 192:
-#line 2029 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2032 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {
   // Is this definition named?? if so, assign the name...
   setValueName(yyvsp[0].InstVal, yyvsp[-1].StrVal);
@@ -3498,7 +3501,7 @@ case 192:
 ;
     break;}
 case 193:
-#line 2036 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2039 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {    // Used for PHI nodes
     yyval.PHIList = new std::list<std::pair<Value*, BasicBlock*> >();
     yyval.PHIList->push_back(std::make_pair(getVal(*yyvsp[-5].TypeVal, yyvsp[-3].ValIDVal), getBBVal(yyvsp[-1].ValIDVal)));
@@ -3506,7 +3509,7 @@ case 193:
   ;
     break;}
 case 194:
-#line 2041 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2044 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {
     yyval.PHIList = yyvsp[-6].PHIList;
     yyvsp[-6].PHIList->push_back(std::make_pair(getVal(yyvsp[-6].PHIList->front().first->getType(), yyvsp[-3].ValIDVal),
@@ -3514,37 +3517,37 @@ case 194:
   ;
     break;}
 case 195:
-#line 2048 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2051 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {    // Used for call statements, and memory insts...
     yyval.ValueList = new std::vector<Value*>();
     yyval.ValueList->push_back(yyvsp[0].ValueVal);
   ;
     break;}
 case 196:
-#line 2052 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2055 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {
     yyval.ValueList = yyvsp[-2].ValueList;
     yyvsp[-2].ValueList->push_back(yyvsp[0].ValueVal);
   ;
     break;}
 case 198:
-#line 2058 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2061 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 { yyval.ValueList = 0; ;
     break;}
 case 199:
-#line 2060 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2063 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {
     yyval.BoolVal = true;
   ;
     break;}
 case 200:
-#line 2063 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2066 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {
     yyval.BoolVal = false;
   ;
     break;}
 case 201:
-#line 2069 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2072 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {
     if (!(*yyvsp[-3].TypeVal)->isInteger() && !(*yyvsp[-3].TypeVal)->isFloatingPoint() && 
         !isa<PackedType>((*yyvsp[-3].TypeVal).get()))
@@ -3559,10 +3562,13 @@ case 201:
   ;
     break;}
 case 202:
-#line 2081 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2084 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {
-    if (!(*yyvsp[-3].TypeVal)->isIntegral())
-      ThrowException("Logical operator requires integral operands!");
+    if (!(*yyvsp[-3].TypeVal)->isIntegral()) {
+      if (!isa<PackedType>(yyvsp[-3].TypeVal->get()) ||
+          !cast<PackedType>(yyvsp[-3].TypeVal->get())->getElementType()->isIntegral())
+        ThrowException("Logical operator requires integral operands!");
+    }
     yyval.InstVal = BinaryOperator::create(yyvsp[-4].BinaryOpVal, getVal(*yyvsp[-3].TypeVal, yyvsp[-2].ValIDVal), getVal(*yyvsp[-3].TypeVal, yyvsp[0].ValIDVal));
     if (yyval.InstVal == 0)
       ThrowException("binary operator returned null!");
@@ -3570,7 +3576,7 @@ case 202:
   ;
     break;}
 case 203:
-#line 2089 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2095 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {
     if(isa<PackedType>((*yyvsp[-3].TypeVal).get())) {
       ThrowException(
@@ -3583,7 +3589,7 @@ case 203:
   ;
     break;}
 case 204:
-#line 2099 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2105 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {
     std::cerr << "WARNING: Use of eliminated 'not' instruction:"
               << " Replacing with 'xor'.\n";
@@ -3598,7 +3604,7 @@ case 204:
   ;
     break;}
 case 205:
-#line 2111 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2117 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {
     if (yyvsp[0].ValueVal->getType() != Type::UByteTy)
       ThrowException("Shift amount must be ubyte!");
@@ -3608,7 +3614,7 @@ case 205:
   ;
     break;}
 case 206:
-#line 2118 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2124 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {
     if (!yyvsp[0].TypeVal->get()->isFirstClassType())
       ThrowException("cast instruction to a non-primitive type: '" +
@@ -3618,7 +3624,7 @@ case 206:
   ;
     break;}
 case 207:
-#line 2125 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2131 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {
     if (yyvsp[-4].ValueVal->getType() != Type::BoolTy)
       ThrowException("select condition must be boolean!");
@@ -3628,7 +3634,7 @@ case 207:
   ;
     break;}
 case 208:
-#line 2132 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2138 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {
     NewVarArgs = true;
     yyval.InstVal = new VAArgInst(yyvsp[-2].ValueVal, *yyvsp[0].TypeVal);
@@ -3636,7 +3642,7 @@ case 208:
   ;
     break;}
 case 209:
-#line 2137 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2143 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {
     ObsoleteVarArgs = true;
     const Type* ArgTy = yyvsp[-2].ValueVal->getType();
@@ -3658,7 +3664,7 @@ case 209:
   ;
     break;}
 case 210:
-#line 2156 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2162 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {
     ObsoleteVarArgs = true;
     const Type* ArgTy = yyvsp[-2].ValueVal->getType();
@@ -3683,7 +3689,7 @@ case 210:
   ;
     break;}
 case 211:
-#line 2178 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2184 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {
     const Type *Ty = yyvsp[0].PHIList->front().first->getType();
     if (!Ty->isFirstClassType())
@@ -3700,7 +3706,7 @@ case 211:
   ;
     break;}
 case 212:
-#line 2192 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2198 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {
     const PointerType *PFTy;
     const FunctionType *Ty;
@@ -3760,65 +3766,65 @@ case 212:
   ;
     break;}
 case 213:
-#line 2249 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2255 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {
     yyval.InstVal = yyvsp[0].InstVal;
   ;
     break;}
 case 214:
-#line 2255 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2261 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 { 
     yyval.ValueList = yyvsp[0].ValueList; 
   ;
     break;}
 case 215:
-#line 2257 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2263 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 { 
     yyval.ValueList = new std::vector<Value*>(); 
   ;
     break;}
 case 216:
-#line 2261 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2267 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {
     yyval.BoolVal = true;
   ;
     break;}
 case 217:
-#line 2264 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2270 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {
     yyval.BoolVal = false;
   ;
     break;}
 case 218:
-#line 2270 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2276 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {
     yyval.InstVal = new MallocInst(*yyvsp[-1].TypeVal, 0, yyvsp[0].UIntVal);
     delete yyvsp[-1].TypeVal;
   ;
     break;}
 case 219:
-#line 2274 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2280 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {
     yyval.InstVal = new MallocInst(*yyvsp[-4].TypeVal, getVal(yyvsp[-2].PrimType, yyvsp[-1].ValIDVal), yyvsp[0].UIntVal);
     delete yyvsp[-4].TypeVal;
   ;
     break;}
 case 220:
-#line 2278 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2284 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {
     yyval.InstVal = new AllocaInst(*yyvsp[-1].TypeVal, 0, yyvsp[0].UIntVal);
     delete yyvsp[-1].TypeVal;
   ;
     break;}
 case 221:
-#line 2282 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2288 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {
     yyval.InstVal = new AllocaInst(*yyvsp[-4].TypeVal, getVal(yyvsp[-2].PrimType, yyvsp[-1].ValIDVal), yyvsp[0].UIntVal);
     delete yyvsp[-4].TypeVal;
   ;
     break;}
 case 222:
-#line 2286 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2292 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {
     if (!isa<PointerType>(yyvsp[0].ValueVal->getType()))
       ThrowException("Trying to free nonpointer type " + 
@@ -3827,7 +3833,7 @@ case 222:
   ;
     break;}
 case 223:
-#line 2293 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2299 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {
     if (!isa<PointerType>(yyvsp[-1].TypeVal->get()))
       ThrowException("Can't load from nonpointer type: " +
@@ -3840,7 +3846,7 @@ case 223:
   ;
     break;}
 case 224:
-#line 2303 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2309 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {
     const PointerType *PT = dyn_cast<PointerType>(yyvsp[-1].TypeVal->get());
     if (!PT)
@@ -3856,7 +3862,7 @@ case 224:
   ;
     break;}
 case 225:
-#line 2316 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2322 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 {
     if (!isa<PointerType>(yyvsp[-2].TypeVal->get()))
       ThrowException("getelementptr insn requires pointer operand!");
@@ -4101,7 +4107,7 @@ yyerrhandle:
     }
   return 1;
 }
-#line 2339 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
+#line 2345 "/Volumes/ProjectsDisk/cvs/llvm/lib/AsmParser/llvmAsmParser.y"
 
 int yyerror(const char *ErrorMsg) {
   std::string where 
