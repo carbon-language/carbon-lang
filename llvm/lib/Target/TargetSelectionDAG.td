@@ -242,6 +242,8 @@ def frem       : SDNode<"ISD::FREM"       , SDTFPBinOp>;
 def fabs       : SDNode<"ISD::FABS"       , SDTFPUnaryOp>;
 def fneg       : SDNode<"ISD::FNEG"       , SDTFPUnaryOp>;
 def fsqrt      : SDNode<"ISD::FSQRT"      , SDTFPUnaryOp>;
+def fsin       : SDNode<"ISD::FSIN"       , SDTFPUnaryOp>;
+def fcos       : SDNode<"ISD::FCOS"       , SDTFPUnaryOp>;
 
 def fround     : SDNode<"ISD::FP_ROUND"   , SDTFPRoundOp>;
 def fextend    : SDNode<"ISD::FP_EXTEND"  , SDTFPExtendOp>;
