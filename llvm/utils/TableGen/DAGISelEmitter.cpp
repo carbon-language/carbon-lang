@@ -1770,18 +1770,24 @@ public:
                      TreePatternNode *pattern, TreePatternNode *instr,
                      unsigned PatNum, std::ostream &os) :
     ISE(ise), Predicates(preds), Pattern(pattern), Instruction(instr),
-    PatternNo(PatNum), OS(os), FoundChain(false), TmpNo(0) {};
+    PatternNo(PatNum), OS(os), FoundChain(false), TmpNo(0) {}
 
+  /// isPredeclaredSDOperand - Return true if this is one of the predeclared
+  /// SDOperands.
+  bool isPredeclaredSDOperand(const std::string &OpName) const {
+    return OpName == "N0" || OpName == "N1" || OpName == "N2" || 
+           OpName == "N00" || OpName == "N01" || 
+           OpName == "N10" || OpName == "N11" || 
+           OpName == "Tmp0" || OpName == "Tmp1" || 
+           OpName == "Tmp2" || OpName == "Tmp3";
+  }
+  
   /// DeclareSDOperand - Emit "SDOperand <opname>" or "<opname>".  This works
   /// around an ugly GCC bug where SelectCode is using too much stack space
   void DeclareSDOperand(const std::string &OpName) const {
     // If it's one of the common cases declared at the top of SelectCode, just
     // use the existing declaration.
-    if (OpName == "N0" || OpName == "N1" || OpName == "N2" || 
-        OpName == "N00" || OpName == "N01" || 
-        OpName == "N10" || OpName == "N11" || 
-        OpName == "Tmp0" || OpName == "Tmp1" || 
-        OpName == "Tmp2" || OpName == "Tmp3")
+    if (isPredeclaredSDOperand(OpName))
       OS << OpName;
     else
       OS << "SDOperand " << OpName;
@@ -1986,9 +1992,11 @@ public:
         std::string Fn = CP->getSelectFunc();
         NumRes = CP->getNumOperands();
         for (unsigned i = 0; i != NumRes; ++i) {
-          OS << "      ";
-          DeclareSDOperand("Tmp" + utostr(i+ResNo));
-          OS << ";\n";
+          if (!isPredeclaredSDOperand("Tmp" + utostr(i+ResNo))) {
+            OS << "      ";
+            DeclareSDOperand("Tmp" + utostr(i+ResNo));
+            OS << ";\n";
+          }
         }
         OS << "      if (!" << Fn << "(" << Val;
         for (unsigned i = 0; i < NumRes; i++)
