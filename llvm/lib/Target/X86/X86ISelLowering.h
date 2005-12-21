@@ -155,6 +155,12 @@ namespace llvm {
     /// DAG node.
     virtual const char *getTargetNodeName(unsigned Opcode) const;
 
+    /// isMaskedValueZeroForTargetNode - Return true if 'Op & Mask' is known to
+    /// be zero. Op is expected to be a target specific node. Used by DAG
+    /// combiner.
+    virtual bool isMaskedValueZeroForTargetNode(const SDOperand &Op,
+                                                uint64_t Mask) const;
+
     SDOperand getReturnAddressFrameIndex(SelectionDAG &DAG);
 
   private:

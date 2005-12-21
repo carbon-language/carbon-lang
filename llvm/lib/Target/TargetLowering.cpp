@@ -125,3 +125,8 @@ void TargetLowering::computeRegisterProperties() {
 const char *TargetLowering::getTargetNodeName(unsigned Opcode) const {
   return NULL;
 }
+
+bool isMaskedValueZeroForTargetNode(const SDOperand &Op,
+                                    uint64_t Mask) const {
+  return false;
+}

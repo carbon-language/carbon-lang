@@ -98,8 +98,8 @@ def brtarget : Operand<OtherVT>;
 // Define X86 specific addressing mode.
 def addr    : ComplexPattern<i32, 4, "SelectAddr", []>;
 def leaaddr : ComplexPattern<i32, 4, "SelectLEAAddr",
-                             [add,
-                              frameindex, constpool, globaladdr, externalsym]>;
+                             [add, frameindex, constpool,
+                              globaladdr, tglobaladdr, externalsym]>;
 
 //===----------------------------------------------------------------------===//
 // X86 Instruction Format Definitions.

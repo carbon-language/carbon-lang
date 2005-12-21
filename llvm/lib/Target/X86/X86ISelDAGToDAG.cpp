@@ -172,6 +172,7 @@ bool X86DAGToDAGISel::MatchAddress(SDOperand N, X86ISelAddressMode &AM) {
     break;
 
   case ISD::GlobalAddress:
+  case ISD::TargetGlobalAddress:
     if (AM.GV == 0) {
       AM.GV = cast<GlobalAddressSDNode>(N)->getGlobal();
       return false;

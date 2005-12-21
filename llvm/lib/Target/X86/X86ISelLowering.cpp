@@ -122,6 +122,7 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     setOperationAction(ISD::SETCC          , MVT::i8   , Custom);
     setOperationAction(ISD::SETCC          , MVT::i16  , Custom);
     setOperationAction(ISD::SETCC          , MVT::i32  , Custom);
+    setOperationAction(ISD::GlobalAddress  , MVT::i32  , Custom);
   }
 
   // We don't have line number support yet.
@@ -1051,6 +1052,7 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   }
   case ISD::GlobalAddress:
     GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
+    SDOperand GVOp = DAG.getTargetGlobalAddress(GV, getPointerTy());
     // For Darwin, external and weak symbols are indirect, so we want to load
     // the value at address GV, not the value of GV itself.  This means that
     // the GlobalAddress must be in the base or index register of the address,
@@ -1058,10 +1060,10 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     if (getTargetMachine().
         getSubtarget<X86Subtarget>().getIndirectExternAndWeakGlobals() &&
         (GV->hasWeakLinkage() || GV->isExternal()))
-      return DAG.getLoad(MVT::i32, DAG.getEntryNode(), Op,
-                         DAG.getSrcValue(NULL));
+      return DAG.getLoad(MVT::i32, DAG.getEntryNode(),
+                         GVOp, DAG.getSrcValue(NULL));
     else
-      return Op;
+      return GVOp;
     break;
   }
 }
@@ -1085,4 +1087,19 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::BRCOND:             return "X86ISD::BRCOND";
   case X86ISD::RET_FLAG:           return "X86ISD::RET_FLAG";
   }
+}
+
+bool X86TargetLowering::isMaskedValueZeroForTargetNode(const SDOperand &Op,
+                                                       uint64_t Mask) const {
+
+  unsigned Opc = Op.getOpcode();
+
+  switch (Opc) {
+  default:
+    assert(Opc >= ISD::BUILTIN_OP_END && "Expected a target specific node");
+    break;
+  case X86ISD::SETCC: return (Mask & 1) == 0;
+  }
+
+  return false;
 }

@@ -455,7 +455,10 @@ static bool MaskedValueIsZero(const SDOperand &Op, uint64_t Mask,
     // Bit counting instructions can not set the high bits of the result
     // register.  The max number of bits sets depends on the input.
     return (Mask & (MVT::getSizeInBits(Op.getValueType())*2-1)) == 0;
-  default: break;
+  default:
+    if (Op.getOpcode() >= ISD::BUILTIN_OP_END)
+      return TLI.isMaskedValueZeroForTargetNode(Op, Mask);
+    break;
   }
   return false;
 }
