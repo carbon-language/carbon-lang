@@ -136,6 +136,21 @@ be passed the PassManager, and the optimization level (values 0-5 based on the
 B<-On> option). This function may add passes to the PassManager that should be
 run. This feature allows the optimization passes of B<llvm-ld> to be extended.
 
+=item B<-post-link-opt>F<Path>
+
+Run post-link optimization program. After linking is completed a bytecode file
+will be generated. It will be passed to the program specified by F<Path> as the
+first argument. The second argument to the program will be the name of a
+temporary file into which the program should place its optimized output. For
+example, the "no-op optimization" would be a simple shell script:
+
+=over
+
+#!/bin/bash
+cp $1 $2
+
+=back
+
 =back
 
 =head2 Miscellaneous Options
