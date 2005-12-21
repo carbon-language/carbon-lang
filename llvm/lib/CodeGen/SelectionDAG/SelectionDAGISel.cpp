@@ -40,10 +40,6 @@
 #include <iostream>
 using namespace llvm;
 
-static cl::opt<bool>
-GEPISelTest("enable-gep-isel-opt", cl::Hidden,
-            cl::desc("temporary for testing"));
-
 #ifndef NDEBUG
 static cl::opt<bool>
 ViewDAGs("view-isel-dags", cl::Hidden,
@@ -1315,8 +1311,6 @@ static Value *InsertGEPComputeCode(Value *&V, BasicBlock *BB, Instruction *GEPI,
 /// indices into blocks that use it.
 static void OptimizeGEPExpression(GetElementPtrInst *GEPI,
                                   const TargetData &TD) {
-  if (!GEPISelTest) return;
-  
   // If this GEP is only used inside the block it is defined in, there is no
   // need to rewrite it.
   bool isUsedOutsideDefBB = false;
