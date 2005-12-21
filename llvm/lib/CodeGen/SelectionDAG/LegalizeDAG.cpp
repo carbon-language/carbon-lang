@@ -1036,9 +1036,9 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         Result = DAG.getNode(ISD::BRCOND, MVT::Other, Tmp1, Tmp2,
                              Node->getOperand(4));
         Result = DAG.getNode(ISD::BR, MVT::Other, Result, Node->getOperand(5));
-        Result = LegalizeOp(Result);  // Relegalize new nodes.
         break;
       }
+      Result = LegalizeOp(Result);  // Relegalize new nodes.
     }
     break;
   case ISD::LOAD:
