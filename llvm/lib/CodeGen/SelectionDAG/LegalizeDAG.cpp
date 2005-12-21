@@ -3827,9 +3827,12 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
                                           std::make_pair(Lo, Hi))).second;
   assert(isNew && "Value already expanded?!?");
   
-  // Make sure the resultant values have been legalized themselves.
-  Lo = LegalizeOp(Lo);
-  Hi = LegalizeOp(Hi);
+  // Make sure the resultant values have been legalized themselves, unless this
+  // is a type that requires multi-step expansion.
+  if (getTypeAction(NVT) != Expand && NVT != MVT::isVoid) {
+    Lo = LegalizeOp(Lo);
+    Hi = LegalizeOp(Hi);
+  }
 }
 
 
