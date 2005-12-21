@@ -622,18 +622,22 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     case TargetLowering::Promote:
     default: assert(0 && "This action is not supported yet!");
     case TargetLowering::Expand: {
-      MachineDebugInfo &DebugInfo = DAG.getMachineFunction().getDebugInfo();
-      std::vector<SDOperand> Ops;
-      Ops.push_back(Tmp1);  // chain
-      Ops.push_back(Node->getOperand(1));  // line #
-      Ops.push_back(Node->getOperand(2));  // col #
-      const std::string &fname =
-        cast<StringSDNode>(Node->getOperand(3))->getValue();
-      const std::string &dirname = 
-        cast<StringSDNode>(Node->getOperand(4))->getValue();
-      unsigned id = DebugInfo.RecordSource(fname, dirname);
-      Ops.push_back(DAG.getConstant(id, MVT::i32));  // source file id
-      Result = DAG.getNode(ISD::DEBUG_LOC, MVT::Other, Ops);
+      if (TLI.isOperationLegal(ISD::DEBUG_LOC, MVT::Other)) {
+        MachineDebugInfo &DebugInfo = DAG.getMachineFunction().getDebugInfo();
+        std::vector<SDOperand> Ops;
+        Ops.push_back(Tmp1);  // chain
+        Ops.push_back(Node->getOperand(1));  // line #
+        Ops.push_back(Node->getOperand(2));  // col #
+        const std::string &fname =
+          cast<StringSDNode>(Node->getOperand(3))->getValue();
+        const std::string &dirname = 
+          cast<StringSDNode>(Node->getOperand(4))->getValue();
+        unsigned id = DebugInfo.RecordSource(fname, dirname);
+        Ops.push_back(DAG.getConstant(id, MVT::i32));  // source file id
+        Result = DAG.getNode(ISD::DEBUG_LOC, MVT::Other, Ops);
+      } else {
+        Result = Tmp1;  // chain
+      }
       Result = LegalizeOp(Result);  // Relegalize new nodes.
       break;
     }

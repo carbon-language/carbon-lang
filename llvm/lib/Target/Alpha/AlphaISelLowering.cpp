@@ -102,6 +102,7 @@ AlphaTargetLowering::AlphaTargetLowering(TargetMachine &TM) : TargetLowering(TM)
 
   // We don't have line number support yet.
   setOperationAction(ISD::LOCATION, MVT::Other, Expand);
+  setOperationAction(ISD::DEBUG_LOC, MVT::Other, Expand);
   
   addLegalFPImmediate(+0.0); //F31
   addLegalFPImmediate(-0.0); //-F31

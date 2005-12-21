@@ -102,6 +102,7 @@ namespace {
 
       // We don't have line number support yet.
       setOperationAction(ISD::LOCATION, MVT::Other, Expand);
+      setOperationAction(ISD::DEBUG_LOC, MVT::Other, Expand);
 
       computeRegisterProperties();
 
