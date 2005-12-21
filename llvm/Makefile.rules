@@ -769,8 +769,10 @@ $(warning Bytecode libraries require llvm-gcc which could not be found ****)
 else
 
 # make the C and C++ compilers strip debug info out of bytecode libraries.
+ifndef DEBUG_RUNTIME
 BCCompile.C += -Wa,-strip-debug
 BCCompile.CXX += -Wa,-strip-debug
+endif
 
 all-local:: $(LibName.BCA)
 

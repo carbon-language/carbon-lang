@@ -178,6 +178,11 @@ OBJ_ROOT := .
 #ENABLE_OPTIMIZED = 1
 @ENABLE_OPTIMIZED@
 
+# When DEBUG_RUNTIME is enabled, the runtime libraries will retain debug
+# symbols.
+#DEBUG_RUNTIME = 1
+@DEBUG_RUNTIME@
+
 # When ENABLE_PROFILING is enabled, the llvm source base is built with profile
 # information to allow gprof to be used to get execution frequencies.
 #ENABLE_PROFILING = 1

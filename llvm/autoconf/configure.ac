@@ -199,6 +199,15 @@ else
   AC_SUBST(ENABLE_OPTIMIZED,[[ENABLE_OPTIMIZED=1]])
 fi
 
+dnl --enable-debug-runtime : should runtime libraries have debug symbols?
+AC_ARG_ENABLE(debug-runtime,
+   AS_HELP_STRING([--enable-debug-runtime,Build runtime libs with debug symbols (default is NO)]),,enableval=no)
+if test ${enableval} = "no" ; then
+  AC_SUBST(DEBUG_RUNTIME,[[]])
+else
+  AC_SUBST(DEBUG_RUNTIME,[[DEBUG_RUNTIME=1]])
+fi
+
 dnl --enable-jit: check whether they want to enable the jit
 AC_ARG_ENABLE(jit,
   AS_HELP_STRING(--enable-jit,
