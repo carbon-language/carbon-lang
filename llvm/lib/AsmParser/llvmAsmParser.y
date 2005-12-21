@@ -1501,8 +1501,11 @@ ConstExpr: CAST '(' ConstVal TO Types ')' {
   | LogicalOps '(' ConstVal ',' ConstVal ')' {
     if ($3->getType() != $5->getType())
       ThrowException("Logical operator types must match!");
-    if (!$3->getType()->isIntegral())
-      ThrowException("Logical operands must have integral types!");
+    if (!$3->getType()->isIntegral()) {
+      if (!isa<PackedType>($3->getType()) || 
+          !cast<PackedType>($3->getType())->getElementType()->isIntegral())
+        ThrowException("Logical operator requires integral operands!");
+    }
     $$ = ConstantExpr::get($1, $3, $5);
   }
   | SetCondOps '(' ConstVal ',' ConstVal ')' {
@@ -2079,8 +2082,11 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     delete $2;
   }
   | LogicalOps Types ValueRef ',' ValueRef {
-    if (!(*$2)->isIntegral())
-      ThrowException("Logical operator requires integral operands!");
+    if (!(*$2)->isIntegral()) {
+      if (!isa<PackedType>($2->get()) ||
+          !cast<PackedType>($2->get())->getElementType()->isIntegral())
+        ThrowException("Logical operator requires integral operands!");
+    }
     $$ = BinaryOperator::create($1, getVal(*$2, $3), getVal(*$2, $5));
     if ($$ == 0)
       ThrowException("binary operator returned null!");
