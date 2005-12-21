@@ -498,7 +498,9 @@ void Verifier::visitBinaryOperator(BinaryOperator &B) {
   // Check that logical operators are only used with integral operands.
   if (B.getOpcode() == Instruction::And || B.getOpcode() == Instruction::Or ||
       B.getOpcode() == Instruction::Xor) {
-    Assert1(B.getType()->isIntegral(),
+    Assert1(B.getType()->isIntegral() ||
+            (isa<PackedType>(B.getType()) && 
+             cast<PackedType>(B.getType())->getElementType()->isIntegral()),
             "Logical operators only work with integral types!", &B);
     Assert1(B.getType() == B.getOperand(0)->getType(),
             "Logical operators must have same type for operands and result!",

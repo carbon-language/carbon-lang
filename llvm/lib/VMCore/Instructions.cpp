@@ -811,16 +811,17 @@ void BinaryOperator::init(BinaryOps iType)
   case Rem:
     assert(getType() == LHS->getType() &&
            "Arithmetic operation should return same type as operands!");
-    assert((getType()->isInteger() ||
-            getType()->isFloatingPoint() ||
-            isa<PackedType>(getType()) ) &&
+    assert((getType()->isInteger() || getType()->isFloatingPoint() ||
+            isa<PackedType>(getType())) &&
           "Tried to create an arithmetic operation on a non-arithmetic type!");
     break;
   case And: case Or:
   case Xor:
     assert(getType() == LHS->getType() &&
            "Logical operation should return same type as operands!");
-    assert(getType()->isIntegral() &&
+    assert((getType()->isIntegral() ||
+            (isa<PackedType>(getType()) && 
+             cast<PackedType>(getType())->getElementType()->isIntegral())) &&
            "Tried to create a logical operation on a non-integral type!");
     break;
   case SetLT: case SetGT: case SetLE:
@@ -889,8 +890,17 @@ BinaryOperator *BinaryOperator::createNot(Value *Op, const std::string &Name,
 
 BinaryOperator *BinaryOperator::createNot(Value *Op, const std::string &Name,
                                           BasicBlock *InsertAtEnd) {
-  return new BinaryOperator(Instruction::Xor, Op,
-                            ConstantIntegral::getAllOnesValue(Op->getType()),
+  Constant *AllOnes;
+  if (const PackedType *PTy = dyn_cast<PackedType>(Op->getType())) {
+    // Create a vector of all ones values.
+    Constant *Elt = ConstantIntegral::getAllOnesValue(PTy->getElementType());
+    AllOnes = 
+      ConstantPacked::get(std::vector<Constant*>(PTy->getNumElements(), Elt));
+  } else {
+    AllOnes = ConstantIntegral::getAllOnesValue(Op->getType());
+  }
+  
+  return new BinaryOperator(Instruction::Xor, Op, AllOnes,
                             Op->getType(), Name, InsertAtEnd);
 }
 
