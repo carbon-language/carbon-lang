@@ -1801,61 +1801,89 @@ def SAHF     : I<0x9E, RawFrm, (ops), "sahf", []>, Imp<[AH],[]>;  // flags = AH
 def LAHF     : I<0x9F, RawFrm, (ops), "lahf", []>, Imp<[],[AH]>;  // AH = flags
 
 def SETBr    : I<0x92, MRM0r,
-                 (ops R8   :$dst), "setb $dst", []>, TB;    // R8 = <  unsign
+                 (ops R8   :$dst),
+                 "setb $dst", []>, TB;    // R8 = <  unsign
 def SETBm    : I<0x92, MRM0m,
-                 (ops i8mem:$dst), "setb $dst", []>, TB;    // [mem8] = <  unsign
+                 (ops i8mem:$dst),
+                 "setb $dst", []>, TB;    // [mem8] = <  unsign
 def SETAEr   : I<0x93, MRM0r, 
-                 (ops R8   :$dst), "setae $dst", []>, TB;   // R8 = >= unsign
+                 (ops R8   :$dst),
+                 "setae $dst", []>, TB;   // R8 = >= unsign
 def SETAEm   : I<0x93, MRM0m, 
-                 (ops i8mem:$dst), "setae $dst", []>, TB;   // [mem8] = >= unsign
+                 (ops i8mem:$dst),
+                 "setae $dst", []>, TB;   // [mem8] = >= unsign
 def SETEr    : I<0x94, MRM0r, 
-                 (ops R8   :$dst), "sete $dst", []>, TB;    // R8 = ==
+                 (ops R8   :$dst),
+                 "sete $dst", []>, TB;    // R8 = ==
 def SETEm    : I<0x94, MRM0m, 
-                 (ops i8mem:$dst), "sete $dst", []>, TB;    // [mem8] = ==
+                 (ops i8mem:$dst),
+                 "sete $dst", []>, TB;    // [mem8] = ==
 def SETNEr   : I<0x95, MRM0r, 
-                 (ops R8   :$dst), "setne $dst", []>, TB;   // R8 = !=
+                 (ops R8   :$dst),
+                 "setne $dst", []>, TB;   // R8 = !=
 def SETNEm   : I<0x95, MRM0m, 
-                 (ops i8mem:$dst), "setne $dst", []>, TB;   // [mem8] = !=
+                 (ops i8mem:$dst),
+                 "setne $dst", []>, TB;   // [mem8] = !=
 def SETBEr   : I<0x96, MRM0r, 
-                 (ops R8   :$dst), "setbe $dst", []>, TB;   // R8 = <= unsign
+                 (ops R8   :$dst),
+                 "setbe $dst", []>, TB;   // R8 = <= unsign
 def SETBEm   : I<0x96, MRM0m, 
-                 (ops i8mem:$dst), "setbe $dst", []>, TB;   // [mem8] = <= unsign
+                 (ops i8mem:$dst),
+                 "setbe $dst", []>, TB;   // [mem8] = <= unsign
 def SETAr    : I<0x97, MRM0r, 
-                 (ops R8   :$dst), "seta $dst", []>, TB;    // R8 = >  signed
+                 (ops R8   :$dst),
+                 "seta $dst", []>, TB;    // R8 = >  signed
 def SETAm    : I<0x97, MRM0m, 
-                 (ops i8mem:$dst), "seta $dst", []>, TB;    // [mem8] = >  signed
+                 (ops i8mem:$dst),
+                 "seta $dst", []>, TB;    // [mem8] = >  signed
 def SETSr    : I<0x98, MRM0r, 
-                 (ops R8   :$dst), "sets $dst", []>, TB;    // R8 = <sign bit>
+                 (ops R8   :$dst),
+                 "sets $dst", []>, TB;    // R8 = <sign bit>
 def SETSm    : I<0x98, MRM0m, 
-                 (ops i8mem:$dst), "sets $dst", []>, TB;    // [mem8] = <sign bit>
+                 (ops i8mem:$dst),
+                 "sets $dst", []>, TB;    // [mem8] = <sign bit>
 def SETNSr   : I<0x99, MRM0r, 
-                 (ops R8   :$dst), "setns $dst", []>, TB;   // R8 = !<sign bit>
+                 (ops R8   :$dst),
+                 "setns $dst", []>, TB;   // R8 = !<sign bit>
 def SETNSm   : I<0x99, MRM0m, 
-                 (ops i8mem:$dst), "setns $dst", []>, TB;   // [mem8] = !<sign bit>
+                 (ops i8mem:$dst),
+                 "setns $dst", []>, TB;   // [mem8] = !<sign bit>
 def SETPr    : I<0x9A, MRM0r, 
-                 (ops R8   :$dst), "setp $dst", []>, TB;    // R8 = parity
+                 (ops R8   :$dst),
+                 "setp $dst", []>, TB;    // R8 = parity
 def SETPm    : I<0x9A, MRM0m, 
-                 (ops i8mem:$dst), "setp $dst", []>, TB;    // [mem8] = parity
+                 (ops i8mem:$dst),
+                 "setp $dst", []>, TB;    // [mem8] = parity
 def SETNPr   : I<0x9B, MRM0r, 
-                 (ops R8   :$dst), "setnp $dst", []>, TB;   // R8 = not parity
+                 (ops R8   :$dst),
+                 "setnp $dst", []>, TB;   // R8 = not parity
 def SETNPm   : I<0x9B, MRM0m, 
-                 (ops i8mem:$dst), "setnp $dst", []>, TB;   // [mem8] = not parity
+                 (ops i8mem:$dst),
+                 "setnp $dst", []>, TB;   // [mem8] = not parity
 def SETLr    : I<0x9C, MRM0r, 
-                 (ops R8   :$dst), "setl $dst", []>, TB;    // R8 = <  signed
+                 (ops R8   :$dst),
+                 "setl $dst", []>, TB;    // R8 = <  signed
 def SETLm    : I<0x9C, MRM0m, 
-                 (ops i8mem:$dst), "setl $dst", []>, TB;    // [mem8] = <  signed
+                 (ops i8mem:$dst),
+                 "setl $dst", []>, TB;    // [mem8] = <  signed
 def SETGEr   : I<0x9D, MRM0r, 
-                 (ops R8   :$dst), "setge $dst", []>, TB;   // R8 = >= signed
+                 (ops R8   :$dst),
+                 "setge $dst", []>, TB;   // R8 = >= signed
 def SETGEm   : I<0x9D, MRM0m, 
-                 (ops i8mem:$dst), "setge $dst", []>, TB;   // [mem8] = >= signed
+                 (ops i8mem:$dst),
+                 "setge $dst", []>, TB;   // [mem8] = >= signed
 def SETLEr   : I<0x9E, MRM0r, 
-                 (ops R8   :$dst), "setle $dst", []>, TB;   // R8 = <= signed
+                 (ops R8   :$dst),
+                 "setle $dst", []>, TB;   // R8 = <= signed
 def SETLEm   : I<0x9E, MRM0m, 
-                 (ops i8mem:$dst), "setle $dst", []>, TB;   // [mem8] = <= signed
+                 (ops i8mem:$dst),
+                 "setle $dst", []>, TB;   // [mem8] = <= signed
 def SETGr    : I<0x9F, MRM0r, 
-                 (ops R8   :$dst), "setg $dst", []>, TB;    // R8 = <  signed
+                 (ops R8   :$dst),
+                 "setg $dst", []>, TB;    // R8 = <  signed
 def SETGm    : I<0x9F, MRM0m, 
-                 (ops i8mem:$dst), "setg $dst", []>, TB;    // [mem8] = <  signed
+                 (ops i8mem:$dst),
+                 "setg $dst", []>, TB;    // [mem8] = <  signed
 
 // Integer comparisons
 def CMP8rr  : I<0x38, MRMDestReg,
