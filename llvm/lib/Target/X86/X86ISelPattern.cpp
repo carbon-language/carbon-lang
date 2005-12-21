@@ -757,9 +757,9 @@ void ISel::EmitSelectCC(SDOperand Cond, SDOperand True, SDOperand False,
     X86::CMOVA32rr,  X86::CMOVAE32rr, X86::CMOVP32rr,  X86::CMOVNP32rr,
   };
   static const unsigned CMOVTABFP[] = {
-    X86::FCMOVE ,  X86::FCMOVNE, /*missing*/0, /*missing*/0,
-    /*missing*/0,  /*missing*/0, X86::FCMOVB , X86::FCMOVBE,
-    X86::FCMOVA ,  X86::FCMOVAE, X86::FCMOVP , X86::FCMOVNP
+    X86::FpCMOVE,  X86::FpCMOVNE, /*missing*/0, /*missing*/0,
+    /*missing*/0,  /*missing*/ 0, X86::FpCMOVB, X86::FpCMOVBE,
+    X86::FpCMOVA,  X86::FpCMOVAE, X86::FpCMOVP, X86::FpCMOVNP
   };
   static const int SSE_CMOVTAB[] = {
     /*CMPEQ*/   0, /*CMPNEQ*/   4, /*missing*/  0, /*missing*/  0,
@@ -944,7 +944,7 @@ void ISel::EmitSelectCC(SDOperand Cond, SDOperand True, SDOperand False,
     default: assert(0 && "Cannot select this type!");
     case MVT::i16: Opc = X86::CMOVE16rr; break;
     case MVT::i32: Opc = X86::CMOVE32rr; break;
-    case MVT::f64: Opc = X86::FCMOVE; break;
+    case MVT::f64: Opc = X86::FpCMOVE; break;
     }
   } else {
     // FIXME: CMP R, 0 -> TEST R, R
@@ -990,7 +990,7 @@ void ISel::EmitCMP(SDOperand LHS, SDOperand RHS, bool HasOneUse) {
     if (!X86ScalarSSE && (CN->isExactlyValue(+0.0) ||
                           CN->isExactlyValue(-0.0))) {
       unsigned Reg = SelectExpr(LHS);
-      BuildMI(BB, X86::FTST, 1).addReg(Reg);
+      BuildMI(BB, X86::FpTST, 1).addReg(Reg);
       BuildMI(BB, X86::FNSTSW8r, 0);
       BuildMI(BB, X86::SAHF, 1);
       return;
@@ -1022,7 +1022,7 @@ void ISel::EmitCMP(SDOperand LHS, SDOperand RHS, bool HasOneUse) {
   case MVT::i16: Opc = X86::CMP16rr; break;
   case MVT::i32: Opc = X86::CMP32rr; break;
   case MVT::f32: Opc = X86::UCOMISSrr; break;
-  case MVT::f64: Opc = X86ScalarSSE ? X86::UCOMISDrr : X86::FUCOMIr; break;
+  case MVT::f64: Opc = X86ScalarSSE ? X86::UCOMISDrr : X86::FpUCOMIr; break;
   }
   unsigned Tmp1, Tmp2;
   if (getRegPressure(LHS) > getRegPressure(RHS)) {
@@ -1325,14 +1325,14 @@ unsigned ISel::SelectExpr(SDOperand N) {
 
     if (cast<ConstantFPSDNode>(N)->isExactlyValue(+0.0) ||
         cast<ConstantFPSDNode>(N)->isExactlyValue(-0.0))
-      BuildMI(BB, X86::FLD0, 0, Tmp1);
+      BuildMI(BB, X86::FpLD0, 0, Tmp1);
     else if (cast<ConstantFPSDNode>(N)->isExactlyValue(+1.0) ||
              cast<ConstantFPSDNode>(N)->isExactlyValue(-1.0))
-      BuildMI(BB, X86::FLD1, 0, Tmp1);
+      BuildMI(BB, X86::FpLD1, 0, Tmp1);
     else
       assert(0 && "Unexpected constant!");
     if (Tmp1 != Result)
-      BuildMI(BB, X86::FCHS, 1, Result).addReg(Tmp1);
+      BuildMI(BB, X86::FpCHS, 1, Result).addReg(Tmp1);
     return Result;
   case ISD::Constant:
     switch (N.getValueType()) {
@@ -1347,7 +1347,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
   case ISD::UNDEF:
     if (Node->getValueType(0) == MVT::f64) {
       // FIXME: SHOULD TEACH STACKIFIER ABOUT UNDEF VALUES!
-      BuildMI(BB, X86::FLD0, 0, Result);
+      BuildMI(BB, X86::FpLD0, 0, Result);
     } else {
       BuildMI(BB, X86::IMPLICIT_DEF, 0, Result);
     }
@@ -1471,11 +1471,11 @@ unsigned ISel::SelectExpr(SDOperand N) {
     switch (SrcTy) {
     case MVT::i32:
       addFrameReference(BuildMI(BB, X86::MOV32mr, 5), FrameIdx).addReg(Tmp1);
-      addFrameReference(BuildMI(BB, X86::FILD32m, 5, Result), FrameIdx);
+      addFrameReference(BuildMI(BB, X86::FpILD32m, 5, Result), FrameIdx);
       break;
     case MVT::i16:
       addFrameReference(BuildMI(BB, X86::MOV16mr, 5), FrameIdx).addReg(Tmp1);
-      addFrameReference(BuildMI(BB, X86::FILD16m, 5, Result), FrameIdx);
+      addFrameReference(BuildMI(BB, X86::FpILD16m, 5, Result), FrameIdx);
       break;
     default: break; // No promotion required.
     }
@@ -1523,7 +1523,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
           assert(Op1.getOpcode() == ISD::LOAD && "SSE load not promoted");
           Opc = X86::ADDSDrm;
         } else {
-          Opc = Op1.getOpcode() == ISD::LOAD ? X86::FADD64m : X86::FADD32m;
+          Opc = Op1.getOpcode() == ISD::LOAD ? X86::FpADD64m : X86::FpADD32m;
         }
         break;
       }
@@ -1616,7 +1616,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
       Opc = (N.getValueType() == MVT::f32) ? X86::SQRTSSrr : X86::SQRTSDrr;
       BuildMI(BB, Opc, 1, Result).addReg(Tmp1);
     } else {
-      BuildMI(BB, X86::FSQRT, 1, Result).addReg(Tmp1);
+      BuildMI(BB, X86::FpSQRT, 1, Result).addReg(Tmp1);
     }
     return Result;
 
@@ -1631,10 +1631,10 @@ unsigned ISel::SelectExpr(SDOperand N) {
     Tmp1 = SelectExpr(Node->getOperand(0));
     switch (N.getOpcode()) {
     default: assert(0 && "Unreachable!");
-    case ISD::FABS: BuildMI(BB, X86::FABS, 1, Result).addReg(Tmp1); break;
-    case ISD::FNEG: BuildMI(BB, X86::FCHS, 1, Result).addReg(Tmp1); break;
-    case ISD::FSIN: BuildMI(BB, X86::FSIN, 1, Result).addReg(Tmp1); break;
-    case ISD::FCOS: BuildMI(BB, X86::FCOS, 1, Result).addReg(Tmp1); break;
+    case ISD::FABS: BuildMI(BB, X86::FpABS, 1, Result).addReg(Tmp1); break;
+    case ISD::FNEG: BuildMI(BB, X86::FpCHS, 1, Result).addReg(Tmp1); break;
+    case ISD::FSIN: BuildMI(BB, X86::FpSIN, 1, Result).addReg(Tmp1); break;
+    case ISD::FCOS: BuildMI(BB, X86::FpCOS, 1, Result).addReg(Tmp1); break;
     }
     return Result;
 
@@ -1698,7 +1698,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
   case ISD::XOR: {
     static const unsigned SUBTab[] = {
       X86::SUB8ri, X86::SUB16ri, X86::SUB32ri, 0, 0,
-      X86::SUB8rm, X86::SUB16rm, X86::SUB32rm, X86::FSUB32m, X86::FSUB64m,
+      X86::SUB8rm, X86::SUB16rm, X86::SUB32rm, X86::FpSUB32m, X86::FpSUB64m,
       X86::SUB8rr, X86::SUB16rr, X86::SUB32rr, X86::FpSUB  , X86::FpSUB,
     };
     static const unsigned SSE_SUBTab[] = {
@@ -1708,7 +1708,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
     };
     static const unsigned MULTab[] = {
       0, X86::IMUL16rri, X86::IMUL32rri, 0, 0,
-      0, X86::IMUL16rm , X86::IMUL32rm, X86::FMUL32m, X86::FMUL64m,
+      0, X86::IMUL16rm , X86::IMUL32rm, X86::FpMUL32m, X86::FpMUL64m,
       0, X86::IMUL16rr , X86::IMUL32rr, X86::FpMUL  , X86::FpMUL,
     };
     static const unsigned SSE_MULTab[] = {
@@ -1821,9 +1821,9 @@ unsigned ISel::SelectExpr(SDOperand N) {
         // For FP, emit 'reverse' subract, with a memory operand.
         if (N.getValueType() == MVT::f64 && !X86ScalarSSE) {
           if (Op0.getOpcode() == ISD::EXTLOAD)
-            Opc = X86::FSUBR32m;
+            Opc = X86::FpSUBR32m;
           else
-            Opc = X86::FSUBR64m;
+            Opc = X86::FpSUBR64m;
 
           X86AddressMode AM;
           EmitFoldedLoad(Op0, AM);
@@ -2015,9 +2015,9 @@ unsigned ISel::SelectExpr(SDOperand N) {
         // Check for reversed and unreversed DIV.
         if (isFoldableLoad(N.getOperand(0), N.getOperand(1), true)) {
           if (N.getOperand(0).getOpcode() == ISD::EXTLOAD)
-            Opc = X86::FDIVR32m;
+            Opc = X86::FpDIVR32m;
           else
-            Opc = X86::FDIVR64m;
+            Opc = X86::FpDIVR64m;
           X86AddressMode AM;
           EmitFoldedLoad(N.getOperand(0), AM);
           Tmp1 = SelectExpr(N.getOperand(1));
@@ -2026,9 +2026,9 @@ unsigned ISel::SelectExpr(SDOperand N) {
         } else if (isFoldableLoad(N.getOperand(1), N.getOperand(0), true) &&
                    N.getOperand(1).getOpcode() == ISD::LOAD) {
           if (N.getOperand(1).getOpcode() == ISD::EXTLOAD)
-            Opc = X86::FDIV32m;
+            Opc = X86::FpDIV32m;
           else
-            Opc = X86::FDIV64m;
+            Opc = X86::FpDIV64m;
           X86AddressMode AM;
           EmitFoldedLoad(N.getOperand(1), AM);
           Tmp1 = SelectExpr(N.getOperand(0));
@@ -2230,7 +2230,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
       if (X86ScalarSSE) {
         Opc = X86::MOVSDrm;
       } else {
-        Opc = X86::FLD64m;
+        Opc = X86::FpLD64m;
         ContainsFPCode = true;
       }
       break;
@@ -2276,7 +2276,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
         Select(Chain);
       }
 
-      addFullAddress(BuildMI(BB, X86::FILD64m, 4, Result), AM);
+      addFullAddress(BuildMI(BB, X86::FpILD64m, 4, Result), AM);
     }
     return Result;
 
@@ -2295,7 +2295,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
         unsigned CPIdx = BB->getParent()->getConstantPool()->
           getConstantPoolIndex(CP->get());
 
-        addConstantPoolReference(BuildMI(BB, X86::FLD32m, 4, Result), CPIdx);
+        addConstantPoolReference(BuildMI(BB, X86::FpLD32m, 4, Result), CPIdx);
         return Result;
       }
 
@@ -2314,7 +2314,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
     case MVT::f64:
       assert(cast<VTSDNode>(Node->getOperand(3))->getVT() == MVT::f32 &&
              "Bad EXTLOAD!");
-      addFullAddress(BuildMI(BB, X86::FLD32m, 5, Result), AM);
+      addFullAddress(BuildMI(BB, X86::FpLD32m, 5, Result), AM);
       break;
     case MVT::i32:
       switch (cast<VTSDNode>(Node->getOperand(3))->getVT()) {
@@ -2521,7 +2521,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
           unsigned Size = MVT::getSizeInBits(MVT::f64)/8;
           MachineFunction *F = BB->getParent();
           int FrameIdx = F->getFrameInfo()->CreateStackObject(Size, Size);
-          addFrameReference(BuildMI(BB, X86::FST64m, 5), FrameIdx).addReg(X86::FP0);
+          addFrameReference(BuildMI(BB, X86::FpST64m, 5), FrameIdx).addReg(X86::FP0);
           addFrameReference(BuildMI(BB, X86::MOVSDrm, 4, Result), FrameIdx);
           break;
         } else {
@@ -3197,7 +3197,7 @@ void ISel::Select(SDOperand N) {
           MachineFunction *F = BB->getParent();
           int FrameIdx = F->getFrameInfo()->CreateStackObject(Size, Size);
           addFrameReference(BuildMI(BB, X86::MOVSSmr, 5), FrameIdx).addReg(Tmp1);
-          addFrameReference(BuildMI(BB, X86::FLD32m, 4, X86::FP0), FrameIdx);
+          addFrameReference(BuildMI(BB, X86::FpLD32m, 4, X86::FP0), FrameIdx);
           BuildMI(BB, X86::FpSETRESULT, 1).addReg(X86::FP0);
           ContainsFPCode = true;
         } else {
@@ -3212,7 +3212,7 @@ void ISel::Select(SDOperand N) {
           MachineFunction *F = BB->getParent();
           int FrameIdx = F->getFrameInfo()->CreateStackObject(Size, Size);
           addFrameReference(BuildMI(BB, X86::MOVSDmr, 5), FrameIdx).addReg(Tmp1);
-          addFrameReference(BuildMI(BB, X86::FLD64m, 4, X86::FP0), FrameIdx);
+          addFrameReference(BuildMI(BB, X86::FpLD64m, 4, X86::FP0), FrameIdx);
           BuildMI(BB, X86::FpSETRESULT, 1).addReg(X86::FP0);
           ContainsFPCode = true;
         } else {
@@ -3342,9 +3342,9 @@ void ISel::Select(SDOperand N) {
 
     // Get the X86 opcode to use.
     switch (N.getOpcode()) {
-    case X86ISD::FP_TO_INT16_IN_MEM: Tmp1 = X86::FIST16m; break;
-    case X86ISD::FP_TO_INT32_IN_MEM: Tmp1 = X86::FIST32m; break;
-    case X86ISD::FP_TO_INT64_IN_MEM: Tmp1 = X86::FISTP64m; break;
+    case X86ISD::FP_TO_INT16_IN_MEM: Tmp1 = X86::FpIST16m; break;
+    case X86ISD::FP_TO_INT32_IN_MEM: Tmp1 = X86::FpIST32m; break;
+    case X86ISD::FP_TO_INT64_IN_MEM: Tmp1 = X86::FpIST64m; break;
     }
 
     addFullAddress(BuildMI(BB, Tmp1, 5), AM).addReg(ValReg);
@@ -3393,7 +3393,7 @@ void ISel::Select(SDOperand N) {
     case MVT::i1: Opc = X86::MOV8mr; break;
     case MVT::f32:
       assert(!X86ScalarSSE && "Cannot truncstore scalar SSE regs");
-      Opc = X86::FST32m; break;
+      Opc = X86::FpST32m; break;
     }
 
     std::vector<std::pair<unsigned, unsigned> > RP;
@@ -3474,7 +3474,7 @@ void ISel::Select(SDOperand N) {
     case MVT::i16: Opc = X86::MOV16mr; break;
     case MVT::i32: Opc = X86::MOV32mr; break;
     case MVT::f32: Opc = X86::MOVSSmr; break;
-    case MVT::f64: Opc = X86ScalarSSE ? X86::MOVSDmr : X86::FST64m; break;
+    case MVT::f64: Opc = X86ScalarSSE ? X86::MOVSDmr : X86::FpST64m; break;
     }
 
     std::vector<std::pair<unsigned, unsigned> > RP;

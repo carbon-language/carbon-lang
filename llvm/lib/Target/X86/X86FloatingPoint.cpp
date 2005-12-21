@@ -311,6 +311,63 @@ static int Lookup(const TableEntry *Table, unsigned N, unsigned Opcode) {
   }
 #endif
 
+//===----------------------------------------------------------------------===//
+// Register File -> Register Stack Mapping Methods
+//===----------------------------------------------------------------------===//
+
+// OpcodeTable - Sorted map of register instructions to their stack version.
+// The first element is an register file pseudo instruction, the second is the
+// concrete X86 instruction which uses the register stack.
+//
+static const TableEntry OpcodeTable[] = {
+  { X86::FpABS    , X86::FABS     },
+  { X86::FpADD32m , X86::FADD32m  },
+  { X86::FpADD64m , X86::FADD64m  },
+  { X86::FpCHS    , X86::FCHS     },
+  { X86::FpCMOVA  , X86::FCMOVA   },
+  { X86::FpCMOVAE , X86::FCMOVAE  },
+  { X86::FpCMOVB  , X86::FCMOVB   },
+  { X86::FpCMOVBE , X86::FCMOVBE  },
+  { X86::FpCMOVE  , X86::FCMOVE   },
+  { X86::FpCMOVNE , X86::FCMOVNE  },
+  { X86::FpCMOVNP , X86::FCMOVNP  },
+  { X86::FpCMOVP  , X86::FCMOVP   },
+  { X86::FpCOS    , X86::FCOS     },
+  { X86::FpDIV32m , X86::FDIV32m  },
+  { X86::FpDIV64m , X86::FDIV64m  },
+  { X86::FpDIVR32m, X86::FDIVR32m },
+  { X86::FpDIVR64m, X86::FDIVR64m },
+  { X86::FpILD16m , X86::FILD16m  },
+  { X86::FpILD32m , X86::FILD32m  },
+  { X86::FpILD64m , X86::FILD64m  },
+  { X86::FpIST16m , X86::FIST16m  },
+  { X86::FpIST32m , X86::FIST32m  },
+  { X86::FpIST64m , X86::FISTP64m },
+  { X86::FpLD0    , X86::FLD0     },
+  { X86::FpLD1    , X86::FLD1     },
+  { X86::FpLD32m  , X86::FLD32m   },
+  { X86::FpLD64m  , X86::FLD64m   },
+  { X86::FpMUL32m , X86::FMUL32m  },
+  { X86::FpMUL64m , X86::FMUL64m  },
+  { X86::FpSIN    , X86::FSIN     },
+  { X86::FpSQRT   , X86::FSQRT    },
+  { X86::FpST32m  , X86::FST32m   },
+  { X86::FpST64m  , X86::FST64m   },
+  { X86::FpSUB32m , X86::FSUB32m  },
+  { X86::FpSUB64m , X86::FSUB64m  },
+  { X86::FpSUBR32m, X86::FSUBR32m },
+  { X86::FpSUBR64m, X86::FSUBR64m },
+  { X86::FpTST    , X86::FTST     },
+  { X86::FpUCOMIr , X86::FUCOMIr  },
+  { X86::FpUCOMr  , X86::FUCOMr   },
+};
+
+static unsigned getConcreteOpcode(unsigned Opcode) {
+  ASSERT_SORTED(OpcodeTable);
+  int Opc = Lookup(OpcodeTable, ARRAY_SIZE(OpcodeTable), Opcode);
+  assert(Opc != -1 && "FP Stack instruction not in OpcodeTable!");
+  return Opc;
+}
 
 //===----------------------------------------------------------------------===//
 // Helper Methods
@@ -407,9 +464,12 @@ static unsigned getFPReg(const MachineOperand &MO) {
 void FPS::handleZeroArgFP(MachineBasicBlock::iterator &I) {
   MachineInstr *MI = I;
   unsigned DestReg = getFPReg(MI->getOperand(0));
-  MI->RemoveOperand(0);   // Remove the explicit ST(0) operand
 
-  // Result gets pushed on the stack...
+  // Change from the pseudo instruction to the concrete instruction.
+  MI->RemoveOperand(0);   // Remove the explicit ST(0) operand
+  MI->setOpcode(getConcreteOpcode(MI->getOpcode()));
+  
+  // Result gets pushed on the stack.
   pushReg(DestReg);
 }
 
@@ -424,20 +484,22 @@ void FPS::handleOneArgFP(MachineBasicBlock::iterator &I) {
   unsigned Reg = getFPReg(MI->getOperand(MI->getNumOperands()-1));
   bool KillsSrc = LV->KillsRegister(MI, X86::FP0+Reg);
 
-  // FSTP80r and FISTP64r are strange because there are no non-popping versions.
+  // FISTP64r is strange because there isn't a non-popping versions.
   // If we have one _and_ we don't want to pop the operand, duplicate the value
   // on the stack instead of moving it.  This ensure that popping the value is
   // always ok.
   //
-  if ((MI->getOpcode() == X86::FSTP80m ||
-       MI->getOpcode() == X86::FISTP64m) && !KillsSrc) {
+  if (MI->getOpcode() == X86::FpIST64m && !KillsSrc) {
     duplicateToTop(Reg, 7 /*temp register*/, I);
   } else {
     moveToTop(Reg, I);            // Move to the top of the stack...
   }
+  
+  // Convert from the pseudo instruction to the concrete instruction.
   MI->RemoveOperand(MI->getNumOperands()-1);    // Remove explicit ST(0) operand
+  MI->setOpcode(getConcreteOpcode(MI->getOpcode()));
 
-  if (MI->getOpcode() == X86::FSTP80m || MI->getOpcode() == X86::FISTP64m) {
+  if (MI->getOpcode() == X86::FISTP64m) {
     assert(StackTop > 0 && "Stack empty??");
     --StackTop;
   } else if (KillsSrc) { // Last use of operand?
@@ -475,8 +537,10 @@ void FPS::handleOneArgFPRW(MachineBasicBlock::iterator &I) {
     duplicateToTop(Reg, getFPReg(MI->getOperand(0)), I);
   }
 
+  // Change from the pseudo instruction to the concrete instruction.
   MI->RemoveOperand(1);   // Drop the source operand.
   MI->RemoveOperand(0);   // Drop the destination operand.
+  MI->setOpcode(getConcreteOpcode(MI->getOpcode()));
 }
 
 
@@ -638,8 +702,10 @@ void FPS::handleCompareFP(MachineBasicBlock::iterator &I) {
   // anywhere.
   moveToTop(Op0, I);
 
+  // Change from the pseudo instruction to the concrete instruction.
   MI->getOperand(0).setReg(getSTReg(Op1));
   MI->RemoveOperand(1);
+  MI->setOpcode(getConcreteOpcode(MI->getOpcode()));
 
   // If any of the operands are killed by this instruction, free them.
   if (KillsOp0) freeStackSlotAfter(I, Op0);
@@ -660,9 +726,12 @@ void FPS::handleCondMovFP(MachineBasicBlock::iterator &I) {
   moveToTop(Op0, I);
 
   // Change the second operand to the stack register that the operand is in.
+  // Change from the pseudo instruction to the concrete instruction.
   MI->RemoveOperand(0);
   MI->getOperand(0).setReg(getSTReg(Op1));
-
+  MI->setOpcode(getConcreteOpcode(MI->getOpcode()));
+  
+  
   // If we kill the second operand, make sure to pop it from the stack.
   if (Op0 != Op1 && LV->KillsRegister(MI, X86::FP0+Op1)) {
     // Get this value off of the register stack.

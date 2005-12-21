@@ -56,7 +56,7 @@ void X86RegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
   } else if (RC == &X86::R16RegClass) {
     Opc = X86::MOV16mr;
   } else if (RC == &X86::RFPRegClass || RC == &X86::RSTRegClass) {
-    Opc = X86::FST64m;
+    Opc = X86::FpST64m;
   } else if (RC == &X86::V4F4RegClass) {
     Opc = X86::MOVSSmr;
   } else if (RC == &X86::V2F8RegClass) {
@@ -80,7 +80,7 @@ void X86RegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
   } else if (RC == &X86::R16RegClass) {
     Opc = X86::MOV16rm;
   } else if (RC == &X86::RFPRegClass || RC == &X86::RSTRegClass) {
-    Opc = X86::FLD64m;
+    Opc = X86::FpLD64m;
   } else if (RC == &X86::V4F4RegClass) {
     Opc = X86::MOVSSrm;
   } else if (RC == &X86::V2F8RegClass) {
@@ -123,8 +123,7 @@ unsigned X86RegisterInfo::isLoadFromStackSlot(MachineInstr *MI,
   case X86::MOV8rm:
   case X86::MOV16rm:
   case X86::MOV32rm:
-  case X86::FLD64m:
-  case X86::FLD80m:
+  case X86::FpLD64m:
   case X86::MOVSSrm:
   case X86::MOVSDrm:
     if (MI->getOperand(1).isFrameIndex() && MI->getOperand(2).isImmediate() &&
