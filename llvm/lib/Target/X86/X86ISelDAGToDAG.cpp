@@ -409,47 +409,6 @@ SDOperand X86DAGToDAGISel::Select(SDOperand N) {
       return CodeGenMap[N] = CurDAG->getTargetNode(Opc, VT, Result);
       break;
     }
-
-    case ISD::RET: {
-      SDOperand Chain = Node->getOperand(0);     // Token chain.
-      unsigned NumOps = Node->getNumOperands();
-
-      // Note: A bit of a hack / optimization... Try to delay chain selection
-      // as much as possible. So it's more likely it has already been selected
-      // for a  real use.
-      switch (NumOps) {
-        default:
-          assert(0 && "Unknown return instruction!");
-        case 3:
-          Chain = Select(Chain);
-          assert(0 && "Not yet handled return instruction!");
-          break;
-        case 2: {
-          SDOperand Val = Select(Node->getOperand(1));
-          Chain = Select(Chain);
-          switch (Node->getOperand(1).getValueType()) {
-            default:
-              assert(0 && "All other types should have been promoted!!");
-            case MVT::i32:
-              Chain = CurDAG->getCopyToReg(Chain, X86::EAX, Val);
-              break;
-            case MVT::f32:
-            case MVT::f64:
-              assert(0 && "Not yet handled return instruction!");
-              break;
-          }
-        }
-        case 1:
-          Chain = Select(Chain);
-          break;
-      }
-      if (X86Lowering.getBytesToPopOnReturn() == 0)
-        return CurDAG->SelectNodeTo(Node, X86::RET, MVT::Other, Chain);
-      else
-        return CurDAG->SelectNodeTo(Node, X86::RET, MVT::Other,
-                              getI16Imm(X86Lowering.getBytesToPopOnReturn()),
-                                    Chain);
-    }
   }
 
   return SelectCode(N);
