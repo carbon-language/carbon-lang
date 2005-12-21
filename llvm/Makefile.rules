@@ -108,6 +108,9 @@ spotless:
 	else \
 	  $(EchoCmd) "make spotless" can only be run from $(PROJ_OBJ_ROOT); \
 	fi
+else
+spotless:
+	$(EchoCmd) "spotless target not supported for objdir == srcdir"
 endif
 
 $(BUILT_SOURCES) : $(ObjMakefiles)
@@ -475,9 +478,9 @@ $(RecursiveTargets)::
 	done
 endif
 
-#---------------------------------------------------------
+#-----------------------------------------------------------
 # Handle the PARALLEL_DIRS options for parallel construction
-#---------------------------------------------------------
+#-----------------------------------------------------------
 ifdef PARALLEL_DIRS
 
 SubDirs += $(PARALLEL_DIRS)
@@ -1219,7 +1222,6 @@ $(LexObjs): $(ObjDir)/%.o : $(PROJ_SRC_DIR)/%.cpp
 
 clean-local::
 	-$(Verb) $(RM) -f $(LexOutput)
-	$(Verb) $(RM) -f $(LexOutput)
 
 endif
 
@@ -1230,7 +1232,6 @@ endif
 
 YaccFiles  := $(filter %.y,$(Sources))
 ifneq ($(YaccFiles),)
-YaccOutput := $(addprefix $(patsubst %.y,%,$(YaccFiles)),.output)
 
 .PRECIOUS: $(YaccOutput)
 
@@ -1239,7 +1240,7 @@ YaccOutput := $(addprefix $(patsubst %.y,%,$(YaccFiles)),.output)
 %.cpp: %.y
 %.h: %.y
 
-# Rule for building the bison parsers...
+# Rule for building the bison based parsers...
 $(PROJ_SRC_DIR)/%.cpp $(PROJ_SRC_DIR)/%.h : $(PROJ_SRC_DIR)/%.y
 	$(Echo) "Bisoning $*.y"
 	$(Verb) $(BISON) -v -d -p $(<F:%Parser.y=%) -o $*.tab.c $<
@@ -1247,8 +1248,13 @@ $(PROJ_SRC_DIR)/%.cpp $(PROJ_SRC_DIR)/%.h : $(PROJ_SRC_DIR)/%.y
 	$(Verb) $(MV) -f $*.tab.h $(PROJ_SRC_DIR)/$*.h
 	$(Echo) "*** DON'T FORGET TO CHECK IN $*.cpp and $*.h (generated files)"
 
+YaccObjs   := $(patsubst %.y,$(ObjDir)/%.o,$(YaccFiles))
+$(YaccObjs): $(ObjDir)/%.o : $(PROJ_SRC_DIR)/%.cpp
+
+YaccOutput := $(addprefix $(patsubst %.y,%,$(YaccFiles)),.output)
+
 clean-local::
-	$(Verb) $(RM) -f $(YaccOutput)
+	-$(Verb) $(RM) -f $(YaccOutput)
 endif
 
 ###############################################################################
