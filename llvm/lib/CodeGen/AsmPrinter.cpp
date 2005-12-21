@@ -146,7 +146,10 @@ void AsmPrinter::EmitXXStructorList(Constant *List) {
   for (unsigned i = 0, e = InitList->getNumOperands(); i != e; ++i)
     if (ConstantStruct *CS = dyn_cast<ConstantStruct>(InitList->getOperand(i))){
       if (CS->getNumOperands() != 2) return;  // Not array of 2-element structs.
-                                              // Emit the function pointer.
+
+      if (CS->getOperand(1)->isNullValue())
+        return;  // Found a null terminator, exit printing.
+      // Emit the function pointer.
       EmitGlobalConstant(CS->getOperand(1));
     }
 }
