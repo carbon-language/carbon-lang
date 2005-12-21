@@ -78,8 +78,57 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		CF26835B09178F5500C5F253 /* TargetInstrItineraries.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TargetInstrItineraries.h; sourceTree = "<group>"; };
+		CF490CD50903C9260072DB1C /* PPC.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PPC.h; sourceTree = "<group>"; };
+		CF490CD60903C9260072DB1C /* PPCAsmPrinter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PPCAsmPrinter.cpp; sourceTree = "<group>"; };
+		CF490CD70903C9260072DB1C /* PPCBranchSelector.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PPCBranchSelector.cpp; sourceTree = "<group>"; };
+		CF490CD80903C9260072DB1C /* PPCCodeEmitter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PPCCodeEmitter.cpp; sourceTree = "<group>"; };
+		CF490CD90903C9260072DB1C /* PPCFrameInfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PPCFrameInfo.h; sourceTree = "<group>"; };
+		CF490CDA0903C9260072DB1C /* PPCInstrBuilder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PPCInstrBuilder.h; sourceTree = "<group>"; };
+		CF490CDB0903C9260072DB1C /* PPCInstrFormats.td */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = PPCInstrFormats.td; sourceTree = "<group>"; };
+		CF490CDC0903C9260072DB1C /* PPCInstrInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PPCInstrInfo.cpp; sourceTree = "<group>"; };
+		CF490CDD0903C9260072DB1C /* PPCInstrInfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PPCInstrInfo.h; sourceTree = "<group>"; };
+		CF490CDE0903C9260072DB1C /* PPCInstrInfo.td */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = PPCInstrInfo.td; sourceTree = "<group>"; };
+		CF490CDF0903C9260072DB1C /* PPCISelDAGToDAG.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PPCISelDAGToDAG.cpp; sourceTree = "<group>"; };
+		CF490CE00903C9260072DB1C /* PPCISelLowering.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PPCISelLowering.cpp; sourceTree = "<group>"; };
+		CF490CE10903C9260072DB1C /* PPCISelLowering.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PPCISelLowering.h; sourceTree = "<group>"; };
+		CF490CE20903C9260072DB1C /* PPCISelPattern.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PPCISelPattern.cpp; sourceTree = "<group>"; };
+		CF490CE30903C9260072DB1C /* PPCJITInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PPCJITInfo.cpp; sourceTree = "<group>"; };
+		CF490CE40903C9260072DB1C /* PPCJITInfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PPCJITInfo.h; sourceTree = "<group>"; };
+		CF490CE50903C9260072DB1C /* PPCRegisterInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PPCRegisterInfo.cpp; sourceTree = "<group>"; };
+		CF490CE60903C9260072DB1C /* PPCRegisterInfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PPCRegisterInfo.h; sourceTree = "<group>"; };
+		CF490CE70903C9260072DB1C /* PPCRegisterInfo.td */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = PPCRegisterInfo.td; sourceTree = "<group>"; };
+		CF490CE80903C9260072DB1C /* PPCRelocations.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PPCRelocations.h; sourceTree = "<group>"; };
+		CF490CE90903C9260072DB1C /* PPCSubtarget.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PPCSubtarget.cpp; sourceTree = "<group>"; };
+		CF490CEA0903C9260072DB1C /* PPCSubtarget.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PPCSubtarget.h; sourceTree = "<group>"; };
+		CF490CEB0903C9260072DB1C /* PPCTargetMachine.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PPCTargetMachine.cpp; sourceTree = "<group>"; };
+		CF490CEC0903C9260072DB1C /* PPCTargetMachine.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PPCTargetMachine.h; sourceTree = "<group>"; };
+		CF490D0E090541A30072DB1C /* PPCSchedule.td */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = PPCSchedule.td; sourceTree = "<group>"; };
+		CF490D0F090541A30072DB1C /* PPCScheduleG3.td */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = PPCScheduleG3.td; sourceTree = "<group>"; };
+		CF490D10090541A30072DB1C /* PPCScheduleG4.td */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = PPCScheduleG4.td; sourceTree = "<group>"; };
+		CF490D11090541A30072DB1C /* PPCScheduleG4Plus.td */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = PPCScheduleG4Plus.td; sourceTree = "<group>"; };
+		CF490D12090541A30072DB1C /* PPCScheduleG5.td */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = PPCScheduleG5.td; sourceTree = "<group>"; };
+		CF490D14090541D30072DB1C /* TargetSchedule.td */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = TargetSchedule.td; sourceTree = "<group>"; };
+		CF490D15090541D30072DB1C /* TargetSelectionDAG.td */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = TargetSelectionDAG.td; sourceTree = "<group>"; };
+		CF490D890906A78C0072DB1C /* PPC.td */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = PPC.td; sourceTree = "<group>"; };
+		CF490E2F0907BBF80072DB1C /* SubtargetEmitter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SubtargetEmitter.h; sourceTree = "<group>"; };
+		CF490E300907BBF80072DB1C /* SubtargetEmitter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SubtargetEmitter.cpp; sourceTree = "<group>"; };
+		CF6F487109505E1500BC9E82 /* MachineDebugInfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MachineDebugInfo.h; sourceTree = "<group>"; };
 		CF9BCD0808C74DE0001E7011 /* SubtargetFeature.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SubtargetFeature.h; sourceTree = "<group>"; };
 		CF9BCD1508C75070001E7011 /* SubtargetFeature.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SubtargetFeature.cpp; sourceTree = "<group>"; };
+		CFBD8B1A090E76540020B107 /* AlphaISelDAGToDAG.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AlphaISelDAGToDAG.cpp; sourceTree = "<group>"; };
+		CFBD8B1B090E76540020B107 /* AlphaISelLowering.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AlphaISelLowering.cpp; sourceTree = "<group>"; };
+		CFBD8B1C090E76540020B107 /* AlphaISelLowering.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AlphaISelLowering.h; sourceTree = "<group>"; };
+		CFBD8B1D090E76540020B107 /* AlphaSubtarget.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AlphaSubtarget.cpp; sourceTree = "<group>"; };
+		CFBD8B1E090E76540020B107 /* AlphaSubtarget.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AlphaSubtarget.h; sourceTree = "<group>"; };
+		CFC244570959DEF2009F8C47 /* DwarfWriter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DwarfWriter.cpp; sourceTree = "<group>"; };
+		CFC244BB0959F24C009F8C47 /* X86ISelDAGToDAG.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = X86ISelDAGToDAG.cpp; sourceTree = "<group>"; };
+		CFC244BC0959F24C009F8C47 /* X86ISelLowering.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = X86ISelLowering.cpp; sourceTree = "<group>"; };
+		CFC244BD0959F24C009F8C47 /* X86ISelLowering.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = X86ISelLowering.h; sourceTree = "<group>"; };
+		CFC244BE0959F284009F8C47 /* SparcV8ISelDAGToDAG.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SparcV8ISelDAGToDAG.cpp; sourceTree = "<group>"; };
+		CFC244BF0959F2E3009F8C47 /* IA64ISelDAGToDAG.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = IA64ISelDAGToDAG.cpp; sourceTree = "<group>"; };
+		CFC244C00959F2E3009F8C47 /* IA64ISelLowering.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = IA64ISelLowering.cpp; sourceTree = "<group>"; };
+		CFC244C10959F2E3009F8C47 /* IA64ISelLowering.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IA64ISelLowering.h; sourceTree = "<group>"; };
 		DE4DA0390911476D0012D44B /* LoopSimplify.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = LoopSimplify.cpp; path = ../lib/Transforms/Utils/LoopSimplify.cpp; sourceTree = SOURCE_ROOT; };
 		DE4DA03C091147920012D44B /* LiveInterval.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = LiveInterval.h; path = ../include/llvm/CodeGen/LiveInterval.h; sourceTree = SOURCE_ROOT; };
 		DE4DA03D091147920012D44B /* LiveIntervalAnalysis.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = LiveIntervalAnalysis.h; path = ../include/llvm/CodeGen/LiveIntervalAnalysis.h; sourceTree = SOURCE_ROOT; };
@@ -206,7 +255,6 @@
 		DE66ED7C08ABEC2B00323D32 /* PHIElimination.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = PHIElimination.cpp; sourceTree = "<group>"; };
 		DE66ED7D08ABEC2B00323D32 /* PhysRegTracker.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = PhysRegTracker.h; sourceTree = "<group>"; };
 		DE66ED7E08ABEC2B00323D32 /* PrologEpilogInserter.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = PrologEpilogInserter.cpp; sourceTree = "<group>"; };
-		DE66ED7F08ABEC2B00323D32 /* RegAllocIterativeScan.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = RegAllocIterativeScan.cpp; sourceTree = "<group>"; };
 		DE66ED8008ABEC2B00323D32 /* RegAllocLinearScan.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = RegAllocLinearScan.cpp; sourceTree = "<group>"; };
 		DE66ED8108ABEC2B00323D32 /* RegAllocLocal.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = RegAllocLocal.cpp; sourceTree = "<group>"; };
 		DE66ED8208ABEC2B00323D32 /* RegAllocSimple.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = RegAllocSimple.cpp; sourceTree = "<group>"; };
@@ -364,13 +412,11 @@
 		DE66EFB308ABEE5F00323D32 /* SparcV8.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = SparcV8.h; sourceTree = "<group>"; };
 		DE66EFB408ABEE5F00323D32 /* SparcV8.td */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = SparcV8.td; sourceTree = "<group>"; };
 		DE66EFB508ABEE5F00323D32 /* SparcV8AsmPrinter.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = SparcV8AsmPrinter.cpp; sourceTree = "<group>"; };
-		DE66EFB608ABEE5F00323D32 /* SparcV8CodeEmitter.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = SparcV8CodeEmitter.cpp; sourceTree = "<group>"; };
 		DE66EFBD08ABEE5F00323D32 /* SparcV8InstrFormats.td */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = SparcV8InstrFormats.td; sourceTree = "<group>"; };
 		DE66EFBE08ABEE5F00323D32 /* SparcV8InstrInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = SparcV8InstrInfo.cpp; sourceTree = "<group>"; };
 		DE66EFBF08ABEE5F00323D32 /* SparcV8InstrInfo.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = SparcV8InstrInfo.h; sourceTree = "<group>"; };
 		DE66EFC008ABEE5F00323D32 /* SparcV8InstrInfo.td */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = SparcV8InstrInfo.td; sourceTree = "<group>"; };
 		DE66EFC208ABEE5F00323D32 /* SparcV8ISelSimple.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = SparcV8ISelSimple.cpp; sourceTree = "<group>"; };
-		DE66EFC308ABEE5F00323D32 /* SparcV8JITInfo.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = SparcV8JITInfo.h; sourceTree = "<group>"; };
 		DE66EFC408ABEE5F00323D32 /* SparcV8RegisterInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; path = SparcV8RegisterInfo.cpp; sourceTree = "<group>"; };
 		DE66EFC508ABEE5F00323D32 /* SparcV8RegisterInfo.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = SparcV8RegisterInfo.h; sourceTree = "<group>"; };
 		DE66EFC608ABEE5F00323D32 /* SparcV8RegisterInfo.td */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text; path = SparcV8RegisterInfo.td; sourceTree = "<group>"; };
@@ -1080,6 +1126,7 @@
 			children = (
 				DE66ED8308ABEC2B00323D32 /* SelectionDAG */,
 				DE66ED3F08ABEC2A00323D32 /* AsmPrinter.cpp */,
+				CFC244570959DEF2009F8C47 /* DwarfWriter.cpp */,
 				DE66ED4008ABEC2A00323D32 /* BranchFolding.cpp */,
 				DEFAB19C0959E97F00E0AB42 /* DwarfWriter.cpp */,
 				DE66ED6F08ABEC2B00323D32 /* ELFWriter.cpp */,
@@ -1095,7 +1142,6 @@
 				DE66ED7C08ABEC2B00323D32 /* PHIElimination.cpp */,
 				DE66ED7D08ABEC2B00323D32 /* PhysRegTracker.h */,
 				DE66ED7E08ABEC2B00323D32 /* PrologEpilogInserter.cpp */,
-				DE66ED7F08ABEC2B00323D32 /* RegAllocIterativeScan.cpp */,
 				DE66ED8008ABEC2B00323D32 /* RegAllocLinearScan.cpp */,
 				DE66ED8108ABEC2B00323D32 /* RegAllocLocal.cpp */,
 				DE66ED8208ABEC2B00323D32 /* RegAllocSimple.cpp */,
@@ -1112,8 +1158,8 @@
 		DE66ED8308ABEC2B00323D32 /* SelectionDAG */ = {
 			isa = PBXGroup;
 			children = (
-				DE694D9F08B51E0C0039C106 /* ScheduleDAG.cpp */,
 				DE66ED9008ABEC2B00323D32 /* LegalizeDAG.cpp */,
+				DE694D9F08B51E0C0039C106 /* ScheduleDAG.cpp */,
 				DE66ED9208ABEC2B00323D32 /* SelectionDAG.cpp */,
 				DE66ED9308ABEC2B00323D32 /* SelectionDAGISel.cpp */,
 				DE66ED9408ABEC2B00323D32 /* SelectionDAGPrinter.cpp */,
@@ -1318,6 +1364,8 @@
 				DE66F08F08ABEE6000323D32 /* TargetMachine.cpp */,
 				DE66F09008ABEE6000323D32 /* TargetMachineRegistry.cpp */,
 				DE66F09108ABEE6000323D32 /* TargetSchedInfo.cpp */,
+				CF490D14090541D30072DB1C /* TargetSchedule.td */,
+				CF490D15090541D30072DB1C /* TargetSelectionDAG.td */,
 				DE66F09208ABEE6000323D32 /* TargetSubtarget.cpp */,
 			);
 			name = lib/Target;
@@ -1328,6 +1376,11 @@
 			isa = PBXGroup;
 			children = (
 				DE66EE9808ABEE5E00323D32 /* Alpha.h */,
+				CFBD8B1A090E76540020B107 /* AlphaISelDAGToDAG.cpp */,
+				CFBD8B1B090E76540020B107 /* AlphaISelLowering.cpp */,
+				CFBD8B1C090E76540020B107 /* AlphaISelLowering.h */,
+				CFBD8B1D090E76540020B107 /* AlphaSubtarget.cpp */,
+				CFBD8B1E090E76540020B107 /* AlphaSubtarget.h */,
 				DE66EE9908ABEE5E00323D32 /* Alpha.td */,
 				DE66EE9A08ABEE5E00323D32 /* AlphaAsmPrinter.cpp */,
 				DE66EE9B08ABEE5E00323D32 /* AlphaCodeEmitter.cpp */,
@@ -1368,6 +1421,9 @@
 				DE66EF0308ABEE5E00323D32 /* IA64InstrInfo.cpp */,
 				DE66EF0408ABEE5E00323D32 /* IA64InstrInfo.h */,
 				DE66EF0508ABEE5E00323D32 /* IA64InstrInfo.td */,
+				CFC244BF0959F2E3009F8C47 /* IA64ISelDAGToDAG.cpp */,
+				CFC244C00959F2E3009F8C47 /* IA64ISelLowering.cpp */,
+				CFC244C10959F2E3009F8C47 /* IA64ISelLowering.h */,
 				DE66EF0608ABEE5E00323D32 /* IA64ISelPattern.cpp */,
 				DE66EF0708ABEE5E00323D32 /* IA64MachineFunctionInfo.h */,
 				DE66EF0808ABEE5E00323D32 /* IA64RegisterInfo.cpp */,
@@ -1383,6 +1439,36 @@
 		DE66EF1108ABEE5E00323D32 /* PowerPC */ = {
 			isa = PBXGroup;
 			children = (
+				CF490D890906A78C0072DB1C /* PPC.td */,
+				CF490CD50903C9260072DB1C /* PPC.h */,
+				CF490CD60903C9260072DB1C /* PPCAsmPrinter.cpp */,
+				CF490CD70903C9260072DB1C /* PPCBranchSelector.cpp */,
+				CF490CD80903C9260072DB1C /* PPCCodeEmitter.cpp */,
+				CF490CD90903C9260072DB1C /* PPCFrameInfo.h */,
+				CF490CDA0903C9260072DB1C /* PPCInstrBuilder.h */,
+				CF490CDB0903C9260072DB1C /* PPCInstrFormats.td */,
+				CF490CDC0903C9260072DB1C /* PPCInstrInfo.cpp */,
+				CF490CDD0903C9260072DB1C /* PPCInstrInfo.h */,
+				CF490CDE0903C9260072DB1C /* PPCInstrInfo.td */,
+				CF490CDF0903C9260072DB1C /* PPCISelDAGToDAG.cpp */,
+				CF490CE00903C9260072DB1C /* PPCISelLowering.cpp */,
+				CF490CE10903C9260072DB1C /* PPCISelLowering.h */,
+				CF490CE20903C9260072DB1C /* PPCISelPattern.cpp */,
+				CF490CE30903C9260072DB1C /* PPCJITInfo.cpp */,
+				CF490CE40903C9260072DB1C /* PPCJITInfo.h */,
+				CF490CE50903C9260072DB1C /* PPCRegisterInfo.cpp */,
+				CF490CE60903C9260072DB1C /* PPCRegisterInfo.h */,
+				CF490CE70903C9260072DB1C /* PPCRegisterInfo.td */,
+				CF490CE80903C9260072DB1C /* PPCRelocations.h */,
+				CF490D0E090541A30072DB1C /* PPCSchedule.td */,
+				CF490D0F090541A30072DB1C /* PPCScheduleG3.td */,
+				CF490D10090541A30072DB1C /* PPCScheduleG4.td */,
+				CF490D11090541A30072DB1C /* PPCScheduleG4Plus.td */,
+				CF490D12090541A30072DB1C /* PPCScheduleG5.td */,
+				CF490CE90903C9260072DB1C /* PPCSubtarget.cpp */,
+				CF490CEA0903C9260072DB1C /* PPCSubtarget.h */,
+				CF490CEB0903C9260072DB1C /* PPCTargetMachine.cpp */,
+				CF490CEC0903C9260072DB1C /* PPCTargetMachine.h */,
 				DE66EF3D08ABEE5F00323D32 /* LICENSE.TXT */,
 				DE4DA03F091147DD0012D44B /* PPC.h */,
 				DE4DA040091147DD0012D44B /* PPC.td */,
@@ -1448,16 +1534,15 @@
 				DE66EFB308ABEE5F00323D32 /* SparcV8.h */,
 				DE66EFB408ABEE5F00323D32 /* SparcV8.td */,
 				DE66EFB508ABEE5F00323D32 /* SparcV8AsmPrinter.cpp */,
-				DE66EFB608ABEE5F00323D32 /* SparcV8CodeEmitter.cpp */,
 				DE66EFBD08ABEE5F00323D32 /* SparcV8InstrFormats.td */,
 				DE66EFBE08ABEE5F00323D32 /* SparcV8InstrInfo.cpp */,
 				DE66EFBF08ABEE5F00323D32 /* SparcV8InstrInfo.h */,
 				DE66EFC008ABEE5F00323D32 /* SparcV8InstrInfo.td */,
 				DE66EFC208ABEE5F00323D32 /* SparcV8ISelSimple.cpp */,
-				DE66EFC308ABEE5F00323D32 /* SparcV8JITInfo.h */,
 				DE66EFC408ABEE5F00323D32 /* SparcV8RegisterInfo.cpp */,
 				DE66EFC508ABEE5F00323D32 /* SparcV8RegisterInfo.h */,
 				DE66EFC608ABEE5F00323D32 /* SparcV8RegisterInfo.td */,
+				CFC244BE0959F284009F8C47 /* SparcV8ISelDAGToDAG.cpp */,
 				DE66EFC708ABEE5F00323D32 /* SparcV8TargetMachine.cpp */,
 				DE66EFC808ABEE5F00323D32 /* SparcV8TargetMachine.h */,
 			);
@@ -1614,6 +1699,9 @@
 				DE66F0D908ABEE6100323D32 /* X86RegisterInfo.h */,
 				DE66F0DA08ABEE6100323D32 /* X86RegisterInfo.td */,
 				DE66F0DB08ABEE6100323D32 /* X86Relocations.h */,
+				CFC244BB0959F24C009F8C47 /* X86ISelDAGToDAG.cpp */,
+				CFC244BC0959F24C009F8C47 /* X86ISelLowering.cpp */,
+				CFC244BD0959F24C009F8C47 /* X86ISelLowering.h */,
 				DE66F0DC08ABEE6100323D32 /* X86Subtarget.cpp */,
 				DE66F0DD08ABEE6100323D32 /* X86Subtarget.h */,
 				DE66F0DE08ABEE6100323D32 /* X86TargetMachine.cpp */,
@@ -1894,6 +1982,7 @@
 				DE66F23B08ABF03100323D32 /* MachineBasicBlock.h */,
 				DE66F23C08ABF03100323D32 /* MachineCodeEmitter.h */,
 				DE66F23D08ABF03100323D32 /* MachineConstantPool.h */,
+				CF6F487109505E1500BC9E82 /* MachineDebugInfo.h */,
 				DE66F23E08ABF03100323D32 /* MachineFrameInfo.h */,
 				DE66F23F08ABF03100323D32 /* MachineFunction.h */,
 				DE66F24008ABF03100323D32 /* MachineFunctionPass.h */,
@@ -2007,6 +2096,7 @@
 				DE66F2A108ABF03200323D32 /* TargetData.h */,
 				DE66F2A208ABF03200323D32 /* TargetFrameInfo.h */,
 				DE66F2A308ABF03200323D32 /* TargetInstrInfo.h */,
+				CF26835B09178F5500C5F253 /* TargetInstrItineraries.h */,
 				DE66F2A408ABF03200323D32 /* TargetJITInfo.h */,
 				DE66F2A508ABF03200323D32 /* TargetLowering.h */,
 				DE66F2A608ABF03200323D32 /* TargetMachine.h */,
@@ -2289,6 +2379,8 @@
 				DE8170AA08CFB44D0093BDEF /* TableGen.cpp */,
 				DE8170AB08CFB44D0093BDEF /* TableGenBackend.cpp */,
 				DE8170AC08CFB44D0093BDEF /* TableGenBackend.h */,
+				CF490E300907BBF80072DB1C /* SubtargetEmitter.cpp */,
+				CF490E2F0907BBF80072DB1C /* SubtargetEmitter.h */,
 			);
 			path = TableGen;
 			sourceTree = "<group>";
@@ -2298,7 +2390,7 @@
 /* Begin PBXLegacyTarget section */
 		CF0329B608D1BE110030FD33 /* LLVM lib */ = {
 			isa = PBXLegacyTarget;
-			buildArgumentsString = "$(ACTION) -j 4 ";
+			buildArgumentsString = "$(ACTION) -j 4";
 			buildConfigurationList = CF0329B708D1BE530030FD33 /* Build configuration list for PBXLegacyTarget "LLVM lib" */;
 			buildPhases = (
 			);
@@ -2316,7 +2408,7 @@
 				);
 			};
 			buildToolPath = /usr/bin/make;
-			buildWorkingDirectory = ../../obj/lib;
+			buildWorkingDirectory = /Volumes/Big2/llvm/llvm/lib;
 			dependencies = (
 			);
 			name = "LLVM lib";
@@ -2343,10 +2435,37 @@
 				);
 			};
 			buildToolPath = /usr/bin/make;
-			buildWorkingDirectory = ../../obj/tools/llc;
+			buildWorkingDirectory = /Volumes/Big2/llvm/llvm/tools/llc;
 			dependencies = (
 			);
 			name = "LLVM llc";
+			passBuildSettingsInEnvironment = 0;
+			productName = "LLVM llc";
+		};
+		CF490E830907CDAB0072DB1C /* LLVM TableGen */ = {
+			isa = PBXLegacyTarget;
+			buildArgumentsString = "$(ACTION) -j 4 ";
+			buildConfigurationList = CF490E840907CDAB0072DB1C /* Build configuration list for PBXLegacyTarget "LLVM TableGen" */;
+			buildPhases = (
+			);
+			buildSettings = {
+				OPTIMIZATION_CFLAGS = "";
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = "LLVM llc";
+				SECTORDER_FLAGS = "";
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+			};
+			buildToolPath = /usr/bin/make;
+			buildWorkingDirectory = /llvm/llvm/utils/TableGen;
+			dependencies = (
+			);
+			name = "LLVM TableGen";
 			passBuildSettingsInEnvironment = 0;
 			productName = "LLVM llc";
 		};
@@ -2362,7 +2481,7 @@
 				PRODUCT_NAME = LLVM;
 			};
 			buildToolPath = /usr/bin/make;
-			buildWorkingDirectory = ../../obj;
+			buildWorkingDirectory = /Volumes/Big2/llvm/llvm;
 			dependencies = (
 			);
 			name = LLVM;
@@ -2389,6 +2508,7 @@
 				CF0329B608D1BE110030FD33 /* LLVM lib */,
 				CF0329BB08D1BE5D0030FD33 /* LLVM llc */,
 				CF0329BC08D1BE8E0030FD33 /* LLVM full llc */,
+				CF490E830907CDAB0072DB1C /* LLVM TableGen */,
 			);
 		};
 /* End PBXProject section */
@@ -2572,6 +2692,61 @@
 			};
 			name = Default;
 		};
+		CF490E850907CDAB0072DB1C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				OPTIMIZATION_CFLAGS = "-O0";
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = "LLVM TableGen";
+				SECTORDER_FLAGS = "";
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+			};
+			name = Debug;
+		};
+		CF490E860907CDAB0072DB1C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = YES;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				OPTIMIZATION_CFLAGS = "-O0";
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = "LLVM llc";
+				SECTORDER_FLAGS = "";
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+			};
+			name = Release;
+		};
+		CF490E870907CDAB0072DB1C /* Default */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				OPTIMIZATION_CFLAGS = "-O0";
+				OTHER_CFLAGS = "";
+				OTHER_LDFLAGS = "";
+				OTHER_REZFLAGS = "";
+				PRODUCT_NAME = "LLVM llc";
+				SECTORDER_FLAGS = "";
+				WARNING_CFLAGS = (
+					"-Wmost",
+					"-Wno-four-char-constants",
+					"-Wno-unknown-pragmas",
+				);
+			};
+			name = Default;
+		};
 		DE66EC4D08ABE78900323D32 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -2640,6 +2815,7 @@
 				CF0329BA08D1BE530030FD33 /* Default */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Default;
 		};
 		CF0329C308D1BEC40030FD33 /* Build configuration list for PBXLegacyTarget "LLVM llc" */ = {
 			isa = XCConfigurationList;
@@ -2649,6 +2825,7 @@
 				CF0329C608D1BEC40030FD33 /* Default */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Default;
 		};
 		CF0329C708D1BEC40030FD33 /* Build configuration list for PBXAggregateTarget "LLVM full llc" */ = {
 			isa = XCConfigurationList;
@@ -2658,6 +2835,17 @@
 				CF0329CA08D1BEC40030FD33 /* Default */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Default;
+		};
+		CF490E840907CDAB0072DB1C /* Build configuration list for PBXLegacyTarget "LLVM TableGen" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CF490E850907CDAB0072DB1C /* Debug */,
+				CF490E860907CDAB0072DB1C /* Release */,
+				CF490E870907CDAB0072DB1C /* Default */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Default;
 		};
 		DE66EC4C08ABE78900323D32 /* Build configuration list for PBXLegacyTarget "LLVM" */ = {
 			isa = XCConfigurationList;
