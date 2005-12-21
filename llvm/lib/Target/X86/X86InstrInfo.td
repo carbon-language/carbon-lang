@@ -290,7 +290,7 @@ let isTerminator = 1 in
 
 // Return instructions.
 let isTerminator = 1, isReturn = 1, isBarrier = 1, hasCtrlDep = 1 in
-  def RET : I<0xC3, RawFrm, (ops), "ret", []>;
+  def RET : I<0xC3, RawFrm, (ops), "ret", [(ret)]>;
 let isTerminator = 1, isReturn = 1, isBarrier = 1, hasCtrlDep = 1 in
   def RETI : Ii16<0xC2, RawFrm, (ops i16imm:$amt), "ret $amt", []>;
 
