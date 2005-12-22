@@ -94,7 +94,6 @@ namespace {
     
 private:
     SDOperand SelectDIV(SDOperand Op);
-    SDOperand SelectCALL(SDOperand Op);
   };
 }
 
@@ -327,191 +326,6 @@ SDOperand IA64DAGToDAGISel::SelectDIV(SDOperand Op) {
   return Result;
 }
 
-
-SDOperand IA64DAGToDAGISel::SelectCALL(SDOperand Op) {
-  SDNode *N = Op.Val;
-  SDOperand Chain = Select(N->getOperand(0));
-  
-  unsigned CallOpcode;
-  std::vector<SDOperand> CallOperands;
-
-  // save the current GP, SP and RP : FIXME: do we need to do all 3 always?
-  SDOperand GPBeforeCall = CurDAG->getCopyFromReg(Chain, IA64::r1, MVT::i64);
-  Chain = GPBeforeCall.getValue(1);
-  SDOperand SPBeforeCall = CurDAG->getCopyFromReg(Chain, IA64::r12, MVT::i64);
-  Chain = SPBeforeCall.getValue(1);
-  SDOperand RPBeforeCall = CurDAG->getCopyFromReg(Chain, IA64::rp, MVT::i64);
-  Chain = RPBeforeCall.getValue(1);
-
-  // if we can call directly, do so
-  if (GlobalAddressSDNode *GASD =
-      dyn_cast<GlobalAddressSDNode>(N->getOperand(1))) {
-    CallOpcode = IA64::BRCALL_IPREL;
-    CallOperands.push_back(CurDAG->getTargetGlobalAddress(GASD->getGlobal(),
-                                                          MVT::i64));
-  } else if (ExternalSymbolSDNode *ESSDN = // FIXME: we currently NEED this
-		                         // case for correctness, to avoid
-					 // "non-pic code with imm reloc.n
-					 // against dynamic symbol" errors
-             dyn_cast<ExternalSymbolSDNode>(N->getOperand(1))) {
-    CallOpcode = IA64::BRCALL_IPREL;
-    CallOperands.push_back(N->getOperand(1));
-  } else {
-    // otherwise we need to load the function descriptor,
-    // load the branch target (function)'s entry point and GP,
-    // branch (call) then restore the GP
-    
-    SDOperand FnDescriptor = Select(N->getOperand(1));
-   
-    // load the branch target's entry point [mem] and 
-    // GP value [mem+8]
-    SDOperand targetEntryPoint=CurDAG->getTargetNode(IA64::LD8, MVT::i64,
-		    FnDescriptor);
-    Chain = targetEntryPoint.getValue(1);
-    SDOperand targetGPAddr=CurDAG->getTargetNode(IA64::ADDS, MVT::i64, 
-		    FnDescriptor, CurDAG->getConstant(8, MVT::i64));
-    Chain = targetGPAddr.getValue(1);
-    SDOperand targetGP=CurDAG->getTargetNode(IA64::LD8, MVT::i64,
-		    targetGPAddr);
-    Chain = targetGP.getValue(1);
-
-/* FIXME? (methcall still fails)
-    SDOperand targetEntryPoint=CurDAG->getLoad(MVT::i64, Chain, FnDescriptor,
-	                                CurDAG->getSrcValue(0));
-    SDOperand targetGPAddr=CurDAG->getNode(ISD::ADD, MVT::i64, FnDescriptor, 
-	                    CurDAG->getConstant(8, MVT::i64));
-    SDOperand targetGP=CurDAG->getLoad(MVT::i64, Chain, targetGPAddr,
-	                               CurDAG->getSrcValue(0));
-    */
-
-    /* this is just the long way of writing the two lines below?
-    // Copy the callee GP into r1
-    SDOperand r1 = CurDAG->getRegister(IA64::r1, MVT::i64);
-    Chain = CurDAG->getNode(ISD::CopyToReg, MVT::i64, Chain, r1,
-	             targetGP);
-    
-
-    // Copy the callee address into the b6 branch register
-    SDOperand B6 = CurDAG->getRegister(IA64::B6, MVT::i64);
-    Chain = CurDAG->getNode(ISD::CopyToReg, MVT::i64, Chain, B6,
-	             targetEntryPoint);
-    */
-
-    Chain = CurDAG->getCopyToReg(Chain, IA64::r1, targetGP);
-    Chain = CurDAG->getCopyToReg(Chain, IA64::B6, targetEntryPoint);
-    
-    CallOperands.push_back(CurDAG->getRegister(IA64::B6, MVT::i64));
-    CallOpcode = IA64::BRCALL_INDIRECT;
-  }
- 
-  // see section 8.5.8 of "Itanium Software Conventions and
-  // Runtime Architecture Guide to see some examples of what's going
-  // on here. (in short: int args get mapped 1:1 'slot-wise' to out0->out7,
-  // while FP args get mapped to F8->F15 as needed)
-  
-  // TODO: support in-memory arguments
- 
-  unsigned used_FPArgs=0; // how many FP args have been used so far?
-
-  unsigned intArgs[] = {IA64::out0, IA64::out1, IA64::out2, IA64::out3,
-                        IA64::out4, IA64::out5, IA64::out6, IA64::out7 };
-  unsigned FPArgs[] = {IA64::F8, IA64::F9, IA64::F10, IA64::F11,
-                       IA64::F12, IA64::F13, IA64::F14, IA64::F15 };
-
-  SDOperand InFlag;  // Null incoming flag value.
-  
-  for (unsigned i = 2, e = N->getNumOperands(); i != e; ++i) {
-    unsigned DestReg = 0;
-    MVT::ValueType RegTy = N->getOperand(i).getValueType();
-    if (RegTy == MVT::i64) {
-      assert((i-2) < 8 && "Too many int args");
-      DestReg = intArgs[i-2];
-    } else {
-      assert(MVT::isFloatingPoint(N->getOperand(i).getValueType()) &&
-             "Unpromoted integer arg?");
-      assert(used_FPArgs < 8 && "Too many fp args");
-      DestReg = FPArgs[used_FPArgs++];
-    }
-    
-    if (N->getOperand(i).getOpcode() != ISD::UNDEF) {
-      SDOperand Val = Select(N->getOperand(i));
-      if(MVT::isInteger(N->getOperand(i).getValueType())) {
-        Chain = CurDAG->getCopyToReg(Chain, DestReg, Val, InFlag);
-        InFlag = Chain.getValue(1);
-        CallOperands.push_back(CurDAG->getRegister(DestReg, RegTy));
-      }
-      // some functions (e.g. printf) want floating point arguments
-      // *also* passed as in-memory representations in integer registers
-      // this is FORTRAN legacy junk which we don't _always_ need
-      // to do, but to be on the safe side, we do. 
-      else if(MVT::isFloatingPoint(N->getOperand(i).getValueType())) {
-        assert((i-2) < 8 && "FP args alone would fit, but no int regs left");
-	// first copy into the appropriate FP reg
-        Chain = CurDAG->getCopyToReg(Chain, DestReg, Val);	
-	// then copy into the appropriate integer reg
-	DestReg = intArgs[i-2];
-        // GETFD takes an FP reg and writes a GP reg	
-	Chain = CurDAG->getTargetNode(IA64::GETFD, MVT::i64, Val);
-        // FIXME: this next line is a bit unfortunate 
-	Chain = CurDAG->getCopyToReg(Chain, DestReg, Chain, InFlag); 
-        InFlag = Chain.getValue(1);
-        CallOperands.push_back(CurDAG->getRegister(DestReg, MVT::i64));
-      }
-    }
-  }
-  
-  // Finally, once everything is in registers to pass to the call, emit the
-  // call itself.
-  if (InFlag.Val)
-    CallOperands.push_back(InFlag);   // Strong dep on register copies.
-  else
-    CallOperands.push_back(Chain);    // Weak dep on whatever occurs before
-  Chain = CurDAG->getTargetNode(CallOpcode, MVT::Other, MVT::Flag,
-                                CallOperands);
- 
-  std::vector<SDOperand> CallResults;
-  
-  // If the call has results, copy the values out of the ret val registers.
-  switch (N->getValueType(0)) {
-    default: assert(0 && "Unexpected ret value!");
-    case MVT::Other: break;
-    case MVT::i1: {
-        // bools are returned as bytes 0/1 in r8
-	SDOperand byteval = CurDAG->getCopyFromReg(Chain, IA64::r8, MVT::i64,
-	                               Chain.getValue(1));
-        Chain = byteval.getValue(1);
-	Chain = CurDAG->getTargetNode(IA64::CMPNE, MVT::i1, MVT::Other,
-	    byteval, CurDAG->getRegister(IA64::r0, MVT::i64)).getValue(1);
-	CallResults.push_back(Chain.getValue(0));
-	break;
-	}
-    case MVT::i64:
-        Chain = CurDAG->getCopyFromReg(Chain, IA64::r8, MVT::i64,
-                                       Chain.getValue(1)).getValue(1);
-        CallResults.push_back(Chain.getValue(0));
-      break;
-    case MVT::f64:
-      Chain = CurDAG->getCopyFromReg(Chain, IA64::F8, N->getValueType(0),
-                                     Chain.getValue(1)).getValue(1);
-      CallResults.push_back(Chain.getValue(0));
-      break;
-  }
-   
-  // restore GP, SP and RP - FIXME: this doesn't quite work (e.g.
-  // methcall / objinst both segfault on exit) and it *really*
-  // doesn't work unless you have -sched=none
-  Chain = CurDAG->getCopyToReg(Chain, IA64::r1, GPBeforeCall);
-  Chain = CurDAG->getCopyToReg(Chain, IA64::r12, SPBeforeCall);
-  Chain = CurDAG->getCopyToReg(Chain, IA64::rp, RPBeforeCall);
-  CallResults.push_back(Chain); // llc segfaults w/o this,
-                      // ary3(e.g.) SIGILLs with 3
-
-  for (unsigned i = 0, e = CallResults.size(); i != e; ++i)
-    CodeGenMap[Op.getValue(i)] = CallResults[i];
- 
-  return CallResults[Op.ResNo];
-}
-
 // Select - Convert the specified operand from a target-independent to a
 // target-specific node if it hasn't already been changed.
 SDOperand IA64DAGToDAGISel::Select(SDOperand Op) {
@@ -527,8 +341,37 @@ SDOperand IA64DAGToDAGISel::Select(SDOperand Op) {
   switch (N->getOpcode()) {
   default: break;
 
+  case ISD::Register: return Op; // XXX: this is a hack, tblgen one day?
+  
   case ISD::CALL:
-  case ISD::TAILCALL: return SelectCALL(Op);
+  case ISD::TAILCALL: { {
+        // FIXME: This is a workaround for a bug in tblgen.
+    // Pattern #47: (call:Flag (tglobaladdr:i32):$dst, ICC:Flag)
+    // Emits: (CALL:void (tglobaladdr:i32):$dst)
+    // Pattern complexity = 2  cost = 1
+    SDOperand N1 = N->getOperand(1);
+    if (N1.getOpcode() != ISD::TargetGlobalAddress &&
+        N1.getOpcode() != ISD::ExternalSymbol) goto P47Fail;
+    SDOperand InFlag = SDOperand(0, 0);
+    SDOperand Chain = N->getOperand(0);
+    SDOperand Tmp0 = N1;
+    Chain = Select(Chain);
+    SDOperand Result;
+    if (N->getNumOperands() == 3) {
+      InFlag = Select(N->getOperand(2));
+      Result = CurDAG->getTargetNode(IA64::BRCALL, MVT::Other, MVT::Flag, Tmp0, 
+                                     Chain, InFlag);
+    } else {
+      Result = CurDAG->getTargetNode(IA64::BRCALL, MVT::Other, MVT::Flag, Tmp0, 
+                                     Chain);
+    }
+    Chain = CodeGenMap[SDOperand(N, 0)] = Result.getValue(0);
+    CodeGenMap[SDOperand(N, 1)] = Result.getValue(1);
+    return Result.getValue(Op.ResNo);
+  }
+    P47Fail:;
+    
+  }
 
   case ISD::FDIV:
   case ISD::SDIV:
@@ -601,7 +444,16 @@ SDOperand IA64DAGToDAGISel::Select(SDOperand Op) {
 	                          CurDAG->getRegister(IA64::r1, MVT::i64), GA);
     return CurDAG->getTargetNode(IA64::LD8, MVT::i64, Tmp);
   }
-			   
+  
+/* XXX  case ISD::ExternalSymbol: {
+    SDOperand EA = CurDAG->getTargetExternalSymbol(cast<ExternalSymbolSDNode>(N)->getSymbol(),
+	  MVT::i64);
+    SDOperand Tmp = CurDAG->getTargetNode(IA64::ADDL_EA, MVT::i64, 
+	                          CurDAG->getRegister(IA64::r1, MVT::i64), EA);
+    return CurDAG->getTargetNode(IA64::LD8, MVT::i64, Tmp);
+ }
+*/
+
   case ISD::LOAD:
   case ISD::EXTLOAD:
   case ISD::ZEXTLOAD: {
@@ -615,10 +467,13 @@ SDOperand IA64DAGToDAGISel::Select(SDOperand Op) {
     default: N->dump(); assert(0 && "Cannot load this type!");
     case MVT::i1: { // this is a bool
       Opc = IA64::LD1; // first we load a byte, then compare for != 0
-      return CurDAG->SelectNodeTo(N, IA64::CMPNE, MVT::i1, MVT::Other, 
+      if(N->getValueType(0) == MVT::i1) // XXX: early exit!
+        return CurDAG->SelectNodeTo(N, IA64::CMPNE, MVT::i1, MVT::Other, 
                                   CurDAG->getTargetNode(Opc, MVT::i64, Address),
                                   CurDAG->getRegister(IA64::r0, MVT::i64), 
                                   Chain).getValue(Op.ResNo);
+      /* otherwise, we want to load a bool into something bigger: LD1
+         will do that for us, so we just fall through */
     }
     case MVT::i8:  Opc = IA64::LD1; break;
     case MVT::i16: Opc = IA64::LD2; break;
@@ -690,6 +545,7 @@ SDOperand IA64DAGToDAGISel::Select(SDOperand Op) {
 
   case ISD::RET: {
     SDOperand Chain = Select(N->getOperand(0));     // Token chain.
+    SDOperand InFlag;
 
     switch (N->getNumOperands()) {
     default:
@@ -707,11 +563,13 @@ SDOperand IA64DAGToDAGISel::Select(SDOperand Op) {
         // we mark r8 as live on exit up above in LowerArguments()
         // BuildMI(BB, IA64::MOV, 1, IA64::r8).addReg(Tmp1);
         Chain = CurDAG->getCopyToReg(Chain, IA64::r8, RetVal);
+	InFlag = Chain.getValue(1);
 	break;
       case MVT::f64:
         // we mark F8 as live on exit up above in LowerArguments()
         // BuildMI(BB, IA64::FMOV, 1, IA64::F8).addReg(Tmp1);
         Chain = CurDAG->getCopyToReg(Chain, IA64::F8, RetVal);
+	InFlag = Chain.getValue(1);
         break;
       }
       break;
