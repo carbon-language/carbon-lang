@@ -38,7 +38,7 @@ def SDTX86RetFlag : SDTypeProfile<0, 2, [SDTCisVT<0, i16>,
 def SDTX86Fld     : SDTypeProfile<1, 2, [SDTCisFP<0>,
                                          SDTCisPtrTy<1>, SDTCisVT<2, OtherVT>]>;
 
-def SDTX86FpSet   : SDTypeProfile<0, 1, [SDTCisFP<0>]>;
+def SDTX86FpSet   : SDTypeProfile<1, 1, [SDTCisVT<0, FlagVT>, SDTCisFP<1>]>;
 
 def X86cmp     : SDNode<"X86ISD::CMP" ,     SDTX86CmpTest,  []>;
 def X86test    : SDNode<"X86ISD::TEST",     SDTX86CmpTest,  []>;
@@ -2257,7 +2257,8 @@ class FpI<dag ops, FPFormat fp, list<dag> pattern>
 def FpGETRESULT : FpI<(ops RFP:$dst), SpecialFP, // FPR = ST(0)
                       []>;  
 def FpSETRESULT : FpI<(ops RFP:$src), SpecialFP,
-                      [(X86fpset RFP:$src)]>, Imp<[], [ST0]>;  // ST(0) = FPR
+                      [(set FLAG, (X86fpset RFP:$src))]>,
+                       Imp<[], [ST0]>;  // ST(0) = FPR
 def FpMOV       : FpI<(ops RFP:$dst, RFP:$src), SpecialFP,
                       []>;   // f1 = fmov f2
 

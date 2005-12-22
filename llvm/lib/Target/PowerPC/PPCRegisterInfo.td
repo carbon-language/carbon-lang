@@ -132,14 +132,6 @@ def CTR : SPR<9, "ctr">;
 // VRsave register
 def VRSAVE: SPR<256, "VRsave">;
 
-// FIXME:
-// HACKTROCITY: define a flags reg class for things that need to take a flag.
-// this should really be handled by tablgen.
-def FLAG: SPR<1023, "Flag">;
-def FLAGRC : RegisterClass<"PPC", [FlagVT], 32, [FLAG]> {
-  let Size = 32;
-}
-
 /// Register classes
 // Allocate volatiles first
 // then nonvolatiles in reverse order since stmw/lmw save from rN to r31
