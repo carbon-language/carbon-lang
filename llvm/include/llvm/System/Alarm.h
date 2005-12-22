@@ -21,8 +21,11 @@ namespace llvm {
 namespace sys {
 
   /// This function registers an alarm to trigger some number of \p seconds in 
-  /// the future. When that time arrives, the \p callback is called. You can
-  /// only call this once. Each time 
+  /// the future. When that time arrives, the AlarmStatus function will begin
+  /// to return 1 instead of 0. The user must poll the status of the alarm by
+  /// making occasional calls to AlarmStatus. If the user sends an interrupt
+  /// signal, AlarmStatus will begin returning -1, even if the alarm event
+  /// occurred.
   /// @returns nothing
   void SetupAlarm(
     unsigned seconds ///< Number of seconds in future when alarm arrives
