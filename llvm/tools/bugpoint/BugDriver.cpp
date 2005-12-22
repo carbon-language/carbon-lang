@@ -62,9 +62,9 @@ std::string llvm::getPassesString(const std::vector<const PassInfo*> &Passes) {
   return Result;
 }
 
-BugDriver::BugDriver(const char *toolname)
+BugDriver::BugDriver(const char *toolname, bool as_child)
   : ToolName(toolname), ReferenceOutputFile(OutputFile),
-    Program(0), Interpreter(0), cbe(0), gcc(0) {}
+    Program(0), Interpreter(0), cbe(0), gcc(0), run_as_child(as_child) {}
 
 
 /// ParseInputFile - Given a bytecode or assembly input filename, parse and
@@ -97,13 +97,15 @@ bool BugDriver::addSources(const std::vector<std::string> &Filenames) {
   // Load the first input file...
   Program = ParseInputFile(Filenames[0]);
   if (Program == 0) return true;
-  std::cout << "Read input file      : '" << Filenames[0] << "'\n";
+  if (!run_as_child)
+    std::cout << "Read input file      : '" << Filenames[0] << "'\n";
 
   for (unsigned i = 1, e = Filenames.size(); i != e; ++i) {
     std::auto_ptr<Module> M(ParseInputFile(Filenames[i]));
     if (M.get() == 0) return true;
 
-    std::cout << "Linking in input file: '" << Filenames[i] << "'\n";
+    if (!run_as_child)
+      std::cout << "Linking in input file: '" << Filenames[i] << "'\n";
     std::string ErrorMessage;
     if (Linker::LinkModules(Program, M.get(), &ErrorMessage)) {
       std::cerr << ToolName << ": error linking in '" << Filenames[i] << "': "
@@ -112,7 +114,8 @@ bool BugDriver::addSources(const std::vector<std::string> &Filenames) {
     }
   }
 
-  std::cout << "*** All input ok\n";
+  if (!run_as_child)
+    std::cout << "*** All input ok\n";
 
   // All input files read successfully!
   return false;
@@ -124,12 +127,21 @@ bool BugDriver::addSources(const std::vector<std::string> &Filenames) {
 /// variables are set up from command line arguments.
 ///
 bool BugDriver::run() {
-  // The first thing that we must do is determine what the problem is. Does the
-  // optimization series crash the compiler, or does it produce illegal code?
-  // We make the top-level decision by trying to run all of the passes on the
-  // the input program, which should generate a bytecode file.  If it does
-  // generate a bytecode file, then we know the compiler didn't crash, so try
-  // to diagnose a miscompilation.
+  // The first thing to do is determine if we're running as a child. If we are,
+  // then what to do is very narrow. This form of invocation is only called
+  // from the runPasses method to actually run those passes in a child process.
+  if (run_as_child) {
+    // Execute the passes
+    return runPassesAsChild(PassesToRun);
+  }
+
+  // If we're not running as a child, the first thing that we must do is 
+  // determine what the problem is. Does the optimization series crash the 
+  // compiler, or does it produce illegal code?  We make the top-level 
+  // decision by trying to run all of the passes on the the input program, 
+  // which should generate a bytecode file.  If it does generate a bytecode 
+  // file, then we know the compiler didn't crash, so try to diagnose a 
+  // miscompilation.
   if (!PassesToRun.empty()) {
     std::cout << "Running selected passes on program to test for crash: ";
     if (runPasses(PassesToRun))

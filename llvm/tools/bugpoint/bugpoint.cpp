@@ -24,6 +24,13 @@
 #include "llvm/System/Signals.h"
 using namespace llvm;
 
+// AsChild - Specifies that this invocation of bugpoint is being generated
+// from a parent process. It is not intended to be used by users so the 
+// option is hidden.
+static cl::opt<bool> 
+  AsChild("as-child", cl::desc("Run bugpoint as child process"), 
+          cl::ReallyHidden);
+
 static cl::list<std::string>
 InputFilenames(cl::Positional, cl::OneOrMore,
                cl::desc("<input llvm ll/bc files>"));
@@ -49,7 +56,7 @@ int main(int argc, char **argv) {
   sys::PrintStackTraceOnErrorSignal();
   sys::SetInterruptFunction(BugpointInterruptFunction);
   
-  BugDriver D(argv[0]);
+  BugDriver D(argv[0],AsChild);
   if (D.addSources(InputFilenames)) return 1;
   D.addPasses(PassList.begin(), PassList.end());
 

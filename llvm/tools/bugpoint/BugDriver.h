@@ -47,13 +47,14 @@ class BugDriver {
   AbstractInterpreter *Interpreter;   // How to run the program
   CBE *cbe;
   GCC *gcc;
+  bool run_as_child;
 
   // FIXME: sort out public/private distinctions...
   friend class ReducePassList;
   friend class ReduceMisCodegenFunctions;
 
 public:
-  BugDriver(const char *toolname);
+  BugDriver(const char *toolname, bool as_child);
 
   const std::string &getToolName() const { return ToolName; }
 
@@ -71,7 +72,8 @@ public:
   }
 
   /// run - The top level method that is invoked after all of the instance
-  /// variables are set up from command line arguments.
+  /// variables are set up from command line arguments. The \p as_child argument
+  /// indicates whether the driver is to run in parent mode or child mode.
   ///
   bool run();
 
@@ -248,6 +250,9 @@ private:
     std::string Filename;
     return runPasses(PassesToRun, Filename, DeleteOutput);
   }
+
+  /// runAsChild - The actual "runPasses" guts that runs in a child process.
+  int runPassesAsChild(const std::vector<const PassInfo*> &PassesToRun);
 
   /// initializeExecutionEnvironment - This method is used to set up the
   /// environment for executing LLVM programs.

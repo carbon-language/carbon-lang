@@ -19,10 +19,6 @@
 // independent code co-exist via conditional compilation until it is verified
 // that the new code works correctly on Unix.
 
-#ifdef _MSC_VER
-#define PLATFORMINDEPENDENT
-#endif
-
 #include "BugDriver.h"
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
@@ -30,14 +26,17 @@
 #include "llvm/Bytecode/WriteBytecodePass.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Support/FileUtilities.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/System/Path.h"
+#include "llvm/System/Program.h"
 #include <fstream>
-#ifndef PLATFORMINDEPENDENT
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/wait.h>
-#endif
 using namespace llvm;
+
+namespace {
+  // ChildOutput - This option captures the name of the child output file that
+  // is set up by the parent bugpoint process
+  cl::opt<std::string> ChildOutput("child-output", cl::ReallyHidden);
+}
 
 /// writeProgramToFile - This writes the current "Program" to the named bytecode
 /// file.  If an error occurs, true is returned.
@@ -86,14 +85,14 @@ void BugDriver::EmitProgressBytecode(const std::string &ID, bool NoFlyer) {
   std::cout << getPassesString(PassesToRun) << "\n";
 }
 
-static void RunChild(Module *Program,const std::vector<const PassInfo*> &Passes,
-                     const std::string &OutFilename) {
+int BugDriver::runPassesAsChild(const std::vector<const PassInfo*> &Passes) {
+
   std::ios::openmode io_mode = std::ios::out | std::ios::trunc |
                                std::ios::binary;
-  std::ofstream OutFile(OutFilename.c_str(), io_mode);
+  std::ofstream OutFile(ChildOutput.c_str(), io_mode);
   if (!OutFile.good()) {
-    std::cerr << "Error opening bytecode file: " << OutFilename << "\n";
-    exit(1);
+    std::cerr << "Error opening bytecode file: " << ChildOutput << "\n";
+    return 1;
   }
 
   PassManager PM;
@@ -115,6 +114,8 @@ static void RunChild(Module *Program,const std::vector<const PassInfo*> &Passes,
 
   // Run all queued passes.
   PM.run(*Program);
+
+  return 0;
 }
 
 /// runPasses - Run the specified passes on Program, outputting a bytecode file
@@ -128,60 +129,67 @@ static void RunChild(Module *Program,const std::vector<const PassInfo*> &Passes,
 bool BugDriver::runPasses(const std::vector<const PassInfo*> &Passes,
                           std::string &OutputFilename, bool DeleteOutput,
                           bool Quiet) const{
+  // setup the output file name
   std::cout << std::flush;
   sys::Path uniqueFilename("bugpoint-output.bc");
   uniqueFilename.makeUnique();
   OutputFilename = uniqueFilename.toString();
 
-#ifndef PLATFORMINDEPENDENT
-  pid_t child_pid;
-  switch (child_pid = fork()) {
-  case -1:    // Error occurred
-    std::cerr << ToolName << ": Error forking!\n";
-    exit(1);
-  case 0:     // Child process runs passes.
-    RunChild(Program, Passes, OutputFilename);
-    exit(0);  // If we finish successfully, return 0!
-  default:    // Parent continues...
-    break;
+  // set up the input file name
+  sys::Path inputFilename("bugpoint-input.bc");
+  inputFilename.makeUnique();
+  std::ios::openmode io_mode = std::ios::out | std::ios::trunc |
+                               std::ios::binary;
+  std::ofstream InFile(inputFilename.c_str(), io_mode);
+  if (!InFile.good()) {
+    std::cerr << "Error opening bytecode file: " << inputFilename << "\n";
+    return(1);
   }
+  WriteBytecodeToFile(Program,InFile,false);
+  InFile.close();
 
-  // Wait for the child process to get done.
-  int Status;
-  if (wait(&Status) != child_pid) {
-    std::cerr << "Error waiting for child process!\n";
-    exit(1);
-  }
+  // setup the child process' arguments
+  const char** args = (const char**)
+    alloca(sizeof(const char*)*(Passes.size()+10));
+  int n = 0;
+  args[n++] = ToolName.c_str();
+  args[n++] = "-as-child";
+  args[n++] = "-child-output";
+  args[n++] = OutputFilename.c_str();
+  std::vector<std::string> pass_args;
+  for (std::vector<const PassInfo*>::const_iterator I = Passes.begin(),
+       E = Passes.end(); I != E; ++I )
+    pass_args.push_back( std::string("-") + (*I)->getPassArgument() );
+  for (std::vector<std::string>::const_iterator I = pass_args.begin(),
+       E = pass_args.end(); I != E; ++I )
+    args[n++] = I->c_str();
+  args[n++] = inputFilename.c_str();
+  args[n++] = 0;
 
-  bool ExitedOK = WIFEXITED(Status) && WEXITSTATUS(Status) == 0;
-#else
-  bool ExitedOK = false;
-#endif
+  sys::Path prog(sys::Program::FindProgramByName(ToolName));
+  int result = sys::Program::ExecuteAndWait(prog,args);
 
   // If we are supposed to delete the bytecode file or if the passes crashed,
   // remove it now.  This may fail if the file was never created, but that's ok.
-  if (DeleteOutput || !ExitedOK)
+  if (DeleteOutput || result != 0)
     sys::Path(OutputFilename).eraseFromDisk();
 
-#ifndef PLATFORMINDEPENDENT
+  // Remove the temporary input file as well
+  inputFilename.eraseFromDisk();
+
   if (!Quiet) {
-    if (ExitedOK)
+    if (result == 0)
       std::cout << "Success!\n";
-    else if (WIFEXITED(Status))
-      std::cout << "Exited with error code '" << WEXITSTATUS(Status) << "'\n";
-    else if (WIFSIGNALED(Status))
-      std::cout << "Crashed with signal #" << WTERMSIG(Status) << "\n";
-#ifdef WCOREDUMP
-    else if (WCOREDUMP(Status))
+    else if (result > 0)
+      std::cout << "Exited with error code '" << result << "'\n";
+    else if (result < 0)
+      std::cout << "Crashed with signal #" << abs(result) << "\n";
+    if (result & 0x01000000)
       std::cout << "Dumped core\n";
-#endif
-    else
-      std::cout << "Failed for unknown reason!\n";
   }
-#endif
 
   // Was the child successful?
-  return !ExitedOK;
+  return result != 0;
 }
 
 
