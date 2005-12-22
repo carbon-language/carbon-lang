@@ -1124,22 +1124,23 @@ void DAGISelEmitter::ParseInstructions() {
       
       CodeGenInstruction &InstInfo =Target.getInstruction(Instrs[i]->getName());
 
-      // Note: Removed if (InstInfo.OperandList.size() == 0) continue;
-      // It's possible for some instruction, e.g. RET for X86 that only has an
-      // implicit flag operand.
-      // FIXME: temporary hack...
-      if (InstInfo.isReturn || InstInfo.isBranch || InstInfo.isCall ||
-          InstInfo.isStore) {
-        // These produce no results
-        for (unsigned j = 0, e = InstInfo.OperandList.size(); j < e; ++j)
-          Operands.push_back(InstInfo.OperandList[j].Rec);
-      } else {
-        // Assume the first operand is the result.
-        Results.push_back(InstInfo.OperandList[0].Rec);
+      if (InstInfo.OperandList.size() != 0) {
+        // It's possible for some instruction, e.g. RET for X86 that only has an
+        // implicit flag operand.
+        // FIXME: temporary hack...
+        if (InstInfo.isReturn || InstInfo.isBranch || InstInfo.isCall ||
+            InstInfo.isStore) {
+          // These produce no results
+          for (unsigned j = 0, e = InstInfo.OperandList.size(); j < e; ++j)
+            Operands.push_back(InstInfo.OperandList[j].Rec);
+        } else {
+          // Assume the first operand is the result.
+          Results.push_back(InstInfo.OperandList[0].Rec);
       
-        // The rest are inputs.
-        for (unsigned j = 1, e = InstInfo.OperandList.size(); j < e; ++j)
-          Operands.push_back(InstInfo.OperandList[j].Rec);
+          // The rest are inputs.
+          for (unsigned j = 1, e = InstInfo.OperandList.size(); j < e; ++j)
+            Operands.push_back(InstInfo.OperandList[j].Rec);
+        }
       }
       
       // Create and insert the instruction.
