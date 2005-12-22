@@ -388,16 +388,22 @@ IA64TargetLowering::LowerCallTo(SDOperand Chain,
     InFlag = Chain.getValue(1);
 
     //FIXME: for performance, only do the following when required
-
+    
     // if we have just copied an FP arg, copy its in-memory representation
     // to the appropriate integer register
-/*    if(MVT::isFloatingPoint(RegValuesToPass[i].getValueType())) {
-      Chain = DAG.getTargetNode(IA64::GETFD, MVT::i64, RegValuesToPass[i], Chain, InFlag);
-      InFlag = Chain.getValue(0); // XXX
-      Chain = DAG.getCopyToReg(Chain, IntArgRegs[i], Chain, InFlag); // ...thrice!
+    if(MVT::isFloatingPoint(RegValuesToPass[i].getValueType())) {
+      std::vector<MVT::ValueType> GETFDRetTypes;
+      std::vector<SDOperand> GETFDOperands;
+      GETFDRetTypes.push_back(MVT::i64);
+      GETFDRetTypes.push_back(MVT::Flag);
+      GETFDOperands.push_back(RegValuesToPass[i]);
+      GETFDOperands.push_back(Chain);
+      GETFDOperands.push_back(InFlag);
+      
+      Chain = DAG.getNode(IA64ISD::GETFD, GETFDRetTypes, GETFDOperands);
+      Chain = DAG.getCopyToReg(Chain, IntArgRegs[i], Chain.getValue(0), Chain.getValue(1)); // ...thrice!
       InFlag = Chain.getValue(1);
-    } */
-
+    }
   }
 
   std::vector<MVT::ValueType> RetVals;
@@ -452,6 +458,7 @@ IA64TargetLowering::LowerCallTo(SDOperand Chain,
       RetVal = DAG.getNode(RetTy->isSigned() ? ISD::AssertSext :ISD::AssertZext,
                            MVT::i64, RetVal, DAG.getValueType(RetTyVT));
       RetVal = DAG.getNode(ISD::TRUNCATE, RetTyVT, RetVal);
+      break;
     case MVT::i64:
       RetVal = DAG.getCopyFromReg(Chain, IA64::r8, MVT::i64, InFlag);
       Chain = RetVal.getValue(1);
