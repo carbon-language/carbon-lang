@@ -115,6 +115,9 @@
 				RelativePath="..\..\lib\CodeGen\BranchFolding.cpp">
 			</File>
 			<File
+				RelativePath="..\..\lib\CodeGen\DwarfWriter.cpp">
+			</File>
+			<File
 				RelativePath="..\..\lib\CodeGen\ELFWriter.cpp">
 			</File>
 			<File
@@ -200,6 +203,9 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
 			<File
 				RelativePath="..\..\include\llvm\CodeGen\AsmPrinter.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\CodeGen\DwarfWriter.h">
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\CodeGen\ELFWriter.h">
