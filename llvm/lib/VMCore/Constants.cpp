@@ -482,9 +482,6 @@ bool ConstantFP::isValueValidForType(const Type *Ty, double Val) {
 
     // TODO: Figure out how to test if a double can be cast to a float!
   case Type::FloatTyID:
-    float FV = float(Val);
-    double DV = double(FV);
-    return  IsNAN(Val) || Val == DV;
   case Type::DoubleTyID:
     return true;          // This is the largest type...
   }
