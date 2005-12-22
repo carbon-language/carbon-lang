@@ -282,13 +282,25 @@ IA64TargetLowering::LowerCallTo(SDOperand Chain,
   MF.getInfo<IA64FunctionInfo>()->outRegsUsed=
     std::max(outRegsUsed, MF.getInfo<IA64FunctionInfo>()->outRegsUsed);
 
+  // keep stack frame 16-byte aligned
+  //assert(NumBytes==((NumBytes+15) & ~15) && "stack frame not 16-byte aligned!");
+  NumBytes = (NumBytes+15) & ~15;
+  
   Chain = DAG.getNode(ISD::CALLSEQ_START, MVT::Other, Chain,
                         DAG.getConstant(NumBytes, getPointerTy()));
 
-  std::vector<SDOperand> args_to_use;
+  SDOperand StackPtr, NullSV;
+  std::vector<SDOperand> Stores;
+  std::vector<SDOperand> RegValuesToPass;
+  unsigned ArgOffset = 16;
+  
   for (unsigned i = 0, e = Args.size(); i != e; ++i)
     {
-      switch (getValueType(Args[i].second)) {
+      SDOperand Val = Args[i].first;
+      MVT::ValueType ObjectVT = Val.getValueType();
+      SDOperand ValToStore;
+      unsigned ObjSize=8;
+      switch (ObjectVT) {
       default: assert(0 && "unexpected argument type!");
       case MVT::i1:
       case MVT::i8:
@@ -297,34 +309,164 @@ IA64TargetLowering::LowerCallTo(SDOperand Chain,
         //promote to 64-bits, sign/zero extending based on type
         //of the argument
         if(Args[i].second->isSigned())
-          Args[i].first = DAG.getNode(ISD::SIGN_EXTEND, MVT::i64,
-              Args[i].first);
+          Val = DAG.getNode(ISD::SIGN_EXTEND, MVT::i64, Val);
         else
-          Args[i].first = DAG.getNode(ISD::ZERO_EXTEND, MVT::i64,
-              Args[i].first);
+          Val = DAG.getNode(ISD::ZERO_EXTEND, MVT::i64, Val);
+        // XXX: fall through
+      case MVT::i64:
+        //ObjSize = 8;
+        if(RegValuesToPass.size() >= 8) {
+          ValToStore = Val;
+        } else {
+          RegValuesToPass.push_back(Val);
+        }
         break;
       case MVT::f32:
         //promote to 64-bits
-        Args[i].first = DAG.getNode(ISD::FP_EXTEND, MVT::f64, Args[i].first);
+        Val = DAG.getNode(ISD::FP_EXTEND, MVT::f64, Val);
+        // XXX: fall through
       case MVT::f64:
-      case MVT::i64:
+        if(RegValuesToPass.size() >= 8) {
+          ValToStore = Val;
+        } else {
+          RegValuesToPass.push_back(Val);
+        }
         break;
       }
-      args_to_use.push_back(Args[i].first);
+      
+      if(ValToStore.Val) {
+        if(!StackPtr.Val) {
+          StackPtr = DAG.getRegister(IA64::r12, MVT::i64);
+          NullSV = DAG.getSrcValue(NULL);
+        }
+        SDOperand PtrOff = DAG.getConstant(ArgOffset, getPointerTy());
+        PtrOff = DAG.getNode(ISD::ADD, MVT::i64, StackPtr, PtrOff);
+        Stores.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
+                                     ValToStore, PtrOff, NullSV));
+      }
+      ArgOffset += ObjSize;
     }
 
-  std::vector<MVT::ValueType> RetVals;
-  MVT::ValueType RetTyVT = getValueType(RetTy);
-  if (RetTyVT != MVT::isVoid)
-    RetVals.push_back(RetTyVT);
-  RetVals.push_back(MVT::Other);
+  // Emit all stores, make sure they occur before any copies into physregs.
+  if (!Stores.empty())
+    Chain = DAG.getNode(ISD::TokenFactor, MVT::Other, Stores);
 
-  SDOperand TheCall = SDOperand(DAG.getCall(RetVals, Chain,
-                                            Callee, args_to_use), 0);
-  Chain = TheCall.getValue(RetTyVT != MVT::isVoid);
+  static const unsigned IntArgRegs[] = {
+    IA64::out0, IA64::out1, IA64::out2, IA64::out3, 
+    IA64::out4, IA64::out5, IA64::out6, IA64::out7
+  };
+
+  static const unsigned FPArgRegs[] = {
+    IA64::F8,  IA64::F9,  IA64::F10, IA64::F11, 
+    IA64::F12, IA64::F13, IA64::F14, IA64::F15
+  };
+
+  SDOperand InFlag;
+  
+  // save the current GP, SP and RP : FIXME: do we need to do all 3 always?
+  SDOperand GPBeforeCall = DAG.getCopyFromReg(Chain, IA64::r1, MVT::i64, InFlag);
+  Chain = GPBeforeCall;
+  InFlag = Chain.getValue(1);
+  SDOperand SPBeforeCall = DAG.getCopyFromReg(Chain, IA64::r12, MVT::i64, InFlag);
+  Chain = SPBeforeCall;
+  InFlag = Chain.getValue(1);
+  SDOperand RPBeforeCall = DAG.getCopyFromReg(Chain, IA64::rp, MVT::i64, InFlag);
+  Chain = RPBeforeCall;
+  InFlag = Chain.getValue(1);
+
+  // Build a sequence of copy-to-reg nodes chained together with token chain
+  // and flag operands which copy the outgoing integer args into regs out[0-7]
+  // mapped 1:1 and the FP args into regs F8-F15 "lazily"
+  // TODO: for performance, we should only copy FP args into int regs when we
+  // know this is required (i.e. for varardic or external (unknown) functions)
+  unsigned usedFPArgs = 0;
+  for (unsigned i = 0, e = RegValuesToPass.size(); i != e; ++i) {
+    Chain = DAG.getCopyToReg(Chain,
+      MVT::isInteger(RegValuesToPass[i].getValueType()) ?
+                                          IntArgRegs[i] : FPArgRegs[usedFPArgs++],
+      RegValuesToPass[i], InFlag);
+    InFlag = Chain.getValue(1);
+
+    //FIXME: for performance, only do the following when required
+
+    // if we have just copied an FP arg, copy its in-memory representation
+    // to the appropriate integer register
+/*    if(MVT::isFloatingPoint(RegValuesToPass[i].getValueType())) {
+      Chain = DAG.getTargetNode(IA64::GETFD, MVT::i64, RegValuesToPass[i], Chain, InFlag);
+      InFlag = Chain.getValue(0); // XXX
+      Chain = DAG.getCopyToReg(Chain, IntArgRegs[i], Chain, InFlag); // ...thrice!
+      InFlag = Chain.getValue(1);
+    } */
+
+  }
+
+  std::vector<MVT::ValueType> RetVals;
+  RetVals.push_back(MVT::Other);
+  RetVals.push_back(MVT::Flag);
+
+  // If the callee is a GlobalAddress node (quite common, every direct call is)
+  // turn it into a TargetGlobalAddress node so that legalize doesn't hack it.
+  if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee))
+    Callee = DAG.getTargetGlobalAddress(G->getGlobal(), MVT::i64);
+
+  std::vector<MVT::ValueType> NodeTys;
+  NodeTys.push_back(MVT::Other);   // Returns a chain
+  NodeTys.push_back(MVT::Flag);    // Returns a flag for retval copy to use.
+  if (InFlag.Val)
+    Chain = SDOperand(DAG.getCall(NodeTys, Chain, Callee, InFlag), 0);
+  else
+    Chain = SDOperand(DAG.getCall(NodeTys, Chain, Callee), 0);
+  InFlag = Chain.getValue(1);
+
+  // restore the GP, SP and RP after the call  
+  Chain = DAG.getCopyToReg(Chain, IA64::r1, GPBeforeCall, InFlag);
+  InFlag = Chain.getValue(1);
+  Chain = DAG.getCopyToReg(Chain, IA64::r12, SPBeforeCall, InFlag);
+  InFlag = Chain.getValue(1);
+  Chain = DAG.getCopyToReg(Chain, IA64::rp, RPBeforeCall, InFlag);
+  InFlag = Chain.getValue(1);
+  
+  MVT::ValueType RetTyVT = getValueType(RetTy);
+  SDOperand RetVal;
+  if (RetTyVT != MVT::isVoid) {
+    switch (RetTyVT) {
+    default: assert(0 && "Unknown value type to return!");
+    case MVT::i1:/* { // bools are just like other integers (returned in r8)
+      SDOperand boolInR8 = DAG.getCopyFromReg(Chain, IA64::r8, MVT::i64, InFlag);
+      RetVal = DAG.getTargetNode(IA64::CMPNE, MVT::i1, // FIXME: is this flagged correctly?
+        DAG.getRegister(IA64::r0, MVT::i64), boolInR8, Chain, InFlag);
+      Chain = RetVal.getValue(1);
+      // Add a note to keep track of whether it is sign or zero extended - TODO: bools
+      RetVal = DAG.getNode(RetTy->isSigned() ? ISD::AssertSext :ISD::AssertZext,
+                           MVT::i64, RetVal, DAG.getValueType(RetTyVT));
+      RetVal = DAG.getNode(ISD::TRUNCATE, RetTyVT, RetVal);
+      break;
+    }*/
+    case MVT::i8:
+    case MVT::i16:
+    case MVT::i32:
+      RetVal = DAG.getCopyFromReg(Chain, IA64::r8, MVT::i64, InFlag);
+      Chain = RetVal.getValue(1);
+      
+      // Add a note to keep track of whether it is sign or zero extended - TODO: bools
+      RetVal = DAG.getNode(RetTy->isSigned() ? ISD::AssertSext :ISD::AssertZext,
+                           MVT::i64, RetVal, DAG.getValueType(RetTyVT));
+      RetVal = DAG.getNode(ISD::TRUNCATE, RetTyVT, RetVal);
+    case MVT::i64:
+      RetVal = DAG.getCopyFromReg(Chain, IA64::r8, MVT::i64, InFlag);
+      Chain = RetVal.getValue(1);
+      break;
+    case MVT::f64:
+      RetVal = DAG.getCopyFromReg(Chain, IA64::F8, MVT::f64, InFlag);
+      Chain = RetVal.getValue(1);
+      break;
+    }
+  }
+  
   Chain = DAG.getNode(ISD::CALLSEQ_END, MVT::Other, Chain,
                       DAG.getConstant(NumBytes, getPointerTy()));
-  return std::make_pair(TheCall, Chain);
+  
+  return std::make_pair(RetVal, Chain);
 }
 
 SDOperand
