@@ -24,7 +24,7 @@
 
 #include "llvm/Type.h"
 #include "llvm/CodeGen/ValueTypes.h"
-#include "llvm/support/DataTypes.h"
+#include "llvm/Support/DataTypes.h"
 #include <vector>
 
 namespace llvm {
