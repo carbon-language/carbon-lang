@@ -64,24 +64,12 @@ class CallGraphNode;
 //===----------------------------------------------------------------------===//
 // CallGraph class definition
 //
-class CallGraph : public ModulePass {
+class CallGraph {
+protected:
   Module *Mod;              // The module this call graph represents
 
   typedef std::map<const Function *, CallGraphNode *> FunctionMapTy;
   FunctionMapTy FunctionMap;    // Map from a function to its node
-
-  // Root is root of the call graph, or the external node if a 'main' function
-  // couldn't be found.
-  //
-  CallGraphNode *Root;
-
-  // ExternalCallingNode - This node has edges to all external functions and
-  // those internal functions that have their address taken.
-  CallGraphNode *ExternalCallingNode;
-
-  // CallsExternalNode - This node has edges to it from all functions making
-  // indirect calls or calling an external function.
-  CallGraphNode *CallsExternalNode;
 
 public:
   //===---------------------------------------------------------------------
@@ -89,15 +77,6 @@ public:
   //
   typedef FunctionMapTy::iterator iterator;
   typedef FunctionMapTy::const_iterator const_iterator;
-
-  CallGraphNode *getExternalCallingNode() const { return ExternalCallingNode; }
-  CallGraphNode *getCallsExternalNode()   const { return CallsExternalNode; }
-
-  // getRoot - Return the root of the call graph, which is either main, or if
-  // main cannot be found, the external node.
-  //
-        CallGraphNode *getRoot()       { return Root; }
-  const CallGraphNode *getRoot() const { return Root; }
 
   /// getModule - Return the module the call graph corresponds to.
   ///
@@ -107,7 +86,6 @@ public:
   inline       iterator end()         { return FunctionMap.end();   }
   inline const_iterator begin() const { return FunctionMap.begin(); }
   inline const_iterator end()   const { return FunctionMap.end();   }
-
 
   // Subscripting operators, return the call graph node for the provided
   // function
@@ -122,6 +100,16 @@ public:
     return I->second;
   }
 
+  //Returns the CallGraphNode which is used to represent undetermined calls 
+  // into the callgraph.  Override this if you want behavioural inheritance.
+  virtual CallGraphNode* getExternalCallingNode() const { return 0; }
+  
+  //Return the root/main method in the module, or some other root node, such
+  // as the externalcallingnode.  Overload these if you behavioural 
+  // inheritance.
+  virtual CallGraphNode* getRoot() { return 0; }
+  virtual const CallGraphNode* getRoot() const { return 0; }
+  
   //===---------------------------------------------------------------------
   // Functions to keep a call graph up to date with a function that has been
   // modified.
@@ -147,53 +135,26 @@ public:
   //===---------------------------------------------------------------------
   // Pass infrastructure interface glue code...
   //
-  CallGraph() : Root(0), CallsExternalNode(0) {}
-  ~CallGraph() { destroy(); }
+protected:
+  CallGraph() {}
+  
+public:
+  virtual ~CallGraph() { destroy(); }
 
-  // runOnModule - Compute the call graph for the specified module.
-  virtual bool runOnModule(Module &M);
-
-  // getAnalysisUsage - This obviously provides a call graph
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-    AU.setPreservesAll();
-  }
-
-  // releaseMemory - Data structures can be large, so free memory aggressively.
-  virtual void releaseMemory() {
-    destroy();
-  }
-
-  /// Print the types found in the module.  If the optional Module parameter is
-  /// passed in, then the types are printed symbolically if possible, using the
-  /// symbol table from the module.
+  /// initialize - Call this method before calling other methods, 
+  /// re/initializes the state of the CallGraph.
   ///
-  void print(std::ostream &o, const Module *M) const;
+  void initialize(Module &M);
 
-  /// dump - Print out this call graph.
-  ///
-  void dump() const;
+  virtual void print(std::ostream &o, const Module *M) const;
 
   // stub - dummy function, just ignore it
   static void stub();
-private:
-  //===---------------------------------------------------------------------
-  // Implementation of CallGraph construction
-  //
-
-  // getNodeFor - Return the node for the specified function or create one if it
-  // does not already exist.
-  //
-  CallGraphNode *getNodeFor(Function *F);
-
-  // addToCallGraph - Add a function to the call graph, and link the node to all
-  // of the functions that it calls.
-  //
-  void addToCallGraph(Function *F);
+protected:
 
   // destroy - Release memory for the call graph
-  void destroy();
+  virtual void destroy();
 };
-
 
 //===----------------------------------------------------------------------===//
 // CallGraphNode class definition
@@ -256,14 +217,11 @@ public:
   /// removeCallEdgeTo, so it should not be used unless necessary.
   void removeAnyCallEdgeTo(CallGraphNode *Callee);
 
-private:                    // Stuff to construct the node, used by CallGraph
   friend class CallGraph;
 
   // CallGraphNode ctor - Create a node for the specified function...
   inline CallGraphNode(Function *f) : F(f) {}
 };
-
-
 
 //===----------------------------------------------------------------------===//
 // GraphTraits specializations for call graphs so that they can be treated as
@@ -311,6 +269,7 @@ template<> struct GraphTraits<CallGraph*> : public GraphTraits<CallGraphNode*> {
     return *P.second;
   }
 };
+
 template<> struct GraphTraits<const CallGraph*> :
   public GraphTraits<const CallGraphNode*> {
   static NodeType *getEntryNode(const CallGraph *CGN) {
@@ -322,9 +281,12 @@ template<> struct GraphTraits<const CallGraph*> :
   static nodes_iterator nodes_end  (const CallGraph *CG) { return CG->end(); }
 };
 
-// Make sure that any clients of this file link in PostDominators.cpp
+// Make sure that any clients of this file link in CallGraph.cpp
 static IncludeFile
 CALLGRAPH_INCLUDE_FILE((void*)&CallGraph::stub);
+
+extern void BasicCallGraphStub();
+static IncludeFile HDR_INCLUDE_CALLGRAPH_CPP((void*)&BasicCallGraphStub);
 
 } // End llvm namespace
 
