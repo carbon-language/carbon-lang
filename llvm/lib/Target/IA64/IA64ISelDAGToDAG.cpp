@@ -343,6 +343,14 @@ SDOperand IA64DAGToDAGISel::Select(SDOperand Op) {
 
   case ISD::Register: return Op; // XXX: this is a hack, tblgen one day?
   
+  case IA64ISD::GETFD: {
+    SDOperand Input = Select(N->getOperand(0));
+    SDOperand Result = CurDAG->getTargetNode(IA64::GETFD, MVT::i64, MVT::Flag, Input);
+    CodeGenMap[Op.getValue(0)] = Result;
+    CodeGenMap[Op.getValue(1)] = Result.getValue(1);
+    return Result.getValue(Op.ResNo);
+  } 
+  
   case ISD::CALL:
   case ISD::TAILCALL: { {
         // FIXME: This is a workaround for a bug in tblgen.
