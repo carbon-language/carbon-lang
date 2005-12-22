@@ -184,10 +184,6 @@ public:
     return getNode(ISD::CopyFromReg, ResultTys, Ops);
   }
 
-  SDOperand getImplicitDef(SDOperand Chain, unsigned Reg, MVT::ValueType VT) {
-    return getNode(ISD::ImplicitDef, MVT::Other, Chain, getRegister(Reg, VT));
-  }
-
   /// getCall - Note that this destroys the vector of RetVals passed in.
   ///
   SDNode *getCall(std::vector<MVT::ValueType> &RetVals, SDOperand Chain,

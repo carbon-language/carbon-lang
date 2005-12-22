@@ -92,12 +92,6 @@ namespace ISD {
     // SelectionDAG.  The register is available from the RegSDNode object.
     CopyFromReg,
 
-    // ImplicitDef - This node indicates that the specified register is
-    // implicitly defined by some operation (e.g. its a live-in argument).  The
-    // two operands to this are the token chain coming in and the register.
-    // The only result is the token chain going out.
-    ImplicitDef,
-
     // UNDEF - An undefined node
     UNDEF,
 
