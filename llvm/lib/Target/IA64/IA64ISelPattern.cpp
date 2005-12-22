@@ -2281,13 +2281,6 @@ void ISel::Select(SDOperand N) {
     return;
   }
 
-  case ISD::ImplicitDef: {
-    Select(N.getOperand(0));
-    BuildMI(BB, IA64::IDEF, 0, 
-            cast<RegisterSDNode>(N.getOperand(1))->getReg());
-    return;
-  }
-
   case ISD::BRCOND: {
     MachineBasicBlock *Dest =
       cast<BasicBlockSDNode>(N.getOperand(2))->getBasicBlock();

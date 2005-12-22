@@ -1600,19 +1600,6 @@ void AlphaISel::Select(SDOperand N) {
     return;
   }
 
-  case ISD::ImplicitDef:
-    ++count_ins;
-    Select(N.getOperand(0));
-    switch(N.getValueType()) {
-    case MVT::f32: Opc = Alpha::IDEF_F32; break;
-    case MVT::f64: Opc = Alpha::IDEF_F64; break;
-    case MVT::i64: Opc = Alpha::IDEF_I; break;
-    default: assert(0 && "should have been legalized");
-    };
-    BuildMI(BB, Opc, 0,
-            cast<RegisterSDNode>(N.getOperand(1))->getReg());
-    return;
-
   case ISD::EntryToken: return;  // Noop
 
   case ISD::TokenFactor:

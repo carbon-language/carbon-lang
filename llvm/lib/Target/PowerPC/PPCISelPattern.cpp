@@ -1601,16 +1601,6 @@ void ISel::Select(SDOperand N) {
         BuildMI(BB, PPC::OR4, 2, Tmp2).addReg(Tmp1).addReg(Tmp1);
     }
     return;
-  case ISD::ImplicitDef:
-    Select(N.getOperand(0));
-    Tmp1 = cast<RegisterSDNode>(N.getOperand(1))->getReg();
-    if (N.getOperand(1).getValueType() == MVT::i32)
-      BuildMI(BB, PPC::IMPLICIT_DEF_GPR, 0, Tmp1);
-    else if (N.getOperand(1).getValueType() == MVT::f32)
-      BuildMI(BB, PPC::IMPLICIT_DEF_F4, 0, Tmp1);
-    else
-      BuildMI(BB, PPC::IMPLICIT_DEF_F8, 0, Tmp1);
-    return;
   case ISD::RET:
     switch (N.getNumOperands()) {
     default:

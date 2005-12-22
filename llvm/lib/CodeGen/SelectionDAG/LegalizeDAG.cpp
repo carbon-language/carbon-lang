@@ -589,12 +589,6 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     AddLegalizedOperand(Op.getValue(0), Result);
     AddLegalizedOperand(Op.getValue(1), Result.getValue(1));
     return Result.getValue(Op.ResNo);
-  case ISD::ImplicitDef:
-    Tmp1 = LegalizeOp(Node->getOperand(0));
-    if (Tmp1 != Node->getOperand(0))
-      Result = DAG.getNode(ISD::ImplicitDef, MVT::Other,
-                           Tmp1, Node->getOperand(1));
-    break;
   case ISD::UNDEF: {
     MVT::ValueType VT = Op.getValueType();
     switch (TLI.getOperationAction(ISD::UNDEF, VT)) {
