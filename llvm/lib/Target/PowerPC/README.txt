@@ -241,3 +241,35 @@ _test:
 
 --> important for C++.
 
+===-------------------------------------------------------------------------===
+
+int test3(int a, int b) { return (a < 0) ? a : 0; }
+
+should be branch free code.  LLVM is turning it into < 1 because of the RHS.
+
+===-------------------------------------------------------------------------===
+
+For this testcase:
+int f1(int a, int b) { return (a&0xF)|(b&0xF0); }
+
+We currently emit:
+_f1:
+        rlwinm r2, r4, 0, 24, 27
+        rlwimi r2, r3, 0, 28, 31
+        or r3, r2, r2
+        blr
+
+We could emit:
+_f1:
+        rlwinm r4, r4, 0, 24, 27
+        rlwimi r3, r4, 0, 0, 27
+        blr
+
+===-------------------------------------------------------------------------===
+
+No loads or stores of the constants should be needed:
+
+struct foo { double X, Y; };
+void xxx(struct foo F);
+void bar() { struct foo R = { 1.0, 2.0 }; xxx(R); }
+
