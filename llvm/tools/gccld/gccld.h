@@ -46,7 +46,7 @@ GenerateNative (const std::string &OutputFilename,
                 char ** const envp,
                 bool Shared,
                 bool ExportAllAsDynamic,
-                const std::string &RPath,
+                const std::vector<std::string> &RPath,
                 const std::string &SOName,
                 bool Verbose=false);
 

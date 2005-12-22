@@ -352,7 +352,7 @@ int llvm::GenerateNative(const std::string &OutputFilename,
                          const sys::Path &gcc, char ** const envp,
                          bool Shared,
                          bool ExportAllAsDynamic,
-                         const std::string &RPath,
+                         const std::vector<std::string> &RPaths,
                          const std::string &SOName,
                          bool Verbose) {
   // Remove these environment variables from the environment of the
@@ -394,10 +394,13 @@ int llvm::GenerateNative(const std::string &OutputFilename,
 
   if (Shared) args.push_back("-shared");
   if (ExportAllAsDynamic) args.push_back("-export-dynamic");
-  if (!RPath.empty()) {
-    std::string rp = "-Wl,-rpath," + RPath;
-    StringsToDelete.push_back(strdup(rp.c_str()));
-    args.push_back(StringsToDelete.back());
+  if (!RPaths.empty()) {
+    for (std::vector<std::string>::const_iterator I = RPaths.begin(),
+        E = RPaths.end(); I != E; I++) {
+      std::string rp = "-Wl,-rpath," + *I;
+      StringsToDelete.push_back(strdup(rp.c_str()));
+      args.push_back(StringsToDelete.back());
+    }
   }
   if (!SOName.empty()) {
     std::string so = "-Wl,-soname," + SOName;
