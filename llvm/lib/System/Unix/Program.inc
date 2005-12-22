@@ -209,17 +209,22 @@ Program::ExecuteAndWait(const Path& path,
     sigaction(SIGALRM, &Old, 0);
   }
 
-  // If the program exited normally with a zero exit status, return success!
+  // Return the proper exit status. 0=success, >0 is programs' exit status,
+  // <0 means a signal was returned, -9999999 means the program dumped core.
+  int result = 0;
   if (WIFEXITED (status))
-    return WEXITSTATUS(status);
+    result = WEXITSTATUS(status);
   else if (WIFSIGNALED(status))
-    return 1;
-    
-#else
-  throw std::string(
-    "Program::ExecuteAndWait not implemented on this platform!\n");
+    result = 0 - WTERMSIG(status);
+#ifdef WCOREDUMP
+  if (WCOREDUMP(status))
+    result |= 0x01000000;
 #endif
-  return 0;
+  return result;
+#else
+  return -99;
+#endif
+    
 }
 
 }
