@@ -15,6 +15,14 @@
 
 include "IA64InstrFormats.td"
 
+//===----------------------------------------------------------------------===//
+// IA-64 specific DAG Nodes.
+//
+
+def IA64getfd : SDNode<"IA64ISD::GETFD", SDTFPToIntOp, []>;
+
+//===---------
+
 def u2imm : Operand<i8>;
 def u6imm : Operand<i8>;
 def s8imm : Operand<i8> {
@@ -614,8 +622,9 @@ def FCVTFXUTRUNCS1 : AForm<0x03, 0x0b, (ops FP:$dst, FP:$src),
 def FNORMD : AForm<0x03, 0x0b, (ops FP:$dst, FP:$src),
   "fnorm.d $dst = $src;;">;
 
-def GETFD : AForm<0x03, 0x0b, (ops GR:$dst, FP:$src),
-  "getf.d $dst = $src;;">;
+def GETFD : AForm_DAG<0x03, 0x0b, (ops GR:$dst, FP:$src),
+  "getf.d $dst = $src;;",
+  [(set GR:$dst, (IA64getfd FP:$src))]>;
 def SETFD : AForm<0x03, 0x0b, (ops FP:$dst, GR:$src),
   "setf.d $dst = $src;;">;
 
