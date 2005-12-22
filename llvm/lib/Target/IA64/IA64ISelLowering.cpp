@@ -291,6 +291,7 @@ IA64TargetLowering::LowerCallTo(SDOperand Chain,
 
   SDOperand StackPtr, NullSV;
   std::vector<SDOperand> Stores;
+  std::vector<SDOperand> Converts;
   std::vector<SDOperand> RegValuesToPass;
   unsigned ArgOffset = 16;
   
@@ -298,7 +299,7 @@ IA64TargetLowering::LowerCallTo(SDOperand Chain,
     {
       SDOperand Val = Args[i].first;
       MVT::ValueType ObjectVT = Val.getValueType();
-      SDOperand ValToStore;
+      SDOperand ValToStore, ValToConvert;
       unsigned ObjSize=8;
       switch (ObjectVT) {
       default: assert(0 && "unexpected argument type!");
@@ -330,6 +331,9 @@ IA64TargetLowering::LowerCallTo(SDOperand Chain,
           ValToStore = Val;
         } else {
           RegValuesToPass.push_back(Val);
+	  if(1 /* TODO: if(calling external or varadic function)*/ ) {
+	    ValToConvert = Val; // additionally pass this FP value as an int
+	  }
         }
         break;
       }
@@ -343,6 +347,10 @@ IA64TargetLowering::LowerCallTo(SDOperand Chain,
         PtrOff = DAG.getNode(ISD::ADD, MVT::i64, StackPtr, PtrOff);
         Stores.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
                                      ValToStore, PtrOff, NullSV));
+      }
+
+      if(ValToConvert.Val) {
+	Converts.push_back(DAG.getNode(IA64ISD::GETFD, MVT::i64, ValToConvert)); 
       }
       ArgOffset += ObjSize;
     }
@@ -379,6 +387,17 @@ IA64TargetLowering::LowerCallTo(SDOperand Chain,
   // mapped 1:1 and the FP args into regs F8-F15 "lazily"
   // TODO: for performance, we should only copy FP args into int regs when we
   // know this is required (i.e. for varardic or external (unknown) functions)
+
+  // first to the FP->(integer representation) conversions, these are
+  // free-floating
+  unsigned seenConverts = 0;
+  for (unsigned i = 0, e = RegValuesToPass.size(); i != e; ++i) {
+    if(MVT::isFloatingPoint(RegValuesToPass[i].getValueType())) {
+      Chain = DAG.getCopyToReg(Chain, IntArgRegs[i], Converts[seenConverts++]);
+    }
+  }
+
+  // next copy args into the usual places
   unsigned usedFPArgs = 0;
   for (unsigned i = 0, e = RegValuesToPass.size(); i != e; ++i) {
     Chain = DAG.getCopyToReg(Chain,
@@ -386,42 +405,34 @@ IA64TargetLowering::LowerCallTo(SDOperand Chain,
                                           IntArgRegs[i] : FPArgRegs[usedFPArgs++],
       RegValuesToPass[i], InFlag);
     InFlag = Chain.getValue(1);
-
-    //FIXME: for performance, only do the following when required
-    
-    // if we have just copied an FP arg, copy its in-memory representation
-    // to the appropriate integer register
-    if(MVT::isFloatingPoint(RegValuesToPass[i].getValueType())) {
-      std::vector<MVT::ValueType> GETFDRetTypes;
-      std::vector<SDOperand> GETFDOperands;
-      GETFDRetTypes.push_back(MVT::i64);
-      GETFDRetTypes.push_back(MVT::Flag);
-      GETFDOperands.push_back(RegValuesToPass[i]);
-      GETFDOperands.push_back(Chain);
-      GETFDOperands.push_back(InFlag);
-      
-      Chain = DAG.getNode(IA64ISD::GETFD, GETFDRetTypes, GETFDOperands);
-      Chain = DAG.getCopyToReg(Chain, IntArgRegs[i], Chain.getValue(0), Chain.getValue(1)); // ...thrice!
-      InFlag = Chain.getValue(1);
-    }
   }
-
-  std::vector<MVT::ValueType> RetVals;
-  RetVals.push_back(MVT::Other);
-  RetVals.push_back(MVT::Flag);
 
   // If the callee is a GlobalAddress node (quite common, every direct call is)
   // turn it into a TargetGlobalAddress node so that legalize doesn't hack it.
-  if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee))
+/*
+  if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee)) {
     Callee = DAG.getTargetGlobalAddress(G->getGlobal(), MVT::i64);
+  }
+*/
 
   std::vector<MVT::ValueType> NodeTys;
+  std::vector<SDOperand> CallOperands;
   NodeTys.push_back(MVT::Other);   // Returns a chain
   NodeTys.push_back(MVT::Flag);    // Returns a flag for retval copy to use.
+  CallOperands.push_back(Chain);
+  CallOperands.push_back(Callee);
+
+  // emit the call itself
   if (InFlag.Val)
+    CallOperands.push_back(InFlag);
+
+/* out with the old...
     Chain = SDOperand(DAG.getCall(NodeTys, Chain, Callee, InFlag), 0);
   else
     Chain = SDOperand(DAG.getCall(NodeTys, Chain, Callee), 0);
+*/
+  // to make way for a hack:
+  Chain = DAG.getNode(IA64ISD::BRCALL, NodeTys, CallOperands);
   InFlag = Chain.getValue(1);
 
   // restore the GP, SP and RP after the call  
@@ -431,7 +442,11 @@ IA64TargetLowering::LowerCallTo(SDOperand Chain,
   InFlag = Chain.getValue(1);
   Chain = DAG.getCopyToReg(Chain, IA64::rp, RPBeforeCall, InFlag);
   InFlag = Chain.getValue(1);
-  
+ 
+  std::vector<MVT::ValueType> RetVals;
+  RetVals.push_back(MVT::Other);
+  RetVals.push_back(MVT::Flag);
+ 
   MVT::ValueType RetTyVT = getValueType(RetTy);
   SDOperand RetVal;
   if (RetTyVT != MVT::isVoid) {

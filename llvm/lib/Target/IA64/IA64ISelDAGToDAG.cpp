@@ -342,6 +342,73 @@ SDOperand IA64DAGToDAGISel::Select(SDOperand Op) {
   default: break;
 
   case ISD::Register: return Op; // XXX: this is a hack, tblgen one day?
+ 
+  case IA64ISD::BRCALL: { // XXX: this is also a hack!
+    SDOperand Chain = Select(N->getOperand(0));
+    SDOperand InFlag;  // Null incoming flag value.
+
+    if(N->getNumOperands()==3) // we have an incoming chain, callee and flag
+      InFlag = Select(N->getOperand(2));
+
+    unsigned CallOpcode;
+    SDOperand CallOperand;
+    std::vector<MVT::ValueType> TypeOperands;
+    
+    // if we can call directly, do so
+    if (GlobalAddressSDNode *GASD =
+      dyn_cast<GlobalAddressSDNode>(N->getOperand(1))) {
+      CallOpcode = IA64::BRCALL_IPREL_GA;
+      CallOperand = CurDAG->getTargetGlobalAddress(GASD->getGlobal(), MVT::i64);
+    } else if (ExternalSymbolSDNode *ESSDN = // FIXME: we currently NEED this
+		                         // case for correctness, to avoid
+					 // "non-pic code with imm reloc.n
+					 // against dynamic symbol" errors
+             dyn_cast<ExternalSymbolSDNode>(N->getOperand(1))) {
+    CallOpcode = IA64::BRCALL_IPREL_ES;
+    CallOperand = N->getOperand(1);
+  } else {
+    // otherwise we need to load the function descriptor,
+    // load the branch target (function)'s entry point and GP,
+    // branch (call) then restore the GP
+    SDOperand FnDescriptor = Select(N->getOperand(1));
+   
+    // load the branch target's entry point [mem] and 
+    // GP value [mem+8]
+    SDOperand targetEntryPoint=CurDAG->getTargetNode(IA64::LD8, MVT::i64,
+		    FnDescriptor);
+    Chain = targetEntryPoint.getValue(1);
+    SDOperand targetGPAddr=CurDAG->getTargetNode(IA64::ADDS, MVT::i64, 
+		    FnDescriptor, CurDAG->getConstant(8, MVT::i64));
+    Chain = targetGPAddr.getValue(1);
+    SDOperand targetGP=CurDAG->getTargetNode(IA64::LD8, MVT::i64,
+		    targetGPAddr);
+    Chain = targetGP.getValue(1);
+
+    Chain = CurDAG->getCopyToReg(Chain, IA64::r1, targetGP, InFlag);
+    InFlag = Chain.getValue(1);
+    Chain = CurDAG->getCopyToReg(Chain, IA64::B6, targetEntryPoint, InFlag); // FLAG these?
+    InFlag = Chain.getValue(1);
+    
+    CallOperand = CurDAG->getRegister(IA64::B6, MVT::i64);
+    CallOpcode = IA64::BRCALL_INDIRECT;
+  }
+ 
+   // Finally, once everything is setup, emit the call itself
+   if(InFlag.Val)
+     Chain = CurDAG->getTargetNode(CallOpcode, MVT::Other, MVT::Flag, CallOperand, Chain, InFlag);
+   else // there might be no arguments
+     Chain = CurDAG->getTargetNode(CallOpcode, MVT::Other, MVT::Flag, CallOperand, Chain);
+   InFlag = Chain.getValue(1);
+
+   std::vector<SDOperand> CallResults;
+
+   CallResults.push_back(Chain);
+   CallResults.push_back(InFlag);
+
+   for (unsigned i = 0, e = CallResults.size(); i != e; ++i)
+     CodeGenMap[Op.getValue(i)] = CallResults[i];
+   return CallResults[Op.ResNo];
+  }
   
   case IA64ISD::GETFD: {
     SDOperand Input = Select(N->getOperand(0));

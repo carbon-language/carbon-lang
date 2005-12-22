@@ -38,10 +38,13 @@ namespace llvm {
       /// operand, producing an f64 value containing the integer representation
       /// of that FP value.
       FCTIDZ, FCTIWZ,
-      
+
       /// GETFD - the getf.d instruction takes a floating point operand and
       /// returns its 64-bit memory representation as an i64
-      GETFD
+      GETFD,
+
+      // TODO: explain this hack
+      BRCALL
     };
   }  
   
