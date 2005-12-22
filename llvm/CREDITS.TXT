@@ -54,12 +54,16 @@ D: Linear scan register allocator, many codegen improvements, Java frontend
 N: Brian Gaeke
 E: gaeke@uiuc.edu
 W: http://www.students.uiuc.edu/~gaeke/
-D: Portions of X86 static and JIT compilers; SparcV8 backend
+D: Portions of X86 static and JIT compilers; initial SparcV8 backend
 D: Dynamic trace optimizer 
 D: FreeBSD/X86 compatibility fixes, the llvm-nm tool
 
 N: Louis Gerbarg
 D: Portions of the PowerPC backend
+
+N: Saem Ghani
+E: saemghani@gmail.com
+D: Callgraph class cleanups
 
 N: Paolo Invernizzi
 E: arathorn@fastwebnet.it
