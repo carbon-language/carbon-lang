@@ -1454,7 +1454,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         Tmp2 = LegalizeOp(Node->getOperand(1));   // RHS
         if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(1) ||
             Tmp3 != Node->getOperand(2) || Tmp4 != Node->getOperand(3)) {
-          Result = DAG.getNode(ISD::SELECT_CC, Node->getValueType(0), Tmp1, Tmp2, 
+          Result = DAG.getNode(ISD::SELECT_CC, Node->getValueType(0), Tmp1,Tmp2, 
                                Tmp3, Tmp4, Node->getOperand(4));
         }
         break;
@@ -1590,7 +1590,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       }
     }
 
-    switch(TLI.getOperationAction(ISD::SETCC, Node->getOperand(0).getValueType())) {
+    switch(TLI.getOperationAction(ISD::SETCC,
+                                  Node->getOperand(0).getValueType())) {
     default: 
       assert(0 && "Cannot handle this action for SETCC yet!");
       break;
@@ -1611,7 +1612,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
                "Fell off of the edge of the floating point world");
           
         // If the target supports SETCC of this type, use it.
-        if (TLI.getOperationAction(ISD::SETCC, NewInTy) == TargetLowering::Legal)
+        if (TLI.isOperationLegal(ISD::SETCC, NewInTy))
           break;
       }
       if (MVT::isInteger(NewInTy))
