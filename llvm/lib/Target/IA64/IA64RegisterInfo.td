@@ -235,8 +235,8 @@ def B6 : GR<0, "b6">;
 def GR : RegisterClass<"IA64", [i64], 64, 
        [
        
-//FIXME!: for readability, we don't want the out registers to be the first
-//        ones allocated
+//FIXME!: for both readability and performance, we don't want the out
+//        registers to be the first ones allocated
 
         out7, out6, out5, out4, out3, out2, out1, out0,
         r3,  r8,  r9,  r10, r11, r14,

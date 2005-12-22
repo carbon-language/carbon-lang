@@ -47,6 +47,7 @@ def IA64 : Target {
 
 //  r1, // global data pointer (GP)  - XXX NOT callee saved, we do it ourselves
 //  r12, // memory stack pointer (SP)- XXX NOT callee saved, we do it ourselves
+//  rp, // return branch register (rp/b0) - we do this ourselves
   // **** r13 (thread pointer) we do not touch, ever. it's not here. ****//
   //r15, // our frame pointer (FP)
   

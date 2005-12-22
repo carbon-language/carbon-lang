@@ -23,7 +23,7 @@ def s8imm : Operand<i8> {
 def s14imm  : Operand<i64> {
   let PrintMethod = "printS14ImmOperand";
 }
-def s22imm  : Operand<i32> {
+def s22imm  : Operand<i64> {
   let PrintMethod = "printS22ImmOperand";
 }
 def u64imm  : Operand<i64> {
@@ -116,7 +116,12 @@ def MOVL : AForm_DAG<0x03, 0x0b, (ops GR:$dst, s64imm:$imm),
 def ADDL_GA : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, globaladdress:$imm),
            "addl $dst = $imm, $src1;;",
 	   []>;
-  
+
+// hmm 
+def ADDL_EA : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, calltarget:$imm),
+           "addl $dst = $imm, $src1;;",
+	   []>;
+ 
 def SUB  : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
            "sub $dst = $src1, $src2;;",
 	   [(set GR:$dst, (sub GR:$src1, GR:$src2))]>;
@@ -639,7 +644,7 @@ let isTerminator = 1, isBranch = 1 in {
     "($qp) br.cond.sptk $dst;;">;
 }
 
-let isCall = 1, isTerminator = 1, isBranch = 1, 
+let isCall = 1, /* isTerminator = 1, isBranch = 1, */
   Uses = [out0,out1,out2,out3,out4,out5,out6,out7],
 // all calls clobber non-callee-saved registers, and for now, they are these:
   Defs = [r2,r3,r8,r9,r10,r11,r14,r15,r16,r17,r18,r19,r20,r21,r22,r23,r24,
@@ -659,8 +664,14 @@ let isCall = 1, isTerminator = 1, isBranch = 1,
   def BRCALL: RawForm<0x03, 0xb0, (ops calltarget:$dst),
   "br.call.sptk rp = $dst;;">;       // FIXME: teach llvm about branch regs?
 // new daggy stuff!  
-  def BRCALL_IPREL : RawForm<0x03, 0xb0, (ops calltarget:$dst, variable_ops),
+
+// calls a globaladdress
+  def BRCALL_IPREL_GA : RawForm<0x03, 0xb0, (ops calltarget:$dst, variable_ops),
   "br.call.sptk rp = $dst;;">;       // FIXME: teach llvm about branch regs?
+// calls an externalsymbol
+  def BRCALL_IPREL_ES : RawForm<0x03, 0xb0, (ops calltarget:$dst, variable_ops),
+  "br.call.sptk rp = $dst;;">;       // FIXME: teach llvm about branch regs?
+// calls through a function descriptor
   def BRCALL_INDIRECT : RawForm<0x03, 0xb0, (ops GR:$branchreg, variable_ops),
   "br.call.sptk rp = $branchreg;;">; // FIXME: teach llvm about branch regs?
   def BRLCOND_CALL : RawForm<0x03, 0xb0, (ops PR:$qp, i64imm:$dst),
