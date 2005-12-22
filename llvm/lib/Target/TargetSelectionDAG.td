@@ -184,6 +184,7 @@ class SDNode<string opcode, SDTypeProfile typeprof,
 def set;
 def node;
 def srcvalue;
+def FLAG;
 
 def imm        : SDNode<"ISD::Constant"  , SDTIntLeaf , [], "ConstantSDNode">;
 def vt         : SDNode<"ISD::VALUETYPE" , SDTOther   , [], "VTSDNode">;
