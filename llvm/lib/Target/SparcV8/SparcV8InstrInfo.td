@@ -561,7 +561,7 @@ let Uses = [O0, O1, O2, O3, O4, O5], hasDelaySlot = 1, isCall = 1,
   // pc-relative call:
   def CALL : InstV8<(ops calltarget:$dst),
                     "call $dst",
-                  [(set ICC/*bogus*/, (call tglobaladdr:$dst, ICC/*bogus*/))]> {
+                  [(set FLAG, (call tglobaladdr:$dst, FLAG))]> {
     bits<30> disp;
     let op = 1;
     let Inst{29-0} = disp;
@@ -571,11 +571,11 @@ let Uses = [O0, O1, O2, O3, O4, O5], hasDelaySlot = 1, isCall = 1,
   def JMPLrr : F3_1<2, 0b111000,
                     (ops MEMrr:$ptr),
                     "call $ptr",
-                    [(set ICC/*bogus*/, (call  ADDRrr:$ptr, ICC/*bogus*/))]>;
+                    [(set FLAG, (call  ADDRrr:$ptr, FLAG))]>;
   def JMPLri : F3_2<2, 0b111000,
                     (ops MEMri:$ptr),
                     "call $ptr",
-                    [(set ICC/*bogus*/, (call  ADDRri:$ptr, ICC/*bogus*/))]>;
+                    [(set FLAG, (call  ADDRri:$ptr, FLAG))]>;
 }
 
 // Section B.28 - Read State Register Instructions
@@ -720,7 +720,7 @@ def : Pat<(V8hi tconstpool:$in), (SETHIi tconstpool:$in)>;
 def : Pat<(V8lo tconstpool:$in), (ORri G0, tconstpool:$in)>;
 
 // Return of a value, which has an input flag.
-def : Pat<(retflag ICC/*HACK*/), (RETL)>;
+def : Pat<(retflag FLAG), (RETL)>;
 
 // Map integer extload's to zextloads.
 def : Pat<(i32 (extload ADDRrr:$src, i1)), (LDUBrr ADDRrr:$src)>;
