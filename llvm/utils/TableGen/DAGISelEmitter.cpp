@@ -489,6 +489,9 @@ static unsigned char getIntrinsicType(Record *R, bool NotRegisters,
   } else if (R->getName() == "node" || R->getName() == "srcvalue") {
     // Placeholder.
     return MVT::isUnknown;
+  } else if (R->getName() == "FLAG") {
+    // Some pseudo flag operand.
+    return MVT::Flag;
   }
   
   TP.error("Unknown node flavor used in pattern: " + R->getName());
@@ -952,17 +955,13 @@ void DAGISelEmitter::ParsePatternFragments(std::ostream &OS) {
 /// HandleUse - Given "Pat" a leaf in the pattern, check to see if it is an
 /// instruction input.  Return true if this is a real use.
 static bool HandleUse(TreePattern *I, TreePatternNode *Pat,
-                      std::map<std::string, TreePatternNode*> &InstInputs,
-                      std::vector<Record*> &InstImpInputs) {
+                      std::map<std::string, TreePatternNode*> &InstInputs) {
   // No name -> not interesting.
   if (Pat->getName().empty()) {
     if (Pat->isLeaf()) {
       DefInit *DI = dynamic_cast<DefInit*>(Pat->getLeafValue());
       if (DI && DI->getDef()->isSubClassOf("RegisterClass"))
         I->error("Input " + DI->getDef()->getName() + " must be named!");
-      else if (DI && DI->getDef()->isSubClassOf("Register")) {
-        InstImpInputs.push_back(DI->getDef());
-      }
     }
     return false;
   }
@@ -1009,10 +1008,9 @@ void DAGISelEmitter::
 FindPatternInputsAndOutputs(TreePattern *I, TreePatternNode *Pat,
                             std::map<std::string, TreePatternNode*> &InstInputs,
                             std::map<std::string, Record*> &InstResults,
-                            std::vector<Record*> &InstImpInputs,
                             std::vector<Record*> &InstImpResults) {
   if (Pat->isLeaf()) {
-    bool isUse = HandleUse(I, Pat, InstInputs, InstImpInputs);
+    bool isUse = HandleUse(I, Pat, InstInputs);
     if (!isUse && Pat->getTransformFn())
       I->error("Cannot specify a transform function for a non-input value!");
     return;
@@ -1023,14 +1021,14 @@ FindPatternInputsAndOutputs(TreePattern *I, TreePatternNode *Pat,
       if (Pat->getChild(i)->getExtType() == MVT::isVoid)
         I->error("Cannot have void nodes inside of patterns!");
       FindPatternInputsAndOutputs(I, Pat->getChild(i), InstInputs, InstResults,
-                                  InstImpInputs, InstImpResults);
+                                  InstImpResults);
     }
     
     // If this is a non-leaf node with no children, treat it basically as if
     // it were a leaf.  This handles nodes like (imm).
     bool isUse = false;
     if (Pat->getNumChildren() == 0)
-      isUse = HandleUse(I, Pat, InstInputs, InstImpInputs);
+      isUse = HandleUse(I, Pat, InstInputs);
     
     if (!isUse && Pat->getTransformFn())
       I->error("Cannot specify a transform function for a non-input value!");
@@ -1063,7 +1061,8 @@ FindPatternInputsAndOutputs(TreePattern *I, TreePatternNode *Pat,
       if (InstResults.count(Dest->getName()))
         I->error("cannot set '" + Dest->getName() +"' multiple times");
       InstResults[Dest->getName()] = Val->getDef();
-    } else if (Val->getDef()->isSubClassOf("Register")) {
+    } else if (Val->getDef()->isSubClassOf("Register") ||
+               Val->getDef()->getName() == "FLAG") {
       InstImpResults.push_back(Val->getDef());
     } else {
       I->error("set destination should be a register!");
@@ -1071,7 +1070,7 @@ FindPatternInputsAndOutputs(TreePattern *I, TreePatternNode *Pat,
     
     // Verify and collect info from the computation.
     FindPatternInputsAndOutputs(I, Pat->getChild(i+NumValues),
-                                InstInputs, InstResults, InstImpInputs, InstImpResults);
+                                InstInputs, InstResults, InstImpResults);
   }
 }
 
@@ -1147,8 +1146,7 @@ void DAGISelEmitter::ParseInstructions() {
       std::vector<Record*> ImpResults;
       std::vector<Record*> ImpOperands;
       Instructions.insert(std::make_pair(Instrs[i], 
-                          DAGInstruction(0, Results, Operands,
-                                         ImpResults, ImpOperands)));
+                          DAGInstruction(0, Results, Operands, ImpResults)));
       continue;  // no pattern.
     }
     
@@ -1169,8 +1167,6 @@ void DAGISelEmitter::ParseInstructions() {
     // InstResults - Keep track of all the virtual registers that are 'set'
     // in the instruction, including what reg class they are.
     std::map<std::string, Record*> InstResults;
-
-    std::vector<Record*> InstImpInputs;
     std::vector<Record*> InstImpResults;
     
     // Verify that the top-level forms in the instruction are of void type, and
@@ -1183,7 +1179,7 @@ void DAGISelEmitter::ParseInstructions() {
 
       // Find inputs and outputs, and verify the structure of the uses/defs.
       FindPatternInputsAndOutputs(I, Pat, InstInputs, InstResults,
-                                  InstImpInputs, InstImpResults);
+                                  InstImpResults);
     }
 
     // Now that we have inputs and outputs of the pattern, inspect the operands
@@ -1272,7 +1268,7 @@ void DAGISelEmitter::ParseInstructions() {
       new TreePatternNode(I->getRecord(), ResultNodeOperands);
 
     // Create and insert the instruction.
-    DAGInstruction TheInst(I, Results, Operands, InstImpResults, InstImpInputs);
+    DAGInstruction TheInst(I, Results, Operands, InstImpResults);
     Instructions.insert(std::make_pair(I->getRecord(), TheInst));
 
     // Use a temporary tree pattern to infer all types and make sure that the
@@ -1346,11 +1342,10 @@ void DAGISelEmitter::ParsePatterns() {
     {
       std::map<std::string, TreePatternNode*> InstInputs;
       std::map<std::string, Record*> InstResults;
-      std::vector<Record*> InstImpInputs;
       std::vector<Record*> InstImpResults;
       FindPatternInputsAndOutputs(Pattern, Pattern->getOnlyTree(),
                                   InstInputs, InstResults,
-                                  InstImpInputs, InstImpResults);
+                                  InstImpResults);
     }
     
     ListInit *LI = Patterns[i]->getValueAsListInit("ResultInstrs");
@@ -1763,13 +1758,15 @@ private:
   std::vector<std::pair<std::string, unsigned> > FoldedChains;
   bool FoundChain;
   unsigned TmpNo;
+  unsigned NumImpInputs;
 
 public:
   PatternCodeEmitter(DAGISelEmitter &ise, ListInit *preds,
                      TreePatternNode *pattern, TreePatternNode *instr,
                      unsigned PatNum, std::ostream &os) :
     ISE(ise), Predicates(preds), Pattern(pattern), Instruction(instr),
-    PatternNo(PatNum), OS(os), FoundChain(false), TmpNo(0) {}
+    PatternNo(PatNum), OS(os), FoundChain(false), TmpNo(0),
+    NumImpInputs(0) {}
 
   /// isPredeclaredSDOperand - Return true if this is one of the predeclared
   /// SDOperands.
@@ -1904,8 +1901,13 @@ public:
           if (LeafRec->isSubClassOf("RegisterClass")) {
             // Handle register references.  Nothing to do here.
           } else if (LeafRec->isSubClassOf("Register")) {
+            // Handle register references.
+            NumImpInputs++;
           } else if (LeafRec->isSubClassOf("ComplexPattern")) {
             // Handle complex pattern. Nothing to do here.
+          } else if (LeafRec->getName() == "FLAG") {
+            // Handle pseudo FLAG register nodes.
+            NumImpInputs++;
           } else if (LeafRec->getName() == "srcvalue") {
             // Place holder for SRCVALUE nodes. Nothing to do here.
           } else if (LeafRec->isSubClassOf("ValueType")) {
@@ -1920,6 +1922,7 @@ public:
                << ") goto P" << PatternNo << "Fail;\n";
           } else {
             Child->dump();
+            std::cerr << " ";
             assert(0 && "Unknown leaf type!");
           }
         } else if (IntInit *II = dynamic_cast<IntInit*>(Child->getLeafValue())) {
@@ -2045,11 +2048,8 @@ public:
     Record *Op = N->getOperator();
     if (Op->isSubClassOf("Instruction")) {
       const DAGInstruction &Inst = ISE.getInstruction(Op);
-      unsigned NumImpResults  = Inst.getNumImpResults();
-      unsigned NumImpOperands = Inst.getNumImpOperands();
-      bool InFlag  = NumImpOperands > 0;
-      bool OutFlag = NumImpResults > 0;
-      bool IsCopyFromReg = false;
+      bool InFlag  = NumImpInputs > 0;
+      bool OutFlag = Inst.getNumImpResults() > 0;
 
       if (InFlag || OutFlag)
         OS << "      InFlag = SDOperand(0, 0);\n";
@@ -2147,41 +2147,50 @@ public:
           ValNo++;
         }
 
-        if (II.hasCtrlDep) {
+        if (II.hasCtrlDep)
           OS << "      Chain = Result.getValue(" << ValNo << ");\n";
-          if (OutFlag)
-            OS << "      InFlag = Result.getValue(" << ValNo+1 << ");\n";
-        } else if (OutFlag) 
-            OS << "      InFlag = Result.getValue(" << ValNo << ");\n";
 
         if (OutFlag)
-          IsCopyFromReg = EmitCopyFromRegs(N, II.hasCtrlDep);
-        if (IsCopyFromReg)
-          OS << "      CodeGenMap[N.getValue(" << ValNo++ << ")] = Result;\n";
+          OS << "      InFlag = Result.getValue("
+             << ValNo + (unsigned)II.hasCtrlDep << ");\n";
 
-        if (OutFlag)
-          OS << "      CodeGenMap[N.getValue(" << ValNo++ << ")] = InFlag;\n";
+        unsigned NumCopies = 0;
+        if (OutFlag) {
+          NumCopies = EmitCopyFromRegs(N, II.hasCtrlDep);
+          for (unsigned i = 0; i < NumCopies; i++) {
+            OS << "      CodeGenMap[N.getValue(" << ValNo << ")] = "
+               << "Result.getValue(" << ValNo << ");\n";
+            ValNo++;
+          }
+        }
 
-        if (IsCopyFromReg || II.hasCtrlDep) {
+        // User does not expect that I produce a chain!
+        bool AddedChain =
+          !NodeHasChain(Pattern, ISE) && (II.hasCtrlDep || NumCopies > 0);
+
+        if (NodeHasChain(Pattern, ISE))
+          OS << "      CodeGenMap[N.getValue(" << ValNo++  << ")] = Chain;\n";
+
+        if (FoldedChains.size() > 0) {
           OS << "      ";
-          if (IsCopyFromReg || NodeHasChain(Pattern, ISE))
-            OS << "CodeGenMap[N.getValue(" << ValNo   << ")] = ";
           for (unsigned j = 0, e = FoldedChains.size(); j < e; j++)
             OS << "CodeGenMap[" << FoldedChains[j].first << ".getValue("
                << FoldedChains[j].second << ")] = ";
           OS << "Chain;\n";
         }
 
-        // FIXME: this only works because (for now) an instruction can either
-        // produce a single result or a single flag.
-        if (II.hasCtrlDep && OutFlag) {
-          if (IsCopyFromReg)
-            OS << "      return (N.ResNo == 0) ? Result : "
-               << "((N.ResNo == 2) ? Chain : InFlag);"
-               << "   // Chain comes before flag.\n";
-          else
-            OS << "      return (N.ResNo) ? Chain : InFlag;"
-               << "   // Chain comes before flag.\n";
+        if (OutFlag)
+          OS << "      CodeGenMap[N.getValue(" << ValNo << ")] = InFlag;\n";
+
+        if (AddedChain && OutFlag) {
+          if (NumResults == 0) {
+            OS << "      return Result.getValue(N.ResNo+1);\n";
+          } else {
+            OS << "      if (N.ResNo < " << NumResults << ")\n";
+            OS << "        return Result.getValue(N.ResNo);\n";
+            OS << "      else\n";
+            OS << "        return Result.getValue(N.ResNo+1);\n";
+          }
         } else {
           OS << "      return Result.getValue(N.ResNo);\n";
         }
@@ -2295,6 +2304,8 @@ private:
                  << ", Select(" << RootName << OpNo
                  << "), InFlag).getValue(1);\n";
             }
+          } else if (RR->getName() == "FLAG") {
+            OS << "      InFlag = Select(" << RootName << OpNo << ");\n";
           }
         }
       }
@@ -2302,9 +2313,10 @@ private:
   }
 
   /// EmitCopyFromRegs - Emit code to copy result to physical registers
-  /// as specified by the instruction.
-  bool EmitCopyFromRegs(TreePatternNode *N, bool HasCtrlDep) {
-    bool RetVal = false;
+  /// as specified by the instruction. It returns the number of
+  /// CopyFromRegs emitted.
+  unsigned EmitCopyFromRegs(TreePatternNode *N, bool HasCtrlDep) {
+    unsigned NumCopies = 0;
     Record *Op = N->getOperator();
     if (Op->isSubClassOf("Instruction")) {
       const DAGInstruction &Inst = ISE.getInstruction(Op);
@@ -2330,12 +2342,12 @@ private:
               OS << "      Chain  = Result.getValue(1);\n";
               OS << "      InFlag = Result.getValue(2);\n";
             }
-            RetVal = true;
+            NumCopies++;
           }
         }
       }
     }
-    return RetVal;
+    return NumCopies;
   }
 };
 
@@ -2555,7 +2567,7 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
 
   OS << "  } // end of big switch.\n\n"
      << "  std::cerr << \"Cannot yet select: \";\n"
-     << "  N.Val->dump();\n"
+     << "  N.Val->dump(CurDAG);\n"
      << "  std::cerr << '\\n';\n"
      << "  abort();\n"
      << "}\n";
