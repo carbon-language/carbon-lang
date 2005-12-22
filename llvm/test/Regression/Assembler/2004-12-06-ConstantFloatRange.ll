@@ -1,5 +1,4 @@
 ; RUN: llvm-as %s -o /dev/null 2>&1 | grep "constant invalid for type"
-; XFAIL: *
 
 ;; This is a testcase for PR409
 
