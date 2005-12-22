@@ -20,6 +20,7 @@
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/CallSite.h"
+#include "llvm/Analysis/CallGraph.h"
 #include <iostream>
 using namespace llvm;
 
@@ -55,13 +56,26 @@ namespace {
       return false;
     }
 
-    void print(std::ostream &OS) const {}
-
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesAll();
     }
   };
 
   RegisterAnalysis<ExternalFunctionsPassedConstants>
-  P2("externalfnconstants", "Print external fn callsites passed constants");
+  P1("externalfnconstants", "Print external fn callsites passed constants");
+  
+  struct CallGraphPrinter : public ModulePass {
+    virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.setPreservesAll();
+      AU.addRequired<CallGraph>();
+    }
+    virtual bool runOnModule(Module &M) { return false; }
+
+    void print(std::ostream &OS, Module *M) const {
+      getAnalysis<CallGraph>().print(OS, M);
+    }
+  };
+  
+  RegisterAnalysis<CallGraphPrinter>
+    P2("callgraph", "Print a call graph");
 }
