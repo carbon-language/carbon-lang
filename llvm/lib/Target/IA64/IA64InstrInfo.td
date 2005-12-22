@@ -622,9 +622,8 @@ def FCVTFXUTRUNCS1 : AForm<0x03, 0x0b, (ops FP:$dst, FP:$src),
 def FNORMD : AForm<0x03, 0x0b, (ops FP:$dst, FP:$src),
   "fnorm.d $dst = $src;;">;
 
-def GETFD : AForm_DAG<0x03, 0x0b, (ops GR:$dst, FP:$src),
-  "getf.d $dst = $src;;",
-  [(set GR:$dst, (IA64getfd FP:$src))]>;
+def GETFD : AForm<0x03, 0x0b, (ops GR:$dst, FP:$src),
+  "getf.d $dst = $src;;">;
 def SETFD : AForm<0x03, 0x0b, (ops FP:$dst, GR:$src),
   "setf.d $dst = $src;;">;
 
