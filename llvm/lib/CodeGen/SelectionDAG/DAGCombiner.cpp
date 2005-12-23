@@ -1760,6 +1760,16 @@ SDOperand DAGCombiner::visitBIT_CONVERT(SDNode *N) {
   if (N0.getOpcode() == ISD::BIT_CONVERT)  // conv(conv(x,t1),t2) -> conv(x,t2)
     return DAG.getNode(ISD::BIT_CONVERT, VT, N0.getOperand(0));
   
+  // fold (conv (load x)) -> (load (conv*)x)
+  if (N0.getOpcode() == ISD::LOAD && N0.hasOneUse()) {
+    SDOperand Load = DAG.getLoad(VT, N0.getOperand(0), N0.getOperand(1),
+                                 N0.getOperand(2));
+    WorkList.push_back(N);
+    CombineTo(N0.Val, DAG.getNode(ISD::BIT_CONVERT, N0.getValueType(), Load),
+              Load.getValue(1));
+    return Load;
+  }
+  
   return SDOperand();
 }
 
