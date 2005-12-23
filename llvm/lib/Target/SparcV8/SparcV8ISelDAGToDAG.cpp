@@ -226,14 +226,8 @@ SparcV8TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
         MF.addLiveIn(*CurArgReg++, VReg);
         SDOperand Arg = DAG.getCopyFromReg(Root, VReg, MVT::i32);
 
-        // We use the stack space that is already reserved for this reg.
-        int FrameIdx = MF.getFrameInfo()->CreateFixedObject(4, ArgOffset);
-        SDOperand FIPtr = DAG.getFrameIndex(FrameIdx, MVT::i32);
-
-        SDOperand SV = DAG.getSrcValue(0);
-        SDOperand Store = DAG.getNode(ISD::STORE, MVT::Other, Root,
-                                      Arg, FIPtr, SV);
-        ArgValues.push_back(DAG.getLoad(MVT::f32, Store, FIPtr, SV));
+        Arg = DAG.getNode(ISD::BIT_CONVERT, MVT::f32, Arg);
+        ArgValues.push_back(Arg);
       }
       ArgOffset += 4;
       break;
@@ -280,20 +274,12 @@ SparcV8TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
         // Compose the two halves together into an i64 unit.
         SDOperand WholeValue = 
           DAG.getNode(ISD::BUILD_PAIR, MVT::i64, LoVal, HiVal);
-                      
-        if (ObjectVT == MVT::i64) {
-          // If we are emitting an i64, this is what we want.
-          ArgValues.push_back(WholeValue);
-        } else {
-          assert(ObjectVT == MVT::f64);
-          // Otherwise, emit a store to the stack and reload into FPR.
-          int FrameIdx = MF.getFrameInfo()->CreateStackObject(8, 8);
-          SDOperand FIPtr = DAG.getFrameIndex(FrameIdx, MVT::i32);
-          SDOperand SV = DAG.getSrcValue(0);
-          SDOperand Store = DAG.getNode(ISD::STORE, MVT::Other, Root,
-                                        WholeValue, FIPtr, SV);
-          ArgValues.push_back(DAG.getLoad(MVT::f64, Store, FIPtr, SV));
-        }
+        
+        // If we want a double, do a bit convert.
+        if (ObjectVT == MVT::f64)
+          WholeValue = DAG.getNode(ISD::BIT_CONVERT, MVT::f64, WholeValue);
+        
+        ArgValues.push_back(WholeValue);
       }
       ArgOffset += 8;
       break;
@@ -418,16 +404,11 @@ SparcV8TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
         ValToStore = Val;
       } else {
         // Convert this to a FP value in an int reg.
-        int FrameIdx = MF.getFrameInfo()->CreateStackObject(4, 4);
-        SDOperand FIPtr = DAG.getFrameIndex(FrameIdx, MVT::i32);
-        SDOperand SV = DAG.getSrcValue(0);
-        SDOperand Store = DAG.getNode(ISD::STORE, MVT::Other, Chain,
-                                      Val, FIPtr, SV);
-        Val = DAG.getLoad(MVT::i32, Store, FIPtr, SV);
+        Val = DAG.getNode(ISD::BIT_CONVERT, MVT::i32, Val);
         RegValuesToPass.push_back(Val);
       }
       break;
-    case MVT::f64: {
+    case MVT::f64:
       ObjSize = 8;
       // If we can store this directly into the outgoing slot, do so.  We can
       // do this when all ArgRegs are used and if the outgoing slot is aligned.
@@ -437,13 +418,7 @@ SparcV8TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
       }
       
       // Otherwise, convert this to a FP value in int regs.
-      int FrameIdx = MF.getFrameInfo()->CreateStackObject(8, 8);
-      SDOperand FIPtr = DAG.getFrameIndex(FrameIdx, MVT::i32);
-      SDOperand SV = DAG.getSrcValue(0);
-      SDOperand Store = DAG.getNode(ISD::STORE, MVT::Other, Chain,
-                                    Val, FIPtr, SV);
-      Val = DAG.getLoad(MVT::i64, Store, FIPtr, SV);
-    }
+      Val = DAG.getNode(ISD::BIT_CONVERT, MVT::i64, Val);
       // FALL THROUGH
     case MVT::i64:
       ObjSize = 8;
