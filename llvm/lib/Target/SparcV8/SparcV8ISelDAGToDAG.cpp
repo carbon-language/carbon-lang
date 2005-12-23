@@ -568,8 +568,11 @@ SDOperand SparcV8TargetLowering::
 LowerVAStart(SDOperand Chain, SDOperand VAListP, Value *VAListV, 
              SelectionDAG &DAG) {
              
-  assert(0 && "Unimp");
-  abort();
+  SDOperand Offset = DAG.getNode(ISD::ADD, MVT::i32,
+                                 DAG.getRegister(V8::I6, MVT::i32),
+                                 DAG.getConstant(VarArgsFrameOffset, MVT::i32));
+  return DAG.getNode(ISD::STORE, MVT::Other, Chain, Offset, 
+                     VAListP, DAG.getSrcValue(VAListV));
 }
 
 std::pair<SDOperand,SDOperand> SparcV8TargetLowering::
