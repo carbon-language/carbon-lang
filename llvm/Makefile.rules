@@ -1568,12 +1568,14 @@ install-local::
 	    $(DataInstall) $$hdr $(PROJ_includedir)/$$hdr ; \
 	  done ; \
 	fi
+ifneq ($(PROJ_SRC_ROOT),$(PROJ_OBJ_ROOT))
 	$(Verb) if test -d "$(PROJ_OBJ_ROOT)/include" ; then \
 	  cd $(PROJ_OBJ_ROOT)/include && \
-	  for hdr in `find . -type f -print` ; do \
+	  for hdr in `find . -type f -print | grep -v CVS` ; do \
 	    $(DataInstall) $$hdr $(PROJ_includedir)/$$hdr ; \
 	  done ; \
 	fi
+endif
 
 uninstall-local::
 	$(Echo) Uninstalling include files
