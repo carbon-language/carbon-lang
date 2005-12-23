@@ -35,7 +35,7 @@ def SDTX86SetCC   : SDTypeProfile<1, 2,
 def SDTX86RetFlag : SDTypeProfile<0, 2, [SDTCisVT<0, i16>,
                                          SDTCisVT<1, FlagVT>]>;
 
-def SDTX86Fld     : SDTypeProfile<1, 2, [SDTCisFP<0>,
+def SDTX86Fld     : SDTypeProfile<1, 2, [SDTCisVT<0, f64>,
                                          SDTCisPtrTy<1>, SDTCisVT<2, OtherVT>]>;
 
 def SDTX86FpSet   : SDTypeProfile<1, 1, [SDTCisVT<0, FlagVT>, SDTCisFP<1>]>;
@@ -128,6 +128,7 @@ def MRM6m  : Format<30>; def MRM7m  : Format<31>;
 def HasSSE1 : Predicate<"X86Vector >= SSE">;
 def HasSSE2 : Predicate<"X86Vector >= SSE2">;
 def HasSSE3 : Predicate<"X86Vector >= SSE3">;
+def FPStack : Predicate<"X86Vector < SSE2">;
 
 //===----------------------------------------------------------------------===//
 // X86 specific pattern fragments.
@@ -245,8 +246,8 @@ def zextloadi16i8  : PatFrag<(ops node:$ptr), (i16 (zextload node:$ptr, i8))>;
 def zextloadi32i8  : PatFrag<(ops node:$ptr), (i32 (zextload node:$ptr, i8))>;
 def zextloadi32i16 : PatFrag<(ops node:$ptr), (i32 (zextload node:$ptr, i16))>;
 
-def extloadi8i1    : PatFrag<(ops node:$ptr), (i8 (extload node:$ptr, i1))>;
-
+def extloadi8i1    : PatFrag<(ops node:$ptr), (i8  (extload node:$ptr, i1))>;
+def extloadf64f32  : PatFrag<(ops node:$ptr), (f64 (extload node:$ptr, f32))>;
 
 //===----------------------------------------------------------------------===//
 // Instruction templates...
@@ -2044,188 +2045,236 @@ def : Pat<(i32 (anyext R8 :$src)), (MOVZX32rr8  R8 :$src)>;
 def : Pat<(i32 (anyext R16:$src)), (MOVZX32rr16 R16:$src)>;
 
 //===----------------------------------------------------------------------===//
-// XMM Floating point support (requires SSE2)
+// XMM Floating point support (requires SSE / SSE2)
 //===----------------------------------------------------------------------===//
 
 def MOVSSrr : I<0x10, MRMSrcReg, (ops FR32:$dst, FR32:$src),
-                "movss {$src, $dst|$dst, $src}", []>, XS;
+                "movss {$src, $dst|$dst, $src}", []>,
+              Requires<[HasSSE1]>, XS;
 def MOVSDrr : I<0x10, MRMSrcReg, (ops FR64:$dst, FR64:$src),
-                "movsd {$src, $dst|$dst, $src}", []>, XD;
+                "movsd {$src, $dst|$dst, $src}", []>,
+              Requires<[HasSSE2]>, XD;
 
 def MOVSSrm : I<0x10, MRMSrcMem, (ops FR32:$dst, f32mem:$src),
                 "movss {$src, $dst|$dst, $src}",
                 [(set FR32:$dst, (loadf32 addr:$src))]>,
-                Requires<[HasSSE2]>, XS;
+              Requires<[HasSSE1]>, XS;
 def MOVSSmr : I<0x11, MRMDestMem, (ops f32mem:$dst, FR32:$src),
                 "movss {$src, $dst|$dst, $src}",
-                [(store FR32:$src, addr:$dst)]>, XS;
+                [(store FR32:$src, addr:$dst)]>,
+              Requires<[HasSSE1]>, XS;
 def MOVSDrm : I<0x10, MRMSrcMem, (ops FR64:$dst, f64mem:$src),
                 "movsd {$src, $dst|$dst, $src}",
                 [(set FR64:$dst, (loadf64 addr:$src))]>,
-                Requires<[HasSSE2]>, XD;
+              Requires<[HasSSE2]>, XD;
 def MOVSDmr : I<0x11, MRMDestMem, (ops f64mem:$dst, FR64:$src),
                 "movsd {$src, $dst|$dst, $src}",
                 [(store FR64:$src, addr:$dst)]>,
-                Requires<[HasSSE2]>, XD;
+              Requires<[HasSSE2]>, XD;
 
 def CVTTSD2SIrr: I<0x2C, MRMSrcReg, (ops R32:$dst, FR64:$src),
-                "cvttsd2si {$src, $dst|$dst, $src}",
-                [(set R32:$dst, (fp_to_sint FR64:$src))]>,
-                Requires<[HasSSE2]>, XD;
+                   "cvttsd2si {$src, $dst|$dst, $src}",
+                   [(set R32:$dst, (fp_to_sint FR64:$src))]>,
+                 Requires<[HasSSE2]>, XD;
 def CVTTSD2SIrm: I<0x2C, MRMSrcMem, (ops R32:$dst, f64mem:$src),
-                "cvttsd2si {$src, $dst|$dst, $src}",
-                [(set R32:$dst, (fp_to_sint (loadf64 addr:$src)))]>,
-                Requires<[HasSSE2]>, XD;
+                   "cvttsd2si {$src, $dst|$dst, $src}",
+                   [(set R32:$dst, (fp_to_sint (loadf64 addr:$src)))]>,
+                 Requires<[HasSSE2]>, XD;
 def CVTTSS2SIrr: I<0x2C, MRMSrcReg, (ops R32:$dst, FR32:$src),
-                "cvttss2si {$src, $dst|$dst, $src}",
-                [(set R32:$dst, (fp_to_sint FR32:$src))]>,
-                Requires<[HasSSE2]>, XS;
+                   "cvttss2si {$src, $dst|$dst, $src}",
+                   [(set R32:$dst, (fp_to_sint FR32:$src))]>,
+                 Requires<[HasSSE1]>, XS;
 def CVTTSS2SIrm: I<0x2C, MRMSrcMem, (ops R32:$dst, f32mem:$src),
-                "cvttss2si {$src, $dst|$dst, $src}",
-                [(set R32:$dst, (fp_to_sint (loadf32 addr:$src)))]>,
-                Requires<[HasSSE2]>, XS;
+                   "cvttss2si {$src, $dst|$dst, $src}",
+                   [(set R32:$dst, (fp_to_sint (loadf32 addr:$src)))]>,
+                 Requires<[HasSSE1]>, XS;
 def CVTSD2SSrr: I<0x5A, MRMSrcReg, (ops FR32:$dst, FR64:$src),
-                "cvtsd2ss {$src, $dst|$dst, $src}",
-                [(set FR32:$dst, (fround FR64:$src))]>,
+                  "cvtsd2ss {$src, $dst|$dst, $src}",
+                  [(set FR32:$dst, (fround FR64:$src))]>,
                 Requires<[HasSSE2]>, XS;
 def CVTSD2SSrm: I<0x5A, MRMSrcMem, (ops FR32:$dst, f64mem:$src), 
-                "cvtsd2ss {$src, $dst|$dst, $src}",
-                [(set FR32:$dst, (fround (loadf64 addr:$src)))]>,
+                  "cvtsd2ss {$src, $dst|$dst, $src}",
+                  [(set FR32:$dst, (fround (loadf64 addr:$src)))]>,
                 Requires<[HasSSE2]>, XS;
 def CVTSS2SDrr: I<0x5A, MRMSrcReg, (ops FR64:$dst, FR32:$src),
-                "cvtss2sd {$src, $dst|$dst, $src}",
-                [(set FR64:$dst, (fextend FR32:$src))]>,
+                  "cvtss2sd {$src, $dst|$dst, $src}",
+                  [(set FR64:$dst, (fextend FR32:$src))]>,
                 Requires<[HasSSE2]>, XD;
 def CVTSS2SDrm: I<0x5A, MRMSrcMem, (ops FR64:$dst, f32mem:$src),
-                "cvtss2sd {$src, $dst|$dst, $src}",
-                [(set FR64:$dst, (fextend (loadf32 addr:$src)))]>,
+                  "cvtss2sd {$src, $dst|$dst, $src}",
+                  [(set FR64:$dst, (fextend (loadf32 addr:$src)))]>,
                 Requires<[HasSSE2]>, XD;
 def CVTSI2SSrr: I<0x2A, MRMSrcReg, (ops FR32:$dst, R32:$src),
-                "cvtsi2ss {$src, $dst|$dst, $src}",
-                [(set FR32:$dst, (sint_to_fp R32:$src))]>,
+                  "cvtsi2ss {$src, $dst|$dst, $src}",
+                  [(set FR32:$dst, (sint_to_fp R32:$src))]>,
                 Requires<[HasSSE2]>, XS;
 def CVTSI2SSrm: I<0x2A, MRMSrcMem, (ops FR32:$dst, i32mem:$src),
-                "cvtsi2ss {$src, $dst|$dst, $src}",
-                [(set FR32:$dst, (sint_to_fp (loadi32 addr:$src)))]>,
+                  "cvtsi2ss {$src, $dst|$dst, $src}",
+                  [(set FR32:$dst, (sint_to_fp (loadi32 addr:$src)))]>,
                 Requires<[HasSSE2]>, XS;
 def CVTSI2SDrr: I<0x2A, MRMSrcReg, (ops FR64:$dst, R32:$src),
-                "cvtsi2sd {$src, $dst|$dst, $src}",
-                [(set FR64:$dst, (sint_to_fp R32:$src))]>,
+                  "cvtsi2sd {$src, $dst|$dst, $src}",
+                  [(set FR64:$dst, (sint_to_fp R32:$src))]>,
                 Requires<[HasSSE2]>, XD;
 def CVTSI2SDrm: I<0x2A, MRMSrcMem, (ops FR64:$dst, i32mem:$src),
-                "cvtsi2sd {$src, $dst|$dst, $src}",
-                [(set FR64:$dst, (sint_to_fp (loadi32 addr:$src)))]>,
+                  "cvtsi2sd {$src, $dst|$dst, $src}",
+                  [(set FR64:$dst, (sint_to_fp (loadi32 addr:$src)))]>,
                 Requires<[HasSSE2]>, XD;
 
 def SQRTSSrm : I<0x51, MRMSrcMem, (ops FR32:$dst, f32mem:$src),
-                "sqrtss {$src, $dst|$dst, $src}", []>, XS;
+                 "sqrtss {$src, $dst|$dst, $src}",
+                 [(set FR32:$dst, (fsqrt (loadf32 addr:$src)))]>,
+               Requires<[HasSSE1]>, XS;
 def SQRTSSrr : I<0x51, MRMSrcReg, (ops FR32:$dst, FR32:$src),
-                "sqrtss {$src, $dst|$dst, $src}",
-                [(set FR32:$dst, (fsqrt FR32:$src))]>, XS;
+                 "sqrtss {$src, $dst|$dst, $src}",
+                 [(set FR32:$dst, (fsqrt FR32:$src))]>,
+               Requires<[HasSSE1]>, XS;
 def SQRTSDrm : I<0x51, MRMSrcMem, (ops FR64:$dst, f64mem:$src),
-                "sqrtsd {$src, $dst|$dst, $src}", []>, XD;
+                 "sqrtsd {$src, $dst|$dst, $src}",
+                 [(set FR64:$dst, (fsqrt (loadf64 addr:$src)))]>,
+               Requires<[HasSSE2]>, XD;
 def SQRTSDrr : I<0x51, MRMSrcReg, (ops FR64:$dst, FR64:$src),
-                "sqrtsd {$src, $dst|$dst, $src}",
-                [(set FR64:$dst, (fsqrt FR64:$src))]>, XD;
+                 "sqrtsd {$src, $dst|$dst, $src}",
+                 [(set FR64:$dst, (fsqrt FR64:$src))]>,
+               Requires<[HasSSE2]>, XD;
 
 def UCOMISDrr: I<0x2E, MRMSrcReg, (ops FR64:$dst, FR64:$src),
-                "ucomisd {$src, $dst|$dst, $src}", []>, TB, OpSize;
+                 "ucomisd {$src, $dst|$dst, $src}", []>,
+               Requires<[HasSSE2]>, TB, OpSize;
 def UCOMISDrm: I<0x2E, MRMSrcMem, (ops FR64:$dst, f64mem:$src),
-                "ucomisd {$src, $dst|$dst, $src}", []>, TB, OpSize;
+                "ucomisd {$src, $dst|$dst, $src}", []>,
+               Requires<[HasSSE2]>, TB, OpSize;
 def UCOMISSrr: I<0x2E, MRMSrcReg, (ops FR32:$dst, FR32:$src),
-                "ucomiss {$src, $dst|$dst, $src}", []>, TB;
+                "ucomiss {$src, $dst|$dst, $src}", []>,
+               Requires<[HasSSE1]>, TB;
 def UCOMISSrm: I<0x2E, MRMSrcMem, (ops FR32:$dst, f32mem:$src),
-                "ucomiss {$src, $dst|$dst, $src}", []>, TB;
+                "ucomiss {$src, $dst|$dst, $src}", []>,
+               Requires<[HasSSE1]>, TB;
 
 // Pseudo-instructions that map fld0 to xorps/xorpd for sse.
 // FIXME: remove when we can teach regalloc that xor reg, reg is ok.
 def FLD0SS : I<0x57, MRMSrcReg, (ops FR32:$dst),
-                "xorps $dst, $dst", []>, TB;
+               "xorps $dst, $dst", []>, Requires<[HasSSE1]>, TB;
 def FLD0SD : I<0x57, MRMSrcReg, (ops FR64:$dst),
-                "xorpd $dst, $dst", []>, TB, OpSize;
+               "xorpd $dst, $dst", []>, Requires<[HasSSE2]>, TB, OpSize;
 
 let isTwoAddress = 1 in {
+// SSE Scalar Arithmetic
 let isCommutable = 1 in {
 def ADDSSrr : I<0x58, MRMSrcReg, (ops FR32:$dst, FR32:$src1, FR32:$src2),
                 "addss {$src2, $dst|$dst, $src2}",
-                [(set FR32:$dst, (fadd FR32:$src1, FR32:$src2))]>, XS;
+                [(set FR32:$dst, (fadd FR32:$src1, FR32:$src2))]>,
+              Requires<[HasSSE1]>, XS;
 def ADDSDrr : I<0x58, MRMSrcReg, (ops FR64:$dst, FR64:$src1, FR64:$src2),
                 "addsd {$src2, $dst|$dst, $src2}",
-                [(set FR64:$dst, (fadd FR64:$src1, FR64:$src2))]>, XD;
-def ANDPSrr : I<0x54, MRMSrcReg, (ops FR32:$dst, FR32:$src1, FR32:$src2),
-                "andps {$src2, $dst|$dst, $src2}", []>, TB;
-def ANDPDrr : I<0x54, MRMSrcReg, (ops FR64:$dst, FR64:$src1, FR64:$src2),
-                "andpd {$src2, $dst|$dst, $src2}", []>, TB, OpSize;
+                [(set FR64:$dst, (fadd FR64:$src1, FR64:$src2))]>,
+              Requires<[HasSSE2]>, XD;
 def MULSSrr : I<0x59, MRMSrcReg, (ops FR32:$dst, FR32:$src1, FR32:$src2),
                 "mulss {$src2, $dst|$dst, $src2}",
-                [(set FR32:$dst, (fmul FR32:$src1, FR32:$src2))]>, XS;
+                [(set FR32:$dst, (fmul FR32:$src1, FR32:$src2))]>,
+              Requires<[HasSSE1]>, XS;
 def MULSDrr : I<0x59, MRMSrcReg, (ops FR64:$dst, FR64:$src1, FR64:$src2),
                 "mulsd {$src2, $dst|$dst, $src2}",
-                [(set FR64:$dst, (fmul FR64:$src1, FR64:$src2))]>, XD;
-def ORPSrr : I<0x56, MRMSrcReg, (ops FR32:$dst, FR32:$src1, FR32:$src2),
-                "orps {$src2, $dst|$dst, $src2}", []>, TB;
-def ORPDrr : I<0x56, MRMSrcReg, (ops FR64:$dst, FR64:$src1, FR64:$src2),
-                "orpd {$src2, $dst|$dst, $src2}", []>, TB, OpSize;
-def XORPSrr : I<0x57, MRMSrcReg, (ops FR32:$dst, FR32:$src1, FR32:$src2),
-                "xorps {$src2, $dst|$dst, $src2}", []>, TB;
-def XORPDrr : I<0x57, MRMSrcReg, (ops FR64:$dst, FR64:$src1, FR64:$src2),
-                "xorpd {$src2, $dst|$dst, $src2}", []>, TB, OpSize;
+                [(set FR64:$dst, (fmul FR64:$src1, FR64:$src2))]>,
+              Requires<[HasSSE2]>, XD;
 }
-def ANDNPSrr : I<0x55, MRMSrcReg, (ops FR32:$dst, FR32:$src1, FR32:$src2),
-                "andnps {$src2, $dst|$dst, $src2}", []>, TB;
-def ANDNPDrr : I<0x55, MRMSrcReg, (ops FR64:$dst, FR64:$src1, FR64:$src2),
-                "andnpd {$src2, $dst|$dst, $src2}", []>, TB, OpSize;
-def ADDSSrm : I<0x58, MRMSrcMem, (ops FR32:$dst, FR32:$src1, f32mem:$src2),
-                "addss {$src2, $dst|$dst, $src2}", []>, XS;
-def ADDSDrm : I<0x58, MRMSrcMem, (ops FR64:$dst, FR64:$src1, f64mem:$src2),
-                "addsd {$src2, $dst|$dst, $src2}", []>, XD;
-def MULSSrm : I<0x59, MRMSrcMem, (ops FR32:$dst, FR32:$src1, f32mem:$src2),
-                "mulss {$src2, $dst|$dst, $src2}", []>, XS;
-def MULSDrm : I<0x59, MRMSrcMem, (ops FR64:$dst, FR64:$src1, f64mem:$src2),
-                "mulsd {$src2, $dst|$dst, $src2}", []>, XD;
 
-def DIVSSrm : I<0x5E, MRMSrcMem, (ops FR32:$dst, FR32:$src1, f32mem:$src2),
-                "divss {$src2, $dst|$dst, $src2}", []>, XS;
+def ADDSSrm : I<0x58, MRMSrcMem, (ops FR32:$dst, FR32:$src1, f32mem:$src2),
+                "addss {$src2, $dst|$dst, $src2}",
+                [(set FR32:$dst, (fadd FR32:$src1, (loadf32 addr:$src2)))]>,
+              Requires<[HasSSE1]>, XS;
+def ADDSDrm : I<0x58, MRMSrcMem, (ops FR64:$dst, FR64:$src1, f64mem:$src2),
+                "addsd {$src2, $dst|$dst, $src2}",
+                [(set FR64:$dst, (fadd FR64:$src1, (loadf64 addr:$src2)))]>,
+              Requires<[HasSSE2]>, XD;
+def MULSSrm : I<0x59, MRMSrcMem, (ops FR32:$dst, FR32:$src1, f32mem:$src2),
+                "mulss {$src2, $dst|$dst, $src2}",
+                [(set FR32:$dst, (fmul FR32:$src1, (loadf32 addr:$src2)))]>,
+              Requires<[HasSSE1]>, XS;
+def MULSDrm : I<0x59, MRMSrcMem, (ops FR64:$dst, FR64:$src1, f64mem:$src2),
+                "mulsd {$src2, $dst|$dst, $src2}",
+                [(set FR64:$dst, (fmul FR64:$src1, (loadf64 addr:$src2)))]>,
+              Requires<[HasSSE2]>, XD;
+
 def DIVSSrr : I<0x5E, MRMSrcReg, (ops FR32:$dst, FR32:$src1, FR32:$src2),
                 "divss {$src2, $dst|$dst, $src2}",
-                [(set FR32:$dst, (fdiv FR32:$src1, FR32:$src2))]>, XS;
-def DIVSDrm : I<0x5E, MRMSrcMem, (ops FR64:$dst, FR64:$src1, f64mem:$src2),
-                "divsd {$src2, $dst|$dst, $src2}", []>, XD;
+                [(set FR32:$dst, (fdiv FR32:$src1, FR32:$src2))]>,
+              Requires<[HasSSE1]>, XS;
+def DIVSSrm : I<0x5E, MRMSrcMem, (ops FR32:$dst, FR32:$src1, f32mem:$src2),
+                "divss {$src2, $dst|$dst, $src2}",
+                [(set FR32:$dst, (fdiv FR32:$src1, (loadf32 addr:$src2)))]>,
+              Requires<[HasSSE1]>, XS;
 def DIVSDrr : I<0x5E, MRMSrcReg, (ops FR64:$dst, FR64:$src1, FR64:$src2),
                 "divsd {$src2, $dst|$dst, $src2}",
-                [(set FR64:$dst, (fdiv FR64:$src1, FR64:$src2))]>, XD;
+                [(set FR64:$dst, (fdiv FR64:$src1, FR64:$src2))]>,
+              Requires<[HasSSE2]>, XD;
+def DIVSDrm : I<0x5E, MRMSrcMem, (ops FR64:$dst, FR64:$src1, f64mem:$src2),
+                "divsd {$src2, $dst|$dst, $src2}",
+                [(set FR64:$dst, (fdiv FR64:$src1, (loadf64 addr:$src2)))]>,
+              Requires<[HasSSE2]>, XD;
 
-def SUBSSrm : I<0x5C, MRMSrcMem, (ops FR32:$dst, FR32:$src1, f32mem:$src2),
-                "subss {$src2, $dst|$dst, $src2}", []>, XS;
 def SUBSSrr : I<0x5C, MRMSrcReg, (ops FR32:$dst, FR32:$src1, FR32:$src2),
                 "subss {$src2, $dst|$dst, $src2}",
-                [(set FR32:$dst, (fsub FR32:$src1, FR32:$src2))]>, XS;
-def SUBSDrm : I<0x5C, MRMSrcMem, (ops FR64:$dst, FR64:$src1, f64mem:$src2),
-                "subsd {$src2, $dst|$dst, $src2}", []>, XD;
+                [(set FR32:$dst, (fsub FR32:$src1, FR32:$src2))]>,
+              Requires<[HasSSE1]>, XS;
+def SUBSSrm : I<0x5C, MRMSrcMem, (ops FR32:$dst, FR32:$src1, f32mem:$src2),
+                "subss {$src2, $dst|$dst, $src2}",
+                [(set FR32:$dst, (fsub FR32:$src1, (loadf32 addr:$src2)))]>,
+              Requires<[HasSSE1]>, XS;
 def SUBSDrr : I<0x5C, MRMSrcReg, (ops FR64:$dst, FR64:$src1, FR64:$src2),
                 "subsd {$src2, $dst|$dst, $src2}",
-                [(set FR64:$dst, (fsub FR64:$src1, FR64:$src2))]>, XD;
+                [(set FR64:$dst, (fsub FR64:$src1, FR64:$src2))]>,
+              Requires<[HasSSE2]>, XD;
+def SUBSDrm : I<0x5C, MRMSrcMem, (ops FR64:$dst, FR64:$src1, f64mem:$src2),
+                "subsd {$src2, $dst|$dst, $src2}",
+                [(set FR64:$dst, (fsub FR64:$src1, (loadf64 addr:$src2)))]>,
+              Requires<[HasSSE2]>, XD;
+
+// SSE Logical
+let isCommutable = 1 in {
+def ANDPSrr : I<0x54, MRMSrcReg, (ops FR32:$dst, FR32:$src1, FR32:$src2),
+                "andps {$src2, $dst|$dst, $src2}", []>,
+              Requires<[HasSSE1]>, TB;
+def ANDPDrr : I<0x54, MRMSrcReg, (ops FR64:$dst, FR64:$src1, FR64:$src2),
+                "andpd {$src2, $dst|$dst, $src2}", []>,
+              Requires<[HasSSE2]>, TB, OpSize;
+def ORPSrr : I<0x56, MRMSrcReg, (ops FR32:$dst, FR32:$src1, FR32:$src2),
+                "orps {$src2, $dst|$dst, $src2}", []>,
+             Requires<[HasSSE1]>, TB;
+def ORPDrr : I<0x56, MRMSrcReg, (ops FR64:$dst, FR64:$src1, FR64:$src2),
+                "orpd {$src2, $dst|$dst, $src2}", []>,
+             Requires<[HasSSE2]>, TB, OpSize;
+def XORPSrr : I<0x57, MRMSrcReg, (ops FR32:$dst, FR32:$src1, FR32:$src2),
+                "xorps {$src2, $dst|$dst, $src2}", []>,
+              Requires<[HasSSE1]>, TB;
+def XORPDrr : I<0x57, MRMSrcReg, (ops FR64:$dst, FR64:$src1, FR64:$src2),
+                "xorpd {$src2, $dst|$dst, $src2}", []>,
+              Requires<[HasSSE2]>, TB, OpSize;
+}
+def ANDNPSrr : I<0x55, MRMSrcReg, (ops FR32:$dst, FR32:$src1, FR32:$src2),
+                "andnps {$src2, $dst|$dst, $src2}", []>,
+               Requires<[HasSSE1]>, TB;
+def ANDNPDrr : I<0x55, MRMSrcReg, (ops FR64:$dst, FR64:$src1, FR64:$src2),
+                "andnpd {$src2, $dst|$dst, $src2}", []>,
+               Requires<[HasSSE2]>, TB, OpSize;
 
 def CMPSSrr : I<0xC2, MRMSrcReg, 
                 (ops FR32:$dst, FR32:$src1, FR32:$src, SSECC:$cc),
-                "cmp${cc}ss {$src, $dst|$dst, $src}", []>, XS;
+                "cmp${cc}ss {$src, $dst|$dst, $src}", []>,
+              Requires<[HasSSE1]>, XS;
 def CMPSSrm : I<0xC2, MRMSrcMem, 
                 (ops FR32:$dst, FR32:$src1, f32mem:$src, SSECC:$cc),
-                "cmp${cc}ss {$src, $dst|$dst, $src}", []>, XS;
+                "cmp${cc}ss {$src, $dst|$dst, $src}", []>,
+              Requires<[HasSSE1]>, XS;
 def CMPSDrr : I<0xC2, MRMSrcReg, 
                 (ops FR64:$dst, FR64:$src1, FR64:$src, SSECC:$cc),
-                "cmp${cc}sd {$src, $dst|$dst, $src}", []>, XD;
+                "cmp${cc}sd {$src, $dst|$dst, $src}", []>,
+              Requires<[HasSSE1]>, XD;
 def CMPSDrm : I<0xC2, MRMSrcMem, 
                 (ops FR64:$dst, FR64:$src1, f64mem:$src, SSECC:$cc),
-                "cmp${cc}sd {$src, $dst|$dst, $src}", []>, XD;
+                "cmp${cc}sd {$src, $dst|$dst, $src}", []>,
+              Requires<[HasSSE2]>, XD;
 }
-
-//===----------------------------------------------------------------------===//
-// Miscellaneous Instructions
-//===----------------------------------------------------------------------===//
-
-def RDTSC : I<0x31, RawFrm, (ops), "rdtsc", []>, TB, Imp<[],[EAX,EDX]>;
-
 
 //===----------------------------------------------------------------------===//
 // Floating Point Stack Support
@@ -2248,45 +2297,92 @@ class FPI<bits<8> o, Format F, dag ops, string asm> : I<o, F, ops, asm, []> {}
 
 // FpI - Floating Point Psuedo Instruction template.
 class FpI<dag ops, FPFormat fp, list<dag> pattern>
+  : X86Inst<0, Pseudo, NoImm, ops, "">, Requires<[FPStack]> {
+  let FPForm = fp; let FPFormBits = FPForm.Value;
+  let Pattern = pattern;
+}
+
+// FpI - Floating Point Psuedo Instruction template.
+// TEMPORARY: for FpGETRESULT and FpSETRESULT only. Since
+// they must match regardless of X86Vector.
+class FpPseudoI<dag ops, FPFormat fp, list<dag> pattern>
   : X86Inst<0, Pseudo, NoImm, ops, ""> {
   let FPForm = fp; let FPFormBits = FPForm.Value;
   let Pattern = pattern;
 }
 
 // Random Pseudo Instructions.
-def FpGETRESULT : FpI<(ops RFP:$dst), SpecialFP, // FPR = ST(0)
+def FpGETRESULT : FpPseudoI<(ops RFP:$dst), SpecialFP, // FPR = ST(0)
                       []>;  
-def FpSETRESULT : FpI<(ops RFP:$src), SpecialFP,
+def FpSETRESULT : FpPseudoI<(ops RFP:$src), SpecialFP,
                       [(set FLAG, (X86fpset RFP:$src))]>,
                        Imp<[], [ST0]>;  // ST(0) = FPR
+
 def FpMOV       : FpI<(ops RFP:$dst, RFP:$src), SpecialFP,
                       []>;   // f1 = fmov f2
 
+// Arithmetic
+
+// Add, Sub, Mul, Div.
+def FpADD : FpI<(ops RFP:$dst, RFP:$src1, RFP:$src2), TwoArgFP,
+                [(set RFP:$dst, (fadd RFP:$src1, RFP:$src2))]>;
+def FpSUB : FpI<(ops RFP:$dst, RFP:$src1, RFP:$src2), TwoArgFP,
+                [(set RFP:$dst, (fsub RFP:$src1, RFP:$src2))]>;
+def FpMUL : FpI<(ops RFP:$dst, RFP:$src1, RFP:$src2), TwoArgFP,
+                [(set RFP:$dst, (fmul RFP:$src1, RFP:$src2))]>;
+def FpDIV : FpI<(ops RFP:$dst, RFP:$src1, RFP:$src2), TwoArgFP,
+                [(set RFP:$dst, (fdiv RFP:$src1, RFP:$src2))]>;
+
+class FPST0rInst<bits<8> o, string asm>
+  : FPI<o, AddRegFrm, (ops RST:$op), asm>, D8;
+class FPrST0Inst<bits<8> o, string asm>
+  : FPI<o, AddRegFrm, (ops RST:$op), asm>, DC;
+class FPrST0PInst<bits<8> o, string asm>
+  : FPI<o, AddRegFrm, (ops RST:$op), asm>, DE;
+
 // Binary Ops with a memory source.
 def FpADD32m  : FpI<(ops RFP:$dst, RFP:$src1, f32mem:$src2), OneArgFPRW,
-                    []>; // ST(0) = ST(0) + [mem32]
+                    [(set RFP:$dst, (fadd RFP:$src1,
+                                     (extloadf64f32 addr:$src2)))]>;
+                // ST(0) = ST(0) + [mem32]
 def FpADD64m  : FpI<(ops RFP:$dst, RFP:$src1, f32mem:$src2), OneArgFPRW,
-                    []>; // ST(0) = ST(0) + [mem32]
+                    [(set RFP:$dst, (fadd RFP:$src1, (loadf64 addr:$src2)))]>;
+                // ST(0) = ST(0) + [mem64]
 def FpMUL32m  : FpI<(ops RFP:$dst, RFP:$src1, f32mem:$src2), OneArgFPRW,
-                    []>; // ST(0) = ST(0) * [mem32]
+                    [(set RFP:$dst, (fmul RFP:$src1,
+                                     (extloadf64f32 addr:$src2)))]>;
+                // ST(0) = ST(0) * [mem32]
 def FpMUL64m  : FpI<(ops RFP:$dst, RFP:$src1, f32mem:$src2), OneArgFPRW,
-                    []>; // ST(0) = ST(0) * [mem32]
+                    [(set RFP:$dst, (fmul RFP:$src1, (loadf64 addr:$src2)))]>;
+                // ST(0) = ST(0) * [mem64]
 def FpSUB32m  : FpI<(ops RFP:$dst, RFP:$src1, f32mem:$src2), OneArgFPRW,
-                     []>; // ST(0) = ST(0) - [mem32]
+                    [(set RFP:$dst, (fsub RFP:$src1,
+                                    (extloadf64f32 addr:$src2)))]>;
+                // ST(0) = ST(0) - [mem32]
 def FpSUB64m  : FpI<(ops RFP:$dst, RFP:$src1, f32mem:$src2), OneArgFPRW,
-                    []>; // ST(0) = ST(0) - [mem32]
+                    [(set RFP:$dst, (fsub RFP:$src1, (loadf64 addr:$src2)))]>;
+                // ST(0) = ST(0) - [mem64]
 def FpSUBR32m : FpI<(ops RFP:$dst, RFP:$src1, f32mem:$src2), OneArgFPRW,
-                    []>; // ST(0) = [mem32] - ST(0)
+                    [(set RFP:$dst, (fadd (extloadf64f32 addr:$src2),
+                                     RFP:$src1))]>;
+                // ST(0) = [mem32] - ST(0)
 def FpSUBR64m : FpI<(ops RFP:$dst, RFP:$src1, f32mem:$src2), OneArgFPRW,
-                    []>; // ST(0) = [mem32] - ST(0)
+                    [(set RFP:$dst, (fsub (loadf64 addr:$src2), RFP:$src1))]>;
+                // ST(0) = [mem64] - ST(0)
 def FpDIV32m  : FpI<(ops RFP:$dst, RFP:$src1, f32mem:$src2), OneArgFPRW,
-                     []>; // ST(0) = ST(0) / [mem32]
+                    [(set RFP:$dst, (fdiv RFP:$src1,
+                                    (extloadf64f32 addr:$src2)))]>;
+                // ST(0) = ST(0) / [mem32]
 def FpDIV64m  : FpI<(ops RFP:$dst, RFP:$src1, f32mem:$src2), OneArgFPRW,
-                    []>; // ST(0) = ST(0) / [mem32]
+                    [(set RFP:$dst, (fdiv RFP:$src1, (loadf64 addr:$src2)))]>;
+                // ST(0) = ST(0) / [mem64]
 def FpDIVR32m : FpI<(ops RFP:$dst, RFP:$src1, f32mem:$src2), OneArgFPRW,
-                    []>; // ST(0) = [mem32] / ST(0)
+                    [(set RFP:$dst, (fdiv (extloadf64f32 addr:$src2),
+                                     RFP:$src1))]>;
+                // ST(0) = [mem32] / ST(0)
 def FpDIVR64m : FpI<(ops RFP:$dst, RFP:$src1, f32mem:$src2), OneArgFPRW,
-                    []>; // ST(0) = [mem32] / ST(0)
+                    [(set RFP:$dst, (fdiv (loadf64 addr:$src2), RFP:$src1))]>;
+                // ST(0) = [mem64] / ST(0)
 
 
 def FADD32m  : FPI<0xD8, MRM0m, (ops f32mem:$src), "fadd{s} $src">;
@@ -2315,6 +2411,51 @@ def FDIVR64m : FPI<0xDC, MRM7m, (ops f64mem:$src), "fdivr{l} $src">;
 //def FIDIV32m  : FPI<0xDA, MRM6m>;    // ST(0) = ST(0) / [mem32int]
 //def FIDIVR16m : FPI<0xDE, MRM7m>;    // ST(0) = [mem16int] / ST(0)
 //def FIDIVR32m : FPI<0xDA, MRM7m>;    // ST(0) = [mem32int] / ST(0)
+
+
+// NOTE: GAS and apparently all other AT&T style assemblers have a broken notion
+// of some of the 'reverse' forms of the fsub and fdiv instructions.  As such,
+// we have to put some 'r's in and take them out of weird places.
+def FADDST0r   : FPST0rInst <0xC0, "fadd $op">;
+def FADDrST0   : FPrST0Inst <0xC0, "fadd {%ST(0), $op|$op, %ST(0)}">;
+def FADDPrST0  : FPrST0PInst<0xC0, "faddp $op">;
+def FSUBRST0r  : FPST0rInst <0xE8, "fsubr $op">;
+def FSUBrST0   : FPrST0Inst <0xE8, "fsub{r} {%ST(0), $op|$op, %ST(0)}">;
+def FSUBPrST0  : FPrST0PInst<0xE8, "fsub{r}p $op">;
+def FSUBST0r   : FPST0rInst <0xE0, "fsub $op">;
+def FSUBRrST0  : FPrST0Inst <0xE0, "fsub{|r} {%ST(0), $op|$op, %ST(0)}">;
+def FSUBRPrST0 : FPrST0PInst<0xE0, "fsub{|r}p $op">;
+def FMULST0r   : FPST0rInst <0xC8, "fmul $op">;
+def FMULrST0   : FPrST0Inst <0xC8, "fmul {%ST(0), $op|$op, %ST(0)}">;
+def FMULPrST0  : FPrST0PInst<0xC8, "fmulp $op">;
+def FDIVRST0r  : FPST0rInst <0xF8, "fdivr $op">;
+def FDIVrST0   : FPrST0Inst <0xF8, "fdiv{r} {%ST(0), $op|$op, %ST(0)}">;
+def FDIVPrST0  : FPrST0PInst<0xF8, "fdiv{r}p $op">;
+def FDIVST0r   : FPST0rInst <0xF0, "fdiv $op">;
+def FDIVRrST0  : FPrST0Inst <0xF0, "fdiv{|r} {%ST(0), $op|$op, %ST(0)}">;
+def FDIVRPrST0 : FPrST0PInst<0xF0, "fdiv{|r}p $op">;
+
+
+// Unary operations.
+def FpCHS  : FpI<(ops RFP:$dst, RFP:$src), OneArgFPRW,
+                 [(set RFP:$dst, (fneg RFP:$src))]>;
+def FpABS  : FpI<(ops RFP:$dst, RFP:$src), OneArgFPRW,
+                 [(set RFP:$dst, (fabs RFP:$src))]>;
+def FpSQRT : FpI<(ops RFP:$dst, RFP:$src), OneArgFPRW,
+                 [(set RFP:$dst, (fsqrt RFP:$src))]>;
+def FpSIN  : FpI<(ops RFP:$dst, RFP:$src), OneArgFPRW,
+                 [(set RFP:$dst, (fsin RFP:$src))]>;
+def FpCOS  : FpI<(ops RFP:$dst, RFP:$src), OneArgFPRW,
+                 [(set RFP:$dst, (fcos RFP:$src))]>;
+def FpTST  : FpI<(ops RFP:$src), OneArgFP,
+                 []>;
+
+def FCHS  : FPI<0xE0, RawFrm, (ops), "fchs">, D9;
+def FABS  : FPI<0xE1, RawFrm, (ops), "fabs">, D9;
+def FSQRT : FPI<0xFA, RawFrm, (ops), "fsqrt">, D9;
+def FSIN  : FPI<0xFE, RawFrm, (ops), "fsin">, D9;
+def FCOS  : FPI<0xFF, RawFrm, (ops), "fcos">, D9;
+def FTST  : FPI<0xE4, RawFrm, (ops), "ftst">, D9;
 
 
 // Floating point cmovs.
@@ -2348,9 +2489,9 @@ def FCMOVNP : FPI<0xD8, AddRegFrm, (ops RST:$op),
 
 // Floating point loads & stores.
 def FpLD32m  : FpI<(ops RFP:$dst, f32mem:$src), ZeroArgFP,
-                   [(set RFP:$dst, (X86fld addr:$src, f32))]>;
+                   [(set RFP:$dst, (extloadf64f32 addr:$src))]>;
 def FpLD64m  : FpI<(ops RFP:$dst, f64mem:$src), ZeroArgFP,
-                   [(set RFP:$dst, (X86fld addr:$src, f64))]>;
+                   [(set RFP:$dst, (loadf64 addr:$src))]>;
 def FpILD16m : FpI<(ops RFP:$dst, i16mem:$src), ZeroArgFP,
                    []>;
 def FpILD32m : FpI<(ops RFP:$dst, i32mem:$src), ZeroArgFP,
@@ -2358,8 +2499,14 @@ def FpILD32m : FpI<(ops RFP:$dst, i32mem:$src), ZeroArgFP,
 def FpILD64m : FpI<(ops RFP:$dst, i64mem:$src), ZeroArgFP,
                    []>;
 
-def FpST32m   : FpI<(ops f32mem:$op, RFP:$src), OneArgFP, []>;
-def FpST64m   : FpI<(ops f64mem:$op, RFP:$src), OneArgFP, []>;
+// Required for RET of f32 / f64 values.
+def : Pat<(X86fld addr:$src, f32), (FpLD32m addr:$src)>;
+def : Pat<(X86fld addr:$src, f64), (FpLD64m addr:$src)>;
+
+def FpST32m   : FpI<(ops f32mem:$op, RFP:$src), OneArgFP,
+                [(truncstore RFP:$src, addr:$op, f32)]>;
+def FpST64m   : FpI<(ops f64mem:$op, RFP:$src), OneArgFP,
+                [(store RFP:$src, addr:$op)]>;
 def FpSTP32m  : FpI<(ops f32mem:$op, RFP:$src), OneArgFP, []>;
 def FpSTP64m  : FpI<(ops f64mem:$op, RFP:$src), OneArgFP, []>;
 def FpIST16m  : FpI<(ops i16mem:$op, RFP:$src), OneArgFP, []>;
@@ -2395,68 +2542,6 @@ def FLD0 : FPI<0xEE, RawFrm, (ops), "fldz">, D9;
 def FLD1 : FPI<0xE8, RawFrm, (ops), "fld1">, D9;
 
 
-// Unary operations.
-def FpCHS  : FpI<(ops RFP:$dst, RFP:$src), OneArgFPRW,
-                 [(set RFP:$dst, (fneg RFP:$src))]>;
-def FpABS  : FpI<(ops RFP:$dst, RFP:$src), OneArgFPRW,
-                 [(set RFP:$dst, (fabs RFP:$src))]>;
-def FpSQRT : FpI<(ops RFP:$dst, RFP:$src), OneArgFPRW,
-                 [(set RFP:$dst, (fsqrt RFP:$src))]>;
-def FpSIN  : FpI<(ops RFP:$dst, RFP:$src), OneArgFPRW,
-                 [(set RFP:$dst, (fsin RFP:$src))]>;
-def FpCOS  : FpI<(ops RFP:$dst, RFP:$src), OneArgFPRW,
-                 [(set RFP:$dst, (fcos RFP:$src))]>;
-def FpTST  : FpI<(ops RFP:$src), OneArgFP,
-                 []>;
-
-def FCHS  : FPI<0xE0, RawFrm, (ops), "fchs">, D9;
-def FABS  : FPI<0xE1, RawFrm, (ops), "fabs">, D9;
-def FSQRT : FPI<0xFA, RawFrm, (ops), "fsqrt">, D9;
-def FSIN  : FPI<0xFE, RawFrm, (ops), "fsin">, D9;
-def FCOS  : FPI<0xFF, RawFrm, (ops), "fcos">, D9;
-def FTST  : FPI<0xE4, RawFrm, (ops), "ftst">, D9;
-
-
-
-// Add, Sub, Mul, Div.
-def FpADD : FpI<(ops RFP:$dst, RFP:$src1, RFP:$src2), TwoArgFP,
-                [(set RFP:$dst, (fadd RFP:$src1, RFP:$src2))]>;
-def FpSUB : FpI<(ops RFP:$dst, RFP:$src1, RFP:$src2), TwoArgFP,
-                [(set RFP:$dst, (fsub RFP:$src1, RFP:$src2))]>;
-def FpMUL : FpI<(ops RFP:$dst, RFP:$src1, RFP:$src2), TwoArgFP,
-                [(set RFP:$dst, (fmul RFP:$src1, RFP:$src2))]>;
-def FpDIV : FpI<(ops RFP:$dst, RFP:$src1, RFP:$src2), TwoArgFP,
-                [(set RFP:$dst, (fdiv RFP:$src1, RFP:$src2))]>;
-
-class FPST0rInst<bits<8> o, string asm>
-  : FPI<o, AddRegFrm, (ops RST:$op), asm>, D8;
-class FPrST0Inst<bits<8> o, string asm>
-  : FPI<o, AddRegFrm, (ops RST:$op), asm>, DC;
-class FPrST0PInst<bits<8> o, string asm>
-  : FPI<o, AddRegFrm, (ops RST:$op), asm>, DE;
-
-// NOTE: GAS and apparently all other AT&T style assemblers have a broken notion
-// of some of the 'reverse' forms of the fsub and fdiv instructions.  As such,
-// we have to put some 'r's in and take them out of weird places.
-def FADDST0r   : FPST0rInst <0xC0, "fadd $op">;
-def FADDrST0   : FPrST0Inst <0xC0, "fadd {%ST(0), $op|$op, %ST(0)}">;
-def FADDPrST0  : FPrST0PInst<0xC0, "faddp $op">;
-def FSUBRST0r  : FPST0rInst <0xE8, "fsubr $op">;
-def FSUBrST0   : FPrST0Inst <0xE8, "fsub{r} {%ST(0), $op|$op, %ST(0)}">;
-def FSUBPrST0  : FPrST0PInst<0xE8, "fsub{r}p $op">;
-def FSUBST0r   : FPST0rInst <0xE0, "fsub $op">;
-def FSUBRrST0  : FPrST0Inst <0xE0, "fsub{|r} {%ST(0), $op|$op, %ST(0)}">;
-def FSUBRPrST0 : FPrST0PInst<0xE0, "fsub{|r}p $op">;
-def FMULST0r   : FPST0rInst <0xC8, "fmul $op">;
-def FMULrST0   : FPrST0Inst <0xC8, "fmul {%ST(0), $op|$op, %ST(0)}">;
-def FMULPrST0  : FPrST0PInst<0xC8, "fmulp $op">;
-def FDIVRST0r  : FPST0rInst <0xF8, "fdivr $op">;
-def FDIVrST0   : FPrST0Inst <0xF8, "fdiv{r} {%ST(0), $op|$op, %ST(0)}">;
-def FDIVPrST0  : FPrST0PInst<0xF8, "fdiv{r}p $op">;
-def FDIVST0r   : FPST0rInst <0xF0, "fdiv $op">;
-def FDIVRrST0  : FPrST0Inst <0xF0, "fdiv{|r} {%ST(0), $op|$op, %ST(0)}">;
-def FDIVRPrST0 : FPrST0PInst<0xF0, "fdiv{|r}p $op">;
-
 // Floating point compares.
 def FpUCOMr   : FpI<(ops RST:$lhs, RST:$rhs), CompareFP,
                     []>;  // FPSW = cmp ST(0) with ST(i)
@@ -2489,3 +2574,10 @@ def FNSTCW16m : I<0xD9, MRM7m,                   // [mem16] = X87 control world
                   (ops i16mem:$dst), "fnstcw $dst", []>;
 def FLDCW16m  : I<0xD9, MRM5m,                   // X87 control world = [mem16]
                   (ops i16mem:$dst), "fldcw $dst", []>;
+
+
+//===----------------------------------------------------------------------===//
+// Miscellaneous Instructions
+//===----------------------------------------------------------------------===//
+
+def RDTSC : I<0x31, RawFrm, (ops), "rdtsc", []>, TB, Imp<[],[EAX,EDX]>;

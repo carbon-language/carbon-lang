@@ -227,8 +227,6 @@ SDOperand X86TargetLowering::LowerReturnTo(SDOperand Chain, SDOperand Op,
       break;
     }
     case MVT::f32:
-      assert(X86ScalarSSE && "MVT::f32 only legal with scalar sse fp");
-      // Fallthrough intended
     case MVT::f64:
       if (!X86ScalarSSE) {
         std::vector<MVT::ValueType> Tys;
@@ -236,6 +234,8 @@ SDOperand X86TargetLowering::LowerReturnTo(SDOperand Chain, SDOperand Op,
         Tys.push_back(MVT::Flag);
         std::vector<SDOperand> Ops;
         Ops.push_back(Chain);
+        if (OpVT == MVT::f32)
+          Op = DAG.getNode(ISD::FP_EXTEND, MVT::f64, Op);
         Ops.push_back(Op);
         Copy = DAG.getNode(X86ISD::FP_SET_RESULT, Tys, Ops);
       } else {
@@ -1053,7 +1053,7 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     return DAG.getNode(X86ISD::BRCOND, Op.getValueType(),
                        Op.getOperand(0), Op.getOperand(2), CC, Cond);
   }
-  case ISD::GlobalAddress:
+  case ISD::GlobalAddress: {
     GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
     SDOperand GVOp = DAG.getTargetGlobalAddress(GV, getPointerTy());
     // For Darwin, external and weak symbols are indirect, so we want to load
@@ -1068,6 +1068,7 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     else
       return GVOp;
     break;
+  }
   }
 }
 

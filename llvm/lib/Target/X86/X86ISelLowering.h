@@ -42,8 +42,8 @@ namespace llvm {
 
       /// FLD - This instruction implements an extending load to FP stack slots.
       /// This corresponds to the X86::FLD32m / X86::FLD64m. It takes a chain
-      /// operand, ptr to load from, and a VALUETYPE node indicating the type
-      /// to load.
+      /// operand, ptr to load from, and a ValueType node indicating the type
+      /// to load to.
       FLD,
 
       /// FP_SET_RESULT - This corresponds to FpSETRESULT pseudo instrcuction
