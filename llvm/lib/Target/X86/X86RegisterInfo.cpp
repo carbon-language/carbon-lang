@@ -568,6 +568,7 @@ void X86RegisterInfo::emitEpilogue(MachineFunction &MF,
   switch (MBBI->getOpcode()) {
   case X86::RET:
   case X86::RETI:
+  case X86::RETVOID:  // FIXME: See X86InstrInfo.td
   case X86::TAILJMPd:
   case X86::TAILJMPr:
   case X86::TAILJMPm: break;  // These are ok

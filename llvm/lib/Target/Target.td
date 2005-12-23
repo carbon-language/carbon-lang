@@ -169,6 +169,8 @@ class Instruction {
   bit hasDelaySlot = 0;     // Does this instruction have an delay slot?
   bit usesCustomDAGSchedInserter = 0; // Pseudo instr needing special help.
   bit hasCtrlDep   = 0;     // Does this instruction r/w ctrl-flow chains?
+  bit hasInFlag    = 0;     // Does this instruction read a flag operand?
+  bit hasOutFlag   = 0;     // Does this instruction write a flag operand?
   
   InstrItinClass Itinerary; // Execution steps used for scheduling. 
 }

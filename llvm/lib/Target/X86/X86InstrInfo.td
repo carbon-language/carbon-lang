@@ -32,13 +32,12 @@ def SDTX86SetCC   : SDTypeProfile<1, 2,
                                   [SDTCisVT<0, i8>, SDTCisVT<1, OtherVT>,
                                    SDTCisVT<2, FlagVT>]>;
 
-def SDTX86RetFlag : SDTypeProfile<0, 2, [SDTCisVT<0, i16>,
-                                         SDTCisVT<1, FlagVT>]>;
+def SDTX86RetFlag : SDTypeProfile<0, 1, [SDTCisVT<0, i16>]>;
 
 def SDTX86Fld     : SDTypeProfile<1, 2, [SDTCisVT<0, f64>,
                                          SDTCisPtrTy<1>, SDTCisVT<2, OtherVT>]>;
 
-def SDTX86FpSet   : SDTypeProfile<1, 1, [SDTCisVT<0, FlagVT>, SDTCisFP<1>]>;
+def SDTX86FpSet   : SDTypeProfile<0, 1, [SDTCisFP<0>]>;
 
 def X86cmp     : SDNode<"X86ISD::CMP" ,     SDTX86CmpTest,  []>;
 def X86test    : SDNode<"X86ISD::TEST",     SDTX86CmpTest,  []>;
@@ -47,7 +46,7 @@ def X86cmov    : SDNode<"X86ISD::CMOV",     SDTX86Cmov,     []>;
 def X86Brcond  : SDNode<"X86ISD::BRCOND",   SDTX86BrCond,   [SDNPHasChain]>;
 def X86SetCC   : SDNode<"X86ISD::SETCC",    SDTX86SetCC,    []>;
 
-def X86retflag : SDNode<"X86ISD::RET_FLAG", SDTX86RetFlag, [SDNPHasChain]>;
+def X86retflag : SDNode<"X86ISD::RET_FLAG", SDTX86RetFlag,  [SDNPHasChain]>;
 
 def X86fld     : SDNode<"X86ISD::FLD",      SDTX86Fld,      [SDNPHasChain]>;
 
@@ -290,13 +289,17 @@ let isTerminator = 1 in
 //
 
 // Return instructions.
-let isTerminator = 1, isReturn = 1, isBarrier = 1, hasCtrlDep = 1 in
-  def RET : I<0xC3, RawFrm, (ops), "ret", [(ret)]>;
-let isTerminator = 1, isReturn = 1, isBarrier = 1, hasCtrlDep = 1 in
-  def RETI : Ii16<0xC2, RawFrm, (ops i16imm:$amt), "ret $amt", []>;
+let isTerminator = 1, isReturn = 1, isBarrier = 1, hasCtrlDep = 1 in {
+  // FIXME: temporary workaround for return without an incoming flag.
+  def RETVOID : I<0xC3, RawFrm, (ops), "ret", [(ret)]>;
+  let hasInFlag = 1 in {
+    def RET : I<0xC3, RawFrm, (ops), "ret", []>;
+    def RETI : Ii16<0xC2, RawFrm, (ops i16imm:$amt), "ret $amt", []>;
+  }
+}
 
-def : Pat<(X86retflag 0, FLAG),        (RET)>;
-def : Pat<(X86retflag imm:$amt, FLAG), (RETI imm:$amt)>;
+def : Pat<(X86retflag 0),        (RET)>;
+def : Pat<(X86retflag imm:$amt), (RETI imm:$amt)>;
 
 // All branches are RawFrm, Void, Branch, and Terminators
 let isBranch = 1, isTerminator = 1 in
@@ -2312,17 +2315,14 @@ class FpPseudoI<dag ops, FPFormat fp, list<dag> pattern>
 }
 
 // Random Pseudo Instructions.
-def FpGETRESULT : FpPseudoI<(ops RFP:$dst), SpecialFP, // FPR = ST(0)
-                      []>;  
-def FpSETRESULT : FpPseudoI<(ops RFP:$src), SpecialFP,
-                      [(set FLAG, (X86fpset RFP:$src))]>,
-                       Imp<[], [ST0]>;  // ST(0) = FPR
+def FpGETRESULT : FpPseudoI<(ops RFP:$dst), SpecialFP, []>;     // FPR = ST(0)
+let hasOutFlag = 1 in 
+  def FpSETRESULT : FpPseudoI<(ops RFP:$src), SpecialFP,
+                    [(X86fpset RFP:$src)]>, Imp<[], [ST0]>;     // ST(0) = FPR
 
-def FpMOV       : FpI<(ops RFP:$dst, RFP:$src), SpecialFP,
-                      []>;   // f1 = fmov f2
+def FpMOV       : FpI<(ops RFP:$dst, RFP:$src), SpecialFP, []>; // f1 = fmov f2
 
 // Arithmetic
-
 // Add, Sub, Mul, Div.
 def FpADD : FpI<(ops RFP:$dst, RFP:$src1, RFP:$src2), TwoArgFP,
                 [(set RFP:$dst, (fadd RFP:$src1, RFP:$src2))]>;

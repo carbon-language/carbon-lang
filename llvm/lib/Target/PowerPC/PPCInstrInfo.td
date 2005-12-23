@@ -46,7 +46,7 @@ def SDT_PPCCallSeq : SDTypeProfile<0, 1, [ SDTCisVT<0, i32> ]>;
 def callseq_start : SDNode<"ISD::CALLSEQ_START", SDT_PPCCallSeq,[SDNPHasChain]>;
 def callseq_end   : SDNode<"ISD::CALLSEQ_END",   SDT_PPCCallSeq,[SDNPHasChain]>;
 
-def SDT_PPCRetFlag : SDTypeProfile<0, 1, [ SDTCisVT<0, FlagVT>]>;
+def SDT_PPCRetFlag : SDTypeProfile<0, 0, []>;
 def retflag       : SDNode<"PPCISD::RET_FLAG", SDT_PPCRetFlag, [SDNPHasChain]>;
 
 //===----------------------------------------------------------------------===//
@@ -223,8 +223,11 @@ let usesCustomDAGSchedInserter = 1 in {  // Expanded by the scheduler.
 
 
 let isTerminator = 1 in {
+  // FIXME: temporary workaround for return without an incoming flag.
   let isReturn = 1 in
-    def BLR : XLForm_2_ext<19, 16, 20, 0, 0, (ops), "blr", BrB, [(ret)]>;
+    def BLRVOID : XLForm_2_ext<19, 16, 20, 0, 0, (ops), "blr", BrB, [(ret)]>;
+  let isReturn = 1, hasInFlag = 1 in
+    def BLR : XLForm_2_ext<19, 16, 20, 0, 0, (ops), "blr", BrB, []>;
   def BCTR : XLForm_2_ext<19, 528, 20, 0, 0, (ops), "bctr", BrB, []>;
 }
 
@@ -1056,7 +1059,7 @@ def : Pat<(f64 (extload iaddr:$src, f32)),
 def : Pat<(f64 (extload xaddr:$src, f32)),
           (FMRSD (LFSX xaddr:$src))>;
 
-def : Pat<(retflag FLAG), (BLR)>;
+def : Pat<(retflag), (BLR)>;
 
 // Same as above, but using a temporary. FIXME: implement temporaries :)
 /*
