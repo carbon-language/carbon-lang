@@ -130,6 +130,7 @@ private:
   SDOperand ExpandIntToFP(bool isSigned, MVT::ValueType DestTy,
                           SDOperand Source);
 
+  SDOperand ExpandBIT_CONVERT(MVT::ValueType DestVT, SDOperand SrcOp);
   SDOperand ExpandLegalINT_TO_FP(bool isSigned,
                                  SDOperand LegalOp,
                                  MVT::ValueType DestVT);
@@ -2119,7 +2120,25 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       break;
     }
     break;
-
+    
+  case ISD::BIT_CONVERT:
+    if (!isTypeLegal(Node->getOperand(0).getValueType()))
+      Result = ExpandBIT_CONVERT(Node->getValueType(0), Node->getOperand(0));
+    else {
+      switch (TLI.getOperationAction(ISD::BIT_CONVERT,
+                                     Node->getOperand(0).getValueType())) {
+      default: assert(0 && "Unknown operation action!");
+      case TargetLowering::Expand:
+        Result = ExpandBIT_CONVERT(Node->getValueType(0), Node->getOperand(0));
+        break;
+      case TargetLowering::Legal:
+        Tmp1 = LegalizeOp(Node->getOperand(0));
+        if (Tmp1 != Node->getOperand(0))
+          Result = DAG.getNode(ISD::BIT_CONVERT, Node->getValueType(0), Tmp1);
+        break;
+      }
+    }
+    break;
     // Conversion operators.  The source and destination have different types.
   case ISD::SINT_TO_FP:
   case ISD::UINT_TO_FP: {
@@ -2472,7 +2491,11 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
       break;
     }
     break;
-
+  case ISD::BIT_CONVERT:
+    Result = ExpandBIT_CONVERT(Node->getValueType(0), Node->getOperand(0));
+    Result = PromoteOp(Result);
+    break;
+    
   case ISD::FP_EXTEND:
     assert(0 && "Case not implemented.  Dynamically dead with 2 FP types!");
   case ISD::FP_ROUND:
@@ -2767,6 +2790,24 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
   assert(Result.Val && "Didn't set a result!");
   AddPromotedOperand(Op, Result);
   return Result;
+}
+
+/// ExpandBIT_CONVERT - Expand a BIT_CONVERT node into a store/load combination.
+/// The resultant code need not be legal.
+SDOperand SelectionDAGLegalize::ExpandBIT_CONVERT(MVT::ValueType DestVT, 
+                                                  SDOperand SrcOp) {
+  // Create the stack frame object.
+  MachineFrameInfo *FrameInfo = DAG.getMachineFunction().getFrameInfo();
+  unsigned ByteSize = MVT::getSizeInBits(DestVT)/8;
+  int FrameIdx = FrameInfo->CreateFixedObject(ByteSize, ByteSize);
+  SDOperand FIPtr = DAG.getFrameIndex(FrameIdx, TLI.getPointerTy());
+  
+  // Emit a store to the stack slot.
+  SDOperand Store = DAG.getNode(ISD::STORE, MVT::Other, DAG.getEntryNode(),
+                                SrcOp.getOperand(0), FIPtr, 
+                                DAG.getSrcValue(NULL));
+  // Result is a load from the stack slot.
+  return DAG.getLoad(DestVT, Store, FIPtr, DAG.getSrcValue(0));
 }
 
 /// ExpandAddSub - Find a clever way to expand this add operation into
@@ -3636,6 +3677,13 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
 
     // The high part is just a zero.
     Hi = DAG.getConstant(0, NVT);
+    break;
+  }
+    
+  case ISD::BIT_CONVERT: {
+    SDOperand Tmp = ExpandBIT_CONVERT(Node->getValueType(0), 
+                                      Node->getOperand(0));
+    ExpandOp(Tmp, Lo, Hi);
     break;
   }
 

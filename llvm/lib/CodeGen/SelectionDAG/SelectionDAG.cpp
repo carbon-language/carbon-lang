@@ -889,6 +889,12 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
         return Operand.Val->getOperand(0);
     }
     break;
+  case ISD::BIT_CONVERT:
+    // Basic sanity checking.
+    assert(MVT::getSizeInBits(VT)==MVT::getSizeInBits(Operand.getValueType()) &&
+           "Cannot BIT_CONVERT between two different types!");
+    if (VT == Operand.getValueType()) return Operand;  // noop conversion.
+    break;
   case ISD::FNEG:
     if (OpOpcode == ISD::FSUB)   // -(X-Y) -> (Y-X)
       return getNode(ISD::FSUB, VT, Operand.Val->getOperand(1),
@@ -1931,6 +1937,7 @@ const char *SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::UINT_TO_FP:  return "uint_to_fp";
   case ISD::FP_TO_SINT:  return "fp_to_sint";
   case ISD::FP_TO_UINT:  return "fp_to_uint";
+  case ISD::BIT_CONVERT: return "bit_convert";
 
     // Control flow instructions
   case ISD::BR:      return "br";
