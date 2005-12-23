@@ -1040,23 +1040,43 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       Result = LegalizeOp(Result);  // Relegalize new nodes.
     }
     break;
-  case ISD::LOAD:
+  case ISD::LOAD: {
     Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
     Tmp2 = LegalizeOp(Node->getOperand(1));  // Legalize the pointer.
 
-    if (Tmp1 != Node->getOperand(0) ||
-        Tmp2 != Node->getOperand(1))
-      Result = DAG.getLoad(Node->getValueType(0), Tmp1, Tmp2,
-                           Node->getOperand(2));
-    else
-      Result = SDOperand(Node, 0);
+    MVT::ValueType VT = Node->getValueType(0);
+    switch (TLI.getOperationAction(Node->getOpcode(), VT)) {
+    default: assert(0 && "This action is not supported yet!");
+    case TargetLowering::Custom: {
+      SDOperand Op = DAG.getLoad(Node->getValueType(0),
+                                 Tmp1, Tmp2, Node->getOperand(2));
+      SDOperand Tmp = TLI.LowerOperation(Op, DAG);
+      if (Tmp.Val) {
+        Result = LegalizeOp(Tmp);
+        // Since loads produce two values, make sure to remember that we legalized
+        // both of them.
+        AddLegalizedOperand(SDOperand(Node, 0), Result);
+        AddLegalizedOperand(SDOperand(Node, 1), Result.getValue(1));
+        return Result.getValue(Op.ResNo);
+      }
+      // FALLTHROUGH if the target thinks it is legal.
+    }
+    case TargetLowering::Legal:
+      if (Tmp1 != Node->getOperand(0) ||
+          Tmp2 != Node->getOperand(1))
+        Result = DAG.getLoad(Node->getValueType(0), Tmp1, Tmp2,
+                             Node->getOperand(2));
+      else
+        Result = SDOperand(Node, 0);
 
-    // Since loads produce two values, make sure to remember that we legalized
-    // both of them.
-    AddLegalizedOperand(SDOperand(Node, 0), Result);
-    AddLegalizedOperand(SDOperand(Node, 1), Result.getValue(1));
-    return Result.getValue(Op.ResNo);
-    
+      // Since loads produce two values, make sure to remember that we legalized
+      // both of them.
+      AddLegalizedOperand(SDOperand(Node, 0), Result);
+      AddLegalizedOperand(SDOperand(Node, 1), Result.getValue(1));
+      return Result.getValue(Op.ResNo);
+    }
+    assert(0 && "Unreachable");
+  }
   case ISD::EXTLOAD:
   case ISD::SEXTLOAD:
   case ISD::ZEXTLOAD: {
@@ -1076,6 +1096,21 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       AddLegalizedOperand(SDOperand(Node, 1), Result.getValue(1));
       return Result.getValue(Op.ResNo);
 
+    case TargetLowering::Custom: {
+      SDOperand Op = DAG.getExtLoad(Node->getOpcode(), Node->getValueType(0),
+                                    Tmp1, Tmp2, Node->getOperand(2),
+                                    SrcVT);
+      SDOperand Tmp = TLI.LowerOperation(Op, DAG);
+      if (Tmp.Val) {
+        Result = LegalizeOp(Tmp);
+        // Since loads produce two values, make sure to remember that we legalized
+        // both of them.
+        AddLegalizedOperand(SDOperand(Node, 0), Result);
+        AddLegalizedOperand(SDOperand(Node, 1), Result.getValue(1));
+        return Result.getValue(Op.ResNo);
+      }
+      // FALLTHROUGH if the target thinks it is legal.
+    }
     case TargetLowering::Legal:
       if (Tmp1 != Node->getOperand(0) ||
           Tmp2 != Node->getOperand(1))
@@ -1234,7 +1269,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     }
     }
     break;
-  case ISD::STORE:
+  case ISD::STORE: {
     Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
     Tmp2 = LegalizeOp(Node->getOperand(2));  // Legalize the pointer.
 
@@ -1264,6 +1299,22 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
           Tmp2 != Node->getOperand(2))
         Result = DAG.getNode(ISD::STORE, MVT::Other, Tmp1, Val, Tmp2,
                              Node->getOperand(3));
+
+      MVT::ValueType VT = Result.Val->getOperand(1).getValueType();
+      switch (TLI.getOperationAction(Result.Val->getOpcode(), VT)) {
+        default: assert(0 && "This action is not supported yet!");
+        case TargetLowering::Custom: {
+          SDOperand Tmp = TLI.LowerOperation(Result, DAG);
+          if (Tmp.Val) {
+            Result = LegalizeOp(Tmp);
+            break;
+          }
+          // FALLTHROUGH if the target thinks it is legal.
+        }
+        case TargetLowering::Legal:
+          // Nothing to do.
+          break;
+      }
       break;
     }
     case Promote:
@@ -1305,6 +1356,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       break;
     }
     break;
+  }
   case ISD::PCMARKER:
     Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
     if (Tmp1 != Node->getOperand(0))
@@ -1327,7 +1379,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     AddLegalizedOperand(SDOperand(Node, 1), Result.getValue(1));
     return Result.getValue(Op.ResNo);
 
-  case ISD::TRUNCSTORE:
+  case ISD::TRUNCSTORE: {
     Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
     Tmp3 = LegalizeOp(Node->getOperand(2));  // Legalize the pointer.
 
@@ -1351,12 +1403,29 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         Result = DAG.getNode(ISD::TRUNCSTORE, MVT::Other, Tmp1, Tmp2, Tmp3,
                              Node->getOperand(3), Node->getOperand(4));
       }
+
+      MVT::ValueType StVT = cast<VTSDNode>(Result.Val->getOperand(4))->getVT();
+      switch (TLI.getOperationAction(Result.Val->getOpcode(), StVT)) {
+        default: assert(0 && "This action is not supported yet!");
+        case TargetLowering::Custom: {
+          SDOperand Tmp = TLI.LowerOperation(Result, DAG);
+          if (Tmp.Val) {
+            Result = LegalizeOp(Tmp);
+            break;
+          }
+          // FALLTHROUGH if the target thinks it is legal.
+        }
+        case TargetLowering::Legal:
+          // Nothing to do.
+          break;
+      }
       break;
     case Promote:
     case Expand:
       assert(0 && "Cannot handle illegal TRUNCSTORE yet!");
     }
     break;
+  }
   case ISD::SELECT:
     switch (getTypeAction(Node->getOperand(0).getValueType())) {
     case Expand: assert(0 && "It's impossible to expand bools");
