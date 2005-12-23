@@ -625,7 +625,7 @@ LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     return DAG.getNode(ISD::BIT_CONVERT, MVT::i32, Op);
   case ISD::SINT_TO_FP: {
     assert(Op.getOperand(0).getValueType() == MVT::i32);
-    Op = DAG.getNode(ISD::BIT_CONVERT, MVT::f32, Op);
+    Op = DAG.getNode(ISD::BIT_CONVERT, MVT::f32, Op.getOperand(0));
     // Convert the int value to FP in an FP register.
     return DAG.getNode(V8ISD::ITOF, Op.getValueType(), Op);
   }
