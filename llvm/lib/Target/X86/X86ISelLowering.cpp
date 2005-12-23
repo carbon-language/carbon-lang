@@ -80,6 +80,9 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   setOperationAction(ISD::FP_TO_SINT       , MVT::i8   , Promote);
   setOperationAction(ISD::FP_TO_SINT       , MVT::i16  , Promote);
 
+  setOperationAction(ISD::BIT_CONVERT, MVT::f32, Expand);
+  setOperationAction(ISD::BIT_CONVERT, MVT::i32, Expand);
+
   if (X86DAGIsel) {
     setOperationAction(ISD::BRCOND         , MVT::Other, Custom);
   }
