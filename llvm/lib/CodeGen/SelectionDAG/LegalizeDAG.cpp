@@ -2804,8 +2804,7 @@ SDOperand SelectionDAGLegalize::ExpandBIT_CONVERT(MVT::ValueType DestVT,
   
   // Emit a store to the stack slot.
   SDOperand Store = DAG.getNode(ISD::STORE, MVT::Other, DAG.getEntryNode(),
-                                SrcOp.getOperand(0), FIPtr, 
-                                DAG.getSrcValue(NULL));
+                                SrcOp, FIPtr, DAG.getSrcValue(NULL));
   // Result is a load from the stack slot.
   return DAG.getLoad(DestVT, Store, FIPtr, DAG.getSrcValue(0));
 }
