@@ -2793,13 +2793,14 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
 }
 
 /// ExpandBIT_CONVERT - Expand a BIT_CONVERT node into a store/load combination.
-/// The resultant code need not be legal.
+/// The resultant code need not be legal.  Note that SrcOp is the input operand
+/// to the BIT_CONVERT, not the BIT_CONVERT node itself.
 SDOperand SelectionDAGLegalize::ExpandBIT_CONVERT(MVT::ValueType DestVT, 
                                                   SDOperand SrcOp) {
   // Create the stack frame object.
   MachineFrameInfo *FrameInfo = DAG.getMachineFunction().getFrameInfo();
   unsigned ByteSize = MVT::getSizeInBits(DestVT)/8;
-  int FrameIdx = FrameInfo->CreateFixedObject(ByteSize, ByteSize);
+  int FrameIdx = FrameInfo->CreateStackObject(ByteSize, ByteSize);
   SDOperand FIPtr = DAG.getFrameIndex(FrameIdx, TLI.getPointerTy());
   
   // Emit a store to the stack slot.
