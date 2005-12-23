@@ -158,39 +158,28 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     if (Src.getValueType() == MVT::f32)
       Src = DAG.getNode(ISD::FP_EXTEND, MVT::f64, Src);
     
+    SDOperand Tmp;
     switch (Op.getValueType()) {
     default: assert(0 && "Unhandled FP_TO_SINT type in custom expander!");
     case MVT::i32:
-      Op = DAG.getNode(PPCISD::FCTIWZ, MVT::f64, Src);
+      Tmp = DAG.getNode(PPCISD::FCTIWZ, MVT::f64, Src);
       break;
     case MVT::i64:
-      Op = DAG.getNode(PPCISD::FCTIDZ, MVT::f64, Src);
+      Tmp = DAG.getNode(PPCISD::FCTIDZ, MVT::f64, Src);
       break;
     }
    
-    int FrameIdx =
-      DAG.getMachineFunction().getFrameInfo()->CreateStackObject(8, 8);
-    SDOperand FI = DAG.getFrameIndex(FrameIdx, MVT::i32);
-    SDOperand ST = DAG.getNode(ISD::STORE, MVT::Other, DAG.getEntryNode(),
-                               Op, FI, DAG.getSrcValue(0));
-    if (Op.getOpcode() == PPCISD::FCTIDZ) {
-      Op = DAG.getLoad(MVT::i64, ST, FI, DAG.getSrcValue(0));
-    } else {
-      FI = DAG.getNode(ISD::ADD, MVT::i32, FI, DAG.getConstant(4, MVT::i32));
-      Op = DAG.getLoad(MVT::i32, ST, FI, DAG.getSrcValue(0));
-    }
-    return Op;
+    // Convert the FP value to an int value through memory.
+    SDOperand Bits = DAG.getNode(ISD::BIT_CONVERT, MVT::i64, Tmp);
+    if (Op.getValueType() == MVT::i32)
+      Bits = DAG.getNode(ISD::TRUNCATE, MVT::i32, Bits);
+    return Bits;
   }
   case ISD::SINT_TO_FP: {
     assert(MVT::i64 == Op.getOperand(0).getValueType() && 
            "Unhandled SINT_TO_FP type in custom expander!");
-    int FrameIdx =
-      DAG.getMachineFunction().getFrameInfo()->CreateStackObject(8, 8);
-    SDOperand FI = DAG.getFrameIndex(FrameIdx, MVT::i32);
-    SDOperand ST = DAG.getNode(ISD::STORE, MVT::Other, DAG.getEntryNode(),
-                               Op.getOperand(0), FI, DAG.getSrcValue(0));
-    SDOperand LD = DAG.getLoad(MVT::f64, ST, FI, DAG.getSrcValue(0));
-    SDOperand FP = DAG.getNode(PPCISD::FCFID, MVT::f64, LD);
+    SDOperand Bits = DAG.getNode(ISD::BIT_CONVERT, MVT::f64, Op.getOperand(0));
+    SDOperand FP = DAG.getNode(PPCISD::FCFID, MVT::f64, Bits);
     if (MVT::f32 == Op.getValueType())
       FP = DAG.getNode(ISD::FP_ROUND, MVT::f32, FP);
     return FP;
