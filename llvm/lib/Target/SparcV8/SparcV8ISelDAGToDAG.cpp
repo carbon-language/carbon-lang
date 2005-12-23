@@ -108,6 +108,9 @@ SparcV8TargetLowering::SparcV8TargetLowering(TargetMachine &TM)
   setOperationAction(ISD::FP_TO_UINT, MVT::i32, Expand);
   setOperationAction(ISD::UINT_TO_FP, MVT::i32, Expand);
   
+  setOperationAction(ISD::BIT_CONVERT, MVT::f32, Expand);
+  setOperationAction(ISD::BIT_CONVERT, MVT::i32, Expand);
+  
   // Turn FP extload into load/fextend
   setOperationAction(ISD::EXTLOAD, MVT::f32, Expand);
   
