@@ -1384,6 +1384,9 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     Tmp3 = LegalizeOp(Node->getOperand(2));  // Legalize the pointer.
 
     switch (getTypeAction(Node->getOperand(1).getValueType())) {
+    case Promote:
+    case Expand:
+      assert(0 && "Cannot handle illegal TRUNCSTORE yet!");
     case Legal:
       Tmp2 = LegalizeOp(Node->getOperand(1));
       
@@ -1420,9 +1423,6 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
           break;
       }
       break;
-    case Promote:
-    case Expand:
-      assert(0 && "Cannot handle illegal TRUNCSTORE yet!");
     }
     break;
   }
