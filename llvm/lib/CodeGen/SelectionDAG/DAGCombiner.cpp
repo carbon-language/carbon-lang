@@ -151,6 +151,7 @@ namespace {
     SDOperand visitZERO_EXTEND(SDNode *N);
     SDOperand visitSIGN_EXTEND_INREG(SDNode *N);
     SDOperand visitTRUNCATE(SDNode *N);
+    SDOperand visitBIT_CONVERT(SDNode *N);
     
     SDOperand visitFADD(SDNode *N);
     SDOperand visitFSUB(SDNode *N);
@@ -609,6 +610,7 @@ SDOperand DAGCombiner::visit(SDNode *N) {
   case ISD::ZERO_EXTEND:        return visitZERO_EXTEND(N);
   case ISD::SIGN_EXTEND_INREG:  return visitSIGN_EXTEND_INREG(N);
   case ISD::TRUNCATE:           return visitTRUNCATE(N);
+  case ISD::BIT_CONVERT:        return visitBIT_CONVERT(N);
   case ISD::FADD:               return visitFADD(N);
   case ISD::FSUB:               return visitFSUB(N);
   case ISD::FMUL:               return visitFMUL(N);
@@ -1742,6 +1744,19 @@ SDOperand DAGCombiner::visitTRUNCATE(SDNode *N) {
     CombineTo(N0.Val, Load, Load.getValue(1));
     return SDOperand();
   }
+  return SDOperand();
+}
+
+SDOperand DAGCombiner::visitBIT_CONVERT(SDNode *N) {
+  SDOperand N0 = N->getOperand(0);
+  MVT::ValueType VT = N->getValueType(0);
+
+  // If the input is a constant, let getNode() fold it.
+  if (isa<ConstantSDNode>(N0) || isa<ConstantFPSDNode>(N0)) {
+    SDOperand Res = DAG.getNode(ISD::BIT_CONVERT, VT, N0);
+    if (Res.Val != N) return Res;
+  }
+  
   return SDOperand();
 }
 

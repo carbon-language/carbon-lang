@@ -828,6 +828,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT) {
 
 SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
                                 SDOperand Operand) {
+  // Constant fold unary operations with an integer constant operand.
   if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Operand.Val)) {
     uint64_t Val = C->getValue();
     switch (Opcode) {
@@ -838,13 +839,25 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     case ISD::TRUNCATE:    return getConstant(Val, VT);
     case ISD::SINT_TO_FP:  return getConstantFP(C->getSignExtended(), VT);
     case ISD::UINT_TO_FP:  return getConstantFP(C->getValue(), VT);
+    case ISD::BIT_CONVERT:
+      if (VT == MVT::f32) {
+        assert(C->getValueType(0) == MVT::i32 && "Invalid bit_convert!");
+        return getConstantFP(BitsToFloat(Val), VT);
+      } else if (VT == MVT::f64) {
+        assert(C->getValueType(0) == MVT::i64 && "Invalid bit_convert!");
+        return getConstantFP(BitsToDouble(Val), VT);
+      }
+      break;
     }
   }
 
+  // Constant fold unary operations with an floating point constant operand.
   if (ConstantFPSDNode *C = dyn_cast<ConstantFPSDNode>(Operand.Val))
     switch (Opcode) {
     case ISD::FNEG:
       return getConstantFP(-C->getValue(), VT);
+    case ISD::FABS:
+      return getConstantFP(fabs(C->getValue()), VT);
     case ISD::FP_ROUND:
     case ISD::FP_EXTEND:
       return getConstantFP(C->getValue(), VT);
@@ -852,6 +865,15 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
       return getConstant((int64_t)C->getValue(), VT);
     case ISD::FP_TO_UINT:
       return getConstant((uint64_t)C->getValue(), VT);
+    case ISD::BIT_CONVERT:
+      if (VT == MVT::i32) {
+        assert(C->getValueType(0) == MVT::f32 && "Invalid bit_convert!");
+        return getConstant(FloatToBits(C->getValue()), VT);
+      } else if (VT == MVT::i64) {
+        assert(C->getValueType(0) == MVT::f64 && "Invalid bit_convert!");
+        return getConstant(DoubleToBits(C->getValue()), VT);
+      }
+      break;
     }
 
   unsigned OpOpcode = Operand.Val->getOpcode();
