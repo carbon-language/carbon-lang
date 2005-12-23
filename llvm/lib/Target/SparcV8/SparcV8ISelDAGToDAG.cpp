@@ -578,8 +578,19 @@ LowerVAStart(SDOperand Chain, SDOperand VAListP, Value *VAListV,
 std::pair<SDOperand,SDOperand> SparcV8TargetLowering::
 LowerVAArg(SDOperand Chain, SDOperand VAListP, Value *VAListV,
            const Type *ArgTy, SelectionDAG &DAG) {
-  assert(0 && "Unimp");
-  abort();
+  // Load the pointer out of the valist.
+  SDOperand Ptr = DAG.getLoad(MVT::i32, Chain,
+                              VAListP, DAG.getSrcValue(VAListV));
+  MVT::ValueType ArgVT = getValueType(ArgTy);
+  SDOperand Val = DAG.getLoad(ArgVT, Ptr.getValue(1),
+                              Ptr, DAG.getSrcValue(NULL));
+  // Increment the pointer.
+  Ptr = DAG.getNode(ISD::ADD, MVT::i32, Ptr, 
+                    DAG.getConstant(MVT::getSizeInBits(ArgVT)/8, MVT::i32));
+  // Store it back to the valist.
+  Chain = DAG.getNode(ISD::STORE, MVT::Other, Chain, Ptr, 
+                      VAListP, DAG.getSrcValue(VAListV));
+  return std::make_pair(Val, Chain);
 }
 
 std::pair<SDOperand, SDOperand> SparcV8TargetLowering::
