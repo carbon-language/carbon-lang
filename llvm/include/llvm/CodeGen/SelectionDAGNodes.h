@@ -214,6 +214,13 @@ namespace ISD {
     // FP_EXTEND - Extend a smaller FP type into a larger FP type.
     FP_EXTEND,
 
+    // BIT_CONVERT - Theis operator converts between integer and FP values, as
+    // if one was stored to memory as integer and the other was loaded from the
+    // same address.  The source and result are required to have the same bit
+    // size (e.g. f32 <-> i32).  This can also be used for int-to-int or 
+    // fp-to-fp conversions, but that is a noop, deleted by getNode().
+    BIT_CONVERT,
+    
     // FNEG, FABS, FSQRT, FSIN, FCOS - Perform unary floating point negation,
     // absolute value, square root, sine and cosine operations.
     FNEG, FABS, FSQRT, FSIN, FCOS,
