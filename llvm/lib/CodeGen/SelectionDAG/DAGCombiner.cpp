@@ -2081,6 +2081,11 @@ SDOperand DAGCombiner::visitSTORE(SDNode *N) {
     return SDOperand(N, 0);
   }
   
+  // If this is a store of a bit convert, store the input value.
+  if (Value.getOpcode() == ISD::BIT_CONVERT)
+    return DAG.getNode(ISD::STORE, MVT::Other, Chain, Value.getOperand(0),
+                       Ptr, SrcValue);
+  
   return SDOperand();
 }
 
