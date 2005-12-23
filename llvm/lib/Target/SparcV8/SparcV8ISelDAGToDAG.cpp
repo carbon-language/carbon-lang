@@ -601,28 +601,14 @@ LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     SDOperand Lo = DAG.getNode(V8ISD::Lo, MVT::i32, CP);
     return DAG.getNode(ISD::ADD, MVT::i32, Lo, Hi);
   }
-  case ISD::FP_TO_SINT: {
+  case ISD::FP_TO_SINT:
     // Convert the fp value to integer in an FP register.
-    Op = DAG.getNode(V8ISD::FTOI, Op.getOperand(0).getValueType(),
-                     Op.getOperand(0));
-    int Size = Op.getOperand(0).getValueType() == MVT::f32 ? 4 : 8;
-    int FrameIdx =
-      DAG.getMachineFunction().getFrameInfo()->CreateStackObject(Size, Size);
-    SDOperand FI = DAG.getFrameIndex(FrameIdx, MVT::i32);
-    SDOperand ST = DAG.getNode(ISD::STORE, MVT::Other, DAG.getEntryNode(),
-                               Op, FI, DAG.getSrcValue(0));
-    return DAG.getLoad(MVT::i32, ST, FI, DAG.getSrcValue(0));
-  }
+    assert(Op.getValueType() == MVT::i32);
+    Op = DAG.getNode(V8ISD::FTOI, MVT::f32, Op.getOperand(0));
+    return DAG.getNode(ISD::BIT_CONVERT, MVT::i32, Op);
   case ISD::SINT_TO_FP: {
-    int Size = Op.getOperand(0).getValueType() == MVT::f32 ? 4 : 8;
-    int FrameIdx =
-      DAG.getMachineFunction().getFrameInfo()->CreateStackObject(Size, Size);
-    SDOperand FI = DAG.getFrameIndex(FrameIdx, MVT::i32);
-    SDOperand ST = DAG.getNode(ISD::STORE, MVT::Other, DAG.getEntryNode(),
-                               Op.getOperand(0), FI, DAG.getSrcValue(0));
-    
-    Op = DAG.getLoad(Op.getValueType(), ST, FI, DAG.getSrcValue(0));
-    
+    assert(Op.getOperand(0).getValueType() == MVT::i32);
+    Op = DAG.getNode(ISD::BIT_CONVERT, MVT::f32, Op);
     // Convert the int value to FP in an FP register.
     return DAG.getNode(V8ISD::ITOF, Op.getValueType(), Op);
   }

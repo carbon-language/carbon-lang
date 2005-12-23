@@ -69,6 +69,10 @@ SDTypeProfile<0, 3, [SDTCisVT<0, OtherVT>, SDTCisVT<1, OtherVT>,
 def SDTV8selectcc :
 SDTypeProfile<1, 4, [SDTCisSameAs<0, 1>, SDTCisSameAs<1, 2>, 
                      SDTCisVT<3, i32>, SDTCisVT<4, FlagVT>]>;
+def SDTV8FTOI :
+SDTypeProfile<1, 1, [SDTCisVT<0, f32>, SDTCisFP<1>]>;
+def SDTV8ITOF :
+SDTypeProfile<1, 1, [SDTCisFP<0>, SDTCisVT<1, f32>]>;
 
 def V8cmpicc : SDNode<"V8ISD::CMPICC", SDTV8cmpicc>;
 def V8cmpfcc : SDNode<"V8ISD::CMPFCC", SDTV8cmpfcc>;
@@ -78,8 +82,8 @@ def V8brfcc : SDNode<"V8ISD::BRFCC", SDTV8brcc, [SDNPHasChain]>;
 def V8hi    : SDNode<"V8ISD::Hi", SDTIntUnaryOp>;
 def V8lo    : SDNode<"V8ISD::Lo", SDTIntUnaryOp>;
 
-def V8ftoi  : SDNode<"V8ISD::FTOI", SDTFPUnaryOp>;
-def V8itof  : SDNode<"V8ISD::ITOF", SDTFPUnaryOp>;
+def V8ftoi  : SDNode<"V8ISD::FTOI", SDTV8FTOI>;
+def V8itof  : SDNode<"V8ISD::ITOF", SDTV8ITOF>;
 
 def V8selecticc : SDNode<"V8ISD::SELECT_ICC", SDTV8selectcc>;
 def V8selectfcc : SDNode<"V8ISD::SELECT_FCC", SDTV8selectcc>;
@@ -597,9 +601,9 @@ def FITOS : F3_3<2, 0b110100, 0b011000100,
                  "fitos $src, $dst",
                  [(set FPRegs:$dst, (V8itof FPRegs:$src))]>;
 def FITOD : F3_3<2, 0b110100, 0b011001000, 
-                 (ops DFPRegs:$dst, DFPRegs:$src),
+                 (ops DFPRegs:$dst, FPRegs:$src),
                  "fitod $src, $dst",
-                 [(set DFPRegs:$dst, (V8itof DFPRegs:$src))]>;
+                 [(set DFPRegs:$dst, (V8itof FPRegs:$src))]>;
 
 // Convert Floating-point to Integer Instructions, p. 142
 def FSTOI : F3_3<2, 0b110100, 0b011010001,
@@ -607,9 +611,9 @@ def FSTOI : F3_3<2, 0b110100, 0b011010001,
                  "fstoi $src, $dst",
                  [(set FPRegs:$dst, (V8ftoi FPRegs:$src))]>;
 def FDTOI : F3_3<2, 0b110100, 0b011010010,
-                 (ops DFPRegs:$dst, DFPRegs:$src),
+                 (ops FPRegs:$dst, DFPRegs:$src),
                  "fdtoi $src, $dst",
-                 [(set DFPRegs:$dst, (V8ftoi DFPRegs:$src))]>;
+                 [(set FPRegs:$dst, (V8ftoi DFPRegs:$src))]>;
 
 // Convert between Floating-point Formats Instructions, p. 143
 def FSTOD : F3_3<2, 0b110100, 0b011001001, 
