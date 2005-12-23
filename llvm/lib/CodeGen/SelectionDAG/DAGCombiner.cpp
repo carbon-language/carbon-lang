@@ -1757,6 +1757,9 @@ SDOperand DAGCombiner::visitBIT_CONVERT(SDNode *N) {
     if (Res.Val != N) return Res;
   }
   
+  if (N0.getOpcode() == ISD::BIT_CONVERT)  // conv(conv(x,t1),t2) -> conv(x,t2)
+    return DAG.getNode(ISD::BIT_CONVERT, VT, N0.getOperand(0));
+  
   return SDOperand();
 }
 

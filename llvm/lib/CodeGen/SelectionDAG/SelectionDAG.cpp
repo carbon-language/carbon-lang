@@ -916,6 +916,8 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
     assert(MVT::getSizeInBits(VT)==MVT::getSizeInBits(Operand.getValueType()) &&
            "Cannot BIT_CONVERT between two different types!");
     if (VT == Operand.getValueType()) return Operand;  // noop conversion.
+    if (OpOpcode == ISD::BIT_CONVERT)  // bitconv(bitconv(x)) -> bitconv(x)
+      return getNode(ISD::BIT_CONVERT, VT, Operand.getOperand(0));
     break;
   case ISD::FNEG:
     if (OpOpcode == ISD::FSUB)   // -(X-Y) -> (Y-X)
