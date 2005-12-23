@@ -271,6 +271,8 @@ CodeGenInstruction::CodeGenInstruction(Record *R, const std::string &AsmStr)
   hasDelaySlot = R->getValueAsBit("hasDelaySlot");
   usesCustomDAGSchedInserter = R->getValueAsBit("usesCustomDAGSchedInserter");
   hasCtrlDep   = R->getValueAsBit("hasCtrlDep");
+  hasInFlag    = R->getValueAsBit("hasInFlag");
+  hasOutFlag   = R->getValueAsBit("hasOutFlag");
   hasVariableNumberOfOperands = false;
   
   DagInit *DI;

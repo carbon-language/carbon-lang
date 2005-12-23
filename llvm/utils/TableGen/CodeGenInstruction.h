@@ -85,6 +85,8 @@ namespace llvm {
     bool usesCustomDAGSchedInserter;
     bool hasVariableNumberOfOperands;
     bool hasCtrlDep;
+    bool hasInFlag;
+    bool hasOutFlag;
 
     CodeGenInstruction(Record *R, const std::string &AsmStr);
 

@@ -328,19 +328,23 @@ namespace llvm {
     std::vector<Record*> Results;
     std::vector<Record*> Operands;
     std::vector<Record*> ImpResults;
+    std::vector<Record*> ImpOperands;
     TreePatternNode *ResultPattern;
   public:
     DAGInstruction(TreePattern *TP,
                    const std::vector<Record*> &results,
                    const std::vector<Record*> &operands,
-                   const std::vector<Record*> &impresults)
+                   const std::vector<Record*> &impresults,
+                   const std::vector<Record*> &impoperands)
       : Pattern(TP), Results(results), Operands(operands), 
-        ImpResults(impresults), ResultPattern(0) {}
+        ImpResults(impresults), ImpOperands(impoperands),
+        ResultPattern(0) {}
 
     TreePattern *getPattern() const { return Pattern; }
     unsigned getNumResults() const { return Results.size(); }
     unsigned getNumOperands() const { return Operands.size(); }
     unsigned getNumImpResults() const { return ImpResults.size(); }
+    unsigned getNumImpOperands() const { return ImpOperands.size(); }
     
     void setResultPattern(TreePatternNode *R) { ResultPattern = R; }
     
@@ -359,6 +363,11 @@ namespace llvm {
       return ImpResults[RN];
     }
     
+    Record *getImpOperand(unsigned ON) const {
+      assert(ON < ImpOperands.size());
+      return ImpOperands[ON];
+    }
+
     TreePatternNode *getResultPattern() const { return ResultPattern; }
   };
   
@@ -444,6 +453,7 @@ private:
                                    std::map<std::string,
                                             TreePatternNode*> &InstInputs,
                                    std::map<std::string, Record*> &InstResults,
+                                   std::vector<Record*> &InstImpInputs,
                                    std::vector<Record*> &InstImpResults);
   void EmitCodeForPattern(PatternToMatch &Pattern, std::ostream &OS);
   void EmitInstructionSelector(std::ostream &OS);
