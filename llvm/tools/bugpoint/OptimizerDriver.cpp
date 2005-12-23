@@ -29,6 +29,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/System/Path.h"
 #include "llvm/System/Program.h"
+#include "llvm/Config/alloca.h"
 #include <fstream>
 using namespace llvm;
 
