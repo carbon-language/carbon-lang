@@ -537,6 +537,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
   case ISD::GlobalAddress:
   case ISD::TargetGlobalAddress:
   case ISD::ExternalSymbol:
+  case ISD::TargetExternalSymbol:
   case ISD::ConstantPool:           // Nothing to do.
   case ISD::BasicBlock:
   case ISD::CONDCODE:
@@ -1954,9 +1955,25 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       Tmp2 = PromoteOp(Node->getOperand(1));  // Promote the RHS.
       break;
     }
-    if (Tmp1 != Node->getOperand(0) ||
-        Tmp2 != Node->getOperand(1))
-      Result = DAG.getNode(Node->getOpcode(), Node->getValueType(0), Tmp1,Tmp2);
+    switch (TLI.getOperationAction(Node->getOpcode(), Node->getValueType(0))) {
+    case TargetLowering::Legal:
+      if (Tmp1 != Node->getOperand(0) ||
+	  Tmp2 != Node->getOperand(1))
+	Result = DAG.getNode(Node->getOpcode(), Node->getValueType(0), Tmp1,Tmp2);
+      break;
+    case TargetLowering::Custom: {
+      Result = DAG.getNode(Node->getOpcode(), Node->getValueType(0), Tmp1, Tmp2);
+      SDOperand Tmp = TLI.LowerOperation(Result, DAG);
+      if (Tmp.Val) {
+	Tmp = LegalizeOp(Tmp);  // Relegalize input.
+	AddLegalizedOperand(Op, Tmp);
+	return Tmp;
+      }
+      break;
+    }
+    default:
+      assert(0 && "Operation not supported");
+    }
     break;
 
   case ISD::BUILD_PAIR: {
@@ -1997,8 +2014,17 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
                              Tmp2);
       break;
     case TargetLowering::Promote:
-    case TargetLowering::Custom:
-      assert(0 && "Cannot promote/custom handle this yet!");
+      assert(0 && "Cannot promote handle this yet!");
+    case TargetLowering::Custom: {
+      Result = DAG.getNode(Node->getOpcode(), Node->getValueType(0), Tmp1, Tmp2);
+      SDOperand Tmp = TLI.LowerOperation(Result, DAG);
+      if (Tmp.Val) {
+	Tmp = LegalizeOp(Tmp);  // Relegalize input.
+	AddLegalizedOperand(Op, Tmp);
+	return Tmp;
+      }
+      break;
+    }
     case TargetLowering::Expand:
       if (MVT::isInteger(Node->getValueType(0))) {
         MVT::ValueType VT = Node->getValueType(0);
