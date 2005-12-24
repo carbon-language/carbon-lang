@@ -744,20 +744,13 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
     else assert(0 && "unknown Lo part");
     return Result;
 
-  case ISD::GlobalAddress:
-    AlphaLowering.restoreGP(BB);
-    has_sym = true;
-
-    Reg = Result = MakeReg(MVT::i64);
-
-    if (EnableAlphaLSMark)
-      BuildMI(BB, Alpha::MEMLABEL, 4).addImm(5).addImm(0).addImm(0)
-        .addImm(getUID());
-
+  case AlphaISD::RelLit: {
+    GlobalAddressSDNode *GASD = cast<GlobalAddressSDNode>(N.getOperand(0));
     BuildMI(BB, Alpha::LDQl, 2, Result)
-      .addGlobalAddress(cast<GlobalAddressSDNode>(N)->getGlobal())
-      .addReg(Alpha::R29);
+      .addGlobalAddress(GASD->getGlobal())
+      .addReg(SelectExpr(N.getOperand(1)));
     return Result;
+  }
 
   case ISD::ExternalSymbol:
     AlphaLowering.restoreGP(BB);

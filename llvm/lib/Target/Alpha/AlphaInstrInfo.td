@@ -27,6 +27,7 @@ def Alpha_cvtqs : SDNode<"AlphaISD::CVTQS_", SDTFPUnaryOpUnC, []>;
 def Alpha_cvttq : SDNode<"AlphaISD::CVTTQ_", SDTFPUnaryOp, []>;
 def Alpha_gprello : SDNode<"AlphaISD::GPRelLo", SDTIntBinOp, []>;
 def Alpha_gprelhi : SDNode<"AlphaISD::GPRelHi", SDTIntBinOp, []>;
+def Alpha_rellit : SDNode<"AlphaISD::RelLit", SDTIntBinOp, []>;
 
 // These are target-independent nodes, but have target-specific formats.
 def SDT_AlphaCallSeq : SDTypeProfile<0, 1, [ SDTCisVT<0, i64> ]>;
@@ -505,6 +506,26 @@ def LDTr : MForm<0x23, 0, 1, "ldt $RA,$DISP($RB)\t\t!gprellow",
 		[(set F8RC:$RA, (load (Alpha_gprello tglobaladdr:$DISP, GPRC:$RB)))]>;
 }
 
+
+//constpool rels
+def : Pat<(i64 (load (Alpha_gprello tconstpool:$DISP, GPRC:$RB))),
+          (LDQr tconstpool:$DISP, GPRC:$RB)>;
+def : Pat<(i64 (sextload (Alpha_gprello tconstpool:$DISP, GPRC:$RB), i32)),
+          (LDLr tconstpool:$DISP, GPRC:$RB)>;
+def : Pat<(i64 (zextload (Alpha_gprello tconstpool:$DISP, GPRC:$RB), i8)),
+          (LDBUr tconstpool:$DISP, GPRC:$RB)>;
+def : Pat<(i64 (zextload (Alpha_gprello tconstpool:$DISP, GPRC:$RB), i16)),
+          (LDWUr tconstpool:$DISP, GPRC:$RB)>;
+def : Pat<(i64 (Alpha_gprello tconstpool:$DISP, GPRC:$RB)),
+          (LDAr tconstpool:$DISP, GPRC:$RB)>;
+def : Pat<(i64 (Alpha_gprelhi tconstpool:$DISP, GPRC:$RB)),
+          (LDAHr tconstpool:$DISP, GPRC:$RB)>;
+def : Pat<(f32 (load (Alpha_gprello tconstpool:$DISP, GPRC:$RB))),
+          (LDSr tconstpool:$DISP, GPRC:$RB)>;
+def : Pat<(f64 (load (Alpha_gprello tconstpool:$DISP, GPRC:$RB))),
+          (LDTr tconstpool:$DISP, GPRC:$RB)>;
+
+
 //misc ext patterns
 def : Pat<(i64 (extload (add GPRC:$RB, immSExt16:$DISP), i8)),
           (LDBU   immSExt16:$DISP, GPRC:$RB)>;
@@ -533,6 +554,19 @@ def : Pat<(i64 (extload GPRC:$addr, i16)),
 def : Pat<(i64 (extload GPRC:$addr, i32)),
           (LDL  0, GPRC:$addr)>;
 
+def : Pat<(store GPRC:$DATA, GPRC:$addr),
+          (STQ  GPRC:$DATA, 0, GPRC:$addr)>;
+def : Pat<(store F8RC:$DATA, GPRC:$addr),
+          (STT  F8RC:$DATA, 0, GPRC:$addr)>;
+def : Pat<(store F4RC:$DATA, GPRC:$addr),
+          (STS  F4RC:$DATA, 0, GPRC:$addr)>;
+def : Pat<(truncstore GPRC:$DATA, GPRC:$addr, i32),
+          (STL  GPRC:$DATA, 0, GPRC:$addr)>;
+def : Pat<(truncstore GPRC:$DATA, GPRC:$addr, i16),
+          (STW GPRC:$DATA, 0, GPRC:$addr)>;
+def : Pat<(truncstore GPRC:$DATA, GPRC:$addr, i8),
+          (STB GPRC:$DATA, 0, GPRC:$addr)>;
+
 
 //load address, rellocated gpdist form
 let OperandList = (ops GPRC:$RA, s16imm:$DISP, GPRC:$RB, s16imm:$NUM) in {
@@ -541,8 +575,9 @@ def LDAHg : MFormAlt<0x09, "ldah $RA,0($RB)\t\t!gpdisp!$NUM">;  //Load address
 }
 
 //Load quad, rellocated literal form
-let isLoad = 1, OperandList = (ops GPRC:$RA, s64imm:$DISP, GPRC:$RB) in
-def LDQl : MFormAlt<0x29, "ldq $RA,$DISP($RB)\t\t!literal">; //Load quadword
+let OperandList = (ops GPRC:$RA, s64imm:$DISP, GPRC:$RB) in
+def LDQl : MForm<0x29, 0, 1, "ldq $RA,$DISP($RB)\t\t!literal",
+                 [(set GPRC:$RA, (Alpha_rellit tglobaladdr:$DISP, GPRC:$RB))]>;
 
 //Branches, int
 def BEQ : BForm<0x39,  "beq $RA,$DISP">; //Branch if = zero

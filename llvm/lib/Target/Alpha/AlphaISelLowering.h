@@ -29,12 +29,11 @@ namespace llvm {
       ITOFT_, FTOIT_, CVTQT_, CVTQS_, CVTTQ_,
 
       /// GPRelHi/GPRelLo - These represent the high and low 16-bit
-      /// parts of a global address respectively.  These nodes have
-      /// two operands, the first of which must be a
-      /// TargetGlobalAddress, and the second of which must be a
-      /// Constant.  Selected naively, these turn into 'ldah R(G)' and
-      /// 'lda R(C)', though these are usually folded into other nodes.
-      GPRelHi, GPRelLo,
+      /// parts of a global address respectively.
+      GPRelHi, GPRelLo, 
+
+      /// RetLit - Literal Relocation of a Global
+      RelLit,
 
       /// GlobalBaseReg, used to restore the GOT ptr
       GlobalBaseReg,

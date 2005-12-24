@@ -212,12 +212,6 @@ SDOperand AlphaDAGToDAGISel::Select(SDOperand Op) {
     Tmp = CurDAG->getTargetNode(Alpha::LDAHr, MVT::i64, CPI, getGlobalBaseReg());
     return CurDAG->SelectNodeTo(N, Alpha::LDAr, MVT::i64, CPI, Tmp);
   }
-  case ISD::TargetGlobalAddress: {
-    GlobalValue *GV = cast<GlobalAddressSDNode>(N)->getGlobal();
-    SDOperand GA = CurDAG->getTargetGlobalAddress(GV, MVT::i64);
-    return CurDAG->SelectNodeTo(N, Alpha::LDQl, MVT::i64, GA, 
-                                getGlobalBaseReg());
-  }
   case ISD::ExternalSymbol:
     return CurDAG->SelectNodeTo(N, Alpha::LDQl, MVT::i64, 
                                 CurDAG->getTargetExternalSymbol(cast<ExternalSymbolSDNode>(N)->getSymbol(), MVT::i64),
