@@ -676,31 +676,26 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
         getValueInfo(dyn_cast<SrcValueSDNode>(N.getOperand(2))->getValue(),
                      i, j, k);
 
-      GlobalAddressSDNode *GASD = dyn_cast<GlobalAddressSDNode>(Address);
-      if (GASD && !GASD->getGlobal()->isExternal()) {
-        Tmp1 = MakeReg(MVT::i64);
-        AlphaLowering.restoreGP(BB);
-        BuildMI(BB, Alpha::LDAHr, 2, Tmp1)
-          .addGlobalAddress(GASD->getGlobal()).addReg(Alpha::R29);
-        if (EnableAlphaLSMark)
-          BuildMI(BB, Alpha::MEMLABEL, 4).addImm(i).addImm(j).addImm(k)
-            .addImm(getUID());
-        BuildMI(BB, GetRelVersion(Opc), 2, Result)
-          .addGlobalAddress(GASD->getGlobal()).addReg(Tmp1);
-      } else if (ConstantPoolSDNode *CP =
-                     dyn_cast<ConstantPoolSDNode>(Address)) {
-        unsigned CPIdx = BB->getParent()->getConstantPool()->
-             getConstantPoolIndex(CP->get());
-        AlphaLowering.restoreGP(BB);
-        has_sym = true;
-        Tmp1 = MakeReg(MVT::i64);
-        BuildMI(BB, Alpha::LDAHr, 2, Tmp1).addConstantPoolIndex(CPIdx)
-          .addReg(Alpha::R29);
-        if (EnableAlphaLSMark)
-          BuildMI(BB, Alpha::MEMLABEL, 4).addImm(i).addImm(j).addImm(k)
-            .addImm(getUID());
-        BuildMI(BB, GetRelVersion(Opc), 2, Result)
-          .addConstantPoolIndex(CPIdx).addReg(Tmp1);
+      if (Address.getOpcode() == AlphaISD::GPRelLo) {
+	unsigned Hi = SelectExpr(Address.getOperand(1));
+	Address = Address.getOperand(0);
+	if (GlobalAddressSDNode *GASD = dyn_cast<GlobalAddressSDNode>(Address)) {
+	  if (EnableAlphaLSMark)
+	    BuildMI(BB, Alpha::MEMLABEL, 4).addImm(i).addImm(j).addImm(k)
+	      .addImm(getUID());
+	  BuildMI(BB, GetRelVersion(Opc), 2, Result)
+	    .addGlobalAddress(GASD->getGlobal()).addReg(Hi);
+	} else if (ConstantPoolSDNode *CP =
+		   dyn_cast<ConstantPoolSDNode>(Address)) {
+	  unsigned CPIdx = BB->getParent()->getConstantPool()->
+	    getConstantPoolIndex(CP->get());
+	  has_sym = true;
+	  if (EnableAlphaLSMark)
+	    BuildMI(BB, Alpha::MEMLABEL, 4).addImm(i).addImm(j).addImm(k)
+	      .addImm(getUID());
+	  BuildMI(BB, GetRelVersion(Opc), 2, Result)
+	    .addConstantPoolIndex(CPIdx).addReg(Tmp1);
+	} else assert(0 && "Unknown Lo part");
       } else if(Address.getOpcode() == ISD::FrameIndex) {
         if (EnableAlphaLSMark)
           BuildMI(BB, Alpha::MEMLABEL, 4).addImm(i).addImm(j).addImm(k)
@@ -718,6 +713,36 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
       }
       return Result;
     }
+  case AlphaISD::GlobalBaseReg:
+    AlphaLowering.restoreGP(BB);
+    BuildMI(BB, Alpha::BIS, 2, Result).addReg(Alpha::R29).addReg(Alpha::R29);
+    return Result;
+  case AlphaISD::GPRelHi:
+    if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(N.getOperand(0)))
+      BuildMI(BB, Alpha::LDAHr, 2, Result)
+	.addConstantPoolIndex(BB->getParent()->getConstantPool()->
+			      getConstantPoolIndex(CP->get()))
+	.addReg(SelectExpr(N.getOperand(1)));
+    else if (GlobalAddressSDNode *GASD = 
+	     dyn_cast<GlobalAddressSDNode>(N.getOperand(0)))
+      BuildMI(BB, Alpha::LDAHr, 2, Result)
+	.addGlobalAddress(GASD->getGlobal())
+	.addReg(SelectExpr(N.getOperand(1)));
+    else assert(0 && "unknown Hi part");
+    return Result;
+  case AlphaISD::GPRelLo:
+    if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(N.getOperand(0)))
+      BuildMI(BB, Alpha::LDAr, 2, Result)
+	.addConstantPoolIndex(BB->getParent()->getConstantPool()->
+			      getConstantPoolIndex(CP->get()))
+	.addReg(SelectExpr(N.getOperand(1)));
+    else if (GlobalAddressSDNode *GASD = 
+	     dyn_cast<GlobalAddressSDNode>(N.getOperand(0)))
+      BuildMI(BB, Alpha::LDAr, 2, Result)
+	.addGlobalAddress(GASD->getGlobal())
+	.addReg(SelectExpr(N.getOperand(1)));
+    else assert(0 && "unknown Lo part");
+    return Result;
 
   case ISD::GlobalAddress:
     AlphaLowering.restoreGP(BB);
@@ -1699,17 +1724,16 @@ void AlphaISel::Select(SDOperand N) {
         getValueInfo(cast<SrcValueSDNode>(N.getOperand(3))->getValue(),
                      i, j, k);
 
-      GlobalAddressSDNode *GASD = dyn_cast<GlobalAddressSDNode>(Address);
-      if (GASD && !GASD->getGlobal()->isExternal()) {
-        Tmp2 = MakeReg(MVT::i64);
-        AlphaLowering.restoreGP(BB);
-        BuildMI(BB, Alpha::LDAHr, 2, Tmp2)
-          .addGlobalAddress(GASD->getGlobal()).addReg(Alpha::R29);
-        if (EnableAlphaLSMark)
-          BuildMI(BB, Alpha::MEMLABEL, 4).addImm(i).addImm(j).addImm(k)
-            .addImm(getUID());
-        BuildMI(BB, GetRelVersion(Opc), 3).addReg(Tmp1)
-          .addGlobalAddress(GASD->getGlobal()).addReg(Tmp2);
+      if (Address.getOpcode() == AlphaISD::GPRelLo) {
+	unsigned Hi = SelectExpr(Address.getOperand(1));
+	Address = Address.getOperand(0);
+	if (GlobalAddressSDNode *GASD = dyn_cast<GlobalAddressSDNode>(Address)) {
+	  if (EnableAlphaLSMark)
+	    BuildMI(BB, Alpha::MEMLABEL, 4).addImm(i).addImm(j).addImm(k)
+	      .addImm(getUID());
+	  BuildMI(BB, GetRelVersion(Opc), 3).addReg(Tmp1)
+	    .addGlobalAddress(GASD->getGlobal()).addReg(Hi);
+	} else assert(0 && "Unknown Lo part");
       } else if(Address.getOpcode() == ISD::FrameIndex) {
         if (EnableAlphaLSMark)
           BuildMI(BB, Alpha::MEMLABEL, 4).addImm(i).addImm(j).addImm(k)

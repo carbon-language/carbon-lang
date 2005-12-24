@@ -203,13 +203,16 @@ SDOperand AlphaDAGToDAGISel::Select(SDOperand Op) {
                                 CurDAG->getTargetFrameIndex(FI, MVT::i32),
                                 getI64Imm(0));
   }
-  case ISD::ConstantPool: {
+  case AlphaISD::GlobalBaseReg: 
+    return getGlobalBaseReg();
+  
+  case ISD::TargetConstantPool: {
     Constant *C = cast<ConstantPoolSDNode>(N)->get();
     SDOperand Tmp, CPI = CurDAG->getTargetConstantPool(C, MVT::i64);
     Tmp = CurDAG->getTargetNode(Alpha::LDAHr, MVT::i64, CPI, getGlobalBaseReg());
     return CurDAG->SelectNodeTo(N, Alpha::LDAr, MVT::i64, CPI, Tmp);
   }
-  case ISD::GlobalAddress: {
+  case ISD::TargetGlobalAddress: {
     GlobalValue *GV = cast<GlobalAddressSDNode>(N)->getGlobal();
     SDOperand GA = CurDAG->getTargetGlobalAddress(GV, MVT::i64);
     return CurDAG->SelectNodeTo(N, Alpha::LDQl, MVT::i64, GA, 

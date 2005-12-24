@@ -25,6 +25,8 @@ def Alpha_ftoit : SDNode<"AlphaISD::FTOIT_", SDTFPToIntOp, []>;
 def Alpha_cvtqt : SDNode<"AlphaISD::CVTQT_", SDTFPUnaryOpUnC, []>;
 def Alpha_cvtqs : SDNode<"AlphaISD::CVTQS_", SDTFPUnaryOpUnC, []>;
 def Alpha_cvttq : SDNode<"AlphaISD::CVTTQ_", SDTFPUnaryOp, []>;
+def Alpha_gprello : SDNode<"AlphaISD::GPRelLo", SDTIntBinOp, []>;
+def Alpha_gprelhi : SDNode<"AlphaISD::GPRelHi", SDTIntBinOp, []>;
 
 // These are target-independent nodes, but have target-specific formats.
 def SDT_AlphaCallSeq : SDTypeProfile<0, 1, [ SDTCisVT<0, i64> ]>;
@@ -437,7 +439,8 @@ def BR : BForm<0x30, "br $RA,$DISP">; //Branch
 def BR_DAG : BFormD<0x30, "br $$31,$DISP">; //Branch
 
 
-let isLoad = 1, OperandList = (ops GPRC:$RA, GPRC:$RB), disp = 0 in {
+let OperandList = (ops GPRC:$RA, GPRC:$RB), disp = 0 in {
+let isLoad = 1 in {
 def LDQdag : MFormD<0x29,  "ldq $RA,0($RB)",
                     [(set GPRC:$RA, (load GPRC:$RB))]>;
 def LDLdag : MFormD<0x29,  "ldl $RA,0($RB)",
@@ -446,7 +449,8 @@ def LDBUdag : MFormD<0x0A, "ldbu $RA,0($RB)",
                     [(set GPRC:$RA, (zextload GPRC:$RB, i8))]>;
 def LDWUdag : MFormD<0x0C, "ldwu $RA,0($RB)",
                     [(set GPRC:$RA, (zextload GPRC:$RB, i16))]>;
-
+}
+let isStore = 1 in {
 def STBdag : MFormD<0x0E, "stb $RA,0($RB)",
 		    [(truncstore GPRC:$RA, GPRC:$RB, i8)]>;
 def STWdag : MFormD<0x0D, "stw $RA,0($RB)",
@@ -456,6 +460,7 @@ def STLdag : MFormD<0x2C, "stl $RA,0($RB)",
 def STQdag : MFormD<0x2D, "stq $RA,0($RB)",
 		    [(store GPRC:$RA, GPRC:$RB)]>;
 }
+}
 
 def : Pat<(i64 (extload GPRC:$src, i8)),
           (LDBUdag GPRC:$src)>;
@@ -464,48 +469,56 @@ def : Pat<(i64 (extload GPRC:$src, i16)),
 def : Pat<(i64 (extload GPRC:$src, i32)),
           (LDLdag GPRC:$src)>;
 
-let isLoad = 1, OperandList = (ops F4RC:$RA, GPRC:$RB), disp = 0 in {
+let OperandList = (ops F4RC:$RA, GPRC:$RB), disp = 0 in {
+let isStore = 1 in
 def STSdag : MFormD<0x26, "sts $RA,0($RB)",
 		[(store F4RC:$RA, GPRC:$RB)]>;
+let isLoad = 1 in
 def LDSdag : MFormD<0x22, "lds $RA,0($RB)",
 		[(set F4RC:$RA, (load GPRC:$RB))]>;
 }
-let isLoad = 1, OperandList = (ops F8RC:$RA, GPRC:$RB), disp = 0 in {
+let OperandList = (ops F8RC:$RA, GPRC:$RB), disp = 0 in {
+let isStore = 1 in
 def STTdag : MFormD<0x27, "stt $RA,0($RB)",
 		[(store F8RC:$RA, GPRC:$RB)]>;
+let isLoad = 1 in
 def LDTdag : MFormD<0x23, "ldt $RA,0($RB)",
 		[(set F8RC:$RA, (load GPRC:$RB))]>;
 }
 
+let isStore = 1 in {
 //Stores, int
 def STB : MForm<0x0E, "stb $RA,$DISP($RB)">; // Store byte
 def STW : MForm<0x0D, "stw $RA,$DISP($RB)">; // Store word
 def STL : MForm<0x2C, "stl $RA,$DISP($RB)">; // Store longword
 def STQ : MForm<0x2D, "stq $RA,$DISP($RB)">; //Store quadword
 
+//Stores, float
+let OperandList = (ops F4RC:$RA, s16imm:$DISP, GPRC:$RB) in
+def STS : MFormAlt<0x26, "sts $RA,$DISP($RB)">; //Store S_floating
+let OperandList = (ops F8RC:$RA, s16imm:$DISP, GPRC:$RB) in
+def STT : MFormAlt<0x27, "stt $RA,$DISP($RB)">; //Store T_floating
+}
+
+let isLoad = 1 in {
 //Loads, int
 def LDL : MForm<0x28,  "ldl $RA,$DISP($RB)">; // Load sign-extended longword
 def LDQ : MForm<0x29,  "ldq $RA,$DISP($RB)">; //Load quadword
 def LDBU : MForm<0x0A, "ldbu $RA,$DISP($RB)">; //Load zero-extended byte
 def LDWU : MForm<0x0C, "ldwu $RA,$DISP($RB)">; //Load zero-extended word
 
-//Stores, float
-let OperandList = (ops F4RC:$RA, s16imm:$DISP, GPRC:$RB) in
-def STS : MFormAlt<0x26, "sts $RA,$DISP($RB)">; //Store S_floating
-let OperandList = (ops F8RC:$RA, s16imm:$DISP, GPRC:$RB) in
-def STT : MFormAlt<0x27, "stt $RA,$DISP($RB)">; //Store T_floating
-
 //Loads, float
 let OperandList = (ops F4RC:$RA, s16imm:$DISP, GPRC:$RB) in
 def LDS : MFormAlt<0x22, "lds $RA,$DISP($RB)">; //Load S_floating
 let OperandList = (ops F8RC:$RA, s16imm:$DISP, GPRC:$RB) in
 def LDT : MFormAlt<0x23, "ldt $RA,$DISP($RB)">; //Load T_floating
+}
 
 //Load address
 def LDA : MForm<0x08,  "lda $RA,$DISP($RB)">;  //Load address
 def LDAH : MForm<0x09, "ldah $RA,$DISP($RB)">;  //Load address high
 
-
+let isLoad = 1 in {
 //Loads, int, Rellocated Low form
 def LDLr : MForm<0x28,  "ldl $RA,$DISP($RB)\t\t!gprellow">; // Load sign-extended longword
 def LDQr : MForm<0x29,  "ldq $RA,$DISP($RB)\t\t!gprellow">; //Load quadword
@@ -517,19 +530,22 @@ let OperandList = (ops F4RC:$RA, s16imm:$DISP, GPRC:$RB) in
 def LDSr : MFormAlt<0x22, "lds $RA,$DISP($RB)\t\t!gprellow">; //Load S_floating
 let OperandList = (ops F8RC:$RA, s16imm:$DISP, GPRC:$RB) in
 def LDTr : MFormAlt<0x23, "ldt $RA,$DISP($RB)\t\t!gprellow">; //Load T_floating
+}
 
 //Load address, rellocated low and high form
 def LDAr : MForm<0x08,  "lda $RA,$DISP($RB)\t\t!gprellow">;  //Load address
 def LDAHr : MForm<0x09, "ldah $RA,$DISP($RB)\t\t!gprelhigh">;  //Load address high
 
+
 //load address, rellocated gpdist form
 def LDAg : MgForm<0x08,  "lda $RA,0($RB)\t\t!gpdisp!$NUM">;  //Load address
 def LDAHg : MgForm<0x09, "ldah $RA,0($RB)\t\t!gpdisp!$NUM">;  //Load address
 
-
 //Load quad, rellocated literal form
+let isLoad = 1 in
 def LDQl : MForm<0x29, "ldq $RA,$DISP($RB)\t\t!literal">; //Load quadword
 
+let isStore = 1 in {
 //Stores, int
 def STBr : MForm<0x0E, "stb $RA,$DISP($RB)\t\t!gprellow">; // Store byte
 def STWr : MForm<0x0D, "stw $RA,$DISP($RB)\t\t!gprellow">; // Store word
@@ -541,7 +557,7 @@ let OperandList = (ops F4RC:$RA, s16imm:$DISP, GPRC:$RB) in
 def STSr : MFormAlt<0x26, "sts $RA,$DISP($RB)\t\t!gprellow">; //Store S_floating
 let OperandList = (ops F8RC:$RA, s16imm:$DISP, GPRC:$RB) in
 def STTr : MFormAlt<0x27, "stt $RA,$DISP($RB)\t\t!gprellow">; //Store T_floating
-
+}
 
 //Branches, int
 def BEQ : BForm<0x39,  "beq $RA,$DISP">; //Branch if = zero
@@ -803,3 +819,42 @@ def : Pat<(fneg F4RC:$RB),
 def : Pat<(mulhs GPRC:$RA, GPRC:$RB),
           (SUBQ (UMULH GPRC:$RA, GPRC:$RB), (ADDQ (CMOVGE GPRC:$RB, R31, GPRC:$RA), 
                                                  (CMOVGE GPRC:$RA, R31, GPRC:$RB)))>;
+
+def : Pat<(Alpha_gprello tglobaladdr:$in, GPRC:$reg),
+	  (LDAr tglobaladdr:$in, GPRC:$reg)>;
+def : Pat<(Alpha_gprelhi tglobaladdr:$in, GPRC:$reg),
+	  (LDAHr tglobaladdr:$in, GPRC:$reg)>;
+
+//GOT Relative loads
+def : Pat<(i64 (load (Alpha_gprello tglobaladdr:$in, GPRC:$reg))),
+          (LDQr tglobaladdr:$in, GPRC:$reg)>;
+def : Pat<(f64 (load (Alpha_gprello tglobaladdr:$in, GPRC:$reg))),
+          (LDTr tglobaladdr:$in, GPRC:$reg)>;
+def : Pat<(f32 (load (Alpha_gprello tglobaladdr:$in, GPRC:$reg))),
+          (LDSr tglobaladdr:$in, GPRC:$reg)>;
+def : Pat<(i64 (sextload (Alpha_gprello tglobaladdr:$in, GPRC:$reg), i32)),
+          (LDLr tglobaladdr:$in, GPRC:$reg)>;
+def : Pat<(i64 (extload (Alpha_gprello tglobaladdr:$in, GPRC:$reg), i32)),
+          (LDLr tglobaladdr:$in, GPRC:$reg)>;
+def : Pat<(i64 (zextload (Alpha_gprello tglobaladdr:$in, GPRC:$reg), i16)),
+          (LDWUr tglobaladdr:$in, GPRC:$reg)>;
+def : Pat<(i64 (extload (Alpha_gprello tglobaladdr:$in, GPRC:$reg), i16)),
+          (LDWUr tglobaladdr:$in, GPRC:$reg)>;
+def : Pat<(i64 (zextload (Alpha_gprello tglobaladdr:$in, GPRC:$reg), i8)),
+          (LDBUr tglobaladdr:$in, GPRC:$reg)>;
+def : Pat<(i64 (extload (Alpha_gprello tglobaladdr:$in, GPRC:$reg), i8)),
+          (LDBUr tglobaladdr:$in, GPRC:$reg)>;
+
+//GOT Relative Stores
+def : Pat<(store GPRC:$val, (Alpha_gprello tglobaladdr:$in, GPRC:$reg)),
+          (STQr GPRC:$val, tglobaladdr:$in, GPRC:$reg)>;
+def : Pat<(store F8RC:$val, (Alpha_gprello tglobaladdr:$in, GPRC:$reg)),
+          (STTr F8RC:$val, tglobaladdr:$in, GPRC:$reg)>;
+def : Pat<(store F4RC:$val, (Alpha_gprello tglobaladdr:$in, GPRC:$reg)),
+          (STSr F4RC:$val, tglobaladdr:$in, GPRC:$reg)>;
+def : Pat<(truncstore GPRC:$val, (Alpha_gprello tglobaladdr:$in, GPRC:$reg), i32),
+          (STLr GPRC:$val, tglobaladdr:$in, GPRC:$reg)>;
+def : Pat<(truncstore GPRC:$val, (Alpha_gprello tglobaladdr:$in, GPRC:$reg), i16),
+          (STWr GPRC:$val, tglobaladdr:$in, GPRC:$reg)>;
+def : Pat<(truncstore GPRC:$val, (Alpha_gprello tglobaladdr:$in, GPRC:$reg), i8),
+          (STBr GPRC:$val, tglobaladdr:$in, GPRC:$reg)>;

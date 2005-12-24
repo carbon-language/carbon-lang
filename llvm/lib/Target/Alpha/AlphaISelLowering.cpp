@@ -104,6 +104,11 @@ AlphaTargetLowering::AlphaTargetLowering(TargetMachine &TM) : TargetLowering(TM)
   setOperationAction(ISD::LOCATION, MVT::Other, Expand);
   setOperationAction(ISD::DEBUG_LOC, MVT::Other, Expand);
   
+  // We want to legalize GlobalAddress and ConstantPool nodes into the 
+  // appropriate instructions to materialize the address.
+  setOperationAction(ISD::GlobalAddress, MVT::i64, Custom);
+  setOperationAction(ISD::ConstantPool,  MVT::i64, Custom);
+
   addLegalFPImmediate(+0.0); //F31
   addLegalFPImmediate(-0.0); //-F31
 
@@ -433,6 +438,28 @@ SDOperand AlphaTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
                                  src, FI, DAG.getSrcValue(0));
       return DAG.getLoad(MVT::i64, ST, FI, DAG.getSrcValue(0));
       }
+  }
+  case ISD::ConstantPool: {
+    Constant *C = cast<ConstantPoolSDNode>(Op)->get();
+    SDOperand CPI = DAG.getTargetConstantPool(C, MVT::i64);
+    
+    SDOperand Hi = DAG.getNode(AlphaISD::GPRelHi,  MVT::i64, CPI,
+			       DAG.getNode(AlphaISD::GlobalBaseReg, MVT::i64));
+    SDOperand Lo = DAG.getNode(AlphaISD::GPRelLo, MVT::i64, CPI, Hi);
+    return Lo;
+  }
+  case ISD::GlobalAddress: {
+    GlobalAddressSDNode *GSDN = cast<GlobalAddressSDNode>(Op);
+    GlobalValue *GV = GSDN->getGlobal();
+    SDOperand GA = DAG.getTargetGlobalAddress(GV, MVT::i64, GSDN->getOffset());
+
+    if (!GV->hasWeakLinkage() && !GV->isExternal()) {
+      SDOperand Hi = DAG.getNode(AlphaISD::GPRelHi,  MVT::i64, GA,
+				 DAG.getNode(AlphaISD::GlobalBaseReg, MVT::i64));
+      SDOperand Lo = DAG.getNode(AlphaISD::GPRelLo, MVT::i64, GA, Hi);
+      return Lo;
+    } else
+      return GA;
   }
 
   }
