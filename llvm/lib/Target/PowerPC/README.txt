@@ -3,10 +3,15 @@ TODO:
 * implement do-loop -> bdnz transform
 * implement powerpc-64 for darwin
 * use stfiwx in float->int
-* be able to combine sequences like the following into 2 instructions:
+
+* Fold add and sub with constant into non-extern, non-weak addresses so this:
 	lis r2, ha16(l2__ZTV4Cell)
 	la r2, lo16(l2__ZTV4Cell)(r2)
 	addi r2, r2, 8
+becomes:
+	lis r2, ha16(l2__ZTV4Cell+8)
+	la r2, lo16(l2__ZTV4Cell+8)(r2)
+
 
 * Teach LLVM how to codegen this:
 unsigned short foo(float a) { return a; }
@@ -23,10 +28,6 @@ _foo:
         lwz r2, -4(r1)
         rlwinm r3, r2, 0, 16, 31
         blr
-
-and:
-  extern int X, Y; int* test(int C) { return C? &X : &Y; }
-as one load when using --enable-pic.
 
 * Support 'update' load/store instructions.  These are cracked on the G5, but
   are still a codesize win.
@@ -167,37 +168,6 @@ doesn't get folded into the rlwimi instruction.  We should ideally see through
 things like this, rather than forcing llvm to generate the equivalent
 
 (shl (add bitfield, C2), C1) with some kind of mask.
-
-===-------------------------------------------------------------------------===
-
-Compile this (standard bitfield insert of a constant):
-void %test(uint* %tmp1) {
-        %tmp2 = load uint* %tmp1                ; <uint> [#uses=1]
-        %tmp5 = or uint %tmp2, 257949696                ; <uint> [#uses=1]
-        %tmp6 = and uint %tmp5, 4018143231              ; <uint> [#uses=1]
-        store uint %tmp6, uint* %tmp1
-        ret void
-}
-
-to:
-
-_test:
-        lwz r0,0(r3)
-        li r2,123
-        rlwimi r0,r2,21,3,10
-        stw r0,0(r3)
-        blr
-
-instead of:
-
-_test:
-        lis r2, -4225
-        lwz r4, 0(r3)
-        ori r2, r2, 65535
-        oris r4, r4, 3936
-        and r2, r4, r2
-        stw r2, 0(r3)
-        blr
 
 ===-------------------------------------------------------------------------===
 

@@ -362,8 +362,9 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     return Lo;
   }
   case ISD::GlobalAddress: {
-    GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
-    SDOperand GA = DAG.getTargetGlobalAddress(GV, MVT::i32);
+    GlobalAddressSDNode *GSDN = cast<GlobalAddressSDNode>(Op);
+    GlobalValue *GV = GSDN->getGlobal();
+    SDOperand GA = DAG.getTargetGlobalAddress(GV, MVT::i32, GSDN->getOffset());
     SDOperand Zero = DAG.getConstant(0, MVT::i32);
 
     if (PPCGenerateStaticCode) {
