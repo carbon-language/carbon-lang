@@ -40,9 +40,11 @@ class InstAlpha<bits<6> op, dag OL, string asmstr>
 }
 
 //3.3.1
-class MFormD<bits<6> opcode, string asmstr, list<dag> pattern> 
+class MForm<bits<6> opcode, bit store, bit load, string asmstr, list<dag> pattern> 
         : InstAlphaAlt<opcode, asmstr> {
   let Pattern = pattern;
+  let isStore = store;
+  let isLoad = load;
 
   bits<5> Ra;
   bits<16> disp;
@@ -62,16 +64,6 @@ class MFormAlt<bits<6> opcode, string asmstr>
   let Inst{20-16} = Rb;
   let Inst{15-0} = disp;
 }
-class MForm<bits<6> opcode, string asmstr> 
-        : InstAlpha<opcode, (ops GPRC:$RA, s16imm:$DISP, GPRC:$RB), asmstr> {
-  bits<5> Ra;
-  bits<16> disp;
-  bits<5> Rb;
-
-  let Inst{25-21} = Ra;
-  let Inst{20-16} = Rb;
-  let Inst{15-0} = disp;
-}
 class MfcForm<bits<6> opcode, bits<16> fc, string asmstr> 
         : InstAlpha<opcode, (ops GPRC:$RA, GPRC:$RB), asmstr> {
   bits<5> Ra;
@@ -80,17 +72,6 @@ class MfcForm<bits<6> opcode, bits<16> fc, string asmstr>
   let Inst{25-21} = Ra;
   let Inst{20-16} = Rb;
   let Inst{15-0} = fc;
-}
-
-class MgForm<bits<6> opcode, string asmstr> 
-        : InstAlpha<opcode, (ops GPRC:$RA, s16imm:$DISP, GPRC:$RB, s16imm:$NUM), asmstr> {
-  bits<5> Ra;
-  bits<16> disp;
-  bits<5> Rb;
-
-  let Inst{25-21} = Ra;
-  let Inst{20-16} = Rb;
-  let Inst{15-0} = disp;
 }
 
 class MbrForm<bits<6> opcode, bits<2> TB, dag OL, string asmstr> : InstAlpha<opcode, OL, asmstr> {
