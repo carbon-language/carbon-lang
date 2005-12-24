@@ -436,6 +436,47 @@ def BR : BForm<0x30, "br $RA,$DISP">; //Branch
 
 def BR_DAG : BFormD<0x30, "br $$31,$DISP">; //Branch
 
+
+let isLoad = 1, OperandList = (ops GPRC:$RA, GPRC:$RB), disp = 0 in {
+def LDQdag : MFormD<0x29,  "ldq $RA,0($RB)",
+                    [(set GPRC:$RA, (load GPRC:$RB))]>;
+def LDLdag : MFormD<0x29,  "ldl $RA,0($RB)",
+                    [(set GPRC:$RA, (sextload GPRC:$RB, i32))]>;
+def LDBUdag : MFormD<0x0A, "ldbu $RA,0($RB)",
+                    [(set GPRC:$RA, (zextload GPRC:$RB, i8))]>;
+def LDWUdag : MFormD<0x0C, "ldwu $RA,0($RB)",
+                    [(set GPRC:$RA, (zextload GPRC:$RB, i16))]>;
+
+def STBdag : MFormD<0x0E, "stb $RA,0($RB)",
+		    [(truncstore GPRC:$RA, GPRC:$RB, i8)]>;
+def STWdag : MFormD<0x0D, "stw $RA,0($RB)",
+		    [(truncstore GPRC:$RA, GPRC:$RB, i16)]>;
+def STLdag : MFormD<0x2C, "stl $RA,0($RB)",
+		    [(truncstore GPRC:$RA, GPRC:$RB, i32)]>;
+def STQdag : MFormD<0x2D, "stq $RA,0($RB)",
+		    [(store GPRC:$RA, GPRC:$RB)]>;
+}
+
+def : Pat<(i64 (extload GPRC:$src, i8)),
+          (LDBUdag GPRC:$src)>;
+def : Pat<(i64 (extload GPRC:$src, i16)),
+          (LDWUdag GPRC:$src)>;
+def : Pat<(i64 (extload GPRC:$src, i32)),
+          (LDLdag GPRC:$src)>;
+
+let isLoad = 1, OperandList = (ops F4RC:$RA, GPRC:$RB), disp = 0 in {
+def STSdag : MFormD<0x26, "sts $RA,0($RB)",
+		[(store F4RC:$RA, GPRC:$RB)]>;
+def LDSdag : MFormD<0x22, "lds $RA,0($RB)",
+		[(set F4RC:$RA, (load GPRC:$RB))]>;
+}
+let isLoad = 1, OperandList = (ops F8RC:$RA, GPRC:$RB), disp = 0 in {
+def STTdag : MFormD<0x27, "stt $RA,0($RB)",
+		[(store F8RC:$RA, GPRC:$RB)]>;
+def LDTdag : MFormD<0x23, "ldt $RA,0($RB)",
+		[(set F8RC:$RA, (load GPRC:$RB))]>;
+}
+
 //Stores, int
 def STB : MForm<0x0E, "stb $RA,$DISP($RB)">; // Store byte
 def STW : MForm<0x0D, "stw $RA,$DISP($RB)">; // Store word

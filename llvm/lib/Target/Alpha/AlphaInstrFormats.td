@@ -40,6 +40,18 @@ class InstAlpha<bits<6> op, dag OL, string asmstr>
 }
 
 //3.3.1
+class MFormD<bits<6> opcode, string asmstr, list<dag> pattern> 
+        : InstAlphaAlt<opcode, asmstr> {
+  let Pattern = pattern;
+
+  bits<5> Ra;
+  bits<16> disp;
+  bits<5> Rb;
+
+  let Inst{25-21} = Ra;
+  let Inst{20-16} = Rb;
+  let Inst{15-0} = disp;
+}
 class MFormAlt<bits<6> opcode, string asmstr> 
         : InstAlphaAlt<opcode, asmstr> {
   bits<5> Ra;

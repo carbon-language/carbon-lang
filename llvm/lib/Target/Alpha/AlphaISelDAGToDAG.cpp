@@ -35,7 +35,6 @@ namespace {
   //===--------------------------------------------------------------------===//
   /// AlphaDAGToDAGISel - Alpha specific code to select Alpha machine
   /// instructions for SelectionDAG operations.
-  ///
   class AlphaDAGToDAGISel : public SelectionDAGISel {
     AlphaTargetLowering AlphaLowering;
 
@@ -193,63 +192,6 @@ SDOperand AlphaDAGToDAGISel::Select(SDOperand Op) {
       cast<BasicBlockSDNode>(N->getOperand(2))->getBasicBlock();
     return CurDAG->SelectNodeTo(N, Alpha::BNE, MVT::Other, CC, 
                                 CurDAG->getBasicBlock(Dest), Chain);
-  }
-  case ISD::LOAD:
-  case ISD::EXTLOAD:
-  case ISD::ZEXTLOAD:
-  case ISD::SEXTLOAD: {
-    SDOperand Chain = Select(N->getOperand(0));
-    SDOperand Address = Select(N->getOperand(1));
-    unsigned opcode = N->getOpcode();
-    unsigned Opc = Alpha::WTF;
-    if (opcode == ISD::LOAD)
-      switch (N->getValueType(0)) {
-      default: N->dump(); assert(0 && "Bad load!");
-      case MVT::i64: Opc = Alpha::LDQ; break;
-      case MVT::f64: Opc = Alpha::LDT; break;
-      case MVT::f32: Opc = Alpha::LDS; break;
-      }
-    else
-      switch (cast<VTSDNode>(N->getOperand(3))->getVT()) {
-      default: N->dump(); assert(0 && "Bad sign extend!");
-      case MVT::i32: Opc = Alpha::LDL;
-        assert(opcode != ISD::ZEXTLOAD && "Not sext"); break;
-      case MVT::i16: Opc = Alpha::LDWU;
-        assert(opcode != ISD::SEXTLOAD && "Not zext"); break;
-      case MVT::i1: //FIXME: Treat i1 as i8 since there are problems otherwise
-      case MVT::i8: Opc = Alpha::LDBU;
-          assert(opcode != ISD::SEXTLOAD && "Not zext"); break;
-      }
-
-    return CurDAG->SelectNodeTo(N, Opc, N->getValueType(0), MVT::Other,
-                                getI64Imm(0), Address, 
-                                Chain).getValue(Op.ResNo);
-  }
-  case ISD::STORE:
-  case ISD::TRUNCSTORE: {
-    SDOperand Chain = Select(N->getOperand(0));
-    SDOperand Value = Select(N->getOperand(1));
-    SDOperand Address = Select(N->getOperand(2));
-
-    unsigned Opc = Alpha::WTF;
-
-    if (N->getOpcode() == ISD::STORE) {
-      switch (N->getOperand(1).getValueType()) {
-      case MVT::i64: Opc = Alpha::STQ; break;
-      case MVT::f64: Opc = Alpha::STT; break;
-      case MVT::f32: Opc = Alpha::STS; break;
-      default: assert(0 && "Bad store!");
-      };
-    } else { //TRUNCSTORE
-      switch (cast<VTSDNode>(N->getOperand(4))->getVT()) {
-      case MVT::i32: Opc = Alpha::STL; break;
-      case MVT::i16: Opc = Alpha::STW; break;
-      case MVT::i8: Opc = Alpha::STB; break;
-      default: assert(0 && "Bad truncstore!");
-      };
-    }
-    return CurDAG->SelectNodeTo(N, Opc, MVT::Other, Value, getI64Imm(0),
-                                Address, Chain);
   }
 
   case ISD::BR: 
