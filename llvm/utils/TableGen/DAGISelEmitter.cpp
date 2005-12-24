@@ -1983,6 +1983,10 @@ public:
         OS << "      ";
         DeclareSDOperand("Tmp"+utostr(ResNo));
         OS << " = " << Val << ";\n";
+      } else if (!N->isLeaf() && N->getOperator()->getName() == "texternalsym") {
+        OS << "      ";
+        DeclareSDOperand("Tmp"+utostr(ResNo));
+        OS << " = " << Val << ";\n";
       } else if (N->isLeaf() && (CP = NodeGetComplexPattern(N, ISE))) {
         std::string Fn = CP->getSelectFunc();
         NumRes = CP->getNumOperands();

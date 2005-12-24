@@ -190,20 +190,23 @@ def vt         : SDNode<"ISD::VALUETYPE" , SDTOther   , [], "VTSDNode">;
 def bb         : SDNode<"ISD::BasicBlock", SDTOther   , [], "BasicBlockSDNode">;
 def cond       : SDNode<"ISD::CONDCODE"  , SDTOther   , [], "CondCodeSDNode">;
 def undef      : SDNode<"ISD::UNDEF"     , SDTUNDEF   , []>;
-def globaladdr : SDNode<"ISD::GlobalAddress",       SDTPtrLeaf, [],
+def globaladdr : SDNode<"ISD::GlobalAddress",         SDTPtrLeaf, [],
                         "GlobalAddressSDNode">;
-def tglobaladdr: SDNode<"ISD::TargetGlobalAddress", SDTPtrLeaf, [],
-                        "GlobalAddressSDNode">;
-def constpool  : SDNode<"ISD::ConstantPool",        SDTPtrLeaf, [],
-                        "ConstantPoolSDNode">;
-def tconstpool : SDNode<"ISD::TargetConstantPool",  SDTPtrLeaf, [],
-                        "ConstantPoolSDNode">;
-def frameindex : SDNode<"ISD::FrameIndex",          SDTPtrLeaf, [],
-                        "FrameIndexSDNode">;
-def tframeindex: SDNode<"ISD::TargetFrameIndex",    SDTPtrLeaf, [],
-                        "FrameIndexSDNode">;
-def externalsym: SDNode<"ISD::ExternalSymbol",      SDTPtrLeaf, [],
-                        "ExternalSymbolSDNode">;
+def tglobaladdr : SDNode<"ISD::TargetGlobalAddress",  SDTPtrLeaf, [],
+                         "GlobalAddressSDNode">;
+def constpool   : SDNode<"ISD::ConstantPool",         SDTPtrLeaf, [],
+                         "ConstantPoolSDNode">;
+def tconstpool  : SDNode<"ISD::TargetConstantPool",   SDTPtrLeaf, [],
+                         "ConstantPoolSDNode">;
+def frameindex  : SDNode<"ISD::FrameIndex",           SDTPtrLeaf, [],
+                         "FrameIndexSDNode">;
+def tframeindex : SDNode<"ISD::TargetFrameIndex",     SDTPtrLeaf, [],
+                         "FrameIndexSDNode">;
+def externalsym : SDNode<"ISD::ExternalSymbol",       SDTPtrLeaf, [],
+                         "ExternalSymbolSDNode">;
+def texternalsym: SDNode<"ISD::TargetExternalSymbol", SDTPtrLeaf, [],
+                         "ExternalSymbolSDNode">;
+
 def add        : SDNode<"ISD::ADD"       , SDTIntBinOp   ,
                         [SDNPCommutative, SDNPAssociative]>;
 def sub        : SDNode<"ISD::SUB"       , SDTIntBinOp>;
