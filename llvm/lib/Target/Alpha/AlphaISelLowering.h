@@ -35,8 +35,11 @@ namespace llvm {
       /// RetLit - Literal Relocation of a Global
       RelLit,
 
-      /// GlobalBaseReg, used to restore the GOT ptr
+      /// GlobalBaseReg - used to restore the GOT ptr
       GlobalBaseReg,
+
+      /// DIVCALL - used for special library calls for div and rem
+      DivCall,
 
     };
   }

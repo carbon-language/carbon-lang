@@ -206,16 +206,20 @@ SDOperand AlphaDAGToDAGISel::Select(SDOperand Op) {
   case AlphaISD::GlobalBaseReg: 
     return getGlobalBaseReg();
   
-  case ISD::TargetConstantPool: {
-    Constant *C = cast<ConstantPoolSDNode>(N)->get();
-    SDOperand Tmp, CPI = CurDAG->getTargetConstantPool(C, MVT::i64);
-    Tmp = CurDAG->getTargetNode(Alpha::LDAHr, MVT::i64, CPI, getGlobalBaseReg());
-    return CurDAG->SelectNodeTo(N, Alpha::LDAr, MVT::i64, CPI, Tmp);
+  case AlphaISD::DivCall: {
+    SDOperand Chain = CurDAG->getEntryNode();
+    Chain = CurDAG->getCopyToReg(Chain, Alpha::R24, Select(Op.getOperand(1)), 
+				 SDOperand(0,0));
+    Chain = CurDAG->getCopyToReg(Chain, Alpha::R25, Select(Op.getOperand(2)), 
+				 Chain.getValue(1));
+    Chain = CurDAG->getCopyToReg(Chain, Alpha::R27, Select(Op.getOperand(0)), 
+				 Chain.getValue(1));
+    Chain = CurDAG->getTargetNode(Alpha::JSRsDAG, MVT::Other, MVT::Flag, 
+				  Chain, Chain.getValue(1));
+    Chain = CurDAG->getCopyFromReg(Chain, Alpha::R27, MVT::i64, 
+				  Chain.getValue(1));
+    return CurDAG->SelectNodeTo(N, Alpha::BIS, MVT::i64, Chain, Chain);
   }
-  case ISD::ExternalSymbol:
-    return CurDAG->SelectNodeTo(N, Alpha::LDQl, MVT::i64, 
-                                CurDAG->getTargetExternalSymbol(cast<ExternalSymbolSDNode>(N)->getSymbol(), MVT::i64),
-                                getGlobalBaseReg());
 
   case ISD::RET: {
     SDOperand Chain = Select(N->getOperand(0));     // Token chain.
@@ -268,33 +272,6 @@ SDOperand AlphaDAGToDAGISel::Select(SDOperand Op) {
       }
       break;
     }
-  case ISD::SDIV:
-  case ISD::UDIV:
-  case ISD::UREM:
-  case ISD::SREM:
-    if (MVT::isInteger(N->getValueType(0))) {
-      const char* opstr = 0;
-      switch(N->getOpcode()) {
-      case ISD::UREM: opstr = "__remqu"; break;
-      case ISD::SREM: opstr = "__remq";  break;
-      case ISD::UDIV: opstr = "__divqu"; break;
-      case ISD::SDIV: opstr = "__divq";  break;
-      }
-      SDOperand Tmp1 = Select(N->getOperand(0)),
-        Tmp2 = Select(N->getOperand(1)),
-        Addr = Select(CurDAG->getExternalSymbol(opstr, 
-						AlphaLowering.getPointerTy()));
-      SDOperand Chain;
-      Chain = CurDAG->getCopyToReg(CurDAG->getEntryNode(), Alpha::R24, Tmp1,
-				   SDOperand(0,0));
-      Chain = CurDAG->getCopyToReg(Chain, Alpha::R25, Tmp2, Chain.getValue(1));
-      Chain = CurDAG->getCopyToReg(Chain, Alpha::R27, Addr, Chain.getValue(1));
-      Chain = CurDAG->getTargetNode(Alpha::JSRsDAG, MVT::Other, MVT::Flag, 
-				    Chain, Chain.getValue(1));
-      return CurDAG->getCopyFromReg(Chain, Alpha::R27, MVT::i64, 
-				    Chain.getValue(1));
-    }
-    break;
 
   case ISD::SETCC:
     if (MVT::isFloatingPoint(N->getOperand(0).Val->getValueType(0))) {

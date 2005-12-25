@@ -74,7 +74,6 @@ class AlphaISel : public SelectionDAGISel {
 
   int count_ins;
   int count_outs;
-  bool has_sym;
   int max_depth;
 
 public:
@@ -93,15 +92,12 @@ public:
     count_ins = 0;
     count_outs = 0;
     max_depth = 0;
-    has_sym = false;
 
     // Codegen the basic block.
     ISelDAG = &DAG;
     max_depth = DAG.getRoot().getNodeDepth();
     Select(DAG.getRoot());
 
-    if(has_sym)
-      ++count_ins;
     if(EnableAlphaCount)
       std::cerr << "COUNT: "
                 << BB->getParent()->getFunction ()->getName() << " "
@@ -689,12 +685,11 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
 		   dyn_cast<ConstantPoolSDNode>(Address)) {
 	  unsigned CPIdx = BB->getParent()->getConstantPool()->
 	    getConstantPoolIndex(CP->get());
-	  has_sym = true;
 	  if (EnableAlphaLSMark)
 	    BuildMI(BB, Alpha::MEMLABEL, 4).addImm(i).addImm(j).addImm(k)
 	      .addImm(getUID());
 	  BuildMI(BB, GetRelVersion(Opc), 2, Result)
-	    .addConstantPoolIndex(CPIdx).addReg(Tmp1);
+	    .addConstantPoolIndex(CPIdx).addReg(Hi);
 	} else assert(0 && "Unknown Lo part");
       } else if(Address.getOpcode() == ISD::FrameIndex) {
         if (EnableAlphaLSMark)
@@ -717,55 +712,42 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
     AlphaLowering.restoreGP(BB);
     BuildMI(BB, Alpha::BIS, 2, Result).addReg(Alpha::R29).addReg(Alpha::R29);
     return Result;
-  case AlphaISD::GPRelHi:
+  case AlphaISD::GPRelHi: {
+    unsigned hi = SelectExpr(N.getOperand(1));
     if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(N.getOperand(0)))
       BuildMI(BB, Alpha::LDAHr, 2, Result)
 	.addConstantPoolIndex(BB->getParent()->getConstantPool()->
-			      getConstantPoolIndex(CP->get()))
-	.addReg(SelectExpr(N.getOperand(1)));
+			      getConstantPoolIndex(CP->get())).addReg(hi);
     else if (GlobalAddressSDNode *GASD = 
 	     dyn_cast<GlobalAddressSDNode>(N.getOperand(0)))
       BuildMI(BB, Alpha::LDAHr, 2, Result)
-	.addGlobalAddress(GASD->getGlobal())
-	.addReg(SelectExpr(N.getOperand(1)));
+	.addGlobalAddress(GASD->getGlobal()).addReg(hi);
     else assert(0 && "unknown Hi part");
     return Result;
-  case AlphaISD::GPRelLo:
+  }
+  case AlphaISD::GPRelLo: {
+    unsigned hi = SelectExpr(N.getOperand(1));
     if (ConstantPoolSDNode *CP = dyn_cast<ConstantPoolSDNode>(N.getOperand(0)))
       BuildMI(BB, Alpha::LDAr, 2, Result)
 	.addConstantPoolIndex(BB->getParent()->getConstantPool()->
-			      getConstantPoolIndex(CP->get()))
-	.addReg(SelectExpr(N.getOperand(1)));
+			      getConstantPoolIndex(CP->get())).addReg(hi);
     else if (GlobalAddressSDNode *GASD = 
 	     dyn_cast<GlobalAddressSDNode>(N.getOperand(0)))
       BuildMI(BB, Alpha::LDAr, 2, Result)
-	.addGlobalAddress(GASD->getGlobal())
-	.addReg(SelectExpr(N.getOperand(1)));
+	.addGlobalAddress(GASD->getGlobal()).addReg(hi);
     else assert(0 && "unknown Lo part");
     return Result;
-
+  }
   case AlphaISD::RelLit: {
-    GlobalAddressSDNode *GASD = cast<GlobalAddressSDNode>(N.getOperand(0));
-    BuildMI(BB, Alpha::LDQl, 2, Result)
-      .addGlobalAddress(GASD->getGlobal())
-      .addReg(SelectExpr(N.getOperand(1)));
+    unsigned hi = SelectExpr(N.getOperand(1));
+    if (GlobalAddressSDNode *GASD = dyn_cast<GlobalAddressSDNode>(N.getOperand(0)))
+      BuildMI(BB, Alpha::LDQl, 2, Result)
+	.addGlobalAddress(GASD->getGlobal()).addReg(hi);
+    else if (ExternalSymbolSDNode *ESSD = dyn_cast<ExternalSymbolSDNode>(N.getOperand(0)))
+      BuildMI(BB, Alpha::LDQl, 2, Result)
+	.addExternalSymbol(ESSD->getSymbol()).addReg(hi);
     return Result;
   }
-
-  case ISD::ExternalSymbol:
-    AlphaLowering.restoreGP(BB);
-    has_sym = true;
-
-    Reg = Result = MakeReg(MVT::i64);
-
-    if (EnableAlphaLSMark)
-      BuildMI(BB, Alpha::MEMLABEL, 4).addImm(5).addImm(0).addImm(0)
-        .addImm(getUID());
-
-    BuildMI(BB, Alpha::LDQl, 2, Result)
-      .addExternalSymbol(cast<ExternalSymbolSDNode>(N)->getSymbol())
-      .addReg(Alpha::R29);
-    return Result;
 
   case ISD::TAILCALL:
   case ISD::CALL:
@@ -1248,60 +1230,16 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
     BuildMI(BB, Opc, 2, Result).addReg(Tmp1).addReg(Tmp2);
     return Result;
   }
-  case ISD::SDIV:
-    {
-      //check if we can convert into a shift!
-      if (isSIntImmediate(N.getOperand(1), SImm) &&
-          SImm != 0 && isPowerOf2_64(llabs(SImm))) {
-        unsigned k = Log2_64(llabs(SImm));
-        Tmp1 = SelectExpr(N.getOperand(0));
-        if (k == 1)
-          Tmp2 = Tmp1;
-        else
-        {
-          Tmp2 = MakeReg(MVT::i64);
-          BuildMI(BB, Alpha::SRAi, 2, Tmp2).addReg(Tmp1).addImm(k - 1);
-        }
-        Tmp3 = MakeReg(MVT::i64);
-        BuildMI(BB, Alpha::SRLi, 2, Tmp3).addReg(Tmp2).addImm(64-k);
-        unsigned Tmp4 = MakeReg(MVT::i64);
-        BuildMI(BB, Alpha::ADDQ, 2, Tmp4).addReg(Tmp3).addReg(Tmp1);
-        if (SImm > 0)
-          BuildMI(BB, Alpha::SRAi, 2, Result).addReg(Tmp4).addImm(k);
-        else
-        {
-          unsigned Tmp5 = MakeReg(MVT::i64);
-          BuildMI(BB, Alpha::SRAi, 2, Tmp5).addReg(Tmp4).addImm(k);
-          BuildMI(BB, Alpha::SUBQ, 2, Result).addReg(Alpha::R31).addReg(Tmp5);
-        }
-        return Result;
-      }
-    }
-    //Else fall through
-  case ISD::UDIV:
-    //else fall though
-  case ISD::UREM:
-  case ISD::SREM: {
-    const char* opstr = 0;
-    switch(opcode) {
-    case ISD::UREM: opstr = "__remqu"; break;
-    case ISD::SREM: opstr = "__remq";  break;
-    case ISD::UDIV: opstr = "__divqu"; break;
-    case ISD::SDIV: opstr = "__divq";  break;
-    }
+  case AlphaISD::DivCall:
     Tmp1 = SelectExpr(N.getOperand(0));
     Tmp2 = SelectExpr(N.getOperand(1));
-    SDOperand Addr =
-      ISelDAG->getExternalSymbol(opstr, AlphaLowering.getPointerTy());
-    Tmp3 = SelectExpr(Addr);
-    //set up regs explicitly (helps Reg alloc)
-    BuildMI(BB, Alpha::BIS, 2, Alpha::R24).addReg(Tmp1).addReg(Tmp1);
-    BuildMI(BB, Alpha::BIS, 2, Alpha::R25).addReg(Tmp2).addReg(Tmp2);
-    BuildMI(BB, Alpha::BIS, 2, Alpha::R27).addReg(Tmp3).addReg(Tmp3);
+    Tmp3 = SelectExpr(N.getOperand(2));
+    BuildMI(BB, Alpha::BIS, 2, Alpha::R24).addReg(Tmp2).addReg(Tmp2);
+    BuildMI(BB, Alpha::BIS, 2, Alpha::R25).addReg(Tmp3).addReg(Tmp3);
+    BuildMI(BB, Alpha::BIS, 2, Alpha::R27).addReg(Tmp1).addReg(Tmp1);
     BuildMI(BB, Alpha::JSRs, 2, Alpha::R23).addReg(Alpha::R27).addImm(0);
     BuildMI(BB, Alpha::BIS, 2, Result).addReg(Alpha::R27).addReg(Alpha::R27);
     return Result;
-  }
 
   case ISD::SELECT:
     if (isFP) {
@@ -1492,7 +1430,6 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
           ConstantUInt::get(Type::getPrimitiveType(Type::ULongTyID) , val);
         unsigned CPI = CP->getConstantPoolIndex(C);
         AlphaLowering.restoreGP(BB);
-        has_sym = true;
         Tmp1 = MakeReg(MVT::i64);
         BuildMI(BB, Alpha::LDAHr, 2, Tmp1).addConstantPoolIndex(CPI)
           .addReg(Alpha::R29);

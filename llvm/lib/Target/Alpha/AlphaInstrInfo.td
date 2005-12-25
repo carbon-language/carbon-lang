@@ -434,6 +434,7 @@ let isCall = 1, Defs = [R24, R25, R27, R28], Uses = [R24, R25] in
 let isCall = 1, Defs = [R23, R24, R25, R27, R28], Uses = [R24, R25, R27] in
   def JSRsDAG : MbrForm< 0x1A, 0x01, (ops ), "jsr $$23,($$27),0">; //Jump to div or rem
 
+
 def JSR_COROUTINE : MbrForm< 0x1A, 0x03, (ops GPRC:$RD, GPRC:$RS, s14imm:$DISP), "jsr_coroutine $RD,($RS),$DISP">; //Jump to subroutine return
 def BR : BForm<0x30, "br $RA,$DISP">; //Branch
 
@@ -575,9 +576,11 @@ def LDAHg : MFormAlt<0x09, "ldah $RA,0($RB)\t\t!gpdisp!$NUM">;  //Load address
 }
 
 //Load quad, rellocated literal form
-let OperandList = (ops GPRC:$RA, s64imm:$DISP, GPRC:$RB) in
+let OperandList = (ops GPRC:$RA, s64imm:$DISP, GPRC:$RB) in 
 def LDQl : MForm<0x29, 0, 1, "ldq $RA,$DISP($RB)\t\t!literal",
                  [(set GPRC:$RA, (Alpha_rellit tglobaladdr:$DISP, GPRC:$RB))]>;
+def : Pat<(Alpha_rellit texternalsym:$ext, GPRC:$RB),
+          (LDQl texternalsym:$ext, GPRC:$RB)>;
 
 //Branches, int
 def BEQ : BForm<0x39,  "beq $RA,$DISP">; //Branch if = zero

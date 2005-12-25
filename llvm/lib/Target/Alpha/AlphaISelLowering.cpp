@@ -82,9 +82,10 @@ AlphaTargetLowering::AlphaTargetLowering(TargetMachine &TM) : TargetLowering(TM)
     setOperationAction(ISD::CTLZ     , MVT::i64  , Expand);
   }
   
-  //If this didn't legalize into a div....
-  //      setOperationAction(ISD::SREM     , MVT::i64, Expand);
-  //      setOperationAction(ISD::UREM     , MVT::i64, Expand);
+  setOperationAction(ISD::SREM     , MVT::i64, Custom);
+  setOperationAction(ISD::UREM     , MVT::i64, Custom);
+  setOperationAction(ISD::SDIV     , MVT::i64, Custom);
+  setOperationAction(ISD::UDIV     , MVT::i64, Custom);
   
   setOperationAction(ISD::MEMMOVE  , MVT::Other, Expand);
   setOperationAction(ISD::MEMSET   , MVT::Other, Expand);
@@ -104,10 +105,12 @@ AlphaTargetLowering::AlphaTargetLowering(TargetMachine &TM) : TargetLowering(TM)
   setOperationAction(ISD::LOCATION, MVT::Other, Expand);
   setOperationAction(ISD::DEBUG_LOC, MVT::Other, Expand);
   
-  // We want to legalize GlobalAddress and ConstantPool nodes into the 
-  // appropriate instructions to materialize the address.
-  setOperationAction(ISD::GlobalAddress, MVT::i64, Custom);
-  setOperationAction(ISD::ConstantPool,  MVT::i64, Custom);
+  // We want to legalize GlobalAddress and ConstantPool and
+  // ExternalSymbols nodes into the appropriate instructions to
+  // materialize the address.
+  setOperationAction(ISD::GlobalAddress,  MVT::i64, Custom);
+  setOperationAction(ISD::ConstantPool,   MVT::i64, Custom);
+  setOperationAction(ISD::ExternalSymbol, MVT::i64, Custom);
 
   addLegalFPImmediate(+0.0); //F31
   addLegalFPImmediate(-0.0); //-F31
@@ -461,6 +464,30 @@ SDOperand AlphaTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     } else
       return DAG.getNode(AlphaISD::RelLit, MVT::i64, GA, DAG.getNode(AlphaISD::GlobalBaseReg, MVT::i64));
   }
+  case ISD::ExternalSymbol: {
+    return DAG.getNode(AlphaISD::RelLit, MVT::i64, 
+		       DAG.getTargetExternalSymbol(cast<ExternalSymbolSDNode>(Op)->getSymbol(), MVT::i64),
+		       DAG.getNode(AlphaISD::GlobalBaseReg, MVT::i64));
+  }
+
+  case ISD::SDIV:
+  case ISD::UDIV:
+  case ISD::UREM:
+  case ISD::SREM:
+    if (MVT::isInteger(Op.getValueType())) {
+      const char* opstr = 0;
+      switch(Op.getOpcode()) {
+      case ISD::UREM: opstr = "__remqu"; break;
+      case ISD::SREM: opstr = "__remq";  break;
+      case ISD::UDIV: opstr = "__divqu"; break;
+      case ISD::SDIV: opstr = "__divq";  break;
+      }
+      SDOperand Tmp1 = Op.getOperand(0),
+        Tmp2 = Op.getOperand(1),
+        Addr = DAG.getExternalSymbol(opstr, MVT::i64);
+      return DAG.getNode(AlphaISD::DivCall, MVT::i64, Addr, Tmp1, Tmp2);
+    }
+    break;
 
   }
 
