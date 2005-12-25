@@ -194,9 +194,6 @@ SDOperand AlphaDAGToDAGISel::Select(SDOperand Op) {
                                 CurDAG->getBasicBlock(Dest), Chain);
   }
 
-  case ISD::BR: 
-    return CurDAG->SelectNodeTo(N, Alpha::BR_DAG, MVT::Other, N->getOperand(1),
-                                Select(N->getOperand(0)));
   case ISD::FrameIndex: {
     int FI = cast<FrameIndexSDNode>(N)->getIndex();
     return CurDAG->SelectNodeTo(N, Alpha::LDA, MVT::i64,
@@ -214,7 +211,7 @@ SDOperand AlphaDAGToDAGISel::Select(SDOperand Op) {
 				 Chain.getValue(1));
     Chain = CurDAG->getCopyToReg(Chain, Alpha::R27, Select(Op.getOperand(0)), 
 				 Chain.getValue(1));
-    Chain = CurDAG->getTargetNode(Alpha::JSRsDAG, MVT::Other, MVT::Flag, 
+    Chain = CurDAG->getTargetNode(Alpha::JSRs, MVT::Other, MVT::Flag, 
 				  Chain, Chain.getValue(1));
     Chain = CurDAG->getCopyFromReg(Chain, Alpha::R27, MVT::i64, 
 				  Chain.getValue(1));
@@ -359,7 +356,7 @@ SDOperand AlphaDAGToDAGISel::SelectCALL(SDOperand Op) {
 
   SDNode *N = Op.Val;
   SDOperand Chain = Select(N->getOperand(0));
-  SDOperand Addr = Select(N->getOperand(1));
+  SDOperand Addr = N->getOperand(1);
   SDOperand InFlag;  // Null incoming flag value.
 
    std::vector<SDOperand> CallOperands;
@@ -404,12 +401,20 @@ SDOperand AlphaDAGToDAGISel::SelectCALL(SDOperand Op) {
    }
 
 
-   Chain = CurDAG->getCopyToReg(Chain, Alpha::R27, Addr, InFlag);
-   InFlag = Chain.getValue(1);
    // Finally, once everything is in registers to pass to the call, emit the
    // call itself.
-   Chain = CurDAG->getTargetNode(Alpha::JSRDAG, MVT::Other, MVT::Flag, 
-                                 Chain, InFlag );
+   if (Addr.getOpcode() == AlphaISD::GPRelLo) {
+     SDOperand GOT = getGlobalBaseReg();
+     Chain = CurDAG->getCopyToReg(Chain, Alpha::R29, GOT, InFlag);
+     InFlag = Chain.getValue(1);
+     Chain = CurDAG->getTargetNode(Alpha::BSR, MVT::Other, MVT::Flag, 
+				   Addr.getOperand(0), Chain, InFlag);
+   } else {
+     Chain = CurDAG->getCopyToReg(Chain, Alpha::R27, Select(Addr), InFlag);
+     InFlag = Chain.getValue(1);
+     Chain = CurDAG->getTargetNode(Alpha::JSR, MVT::Other, MVT::Flag, 
+				   Chain, InFlag );
+   }
    InFlag = Chain.getValue(1);
 
    std::vector<SDOperand> CallResults;

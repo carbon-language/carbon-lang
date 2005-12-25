@@ -824,17 +824,18 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
         }
       }
       //build the right kind of call
-      GlobalAddressSDNode *GASD = dyn_cast<GlobalAddressSDNode>(N.getOperand(1));
-      if (GASD && !GASD->getGlobal()->isExternal()) {
+      if (N.getOperand(1).getOpcode() == AlphaISD::GPRelLo) {
         //use PC relative branch call
         AlphaLowering.restoreGP(BB);
-        BuildMI(BB, Alpha::BSR, 1, Alpha::R26)
-          .addGlobalAddress(GASD->getGlobal(),true);
+        BuildMI(BB, Alpha::BSR, 1)
+          .addGlobalAddress(cast<GlobalAddressSDNode>(N.getOperand(1)
+						      .getOperand(0))
+			    ->getGlobal(),true);
       } else {
         //no need to restore GP as we are doing an indirect call
         Tmp1 = SelectExpr(N.getOperand(1));
         BuildMI(BB, Alpha::BIS, 2, Alpha::R27).addReg(Tmp1).addReg(Tmp1);
-        BuildMI(BB, Alpha::JSR, 2, Alpha::R26).addReg(Alpha::R27).addImm(0);
+        BuildMI(BB, Alpha::JSR, 0);
       }
 
       //push the result into a virtual register
@@ -1237,7 +1238,7 @@ unsigned AlphaISel::SelectExpr(SDOperand N) {
     BuildMI(BB, Alpha::BIS, 2, Alpha::R24).addReg(Tmp2).addReg(Tmp2);
     BuildMI(BB, Alpha::BIS, 2, Alpha::R25).addReg(Tmp3).addReg(Tmp3);
     BuildMI(BB, Alpha::BIS, 2, Alpha::R27).addReg(Tmp1).addReg(Tmp1);
-    BuildMI(BB, Alpha::JSRs, 2, Alpha::R23).addReg(Alpha::R27).addImm(0);
+    BuildMI(BB, Alpha::JSRs, 0);
     BuildMI(BB, Alpha::BIS, 2, Result).addReg(Alpha::R27).addReg(Alpha::R27);
     return Result;
 
@@ -1551,7 +1552,7 @@ void AlphaISel::Select(SDOperand N) {
       cast<BasicBlockSDNode>(N.getOperand(1))->getBasicBlock();
 
     Select(N.getOperand(0));
-    BuildMI(BB, Alpha::BR, 1, Alpha::R31).addMBB(Dest);
+    BuildMI(BB, Alpha::BR, 1).addMBB(Dest);
     return;
   }
 

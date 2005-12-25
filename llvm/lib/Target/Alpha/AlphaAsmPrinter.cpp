@@ -136,9 +136,9 @@ void AlphaAsmPrinter::printOp(const MachineOperand &MO, bool IsCallOp) {
   case MachineOperand::MO_GlobalAddress:
     //Abuse PCrel to specify pcrel calls
     //calls are the only thing that use this flag
-    if (MO.isPCRelative())
-      O << PrivateGlobalPrefix << Mang->getValueName(MO.getGlobal()) << "..ng";
-    else
+//     if (MO.isPCRelative())
+//       O << PrivateGlobalPrefix << Mang->getValueName(MO.getGlobal()) << "..ng";
+//     else
       O << Mang->getValueName(MO.getGlobal());
     return;
 

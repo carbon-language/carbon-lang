@@ -95,10 +95,13 @@ class BForm<bits<6> opcode, string asmstr>
   let Inst{25-21} = Ra;
   let Inst{20-0} = disp;
 }
+def target : Operand<OtherVT> {}
 let isBranch = 1, isTerminator = 1 in
-class BFormD<bits<6> opcode, string asmstr> 
-    : InstAlpha<opcode, (ops s21imm:$DISP), asmstr> {
-  bits<5> Ra = 31;
+class BFormD<bits<6> opcode, string asmstr, list<dag> pattern> 
+    : InstAlpha<opcode, (ops target:$DISP), asmstr> {
+  let Pattern = pattern;
+
+  bits<5> Ra;
   bits<21> disp;
 
   let Inst{25-21} = Ra;
