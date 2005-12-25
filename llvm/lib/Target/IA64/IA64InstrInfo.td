@@ -674,13 +674,13 @@ let isCall = 1, /* isTerminator = 1, isBranch = 1, */
 // new daggy stuff!  
 
 // calls a globaladdress
-  def BRCALL_IPREL_GA : RawForm<0x03, 0xb0, (ops calltarget:$dst, variable_ops),
+  def BRCALL_IPREL_GA : RawForm<0x03, 0xb0, (ops calltarget:$dst),
   "br.call.sptk rp = $dst;;">;       // FIXME: teach llvm about branch regs?
 // calls an externalsymbol
-  def BRCALL_IPREL_ES : RawForm<0x03, 0xb0, (ops calltarget:$dst, variable_ops),
+  def BRCALL_IPREL_ES : RawForm<0x03, 0xb0, (ops calltarget:$dst),
   "br.call.sptk rp = $dst;;">;       // FIXME: teach llvm about branch regs?
 // calls through a function descriptor
-  def BRCALL_INDIRECT : RawForm<0x03, 0xb0, (ops GR:$branchreg, variable_ops),
+  def BRCALL_INDIRECT : RawForm<0x03, 0xb0, (ops GR:$branchreg),
   "br.call.sptk rp = $branchreg;;">; // FIXME: teach llvm about branch regs?
   def BRLCOND_CALL : RawForm<0x03, 0xb0, (ops PR:$qp, i64imm:$dst),
     "($qp) brl.cond.call.sptk $dst;;">;
