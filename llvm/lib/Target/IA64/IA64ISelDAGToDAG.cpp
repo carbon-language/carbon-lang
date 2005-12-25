@@ -352,7 +352,6 @@ SDOperand IA64DAGToDAGISel::Select(SDOperand Op) {
 
     unsigned CallOpcode;
     SDOperand CallOperand;
-    std::vector<MVT::ValueType> TypeOperands;
     
     // if we can call directly, do so
     if (GlobalAddressSDNode *GASD =
@@ -395,7 +394,7 @@ SDOperand IA64DAGToDAGISel::Select(SDOperand Op) {
  
    // Finally, once everything is setup, emit the call itself
    if(InFlag.Val)
-     Chain = CurDAG->getTargetNode(CallOpcode, MVT::Other, MVT::Flag, CallOperand, Chain, InFlag);
+     Chain = CurDAG->getTargetNode(CallOpcode, MVT::Other, MVT::Flag, CallOperand, InFlag);
    else // there might be no arguments
      Chain = CurDAG->getTargetNode(CallOpcode, MVT::Other, MVT::Flag, CallOperand, Chain);
    InFlag = Chain.getValue(1);
