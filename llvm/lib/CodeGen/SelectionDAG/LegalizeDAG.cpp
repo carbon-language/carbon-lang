@@ -1956,11 +1956,6 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       break;
     }
     switch (TLI.getOperationAction(Node->getOpcode(), Node->getValueType(0))) {
-    case TargetLowering::Legal:
-      if (Tmp1 != Node->getOperand(0) ||
-	  Tmp2 != Node->getOperand(1))
-	Result = DAG.getNode(Node->getOpcode(), Node->getValueType(0), Tmp1,Tmp2);
-      break;
     case TargetLowering::Custom: {
       Result = DAG.getNode(Node->getOpcode(), Node->getValueType(0), Tmp1, Tmp2);
       SDOperand Tmp = TLI.LowerOperation(Result, DAG);
@@ -1968,9 +1963,13 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
 	Tmp = LegalizeOp(Tmp);  // Relegalize input.
 	AddLegalizedOperand(Op, Tmp);
 	return Tmp;
-      }
-      break;
+      } //else it was considered legal and we fall through
     }
+    case TargetLowering::Legal:
+      if (Tmp1 != Node->getOperand(0) ||
+	  Tmp2 != Node->getOperand(1))
+	Result = DAG.getNode(Node->getOpcode(), Node->getValueType(0), Tmp1,Tmp2);
+      break;
     default:
       assert(0 && "Operation not supported");
     }
@@ -2007,6 +2006,15 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     Tmp1 = LegalizeOp(Node->getOperand(0));   // LHS
     Tmp2 = LegalizeOp(Node->getOperand(1));   // RHS
     switch (TLI.getOperationAction(Node->getOpcode(), Node->getValueType(0))) {
+    case TargetLowering::Custom: {
+      Result = DAG.getNode(Node->getOpcode(), Node->getValueType(0), Tmp1, Tmp2);
+      SDOperand Tmp = TLI.LowerOperation(Result, DAG);
+      if (Tmp.Val) {
+	Tmp = LegalizeOp(Tmp);  // Relegalize input.
+	AddLegalizedOperand(Op, Tmp);
+	return Tmp;
+      } //else it was considered legal and we fall through
+    }
     case TargetLowering::Legal:
       if (Tmp1 != Node->getOperand(0) ||
           Tmp2 != Node->getOperand(1))
@@ -2015,16 +2023,6 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       break;
     case TargetLowering::Promote:
       assert(0 && "Cannot promote handle this yet!");
-    case TargetLowering::Custom: {
-      Result = DAG.getNode(Node->getOpcode(), Node->getValueType(0), Tmp1, Tmp2);
-      SDOperand Tmp = TLI.LowerOperation(Result, DAG);
-      if (Tmp.Val) {
-	Tmp = LegalizeOp(Tmp);  // Relegalize input.
-	AddLegalizedOperand(Op, Tmp);
-	return Tmp;
-      }
-      break;
-    }
     case TargetLowering::Expand:
       if (MVT::isInteger(Node->getValueType(0))) {
         MVT::ValueType VT = Node->getValueType(0);
