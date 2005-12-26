@@ -19,6 +19,7 @@
 #include "llvm/Config/config.h"
 #include "llvm/Support/CommandLine.h"
 #include <algorithm>
+#include <functional>
 #include <map>
 #include <set>
 #include <iostream>
