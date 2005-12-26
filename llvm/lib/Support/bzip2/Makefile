@@ -13,6 +13,4 @@ SOURCES = blocksort.c huffman.c crctable.c randtable.c compress.c decompress.c \
 EXTRA_DIST = bzlib.h bzlib_private.h CHANGES LICENSE README \
 	     README.COMPILATION.PROBLEMS Y2K_INFO
 
-CFLAGS=-fno-strength-reduce 
-
 include $(LEVEL)/Makefile.common
