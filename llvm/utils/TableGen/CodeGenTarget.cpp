@@ -273,6 +273,7 @@ CodeGenInstruction::CodeGenInstruction(Record *R, const std::string &AsmStr)
   hasCtrlDep   = R->getValueAsBit("hasCtrlDep");
   hasInFlag    = R->getValueAsBit("hasInFlag");
   hasOutFlag   = R->getValueAsBit("hasOutFlag");
+  noResults    = R->getValueAsBit("noResults");
   hasVariableNumberOfOperands = false;
   
   DagInit *DI;

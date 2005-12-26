@@ -289,12 +289,15 @@ let isTerminator = 1 in
 //
 
 // Return instructions.
-let isTerminator = 1, isReturn = 1, isBarrier = 1, hasCtrlDep = 1 in {
+let isTerminator = 1, isReturn = 1, isBarrier = 1,
+    hasCtrlDep = 1, noResults = 1 in {
   // FIXME: temporary workaround for return without an incoming flag.
   def RETVOID : I<0xC3, RawFrm, (ops), "ret", [(ret)]>;
   let hasInFlag = 1 in {
-    def RET : I<0xC3, RawFrm, (ops), "ret", []>;
-    def RETI : Ii16<0xC2, RawFrm, (ops i16imm:$amt), "ret $amt", []>;
+    def RET  : I<0xC3, RawFrm, (ops), "ret",
+                 [(X86retflag 0)]>;
+    def RETI : Ii16<0xC2, RawFrm, (ops i16imm:$amt), "ret $amt",
+                    [(X86retflag imm:$amt)]>;
   }
 }
 
@@ -302,7 +305,7 @@ def : Pat<(X86retflag 0),        (RET)>;
 def : Pat<(X86retflag imm:$amt), (RETI imm:$amt)>;
 
 // All branches are RawFrm, Void, Branch, and Terminators
-let isBranch = 1, isTerminator = 1 in
+let isBranch = 1, isTerminator = 1, noResults = 1 in
   class IBr<bits<8> opcode, dag ops, string asm, list<dag> pattern> :
         I<opcode, RawFrm, ops, asm, pattern>;
 
@@ -339,7 +342,7 @@ def JNP : IBr<0x8B, (ops brtarget:$dst), "jnp $dst", []>, TB;
 //===----------------------------------------------------------------------===//
 //  Call Instructions...
 //
-let isCall = 1 in
+let isCall = 1, noResults = 1 in
   // All calls clobber the non-callee saved registers...
   let Defs = [EAX, ECX, EDX, FP0, FP1, FP2, FP3, FP4, FP5, FP6, ST0,
               XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7] in {
@@ -349,11 +352,11 @@ let isCall = 1 in
   }
 
 // Tail call stuff.
-let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in
+let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1, noResults = 1 in
   def TAILJMPd : IBr<0xE9, (ops calltarget:$dst), "jmp $dst  # TAIL CALL", []>;
-let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in
+let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1, noResults = 1 in
   def TAILJMPr : I<0xFF, MRM4r, (ops R32:$dst), "jmp {*}$dst  # TAIL CALL", []>;
-let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in
+let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1, noResults = 1 in
   def TAILJMPm : I<0xFF, MRM4m, (ops i32mem:$dst),
                    "jmp {*}$dst  # TAIL CALL", []>;
 
@@ -2305,20 +2308,13 @@ class FpI<dag ops, FPFormat fp, list<dag> pattern>
   let Pattern = pattern;
 }
 
-// FpI - Floating Point Psuedo Instruction template.
-// TEMPORARY: for FpGETRESULT and FpSETRESULT only. Since
-// they must match regardless of X86Vector.
-class FpPseudoI<dag ops, FPFormat fp, list<dag> pattern>
-  : X86Inst<0, Pseudo, NoImm, ops, ""> {
-  let FPForm = fp; let FPFormBits = FPForm.Value;
-  let Pattern = pattern;
-}
-
 // Random Pseudo Instructions.
-def FpGETRESULT : FpPseudoI<(ops RFP:$dst), SpecialFP, []>;     // FPR = ST(0)
-let hasOutFlag = 1 in 
-  def FpSETRESULT : FpPseudoI<(ops RFP:$src), SpecialFP,
-                    [(X86fpset RFP:$src)]>, Imp<[], [ST0]>;     // ST(0) = FPR
+def FpGETRESULT : FpI<(ops RFP:$dst), SpecialFP, []>;     // FPR = ST(0)
+let noResults = 1, hasOutFlag = 1 in 
+  def FpSETRESULT : FpI<(ops RFP:$src), SpecialFP,
+                        []>, Imp<[], [ST0]>;              // ST(0) = FPR
+
+def : Pat<(X86fpset RFP:$src), (FpSETRESULT RFP:$src)>;
 
 def FpMOV       : FpI<(ops RFP:$dst, RFP:$src), SpecialFP, []>; // f1 = fmov f2
 

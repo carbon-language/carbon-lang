@@ -171,7 +171,7 @@ let usesCustomDAGSchedInserter = 1 in {  // Expanded by the scheduler.
 
 // Section A.3 - Synthetic Instructions, p. 85
 // special cases of JMPL:
-let isReturn = 1, isTerminator = 1, hasDelaySlot = 1 in {
+let isReturn = 1, isTerminator = 1, hasDelaySlot = 1, noResults = 1 in {
   let rd = O7.Num, rs1 = G0.Num, simm13 = 8 in
     // FIXME: temporary workaround for return without an incoming flag.
     def RETVOID: F3_2<2, 0b111000, (ops), "retl", [(ret)]>;
@@ -466,6 +466,7 @@ class BranchV8<bits<4> cc, dag ops, string asmstr, list<dag> pattern>
   let isBranch = 1;
   let isTerminator = 1;
   let hasDelaySlot = 1;
+  let noResults = 1;
 }
 
 let isBarrier = 1 in
@@ -511,6 +512,7 @@ class FPBranchV8<bits<4> cc, dag ops, string asmstr, list<dag> pattern>
   let isBranch = 1;
   let isTerminator = 1;
   let hasDelaySlot = 1;
+  let noResults = 1;
 }
 
 def FBU  : FPBranchV8<0b0111, (ops brtarget:$dst),
@@ -561,7 +563,7 @@ def FBO  : FPBranchV8<0b1111, (ops brtarget:$dst),
 // Section B.24 - Call and Link Instruction, p. 125
 // This is the only Format 1 instruction
 let Uses = [O0, O1, O2, O3, O4, O5],
-    hasDelaySlot = 1, isCall = 1, hasInFlag = 1, hasOutFlag = 1,
+    hasDelaySlot = 1, isCall = 1, hasInFlag = 1, hasOutFlag = 1, noResults = 1,
     Defs = [O0, O1, O2, O3, O4, O5, O7, G1, G2, G3, G4, G5, G6, G7,
     D0, D1, D2, D3, D4, D5, D6, D7, D8, D9, D10, D11, D12, D13, D14, D15] in { 
   def CALL : InstV8<(ops calltarget:$dst),

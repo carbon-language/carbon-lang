@@ -520,7 +520,7 @@ def CADDIMM22 : AForm<0x03, 0x0b, (ops GR:$dst, GR:$src1, s22imm:$imm, PR:$qp),
 def SUBIMM8 : AForm<0x03, 0x0b, (ops GR:$dst, s8imm:$imm, GR:$src2),
   "sub $dst = $imm, $src2;;">;
 
-let isStore = 1 in {
+let isStore = 1, noResults = 1 in {
   def ST1 : AForm<0x03, 0x0b, (ops GR:$dstPtr, GR:$value),
     "st1 [$dstPtr] = $value;;">;
   def ST2 : AForm<0x03, 0x0b, (ops GR:$dstPtr, GR:$value),
@@ -643,7 +643,7 @@ def FP_TO_UINT : Pat<(i64 (fp_to_uint FP:$src)),
   (GETFSIG (FCVTFXUTRUNC FP:$src))>;
 
 
-let isTerminator = 1, isBranch = 1 in {
+let isTerminator = 1, isBranch = 1, noResults = 1 in {
   def BRL_NOTCALL : RawForm<0x03, 0xb0, (ops i64imm:$dst),
     "(p0) brl.cond.sptk $dst;;">;
   def BRLCOND_NOTCALL : RawForm<0x03, 0xb0, (ops PR:$qp, i64imm:$dst),
@@ -652,7 +652,7 @@ let isTerminator = 1, isBranch = 1 in {
     "($qp) br.cond.sptk $dst;;">;
 }
 
-let isCall = 1, /* isTerminator = 1, isBranch = 1, */
+let isCall = 1, noResults = 1, /* isTerminator = 1, isBranch = 1, */
   Uses = [out0,out1,out2,out3,out4,out5,out6,out7],
 // all calls clobber non-callee-saved registers, and for now, they are these:
   Defs = [r2,r3,r8,r9,r10,r11,r14,r15,r16,r17,r18,r19,r20,r21,r22,r23,r24,
@@ -688,7 +688,7 @@ let isCall = 1, /* isTerminator = 1, isBranch = 1, */
     "($qp) br.cond.call.sptk $dst;;">;
 }
 
-let isTerminator = 1, isReturn = 1 in
+let isTerminator = 1, isReturn = 1, noResults = 1 in
   def RET : RawForm<0x03, 0xb0, (ops), "br.ret.sptk.many rp;;">; // return
 
 

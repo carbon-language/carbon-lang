@@ -87,6 +87,7 @@ namespace llvm {
     bool hasCtrlDep;
     bool hasInFlag;
     bool hasOutFlag;
+    bool noResults;
 
     CodeGenInstruction(Record *R, const std::string &AsmStr);
 

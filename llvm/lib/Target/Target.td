@@ -171,6 +171,7 @@ class Instruction {
   bit hasCtrlDep   = 0;     // Does this instruction r/w ctrl-flow chains?
   bit hasInFlag    = 0;     // Does this instruction read a flag operand?
   bit hasOutFlag   = 0;     // Does this instruction write a flag operand?
+  bit noResults    = 0;     // Does this instruction produce no results?
   
   InstrItinClass Itinerary; // Execution steps used for scheduling. 
 }

@@ -404,14 +404,14 @@ def : Pat<(setune GPRC:$X, GPRC:$Y), (CMPEQi (CMPEQ GPRC:$X, GPRC:$Y), 0)>;
 def : Pat<(setune GPRC:$X, immUExt8:$Y), (CMPEQi (CMPEQ GPRC:$X, immUExt8:$Y), 0)>;
 
 
-let isReturn = 1, isTerminator = 1 in 
+let isReturn = 1, isTerminator = 1, noResults = 1 in 
   def RET : MbrForm< 0x1A, 0x02, (ops GPRC:$RD, GPRC:$RS, s64imm:$DISP), "ret $RD,($RS),$DISP">; //Return from subroutine
 //DAG Version:
-let isReturn = 1, isTerminator = 1, Ra = 31, Rb = 26, disp = 1, Uses = [R26] in 
+let isReturn = 1, isTerminator = 1, noResults = 1, Ra = 31, Rb = 26, disp = 1, Uses = [R26] in 
   def RETDAG : MbrForm< 0x1A, 0x02, (ops), "ret $$31,($$26),1">; //Return from subroutine
 
 def JMP : MbrForm< 0x1A, 0x00, (ops GPRC:$RD, GPRC:$RS, GPRC:$DISP), "jmp $RD,($RS),$DISP">; //Jump
-let isCall = 1, Ra = 26,
+let isCall = 1, noResults = 1, Ra = 26,
     Defs = [R0, R1, R2, R3, R4, R5, R6, R7, R8, R16, R17, R18, R19,
             R20, R21, R22, R23, R24, R25, R26, R27, R28, R29,
             F0, F1,
@@ -419,7 +419,7 @@ let isCall = 1, Ra = 26,
             F20, F21, F22, F23, F24, F25, F26, F27, F28, F29, F30], Uses = [R29] in {
     def BSR : BFormD<0x34, "bsr $$26,$$$DISP..ng", []>; //Branch to subroutine
 }
-let isCall = 1,
+let isCall = 1, noResults = 1,
     Defs = [R0, R1, R2, R3, R4, R5, R6, R7, R8, R16, R17, R18, R19,
             R20, R21, R22, R23, R24, R25, R26, R27, R28, R29,
             F0, F1,
@@ -428,7 +428,7 @@ let isCall = 1,
     def JSR : MbrForm< 0x1A, 0x01, (ops ), "jsr $$26,($$27),0">; //Jump to subroutine
 }
 
-let isCall = 1, Defs = [R23, R24, R25, R27, R28], Uses = [R24, R25, R27] in
+let isCall = 1, noResults = 1, Defs = [R23, R24, R25, R27, R28], Uses = [R24, R25, R27] in
   def JSRs : MbrForm< 0x1A, 0x01, (ops ), "jsr $$23,($$27),0">; //Jump to div or rem
 
 

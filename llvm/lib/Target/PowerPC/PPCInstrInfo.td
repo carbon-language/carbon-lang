@@ -224,17 +224,18 @@ let usesCustomDAGSchedInserter = 1 in {  // Expanded by the scheduler.
 
 let isTerminator = 1 in {
   // FIXME: temporary workaround for return without an incoming flag.
-  let isReturn = 1 in
+  let isReturn = 1, noResults = 1 in
     def BLRVOID : XLForm_2_ext<19, 16, 20, 0, 0, (ops), "blr", BrB, [(ret)]>;
-  let isReturn = 1, hasInFlag = 1 in
+  let isReturn = 1, noResults = 1, hasInFlag = 1 in
     def BLR : XLForm_2_ext<19, 16, 20, 0, 0, (ops), "blr", BrB, []>;
+  let noResults = 1 in
   def BCTR : XLForm_2_ext<19, 528, 20, 0, 0, (ops), "bctr", BrB, []>;
 }
 
 let Defs = [LR] in
   def MovePCtoLR : Pseudo<(ops piclabel:$label), "bl $label", []>;
 
-let isBranch = 1, isTerminator = 1, hasCtrlDep = 1 in {
+let isBranch = 1, isTerminator = 1, hasCtrlDep = 1, noResults = 1 in {
   def COND_BRANCH : Pseudo<(ops CRRC:$crS, u16imm:$opc,
                                 target:$true, target:$false),
                            "; COND_BRANCH", []>;
@@ -262,7 +263,7 @@ let isBranch = 1, isTerminator = 1, hasCtrlDep = 1 in {
                   "bnu $crS, $block", BrB>;
 }
 
-let isCall = 1, 
+let isCall = 1, noResults = 1, 
   // All calls clobber the non-callee saved registers...
   Defs = [R0,R2,R3,R4,R5,R6,R7,R8,R9,R10,R11,R12,
           F0,F1,F2,F3,F4,F5,F6,F7,F8,F9,F10,F11,F12,F13,
@@ -328,7 +329,7 @@ def LI  : DForm_2_r0<14, (ops GPRC:$rD, symbolLo:$imm),
 def LIS : DForm_2_r0<15, (ops GPRC:$rD, symbolHi:$imm),
                      "lis $rD, $imm", IntGeneral,
                      [(set GPRC:$rD, imm16Shifted:$imm)]>;
-let isStore = 1 in {
+let isStore = 1, noResults = 1 in {
 def STMW : DForm_3<47, (ops GPRC:$rS, s16imm:$disp, GPRC:$rA),
                    "stmw $rS, $disp($rA)", LdStLMW,
                    []>;
@@ -385,7 +386,7 @@ def LFD : DForm_8<50, (ops F8RC:$rD, memri:$src),
                   "lfd $rD, $src", LdStLFD,
                   [(set F8RC:$rD, (load iaddr:$src))]>;
 }
-let isStore = 1 in {
+let isStore = 1, noResults = 1 in {
 def STFS : DForm_9<52, (ops F4RC:$rS, memri:$dst),
                    "stfs $rS, $dst", LdStUX,
                    [(store F4RC:$rS, iaddr:$dst)]>;
@@ -404,7 +405,7 @@ def LD   : DSForm_2<58, 0, (ops GPRC:$rT, s16immX4:$DS, GPRC:$rA),
                     "ld $rT, $DS($rA)", LdStLD,
                     []>, isPPC64;
 }
-let isStore = 1 in {
+let isStore = 1, noResults = 1 in {
 def STD  : DSForm_2<62, 0, (ops GPRC:$rT, s16immX4:$DS, GPRC:$rA),
                     "std $rT, $DS($rA)", LdStSTD,
                     []>, isPPC64;
@@ -511,7 +512,7 @@ def SRAD : XForm_6<31, 794, (ops G8RC:$rA, G8RC:$rS, G8RC:$rB),
 def SRAW : XForm_6<31, 792, (ops GPRC:$rA, GPRC:$rS, GPRC:$rB),
                    "sraw $rA, $rS, $rB", IntShift,
                    [(set GPRC:$rA, (PPCsra GPRC:$rS, GPRC:$rB))]>;
-let isStore = 1 in {
+let isStore = 1, noResults = 1 in {
 def STBX  : XForm_8<31, 215, (ops GPRC:$rS, memrr:$dst),
                    "stbx $rS, $dst", LdStGeneral,
                    [(truncstore GPRC:$rS, xaddr:$dst, i8)]>;
@@ -636,7 +637,7 @@ def FNEGD  : XForm_26<63, 40, (ops F8RC:$frD, F8RC:$frB),
                       [(set F8RC:$frD, (fneg F8RC:$frB))]>;
                       
                       
-let isStore = 1 in {
+let isStore = 1, noResults = 1 in {
 def STFIWX: XForm_28<31, 983, (ops F4RC:$frS, memrr:$dst),
                      "stfiwx $frS, $dst", LdStUX,
                      []>;

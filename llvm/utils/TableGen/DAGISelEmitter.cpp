@@ -1097,11 +1097,8 @@ void DAGISelEmitter::ParseInstructions() {
       CodeGenInstruction &InstInfo =Target.getInstruction(Instrs[i]->getName());
 
       if (InstInfo.OperandList.size() != 0) {
-        // It's possible for some instruction, e.g. RET for X86 that only has an
-        // implicit flag operand.
         // FIXME: temporary hack...
-        if (InstInfo.isReturn || InstInfo.isBranch || InstInfo.isCall ||
-            InstInfo.isStore) {
+        if (InstInfo.noResults) {
           // These produce no results
           for (unsigned j = 0, e = InstInfo.OperandList.size(); j < e; ++j)
             Operands.push_back(InstInfo.OperandList[j].Rec);
