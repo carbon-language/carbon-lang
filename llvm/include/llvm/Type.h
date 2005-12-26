@@ -38,6 +38,7 @@
 #include "llvm/Support/Casting.h"
 #include "llvm/ADT/GraphTraits.h"
 #include "llvm/ADT/iterator"
+#include <string>
 #include <vector>
 
 namespace llvm {
