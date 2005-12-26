@@ -20,6 +20,7 @@
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/SetOperations.h"
 #include <algorithm>
+#include <iostream>
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
