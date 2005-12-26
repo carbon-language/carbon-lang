@@ -12,6 +12,8 @@
 
 #include "Record.h"
 #include "llvm/Support/DataTypes.h"
+#include <ios>
+
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//

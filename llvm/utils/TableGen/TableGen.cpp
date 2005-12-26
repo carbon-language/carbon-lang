@@ -28,6 +28,7 @@
 #include <algorithm>
 #include <cstdio>
 #include <fstream>
+#include <ios>
 using namespace llvm;
 
 enum ActionType {
