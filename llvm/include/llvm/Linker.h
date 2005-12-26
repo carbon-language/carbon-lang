@@ -16,6 +16,7 @@
 
 #include "llvm/System/Path.h"
 #include <vector>
+#include <memory>
 
 namespace llvm {
 
