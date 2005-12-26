@@ -13,6 +13,7 @@
 
 #include "ArchiveInternals.h"
 #include "llvm/Bytecode/Reader.h"
+#include <memory>
 
 using namespace llvm;
 
