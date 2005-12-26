@@ -22,6 +22,7 @@
 #ifndef LLVM_CODEGEN_MACHINECONSTANTPOOL_H
 #define LLVM_CODEGEN_MACHINECONSTANTPOOL_H
 
+#include <iostream>
 #include <vector>
 
 namespace llvm {
