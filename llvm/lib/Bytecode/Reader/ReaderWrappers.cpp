@@ -21,6 +21,8 @@
 #include "llvm/System/MappedFile.h"
 #include <cerrno>
 #include <iostream>
+#include <memory>
+
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
