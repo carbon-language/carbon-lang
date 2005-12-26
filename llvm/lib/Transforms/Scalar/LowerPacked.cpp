@@ -24,6 +24,7 @@
 #include <algorithm>
 #include <map>
 #include <iostream>
+#include <functional>
 
 using namespace llvm;
 
