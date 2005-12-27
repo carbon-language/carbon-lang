@@ -51,7 +51,8 @@ void RegisterInfoEmitter::runHeader(std::ostream &OS) {
   const std::string &TargetName = Target.getName();
   std::string ClassName = TargetName + "GenRegisterInfo";
 
-  OS << "#include \"llvm/Target/MRegisterInfo.h\"\n\n";
+  OS << "#include \"llvm/Target/MRegisterInfo.h\"\n";
+  OS << "#include <string>\n\n";
 
   OS << "namespace llvm {\n\n";
 
