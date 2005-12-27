@@ -39,6 +39,7 @@
 #include "llvm/Config/config.h"
 #include <algorithm>
 #include <iostream>
+#include <ios>
 #include <sstream>
 using namespace llvm;
 
