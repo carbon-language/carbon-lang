@@ -119,7 +119,7 @@ def ADJUSTSTACKUP : PseudoInstAlpha<(ops s64imm:$amt), "; ADJUP $amt",
 def ADJUSTSTACKDOWN : PseudoInstAlpha<(ops s64imm:$amt), "; ADJDOWN $amt", 
                 [(callseq_end imm:$amt)]>;
 }
-def ALTENT : PseudoInstAlpha<(ops s64imm:$TARGET), "$TARGET:\n", []>;
+def ALTENT : PseudoInstAlpha<(ops s64imm:$TARGET), "$$$TARGET..ng:\n", []>;
 def PCLABEL : PseudoInstAlpha<(ops s64imm:$num), "PCMARKER_$num:\n",[]>;
 def MEMLABEL : PseudoInstAlpha<(ops s64imm:$i, s64imm:$j, s64imm:$k, s64imm:$m),
          "LSMARKER$$$i$$$j$$$k$$$m:\n",[]>;
