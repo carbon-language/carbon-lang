@@ -419,7 +419,7 @@ let isCall = 1, noResults = 1, Ra = 26,
             F20, F21, F22, F23, F24, F25, F26, F27, F28, F29, F30], Uses = [R29] in {
     def BSR : BFormD<0x34, "bsr $$26,$$$DISP..ng", []>; //Branch to subroutine
 }
-let isCall = 1, noResults = 1,
+let isCall = 1, noResults = 1, Ra = 26, Rb = 27, disp = 0,
     Defs = [R0, R1, R2, R3, R4, R5, R6, R7, R8, R16, R17, R18, R19,
             R20, R21, R22, R23, R24, R25, R26, R27, R28, R29,
             F0, F1,
@@ -428,7 +428,8 @@ let isCall = 1, noResults = 1,
     def JSR : MbrForm< 0x1A, 0x01, (ops ), "jsr $$26,($$27),0">; //Jump to subroutine
 }
 
-let isCall = 1, noResults = 1, Defs = [R23, R24, R25, R27, R28], Uses = [R24, R25, R27] in
+let isCall = 1, noResults = 1, Ra = 23, Rb = 27, disp = 0,
+    Defs = [R23, R24, R25, R27, R28], Uses = [R24, R25, R27] in
   def JSRs : MbrForm< 0x1A, 0x01, (ops ), "jsr $$23,($$27),0">; //Jump to div or rem
 
 
