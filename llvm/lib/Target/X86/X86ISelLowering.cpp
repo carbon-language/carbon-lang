@@ -591,6 +591,9 @@ X86TargetLowering::LowerFastCCArguments(Function &F, SelectionDAG &DAG) {
                                     X86::R8RegisterClass);
           ArgValue = DAG.getCopyFromReg(DAG.getRoot(), VReg, MVT::i8);
           DAG.setRoot(ArgValue.getValue(1));
+          if (ObjectVT == MVT::i1)
+            // FIXME: Should insert a assertzext here.
+            ArgValue = DAG.getNode(ISD::TRUNCATE, MVT::i1, ArgValue);
         }
         ++NumIntRegs;
         break;
@@ -780,6 +783,8 @@ X86TargetLowering::LowerFastCCCallTo(SDOperand Chain, const Type *RetTy,
     switch (getValueType(Args[i].second)) {
     default: assert(0 && "Unexpected ValueType for argument!");
     case MVT::i1:
+      Args[i].first = DAG.getNode(ISD::ANY_EXTEND, MVT::i8, Args[i].first);
+      // Fall through.
     case MVT::i8:
     case MVT::i16:
     case MVT::i32:
