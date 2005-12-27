@@ -347,12 +347,12 @@ IA64TargetLowering::LowerCallTo(SDOperand Chain,
         PtrOff = DAG.getNode(ISD::ADD, MVT::i64, StackPtr, PtrOff);
         Stores.push_back(DAG.getNode(ISD::STORE, MVT::Other, Chain,
                                      ValToStore, PtrOff, NullSV));
+        ArgOffset += ObjSize;
       }
 
       if(ValToConvert.Val) {
 	Converts.push_back(DAG.getNode(IA64ISD::GETFD, MVT::i64, ValToConvert)); 
       }
-      ArgOffset += ObjSize;
     }
 
   // Emit all stores, make sure they occur before any copies into physregs.
@@ -397,7 +397,7 @@ IA64TargetLowering::LowerCallTo(SDOperand Chain,
     }
   }
 
-  // next copy args into the usual places
+  // next copy args into the usual places, these are flagged
   unsigned usedFPArgs = 0;
   for (unsigned i = 0, e = RegValuesToPass.size(); i != e; ++i) {
     Chain = DAG.getCopyToReg(Chain,
