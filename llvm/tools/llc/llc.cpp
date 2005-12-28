@@ -30,6 +30,7 @@
 #include <fstream>
 #include <iostream>
 #include <memory>
+#include <cstdio>
 
 using namespace llvm;
 
@@ -243,7 +244,7 @@ int main(int argc, char **argv) {
                 << "' does not support generation of this file type!\n";
       if (Out != &std::cout) delete Out;
       // And the Out file is empty and useless, so remove it now.
-      remove(OutputFilename.c_str());
+      std::remove(OutputFilename.c_str());
       return 1;
     } else {
       // Run our queue of passes all at once now, efficiently.
