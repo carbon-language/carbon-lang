@@ -16,6 +16,7 @@
 #include "llvm/Function.h"
 #include <fstream>
 #include <iostream>
+#include <ios>
 
 using namespace llvm;
 
