@@ -17,6 +17,7 @@
 #include "llvm/System/Signals.h"
 #include <iostream>
 #include <iomanip>
+#include <memory>
 
 using namespace llvm;
 
