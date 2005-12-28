@@ -23,6 +23,7 @@
 #define LLVM_CODEGEN_MACHINECONSTANTPOOL_H
 
 #include <vector>
+#include <iosfwd>
 
 namespace llvm {
 
