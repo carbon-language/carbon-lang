@@ -20,6 +20,7 @@
 #include <iostream>
 #include <algorithm>
 #include <iomanip>
+#include <memory>
 
 using namespace llvm;
 
