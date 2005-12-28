@@ -19,6 +19,7 @@
 #include "llvm/Support/Mangler.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Target/TargetMachine.h"
+#include <iostream>
 using namespace llvm;
 
 AsmPrinter::AsmPrinter(std::ostream &o, TargetMachine &tm)
