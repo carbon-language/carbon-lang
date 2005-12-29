@@ -44,12 +44,12 @@ def invX : SDNodeXForm<imm, [{
 def immUExt8  : PatLeaf<(imm), [{
   // immUExt8 predicate - True if the immediate fits in a 8-bit zero extended
   // field.  Used by instructions like 'addi'.
-  return (unsigned long)N->getValue() == (unsigned char)N->getValue();
+  return (uint64_t)N->getValue() == (uint8_t)N->getValue();
 }]>;
 def immUExt8inv  : PatLeaf<(imm), [{
   // immUExt8inv predicate - True if the inverted immediate fits in a 8-bit zero extended
   // field.  Used by instructions like 'ornoti'.
-  return (unsigned long)~N->getValue() == (unsigned char)~N->getValue();
+  return (uint64_t)~N->getValue() == (uint8_t)~N->getValue();
 }], invX>;
 def immSExt16  : PatLeaf<(imm), [{
   // immSExt16 predicate - True if the immediate fits in a 16-bit sign extended
