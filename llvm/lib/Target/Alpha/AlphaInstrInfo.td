@@ -54,7 +54,7 @@ def immUExt8inv  : PatLeaf<(imm), [{
 def immSExt16  : PatLeaf<(imm), [{
   // immSExt16 predicate - True if the immediate fits in a 16-bit sign extended
   // field.  Used by instructions like 'lda'.
-  return (int)N->getValue() == (short)N->getValue();
+  return (int64_t)N->getValue() == (int16_t)N->getValue();
 }]>;
 
 def iZAPX : SDNodeXForm<imm, [{
