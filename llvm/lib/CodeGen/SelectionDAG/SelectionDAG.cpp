@@ -511,7 +511,7 @@ SDOperand SelectionDAG::getGlobalAddress(const GlobalValue *GV,
                                          MVT::ValueType VT, int offset) {
   SDNode *&N = GlobalValues[std::make_pair(GV, offset)];
   if (N) return SDOperand(N, 0);
-  N = new GlobalAddressSDNode(false, GV, VT);
+  N = new GlobalAddressSDNode(false, GV, VT, offset);
   AllNodes.push_back(N);
   return SDOperand(N, 0);
 }
