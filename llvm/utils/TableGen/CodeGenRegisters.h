@@ -41,7 +41,7 @@ namespace llvm {
     std::string MethodProtos, MethodBodies;
 
     const std::string &getName() const;
-
+    const std::vector<MVT::ValueType> &getValueTypes() const { return VTs; }
     unsigned getNumValueTypes() const { return VTs.size(); }
     
     const MVT::ValueType getValueTypeNum(unsigned VTNum) const {

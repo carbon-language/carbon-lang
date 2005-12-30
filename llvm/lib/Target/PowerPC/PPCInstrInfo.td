@@ -447,7 +447,7 @@ def LVEWX: XForm_1<31,  71, (ops VRRC:$vD,  GPRC:$base, GPRC:$rA),
                    []>;
 def LVX  : XForm_1<31, 103, (ops VRRC:$vD,  memrr:$src),
                    "lvx $vD, $src", LdStGeneral,
-                   [(set VRRC:$vD, (load xoaddr:$src))]>;
+                   [(set VRRC:$vD, (v4f32 (load xoaddr:$src)))]>;
 }
 def LVSL : XForm_1<31,   6, (ops VRRC:$vD,  GPRC:$base, GPRC:$rA),
                    "lvsl $vD, $base, $rA", LdStGeneral,
@@ -542,7 +542,7 @@ def STVEWX: XForm_8<31, 199, (ops VRRC:$rS, GPRC:$rA, GPRC:$rB),
                    []>;
 def STVX  : XForm_8<31, 231, (ops VRRC:$rS, memrr:$dst),
                    "stvx $rS, $dst", LdStGeneral,
-                   [(store VRRC:$rS, xoaddr:$dst)]>;
+                   [(store (v4f32 VRRC:$rS), xoaddr:$dst)]>;
 }
 def SRAWI : XForm_10<31, 824, (ops GPRC:$rA, GPRC:$rS, u5imm:$SH), 
                      "srawi $rA, $rS, $SH", IntShift,
@@ -892,6 +892,9 @@ def VNMSUBFP: VAForm_1<47, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB, VRRC:$vC),
 def VADDFP : VXForm_1<10, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
                       "vaddfp $vD, $vA, $vB", VecFP,
                       [(set VRRC:$vD, (fadd VRRC:$vA, VRRC:$vB))]>;
+def VADDUWM : VXForm_1<128, (ops VRRC:$vD, VRRC:$vA, VRRC:$vB),
+                      "vadduwm $vD, $vA, $vB", VecGeneral,
+                      [(set VRRC:$vD, (add VRRC:$vA, VRRC:$vB))]>;
 def VCFSX  : VXForm_1<842, (ops VRRC:$vD, u5imm:$UIMM, VRRC:$vB),
                       "vcfsx $vD, $vB, $UIMM", VecFP,
                       []>;
@@ -1059,6 +1062,11 @@ def : Pat<(f64 (extload iaddr:$src, f32)),
           (FMRSD (LFS iaddr:$src))>;
 def : Pat<(f64 (extload xaddr:$src, f32)),
           (FMRSD (LFSX xaddr:$src))>;
+
+def : Pat<(v4i32 (load xoaddr:$src)),
+          (v4i32 (LVX xoaddr:$src))>;
+def : Pat<(store (v4i32 VRRC:$rS), xoaddr:$dst),
+          (STVX (v4i32 VRRC:$rS), xoaddr:$dst)>;
 
 def : Pat<(retflag), (BLR)>;
 

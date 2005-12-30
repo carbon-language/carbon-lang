@@ -124,9 +124,9 @@ namespace llvm {
   /// patterns), and as such should be ref counted.  We currently just leak all
   /// TreePatternNode objects!
   class TreePatternNode {
-    /// The inferred type for this node, or MVT::LAST_VALUETYPE if it hasn't
+    /// The inferred type for this node, or MVT::isUnknown if it hasn't
     /// been determined yet.
-    unsigned char Ty;
+    std::vector<unsigned char> Types;
     
     /// Operator - The Record for the operator if this is an interior node (not
     /// a leaf).
@@ -151,26 +151,32 @@ namespace llvm {
     std::vector<TreePatternNode*> Children;
   public:
     TreePatternNode(Record *Op, const std::vector<TreePatternNode*> &Ch) 
-      : Ty(MVT::isUnknown), Operator(Op), Val(0), TransformFn(0),
-        Children(Ch) {}
+      : Types(), Operator(Op), Val(0), TransformFn(0),
+      Children(Ch) { Types.push_back(MVT::isUnknown); }
     TreePatternNode(Init *val)    // leaf ctor
-      : Ty(MVT::isUnknown), Operator(0), Val(val), TransformFn(0) {}
+      : Types(), Operator(0), Val(val), TransformFn(0) { Types.push_back(MVT::isUnknown); }
     ~TreePatternNode();
     
     const std::string &getName() const { return Name; }
     void setName(const std::string &N) { Name = N; }
     
     bool isLeaf() const { return Val != 0; }
-    bool hasTypeSet() const { return Ty < MVT::LAST_VALUETYPE; }
+    bool hasTypeSet() const { return Types[0] < MVT::LAST_VALUETYPE; }
     bool isTypeCompletelyUnknown() const {
-      return Ty == MVT::isUnknown;
+      return Types[0] == MVT::isUnknown;
     }
-    MVT::ValueType getType() const {
+    MVT::ValueType getTypeNum(unsigned Num) const {
       assert(hasTypeSet() && "Doesn't have a type yet!");
-      return (MVT::ValueType)Ty;
+      assert(Types.size() > Num && "Type num out of range!");
+      return (MVT::ValueType)Types[Num];
     }
-    unsigned char getExtType() const { return Ty; }
-    void setType(unsigned char VT) { Ty = VT; }
+    unsigned char getExtTypeNum(unsigned Num) const { 
+      assert(Types.size() > Num && "Extended type num out of range!");
+      return Types[Num]; 
+    }
+    const std::vector<unsigned char> &getExtTypes() const { return Types; }
+    void setTypes(const std::vector<unsigned char> &T) { Types = T; }
+    void removeTypes() { Types = std::vector<unsigned char>(1,MVT::isUnknown); }
     
     Init *getLeafValue() const { assert(isLeaf()); return Val; }
     Record *getOperator() const { assert(!isLeaf()); return Operator; }
@@ -180,6 +186,7 @@ namespace llvm {
     void setChild(unsigned i, TreePatternNode *N) {
       Children[i] = N;
     }
+    
     
     const std::string &getPredicateFn() const { return PredicateFn; }
     void setPredicateFn(const std::string &Fn) { PredicateFn = Fn; }
@@ -222,7 +229,12 @@ namespace llvm {
     /// information.  If N already contains a conflicting type, then throw an
     /// exception.  This returns true if any information was updated.
     ///
-    bool UpdateNodeType(unsigned char EVT, TreePattern &TP);
+    bool UpdateNodeType(const std::vector<unsigned char> &ExtVTs,
+                        TreePattern &TP);
+    bool UpdateNodeType(unsigned char ExtVT, TreePattern &TP) {
+      std::vector<unsigned char> ExtVTs(1, ExtVT);
+      return UpdateNodeType(ExtVTs, TP);
+    }
     
     /// ContainsUnresolvedType - Return true if this tree contains any
     /// unresolved types.
