@@ -46,7 +46,7 @@ void SubtargetEmitter::Enumeration(std::ostream &OS,
                                    bool isBits) {
   // Get all records of class and sort
   std::vector<Record*> DefList = Records.getAllDerivedDefinitions(ClassName);
-  sort(DefList.begin(), DefList.end(), LessRecord());
+  std::sort(DefList.begin(), DefList.end(), LessRecord());
 
   // Open enumeration
   OS << "enum {\n";
@@ -81,7 +81,7 @@ void SubtargetEmitter::FeatureKeyValues(std::ostream &OS) {
   // Gather and sort all the features
   std::vector<Record*> FeatureList =
                            Records.getAllDerivedDefinitions("SubtargetFeature");
-  sort(FeatureList.begin(), FeatureList.end(), LessRecord());
+  std::sort(FeatureList.begin(), FeatureList.end(), LessRecord());
 
   // Begin feature table
   OS << "// Sorted (by key) array of values for CPU features.\n"
@@ -126,7 +126,7 @@ void SubtargetEmitter::CPUKeyValues(std::ostream &OS) {
   // Gather and sort processor information
   std::vector<Record*> ProcessorList =
                           Records.getAllDerivedDefinitions("Processor");
-  sort(ProcessorList.begin(), ProcessorList.end(), LessRecordFieldName());
+  std::sort(ProcessorList.begin(), ProcessorList.end(), LessRecordFieldName());
 
   // Begin processor table
   OS << "// Sorted (by key) array of values for CPU subtype.\n"
@@ -183,7 +183,7 @@ unsigned SubtargetEmitter::CollectAllItinClasses(std::ostream &OS,
   // Gather and sort all itinerary classes
   std::vector<Record*> ItinClassList =
                             Records.getAllDerivedDefinitions("InstrItinClass");
-  sort(ItinClassList.begin(), ItinClassList.end(), LessRecord());
+  std::sort(ItinClassList.begin(), ItinClassList.end(), LessRecord());
 
   // For each itinerary class
   unsigned N = ItinClassList.size();
@@ -388,7 +388,7 @@ void SubtargetEmitter::EmitProcessorLookup(std::ostream &OS) {
   // Gather and sort processor information
   std::vector<Record*> ProcessorList =
                           Records.getAllDerivedDefinitions("Processor");
-  sort(ProcessorList.begin(), ProcessorList.end(), LessRecordFieldName());
+  std::sort(ProcessorList.begin(), ProcessorList.end(), LessRecordFieldName());
 
   // Begin processor table
   OS << "\n";
@@ -455,7 +455,7 @@ void SubtargetEmitter::EmitData(std::ostream &OS) {
 void SubtargetEmitter::ParseFeaturesFunction(std::ostream &OS) {
   std::vector<Record*> Features =
                        Records.getAllDerivedDefinitions("SubtargetFeature");
-  sort(Features.begin(), Features.end(), LessRecord());
+  std::sort(Features.begin(), Features.end(), LessRecord());
 
   OS << "// ParseSubtargetFeatures - Parses features string setting specified\n" 
         "// subtarget options.\n" 

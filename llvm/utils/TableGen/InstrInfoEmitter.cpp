@@ -253,7 +253,7 @@ void InstrInfoEmitter::GatherItinClasses() {
   
   if (!IsItineraries) return;
   
-  sort(DefList.begin(), DefList.end(), LessRecord());
+  std::sort(DefList.begin(), DefList.end(), LessRecord());
 
   for (unsigned i = 0, N = DefList.size(); i < N; i++) {
     Record *Def = DefList[i];
