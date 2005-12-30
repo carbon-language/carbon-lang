@@ -175,7 +175,7 @@ class PassManagerT : public PassManagerTraits<UnitType>,public AnalysisResolver{
 
 public:
   PassManagerT(ParentClass *Par = 0) : Parent(Par), Batcher(0) {}
-  ~PassManagerT() {
+  virtual ~PassManagerT() {
     // Delete all of the contained passes...
     for (typename std::vector<PassClass*>::iterator
            I = Passes.begin(), E = Passes.end(); I != E; ++I)
@@ -623,6 +623,16 @@ public:
 };
 
 
+//===----------------------------------------------------------------------===//
+// BasicBlockPassManager
+//
+// This pass manager is used to group together all of the BasicBlockPass's
+// into a single unit.
+//
+class BasicBlockPassManager {
+  //TODO:Start absorbing PassManagerTraits<BasicBlock>
+};
+
 
 //===----------------------------------------------------------------------===//
 // PassManagerTraits<BasicBlock> Specialization
@@ -630,7 +640,8 @@ public:
 // This pass manager is used to group together all of the BasicBlockPass's
 // into a single unit.
 //
-template<> class PassManagerTraits<BasicBlock> : public BasicBlockPass {
+template<> class PassManagerTraits<BasicBlock> : public BasicBlockPass,
+                                                 public BasicBlockPassManager {
 public:
   // PassClass - The type of passes tracked by this PassManager
   typedef BasicBlockPass PassClass;
@@ -677,6 +688,16 @@ public:
 };
 
 
+//===----------------------------------------------------------------------===//
+// FunctionPassManager
+//
+// This pass manager is used to group together all of the FunctionPass's
+// into a single unit.
+//
+class FunctionPassManagerT {
+  //TODO:Start absorbing PassManagerTraits<Function>
+};
+
 
 //===----------------------------------------------------------------------===//
 // PassManagerTraits<Function> Specialization
@@ -684,7 +705,8 @@ public:
 // This pass manager is used to group together all of the FunctionPass's
 // into a single unit.
 //
-template<> class PassManagerTraits<Function> : public FunctionPass {
+template<> class PassManagerTraits<Function> : public FunctionPass, 
+                                               public FunctionPassManagerT {
 public:
   // PassClass - The type of passes tracked by this PassManager
   typedef FunctionPass PassClass;
@@ -722,13 +744,23 @@ public:
 };
 
 
+//===----------------------------------------------------------------------===//
+// ModulePassManager
+//
+// This is the top level PassManager implementation that holds generic passes.
+//
+class ModulePassManager {
+  //TODO:Start absorbing PassManagerTraits<Module>
+};
+
 
 //===----------------------------------------------------------------------===//
 // PassManagerTraits<Module> Specialization
 //
 // This is the top level PassManager implementation that holds generic passes.
 //
-template<> class PassManagerTraits<Module> : public ModulePass {
+template<> class PassManagerTraits<Module> : public ModulePass, 
+                                             public ModulePassManager {
 public:
   // PassClass - The type of passes tracked by this PassManager
   typedef ModulePass PassClass;
@@ -755,7 +787,6 @@ public:
     return ((PassManagerT<Module>*)this)->runOnUnit(&M);
   }
 };
-
 
 
 //===----------------------------------------------------------------------===//
