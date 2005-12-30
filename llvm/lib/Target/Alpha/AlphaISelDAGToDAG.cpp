@@ -38,13 +38,14 @@ namespace {
   class AlphaDAGToDAGISel : public SelectionDAGISel {
     AlphaTargetLowering AlphaLowering;
 
-    static const int IMM_LOW  = -32768;
-    static const int IMM_HIGH = 32767;
-    static const int IMM_MULT = 65536;
+    static const int64_t IMM_LOW  = -32768;
+    static const int64_t IMM_HIGH = 32767;
+    static const int64_t IMM_MULT = 65536;
     
   public:
     AlphaDAGToDAGISel(TargetMachine &TM)
-      : SelectionDAGISel(AlphaLowering), AlphaLowering(TM) {}
+      : SelectionDAGISel(AlphaLowering), AlphaLowering(TM) 
+    {}
 
     /// getI64Imm - Return a target constant with the specified value, of type
     /// i64.
@@ -240,17 +241,24 @@ SDOperand AlphaDAGToDAGISel::Select(SDOperand Op) {
     return CurDAG->SelectNodeTo(N, Alpha::RETDAG, MVT::Other, Chain, InFlag);
   }
   case ISD::Constant: {
-    int64_t val = (int64_t)cast<ConstantSDNode>(N)->getValue();
-    if (val > (int64_t)IMM_HIGH +(int64_t)IMM_HIGH* (int64_t)IMM_MULT ||
-        val < (int64_t)IMM_LOW + (int64_t)IMM_LOW * (int64_t)IMM_MULT) {
-      MachineConstantPool *CP = BB->getParent()->getConstantPool();
-      ConstantUInt *C =
-        ConstantUInt::get(Type::getPrimitiveType(Type::ULongTyID) , val);
-      SDOperand Tmp, CPI = CurDAG->getTargetConstantPool(C, MVT::i64);
-      Tmp = CurDAG->getTargetNode(Alpha::LDAHr, MVT::i64, CPI, getGlobalBaseReg());
-      return CurDAG->SelectNodeTo(N, Alpha::LDQr, MVT::i64, CPI, Tmp);
-    }
-    break;
+    uint64_t uval = cast<ConstantSDNode>(N)->getValue();
+    int64_t val = (int64_t)uval;
+    int32_t val32 = (int32_t)val;
+    if (val <= IMM_HIGH + IMM_HIGH * IMM_MULT &&
+	val >= IMM_LOW  + IMM_LOW  * IMM_MULT)
+      break; //(LDAH (LDA))
+    if ((uval >> 32) == 0 && //empty upper bits
+	val32 <= IMM_HIGH + IMM_HIGH * IMM_MULT &&
+	val32 >= IMM_LOW  + IMM_LOW  * IMM_MULT)
+      break; //(zext (LDAH (LDA)))
+    //Else use the constant pool
+    MachineConstantPool *CP = BB->getParent()->getConstantPool();
+    ConstantUInt *C =
+      ConstantUInt::get(Type::getPrimitiveType(Type::ULongTyID) , uval);
+    SDOperand Tmp, CPI = CurDAG->getTargetConstantPool(C, MVT::i64);
+    Tmp = CurDAG->getTargetNode(Alpha::LDAHr, MVT::i64, CPI, getGlobalBaseReg());
+    return CurDAG->SelectNodeTo(N, Alpha::LDQr, MVT::i64, MVT::Other, 
+				CPI, Tmp, CurDAG->getEntryNode());
   }
   case ISD::ConstantFP:
     if (ConstantFPSDNode *CN = dyn_cast<ConstantFPSDNode>(N)) {

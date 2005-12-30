@@ -57,6 +57,20 @@ def immSExt16  : PatLeaf<(imm), [{
   return (int64_t)N->getValue() == (int16_t)N->getValue();
 }]>;
 
+def SExtInt : SDNodeXForm<imm, [{
+  return getI64Imm(((int64_t)N->getValue() << 32) >> 32);
+}]>;
+
+def immSExt16int  : PatLeaf<(imm), [{
+  // immSExt16 predicate - True if the immediate fits in a 16-bit sign extended
+  // field.  Used by instructions like 'lda'.
+  int64_t val = (int64_t)N->getValue();
+  uint32_t uval32 = (uint32_t)val;
+  int32_t val32 = (int32_t)val;
+  return (int64_t)uval32 == val && val32 == (int16_t)val32;
+}], SExtInt>;
+
+
 def iZAPX : SDNodeXForm<imm, [{
   // Transformation function: get the imm to ZAPi
   uint64_t UImm = (uint64_t)N->getValue();
@@ -778,12 +792,19 @@ def CVTTS : FPForm<0x16, 0x7AC, "cvtts/sui $RB,$RC",
 //Constant handling
 
 def immConst2Part  : PatLeaf<(imm), [{
-  // immZAP predicate - True if the immediate fits is suitable for use in a
-  // ZAP instruction
+  //true if imm fits in a LDAH LDA pair
   int64_t val = (int64_t)N->getValue();
   return (val <= (int64_t)IMM_HIGH +(int64_t)IMM_HIGH* (int64_t)IMM_MULT &
                val >= (int64_t)IMM_LOW + (int64_t)IMM_LOW * (int64_t)IMM_MULT);
 }]>;
+def immConst2PartInt  : PatLeaf<(imm), [{
+  //true if imm fits in a LDAH LDA pair with zeroext
+  uint64_t uval = N->getValue();
+  int32_t val32 = (int32_t)uval;
+  return ((uval >> 32) == 0 && //empty upper bits
+          val32 <= IMM_HIGH + IMM_HIGH * IMM_MULT &&
+          val32 >= IMM_LOW  + IMM_LOW  * IMM_MULT);
+}], SExtInt>;
 
 //TODO: factor this out
 def LL16 : SDNodeXForm<imm, [{
@@ -807,6 +828,13 @@ def : Pat<(i64 immConst2Part:$imm),
 
 def : Pat<(i64 immSExt16:$imm),
           (LDA immSExt16:$imm, R31)>;
+
+def : Pat<(i64 immSExt16int:$imm),
+          (ZAPNOTi (LDA (SExtInt immSExt16int:$imm), R31), 15)>;
+def : Pat<(i64 immConst2PartInt:$imm),
+          (ZAPNOTi (LDA (LL16 (SExtInt immConst2PartInt:$imm)), 
+                        (LDAH (LH16 (SExtInt immConst2PartInt:$imm)), R31)), 15)>;
+
 
 //TODO: I want to just define these like this!
 //def : Pat<(i64 0),
