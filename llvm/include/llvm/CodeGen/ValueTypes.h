@@ -76,6 +76,9 @@ namespace MVT {  // MVT = Machine Value Types
     switch (VT) {
     default: 
       break;
+    case MVT::i32:
+      if (NumElements == 4) return MVT::v4i32;
+      break;
     case MVT::f32:
       if (NumElements == 4) return MVT::v4f32;
       break;
