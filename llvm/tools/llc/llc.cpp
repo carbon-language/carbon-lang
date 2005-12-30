@@ -24,6 +24,7 @@
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/PluginLoader.h"
 #include "llvm/Support/PassNameParser.h"
+#include "llvm/Support/FileUtilities.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/System/Signals.h"
 #include "llvm/Config/config.h"
@@ -244,7 +245,7 @@ int main(int argc, char **argv) {
                 << "' does not support generation of this file type!\n";
       if (Out != &std::cout) delete Out;
       // And the Out file is empty and useless, so remove it now.
-      std::remove(OutputFilename.c_str());
+      sys::Path(OutputFilename).eraseFromDisk();
       return 1;
     } else {
       // Run our queue of passes all at once now, efficiently.
