@@ -56,7 +56,7 @@ static bool LHSIsSubsetOfRHS(const std::vector<unsigned char> &LHS,
                              const std::vector<unsigned char> &RHS) {
   if (LHS.size() > RHS.size()) return false;
   for (unsigned i = 0, e = LHS.size(); i != e; ++i)
-    if (find(RHS.begin(), RHS.end(), LHS[i]) == RHS.end())
+    if (std::find(RHS.begin(), RHS.end(), LHS[i]) == RHS.end())
       return false;
   return true;
 }
