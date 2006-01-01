@@ -34,72 +34,56 @@ def SDT_AlphaCallSeq : SDTypeProfile<0, 1, [ SDTCisVT<0, i64> ]>;
 def callseq_start : SDNode<"ISD::CALLSEQ_START", SDT_AlphaCallSeq,[SDNPHasChain]>;
 def callseq_end   : SDNode<"ISD::CALLSEQ_END",   SDT_AlphaCallSeq,[SDNPHasChain]>;
 
+def SDTFPLeaf : SDTypeProfile<1, 0, [SDTCisFP<0>]>;      // for 'fpimm'.
+def fpimm : SDNode<"ISD::ConstantFP"  , SDTFPLeaf , [], "ConstantFPSDNode">;
 
 //********************
 //Paterns for matching
 //********************
-def invX : SDNodeXForm<imm, [{
+def invX : SDNodeXForm<imm, [{ //invert
   return getI64Imm(~N->getValue());
 }]>;
-def immUExt8  : PatLeaf<(imm), [{
-  // immUExt8 predicate - True if the immediate fits in a 8-bit zero extended
-  // field.  Used by instructions like 'addi'.
-  return (uint64_t)N->getValue() == (uint8_t)N->getValue();
+def negX : SDNodeXForm<imm, [{ //negate
+  return getI64Imm(~N->getValue() + 1);
 }]>;
-def immUExt8inv  : PatLeaf<(imm), [{
-  // immUExt8inv predicate - True if the inverted immediate fits in a 8-bit zero extended
-  // field.  Used by instructions like 'ornoti'.
-  return (uint64_t)~N->getValue() == (uint8_t)~N->getValue();
-}], invX>;
-def immSExt16  : PatLeaf<(imm), [{
-  // immSExt16 predicate - True if the immediate fits in a 16-bit sign extended
-  // field.  Used by instructions like 'lda'.
-  return (int64_t)N->getValue() == (int16_t)N->getValue();
-}]>;
-
-def SExtInt : SDNodeXForm<imm, [{
+def SExt32 : SDNodeXForm<imm, [{ //signed extend int to long
   return getI64Imm(((int64_t)N->getValue() << 32) >> 32);
 }]>;
-
-def immSExt16int  : PatLeaf<(imm), [{
-  // immSExt16 predicate - True if the immediate fits in a 16-bit sign extended
-  // field.  Used by instructions like 'lda'.
-  int64_t val = (int64_t)N->getValue();
-  uint32_t uval32 = (uint32_t)val;
-  int32_t val32 = (int32_t)val;
-  return (int64_t)uval32 == val && val32 == (int16_t)val32;
-}], SExtInt>;
-
-
-def iZAPX : SDNodeXForm<imm, [{
-  // Transformation function: get the imm to ZAPi
-  uint64_t UImm = (uint64_t)N->getValue();
-  unsigned int build = 0;
-  for(int i = 0; i < 8; ++i)
-  {
-    if ((UImm & 0x00FF) == 0x00FF)
-      build |= 1 << i;
-    else if ((UImm & 0x00FF) != 0)
-    { build = 0; break; }
-    UImm >>= 8;
-  }
-  return getI64Imm(build);
+def SExt16 : SDNodeXForm<imm, [{ //signed extend int to long
+  return getI64Imm(((int64_t)N->getValue() << 48) >> 48);
 }]>;
-def immZAP  : PatLeaf<(imm), [{
-  // immZAP predicate - True if the immediate fits is suitable for use in a
-  // ZAP instruction
-  uint64_t UImm = (uint64_t)N->getValue();
-  unsigned int build = 0;
-  for(int i = 0; i < 8; ++i)
-  {
-    if ((UImm & 0x00FF) == 0x00FF)
-      build |= 1 << i;
-    else if ((UImm & 0x00FF) != 0)
-    { build = 0; break; }
-    UImm >>= 8;
-  }
+def LL16 : SDNodeXForm<imm, [{ //lda part of constant
+  return getI64Imm(get_lda16(N->getValue()));
+}]>;
+def LH16 : SDNodeXForm<imm, [{ //ldah part of constant (or more if too big)
+  return getI64Imm(get_ldah16(N->getValue()));
+}]>;
+def iZAPX : SDNodeXForm<imm, [{ // get imm to ZAPi
+  return getI64Imm(get_zapImm((uint64_t)N->getValue()));
+}]>;
+
+def immUExt8  : PatLeaf<(imm), [{ //imm fits in 8 bit zero extended field
+  return (uint64_t)N->getValue() == (uint8_t)N->getValue();
+}]>;
+def immUExt8inv  : PatLeaf<(imm), [{ //inverted imm fits in 8 bit zero extended field
+  return (uint64_t)~N->getValue() == (uint8_t)~N->getValue();
+}], invX>;
+def immUExt8neg  : PatLeaf<(imm), [{ //negated imm fits in 8 bit zero extended field
+  return ((uint64_t)~N->getValue() + 1) == (uint8_t)((uint64_t)~N->getValue() + 1);
+}], negX>;
+def immSExt16  : PatLeaf<(imm), [{ //imm fits in 16 bit sign extended field
+  return ((int64_t)N->getValue() << 48) >> 48 == (int64_t)N->getValue();
+}]>;
+def immSExt16int  : PatLeaf<(imm), [{ //(int)imm fits in a 16 bit sign extended field
+  return ((int64_t)N->getValue() << 48) >> 48 == ((int64_t)N->getValue() << 32) >> 32;
+}], SExt16>;
+def immZAP  : PatLeaf<(imm), [{ //imm is good for zapi
+  uint64_t build = get_zapImm((uint64_t)N->getValue());
   return build != 0;
 }], iZAPX>;
+def immFPZ  : PatLeaf<(fpimm), [{ //the only fpconstant nodes are +/- 0.0
+  return true;
+}]>;
 
 def intop : PatFrag<(ops node:$op), (sext_inreg node:$op, i32)>;
 def add4  : PatFrag<(ops node:$op1, node:$op2),
@@ -111,11 +95,8 @@ def add8  : PatFrag<(ops node:$op1, node:$op2),
 def sub8  : PatFrag<(ops node:$op1, node:$op2),
                     (sub (shl node:$op1, 3), node:$op2)>;
 
-  // //#define FP    $15
-  // //#define RA    $26
-  // //#define PV    $27
-  // //#define GP    $29
-  // //#define SP    $30
+
+//Pseudo ops for selection
 
 def PHI : PseudoInstAlpha<(ops variable_ops), "#phi", []>;
 
@@ -127,6 +108,7 @@ def IDEF_F64 : PseudoInstAlpha<(ops F8RC:$RA), "#idef $RA",
              [(set F8RC:$RA, (undef))]>;
 
 def WTF : PseudoInstAlpha<(ops variable_ops), "#wtf", []>;
+
 let isLoad = 1, hasCtrlDep = 1 in {
 def ADJUSTSTACKUP : PseudoInstAlpha<(ops s64imm:$amt), "; ADJUP $amt", 
                 [(callseq_start imm:$amt)]>;
@@ -138,12 +120,7 @@ def PCLABEL : PseudoInstAlpha<(ops s64imm:$num), "PCMARKER_$num:\n",[]>;
 def MEMLABEL : PseudoInstAlpha<(ops s64imm:$i, s64imm:$j, s64imm:$k, s64imm:$m),
          "LSMARKER$$$i$$$j$$$k$$$m:\n",[]>;
 
-//*****************
-//These are shortcuts, the assembler expands them
-//*****************
-//AT = R28
-//T0-T7 = R1 - R8
-//T8-T11 = R22-R25
+
 
 //An even better improvement on the Int = SetCC(FP):  SelectCC!
 //These are evil because they hide control flow in a MBB
@@ -322,11 +299,11 @@ def S8ADDQi  : OFormL<0x10, 0x32, "s8addq $RA,$L,$RC",
 def S8SUBL   : OForm< 0x10, 0x1B, "s8subl $RA,$RB,$RC", 
                       [(set GPRC:$RC, (intop (sub8 GPRC:$RA, GPRC:$RB)))]>;
 def S8SUBLi  : OFormL<0x10, 0x1B, "s8subl $RA,$L,$RC", 
-                      [(set GPRC:$RC, (intop (sub8 GPRC:$RA, immUExt8:$L)))]>;
+                      [(set GPRC:$RC, (intop (add8 GPRC:$RA, immUExt8neg:$L)))]>;
 def S8SUBQ   : OForm< 0x10, 0x3B, "s8subq $RA,$RB,$RC", 
                       [(set GPRC:$RC, (sub8 GPRC:$RA, GPRC:$RB))]>;
 def S8SUBQi  : OFormL<0x10, 0x3B, "s8subq $RA,$L,$RC", 
-                      [(set GPRC:$RC, (sub8 GPRC:$RA, immUExt8:$L))]>;
+                      [(set GPRC:$RC, (add8 GPRC:$RA, immUExt8neg:$L))]>;
 def SEXTB    : OForm2<0x1C, 0x00, "sextb $RB,$RC", 
                       [(set GPRC:$RC, (sext_inreg GPRC:$RB, i8))]>;
 def SEXTW    : OForm2<0x1C, 0x01, "sextw $RB,$RC", 
@@ -346,11 +323,11 @@ def SRLi     : OFormL<0x12, 0x34, "srl $RA,$L,$RC",
 def SUBL     : OForm< 0x10, 0x09, "subl $RA,$RB,$RC",
                       [(set GPRC:$RC, (intop (sub GPRC:$RA, GPRC:$RB)))]>;
 def SUBLi    : OFormL<0x10, 0x09, "subl $RA,$L,$RC",
-                      [(set GPRC:$RC, (intop (sub GPRC:$RA, immUExt8:$L)))]>;
+                      [(set GPRC:$RC, (intop (add GPRC:$RA, immUExt8neg:$L)))]>;
 def SUBQ     : OForm< 0x10, 0x29, "subq $RA,$RB,$RC",
                       [(set GPRC:$RC, (sub GPRC:$RA, GPRC:$RB))]>;
 def SUBQi    : OFormL<0x10, 0x29, "subq $RA,$L,$RC",
-                      [(set GPRC:$RC, (sub GPRC:$RA, immUExt8:$L))]>;
+                      [(set GPRC:$RC, (add GPRC:$RA, immUExt8neg:$L))]>;
 def UMULH    : OForm< 0x13, 0x30, "umulh $RA,$RB,$RC",
                       [(set GPRC:$RC, (mulhu GPRC:$RA, GPRC:$RB))]>;                     
 def UMULHi   : OFormL<0x13, 0x30, "umulh $RA,$L,$RC", 
@@ -448,10 +425,6 @@ let isCall = 1, noResults = 1, Ra = 23, Rb = 27, disp = 0,
 
 
 def JSR_COROUTINE : MbrForm< 0x1A, 0x03, (ops GPRC:$RD, GPRC:$RS, s14imm:$DISP), "jsr_coroutine $RD,($RS),$DISP">; //Jump to subroutine return
-
-let Ra = 31 in
-def BR : BFormD<0x30, "br $$31,$DISP", [(br bb:$DISP)]>;
-
 
 let OperandList = (ops GPRC:$RA, s64imm:$DISP, GPRC:$RB) in {
 def LDQ   : MForm<0x29, 0, 1, "ldq $RA,$DISP($RB)",
@@ -594,24 +567,6 @@ def LDQl : MForm<0x29, 0, 1, "ldq $RA,$DISP($RB)\t\t!literal",
 def : Pat<(Alpha_rellit texternalsym:$ext, GPRC:$RB),
           (LDQl texternalsym:$ext, GPRC:$RB)>;
 
-//Branches, int
-def BEQ : BForm<0x39,  "beq $RA,$DISP">; //Branch if = zero
-def BGE : BForm<0x3E,  "bge $RA,$DISP">; //Branch if >= zero
-def BGT : BForm<0x3F,  "bgt $RA,$DISP">; //Branch if > zero
-def BLBC : BForm<0x38, "blbc $RA,$DISP">; //Branch if low bit clear
-def BLBS : BForm<0x3C, "blbs $RA,$DISP">; //Branch if low bit set
-def BLE : BForm<0x3B,  "ble $RA,$DISP">; //Branch if <= zero
-def BLT : BForm<0x3A,  "blt $RA,$DISP">; //Branch if < zero
-def BNE : BForm<0x3D,  "bne $RA,$DISP">; //Branch if != zero
-
-//Branches, float
-def FBEQ : FBForm<0x31, "fbeq $RA,$DISP">; //Floating branch if =  zero
-def FBGE : FBForm<0x36, "fbge $RA,$DISP">; //Floating branch if >= zero
-def FBGT : FBForm<0x37, "fbgt $RA,$DISP">; //Floating branch if > zero
-def FBLE : FBForm<0x33, "fble $RA,$DISP">; //Floating branch if <= zero
-def FBLT : FBForm<0x32, "fblt $RA,$DISP">; //Floating branch if < zero
-def FBNE : FBForm<0x35, "fbne $RA,$DISP">; //Floating branch if != zero
-
 def RPCC : MfcForm<0x18, 0xC000, "rpcc $RA">; //Read process cycle counter
 
 //Basic Floating point ops
@@ -747,6 +702,63 @@ let OperandList = (ops F4RC:$RC, F8RC:$RB), Fa = 31 in
 def CVTTS : FPForm<0x16, 0x7AC, "cvtts/sui $RB,$RC",
                    [(set F4RC:$RC, (fround F8RC:$RB))]>;
 
+
+/////////////////////////////////////////////////////////
+//Branching
+/////////////////////////////////////////////////////////
+let isBranch = 1, isTerminator = 1, hasCtrlDep = 1, noResults = 1 in {
+let Ra = 31 in
+def BR : BFormD<0x30, "br $$31,$DISP", [(br bb:$DISP)]>;
+
+//Branches, int
+def BEQ  : BFormDG<0x39, "beq $RA,$DISP", 
+                   [(brcond (seteq GPRC:$RA, 0), bb:$DISP)]>;
+def BGE  : BFormDG<0x3E, "bge $RA,$DISP", 
+                   [(brcond (setge GPRC:$RA, 0), bb:$DISP)]>;
+def BGT  : BFormDG<0x3F, "bgt $RA,$DISP",
+                   [(brcond (setgt GPRC:$RA, 0), bb:$DISP)]>;
+def BLBC : BFormDG<0x38, "blbc $RA,$DISP", []>; //TODO: Low bit clear
+def BLBS : BFormDG<0x3C, "blbs $RA,$DISP",
+                   [(brcond (seteq GPRC:$RA, 1), bb:$DISP)]>;
+def BLE  : BFormDG<0x3B, "ble $RA,$DISP",
+                   [(brcond (setle GPRC:$RA, 0), bb:$DISP)]>;
+def BLT  : BFormDG<0x3A, "blt $RA,$DISP",
+                   [(brcond (setlt GPRC:$RA, 0), bb:$DISP)]>;
+def BNE  : BFormDG<0x3D, "bne $RA,$DISP",
+                   [(brcond (setne GPRC:$RA, 0), bb:$DISP)]>;
+
+//Branches, float
+def FBEQ : FBForm<0x31, "fbeq $RA,$DISP", 
+                  [(brcond (seteq F8RC:$RA, immFPZ), bb:$DISP)]>;
+def FBGE : FBForm<0x36, "fbge $RA,$DISP",
+                  [(brcond (setge F8RC:$RA, immFPZ), bb:$DISP)]>;
+def FBGT : FBForm<0x37, "fbgt $RA,$DISP",
+                  [(brcond (setgt F8RC:$RA, immFPZ), bb:$DISP)]>;
+def FBLE : FBForm<0x33, "fble $RA,$DISP",
+                  [(brcond (setle F8RC:$RA, immFPZ), bb:$DISP)]>;
+def FBLT : FBForm<0x32, "fblt $RA,$DISP",
+                  [(brcond (setlt F8RC:$RA, immFPZ), bb:$DISP)]>;
+def FBNE : FBForm<0x35, "fbne $RA,$DISP",
+                  [(brcond (setne F8RC:$RA, immFPZ), bb:$DISP)]>;
+}
+
+def : Pat<(brcond (and GPRC:$RA, 1), bb:$DISP), (BLBS GPRC:$RA, bb:$DISP)>;
+def : Pat<(brcond GPRC:$RA, bb:$DISP), (BNE GPRC:$RA, bb:$DISP)>;
+def : Pat<(brcond (seteq F8RC:$RA, F8RC:$RB), bb:$DISP),
+          (FBNE  (CMPTEQ F8RC:$RA, F8RC:$RB), bb:$DISP)>;
+def : Pat<(brcond (setlt F8RC:$RA, F8RC:$RB), bb:$DISP),
+          (FBNE  (CMPTLT F8RC:$RA, F8RC:$RB), bb:$DISP)>;
+def : Pat<(brcond (setle F8RC:$RA, F8RC:$RB), bb:$DISP),
+          (FBNE  (CMPTLE F8RC:$RA, F8RC:$RB), bb:$DISP)>;
+def : Pat<(brcond (setgt F8RC:$RA, F8RC:$RB), bb:$DISP),
+          (FBNE  (CMPTLT F8RC:$RB, F8RC:$RA), bb:$DISP)>;
+def : Pat<(brcond (setge F8RC:$RA, F8RC:$RB), bb:$DISP),
+          (FBNE  (CMPTLE F8RC:$RB, F8RC:$RA), bb:$DISP)>;
+def : Pat<(brcond (setne F8RC:$RA, F8RC:$RB), bb:$DISP),
+          (FBEQ  (CMPTEQ F8RC:$RA, F8RC:$RB), bb:$DISP)>;
+
+//End Branches
+
 //S_floating : IEEE Single
 //T_floating : IEEE Double
 
@@ -794,34 +806,16 @@ def CVTTS : FPForm<0x16, 0x7AC, "cvtts/sui $RB,$RC",
 def immConst2Part  : PatLeaf<(imm), [{
   //true if imm fits in a LDAH LDA pair
   int64_t val = (int64_t)N->getValue();
-  return (val <= (int64_t)IMM_HIGH +(int64_t)IMM_HIGH* (int64_t)IMM_MULT &
-               val >= (int64_t)IMM_LOW + (int64_t)IMM_LOW * (int64_t)IMM_MULT);
+  return (val <= IMM_FULLHIGH  && val >= IMM_FULLLOW);
 }]>;
 def immConst2PartInt  : PatLeaf<(imm), [{
   //true if imm fits in a LDAH LDA pair with zeroext
   uint64_t uval = N->getValue();
   int32_t val32 = (int32_t)uval;
   return ((uval >> 32) == 0 && //empty upper bits
-          val32 <= IMM_HIGH + IMM_HIGH * IMM_MULT &&
-          val32 >= IMM_LOW  + IMM_LOW  * IMM_MULT);
-}], SExtInt>;
-
-//TODO: factor this out
-def LL16 : SDNodeXForm<imm, [{
-int64_t l = N->getValue();
-  int64_t y = l / IMM_MULT;
-  if (l % IMM_MULT > IMM_HIGH)
-    ++y;
-  return getI64Imm(l - y * IMM_MULT);
-}]>;
-//TODO: factor this out
-def LH16 : SDNodeXForm<imm, [{
-int64_t l = N->getValue();
-  int64_t y = l / IMM_MULT;
-  if (l % IMM_MULT > IMM_HIGH)
-    ++y;
-  return getI64Imm(y);
-}]>;
+          val32 <= IMM_FULLHIGH);
+//          val32 >= IMM_FULLLOW  + IMM_LOW  * IMM_MULT); //Always True
+}], SExt32>;
 
 def : Pat<(i64 immConst2Part:$imm),
           (LDA (LL16 immConst2Part:$imm), (LDAH (LH16 immConst2Part:$imm), R31))>;
@@ -830,10 +824,10 @@ def : Pat<(i64 immSExt16:$imm),
           (LDA immSExt16:$imm, R31)>;
 
 def : Pat<(i64 immSExt16int:$imm),
-          (ZAPNOTi (LDA (SExtInt immSExt16int:$imm), R31), 15)>;
+          (ZAPNOTi (LDA (SExt16 immSExt16int:$imm), R31), 15)>;
 def : Pat<(i64 immConst2PartInt:$imm),
-          (ZAPNOTi (LDA (LL16 (SExtInt immConst2PartInt:$imm)), 
-                        (LDAH (LH16 (SExtInt immConst2PartInt:$imm)), R31)), 15)>;
+          (ZAPNOTi (LDA (LL16 (SExt16 immConst2PartInt:$imm)), 
+                        (LDAH (LH16 (SExt16 immConst2PartInt:$imm)), R31)), 15)>;
 
 
 //TODO: I want to just define these like this!

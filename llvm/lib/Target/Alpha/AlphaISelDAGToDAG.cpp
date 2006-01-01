@@ -41,7 +41,46 @@ namespace {
     static const int64_t IMM_LOW  = -32768;
     static const int64_t IMM_HIGH = 32767;
     static const int64_t IMM_MULT = 65536;
-    
+    static const int64_t IMM_FULLHIGH = IMM_HIGH + IMM_HIGH * IMM_MULT;
+    static const int64_t IMM_FULLLOW = IMM_LOW + IMM_LOW  * IMM_MULT;
+
+    static int64_t get_ldah16(int64_t x) {
+      int64_t y = x / IMM_MULT;
+      if (x % IMM_MULT > IMM_HIGH)
+	++y;
+      return y;
+    }
+
+    static int64_t get_lda16(int64_t x) {
+      return x - get_ldah16(x) * IMM_MULT;
+    }
+
+    static uint64_t get_zapImm(uint64_t x) {
+      unsigned int build = 0;
+      for(int i = 0; i < 8; ++i)
+	{
+	  if ((x & 0x00FF) == 0x00FF)
+	    build |= 1 << i;
+	  else if ((x & 0x00FF) != 0)
+	    { build = 0; break; }
+	  x >>= 8;
+	}
+      return x;
+    }
+
+    static bool isFPZ(SDOperand N) {
+      ConstantFPSDNode *CN = dyn_cast<ConstantFPSDNode>(N);
+      return (CN && (CN->isExactlyValue(+0.0) || CN->isExactlyValue(-0.0)));
+    }
+    static bool isFPZn(SDOperand N) {
+      ConstantFPSDNode *CN = dyn_cast<ConstantFPSDNode>(N);
+      return (CN && CN->isExactlyValue(-0.0));
+    }
+    static bool isFPZp(SDOperand N) {
+      ConstantFPSDNode *CN = dyn_cast<ConstantFPSDNode>(N);
+      return (CN && CN->isExactlyValue(+0.0));
+    }
+
   public:
     AlphaDAGToDAGISel(TargetMachine &TM)
       : SelectionDAGISel(AlphaLowering), AlphaLowering(TM) 
@@ -154,46 +193,6 @@ SDOperand AlphaDAGToDAGISel::Select(SDOperand Op) {
     CodeGenMap[Op.getValue(1)] = Result.getValue(1);
     return SDOperand(Result.Val, Op.ResNo);
   }
-  case ISD::BRCOND: {
-    if (N->getOperand(1).getOpcode() == ISD::SETCC &&
-	MVT::isFloatingPoint(N->getOperand(1).getOperand(0).getValueType())) {
-      SDOperand Chain = Select(N->getOperand(0));
-      SDOperand CC1 = Select(N->getOperand(1).getOperand(0));
-      SDOperand CC2 = Select(N->getOperand(1).getOperand(1));
-      ISD::CondCode cCode= cast<CondCodeSDNode>(N->getOperand(1).getOperand(2))->get();
-
-      bool rev = false;
-      bool isNE = false;
-      unsigned Opc = Alpha::WTF;
-      switch(cCode) {
-      default: N->dump(); assert(0 && "Unknown FP comparison!");
-      case ISD::SETEQ: Opc = Alpha::CMPTEQ; break;
-      case ISD::SETLT: Opc = Alpha::CMPTLT; break;
-      case ISD::SETLE: Opc = Alpha::CMPTLE; break;
-      case ISD::SETGT: Opc = Alpha::CMPTLT; rev = true; break;
-      case ISD::SETGE: Opc = Alpha::CMPTLE; rev = true; break;
-      case ISD::SETNE: Opc = Alpha::CMPTEQ; isNE = true; break;
-      };
-      SDOperand cmp = CurDAG->getTargetNode(Opc, MVT::f64, 
-                                            rev?CC2:CC1,
-                                            rev?CC1:CC2);
-
-      MachineBasicBlock *Dest =
-	cast<BasicBlockSDNode>(N->getOperand(2))->getBasicBlock();
-      if(isNE)
-	return CurDAG->SelectNodeTo(N, Alpha::FBEQ, MVT::Other, cmp, 
-				    CurDAG->getBasicBlock(Dest), Chain);
-      else
-	return CurDAG->SelectNodeTo(N, Alpha::FBNE, MVT::Other, cmp, 
-				    CurDAG->getBasicBlock(Dest), Chain);
-    }
-    SDOperand Chain = Select(N->getOperand(0));
-    SDOperand CC = Select(N->getOperand(1));
-    MachineBasicBlock *Dest =
-      cast<BasicBlockSDNode>(N->getOperand(2))->getBasicBlock();
-    return CurDAG->SelectNodeTo(N, Alpha::BNE, MVT::Other, CC, 
-                                CurDAG->getBasicBlock(Dest), Chain);
-  }
 
   case ISD::FrameIndex: {
     int FI = cast<FrameIndexSDNode>(N)->getIndex();
@@ -248,8 +247,8 @@ SDOperand AlphaDAGToDAGISel::Select(SDOperand Op) {
 	val >= IMM_LOW  + IMM_LOW  * IMM_MULT)
       break; //(LDAH (LDA))
     if ((uval >> 32) == 0 && //empty upper bits
-	val32 <= IMM_HIGH + IMM_HIGH * IMM_MULT &&
-	val32 >= IMM_LOW  + IMM_LOW  * IMM_MULT)
+	val32 <= IMM_HIGH + IMM_HIGH * IMM_MULT)
+      //	val32 >= IMM_LOW  + IMM_LOW  * IMM_MULT) //always true
       break; //(zext (LDAH (LDA)))
     //Else use the constant pool
     MachineConstantPool *CP = BB->getParent()->getConstantPool();

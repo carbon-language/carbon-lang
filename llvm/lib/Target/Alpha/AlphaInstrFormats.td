@@ -107,10 +107,23 @@ class BFormD<bits<6> opcode, string asmstr, list<dag> pattern>
   let Inst{25-21} = Ra;
   let Inst{20-0} = disp;
 }
+let isBranch = 1, isTerminator = 1 in
+class BFormDG<bits<6> opcode, string asmstr, list<dag> pattern> 
+    : InstAlpha<opcode, (ops GPRC:$RA, target:$DISP), asmstr> {
+  let Pattern = pattern;
+
+  bits<5> Ra;
+  bits<21> disp;
+
+  let Inst{25-21} = Ra;
+  let Inst{20-0} = disp;
+}
 
 let isBranch = 1, isTerminator = 1 in
-class FBForm<bits<6> opcode, string asmstr> 
-    : InstAlpha<opcode, (ops F8RC:$RA, s21imm:$DISP), asmstr> {
+class FBForm<bits<6> opcode, string asmstr, list<dag> pattern> 
+    : InstAlpha<opcode, (ops F8RC:$RA, target:$DISP), asmstr> {
+  let Pattern = pattern;
+
   bits<5> Ra;
   bits<21> disp;
 
