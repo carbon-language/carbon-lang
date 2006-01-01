@@ -20,7 +20,6 @@
 #include <cstdlib>
 #include <iostream>
 #include <map>
-using namespace std;
 using namespace llvm;
 
 #define BUILD_OFormatI(Op, RA, LIT, FUN, RC) \
@@ -240,7 +239,7 @@ void AlphaJITInfo::relocate(void *Function, MachineRelocation *MR,
   //because gpdist are paired and relative to the pc of the first inst,
   //we need to have some state
 
-  static map<pair<void*, int>, void*> gpdistmap;
+  static std::map<std::pair<void*, int>, void*> gpdistmap;
 
   for (unsigned i = 0; i != NumRelocs; ++i, ++MR) {
     unsigned *RelocPos = (unsigned*)Function + MR->getMachineCodeOffset()/4;
@@ -276,13 +275,13 @@ void AlphaJITInfo::relocate(void *Function, MachineRelocation *MR,
         idx = getUpper16(idx);
         DEBUG(std::cerr << "LDAH: " << idx << "\n");
         //add the relocation to the map
-        gpdistmap[make_pair(Function, MR->getConstantVal())] = RelocPos;
+        gpdistmap[std::make_pair(Function, MR->getConstantVal())] = RelocPos;
         break;
       case 0x08: //LDA
-        assert(gpdistmap[make_pair(Function, MR->getConstantVal())] &&
+        assert(gpdistmap[std::make_pair(Function, MR->getConstantVal())] &&
                "LDAg without seeing LDAHg");
         idx = &GOTBase[GOToffset * 8] -
-          (unsigned char*)gpdistmap[make_pair(Function, MR->getConstantVal())];
+          (unsigned char*)gpdistmap[std::make_pair(Function, MR->getConstantVal())];
         idx = getLower16(idx);
         DEBUG(std::cerr << "LDA: " << idx << "\n");
         break;
