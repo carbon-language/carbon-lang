@@ -126,43 +126,32 @@ AlphaRegisterInfo::isLoadFromStackSlot(MachineInstr *MI, int &FrameIndex) const
 MachineInstr *AlphaRegisterInfo::foldMemoryOperand(MachineInstr *MI,
                                                  unsigned OpNum,
                                                  int FrameIndex) const {
-  // Make sure this is a reg-reg copy.
-  unsigned Opc = MI->getOpcode();
-  
-  if ((Opc == Alpha::BIS &&
-       MI->getOperand(1).getReg() == MI->getOperand(2).getReg())) {
-    if (OpNum == 0) {  // move -> store
-      unsigned InReg = MI->getOperand(1).getReg();
-      return BuildMI(Alpha::STQ, 3).addReg(InReg).addFrameIndex(FrameIndex)
-        .addReg(Alpha::F31);
-    } else {           // load -> move
-      unsigned OutReg = MI->getOperand(0).getReg();
-      return BuildMI(Alpha::LDQ, 2, OutReg).addFrameIndex(FrameIndex)
-        .addReg(Alpha::F31);
-    }
-  } else if ((Opc == Alpha::CPYSS &&
-              MI->getOperand(1).getReg() == MI->getOperand(2).getReg())) {
-    if (OpNum == 0) {  // move -> store
-      unsigned InReg = MI->getOperand(1).getReg();
-      return BuildMI(Alpha::STS, 3).addReg(InReg).addFrameIndex(FrameIndex)
-        .addReg(Alpha::F31);
-    } else {           // load -> move
-      unsigned OutReg = MI->getOperand(0).getReg();
-      return BuildMI(Alpha::LDS, 2, OutReg).addFrameIndex(FrameIndex)
-        .addReg(Alpha::F31);
-    }
-  } else if ((Opc == Alpha::CPYST &&
-              MI->getOperand(1).getReg() == MI->getOperand(2).getReg())) {
-    if (OpNum == 0) {  // move -> store
-      unsigned InReg = MI->getOperand(1).getReg();
-      return BuildMI(Alpha::STT, 3).addReg(InReg).addFrameIndex(FrameIndex)
-        .addReg(Alpha::F31);
-    } else {           // load -> move
-      unsigned OutReg = MI->getOperand(0).getReg();
-      return BuildMI(Alpha::LDT, 2, OutReg).addFrameIndex(FrameIndex)
-        .addReg(Alpha::F31);
-    }
-  }
+   // Make sure this is a reg-reg copy.
+   unsigned Opc = MI->getOpcode();
+
+   switch(Opc) {
+   default:
+     break;
+   case Alpha::BIS:
+   case Alpha::CPYSS:
+   case Alpha::CPYST:
+     if (MI->getOperand(1).getReg() == MI->getOperand(2).getReg()) {
+       if (OpNum == 0) {  // move -> store
+	 unsigned InReg = MI->getOperand(1).getReg();
+	 Opc = (Opc == Alpha::BIS) ? Alpha::STQ : 
+	   ((Opc == Alpha::CPYSS) ? Alpha::STS : Alpha::STT);
+	 return BuildMI(Opc, 3).addReg(InReg).addFrameIndex(FrameIndex)
+	   .addReg(Alpha::F31);
+       } else {           // load -> move
+	 unsigned OutReg = MI->getOperand(0).getReg();
+	 Opc = (Opc == Alpha::BIS) ? Alpha::LDQ : 
+	   ((Opc == Alpha::CPYSS) ? Alpha::LDS : Alpha::LDT);
+	 return BuildMI(Opc, 2, OutReg).addFrameIndex(FrameIndex)
+	   .addReg(Alpha::F31);
+       }
+     }
+     break;
+   }
   return 0;
 }
 
