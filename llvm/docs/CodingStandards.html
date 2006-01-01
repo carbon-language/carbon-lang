@@ -45,9 +45,9 @@
       <li><a href="#micro">The Low Level Issues</a>
         <ol>
           <li><a href="#hl_assert">Assert Liberally</a></li>
+          <li><a href="#hl_ns_std">Do not use 'using namespace std'</a></li>
           <li><a href="#hl_preincrement">Prefer Preincrement</a></li>
           <li><a href="#hl_avoidendl">Avoid <tt>std::endl</tt></a></li>
-          <li><a href="#hl_exploitcpp">Exploit C++ to its Fullest</a></li>
         </ol></li>
     </ol></li>
   <li><a href="#seealso">See Also</a></li>
@@ -535,6 +535,40 @@ assert(isa&lt;PHINode&gt;(Succ-&gt;front()) &amp;&amp; "Only works on PHId BBs!"
 
 </div>
 
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="hl_ns_std">Do not use 'using namespace std'</a>
+</div>
+
+<div class="doc_text">
+<p>In LLVM, we prefer to explicitly prefix all identifiers from the standard
+namespace with an "std::" prefix, rather than rely on "using namespace std;".
+</p>
+
+<p> In header files, adding a 'using namespace XXX' directive pollutes the 
+namespace of any source file that includes the header.  This is clearly a bad
+thing.</p>
+
+<p>In implementation files (e.g. .cpp files) the rule is more of a stylistic
+rule, but is still important.  Basically, using explicit namespace prefixes 
+makes
+the code <b>more clear</b> - because it is immediately obvious what facilities
+are being used and where they are coming from - and <b>more portable</b> -
+because namespace clashes cannot occur between LLVM code and other namespaces.
+The portability rule is important because different standard library 
+implementations expose different symbols (potentially ones they shouldn't) and 
+future revisions to the C++ standard will add more symbols to the std 
+namespace.  As such, we never 'using namespace std;' in LLVM.</p>
+
+<p>The exception to the general rule (i.e. it's not an exception for the std 
+namespace) is for implementation files.  For example, all of the code in the
+LLVM project implements code that lives in the 'llvm' namespace.  As such, it
+is ok, and actually more clear, for the .cpp files to have a 'using namespace 
+llvm' directive at their top, after the #includes.  The general form of this
+rule is that any .cpp file that implements code in any namespace may use that
+namespace (and its parents), but should not use any others.</p>
+
+</div>
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
@@ -576,25 +610,6 @@ std::cout &lt;&lt; '\n' &lt;&lt; std::flush;
 
 <p>Most of the time, you probably have no reason to flush the output stream, so
 it's better to use a literal <tt>'\n'</tt>.</p>
-
-</div>
-
-<!-- _______________________________________________________________________ -->
-<div class="doc_subsubsection">
-  <a name="hl_exploitcpp">Exploit C++ to its Fullest</a>
-</div>
-
-<div class="doc_text">
-
-<p>C++ is a powerful language.  With a firm grasp on its capabilities, you can
-make write effective, consise, readable and maintainable code all at the same
-time.  By staying consistent, you reduce the amount of special cases that need
-to be remembered.  Reducing the total number of lines of code you write is a
-good way to avoid documentation, and avoid giving bugs a place to hide.</p>
-
-<p>For these reasons, come to know and love the contents of your local
-<tt>&lt;algorithm&gt;</tt> header file.  Know about <tt>&lt;functional&gt;</tt>
-and what it can do for you.  C++ is just a tool that wants you to master it.</p>
 
 </div>
 
