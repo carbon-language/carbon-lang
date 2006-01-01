@@ -131,6 +131,10 @@ def SDTBr : SDTypeProfile<0, 1, [ // br
   SDTCisVT<0, OtherVT>
 ]>;
 
+def SDTBrcond : SDTypeProfile<0, 2, [ // brcond
+  SDTCisInt<0>, SDTCisVT<1, OtherVT>
+]>;
+
 def SDTRet : SDTypeProfile<0, 0, []>; // ret
 
 def SDTReadPort : SDTypeProfile<1, 1, [ // readport
@@ -260,6 +264,7 @@ def setcc      : SDNode<"ISD::SETCC"      , SDTSetCC>;
 def select     : SDNode<"ISD::SELECT"     , SDTSelect>;
 def selectcc   : SDNode<"ISD::SELECT_CC"  , SDTSelectCC>;
 
+def brcond     : SDNode<"ISD::BRCOND"     , SDTBrcond, [SDNPHasChain]>;
 def br         : SDNode<"ISD::BR"         , SDTBr,     [SDNPHasChain]>;
 def ret        : SDNode<"ISD::RET"        , SDTRet,    [SDNPHasChain]>;
 
