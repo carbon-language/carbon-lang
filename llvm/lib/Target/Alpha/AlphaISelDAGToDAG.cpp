@@ -65,7 +65,7 @@ namespace {
 	    { build = 0; break; }
 	  x >>= 8;
 	}
-      return x;
+      return build;
     }
 
     static bool isFPZ(SDOperand N) {
