@@ -511,7 +511,7 @@ private:
     // batcher class then we can reorder to pass to execute before the batcher
     // does, which will potentially allow us to batch more passes!
     //
-    //const std::vector<AnalysisID> &ProvidedSet = AnUsage.getProvidedSet();
+    // const std::vector<AnalysisID> &ProvidedSet = AnUsage.getProvidedSet();
     if (Batcher /*&& ProvidedSet.empty()*/)
       closeBatcher();                     // This pass cannot be batched!
 
@@ -630,18 +630,6 @@ public:
 // into a single unit.
 //
 class BasicBlockPassManager {
-  //TODO:Start absorbing PassManagerTraits<BasicBlock>
-};
-
-
-//===----------------------------------------------------------------------===//
-// PassManagerTraits<BasicBlock> Specialization
-//
-// This pass manager is used to group together all of the BasicBlockPass's
-// into a single unit.
-//
-template<> class PassManagerTraits<BasicBlock> : public BasicBlockPass,
-                                                 public BasicBlockPassManager {
 public:
   // PassClass - The type of passes tracked by this PassManager
   typedef BasicBlockPass PassClass;
@@ -664,27 +652,47 @@ public:
   // PMType - The type of the passmanager that subclasses this class
   typedef PassManagerT<BasicBlock> PMType;
 
+  // getPMName() - Return the name of the unit the PassManager operates on for
+  // debugging.
+  virtual const char *getPMName() const { return "BasicBlock"; }
+  
+  virtual const char *getPassName() const { return "BasicBlock Pass Manager"; }
+
+  // TODO:Start absorbing PassManagerTraits<BasicBlock>
+};
+
+
+//===----------------------------------------------------------------------===//
+// PassManagerTraits<BasicBlock> Specialization
+//
+// This pass manager is used to group together all of the BasicBlockPass's
+// into a single unit.
+//
+template<> class PassManagerTraits<BasicBlock> : public BasicBlockPass,
+                                                 public BasicBlockPassManager {
+public:
   // runPass - Specify how the pass should be run on the UnitType
   static bool runPass(PassClass *P, BasicBlock *M) {
     // todo, init and finalize
     return P->runOnBasicBlock(*M);
   }
-
-  // getPMName() - Return the name of the unit the PassManager operates on for
-  // debugging.
-  const char *getPMName() const { return "BasicBlock"; }
-  virtual const char *getPassName() const { return "BasicBlock Pass Manager"; }
-
+  
   // Implement the BasicBlockPass interface...
   virtual bool doInitialization(Module &M);
   virtual bool doInitialization(Function &F);
   virtual bool runOnBasicBlock(BasicBlock &BB);
   virtual bool doFinalization(Function &F);
   virtual bool doFinalization(Module &M);
-
+  
+  // Forwarded
+  virtual const char *getPassName() const { 
+    return BasicBlockPassManager::getPassName();
+  }
+  
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.setPreservesAll();
   }
+
 };
 
 
@@ -695,18 +703,6 @@ public:
 // into a single unit.
 //
 class FunctionPassManagerT {
-  //TODO:Start absorbing PassManagerTraits<Function>
-};
-
-
-//===----------------------------------------------------------------------===//
-// PassManagerTraits<Function> Specialization
-//
-// This pass manager is used to group together all of the FunctionPass's
-// into a single unit.
-//
-template<> class PassManagerTraits<Function> : public FunctionPass, 
-                                               public FunctionPassManagerT {
 public:
   // PassClass - The type of passes tracked by this PassManager
   typedef FunctionPass PassClass;
@@ -722,24 +718,43 @@ public:
 
   // PMType - The type of the passmanager that subclasses this class
   typedef PassManagerT<Function> PMType;
+  
+  // getPMName() - Return the name of the unit the PassManager operates on for
+  // debugging.
+  virtual const char *getPMName() const { return "Function"; }
+  
+  virtual const char *getPassName() const { return "Function Pass Manager"; }
 
+  // TODO:Start absorbing PassManagerTraits<Function>
+};
+
+
+//===----------------------------------------------------------------------===//
+// PassManagerTraits<Function> Specialization
+//
+// This pass manager is used to group together all of the FunctionPass's
+// into a single unit.
+//
+template<> class PassManagerTraits<Function> : public FunctionPass, 
+                                               public FunctionPassManagerT {
+public:
   // runPass - Specify how the pass should be run on the UnitType
   static bool runPass(PassClass *P, Function *F) {
     return P->runOnFunction(*F);
   }
-
-  // getPMName() - Return the name of the unit the PassManager operates on for
-  // debugging.
-  const char *getPMName() const { return "Function"; }
-  virtual const char *getPassName() const { return "Function Pass Manager"; }
-
+  
   // Implement the FunctionPass interface...
   virtual bool doInitialization(Module &M);
   virtual bool runOnFunction(Function &F);
   virtual bool doFinalization(Module &M);
-
+  
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.setPreservesAll();
+  }
+  
+  // Forwarded
+  virtual const char *getPassName() const { 
+    return FunctionPassManagerT::getPassName();
   }
 };
 
@@ -750,17 +765,6 @@ public:
 // This is the top level PassManager implementation that holds generic passes.
 //
 class ModulePassManager {
-  //TODO:Start absorbing PassManagerTraits<Module>
-};
-
-
-//===----------------------------------------------------------------------===//
-// PassManagerTraits<Module> Specialization
-//
-// This is the top level PassManager implementation that holds generic passes.
-//
-template<> class PassManagerTraits<Module> : public ModulePass, 
-                                             public ModulePassManager {
 public:
   // PassClass - The type of passes tracked by this PassManager
   typedef ModulePass PassClass;
@@ -773,18 +777,39 @@ public:
 
   // ParentClass - The type of the parent PassManager...
   typedef AnalysisResolver ParentClass;
-
-  // runPass - Specify how the pass should be run on the UnitType
-  static bool runPass(PassClass *P, Module *M) { return P->runOnModule(*M); }
-
+  
   // getPMName() - Return the name of the unit the PassManager operates on for
   // debugging.
-  const char *getPMName() const { return "Module"; }
   virtual const char *getPassName() const { return "Module Pass Manager"; }
+  
+  // getPMName() - Return the name of the unit the PassManager operates on for
+  // debugging.
+  virtual const char *getPMName() const { return "Module"; }
+  
+  
+  // TODO:Start absorbing PassManagerTraits<Module>
+};
 
+
+//===----------------------------------------------------------------------===//
+// PassManagerTraits<Module> Specialization
+//
+// This is the top level PassManager implementation that holds generic passes.
+//
+template<> class PassManagerTraits<Module> : public ModulePass, 
+                                             public ModulePassManager {
+public:
+  // runPass - Specify how the pass should be run on the UnitType
+  static bool runPass(PassClass *P, Module *M) { return P->runOnModule(*M); }
+  
   // runOnModule - Implement the PassManager interface.
   bool runOnModule(Module &M) {
     return ((PassManagerT<Module>*)this)->runOnUnit(&M);
+  }
+  
+  // Forwarded
+  virtual const char *getPassName() const { 
+    return ModulePassManager::getPassName();
   }
 };
 
