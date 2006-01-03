@@ -540,18 +540,10 @@ namespace {
 
       for (inst_iterator I = inst_begin(F), E = inst_end(F); I != E; ++I)
         Tracker->add(&*I);
+      Tracker->print(std::cerr);
+      delete Tracker;
       return false;
     }
-
-    /// print - Convert to human readable form
-    virtual void print(std::ostream &OS, const Module* = 0) const {
-      Tracker->print(OS);
-    }
-
-    virtual void releaseMemory() {
-      delete Tracker;
-    }
   };
-  RegisterPass<AliasSetPrinter> X("print-alias-sets", "Alias Set Printer",
-                                  PassInfo::Analysis | PassInfo::Optimization);
+  RegisterOpt<AliasSetPrinter> X("print-alias-sets", "Alias Set Printer");
 }
