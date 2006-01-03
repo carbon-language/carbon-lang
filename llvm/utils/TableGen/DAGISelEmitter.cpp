@@ -1832,27 +1832,6 @@ public:
     ISE(ise), Predicates(preds), Pattern(pattern), Instruction(instr),
     PatternNo(PatNum), OS(os), TmpNo(0) {}
 
-  /// isPredeclaredSDOperand - Return true if this is one of the predeclared
-  /// SDOperands.
-  bool isPredeclaredSDOperand(const std::string &OpName) const {
-    return OpName == "N0" || OpName == "N1" || OpName == "N2" || 
-           OpName == "N00" || OpName == "N01" || 
-           OpName == "N10" || OpName == "N11" || 
-           OpName == "Tmp0" || OpName == "Tmp1" || 
-           OpName == "Tmp2" || OpName == "Tmp3";
-  }
-  
-  /// DeclareSDOperand - Emit "SDOperand <opname>" or "<opname>".  This works
-  /// around an ugly GCC bug where SelectCode is using too much stack space
-  void DeclareSDOperand(const std::string &OpName) const {
-    // If it's one of the common cases declared at the top of SelectCode, just
-    // use the existing declaration.
-    if (isPredeclaredSDOperand(OpName))
-      OS << OpName;
-    else
-      OS << "SDOperand " << OpName;
-  }
-  
   /// EmitMatchCode - Emit a matcher for N, going to the label for PatternNo
   /// if the match fails. At this point, we already know that the opcode for N
   /// matches, and the SDNode for the result has the RootName specified name.
@@ -1926,9 +1905,8 @@ public:
     }
 
     for (unsigned i = 0, e = N->getNumChildren(); i != e; ++i, ++OpNo) {
-      OS << "      ";
-      DeclareSDOperand(RootName+utostr(OpNo));
-      OS << " = " << RootName << ".getOperand(" << OpNo << ");\n";
+      OS << "      SDOperand " << RootName << OpNo << " = "
+         << RootName << ".getOperand(" << OpNo << ");\n";
       TreePatternNode *Child = N->getChild(i);
     
       if (!Child->isLeaf()) {
@@ -1999,7 +1977,7 @@ public:
 
     if (HasChain) {
       if (!FoundChain) {
-        OS << "      Chain = " << RootName << ".getOperand(0);\n";
+        OS << "      SDOperand Chain = " << RootName << ".getOperand(0);\n";
         FoundChain = true;
       }
     }
@@ -2039,41 +2017,30 @@ public:
           case MVT::i64: OS << "      uint64_t Tmp"; break;
         }
         OS << ResNo << "C = cast<ConstantSDNode>(" << Val << ")->getValue();\n";
-        OS << "      ";
-        DeclareSDOperand("Tmp"+utostr(ResNo));
-        OS << " = CurDAG->getTargetConstant(Tmp"
+        OS << "      SDOperand Tmp" << utostr(ResNo)
+           << " = CurDAG->getTargetConstant(Tmp"
            << ResNo << "C, MVT::" << getEnumName(N->getTypeNum(0)) << ");\n";
       } else if (!N->isLeaf() && N->getOperator()->getName() == "tglobaladdr") {
-        OS << "      ";
-        DeclareSDOperand("Tmp"+utostr(ResNo));
-        OS << " = " << Val << ";\n";
+        OS << "      SDOperand Tmp" << ResNo << " = " << Val << ";\n";
       } else if (!N->isLeaf() && N->getOperator()->getName() == "tconstpool") {
-        OS << "      ";
-        DeclareSDOperand("Tmp"+utostr(ResNo));
-        OS << " = " << Val << ";\n";
-      } else if (!N->isLeaf() && N->getOperator()->getName() == "texternalsym") {
-        OS << "      ";
-        DeclareSDOperand("Tmp"+utostr(ResNo));
-        OS << " = " << Val << ";\n";
+        OS << "      SDOperand Tmp" << ResNo << " = " << Val << ";\n";
+      } else if (!N->isLeaf() && N->getOperator()->getName() == "texternalsym"){
+        OS << "      SDOperand Tmp" << ResNo << " = " << Val << ";\n";
       } else if (N->isLeaf() && (CP = NodeGetComplexPattern(N, ISE))) {
         std::string Fn = CP->getSelectFunc();
         NumRes = CP->getNumOperands();
-        for (unsigned i = 0; i != NumRes; ++i) {
-          if (!isPredeclaredSDOperand("Tmp" + utostr(i+ResNo))) {
-            OS << "      ";
-            DeclareSDOperand("Tmp" + utostr(i+ResNo));
-            OS << ";\n";
-          }
-        }
+        OS << "      SDOperand ";
+        for (unsigned i = 0; i != NumRes; ++i)
+          OS << "Tmp" << (i+ResNo) << ",";
+        OS << ";\n";
+        
         OS << "      if (!" << Fn << "(" << Val;
         for (unsigned i = 0; i < NumRes; i++)
           OS << ", Tmp" << i + ResNo;
         OS << ")) goto P" << PatternNo << "Fail;\n";
         TmpNo = ResNo + NumRes;
       } else {
-        OS << "      ";
-        DeclareSDOperand("Tmp"+utostr(ResNo));
-        OS << " = Select(" << Val << ");\n";
+        OS << "      SDOperand Tmp" << ResNo << " = Select(" << Val << ");\n";
       }
       // Add Tmp<ResNo> to VariableMap, so that we don't multiply select this
       // value if used multiple times by this pattern result.
@@ -2086,9 +2053,7 @@ public:
       if (DefInit *DI = dynamic_cast<DefInit*>(N->getLeafValue())) {
         unsigned ResNo = TmpNo++;
         if (DI->getDef()->isSubClassOf("Register")) {
-          OS << "      ";
-          DeclareSDOperand("Tmp"+utostr(ResNo));
-          OS << " = CurDAG->getRegister("
+          OS << "      SDOperand Tmp" << ResNo << " = CurDAG->getRegister("
              << ISE.getQualifiedName(DI->getDef()) << ", MVT::"
              << getEnumName(N->getTypeNum(0))
              << ");\n";
@@ -2096,10 +2061,8 @@ public:
         }
       } else if (IntInit *II = dynamic_cast<IntInit*>(N->getLeafValue())) {
         unsigned ResNo = TmpNo++;
-        OS << "      ";
-        DeclareSDOperand("Tmp"+utostr(ResNo));
         assert(N->getExtTypes().size() == 1 && "Multiple types not handled!");
-        OS << " = CurDAG->getTargetConstant("
+        OS << "      SDOperand Tmp" << ResNo << " = CurDAG->getTargetConstant("
            << II->getValue() << ", MVT::"
            << getEnumName(N->getTypeNum(0))
            << ");\n";
@@ -2125,7 +2088,7 @@ public:
       if (isRoot && PatternHasCtrlDep(Pattern, ISE))
         HasChain = true;
       if (HasInFlag || HasOutFlag)
-        OS << "      InFlag = SDOperand(0, 0);\n";
+        OS << "      SDOperand InFlag = SDOperand(0, 0);\n";
 
       // Determine operand emission order. Complex pattern first.
       std::vector<std::pair<unsigned, TreePatternNode*> > EmitOrder;
@@ -2167,9 +2130,7 @@ public:
       unsigned NumResults = Inst.getNumResults();    
       unsigned ResNo = TmpNo++;
       if (!isRoot) {
-        OS << "      ";
-        DeclareSDOperand("Tmp"+utostr(ResNo));
-        OS << " = CurDAG->getTargetNode("
+        OS << "      SDOperand Tmp" << ResNo << " = CurDAG->getTargetNode("
            << II.Namespace << "::" << II.TheDef->getName();
         if (N->getTypeNum(0) != MVT::isVoid)
           OS << ", MVT::" << getEnumName(N->getTypeNum(0));
@@ -2188,7 +2149,7 @@ public:
              << NumResults << ");\n";
         }
       } else if (HasChain || HasOutFlag) {
-        OS << "      Result = CurDAG->getTargetNode("
+        OS << "      SDOperand Result = CurDAG->getTargetNode("
            << II.Namespace << "::" << II.TheDef->getName();
 
         // Output order: results, chain, flags
@@ -2295,9 +2256,7 @@ public:
       assert(N->getNumChildren() == 1 && "node xform should have one child!");
       unsigned OpVal = EmitResultCode(N->getChild(0)).second;
       unsigned ResNo = TmpNo++;
-      OS << "      ";
-      DeclareSDOperand("Tmp"+utostr(ResNo));
-      OS << " = Transform_" << Op->getName()
+      OS << "      SDOperand Tmp" << ResNo << " = Transform_" << Op->getName()
          << "(Tmp" << OpVal << ".Val);\n";
       if (isRoot) {
         OS << "      CodeGenMap[N] = Tmp" << ResNo << ";\n";
@@ -2376,7 +2335,7 @@ private:
     }
 
     if (isRoot && HasInFlag) {
-      OS << "      " << RootName << OpNo << " = " << RootName
+      OS << "      SDOperand " << RootName << OpNo << " = " << RootName
          << ".getOperand(" << OpNo << ");\n";
       OS << "      InFlag = Select(" << RootName << OpNo << ");\n";
     }
@@ -2517,8 +2476,6 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
     << "  std::map<SDOperand, SDOperand>::iterator CGMI = CodeGenMap.find(N);\n"
      << "  if (CGMI != CodeGenMap.end()) return CGMI->second;\n"
      << "  // Work arounds for GCC stack overflow bugs.\n"
-     << "  SDOperand N0, N1, N2, N00, N01, N10, N11, Tmp0, Tmp1, Tmp2, Tmp3;\n"
-     << "  SDOperand Chain, InFlag, Result;\n"
      << "  switch (N.getOpcode()) {\n"
      << "  default: break;\n"
      << "  case ISD::EntryToken:       // These leaves remain the same.\n"
@@ -2544,7 +2501,7 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
      << "               CurDAG->getNode(ISD::TokenFactor, MVT::Other, Ops);\n"
      << "    }\n"
      << "  case ISD::CopyFromReg: {\n"
-     << "    Chain = Select(N.getOperand(0));\n"
+     << "    SDOperand Chain = Select(N.getOperand(0));\n"
      << "    unsigned Reg = cast<RegisterSDNode>(N.getOperand(1))->getReg();\n"
      << "    MVT::ValueType VT = N.Val->getValueType(0);\n"
      << "    if (N.Val->getNumValues() == 2) {\n"
@@ -2567,10 +2524,10 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
      << "    }\n"
      << "  }\n"
      << "  case ISD::CopyToReg: {\n"
-     << "    Chain = Select(N.getOperand(0));\n"
+     << "    SDOperand Chain = Select(N.getOperand(0));\n"
      << "    unsigned Reg = cast<RegisterSDNode>(N.getOperand(1))->getReg();\n"
      << "    SDOperand Val = Select(N.getOperand(2));\n"
-     << "    Result = N;\n"
+     << "    SDOperand Result = N;\n"
      << "    if (N.Val->getNumValues() == 1) {\n"
      << "      if (Chain != N.getOperand(0) || Val != N.getOperand(2))\n"
      << "        Result = CurDAG->getCopyToReg(Chain, Reg, Val);\n"
