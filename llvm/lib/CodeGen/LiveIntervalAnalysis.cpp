@@ -247,7 +247,7 @@ addIntervalsForSpills(const LiveInterval &li, VirtRegMap &vrm, int slot) {
         index += InstrSlots::NUM;
       if (index == end) break;
 
-      MachineBasicBlock::iterator mi = getInstructionFromIndex(index);
+      MachineInstr *MI = getInstructionFromIndex(index);
 
       // NewRegLiveIn - This instruction might have multiple uses of the spilled
       // register.  In this case, for the first use, keep track of the new vreg
@@ -256,26 +256,26 @@ addIntervalsForSpills(const LiveInterval &li, VirtRegMap &vrm, int slot) {
       unsigned NewRegLiveIn = 0;
 
     for_operand:
-      for (unsigned i = 0; i != mi->getNumOperands(); ++i) {
-        MachineOperand& mop = mi->getOperand(i);
+      for (unsigned i = 0; i != MI->getNumOperands(); ++i) {
+        MachineOperand& mop = MI->getOperand(i);
         if (mop.isRegister() && mop.getReg() == li.reg) {
           if (NewRegLiveIn && mop.isUse()) {
             // We already emitted a reload of this value, reuse it for
             // subsequent operands.
-            mi->SetMachineOperandReg(i, NewRegLiveIn);
+            MI->SetMachineOperandReg(i, NewRegLiveIn);
             DEBUG(std::cerr << "\t\t\t\treused reload into reg" << NewRegLiveIn
                             << " for operand #" << i << '\n');
-          } else if (MachineInstr* fmi = mri_->foldMemoryOperand(mi, i, slot)) {
+          } else if (MachineInstr* fmi = mri_->foldMemoryOperand(MI, i, slot)) {
             // Attempt to fold the memory reference into the instruction.  If we
             // can do this, we don't need to insert spill code.
             if (lv_)
-              lv_->instructionChanged(mi, fmi);
-            vrm.virtFolded(li.reg, mi, i, fmi);
-            mi2iMap_.erase(mi);
+              lv_->instructionChanged(MI, fmi);
+            vrm.virtFolded(li.reg, MI, i, fmi);
+            mi2iMap_.erase(MI);
             i2miMap_[index/InstrSlots::NUM] = fmi;
             mi2iMap_[fmi] = index;
-            MachineBasicBlock &MBB = *mi->getParent();
-            mi = MBB.insert(MBB.erase(mi), fmi);
+            MachineBasicBlock &MBB = *MI->getParent();
+            MI = MBB.insert(MBB.erase(MI), fmi);
             ++numFolded;
 
             // Folding the load/store can completely change the instruction in
@@ -300,7 +300,7 @@ addIntervalsForSpills(const LiveInterval &li, VirtRegMap &vrm, int slot) {
 
             // create a new register for this spill
             NewRegLiveIn = mf_->getSSARegMap()->createVirtualRegister(rc);
-            mi->SetMachineOperandReg(i, NewRegLiveIn);
+            MI->SetMachineOperandReg(i, NewRegLiveIn);
             vrm.grow();
             vrm.assignVirt2StackSlot(NewRegLiveIn, slot);
             LiveInterval& nI = getOrCreateInterval(NewRegLiveIn);
@@ -316,7 +316,7 @@ addIntervalsForSpills(const LiveInterval &li, VirtRegMap &vrm, int slot) {
 
             // update live variables if it is available
             if (lv_)
-              lv_->addVirtualRegisterKilled(NewRegLiveIn, mi);
+              lv_->addVirtualRegisterKilled(NewRegLiveIn, MI);
             
             // If this is a live in, reuse it for subsequent live-ins.  If it's
             // a def, we can't do this.
