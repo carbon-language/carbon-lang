@@ -43,89 +43,99 @@ namespace {
     std::set<std::string> ExternalNames;
     bool DontInternalize;
   public:
-    InternalizePass(bool InternalizeEverything = true) : DontInternalize(false){
-      if (!APIFile.empty())           // If a filename is specified, use it
-        LoadFile(APIFile.c_str());
-      else if (!APIList.empty())      // Else, if a list is specified, use it.
-        ExternalNames.insert(APIList.begin(), APIList.end());
-      else if (!InternalizeEverything)
-        // Finally, if we're allowed to, internalize all but main.
-        DontInternalize = true;
-    }
-
-    void LoadFile(const char *Filename) {
-      // Load the APIFile...
-      std::ifstream In(Filename);
-      if (!In.good()) {
-        std::cerr << "WARNING: Internalize couldn't load file '" << Filename
-                  << "'!\n";
-        return;   // Do not internalize anything...
-      }
-      while (In) {
-        std::string Symbol;
-        In >> Symbol;
-        if (!Symbol.empty())
-          ExternalNames.insert(Symbol);
-      }
-    }
-
-    virtual bool runOnModule(Module &M) {
-      if (DontInternalize) return false;
-      
-      // If no list or file of symbols was specified, check to see if there is a
-      // "main" symbol defined in the module.  If so, use it, otherwise do not
-      // internalize the module, it must be a library or something.
-      //
-      if (ExternalNames.empty()) {
-        Function *MainFunc = M.getMainFunction();
-        if (MainFunc == 0 || MainFunc->isExternal())
-          return false;  // No main found, must be a library...
-
-        // Preserve main, internalize all else.
-        ExternalNames.insert(MainFunc->getName());
-      }
-
-      bool Changed = false;
-
-      // Found a main function, mark all functions not named main as internal.
-      for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
-        if (!I->isExternal() &&         // Function must be defined here
-            !I->hasInternalLinkage() &&  // Can't already have internal linkage
-            !ExternalNames.count(I->getName())) {// Not marked to keep external?
-          I->setLinkage(GlobalValue::InternalLinkage);
-          Changed = true;
-          ++NumFunctions;
-          DEBUG(std::cerr << "Internalizing func " << I->getName() << "\n");
-        }
-
-      // Mark all global variables with initializers as internal as well...
-      for (Module::global_iterator I = M.global_begin(), E = M.global_end();
-           I != E; ++I)
-        if (!I->isExternal() && !I->hasInternalLinkage() &&
-            !ExternalNames.count(I->getName()) &&
-            // *never* internalize the llvm.used symbol, used to implement
-            // attribute((used)).
-            I->getName() != "llvm.used") {
-          // Special case handling of the global ctor and dtor list.  When we
-          // internalize it, we mark it constant, which allows elimination of
-          // the list if it's empty.
-          //
-          if (I->hasAppendingLinkage() && (I->getName() == "llvm.global_ctors"||
-                                           I->getName() == "llvm.global_dtors"))
-            I->setConstant(true);
-
-          I->setLinkage(GlobalValue::InternalLinkage);
-          Changed = true;
-          ++NumGlobals;
-          DEBUG(std::cerr << "Internalizing gvar " << I->getName() << "\n");
-        }
-
-      return Changed;
-    }
+    InternalizePass(bool InternalizeEverything = true);
+    void LoadFile(const char *Filename);
+    virtual bool runOnModule(Module &M);
   };
-
   RegisterOpt<InternalizePass> X("internalize", "Internalize Global Symbols");
 } // end anonymous namespace
+
+InternalizePass::InternalizePass(bool InternalizeEverything) 
+  : DontInternalize(false){
+  if (!APIFile.empty())           // If a filename is specified, use it
+    LoadFile(APIFile.c_str());
+  else if (!APIList.empty())      // Else, if a list is specified, use it.
+    ExternalNames.insert(APIList.begin(), APIList.end());
+  else if (!InternalizeEverything)
+    // Finally, if we're allowed to, internalize all but main.
+    DontInternalize = true;
+}
+
+void InternalizePass::LoadFile(const char *Filename) {
+  // Load the APIFile...
+  std::ifstream In(Filename);
+  if (!In.good()) {
+    std::cerr << "WARNING: Internalize couldn't load file '" << Filename
+    << "'!\n";
+    return;   // Do not internalize anything...
+  }
+  while (In) {
+    std::string Symbol;
+    In >> Symbol;
+    if (!Symbol.empty())
+      ExternalNames.insert(Symbol);
+  }
+}
+
+bool InternalizePass::runOnModule(Module &M) {
+  if (DontInternalize) return false;
+  
+  // If no list or file of symbols was specified, check to see if there is a
+  // "main" symbol defined in the module.  If so, use it, otherwise do not
+  // internalize the module, it must be a library or something.
+  //
+  if (ExternalNames.empty()) {
+    Function *MainFunc = M.getMainFunction();
+    if (MainFunc == 0 || MainFunc->isExternal())
+      return false;  // No main found, must be a library...
+    
+    // Preserve main, internalize all else.
+    ExternalNames.insert(MainFunc->getName());
+  }
+  
+  bool Changed = false;
+  
+  // Found a main function, mark all functions not named main as internal.
+  for (Module::iterator I = M.begin(), E = M.end(); I != E; ++I)
+    if (!I->isExternal() &&         // Function must be defined here
+        !I->hasInternalLinkage() &&  // Can't already have internal linkage
+        !ExternalNames.count(I->getName())) {// Not marked to keep external?
+      I->setLinkage(GlobalValue::InternalLinkage);
+      Changed = true;
+      ++NumFunctions;
+      DEBUG(std::cerr << "Internalizing func " << I->getName() << "\n");
+    }
+  
+  // Never internalize the llvm.used symbol.  It is used to implement
+  // attribute((used)).
+  ExternalNames.insert("llvm.used");
+        
+  // Never internalize anchors used by the debugger, else the debugger won't
+  // find them.
+  ExternalNames.insert("llvm.dbg.translation_units");
+  ExternalNames.insert("llvm.dbg.globals");
+      
+  // Mark all global variables with initializers as internal as well.
+  for (Module::global_iterator I = M.global_begin(), E = M.global_end();
+       I != E; ++I)
+    if (!I->isExternal() && !I->hasInternalLinkage() &&
+        !ExternalNames.count(I->getName())) {
+      // Special case handling of the global ctor and dtor list.  When we
+      // internalize it, we mark it constant, which allows elimination of
+      // the list if it's empty.
+      //
+      if (I->hasAppendingLinkage() && (I->getName() == "llvm.global_ctors" ||
+                                       I->getName() == "llvm.global_dtors"))
+        I->setConstant(true);
+      
+      I->setLinkage(GlobalValue::InternalLinkage);
+      Changed = true;
+      ++NumGlobals;
+      DEBUG(std::cerr << "Internalizing gvar " << I->getName() << "\n");
+    }
+      
+  return Changed;
+}
 
 ModulePass *llvm::createInternalizePass(bool InternalizeEverything) {
   return new InternalizePass(InternalizeEverything);
