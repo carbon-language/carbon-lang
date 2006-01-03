@@ -889,9 +889,15 @@ implementations.  You can use them with commands like '<tt>opt -anders-aa -ds-aa
 <div class="doc_text">
 
 <p>The <tt>-print-alias-sets</tt> pass is exposed as part of the
-<tt>analyze</tt> tool to print out the Alias Sets formed by the <a
+<tt>opt</tt> tool to print out the Alias Sets formed by the <a
 href="#ast"><tt>AliasSetTracker</tt></a> class.  This is useful if you're using
-the <tt>AliasSetTracker</tt> class.</p>
+the <tt>AliasSetTracker</tt> class.  To use it, use something like:</p>
+
+<div class="doc_code">
+<pre>
+% opt -ds-aa -print-alias-sets -disable-output
+</pre>
+</div>
 
 </div>
 
