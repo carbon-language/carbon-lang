@@ -652,6 +652,8 @@ public:
   // PMType - The type of the passmanager that subclasses this class
   typedef PassManagerT<BasicBlock> PMType;
 
+  virtual ~BasicBlockPassManager() {}
+  
   // getPMName() - Return the name of the unit the PassManager operates on for
   // debugging.
   virtual const char *getPMName() const { return "BasicBlock"; }
@@ -719,6 +721,8 @@ public:
   // PMType - The type of the passmanager that subclasses this class
   typedef PassManagerT<Function> PMType;
   
+  virtual ~FunctionPassManagerT() {}
+
   // getPMName() - Return the name of the unit the PassManager operates on for
   // debugging.
   virtual const char *getPMName() const { return "Function"; }
@@ -778,6 +782,8 @@ public:
   // ParentClass - The type of the parent PassManager...
   typedef AnalysisResolver ParentClass;
   
+  virtual ~ModulePassManager() {}
+
   // getPMName() - Return the name of the unit the PassManager operates on for
   // debugging.
   virtual const char *getPassName() const { return "Module Pass Manager"; }
