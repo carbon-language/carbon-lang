@@ -18,74 +18,52 @@ using namespace llvm;
 
 // Handle the Pass registration stuff necessary to use TargetData's.
 namespace {
-  RegisterPass<MachineDebugInfo> X("machinedebuginfo", "Debug Information",
-                                  PassInfo::Analysis | PassInfo::Optimization);
+  RegisterPass<MachineDebugInfo> X("machinedebuginfo", "Debug Information");
+}
+  
+/// doInitialization - Initialize the debug state for a new module.
+///
+bool MachineDebugInfo::doInitialization() {
+  return false;
 }
 
-namespace llvm {
+/// doFinalization - Tear down the debug state after completion of a module.
+///
+bool MachineDebugInfo::doFinalization() {
+  return false;
+}
+
+/// getUniqueSourceID - Register a source file with debug info.  Returns an id.
+///
+unsigned MachineDebugInfo::getUniqueSourceID(const std::string &fname,
+                                             const std::string &dirname) {
+  // Compose a key
+  const std::string path = dirname + "/" + fname;
+  // Check if the source file is already recorded
+  std::map<std::string, unsigned>::iterator
+      SMI = SourceMap.lower_bound(path);
+  // If already there return existing id
+  if (SMI != SourceMap.end() && SMI->first == path) return SMI->second;
+  // Bump up the count
+  ++SourceCount;
+  // Record the count
+  SourceMap.insert(SMI, std::make_pair(path, SourceCount));
+  // Return id
+  return SourceCount;
+}
+
+/// getSourceFiles - Return a vector of files.  Vector index + 1 equals id.
+///
+std::vector<std::string> MachineDebugInfo::getSourceFiles() const {
+  std::vector<std::string> Sources(SourceCount);
   
-  /// DebugInfo - Keep track of debug information for the function.
-  ///
-  // FIXME - making it global until we can find a proper place to hang it from.
-  MachineDebugInfo *DebugInfo;
-
-  // FIXME - temporary hack until we can find a place to hand debug info from.
-  ModulePass *createDebugInfoPass() {
-    if (!DebugInfo) DebugInfo = new MachineDebugInfo();
-    return (ModulePass *)DebugInfo;
+  for (std::map<std::string, unsigned>::const_iterator SMI = SourceMap.begin(),
+                                                       E = SourceMap.end();
+                                                       SMI != E; SMI++) {
+    unsigned Index = SMI->second - 1;
+    const std::string &Path = SMI->first;
+    Sources[Index] = Path;
   }
-  
-  /// getDebugInfo - Returns the DebugInfo.
-  MachineDebugInfo &getMachineDebugInfo() {
-    assert(DebugInfo && "DebugInfo pass not created");
-    return *DebugInfo;
-  }
-
-  /// doInitialization - Initialize the debug state for a new module.
-  ///
-  bool MachineDebugInfo::doInitialization() {
-    return true;
-  }
-
-  /// doFinalization - Tear down the debug state after completion of a module.
-  ///
-  bool MachineDebugInfo::doFinalization() {
-    
-    return true;
-  }
-
-  /// RecordSource - Register a source file with debug info.  Returns an id.
-  ///
-  unsigned MachineDebugInfo::RecordSource(std::string fname,
-                                          std::string dirname) {
-    // Compose a key
-    std::string path = dirname + "/" + fname;
-    // Check if the source file is already recorded
-    StrIntMapIter SMI = SourceMap.find(path);
-    // If already there return existing id
-    if (SMI != SourceMap.end()) return SMI->second;
-    // Bump up the count
-    ++SourceCount;
-    // Record the count
-    SourceMap[path] = SourceCount;
-    // Return id
-    return SourceCount;
-  }
-
-  /// getSourceFiles - Return a vector of files.  Vector index + 1 equals id.
-  ///
-  std::vector<std::string> MachineDebugInfo::getSourceFiles() {
-    std::vector<std::string> Sources(SourceCount);
-    
-    for (StrIntMapIter SMI = SourceMap.begin(), E = SourceMap.end(); SMI != E;
-                       SMI++) {
-      unsigned Index = SMI->second - 1;
-      std::string Path = SMI->first;
-      Sources[Index] = Path;
-    }
-    return Sources;
-  }
-
-
-};
+  return Sources;
+}
 

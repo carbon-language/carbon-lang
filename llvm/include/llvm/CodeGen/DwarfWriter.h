@@ -14,8 +14,7 @@
 #ifndef LLVM_CODEGEN_DWARFPRINTER_H
 #define LLVM_CODEGEN_DWARFPRINTER_H
 
-#include <iostream>
-#include "llvm/CodeGen/MachineDebugInfo.h"
+#include <iosfwd>
 
 namespace llvm {
 
@@ -429,6 +428,7 @@ namespace llvm {
   // Forward declarations.
   //
   class AsmPrinter;
+  class MachineDebugInfo;
   
   //===--------------------------------------------------------------------===//
   // DwarfWriter - emits dwarf debug and exception handling directives.
@@ -447,11 +447,27 @@ namespace llvm {
     
     /// DebugInfo - Collected debug information.
     ///
-    MachineDebugInfo &DebugInfo;
+    MachineDebugInfo *DebugInfo;
     
+    /// didInitial - Flag to indicate if initial emission has been done.
+    ///
+    bool didInitial;
+    
+    //===------------------------------------------------------------------===//
+    // Properties to be set by the derived class ctor, used to configure the
+    // dwarf writer.
+
     /// hasLEB128 - True if target asm supports leb128 directives.
     ///
     bool hasLEB128; /// Defaults to false.
+    
+    /// hasDotLoc - True if target asm supports .loc directives.
+    ///
+    bool hasDotLoc; /// Defaults to false.
+    
+    /// hasDotFile - True if target asm supports .file directives.
+    ///
+    bool hasDotFile; /// Defaults to false.
     
     /// needsSet - True if target asm can't compute addresses on data
     /// directives.
@@ -469,94 +485,89 @@ namespace llvm {
     ///
     const char *DwarfLineSection; /// Defaults to ".debug_line".
 
+    //===------------------------------------------------------------------===//
+
   public:
     
     // Ctor.
-    DwarfWriter(std::ostream &o, AsmPrinter *ap, MachineDebugInfo &di)
+    DwarfWriter(std::ostream &o, AsmPrinter *ap)
     : O(o)
     , Asm(ap)
-    , DebugInfo(di)
+    , DebugInfo(NULL)
+    , didInitial(false)
     , hasLEB128(false)
+    , hasDotLoc(false)
+    , hasDotFile(false)
     , needsSet(false)
     , DwarfAbbrevSection(".debug_abbrev")
     , DwarfInfoSection(".debug_info")
     , DwarfLineSection(".debug_line")
     {}
     
+    /// SetDebugInfo - Set DebugInfo at when it's know that pass manager
+    /// has created it.
+    void SetDebugInfo(MachineDebugInfo *di) { DebugInfo = di; }
+    
     /// EmitHex - Emit a hexidecimal string to the output stream.
     ///
-    void EmitHex(unsigned Value) {
-      O << "0x"
-        << std::hex
-        << Value
-        << std::dec;
-    }
+    void EmitHex(unsigned Value) const;
     
     /// EmitComment - Emit a simple string comment.
     ///
-    void EmitComment(const char *Comment) {
-      O << "\t"
-        << Asm->getCommentString()
-        << " "
-        << Comment
-        << "\n";
-    }
+    void EmitComment(const char *Comment) const;
 
     /// EmitULEB128 - Emit a series of hexidecimal values (separated by commas)
     /// representing an unsigned leb128 value.
     ///
-    void EmitULEB128(unsigned Value) {
-      do {
-        unsigned Byte = Value & 0x7f;
-        Value >>= 7;
-        if (Value) Byte |= 0x80;
-        EmitHex(Byte);
-        if (Value) O << ", ";
-      } while (Value);
-    }
+    void EmitULEB128(unsigned Value) const;
 
     /// EmitSLEB128 - Emit a series of hexidecimal values (separated by commas)
     /// representing a signed leb128 value.
     ///
-    void EmitSLEB128(int Value) {
-      int Sign = Value >> (8 * sizeof(Value) - 1);
-      bool IsMore;
-      
-      do {
-        unsigned Byte = Value & 0x7f;
-        Value >>= 7;
-        IsMore = Value != Sign || ((Byte ^ Sign) & 0x40) != 0;
-        if (IsMore) Byte |= 0x80;
-        EmitHex(Byte);
-        if (IsMore) O << ", ";
-      } while (IsMore);
-    }
+    void EmitSLEB128(int Value) const;
     
     /// EmitLabelName - Emit label name for internal use by dwarf.
     ///
-    void EmitLabelName(const char *Tag, int Num) {
-      O << Asm->getPrivateGlobalPrefix()
-        << "debug_"
-        << Tag
-        << Num;
-    }
+    void EmitLabelName(const char *Tag, int Num) const;
     
     /// EmitLabel - Emit location label for internal use by dwarf.
     ///
-    void EmitLabel(const char *Tag, int Num) {
-      EmitLabelName(Tag, Num);
-      O << ":\n";
-    }
+    void EmitLabel(const char *Tag, int Num) const;
     
-    // Defined elsewhere
+    /// EmitULEB128Bytes - Emit an assembler byte data directive to compose an
+    /// unsigned leb128 value.  Comment is added to the end of the directive if
+    /// DwarfVerbose is true (should not contain any newlines.)
+    ///
+    void EmitULEB128Bytes(unsigned Value, const char *Comment) const;
+    
+    /// EmitSLEB128Bytes - Emit an assembler byte data directive to compose a
+    /// signed leb128 value.  Comment is added to the end of the directive if
+    /// DwarfVerbose is true (should not contain any newlines.)
+    ///
+    void EmitSLEB128Bytes(int Value, const char *Comment) const;
+    
+    /// EmitInitial - Emit initial dwarf declarations.
+    ///
+    void EmitInitial() const;
+    
+    /// ShouldEmitDwarf - Determine if dwarf declarations should be made.
+    ///
+    bool ShouldEmitDwarf();
 
-    void EmitULEB128Bytes(unsigned Value, std::string Comment);
-    void EmitSLEB128Bytes(int Value, std::string Comment);
-
+    /// BeginModule - Emit all dwarf sections that should come prior to the
+    /// content.
     void BeginModule();
+    
+    /// EndModule - Emit all dwarf sections that should come after the content.
+    ///
     void EndModule();
     
+    /// BeginFunction - Emit pre-function debug information.
+    ///
     void BeginFunction();
+    
+    /// EndFunction - Emit post-function debug information.
+    ///
     void EndFunction();
   };
   

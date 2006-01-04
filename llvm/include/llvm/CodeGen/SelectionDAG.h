@@ -25,6 +25,7 @@
 namespace llvm {
   class TargetLowering;
   class TargetMachine;
+  class MachineDebugInfo;
   class MachineFunction;
 
 /// SelectionDAG class - This is used to represent a portion of an LLVM function
@@ -41,6 +42,7 @@ namespace llvm {
 class SelectionDAG {
   TargetLowering &TLI;
   MachineFunction &MF;
+  MachineDebugInfo *DI;
 
   // Root - The root of the entire DAG.  EntryNode - The starting token.
   SDOperand Root, EntryNode;
@@ -52,7 +54,8 @@ class SelectionDAG {
   std::map<std::pair<const Value*, int>, SDNode*> ValueNodes;
 
 public:
-  SelectionDAG(TargetLowering &tli, MachineFunction &mf) : TLI(tli), MF(mf) {
+  SelectionDAG(TargetLowering &tli, MachineFunction &mf, MachineDebugInfo *di)
+  : TLI(tli), MF(mf), DI(di) {
     EntryNode = Root = getNode(ISD::EntryToken, MVT::Other);
   }
   ~SelectionDAG();
@@ -60,6 +63,7 @@ public:
   MachineFunction &getMachineFunction() const { return MF; }
   const TargetMachine &getTarget() const;
   TargetLowering &getTargetLoweringInfo() const { return TLI; }
+  MachineDebugInfo *getMachineDebugInfo() const { return DI; }
 
   /// viewGraph - Pop up a ghostview window with the DAG rendered using 'dot'.
   ///

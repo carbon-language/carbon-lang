@@ -239,9 +239,6 @@ int main(int argc, char **argv) {
       }
     }
     
-    // Set up collection of debug information
-    Passes.add(createDebugInfoPass());
-
     // Ask the target to add backend passes as necessary.
     if (Target.addPassesToEmitFile(Passes, *Out, FileType, Fast)) {
       std::cerr << argv[0] << ": target '" << Target.getName()

@@ -204,16 +204,16 @@ namespace {
     
     virtual bool runOnMachineFunction(MachineFunction &F) = 0;
     virtual bool doFinalization(Module &M) = 0;
+    
   };
 
   /// DarwinDwarfWriter - Dwarf debug info writer customized for Darwin/Mac OS X
   ///
   struct DarwinDwarfWriter : public DwarfWriter {
     // Ctor.
-    DarwinDwarfWriter(std::ostream &o, AsmPrinter *ap, MachineDebugInfo &di)
-    : DwarfWriter(o, ap, di)
+    DarwinDwarfWriter(std::ostream &o, AsmPrinter *ap)
+    : DwarfWriter(o, ap)
     {
-      hasLEB128 = false;
       needsSet = true;
       DwarfAbbrevSection = ".section __DWARFA,__debug_abbrev,regular,debug";
       DwarfInfoSection = ".section __DWARFA,__debug_info,regular,debug";
@@ -229,9 +229,7 @@ namespace {
     DarwinDwarfWriter DW;
 
     DarwinAsmPrinter(std::ostream &O, TargetMachine &TM)
-      : PPCAsmPrinter(O, TM),
-        // FIXME - MachineDebugInfo needs a proper location
-        DW(O, this, getMachineDebugInfo())      
+      : PPCAsmPrinter(O, TM), DW(O, this)      
       {
       CommentString = ";";
       GlobalPrefix = "_";
@@ -252,6 +250,11 @@ namespace {
     bool runOnMachineFunction(MachineFunction &F);
     bool doInitialization(Module &M);
     bool doFinalization(Module &M);
+    
+    void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.addRequired<MachineDebugInfo>();
+    }
+
   };
 
   /// AIXAsmPrinter - PowerPC assembly printer, customized for AIX
@@ -483,6 +486,7 @@ bool DarwinAsmPrinter::doInitialization(Module &M) {
   Mang->setUseQuotes(true);
   
   // Emit initial debug information.
+  DW.SetDebugInfo(getAnalysisToUpdate<MachineDebugInfo>());
   DW.BeginModule();
   return false;
 }
@@ -613,7 +617,7 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
   return false; // success
 }
 
-/// runOnMachineFunction - This uses the printMachineInstruction()
+/// runOnMachineFunction - This uses the e()
 /// method to print assembly for each instruction.
 ///
 bool AIXAsmPrinter::runOnMachineFunction(MachineFunction &MF) {

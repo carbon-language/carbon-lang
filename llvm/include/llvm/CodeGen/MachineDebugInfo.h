@@ -28,11 +28,7 @@ namespace llvm {
 ///
 class MachineDebugInfo : public ImmutablePass {
 private:
-  // convenience types
-  typedef std::map<std::string, unsigned> StrIntMap;
-  typedef StrIntMap::iterator StrIntMapIter;
-  
-  StrIntMap SourceMap;                  // Map of source file path to id
+  std::map<std::string, unsigned> SourceMap; // Map of source file path to id
   unsigned SourceCount;                 // Number of source files (used to
                                         // generate id)
   unsigned UniqueID;                    // Number used to unique labels used
@@ -50,25 +46,25 @@ public:
   /// hasInfo - Returns true if debug info is present.
   ///
   // FIXME - need scheme to suppress debug output.
-  bool hasInfo() { return true; }
+  bool hasInfo() const { return SourceCount != 0; }
   
-  /// NextUniqueID - Returns a unique number for labels used by debugger.
+  /// getNextUniqueID - Returns a unique number for labels used by debugger.
   ///
-  unsigned NextUniqueID() { return UniqueID++; }
+  unsigned getNextUniqueID() { return UniqueID++; }
   
   bool doInitialization();
   bool doFinalization();
-  unsigned RecordSource(std::string fname, std::string dirname);
-  std::vector<std::string> getSourceFiles();
+  
+  /// getUniqueSourceID - Register a source file with debug info. Returns an id.
+  ///
+  unsigned getUniqueSourceID(const std::string &fname, 
+                             const std::string &dirname);
+  
+  /// getSourceFiles - Return a vector of files.  Vector index + 1 equals id.
+  ///
+  std::vector<std::string> getSourceFiles() const;
   
 }; // End class MachineDebugInfo
-//===----------------------------------------------------------------------===//
-
-// FIXME - temporary hack until we can find a place to hang debug info from.
-MachineDebugInfo &getMachineDebugInfo();
-
-// FIXME - temporary hack until we can find a place to hand debug info from.
-ModulePass *createDebugInfoPass();
 
 } // End llvm namespace
 

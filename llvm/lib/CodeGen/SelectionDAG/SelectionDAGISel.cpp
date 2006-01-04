@@ -21,6 +21,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/CodeGen/IntrinsicLowering.h"
+#include "llvm/CodeGen/MachineDebugInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
@@ -1640,7 +1641,7 @@ void SelectionDAGISel::BuildSelectionDAG(SelectionDAG &DAG, BasicBlock *LLVMBB,
 
 void SelectionDAGISel::SelectBasicBlock(BasicBlock *LLVMBB, MachineFunction &MF,
                                         FunctionLoweringInfo &FuncInfo) {
-  SelectionDAG DAG(TLI, MF);
+  SelectionDAG DAG(TLI, MF, getAnalysisToUpdate<MachineDebugInfo>());
   CurDAG = &DAG;
   std::vector<std::pair<MachineInstr*, unsigned> > PHINodesToUpdate;
 

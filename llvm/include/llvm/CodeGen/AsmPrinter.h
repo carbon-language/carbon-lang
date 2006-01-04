@@ -36,7 +36,7 @@ namespace llvm {
     ///
     unsigned FunctionNumber;
 
-  protected:
+  public:
     /// Output stream on which we're printing assembly code.
     ///
     std::ostream &O;
@@ -162,7 +162,8 @@ namespace llvm {
     /// HasDotTypeDotSizeDirective - True if the target has .type and .size
     /// directives, this is true for most ELF targets.
     bool HasDotTypeDotSizeDirective;     // Defaults to true.
-
+  
+  protected:
     AsmPrinter(std::ostream &o, TargetMachine &TM);
     
   public:
@@ -194,7 +195,7 @@ namespace llvm {
     /// doFinalization - Shut down the asmprinter.  If you override this in your
     /// pass, you must make sure to call it explicitly.
     bool doFinalization(Module &M);
-
+    
     /// SetupMachineFunction - This should be called when a new MachineFunction
     /// is being processed from runOnMachineFunction.
     void SetupMachineFunction(MachineFunction &MF);
@@ -231,43 +232,7 @@ namespace llvm {
     
   private:
     void EmitXXStructorList(Constant *List);
-    
-  public:
-    /// getCommentString - get the comment string.
-    ///
-    const char *getCommentString() {
-      return CommentString;
-    }
-    
-    /// getData8bitsDirective - get the 8-bit data directive string.
-    ///
-    const char *getData8bitsDirective() {
-      return Data8bitsDirective;
-    }
-    
-    /// getData16bitsDirective - get the 16-bit data directive string.
-    ///
-    const char *getData16bitsDirective() {
-      return Data16bitsDirective;
-    }
-    
-    /// getData32bitsDirective - get the 32-bit data directive string.
-    ///
-    const char *getData32bitsDirective() {
-      return Data32bitsDirective;
-    }
-    
-    /// getData64bitsDirective - get the 64-bit data directive string.
-    ///
-    const char *getData64bitsDirective() {
-      return Data64bitsDirective;
-    }
-    
-    /// getPrivateGlobalPrefix - get private label prefix.
-    ///
-    const char *getPrivateGlobalPrefix() {
-      return PrivateGlobalPrefix;
-    }
+
   };
 }
 

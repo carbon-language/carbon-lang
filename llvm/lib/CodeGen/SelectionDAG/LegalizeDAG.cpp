@@ -618,8 +618,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     case TargetLowering::Promote:
     default: assert(0 && "This action is not supported yet!");
     case TargetLowering::Expand: {
-      if (TLI.isOperationLegal(ISD::DEBUG_LOC, MVT::Other)) {
-        MachineDebugInfo &DebugInfo = getMachineDebugInfo();
+      MachineDebugInfo *DebugInfo = DAG.getMachineDebugInfo();
+      if (TLI.isOperationLegal(ISD::DEBUG_LOC, MVT::Other) && DebugInfo) {
         std::vector<SDOperand> Ops;
         Ops.push_back(Tmp1);  // chain
         Ops.push_back(Node->getOperand(1));  // line #
@@ -628,9 +628,9 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
           cast<StringSDNode>(Node->getOperand(3))->getValue();
         const std::string &dirname = 
           cast<StringSDNode>(Node->getOperand(4))->getValue();
-        unsigned srcfile = DebugInfo.RecordSource(fname, dirname);
+        unsigned srcfile = DebugInfo->getUniqueSourceID(fname, dirname);
         Ops.push_back(DAG.getConstant(srcfile, MVT::i32));  // source file id
-        unsigned id = DebugInfo.NextUniqueID();
+        unsigned id = DebugInfo->getNextUniqueID();
         Ops.push_back(DAG.getConstant(id, MVT::i32));  // label id
         Result = DAG.getNode(ISD::DEBUG_LOC, MVT::Other, Ops);
       } else {
