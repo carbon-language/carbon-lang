@@ -98,6 +98,17 @@ bool PNE::EliminatePHINodes(MachineFunction &MF, MachineBasicBlock &MBB) {
   return true;
 }
 
+/// InstructionUsesRegister - Return true if the specified machine instr has a
+/// use of the specified register.
+static bool InstructionUsesRegister(MachineInstr *MI, unsigned SrcReg) {
+  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i)
+    if (MI->getOperand(0).isRegister() &&
+        MI->getOperand(0).getReg() == SrcReg &&
+        MI->getOperand(0).isUse())
+      return true;
+  return false;
+}
+
 /// LowerAtomicPHINode - Lower the PHI node at the top of the specified block,
 /// under the assuption that it needs to be lowered in a way that supports
 /// atomic execution of PHIs.  This lowering method is always correct all of the
@@ -262,12 +273,37 @@ void PNE::LowerAtomicPHINode(MachineBasicBlock &MBB,
     }        
 
     // Okay, if we now know that the value is not live out of the block,
-    // we can add a kill marker to the copy we inserted saying that it
-    // kills the incoming value!
-    //
+    // we can add a kill marker in this block saying that it kills the incoming
+    // value!
     if (!ValueIsLive) {
-      MachineBasicBlock::iterator Prev = prior(I);
-      LV->addVirtualRegisterKilled(SrcReg, Prev);
+      // In our final twist, we have to decide which instruction kills the
+      // register.  In most cases this is the copy, however, the first 
+      // terminator instruction at the end of the block may also use the value.
+      // In this case, we should mark *it* as being the killing block, not the
+      // copy.
+      bool FirstTerminatorUsesValue = false;
+      if (I != opBlock.end()) {
+        FirstTerminatorUsesValue = InstructionUsesRegister(I, SrcReg);
+      
+        // Check that no other terminators use values.
+#ifndef NDEBUG
+        for (MachineBasicBlock::iterator TI = next(I); TI != opBlock.end();
+             ++TI) {
+          assert(!InstructionUsesRegister(TI, SrcReg) &&
+                 "Terminator instructions cannot use virtual registers unless"
+                 "they are the first terminator in a block!");
+        }
+#endif
+      }
+      
+      MachineBasicBlock::iterator KillInst;
+      if (!FirstTerminatorUsesValue) 
+        KillInst = prior(I);
+      else
+        KillInst = I;
+      
+      // Finally, mark it killed.
+      LV->addVirtualRegisterKilled(SrcReg, KillInst);
 
       // This vreg no longer lives all of the way through opBlock.
       unsigned opBlockNum = opBlock.getNumber();
