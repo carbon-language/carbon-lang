@@ -2466,6 +2466,62 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
   std::string InstNS = Target.inst_begin()->second.Namespace;
   if (!InstNS.empty()) InstNS += "::";
   
+  // Group the patterns by their top-level opcodes.
+  std::map<Record*, std::vector<PatternToMatch*>,
+    CompareByRecordName> PatternsByOpcode;
+  for (unsigned i = 0, e = PatternsToMatch.size(); i != e; ++i) {
+    TreePatternNode *Node = PatternsToMatch[i].getSrcPattern();
+    if (!Node->isLeaf()) {
+      PatternsByOpcode[Node->getOperator()].push_back(&PatternsToMatch[i]);
+    } else {
+      const ComplexPattern *CP;
+      if (IntInit *II = 
+          dynamic_cast<IntInit*>(Node->getLeafValue())) {
+        PatternsByOpcode[getSDNodeNamed("imm")].push_back(&PatternsToMatch[i]);
+      } else if ((CP = NodeGetComplexPattern(Node, *this))) {
+        std::vector<Record*> OpNodes = CP->getRootNodes();
+        for (unsigned j = 0, e = OpNodes.size(); j != e; j++) {
+          PatternsByOpcode[OpNodes[j]].insert(PatternsByOpcode[OpNodes[j]].begin(),
+                                              &PatternsToMatch[i]);
+        }
+      } else {
+        std::cerr << "Unrecognized opcode '";
+        Node->dump();
+        std::cerr << "' on tree pattern '";
+        std::cerr << PatternsToMatch[i].getDstPattern()->getOperator()->getName();
+        std::cerr << "'!\n";
+        exit(1);
+      }
+    }
+  }
+  
+  // Emit one Select_* method for each top-level opcode.  We do this instead of
+  // emitting one giant switch statement to support compilers where this will
+  // result in the recursive functions taking less stack space.
+  for (std::map<Record*, std::vector<PatternToMatch*>,
+       CompareByRecordName>::iterator PBOI = PatternsByOpcode.begin(),
+       E = PatternsByOpcode.end(); PBOI != E; ++PBOI) {
+    OS << "SDOperand Select_" << PBOI->first->getName() << "(SDOperand N) {\n";
+    
+    const SDNodeInfo &OpcodeInfo = getSDNodeInfo(PBOI->first);
+    std::vector<PatternToMatch*> &Patterns = PBOI->second;
+    
+    // We want to emit all of the matching code now.  However, we want to emit
+    // the matches in order of minimal cost.  Sort the patterns so the least
+    // cost one is at the start.
+    std::stable_sort(Patterns.begin(), Patterns.end(),
+                     PatternSortingPredicate(*this));
+    
+    for (unsigned i = 0, e = Patterns.size(); i != e; ++i)
+      EmitCodeForPattern(*Patterns[i], OS);
+    
+    OS << "  std::cerr << \"Cannot yet select: \";\n"
+       << "  N.Val->dump(CurDAG);\n"
+       << "  std::cerr << '\\n';\n"
+       << "  abort();\n"
+       << "}\n\n";
+  }
+  
   // Emit boilerplate.
   OS << "// The main instruction selector code.\n"
      << "SDOperand SelectCode(SDOperand N) {\n"
@@ -2544,55 +2600,16 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
      << "    }\n"
      << "  }\n";
     
-  // Group the patterns by their top-level opcodes.
-  std::map<Record*, std::vector<PatternToMatch*>,
-           CompareByRecordName> PatternsByOpcode;
-  for (unsigned i = 0, e = PatternsToMatch.size(); i != e; ++i) {
-    TreePatternNode *Node = PatternsToMatch[i].getSrcPattern();
-    if (!Node->isLeaf()) {
-      PatternsByOpcode[Node->getOperator()].push_back(&PatternsToMatch[i]);
-    } else {
-      const ComplexPattern *CP;
-      if (IntInit *II = 
-             dynamic_cast<IntInit*>(Node->getLeafValue())) {
-        PatternsByOpcode[getSDNodeNamed("imm")].push_back(&PatternsToMatch[i]);
-      } else if ((CP = NodeGetComplexPattern(Node, *this))) {
-        std::vector<Record*> OpNodes = CP->getRootNodes();
-        for (unsigned j = 0, e = OpNodes.size(); j != e; j++) {
-          PatternsByOpcode[OpNodes[j]].insert(PatternsByOpcode[OpNodes[j]].begin(),
-                                              &PatternsToMatch[i]);
-        }
-      } else {
-        std::cerr << "Unrecognized opcode '";
-        Node->dump();
-        std::cerr << "' on tree pattern '";
-        std::cerr << PatternsToMatch[i].getDstPattern()->getOperator()->getName();
-        std::cerr << "'!\n";
-        exit(1);
-      }
-    }
-  }
-  
-  // Loop over all of the case statements.
+  // Loop over all of the case statements, emiting a call to each method we
+  // emitted above.
   for (std::map<Record*, std::vector<PatternToMatch*>,
                 CompareByRecordName>::iterator PBOI = PatternsByOpcode.begin(),
        E = PatternsByOpcode.end(); PBOI != E; ++PBOI) {
     const SDNodeInfo &OpcodeInfo = getSDNodeInfo(PBOI->first);
-    std::vector<PatternToMatch*> &Patterns = PBOI->second;
-    
-    OS << "  case " << OpcodeInfo.getEnumName() << ":\n";
-
-    // We want to emit all of the matching code now.  However, we want to emit
-    // the matches in order of minimal cost.  Sort the patterns so the least
-    // cost one is at the start.
-    std::stable_sort(Patterns.begin(), Patterns.end(),
-                     PatternSortingPredicate(*this));
-    
-    for (unsigned i = 0, e = Patterns.size(); i != e; ++i)
-      EmitCodeForPattern(*Patterns[i], OS);
-    OS << "    break;\n\n";
+    OS << "  case " << OpcodeInfo.getEnumName() << ": "
+       << std::string(std::max(0, int(16-OpcodeInfo.getEnumName().size())), ' ')
+       << "return Select_" << PBOI->first->getName() << "(N);\n";
   }
-  
 
   OS << "  } // end of big switch.\n\n"
      << "  std::cerr << \"Cannot yet select: \";\n"
