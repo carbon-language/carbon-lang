@@ -25,6 +25,7 @@
 #include "llvm/Module.h"
 #include "llvm/Assembly/Writer.h"
 #include "llvm/CodeGen/AsmPrinter.h"
+#include "llvm/CodeGen/DwarfWriter.h"
 #include "llvm/CodeGen/MachineDebugInfo.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineInstr.h"
@@ -205,13 +206,33 @@ namespace {
     virtual bool doFinalization(Module &M) = 0;
   };
 
+  /// DarwinDwarfWriter - Dwarf debug info writer customized for Darwin/Mac OS X
+  ///
+  struct DarwinDwarfWriter : public DwarfWriter {
+    // Ctor.
+    DarwinDwarfWriter(std::ostream &o, AsmPrinter *ap, MachineDebugInfo &di)
+    : DwarfWriter(o, ap, di)
+    {
+      hasLEB128 = false;
+      needsSet = true;
+      DwarfAbbrevSection = ".section __DWARFA,__debug_abbrev,regular,debug";
+      DwarfInfoSection = ".section __DWARFA,__debug_info,regular,debug";
+      DwarfLineSection = ".section __DWARFA,__debug_line,regular,debug";
+    }
+  };
+
   /// DarwinAsmPrinter - PowerPC assembly printer, customized for Darwin/Mac OS
   /// X
   ///
   struct DarwinAsmPrinter : public PPCAsmPrinter {
+  
+    DarwinDwarfWriter DW;
 
     DarwinAsmPrinter(std::ostream &O, TargetMachine &TM)
-      : PPCAsmPrinter(O, TM) {
+      : PPCAsmPrinter(O, TM),
+        // FIXME - MachineDebugInfo needs a proper location
+        DW(O, this, getMachineDebugInfo())      
+      {
       CommentString = ";";
       GlobalPrefix = "_";
       PrivateGlobalPrefix = "L";     // Marker for constant pool idxs
@@ -397,12 +418,8 @@ bool DarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   SetupMachineFunction(MF);
   O << "\n\n";
   
-  // Print out dwarf file info
-  MachineDebugInfo &DebugInfo = MF.getDebugInfo();
-  std::vector<std::string> Sources = DebugInfo.getSourceFiles();
-  for (unsigned i = 0, N = Sources.size(); i < N; i++) {
-    O << "\t; .file\t" << (i + 1) << "," << "\"" << Sources[i]  << "\"" << "\n";
-  }
+  // Emit pre-function debug information.
+  DW.BeginFunction();
 
   // Print out constants referenced by the function
   EmitConstantPool(MF.getConstantPool());
@@ -449,6 +466,9 @@ bool DarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
     }
   }
 
+  // Emit post-function debug information.
+  DW.EndFunction();
+
   // We didn't modify anything.
   return false;
 }
@@ -461,6 +481,9 @@ bool DarwinAsmPrinter::doInitialization(Module &M) {
   
   // Darwin wants symbols to be quoted if they have complex names.
   Mang->setUseQuotes(true);
+  
+  // Emit initial debug information.
+  DW.BeginModule();
   return false;
 }
 
@@ -583,6 +606,9 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
   // code that does this, it is always safe to set.
   O << "\t.subsections_via_symbols\n";
 
+  // Emit initial debug information.
+  DW.EndModule();
+
   AsmPrinter::doFinalization(M);
   return false; // success
 }
@@ -592,7 +618,7 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
 ///
 bool AIXAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   SetupMachineFunction(MF);
-
+  
   // Print out constants referenced by the function
   EmitConstantPool(MF.getConstantPool());
 

@@ -14,11 +14,14 @@
 #ifndef LLVM_CODEGEN_DWARFPRINTER_H
 #define LLVM_CODEGEN_DWARFPRINTER_H
 
+#include <iostream>
+#include "llvm/CodeGen/MachineDebugInfo.h"
+
 namespace llvm {
 
-  //===----------------------------------------------------------------------===//
+  //===--------------------------------------------------------------------===//
   // Dwarf constants as gleaned from the DWARF Debugging Information Format V.3
-  // reference manual http://dwarf.freestandards.org. 
+  // reference manual http://dwarf.freestandards.org .
   //
   enum dwarf_constants {
    // Tags
@@ -422,6 +425,141 @@ namespace llvm {
     DW_CFA_lo_user = 0x1c,
     DW_CFA_hi_user = 0x3f
   };
+  
+  // Forward declarations.
+  //
+  class AsmPrinter;
+  
+  //===--------------------------------------------------------------------===//
+  // DwarfWriter - emits dwarf debug and exception handling directives.
+  //
+  class DwarfWriter {
+  
+  protected:
+  
+    /// O - Stream to .s file.
+    ///
+    std::ostream &O;
+
+    /// Asm - Target of dwarf emission.
+    ///
+    AsmPrinter *Asm;
+    
+    /// DebugInfo - Collected debug information.
+    ///
+    MachineDebugInfo &DebugInfo;
+    
+    /// hasLEB128 - True if target asm supports leb128 directives.
+    ///
+    bool hasLEB128; /// Defaults to false.
+    
+    /// needsSet - True if target asm can't compute addresses on data
+    /// directives.
+    bool needsSet; /// Defaults to false.
+    
+    /// DwarfAbbrevSection - section directive arg for dwarf abbrev.
+    ///
+    const char *DwarfAbbrevSection; /// Defaults to ".debug_abbrev".
+
+    /// DwarfInfoSection - section directive arg for dwarf info.
+    ///
+    const char *DwarfInfoSection; /// Defaults to ".debug_info".
+
+    /// DwarfLineSection - section directive arg for dwarf info.
+    ///
+    const char *DwarfLineSection; /// Defaults to ".debug_line".
+
+  public:
+    
+    // Ctor.
+    DwarfWriter(std::ostream &o, AsmPrinter *ap, MachineDebugInfo &di)
+    : O(o)
+    , Asm(ap)
+    , DebugInfo(di)
+    , hasLEB128(false)
+    , needsSet(false)
+    , DwarfAbbrevSection(".debug_abbrev")
+    , DwarfInfoSection(".debug_info")
+    , DwarfLineSection(".debug_line")
+    {}
+    
+    /// EmitHex - Emit a hexidecimal string to the output stream.
+    ///
+    void EmitHex(unsigned Value) {
+      O << "0x"
+        << std::hex
+        << Value
+        << std::dec;
+    }
+    
+    /// EmitComment - Emit a simple string comment.
+    ///
+    void EmitComment(const char *Comment) {
+      O << "\t"
+        << Asm->getCommentString()
+        << " "
+        << Comment
+        << "\n";
+    }
+
+    /// EmitULEB128 - Emit a series of hexidecimal values (separated by commas)
+    /// representing an unsigned leb128 value.
+    ///
+    void EmitULEB128(unsigned Value) {
+      do {
+        unsigned Byte = Value & 0x7f;
+        Value >>= 7;
+        if (Value) Byte |= 0x80;
+        EmitHex(Byte);
+        if (Value) O << ", ";
+      } while (Value);
+    }
+
+    /// EmitSLEB128 - Emit a series of hexidecimal values (separated by commas)
+    /// representing a signed leb128 value.
+    ///
+    void EmitSLEB128(int Value) {
+      int Sign = Value >> (8 * sizeof(Value) - 1);
+      bool IsMore;
+      
+      do {
+        unsigned Byte = Value & 0x7f;
+        Value >>= 7;
+        IsMore = Value != Sign || ((Byte ^ Sign) & 0x40) != 0;
+        if (IsMore) Byte |= 0x80;
+        EmitHex(Byte);
+        if (IsMore) O << ", ";
+      } while (IsMore);
+    }
+    
+    /// EmitLabelName - Emit label name for internal use by dwarf.
+    ///
+    void EmitLabelName(const char *Tag, int Num) {
+      O << Asm->getPrivateGlobalPrefix()
+        << "debug_"
+        << Tag
+        << Num;
+    }
+    
+    /// EmitLabel - Emit location label for internal use by dwarf.
+    ///
+    void EmitLabel(const char *Tag, int Num) {
+      EmitLabelName(Tag, Num);
+      O << ":\n";
+    }
+    
+    // Defined elsewhere
+
+    void EmitULEB128Bytes(unsigned Value, std::string Comment);
+    void EmitSLEB128Bytes(int Value, std::string Comment);
+
+    void BeginModule();
+    void EndModule();
+    
+    void BeginFunction();
+    void EndFunction();
+  };
+  
 
 } // end llvm namespace
 

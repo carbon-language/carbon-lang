@@ -80,7 +80,7 @@ bool PPCTargetMachine::addPassesToEmitFile(PassManager &PM,
                                            CodeGenFileType FileType,
                                            bool Fast) {
   if (FileType != TargetMachine::AssemblyFile) return true;
-
+  
   // Run loop strength reduction before anything else.
   if (!Fast) PM.add(createLoopStrengthReducePass());
 

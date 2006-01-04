@@ -16,6 +16,7 @@
 #include "llvm/Constants.h"
 #include "llvm/Module.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
+#include "llvm/CodeGen/MachineDebugInfo.h"
 #include "llvm/Support/Mangler.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Target/TargetMachine.h"

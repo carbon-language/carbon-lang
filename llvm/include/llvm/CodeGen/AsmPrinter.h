@@ -35,7 +35,7 @@ namespace llvm {
     /// IncrementFunctionNumber().
     ///
     unsigned FunctionNumber;
-    
+
   protected:
     /// Output stream on which we're printing assembly code.
     ///
@@ -165,6 +165,7 @@ namespace llvm {
 
     AsmPrinter(std::ostream &o, TargetMachine &TM);
     
+  public:
     /// SwitchSection - Switch to the specified section of the executable if we
     /// are not already in it!  If GV is non-null and if the global has an
     /// explicitly requested section, we switch to the section indicated for the
@@ -175,6 +176,7 @@ namespace llvm {
     ///
     void SwitchSection(const char *NewSection, const GlobalValue *GV);
 
+  protected:
     /// getFunctionNumber - Return a unique ID for the current function.
     ///
     unsigned getFunctionNumber() const { return FunctionNumber; }
@@ -229,6 +231,43 @@ namespace llvm {
     
   private:
     void EmitXXStructorList(Constant *List);
+    
+  public:
+    /// getCommentString - get the comment string.
+    ///
+    const char *getCommentString() {
+      return CommentString;
+    }
+    
+    /// getData8bitsDirective - get the 8-bit data directive string.
+    ///
+    const char *getData8bitsDirective() {
+      return Data8bitsDirective;
+    }
+    
+    /// getData16bitsDirective - get the 16-bit data directive string.
+    ///
+    const char *getData16bitsDirective() {
+      return Data16bitsDirective;
+    }
+    
+    /// getData32bitsDirective - get the 32-bit data directive string.
+    ///
+    const char *getData32bitsDirective() {
+      return Data32bitsDirective;
+    }
+    
+    /// getData64bitsDirective - get the 64-bit data directive string.
+    ///
+    const char *getData64bitsDirective() {
+      return Data64bitsDirective;
+    }
+    
+    /// getPrivateGlobalPrefix - get private label prefix.
+    ///
+    const char *getPrivateGlobalPrefix() {
+      return PrivateGlobalPrefix;
+    }
   };
 }
 
