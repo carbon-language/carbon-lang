@@ -139,6 +139,9 @@
 				RelativePath="..\..\lib\CodeGen\MachineCodeEmitter.cpp">
 			</File>
 			<File
+				RelativePath="..\..\lib\CodeGen\MachineDebugInfo.cpp">
+			</File>
+			<File
 				RelativePath="..\..\lib\CodeGen\MachineFunction.cpp">
 			</File>
 			<File
