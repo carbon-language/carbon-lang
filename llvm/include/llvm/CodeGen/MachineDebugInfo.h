@@ -47,6 +47,11 @@ public:
   {}
   ~MachineDebugInfo() { }
   
+  /// hasInfo - Returns true if debug info is present.
+  ///
+  // FIXME - need scheme to suppress debug output.
+  bool hasInfo() { return true; }
+  
   /// NextUniqueID - Returns a unique number for labels used by debugger.
   ///
   unsigned NextUniqueID() { return UniqueID++; }
