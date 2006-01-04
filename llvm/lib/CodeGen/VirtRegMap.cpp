@@ -393,6 +393,7 @@ void LocalSpiller::RewriteMBB(MachineBasicBlock &MBB, const VirtRegMap &VRM) {
       
       // Otherwise, reload it and remember that we have it.
       PhysReg = VRM.getPhys(VirtReg);
+      assert(PhysReg && "Must map virtreg to physreg!");
       const TargetRegisterClass* RC =
         MBB.getParent()->getSSARegMap()->getRegClass(VirtReg);
 
