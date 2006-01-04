@@ -619,7 +619,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     default: assert(0 && "This action is not supported yet!");
     case TargetLowering::Expand: {
       if (TLI.isOperationLegal(ISD::DEBUG_LOC, MVT::Other)) {
-        MachineDebugInfo &DebugInfo = DAG.getMachineFunction().getDebugInfo();
+        MachineDebugInfo &DebugInfo = getMachineDebugInfo();
         std::vector<SDOperand> Ops;
         Ops.push_back(Tmp1);  // chain
         Ops.push_back(Node->getOperand(1));  // line #
