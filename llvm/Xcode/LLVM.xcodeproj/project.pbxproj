@@ -113,6 +113,8 @@
 		CF490D890906A78C0072DB1C /* PPC.td */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = PPC.td; sourceTree = "<group>"; };
 		CF490E2F0907BBF80072DB1C /* SubtargetEmitter.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SubtargetEmitter.h; sourceTree = "<group>"; };
 		CF490E300907BBF80072DB1C /* SubtargetEmitter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SubtargetEmitter.cpp; sourceTree = "<group>"; };
+		CF6529A6095B21A8007F884E /* MachineDebugInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MachineDebugInfo.cpp; sourceTree = "<group>"; };
+		CF6B5AFD095C82C300D1EA42 /* DAGCombiner.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DAGCombiner.cpp; sourceTree = "<group>"; };
 		CF6F487109505E1500BC9E82 /* MachineDebugInfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MachineDebugInfo.h; sourceTree = "<group>"; };
 		CF9BCD0808C74DE0001E7011 /* SubtargetFeature.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SubtargetFeature.h; sourceTree = "<group>"; };
 		CF9BCD1508C75070001E7011 /* SubtargetFeature.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = SubtargetFeature.cpp; sourceTree = "<group>"; };
@@ -1136,6 +1138,7 @@
 				DE66ED7508ABEC2B00323D32 /* LiveVariables.cpp */,
 				DE66ED7608ABEC2B00323D32 /* MachineBasicBlock.cpp */,
 				DE66ED7708ABEC2B00323D32 /* MachineCodeEmitter.cpp */,
+				CF6529A6095B21A8007F884E /* MachineDebugInfo.cpp */,
 				DE66ED7808ABEC2B00323D32 /* MachineFunction.cpp */,
 				DE66ED7908ABEC2B00323D32 /* MachineInstr.cpp */,
 				DE66ED7B08ABEC2B00323D32 /* Passes.cpp */,
@@ -1158,6 +1161,7 @@
 		DE66ED8308ABEC2B00323D32 /* SelectionDAG */ = {
 			isa = PBXGroup;
 			children = (
+				CF6B5AFD095C82C300D1EA42 /* DAGCombiner.cpp */,
 				DE66ED9008ABEC2B00323D32 /* LegalizeDAG.cpp */,
 				DE694D9F08B51E0C0039C106 /* ScheduleDAG.cpp */,
 				DE66ED9208ABEC2B00323D32 /* SelectionDAG.cpp */,
