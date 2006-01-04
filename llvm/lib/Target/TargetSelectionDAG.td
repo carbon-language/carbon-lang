@@ -440,8 +440,8 @@ class ComplexPattern<ValueType ty, int numops, string fn, list<SDNode> roots = [
 //===----------------------------------------------------------------------===//
 // Dwarf support.
 //
-def SDT_dwarf_loc : SDTypeProfile<0, 3,
-                                    [SDTCisInt<0>, SDTCisInt<1>, SDTCisInt<2>]>;
+def SDT_dwarf_loc : SDTypeProfile<0, 4,
+                      [SDTCisInt<0>, SDTCisInt<1>, SDTCisInt<2>, SDTCisInt<3>]>;
 def dwarf_loc  : SDNode<"ISD::DEBUG_LOC", SDT_dwarf_loc,[SDNPHasChain]>;
 
 

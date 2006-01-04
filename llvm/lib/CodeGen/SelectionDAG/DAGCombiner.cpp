@@ -2117,7 +2117,8 @@ SDOperand DAGCombiner::visitDEBUGLOC(SDNode *N) {
     return DAG.getNode(ISD::DEBUG_LOC, MVT::Other, Chain.getOperand(0),
                                                    N->getOperand(1),
                                                    N->getOperand(2),
-                                                   N->getOperand(3));
+                                                   N->getOperand(3),
+                                                   N->getOperand(4));
   }
   
   return SDOperand();

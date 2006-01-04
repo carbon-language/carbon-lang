@@ -955,10 +955,11 @@ def V_SET0 : VXForm_setzero<1220, (ops VRRC:$vD),
 // DWARF Pseudo Instructions
 //
 
-def DWARF_LOC        : Pseudo<(ops i32imm:$line, i32imm:$col, i32imm:$file),
-                              "; .loc $file, $line, $col",
+def DWARF_LOC        : Pseudo<(ops i32imm:$line, i32imm:$col, i32imm:$file,
+                                   i32imm:$id),
+                              "; .loc $file, $line, $col\nLdebug_loc$id:",
                       [(dwarf_loc (i32 imm:$line), (i32 imm:$col),
-                                  (i32 imm:$file))]>;
+                                  (i32 imm:$file), (i32 imm:$id))]>;
 
 //===----------------------------------------------------------------------===//
 // PowerPC Instruction Patterns

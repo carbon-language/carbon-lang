@@ -50,6 +50,7 @@ namespace llvm {
   /// doFinalization - Tear down the debug state after completion of a module.
   ///
   bool MachineDebugInfo::doFinalization() {
+    
     return true;
   }
 
