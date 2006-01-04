@@ -68,6 +68,8 @@ public:
         }
       return false;
     }
+    
+    void dump() const;
   };
 
 private:
