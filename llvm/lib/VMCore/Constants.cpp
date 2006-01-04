@@ -1277,14 +1277,15 @@ Constant *ConstantExpr::get(unsigned Opcode, Constant *C1, Constant *C2) {
   case Instruction::Mul: case Instruction::Div:
   case Instruction::Rem:
     assert(C1->getType() == C2->getType() && "Op types should be identical!");
-    assert((C1->getType()->isInteger() || C1->getType()->isFloatingPoint()) &&
+    assert((C1->getType()->isInteger() || C1->getType()->isFloatingPoint() ||
+            isa<PackedType>(C1->getType())) &&
            "Tried to create an arithmetic operation on a non-arithmetic type!");
     break;
   case Instruction::And:
   case Instruction::Or:
   case Instruction::Xor:
     assert(C1->getType() == C2->getType() && "Op types should be identical!");
-    assert(C1->getType()->isIntegral() &&
+    assert((C1->getType()->isIntegral() || isa<PackedType>(C1->getType())) &&
            "Tried to create a logical operation on a non-integral type!");
     break;
   case Instruction::SetLT: case Instruction::SetGT: case Instruction::SetLE:
@@ -1294,7 +1295,7 @@ Constant *ConstantExpr::get(unsigned Opcode, Constant *C1, Constant *C2) {
   case Instruction::Shl:
   case Instruction::Shr:
     assert(C2->getType() == Type::UByteTy && "Shift should be by ubyte!");
-    assert(C1->getType()->isInteger() &&
+    assert((C1->getType()->isInteger() || isa<PackedType>(C1->getType())) &&
            "Tried to create a shift operation on a non-integer type!");
     break;
   default:
