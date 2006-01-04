@@ -2531,7 +2531,6 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
      << "    return N;   // Already selected.\n\n"
     << "  std::map<SDOperand, SDOperand>::iterator CGMI = CodeGenMap.find(N);\n"
      << "  if (CGMI != CodeGenMap.end()) return CGMI->second;\n"
-     << "  // Work arounds for GCC stack overflow bugs.\n"
      << "  switch (N.getOpcode()) {\n"
      << "  default: break;\n"
      << "  case ISD::EntryToken:       // These leaves remain the same.\n"
@@ -2607,7 +2606,7 @@ void DAGISelEmitter::EmitInstructionSelector(std::ostream &OS) {
        E = PatternsByOpcode.end(); PBOI != E; ++PBOI) {
     const SDNodeInfo &OpcodeInfo = getSDNodeInfo(PBOI->first);
     OS << "  case " << OpcodeInfo.getEnumName() << ": "
-       << std::string(std::max(0, int(16-OpcodeInfo.getEnumName().size())), ' ')
+       << std::string(std::max(0, int(24-OpcodeInfo.getEnumName().size())), ' ')
        << "return Select_" << PBOI->first->getName() << "(N);\n";
   }
 
