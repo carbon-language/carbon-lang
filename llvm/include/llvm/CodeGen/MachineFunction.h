@@ -114,10 +114,6 @@ class MachineFunction : private Annotation {
   std::vector<std::pair<unsigned, unsigned> > LiveIns;
   std::vector<unsigned> LiveOuts;
   
-  /// DebugInfo - Keep track of debug information for the function.
-  ///
-  MachineDebugInfo DebugInfo;
-
 public:
   MachineFunction(const Function *Fn, const TargetMachine &TM);
   ~MachineFunction();
@@ -218,11 +214,6 @@ public:
     return MBBNumbering.back();
   }
   
-  /// getDebugInfo - Returns the DebugInfo.
-  MachineDebugInfo &getDebugInfo() {
-    return DebugInfo;
-  }
-
   /// print - Print out the MachineFunction in a format suitable for debugging
   /// to the specified stream.
   ///
