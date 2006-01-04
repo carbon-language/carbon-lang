@@ -620,6 +620,7 @@ public:
     // Initialize the immutable pass...
     IP->initializePass();
   }
+
 };
 
 
@@ -659,7 +660,10 @@ public:
   virtual const char *getPMName() const { return "BasicBlock"; }
   
   virtual const char *getPassName() const { return "BasicBlock Pass Manager"; }
-
+  
+  virtual bool runOnBasicBlock(BasicBlock &BB);
+  
+  
   // TODO:Start absorbing PassManagerTraits<BasicBlock>
 };
 
@@ -682,7 +686,12 @@ public:
   // Implement the BasicBlockPass interface...
   virtual bool doInitialization(Module &M);
   virtual bool doInitialization(Function &F);
-  virtual bool runOnBasicBlock(BasicBlock &BB);
+  
+  // Forwarded
+  virtual bool runOnBasicBlock(BasicBlock &BB) { 
+    return BasicBlockPassManager::runOnBasicBlock(BB);
+  }
+  
   virtual bool doFinalization(Function &F);
   virtual bool doFinalization(Module &M);
   
@@ -728,7 +737,10 @@ public:
   virtual const char *getPMName() const { return "Function"; }
   
   virtual const char *getPassName() const { return "Function Pass Manager"; }
-
+  
+  virtual bool runOnFunction(Function &F);
+  
+  
   // TODO:Start absorbing PassManagerTraits<Function>
 };
 
@@ -749,7 +761,12 @@ public:
   
   // Implement the FunctionPass interface...
   virtual bool doInitialization(Module &M);
-  virtual bool runOnFunction(Function &F);
+  
+  // Forwarded
+  virtual bool runOnFunction(Function &F) { 
+    return FunctionPassManagerT::runOnFunction(F);
+  }
+  
   virtual bool doFinalization(Module &M);
   
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
@@ -761,7 +778,6 @@ public:
     return FunctionPassManagerT::getPassName();
   }
 };
-
 
 //===----------------------------------------------------------------------===//
 // ModulePassManager
@@ -792,6 +808,8 @@ public:
   // debugging.
   virtual const char *getPMName() const { return "Module"; }
   
+  // runOnModule - Implement the PassManager interface.
+  virtual bool runOnModule(Module &M);
   
   // TODO:Start absorbing PassManagerTraits<Module>
 };
@@ -808,9 +826,9 @@ public:
   // runPass - Specify how the pass should be run on the UnitType
   static bool runPass(PassClass *P, Module *M) { return P->runOnModule(*M); }
   
-  // runOnModule - Implement the PassManager interface.
+  // Forwarded
   bool runOnModule(Module &M) {
-    return ((PassManagerT<Module>*)this)->runOnUnit(&M);
+    return ModulePassManager::runOnModule(M);
   }
   
   // Forwarded
@@ -819,6 +837,31 @@ public:
   }
 };
 
+
+//===----------------------------------------------------------------------===//
+// PassManagerTraits Method Implementations
+//
+
+// BasicBlockPassManager Implementations
+//
+
+inline bool BasicBlockPassManager::runOnBasicBlock(BasicBlock &BB) {
+  return ((PMType*)this)->runOnUnit(&BB);
+}
+
+// FunctionPassManagerT Implementations
+//
+
+inline bool FunctionPassManagerT::runOnFunction(Function &F) {
+  return ((PMType*)this)->runOnUnit(&F);
+}
+
+// ModulePassManager Implementations
+//
+
+bool ModulePassManager::runOnModule(Module &M) {
+  return ((PassManagerT<Module>*)this)->runOnUnit(&M);
+}
 
 //===----------------------------------------------------------------------===//
 // PassManagerTraits Method Implementations
@@ -838,10 +881,6 @@ inline bool PassManagerTraits<BasicBlock>::doInitialization(Function &F) {
   for (unsigned i = 0, e = ((PMType*)this)->Passes.size(); i != e; ++i)
     ((PMType*)this)->Passes[i]->doInitialization(F);
   return Changed;
-}
-
-inline bool PassManagerTraits<BasicBlock>::runOnBasicBlock(BasicBlock &BB) {
-  return ((PMType*)this)->runOnUnit(&BB);
 }
 
 inline bool PassManagerTraits<BasicBlock>::doFinalization(Function &F) {
@@ -866,10 +905,6 @@ inline bool PassManagerTraits<Function>::doInitialization(Module &M) {
   for (unsigned i = 0, e = ((PMType*)this)->Passes.size(); i != e; ++i)
     ((PMType*)this)->Passes[i]->doInitialization(M);
   return Changed;
-}
-
-inline bool PassManagerTraits<Function>::runOnFunction(Function &F) {
-  return ((PMType*)this)->runOnUnit(&F);
 }
 
 inline bool PassManagerTraits<Function>::doFinalization(Module &M) {
