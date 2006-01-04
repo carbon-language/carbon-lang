@@ -332,11 +332,61 @@ struct NullPointerRules : public TemplateRules<ConstantPointerNull,
 //                          ConstantPackedRules Class
 //===----------------------------------------------------------------------===//
 
+/// DoVectorOp - Given two packed constants and a function pointer, apply the
+/// function pointer to each element pair, producing a new ConstantPacked
+/// constant.
+static Constant *EvalVectorOp(const ConstantPacked *V1, 
+                              const ConstantPacked *V2,
+                              Constant *(*FP)(Constant*, Constant*)) {
+  std::vector<Constant*> Res;
+  for (unsigned i = 0, e = V1->getNumOperands(); i != e; ++i)
+    Res.push_back(FP(const_cast<Constant*>(V1->getOperand(i)),
+                     const_cast<Constant*>(V2->getOperand(i))));
+  return ConstantPacked::get(Res);
+}
+
 /// PackedTypeRules provides a concrete base class of ConstRules for
 /// ConstantPacked operands.
 ///
 struct ConstantPackedRules
   : public TemplateRules<ConstantPacked, ConstantPackedRules> {
+  
+  static Constant *Add(const ConstantPacked *V1, const ConstantPacked *V2) {
+    return EvalVectorOp(V1, V2, ConstantExpr::getAdd);
+  }
+  static Constant *Sub(const ConstantPacked *V1, const ConstantPacked *V2) {
+    return EvalVectorOp(V1, V2, ConstantExpr::getSub);
+  }
+  static Constant *Mul(const ConstantPacked *V1, const ConstantPacked *V2) {
+    return EvalVectorOp(V1, V2, ConstantExpr::getMul);
+  }
+  static Constant *Div(const ConstantPacked *V1, const ConstantPacked *V2) {
+    return EvalVectorOp(V1, V2, ConstantExpr::getDiv);
+  }
+  static Constant *Rem(const ConstantPacked *V1, const ConstantPacked *V2) {
+    return EvalVectorOp(V1, V2, ConstantExpr::getRem);
+  }
+  static Constant *And(const ConstantPacked *V1, const ConstantPacked *V2) {
+    return EvalVectorOp(V1, V2, ConstantExpr::getAnd);
+  }
+  static Constant *Or (const ConstantPacked *V1, const ConstantPacked *V2) {
+    return EvalVectorOp(V1, V2, ConstantExpr::getOr);
+  }
+  static Constant *Xor(const ConstantPacked *V1, const ConstantPacked *V2) {
+    return EvalVectorOp(V1, V2, ConstantExpr::getXor);
+  }
+  static Constant *Shl(const ConstantPacked *V1, const ConstantPacked *V2) {
+    return EvalVectorOp(V1, V2, ConstantExpr::getShl);
+  }
+  static Constant *Shr(const ConstantPacked *V1, const ConstantPacked *V2) {
+    return EvalVectorOp(V1, V2, ConstantExpr::getShr);
+  }
+  static Constant *LessThan(const ConstantPacked *V1, const ConstantPacked *V2){
+    return 0;
+  }
+  static Constant *EqualTo(const ConstantPacked *V1, const ConstantPacked *V2) {
+    return 0;
+  }
 };
 
 
