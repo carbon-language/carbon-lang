@@ -70,6 +70,7 @@ void DwarfWriter::EmitSLEB128Bytes(int Value, std::string Comment) {
 /// BeginModule - Emit all dwarf sections that should come prior to the content.
 ///
 void DwarfWriter::BeginModule() {
+  if (!DebugInfo.hasInfo()) return;
   EmitComment("Dwarf Begin Module");
   
   // define base addresses for dwarf sections
@@ -84,6 +85,7 @@ void DwarfWriter::BeginModule() {
 /// EndModule - Emit all dwarf sections that should come after the content.
 ///
 void DwarfWriter::EndModule() {
+  if (!DebugInfo.hasInfo()) return;
   EmitComment("Dwarf End Module");
   // Print out dwarf file info
   std::vector<std::string> Sources = DebugInfo.getSourceFiles();
@@ -96,12 +98,14 @@ void DwarfWriter::EndModule() {
 /// BeginFunction - Emit pre-function debug information.
 ///
 void DwarfWriter::BeginFunction() {
+  if (!DebugInfo.hasInfo()) return;
   EmitComment("Dwarf Begin Function");
 }
 
 /// EndFunction - Emit post-function debug information.
 ///
 void DwarfWriter::EndFunction() {
+  if (!DebugInfo.hasInfo()) return;
   EmitComment("Dwarf End Function");
 }
 
