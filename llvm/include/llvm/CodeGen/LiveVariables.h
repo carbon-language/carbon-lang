@@ -38,6 +38,34 @@ class MRegisterInfo;
 
 class LiveVariables : public MachineFunctionPass {
 public:
+  /// VarInfo - This represents the regions where a virtual register is live in
+  /// the program.  We represent this with three difference pieces of
+  /// information: the instruction that uniquely defines the value, the set of
+  /// blocks the instruction is live into and live out of, and the set of 
+  /// non-phi instructions that are the last users of the value.
+  ///
+  /// In the common case where a value is defined and killed in the same block,
+  /// DefInst is the defining inst, there is one killing instruction, and 
+  /// AliveBlocks is empty.
+  ///
+  /// Otherwise, the value is live out of the block.  If the value is live
+  /// across any blocks, these blocks are listed in AliveBlocks.  Blocks where
+  /// the liveness range ends are not included in AliveBlocks, instead being
+  /// captured by the Kills set.  In these blocks, the value is live into the
+  /// block (unless the value is defined and killed in the same block) and lives
+  /// until the specified instruction.  Note that there cannot ever be a value
+  /// whose Kills set contains two instructions from the same basic block.
+  ///
+  /// PHI nodes complicate things a bit.  If a PHI node is the last user of a
+  /// value in one of its predecessor blocks, it is not listed in the kills set,
+  /// but does include the predecessor block in the AliveBlocks set (unless that
+  /// block also defines the value).  This leads to the (perfectly sensical)
+  /// situation where a value is defined in a block, and the last use is a phi
+  /// node in the successor.  In this case, DefInst will be the defining
+  /// instruction, AliveBlocks is empty (the value is not live across any 
+  /// blocks) and Kills is empty (phi nodes are not included).  This is sensical
+  /// because the value must be live to the end of the block, but is not live in
+  /// any successor blocks.
   struct VarInfo {
     /// DefInst - The machine instruction that defines this register.
     ///
