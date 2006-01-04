@@ -2030,12 +2030,13 @@ public:
         std::string Fn = CP->getSelectFunc();
         NumRes = CP->getNumOperands();
         OS << "      SDOperand ";
-        for (unsigned i = 0; i != NumRes; ++i)
+        unsigned i;
+        for (i = 0; i < NumRes - 1; ++i)
           OS << "Tmp" << (i+ResNo) << ",";
-        OS << ";\n";
+        OS << "Tmp" << (i+ResNo) << ";\n";
         
         OS << "      if (!" << Fn << "(" << Val;
-        for (unsigned i = 0; i < NumRes; i++)
+        for (i = 0; i < NumRes; i++)
           OS << ", Tmp" << i + ResNo;
         OS << ")) goto P" << PatternNo << "Fail;\n";
         TmpNo = ResNo + NumRes;
