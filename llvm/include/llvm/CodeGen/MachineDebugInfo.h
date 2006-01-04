@@ -15,6 +15,7 @@
 #ifndef LLVM_CODEGEN_MACHINEDEBUGINFO_H
 #define LLVM_CODEGEN_MACHINEDEBUGINFO_H
 
+#include "llvm/Pass.h"
 #include <string>
 #include <map>
 #include <vector>
@@ -25,7 +26,7 @@ namespace llvm {
 /// module.  Queries can be made by different debugging schemes and reformated
 /// for specific use.
 ///
-class MachineDebugInfo {
+class MachineDebugInfo : public ImmutablePass {
 private:
   // convenience types
   typedef std::map<std::string, unsigned> StrIntMap;
@@ -34,46 +35,35 @@ private:
   StrIntMap SourceMap;                  // Map of source file path to id
   unsigned SourceCount;                 // Number of source files (used to
                                         // generate id)
+  unsigned UniqueID;                    // Number used to unique labels used
+                                        // by debugger.
 
 public:
   // Ctor.
-  MachineDebugInfo() : SourceMap(), SourceCount(0) {}
+  MachineDebugInfo()
+  : SourceMap()
+  , SourceCount(0)
+  , UniqueID(1)
+  {}
+  ~MachineDebugInfo() { }
   
-  /// RecordSource - Register a source file with debug info.  Returns an id.
+  /// NextUniqueID - Returns a unique number for labels used by debugger.
   ///
-  unsigned RecordSource(std::string fname, std::string dirname) {
-    // Compose a key
-    std::string path = dirname + "/" + fname;
-    // Check if the source file is already recorded
-    StrIntMapIter SMI = SourceMap.find(path);
-    // If already there return existing id
-    if (SMI != SourceMap.end()) return SMI->second;
-    // Bump up the count
-    ++SourceCount;
-    // Record the count
-    SourceMap[path] = SourceCount;
-    // Return id
-    return SourceCount;
-  }
-
-  /// getSourceFiles - Return a vector of files.  Vector index + 1 equals id.
-  ///
-  std::vector<std::string> getSourceFiles() {
-    std::vector<std::string> Sources(SourceCount);
-    
-    for (StrIntMapIter SMI = SourceMap.begin(), E = SourceMap.end(); SMI != E;
-                       SMI++) {
-      unsigned Index = SMI->second - 1;
-      std::string Path = SMI->first;
-      Sources[Index] = Path;
-    }
-    return Sources;
-  }
+  unsigned NextUniqueID() { return UniqueID++; }
+  
+  bool doInitialization();
+  bool doFinalization();
+  unsigned RecordSource(std::string fname, std::string dirname);
+  std::vector<std::string> getSourceFiles();
   
 }; // End class MachineDebugInfo
 //===----------------------------------------------------------------------===//
 
+// FIXME - temporary hack until we can find a place to hang debug info from.
+MachineDebugInfo &getMachineDebugInfo();
 
+// FIXME - temporary hack until we can find a place to hand debug info from.
+ModulePass *createDebugInfoPass();
 
 } // End llvm namespace
 
