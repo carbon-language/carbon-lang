@@ -311,7 +311,8 @@ private:
 ///      other basic block in the function.
 ///   3. Optimizations conform to all of the constraints of FunctionPasses.
 ///
-struct BasicBlockPass : public FunctionPass {
+class BasicBlockPass : public FunctionPass {
+public:
   /// doInitialization - Virtual method overridden by subclasses to do
   /// any necessary per-module initialization.
   ///
