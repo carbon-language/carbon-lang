@@ -328,6 +328,29 @@ struct NullPointerRules : public TemplateRules<ConstantPointerNull,
   }
 };
 
+//===----------------------------------------------------------------------===//
+//                          ConstantPackedRules Class
+//===----------------------------------------------------------------------===//
+
+/// PackedTypeRules provides a concrete base class of ConstRules for
+/// ConstantPacked operands.
+///
+struct ConstantPackedRules
+  : public TemplateRules<ConstantPacked, ConstantPackedRules> {
+};
+
+
+//===----------------------------------------------------------------------===//
+//                          GeneralPackedRules Class
+//===----------------------------------------------------------------------===//
+
+/// GeneralPackedRules provides a concrete base class of ConstRules for
+/// PackedType operands, where both operands are not ConstantPacked.  The usual
+/// cause for this is that one operand is a ConstantAggregateZero.
+///
+struct GeneralPackedRules : public TemplateRules<Constant, GeneralPackedRules> {
+};
+
 
 //===----------------------------------------------------------------------===//
 //                             DirectRules Class
@@ -487,6 +510,8 @@ ConstRules &ConstRules::get(const Constant *V1, const Constant *V2) {
   static EmptyRules       EmptyR;
   static BoolRules        BoolR;
   static NullPointerRules NullPointerR;
+  static ConstantPackedRules ConstantPackedR;
+  static GeneralPackedRules GeneralPackedR;
   static DirectIntRules<ConstantSInt,   signed char , &Type::SByteTy>  SByteR;
   static DirectIntRules<ConstantUInt, unsigned char , &Type::UByteTy>  UByteR;
   static DirectIntRules<ConstantSInt,   signed short, &Type::ShortTy>  ShortR;
@@ -517,6 +542,10 @@ ConstRules &ConstRules::get(const Constant *V1, const Constant *V2) {
   case Type::ULongTyID:   return ULongR;
   case Type::FloatTyID:   return FloatR;
   case Type::DoubleTyID:  return DoubleR;
+  case Type::PackedTyID:
+    if (isa<ConstantPacked>(V1) && isa<ConstantPacked>(V2))
+      return ConstantPackedR;
+    return GeneralPackedR;  // Constant folding rules for ConstantAggregateZero.
   }
 }
 
