@@ -385,6 +385,14 @@ struct ConstantPackedRules
     return 0;
   }
   static Constant *EqualTo(const ConstantPacked *V1, const ConstantPacked *V2) {
+    for (unsigned i = 0, e = V1->getNumOperands(); i != e; ++i) {
+      Constant *C = 
+        ConstantExpr::getSetEQ(const_cast<Constant*>(V1->getOperand(i)),
+                               const_cast<Constant*>(V2->getOperand(i)));
+      if (ConstantBool *CB = dyn_cast<ConstantBool>(C))
+        return CB;
+    }
+    // Otherwise, could not decide from any element pairs.
     return 0;
   }
 };
@@ -951,15 +959,15 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
   case Instruction::SetGT:   C = ConstRules::get(V1, V2).lessthan(V2, V1);break;
   case Instruction::SetNE:   // V1 != V2  ===  !(V1 == V2)
     C = ConstRules::get(V1, V2).equalto(V1, V2);
-    if (C) return ConstantExpr::get(Instruction::Xor, C, ConstantBool::True);
+    if (C) return ConstantExpr::getNot(C);
     break;
   case Instruction::SetLE:   // V1 <= V2  ===  !(V2 < V1)
     C = ConstRules::get(V1, V2).lessthan(V2, V1);
-    if (C) return ConstantExpr::get(Instruction::Xor, C, ConstantBool::True);
+    if (C) return ConstantExpr::getNot(C);
     break;
   case Instruction::SetGE:   // V1 >= V2  ===  !(V1 < V2)
     C = ConstRules::get(V1, V2).lessthan(V1, V2);
-    if (C) return ConstantExpr::get(Instruction::Xor, C, ConstantBool::True);
+    if (C) return ConstantExpr::getNot(C);
     break;
   }
 
