@@ -78,7 +78,7 @@ void AnalysisUsage::setPreservesCFG() {
 // PassManager implementation - The PassManager class is a simple Pimpl class
 // that wraps the PassManagerT template.
 //
-PassManager::PassManager() : PM(new PassManagerT<Module>()) {}
+PassManager::PassManager() : PM(new ModulePassManager()) {}
 PassManager::~PassManager() { delete PM; }
 void PassManager::add(Pass *P) {
   ModulePass *MP = dynamic_cast<ModulePass*>(P);
@@ -93,7 +93,7 @@ bool PassManager::run(Module &M) { return PM->runOnModule(M); }
 // is like PassManager, but only deals in FunctionPasses.
 //
 FunctionPassManager::FunctionPassManager(ModuleProvider *P) :
-  PM(new PassManagerT<Function>()), MP(P) {}
+  PM(new FunctionPassManagerT()), MP(P) {}
 FunctionPassManager::~FunctionPassManager() { delete PM; }
 void FunctionPassManager::add(FunctionPass *P) { PM->add(P); }
 void FunctionPassManager::add(ImmutablePass *IP) { PM->add(IP); }
@@ -194,7 +194,7 @@ void PMDebug::PrintAnalysisSetInfo(unsigned Depth, const char *Msg,
 // Pass Implementation
 //
 
-void ModulePass::addToPassManager(PassManagerT<Module> *PM, AnalysisUsage &AU) {
+void ModulePass::addToPassManager(ModulePassManager *PM, AnalysisUsage &AU) {
   PM->addPass(this, AU);
 }
 
@@ -231,7 +231,7 @@ void Pass::dump() const {
 //===----------------------------------------------------------------------===//
 // ImmutablePass Implementation
 //
-void ImmutablePass::addToPassManager(PassManagerT<Module> *PM,
+void ImmutablePass::addToPassManager(ModulePassManager *PM, 
                                      AnalysisUsage &AU) {
   PM->addPass(this, AU);
 }
@@ -264,12 +264,12 @@ bool FunctionPass::run(Function &F) {
   return Changed | doFinalization(*F.getParent());
 }
 
-void FunctionPass::addToPassManager(PassManagerT<Module> *PM,
+void FunctionPass::addToPassManager(ModulePassManager *PM,
                                     AnalysisUsage &AU) {
   PM->addPass(this, AU);
 }
 
-void FunctionPass::addToPassManager(PassManagerT<Function> *PM,
+void FunctionPass::addToPassManager(FunctionPassManagerT *PM,
                                     AnalysisUsage &AU) {
   PM->addPass(this, AU);
 }
@@ -302,12 +302,12 @@ bool BasicBlockPass::runPass(BasicBlock &BB) {
   return Changed;
 }
 
-void BasicBlockPass::addToPassManager(PassManagerT<Function> *PM,
+void BasicBlockPass::addToPassManager(FunctionPassManagerT *PM,
                                       AnalysisUsage &AU) {
   PM->addPass(this, AU);
 }
 
-void BasicBlockPass::addToPassManager(PassManagerT<BasicBlock> *PM,
+void BasicBlockPass::addToPassManager(BasicBlockPassManager *PM,
                                       AnalysisUsage &AU) {
   PM->addPass(this, AU);
 }

@@ -44,7 +44,10 @@ class Module;
 class AnalysisUsage;
 class PassInfo;
 class ImmutablePass;
-template<class UnitType> class PassManagerT;
+template<class Trait> class PassManagerT;
+class BasicBlockPassManager;
+class FunctionPassManagerT;
+class ModulePassManager;
 struct AnalysisResolver;
 
 // AnalysisID - Use the PassInfo to identify a pass...
@@ -197,9 +200,10 @@ public:
   }
 
 private:
-  friend class PassManagerT<Module>;
-  friend class PassManagerT<Function>;
-  friend class PassManagerT<BasicBlock>;
+  template<typename Trait> friend class PassManagerT;
+  friend class ModulePassManager;
+  friend class FunctionPassManagerT;
+  friend class BasicBlockPassManager;
 };
 
 inline std::ostream &operator<<(std::ostream &OS, const Pass &P) {
@@ -220,7 +224,7 @@ public:
   virtual bool runPass(Module &M) { return runOnModule(M); }
   virtual bool runPass(BasicBlock&) { return false; }
 
-  virtual void addToPassManager(PassManagerT<Module> *PM, AnalysisUsage &AU);
+  virtual void addToPassManager(ModulePassManager *PM, AnalysisUsage &AU);
 };
 
 
@@ -244,8 +248,9 @@ public:
   virtual bool runOnModule(Module &M) { return false; }
 
 private:
-  friend class PassManagerT<Module>;
-  virtual void addToPassManager(PassManagerT<Module> *PM, AnalysisUsage &AU);
+  template<typename Trait> friend class PassManagerT;
+  friend class ModulePassManager;
+  virtual void addToPassManager(ModulePassManager *PM, AnalysisUsage &AU);
 };
 
 //===----------------------------------------------------------------------===//
@@ -286,11 +291,12 @@ public:
   bool run(Function &F);
 
 private:
-  friend class PassManagerT<Module>;
-  friend class PassManagerT<Function>;
-  friend class PassManagerT<BasicBlock>;
-  virtual void addToPassManager(PassManagerT<Module> *PM, AnalysisUsage &AU);
-  virtual void addToPassManager(PassManagerT<Function> *PM, AnalysisUsage &AU);
+  template<typename Trait> friend class PassManagerT;
+  friend class ModulePassManager;
+  friend class FunctionPassManagerT;
+  friend class BasicBlockPassManager;
+  virtual void addToPassManager(ModulePassManager *PM, AnalysisUsage &AU);
+  virtual void addToPassManager(FunctionPassManagerT *PM, AnalysisUsage &AU);
 };
 
 
@@ -344,10 +350,11 @@ struct BasicBlockPass : public FunctionPass {
   virtual bool runPass(BasicBlock &BB);
 
 private:
-  friend class PassManagerT<Function>;
-  friend class PassManagerT<BasicBlock>;
-  virtual void addToPassManager(PassManagerT<Function> *PM, AnalysisUsage &AU);
-  virtual void addToPassManager(PassManagerT<BasicBlock> *PM,AnalysisUsage &AU);
+  template<typename Trait> friend class PassManagerT;
+  friend class FunctionPassManagerT;
+  friend class BasicBlockPassManager;
+  virtual void addToPassManager(FunctionPassManagerT *PM, AnalysisUsage &AU);
+  virtual void addToPassManager(BasicBlockPassManager *PM,AnalysisUsage &AU);
 };
 
 /// If the user specifies the -time-passes argument on an LLVM tool command line

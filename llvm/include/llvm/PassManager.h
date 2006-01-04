@@ -23,10 +23,12 @@ class Pass;
 class ModulePass;
 class Module;
 class ModuleProvider;
-template<class UnitType> class PassManagerT;
+class ModulePassManager;
+class FunctionPassManagerT;
+class BasicBlockPassManager;
 
 class PassManager {
-  PassManagerT<Module> *PM;    // This is a straightforward Pimpl class
+  ModulePassManager *PM;    // This is a straightforward Pimpl class
 public:
   PassManager();
   ~PassManager();
@@ -49,7 +51,7 @@ class ImmutablePass;
 class Function;
 
 class FunctionPassManager {
-  PassManagerT<Function> *PM;    // This is a straightforward Pimpl class
+  FunctionPassManagerT *PM;    // This is a straightforward Pimpl class
   ModuleProvider *MP;
 public:
   FunctionPassManager(ModuleProvider *P);

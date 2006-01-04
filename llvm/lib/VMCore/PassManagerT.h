@@ -123,10 +123,70 @@ public:
 
 static TimingInfo *TheTimeInfo;
 
-//===----------------------------------------------------------------------===//
-// Declare the PassManagerTraits which will be specialized...
-//
-template<class UnitType> class PassManagerTraits;   // Do not define.
+// FIXME:I'm not sure if this is the best way, but this was the only way I 
+// could get around the recursive template issues. -- Saem
+struct BBTraits {
+  typedef BasicBlock UnitType;
+  
+  // PassClass - The type of passes tracked by this PassManager
+  typedef BasicBlockPass PassClass;
+
+  // SubPassClass - The types of classes that should be collated together
+  // This is impossible to match, so BasicBlock instantiations of PassManagerT
+  // do not collate.
+  //
+  typedef BasicBlockPassManager SubPassClass;
+
+  // BatcherClass - The type to use for collation of subtypes... This class is
+  // never instantiated for the PassManager<BasicBlock>, but it must be an
+  // instance of PassClass to typecheck.
+  //
+  typedef PassClass BatcherClass;
+
+  // ParentClass - The type of the parent PassManager...
+  typedef FunctionPassManagerT ParentClass;
+
+  // PMType - The type of this passmanager
+  typedef BasicBlockPassManager PMType;
+};
+
+struct FTraits {
+  typedef Function UnitType;
+  
+  // PassClass - The type of passes tracked by this PassManager
+  typedef FunctionPass PassClass;
+
+  // SubPassClass - The types of classes that should be collated together
+  typedef BasicBlockPass SubPassClass;
+
+  // BatcherClass - The type to use for collation of subtypes...
+  typedef BasicBlockPassManager BatcherClass;
+
+  // ParentClass - The type of the parent PassManager...
+  typedef ModulePassManager ParentClass;
+
+  // PMType - The type of this passmanager
+  typedef FunctionPassManagerT PMType;
+};
+
+struct MTraits {
+  typedef Module UnitType;
+  
+  // PassClass - The type of passes tracked by this PassManager
+  typedef ModulePass PassClass;
+
+  // SubPassClass - The types of classes that should be collated together
+  typedef FunctionPass SubPassClass;
+
+  // BatcherClass - The type to use for collation of subtypes...
+  typedef FunctionPassManagerT BatcherClass;
+
+  // ParentClass - The type of the parent PassManager...
+  typedef AnalysisResolver ParentClass;
+  
+  // PMType - The type of this passmanager
+  typedef ModulePassManager PMType;
+};
 
 
 //===----------------------------------------------------------------------===//
@@ -134,32 +194,26 @@ template<class UnitType> class PassManagerTraits;   // Do not define.
 // deletes all passes contained inside of the PassManagerT, so you shouldn't
 // delete passes manually, and all passes should be dynamically allocated.
 //
-template<typename UnitType>
-class PassManagerT : public PassManagerTraits<UnitType>,public AnalysisResolver{
-  // TODO:Edit these to reflect changes for world sanitisation
-  typedef PassManagerTraits<UnitType> Traits;
-  typedef typename Traits::PassClass       PassClass;
-  typedef typename Traits::SubPassClass SubPassClass;
-  typedef typename Traits::BatcherClass BatcherClass;
-  typedef typename Traits::ParentClass   ParentClass;
-
-#if defined(_MSC_VER) || defined(__INTEL_COMPILER) || defined(__HP_aCC)
-  friend PassClass;
-  friend SubPassClass;
-#else
-  // TODO:Redefine when sanitising
-  friend class PassManagerTraits<UnitType>::PassClass;
-  friend class PassManagerTraits<UnitType>::SubPassClass;
-#endif
-  // TODO:Redefine this when santising
-  friend class PassManagerTraits<UnitType>;
+template<typename Trait> class PassManagerT : public AnalysisResolver {
+  
+  typedef typename Trait::PassClass    PassClass;
+  typedef typename Trait::UnitType     UnitType;
+  typedef typename Trait::ParentClass  ParentClass;
+  typedef typename Trait::SubPassClass SubPassClass;
+  typedef typename Trait::BatcherClass BatcherClass;
+  typedef typename Trait::PMType       PMType;
+  
+  friend class ModulePass;
+  friend class FunctionPass;
+  friend class BasicBlockPass;
+  
   friend class ImmutablePass;
   
   friend class BasicBlockPassManager;
   friend class FunctionPassManagerT;
   friend class ModulePassManager;
 
-  std::vector<PassClass*> Passes;    // List of passes to run
+  std::vector<PassClass*> Passes;               // List of passes to run
   std::vector<ImmutablePass*> ImmutablePasses;  // List of immutable passes
 
   // The parent of this pass manager...
@@ -181,6 +235,18 @@ class PassManagerT : public PassManagerTraits<UnitType>,public AnalysisResolver{
   std::map<Pass*, Pass*> LastUseOf;
 
 public:
+  
+  // getPMName() - Return the name of the unit the PassManager operates on for
+  // debugging.
+  virtual const char *getPMName() const =0;
+  
+  virtual const char *getPassName() const =0;
+
+  virtual bool runPass(PassClass *P, UnitType *M) =0;
+  
+  // TODO:Figure out what pure virtuals remain.
+  
+  
   PassManagerT(ParentClass *Par = 0) : Parent(Par), Batcher(0) {}
   virtual ~PassManagerT() {
     // Delete all of the contained passes...
@@ -221,7 +287,7 @@ public:
       LastUserOf[I->second].push_back(I->first);
 
     // Output debug information...
-    if (Parent == 0) PMDebug::PerformPassStartupStuff(this);
+    if (Parent == 0) PMDebug::PerformPassStartupStuff((dynamic_cast<PassClass*>(this)));
 
     // Run all of the passes
     for (unsigned i = 0, e = Passes.size(); i < e; ++i) {
@@ -337,7 +403,7 @@ public:
     for (unsigned i = 0, e = ImmutablePasses.size(); i != e; ++i)
       ImmutablePasses[i]->dumpPassStructure(0);
 
-    std::cerr << std::string(Offset*2, ' ') << Traits::getPMName()
+    std::cerr << std::string(Offset*2, ' ') << this->getPMName()
               << " Pass Manager\n";
     for (typename std::vector<PassClass*>::iterator
            I = Passes.begin(), E = Passes.end(); I != E; ++I) {
@@ -425,7 +491,7 @@ public:
       // frees the analysis AFTER this pass manager runs.
       //
       if (Parent) {
-        Parent->markPassUsed(P, this);
+        Parent->markPassUsed(P, dynamic_cast<Pass*>(this));
       } else {
         assert(getAnalysisOrNullUp(P) &&
                dynamic_cast<ImmutablePass*>(getAnalysisOrNullUp(P)) &&
@@ -473,7 +539,7 @@ public:
     // depends on the class of the pass, and is critical to laying out passes in
     // an optimal order..
     //
-    P->addToPassManager(this, AnUsage);
+    P->addToPassManager(dynamic_cast<PMType*>(this), AnUsage);
   }
 
   // add - H4x0r an ImmutablePass into a PassManager that might not be
@@ -566,14 +632,14 @@ private:
     // For now assume that our results are never used...
     LastUseOf[P] = P;
   }
-
+  
   // For FunctionPass subclasses, we must be sure to batch the FunctionPass's
   // together in a BatcherClass object so that all of the analyses are run
   // together a function at a time.
   //
   void addPass(SubPassClass *MP, AnalysisUsage &AnUsage) {
     if (Batcher == 0) // If we don't have a batcher yet, make one now.
-      Batcher = new BatcherClass(this);
+      Batcher = new BatcherClass((dynamic_cast<PMType*>(this)));
     // The Batcher will queue the passes up
     MP->addToPassManager(Batcher, AnUsage);
   }
@@ -627,11 +693,8 @@ public:
     // Initialize the immutable pass...
     IP->initializePass();
   }
-
-  // TODO: Once the world has been sanitised, the pure virtuals below can be 
-  // brought in.
+  
 };
-
 
 //===----------------------------------------------------------------------===//
 // BasicBlockPassManager
@@ -639,36 +702,24 @@ public:
 // This pass manager is used to group together all of the BasicBlockPass's
 // into a single unit.
 //
-class BasicBlockPassManager {
+class BasicBlockPassManager : public BasicBlockPass, 
+                              public BBTraits, 
+                              public PassManagerT<BBTraits> {
 public:
-  // PassClass - The type of passes tracked by this PassManager
-  typedef BasicBlockPass PassClass;
-
-  // SubPassClass - The types of classes that should be collated together
-  // This is impossible to match, so BasicBlock instantiations of PassManagerT
-  // do not collate.
-  //
-  typedef PassManagerT<Module> SubPassClass;
-
-  // BatcherClass - The type to use for collation of subtypes... This class is
-  // never instantiated for the PassManager<BasicBlock>, but it must be an
-  // instance of PassClass to typecheck.
-  //
-  typedef PassClass BatcherClass;
-
-  // ParentClass - The type of the parent PassManager...
-  typedef PassManagerT<Function> ParentClass;
-
-  // PMType - The type of the passmanager that subclasses this class
-  typedef PassManagerT<BasicBlock> PMType;
-
+  BasicBlockPassManager(BBTraits::ParentClass* PC) : 
+    PassManagerT<BBTraits>(PC) {
+  }
+  
+  BasicBlockPassManager(BasicBlockPassManager* BBPM) : 
+    PassManagerT<BBTraits>(BBPM->Parent) {
+  }
   
   // runPass - Specify how the pass should be run on the UnitType
-  static bool runPass(PassClass *P, BasicBlock *M) {
-    // todo, init and finalize
+  virtual bool runPass(BBTraits::PassClass *P, BasicBlock *M) {
+    // TODO: init and finalize
     return P->runOnBasicBlock(*M);
   }
-    
+  
   virtual ~BasicBlockPassManager() {}
   
   // getPMName() - Return the name of the unit the PassManager operates on for
@@ -688,84 +739,27 @@ public:
   }
 };
 
-
-//===----------------------------------------------------------------------===//
-// PassManagerTraits<BasicBlock> Specialization
-//
-// This pass manager is used to group together all of the BasicBlockPass's
-// into a single unit.
-//
-template<> class PassManagerTraits<BasicBlock> : public BasicBlockPass,
-                                                 public BasicBlockPassManager {
-public:
-  // runPass - Specify how the pass should be run on the UnitType
-  static bool runPass(PassClass *P, BasicBlock *M) {
-    return BasicBlockPassManager::runPass(P,M);
-  }
-  
-  // Forwarded
-  virtual bool doInitialization(Module &M) { 
-    return BasicBlockPassManager::doInitialization(M);
-  }
-  
-  // Forwarded
-  virtual bool doInitialization(Function &F) { 
-    return BasicBlockPassManager::doInitialization(F);
-  }
-  
-  // Forwarded
-  virtual bool runOnBasicBlock(BasicBlock &BB) { 
-    return BasicBlockPassManager::runOnBasicBlock(BB);
-  }
-  
-  // Forwarded
-  virtual bool doFinalization(Function &F) { 
-    return BasicBlockPassManager::doFinalization(F);
-  }
-  
-  // Forwarded
-  virtual bool doFinalization(Module &M) {
-    return BasicBlockPassManager::doFinalization(M);
-  }
-  
-  // Forwarded
-  virtual const char *getPassName() const { 
-    return BasicBlockPassManager::getPassName();
-  }
-  
-  // Forwarded
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-    BasicBlockPassManager::getAnalysisUsage(AU);
-  }
-
-};
-
-
 //===----------------------------------------------------------------------===//
 // FunctionPassManager
 //
 // This pass manager is used to group together all of the FunctionPass's
 // into a single unit.
 //
-class FunctionPassManagerT {
+class FunctionPassManagerT : public FunctionPass, 
+                             public FTraits, 
+                             public PassManagerT<FTraits> {
 public:
-  // PassClass - The type of passes tracked by this PassManager
-  typedef FunctionPass PassClass;
-
-  // SubPassClass - The types of classes that should be collated together
-  typedef BasicBlockPass SubPassClass;
-
-  // BatcherClass - The type to use for collation of subtypes...
-  typedef PassManagerT<BasicBlock> BatcherClass;
-
-  // ParentClass - The type of the parent PassManager...
-  typedef PassManagerT<Module> ParentClass;
-
-  // PMType - The type of the passmanager that subclasses this class
-  typedef PassManagerT<Function> PMType;
+  FunctionPassManagerT() : PassManagerT<FTraits>(0) {}
+  
+  // Parent constructor
+  FunctionPassManagerT(FTraits::ParentClass* PC) : PassManagerT<FTraits>(PC) {}
+  
+  FunctionPassManagerT(FunctionPassManagerT* FPM) : 
+    PassManagerT<FTraits>(FPM->Parent) {
+  }
   
   virtual ~FunctionPassManagerT() {}
-
+  
   // getPMName() - Return the name of the unit the PassManager operates on for
   // debugging.
   virtual const char *getPMName() const { return "Function"; }
@@ -783,73 +777,32 @@ public:
   }
   
   // runPass - Specify how the pass should be run on the UnitType
-  static bool runPass(PassClass *P, Function *F) {
+  virtual bool runPass(FTraits::PassClass *P, Function *F) {
     return P->runOnFunction(*F);
   }
 };
 
 
 //===----------------------------------------------------------------------===//
-// PassManagerTraits<Function> Specialization
-//
-// This pass manager is used to group together all of the FunctionPass's
-// into a single unit.
-//
-template<> class PassManagerTraits<Function> : public FunctionPass, 
-                                               public FunctionPassManagerT {
-public:
-  // runPass - Specify how the pass should be run on the UnitType
-  static bool runPass(PassClass *P, Function *F) {
-    return FunctionPassManagerT::runPass(P,F);
-  }
-  
-  // Forwarded
-  virtual bool doInitialization(Module &M) { 
-    return FunctionPassManagerT::doInitialization(M);
-  }
-  
-  // Forwarded
-  virtual bool runOnFunction(Function &F) { 
-    return FunctionPassManagerT::runOnFunction(F);
-  }
-  
-  // Forwarded
-  virtual bool doFinalization(Module &M) { 
-    return FunctionPassManagerT::doFinalization(M);
-  }
-  
-  // Forwarded
-  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
-    FunctionPassManagerT::getAnalysisUsage(AU);
-  }
-  
-  // Forwarded
-  virtual const char *getPassName() const { 
-    return FunctionPassManagerT::getPassName();
-  }
-};
-
-//===----------------------------------------------------------------------===//
 // ModulePassManager
 //
 // This is the top level PassManager implementation that holds generic passes.
 //
-class ModulePassManager {
+class ModulePassManager : public ModulePass, 
+                          public MTraits, 
+                          public PassManagerT<MTraits> {
 public:
-  // PassClass - The type of passes tracked by this PassManager
-  typedef ModulePass PassClass;
-
-  // SubPassClass - The types of classes that should be collated together
-  typedef FunctionPass SubPassClass;
-
-  // BatcherClass - The type to use for collation of subtypes...
-  typedef PassManagerT<Function> BatcherClass;
-
-  // ParentClass - The type of the parent PassManager...
-  typedef AnalysisResolver ParentClass;
+  ModulePassManager() : PassManagerT<MTraits>(0) {}
+  
+  // Batcher Constructor
+  ModulePassManager(MTraits::ParentClass* PC) : PassManagerT<MTraits>(PC) {}
+  
+  ModulePassManager(ModulePassManager* MPM) : 
+    PassManagerT<MTraits>((MPM->Parent)) {
+  }
   
   virtual ~ModulePassManager() {}
-
+  
   // getPMName() - Return the name of the unit the PassManager operates on for
   // debugging.
   virtual const char *getPassName() const { return "Module Pass Manager"; }
@@ -862,35 +815,9 @@ public:
   virtual bool runOnModule(Module &M);
   
   // runPass - Specify how the pass should be run on the UnitType
-  static bool runPass(PassClass *P, Module *M) { return P->runOnModule(*M); }
+  virtual bool runPass(MTraits::PassClass *P, Module *M) { return P->runOnModule(*M); }
   
 };
-
-
-//===----------------------------------------------------------------------===//
-// PassManagerTraits<Module> Specialization
-//
-// This is the top level PassManager implementation that holds generic passes.
-//
-template<> class PassManagerTraits<Module> : public ModulePass, 
-                                             public ModulePassManager {
-public:
-  // Forwarded
-  static bool runPass(PassClass *P, Module *M) { 
-    return ModulePassManager::runPass(P,M);
-  }
-  
-  // Forwarded
-  bool runOnModule(Module &M) {
-    return ModulePassManager::runOnModule(M);
-  }
-  
-  // Forwarded
-  virtual const char *getPassName() const { 
-    return ModulePassManager::getPassName();
-  }
-};
-
 
 //===----------------------------------------------------------------------===//
 // PassManagerTraits Method Implementations
@@ -900,34 +827,34 @@ public:
 //
 
 inline bool BasicBlockPassManager::runOnBasicBlock(BasicBlock &BB) {
-  return ((PMType*)this)->runOnUnit(&BB);
+  return ((BBTraits::PMType*)this)->runOnUnit(&BB);
 }
 
 inline bool BasicBlockPassManager::doInitialization(Module &M) {
   bool Changed = false;
-  for (unsigned i = 0, e = ((PMType*)this)->Passes.size(); i != e; ++i)
-    ((PMType*)this)->Passes[i]->doInitialization(M);
+  for (unsigned i = 0, e = ((BBTraits::PMType*)this)->Passes.size(); i != e; ++i)
+    ((BBTraits::PMType*)this)->Passes[i]->doInitialization(M);
   return Changed;
 }
 
 inline bool BasicBlockPassManager::doInitialization(Function &F) {
   bool Changed = false;
-  for (unsigned i = 0, e = ((PMType*)this)->Passes.size(); i != e; ++i)
-    ((PMType*)this)->Passes[i]->doInitialization(F);
+  for (unsigned i = 0, e = ((BBTraits::PMType*)this)->Passes.size(); i != e; ++i)
+    ((BBTraits::PMType*)this)->Passes[i]->doInitialization(F);
   return Changed;
 }
 
 inline bool BasicBlockPassManager::doFinalization(Function &F) {
   bool Changed = false;
-  for (unsigned i = 0, e = ((PMType*)this)->Passes.size(); i != e; ++i)
-    ((PMType*)this)->Passes[i]->doFinalization(F);
+  for (unsigned i = 0, e = ((BBTraits::PMType*)this)->Passes.size(); i != e; ++i)
+    ((BBTraits::PMType*)this)->Passes[i]->doFinalization(F);
   return Changed;
 }
 
 inline bool BasicBlockPassManager::doFinalization(Module &M) {
   bool Changed = false;
-  for (unsigned i = 0, e = ((PMType*)this)->Passes.size(); i != e; ++i)
-    ((PMType*)this)->Passes[i]->doFinalization(M);
+  for (unsigned i=0, e = ((BBTraits::PMType*)this)->Passes.size(); i != e; ++i)
+    ((BBTraits::PMType*)this)->Passes[i]->doFinalization(M);
   return Changed;
 }
 
@@ -935,20 +862,20 @@ inline bool BasicBlockPassManager::doFinalization(Module &M) {
 //
 
 inline bool FunctionPassManagerT::runOnFunction(Function &F) {
-  return ((PMType*)this)->runOnUnit(&F);
+  return ((FTraits::PMType*)this)->runOnUnit(&F);
 }
 
 inline bool FunctionPassManagerT::doInitialization(Module &M) {
   bool Changed = false;
-  for (unsigned i = 0, e = ((PMType*)this)->Passes.size(); i != e; ++i)
-    ((PMType*)this)->Passes[i]->doInitialization(M);
+  for (unsigned i=0, e = ((FTraits::PMType*)this)->Passes.size(); i != e; ++i)
+    ((FTraits::PMType*)this)->Passes[i]->doInitialization(M);
   return Changed;
 }
 
 inline bool FunctionPassManagerT::doFinalization(Module &M) {
   bool Changed = false;
-  for (unsigned i = 0, e = ((PMType*)this)->Passes.size(); i != e; ++i)
-    ((PMType*)this)->Passes[i]->doFinalization(M);
+  for (unsigned i=0, e = ((FTraits::PMType*)this)->Passes.size(); i != e; ++i)
+    ((FTraits::PMType*)this)->Passes[i]->doFinalization(M);
   return Changed;
 }
 
@@ -956,7 +883,7 @@ inline bool FunctionPassManagerT::doFinalization(Module &M) {
 //
 
 bool ModulePassManager::runOnModule(Module &M) {
-  return ((PassManagerT<Module>*)this)->runOnUnit(&M);
+  return ((PassManagerT<MTraits>*)this)->runOnUnit(&M);
 }
 
 
