@@ -27,6 +27,7 @@
 #include "llvm/Support/FileUtilities.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/System/Signals.h"
+#include "llvm/CodeGen/MachineDebugInfo.h"
 #include "llvm/Config/config.h"
 #include <fstream>
 #include <iostream>
@@ -237,6 +238,9 @@ int main(int argc, char **argv) {
         sys::RemoveFileOnSignal(sys::Path(OutputFilename));
       }
     }
+    
+    // Set up collection of debug information
+    Passes.add(createDebugInfoPass());
 
     // Ask the target to add backend passes as necessary.
     if (Target.addPassesToEmitFile(Passes, *Out, FileType, Fast)) {
