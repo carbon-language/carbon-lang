@@ -34,9 +34,6 @@ def SDT_AlphaCallSeq : SDTypeProfile<0, 1, [ SDTCisVT<0, i64> ]>;
 def callseq_start : SDNode<"ISD::CALLSEQ_START", SDT_AlphaCallSeq,[SDNPHasChain]>;
 def callseq_end   : SDNode<"ISD::CALLSEQ_END",   SDT_AlphaCallSeq,[SDNPHasChain]>;
 
-def SDTFPLeaf : SDTypeProfile<1, 0, [SDTCisFP<0>]>;      // for 'fpimm'.
-def fpimm : SDNode<"ISD::ConstantFP"  , SDTFPLeaf , [], "ConstantFPSDNode">;
-
 //********************
 //Paterns for matching
 //********************
