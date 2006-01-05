@@ -476,10 +476,6 @@ SparcV8TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
     InFlag = Chain.getValue(1);
   }
 
-  std::vector<MVT::ValueType> RetVals;
-  RetVals.push_back(MVT::Other);
-  RetVals.push_back(MVT::Flag);
-
   // If the callee is a GlobalAddress node (quite common, every direct call is)
   // turn it into a TargetGlobalAddress node so that legalize doesn't hack it.
   if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee))
