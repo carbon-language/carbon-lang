@@ -96,8 +96,9 @@ PPCTargetLowering::PPCTargetLowering(TargetMachine &TM)
 
   // Support label based line numbers.
   setOperationAction(ISD::LOCATION, MVT::Other, Expand);
+  setOperationAction(ISD::DEBUG_LOC, MVT::Other, Expand);
   // FIXME - use subtarget debug flags
-  if (TM.getSubtarget<PPCSubtarget>().isDarwin())
+  if (!TM.getSubtarget<PPCSubtarget>().isDarwin())
     setOperationAction(ISD::DEBUG_LABEL, MVT::Other, Expand);
   
   // We want to legalize GlobalAddress and ConstantPool nodes into the 

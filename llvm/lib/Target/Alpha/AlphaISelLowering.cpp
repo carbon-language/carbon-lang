@@ -103,6 +103,8 @@ AlphaTargetLowering::AlphaTargetLowering(TargetMachine &TM) : TargetLowering(TM)
 
   // We don't have line number support yet.
   setOperationAction(ISD::LOCATION, MVT::Other, Expand);
+  setOperationAction(ISD::DEBUG_LOC, MVT::Other, Expand);
+  setOperationAction(ISD::DEBUG_LABEL, MVT::Other, Expand);
   
   // We want to legalize GlobalAddress and ConstantPool and
   // ExternalSymbols nodes into the appropriate instructions to
