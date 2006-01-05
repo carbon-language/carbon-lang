@@ -1,6 +1,7 @@
 ; This test checks to make sure that constant exprs fold in some simple situations
 
-; RUN: llvm-as < %s | llvm-dis | not grep '('
+; RUN: llvm-as < %s | llvm-dis | not grep '(' &&
+; RUN: llvm-as < %s
 
 %A = global long 0
 
@@ -22,4 +23,7 @@ global bool setlt (long* %A, long* getelementptr (long* %A, long 0))        ; fa
 global bool setlt (int* getelementptr (%Ty* %B, long 0, ubyte 0), 
                    int* getelementptr (%Ty* %B, long 0, ubyte 1))            ; true
 ;global bool setne (long* %A, long* cast (%Ty* %B to long*))                 ; true
+
+global bool seteq ({ short }* cast (int 1 to { short }*), { short }* null)
+global  bool setlt ({ short }* cast (int 1 to { short }*), { short }* cast (int 2 to { short }*))
 
