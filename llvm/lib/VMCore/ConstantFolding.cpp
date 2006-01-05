@@ -235,7 +235,7 @@ struct EmptyRules : public TemplateRules<Constant, EmptyRules> {
 //
 struct BoolRules : public TemplateRules<ConstantBool, BoolRules> {
 
-  static Constant *LessThan(const ConstantBool *V1, const ConstantBool *V2){
+  static Constant *LessThan(const ConstantBool *V1, const ConstantBool *V2) {
     return ConstantBool::get(V1->getValue() < V2->getValue());
   }
 
@@ -800,13 +800,13 @@ static Instruction::BinaryOps evaluateRelation(const Constant *V1,
     if (SwappedRelation != Instruction::BinaryOpsEnd)
       return SetCondInst::getSwappedCondition(SwappedRelation);
 
-  } else if (const GlobalValue *CPR1 = dyn_cast<GlobalValue>(V1)){
+  } else if (const GlobalValue *CPR1 = dyn_cast<GlobalValue>(V1)) {
     if (isa<ConstantExpr>(V2)) {  // Swap as necessary.
-    Instruction::BinaryOps SwappedRelation = evaluateRelation(V2, V1);
-    if (SwappedRelation != Instruction::BinaryOpsEnd)
-      return SetCondInst::getSwappedCondition(SwappedRelation);
-    else
-      return Instruction::BinaryOpsEnd;
+      Instruction::BinaryOps SwappedRelation = evaluateRelation(V2, V1);
+      if (SwappedRelation != Instruction::BinaryOpsEnd)
+        return SetCondInst::getSwappedCondition(SwappedRelation);
+      else
+        return Instruction::BinaryOpsEnd;
     }
 
     // Now we know that the RHS is a GlobalValue or simple constant,
