@@ -952,13 +952,13 @@ SDOperand PPCDAGToDAGISel::Select(SDOperand Op) {
     if (isIntImmediate(N->getOperand(1), Imm) && 
         N->getOperand(0).getOpcode() == ISD::OR &&
         isIntImmediate(N->getOperand(0).getOperand(1), Imm2)) {
-      unsigned SH, MB, ME;
+      unsigned MB, ME;
       Imm = ~(Imm^Imm2);
       if (isRunOfOnes(Imm, MB, ME)) {
         SDOperand Tmp1 = Select(N->getOperand(0).getOperand(0));
         SDOperand Tmp2 = Select(N->getOperand(0).getOperand(1));
         return CurDAG->getTargetNode(PPC::RLWIMI, MVT::i32, Tmp1, Tmp2,
-                                     getI32Imm(SH), getI32Imm(MB), getI32Imm(ME));
+                                     getI32Imm(0), getI32Imm(MB), getI32Imm(ME));
       }
     }
     
