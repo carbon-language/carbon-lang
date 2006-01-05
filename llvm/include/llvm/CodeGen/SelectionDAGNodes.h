@@ -362,8 +362,8 @@ namespace ISD {
     
     // DEBUG_LABEL - This node is used to mark a location in the code where a
     // label should be generated for use by the debug information.  It takes a
-    // token chain as input, the a unique id (provided by MachineDebugInfo.) It
-    // produces a token chain as output.
+    // token chain as input and then a unique id (provided by MachineDebugInfo.)
+    // It produces a token chain as output.
     DEBUG_LABEL,
     
     // BUILTIN_OP_END - This must be the last enum value in this list.
