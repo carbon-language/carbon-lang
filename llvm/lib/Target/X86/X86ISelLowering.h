@@ -46,6 +46,17 @@ namespace llvm {
       /// to load to.
       FLD,
 
+      /// FST - This instruction implements a truncating store to FP stack
+      /// slots. This corresponds to the X86::FST32m / X86::FST64m. It takes a
+      /// chain operand, value to store, address, and a ValueType to store it
+      /// as.
+      FST,
+
+      /// FP_SET_RESULT - This corresponds to FpGETRESULT pseudo instrcuction
+      /// which copies from ST(0) to the destination. It takes a chain and writes
+      /// a RFP result and a chain.
+      FP_GET_RESULT,
+
       /// FP_SET_RESULT - This corresponds to FpSETRESULT pseudo instrcuction
       /// which copies the source operand to ST(0). It takes a chain and writes
       /// a chain and a flag.

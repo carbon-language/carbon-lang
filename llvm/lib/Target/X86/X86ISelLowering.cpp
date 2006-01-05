@@ -457,38 +457,117 @@ X86TargetLowering::LowerCCCCallTo(SDOperand Chain, const Type *RetTy,
     RetVals.push_back(MVT::i32);
     break;
   }
-  std::vector<SDOperand> Ops;
-  Ops.push_back(Chain);
-  Ops.push_back(Callee);
-  Ops.push_back(DAG.getConstant(NumBytes, getPointerTy()));
-  Ops.push_back(DAG.getConstant(0, getPointerTy()));
-  SDOperand TheCall = DAG.getNode(isTailCall ? X86ISD::TAILCALL : X86ISD::CALL,
-                                  RetVals, Ops);
-  Chain = DAG.getNode(ISD::CALLSEQ_END, MVT::Other, TheCall);
 
-  SDOperand ResultVal;
-  switch (RetTyVT) {
-  case MVT::isVoid: break;
-  default:
-    ResultVal = TheCall.getValue(1);
-    break;
-  case MVT::i1:
-  case MVT::i8:
-  case MVT::i16:
-    ResultVal = DAG.getNode(ISD::TRUNCATE, RetTyVT, TheCall.getValue(1));
-    break;
-  case MVT::f32:
-    // FIXME: we would really like to remember that this FP_ROUND operation is
-    // okay to eliminate if we allow excess FP precision.
-    ResultVal = DAG.getNode(ISD::FP_ROUND, MVT::f32, TheCall.getValue(1));
-    break;
-  case MVT::i64:
-    ResultVal = DAG.getNode(ISD::BUILD_PAIR, MVT::i64, TheCall.getValue(1),
-                            TheCall.getValue(2));
-    break;
+  if (X86DAGIsel) {
+    std::vector<MVT::ValueType> NodeTys;
+    NodeTys.push_back(MVT::Other);   // Returns a chain
+    NodeTys.push_back(MVT::Flag);    // Returns a flag for retval copy to use.
+
+    std::vector<SDOperand> Ops;
+    Ops.push_back(Chain);
+    Ops.push_back(Callee);
+
+    Chain = DAG.getNode(isTailCall ? X86ISD::TAILCALL : X86ISD::CALL,
+                        NodeTys, Ops);
+    SDOperand InFlag = Chain.getValue(1);
+
+    SDOperand RetVal;
+    if (RetTyVT != MVT::isVoid) {
+      switch (RetTyVT) {
+      default: assert(0 && "Unknown value type to return!");
+      case MVT::i1:
+      case MVT::i8:
+        RetVal = DAG.getCopyFromReg(Chain, X86::AL, MVT::i8, InFlag);
+        Chain = RetVal.getValue(1);
+        break;
+      case MVT::i16:
+        RetVal = DAG.getCopyFromReg(Chain, X86::AX, MVT::i16, InFlag);
+        Chain = RetVal.getValue(1);
+        break;
+      case MVT::i32:
+        RetVal = DAG.getCopyFromReg(Chain, X86::EAX, MVT::i32, InFlag);
+        Chain = RetVal.getValue(1);
+        break;
+      case MVT::i64: {
+        SDOperand Lo = DAG.getCopyFromReg(Chain, X86::EAX, MVT::i32, InFlag);
+        SDOperand Hi = DAG.getCopyFromReg(Lo.getValue(1), X86::EDX, MVT::i32, 
+                                          Lo.getValue(2));
+        RetVal = DAG.getNode(ISD::BUILD_PAIR, MVT::i64, Lo, Hi);
+        Chain = Hi.getValue(1);
+        break;
+      }
+      case MVT::f32:
+      case MVT::f64: {
+        std::vector<MVT::ValueType> Tys;
+        Tys.push_back(MVT::f64);
+        Tys.push_back(MVT::Other);
+        std::vector<SDOperand> Ops;
+        Ops.push_back(Chain);
+        Ops.push_back(InFlag);
+        RetVal = DAG.getNode(X86ISD::FP_GET_RESULT, Tys, Ops);
+        Chain = RetVal.getValue(1);
+        if (X86ScalarSSE) {
+          unsigned Size = MVT::getSizeInBits(MVT::f64)/8;
+          MachineFunction &MF = DAG.getMachineFunction();
+          int SSFI = MF.getFrameInfo()->CreateStackObject(Size, Size);
+          SDOperand StackSlot = DAG.getFrameIndex(SSFI, getPointerTy());
+          Tys.clear();
+          Tys.push_back(MVT::Other);
+          Ops.clear();
+          Ops.push_back(Chain);
+          Ops.push_back(RetVal);
+          Ops.push_back(StackSlot);
+          Ops.push_back(DAG.getValueType(RetTyVT));
+          Chain = DAG.getNode(X86ISD::FST, Tys, Ops);
+          RetVal = DAG.getLoad(RetTyVT, Chain, StackSlot,
+                               DAG.getSrcValue(NULL));
+          Chain = RetVal.getValue(1);
+        } else if (RetTyVT == MVT::f32)
+          RetVal = DAG.getNode(ISD::FP_ROUND, MVT::f32, RetVal);
+        break;
+      }
+      }
+    }
+
+    Chain = DAG.getNode(ISD::CALLSEQ_END, MVT::Other, Chain,
+                        DAG.getConstant(NumBytes, getPointerTy()),
+                        DAG.getConstant(0, getPointerTy()));
+    return std::make_pair(RetVal, Chain);
+  } else {
+    std::vector<SDOperand> Ops;
+    Ops.push_back(Chain);
+    Ops.push_back(Callee);
+    Ops.push_back(DAG.getConstant(NumBytes, getPointerTy()));
+    Ops.push_back(DAG.getConstant(0, getPointerTy()));
+
+    SDOperand TheCall = DAG.getNode(isTailCall ? X86ISD::TAILCALL : X86ISD::CALL,
+                                    RetVals, Ops);
+
+    SDOperand ResultVal;
+    switch (RetTyVT) {
+    case MVT::isVoid: break;
+    default:
+      ResultVal = TheCall.getValue(1);
+      break;
+    case MVT::i1:
+    case MVT::i8:
+    case MVT::i16:
+      ResultVal = DAG.getNode(ISD::TRUNCATE, RetTyVT, TheCall.getValue(1));
+      break;
+    case MVT::f32:
+      // FIXME: we would really like to remember that this FP_ROUND operation is
+      // okay to eliminate if we allow excess FP precision.
+      ResultVal = DAG.getNode(ISD::FP_ROUND, MVT::f32, TheCall.getValue(1));
+      break;
+    case MVT::i64:
+      ResultVal = DAG.getNode(ISD::BUILD_PAIR, MVT::i64, TheCall.getValue(1),
+                              TheCall.getValue(2));
+      break;
+    }
+
+    Chain = DAG.getNode(ISD::CALLSEQ_END, MVT::Other, TheCall);
+    return std::make_pair(ResultVal, Chain);
   }
-
-  return std::make_pair(ResultVal, Chain);
 }
 
 SDOperand
@@ -1085,6 +1164,8 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::FP_TO_INT32_IN_MEM: return "X86ISD::FP_TO_INT32_IN_MEM";
   case X86ISD::FP_TO_INT64_IN_MEM: return "X86ISD::FP_TO_INT64_IN_MEM";
   case X86ISD::FLD:                return "X86ISD::FLD";
+  case X86ISD::FST:                return "X86ISD::FST";
+  case X86ISD::FP_GET_RESULT:      return "X86ISD::FP_GET_RESULT";
   case X86ISD::FP_SET_RESULT:      return "X86ISD::FP_SET_RESULT";
   case X86ISD::CALL:               return "X86ISD::CALL";
   case X86ISD::TAILCALL:           return "X86ISD::TAILCALL";

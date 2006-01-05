@@ -36,7 +36,11 @@ def SDTX86RetFlag : SDTypeProfile<0, 1, [SDTCisVT<0, i16>]>;
 
 def SDTX86Fld     : SDTypeProfile<1, 2, [SDTCisVT<0, f64>,
                                          SDTCisPtrTy<1>, SDTCisVT<2, OtherVT>]>;
+def SDTX86Fst     : SDTypeProfile<0, 3, [SDTCisFP<0>,
+                                         SDTCisPtrTy<1>, SDTCisVT<2, OtherVT>]>;
 
+
+def SDTX86FpGet   : SDTypeProfile<1, 0, [SDTCisVT<0, f64>]>;
 def SDTX86FpSet   : SDTypeProfile<0, 1, [SDTCisFP<0>]>;
 
 def X86cmp     : SDNode<"X86ISD::CMP" ,     SDTX86CmpTest,  []>;
@@ -49,9 +53,23 @@ def X86SetCC   : SDNode<"X86ISD::SETCC",    SDTX86SetCC,    []>;
 def X86retflag : SDNode<"X86ISD::RET_FLAG", SDTX86RetFlag,  [SDNPHasChain]>;
 
 def X86fld     : SDNode<"X86ISD::FLD",      SDTX86Fld,      [SDNPHasChain]>;
+def X86fst     : SDNode<"X86ISD::FST",      SDTX86Fst,      [SDNPHasChain]>;
 
+def X86fpget   : SDNode<"X86ISD::FP_GET_RESULT",
+                                            SDTX86FpGet,    [SDNPHasChain]>;
 def X86fpset   : SDNode<"X86ISD::FP_SET_RESULT",
                                             SDTX86FpSet,    [SDNPHasChain]>;
+
+def SDT_X86CallSeqStart : SDTypeProfile<0, 1, [ SDTCisVT<0, i32> ]>;
+def SDT_X86CallSeqEnd   : SDTypeProfile<0, 2, [ SDTCisVT<0, i32>,
+                                                SDTCisVT<1, i32> ]>;
+def callseq_start : SDNode<"ISD::CALLSEQ_START", SDT_X86CallSeqStart,
+                           [SDNPHasChain]>;
+def callseq_end   : SDNode<"ISD::CALLSEQ_END",   SDT_X86CallSeqEnd,
+                           [SDNPHasChain]>;
+
+def SDT_X86Call   : SDTypeProfile<0, 1, [SDTCisVT<0, i32>]>;
+def call          : SDNode<"X86ISD::CALL", SDT_X86Call, [SDNPHasChain]>;
 
 //===----------------------------------------------------------------------===//
 // X86 Operand Definitions.
@@ -275,9 +293,11 @@ class Ii32<bits<8> o, Format f, dag ops, string asm, list<dag> pattern>
 def PHI : I<0, Pseudo, (ops variable_ops), "PHINODE", []>;        // PHI node.
 def NOOP : I<0x90, RawFrm, (ops), "nop", []>; // nop
 
-def ADJCALLSTACKDOWN : I<0, Pseudo, (ops i32imm:$amt), "#ADJCALLSTACKDOWN", []>;
+def ADJCALLSTACKDOWN : I<0, Pseudo, (ops i32imm:$amt), "#ADJCALLSTACKDOWN",
+                         [(callseq_start imm:$amt)]>;
 def ADJCALLSTACKUP   : I<0, Pseudo, (ops i32imm:$amt1, i32imm:$amt2),
-                         "#ADJCALLSTACKUP", []>;
+                         "#ADJCALLSTACKUP",
+                         [(callseq_end imm:$amt1, imm:$amt2)]>;
 def IMPLICIT_USE     : I<0, Pseudo, (ops variable_ops), "#IMPLICIT_USE", []>;
 def IMPLICIT_DEF     : I<0, Pseudo, (ops variable_ops), "#IMPLICIT_DEF", []>;
 let isTerminator = 1 in
@@ -300,9 +320,6 @@ let isTerminator = 1, isReturn = 1, isBarrier = 1,
                     [(X86retflag imm:$amt)]>;
   }
 }
-
-def : Pat<(X86retflag 0),        (RET)>;
-def : Pat<(X86retflag imm:$amt), (RETI imm:$amt)>;
 
 // All branches are RawFrm, Void, Branch, and Terminators
 let isBranch = 1, isTerminator = 1, noResults = 1 in
@@ -342,14 +359,24 @@ def JNP : IBr<0x8B, (ops brtarget:$dst), "jnp $dst", []>, TB;
 //===----------------------------------------------------------------------===//
 //  Call Instructions...
 //
-let isCall = 1, noResults = 1 in
+// FIXME: How about hasInFlag = 1? A fastcall would require an incoming flag
+// to stick the CopyToRegs to the call.
+let isCall = 1, noResults = 1, hasOutFlag = 1 in
   // All calls clobber the non-callee saved registers...
   let Defs = [EAX, ECX, EDX, FP0, FP1, FP2, FP3, FP4, FP5, FP6, ST0,
               XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7] in {
-    def CALLpcrel32 : I<0xE8, RawFrm, (ops calltarget:$dst), "call $dst", []>;
-    def CALL32r     : I<0xFF, MRM2r, (ops R32:$dst), "call {*}$dst", []>;
-    def CALL32m     : I<0xFF, MRM2m, (ops i32mem:$dst), "call {*}$dst", []>;
+    def CALLpcrel32 : I<0xE8, RawFrm, (ops calltarget:$dst), "call $dst",
+                      []>;
+    def CALL32r     : I<0xFF, MRM2r, (ops R32:$dst), "call {*}$dst",
+                      []>;
+    def CALL32m     : I<0xFF, MRM2m, (ops i32mem:$dst), "call {*}$dst",
+                      []>;
   }
+
+def : Pat<(call tglobaladdr:$dst),
+          (CALLpcrel32 tglobaladdr:$dst)>;
+def : Pat<(call externalsym:$dst),
+          (CALLpcrel32 externalsym:$dst)>;
 
 // Tail call stuff.
 let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1, noResults = 1 in
@@ -2309,11 +2336,17 @@ class FpI<dag ops, FPFormat fp, list<dag> pattern>
 }
 
 // Random Pseudo Instructions.
-def FpGETRESULT : FpI<(ops RFP:$dst), SpecialFP, []>;     // FPR = ST(0)
+let hasInFlag = 1 in
+  def FpGETRESULT : FpI<(ops RFP:$dst), SpecialFP, []>;   // FPR = ST(0)
+
+// Do not inline into instruction def. since it isn't predicated on FPStack.
+def : Pat<(X86fpget), (FpGETRESULT)>;
+
 let noResults = 1, hasOutFlag = 1 in 
   def FpSETRESULT : FpI<(ops RFP:$src), SpecialFP,
                         []>, Imp<[], [ST0]>;              // ST(0) = FPR
 
+// Do not inline into instruction def. since it isn't predicated on FPStack.
 def : Pat<(X86fpset RFP:$src), (FpSETRESULT RFP:$src)>;
 
 def FpMOV       : FpI<(ops RFP:$dst, RFP:$src), SpecialFP, []>; // f1 = fmov f2
@@ -2359,7 +2392,7 @@ def FpSUB64m  : FpI<(ops RFP:$dst, RFP:$src1, f32mem:$src2), OneArgFPRW,
                     [(set RFP:$dst, (fsub RFP:$src1, (loadf64 addr:$src2)))]>;
                 // ST(0) = ST(0) - [mem64]
 def FpSUBR32m : FpI<(ops RFP:$dst, RFP:$src1, f32mem:$src2), OneArgFPRW,
-                    [(set RFP:$dst, (fadd (extloadf64f32 addr:$src2),
+                    [(set RFP:$dst, (fsub (extloadf64f32 addr:$src2),
                                      RFP:$src1))]>;
                 // ST(0) = [mem32] - ST(0)
 def FpSUBR64m : FpI<(ops RFP:$dst, RFP:$src1, f32mem:$src2), OneArgFPRW,
@@ -2503,6 +2536,10 @@ def FpST32m   : FpI<(ops f32mem:$op, RFP:$src), OneArgFP,
                 [(truncstore RFP:$src, addr:$op, f32)]>;
 def FpST64m   : FpI<(ops f64mem:$op, RFP:$src), OneArgFP,
                 [(store RFP:$src, addr:$op)]>;
+
+def : Pat<(X86fst RFP:$src, addr:$op, f32), (FpST32m addr:$op, RFP:$src)>;
+def : Pat<(X86fst RFP:$src, addr:$op, f64), (FpST64m addr:$op, RFP:$src)>;
+
 def FpSTP32m  : FpI<(ops f32mem:$op, RFP:$src), OneArgFP, []>;
 def FpSTP64m  : FpI<(ops f64mem:$op, RFP:$src), OneArgFP, []>;
 def FpIST16m  : FpI<(ops i16mem:$op, RFP:$src), OneArgFP, []>;
