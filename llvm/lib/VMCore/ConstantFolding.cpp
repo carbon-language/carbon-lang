@@ -720,6 +720,7 @@ Constant *llvm::ConstantFoldSelectInstruction(const Constant *Cond,
   if (isa<UndefValue>(V1)) return const_cast<Constant*>(V2);
   if (isa<UndefValue>(V2)) return const_cast<Constant*>(V1);
   if (isa<UndefValue>(Cond)) return const_cast<Constant*>(V1);
+  if (V1 == V2) return const_cast<Constant*>(V1);
   return 0;
 }
 
@@ -786,16 +787,27 @@ static int IdxCompare(Constant *C1, Constant *C2, const Type *ElTy) {
 /// constants (like ConstantInt) to be the simplest, followed by
 /// GlobalValues, followed by ConstantExpr's (the most complex).
 ///
-static Instruction::BinaryOps evaluateRelation(const Constant *V1,
-                                               const Constant *V2) {
+static Instruction::BinaryOps evaluateRelation(Constant *V1, Constant *V2) {
   assert(V1->getType() == V2->getType() &&
          "Cannot compare different types of values!");
   if (V1 == V2) return Instruction::SetEQ;
 
   if (!isa<ConstantExpr>(V1) && !isa<GlobalValue>(V1)) {
+    if (!isa<GlobalValue>(V2) && !isa<ConstantExpr>(V2)) {
+      // We distilled this down to a simple case, use the standard constant
+      // folder.
+      ConstantBool *R = dyn_cast<ConstantBool>(ConstantExpr::getSetEQ(V1, V2));
+      if (R == ConstantBool::True) return Instruction::SetEQ;
+      R = dyn_cast<ConstantBool>(ConstantExpr::getSetLT(V1, V2));
+      if (R == ConstantBool::True) return Instruction::SetLT;
+      R = dyn_cast<ConstantBool>(ConstantExpr::getSetGT(V1, V2));
+      if (R == ConstantBool::True) return Instruction::SetGT;
+      
+      // If we couldn't figure it out, bail.
+      return Instruction::BinaryOpsEnd;
+    }
+    
     // If the first operand is simple, swap operands.
-    assert((isa<GlobalValue>(V2) || isa<ConstantExpr>(V2)) &&
-           "Simple cases should have been handled by caller!");
     Instruction::BinaryOps SwappedRelation = evaluateRelation(V2, V1);
     if (SwappedRelation != Instruction::BinaryOpsEnd)
       return SetCondInst::getSwappedCondition(SwappedRelation);
@@ -826,7 +838,7 @@ static Instruction::BinaryOps evaluateRelation(const Constant *V1,
   } else {
     // Ok, the LHS is known to be a constantexpr.  The RHS can be any of a
     // constantexpr, a CPR, or a simple constant.
-    const ConstantExpr *CE1 = cast<ConstantExpr>(V1);
+    ConstantExpr *CE1 = cast<ConstantExpr>(V1);
     Constant *CE1Op0 = CE1->getOperand(0);
 
     switch (CE1->getOpcode()) {
@@ -834,9 +846,21 @@ static Instruction::BinaryOps evaluateRelation(const Constant *V1,
       // If the cast is not actually changing bits, and the second operand is a
       // null pointer, do the comparison with the pre-casted value.
       if (V2->isNullValue() &&
-          CE1->getType()->isLosslesslyConvertibleTo(CE1Op0->getType()))
+          (isa<PointerType>(CE1->getType()) || CE1->getType()->isIntegral()))
         return evaluateRelation(CE1Op0,
                                 Constant::getNullValue(CE1Op0->getType()));
+
+      // If the dest type is a pointer type, and the RHS is a constantexpr cast
+      // from the same type as the src of the LHS, evaluate the inputs.  This is
+      // important for things like "seteq (cast 4 to int*), (cast 5 to int*)",
+      // which happens a lot in compilers with tagged integers.
+      if (ConstantExpr *CE2 = dyn_cast<ConstantExpr>(V2))
+        if (isa<PointerType>(CE1->getType()) && 
+            CE2->getOpcode() == Instruction::Cast &&
+            CE1->getOperand(0)->getType() == CE2->getOperand(0)->getType() &&
+            CE1->getOperand(0)->getType()->isIntegral()) {
+          return evaluateRelation(CE1->getOperand(0), CE2->getOperand(0));
+        }
       break;
 
     case Instruction::GetElementPtr:
@@ -977,7 +1001,8 @@ Constant *llvm::ConstantFoldBinaryInstruction(unsigned Opcode,
   if (SetCondInst::isRelational(Opcode)) {
     if (isa<UndefValue>(V1) || isa<UndefValue>(V2))
       return UndefValue::get(Type::BoolTy);
-    switch (evaluateRelation(V1, V2)) {
+    switch (evaluateRelation(const_cast<Constant*>(V1),
+                             const_cast<Constant*>(V2))) {
     default: assert(0 && "Unknown relational!");
     case Instruction::BinaryOpsEnd:
       break;  // Couldn't determine anything about these constants.
