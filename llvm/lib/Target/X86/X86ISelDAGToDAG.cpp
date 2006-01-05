@@ -410,33 +410,6 @@ SDOperand X86DAGToDAGISel::Select(SDOperand N) {
       return CodeGenMap[N] = CurDAG->getTargetNode(Opc, VT, Result);
       break;
     }
-
-    case ISD::ConstantFP: {
-      Opc = 0;
-      if (X86ScalarSSE) {
-        assert(cast<ConstantFPSDNode>(N)->isExactlyValue(+0.0) &&
-               "SSE only supports +0.0");
-        Opc = (NVT == MVT::f32) ? X86::FLD0SS : X86::FLD0SD;
-      }
-
-      if (cast<ConstantFPSDNode>(N)->isExactlyValue(+0.0) ||
-          cast<ConstantFPSDNode>(N)->isExactlyValue(-0.0))
-        Opc = X86::FpLD0;
-      else if (cast<ConstantFPSDNode>(N)->isExactlyValue(+1.0) ||
-               cast<ConstantFPSDNode>(N)->isExactlyValue(-1.0))
-        Opc = X86::FpLD1;
-
-      assert(Opc != 0 && "Unexpected constant!");
-
-      SDOperand Result = CurDAG->getTargetNode(Opc, NVT);
-
-      if (cast<ConstantFPSDNode>(N)->getValue() < 0.0 ||
-          cast<ConstantFPSDNode>(N)->isExactlyValue(-0.0))
-        Result = CurDAG->getTargetNode(X86::FpCHS, NVT, Result);
-
-      CodeGenMap[N] = Result;
-      return Result;
-    }
   }
 
   return SelectCode(N);

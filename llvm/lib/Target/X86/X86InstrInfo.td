@@ -244,6 +244,26 @@ def i16immZExt8  : PatLeaf<(i16 imm), [{
   return (unsigned)N->getValue() == (unsigned char)N->getValue();
 }]>;
 
+def fp32imm0 : PatLeaf<(f32 fpimm), [{
+  return N->isExactlyValue(+0.0);
+}]>;
+
+def fp64imm0 : PatLeaf<(f64 fpimm), [{
+  return N->isExactlyValue(+0.0);
+}]>;
+
+def fp64immneg0 : PatLeaf<(f64 fpimm), [{
+  return N->isExactlyValue(-0.0);
+}]>;
+
+def fp64imm1 : PatLeaf<(f64 fpimm), [{
+  return N->isExactlyValue(+1.0);
+}]>;
+
+def fp64immneg1 : PatLeaf<(f64 fpimm), [{
+  return N->isExactlyValue(-1.0);
+}]>;
+
 // Helper fragments for loads.
 def loadi8  : PatFrag<(ops node:$ptr), (i8  (load node:$ptr))>;
 def loadi16 : PatFrag<(ops node:$ptr), (i16 (load node:$ptr))>;
@@ -2187,9 +2207,13 @@ def UCOMISSrm: I<0x2E, MRMSrcMem, (ops FR32:$dst, f32mem:$src),
 // Pseudo-instructions that map fld0 to xorps/xorpd for sse.
 // FIXME: remove when we can teach regalloc that xor reg, reg is ok.
 def FLD0SS : I<0x57, MRMSrcReg, (ops FR32:$dst),
-               "xorps $dst, $dst", []>, Requires<[HasSSE1]>, TB;
+               "xorps $dst, $dst",
+               [(set FR32:$dst, fp32imm0)]>,
+             Requires<[HasSSE1]>, TB;
 def FLD0SD : I<0x57, MRMSrcReg, (ops FR64:$dst),
-               "xorpd $dst, $dst", []>, Requires<[HasSSE2]>, TB, OpSize;
+               "xorpd $dst, $dst",
+               [(set FR64:$dst, fp64imm0)]>,
+             Requires<[HasSSE2]>, TB, OpSize;
 
 let isTwoAddress = 1 in {
 // SSE Scalar Arithmetic
@@ -2568,8 +2592,13 @@ def FSTPrr  : FPI<0xD8, AddRegFrm, (ops RST:$op), "fstp $op">, DD;
 def FXCH    : FPI<0xC8, AddRegFrm, (ops RST:$op), "fxch $op">, D9;
 
 // Floating point constant loads.
-def FpLD0 : FpI<(ops RFP:$dst), ZeroArgFP, []>;
-def FpLD1 : FpI<(ops RFP:$dst), ZeroArgFP, []>;
+def FpLD0 : FpI<(ops RFP:$dst), ZeroArgFP,
+                [(set RFP:$dst, fp64imm0)]>;
+def FpLD1 : FpI<(ops RFP:$dst), ZeroArgFP,
+                [(set RFP:$dst, fp64imm1)]>;
+
+def : Pat<(f64 fp64immneg0), (FpCHS (FpLD0))>, Requires<[FPStack]>;
+def : Pat<(f64 fp64immneg1), (FpCHS (FpLD1))>, Requires<[FPStack]>;
 
 def FLD0 : FPI<0xEE, RawFrm, (ops), "fldz">, D9;
 def FLD1 : FPI<0xE8, RawFrm, (ops), "fld1">, D9;
