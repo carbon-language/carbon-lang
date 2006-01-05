@@ -619,20 +619,33 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     default: assert(0 && "This action is not supported yet!");
     case TargetLowering::Expand: {
       MachineDebugInfo *DebugInfo = DAG.getMachineDebugInfo();
-      if (TLI.isOperationLegal(ISD::DEBUG_LOC, MVT::Other) && DebugInfo) {
+      bool useDEBUG_LOC = TLI.isOperationLegal(ISD::DEBUG_LOC, MVT::Other);
+      bool useDEBUG_LABEL = TLI.isOperationLegal(ISD::DEBUG_LABEL, MVT::Other);
+      
+      if (DebugInfo && (useDEBUG_LOC || useDEBUG_LABEL)) {
+        const std::string &FName =
+          cast<StringSDNode>(Node->getOperand(3))->getValue();
+        const std::string &DirName = 
+          cast<StringSDNode>(Node->getOperand(4))->getValue();
+        unsigned SrcFile = DebugInfo->getUniqueSourceID(FName, DirName);
+
         std::vector<SDOperand> Ops;
         Ops.push_back(Tmp1);  // chain
-        Ops.push_back(Node->getOperand(1));  // line #
-        Ops.push_back(Node->getOperand(2));  // col #
-        const std::string &fname =
-          cast<StringSDNode>(Node->getOperand(3))->getValue();
-        const std::string &dirname = 
-          cast<StringSDNode>(Node->getOperand(4))->getValue();
-        unsigned srcfile = DebugInfo->getUniqueSourceID(fname, dirname);
-        Ops.push_back(DAG.getConstant(srcfile, MVT::i32));  // source file id
-        unsigned id = DebugInfo->getNextUniqueID();
-        Ops.push_back(DAG.getConstant(id, MVT::i32));  // label id
-        Result = DAG.getNode(ISD::DEBUG_LOC, MVT::Other, Ops);
+        SDOperand LineOp = Node->getOperand(1);
+        SDOperand ColOp = Node->getOperand(2);
+        
+        if (useDEBUG_LOC) {
+          Ops.push_back(LineOp);  // line #
+          Ops.push_back(ColOp);  // col #
+          Ops.push_back(DAG.getConstant(SrcFile, MVT::i32));  // source file id
+          Result = DAG.getNode(ISD::DEBUG_LOC, MVT::Other, Ops);
+        } else {
+          unsigned Line = dyn_cast<ConstantSDNode>(LineOp)->getValue();
+          unsigned Col = dyn_cast<ConstantSDNode>(ColOp)->getValue();
+          unsigned ID = DebugInfo->RecordLabel(Line, Col, SrcFile);
+          Ops.push_back(DAG.getConstant(ID, MVT::i32));
+          Result = DAG.getNode(ISD::DEBUG_LABEL, MVT::Other, Ops);
+        }
       } else {
         Result = Tmp1;  // chain
       }
@@ -661,27 +674,40 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     break;
     
   case ISD::DEBUG_LOC:
-    assert(Node->getNumOperands() == 5 && "Invalid DEBUG_LOC node!");
+    assert(Node->getNumOperands() == 4 && "Invalid DEBUG_LOC node!");
     switch (TLI.getOperationAction(ISD::DEBUG_LOC, MVT::Other)) {
     case TargetLowering::Promote:
     case TargetLowering::Expand:
     default: assert(0 && "This action is not supported yet!");
-    case TargetLowering::Legal: {
-        SDOperand Tmp5;
-        Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
-        Tmp2 = LegalizeOp(Node->getOperand(1));  // Legalize the line #.
-        Tmp3 = LegalizeOp(Node->getOperand(2));  // Legalize the col #.
-        Tmp4 = LegalizeOp(Node->getOperand(3));  // Legalize the source file id.
-        Tmp5 = LegalizeOp(Node->getOperand(4));  // Legalize the label id.
-        
-        if (Tmp1 != Node->getOperand(0) ||
-            Tmp2 != Node->getOperand(1) ||
-            Tmp3 != Node->getOperand(2) ||
-            Tmp4 != Node->getOperand(3) ||
-            Tmp5 != Node->getOperand(4)) {
-          Result =
-           DAG.getNode(ISD::DEBUG_LOC,MVT::Other, Tmp1, Tmp2, Tmp3, Tmp4, Tmp5);
-        }
+    case TargetLowering::Legal:
+      Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
+      Tmp2 = LegalizeOp(Node->getOperand(1));  // Legalize the line #.
+      Tmp3 = LegalizeOp(Node->getOperand(2));  // Legalize the col #.
+      Tmp4 = LegalizeOp(Node->getOperand(3));  // Legalize the source file id.
+      
+      if (Tmp1 != Node->getOperand(0) ||
+          Tmp2 != Node->getOperand(1) ||
+          Tmp3 != Node->getOperand(2) ||
+          Tmp4 != Node->getOperand(3)) {
+        Result = DAG.getNode(ISD::DEBUG_LOC,MVT::Other, Tmp1, Tmp2, Tmp3, Tmp4);
+      }
+      break;
+    }
+    break;    
+
+  case ISD::DEBUG_LABEL:
+    assert(Node->getNumOperands() == 2 && "Invalid DEBUG_LABEL node!");
+    switch (TLI.getOperationAction(ISD::DEBUG_LABEL, MVT::Other)) {
+    case TargetLowering::Promote:
+    case TargetLowering::Expand:
+    default: assert(0 && "This action is not supported yet!");
+    case TargetLowering::Legal:
+      Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
+      Tmp2 = LegalizeOp(Node->getOperand(1));  // Legalize the label id.
+      
+      if (Tmp1 != Node->getOperand(0) ||
+          Tmp2 != Node->getOperand(1)) {
+        Result = DAG.getNode(ISD::DEBUG_LABEL, MVT::Other, Tmp1, Tmp2);
       }
       break;
     }

@@ -355,11 +355,16 @@ namespace ISD {
     LOCATION,
     
     // DEBUG_LOC - This node is used to represent source line information
-    // embedded in the code.  It takes token chain as input, then a line number,
-    // then a column then a file id (provided by MachineDebugInfo), then a
-    // unique id (provided by MachineDebugInfo for label gen).  It produces a
-    // token chain as output.
+    // embedded in the code.  It takes a token chain as input, then a line
+    // number, then a column then a file id (provided by MachineDebugInfo.) It
+    // produces a token chain as output.
     DEBUG_LOC,
+    
+    // DEBUG_LABEL - This node is used to mark a location in the code where a
+    // label should be generated for use by the debug information.  It takes a
+    // token chain as input, the a unique id (provided by MachineDebugInfo.) It
+    // produces a token chain as output.
+    DEBUG_LABEL,
     
     // BUILTIN_OP_END - This must be the last enum value in this list.
     BUILTIN_OP_END,

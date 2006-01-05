@@ -94,8 +94,11 @@ PPCTargetLowering::PPCTargetLowering(TargetMachine &TM)
   // PowerPC does not have truncstore for i1.
   setOperationAction(ISD::TRUNCSTORE, MVT::i1, Promote);
 
-  // PowerPC doesn't have line number support yet.
+  // Support label based line numbers.
   setOperationAction(ISD::LOCATION, MVT::Other, Expand);
+  // FIXME - use subtarget debug flags
+  if (TM.getSubtarget<PPCSubtarget>().isDarwin())
+    setOperationAction(ISD::DEBUG_LABEL, MVT::Other, Expand);
   
   // We want to legalize GlobalAddress and ConstantPool nodes into the 
   // appropriate instructions to materialize the address.

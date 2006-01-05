@@ -550,8 +550,9 @@ namespace llvm {
     ///
     void EmitInitial() const;
     
-    /// ShouldEmitDwarf - Determine if dwarf declarations should be made.
-    ///
+    /// ShouldEmitDwarf - Returns true if dwarf declarations should be made.
+    /// When called it also checks to see if debug info is newly available.  if
+    /// so the initial dwarf headers are emitted.
     bool ShouldEmitDwarf();
 
     /// BeginModule - Emit all dwarf sections that should come prior to the

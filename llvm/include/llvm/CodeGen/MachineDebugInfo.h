@@ -52,6 +52,13 @@ public:
   ///
   unsigned getNextUniqueID() { return UniqueID++; }
   
+  /// RecordLabel - Records location information and associates it with a
+  /// debug label.  Returns unique label id.
+  unsigned RecordLabel(unsigned Line, unsigned Col, unsigned SrcFile) {
+    // FIXME - actually record.
+    return getNextUniqueID();
+  }
+  
   bool doInitialization();
   bool doFinalization();
   

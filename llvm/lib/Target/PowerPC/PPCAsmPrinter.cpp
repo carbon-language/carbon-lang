@@ -252,7 +252,9 @@ namespace {
     bool doFinalization(Module &M);
     
     void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.setPreservesAll();
       AU.addRequired<MachineDebugInfo>();
+      PPCAsmPrinter::getAnalysisUsage(AU);
     }
 
   };
@@ -418,6 +420,9 @@ void PPCAsmPrinter::printMachineInstruction(const MachineInstr *MI) {
 /// method to print assembly for each instruction.
 ///
 bool DarwinAsmPrinter::runOnMachineFunction(MachineFunction &MF) {
+  // FIXME - is this the earliest this can be set.
+  DW.SetDebugInfo(&getAnalysis<MachineDebugInfo>());
+
   SetupMachineFunction(MF);
   O << "\n\n";
   
@@ -486,7 +491,6 @@ bool DarwinAsmPrinter::doInitialization(Module &M) {
   Mang->setUseQuotes(true);
   
   // Emit initial debug information.
-  DW.SetDebugInfo(getAnalysisToUpdate<MachineDebugInfo>());
   DW.BeginModule();
   return false;
 }
