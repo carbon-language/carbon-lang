@@ -721,8 +721,8 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
       if (Instruction *NV = FoldOpIntoPhi(I))
         return NV;
     
-    ConstantInt *XorRHS;
-    Value *XorLHS;
+    ConstantInt *XorRHS = 0;
+    Value *XorLHS = 0;
     if (match(LHS, m_Xor(m_Value(XorLHS), m_ConstantInt(XorRHS)))) {
       unsigned TySizeBits = I.getType()->getPrimitiveSizeInBits();
       int64_t  RHSSExt = cast<ConstantInt>(RHSC)->getSExtValue();
@@ -821,7 +821,7 @@ FoundSExt:
     if (Instruction *R = AssociativeOpt(I, AddMaskingAnd(C2))) return R;
 
   if (ConstantInt *CRHS = dyn_cast<ConstantInt>(RHS)) {
-    Value *X;
+    Value *X = 0;
     if (match(LHS, m_Not(m_Value(X)))) {   // ~X + C --> (C-1) - X
       Constant *C= ConstantExpr::getSub(CRHS, ConstantInt::get(I.getType(), 1));
       return BinaryOperator::createSub(C, X);
@@ -1772,7 +1772,7 @@ Instruction *InstCombiner::visitAnd(BinaryOperator &I) {
     // calling MaskedValueIsZero, to avoid inefficient cases where we traipse
     // through many levels of ands.
     {
-      Value *X; ConstantInt *C1;
+      Value *X = 0; ConstantInt *C1 = 0;
       if (match(Op0, m_And(m_Value(X), m_ConstantInt(C1))))
         return BinaryOperator::createAnd(X, ConstantExpr::getAnd(C1, AndRHS));
     }
@@ -2076,7 +2076,7 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
                           cast<ConstantIntegral>(ConstantExpr::getNot(RHS))))
       return ReplaceInstUsesWith(I, RHS);
 
-    ConstantInt *C1; Value *X;
+    ConstantInt *C1 = 0; Value *X = 0;
     // (X & C1) | C2 --> (X | C2) & (C1|C2)
     if (match(Op0, m_And(m_Value(X), m_ConstantInt(C1))) && isOnlyUse(Op0)) {
       Instruction *Or = BinaryOperator::createOr(X, RHS, Op0->getName());
@@ -2103,7 +2103,8 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
         return NV;
   }
 
-  Value *A, *B; ConstantInt *C1, *C2;
+  Value *A = 0, *B = 0;
+  ConstantInt *C1 = 0, *C2 = 0;
 
   if (match(Op0, m_And(m_Value(A), m_Value(B))))
     if (A == Op1 || B == Op1)    // (A & ?) | A  --> A
@@ -2140,7 +2141,7 @@ Instruction *InstCombiner::visitOr(BinaryOperator &I) {
     // .. and C2 = ~C1 and C2 is 0+1+ and (N & C2) == 0
     // replace with V+N.
     if (C1 == ConstantExpr::getNot(C2)) {
-      Value *V1, *V2;
+      Value *V1 = 0, *V2 = 0;
       if ((C2->getRawValue() & (C2->getRawValue()+1)) == 0 && // C2 == 0+1+
           match(A, m_Add(m_Value(V1), m_Value(V2)))) {
         // Add commutes, try both ways.
@@ -2415,9 +2416,9 @@ Instruction *InstCombiner::visitXor(BinaryOperator &I) {
     }
 
   // (A & C1)^(B & C2) -> (A & C1)|(B & C2) iff C1&C2 == 0
-  Value *A, *B; ConstantInt *C1, *C2;
-  if (match(Op0, m_And(m_Value(A), m_ConstantInt(C1))) &&
-      match(Op1, m_And(m_Value(B), m_ConstantInt(C2))) &&
+  ConstantInt *C1 = 0, *C2 = 0;
+  if (match(Op0, m_And(m_Value(), m_ConstantInt(C1))) &&
+      match(Op1, m_And(m_Value(), m_ConstantInt(C2))) &&
       ConstantExpr::getAnd(C1, C2)->isNullValue())
     return BinaryOperator::createOr(Op0, Op1);
 
