@@ -379,7 +379,7 @@ SparcV8TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
   for (unsigned i = 0, e = Args.size(); i != e; ++i) {
     SDOperand Val = Args[i].first;
     MVT::ValueType ObjectVT = Val.getValueType();
-    SDOperand ValToStore;
+    SDOperand ValToStore(0, 0);
     unsigned ObjSize;
     switch (ObjectVT) {
     default: assert(0 && "Unhandled argument type!");

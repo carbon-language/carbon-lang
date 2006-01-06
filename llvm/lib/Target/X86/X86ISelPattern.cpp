@@ -2989,7 +2989,7 @@ void ISel::EmitFastCCToFastCCTailCall(SDNode *TailCallNode) {
 
   // Copy the return address of the caller into a virtual register so we don't
   // clobber it.
-  SDOperand RetVal;
+  SDOperand RetVal(0, 0);
   if (ESPOffset) {
     SDOperand RetValAddr = X86Lowering.getReturnAddressFrameIndex(*TheDAG);
     RetVal = TheDAG->getLoad(MVT::i32, TheDAG->getEntryNode(),
