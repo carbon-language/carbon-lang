@@ -100,6 +100,8 @@ namespace {
                     SDOperand &Index, SDOperand &Disp);
     bool SelectLEAAddr(SDOperand N, SDOperand &Base, SDOperand &Scale,
                        SDOperand &Index, SDOperand &Disp);
+    bool TryFoldLoad(SDOperand N, SDOperand &Base, SDOperand &Scale,
+                     SDOperand &Index, SDOperand &Disp);
 
     inline void getAddressOperands(X86ISelAddressMode &AM, SDOperand &Base, 
                                    SDOperand &Scale, SDOperand &Index,
@@ -294,8 +296,16 @@ bool X86DAGToDAGISel::SelectAddr(SDOperand N, SDOperand &Base, SDOperand &Scale,
   return false;
 }
 
-static bool isRegister0(SDOperand Op)
-{
+bool X86DAGToDAGISel::TryFoldLoad(SDOperand N, SDOperand &Base,
+                                  SDOperand &Scale, SDOperand &Index,
+                                  SDOperand &Disp) {
+  if (N.getOpcode() == ISD::LOAD && N.hasOneUse() &&
+      CodeGenMap.count(N.getValue(1)))
+    return SelectAddr(N.getOperand(1), Base, Scale, Index, Disp);
+  return false;
+}
+
+static bool isRegister0(SDOperand Op) {
   if (RegisterSDNode *R = dyn_cast<RegisterSDNode>(Op))
     return (R->getReg() == 0);
   return false;
@@ -354,14 +364,67 @@ bool X86DAGToDAGISel::SelectLEAAddr(SDOperand N, SDOperand &Base, SDOperand &Sca
 SDOperand X86DAGToDAGISel::Select(SDOperand N) {
   SDNode *Node = N.Val;
   MVT::ValueType NVT = Node->getValueType(0);
-  unsigned Opc;
+  unsigned Opc, MOpc;
+  unsigned Opcode = Node->getOpcode();
 
-  if (Node->getOpcode() >= ISD::BUILTIN_OP_END &&
-      Node->getOpcode() < X86ISD::FIRST_NUMBER)
+  if (Opcode >= ISD::BUILTIN_OP_END && Opcode < X86ISD::FIRST_NUMBER)
     return N;   // Already selected.
   
-  switch (Node->getOpcode()) {
+  switch (Opcode) {
     default: break;
+    case ISD::MULHU:
+    case ISD::MULHS: {
+      if (Opcode == ISD::MULHU)
+        switch (NVT) {
+        default: assert(0 && "Unsupported VT!");
+        case MVT::i8:  Opc = X86::MUL8r;  MOpc = X86::MUL8m;  break;
+        case MVT::i16: Opc = X86::MUL16r; MOpc = X86::MUL16m; break;
+        case MVT::i32: Opc = X86::MUL32r; MOpc = X86::MUL32m; break;
+        }
+      else
+        switch (NVT) {
+        default: assert(0 && "Unsupported VT!");
+        case MVT::i8:  Opc = X86::IMUL8r;  MOpc = X86::IMUL8m;  break;
+        case MVT::i16: Opc = X86::IMUL16r; MOpc = X86::IMUL16m; break;
+        case MVT::i32: Opc = X86::IMUL32r; MOpc = X86::IMUL32m; break;
+        }
+
+      unsigned LoReg, HiReg;
+      switch (NVT) {
+      default: assert(0 && "Unsupported VT!");
+      case MVT::i8:  LoReg = X86::AL;  HiReg = X86::AH;  break;
+      case MVT::i16: LoReg = X86::AX;  HiReg = X86::DX;  break;
+      case MVT::i32: LoReg = X86::EAX; HiReg = X86::EDX; break;
+      }
+
+      SDOperand N0 = Node->getOperand(0);
+      SDOperand N1 = Node->getOperand(1);
+
+      bool foldedLoad = false;
+      SDOperand Tmp0, Tmp1, Tmp2, Tmp3;
+      foldedLoad = TryFoldLoad(N1, Tmp0, Tmp1, Tmp2, Tmp3);
+      SDOperand Chain = foldedLoad ? Select(N1.getOperand(0))
+                                   : CurDAG->getEntryNode();
+
+      SDOperand InFlag;
+      Chain  = CurDAG->getCopyToReg(Chain, CurDAG->getRegister(LoReg, NVT),
+                                    Select(N0), InFlag);
+      InFlag = Chain.getValue(1);
+
+      if (foldedLoad) {
+        Chain  = CurDAG->getTargetNode(MOpc, MVT::Other, MVT::Flag, Tmp0, Tmp1,
+                                       Tmp2, Tmp3, Chain, InFlag);
+        InFlag = Chain.getValue(1);
+      } else {
+        InFlag = CurDAG->getTargetNode(Opc, MVT::Flag, Select(N1), InFlag);
+      }
+
+      SDOperand Result = CurDAG->getCopyFromReg(Chain, HiReg, NVT, InFlag);
+      CodeGenMap[N.getValue(0)] = Result;
+      CodeGenMap[N.getValue(1)] = Result.getValue(1);
+      CodeGenMap[N.getValue(2)] = Result.getValue(2);
+      return Result.getValue(N.ResNo);
+    }
 
     case ISD::TRUNCATE: {
       unsigned Reg;
@@ -387,8 +450,20 @@ SDOperand X86DAGToDAGISel::Select(SDOperand N) {
 
       Result = CurDAG->getCopyFromReg(Chain,
                                       Reg, VT, InFlag);
-      return CodeGenMap[N] = CurDAG->getTargetNode(Opc, VT, Result);
+      if (N.Val->hasOneUse())
+        return CurDAG->SelectNodeTo(N.Val, Opc, VT, Result);
+      else
+        return CodeGenMap[N] = CurDAG->getTargetNode(Opc, VT, Result);
       break;
+    }
+
+    case ISD::UNDEF: {
+      Opc = (NVT == MVT::f64) ? (X86Vector >= SSE2 ? X86::FLD0SD : X86::FpLD0)
+                              : X86::IMPLICIT_DEF;
+      if (N.Val->hasOneUse())
+        return CurDAG->SelectNodeTo(N.Val, Opc, NVT);
+      else
+        return CodeGenMap[N] = CurDAG->getTargetNode(Opc, NVT);
     }
   }
 
