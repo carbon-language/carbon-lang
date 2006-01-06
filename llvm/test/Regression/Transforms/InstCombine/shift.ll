@@ -180,3 +180,10 @@ uint %test25(uint %tmp.2, uint %AA) {
 	ret uint %tmp.6
 }
 
+int %test26(uint %A) { ;; handle casts between shifts.
+	%B = shr uint %A, ubyte 1
+	%C = cast uint %B to int
+        %D = shl int %C, ubyte 1
+	ret int %D
+}
+ 
