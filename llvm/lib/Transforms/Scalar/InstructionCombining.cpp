@@ -119,6 +119,8 @@ namespace {
     Instruction *FoldGEPSetCC(User *GEPLHS, Value *RHS,
                               Instruction::BinaryOps Cond, Instruction &I);
     Instruction *visitShiftInst(ShiftInst &I);
+    Instruction *FoldShiftByConstant(Value *Op0, ConstantUInt *Op1,
+                                     ShiftInst &I);
     Instruction *visitCastInst(CastInst &CI);
     Instruction *FoldSelectOpOp(SelectInst &SI, Instruction *TI,
                                 Instruction *FI);
@@ -3438,75 +3440,84 @@ Instruction *InstCombiner::visitShiftInst(ShiftInst &I) {
     }
   }
 
-  if (ConstantUInt *CUI = dyn_cast<ConstantUInt>(Op1)) {
-    // shl uint X, 32 = 0 and shr ubyte Y, 9 = 0, ... just don't eliminate shr
-    // of a signed value.
-    //
-    unsigned TypeBits = Op0->getType()->getPrimitiveSizeInBits();
-    if (CUI->getValue() >= TypeBits) {
-      if (!Op0->getType()->isSigned() || isLeftShift)
-        return ReplaceInstUsesWith(I, Constant::getNullValue(Op0->getType()));
-      else {
-        I.setOperand(1, ConstantUInt::get(Type::UByteTy, TypeBits-1));
-        return &I;
-      }
+  if (ConstantUInt *CUI = dyn_cast<ConstantUInt>(Op1))
+    if (Instruction *Res = FoldShiftByConstant(Op0, CUI, I))
+      return Res;
+  return 0;
+}
+
+Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantUInt *Op1,
+                                               ShiftInst &I) {
+  bool isLeftShift = I.getOpcode() == Instruction::Shl;
+
+  // shl uint X, 32 = 0 and shr ubyte Y, 9 = 0, ... just don't eliminate shr
+  // of a signed value.
+  //
+  unsigned TypeBits = Op0->getType()->getPrimitiveSizeInBits();
+  if (Op1->getValue() >= TypeBits) {
+    if (!Op0->getType()->isSigned() || isLeftShift)
+      return ReplaceInstUsesWith(I, Constant::getNullValue(Op0->getType()));
+    else {
+      I.setOperand(1, ConstantUInt::get(Type::UByteTy, TypeBits-1));
+      return &I;
     }
-
-    // ((X*C1) << C2) == (X * (C1 << C2))
-    if (BinaryOperator *BO = dyn_cast<BinaryOperator>(Op0))
-      if (BO->getOpcode() == Instruction::Mul && isLeftShift)
-        if (Constant *BOOp = dyn_cast<Constant>(BO->getOperand(1)))
-          return BinaryOperator::createMul(BO->getOperand(0),
-                                           ConstantExpr::getShl(BOOp, CUI));
-
-    // Try to fold constant and into select arguments.
-    if (SelectInst *SI = dyn_cast<SelectInst>(Op0))
-      if (Instruction *R = FoldOpIntoSelect(I, SI, this))
-        return R;
-    if (isa<PHINode>(Op0))
-      if (Instruction *NV = FoldOpIntoPhi(I))
-        return NV;
-
-    if (Op0->hasOneUse()) {
-      // If this is a SHL of a sign-extending cast, see if we can turn the input
-      // into a zero extending cast (a simple strength reduction).
-      if (CastInst *CI = dyn_cast<CastInst>(Op0)) {
-        const Type *SrcTy = CI->getOperand(0)->getType();
-        if (isLeftShift && SrcTy->isInteger() && SrcTy->isSigned() &&
-            SrcTy->getPrimitiveSizeInBits() <
-                   CI->getType()->getPrimitiveSizeInBits()) {
-          // We can change it to a zero extension if we are shifting out all of
-          // the sign extended bits.  To check this, form a mask of all of the
-          // sign extend bits, then shift them left and see if we have anything
-          // left.
-          Constant *Mask = ConstantIntegral::getAllOnesValue(SrcTy); //     1111
-          Mask = ConstantExpr::getZeroExtend(Mask, CI->getType());   // 00001111
-          Mask = ConstantExpr::getNot(Mask);   // 1's in the sign bits: 11110000
-          if (ConstantExpr::getShl(Mask, CUI)->isNullValue()) {
-            // If the shift is nuking all of the sign bits, change this to a
-            // zero extension cast.  To do this, cast the cast input to
-            // unsigned, then to the requested size.
-            Value *CastOp = CI->getOperand(0);
-            Instruction *NC =
-              new CastInst(CastOp, CastOp->getType()->getUnsignedVersion(),
-                           CI->getName()+".uns");
-            NC = InsertNewInstBefore(NC, I);
-            // Finally, insert a replacement for CI.
-            NC = new CastInst(NC, CI->getType(), CI->getName());
-            CI->setName("");
-            NC = InsertNewInstBefore(NC, I);
-            WorkList.push_back(CI);  // Delete CI later.
-            I.setOperand(0, NC);
-            return &I;               // The SHL operand was modified.
-          }
+  }
+  
+  // ((X*C1) << C2) == (X * (C1 << C2))
+  if (BinaryOperator *BO = dyn_cast<BinaryOperator>(Op0))
+    if (BO->getOpcode() == Instruction::Mul && isLeftShift)
+      if (Constant *BOOp = dyn_cast<Constant>(BO->getOperand(1)))
+        return BinaryOperator::createMul(BO->getOperand(0),
+                                         ConstantExpr::getShl(BOOp, Op1));
+  
+  // Try to fold constant and into select arguments.
+  if (SelectInst *SI = dyn_cast<SelectInst>(Op0))
+    if (Instruction *R = FoldOpIntoSelect(I, SI, this))
+      return R;
+  if (isa<PHINode>(Op0))
+    if (Instruction *NV = FoldOpIntoPhi(I))
+      return NV;
+  
+  if (Op0->hasOneUse()) {
+    // If this is a SHL of a sign-extending cast, see if we can turn the input
+    // into a zero extending cast (a simple strength reduction).
+    if (CastInst *CI = dyn_cast<CastInst>(Op0)) {
+      const Type *SrcTy = CI->getOperand(0)->getType();
+      if (isLeftShift && SrcTy->isInteger() && SrcTy->isSigned() &&
+          SrcTy->getPrimitiveSizeInBits() <
+          CI->getType()->getPrimitiveSizeInBits()) {
+        // We can change it to a zero extension if we are shifting out all of
+        // the sign extended bits.  To check this, form a mask of all of the
+        // sign extend bits, then shift them left and see if we have anything
+        // left.
+        Constant *Mask = ConstantIntegral::getAllOnesValue(SrcTy); //     1111
+        Mask = ConstantExpr::getZeroExtend(Mask, CI->getType());   // 00001111
+        Mask = ConstantExpr::getNot(Mask);   // 1's in the sign bits: 11110000
+        if (ConstantExpr::getShl(Mask, Op1)->isNullValue()) {
+          // If the shift is nuking all of the sign bits, change this to a
+          // zero extension cast.  To do this, cast the cast input to
+          // unsigned, then to the requested size.
+          Value *CastOp = CI->getOperand(0);
+          Instruction *NC =
+            new CastInst(CastOp, CastOp->getType()->getUnsignedVersion(),
+                         CI->getName()+".uns");
+          NC = InsertNewInstBefore(NC, I);
+          // Finally, insert a replacement for CI.
+          NC = new CastInst(NC, CI->getType(), CI->getName());
+          CI->setName("");
+          NC = InsertNewInstBefore(NC, I);
+          WorkList.push_back(CI);  // Delete CI later.
+          I.setOperand(0, NC);
+          return &I;               // The SHL operand was modified.
         }
       }
-
-      if (BinaryOperator *Op0BO = dyn_cast<BinaryOperator>(Op0)) {
-        // Turn ((X >> C) + Y) << C  ->  (X + (Y << C)) & (~0 << C)
-        Value *V1, *V2;
-        ConstantInt *CC;
-        switch (Op0BO->getOpcode()) {
+    }
+    
+    if (BinaryOperator *Op0BO = dyn_cast<BinaryOperator>(Op0)) {
+      // Turn ((X >> C) + Y) << C  ->  (X + (Y << C)) & (~0 << C)
+      Value *V1, *V2;
+      ConstantInt *CC;
+      switch (Op0BO->getOpcode()) {
         default: break;
         case Instruction::Add:
         case Instruction::And:
@@ -3516,85 +3527,85 @@ Instruction *InstCombiner::visitShiftInst(ShiftInst &I) {
           // Turn (Y + (X >> C)) << C  ->  (X + (Y << C)) & (~0 << C)
           if (isLeftShift && Op0BO->getOperand(1)->hasOneUse() &&
               match(Op0BO->getOperand(1),
-                    m_Shr(m_Value(V1), m_ConstantInt(CC))) && CC == CUI) {
+                    m_Shr(m_Value(V1), m_ConstantInt(CC))) && CC == Op1) {
             Instruction *YS = new ShiftInst(Instruction::Shl, 
-                                            Op0BO->getOperand(0), CUI,
+                                            Op0BO->getOperand(0), Op1,
                                             Op0BO->getName());
             InsertNewInstBefore(YS, I); // (Y << C)
             Instruction *X = BinaryOperator::create(Op0BO->getOpcode(), YS,
                                                     V1,
-                                               Op0BO->getOperand(1)->getName());
+                                                    Op0BO->getOperand(1)->getName());
             InsertNewInstBefore(X, I);  // (X + (Y << C))
             Constant *C2 = ConstantInt::getAllOnesValue(X->getType());
-            C2 = ConstantExpr::getShl(C2, CUI);
+            C2 = ConstantExpr::getShl(C2, Op1);
             return BinaryOperator::createAnd(X, C2);
           }
-
+          
           // Turn (Y + ((X >> C) & CC)) << C  ->  ((X & (CC << C)) + (Y << C))
           if (isLeftShift && Op0BO->getOperand(1)->hasOneUse() &&
               match(Op0BO->getOperand(1),
                     m_And(m_Shr(m_Value(V1), m_Value(V2)),
-                          m_ConstantInt(CC))) && V2 == CUI &&
-       cast<BinaryOperator>(Op0BO->getOperand(1))->getOperand(0)->hasOneUse()) {
+                          m_ConstantInt(CC))) && V2 == Op1 &&
+              cast<BinaryOperator>(Op0BO->getOperand(1))->getOperand(0)->hasOneUse()) {
             Instruction *YS = new ShiftInst(Instruction::Shl, 
-                                            Op0BO->getOperand(0), CUI,
+                                            Op0BO->getOperand(0), Op1,
                                             Op0BO->getName());
             InsertNewInstBefore(YS, I); // (Y << C)
             Instruction *XM =
-              BinaryOperator::createAnd(V1, ConstantExpr::getShl(CC, CUI),
+              BinaryOperator::createAnd(V1, ConstantExpr::getShl(CC, Op1),
                                         V1->getName()+".mask");
             InsertNewInstBefore(XM, I); // X & (CC << C)
             
             return BinaryOperator::create(Op0BO->getOpcode(), YS, XM);
           }
-              
+          
           // FALL THROUGH.
         case Instruction::Sub:
           // Turn ((X >> C) + Y) << C  ->  (X + (Y << C)) & (~0 << C)
           if (isLeftShift && Op0BO->getOperand(0)->hasOneUse() &&
               match(Op0BO->getOperand(0),
-                    m_Shr(m_Value(V1), m_ConstantInt(CC))) && CC == CUI) {
+                    m_Shr(m_Value(V1), m_ConstantInt(CC))) && CC == Op1) {
             Instruction *YS = new ShiftInst(Instruction::Shl, 
-                                            Op0BO->getOperand(1), CUI,
+                                            Op0BO->getOperand(1), Op1,
                                             Op0BO->getName());
             InsertNewInstBefore(YS, I); // (Y << C)
             Instruction *X = BinaryOperator::create(Op0BO->getOpcode(), YS,
                                                     V1,
-                                              Op0BO->getOperand(0)->getName());
+                                                    Op0BO->getOperand(0)->getName());
             InsertNewInstBefore(X, I);  // (X + (Y << C))
             Constant *C2 = ConstantInt::getAllOnesValue(X->getType());
-            C2 = ConstantExpr::getShl(C2, CUI);
+            C2 = ConstantExpr::getShl(C2, Op1);
             return BinaryOperator::createAnd(X, C2);
           }
-
+          
           if (isLeftShift && Op0BO->getOperand(0)->hasOneUse() &&
               match(Op0BO->getOperand(0),
                     m_And(m_Shr(m_Value(V1), m_Value(V2)),
-                          m_ConstantInt(CC))) && V2 == CUI &&
-       cast<BinaryOperator>(Op0BO->getOperand(0))->getOperand(0)->hasOneUse()) {
+                          m_ConstantInt(CC))) && V2 == Op1 &&
+              cast<BinaryOperator>(Op0BO->getOperand(0))->getOperand(0)->hasOneUse()) {
             Instruction *YS = new ShiftInst(Instruction::Shl, 
-                                            Op0BO->getOperand(1), CUI,
+                                            Op0BO->getOperand(1), Op1,
                                             Op0BO->getName());
             InsertNewInstBefore(YS, I); // (Y << C)
             Instruction *XM =
-              BinaryOperator::createAnd(V1, ConstantExpr::getShl(CC, CUI),
+              BinaryOperator::createAnd(V1, ConstantExpr::getShl(CC, Op1),
                                         V1->getName()+".mask");
             InsertNewInstBefore(XM, I); // X & (CC << C)
             
             return BinaryOperator::create(Op0BO->getOpcode(), YS, XM);
           }
-
+          
           break;
-        }
-
-
-        // If the operand is an bitwise operator with a constant RHS, and the
-        // shift is the only use, we can pull it out of the shift.
-        if (ConstantInt *Op0C = dyn_cast<ConstantInt>(Op0BO->getOperand(1))) {
-          bool isValid = true;     // Valid only for And, Or, Xor
-          bool highBitSet = false; // Transform if high bit of constant set?
-
-          switch (Op0BO->getOpcode()) {
+      }
+      
+      
+      // If the operand is an bitwise operator with a constant RHS, and the
+      // shift is the only use, we can pull it out of the shift.
+      if (ConstantInt *Op0C = dyn_cast<ConstantInt>(Op0BO->getOperand(1))) {
+        bool isValid = true;     // Valid only for And, Or, Xor
+        bool highBitSet = false; // Transform if high bit of constant set?
+        
+        switch (Op0BO->getOpcode()) {
           default: isValid = false; break;   // Do not perform transform!
           case Instruction::Add:
             isValid = isLeftShift;
@@ -3606,99 +3617,97 @@ Instruction *InstCombiner::visitShiftInst(ShiftInst &I) {
           case Instruction::And:
             highBitSet = true;
             break;
+        }
+        
+        // If this is a signed shift right, and the high bit is modified
+        // by the logical operation, do not perform the transformation.
+        // The highBitSet boolean indicates the value of the high bit of
+        // the constant which would cause it to be modified for this
+        // operation.
+        //
+        if (isValid && !isLeftShift && !I.getType()->isUnsigned()) {
+          uint64_t Val = Op0C->getRawValue();
+          isValid = ((Val & (1 << (TypeBits-1))) != 0) == highBitSet;
+        }
+        
+        if (isValid) {
+          Constant *NewRHS = ConstantExpr::get(I.getOpcode(), Op0C, Op1);
+          
+          Instruction *NewShift =
+            new ShiftInst(I.getOpcode(), Op0BO->getOperand(0), Op1,
+                          Op0BO->getName());
+          Op0BO->setName("");
+          InsertNewInstBefore(NewShift, I);
+          
+          return BinaryOperator::create(Op0BO->getOpcode(), NewShift,
+                                        NewRHS);
+        }
+      }
+    }
+  }
+  
+  // If this is a shift of a shift, see if we can fold the two together.
+  if (ShiftInst *Op0SI = dyn_cast<ShiftInst>(Op0))
+    if (ConstantUInt *ShiftAmt1C =
+        dyn_cast<ConstantUInt>(Op0SI->getOperand(1))) {
+      unsigned ShiftAmt1 = (unsigned)ShiftAmt1C->getValue();
+      unsigned ShiftAmt2 = (unsigned)Op1->getValue();
+      
+      // Check for (A << c1) << c2   and   (A >> c1) >> c2
+      if (I.getOpcode() == Op0SI->getOpcode()) {
+        unsigned Amt = ShiftAmt1+ShiftAmt2;   // Fold into one big shift.
+        if (Op0->getType()->getPrimitiveSizeInBits() < Amt)
+          Amt = Op0->getType()->getPrimitiveSizeInBits();
+        return new ShiftInst(I.getOpcode(), Op0SI->getOperand(0),
+                             ConstantUInt::get(Type::UByteTy, Amt));
+      }
+      
+      // Check for (A << c1) >> c2 or visaversa.  If we are dealing with
+      // signed types, we can only support the (A >> c1) << c2 configuration,
+      // because it can not turn an arbitrary bit of A into a sign bit.
+      if (I.getType()->isUnsigned() || isLeftShift) {
+        // Calculate bitmask for what gets shifted off the edge...
+        Constant *C = ConstantIntegral::getAllOnesValue(I.getType());
+        if (isLeftShift)
+          C = ConstantExpr::getShl(C, ShiftAmt1C);
+        else
+          C = ConstantExpr::getShr(C, ShiftAmt1C);
+        
+        Instruction *Mask =
+          BinaryOperator::createAnd(Op0SI->getOperand(0), C,
+                                    Op0SI->getOperand(0)->getName()+".mask");
+        InsertNewInstBefore(Mask, I);
+        
+        // Figure out what flavor of shift we should use...
+        if (ShiftAmt1 == ShiftAmt2)
+          return ReplaceInstUsesWith(I, Mask);  // (A << c) >> c  === A & c2
+        else if (ShiftAmt1 < ShiftAmt2) {
+          return new ShiftInst(I.getOpcode(), Mask,
+                               ConstantUInt::get(Type::UByteTy, ShiftAmt2-ShiftAmt1));
+        } else {
+          return new ShiftInst(Op0SI->getOpcode(), Mask,
+                               ConstantUInt::get(Type::UByteTy, ShiftAmt1-ShiftAmt2));
+        }
+      } else {
+        // We can handle signed (X << C1) >> C2 if it's a sign extend.  In
+        // this case, C1 == C2 and C1 is 8, 16, or 32.
+        if (ShiftAmt1 == ShiftAmt2) {
+          const Type *SExtType = 0;
+          switch (ShiftAmt1) {
+          case 8 : SExtType = Type::SByteTy; break;
+          case 16: SExtType = Type::ShortTy; break;
+          case 32: SExtType = Type::IntTy; break;
           }
-
-          // If this is a signed shift right, and the high bit is modified
-          // by the logical operation, do not perform the transformation.
-          // The highBitSet boolean indicates the value of the high bit of
-          // the constant which would cause it to be modified for this
-          // operation.
-          //
-          if (isValid && !isLeftShift && !I.getType()->isUnsigned()) {
-            uint64_t Val = Op0C->getRawValue();
-            isValid = ((Val & (1 << (TypeBits-1))) != 0) == highBitSet;
-          }
-
-          if (isValid) {
-            Constant *NewRHS = ConstantExpr::get(I.getOpcode(), Op0C, CUI);
-
-            Instruction *NewShift =
-              new ShiftInst(I.getOpcode(), Op0BO->getOperand(0), CUI,
-                            Op0BO->getName());
-            Op0BO->setName("");
-            InsertNewInstBefore(NewShift, I);
-
-            return BinaryOperator::create(Op0BO->getOpcode(), NewShift,
-                                          NewRHS);
+          
+          if (SExtType) {
+            Instruction *NewTrunc = new CastInst(Op0SI->getOperand(0),
+                                                 SExtType, "sext");
+            InsertNewInstBefore(NewTrunc, I);
+            return new CastInst(NewTrunc, I.getType());
           }
         }
       }
     }
-
-    // If this is a shift of a shift, see if we can fold the two together...
-    if (ShiftInst *Op0SI = dyn_cast<ShiftInst>(Op0))
-      if (ConstantUInt *ShiftAmt1C =
-                                 dyn_cast<ConstantUInt>(Op0SI->getOperand(1))) {
-        unsigned ShiftAmt1 = (unsigned)ShiftAmt1C->getValue();
-        unsigned ShiftAmt2 = (unsigned)CUI->getValue();
-
-        // Check for (A << c1) << c2   and   (A >> c1) >> c2
-        if (I.getOpcode() == Op0SI->getOpcode()) {
-          unsigned Amt = ShiftAmt1+ShiftAmt2;   // Fold into one big shift...
-          if (Op0->getType()->getPrimitiveSizeInBits() < Amt)
-            Amt = Op0->getType()->getPrimitiveSizeInBits();
-          return new ShiftInst(I.getOpcode(), Op0SI->getOperand(0),
-                               ConstantUInt::get(Type::UByteTy, Amt));
-        }
-
-        // Check for (A << c1) >> c2 or visaversa.  If we are dealing with
-        // signed types, we can only support the (A >> c1) << c2 configuration,
-        // because it can not turn an arbitrary bit of A into a sign bit.
-        if (I.getType()->isUnsigned() || isLeftShift) {
-          // Calculate bitmask for what gets shifted off the edge...
-          Constant *C = ConstantIntegral::getAllOnesValue(I.getType());
-          if (isLeftShift)
-            C = ConstantExpr::getShl(C, ShiftAmt1C);
-          else
-            C = ConstantExpr::getShr(C, ShiftAmt1C);
-
-          Instruction *Mask =
-            BinaryOperator::createAnd(Op0SI->getOperand(0), C,
-                                      Op0SI->getOperand(0)->getName()+".mask");
-          InsertNewInstBefore(Mask, I);
-
-          // Figure out what flavor of shift we should use...
-          if (ShiftAmt1 == ShiftAmt2)
-            return ReplaceInstUsesWith(I, Mask);  // (A << c) >> c  === A & c2
-          else if (ShiftAmt1 < ShiftAmt2) {
-            return new ShiftInst(I.getOpcode(), Mask,
-                         ConstantUInt::get(Type::UByteTy, ShiftAmt2-ShiftAmt1));
-          } else {
-            return new ShiftInst(Op0SI->getOpcode(), Mask,
-                         ConstantUInt::get(Type::UByteTy, ShiftAmt1-ShiftAmt2));
-          }
-        } else {
-          // We can handle signed (X << C1) >> C2 if it's a sign extend.  In
-          // this case, C1 == C2 and C1 is 8, 16, or 32.
-          if (ShiftAmt1 == ShiftAmt2) {
-            const Type *SExtType = 0;
-            switch (ShiftAmt1) {
-            case 8 : SExtType = Type::SByteTy; break;
-            case 16: SExtType = Type::ShortTy; break;
-            case 32: SExtType = Type::IntTy; break;
-            }
-            
-            if (SExtType) {
-              Instruction *NewTrunc = new CastInst(Op0SI->getOperand(0),
-                                                   SExtType, "sext");
-              InsertNewInstBefore(NewTrunc, I);
-              return new CastInst(NewTrunc, I.getType());
-            }
-          }
-        }
-      }
-  }
-
   return 0;
 }
 
