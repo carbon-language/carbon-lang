@@ -1282,9 +1282,6 @@ SDOperand DAGCombiner::visitSHL(SDNode *N) {
   // fold (shl x, 0) -> x
   if (N1C && N1C->isNullValue())
     return N0;
-  // fold (shl x, 1) -> (add x, x)
-  if (N1C && N1C->getValue() == 1)
-    return DAG.getNode(ISD::ADD, VT, N0, N0);
   // if (shl x, c) is known to be zero, return 0
   if (N1C && MaskedValueIsZero(SDOperand(N, 0), ~0ULL >> (64-OpSizeInBits),TLI))
     return DAG.getConstant(0, VT);
