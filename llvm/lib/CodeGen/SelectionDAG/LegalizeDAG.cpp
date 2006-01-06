@@ -1303,8 +1303,8 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     }
     }
 
-    MVT::ValueType VT = Node->getValueType(0);
-    switch (TLI.getOperationAction(Node->getOpcode(), VT)) {
+    switch (TLI.getOperationAction(Node->getOpcode(),
+                                   Node->getValueType(0))) {
     default: assert(0 && "This action is not supported yet!");
     case TargetLowering::Custom: {
       SDOperand Tmp = TLI.LowerOperation(Result, DAG);
