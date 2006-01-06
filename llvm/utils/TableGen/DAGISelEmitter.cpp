@@ -1691,6 +1691,11 @@ static const ComplexPattern *NodeGetComplexPattern(TreePatternNode *N,
 /// patterns before small ones.  This is used to determine the size of a
 /// pattern.
 static unsigned getPatternSize(TreePatternNode *P, DAGISelEmitter &ISE) {
+  assert(isExtIntegerInVTs(P->getExtTypes()) || 
+         isExtFloatingPointInVTs(P->getExtTypes()) ||
+         P->getExtTypeNum(0) == MVT::isVoid ||
+         P->getExtTypeNum(0) == MVT::Flag && 
+         "Not a valid pattern node to size!");
   unsigned Size = 2;  // The node itself.
 
   // FIXME: This is a hack to statically increase the priority of patterns
@@ -1700,7 +1705,7 @@ static unsigned getPatternSize(TreePatternNode *P, DAGISelEmitter &ISE) {
   // calculate the complexity of all patterns a dag can potentially map to.
   const ComplexPattern *AM = NodeGetComplexPattern(P, ISE);
   if (AM)
-    Size += AM->getNumOperands();
+    Size += AM->getNumOperands() * 2;
     
   // Count children in the count if they are also nodes.
   for (unsigned i = 0, e = P->getNumChildren(); i != e; ++i) {
@@ -1708,10 +1713,10 @@ static unsigned getPatternSize(TreePatternNode *P, DAGISelEmitter &ISE) {
     if (!Child->isLeaf() && Child->getExtTypeNum(0) != MVT::Other)
       Size += getPatternSize(Child, ISE);
     else if (Child->isLeaf()) {
-      Size += getPatternSize(Child, ISE);
       if (dynamic_cast<IntInit*>(Child->getLeafValue())) 
-        // Matches a ConstantSDNode. More specific to any immediate.
-        ++Size;
+        Size += 3;  // Matches a ConstantSDNode.
+      else if (NodeIsComplexPattern(Child))
+        Size += getPatternSize(Child, ISE);
     }
   }
   
