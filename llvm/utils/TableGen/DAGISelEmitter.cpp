@@ -1902,6 +1902,10 @@ public:
            << ".getValue(" << CInfo.getNumResults() << "))) goto P"
            << PatternNo << "Fail;   // Already selected for a chain use?\n";
       }
+      if (!FoundChain) {
+        OS << "      SDOperand Chain = " << RootName << ".getOperand(0);\n";
+        FoundChain = true;
+      }
     }
 
     for (unsigned i = 0, e = N->getNumChildren(); i != e; ++i, ++OpNo) {
@@ -1972,13 +1976,6 @@ public:
           Child->dump();
           assert(0 && "Unknown leaf type!");
         }
-      }
-    }
-
-    if (HasChain) {
-      if (!FoundChain) {
-        OS << "      SDOperand Chain = " << RootName << ".getOperand(0);\n";
-        FoundChain = true;
       }
     }
 
