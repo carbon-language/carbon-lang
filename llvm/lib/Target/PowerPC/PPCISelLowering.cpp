@@ -379,6 +379,7 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     
     // Only lower GlobalAddress on Darwin.
     if (!getTargetMachine().getSubtarget<PPCSubtarget>().isDarwin()) break;
+    
     SDOperand Hi = DAG.getNode(PPCISD::Hi, MVT::i32, GA, Zero);
     if (PICEnabled) {
       // With PIC, the first instruction is actually "GR+hi(&G)".
@@ -389,7 +390,7 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     SDOperand Lo = DAG.getNode(PPCISD::Lo, MVT::i32, GA, Zero);
     Lo = DAG.getNode(ISD::ADD, MVT::i32, Hi, Lo);
                                    
-    if (!GV->hasWeakLinkage() && !GV->isExternal())
+    if (!GV->hasWeakLinkage() && !GV->hasLinkOnceLinkage() && !GV->isExternal())
       return Lo;
 
     // If the global is weak or external, we have to go through the lazy
