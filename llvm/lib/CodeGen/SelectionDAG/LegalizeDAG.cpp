@@ -1302,6 +1302,22 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       break;
     }
     }
+
+    MVT::ValueType VT = Node->getValueType(0);
+    switch (TLI.getOperationAction(Node->getOpcode(), VT)) {
+    default: assert(0 && "This action is not supported yet!");
+    case TargetLowering::Custom: {
+      SDOperand Tmp = TLI.LowerOperation(Result, DAG);
+      if (Tmp.Val) {
+        Result = LegalizeOp(Tmp);
+        break;
+      }
+      // FALLTHROUGH if the target thinks it is legal.
+    }
+    case TargetLowering::Legal:
+      // Nothing to do.
+      break;
+    }
     break;
   case ISD::STORE: {
     Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
