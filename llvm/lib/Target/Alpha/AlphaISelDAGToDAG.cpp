@@ -241,6 +241,10 @@ SDOperand AlphaDAGToDAGISel::Select(SDOperand Op) {
   }
   case ISD::Constant: {
     uint64_t uval = cast<ConstantSDNode>(N)->getValue();
+    
+    if (uval == 0)
+      return CurDAG->getCopyFromReg(CurDAG->getEntryNode(), Alpha::R31, MVT::i64);
+
     int64_t val = (int64_t)uval;
     int32_t val32 = (int32_t)val;
     if (val <= IMM_HIGH + IMM_HIGH * IMM_MULT &&
