@@ -1343,7 +1343,6 @@ let isTwoAddress = 0 in {
 }
 
 // Shift instructions
-// FIXME: provide shorter instructions when imm8 == 1
 def SHL8rCL  : I<0xD2, MRM4r, (ops R8 :$dst, R8 :$src),
                  "shl{b} {%cl, $dst|$dst, %CL}",
                  [(set R8:$dst, (shl R8:$src, CL))]>, Imp<[CL],[]>;
@@ -2756,3 +2755,13 @@ def FLDCW16m  : I<0xD9, MRM5m,                   // X87 control world = [mem16]
 //===----------------------------------------------------------------------===//
 
 def RDTSC : I<0x31, RawFrm, (ops), "rdtsc", []>, TB, Imp<[],[EAX,EDX]>;
+
+
+//===----------------------------------------------------------------------===//
+// Some peepholes
+//===----------------------------------------------------------------------===//
+
+// (shl x, 1) ==> (add x, x)
+def : Pat<(shl R8 :$src1, (i8 1)), (ADD8rr  R8 :$src1, R8 :$src1)>;
+def : Pat<(shl R16:$src1, (i8 1)), (ADD16rr R16:$src1, R16:$src1)>;
+def : Pat<(shl R32:$src1, (i8 1)), (ADD32rr R32:$src1, R32:$src1)>;
