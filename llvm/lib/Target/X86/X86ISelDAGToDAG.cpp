@@ -300,7 +300,7 @@ bool X86DAGToDAGISel::TryFoldLoad(SDOperand N, SDOperand &Base,
                                   SDOperand &Scale, SDOperand &Index,
                                   SDOperand &Disp) {
   if (N.getOpcode() == ISD::LOAD && N.hasOneUse() &&
-      CodeGenMap.count(N.getValue(1)))
+      CodeGenMap.count(N.getValue(1)) == 0)
     return SelectAddr(N.getOperand(1), Base, Scale, Index, Disp);
   return false;
 }
@@ -403,6 +403,15 @@ SDOperand X86DAGToDAGISel::Select(SDOperand N) {
       bool foldedLoad = false;
       SDOperand Tmp0, Tmp1, Tmp2, Tmp3;
       foldedLoad = TryFoldLoad(N1, Tmp0, Tmp1, Tmp2, Tmp3);
+      // MULHU and MULHS are commmutative
+      if (!foldedLoad) {
+        foldedLoad = TryFoldLoad(N0, Tmp0, Tmp1, Tmp2, Tmp3);
+        if (foldedLoad) {
+          N0 = Node->getOperand(1);
+          N1 = Node->getOperand(0);
+        }
+      }
+
       SDOperand Chain = foldedLoad ? Select(N1.getOperand(0))
                                    : CurDAG->getEntryNode();
 
@@ -421,9 +430,94 @@ SDOperand X86DAGToDAGISel::Select(SDOperand N) {
 
       SDOperand Result = CurDAG->getCopyFromReg(Chain, HiReg, NVT, InFlag);
       CodeGenMap[N.getValue(0)] = Result;
-      CodeGenMap[N.getValue(1)] = Result.getValue(1);
-      CodeGenMap[N.getValue(2)] = Result.getValue(2);
-      return Result.getValue(N.ResNo);
+      if (foldedLoad)
+        CodeGenMap[N1.getValue(1)] = Result.getValue(1);
+      return Result;
+    }
+
+    case ISD::SDIV:
+    case ISD::UDIV:
+    case ISD::SREM:
+    case ISD::UREM: {
+      bool isSigned = Opcode == ISD::SDIV || Opcode == ISD::SREM;
+      bool isDiv    = Opcode == ISD::SDIV || Opcode == ISD::UDIV;
+      if (!isSigned)
+        switch (NVT) {
+        default: assert(0 && "Unsupported VT!");
+        case MVT::i8:  Opc = X86::DIV8r;  MOpc = X86::DIV8m;  break;
+        case MVT::i16: Opc = X86::DIV16r; MOpc = X86::DIV16m; break;
+        case MVT::i32: Opc = X86::DIV32r; MOpc = X86::DIV32m; break;
+        }
+      else
+        switch (NVT) {
+        default: assert(0 && "Unsupported VT!");
+        case MVT::i8:  Opc = X86::IDIV8r;  MOpc = X86::IDIV8m;  break;
+        case MVT::i16: Opc = X86::IDIV16r; MOpc = X86::IDIV16m; break;
+        case MVT::i32: Opc = X86::IDIV32r; MOpc = X86::IDIV32m; break;
+        }
+
+      unsigned LoReg, HiReg;
+      unsigned ClrOpcode, SExtOpcode;
+      switch (NVT) {
+      default: assert(0 && "Unsupported VT!");
+      case MVT::i8:
+        LoReg = X86::AL;  HiReg = X86::AH;
+        ClrOpcode  = X86::MOV8ri;
+        SExtOpcode = X86::CBW;
+        break;
+      case MVT::i16:
+        LoReg = X86::AX;  HiReg = X86::DX;
+        ClrOpcode  = X86::MOV16ri;
+        SExtOpcode = X86::CWD;
+        break;
+      case MVT::i32:
+        LoReg = X86::EAX; HiReg = X86::EDX;
+        ClrOpcode  = X86::MOV32ri;
+        SExtOpcode = X86::CDQ;
+        break;
+      }
+
+      SDOperand N0 = Node->getOperand(0);
+      SDOperand N1 = Node->getOperand(1);
+
+      bool foldedLoad = false;
+      SDOperand Tmp0, Tmp1, Tmp2, Tmp3;
+      foldedLoad = TryFoldLoad(N1, Tmp0, Tmp1, Tmp2, Tmp3);
+      SDOperand Chain = foldedLoad ? Select(N1.getOperand(0))
+                                   : CurDAG->getEntryNode();
+
+      SDOperand InFlag;
+      Chain  = CurDAG->getCopyToReg(Chain, CurDAG->getRegister(LoReg, NVT),
+                                    Select(N0), InFlag);
+      InFlag = Chain.getValue(1);
+
+      if (isSigned) {
+        // Sign extend the low part into the high part.
+        InFlag = CurDAG->getTargetNode(SExtOpcode, MVT::Flag, InFlag);
+      } else {
+        // Zero out the high part, effectively zero extending the input.
+        SDOperand ClrNode =
+          CurDAG->getTargetNode(ClrOpcode, NVT,
+                                CurDAG->getTargetConstant(0, NVT));
+        Chain  = CurDAG->getCopyToReg(Chain, CurDAG->getRegister(HiReg, NVT),
+                                      ClrNode, InFlag);
+        InFlag = Chain.getValue(1);
+      }
+
+      if (foldedLoad) {
+        Chain  = CurDAG->getTargetNode(MOpc, MVT::Other, MVT::Flag, Tmp0, Tmp1,
+                                       Tmp2, Tmp3, Chain, InFlag);
+        InFlag = Chain.getValue(1);
+      } else {
+        InFlag = CurDAG->getTargetNode(Opc, MVT::Flag, Select(N1), InFlag);
+      }
+
+      SDOperand Result = CurDAG->getCopyFromReg(Chain, isDiv ? LoReg : HiReg,
+                                                NVT, InFlag);
+      CodeGenMap[N.getValue(0)] = Result;
+      if (foldedLoad)
+        CodeGenMap[N1.getValue(1)] = Result.getValue(1);
+      return Result;
     }
 
     case ISD::TRUNCATE: {
