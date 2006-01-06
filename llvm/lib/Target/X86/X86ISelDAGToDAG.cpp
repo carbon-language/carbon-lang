@@ -363,26 +363,6 @@ SDOperand X86DAGToDAGISel::Select(SDOperand N) {
   switch (Node->getOpcode()) {
     default: break;
 
-    case ISD::SHL:
-      if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(Node->getOperand(1))) {
-        if (CN->getValue() == 1) {
-          // X = SHL Y, 1  -> X = ADD Y, Y
-          switch (NVT) {
-            default: assert(0 && "Cannot shift this type!");
-            case MVT::i8:  Opc = X86::ADD8rr; break;
-            case MVT::i16: Opc = X86::ADD16rr; break;
-            case MVT::i32: Opc = X86::ADD32rr; break;
-          }
-          SDOperand Tmp0 = Select(Node->getOperand(0));
-          if (Node->hasOneUse())
-            return CurDAG->SelectNodeTo(Node, Opc, NVT, Tmp0, Tmp0);
-          else
-            return CodeGenMap[N] =
-              CurDAG->getTargetNode(Opc, NVT, Tmp0, Tmp0);
-        }
-      }
-      break;
-
     case ISD::TRUNCATE: {
       unsigned Reg;
       MVT::ValueType VT;
