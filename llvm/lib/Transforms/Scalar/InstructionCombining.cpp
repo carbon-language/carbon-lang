@@ -3449,13 +3449,15 @@ Instruction *InstCombiner::visitShiftInst(ShiftInst &I) {
 Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantUInt *Op1,
                                                ShiftInst &I) {
   bool isLeftShift = I.getOpcode() == Instruction::Shl;
+  bool isSignedShift = Op0->getType()->isSigned();
+  bool isUnsignedShift = !isSignedShift;
 
   // shl uint X, 32 = 0 and shr ubyte Y, 9 = 0, ... just don't eliminate shr
   // of a signed value.
   //
   unsigned TypeBits = Op0->getType()->getPrimitiveSizeInBits();
   if (Op1->getValue() >= TypeBits) {
-    if (!Op0->getType()->isSigned() || isLeftShift)
+    if (isUnsignedShift || isLeftShift)
       return ReplaceInstUsesWith(I, Constant::getNullValue(Op0->getType()));
     else {
       I.setOperand(1, ConstantUInt::get(Type::UByteTy, TypeBits-1));
@@ -3625,7 +3627,7 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantUInt *Op1,
         // the constant which would cause it to be modified for this
         // operation.
         //
-        if (isValid && !isLeftShift && !I.getType()->isUnsigned()) {
+        if (isValid && !isLeftShift && isSignedShift) {
           uint64_t Val = Op0C->getRawValue();
           isValid = ((Val & (1 << (TypeBits-1))) != 0) == highBitSet;
         }
@@ -3665,7 +3667,7 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantUInt *Op1,
       // Check for (A << c1) >> c2 or visaversa.  If we are dealing with
       // signed types, we can only support the (A >> c1) << c2 configuration,
       // because it can not turn an arbitrary bit of A into a sign bit.
-      if (I.getType()->isUnsigned() || isLeftShift) {
+      if (isUnsignedShift || isLeftShift) {
         // Calculate bitmask for what gets shifted off the edge...
         Constant *C = ConstantIntegral::getAllOnesValue(I.getType());
         if (isLeftShift)
