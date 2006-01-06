@@ -118,13 +118,20 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   // These should be promoted to a larger select which is supported.
   setOperationAction(ISD::SELECT           , MVT::i1   , Promote);
   setOperationAction(ISD::SELECT           , MVT::i8   , Promote);
-  // X86 wants to expand cmov itself.
   if (X86DAGIsel) {
+    // X86 wants to expand cmov itself.
     setOperationAction(ISD::SELECT         , MVT::i16  , Custom);
     setOperationAction(ISD::SELECT         , MVT::i32  , Custom);
+    setOperationAction(ISD::SELECT         , MVT::f32  , Custom);
+    setOperationAction(ISD::SELECT         , MVT::f64  , Custom);
     setOperationAction(ISD::SETCC          , MVT::i8   , Custom);
     setOperationAction(ISD::SETCC          , MVT::i16  , Custom);
     setOperationAction(ISD::SETCC          , MVT::i32  , Custom);
+    setOperationAction(ISD::SETCC          , MVT::f32  , Custom);
+    setOperationAction(ISD::SETCC          , MVT::f64  , Custom);
+    // X86 ret instruction may pop stack.
+    setOperationAction(ISD::RET            , MVT::Other, Custom);
+    // Darwin ABI issue.
     setOperationAction(ISD::GlobalAddress  , MVT::i32  , Custom);
   }
 
@@ -201,6 +208,12 @@ X86TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
                                SelectionDAG &DAG) {
   assert((!isVarArg || CallingConv == CallingConv::C) &&
          "Only C takes varargs!");
+
+  // If the callee is a GlobalAddress node (quite common, every direct call is)
+  // turn it into a TargetGlobalAddress node so that legalize doesn't hack it.
+  if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee))
+    Callee = DAG.getTargetGlobalAddress(G->getGlobal(), getPointerTy());
+
   if (CallingConv == CallingConv::Fast && EnableFastCC)
     return LowerFastCCCallTo(Chain, RetTy, isTailCall, Callee, Args, DAG);
   return  LowerCCCCallTo(Chain, RetTy, isVarArg, isTailCall, Callee, Args, DAG);
@@ -223,8 +236,8 @@ SDOperand X86TargetLowering::LowerReturnTo(SDOperand Chain, SDOperand Op,
                                  DAG.getConstant(1, MVT::i32));
       SDOperand Lo = DAG.getNode(ISD::EXTRACT_ELEMENT, MVT::i32, Op,
                                  DAG.getConstant(0, MVT::i32));
-      Copy = DAG.getCopyToReg(Chain, X86::EAX, Hi, SDOperand());
-      Copy = DAG.getCopyToReg(Copy,  X86::EDX, Lo, Copy.getValue(1));
+      Copy = DAG.getCopyToReg(Chain, X86::EDX, Hi, SDOperand());
+      Copy = DAG.getCopyToReg(Copy,  X86::EAX, Lo, Copy.getValue(1));
       break;
     }
     case MVT::f32:
@@ -468,8 +481,8 @@ X86TargetLowering::LowerCCCCallTo(SDOperand Chain, const Type *RetTy,
     Ops.push_back(Chain);
     Ops.push_back(Callee);
 
-    Chain = DAG.getNode(isTailCall ? X86ISD::TAILCALL : X86ISD::CALL,
-                        NodeTys, Ops);
+    // FIXME: Do not generate X86ISD::TAILCALL for now.
+    Chain = DAG.getNode(X86ISD::CALL, NodeTys, Ops);
     SDOperand InFlag = Chain.getValue(1);
 
     SDOperand RetVal;
@@ -951,43 +964,145 @@ X86TargetLowering::LowerFastCCCallTo(SDOperand Chain, const Type *RetTy,
     break;
   }
 
-  std::vector<SDOperand> Ops;
-  Ops.push_back(Chain);
-  Ops.push_back(Callee);
-  Ops.push_back(DAG.getConstant(ArgOffset, getPointerTy()));
-  // Callee pops all arg values on the stack.
-  Ops.push_back(DAG.getConstant(ArgOffset, getPointerTy()));
+  if (X86DAGIsel) {
+    // Build a sequence of copy-to-reg nodes chained together with token chain
+    // and flag operands which copy the outgoing args into registers.
+    SDOperand InFlag;
+    for (unsigned i = 0, e = RegValuesToPass.size(); i != e; ++i) {
+      unsigned CCReg;
+      SDOperand RegToPass = RegValuesToPass[i];
+      switch (RegToPass.getValueType()) {
+      default: assert(0 && "Bad thing to pass in regs");
+      case MVT::i8:
+        CCReg = (i == 0) ? X86::AL  : X86::DL;
+        break;
+      case MVT::i16:
+        CCReg = (i == 0) ? X86::AX  : X86::DX;
+        break;
+      case MVT::i32:
+        CCReg = (i == 0) ? X86::EAX : X86::EDX;
+        break;
+      }
 
-  // Pass register arguments as needed.
-  Ops.insert(Ops.end(), RegValuesToPass.begin(), RegValuesToPass.end());
+      Chain = DAG.getCopyToReg(Chain, CCReg, RegToPass, InFlag);
+      InFlag = Chain.getValue(1);
+    }
 
-  SDOperand TheCall = DAG.getNode(isTailCall ? X86ISD::TAILCALL : X86ISD::CALL,
-                                  RetVals, Ops);
-  Chain = DAG.getNode(ISD::CALLSEQ_END, MVT::Other, TheCall);
+    std::vector<MVT::ValueType> NodeTys;
+    NodeTys.push_back(MVT::Other);   // Returns a chain
+    NodeTys.push_back(MVT::Flag);    // Returns a flag for retval copy to use.
 
-  SDOperand ResultVal;
-  switch (RetTyVT) {
-  case MVT::isVoid: break;
-  default:
-    ResultVal = TheCall.getValue(1);
-    break;
-  case MVT::i1:
-  case MVT::i8:
-  case MVT::i16:
-    ResultVal = DAG.getNode(ISD::TRUNCATE, RetTyVT, TheCall.getValue(1));
-    break;
-  case MVT::f32:
-    // FIXME: we would really like to remember that this FP_ROUND operation is
-    // okay to eliminate if we allow excess FP precision.
-    ResultVal = DAG.getNode(ISD::FP_ROUND, MVT::f32, TheCall.getValue(1));
-    break;
-  case MVT::i64:
-    ResultVal = DAG.getNode(ISD::BUILD_PAIR, MVT::i64, TheCall.getValue(1),
-                            TheCall.getValue(2));
-    break;
+    std::vector<SDOperand> Ops;
+    Ops.push_back(Chain);
+    Ops.push_back(Callee);
+    if (InFlag.Val)
+      Ops.push_back(InFlag);
+
+    // FIXME: Do not generate X86ISD::TAILCALL for now.
+    Chain = DAG.getNode(X86ISD::CALL, NodeTys, Ops);
+    InFlag = Chain.getValue(1);
+
+    SDOperand RetVal;
+    if (RetTyVT != MVT::isVoid) {
+      switch (RetTyVT) {
+      default: assert(0 && "Unknown value type to return!");
+      case MVT::i1:
+      case MVT::i8:
+        RetVal = DAG.getCopyFromReg(Chain, X86::AL, MVT::i8, InFlag);
+        Chain = RetVal.getValue(1);
+        break;
+      case MVT::i16:
+        RetVal = DAG.getCopyFromReg(Chain, X86::AX, MVT::i16, InFlag);
+        Chain = RetVal.getValue(1);
+        break;
+      case MVT::i32:
+        RetVal = DAG.getCopyFromReg(Chain, X86::EAX, MVT::i32, InFlag);
+        Chain = RetVal.getValue(1);
+        break;
+      case MVT::i64: {
+        SDOperand Lo = DAG.getCopyFromReg(Chain, X86::EAX, MVT::i32, InFlag);
+        SDOperand Hi = DAG.getCopyFromReg(Lo.getValue(1), X86::EDX, MVT::i32, 
+                                          Lo.getValue(2));
+        RetVal = DAG.getNode(ISD::BUILD_PAIR, MVT::i64, Lo, Hi);
+        Chain = Hi.getValue(1);
+        break;
+      }
+      case MVT::f32:
+      case MVT::f64: {
+        std::vector<MVT::ValueType> Tys;
+        Tys.push_back(MVT::f64);
+        Tys.push_back(MVT::Other);
+        std::vector<SDOperand> Ops;
+        Ops.push_back(Chain);
+        Ops.push_back(InFlag);
+        RetVal = DAG.getNode(X86ISD::FP_GET_RESULT, Tys, Ops);
+        Chain = RetVal.getValue(1);
+        if (X86ScalarSSE) {
+          unsigned Size = MVT::getSizeInBits(MVT::f64)/8;
+          MachineFunction &MF = DAG.getMachineFunction();
+          int SSFI = MF.getFrameInfo()->CreateStackObject(Size, Size);
+          SDOperand StackSlot = DAG.getFrameIndex(SSFI, getPointerTy());
+          Tys.clear();
+          Tys.push_back(MVT::Other);
+          Ops.clear();
+          Ops.push_back(Chain);
+          Ops.push_back(RetVal);
+          Ops.push_back(StackSlot);
+          Ops.push_back(DAG.getValueType(RetTyVT));
+          Chain = DAG.getNode(X86ISD::FST, Tys, Ops);
+          RetVal = DAG.getLoad(RetTyVT, Chain, StackSlot,
+                               DAG.getSrcValue(NULL));
+          Chain = RetVal.getValue(1);
+        } else if (RetTyVT == MVT::f32)
+          RetVal = DAG.getNode(ISD::FP_ROUND, MVT::f32, RetVal);
+        break;
+      }
+      }
+    }
+
+    Chain = DAG.getNode(ISD::CALLSEQ_END, MVT::Other, Chain,
+                        DAG.getConstant(ArgOffset, getPointerTy()),
+                        DAG.getConstant(ArgOffset, getPointerTy()));
+    return std::make_pair(RetVal, Chain);
+  } else {
+    std::vector<SDOperand> Ops;
+    Ops.push_back(Chain);
+    Ops.push_back(Callee);
+    Ops.push_back(DAG.getConstant(ArgOffset, getPointerTy()));
+    // Callee pops all arg values on the stack.
+    Ops.push_back(DAG.getConstant(ArgOffset, getPointerTy()));
+
+    // Pass register arguments as needed.
+    Ops.insert(Ops.end(), RegValuesToPass.begin(), RegValuesToPass.end());
+
+    SDOperand TheCall = DAG.getNode(isTailCall ? X86ISD::TAILCALL : X86ISD::CALL,
+                                    RetVals, Ops);
+    Chain = DAG.getNode(ISD::CALLSEQ_END, MVT::Other, TheCall);
+
+    SDOperand ResultVal;
+    switch (RetTyVT) {
+    case MVT::isVoid: break;
+    default:
+      ResultVal = TheCall.getValue(1);
+      break;
+    case MVT::i1:
+    case MVT::i8:
+    case MVT::i16:
+      ResultVal = DAG.getNode(ISD::TRUNCATE, RetTyVT, TheCall.getValue(1));
+      break;
+    case MVT::f32:
+      // FIXME: we would really like to remember that this FP_ROUND operation is
+      // okay to eliminate if we allow excess FP precision.
+      ResultVal = DAG.getNode(ISD::FP_ROUND, MVT::f32, TheCall.getValue(1));
+      break;
+    case MVT::i64:
+      ResultVal = DAG.getNode(ISD::BUILD_PAIR, MVT::i64, TheCall.getValue(1),
+                              TheCall.getValue(2));
+      break;
+    }
+
+    return std::make_pair(ResultVal, Chain);
   }
-
-  return std::make_pair(ResultVal, Chain);
 }
 
 SDOperand X86TargetLowering::getReturnAddressFrameIndex(SelectionDAG &DAG) {
@@ -1024,6 +1139,54 @@ LowerFrameReturnAddress(bool isFrameAddress, SDOperand Chain, unsigned Depth,
 //===----------------------------------------------------------------------===//
 //                           X86 Custom Lowering Hooks
 //===----------------------------------------------------------------------===//
+
+/// SetCCToX86CondCode - do a one to one translation of a ISD::CondCode to
+/// X86 specific CondCode. It returns a X86ISD::COND_INVALID if it cannot
+/// do a direct translation.
+static unsigned CCToX86CondCode(SDOperand CC, bool isFP) {
+  ISD::CondCode SetCCOpcode = cast<CondCodeSDNode>(CC)->get();
+  unsigned X86CC = X86ISD::COND_INVALID;
+  if (!isFP) {
+    switch (SetCCOpcode) {
+    default: break;
+    case ISD::SETEQ:  X86CC = X86ISD::COND_E;  break;
+    case ISD::SETGT:  X86CC = X86ISD::COND_G;  break;
+    case ISD::SETGE:  X86CC = X86ISD::COND_GE; break;
+    case ISD::SETLT:  X86CC = X86ISD::COND_L;  break;
+    case ISD::SETLE:  X86CC = X86ISD::COND_LE; break;
+    case ISD::SETNE:  X86CC = X86ISD::COND_NE; break;
+    case ISD::SETULT: X86CC = X86ISD::COND_B;  break;
+    case ISD::SETUGT: X86CC = X86ISD::COND_A;  break;
+    case ISD::SETULE: X86CC = X86ISD::COND_BE; break;
+    case ISD::SETUGE: X86CC = X86ISD::COND_AE; break;
+    }
+  } else {
+    // On a floating point condition, the flags are set as follows:
+    // ZF  PF  CF   op
+    //  0 | 0 | 0 | X > Y
+    //  0 | 0 | 1 | X < Y
+    //  1 | 0 | 0 | X == Y
+    //  1 | 1 | 1 | unordered
+    switch (SetCCOpcode) {
+    default: break;
+    case ISD::SETUEQ:
+    case ISD::SETEQ: X86CC = X86ISD::COND_E;  break;
+    case ISD::SETOGT:
+    case ISD::SETGT: X86CC = X86ISD::COND_A;  break;
+    case ISD::SETOGE:
+    case ISD::SETGE: X86CC = X86ISD::COND_AE; break;
+    case ISD::SETULT:
+    case ISD::SETLT: X86CC = X86ISD::COND_B;  break;
+    case ISD::SETULE:
+    case ISD::SETLE: X86CC = X86ISD::COND_BE; break;
+    case ISD::SETONE:
+    case ISD::SETNE: X86CC = X86ISD::COND_NE; break;
+    case ISD::SETUO: X86CC = X86ISD::COND_P;  break;
+    case ISD::SETO:  X86CC = X86ISD::COND_NP; break;
+    }
+  }
+  return X86CC;
+}
 
 /// LowerOperation - Provide custom lowering hooks for some operations.
 ///
@@ -1100,7 +1263,87 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     SDOperand CC   = Op.getOperand(2);
     SDOperand Cond = DAG.getNode(X86ISD::CMP, MVT::Flag,
                                  Op.getOperand(0), Op.getOperand(1));
-    return DAG.getNode(X86ISD::SETCC, MVT::i8, CC, Cond);
+    ISD::CondCode SetCCOpcode = cast<CondCodeSDNode>(CC)->get();
+    bool isFP = MVT::isFloatingPoint(Op.getOperand(1).getValueType());
+    unsigned X86CC = CCToX86CondCode(CC, isFP);
+    if (X86CC != X86ISD::COND_INVALID) {
+      return DAG.getNode(X86ISD::SETCC, MVT::i8, 
+                         DAG.getConstant(X86CC, MVT::i8), Cond);
+    } else {
+      assert(isFP && "Illegal integer SetCC!");
+
+      std::vector<MVT::ValueType> Tys;
+      std::vector<SDOperand> Ops;
+      switch (SetCCOpcode) {
+      default: assert(false && "Illegal floating point SetCC!");
+      case ISD::SETOEQ: {  // !PF & ZF
+        Tys.push_back(MVT::i8);
+        Tys.push_back(MVT::Flag);
+        Ops.push_back(DAG.getConstant(X86ISD::COND_NP, MVT::i8));
+        Ops.push_back(Cond);
+        SDOperand Tmp1 = DAG.getNode(X86ISD::SETCC, Tys, Ops);
+        SDOperand Tmp2 = DAG.getNode(X86ISD::SETCC, MVT::i8,
+                                     DAG.getConstant(X86ISD::COND_E, MVT::i8),
+                                     Tmp1.getValue(1));
+        return DAG.getNode(ISD::AND, MVT::i8, Tmp1, Tmp2);
+      }
+      case ISD::SETOLT: {  // !PF & CF
+        Tys.push_back(MVT::i8);
+        Tys.push_back(MVT::Flag);
+        Ops.push_back(DAG.getConstant(X86ISD::COND_NP, MVT::i8));
+        Ops.push_back(Cond);
+        SDOperand Tmp1 = DAG.getNode(X86ISD::SETCC, Tys, Ops);
+        SDOperand Tmp2 = DAG.getNode(X86ISD::SETCC, MVT::i8,
+                                     DAG.getConstant(X86ISD::COND_B, MVT::i8),
+                                     Tmp1.getValue(1));
+        return DAG.getNode(ISD::AND, MVT::i8, Tmp1, Tmp2);
+      }
+      case ISD::SETOLE: {  // !PF & (CF || ZF)
+        Tys.push_back(MVT::i8);
+        Tys.push_back(MVT::Flag);
+        Ops.push_back(DAG.getConstant(X86ISD::COND_NP, MVT::i8));
+        Ops.push_back(Cond);
+        SDOperand Tmp1 = DAG.getNode(X86ISD::SETCC, Tys, Ops);
+        SDOperand Tmp2 = DAG.getNode(X86ISD::SETCC, MVT::i8,
+                                     DAG.getConstant(X86ISD::COND_BE, MVT::i8),
+                                     Tmp1.getValue(1));
+        return DAG.getNode(ISD::AND, MVT::i8, Tmp1, Tmp2);
+      }
+      case ISD::SETUGT: {  // PF | (!ZF & !CF)
+        Tys.push_back(MVT::i8);
+        Tys.push_back(MVT::Flag);
+        Ops.push_back(DAG.getConstant(X86ISD::COND_P, MVT::i8));
+        Ops.push_back(Cond);
+        SDOperand Tmp1 = DAG.getNode(X86ISD::SETCC, Tys, Ops);
+        SDOperand Tmp2 = DAG.getNode(X86ISD::SETCC, MVT::i8,
+                                     DAG.getConstant(X86ISD::COND_A, MVT::i8),
+                                     Tmp1.getValue(1));
+        return DAG.getNode(ISD::OR, MVT::i8, Tmp1, Tmp2);
+      }
+      case ISD::SETUGE: {  // PF | !CF
+        Tys.push_back(MVT::i8);
+        Tys.push_back(MVT::Flag);
+        Ops.push_back(DAG.getConstant(X86ISD::COND_P, MVT::i8));
+        Ops.push_back(Cond);
+        SDOperand Tmp1 = DAG.getNode(X86ISD::SETCC, Tys, Ops);
+        SDOperand Tmp2 = DAG.getNode(X86ISD::SETCC, MVT::i8,
+                                     DAG.getConstant(X86ISD::COND_AE, MVT::i8),
+                                     Tmp1.getValue(1));
+        return DAG.getNode(ISD::OR, MVT::i8, Tmp1, Tmp2);
+      }
+      case ISD::SETUNE: {  // PF | !ZF
+        Tys.push_back(MVT::i8);
+        Tys.push_back(MVT::Flag);
+        Ops.push_back(DAG.getConstant(X86ISD::COND_P, MVT::i8));
+        Ops.push_back(Cond);
+        SDOperand Tmp1 = DAG.getNode(X86ISD::SETCC, Tys, Ops);
+        SDOperand Tmp2 = DAG.getNode(X86ISD::SETCC, MVT::i8,
+                                     DAG.getConstant(X86ISD::COND_NE, MVT::i8),
+                                     Tmp1.getValue(1));
+        return DAG.getNode(ISD::OR, MVT::i8, Tmp1, Tmp2);
+      }
+      }
+    }
   }
   case ISD::SELECT: {
     SDOperand Cond  = Op.getOperand(0);
@@ -1110,10 +1353,13 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
       Cond = Cond.getOperand(1);
     } else if (Cond.getOpcode() == ISD::SETCC) {
       CC = Cond.getOperand(2);
+      bool isFP = MVT::isFloatingPoint(Cond.getOperand(1).getValueType());
+      unsigned X86CC = CCToX86CondCode(CC, isFP);
+      CC = DAG.getConstant(X86CC, MVT::i8);
       Cond = DAG.getNode(X86ISD::CMP, MVT::Flag,
                          Cond.getOperand(0), Cond.getOperand(1));
     } else {
-      CC = DAG.getCondCode(ISD::SETEQ);
+      CC = DAG.getConstant(X86ISD::COND_E, MVT::i8);
       Cond = DAG.getNode(X86ISD::TEST, MVT::Flag, Cond, Cond);
     }
     return DAG.getNode(X86ISD::CMOV, Op.getValueType(),
@@ -1129,14 +1375,22 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
       Cond = Cond.getOperand(1);
     } else if (Cond.getOpcode() == ISD::SETCC) {
       CC = Cond.getOperand(2);
+      bool isFP = MVT::isFloatingPoint(Cond.getOperand(1).getValueType());
+      unsigned X86CC = CCToX86CondCode(CC, isFP);
+      CC = DAG.getConstant(X86CC, MVT::i8);
       Cond = DAG.getNode(X86ISD::CMP, MVT::Flag,
                          Cond.getOperand(0), Cond.getOperand(1));
     } else {
-      CC = DAG.getCondCode(ISD::SETNE);
+      CC = DAG.getConstant(X86ISD::COND_NE, MVT::i8);
       Cond = DAG.getNode(X86ISD::TEST, MVT::Flag, Cond, Cond);
     }
     return DAG.getNode(X86ISD::BRCOND, Op.getValueType(),
                        Op.getOperand(0), Op.getOperand(2), CC, Cond);
+  }
+  case ISD::RET: {
+    // Can only be return void.
+    return DAG.getNode(X86ISD::RET, MVT::Other, Op.getOperand(0),
+                       DAG.getConstant(getBytesToPopOnReturn(), MVT::i16));
   }
   case ISD::GlobalAddress: {
     GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
@@ -1176,6 +1430,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::SETCC:              return "X86ISD::SETCC";
   case X86ISD::CMOV:               return "X86ISD::CMOV";
   case X86ISD::BRCOND:             return "X86ISD::BRCOND";
+  case X86ISD::RET:                return "X86ISD::RET";
   case X86ISD::RET_FLAG:           return "X86ISD::RET_FLAG";
   }
 }

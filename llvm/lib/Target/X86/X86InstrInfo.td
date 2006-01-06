@@ -17,22 +17,21 @@
 // X86 specific DAG Nodes.
 //
 
-def SDTX86CmpTest : SDTypeProfile<1, 2, [SDTCisVT<0, FlagVT>, SDTCisInt<1>,
-                                         SDTCisSameAs<1, 2>]>;
+def SDTX86CmpTest : SDTypeProfile<1, 2, [SDTCisVT<0, FlagVT>, SDTCisSameAs<1, 2>]>;
 
 def SDTX86Cmov    : SDTypeProfile<1, 4,
                                   [SDTCisSameAs<0, 1>, SDTCisSameAs<1, 2>,
-                                   SDTCisVT<3, OtherVT>, SDTCisVT<4, FlagVT>]>;
+                                   SDTCisVT<3, i8>, SDTCisVT<4, FlagVT>]>;
 
 def SDTX86BrCond  : SDTypeProfile<0, 3,
                                   [SDTCisVT<0, OtherVT>,
-                                   SDTCisVT<1, OtherVT>, SDTCisVT<2, FlagVT>]>;
+                                   SDTCisVT<1, i8>, SDTCisVT<2, FlagVT>]>;
 
 def SDTX86SetCC   : SDTypeProfile<1, 2,
-                                  [SDTCisVT<0, i8>, SDTCisVT<1, OtherVT>,
+                                  [SDTCisVT<0, i8>, SDTCisVT<1, i8>,
                                    SDTCisVT<2, FlagVT>]>;
 
-def SDTX86RetFlag : SDTypeProfile<0, 1, [SDTCisVT<0, i16>]>;
+def SDTX86Ret     : SDTypeProfile<0, 1, [SDTCisVT<0, i16>]>;
 
 def SDTX86Fld     : SDTypeProfile<1, 2, [SDTCisVT<0, f64>,
                                          SDTCisPtrTy<1>, SDTCisVT<2, OtherVT>]>;
@@ -47,10 +46,11 @@ def X86cmp     : SDNode<"X86ISD::CMP" ,     SDTX86CmpTest,  []>;
 def X86test    : SDNode<"X86ISD::TEST",     SDTX86CmpTest,  []>;
 
 def X86cmov    : SDNode<"X86ISD::CMOV",     SDTX86Cmov,     []>;
-def X86Brcond  : SDNode<"X86ISD::BRCOND",   SDTX86BrCond,   [SDNPHasChain]>;
-def X86SetCC   : SDNode<"X86ISD::SETCC",    SDTX86SetCC,    []>;
+def X86brcond  : SDNode<"X86ISD::BRCOND",   SDTX86BrCond,   [SDNPHasChain]>;
+def X86setcc   : SDNode<"X86ISD::SETCC",    SDTX86SetCC,    []>;
 
-def X86retflag : SDNode<"X86ISD::RET_FLAG", SDTX86RetFlag,  [SDNPHasChain]>;
+def X86ret     : SDNode<"X86ISD::RET",      SDTX86Ret,      [SDNPHasChain]>;
+def X86retflag : SDNode<"X86ISD::RET_FLAG", SDTX86Ret,      [SDNPHasChain]>;
 
 def X86fld     : SDNode<"X86ISD::FLD",      SDTX86Fld,      [SDNPHasChain]>;
 def X86fst     : SDNode<"X86ISD::FST",      SDTX86Fst,      [SDNPHasChain]>;
@@ -226,6 +226,26 @@ class XS     { bits<4> Prefix = 12; }
 //===----------------------------------------------------------------------===//
 // Pattern fragments...
 //
+
+// X86 specific condition code. These correspond to CondCode in
+// X86ISelLowering.h. They must be kept in synch.
+def X86_COND_A   : PatLeaf<(i8 0)>;
+def X86_COND_AE  : PatLeaf<(i8 1)>;
+def X86_COND_B   : PatLeaf<(i8 2)>;
+def X86_COND_BE  : PatLeaf<(i8 3)>;
+def X86_COND_E   : PatLeaf<(i8 4)>;
+def X86_COND_G   : PatLeaf<(i8 5)>;
+def X86_COND_GE  : PatLeaf<(i8 6)>;
+def X86_COND_L   : PatLeaf<(i8 7)>;
+def X86_COND_LE  : PatLeaf<(i8 8)>;
+def X86_COND_NE  : PatLeaf<(i8 9)>;
+def X86_COND_NO  : PatLeaf<(i8 10)>;
+def X86_COND_NP  : PatLeaf<(i8 11)>;
+def X86_COND_NS  : PatLeaf<(i8 12)>;
+def X86_COND_O   : PatLeaf<(i8 13)>;
+def X86_COND_P   : PatLeaf<(i8 14)>;
+def X86_COND_S   : PatLeaf<(i8 15)>;
+
 def i16immSExt8  : PatLeaf<(i16 imm), [{
   // i16immSExt8 predicate - True if the 16-bit immediate fits in a 8-bit
   // sign extended field.
@@ -332,12 +352,13 @@ let isTerminator = 1 in
 let isTerminator = 1, isReturn = 1, isBarrier = 1,
     hasCtrlDep = 1, noResults = 1 in {
   // FIXME: temporary workaround for return without an incoming flag.
-  def RETVOID : I<0xC3, RawFrm, (ops), "ret", [(ret)]>;
+  def RETVOID  : I<0xC3, RawFrm, (ops), "ret", [(X86ret 0)]>;
+  def RETIVOID : Ii16<0xC2, RawFrm, (ops i16imm:$amt), "ret $amt",
+                      [(X86ret imm:$amt)]>;
   let hasInFlag = 1 in {
-    def RET  : I<0xC3, RawFrm, (ops), "ret",
-                 [(X86retflag 0)]>;
-    def RETI : Ii16<0xC2, RawFrm, (ops i16imm:$amt), "ret $amt",
-                    [(X86retflag imm:$amt)]>;
+    def RET    : I<0xC3, RawFrm, (ops), "ret", [(X86retflag 0)]>;
+    def RETI   : Ii16<0xC2, RawFrm, (ops i16imm:$amt), "ret $amt",
+                      [(X86retflag imm:$amt)]>;
   }
 }
 
@@ -350,31 +371,35 @@ let isBarrier = 1 in
   def JMP : IBr<0xE9, (ops brtarget:$dst), "jmp $dst", [(br bb:$dst)]>;
 
 def JE  : IBr<0x84, (ops brtarget:$dst), "je $dst",
-              [(X86Brcond bb:$dst, SETEQ, STATUS)]>, Imp<[STATUS],[]>, TB;
+              [(X86brcond bb:$dst, X86_COND_E, STATUS)]>, Imp<[STATUS],[]>, TB;
 def JNE : IBr<0x85, (ops brtarget:$dst), "jne $dst",
-              [(X86Brcond bb:$dst, SETNE, STATUS)]>, Imp<[STATUS],[]>, TB;
+              [(X86brcond bb:$dst, X86_COND_NE, STATUS)]>, Imp<[STATUS],[]>, TB;
 def JL  : IBr<0x8C, (ops brtarget:$dst), "jl $dst",
-              [(X86Brcond bb:$dst, SETLT, STATUS)]>, Imp<[STATUS],[]>, TB;
+              [(X86brcond bb:$dst, X86_COND_L, STATUS)]>, Imp<[STATUS],[]>, TB;
 def JLE : IBr<0x8E, (ops brtarget:$dst), "jle $dst",
-              [(X86Brcond bb:$dst, SETLE, STATUS)]>, Imp<[STATUS],[]>, TB;
+              [(X86brcond bb:$dst, X86_COND_LE, STATUS)]>, Imp<[STATUS],[]>, TB;
 def JG  : IBr<0x8F, (ops brtarget:$dst), "jg $dst",
-              [(X86Brcond bb:$dst, SETGT, STATUS)]>, Imp<[STATUS],[]>, TB;
+              [(X86brcond bb:$dst, X86_COND_G, STATUS)]>, Imp<[STATUS],[]>, TB;
 def JGE : IBr<0x8D, (ops brtarget:$dst), "jge $dst",
-              [(X86Brcond bb:$dst, SETGE, STATUS)]>, Imp<[STATUS],[]>, TB;
+              [(X86brcond bb:$dst, X86_COND_GE, STATUS)]>, Imp<[STATUS],[]>, TB;
 
 def JB  : IBr<0x82, (ops brtarget:$dst), "jb $dst",
-              [(X86Brcond bb:$dst, SETULT, STATUS)]>, Imp<[STATUS],[]>, TB;
+              [(X86brcond bb:$dst, X86_COND_B, STATUS)]>, Imp<[STATUS],[]>, TB;
 def JBE : IBr<0x86, (ops brtarget:$dst), "jbe $dst",
-              [(X86Brcond bb:$dst, SETULE, STATUS)]>, Imp<[STATUS],[]>, TB;
+              [(X86brcond bb:$dst, X86_COND_BE, STATUS)]>, Imp<[STATUS],[]>, TB;
 def JA  : IBr<0x87, (ops brtarget:$dst), "ja $dst",
-              [(X86Brcond bb:$dst, SETUGT, STATUS)]>, Imp<[STATUS],[]>, TB;
+              [(X86brcond bb:$dst, X86_COND_A, STATUS)]>, Imp<[STATUS],[]>, TB;
 def JAE : IBr<0x83, (ops brtarget:$dst), "jae $dst",
-              [(X86Brcond bb:$dst, SETUGE, STATUS)]>, Imp<[STATUS],[]>, TB;
+              [(X86brcond bb:$dst, X86_COND_AE, STATUS)]>, Imp<[STATUS],[]>, TB;
 
-def JS  : IBr<0x88, (ops brtarget:$dst), "js $dst", []>, TB;
-def JNS : IBr<0x89, (ops brtarget:$dst), "jns $dst", []>, TB;
-def JP  : IBr<0x8A, (ops brtarget:$dst), "jp $dst", []>, TB;
-def JNP : IBr<0x8B, (ops brtarget:$dst), "jnp $dst", []>, TB;
+def JS  : IBr<0x88, (ops brtarget:$dst), "js $dst",
+              [(X86brcond bb:$dst, X86_COND_S, STATUS)]>, Imp<[STATUS],[]>, TB;
+def JNS : IBr<0x89, (ops brtarget:$dst), "jns $dst",
+              [(X86brcond bb:$dst, X86_COND_NS, STATUS)]>, Imp<[STATUS],[]>, TB;
+def JP  : IBr<0x8A, (ops brtarget:$dst), "jp $dst",
+              [(X86brcond bb:$dst, X86_COND_P, STATUS)]>, Imp<[STATUS],[]>, TB;
+def JNP : IBr<0x8B, (ops brtarget:$dst), "jnp $dst",
+              [(X86brcond bb:$dst, X86_COND_NP, STATUS)]>, Imp<[STATUS],[]>, TB;
 
 //===----------------------------------------------------------------------===//
 //  Call Instructions...
@@ -388,9 +413,9 @@ let isCall = 1, noResults = 1, hasOutFlag = 1 in
     def CALLpcrel32 : I<0xE8, RawFrm, (ops calltarget:$dst), "call $dst",
                       []>;
     def CALL32r     : I<0xFF, MRM2r, (ops R32:$dst), "call {*}$dst",
-                      []>;
+                      [(call R32:$dst)]>;
     def CALL32m     : I<0xFF, MRM2m, (ops i32mem:$dst), "call {*}$dst",
-                      []>;
+                      [(call (loadi32 addr:$dst))]>;
   }
 
 def : Pat<(call tglobaladdr:$dst),
@@ -658,303 +683,351 @@ def CMOVB16rr : I<0x42, MRMSrcReg,       // if <u, R16 = R16
                   (ops R16:$dst, R16:$src1, R16:$src2),
                   "cmovb {$src2, $dst|$dst, $src2}",
                   [(set R16:$dst, (X86cmov R16:$src1, R16:$src2,
-                                   SETULT, STATUS))]>,
+                                   X86_COND_B, STATUS))]>,
                   Imp<[STATUS],[]>, TB, OpSize;
 def CMOVB16rm : I<0x42, MRMSrcMem,       // if <u, R16 = [mem16]
                   (ops R16:$dst, R16:$src1, i16mem:$src2),
                   "cmovb {$src2, $dst|$dst, $src2}",
                   [(set R16:$dst, (X86cmov R16:$src1, (loadi16 addr:$src2),
-                                   SETULT, STATUS))]>,
+                                   X86_COND_B, STATUS))]>,
                   Imp<[STATUS],[]>, TB, OpSize;
 def CMOVB32rr : I<0x42, MRMSrcReg,       // if <u, R32 = R32
                   (ops R32:$dst, R32:$src1, R32:$src2),
                   "cmovb {$src2, $dst|$dst, $src2}",
                   [(set R32:$dst, (X86cmov R32:$src1, R32:$src2,
-                                   SETULT, STATUS))]>,
+                                   X86_COND_B, STATUS))]>,
                   Imp<[STATUS],[]>,  TB;
 def CMOVB32rm : I<0x42, MRMSrcMem,       // if <u, R32 = [mem32]
                   (ops R32:$dst, R32:$src1, i32mem:$src2),
                   "cmovb {$src2, $dst|$dst, $src2}",
                   [(set R32:$dst, (X86cmov R32:$src1, (loadi32 addr:$src2),
-                                   SETULT, STATUS))]>,
+                                   X86_COND_B, STATUS))]>,
                   Imp<[STATUS],[]>,  TB;
 
 def CMOVAE16rr: I<0x43, MRMSrcReg,       // if >=u, R16 = R16
                   (ops R16:$dst, R16:$src1, R16:$src2),
                   "cmovae {$src2, $dst|$dst, $src2}",
                   [(set R16:$dst, (X86cmov R16:$src1, R16:$src2,
-                                   SETUGE, STATUS))]>,
+                                   X86_COND_AE, STATUS))]>,
                   Imp<[STATUS],[]>,  TB, OpSize;
 def CMOVAE16rm: I<0x43, MRMSrcMem,       // if >=u, R16 = [mem16]
                   (ops R16:$dst, R16:$src1, i16mem:$src2),
                   "cmovae {$src2, $dst|$dst, $src2}",
                   [(set R16:$dst, (X86cmov R16:$src1, (loadi16 addr:$src2),
-                                   SETUGE, STATUS))]>,
+                                   X86_COND_AE, STATUS))]>,
                   Imp<[STATUS],[]>,  TB, OpSize;
 def CMOVAE32rr: I<0x43, MRMSrcReg,       // if >=u, R32 = R32
                   (ops R32:$dst, R32:$src1, R32:$src2),
                   "cmovae {$src2, $dst|$dst, $src2}",
                   [(set R32:$dst, (X86cmov R32:$src1, R32:$src2,
-                                   SETUGE, STATUS))]>,
+                                   X86_COND_AE, STATUS))]>,
                   Imp<[STATUS],[]>,  TB;
 def CMOVAE32rm: I<0x43, MRMSrcMem,       // if >=u, R32 = [mem32]
                   (ops R32:$dst, R32:$src1, i32mem:$src2),
                   "cmovae {$src2, $dst|$dst, $src2}",
                   [(set R32:$dst, (X86cmov R32:$src1, (loadi32 addr:$src2),
-                                   SETUGE, STATUS))]>,
+                                   X86_COND_AE, STATUS))]>,
                   Imp<[STATUS],[]>,  TB;
 
 def CMOVE16rr : I<0x44, MRMSrcReg,       // if ==, R16 = R16
                   (ops R16:$dst, R16:$src1, R16:$src2),
                   "cmove {$src2, $dst|$dst, $src2}",
                   [(set R16:$dst, (X86cmov R16:$src1, R16:$src2,
-                                   SETEQ, STATUS))]>,
+                                   X86_COND_E, STATUS))]>,
                   Imp<[STATUS],[]>,  TB, OpSize;
 def CMOVE16rm : I<0x44, MRMSrcMem,       // if ==, R16 = [mem16]
                   (ops R16:$dst, R16:$src1, i16mem:$src2),
                   "cmove {$src2, $dst|$dst, $src2}",
                   [(set R16:$dst, (X86cmov R16:$src1, (loadi16 addr:$src2),
-                                   SETEQ, STATUS))]>,
+                                   X86_COND_E, STATUS))]>,
                   Imp<[STATUS],[]>,  TB, OpSize;
 def CMOVE32rr : I<0x44, MRMSrcReg,       // if ==, R32 = R32
                   (ops R32:$dst, R32:$src1, R32:$src2),
                   "cmove {$src2, $dst|$dst, $src2}",
                   [(set R32:$dst, (X86cmov R32:$src1, R32:$src2,
-                                   SETEQ, STATUS))]>,
+                                   X86_COND_E, STATUS))]>,
                   Imp<[STATUS],[]>,  TB;
 def CMOVE32rm : I<0x44, MRMSrcMem,       // if ==, R32 = [mem32]
                   (ops R32:$dst, R32:$src1, i32mem:$src2),
                   "cmove {$src2, $dst|$dst, $src2}",
                   [(set R32:$dst, (X86cmov R32:$src1, (loadi32 addr:$src2),
-                                   SETEQ, STATUS))]>,
+                                   X86_COND_E, STATUS))]>,
                   Imp<[STATUS],[]>,  TB;
 
 def CMOVNE16rr: I<0x45, MRMSrcReg,       // if !=, R16 = R16
                   (ops R16:$dst, R16:$src1, R16:$src2),
                   "cmovne {$src2, $dst|$dst, $src2}",
                   [(set R16:$dst, (X86cmov R16:$src1, R16:$src2,
-                                   SETNE, STATUS))]>,
+                                   X86_COND_NE, STATUS))]>,
                   Imp<[STATUS],[]>,  TB, OpSize;
 def CMOVNE16rm: I<0x45, MRMSrcMem,       // if !=, R16 = [mem16]
                   (ops R16:$dst, R16:$src1, i16mem:$src2),
                   "cmovne {$src2, $dst|$dst, $src2}",
                   [(set R16:$dst, (X86cmov R16:$src1, (loadi16 addr:$src2),
-                                   SETNE, STATUS))]>,
+                                   X86_COND_NE, STATUS))]>,
                   Imp<[STATUS],[]>,  TB, OpSize;
 def CMOVNE32rr: I<0x45, MRMSrcReg,       // if !=, R32 = R32
                   (ops R32:$dst, R32:$src1, R32:$src2),
                   "cmovne {$src2, $dst|$dst, $src2}",
                   [(set R32:$dst, (X86cmov R32:$src1, R32:$src2,
-                                   SETNE, STATUS))]>,
+                                   X86_COND_NE, STATUS))]>,
                   Imp<[STATUS],[]>,  TB;
 def CMOVNE32rm: I<0x45, MRMSrcMem,       // if !=, R32 = [mem32]
                   (ops R32:$dst, R32:$src1, i32mem:$src2),
                   "cmovne {$src2, $dst|$dst, $src2}",
                   [(set R32:$dst, (X86cmov R32:$src1, (loadi32 addr:$src2),
-                                   SETNE, STATUS))]>,
+                                   X86_COND_NE, STATUS))]>,
                   Imp<[STATUS],[]>,  TB;
 
 def CMOVBE16rr: I<0x46, MRMSrcReg,       // if <=u, R16 = R16
                   (ops R16:$dst, R16:$src1, R16:$src2),
                   "cmovbe {$src2, $dst|$dst, $src2}",
                   [(set R16:$dst, (X86cmov R16:$src1, R16:$src2,
-                                   SETULE, STATUS))]>,
+                                   X86_COND_BE, STATUS))]>,
                   Imp<[STATUS],[]>,  TB, OpSize;
 def CMOVBE16rm: I<0x46, MRMSrcMem,       // if <=u, R16 = [mem16]
                   (ops R16:$dst, R16:$src1, i16mem:$src2),
                   "cmovbe {$src2, $dst|$dst, $src2}",
                   [(set R16:$dst, (X86cmov R16:$src1, (loadi16 addr:$src2),
-                                   SETULE, STATUS))]>,
+                                   X86_COND_BE, STATUS))]>,
                   Imp<[STATUS],[]>,  TB, OpSize;
 def CMOVBE32rr: I<0x46, MRMSrcReg,       // if <=u, R32 = R32
                   (ops R32:$dst, R32:$src1, R32:$src2),
                   "cmovbe {$src2, $dst|$dst, $src2}",
                   [(set R32:$dst, (X86cmov R32:$src1, R32:$src2,
-                                   SETULE, STATUS))]>,
+                                   X86_COND_BE, STATUS))]>,
                   Imp<[STATUS],[]>,  TB;
 def CMOVBE32rm: I<0x46, MRMSrcMem,       // if <=u, R32 = [mem32]
                   (ops R32:$dst, R32:$src1, i32mem:$src2),
                   "cmovbe {$src2, $dst|$dst, $src2}",
                   [(set R32:$dst, (X86cmov R32:$src1, (loadi32 addr:$src2),
-                                   SETULE, STATUS))]>,
+                                   X86_COND_BE, STATUS))]>,
                   Imp<[STATUS],[]>,  TB;
 
 def CMOVA16rr : I<0x47, MRMSrcReg,       // if >u, R16 = R16
                   (ops R16:$dst, R16:$src1, R16:$src2),
                   "cmova {$src2, $dst|$dst, $src2}",
                   [(set R16:$dst, (X86cmov R16:$src1, R16:$src2,
-                                   SETUGT, STATUS))]>,
+                                   X86_COND_A, STATUS))]>,
                   Imp<[STATUS],[]>,  TB, OpSize;
 def CMOVA16rm : I<0x47, MRMSrcMem,       // if >u, R16 = [mem16]
                   (ops R16:$dst, R16:$src1, i16mem:$src2),
                   "cmova {$src2, $dst|$dst, $src2}",
                   [(set R16:$dst, (X86cmov R16:$src1, (loadi16 addr:$src2),
-                                   SETUGT, STATUS))]>,
+                                   X86_COND_A, STATUS))]>,
                   Imp<[STATUS],[]>,  TB, OpSize;
 def CMOVA32rr : I<0x47, MRMSrcReg,       // if >u, R32 = R32
                   (ops R32:$dst, R32:$src1, R32:$src2),
                   "cmova {$src2, $dst|$dst, $src2}",
                   [(set R32:$dst, (X86cmov R32:$src1, R32:$src2,
-                                   SETUGT, STATUS))]>,
+                                   X86_COND_A, STATUS))]>,
                   Imp<[STATUS],[]>,  TB;
 def CMOVA32rm : I<0x47, MRMSrcMem,       // if >u, R32 = [mem32]
                   (ops R32:$dst, R32:$src1, i32mem:$src2),
                   "cmova {$src2, $dst|$dst, $src2}",
                   [(set R32:$dst, (X86cmov R32:$src1, (loadi32 addr:$src2),
-                                   SETUGT, STATUS))]>,
+                                   X86_COND_A, STATUS))]>,
                   Imp<[STATUS],[]>,  TB;
 
 def CMOVL16rr : I<0x4C, MRMSrcReg,       // if <s, R16 = R16
                   (ops R16:$dst, R16:$src1, R16:$src2),
                   "cmovl {$src2, $dst|$dst, $src2}",
                   [(set R16:$dst, (X86cmov R16:$src1, R16:$src2,
-                                   SETLT, STATUS))]>,
+                                   X86_COND_L, STATUS))]>,
                   Imp<[STATUS],[]>,  TB, OpSize;
 def CMOVL16rm : I<0x4C, MRMSrcMem,       // if <s, R16 = [mem16]
                   (ops R16:$dst, R16:$src1, i16mem:$src2),
                   "cmovl {$src2, $dst|$dst, $src2}",
                   [(set R16:$dst, (X86cmov R16:$src1, (loadi16 addr:$src2),
-                                   SETLT, STATUS))]>,
+                                   X86_COND_L, STATUS))]>,
                   Imp<[STATUS],[]>,  TB, OpSize;
 def CMOVL32rr : I<0x4C, MRMSrcReg,       // if <s, R32 = R32
                   (ops R32:$dst, R32:$src1, R32:$src2),
                   "cmovl {$src2, $dst|$dst, $src2}",
                   [(set R32:$dst, (X86cmov R32:$src1, R32:$src2,
-                                   SETLT, STATUS))]>,
+                                   X86_COND_L, STATUS))]>,
                   Imp<[STATUS],[]>,  TB;
 def CMOVL32rm : I<0x4C, MRMSrcMem,       // if <s, R32 = [mem32]
                   (ops R32:$dst, R32:$src1, i32mem:$src2),
                   "cmovl {$src2, $dst|$dst, $src2}",
                   [(set R32:$dst, (X86cmov R32:$src1, (loadi32 addr:$src2),
-                                   SETLT, STATUS))]>,
+                                   X86_COND_L, STATUS))]>,
                   Imp<[STATUS],[]>,  TB;
 
 def CMOVGE16rr: I<0x4D, MRMSrcReg,       // if >=s, R16 = R16
                   (ops R16:$dst, R16:$src1, R16:$src2),
                   "cmovge {$src2, $dst|$dst, $src2}",
                   [(set R16:$dst, (X86cmov R16:$src1, R16:$src2,
-                                   SETGE, STATUS))]>,
+                                   X86_COND_GE, STATUS))]>,
                   Imp<[STATUS],[]>,  TB, OpSize;
 def CMOVGE16rm: I<0x4D, MRMSrcMem,       // if >=s, R16 = [mem16]
                   (ops R16:$dst, R16:$src1, i16mem:$src2),
                   "cmovge {$src2, $dst|$dst, $src2}",
                   [(set R16:$dst, (X86cmov R16:$src1, (loadi16 addr:$src2),
-                                   SETGE, STATUS))]>,
+                                   X86_COND_GE, STATUS))]>,
                   Imp<[STATUS],[]>,  TB, OpSize;
 def CMOVGE32rr: I<0x4D, MRMSrcReg,       // if >=s, R32 = R32
                   (ops R32:$dst, R32:$src1, R32:$src2),
                   "cmovge {$src2, $dst|$dst, $src2}",
                   [(set R32:$dst, (X86cmov R32:$src1, R32:$src2,
-                                   SETGE, STATUS))]>,
+                                   X86_COND_GE, STATUS))]>,
                   Imp<[STATUS],[]>,  TB;
 def CMOVGE32rm: I<0x4D, MRMSrcMem,       // if >=s, R32 = [mem32]
                   (ops R32:$dst, R32:$src1, i32mem:$src2),
                   "cmovge {$src2, $dst|$dst, $src2}",
                   [(set R32:$dst, (X86cmov R32:$src1, (loadi32 addr:$src2),
-                                   SETGE, STATUS))]>,
+                                   X86_COND_GE, STATUS))]>,
                   Imp<[STATUS],[]>,  TB;
 
 def CMOVLE16rr: I<0x4E, MRMSrcReg,       // if <=s, R16 = R16
                   (ops R16:$dst, R16:$src1, R16:$src2),
                   "cmovle {$src2, $dst|$dst, $src2}",
                   [(set R16:$dst, (X86cmov R16:$src1, R16:$src2,
-                                   SETLE, STATUS))]>,
+                                   X86_COND_LE, STATUS))]>,
                   Imp<[STATUS],[]>,  TB, OpSize;
 def CMOVLE16rm: I<0x4E, MRMSrcMem,       // if <=s, R16 = [mem16]
                   (ops R16:$dst, R16:$src1, i16mem:$src2),
                   "cmovle {$src2, $dst|$dst, $src2}",
                   [(set R16:$dst, (X86cmov R16:$src1, (loadi16 addr:$src2),
-                                   SETLE, STATUS))]>,
+                                   X86_COND_LE, STATUS))]>,
                   Imp<[STATUS],[]>,  TB, OpSize;
 def CMOVLE32rr: I<0x4E, MRMSrcReg,       // if <=s, R32 = R32
                   (ops R32:$dst, R32:$src1, R32:$src2),
                   "cmovle {$src2, $dst|$dst, $src2}",
                   [(set R32:$dst, (X86cmov R32:$src1, R32:$src2,
-                                   SETLE, STATUS))]>,
+                                   X86_COND_LE, STATUS))]>,
                   Imp<[STATUS],[]>,  TB;
 def CMOVLE32rm: I<0x4E, MRMSrcMem,       // if <=s, R32 = [mem32]
                   (ops R32:$dst, R32:$src1, i32mem:$src2),
                   "cmovle {$src2, $dst|$dst, $src2}",
                   [(set R32:$dst, (X86cmov R32:$src1, (loadi32 addr:$src2),
-                                   SETLE, STATUS))]>,
+                                   X86_COND_LE, STATUS))]>,
                   Imp<[STATUS],[]>,  TB;
 
 def CMOVG16rr : I<0x4F, MRMSrcReg,       // if >s, R16 = R16
                   (ops R16:$dst, R16:$src1, R16:$src2),
                   "cmovg {$src2, $dst|$dst, $src2}",
                   [(set R16:$dst, (X86cmov R16:$src1, R16:$src2,
-                                   SETGT, STATUS))]>,
+                                   X86_COND_G, STATUS))]>,
                   Imp<[STATUS],[]>,  TB, OpSize;
 def CMOVG16rm : I<0x4F, MRMSrcMem,       // if >s, R16 = [mem16]
                   (ops R16:$dst, R16:$src1, i16mem:$src2),
                   "cmovg {$src2, $dst|$dst, $src2}",
                   [(set R16:$dst, (X86cmov R16:$src1, (loadi16 addr:$src2),
-                                   SETGT, STATUS))]>,
+                                   X86_COND_G, STATUS))]>,
                   Imp<[STATUS],[]>,  TB, OpSize;
 def CMOVG32rr : I<0x4F, MRMSrcReg,       // if >s, R32 = R32
                   (ops R32:$dst, R32:$src1, R32:$src2),
                   "cmovg {$src2, $dst|$dst, $src2}",
                   [(set R32:$dst, (X86cmov R32:$src1, R32:$src2,
-                                   SETGT, STATUS))]>,
+                                   X86_COND_G, STATUS))]>,
                   Imp<[STATUS],[]>,  TB;
 def CMOVG32rm : I<0x4F, MRMSrcMem,       // if >s, R32 = [mem32]
                   (ops R32:$dst, R32:$src1, i32mem:$src2),
                   "cmovg {$src2, $dst|$dst, $src2}",
                   [(set R32:$dst, (X86cmov R32:$src1, (loadi32 addr:$src2),
-                                   SETGT, STATUS))]>,
+                                   X86_COND_G, STATUS))]>,
                   Imp<[STATUS],[]>,  TB;
 
 def CMOVS16rr : I<0x48, MRMSrcReg,       // if signed, R16 = R16
                   (ops R16:$dst, R16:$src1, R16:$src2),
-                  "cmovs {$src2, $dst|$dst, $src2}", []>, TB, OpSize;
+                  "cmovs {$src2, $dst|$dst, $src2}",
+                  [(set R16:$dst, (X86cmov R16:$src1, R16:$src2,
+                                   X86_COND_S, STATUS))]>,
+                  Imp<[STATUS],[]>, TB, OpSize;
 def CMOVS16rm : I<0x48, MRMSrcMem,       // if signed, R16 = [mem16]
                   (ops R16:$dst, R16:$src1, i16mem:$src2),
-                  "cmovs {$src2, $dst|$dst, $src2}", []>, TB, OpSize;
+                  "cmovs {$src2, $dst|$dst, $src2}",
+                  [(set R16:$dst, (X86cmov R16:$src1, (loadi16 addr:$src2),
+                                   X86_COND_S, STATUS))]>,
+                  Imp<[STATUS],[]>, TB, OpSize;
 def CMOVS32rr : I<0x48, MRMSrcReg,       // if signed, R32 = R32
                   (ops R32:$dst, R32:$src1, R32:$src2),
-                  "cmovs {$src2, $dst|$dst, $src2}", []>, TB;
+                  "cmovs {$src2, $dst|$dst, $src2}",
+                  [(set R32:$dst, (X86cmov R32:$src1, R32:$src2,
+                                   X86_COND_S, STATUS))]>,
+                  Imp<[STATUS],[]>, TB;
 def CMOVS32rm : I<0x48, MRMSrcMem,       // if signed, R32 = [mem32]
                   (ops R32:$dst, R32:$src1, i32mem:$src2),
-                  "cmovs {$src2, $dst|$dst, $src2}", []>, TB;
+                  "cmovs {$src2, $dst|$dst, $src2}",
+                  [(set R32:$dst, (X86cmov R32:$src1, (loadi32 addr:$src2),
+                                   X86_COND_S, STATUS))]>,
+                  Imp<[STATUS],[]>, TB;
 
 def CMOVNS16rr: I<0x49, MRMSrcReg,       // if !signed, R16 = R16
                   (ops R16:$dst, R16:$src1, R16:$src2),
-                  "cmovns {$src2, $dst|$dst, $src2}", []>, TB, OpSize;
+                  "cmovns {$src2, $dst|$dst, $src2}",
+                  [(set R16:$dst, (X86cmov R16:$src1, R16:$src2,
+                                   X86_COND_NS, STATUS))]>,
+                  Imp<[STATUS],[]>, TB, OpSize;
 def CMOVNS16rm: I<0x49, MRMSrcMem,       // if !signed, R16 = [mem16]
                   (ops R16:$dst, R16:$src1, i16mem:$src2),
-                  "cmovns {$src2, $dst|$dst, $src2}", []>, TB, OpSize;
+                  "cmovns {$src2, $dst|$dst, $src2}",
+                  [(set R16:$dst, (X86cmov R16:$src1, (loadi16 addr:$src2),
+                                   X86_COND_NS, STATUS))]>,
+                  Imp<[STATUS],[]>, TB, OpSize;
 def CMOVNS32rr: I<0x49, MRMSrcReg,       // if !signed, R32 = R32
                   (ops R32:$dst, R32:$src1, R32:$src2),
-                  "cmovns {$src2, $dst|$dst, $src2}", []>, TB;
+                  "cmovns {$src2, $dst|$dst, $src2}",
+                  [(set R32:$dst, (X86cmov R32:$src1, R32:$src2,
+                                   X86_COND_NS, STATUS))]>,
+                  Imp<[STATUS],[]>, TB;
 def CMOVNS32rm: I<0x49, MRMSrcMem,       // if !signed, R32 = [mem32]
                   (ops R32:$dst, R32:$src1, i32mem:$src2),
-                  "cmovns {$src2, $dst|$dst, $src2}", []>, TB;
+                  "cmovns {$src2, $dst|$dst, $src2}",
+                  [(set R32:$dst, (X86cmov R32:$src1, (loadi32 addr:$src2),
+                                   X86_COND_NS, STATUS))]>,
+                  Imp<[STATUS],[]>, TB;
 
 def CMOVP16rr : I<0x4A, MRMSrcReg,       // if parity, R16 = R16
                   (ops R16:$dst, R16:$src1, R16:$src2),
-                  "cmovp {$src2, $dst|$dst, $src2}", []>, TB, OpSize;
+                  "cmovp {$src2, $dst|$dst, $src2}",
+                  [(set R16:$dst, (X86cmov R16:$src1, R16:$src2,
+                                   X86_COND_P, STATUS))]>,
+                  Imp<[STATUS],[]>, TB, OpSize;
 def CMOVP16rm : I<0x4A, MRMSrcMem,       // if parity, R16 = [mem16]
                   (ops R16:$dst, R16:$src1, i16mem:$src2),
-                  "cmovp {$src2, $dst|$dst, $src2}", []>, TB, OpSize;
+                  "cmovp {$src2, $dst|$dst, $src2}",
+                  [(set R16:$dst, (X86cmov R16:$src1, (loadi16 addr:$src2),
+                                   X86_COND_P, STATUS))]>,
+                  Imp<[STATUS],[]>, TB, OpSize;
 def CMOVP32rr : I<0x4A, MRMSrcReg,       // if parity, R32 = R32
                   (ops R32:$dst, R32:$src1, R32:$src2),
-                  "cmovp {$src2, $dst|$dst, $src2}", []>, TB;
+                  "cmovp {$src2, $dst|$dst, $src2}",
+                  [(set R32:$dst, (X86cmov R32:$src1, R32:$src2,
+                                   X86_COND_P, STATUS))]>,
+                  Imp<[STATUS],[]>, TB;
 def CMOVP32rm : I<0x4A, MRMSrcMem,       // if parity, R32 = [mem32]
                   (ops R32:$dst, R32:$src1, i32mem:$src2),
-                  "cmovp {$src2, $dst|$dst, $src2}", []>, TB;
+                  "cmovp {$src2, $dst|$dst, $src2}",
+                  [(set R32:$dst, (X86cmov R32:$src1, (loadi32 addr:$src2),
+                                   X86_COND_P, STATUS))]>,
+                  Imp<[STATUS],[]>, TB;
 
 def CMOVNP16rr : I<0x4B, MRMSrcReg,       // if !parity, R16 = R16
                   (ops R16:$dst, R16:$src1, R16:$src2),
-                  "cmovnp {$src2, $dst|$dst, $src2}", []>, TB, OpSize;
+                  "cmovnp {$src2, $dst|$dst, $src2}",
+                   [(set R16:$dst, (X86cmov R16:$src1, R16:$src2,
+                                    X86_COND_NP, STATUS))]>,
+                  Imp<[STATUS],[]>, TB, OpSize;
 def CMOVNP16rm : I<0x4B, MRMSrcMem,       // if !parity, R16 = [mem16]
                   (ops R16:$dst, R16:$src1, i16mem:$src2),
-                  "cmovnp {$src2, $dst|$dst, $src2}", []>, TB, OpSize;
+                  "cmovnp {$src2, $dst|$dst, $src2}",
+                   [(set R16:$dst, (X86cmov R16:$src1, (loadi16 addr:$src2),
+                                    X86_COND_NP, STATUS))]>,
+                  Imp<[STATUS],[]>, TB, OpSize;
 def CMOVNP32rr : I<0x4B, MRMSrcReg,       // if !parity, R32 = R32
                   (ops R32:$dst, R32:$src1, R32:$src2),
-                  "cmovnp {$src2, $dst|$dst, $src2}", []>, TB;
+                  "cmovnp {$src2, $dst|$dst, $src2}",
+                   [(set R32:$dst, (X86cmov R32:$src1, R32:$src2,
+                                    X86_COND_NP, STATUS))]>,
+                  Imp<[STATUS],[]>, TB;
 def CMOVNP32rm : I<0x4B, MRMSrcMem,       // if !parity, R32 = [mem32]
                   (ops R32:$dst, R32:$src1, i32mem:$src2),
-                  "cmovnp {$src2, $dst|$dst, $src2}", []>, TB;
+                  "cmovnp {$src2, $dst|$dst, $src2}",
+                   [(set R32:$dst, (X86cmov R32:$src1, (loadi32 addr:$src2),
+                                   X86_COND_NP, STATUS))]>,
+                  Imp<[STATUS],[]>, TB;
 
 
 // unary instructions
@@ -1863,109 +1936,146 @@ def LAHF     : I<0x9F, RawFrm, (ops), "lahf", []>, Imp<[],[AH]>;  // AH = flags
 
 def SETEr    : I<0x94, MRM0r, 
                  (ops R8   :$dst),
-                 "sete $dst", [(set R8:$dst, (X86SetCC SETEQ, STATUS))]>,
+                 "sete $dst",
+                 [(set R8:$dst, (X86setcc X86_COND_E, STATUS))]>,
                TB;                        // R8 = ==
 def SETEm    : I<0x94, MRM0m, 
                  (ops i8mem:$dst),
-                 "sete $dst", [(store (X86SetCC SETEQ, STATUS), addr:$dst)]>,
+                 "sete $dst",
+                 [(store (X86setcc X86_COND_E, STATUS), addr:$dst)]>,
                TB;                        // [mem8] = ==
 def SETNEr   : I<0x95, MRM0r, 
                  (ops R8   :$dst),
-                 "setne $dst", [(set R8:$dst, (X86SetCC SETNE, STATUS))]>,
+                 "setne $dst",
+                 [(set R8:$dst, (X86setcc X86_COND_NE, STATUS))]>,
                TB;                        // R8 = !=
 def SETNEm   : I<0x95, MRM0m, 
                  (ops i8mem:$dst),
-                 "setne $dst", [(store (X86SetCC SETNE, STATUS), addr:$dst)]>,
+                 "setne $dst",
+                 [(store (X86setcc X86_COND_NE, STATUS), addr:$dst)]>,
                TB;                        // [mem8] = !=
 def SETLr    : I<0x9C, MRM0r, 
                  (ops R8   :$dst),
-                 "setl $dst", [(set R8:$dst, (X86SetCC SETLT, STATUS))]>,
+                 "setl $dst",
+                 [(set R8:$dst, (X86setcc X86_COND_L, STATUS))]>,
                TB;                        // R8 = <  signed
 def SETLm    : I<0x9C, MRM0m, 
                  (ops i8mem:$dst),
-                 "setl $dst", [(store (X86SetCC SETLT, STATUS), addr:$dst)]>,
+                 "setl $dst",
+                 [(store (X86setcc X86_COND_L, STATUS), addr:$dst)]>,
                TB;                        // [mem8] = <  signed
 def SETGEr   : I<0x9D, MRM0r, 
                  (ops R8   :$dst),
-                 "setge $dst", [(set R8:$dst, (X86SetCC SETGE, STATUS))]>,
+                 "setge $dst",
+                 [(set R8:$dst, (X86setcc X86_COND_GE, STATUS))]>,
                TB;                        // R8 = >= signed
 def SETGEm   : I<0x9D, MRM0m, 
                  (ops i8mem:$dst),
-                 "setge $dst", [(store (X86SetCC SETGE, STATUS), addr:$dst)]>,
+                 "setge $dst",
+                 [(store (X86setcc X86_COND_GE, STATUS), addr:$dst)]>,
                TB;                        // [mem8] = >= signed
 def SETLEr   : I<0x9E, MRM0r, 
                  (ops R8   :$dst),
-                 "setle $dst", [(set R8:$dst, (X86SetCC SETLE, STATUS))]>,
+                 "setle $dst",
+                 [(set R8:$dst, (X86setcc X86_COND_LE, STATUS))]>,
                TB;                        // R8 = <= signed
 def SETLEm   : I<0x9E, MRM0m, 
                  (ops i8mem:$dst),
-                 "setle $dst", [(store (X86SetCC SETLE, STATUS), addr:$dst)]>,
+                 "setle $dst",
+                 [(store (X86setcc X86_COND_LE, STATUS), addr:$dst)]>,
                TB;                        // [mem8] = <= signed
 def SETGr    : I<0x9F, MRM0r, 
                  (ops R8   :$dst),
-                 "setg $dst", [(set R8:$dst, (X86SetCC SETGT, STATUS))]>,
+                 "setg $dst",
+                 [(set R8:$dst, (X86setcc X86_COND_G, STATUS))]>,
                TB;                        // R8 = >  signed
 def SETGm    : I<0x9F, MRM0m, 
                  (ops i8mem:$dst),
-                 "setg $dst", [(store (X86SetCC SETGT, STATUS), addr:$dst)]>,
+                 "setg $dst",
+                 [(store (X86setcc X86_COND_G, STATUS), addr:$dst)]>,
                TB;                        // [mem8] = >  signed
 
 def SETBr    : I<0x92, MRM0r,
                  (ops R8   :$dst),
-                 "setb $dst", [(set R8:$dst, (X86SetCC SETULT, STATUS))]>,
+                 "setb $dst",
+                 [(set R8:$dst, (X86setcc X86_COND_B, STATUS))]>,
                TB;                        // R8 = <  unsign
 def SETBm    : I<0x92, MRM0m,
                  (ops i8mem:$dst),
-                 "setb $dst", [(store (X86SetCC SETULT, STATUS), addr:$dst)]>,
+                 "setb $dst",
+                 [(store (X86setcc X86_COND_B, STATUS), addr:$dst)]>,
                TB;                        // [mem8] = <  unsign
 def SETAEr   : I<0x93, MRM0r, 
                  (ops R8   :$dst),
-                 "setae $dst", [(set R8:$dst, (X86SetCC SETUGE, STATUS))]>,
+                 "setae $dst",
+                 [(set R8:$dst, (X86setcc X86_COND_AE, STATUS))]>,
                TB;                        // R8 = >= unsign
 def SETAEm   : I<0x93, MRM0m, 
                  (ops i8mem:$dst),
-                 "setae $dst", [(store (X86SetCC SETUGE, STATUS), addr:$dst)]>,
+                 "setae $dst",
+                 [(store (X86setcc X86_COND_AE, STATUS), addr:$dst)]>,
                TB;                        // [mem8] = >= unsign
 def SETBEr   : I<0x96, MRM0r, 
                  (ops R8   :$dst),
-                 "setbe $dst", [(set R8:$dst, (X86SetCC SETULE, STATUS))]>,
+                 "setbe $dst",
+                 [(set R8:$dst, (X86setcc X86_COND_BE, STATUS))]>,
                TB;                        // R8 = <= unsign
 def SETBEm   : I<0x96, MRM0m, 
                  (ops i8mem:$dst),
-                 "setbe $dst", [(store (X86SetCC SETULE, STATUS), addr:$dst)]>,
+                 "setbe $dst",
+                 [(store (X86setcc X86_COND_BE, STATUS), addr:$dst)]>,
                TB;                        // [mem8] = <= unsign
 def SETAr    : I<0x97, MRM0r, 
                  (ops R8   :$dst),
-                 "seta $dst", [(set R8:$dst, (X86SetCC SETUGT, STATUS))]>,
+                 "seta $dst",
+                 [(set R8:$dst, (X86setcc X86_COND_A, STATUS))]>,
                TB;                        // R8 = >  signed
 def SETAm    : I<0x97, MRM0m, 
                  (ops i8mem:$dst),
-                 "seta $dst", [(store (X86SetCC SETUGT, STATUS), addr:$dst)]>,
+                 "seta $dst",
+                 [(store (X86setcc X86_COND_A, STATUS), addr:$dst)]>,
                TB;                        // [mem8] = >  signed
+
 def SETSr    : I<0x98, MRM0r, 
                  (ops R8   :$dst),
-                 "sets $dst", []>, TB;    // R8 = <sign bit>
+                 "sets $dst",
+                 [(set R8:$dst, (X86setcc X86_COND_S, STATUS))]>,
+               TB;                        // R8 = <sign bit>
 def SETSm    : I<0x98, MRM0m, 
                  (ops i8mem:$dst),
-                 "sets $dst", []>, TB;    // [mem8] = <sign bit>
+                 "sets $dst",
+                 [(store (X86setcc X86_COND_S, STATUS), addr:$dst)]>,
+               TB;                        // [mem8] = <sign bit>
 def SETNSr   : I<0x99, MRM0r, 
                  (ops R8   :$dst),
-                 "setns $dst", []>, TB;   // R8 = !<sign bit>
+                 "setns $dst",
+                 [(set R8:$dst, (X86setcc X86_COND_NS, STATUS))]>,
+               TB;                        // R8 = !<sign bit>
 def SETNSm   : I<0x99, MRM0m, 
                  (ops i8mem:$dst),
-                 "setns $dst", []>, TB;   // [mem8] = !<sign bit>
+                 "setns $dst",
+                 [(store (X86setcc X86_COND_NS, STATUS), addr:$dst)]>,
+               TB;                        // [mem8] = !<sign bit>
 def SETPr    : I<0x9A, MRM0r, 
                  (ops R8   :$dst),
-                 "setp $dst", []>, TB;    // R8 = parity
+                 "setp $dst",
+                 [(set R8:$dst, (X86setcc X86_COND_P, STATUS))]>,
+               TB;                        // R8 = parity
 def SETPm    : I<0x9A, MRM0m, 
                  (ops i8mem:$dst),
-                 "setp $dst", []>, TB;    // [mem8] = parity
+                 "setp $dst",
+                 [(store (X86setcc X86_COND_P, STATUS), addr:$dst)]>,
+               TB;                        // [mem8] = parity
 def SETNPr   : I<0x9B, MRM0r, 
                  (ops R8   :$dst),
-                 "setnp $dst", []>, TB;   // R8 = not parity
+                 "setnp $dst",
+                 [(set R8:$dst, (X86setcc X86_COND_NP, STATUS))]>,
+               TB;                        // R8 = not parity
 def SETNPm   : I<0x9B, MRM0m, 
                  (ops i8mem:$dst),
-                 "setnp $dst", []>, TB;   // [mem8] = not parity
+                 "setnp $dst",
+                 [(store (X86setcc X86_COND_NP, STATUS), addr:$dst)]>,
+               TB;                        // [mem8] = not parity
 
 // Integer comparisons
 def CMP8rr  : I<0x38, MRMDestReg,
@@ -2191,28 +2301,30 @@ def SQRTSDrr : I<0x51, MRMSrcReg, (ops FR64:$dst, FR64:$src),
                  [(set FR64:$dst, (fsqrt FR64:$src))]>,
                Requires<[HasSSE2]>, XD;
 
-def UCOMISDrr: I<0x2E, MRMSrcReg, (ops FR64:$dst, FR64:$src),
-                 "ucomisd {$src, $dst|$dst, $src}", []>,
+def UCOMISDrr: I<0x2E, MRMSrcReg, (ops FR64:$src1, FR64:$src2),
+                 "ucomisd {$src2, $src1|$src1, $src2}",
+                 [(set STATUS, (X86cmp FR64:$src1, FR64:$src2))]>,
                Requires<[HasSSE2]>, TB, OpSize;
-def UCOMISDrm: I<0x2E, MRMSrcMem, (ops FR64:$dst, f64mem:$src),
-                "ucomisd {$src, $dst|$dst, $src}", []>,
-               Requires<[HasSSE2]>, TB, OpSize;
-def UCOMISSrr: I<0x2E, MRMSrcReg, (ops FR32:$dst, FR32:$src),
-                "ucomiss {$src, $dst|$dst, $src}", []>,
-               Requires<[HasSSE1]>, TB;
-def UCOMISSrm: I<0x2E, MRMSrcMem, (ops FR32:$dst, f32mem:$src),
-                "ucomiss {$src, $dst|$dst, $src}", []>,
-               Requires<[HasSSE1]>, TB;
+def UCOMISDrm: I<0x2E, MRMSrcMem, (ops FR64:$src1, f64mem:$src2),
+                 "ucomisd {$src2, $src1|$src1, $src2}",
+                 [(set STATUS, (X86cmp FR64:$src1, (loadf64 addr:$src2)))]>,
+               Imp<[],[STATUS]>, Requires<[HasSSE2]>, TB, OpSize;
+def UCOMISSrr: I<0x2E, MRMSrcReg, (ops FR32:$src1, FR32:$src2),
+                 "ucomiss {$src2, $src1|$src1, $src2}",
+                 [(set STATUS, (X86cmp FR32:$src1, FR32:$src2))]>,
+               Imp<[],[STATUS]>, Requires<[HasSSE1]>, TB;
+def UCOMISSrm: I<0x2E, MRMSrcMem, (ops FR32:$src1, f32mem:$src2),
+                 "ucomiss {$src2, $src1|$src1, $src2}",
+                 [(set STATUS, (X86cmp FR32:$src1, (loadf32 addr:$src2)))]>,
+               Imp<[],[STATUS]>, Requires<[HasSSE1]>, TB;
 
 // Pseudo-instructions that map fld0 to xorps/xorpd for sse.
 // FIXME: remove when we can teach regalloc that xor reg, reg is ok.
 def FLD0SS : I<0x57, MRMSrcReg, (ops FR32:$dst),
-               "xorps $dst, $dst",
-               [(set FR32:$dst, fp32imm0)]>,
+               "xorps $dst, $dst", [(set FR32:$dst, fp32imm0)]>,
              Requires<[HasSSE1]>, TB;
 def FLD0SD : I<0x57, MRMSrcReg, (ops FR64:$dst),
-               "xorpd $dst, $dst",
-               [(set FR64:$dst, fp64imm0)]>,
+               "xorpd $dst, $dst", [(set FR64:$dst, fp64imm0)]>,
              Requires<[HasSSE2]>, TB, OpSize;
 
 let isTwoAddress = 1 in {
@@ -2605,10 +2717,11 @@ def FLD1 : FPI<0xE8, RawFrm, (ops), "fld1">, D9;
 
 
 // Floating point compares.
-def FpUCOMr   : FpI<(ops RST:$lhs, RST:$rhs), CompareFP,
+def FpUCOMr   : FpI<(ops RFP:$lhs, RFP:$rhs), CompareFP,
                     []>;  // FPSW = cmp ST(0) with ST(i)
-def FpUCOMIr  : FpI<(ops RST:$lhs, RST:$rhs), CompareFP,
-                    []>;  // CC = cmp ST(0) with ST(i)
+def FpUCOMIr  : FpI<(ops RFP:$lhs, RFP:$rhs), CompareFP,
+                    [(set STATUS, (X86cmp RFP:$lhs, RFP:$rhs))]>,
+                Imp<[],[STATUS]>;       // CC = cmp ST(0) with ST(i)
 
 def FUCOMr    : FPI<0xE0, AddRegFrm,    // FPSW = cmp ST(0) with ST(i)
                     (ops RST:$reg),
