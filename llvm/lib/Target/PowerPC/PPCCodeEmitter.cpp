@@ -194,6 +194,7 @@ int PPCCodeEmitter::getMachineOpValue(MachineInstr &MI, MachineOperand &MO) {
   } else if (MO.isGlobalAddress() || MO.isExternalSymbol()) {
     bool isExternal = MO.isExternalSymbol() ||
                       MO.getGlobal()->hasWeakLinkage() ||
+                      MO.getGlobal()->hasLinkOnceLinkage() ||
                       MO.getGlobal()->isExternal();
     unsigned Reloc = 0;
     if (MI.getOpcode() == PPC::BL)
