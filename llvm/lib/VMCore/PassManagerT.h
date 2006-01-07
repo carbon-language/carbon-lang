@@ -123,8 +123,6 @@ public:
 
 static TimingInfo *TheTimeInfo;
 
-// FIXME:I'm not sure if this is the best way, but this was the only way I 
-// could get around the recursive template issues. -- Saem
 struct BBTraits {
   typedef BasicBlock UnitType;
   
@@ -138,7 +136,7 @@ struct BBTraits {
   typedef BasicBlockPassManager SubPassClass;
 
   // BatcherClass - The type to use for collation of subtypes... This class is
-  // never instantiated for the PassManager<BasicBlock>, but it must be an
+  // never instantiated for the BasicBlockPassManager, but it must be an
   // instance of PassClass to typecheck.
   //
   typedef PassClass BatcherClass;
@@ -287,7 +285,10 @@ public:
       LastUserOf[I->second].push_back(I->first);
 
     // Output debug information...
-    if (Parent == 0) PMDebug::PerformPassStartupStuff((dynamic_cast<PassClass*>(this)));
+    assert(dynamic_cast<PassClass*>(this) && 
+           "It wasn't the PassClass I thought it was");
+    if (Parent == 0) 
+      PMDebug::PerformPassStartupStuff((dynamic_cast<PassClass*>(this)));
 
     // Run all of the passes
     for (unsigned i = 0, e = Passes.size(); i < e; ++i) {
@@ -491,6 +492,8 @@ public:
       // frees the analysis AFTER this pass manager runs.
       //
       if (Parent) {
+        assert(dynamic_cast<Pass*>(this) && 
+               "It wasn't the Pass type I thought it was.");
         Parent->markPassUsed(P, dynamic_cast<Pass*>(this));
       } else {
         assert(getAnalysisOrNullUp(P) &&
@@ -508,6 +511,7 @@ public:
   }
 
   virtual unsigned getNumContainedPasses() const { return Passes.size(); }
+  
   virtual const Pass *getContainedPass(unsigned N) const {
     assert(N < Passes.size() && "Pass number out of range!");
     return Passes[N];
@@ -522,24 +526,16 @@ public:
     // Get information about what analyses the pass uses...
     AnalysisUsage AnUsage;
     P->getAnalysisUsage(AnUsage);
-    const std::vector<AnalysisID> &Required = AnUsage.getRequiredSet();
-
-    // Loop over all of the analyses used by this pass,
-    for (std::vector<AnalysisID>::const_iterator I = Required.begin(),
-           E = Required.end(); I != E; ++I) {
-      if (getAnalysisOrNullDown(*I) == 0) {
-        Pass *AP = (*I)->createPass();
-        if (ImmutablePass *IP = dynamic_cast<ImmutablePass *> (AP)) { add(IP); }
-        else if (PassClass *RP = dynamic_cast<PassClass *> (AP)) { add(RP); }
-        else { assert (0 && "Wrong kind of pass for this PassManager"); }
-      }
-    }
-
+    
+    addRequiredPasses(AnUsage.getRequiredSet());
+    
     // Tell the pass to add itself to this PassManager... the way it does so
     // depends on the class of the pass, and is critical to laying out passes in
     // an optimal order..
     //
-    P->addToPassManager(dynamic_cast<PMType*>(this), AnUsage);
+    assert(dynamic_cast<PMType*>(this) && 
+        "It wasn't the right passmanager type.");
+    P->addToPassManager(static_cast<PMType*>(this), AnUsage);
   }
 
   // add - H4x0r an ImmutablePass into a PassManager that might not be
@@ -549,19 +545,9 @@ public:
     // Get information about what analyses the pass uses...
     AnalysisUsage AnUsage;
     P->getAnalysisUsage(AnUsage);
-    const std::vector<AnalysisID> &Required = AnUsage.getRequiredSet();
-
-    // Loop over all of the analyses used by this pass,
-    for (std::vector<AnalysisID>::const_iterator I = Required.begin(),
-           E = Required.end(); I != E; ++I) {
-      if (getAnalysisOrNullDown(*I) == 0) {
-        Pass *AP = (*I)->createPass();
-        if (ImmutablePass *IP = dynamic_cast<ImmutablePass *> (AP)) add(IP);
-        else if (PassClass *RP = dynamic_cast<PassClass *> (AP)) add(RP);
-        else assert (0 && "Wrong kind of pass for this PassManager");
-      }
-    }
-
+    
+    addRequiredPasses(AnUsage.getRequiredSet());
+    
     // Add the ImmutablePass to this PassManager.
     addPass(P, AnUsage);
   }
@@ -581,11 +567,10 @@ private:
     const std::vector<AnalysisID> &RequiredSet = AnUsage.getRequiredSet();
 
     // FIXME: If this pass being added isn't killed by any of the passes in the
-    // batcher class then we can reorder to pass to execute before the batcher
+    // batcher class then we can reorder the pass to execute before the batcher
     // does, which will potentially allow us to batch more passes!
     //
-    // const std::vector<AnalysisID> &ProvidedSet = AnUsage.getProvidedSet();
-    if (Batcher /*&& ProvidedSet.empty()*/)
+    if (Batcher)
       closeBatcher();                     // This pass cannot be batched!
 
     // Set the Resolver instance variable in the Pass so that it knows where to
@@ -638,8 +623,13 @@ private:
   // together a function at a time.
   //
   void addPass(SubPassClass *MP, AnalysisUsage &AnUsage) {
-    if (Batcher == 0) // If we don't have a batcher yet, make one now.
-      Batcher = new BatcherClass((dynamic_cast<PMType*>(this)));
+
+    if (Batcher == 0) { // If we don't have a batcher yet, make one now.
+      assert(dynamic_cast<PMType*>(this) && 
+             "It wasn't the PassManager type I thought it was");
+      Batcher = new BatcherClass((static_cast<PMType*>(this)));
+    }
+
     // The Batcher will queue the passes up
     MP->addToPassManager(Batcher, AnUsage);
   }
@@ -652,6 +642,17 @@ private:
     }
   }
 
+  void addRequiredPasses(const std::vector<AnalysisID> &Required) {
+    for (std::vector<AnalysisID>::const_iterator I = Required.begin(),
+         E = Required.end(); I != E; ++I) {
+      if (getAnalysisOrNullDown(*I) == 0) {
+        Pass *AP = (*I)->createPass();
+        if (ImmutablePass *IP = dynamic_cast<ImmutablePass *> (AP)) add(IP);
+        else if (PassClass *RP = dynamic_cast<PassClass *> (AP)) add(RP);
+        else assert (0 && "Wrong kind of pass for this PassManager");
+      }
+    }
+  }
 public:
   // When an ImmutablePass is added, it gets added to the top level pass
   // manager.
