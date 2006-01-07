@@ -294,7 +294,8 @@ void *JIT::getOrEmitGlobalVariable(const GlobalVariable *GV) {
     // actually initialize the global after current function has finished
     // compilation.
     uint64_t S = getTargetData().getTypeSize(GV->getType()->getElementType());
-    unsigned char A =  getTargetData().getTypeAlignment(GV->getType()->getElementType());
+    unsigned char A =
+      getTargetData().getTypeAlignment(GV->getType()->getElementType());
     Ptr = MCE->allocateGlobal(S, A);
     state.getPendingGlobals(locked).push_back(GV);
   }
