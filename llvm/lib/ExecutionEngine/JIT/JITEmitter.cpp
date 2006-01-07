@@ -105,8 +105,8 @@ JITMemoryManager::JITMemoryManager(bool useGOT) {
 }
 
 JITMemoryManager::~JITMemoryManager() {
-  for (std::list<sys::MemoryBlock>::iterator ib = Blocks.begin(), ie = Blocks.end();
-       ib != ie; ++ib)
+  for (std::list<sys::MemoryBlock>::iterator ib = Blocks.begin(),
+       ie = Blocks.end(); ib != ie; ++ib)
     sys::Memory::ReleaseRWX(*ib);
   Blocks.clear();
 }
@@ -352,14 +352,15 @@ void *JITResolver::JITCompilerFn(void *Stub) {
   // a little bit after the stub.  As such, use upper_bound to find it.
   std::map<void*, Function*>::iterator I =
     JR.state.getStubToFunctionMap(locked).upper_bound(Stub);
-  assert(I != JR.state.getStubToFunctionMap(locked).begin() && "This is not a known stub!");
+  assert(I != JR.state.getStubToFunctionMap(locked).begin() &&
+         "This is not a known stub!");
   Function *F = (--I)->second;
 
   // We might like to remove the stub from the StubToFunction map.
   // We can't do that! Multiple threads could be stuck, waiting to acquire the
   // lock above. As soon as the 1st function finishes compiling the function,
-  // the next one will be released, and needs to be able to find the function it needs
-  // to call.
+  // the next one will be released, and needs to be able to find the function it
+  // needs to call.
   //JR.state.getStubToFunctionMap(locked).erase(I);
 
   DEBUG(std::cerr << "JIT: Lazily resolving function '" << F->getName()
@@ -534,7 +535,8 @@ void JITEmitter::finishFunction(MachineFunction &F) {
         MR.setGOTIndex(idx);
         if (((void**)MemMgr.getGOTBase())[idx] != ResultPtr) {
           DEBUG(std::cerr << "GOT was out of date for " << ResultPtr
-                << " pointing at " << ((void**)MemMgr.getGOTBase())[idx] << "\n");
+                << " pointing at " << ((void**)MemMgr.getGOTBase())[idx]
+                << "\n");
           ((void**)MemMgr.getGOTBase())[idx] = ResultPtr;
         }
       }
