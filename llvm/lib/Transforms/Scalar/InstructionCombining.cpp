@@ -3669,7 +3669,7 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantUInt *Op1,
     // is a noop cast between the two.
     bool isShiftOfLeftShift = ShiftOp->getOpcode() == Instruction::Shl;
     bool isShiftOfSignedShift = ShiftOp->getType()->isSigned();
-    bool isShiftOfUnsignedShift = !isSignedShift;
+    bool isShiftOfUnsignedShift = !isShiftOfSignedShift;
     
     ConstantUInt *ShiftAmt1C = cast<ConstantUInt>(ShiftOp->getOperand(1));
 
@@ -3704,7 +3704,7 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantUInt *Op1,
       if (isLeftShift)
         C = ConstantExpr::getShl(C, ShiftAmt1C);
       else
-        C = ConstantExpr::getShr(C, ShiftAmt1C); // must be an unsigned shr.
+        C = ConstantExpr::getUShr(C, ShiftAmt1C);
       
       Value *Op = ShiftOp->getOperand(0);
       if (isShiftOfSignedShift != isSignedShift)
@@ -3715,17 +3715,43 @@ Instruction *InstCombiner::FoldShiftByConstant(Value *Op0, ConstantUInt *Op1,
       InsertNewInstBefore(Mask, I);
       
       // Figure out what flavor of shift we should use...
-      if (ShiftAmt1 == ShiftAmt2)
+      if (ShiftAmt1 == ShiftAmt2) {
         return ReplaceInstUsesWith(I, Mask);  // (A << c) >> c  === A & c2
-      else if (ShiftAmt1 < ShiftAmt2) {
+      } else if (ShiftAmt1 < ShiftAmt2) {
         return new ShiftInst(I.getOpcode(), Mask,
                          ConstantUInt::get(Type::UByteTy, ShiftAmt2-ShiftAmt1));
-      } else {
-        return new ShiftInst(ShiftOp->getOpcode(), Mask,
+      } else if (isShiftOfUnsignedShift || isShiftOfLeftShift) {
+        if (isShiftOfUnsignedShift && !isShiftOfLeftShift && isSignedShift) {
+          // Make sure to emit an unsigned shift right, not a signed one.
+          Mask = InsertNewInstBefore(new CastInst(Mask, 
+                                        Mask->getType()->getUnsignedVersion(),
+                                                  Op->getName()), I);
+          Mask = new ShiftInst(Instruction::Shr, Mask,
                          ConstantUInt::get(Type::UByteTy, ShiftAmt1-ShiftAmt2));
+          InsertNewInstBefore(Mask, I);
+          return new CastInst(Mask, I.getType());
+        } else {
+          return new ShiftInst(ShiftOp->getOpcode(), Mask,
+                    ConstantUInt::get(Type::UByteTy, ShiftAmt1-ShiftAmt2));
+        }
+      } else {
+        // (X >>s C1) << C2  where C1 > C2  === (X >>s (C1-C2)) & mask
+        Op = InsertNewInstBefore(new CastInst(Mask,
+                                              I.getType()->getSignedVersion(),
+                                              Mask->getName()), I);
+        Instruction *Shift =
+          new ShiftInst(ShiftOp->getOpcode(), Op,
+                        ConstantUInt::get(Type::UByteTy, ShiftAmt1-ShiftAmt2));
+        InsertNewInstBefore(Shift, I);
+        
+        C = ConstantIntegral::getAllOnesValue(Shift->getType());
+        C = ConstantExpr::getShl(C, Op1);
+        Mask = BinaryOperator::createAnd(Shift, C, Op->getName()+".mask");
+        InsertNewInstBefore(Mask, I);
+        return new CastInst(Mask, I.getType());
       }
     } else {
-      // We can handle signed (X << C1) >> C2 if it's a sign extend.  In
+      // We can handle signed (X << C1) >>s C2 if it's a sign extend.  In
       // this case, C1 == C2 and C1 is 8, 16, or 32.
       if (ShiftAmt1 == ShiftAmt2) {
         const Type *SExtType = 0;
