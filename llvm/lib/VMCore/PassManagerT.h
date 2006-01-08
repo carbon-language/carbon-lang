@@ -288,7 +288,7 @@ public:
     assert(dynamic_cast<PassClass*>(this) && 
            "It wasn't the PassClass I thought it was");
     if (Parent == 0) 
-      PMDebug::PerformPassStartupStuff((dynamic_cast<PassClass*>(this)));
+      PMDebug::PerformPassStartupStuff((dynamic_cast<PMType*>(this)));
 
     // Run all of the passes
     for (unsigned i = 0, e = Passes.size(); i < e; ++i) {
@@ -399,8 +399,9 @@ public:
   }
 
   // dumpPassStructure - Implement the -debug-passes=PassStructure option
-  virtual void dumpPassStructure(unsigned Offset = 0) {
+  inline void dumpPassStructure(unsigned Offset = 0) {
     // Print out the immutable passes...
+    
     for (unsigned i = 0, e = ImmutablePasses.size(); i != e; ++i)
       ImmutablePasses[i]->dumpPassStructure(0);
 
@@ -653,6 +654,7 @@ private:
       }
     }
   }
+
 public:
   // When an ImmutablePass is added, it gets added to the top level pass
   // manager.
@@ -723,6 +725,10 @@ public:
   
   virtual ~BasicBlockPassManager() {}
   
+  virtual void dumpPassStructure(unsigned Offset = 0) { 
+    PassManagerT<BBTraits>::dumpPassStructure(Offset);
+  }
+  
   // getPMName() - Return the name of the unit the PassManager operates on for
   // debugging.
   virtual const char *getPMName() const { return "BasicBlock"; }
@@ -760,6 +766,10 @@ public:
   }
   
   virtual ~FunctionPassManagerT() {}
+  
+  virtual void dumpPassStructure(unsigned Offset = 0) { 
+    PassManagerT<FTraits>::dumpPassStructure(Offset);
+  }
   
   // getPMName() - Return the name of the unit the PassManager operates on for
   // debugging.
@@ -803,6 +813,10 @@ public:
   }
   
   virtual ~ModulePassManager() {}
+  
+  virtual void dumpPassStructure(unsigned Offset = 0) { 
+    PassManagerT<MTraits>::dumpPassStructure(Offset);
+  }
   
   // getPMName() - Return the name of the unit the PassManager operates on for
   // debugging.
