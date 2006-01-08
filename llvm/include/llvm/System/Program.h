@@ -50,6 +50,8 @@ namespace sys {
       /// executed. It is presumed this is the result of the FindProgramByName
       /// method.
       /// @returns an integer result code indicating the status of the program.
+      /// A zero or positive value indicates the result code of the program. A
+      /// negative value is the signal number on which it terminated.
       /// @throws std::string on a variety of error conditions or if the invoked
       /// program aborted abnormally.
       /// @see FindProgrambyName
