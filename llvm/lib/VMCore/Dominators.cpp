@@ -472,3 +472,446 @@ void DominanceFrontierBase::print(std::ostream &o, const Module* ) const {
   }
 }
 
+//===----------------------------------------------------------------------===//
+// ETOccurrence Implementation
+//===----------------------------------------------------------------------===//
+
+void ETOccurrence::Splay() {
+  ETOccurrence *father;
+  ETOccurrence *grandfather;
+  int occdepth;
+  int fatherdepth;
+  
+  while (Parent) {
+    occdepth = Depth;
+    
+    father = Parent;
+    fatherdepth = Parent->Depth;
+    grandfather = father->Parent;
+    
+    // If we have no grandparent, a single zig or zag will do.
+    if (!grandfather) {
+      setDepthAdd(fatherdepth);
+      MinOccurrence = father->MinOccurrence;
+      Min = father->Min;
+      
+      // See what we have to rotate
+      if (father->Left == this) {
+        // Zig
+        father->setLeft(Right);
+        setRight(father);
+        if (father->Left)
+          father->Left->setDepthAdd(occdepth);
+      } else {
+        // Zag
+        father->setRight(Left);
+        setLeft(father);
+        if (father->Right)
+          father->Right->setDepthAdd(occdepth);
+      }
+      father->setDepth(-occdepth);
+      Parent = NULL;
+      
+      father->recomputeMin();
+      return;
+    }
+    
+    // If we have a grandfather, we need to do some
+    // combination of zig and zag.
+    int grandfatherdepth = grandfather->Depth;
+    
+    setDepthAdd(fatherdepth + grandfatherdepth);
+    MinOccurrence = grandfather->MinOccurrence;
+    Min = grandfather->Min;
+    
+    ETOccurrence *greatgrandfather = grandfather->Parent;
+    
+    if (grandfather->Left == father) {
+      if (father->Left == this) {
+        // Zig zig
+        grandfather->setLeft(father->Right);
+        father->setLeft(Right);
+        setRight(father);
+        father->setRight(grandfather);
+        
+        father->setDepth(-occdepth);
+        
+        if (father->Left)
+          father->Left->setDepthAdd(occdepth);
+        
+        grandfather->setDepth(-fatherdepth);
+        if (grandfather->Left)
+          grandfather->Left->setDepthAdd(fatherdepth);
+      } else {
+        // Zag zig
+        grandfather->setLeft(Right);
+        father->setRight(Left);
+        setLeft(father);
+        setRight(grandfather);
+        
+        father->setDepth(-occdepth);
+        if (father->Right)
+          father->Right->setDepthAdd(occdepth);
+        grandfather->setDepth(-occdepth - fatherdepth);
+        if (grandfather->Left)
+          grandfather->Left->setDepthAdd(occdepth + fatherdepth);
+      }
+    } else {
+      if (father->Left == this) {
+        // Zig zag
+        grandfather->setRight(Left);
+        father->setLeft(Right);
+        setLeft(grandfather);
+        setRight(father);
+        
+        father->setDepth(-occdepth);
+        if (father->Left)
+          father->Left->setDepthAdd(occdepth);
+        grandfather->setDepth(-occdepth - fatherdepth);
+        if (grandfather->Right)
+          grandfather->Right->setDepthAdd(occdepth + fatherdepth);
+      } else {              // Zag Zag
+        grandfather->setRight(father->Left);
+        father->setRight(Left);
+        setLeft(father);
+        father->setLeft(grandfather);
+        
+        father->setDepth(-occdepth);
+        if (father->Right)
+          father->Right->setDepthAdd(occdepth);
+        grandfather->setDepth(-fatherdepth);
+        if (grandfather->Right)
+          grandfather->Right->setDepthAdd(fatherdepth);
+      }
+    }
+    
+    // Might need one more rotate depending on greatgrandfather.
+    setParent(greatgrandfather);
+    if (greatgrandfather) {
+      if (greatgrandfather->Left == grandfather)
+        greatgrandfather->Left = this;
+      else
+        greatgrandfather->Right = this;
+      
+    }
+    grandfather->recomputeMin();
+    father->recomputeMin();
+  }
+}
+
+//===----------------------------------------------------------------------===//
+// ETNode implementation
+//===----------------------------------------------------------------------===//
+
+void ETNode::Split() {
+  ETOccurrence *right, *left;
+  ETOccurrence *rightmost = RightmostOcc;
+  ETOccurrence *parent;
+
+  // Update the occurrence tree first.
+  RightmostOcc->Splay();
+
+  // Find the leftmost occurrence in the rightmost subtree, then splay
+  // around it.
+  for (right = rightmost->Right; rightmost->Left; rightmost = rightmost->Left);
+
+  right->Splay();
+
+  // Start splitting
+  right->Left->Parent = NULL;
+  parent = ParentOcc;
+  parent->Splay();
+  ParentOcc = NULL;
+
+  left = parent->Left;
+  parent->Right->Parent = NULL;
+
+  right->setLeft(left);
+
+  right->recomputeMin();
+
+  rightmost->Splay();
+  rightmost->Depth = 0;
+  rightmost->Min = 0;
+
+  delete parent;
+
+  // Now update *our* tree
+
+  if (Father->Son == this)
+    Father->Son = Right;
+
+  if (Father->Son == this)
+    Father->Son = NULL;
+  else {
+    Left->Right = Right;
+    Right->Left = Left;
+  }
+  Left = Right = NULL;
+  Father = NULL;
+}
+
+void ETNode::setFather(ETNode *NewFather) {
+  ETOccurrence *rightmost;
+  ETOccurrence *leftpart;
+  ETOccurrence *NewFatherOcc;
+  ETOccurrence *temp;
+
+  // First update the path in the splay tree
+  NewFatherOcc = new ETOccurrence(NewFather);
+
+  rightmost = NewFather->RightmostOcc;
+  rightmost->Splay();
+
+  leftpart = rightmost->Left;
+
+  temp = RightmostOcc;
+  temp->Splay();
+
+  NewFatherOcc->setLeft(leftpart);
+  NewFatherOcc->setRight(temp);
+
+  temp->Depth++;
+  temp->Min++;
+  NewFatherOcc->recomputeMin();
+
+  rightmost->setLeft(NewFatherOcc);
+
+  if (NewFatherOcc->Min + rightmost->Depth < rightmost->Min) {
+    rightmost->Min = NewFatherOcc->Min + rightmost->Depth;
+    rightmost->MinOccurrence = NewFatherOcc->MinOccurrence;
+  }
+
+  ParentOcc = NewFatherOcc;
+
+  // Update *our* tree
+  ETNode *left;
+  ETNode *right;
+
+  Father = NewFather;
+  right = Father->Son;
+
+  if (right)
+    left = right->Left;
+  else
+    left = right = this;
+
+  left->Right = this;
+  right->Left = this;
+  Left = left;
+  Right = right;
+
+  Father->Son = this;
+}
+
+bool ETNode::Below(ETNode *other) {
+  ETOccurrence *up = other->RightmostOcc;
+  ETOccurrence *down = RightmostOcc;
+
+  if (this == other)
+    return true;
+
+  up->Splay();
+
+  ETOccurrence *left, *right;
+  left = up->Left;
+  right = up->Right;
+
+  if (!left)
+    return false;
+
+  left->Parent = NULL;
+
+  if (right)
+    right->Parent = NULL;
+
+  down->Splay();
+
+  if (left == down || left->Parent != NULL) {
+    if (right)
+      right->Parent = up;
+    up->setLeft(down);
+  } else {
+    left->Parent = up;
+
+    // If the two occurrences are in different trees, put things
+    // back the way they were.
+    if (right && right->Parent != NULL)
+      up->setRight(down);
+    else
+      up->setRight(right);
+    return false;
+  }
+
+  if (down->Depth <= 0)
+    return false;
+
+  return !down->Right || down->Right->Min + down->Depth >= 0;
+}
+
+ETNode *ETNode::NCA(ETNode *other) {
+  ETOccurrence *occ1 = RightmostOcc;
+  ETOccurrence *occ2 = other->RightmostOcc;
+  
+  ETOccurrence *left, *right, *ret;
+  ETOccurrence *occmin;
+  int mindepth;
+  
+  if (this == other)
+    return this;
+  
+  occ1->Splay();
+  left = occ1->Left;
+  right = occ1->Right;
+  
+  if (left)
+    left->Parent = NULL;
+  
+  if (right)
+    right->Parent = NULL;
+  occ2->Splay();
+
+  if (left == occ2 || (left && left->Parent != NULL)) {
+    ret = occ2->Right;
+    
+    occ1->setLeft(occ2);
+    if (right)
+      right->Parent = occ1;
+  } else {
+    ret = occ2->Left;
+    
+    occ1->setRight(occ2);
+    if (left)
+      left->Parent = occ1;
+  }
+
+  if (occ2->Depth > 0) {
+    occmin = occ1;
+    mindepth = occ1->Depth;
+  } else {
+    occmin = occ2;
+    mindepth = occ2->Depth + occ1->Depth;
+  }
+  
+  if (ret && ret->Min + occ1->Depth + occ2->Depth < mindepth)
+    return ret->MinOccurrence->OccFor;
+  else
+    return occmin->OccFor;
+}
+
+//===----------------------------------------------------------------------===//
+// ETForest implementation
+//===----------------------------------------------------------------------===//
+
+static RegisterAnalysis<ETForest>
+D("etforest", "ET Forest Construction", true);
+
+void ETForestBase::reset() {
+  for (ETMapType::iterator I = Nodes.begin(), E = Nodes.end(); I != E; ++I)
+    delete I->second;
+  Nodes.clear();
+}
+
+ETNode *ETForest::getNodeForBlock(BasicBlock *BB) {
+  ETNode *&BBNode = Nodes[BB];
+  if (BBNode) return BBNode;
+
+  // Haven't calculated this node yet?  Get or calculate the node for the
+  // immediate dominator.
+  BasicBlock *IDom = getAnalysis<ImmediateDominators>()[BB];
+
+  // If we are unreachable, we may not have an immediate dominator.
+  if (!IDom)
+    return BBNode = new ETNode(BB);
+  else {
+    ETNode *IDomNode = getNodeForBlock(IDom);
+    
+    // Add a new tree node for this BasicBlock, and link it as a child of
+    // IDomNode
+    BBNode = new ETNode(BB);
+    BBNode->setFather(IDomNode);
+    return BBNode;
+  }
+}
+
+void ETForest::calculate(const ImmediateDominators &ID) {
+  assert(Roots.size() == 1 && "ETForest should have 1 root block!");
+  BasicBlock *Root = Roots[0];
+  Nodes[Root] = new ETNode(Root); // Add a node for the root
+
+  Function *F = Root->getParent();
+  // Loop over all of the reachable blocks in the function...
+  for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I)
+    if (BasicBlock *ImmDom = ID.get(I)) {  // Reachable block.
+      ETNode *&BBNode = Nodes[I];
+      if (!BBNode) {  // Haven't calculated this node yet?
+        // Get or calculate the node for the immediate dominator
+        ETNode *IDomNode =  getNodeForBlock(ImmDom);
+
+        // Add a new ETNode for this BasicBlock, and set it's parent
+        // to it's immediate dominator.
+        BBNode = new ETNode(I);
+        BBNode->setFather(IDomNode);
+      }
+    }
+
+  int dfsnum = 0;
+  for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I) { 
+   if (!getNodeForBlock(I)->hasFather())
+     getNodeForBlock(I)->assignDFSNumber(dfsnum);
+  }
+  DFSInfoValid = true;
+}
+
+//===----------------------------------------------------------------------===//
+// ETForestBase Implementation
+//===----------------------------------------------------------------------===//
+
+void ETForestBase::addNewBlock(BasicBlock *BB, BasicBlock *IDom) {
+  ETNode *&BBNode = Nodes[BB];
+  assert(!BBNode && "BasicBlock already in ET-Forest");
+
+  BBNode = new ETNode(BB);
+  BBNode->setFather(getNode(IDom));
+  DFSInfoValid = false;
+}
+
+void ETForestBase::setImmediateDominator(BasicBlock *BB, BasicBlock *newIDom) {
+  assert(getNode(BB) && "BasicBlock not in ET-Forest");
+  assert(getNode(newIDom) && "IDom not in ET-Forest");
+  
+  ETNode *Node = getNode(BB);
+  if (Node->hasFather()) {
+    if (Node->getFather()->getData<BasicBlock>() == newIDom)
+      return;
+    Node->Split();
+  }
+  Node->setFather(getNode(newIDom));
+  DFSInfoValid= false;
+}
+
+void ETForestBase::print(std::ostream &o, const Module *) const {
+  o << "=============================--------------------------------\n";
+  o << "ET Forest:\n";
+  o << "DFS Info ";
+  if (DFSInfoValid)
+    o << "is";
+  else
+    o << "is not";
+  o << " up to date\n";
+
+  Function *F = getRoots()[0]->getParent();
+  for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I) {
+    o << "  DFS Numbers For Basic Block:";
+    WriteAsOperand(o, I, false);
+    o << " are:";
+    if (ETNode *EN = getNode(I)) {
+      o << "In: " << EN->getDFSNumIn();
+      o << " Out: " << EN->getDFSNumOut() << "\n";
+    } else {
+      o << "No associated ETNode";
+    }
+    o << "\n";
+  }
+  o << "\n";
+}

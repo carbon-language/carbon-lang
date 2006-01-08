@@ -13,7 +13,9 @@
 //  2. DominatorSet: Calculates the [reverse] dominator set for a function
 //  3. DominatorTree: Represent the ImmediateDominator as an explicit tree
 //     structure.
-//  4. DominanceFrontier: Calculate and hold the dominance frontier for a
+//  4. ETForest: Efficient data structure for dominance comparisons and 
+//     nearest-common-ancestor queries.
+//  5. DominanceFrontier: Calculate and hold the dominance frontier for a
 //     function.
 //
 //  These data structures are listed in increasing order of complexity.  It
@@ -25,6 +27,7 @@
 #ifndef LLVM_ANALYSIS_DOMINATORS_H
 #define LLVM_ANALYSIS_DOMINATORS_H
 
+#include "llvm/Analysis/ET-Forest.h"
 #include "llvm/Pass.h"
 #include <set>
 
@@ -389,6 +392,116 @@ public:
 
 
 //===-------------------------------------
+/// ET-Forest Class - Class used to construct forwards and backwards 
+/// ET-Forests
+///
+struct ETForestBase : public DominatorBase {
+  ETForestBase(bool isPostDom) : DominatorBase(isPostDom), Nodes(), 
+                                 DFSInfoValid(false) {}
+  
+  virtual void releaseMemory() { reset(); }
+
+  typedef std::map<BasicBlock*, ETNode*> ETMapType;
+
+
+  /// dominates - Return true if A dominates B.
+  ///
+  inline bool dominates(BasicBlock *A, BasicBlock *B) const {
+    if (A == B)
+      return true;
+    
+    ETNode *NodeA = getNode(A);
+    ETNode *NodeB = getNode(B);
+    
+    if (DFSInfoValid)
+      return NodeB->DominatedBy(NodeA);
+    else
+      return NodeB->DominatedBySlow(NodeA);
+  }
+
+  /// properlyDominates - Return true if A dominates B and A != B.
+  ///
+  bool properlyDominates(BasicBlock *A, BasicBlock *B) const {
+    return dominates(A, B) && A != B;
+  }
+
+  /// Return the nearest common dominator of A and B.
+  BasicBlock *nearestCommonDominator(BasicBlock *A, BasicBlock *B) const  {
+    ETNode *NodeA = getNode(A);
+    ETNode *NodeB = getNode(B);
+    
+    ETNode *Common = NodeA->NCA(NodeB);
+    if (!Common)
+      return NULL;
+    return Common->getData<BasicBlock>();
+  }
+
+  virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+    AU.setPreservesAll();
+    AU.addRequired<ImmediateDominators>();
+  }
+  //===--------------------------------------------------------------------===//
+  // API to update Forest information based on modifications
+  // to the CFG...
+
+  /// addNewBlock - Add a new block to the CFG, with the specified immediate
+  /// dominator.
+  ///
+  void addNewBlock(BasicBlock *BB, BasicBlock *IDom);
+
+  /// setImmediateDominator - Update the immediate dominator information to
+  /// change the current immediate dominator for the specified block
+  /// to another block.  This method requires that BB for NewIDom
+  /// already have an ETNode, otherwise just use addNewBlock.
+  ///
+  void setImmediateDominator(BasicBlock *BB, BasicBlock *NewIDom);
+  /// print - Convert to human readable form
+  ///
+  virtual void print(std::ostream &OS, const Module* = 0) const;
+protected:
+  /// getNode - return the (Post)DominatorTree node for the specified basic
+  /// block.  This is the same as using operator[] on this class.
+  ///
+  inline ETNode *getNode(BasicBlock *BB) const {
+    ETMapType::const_iterator i = Nodes.find(BB);
+    return (i != Nodes.end()) ? i->second : 0;
+  }
+
+  inline ETNode *operator[](BasicBlock *BB) const {
+    return getNode(BB);
+  }
+
+  void reset();
+  ETMapType Nodes;
+  bool DFSInfoValid;
+
+};
+
+//==-------------------------------------
+/// ETForest Class - Concrete subclass of ETForestBase that is used to
+/// compute a forwards ET-Forest.
+
+struct ETForest : public ETForestBase {
+  ETForest() : ETForestBase(false) {}
+
+  BasicBlock *getRoot() const {
+    assert(Roots.size() == 1 && "Should always have entry node!");
+    return Roots[0];
+  }
+
+  virtual bool runOnFunction(Function &F) {
+    reset();     // Reset from the last time we were run...
+    ImmediateDominators &ID = getAnalysis<ImmediateDominators>();
+    Roots = ID.getRoots();
+    calculate(ID);
+    return false;
+  }
+
+  void calculate(const ImmediateDominators &ID);
+  ETNode *getNodeForBlock(BasicBlock *BB);
+};
+
+//===-------------------------------------
 /// DominatorTree Class - Concrete subclass of DominatorTreeBase that is used to
 /// compute a normal dominator tree.
 ///
@@ -517,6 +630,7 @@ private:
   const DomSetType &calculate(const DominatorTree &DT,
                               const DominatorTree::Node *Node);
 };
+
 
 // Make sure that any clients of this file link in Dominators.cpp
 static IncludeFile

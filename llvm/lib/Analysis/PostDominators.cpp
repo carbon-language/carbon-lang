@@ -205,6 +205,69 @@ void PostDominatorTree::calculate(const PostDominatorSet &DS) {
       }
     }
 }
+//===----------------------------------------------------------------------===//
+// PostETForest Implementation
+//===----------------------------------------------------------------------===//
+
+static RegisterAnalysis<PostETForest>
+G("postetforest", "Post-ET-Forest Construction", true);
+
+ETNode *PostETForest::getNodeForBlock(BasicBlock *BB) {
+  ETNode *&BBNode = Nodes[BB];
+  if (BBNode) return BBNode;
+
+  // Haven't calculated this node yet?  Get or calculate the node for the
+  // immediate dominator.
+  BasicBlock *IDom = getAnalysis<ImmediatePostDominators>()[BB];
+
+  // If we are unreachable, we may not have an immediate dominator.
+  if (!IDom)
+    return BBNode = new ETNode(BB);
+  else {
+    ETNode *IDomNode = getNodeForBlock(IDom);
+    
+    // Add a new tree node for this BasicBlock, and link it as a child of
+    // IDomNode
+    BBNode = new ETNode(BB);
+    BBNode->setFather(IDomNode);
+    return BBNode;
+  }
+}
+
+void PostETForest::calculate(const ImmediatePostDominators &ID) {
+  for (unsigned i = 0, e = Roots.size(); i != e; ++i)
+    Nodes[Roots[i]] = new ETNode(Roots[i]); // Add a node for the root
+
+  // Iterate over all nodes in inverse depth first order.
+  for (unsigned i = 0, e = Roots.size(); i != e; ++i)
+    for (idf_iterator<BasicBlock*> I = idf_begin(Roots[i]),
+           E = idf_end(Roots[i]); I != E; ++I) {
+    BasicBlock *BB = *I;
+    ETNode *&BBNode = Nodes[BB];
+    if (!BBNode) {  
+      ETNode *IDomNode =  NULL;
+
+      if (ID.get(BB))
+        IDomNode = getNodeForBlock(ID.get(BB));
+
+      // Add a new ETNode for this BasicBlock, and set it's parent
+      // to it's immediate dominator.
+      BBNode = new ETNode(BB);
+      if (IDomNode)          
+        BBNode->setFather(IDomNode);
+    }
+  }
+
+  int dfsnum = 0;
+  // Iterate over all nodes in depth first order...
+  for (unsigned i = 0, e = Roots.size(); i != e; ++i)
+    for (idf_iterator<BasicBlock*> I = idf_begin(Roots[i]),
+           E = idf_end(Roots[i]); I != E; ++I) {
+        if (!getNodeForBlock(*I)->hasFather())
+          getNodeForBlock(*I)->assignDFSNumber(dfsnum);
+    }
+  DFSInfoValid = true;
+}
 
 //===----------------------------------------------------------------------===//
 //  PostDominanceFrontier Implementation
