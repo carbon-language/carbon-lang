@@ -257,6 +257,9 @@
 				RelativePath="..\..\include\llvm\Analysis\Dominators.h">
 			</File>
 			<File
+				RelativePath="..\..\include\llvm\Analysis\ET-Forest.h">
+			</File>
+			<File
 				RelativePath="..\..\include\llvm\Analysis\FindUsedTypes.h">
 			</File>
 			<File
