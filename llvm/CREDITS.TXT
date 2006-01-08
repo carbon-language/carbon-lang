@@ -20,6 +20,10 @@ N: Nate Begeman
 E: natebegeman@mac.com
 D: Primary PowerPC backend developer
 
+N: Daniel Berlin
+E: dberlin@dberlin.org
+D: ET-Forest implementation.
+
 N: Misha Brukman
 E: brukman+llvm@uiuc.edu
 W: http://misha.brukman.net
