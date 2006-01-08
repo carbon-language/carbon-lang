@@ -95,8 +95,8 @@ struct ListReducer {
     }
 
     // Okay, we trimmed as much off the top and the bottom of the list as we
-    // could.  If there is more two elements in the list, try deleting interior
-    // elements and testing that.
+    // could.  If there is more than two elements in the list, try deleting 
+    // interior elements and testing that.
     //
     if (TheList.size() > 2) {
       bool Changed = true;
