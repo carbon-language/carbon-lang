@@ -95,10 +95,10 @@ FunctionPass *llvm::createLoadValueNumberingPass() { return new LoadVN(); }
 ///
 void LoadVN::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesAll();
-  AU.addRequired<AliasAnalysis>();
+  AU.addRequiredTransitive<AliasAnalysis>();
   AU.addRequired<ValueNumbering>();
-  AU.addRequired<DominatorSet>();
-  AU.addRequired<TargetData>();
+  AU.addRequiredTransitive<DominatorSet>();
+  AU.addRequiredTransitive<TargetData>();
 }
 
 static bool isPathTransparentTo(BasicBlock *CurBlock, BasicBlock *Dom,
