@@ -74,10 +74,8 @@ private:
   std::string ModuleID;          // Human readable identifier for the module
   std::string TargetTriple;      // Platform target triple Module compiled on
 
-  // These flags are probably not the right long-term way to handle this kind of
-  // target information, but it is sufficient for now.
-  Endianness  Endian;     // True if target is little endian
-  PointerSize PtrSize;    // True if target has 32-bit pointers (false = 64-bit)
+  Endianness  Endian;     // Endianness assumed in the module
+  PointerSize PtrSize;    // Pointer size assumed in the module
 
   friend class Constant;
 
