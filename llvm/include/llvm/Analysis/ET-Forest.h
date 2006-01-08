@@ -30,6 +30,7 @@
 #define LLVM_ANALYSIS_ETFOREST_H
 
 #include <cassert>
+#include <cstdlib>
 
 namespace llvm {
 class ETNode;
