@@ -1969,6 +1969,28 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       Result = DAG.getNode(Node->getOpcode(), VTs, Ops);
     }
 
+    switch (TLI.getOperationAction(Node->getOpcode(),
+                                   Node->getValueType(0))) {
+    default: assert(0 && "This action is not supported yet!");
+    case TargetLowering::Custom: {
+      SDOperand Tmp = TLI.LowerOperation(Result, DAG);
+      if (Tmp.Val) {
+        SDOperand Tmp2, RetVal;
+        for (unsigned i = 0, e = Node->getNumValues(); i != e; ++i) {
+          Tmp2 = LegalizeOp(Tmp.getValue(i));
+          AddLegalizedOperand(SDOperand(Node, i), Tmp2);
+          if (i == Op.ResNo)
+            RetVal = Tmp;
+        }
+        return RetVal;
+      }
+      // FALLTHROUGH if the target thinks it is legal.
+    }
+    case TargetLowering::Legal:
+      // Nothing to do.
+      break;
+    }
+
     // Since these produce multiple values, make sure to remember that we
     // legalized all of them.
     for (unsigned i = 0, e = Node->getNumValues(); i != e; ++i)
@@ -3888,7 +3910,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
       Lo = ExpandLibCall("__fixunsdfdi", Node, Hi);
     break;
 
-  case ISD::SHL:
+  case ISD::SHL: {
     // If the target wants custom lowering, do so.
     if (TLI.getOperationAction(ISD::SHL, VT) == TargetLowering::Custom) {
       SDOperand Op = DAG.getNode(ISD::SHL, VT, Node->getOperand(0),
@@ -3907,7 +3929,10 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
       break;
 
     // If this target supports SHL_PARTS, use it.
-    if (TLI.isOperationLegal(ISD::SHL_PARTS, NVT)) {
+    TargetLowering::LegalizeAction Action =
+      TLI.getOperationAction(ISD::SHL_PARTS, NVT);
+    if ((Action == TargetLowering::Legal && TLI.isTypeLegal(NVT)) ||
+        Action == TargetLowering::Custom) {
       ExpandShiftParts(ISD::SHL_PARTS, Node->getOperand(0), Node->getOperand(1),
                        Lo, Hi);
       break;
@@ -3916,8 +3941,9 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     // Otherwise, emit a libcall.
     Lo = ExpandLibCall("__ashldi3", Node, Hi);
     break;
+  }
 
-  case ISD::SRA:
+  case ISD::SRA: {
     // If the target wants custom lowering, do so.
     if (TLI.getOperationAction(ISD::SRA, VT) == TargetLowering::Custom) {
       SDOperand Op = DAG.getNode(ISD::SRA, VT, Node->getOperand(0),
@@ -3936,7 +3962,10 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
       break;
 
     // If this target supports SRA_PARTS, use it.
-    if (TLI.isOperationLegal(ISD::SRA_PARTS, NVT)) {
+    TargetLowering::LegalizeAction Action =
+      TLI.getOperationAction(ISD::SRA_PARTS, NVT);
+    if ((Action == TargetLowering::Legal && TLI.isTypeLegal(NVT)) ||
+        Action == TargetLowering::Custom) {
       ExpandShiftParts(ISD::SRA_PARTS, Node->getOperand(0), Node->getOperand(1),
                        Lo, Hi);
       break;
@@ -3945,7 +3974,9 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     // Otherwise, emit a libcall.
     Lo = ExpandLibCall("__ashrdi3", Node, Hi);
     break;
-  case ISD::SRL:
+  }
+
+  case ISD::SRL: {
     // If the target wants custom lowering, do so.
     if (TLI.getOperationAction(ISD::SRL, VT) == TargetLowering::Custom) {
       SDOperand Op = DAG.getNode(ISD::SRL, VT, Node->getOperand(0),
@@ -3964,7 +3995,10 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
       break;
 
     // If this target supports SRL_PARTS, use it.
-    if (TLI.isOperationLegal(ISD::SRL_PARTS, NVT)) {
+    TargetLowering::LegalizeAction Action =
+      TLI.getOperationAction(ISD::SRL_PARTS, NVT);
+    if ((Action == TargetLowering::Legal && TLI.isTypeLegal(NVT)) ||
+        Action == TargetLowering::Custom) {
       ExpandShiftParts(ISD::SRL_PARTS, Node->getOperand(0), Node->getOperand(1),
                        Lo, Hi);
       break;
@@ -3973,6 +4007,7 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     // Otherwise, emit a libcall.
     Lo = ExpandLibCall("__lshrdi3", Node, Hi);
     break;
+  }
 
   case ISD::ADD:
     ExpandByParts(ISD::ADD_PARTS, Node->getOperand(0), Node->getOperand(1),
@@ -4021,17 +4056,17 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
   case ISD::UREM: Lo = ExpandLibCall("__umoddi3", Node, Hi); break;
   }
 
-  // Remember in a map if the values will be reused later.
-  bool isNew = ExpandedNodes.insert(std::make_pair(Op,
-                                          std::make_pair(Lo, Hi))).second;
-  assert(isNew && "Value already expanded?!?");
-  
   // Make sure the resultant values have been legalized themselves, unless this
   // is a type that requires multi-step expansion.
   if (getTypeAction(NVT) != Expand && NVT != MVT::isVoid) {
     Lo = LegalizeOp(Lo);
     Hi = LegalizeOp(Hi);
   }
+
+  // Remember in a map if the values will be reused later.
+  bool isNew =
+    ExpandedNodes.insert(std::make_pair(Op, std::make_pair(Lo, Hi))).second;
+  assert(isNew && "Value already expanded?!?");
 }
 
 
