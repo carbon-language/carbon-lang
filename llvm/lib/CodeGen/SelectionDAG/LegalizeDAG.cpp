@@ -3151,8 +3151,10 @@ bool SelectionDAGLegalize::ExpandShift(unsigned Opc, SDOperand Op,SDOperand Amt,
 /// FindLatestCallSeqStart - Scan up the dag to find the latest (highest
 /// NodeDepth) node that is an CallSeqStart operation and occurs later than
 /// Found.
-static void FindLatestCallSeqStart(SDNode *Node, SDNode *&Found) {
-  if (Node->getNodeDepth() <= Found->getNodeDepth()) return;
+static void FindLatestCallSeqStart(SDNode *Node, SDNode *&Found,
+                                   std::set<SDNode*> &Visited) {
+  if (Node->getNodeDepth() <= Found->getNodeDepth() ||
+      !Visited.insert(Node).second) return;
   
   // If we found an CALLSEQ_START, we already know this node occurs later
   // than the Found node. Just remember this node and return.
@@ -3165,11 +3167,11 @@ static void FindLatestCallSeqStart(SDNode *Node, SDNode *&Found) {
   assert(Node->getNumOperands() != 0 &&
          "All leaves should have depth equal to the entry node!");
   for (unsigned i = 0, e = Node->getNumOperands()-1; i != e; ++i)
-    FindLatestCallSeqStart(Node->getOperand(i).Val, Found);
+    FindLatestCallSeqStart(Node->getOperand(i).Val, Found, Visited);
 
   // Tail recurse for the last iteration.
   FindLatestCallSeqStart(Node->getOperand(Node->getNumOperands()-1).Val,
-                             Found);
+                         Found, Visited);
 }
 
 
@@ -3247,7 +3249,9 @@ static SDOperand FindInputOutputChains(SDNode *OpNode, SDNode *&OutChain,
                                        SDOperand Entry) {
   SDNode *LatestCallSeqStart = Entry.Val;
   SDNode *LatestCallSeqEnd = 0;
-  FindLatestCallSeqStart(OpNode, LatestCallSeqStart);
+  std::set<SDNode*> Visited;
+  FindLatestCallSeqStart(OpNode, LatestCallSeqStart, Visited);
+  Visited.clear();
   //std::cerr<<"Found node: "; LatestCallSeqStart->dump(); std::cerr <<"\n";
 
   // It is possible that no ISD::CALLSEQ_START was found because there is no
@@ -3265,8 +3269,8 @@ static SDOperand FindInputOutputChains(SDNode *OpNode, SDNode *&OutChain,
   // Finally, find the first call that this must come before, first we find the
   // CallSeqEnd that ends the call.
   OutChain = 0;
-  std::set<SDNode*> Visited;
   FindEarliestCallSeqEnd(OpNode, OutChain, Visited);
+  Visited.clear();
 
   // If we found one, translate from the adj up to the callseq_start.
   if (OutChain)
