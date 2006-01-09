@@ -613,7 +613,7 @@ void ETNode::Split() {
 
   // Find the leftmost occurrence in the rightmost subtree, then splay
   // around it.
-  for (right = rightmost->Right; rightmost->Left; rightmost = rightmost->Left);
+  for (right = rightmost->Right; right->Left; right = right->Left);
 
   right->Splay();
 
