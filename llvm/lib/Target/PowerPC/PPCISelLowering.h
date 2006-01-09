@@ -70,6 +70,10 @@ namespace llvm {
   public:
     PPCTargetLowering(TargetMachine &TM);
     
+    /// getTargetNodeName() - This method returns the name of a target specific
+    /// DAG node.
+    virtual const char *getTargetNodeName(unsigned Opcode) const;
+    
     /// LowerOperation - Provide custom lowering hooks for some operations.
     ///
     virtual SDOperand LowerOperation(SDOperand Op, SelectionDAG &DAG);

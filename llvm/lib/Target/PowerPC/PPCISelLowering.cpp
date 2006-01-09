@@ -139,6 +139,25 @@ PPCTargetLowering::PPCTargetLowering(TargetMachine &TM)
   computeRegisterProperties();
 }
 
+const char *PPCTargetLowering::getTargetNodeName(unsigned Opcode) const {
+  switch (Opcode) {
+  default: return 0;
+  case PPCISD::FSEL:          return "PPCISD::FSEL";
+  case PPCISD::FCFID:         return "PPCISD::FCFID";
+  case PPCISD::FCTIDZ:        return "PPCISD::FCTIDZ";
+  case PPCISD::FCTIWZ:        return "PPCISD::FCTIWZ";
+  case PPCISD::VMADDFP:       return "PPCISD::VMADDFP";
+  case PPCISD::VNMSUBFP:      return "PPCISD::VNMSUBFP";
+  case PPCISD::Hi:            return "PPCISD::Hi";
+  case PPCISD::Lo:            return "PPCISD::Lo";
+  case PPCISD::GlobalBaseReg: return "PPCISD::GlobalBaseReg";
+  case PPCISD::SRL:           return "PPCISD::SRL";
+  case PPCISD::SRA:           return "PPCISD::SRA";
+  case PPCISD::SHL:           return "PPCISD::SHL";
+  case PPCISD::RET_FLAG:      return "PPCISD::RET_FLAG";
+  }
+}
+
 /// isFloatingPointZero - Return true if this is 0.0 or -0.0.
 static bool isFloatingPointZero(SDOperand Op) {
   if (ConstantFPSDNode *CFP = dyn_cast<ConstantFPSDNode>(Op))
