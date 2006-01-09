@@ -94,10 +94,12 @@ def callseq_start : SDNode<"ISD::CALLSEQ_START", SDT_V8CallSeq, [SDNPHasChain]>;
 def callseq_end   : SDNode<"ISD::CALLSEQ_END",   SDT_V8CallSeq, [SDNPHasChain]>;
 
 def SDT_V8Call    : SDTypeProfile<0, 1, [SDTCisVT<0, i32>]>;
-def call          : SDNode<"ISD::CALL", SDT_V8Call, [SDNPHasChain]>;
+def call          : SDNode<"ISD::CALL", SDT_V8Call,
+	                   [SDNPHasChain, SDNPOptInFlag, SDNPOutFlag]>;
 
 def SDT_V8RetFlag : SDTypeProfile<0, 0, []>;
-def retflag       : SDNode<"V8ISD::RET_FLAG", SDT_V8RetFlag, [SDNPHasChain]>;
+def retflag       : SDNode<"V8ISD::RET_FLAG", SDT_V8RetFlag,
+	                   [SDNPHasChain, SDNPOptInFlag]>;
 
 //===----------------------------------------------------------------------===//
 // Instructions
@@ -173,10 +175,7 @@ let usesCustomDAGSchedInserter = 1 in {  // Expanded by the scheduler.
 // special cases of JMPL:
 let isReturn = 1, isTerminator = 1, hasDelaySlot = 1, noResults = 1 in {
   let rd = O7.Num, rs1 = G0.Num, simm13 = 8 in
-    // FIXME: temporary workaround for return without an incoming flag.
-    def RETVOID: F3_2<2, 0b111000, (ops), "retl", [(ret)]>;
-    let hasInFlag = 1 in
-      def RETL: F3_2<2, 0b111000, (ops), "retl", []>;
+    def RETL: F3_2<2, 0b111000, (ops), "retl", [(retflag)]>;
 }
 
 // Section B.1 - Load Integer Instructions, p. 90
@@ -563,7 +562,7 @@ def FBO  : FPBranchV8<0b1111, (ops brtarget:$dst),
 // Section B.24 - Call and Link Instruction, p. 125
 // This is the only Format 1 instruction
 let Uses = [O0, O1, O2, O3, O4, O5],
-    hasDelaySlot = 1, isCall = 1, hasInFlag = 1, hasOutFlag = 1, noResults = 1,
+    hasDelaySlot = 1, isCall = 1, noResults = 1,
     Defs = [O0, O1, O2, O3, O4, O5, O7, G1, G2, G3, G4, G5, G6, G7,
     D0, D1, D2, D3, D4, D5, D6, D7, D8, D9, D10, D11, D12, D13, D14, D15] in { 
   def CALL : InstV8<(ops calltarget:$dst),
@@ -724,10 +723,6 @@ def : Pat<(V8hi tglobaladdr:$in), (SETHIi tglobaladdr:$in)>;
 def : Pat<(V8lo tglobaladdr:$in), (ORri G0, tglobaladdr:$in)>;
 def : Pat<(V8hi tconstpool:$in), (SETHIi tconstpool:$in)>;
 def : Pat<(V8lo tconstpool:$in), (ORri G0, tconstpool:$in)>;
-
-// Return of a value, which has an input flag.
-def : Pat<(retflag), (RETL)>;
-
 
 // Calls: 
 def : Pat<(call tglobaladdr:$dst),

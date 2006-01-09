@@ -174,6 +174,9 @@ class SDNodeProperty;
 def SDNPCommutative : SDNodeProperty;   // X op Y == Y op X
 def SDNPAssociative : SDNodeProperty;   // (X op Y) op Z == X op (Y op Z)
 def SDNPHasChain    : SDNodeProperty;   // R/W chain operand and result
+def SDNPOutFlag     : SDNodeProperty;   // Write a flag result
+def SDNPInFlag      : SDNodeProperty;   // Read a flag operand
+def SDNPOptInFlag   : SDNodeProperty;   // Optionally read a flag operand
 
 //===----------------------------------------------------------------------===//
 // Selection DAG Node definitions.

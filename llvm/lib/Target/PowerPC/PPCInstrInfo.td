@@ -47,7 +47,8 @@ def callseq_start : SDNode<"ISD::CALLSEQ_START", SDT_PPCCallSeq,[SDNPHasChain]>;
 def callseq_end   : SDNode<"ISD::CALLSEQ_END",   SDT_PPCCallSeq,[SDNPHasChain]>;
 
 def SDT_PPCRetFlag : SDTypeProfile<0, 0, []>;
-def retflag       : SDNode<"PPCISD::RET_FLAG", SDT_PPCRetFlag, [SDNPHasChain]>;
+def retflag       : SDNode<"PPCISD::RET_FLAG", SDT_PPCRetFlag,
+	                   [SDNPHasChain, SDNPOptInFlag]>;
 
 //===----------------------------------------------------------------------===//
 // PowerPC specific transformation functions and pattern fragments.
@@ -222,13 +223,10 @@ let usesCustomDAGSchedInserter = 1 in {  // Expanded by the scheduler.
 }
 
 
-let isTerminator = 1 in {
+let isTerminator = 1, noResults = 1 in {
   // FIXME: temporary workaround for return without an incoming flag.
-  let isReturn = 1, noResults = 1 in
-    def BLRVOID : XLForm_2_ext<19, 16, 20, 0, 0, (ops), "blr", BrB, [(ret)]>;
-  let isReturn = 1, noResults = 1, hasInFlag = 1 in
-    def BLR : XLForm_2_ext<19, 16, 20, 0, 0, (ops), "blr", BrB, []>;
-  let noResults = 1 in
+  let isReturn = 1 in
+    def BLR : XLForm_2_ext<19, 16, 20, 0, 0, (ops), "blr", BrB, [(retflag)]>;
   def BCTR : XLForm_2_ext<19, 528, 20, 0, 0, (ops), "bctr", BrB, []>;
 }
 
@@ -1071,8 +1069,6 @@ def : Pat<(v4i32 (load xoaddr:$src)),
           (v4i32 (LVX xoaddr:$src))>;
 def : Pat<(store (v4i32 VRRC:$rS), xoaddr:$dst),
           (STVX (v4i32 VRRC:$rS), xoaddr:$dst)>;
-
-def : Pat<(retflag), (BLR)>;
 
 // Same as above, but using a temporary. FIXME: implement temporaries :)
 /*

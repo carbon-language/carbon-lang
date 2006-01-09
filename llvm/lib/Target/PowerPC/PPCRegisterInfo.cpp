@@ -373,8 +373,7 @@ void PPCRegisterInfo::emitEpilogue(MachineFunction &MF,
   const MachineFrameInfo *MFI = MF.getFrameInfo();
   MachineBasicBlock::iterator MBBI = prior(MBB.end());
   MachineInstr *MI;
-  // FIXME: BLRVOID should be removed. See PPCInstrInfo.td
-  assert((MBBI->getOpcode() == PPC::BLR || MBBI->getOpcode() == PPC::BLRVOID) &&
+  assert(MBBI->getOpcode() == PPC::BLR &&
          "Can only insert epilog into returning blocks");
 
   // Get the number of bytes allocated from the FrameInfo...

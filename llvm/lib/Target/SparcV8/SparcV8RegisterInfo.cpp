@@ -165,8 +165,7 @@ void SparcV8RegisterInfo::emitPrologue(MachineFunction &MF) const {
 void SparcV8RegisterInfo::emitEpilogue(MachineFunction &MF,
                                        MachineBasicBlock &MBB) const {
   MachineBasicBlock::iterator MBBI = prior(MBB.end());
-  // FIXME: RETVOID should be removed. See SparcV8InstrInfo.td
-  assert((MBBI->getOpcode() == V8::RETL || MBBI->getOpcode() == V8::RETVOID) &&
+  assert(MBBI->getOpcode() == V8::RETL &&
          "Can only put epilog before 'retl' instruction!");
   BuildMI(MBB, MBBI, V8::RESTORErr, 2, V8::G0).addReg(V8::G0).addReg(V8::G0);
 }
