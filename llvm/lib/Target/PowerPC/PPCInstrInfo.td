@@ -987,6 +987,10 @@ def : Pat<(or (shl GPRC:$rS, GPRC:$rB),
               (srl GPRC:$rS, (sub 32, GPRC:$rB))),
           (RLWNM GPRC:$rS, GPRC:$rB, 0, 31)>;
 
+// Return void support.
+def : Pat<(ret), (BLR)>;
+
+// 64-bit support
 def : Pat<(i64 (zext GPRC:$in)),
           (RLDICL (OR4To8 GPRC:$in, GPRC:$in), 0, 32)>;
 def : Pat<(i64 (anyext GPRC:$in)),
