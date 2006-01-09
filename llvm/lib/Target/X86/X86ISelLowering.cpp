@@ -1247,7 +1247,7 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
                                    ShAmt, DAG.getConstant(32, MVT::i8));
 
     SDOperand Hi, Lo;
-    SDOperand CC = DAG.getConstant(X86ISD::COND_E, MVT::i8);
+    SDOperand CC = DAG.getConstant(X86ISD::COND_NE, MVT::i8);
 
     std::vector<MVT::ValueType> Tys;
     Tys.push_back(MVT::i32);
