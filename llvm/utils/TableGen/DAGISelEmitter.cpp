@@ -283,6 +283,12 @@ SDNodeInfo::SDNodeInfo(Record *R) : Def(R) {
       Properties |= 1 << SDNPAssociative;
     } else if (PropList[i]->getName() == "SDNPHasChain") {
       Properties |= 1 << SDNPHasChain;
+    } else if (PropList[i]->getName() == "SDNPOutFlag") {
+      Properties |= 1 << SDNPOutFlag;
+    } else if (PropList[i]->getName() == "SDNPInFlag") {
+      Properties |= 1 << SDNPInFlag;
+    } else if (PropList[i]->getName() == "SDNPOptInFlag") {
+      Properties |= 1 << SDNPOptInFlag;
     } else {
       std::cerr << "Unknown SD Node property '" << PropList[i]->getName()
                 << "' on node '" << R->getName() << "'!\n";
@@ -1779,29 +1785,29 @@ Record *DAGISelEmitter::getSDNodeNamed(const std::string &Name) const {
   return N;
 }
 
-/// NodeHasChain - return true if TreePatternNode has the property
-/// 'hasChain', meaning it reads a ctrl-flow chain operand and writes
-/// a chain result.
-static bool NodeHasChain(TreePatternNode *N, DAGISelEmitter &ISE)
+/// NodeHasProperty - return true if TreePatternNode has the specified
+/// property.
+static bool NodeHasProperty(TreePatternNode *N, SDNodeInfo::SDNP Property,
+                            DAGISelEmitter &ISE)
 {
   if (N->isLeaf()) return false;
   Record *Operator = N->getOperator();
   if (!Operator->isSubClassOf("SDNode")) return false;
 
   const SDNodeInfo &NodeInfo = ISE.getSDNodeInfo(Operator);
-  return NodeInfo.hasProperty(SDNodeInfo::SDNPHasChain);
+  return NodeInfo.hasProperty(Property);
 }
 
-static bool PatternHasCtrlDep(TreePatternNode *N, DAGISelEmitter &ISE)
+static bool PatternHasProperty(TreePatternNode *N, SDNodeInfo::SDNP Property,
+                               DAGISelEmitter &ISE)
 {
-  if (NodeHasChain(N, ISE))
+  if (NodeHasProperty(N, Property, ISE))
     return true;
-  else {
-    for (unsigned i = 0, e = N->getNumChildren(); i != e; ++i) {
-      TreePatternNode *Child = N->getChild(i);
-      if (PatternHasCtrlDep(Child, ISE))
-        return true;
-    }
+
+  for (unsigned i = 0, e = N->getNumChildren(); i != e; ++i) {
+    TreePatternNode *Child = N->getChild(i);
+    if (PatternHasProperty(Child, Property, ISE))
+      return true;
   }
 
   return false;
@@ -1891,7 +1897,7 @@ public:
 
     // Emit code to load the child nodes and match their contents recursively.
     unsigned OpNo = 0;
-    bool HasChain = NodeHasChain(N, ISE);
+    bool HasChain = NodeHasProperty(N, SDNodeInfo::SDNPHasChain, ISE);
     if (HasChain) {
       OpNo = 1;
       if (!isRoot) {
@@ -1919,7 +1925,7 @@ public:
         OS << "      if (" << RootName << OpNo << ".getOpcode() != "
            << CInfo.getEnumName() << ") goto P" << PatternNo << "Fail;\n";
         EmitMatchCode(Child, RootName + utostr(OpNo), FoundChain);
-        if (NodeHasChain(Child, ISE)) {
+        if (NodeHasProperty(Child, SDNodeInfo::SDNPHasChain, ISE)) {
           FoldedChains.push_back(std::make_pair(RootName + utostr(OpNo),
                                                 CInfo.getNumResults()));
         }
@@ -2078,13 +2084,16 @@ public:
       const DAGInstruction &Inst = ISE.getInstruction(Op);
       bool HasImpInputs  = Inst.getNumImpOperands() > 0;
       bool HasImpResults = Inst.getNumImpResults() > 0;
-      bool HasInFlag  = II.hasInFlag  || HasImpInputs;
-      bool HasOutFlag = II.hasOutFlag || HasImpResults;
-      bool HasChain   = II.hasCtrlDep;
+      bool HasOptInFlag  = isRoot &&
+        NodeHasProperty(Pattern, SDNodeInfo::SDNPOptInFlag, ISE);
+      bool HasInFlag  = isRoot &&
+        NodeHasProperty(Pattern, SDNodeInfo::SDNPInFlag, ISE);
+      bool HasOutFlag = HasImpResults ||
+        (isRoot && PatternHasProperty(Pattern, SDNodeInfo::SDNPOutFlag, ISE));
+      bool HasChain   = II.hasCtrlDep ||
+        (isRoot && PatternHasProperty(Pattern, SDNodeInfo::SDNPHasChain, ISE));
 
-      if (isRoot && PatternHasCtrlDep(Pattern, ISE))
-        HasChain = true;
-      if (HasInFlag || HasOutFlag)
+      if (HasOutFlag || HasInFlag || HasOptInFlag || HasImpInputs)
         OS << "      SDOperand InFlag = SDOperand(0, 0);\n";
 
       // Determine operand emission order. Complex pattern first.
@@ -2121,8 +2130,16 @@ public:
       // Emit all the chain and CopyToReg stuff.
       if (HasChain)
         OS << "      Chain = Select(Chain);\n";
-      if (HasInFlag)
-        EmitInFlags(Pattern, "N", HasChain, II.hasInFlag, true);
+      if (HasImpInputs)
+        EmitCopyToRegs(Pattern, "N", HasChain, true);
+      if (HasInFlag || HasOptInFlag) {
+        unsigned FlagNo = (unsigned) HasChain + Pattern->getNumChildren();
+        if (HasOptInFlag)
+          OS << "      if (N.getNumOperands() == " << FlagNo+1 << ") ";
+        else
+          OS << "      ";
+        OS << "InFlag = Select(N.getOperand(" << FlagNo << "));\n";
+      }
 
       unsigned NumResults = Inst.getNumResults();    
       unsigned ResNo = TmpNo++;
@@ -2164,7 +2181,7 @@ public:
         for (unsigned i = 0, e = Ops.size(); i != e; ++i)
           OS << ", Tmp" << Ops[i];
         if (HasChain)  OS << ", Chain";
-        if (HasInFlag) OS << ", InFlag";
+        if (HasInFlag || HasImpInputs) OS << ", InFlag";
         OS << ");\n";
 
         unsigned ValNo = 0;
@@ -2191,8 +2208,10 @@ public:
         }
 
         // User does not expect that the instruction produces a chain!
-        bool AddedChain = HasChain && !NodeHasChain(Pattern, ISE);
-        if (NodeHasChain(Pattern, ISE))
+        bool NodeHasChain =
+          NodeHasProperty(Pattern, SDNodeInfo::SDNPHasChain, ISE);
+        bool AddedChain = HasChain && !NodeHasChain;
+        if (NodeHasChain)
           OS << "      CodeGenMap[N.getValue(" << ValNo++  << ")] = Chain;\n";
 
         if (FoldedChains.size() > 0) {
@@ -2230,7 +2249,7 @@ public:
           OS << ", MVT::Flag";
         for (unsigned i = 0, e = Ops.size(); i != e; ++i)
           OS << ", Tmp" << Ops[i];
-        if (HasInFlag)
+        if (HasInFlag || HasImpInputs)
           OS << ", InFlag";
         OS << ");\n";
         OS << "      } else {\n";
@@ -2242,7 +2261,7 @@ public:
           OS << ", MVT::Flag";
         for (unsigned i = 0, e = Ops.size(); i != e; ++i)
           OS << ", Tmp" << Ops[i];
-        if (HasInFlag)
+        if (HasInFlag || HasImpInputs)
           OS << ", InFlag";
         OS << ");\n";
         OS << "      }\n";
@@ -2282,7 +2301,8 @@ public:
       return true;
     }
   
-    unsigned OpNo = (unsigned) NodeHasChain(Pat, ISE);
+    unsigned OpNo =
+      (unsigned) NodeHasProperty(Pat, SDNodeInfo::SDNPHasChain, ISE);
     for (unsigned i = 0, e = Pat->getNumChildren(); i != e; ++i, ++OpNo)
       if (InsertOneTypeCheck(Pat->getChild(i), Other->getChild(i),
                              Prefix + utostr(OpNo)))
@@ -2291,16 +2311,17 @@ public:
   }
 
 private:
-  /// EmitInFlags - Emit the flag operands for the DAG that is
+  /// EmitCopyToRegs - Emit the flag operands for the DAG that is
   /// being built.
-  void EmitInFlags(TreePatternNode *N, const std::string &RootName,
-                   bool HasChain, bool HasInFlag, bool isRoot = false) {
+  void EmitCopyToRegs(TreePatternNode *N, const std::string &RootName,
+                      bool HasChain, bool isRoot = false) {
     const CodeGenTarget &T = ISE.getTargetInfo();
-    unsigned OpNo = (unsigned) NodeHasChain(N, ISE);
+    unsigned OpNo =
+      (unsigned) NodeHasProperty(N, SDNodeInfo::SDNPHasChain, ISE);
     for (unsigned i = 0, e = N->getNumChildren(); i != e; ++i, ++OpNo) {
       TreePatternNode *Child = N->getChild(i);
       if (!Child->isLeaf()) {
-        EmitInFlags(Child, RootName + utostr(OpNo), HasChain, HasInFlag);
+        EmitCopyToRegs(Child, RootName + utostr(OpNo), HasChain);
       } else {
         if (DefInit *DI = dynamic_cast<DefInit*>(Child->getLeafValue())) {
           Record *RR = DI->getDef();
@@ -2329,12 +2350,6 @@ private:
           }
         }
       }
-    }
-
-    if (isRoot && HasInFlag) {
-      OS << "      SDOperand " << RootName << OpNo << " = " << RootName
-         << ".getOperand(" << OpNo << ");\n";
-      OS << "      InFlag = Select(" << RootName << OpNo << ");\n";
     }
   }
 
