@@ -741,6 +741,10 @@ def FBNE : FBForm<0x35, "fbne $RA,$DISP",
 
 def : Pat<(brcond (and GPRC:$RA, 1), bb:$DISP), (BLBS GPRC:$RA, bb:$DISP)>;
 def : Pat<(brcond GPRC:$RA, bb:$DISP), (BNE GPRC:$RA, bb:$DISP)>;
+def : Pat<(brcond (setne GPRC:$RA, GPRC:$RB), bb:$DISP),
+          (BEQ (CMPEQ GPRC:$RA, GPRC:$RB), bb:$DISP)>;
+def : Pat<(brcond (setne GPRC:$RA, immUExt8:$L), bb:$DISP),
+          (BEQ (CMPEQi GPRC:$RA, immUExt8:$L), bb:$DISP)>;
 def : Pat<(brcond (seteq F8RC:$RA, F8RC:$RB), bb:$DISP),
           (FBNE  (CMPTEQ F8RC:$RA, F8RC:$RB), bb:$DISP)>;
 def : Pat<(brcond (setlt F8RC:$RA, F8RC:$RB), bb:$DISP),
