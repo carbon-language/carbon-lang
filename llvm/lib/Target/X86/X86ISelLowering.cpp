@@ -1231,7 +1231,7 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     SDOperand ShOpHi = Op.getOperand(1);
     SDOperand ShAmt  = Op.getOperand(2);
     SDOperand Tmp1 = isSRA ? DAG.getNode(ISD::SRA, MVT::i32, ShOpHi,
-                                         DAG.getConstant(32, MVT::i32))
+                                         DAG.getConstant(31, MVT::i32))
                            : DAG.getConstant(0, MVT::i32);
 
     SDOperand Tmp2, Tmp3;
@@ -1271,6 +1271,7 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
       Ops.push_back(Tmp2);
       Ops.push_back(Tmp3);
       Ops.push_back(CC);
+      Ops.push_back(InFlag);
       Lo = DAG.getNode(X86ISD::CMOV, Tys, Ops);
       InFlag = Lo.getValue(1);
 
