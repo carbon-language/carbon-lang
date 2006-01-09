@@ -17,6 +17,10 @@
 // X86 specific DAG Nodes.
 //
 
+def SDTIntShiftDOp: SDTypeProfile<1, 3,
+                                  [SDTCisSameAs<0, 1>, SDTCisSameAs<0, 2>,
+                                   SDTCisInt<0>, SDTCisInt<3>]>;
+
 def SDTX86CmpTest : SDTypeProfile<1, 2, [SDTCisVT<0, FlagVT>, SDTCisSameAs<1, 2>]>;
 
 def SDTX86Cmov    : SDTypeProfile<1, 4,
@@ -33,43 +37,67 @@ def SDTX86SetCC   : SDTypeProfile<1, 2,
 
 def SDTX86Ret     : SDTypeProfile<0, 1, [SDTCisVT<0, i16>]>;
 
+def SDT_X86CallSeqStart : SDTypeProfile<0, 1, [ SDTCisVT<0, i32> ]>;
+def SDT_X86CallSeqEnd   : SDTypeProfile<0, 2, [ SDTCisVT<0, i32>,
+                                                SDTCisVT<1, i32> ]>;
+
+def SDT_X86Call   : SDTypeProfile<0, 1, [SDTCisVT<0, i32>]>;
+
+def SDTX86FpGet   : SDTypeProfile<1, 0, [SDTCisVT<0, f64>]>;
+def SDTX86FpSet   : SDTypeProfile<0, 1, [SDTCisFP<0>]>;
+
 def SDTX86Fld     : SDTypeProfile<1, 2, [SDTCisVT<0, f64>,
                                          SDTCisPtrTy<1>, SDTCisVT<2, OtherVT>]>;
 def SDTX86Fst     : SDTypeProfile<0, 3, [SDTCisFP<0>,
                                          SDTCisPtrTy<1>, SDTCisVT<2, OtherVT>]>;
 
+def SDTX86RdTsc   : SDTypeProfile<0, 0, []>;
 
-def SDTX86FpGet   : SDTypeProfile<1, 0, [SDTCisVT<0, f64>]>;
-def SDTX86FpSet   : SDTypeProfile<0, 1, [SDTCisFP<0>]>;
+def X86addflag : SDNode<"X86ISD::ADD_FLAG", SDTIntBinOp ,
+                        [SDNPCommutative, SDNPAssociative, SDNPOutFlag]>;
+def X86subflag : SDNode<"X86ISD::SUB_FLAG", SDTIntBinOp,
+                        [SDNPOutFlag]>;
+def X86adc     : SDNode<"X86ISD::ADC" ,     SDTIntBinOp ,
+                        [SDNPCommutative, SDNPAssociative]>;
+def X86sbb     : SDNode<"X86ISD::SBB" ,     SDTIntBinOp>;
+
+def X86shld    : SDNode<"X86ISD::SHLD",     SDTIntShiftDOp>;
+def X86shrd    : SDNode<"X86ISD::SHRD",     SDTIntShiftDOp>;
 
 def X86cmp     : SDNode<"X86ISD::CMP" ,     SDTX86CmpTest,  []>;
 def X86test    : SDNode<"X86ISD::TEST",     SDTX86CmpTest,  []>;
 
-def X86cmov    : SDNode<"X86ISD::CMOV",     SDTX86Cmov,     []>;
-def X86brcond  : SDNode<"X86ISD::BRCOND",   SDTX86BrCond,   [SDNPHasChain]>;
+def X86cmov    : SDNode<"X86ISD::CMOV",     SDTX86Cmov,    
+                        [SDNPOutFlag]>;
+def X86brcond  : SDNode<"X86ISD::BRCOND",   SDTX86BrCond,
+                        [SDNPHasChain]>;
 def X86setcc   : SDNode<"X86ISD::SETCC",    SDTX86SetCC,    []>;
 
-def X86ret     : SDNode<"X86ISD::RET",      SDTX86Ret,      [SDNPHasChain]>;
-def X86retflag : SDNode<"X86ISD::RET_FLAG", SDTX86Ret,      [SDNPHasChain]>;
+def X86retflag : SDNode<"X86ISD::RET_FLAG", SDTX86Ret,
+                        [SDNPHasChain, SDNPOptInFlag]>;
 
-def X86fld     : SDNode<"X86ISD::FLD",      SDTX86Fld,      [SDNPHasChain]>;
-def X86fst     : SDNode<"X86ISD::FST",      SDTX86Fst,      [SDNPHasChain]>;
+def X86callseq_start :
+                 SDNode<"ISD::CALLSEQ_START", SDT_X86CallSeqStart,
+                        [SDNPHasChain]>;
+def X86callseq_end :
+                 SDNode<"ISD::CALLSEQ_END",   SDT_X86CallSeqEnd,
+                        [SDNPHasChain]>;
 
-def X86fpget   : SDNode<"X86ISD::FP_GET_RESULT",
-                                            SDTX86FpGet,    [SDNPHasChain]>;
-def X86fpset   : SDNode<"X86ISD::FP_SET_RESULT",
-                                            SDTX86FpSet,    [SDNPHasChain]>;
+def X86call    : SDNode<"X86ISD::CALL",     SDT_X86Call,
+                        [SDNPHasChain, SDNPOutFlag, SDNPOptInFlag]>;
 
-def SDT_X86CallSeqStart : SDTypeProfile<0, 1, [ SDTCisVT<0, i32> ]>;
-def SDT_X86CallSeqEnd   : SDTypeProfile<0, 2, [ SDTCisVT<0, i32>,
-                                                SDTCisVT<1, i32> ]>;
-def callseq_start : SDNode<"ISD::CALLSEQ_START", SDT_X86CallSeqStart,
-                           [SDNPHasChain]>;
-def callseq_end   : SDNode<"ISD::CALLSEQ_END",   SDT_X86CallSeqEnd,
-                           [SDNPHasChain]>;
+def X86fpget   : SDNode<"X86ISD::FP_GET_RESULT", SDTX86FpGet,
+                        [SDNPHasChain, SDNPInFlag]>;
+def X86fpset   : SDNode<"X86ISD::FP_SET_RESULT", SDTX86FpSet,
+                        [SDNPHasChain, SDNPOutFlag]>;
 
-def SDT_X86Call   : SDTypeProfile<0, 1, [SDTCisVT<0, i32>]>;
-def call          : SDNode<"X86ISD::CALL", SDT_X86Call, [SDNPHasChain]>;
+def X86fld     : SDNode<"X86ISD::FLD",      SDTX86Fld,
+                        [SDNPHasChain]>;
+def X86fst     : SDNode<"X86ISD::FST",      SDTX86Fst,
+                        [SDNPHasChain]>;
+
+def X86rdtsc   : SDNode<"X86ISD::RDTSC_DAG",SDTX86RdTsc,
+                        [SDNPHasChain, SDNPOutFlag]>;
 
 //===----------------------------------------------------------------------===//
 // X86 Operand Definitions.
@@ -334,10 +362,10 @@ def PHI : I<0, Pseudo, (ops variable_ops), "PHINODE", []>;        // PHI node.
 def NOOP : I<0x90, RawFrm, (ops), "nop", []>; // nop
 
 def ADJCALLSTACKDOWN : I<0, Pseudo, (ops i32imm:$amt), "#ADJCALLSTACKDOWN",
-                         [(callseq_start imm:$amt)]>;
+                         [(X86callseq_start imm:$amt)]>;
 def ADJCALLSTACKUP   : I<0, Pseudo, (ops i32imm:$amt1, i32imm:$amt2),
                          "#ADJCALLSTACKUP",
-                         [(callseq_end imm:$amt1, imm:$amt2)]>;
+                         [(X86callseq_end imm:$amt1, imm:$amt2)]>;
 def IMPLICIT_USE     : I<0, Pseudo, (ops variable_ops), "#IMPLICIT_USE", []>;
 def IMPLICIT_DEF     : I<0, Pseudo, (ops variable_ops), "#IMPLICIT_DEF", []>;
 let isTerminator = 1 in
@@ -351,15 +379,9 @@ let isTerminator = 1 in
 // Return instructions.
 let isTerminator = 1, isReturn = 1, isBarrier = 1,
     hasCtrlDep = 1, noResults = 1 in {
-  // FIXME: temporary workaround for return without an incoming flag.
-  def RETVOID  : I<0xC3, RawFrm, (ops), "ret", [(X86ret 0)]>;
-  def RETIVOID : Ii16<0xC2, RawFrm, (ops i16imm:$amt), "ret $amt",
-                      [(X86ret imm:$amt)]>;
-  let hasInFlag = 1 in {
-    def RET    : I<0xC3, RawFrm, (ops), "ret", [(X86retflag 0)]>;
-    def RETI   : Ii16<0xC2, RawFrm, (ops i16imm:$amt), "ret $amt",
-                      [(X86retflag imm:$amt)]>;
-  }
+  def RET    : I<0xC3, RawFrm, (ops), "ret", [(X86retflag 0)]>;
+  def RETI   : Ii16<0xC2, RawFrm, (ops i16imm:$amt), "ret $amt",
+                    [(X86retflag imm:$amt)]>;
 }
 
 // All branches are RawFrm, Void, Branch, and Terminators
@@ -404,23 +426,21 @@ def JNP : IBr<0x8B, (ops brtarget:$dst), "jnp $dst",
 //===----------------------------------------------------------------------===//
 //  Call Instructions...
 //
-// FIXME: How about hasInFlag = 1? A fastcall would require an incoming flag
-// to stick the CopyToRegs to the call.
-let isCall = 1, noResults = 1, hasOutFlag = 1 in
+let isCall = 1, noResults = 1 in
   // All calls clobber the non-callee saved registers...
   let Defs = [EAX, ECX, EDX, FP0, FP1, FP2, FP3, FP4, FP5, FP6, ST0,
               XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7] in {
     def CALLpcrel32 : I<0xE8, RawFrm, (ops calltarget:$dst), "call $dst",
                       []>;
     def CALL32r     : I<0xFF, MRM2r, (ops R32:$dst), "call {*}$dst",
-                      [(call R32:$dst)]>;
+                      [(X86call R32:$dst)]>;
     def CALL32m     : I<0xFF, MRM2m, (ops i32mem:$dst), "call {*}$dst",
-                      [(call (loadi32 addr:$dst))]>;
+                      [(X86call (loadi32 addr:$dst))]>;
   }
 
-def : Pat<(call tglobaladdr:$dst),
+def : Pat<(X86call tglobaladdr:$dst),
           (CALLpcrel32 tglobaladdr:$dst)>;
-def : Pat<(call externalsym:$dst),
+def : Pat<(X86call externalsym:$dst),
           (CALLpcrel32 externalsym:$dst)>;
 
 // Tail call stuff.
@@ -1544,64 +1564,94 @@ let isTwoAddress = 0 in {
 // Double shift instructions (generalizations of rotate)
 
 def SHLD32rrCL : I<0xA5, MRMDestReg, (ops R32:$dst, R32:$src1, R32:$src2),
-                   "shld{l} {%cl, $src2, $dst|$dst, $src2, %CL}", []>,
+                   "shld{l} {%cl, $src2, $dst|$dst, $src2, %CL}",
+                   [(set R32:$dst, (X86shld R32:$src1, R32:$src2, CL))]>,
                    Imp<[CL],[]>, TB;
 def SHRD32rrCL : I<0xAD, MRMDestReg, (ops R32:$dst, R32:$src1, R32:$src2),
-                   "shrd{l} {%cl, $src2, $dst|$dst, $src2, %CL}", []>,
+                   "shrd{l} {%cl, $src2, $dst|$dst, $src2, %CL}",
+                   [(set R32:$dst, (X86shrd R32:$src1, R32:$src2, CL))]>,
                    Imp<[CL],[]>, TB;
 def SHLD16rrCL : I<0xA5, MRMDestReg, (ops R16:$dst, R16:$src1, R16:$src2),
-                   "shld{w} {%cl, $src2, $dst|$dst, $src2, %CL}", []>,
+                   "shld{w} {%cl, $src2, $dst|$dst, $src2, %CL}",
+                   [(set R16:$dst, (X86shld R16:$src1, R16:$src2, CL))]>,
                    Imp<[CL],[]>, TB, OpSize;
 def SHRD16rrCL : I<0xAD, MRMDestReg, (ops R16:$dst, R16:$src1, R16:$src2),
-                   "shrd{w} {%cl, $src2, $dst|$dst, $src2, %CL}", []>,
+                   "shrd{w} {%cl, $src2, $dst|$dst, $src2, %CL}",
+                   [(set R16:$dst, (X86shrd R16:$src1, R16:$src2, CL))]>,
                    Imp<[CL],[]>, TB, OpSize;
 
 let isCommutable = 1 in {  // These instructions commute to each other.
 def SHLD32rri8 : Ii8<0xA4, MRMDestReg,
                      (ops R32:$dst, R32:$src1, R32:$src2, i8imm:$src3),
-                     "shld{l} {$src3, $src2, $dst|$dst, $src2, $src3}", []>, TB;
+                     "shld{l} {$src3, $src2, $dst|$dst, $src2, $src3}",
+                     [(set R32:$dst, (X86shld R32:$src1, R32:$src2,
+                                      (i8 imm:$src3)))]>,
+                 TB;
 def SHRD32rri8 : Ii8<0xAC, MRMDestReg,
                      (ops R32:$dst, R32:$src1, R32:$src2, i8imm:$src3),
-                     "shrd{l} {$src3, $src2, $dst|$dst, $src2, $src3}", []>, TB;
+                     "shrd{l} {$src3, $src2, $dst|$dst, $src2, $src3}",
+                     [(set R32:$dst, (X86shrd R32:$src1, R32:$src2,
+                                      (i8 imm:$src3)))]>,
+                 TB;
 def SHLD16rri8 : Ii8<0xA4, MRMDestReg,
                      (ops R16:$dst, R16:$src1, R16:$src2, i8imm:$src3),
-                     "shld{w} {$src3, $src2, $dst|$dst, $src2, $src3}", []>,
+                     "shld{w} {$src3, $src2, $dst|$dst, $src2, $src3}",
+                     [(set R16:$dst, (X86shld R16:$src1, R16:$src2,
+                                      (i8 imm:$src3)))]>,
                      TB, OpSize;
 def SHRD16rri8 : Ii8<0xAC, MRMDestReg,
                      (ops R16:$dst, R16:$src1, R16:$src2, i8imm:$src3),
-                     "shrd{w} {$src3, $src2, $dst|$dst, $src2, $src3}", []>,
+                     "shrd{w} {$src3, $src2, $dst|$dst, $src2, $src3}",
+                     [(set R16:$dst, (X86shrd R16:$src1, R16:$src2,
+                                      (i8 imm:$src3)))]>,
                      TB, OpSize;
 }
 
 let isTwoAddress = 0 in {
   def SHLD32mrCL : I<0xA5, MRMDestMem, (ops i32mem:$dst, R32:$src2),
-                     "shld{l} {%cl, $src2, $dst|$dst, $src2, %CL}", []>,
+                     "shld{l} {%cl, $src2, $dst|$dst, $src2, %CL}",
+                     [(store (X86shld (loadi32 addr:$dst), R32:$src2, CL),
+                       addr:$dst)]>,
                      Imp<[CL],[]>, TB;
   def SHRD32mrCL : I<0xAD, MRMDestMem, (ops i32mem:$dst, R32:$src2),
-                    "shrd{l} {%cl, $src2, $dst|$dst, $src2, %CL}", []>,
+                    "shrd{l} {%cl, $src2, $dst|$dst, $src2, %CL}",
+                    [(store (X86shrd (loadi32 addr:$dst), R32:$src2, CL),
+                      addr:$dst)]>,
                     Imp<[CL],[]>, TB;
   def SHLD32mri8 : Ii8<0xA4, MRMDestMem,
                       (ops i32mem:$dst, R32:$src2, i8imm:$src3),
-                      "shld{l} {$src3, $src2, $dst|$dst, $src2, $src3}", []>,
+                      "shld{l} {$src3, $src2, $dst|$dst, $src2, $src3}",
+                      [(store (X86shld (loadi32 addr:$dst), R32:$src2,
+                                        (i8 imm:$src3)), addr:$dst)]>,
                       TB;
   def SHRD32mri8 : Ii8<0xAC, MRMDestMem, 
                        (ops i32mem:$dst, R32:$src2, i8imm:$src3),
-                       "shrd{l} {$src3, $src2, $dst|$dst, $src2, $src3}", []>,
+                       "shrd{l} {$src3, $src2, $dst|$dst, $src2, $src3}",
+                       [(store (X86shrd (loadi32 addr:$dst), R32:$src2,
+                                         (i8 imm:$src3)), addr:$dst)]>,
                        TB;
 
   def SHLD16mrCL : I<0xA5, MRMDestMem, (ops i16mem:$dst, R16:$src2),
-                     "shld{w} {%cl, $src2, $dst|$dst, $src2, %CL}", []>,
+                     "shld{w} {%cl, $src2, $dst|$dst, $src2, %CL}",
+                     [(store (X86shld (loadi16 addr:$dst), R16:$src2, CL),
+                       addr:$dst)]>,
                      Imp<[CL],[]>, TB, OpSize;
   def SHRD16mrCL : I<0xAD, MRMDestMem, (ops i16mem:$dst, R16:$src2),
-                    "shrd{w} {%cl, $src2, $dst|$dst, $src2, %CL}", []>,
+                    "shrd{w} {%cl, $src2, $dst|$dst, $src2, %CL}",
+                    [(store (X86shrd (loadi16 addr:$dst), R16:$src2, CL),
+                      addr:$dst)]>,
                     Imp<[CL],[]>, TB, OpSize;
   def SHLD16mri8 : Ii8<0xA4, MRMDestMem,
                       (ops i16mem:$dst, R16:$src2, i8imm:$src3),
-                      "shld{w} {$src3, $src2, $dst|$dst, $src2, $src3}", []>,
+                      "shld{w} {$src3, $src2, $dst|$dst, $src2, $src3}",
+                      [(store (X86shld (loadi16 addr:$dst), R16:$src2,
+                                        (i8 imm:$src3)), addr:$dst)]>,
                       TB, OpSize;
   def SHRD16mri8 : Ii8<0xAC, MRMDestMem, 
                        (ops i16mem:$dst, R16:$src2, i8imm:$src3),
-                       "shrd{w} {$src3, $src2, $dst|$dst, $src2, $src3}", []>,
+                       "shrd{w} {$src3, $src2, $dst|$dst, $src2, $src3}",
+                      [(store (X86shrd (loadi16 addr:$dst), R16:$src2,
+                                        (i8 imm:$src3)), addr:$dst)]>,
                        TB, OpSize;
 }
 
@@ -1684,22 +1734,29 @@ let isTwoAddress = 0 in {
 
 let isCommutable = 1 in {  // X = ADC Y, Z --> X = ADC Z, Y
 def ADC32rr  : I<0x11, MRMDestReg, (ops R32:$dst, R32:$src1, R32:$src2),
-                 "adc{l} {$src2, $dst|$dst, $src2}", []>;
+                 "adc{l} {$src2, $dst|$dst, $src2}",
+                 [(set R32:$dst, (X86adc R32:$src1, R32:$src2))]>;
 }
 def ADC32rm  : I<0x13, MRMSrcMem , (ops R32:$dst, R32:$src1, i32mem:$src2),
-                 "adc{l} {$src2, $dst|$dst, $src2}", []>;
+                 "adc{l} {$src2, $dst|$dst, $src2}",
+                 [(set R32:$dst, (X86adc R32:$src1, (load addr:$src2)))]>;
 def ADC32ri  : Ii32<0x81, MRM2r, (ops R32:$dst, R32:$src1, i32imm:$src2),
-                    "adc{l} {$src2, $dst|$dst, $src2}", []>;
-def ADC32ri8 : Ii8<0x83, MRM2r, (ops R32:$dst, R32:$src1, i8imm:$src2),
-                   "adc{l} {$src2, $dst|$dst, $src2}", []>;
+                    "adc{l} {$src2, $dst|$dst, $src2}",
+                 [(set R32:$dst, (X86adc R32:$src1, imm:$src2))]>;
+def ADC32ri8 : Ii8<0x83, MRM2r, (ops R32:$dst, R32:$src1, i32i8imm:$src2),
+                   "adc{l} {$src2, $dst|$dst, $src2}",
+                 [(set R32:$dst, (X86adc R32:$src1, i32immSExt8:$src2))]>;
 
 let isTwoAddress = 0 in {
   def ADC32mr  : I<0x11, MRMDestMem, (ops i32mem:$dst, R32:$src2),
-                   "adc{l} {$src2, $dst|$dst, $src2}", []>;
+                   "adc{l} {$src2, $dst|$dst, $src2}",
+                   [(store (X86adc (load addr:$dst), R32:$src2), addr:$dst)]>;
   def ADC32mi  : Ii32<0x81, MRM2m, (ops i32mem:$dst, i32imm:$src2),
-                      "adc{l} {$src2, $dst|$dst, $src2}", []>;
-  def ADC32mi8 : Ii8<0x83, MRM2m, (ops i32mem:$dst, i8imm :$src2),
-                     "adc{l} {$src2, $dst|$dst, $src2}", []>;
+                      "adc{l} {$src2, $dst|$dst, $src2}",
+                  [(store (X86adc (loadi32 addr:$dst), imm:$src2), addr:$dst)]>;
+  def ADC32mi8 : Ii8<0x83, MRM2m, (ops i32mem:$dst, i32i8imm :$src2),
+                     "adc{l} {$src2, $dst|$dst, $src2}",
+             [(store (X86adc (load addr:$dst), i32immSExt8:$src2), addr:$dst)]>;
 }
 
 def SUB8rr   : I<0x28, MRMDestReg, (ops R8 :$dst, R8 :$src1, R8 :$src2),
@@ -1768,36 +1825,52 @@ let isTwoAddress = 0 in {
 }
 
 def SBB32rr    : I<0x19, MRMDestReg, (ops R32:$dst, R32:$src1, R32:$src2),
-                  "sbb{l} {$src2, $dst|$dst, $src2}", []>;
+                  "sbb{l} {$src2, $dst|$dst, $src2}",
+                  [(set R32:$dst, (X86sbb R32:$src1, R32:$src2))]>;
 
 let isTwoAddress = 0 in {
   def SBB32mr  : I<0x19, MRMDestMem, (ops i32mem:$dst, R32:$src2), 
-                   "sbb{l} {$src2, $dst|$dst, $src2}", []>;
+                   "sbb{l} {$src2, $dst|$dst, $src2}",
+                   [(store (X86sbb (load addr:$dst), R32:$src2), addr:$dst)]>;
   def SBB8mi  : Ii32<0x80, MRM3m, (ops i8mem:$dst, i8imm:$src2), 
-                      "sbb{b} {$src2, $dst|$dst, $src2}", []>;
+                      "sbb{b} {$src2, $dst|$dst, $src2}",
+                   [(store (X86sbb (loadi8 addr:$dst), imm:$src2), addr:$dst)]>;
   def SBB16mi  : Ii32<0x81, MRM3m, (ops i16mem:$dst, i16imm:$src2), 
-                      "sbb{w} {$src2, $dst|$dst, $src2}", []>, OpSize;
+                      "sbb{w} {$src2, $dst|$dst, $src2}",
+                  [(store (X86sbb (loadi16 addr:$dst), imm:$src2), addr:$dst)]>,
+                     OpSize;
   def SBB32mi  : Ii32<0x81, MRM3m, (ops i32mem:$dst, i32imm:$src2), 
-                      "sbb{l} {$src2, $dst|$dst, $src2}", []>;
-  def SBB16mi8 : Ii8<0x83, MRM3m, (ops i16mem:$dst, i8imm :$src2), 
-                     "sbb{w} {$src2, $dst|$dst, $src2}", []>, OpSize;
-  def SBB32mi8 : Ii8<0x83, MRM3m, (ops i32mem:$dst, i8imm :$src2), 
-                     "sbb{l} {$src2, $dst|$dst, $src2}", []>;
+                      "sbb{l} {$src2, $dst|$dst, $src2}",
+                  [(store (X86sbb (loadi32 addr:$dst), imm:$src2), addr:$dst)]>;
+  def SBB16mi8 : Ii8<0x83, MRM3m, (ops i16mem:$dst, i16i8imm :$src2), 
+                     "sbb{w} {$src2, $dst|$dst, $src2}",
+             [(store (X86sbb (load addr:$dst), i16immSExt8:$src2), addr:$dst)]>,
+                     OpSize;
+  def SBB32mi8 : Ii8<0x83, MRM3m, (ops i32mem:$dst, i32i8imm :$src2), 
+                     "sbb{l} {$src2, $dst|$dst, $src2}",
+             [(store (X86sbb (load addr:$dst), i32immSExt8:$src2), addr:$dst)]>;
 }
 def SBB8ri   : Ii8<0x80, MRM3r, (ops R8:$dst, R8:$src1, i8imm:$src2),
-                    "sbb{b} {$src2, $dst|$dst, $src2}", []>;
+                    "sbb{b} {$src2, $dst|$dst, $src2}",
+                    [(set R8:$dst, (X86sbb R8:$src1, imm:$src2))]>;
 def SBB16ri  : Ii16<0x81, MRM3r, (ops R16:$dst, R16:$src1, i16imm:$src2),
-                    "sbb{w} {$src2, $dst|$dst, $src2}", []>, OpSize;
+                    "sbb{w} {$src2, $dst|$dst, $src2}",
+                    [(set R16:$dst, (X86sbb R16:$src1, imm:$src2))]>, OpSize;
 
 def SBB32rm  : I<0x1B, MRMSrcMem, (ops R32:$dst, R32:$src1, i32mem:$src2),
-                    "sbb{l} {$src2, $dst|$dst, $src2}", []>;
+                    "sbb{l} {$src2, $dst|$dst, $src2}",
+                    [(set R32:$dst, (X86sbb R32:$src1, (load addr:$src2)))]>;
 def SBB32ri  : Ii32<0x81, MRM3r, (ops R32:$dst, R32:$src1, i32imm:$src2),
-                    "sbb{l} {$src2, $dst|$dst, $src2}", []>;
+                    "sbb{l} {$src2, $dst|$dst, $src2}",
+                    [(set R32:$dst, (X86sbb R32:$src1, imm:$src2))]>;
 
-def SBB16ri8 : Ii8<0x83, MRM3r, (ops R16:$dst, R16:$src1, i8imm:$src2),
-                   "sbb{w} {$src2, $dst|$dst, $src2}", []>, OpSize;
-def SBB32ri8 : Ii8<0x83, MRM3r, (ops R32:$dst, R32:$src1, i8imm:$src2),
-                   "sbb{l} {$src2, $dst|$dst, $src2}", []>;
+def SBB16ri8 : Ii8<0x83, MRM3r, (ops R16:$dst, R16:$src1, i16i8imm:$src2),
+                   "sbb{w} {$src2, $dst|$dst, $src2}",
+                   [(set R16:$dst, (X86sbb R16:$src1, i16immSExt8:$src2))]>,
+                   OpSize;
+def SBB32ri8 : Ii8<0x83, MRM3r, (ops R32:$dst, R32:$src1, i32i8imm:$src2),
+                   "sbb{l} {$src2, $dst|$dst, $src2}",
+                   [(set R32:$dst, (X86sbb R32:$src1, i32immSExt8:$src2))]>;
 
 let isCommutable = 1 in {  // X = IMUL Y, Z --> X = IMUL Z, Y
 def IMUL16rr : I<0xAF, MRMSrcReg, (ops R16:$dst, R16:$src1, R16:$src2),
@@ -1816,6 +1889,25 @@ def IMUL32rm : I<0xAF, MRMSrcMem, (ops R32:$dst, R32:$src1, i32mem:$src2),
                  [(set R32:$dst, (mul R32:$src1, (load addr:$src2)))]>, TB;
 
 } // end Two Address instructions
+
+// X86 specific add which produces a flag.
+def : Pat<(X86addflag R32:$src1, R32:$src2),
+          (ADD32rr R32:$src1, R32:$src2)>;
+def : Pat<(X86addflag R32:$src1, (load addr:$src2)),
+          (ADD32rm R32:$src1, addr:$src2)>;
+def : Pat<(X86addflag R32:$src1, imm:$src2),
+          (ADD32ri R32:$src1, imm:$src2)>;
+def : Pat<(X86addflag R32:$src1, i32immSExt8:$src2),
+          (ADD32ri8 R32:$src1, i32immSExt8:$src2)>;
+
+def : Pat<(X86subflag R32:$src1, R32:$src2),
+          (SUB32rr R32:$src1, R32:$src2)>;
+def : Pat<(X86subflag R32:$src1, (load addr:$src2)),
+          (SUB32rm R32:$src1, addr:$src2)>;
+def : Pat<(X86subflag R32:$src1, imm:$src2),
+          (SUB32ri R32:$src1, imm:$src2)>;
+def : Pat<(X86subflag R32:$src1, i32immSExt8:$src2),
+          (SUB32ri8 R32:$src1, i32immSExt8:$src2)>;
 
 // Suprisingly enough, these are not two address instructions!
 def IMUL16rri  : Ii16<0x69, MRMSrcReg,                      // R16 = R16*I16
@@ -2471,13 +2563,12 @@ class FpI<dag ops, FPFormat fp, list<dag> pattern>
 }
 
 // Random Pseudo Instructions.
-let hasInFlag = 1 in
-  def FpGETRESULT : FpI<(ops RFP:$dst), SpecialFP, []>;   // FPR = ST(0)
+def FpGETRESULT : FpI<(ops RFP:$dst), SpecialFP, []>;   // FPR = ST(0)
 
 // Do not inline into instruction def. since it isn't predicated on FPStack.
 def : Pat<(X86fpget), (FpGETRESULT)>;
 
-let noResults = 1, hasOutFlag = 1 in 
+let noResults = 1 in 
   def FpSETRESULT : FpI<(ops RFP:$src), SpecialFP,
                         []>, Imp<[], [ST0]>;              // ST(0) = FPR
 
@@ -2754,8 +2845,8 @@ def FLDCW16m  : I<0xD9, MRM5m,                   // X87 control world = [mem16]
 // Miscellaneous Instructions
 //===----------------------------------------------------------------------===//
 
-def RDTSC : I<0x31, RawFrm, (ops), "rdtsc", []>, TB, Imp<[],[EAX,EDX]>;
-
+def RDTSC : I<0x31, RawFrm, (ops), "rdtsc", [(X86rdtsc)]>,
+            TB, Imp<[],[EAX,EDX]>;
 
 //===----------------------------------------------------------------------===//
 // Some peepholes

@@ -25,6 +25,21 @@ namespace llvm {
       // Start the numbering where the builtin ops leave off.
       FIRST_NUMBER = ISD::BUILTIN_OP_END+X86::INSTRUCTION_LIST_END,
 
+      /// ADD_FLAG, SUB_FLAG - Same as ISD::ADD and ISD::SUB except it also
+      /// produces a flag result.
+      ADD_FLAG,
+      SUB_FLAG,
+
+      /// ADC, SBB - Add with carry and subtraction with borrow. These
+      /// correspond to X86::ADCxx and X86::SBBxx instructions.
+      ADC,
+      SBB,
+
+      /// SHLD, SHRD - Double shift instructions. These correspond to
+      /// X86::SHLDxx and X86::SHRDxx instructions.
+      SHLD,
+      SHRD,
+
       /// FILD64m - This instruction implements SINT_TO_FP with a
       /// 64-bit source in memory and a FP reg result.  This corresponds to
       /// the X86::FILD64m instruction.  It has two inputs (token chain and
@@ -99,7 +114,7 @@ namespace llvm {
       /// X86 conditional moves. Operand 1 and operand 2 are the two values
       /// to select from (operand 1 is a R/W operand). Operand 3 is the condition
       /// code, and operand 4 is the flag operand produced by a CMP or TEST
-      /// instruction.
+      /// instruction. It also writes a flag result.
       CMOV,
 
       /// X86 conditional branches. Operand 1 is the chain operand, operand 2
@@ -107,10 +122,6 @@ namespace llvm {
       /// condition code, and operand 4 is the flag operand produced by a CMP
       /// or TEST instruction.
       BRCOND,
-
-      /// Return without a flag operand. Operand 1 is the number of bytes of
-      /// stack to pop, and operand 2 is the chain.
-      RET,
 
       /// Return with a flag operand. Operand 1 is the number of bytes of stack
       /// to pop, operand 2 is the chain and operand 3 is a flag operand.

@@ -133,6 +133,12 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     setOperationAction(ISD::RET            , MVT::Other, Custom);
     // Darwin ABI issue.
     setOperationAction(ISD::GlobalAddress  , MVT::i32  , Custom);
+    // 64-bit addm sub, shl, sra, srl (iff 32-bit x86)
+    setOperationAction(ISD::ADD_PARTS      , MVT::i32  , Custom);
+    setOperationAction(ISD::SUB_PARTS      , MVT::i32  , Custom);
+    setOperationAction(ISD::SHL_PARTS      , MVT::i32  , Custom);
+    setOperationAction(ISD::SRA_PARTS      , MVT::i32  , Custom);
+    setOperationAction(ISD::SRL_PARTS      , MVT::i32  , Custom);
   }
 
   // We don't have line number support yet.
@@ -243,13 +249,13 @@ SDOperand X86TargetLowering::LowerReturnTo(SDOperand Chain, SDOperand Op,
     case MVT::f32:
     case MVT::f64:
       if (!X86ScalarSSE) {
+        if (OpVT == MVT::f32)
+          Op = DAG.getNode(ISD::FP_EXTEND, MVT::f64, Op);
         std::vector<MVT::ValueType> Tys;
         Tys.push_back(MVT::Other);
         Tys.push_back(MVT::Flag);
         std::vector<SDOperand> Ops;
         Ops.push_back(Chain);
-        if (OpVT == MVT::f32)
-          Op = DAG.getNode(ISD::FP_EXTEND, MVT::f64, Op);
         Ops.push_back(Op);
         Copy = DAG.getNode(X86ISD::FP_SET_RESULT, Tys, Ops);
       } else {
@@ -476,7 +482,6 @@ X86TargetLowering::LowerCCCCallTo(SDOperand Chain, const Type *RetTy,
     std::vector<MVT::ValueType> NodeTys;
     NodeTys.push_back(MVT::Other);   // Returns a chain
     NodeTys.push_back(MVT::Flag);    // Returns a flag for retval copy to use.
-
     std::vector<SDOperand> Ops;
     Ops.push_back(Chain);
     Ops.push_back(Callee);
@@ -991,7 +996,6 @@ X86TargetLowering::LowerFastCCCallTo(SDOperand Chain, const Type *RetTy,
     std::vector<MVT::ValueType> NodeTys;
     NodeTys.push_back(MVT::Other);   // Returns a chain
     NodeTys.push_back(MVT::Flag);    // Returns a flag for retval copy to use.
-
     std::vector<SDOperand> Ops;
     Ops.push_back(Chain);
     Ops.push_back(Callee);
@@ -1193,6 +1197,99 @@ static unsigned CCToX86CondCode(SDOperand CC, bool isFP) {
 SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   switch (Op.getOpcode()) {
   default: assert(0 && "Should not custom lower this!");
+  case ISD::ADD_PARTS:
+  case ISD::SUB_PARTS: {
+    assert(Op.getNumOperands() == 4 && Op.getValueType() == MVT::i32 &&
+           "Not an i64 add/sub!");
+    bool isAdd = Op.getOpcode() == ISD::ADD_PARTS;
+    std::vector<MVT::ValueType> Tys;
+    Tys.push_back(MVT::i32);
+    Tys.push_back(MVT::Flag);
+    std::vector<SDOperand> Ops;
+    Ops.push_back(Op.getOperand(0));
+    Ops.push_back(Op.getOperand(2));
+    SDOperand Lo = DAG.getNode(isAdd ? X86ISD::ADD_FLAG : X86ISD::SUB_FLAG,
+                               Tys, Ops);
+    SDOperand Hi = DAG.getNode(isAdd ? X86ISD::ADC : X86ISD::SBB, MVT::i32,
+                               Op.getOperand(1), Op.getOperand(3),
+                               Lo.getValue(1));
+    Tys.clear();
+    Tys.push_back(MVT::i32);
+    Tys.push_back(MVT::i32);
+    Ops.clear();
+    Ops.push_back(Lo);
+    Ops.push_back(Hi);
+    return DAG.getNode(ISD::MERGE_VALUES, Tys, Ops);
+  }
+  case ISD::SHL_PARTS:
+  case ISD::SRA_PARTS:
+  case ISD::SRL_PARTS: {
+    assert(Op.getNumOperands() == 3 && Op.getValueType() == MVT::i32 &&
+           "Not an i64 shift!");
+    bool isSRA = Op.getOpcode() == ISD::SRA_PARTS;
+    SDOperand ShOpLo = Op.getOperand(0);
+    SDOperand ShOpHi = Op.getOperand(1);
+    SDOperand ShAmt  = Op.getOperand(2);
+    SDOperand Tmp1 = isSRA ? DAG.getNode(ISD::SRA, MVT::i32, ShOpHi,
+                                         DAG.getConstant(32, MVT::i32))
+                           : DAG.getConstant(0, MVT::i32);
+
+    SDOperand Tmp2, Tmp3;
+    if (Op.getOpcode() == ISD::SHL_PARTS) {
+      Tmp2 = DAG.getNode(X86ISD::SHLD, MVT::i32, ShOpHi, ShOpLo, ShAmt);
+      Tmp3 = DAG.getNode(ISD::SHL, MVT::i32, ShOpLo, ShAmt);
+    } else {
+      Tmp2 = DAG.getNode(X86ISD::SHRD, MVT::i32, ShOpLo, ShOpHi, ShAmt);
+      Tmp3 = DAG.getNode(isSRA ? ISD::SRA : ISD::SHL, MVT::i32, ShOpHi, ShAmt);
+    }
+
+    SDOperand InFlag = DAG.getNode(X86ISD::TEST, MVT::Flag,
+                                   ShAmt, DAG.getConstant(32, MVT::i8));
+
+    SDOperand Hi, Lo;
+    SDOperand CC = DAG.getConstant(X86ISD::COND_E, MVT::i8);
+
+    std::vector<MVT::ValueType> Tys;
+    Tys.push_back(MVT::i32);
+    Tys.push_back(MVT::Flag);
+    std::vector<SDOperand> Ops;
+    if (Op.getOpcode() == ISD::SHL_PARTS) {
+      Ops.push_back(Tmp2);
+      Ops.push_back(Tmp3);
+      Ops.push_back(CC);
+      Ops.push_back(InFlag);
+      Hi = DAG.getNode(X86ISD::CMOV, Tys, Ops);
+      InFlag = Hi.getValue(1);
+
+      Ops.clear();
+      Ops.push_back(Tmp3);
+      Ops.push_back(Tmp1);
+      Ops.push_back(CC);
+      Ops.push_back(InFlag);
+      Lo = DAG.getNode(X86ISD::CMOV, Tys, Ops);
+    } else {
+      Ops.push_back(Tmp2);
+      Ops.push_back(Tmp3);
+      Ops.push_back(CC);
+      Lo = DAG.getNode(X86ISD::CMOV, Tys, Ops);
+      InFlag = Lo.getValue(1);
+
+      Ops.clear();
+      Ops.push_back(Tmp3);
+      Ops.push_back(Tmp1);
+      Ops.push_back(CC);
+      Ops.push_back(InFlag);
+      Hi = DAG.getNode(X86ISD::CMOV, Tys, Ops);
+    }
+
+    Tys.clear();
+    Tys.push_back(MVT::i32);
+    Tys.push_back(MVT::i32);
+    Ops.clear();
+    Ops.push_back(Lo);
+    Ops.push_back(Hi);
+    return DAG.getNode(ISD::MERGE_VALUES, Tys, Ops);
+  }
   case ISD::SINT_TO_FP: {
     assert(Op.getValueType() == MVT::f64 &&
            Op.getOperand(0).getValueType() == MVT::i64 &&
@@ -1362,8 +1459,16 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
       CC = DAG.getConstant(X86ISD::COND_E, MVT::i8);
       Cond = DAG.getNode(X86ISD::TEST, MVT::Flag, Cond, Cond);
     }
-    return DAG.getNode(X86ISD::CMOV, Op.getValueType(),
-                       Op.getOperand(1), Op.getOperand(2), CC, Cond);
+
+    std::vector<MVT::ValueType> Tys;
+    Tys.push_back(Op.getValueType());
+    Tys.push_back(MVT::Flag);
+    std::vector<SDOperand> Ops;
+    Ops.push_back(Op.getOperand(1));
+    Ops.push_back(Op.getOperand(2));
+    Ops.push_back(CC);
+    Ops.push_back(Cond);
+    return DAG.getNode(X86ISD::CMOV, Tys, Ops);
   }
   case ISD::BRCOND: {
     SDOperand Cond  = Op.getOperand(1);
@@ -1389,7 +1494,7 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   }
   case ISD::RET: {
     // Can only be return void.
-    return DAG.getNode(X86ISD::RET, MVT::Other, Op.getOperand(0),
+    return DAG.getNode(X86ISD::RET_FLAG, MVT::Other, Op.getOperand(0),
                        DAG.getConstant(getBytesToPopOnReturn(), MVT::i16));
   }
   case ISD::GlobalAddress: {
@@ -1414,6 +1519,12 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
 const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   switch (Opcode) {
   default: return NULL;
+  case X86ISD::ADD_FLAG:           return "X86ISD::ADD_FLAG";
+  case X86ISD::SUB_FLAG:           return "X86ISD::SUB_FLAG";
+  case X86ISD::ADC:                return "X86ISD::ADC";
+  case X86ISD::SBB:                return "X86ISD::SBB";
+  case X86ISD::SHLD:               return "X86ISD::SHLD";
+  case X86ISD::SHRD:               return "X86ISD::SHRD";
   case X86ISD::FILD64m:            return "X86ISD::FILD64m";
   case X86ISD::FP_TO_INT16_IN_MEM: return "X86ISD::FP_TO_INT16_IN_MEM";
   case X86ISD::FP_TO_INT32_IN_MEM: return "X86ISD::FP_TO_INT32_IN_MEM";
@@ -1430,7 +1541,6 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::SETCC:              return "X86ISD::SETCC";
   case X86ISD::CMOV:               return "X86ISD::CMOV";
   case X86ISD::BRCOND:             return "X86ISD::BRCOND";
-  case X86ISD::RET:                return "X86ISD::RET";
   case X86ISD::RET_FLAG:           return "X86ISD::RET_FLAG";
   }
 }
