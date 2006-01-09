@@ -1200,20 +1200,6 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
   return getNode(Opcode, VT, Ops);
 }
 
-SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
-                                SDOperand N1, SDOperand N2, SDOperand N3,
-                                SDOperand N4, SDOperand N5, SDOperand N6) {
-  std::vector<SDOperand> Ops;
-  Ops.reserve(6);
-  Ops.push_back(N1);
-  Ops.push_back(N2);
-  Ops.push_back(N3);
-  Ops.push_back(N4);
-  Ops.push_back(N5);
-  Ops.push_back(N6);
-  return getNode(Opcode, VT, Ops);
-}
-
 // setAdjCallChain - This method changes the token chain of an
 // CALLSEQ_START/END node to be the specified operand.
 void SDNode::setAdjCallChain(SDOperand N) {
