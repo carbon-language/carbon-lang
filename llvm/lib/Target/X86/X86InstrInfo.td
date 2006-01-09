@@ -368,6 +368,16 @@ def ADJCALLSTACKUP   : I<0, Pseudo, (ops i32imm:$amt1, i32imm:$amt2),
                          [(X86callseq_end imm:$amt1, imm:$amt2)]>;
 def IMPLICIT_USE     : I<0, Pseudo, (ops variable_ops), "#IMPLICIT_USE", []>;
 def IMPLICIT_DEF     : I<0, Pseudo, (ops variable_ops), "#IMPLICIT_DEF", []>;
+def IMPLICIT_DEF_R8  : I<0, Pseudo, (ops R8:$dst),
+                         "#IMPLICIT_DEF $dst",
+                         [(set R8:$dst, (undef))]>;
+def IMPLICIT_DEF_R16  : I<0, Pseudo, (ops R16:$dst),
+                         "#IMPLICIT_DEF $dst",
+                         [(set R16:$dst, (undef))]>;
+def IMPLICIT_DEF_R32  : I<0, Pseudo, (ops R32:$dst),
+                         "#IMPLICIT_DEF $dst",
+                         [(set R32:$dst, (undef))]>;
+
 let isTerminator = 1 in
   let Defs = [FP0, FP1, FP2, FP3, FP4, FP5, FP6] in
     def FP_REG_KILL  : I<0, Pseudo, (ops), "#FP_REG_KILL", []>;
@@ -437,11 +447,6 @@ let isCall = 1, noResults = 1 in
     def CALL32m     : I<0xFF, MRM2m, (ops i32mem:$dst), "call {*}$dst",
                       [(X86call (loadi32 addr:$dst))]>;
   }
-
-def : Pat<(X86call tglobaladdr:$dst),
-          (CALLpcrel32 tglobaladdr:$dst)>;
-def : Pat<(X86call externalsym:$dst),
-          (CALLpcrel32 externalsym:$dst)>;
 
 // Tail call stuff.
 let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1, noResults = 1 in
@@ -1890,25 +1895,6 @@ def IMUL32rm : I<0xAF, MRMSrcMem, (ops R32:$dst, R32:$src1, i32mem:$src2),
 
 } // end Two Address instructions
 
-// X86 specific add which produces a flag.
-def : Pat<(X86addflag R32:$src1, R32:$src2),
-          (ADD32rr R32:$src1, R32:$src2)>;
-def : Pat<(X86addflag R32:$src1, (load addr:$src2)),
-          (ADD32rm R32:$src1, addr:$src2)>;
-def : Pat<(X86addflag R32:$src1, imm:$src2),
-          (ADD32ri R32:$src1, imm:$src2)>;
-def : Pat<(X86addflag R32:$src1, i32immSExt8:$src2),
-          (ADD32ri8 R32:$src1, i32immSExt8:$src2)>;
-
-def : Pat<(X86subflag R32:$src1, R32:$src2),
-          (SUB32rr R32:$src1, R32:$src2)>;
-def : Pat<(X86subflag R32:$src1, (load addr:$src2)),
-          (SUB32rm R32:$src1, addr:$src2)>;
-def : Pat<(X86subflag R32:$src1, imm:$src2),
-          (SUB32ri R32:$src1, imm:$src2)>;
-def : Pat<(X86subflag R32:$src1, i32immSExt8:$src2),
-          (SUB32ri8 R32:$src1, i32immSExt8:$src2)>;
-
 // Suprisingly enough, these are not two address instructions!
 def IMUL16rri  : Ii16<0x69, MRMSrcReg,                      // R16 = R16*I16
                       (ops R16:$dst, R16:$src1, i16imm:$src2),
@@ -2284,20 +2270,6 @@ def MOVZX32rm16: I<0xB7, MRMSrcMem, (ops R32:$dst, i16mem:$src),
                    "movz{wl|x} {$src, $dst|$dst, $src}",
                    [(set R32:$dst, (zextloadi32i16 addr:$src))]>, TB;
 
-// Handling 1 bit zextload and sextload
-def : Pat<(sextloadi16i1 addr:$src), (MOVSX16rm8  addr:$src)>;
-def : Pat<(sextloadi32i1 addr:$src), (MOVSX32rm8  addr:$src)>;
-def : Pat<(zextloadi16i1 addr:$src), (MOVZX16rm8  addr:$src)>;
-def : Pat<(zextloadi32i1 addr:$src), (MOVZX32rm8  addr:$src)>;
-
-// Handling 1 bit extload
-def : Pat<(extloadi8i1 addr:$src), (MOV8rm  addr:$src)>;
-
-// Modeling anyext as zext
-def : Pat<(i16 (anyext R8 :$src)), (MOVZX16rr8  R8 :$src)>;
-def : Pat<(i32 (anyext R8 :$src)), (MOVZX32rr8  R8 :$src)>;
-def : Pat<(i32 (anyext R16:$src)), (MOVZX32rr16 R16:$src)>;
-
 //===----------------------------------------------------------------------===//
 // XMM Floating point support (requires SSE / SSE2)
 //===----------------------------------------------------------------------===//
@@ -2555,25 +2527,25 @@ def CMPSDrm : I<0xC2, MRMSrcMem,
 // FPI - Floating Point Instruction template.
 class FPI<bits<8> o, Format F, dag ops, string asm> : I<o, F, ops, asm, []> {}
 
-// FpI - Floating Point Psuedo Instruction template.
-class FpI<dag ops, FPFormat fp, list<dag> pattern>
-  : X86Inst<0, Pseudo, NoImm, ops, "">, Requires<[FPStack]> {
+// FpI_ - Floating Point Psuedo Instruction template. Not Predicated.
+class FpI_<dag ops, FPFormat fp, list<dag> pattern>
+  : X86Inst<0, Pseudo, NoImm, ops, ""> {
   let FPForm = fp; let FPFormBits = FPForm.Value;
   let Pattern = pattern;
 }
 
 // Random Pseudo Instructions.
-def FpGETRESULT : FpI<(ops RFP:$dst), SpecialFP, []>;   // FPR = ST(0)
-
-// Do not inline into instruction def. since it isn't predicated on FPStack.
-def : Pat<(X86fpget), (FpGETRESULT)>;
+def FpGETRESULT : FpI_<(ops RFP:$dst), SpecialFP,
+                  [(set RFP:$dst, X86fpget)]>;                    // FPR = ST(0)
 
 let noResults = 1 in 
-  def FpSETRESULT : FpI<(ops RFP:$src), SpecialFP,
-                        []>, Imp<[], [ST0]>;              // ST(0) = FPR
+  def FpSETRESULT : FpI_<(ops RFP:$src), SpecialFP,
+                        [(X86fpset RFP:$src)]>, Imp<[], [ST0]>;   // ST(0) = FPR
 
-// Do not inline into instruction def. since it isn't predicated on FPStack.
-def : Pat<(X86fpset RFP:$src), (FpSETRESULT RFP:$src)>;
+// FpI - Floating Point Psuedo Instruction template. Predicated on FPStack.
+class FpI<dag ops, FPFormat fp, list<dag> pattern> :
+  FpI_<ops, fp, pattern>, Requires<[FPStack]>;
+
 
 def FpMOV       : FpI<(ops RFP:$dst, RFP:$src), SpecialFP, []>; // f1 = fmov f2
 
@@ -2754,17 +2726,10 @@ def FpILD32m : FpI<(ops RFP:$dst, i32mem:$src), ZeroArgFP,
 def FpILD64m : FpI<(ops RFP:$dst, i64mem:$src), ZeroArgFP,
                    []>;
 
-// Required for RET of f32 / f64 values.
-def : Pat<(X86fld addr:$src, f32), (FpLD32m addr:$src)>;
-def : Pat<(X86fld addr:$src, f64), (FpLD64m addr:$src)>;
-
 def FpST32m   : FpI<(ops f32mem:$op, RFP:$src), OneArgFP,
                 [(truncstore RFP:$src, addr:$op, f32)]>;
 def FpST64m   : FpI<(ops f64mem:$op, RFP:$src), OneArgFP,
                 [(store RFP:$src, addr:$op)]>;
-
-def : Pat<(X86fst RFP:$src, addr:$op, f32), (FpST32m addr:$op, RFP:$src)>;
-def : Pat<(X86fst RFP:$src, addr:$op, f64), (FpST64m addr:$op, RFP:$src)>;
 
 def FpSTP32m  : FpI<(ops f32mem:$op, RFP:$src), OneArgFP, []>;
 def FpSTP64m  : FpI<(ops f64mem:$op, RFP:$src), OneArgFP, []>;
@@ -2798,9 +2763,6 @@ def FpLD0 : FpI<(ops RFP:$dst), ZeroArgFP,
                 [(set RFP:$dst, fp64imm0)]>;
 def FpLD1 : FpI<(ops RFP:$dst), ZeroArgFP,
                 [(set RFP:$dst, fp64imm1)]>;
-
-def : Pat<(f64 fp64immneg0), (FpCHS (FpLD0))>, Requires<[FPStack]>;
-def : Pat<(f64 fp64immneg1), (FpCHS (FpLD1))>, Requires<[FPStack]>;
 
 def FLD0 : FPI<0xEE, RawFrm, (ops), "fldz">, D9;
 def FLD1 : FPI<0xE8, RawFrm, (ops), "fld1">, D9;
@@ -2847,6 +2809,68 @@ def FLDCW16m  : I<0xD9, MRM5m,                   // X87 control world = [mem16]
 
 def RDTSC : I<0x31, RawFrm, (ops), "rdtsc", [(X86rdtsc)]>,
             TB, Imp<[],[EAX,EDX]>;
+
+
+//===----------------------------------------------------------------------===//
+// Non-Instruction Patterns
+//===----------------------------------------------------------------------===//
+
+// Calls
+def : Pat<(X86call tglobaladdr:$dst),
+          (CALLpcrel32 tglobaladdr:$dst)>;
+def : Pat<(X86call externalsym:$dst),
+          (CALLpcrel32 externalsym:$dst)>;
+
+// X86 specific add which produces a flag.
+def : Pat<(X86addflag R32:$src1, R32:$src2),
+          (ADD32rr R32:$src1, R32:$src2)>;
+def : Pat<(X86addflag R32:$src1, (load addr:$src2)),
+          (ADD32rm R32:$src1, addr:$src2)>;
+def : Pat<(X86addflag R32:$src1, imm:$src2),
+          (ADD32ri R32:$src1, imm:$src2)>;
+def : Pat<(X86addflag R32:$src1, i32immSExt8:$src2),
+          (ADD32ri8 R32:$src1, i32immSExt8:$src2)>;
+
+def : Pat<(X86subflag R32:$src1, R32:$src2),
+          (SUB32rr R32:$src1, R32:$src2)>;
+def : Pat<(X86subflag R32:$src1, (load addr:$src2)),
+          (SUB32rm R32:$src1, addr:$src2)>;
+def : Pat<(X86subflag R32:$src1, imm:$src2),
+          (SUB32ri R32:$src1, imm:$src2)>;
+def : Pat<(X86subflag R32:$src1, i32immSExt8:$src2),
+          (SUB32ri8 R32:$src1, i32immSExt8:$src2)>;
+
+// {s|z}extload bool -> {s|z}extload byte
+def : Pat<(sextloadi16i1 addr:$src), (MOVSX16rm8 addr:$src)>;
+def : Pat<(sextloadi32i1 addr:$src), (MOVSX32rm8 addr:$src)>;
+def : Pat<(zextloadi16i1 addr:$src), (MOVZX16rm8 addr:$src)>;
+def : Pat<(zextloadi32i1 addr:$src), (MOVZX32rm8 addr:$src)>;
+
+// extload bool -> extload byte
+def : Pat<(extloadi8i1 addr:$src), (MOV8rm addr:$src)>;
+
+// anyext -> zext
+def : Pat<(i16 (anyext R8 :$src)), (MOVZX16rr8  R8 :$src)>;
+def : Pat<(i32 (anyext R8 :$src)), (MOVZX32rr8  R8 :$src)>;
+def : Pat<(i32 (anyext R16:$src)), (MOVZX32rr16 R16:$src)>;
+
+// Required for RET of f32 / f64 values.
+def : Pat<(X86fld addr:$src, f32), (FpLD32m addr:$src)>;
+def : Pat<(X86fld addr:$src, f64), (FpLD64m addr:$src)>;
+
+// Required for CALL which return f32 / f64 values.
+def : Pat<(X86fst RFP:$src, addr:$op, f32), (FpST32m addr:$op, RFP:$src)>;
+def : Pat<(X86fst RFP:$src, addr:$op, f64), (FpST64m addr:$op, RFP:$src)>;
+
+// Floatin point constant -0.0 and -1.0
+def : Pat<(f64 fp64immneg0), (FpCHS (FpLD0))>, Requires<[FPStack]>;
+def : Pat<(f64 fp64immneg1), (FpCHS (FpLD1))>, Requires<[FPStack]>;
+
+// FR64 undef
+def : Pat<(f64 (undef)), (FLD0SD)>, Requires<[HasSSE2]>;
+// RFP undef
+def : Pat<(f64 (undef)), (FpLD0)>,  Requires<[FPStack]>;
+
 
 //===----------------------------------------------------------------------===//
 // Some peepholes

@@ -550,15 +550,6 @@ SDOperand X86DAGToDAGISel::Select(SDOperand N) {
         return CodeGenMap[N] = CurDAG->getTargetNode(Opc, VT, Result);
       break;
     }
-
-    case ISD::UNDEF: {
-      Opc = (NVT == MVT::f64) ? (X86Vector >= SSE2 ? X86::FLD0SD : X86::FpLD0)
-                              : X86::IMPLICIT_DEF;
-      if (N.Val->hasOneUse())
-        return CurDAG->SelectNodeTo(N.Val, Opc, NVT);
-      else
-        return CodeGenMap[N] = CurDAG->getTargetNode(Opc, NVT);
-    }
   }
 
   return SelectCode(N);
