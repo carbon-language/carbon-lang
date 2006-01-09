@@ -69,6 +69,7 @@ namespace {
       AU.addPreserved<LoopInfo>();
       AU.addPreserved<DominatorSet>();
       AU.addPreserved<ImmediateDominators>();
+      AU.addPreserved<ETForest>();
       AU.addPreserved<DominatorTree>();
       AU.addPreserved<DominanceFrontier>();
       AU.addPreservedID(BreakCriticalEdgesID);  // No critical edges added.
@@ -334,6 +335,7 @@ void LoopSimplify::InsertPreheaderForLoop(Loop *L) {
   // the old header.
   DominatorTree::Node *PHDomTreeNode =
     DT.createNewNode(NewBB, DT.getNode(Header)->getIDom());
+  BasicBlock *oldHeaderIDom = DT.getNode(Header)->getIDom()->getBlock();
 
   // Change the header node so that PNHode is the new immediate dominator
   DT.changeImmediateDominator(DT.getNode(Header), PHDomTreeNode);
@@ -358,6 +360,15 @@ void LoopSimplify::InsertPreheaderForLoop(Loop *L) {
 
     // The preheader now is the immediate dominator for the header node...
     ID->setImmediateDominator(Header, NewBB);
+  }
+  
+  // Update ET Forest information if we have it...
+  if (ETForest *EF = getAnalysisToUpdate<ETForest>()) {
+    // Whatever i-dominated the header node now immediately dominates NewBB
+    EF->addNewBlock(NewBB, oldHeaderIDom);
+
+    // The preheader now is the immediate dominator for the header node...
+    EF->setImmediateDominator(Header, NewBB);
   }
 
   // Update dominance frontier information...
@@ -762,6 +773,7 @@ void LoopSimplify::UpdateDomInfoForRevectoredPreds(BasicBlock *NewBB,
         NewBBIDomNode = NewBBIDomNode->getIDom();
         assert(NewBBIDomNode && "No shared dominator found??");
       }
+      NewBBIDom = NewBBIDomNode->getBlock();
     }
 
     // Create the new dominator tree node... and set the idom of NewBB.
@@ -773,6 +785,13 @@ void LoopSimplify::UpdateDomInfoForRevectoredPreds(BasicBlock *NewBB,
       DominatorTree::Node *NewBBSuccNode = DT->getNode(NewBBSucc);
       DT->changeImmediateDominator(NewBBSuccNode, NewBBNode);
     }
+  }
+
+  // Update ET-Forest information if it is active.
+  if (ETForest *EF = getAnalysisToUpdate<ETForest>()) {
+    EF->addNewBlock(NewBB, NewBBIDom);
+    if (NewBBDominatesNewBBSucc)
+      EF->setImmediateDominator(NewBBSucc, NewBB);
   }
 
   // Update dominance frontier information...
