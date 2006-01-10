@@ -717,6 +717,13 @@ void BytecodeReader::ParseInstruction(std::vector<unsigned> &Oprnds,
     Result = new VAArgInst(foo, getSanitizedType(Oprnds[1]));
     break;
   }
+  case Instruction::ExtractElement: {
+    if (Oprnds.size() != 2)
+      throw std::string("Invalid extractelement instruction!");
+    Result = new ExtractElementInst(getValue(iType, Oprnds[0]), 
+                                    getValue(Type::UIntTyID, Oprnds[1]));
+    break;
+  }
   case Instruction::Cast:
     Result = new CastInst(getValue(iType, Oprnds[0]),
                           getSanitizedType(Oprnds[1]));
@@ -1439,6 +1446,12 @@ Constant *BytecodeReader::ParseConstantValue(unsigned TypeID) {
         error("Select instruction must have three arguments.");
       Constant* Result = ConstantExpr::getSelect(ArgVec[0], ArgVec[1],
                                                  ArgVec[2]);
+      if (Handler) Handler->handleConstantExpression(Opcode, ArgVec, Result);
+      return Result;
+    } else if (Opcode == Instruction::ExtractElement) {
+      if (ArgVec.size() != 2)
+        error("ExtractElement instruction must have two arguments.");
+      Constant* Result = ConstantExpr::getExtractElement(ArgVec[0], ArgVec[1]);
       if (Handler) Handler->handleConstantExpression(Opcode, ArgVec, Result);
       return Result;
     } else {                            // All other 2-operand expressions
