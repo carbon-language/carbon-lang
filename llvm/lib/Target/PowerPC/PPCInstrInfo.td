@@ -224,7 +224,6 @@ let usesCustomDAGSchedInserter = 1 in {  // Expanded by the scheduler.
 
 
 let isTerminator = 1, noResults = 1 in {
-  // FIXME: temporary workaround for return without an incoming flag.
   let isReturn = 1 in
     def BLR : XLForm_2_ext<19, 16, 20, 0, 0, (ops), "blr", BrB, [(retflag)]>;
   def BCTR : XLForm_2_ext<19, 528, 20, 0, 0, (ops), "bctr", BrB, []>;
