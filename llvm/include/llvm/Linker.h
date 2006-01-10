@@ -158,7 +158,8 @@ class Linker {
     /// @see getLastError
     /// @throws nothing
     bool LinkInItems (
-      const ItemList& Items // Set of libraries/files to link in
+      const ItemList& Items, ///< Set of libraries/files to link in
+      ItemList& NativeItems  ///< Output list of native files/libs
     );
 
     /// This function links the bytecode \p Files into the composite module.
@@ -210,7 +211,8 @@ class Linker {
     /// @returns true if an error occurs, false otherwise
     /// @brief Link one library into the module
     bool LinkInLibrary (
-      const std::string& Library ///< The library to link in
+      const std::string& Library, ///< The library to link in
+      bool& is_file               ///< Indicates if lib is really a bc file
     );
 
     /// This function links one bytecode archive, \p Filename, into the module.

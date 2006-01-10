@@ -434,10 +434,11 @@ int main(int argc, char **argv, char **envp) {
     } else {
       // Build a list of the items from our command line
       Linker::ItemList Items;
+      Linker::ItemList NativeItems;
       BuildLinkItems(Items, InputFilenames, Libraries);
 
       // Link all the items together
-      if (TheLinker.LinkInItems(Items) )
+      if (TheLinker.LinkInItems(Items,NativeItems) )
         return 1;
     }
 

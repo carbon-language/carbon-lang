@@ -17,17 +17,28 @@
 
 using namespace llvm;
 
-// LinkItems - preserve link order for an arbitrary set of linkage items.
+// LinkItems - This function is the main entry point into linking. It takes a
+// list of LinkItem which indicates the order the files should be linked and
+// how each file should be treated (plain file or with library search). The
+// function only links bytecode and produces a result list of items that are
+// native objects. 
 bool
-Linker::LinkInItems(const ItemList& Items) {
+Linker::LinkInItems(const ItemList& Items, ItemList& NativeItems) {
+  // Clear the NativeItems just in case
+  NativeItems.clear();
+
   // For each linkage item ...
   for (ItemList::const_iterator I = Items.begin(), E = Items.end();
        I != E; ++I) {
     if (I->second) {
       // Link in the library suggested.
-      if (LinkInLibrary(I->first))
+      bool is_file = true;
+      if (LinkInLibrary(I->first,is_file))
         return true;
+      if (!is_file)
+        NativeItems.push_back(*I);
     } else {
+      // Link in the file suggested
       if (LinkInFile(sys::Path(I->first)))
         return true;
     }
@@ -38,9 +49,10 @@ Linker::LinkInItems(const ItemList& Items) {
   // that module should also be aggregated with duplicates eliminated. This is
   // now the time to process the dependent libraries to resolve any remaining
   // symbols.
+  bool is_bytecode;
   for (Module::lib_iterator I = Composite->lib_begin(),
          E = Composite->lib_end(); I != E; ++I)
-    if(LinkInLibrary(*I))
+    if(LinkInLibrary(*I, is_bytecode))
       return true;
 
   return false;
@@ -49,25 +61,30 @@ Linker::LinkInItems(const ItemList& Items) {
 
 /// LinkInLibrary - links one library into the HeadModule.
 ///
-bool Linker::LinkInLibrary(const std::string& Lib) {
+bool Linker::LinkInLibrary(const std::string& Lib, bool& is_file) {
+  is_file = false;
   // Determine where this library lives.
   sys::Path Pathname = FindLib(Lib);
   if (Pathname.isEmpty())
     return warning("Cannot find library '" + Lib + "'");
 
   // If its an archive, try to link it in
-  if (Pathname.isArchive()) {
-    if (LinkInArchive(Pathname))
-      return error("Cannot link archive '" + Pathname.toString() + "'");
-  } else if (Pathname.isBytecodeFile()) {
-    // LLVM ".so" file.
-    if (LinkInFile(Pathname))
-      return error("Cannot link file '" + Pathname.toString() + "'");
-
-  } else if (Pathname.isDynamicLibrary()) {
-    return warning("Library '" + Lib + "' is a native dynamic library.");
-  } else {
-    return warning("Supposed library '" + Lib + "' isn't a library.");
+  std::string Magic;
+  Pathname.getMagicNumber(Magic, 64);
+  switch (sys::IdentifyFileType(Magic.c_str(), 64)) {
+    case sys::BytecodeFileType:
+    case sys::CompressedBytecodeFileType:
+      // LLVM ".so" file.
+      if (LinkInFile(Pathname))
+        return error("Cannot link file '" + Pathname.toString() + "'");
+      is_file = true;
+      break;
+    case sys::ArchiveFileType:
+      if (LinkInArchive(Pathname))
+        return error("Cannot link archive '" + Pathname.toString() + "'");
+      break;
+    default:
+      return warning("Supposed library '" + Lib + "' isn't a library.");
   }
   return false;
 }
@@ -85,8 +102,9 @@ bool Linker::LinkInLibrary(const std::string& Lib) {
 bool Linker::LinkInLibraries(const std::vector<std::string> &Libraries) {
 
   // Process the set of libraries we've been provided.
+  bool is_bytecode;
   for (unsigned i = 0; i < Libraries.size(); ++i)
-    if (LinkInLibrary(Libraries[i]))
+    if (LinkInLibrary(Libraries[i], is_bytecode))
       return true;
 
   // At this point we have processed all the libraries provided to us. Since
@@ -97,7 +115,7 @@ bool Linker::LinkInLibraries(const std::vector<std::string> &Libraries) {
   const Module::LibraryListType& DepLibs = Composite->getLibraries();
   for (Module::LibraryListType::const_iterator I = DepLibs.begin(),
          E = DepLibs.end(); I != E; ++I)
-    if (LinkInLibrary(*I))
+    if (LinkInLibrary(*I, is_bytecode))
       return true;
 
   return false;

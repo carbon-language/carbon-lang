@@ -243,11 +243,23 @@ int main(int argc, char **argv, char **envp ) {
     } else {
       // Build a list of the items from our command line
       Linker::ItemList Items;
+      Linker::ItemList NativeItems;
       BuildLinkItems(Items, InputFilenames, Libraries);
 
       // Link all the items together
-      if (TheLinker.LinkInItems(Items))
+      if (TheLinker.LinkInItems(Items,NativeItems))
         return 1; // Error already printed
+
+      // Revise the Libraries based on the remaining (native) libraries that
+      // were not linked in to the bytecode. This ensures that we don't attempt
+      // to pass a bytecode library to the native linker
+      Libraries.clear(); // we've consumed the libraries except for native
+      if ((Native || NativeCBE) && !NativeItems.empty()) {
+        for (Linker::ItemList::const_iterator I = NativeItems.begin(), 
+             E = NativeItems.end(); I != E; ++I) {
+          Libraries.push_back(I->first);
+        }
+      }
     }
 
     // We're done with the Linker, so tell it to release its module
