@@ -388,6 +388,7 @@ public:
   void visitUnreachable(UnreachableInst &I) { /* noop */ }
 
   // These all get lowered before this pass.
+  void visitExtractElement(ExtractElementInst &I) { assert(0 && "TODO"); }
   void visitSwitch(SwitchInst &I) { assert(0 && "TODO"); }
   void visitInvoke(InvokeInst &I) { assert(0 && "TODO"); }
   void visitUnwind(UnwindInst &I) { assert(0 && "TODO"); }
