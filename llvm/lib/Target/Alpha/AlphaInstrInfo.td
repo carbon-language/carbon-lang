@@ -828,7 +828,7 @@ def : Pat<(i64 immSExt16int:$imm),
           (ZAPNOTi (LDA (SExt16 immSExt16int:$imm), R31), 15)>;
 def : Pat<(i64 immConst2PartInt:$imm),
           (ZAPNOTi (LDA (LL16 (SExt16 immConst2PartInt:$imm)), 
-                        (LDAH (LH16 (SExt16 immConst2PartInt:$imm)), R31)), 15)>;
+                        (LDAH (LH16 (SExt32 immConst2PartInt:$imm)), R31)), 15)>;
 
 
 //TODO: I want to just define these like this!
