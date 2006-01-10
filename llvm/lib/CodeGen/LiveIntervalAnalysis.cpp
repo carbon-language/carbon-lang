@@ -585,7 +585,8 @@ void LiveIntervals::handleRegisterDef(MachineBasicBlock *MBB,
     handleVirtualRegisterDef(MBB, MI, getOrCreateInterval(reg));
   else if (allocatableRegs_[reg]) {
     unsigned SrcReg = 0, DestReg = 0;
-    bool IsMove = tii_->isMoveInstr(*MI, SrcReg, DestReg);
+    if (!tii_->isMoveInstr(*MI, SrcReg, DestReg))
+      SrcReg = DestReg = 0;
 
     handlePhysicalRegisterDef(MBB, MI, getOrCreateInterval(reg),
                               SrcReg, DestReg);
