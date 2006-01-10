@@ -724,6 +724,16 @@ Constant *llvm::ConstantFoldSelectInstruction(const Constant *Cond,
   return 0;
 }
 
+Constant *llvm::ConstantFoldExtractElementInstruction(const Constant *Val,
+                                                      const Constant *Idx) {
+  if (const ConstantPacked *CVal = dyn_cast<ConstantPacked>(Val)) {
+    if (const ConstantUInt *CIdx = dyn_cast<ConstantUInt>(Idx)) {
+      return const_cast<Constant*>(CVal->getOperand(CIdx->getValue()));
+    }
+  } 
+  return 0;
+}
+
 /// isZeroSizedType - This type is zero sized if its an array or structure of
 /// zero sized types.  The only leaf zero sized type is an empty structure.
 static bool isMaybeZeroSizedType(const Type *Ty) {

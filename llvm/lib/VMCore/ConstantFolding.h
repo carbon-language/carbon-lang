@@ -31,6 +31,8 @@ namespace llvm {
   Constant *ConstantFoldSelectInstruction(const Constant *Cond,
                                           const Constant *V1,
                                           const Constant *V2);
+  Constant *ConstantFoldExtractElementInstruction(const Constant *Val,
+                                                  const Constant *Idx);
   Constant *ConstantFoldBinaryInstruction(unsigned Opcode, const Constant *V1,
                                           const Constant *V2);
   Constant *ConstantFoldGetElementPtr(const Constant *C,

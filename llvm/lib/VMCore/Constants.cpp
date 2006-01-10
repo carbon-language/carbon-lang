@@ -1403,6 +1403,8 @@ Constant *ConstantExpr::getGetElementPtr(Constant *C,
 
 Constant *ConstantExpr::getExtractElementTy(const Type *ReqTy, Constant *Val,
                                             Constant *Idx) {
+  if (Constant *FC = ConstantFoldExtractElementInstruction(Val, Idx))
+    return FC;          // Fold a few common cases...
   // Look up the constant in the table first to ensure uniqueness
   std::vector<Constant*> ArgVec(1, Val);
   ArgVec.push_back(Idx);
