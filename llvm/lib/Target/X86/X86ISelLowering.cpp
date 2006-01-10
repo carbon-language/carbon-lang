@@ -1192,6 +1192,26 @@ static unsigned CCToX86CondCode(SDOperand CC, bool isFP) {
   return X86CC;
 }
 
+/// SupportedByFPCMOV - is there a floating point cmov for the specific
+/// X86 condition code.
+/// Current x86 isa includes the following FP cmov instructions:
+/// fcmovb, fcomvbe, fcomve, fcmovu, fcmovae, fcmova, fcmovne, fcmovnu.
+static bool SupportedByFPCMOV(unsigned X86CC) {
+  switch (X86CC) {
+  default:
+    return false;
+  case X86ISD::COND_B:
+  case X86ISD::COND_BE:
+  case X86ISD::COND_E:
+  case X86ISD::COND_P:
+  case X86ISD::COND_A:
+  case X86ISD::COND_AE:
+  case X86ISD::COND_NE:
+  case X86ISD::COND_NP:
+    return true;
+  }
+}
+
 /// LowerOperation - Provide custom lowering hooks for some operations.
 ///
 SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
@@ -1444,21 +1464,32 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     }
   }
   case ISD::SELECT: {
-    SDOperand Cond  = Op.getOperand(0);
-    SDOperand CC;
-    if (Cond.getOpcode() == X86ISD::SETCC) {
-      CC = Cond.getOperand(0);
-      Cond = Cond.getOperand(1);
-    } else if (Cond.getOpcode() == ISD::SETCC) {
-      CC = Cond.getOperand(2);
-      bool isFP = MVT::isFloatingPoint(Cond.getOperand(1).getValueType());
+    MVT::ValueType VT = Op.getValueType();
+    bool isFP      = MVT::isFloatingPoint(VT);
+    bool isFPStack = isFP && (X86Vector < SSE2);
+    bool isFPSSE   = isFP && (X86Vector >= SSE2);
+    bool isValid   = false;
+    SDOperand Op0 = Op.getOperand(0);
+    SDOperand Cond, CC;
+    if (Op0.getOpcode() == X86ISD::SETCC) {
+      CC   = Op0.getOperand(0);
+      Cond = Op0.getOperand(1);
+      isValid =
+        !(isFPStack &&
+          !SupportedByFPCMOV(cast<ConstantSDNode>(CC)->getSignExtended()));
+    } else if (Op0.getOpcode() == ISD::SETCC) {
+      CC = Op0.getOperand(2);
+      bool isFP = MVT::isFloatingPoint(Op0.getOperand(1).getValueType());
       unsigned X86CC = CCToX86CondCode(CC, isFP);
       CC = DAG.getConstant(X86CC, MVT::i8);
       Cond = DAG.getNode(X86ISD::CMP, MVT::Flag,
-                         Cond.getOperand(0), Cond.getOperand(1));
-    } else {
+                         Op0.getOperand(0), Op0.getOperand(1));
+      isValid = true;
+    }
+
+    if (!isValid) {
       CC = DAG.getConstant(X86ISD::COND_E, MVT::i8);
-      Cond = DAG.getNode(X86ISD::TEST, MVT::Flag, Cond, Cond);
+      Cond = DAG.getNode(X86ISD::TEST, MVT::Flag, Op0, Op0);
     }
 
     std::vector<MVT::ValueType> Tys;

@@ -377,6 +377,13 @@ def IMPLICIT_DEF_R16  : I<0, Pseudo, (ops R16:$dst),
 def IMPLICIT_DEF_R32  : I<0, Pseudo, (ops R32:$dst),
                          "#IMPLICIT_DEF $dst",
                          [(set R32:$dst, (undef))]>;
+def IMPLICIT_DEF_FR32 : I<0, Pseudo, (ops FR32:$dst),
+                         "#IMPLICIT_DEF $dst",
+                         [(set FR32:$dst, (undef))]>, Requires<[HasSSE2]>;
+def IMPLICIT_DEF_FR64 : I<0, Pseudo, (ops FR64:$dst),
+                         "#IMPLICIT_DEF $dst",
+                         [(set FR64:$dst, (undef))]>, Requires<[HasSSE2]>;
+
 
 let isTerminator = 1 in
   let Defs = [FP0, FP1, FP2, FP3, FP4, FP5, FP6] in
@@ -2687,14 +2694,30 @@ def FTST  : FPI<0xE4, RawFrm, (ops), "ftst">, D9;
 
 // Floating point cmovs.
 let isTwoAddress = 1 in {
-  def FpCMOVB  : FpI<(ops RST:$dst, RFP:$src1, RFP:$src2), CondMovFP, []>;
-  def FpCMOVBE : FpI<(ops RST:$dst, RFP:$src1, RFP:$src2), CondMovFP, []>;
-  def FpCMOVE  : FpI<(ops RST:$dst, RFP:$src1, RFP:$src2), CondMovFP, []>;
-  def FpCMOVP  : FpI<(ops RST:$dst, RFP:$src1, RFP:$src2), CondMovFP, []>;
-  def FpCMOVAE : FpI<(ops RST:$dst, RFP:$src1, RFP:$src2), CondMovFP, []>;
-  def FpCMOVA  : FpI<(ops RST:$dst, RFP:$src1, RFP:$src2), CondMovFP, []>;
-  def FpCMOVNE : FpI<(ops RST:$dst, RFP:$src1, RFP:$src2), CondMovFP, []>;
-  def FpCMOVNP : FpI<(ops RST:$dst, RFP:$src1, RFP:$src2), CondMovFP, []>;
+  def FpCMOVB  : FpI<(ops RFP:$dst, RFP:$src1, RFP:$src2), CondMovFP,
+                     [(set RFP:$dst, (X86cmov RFP:$src1, RFP:$src2,
+                                      X86_COND_B, STATUS))]>;
+  def FpCMOVBE : FpI<(ops RFP:$dst, RFP:$src1, RFP:$src2), CondMovFP,
+                     [(set RFP:$dst, (X86cmov RFP:$src1, RFP:$src2,
+                                      X86_COND_BE, STATUS))]>;
+  def FpCMOVE  : FpI<(ops RFP:$dst, RFP:$src1, RFP:$src2), CondMovFP,
+                     [(set RFP:$dst, (X86cmov RFP:$src1, RFP:$src2,
+                                      X86_COND_E, STATUS))]>;
+  def FpCMOVP  : FpI<(ops RFP:$dst, RFP:$src1, RFP:$src2), CondMovFP,
+                     [(set RFP:$dst, (X86cmov RFP:$src1, RFP:$src2,
+                                      X86_COND_P, STATUS))]>;
+  def FpCMOVAE : FpI<(ops RFP:$dst, RFP:$src1, RFP:$src2), CondMovFP,
+                     [(set RFP:$dst, (X86cmov RFP:$src1, RFP:$src2,
+                                      X86_COND_AE, STATUS))]>;
+  def FpCMOVA  : FpI<(ops RFP:$dst, RFP:$src1, RFP:$src2), CondMovFP,
+                     [(set RFP:$dst, (X86cmov RFP:$src1, RFP:$src2,
+                                      X86_COND_A, STATUS))]>;
+  def FpCMOVNE : FpI<(ops RFP:$dst, RFP:$src1, RFP:$src2), CondMovFP,
+                     [(set RFP:$dst, (X86cmov RFP:$src1, RFP:$src2,
+                                      X86_COND_NE, STATUS))]>;
+  def FpCMOVNP : FpI<(ops RFP:$dst, RFP:$src1, RFP:$src2), CondMovFP,
+                     [(set RFP:$dst, (X86cmov RFP:$src1, RFP:$src2,
+                                      X86_COND_NP, STATUS))]>;
 }
 
 def FCMOVB  : FPI<0xC0, AddRegFrm, (ops RST:$op),
@@ -2866,8 +2889,6 @@ def : Pat<(X86fst RFP:$src, addr:$op, f64), (FpST64m addr:$op, RFP:$src)>;
 def : Pat<(f64 fp64immneg0), (FpCHS (FpLD0))>, Requires<[FPStack]>;
 def : Pat<(f64 fp64immneg1), (FpCHS (FpLD1))>, Requires<[FPStack]>;
 
-// FR64 undef
-def : Pat<(f64 (undef)), (FLD0SD)>, Requires<[HasSSE2]>;
 // RFP undef
 def : Pat<(f64 (undef)), (FpLD0)>,  Requires<[FPStack]>;
 

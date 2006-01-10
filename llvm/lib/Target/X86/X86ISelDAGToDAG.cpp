@@ -18,6 +18,7 @@
 #include "llvm/GlobalValue.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/Debug.h"
@@ -549,6 +550,63 @@ SDOperand X86DAGToDAGISel::Select(SDOperand N) {
       else
         return CodeGenMap[N] = CurDAG->getTargetNode(Opc, VT, Result);
       break;
+    }
+
+    case X86ISD::FP_TO_INT16_IN_MEM:
+    case X86ISD::FP_TO_INT32_IN_MEM:
+    case X86ISD::FP_TO_INT64_IN_MEM: {
+      assert(N.getOperand(1).getValueType() == MVT::f64);
+
+      // Change the floating point control register to use "round towards zero"
+      // mode when truncating to an integer value.
+      MachineFunction &MF = CurDAG->getMachineFunction();
+      int CWFI = MF.getFrameInfo()->CreateStackObject(2, 2);
+      SDOperand CWSlot = CurDAG->getFrameIndex(CWFI, MVT::i32);
+      SDOperand Base, Scale, Index, Disp;
+      (void)SelectAddr(CWSlot, Base, Scale, Index, Disp);
+      SDOperand Chain = N.getOperand(0);
+
+      // Save the control word.
+      Chain = CurDAG->getTargetNode(X86::FNSTCW16m, MVT::Other,
+                                    Base, Scale, Index, Disp, Chain);
+
+      // Load the old value of the high byte of the control word.
+      SDOperand OldCW =
+        CurDAG->getTargetNode(X86::MOV16rm, MVT::i16, MVT::Other,
+                              Base, Scale, Index, Disp, Chain);
+      Chain = OldCW.getValue(1);
+
+      // Set the high part to be round to zero...
+      Chain = CurDAG->getTargetNode(X86::MOV16mi, MVT::Other,
+                                    Base, Scale, Index, Disp, 
+                                    CurDAG->getConstant(0xC7F, MVT::i16),
+                                    Chain);
+
+      // Reload the modified control word now...
+      Chain = CurDAG->getTargetNode(X86::FLDCW16m, MVT::Other,
+                                    Base, Scale, Index, Disp, Chain);
+
+      // Restore the memory image of control word to original value
+      Chain = CurDAG->getTargetNode(X86::MOV16mr, MVT::Other, 
+                                    Base, Scale, Index, Disp, OldCW, Chain);
+
+      switch (Opcode) {
+      case X86ISD::FP_TO_INT16_IN_MEM: Opc = X86::FpIST16m; break;
+      case X86ISD::FP_TO_INT32_IN_MEM: Opc = X86::FpIST32m; break;
+      case X86ISD::FP_TO_INT64_IN_MEM: Opc = X86::FpIST64m; break;
+      }
+
+      SDOperand N1 = Select(N.getOperand(1));
+      SDOperand Base2, Scale2, Index2, Disp2;
+      (void)SelectAddr(N.getOperand(2), Base2, Scale2, Index2, Disp2);
+      Chain = CurDAG->getTargetNode(Opc, MVT::Other,
+                                    Base2, Scale2, Index2, Disp2, N1, Chain);
+
+      // Reload the modified control word now...
+      CodeGenMap[N] =
+        Chain = CurDAG->getTargetNode(X86::FLDCW16m, MVT::Other,
+                                      Base, Scale, Index, Disp, Chain);
+      return Chain;
     }
   }
 
