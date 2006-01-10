@@ -461,7 +461,7 @@ IA64TargetLowering::LowerCallTo(SDOperand Chain,
       InFlag = zeroReg.getValue(2);
       Chain = zeroReg.getValue(1); 	
       
-      RetVal = DAG.getNode(ISD::SETNE, MVT::i1, boolInR8, zeroReg);
+      RetVal = DAG.getSetCC(MVT::i1, boolInR8, zeroReg, ISD::SETNE);
       break;
     }
     case MVT::i8:
