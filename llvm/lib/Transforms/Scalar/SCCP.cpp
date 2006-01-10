@@ -322,6 +322,7 @@ private:
   void visitSelectInst(SelectInst &I);
   void visitBinaryOperator(Instruction &I);
   void visitShiftInst(ShiftInst &I) { visitBinaryOperator(I); }
+  void visitExtractElementInst(ExtractElementInst &I);
 
   // Instructions that cannot be folded away...
   void visitStoreInst     (Instruction &I);
@@ -726,6 +727,17 @@ void SCCPSolver::visitBinaryOperator(Instruction &I) {
     markConstant(IV, &I, ConstantExpr::get(I.getOpcode(), V1State.getConstant(),
                                            V2State.getConstant()));
   }
+}
+
+void SCCPSolver::visitExtractElementInst(ExtractElementInst &I) {
+  LatticeVal &ValState = getValueState(I.getOperand(0));
+  LatticeVal &IdxState = getValueState(I.getOperand(1));
+
+  if (ValState.isOverdefined() || IdxState.isOverdefined())
+    markOverdefined(&I);
+  else if(ValState.isConstant() && IdxState.isConstant())
+    markConstant(&I, ConstantExpr::getExtractElement(ValState.getConstant(),
+                                                     IdxState.getConstant()));
 }
 
 // Handle getelementptr instructions... if all operands are constants then we

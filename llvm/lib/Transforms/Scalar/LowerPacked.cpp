@@ -59,6 +59,10 @@ public:
    /// @param SELI the select operator to convert
    void visitSelectInst(SelectInst& SELI);
 
+   /// @brief Lowers packed extractelement instructions.
+   /// @param EI the extractelement operator to convert
+   void visitExtractElementInst(ExtractElementInst& EI);
+
    /// This function asserts if the instruction is a PackedType but
    /// is handled by another function.
    ///
@@ -330,6 +334,33 @@ void LowerPacked::visitSelectInst(SelectInst& SELI)
       Changed = true;
       instrsToRemove.push_back(&SELI);
    }
+}
+
+void LowerPacked::visitExtractElementInst(ExtractElementInst& EI)
+{
+  std::vector<Value*>& op0Vals = getValues(EI.getOperand(0));
+  const PackedType *PTy = cast<PackedType>(EI.getOperand(0)->getType());
+  Value *op1 = EI.getOperand(1);
+
+  if (ConstantUInt *C = dyn_cast<ConstantUInt>(op1)) {
+    EI.replaceAllUsesWith(op0Vals[C->getValue()]);
+  } else {
+    AllocaInst *alloca = new AllocaInst(PTy->getElementType(),
+					ConstantUInt::get(Type::UIntTy, PTy->getNumElements()),
+					EI.getName() + ".alloca", &(EI.getParent()->getParent()->getEntryBlock().front()));
+    for (unsigned i = 0; i < PTy->getNumElements(); ++i) {
+      GetElementPtrInst *GEP = new GetElementPtrInst(alloca, ConstantUInt::get(Type::UIntTy, i),
+						     "store.ge", &EI);
+      new StoreInst(op0Vals[i], GEP, &EI);
+    }
+    GetElementPtrInst *GEP = new GetElementPtrInst(alloca, op1,
+						   EI.getName() + ".ge", &EI);
+    LoadInst *load = new LoadInst(GEP, EI.getName() + ".load", &EI);
+    EI.replaceAllUsesWith(load);
+  }
+
+  Changed = true;
+  instrsToRemove.push_back(&EI);
 }
 
 bool LowerPacked::runOnFunction(Function& F)
