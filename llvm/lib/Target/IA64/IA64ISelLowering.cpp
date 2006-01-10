@@ -300,7 +300,7 @@ IA64TargetLowering::LowerCallTo(SDOperand Chain,
     {
       SDOperand Val = Args[i].first;
       MVT::ValueType ObjectVT = Val.getValueType();
-      SDOperand ValToStore(0, 0), ValToConvert;
+      SDOperand ValToStore(0, 0), ValToConvert(0, 0);
       unsigned ObjSize=8;
       switch (ObjectVT) {
       default: assert(0 && "unexpected argument type!");
