@@ -134,7 +134,7 @@ static inline sys::Path IsLibrary(const std::string& Name,
     if (FullPath.isArchive())
       return FullPath;
 
-    // Try the libX.so form
+    // Try the libX.so (or .dylib) form
     FullPath.eraseSuffix();
     FullPath.appendSuffix(&(LTDL_SHLIB_EXT[1]));
     if (FullPath.isDynamicLibrary())  // Native shared library?
