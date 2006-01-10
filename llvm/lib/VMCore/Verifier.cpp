@@ -178,6 +178,7 @@ namespace {  // Anonymous namespace for class
     void visitPHINode(PHINode &PN);
     void visitBinaryOperator(BinaryOperator &B);
     void visitShiftInst(ShiftInst &SI);
+    void visitExtractElementInst(ExtractElementInst &EI);
     void visitVAArgInst(VAArgInst &VAA) { visitInstruction(VAA); }
     void visitCallInst(CallInst &CI);
     void visitGetElementPtrInst(GetElementPtrInst &GEP);
@@ -530,6 +531,18 @@ void Verifier::visitShiftInst(ShiftInst &SI) {
   Assert1(SI.getOperand(1)->getType() == Type::UByteTy,
           "Second operand to shift must be ubyte type!", &SI);
   visitInstruction(SI);
+}
+
+void Verifier::visitExtractElementInst(ExtractElementInst &EI) {
+  Assert1(isa<PackedType>(EI.getOperand(0)->getType()),
+          "First operand to extractelement must be packed type!", &EI);
+  Assert1(EI.getOperand(1)->getType() == Type::UIntTy,
+          "Second operand to extractelement must be uint type!", &EI);
+  Assert1(EI.getType() == 
+	  cast<PackedType>(EI.getOperand(0)->getType())->getElementType(),
+          "Extractelement return type must be same as "
+	  "first operand element type!", &EI);
+  visitInstruction(EI);
 }
 
 void Verifier::visitGetElementPtrInst(GetElementPtrInst &GEP) {

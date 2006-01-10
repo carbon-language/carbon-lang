@@ -796,6 +796,26 @@ const Type* GetElementPtrInst::getIndexedType(const Type *Ptr, Value *Idx) {
 }
 
 //===----------------------------------------------------------------------===//
+//                           ExtractElementInst Implementation
+//===----------------------------------------------------------------------===//
+
+ExtractElementInst::ExtractElementInst(Value *Val, Value *Index,
+                         const std::string &Name, Instruction *InsertBef)
+  : Instruction(cast<PackedType>(Val->getType())->getElementType(),
+                ExtractElement, Ops, 2, Name, InsertBef) {
+  Ops[0].init(Val, this);
+  Ops[1].init(Index, this);
+}
+
+ExtractElementInst::ExtractElementInst(Value *Val, Value *Index,
+                         const std::string &Name, BasicBlock *InsertAE)
+  : Instruction(cast<PackedType>(Val->getType())->getElementType(),
+                ExtractElement, Ops, 2, Name, InsertAE) {
+  Ops[0].init(Val, this);
+  Ops[1].init(Index, this);
+}
+
+//===----------------------------------------------------------------------===//
 //                             BinaryOperator Class
 //===----------------------------------------------------------------------===//
 
@@ -1155,6 +1175,7 @@ CallInst   *CallInst::clone()   const { return new CallInst(*this); }
 ShiftInst  *ShiftInst::clone()  const { return new ShiftInst(*this); }
 SelectInst *SelectInst::clone() const { return new SelectInst(*this); }
 VAArgInst  *VAArgInst::clone()  const { return new VAArgInst(*this); }
+ExtractElementInst *ExtractElementInst::clone() const {return new ExtractElementInst(*this); }
 PHINode    *PHINode::clone()    const { return new PHINode(*this); }
 ReturnInst *ReturnInst::clone() const { return new ReturnInst(*this); }
 BranchInst *BranchInst::clone() const { return new BranchInst(*this); }

@@ -120,6 +120,7 @@ const char *Instruction::getOpcodeName(unsigned OpCode) {
   case Shl:     return "shl";
   case Shr:     return "shr";
   case VAArg:   return "va_arg";
+  case ExtractElement: return "extractelement";
 
   default: return "<Invalid operator> ";
   }

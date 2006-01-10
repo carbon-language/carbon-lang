@@ -347,6 +347,19 @@ public:
   }
 };
 
+/// ExtractElementConstantExpr - This class is private to Constants.cpp, and is used
+/// behind the scenes to implement extractelement constant exprs.
+class ExtractElementConstantExpr : public ConstantExpr {
+  Use Ops[2];
+public:
+  ExtractElementConstantExpr(Constant *C1, Constant *C2)
+    : ConstantExpr(cast<PackedType>(C1->getType())->getElementType(), 
+                   Instruction::ExtractElement, Ops, 2) {
+    Ops[0].init(C1, this);
+    Ops[1].init(C2, this);
+  }
+};
+
 /// GetElementPtrConstantExpr - This class is private to Constants.cpp, and is
 /// used behind the scenes to implement getelementpr constant exprs.
 struct GetElementPtrConstantExpr : public ConstantExpr {
@@ -1141,6 +1154,8 @@ namespace llvm {
         return new BinaryConstantExpr(V.first, V.second[0], V.second[1]);
       if (V.first == Instruction::Select)
         return new SelectConstantExpr(V.second[0], V.second[1], V.second[2]);
+      if (V.first == Instruction::ExtractElement)
+        return new ExtractElementConstantExpr(V.second[0], V.second[1]);
 
       assert(V.first == Instruction::GetElementPtr && "Invalid ConstantExpr!");
 
@@ -1386,6 +1401,23 @@ Constant *ConstantExpr::getGetElementPtr(Constant *C,
   return getGetElementPtrTy(PointerType::get(Ty), C, IdxList);
 }
 
+Constant *ConstantExpr::getExtractElementTy(const Type *ReqTy, Constant *Val,
+                                            Constant *Idx) {
+  // Look up the constant in the table first to ensure uniqueness
+  std::vector<Constant*> ArgVec(1, Val);
+  ArgVec.push_back(Idx);
+  const ExprMapKeyType &Key = std::make_pair(Instruction::ExtractElement,ArgVec);
+  return ExprConstants.getOrCreate(ReqTy, Key);
+}
+
+Constant *ConstantExpr::getExtractElement(Constant *Val, Constant *Idx) {
+  assert(isa<PackedType>(Val->getType()) &&
+         "Tried to create extractelement operation on non-packed type!");
+  assert(Idx->getType() == Type::UIntTy &&
+         "Index must be uint type!");
+  return getExtractElementTy(cast<PackedType>(Val->getType())->getElementType(),
+                             Val, Idx);
+}
 
 // destroyConstant - Remove the constant from the constant table...
 //
@@ -1581,6 +1613,12 @@ void ConstantExpr::replaceUsesOfWithOnConstant(Value *From, Value *ToV,
     if (C2 == From) C2 = To;
     if (C3 == From) C3 = To;
     Replacement = ConstantExpr::getSelect(C1, C2, C3);
+  } else if (getOpcode() == Instruction::ExtractElement) {
+    Constant *C1 = getOperand(0);
+    Constant *C2 = getOperand(1);
+    if (C1 == From) C1 = To;
+    if (C2 == From) C2 = To;
+    Replacement = ConstantExpr::getExtractElement(C1, C2);
   } else if (getNumOperands() == 2) {
     Constant *C1 = getOperand(0);
     Constant *C2 = getOperand(1);
