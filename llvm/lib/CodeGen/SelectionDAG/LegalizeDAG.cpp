@@ -1975,13 +1975,14 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     case TargetLowering::Custom: {
       SDOperand Tmp = TLI.LowerOperation(Result, DAG);
       if (Tmp.Val) {
-        SDOperand Tmp2, RetVal;
+        SDOperand Tmp2, RetVal(0,0);
         for (unsigned i = 0, e = Node->getNumValues(); i != e; ++i) {
           Tmp2 = LegalizeOp(Tmp.getValue(i));
           AddLegalizedOperand(SDOperand(Node, i), Tmp2);
           if (i == Op.ResNo)
             RetVal = Tmp;
         }
+        assert(RetVal.Val && "Illegal result number");
         return RetVal;
       }
       // FALLTHROUGH if the target thinks it is legal.
