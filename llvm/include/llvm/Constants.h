@@ -521,6 +521,8 @@ protected:
                                Constant *C1, Constant *C2, Constant *C3);
   static Constant *getGetElementPtrTy(const Type *Ty, Constant *C,
                                       const std::vector<Value*> &IdxList);
+  static Constant *getExtractElementTy(const Type *Ty, Constant *Val,
+                                       Constant *Idx);
 
 public:
   // Static methods to construct a ConstantExpr of different kinds.  Note that
@@ -587,6 +589,10 @@ public:
                                     const std::vector<Constant*> &IdxList);
   static Constant *getGetElementPtr(Constant *C,
                                     const std::vector<Value*> &IdxList);
+
+  /// Extractelement form.
+  ///
+  static Constant *getExtractElement(Constant *Val, Constant *Idx);
 
   /// isNullValue - Return true if this is the value that would be returned by
   /// getNullValue.

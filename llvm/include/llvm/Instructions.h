@@ -718,6 +718,52 @@ public:
 };
 
 //===----------------------------------------------------------------------===//
+//                                ExtractElementInst Class
+//===----------------------------------------------------------------------===//
+
+/// ExtractElementInst - This instruction extracts a single (scalar)
+/// element from a PackedType value
+///
+class ExtractElementInst : public Instruction {
+  Use Ops[2];
+  ExtractElementInst(const ExtractElementInst &EI) : 
+    Instruction(EI.getType(), ExtractElement, Ops, 2) {
+    Ops[0].init(EI.Ops[0], this);
+    Ops[1].init(EI.Ops[1], this);
+  }
+
+public:
+  ExtractElementInst(Value *Val, Value *Index,
+               const std::string &Name = "", Instruction *InsertBefore = 0);
+  ExtractElementInst(Value *Val, Value *Index,
+               const std::string &Name, BasicBlock *InsertAtEnd);
+
+  virtual ExtractElementInst *clone() const;
+
+  virtual bool mayWriteToMemory() const { return false; }
+
+  /// Transparently provide more efficient getOperand methods.
+  Value *getOperand(unsigned i) const {
+    assert(i < 2 && "getOperand() out of range!");
+    return Ops[i];
+  }
+  void setOperand(unsigned i, Value *Val) {
+    assert(i < 2 && "setOperand() out of range!");
+    Ops[i] = Val;
+  }
+  unsigned getNumOperands() const { return 2; }
+
+  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const ExtractElementInst *) { return true; }
+  static inline bool classof(const Instruction *I) {
+    return I->getOpcode() == Instruction::ExtractElement;
+  }
+  static inline bool classof(const Value *V) {
+    return isa<Instruction>(V) && classof(cast<Instruction>(V));
+  }
+};
+
+//===----------------------------------------------------------------------===//
 //                               PHINode Class
 //===----------------------------------------------------------------------===//
 

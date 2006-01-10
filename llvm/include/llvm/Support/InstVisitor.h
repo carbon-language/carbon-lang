@@ -175,6 +175,7 @@ public:
   RetTy visitCallInst(CallInst     &I)              { DELEGATE(Instruction); }
   RetTy visitShiftInst(ShiftInst   &I)              { DELEGATE(Instruction); }
   RetTy visitVAArgInst(VAArgInst   &I)              { DELEGATE(Instruction); }
+  RetTy visitExtractElementInst(ExtractElementInst &I) { DELEGATE(Instruction); }
 
   // Next level propagators... if the user does not overload a specific
   // instruction type, they can overload one of these to get the whole class

@@ -135,7 +135,8 @@ HANDLE_OTHER_INST(34, Select , SelectInst )  // select instruction
 HANDLE_OTHER_INST(35, UserOp1, Instruction)  // May be used internally in a pass
 HANDLE_OTHER_INST(36, UserOp2, Instruction)
 HANDLE_OTHER_INST(37, VAArg  , VAArgInst  )  // vaarg instruction
-  LAST_OTHER_INST(37)
+HANDLE_OTHER_INST(38, ExtractElement, ExtractElementInst)  // extract packed element
+  LAST_OTHER_INST(38)
 
 #undef  FIRST_TERM_INST
 #undef HANDLE_TERM_INST
