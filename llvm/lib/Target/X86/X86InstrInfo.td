@@ -50,6 +50,7 @@ def SDTX86Fld     : SDTypeProfile<1, 2, [SDTCisVT<0, f64>,
                                          SDTCisPtrTy<1>, SDTCisVT<2, OtherVT>]>;
 def SDTX86Fst     : SDTypeProfile<0, 3, [SDTCisFP<0>,
                                          SDTCisPtrTy<1>, SDTCisVT<2, OtherVT>]>;
+def SDTX86Fild64m : SDTypeProfile<1, 1, [SDTCisVT<0, f64>, SDTCisPtrTy<1>]>;
 
 def SDTX86RdTsc   : SDTypeProfile<0, 0, []>;
 
@@ -94,6 +95,8 @@ def X86fpset   : SDNode<"X86ISD::FP_SET_RESULT", SDTX86FpSet,
 def X86fld     : SDNode<"X86ISD::FLD",      SDTX86Fld,
                         [SDNPHasChain]>;
 def X86fst     : SDNode<"X86ISD::FST",      SDTX86Fst,
+                        [SDNPHasChain]>;
+def X86fild64m : SDNode<"X86ISD::FILD64m",  SDTX86Fild64m,
                         [SDNPHasChain]>;
 
 def X86rdtsc   : SDNode<"X86ISD::RDTSC_DAG",SDTX86RdTsc,
@@ -2633,19 +2636,67 @@ def FDIVR32m : FPI<0xD8, MRM7m, (ops f32mem:$src), "fdivr{s} $src">;
 def FDIVR64m : FPI<0xDC, MRM7m, (ops f64mem:$src), "fdivr{l} $src">;
 
 // FIXME: Implement these when we have a dag-dag isel!
-//def FIADD16m  : FPI<0xDE, MRM0m>;    // ST(0) = ST(0) + [mem16int]
-//def FIADD32m  : FPI<0xDA, MRM0m>;    // ST(0) = ST(0) + [mem32int]
-//def FIMUL16m  : FPI<0xDE, MRM1m>;    // ST(0) = ST(0) * [mem16]
-//def FIMUL32m  : FPI<0xDA, MRM1m>;    // ST(0) = ST(0) * [mem32]
-//def FISUB16m  : FPI<0xDE, MRM4m>;    // ST(0) = ST(0) - [mem16int]
-//def FISUB32m  : FPI<0xDA, MRM4m>;    // ST(0) = ST(0) - [mem32int]
-//def FISUBR16m : FPI<0xDE, MRM5m>;    // ST(0) = [mem16int] - ST(0)
-//def FISUBR32m : FPI<0xDA, MRM5m>;    // ST(0) = [mem32int] - ST(0)
-//def FIDIV16m  : FPI<0xDE, MRM6m>;    // ST(0) = ST(0) / [mem16int]
-//def FIDIV32m  : FPI<0xDA, MRM6m>;    // ST(0) = ST(0) / [mem32int]
-//def FIDIVR16m : FPI<0xDE, MRM7m>;    // ST(0) = [mem16int] / ST(0)
-//def FIDIVR32m : FPI<0xDA, MRM7m>;    // ST(0) = [mem32int] / ST(0)
+def FpIADD16m : FpI<(ops RFP:$dst, RFP:$src1, i16mem:$src2), OneArgFPRW,
+                    [(set RFP:$dst, (fadd RFP:$src1,
+                                     (sint_to_fp (loadi16 addr:$src2))))]>;
+                // ST(0) = ST(0) + [mem16int]
+def FpIADD32m : FpI<(ops RFP:$dst, RFP:$src1, i16mem:$src2), OneArgFPRW,
+                    [(set RFP:$dst, (fadd RFP:$src1,
+                                     (sint_to_fp (loadi32 addr:$src2))))]>;
+                // ST(0) = ST(0) + [mem32int]
+def FpIMUL16m : FpI<(ops RFP:$dst, RFP:$src1, i16mem:$src2), OneArgFPRW,
+                    [(set RFP:$dst, (fmul RFP:$src1,
+                                     (sint_to_fp (loadi16 addr:$src2))))]>;
+                // ST(0) = ST(0) * [mem16int]
+def FpIMUL32m : FpI<(ops RFP:$dst, RFP:$src1, i16mem:$src2), OneArgFPRW,
+                    [(set RFP:$dst, (fmul RFP:$src1,
+                                     (sint_to_fp (loadi32 addr:$src2))))]>;
+                // ST(0) = ST(0) * [mem32int]
+def FpISUB16m : FpI<(ops RFP:$dst, RFP:$src1, i16mem:$src2), OneArgFPRW,
+                    [(set RFP:$dst, (fsub RFP:$src1,
+                                     (sint_to_fp (loadi16 addr:$src2))))]>;
+                // ST(0) = ST(0) - [mem16int]
+def FpISUB32m : FpI<(ops RFP:$dst, RFP:$src1, i16mem:$src2), OneArgFPRW,
+                    [(set RFP:$dst, (fsub RFP:$src1,
+                                     (sint_to_fp (loadi32 addr:$src2))))]>;
+                // ST(0) = ST(0) - [mem32int]
+def FpISUBR16m : FpI<(ops RFP:$dst, RFP:$src1, i16mem:$src2), OneArgFPRW,
+                     [(set RFP:$dst, (fsub (sint_to_fp (loadi16 addr:$src2)),
+                                      RFP:$src1))]>;
+                // ST(0) = [mem16int] - ST(0)
+def FpISUBR32m : FpI<(ops RFP:$dst, RFP:$src1, i16mem:$src2), OneArgFPRW,
+                     [(set RFP:$dst, (fsub (sint_to_fp (loadi32 addr:$src2)),
+                                      RFP:$src1))]>;
+                // ST(0) = [mem32int] - ST(0)
+def FpIDIV16m : FpI<(ops RFP:$dst, RFP:$src1, i16mem:$src2), OneArgFPRW,
+                    [(set RFP:$dst, (fdiv RFP:$src1,
+                                     (sint_to_fp (loadi16 addr:$src2))))]>;
+                // ST(0) = ST(0) / [mem16int]
+def FpIDIV32m : FpI<(ops RFP:$dst, RFP:$src1, i16mem:$src2), OneArgFPRW,
+                    [(set RFP:$dst, (fdiv RFP:$src1,
+                                     (sint_to_fp (loadi32 addr:$src2))))]>;
+                // ST(0) = ST(0) / [mem32int]
+def FpIDIVR16m : FpI<(ops RFP:$dst, RFP:$src1, i16mem:$src2), OneArgFPRW,
+                     [(set RFP:$dst, (fdiv (sint_to_fp (loadi16 addr:$src2)),
+                                      RFP:$src1))]>;
+                // ST(0) = [mem16int] / ST(0)
+def FpIDIVR32m : FpI<(ops RFP:$dst, RFP:$src1, i16mem:$src2), OneArgFPRW,
+                     [(set RFP:$dst, (fdiv (sint_to_fp (loadi32 addr:$src2)),
+                                      RFP:$src1))]>;
+                // ST(0) = [mem32int] / ST(0)
 
+def FIADD16m  : FPI<0xDE, MRM0m, (ops i16mem:$src), "fiadd{s} $src">;
+def FIADD32m  : FPI<0xDA, MRM0m, (ops i32mem:$src), "fiadd{l} $src">;
+def FIMUL16m  : FPI<0xDE, MRM1m, (ops i16mem:$src), "fimul{s} $src">;
+def FIMUL32m  : FPI<0xDA, MRM1m, (ops i32mem:$src), "fimul{l} $src">;
+def FISUB16m  : FPI<0xDE, MRM4m, (ops i16mem:$src), "fisub{s} $src">;
+def FISUB32m  : FPI<0xDA, MRM4m, (ops i32mem:$src), "fisub{l} $src">;
+def FISUBR16m : FPI<0xDE, MRM5m, (ops i16mem:$src), "fisubr{s} $src">;
+def FISUBR32m : FPI<0xDA, MRM5m, (ops i32mem:$src), "fisubr{l} $src">;
+def FIDIV16m  : FPI<0xDE, MRM6m, (ops i16mem:$src), "fidiv{s} $src">;
+def FIDIV32m  : FPI<0xDA, MRM6m, (ops i32mem:$src), "fidiv{s} $src">;
+def FIDIVR16m : FPI<0xDE, MRM7m, (ops i16mem:$src), "fidivr{s} $src">;
+def FIDIVR32m : FPI<0xDA, MRM7m, (ops i32mem:$src), "fidivr{s} $src">;
 
 // NOTE: GAS and apparently all other AT&T style assemblers have a broken notion
 // of some of the 'reverse' forms of the fsub and fdiv instructions.  As such,
@@ -2743,11 +2794,11 @@ def FpLD32m  : FpI<(ops RFP:$dst, f32mem:$src), ZeroArgFP,
 def FpLD64m  : FpI<(ops RFP:$dst, f64mem:$src), ZeroArgFP,
                    [(set RFP:$dst, (loadf64 addr:$src))]>;
 def FpILD16m : FpI<(ops RFP:$dst, i16mem:$src), ZeroArgFP,
-                   []>;
+                   [(set RFP:$dst, (sint_to_fp (loadi16 addr:$src)))]>;
 def FpILD32m : FpI<(ops RFP:$dst, i32mem:$src), ZeroArgFP,
-                   []>;
+                   [(set RFP:$dst, (sint_to_fp (loadi32 addr:$src)))]>;
 def FpILD64m : FpI<(ops RFP:$dst, i64mem:$src), ZeroArgFP,
-                   []>;
+                   [(set RFP:$dst, (X86fild64m addr:$src))]>;
 
 def FpST32m   : FpI<(ops f32mem:$op, RFP:$src), OneArgFP,
                 [(truncstore RFP:$src, addr:$op, f32)]>;
