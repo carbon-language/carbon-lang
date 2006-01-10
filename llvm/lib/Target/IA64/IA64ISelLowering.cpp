@@ -452,18 +452,18 @@ IA64TargetLowering::LowerCallTo(SDOperand Chain,
   SDOperand RetVal;
   if (RetTyVT != MVT::isVoid) {
     switch (RetTyVT) {
-    default: assert(0 && "Unknown value type to return!");
-    case MVT::i1:/* { // bools are just like other integers (returned in r8)
+    default: // assert(0 && "Unknown value type to return!");
+    case MVT::i1: { // bools are just like other integers (returned in r8)
       SDOperand boolInR8 = DAG.getCopyFromReg(Chain, IA64::r8, MVT::i64, InFlag);
-      RetVal = DAG.getTargetNode(IA64::CMPNE, MVT::i1, // FIXME: is this flagged correctly?
-        DAG.getRegister(IA64::r0, MVT::i64), boolInR8, Chain, InFlag);
-      Chain = RetVal.getValue(1);
-      // Add a note to keep track of whether it is sign or zero extended - TODO: bools
-      RetVal = DAG.getNode(RetTy->isSigned() ? ISD::AssertSext :ISD::AssertZext,
-                           MVT::i64, RetVal, DAG.getValueType(RetTyVT));
-      RetVal = DAG.getNode(ISD::TRUNCATE, RetTyVT, RetVal);
+      InFlag = boolInR8.getValue(2);
+      Chain = boolInR8.getValue(1);
+      SDOperand zeroReg = DAG.getCopyFromReg(Chain, IA64::r0, MVT::i64, InFlag);
+      InFlag = zeroReg.getValue(2);
+      Chain = zeroReg.getValue(1); 	
+      
+      RetVal = DAG.getNode(ISD::SETNE, MVT::i1, boolInR8, zeroReg);
       break;
-    }*/
+    }
     case MVT::i8:
     case MVT::i16:
     case MVT::i32:
