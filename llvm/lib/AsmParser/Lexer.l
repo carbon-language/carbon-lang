@@ -272,6 +272,8 @@ load            { RET_TOK(MemOpVal, Load, LOAD); }
 store           { RET_TOK(MemOpVal, Store, STORE); }
 getelementptr   { RET_TOK(MemOpVal, GetElementPtr, GETELEMENTPTR); }
 
+extractelement  { RET_TOK(OtherOpVal, ExtractElement, EXTRACTELEMENT); }
+
 
 {VarID}         {
                   UnEscapeLexed(yytext+1);

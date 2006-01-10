@@ -979,7 +979,7 @@ Module *llvm::RunVMAsmParser(const char * AsmString, Module * M) {
 
 // Other Operators
 %type  <OtherOpVal> ShiftOps
-%token <OtherOpVal> PHI_TOK CAST SELECT SHL SHR VAARG
+%token <OtherOpVal> PHI_TOK CAST SELECT SHL SHR VAARG EXTRACTELEMENT
 %token VAARG_old VANEXT_old //OBSOLETE
 
 
@@ -1519,8 +1519,15 @@ ConstExpr: CAST '(' ConstVal TO Types ')' {
     if (!$3->getType()->isInteger())
       ThrowException("Shift constant expression requires integer operand!");
     $$ = ConstantExpr::get($1, $3, $5);
+  }
+  | EXTRACTELEMENT '(' ConstVal ',' ConstVal ')' {
+        if (!isa<PackedType>($3->getType()))
+      ThrowException("First operand of extractelement must be "
+                     "packed type!");
+    if ($5->getType() != Type::UIntTy)
+      ThrowException("Second operand of extractelement must be uint!");
+    $$ = ConstantExpr::getExtractElement($3, $5);
   };
-
 
 // ConstVector - A list of comma separated constants.
 ConstVector : ConstVector ',' ConstVal {
@@ -2180,6 +2187,14 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
     CurBB->getInstList().push_back(tmp);
     $$ = new LoadInst(foo);
     delete $4;
+  }
+  | EXTRACTELEMENT ResolvedVal ',' ResolvedVal {
+    if (!isa<PackedType>($2->getType()))
+      ThrowException("First operand of extractelement must be a "
+                     "packed type val!");
+    if ($4->getType() != Type::UIntTy)
+      ThrowException("Second operand of extractelement must be a uint!");
+    $$ = new ExtractElementInst($2, $4);
   }
   | PHI_TOK PHIList {
     const Type *Ty = $2->front().first->getType();

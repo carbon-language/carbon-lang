@@ -128,8 +128,9 @@ typedef union {
 #define	SHL	345
 #define	SHR	346
 #define	VAARG	347
-#define	VAARG_old	348
-#define	VANEXT_old	349
+#define	EXTRACTELEMENT	348
+#define	VAARG_old	349
+#define	VANEXT_old	350
 
 
 extern YYSTYPE llvmAsmlval;
