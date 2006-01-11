@@ -716,7 +716,7 @@ def BGT  : BFormDG<0x3F, "bgt $RA,$DISP",
                    [(brcond (setgt GPRC:$RA, 0), bb:$DISP)]>;
 def BLBC : BFormDG<0x38, "blbc $RA,$DISP", []>; //TODO: Low bit clear
 def BLBS : BFormDG<0x3C, "blbs $RA,$DISP",
-                   [(brcond (seteq GPRC:$RA, 1), bb:$DISP)]>;
+                   [(brcond (and GPRC:$RA, 1), bb:$DISP)]>;
 def BLE  : BFormDG<0x3B, "ble $RA,$DISP",
                    [(brcond (setle GPRC:$RA, 0), bb:$DISP)]>;
 def BLT  : BFormDG<0x3A, "blt $RA,$DISP",
@@ -739,7 +739,6 @@ def FBNE : FBForm<0x35, "fbne $RA,$DISP",
                   [(brcond (setne F8RC:$RA, immFPZ), bb:$DISP)]>;
 }
 
-def : Pat<(brcond (and GPRC:$RA, 1), bb:$DISP), (BLBS GPRC:$RA, bb:$DISP)>;
 def : Pat<(brcond GPRC:$RA, bb:$DISP), (BNE GPRC:$RA, bb:$DISP)>;
 def : Pat<(brcond (setne GPRC:$RA, GPRC:$RB), bb:$DISP),
           (BEQ (CMPEQ GPRC:$RA, GPRC:$RB), bb:$DISP)>;
