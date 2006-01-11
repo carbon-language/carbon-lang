@@ -17,8 +17,9 @@
 #include "X86TargetMachine.h"
 #include "llvm/CallingConv.h"
 #include "llvm/Function.h"
-#include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
+#include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/Target/TargetOptions.h"
@@ -1140,14 +1141,34 @@ LowerFrameReturnAddress(bool isFrameAddress, SDOperand Chain, unsigned Depth,
   return std::make_pair(Result, Chain);
 }
 
-//===----------------------------------------------------------------------===//
-//                           X86 Custom Lowering Hooks
-//===----------------------------------------------------------------------===//
+/// getCondBrOpcodeForX86CC - Returns the X86 conditional branch opcode
+/// which corresponds to the condition code.
+static unsigned getCondBrOpcodeForX86CC(unsigned X86CC) {
+  switch (X86CC) {
+  default: assert(0 && "Unknown X86 conditional code!");
+  case X86ISD::COND_A:  return X86::JA;
+  case X86ISD::COND_AE: return X86::JAE;
+  case X86ISD::COND_B:  return X86::JB;
+  case X86ISD::COND_BE: return X86::JBE;
+  case X86ISD::COND_E:  return X86::JE;
+  case X86ISD::COND_G:  return X86::JG;
+  case X86ISD::COND_GE: return X86::JGE;
+  case X86ISD::COND_L:  return X86::JL;
+  case X86ISD::COND_LE: return X86::JLE;
+  case X86ISD::COND_NE: return X86::JNE;
+  case X86ISD::COND_NO: return X86::JNO;
+  case X86ISD::COND_NP: return X86::JNP;
+  case X86ISD::COND_NS: return X86::JNS;
+  case X86ISD::COND_O:  return X86::JO;
+  case X86ISD::COND_P:  return X86::JP;
+  case X86ISD::COND_S:  return X86::JS;
+  }
+}
 
-/// SetCCToX86CondCode - do a one to one translation of a ISD::CondCode to
-/// X86 specific CondCode. It returns a X86ISD::COND_INVALID if it cannot
+/// getX86CC - do a one to one translation of a ISD::CondCode to the X86
+/// specific condition code. It returns a X86ISD::COND_INVALID if it cannot
 /// do a direct translation.
-static unsigned CCToX86CondCode(SDOperand CC, bool isFP) {
+static unsigned getX86CC(SDOperand CC, bool isFP) {
   ISD::CondCode SetCCOpcode = cast<CondCodeSDNode>(CC)->get();
   unsigned X86CC = X86ISD::COND_INVALID;
   if (!isFP) {
@@ -1192,11 +1213,10 @@ static unsigned CCToX86CondCode(SDOperand CC, bool isFP) {
   return X86CC;
 }
 
-/// SupportedByFPCMOV - is there a floating point cmov for the specific
-/// X86 condition code.
-/// Current x86 isa includes the following FP cmov instructions:
+/// hasFPCMov - is there a floating point cmov for the specific X86 condition
+/// code. Current x86 isa includes the following FP cmov instructions:
 /// fcmovb, fcomvbe, fcomve, fcmovu, fcmovae, fcmova, fcmovne, fcmovnu.
-static bool SupportedByFPCMOV(unsigned X86CC) {
+static bool hasFPCMov(unsigned X86CC) {
   switch (X86CC) {
   default:
     return false;
@@ -1211,6 +1231,64 @@ static bool SupportedByFPCMOV(unsigned X86CC) {
     return true;
   }
 }
+
+MachineBasicBlock *
+X86TargetLowering::InsertAtEndOfBasicBlock(MachineInstr *MI,
+                                           MachineBasicBlock *BB) {
+  assert((MI->getOpcode() == X86::CMOV_FR32 ||
+          MI->getOpcode() == X86::CMOV_FR64) &&
+         "Unexpected instr type to insert");
+
+  // To "insert" a SELECT_CC instruction, we actually have to insert the diamond
+  // control-flow pattern.  The incoming instruction knows the destination vreg
+  // to set, the condition code register to branch on, the true/false values to
+  // select between, and a branch opcode to use.
+  const BasicBlock *LLVM_BB = BB->getBasicBlock();
+  ilist<MachineBasicBlock>::iterator It = BB;
+  ++It;
+  
+  //  thisMBB:
+  //  ...
+  //   TrueVal = ...
+  //   cmpTY ccX, r1, r2
+  //   bCC copy1MBB
+  //   fallthrough --> copy0MBB
+  MachineBasicBlock *thisMBB = BB;
+  MachineBasicBlock *copy0MBB = new MachineBasicBlock(LLVM_BB);
+  MachineBasicBlock *sinkMBB = new MachineBasicBlock(LLVM_BB);
+  unsigned Opc = getCondBrOpcodeForX86CC(MI->getOperand(3).getImmedValue());
+  BuildMI(BB, Opc, 1).addMBB(sinkMBB);
+  MachineFunction *F = BB->getParent();
+  F->getBasicBlockList().insert(It, copy0MBB);
+  F->getBasicBlockList().insert(It, sinkMBB);
+  // Update machine-CFG edges
+  BB->addSuccessor(copy0MBB);
+  BB->addSuccessor(sinkMBB);
+  
+  //  copy0MBB:
+  //   %FalseValue = ...
+  //   # fallthrough to sinkMBB
+  BB = copy0MBB;
+  
+  // Update machine-CFG edges
+  BB->addSuccessor(sinkMBB);
+  
+  //  sinkMBB:
+  //   %Result = phi [ %FalseValue, copy0MBB ], [ %TrueValue, thisMBB ]
+  //  ...
+  BB = sinkMBB;
+  BuildMI(BB, X86::PHI, 4, MI->getOperand(0).getReg())
+    .addReg(MI->getOperand(1).getReg()).addMBB(copy0MBB)
+    .addReg(MI->getOperand(2).getReg()).addMBB(thisMBB);
+
+  delete MI;   // The pseudo instruction is gone now.
+  return BB;
+}
+
+
+//===----------------------------------------------------------------------===//
+//                           X86 Custom Lowering Hooks
+//===----------------------------------------------------------------------===//
 
 /// LowerOperation - Provide custom lowering hooks for some operations.
 ///
@@ -1383,7 +1461,7 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
                                  Op.getOperand(0), Op.getOperand(1));
     ISD::CondCode SetCCOpcode = cast<CondCodeSDNode>(CC)->get();
     bool isFP = MVT::isFloatingPoint(Op.getOperand(1).getValueType());
-    unsigned X86CC = CCToX86CondCode(CC, isFP);
+    unsigned X86CC = getX86CC(CC, isFP);
     if (X86CC != X86ISD::COND_INVALID) {
       return DAG.getNode(X86ISD::SETCC, MVT::i8, 
                          DAG.getConstant(X86CC, MVT::i8), Cond);
@@ -1475,12 +1553,11 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
       CC   = Op0.getOperand(0);
       Cond = Op0.getOperand(1);
       isValid =
-        !(isFPStack &&
-          !SupportedByFPCMOV(cast<ConstantSDNode>(CC)->getSignExtended()));
+        !(isFPStack && !hasFPCMov(cast<ConstantSDNode>(CC)->getSignExtended()));
     } else if (Op0.getOpcode() == ISD::SETCC) {
       CC = Op0.getOperand(2);
       bool isFP = MVT::isFloatingPoint(Op0.getOperand(1).getValueType());
-      unsigned X86CC = CCToX86CondCode(CC, isFP);
+      unsigned X86CC = getX86CC(CC, isFP);
       CC = DAG.getConstant(X86CC, MVT::i8);
       Cond = DAG.getNode(X86ISD::CMP, MVT::Flag,
                          Op0.getOperand(0), Op0.getOperand(1));
@@ -1513,7 +1590,7 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     } else if (Cond.getOpcode() == ISD::SETCC) {
       CC = Cond.getOperand(2);
       bool isFP = MVT::isFloatingPoint(Cond.getOperand(1).getValueType());
-      unsigned X86CC = CCToX86CondCode(CC, isFP);
+      unsigned X86CC = getX86CC(CC, isFP);
       CC = DAG.getConstant(X86CC, MVT::i8);
       Cond = DAG.getNode(X86ISD::CMP, MVT::Flag,
                          Cond.getOperand(0), Cond.getOperand(1));

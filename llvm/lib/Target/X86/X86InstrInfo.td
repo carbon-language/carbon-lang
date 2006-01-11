@@ -361,8 +361,8 @@ class Ii32<bits<8> o, Format f, dag ops, string asm, list<dag> pattern>
 // Instruction list...
 //
 
+// Pseudo-instructions:
 def PHI : I<0, Pseudo, (ops variable_ops), "PHINODE", []>;        // PHI node.
-def NOOP : I<0x90, RawFrm, (ops), "nop", []>; // nop
 
 def ADJCALLSTACKDOWN : I<0, Pseudo, (ops i32imm:$amt), "#ADJCALLSTACKDOWN",
                          [(X86callseq_start imm:$amt)]>;
@@ -388,9 +388,28 @@ def IMPLICIT_DEF_FR64 : I<0, Pseudo, (ops FR64:$dst),
                          [(set FR64:$dst, (undef))]>, Requires<[HasSSE2]>;
 
 
+// CMOV* - Used to implement the SSE SELECT DAG operation.  Expanded by the
+// scheduler into a branch sequence.
+let usesCustomDAGSchedInserter = 1 in {  // Expanded by the scheduler.
+  def CMOV_FR32 : I<0, Pseudo,
+                    (ops FR32:$dst, FR32:$t, FR32:$f, i8imm:$cond),
+                    "#CMOV PSEUDO!",
+                    [(set FR32:$dst, (X86cmov FR32:$t, FR32:$f, imm:$cond,
+                                      STATUS))]>;
+  def CMOV_FR64 : I<0, Pseudo,
+                    (ops FR64:$dst, FR64:$t, FR64:$f, i8imm:$cond),
+                    "#CMOV PSEUDO!",
+                    [(set FR64:$dst, (X86cmov FR64:$t, FR64:$f, imm:$cond,
+                                      STATUS))]>;
+}
+
 let isTerminator = 1 in
   let Defs = [FP0, FP1, FP2, FP3, FP4, FP5, FP6] in
     def FP_REG_KILL  : I<0, Pseudo, (ops), "#FP_REG_KILL", []>;
+
+
+// Nop
+def NOOP : I<0x90, RawFrm, (ops), "nop", []>;
 
 //===----------------------------------------------------------------------===//
 //  Control Flow Instructions...
@@ -409,6 +428,7 @@ let isBranch = 1, isTerminator = 1, noResults = 1 in
   class IBr<bits<8> opcode, dag ops, string asm, list<dag> pattern> :
         I<opcode, RawFrm, ops, asm, pattern>;
 
+// Conditional branches
 let isBarrier = 1 in
   def JMP : IBr<0xE9, (ops brtarget:$dst), "jmp $dst", [(br bb:$dst)]>;
 
@@ -442,6 +462,10 @@ def JP  : IBr<0x8A, (ops brtarget:$dst), "jp $dst",
               [(X86brcond bb:$dst, X86_COND_P, STATUS)]>, Imp<[STATUS],[]>, TB;
 def JNP : IBr<0x8B, (ops brtarget:$dst), "jnp $dst",
               [(X86brcond bb:$dst, X86_COND_NP, STATUS)]>, Imp<[STATUS],[]>, TB;
+def JO  : IBr<0x80, (ops brtarget:$dst), "jo $dst",
+              [(X86brcond bb:$dst, X86_COND_O, STATUS)]>, Imp<[STATUS],[]>, TB;
+def JNO : IBr<0x81, (ops brtarget:$dst), "jno $dst",
+              [(X86brcond bb:$dst, X86_COND_NO, STATUS)]>, Imp<[STATUS],[]>, TB;
 
 //===----------------------------------------------------------------------===//
 //  Call Instructions...
