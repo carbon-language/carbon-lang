@@ -160,7 +160,13 @@
 				RelativePath="..\..\lib\VMCore\Type.cpp">
 			</File>
 			<File
+				RelativePath="..\..\lib\VMCore\TypeSymbolTable.cpp">
+			</File>
+			<File
 				RelativePath="..\..\lib\VMCore\Value.cpp">
+			</File>
+			<File
+				RelativePath="..\..\lib\VMCore\ValueSymbolTable.cpp">
 			</File>
 			<File
 				RelativePath="..\..\lib\VMCore\Verifier.cpp">
@@ -267,6 +273,9 @@
 				RelativePath="..\..\include\llvm\Type.h">
 			</File>
 			<File
+				RelativePath="..\..\include\llvm\TypeSymbolTable.h">
+			</File>
+			<File
 				RelativePath="..\..\include\llvm\Use.h">
 			</File>
 			<File
@@ -274,6 +283,9 @@
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\Value.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\ValueSymbolTable.h">
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\Assembly\Writer.h">
