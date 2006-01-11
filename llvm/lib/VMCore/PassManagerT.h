@@ -260,23 +260,12 @@ public:
   // run - Run all of the queued passes on the specified module in an optimal
   // way.
   virtual bool runOnUnit(UnitType *M) {
-    bool MadeChanges = false;
     closeBatcher();
     CurrentAnalyses.clear();
 
     TimingInfo::createTheTimeInfo();
 
-    // Add any immutable passes to the CurrentAnalyses set...
-    for (unsigned i = 0, e = ImmutablePasses.size(); i != e; ++i) {
-      ImmutablePass *IPass = ImmutablePasses[i];
-      if (const PassInfo *PI = IPass->getPassInfo()) {
-        CurrentAnalyses[PI] = IPass;
-
-        const std::vector<const PassInfo*> &II = PI->getInterfacesImplemented();
-        for (unsigned i = 0, e = II.size(); i != e; ++i)
-          CurrentAnalyses[II[i]] = IPass;
-      }
-    }
+    addImmutablePasses();
 
     // LastUserOf - This contains the inverted LastUseOfMap...
     std::map<Pass *, std::vector<Pass*> > LastUserOf;
@@ -290,112 +279,7 @@ public:
     if (Parent == 0) 
       PMDebug::PerformPassStartupStuff((dynamic_cast<PMType*>(this)));
 
-    // Run all of the passes
-    for (unsigned i = 0, e = Passes.size(); i < e; ++i) {
-      PassClass *P = Passes[i];
-
-      PMDebug::PrintPassInformation(getDepth(), "Executing Pass", P, M);
-
-      // Get information about what analyses the pass uses...
-      AnalysisUsage AnUsage;
-      P->getAnalysisUsage(AnUsage);
-      PMDebug::PrintAnalysisSetInfo(getDepth(), "Required", P,
-                                    AnUsage.getRequiredSet());
-
-      // All Required analyses should be available to the pass as it runs!  Here
-      // we fill in the AnalysisImpls member of the pass so that it can
-      // successfully use the getAnalysis() method to retrieve the
-      // implementations it needs.
-      //
-      P->AnalysisImpls.clear();
-      P->AnalysisImpls.reserve(AnUsage.getRequiredSet().size());
-      for (std::vector<const PassInfo *>::const_iterator
-             I = AnUsage.getRequiredSet().begin(),
-             E = AnUsage.getRequiredSet().end(); I != E; ++I) {
-        Pass *Impl = getAnalysisOrNullUp(*I);
-        if (Impl == 0) {
-          std::cerr << "Analysis '" << (*I)->getPassName()
-                    << "' used but not available!";
-          assert(0 && "Analysis used but not available!");
-        } else if (PassDebugging == Details) {
-          if ((*I)->getPassName() != std::string(Impl->getPassName()))
-            std::cerr << "    Interface '" << (*I)->getPassName()
-                    << "' implemented by '" << Impl->getPassName() << "'\n";
-        }
-        P->AnalysisImpls.push_back(std::make_pair(*I, Impl));
-      }
-
-      // Run the sub pass!
-      if (TheTimeInfo) TheTimeInfo->passStarted(P);
-      bool Changed = runPass(P, M);
-      if (TheTimeInfo) TheTimeInfo->passEnded(P);
-      MadeChanges |= Changed;
-
-      // Check for memory leaks by the pass...
-      LeakDetector::checkForGarbage(std::string("after running pass '") +
-                                    P->getPassName() + "'");
-
-      if (Changed)
-        PMDebug::PrintPassInformation(getDepth()+1, "Made Modification", P, M);
-      PMDebug::PrintAnalysisSetInfo(getDepth(), "Preserved", P,
-                                    AnUsage.getPreservedSet());
-
-
-      // Erase all analyses not in the preserved set...
-      if (!AnUsage.getPreservesAll()) {
-        const std::vector<AnalysisID> &PreservedSet = AnUsage.getPreservedSet();
-        for (std::map<AnalysisID, Pass*>::iterator I = CurrentAnalyses.begin(),
-               E = CurrentAnalyses.end(); I != E; )
-          if (std::find(PreservedSet.begin(), PreservedSet.end(), I->first) !=
-              PreservedSet.end())
-            ++I; // This analysis is preserved, leave it in the available set...
-          else {
-            if (!dynamic_cast<ImmutablePass*>(I->second)) {
-              std::map<AnalysisID, Pass*>::iterator J = I++;
-              CurrentAnalyses.erase(J);   // Analysis not preserved!
-            } else {
-              ++I;
-            }
-          }
-      }
-
-      // Add the current pass to the set of passes that have been run, and are
-      // thus available to users.
-      //
-      if (const PassInfo *PI = P->getPassInfo()) {
-        CurrentAnalyses[PI] = P;
-
-        // This pass is the current implementation of all of the interfaces it
-        // implements as well.
-        //
-        const std::vector<const PassInfo*> &II = PI->getInterfacesImplemented();
-        for (unsigned i = 0, e = II.size(); i != e; ++i)
-          CurrentAnalyses[II[i]] = P;
-      }
-
-      // Free memory for any passes that we are the last use of...
-      std::vector<Pass*> &DeadPass = LastUserOf[P];
-      for (std::vector<Pass*>::iterator I = DeadPass.begin(),E = DeadPass.end();
-           I != E; ++I) {
-        PMDebug::PrintPassInformation(getDepth()+1, "Freeing Pass", *I, M);
-        (*I)->releaseMemory();
-      }
-
-      // Make sure to remove dead passes from the CurrentAnalyses list...
-      for (std::map<AnalysisID, Pass*>::iterator I = CurrentAnalyses.begin();
-           I != CurrentAnalyses.end(); ) {
-        std::vector<Pass*>::iterator DPI = std::find(DeadPass.begin(),
-                                                     DeadPass.end(), I->second);
-        if (DPI != DeadPass.end()) {    // This pass is dead now... remove it
-          std::map<AnalysisID, Pass*>::iterator IDead = I++;
-          CurrentAnalyses.erase(IDead);
-        } else {
-          ++I;  // Move on to the next element...
-        }
-      }
-    }
-
-    return MadeChanges;
+    return runPasses(M, LastUserOf);
   }
 
   // dumpPassStructure - Implement the -debug-passes=PassStructure option
@@ -696,7 +580,146 @@ public:
     // Initialize the immutable pass...
     IP->initializePass();
   }
+private:
   
+  // Add any immutable passes to the CurrentAnalyses set...
+  inline void addImmutablePasses() { 
+    for (unsigned i = 0, e = ImmutablePasses.size(); i != e; ++i) {
+      ImmutablePass *IPass = ImmutablePasses[i];
+      if (const PassInfo *PI = IPass->getPassInfo()) {
+        CurrentAnalyses[PI] = IPass;
+
+        const std::vector<const PassInfo*> &II = PI->getInterfacesImplemented();
+        for (unsigned i = 0, e = II.size(); i != e; ++i)
+          CurrentAnalyses[II[i]] = IPass;
+      }
+    }
+  }
+  
+  // Run all of the passes
+  inline bool runPasses(UnitType *M, 
+                 std::map<Pass *, std::vector<Pass*> > &LastUserOf) { 
+    bool MadeChanges = false;
+    
+    for (unsigned i = 0, e = Passes.size(); i < e; ++i) {
+      PassClass *P = Passes[i];
+
+      PMDebug::PrintPassInformation(getDepth(), "Executing Pass", P, M);
+
+      // Get information about what analyses the pass uses...
+      AnalysisUsage AnUsage;
+      P->getAnalysisUsage(AnUsage);
+      PMDebug::PrintAnalysisSetInfo(getDepth(), "Required", P,
+                                    AnUsage.getRequiredSet());
+      
+      initialiseAnalysisImpl(P, AnUsage);
+      
+      // Run the sub pass!
+      if (TheTimeInfo) TheTimeInfo->passStarted(P);
+      bool Changed = runPass(P, M);
+      if (TheTimeInfo) TheTimeInfo->passEnded(P);
+      MadeChanges |= Changed;
+
+      // Check for memory leaks by the pass...
+      LeakDetector::checkForGarbage(std::string("after running pass '") +
+                                    P->getPassName() + "'");
+
+      if (Changed)
+        PMDebug::PrintPassInformation(getDepth()+1, "Made Modification", P, M);
+      PMDebug::PrintAnalysisSetInfo(getDepth(), "Preserved", P,
+                                    AnUsage.getPreservedSet());
+      
+      // Erase all analyses not in the preserved set
+      removeNonPreservedAnalyses(AnUsage);
+      
+      // Add the current pass to the set of passes that have been run, and are
+      // thus available to users.
+      //
+      if (const PassInfo *PI = P->getPassInfo()) {
+        CurrentAnalyses[PI] = P;
+
+        // This pass is the current implementation of all of the interfaces it
+        // implements as well.
+        //
+        const std::vector<const PassInfo*> &II = PI->getInterfacesImplemented();
+        for (unsigned i = 0, e = II.size(); i != e; ++i)
+          CurrentAnalyses[II[i]] = P;
+      }
+
+      // Free memory for any passes that we are the last use of...
+      std::vector<Pass*> &DeadPass = LastUserOf[P];
+      for (std::vector<Pass*>::iterator I = DeadPass.begin(),E = DeadPass.end();
+           I != E; ++I) {
+        PMDebug::PrintPassInformation(getDepth()+1, "Freeing Pass", *I, M);
+        (*I)->releaseMemory();
+      }
+      
+      // remove dead passes from the CurrentAnalyses list...
+      removeDeadPasses(DeadPass);
+    }
+    
+    return MadeChanges;
+  }
+  
+  // All Required analyses should be available to the pass as it runs!  Here
+  // we fill in the AnalysisImpls member of the pass so that it can
+  // successfully use the getAnalysis() method to retrieve the
+  // implementations it needs.
+  //
+  inline void initialiseAnalysisImpl(PassClass *P, AnalysisUsage &AnUsage) { 
+    P->AnalysisImpls.clear();
+    P->AnalysisImpls.reserve(AnUsage.getRequiredSet().size());
+    
+    for (std::vector<const PassInfo *>::const_iterator
+         I = AnUsage.getRequiredSet().begin(),
+         E = AnUsage.getRequiredSet().end(); I != E; ++I) {
+      Pass *Impl = getAnalysisOrNullUp(*I);
+      if (Impl == 0) {
+        std::cerr << "Analysis '" << (*I)->getPassName()
+                  << "' used but not available!";
+        assert(0 && "Analysis used but not available!");
+      } else if (PassDebugging == Details) {
+        if ((*I)->getPassName() != std::string(Impl->getPassName()))
+          std::cerr << "    Interface '" << (*I)->getPassName()
+                  << "' implemented by '" << Impl->getPassName() << "'\n";
+      }
+      
+      P->AnalysisImpls.push_back(std::make_pair(*I, Impl));
+    }
+  }
+  
+  inline void removeNonPreservedAnalyses(AnalysisUsage &AnUsage) { 
+    if (!AnUsage.getPreservesAll()) {
+      const std::vector<AnalysisID> &PreservedSet = AnUsage.getPreservedSet();
+      for (std::map<AnalysisID, Pass*>::iterator I = CurrentAnalyses.begin(),
+           E = CurrentAnalyses.end(); I != E; )
+        if (std::find(PreservedSet.begin(), PreservedSet.end(), I->first) !=
+            PreservedSet.end())
+          ++I; // This analysis is preserved, leave it in the available set...
+      else {
+        if (!dynamic_cast<ImmutablePass*>(I->second)) {
+          std::map<AnalysisID, Pass*>::iterator J = I++;
+          CurrentAnalyses.erase(J);   // Analysis not preserved!
+        } else {
+          ++I;
+        }
+      }
+    }
+  }
+  
+  inline void removeDeadPasses(std::vector<Pass*> &DeadPass) { 
+    for (std::map<AnalysisID, Pass*>::iterator I = CurrentAnalyses.begin();
+          I != CurrentAnalyses.end(); ) {
+      std::vector<Pass*>::iterator DPI = std::find(DeadPass.begin(),
+                                                    DeadPass.end(), I->second);
+      if (DPI != DeadPass.end()) {    // This pass is dead now... remove it
+        std::map<AnalysisID, Pass*>::iterator IDead = I++;
+        CurrentAnalyses.erase(IDead);
+      } else {
+        ++I;  // Move on to the next element...
+      }
+    }
+  }
 };
 
 //===----------------------------------------------------------------------===//
@@ -830,8 +853,9 @@ public:
   virtual bool runOnModule(Module &M);
   
   // runPass - Specify how the pass should be run on the UnitType
-  virtual bool runPass(MTraits::PassClass *P, Module *M) { return P->runOnModule(*M); }
-  
+  virtual bool runPass(MTraits::PassClass *P, Module *M) {
+    return P->runOnModule(*M);
+  }
 };
 
 //===----------------------------------------------------------------------===//
@@ -847,21 +871,21 @@ inline bool BasicBlockPassManager::runOnBasicBlock(BasicBlock &BB) {
 
 inline bool BasicBlockPassManager::doInitialization(Module &M) {
   bool Changed = false;
-  for (unsigned i = 0, e = ((BBTraits::PMType*)this)->Passes.size(); i != e; ++i)
+  for (unsigned i = 0, e =((BBTraits::PMType*)this)->Passes.size(); i != e; ++i)
     ((BBTraits::PMType*)this)->Passes[i]->doInitialization(M);
   return Changed;
 }
 
 inline bool BasicBlockPassManager::doInitialization(Function &F) {
   bool Changed = false;
-  for (unsigned i = 0, e = ((BBTraits::PMType*)this)->Passes.size(); i != e; ++i)
+  for (unsigned i = 0, e =((BBTraits::PMType*)this)->Passes.size(); i != e; ++i)
     ((BBTraits::PMType*)this)->Passes[i]->doInitialization(F);
   return Changed;
 }
 
 inline bool BasicBlockPassManager::doFinalization(Function &F) {
   bool Changed = false;
-  for (unsigned i = 0, e = ((BBTraits::PMType*)this)->Passes.size(); i != e; ++i)
+  for (unsigned i = 0, e =((BBTraits::PMType*)this)->Passes.size(); i != e; ++i)
     ((BBTraits::PMType*)this)->Passes[i]->doFinalization(F);
   return Changed;
 }
@@ -900,7 +924,6 @@ inline bool FunctionPassManagerT::doFinalization(Module &M) {
 bool ModulePassManager::runOnModule(Module &M) {
   return ((PassManagerT<MTraits>*)this)->runOnUnit(&M);
 }
-
 
 } // End llvm namespace
 
