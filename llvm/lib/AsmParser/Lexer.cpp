@@ -748,7 +748,7 @@ goto find_rule; \
 #define YY_MORE_ADJ 0
 #define YY_RESTORE_YY_MORE_OFFSET
 char *yytext;
-#line 1 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 1 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 #define INITIAL 0
 /*===-- Lexer.l - Scanner for llvm assembly files --------------*- C++ -*--===//
 //
@@ -763,7 +763,7 @@ char *yytext;
 //
 //===----------------------------------------------------------------------===*/
 #define YY_NEVER_INTERACTIVE 1
-#line 28 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 28 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 #include "ParserInternals.h"
 #include "llvm/Module.h"
 #include <list>
@@ -1040,7 +1040,7 @@ YY_DECL
 	register char *yy_cp, *yy_bp;
 	register int yy_act;
 
-#line 179 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 179 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 
 
 #line 1047 "Lexer.cpp"
@@ -1136,447 +1136,447 @@ do_action:	/* This label is used only to access EOF actions. */
 	{ /* beginning of action switch */
 case 1:
 YY_RULE_SETUP
-#line 181 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 181 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { /* Ignore comments for now */ }
 	YY_BREAK
 case 2:
 YY_RULE_SETUP
-#line 183 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 183 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { return BEGINTOK; }
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 184 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 184 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { return ENDTOK; }
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 185 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 185 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { return TRUETOK;  }
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 186 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 186 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { return FALSETOK; }
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 187 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 187 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { return DECLARE; }
 	YY_BREAK
 case 7:
 YY_RULE_SETUP
-#line 188 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 188 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { return GLOBAL; }
 	YY_BREAK
 case 8:
 YY_RULE_SETUP
-#line 189 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 189 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { return CONSTANT; }
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 190 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 190 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { return INTERNAL; }
 	YY_BREAK
 case 10:
 YY_RULE_SETUP
-#line 191 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 191 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { return LINKONCE; }
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 192 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 192 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { return WEAK; }
 	YY_BREAK
 case 12:
 YY_RULE_SETUP
-#line 193 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 193 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { return APPENDING; }
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 194 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 194 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { return EXTERNAL; }    /* Deprecated, turn into external */
 	YY_BREAK
 case 14:
 YY_RULE_SETUP
-#line 195 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 195 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { return EXTERNAL; }
 	YY_BREAK
 case 15:
 YY_RULE_SETUP
-#line 196 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 196 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { return IMPLEMENTATION; }
 	YY_BREAK
 case 16:
 YY_RULE_SETUP
-#line 197 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 197 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { return ZEROINITIALIZER; }
 	YY_BREAK
 case 17:
 YY_RULE_SETUP
-#line 198 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 198 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { return DOTDOTDOT; }
 	YY_BREAK
 case 18:
 YY_RULE_SETUP
-#line 199 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 199 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { return UNDEF; }
 	YY_BREAK
 case 19:
 YY_RULE_SETUP
-#line 200 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 200 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { return NULL_TOK; }
 	YY_BREAK
 case 20:
 YY_RULE_SETUP
-#line 201 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 201 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { return TO; }
 	YY_BREAK
 case 21:
 YY_RULE_SETUP
-#line 202 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 202 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { RET_TOK(TermOpVal, Unwind, UNWIND); }
 	YY_BREAK
 case 22:
 YY_RULE_SETUP
-#line 203 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 203 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { return NOT; }  /* Deprecated, turned into XOR */
 	YY_BREAK
 case 23:
 YY_RULE_SETUP
-#line 204 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 204 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { return TAIL; }
 	YY_BREAK
 case 24:
 YY_RULE_SETUP
-#line 205 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 205 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { return TARGET; }
 	YY_BREAK
 case 25:
 YY_RULE_SETUP
-#line 206 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 206 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { return TRIPLE; }
 	YY_BREAK
 case 26:
 YY_RULE_SETUP
-#line 207 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 207 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { return DEPLIBS; }
 	YY_BREAK
 case 27:
 YY_RULE_SETUP
-#line 208 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 208 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { return ENDIAN; }
 	YY_BREAK
 case 28:
 YY_RULE_SETUP
-#line 209 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 209 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { return POINTERSIZE; }
 	YY_BREAK
 case 29:
 YY_RULE_SETUP
-#line 210 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 210 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { return LITTLE; }
 	YY_BREAK
 case 30:
 YY_RULE_SETUP
-#line 211 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 211 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { return BIG; }
 	YY_BREAK
 case 31:
 YY_RULE_SETUP
-#line 212 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 212 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { return VOLATILE; }
 	YY_BREAK
 case 32:
 YY_RULE_SETUP
-#line 213 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 213 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { return ALIGN;  }
 	YY_BREAK
 case 33:
 YY_RULE_SETUP
-#line 214 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 214 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { return SECTION; }
 	YY_BREAK
 case 34:
 YY_RULE_SETUP
-#line 216 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 216 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { return CC_TOK; }
 	YY_BREAK
 case 35:
 YY_RULE_SETUP
-#line 217 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 217 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { return CCC_TOK; }
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 218 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 218 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { return FASTCC_TOK; }
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 219 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 219 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { return COLDCC_TOK; }
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 221 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 221 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { llvmAsmlval.PrimType = Type::VoidTy  ; return VOID;   }
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
-#line 222 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 222 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { llvmAsmlval.PrimType = Type::BoolTy  ; return BOOL;   }
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 223 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 223 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { llvmAsmlval.PrimType = Type::SByteTy ; return SBYTE;  }
 	YY_BREAK
 case 41:
 YY_RULE_SETUP
-#line 224 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 224 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { llvmAsmlval.PrimType = Type::UByteTy ; return UBYTE;  }
 	YY_BREAK
 case 42:
 YY_RULE_SETUP
-#line 225 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 225 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { llvmAsmlval.PrimType = Type::ShortTy ; return SHORT;  }
 	YY_BREAK
 case 43:
 YY_RULE_SETUP
-#line 226 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 226 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { llvmAsmlval.PrimType = Type::UShortTy; return USHORT; }
 	YY_BREAK
 case 44:
 YY_RULE_SETUP
-#line 227 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 227 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { llvmAsmlval.PrimType = Type::IntTy   ; return INT;    }
 	YY_BREAK
 case 45:
 YY_RULE_SETUP
-#line 228 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 228 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { llvmAsmlval.PrimType = Type::UIntTy  ; return UINT;   }
 	YY_BREAK
 case 46:
 YY_RULE_SETUP
-#line 229 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 229 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { llvmAsmlval.PrimType = Type::LongTy  ; return LONG;   }
 	YY_BREAK
 case 47:
 YY_RULE_SETUP
-#line 230 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 230 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { llvmAsmlval.PrimType = Type::ULongTy ; return ULONG;  }
 	YY_BREAK
 case 48:
 YY_RULE_SETUP
-#line 231 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 231 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { llvmAsmlval.PrimType = Type::FloatTy ; return FLOAT;  }
 	YY_BREAK
 case 49:
 YY_RULE_SETUP
-#line 232 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 232 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { llvmAsmlval.PrimType = Type::DoubleTy; return DOUBLE; }
 	YY_BREAK
 case 50:
 YY_RULE_SETUP
-#line 233 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 233 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { llvmAsmlval.PrimType = Type::LabelTy ; return LABEL;  }
 	YY_BREAK
 case 51:
 YY_RULE_SETUP
-#line 234 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 234 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { return TYPE;   }
 	YY_BREAK
 case 52:
 YY_RULE_SETUP
-#line 235 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 235 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { return OPAQUE; }
 	YY_BREAK
 case 53:
 YY_RULE_SETUP
-#line 237 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 237 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { RET_TOK(BinaryOpVal, Add, ADD); }
 	YY_BREAK
 case 54:
 YY_RULE_SETUP
-#line 238 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 238 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { RET_TOK(BinaryOpVal, Sub, SUB); }
 	YY_BREAK
 case 55:
 YY_RULE_SETUP
-#line 239 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 239 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { RET_TOK(BinaryOpVal, Mul, MUL); }
 	YY_BREAK
 case 56:
 YY_RULE_SETUP
-#line 240 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 240 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { RET_TOK(BinaryOpVal, Div, DIV); }
 	YY_BREAK
 case 57:
 YY_RULE_SETUP
-#line 241 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 241 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { RET_TOK(BinaryOpVal, Rem, REM); }
 	YY_BREAK
 case 58:
 YY_RULE_SETUP
-#line 242 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 242 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { RET_TOK(BinaryOpVal, And, AND); }
 	YY_BREAK
 case 59:
 YY_RULE_SETUP
-#line 243 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 243 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { RET_TOK(BinaryOpVal, Or , OR ); }
 	YY_BREAK
 case 60:
 YY_RULE_SETUP
-#line 244 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 244 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { RET_TOK(BinaryOpVal, Xor, XOR); }
 	YY_BREAK
 case 61:
 YY_RULE_SETUP
-#line 245 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 245 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { RET_TOK(BinaryOpVal, SetNE, SETNE); }
 	YY_BREAK
 case 62:
 YY_RULE_SETUP
-#line 246 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 246 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { RET_TOK(BinaryOpVal, SetEQ, SETEQ); }
 	YY_BREAK
 case 63:
 YY_RULE_SETUP
-#line 247 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 247 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { RET_TOK(BinaryOpVal, SetLT, SETLT); }
 	YY_BREAK
 case 64:
 YY_RULE_SETUP
-#line 248 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 248 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { RET_TOK(BinaryOpVal, SetGT, SETGT); }
 	YY_BREAK
 case 65:
 YY_RULE_SETUP
-#line 249 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 249 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { RET_TOK(BinaryOpVal, SetLE, SETLE); }
 	YY_BREAK
 case 66:
 YY_RULE_SETUP
-#line 250 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 250 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { RET_TOK(BinaryOpVal, SetGE, SETGE); }
 	YY_BREAK
 case 67:
 YY_RULE_SETUP
-#line 252 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 252 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { RET_TOK(OtherOpVal, PHI, PHI_TOK); }
 	YY_BREAK
 case 68:
 YY_RULE_SETUP
-#line 253 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 253 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { RET_TOK(OtherOpVal, Call, CALL); }
 	YY_BREAK
 case 69:
 YY_RULE_SETUP
-#line 254 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 254 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { RET_TOK(OtherOpVal, Cast, CAST); }
 	YY_BREAK
 case 70:
 YY_RULE_SETUP
-#line 255 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 255 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { RET_TOK(OtherOpVal, Select, SELECT); }
 	YY_BREAK
 case 71:
 YY_RULE_SETUP
-#line 256 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 256 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { RET_TOK(OtherOpVal, Shl, SHL); }
 	YY_BREAK
 case 72:
 YY_RULE_SETUP
-#line 257 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 257 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { RET_TOK(OtherOpVal, Shr, SHR); }
 	YY_BREAK
 case 73:
 YY_RULE_SETUP
-#line 258 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 258 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { return VANEXT_old; }
 	YY_BREAK
 case 74:
 YY_RULE_SETUP
-#line 259 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 259 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { return VAARG_old; }
 	YY_BREAK
 case 75:
 YY_RULE_SETUP
-#line 260 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 260 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { RET_TOK(OtherOpVal, VAArg , VAARG); }
 	YY_BREAK
 case 76:
 YY_RULE_SETUP
-#line 261 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 261 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { RET_TOK(TermOpVal, Ret, RET); }
 	YY_BREAK
 case 77:
 YY_RULE_SETUP
-#line 262 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 262 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { RET_TOK(TermOpVal, Br, BR); }
 	YY_BREAK
 case 78:
 YY_RULE_SETUP
-#line 263 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 263 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { RET_TOK(TermOpVal, Switch, SWITCH); }
 	YY_BREAK
 case 79:
 YY_RULE_SETUP
-#line 264 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 264 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { RET_TOK(TermOpVal, Invoke, INVOKE); }
 	YY_BREAK
 case 80:
 YY_RULE_SETUP
-#line 265 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 265 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { RET_TOK(TermOpVal, Unwind, UNWIND); }
 	YY_BREAK
 case 81:
 YY_RULE_SETUP
-#line 266 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 266 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { RET_TOK(TermOpVal, Unreachable, UNREACHABLE); }
 	YY_BREAK
 case 82:
 YY_RULE_SETUP
-#line 268 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 268 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { RET_TOK(MemOpVal, Malloc, MALLOC); }
 	YY_BREAK
 case 83:
 YY_RULE_SETUP
-#line 269 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 269 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { RET_TOK(MemOpVal, Alloca, ALLOCA); }
 	YY_BREAK
 case 84:
 YY_RULE_SETUP
-#line 270 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 270 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { RET_TOK(MemOpVal, Free, FREE); }
 	YY_BREAK
 case 85:
 YY_RULE_SETUP
-#line 271 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 271 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { RET_TOK(MemOpVal, Load, LOAD); }
 	YY_BREAK
 case 86:
 YY_RULE_SETUP
-#line 272 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 272 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { RET_TOK(MemOpVal, Store, STORE); }
 	YY_BREAK
 case 87:
 YY_RULE_SETUP
-#line 273 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 273 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { RET_TOK(MemOpVal, GetElementPtr, GETELEMENTPTR); }
 	YY_BREAK
 case 88:
 YY_RULE_SETUP
-#line 275 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 275 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { RET_TOK(OtherOpVal, ExtractElement, EXTRACTELEMENT); }
 	YY_BREAK
 case 89:
 YY_RULE_SETUP
-#line 278 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 278 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 {
                   UnEscapeLexed(yytext+1);
                   llvmAsmlval.StrVal = strdup(yytext+1);             // Skip %
@@ -1585,7 +1585,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 90:
 YY_RULE_SETUP
-#line 283 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 283 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 {
                   yytext[strlen(yytext)-1] = 0;  // nuke colon
                   UnEscapeLexed(yytext);
@@ -1595,7 +1595,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 91:
 YY_RULE_SETUP
-#line 289 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 289 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 {
                   yytext[strlen(yytext)-2] = 0;  // nuke colon, end quote
                   UnEscapeLexed(yytext+1);
@@ -1605,7 +1605,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 92:
 YY_RULE_SETUP
-#line 296 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 296 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { // Note that we cannot unescape a string constant here!  The
                    // string constant might contain a \00 which would not be
                    // understood by the string stuff.  It is valid to make a
@@ -1618,12 +1618,12 @@ YY_RULE_SETUP
 	YY_BREAK
 case 93:
 YY_RULE_SETUP
-#line 307 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 307 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { llvmAsmlval.UInt64Val = atoull(yytext); return EUINT64VAL; }
 	YY_BREAK
 case 94:
 YY_RULE_SETUP
-#line 308 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 308 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 {
                   uint64_t Val = atoull(yytext+1);
                   // +1:  we have bigger negative range
@@ -1635,7 +1635,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 95:
 YY_RULE_SETUP
-#line 316 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 316 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 {
                    llvmAsmlval.UInt64Val = HexIntToVal(yytext+3);
                    return yytext[0] == 's' ? ESINT64VAL : EUINT64VAL;
@@ -1643,7 +1643,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 96:
 YY_RULE_SETUP
-#line 321 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 321 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 {
                   uint64_t Val = atoull(yytext+1);
                   if ((unsigned)Val != Val)
@@ -1654,7 +1654,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 97:
 YY_RULE_SETUP
-#line 328 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 328 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 {
                   uint64_t Val = atoull(yytext+2);
                   // +1:  we have bigger negative range
@@ -1666,16 +1666,16 @@ YY_RULE_SETUP
 	YY_BREAK
 case 98:
 YY_RULE_SETUP
-#line 337 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 337 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { llvmAsmlval.FPVal = atof(yytext); return FPVAL; }
 	YY_BREAK
 case 99:
 YY_RULE_SETUP
-#line 338 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 338 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { llvmAsmlval.FPVal = HexToFP(yytext); return FPVAL; }
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
-#line 340 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 340 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 {
                   /* Make sure to free the internal buffers for flex when we are
                    * done reading our input!
@@ -1686,17 +1686,17 @@ case YY_STATE_EOF(INITIAL):
 	YY_BREAK
 case 100:
 YY_RULE_SETUP
-#line 348 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 348 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { /* Ignore whitespace */ }
 	YY_BREAK
 case 101:
 YY_RULE_SETUP
-#line 349 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 349 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 { return yytext[0]; }
 	YY_BREAK
 case 102:
 YY_RULE_SETUP
-#line 351 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 351 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 YY_FATAL_ERROR( "flex scanner jammed" );
 	YY_BREAK
 #line 1703 "Lexer.cpp"
@@ -2581,5 +2581,5 @@ int main()
 	return 0;
 	}
 #endif
-#line 351 "/Users/bocchino/vllvm-checkin/src/lib/AsmParser/Lexer.l"
+#line 351 "/Users/sabre/llvm/lib/AsmParser/Lexer.l"
 
