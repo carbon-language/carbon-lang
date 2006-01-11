@@ -458,6 +458,9 @@ SDOperand X86DAGToDAGISel::Select(SDOperand N) {
 
   if (Opcode >= ISD::BUILTIN_OP_END && Opcode < X86ISD::FIRST_NUMBER)
     return N;   // Already selected.
+
+  std::map<SDOperand, SDOperand>::iterator CGMI = CodeGenMap.find(N);
+  if (CGMI != CodeGenMap.end()) return CGMI->second;
   
   switch (Opcode) {
     default: break;
@@ -621,7 +624,7 @@ SDOperand X86DAGToDAGISel::Select(SDOperand N) {
       SDOperand Tmp1 = CurDAG->getTargetNode(Opc, VT, Tmp0);
       SDOperand InFlag = SDOperand(0,0);
       SDOperand Result = CurDAG->getCopyToReg(CurDAG->getEntryNode(),
-                                              Reg, Tmp1, InFlag).getValue(1);
+                                              Reg, Tmp1, InFlag);
       SDOperand Chain = Result.getValue(0);
       InFlag = Result.getValue(1);
 
@@ -695,6 +698,46 @@ SDOperand X86DAGToDAGISel::Select(SDOperand N) {
         Chain = CurDAG->getTargetNode(X86::FLDCW16m, MVT::Other,
                                       Base, Scale, Index, Disp, Chain);
       return Chain;
+    }
+
+    case ISD::DYNAMIC_STACKALLOC: {
+      SDOperand Chain = N.getOperand(0);
+      SDOperand Size  = N.getOperand(1);
+      SDOperand Align = N.getOperand(2);
+
+      // FIXME: We are currently ignoring the requested alignment for handling
+      // greater than the stack alignment.  This will need to be revisited at
+      // some point.
+      if (!isa<ConstantSDNode>(Align) ||
+          cast<ConstantSDNode>(Align)->getValue() != 0) {
+        std::cerr << "Cannot allocate stack object with greater alignment than"
+                  << " the stack alignment yet!";
+        abort();
+      }
+
+      // FIXME: This produces crappy code. Lots of unnecessary MOV32rr to and
+      // from ESP.
+      SDOperand InFlag;
+      SDOperand SPVal = CurDAG->getCopyFromReg(Chain, X86::ESP, MVT::i32, InFlag);
+      Chain  = SPVal.getValue(1);
+      InFlag = SPVal.getValue(2);
+
+      SDOperand Result = Select(CurDAG->getNode(X86ISD::SUB_FLAG, MVT::i32,
+                                                SPVal, Size, InFlag));
+      InFlag = Result.getValue(1);
+
+      // Force the result back into ESP.
+      Chain  = CurDAG->getCopyToReg(Chain,
+                                    CurDAG->getRegister(X86::ESP, MVT::i32),
+                                    Result, InFlag);
+      InFlag = Chain.getValue(1);
+
+      // Copy the result back from ESP.
+      Result = CurDAG->getCopyFromReg(Chain, X86::ESP, MVT::i32, InFlag);
+
+      CodeGenMap[N.getValue(0)] = Result;
+      CodeGenMap[N.getValue(1)] = Result.getValue(1);
+      return Result.getValue(N.ResNo);
     }
   }
 
