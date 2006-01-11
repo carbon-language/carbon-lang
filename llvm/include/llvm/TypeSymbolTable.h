@@ -2,10 +2,8 @@
 //
 //                     The LLVM Compiler Infrastructure
 //
-// This file was developed by Reid Spencer based on the original SymbolTable
-// implemented by the LLVM Research Group and re-written by Reid Spencer.
-// It is distributed under the University of Illinois Open Source License. 
-// See LICENSE.TXT for details.
+// This file was developed by Reid Spencer.  It is distributed under the 
+// University of Illinois Open Source License.  See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
 //
