@@ -635,10 +635,22 @@ LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     
     // Get the condition flag.
     if (LHS.getValueType() == MVT::i32) {
-      SDOperand Cond = DAG.getNode(V8ISD::CMPICC, MVT::Flag, LHS, RHS);
+      std::vector<MVT::ValueType> VTs;
+      VTs.push_back(MVT::i32);
+      VTs.push_back(MVT::Flag);
+      std::vector<SDOperand> Ops;
+      Ops.push_back(LHS);
+      Ops.push_back(RHS);
+      SDOperand Cond = DAG.getNode(V8ISD::CMPICC, VTs, Ops);
       return DAG.getNode(V8ISD::BRICC, MVT::Other, Chain, Dest, CC, Cond);
     } else {
-      SDOperand Cond = DAG.getNode(V8ISD::CMPFCC, MVT::Flag, LHS, RHS);
+      std::vector<MVT::ValueType> VTs;
+      VTs.push_back(MVT::i32);
+      VTs.push_back(MVT::Flag);
+      std::vector<SDOperand> Ops;
+      Ops.push_back(LHS);
+      Ops.push_back(RHS);
+      SDOperand Cond = DAG.getNode(V8ISD::CMPFCC, VTs, Ops);
       return DAG.getNode(V8ISD::BRFCC, MVT::Other, Chain, Dest, CC, Cond);
     }
   }
@@ -651,7 +663,13 @@ LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     
     unsigned Opc;
     Opc = LHS.getValueType() == MVT::i32 ? V8ISD::CMPICC : V8ISD::CMPFCC;
-    SDOperand CompareFlag = DAG.getNode(Opc, MVT::Flag, LHS, RHS);
+    std::vector<MVT::ValueType> VTs;
+    VTs.push_back(LHS.getValueType());
+    VTs.push_back(MVT::Flag);
+    std::vector<SDOperand> Ops;
+    Ops.push_back(LHS);
+    Ops.push_back(RHS);
+    SDOperand CompareFlag = DAG.getNode(Opc, VTs, Ops).getValue(1);
     
     Opc = LHS.getValueType() == MVT::i32 ? 
       V8ISD::SELECT_ICC : V8ISD::SELECT_FCC;
@@ -882,14 +900,6 @@ SDOperand SparcV8DAGToDAGISel::Select(SDOperand Op) {
       CurDAG->getTargetNode(V8::ADDri, MVT::i32,
                             CurDAG->getTargetFrameIndex(FI, MVT::i32),
                             CurDAG->getTargetConstant(0, MVT::i32));
-  }
-  case V8ISD::CMPICC: {
-    // FIXME: Handle compare with immediate.
-    SDOperand LHS = Select(N->getOperand(0));
-    SDOperand RHS = Select(N->getOperand(1));
-    SDOperand Result = CurDAG->getTargetNode(V8::SUBCCrr, MVT::i32, MVT::Flag,
-                                             LHS, RHS);
-    return CodeGenMap[Op] = Result.getValue(1);
   }
   case ISD::ADD_PARTS: {
     SDOperand LHSL = Select(N->getOperand(0));

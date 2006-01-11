@@ -59,8 +59,6 @@ def MEMri : Operand<i32> {
 def brtarget : Operand<OtherVT>;
 def calltarget : Operand<i32>;
 
-def SDTV8cmpicc : 
-SDTypeProfile<1, 2, [SDTCisVT<0, FlagVT>, SDTCisInt<1>, SDTCisSameAs<1, 2>]>;
 def SDTV8cmpfcc : 
 SDTypeProfile<1, 2, [SDTCisVT<0, FlagVT>, SDTCisFP<1>, SDTCisSameAs<1, 2>]>;
 def SDTV8brcc : 
@@ -74,7 +72,8 @@ SDTypeProfile<1, 1, [SDTCisVT<0, f32>, SDTCisFP<1>]>;
 def SDTV8ITOF :
 SDTypeProfile<1, 1, [SDTCisFP<0>, SDTCisVT<1, f32>]>;
 
-def V8cmpicc : SDNode<"V8ISD::CMPICC", SDTV8cmpicc>;
+def V8cmpicc : SDNode<"V8ISD::CMPICC", SDTIntBinOp,
+                      [SDNPCommutative, SDNPOutFlag]>;
 def V8cmpfcc : SDNode<"V8ISD::CMPFCC", SDTV8cmpfcc>;
 def V8bricc : SDNode<"V8ISD::BRICC", SDTV8brcc, [SDNPHasChain]>;
 def V8brfcc : SDNode<"V8ISD::BRFCC", SDTV8brcc, [SDNPHasChain]>;
@@ -405,10 +404,12 @@ def SUBXri  : F3_2<2, 0b001100,
                    "subx $b, $c, $dst", []>;
 def SUBCCrr : F3_1<2, 0b010100, 
                    (ops IntRegs:$dst, IntRegs:$b, IntRegs:$c),
-                   "subcc $b, $c, $dst", []>;
+                   "subcc $b, $c, $dst",
+                   [(set IntRegs:$dst, (V8cmpicc IntRegs:$b, IntRegs:$c))]>;
 def SUBCCri : F3_2<2, 0b010100,
                    (ops IntRegs:$dst, IntRegs:$b, i32imm:$c),
-                   "subcc $b, $c, $dst", []>;
+                   "subcc $b, $c, $dst",
+                   [(set IntRegs:$dst, (V8cmpicc IntRegs:$b, simm13:$c))]>;
 def SUBXCCrr: F3_1<2, 0b011100, 
                    (ops IntRegs:$dst, IntRegs:$b, IntRegs:$c),
                    "subxcc $b, $c, $dst", []>;
