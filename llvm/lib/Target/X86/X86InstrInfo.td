@@ -2916,8 +2916,8 @@ def RDTSC : I<0x31, RawFrm, (ops), "rdtsc", [(X86rdtsc)]>,
 // Calls
 def : Pat<(X86call tglobaladdr:$dst),
           (CALLpcrel32 tglobaladdr:$dst)>;
-def : Pat<(X86call externalsym:$dst),
-          (CALLpcrel32 externalsym:$dst)>;
+def : Pat<(X86call texternalsym:$dst),
+          (CALLpcrel32 texternalsym:$dst)>;
 
 // X86 specific add which produces a flag.
 def : Pat<(X86addflag R32:$src1, R32:$src2),

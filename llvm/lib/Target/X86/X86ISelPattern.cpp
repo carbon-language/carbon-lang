@@ -1223,12 +1223,15 @@ unsigned ISel::SelectExpr(SDOperand N) {
   SDNode *Node = N.Val;
   SDOperand Op0, Op1;
 
-  if (Node->getOpcode() == ISD::CopyFromReg) {
-    unsigned Reg = cast<RegisterSDNode>(Node->getOperand(1))->getReg();
+  if (Node->getOpcode() == ISD::CopyFromReg ||
+      Node->getOpcode() == ISD::Register) {
+    unsigned Reg = (Node->getOpcode() == ISD::CopyFromReg) ?
+      cast<RegisterSDNode>(Node->getOperand(1))->getReg() :
+      cast<RegisterSDNode>(Node)->getReg();
     // Just use the specified register as our input if we can.
     if (MRegisterInfo::isVirtualRegister(Reg) || Reg == X86::ESP)
       return Reg;
-  }
+  } 
 
   unsigned &Reg = ExprMap[N];
   if (Reg) return Reg;

@@ -220,6 +220,8 @@ X86TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
   // turn it into a TargetGlobalAddress node so that legalize doesn't hack it.
   if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee))
     Callee = DAG.getTargetGlobalAddress(G->getGlobal(), getPointerTy());
+  else if (ExternalSymbolSDNode *S = dyn_cast<ExternalSymbolSDNode>(Callee))
+    Callee = DAG.getTargetExternalSymbol(S->getSymbol(), getPointerTy());
 
   if (CallingConv == CallingConv::Fast && EnableFastCC)
     return LowerFastCCCallTo(Chain, RetTy, isTailCall, Callee, Args, DAG);
@@ -412,8 +414,7 @@ X86TargetLowering::LowerCCCCallTo(SDOperand Chain, const Type *RetTy,
 
     // Arguments go on the stack in reverse order, as specified by the ABI.
     unsigned ArgOffset = 0;
-    SDOperand StackPtr = DAG.getCopyFromReg(DAG.getEntryNode(),
-                                            X86::ESP, MVT::i32);
+    SDOperand StackPtr = DAG.getRegister(X86::ESP, MVT::i32);
     std::vector<SDOperand> Stores;
 
     for (unsigned i = 0, e = Args.size(); i != e; ++i) {
