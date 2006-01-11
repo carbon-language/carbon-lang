@@ -13,12 +13,17 @@
 //===----------------------------------------------------------------------===//
 
 #include "X86.h"
+#include "X86RegisterInfo.h"
 #include "X86Subtarget.h"
 #include "X86ISelLowering.h"
 #include "llvm/GlobalValue.h"
+#include "llvm/Instructions.h"
+#include "llvm/Support/CFG.h"
 #include "llvm/CodeGen/MachineConstantPool.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
+#include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/SSARegMap.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/Debug.h"
@@ -139,6 +144,7 @@ namespace {
 /// when it has created a SelectionDAG for us to codegen.
 void X86DAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
   DEBUG(BB->dump());
+  MachineFunction::iterator FirstMBB = BB;
 
   // Codegen the basic block.
   DAG.setRoot(Select(DAG.getRoot()));
@@ -147,6 +153,59 @@ void X86DAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
 
   // Emit machine code to BB. 
   ScheduleAndEmitDAG(DAG);
+  
+  // If we are emitting FP stack code, scan the basic block to determine if this
+  // block defines any FP values.  If so, put an FP_REG_KILL instruction before
+  // the terminator of the block.
+  if (X86Vector < SSE2) {
+    // Note that FP stack instructions *are* used in SSE code when returning
+    // values, but these are not live out of the basic block, so we don't need
+    // an FP_REG_KILL in this case either.
+    bool ContainsFPCode = false;
+    
+    // Scan all of the machine instructions in these MBBs, checking for FP
+    // stores.
+    MachineFunction::iterator MBBI = FirstMBB;
+    do {
+      for (MachineBasicBlock::iterator I = MBBI->begin(), E = MBBI->end();
+           !ContainsFPCode && I != E; ++I) {
+        for (unsigned op = 0, e = I->getNumOperands(); op != e; ++op) {
+          if (I->getOperand(op).isRegister() && I->getOperand(op).isDef() &&
+              MRegisterInfo::isVirtualRegister(I->getOperand(op).getReg()) &&
+              RegMap->getRegClass(I->getOperand(0).getReg()) == 
+                X86::RFPRegisterClass) {
+            ContainsFPCode = true;
+            break;
+          }
+        }
+      }
+    } while (!ContainsFPCode && &*(MBBI++) != BB);
+    
+    // Check PHI nodes in successor blocks.  These PHI's will be lowered to have
+    // a copy of the input value in this block.
+    if (!ContainsFPCode) {
+      // Final check, check LLVM BB's that are successors to the LLVM BB
+      // corresponding to BB for FP PHI nodes.
+      const BasicBlock *LLVMBB = BB->getBasicBlock();
+      const PHINode *PN;
+      for (succ_const_iterator SI = succ_begin(LLVMBB), E = succ_end(LLVMBB);
+           !ContainsFPCode && SI != E; ++SI) {
+        for (BasicBlock::const_iterator II = SI->begin();
+             (PN = dyn_cast<PHINode>(II)); ++II) {
+          if (PN->getType()->isFloatingPoint()) {
+            ContainsFPCode = true;
+            break;
+          }
+        }
+      }
+    }
+
+    // Finally, if we found any FP code, emit the FP_REG_KILL instruction.
+    if (ContainsFPCode) {
+      BuildMI(*BB, BB->getFirstTerminator(), X86::FP_REG_KILL, 0);
+      ++NumFPKill;
+    }
+  }
 }
 
 /// FIXME: copied from X86ISelPattern.cpp

@@ -226,7 +226,6 @@ void ISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
           break;
         }
 
-
   // Insert FP_REG_KILL instructions into basic blocks that need them.  This
   // only occurs due to the floating point stackifier not being aggressive
   // enough to handle arbitrary global stackification.
