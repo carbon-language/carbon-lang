@@ -15,6 +15,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/ADT/StringExtras.h"
 #include <iostream>
+#include <algorithm>
 
 using namespace llvm;
 
