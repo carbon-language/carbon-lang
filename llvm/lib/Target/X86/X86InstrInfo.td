@@ -52,6 +52,8 @@ def SDTX86Fst     : SDTypeProfile<0, 3, [SDTCisFP<0>,
                                          SDTCisPtrTy<1>, SDTCisVT<2, OtherVT>]>;
 def SDTX86Fild64m : SDTypeProfile<1, 1, [SDTCisVT<0, f64>, SDTCisPtrTy<1>]>;
 
+def SDTX86RepStr  : SDTypeProfile<0, 1, [SDTCisVT<0, OtherVT>]>;
+
 def SDTX86RdTsc   : SDTypeProfile<0, 0, []>;
 
 def X86addflag : SDNode<"X86ISD::ADD_FLAG", SDTIntBinOp ,
@@ -98,6 +100,11 @@ def X86fst     : SDNode<"X86ISD::FST",      SDTX86Fst,
                         [SDNPHasChain]>;
 def X86fild64m : SDNode<"X86ISD::FILD64m",  SDTX86Fild64m,
                         [SDNPHasChain]>;
+
+def X86rep_stos: SDNode<"X86ISD::REP_STOS", SDTX86RepStr,
+                        [SDNPHasChain, SDNPInFlag]>;
+def X86rep_movs: SDNode<"X86ISD::REP_MOVS", SDTX86RepStr,
+                        [SDNPHasChain, SDNPInFlag]>;
 
 def X86rdtsc   : SDNode<"X86ISD::RDTSC_DAG",SDTX86RdTsc,
                         [SDNPHasChain, SDNPOutFlag]>;
@@ -549,18 +556,24 @@ def LEA32r   : I<0x8D, MRMSrcMem,
                  "lea{l} {$src|$dst}, {$dst|$src}",
                  [(set R32:$dst, leaaddr:$src)]>;
 
-def REP_MOVSB : I<0xA4, RawFrm, (ops), "{rep;movsb|rep movsb}", []>,
+def REP_MOVSB : I<0xA4, RawFrm, (ops), "{rep;movsb|rep movsb}",
+                  [(X86rep_movs i8)]>,
                 Imp<[ECX,EDI,ESI], [ECX,EDI,ESI]>, REP;
-def REP_MOVSW : I<0xA5, RawFrm, (ops), "{rep;movsw|rep movsw}", []>,
+def REP_MOVSW : I<0xA5, RawFrm, (ops), "{rep;movsw|rep movsw}",
+                  [(X86rep_movs i16)]>,
                 Imp<[ECX,EDI,ESI], [ECX,EDI,ESI]>, REP, OpSize;
-def REP_MOVSD : I<0xA5, RawFrm, (ops), "{rep;movsd|rep movsd}", []>,
+def REP_MOVSD : I<0xA5, RawFrm, (ops), "{rep;movsd|rep movsd}",
+                  [(X86rep_movs i32)]>,
                 Imp<[ECX,EDI,ESI], [ECX,EDI,ESI]>, REP;
 
-def REP_STOSB : I<0xAA, RawFrm, (ops), "{rep;stosb|rep stosb}", []>,
+def REP_STOSB : I<0xAA, RawFrm, (ops), "{rep;stosb|rep stosb}",
+                  [(X86rep_stos i8)]>,
                 Imp<[AL,ECX,EDI], [ECX,EDI]>, REP;
-def REP_STOSW : I<0xAB, RawFrm, (ops), "{rep;stosw|rep stosw}", []>,
+def REP_STOSW : I<0xAB, RawFrm, (ops), "{rep;stosw|rep stosw}",
+                  [(X86rep_stos i16)]>,
                 Imp<[AX,ECX,EDI], [ECX,EDI]>, REP, OpSize;
-def REP_STOSD : I<0xAB, RawFrm, (ops), "{rep;stosl|rep stosd}", []>,
+def REP_STOSD : I<0xAB, RawFrm, (ops), "{rep;stosl|rep stosd}",
+                  [(X86rep_stos i32)]>,
                 Imp<[EAX,ECX,EDI], [ECX,EDI]>, REP;
 
 

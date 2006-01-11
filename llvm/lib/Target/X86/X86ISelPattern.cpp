@@ -3558,8 +3558,8 @@ void ISel::Select(SDOperand N) {
       Opcode = X86::REP_STOSB;
     }
 
-    // No matter what the alignment is, we put the source in ESI, the
-    // destination in EDI, and the count in ECX.
+    // No matter what the alignment is, we put the destination in EDI, and the
+    // count in ECX.
     unsigned TmpReg1 = SelectExpr(Node->getOperand(1));
     BuildMI(BB, X86::MOV32rr, 1, X86::ECX).addReg(CountReg);
     BuildMI(BB, X86::MOV32rr, 1, X86::EDI).addReg(TmpReg1);

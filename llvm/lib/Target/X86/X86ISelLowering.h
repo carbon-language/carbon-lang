@@ -123,9 +123,15 @@ namespace llvm {
       /// or TEST instruction.
       BRCOND,
 
-      /// Return with a flag operand. Operand 1 is the number of bytes of stack
-      /// to pop, operand 2 is the chain and operand 3 is a flag operand.
+      /// Return with a flag operand. Operand 1 is the chain operand, operand
+      /// 2 is the number of bytes of stack to pop.
       RET_FLAG,
+
+      /// REP_STOS - Repeat fill, corresponds to X86::REP_STOSx.
+      REP_STOS,
+
+      /// REP_MOVS - Repeat move, corresponds to X86::REP_MOVSx.
+      REP_MOVS,
     };
 
     // X86 specific condition code. These correspond to X86_*_COND in
