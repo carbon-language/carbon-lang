@@ -215,12 +215,10 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
 
       // Replace the pseudo instruction with a new instruction...
       if (Old->getOpcode() == PPC::ADJCALLSTACKDOWN) {
-        MBB.insert(I, BuildMI(PPC::ADDI, 2, PPC::R1).addReg(PPC::R1)
-                .addSImm(-Amount));
+        BuildMI(MBB, I, PPC::ADDI, 2, PPC::R1).addReg(PPC::R1).addSImm(-Amount);
       } else {
         assert(Old->getOpcode() == PPC::ADJCALLSTACKUP);
-        MBB.insert(I, BuildMI(PPC::ADDI, 2, PPC::R1).addReg(PPC::R1)
-                .addSImm(Amount));
+        BuildMI(MBB, I, PPC::ADDI, 2, PPC::R1).addReg(PPC::R1).addSImm(Amount);
       }
     }
   }
@@ -259,9 +257,9 @@ PPCRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II) const {
   if (Offset > 32767 || Offset < -32768) {
     // Insert a set of r0 with the full offset value before the ld, st, or add
     MachineBasicBlock *MBB = MI.getParent();
-    MBB->insert(II, BuildMI(PPC::LIS, 1, PPC::R0).addSImm(Offset >> 16));
-    MBB->insert(II, BuildMI(PPC::ORI, 2, PPC::R0).addReg(PPC::R0)
-      .addImm(Offset));
+    BuildMI(*MBB, II, PPC::LIS, 1, PPC::R0).addSImm(Offset >> 16);
+    BuildMI(*MBB, II, PPC::ORI, 2, PPC::R0).addReg(PPC::R0).addImm(Offset);
+    
     // convert into indexed form of the instruction
     // sth 0:rA, 1:imm 2:(rB) ==> sthx 0:rA, 2:rB, 1:r0
     // addi 0:rA 1:rB, 2, imm ==> add 0:rA, 1:rB, 2:r0
@@ -291,7 +289,6 @@ void PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
   MachineBasicBlock &MBB = MF.front();   // Prolog goes in entry BB
   MachineBasicBlock::iterator MBBI = MBB.begin();
   MachineFrameInfo *MFI = MF.getFrameInfo();
-  MachineInstr *MI;
 
   // Get the number of bytes to allocate from the FrameInfo
   unsigned NumBytes = MFI->getStackSize();
@@ -331,17 +328,15 @@ void PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
 
   // Adjust stack pointer: r1 -= numbytes.
   if (NumBytes <= 32768) {
-    MI=BuildMI(PPC::STWU,3).addReg(PPC::R1).addSImm(-NumBytes).addReg(PPC::R1);
-    MBB.insert(MBBI, MI);
+    BuildMI(MBB, MBBI, PPC::STWU, 3)
+       .addReg(PPC::R1).addSImm(-NumBytes).addReg(PPC::R1);
   } else {
     int NegNumbytes = -NumBytes;
-    MI = BuildMI(PPC::LIS, 1, PPC::R0).addSImm(NegNumbytes >> 16);
-    MBB.insert(MBBI, MI);
-    MI = BuildMI(PPC::ORI, 2, PPC::R0).addReg(PPC::R0)
-      .addImm(NegNumbytes & 0xFFFF);
-    MBB.insert(MBBI, MI);
-    MI = BuildMI(PPC::STWUX, 3).addReg(PPC::R1).addReg(PPC::R1).addReg(PPC::R0);
-    MBB.insert(MBBI, MI);
+    BuildMI(MBB, MBBI, PPC::LIS, 1, PPC::R0).addSImm(NegNumbytes >> 16);
+    BuildMI(MBB, MBBI, PPC::ORI, 2, PPC::R0)
+        .addReg(PPC::R0).addImm(NegNumbytes & 0xFFFF);
+    BuildMI(MBB, MBBI, PPC::STWUX, 3)
+        .addReg(PPC::R1).addReg(PPC::R1).addReg(PPC::R0);
   }
   
   // If there is a preferred stack alignment, align R1 now
@@ -350,21 +345,18 @@ void PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
   // instructions.
   if (MaxAlign > TargetAlign) {
     assert(isPowerOf2_32(MaxAlign) && MaxAlign < 32767 && "Invalid alignment!");
-    MI = BuildMI(PPC::RLWINM, 4, PPC::R0).addReg(PPC::R1).addImm(0)
-      .addImm(32-Log2_32(MaxAlign)).addImm(31);
-    MBB.insert(MBBI, MI);
-    MI = BuildMI(PPC::SUBFIC, 2, PPC::R0).addReg(PPC::R0).addImm(MaxAlign);
-    MBB.insert(MBBI, MI);
-    MI = BuildMI(PPC::STWUX, 3).addReg(PPC::R1).addReg(PPC::R1).addReg(PPC::R0);
-    MBB.insert(MBBI, MI);
+    BuildMI(MBB, MBBI, PPC::RLWINM, 4, PPC::R0)
+      .addReg(PPC::R1).addImm(0).addImm(32-Log2_32(MaxAlign)).addImm(31);
+    BuildMI(MBB, MBBI, PPC::SUBFIC, 2,PPC::R0).addReg(PPC::R0).addImm(MaxAlign);
+    BuildMI(MBB, MBBI, PPC::STWUX, 3)
+      .addReg(PPC::R1).addReg(PPC::R1).addReg(PPC::R0);
   }
   
   // If there is a frame pointer, copy R1 (SP) into R31 (FP)
   if (hasFP(MF)) {
-    MI = BuildMI(PPC::STW, 3).addReg(PPC::R31).addSImm(GPRSize).addReg(PPC::R1);
-    MBB.insert(MBBI, MI);
-    MI = BuildMI(PPC::OR4, 2, PPC::R31).addReg(PPC::R1).addReg(PPC::R1);
-    MBB.insert(MBBI, MI);
+    BuildMI(MBB, MBBI, PPC::STW, 3)
+      .addReg(PPC::R31).addSImm(GPRSize).addReg(PPC::R1);
+    BuildMI(MBB, MBBI, PPC::OR4, 2, PPC::R31).addReg(PPC::R1).addReg(PPC::R1);
   }
 }
 
