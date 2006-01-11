@@ -34,6 +34,7 @@ namespace {
     virtual bool runOnFunction(Function &F);
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
+      AU.addPreserved<ETForest>();
       AU.addPreserved<DominatorSet>();
       AU.addPreserved<ImmediateDominators>();
       AU.addPreserved<DominatorTree>();
@@ -152,6 +153,10 @@ bool llvm::SplitCriticalEdge(TerminatorInst *TI, unsigned SuccNum, Pass *P) {
     // anything.
     ID->addNewBlock(NewBB, TIBB);
   }
+
+  // Update the forest?
+  if (ETForest *EF = P->getAnalysisToUpdate<ETForest>())
+    EF->addNewBlock(NewBB, TIBB);
 
   // Should we update DominatorTree information?
   if (DominatorTree *DT = P->getAnalysisToUpdate<DominatorTree>()) {
