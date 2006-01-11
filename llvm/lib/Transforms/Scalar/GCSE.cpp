@@ -45,7 +45,7 @@ namespace {
     // This transformation requires dominator and immediate dominator info
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesCFG();
-      AU.addRequired<DominatorSet>();
+      AU.addRequired<ETForest>();
       AU.addRequired<DominatorTree>();
       AU.addRequired<ValueNumbering>();
     }
@@ -64,7 +64,7 @@ bool GCSE::runOnFunction(Function &F) {
   bool Changed = false;
 
   // Get pointers to the analysis results that we will be using...
-  DominatorSet &DS = getAnalysis<DominatorSet>();
+  ETForest &EF = getAnalysis<ETForest>();
   ValueNumbering &VN = getAnalysis<ValueNumbering>();
   DominatorTree &DT = getAnalysis<DominatorTree>();
 
@@ -141,7 +141,7 @@ bool GCSE::runOnFunction(Function &F) {
             if (OtherI->getParent() == BB)
               Dominates = BlockInsts.count(OtherI);
             else
-              Dominates = DS.dominates(OtherI->getParent(), BB);
+              Dominates = EF.dominates(OtherI->getParent(), BB);
 
             if (Dominates) {
               // Okay, we found an instruction with the same value as this one
