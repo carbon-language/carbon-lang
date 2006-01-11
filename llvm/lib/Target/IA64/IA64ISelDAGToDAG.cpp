@@ -341,8 +341,6 @@ SDOperand IA64DAGToDAGISel::Select(SDOperand Op) {
   switch (N->getOpcode()) {
   default: break;
 
-  case ISD::Register: return Op; // XXX: this is a hack, tblgen one day?
- 
   case IA64ISD::BRCALL: { // XXX: this is also a hack!
     SDOperand Chain = Select(N->getOperand(0));
     SDOperand InFlag;  // Null incoming flag value.
