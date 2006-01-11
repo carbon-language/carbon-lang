@@ -424,11 +424,15 @@ let isTwoAddress = 1 in {
     "($qp) mov $dst = $src;;">;
 }
 
-// TODO: select bools
 def SELECTINT : Pat<(select PR:$which, GR:$src1, GR:$src2),
           (CMOV (MOV GR:$src2), GR:$src1, PR:$which)>; // note order!
 def SELECTFP : Pat<(select PR:$which, FP:$src1, FP:$src2),
           (CFMOV (FMOV FP:$src2), FP:$src1, PR:$which)>; // note order!
+// TODO: can do this faster, w/o using any integer regs (see pattern isel)
+// FIXME: this makes tblgen cough and splutter:
+// Assertion && "Unknown node in result pattern!"'
+//def SELECTBOOL : Pat<(select PR:$which, PR:$src1, PR:$src2), // note order!
+//          (trunc (CMOV (MOV (zext PR:$src2)), (zext PR:$src1), PR:$which))>;
 
 // load constants of various sizes // FIXME: prettyprint -ve constants
 def : Pat<(i64 immSExt14:$imm), (ADDS r0, immSExt14:$imm)>;
