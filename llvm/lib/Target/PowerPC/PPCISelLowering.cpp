@@ -509,7 +509,13 @@ PPCTargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
     case MVT::f32:
     case MVT::f64:
       ObjSize = (ObjectVT == MVT::f64) ? 8 : 4;
-      if (!ArgLive) break;
+      if (!ArgLive) {
+        if (FPR_remaining > 0) {
+          --FPR_remaining;
+          ++FPR_idx;
+        }        
+        break;
+      }
       if (FPR_remaining > 0) {
         unsigned VReg;
         if (ObjectVT == MVT::f32)
