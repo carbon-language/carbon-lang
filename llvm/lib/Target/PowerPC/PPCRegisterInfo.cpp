@@ -370,23 +370,34 @@ void PPCRegisterInfo::emitPrologue(MachineFunction &MF) const {
 
 void PPCRegisterInfo::emitEpilogue(MachineFunction &MF,
                                    MachineBasicBlock &MBB) const {
-  const MachineFrameInfo *MFI = MF.getFrameInfo();
   MachineBasicBlock::iterator MBBI = prior(MBB.end());
-  MachineInstr *MI;
   assert(MBBI->getOpcode() == PPC::BLR &&
          "Can only insert epilog into returning blocks");
 
-  // Get the number of bytes allocated from the FrameInfo...
-  unsigned NumBytes = MFI->getStackSize();
-  unsigned GPRSize = 4;
+  // Get the number of bytes allocated from the FrameInfo.
+  unsigned NumBytes = MF.getFrameInfo()->getStackSize();
+  unsigned GPRSize = 4; 
 
   if (NumBytes != 0) {
+    // If this function has a frame pointer, load the saved stack pointer from
+    // its stack slot.
     if (hasFP(MF)) {
-      MI = BuildMI(PPC::LWZ, 2, PPC::R31).addSImm(GPRSize).addReg(PPC::R31);
-      MBB.insert(MBBI, MI);
+      BuildMI(MBB, MBBI, PPC::LWZ, 2, PPC::R31)
+          .addSImm(GPRSize).addReg(PPC::R31);
     }
-    MI = BuildMI(PPC::LWZ, 2, PPC::R1).addSImm(0).addReg(PPC::R1);
-    MBB.insert(MBBI, MI);
+    
+    // The loaded (or persistent) stack pointer value is offseted by the 'stwu'
+    // on entry to the function.  Add this offset back now.
+    if (NumBytes <= 32768) {
+      BuildMI(MBB, MBBI, PPC::ADDI, 2, PPC::R1)
+          .addReg(PPC::R1).addSImm(NumBytes);
+    } else {
+      BuildMI(MBB, MBBI, PPC::LIS, 1, PPC::R0).addSImm(NumBytes >> 16);
+      BuildMI(MBB, MBBI, PPC::ORI, 2, PPC::R0)
+          .addReg(PPC::R0).addImm(NumBytes & 0xFFFF);
+      BuildMI(MBB, MBBI, PPC::ADD4, 2, PPC::R1)
+        .addReg(PPC::R0).addReg(PPC::R1);
+    }
   }
 }
 
