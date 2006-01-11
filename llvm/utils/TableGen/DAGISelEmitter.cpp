@@ -2128,10 +2128,11 @@ public:
       }
 
       // Emit all the chain and CopyToReg stuff.
+      bool ChainEmitted = HasChain;
       if (HasChain)
         OS << "      Chain = Select(Chain);\n";
       if (HasImpInputs)
-        EmitCopyToRegs(Pattern, "N", HasChain, true);
+        EmitCopyToRegs(Pattern, "N", ChainEmitted, true);
       if (HasInFlag || HasOptInFlag) {
         unsigned FlagNo = (unsigned) HasChain + Pattern->getNumChildren();
         if (HasOptInFlag)
@@ -2199,11 +2200,10 @@ public:
              << ValNo + (unsigned)HasChain << ");\n";
 
         if (HasImpResults) {
-          if (EmitCopyFromRegs(N, HasChain)) {
+          if (EmitCopyFromRegs(N, ChainEmitted)) {
             OS << "      CodeGenMap[N.getValue(" << ValNo << ")] = "
                << "Result.getValue(" << ValNo << ");\n";
             ValNo++;
-            HasChain = true;
           }
         }
 
@@ -2314,14 +2314,14 @@ private:
   /// EmitCopyToRegs - Emit the flag operands for the DAG that is
   /// being built.
   void EmitCopyToRegs(TreePatternNode *N, const std::string &RootName,
-                      bool HasChain, bool isRoot = false) {
+                      bool &ChainEmitted, bool isRoot = false) {
     const CodeGenTarget &T = ISE.getTargetInfo();
     unsigned OpNo =
       (unsigned) NodeHasProperty(N, SDNodeInfo::SDNPHasChain, ISE);
     for (unsigned i = 0, e = N->getNumChildren(); i != e; ++i, ++OpNo) {
       TreePatternNode *Child = N->getChild(i);
       if (!Child->isLeaf()) {
-        EmitCopyToRegs(Child, RootName + utostr(OpNo), HasChain);
+        EmitCopyToRegs(Child, RootName + utostr(OpNo), ChainEmitted);
       } else {
         if (DefInit *DI = dynamic_cast<DefInit*>(Child->getLeafValue())) {
           Record *RR = DI->getDef();
@@ -2329,7 +2329,11 @@ private:
             MVT::ValueType RVT = getRegisterValueType(RR, T);
             if (RVT == MVT::Flag) {
               OS << "      InFlag = Select(" << RootName << OpNo << ");\n";
-            } else if (HasChain) {
+            } else {
+              if (!ChainEmitted) {
+                OS << "      SDOperand Chain = CurDAG->getEntryNode();\n";
+                ChainEmitted = true;
+              }
               OS << "      SDOperand " << RootName << "CR" << i << ";\n";
               OS << "      " << RootName << "CR" << i
                  << "  = CurDAG->getCopyToReg(Chain, CurDAG->getRegister("
@@ -2340,12 +2344,6 @@ private:
                  << ".getValue(0);\n";
               OS << "      InFlag = " << RootName << "CR" << i
                  << ".getValue(1);\n";
-            } else {
-              OS << "      InFlag = CurDAG->getCopyToReg(CurDAG->getEntryNode()"
-                 << ", CurDAG->getRegister(" << ISE.getQualifiedName(RR)
-                 << ", MVT::" << getEnumName(RVT) << ")"
-                 << ", Select(" << RootName << OpNo
-                 << "), InFlag).getValue(1);\n";
             }
           }
         }
@@ -2356,7 +2354,7 @@ private:
   /// EmitCopyFromRegs - Emit code to copy result to physical registers
   /// as specified by the instruction. It returns true if any copy is
   /// emitted.
-  bool EmitCopyFromRegs(TreePatternNode *N, bool HasChain) {
+  bool EmitCopyFromRegs(TreePatternNode *N, bool &ChainEmitted) {
     bool RetVal = false;
     Record *Op = N->getOperator();
     if (Op->isSubClassOf("Instruction")) {
@@ -2369,20 +2367,15 @@ private:
         if (RR->isSubClassOf("Register")) {
           MVT::ValueType RVT = getRegisterValueType(RR, CGT);
           if (RVT != MVT::Flag) {
-            if (HasChain) {
-              OS << "      Result = CurDAG->getCopyFromReg(Chain, "
-                 << ISE.getQualifiedName(RR)
-                 << ", MVT::" << getEnumName(RVT) << ", InFlag);\n";
-              OS << "      Chain  = Result.getValue(1);\n";
-              OS << "      InFlag = Result.getValue(2);\n";
-            } else {
-              OS << "      Chain;\n";
-              OS << "      Result = CurDAG->getCopyFromReg("
-                 << "CurDAG->getEntryNode(), ISE.getQualifiedName(RR)"
-                 << ", MVT::" << getEnumName(RVT) << ", InFlag);\n";
-              OS << "      Chain  = Result.getValue(1);\n";
-              OS << "      InFlag = Result.getValue(2);\n";
+            if (!ChainEmitted) {
+              OS << "      SDOperand Chain = CurDAG->getEntryNode();\n";
+              ChainEmitted = true;
             }
+            OS << "      Result = CurDAG->getCopyFromReg(Chain, "
+               << ISE.getQualifiedName(RR)
+               << ", MVT::" << getEnumName(RVT) << ", InFlag);\n";
+            OS << "      Chain  = Result.getValue(1);\n";
+            OS << "      InFlag = Result.getValue(2);\n";
             RetVal = true;
           }
         }
