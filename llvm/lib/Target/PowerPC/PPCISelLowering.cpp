@@ -657,8 +657,7 @@ PPCTargetLowering::LowerCallTo(SDOperand Chain,
     // Set up a copy of the stack pointer for use loading and storing any
     // arguments that may not fit in the registers available for argument
     // passing.
-    SDOperand StackPtr = DAG.getCopyFromReg(DAG.getEntryNode(),
-                                            PPC::R1, MVT::i32);
+    SDOperand StackPtr = DAG.getRegister(PPC::R1, MVT::i32);
     
     // Figure out which arguments are going to go in registers, and which in
     // memory.  Also, if this is a vararg function, floating point operations
