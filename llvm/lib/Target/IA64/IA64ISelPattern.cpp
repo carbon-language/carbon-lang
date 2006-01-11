@@ -96,6 +96,8 @@ namespace {
       //IA64 has these, but they are not implemented
       setOperationAction(ISD::CTTZ , MVT::i64  , Expand);
       setOperationAction(ISD::CTLZ , MVT::i64  , Expand);
+      setOperationAction(ISD::ROTL , MVT::i64  , Expand);
+      setOperationAction(ISD::ROTR , MVT::i64  , Expand);
       // FIXME: implement mulhs (xma.h) and mulhu (xma.hu)
       setOperationAction(ISD::MULHS , MVT::i64  , Expand);
       setOperationAction(ISD::MULHU , MVT::i64  , Expand);
