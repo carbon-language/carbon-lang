@@ -335,7 +335,7 @@ def XORri   : F3_2<2, 0b000011,
 def XNORrr  : F3_1<2, 0b000111,
                    (ops IntRegs:$dst, IntRegs:$b, IntRegs:$c),
                    "xnor $b, $c, $dst",
-                   [(set IntRegs:$dst, (xor IntRegs:$b, (not IntRegs:$c)))]>;
+                   [(set IntRegs:$dst, (not (xor IntRegs:$b, IntRegs:$c)))]>;
 def XNORri  : F3_2<2, 0b000111,
                    (ops IntRegs:$dst, IntRegs:$b, i32imm:$c),
                    "xnor $b, $c, $dst", []>;
