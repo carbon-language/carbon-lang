@@ -107,12 +107,14 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   setOperationAction(ISD::CTLZ             , MVT::i32  , Expand);
   setOperationAction(ISD::READCYCLECOUNTER , MVT::i64  , Custom);
 
-  setOperationAction(ISD::ROTL             , MVT::i8   , Expand);
-  setOperationAction(ISD::ROTR             , MVT::i8   , Expand);
-  setOperationAction(ISD::ROTL             , MVT::i16  , Expand);
-  setOperationAction(ISD::ROTR             , MVT::i16  , Expand);
-  setOperationAction(ISD::ROTL             , MVT::i32  , Expand);
-  setOperationAction(ISD::ROTR             , MVT::i32  , Expand);
+  if (!X86DAGIsel) {
+    setOperationAction(ISD::ROTL           , MVT::i8   , Expand);
+    setOperationAction(ISD::ROTR           , MVT::i8   , Expand);
+    setOperationAction(ISD::ROTL           , MVT::i16  , Expand);
+    setOperationAction(ISD::ROTR           , MVT::i16  , Expand);
+    setOperationAction(ISD::ROTL           , MVT::i32  , Expand);
+    setOperationAction(ISD::ROTR           , MVT::i32  , Expand);
+  }
 
   setOperationAction(ISD::READIO           , MVT::i1   , Expand);
   setOperationAction(ISD::READIO           , MVT::i8   , Expand);

@@ -1555,60 +1555,92 @@ let isTwoAddress = 0 in {
 // Rotate instructions
 // FIXME: provide shorter instructions when imm8 == 1
 def ROL8rCL  : I<0xD2, MRM0r, (ops R8 :$dst, R8 :$src),
-                 "rol{b} {%cl, $dst|$dst, %CL}", []>, Imp<[CL],[]>;
+                 "rol{b} {%cl, $dst|$dst, %CL}",
+                 [(set R8:$dst, (rotl R8:$src, CL))]>, Imp<[CL],[]>;
 def ROL16rCL : I<0xD3, MRM0r, (ops R16:$dst, R16:$src),
-                 "rol{w} {%cl, $dst|$dst, %CL}", []>, Imp<[CL],[]>, OpSize;
+                 "rol{w} {%cl, $dst|$dst, %CL}",
+                 [(set R16:$dst, (rotl R16:$src, CL))]>, Imp<[CL],[]>, OpSize;
 def ROL32rCL : I<0xD3, MRM0r, (ops R32:$dst, R32:$src),
-                 "rol{l} {%cl, $dst|$dst, %CL}", []>, Imp<[CL],[]>;
+                 "rol{l} {%cl, $dst|$dst, %CL}",
+                 [(set R32:$dst, (rotl R32:$src, CL))]>, Imp<[CL],[]>;
 
 def ROL8ri   : Ii8<0xC0, MRM0r, (ops R8 :$dst, R8 :$src1, i8imm:$src2),
-                   "rol{b} {$src2, $dst|$dst, $src2}", []>;
+                   "rol{b} {$src2, $dst|$dst, $src2}",
+                   [(set R8:$dst, (rotl R8:$src1, (i8 imm:$src2)))]>;
 def ROL16ri  : Ii8<0xC1, MRM0r, (ops R16:$dst, R16:$src1, i8imm:$src2),
-                   "rol{w} {$src2, $dst|$dst, $src2}", []>, OpSize;
+                   "rol{w} {$src2, $dst|$dst, $src2}",
+                   [(set R16:$dst, (rotl R16:$src1, (i8 imm:$src2)))]>, OpSize;
 def ROL32ri  : Ii8<0xC1, MRM0r, (ops R32:$dst, R32:$src1, i8imm:$src2),
-                   "rol{l} {$src2, $dst|$dst, $src2}", []>;
+                   "rol{l} {$src2, $dst|$dst, $src2}",
+                   [(set R32:$dst, (rotl R32:$src1, (i8 imm:$src2)))]>;
 
 let isTwoAddress = 0 in {
   def ROL8mCL  : I<0xD2, MRM0m, (ops i8mem :$dst),
-                   "rol{b} {%cl, $dst|$dst, %CL}", []>, Imp<[CL],[]>;
+                   "rol{b} {%cl, $dst|$dst, %CL}",
+                   [(store (rotl (loadi8 addr:$dst), CL), addr:$dst)]>,
+                   Imp<[CL],[]>;
   def ROL16mCL : I<0xD3, MRM0m, (ops i16mem:$dst),
-                   "rol{w} {%cl, $dst|$dst, %CL}", []>, Imp<[CL],[]>, OpSize;
+                   "rol{w} {%cl, $dst|$dst, %CL}",
+                   [(store (rotl (loadi16 addr:$dst), CL), addr:$dst)]>,
+                   Imp<[CL],[]>, OpSize;
   def ROL32mCL : I<0xD3, MRM0m, (ops i32mem:$dst),
-                   "rol{l} {%cl, $dst|$dst, %CL}", []>, Imp<[CL],[]>;
+                   "rol{l} {%cl, $dst|$dst, %CL}",
+                   [(store (rotl (loadi32 addr:$dst), CL), addr:$dst)]>,
+                   Imp<[CL],[]>;
   def ROL8mi   : Ii8<0xC0, MRM0m, (ops i8mem :$dst, i8imm:$src),
-                     "rol{b} {$src, $dst|$dst, $src}", []>;
+                     "rol{b} {$src, $dst|$dst, $src}",
+                 [(store (rotl (loadi8 addr:$dst), (i8 imm:$src)), addr:$dst)]>;
   def ROL16mi  : Ii8<0xC1, MRM0m, (ops i16mem:$dst, i8imm:$src),
-                     "rol{w} {$src, $dst|$dst, $src}", []>, OpSize;
+                     "rol{w} {$src, $dst|$dst, $src}",
+                [(store (rotl (loadi16 addr:$dst), (i8 imm:$src)), addr:$dst)]>,
+                     OpSize;
   def ROL32mi  : Ii8<0xC1, MRM0m, (ops i32mem:$dst, i8imm:$src),
-                     "rol{l} {$src, $dst|$dst, $src}", []>;
+                     "rol{l} {$src, $dst|$dst, $src}",
+                [(store (rotl (loadi32 addr:$dst), (i8 imm:$src)), addr:$dst)]>;
 }
 
 def ROR8rCL  : I<0xD2, MRM1r, (ops R8 :$dst, R8 :$src),
-                 "ror{b} {%cl, $dst|$dst, %CL}", []>, Imp<[CL],[]>;
+                 "ror{b} {%cl, $dst|$dst, %CL}",
+                 [(set R8:$dst, (rotr R8:$src, CL))]>, Imp<[CL],[]>;
 def ROR16rCL : I<0xD3, MRM1r, (ops R16:$dst, R16:$src),
-                 "ror{w} {%cl, $dst|$dst, %CL}", []>, Imp<[CL],[]>, OpSize;
+                 "ror{w} {%cl, $dst|$dst, %CL}",
+                 [(set R16:$dst, (rotr R16:$src, CL))]>, Imp<[CL],[]>, OpSize;
 def ROR32rCL : I<0xD3, MRM1r, (ops R32:$dst, R32:$src),
-                 "ror{l} {%cl, $dst|$dst, %CL}", []>, Imp<[CL],[]>;
+                 "ror{l} {%cl, $dst|$dst, %CL}",
+                 [(set R32:$dst, (rotr R32:$src, CL))]>, Imp<[CL],[]>;
 
 def ROR8ri   : Ii8<0xC0, MRM1r, (ops R8 :$dst, R8 :$src1, i8imm:$src2),
-                   "ror{b} {$src2, $dst|$dst, $src2}", []>;
+                   "ror{b} {$src2, $dst|$dst, $src2}",
+                   [(set R8:$dst, (rotr R8:$src1, (i8 imm:$src2)))]>;
 def ROR16ri  : Ii8<0xC1, MRM1r, (ops R16:$dst, R16:$src1, i8imm:$src2),
-                   "ror{w} {$src2, $dst|$dst, $src2}", []>, OpSize;
+                   "ror{w} {$src2, $dst|$dst, $src2}",
+                   [(set R16:$dst, (rotr R16:$src1, (i8 imm:$src2)))]>, OpSize;
 def ROR32ri  : Ii8<0xC1, MRM1r, (ops R32:$dst, R32:$src1, i8imm:$src2),
-                   "ror{l} {$src2, $dst|$dst, $src2}", []>;
+                   "ror{l} {$src2, $dst|$dst, $src2}",
+                   [(set R32:$dst, (rotr R32:$src1, (i8 imm:$src2)))]>;
 let isTwoAddress = 0 in {
   def ROR8mCL  : I<0xD2, MRM1m, (ops i8mem :$dst),
-                   "ror{b} {%cl, $dst|$dst, %CL}", []>, Imp<[CL],[]>;
+                   "ror{b} {%cl, $dst|$dst, %CL}",
+                   [(store (rotr (loadi8 addr:$dst), CL), addr:$dst)]>,
+                   Imp<[CL],[]>;
   def ROR16mCL : I<0xD3, MRM1m, (ops i16mem:$dst),
-                   "ror{w} {%cl, $dst|$dst, %CL}", []>, Imp<[CL],[]>, OpSize;
+                   "ror{w} {%cl, $dst|$dst, %CL}",
+                   [(store (rotr (loadi16 addr:$dst), CL), addr:$dst)]>,
+                   Imp<[CL],[]>, OpSize;
   def ROR32mCL : I<0xD3, MRM1m, (ops i32mem:$dst), 
-                   "ror{l} {%cl, $dst|$dst, %CL}", []>, Imp<[CL],[]>;
+                   "ror{l} {%cl, $dst|$dst, %CL}",
+                   [(store (rotr (loadi32 addr:$dst), CL), addr:$dst)]>,
+                   Imp<[CL],[]>;
   def ROR8mi   : Ii8<0xC0, MRM1m, (ops i8mem :$dst, i8imm:$src),
-                     "ror{b} {$src, $dst|$dst, $src}", []>;
+                     "ror{b} {$src, $dst|$dst, $src}",
+                 [(store (rotr (loadi8 addr:$dst), (i8 imm:$src)), addr:$dst)]>;
   def ROR16mi  : Ii8<0xC1, MRM1m, (ops i16mem:$dst, i8imm:$src),
-                     "ror{w} {$src, $dst|$dst, $src}", []>, OpSize;
+                     "ror{w} {$src, $dst|$dst, $src}",
+                [(store (rotr (loadi16 addr:$dst), (i8 imm:$src)), addr:$dst)]>,
+                     OpSize;
   def ROR32mi  : Ii8<0xC1, MRM1m, (ops i32mem:$dst, i8imm:$src),
-                     "ror{l} {$src, $dst|$dst, $src}", []>;
+                     "ror{l} {$src, $dst|$dst, $src}",
+                [(store (rotr (loadi32 addr:$dst), (i8 imm:$src)), addr:$dst)]>;
 }
 
 
