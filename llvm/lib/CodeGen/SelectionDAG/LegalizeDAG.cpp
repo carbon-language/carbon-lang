@@ -829,7 +829,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     // legalization process more efficient and also makes libcall insertion
     // easier.
     break;
-  case ISD::DYNAMIC_STACKALLOC:
+  case ISD::DYNAMIC_STACKALLOC: {
     Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
     Tmp2 = LegalizeOp(Node->getOperand(1));  // Legalize the size.
     Tmp3 = LegalizeOp(Node->getOperand(2));  // Legalize the alignment.
@@ -842,12 +842,25 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     } else
       Result = Op.getValue(0);
 
-    // Since this op produces two values, make sure to remember that we
-    // legalized both of them.
-    AddLegalizedOperand(SDOperand(Node, 0), Result);
-    AddLegalizedOperand(SDOperand(Node, 1), Result.getValue(1));
-    return Result.getValue(Op.ResNo);
-
+    switch (TLI.getOperationAction(Node->getOpcode(),
+                                   Node->getValueType(0))) {
+    default: assert(0 && "This action is not supported yet!");
+    case TargetLowering::Custom: {
+      SDOperand Tmp = TLI.LowerOperation(Result, DAG);
+      if (Tmp.Val) {
+        Result = LegalizeOp(Tmp);
+      }
+      // FALLTHROUGH if the target thinks it is legal.
+    }
+    case TargetLowering::Legal:
+      // Since this op produce two values, make sure to remember that we
+      // legalized both of them.
+      AddLegalizedOperand(SDOperand(Node, 0), Result);
+      AddLegalizedOperand(SDOperand(Node, 1), Result.getValue(1));
+      return Result.getValue(Op.ResNo);
+    }
+    assert(0 && "Unreachable");
+  }
   case ISD::TAILCALL:
   case ISD::CALL: {
     Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
