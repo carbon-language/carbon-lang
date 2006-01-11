@@ -380,7 +380,7 @@ void PPCRegisterInfo::emitEpilogue(MachineFunction &MF,
     
     // The loaded (or persistent) stack pointer value is offseted by the 'stwu'
     // on entry to the function.  Add this offset back now.
-    if (NumBytes <= 32768) {
+    if (NumBytes < 32768) {
       BuildMI(MBB, MBBI, PPC::ADDI, 2, PPC::R1)
           .addReg(PPC::R1).addSImm(NumBytes);
     } else {
