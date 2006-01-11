@@ -315,7 +315,8 @@ static bool isRegister0(SDOperand Op) {
 /// SelectLEAAddr - it calls SelectAddr and determines if the maximal addressing
 /// mode it matches can be cost effectively emitted as an LEA instruction.
 /// For X86, it always is unless it's just a (Reg + const).
-bool X86DAGToDAGISel::SelectLEAAddr(SDOperand N, SDOperand &Base, SDOperand &Scale,
+bool X86DAGToDAGISel::SelectLEAAddr(SDOperand N, SDOperand &Base,
+                                    SDOperand &Scale,
                                     SDOperand &Index, SDOperand &Disp) {
   X86ISelAddressMode AM;
   if (!MatchAddress(N, AM)) {
