@@ -35,7 +35,7 @@
 
 namespace llvm {
 
-struct DominatorSet;
+struct ETForest;
 class LoopInfo;
 class PHINode;
 class Instruction;
@@ -267,8 +267,6 @@ public:
   virtual void releaseMemory();
   void print(std::ostream &O, const Module* = 0) const;
 
-  /// getAnalysisUsage - Requires dominator sets
-  ///
   virtual void getAnalysisUsage(AnalysisUsage &AU) const;
 
   /// removeLoop - This removes the specified top-level loop from this loop info
@@ -299,8 +297,8 @@ public:
 
   static void stub();  // Noop
 private:
-  void Calculate(const DominatorSet &DS);
-  Loop *ConsiderForLoop(BasicBlock *BB, const DominatorSet &DS);
+  void Calculate(const ETForest &EF);
+  Loop *ConsiderForLoop(BasicBlock *BB, const ETForest &EF);
   void MoveSiblingLoopInto(Loop *NewChild, Loop *NewParent);
   void InsertLoopInto(Loop *L, Loop *Parent);
 };
