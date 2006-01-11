@@ -889,7 +889,6 @@ SDOperand SparcV8DAGToDAGISel::Select(SDOperand Op) {
   
   switch (N->getOpcode()) {
   default: break;
-  case ISD::Register: return Op;
   case ISD::FrameIndex: {
     int FI = cast<FrameIndexSDNode>(N)->getIndex();
     if (N->hasOneUse())
