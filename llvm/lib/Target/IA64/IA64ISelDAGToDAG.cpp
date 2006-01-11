@@ -411,10 +411,9 @@ SDOperand IA64DAGToDAGISel::Select(SDOperand Op) {
   
   case IA64ISD::GETFD: {
     SDOperand Input = Select(N->getOperand(0));
-    SDOperand Result = CurDAG->getTargetNode(IA64::GETFD, MVT::i64, MVT::Flag, Input);
-    CodeGenMap[Op.getValue(0)] = Result;
-    CodeGenMap[Op.getValue(1)] = Result.getValue(1);
-    return Result.getValue(Op.ResNo);
+    SDOperand Result = CurDAG->getTargetNode(IA64::GETFD, MVT::i64, Input);
+    CodeGenMap[Op] = Result;
+    return Result;
   } 
   
   case ISD::CALL:
