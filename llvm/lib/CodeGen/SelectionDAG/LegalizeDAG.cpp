@@ -2112,6 +2112,24 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     }
     break;
 
+  case ISD::ROTL:
+  case ISD::ROTR:
+    Tmp1 = LegalizeOp(Node->getOperand(0));   // LHS
+    Tmp2 = LegalizeOp(Node->getOperand(1));   // RHS
+    switch (TLI.getOperationAction(Node->getOpcode(), Node->getValueType(0))) {
+    case TargetLowering::Custom:
+    case TargetLowering::Promote:
+    case TargetLowering::Expand:
+      assert(0 && "Cannot handle this yet!");
+    case TargetLowering::Legal:
+      if (Tmp1 != Node->getOperand(0) ||
+          Tmp2 != Node->getOperand(1))
+        Result = DAG.getNode(Node->getOpcode(), Node->getValueType(0), Tmp1,
+                             Tmp2);
+      break;
+    }
+    break;
+    
   case ISD::CTPOP:
   case ISD::CTTZ:
   case ISD::CTLZ:

@@ -230,6 +230,8 @@ def urem       : SDNode<"ISD::UREM"      , SDTIntBinOp>;
 def srl        : SDNode<"ISD::SRL"       , SDTIntShiftOp>;
 def sra        : SDNode<"ISD::SRA"       , SDTIntShiftOp>;
 def shl        : SDNode<"ISD::SHL"       , SDTIntShiftOp>;
+def rotl       : SDNode<"ISD::ROTL"      , SDTIntShiftOp>;
+def rotr       : SDNode<"ISD::ROTR"      , SDTIntShiftOp>;
 def and        : SDNode<"ISD::AND"       , SDTIntBinOp,
                         [SDNPCommutative, SDNPAssociative]>;
 def or         : SDNode<"ISD::OR"        , SDTIntBinOp,

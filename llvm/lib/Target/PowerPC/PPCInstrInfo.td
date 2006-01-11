@@ -982,9 +982,6 @@ def : Pat<(or GPRC:$in, imm:$imm),
 // XOR an arbitrary immediate.
 def : Pat<(xor GPRC:$in, imm:$imm),
           (XORIS (XORI GPRC:$in, (LO16 imm:$imm)), (HI16 imm:$imm))>;
-def : Pat<(or (shl GPRC:$rS, GPRC:$rB),
-              (srl GPRC:$rS, (sub 32, GPRC:$rB))),
-          (RLWNM GPRC:$rS, GPRC:$rB, 0, 31)>;
 
 // Return void support.
 def : Pat<(ret), (BLR)>;
@@ -1008,6 +1005,12 @@ def : Pat<(srl GPRC:$in, (i32 imm:$imm)),
 def : Pat<(srl G8RC:$in, (i64 imm:$imm)),
           (RLDICL G8RC:$in, (SRL64 imm:$imm), imm:$imm)>;
 
+// ROTL
+def : Pat<(rotl GPRC:$in, GPRC:$sh),
+          (RLWNM GPRC:$in, GPRC:$sh, 0, 31)>;
+def : Pat<(rotl GPRC:$in, (i32 imm:$imm)),
+          (RLWINM GPRC:$in, imm:$imm, 0, 31)>;
+          
 // Hi and Lo for Darwin Global Addresses.
 def : Pat<(PPChi tglobaladdr:$in, 0), (LIS tglobaladdr:$in)>;
 def : Pat<(PPClo tglobaladdr:$in, 0), (LI tglobaladdr:$in)>;

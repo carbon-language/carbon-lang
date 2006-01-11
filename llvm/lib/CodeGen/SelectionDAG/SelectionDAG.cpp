@@ -983,6 +983,8 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
   case ISD::SHL:
   case ISD::SRA:
   case ISD::SRL:
+  case ISD::ROTL:
+  case ISD::ROTR:
     assert(VT == N1.getValueType() &&
            "Shift operators return type must be the same as their first arg");
     assert(MVT::isInteger(VT) && MVT::isInteger(N2.getValueType()) &&
@@ -1039,6 +1041,12 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
       case ISD::SHL  : return getConstant(C1 << C2, VT);
       case ISD::SRL  : return getConstant(C1 >> C2, VT);
       case ISD::SRA  : return getConstant(N1C->getSignExtended() >>(int)C2, VT);
+      case ISD::ROTL : 
+        return getConstant((C1 << C2) | (C1 >> (MVT::getSizeInBits(VT) - C2)),
+                           VT);
+      case ISD::ROTR : 
+        return getConstant((C1 >> C2) | (C1 << (MVT::getSizeInBits(VT) - C2)), 
+                           VT);
       default: break;
       }
     } else {      // Cannonicalize constant to RHS if commutative
@@ -1915,6 +1923,9 @@ const char *SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::SHL:    return "shl";
   case ISD::SRA:    return "sra";
   case ISD::SRL:    return "srl";
+  case ISD::ROTL:   return "rotl";
+  case ISD::ROTR:   return "rotr";
+  case ISD::BSWAP:  return "bswap";
   case ISD::FADD:   return "fadd";
   case ISD::FSUB:   return "fsub";
   case ISD::FMUL:   return "fmul";

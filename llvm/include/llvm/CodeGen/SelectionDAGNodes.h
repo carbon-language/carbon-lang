@@ -131,8 +131,10 @@ namespace ISD {
     // an unsigned/signed value of type i[2*n], then return the top part.
     MULHU, MULHS,
 
-    // Bitwise operators.
-    AND, OR, XOR, SHL, SRA, SRL,
+    // Bitwise operators - logical and, logical or, logical xor, shift left,
+    // shift right algebraic (shift in sign bits), shift right logical (shift in
+    // zeroes), rotate left, rotate right, and byteswap.
+    AND, OR, XOR, SHL, SRA, SRL, ROTL, ROTR, BSWAP,
 
     // Counting operators
     CTTZ, CTLZ, CTPOP,

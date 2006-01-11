@@ -1133,8 +1133,6 @@ SDOperand DAGCombiner::visitOR(SDNode *N) {
                                                  N1),
                        DAG.getConstant(N1C->getValue() | C1->getValue(), VT));
   }
-  
-  
   // fold (or (setcc x), (setcc y)) -> (setcc (or x, y))
   if (isSetCCEquivalent(N0, LL, LR, CC0) && isSetCCEquivalent(N1, RL, RR, CC1)){
     ISD::CondCode Op0 = cast<CondCodeSDNode>(CC0)->get();
@@ -1179,6 +1177,42 @@ SDOperand DAGCombiner::visitOR(SDNode *N) {
                                    N0.getOperand(0), N1.getOperand(0));
     WorkList.push_back(ORNode.Val);
     return DAG.getNode(ISD::ZERO_EXTEND, VT, ORNode);
+  }
+  // canonicalize shl to left side in a shl/srl pair, to match rotate
+  if (N0.getOpcode() == ISD::SRL && N1.getOpcode() == ISD::SHL)
+    std::swap(N0, N1);
+  // check for rotl, rotr
+  if (N0.getOpcode() == ISD::SHL && N1.getOpcode() == ISD::SRL &&
+      N0.getOperand(0) == N1.getOperand(0) &&
+      TLI.isOperationLegal(ISD::ROTL, VT)) {
+    // fold (or (shl x, C1), (srl x, C2)) -> (rotl x, C1)
+    if (N0.getOperand(1).getOpcode() == ISD::Constant &&
+        N1.getOperand(1).getOpcode() == ISD::Constant) {
+      uint64_t c1val = cast<ConstantSDNode>(N0.getOperand(1))->getValue();
+      uint64_t c2val = cast<ConstantSDNode>(N1.getOperand(1))->getValue();
+      if ((c1val + c2val) == OpSizeInBits)
+        return DAG.getNode(ISD::ROTL, VT, N0.getOperand(0), N0.getOperand(1));
+    }
+    // fold (or (shl x, y), (srl x, (sub 32, y))) -> (rotl x, y)
+    if (N1.getOperand(1).getOpcode() == ISD::SUB &&
+        N0.getOperand(1) == N1.getOperand(1).getOperand(1))
+      if (ConstantSDNode *SUBC = 
+          dyn_cast<ConstantSDNode>(N1.getOperand(1).getOperand(0)))
+        if (SUBC->getValue() == OpSizeInBits)
+          return DAG.getNode(ISD::ROTL, VT, N0.getOperand(0), N0.getOperand(1));
+    // fold (or (shl x, (sub 32, y)), (srl x, r)) -> (rotr x, y)
+    if (N0.getOperand(1).getOpcode() == ISD::SUB &&
+        N1.getOperand(1) == N0.getOperand(1).getOperand(1))
+      if (ConstantSDNode *SUBC = 
+          dyn_cast<ConstantSDNode>(N0.getOperand(1).getOperand(0)))
+        if (SUBC->getValue() == OpSizeInBits) {
+          if (TLI.isOperationLegal(ISD::ROTR, VT))
+            return DAG.getNode(ISD::ROTR, VT, N0.getOperand(0), 
+                               N1.getOperand(1));
+          else
+            return DAG.getNode(ISD::ROTL, VT, N0.getOperand(0),
+                               N0.getOperand(1));
+        }
   }
   return SDOperand();
 }

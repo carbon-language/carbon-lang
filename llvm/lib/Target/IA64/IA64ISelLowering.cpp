@@ -80,6 +80,8 @@ IA64TargetLowering::IA64TargetLowering(TargetMachine &TM)
       //IA64 has these, but they are not implemented
       setOperationAction(ISD::CTTZ , MVT::i64  , Expand);
       setOperationAction(ISD::CTLZ , MVT::i64  , Expand);
+      setOperationAction(ISD::ROTL , MVT::i64  , Expand);
+      setOperationAction(ISD::ROTR , MVT::i64  , Expand);
 
       computeRegisterProperties();
 
