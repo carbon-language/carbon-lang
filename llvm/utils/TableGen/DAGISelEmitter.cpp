@@ -2281,8 +2281,8 @@ public:
       return std::make_pair(1, ResNo);
     } else {
       N->dump();
-      assert(0 && "Unknown node in result pattern!");
-      return std::make_pair(1, ~0U);
+      std::cerr << "\n";
+      throw std::string("Unknown node in result pattern!");
     }
   }
 
