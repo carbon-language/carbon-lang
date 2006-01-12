@@ -153,8 +153,7 @@ def brtarget : Operand<OtherVT>;
 // Define X86 specific addressing mode.
 def addr    : ComplexPattern<i32, 4, "SelectAddr", []>;
 def leaaddr : ComplexPattern<i32, 4, "SelectLEAAddr",
-                             [add, frameindex, constpool,
-                              globaladdr, tglobaladdr, externalsym]>;
+                             [add, frameindex, constpool]>;
 
 //===----------------------------------------------------------------------===//
 // X86 Instruction Format Definitions.
@@ -2957,6 +2956,10 @@ def RDTSC : I<0x31, RawFrm, (ops), "rdtsc", [(X86rdtsc)]>,
 //===----------------------------------------------------------------------===//
 // Non-Instruction Patterns
 //===----------------------------------------------------------------------===//
+
+// GlobalAddress and ExternalSymbol
+def : Pat<(i32 globaladdr:$dst),  (MOV32ri globaladdr:$dst)>;
+def : Pat<(i32 externalsym:$dst), (MOV32ri externalsym:$dst)>;
 
 // Calls
 def : Pat<(X86call tglobaladdr:$dst),

@@ -1723,8 +1723,8 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
                        DAG.getValueType(AVT), InFlag);
   }
   case ISD::GlobalAddress: {
+    SDOperand Result;
     GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
-    SDOperand GVOp = DAG.getTargetGlobalAddress(GV, getPointerTy());
     // For Darwin, external and weak symbols are indirect, so we want to load
     // the value at address GV, not the value of GV itself.  This means that
     // the GlobalAddress must be in the base or index register of the address,
@@ -1732,11 +1732,10 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     if (getTargetMachine().
         getSubtarget<X86Subtarget>().getIndirectExternAndWeakGlobals() &&
         (GV->hasWeakLinkage() || GV->isExternal()))
-      return DAG.getLoad(MVT::i32, DAG.getEntryNode(),
-                         GVOp, DAG.getSrcValue(NULL));
-    else
-      return GVOp;
-    break;
+      Result = DAG.getLoad(MVT::i32, DAG.getEntryNode(),
+                           DAG.getTargetGlobalAddress(GV, getPointerTy()),
+                           DAG.getSrcValue(NULL));
+    return Result;
   }
   }
 }
