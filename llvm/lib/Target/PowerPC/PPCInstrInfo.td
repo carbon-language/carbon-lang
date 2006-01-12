@@ -181,7 +181,7 @@ def memrr : Operand<i32> {
   let MIOperandInfo = (ops GPRC, GPRC);
 }
 
-// Define X86 specific addressing mode.
+// Define PowerPC specific addressing mode.
 def iaddr  : ComplexPattern<i32, 2, "SelectAddrImm",    []>;
 def xaddr  : ComplexPattern<i32, 2, "SelectAddrIdx",    []>;
 def xoaddr : ComplexPattern<i32, 2, "SelectAddrIdxOnly",[]>;
