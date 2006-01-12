@@ -189,14 +189,6 @@ static bool isIntImmediate(SDNode *N, unsigned& Imm) {
   return false;
 }
 
-// isOprShiftImm - Returns true if the specified operand is a shift opcode with
-// a immediate shift count less than 32.
-static bool isOprShiftImm(SDNode *N, unsigned& Opc, unsigned& SH) {
-  Opc = N->getOpcode();
-  return (Opc == ISD::SHL || Opc == ISD::SRL || Opc == ISD::SRA) &&
-    isIntImmediate(N->getOperand(1).Val, SH) && SH < 32;
-}
-
 // isRunOfOnes - Returns true iff Val consists of one contiguous run of 1s with
 // any number of 0s on either side.  The 1s are allowed to wrap from LSB to
 // MSB, so 0x000FFF0, 0x0000FFFF, and 0xFF0000FF are all runs.  0x0F0F0000 is
@@ -269,21 +261,6 @@ static bool isRotateAndMask(SDNode *N, unsigned Mask, bool IsShiftMask,
 static bool isOpcWithIntImmediate(SDNode *N, unsigned Opc, unsigned& Imm) {
   return N->getOpcode() == Opc && isIntImmediate(N->getOperand(1).Val, Imm);
 }
-
-// isOprNot - Returns true if the specified operand is an xor with immediate -1.
-static bool isOprNot(SDNode *N) {
-  unsigned Imm;
-  return isOpcWithIntImmediate(N, ISD::XOR, Imm) && (signed)Imm == -1;
-}
-
-// Immediate constant composers.
-// Lo16 - grabs the lo 16 bits from a 32 bit constant.
-// Hi16 - grabs the hi 16 bits from a 32 bit constant.
-// HA16 - computes the hi bits required if the lo bits are add/subtracted in
-// arithmethically.
-static unsigned Lo16(unsigned x)  { return x & 0x0000FFFF; }
-static unsigned Hi16(unsigned x)  { return Lo16(x >> 16); }
-static unsigned HA16(unsigned x)  { return Hi16((signed)x - (signed short)x); }
 
 // isIntImmediate - This method tests to see if a constant operand.
 // If so Imm will receive the 32 bit value.
@@ -410,7 +387,7 @@ bool PPCDAGToDAGISel::SelectAddrImm(SDOperand N, SDOperand &Disp,
   if (N.getOpcode() == ISD::ADD) {
     unsigned imm = 0;
     if (isIntImmediate(N.getOperand(1), imm) && isInt16(imm)) {
-      Disp = getI32Imm(Lo16(imm));
+      Disp = getI32Imm(imm & 0xFFFF);
       if (FrameIndexSDNode *FI = dyn_cast<FrameIndexSDNode>(N.getOperand(0))) {
         Base = CurDAG->getTargetFrameIndex(FI->getIndex(), MVT::i32);
       } else {
@@ -488,7 +465,7 @@ SDOperand PPCDAGToDAGISel::SelectCC(SDOperand LHS, SDOperand RHS,
     if (isIntImmediate(RHS, Imm) && 
         ((U && isUInt16(Imm)) || (!U && isInt16(Imm))))
       return CurDAG->getTargetNode(U ? PPC::CMPLWI : PPC::CMPWI, MVT::i32,
-                                   LHS, getI32Imm(Lo16(Imm)));
+                                   LHS, getI32Imm(Imm & 0xFFFF));
     return CurDAG->getTargetNode(U ? PPC::CMPLW : PPC::CMPW, MVT::i32,
                                  LHS, Select(RHS));
   } else if (LHS.getValueType() == MVT::f32) {
