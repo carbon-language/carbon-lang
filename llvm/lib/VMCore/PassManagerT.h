@@ -472,33 +472,10 @@ private:
            E = RequiredSet.end(); I != E; ++I)
       markPassUsed(*I, P);     // Mark *I as used by P
 
-    // Erase all analyses not in the preserved set...
-    if (!AnUsage.getPreservesAll()) {
-      const std::vector<AnalysisID> &PreservedSet = AnUsage.getPreservedSet();
-      for (std::map<AnalysisID, Pass*>::iterator I = CurrentAnalyses.begin(),
-             E = CurrentAnalyses.end(); I != E; ) {
-        if (std::find(PreservedSet.begin(), PreservedSet.end(), I->first) ==
-            PreservedSet.end()) {             // Analysis not preserved!
-          CurrentAnalyses.erase(I);           // Remove from available analyses
-          I = CurrentAnalyses.begin();
-        } else {
-          ++I;
-        }
-      }
-    }
-
-    // Add this pass to the currently available set...
-    if (const PassInfo *PI = P->getPassInfo()) {
-      CurrentAnalyses[PI] = P;
-
-      // This pass is the current implementation of all of the interfaces it
-      // implements as well.
-      //
-      const std::vector<const PassInfo*> &II = PI->getInterfacesImplemented();
-      for (unsigned i = 0, e = II.size(); i != e; ++i)
-        CurrentAnalyses[II[i]] = P;
-    }
-
+    removeNonPreservedAnalyses(AnUsage);
+    
+    makeCurrentlyAvailable(P);
+    
     // For now assume that our results are never used...
     LastUseOf[P] = P;
   }
@@ -632,30 +609,10 @@ private:
       // Erase all analyses not in the preserved set
       removeNonPreservedAnalyses(AnUsage);
       
-      // Add the current pass to the set of passes that have been run, and are
-      // thus available to users.
-      //
-      if (const PassInfo *PI = P->getPassInfo()) {
-        CurrentAnalyses[PI] = P;
-
-        // This pass is the current implementation of all of the interfaces it
-        // implements as well.
-        //
-        const std::vector<const PassInfo*> &II = PI->getInterfacesImplemented();
-        for (unsigned i = 0, e = II.size(); i != e; ++i)
-          CurrentAnalyses[II[i]] = P;
-      }
-
-      // Free memory for any passes that we are the last use of...
-      std::vector<Pass*> &DeadPass = LastUserOf[P];
-      for (std::vector<Pass*>::iterator I = DeadPass.begin(),E = DeadPass.end();
-           I != E; ++I) {
-        PMDebug::PrintPassInformation(getDepth()+1, "Freeing Pass", *I, M);
-        (*I)->releaseMemory();
-      }
+      makeCurrentlyAvailable(P);
       
-      // remove dead passes from the CurrentAnalyses list...
-      removeDeadPasses(DeadPass);
+      // free memory and remove dead passes from the CurrentAnalyses list...
+      removeDeadPasses(P, M, LastUserOf);
     }
     
     return MadeChanges;
@@ -707,7 +664,15 @@ private:
     }
   }
   
-  inline void removeDeadPasses(std::vector<Pass*> &DeadPass) { 
+  inline void removeDeadPasses(Pass* P, UnitType *M, 
+              std::map<Pass *, std::vector<Pass*> > &LastUserOf) { 
+    std::vector<Pass*> &DeadPass = LastUserOf[P];
+    for (std::vector<Pass*>::iterator I = DeadPass.begin(),E = DeadPass.end();
+          I != E; ++I) {
+      PMDebug::PrintPassInformation(getDepth()+1, "Freeing Pass", *I, M);
+      (*I)->releaseMemory();
+    }
+    
     for (std::map<AnalysisID, Pass*>::iterator I = CurrentAnalyses.begin();
           I != CurrentAnalyses.end(); ) {
       std::vector<Pass*>::iterator DPI = std::find(DeadPass.begin(),
@@ -720,7 +685,22 @@ private:
       }
     }
   }
+  
+  inline void makeCurrentlyAvailable(Pass* P) { 
+    if (const PassInfo *PI = P->getPassInfo()) {
+      CurrentAnalyses[PI] = P;
+
+      // This pass is the current implementation of all of the interfaces it
+      // implements as well.
+      //
+      const std::vector<const PassInfo*> &II = PI->getInterfacesImplemented();
+      for (unsigned i = 0, e = II.size(); i != e; ++i)
+        CurrentAnalyses[II[i]] = P;
+    }
+  }
 };
+
+
 
 //===----------------------------------------------------------------------===//
 // BasicBlockPassManager
@@ -859,7 +839,7 @@ public:
 };
 
 //===----------------------------------------------------------------------===//
-// PassManagerTraits Method Implementations
+// PassManager Method Implementations
 //
 
 // BasicBlockPassManager Implementations
