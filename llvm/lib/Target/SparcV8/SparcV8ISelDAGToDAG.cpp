@@ -76,6 +76,8 @@ namespace {
                               SelectionDAG &DAG);
     virtual MachineBasicBlock *InsertAtEndOfBasicBlock(MachineInstr *MI,
                                                        MachineBasicBlock *MBB);
+    
+    virtual const char *getTargetNodeName(unsigned Opcode) const;
   };
 }
 
@@ -159,6 +161,22 @@ SparcV8TargetLowering::SparcV8TargetLowering(TargetMachine &TM)
   setOperationAction(ISD::DEBUG_LABEL, MVT::Other, Expand);
 
   computeRegisterProperties();
+}
+
+const char *SparcV8TargetLowering::getTargetNodeName(unsigned Opcode) const {
+  switch (Opcode) {
+  case V8ISD::CMPICC:     return "V8ISD::CMPICC";
+  case V8ISD::CMPFCC:     return "V8ISD::CMPFCC";
+  case V8ISD::BRICC:      return "V8ISD::BRICC";
+  case V8ISD::BRFCC:      return "V8ISD::BRFCC";
+  case V8ISD::Hi:         return "V8ISD::Hi";
+  case V8ISD::Lo:         return "V8ISD::Lo";
+  case V8ISD::FTOI:       return "V8ISD::FTOI";
+  case V8ISD::ITOF:       return "V8ISD::ITOF";
+  case V8ISD::SELECT_ICC: return "V8ISD::SELECT_ICC";
+  case V8ISD::SELECT_FCC: return "V8ISD::SELECT_FCC";
+  case V8ISD::RET_FLAG:   return "V8ISD::RET_FLAG";
+  }
 }
 
 /// LowerArguments - V8 uses a very simple ABI, where all values are passed in
