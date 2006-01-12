@@ -696,6 +696,14 @@ SDOperand DAGCombiner::visitADD(SDNode *N) {
       return DAG.getNode(ISD::ADD, VT, N0.getOperand(0),
                          DAG.getConstant(N1C->getValue()+N01C->getValue(), VT));
   }
+  
+  // fold ((c1-A)+c2) -> (c1+c2)-A
+  if (N1C && N0.getOpcode() == ISD::SUB)
+    if (ConstantSDNode *N0C = dyn_cast<ConstantSDNode>(N0.getOperand(0)))
+      return DAG.getNode(ISD::SUB, VT,
+                         DAG.getConstant(N1C->getValue()+N0C->getValue(), VT),
+                         N0.getOperand(1));
+  
   // fold ((0-A) + B) -> B-A
   if (N0.getOpcode() == ISD::SUB && isa<ConstantSDNode>(N0.getOperand(0)) &&
       cast<ConstantSDNode>(N0.getOperand(0))->isNullValue())
