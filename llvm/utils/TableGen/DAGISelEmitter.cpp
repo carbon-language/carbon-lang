@@ -2023,11 +2023,23 @@ public:
         OS << "      SDOperand Tmp" << utostr(ResNo)
            << " = CurDAG->getTargetConstant(Tmp"
            << ResNo << "C, MVT::" << getEnumName(N->getTypeNum(0)) << ");\n";
+      } else if (!N->isLeaf() && N->getOperator()->getName() == "globaladdr") {
+        OS << "      SDOperand Tmp" << ResNo
+           << " = CurDAG->getTargetGlobalAddress(cast<GlobalAddressSDNode>("
+           << Val << ")->getGlobal(), MVT::" << getEnumName(N->getTypeNum(0))
+           << ");\n";
+      } else if (!N->isLeaf() && N->getOperator()->getName() == "externalsym") {
+        OS << "      SDOperand Tmp" << ResNo
+           << " = CurDAG->getTargetExternalSymbol(cast<ExternalSymbolSDNode>("
+           << Val << ")->getSymbol(), MVT::" << getEnumName(N->getTypeNum(0))
+           << ");\n";
+      } else if (!N->isLeaf() && N->getOperator()->getName() == "texternalsym"){
+        OS << "      SDOperand Tmp" << ResNo << " = " << Val << ";\n";
       } else if (!N->isLeaf() && N->getOperator()->getName() == "tglobaladdr") {
         OS << "      SDOperand Tmp" << ResNo << " = " << Val << ";\n";
-      } else if (!N->isLeaf() && N->getOperator()->getName() == "tconstpool") {
-        OS << "      SDOperand Tmp" << ResNo << " = " << Val << ";\n";
       } else if (!N->isLeaf() && N->getOperator()->getName() == "texternalsym"){
+        OS << "      SDOperand Tmp" << ResNo << " = " << Val << ";\n";
+      } else if (!N->isLeaf() && N->getOperator()->getName() == "tconstpool") {
         OS << "      SDOperand Tmp" << ResNo << " = " << Val << ";\n";
       } else if (N->isLeaf() && (CP = NodeGetComplexPattern(N, ISE))) {
         std::string Fn = CP->getSelectFunc();
