@@ -165,6 +165,7 @@ SparcV8TargetLowering::SparcV8TargetLowering(TargetMachine &TM)
 
 const char *SparcV8TargetLowering::getTargetNodeName(unsigned Opcode) const {
   switch (Opcode) {
+  default: return 0;
   case V8ISD::CMPICC:     return "V8ISD::CMPICC";
   case V8ISD::CMPFCC:     return "V8ISD::CMPFCC";
   case V8ISD::BRICC:      return "V8ISD::BRICC";
@@ -661,7 +662,7 @@ LowerOperation(SDOperand Op, SelectionDAG &DAG) {
       std::vector<SDOperand> Ops;
       Ops.push_back(LHS);
       Ops.push_back(RHS);
-      SDOperand Cond = DAG.getNode(V8ISD::CMPICC, VTs, Ops);
+      SDOperand Cond = DAG.getNode(V8ISD::CMPICC, VTs, Ops).getValue(1);
       return DAG.getNode(V8ISD::BRICC, MVT::Other, Chain, Dest, CC, Cond);
     } else {
       std::vector<MVT::ValueType> VTs;
@@ -670,7 +671,7 @@ LowerOperation(SDOperand Op, SelectionDAG &DAG) {
       std::vector<SDOperand> Ops;
       Ops.push_back(LHS);
       Ops.push_back(RHS);
-      SDOperand Cond = DAG.getNode(V8ISD::CMPFCC, VTs, Ops);
+      SDOperand Cond = DAG.getNode(V8ISD::CMPFCC, VTs, Ops).getValue(1);
       return DAG.getNode(V8ISD::BRFCC, MVT::Other, Chain, Dest, CC, Cond);
     }
   }
