@@ -665,13 +665,7 @@ LowerOperation(SDOperand Op, SelectionDAG &DAG) {
       SDOperand Cond = DAG.getNode(V8ISD::CMPICC, VTs, Ops).getValue(1);
       return DAG.getNode(V8ISD::BRICC, MVT::Other, Chain, Dest, CC, Cond);
     } else {
-      std::vector<MVT::ValueType> VTs;
-      VTs.push_back(MVT::i32);
-      VTs.push_back(MVT::Flag);
-      std::vector<SDOperand> Ops;
-      Ops.push_back(LHS);
-      Ops.push_back(RHS);
-      SDOperand Cond = DAG.getNode(V8ISD::CMPFCC, VTs, Ops).getValue(1);
+      SDOperand Cond = DAG.getNode(V8ISD::CMPFCC, MVT::Flag, LHS, RHS);
       return DAG.getNode(V8ISD::BRFCC, MVT::Other, Chain, Dest, CC, Cond);
     }
   }
@@ -682,18 +676,21 @@ LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     SDOperand TrueVal = Op.getOperand(2);
     SDOperand FalseVal = Op.getOperand(3);
     
+    SDOperand CompareFlag;
     unsigned Opc;
-    Opc = LHS.getValueType() == MVT::i32 ? V8ISD::CMPICC : V8ISD::CMPFCC;
-    std::vector<MVT::ValueType> VTs;
-    VTs.push_back(LHS.getValueType());
-    VTs.push_back(MVT::Flag);
-    std::vector<SDOperand> Ops;
-    Ops.push_back(LHS);
-    Ops.push_back(RHS);
-    SDOperand CompareFlag = DAG.getNode(Opc, VTs, Ops).getValue(1);
-    
-    Opc = LHS.getValueType() == MVT::i32 ? 
-      V8ISD::SELECT_ICC : V8ISD::SELECT_FCC;
+    if (LHS.getValueType() == MVT::i32) {
+      std::vector<MVT::ValueType> VTs;
+      VTs.push_back(LHS.getValueType());   // subcc returns a value
+      VTs.push_back(MVT::Flag);
+      std::vector<SDOperand> Ops;
+      Ops.push_back(LHS);
+      Ops.push_back(RHS);
+      CompareFlag = DAG.getNode(V8ISD::CMPICC, VTs, Ops).getValue(1);
+      Opc = V8ISD::SELECT_ICC;
+    } else {
+      CompareFlag = DAG.getNode(V8ISD::CMPFCC, MVT::Flag, LHS, RHS);
+      Opc = V8ISD::SELECT_FCC;
+    }
     return DAG.getNode(Opc, TrueVal.getValueType(), TrueVal, FalseVal, 
                        DAG.getConstant(CC, MVT::i32), CompareFlag);
   }

@@ -72,9 +72,8 @@ SDTypeProfile<1, 1, [SDTCisVT<0, f32>, SDTCisFP<1>]>;
 def SDTV8ITOF :
 SDTypeProfile<1, 1, [SDTCisFP<0>, SDTCisVT<1, f32>]>;
 
-def V8cmpicc : SDNode<"V8ISD::CMPICC", SDTIntBinOp,
-                      [SDNPCommutative, SDNPOutFlag]>;
-def V8cmpfcc : SDNode<"V8ISD::CMPFCC", SDTV8cmpfcc>;
+def V8cmpicc : SDNode<"V8ISD::CMPICC", SDTIntBinOp, [SDNPOutFlag]>;
+def V8cmpfcc : SDNode<"V8ISD::CMPFCC", SDTV8cmpfcc, [SDNPOutFlag]>;
 def V8bricc : SDNode<"V8ISD::BRICC", SDTV8brcc, [SDNPHasChain]>;
 def V8brfcc : SDNode<"V8ISD::BRFCC", SDTV8brcc, [SDNPHasChain]>;
 
