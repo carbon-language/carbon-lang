@@ -2259,7 +2259,7 @@ unsigned ISel::SelectExpr(SDOperand N) {
       addFullAddress(BuildMI(BB, Opc, 4, Result), AM);
     }
     return Result;
-  case X86ISD::FILD64m:
+  case X86ISD::FILD:
     // Make sure we generate both values.
     assert(Result != 1 && N.getValueType() == MVT::f64);
     if (!ExprMap.insert(std::make_pair(N.getValue(1), 1)).second)
@@ -3301,7 +3301,7 @@ void ISel::Select(SDOperand N) {
     SelectExpr(N);
     return;
   case ISD::CopyFromReg:
-  case X86ISD::FILD64m:
+  case X86ISD::FILD:
     ExprMap.erase(N);
     SelectExpr(N.getValue(0));
     return;

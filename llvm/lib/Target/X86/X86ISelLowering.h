@@ -40,16 +40,16 @@ namespace llvm {
       SHLD,
       SHRD,
 
-      /// FILD64m - This instruction implements SINT_TO_FP with a
-      /// 64-bit source in memory and a FP reg result.  This corresponds to
-      /// the X86::FILD64m instruction.  It has two inputs (token chain and
-      /// address) and two outputs (FP value and token chain).
-      FILD64m,
+      /// FILD - This instruction implements SINT_TO_FP with the integer source
+      /// in memory and FP reg result.  This corresponds to the X86::FILD*m
+      /// instructions. It has three inputs (token chain, address, and source
+      /// type) and two outputs (FP value and token chain).
+      FILD,
 
       /// FP_TO_INT*_IN_MEM - This instruction implements FP_TO_SINT with the
       /// integer destination in memory and a FP reg source.  This corresponds
       /// to the X86::FIST*m instructions and the rounding mode change stuff. It
-      /// has two inputs (token chain and address) and two outputs (FP value and
+      /// has two inputs (token chain and address) and two outputs (int value and
       /// token chain).
       FP_TO_INT16_IN_MEM,
       FP_TO_INT32_IN_MEM,

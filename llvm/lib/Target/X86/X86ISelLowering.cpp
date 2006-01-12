@@ -194,6 +194,11 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     // Set up the FP register classes.
     addRegisterClass(MVT::f64, X86::RFPRegisterClass);
 
+    if (X86DAGIsel) {
+      setOperationAction(ISD::SINT_TO_FP, MVT::i16, Custom);
+      setOperationAction(ISD::SINT_TO_FP, MVT::i32, Custom);
+    }
+
     if (!UnsafeFPMath) {
       setOperationAction(ISD::FSIN           , MVT::f64  , Expand);
       setOperationAction(ISD::FCOS           , MVT::f64  , Expand);
@@ -1404,22 +1409,30 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
   }
   case ISD::SINT_TO_FP: {
     assert(Op.getValueType() == MVT::f64 &&
-           Op.getOperand(0).getValueType() == MVT::i64 &&
+           Op.getOperand(0).getValueType() <= MVT::i64 &&
+           Op.getOperand(0).getValueType() >= MVT::i16 &&
            "Unknown SINT_TO_FP to lower!");
-    // We lower sint64->FP into a store to a temporary stack slot, followed by a
-    // FILD64m node.
+
+    SDOperand Result;
+    MVT::ValueType SrcVT = Op.getOperand(0).getValueType();
+    unsigned Size = MVT::getSizeInBits(SrcVT)/8;
     MachineFunction &MF = DAG.getMachineFunction();
-    int SSFI = MF.getFrameInfo()->CreateStackObject(8, 8);
+    int SSFI = MF.getFrameInfo()->CreateStackObject(Size, Size);
     SDOperand StackSlot = DAG.getFrameIndex(SSFI, getPointerTy());
-    SDOperand Store = DAG.getNode(ISD::STORE, MVT::Other, DAG.getEntryNode(),
-                           Op.getOperand(0), StackSlot, DAG.getSrcValue(NULL));
-    std::vector<MVT::ValueType> RTs;
-    RTs.push_back(MVT::f64);
-    RTs.push_back(MVT::Other);
+    SDOperand Chain = DAG.getNode(ISD::STORE, MVT::Other,
+                                  DAG.getEntryNode(), Op.getOperand(0),
+                                  StackSlot, DAG.getSrcValue(NULL));
+
+    // Build the FILD
+    std::vector<MVT::ValueType> Tys;
+    Tys.push_back(MVT::f64);
+    Tys.push_back(MVT::Flag);
     std::vector<SDOperand> Ops;
-    Ops.push_back(Store);
+    Ops.push_back(Chain);
     Ops.push_back(StackSlot);
-    return DAG.getNode(X86ISD::FILD64m, RTs, Ops);
+    Ops.push_back(DAG.getValueType(SrcVT));
+    Result = DAG.getNode(X86ISD::FILD, Tys, Ops);
+    return Result;
   }
   case ISD::FP_TO_SINT: {
     assert(Op.getValueType() <= MVT::i64 && Op.getValueType() >= MVT::i16 &&
@@ -1749,7 +1762,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::SBB:                return "X86ISD::SBB";
   case X86ISD::SHLD:               return "X86ISD::SHLD";
   case X86ISD::SHRD:               return "X86ISD::SHRD";
-  case X86ISD::FILD64m:            return "X86ISD::FILD64m";
+  case X86ISD::FILD:               return "X86ISD::FILD";
   case X86ISD::FP_TO_INT16_IN_MEM: return "X86ISD::FP_TO_INT16_IN_MEM";
   case X86ISD::FP_TO_INT32_IN_MEM: return "X86ISD::FP_TO_INT32_IN_MEM";
   case X86ISD::FP_TO_INT64_IN_MEM: return "X86ISD::FP_TO_INT64_IN_MEM";

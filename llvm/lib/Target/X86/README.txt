@@ -31,16 +31,12 @@ though?  http://gcc.gnu.org/bugzilla/show_bug.cgi?id=14224
 
 //===---------------------------------------------------------------------===//
 
-Need to add support for rotate instructions.
-
-//===---------------------------------------------------------------------===//
-
 Some targets (e.g. athlons) prefer freep to fstp ST(0):
 http://gcc.gnu.org/ml/gcc-patches/2004-04/msg00659.html
 
 //===---------------------------------------------------------------------===//
 
-This should use faddi on chips where it is profitable:
+This should use fiadd on chips where it is profitable:
 double foo(double P, int *I) { return P+*I; }
 
 //===---------------------------------------------------------------------===//
@@ -107,3 +103,12 @@ Should we promote i16 to i32 to avoid partial register update stalls?
 
 Leave any_extend as pseudo instruction and hint to register
 allocator. Delay codegen until post register allocation.
+
+//===---------------------------------------------------------------------===//
+
+Add a target specific hook to DAG combiner to handle SINT_TO_FP and
+FP_TO_SINT when the source operand is already in memory.
+
+//===---------------------------------------------------------------------===//
+
+Check if load folding would add a cycle in the dag.
