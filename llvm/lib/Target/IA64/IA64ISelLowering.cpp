@@ -392,11 +392,12 @@ IA64TargetLowering::LowerCallTo(SDOperand Chain,
   // know this is required (i.e. for varardic or external (unknown) functions)
 
   // first to the FP->(integer representation) conversions, these are
-  // free-floating
+  // flagged for now, but shouldn't have to be (TODO)
   unsigned seenConverts = 0;
   for (unsigned i = 0, e = RegValuesToPass.size(); i != e; ++i) {
     if(MVT::isFloatingPoint(RegValuesToPass[i].getValueType())) {
-      Chain = DAG.getCopyToReg(Chain, IntArgRegs[i], Converts[seenConverts++]);
+      Chain = DAG.getCopyToReg(Chain, IntArgRegs[i], Converts[seenConverts++], InFlag);
+      InFlag = Chain.getValue(1);
     }
   }
 
@@ -428,6 +429,8 @@ IA64TargetLowering::LowerCallTo(SDOperand Chain,
   // emit the call itself
   if (InFlag.Val)
     CallOperands.push_back(InFlag);
+  else
+    assert(0 && "this should never happen!\n");
 
 /* out with the old...
     Chain = SDOperand(DAG.getCall(NodeTys, Chain, Callee, InFlag), 0);
@@ -480,10 +483,12 @@ IA64TargetLowering::LowerCallTo(SDOperand Chain,
     case MVT::i64:
       RetVal = DAG.getCopyFromReg(Chain, IA64::r8, MVT::i64, InFlag);
       Chain = RetVal.getValue(1);
+      InFlag = RetVal.getValue(2); // XXX dead
       break;
     case MVT::f64:
       RetVal = DAG.getCopyFromReg(Chain, IA64::F8, MVT::f64, InFlag);
       Chain = RetVal.getValue(1);
+      InFlag = RetVal.getValue(2); // XXX dead
       break;
     }
   }
