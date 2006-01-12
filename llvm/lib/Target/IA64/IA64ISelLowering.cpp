@@ -376,14 +376,14 @@ IA64TargetLowering::LowerCallTo(SDOperand Chain,
   
   // save the current GP, SP and RP : FIXME: do we need to do all 3 always?
   SDOperand GPBeforeCall = DAG.getCopyFromReg(Chain, IA64::r1, MVT::i64, InFlag);
-  Chain = GPBeforeCall;
-  InFlag = Chain.getValue(1);
+  Chain = GPBeforeCall.getValue(1);
+  InFlag = Chain.getValue(2);
   SDOperand SPBeforeCall = DAG.getCopyFromReg(Chain, IA64::r12, MVT::i64, InFlag);
-  Chain = SPBeforeCall;
-  InFlag = Chain.getValue(1);
+  Chain = SPBeforeCall.getValue(1);
+  InFlag = Chain.getValue(2);
   SDOperand RPBeforeCall = DAG.getCopyFromReg(Chain, IA64::rp, MVT::i64, InFlag);
-  Chain = RPBeforeCall;
-  InFlag = Chain.getValue(1);
+  Chain = RPBeforeCall.getValue(1);
+  InFlag = Chain.getValue(2);
 
   // Build a sequence of copy-to-reg nodes chained together with token chain
   // and flag operands which copy the outgoing integer args into regs out[0-7]
