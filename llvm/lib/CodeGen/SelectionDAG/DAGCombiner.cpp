@@ -1184,7 +1184,7 @@ SDOperand DAGCombiner::visitOR(SDNode *N) {
   // check for rotl, rotr
   if (N0.getOpcode() == ISD::SHL && N1.getOpcode() == ISD::SRL &&
       N0.getOperand(0) == N1.getOperand(0) &&
-      TLI.isOperationLegal(ISD::ROTL, VT)) {
+      TLI.isOperationLegal(ISD::ROTL, VT) && TLI.isTypeLegal(VT)) {
     // fold (or (shl x, C1), (srl x, C2)) -> (rotl x, C1)
     if (N0.getOperand(1).getOpcode() == ISD::Constant &&
         N1.getOperand(1).getOpcode() == ISD::Constant) {
@@ -1206,7 +1206,7 @@ SDOperand DAGCombiner::visitOR(SDNode *N) {
       if (ConstantSDNode *SUBC = 
           dyn_cast<ConstantSDNode>(N0.getOperand(1).getOperand(0)))
         if (SUBC->getValue() == OpSizeInBits) {
-          if (TLI.isOperationLegal(ISD::ROTR, VT))
+          if (TLI.isOperationLegal(ISD::ROTR, VT) && TLI.isTypeLegal(VT))
             return DAG.getNode(ISD::ROTR, VT, N0.getOperand(0), 
                                N1.getOperand(1));
           else
