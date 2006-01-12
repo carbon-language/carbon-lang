@@ -161,8 +161,8 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
 
   if (X86ScalarSSE) {
     // Set up the FP register classes.
-    addRegisterClass(MVT::f32, X86::V4F4RegisterClass);
-    addRegisterClass(MVT::f64, X86::V2F8RegisterClass);
+    addRegisterClass(MVT::f32, X86::FR32RegisterClass);
+    addRegisterClass(MVT::f64, X86::FR64RegisterClass);
 
     // SSE has no load+extend ops
     setOperationAction(ISD::EXTLOAD,  MVT::f32, Expand);

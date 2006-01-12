@@ -74,7 +74,8 @@ def X86cmov    : SDNode<"X86ISD::CMOV",     SDTX86Cmov,
                         [SDNPOutFlag]>;
 def X86brcond  : SDNode<"X86ISD::BRCOND",   SDTX86BrCond,
                         [SDNPHasChain]>;
-def X86setcc   : SDNode<"X86ISD::SETCC",    SDTX86SetCC,    []>;
+def X86setcc   : SDNode<"X86ISD::SETCC",    SDTX86SetCC,
+                        [SDNPOutFlag]>;
 
 def X86retflag : SDNode<"X86ISD::RET_FLAG", SDTX86Ret,
                         [SDNPHasChain, SDNPOptInFlag]>;
