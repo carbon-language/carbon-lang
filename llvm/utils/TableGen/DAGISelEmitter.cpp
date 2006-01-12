@@ -1826,7 +1826,9 @@ private:
   unsigned PatternNo;
   std::ostream &OS;
   // Node to name mapping
-  std::map<std::string,std::string> VariableMap;
+  std::map<std::string, std::string> VariableMap;
+  // Node to operator mapping
+  std::map<std::string, Record*> OperatorMap;
   // Names of all the folded nodes which produce chains.
   std::vector<std::pair<std::string, unsigned> > FoldedChains;
   unsigned TmpNo;
@@ -1892,6 +1894,9 @@ public:
            << ") goto P" << PatternNo << "Fail;\n";
         return;
       }
+
+      if (!N->isLeaf())
+        OperatorMap[N->getName()] = N->getOperator();
     }
 
 
@@ -2023,20 +2028,26 @@ public:
         OS << "      SDOperand Tmp" << utostr(ResNo)
            << " = CurDAG->getTargetConstant(Tmp"
            << ResNo << "C, MVT::" << getEnumName(N->getTypeNum(0)) << ");\n";
-      } else if (!N->isLeaf() && N->getOperator()->getName() == "globaladdr") {
-        OS << "      SDOperand Tmp" << ResNo
-           << " = CurDAG->getTargetGlobalAddress(cast<GlobalAddressSDNode>("
-           << Val << ")->getGlobal(), MVT::" << getEnumName(N->getTypeNum(0))
-           << ");\n";
-      } else if (!N->isLeaf() && N->getOperator()->getName() == "externalsym") {
-        OS << "      SDOperand Tmp" << ResNo
-           << " = CurDAG->getTargetExternalSymbol(cast<ExternalSymbolSDNode>("
-           << Val << ")->getSymbol(), MVT::" << getEnumName(N->getTypeNum(0))
-           << ");\n";
       } else if (!N->isLeaf() && N->getOperator()->getName() == "texternalsym"){
-        OS << "      SDOperand Tmp" << ResNo << " = " << Val << ";\n";
+        Record *Op = OperatorMap[N->getName()];
+        // Transform ExternalSymbol to TargetExternalSymbol
+        if (Op && Op->getName() == "externalsym") {
+          OS << "      SDOperand Tmp" << ResNo
+             << " = CurDAG->getTargetExternalSymbol(cast<ExternalSymbolSDNode>("
+             << Val << ")->getSymbol(), MVT::" << getEnumName(N->getTypeNum(0))
+             << ");\n";
+        } else
+          OS << "      SDOperand Tmp" << ResNo << " = " << Val << ";\n";
       } else if (!N->isLeaf() && N->getOperator()->getName() == "tglobaladdr") {
-        OS << "      SDOperand Tmp" << ResNo << " = " << Val << ";\n";
+        Record *Op = OperatorMap[N->getName()];
+        // Transform GlobalAddress to TargetGlobalAddress
+        if (Op && Op->getName() == "globaladdr") {
+          OS << "      SDOperand Tmp" << ResNo
+             << " = CurDAG->getTargetGlobalAddress(cast<GlobalAddressSDNode>("
+             << Val << ")->getGlobal(), MVT::" << getEnumName(N->getTypeNum(0))
+             << ");\n";
+        } else
+          OS << "      SDOperand Tmp" << ResNo << " = " << Val << ";\n";
       } else if (!N->isLeaf() && N->getOperator()->getName() == "texternalsym"){
         OS << "      SDOperand Tmp" << ResNo << " = " << Val << ";\n";
       } else if (!N->isLeaf() && N->getOperator()->getName() == "tconstpool") {
