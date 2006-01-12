@@ -1,5 +1,5 @@
-; RUN: llvm-as < %s | llc -march=sparcv8 -disable-v8-dag-isel=false &&
-; RUN: llvm-as < %s | llc -march=sparcv8 -disable-v8-dag-isel=false | grep xnor | wc -l | grep 2
+; RUN: llvm-as < %s | llc -march=sparcv8 -enable-v8-dag-isel=true &&
+; RUN: llvm-as < %s | llc -march=sparcv8 -enable-v8-dag-isel=true | grep xnor | wc -l | grep 2
 
 int %test1(int %X, int %Y) {
 	%A = xor int %X, %Y
