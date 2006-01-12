@@ -120,14 +120,14 @@ bool AsmPrinter::EmitSpecialLLVMGlobal(const GlobalVariable *GV) {
   if (GV->getName() == "llvm.used")
     return true;  // No need to emit this at all.
 
-  if (GV->getName() == "llvm.global_ctors") {
+  if (GV->getName() == "llvm.global_ctors" && GV->use_empty()) {
     SwitchSection(StaticCtorsSection, 0);
     EmitAlignment(2, 0);
     EmitXXStructorList(GV->getInitializer());
     return true;
   } 
   
-  if (GV->getName() == "llvm.global_dtors") {
+  if (GV->getName() == "llvm.global_dtors" && GV->use_empty()) {
     SwitchSection(StaticDtorsSection, 0);
     EmitAlignment(2, 0);
     EmitXXStructorList(GV->getInitializer());
