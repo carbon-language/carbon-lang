@@ -28,9 +28,9 @@ namespace {
   // Register the target.
   RegisterTarget<SparcV8TargetMachine> X("sparcv8","  SPARC V8 (experimental)");
 
-  cl::opt<bool> DisableV8DAGDAG("disable-v8-dag-isel", cl::Hidden,
-                                cl::desc("Disable DAG-to-DAG isel for V8"),
-                                cl::init(1));
+  cl::opt<bool> EnableV8DAGDAG("enable-v8-dag-isel", cl::Hidden,
+                                cl::desc("Enable DAG-to-DAG isel for V8"),
+                                cl::init(0));
 }
 
 /// SparcV8TargetMachine ctor - Create an ILP32 architecture model
@@ -86,7 +86,7 @@ bool SparcV8TargetMachine::addPassesToEmitFile(PassManager &PM,
   if (PrintMachineCode)
     PM.add(new PrintFunctionPass());
 
-  if (DisableV8DAGDAG) {
+  if (!EnableV8DAGDAG) {
     // Replace malloc and free instructions with library calls.
     PM.add(createLowerAllocationsPass());
     PM.add(createLowerSelectPass());
