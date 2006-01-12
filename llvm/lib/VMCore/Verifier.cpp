@@ -68,7 +68,7 @@ namespace {  // Anonymous namespace for class
     VerifierFailureAction action;
                           // What to do if verification fails.
     Module *Mod;          // Module we are verifying right now
-    DominatorSet *DS;     // Dominator set, caution can be null!
+    ETForest *EF;     // ET-Forest, caution can be null!
     std::stringstream msgs;  // A stringstream to collect messages
 
     /// InstInThisBlock - when verifying a basic block, keep track of all of the
@@ -79,17 +79,17 @@ namespace {  // Anonymous namespace for class
 
     Verifier()
         : Broken(false), RealPass(true), action(AbortProcessAction),
-          DS(0), msgs( std::ios::app | std::ios::out ) {}
+          EF(0), msgs( std::ios::app | std::ios::out ) {}
     Verifier( VerifierFailureAction ctn )
-        : Broken(false), RealPass(true), action(ctn), DS(0),
+        : Broken(false), RealPass(true), action(ctn), EF(0),
           msgs( std::ios::app | std::ios::out ) {}
     Verifier(bool AB )
         : Broken(false), RealPass(true),
-          action( AB ? AbortProcessAction : PrintMessageAction), DS(0),
+          action( AB ? AbortProcessAction : PrintMessageAction), EF(0),
           msgs( std::ios::app | std::ios::out ) {}
-    Verifier(DominatorSet &ds)
+    Verifier(ETForest &ef)
       : Broken(false), RealPass(false), action(PrintMessageAction),
-        DS(&ds), msgs( std::ios::app | std::ios::out ) {}
+        EF(&ef), msgs( std::ios::app | std::ios::out ) {}
 
 
     bool doInitialization(Module &M) {
@@ -106,7 +106,7 @@ namespace {  // Anonymous namespace for class
 
     bool runOnFunction(Function &F) {
       // Get dominator information if we are being run by PassManager
-      if (RealPass) DS = &getAnalysis<DominatorSet>();
+      if (RealPass) EF = &getAnalysis<ETForest>();
       visit(F);
       InstsInThisBlock.clear();
 
@@ -139,7 +139,7 @@ namespace {  // Anonymous namespace for class
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesAll();
       if (RealPass)
-        AU.addRequired<DominatorSet>();
+	AU.addRequired<ETForest>();
     }
 
     /// abortIfBroken - If the module is broken and we are supposed to abort on
@@ -582,7 +582,7 @@ void Verifier::visitInstruction(Instruction &I) {
     for (Value::use_iterator UI = I.use_begin(), UE = I.use_end();
          UI != UE; ++UI)
       Assert1(*UI != (User*)&I ||
-              !DS->dominates(&BB->getParent()->getEntryBlock(), BB),
+              !EF->dominates(&BB->getParent()->getEntryBlock(), BB),
               "Only PHI nodes may reference their own value!", &I);
   }
 
@@ -633,20 +633,20 @@ void Verifier::visitInstruction(Instruction &I) {
           // If they are in the same basic block, make sure that the definition
           // comes before the use.
           Assert2(InstsInThisBlock.count(Op) ||
-                  !DS->dominates(&BB->getParent()->getEntryBlock(), BB),
+                  !EF->dominates(&BB->getParent()->getEntryBlock(), BB),
                   "Instruction does not dominate all uses!", Op, &I);
         }
 
         // Definition must dominate use unless use is unreachable!
-        Assert2(DS->dominates(OpBlock, BB) ||
-                !DS->dominates(&BB->getParent()->getEntryBlock(), BB),
+        Assert2(EF->dominates(OpBlock, BB) ||
+                !EF->dominates(&BB->getParent()->getEntryBlock(), BB),
                 "Instruction does not dominate all uses!", Op, &I);
       } else {
         // PHI nodes are more difficult than other nodes because they actually
         // "use" the value in the predecessor basic blocks they correspond to.
         BasicBlock *PredBB = cast<BasicBlock>(I.getOperand(i+1));
-        Assert2(DS->dominates(OpBlock, PredBB) ||
-                !DS->dominates(&BB->getParent()->getEntryBlock(), PredBB),
+        Assert2(EF->dominates(OpBlock, PredBB) ||
+                !EF->dominates(&BB->getParent()->getEntryBlock(), PredBB),
                 "Instruction does not dominate all uses!", Op, &I);
       }
     }
