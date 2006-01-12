@@ -2959,8 +2959,8 @@ def RDTSC : I<0x31, RawFrm, (ops), "rdtsc", [(X86rdtsc)]>,
 //===----------------------------------------------------------------------===//
 
 // GlobalAddress and ExternalSymbol
-def : Pat<(i32 globaladdr:$dst),  (MOV32ri globaladdr:$dst)>;
-def : Pat<(i32 externalsym:$dst), (MOV32ri externalsym:$dst)>;
+def : Pat<(i32 globaladdr:$dst),  (MOV32ri tglobaladdr:$dst)>;
+def : Pat<(i32 externalsym:$dst), (MOV32ri texternalsym:$dst)>;
 
 // Calls
 def : Pat<(X86call tglobaladdr:$dst),
