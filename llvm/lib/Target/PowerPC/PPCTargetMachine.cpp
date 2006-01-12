@@ -29,9 +29,6 @@
 using namespace llvm;
 
 namespace {
-  static cl::opt<bool> DisablePPCDAGDAG("disable-ppc-dag-isel", cl::Hidden,
-                             cl::desc("Disable DAG-to-DAG isel for PPC"));
-  
   // Register the targets
   RegisterTarget<PPCTargetMachine>
   X("ppc32", "  PowerPC");
@@ -100,10 +97,7 @@ bool PPCTargetMachine::addPassesToEmitFile(PassManager &PM,
   PM.add(createUnreachableBlockEliminationPass());
 
   // Install an instruction selector.
-  if (!DisablePPCDAGDAG)
-    PM.add(createPPCISelDag(*this));
-  else
-    PM.add(createPPCISelPattern(*this));
+  PM.add(createPPCISelDag(*this));
 
   if (PrintMachineCode)
     PM.add(createMachineFunctionPrinterPass(&std::cerr));
@@ -157,10 +151,7 @@ void PPCJITInfo::addPassesToJITCompile(FunctionPassManager &PM) {
   PM.add(createUnreachableBlockEliminationPass());
 
   // Install an instruction selector.
-  if (!DisablePPCDAGDAG)
-    PM.add(createPPCISelDag(TM));
-  else
-    PM.add(createPPCISelPattern(TM));
+  PM.add(createPPCISelDag(TM));
 
   PM.add(createRegisterAllocator());
   PM.add(createPrologEpilogCodeInserter());
