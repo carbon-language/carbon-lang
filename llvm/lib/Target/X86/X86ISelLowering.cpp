@@ -1606,7 +1606,7 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
       addTest = true;
 
     if (addTest) {
-      CC = DAG.getConstant(X86ISD::COND_E, MVT::i8);
+      CC = DAG.getConstant(X86ISD::COND_NE, MVT::i8);
       Cond = DAG.getNode(X86ISD::TEST, MVT::Flag, Op0, Op0);
     }
 
@@ -1614,8 +1614,10 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     Tys.push_back(Op.getValueType());
     Tys.push_back(MVT::Flag);
     std::vector<SDOperand> Ops;
-    Ops.push_back(Op.getOperand(1));
+    // X86ISD::CMOV means set the result (which is operand 1) to the RHS if
+    // condition is true.
     Ops.push_back(Op.getOperand(2));
+    Ops.push_back(Op.getOperand(1));
     Ops.push_back(CC);
     Ops.push_back(Cond);
     return DAG.getNode(X86ISD::CMOV, Tys, Ops);
