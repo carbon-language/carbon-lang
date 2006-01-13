@@ -796,6 +796,18 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
   case Intrinsic::memmove:         NumArgs = 4; break;
   case Intrinsic::memset:          NumArgs = 4; break;
 
+  case Intrinsic::stacksave:
+    NumArgs = 0;
+    Assert1(CI.getType() == PointerType::get(Type::SByteTy),
+            "llvm.stacksave must return an sbyte*", &CI);
+    break;
+  case Intrinsic::stackrestore:
+    NumArgs = 1;
+    Assert1(CI.getOperand(1)->getType() == PointerType::get(Type::SByteTy),
+            "llvm.stackrestore must take an sbyte*", &CI);
+    Assert1(CI.getType() == Type::VoidTy,
+            "llvm.stackrestore return void", &CI);
+    break;
   case Intrinsic::prefetch:        NumArgs = 3; break;
   case Intrinsic::pcmarker:
     NumArgs = 1;

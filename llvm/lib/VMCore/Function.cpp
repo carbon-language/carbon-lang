@@ -249,10 +249,12 @@ unsigned Function::getIntrinsicID() const {
     if (getName() == "llvm.readcyclecounter") return Intrinsic::readcyclecounter;
     break;
   case 's':
-    if (getName() == "llvm.setjmp")     return Intrinsic::setjmp;
-    if (getName() == "llvm.sigsetjmp")  return Intrinsic::sigsetjmp;
-    if (getName() == "llvm.siglongjmp") return Intrinsic::siglongjmp;
-    if (getName() == "llvm.sqrt")       return Intrinsic::sqrt;
+    if (getName() == "llvm.setjmp")       return Intrinsic::setjmp;
+    if (getName() == "llvm.sigsetjmp")    return Intrinsic::sigsetjmp;
+    if (getName() == "llvm.siglongjmp")   return Intrinsic::siglongjmp;
+    if (getName() == "llvm.stackrestore") return Intrinsic::stackrestore;
+    if (getName() == "llvm.stacksave")    return Intrinsic::stacksave;
+    if (getName() == "llvm.sqrt")         return Intrinsic::sqrt;
     break;
   case 'v':
     if (getName() == "llvm.va_copy")  return Intrinsic::vacopy;
