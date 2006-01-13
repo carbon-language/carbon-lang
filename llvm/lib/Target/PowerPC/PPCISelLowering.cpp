@@ -142,6 +142,7 @@ PPCTargetLowering::PPCTargetLowering(TargetMachine &TM)
   }
   
   setSetCCResultContents(ZeroOrOneSetCCResult);
+  setStackPointerRegisterToSaveRestore(PPC::R1);
   
   computeRegisterProperties();
 }
