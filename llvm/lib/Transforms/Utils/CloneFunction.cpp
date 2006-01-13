@@ -14,8 +14,9 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Utils/Cloning.h"
-#include "llvm/Instructions.h"
+#include "llvm/Constants.h"
 #include "llvm/DerivedTypes.h"
+#include "llvm/Instructions.h"
 #include "llvm/Function.h"
 #include "ValueMapper.h"
 using namespace llvm;
@@ -23,11 +24,14 @@ using namespace llvm;
 // CloneBasicBlock - See comments in Cloning.h
 BasicBlock *llvm::CloneBasicBlock(const BasicBlock *BB,
                                   std::map<const Value*, Value*> &ValueMap,
-                                  const char *NameSuffix, Function *F) {
+                                  const char *NameSuffix, Function *F,
+                                  ClonedCodeInfo *CodeInfo) {
   BasicBlock *NewBB = new BasicBlock("", F);
   if (BB->hasName()) NewBB->setName(BB->getName()+NameSuffix);
 
-  // Loop over all instructions copying them over...
+  bool hasCalls = false, hasDynamicAllocas = false, hasStaticAllocas = false;
+  
+  // Loop over all instructions, and copy them over.
   for (BasicBlock::const_iterator II = BB->begin(), IE = BB->end();
        II != IE; ++II) {
     Instruction *NewInst = II->clone();
@@ -35,6 +39,22 @@ BasicBlock *llvm::CloneBasicBlock(const BasicBlock *BB,
       NewInst->setName(II->getName()+NameSuffix);
     NewBB->getInstList().push_back(NewInst);
     ValueMap[II] = NewInst;                // Add instruction map to value.
+    
+    hasCalls |= isa<CallInst>(II);
+    if (const AllocaInst *AI = dyn_cast<AllocaInst>(II)) {
+      if (isa<ConstantInt>(AI->getArraySize()))
+        hasStaticAllocas = true;
+      else
+        hasDynamicAllocas = true;
+    }
+  }
+  
+  if (CodeInfo) {
+    CodeInfo->ContainsCalls          |= hasCalls;
+    CodeInfo->ContainsUnwinds        |= isa<UnwindInst>(BB->getTerminator());
+    CodeInfo->ContainsDynamicAllocas |= hasDynamicAllocas;
+    CodeInfo->ContainsDynamicAllocas |= hasStaticAllocas && 
+                                        BB != &BB->getParent()->front();
   }
   return NewBB;
 }
@@ -45,12 +65,12 @@ BasicBlock *llvm::CloneBasicBlock(const BasicBlock *BB,
 void llvm::CloneFunctionInto(Function *NewFunc, const Function *OldFunc,
                              std::map<const Value*, Value*> &ValueMap,
                              std::vector<ReturnInst*> &Returns,
-                             const char *NameSuffix) {
+                             const char *NameSuffix, ClonedCodeInfo *CodeInfo) {
   assert(NameSuffix && "NameSuffix cannot be null!");
 
 #ifndef NDEBUG
-  for (Function::const_arg_iterator I = OldFunc->arg_begin(), E = OldFunc->arg_end();
-       I != E; ++I)
+  for (Function::const_arg_iterator I = OldFunc->arg_begin(), 
+       E = OldFunc->arg_end(); I != E; ++I)
     assert(ValueMap.count(I) && "No mapping from source argument specified!");
 #endif
 
@@ -63,7 +83,8 @@ void llvm::CloneFunctionInto(Function *NewFunc, const Function *OldFunc,
     const BasicBlock &BB = *BI;
 
     // Create a new basic block and copy instructions into it!
-    BasicBlock *CBB = CloneBasicBlock(&BB, ValueMap, NameSuffix, NewFunc);
+    BasicBlock *CBB = CloneBasicBlock(&BB, ValueMap, NameSuffix, NewFunc,
+                                      CodeInfo);
     ValueMap[&BB] = CBB;                       // Add basic block mapping.
 
     if (ReturnInst *RI = dyn_cast<ReturnInst>(CBB->getTerminator()))
@@ -89,13 +110,15 @@ void llvm::CloneFunctionInto(Function *NewFunc, const Function *OldFunc,
 /// the function from their old to new values.
 ///
 Function *llvm::CloneFunction(const Function *F,
-                              std::map<const Value*, Value*> &ValueMap) {
+                              std::map<const Value*, Value*> &ValueMap,
+                              ClonedCodeInfo *CodeInfo) {
   std::vector<const Type*> ArgTypes;
 
   // The user might be deleting arguments to the function by specifying them in
   // the ValueMap.  If so, we need to not add the arguments to the arg ty vector
   //
-  for (Function::const_arg_iterator I = F->arg_begin(), E = F->arg_end(); I != E; ++I)
+  for (Function::const_arg_iterator I = F->arg_begin(), E = F->arg_end();
+       I != E; ++I)
     if (ValueMap.count(I) == 0)  // Haven't mapped the argument to anything yet?
       ArgTypes.push_back(I->getType());
 
@@ -108,14 +131,15 @@ Function *llvm::CloneFunction(const Function *F,
 
   // Loop over the arguments, copying the names of the mapped arguments over...
   Function::arg_iterator DestI = NewF->arg_begin();
-  for (Function::const_arg_iterator I = F->arg_begin(), E = F->arg_end(); I != E; ++I)
+  for (Function::const_arg_iterator I = F->arg_begin(), E = F->arg_end();
+       I != E; ++I)
     if (ValueMap.count(I) == 0) {   // Is this argument preserved?
       DestI->setName(I->getName()); // Copy the name over...
       ValueMap[I] = DestI++;        // Add mapping to ValueMap
     }
 
   std::vector<ReturnInst*> Returns;  // Ignore returns cloned...
-  CloneFunctionInto(NewF, F, ValueMap, Returns);
+  CloneFunctionInto(NewF, F, ValueMap, Returns, "", CodeInfo);
   return NewF;
 }
 

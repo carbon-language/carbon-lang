@@ -37,6 +37,31 @@ class Trace;
 ///
 Module *CloneModule(const Module *M);
 
+/// ClonedCodeInfo - This struct can be used to capture information about code
+/// being cloned, while it is being cloned.
+struct ClonedCodeInfo {
+  /// ContainsCalls - This is set to true if the cloned code contains a normal
+  /// call instruction.
+  bool ContainsCalls;
+  
+  /// ContainsUnwinds - This is set to true if the cloned code contains an
+  /// unwind instruction.
+  bool ContainsUnwinds;
+  
+  /// ContainsDynamicAllocas - This is set to true if the cloned code contains
+  /// a 'dynamic' alloca.  Dynamic allocas are allocas that are either not in
+  /// the entry block or they are in the entry block but are not a constant
+  /// size.
+  bool ContainsDynamicAllocas;
+  
+  ClonedCodeInfo() {
+    ContainsCalls = false;
+    ContainsUnwinds = false;
+    ContainsDynamicAllocas = false;
+  }
+};
+
+
 /// CloneBasicBlock - Return a copy of the specified basic block, but without
 /// embedding the block into a particular function.  The block returned is an
 /// exact copy of the specified basic block, without any remapping having been
@@ -61,9 +86,14 @@ Module *CloneModule(const Module *M);
 /// If you would like the basic block to be auto-inserted into the end of a
 /// function, you can specify it as the optional fourth parameter.
 ///
+/// If you would like to collect additional information about the cloned
+/// function, you can specify a ClonedCodeInfo object with the optional fifth
+/// parameter.
+///
 BasicBlock *CloneBasicBlock(const BasicBlock *BB,
                             std::map<const Value*, Value*> &ValueMap,
-                            const char *NameSuffix = "", Function *F = 0);
+                            const char *NameSuffix = "", Function *F = 0,
+                            ClonedCodeInfo *CodeInfo = 0);
 
 
 /// CloneFunction - Return a copy of the specified function, but without
@@ -72,16 +102,18 @@ BasicBlock *CloneBasicBlock(const BasicBlock *BB,
 /// original one.  If any of the arguments to the function are in the ValueMap,
 /// the arguments are deleted from the resultant function.  The ValueMap is
 /// updated to include mappings from all of the instructions and basicblocks in
-/// the function from their old to new values.
+/// the function from their old to new values.  The final argument captures
+/// information about the cloned code if non-null.
 ///
 Function *CloneFunction(const Function *F,
-                        std::map<const Value*, Value*> &ValueMap);
+                        std::map<const Value*, Value*> &ValueMap,
+                        ClonedCodeInfo *CodeInfo = 0);
 
 /// CloneFunction - Version of the function that doesn't need the ValueMap.
 ///
-inline Function *CloneFunction(const Function *F) {
+inline Function *CloneFunction(const Function *F, ClonedCodeInfo *CodeInfo = 0){
   std::map<const Value*, Value*> ValueMap;
-  return CloneFunction(F, ValueMap);
+  return CloneFunction(F, ValueMap, CodeInfo);
 }
 
 /// Clone OldFunc into NewFunc, transforming the old arguments into references
@@ -93,7 +125,8 @@ inline Function *CloneFunction(const Function *F) {
 void CloneFunctionInto(Function *NewFunc, const Function *OldFunc,
                        std::map<const Value*, Value*> &ValueMap,
                        std::vector<ReturnInst*> &Returns,
-                       const char *NameSuffix = "");
+                       const char *NameSuffix = "", 
+                       ClonedCodeInfo *CodeInfo = 0);
 
 
 /// CloneTraceInto - Clone T into NewFunc. Original<->clone mapping is
