@@ -10,9 +10,6 @@
 // This file implements inlining of a function into a call site, resolving
 // parameters and the return value as appropriate.
 //
-// FIXME: This pass should transform alloca instructions in the called function
-// into alloca/dealloca pairs!  Or perhaps it should refuse to inline them!
-//
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Utils/Cloning.h"
@@ -87,13 +84,14 @@ bool llvm::InlineFunction(CallSite CS) {
   // calculate which instruction they should be inserted before.  We insert the
   // instructions at the end of the current alloca list.
   //
-  if (isa<AllocaInst>(FirstNewBlock->begin())) {
+  {
     BasicBlock::iterator InsertPoint = Caller->begin()->begin();
     for (BasicBlock::iterator I = FirstNewBlock->begin(),
            E = FirstNewBlock->end(); I != E; )
       if (AllocaInst *AI = dyn_cast<AllocaInst>(I++))
         if (isa<Constant>(AI->getArraySize())) {
-          // Scan for the block of allocas that we can move over.
+          // Scan for the block of allocas that we can move over, and move them
+          // all at once.
           while (isa<AllocaInst>(I) &&
                  isa<Constant>(cast<AllocaInst>(I)->getArraySize()))
             ++I;
