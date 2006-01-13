@@ -1582,12 +1582,11 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
       // If the X86ISD::SETCC has more than one use, then it's probably better
       // to use a test instead of duplicating the X86ISD::CMP (for register
       // pressure reason).
-      if (Cond.hasOneUse() && Cond.getOperand(1).getOpcode() == X86ISD::CMP) {
+      if (Op0.hasOneUse() && Op0.getOperand(1).getOpcode() == X86ISD::CMP) {
         CC   = Op0.getOperand(0);
         Cond = Op0.getOperand(1);
         addTest =
-          !(isFPStack &&
-            !hasFPCMov(cast<ConstantSDNode>(CC)->getSignExtended()));
+          isFPStack && !hasFPCMov(cast<ConstantSDNode>(CC)->getSignExtended());
       } else
         addTest = true;
     } else if (Op0.getOpcode() == ISD::SETCC) {
