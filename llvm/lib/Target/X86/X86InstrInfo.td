@@ -2988,6 +2988,11 @@ def : Pat<(X86subflag R32:$src1, imm:$src2),
 def : Pat<(X86subflag R32:$src1, i32immSExt8:$src2),
           (SUB32ri8 R32:$src1, i32immSExt8:$src2)>;
 
+def : Pat<(truncstore (i8 imm:$src), addr:$dst, i1), 
+          (MOV8mi addr:$dst, imm:$src)>;
+def : Pat<(truncstore R8:$src, addr:$dst, i1), 
+          (MOV8mr addr:$dst, R8:$src)>;
+
 // {s|z}extload bool -> {s|z}extload byte
 def : Pat<(sextloadi16i1 addr:$src), (MOVSX16rm8 addr:$src)>;
 def : Pat<(sextloadi32i1 addr:$src), (MOVSX32rm8 addr:$src)>;
