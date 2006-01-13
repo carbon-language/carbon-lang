@@ -29,8 +29,8 @@ namespace {
 }
 
 namespace llvm {
-  cl::opt<bool> EnableAlphaDAG("enable-dag-isel-for-alpha",
-                             cl::desc("Enable DAG ISEL for Alpha (beta option!)"),
+  cl::opt<bool> DisableAlphaDAG("disable-alpha-dag-isel",
+                             cl::desc("Disable DAG ISEL for Alpha"),
                              cl::Hidden);
 }
 
@@ -94,7 +94,7 @@ bool AlphaTargetMachine::addPassesToEmitFile(PassManager &PM,
   // Make sure that no unreachable blocks are instruction selected.
   PM.add(createUnreachableBlockEliminationPass());
 
-  if (EnableAlphaDAG)
+  if (!DisableAlphaDAG)
     PM.add(createAlphaISelDag(*this));
   else
     PM.add(createAlphaPatternInstructionSelector(*this));
