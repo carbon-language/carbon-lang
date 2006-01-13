@@ -112,3 +112,12 @@ FP_TO_SINT when the source operand is already in memory.
 //===---------------------------------------------------------------------===//
 
 Check if load folding would add a cycle in the dag.
+
+//===---------------------------------------------------------------------===//
+
+Model X86 EFLAGS as a real register to avoid redudant cmp / test. e.g.
+
+	cmpl $1, %eax
+	setg %al
+	testb %al, %al  # unnecessary
+	jne .BB7
