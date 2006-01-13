@@ -1982,8 +1982,12 @@ const char *SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::TRUNCSTORE: return "truncstore";
 
   case ISD::DYNAMIC_STACKALLOC: return "dynamic_stackalloc";
-  case ISD::EXTRACT_ELEMENT: return "extract_element";
-  case ISD::BUILD_PAIR: return "build_pair";
+  case ISD::EXTRACT_ELEMENT:    return "extract_element";
+  case ISD::BUILD_PAIR:         return "build_pair";
+  case ISD::STACKSAVE:          return "stacksave";
+  case ISD::STACKRESTORE:       return "stackrestore";
+    
+  // Block memory operations.
   case ISD::MEMSET:  return "memset";
   case ISD::MEMCPY:  return "memcpy";
   case ISD::MEMMOVE: return "memmove";

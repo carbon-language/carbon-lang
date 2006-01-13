@@ -312,6 +312,15 @@ namespace ISD {
     CALL,
     TAILCALL,
 
+    // STACKSAVE - STACKSAVE has one operand, an input chain.  It produces a
+    // value, the same type as the pointer type for the system, and an output
+    // chain.
+    STACKSAVE,
+    
+    // STACKRESTORE has two operands, an input chain and a pointer to restore to
+    // it returns an output chain.
+    STACKRESTORE,
+    
     // MEMSET/MEMCPY/MEMMOVE - The first operand is the chain, and the rest
     // correspond to the operands of the LLVM intrinsic functions.  The only
     // result is a token chain.  The alignment argument is guaranteed to be a
