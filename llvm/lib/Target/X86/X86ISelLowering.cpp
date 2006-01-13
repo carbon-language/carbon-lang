@@ -1572,14 +1572,24 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     bool isFP      = MVT::isFloatingPoint(VT);
     bool isFPStack = isFP && (X86Vector < SSE2);
     bool isFPSSE   = isFP && (X86Vector >= SSE2);
-    bool isValid   = false;
+    bool addTest   = false;
     SDOperand Op0 = Op.getOperand(0);
     SDOperand Cond, CC;
     if (Op0.getOpcode() == X86ISD::SETCC) {
-      CC   = Op0.getOperand(0);
-      Cond = Op0.getOperand(1);
-      isValid =
-        !(isFPStack && !hasFPCMov(cast<ConstantSDNode>(CC)->getSignExtended()));
+      // If condition flag is set by a X86ISD::CMP, then make a copy of it
+      // (since flag operand cannot be shared). If the X86ISD::SETCC does not
+      // have another use it will be eliminated.
+      // If the X86ISD::SETCC has more than one use, then it's probably better
+      // to use a test instead of duplicating the X86ISD::CMP (for register
+      // pressure reason).
+      if (Cond.hasOneUse() && Cond.getOperand(1).getOpcode() == X86ISD::CMP) {
+        CC   = Op0.getOperand(0);
+        Cond = Op0.getOperand(1);
+        addTest =
+          !(isFPStack &&
+            !hasFPCMov(cast<ConstantSDNode>(CC)->getSignExtended()));
+      } else
+        addTest = true;
     } else if (Op0.getOpcode() == ISD::SETCC) {
       CC = Op0.getOperand(2);
       bool isFP = MVT::isFloatingPoint(Op0.getOperand(1).getValueType());
@@ -1587,10 +1597,11 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
       CC = DAG.getConstant(X86CC, MVT::i8);
       Cond = DAG.getNode(X86ISD::CMP, MVT::Flag,
                          Op0.getOperand(0), Op0.getOperand(1));
-      isValid = true;
-    }
+      addTest = true;
+    } else
+      addTest = true;
 
-    if (!isValid) {
+    if (!addTest) {
       CC = DAG.getConstant(X86ISD::COND_E, MVT::i8);
       Cond = DAG.getNode(X86ISD::TEST, MVT::Flag, Op0, Op0);
     }
@@ -1606,13 +1617,24 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     return DAG.getNode(X86ISD::CMOV, Tys, Ops);
   }
   case ISD::BRCOND: {
+    bool addTest = false;
     SDOperand Cond  = Op.getOperand(1);
     SDOperand Dest  = Op.getOperand(2);
     SDOperand CC;
-    // TODO: handle Cond == OR / AND / XOR
     if (Cond.getOpcode() == X86ISD::SETCC) {
-      CC = Cond.getOperand(0);
-      Cond = Cond.getOperand(1);
+      // If condition flag is set by a X86ISD::CMP, then make a copy of it
+      // (since flag operand cannot be shared). If the X86ISD::SETCC does not
+      // have another use it will be eliminated.
+      // If the X86ISD::SETCC has more than one use, then it's probably better
+      // to use a test instead of duplicating the X86ISD::CMP (for register
+      // pressure reason).
+      if (Cond.hasOneUse() && Cond.getOperand(1).getOpcode() == X86ISD::CMP) {
+        CC   = Cond.getOperand(0);
+        Cond = DAG.getNode(X86ISD::CMP, MVT::Flag,
+                           Cond.getOperand(1).getOperand(0),
+                           Cond.getOperand(1).getOperand(1));
+      } else
+        addTest = true;
     } else if (Cond.getOpcode() == ISD::SETCC) {
       CC = Cond.getOperand(2);
       bool isFP = MVT::isFloatingPoint(Cond.getOperand(1).getValueType());
@@ -1620,7 +1642,10 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
       CC = DAG.getConstant(X86CC, MVT::i8);
       Cond = DAG.getNode(X86ISD::CMP, MVT::Flag,
                          Cond.getOperand(0), Cond.getOperand(1));
-    } else {
+    } else
+      addTest = true;
+
+    if (addTest) {
       CC = DAG.getConstant(X86ISD::COND_NE, MVT::i8);
       Cond = DAG.getNode(X86ISD::TEST, MVT::Flag, Cond, Cond);
     }
