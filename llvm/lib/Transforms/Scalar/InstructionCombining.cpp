@@ -4620,12 +4620,17 @@ Instruction *InstCombiner::visitSelectInst(SelectInst &SI) {
 }
 
 
-// CallInst simplification
-//
+/// visitCallInst - CallInst simplification.  This mostly only handles folding 
+/// of intrinsic instructions.  For normal calls, it allows visitCallSite to do
+/// the heavy lifting.
+///
 Instruction *InstCombiner::visitCallInst(CallInst &CI) {
+  IntrinsicInst *II = dyn_cast<IntrinsicInst>(&CI);
+  if (!II) return visitCallSite(&CI);
+  
   // Intrinsics cannot occur in an invoke, so handle them here instead of in
   // visitCallSite.
-  if (MemIntrinsic *MI = dyn_cast<MemIntrinsic>(&CI)) {
+  if (MemIntrinsic *MI = dyn_cast<MemIntrinsic>(II)) {
     bool Changed = false;
 
     // memmove/cpy/set of zero bytes is a noop.
@@ -4645,7 +4650,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
     // If we have a memmove and the source operation is a constant global,
     // then the source and dest pointers can't alias, so we can change this
     // into a call to memcpy.
-    if (MemMoveInst *MMI = dyn_cast<MemMoveInst>(MI))
+    if (MemMoveInst *MMI = dyn_cast<MemMoveInst>(II))
       if (GlobalVariable *GVSrc = dyn_cast<GlobalVariable>(MMI->getSource()))
         if (GVSrc->isConstant()) {
           Module *M = CI.getParent()->getParent()->getParent();
@@ -4655,8 +4660,8 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
           Changed = true;
         }
 
-    if (Changed) return &CI;
-  } else if (DbgStopPointInst *SPI = dyn_cast<DbgStopPointInst>(&CI)) {
+    if (Changed) return II;
+  } else if (DbgStopPointInst *SPI = dyn_cast<DbgStopPointInst>(II)) {
     // If this stoppoint is at the same source location as the previous
     // stoppoint in the chain, it is not needed.
     if (DbgStopPointInst *PrevSPI =
@@ -4668,7 +4673,7 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
       }
   }
 
-  return visitCallSite(&CI);
+  return visitCallSite(II);
 }
 
 // InvokeInst simplification
