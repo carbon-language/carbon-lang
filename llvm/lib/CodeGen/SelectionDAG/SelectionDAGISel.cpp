@@ -1004,11 +1004,21 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
                              getValue(I.getOperand(1)).getValueType(),
                              getValue(I.getOperand(1))));
     return 0;
-  case Intrinsic::stacksave:
-    setValue(&I, DAG.getNode(ISD::UNDEF, TLI.getValueType(I.getType())));
-    return 0;  // FIXME: discard stacksave/restore
+  case Intrinsic::stacksave: {
+    std::vector<MVT::ValueType> VTs;
+    VTs.push_back(TLI.getPointerTy());
+    VTs.push_back(MVT::Other);
+    std::vector<SDOperand> Ops;
+    Ops.push_back(getRoot());
+    SDOperand Tmp = DAG.getNode(ISD::STACKSAVE, VTs, Ops);
+    setValue(&I, Tmp);
+    DAG.setRoot(Tmp.getValue(1));
+    return 0;
+  }
   case Intrinsic::stackrestore:
-    return 0;  // FIXME: discard stacksave/restore
+    DAG.setRoot(DAG.getNode(ISD::STACKRESTORE, MVT::Other, DAG.getRoot(),
+                            getValue(I.getOperand(1))));
+    return 0;
   case Intrinsic::prefetch:
     // FIXME: Currently discarding prefetches.
     return 0;

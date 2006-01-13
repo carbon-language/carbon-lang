@@ -1425,6 +1425,64 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     if (Tmp1 != Node->getOperand(0))
       Result = DAG.getNode(ISD::PCMARKER, MVT::Other, Tmp1,Node->getOperand(1));
     break;
+  case ISD::STACKSAVE:
+    Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
+    if (Tmp1 != Node->getOperand(0)) {
+      std::vector<MVT::ValueType> VTs;
+      VTs.push_back(Node->getValueType(0));
+      VTs.push_back(MVT::Other);
+      std::vector<SDOperand> Ops;
+      Ops.push_back(Tmp1);
+      Result = DAG.getNode(ISD::STACKSAVE, VTs, Ops);
+    }
+      
+    switch (TLI.getOperationAction(ISD::STACKSAVE, MVT::Other)) {
+    default: assert(0 && "This action is not supported yet!");
+    case TargetLowering::Custom: {
+      SDOperand Tmp = TLI.LowerOperation(Result, DAG);
+      if (Tmp.Val) {
+        Result = LegalizeOp(Tmp);
+        break;
+      }
+      // FALLTHROUGH if the target thinks it is legal.
+    }
+    case TargetLowering::Legal:
+      // Since stacksave produce two values, make sure to remember that we
+      // legalized both of them.
+      AddLegalizedOperand(SDOperand(Node, 0), Result);
+      AddLegalizedOperand(SDOperand(Node, 1), Result.getValue(1));
+      return Result.getValue(Op.ResNo);
+    case TargetLowering::Expand:
+      Tmp1 = DAG.getNode(ISD::UNDEF, Node->getValueType(0));
+      AddLegalizedOperand(SDOperand(Node, 0), Tmp1);
+      AddLegalizedOperand(SDOperand(Node, 1), Node->getOperand(0));
+      return Op.ResNo ? Node->getOperand(0) : Tmp1;
+    }
+    
+  case ISD::STACKRESTORE:
+    Tmp1 = LegalizeOp(Node->getOperand(0));  // Legalize the chain.
+    Tmp2 = LegalizeOp(Node->getOperand(1));  // Legalize the pointer.
+    if (Tmp1 != Node->getOperand(0) || Tmp2 != Node->getOperand(1))
+      Result = DAG.getNode(ISD::STACKRESTORE, MVT::Other, Tmp1, Tmp2);
+      
+    switch (TLI.getOperationAction(ISD::STACKRESTORE, MVT::Other)) {
+    default: assert(0 && "This action is not supported yet!");
+    case TargetLowering::Custom: {
+      SDOperand Tmp = TLI.LowerOperation(Result, DAG);
+      if (Tmp.Val) {
+        Result = LegalizeOp(Tmp);
+        break;
+      }
+      // FALLTHROUGH if the target thinks it is legal.
+    }
+    case TargetLowering::Legal:
+      break;
+    case TargetLowering::Expand:
+      Result = Tmp1;
+      break;
+    }
+    break;
+
   case ISD::READCYCLECOUNTER:
     Tmp1 = LegalizeOp(Node->getOperand(0)); // Legalize the chain
     if (Tmp1 != Node->getOperand(0)) {
