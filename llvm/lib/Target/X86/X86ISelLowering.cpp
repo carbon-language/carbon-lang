@@ -1601,7 +1601,7 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     } else
       addTest = true;
 
-    if (!addTest) {
+    if (addTest) {
       CC = DAG.getConstant(X86ISD::COND_E, MVT::i8);
       Cond = DAG.getNode(X86ISD::TEST, MVT::Flag, Op0, Op0);
     }
