@@ -30,6 +30,9 @@
 #include "llvm/Intrinsics.h"
 
 namespace llvm {
+  /// IntrinsicInst - A useful wrapper class for inspecting calls to intrinsic
+  /// functions.  This allows the standard isa/dyncast/cast functionality to
+  /// work with calls to intrinsic functions.
   class IntrinsicInst : public CallInst {
     IntrinsicInst();                      // DO NOT IMPLEMENT
     IntrinsicInst(const IntrinsicInst&);  // DO NOT IMPLEMENT
@@ -40,6 +43,23 @@ namespace llvm {
     /// casts from the specified value, returning the original uncasted value.
     /// Note that the returned value is guaranteed to have pointer type.
     static Value *StripPointerCasts(Value *Ptr);
+    
+    /// getIntrinsicID - Return the intrinsic ID of this intrinsic.
+    ///
+    Intrinsic::ID getIntrinsicID() const {
+      return (Intrinsic::ID)getCalledFunction()->getIntrinsicID();
+    }
+    
+    // Methods for support type inquiry through isa, cast, and dyn_cast:
+    static inline bool classof(const IntrinsicInst *) { return true; }
+    static inline bool classof(const CallInst *I) {
+      if (const Function *CF = I->getCalledFunction())
+        return CF->getIntrinsicID() != 0;
+      return false;
+    }
+    static inline bool classof(const Value *V) {
+      return isa<CallInst>(V) && classof(cast<CallInst>(V));
+    }
   };
 
   /// DbgInfoIntrinsic - This is the common base class for debug info intrinsics
