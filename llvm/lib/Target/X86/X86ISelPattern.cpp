@@ -1229,7 +1229,8 @@ unsigned ISel::SelectExpr(SDOperand N) {
       cast<RegisterSDNode>(Node->getOperand(1))->getReg() :
       cast<RegisterSDNode>(Node)->getReg();
     // Just use the specified register as our input if we can.
-    if (MRegisterInfo::isVirtualRegister(Reg))
+    if (Node->getOpcode() == ISD::Register ||
+        MRegisterInfo::isVirtualRegister(Reg))
       return Reg;
   } 
 
