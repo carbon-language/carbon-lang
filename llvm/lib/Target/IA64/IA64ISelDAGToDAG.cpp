@@ -571,9 +571,12 @@ SDOperand IA64DAGToDAGISel::Select(SDOperand Op) {
       default: assert(0 && "unknown type in store");
       case MVT::i1: { // this is a bool
         Opc = IA64::ST1; // we store either 0 or 1 as a byte 
+	// first load zero!
+	SDOperand Initial = CurDAG->getCopyFromReg(Chain, IA64::r0, MVT::i64);
+	Chain = Initial.getValue(1);
+	// then load 1 iff the predicate to store is 1
         SDOperand Tmp = 
-          CurDAG->getTargetNode(IA64::PADDS, MVT::i64,
-                                CurDAG->getRegister(IA64::r0, MVT::i64),
+          CurDAG->getTargetNode(IA64::PADDS, MVT::i64, Initial,
                                 CurDAG->getConstant(1, MVT::i64),
                                 Select(N->getOperand(1)));
         return CurDAG->SelectNodeTo(N, Opc, MVT::Other, Address, Tmp, Chain);
