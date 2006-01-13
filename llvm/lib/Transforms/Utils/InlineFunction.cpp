@@ -215,6 +215,36 @@ bool llvm::InlineFunction(CallSite CS) {
         }
   }
 
+  // If the inlined code contained dynamic alloca instructions, wrap the inlined
+  // code with llvm.stacksave/llvm.stackrestore intrinsics.
+  if (InlinedFunctionInfo.ContainsDynamicAllocas) {
+    Module *M = Caller->getParent();
+    const Type *SBytePtr = PointerType::get(Type::SByteTy);
+    // Get the two intrinsics we care about.
+    Function *StackSave, *StackRestore;
+    StackSave    = M->getOrInsertFunction("llvm.stacksave", SBytePtr, NULL);
+    StackRestore = M->getOrInsertFunction("llvm.stackrestore", Type::VoidTy,
+                                          SBytePtr, NULL);
+    
+    // Insert the llvm.stacksave.
+    Value *SavedPtr = new CallInst(StackSave, "savedstack", 
+                                   FirstNewBlock->begin());
+    
+    // Insert a call to llvm.stackrestore before any return instructions in the
+    // inlined function.
+    for (unsigned i = 0, e = Returns.size(); i != e; ++i)
+      new CallInst(StackRestore, SavedPtr, "", Returns[i]);
+    
+    // If we are inlining an invoke instruction, insert restores before each
+    // unwind.  These unwinds will be rewritten into branches later.
+    if (InlinedFunctionInfo.ContainsUnwinds && isa<InvokeInst>(TheCall)) {
+      for (Function::iterator BB = FirstNewBlock, E = Caller->end();
+           BB != E; ++BB)
+        if (UnwindInst *UI = dyn_cast<UnwindInst>(BB->getTerminator()))
+          new CallInst(StackRestore, SavedPtr, "", UI);
+    }
+  }
+
   // If we are inlining tail call instruction through a call site that isn't 
   // marked 'tail', we must remove the tail marker for any calls in the inlined
   // code.
