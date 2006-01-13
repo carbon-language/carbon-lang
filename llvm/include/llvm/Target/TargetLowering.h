@@ -234,6 +234,13 @@ public:
   bool usesUnderscoreSetJmpLongJmp() const {
     return UseUnderscoreSetJmpLongJmp;
   }
+  
+  /// getStackPointerRegisterToSaveRestore - If a physical register, this
+  /// specifies the register that llvm.savestack/llvm.restorestack should save
+  /// and restore.
+  unsigned getStackPointerRegisterToSaveRestore() const {
+    return StackPointerRegisterToSaveRestore;
+  }
 
   //===--------------------------------------------------------------------===//
   // TargetLowering Configuration Methods - These methods should be invoked by
@@ -265,6 +272,13 @@ protected:
   /// the non _ versions.  Defaults to false.
   void setUseUnderscoreSetJmpLongJmp(bool Val) {
     UseUnderscoreSetJmpLongJmp = Val;
+  }
+  
+  /// setStackPointerRegisterToSaveRestore - If set to a physical register, this
+  /// specifies the register that llvm.savestack/llvm.restorestack should save
+  /// and restore.
+  void setStackPointerRegisterToSaveRestore(unsigned R) {
+    StackPointerRegisterToSaveRestore = R;
   }
   
   /// setSetCCIxExpensive - This is a short term hack for targets that codegen
@@ -443,6 +457,11 @@ private:
   /// UseUnderscoreSetJmpLongJmp - This target prefers to use _setjmp and
   /// _longjmp to implement llvm.setjmp/llvm.longjmp.  Defaults to false.
   bool UseUnderscoreSetJmpLongJmp;
+  
+  /// StackPointerRegisterToSaveRestore - If set to a physical register, this
+  /// specifies the register that llvm.savestack/llvm.restorestack should save
+  /// and restore.
+  unsigned StackPointerRegisterToSaveRestore;
 
   /// RegClassForVT - This indicates the default register class to use for
   /// each ValueType the target supports natively.
