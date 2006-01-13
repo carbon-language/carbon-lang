@@ -135,6 +135,7 @@ namespace {
     Instruction *visitStoreInst(StoreInst &SI);
     Instruction *visitBranchInst(BranchInst &BI);
     Instruction *visitSwitchInst(SwitchInst &SI);
+    Instruction *visitExtractElementInst(ExtractElementInst &EI);
 
     // visitInstruction - Specify what to return for unhandled instructions...
     Instruction *visitInstruction(Instruction &I) { return 0; }
@@ -5877,6 +5878,58 @@ Instruction *InstCombiner::visitSwitchInst(SwitchInst &SI) {
   return 0;
 }
 
+Instruction *InstCombiner::visitExtractElementInst(ExtractElementInst &EI) {
+  if (ConstantAggregateZero *C = 
+      dyn_cast<ConstantAggregateZero>(EI.getOperand(0))) {
+    // If packed val is constant 0, replace extract with scalar 0
+    const Type *Ty = cast<PackedType>(C->getType())->getElementType();
+    EI.replaceAllUsesWith(Constant::getNullValue(Ty));
+    return ReplaceInstUsesWith(EI, Constant::getNullValue(Ty));
+  }
+  if (ConstantPacked *C = dyn_cast<ConstantPacked>(EI.getOperand(0))) {
+    // If packed val is constant with uniform operands, replace EI
+    // with that operand
+    Constant *op0 = cast<Constant>(C->getOperand(0));
+    for (unsigned i = 1; i < C->getNumOperands(); ++i)
+      if (C->getOperand(i) != op0) return 0;
+    return ReplaceInstUsesWith(EI, op0);
+  }
+  if (Instruction *I = dyn_cast<Instruction>(EI.getOperand(0)))
+    if (I->hasOneUse()) {
+      // Push extractelement into predecessor operation if legal and
+      // profitable to do so
+      if (BinaryOperator *BO = dyn_cast<BinaryOperator>(I)) {
+        if (!isa<Constant>(BO->getOperand(0)) &&
+            !isa<Constant>(BO->getOperand(1)))
+          return 0;
+        ExtractElementInst *newEI0 = 
+          new ExtractElementInst(BO->getOperand(0), EI.getOperand(1),
+                                 EI.getName());
+        ExtractElementInst *newEI1 =
+          new ExtractElementInst(BO->getOperand(1), EI.getOperand(1),
+                                 EI.getName());
+        InsertNewInstBefore(newEI0, EI);
+        InsertNewInstBefore(newEI1, EI);
+        return BinaryOperator::create(BO->getOpcode(), newEI0, newEI1);
+      }
+      switch(I->getOpcode()) {
+      case Instruction::Load: {
+        Value *Ptr = InsertCastBefore(I->getOperand(0),
+                                      PointerType::get(EI.getType()), EI);
+        GetElementPtrInst *GEP = 
+          new GetElementPtrInst(Ptr, EI.getOperand(1),
+                                I->getName() + ".gep");
+        InsertNewInstBefore(GEP, EI);
+        return new LoadInst(GEP);
+      }
+      default:
+        return 0;
+      }
+    }
+  return 0;
+}
+
+
 void InstCombiner::removeFromWorkList(Instruction *I) {
   WorkList.erase(std::remove(WorkList.begin(), WorkList.end(), I),
                  WorkList.end());
@@ -6075,7 +6128,7 @@ bool InstCombiner::runOnFunction(Function &F) {
               WorkList.push_back(OpI);
 
           // Instructions may end up in the worklist more than once.  Erase all
-          // occurrances of this instruction.
+          // occurrences of this instruction.
           removeFromWorkList(I);
           I->eraseFromParent();
         } else {
