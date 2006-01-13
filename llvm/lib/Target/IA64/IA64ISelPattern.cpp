@@ -107,6 +107,10 @@ namespace {
       setOperationAction(ISD::DEBUG_LOC, MVT::Other, Expand);
       setOperationAction(ISD::DEBUG_LABEL, MVT::Other, Expand);
 
+      // Not implemented yet.
+      setOperationAction(ISD::STACKSAVE, MVT::Other, Expand); 
+      setOperationAction(ISD::STACKRESTORE, MVT::Other, Expand);
+
       computeRegisterProperties();
 
       addLegalFPImmediate(+0.0);

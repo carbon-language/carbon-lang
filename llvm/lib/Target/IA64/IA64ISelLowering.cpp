@@ -83,6 +83,10 @@ IA64TargetLowering::IA64TargetLowering(TargetMachine &TM)
       setOperationAction(ISD::ROTL , MVT::i64  , Expand);
       setOperationAction(ISD::ROTR , MVT::i64  , Expand);
 
+      // Not implemented yet.
+      setOperationAction(ISD::STACKSAVE, MVT::Other, Expand);
+      setOperationAction(ISD::STACKRESTORE, MVT::Other, Expand);
+
       computeRegisterProperties();
 
       addLegalFPImmediate(+0.0);
