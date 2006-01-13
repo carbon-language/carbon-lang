@@ -125,6 +125,9 @@
       </li>
       <li><a href="#int_codegen">Code Generator Intrinsics</a>
         <ol>
+          <li><a href="#i_bswap_i16">'<tt>llvm.bswap.i16</tt>' Intrinsic</a></li>
+          <li><a href="#i_bswap_i32">'<tt>llvm.bswap.i32</tt>' Intrinsic</a></li>
+          <li><a href="#i_bswap_i64">'<tt>llvm.bswap.i64</tt>' Intrinsic</a></li>
           <li><a href="#i_returnaddress">'<tt>llvm.returnaddress</tt>' Intrinsic</a></li>
           <li><a href="#i_frameaddress">'<tt>llvm.frameaddress</tt>'   Intrinsic</a></li>
           <li><a href="#i_stacksave">'<tt>llvm.stacksave</tt>' Intrinsic</a></li>
@@ -2698,6 +2701,93 @@ garbage collector runtime, as needed.</p>
 <p>
 These intrinsics are provided by LLVM to expose special features that may only
 be implemented with code generator support.
+</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="i_bswap_i16">'<tt>llvm.bswap.i16</tt>' Intrinsic</a>
+</div>
+
+<div class="doc_text">
+
+<h5>Syntax:</h5>
+<pre>
+  declare ushort %llvm.bswap.i16( ushort &lt;id&gt; )
+</pre>
+
+<h5>Overview:</h5>
+
+<p>
+The '<tt>llvm.bwsap.i16</tt>' intrinsic is used to byteswap a 16 bit quantity.
+This is useful for performing operations on data that is not in the target's 
+native byte order.
+</p>
+
+<h5>Semantics:</h5>
+
+<p>
+This intrinsic returns a ushort value that has the two bytes of the input ushort
+swapped.
+</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="i_bswap_i32">'<tt>llvm.bswap.i32</tt>' Intrinsic</a>
+</div>
+
+<div class="doc_text">
+
+<h5>Syntax:</h5>
+<pre>
+  declare uint %llvm.bswap.i32( uint &lt;id&gt; )
+</pre>
+
+<h5>Overview:</h5>
+
+<p>
+The '<tt>llvm.bwsap.i32</tt>' intrinsic is used to byteswap a 32 bit quantity.
+This is useful for performing operations on data that is not in the target's 
+native byte order.
+</p>
+
+<h5>Semantics:</h5>
+
+<p>
+This intrinsic returns a uint value that has the four bytes of the input uint
+swapped, so that if the input bytes are numbered 0, 1, 2, 3 then the returned
+uint will have its bytes in 3, 2, 1, 0 order.
+</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="i_bswap_i64">'<tt>llvm.bswap.i64</tt>' Intrinsic</a>
+</div>
+
+<div class="doc_text">
+
+<h5>Syntax:</h5>
+<pre>
+  declare ulong %llvm.bswap.i64( ulong &lt;id&gt; )
+</pre>
+
+<h5>Overview:</h5>
+
+<p>
+The '<tt>llvm.bwsap.i64</tt>' intrinsic is used to byteswap a 64 bit quantity.
+This is useful for performing operations on data that is not in the target's 
+native byte order.
+</p>
+
+<h5>Semantics:</h5>
+
+<p>
+See the description for <a href="#i_bswap_i32"><tt>llvm.bswap.i32</tt></a>.
 </p>
 
 </div>
