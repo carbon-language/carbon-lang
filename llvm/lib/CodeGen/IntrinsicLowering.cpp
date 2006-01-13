@@ -248,6 +248,19 @@ void DefaultIntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
     break;
   }
 
+  case Intrinsic::stacksave:
+  case Intrinsic::stackrestore: {
+    static bool Warned = false;
+    if (!Warned)
+      std::cerr << "WARNING: this target does not support the llvm.stack"
+       << (Callee->getIntrinsicID() == Intrinsic::stacksave ?
+           "save" : "restore") << " intrinsic.\n";
+    Warned = true;
+    if (Callee->getIntrinsicID() == Intrinsic::stacksave)
+      CI->replaceAllUsesWith(Constant::getNullValue(CI->getType()));
+    break;
+  }
+    
   case Intrinsic::returnaddress:
   case Intrinsic::frameaddress:
     std::cerr << "WARNING: this target does not support the llvm."
@@ -263,8 +276,8 @@ void DefaultIntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
   case Intrinsic::pcmarker:
     break;    // Simply strip out pcmarker on unsupported architectures
   case Intrinsic::readcyclecounter: {
-    std::cerr << "WARNING: this target does not support the llvm.readcyclecounter"
-              << " intrinsic.  It is being lowered to a constant 0\n";
+    std::cerr << "WARNING: this target does not support the llvm.readcyclecoun"
+              << "ter intrinsic.  It is being lowered to a constant 0\n";
     CI->replaceAllUsesWith(ConstantUInt::get(Type::ULongTy, 0));
     break;
   }
