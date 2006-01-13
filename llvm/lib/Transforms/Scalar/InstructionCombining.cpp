@@ -4671,6 +4671,39 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
         SPI->replaceAllUsesWith(PrevSPI);
         return EraseInstFromFunction(CI);
       }
+  } else {
+    switch (II->getIntrinsicID()) {
+    default: break;
+    case Intrinsic::stackrestore: {
+      // If the save is right next to the restore, remove the restore.  This can
+      // happen when variable allocas are DCE'd.
+      if (IntrinsicInst *SS = dyn_cast<IntrinsicInst>(II->getOperand(1))) {
+        if (SS->getIntrinsicID() == Intrinsic::stacksave) {
+          BasicBlock::iterator BI = SS;
+          if (&*++BI == II)
+            return EraseInstFromFunction(CI);
+        }
+      }
+      
+      // If the stack restore is in a return/unwind block and if there are no
+      // allocas or calls between the restore and the return, nuke the restore.
+      TerminatorInst *TI = II->getParent()->getTerminator();
+      if (isa<ReturnInst>(TI) || isa<UnwindInst>(TI)) {
+        BasicBlock::iterator BI = II;
+        bool CannotRemove = false;
+        for (++BI; &*BI != TI; ++BI) {
+          if (isa<AllocaInst>(BI) ||
+              (isa<CallInst>(BI) && !isa<IntrinsicInst>(BI))) {
+            CannotRemove = true;
+            break;
+          }
+        }
+        if (!CannotRemove)
+          return EraseInstFromFunction(CI);
+      }
+      break;
+    }
+    }
   }
 
   return visitCallSite(II);
