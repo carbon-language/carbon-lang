@@ -39,6 +39,7 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   setSetCCResultType(MVT::i8);
   setSetCCResultContents(ZeroOrOneSetCCResult);
   setShiftAmountFlavor(Mask);   // shl X, 32 == shl X, 0
+  setStackPointerRegisterToSaveRestore(X86::ESP);
 
   // Set up the register classes.
   addRegisterClass(MVT::i8, X86::R8RegisterClass);
