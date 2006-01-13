@@ -108,6 +108,10 @@ PPCTargetLowering::PPCTargetLowering(TargetMachine &TM)
   // appropriate instructions to materialize the address.
   setOperationAction(ISD::GlobalAddress, MVT::i32, Custom);
   setOperationAction(ISD::ConstantPool,  MVT::i32, Custom);
+
+  // Not implemented yet.
+  setOperationAction(ISD::STACKSAVE, MVT::Other, Expand); 
+  setOperationAction(ISD::STACKRESTORE, MVT::Other, Expand);
   
   if (TM.getSubtarget<PPCSubtarget>().is64Bit()) {
     // They also have instructions for converting between i64 and fp.

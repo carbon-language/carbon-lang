@@ -159,6 +159,10 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   setOperationAction(ISD::DEBUG_LOC, MVT::Other, Expand);
   setOperationAction(ISD::DEBUG_LABEL, MVT::Other, Expand);
 
+  // Not implemented yet.
+  setOperationAction(ISD::STACKSAVE, MVT::Other, Expand); 
+  setOperationAction(ISD::STACKRESTORE, MVT::Other, Expand);
+
   if (X86ScalarSSE) {
     // Set up the FP register classes.
     addRegisterClass(MVT::f32, X86::FR32RegisterClass);
