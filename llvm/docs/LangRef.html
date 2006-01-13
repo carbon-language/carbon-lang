@@ -127,6 +127,8 @@
         <ol>
           <li><a href="#i_returnaddress">'<tt>llvm.returnaddress</tt>' Intrinsic</a></li>
           <li><a href="#i_frameaddress">'<tt>llvm.frameaddress</tt>'   Intrinsic</a></li>
+          <li><a href="#i_stacksave">'<tt>llvm.stacksave</tt>' Intrinsic</a></li>
+          <li><a href="#i_stackrestore">'<tt>llvm.stackrestore</tt>' Intrinsic</a></li>
           <li><a href="#i_prefetch">'<tt>llvm.prefetch</tt>' Intrinsic</a></li>
           <li><a href="#i_pcmarker">'<tt>llvm.pcmarker</tt>' Intrinsic</a></li>
           <li><a href="#i_readcyclecounter"><tt>llvm.readcyclecounter</tt>' Intrinsic</a></li>
@@ -2786,6 +2788,72 @@ aggressive transformations, so the value returned may not be that of the obvious
 source-language caller.
 </p>
 </div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="i_stacksave">'<tt>llvm.stacksave</tt>' Intrinsic</a>
+</div>
+
+<div class="doc_text">
+
+<h5>Syntax:</h5>
+<pre>
+  declare sbyte *%llvm.stacksave()
+</pre>
+
+<h5>Overview:</h5>
+
+<p>
+The '<tt>llvm.stacksave</tt>' intrinsic is used to remember the current state of
+the function stack, for use with <a href="#i_stackrestore">
+<tt>llvm.stackrestore</tt></a>.  This is useful for implementing language
+features like scoped automatic variable sized arrays in C99.
+</p>
+
+<h5>Semantics:</h5>
+
+<p>
+This intrinsic returns a opaque pointer value that can be passed to <a
+href="#i_stackrestore"><tt>llvm.stackrestore</tt></a>.  When an
+<tt>llvm.stackrestore</tt> intrinsic is executed with a value saved from 
+<tt>llvm.stacksave</tt>, it effectively restores the state of the stack to the
+state it was in when the <tt>llvm.stacksave</tt> intrinsic executed.  In
+practice, this pops any <a href="#i_alloca">alloca</a> blocks from the stack
+that were allocated after the <tt>llvm.stacksave</tt> was executed.
+</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+  <a name="i_stackrestore">'<tt>llvm.stackrestore</tt>' Intrinsic</a>
+</div>
+
+<div class="doc_text">
+
+<h5>Syntax:</h5>
+<pre>
+  declare void %llvm.stackrestore(sbyte* %ptr)
+</pre>
+
+<h5>Overview:</h5>
+
+<p>
+The '<tt>llvm.stackrestore</tt>' intrinsic is used to restore the state of
+the function stack to the state it was in when the corresponding <a
+href="#llvm.stacksave"><tt>llvm.stacksave</tt></a> intrinsic executed.  This is
+useful for implementing language features like scoped automatic variable sized
+arrays in C99.
+</p>
+
+<h5>Semantics:</h5>
+
+<p>
+See the description for <a href="#i_stacksave"><tt>llvm.stacksave</tt></a>.
+</p>
+
+</div>
+
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
