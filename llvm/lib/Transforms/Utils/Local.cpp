@@ -296,6 +296,7 @@ bool llvm::isInstructionTriviallyDead(Instruction *I) {
       default: break;
       case Intrinsic::returnaddress:
       case Intrinsic::frameaddress:
+      case Intrinsic::stacksave:
       case Intrinsic::isunordered:
       case Intrinsic::ctpop:
       case Intrinsic::ctlz:
