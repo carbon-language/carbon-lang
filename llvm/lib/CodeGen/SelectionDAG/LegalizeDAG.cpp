@@ -1453,10 +1453,20 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       AddLegalizedOperand(SDOperand(Node, 1), Result.getValue(1));
       return Result.getValue(Op.ResNo);
     case TargetLowering::Expand:
-      Tmp1 = DAG.getNode(ISD::UNDEF, Node->getValueType(0));
-      AddLegalizedOperand(SDOperand(Node, 0), Tmp1);
-      AddLegalizedOperand(SDOperand(Node, 1), Node->getOperand(0));
-      return Op.ResNo ? Node->getOperand(0) : Tmp1;
+      // Expand to CopyFromReg if the target set 
+      // StackPointerRegisterToSaveRestore.
+      if (unsigned SP = TLI.getStackPointerRegisterToSaveRestore()) {
+        Tmp1 = DAG.getCopyFromReg(Node->getOperand(0), SP, 
+                                  Node->getValueType(0));
+        AddLegalizedOperand(SDOperand(Node, 0), Tmp1);
+        AddLegalizedOperand(SDOperand(Node, 1), Tmp1.getValue(1));
+        return Tmp1.getValue(Op.ResNo);
+      } else {
+        Tmp1 = DAG.getNode(ISD::UNDEF, Node->getValueType(0));
+        AddLegalizedOperand(SDOperand(Node, 0), Tmp1);
+        AddLegalizedOperand(SDOperand(Node, 1), Node->getOperand(0));
+        return Op.ResNo ? Node->getOperand(0) : Tmp1;
+      }
     }
     
   case ISD::STACKRESTORE:
@@ -1478,7 +1488,13 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     case TargetLowering::Legal:
       break;
     case TargetLowering::Expand:
-      Result = Tmp1;
+      // Expand to CopyToReg if the target set 
+      // StackPointerRegisterToSaveRestore.
+      if (unsigned SP = TLI.getStackPointerRegisterToSaveRestore()) {
+        Result = DAG.getCopyToReg(Tmp1, SP, Tmp2);
+      } else {
+        Result = Tmp1;
+      }
       break;
     }
     break;
