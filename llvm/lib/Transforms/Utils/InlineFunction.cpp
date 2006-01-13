@@ -24,6 +24,109 @@ using namespace llvm;
 bool llvm::InlineFunction(CallInst *CI) { return InlineFunction(CallSite(CI)); }
 bool llvm::InlineFunction(InvokeInst *II) {return InlineFunction(CallSite(II));}
 
+/// HandleInlinedInvoke - If we inlined an invoke site, we need to convert calls
+/// in the body of the inlined function into invokes and turn unwind
+/// instructions into branches to the invoke unwind dest.
+///
+/// II is the invoke instruction begin inlined.  FirstNewBlock is the first
+/// block of the inlined code (the last block is the end of the function),
+/// and InlineCodeInfo is information about the code that got inlined.
+static void HandleInlinedInvoke(InvokeInst *II, BasicBlock *FirstNewBlock,
+                                ClonedCodeInfo &InlinedCodeInfo) {
+  BasicBlock *InvokeDest = II->getUnwindDest();
+  std::vector<Value*> InvokeDestPHIValues;
+
+  // If there are PHI nodes in the unwind destination block, we need to
+  // keep track of which values came into them from this invoke, then remove
+  // the entry for this block.
+  BasicBlock *InvokeBlock = II->getParent();
+  for (BasicBlock::iterator I = InvokeDest->begin(); isa<PHINode>(I); ++I) {
+    PHINode *PN = cast<PHINode>(I);
+    // Save the value to use for this edge.
+    InvokeDestPHIValues.push_back(PN->getIncomingValueForBlock(InvokeBlock));
+  }
+
+  Function *Caller = FirstNewBlock->getParent();
+  
+  // The inlined code is currently at the end of the function, scan from the
+  // start of the inlined code to its end, checking for stuff we need to
+  // rewrite.
+  for (Function::iterator BB = FirstNewBlock, E = Caller->end();
+       BB != E; ++BB) {
+    for (BasicBlock::iterator BBI = BB->begin(), E = BB->end(); BBI != E; ) {
+      Instruction *I = BBI++;
+      
+      // We only need to check for function calls: inlined invoke instructions
+      // require no special handling.
+      if (!isa<CallInst>(I)) continue;
+      CallInst *CI = cast<CallInst>(I);
+
+      // If this is an intrinsic function call, do not convert it to an invoke.
+      if (CI->getCalledFunction() &&
+          CI->getCalledFunction()->getIntrinsicID())
+        continue;
+      
+      // Convert this function call into an invoke instruction.
+      // First, split the basic block.
+      BasicBlock *Split = BB->splitBasicBlock(CI, CI->getName()+".noexc");
+      
+      // Next, create the new invoke instruction, inserting it at the end
+      // of the old basic block.
+      InvokeInst *II =
+        new InvokeInst(CI->getCalledValue(), Split, InvokeDest,
+                       std::vector<Value*>(CI->op_begin()+1, CI->op_end()),
+                       CI->getName(), BB->getTerminator());
+      II->setCallingConv(CI->getCallingConv());
+      
+      // Make sure that anything using the call now uses the invoke!
+      CI->replaceAllUsesWith(II);
+      
+      // Delete the unconditional branch inserted by splitBasicBlock
+      BB->getInstList().pop_back();
+      Split->getInstList().pop_front();  // Delete the original call
+      
+      // Update any PHI nodes in the exceptional block to indicate that
+      // there is now a new entry in them.
+      unsigned i = 0;
+      for (BasicBlock::iterator I = InvokeDest->begin();
+           isa<PHINode>(I); ++I, ++i) {
+        PHINode *PN = cast<PHINode>(I);
+        PN->addIncoming(InvokeDestPHIValues[i], BB);
+      }
+        
+      // This basic block is now complete, start scanning the next one.
+      break;
+    }
+    
+    if (UnwindInst *UI = dyn_cast<UnwindInst>(BB->getTerminator())) {
+      // An UnwindInst requires special handling when it gets inlined into an
+      // invoke site.  Once this happens, we know that the unwind would cause
+      // a control transfer to the invoke exception destination, so we can
+      // transform it into a direct branch to the exception destination.
+      new BranchInst(InvokeDest, UI);
+      
+      // Delete the unwind instruction!
+      UI->getParent()->getInstList().pop_back();
+      
+      // Update any PHI nodes in the exceptional block to indicate that
+      // there is now a new entry in them.
+      unsigned i = 0;
+      for (BasicBlock::iterator I = InvokeDest->begin();
+           isa<PHINode>(I); ++I, ++i) {
+        PHINode *PN = cast<PHINode>(I);
+        PN->addIncoming(InvokeDestPHIValues[i], BB);
+      }
+    }
+  }
+
+  // Now that everything is happy, we have one final detail.  The PHI nodes in
+  // the exception destination block still have entries due to the original
+  // invoke instruction.  Eliminate these entries (which might even delete the
+  // PHI node) now.
+  InvokeDest->removePredecessor(II->getParent());
+}
+
+
 // InlineFunction - This function inlines the called function into the basic
 // block of the caller.  This returns false if it is not possible to inline this
 // call.  The program is still in a well defined state if this occurs though.
@@ -60,6 +163,7 @@ bool llvm::InlineFunction(CallSite CS) {
   // Make sure to capture all of the return instructions from the cloned
   // function.
   std::vector<ReturnInst*> Returns;
+  ClonedCodeInfo InlinedFunctionInfo;
   { // Scope to destroy ValueMap after cloning.
     // Calculate the vector of arguments to pass into the function cloner...
     std::map<const Value*, Value*> ValueMap;
@@ -73,7 +177,8 @@ bool llvm::InlineFunction(CallSite CS) {
       ValueMap[I] = *AI;
 
     // Clone the entire body of the callee into the caller.
-    CloneFunctionInto(Caller, CalledFunc, ValueMap, Returns, ".i");
+    CloneFunctionInto(Caller, CalledFunc, ValueMap, Returns, ".i",
+                      &InlinedFunctionInfo);
   }
 
   // Remember the first block that is newly cloned over.
@@ -117,93 +222,8 @@ bool llvm::InlineFunction(CallSite CS) {
   // If we are inlining for an invoke instruction, we must make sure to rewrite
   // any inlined 'unwind' instructions into branches to the invoke exception
   // destination, and call instructions into invoke instructions.
-  if (InvokeInst *II = dyn_cast<InvokeInst>(TheCall)) {
-    BasicBlock *InvokeDest = II->getUnwindDest();
-    std::vector<Value*> InvokeDestPHIValues;
-
-    // If there are PHI nodes in the exceptional destination block, we need to
-    // keep track of which values came into them from this invoke, then remove
-    // the entry for this block.
-    for (BasicBlock::iterator I = InvokeDest->begin(); isa<PHINode>(I); ++I) {
-      PHINode *PN = cast<PHINode>(I);
-      // Save the value to use for this edge...
-      InvokeDestPHIValues.push_back(PN->getIncomingValueForBlock(OrigBB));
-    }
-
-    for (Function::iterator BB = FirstNewBlock, E = Caller->end();
-         BB != E; ++BB) {
-      for (BasicBlock::iterator I = BB->begin(), E = BB->end(); I != E; ) {
-        // We only need to check for function calls: inlined invoke instructions
-        // require no special handling...
-        if (CallInst *CI = dyn_cast<CallInst>(I)) {
-          // Convert this function call into an invoke instruction... if it's
-          // not an intrinsic function call (which are known to not unwind).
-          if (CI->getCalledFunction() &&
-              CI->getCalledFunction()->getIntrinsicID()) {
-            ++I;
-          } else {
-            // First, split the basic block...
-            BasicBlock *Split = BB->splitBasicBlock(CI, CI->getName()+".noexc");
-
-            // Next, create the new invoke instruction, inserting it at the end
-            // of the old basic block.
-            InvokeInst *II =
-              new InvokeInst(CI->getCalledValue(), Split, InvokeDest,
-                            std::vector<Value*>(CI->op_begin()+1, CI->op_end()),
-                             CI->getName(), BB->getTerminator());
-            II->setCallingConv(CI->getCallingConv());
-
-            // Make sure that anything using the call now uses the invoke!
-            CI->replaceAllUsesWith(II);
-
-            // Delete the unconditional branch inserted by splitBasicBlock
-            BB->getInstList().pop_back();
-            Split->getInstList().pop_front();  // Delete the original call
-
-            // Update any PHI nodes in the exceptional block to indicate that
-            // there is now a new entry in them.
-            unsigned i = 0;
-            for (BasicBlock::iterator I = InvokeDest->begin();
-                 isa<PHINode>(I); ++I, ++i) {
-              PHINode *PN = cast<PHINode>(I);
-              PN->addIncoming(InvokeDestPHIValues[i], BB);
-            }
-
-            // This basic block is now complete, start scanning the next one.
-            break;
-          }
-        } else {
-          ++I;
-        }
-      }
-
-      if (UnwindInst *UI = dyn_cast<UnwindInst>(BB->getTerminator())) {
-        // An UnwindInst requires special handling when it gets inlined into an
-        // invoke site.  Once this happens, we know that the unwind would cause
-        // a control transfer to the invoke exception destination, so we can
-        // transform it into a direct branch to the exception destination.
-        new BranchInst(InvokeDest, UI);
-
-        // Delete the unwind instruction!
-        UI->getParent()->getInstList().pop_back();
-
-        // Update any PHI nodes in the exceptional block to indicate that
-        // there is now a new entry in them.
-        unsigned i = 0;
-        for (BasicBlock::iterator I = InvokeDest->begin();
-             isa<PHINode>(I); ++I, ++i) {
-          PHINode *PN = cast<PHINode>(I);
-          PN->addIncoming(InvokeDestPHIValues[i], BB);
-        }
-      }
-    }
-
-    // Now that everything is happy, we have one final detail.  The PHI nodes in
-    // the exception destination block still have entries due to the original
-    // invoke instruction.  Eliminate these entries (which might even delete the
-    // PHI node) now.
-    InvokeDest->removePredecessor(II->getParent());
-  }
+  if (InvokeInst *II = dyn_cast<InvokeInst>(TheCall))
+    HandleInlinedInvoke(II, FirstNewBlock, InlinedFunctionInfo);
 
   // If we cloned in _exactly one_ basic block, and if that block ends in a
   // return instruction, we splice the body of the inlined callee directly into
