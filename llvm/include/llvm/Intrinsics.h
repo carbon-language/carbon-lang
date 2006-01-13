@@ -34,6 +34,8 @@ namespace Intrinsic {
     // Code generator intrinsics.
     returnaddress,    // Yields the return address of a dynamic call frame
     frameaddress,     // Yields the frame address of a dynamic call frame
+    stacksave,        // Save the stack pointer
+    stackrestore,     // Restore the stack pointer
     prefetch,         // Prefetch a value into the cache
     pcmarker,         // Export a PC from near the marker
     readcyclecounter, // Read cycle counter register
