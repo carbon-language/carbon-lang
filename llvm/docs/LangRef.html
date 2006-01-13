@@ -2709,7 +2709,7 @@ be implemented with code generator support.
 
 <h5>Syntax:</h5>
 <pre>
-  declare void* %llvm.returnaddress(uint &lt;level&gt;)
+  declare sbyte *%llvm.returnaddress(uint &lt;level&gt;)
 </pre>
 
 <h5>Overview:</h5>
@@ -2753,7 +2753,7 @@ source-language caller.
 
 <h5>Syntax:</h5>
 <pre>
-  declare void* %llvm.frameaddress(uint &lt;level&gt;)
+  declare sbyte *%llvm.frameaddress(uint &lt;level&gt;)
 </pre>
 
 <h5>Overview:</h5>
@@ -3362,7 +3362,6 @@ These allow efficient code generation for some algorithms.
 <h5>Syntax:</h5>
 <pre>
   declare int %llvm.ctpop(int &lt;src&gt;)
-
 </pre>
 
 <h5>Overview:</h5>
@@ -3433,7 +3432,6 @@ of src. For example, <tt>llvm.cttz(int 2) = 30</tt>.
 <h5>Syntax:</h5>
 <pre>
   declare int %llvm.cttz(int &lt;src&gt;)
-
 </pre>
 
 <h5>Overview:</h5>
