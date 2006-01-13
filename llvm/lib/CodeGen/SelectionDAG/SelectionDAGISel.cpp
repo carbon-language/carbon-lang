@@ -1004,6 +1004,11 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
                              getValue(I.getOperand(1)).getValueType(),
                              getValue(I.getOperand(1))));
     return 0;
+  case Intrinsic::stacksave:
+    setValue(&I, DAG.getNode(ISD::UNDEF, TLI.getValueType(I.getType())));
+    return 0;  // FIXME: discard stacksave/restore
+  case Intrinsic::stackrestore:
+    return 0;  // FIXME: discard stacksave/restore
   case Intrinsic::prefetch:
     // FIXME: Currently discarding prefetches.
     return 0;
