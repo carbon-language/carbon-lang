@@ -1257,7 +1257,7 @@ let isTwoAddress = 0 in {
   def AND32mi8 : Ii8<0x83, MRM4m,
                      (ops i32mem:$dst, i32i8imm :$src),
                      "and{l} {$src, $dst|$dst, $src}",
-                [(store (add (load addr:$dst), i32immSExt8:$src), addr:$dst)]>;
+                [(store (and (load addr:$dst), i32immSExt8:$src), addr:$dst)]>;
 }
 
 
