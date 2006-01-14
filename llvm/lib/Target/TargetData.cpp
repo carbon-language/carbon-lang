@@ -131,6 +131,9 @@ TargetData::TargetData(const std::string &ToolName, const Module *M) {
   BoolAlignment    = 1;
 }
 
+/// Layouts - The lazy cache of structure layout information maintained by
+/// TargetData.
+///
 static std::map<std::pair<const TargetData*,const StructType*>,
                 StructLayout> *Layouts = 0;
 
@@ -164,6 +167,21 @@ const StructLayout *TargetData::getStructLayout(const StructType *Ty) const {
                                               StructLayout(Ty, *this)))->second;
   }
 }
+
+/// InvalidateStructLayoutInfo - TargetData speculatively caches StructLayout
+/// objects.  If a TargetData object is alive when types are being refined and
+/// removed, this method must be called whenever a StructType is removed to
+/// avoid a dangling pointer in this cache.
+void TargetData::InvalidateStructLayoutInfo(const StructType *Ty) const {
+  if (!Layouts) return;  // No cache.
+
+  std::map<std::pair<const TargetData*,const StructType*>,
+           StructLayout>::iterator I = Layouts->find(std::make_pair(this, Ty));
+  if (I != Layouts->end())
+    Layouts->erase(I);
+}
+
+
 
 static inline void getTypeInfo(const Type *Ty, const TargetData *TD,
                                uint64_t &Size, unsigned char &Alignment) {
