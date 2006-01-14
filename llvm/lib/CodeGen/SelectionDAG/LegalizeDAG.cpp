@@ -3016,6 +3016,7 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
     Tmp2 = LegalizeOp(Node->getOperand(1));
     Result = DAG.getNode(ISD::SRL, NVT, Tmp1, Tmp2);
     break;
+    
   case ISD::LOAD:
     Tmp1 = LegalizeOp(Node->getOperand(0));   // Legalize the chain.
     Tmp2 = LegalizeOp(Node->getOperand(1));   // Legalize the pointer.
@@ -3374,11 +3375,24 @@ static SDNode *FindCallSeqEnd(SDNode *Node) {
   if (Node->use_empty())
     return 0;   // No CallSeqEnd
 
+  // The chain is usually at the end.
   SDOperand TheChain(Node, Node->getNumValues()-1);
-  if (TheChain.getValueType() != MVT::Other)
+  if (TheChain.getValueType() != MVT::Other) {
+    // Sometimes it's at the beginning.
     TheChain = SDOperand(Node, 0);
-  if (TheChain.getValueType() != MVT::Other)
-    return 0;
+    if (TheChain.getValueType() != MVT::Other) {
+      // Otherwise, hunt for it.
+      for (unsigned i = 1, e = Node->getNumValues(); i != e; ++i)
+        if (Node->getValueType(i) == MVT::Other) {
+          TheChain = SDOperand(Node, i);
+          break;
+        }
+
+      // Otherwise, we walked into a node without a chain.  
+      if (TheChain.getValueType() != MVT::Other)
+        return 0;
+    }
+  }
 
   for (SDNode::use_iterator UI = Node->use_begin(),
          E = Node->use_end(); UI != E; ++UI) {
