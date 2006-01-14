@@ -682,6 +682,7 @@ SDOperand X86DAGToDAGISel::Select(SDOperand N) {
                                     Base, Scale, Index, Disp, OldCW, Chain);
 
       switch (Opcode) {
+      default: assert(0 && "Unknown FP_TO_INT*_IN_MEM");
       case X86ISD::FP_TO_INT16_IN_MEM: Opc = X86::FpIST16m; break;
       case X86ISD::FP_TO_INT32_IN_MEM: Opc = X86::FpIST32m; break;
       case X86ISD::FP_TO_INT64_IN_MEM: Opc = X86::FpIST64m; break;
