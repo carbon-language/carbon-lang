@@ -100,8 +100,8 @@ inline unsigned ByteSwap_32(unsigned Value) {
 // ByteSwap_64 - This function returns a byte-swapped representation of the
 // 64-bit argument, Value.
 inline uint64_t ByteSwap_64(uint64_t Value) {
-  uint64_t Hi = ByteSwap_32(Value);
-  uint64_t Lo = ByteSwap_32(Value >> 32);
+  uint64_t Hi = ByteSwap_32(unsigned(Value));
+  uint64_t Lo = ByteSwap_32(unsigned(Value >> 32));
   return (Hi << 32) | Lo;
 }
 
