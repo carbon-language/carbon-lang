@@ -147,7 +147,8 @@ public:
   void initialize(Module &M);
 
   virtual void print(std::ostream &o, const Module *M) const;
-
+  void dump() const;
+  
   // stub - dummy function, just ignore it
   static void stub();
 protected:

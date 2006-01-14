@@ -216,6 +216,10 @@ void CallGraph::print(std::ostream &OS, const Module *M) const {
     I->second->print(OS);
 }
 
+void CallGraph::dump() const {
+  print(std::cerr, 0);
+}
+
 //===----------------------------------------------------------------------===//
 // Implementations of public modification methods
 //
