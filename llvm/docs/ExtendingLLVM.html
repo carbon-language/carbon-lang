@@ -97,9 +97,13 @@ function and then be turned into an instruction if warranted.</p>
     not access memory or does not write to memory, add it to the relevant list
     of functions.</li>
 
-<li><tt>llvm/lib/Transforms/Utils/Local.cpp</tt>: If it is possible to constant
-fold your intrinsic, add support to it in the <tt>canConstantFoldCallTo</tt> and
-<tt>ConstantFoldCall</tt> functions.</li>
+<li><tt>llvm/lib/Analysis/ConstantFolding.cpp</tt>: If it is possible to 
+    constant fold your intrinsic, add support to it in the 
+    <tt>canConstantFoldCallTo</tt> and <tt>ConstantFoldCall</tt> functions.</li>
+
+<li><tt>llvm/lib/Transforms/Utils/Local.cpp</tt>: If your intrinsic has no side-
+    effects, add it to the list of intrinsics in the 
+    <tt>isInstructionTriviallyDead</tt> function.</li>
 
 <li>Test your intrinsic</li>
 
