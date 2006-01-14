@@ -297,8 +297,8 @@ public:
 
   static void stub();  // Noop
 private:
-  void Calculate(const ETForest &EF);
-  Loop *ConsiderForLoop(BasicBlock *BB, const ETForest &EF);
+  void Calculate(ETForest &EF);
+  Loop *ConsiderForLoop(BasicBlock *BB, ETForest &EF);
   void MoveSiblingLoopInto(Loop *NewChild, Loop *NewParent);
   void InsertLoopInto(Loop *L, Loop *Parent);
 };

@@ -812,6 +812,21 @@ void ETForestBase::reset() {
   Nodes.clear();
 }
 
+void ETForestBase::updateDFSNumbers()
+{
+  int dfsnum = 0;
+  // Iterate over all nodes in depth first order.
+  for (unsigned i = 0, e = Roots.size(); i != e; ++i)
+    for (df_iterator<BasicBlock*> I = df_begin(Roots[i]),
+           E = df_end(Roots[i]); I != E; ++I) {
+      BasicBlock *BB = *I;
+      if (!getNode(BB)->hasFather())
+        getNode(BB)->assignDFSNumber(dfsnum);    
+  }
+  SlowQueries = 0;
+  DFSInfoValid = true;
+}
+
 ETNode *ETForest::getNodeForBlock(BasicBlock *BB) {
   ETNode *&BBNode = Nodes[BB];
   if (BBNode) return BBNode;
@@ -855,12 +870,14 @@ void ETForest::calculate(const ImmediateDominators &ID) {
       }
     }
 
-  int dfsnum = 0;
-  for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I) { 
-   if (!getNodeForBlock(I)->hasFather())
-     getNodeForBlock(I)->assignDFSNumber(dfsnum);
+  // Make sure we've got nodes around for every block
+  for (Function::iterator I = F->begin(), E = F->end(); I != E; ++I) {
+    ETNode *&BBNode = Nodes[I];
+    if (!BBNode)
+      BBNode = new ETNode(I);
   }
-  DFSInfoValid = true;
+
+  updateDFSNumbers ();
 }
 
 //===----------------------------------------------------------------------===//

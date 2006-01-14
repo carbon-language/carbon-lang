@@ -397,16 +397,17 @@ public:
 ///
 struct ETForestBase : public DominatorBase {
   ETForestBase(bool isPostDom) : DominatorBase(isPostDom), Nodes(), 
-                                 DFSInfoValid(false) {}
+                                 DFSInfoValid(false), SlowQueries(0) {}
   
   virtual void releaseMemory() { reset(); }
 
   typedef std::map<BasicBlock*, ETNode*> ETMapType;
 
-
+  void updateDFSNumbers();
+    
   /// dominates - Return true if A dominates B.
   ///
-  inline bool dominates(BasicBlock *A, BasicBlock *B) const {
+  inline bool dominates(BasicBlock *A, BasicBlock *B) {
     if (A == B)
       return true;
     
@@ -415,13 +416,21 @@ struct ETForestBase : public DominatorBase {
     
     if (DFSInfoValid)
       return NodeB->DominatedBy(NodeA);
-    else
+    else {
+      // If we end up with too many slow queries, just update the
+      // DFS numbers on the theory that we are going to keep querying.
+      SlowQueries++;
+      if (SlowQueries > 32) {
+        updateDFSNumbers();
+        return NodeB->DominatedBy(NodeA);
+      }
       return NodeB->DominatedBySlow(NodeA);
+    }
   }
 
   /// properlyDominates - Return true if A dominates B and A != B.
   ///
-  bool properlyDominates(BasicBlock *A, BasicBlock *B) const {
+  bool properlyDominates(BasicBlock *A, BasicBlock *B) {
     return dominates(A, B) && A != B;
   }
 
@@ -474,6 +483,7 @@ protected:
   void reset();
   ETMapType Nodes;
   bool DFSInfoValid;
+  unsigned int SlowQueries;
 
 };
 

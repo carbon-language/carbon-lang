@@ -104,7 +104,7 @@ void LoopInfo::releaseMemory() {
 }
 
 
-void LoopInfo::Calculate(const ETForest &EF) {
+void LoopInfo::Calculate(ETForest &EF) {
   BasicBlock *RootNode = EF.getRoot();
 
   for (df_iterator<BasicBlock*> NI = df_begin(RootNode),
@@ -135,7 +135,7 @@ static bool isNotAlreadyContainedIn(Loop *SubLoop, Loop *ParentLoop) {
   return isNotAlreadyContainedIn(SubLoop->getParentLoop(), ParentLoop);
 }
 
-Loop *LoopInfo::ConsiderForLoop(BasicBlock *BB, const ETForest &EF) {
+Loop *LoopInfo::ConsiderForLoop(BasicBlock *BB, ETForest &EF) {
   if (BBMap.find(BB) != BBMap.end()) return 0;   // Haven't processed this node?
 
   std::vector<BasicBlock *> TodoStack;
