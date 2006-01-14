@@ -32,6 +32,7 @@ class InvokeInst;
 class ReturnInst;
 class CallSite;
 class Trace;
+class CallGraph;
 
 /// CloneModule - Return an exact copy of the specified module
 ///
@@ -136,6 +137,12 @@ void CloneTraceInto(Function *NewFunc, Trace &T,
                     std::map<const Value*, Value*> &ValueMap,
                     const char *NameSuffix);
 
+/// CloneTrace - Returns a copy of the specified trace.
+/// It takes a vector of basic blocks clones the basic blocks, removes internal
+/// phi nodes, adds it to the same function as the original (although there is
+/// no jump to it) and returns the new vector of basic blocks.
+std::vector<BasicBlock *> CloneTrace(const std::vector<BasicBlock*> &origTrace);
+
 /// InlineFunction - This function inlines the called function into the basic
 /// block of the caller.  This returns false if it is not possible to inline
 /// this call.  The program is still in a well defined state if this occurs
@@ -146,15 +153,12 @@ void CloneTraceInto(Function *NewFunc, Trace &T,
 /// exists in the instruction stream.  Similiarly this will inline a recursive
 /// function by one level.
 ///
-bool InlineFunction(CallInst *C);
-bool InlineFunction(InvokeInst *II);
-bool InlineFunction(CallSite CS);
-
-/// CloneTrace - Returns a copy of the specified trace.
-/// It takes a vector of basic blocks clones the basic blocks, removes internal
-/// phi nodes, adds it to the same function as the original (although there is
-/// no jump to it) and returns the new vector of basic blocks.
-std::vector<BasicBlock *> CloneTrace(const std::vector<BasicBlock*> &origTrace);
+/// If a non-null callgraph pointer is provided, these functions update the
+/// CallGraph to represent the program after inlining.
+///
+bool InlineFunction(CallInst *C, CallGraph *CG = 0);
+bool InlineFunction(InvokeInst *II, CallGraph *CG = 0);
+bool InlineFunction(CallSite CS, CallGraph *CG = 0);
 
 } // End llvm namespace
 
