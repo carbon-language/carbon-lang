@@ -132,6 +132,11 @@ public:
   /// old code over).
   void changeFunction(Function *OldF, Function *NewF);
 
+  /// getOrInsertFunction - This method is identical to calling operator[], but
+  /// it will insert a new CallGraphNode for the specified function if one does
+  /// not already exist.
+  CallGraphNode *getOrInsertFunction(const Function *F);
+  
   //===---------------------------------------------------------------------
   // Pass infrastructure interface glue code...
   //
