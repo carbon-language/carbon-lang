@@ -113,7 +113,16 @@ public:
   uint64_t getIndexedOffset(const Type *Ty,
                             const std::vector<Value*> &Indices) const;
 
+  /// getStructLayout - Return a StructLayout object, indicating the alignment
+  /// of the struct, its size, and the offsets of its fields.  Note that this
+  /// information is lazily cached.
   const StructLayout *getStructLayout(const StructType *Ty) const;
+  
+  /// InvalidateStructLayoutInfo - TargetData speculatively caches StructLayout
+  /// objects.  If a TargetData object is alive when types are being refined and
+  /// removed, this method must be called whenever a StructType is removed to
+  /// avoid a dangling pointer in this cache.
+  void InvalidateStructLayoutInfo(const StructType *Ty) const;
 };
 
 /// StructLayout - used to lazily calculate structure layout information for a
