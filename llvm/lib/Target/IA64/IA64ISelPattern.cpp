@@ -98,6 +98,7 @@ namespace {
       setOperationAction(ISD::CTLZ , MVT::i64  , Expand);
       setOperationAction(ISD::ROTL , MVT::i64  , Expand);
       setOperationAction(ISD::ROTR , MVT::i64  , Expand);
+      setOperationAction(ISD::BSWAP, MVT::i64  , Expand);  // mux @rev
       // FIXME: implement mulhs (xma.h) and mulhu (xma.hu)
       setOperationAction(ISD::MULHS , MVT::i64  , Expand);
       setOperationAction(ISD::MULHU , MVT::i64  , Expand);

@@ -64,7 +64,8 @@ PPCTargetLowering::PPCTargetLowering(TargetMachine &TM)
     setOperationAction(ISD::FSQRT, MVT::f32, Expand);
   }
   
-  // PowerPC does not have CTPOP or CTTZ
+  // PowerPC does not have BSWAP, CTPOP or CTTZ
+  setOperationAction(ISD::BSWAP, MVT::i32  , Expand);
   setOperationAction(ISD::CTPOP, MVT::i32  , Expand);
   setOperationAction(ISD::CTTZ , MVT::i32  , Expand);
   

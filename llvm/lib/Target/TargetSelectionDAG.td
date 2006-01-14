@@ -240,6 +240,7 @@ def xor        : SDNode<"ISD::XOR"       , SDTIntBinOp,
                         [SDNPCommutative, SDNPAssociative]>;
                         
 def sext_inreg : SDNode<"ISD::SIGN_EXTEND_INREG", SDTExtInreg>;
+def bswap      : SDNode<"ISD::BSWAP"      , SDTIntUnaryOp>;
 def ctlz       : SDNode<"ISD::CTLZ"       , SDTIntUnaryOp>;
 def cttz       : SDNode<"ISD::CTTZ"       , SDTIntUnaryOp>;
 def ctpop      : SDNode<"ISD::CTPOP"      , SDTIntUnaryOp>;

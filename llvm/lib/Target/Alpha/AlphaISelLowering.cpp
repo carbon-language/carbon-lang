@@ -81,6 +81,7 @@ AlphaTargetLowering::AlphaTargetLowering(TargetMachine &TM) : TargetLowering(TM)
     setOperationAction(ISD::CTTZ     , MVT::i64  , Expand);
     setOperationAction(ISD::CTLZ     , MVT::i64  , Expand);
   }
+  setOperationAction(ISD::BSWAP    , MVT::i64, Expand);
   setOperationAction(ISD::ROTL     , MVT::i64, Expand);
   setOperationAction(ISD::ROTR     , MVT::i64, Expand);
   

@@ -2217,6 +2217,58 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     }
     break;
     
+  case ISD::BSWAP:
+    Tmp1 = LegalizeOp(Node->getOperand(0));   // Op
+    switch (TLI.getOperationAction(Node->getOpcode(), Node->getValueType(0))) {
+      case TargetLowering::Legal:
+        if (Tmp1 != Node->getOperand(0))
+          Result = DAG.getNode(Node->getOpcode(), Node->getValueType(0), Tmp1);
+        break;
+      case TargetLowering::Promote: {
+        MVT::ValueType OVT = Tmp1.getValueType();
+        MVT::ValueType NVT = TLI.getTypeToPromoteTo(Node->getOpcode(), OVT);
+        unsigned DiffBits = getSizeInBits(NVT) - getSizeInBits(OVT);
+
+        Tmp1 = DAG.getNode(ISD::ZERO_EXTEND, NVT, Tmp1);
+        Tmp1 = DAG.getNode(ISD::BSWAP, NVT, Tmp1);
+        Result = DAG.getNode(ISD::SRL, NVT, Tmp1,
+                             DAG.getConstant(DiffBits, TLI.getShiftAmountTy()));
+        break;
+      }
+      case TargetLowering::Custom:
+        assert(0 && "Cannot custom legalize this yet!");
+      case TargetLowering::Expand: {
+        MVT::ValueType VT = Tmp1.getValueType();
+        switch (VT) {
+        default: assert(0 && "Unhandled Expand type in BSWAP!"); abort();
+        case MVT::i16:
+          Tmp2 = DAG.getNode(ISD::SHL, VT, Tmp1, 
+                             DAG.getConstant(8, TLI.getShiftAmountTy()));
+          Tmp1 = DAG.getNode(ISD::SRL, VT, Tmp1,
+                             DAG.getConstant(8, TLI.getShiftAmountTy()));
+          Result = DAG.getNode(ISD::OR, VT, Tmp1, Tmp2);
+          break;
+        case MVT::i32:
+          Tmp4 = DAG.getNode(ISD::SHL, VT, Tmp1, 
+                             DAG.getConstant(24, TLI.getShiftAmountTy()));
+          Tmp3 = DAG.getNode(ISD::SHL, VT, Tmp1, 
+                             DAG.getConstant(8, TLI.getShiftAmountTy()));
+          Tmp2 = DAG.getNode(ISD::SRL, VT, Tmp1, 
+                             DAG.getConstant(8, TLI.getShiftAmountTy()));
+          Tmp1 = DAG.getNode(ISD::SRL, VT, Tmp1, 
+                             DAG.getConstant(24, TLI.getShiftAmountTy()));
+          Tmp3 = DAG.getNode(ISD::AND, VT, Tmp3, DAG.getConstant(0xFF0000, VT));
+          Tmp2 = DAG.getNode(ISD::AND, VT, Tmp2, DAG.getConstant(0xFF00, VT));
+          Tmp4 = DAG.getNode(ISD::OR, VT, Tmp4, Tmp3);
+          Tmp2 = DAG.getNode(ISD::OR, VT, Tmp2, Tmp1);
+          Result = DAG.getNode(ISD::OR, VT, Tmp4, Tmp2);
+          break;
+        }
+        break;
+      }
+    }
+    break;
+    
   case ISD::CTPOP:
   case ISD::CTTZ:
   case ISD::CTLZ:
@@ -3027,6 +3079,14 @@ SDOperand SelectionDAGLegalize::PromoteOp(SDOperand Op) {
     AddLegalizedOperand(Op.getValue(1), Result.getValue(1));
     break;
   }
+  case ISD::BSWAP:
+    Tmp1 = Node->getOperand(0);
+    Tmp1 = DAG.getNode(ISD::ZERO_EXTEND, NVT, Tmp1);
+    Tmp1 = DAG.getNode(ISD::BSWAP, NVT, Tmp1);
+    Result = DAG.getNode(ISD::SRL, NVT, Tmp1,
+                         DAG.getConstant(getSizeInBits(NVT) - getSizeInBits(VT),
+                                         TLI.getShiftAmountTy()));
+    break;
   case ISD::CTPOP:
   case ISD::CTTZ:
   case ISD::CTLZ:
@@ -3636,6 +3696,14 @@ void SelectionDAGLegalize::ExpandOp(SDOperand Op, SDOperand &Lo, SDOperand &Hi){
     Lo = DAG.getNode(ISD::SIGN_EXTEND_INREG, NVT, Lo, Node->getOperand(1));
     break;
 
+  case ISD::BSWAP: {
+    ExpandOp(Node->getOperand(0), Lo, Hi);
+    SDOperand TempLo = DAG.getNode(ISD::BSWAP, NVT, Hi);
+    Hi = DAG.getNode(ISD::BSWAP, NVT, Lo);
+    Lo = TempLo;
+    break;
+  }
+    
   case ISD::CTPOP:
     ExpandOp(Node->getOperand(0), Lo, Hi);
     Lo = DAG.getNode(ISD::ADD, NVT,          // ctpop(HL) -> ctpop(H)+ctpop(L)

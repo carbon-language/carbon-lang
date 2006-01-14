@@ -82,6 +82,7 @@ IA64TargetLowering::IA64TargetLowering(TargetMachine &TM)
       setOperationAction(ISD::CTLZ , MVT::i64  , Expand);
       setOperationAction(ISD::ROTL , MVT::i64  , Expand);
       setOperationAction(ISD::ROTR , MVT::i64  , Expand);
+      setOperationAction(ISD::BSWAP, MVT::i64  , Expand);  // mux @rev
 
       // Not implemented yet.
       setOperationAction(ISD::STACKSAVE, MVT::Other, Expand);

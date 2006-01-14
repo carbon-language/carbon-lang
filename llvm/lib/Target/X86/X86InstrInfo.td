@@ -518,7 +518,9 @@ def POP32r   : I<0x58, AddRegFrm,
 
 let isTwoAddress = 1 in                               // R32 = bswap R32
   def BSWAP32r : I<0xC8, AddRegFrm,
-                   (ops R32:$dst, R32:$src), "bswap{l} $dst", []>, TB;
+                   (ops R32:$dst, R32:$src),
+                   "bswap{l} $dst", 
+                   [(set R32:$dst, (bswap R32:$src))]>, TB;
 
 def XCHG8rr  : I<0x86, MRMDestReg,                    // xchg R8, R8
                  (ops R8:$src1, R8:$src2),

@@ -109,6 +109,7 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   setOperationAction(ISD::READCYCLECOUNTER , MVT::i64  , Custom);
 
   if (!X86DAGIsel) {
+    setOperationAction(ISD::BSWAP          , MVT::i32  , Expand);
     setOperationAction(ISD::ROTL           , MVT::i8   , Expand);
     setOperationAction(ISD::ROTR           , MVT::i8   , Expand);
     setOperationAction(ISD::ROTL           , MVT::i16  , Expand);
@@ -116,6 +117,7 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
     setOperationAction(ISD::ROTL           , MVT::i32  , Expand);
     setOperationAction(ISD::ROTR           , MVT::i32  , Expand);
   }
+  setOperationAction(ISD::BSWAP            , MVT::i16  , Expand);
 
   setOperationAction(ISD::READIO           , MVT::i1   , Expand);
   setOperationAction(ISD::READIO           , MVT::i8   , Expand);
