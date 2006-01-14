@@ -990,15 +990,7 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
     return 0;
   }
   case Intrinsic::bswap_i16:
-    setValue(&I, DAG.getNode(ISD::BSWAP,
-                             getValue(I.getOperand(1)).getValueType(),
-                             getValue(I.getOperand(1))));
-    return 0;
   case Intrinsic::bswap_i32:
-    setValue(&I, DAG.getNode(ISD::BSWAP,
-                             getValue(I.getOperand(1)).getValueType(),
-                             getValue(I.getOperand(1))));
-    return 0;
   case Intrinsic::bswap_i64:
     setValue(&I, DAG.getNode(ISD::BSWAP,
                              getValue(I.getOperand(1)).getValueType(),
