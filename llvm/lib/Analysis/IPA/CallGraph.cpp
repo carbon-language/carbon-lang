@@ -56,7 +56,7 @@ public:
     destroy();
     CallGraph::initialize(M);
     
-    ExternalCallingNode = getNodeFor(0);
+    ExternalCallingNode = getOrInsertFunction(0);
     CallsExternalNode = new CallGraphNode(0);
     Root = 0;
   
@@ -107,24 +107,12 @@ private:
   //===---------------------------------------------------------------------
   // Implementation of CallGraph construction
   //
-  // getNodeFor - Return the node for the specified function or create one if it
-  // does not already exist.
-  //
 
-  CallGraphNode *getNodeFor(Function *F) {
-    CallGraphNode *&CGN = FunctionMap[F];
-    if (CGN) return CGN;
-
-    assert((!F || F->getParent() == Mod) && "Function not in current module!");
-    return CGN = new CallGraphNode(F);
-  }
-  
-  //
   // addToCallGraph - Add a function to the call graph, and link the node to all
   // of the functions that it calls.
   //
   void addToCallGraph(Function *F) {
-    CallGraphNode *Node = getNodeFor(F);
+    CallGraphNode *Node = getOrInsertFunction(F);
 
     // If this function has external linkage, anything could call it...
     if (!F->hasInternalLinkage()) {
@@ -150,7 +138,8 @@ private:
     for (Value::use_iterator I = F->use_begin(), E = F->use_end(); I != E; ++I){
       if (Instruction *Inst = dyn_cast<Instruction>(*I)) {
         if (isOnlyADirectCall(F, CallSite::get(Inst)))
-          getNodeFor(Inst->getParent()->getParent())->addCalledFunction(Node);
+          getOrInsertFunction(Inst->getParent()->getParent())
+              ->addCalledFunction(Node);
         else
           isUsedExternally = true;
       } else if (GlobalValue *GV = dyn_cast<GlobalValue>(*I)) {
@@ -158,7 +147,8 @@ private:
              I != E; ++I)
           if (Instruction *Inst = dyn_cast<Instruction>(*I)) {
           if (isOnlyADirectCall(F, CallSite::get(Inst)))
-            getNodeFor(Inst->getParent()->getParent())->addCalledFunction(Node);
+            getOrInsertFunction(Inst->getParent()->getParent())
+                ->addCalledFunction(Node);
           else
             isUsedExternally = true;
           } else {
@@ -254,6 +244,19 @@ void CallGraph::changeFunction(Function *OldF, Function *NewF) {
   New->F = NewF;
   FunctionMap.erase(I);
 }
+
+// getOrInsertFunction - This method is identical to calling operator[], but
+// it will insert a new CallGraphNode for the specified function if one does
+// not already exist.
+CallGraphNode *CallGraph::getOrInsertFunction(const Function *F) {
+  CallGraphNode *&CGN = FunctionMap[F];
+  if (CGN) return CGN;
+  
+  assert((!F || F->getParent() == Mod) && "Function not in current module!");
+  return CGN = new CallGraphNode(const_cast<Function*>(F));
+}
+
+
 
 void CallGraph::stub() {}
 
