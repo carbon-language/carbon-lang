@@ -94,6 +94,15 @@ IA64TargetLowering::IA64TargetLowering(TargetMachine &TM)
       addLegalFPImmediate(+1.0);
 }
 
+const char *IA64TargetLowering::getTargetNodeName(unsigned Opcode) const {
+  switch (Opcode) {
+  default: return 0;
+  case IA64ISD::GETFD:  return "IA64ISD::GETFD";
+  case IA64ISD::BRCALL: return "IA64ISD::BRCALL";  
+  }
+}
+  
+
 /// isFloatingPointZero - Return true if this is 0.0 or -0.0.
 static bool isFloatingPointZero(SDOperand Op) {
   if (ConstantFPSDNode *CFP = dyn_cast<ConstantFPSDNode>(Op))

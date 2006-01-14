@@ -25,20 +25,6 @@ namespace llvm {
       // Start the numbering where the builting ops and target ops leave off.
       FIRST_NUMBER = ISD::BUILTIN_OP_END+IA64::INSTRUCTION_LIST_END,
 
-      /// FSEL - Traditional three-operand fsel node.
-      ///
-      FSEL,
-      
-      /// FCFID - The FCFID instruction, taking an f64 operand and producing
-      /// and f64 value containing the FP representation of the integer that
-      /// was temporarily in the f64 operand.
-      FCFID,
-      
-      /// FCTI[D,W]Z - The FCTIDZ and FCTIWZ instructions, taking an f32 or f64 
-      /// operand, producing an f64 value containing the integer representation
-      /// of that FP value.
-      FCTIDZ, FCTIWZ,
-
       /// GETFD - the getf.d instruction takes a floating point operand and
       /// returns its 64-bit memory representation as an i64
       GETFD,
@@ -63,6 +49,8 @@ namespace llvm {
     ///
 // XXX    virtual SDOperand LowerOperation(SDOperand Op, SelectionDAG &DAG);
     
+    const char *getTargetNodeName(unsigned Opcode) const;
+      
     /// LowerArguments - This hook must be implemented to indicate how we should
     /// lower the arguments for the specified function, into the specified DAG.
     virtual std::vector<SDOperand>
