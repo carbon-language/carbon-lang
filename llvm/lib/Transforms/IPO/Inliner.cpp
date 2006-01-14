@@ -42,18 +42,7 @@ static bool InlineCallIfPossible(CallSite CS, CallGraph &CG,
                                  const std::set<Function*> &SCCFunctions) {
   Function *Caller = CS.getInstruction()->getParent()->getParent();
   Function *Callee = CS.getCalledFunction();
-  if (!InlineFunction(CS)) return false;
-
-  // Update the call graph by deleting the edge from Callee to Caller
-  CallGraphNode *CalleeNode = CG[Callee];
-  CallGraphNode *CallerNode = CG[Caller];
-  CallerNode->removeCallEdgeTo(CalleeNode);
-
-  // Since we inlined all uninlined call sites in the callee into the caller,
-  // add edges from the caller to all of the callees of the callee.
-  for (CallGraphNode::iterator I = CalleeNode->begin(),
-         E = CalleeNode->end(); I != E; ++I)
-    CallerNode->addCalledFunction(*I);
+  if (!InlineFunction(CS, &CG)) return false;
 
   // If we inlined the last possible call site to the function, delete the
   // function body now.
@@ -63,6 +52,7 @@ static bool InlineCallIfPossible(CallSite CS, CallGraph &CG,
                     << Callee->getName() << "\n");
 
     // Remove any call graph edges from the callee to its callees.
+    CallGraphNode *CalleeNode = CG[Callee];
     while (CalleeNode->begin() != CalleeNode->end())
       CalleeNode->removeCallEdgeTo(*(CalleeNode->end()-1));
 
