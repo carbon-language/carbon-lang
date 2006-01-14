@@ -37,6 +37,13 @@ llvm::canConstantFoldCallTo(Function *F) {
   switch (F->getIntrinsicID()) {
   case Intrinsic::isunordered:
   case Intrinsic::sqrt:
+  case Intrinsic::bswap_i16:
+  case Intrinsic::bswap_i32:
+  case Intrinsic::bswap_i64:
+  // FIXME: these should be constant folded as well
+  //case Intrinsic::ctpop:
+  //case Intrinsic::ctlz:
+  //case Intrinsic::cttz:
     return true;
   default: break;
   }
@@ -142,6 +149,14 @@ llvm::ConstantFoldCall(Function *F, const std::vector<Constant*> &Operands) {
         default:
           break;
       }
+    } else if (ConstantUInt *Op = dyn_cast<ConstantUInt>(Operands[0])) {
+      uint64_t V = Op->getValue();
+      if (Name == "llvm.bswap.i16")
+        return ConstantUInt::get(Ty, ByteSwap_16(V));
+      else if (Name == "llvm.bswap.i32")
+        return ConstantUInt::get(Ty, ByteSwap_32(V));
+      else if (Name == "llvm.bswap.i64")
+        return ConstantUInt::get(Ty, ByteSwap_64(V));
     }
   } else if (Operands.size() == 2) {
     if (ConstantFP *Op1 = dyn_cast<ConstantFP>(Operands[0])) {

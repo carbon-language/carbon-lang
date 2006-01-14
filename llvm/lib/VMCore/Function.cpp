@@ -207,6 +207,11 @@ unsigned Function::getIntrinsicID() const {
   assert(getName().size() != 5 && "'llvm.' is an invalid intrinsic name!");
 
   switch (getName()[5]) {
+  case 'b':
+    if (getName() == "llvm.bswap.i16") return Intrinsic::bswap_i16;
+    if (getName() == "llvm.bswap.i32") return Intrinsic::bswap_i32;
+    if (getName() == "llvm.bswap.i64") return Intrinsic::bswap_i64;
+    break;
   case 'c':
     if (getName() == "llvm.ctpop") return Intrinsic::ctpop;
     if (getName() == "llvm.cttz") return Intrinsic::cttz;

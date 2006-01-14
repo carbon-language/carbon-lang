@@ -298,6 +298,9 @@ bool llvm::isInstructionTriviallyDead(Instruction *I) {
       case Intrinsic::frameaddress:
       case Intrinsic::stacksave:
       case Intrinsic::isunordered:
+      case Intrinsic::bswap_i16:
+      case Intrinsic::bswap_i32:
+      case Intrinsic::bswap_i64:
       case Intrinsic::ctpop:
       case Intrinsic::ctlz:
       case Intrinsic::cttz:

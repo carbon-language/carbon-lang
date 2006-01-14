@@ -749,6 +749,36 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
     NumArgs = 0;
     break;
 
+  case Intrinsic::bswap_i16:
+    Assert1(FT->getNumParams() == 1,
+            "Illegal # arguments for intrinsic function!", IF);
+    Assert1(FT->getReturnType() == FT->getParamType(0),
+            "Return type does not match source type", IF);
+    Assert1(FT->getReturnType() == Type::UShortTy,
+            "Return type is not ushort!", IF);
+    NumArgs = 1;
+    break;    
+
+  case Intrinsic::bswap_i32:
+    Assert1(FT->getNumParams() == 1,
+            "Illegal # arguments for intrinsic function!", IF);
+    Assert1(FT->getReturnType() == FT->getParamType(0),
+            "Return type does not match source type", IF);
+    Assert1(FT->getReturnType() == Type::UIntTy,
+            "Return type is not uint!", IF);
+    NumArgs = 1;
+    break;    
+
+  case Intrinsic::bswap_i64:
+    Assert1(FT->getNumParams() == 1,
+            "Illegal # arguments for intrinsic function!", IF);
+    Assert1(FT->getReturnType() == FT->getParamType(0),
+            "Return type does not match source type", IF);
+    Assert1(FT->getReturnType() == Type::ULongTy,
+            "Return type is not ulong!", IF);
+    NumArgs = 1;
+    break;    
+    
   case Intrinsic::ctpop:
   case Intrinsic::ctlz:
   case Intrinsic::cttz:

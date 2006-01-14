@@ -58,19 +58,21 @@ namespace Intrinsic {
     dbg_func_start,   // Start of a function
     dbg_declare,      // Declare a local object
 
-
-    // Standard libc functions.
+    // Standard C library intrinsics.
     memcpy,         // Copy non-overlapping memory blocks
     memmove,        // Copy potentially overlapping memory blocks
     memset,         // Fill memory with a byte value
-
-    // libm related functions.
     isunordered,    // Return true if either argument is a NaN
-    ctpop, //count population
-    ctlz, //count leading zeros
-    cttz, //count trailing zeros
-    sqrt, //square root
+    sqrt,           // Square root
 
+    // Bit manipulation instrinsics.
+    bswap_i16,      // Byteswap 16 bits
+    bswap_i32,      // Byteswap 32 bits
+    bswap_i64,      // Byteswap 64 bits
+    ctpop,          // Count population
+    ctlz,           // Count leading zeros
+    cttz,           // Count trailing zeros
+    
     // Input/Output intrinsics.
     readport,
     writeport,

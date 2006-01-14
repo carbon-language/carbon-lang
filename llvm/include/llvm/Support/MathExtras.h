@@ -79,6 +79,32 @@ inline bool isPowerOf2_64(uint64_t Value) {
   return Value && !(Value & (Value - 1LL));
 }
 
+// ByteSwap_16 - This function returns a byte-swapped representation of the
+// 16-bit argument, Value.
+inline unsigned short ByteSwap_16(unsigned short Value) {
+  unsigned short Hi = Value << 8;
+  unsigned short Lo = Value >> 8;
+  return Hi | Lo;
+}
+
+// ByteSwap_32 - This function returns a byte-swapped representation of the
+// 32-bit argument, Value.
+inline unsigned ByteSwap_32(unsigned Value) {
+  unsigned Byte0 = Value & 0x000000FF;
+  unsigned Byte1 = Value & 0x0000FF00;
+  unsigned Byte2 = Value & 0x00FF0000;
+  unsigned Byte3 = Value & 0xFF000000;
+  return (Byte0 << 24) | (Byte1 << 8) | (Byte2 >> 8) | (Byte3 >> 24);
+}
+
+// ByteSwap_64 - This function returns a byte-swapped representation of the
+// 64-bit argument, Value.
+inline uint64_t ByteSwap_64(uint64_t Value) {
+  uint64_t Hi = ByteSwap_32(Value);
+  uint64_t Lo = ByteSwap_32(Value >> 32);
+  return (Hi << 32) | Lo;
+}
+
 // CountLeadingZeros_32 - this function performs the platform optimal form of
 // counting the number of zeros from the most significant bit to the first one
 // bit.  Ex. CountLeadingZeros_32(0x00F000FF) == 8.
