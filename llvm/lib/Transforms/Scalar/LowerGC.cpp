@@ -26,7 +26,6 @@
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
 #include "llvm/Pass.h"
-#include "llvm/Transforms/Utils/Cloning.h"
 using namespace llvm;
 
 namespace {
@@ -203,9 +202,6 @@ bool LowerGC::runOnFunction(Function &F) {
               }
             }
 
-            // Now that we made the replacement, inline expand the call if
-            // possible, otherwise things will be too horribly expensive.
-            InlineFunction(CI);
             MadeChange = true;
           }
       }
