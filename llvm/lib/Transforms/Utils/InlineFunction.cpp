@@ -18,11 +18,16 @@
 #include "llvm/Module.h"
 #include "llvm/Instructions.h"
 #include "llvm/Intrinsics.h"
+#include "llvm/Analysis/CallGraph.h"
 #include "llvm/Support/CallSite.h"
 using namespace llvm;
 
-bool llvm::InlineFunction(CallInst *CI) { return InlineFunction(CallSite(CI)); }
-bool llvm::InlineFunction(InvokeInst *II) {return InlineFunction(CallSite(II));}
+bool llvm::InlineFunction(CallInst *CI, CallGraph *CG) {
+  return InlineFunction(CallSite(CI), CG);
+}
+bool llvm::InlineFunction(InvokeInst *II, CallGraph *CG) {
+  return InlineFunction(CallSite(II), CG);
+}
 
 /// HandleInlinedInvoke - If we inlined an invoke site, we need to convert calls
 /// in the body of the inlined function into invokes and turn unwind
@@ -131,6 +136,24 @@ static void HandleInlinedInvoke(InvokeInst *II, BasicBlock *FirstNewBlock,
   InvokeDest->removePredecessor(II->getParent());
 }
 
+/// UpdateCallGraphAfterInlining - Once we have finished inlining a call from
+/// caller to callee, update the specified callgraph to reflect the changes we
+/// made.
+static void UpdateCallGraphAfterInlining(const Function *Caller, 
+                                         const Function *Callee,
+                                         CallGraph &CG) {
+  // Update the call graph by deleting the edge from Callee to Caller
+  CallGraphNode *CalleeNode = CG[Callee];
+  CallGraphNode *CallerNode = CG[Caller];
+  CallerNode->removeCallEdgeTo(CalleeNode);
+  
+  // Since we inlined all uninlined call sites in the callee into the caller,
+  // add edges from the caller to all of the callees of the callee.
+  for (CallGraphNode::iterator I = CalleeNode->begin(),
+       E = CalleeNode->end(); I != E; ++I)
+    CallerNode->addCalledFunction(*I);
+}
+
 
 // InlineFunction - This function inlines the called function into the basic
 // block of the caller.  This returns false if it is not possible to inline this
@@ -141,7 +164,7 @@ static void HandleInlinedInvoke(InvokeInst *II, BasicBlock *FirstNewBlock,
 // exists in the instruction stream.  Similiarly this will inline a recursive
 // function by one level.
 //
-bool llvm::InlineFunction(CallSite CS) {
+bool llvm::InlineFunction(CallSite CS, CallGraph *CG) {
   Instruction *TheCall = CS.getInstruction();
   assert(TheCall->getParent() && TheCall->getParent()->getParent() &&
          "Instruction not in function!");
@@ -234,14 +257,33 @@ bool llvm::InlineFunction(CallSite CS) {
     // inlined function.
     for (unsigned i = 0, e = Returns.size(); i != e; ++i)
       new CallInst(StackRestore, SavedPtr, "", Returns[i]);
+
+    // Count the number of StackRestore calls we insert.
+    unsigned NumStackRestores = Returns.size();
     
     // If we are inlining an invoke instruction, insert restores before each
     // unwind.  These unwinds will be rewritten into branches later.
     if (InlinedFunctionInfo.ContainsUnwinds && isa<InvokeInst>(TheCall)) {
       for (Function::iterator BB = FirstNewBlock, E = Caller->end();
            BB != E; ++BB)
-        if (UnwindInst *UI = dyn_cast<UnwindInst>(BB->getTerminator()))
+        if (UnwindInst *UI = dyn_cast<UnwindInst>(BB->getTerminator())) {
           new CallInst(StackRestore, SavedPtr, "", UI);
+          ++NumStackRestores;
+        }
+    }
+      
+    // If we are supposed to update the callgraph, do so now.
+    if (CG) {
+      CallGraphNode *StackSaveCGN    = CG->getOrInsertFunction(StackSave);
+      CallGraphNode *StackRestoreCGN = CG->getOrInsertFunction(StackRestore);
+      CallGraphNode *CallerNode = (*CG)[Caller];
+
+      // 'Caller' now calls llvm.stacksave one more time.
+      CallerNode->addCalledFunction(StackSaveCGN);
+      
+      // 'Caller' now calls llvm.stackrestore the appropriate number of times.
+      for (unsigned i = 0; i != NumStackRestores; ++i)
+        CallerNode->addCalledFunction(StackRestoreCGN);
     }
   }
 
@@ -288,6 +330,9 @@ bool llvm::InlineFunction(CallSite CS) {
     // Since we are now done with the return instruction, delete it also.
     Returns[0]->getParent()->getInstList().erase(Returns[0]);
 
+    // Update the callgraph if requested.
+    if (CG) UpdateCallGraphAfterInlining(Caller, CalledFunc, *CG);
+    
     // We are now done with the inlining.
     return true;
   }
@@ -413,5 +458,9 @@ bool llvm::InlineFunction(CallSite CS) {
 
   // Now we can remove the CalleeEntry block, which is now empty.
   Caller->getBasicBlockList().erase(CalleeEntry);
+  
+  // Update the callgraph if requested.
+  if (CG) UpdateCallGraphAfterInlining(Caller, CalledFunc, *CG);
+
   return true;
 }
