@@ -847,22 +847,32 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     switch (TLI.getOperationAction(Node->getOpcode(),
                                    Node->getValueType(0))) {
     default: assert(0 && "This action is not supported yet!");
-    case TargetLowering::Custom: {
+    case TargetLowering::Expand: {
+      unsigned SPReg = TLI.getStackPointerRegisterToSaveRestore();
+      assert(SPReg && "Target cannot require DYNAMIC_STACKALLOC expansion and"
+             " not tell us which reg is the stack pointer!");
+      SDOperand Chain = Tmp1.getOperand(0);
+      SDOperand Size  = Tmp2.getOperand(1);
+      SDOperand SP = DAG.getCopyFromReg(Chain, SPReg, Node->getValueType(0));
+      Tmp1 = DAG.getNode(ISD::SUB, Node->getValueType(0), SP, Size);    // Value
+      Tmp2 = DAG.getCopyToReg(SP.getValue(1), SPReg, Tmp1);      // Output chain
+      break;
+    }
+    case TargetLowering::Custom:
       Tmp3 = TLI.LowerOperation(Tmp1, DAG);
       if (Tmp3.Val) {
         Tmp1 = LegalizeOp(Tmp3);
         Tmp2 = LegalizeOp(Tmp3.getValue(1));
       }
-      // FALLTHROUGH if the target thinks it is legal.
-    }
+      break;
     case TargetLowering::Legal:
-      // Since this op produce two values, make sure to remember that we
-      // legalized both of them.
-      AddLegalizedOperand(SDOperand(Node, 0), Tmp1);
-      AddLegalizedOperand(SDOperand(Node, 1), Tmp2);
-      return Op.ResNo ? Tmp2 : Tmp1;
+      break;
     }
-    assert(0 && "Unreachable");
+    // Since this op produce two values, make sure to remember that we
+    // legalized both of them.
+    AddLegalizedOperand(SDOperand(Node, 0), Tmp1);
+    AddLegalizedOperand(SDOperand(Node, 1), Tmp2);
+    return Op.ResNo ? Tmp2 : Tmp1;
   }
   case ISD::TAILCALL:
   case ISD::CALL: {
