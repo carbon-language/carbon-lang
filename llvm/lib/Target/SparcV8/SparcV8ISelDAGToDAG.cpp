@@ -136,6 +136,8 @@ SparcV8TargetLowering::SparcV8TargetLowering(TargetMachine &TM)
   setOperationAction(ISD::SELECT_CC, MVT::f32, Custom);
   setOperationAction(ISD::SELECT_CC, MVT::f64, Custom);
   
+  setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i32, Custom);
+  
   // V8 has no intrinsics for these particular operations.
   setOperationAction(ISD::MEMMOVE, MVT::Other, Expand);
   setOperationAction(ISD::MEMSET, MVT::Other, Expand);
@@ -699,7 +701,22 @@ LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     return DAG.getNode(Opc, TrueVal.getValueType(), TrueVal, FalseVal, 
                        DAG.getConstant(CC, MVT::i32), CompareFlag);
   }
-  }  
+  case ISD::DYNAMIC_STACKALLOC: {
+    SDOperand Chain = Op.getOperand(0);
+    SDOperand Size  = Op.getOperand(1);
+
+    SDOperand SP = DAG.getCopyFromReg(Chain, V8::O6, MVT::i32);
+    Chain = SP.getValue(1);
+    SDOperand Res = DAG.getNode(ISD::SUB, MVT::i32, SP, Size);
+    Chain = DAG.getCopyToReg(Chain, V8::O6, Res);
+
+    std::vector<MVT::ValueType> VTs(Op.Val->value_begin(), Op.Val->value_end());
+    std::vector<SDOperand> Ops;
+    Ops.push_back(Res);
+    Ops.push_back(Chain);
+    return DAG.getNode(ISD::MERGE_VALUES, VTs, Ops);
+  }
+  }
 }
 
 MachineBasicBlock *
