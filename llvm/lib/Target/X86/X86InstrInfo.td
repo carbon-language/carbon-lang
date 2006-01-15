@@ -682,14 +682,23 @@ def MOV32mr : I<0x89, MRMDestMem, (ops i32mem:$dst, R32:$src),
 //
 
 // Extra precision multiplication
-def MUL8r  : I<0xF6, MRM4r, (ops R8:$src), "mul{b} $src", []>,
+def MUL8r  : I<0xF6, MRM4r, (ops R8:$src), "mul{b} $src",
+               // FIXME: Used for 8-bit mul, ignore result upper 8 bits.
+               // This probably ought to be moved to a def : Pat<> if the
+               // syntax can be accepted.
+               [(set AL, (mul AL, R8:$src))]>,
              Imp<[AL],[AX]>;               // AL,AH = AL*R8
 def MUL16r : I<0xF7, MRM4r, (ops R16:$src), "mul{w} $src", []>,
              Imp<[AX],[AX,DX]>, OpSize;    // AX,DX = AX*R16
 def MUL32r : I<0xF7, MRM4r, (ops R32:$src), "mul{l} $src", []>,
              Imp<[EAX],[EAX,EDX]>;         // EAX,EDX = EAX*R32
 def MUL8m  : I<0xF6, MRM4m, (ops i8mem :$src),
-               "mul{b} $src", []>, Imp<[AL],[AX]>;          // AL,AH = AL*[mem8]
+               "mul{b} $src",
+               // FIXME: Used for 8-bit mul, ignore result upper 8 bits.
+               // This probably ought to be moved to a def : Pat<> if the
+               // syntax can be accepted.
+               [(set AL, (mul AL, (loadi8 addr:$src)))]>,
+             Imp<[AL],[AX]>;          // AL,AH = AL*[mem8]
 def MUL16m : I<0xF7, MRM4m, (ops i16mem:$src),
                "mul{w} $src", []>, Imp<[AX],[AX,DX]>,
                OpSize; // AX,DX = AX*[mem16]
