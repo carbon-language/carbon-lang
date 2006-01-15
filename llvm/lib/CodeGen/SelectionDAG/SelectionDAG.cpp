@@ -1899,6 +1899,7 @@ const char *SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::CopyToReg:     return "CopyToReg";
   case ISD::CopyFromReg:   return "CopyFromReg";
   case ISD::UNDEF:         return "undef";
+  case ISD::MERGE_VALUES:  return "mergevalues";
 
   // Unary operators
   case ISD::FABS:   return "fabs";
