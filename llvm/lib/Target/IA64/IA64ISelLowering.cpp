@@ -84,9 +84,11 @@ IA64TargetLowering::IA64TargetLowering(TargetMachine &TM)
       setOperationAction(ISD::ROTR , MVT::i64  , Expand);
       setOperationAction(ISD::BSWAP, MVT::i64  , Expand);  // mux @rev
 
-      // Not implemented yet.
       setOperationAction(ISD::STACKSAVE, MVT::Other, Expand);
       setOperationAction(ISD::STACKRESTORE, MVT::Other, Expand);
+      setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i64, Expand);
+
+      setStackPointerRegisterToSaveRestore(IA64::r12);
 
       computeRegisterProperties();
 

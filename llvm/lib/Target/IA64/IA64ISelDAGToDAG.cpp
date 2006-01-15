@@ -450,37 +450,6 @@ SDOperand IA64DAGToDAGISel::Select(SDOperand Op) {
   case ISD::SREM:
   case ISD::UREM: return SelectDIV(Op);
  
-  case ISD::DYNAMIC_STACKALLOC: {
-    if (!isa<ConstantSDNode>(N->getOperand(2)) ||
-        cast<ConstantSDNode>(N->getOperand(2))->getValue() != 0) {
-      std::cerr << "Cannot allocate stack object with greater alignment than"
-                << " the stack alignment yet!";
-      abort();
-    }
-
-    SDOperand Chain = Select(N->getOperand(0));
-    SDOperand Amt   = Select(N->getOperand(1));
-    SDOperand Reg = CurDAG->getRegister(IA64::r12, MVT::i64);
-    SDOperand Val = CurDAG->getCopyFromReg(Chain, IA64::r12, MVT::i64);
-    Chain = Val.getValue(1);
-    
-    // Subtract the amount (guaranteed to be a multiple of the stack alignment)
-    // from the stack pointer, giving us the result pointer.
-    SDOperand Result = Select(CurDAG->getNode(ISD::SUB, MVT::i64, Val, Amt));
-    
-    // Copy this result back into r12.
-    Chain = CurDAG->getNode(ISD::CopyToReg, MVT::Other, Chain, Reg, Result);
-    
-    // Copy this result back out of r12 to make sure we're not using the stack
-    // space without decrementing the stack pointer.
-    Result = CurDAG->getCopyFromReg(Chain, IA64::r12, MVT::i64);
-  
-    // Finally, replace the DYNAMIC_STACKALLOC with the copyfromreg.
-    CodeGenMap[Op.getValue(0)] = Result;
-    CodeGenMap[Op.getValue(1)] = Result.getValue(1);
-    return SDOperand(Result.Val, Op.ResNo);
-  }
-
   case ISD::ConstantFP: {
     SDOperand Chain = CurDAG->getEntryNode(); // this is a constant, so..
 
@@ -501,7 +470,8 @@ SDOperand IA64DAGToDAGISel::Select(SDOperand Op) {
                                 CurDAG->getTargetFrameIndex(FI, MVT::i64));
   }
 
-  case ISD::ConstantPool: {
+  case ISD::ConstantPool: { // TODO: nuke the constant pool
+			    //       (ia64 doesn't need one)
     Constant *C = cast<ConstantPoolSDNode>(N)->get();
     SDOperand CPI = CurDAG->getTargetConstantPool(C, MVT::i64);
     return CurDAG->getTargetNode(IA64::ADDL_GA, MVT::i64, // ?
