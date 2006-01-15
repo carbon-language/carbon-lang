@@ -445,7 +445,8 @@ SparcV8TargetLowering::LowerCallTo(SDOperand Chain, const Type *RetTy,
       ObjSize = 8;
       // If we can store this directly into the outgoing slot, do so.  We can
       // do this when all ArgRegs are used and if the outgoing slot is aligned.
-      if (RegValuesToPass.size() >= 6 && ((ArgOffset-68) & 7) == 0) {
+      // FIXME: McGill/misr fails with this.
+      if (0 && RegValuesToPass.size() >= 6 && ((ArgOffset-68) & 7) == 0) {
         ValToStore = Val;
         break;
       }
