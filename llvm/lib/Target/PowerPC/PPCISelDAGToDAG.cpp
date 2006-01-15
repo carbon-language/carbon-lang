@@ -96,7 +96,6 @@ namespace {
 #include "PPCGenDAGISel.inc"
     
 private:
-    SDOperand SelectDYNAMIC_STACKALLOC(SDOperand Op);
     SDOperand SelectADD_PARTS(SDOperand Op);
     SDOperand SelectSUB_PARTS(SDOperand Op);
     SDOperand SelectSETCC(SDOperand Op);
@@ -531,42 +530,6 @@ static unsigned getCRIdxForSetCC(ISD::CondCode CC, bool& Inv) {
   return 0;
 }
 
-SDOperand PPCDAGToDAGISel::SelectDYNAMIC_STACKALLOC(SDOperand Op) {
-  SDNode *N = Op.Val;
-
-  // FIXME: We are currently ignoring the requested alignment for handling
-  // greater than the stack alignment.  This will need to be revisited at some
-  // point.  Align = N.getOperand(2);
-  if (!isa<ConstantSDNode>(N->getOperand(2)) ||
-      cast<ConstantSDNode>(N->getOperand(2))->getValue() != 0) {
-    std::cerr << "Cannot allocate stack object with greater alignment than"
-    << " the stack alignment yet!";
-    abort();
-  }
-  SDOperand Chain = Select(N->getOperand(0));
-  SDOperand Amt   = Select(N->getOperand(1));
-  
-  SDOperand R1Reg = CurDAG->getRegister(PPC::R1, MVT::i32);
-  
-  SDOperand R1Val = CurDAG->getCopyFromReg(Chain, PPC::R1, MVT::i32);
-  Chain = R1Val.getValue(1);
-  
-  // Subtract the amount (guaranteed to be a multiple of the stack alignment)
-  // from the stack pointer, giving us the result pointer.
-  SDOperand Result = CurDAG->getTargetNode(PPC::SUBF, MVT::i32, Amt, R1Val);
-  
-  // Copy this result back into R1.
-  Chain = CurDAG->getNode(ISD::CopyToReg, MVT::Other, Chain, R1Reg, Result);
-  
-  // Copy this result back out of R1 to make sure we're not using the stack
-  // space without decrementing the stack pointer.
-  Result = CurDAG->getCopyFromReg(Chain, PPC::R1, MVT::i32);
-  
-  // Finally, replace the DYNAMIC_STACKALLOC with the copyfromreg.
-  CodeGenMap[Op.getValue(0)] = Result;
-  CodeGenMap[Op.getValue(1)] = Result.getValue(1);
-  return SDOperand(Result.Val, Op.ResNo);
-}
 
 SDOperand PPCDAGToDAGISel::SelectADD_PARTS(SDOperand Op) {
   SDNode *N = Op.Val;
@@ -854,7 +817,6 @@ SDOperand PPCDAGToDAGISel::Select(SDOperand Op) {
   
   switch (N->getOpcode()) {
   default: break;
-  case ISD::DYNAMIC_STACKALLOC: return SelectDYNAMIC_STACKALLOC(Op);
   case ISD::ADD_PARTS:          return SelectADD_PARTS(Op);
   case ISD::SUB_PARTS:          return SelectSUB_PARTS(Op);
   case ISD::SETCC:              return SelectSETCC(Op);

@@ -110,9 +110,10 @@ PPCTargetLowering::PPCTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::GlobalAddress, MVT::i32, Custom);
   setOperationAction(ISD::ConstantPool,  MVT::i32, Custom);
 
-  // Not implemented yet.
-  setOperationAction(ISD::STACKSAVE, MVT::Other, Expand); 
-  setOperationAction(ISD::STACKRESTORE, MVT::Other, Expand);
+  // Use the default implementation.
+  setOperationAction(ISD::STACKSAVE         , MVT::Other, Expand); 
+  setOperationAction(ISD::STACKRESTORE      , MVT::Other, Expand);
+  setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i32  , Expand);
   
   if (TM.getSubtarget<PPCSubtarget>().is64Bit()) {
     // They also have instructions for converting between i64 and fp.
