@@ -724,6 +724,13 @@ def : Pat<(V8lo tglobaladdr:$in), (ORri G0, tglobaladdr:$in)>;
 def : Pat<(V8hi tconstpool:$in), (SETHIi tconstpool:$in)>;
 def : Pat<(V8lo tconstpool:$in), (ORri G0, tconstpool:$in)>;
 
+// Add reg, lo.  This is used when taking the addr of a global/constpool entry.
+def : Pat<(add IntRegs:$r, (V8lo tglobaladdr:$in)),
+          (ADDri IntRegs:$r, tglobaladdr:$in)>;
+def : Pat<(add IntRegs:$r, (V8lo tconstpool:$in)),
+          (ADDri IntRegs:$r, tconstpool:$in)>;
+
+
 // Calls: 
 def : Pat<(call tglobaladdr:$dst),
           (CALL tglobaladdr:$dst)>;

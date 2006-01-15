@@ -112,9 +112,10 @@ bool SparcV8AsmPrinter::runOnMachineFunction(MachineFunction &MF) {
   for (MachineFunction::const_iterator I = MF.begin(), E = MF.end();
        I != E; ++I) {
     // Print a label for the basic block.
-    O << ".LBB" << Mang->getValueName(MF.getFunction ())
-      << "_" << I->getNumber () << ":\t! "
-      << I->getBasicBlock ()->getName () << "\n";
+    if (I != MF.begin())
+      O << ".LBB" << Mang->getValueName(MF.getFunction ())
+        << "_" << I->getNumber () << ":\t! "
+        << I->getBasicBlock ()->getName () << "\n";
     for (MachineBasicBlock::const_iterator II = I->begin(), E = I->end();
          II != E; ++II) {
       // Print the assembly for the instruction.
@@ -135,8 +136,8 @@ void SparcV8AsmPrinter::printOperand(const MachineInstr *MI, int opNum) {
   if (MI->getOpcode() == V8::SETHIi && !MO.isRegister() && !MO.isImmediate()) {
     O << "%hi(";
     CloseParen = true;
-  } else if (MI->getOpcode() ==V8::ORri &&!MO.isRegister() &&!MO.isImmediate())
-  {
+  } else if ((MI->getOpcode() == V8::ORri || MI->getOpcode() == V8::ADDri)
+             && !MO.isRegister() && !MO.isImmediate()) {
     O << "%lo(";
     CloseParen = true;
   }
