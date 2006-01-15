@@ -130,7 +130,8 @@ public:
 
 class ETNode {
 public:
-  ETNode(void *d) : data(d), Father(NULL), Left(NULL),
+  ETNode(void *d) : data(d), DFSNumIn(-1), DFSNumOut(-1),
+                    Father(NULL), Left(NULL),
                     Right(NULL), Son(NULL), ParentOcc(NULL) {   
     RightmostOcc = new ETOccurrence(this);
   };
@@ -287,7 +288,7 @@ public:
   void *data;
 
   // DFS Numbers
-  unsigned DFSNumIn, DFSNumOut;
+  int DFSNumIn, DFSNumOut;
 
   // Father
   ETNode *Father;
