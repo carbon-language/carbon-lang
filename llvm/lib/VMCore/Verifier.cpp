@@ -60,8 +60,6 @@
 #include <sstream>
 using namespace llvm;
 
-#define ETForest DominatorSet
-
 namespace {  // Anonymous namespace for class
 
   struct Verifier : public FunctionPass, InstVisitor<Verifier> {
