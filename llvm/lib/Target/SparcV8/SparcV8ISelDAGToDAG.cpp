@@ -243,6 +243,7 @@ SparcV8TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
 
           Load = DAG.getExtLoad(LoadOp, MVT::i32, Root, FIPtr,
                                 DAG.getSrcValue(0), ObjectVT);
+          Load = DAG.getNode(ISD::TRUNCATE, ObjectVT, Load);
         }
         ArgValues.push_back(Load);
       }
