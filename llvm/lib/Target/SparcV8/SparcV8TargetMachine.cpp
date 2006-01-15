@@ -73,9 +73,6 @@ bool SparcV8TargetMachine::addPassesToEmitFile(PassManager &PM,
   // FIXME: Implement efficient support for garbage collection intrinsics.
   PM.add(createLowerGCPass());
 
-  // Make sure that no unreachable blocks are instruction selected.
-  PM.add(createUnreachableBlockEliminationPass());
-
   // FIXME: implement the invoke/unwind instructions!
   PM.add(createLowerInvokePass());
 
@@ -90,9 +87,14 @@ bool SparcV8TargetMachine::addPassesToEmitFile(PassManager &PM,
     // Replace malloc and free instructions with library calls.
     PM.add(createLowerAllocationsPass());
     PM.add(createLowerSelectPass());
+    // Make sure that no unreachable blocks are instruction selected.
+    PM.add(createUnreachableBlockEliminationPass());
     PM.add(createSparcV8SimpleInstructionSelector(*this));
-  } else
+  } else {
+    // Make sure that no unreachable blocks are instruction selected.
+    PM.add(createUnreachableBlockEliminationPass());
     PM.add(createSparcV8ISelDag(*this));
+  }
 
   // Print machine instructions as they were initially generated.
   if (PrintMachineCode)
