@@ -101,6 +101,7 @@
           <li><a href="#i_cast">'<tt>cast .. to</tt>' Instruction</a></li>
           <li><a href="#i_select">'<tt>select</tt>' Instruction</a></li>
           <li><a href="#i_extractelement">'<tt>extractelement</tt>' Instruction</a></li>
+          <li><a href="#i_insertelement">'<tt>insertelement</tt>' Instruction</a></li>
           <li><a href="#i_call">'<tt>call</tt>'  Instruction</a></li>
           <li><a href="#i_va_arg">'<tt>va_arg</tt>'  Instruction</a></li>
         </ol>
@@ -1097,6 +1098,11 @@ following is the syntax for constant expressions:</p>
   <dt><b><tt>extractelement ( VAL, IDX )</tt></b></dt>
 
   <dd>Perform the <a href="#i_extractelement">extractelement
+  operation</a> on constants.
+
+  <dt><b><tt>insertelement ( VAL, ELT, IDX )</tt></b></dt>
+
+  <dd>Perform the <a href="#i_insertelement">insertelement
   operation</a> on constants.
 
   <dt><b><tt>OPCODE ( LHS, RHS )</tt></b></dt>
@@ -2261,7 +2267,7 @@ value argument; otherwise, it returns the second value argument.
 
 <p>
 The '<tt>extractelement</tt>' instruction extracts a single scalar
-element from a vector at a specified index.
+element from a packed vector at a specified index.
 </p>
 
 
@@ -2286,6 +2292,53 @@ results are undefined.
 
 <pre>
   %result = extractelement &lt;4 x int&gt; %vec, uint 0    <i>; yields int</i>
+</pre>
+</div>
+
+
+<!-- _______________________________________________________________________ -->
+<div class="doc_subsubsection">
+   <a name="i_insertelement">'<tt>insertelement</tt>' Instruction</a>
+</div>
+
+<div class="doc_text">
+
+<h5>Syntax:</h5>
+
+<pre>
+  &lt;result&gt; = insertelement &lt;n x &lt;ty&gt;&gt; &lt;val&gt;, &lt;ty&gt; &lt;elt&gt, uint &lt;idx&gt;    <i>; yields &lt;n x &lt;ty&gt;&gt;</i>
+</pre>
+
+<h5>Overview:</h5>
+
+<p>
+The '<tt>insertelement</tt>' instruction inserts a scalar
+element into a packed vector at a specified index.
+</p>
+
+
+<h5>Arguments:</h5>
+
+<p>
+The first operand of an '<tt>insertelement</tt>' instruction is a
+value of <a href="#t_packed">packed</a> type.  The second operand is a
+scalar value whose type must equal the element type of the first
+operand.  The third operand is an index indicating the position at
+which to insert the value.  The index may be a variable.</p>
+
+<h5>Semantics:</h5>
+
+<p>
+The result is a packed vector of the same type as <tt>val</tt>.  Its
+element values are those of <tt>val</tt> except at position
+<tt>idx</tt>, where it gets the value <tt>elt</tt>.  If <tt>idx</tt>
+exceeds the length of <tt>val</tt>, the results are undefined.
+</p>
+
+<h5>Example:</h5>
+
+<pre>
+  %result = insertelement &lt;4 x int&gt; %vec, int 1, uint 0    <i>; yields &lt;4 x int&gt;</i>
 </pre>
 </div>
 
