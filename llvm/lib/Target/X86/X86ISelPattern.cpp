@@ -2386,46 +2386,6 @@ unsigned ISel::SelectExpr(SDOperand N) {
     return Result;
   }
 
-  case ISD::DYNAMIC_STACKALLOC:
-    // Generate both result values.
-    if (Result != 1)
-      ExprMap[N.getValue(1)] = 1;   // Generate the token
-    else
-      Result = ExprMap[N.getValue(0)] = MakeReg(N.getValue(0).getValueType());
-
-    // FIXME: We are currently ignoring the requested alignment for handling
-    // greater than the stack alignment.  This will need to be revisited at some
-    // point.  Align = N.getOperand(2);
-
-    if (!isa<ConstantSDNode>(N.getOperand(2)) ||
-        cast<ConstantSDNode>(N.getOperand(2))->getValue() != 0) {
-      std::cerr << "Cannot allocate stack object with greater alignment than"
-                << " the stack alignment yet!";
-      abort();
-    }
-
-    if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(N.getOperand(1))) {
-      Select(N.getOperand(0));
-      BuildMI(BB, X86::SUB32ri, 2, X86::ESP).addReg(X86::ESP)
-        .addImm(CN->getValue());
-    } else {
-      if (getRegPressure(N.getOperand(0)) > getRegPressure(N.getOperand(1))) {
-        Select(N.getOperand(0));
-        Tmp1 = SelectExpr(N.getOperand(1));
-      } else {
-        Tmp1 = SelectExpr(N.getOperand(1));
-        Select(N.getOperand(0));
-      }
-
-      // Subtract size from stack pointer, thereby allocating some space.
-      BuildMI(BB, X86::SUB32rr, 2, X86::ESP).addReg(X86::ESP).addReg(Tmp1);
-    }
-
-    // Put a pointer to the space into the result register, by copying the stack
-    // pointer.
-    BuildMI(BB, X86::MOV32rr, 1, Result).addReg(X86::ESP);
-    return Result;
-
   case X86ISD::TAILCALL:
   case X86ISD::CALL: {
     // The chain for this call is now lowered.
@@ -3295,7 +3255,6 @@ void ISel::Select(SDOperand N) {
   case ISD::EXTLOAD:
   case ISD::SEXTLOAD:
   case ISD::ZEXTLOAD:
-  case ISD::DYNAMIC_STACKALLOC:
   case X86ISD::TAILCALL:
   case X86ISD::CALL:
     ExprMap.erase(N);

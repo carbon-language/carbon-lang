@@ -700,46 +700,6 @@ SDOperand X86DAGToDAGISel::Select(SDOperand N) {
                                       Base, Scale, Index, Disp, Chain);
       return Chain;
     }
-
-    case ISD::DYNAMIC_STACKALLOC: {
-      SDOperand Chain = N.getOperand(0);
-      SDOperand Size  = N.getOperand(1);
-      SDOperand Align = N.getOperand(2);
-
-      // FIXME: We are currently ignoring the requested alignment for handling
-      // greater than the stack alignment.  This will need to be revisited at
-      // some point.
-      if (!isa<ConstantSDNode>(Align) ||
-          cast<ConstantSDNode>(Align)->getValue() != 0) {
-        std::cerr << "Cannot allocate stack object with greater alignment than"
-                  << " the stack alignment yet!";
-        abort();
-      }
-
-      // FIXME: This produces crappy code. Lots of unnecessary MOV32rr to and
-      // from ESP.
-      SDOperand InFlag;
-      SDOperand SPVal = CurDAG->getCopyFromReg(Chain, X86::ESP, MVT::i32, InFlag);
-      Chain  = SPVal.getValue(1);
-      InFlag = SPVal.getValue(2);
-
-      SDOperand Result = Select(CurDAG->getNode(X86ISD::SUB_FLAG, MVT::i32,
-                                                SPVal, Size, InFlag));
-      InFlag = Result.getValue(1);
-
-      // Force the result back into ESP.
-      Chain  = CurDAG->getCopyToReg(Chain,
-                                    CurDAG->getRegister(X86::ESP, MVT::i32),
-                                    Result, InFlag);
-      InFlag = Chain.getValue(1);
-
-      // Copy the result back from ESP.
-      Result = CurDAG->getCopyFromReg(Chain, X86::ESP, MVT::i32, InFlag);
-
-      CodeGenMap[N.getValue(0)] = Result;
-      CodeGenMap[N.getValue(1)] = Result.getValue(1);
-      return Result.getValue(N.ResNo);
-    }
   }
 
   return SelectCode(N);
