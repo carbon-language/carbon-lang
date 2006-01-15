@@ -544,6 +544,8 @@ static std::vector<unsigned char> getIntrinsicType(Record *R, bool NotRegisters,
     // Pattern fragment types will be resolved when they are inlined.
     return Unknown;
   } else if (R->isSubClassOf("Register")) {
+    if (NotRegisters) 
+      return Unknown;
     // If the register appears in exactly one regclass, and the regclass has one
     // value type, use it as the known type.
     const CodeGenTarget &T = TP.getDAGISelEmitter().getTargetInfo();
