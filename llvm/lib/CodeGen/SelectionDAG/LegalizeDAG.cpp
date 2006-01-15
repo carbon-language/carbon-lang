@@ -842,22 +842,25 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     } else
       Result = Op.getValue(0);
 
+    Tmp1 = Result;
+    Tmp2 = Result.getValue(1);
     switch (TLI.getOperationAction(Node->getOpcode(),
                                    Node->getValueType(0))) {
     default: assert(0 && "This action is not supported yet!");
     case TargetLowering::Custom: {
-      SDOperand Tmp = TLI.LowerOperation(Result, DAG);
-      if (Tmp.Val) {
-        Result = LegalizeOp(Tmp);
+      Tmp3 = TLI.LowerOperation(Tmp1, DAG);
+      if (Tmp3.Val) {
+        Tmp1 = LegalizeOp(Tmp3);
+        Tmp2 = LegalizeOp(Tmp3.getValue(1));
       }
       // FALLTHROUGH if the target thinks it is legal.
     }
     case TargetLowering::Legal:
       // Since this op produce two values, make sure to remember that we
       // legalized both of them.
-      AddLegalizedOperand(SDOperand(Node, 0), Result);
-      AddLegalizedOperand(SDOperand(Node, 1), Result.getValue(1));
-      return Result.getValue(Op.ResNo);
+      AddLegalizedOperand(SDOperand(Node, 0), Tmp1);
+      AddLegalizedOperand(SDOperand(Node, 1), Tmp2);
+      return Op.ResNo ? Tmp2 : Tmp1;
     }
     assert(0 && "Unreachable");
   }
