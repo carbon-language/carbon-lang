@@ -50,6 +50,7 @@ public:
     Depth(0), Min(0), MinOccurrence(this) {};
 
   void setParent(ETOccurrence *n) {
+    assert(n != this && "Trying to set parent to ourselves");
     Parent = n;
   }
 
