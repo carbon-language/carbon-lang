@@ -1808,7 +1808,9 @@ SDOperand DAGCombiner::visitBIT_CONVERT(SDNode *N) {
     return DAG.getNode(ISD::BIT_CONVERT, VT, N0.getOperand(0));
   
   // fold (conv (load x)) -> (load (conv*)x)
-  if (N0.getOpcode() == ISD::LOAD && N0.hasOneUse()) {
+  // FIXME: These xforms need to know that the resultant load doesn't need a 
+  // higher alignment than the original!
+  if (0 && N0.getOpcode() == ISD::LOAD && N0.hasOneUse()) {
     SDOperand Load = DAG.getLoad(VT, N0.getOperand(0), N0.getOperand(1),
                                  N0.getOperand(2));
     WorkList.push_back(N);
@@ -2129,7 +2131,9 @@ SDOperand DAGCombiner::visitSTORE(SDNode *N) {
   }
   
   // If this is a store of a bit convert, store the input value.
-  if (Value.getOpcode() == ISD::BIT_CONVERT)
+  // FIXME: This needs to know that the resultant store does not need a 
+  // higher alignment than the original.
+  if (0 && Value.getOpcode() == ISD::BIT_CONVERT)
     return DAG.getNode(ISD::STORE, MVT::Other, Chain, Value.getOperand(0),
                        Ptr, SrcValue);
   
