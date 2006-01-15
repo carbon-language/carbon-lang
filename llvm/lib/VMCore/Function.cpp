@@ -265,6 +265,7 @@ unsigned Function::getIntrinsicID() const {
     if (getName() == "llvm.va_copy")  return Intrinsic::vacopy;
     if (getName() == "llvm.va_end")   return Intrinsic::vaend;
     if (getName() == "llvm.va_start") return Intrinsic::vastart;
+    break;
   case 'w':
     if (getName() == "llvm.writeport") return Intrinsic::writeport;
     if (getName() == "llvm.writeio")   return Intrinsic::writeio;
