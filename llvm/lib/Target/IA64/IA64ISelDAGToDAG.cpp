@@ -199,11 +199,13 @@ SDOperand IA64DAGToDAGISel::SelectDIV(SDOperand Op) {
         Chain = TmpF3.getValue(1);
         TmpF4 = CurDAG->getTargetNode(IA64::FCVTXF, MVT::f64, TmpF2);
         Chain = TmpF4.getValue(1);
-      } else {
-        TmpF3 = CurDAG->getTargetNode(IA64::FCVTXUFS1, MVT::f64, TmpF1);
-        Chain = TmpF3.getValue(1);
-        TmpF4 = CurDAG->getTargetNode(IA64::FCVTXUFS1, MVT::f64, TmpF2);
-        Chain = TmpF4.getValue(1);
+      } else { // is unsigned
+        if(isModulus) { /* unsigned integer divides do not need any fcvt.x*f* insns */
+          TmpF3 = CurDAG->getTargetNode(IA64::FCVTXUFS1, MVT::f64, TmpF1);
+          Chain = TmpF3.getValue(1);
+          TmpF4 = CurDAG->getTargetNode(IA64::FCVTXUFS1, MVT::f64, TmpF2);
+          Chain = TmpF4.getValue(1);
+        }
       }
 
     } else { // this is an FP divide/remainder, so we 'leak' some temp
@@ -214,116 +216,110 @@ SDOperand IA64DAGToDAGISel::SelectDIV(SDOperand Op) {
 
     // we start by computing an approximate reciprocal (good to 9 bits?)
     // note, this instruction writes _both_ TmpF5 (answer) and TmpPR (predicate)
-    TmpF5 = CurDAG->getTargetNode(IA64::FRCPAS1, MVT::f64, MVT::i1,
+    if(isFP)
+      TmpF5 = CurDAG->getTargetNode(IA64::FRCPAS0, MVT::f64, MVT::i1,
 	                          TmpF3, TmpF4);
+    else
+      TmpF5 = CurDAG->getTargetNode(IA64::FRCPAS1, MVT::f64, MVT::i1,
+                                  TmpF3, TmpF4);
+                                  
     TmpPR = TmpF5.getValue(1);
     Chain = TmpF5.getValue(2);
 
-    if(!isModulus) { // if this is a divide, we worry about div-by-zero
-        SDOperand bogusPR = CurDAG->getTargetNode(IA64::CMPEQ, MVT::i1, 
-          CurDAG->getRegister(IA64::r0, MVT::i64),
-          CurDAG->getRegister(IA64::r0, MVT::i64));
-        Chain = bogusPR.getValue(1);
-        TmpPR2 = CurDAG->getTargetNode(IA64::TPCMPNE, MVT::i1, bogusPR,
-          CurDAG->getRegister(IA64::r0, MVT::i64),
-          CurDAG->getRegister(IA64::r0, MVT::i64), TmpPR); 
-        Chain = TmpPR2.getValue(1);
-    }
-
+    // we'll need copies of F0 and F1
     SDOperand F0 = CurDAG->getRegister(IA64::F0, MVT::f64);
     SDOperand F1 = CurDAG->getRegister(IA64::F1, MVT::f64);
 
-    // now we apply newton's method, thrice! (FIXME: this is ~72 bits of
-    // precision, don't need this much for f32/i32)
-    TmpF6 = CurDAG->getTargetNode(IA64::CFNMAS1, MVT::f64,
+    SDOperand minusB;
+    if(isModulus) { // for remainders, it'll be handy to have
+                             // copies of -input_b
+      minusB = CurDAG->getTargetNode(IA64::SUB, MVT::i64,
+                  CurDAG->getRegister(IA64::r0, MVT::i64), Tmp2);
+      Chain = minusB.getValue(1);
+    }
+    
+    SDOperand TmpE0, TmpY1, TmpE1, TmpY2;
+    
+    TmpE0 = CurDAG->getTargetNode(IA64::CFNMAS1, MVT::f64,
       TmpF4, TmpF5, F1, TmpPR);
-    Chain = TmpF6.getValue(1);
-    TmpF7 = CurDAG->getTargetNode(IA64::CFMAS1, MVT::f64,
-      TmpF3, TmpF5, F0, TmpPR);
-    Chain = TmpF7.getValue(1);
-    TmpF8 = CurDAG->getTargetNode(IA64::CFMAS1, MVT::f64,
-      TmpF6, TmpF6, F0, TmpPR);
-    Chain = TmpF8.getValue(1);
-    TmpF9 = CurDAG->getTargetNode(IA64::CFMAS1, MVT::f64,
-      TmpF6, TmpF7, TmpF7, TmpPR);
-    Chain = TmpF9.getValue(1);
-    TmpF10 = CurDAG->getTargetNode(IA64::CFMAS1, MVT::f64,
-      TmpF6, TmpF5, TmpF5, TmpPR);
-    Chain = TmpF10.getValue(1);
-    TmpF11 = CurDAG->getTargetNode(IA64::CFMAS1, MVT::f64,
-      TmpF8, TmpF9, TmpF9, TmpPR);
-    Chain = TmpF11.getValue(1);
-    TmpF12 = CurDAG->getTargetNode(IA64::CFMAS1, MVT::f64,
-      TmpF8, TmpF10, TmpF10, TmpPR);
-    Chain = TmpF12.getValue(1);
-    TmpF13 = CurDAG->getTargetNode(IA64::CFNMAS1, MVT::f64,
-      TmpF4, TmpF11, TmpF3, TmpPR);
-    Chain = TmpF13.getValue(1);
+    Chain = TmpE0.getValue(1);
+    TmpY1 = CurDAG->getTargetNode(IA64::CFMAS1, MVT::f64,
+      TmpF5, TmpE0, TmpF5, TmpPR);
+    Chain = TmpY1.getValue(1);
+    TmpE1 = CurDAG->getTargetNode(IA64::CFMAS1, MVT::f64,
+      TmpE0, TmpE0, F0, TmpPR);
+    Chain = TmpE1.getValue(1);
+    TmpY2 = CurDAG->getTargetNode(IA64::CFMAS1, MVT::f64,
+      TmpY1, TmpE1, TmpY1, TmpPR);
+    Chain = TmpY2.getValue(1);
     
-       // FIXME: this is unfortunate :(
-       // the story is that the dest reg of the fnma above and the fma below
-       // (and therefore possibly the src of the fcvt.fx[u] as well) cannot
-       // be the same register, or this code breaks if the first argument is
-       // zero. (e.g. without this hack, 0%8 yields -64, not 0.)
-    TmpF14 = CurDAG->getTargetNode(IA64::CFMAS1, MVT::f64,
-      TmpF13, TmpF12, TmpF11, TmpPR);
-    Chain = TmpF14.getValue(1);
-    
-    if(isModulus) { // XXX: fragile! fixes _only_ mod, *breaks* div! !
-      SDOperand bogus = CurDAG->getTargetNode(IA64::IUSE, MVT::Other, TmpF13); // hack :(
-      Chain = bogus.getValue(0); // hmmm
-    }
+    if(isFP) { // if this is an FP divide, we finish up here and exit early
+      if(isModulus)
+        assert(0 && "Sorry, try another FORTRAN compiler.");
+ 
+      SDOperand TmpE2, TmpY3, TmpQ0, TmpR0;
+      
+      TmpE2 = CurDAG->getTargetNode(IA64::CFMAS1, MVT::f64,
+        TmpE1, TmpE1, F0, TmpPR);
+      Chain = TmpE2.getValue(1);
+      TmpY3 = CurDAG->getTargetNode(IA64::CFMAS1, MVT::f64,
+        TmpY2, TmpE2, TmpY2, TmpPR);
+      Chain = TmpY3.getValue(1);
+      TmpQ0 = CurDAG->getTargetNode(IA64::CFMADS1, MVT::f64, // double prec!
+        Tmp1, TmpY3, F0, TmpPR);
+      Chain = TmpQ0.getValue(1);
+      TmpR0 = CurDAG->getTargetNode(IA64::CFNMADS1, MVT::f64, // double prec!
+        Tmp2, TmpQ0, Tmp1, TmpPR);
+      Chain = TmpR0.getValue(1);
 
-    if(!isFP) {
-      // round to an integer
-      if(isSigned) {
-        TmpF15 = CurDAG->getTargetNode(IA64::FCVTFXTRUNCS1, MVT::i64, TmpF14);
-        Chain = TmpF15.getValue(1);
-      }
-      else {
-        TmpF15 = CurDAG->getTargetNode(IA64::FCVTFXUTRUNCS1, MVT::i64, TmpF14);
-        Chain = TmpF15.getValue(1);
-      }
-    } else {
-      TmpF15 = TmpF14;
-     // EXERCISE: can you see why TmpF15=TmpF14 does not work here, and
-     // we really do need the above FMOV? ;)
-    }
-
-    if(!isModulus) {
-      if(isFP) { // extra worrying about div-by-zero
-      // we do a 'conditional fmov' (of the correct result, depending
-      // on how the frcpa predicate turned out)
-      SDOperand bogoResult = CurDAG->getTargetNode(IA64::PFMOV, MVT::f64,
-                                                   TmpF12, TmpPR2);
-      Chain = bogoResult.getValue(1);
-      Result = CurDAG->getTargetNode(IA64::CFMOV, MVT::f64, bogoResult,
-        TmpF15, TmpPR);
+// we want Result to have the same target register as the frcpa, so
+// we two-address hack it. See the comment "for this to work..." on
+// page 48 of Intel application note #245415
+      Result = CurDAG->getTargetNode(IA64::TCFMADS0, MVT::f64, // d.p. s0 rndg!
+        TmpY3, TmpR0, TmpQ0, TmpPR);
       Chain = Result.getValue(1);
-      }
-      else {
-        Result = CurDAG->getTargetNode(IA64::GETFSIG, MVT::i64, TmpF15);
-        Chain = Result.getValue(1);
-      }
-    } else { // this is a modulus
-      if(!isFP) {
-        // answer = q * (-b) + a
-        SDOperand TmpI = CurDAG->getTargetNode(IA64::SUB, MVT::i64,
-          CurDAG->getRegister(IA64::r0, MVT::i64), Tmp2);
-        Chain = TmpI.getValue(1);
-        SDOperand TmpF = CurDAG->getTargetNode(IA64::SETFSIG, MVT::f64, TmpI);
-        Chain = TmpF.getValue(1);
-        SDOperand ModulusResult = CurDAG->getTargetNode(IA64::XMAL, MVT::f64,
-          TmpF15, TmpF, TmpF1);
-        Chain = ModulusResult.getValue(1);
-        Result = CurDAG->getTargetNode(IA64::GETFSIG, MVT::i64, ModulusResult);
-        Chain = Result.getValue(1);
-      } else { // FP modulus! The horror... the horror....
-        assert(0 && "sorry, no FP modulus just yet!\n!\n");
-      }
-    }
+      return Result; // XXX: early exit!
+    } else { // this is *not* an FP divide, so there's a bit left to do:
+    
+      SDOperand TmpQ2, TmpR2, TmpQ3, TmpQ;
+      
+      TmpQ2 = CurDAG->getTargetNode(IA64::CFMAS1, MVT::f64,
+        TmpF3, TmpY2, F0, TmpPR);
+      Chain = TmpQ2.getValue(1);
+      TmpR2 = CurDAG->getTargetNode(IA64::CFNMAS1, MVT::f64,
+        TmpF4, TmpQ2, TmpF3, TmpPR);
+      Chain = TmpR2.getValue(1);
 
-  return Result;
+// we want TmpQ3 to have the same target register as the frcpa, so
+// we two-address hack it. See the comment "for this to work..." on
+// page 48 of Intel application note #245415
+      TmpQ3 = CurDAG->getTargetNode(IA64::TCFMAS1, MVT::f64,
+        TmpR2, TmpR2, TmpY2, TmpQ2, TmpPR);
+      Chain = TmpQ3.getValue(1);
+      
+      if(isSigned)
+        TmpQ = CurDAG->getTargetNode(IA64::FCVTFXTRUNCS1, MVT::f64, TmpQ3);
+      else
+        TmpQ = CurDAG->getTargetNode(IA64::FCVTFXUTRUNCS1, MVT::f64, TmpQ3);
+      
+      Chain = TmpQ.getValue(1);
+
+      if(isModulus) {
+        SDOperand FPminusB = CurDAG->getTargetNode(IA64::SETFSIG, MVT::f64,
+          minusB);
+        Chain = FPminusB.getValue(1);
+        SDOperand Remainder = CurDAG->getTargetNode(IA64::XMAL, MVT::f64,
+          TmpQ, FPminusB, TmpF1);
+        Chain = Remainder.getValue(1);
+        Result = CurDAG->getTargetNode(IA64::GETFSIG, MVT::i64, Remainder);
+        Chain = Result.getValue(1);
+      } else { // just an integer divide
+        Result = CurDAG->getTargetNode(IA64::GETFSIG, MVT::i64, TmpQ);
+        Chain = Result.getValue(1);
+      }
+
+      return Result;
+    } // wasn't an FP divide
 }
 
 // Select - Convert the specified operand from a target-independent to a

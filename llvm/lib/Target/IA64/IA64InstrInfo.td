@@ -589,6 +589,15 @@ def FNEGABS : AForm_DAG<0x03, 0x0b, (ops FP:$dst, FP:$src),
   "fnegabs $dst = $src;;",
   [(set FP:$dst, (fneg (fabs FP:$src)))]>;
 
+let isTwoAddress=1 in {
+def TCFMAS1 : AForm<0x03, 0x0b,
+  (ops FP:$dst, FP:$bogussrc, FP:$src1, FP:$src2, FP:$src3, PR:$qp),
+    "($qp) fma.s1 $dst = $src1, $src2, $src3;;">;
+def TCFMADS0 : AForm<0x03, 0x0b,
+  (ops FP:$dst, FP:$bogussrc, FP:$src1, FP:$src2, FP:$src3, PR:$qp),
+    "($qp) fma.d.s0 $dst = $src1, $src2, $src3;;">;
+}
+
 def CFMAS1 : AForm<0x03, 0x0b,
   (ops FP:$dst, FP:$src1, FP:$src2, FP:$src3, PR:$qp),
     "($qp) fma.s1 $dst = $src1, $src2, $src3;;">;
@@ -596,6 +605,18 @@ def CFNMAS1 : AForm<0x03, 0x0b,
   (ops FP:$dst, FP:$src1, FP:$src2, FP:$src3, PR:$qp),
     "($qp) fnma.s1 $dst = $src1, $src2, $src3;;">;
 
+def CFMADS1 : AForm<0x03, 0x0b,
+  (ops FP:$dst, FP:$src1, FP:$src2, FP:$src3, PR:$qp),
+    "($qp) fma.d.s1 $dst = $src1, $src2, $src3;;">;
+def CFMADS0 : AForm<0x03, 0x0b,
+  (ops FP:$dst, FP:$src1, FP:$src2, FP:$src3, PR:$qp),
+    "($qp) fma.d.s0 $dst = $src1, $src2, $src3;;">;
+def CFNMADS1 : AForm<0x03, 0x0b,
+  (ops FP:$dst, FP:$src1, FP:$src2, FP:$src3, PR:$qp),
+    "($qp) fnma.d.s1 $dst = $src1, $src2, $src3;;">;
+
+def FRCPAS0 : AForm<0x03, 0x0b, (ops FP:$dstFR, PR:$dstPR, FP:$src1, FP:$src2),
+  "frcpa.s0 $dstFR, $dstPR = $src1, $src2;;">;
 def FRCPAS1 : AForm<0x03, 0x0b, (ops FP:$dstFR, PR:$dstPR, FP:$src1, FP:$src2),
   "frcpa.s1 $dstFR, $dstPR = $src1, $src2;;">;
 
