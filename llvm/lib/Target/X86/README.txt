@@ -54,6 +54,10 @@ fxch	->		fucomi
 fucomi			jl X
 jg X
 
+Ideas:
+http://gcc.gnu.org/ml/gcc-patches/2004-11/msg02410.html
+
+
 //===---------------------------------------------------------------------===//
 
 Improvements to the multiply -> shift/add algorithm:
@@ -121,3 +125,44 @@ Model X86 EFLAGS as a real register to avoid redudant cmp / test. e.g.
 	setg %al
 	testb %al, %al  # unnecessary
 	jne .BB7
+
+//===---------------------------------------------------------------------===//
+
+Count leading zeros and count trailing zeros:
+
+int clz(int X) { return __builtin_clz(X); }
+int ctz(int X) { return __builtin_ctz(X); }
+
+$ gcc t.c -S -o - -O3  -fomit-frame-pointer -masm=intel
+clz:
+        bsr     %eax, DWORD PTR [%esp+4]
+        xor     %eax, 31
+        ret
+ctz:
+        bsf     %eax, DWORD PTR [%esp+4]
+        ret
+
+however, check that these are defined for 0 and 32.  Our intrinsics are, GCC's
+aren't.
+
+//===---------------------------------------------------------------------===//
+
+Use push/pop instructions in prolog/epilog sequences instead of stores off 
+ESP (certain code size win, perf win on some [which?] processors).
+
+//===---------------------------------------------------------------------===//
+
+Only use inc/neg/not instructions on processors where they are faster than
+add/sub/xor.  They are slower on the P4 due to only updating some processor
+flags.
+
+//===---------------------------------------------------------------------===//
+
+Open code rint,floor,ceil,trunc:
+http://gcc.gnu.org/ml/gcc-patches/2004-08/msg02006.html
+http://gcc.gnu.org/ml/gcc-patches/2004-08/msg02011.html
+
+//===---------------------------------------------------------------------===//
+
+Combine: a = sin(x), b = cos(x) into a,b = sincos(x).
+

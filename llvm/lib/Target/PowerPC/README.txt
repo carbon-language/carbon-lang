@@ -225,3 +225,29 @@ struct foo { double X, Y; };
 void xxx(struct foo F);
 void bar() { struct foo R = { 1.0, 2.0 }; xxx(R); }
 
+===-------------------------------------------------------------------------===
+
+For this:
+
+int h(int i, int j, int k) {
+ return (i==0||j==0||k == 0);
+}
+
+We currently emit this:
+
+_h:
+        cntlzw r2, r3
+        cntlzw r3, r4
+        cntlzw r4, r5
+        srwi r2, r2, 5
+        srwi r3, r3, 5
+        srwi r4, r4, 5
+        or r2, r3, r2
+        or r3, r2, r4
+        blr
+
+The ctlz/shift instructions are created by the isel, so the dag combiner doesn't
+have a chance to pull the shifts through the or's (eliminating two 
+instructions).  SETCC nodes should be custom lowered in this case, not expanded
+by the isel.
+
