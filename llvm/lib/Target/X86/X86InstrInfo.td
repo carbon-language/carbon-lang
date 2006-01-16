@@ -2797,9 +2797,9 @@ def FISUB32m  : FPI<0xDA, MRM4m, (ops i32mem:$src), "fisub{l} $src">;
 def FISUBR16m : FPI<0xDE, MRM5m, (ops i16mem:$src), "fisubr{s} $src">;
 def FISUBR32m : FPI<0xDA, MRM5m, (ops i32mem:$src), "fisubr{l} $src">;
 def FIDIV16m  : FPI<0xDE, MRM6m, (ops i16mem:$src), "fidiv{s} $src">;
-def FIDIV32m  : FPI<0xDA, MRM6m, (ops i32mem:$src), "fidiv{s} $src">;
+def FIDIV32m  : FPI<0xDA, MRM6m, (ops i32mem:$src), "fidiv{l} $src">;
 def FIDIVR16m : FPI<0xDE, MRM7m, (ops i16mem:$src), "fidivr{s} $src">;
-def FIDIVR32m : FPI<0xDA, MRM7m, (ops i32mem:$src), "fidivr{s} $src">;
+def FIDIVR32m : FPI<0xDA, MRM7m, (ops i32mem:$src), "fidivr{l} $src">;
 
 // NOTE: GAS and apparently all other AT&T style assemblers have a broken notion
 // of some of the 'reverse' forms of the fsub and fdiv instructions.  As such,
