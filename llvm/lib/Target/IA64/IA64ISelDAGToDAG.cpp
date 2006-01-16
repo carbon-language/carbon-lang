@@ -183,6 +183,10 @@ SDOperand IA64DAGToDAGISel::SelectDIV(SDOperand Op) {
     SDOperand TmpF1, TmpF2, TmpF3, TmpF4, TmpF5, TmpF6, TmpF7, TmpF8;
     SDOperand TmpF9, TmpF10,TmpF11,TmpF12,TmpF13,TmpF14,TmpF15;
     SDOperand Result;
+
+    // we'll need copies of F0 and F1
+    SDOperand F0 = CurDAG->getRegister(IA64::F0, MVT::f64);
+    SDOperand F1 = CurDAG->getRegister(IA64::F1, MVT::f64);
     
     // OK, emit some code:
 
@@ -200,12 +204,10 @@ SDOperand IA64DAGToDAGISel::SelectDIV(SDOperand Op) {
         TmpF4 = CurDAG->getTargetNode(IA64::FCVTXF, MVT::f64, TmpF2);
         Chain = TmpF4.getValue(1);
       } else { // is unsigned
-        if(isModulus) { /* unsigned integer divides do not need any fcvt.x*f* insns */
-          TmpF3 = CurDAG->getTargetNode(IA64::FCVTXUFS1, MVT::f64, TmpF1);
-          Chain = TmpF3.getValue(1);
-          TmpF4 = CurDAG->getTargetNode(IA64::FCVTXUFS1, MVT::f64, TmpF2);
-          Chain = TmpF4.getValue(1);
-        }
+        TmpF3 = CurDAG->getTargetNode(IA64::FCVTXUFS1, MVT::f64, TmpF1);
+        Chain = TmpF3.getValue(1);
+        TmpF4 = CurDAG->getTargetNode(IA64::FCVTXUFS1, MVT::f64, TmpF2);
+        Chain = TmpF4.getValue(1);
       }
 
     } else { // this is an FP divide/remainder, so we 'leak' some temp
@@ -225,10 +227,6 @@ SDOperand IA64DAGToDAGISel::SelectDIV(SDOperand Op) {
                                   
     TmpPR = TmpF5.getValue(1);
     Chain = TmpF5.getValue(2);
-
-    // we'll need copies of F0 and F1
-    SDOperand F0 = CurDAG->getRegister(IA64::F0, MVT::f64);
-    SDOperand F1 = CurDAG->getRegister(IA64::F1, MVT::f64);
 
     SDOperand minusB;
     if(isModulus) { // for remainders, it'll be handy to have
@@ -276,7 +274,7 @@ SDOperand IA64DAGToDAGISel::SelectDIV(SDOperand Op) {
 // we two-address hack it. See the comment "for this to work..." on
 // page 48 of Intel application note #245415
       Result = CurDAG->getTargetNode(IA64::TCFMADS0, MVT::f64, // d.p. s0 rndg!
-        TmpY3, TmpR0, TmpQ0, TmpPR);
+        TmpF5, TmpY3, TmpR0, TmpQ0, TmpPR);
       Chain = Result.getValue(1);
       return Result; // XXX: early exit!
     } else { // this is *not* an FP divide, so there's a bit left to do:
@@ -290,13 +288,22 @@ SDOperand IA64DAGToDAGISel::SelectDIV(SDOperand Op) {
         TmpF4, TmpQ2, TmpF3, TmpPR);
       Chain = TmpR2.getValue(1);
 
-// we want TmpQ3 to have the same target register as the frcpa, so
-// we two-address hack it. See the comment "for this to work..." on
-// page 48 of Intel application note #245415
-      TmpQ3 = CurDAG->getTargetNode(IA64::TCFMAS1, MVT::f64,
-        TmpR2, TmpR2, TmpY2, TmpQ2, TmpPR);
+// we want TmpQ3 to have the same target register as the frcpa? maybe we
+// should two-address hack it. See the comment "for this to work..." on page
+// 48 of Intel application note #245415
+      TmpQ3 = CurDAG->getTargetNode(IA64::CFMAS1, MVT::f64,
+        TmpR2, TmpY2, TmpQ2, TmpPR);
       Chain = TmpQ3.getValue(1);
-      
+
+      // FIXME: this is unfortunate :(
+      // the story is that the dest reg of the fnma above and the fma below it
+      // (and therefore the src of the fcvt.fx[u] below as well) cannot
+      // be the same register, or this code breaks if the first argument is
+      // zero. (e.g. without this hack, 0%8 yields -64, not 0.)
+/* XXX: these two lines do nothing */
+      SDOperand bogus = CurDAG->getTargetNode(IA64::IUSE, MVT::Other, TmpR2);
+      Chain = bogus.getValue(0);
+
       if(isSigned)
         TmpQ = CurDAG->getTargetNode(IA64::FCVTFXTRUNCS1, MVT::f64, TmpQ3);
       else
