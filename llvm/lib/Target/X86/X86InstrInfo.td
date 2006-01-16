@@ -2686,42 +2686,42 @@ def FpADD32m  : FpI<(ops RFP:$dst, RFP:$src1, f32mem:$src2), OneArgFPRW,
                     [(set RFP:$dst, (fadd RFP:$src1,
                                      (extloadf64f32 addr:$src2)))]>;
                 // ST(0) = ST(0) + [mem32]
-def FpADD64m  : FpI<(ops RFP:$dst, RFP:$src1, f32mem:$src2), OneArgFPRW,
+def FpADD64m  : FpI<(ops RFP:$dst, RFP:$src1, f64mem:$src2), OneArgFPRW,
                     [(set RFP:$dst, (fadd RFP:$src1, (loadf64 addr:$src2)))]>;
                 // ST(0) = ST(0) + [mem64]
 def FpMUL32m  : FpI<(ops RFP:$dst, RFP:$src1, f32mem:$src2), OneArgFPRW,
                     [(set RFP:$dst, (fmul RFP:$src1,
                                      (extloadf64f32 addr:$src2)))]>;
                 // ST(0) = ST(0) * [mem32]
-def FpMUL64m  : FpI<(ops RFP:$dst, RFP:$src1, f32mem:$src2), OneArgFPRW,
+def FpMUL64m  : FpI<(ops RFP:$dst, RFP:$src1, f64mem:$src2), OneArgFPRW,
                     [(set RFP:$dst, (fmul RFP:$src1, (loadf64 addr:$src2)))]>;
                 // ST(0) = ST(0) * [mem64]
 def FpSUB32m  : FpI<(ops RFP:$dst, RFP:$src1, f32mem:$src2), OneArgFPRW,
                     [(set RFP:$dst, (fsub RFP:$src1,
                                     (extloadf64f32 addr:$src2)))]>;
                 // ST(0) = ST(0) - [mem32]
-def FpSUB64m  : FpI<(ops RFP:$dst, RFP:$src1, f32mem:$src2), OneArgFPRW,
+def FpSUB64m  : FpI<(ops RFP:$dst, RFP:$src1, f64mem:$src2), OneArgFPRW,
                     [(set RFP:$dst, (fsub RFP:$src1, (loadf64 addr:$src2)))]>;
                 // ST(0) = ST(0) - [mem64]
 def FpSUBR32m : FpI<(ops RFP:$dst, RFP:$src1, f32mem:$src2), OneArgFPRW,
                     [(set RFP:$dst, (fsub (extloadf64f32 addr:$src2),
                                      RFP:$src1))]>;
                 // ST(0) = [mem32] - ST(0)
-def FpSUBR64m : FpI<(ops RFP:$dst, RFP:$src1, f32mem:$src2), OneArgFPRW,
+def FpSUBR64m : FpI<(ops RFP:$dst, RFP:$src1, f64mem:$src2), OneArgFPRW,
                     [(set RFP:$dst, (fsub (loadf64 addr:$src2), RFP:$src1))]>;
                 // ST(0) = [mem64] - ST(0)
 def FpDIV32m  : FpI<(ops RFP:$dst, RFP:$src1, f32mem:$src2), OneArgFPRW,
                     [(set RFP:$dst, (fdiv RFP:$src1,
                                     (extloadf64f32 addr:$src2)))]>;
                 // ST(0) = ST(0) / [mem32]
-def FpDIV64m  : FpI<(ops RFP:$dst, RFP:$src1, f32mem:$src2), OneArgFPRW,
+def FpDIV64m  : FpI<(ops RFP:$dst, RFP:$src1, f64mem:$src2), OneArgFPRW,
                     [(set RFP:$dst, (fdiv RFP:$src1, (loadf64 addr:$src2)))]>;
                 // ST(0) = ST(0) / [mem64]
 def FpDIVR32m : FpI<(ops RFP:$dst, RFP:$src1, f32mem:$src2), OneArgFPRW,
                     [(set RFP:$dst, (fdiv (extloadf64f32 addr:$src2),
                                      RFP:$src1))]>;
                 // ST(0) = [mem32] / ST(0)
-def FpDIVR64m : FpI<(ops RFP:$dst, RFP:$src1, f32mem:$src2), OneArgFPRW,
+def FpDIVR64m : FpI<(ops RFP:$dst, RFP:$src1, f64mem:$src2), OneArgFPRW,
                     [(set RFP:$dst, (fdiv (loadf64 addr:$src2), RFP:$src1))]>;
                 // ST(0) = [mem64] / ST(0)
 
@@ -2739,12 +2739,11 @@ def FDIV64m  : FPI<0xDC, MRM6m, (ops f64mem:$src), "fdiv{l} $src">;
 def FDIVR32m : FPI<0xD8, MRM7m, (ops f32mem:$src), "fdivr{s} $src">;
 def FDIVR64m : FPI<0xDC, MRM7m, (ops f64mem:$src), "fdivr{l} $src">;
 
-// FIXME: Implement these when we have a dag-dag isel!
 def FpIADD16m : FpI<(ops RFP:$dst, RFP:$src1, i16mem:$src2), OneArgFPRW,
                     [(set RFP:$dst, (fadd RFP:$src1,
                                      (X86fild addr:$src2, i16)))]>;
                 // ST(0) = ST(0) + [mem16int]
-def FpIADD32m : FpI<(ops RFP:$dst, RFP:$src1, i16mem:$src2), OneArgFPRW,
+def FpIADD32m : FpI<(ops RFP:$dst, RFP:$src1, i32mem:$src2), OneArgFPRW,
                     [(set RFP:$dst, (fadd RFP:$src1,
                                      (X86fild addr:$src2, i32)))]>;
                 // ST(0) = ST(0) + [mem32int]
@@ -2752,7 +2751,7 @@ def FpIMUL16m : FpI<(ops RFP:$dst, RFP:$src1, i16mem:$src2), OneArgFPRW,
                     [(set RFP:$dst, (fmul RFP:$src1,
                                      (X86fild addr:$src2, i16)))]>;
                 // ST(0) = ST(0) * [mem16int]
-def FpIMUL32m : FpI<(ops RFP:$dst, RFP:$src1, i16mem:$src2), OneArgFPRW,
+def FpIMUL32m : FpI<(ops RFP:$dst, RFP:$src1, i32mem:$src2), OneArgFPRW,
                     [(set RFP:$dst, (fmul RFP:$src1,
                                      (X86fild addr:$src2, i32)))]>;
                 // ST(0) = ST(0) * [mem32int]
@@ -2760,7 +2759,7 @@ def FpISUB16m : FpI<(ops RFP:$dst, RFP:$src1, i16mem:$src2), OneArgFPRW,
                     [(set RFP:$dst, (fsub RFP:$src1,
                                      (X86fild addr:$src2, i16)))]>;
                 // ST(0) = ST(0) - [mem16int]
-def FpISUB32m : FpI<(ops RFP:$dst, RFP:$src1, i16mem:$src2), OneArgFPRW,
+def FpISUB32m : FpI<(ops RFP:$dst, RFP:$src1, i32mem:$src2), OneArgFPRW,
                     [(set RFP:$dst, (fsub RFP:$src1,
                                      (X86fild addr:$src2, i32)))]>;
                 // ST(0) = ST(0) - [mem32int]
@@ -2768,7 +2767,7 @@ def FpISUBR16m : FpI<(ops RFP:$dst, RFP:$src1, i16mem:$src2), OneArgFPRW,
                      [(set RFP:$dst, (fsub (X86fild addr:$src2, i16),
                                       RFP:$src1))]>;
                 // ST(0) = [mem16int] - ST(0)
-def FpISUBR32m : FpI<(ops RFP:$dst, RFP:$src1, i16mem:$src2), OneArgFPRW,
+def FpISUBR32m : FpI<(ops RFP:$dst, RFP:$src1, i32mem:$src2), OneArgFPRW,
                      [(set RFP:$dst, (fsub (X86fild addr:$src2, i32),
                                       RFP:$src1))]>;
                 // ST(0) = [mem32int] - ST(0)
@@ -2776,7 +2775,7 @@ def FpIDIV16m : FpI<(ops RFP:$dst, RFP:$src1, i16mem:$src2), OneArgFPRW,
                     [(set RFP:$dst, (fdiv RFP:$src1,
                                      (X86fild addr:$src2, i16)))]>;
                 // ST(0) = ST(0) / [mem16int]
-def FpIDIV32m : FpI<(ops RFP:$dst, RFP:$src1, i16mem:$src2), OneArgFPRW,
+def FpIDIV32m : FpI<(ops RFP:$dst, RFP:$src1, i32mem:$src2), OneArgFPRW,
                     [(set RFP:$dst, (fdiv RFP:$src1,
                                      (X86fild addr:$src2, i32)))]>;
                 // ST(0) = ST(0) / [mem32int]
@@ -2784,7 +2783,7 @@ def FpIDIVR16m : FpI<(ops RFP:$dst, RFP:$src1, i16mem:$src2), OneArgFPRW,
                      [(set RFP:$dst, (fdiv (X86fild addr:$src2, i16),
                                       RFP:$src1))]>;
                 // ST(0) = [mem16int] / ST(0)
-def FpIDIVR32m : FpI<(ops RFP:$dst, RFP:$src1, i16mem:$src2), OneArgFPRW,
+def FpIDIVR32m : FpI<(ops RFP:$dst, RFP:$src1, i32mem:$src2), OneArgFPRW,
                      [(set RFP:$dst, (fdiv (X86fild addr:$src2, i32),
                                       RFP:$src1))]>;
                 // ST(0) = [mem32int] / ST(0)
