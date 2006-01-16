@@ -35,15 +35,26 @@ llvm::canConstantFoldCallTo(Function *F) {
   const std::string &Name = F->getName();
 
   switch (F->getIntrinsicID()) {
-  case Intrinsic::isunordered:
-  case Intrinsic::sqrt:
+  case Intrinsic::isunordered_f32:
+  case Intrinsic::isunordered_f64:
+  case Intrinsic::sqrt_f32:
+  case Intrinsic::sqrt_f64:
   case Intrinsic::bswap_i16:
   case Intrinsic::bswap_i32:
   case Intrinsic::bswap_i64:
   // FIXME: these should be constant folded as well
-  //case Intrinsic::ctpop:
-  //case Intrinsic::ctlz:
-  //case Intrinsic::cttz:
+  //case Intrinsic::ctpop_i8:
+  //case Intrinsic::ctpop_i16:
+  //case Intrinsic::ctpop_i32:
+  //case Intrinsic::ctpop_i64:
+  //case Intrinsic::ctlz_i8:
+  //case Intrinsic::ctlz_i16:
+  //case Intrinsic::ctlz_i32:
+  //case Intrinsic::ctlz_i64:
+  //case Intrinsic::cttz_i8:
+  //case Intrinsic::cttz_i16:
+  //case Intrinsic::cttz_i32:
+  //case Intrinsic::cttz_i64:
     return true;
   default: break;
   }
@@ -125,7 +136,7 @@ llvm::ConstantFoldCall(Function *F, const std::vector<Constant*> &Operands) {
             return ConstantFP::get(Ty, log(V));
           else if (Name == "log10" && V > 0)
             return ConstantFoldFP(log10, V, Ty);
-          else if (Name == "llvm.sqrt") {
+          else if (Name == "llvm.sqrt.f32" || Name == "llvm.sqrt.f64") {
             if (V >= -0.0)
               return ConstantFP::get(Ty, sqrt(V));
             else // Undefined
@@ -164,7 +175,7 @@ llvm::ConstantFoldCall(Function *F, const std::vector<Constant*> &Operands) {
       if (ConstantFP *Op2 = dyn_cast<ConstantFP>(Operands[1])) {
         double Op2V = Op2->getValue();
 
-        if (Name == "llvm.isunordered")
+        if (Name == "llvm.isunordered.f32" || Name == "llvm.isunordered.f64")
           return ConstantBool::get(IsNAN(Op1V) || IsNAN(Op2V));
         else
         if (Name == "pow") {

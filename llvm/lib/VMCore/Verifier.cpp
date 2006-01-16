@@ -128,7 +128,8 @@ namespace {  // Anonymous namespace for class
         if (I->isExternal()) visitFunction(*I);
       }
 
-      for (Module::global_iterator I = M.global_begin(), E = M.global_end(); I != E; ++I)
+      for (Module::global_iterator I = M.global_begin(), E = M.global_end(); 
+           I != E; ++I)
         visitGlobalVariable(*I);
 
       // If the module is broken, abort at this time.
@@ -729,15 +730,27 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
     break;
   }
 
-  case Intrinsic::isunordered:
+  case Intrinsic::isunordered_f32:
     Assert1(FT->getNumParams() == 2,
             "Illegal # arguments for intrinsic function!", IF);
     Assert1(FT->getReturnType() == Type::BoolTy,
             "Return type is not bool!", IF);
     Assert1(FT->getParamType(0) == FT->getParamType(1),
             "Arguments must be of the same type!", IF);
-    Assert1(FT->getParamType(0)->isFloatingPoint(),
-            "Argument is not a floating point type!", IF);
+    Assert1(FT->getParamType(0) == Type::FloatTy,
+            "Arguments must be a 32-bit floating point type!", IF);
+    NumArgs = 2;
+    break;
+
+  case Intrinsic::isunordered_f64:
+    Assert1(FT->getNumParams() == 2,
+            "Illegal # arguments for intrinsic function!", IF);
+    Assert1(FT->getReturnType() == Type::BoolTy,
+            "Return type is not bool!", IF);
+    Assert1(FT->getParamType(0) == FT->getParamType(1),
+            "Arguments must be of the same type!", IF);
+    Assert1(FT->getParamType(0) == Type::DoubleTy,
+            "Argument is not a 64-bit floating point type!", IF);
     NumArgs = 2;
     break;
 
@@ -779,23 +792,147 @@ void Verifier::visitIntrinsicFunctionCall(Intrinsic::ID ID, CallInst &CI) {
     NumArgs = 1;
     break;    
     
-  case Intrinsic::ctpop:
-  case Intrinsic::ctlz:
-  case Intrinsic::cttz:
+  case Intrinsic::ctpop_i8:
     Assert1(FT->getNumParams() == 1,
             "Illegal # arguments for intrinsic function!", IF);
     Assert1(FT->getReturnType() == FT->getParamType(0),
             "Return type does not match source type", IF);
-    Assert1(FT->getParamType(0)->isIntegral(),
-            "Argument must be of an int type!", IF);
+    Assert1(FT->getParamType(0) == Type::UByteTy 
+            || FT->getParamType(0) == Type::SByteTy,
+            "Argument must be a byte type!", IF);
     NumArgs = 1;
     break;
 
-  case Intrinsic::sqrt:
+  case Intrinsic::ctpop_i16:
     Assert1(FT->getNumParams() == 1,
             "Illegal # arguments for intrinsic function!", IF);
-    Assert1(FT->getParamType(0)->isFloatingPoint(),
-            "Argument is not a floating point type!", IF);
+    Assert1(FT->getReturnType() == FT->getParamType(0),
+            "Return type does not match source type", IF);
+    Assert1(FT->getParamType(0) == Type::UShortTy 
+            || FT->getParamType(0) == Type::ShortTy,
+            "Argument must be a short type!", IF);
+    NumArgs = 1;
+    break;
+
+  case Intrinsic::ctpop_i32:
+    Assert1(FT->getNumParams() == 1,
+            "Illegal # arguments for intrinsic function!", IF);
+    Assert1(FT->getReturnType() == FT->getParamType(0),
+            "Return type does not match source type", IF);
+    Assert1(FT->getParamType(0) == Type::UIntTy 
+            || FT->getParamType(0) == Type::IntTy,
+            "Argument must be an int type!", IF);
+    NumArgs = 1;
+    break;
+
+  case Intrinsic::ctpop_i64:
+    Assert1(FT->getNumParams() == 1,
+            "Illegal # arguments for intrinsic function!", IF);
+    Assert1(FT->getReturnType() == FT->getParamType(0),
+            "Return type does not match source type", IF);
+    Assert1(FT->getParamType(0) == Type::ULongTy 
+            || FT->getParamType(0) == Type::LongTy,
+            "Argument must be a long type!", IF);
+    NumArgs = 1;
+    break;
+
+  case Intrinsic::ctlz_i8:
+    Assert1(FT->getNumParams() == 1,
+            "Illegal # arguments for intrinsic function!", IF);
+    Assert1(FT->getReturnType() == FT->getParamType(0),
+            "Return type does not match source type", IF);
+    Assert1(FT->getParamType(0) == Type::UByteTy 
+            || FT->getParamType(0) == Type::SByteTy,
+            "Argument must be a byte type!", IF);
+    NumArgs = 1;
+    break;
+
+  case Intrinsic::ctlz_i16:
+    Assert1(FT->getNumParams() == 1,
+            "Illegal # arguments for intrinsic function!", IF);
+    Assert1(FT->getReturnType() == FT->getParamType(0),
+            "Return type does not match source type", IF);
+    Assert1(FT->getParamType(0) == Type::UShortTy 
+            || FT->getParamType(0) == Type::ShortTy,
+            "Argument must be a short type!", IF);
+    NumArgs = 1;
+    break;
+  case Intrinsic::ctlz_i32:
+    Assert1(FT->getNumParams() == 1,
+            "Illegal # arguments for intrinsic function!", IF);
+    Assert1(FT->getReturnType() == FT->getParamType(0),
+            "Return type does not match source type", IF);
+    Assert1(FT->getParamType(0) == Type::UIntTy 
+            || FT->getParamType(0) == Type::IntTy,
+            "Argument must be an int type!", IF);
+    NumArgs = 1;
+    break;
+  case Intrinsic::ctlz_i64:
+    Assert1(FT->getNumParams() == 1,
+            "Illegal # arguments for intrinsic function!", IF);
+    Assert1(FT->getReturnType() == FT->getParamType(0),
+            "Return type does not match source type", IF);
+    Assert1(FT->getParamType(0) == Type::ULongTy 
+            || FT->getParamType(0) == Type::LongTy,
+            "Argument must be a long type!", IF);
+    NumArgs = 1;
+    break;
+  case Intrinsic::cttz_i8:
+    Assert1(FT->getNumParams() == 1,
+            "Illegal # arguments for intrinsic function!", IF);
+    Assert1(FT->getReturnType() == FT->getParamType(0),
+            "Return type does not match source type", IF);
+    Assert1(FT->getParamType(0) == Type::UByteTy 
+            || FT->getParamType(0) == Type::SByteTy,
+            "Argument must be a byte type!", IF);
+    NumArgs = 1;
+    break;
+  case Intrinsic::cttz_i16:
+    Assert1(FT->getNumParams() == 1,
+            "Illegal # arguments for intrinsic function!", IF);
+    Assert1(FT->getReturnType() == FT->getParamType(0),
+            "Return type does not match source type", IF);
+    Assert1(FT->getParamType(0) == Type::UShortTy 
+            || FT->getParamType(0) == Type::ShortTy,
+            "Argument must be a short type!", IF);
+    NumArgs = 1;
+    break;
+  case Intrinsic::cttz_i32:
+    Assert1(FT->getNumParams() == 1,
+            "Illegal # arguments for intrinsic function!", IF);
+    Assert1(FT->getReturnType() == FT->getParamType(0),
+            "Return type does not match source type", IF);
+    Assert1(FT->getParamType(0) == Type::UIntTy 
+            || FT->getParamType(0) == Type::IntTy,
+            "Argument must be an int type!", IF);
+    NumArgs = 1;
+    break;
+  case Intrinsic::cttz_i64:
+    Assert1(FT->getNumParams() == 1,
+            "Illegal # arguments for intrinsic function!", IF);
+    Assert1(FT->getReturnType() == FT->getParamType(0),
+            "Return type does not match source type", IF);
+    Assert1(FT->getParamType(0) == Type::ULongTy 
+            || FT->getParamType(0) == Type::LongTy,
+            "Argument must be a long type!", IF);
+    NumArgs = 1;
+    break;
+
+  case Intrinsic::sqrt_f32:
+    Assert1(FT->getNumParams() == 1,
+            "Illegal # arguments for intrinsic function!", IF);
+    Assert1(FT->getParamType(0) == Type::FloatTy,
+            "Argument is not a 32-bit floating point type!", IF);
+    Assert1(FT->getReturnType() == FT->getParamType(0),
+            "Return type is not the same as argument type!", IF);
+    NumArgs = 1;
+    break;
+
+  case Intrinsic::sqrt_f64:
+    Assert1(FT->getNumParams() == 1,
+            "Illegal # arguments for intrinsic function!", IF);
+    Assert1(FT->getParamType(0) == Type::DoubleTy,
+            "Argument is not a 64-bit floating point type!", IF);
     Assert1(FT->getReturnType() == FT->getParamType(0),
             "Return type is not the same as argument type!", IF);
     NumArgs = 1;

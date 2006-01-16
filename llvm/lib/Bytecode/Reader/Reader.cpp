@@ -17,6 +17,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "Reader.h"
+#include "llvm/Assembly/AutoUpgrade.h"
 #include "llvm/Bytecode/BytecodeHandler.h"
 #include "llvm/BasicBlock.h"
 #include "llvm/CallingConv.h"
@@ -2002,6 +2003,7 @@ void BytecodeReader::ParseModuleGlobalInfo() {
     // Insert the place holder.
     Function *Func = new Function(FTy, GlobalValue::ExternalLinkage,
                                   "", TheModule);
+    UpgradeIntrinsicFunction(Func);
     insertValue(Func, (FnSignature & (~0U >> 1)) >> 5, ModuleValues);
 
     // Flags are not used yet.

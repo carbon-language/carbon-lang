@@ -62,16 +62,27 @@ namespace Intrinsic {
     memcpy,         // Copy non-overlapping memory blocks
     memmove,        // Copy potentially overlapping memory blocks
     memset,         // Fill memory with a byte value
-    isunordered,    // Return true if either argument is a NaN
-    sqrt,           // Square root
+    isunordered_f32,// Return true if either float argument is a NaN
+    isunordered_f64,// Return true if either double argument is a NaN
+    sqrt_f32,       // Square root of float
+    sqrt_f64,       // Square root of double
 
     // Bit manipulation instrinsics.
     bswap_i16,      // Byteswap 16 bits
     bswap_i32,      // Byteswap 32 bits
     bswap_i64,      // Byteswap 64 bits
-    ctpop,          // Count population
-    ctlz,           // Count leading zeros
-    cttz,           // Count trailing zeros
+    ctpop_i8,       // Count population of sbyte
+    ctpop_i16,      // Count population of short
+    ctpop_i32,      // Count population of int
+    ctpop_i64,      // Count population of long
+    ctlz_i8,        // Count leading zeros of sbyte
+    ctlz_i16,       // Count leading zeros of short
+    ctlz_i32,       // Count leading zeros of int
+    ctlz_i64,       // Count leading zeros of long
+    cttz_i8,        // Count trailing zeros of sbyte
+    cttz_i16,       // Count trailing zeros of short
+    cttz_i32,       // Count trailing zeros of int
+    cttz_i64,       // Count trailing zeros of long
     
     // Input/Output intrinsics.
     readport,

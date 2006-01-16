@@ -17,6 +17,7 @@
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
 #include "llvm/SymbolTable.h"
+#include "llvm/Assembly/AutoUpgrade.h"
 #include "llvm/Support/GetElementPtrTypeIterator.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/MathExtras.h"
@@ -104,11 +105,15 @@ static struct PerModuleInfo {
       ThrowException(UndefinedReferences);
     }
 
+    // Rename any overloaded intrinsic functions.
+    for (Module::iterator FI = CurrentModule->begin(), FE =
+         CurrentModule->end(); FI != FE; ++FI)
+      UpgradeIntrinsicFunction(&(*FI));
+
     Values.clear();         // Clear out function local definitions
     Types.clear();
     CurrentModule = 0;
   }
-
 
   // GetForwardRefForGlobal - Check to see if there is a forward reference
   // for this global.  If so, remove it from the GlobalRefs map and return it.

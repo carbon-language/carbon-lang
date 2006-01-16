@@ -113,11 +113,13 @@ void DefaultIntrinsicLowering::AddPrototypes(Module &M) {
                               Type::IntTy, (--(--I->arg_end()))->getType(),
                               (Type *)0);
         break;
-      case Intrinsic::isunordered:
+      case Intrinsic::isunordered_f32:
+      case Intrinsic::isunordered_f64:
         EnsureFunctionExists(M, "isunordered", I->arg_begin(), I->arg_end(),
                              Type::BoolTy);
         break;
-      case Intrinsic::sqrt:
+      case Intrinsic::sqrt_f32:
+      case Intrinsic::sqrt_f64:
         if(I->arg_begin()->getType() == Type::FloatTy)
           EnsureFunctionExists(M, "sqrtf", I->arg_begin(), I->arg_end(),
                                Type::FloatTy);
@@ -326,22 +328,30 @@ void DefaultIntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
                     AbortFCache);
     break;
   }
-  
+  case Intrinsic::ctpop_i8:
+  case Intrinsic::ctpop_i16:
+  case Intrinsic::ctpop_i32:
+  case Intrinsic::ctpop_i64:
+    CI->replaceAllUsesWith(LowerCTPOP(CI->getOperand(1), CI));
+    break;
+
   case Intrinsic::bswap_i16:
   case Intrinsic::bswap_i32:
   case Intrinsic::bswap_i64:
     CI->replaceAllUsesWith(LowerBSWAP(CI->getOperand(1), CI));
     break;
     
-  case Intrinsic::ctpop:
-    CI->replaceAllUsesWith(LowerCTPOP(CI->getOperand(1), CI));
-    break;
-
-  case Intrinsic::ctlz:
+  case Intrinsic::ctlz_i8:
+  case Intrinsic::ctlz_i16:
+  case Intrinsic::ctlz_i32:
+  case Intrinsic::ctlz_i64:
     CI->replaceAllUsesWith(LowerCTLZ(CI->getOperand(1), CI));
     break;
 
-  case Intrinsic::cttz: {
+  case Intrinsic::cttz_i8:
+  case Intrinsic::cttz_i16:
+  case Intrinsic::cttz_i32:
+  case Intrinsic::cttz_i64: {
     // cttz(x) -> ctpop(~X & (X-1))
     Value *Src = CI->getOperand(1);
     Value *NotSrc = BinaryOperator::createNot(Src, Src->getName()+".not", CI);
@@ -419,7 +429,8 @@ void DefaultIntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
                     (*(CI->op_begin()+1))->getType(), MemsetFCache);
     break;
   }
-  case Intrinsic::isunordered: {
+  case Intrinsic::isunordered_f32:
+  case Intrinsic::isunordered_f64: {
     Value *L = CI->getOperand(1);
     Value *R = CI->getOperand(2);
 
@@ -430,7 +441,8 @@ void DefaultIntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
                              "isunordered", CI));
     break;
   }
-  case Intrinsic::sqrt: {
+  case Intrinsic::sqrt_f32:
+  case Intrinsic::sqrt_f64: {
     static Function *sqrtFCache = 0;
     static Function *sqrtfFCache = 0;
     if(CI->getType() == Type::FloatTy)

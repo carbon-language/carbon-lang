@@ -963,12 +963,14 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
       setValue(&I, DAG.getNode(ISD::UNDEF, TLI.getValueType(I.getType())));
     return 0;
     
-  case Intrinsic::isunordered:
+  case Intrinsic::isunordered_f32:
+  case Intrinsic::isunordered_f64:
     setValue(&I, DAG.getSetCC(MVT::i1,getValue(I.getOperand(1)),
                               getValue(I.getOperand(2)), ISD::SETUO));
     return 0;
     
-  case Intrinsic::sqrt:
+  case Intrinsic::sqrt_f32:
+  case Intrinsic::sqrt_f64:
     setValue(&I, DAG.getNode(ISD::FSQRT,
                              getValue(I.getOperand(1)).getValueType(),
                              getValue(I.getOperand(1))));
@@ -996,17 +998,26 @@ SelectionDAGLowering::visitIntrinsicCall(CallInst &I, unsigned Intrinsic) {
                              getValue(I.getOperand(1)).getValueType(),
                              getValue(I.getOperand(1))));
     return 0;
-  case Intrinsic::cttz:
+  case Intrinsic::cttz_i8:
+  case Intrinsic::cttz_i16:
+  case Intrinsic::cttz_i32:
+  case Intrinsic::cttz_i64:
     setValue(&I, DAG.getNode(ISD::CTTZ,
                              getValue(I.getOperand(1)).getValueType(),
                              getValue(I.getOperand(1))));
     return 0;
-  case Intrinsic::ctlz:
+  case Intrinsic::ctlz_i8:
+  case Intrinsic::ctlz_i16:
+  case Intrinsic::ctlz_i32:
+  case Intrinsic::ctlz_i64:
     setValue(&I, DAG.getNode(ISD::CTLZ,
                              getValue(I.getOperand(1)).getValueType(),
                              getValue(I.getOperand(1))));
     return 0;
-  case Intrinsic::ctpop:
+  case Intrinsic::ctpop_i8:
+  case Intrinsic::ctpop_i16:
+  case Intrinsic::ctpop_i32:
+  case Intrinsic::ctpop_i64:
     setValue(&I, DAG.getNode(ISD::CTPOP,
                              getValue(I.getOperand(1)).getValueType(),
                              getValue(I.getOperand(1))));

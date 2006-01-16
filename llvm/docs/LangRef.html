@@ -3394,20 +3394,21 @@ this can be specified as the fourth argument, otherwise it should be set to 0 or
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
-  <a name="i_isunordered">'<tt>llvm.isunordered</tt>' Intrinsic</a>
+  <a name="i_isunordered">'<tt>llvm.isunordered.*</tt>' Intrinsic</a>
 </div>
 
 <div class="doc_text">
 
 <h5>Syntax:</h5>
 <pre>
-  declare bool %llvm.isunordered(&lt;float or double&gt; Val1, &lt;float or double&gt; Val2)
+  declare bool %llvm.isunordered.f32(float Val1, float  Val2)
+  declare bool %llvm.isunordered.f64(double Val1, double Val2)
 </pre>
 
 <h5>Overview:</h5>
 
 <p>
-The '<tt>llvm.isunordered</tt>' intrinsic returns true if either or both of the
+The '<tt>llvm.isunordered</tt>' intrinsics return true if either or both of the
 specified floating point values is a NAN.
 </p>
 
@@ -3435,13 +3436,14 @@ false.
 
 <h5>Syntax:</h5>
 <pre>
-  declare &lt;float or double&gt; %llvm.sqrt(&lt;float or double&gt; Val)
+  declare double %llvm.sqrt.f32(float Val)
+  declare double %llvm.sqrt.f64(double Val)
 </pre>
 
 <h5>Overview:</h5>
 
 <p>
-The '<tt>llvm.sqrt</tt>' intrinsic returns the sqrt of the specified operand,
+The '<tt>llvm.sqrt</tt>' intrinsics return the sqrt of the specified operand,
 returning the same value as the libm '<tt>sqrt</tt>' function would.  Unlike
 <tt>sqrt</tt> in libm, however, <tt>llvm.sqrt</tt> has undefined behavior for
 negative numbers (which allows for better optimization).
@@ -3483,6 +3485,7 @@ These allow efficient code generation for some algorithms.
 
 <h5>Syntax:</h5>
 <pre>
+  declare ushort %llvm.bswap.i8( ubyte &lt;id&gt; )
   declare ushort %llvm.bswap.i16( ushort &lt;id&gt; )
   declare uint %llvm.bswap.i32( uint &lt;id&gt; )
   declare ulong %llvm.bswap.i64( ulong &lt;id&gt; )
@@ -3511,20 +3514,24 @@ to 64 bits.
 
 <!-- _______________________________________________________________________ -->
 <div class="doc_subsubsection">
-  <a name="int_ctpop">'<tt>llvm.ctpop</tt>' Intrinsic</a>
+  <a name="int_ctpop">'<tt>llvm.ctpop.*</tt>' Intrinsic</a>
 </div>
 
 <div class="doc_text">
 
 <h5>Syntax:</h5>
 <pre>
-  declare int %llvm.ctpop(int &lt;src&gt;)
+  declare sbyte %llvm.ctpop.i8(sbyte &lt;src&gt;)
+  declare short %llvm.ctpop.i16(short &lt;src&gt;)
+  declare int   %llvm.ctpop.i32(int &lt;src&gt;)
+  declare long  %llvm.ctpop.i64(long &lt;src&gt;)
 </pre>
 
 <h5>Overview:</h5>
 
 <p>
-The '<tt>llvm.ctpop</tt>' intrinsic counts the number of ones in a variable.
+The '<tt>llvm.ctpop</tt>' family of intrinsics counts the number of ones in a 
+variable.
 </p>
 
 <h5>Arguments:</h5>
@@ -3550,15 +3557,17 @@ The '<tt>llvm.ctpop</tt>' intrinsic counts the 1's in a variable.
 
 <h5>Syntax:</h5>
 <pre>
-  declare int %llvm.ctlz(int &lt;src&gt;)
-
+  declare sbyte %llvm.ctlz.i8(sbyte &lt;src&gt;)
+  declare short %llvm.ctlz.i16(short &lt;src&gt;)
+  declare int   %llvm.ctlz.i32(int &lt;src&gt;)
+  declare long  %llvm.ctlz.i64(long &lt;src&gt;)
 </pre>
 
 <h5>Overview:</h5>
 
 <p>
-The '<tt>llvm.ctlz</tt>' intrinsic counts the number of leading zeros in a
-variable.
+The '<tt>llvm.ctlz</tt>' family of intrinsic functions counts the number of 
+leading zeros in a variable.
 </p>
 
 <h5>Arguments:</h5>
@@ -3588,13 +3597,17 @@ of src. For example, <tt>llvm.cttz(int 2) = 30</tt>.
 
 <h5>Syntax:</h5>
 <pre>
-  declare int %llvm.cttz(int &lt;src&gt;)
+  declare sbyte %llvm.cttz.i8(sbyte &lt;src&gt;)
+  declare short %llvm.cttz.i16(short &lt;src&gt;)
+  declare int   %llvm.cttz.i32(int &lt;src&gt;)
+  declare long  %llvm.cttz.i64(long &lt;src&gt;)
 </pre>
 
 <h5>Overview:</h5>
 
 <p>
-The '<tt>llvm.cttz</tt>' intrinsic counts the number of trailing zeros.
+The '<tt>llvm.cttz</tt>' family of intrinsic functions counts the number of 
+trailing zeros.
 </p>
 
 <h5>Arguments:</h5>

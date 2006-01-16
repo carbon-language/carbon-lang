@@ -297,14 +297,25 @@ bool llvm::isInstructionTriviallyDead(Instruction *I) {
       case Intrinsic::returnaddress:
       case Intrinsic::frameaddress:
       case Intrinsic::stacksave:
-      case Intrinsic::isunordered:
+      case Intrinsic::isunordered_f32:
+      case Intrinsic::isunordered_f64:
       case Intrinsic::bswap_i16:
       case Intrinsic::bswap_i32:
       case Intrinsic::bswap_i64:
-      case Intrinsic::ctpop:
-      case Intrinsic::ctlz:
-      case Intrinsic::cttz:
-      case Intrinsic::sqrt:
+      case Intrinsic::ctpop_i8:
+      case Intrinsic::ctpop_i16:
+      case Intrinsic::ctpop_i32:
+      case Intrinsic::ctpop_i64:
+      case Intrinsic::ctlz_i8:
+      case Intrinsic::ctlz_i16:
+      case Intrinsic::ctlz_i32:
+      case Intrinsic::ctlz_i64:
+      case Intrinsic::cttz_i8:
+      case Intrinsic::cttz_i16:
+      case Intrinsic::cttz_i32:
+      case Intrinsic::cttz_i64:
+      case Intrinsic::sqrt_f32:
+      case Intrinsic::sqrt_f64:
         return true;             // These intrinsics have no side effects.
       }
   return false;
