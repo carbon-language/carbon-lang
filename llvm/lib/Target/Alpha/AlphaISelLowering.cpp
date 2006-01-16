@@ -112,13 +112,16 @@ AlphaTargetLowering::AlphaTargetLowering(TargetMachine &TM) : TargetLowering(TM)
   // Not implemented yet.
   setOperationAction(ISD::STACKSAVE, MVT::Other, Expand); 
   setOperationAction(ISD::STACKRESTORE, MVT::Other, Expand);
-  
+  setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i64, Expand);
+
   // We want to legalize GlobalAddress and ConstantPool and
   // ExternalSymbols nodes into the appropriate instructions to
   // materialize the address.
   setOperationAction(ISD::GlobalAddress,  MVT::i64, Custom);
   setOperationAction(ISD::ConstantPool,   MVT::i64, Custom);
   setOperationAction(ISD::ExternalSymbol, MVT::i64, Custom);
+
+  setStackPointerRegisterToSaveRestore(Alpha::R30);
 
   addLegalFPImmediate(+0.0); //F31
   addLegalFPImmediate(-0.0); //-F31

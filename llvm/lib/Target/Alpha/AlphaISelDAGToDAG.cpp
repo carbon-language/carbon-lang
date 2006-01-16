@@ -163,37 +163,6 @@ SDOperand AlphaDAGToDAGISel::Select(SDOperand Op) {
   case ISD::TAILCALL:
   case ISD::CALL: return SelectCALL(Op);
 
-  case ISD::DYNAMIC_STACKALLOC: {
-    if (!isa<ConstantSDNode>(N->getOperand(2)) ||
-        cast<ConstantSDNode>(N->getOperand(2))->getValue() != 0) {
-      std::cerr << "Cannot allocate stack object with greater alignment than"
-                << " the stack alignment yet!";
-      abort();
-    }
-
-    SDOperand Chain = Select(N->getOperand(0));
-    SDOperand Amt   = Select(N->getOperand(1));
-    SDOperand Reg = CurDAG->getRegister(Alpha::R30, MVT::i64);
-    SDOperand Val = CurDAG->getCopyFromReg(Chain, Alpha::R30, MVT::i64);
-    Chain = Val.getValue(1);
-    
-    // Subtract the amount (guaranteed to be a multiple of the stack alignment)
-    // from the stack pointer, giving us the result pointer.
-    SDOperand Result = CurDAG->getTargetNode(Alpha::SUBQ, MVT::i64, Val, Amt);
-    
-    // Copy this result back into R30.
-    Chain = CurDAG->getNode(ISD::CopyToReg, MVT::Other, Chain, Reg, Result);
-    
-    // Copy this result back out of R30 to make sure we're not using the stack
-    // space without decrementing the stack pointer.
-    Result = CurDAG->getCopyFromReg(Chain, Alpha::R30, MVT::i64);
-  
-    // Finally, replace the DYNAMIC_STACKALLOC with the copyfromreg.
-    CodeGenMap[Op.getValue(0)] = Result;
-    CodeGenMap[Op.getValue(1)] = Result.getValue(1);
-    return SDOperand(Result.Val, Op.ResNo);
-  }
-
   case ISD::FrameIndex: {
     int FI = cast<FrameIndexSDNode>(N)->getIndex();
     return CurDAG->SelectNodeTo(N, Alpha::LDA, MVT::i64,
@@ -216,6 +185,11 @@ SDOperand AlphaDAGToDAGISel::Select(SDOperand Op) {
     Chain = CurDAG->getCopyFromReg(Chain, Alpha::R27, MVT::i64, 
 				  Chain.getValue(1));
     return CurDAG->SelectNodeTo(N, Alpha::BIS, MVT::i64, Chain, Chain);
+  }
+
+  case ISD::READCYCLECOUNTER: {
+    SDOperand Chain = Select(N->getOperand(0)); //Select chain
+    return CurDAG->SelectNodeTo(N, Alpha::RPCC, MVT::i64, Chain);
   }
 
   case ISD::RET: {
