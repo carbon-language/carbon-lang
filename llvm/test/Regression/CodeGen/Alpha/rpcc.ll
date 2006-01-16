@@ -1,5 +1,4 @@
 ; RUN: llvm-as < %s | llc -march=alpha | grep rpcc
-; XFAIL: *
 
 declare ulong %llvm.readcyclecounter()
 
