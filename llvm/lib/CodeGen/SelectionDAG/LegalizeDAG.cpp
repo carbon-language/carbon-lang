@@ -2179,12 +2179,12 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
     Tmp2 = LegalizeOp(Node->getOperand(1));   // RHS
     switch (TLI.getOperationAction(Node->getOpcode(), Node->getValueType(0))) {
     case TargetLowering::Custom: {
-      Result = DAG.getNode(Node->getOpcode(), Node->getValueType(0), Tmp1, Tmp2);
+      Result = DAG.getNode(Node->getOpcode(), Node->getValueType(0), Tmp1,Tmp2);
       SDOperand Tmp = TLI.LowerOperation(Result, DAG);
       if (Tmp.Val) {
-	Tmp = LegalizeOp(Tmp);  // Relegalize input.
-	AddLegalizedOperand(Op, Tmp);
-	return Tmp;
+        Tmp = LegalizeOp(Tmp);  // Relegalize input.
+        AddLegalizedOperand(Op, Tmp);
+        return Tmp;
       } //else it was considered legal and we fall through
     }
     case TargetLowering::Legal:
@@ -2276,6 +2276,45 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
           Tmp2 = DAG.getNode(ISD::OR, VT, Tmp2, Tmp1);
           Result = DAG.getNode(ISD::OR, VT, Tmp4, Tmp2);
           break;
+        case MVT::i64: {
+          SDOperand Tmp5, Tmp6, Tmp7, Tmp8;
+          Tmp8 = DAG.getNode(ISD::SHL, VT, Tmp1,
+                             DAG.getConstant(56, TLI.getShiftAmountTy()));
+          Tmp7 = DAG.getNode(ISD::SHL, VT, Tmp1,
+                             DAG.getConstant(40, TLI.getShiftAmountTy()));
+          Tmp6 = DAG.getNode(ISD::SHL, VT, Tmp1,
+                             DAG.getConstant(24, TLI.getShiftAmountTy()));
+          Tmp5 = DAG.getNode(ISD::SHL, VT, Tmp1,
+                             DAG.getConstant(8, TLI.getShiftAmountTy()));
+          Tmp4 = DAG.getNode(ISD::SRL, VT, Tmp1,
+                             DAG.getConstant(8, TLI.getShiftAmountTy()));
+          Tmp3 = DAG.getNode(ISD::SRL, VT, Tmp1,
+                             DAG.getConstant(24, TLI.getShiftAmountTy()));
+          Tmp2 = DAG.getNode(ISD::SRL, VT, Tmp1,
+                             DAG.getConstant(40, TLI.getShiftAmountTy()));
+          Tmp1 = DAG.getNode(ISD::SRL, VT, Tmp1,
+                             DAG.getConstant(56, TLI.getShiftAmountTy()));
+          Tmp7 = DAG.getNode(ISD::AND, VT, Tmp7, 
+                             DAG.getConstant(0x00FF000000000000ULL, VT));
+          Tmp6 = DAG.getNode(ISD::AND, VT, Tmp7, 
+                             DAG.getConstant(0x0000FF0000000000ULL, VT));
+          Tmp5 = DAG.getNode(ISD::AND, VT, Tmp7, 
+                             DAG.getConstant(0x000000FF00000000ULL, VT));
+          Tmp4 = DAG.getNode(ISD::AND, VT, Tmp7, 
+                             DAG.getConstant(0x00000000FF000000ULL, VT));
+          Tmp3 = DAG.getNode(ISD::AND, VT, Tmp7, 
+                             DAG.getConstant(0x0000000000FF0000ULL, VT));
+          Tmp2 = DAG.getNode(ISD::AND, VT, Tmp7, 
+                             DAG.getConstant(0x000000000000FF00ULL, VT));
+          Tmp8 = DAG.getNode(ISD::OR, VT, Tmp8, Tmp7);
+          Tmp6 = DAG.getNode(ISD::OR, VT, Tmp6, Tmp5);
+          Tmp4 = DAG.getNode(ISD::OR, VT, Tmp4, Tmp3);
+          Tmp2 = DAG.getNode(ISD::OR, VT, Tmp2, Tmp1);
+          Tmp8 = DAG.getNode(ISD::OR, VT, Tmp8, Tmp6);
+          Tmp4 = DAG.getNode(ISD::OR, VT, Tmp4, Tmp2);
+          Result = DAG.getNode(ISD::OR, VT, Tmp8, Tmp4);
+          break;
+        }
         }
         break;
       }
