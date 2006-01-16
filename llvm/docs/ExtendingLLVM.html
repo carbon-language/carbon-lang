@@ -16,6 +16,7 @@
   <li><a href="#introduction">Introduction and Warning</a></li>
   <li><a href="#intrinsic">Adding a new intrinsic function</a></li>
   <li><a href="#instruction">Adding a new instruction</a></li>
+  <li><a href="#sdnode">Adding a new SelectionDAG node</a></li>
   <li><a href="#type">Adding a new type</a>
   <ol>
     <li><a href="#fund_type">Adding a new fundamental type</a></li>
@@ -105,9 +106,8 @@ function and then be turned into an instruction if warranted.</p>
     effects, add it to the list of intrinsics in the 
     <tt>isInstructionTriviallyDead</tt> function.</li>
 
-<li>Test your intrinsic</li>
-
-<li><tt>llvm/test/Regression/*</tt>: add your test cases to the test suite</li>
+<li><tt>llvm/test/Regression/*</tt>: Add test cases for your test cases to the 
+    test suite</li>
 </ol>
 
 <p>Once the intrinsic has been added to the system, you must add code generator
@@ -116,48 +116,123 @@ support for it.  Generally you must do the following steps:</p>
 <dl>
 <dt>Add support to the C backend in <tt>lib/Target/CBackend/</tt></dt>
 
-<dd>Depending on the intrinsic, there are a few ways to implement this.  First,
-if it makes sense to lower the intrinsic to an expanded sequence of C code in
-all cases, just emit the expansion in <tt>visitCallInst</tt>.  Second, if the
-intrinsic has some way to express it with GCC (or any other compiler)
-extensions, it can be conditionally supported based on the compiler compiling
-the CBE output (see llvm.prefetch for an example).  Third, if the intrinsic
-really has no way to be lowered, just have the code generator emit code that
-prints an error message and calls abort if executed.
+<dd>Depending on the intrinsic, there are a few ways to implement this.  For
+most intrinsics, it makes sense to add code to lower your intrinsic in 
+<tt>LowerIntrinsicCall</tt> in <tt>lib/CodeGen/IntrinsicLowering.cpp</tt>.
+Second, if it makes sense to lower the intrinsic to an expanded sequence of C 
+code in all cases, just emit the expansion in <tt>visitCallInst</tt> in
+<tt>Writer.cpp</tt>.  If the intrinsic has some way to express it with GCC 
+(or any other compiler) extensions, it can be conditionally supported based on 
+the compiler compiling the CBE output (see llvm.prefetch for an example).  
+Third, if the intrinsic really has no way to be lowered, just have the code 
+generator emit code that prints an error message and calls abort if executed.
 </dd>
 
-<dt>Add a enum value for the SelectionDAG node in
-<tt>include/llvm/CodeGen/SelectionDAGNodes.h</tt></dt>
+<dl>
+<dt>Add support to the SelectionDAG Instruction Selector in 
+<tt>lib/CodeGen/SelectionDAG/</tt></dt>
 
-<dd>Also, add code to <tt>lib/CodeGen/SelectionDAG/SelectionDAG.cpp</tt> (and
-<tt>SelectionDAGPrinter.cpp</tt>) to print the node.</dd>
+<dd>Since most targets in LLVM use the SelectionDAG framework for generating
+code, you will likely need to add support for your intrinsic there as well.
+This is usually accomplished by adding a new node, and then teaching the
+SelectionDAG code how to handle that node.  To do this, follow the steps in
+the next section, Adding a new SelectionDAG node.</dd>
 
-<dt>Add code to <tt>SelectionDAG/SelectionDAGISel.cpp</tt> to recognize the
-intrinsic.</dt>
+<dl>
+<dt>Once you have added the new node, add code to 
+<tt>SelectionDAG/SelectionDAGISel.cpp</tt> to recognize the intrinsic.  In most
+cases, the intrinsic will just be turned into the node you just added.  For an
+example of this, see how <tt>visitIntrinsicCall</tt> handles Intrinsic::ctpop
+</dt>
 
-<dd>Presumably the intrinsic should be recognized and turned into the node you
-added above.</dd>
+</div>
 
-<dt>Add code to <tt>SelectionDAG/LegalizeDAG.cpp</tt> to <a
-href="CodeGenerator.html#selectiondag_legalize">legalize, promote, and
-expand</a> the node as necessary.</dt>
+<!-- *********************************************************************** -->
+<div class="doc_section">
+  <a name="sdnode">Adding a new SelectionDAG node</a>
+</div>
+<!-- *********************************************************************** -->
 
-<dd>If the intrinsic can be expanded to primitive operations, legalize can break
-the node down into other elementary operations that are be supported.</dd>
+<div class="doc_text">
 
-<dt>Add target-specific support to specific code generators.</dt>
+<p>As with intrinsics, adding a new SelectionDAG node to LLVM is much easier
+than adding a new instruction.  New nodes are often added to help represent
+instructions common to many targets.  These nodes often map to an LLVM
+instruction (add, sub) or intrinsic (byteswap, population count).  In other
+cases, new nodes have been added to allow many targets to perform a common task
+(converting between floating point and integer representation) or capture more
+complicated behavior in a single node (rotate).</p>
 
-<dd>Extend the code generators you are interested in to recognize and support
-the node, emitting the code you want.</dd>
-</dl>
-
-<p>
-Unfortunately, the process of extending the code generator to support a new node
-is not extremely well documented.  As such, it is often helpful to look at other
-intrinsics (e.g. <tt>llvm.ctpop</tt>) to see how they are recognized and turned
-into a node by <tt>SelectionDAGISel.cpp</tt>, legalized by
-<tt>LegalizeDAG.cpp</tt>, then finally emitted by the various code generators.
-</p>
+<ol>
+<li><tt>include/llvm/CodeGen/SelectionDAGNodes.h</tt>:
+    Add an enum value for the new SelectionDAG node.</li>
+<li><tt>lib/CodeGen/SelectionDAG/SelectionDAG.cpp</tt>:
+    Add code to print the node to <tt>getOperationName</tt>.  If your new node
+    can be evaluated at compile time when given constant arguments (such as an
+    add of a constant with another constant), find the <tt>getNode</tt> method
+    that takes the appropriate number of arguments, and add a case for your node
+    to the switch statement that performs constant folding for nodes that take
+    the same number of arguments as your new node.</li>
+<li><tt>lib/CodeGen/SelectionDAG/LegalizeDAG.cpp</tt>:
+    Add code to <a href="CodeGenerator.html#selectiondag_legalize">legalize, 
+    promote, and expand</a> the node as necessary.  At a minimum, you will need
+    to add a case statement for your node in <tt>LegalizeOp</tt> which calls
+    LegalizeOp on the node's operands, and returns a new node if any of the
+    operands changed as a result of being legalized.  It is likely that not all
+    targets supported by the SelectionDAG framework will natively support the
+    new node.  In this case, you must also add code in your node's case
+    statement in <tt>LegalizeOp</tt> to Expand your node into simpler, legal
+    operations.  The case for ISD::UREM for expanding a remainder into a
+    multiply and a subtract is a good example.</li>
+<li><tt>lib/CodeGen/SelectionDAG/LegalizeDAG.cpp</tt>:
+    If targets may support the new node being added only at certain sizes, you 
+    will also need to add code to your node's case statement in 
+    <tt>LegalizeOp</tt> to Promote your node's operands to a larger size, and 
+    perform the correct operation.  You will also need to add code to 
+    <tt>PromoteOp</tt> to do this as well.  For a good example, see ISD::BSWAP,
+    which promotes its operand to a wider size, performs the byteswap, and then
+    shifts the correct bytes right to emulate the narrower byteswap in the
+    wider type.</li>
+<li><tt>lib/CodeGen/SelectionDAG/LegalizeDAG.cpp</tt>:
+    Add a case for your node in <tt>ExpandOp</tt> to teach the legalizer how to
+    perform the action represented by the new node on a value that has been
+    split into high and low halves.  This case will be used to support your 
+    node with a 64 bit operand on a 32 bit target.</li>
+<li><tt>lib/CodeGen/SelectionDAG/DAGCombiner.cpp</tt>:
+    If your node can be combined with itself, or other existing nodes in a 
+    peephole-like fashion, add a visit function for it, and call that function
+    from <tt></tt>.  There are several good examples for simple combines you
+    can do; <tt>visitFABS</tt> and <tt>visitSRL</tt> are good starting places.
+    </li>
+<li><tt>lib/Target/PowerPC/PPCISelLowering.cpp</tt>:
+    Each target has an implementation of the <tt>TargetLowering</tt> class,
+    usually in its own file (although some targets include it in the same
+    file as the DAGToDAGISel).  The default behavior for a target is to
+    assume that your new node is legal for all types that are legal for
+    that target.  If this target does not natively support your node, then
+    tell the target to either Promote it (if it is supported at a larger
+    type) or Expand it.  This will cause the code you wrote in 
+    <tt>LegalizeOp</tt> above to decompose your new node into other legal
+    nodes for this target.</li>
+<li><tt>lib/Target/TargetSelectionDAG.td</tt>:
+    Most current targets supported by LLVM generate code using the DAGToDAG
+    method, where SelectionDAG nodes are pattern matched to target-specific
+    nodes, which represent individual instructions.  In order for the targets
+    to match an instruction to your new node, you must add a def for that node
+    to the list in this file, with the appropriate type constraints. Look at
+    <tt>add</tt>, <tt>bswap</tt>, and <tt>fadd</tt> for examples.</li>
+<li><tt>lib/Target/PowerPC/PPCInstrInfo.td</tt>:
+    Each target has a tablegen file that describes the target's instruction
+    set.  For targets that use the DAGToDAG instruction selection framework,
+    add a pattern for your new node that uses one or more target nodes.
+    Documentation for this is a bit sparse right now, but there are several
+    decent examples.  See the patterns for <tt>rotl</tt> in 
+    <tt>PPCInstrInfo.td</tt>.</li>
+<li>TODO: document complex patterns.</li>
+<li><tt>llvm/test/Regression/CodeGen/*</tt>: Add test cases for your new node
+    to the test suite.  <tt>llvm/test/Regression/CodeGen/X86/bswap.ll</tt> is
+    a good example.</li>
+</ol>
 
 </div>
 
