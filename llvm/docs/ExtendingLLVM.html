@@ -26,7 +26,8 @@
 
 <div class="doc_author">    
   <p>Written by <a href="http://misha.brukman.net">Misha Brukman</a>,
-  Brad Jones, and <a href="http://nondot.org/sabre">Chris Lattner</a></p>
+  Brad Jones, Nate Begeman,
+  and <a href="http://nondot.org/sabre">Chris Lattner</a></p>
 </div>
 
 <!-- *********************************************************************** -->
@@ -123,7 +124,8 @@ Second, if it makes sense to lower the intrinsic to an expanded sequence of C
 code in all cases, just emit the expansion in <tt>visitCallInst</tt> in
 <tt>Writer.cpp</tt>.  If the intrinsic has some way to express it with GCC 
 (or any other compiler) extensions, it can be conditionally supported based on 
-the compiler compiling the CBE output (see llvm.prefetch for an example).  
+the compiler compiling the CBE output (see <tt>llvm.prefetch</tt> for an 
+example).  
 Third, if the intrinsic really has no way to be lowered, just have the code 
 generator emit code that prints an error message and calls abort if executed.
 </dd>
@@ -136,13 +138,14 @@ generator emit code that prints an error message and calls abort if executed.
 code, you will likely need to add support for your intrinsic there as well.
 This is usually accomplished by adding a new node, and then teaching the
 SelectionDAG code how to handle that node.  To do this, follow the steps in
-the next section, Adding a new SelectionDAG node.</dd>
+the <a href="#sdnode">Adding a new SelectionDAG node</a> section.</dd>
 
 <dl>
 <dt>Once you have added the new node, add code to 
 <tt>SelectionDAG/SelectionDAGISel.cpp</tt> to recognize the intrinsic.  In most
 cases, the intrinsic will just be turned into the node you just added.  For an
-example of this, see how <tt>visitIntrinsicCall</tt> handles Intrinsic::ctpop
+example of this, see how <tt>visitIntrinsicCall</tt> handles 
+<tt>Intrinsic::ctpop_*</tt>.
 </dt>
 
 </div>
@@ -182,14 +185,15 @@ complicated behavior in a single node (rotate).</p>
     targets supported by the SelectionDAG framework will natively support the
     new node.  In this case, you must also add code in your node's case
     statement in <tt>LegalizeOp</tt> to Expand your node into simpler, legal
-    operations.  The case for ISD::UREM for expanding a remainder into a
-    multiply and a subtract is a good example.</li>
+    operations.  The case for <tt>ISD::UREM</tt> for expanding a remainder into
+    a divide, multiply, and a subtract is a good example.</li>
 <li><tt>lib/CodeGen/SelectionDAG/LegalizeDAG.cpp</tt>:
     If targets may support the new node being added only at certain sizes, you 
     will also need to add code to your node's case statement in 
     <tt>LegalizeOp</tt> to Promote your node's operands to a larger size, and 
     perform the correct operation.  You will also need to add code to 
-    <tt>PromoteOp</tt> to do this as well.  For a good example, see ISD::BSWAP,
+    <tt>PromoteOp</tt> to do this as well.  For a good example, see 
+    <tt>ISD::BSWAP</tt>,
     which promotes its operand to a wider size, performs the byteswap, and then
     shifts the correct bytes right to emulate the narrower byteswap in the
     wider type.</li>
