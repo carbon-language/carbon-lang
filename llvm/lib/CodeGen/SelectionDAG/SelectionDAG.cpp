@@ -32,6 +32,8 @@ static bool isCommutativeBinOp(unsigned Opcode) {
   switch (Opcode) {
   case ISD::ADD:
   case ISD::MUL:
+  case ISD::MULHU:
+  case ISD::MULHS:
   case ISD::FADD:
   case ISD::FMUL:
   case ISD::AND:
@@ -828,6 +830,7 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT) {
 
 SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
                                 SDOperand Operand) {
+  unsigned Tmp1;
   // Constant fold unary operations with an integer constant operand.
   if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(Operand.Val)) {
     uint64_t Val = C->getValue();
@@ -848,6 +851,59 @@ SDOperand SelectionDAG::getNode(unsigned Opcode, MVT::ValueType VT,
         return getConstantFP(BitsToDouble(Val), VT);
       }
       break;
+    case ISD::BSWAP:
+      switch(VT) {
+      default: assert(0 && "Invalid bswap!"); break;
+      case MVT::i16: return getConstant(ByteSwap_16((unsigned short)Val), VT);
+      case MVT::i32: return getConstant(ByteSwap_32((unsigned)Val), VT);
+      case MVT::i64: return getConstant(ByteSwap_64(Val), VT);
+      }
+      break;
+    case ISD::CTPOP:
+      switch(VT) {
+      default: assert(0 && "Invalid ctpop!"); break;
+      case MVT::i1: return getConstant(Val != 0, VT);
+      case MVT::i8: 
+        Tmp1 = (unsigned)Val & 0xFF;
+        return getConstant(CountPopulation_32(Tmp1), VT);
+      case MVT::i16:
+        Tmp1 = (unsigned)Val & 0xFFFF;
+        return getConstant(CountPopulation_32(Tmp1), VT);
+      case MVT::i32:
+        return getConstant(CountPopulation_32((unsigned)Val), VT);
+      case MVT::i64:
+        return getConstant(CountPopulation_64(Val), VT);
+      }
+    case ISD::CTLZ:
+      switch(VT) {
+      default: assert(0 && "Invalid ctlz!"); break;
+      case MVT::i1: return getConstant(Val == 0, VT);
+      case MVT::i8: 
+        Tmp1 = (unsigned)Val & 0xFF;
+        return getConstant(CountLeadingZeros_32(Tmp1)-24, VT);
+      case MVT::i16:
+        Tmp1 = (unsigned)Val & 0xFFFF;
+        return getConstant(CountLeadingZeros_32(Tmp1)-16, VT);
+      case MVT::i32:
+        return getConstant(CountLeadingZeros_32((unsigned)Val), VT);
+      case MVT::i64:
+        return getConstant(CountLeadingZeros_64(Val), VT);
+      }
+    case ISD::CTTZ:
+      switch(VT) {
+      default: assert(0 && "Invalid cttz!"); break;
+      case MVT::i1: return getConstant(Val == 0, VT);
+      case MVT::i8: 
+        Tmp1 = (unsigned)Val | 0x100;
+        return getConstant(CountTrailingZeros_32(Tmp1), VT);
+      case MVT::i16:
+        Tmp1 = (unsigned)Val | 0x10000;
+        return getConstant(CountTrailingZeros_32(Tmp1), VT);
+      case MVT::i32:
+        return getConstant(CountTrailingZeros_32((unsigned)Val), VT);
+      case MVT::i64:
+        return getConstant(CountTrailingZeros_64(Val), VT);
+      }
     }
   }
 
@@ -1926,7 +1982,6 @@ const char *SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::SRL:    return "srl";
   case ISD::ROTL:   return "rotl";
   case ISD::ROTR:   return "rotr";
-  case ISD::BSWAP:  return "bswap";
   case ISD::FADD:   return "fadd";
   case ISD::FSUB:   return "fsub";
   case ISD::FMUL:   return "fmul";
@@ -1993,7 +2048,8 @@ const char *SDNode::getOperationName(const SelectionDAG *G) const {
   case ISD::MEMCPY:  return "memcpy";
   case ISD::MEMMOVE: return "memmove";
 
-  // Bit counting
+  // Bit manipulation
+  case ISD::BSWAP:   return "bswap";
   case ISD::CTPOP:   return "ctpop";
   case ISD::CTTZ:    return "cttz";
   case ISD::CTLZ:    return "ctlz";
