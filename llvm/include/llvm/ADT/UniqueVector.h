@@ -62,7 +62,7 @@ public:
   
   /// getVector - Return the ID ordered vector of entries.
   ///
-  inline const typename std::vector<T> &getVector() const { return Vector; }
+  const typename std::vector<T> &getVector() const { return Vector; }
 };
 
 } // End of namespace llvm
