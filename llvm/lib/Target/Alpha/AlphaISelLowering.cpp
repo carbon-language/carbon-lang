@@ -128,6 +128,21 @@ AlphaTargetLowering::AlphaTargetLowering(TargetMachine &TM) : TargetLowering(TM)
   useITOF = TM.getSubtarget<AlphaSubtarget>().hasF2I();
 }
 
+const char *AlphaTargetLowering::getTargetNodeName(unsigned Opcode) const {
+  switch (Opcode) {
+  default: return 0;
+  case AlphaISD::ITOFT_: return "Alpha::ITOFT_";
+  case AlphaISD::FTOIT_: return "Alpha::FTOIT_";
+  case AlphaISD::CVTQT_: return "Alpha::CVTQT_";
+  case AlphaISD::CVTQS_: return "Alpha::CVTQS_";
+  case AlphaISD::CVTTQ_: return "Alpha::CVTTQ_";
+  case AlphaISD::GPRelHi: return "Alpha::GPRelHi";
+  case AlphaISD::GPRelLo: return "Alpha::GPRelLo";
+  case AlphaISD::RelLit: return "Alpha::RelLit";
+  case AlphaISD::GlobalBaseReg: return "Alpha::GlobalBaseReg";
+  case AlphaISD::DivCall: return "Alpha::DivCall";
+  }
+}
 
 //http://www.cs.arizona.edu/computer.help/policy/DIGITAL_unix/AA-PY8AC-TET1_html/callCH3.html#BLOCK21
 

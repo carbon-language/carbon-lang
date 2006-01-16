@@ -56,7 +56,10 @@ namespace llvm {
     /// LowerOperation - Provide custom lowering hooks for some operations.
     ///
     virtual SDOperand LowerOperation(SDOperand Op, SelectionDAG &DAG);
-    
+
+    //Friendly names for dumps
+    const char *getTargetNodeName(unsigned Opcode) const;
+
     /// LowerArguments - This hook must be implemented to indicate how we should
     /// lower the arguments for the specified function, into the specified DAG.
     virtual std::vector<SDOperand>
