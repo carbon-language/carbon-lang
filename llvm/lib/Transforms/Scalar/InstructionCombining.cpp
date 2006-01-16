@@ -748,7 +748,7 @@ Instruction *InstCombiner::visitAdd(BinaryOperator &I) {
             // This is a sign extend if the top bits are known zero.
             Constant *Mask = ConstantInt::getAllOnesValue(XorLHS->getType());
             Mask = ConstantExpr::getShl(Mask, 
-                           ConstantInt::get(Type::UByteTy, 64-TySizeBits-Size));
+                         ConstantInt::get(Type::UByteTy, 64-(TySizeBits-Size)));
             if (!MaskedValueIsZero(XorLHS, cast<ConstantInt>(Mask)))
               Size = 0;  // Not a sign ext, but can't be any others either.
             goto FoundSExt;
