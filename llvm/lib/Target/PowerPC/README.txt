@@ -251,3 +251,91 @@ have a chance to pull the shifts through the or's (eliminating two
 instructions).  SETCC nodes should be custom lowered in this case, not expanded
 by the isel.
 
+===-------------------------------------------------------------------------===
+
+Darwin Stub LICM optimization:
+
+Loops like this:
+  
+  for (...)  bar();
+
+Have to go through an indirect stub if bar is external or linkonce.  It would 
+be better to compile it as:
+
+     fp = &bar;
+     for (...)  fp();
+
+which only computes the address of bar once (instead of each time through the 
+stub).  This is Darwin specific and would have to be done in the code generator.
+Probably not a win on x86.
+
+===-------------------------------------------------------------------------===
+
+PowerPC i1/setcc stuff (depends on subreg stuff):
+
+Check out the PPC code we get for 'compare' in this testcase:
+http://gcc.gnu.org/bugzilla/show_bug.cgi?id=19672
+
+oof.  on top of not doing the logical crnand instead of (mfcr, mfcr,
+invert, invert, or), we then have to compare it against zero instead of
+using the value already in a CR!
+
+that should be something like
+        cmpw cr7, r8, r5
+        cmpw cr0, r7, r3
+        crnand cr0, cr0, cr7
+        bne cr0, LBB_compare_4
+
+instead of
+        cmpw cr7, r8, r5
+        cmpw cr0, r7, r3
+        mfcr r7, 1
+        mcrf cr7, cr0
+        mfcr r8, 1
+        rlwinm r7, r7, 30, 31, 31
+        rlwinm r8, r8, 30, 31, 31
+        xori r7, r7, 1
+        xori r8, r8, 1
+        addi r2, r2, 1
+        or r7, r8, r7
+        cmpwi cr0, r7, 0
+        bne cr0, LBB_compare_4  ; loopexit
+
+===-------------------------------------------------------------------------===
+
+Simple IPO for argument passing, change:
+  void foo(int X, double Y, int Z) -> void foo(int X, int Z, double Y)
+
+the Darwin ABI specifies that any integer arguments in the first 32 bytes worth
+of arguments get assigned to r3 through r10. That is, if you have a function
+foo(int, double, int) you get r3, f1, r6, since the 64 bit double ate up the
+argument bytes for r4 and r5. The trick then would be to shuffle the argument
+order for functions we can internalize so that the maximum number of 
+integers/pointers get passed in regs before you see any of the fp arguments.
+
+Instead of implementing this, it would actually probably be easier to just 
+implement a PPC fastcc, where we could do whatever we wanted to the CC, 
+including having this work sanely.
+
+===-------------------------------------------------------------------------===
+
+Fix Darwin FP-In-Integer Registers ABI
+
+Darwin passes doubles in structures in integer registers, which is very very 
+bad.  Add something like a BIT_CONVERT to LLVM, then do an i-p transformation 
+that percolates these things out of functions.
+
+Check out how horrible this is:
+http://gcc.gnu.org/ml/gcc/2005-10/msg01036.html
+
+This is an extension of "interprocedural CC unmunging" that can't be done with
+just fastcc.
+
+===-------------------------------------------------------------------------===
+
+Code Gen IPO optimization:
+
+Squish small scalar globals together into a single global struct, allowing the 
+address of the struct to be CSE'd, avoiding PIC accesses (also reduces the size
+of the GOT on targets with one).
+
