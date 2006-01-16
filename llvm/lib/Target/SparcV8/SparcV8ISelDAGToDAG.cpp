@@ -241,6 +241,10 @@ SparcV8TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
           unsigned LoadOp =
             I->getType()->isSigned() ? ISD::SEXTLOAD : ISD::ZEXTLOAD;
 
+          // Sparc is big endian, so add an offset based on the ObjectVT.
+          unsigned Offset = 4-std::max(1U, MVT::getSizeInBits(ObjectVT)/8);
+          FIPtr = DAG.getNode(ISD::ADD, MVT::i32, FIPtr,
+                              DAG.getConstant(Offset, MVT::i32));
           Load = DAG.getExtLoad(LoadOp, MVT::i32, Root, FIPtr,
                                 DAG.getSrcValue(0), ObjectVT);
           Load = DAG.getNode(ISD::TRUNCATE, ObjectVT, Load);
