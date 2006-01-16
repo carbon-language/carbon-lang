@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "X86.h"
+#include "X86InstrBuilder.h"
 #include "X86ISelLowering.h"
 #include "X86TargetMachine.h"
 #include "llvm/CallingConv.h"
@@ -1261,54 +1262,117 @@ static bool hasFPCMov(unsigned X86CC) {
 MachineBasicBlock *
 X86TargetLowering::InsertAtEndOfBasicBlock(MachineInstr *MI,
                                            MachineBasicBlock *BB) {
-  assert((MI->getOpcode() == X86::CMOV_FR32 ||
-          MI->getOpcode() == X86::CMOV_FR64) &&
-         "Unexpected instr type to insert");
+  switch (MI->getOpcode()) {
+  default: assert(false && "Unexpected instr type to insert");
+  case X86::CMOV_FR32:
+  case X86::CMOV_FR64: {
+    // To "insert" a SELECT_CC instruction, we actually have to insert the diamond
+    // control-flow pattern.  The incoming instruction knows the destination vreg
+    // to set, the condition code register to branch on, the true/false values to
+    // select between, and a branch opcode to use.
+    const BasicBlock *LLVM_BB = BB->getBasicBlock();
+    ilist<MachineBasicBlock>::iterator It = BB;
+    ++It;
+  
+    //  thisMBB:
+    //  ...
+    //   TrueVal = ...
+    //   cmpTY ccX, r1, r2
+    //   bCC copy1MBB
+    //   fallthrough --> copy0MBB
+    MachineBasicBlock *thisMBB = BB;
+    MachineBasicBlock *copy0MBB = new MachineBasicBlock(LLVM_BB);
+    MachineBasicBlock *sinkMBB = new MachineBasicBlock(LLVM_BB);
+    unsigned Opc = getCondBrOpcodeForX86CC(MI->getOperand(3).getImmedValue());
+    BuildMI(BB, Opc, 1).addMBB(sinkMBB);
+    MachineFunction *F = BB->getParent();
+    F->getBasicBlockList().insert(It, copy0MBB);
+    F->getBasicBlockList().insert(It, sinkMBB);
+    // Update machine-CFG edges
+    BB->addSuccessor(copy0MBB);
+    BB->addSuccessor(sinkMBB);
+  
+    //  copy0MBB:
+    //   %FalseValue = ...
+    //   # fallthrough to sinkMBB
+    BB = copy0MBB;
+  
+    // Update machine-CFG edges
+    BB->addSuccessor(sinkMBB);
+  
+    //  sinkMBB:
+    //   %Result = phi [ %FalseValue, copy0MBB ], [ %TrueValue, thisMBB ]
+    //  ...
+    BB = sinkMBB;
+    BuildMI(BB, X86::PHI, 4, MI->getOperand(0).getReg())
+      .addReg(MI->getOperand(1).getReg()).addMBB(copy0MBB)
+      .addReg(MI->getOperand(2).getReg()).addMBB(thisMBB);
 
-  // To "insert" a SELECT_CC instruction, we actually have to insert the diamond
-  // control-flow pattern.  The incoming instruction knows the destination vreg
-  // to set, the condition code register to branch on, the true/false values to
-  // select between, and a branch opcode to use.
-  const BasicBlock *LLVM_BB = BB->getBasicBlock();
-  ilist<MachineBasicBlock>::iterator It = BB;
-  ++It;
-  
-  //  thisMBB:
-  //  ...
-  //   TrueVal = ...
-  //   cmpTY ccX, r1, r2
-  //   bCC copy1MBB
-  //   fallthrough --> copy0MBB
-  MachineBasicBlock *thisMBB = BB;
-  MachineBasicBlock *copy0MBB = new MachineBasicBlock(LLVM_BB);
-  MachineBasicBlock *sinkMBB = new MachineBasicBlock(LLVM_BB);
-  unsigned Opc = getCondBrOpcodeForX86CC(MI->getOperand(3).getImmedValue());
-  BuildMI(BB, Opc, 1).addMBB(sinkMBB);
-  MachineFunction *F = BB->getParent();
-  F->getBasicBlockList().insert(It, copy0MBB);
-  F->getBasicBlockList().insert(It, sinkMBB);
-  // Update machine-CFG edges
-  BB->addSuccessor(copy0MBB);
-  BB->addSuccessor(sinkMBB);
-  
-  //  copy0MBB:
-  //   %FalseValue = ...
-  //   # fallthrough to sinkMBB
-  BB = copy0MBB;
-  
-  // Update machine-CFG edges
-  BB->addSuccessor(sinkMBB);
-  
-  //  sinkMBB:
-  //   %Result = phi [ %FalseValue, copy0MBB ], [ %TrueValue, thisMBB ]
-  //  ...
-  BB = sinkMBB;
-  BuildMI(BB, X86::PHI, 4, MI->getOperand(0).getReg())
-    .addReg(MI->getOperand(1).getReg()).addMBB(copy0MBB)
-    .addReg(MI->getOperand(2).getReg()).addMBB(thisMBB);
+    delete MI;   // The pseudo instruction is gone now.
+    return BB;
+  }
 
-  delete MI;   // The pseudo instruction is gone now.
-  return BB;
+  case X86::FP_TO_INT16_IN_MEM:
+  case X86::FP_TO_INT32_IN_MEM:
+  case X86::FP_TO_INT64_IN_MEM: {
+    // Change the floating point control register to use "round towards zero"
+    // mode when truncating to an integer value.
+    MachineFunction *F = BB->getParent();
+    int CWFrameIdx = F->getFrameInfo()->CreateStackObject(2, 2);
+    addFrameReference(BuildMI(BB, X86::FNSTCW16m, 4), CWFrameIdx);
+
+    // Load the old value of the high byte of the control word...
+    unsigned OldCW =
+      F->getSSARegMap()->createVirtualRegister(X86::R16RegisterClass);
+    addFrameReference(BuildMI(BB, X86::MOV16rm, 4, OldCW), CWFrameIdx);
+
+    // Set the high part to be round to zero...
+    addFrameReference(BuildMI(BB, X86::MOV16mi, 5), CWFrameIdx).addImm(0xC7F);
+
+    // Reload the modified control word now...
+    addFrameReference(BuildMI(BB, X86::FLDCW16m, 4), CWFrameIdx);
+
+    // Restore the memory image of control word to original value
+    addFrameReference(BuildMI(BB, X86::MOV16mr, 5), CWFrameIdx).addReg(OldCW);
+
+    // Get the X86 opcode to use.
+    unsigned Opc;
+    switch (MI->getOpcode()) {
+    case X86::FP_TO_INT16_IN_MEM: Opc = X86::FpIST16m; break;
+    case X86::FP_TO_INT32_IN_MEM: Opc = X86::FpIST32m; break;
+    case X86::FP_TO_INT64_IN_MEM: Opc = X86::FpIST64m; break;
+    }
+
+    X86AddressMode AM;
+    MachineOperand &Op = MI->getOperand(0);
+    if (Op.isRegister()) {
+      AM.BaseType = X86AddressMode::RegBase;
+      AM.Base.Reg = Op.getReg();
+    } else {
+      AM.BaseType = X86AddressMode::FrameIndexBase;
+      AM.Base.FrameIndex = Op.getFrameIndex();
+    }
+    Op = MI->getOperand(1);
+    if (Op.isImmediate())
+      AM.Scale = Op.getImmedValue();
+    Op = MI->getOperand(2);
+    if (Op.isImmediate())
+      AM.IndexReg = Op.getImmedValue();
+    Op = MI->getOperand(3);
+    if (Op.isGlobalAddress()) {
+      AM.GV = Op.getGlobal();
+    } else {
+      AM.Disp = Op.getImmedValue();
+    }
+    addFullAddress(BuildMI(BB, Opc, 5), AM).addReg(MI->getOperand(4).getReg());
+
+    // Reload the original control word now.
+    addFrameReference(BuildMI(BB, X86::FLDCW16m, 4), CWFrameIdx);
+
+    delete MI;   // The pseudo instruction is gone now.
+    return BB;
+  }
+  }
 }
 
 

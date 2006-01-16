@@ -52,6 +52,7 @@ def SDTX86Fst     : SDTypeProfile<0, 3, [SDTCisFP<0>,
                                          SDTCisPtrTy<1>, SDTCisVT<2, OtherVT>]>;
 def SDTX86Fild    : SDTypeProfile<1, 2, [SDTCisVT<0, f64>, SDTCisPtrTy<1>,
                                          SDTCisVT<2, OtherVT>]>;
+def SDTX86FpToIMem: SDTypeProfile<0, 2, [SDTCisFP<0>, SDTCisPtrTy<1>]>;
 
 def SDTX86RepStr  : SDTypeProfile<0, 1, [SDTCisVT<0, OtherVT>]>;
 
@@ -101,6 +102,12 @@ def X86fld     : SDNode<"X86ISD::FLD",      SDTX86Fld,
 def X86fst     : SDNode<"X86ISD::FST",      SDTX86Fst,
                         [SDNPHasChain]>;
 def X86fild    : SDNode<"X86ISD::FILD",     SDTX86Fild,
+                        [SDNPHasChain]>;
+def X86fp_to_i16mem : SDNode<"X86ISD::FP_TO_INT16_IN_MEM", SDTX86FpToIMem,
+                        [SDNPHasChain]>;
+def X86fp_to_i32mem : SDNode<"X86ISD::FP_TO_INT32_IN_MEM", SDTX86FpToIMem,
+                        [SDNPHasChain]>;
+def X86fp_to_i64mem : SDNode<"X86ISD::FP_TO_INT64_IN_MEM", SDTX86FpToIMem,
                         [SDNPHasChain]>;
 
 def X86rep_stos: SDNode<"X86ISD::REP_STOS", SDTX86RepStr,
@@ -401,15 +408,31 @@ def IMPLICIT_DEF_FR64 : I<0, Pseudo, (ops FR64:$dst),
 let usesCustomDAGSchedInserter = 1 in {  // Expanded by the scheduler.
   def CMOV_FR32 : I<0, Pseudo,
                     (ops FR32:$dst, FR32:$t, FR32:$f, i8imm:$cond),
-                    "#CMOV PSEUDO!",
+                    "#CMOV_FR32 PSEUDO!",
                     [(set FR32:$dst, (X86cmov FR32:$t, FR32:$f, imm:$cond,
                                       STATUS))]>;
   def CMOV_FR64 : I<0, Pseudo,
                     (ops FR64:$dst, FR64:$t, FR64:$f, i8imm:$cond),
-                    "#CMOV PSEUDO!",
+                    "#CMOV_FR64 PSEUDO!",
                     [(set FR64:$dst, (X86cmov FR64:$t, FR64:$f, imm:$cond,
                                       STATUS))]>;
 }
+
+let usesCustomDAGSchedInserter = 1 in {  // Expanded by the scheduler.
+  def FP_TO_INT16_IN_MEM : I<0, Pseudo,
+                            (ops i16mem:$dst, RFP:$src),
+                           "#FP_TO_INT16_IN_MEM PSEUDO!",
+                           [(X86fp_to_i16mem RFP:$src, addr:$dst)]>;
+  def FP_TO_INT32_IN_MEM : I<0, Pseudo,
+                            (ops i32mem:$dst, RFP:$src),
+                           "#FP_TO_INT32_IN_MEM PSEUDO!",
+                           [(X86fp_to_i32mem RFP:$src, addr:$dst)]>;
+  def FP_TO_INT64_IN_MEM : I<0, Pseudo,
+                            (ops i64mem:$dst, RFP:$src),
+                           "#FP_TO_INT64_IN_MEM PSEUDO!",
+                           [(X86fp_to_i64mem RFP:$src, addr:$dst)]>;
+}
+
 
 let isTerminator = 1 in
   let Defs = [FP0, FP1, FP2, FP3, FP4, FP5, FP6] in
