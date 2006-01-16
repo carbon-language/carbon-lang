@@ -128,8 +128,102 @@ void DefaultIntrinsicLowering::AddPrototypes(Module &M) {
       }
 }
 
+/// LowerBSWAP - Emit the code to lower bswap of V before the specified
+/// instruction IP.
+static Value *LowerBSWAP(Value *V, Instruction *IP) {
+  assert(V->getType()->isInteger() && "Can't bswap a non-integer type!");
+
+  const Type *DestTy = V->getType();
+  
+  // Force to unsigned so that the shift rights are logical.
+  if (DestTy->isSigned())
+    V = new CastInst(V, DestTy->getUnsignedVersion(), V->getName(), IP);
+
+  unsigned BitSize = V->getType()->getPrimitiveSizeInBits();
+  
+  switch(BitSize) {
+  default: assert(0 && "Unhandled type size of value to byteswap!");
+  case 16: {
+    Value *Tmp1 = new ShiftInst(Instruction::Shl, V,
+                                ConstantInt::get(Type::UByteTy,8),"bswap.2",IP);
+    Value *Tmp2 = new ShiftInst(Instruction::Shr, V,
+                                ConstantInt::get(Type::UByteTy,8),"bswap.1",IP);
+    V = BinaryOperator::createOr(Tmp1, Tmp2, "bswap.i16", IP);
+    break;
+  }
+  case 32: {
+    Value *Tmp4 = new ShiftInst(Instruction::Shl, V,
+                              ConstantInt::get(Type::UByteTy,24),"bswap.4", IP);
+    Value *Tmp3 = new ShiftInst(Instruction::Shl, V,
+                                ConstantInt::get(Type::UByteTy,8),"bswap.3",IP);
+    Value *Tmp2 = new ShiftInst(Instruction::Shr, V,
+                                ConstantInt::get(Type::UByteTy,8),"bswap.2",IP);
+    Value *Tmp1 = new ShiftInst(Instruction::Shr, V,
+                              ConstantInt::get(Type::UByteTy,24),"bswap.1", IP);
+    Tmp3 = BinaryOperator::createAnd(Tmp3, 
+                                     ConstantUInt::get(Type::UIntTy, 0xFF0000),
+                                     "bswap.and3", IP);
+    Tmp2 = BinaryOperator::createAnd(Tmp2, 
+                                     ConstantUInt::get(Type::UIntTy, 0xFF00),
+                                     "bswap.and2", IP);
+    Tmp4 = BinaryOperator::createOr(Tmp4, Tmp3, "bswap.or1", IP);
+    Tmp2 = BinaryOperator::createOr(Tmp2, Tmp1, "bswap.or2", IP);
+    V = BinaryOperator::createOr(Tmp4, Tmp3, "bswap.i32", IP);
+    break;
+  }
+  case 64: {
+    Value *Tmp8 = new ShiftInst(Instruction::Shl, V,
+                              ConstantInt::get(Type::UByteTy,56),"bswap.8", IP);
+    Value *Tmp7 = new ShiftInst(Instruction::Shl, V,
+                              ConstantInt::get(Type::UByteTy,40),"bswap.7", IP);
+    Value *Tmp6 = new ShiftInst(Instruction::Shl, V,
+                              ConstantInt::get(Type::UByteTy,24),"bswap.6", IP);
+    Value *Tmp5 = new ShiftInst(Instruction::Shl, V,
+                                ConstantInt::get(Type::UByteTy,8),"bswap.5",IP);
+    Value *Tmp4 = new ShiftInst(Instruction::Shr, V,
+                                ConstantInt::get(Type::UByteTy,8),"bswap.4",IP);
+    Value *Tmp3 = new ShiftInst(Instruction::Shr, V,
+                              ConstantInt::get(Type::UByteTy,24),"bswap.3", IP);
+    Value *Tmp2 = new ShiftInst(Instruction::Shr, V,
+                              ConstantInt::get(Type::UByteTy,40),"bswap.2", IP);
+    Value *Tmp1 = new ShiftInst(Instruction::Shr, V,
+                              ConstantInt::get(Type::UByteTy,56),"bswap.1", IP);
+    Tmp7 = BinaryOperator::createAnd(Tmp7,
+                          ConstantUInt::get(Type::ULongTy, 0xFF000000000000ULL),
+                          "bswap.and7", IP);
+    Tmp6 = BinaryOperator::createAnd(Tmp6,
+                            ConstantUInt::get(Type::ULongTy, 0xFF0000000000ULL),
+                            "bswap.and6", IP);
+    Tmp5 = BinaryOperator::createAnd(Tmp5,
+                              ConstantUInt::get(Type::ULongTy, 0xFF00000000ULL),
+                              "bswap.and5", IP);
+    Tmp4 = BinaryOperator::createAnd(Tmp4,
+                                ConstantUInt::get(Type::ULongTy, 0xFF000000ULL),
+                                "bswap.and4", IP);
+    Tmp3 = BinaryOperator::createAnd(Tmp3,
+                                  ConstantUInt::get(Type::ULongTy, 0xFF0000ULL),
+                                  "bswap.and3", IP);
+    Tmp2 = BinaryOperator::createAnd(Tmp2,
+                                    ConstantUInt::get(Type::ULongTy, 0xFF00ULL),
+                                    "bswap.and2", IP);
+    Tmp8 = BinaryOperator::createOr(Tmp8, Tmp7, "bswap.or1", IP);
+    Tmp6 = BinaryOperator::createOr(Tmp6, Tmp5, "bswap.or2", IP);
+    Tmp4 = BinaryOperator::createOr(Tmp4, Tmp3, "bswap.or3", IP);
+    Tmp2 = BinaryOperator::createOr(Tmp2, Tmp1, "bswap.or4", IP);
+    Tmp8 = BinaryOperator::createOr(Tmp8, Tmp6, "bswap.or5", IP);
+    Tmp4 = BinaryOperator::createOr(Tmp4, Tmp2, "bswap.or6", IP);
+    V = BinaryOperator::createOr(Tmp8, Tmp4, "bswap.i64", IP);
+    break;
+  }
+  }
+  
+  if (V->getType() != DestTy)
+    V = new CastInst(V, DestTy, V->getName(), IP);
+  return V;
+}
+
 /// LowerCTPOP - Emit the code to lower ctpop of V before the specified
-/// instruction.
+/// instruction IP.
 static Value *LowerCTPOP(Value *V, Instruction *IP) {
   assert(V->getType()->isInteger() && "Can't ctpop a non-integer type!");
 
@@ -163,7 +257,7 @@ static Value *LowerCTPOP(Value *V, Instruction *IP) {
 }
 
 /// LowerCTLZ - Emit the code to lower ctlz of V before the specified
-/// instruction.
+/// instruction IP.
 static Value *LowerCTLZ(Value *V, Instruction *IP) {
   const Type *DestTy = V->getType();
 
@@ -184,6 +278,8 @@ static Value *LowerCTLZ(Value *V, Instruction *IP) {
   V = BinaryOperator::createNot(V, "", IP);
   return LowerCTPOP(V, IP);
 }
+
+
 
 void DefaultIntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
   Function *Callee = CI->getCalledFunction();
@@ -230,6 +326,13 @@ void DefaultIntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
                     AbortFCache);
     break;
   }
+  
+  case Intrinsic::bswap_i16:
+  case Intrinsic::bswap_i32:
+  case Intrinsic::bswap_i64:
+    CI->replaceAllUsesWith(LowerBSWAP(CI->getOperand(1), CI));
+    break;
+    
   case Intrinsic::ctpop:
     CI->replaceAllUsesWith(LowerCTPOP(CI->getOperand(1), CI));
     break;
@@ -237,6 +340,7 @@ void DefaultIntrinsicLowering::LowerIntrinsicCall(CallInst *CI) {
   case Intrinsic::ctlz:
     CI->replaceAllUsesWith(LowerCTLZ(CI->getOperand(1), CI));
     break;
+
   case Intrinsic::cttz: {
     // cttz(x) -> ctpop(~X & (X-1))
     Value *Src = CI->getOperand(1);
