@@ -394,15 +394,7 @@ int GCC::ExecuteProgram(const std::string &ProgramFile,
   sys::Path OutputBinary (ProgramFile+".gcc.exe");
   OutputBinary.makeUnique();
   GCCArgs.push_back(OutputBinary.c_str()); // Output to the right file...
-  GCCArgs.push_back("-lz");
   GCCArgs.push_back("-lm");                // Hard-code the math library...
-  GCCArgs.push_back("-x");
-  GCCArgs.push_back("none");
-  GCCArgs.push_back("/usr/local/lib/NAGWare/quickfit.o");
-  GCCArgs.push_back("-Xlinker");
-  GCCArgs.push_back("-flat_namespace");
-  GCCArgs.push_back("/usr/local/lib/NAGWare/libf97.dylib");
-  GCCArgs.push_back("/usr/local/lib/NAGWare/libf96.a");
   GCCArgs.push_back("-O2");                // Optimize the program a bit...
 #if defined (HAVE_LINK_R)
   GCCArgs.push_back("-Wl,-R.");            // Search this dir for .so files
