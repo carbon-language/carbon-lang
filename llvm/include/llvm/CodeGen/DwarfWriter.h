@@ -17,15 +17,13 @@
 // 
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CODEGEN_DWARFPRINTER_H
-#define LLVM_CODEGEN_DWARFPRINTER_H
+#ifndef LLVM_CODEGEN_DWARFWRITER_H
+#define LLVM_CODEGEN_DWARFWRITER_H
 
 #include "llvm/ADT/UniqueVector.h"
 
 #include <iosfwd>
-#include <map>
 #include <string>
-#include <vector>
 
 
 namespace llvm {
@@ -567,7 +565,7 @@ namespace llvm {
   struct DIELabel : public DIEValue {
     const DWLabel Value;
     
-    DIELabel(const DWLabel &V) : DIEValue(DW_FORM_ref4), Value(V) {}
+    DIELabel(const DWLabel &V) : DIEValue(isLabel), Value(V) {}
 
     // Implement isa/cast/dyncast.
     static bool classof(const DWLabel *)   { return true; }
@@ -590,7 +588,7 @@ namespace llvm {
     const DWLabel Value2;
     
     DIEDelta(const DWLabel &V1, const DWLabel &V2)
-    : DIEValue(DW_FORM_addr), Value1(V1), Value2(V2) {}
+    : DIEValue(isDelta), Value1(V1), Value2(V2) {}
 
     // Implement isa/cast/dyncast.
     static bool classof(const DIEDelta *)  { return true; }
@@ -624,7 +622,14 @@ namespace llvm {
     , Children()
     , Values()
     {}
-    virtual ~DIE() {
+    ~DIE() {
+      for (unsigned i = 0, N = Children.size(); i < N; i++) {
+        delete Children[i];
+      }
+
+      for (unsigned j = 0, M = Children.size(); j < M; j++) {
+        delete Children[j];
+      }
     }
     
     // Accessors
