@@ -984,7 +984,8 @@ Module *llvm::RunVMAsmParser(const char * AsmString, Module * M) {
 
 // Other Operators
 %type  <OtherOpVal> ShiftOps
-%token <OtherOpVal> PHI_TOK CAST SELECT SHL SHR VAARG EXTRACTELEMENT
+%token <OtherOpVal> PHI_TOK CAST SELECT SHL SHR VAARG
+%token <OtherOpVal> EXTRACTELEMENT INSERTELEMENT
 %token VAARG_old VANEXT_old //OBSOLETE
 
 
@@ -2195,11 +2196,23 @@ InstVal : ArithmeticOps Types ValueRef ',' ValueRef {
   }
   | EXTRACTELEMENT ResolvedVal ',' ResolvedVal {
     if (!isa<PackedType>($2->getType()))
-      ThrowException("First operand of extractelement must be a "
-                     "packed type val!");
+      ThrowException("First operand of extractelement must be "
+                     "packed type!");
     if ($4->getType() != Type::UIntTy)
-      ThrowException("Second operand of extractelement must be a uint!");
+      ThrowException("Second operand of extractelement must be uint!");
     $$ = new ExtractElementInst($2, $4);
+  }
+  | INSERTELEMENT ResolvedVal ',' ResolvedVal ',' ResolvedVal {
+    if (!isa<PackedType>($2->getType()))
+      ThrowException("First operand of insertelement must be "
+                     "packed type!");
+    if ($4->getType() != 
+        cast<PackedType>($2->getType())->getElementType())
+      ThrowException("Second operand of insertelement must be "
+                     "packed element type!");
+    if ($6->getType() != Type::UIntTy)
+      ThrowException("Third operand of insertelement must be uint!");
+    $$ = new InsertElementInst($2, $4, $6);
   }
   | PHI_TOK PHIList {
     const Type *Ty = $2->front().first->getType();
