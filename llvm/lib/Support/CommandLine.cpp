@@ -448,8 +448,11 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
     }
 
     if (Handler == 0) {
-      std::cerr << ProgramName << ": Unknown command line argument '" << argv[i]
-                << "'.  Try: '" << argv[0] << " --help'\n";
+      if (ProgramName)
+        std::cerr << ProgramName << ": Unknown command line argument '"
+                  << argv[i] << "'.  Try: '" << argv[0] << " --help'\n";
+      else
+        std::cerr << "Unknown command line argument '" << argv[i] << "'.\n";
       ErrorParsing = true;
       continue;
     }
@@ -485,17 +488,28 @@ void cl::ParseCommandLineOptions(int &argc, char **argv,
 
   // Check and handle positional arguments now...
   if (NumPositionalRequired > PositionalVals.size()) {
-    std::cerr << ProgramName
-              << ": Not enough positional command line arguments specified!\n"
-              << "Must specify at least " << NumPositionalRequired
-              << " positional arguments: See: " << argv[0] << " --help\n";
+    if (ProgramName)
+      std::cerr << ProgramName
+                << ": Not enough positional command line arguments specified!\n"
+                << "Must specify at least " << NumPositionalRequired
+                << " positional arguments: See: " << argv[0] << " --help\n";
+    else
+      std::cerr << "Not enough positional command line arguments specified!\n"
+                << "Must specify at least " << NumPositionalRequired
+                << " positional arguments.";
+    
     ErrorParsing = true;
   } else if (!HasUnlimitedPositionals
              && PositionalVals.size() > PositionalOpts.size()) {
-    std::cerr << ProgramName
-              << ": Too many positional arguments specified!\n"
-              << "Can specify at most " << PositionalOpts.size()
-              << " positional arguments: See: " << argv[0] << " --help\n";
+    if (ProgramName)
+      std::cerr << ProgramName
+                << ": Too many positional arguments specified!\n"
+                << "Can specify at most " << PositionalOpts.size()
+                << " positional arguments: See: " << argv[0] << " --help\n";
+    else
+      std::cerr << "Too many positional arguments specified!\n"
+                << "Can specify at most " << PositionalOpts.size()
+                << " positional arguments.\n";
     ErrorParsing = true;
 
   } else if (ConsumeAfterOpt == 0) {
