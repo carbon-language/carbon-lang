@@ -726,17 +726,17 @@ public:
 ///
 class ExtractElementInst : public Instruction {
   Use Ops[2];
-  ExtractElementInst(const ExtractElementInst &EI) : 
-    Instruction(EI.getType(), ExtractElement, Ops, 2) {
-    Ops[0].init(EI.Ops[0], this);
-    Ops[1].init(EI.Ops[1], this);
+  ExtractElementInst(const ExtractElementInst &EE) : 
+    Instruction(EE.getType(), ExtractElement, Ops, 2) {
+    Ops[0].init(EE.Ops[0], this);
+    Ops[1].init(EE.Ops[1], this);
   }
 
 public:
   ExtractElementInst(Value *Val, Value *Index,
-               const std::string &Name = "", Instruction *InsertBefore = 0);
+                     const std::string &Name = "", Instruction *InsertBefore = 0);
   ExtractElementInst(Value *Val, Value *Index,
-               const std::string &Name, BasicBlock *InsertAtEnd);
+                     const std::string &Name, BasicBlock *InsertAtEnd);
 
   virtual ExtractElementInst *clone() const;
 
@@ -757,6 +757,53 @@ public:
   static inline bool classof(const ExtractElementInst *) { return true; }
   static inline bool classof(const Instruction *I) {
     return I->getOpcode() == Instruction::ExtractElement;
+  }
+  static inline bool classof(const Value *V) {
+    return isa<Instruction>(V) && classof(cast<Instruction>(V));
+  }
+};
+
+//===----------------------------------------------------------------------===//
+//                                InsertElementInst Class
+//===----------------------------------------------------------------------===//
+
+/// InsertElementInst - This instruction inserts a single (scalar)
+/// element into a PackedType value
+///
+class InsertElementInst : public Instruction {
+  Use Ops[3];
+  InsertElementInst(const InsertElementInst &IE) : 
+    Instruction(IE.getType(), InsertElement, Ops, 3) {
+    Ops[0].init(IE.Ops[0], this);
+    Ops[1].init(IE.Ops[1], this);
+    Ops[2].init(IE.Ops[2], this);
+  }
+
+public:
+  InsertElementInst(Value *Val, Value *Elt, Value *Index,
+                    const std::string &Name = "", Instruction *InsertBefore = 0);
+  InsertElementInst(Value *Val, Value *Elt,  Value *Index,
+                    const std::string &Name, BasicBlock *InsertAtEnd);
+
+  virtual InsertElementInst *clone() const;
+
+  virtual bool mayWriteToMemory() const { return false; }
+
+  /// Transparently provide more efficient getOperand methods.
+  Value *getOperand(unsigned i) const {
+    assert(i < 3 && "getOperand() out of range!");
+    return Ops[i];
+  }
+  void setOperand(unsigned i, Value *Val) {
+    assert(i < 3 && "setOperand() out of range!");
+    Ops[i] = Val;
+  }
+  unsigned getNumOperands() const { return 3; }
+
+  // Methods for support type inquiry through isa, cast, and dyn_cast:
+  static inline bool classof(const InsertElementInst *) { return true; }
+  static inline bool classof(const Instruction *I) {
+    return I->getOpcode() == Instruction::InsertElement;
   }
   static inline bool classof(const Value *V) {
     return isa<Instruction>(V) && classof(cast<Instruction>(V));
