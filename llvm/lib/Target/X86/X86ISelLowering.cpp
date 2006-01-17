@@ -543,16 +543,17 @@ X86TargetLowering::LowerCCCCallTo(SDOperand Chain, const Type *RetTy,
         Chain = Hi.getValue(1);
         break;
       }
-      case MVT::f32:
       case MVT::f64: {
         std::vector<MVT::ValueType> Tys;
         Tys.push_back(MVT::f64);
         Tys.push_back(MVT::Other);
+        Tys.push_back(MVT::Flag);
         std::vector<SDOperand> Ops;
         Ops.push_back(Chain);
         Ops.push_back(InFlag);
         RetVal = DAG.getNode(X86ISD::FP_GET_RESULT, Tys, Ops);
-        Chain = RetVal.getValue(1);
+        Chain  = RetVal.getValue(1);
+        InFlag = RetVal.getValue(2);
         if (X86ScalarSSE) {
           unsigned Size = MVT::getSizeInBits(MVT::f64)/8;
           MachineFunction &MF = DAG.getMachineFunction();
@@ -565,12 +566,12 @@ X86TargetLowering::LowerCCCCallTo(SDOperand Chain, const Type *RetTy,
           Ops.push_back(RetVal);
           Ops.push_back(StackSlot);
           Ops.push_back(DAG.getValueType(RetTyVT));
+          Ops.push_back(InFlag);
           Chain = DAG.getNode(X86ISD::FST, Tys, Ops);
           RetVal = DAG.getLoad(RetTyVT, Chain, StackSlot,
                                DAG.getSrcValue(NULL));
           Chain = RetVal.getValue(1);
-        } else if (RetTyVT == MVT::f32)
-          RetVal = DAG.getNode(ISD::FP_ROUND, MVT::f32, RetVal);
+        }
         break;
       }
       }
@@ -1059,16 +1060,17 @@ X86TargetLowering::LowerFastCCCallTo(SDOperand Chain, const Type *RetTy,
         Chain = Hi.getValue(1);
         break;
       }
-      case MVT::f32:
       case MVT::f64: {
         std::vector<MVT::ValueType> Tys;
         Tys.push_back(MVT::f64);
         Tys.push_back(MVT::Other);
+        Tys.push_back(MVT::Flag);
         std::vector<SDOperand> Ops;
         Ops.push_back(Chain);
         Ops.push_back(InFlag);
         RetVal = DAG.getNode(X86ISD::FP_GET_RESULT, Tys, Ops);
-        Chain = RetVal.getValue(1);
+        Chain  = RetVal.getValue(1);
+        InFlag = RetVal.getValue(2);
         if (X86ScalarSSE) {
           unsigned Size = MVT::getSizeInBits(MVT::f64)/8;
           MachineFunction &MF = DAG.getMachineFunction();
@@ -1081,12 +1083,12 @@ X86TargetLowering::LowerFastCCCallTo(SDOperand Chain, const Type *RetTy,
           Ops.push_back(RetVal);
           Ops.push_back(StackSlot);
           Ops.push_back(DAG.getValueType(RetTyVT));
+          Ops.push_back(InFlag);
           Chain = DAG.getNode(X86ISD::FST, Tys, Ops);
           RetVal = DAG.getLoad(RetTyVT, Chain, StackSlot,
                                DAG.getSrcValue(NULL));
           Chain = RetVal.getValue(1);
-        } else if (RetTyVT == MVT::f32)
-          RetVal = DAG.getNode(ISD::FP_ROUND, MVT::f32, RetVal);
+        }
         break;
       }
       }

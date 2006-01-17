@@ -93,14 +93,14 @@ def X86call    : SDNode<"X86ISD::CALL",     SDT_X86Call,
                         [SDNPHasChain, SDNPOutFlag, SDNPOptInFlag]>;
 
 def X86fpget   : SDNode<"X86ISD::FP_GET_RESULT", SDTX86FpGet,
-                        [SDNPHasChain, SDNPInFlag]>;
+                        [SDNPHasChain, SDNPInFlag, SDNPOutFlag]>;
 def X86fpset   : SDNode<"X86ISD::FP_SET_RESULT", SDTX86FpSet,
                         [SDNPHasChain, SDNPOutFlag]>;
 
 def X86fld     : SDNode<"X86ISD::FLD",      SDTX86Fld,
                         [SDNPHasChain]>;
 def X86fst     : SDNode<"X86ISD::FST",      SDTX86Fst,
-                        [SDNPHasChain]>;
+                        [SDNPHasChain, SDNPInFlag]>;
 def X86fild    : SDNode<"X86ISD::FILD",     SDTX86Fild,
                         [SDNPHasChain]>;
 def X86fp_to_i16mem : SDNode<"X86ISD::FP_TO_INT16_IN_MEM", SDTX86FpToIMem,
