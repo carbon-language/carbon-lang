@@ -1293,6 +1293,46 @@ void DwarfWriter::EmitDebugLines() const {
   
   EmitLabel("line_end", 0);
 }
+  
+/// EmitDebugFrame - Emit visible names into a debug frame section.
+///
+void DwarfWriter::EmitDebugFrame() {
+}
+
+/// EmitDebugPubNames - Emit visible names into a debug pubnames section.
+///
+void DwarfWriter::EmitDebugPubNames() {
+}
+
+/// EmitDebugPubTypes - Emit visible names into a debug pubtypes section.
+///
+void DwarfWriter::EmitDebugPubTypes() {
+}
+
+/// EmitDebugStr - Emit visible names into a debug str section.
+///
+void DwarfWriter::EmitDebugStr() {
+}
+
+/// EmitDebugLoc - Emit visible names into a debug loc section.
+///
+void DwarfWriter::EmitDebugLoc() {
+}
+
+/// EmitDebugARanges - Emit visible names into a debug aranges section.
+///
+void DwarfWriter::EmitDebugARanges() {
+}
+
+/// EmitDebugRanges - Emit visible names into a debug ranges section.
+///
+void DwarfWriter::EmitDebugRanges() {
+}
+
+/// EmitDebugMacInfo - Emit visible names into a debug macinfo section.
+///
+void DwarfWriter::EmitDebugMacInfo() {
+}
 
 /// ShouldEmitDwarf - Determine if Dwarf declarations should be made.
 ///
@@ -1329,6 +1369,14 @@ bool DwarfWriter::ShouldEmitDwarf() {
   , DwarfAbbrevSection(".debug_abbrev")
   , DwarfInfoSection(".debug_info")
   , DwarfLineSection(".debug_line")
+  , DwarfFrameSection(".debug_frame")
+  , DwarfPubNamesSection(".debug_pubnames")
+  , DwarfPubTypesSection(".debug_pubtypes")
+  , DwarfStrSection(".debug_str")
+  , DwarfLocSection(".debug_loc")
+  , DwarfARangesSection(".debug_aranges")
+  , DwarfRangesSection(".debug_ranges")
+  , DwarfMacInfoSection(".debug_macinfo")
   , TextSection(".text")
   , DataSection(".data")
   {}
@@ -1377,6 +1425,30 @@ void DwarfWriter::EndModule() {
   
   // Emit source line correspondence into a debug line section.
   EmitDebugLines();
+  
+  // Emit info into a debug frame section.
+  EmitDebugFrame();
+  
+  // Emit info into a debug pubnames section.
+  EmitDebugPubNames();
+  
+  // Emit info into a debug pubtypes section.
+  EmitDebugPubTypes();
+  
+  // Emit info into a debug str section.
+  EmitDebugStr();
+  
+  // Emit info into a debug loc section.
+  EmitDebugLoc();
+  
+  // Emit info into a debug aranges section.
+  EmitDebugARanges();
+  
+  // Emit info into a debug ranges section.
+  EmitDebugRanges();
+  
+  // Emit info into a debug macinfo section.
+  EmitDebugMacInfo();
 }
 
 /// BeginFunction - Emit pre-function debug information.

@@ -744,6 +744,38 @@ namespace llvm {
     ///
     const char *DwarfLineSection; /// Defaults to ".debug_line".
     
+    /// DwarfFrameSection - Section directive for Dwarf info.
+    ///
+    const char *DwarfFrameSection; /// Defaults to ".debug_frame".
+    
+    /// DwarfPubNamesSection - Section directive for Dwarf info.
+    ///
+    const char *DwarfPubNamesSection; /// Defaults to ".debug_pubnames".
+    
+    /// DwarfPubTypesSection - Section directive for Dwarf info.
+    ///
+    const char *DwarfPubTypesSection; /// Defaults to ".debug_pubtypes".
+    
+    /// DwarfStrSection - Section directive for Dwarf info.
+    ///
+    const char *DwarfStrSection; /// Defaults to ".debug_str".
+
+    /// DwarfLocSection - Section directive for Dwarf info.
+    ///
+    const char *DwarfLocSection; /// Defaults to ".debug_loc".
+
+    /// DwarfARangesSection - Section directive for Dwarf info.
+    ///
+    const char *DwarfARangesSection; /// Defaults to ".debug_aranges".
+
+    /// DwarfRangesSection - Section directive for Dwarf info.
+    ///
+    const char *DwarfRangesSection; /// Defaults to ".debug_ranges".
+
+    /// DwarfMacInfoSection - Section directive for Dwarf info.
+    ///
+    const char *DwarfMacInfoSection; /// Defaults to ".debug_macinfo".
+
     /// TextSection - Section directive for standard text.
     ///
     const char *TextSection; /// Defaults to ".text".
@@ -877,6 +909,38 @@ private:
     ///
     void EmitDebugLines() const;
 
+    /// EmitDebugFrame - Emit info into a debug frame section.
+    ///
+    void DwarfWriter::EmitDebugFrame();
+    
+    /// EmitDebugPubNames - Emit info into a debug pubnames section.
+    ///
+    void DwarfWriter::EmitDebugPubNames();
+    
+    /// EmitDebugPubTypes - Emit info into a debug pubtypes section.
+    ///
+    void DwarfWriter::EmitDebugPubTypes();
+    
+    /// EmitDebugStr - Emit info into a debug str section.
+    ///
+    void DwarfWriter::EmitDebugStr();
+    
+    /// EmitDebugLoc - Emit info into a debug loc section.
+    ///
+    void DwarfWriter::EmitDebugLoc();
+    
+    /// EmitDebugARanges - Emit info into a debug aranges section.
+    ///
+    void DwarfWriter::EmitDebugARanges();
+    
+    /// EmitDebugRanges - Emit info into a debug ranges section.
+    ///
+    void DwarfWriter::EmitDebugRanges();
+    
+    /// EmitDebugMacInfo - Emit info into a debug macinfo section.
+    ///
+    void DwarfWriter::EmitDebugMacInfo();
+    
     /// ShouldEmitDwarf - Returns true if Dwarf declarations should be made.
     /// When called it also checks to see if debug info is newly available.  if
     /// so the initial Dwarf headers are emitted.

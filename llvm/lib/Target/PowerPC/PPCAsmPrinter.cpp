@@ -215,9 +215,17 @@ namespace {
     : DwarfWriter(o, ap)
     {
       needsSet = true;
-      DwarfAbbrevSection = ".section __DWARF,__debug_abbrev,regular,debug";
-      DwarfInfoSection = ".section __DWARF,__debug_info,regular,debug";
-      DwarfLineSection = ".section __DWARF,__debug_line,regular,debug";
+      DwarfAbbrevSection = ".section __DWARFA,__debug_abbrev,regular,debug";
+      DwarfInfoSection = ".section __DWARFA,__debug_info,regular,debug";
+      DwarfLineSection = ".section __DWARFA,__debug_line,regular,debug";
+      DwarfFrameSection = ".section __DWARFA,__debug_frame,regular,debug";
+      DwarfPubNamesSection = ".section __DWARFA,__debug_pubnames,regular,debug";
+      DwarfPubTypesSection = ".section __DWARFA,__debug_pubtypes,regular,debug";
+      DwarfStrSection = ".section __DWARFA,__debug_str,regular,debug";
+      DwarfLocSection = ".section __DWARFA,__debug_loc,regular,debug";
+      DwarfARangesSection = ".section __DWARFA,__debug_aranges,regular,debug";
+      DwarfRangesSection = ".section __DWARFA,__debug_ranges,regular,debug";
+      DwarfMacInfoSection = ".section __DWARFA,__debug_macinfo,regular,debug";
       TextSection = ".text";
       DataSection = ".data";
     }
