@@ -157,8 +157,7 @@ static inline sys::Path IsLibrary(const std::string& Name,
 /// Path if no matching file can be found.
 ///
 sys::Path
-Linker::FindLib(const std::string &Filename)
-{
+Linker::FindLib(const std::string &Filename) {
   // Determine if the pathname can be found as it stands.
   sys::Path FilePath(Filename);
   if (FilePath.canRead() &&
