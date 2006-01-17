@@ -556,6 +556,8 @@ static std::vector<unsigned char> getIntrinsicType(Record *R, bool NotRegisters,
     // Using a VTSDNode or CondCodeSDNode.
     return Other;
   } else if (R->isSubClassOf("ComplexPattern")) {
+    if (NotRegisters) 
+      return Unknown;
     std::vector<unsigned char>
     ComplexPat(1, TP.getDAGISelEmitter().getComplexPattern(R).getValueType());
     return ComplexPat;
