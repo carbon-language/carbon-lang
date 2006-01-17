@@ -839,7 +839,7 @@ public:
     
     /// EmitString - Emit a string with quotes and a null terminator.
     /// Special characters are emitted properly. (Eg. '\t')
-    void DwarfWriter::EmitString(const std::string &String) const;
+    void EmitString(const std::string &String) const;
 
     /// PrintLabelName - Print label name in form used by Dwarf writer.
     ///
@@ -911,35 +911,35 @@ private:
 
     /// EmitDebugFrame - Emit info into a debug frame section.
     ///
-    void DwarfWriter::EmitDebugFrame();
+    void EmitDebugFrame();
     
     /// EmitDebugPubNames - Emit info into a debug pubnames section.
     ///
-    void DwarfWriter::EmitDebugPubNames();
+    void EmitDebugPubNames();
     
     /// EmitDebugPubTypes - Emit info into a debug pubtypes section.
     ///
-    void DwarfWriter::EmitDebugPubTypes();
+    void EmitDebugPubTypes();
     
     /// EmitDebugStr - Emit info into a debug str section.
     ///
-    void DwarfWriter::EmitDebugStr();
+    void EmitDebugStr();
     
     /// EmitDebugLoc - Emit info into a debug loc section.
     ///
-    void DwarfWriter::EmitDebugLoc();
+    void EmitDebugLoc();
     
     /// EmitDebugARanges - Emit info into a debug aranges section.
     ///
-    void DwarfWriter::EmitDebugARanges();
+    void EmitDebugARanges();
     
     /// EmitDebugRanges - Emit info into a debug ranges section.
     ///
-    void DwarfWriter::EmitDebugRanges();
+    void EmitDebugRanges();
     
     /// EmitDebugMacInfo - Emit info into a debug macinfo section.
     ///
-    void DwarfWriter::EmitDebugMacInfo();
+    void EmitDebugMacInfo();
     
     /// ShouldEmitDwarf - Returns true if Dwarf declarations should be made.
     /// When called it also checks to see if debug info is newly available.  if
