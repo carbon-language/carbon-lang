@@ -343,6 +343,7 @@ def sextloadi16i8  : PatFrag<(ops node:$ptr), (i16 (sextload node:$ptr, i8))>;
 def sextloadi32i8  : PatFrag<(ops node:$ptr), (i32 (sextload node:$ptr, i8))>;
 def sextloadi32i16 : PatFrag<(ops node:$ptr), (i32 (sextload node:$ptr, i16))>;
 
+def zextloadi8i1   : PatFrag<(ops node:$ptr), (i8  (zextload node:$ptr, i1))>;
 def zextloadi16i1  : PatFrag<(ops node:$ptr), (i16 (zextload node:$ptr, i1))>;
 def zextloadi32i1  : PatFrag<(ops node:$ptr), (i32 (zextload node:$ptr, i1))>;
 def zextloadi16i8  : PatFrag<(ops node:$ptr), (i16 (zextload node:$ptr, i8))>;
@@ -3029,6 +3030,7 @@ def : Pat<(truncstore R8:$src, addr:$dst, i1),
 // {s|z}extload bool -> {s|z}extload byte
 def : Pat<(sextloadi16i1 addr:$src), (MOVSX16rm8 addr:$src)>;
 def : Pat<(sextloadi32i1 addr:$src), (MOVSX32rm8 addr:$src)>;
+def : Pat<(zextloadi8i1  addr:$src), (MOV8rm     addr:$src)>;
 def : Pat<(zextloadi16i1 addr:$src), (MOVZX16rm8 addr:$src)>;
 def : Pat<(zextloadi32i1 addr:$src), (MOVZX32rm8 addr:$src)>;
 
