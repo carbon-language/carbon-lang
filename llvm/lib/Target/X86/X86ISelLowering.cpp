@@ -548,6 +548,7 @@ X86TargetLowering::LowerCCCCallTo(SDOperand Chain, const Type *RetTy,
         Chain = Hi.getValue(1);
         break;
       }
+      case MVT::f32:
       case MVT::f64: {
         std::vector<MVT::ValueType> Tys;
         Tys.push_back(MVT::f64);
@@ -580,6 +581,11 @@ X86TargetLowering::LowerCCCCallTo(SDOperand Chain, const Type *RetTy,
                                DAG.getSrcValue(NULL));
           Chain = RetVal.getValue(1);
         }
+
+        if (RetTyVT == MVT::f32 && !X86ScalarSSE)
+          // FIXME: we would really like to remember that this FP_ROUND
+          // operation is okay to eliminate if we allow excess FP precision.
+          RetVal = DAG.getNode(ISD::FP_ROUND, MVT::f32, RetVal);
         break;
       }
       }
@@ -1068,6 +1074,7 @@ X86TargetLowering::LowerFastCCCallTo(SDOperand Chain, const Type *RetTy,
         Chain = Hi.getValue(1);
         break;
       }
+      case MVT::f32:
       case MVT::f64: {
         std::vector<MVT::ValueType> Tys;
         Tys.push_back(MVT::f64);
@@ -1100,6 +1107,11 @@ X86TargetLowering::LowerFastCCCallTo(SDOperand Chain, const Type *RetTy,
                                DAG.getSrcValue(NULL));
           Chain = RetVal.getValue(1);
         }
+
+        if (RetTyVT == MVT::f32 && !X86ScalarSSE)
+          // FIXME: we would really like to remember that this FP_ROUND
+          // operation is okay to eliminate if we allow excess FP precision.
+          RetVal = DAG.getNode(ISD::FP_ROUND, MVT::f32, RetVal);
         break;
       }
       }
