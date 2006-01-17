@@ -228,6 +228,8 @@ SDOperand IA64DAGToDAGISel::SelectDIV(SDOperand Op) {
     TmpPR = TmpF5.getValue(1);
     Chain = TmpF5.getValue(2);
 
+    Chain = CurDAG->getCopyToReg(Chain, IA64::F8, TmpF5);
+
     SDOperand minusB;
     if(isModulus) { // for remainders, it'll be handy to have
                              // copies of -input_b
@@ -287,23 +289,18 @@ SDOperand IA64DAGToDAGISel::SelectDIV(SDOperand Op) {
       TmpR2 = CurDAG->getTargetNode(IA64::CFNMAS1, MVT::f64,
         TmpF4, TmpQ2, TmpF3, TmpPR);
       Chain = TmpR2.getValue(1);
-
+      
 // we want TmpQ3 to have the same target register as the frcpa? maybe we
 // should two-address hack it. See the comment "for this to work..." on page
 // 48 of Intel application note #245415
-      TmpQ3 = CurDAG->getTargetNode(IA64::CFMAS1, MVT::f64,
-        TmpR2, TmpY2, TmpQ2, TmpPR);
+      TmpQ3 = CurDAG->getTargetNode(IA64::TCFMAS1, MVT::f64,
+        TmpF5, TmpR2, TmpY2, TmpQ2, TmpPR);
       Chain = TmpQ3.getValue(1);
 
-      // FIXME: this is unfortunate :(
-      // the story is that the dest reg of the fnma above and the fma below it
-      // (and therefore the src of the fcvt.fx[u] below as well) cannot
-      // be the same register, or this code breaks if the first argument is
-      // zero. (e.g. without this hack, 0%8 yields -64, not 0.)
-/* XXX: these two lines do nothing */
-      SDOperand bogus = CurDAG->getTargetNode(IA64::IUSE, MVT::Other, TmpR2);
-      Chain = bogus.getValue(0);
-
+      // STORY: without these two-address instructions (TCFMAS1 and TCFMADS0)
+      // the FPSWA won't be able to help out in the case of large/tiny
+      // arguments. Other fun bugs may also appear, e.g. 0/x = x, not 0.
+      
       if(isSigned)
         TmpQ = CurDAG->getTargetNode(IA64::FCVTFXTRUNCS1, MVT::f64, TmpQ3);
       else
