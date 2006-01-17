@@ -112,6 +112,9 @@
 				RelativePath="..\..\lib\VMCore\AsmWriter.cpp">
 			</File>
 			<File
+				RelativePath="..\..\lib\VMCore\AutoUpgrade.cpp">
+			</File>
+			<File
 				RelativePath="..\..\lib\VMCore\BasicBlock.cpp">
 			</File>
 			<File
@@ -184,6 +187,9 @@
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\Assembly\AsmAnnotationWriter.h">
+			</File>
+			<File
+				RelativePath="..\..\include\llvm\Assembly\AutoUpgrade.h">
 			</File>
 			<File
 				RelativePath="..\..\include\llvm\BasicBlock.h">

@@ -279,9 +279,6 @@
 					RelativePath="..\..\lib\Transforms\Scalar\Mem2Reg.cpp">
 				</File>
 				<File
-					RelativePath="..\..\lib\Transforms\Scalar\PRE.cpp">
-				</File>
-				<File
 					RelativePath="..\..\lib\Transforms\Scalar\Reassociate.cpp">
 				</File>
 				<File
