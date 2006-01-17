@@ -800,7 +800,7 @@ const Type* GetElementPtrInst::getIndexedType(const Type *Ptr, Value *Idx) {
 //===----------------------------------------------------------------------===//
 
 ExtractElementInst::ExtractElementInst(Value *Val, Value *Index,
-                         const std::string &Name, Instruction *InsertBef)
+                                       const std::string &Name, Instruction *InsertBef)
   : Instruction(cast<PackedType>(Val->getType())->getElementType(),
                 ExtractElement, Ops, 2, Name, InsertBef) {
   Ops[0].init(Val, this);
@@ -808,11 +808,31 @@ ExtractElementInst::ExtractElementInst(Value *Val, Value *Index,
 }
 
 ExtractElementInst::ExtractElementInst(Value *Val, Value *Index,
-                         const std::string &Name, BasicBlock *InsertAE)
+                                       const std::string &Name, BasicBlock *InsertAE)
   : Instruction(cast<PackedType>(Val->getType())->getElementType(),
                 ExtractElement, Ops, 2, Name, InsertAE) {
   Ops[0].init(Val, this);
   Ops[1].init(Index, this);
+}
+
+//===----------------------------------------------------------------------===//
+//                           InsertElementInst Implementation
+//===----------------------------------------------------------------------===//
+
+InsertElementInst::InsertElementInst(Value *Val, Value *Elt, Value *Index,
+                                     const std::string &Name, Instruction *InsertBef)
+  : Instruction(Val->getType(), InsertElement, Ops, 3, Name, InsertBef) {
+  Ops[0].init(Val, this);
+  Ops[1].init(Elt, this);
+  Ops[2].init(Index, this);
+}
+
+InsertElementInst::InsertElementInst(Value *Val, Value *Elt, Value *Index,
+                                     const std::string &Name, BasicBlock *InsertAE)
+  : Instruction(Val->getType(), InsertElement, Ops, 3, Name, InsertAE) {
+  Ops[0].init(Val, this);
+  Ops[1].init(Elt, this);
+  Ops[2].init(Index, this);
 }
 
 //===----------------------------------------------------------------------===//
@@ -1176,6 +1196,7 @@ ShiftInst  *ShiftInst::clone()  const { return new ShiftInst(*this); }
 SelectInst *SelectInst::clone() const { return new SelectInst(*this); }
 VAArgInst  *VAArgInst::clone()  const { return new VAArgInst(*this); }
 ExtractElementInst *ExtractElementInst::clone() const {return new ExtractElementInst(*this); }
+InsertElementInst *InsertElementInst::clone() const {return new InsertElementInst(*this); }
 PHINode    *PHINode::clone()    const { return new PHINode(*this); }
 ReturnInst *ReturnInst::clone() const { return new ReturnInst(*this); }
 BranchInst *BranchInst::clone() const { return new BranchInst(*this); }

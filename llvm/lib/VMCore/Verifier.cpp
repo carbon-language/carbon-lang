@@ -140,7 +140,7 @@ namespace {  // Anonymous namespace for class
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesAll();
       if (RealPass)
-	AU.addRequired<ETForest>();
+        AU.addRequired<ETForest>();
     }
 
     /// abortIfBroken - If the module is broken and we are supposed to abort on
@@ -180,6 +180,7 @@ namespace {  // Anonymous namespace for class
     void visitBinaryOperator(BinaryOperator &B);
     void visitShiftInst(ShiftInst &SI);
     void visitExtractElementInst(ExtractElementInst &EI);
+    void visitInsertElementInst(InsertElementInst &EI);
     void visitVAArgInst(VAArgInst &VAA) { visitInstruction(VAA); }
     void visitCallInst(CallInst &CI);
     void visitGetElementPtrInst(GetElementPtrInst &GEP);
@@ -540,10 +541,22 @@ void Verifier::visitExtractElementInst(ExtractElementInst &EI) {
   Assert1(EI.getOperand(1)->getType() == Type::UIntTy,
           "Second operand to extractelement must be uint type!", &EI);
   Assert1(EI.getType() == 
-	  cast<PackedType>(EI.getOperand(0)->getType())->getElementType(),
-          "Extractelement return type must be same as "
-	  "first operand element type!", &EI);
+          cast<PackedType>(EI.getOperand(0)->getType())->getElementType(),
+          "Extractelement return type must match "
+          "first operand element type!", &EI);
   visitInstruction(EI);
+}
+
+void Verifier::visitInsertElementInst(InsertElementInst &IE) {
+  Assert1(isa<PackedType>(IE.getOperand(0)->getType()),
+          "First operand to insertelement must be packed type!", &IE);
+  Assert1(IE.getOperand(1)->getType() == 
+          cast<PackedType>(IE.getOperand(0)->getType())->getElementType(),
+          "Second operand to insertelement must match "
+          "first operand element type!", &IE);
+  Assert1(IE.getOperand(2)->getType() == Type::UIntTy,
+          "Third operand to insertelement must be uint type!", &IE);
+  visitInstruction(IE);
 }
 
 void Verifier::visitGetElementPtrInst(GetElementPtrInst &GEP) {

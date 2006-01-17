@@ -347,8 +347,9 @@ public:
   }
 };
 
-/// ExtractElementConstantExpr - This class is private to Constants.cpp, and is used
-/// behind the scenes to implement extractelement constant exprs.
+/// ExtractElementConstantExpr - This class is private to
+/// Constants.cpp, and is used behind the scenes to implement
+/// extractelement constant exprs.
 class ExtractElementConstantExpr : public ConstantExpr {
   Use Ops[2];
 public:
@@ -357,6 +358,21 @@ public:
                    Instruction::ExtractElement, Ops, 2) {
     Ops[0].init(C1, this);
     Ops[1].init(C2, this);
+  }
+};
+
+/// InsertElementConstantExpr - This class is private to
+/// Constants.cpp, and is used behind the scenes to implement
+/// insertelement constant exprs.
+class InsertElementConstantExpr : public ConstantExpr {
+  Use Ops[3];
+public:
+  InsertElementConstantExpr(Constant *C1, Constant *C2, Constant *C3)
+    : ConstantExpr(C1->getType(), Instruction::InsertElement, 
+                   Ops, 3) {
+    Ops[0].init(C1, this);
+    Ops[1].init(C2, this);
+    Ops[2].init(C3, this);
   }
 };
 
@@ -1156,6 +1172,9 @@ namespace llvm {
         return new SelectConstantExpr(V.second[0], V.second[1], V.second[2]);
       if (V.first == Instruction::ExtractElement)
         return new ExtractElementConstantExpr(V.second[0], V.second[1]);
+      if (V.first == Instruction::InsertElement)
+        return new InsertElementConstantExpr(V.second[0], V.second[1],
+                                             V.second[2]);
 
       assert(V.first == Instruction::GetElementPtr && "Invalid ConstantExpr!");
 
@@ -1416,9 +1435,33 @@ Constant *ConstantExpr::getExtractElement(Constant *Val, Constant *Idx) {
   assert(isa<PackedType>(Val->getType()) &&
          "Tried to create extractelement operation on non-packed type!");
   assert(Idx->getType() == Type::UIntTy &&
-         "Index must be uint type!");
+         "Extractelement index must be uint type!");
   return getExtractElementTy(cast<PackedType>(Val->getType())->getElementType(),
                              Val, Idx);
+}
+
+Constant *ConstantExpr::getInsertElementTy(const Type *ReqTy, Constant *Val,
+                                           Constant *Elt, Constant *Idx) {
+  if (Constant *FC = ConstantFoldInsertElementInstruction(Val, Elt, Idx))
+    return FC;          // Fold a few common cases...
+  // Look up the constant in the table first to ensure uniqueness
+  std::vector<Constant*> ArgVec(1, Val);
+  ArgVec.push_back(Elt);
+  ArgVec.push_back(Idx);
+  const ExprMapKeyType &Key = std::make_pair(Instruction::InsertElement,ArgVec);
+  return ExprConstants.getOrCreate(ReqTy, Key);
+}
+
+Constant *ConstantExpr::getInsertElement(Constant *Val, Constant *Elt, 
+                                         Constant *Idx) {
+  assert(isa<PackedType>(Val->getType()) &&
+         "Tried to create insertelement operation on non-packed type!");
+  assert(Elt->getType() == cast<PackedType>(Val->getType())->getElementType()
+         && "Insertelement types must match!");
+  assert(Idx->getType() == Type::UIntTy &&
+         "Insertelement index must be uint type!");
+  return getInsertElementTy(cast<PackedType>(Val->getType())->getElementType(),
+                            Val, Elt, Idx);
 }
 
 // destroyConstant - Remove the constant from the constant table...

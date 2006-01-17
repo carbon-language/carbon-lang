@@ -734,6 +734,63 @@ Constant *llvm::ConstantFoldExtractElementInstruction(const Constant *Val,
   return 0;
 }
 
+Constant *llvm::ConstantFoldInsertElementInstruction(const Constant *Val,
+                                                     const Constant *Elt,
+                                                     const Constant *Idx) {
+  const ConstantUInt *CIdx = dyn_cast<ConstantUInt>(Idx);
+  if (!CIdx) return 0;
+  unsigned idxVal = CIdx->getValue();
+  if (const UndefValue *UVal = dyn_cast<UndefValue>(Val)) {
+    // Insertion of scalar constant into packed undef
+    // Optimize away insertion of undef
+    if (isa<UndefValue>(Elt))
+      return const_cast<Constant*>(Val);
+    // Otherwise break the aggregate undef into multiple undefs and do
+    // the insertion
+    unsigned numOps = 
+      cast<PackedType>(Val->getType())->getNumElements();
+    std::vector<Constant*> Ops; 
+    Ops.reserve(numOps);
+    for (unsigned i = 0; i < numOps; ++i) {
+      const Constant *Op =
+        (i == idxVal) ? Elt : UndefValue::get(Elt->getType());
+      Ops.push_back(const_cast<Constant*>(Op));
+    }
+    return ConstantPacked::get(Ops);
+  }
+  if (const ConstantAggregateZero *CVal =
+      dyn_cast<ConstantAggregateZero>(Val)) {
+    // Insertion of scalar constant into packed aggregate zero
+    // Optimize away insertion of zero
+    if (Elt->isNullValue())
+      return const_cast<Constant*>(Val);
+    // Otherwise break the aggregate zero into multiple zeros and do
+    // the insertion
+    unsigned numOps = 
+      cast<PackedType>(Val->getType())->getNumElements();
+    std::vector<Constant*> Ops; 
+    Ops.reserve(numOps);
+    for (unsigned i = 0; i < numOps; ++i) {
+      const Constant *Op =
+        (i == idxVal) ? Elt : Constant::getNullValue(Elt->getType());
+      Ops.push_back(const_cast<Constant*>(Op));
+    }
+    return ConstantPacked::get(Ops);
+  }
+  if (const ConstantPacked *CVal = dyn_cast<ConstantPacked>(Val)) {
+    // Insertion of scalar constant into packed constant
+    std::vector<Constant*> Ops; 
+    Ops.reserve(CVal->getNumOperands());
+    for (unsigned i = 0; i < CVal->getNumOperands(); ++i) {
+      const Constant *Op =
+        (i == idxVal) ? Elt : cast<Constant>(CVal->getOperand(i));
+      Ops.push_back(const_cast<Constant*>(Op));
+    }
+    return ConstantPacked::get(Ops);
+  }
+  return 0;
+}
+
 /// isZeroSizedType - This type is zero sized if its an array or structure of
 /// zero sized types.  The only leaf zero sized type is an empty structure.
 static bool isMaybeZeroSizedType(const Type *Ty) {
