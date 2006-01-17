@@ -627,7 +627,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
           cast<StringSDNode>(Node->getOperand(3))->getValue();
         const std::string &DirName = 
           cast<StringSDNode>(Node->getOperand(4))->getValue();
-        unsigned SrcFile = DebugInfo->getUniqueSourceID(FName, DirName);
+        unsigned SrcFile = DebugInfo->RecordSource(DirName, FName);
 
         std::vector<SDOperand> Ops;
         Ops.push_back(Tmp1);  // chain

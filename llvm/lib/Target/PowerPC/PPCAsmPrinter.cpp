@@ -215,9 +215,11 @@ namespace {
     : DwarfWriter(o, ap)
     {
       needsSet = true;
-      DwarfAbbrevSection = ".section __DWARFA,__debug_abbrev,regular,debug";
-      DwarfInfoSection = ".section __DWARFA,__debug_info,regular,debug";
-      DwarfLineSection = ".section __DWARFA,__debug_line,regular,debug";
+      DwarfAbbrevSection = ".section __DWARF,__debug_abbrev,regular,debug";
+      DwarfInfoSection = ".section __DWARF,__debug_info,regular,debug";
+      DwarfLineSection = ".section __DWARF,__debug_line,regular,debug";
+      TextSection = ".text";
+      DataSection = ".data";
     }
   };
 
@@ -607,15 +609,15 @@ bool DarwinAsmPrinter::doFinalization(Module &M) {
     }
   }
 
+  // Emit initial debug information.
+  DW.EndModule();
+
   // Funny Darwin hack: This flag tells the linker that no global symbols
   // contain code that falls through to other global symbols (e.g. the obvious
   // implementation of multiple entry points).  If this doesn't occur, the
   // linker can safely perform dead code stripping.  Since LLVM never generates
   // code that does this, it is always safe to set.
   O << "\t.subsections_via_symbols\n";
-
-  // Emit initial debug information.
-  DW.EndModule();
 
   AsmPrinter::doFinalization(M);
   return false; // success
