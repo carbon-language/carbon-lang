@@ -18,17 +18,17 @@ namespace llvm {
 
 //===----------------------------------------------------------------------===//
 /// UniqueVector - This class produces a sequential ID number (base 1) for each
-/// unique entry that is added.  This class also provides an ID ordered vector
-/// of the entries (indexed by ID - 1.)  T is the type of entries in the vector.
-/// This class should have an implementation of operator== and of operator<.
+/// unique entry that is added.  T is the type of entries in the vector. This
+/// class should have an implementation of operator== and of operator<.
+/// Entries can be fetched using operator[] with the entry ID. 
 template<class T> class UniqueVector {
 private:
   // Map - Used to handle the correspondence of entry to ID.
-  typename std::map<T, unsigned> Map;
+  std::map<T, unsigned> Map;
 
   // Vector - ID ordered vector of entries. Entries can be indexed by ID - 1.
   //
-  typename std::vector<T> Vector;
+  std::vector<const T *> Vector;
   
 public:
   /// insert - Append entry to the vector if it doesn't already exist.  Returns
@@ -44,25 +44,25 @@ public:
     unsigned ID = Vector.size() + 1;
     
     // Insert in map.
-    Map.insert(MI, std::make_pair(Entry, ID));
+    MI = Map.insert(MI, std::make_pair(Entry, ID));
     
     // Insert in vector.
-    Vector.push_back(Entry);
+    Vector.push_back(&MI->first);
 
     return ID;
   }
   
   /// operator[] - Returns a reference to the entry with the specified ID.
-  /// 
-  const T &operator[](unsigned ID) const { return Vector[ID - 1]; }
+  ///
+  const T &operator[](unsigned ID) const { return *Vector[ID - 1]; }
   
   /// size - Returns the number of entries in the vector.
   ///
   size_t size() const { return Vector.size(); }
   
-  /// getVector - Return the ID ordered vector of entries.
+  /// empty - Returns true if the vector is empty.
   ///
-  const typename std::vector<T> &getVector() const { return Vector; }
+  bool empty() const { return Vector.empty(); }
 };
 
 } // End of namespace llvm
