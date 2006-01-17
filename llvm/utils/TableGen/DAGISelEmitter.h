@@ -399,7 +399,7 @@ struct PatternToMatch {
   TreePatternNode *getDstPattern() const { return DstPattern; }
 };
 
-/// InstrSelectorEmitter - The top-level class which coordinates construction
+/// DAGISelEmitter - The top-level class which coordinates construction
 /// and emission of the instruction selector.
 ///
 class DAGISelEmitter : public TableGenBackend {
