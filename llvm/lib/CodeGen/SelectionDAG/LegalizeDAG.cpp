@@ -1639,6 +1639,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       // Perform the larger operation, then round down.
       Result = DAG.getNode(ISD::SELECT, NVT, Tmp1, Tmp2,Tmp3);
       Result = DAG.getNode(TruncOp, Node->getValueType(0), Result);
+      Result = LegalizeOp(Result);
       break;
     }
     }
@@ -1838,6 +1839,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       
       Result = DAG.getNode(ISD::SETCC, Node->getValueType(0), Tmp1, Tmp2,
                            Node->getOperand(2));
+      Result = LegalizeOp(Result);
       break;
     }
     case TargetLowering::Custom: {
@@ -2246,6 +2248,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
         Tmp1 = DAG.getNode(ISD::BSWAP, NVT, Tmp1);
         Result = DAG.getNode(ISD::SRL, NVT, Tmp1,
                              DAG.getConstant(DiffBits, TLI.getShiftAmountTy()));
+        Result = LegalizeOp(Result);
         break;
       }
       case TargetLowering::Custom:
@@ -2316,6 +2319,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
           break;
         }
         }
+        Result = LegalizeOp(Result);
         break;
       }
     }
@@ -2358,6 +2362,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
                                              getSizeInBits(OVT), NVT));
         break;
       }
+      Result = LegalizeOp(Result);
       break;
     }
     case TargetLowering::Custom:
@@ -2384,7 +2389,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
                                          DAG.getNode(ISD::SRL, VT, Tmp1, Tmp3),
                                          Tmp2));
         }
-        Result = Tmp1;
+        Result = LegalizeOp(Tmp1);
         break;
       }
       case ISD::CTLZ: {
