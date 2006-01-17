@@ -228,8 +228,6 @@ SDOperand IA64DAGToDAGISel::SelectDIV(SDOperand Op) {
     TmpPR = TmpF5.getValue(1);
     Chain = TmpF5.getValue(2);
 
-    Chain = CurDAG->getCopyToReg(Chain, IA64::F8, TmpF5);
-
     SDOperand minusB;
     if(isModulus) { // for remainders, it'll be handy to have
                              // copies of -input_b
