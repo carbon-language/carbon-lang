@@ -1810,69 +1810,71 @@ public:
 /// optimization is to compute the result at compile time if the argument is
 /// a constant.
 /// @brief Simplify the ffs library function.
-struct FFSOptimization : public LibCallOptimization
-{
+struct FFSOptimization : public LibCallOptimization {
 protected:
   /// @brief Subclass Constructor
   FFSOptimization(const char* funcName, const char* description)
-    : LibCallOptimization(funcName, description)
-    {}
+    : LibCallOptimization(funcName, description) {}
 
 public:
   /// @brief Default Constructor
   FFSOptimization() : LibCallOptimization("ffs",
       "Number of 'ffs' calls simplified") {}
 
-  /// @brief Make sure that the "fputs" function has the right prototype
-  virtual bool ValidateCalledFunction(const Function* f, SimplifyLibCalls& SLC)
-  {
+  /// @brief Make sure that the "ffs" function has the right prototype
+  virtual bool ValidateCalledFunction(const Function *F, SimplifyLibCalls &SLC){
     // Just make sure this has 2 arguments
-    return (f->arg_size() == 1 && f->getReturnType() == Type::IntTy);
+    return F->arg_size() == 1 && F->getReturnType() == Type::IntTy;
   }
 
   /// @brief Perform the ffs optimization.
-  virtual bool OptimizeCall(CallInst* ci, SimplifyLibCalls& SLC)
-  {
-    if (ConstantInt* CI = dyn_cast<ConstantInt>(ci->getOperand(1)))
-    {
+  virtual bool OptimizeCall(CallInst *TheCall, SimplifyLibCalls &SLC) {
+    if (ConstantInt *CI = dyn_cast<ConstantInt>(TheCall->getOperand(1))) {
       // ffs(cnst)  -> bit#
       // ffsl(cnst) -> bit#
       // ffsll(cnst) -> bit#
       uint64_t val = CI->getRawValue();
       int result = 0;
-      while (val != 0) {
-        result +=1;
-        if (val&1)
-          break;
-        val >>= 1;
+      if (val) {
+        ++result;
+        while ((val & 1) == 0) {
+          ++result;
+          val >>= 1;
+        }
       }
-      ci->replaceAllUsesWith(ConstantSInt::get(Type::IntTy, result));
-      ci->eraseFromParent();
+      TheCall->replaceAllUsesWith(ConstantSInt::get(Type::IntTy, result));
+      TheCall->eraseFromParent();
       return true;
     }
 
-    // ffs(x) -> ( x == 0 ? 0 : llvm.cttz(x)+1)
-    // ffsl(x) -> ( x == 0 ? 0 : llvm.cttz(x)+1)
-    // ffsll(x) -> ( x == 0 ? 0 : llvm.cttz(x)+1)
-    const Type* arg_type = ci->getOperand(1)->getType();
-    std::vector<const Type*> args;
-    args.push_back(arg_type);
-    FunctionType* llvm_cttz_type = FunctionType::get(arg_type,args,false);
-    Function* F =
-      SLC.getModule()->getOrInsertFunction("llvm.cttz",llvm_cttz_type);
-    std::string inst_name(ci->getName()+".ffs");
-    Instruction* call =
-      new CallInst(F, ci->getOperand(1), inst_name, ci);
-    if (arg_type != Type::IntTy)
-      call = new CastInst(call, Type::IntTy, inst_name, ci);
-    BinaryOperator* add = BinaryOperator::createAdd(call,
-      ConstantSInt::get(Type::IntTy,1), inst_name, ci);
-    SetCondInst* eq = new SetCondInst(Instruction::SetEQ,ci->getOperand(1),
-      ConstantSInt::get(ci->getOperand(1)->getType(),0),inst_name,ci);
-    SelectInst* select = new SelectInst(eq,ConstantSInt::get(Type::IntTy,0),add,
-      inst_name,ci);
-    ci->replaceAllUsesWith(select);
-    ci->eraseFromParent();
+    // ffs(x)   -> x == 0 ? 0 : llvm.cttz(x)+1
+    // ffsl(x)  -> x == 0 ? 0 : llvm.cttz(x)+1
+    // ffsll(x) -> x == 0 ? 0 : llvm.cttz(x)+1
+    const Type *ArgType = TheCall->getOperand(1)->getType();
+    ArgType = ArgType->getUnsignedVersion();
+    const char *CTTZName;
+    switch (ArgType->getTypeID()) {
+    default: assert(0 && "Unknown unsigned type!");
+    case Type::UByteTyID : CTTZName = "llvm.cttz.i8" ; break;
+    case Type::UShortTyID: CTTZName = "llvm.cttz.i16"; break;
+    case Type::UIntTyID  : CTTZName = "llvm.cttz.i32"; break;
+    case Type::ULongTyID : CTTZName = "llvm.cttz.i64"; break;
+    }
+    
+    Function *F = SLC.getModule()->getOrInsertFunction(CTTZName, ArgType,
+                                                       ArgType, NULL);
+    Value *V = new CastInst(TheCall->getOperand(1), ArgType, "tmp", TheCall);
+    Value *V2 = new CallInst(F, V, "tmp", TheCall);
+    V2 = new CastInst(V2, Type::IntTy, "tmp", TheCall);
+    V2 = BinaryOperator::createAdd(V2, ConstantSInt::get(Type::IntTy, 1),
+                                   "tmp", TheCall);
+    Value *Cond = 
+      BinaryOperator::createSetEQ(V, Constant::getNullValue(V->getType()),
+                                  "tmp", TheCall);
+    V2 = new SelectInst(Cond, ConstantInt::get(Type::IntTy, 0), V2,
+                        TheCall->getName(), TheCall);
+    TheCall->replaceAllUsesWith(V2);
+    TheCall->eraseFromParent();
     return true;
   }
 } FFSOptimizer;
