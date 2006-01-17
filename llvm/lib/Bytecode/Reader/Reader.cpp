@@ -725,6 +725,17 @@ void BytecodeReader::ParseInstruction(std::vector<unsigned> &Oprnds,
                                     getValue(Type::UIntTyID, Oprnds[1]));
     break;
   }
+  case Instruction::InsertElement: {
+    const PackedType *PackedTy = dyn_cast<PackedType>(InstTy);
+    if (!PackedTy || Oprnds.size() != 3)
+      throw std::string("Invalid insertelement instruction!");
+    Result = 
+      new InsertElementInst(getValue(iType, Oprnds[0]), 
+                            getValue(getTypeSlot(PackedTy->getElementType()), 
+                                     Oprnds[1]),
+                            getValue(Type::UIntTyID, Oprnds[2]));
+    break;
+  }
   case Instruction::Cast:
     Result = new CastInst(getValue(iType, Oprnds[0]),
                           getSanitizedType(Oprnds[1]));
@@ -1453,6 +1464,13 @@ Constant *BytecodeReader::ParseConstantValue(unsigned TypeID) {
       if (ArgVec.size() != 2)
         error("ExtractElement instruction must have two arguments.");
       Constant* Result = ConstantExpr::getExtractElement(ArgVec[0], ArgVec[1]);
+      if (Handler) Handler->handleConstantExpression(Opcode, ArgVec, Result);
+      return Result;
+    } else if (Opcode == Instruction::InsertElement) {
+      if (ArgVec.size() != 3)
+        error("InsertElement instruction must have three arguments.");
+      Constant* Result = 
+        ConstantExpr::getInsertElement(ArgVec[0], ArgVec[1], ArgVec[2]);
       if (Handler) Handler->handleConstantExpression(Opcode, ArgVec, Result);
       return Result;
     } else {                            // All other 2-operand expressions
