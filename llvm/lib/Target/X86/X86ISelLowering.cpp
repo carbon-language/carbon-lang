@@ -52,7 +52,12 @@ X86TargetLowering::X86TargetLowering(TargetMachine &TM)
   setOperationAction(ISD::UINT_TO_FP       , MVT::i1   , Promote);
   setOperationAction(ISD::UINT_TO_FP       , MVT::i8   , Promote);
   setOperationAction(ISD::UINT_TO_FP       , MVT::i16  , Promote);
-  setOperationAction(ISD::UINT_TO_FP       , MVT::i32  , Promote);
+
+  if (X86ScalarSSE)
+    // No SSE i64 SINT_TO_FP, so expand i32 UINT_TO_FP instead.
+    setOperationAction(ISD::UINT_TO_FP     , MVT::i32  , Expand);
+  else
+    setOperationAction(ISD::UINT_TO_FP     , MVT::i32  , Promote);
 
   // Promote i1/i8 SINT_TO_FP to larger SINT_TO_FP's, as X86 doesn't have
   // this operation.
