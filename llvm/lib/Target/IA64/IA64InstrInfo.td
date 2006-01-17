@@ -537,6 +537,8 @@ let isStore = 1, noResults = 1 in {
     "stfs [$dstPtr] = $value;;">;
   def STF8 : AForm<0x03, 0x0b, (ops GR:$dstPtr, FP:$value),
     "stfd [$dstPtr] = $value;;">;
+  def STF_SPILL : AForm<0x03, 0x0b, (ops GR:$dstPtr, FP:$value),
+    "stf.spill [$dstPtr] = $value;;">;
 }
 
 let isLoad = 1 in {
@@ -552,6 +554,8 @@ let isLoad = 1 in {
     "ldfs $dst = [$srcPtr];;">;
   def LDF8 : AForm<0x03, 0x0b, (ops FP:$dst, GR:$srcPtr),
     "ldfd $dst = [$srcPtr];;">;
+  def LDF_FILL : AForm<0x03, 0x0b, (ops FP:$dst, GR:$srcPtr),
+    "ldf.fill $dst = [$srcPtr];;">;
 }
 
 def POPCNT : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src),

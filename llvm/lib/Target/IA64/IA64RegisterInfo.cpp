@@ -40,7 +40,7 @@ void IA64RegisterInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                            const TargetRegisterClass *RC) const{
 
   if (RC == IA64::FPRegisterClass) {
-    BuildMI(MBB, MI, IA64::STF8, 2).addFrameIndex(FrameIdx).addReg(SrcReg);
+    BuildMI(MBB, MI, IA64::STF_SPILL, 2).addFrameIndex(FrameIdx).addReg(SrcReg);
   } else if (RC == IA64::GRRegisterClass) {
     BuildMI(MBB, MI, IA64::ST8, 2).addFrameIndex(FrameIdx).addReg(SrcReg);
  }
@@ -63,7 +63,7 @@ void IA64RegisterInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
                                             const TargetRegisterClass *RC)const{
 
   if (RC == IA64::FPRegisterClass) {
-    BuildMI(MBB, MI, IA64::LDF8, 1, DestReg).addFrameIndex(FrameIdx);
+    BuildMI(MBB, MI, IA64::LDF_FILL, 1, DestReg).addFrameIndex(FrameIdx);
   } else if (RC == IA64::GRRegisterClass) {
     BuildMI(MBB, MI, IA64::LD8, 1, DestReg).addFrameIndex(FrameIdx);
  } else if (RC == IA64::PRRegisterClass) {

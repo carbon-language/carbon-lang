@@ -282,7 +282,11 @@ def GR : RegisterClass<"IA64", [i64], 64,
 
 
 // these are the scratch (+stacked) FP registers
-def FP : RegisterClass<"IA64", [f64], 64, 
+
+// the 128 here is to make stf.spill/ldf.fill happy,
+// when storing full (82-bit) FP regs to stack slots
+// we need to 16-byte align
+def FP : RegisterClass<"IA64", [f64], 128, 
        [F6, F7, 
 	F8, F9, F10, F11, F12, F13, F14, F15, 
 	F32, F33, F34, F35, F36, F37, F38, F39, 
