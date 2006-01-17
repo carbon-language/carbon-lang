@@ -555,6 +555,9 @@ X86TargetLowering::LowerCCCCallTo(SDOperand Chain, const Type *RetTy,
         Chain  = RetVal.getValue(1);
         InFlag = RetVal.getValue(2);
         if (X86ScalarSSE) {
+          // FIXME:Currently the FST is flagged to the FP_GET_RESULT. This
+          // shouldn't be necessary except for RFP cannot be live across
+          // multiple blocks. When stackifier is fixed, they can be uncoupled.
           unsigned Size = MVT::getSizeInBits(MVT::f64)/8;
           MachineFunction &MF = DAG.getMachineFunction();
           int SSFI = MF.getFrameInfo()->CreateStackObject(Size, Size);
@@ -1072,6 +1075,9 @@ X86TargetLowering::LowerFastCCCallTo(SDOperand Chain, const Type *RetTy,
         Chain  = RetVal.getValue(1);
         InFlag = RetVal.getValue(2);
         if (X86ScalarSSE) {
+          // FIXME:Currently the FST is flagged to the FP_GET_RESULT. This
+          // shouldn't be necessary except for RFP cannot be live across
+          // multiple blocks. When stackifier is fixed, they can be uncoupled.
           unsigned Size = MVT::getSizeInBits(MVT::f64)/8;
           MachineFunction &MF = DAG.getMachineFunction();
           int SSFI = MF.getFrameInfo()->CreateStackObject(Size, Size);
