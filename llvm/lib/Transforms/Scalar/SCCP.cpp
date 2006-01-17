@@ -323,6 +323,7 @@ private:
   void visitBinaryOperator(Instruction &I);
   void visitShiftInst(ShiftInst &I) { visitBinaryOperator(I); }
   void visitExtractElementInst(ExtractElementInst &I);
+  void visitInsertElementInst(InsertElementInst &I);
 
   // Instructions that cannot be folded away...
   void visitStoreInst     (Instruction &I);
@@ -738,6 +739,26 @@ void SCCPSolver::visitExtractElementInst(ExtractElementInst &I) {
   else if(ValState.isConstant() && IdxState.isConstant())
     markConstant(&I, ConstantExpr::getExtractElement(ValState.getConstant(),
                                                      IdxState.getConstant()));
+}
+
+void SCCPSolver::visitInsertElementInst(InsertElementInst &I) {
+  LatticeVal &ValState = getValueState(I.getOperand(0));
+  LatticeVal &EltState = getValueState(I.getOperand(1));
+  LatticeVal &IdxState = getValueState(I.getOperand(2));
+
+  if (ValState.isOverdefined() || EltState.isOverdefined() ||
+      IdxState.isOverdefined())
+    markOverdefined(&I);
+  else if(ValState.isConstant() && EltState.isConstant() &&
+          IdxState.isConstant())
+    markConstant(&I, ConstantExpr::getInsertElement(ValState.getConstant(),
+                                                    EltState.getConstant(),
+                                                    IdxState.getConstant()));
+  else if (ValState.isUndefined() && EltState.isConstant() &&
+           IdxState.isConstant())
+    markConstant(&I, ConstantExpr::getInsertElement(UndefValue::get(I.getType()),
+                                                    EltState.getConstant(),
+                                                    IdxState.getConstant()));
 }
 
 // Handle getelementptr instructions... if all operands are constants then we

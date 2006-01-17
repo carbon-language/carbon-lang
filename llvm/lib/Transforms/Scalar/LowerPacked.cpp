@@ -61,7 +61,11 @@ public:
 
    /// @brief Lowers packed extractelement instructions.
    /// @param EI the extractelement operator to convert
-   void visitExtractElementInst(ExtractElementInst& EI);
+   void visitExtractElementInst(ExtractElementInst& EE);
+
+   /// @brief Lowers packed insertelement instructions.
+   /// @param EI the insertelement operator to convert
+   void visitInsertElementInst(InsertElementInst& IE);
 
    /// This function asserts if the instruction is a PackedType but
    /// is handled by another function.
@@ -345,22 +349,55 @@ void LowerPacked::visitExtractElementInst(ExtractElementInst& EI)
   if (ConstantUInt *C = dyn_cast<ConstantUInt>(op1)) {
     EI.replaceAllUsesWith(op0Vals[C->getValue()]);
   } else {
-    AllocaInst *alloca = new AllocaInst(PTy->getElementType(),
-					ConstantUInt::get(Type::UIntTy, PTy->getNumElements()),
-					EI.getName() + ".alloca", &(EI.getParent()->getParent()->getEntryBlock().front()));
+    AllocaInst *alloca = 
+      new AllocaInst(PTy->getElementType(),
+                     ConstantUInt::get(Type::UIntTy, PTy->getNumElements()),
+                     EI.getName() + ".alloca", 
+		     EI.getParent()->getParent()->getEntryBlock().begin());
     for (unsigned i = 0; i < PTy->getNumElements(); ++i) {
-      GetElementPtrInst *GEP = new GetElementPtrInst(alloca, ConstantUInt::get(Type::UIntTy, i),
-						     "store.ge", &EI);
+      GetElementPtrInst *GEP = 
+        new GetElementPtrInst(alloca, ConstantUInt::get(Type::UIntTy, i),
+                              "store.ge", &EI);
       new StoreInst(op0Vals[i], GEP, &EI);
     }
-    GetElementPtrInst *GEP = new GetElementPtrInst(alloca, op1,
-						   EI.getName() + ".ge", &EI);
+    GetElementPtrInst *GEP = 
+      new GetElementPtrInst(alloca, op1, EI.getName() + ".ge", &EI);
     LoadInst *load = new LoadInst(GEP, EI.getName() + ".load", &EI);
     EI.replaceAllUsesWith(load);
   }
 
   Changed = true;
   instrsToRemove.push_back(&EI);
+}
+
+void LowerPacked::visitInsertElementInst(InsertElementInst& IE)
+{
+  std::vector<Value*>& Vals = getValues(IE.getOperand(0));
+  Value *Elt = IE.getOperand(1);
+  Value *Idx = IE.getOperand(2);
+  std::vector<Value*> result;
+  result.reserve(Vals.size());
+
+  if (ConstantUInt *C = dyn_cast<ConstantUInt>(Idx)) {
+    unsigned idxVal = C->getValue();
+    for (unsigned i = 0; i != Vals.size(); ++i) {
+      result.push_back(i == idxVal ? Elt : Vals[i]);
+    }
+  } else {
+    for (unsigned i = 0; i != Vals.size(); ++i) {
+      SetCondInst *setcc =
+        new SetCondInst(Instruction::SetEQ, Idx, 
+                        ConstantUInt::get(Type::UIntTy, i),
+                        "setcc", &IE);
+      SelectInst *select =
+        new SelectInst(setcc, Elt, Vals[i], "select", &IE);
+      result.push_back(select);
+    }
+  }
+
+  setValues(&IE, result);
+  Changed = true;
+  instrsToRemove.push_back(&IE);
 }
 
 bool LowerPacked::runOnFunction(Function& F)
