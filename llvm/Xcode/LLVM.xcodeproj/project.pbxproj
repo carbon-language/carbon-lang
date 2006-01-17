@@ -131,6 +131,7 @@
 		CFC244BF0959F2E3009F8C47 /* IA64ISelDAGToDAG.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = IA64ISelDAGToDAG.cpp; sourceTree = "<group>"; };
 		CFC244C00959F2E3009F8C47 /* IA64ISelLowering.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = IA64ISelLowering.cpp; sourceTree = "<group>"; };
 		CFC244C10959F2E3009F8C47 /* IA64ISelLowering.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IA64ISelLowering.h; sourceTree = "<group>"; };
+		CFF8B434097C605F0047F72A /* UniqueVector.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = UniqueVector.h; sourceTree = "<group>"; };
 		DE4DA0390911476D0012D44B /* LoopSimplify.cpp */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.cpp.cpp; name = LoopSimplify.cpp; path = ../lib/Transforms/Utils/LoopSimplify.cpp; sourceTree = SOURCE_ROOT; };
 		DE4DA03C091147920012D44B /* LiveInterval.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = LiveInterval.h; path = ../include/llvm/CodeGen/LiveInterval.h; sourceTree = SOURCE_ROOT; };
 		DE4DA03D091147920012D44B /* LiveIntervalAnalysis.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = LiveIntervalAnalysis.h; path = ../include/llvm/CodeGen/LiveIntervalAnalysis.h; sourceTree = SOURCE_ROOT; };
@@ -1898,6 +1899,7 @@
 				DE66F1FF08ABF03100323D32 /* STLExtras.h */,
 				DE66F20008ABF03100323D32 /* StringExtras.h */,
 				DE66F20108ABF03100323D32 /* Tree.h */,
+				CFF8B434097C605F0047F72A /* UniqueVector.h */,
 				DE66F20208ABF03100323D32 /* VectorExtras.h */,
 			);
 			path = ADT;
