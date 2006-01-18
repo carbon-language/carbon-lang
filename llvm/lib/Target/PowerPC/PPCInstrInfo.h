@@ -52,6 +52,8 @@ public:
     case PPC::BGE: return PPC::BLT;
     case PPC::BGT: return PPC::BLE;
     case PPC::BLE: return PPC::BGT;
+    case PPC::BNU: return PPC::BUN;
+    case PPC::BUN: return PPC::BNU;
     }
   }
 };
