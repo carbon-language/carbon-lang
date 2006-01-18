@@ -678,7 +678,7 @@ SDOperand DAGCombiner::visitADD(SDNode *N) {
   
   // fold (add c1, c2) -> c1+c2
   if (N0C && N1C)
-    return DAG.getConstant(N0C->getValue() + N1C->getValue(), VT);
+    return DAG.getNode(ISD::ADD, VT, N0, N1);
   // canonicalize constant to RHS
   if (N0C && !N1C)
     return DAG.getNode(ISD::ADD, VT, N1, N0);
@@ -723,20 +723,17 @@ SDOperand DAGCombiner::visitSUB(SDNode *N) {
   SDOperand N1 = N->getOperand(1);
   ConstantSDNode *N0C = dyn_cast<ConstantSDNode>(N0.Val);
   ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1.Val);
+  MVT::ValueType VT = N0.getValueType();
   
   // fold (sub x, x) -> 0
   if (N0 == N1)
     return DAG.getConstant(0, N->getValueType(0));
-  
   // fold (sub c1, c2) -> c1-c2
   if (N0C && N1C)
-    return DAG.getConstant(N0C->getValue() - N1C->getValue(),
-                           N->getValueType(0));
+    return DAG.getNode(ISD::SUB, VT, N0, N1);
   // fold (sub x, c) -> (add x, -c)
   if (N1C)
-    return DAG.getNode(ISD::ADD, N0.getValueType(), N0,
-                       DAG.getConstant(-N1C->getValue(), N0.getValueType()));
-
+    return DAG.getNode(ISD::ADD, VT, N0, DAG.getConstant(-N1C->getValue(), VT));
   // fold (A+B)-A -> B
   if (N0.getOpcode() == ISD::ADD && N0.getOperand(0) == N1)
     return N0.getOperand(1);
@@ -755,7 +752,7 @@ SDOperand DAGCombiner::visitMUL(SDNode *N) {
   
   // fold (mul c1, c2) -> c1*c2
   if (N0C && N1C)
-    return DAG.getConstant(N0C->getValue() * N1C->getValue(), VT);
+    return DAG.getNode(ISD::MUL, VT, N0, N1);
   // canonicalize constant to RHS
   if (N0C && !N1C)
     return DAG.getNode(ISD::MUL, VT, N1, N0);
@@ -798,14 +795,13 @@ SDOperand DAGCombiner::visitMUL(SDNode *N) {
 SDOperand DAGCombiner::visitSDIV(SDNode *N) {
   SDOperand N0 = N->getOperand(0);
   SDOperand N1 = N->getOperand(1);
-  MVT::ValueType VT = N->getValueType(0);
   ConstantSDNode *N0C = dyn_cast<ConstantSDNode>(N0.Val);
   ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1.Val);
+  MVT::ValueType VT = N->getValueType(0);
 
   // fold (sdiv c1, c2) -> c1/c2
   if (N0C && N1C && !N1C->isNullValue())
-    return DAG.getConstant(N0C->getSignExtended() / N1C->getSignExtended(),
-                           N->getValueType(0));
+    return DAG.getNode(ISD::SDIV, VT, N0, N1);
   // fold (sdiv X, 1) -> X
   if (N1C && N1C->getSignExtended() == 1LL)
     return N0;
@@ -857,14 +853,13 @@ SDOperand DAGCombiner::visitSDIV(SDNode *N) {
 SDOperand DAGCombiner::visitUDIV(SDNode *N) {
   SDOperand N0 = N->getOperand(0);
   SDOperand N1 = N->getOperand(1);
-  MVT::ValueType VT = N->getValueType(0);
   ConstantSDNode *N0C = dyn_cast<ConstantSDNode>(N0.Val);
   ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1.Val);
+  MVT::ValueType VT = N->getValueType(0);
   
   // fold (udiv c1, c2) -> c1/c2
   if (N0C && N1C && !N1C->isNullValue())
-    return DAG.getConstant(N0C->getValue() / N1C->getValue(),
-                           N->getValueType(0));
+    return DAG.getNode(ISD::UDIV, VT, N0, N1);
   // fold (udiv x, (1 << c)) -> x >>u c
   if (N1C && isPowerOf2_64(N1C->getValue()))
     return DAG.getNode(ISD::SRL, N->getValueType(0), N0,
@@ -882,20 +877,19 @@ SDOperand DAGCombiner::visitUDIV(SDNode *N) {
 SDOperand DAGCombiner::visitSREM(SDNode *N) {
   SDOperand N0 = N->getOperand(0);
   SDOperand N1 = N->getOperand(1);
-  MVT::ValueType VT = N->getValueType(0);
   ConstantSDNode *N0C = dyn_cast<ConstantSDNode>(N0);
   ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1);
+  MVT::ValueType VT = N->getValueType(0);
   
   // fold (srem c1, c2) -> c1%c2
   if (N0C && N1C && !N1C->isNullValue())
-    return DAG.getConstant(N0C->getSignExtended() % N1C->getSignExtended(),
-                           N->getValueType(0));
+    return DAG.getNode(ISD::SREM, VT, N0, N1);
   // If we know the sign bits of both operands are zero, strength reduce to a
   // urem instead.  Handles (X & 0x0FFFFFFF) %s 16 -> X&15
   uint64_t SignBit = 1ULL << (MVT::getSizeInBits(VT)-1);
   if (MaskedValueIsZero(N1, SignBit, TLI) &&
       MaskedValueIsZero(N0, SignBit, TLI))
-    return DAG.getNode(ISD::UREM, N1.getValueType(), N0, N1);
+    return DAG.getNode(ISD::UREM, VT, N0, N1);
   return SDOperand();
 }
 
@@ -904,15 +898,14 @@ SDOperand DAGCombiner::visitUREM(SDNode *N) {
   SDOperand N1 = N->getOperand(1);
   ConstantSDNode *N0C = dyn_cast<ConstantSDNode>(N0);
   ConstantSDNode *N1C = dyn_cast<ConstantSDNode>(N1);
+  MVT::ValueType VT = N->getValueType(0);
   
   // fold (urem c1, c2) -> c1%c2
   if (N0C && N1C && !N1C->isNullValue())
-    return DAG.getConstant(N0C->getValue() % N1C->getValue(),
-                           N->getValueType(0));
+    return DAG.getNode(ISD::UREM, VT, N0, N1);
   // fold (urem x, pow2) -> (and x, pow2-1)
   if (N1C && !N1C->isNullValue() && isPowerOf2_64(N1C->getValue()))
-    return DAG.getNode(ISD::AND, N0.getValueType(), N0, 
-                       DAG.getConstant(N1C->getValue()-1, N1.getValueType()));
+    return DAG.getNode(ISD::AND, VT, N0, DAG.getConstant(N1C->getValue()-1,VT));
   return SDOperand();
 }
 
@@ -957,7 +950,7 @@ SDOperand DAGCombiner::visitAND(SDNode *N) {
   
   // fold (and c1, c2) -> c1&c2
   if (N0C && N1C)
-    return DAG.getConstant(N0C->getValue() & N1C->getValue(), VT);
+    return DAG.getNode(ISD::AND, VT, N0, N1);
   // canonicalize constant to RHS
   if (N0C && !N1C)
     return DAG.getNode(ISD::AND, VT, N1, N0);
@@ -1108,8 +1101,7 @@ SDOperand DAGCombiner::visitOR(SDNode *N) {
   
   // fold (or c1, c2) -> c1|c2
   if (N0C && N1C)
-    return DAG.getConstant(N0C->getValue() | N1C->getValue(),
-                           N->getValueType(0));
+    return DAG.getNode(ISD::OR, VT, N0, N1);
   // canonicalize constant to RHS
   if (N0C && !N1C)
     return DAG.getNode(ISD::OR, VT, N1, N0);
@@ -1235,7 +1227,7 @@ SDOperand DAGCombiner::visitXOR(SDNode *N) {
   
   // fold (xor c1, c2) -> c1^c2
   if (N0C && N1C)
-    return DAG.getConstant(N0C->getValue() ^ N1C->getValue(), VT);
+    return DAG.getNode(ISD::XOR, VT, N0, N1);
   // canonicalize constant to RHS
   if (N0C && !N1C)
     return DAG.getNode(ISD::XOR, VT, N1, N0);
@@ -1314,7 +1306,7 @@ SDOperand DAGCombiner::visitSHL(SDNode *N) {
   
   // fold (shl c1, c2) -> c1<<c2
   if (N0C && N1C)
-    return DAG.getConstant(N0C->getValue() << N1C->getValue(), VT);
+    return DAG.getNode(ISD::SHL, VT, N0, N1);
   // fold (shl 0, x) -> 0
   if (N0C && N0C->isNullValue())
     return N0;
@@ -1369,7 +1361,7 @@ SDOperand DAGCombiner::visitSRA(SDNode *N) {
   
   // fold (sra c1, c2) -> c1>>c2
   if (N0C && N1C)
-    return DAG.getConstant(N0C->getSignExtended() >> N1C->getValue(), VT);
+    return DAG.getNode(ISD::SRA, VT, N0, N1);
   // fold (sra 0, x) -> 0
   if (N0C && N0C->isNullValue())
     return N0;
@@ -1398,7 +1390,7 @@ SDOperand DAGCombiner::visitSRL(SDNode *N) {
   
   // fold (srl c1, c2) -> c1 >>u c2
   if (N0C && N1C)
-    return DAG.getConstant(N0C->getValue() >> N1C->getValue(), VT);
+    return DAG.getNode(ISD::SRL, VT, N0, N1);
   // fold (srl 0, x) -> 0
   if (N0C && N0C->isNullValue())
     return N0;
@@ -1427,33 +1419,33 @@ SDOperand DAGCombiner::visitSRL(SDNode *N) {
 SDOperand DAGCombiner::visitCTLZ(SDNode *N) {
   SDOperand N0 = N->getOperand(0);
   ConstantSDNode *N0C = dyn_cast<ConstantSDNode>(N0);
+  MVT::ValueType VT = N->getValueType(0);
 
   // fold (ctlz c1) -> c2
   if (N0C)
-    return DAG.getConstant(CountLeadingZeros_64(N0C->getValue()),
-                           N0.getValueType());
+    return DAG.getNode(ISD::CTLZ, VT, N0);
   return SDOperand();
 }
 
 SDOperand DAGCombiner::visitCTTZ(SDNode *N) {
   SDOperand N0 = N->getOperand(0);
   ConstantSDNode *N0C = dyn_cast<ConstantSDNode>(N0);
+  MVT::ValueType VT = N->getValueType(0);
   
   // fold (cttz c1) -> c2
   if (N0C)
-    return DAG.getConstant(CountTrailingZeros_64(N0C->getValue()),
-                           N0.getValueType());
+    return DAG.getNode(ISD::CTTZ, VT, N0);
   return SDOperand();
 }
 
 SDOperand DAGCombiner::visitCTPOP(SDNode *N) {
   SDOperand N0 = N->getOperand(0);
   ConstantSDNode *N0C = dyn_cast<ConstantSDNode>(N0);
+  MVT::ValueType VT = N->getValueType(0);
   
   // fold (ctpop c1) -> c2
   if (N0C)
-    return DAG.getConstant(CountPopulation_64(N0C->getValue()),
-                           N0.getValueType());
+    return DAG.getNode(ISD::CTPOP, VT, N0);
   return SDOperand();
 }
 
@@ -1591,7 +1583,7 @@ SDOperand DAGCombiner::visitSIGN_EXTEND(SDNode *N) {
 
   // fold (sext c1) -> c1
   if (N0C)
-    return DAG.getConstant(N0C->getSignExtended(), VT);
+    return DAG.getNode(ISD::SIGN_EXTEND, VT, N0);
   // fold (sext (sext x)) -> (sext x)
   if (N0.getOpcode() == ISD::SIGN_EXTEND)
     return DAG.getNode(ISD::SIGN_EXTEND, VT, N0.getOperand(0));
@@ -1636,7 +1628,7 @@ SDOperand DAGCombiner::visitZERO_EXTEND(SDNode *N) {
 
   // fold (zext c1) -> c1
   if (N0C)
-    return DAG.getConstant(N0C->getValue(), VT);
+    return DAG.getNode(ISD::ZERO_EXTEND, VT, N0);
   // fold (zext (zext x)) -> (zext x)
   if (N0.getOpcode() == ISD::ZERO_EXTEND)
     return DAG.getNode(ISD::ZERO_EXTEND, VT, N0.getOperand(0));
@@ -1755,7 +1747,7 @@ SDOperand DAGCombiner::visitTRUNCATE(SDNode *N) {
     return N0;
   // fold (truncate c1) -> c1
   if (N0C)
-    return DAG.getConstant(N0C->getValue(), VT);
+    return DAG.getNode(ISD::TRUNCATE, VT, N0);
   // fold (truncate (truncate x)) -> (truncate x)
   if (N0.getOpcode() == ISD::TRUNCATE)
     return DAG.getNode(ISD::TRUNCATE, VT, N0.getOperand(0));
@@ -1831,7 +1823,7 @@ SDOperand DAGCombiner::visitFADD(SDNode *N) {
   
   // fold (fadd c1, c2) -> c1+c2
   if (N0CFP && N1CFP)
-    return DAG.getConstantFP(N0CFP->getValue() + N1CFP->getValue(), VT);
+    return DAG.getNode(ISD::FADD, VT, N0, N1);
   // canonicalize constant to RHS
   if (N0CFP && !N1CFP)
     return DAG.getNode(ISD::FADD, VT, N1, N0);
@@ -1853,10 +1845,10 @@ SDOperand DAGCombiner::visitFSUB(SDNode *N) {
   
   // fold (fsub c1, c2) -> c1-c2
   if (N0CFP && N1CFP)
-    return DAG.getConstantFP(N0CFP->getValue() - N1CFP->getValue(), VT);
+    return DAG.getNode(ISD::FSUB, VT, N0, N1);
   // fold (A-(-B)) -> A+B
   if (N1.getOpcode() == ISD::FNEG)
-    return DAG.getNode(ISD::FADD, N0.getValueType(), N0, N1.getOperand(0));
+    return DAG.getNode(ISD::FADD, VT, N0, N1.getOperand(0));
   return SDOperand();
 }
 
@@ -1869,7 +1861,7 @@ SDOperand DAGCombiner::visitFMUL(SDNode *N) {
 
   // fold (fmul c1, c2) -> c1*c2
   if (N0CFP && N1CFP)
-    return DAG.getConstantFP(N0CFP->getValue() * N1CFP->getValue(), VT);
+    return DAG.getNode(ISD::FMUL, VT, N0, N1);
   // canonicalize constant to RHS
   if (N0CFP && !N1CFP)
     return DAG.getNode(ISD::FMUL, VT, N1, N0);
@@ -1882,26 +1874,26 @@ SDOperand DAGCombiner::visitFMUL(SDNode *N) {
 SDOperand DAGCombiner::visitFDIV(SDNode *N) {
   SDOperand N0 = N->getOperand(0);
   SDOperand N1 = N->getOperand(1);
+  ConstantFPSDNode *N0CFP = dyn_cast<ConstantFPSDNode>(N0);
+  ConstantFPSDNode *N1CFP = dyn_cast<ConstantFPSDNode>(N1);
   MVT::ValueType VT = N->getValueType(0);
 
-  if (ConstantFPSDNode *N0CFP = dyn_cast<ConstantFPSDNode>(N0))
-    if (ConstantFPSDNode *N1CFP = dyn_cast<ConstantFPSDNode>(N1)) {
-      // fold floating point (fdiv c1, c2)
-      return DAG.getConstantFP(N0CFP->getValue() / N1CFP->getValue(), VT);
-    }
+  // fold (fdiv c1, c2) -> c1/c2
+  if (N0CFP && N1CFP)
+    return DAG.getNode(ISD::FDIV, VT, N0, N1);
   return SDOperand();
 }
 
 SDOperand DAGCombiner::visitFREM(SDNode *N) {
   SDOperand N0 = N->getOperand(0);
   SDOperand N1 = N->getOperand(1);
+  ConstantFPSDNode *N0CFP = dyn_cast<ConstantFPSDNode>(N0);
+  ConstantFPSDNode *N1CFP = dyn_cast<ConstantFPSDNode>(N1);
   MVT::ValueType VT = N->getValueType(0);
 
-  if (ConstantFPSDNode *N0CFP = dyn_cast<ConstantFPSDNode>(N0))
-    if (ConstantFPSDNode *N1CFP = dyn_cast<ConstantFPSDNode>(N1)) {
-      // fold floating point (frem c1, c2) -> fmod(c1, c2)
-      return DAG.getConstantFP(fmod(N0CFP->getValue(),N1CFP->getValue()), VT);
-    }
+  // fold (frem c1, c2) -> fmod(c1,c2)
+  if (N0CFP && N1CFP)
+    return DAG.getNode(ISD::FREM, VT, N0, N1);
   return SDOperand();
 }
 
@@ -1909,47 +1901,55 @@ SDOperand DAGCombiner::visitFREM(SDNode *N) {
 SDOperand DAGCombiner::visitSINT_TO_FP(SDNode *N) {
   SDOperand N0 = N->getOperand(0);
   ConstantSDNode *N0C = dyn_cast<ConstantSDNode>(N0);
+  MVT::ValueType VT = N->getValueType(0);
   
   // fold (sint_to_fp c1) -> c1fp
   if (N0C)
-    return DAG.getConstantFP(N0C->getSignExtended(), N->getValueType(0));
+    return DAG.getNode(ISD::SINT_TO_FP, VT, N0);
   return SDOperand();
 }
 
 SDOperand DAGCombiner::visitUINT_TO_FP(SDNode *N) {
   SDOperand N0 = N->getOperand(0);
   ConstantSDNode *N0C = dyn_cast<ConstantSDNode>(N0);
-  
+  MVT::ValueType VT = N->getValueType(0);
+
   // fold (uint_to_fp c1) -> c1fp
   if (N0C)
-    return DAG.getConstantFP(N0C->getValue(), N->getValueType(0));
+    return DAG.getNode(ISD::UINT_TO_FP, VT, N0);
   return SDOperand();
 }
 
 SDOperand DAGCombiner::visitFP_TO_SINT(SDNode *N) {
-  ConstantFPSDNode *N0CFP = dyn_cast<ConstantFPSDNode>(N->getOperand(0));
+  SDOperand N0 = N->getOperand(0);
+  ConstantFPSDNode *N0CFP = dyn_cast<ConstantFPSDNode>(N0);
+  MVT::ValueType VT = N->getValueType(0);
   
   // fold (fp_to_sint c1fp) -> c1
   if (N0CFP)
-    return DAG.getConstant((int64_t)N0CFP->getValue(), N->getValueType(0));
+    return DAG.getNode(ISD::FP_TO_SINT, VT, N0);
   return SDOperand();
 }
 
 SDOperand DAGCombiner::visitFP_TO_UINT(SDNode *N) {
-  ConstantFPSDNode *N0CFP = dyn_cast<ConstantFPSDNode>(N->getOperand(0));
+  SDOperand N0 = N->getOperand(0);
+  ConstantFPSDNode *N0CFP = dyn_cast<ConstantFPSDNode>(N0);
+  MVT::ValueType VT = N->getValueType(0);
   
   // fold (fp_to_uint c1fp) -> c1
   if (N0CFP)
-    return DAG.getConstant((uint64_t)N0CFP->getValue(), N->getValueType(0));
+    return DAG.getNode(ISD::FP_TO_UINT, VT, N0);
   return SDOperand();
 }
 
 SDOperand DAGCombiner::visitFP_ROUND(SDNode *N) {
-  ConstantFPSDNode *N0CFP = dyn_cast<ConstantFPSDNode>(N->getOperand(0));
+  SDOperand N0 = N->getOperand(0);
+  ConstantFPSDNode *N0CFP = dyn_cast<ConstantFPSDNode>(N0);
+  MVT::ValueType VT = N->getValueType(0);
   
   // fold (fp_round c1fp) -> c1fp
   if (N0CFP)
-    return DAG.getConstantFP(N0CFP->getValue(), N->getValueType(0));
+    return DAG.getNode(ISD::FP_ROUND, VT, N0);
   return SDOperand();
 }
 
@@ -1968,41 +1968,47 @@ SDOperand DAGCombiner::visitFP_ROUND_INREG(SDNode *N) {
 }
 
 SDOperand DAGCombiner::visitFP_EXTEND(SDNode *N) {
-  ConstantFPSDNode *N0CFP = dyn_cast<ConstantFPSDNode>(N->getOperand(0));
+  SDOperand N0 = N->getOperand(0);
+  ConstantFPSDNode *N0CFP = dyn_cast<ConstantFPSDNode>(N0);
+  MVT::ValueType VT = N->getValueType(0);
   
   // fold (fp_extend c1fp) -> c1fp
   if (N0CFP)
-    return DAG.getConstantFP(N0CFP->getValue(), N->getValueType(0));
+    return DAG.getNode(ISD::FP_EXTEND, VT, N0);
   return SDOperand();
 }
 
 SDOperand DAGCombiner::visitFNEG(SDNode *N) {
-  ConstantFPSDNode *N0CFP = dyn_cast<ConstantFPSDNode>(N->getOperand(0));
-  // fold (neg c1) -> -c1
+  SDOperand N0 = N->getOperand(0);
+  ConstantFPSDNode *N0CFP = dyn_cast<ConstantFPSDNode>(N0);
+  MVT::ValueType VT = N->getValueType(0);
+
+  // fold (fneg c1) -> -c1
   if (N0CFP)
-    return DAG.getConstantFP(-N0CFP->getValue(), N->getValueType(0));
-  // fold (neg (sub x, y)) -> (sub y, x)
+    return DAG.getNode(ISD::FNEG, VT, N0);
+  // fold (fneg (sub x, y)) -> (sub y, x)
   if (N->getOperand(0).getOpcode() == ISD::SUB)
-    return DAG.getNode(ISD::SUB, N->getValueType(0), N->getOperand(1), 
-                       N->getOperand(0));
-  // fold (neg (neg x)) -> x
+    return DAG.getNode(ISD::SUB, VT, N->getOperand(1), N->getOperand(0));
+  // fold (fneg (fneg x)) -> x
   if (N->getOperand(0).getOpcode() == ISD::FNEG)
     return N->getOperand(0).getOperand(0);
   return SDOperand();
 }
 
 SDOperand DAGCombiner::visitFABS(SDNode *N) {
-  ConstantFPSDNode *N0CFP = dyn_cast<ConstantFPSDNode>(N->getOperand(0));
+  SDOperand N0 = N->getOperand(0);
+  ConstantFPSDNode *N0CFP = dyn_cast<ConstantFPSDNode>(N0);
+  MVT::ValueType VT = N->getValueType(0);
+  
   // fold (fabs c1) -> fabs(c1)
   if (N0CFP)
-    return DAG.getConstantFP(fabs(N0CFP->getValue()), N->getValueType(0));
+    return DAG.getNode(ISD::FABS, VT, N0);
   // fold (fabs (fabs x)) -> (fabs x)
   if (N->getOperand(0).getOpcode() == ISD::FABS)
     return N->getOperand(0);
   // fold (fabs (fneg x)) -> (fabs x)
   if (N->getOperand(0).getOpcode() == ISD::FNEG)
-    return DAG.getNode(ISD::FABS, N->getValueType(0), 
-                       N->getOperand(0).getOperand(0));
+    return DAG.getNode(ISD::FABS, VT, N->getOperand(0).getOperand(0));
   return SDOperand();
 }
 
