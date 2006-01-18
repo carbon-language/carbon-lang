@@ -215,17 +215,18 @@ namespace {
     : DwarfWriter(o, ap)
     {
       needsSet = true;
-      DwarfAbbrevSection = ".section __DWARFA,__debug_abbrev,regular,debug";
-      DwarfInfoSection = ".section __DWARFA,__debug_info,regular,debug";
-      DwarfLineSection = ".section __DWARFA,__debug_line,regular,debug";
-      DwarfFrameSection = ".section __DWARFA,__debug_frame,regular,debug";
-      DwarfPubNamesSection = ".section __DWARFA,__debug_pubnames,regular,debug";
-      DwarfPubTypesSection = ".section __DWARFA,__debug_pubtypes,regular,debug";
-      DwarfStrSection = ".section __DWARFA,__debug_str,regular,debug";
-      DwarfLocSection = ".section __DWARFA,__debug_loc,regular,debug";
-      DwarfARangesSection = ".section __DWARFA,__debug_aranges,regular,debug";
-      DwarfRangesSection = ".section __DWARFA,__debug_ranges,regular,debug";
-      DwarfMacInfoSection = ".section __DWARFA,__debug_macinfo,regular,debug";
+      DwarfAbbrevSection = ".section __DWARFA,__debug_abbrev";
+      DwarfInfoSection = ".section __DWARFA,__debug_info";
+      DwarfLineSection = ".section __DWARFA,__debug_line";
+      DwarfFrameSection =
+          ".section __DWARFA,__debug_frame,,coalesced,no_toc+strip_static_syms";
+      DwarfPubNamesSection = ".section __DWARFA,__debug_pubnames";
+      DwarfPubTypesSection = ".section __DWARFA,__debug_pubtypes";
+      DwarfStrSection = ".section __DWARFA,__debug_str";
+      DwarfLocSection = ".section __DWARFA,__debug_loc";
+      DwarfARangesSection = ".section __DWARFA,__debug_aranges";
+      DwarfRangesSection = ".section __DWARFA,__debug_ranges";
+      DwarfMacInfoSection = ".section __DWARFA,__debug_macinfo";
       TextSection = ".text";
       DataSection = ".data";
     }
@@ -233,7 +234,6 @@ namespace {
 
   /// DarwinAsmPrinter - PowerPC assembly printer, customized for Darwin/Mac OS
   /// X
-  ///
   struct DarwinAsmPrinter : public PPCAsmPrinter {
   
     DarwinDwarfWriter DW;

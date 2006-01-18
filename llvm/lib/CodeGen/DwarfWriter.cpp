@@ -701,7 +701,7 @@ unsigned DIEString::SizeOf(const DwarfWriter &DW, unsigned Form) const {
 /// EmitValue - Emit label value.
 ///
 void DIELabel::EmitValue(const DwarfWriter &DW, unsigned Form) const {
-  DW.EmitLabelReference(Value);
+  DW.EmitReference(Value);
 }
 
 /// SizeOf - Determine size of label value in bytes.
@@ -893,9 +893,9 @@ void DwarfWriter::EmitLabel(const char *Tag, unsigned Number) const {
   O << ":\n";
 }
 
-/// EmitLabelReference - Emit a reference to a label.
+/// EmitReference - Emit a reference to a label.
 ///
-void DwarfWriter::EmitLabelReference(const char *Tag, unsigned Number) const {
+void DwarfWriter::EmitReference(const char *Tag, unsigned Number) const {
   if (AddressSize == 4)
     O << Asm->Data32bitsDirective;
   else
@@ -1113,7 +1113,7 @@ void DwarfWriter::EmitDebugInfo() const {
     
     EmitShort(DWARF_VERSION); EOL("DWARF version number");
 
-    EmitLabelReference("abbrev", 0); EOL("Offset Into Abbrev. Section");
+    EmitReference("abbrev", 0); EOL("Offset Into Abbrev. Section");
 
     EmitByte(AddressSize); EOL("Address Size (in bytes)");
     
@@ -1252,7 +1252,7 @@ void DwarfWriter::EmitDebugLines() const {
     EmitByte(0); EOL("Extended Op");
     EmitByte(4 + 1); EOL("Op size");
     EmitByte(DW_LNE_set_address); EOL("DW_LNE_set_address");
-    EmitLabelReference("loc", i + 1); EOL("Location label");
+    EmitReference("loc", i + 1); EOL("Location label");
     
     // If change of source, then switch to the new source.
     if (Source != LineInfo->getSourceID()) {
@@ -1297,41 +1297,79 @@ void DwarfWriter::EmitDebugLines() const {
 /// EmitDebugFrame - Emit visible names into a debug frame section.
 ///
 void DwarfWriter::EmitDebugFrame() {
+  // FIXME - Should be per frame
 }
 
 /// EmitDebugPubNames - Emit visible names into a debug pubnames section.
 ///
 void DwarfWriter::EmitDebugPubNames() {
+  // Start the dwarf pubnames section.
+  Asm->SwitchSection(DwarfPubNamesSection, 0);
 }
 
 /// EmitDebugPubTypes - Emit visible names into a debug pubtypes section.
 ///
 void DwarfWriter::EmitDebugPubTypes() {
+  // Start the dwarf pubtypes section.
+  Asm->SwitchSection(DwarfPubTypesSection, 0);
 }
 
 /// EmitDebugStr - Emit visible names into a debug str section.
 ///
 void DwarfWriter::EmitDebugStr() {
+  // Start the dwarf str section.
+  Asm->SwitchSection(DwarfStrSection, 0);
 }
 
 /// EmitDebugLoc - Emit visible names into a debug loc section.
 ///
 void DwarfWriter::EmitDebugLoc() {
+  // Start the dwarf loc section.
+  Asm->SwitchSection(DwarfLocSection, 0);
 }
 
 /// EmitDebugARanges - Emit visible names into a debug aranges section.
 ///
 void DwarfWriter::EmitDebugARanges() {
+  // Start the dwarf aranges section.
+  Asm->SwitchSection(DwarfARangesSection, 0);
+  
+  // FIXME - Mock up
+
+  // Don't include size of length
+  EmitLong(0x1c); EOL("Length of Address Ranges Info");
+  
+  EmitShort(DWARF_VERSION); EOL("Dwarf Version");
+  
+  EmitReference("info", 0); EOL("Offset of Compilation Unit Info");
+
+  EmitByte(AddressSize); EOL("Size of Address");
+
+  EmitByte(0); EOL("Size of Segment Descriptor");
+
+  EmitShort(0);  EOL("Pad (1)");
+  EmitShort(0);  EOL("Pad (2)");
+
+  // Range 1
+  EmitReference("text_begin", 0); EOL("Address");
+  EmitDifference("text_end", 0, "text_begin", 0); EOL("Length");
+
+  EmitLong(0); EOL("EOM (1)");
+  EmitLong(0); EOL("EOM (2)");
 }
 
 /// EmitDebugRanges - Emit visible names into a debug ranges section.
 ///
 void DwarfWriter::EmitDebugRanges() {
+  // Start the dwarf ranges section.
+  Asm->SwitchSection(DwarfRangesSection, 0);
 }
 
 /// EmitDebugMacInfo - Emit visible names into a debug macinfo section.
 ///
 void DwarfWriter::EmitDebugMacInfo() {
+  // Start the dwarf macinfo section.
+  Asm->SwitchSection(DwarfMacInfoSection, 0);
 }
 
 /// ShouldEmitDwarf - Determine if Dwarf declarations should be made.
@@ -1397,7 +1435,9 @@ void DwarfWriter::EndModule() {
   EOL("Dwarf End Module");
   
   // Standard sections final addresses.
+  Asm->SwitchSection(TextSection, 0);
   EmitLabel("text_end", 0);
+  Asm->SwitchSection(DataSection, 0);
   EmitLabel("data_end", 0);
 
   // Get directory and source information.
@@ -1451,14 +1491,14 @@ void DwarfWriter::EndModule() {
   EmitDebugMacInfo();
 }
 
-/// BeginFunction - Emit pre-function debug information.
+/// BeginFunction - Gather pre-function debug information.
 ///
 void DwarfWriter::BeginFunction() {
   if (!ShouldEmitDwarf()) return;
   EOL("Dwarf Begin Function");
 }
 
-/// EndFunction - Emit post-function debug information.
+/// EndFunction - Gather and emit post-function debug information.
 ///
 void DwarfWriter::EndFunction() {
   if (!ShouldEmitDwarf()) return;

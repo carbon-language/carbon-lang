@@ -855,12 +855,12 @@ public:
     }
     void EmitLabel(const char *Tag, unsigned Number) const;
     
-    /// EmitLabelReference - Emit a reference to a label.
+    /// EmitReference - Emit a reference to a label.
     ///
-    void EmitLabelReference(DWLabel Label) const {
-      EmitLabelReference(Label.Tag, Label.Number);
+    void EmitReference(DWLabel Label) const {
+      EmitReference(Label.Tag, Label.Number);
     }
-    void EmitLabelReference(const char *Tag, unsigned Number) const;
+    void EmitReference(const char *Tag, unsigned Number) const;
 
     /// EmitDifference - Emit the difference between two labels.  Some
     /// assemblers do not behave with absolute expressions with data directives,
@@ -967,11 +967,11 @@ private:
     ///
     void EndModule();
     
-    /// BeginFunction - Emit pre-function debug information.
+    /// BeginFunction - Gather pre-function debug information.
     ///
     void BeginFunction();
     
-    /// EndFunction - Emit post-function debug information.
+    /// EndFunction - Gather and emit post-function debug information.
     ///
     void EndFunction();
   };
