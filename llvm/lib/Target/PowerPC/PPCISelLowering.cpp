@@ -238,7 +238,7 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     // subtraction at all.
     if (isFloatingPointZero(RHS))
       switch (CC) {
-      default: assert(0 && "Invalid FSEL condition"); abort();
+      default: break;       // SETUO etc aren't handled by fsel.
       case ISD::SETULT:
       case ISD::SETLT:
         std::swap(TV, FV);  // fsel is natively setge, swap operands for setlt
@@ -260,7 +260,7 @@ SDOperand PPCTargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
     
     SDOperand Cmp;
     switch (CC) {
-    default: assert(0 && "Invalid FSEL condition"); abort();
+    default: break;       // SETUO etc aren't handled by fsel.
     case ISD::SETULT:
     case ISD::SETLT:
       Cmp = DAG.getNode(ISD::FSUB, CmpVT, LHS, RHS);
