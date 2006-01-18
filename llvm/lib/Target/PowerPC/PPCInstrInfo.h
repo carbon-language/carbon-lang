@@ -1,4 +1,4 @@
-//===- PPCInstrInfo.h - PowerPC32 Instruction Information -------*- C++ -*-===//
+//===- PPCInstrInfo.h - PowerPC Instruction Information ---------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
