@@ -2638,7 +2638,7 @@ SDOperand DAGCombiner::SimplifySetCC(MVT::ValueType VT, SDOperand N0,
       return DAG.getConstant(UOF, VT);
     // Otherwise, we can't fold it.  However, we can simplify it to SETUO/SETO
     // if it is not already.
-    ISD::CondCode NewCond = UOF == 0 ? ISD::SETUO : ISD::SETO;
+    ISD::CondCode NewCond = UOF == 0 ? ISD::SETO : ISD::SETUO;
     if (NewCond != Cond)
       return DAG.getSetCC(VT, N0, N1, NewCond);
   }
