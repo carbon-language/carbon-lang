@@ -1070,7 +1070,9 @@ void SelectionDAGLowering::visitCall(CallInst &I) {
         } else if (Name[0] == 's' && (Name == "sin" || Name == "sinf")) {
           if (I.getNumOperands() == 2 &&   // Basic sanity checks.
               I.getOperand(1)->getType()->isFloatingPoint() &&
-              I.getType() == I.getOperand(1)->getType()) {
+              I.getType() == I.getOperand(1)->getType() &&
+              TLI.isOperationLegal(ISD::FSIN,
+                                 TLI.getValueType(I.getOperand(1)->getType()))) {
             SDOperand Tmp = getValue(I.getOperand(1));
             setValue(&I, DAG.getNode(ISD::FSIN, Tmp.getValueType(), Tmp));
             return;
@@ -1078,7 +1080,9 @@ void SelectionDAGLowering::visitCall(CallInst &I) {
         } else if (Name[0] == 'c' && (Name == "cos" || Name == "cosf")) {
           if (I.getNumOperands() == 2 &&   // Basic sanity checks.
               I.getOperand(1)->getType()->isFloatingPoint() &&
-              I.getType() == I.getOperand(1)->getType()) {
+              I.getType() == I.getOperand(1)->getType() &&
+              TLI.isOperationLegal(ISD::FCOS,
+                              TLI.getValueType(I.getOperand(1)->getType()))) {
             SDOperand Tmp = getValue(I.getOperand(1));
             setValue(&I, DAG.getNode(ISD::FCOS, Tmp.getValueType(), Tmp));
             return;
