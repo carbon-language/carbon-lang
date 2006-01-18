@@ -531,6 +531,8 @@ X86TargetLowering::LowerCCCCallTo(SDOperand Chain, const Type *RetTy,
       case MVT::i8:
         RetVal = DAG.getCopyFromReg(Chain, X86::AL, MVT::i8, InFlag);
         Chain = RetVal.getValue(1);
+        if (RetTyVT == MVT::i1) 
+          RetVal = DAG.getNode(ISD::TRUNCATE, MVT::i1, RetVal);
         break;
       case MVT::i16:
         RetVal = DAG.getCopyFromReg(Chain, X86::AX, MVT::i16, InFlag);
@@ -1057,6 +1059,8 @@ X86TargetLowering::LowerFastCCCallTo(SDOperand Chain, const Type *RetTy,
       case MVT::i8:
         RetVal = DAG.getCopyFromReg(Chain, X86::AL, MVT::i8, InFlag);
         Chain = RetVal.getValue(1);
+        if (RetTyVT == MVT::i1) 
+          RetVal = DAG.getNode(ISD::TRUNCATE, MVT::i1, RetVal);
         break;
       case MVT::i16:
         RetVal = DAG.getCopyFromReg(Chain, X86::AX, MVT::i16, InFlag);
