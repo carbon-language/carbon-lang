@@ -1469,7 +1469,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
       // Expand to CopyFromReg if the target set 
       // StackPointerRegisterToSaveRestore.
       if (unsigned SP = TLI.getStackPointerRegisterToSaveRestore()) {
-        Tmp1 = DAG.getCopyFromReg(Node->getOperand(0), SP, 
+        Tmp1 = DAG.getCopyFromReg(Tmp1, SP, 
                                   Node->getValueType(0));
         AddLegalizedOperand(SDOperand(Node, 0), Tmp1);
         AddLegalizedOperand(SDOperand(Node, 1), Tmp1.getValue(1));
