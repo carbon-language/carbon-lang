@@ -30,14 +30,18 @@ Module *llvm::CloneModule(const Module *M) {
   Module *New = new Module(M->getModuleIdentifier());
   New->setEndianness(M->getEndianness());
   New->setPointerSize(M->getPointerSize());
+  New->setTargetTriple(M->getTargetTriple());
 
-  // Copy all of the type symbol table entries over...
+  // Copy all of the type symbol table entries over.
   const SymbolTable &SymTab = M->getSymbolTable();
   SymbolTable::type_const_iterator TypeI = SymTab.type_begin();
   SymbolTable::type_const_iterator TypeE = SymTab.type_end();
-  for ( ; TypeI != TypeE; ++TypeI ) {
+  for (; TypeI != TypeE; ++TypeI)
     New->addTypeName(TypeI->first, TypeI->second);
-  }
+  
+  // Copy all of the dependent libraries over.
+  for (Module::lib_iterator I = M->lib_begin(), E = M->lib_end(); I != E; ++I)
+    New->addLibrary(*I);
 
   // Create the value map that maps things from the old module over to the new
   // module.
