@@ -473,7 +473,7 @@ IA64TargetLowering::LowerCallTo(SDOperand Chain,
   SDOperand RetVal;
   if (RetTyVT != MVT::isVoid) {
     switch (RetTyVT) {
-    default: // assert(0 && "Unknown value type to return!");
+    default: assert(0 && "Unknown value type to return!");
     case MVT::i1: { // bools are just like other integers (returned in r8)
       SDOperand boolInR8 = DAG.getCopyFromReg(Chain, IA64::r8, MVT::i64, InFlag);
       InFlag = boolInR8.getValue(2);
@@ -491,7 +491,7 @@ IA64TargetLowering::LowerCallTo(SDOperand Chain,
       RetVal = DAG.getCopyFromReg(Chain, IA64::r8, MVT::i64, InFlag);
       Chain = RetVal.getValue(1);
       
-      // Add a note to keep track of whether it is sign or zero extended - TODO: bools
+      // keep track of whether it is sign or zero extended (todo: bools?)
       RetVal = DAG.getNode(RetTy->isSigned() ? ISD::AssertSext :ISD::AssertZext,
                            MVT::i64, RetVal, DAG.getValueType(RetTyVT));
       RetVal = DAG.getNode(ISD::TRUNCATE, RetTyVT, RetVal);
@@ -500,6 +500,11 @@ IA64TargetLowering::LowerCallTo(SDOperand Chain,
       RetVal = DAG.getCopyFromReg(Chain, IA64::r8, MVT::i64, InFlag);
       Chain = RetVal.getValue(1);
       InFlag = RetVal.getValue(2); // XXX dead
+      break;
+    case MVT::f32:
+      RetVal = DAG.getCopyFromReg(Chain, IA64::F8, MVT::f64, InFlag);
+      Chain = RetVal.getValue(1);
+      RetVal = DAG.getNode(ISD::TRUNCATE, MVT::f32, RetVal);
       break;
     case MVT::f64:
       RetVal = DAG.getCopyFromReg(Chain, IA64::F8, MVT::f64, InFlag);
