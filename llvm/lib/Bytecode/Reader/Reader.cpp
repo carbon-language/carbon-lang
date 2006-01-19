@@ -857,6 +857,11 @@ void BytecodeReader::ParseInstruction(std::vector<unsigned> &Oprnds,
     }
 
     Result = new CallInst(F, Params);
+    if (CallInst* newCI = UpgradeIntrinsicCall(cast<CallInst>(Result))) {
+      Result->replaceAllUsesWith(newCI);
+      Result->eraseFromParent();
+      Result = newCI;
+    }
     if (isTailCall) cast<CallInst>(Result)->setTailCall();
     if (CallingConv) cast<CallInst>(Result)->setCallingConv(CallingConv);
     break;
