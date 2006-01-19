@@ -2119,11 +2119,21 @@ public:
         NodeHasProperty(Pattern, SDNodeInfo::SDNPInFlag, ISE);
       bool HasOutFlag = HasImpResults ||
         (isRoot && PatternHasProperty(Pattern, SDNodeInfo::SDNPOutFlag, ISE));
+      bool NodeHasChain =
+        NodeHasProperty(Pattern, SDNodeInfo::SDNPHasChain, ISE);
       bool HasChain   = II.hasCtrlDep ||
         (isRoot && PatternHasProperty(Pattern, SDNodeInfo::SDNPHasChain, ISE));
 
       if (HasOutFlag || HasInFlag || HasOptInFlag || HasImpInputs)
         OS << "      SDOperand InFlag = SDOperand(0, 0);\n";
+
+      // How many results is this pattern expected to produce?
+      unsigned NumExpectedResults = 0;
+      for (unsigned i = 0, e = Pattern->getExtTypes().size(); i != e; i++) {
+        MVT::ValueType VT = Pattern->getTypeNum(i);
+        if (VT != MVT::isVoid && VT != MVT::Flag)
+          NumExpectedResults++;
+      }
 
       // Determine operand emission order. Complex pattern first.
       std::vector<std::pair<unsigned, TreePatternNode*> > EmitOrder;
@@ -2163,7 +2173,7 @@ public:
       if (HasImpInputs)
         EmitCopyToRegs(Pattern, "N", ChainEmitted, true);
       if (HasInFlag || HasOptInFlag) {
-        unsigned FlagNo = (unsigned) HasChain + Pattern->getNumChildren();
+        unsigned FlagNo = (unsigned) NodeHasChain + Pattern->getNumChildren();
         if (HasOptInFlag)
           OS << "      if (N.getNumOperands() == " << FlagNo+1 << ") ";
         else
@@ -2237,8 +2247,6 @@ public:
         }
 
         // User does not expect that the instruction produces a chain!
-        bool NodeHasChain =
-          NodeHasProperty(Pattern, SDNodeInfo::SDNPHasChain, ISE);
         bool AddedChain = HasChain && !NodeHasChain;
         if (NodeHasChain)
           OS << "      CodeGenMap[N.getValue(" << ValNo++  << ")] = Chain;\n";
@@ -2255,13 +2263,10 @@ public:
           OS << "      CodeGenMap[N.getValue(" << ValNo << ")] = InFlag;\n";
 
         if (AddedChain && HasOutFlag) {
-          // Is this pattern expected to produce a result?
-          if (Pattern->getTypeNum(0) == MVT::isVoid ||
-              Pattern->getTypeNum(0) == MVT::Flag) {
+          if (NumExpectedResults == 0) {
             OS << "      return Result.getValue(N.ResNo+1);\n";
           } else {
-            OS << "      if (N.ResNo < "
-               << ((NumResults > 1) ? NumResults : 1) << ")\n";
+            OS << "      if (N.ResNo < " << NumExpectedResults << ")\n";
             OS << "        return Result.getValue(N.ResNo);\n";
             OS << "      else\n";
             OS << "        return Result.getValue(N.ResNo+1);\n";
