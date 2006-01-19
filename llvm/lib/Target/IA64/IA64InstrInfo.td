@@ -142,6 +142,9 @@ let isTwoAddress = 1 in {
 def TPCADDIMM22 : AForm<0x03, 0x0b,
   (ops GR:$dst, GR:$src1, s22imm:$imm, PR:$qp),
     "($qp) add $dst = $imm, $dst;;">;
+def TPCADDS : AForm<0x03, 0x0b,
+  (ops GR:$dst, GR:$src1, s14imm:$imm, PR:$qp),
+    "($qp) adds $dst = $imm, $dst;;">;
 def TPCMPIMM8NE : AForm<0x03, 0x0b,
   (ops PR:$dst, PR:$src1, s22imm:$imm, GR:$src2, PR:$qp),
     "($qp) cmp.ne $dst , p0 = $imm, $src2;;">;
@@ -377,7 +380,7 @@ def bAND  : Pat<(and PR:$src1, PR:$src2),
   
 def bXOR  : Pat<(xor PR:$src1, PR:$src2),
           (TPCMPIMM8NE (PCMPEQUNCR0R0 PR:$src2), 1,
-	               (PADDS r0, 1, PR:$src2),
+	               (TPCADDS (ADDS r0, 0), 1, PR:$src2),
                         PR:$src1)>;
 
 def XOR   : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, GR:$src2),
