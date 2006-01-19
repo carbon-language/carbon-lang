@@ -2082,7 +2082,7 @@ SDOperand SelectionDAGLegalize::LegalizeOp(SDOperand Op) {
           Tmp2 = LegalizeOp(Tmp.getValue(i));
           AddLegalizedOperand(SDOperand(Node, i), Tmp2);
           if (i == Op.ResNo)
-            RetVal = Tmp;
+            RetVal = Tmp2;
         }
         assert(RetVal.Val && "Illegal result number");
         return RetVal;
