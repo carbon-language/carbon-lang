@@ -109,7 +109,7 @@ bool InternalizePass::runOnModule(Module &M) {
   // Never internalize the llvm.used symbol.  It is used to implement
   // attribute((used)).
   ExternalNames.insert("llvm.used");
-        
+  
   // Never internalize anchors used by the debugger, else the debugger won't
   // find them.
   ExternalNames.insert("llvm.dbg.translation_units");
@@ -125,13 +125,19 @@ bool InternalizePass::runOnModule(Module &M) {
       // the list if it's empty.
       //
       if (I->hasAppendingLinkage() && (I->getName() == "llvm.global_ctors" ||
-                                       I->getName() == "llvm.global_dtors"))
+                                       I->getName() == "llvm.global_dtors")) {
         I->setConstant(true);
+        
+        // If the global ctors/dtors list has no uses, do not internalize it, as
+        // there is no __main in this program, so the asmprinter should handle
+        // it.
+        if (I->use_empty()) continue;
+      }
       
       I->setLinkage(GlobalValue::InternalLinkage);
       Changed = true;
       ++NumGlobals;
-      DEBUG(std::cerr << "Internalizing gvar " << I->getName() << "\n");
+      DEBUG(std::cerr << "Internalized gvar " << I->getName() << "\n");
     }
       
   return Changed;
