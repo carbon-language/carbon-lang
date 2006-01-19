@@ -3068,12 +3068,22 @@ def : Pat<(shl R8 :$src1, (i8 1)), (ADD8rr  R8 :$src1, R8 :$src1)>;
 def : Pat<(shl R16:$src1, (i8 1)), (ADD16rr R16:$src1, R16:$src1)>;
 def : Pat<(shl R32:$src1, (i8 1)), (ADD32rr R32:$src1, R32:$src1)>;
 
-// (or (x >> c) | (y << (32 - c))) ==> (shrd x, y, c)
+// (or (x >> c) | (y << (32 - c))) ==> (shrd32 x, y, c)
 def : Pat<(or (srl R32:$src1, CL:$amt),
               (shl R32:$src2, (sub 32, CL:$amt))),
           (SHRD32rrCL R32:$src1, R32:$src2)>;
 
-// (or (x << c) | (y >> (32 - c))) ==> (shld x, y, c)
+// (or (x << c) | (y >> (32 - c))) ==> (shld32 x, y, c)
 def : Pat<(or (shl R32:$src1, CL:$amt),
               (srl R32:$src2, (sub 32, CL:$amt))),
           (SHLD32rrCL R32:$src1, R32:$src2)>;
+
+// (or (x >> c) | (y << (16 - c))) ==> (shrd16 x, y, c)
+def : Pat<(or (srl R16:$src1, CL:$amt),
+              (shl R16:$src2, (sub 16, CL:$amt))),
+          (SHRD16rrCL R16:$src1, R16:$src2)>;
+
+// (or (x << c) | (y >> (16 - c))) ==> (shld16 x, y, c)
+def : Pat<(or (shl R16:$src1, CL:$amt),
+              (srl R16:$src2, (sub 16, CL:$amt))),
+          (SHLD16rrCL R16:$src1, R16:$src2)>;

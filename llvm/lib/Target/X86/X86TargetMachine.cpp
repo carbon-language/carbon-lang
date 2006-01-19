@@ -48,7 +48,7 @@ namespace {
   cl::opt<bool, true> EnableX86DAGDAG("enable-x86-dag-isel", cl::Hidden,
                       cl::desc("Enable DAG-to-DAG isel for X86"),
                       cl::location(X86DAGIsel),
-                      cl::init(false));
+                      cl::init(true));
   
   // FIXME: This should eventually be handled with target triples and
   // subtarget support!
