@@ -141,7 +141,7 @@ Function* llvm::UpgradeIntrinsicFunction(Function* F) {
   return 0;
 }
 
-CallInst* llvm::UpgradeIntrinsicCall(CallInst *CI) {
+Instruction* llvm::UpgradeIntrinsicCall(CallInst *CI) {
   Function *F = CI->getCalledFunction();
   if (const Type* Ty = get_type(F)) {
     Function* newF = UpgradeIntrinsicFunction(F);
@@ -154,6 +154,9 @@ CallInst* llvm::UpgradeIntrinsicCall(CallInst *CI) {
       const Type* newTy = Ty->getUnsignedVersion();
       newCI->setOperand(1,new CastInst(newCI->getOperand(1), newTy, 
                      "autoupgrade_cast", newCI));
+      CastInst* final = new CastInst(newCI, Ty, "autoupgrade_uncast",newCI);
+      newCI->moveBefore(final);
+      return final;
     }
     return newCI;
   }
