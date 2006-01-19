@@ -1457,7 +1457,7 @@ SDOperand X86TargetLowering::LowerOperation(SDOperand Op, SelectionDAG &DAG) {
       Tmp3 = DAG.getNode(ISD::SHL, MVT::i32, ShOpLo, ShAmt);
     } else {
       Tmp2 = DAG.getNode(X86ISD::SHRD, MVT::i32, ShOpLo, ShOpHi, ShAmt);
-      Tmp3 = DAG.getNode(isSRA ? ISD::SRA : ISD::SHL, MVT::i32, ShOpHi, ShAmt);
+      Tmp3 = DAG.getNode(isSRA ? ISD::SRA : ISD::SRL, MVT::i32, ShOpHi, ShAmt);
     }
 
     SDOperand InFlag = DAG.getNode(X86ISD::TEST, MVT::Flag,
