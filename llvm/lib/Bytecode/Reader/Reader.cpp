@@ -670,6 +670,7 @@ void BytecodeReader::ParseInstruction(std::vector<unsigned> &Oprnds,
                                     getValue(iType, Oprnds[0]),
                                     getValue(iType, Oprnds[1]));
 
+  bool isCall = false;
   switch (Opcode) {
   default:
     if (Result == 0)
@@ -857,13 +858,9 @@ void BytecodeReader::ParseInstruction(std::vector<unsigned> &Oprnds,
     }
 
     Result = new CallInst(F, Params);
-    if (CallInst* newCI = UpgradeIntrinsicCall(cast<CallInst>(Result))) {
-      Result->replaceAllUsesWith(newCI);
-      Result->eraseFromParent();
-      Result = newCI;
-    }
     if (isTailCall) cast<CallInst>(Result)->setTailCall();
     if (CallingConv) cast<CallInst>(Result)->setCallingConv(CallingConv);
+    isCall = true;
     break;
   }
   case 56:                     // Invoke with encoded CC
@@ -1034,6 +1031,15 @@ void BytecodeReader::ParseInstruction(std::vector<unsigned> &Oprnds,
     break;
   }  // end switch(Opcode)
 
+  BB->getInstList().push_back(Result);
+
+  if (this->hasUpgradedIntrinsicFunctions && isCall)
+    if (Instruction* inst = UpgradeIntrinsicCall(cast<CallInst>(Result))) {
+      Result->replaceAllUsesWith(inst);
+      Result->eraseFromParent();
+      Result = inst;
+    }
+
   unsigned TypeSlot;
   if (Result->getType() == InstTy)
     TypeSlot = iType;
@@ -1041,7 +1047,6 @@ void BytecodeReader::ParseInstruction(std::vector<unsigned> &Oprnds,
     TypeSlot = getTypeSlot(Result->getType());
 
   insertValue(Result, TypeSlot, FunctionValues);
-  BB->getInstList().push_back(Result);
 }
 
 /// Get a particular numbered basic block, which might be a forward reference.
@@ -2026,7 +2031,14 @@ void BytecodeReader::ParseModuleGlobalInfo() {
     // Insert the place holder.
     Function *Func = new Function(FTy, GlobalValue::ExternalLinkage,
                                   "", TheModule);
-    UpgradeIntrinsicFunction(Func);
+
+    // Replace with upgraded intrinsic function, if applicable.
+    if (Function* upgrdF = UpgradeIntrinsicFunction(Func)) {
+      hasUpgradedIntrinsicFunctions = true;
+      Func->eraseFromParent();
+      Func = upgrdF;
+    }
+
     insertValue(Func, (FnSignature & (~0U >> 1)) >> 5, ModuleValues);
 
     // Flags are not used yet.
