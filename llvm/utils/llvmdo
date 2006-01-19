@@ -96,12 +96,15 @@ if test -d "$TOPDIR" ; then
       \! -name '*~' \
       \! -name '#*' \
       \! -name 'Sparc.burm.c' \
+      \! -name 'Lexer.cpp' \
       \! -name 'llvmAsmParser.cpp' \
       \! -name 'llvmAsmParser.h' \
+      \! -name 'FileLexer.cpp' \
       \! -name 'FileParser.cpp' \
       \! -name 'FileParser.h' \
       \! -name 'StackerParser.h' \
       \! -name 'StackerParser.cpp' \
+      \! -name 'ConfigLexer.cpp' \
      -exec $PROGRAM "$@" {} \; \
     \)
 else
