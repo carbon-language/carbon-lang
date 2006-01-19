@@ -63,8 +63,9 @@ def X86addflag : SDNode<"X86ISD::ADD_FLAG", SDTIntBinOp ,
 def X86subflag : SDNode<"X86ISD::SUB_FLAG", SDTIntBinOp,
                         [SDNPOutFlag]>;
 def X86adc     : SDNode<"X86ISD::ADC" ,     SDTIntBinOp ,
-                        [SDNPCommutative, SDNPAssociative]>;
-def X86sbb     : SDNode<"X86ISD::SBB" ,     SDTIntBinOp>;
+                        [SDNPCommutative, SDNPAssociative, SDNPInFlag]>;
+def X86sbb     : SDNode<"X86ISD::SBB" ,     SDTIntBinOp,
+                        [SDNPInFlag]>;
 
 def X86shld    : SDNode<"X86ISD::SHLD",     SDTIntShiftDOp>;
 def X86shrd    : SDNode<"X86ISD::SHRD",     SDTIntShiftDOp>;
