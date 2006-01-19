@@ -339,3 +339,7 @@ Squish small scalar globals together into a single global struct, allowing the
 address of the struct to be CSE'd, avoiding PIC accesses (also reduces the size
 of the GOT on targets with one).
 
+===-------------------------------------------------------------------------===
+
+Generate lwbrx and other byteswapping load/store instructions when reasonable.
+
