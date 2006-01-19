@@ -12,16 +12,37 @@
 //===----------------------------------------------------------------------===//
 
 #include "llvm/Assembly/AutoUpgrade.h"
+#include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
-#include "llvm/Type.h"
+#include "llvm/Module.h"
+#include "llvm/Instructions.h"
+#include "llvm/Intrinsics.h"
+#include "llvm/SymbolTable.h"
 #include <iostream>
 
 using namespace llvm;
 
-// UpgradeIntrinsicFunction - Convert overloaded intrinsic function names to
-// their non-overloaded variants by appending the appropriate suffix based on
-// the argument types.
-bool llvm::UpgradeIntrinsicFunction(Function* F) {
+// Utility function for getting the correct suffix given a type
+static inline const char* get_suffix(const Type* Ty) {
+  if (Ty == Type::UIntTy)
+    return ".i32";
+  if (Ty == Type::UShortTy)
+    return ".i16";
+  if (Ty == Type::UByteTy)
+    return ".i8";
+  if (Ty == Type::ULongTy)
+    return ".i64";
+  if (Ty == Type::FloatTy)
+    return ".f32";
+  if (Ty == Type::DoubleTy)
+    return ".f64";
+  return 0;
+}
+
+static inline const Type* get_type(Function* F) {
+  // If there's no function, we can't get the argument type.
+  if (!F)
+    return 0;
 
   // Get the Function's name.
   const std::string& Name = F->getName();
@@ -29,77 +50,147 @@ bool llvm::UpgradeIntrinsicFunction(Function* F) {
   // Quickly eliminate it, if it's not a candidate.
   if (Name.length() <= 5 || Name[0] != 'l' || Name[1] != 'l' || Name[2] !=
     'v' || Name[3] != 'm' || Name[4] != '.')
-    return false;
+    return 0;
 
-  // See if its one of the name's we're interested in.
   switch (Name[5]) {
     case 'b':
-      if (Name == "llvm.bswap") {
-        const Type* Ty = F->getReturnType();
-        std::string new_name = Name;
-        if (Ty == Type::UShortTy || Ty == Type::ShortTy)
-          new_name += ".i16";
-        else if (Ty == Type::UIntTy || Ty == Type::IntTy)
-          new_name += ".i32";
-        else if (Ty == Type::ULongTy || Ty == Type::LongTy)
-          new_name += ".i64";
-        std::cerr << "WARNING: change " << Name << " to " 
-          << new_name << "\n";
-        F->setName(new_name);
-        return true;
-      }
+      if (Name == "llvm.bswap")
+        return F->getReturnType();
       break;
     case 'c':
-      if (Name == "llvm.ctpop" || Name == "llvm.ctlz" || 
-          Name == "llvm.cttz") {
-        const Type* Ty = F->getReturnType();
-        std::string new_name = Name;
-        if (Ty == Type::UByteTy || Ty == Type::SByteTy)
-          new_name += ".i8";
-        else if (Ty == Type::UShortTy || Ty == Type::ShortTy)
-          new_name += ".i16";
-        else if (Ty == Type::UIntTy || Ty == Type::IntTy)
-          new_name += ".i32";
-        else if (Ty == Type::ULongTy || Ty == Type::LongTy)
-          new_name += ".i64";
-        std::cerr << "WARNING: change " << Name << " to " 
-          << new_name << "\n";
-        F->setName(new_name);
-        return true;
-      }
+      if (Name == "llvm.ctpop" || Name == "llvm.ctlz" || Name == "llvm.cttz")
+        return F->getReturnType();
       break;
     case 'i':
       if (Name == "llvm.isunordered") {
         Function::const_arg_iterator ArgIt = F->arg_begin();
-        const Type* Ty = ArgIt->getType();
-        std::string new_name = Name;
-        if (Ty == Type::FloatTy)
-          new_name += ".f32";
-        else if (Ty == Type::DoubleTy)
-          new_name += ".f64";
-        std::cerr << "WARNING: change " << Name << " to " 
-          << new_name << "\n";
-        F->setName(new_name);
-        return true;
+        if (ArgIt != F->arg_end()) 
+          return ArgIt->getType();
       }
       break;
     case 's':
-      if (Name == "llvm.sqrt") {
-        const Type* Ty = F->getReturnType();
-        std::string new_name = Name;
-        if (Ty == Type::FloatTy)
-          new_name += ".f32";
-        else if (Ty == Type::DoubleTy) {
-          new_name += ".f64";
-        }
-        std::cerr << "WARNING: change " << Name << " to " 
-          << new_name << "\n";
-        F->setName(new_name);
-        return true;
-      }
+      if (Name == "llvm.sqrt")
+        return F->getReturnType();
       break;
     default:
       break;
+  }
+  return 0;
+}
+
+bool llvm::IsUpgradeableIntrinsicName(const std::string& Name) {
+  // Quickly eliminate it, if it's not a candidate.
+  if (Name.length() <= 5 || Name[0] != 'l' || Name[1] != 'l' || Name[2] !=
+    'v' || Name[3] != 'm' || Name[4] != '.')
+    return false;
+
+  switch (Name[5]) {
+    case 'b':
+      if (Name == "llvm.bswap")
+        return true;
+      break;
+    case 'c':
+      if (Name == "llvm.ctpop" || Name == "llvm.ctlz" || Name == "llvm.cttz")
+        return true;
+      break;
+    case 'i':
+      if (Name == "llvm.isunordered")
+        return true;
+      break;
+    case 's':
+      if (Name == "llvm.sqrt")
+        return true;
+      break;
+    default:
+      break;
+  }
+  return false;
+}
+
+// UpgradeIntrinsicFunction - Convert overloaded intrinsic function names to
+// their non-overloaded variants by appending the appropriate suffix based on
+// the argument types.
+Function* llvm::UpgradeIntrinsicFunction(Function* F) {
+  // See if its one of the name's we're interested in.
+  if (const Type* Ty = get_type(F)) {
+    const char* suffix = get_suffix(Ty);
+    if (Ty->isSigned())
+      suffix = get_suffix(Ty->getUnsignedVersion());
+    assert(suffix && "Intrinsic parameter type not recognized");
+    const std::string& Name = F->getName();
+    std::string new_name = Name + suffix;
+    std::cerr << "WARNING: change " << Name << " to " << new_name << "\n";
+    SymbolTable& SymTab = F->getParent()->getSymbolTable();
+    if (Value* V = SymTab.lookup(F->getType(),new_name))
+      if (Function* OtherF = dyn_cast<Function>(V))
+        return OtherF;
+    
+    // There wasn't an existing function for the intrinsic, so now make sure the
+    // signedness of the arguments is correct.
+    if (Ty->isSigned()) {
+      const Type* newTy = Ty->getUnsignedVersion();
+      std::vector<const Type*> Params;
+      Params.push_back(newTy);
+      FunctionType* FT = FunctionType::get(newTy, Params,false);
+      return new Function(FT, GlobalValue::ExternalLinkage, new_name, 
+                          F->getParent());
+    }
+
+    // The argument was the correct type (unsigned or floating), so just
+    // rename the function to its correct name and return it.
+    F->setName(new_name);
+    return F;
+  }
+  return 0;
+}
+
+CallInst* llvm::UpgradeIntrinsicCall(CallInst *CI) {
+  Function *F = CI->getCalledFunction();
+  if (const Type* Ty = get_type(F)) {
+    Function* newF = UpgradeIntrinsicFunction(F);
+    std::vector<Value*> Oprnds;
+    for (User::op_iterator OI = CI->op_begin(), OE = CI->op_end(); 
+         OI != OE; ++OI)
+      Oprnds.push_back(CI);
+    CallInst* newCI = new CallInst(newF,Oprnds,"autoupgrade_call",CI);
+    if (Ty->isSigned()) {
+      const Type* newTy = Ty->getUnsignedVersion();
+      newCI->setOperand(1,new CastInst(newCI->getOperand(1), newTy, 
+                     "autoupgrade_cast", newCI));
+    }
+    return newCI;
+  }
+  return 0;
+}
+
+bool llvm::UpgradeCallsToIntrinsic(Function* F) {
+  if (Function* newF = UpgradeIntrinsicFunction(F)) {
+    for (Value::use_iterator UI = F->use_begin(), UE = F->use_end();
+         UI != UE; ++UI) {
+      if (CallInst* CI = dyn_cast<CallInst>(*UI)) {
+        std::vector<Value*> Oprnds;
+        User::op_iterator OI = CI->op_begin();
+        ++OI;
+        for (User::op_iterator OE = CI->op_end(); OI != OE; ++OI)
+          Oprnds.push_back(*OI);
+        CallInst* newCI = new CallInst(newF,Oprnds,"autoupgrade_call",CI);
+        const Type* Ty = Oprnds[0]->getType();
+        if (Ty->isSigned()) {
+          const Type* newTy = Ty->getUnsignedVersion();
+          newCI->setOperand(1,new CastInst(newCI->getOperand(1), newTy, 
+                         "autoupgrade_cast", newCI));
+          CastInst* final = new CastInst(newCI, Ty, "autoupgrade_uncast",newCI);
+          newCI->moveBefore(final);
+          CI->replaceAllUsesWith(final);
+        } else {
+          CI->replaceAllUsesWith(newCI);
+        }
+        CI->eraseFromParent();
+      }
+    }
+    if (newF != F)
+      F->eraseFromParent();
+    return true;
   }
   return false;
 }
