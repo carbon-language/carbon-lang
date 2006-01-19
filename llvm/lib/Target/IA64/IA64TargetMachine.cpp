@@ -103,11 +103,9 @@ bool IA64TargetMachine::addPassesToEmitFile(PassManager &PM,
   PM.add(createUnreachableBlockEliminationPass());
 
   // Add an instruction selector
-  if(EnableDAGIsel)
-    PM.add(createIA64DAGToDAGInstructionSelector(*this));
-  else
-    PM.add(createIA64PatternInstructionSelector(*this));
-  
+// FIXME: reap this option one day:  if(EnableDAGIsel)
+  PM.add(createIA64DAGToDAGInstructionSelector(*this));
+
 /* XXX not yet. ;)
   // Run optional SSA-based machine code optimizations next...
   if (!NoSSAPeephole)
