@@ -321,6 +321,12 @@ private:
   // unreachable instruction.
   bool hasNoUnreachableInst;
 
+  /// In release 1.7 we changed intrinsic functions to not be overloaded. There
+  /// is no bytecode change for this, but to optimize the auto-upgrade of calls
+  /// to intrinsic functions, we set this flag to identify when a module has
+  /// been read that contains intrinsics that were upgraded.
+  bool hasUpgradedIntrinsicFunctions;
+
   /// CompactionTypes - If a compaction table is active in the current function,
   /// this is the mapping that it contains.  We keep track of what resolved type
   /// it is as well as what global type entry it is.
@@ -388,6 +394,7 @@ private:
   /// for example, by the llvm-abcd tool for analysis of byte code.
   /// @brief Handler for parsing events.
   BytecodeHandler* Handler;
+
 
 /// @}
 /// @name Implementation Details
