@@ -266,6 +266,11 @@ SparcV8TargetLowering::LowerArguments(Function &F, SelectionDAG &DAG) {
 
         Arg = DAG.getNode(ISD::BIT_CONVERT, MVT::f32, Arg);
         ArgValues.push_back(Arg);
+      } else {
+        int FrameIdx = MF.getFrameInfo()->CreateFixedObject(4, ArgOffset);
+        SDOperand FIPtr = DAG.getFrameIndex(FrameIdx, MVT::i32);
+        SDOperand Load = DAG.getLoad(MVT::f32, Root, FIPtr, DAG.getSrcValue(0));
+        ArgValues.push_back(Load);
       }
       ArgOffset += 4;
       break;
