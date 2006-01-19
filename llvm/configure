@@ -27752,7 +27752,10 @@ fi
 
 
 
-for ac_func in backtrace getcwd getpagesize getrusage gettimeofday
+
+
+
+for ac_func in backtrace ceil ceilf floor floorf getcwd getpagesize getrusage
 do
 as_ac_var=`echo "ac_cv_func_$ac_func" | $as_tr_sh`
 echo "$as_me:$LINENO: checking for $ac_func" >&5
@@ -27857,7 +27860,8 @@ done
 
 
 
-for ac_func in isatty mkdtemp mkstemp mktemp
+
+for ac_func in gettimeofday isatty mkdtemp mkstemp mktemp
 do
 as_ac_var=`echo "ac_cv_func_$ac_func" | $as_tr_sh`
 echo "$as_me:$LINENO: checking for $ac_func" >&5
