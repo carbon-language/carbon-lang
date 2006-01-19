@@ -126,12 +126,15 @@ bool InternalizePass::runOnModule(Module &M) {
       //
       if (I->hasAppendingLinkage() && (I->getName() == "llvm.global_ctors" ||
                                        I->getName() == "llvm.global_dtors")) {
-        I->setConstant(true);
-        
         // If the global ctors/dtors list has no uses, do not internalize it, as
         // there is no __main in this program, so the asmprinter should handle
         // it.
         if (I->use_empty()) continue;
+ 
+        // Otherwise, also mark the list constant, as we know that it will not
+        // be mutated any longer, and the makes simple IPO xforms automatically
+        // better.
+        I->setConstant(true);
       }
       
       I->setLinkage(GlobalValue::InternalLinkage);
