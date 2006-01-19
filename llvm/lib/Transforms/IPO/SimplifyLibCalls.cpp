@@ -25,6 +25,7 @@
 #include "llvm/Pass.h"
 #include "llvm/ADT/hash_map"
 #include "llvm/ADT/Statistic.h"
+#include "llvm/Config/config.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Target/TargetData.h"
 #include "llvm/Transforms/IPO.h"
@@ -317,12 +318,14 @@ public:
     return memcpy_func;
   }
 
+#ifdef HAVE_FLOORF
   Function* get_floorf() {
     if (!floorf_func)
       floorf_func = M->getOrInsertFunction("floorf", Type::FloatTy,
                                            Type::FloatTy, (Type *)0);
     return floorf_func;
   }
+#endif
   
 private:
   /// @brief Reset our cached data for a new Module
@@ -337,7 +340,9 @@ private:
     sqrt_func   = 0;
     strcpy_func = 0;
     strlen_func = 0;
+#ifdef HAVE_FLOORF
     floorf_func = 0;
+#endif
   }
 
 private:
@@ -348,7 +353,9 @@ private:
   Function* sqrt_func;   ///< Cached sqrt function
   Function* strcpy_func; ///< Cached strcpy function
   Function* strlen_func; ///< Cached strlen function
+#ifdef HAVE_FLOORF
   Function* floorf_func; ///< Cached floorf function
+#endif
   Module* M;             ///< Cached Module
   TargetData* TD;        ///< Cached TargetData
 };
@@ -1906,6 +1913,7 @@ public:
 } FFSLLOptimizer;
 
 
+#ifdef HAVE_FLOORF
 /// This LibCallOptimization will simplify calls to the "floor" library
 /// function.
 /// @brief Simplify the floor library function.
@@ -1937,6 +1945,7 @@ struct FloorOptimization : public LibCallOptimization {
     return false; // opt failed
   }
 } FloorOptimizer;
+#endif
 
 
 
