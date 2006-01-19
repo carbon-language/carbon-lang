@@ -290,6 +290,11 @@ static Value *RemapOperand(const Value *In,
       Result = const_cast<Constant*>(CPV);
     } else if (isa<GlobalValue>(CPV)) {
       Result = cast<Constant>(RemapOperand(CPV, ValueMap));
+    } else if (const ConstantPacked *CP = dyn_cast<ConstantPacked>(CPV)) {
+      std::vector<Constant*> Operands(CP->getNumOperands());
+      for (unsigned i = 0, e = CP->getNumOperands(); i != e; ++i)
+        Operands[i] = cast<Constant>(RemapOperand(CP->getOperand(i), ValueMap));
+      Result = ConstantPacked::get(Operands);
     } else if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(CPV)) {
       if (CE->getOpcode() == Instruction::GetElementPtr) {
         Value *Ptr = RemapOperand(CE->getOperand(0), ValueMap);
