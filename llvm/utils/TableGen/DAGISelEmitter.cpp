@@ -2255,10 +2255,13 @@ public:
           OS << "      CodeGenMap[N.getValue(" << ValNo << ")] = InFlag;\n";
 
         if (AddedChain && HasOutFlag) {
-          if (NumResults == 0) {
+          // Is this pattern expected to produce a result?
+          if (Pattern->getTypeNum(0) == MVT::isVoid ||
+              Pattern->getTypeNum(0) == MVT::Flag) {
             OS << "      return Result.getValue(N.ResNo+1);\n";
           } else {
-            OS << "      if (N.ResNo < " << NumResults << ")\n";
+            OS << "      if (N.ResNo < "
+               << ((NumResults > 1) ? NumResults : 1) << ")\n";
             OS << "        return Result.getValue(N.ResNo);\n";
             OS << "      else\n";
             OS << "        return Result.getValue(N.ResNo+1);\n";
