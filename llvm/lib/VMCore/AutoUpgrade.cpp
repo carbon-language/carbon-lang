@@ -24,18 +24,15 @@ using namespace llvm;
 
 // Utility function for getting the correct suffix given a type
 static inline const char* get_suffix(const Type* Ty) {
-  if (Ty == Type::UIntTy)
-    return ".i32";
-  if (Ty == Type::UShortTy)
-    return ".i16";
-  if (Ty == Type::UByteTy)
-    return ".i8";
-  if (Ty == Type::ULongTy)
-    return ".i64";
-  if (Ty == Type::FloatTy)
-    return ".f32";
-  if (Ty == Type::DoubleTy)
-    return ".f64";
+  switch (Ty->getTypeID()) {
+    case Type::UIntTyID:    return ".i32";
+    case Type::UShortTyID:  return ".i16";
+    case Type::UByteTyID:   return ".i8";
+    case Type::ULongTyID:   return ".i64";
+    case Type::FloatTyID:   return ".f32";
+    case Type::DoubleTyID:  return ".f64";
+    default:                break;                        
+  }
   return 0;
 }
 
