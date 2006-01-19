@@ -215,7 +215,6 @@ void X86DAGToDAGISel::InstructionSelectBasicBlock(SelectionDAG &DAG) {
 /// the main function.
 static void EmitSpecialCodeForMain(MachineBasicBlock *BB,
                                    MachineFrameInfo *MFI) {
-#if 0
   // Switch the FPU to 64-bit precision mode for better compatibility and speed.
   int CWFrameIdx = MFI->CreateStackObject(2, 2);
   addFrameReference(BuildMI(BB, X86::FNSTCW16m, 4), CWFrameIdx);
@@ -226,7 +225,6 @@ static void EmitSpecialCodeForMain(MachineBasicBlock *BB,
 
   // Reload the modified control word now.
   addFrameReference(BuildMI(BB, X86::FLDCW16m, 4), CWFrameIdx);
-#endif
 }
 
 void X86DAGToDAGISel::EmitFunctionEntryCode(Function &Fn, MachineFunction &MF) {
