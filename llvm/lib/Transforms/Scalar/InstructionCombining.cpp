@@ -3799,8 +3799,8 @@ static CastType getCastType(const Type *Src, const Type *Dest) {
 // isEliminableCastOfCast - Return true if it is valid to eliminate the CI
 // instruction.
 //
-static inline bool isEliminableCastOfCast(const Type *SrcTy, const Type *MidTy,
-                                          const Type *DstTy, TargetData *TD) {
+static bool isEliminableCastOfCast(const Type *SrcTy, const Type *MidTy,
+                                   const Type *DstTy, TargetData *TD) {
 
   // It is legal to eliminate the instruction if casting A->B->A if the sizes
   // are identical and the bits don't get reinterpreted (for example
@@ -3856,6 +3856,15 @@ static inline bool isEliminableCastOfCast(const Type *SrcTy, const Type *MidTy,
       return ResultCast == FirstCast;
     }
   }
+  
+  // If this is a cast from 'float -> double -> integer', cast from
+  // 'float -> integer' directly, as the value isn't changed by the 
+  // float->double conversion.
+  if (SrcTy->isFloatingPoint() && MidTy->isFloatingPoint() &&
+      DstTy->isIntegral() && 
+      SrcTy->getPrimitiveSize() < MidTy->getPrimitiveSize())
+    return true;
+  
   return false;
 }
 
