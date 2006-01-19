@@ -1835,6 +1835,7 @@ private:
   std::map<std::string, Record*> OperatorMap;
   // Names of all the folded nodes which produce chains.
   std::vector<std::pair<std::string, unsigned> > FoldedChains;
+  std::set<std::string> Duplicates;
   unsigned TmpNo;
 
 public:
@@ -1952,6 +1953,7 @@ public:
             // previously named thing.
             OS << "      if (" << VarMapEntry << " != " << RootName << OpNo
                << ") goto P" << PatternNo << "Fail;\n";
+            Duplicates.insert(RootName + utostr(OpNo));
             continue;
           }
         }
@@ -2351,6 +2353,13 @@ private:
         EmitCopyToRegs(Child, RootName + utostr(OpNo), ChainEmitted);
       } else {
         if (DefInit *DI = dynamic_cast<DefInit*>(Child->getLeafValue())) {
+          if (!Child->getName().empty()) {
+            std::string Name = RootName + utostr(OpNo);
+            if (Duplicates.find(Name) != Duplicates.end())
+              // A duplicate! Do not emit a copy for this node.
+              continue;
+          }
+
           Record *RR = DI->getDef();
           if (RR->isSubClassOf("Register")) {
             MVT::ValueType RVT = getRegisterValueType(RR, T);
