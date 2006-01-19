@@ -213,11 +213,11 @@ def EQV      : OForm< 0x11, 0x48, "eqv $RA,$RB,$RC",
 def EQVi     : OFormL<0x11, 0x48, "eqv $RA,$L,$RC", 
                       [(set GPRC:$RC, (xor GPRC:$RA, immUExt8inv:$L))]>;
 def EXTBL    : OForm< 0x12, 0x06, "EXTBL $RA,$RB,$RC", 
-                      [(set GPRC:$RC, (and (srl GPRC:$RA, (sll GPRC:$RB, 3)), 255))]>;
+                      [(set GPRC:$RC, (and (srl GPRC:$RA, (shl GPRC:$RB, 3)), 255))]>;
 def EXTWL    : OForm< 0x12, 0x16, "EXTWL $RA,$RB,$RC", 
-                      [(set GPRC:$RC, (and (srl GPRC:$RA, (sll GPRC:$RB, 3)), 65535))]>;
+                      [(set GPRC:$RC, (and (srl GPRC:$RA, (shl GPRC:$RB, 3)), 65535))]>;
 def EXTLL    : OForm< 0x12, 0x26, "EXTLL $RA,$RB,$RC", 
-                      [(set GPRC:$RC, (and (srl GPRC:$RA, (sll GPRC:$RB, 3)), 4294967295))]>;
+                      [(set GPRC:$RC, (and (srl GPRC:$RA, (shl GPRC:$RB, 3)), 4294967295))]>;
 
 //def EXTBLi   : OFormL<0x12, 0x06, "EXTBL $RA,$L,$RC", []>; //Extract byte low
 //def EXTLH    : OForm< 0x12, 0x6A, "EXTLH $RA,$RB,$RC", []>; //Extract longword high

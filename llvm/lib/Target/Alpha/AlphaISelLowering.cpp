@@ -97,9 +97,10 @@ AlphaTargetLowering::AlphaTargetLowering(TargetMachine &TM) : TargetLowering(TM)
   // We don't support sin/cos/sqrt
   setOperationAction(ISD::FSIN , MVT::f64, Expand);
   setOperationAction(ISD::FCOS , MVT::f64, Expand);
-  setOperationAction(ISD::FSQRT, MVT::f64, Expand);
   setOperationAction(ISD::FSIN , MVT::f32, Expand);
   setOperationAction(ISD::FCOS , MVT::f32, Expand);
+
+  setOperationAction(ISD::FSQRT, MVT::f64, Expand);
   setOperationAction(ISD::FSQRT, MVT::f32, Expand);
 
   setOperationAction(ISD::SETCC, MVT::f32, Promote);
