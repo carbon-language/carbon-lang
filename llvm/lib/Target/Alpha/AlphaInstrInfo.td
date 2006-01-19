@@ -212,11 +212,16 @@ def EQV      : OForm< 0x11, 0x48, "eqv $RA,$RB,$RC",
                       [(set GPRC:$RC, (xor GPRC:$RA, (not GPRC:$RB)))]>;
 def EQVi     : OFormL<0x11, 0x48, "eqv $RA,$L,$RC", 
                       [(set GPRC:$RC, (xor GPRC:$RA, immUExt8inv:$L))]>;
-//def EXTBL    : OForm< 0x12, 0x06, "EXTBL $RA,$RB,$RC", []>; //Extract byte low
+def EXTBL    : OForm< 0x12, 0x06, "EXTBL $RA,$RB,$RC", 
+                      [(set GPRC:$RC, (and (srl GPRC:$RA, (sll GPRC:$RB, 3)), 255))]>;
+def EXTWL    : OForm< 0x12, 0x16, "EXTWL $RA,$RB,$RC", 
+                      [(set GPRC:$RC, (and (srl GPRC:$RA, (sll GPRC:$RB, 3)), 65535))]>;
+def EXTLL    : OForm< 0x12, 0x26, "EXTLL $RA,$RB,$RC", 
+                      [(set GPRC:$RC, (and (srl GPRC:$RA, (sll GPRC:$RB, 3)), 4294967295))]>;
+
 //def EXTBLi   : OFormL<0x12, 0x06, "EXTBL $RA,$L,$RC", []>; //Extract byte low
 //def EXTLH    : OForm< 0x12, 0x6A, "EXTLH $RA,$RB,$RC", []>; //Extract longword high
 //def EXTLHi   : OFormL<0x12, 0x6A, "EXTLH $RA,$L,$RC", []>; //Extract longword high
-//def EXTLL    : OForm< 0x12, 0x26, "EXTLL $RA,$RB,$RC", []>; //Extract longword low
 //def EXTLLi   : OFormL<0x12, 0x26, "EXTLL $RA,$L,$RC", []>; //Extract longword low
 //def EXTQH    : OForm< 0x12, 0x7A, "EXTQH $RA,$RB,$RC", []>; //Extract quadword high
 //def EXTQHi   : OFormL<0x12, 0x7A, "EXTQH $RA,$L,$RC", []>; //Extract quadword high
@@ -224,8 +229,8 @@ def EQVi     : OFormL<0x11, 0x48, "eqv $RA,$L,$RC",
 //def EXTQi    : OFormL<0x12, 0x36, "EXTQ $RA,$L,$RC", []>; //Extract quadword low
 //def EXTWH    : OForm< 0x12, 0x5A, "EXTWH $RA,$RB,$RC", []>; //Extract word high
 //def EXTWHi   : OFormL<0x12, 0x5A, "EXTWH $RA,$L,$RC", []>; //Extract word high
-//def EXTWL    : OForm< 0x12, 0x16, "EXTWL $RA,$RB,$RC", []>; //Extract word low
 //def EXTWLi   : OFormL<0x12, 0x16, "EXTWL $RA,$L,$RC", []>; //Extract word low
+
 //def IMPLVER  : OForm< 0x11, 0x6C, "IMPLVER $RA,$RB,$RC", []>; //Implementation version
 //def IMPLVERi : OFormL<0x11, 0x6C, "IMPLVER $RA,$L,$RC", []>; //Implementation version
 //def INSBL    : OForm< 0x12, 0x0B, "INSBL $RA,$RB,$RC", []>; //Insert byte low
