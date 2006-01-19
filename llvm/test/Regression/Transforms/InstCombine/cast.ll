@@ -161,3 +161,8 @@ void %test25(int** %P) {
         ret void
 }
 
+int %test26(float %F) {
+	%c = cast float %F to double   ;; no need to cast from float->double.
+	%D = cast double %c to int
+	ret int %D
+}
