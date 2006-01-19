@@ -267,16 +267,29 @@ Constant *llvm::ConstantFoldLoadThroughGEPConstantExpr(Constant *C,
         return 0;
       }
     } else if (ConstantInt *CI = dyn_cast<ConstantInt>(I.getOperand())) {
-      const ArrayType *ATy = cast<ArrayType>(*I);
-      if ((uint64_t)CI->getRawValue() >= ATy->getNumElements()) return 0;
-      if (ConstantArray *CA = dyn_cast<ConstantArray>(C))
-        C = CA->getOperand((unsigned)CI->getRawValue());
-      else if (isa<ConstantAggregateZero>(C))
-        C = Constant::getNullValue(ATy->getElementType());
-      else if (isa<UndefValue>(C))
-        C = UndefValue::get(ATy->getElementType());
-      else
+      if (const ArrayType *ATy = dyn_cast<ArrayType>(*I)) {
+        if ((uint64_t)CI->getRawValue() >= ATy->getNumElements()) return 0;
+        if (ConstantArray *CA = dyn_cast<ConstantArray>(C))
+          C = CA->getOperand((unsigned)CI->getRawValue());
+        else if (isa<ConstantAggregateZero>(C))
+          C = Constant::getNullValue(ATy->getElementType());
+        else if (isa<UndefValue>(C))
+          C = UndefValue::get(ATy->getElementType());
+        else
+          return 0;
+      } else if (const PackedType *PTy = dyn_cast<PackedType>(*I)) {
+        if ((uint64_t)CI->getRawValue() >= PTy->getNumElements()) return 0;
+        if (ConstantPacked *CP = dyn_cast<ConstantPacked>(C))
+          C = CP->getOperand((unsigned)CI->getRawValue());
+        else if (isa<ConstantAggregateZero>(C))
+          C = Constant::getNullValue(PTy->getElementType());
+        else if (isa<UndefValue>(C))
+          C = UndefValue::get(PTy->getElementType());
+        else
+          return 0;
+      } else {
         return 0;
+      }
     } else {
       return 0;
     }
