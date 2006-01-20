@@ -132,6 +132,7 @@ namespace {
 
     void printConstant(Constant *CPV);
     void printConstantArray(ConstantArray *CPA);
+    void printConstantPacked(ConstantPacked *CP);
 
     // isInlinableInst - Attempt to inline instructions into their uses to build
     // trees as much as possible.  To do this, we have to consistently decide
@@ -329,7 +330,8 @@ std::ostream &CWriter::printType(std::ostream &Out, const Type *Ty,
     const PointerType *PTy = cast<PointerType>(Ty);
     std::string ptrName = "*" + NameSoFar;
 
-    if (isa<ArrayType>(PTy->getElementType()))
+    if (isa<ArrayType>(PTy->getElementType()) ||
+        isa<PackedType>(PTy->getElementType()))
       ptrName = "(" + ptrName + ")";
 
     return printType(Out, PTy->getElementType(), ptrName);
@@ -340,6 +342,14 @@ std::ostream &CWriter::printType(std::ostream &Out, const Type *Ty,
     unsigned NumElements = ATy->getNumElements();
     if (NumElements == 0) NumElements = 1;
     return printType(Out, ATy->getElementType(),
+                     NameSoFar + "[" + utostr(NumElements) + "]");
+  }
+
+  case Type::PackedTyID: {
+    const PackedType *PTy = cast<PackedType>(Ty);
+    unsigned NumElements = PTy->getNumElements();
+    if (NumElements == 0) NumElements = 1;
+    return printType(Out, PTy->getElementType(),
                      NameSoFar + "[" + utostr(NumElements) + "]");
   }
 
@@ -424,6 +434,19 @@ void CWriter::printConstantArray(ConstantArray *CPA) {
     }
     Out << " }";
   }
+}
+
+void CWriter::printConstantPacked(ConstantPacked *CP) {
+  Out << '{';
+  if (CP->getNumOperands()) {
+    Out << ' ';
+    printConstant(cast<Constant>(CP->getOperand(0)));
+    for (unsigned i = 1, e = CP->getNumOperands(); i != e; ++i) {
+      Out << ", ";
+      printConstant(cast<Constant>(CP->getOperand(i)));
+    }
+  }
+  Out << " }";
 }
 
 // isFPCSafeToPrint - Returns true if we may assume that CFP may be written out
@@ -638,6 +661,25 @@ void CWriter::printConstant(Constant *CPV) {
       Out << " }";
     } else {
       printConstantArray(cast<ConstantArray>(CPV));
+    }
+    break;
+
+  case Type::PackedTyID:
+    if (isa<ConstantAggregateZero>(CPV) || isa<UndefValue>(CPV)) {
+      const PackedType *AT = cast<PackedType>(CPV->getType());
+      Out << '{';
+      if (AT->getNumElements()) {
+        Out << ' ';
+        Constant *CZ = Constant::getNullValue(AT->getElementType());
+        printConstant(CZ);
+        for (unsigned i = 1, e = AT->getNumElements(); i != e; ++i) {
+          Out << ", ";
+          printConstant(CZ);
+        }
+      }
+      Out << " }";
+    } else {
+      printConstantPacked(cast<ConstantPacked>(CPV));
     }
     break;
 
@@ -936,7 +978,8 @@ bool CWriter::doInitialization(Module &M) {
           // the compiler figure out the rest of the zeros.
           Out << " = " ;
           if (isa<StructType>(I->getInitializer()->getType()) ||
-              isa<ArrayType>(I->getInitializer()->getType())) {
+              isa<ArrayType>(I->getInitializer()->getType()) ||
+              isa<PackedType>(I->getInitializer()->getType())) {
             Out << "{ 0 }";
           } else {
             // Just print it out normally.
@@ -987,7 +1030,7 @@ void CWriter::printFloatingPointConstants(Function &F) {
 
 
 /// printSymbolTable - Run through symbol table looking for type names.  If a
-/// type name is found, emit it's declaration...
+/// type name is found, emit its declaration...
 ///
 void CWriter::printModuleTypes(const SymbolTable &ST) {
   // We are only interested in the type plane of the symbol table.
@@ -1035,6 +1078,9 @@ void CWriter::printModuleTypes(const SymbolTable &ST) {
 
 // Push the struct onto the stack and recursively push all structs
 // this one depends on.
+//
+// TODO:  Make this work properly with packed types
+//
 void CWriter::printContainedStructs(const Type *Ty,
                                     std::set<const StructType*> &StructPrinted){
   // Don't walk through pointers.
@@ -1055,7 +1101,6 @@ void CWriter::printContainedStructs(const Type *Ty,
     }
   }
 }
-
 
 void CWriter::printFunctionSignature(const Function *F, bool Prototype) {
   if (F->hasInternalLinkage()) Out << "static ";
