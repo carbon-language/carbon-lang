@@ -113,10 +113,6 @@ def ADDS : AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, s14imm:$imm),
            "adds $dst = $imm, $src1;;",
 	   [(set GR:$dst, (add GR:$src1, immSExt14:$imm))]>;
  
-def PADDS: AForm_DAG<0x03, 0x0b, (ops GR:$dst, GR:$src1, s14imm:$imm, PR:$qp),
-           "($qp) adds $dst = $imm, $src1;;",
-	   []>;
-
 def MOVL : AForm_DAG<0x03, 0x0b, (ops GR:$dst, s64imm:$imm),
            "movl $dst = $imm;;",
 	   [(set GR:$dst, imm64:$imm)]>;
@@ -142,9 +138,10 @@ let isTwoAddress = 1 in {
 def TPCADDIMM22 : AForm<0x03, 0x0b,
   (ops GR:$dst, GR:$src1, s22imm:$imm, PR:$qp),
     "($qp) add $dst = $imm, $dst;;">;
-def TPCADDS : AForm<0x03, 0x0b,
+def TPCADDS : AForm_DAG<0x03, 0x0b,
   (ops GR:$dst, GR:$src1, s14imm:$imm, PR:$qp),
-    "($qp) adds $dst = $imm, $dst;;">;
+    "($qp) adds $dst = $imm, $dst;;",
+    []>;
 def TPCMPIMM8NE : AForm<0x03, 0x0b,
   (ops PR:$dst, PR:$src1, s22imm:$imm, GR:$src2, PR:$qp),
     "($qp) cmp.ne $dst , p0 = $imm, $src2;;">;

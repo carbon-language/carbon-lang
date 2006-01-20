@@ -542,9 +542,9 @@ SDOperand IA64DAGToDAGISel::Select(SDOperand Op) {
 	// first load zero!
 	SDOperand Initial = CurDAG->getCopyFromReg(Chain, IA64::r0, MVT::i64);
 	Chain = Initial.getValue(1);
-	// then load 1 iff the predicate to store is 1
+	// then load 1 into the same reg iff the predicate to store is 1
         SDOperand Tmp = 
-          CurDAG->getTargetNode(IA64::PADDS, MVT::i64, Initial,
+          CurDAG->getTargetNode(IA64::TPCADDS, MVT::i64, Initial,
                                 CurDAG->getConstant(1, MVT::i64),
                                 Select(N->getOperand(1)));
         return CurDAG->SelectNodeTo(N, Opc, MVT::Other, Address, Tmp, Chain);
