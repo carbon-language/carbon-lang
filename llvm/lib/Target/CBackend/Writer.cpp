@@ -1037,29 +1037,22 @@ void CWriter::printModuleTypes(const SymbolTable &ST) {
 // this one depends on.
 void CWriter::printContainedStructs(const Type *Ty,
                                     std::set<const StructType*> &StructPrinted){
+  // Don't walk through pointers.
+  if (isa<PointerType>(Ty) || Ty->isPrimitiveType()) return;
+  
+  // Print all contained types first.
+  for (Type::subtype_iterator I = Ty->subtype_begin(),
+       E = Ty->subtype_end(); I != E; ++I)
+    printContainedStructs(*I, StructPrinted);
+  
   if (const StructType *STy = dyn_cast<StructType>(Ty)) {
-    //Check to see if we have already printed this struct
-    if (StructPrinted.count(STy) == 0) {
-      // Print all contained types first...
-      for (StructType::element_iterator I = STy->element_begin(),
-             E = STy->element_end(); I != E; ++I) {
-        const Type *Ty1 = I->get();
-        if (isa<StructType>(Ty1) || isa<ArrayType>(Ty1))
-          printContainedStructs(*I, StructPrinted);
-      }
-
-      //Print structure type out..
-      StructPrinted.insert(STy);
+    // Check to see if we have already printed this struct.
+    if (StructPrinted.insert(STy).second) {
+      // Print structure type out.
       std::string Name = TypeNames[STy];
       printType(Out, STy, Name, true);
       Out << ";\n\n";
     }
-
-    // If it is an array, check contained types and continue
-  } else if (const ArrayType *ATy = dyn_cast<ArrayType>(Ty)){
-    const Type *Ty1 = ATy->getElementType();
-    if (isa<StructType>(Ty1) || isa<ArrayType>(Ty1))
-      printContainedStructs(Ty1, StructPrinted);
   }
 }
 
